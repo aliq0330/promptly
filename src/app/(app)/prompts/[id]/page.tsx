@@ -5,6 +5,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { getPromptById, mockPrompts } from "@/mocks/prompts";
 import { getCommentsForPrompt } from "@/mocks/comments";
+import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
 import { formatCount, formatRelativeTime } from "@/lib/utils";
 
 export function generateStaticParams() {
@@ -22,6 +23,8 @@ export default async function PromptDetailPage({
 
   const media = prompt.media[0];
   const comments = getCommentsForPrompt(prompt.id);
+  const typeMeta = CONTENT_TYPE_META[prompt.contentType];
+  const TypeIcon = typeMeta.icon;
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 px-4 py-6 lg:px-6">
@@ -32,6 +35,11 @@ export default async function PromptDetailPage({
       )}
 
       <div className="space-y-3">
+        <div className="flex items-center gap-1.5 text-primary">
+          <TypeIcon size={14} />
+          <span className="text-xs font-medium">{typeMeta.label} Prompt</span>
+        </div>
+
         <div className="flex items-start justify-between gap-3">
           <h1 className="text-lg font-semibold text-text">{prompt.title}</h1>
           {prompt.origin.type === "remix" && <Badge>Remix</Badge>}

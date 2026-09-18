@@ -15,18 +15,21 @@ alındığında veya mimaride değişiklik yapıldığında güncellenmelidir.
 
 ## 1. Ürünün Amacı
 
-Promptly, kullanıcıların yapay zekâ görsel üretiminde kullandıkları
-promptları paylaşabildiği, keşfedebildiği, yeniden kullanabildiği (remix) ve
+Promptly, kullanıcıların yapay zekâ ile ürettikleri promptları
+paylaşabildiği, keşfedebildiği, yeniden kullanabildiği (remix) ve
 birbirleriyle sosyal olarak etkileşime girebildiği bir platformdur.
+**Yalnızca görsel üretim promptlarıyla sınırlı değildir** — metin/yazarlık,
+video, kodlama ve müzik üretim promptları da aynı platformda, aynı akışlarda
+yer alır (`Prompt.contentType`: `image` | `text` | `video` | `code` |
+`music`).
 
-Merkezde: promptlar, görsel üretim, remix, yaratıcı prompt istekleri ve
+Merkezde: promptlar (her türden), remix, yaratıcı prompt istekleri ve
 topluluk var. Genel amaçlı bir sosyal medya sitesi veya soru-cevap platformu
-DEĞİLDİR — her sosyal özellik prompt/görsel üretim deneyimini desteklemek
-için var.
+DEĞİLDİR — her sosyal özellik prompt üretim deneyimini desteklemek için var.
 
 Temel varlıklar:
-- **Prompt**: başlık, açıklama, tam prompt metni, görsel(ler), etiketler,
-  kullanılan araç/model.
+- **Prompt**: başlık, açıklama, tam prompt metni, içerik türü, görsel(ler)
+  (yalnızca `image` türünde), etiketler, kullanılan araç/model.
 - **Remix**: bir prompttan (veya bir istek yanıtından) türetilmiş yeni bir
   prompt; köken zinciri korunur.
 - **Prompt İsteği (Request)**: kullanıcının belirli bir görsel/stil için
@@ -134,8 +137,8 @@ property'lerinde tanımlanır; dosyalara dağıtılmaz.
 
 | Route | Açıklama |
 |---|---|
-| `/` | Ana sayfa / sosyal feed (Takip Ettiklerim, Popüler, Sana Özel sekmeleri) |
-| `/discover` | Keşfet: trend promptlar, yaratıcılar, etiketler, istekler |
+| `/` | Ana sayfa / karma feed — her içerik türünden prompt + prompt istekleri iç içe (Takip Ettiklerim, Popüler, Sana Özel sekmeleri) |
+| `/discover` | Keşfet: karma trend akışı (içerik türü filtreleriyle) + yaratıcılar + etiketler |
 | `/prompts/[id]` | Prompt detay sayfası |
 | `/create` | Prompt oluşturma formu |
 | `/requests` | Prompt istekleri listesi |
@@ -273,6 +276,34 @@ feed, keşfet, istekler, bildirimler, mesajlar ve profil sayfaları dolduruldu.
 - Mobil header: arama artık dar ekranlarda metni kırpılan bir kutu değil,
   bildirim/mesaj ikonlarıyla aynı boyutta bir arama ikonu (`/search`'e
   yönlendiriyor); masaüstünde tam metinli arama kutusu korunuyor.
+- **Çoklu içerik türü + karma akış:** `Prompt.contentType` alanı eklendi
+  (`image` | `text` | `video` | `code` | `music`). Kart render'ı artık türe
+  göre ayrışıyor: `PromptCard` (features/prompts/prompt-card.tsx) türe göre
+  `ImagePromptCard` (medya önizlemeli) veya `TextPromptCard` (metin/video/
+  kod/müzik — medya alanı zorlanmıyor, kısa bir prompt metni önizlemesi +
+  "Tamamını görüntüle" eylemiyle detay sayfasına yönlendiriyor) arasında
+  seçim yapıyor. Ortak footer (`PromptCardFooter`) ve remix ilişki satırı
+  (`RemixSourceLink`) her iki kart tipinde de paylaşılıyor.
+- Ana Sayfa ve Keşfet artık **karma akış**: prompt istekleri artık yalnızca
+  `/requests`'te değil, Ana Sayfa ve Keşfet'te diğer prompt türleriyle iç
+  içe görünüyor (`src/features/feed/{types,feed-grid,feed-tabs}.tsx` —
+  `FeedItem = {kind:"prompt"} | {kind:"request"}`). `/requests` sayfası ve
+  navigasyondaki "Prompt İstekleri" linki değişmeden duruyor. Keşfet'e
+  içerik türü filtre çipleri eklendi (`DiscoverFeed`, client-side, gerçekten
+  filtreliyor): Tümü/Görsel/Metin/Video/Kod/Müzik/İstekler. Ana Sayfa
+  sekmeleri CLAUDE.md §5 ile eşleşecek şekilde Takip Ettiklerim/Popüler/
+  Sana Özel sırasına alındı.
+- **Tablet/masaüstü kart boşluğu düzeltmesi:** `PromptGrid` ve `FeedGrid`
+  artık CSS Grid değil, CSS multi-column masonry kullanıyor
+  (`columns-1 sm:columns-2 xl:columns-3` + her kart `break-inside-avoid`).
+  Kısa kartlar artık komşu sütundaki uzun bir karta göre gerilmiyor — grid
+  satır hizalamasının neden olduğu büyük boş alanlar ortadan kalktı. Saf
+  CSS olduğu için JS ölçüm/ResizeObserver gerekmiyor, pencere yeniden
+  boyutlandırma ve yön değişikliklerinde native olarak yeniden akıyor.
+- **iOS safe-area:** `app/layout.tsx`'e `viewportFit: "cover"` eklendi;
+  `MobileNav` ve `AppShell`'in ana içerik alt boşluğu artık
+  `env(safe-area-inset-bottom)`'ı hesaba katıyor (çentikli/Dynamic Island
+  cihazlarda alt navigasyonun içerik ile çakışmaması için).
 
 **Bilinen sorunlar / bilinçli basitleştirmeler:**
 - Tablet için ayrı bir navigasyon/genişlik düzeni henüz yok; `lg` (1024px)
@@ -286,5 +317,13 @@ feed, keşfet, istekler, bildirimler, mesajlar ve profil sayfaları dolduruldu.
   `tags/[tag]`, `messages/[conversationId]`) `generateStaticParams()` ile
   mock veri setindeki TÜM id'leri döndürüyor — gerçek backend'e geçilince
   bu fonksiyonlar kaldırılıp sunucu tarafı veri çekmeye geçilecek.
+- Masonry (CSS columns) sütun-öncelikli sıralar (önce 1. sütun tepeden
+  dizilir, sonra 2. sütuna geçer) — grid'in satır-öncelikli sıralamasından
+  farklıdır. Pinterest/Unsplash tarzı masonry akışlarında beklenen/kabul
+  gören bir davranıştır, ancak "Popüler" gibi sekmelerde en yüksek puanlı
+  öğe her zaman sol üstte olur, tam soldan-sağa okuma sırası garanti edilmez.
+- "Popüler" sekmesinde prompt (likeCount) ve istek (responseCount×15)
+  farklı ölçeklerde metriklere sahip olduğundan sıralama kaba bir
+  sezgiseldir — gerçek bir "trend skoru" backend tarafında hesaplanmalı.
 
 **Sonraki modül:** Prompt oluşturma (Bölüm 7).

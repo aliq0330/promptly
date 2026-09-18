@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { PromptGrid } from "@/features/prompts/prompt-grid";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { RequestCard } from "@/features/requests/request-card";
+import { DiscoverFeed } from "@/features/feed/discover-feed";
+import { feedItemPopularity, type FeedItem } from "@/features/feed/types";
 import { mockPrompts } from "@/mocks/prompts";
 import { mockUsers } from "@/mocks/users";
 import { mockTags } from "@/mocks/tags";
@@ -10,18 +10,21 @@ import { mockRequests } from "@/mocks/requests";
 import { formatCount } from "@/lib/utils";
 
 export default function DiscoverPage() {
-  const trending = [...mockPrompts].sort((a, b) => b.likeCount - a.likeCount).slice(0, 6);
+  const trending: FeedItem[] = [
+    ...mockPrompts.map((prompt): FeedItem => ({ kind: "prompt", data: prompt })),
+    ...mockRequests.map((request): FeedItem => ({ kind: "request", data: request })),
+  ].sort((a, b) => feedItemPopularity(b) - feedItemPopularity(a));
+
   const creators = [...mockUsers]
     .filter((user) => user.id !== "me")
     .sort((a, b) => b.followerCount - a.followerCount)
     .slice(0, 5);
-  const openRequests = mockRequests.filter((request) => request.status === "open").slice(0, 3);
 
   return (
     <div className="space-y-8 px-4 py-6 lg:px-6">
       <section className="space-y-4">
-        <h2 className="text-base font-semibold text-text">Trend Promptlar</h2>
-        <PromptGrid prompts={trending} />
+        <h2 className="text-base font-semibold text-text">Keşfet</h2>
+        <DiscoverFeed items={trending} />
       </section>
 
       <section className="space-y-3">
@@ -54,15 +57,6 @@ export default function DiscoverPage() {
                 #{tag.label}
               </Badge>
             </Link>
-          ))}
-        </div>
-      </section>
-
-      <section className="space-y-3">
-        <h2 className="text-base font-semibold text-text">Açık Prompt İstekleri</h2>
-        <div className="overflow-hidden rounded-lg border border-border bg-surface">
-          {openRequests.map((request) => (
-            <RequestCard key={request.id} request={request} />
           ))}
         </div>
       </section>

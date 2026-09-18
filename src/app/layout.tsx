@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { Inter } from "next/font/google";
 import { ThemeProvider, themeInitScript } from "@/components/theme/theme-provider";
@@ -13,6 +13,14 @@ export const metadata: Metadata = {
   title: "Promptly",
   description:
     "AI görsel üretim promptlarını paylaşan, keşfeden ve remixleyen yaratıcı topluluk platformu.",
+};
+
+// viewport-fit=cover is required for env(safe-area-inset-*) to resolve to
+// non-zero values on notched iOS devices (fixed bottom nav, see MobileNav).
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

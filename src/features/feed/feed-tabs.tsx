@@ -2,30 +2,30 @@
 
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { PromptGrid } from "@/features/prompts/prompt-grid";
-import type { Prompt } from "@/types";
+import { FeedGrid } from "./feed-grid";
+import { feedItemAuthorId, feedItemPopularity, type FeedItem } from "./types";
 
-type TabKey = "for-you" | "popular" | "following";
+type TabKey = "following" | "popular" | "for-you";
 
 const TABS: { key: TabKey; label: string }[] = [
-  { key: "for-you", label: "Sana Özel" },
-  { key: "popular", label: "Popüler" },
   { key: "following", label: "Takip Ettiklerim" },
+  { key: "popular", label: "Popüler" },
+  { key: "for-you", label: "Sana Özel" },
 ];
 
 // Mirrors the creators followed on the Following page mock (see
 // src/mocks — no real follow graph exists yet, see CLAUDE.md section 13).
 const FOLLOWED_USER_IDS = new Set(["u1", "u3", "u5", "u7"]);
 
-export function FeedTabs({ prompts }: { prompts: Prompt[] }) {
+export function FeedTabs({ items }: { items: FeedItem[] }) {
   const [active, setActive] = useState<TabKey>("for-you");
 
   const visible =
     active === "popular"
-      ? [...prompts].sort((a, b) => b.likeCount - a.likeCount)
+      ? [...items].sort((a, b) => feedItemPopularity(b) - feedItemPopularity(a))
       : active === "following"
-        ? prompts.filter((prompt) => FOLLOWED_USER_IDS.has(prompt.author.id))
-        : prompts;
+        ? items.filter((item) => FOLLOWED_USER_IDS.has(feedItemAuthorId(item)))
+        : items;
 
   return (
     <div className="space-y-4 pb-6">
@@ -47,7 +47,7 @@ export function FeedTabs({ prompts }: { prompts: Prompt[] }) {
         ))}
       </div>
       <div className="px-4 lg:px-6">
-        <PromptGrid prompts={visible} />
+        <FeedGrid items={visible} />
       </div>
     </div>
   );

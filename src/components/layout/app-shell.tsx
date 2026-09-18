@@ -16,7 +16,9 @@ export function AppShell({ children, aside }: AppShellProps) {
       <div className="flex min-w-0 flex-1 flex-col">
         <Header />
         <div className="flex flex-1">
-          <main className="min-w-0 flex-1 pb-20 lg:pb-8">{children}</main>
+          <main className="min-w-0 flex-1 pb-[calc(5rem+env(safe-area-inset-bottom))] lg:pb-8">
+            {children}
+          </main>
           {aside ? (
             <aside className="hidden w-80 shrink-0 border-l border-border p-4 xl:block">
               {aside}

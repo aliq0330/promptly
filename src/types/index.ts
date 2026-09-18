@@ -35,6 +35,13 @@ export type PromptOrigin =
   | { type: "remix"; sourcePromptId: string; rootPromptId: string }
   | { type: "request-response"; requestId: string; responseId: string };
 
+/**
+ * Promptly isn't image-only: writing, video, code and music generation
+ * prompts share the platform (see CLAUDE.md section 1). Only "image"
+ * prompts render a media preview — the rest use a compact text-first card.
+ */
+export type PromptContentType = "image" | "text" | "video" | "code" | "music";
+
 export interface Prompt {
   id: string;
   author: UserProfile;
@@ -42,6 +49,7 @@ export interface Prompt {
   description: string;
   promptText: string;
   tool: string | null;
+  contentType: PromptContentType;
   media: PromptMedia[];
   tags: Tag[];
   origin: PromptOrigin;

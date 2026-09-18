@@ -16,6 +16,11 @@ export const mockTags: Tag[] = [
   { slug: "surreal", label: "Sürreal" },
   { slug: "uzay", label: "Uzay" },
   { slug: "retro", label: "Retro" },
+  { slug: "yazarlik", label: "Yazarlık" },
+  { slug: "siir", label: "Şiir" },
+  { slug: "video-uretim", label: "Video Üretimi" },
+  { slug: "kodlama", label: "Kodlama" },
+  { slug: "muzik-uretim", label: "Müzik Üretimi" },
 ];
 
 export function getTag(slug: string): Tag {
