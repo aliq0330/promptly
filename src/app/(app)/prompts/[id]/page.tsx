@@ -1,18 +1,21 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { ChevronRight, Heart, MessageCircle, Repeat2 } from "lucide-react";
+import { ChevronRight, Repeat2 } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { PromptGrid } from "@/features/prompts/prompt-grid";
 import { RemixSourceLink } from "@/features/prompts/remix-source-link";
+import { CommentSection } from "@/features/prompts/comment-section";
+import { LikeButton } from "@/features/prompts/like-button";
+import { SaveButton } from "@/features/prompts/save-button";
+import { CommentCountLink } from "@/features/prompts/comment-count-link";
 import {
   getPromptById,
   getRemixChain,
   getRemixesOf,
   mockPrompts,
 } from "@/mocks/prompts";
-import { getCommentsForPrompt } from "@/mocks/comments";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
 import { formatCount, formatRelativeTime } from "@/lib/utils";
 
@@ -30,7 +33,6 @@ export default async function PromptDetailPage({
   if (!prompt) notFound();
 
   const media = prompt.media[0];
-  const comments = getCommentsForPrompt(prompt.id);
   const remixes = getRemixesOf(prompt.id);
   const remixChain = getRemixChain(prompt.id);
   const typeMeta = CONTENT_TYPE_META[prompt.contentType];
@@ -101,18 +103,18 @@ export default async function PromptDetailPage({
 
         <div className="flex items-center justify-between gap-3 pt-1">
           <div className="flex items-center gap-5 text-sm text-text-muted">
-            <span className="flex items-center gap-1.5">
-              <Heart size={18} />
-              {formatCount(prompt.likeCount)}
-            </span>
-            <span className="flex items-center gap-1.5">
-              <MessageCircle size={18} />
-              {formatCount(prompt.commentCount)}
-            </span>
+            <LikeButton id={prompt.id} likeCount={prompt.likeCount} size={18} className="text-sm" />
+            <CommentCountLink
+              promptId={prompt.id}
+              baseCount={prompt.commentCount}
+              size={18}
+              className="text-sm"
+            />
             <span className="flex items-center gap-1.5">
               <Repeat2 size={18} />
               {formatCount(prompt.remixCount)}
             </span>
+            <SaveButton promptId={prompt.id} size={18} />
           </div>
           <Link
             href={`/create?remix=${prompt.id}`}
@@ -135,49 +137,7 @@ export default async function PromptDetailPage({
         )}
       </section>
 
-      <section className="space-y-3 border-t border-border pt-5">
-        <h2 className="text-sm font-semibold text-text">Yorumlar ({comments.length})</h2>
-        {comments.length === 0 ? (
-          <p className="py-6 text-center text-sm text-text-muted">Henüz yorum yapılmadı.</p>
-        ) : (
-          <div className="space-y-4">
-            {comments
-              .filter((comment) => !comment.parentId)
-              .map((comment) => (
-                <div key={comment.id} className="space-y-3">
-                  <div className="flex gap-2.5">
-                    <Avatar src={comment.author.avatarUrl} alt={comment.author.displayName} size={32} />
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm">
-                        <span className="font-medium text-text">{comment.author.displayName}</span>{" "}
-                        <span className="text-text-muted">{comment.body}</span>
-                      </p>
-                      <span className="text-xs text-text-muted">
-                        {formatRelativeTime(comment.createdAt)}
-                      </span>
-                    </div>
-                  </div>
-                  {comments
-                    .filter((reply) => reply.parentId === comment.id)
-                    .map((reply) => (
-                      <div key={reply.id} className="ml-10 flex gap-2.5">
-                        <Avatar src={reply.author.avatarUrl} alt={reply.author.displayName} size={28} />
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm">
-                            <span className="font-medium text-text">{reply.author.displayName}</span>{" "}
-                            <span className="text-text-muted">{reply.body}</span>
-                          </p>
-                          <span className="text-xs text-text-muted">
-                            {formatRelativeTime(reply.createdAt)}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                </div>
-              ))}
-          </div>
-        )}
-      </section>
+      <CommentSection promptId={prompt.id} />
     </div>
   );
 }

@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { Heart, MessageCircle, Repeat2 } from "lucide-react";
+import { MessageCircle, Repeat2 } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { LikeButton } from "@/features/prompts/like-button";
 import { formatCount, formatRelativeTime } from "@/lib/utils";
 import type { PromptRequestResponse } from "@/types";
 
@@ -37,10 +38,7 @@ export function ResponseCard({ response }: { response: PromptRequestResponse }) 
           ))}
         </div>
         <div className="flex items-center gap-3 pt-1 text-xs text-text-muted">
-          <span className="flex items-center gap-1">
-            <Heart size={14} />
-            {formatCount(response.likeCount)}
-          </span>
+          <LikeButton id={response.id} likeCount={response.likeCount} />
           <span className="flex items-center gap-1">
             <MessageCircle size={14} />
             {formatCount(response.commentCount)}

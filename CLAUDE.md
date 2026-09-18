@@ -195,7 +195,7 @@ gerçek Supabase projesi bağlantısı yoktur.**
 11. [x] Keşfet, arama ve etiketler (mock veriyle)
 12. [x] Kullanıcı profilleri (mock veriyle)
 13. [x] Takip sistemi (localStorage ile gerçek takip et/bırak; sunucu senkronizasyonu Supabase'e bağlı)
-14. [ ] Beğeni, yorum, kaydetme, paylaşma (sayılar/yorumlar salt okunur gösteriliyor)
+14. [x] Beğeni, yorum, kaydetme, paylaşma (beğeni/kaydetme localStorage ile gerçek; yorum ekleme gerçek/yerel; sunucu senkronizasyonu Supabase'e bağlı)
 15. [x] Bildirimler (mock veriyle)
 16. [x] Özel mesajlaşma (mesaj gönderme henüz devre dışı)
 17. [ ] Kayıt, giriş, hesap ayarları (Supabase Auth)
@@ -211,7 +211,7 @@ gerçek Supabase projesi bağlantısı yoktur.**
 
 ## 9. Şu Anki Durum (bu bölüm her modül sonunda güncellenir)
 
-**Son güncelleme:** Takip sistemi tamamlandı — Bölüm 13 işaretlendi.
+**Son güncelleme:** Beğeni, yorum, kaydetme, paylaşma tamamlandı — Bölüm 14 işaretlendi.
 
 **Tamamlanan:**
 - CLAUDE.md oluşturuldu.
@@ -399,6 +399,61 @@ gerçek Supabase projesi bağlantısı yoktur.**
   - Playwright ile uçtan uca doğrulandı: takip et → buton değişiyor →
     sayfa yenilenince kalıcı → `/following`'de görünüyor; takipten çık →
     `/following`'den kayboluyor; Keşfet'teki buton kart linkiyle çakışmıyor.
+- **Beğeni, yorum, kaydetme, paylaşma (Bölüm 14):** Paylaşma zaten gerçekti
+  (Web Share/panoya kopyalama); beğeni, kaydetme ve yorum ekleme artık aynı
+  şekilde gerçek — Follow sistemiyle birebir aynı localStorage mimarisi.
+  - Yeni `features/prompts/like-save-provider.tsx`: `LikeProvider`/`useLike`
+    (anahtar `"promptly-likes"`, başlangıç seti boş — tüm mock prompt/
+    yanıtlarda `isLiked: false`) ve `SaveProvider`/`useSave` (anahtar
+    `"promptly-saves"`, başlangıç seti `["p3","p5","p7","p11","p15"]` —
+    `/saved` sayfasının eski hardcoded `SAVED_PROMPT_IDS` sabitinin yerini
+    aldı). İkisi de aynı dahili `useToggleSet` yardımcı hook'unu paylaşıyor
+    (FollowProvider'daki storage/seed deseninin tekrarını önlemek için).
+    Beğeni hem promptlarda hem istek yanıtlarında (`PromptRequestResponse`)
+    çalışıyor — id'leri çakışmadığından (`p*` / `rr*`) tek bir id alanı
+    yeterli.
+  - Yeni `features/prompts/like-button.tsx` ve `save-button.tsx`: `Heart`/
+    `Bookmark` ikonlu, gerçekten tıklanabilir toggle butonları (ShareButton
+    ile aynı desen — `event.preventDefault()`/`stopPropagation()` ile kart
+    genelindeki "stretched link" ile çakışmıyor). Beğeni sayısı, takipçi
+    sayısında kullanılan aynı optimistik `+1/-1` tekniğiyle (mock'un statik
+    `likeCount`'una göre) gösteriliyor. Yeni `comment-count-link.tsx` aynı
+    tekniği yorum sayısına da uyguluyor (aşağıya bakınız).
+  - `PromptCardFooter` artık statik `<span>` yerine bu gerçek butonları
+    kullanıyor — bu tek değişiklik feed, keşfet, etiket, kayıtlı, arama,
+    takip ettiklerim ve profil sayfalarındaki TÜM prompt kartlarına
+    yayılıyor. `ResponseCard`'daki (istek yanıtları) beğeni de aynı
+    `LikeButton`'a geçirildi; yorum sayısı orada statik kaldı çünkü yanıtlar
+    için hiç yorum veri modeli yok (bkz. bilinen sorunlar).
+  - `/saved` sayfası artık `"use client"` ve `useSave().isSaved()` ile
+    gerçek kayıt durumunu okuyor (Follow modülünde `/following`'in
+    dönüştürülmesiyle aynı desen); boşsa dürüst bir "henüz bir şey
+    kaydetmedin" mesajı gösteriyor.
+  - **Yorum ekleme gerçek hale getirildi:** Yeni
+    `features/prompts/comment-provider.tsx` (`CommentProvider`/
+    `useComments`, anahtar `"promptly-local-comments"`) — eklenen yorumlar
+    "me" mock kullanıcısı adına (`getUserById("me")`) oluşturuluyor ve
+    localStorage'a yazılıyor. Yeni `features/prompts/comment-section.tsx`
+    prompt detay sayfasındaki eski salt-okunur yorum bloğunun yerini aldı:
+    üstte gerçek bir yorum yazma formu (avatar + input + "Gönder" butonu),
+    altında mock yorumlarla yerel yorumların birleştirilip
+    tarihe göre sıralanmış hâli. "Yorumlar (N)" başlığı artık eklenen
+    yorumları da sayıyor. Yanıt (reply) ekleme arayüzü henüz yok — yalnızca
+    üst seviye yorum ekleniyor (mock veride zaten var olan `parentId`'li
+    yanıtlar salt okunur gösterilmeye devam ediyor).
+  - Prompt detay sayfasının üst istatistik satırına (`Heart`/`MessageCircle`
+    yerine gerçek `LikeButton`/`CommentCountLink`) ek olarak daha önce hiç
+    olmayan bir `SaveButton` eklendi — kart footer'ıyla tutarlılık için.
+  - Yeni provider'lar `(app)/layout.tsx`'e `FollowProvider`'ın içine
+    (`LikeProvider` → `SaveProvider` → `CommentProvider` → `AppShell`)
+    sarılarak eklendi.
+  - Playwright ile uçtan uca doğrulandı: beğenme → kalp doluyor, sayı +1
+    oluyor, sayfa yenilenince kalıcı; kaydetme → `/saved`'e ekleniyor,
+    oradan kaydı kaldırınca listeden anında kayboluyor; yorum ekleme →
+    "Yorumlar (N)" sayısı artıyor, yorum sayfa yenilenince kalıcı olarak
+    duruyor; kart üzerindeki yeni butonlar stretched-link kart navigasyonu
+    ile çakışmıyor (yazar/profil linki hâlâ doğru çalışıyor); mobil + koyu
+    temada bozulma yok.
 
 **Bilinen sorunlar / bilinçli basitleştirmeler:**
 - Tablet için ayrı bir navigasyon/genişlik düzeni henüz yok; `lg` (1024px)
@@ -434,5 +489,22 @@ gerçek Supabase projesi bağlantısı yoktur.**
   gerçekten görmez (bildirim mock verisi statik kalıyor). Gerçek çapraz
   kullanıcı senkronizasyonu `follows` tablosu + Supabase Auth gerektirir
   (Bölüm 17–21).
+- Beğeni, kaydetme ve yorumlar da aynı şekilde yalnızca bu tarayıcıda
+  yaşıyor (localStorage) — başkası bir promptu beğendiğinde/yorum
+  yaptığında yazar gerçek bir bildirim almıyor (bildirimler mock veride
+  statik kalmaya devam ediyor) ve başka bir cihazdan bakıldığında bu
+  eylemler görünmüyor. Gerçek, çapraz kullanıcı senkronizasyonu
+  `prompt_likes`/`prompt_saves`/`prompt_comments` tabloları + Supabase Auth
+  gerektirir (Bölüm 17–21).
+- Yorum ekleme yalnızca promptlar için var; istek yanıtlarının
+  (`PromptRequestResponse`) hiç yorum veri modeli yok, bu yüzden
+  `ResponseCard`'daki yorum sayısı hâlâ salt okunur/statik. Ayrıca eklenen
+  yorumlara yanıt (reply) verme arayüzü yok — yalnızca üst seviye yorum
+  eklenebiliyor; mock veride zaten var olan `parentId`'li yanıtlar salt
+  okunur gösterilmeye devam ediyor.
+- `likeCount`/`commentCount` gibi kart üzerindeki toplam sayılar hâlâ
+  mock'un statik alanları + bu oturumun kendi eylemine göre ±1 optimistik
+  düzeltme (takipçi sayısında kullanılan aynı teknik) — gerçek bir
+  "kaç kişi beğendi" agregasyonu backend'e bağlı.
 
-**Sonraki modül:** Beğeni, yorum, kaydetme, paylaşma (Bölüm 14).
+**Sonraki modül:** Kayıt, giriş, hesap ayarları — Supabase Auth (Bölüm 17).
