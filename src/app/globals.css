@@ -1,0 +1,71 @@
+@import "tailwindcss";
+
+/*
+ * Lavender Studio design tokens.
+ * Single source of truth for color, radius and font tokens — see CLAUDE.md
+ * section 4. Do not redefine these values in individual components.
+ */
+
+:root {
+  --color-background: #f8f7fc;
+  --color-surface: #ffffff;
+  --color-surface-elevated: #ffffff;
+  --color-accent-surface: #ede9fe;
+  --color-accent: #7c3aed;
+  --color-primary: #7c3aed;
+  --color-primary-dark: #5b21b6;
+  --color-primary-foreground: #ffffff;
+  --color-text: #27233a;
+  --color-text-muted: #6b6480;
+  --color-border: #e4e0f2;
+
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+}
+
+:root.dark {
+  --color-background: #14121e;
+  --color-surface: #201c2b;
+  --color-surface-elevated: #302741;
+  --color-accent-surface: #302741;
+  --color-accent: #d2c1ff;
+  --color-primary: #b9a1ff;
+  --color-primary-dark: #d2c1ff;
+  --color-primary-foreground: #14121e;
+  --color-text: #f4f0ff;
+  --color-text-muted: #a79fc2;
+  --color-border: #332c47;
+}
+
+@theme inline {
+  --color-background: var(--color-background);
+  --color-surface: var(--color-surface);
+  --color-surface-elevated: var(--color-surface-elevated);
+  --color-accent-surface: var(--color-accent-surface);
+  --color-accent: var(--color-accent);
+  --color-primary: var(--color-primary);
+  --color-primary-dark: var(--color-primary-dark);
+  --color-primary-foreground: var(--color-primary-foreground);
+  --color-text: var(--color-text);
+  --color-text-muted: var(--color-text-muted);
+  --color-border: var(--color-border);
+
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+
+  --font-sans: var(--font-inter);
+}
+
+body {
+  background: var(--color-background);
+  color: var(--color-text);
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+* {
+  border-color: var(--color-border);
+}
