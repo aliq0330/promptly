@@ -22,17 +22,25 @@ export function Header() {
         P
       </Link>
 
-      <div className="flex min-w-0 flex-1 items-center">
+      <div className="hidden min-w-0 flex-1 items-center lg:flex">
         <Link
           href="/search"
-          className="flex h-10 w-full items-center gap-2 rounded-md border border-border bg-background px-3 text-sm text-text-muted lg:max-w-md"
+          className="flex h-10 w-full max-w-md items-center gap-2 rounded-md border border-border bg-background px-3 text-sm text-text-muted"
         >
           <Search size={18} className="shrink-0" />
           <span className="truncate">Prompt, kullanıcı veya etiket ara</span>
         </Link>
       </div>
 
-      <div className="flex shrink-0 items-center gap-1">
+      <div className="flex flex-1 items-center justify-end gap-1 lg:flex-none">
+        <Link
+          href="/search"
+          aria-label="Ara"
+          title="Ara"
+          className={iconButtonClassName(false, "shrink-0 lg:hidden")}
+        >
+          <Search size={20} />
+        </Link>
         <Link
           href="/notifications"
           aria-label="Bildirimler"

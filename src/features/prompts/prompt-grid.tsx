@@ -9,7 +9,7 @@ export function PromptGrid({ prompts }: { prompts: Prompt[] }) {
   }
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+    <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2 xl:grid-cols-3">
       {prompts.map((prompt) => (
         <PromptCard key={prompt.id} prompt={prompt} />
       ))}

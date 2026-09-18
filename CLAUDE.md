@@ -254,6 +254,25 @@ feed, keşfet, istekler, bildirimler, mesajlar ve profil sayfaları dolduruldu.
 - `npm run lint`, `npx tsc --noEmit` ve `npm run build` çalıştırıldı, hepsi
   hatasız geçti (71 statik sayfa üretildi). Dev sunucusunda masaüstü/mobil
   görünümler ve açık/koyu tema Playwright ile görsel olarak doğrulandı.
+- Ana akış kartı (`PromptCard`) ve istek kartı (`RequestCard`) kullanılabilirlik
+  turu: görsel oranı artık medyanın gerçek en/boy oranından türetilip
+  0.75–1.4 arasına sıkıştırılıyor (`clampedAspectRatio`, tüm kartlar aynı
+  4:3 kalıbına zorlanmıyor); placeholder sanat düz iki renkli gradyan yerine
+  offline üretilen yumuşak "bokeh" blob kompozisyonuna geçti (daha çok
+  soyut üretilmiş sanat, daha az "boş kutu" hissi); grid artık `items-start`
+  kullanıyor ki kısa kartlar komşusuna göre gereksiz yere uzamasın. Kart
+  içinde tıklanabilir alanlar (yazar linki, yorum/remix linki, paylaş
+  butonu) ile kartın tamamının linki "stretched link" deseniyle
+  (`position: absolute inset-0` + göreceli olarak üstte duran interaktif
+  öğeler) çakışmadan bir arada çalışıyor; Playwright ile doğrulandı.
+  Beğeni ve kaydet ikonları bilinçli olarak tıklanamaz/`cursor-default`
+  bırakıldı (gerçek kalıcılık olmadan aktifmiş gibi göstermemek için, bkz.
+  CLAUDE.md §2 kuralı); paylaş butonu ise Web Share API / panoya kopyalama
+  ile gerçekten çalışıyor. Remix kartlarında orijinal içeriğe giden görünür
+  bir bağlantı satırı eklendi.
+- Mobil header: arama artık dar ekranlarda metni kırpılan bir kutu değil,
+  bildirim/mesaj ikonlarıyla aynı boyutta bir arama ikonu (`/search`'e
+  yönlendiriyor); masaüstünde tam metinli arama kutusu korunuyor.
 
 **Bilinen sorunlar / bilinçli basitleştirmeler:**
 - Tablet için ayrı bir navigasyon/genişlik düzeni henüz yok; `lg` (1024px)
