@@ -1,10 +1,10 @@
 import { Suspense } from "react";
-import { CreatePromptForm } from "@/features/prompts/create-prompt-form";
+import { CreateGate } from "@/features/prompts/create-gate";
 
 export default function CreatePromptPage() {
   return (
     <Suspense fallback={null}>
-      <CreatePromptForm />
+      <CreateGate />
     </Suspense>
   );
 }

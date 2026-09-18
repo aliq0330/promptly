@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
+import { cn, promptHref } from "@/lib/utils";
 import { CONTENT_TYPE_META } from "./content-type-meta";
 import { PromptCardFooter } from "./prompt-card-footer";
 import { RemixSourceLink } from "./remix-source-link";
@@ -53,7 +53,7 @@ export function TextPromptCard({ prompt }: { prompt: Prompt }) {
 
       <PromptCardFooter prompt={prompt} />
 
-      <Link href={`/prompts/${prompt.id}`} className="absolute inset-0 z-0" aria-label={prompt.title} />
+      <Link href={promptHref(prompt)} className="absolute inset-0 z-0" aria-label={prompt.title} />
     </div>
   );
 }

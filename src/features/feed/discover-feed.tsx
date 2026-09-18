@@ -3,7 +3,9 @@
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { FeedGrid } from "./feed-grid";
-import type { FeedItem } from "./types";
+import { feedItemCreatedAt, type FeedItem } from "./types";
+import { useLocalPrompts } from "@/features/prompts/local-prompts-provider";
+import { useRequests } from "@/features/requests/requests-provider";
 
 const FILTERS = [
   { key: "all", label: "Tümü" },
@@ -19,12 +21,24 @@ type FilterKey = (typeof FILTERS)[number]["key"];
 
 export function DiscoverFeed({ items }: { items: FeedItem[] }) {
   const [active, setActive] = useState<FilterKey>("all");
+  const { localPrompts } = useLocalPrompts();
+  const { allRequests } = useRequests();
+
+  const allItems = useMemo<FeedItem[]>(() => {
+    const localRequestItems: FeedItem[] = allRequests
+      .filter((request) => request.id.startsWith("local-req-"))
+      .map((request) => ({ kind: "request", data: request }));
+    const localPromptItems: FeedItem[] = localPrompts.map((prompt) => ({ kind: "prompt", data: prompt }));
+    return [...items, ...localRequestItems, ...localPromptItems].sort(
+      (a, b) => feedItemCreatedAt(b) - feedItemCreatedAt(a),
+    );
+  }, [items, allRequests, localPrompts]);
 
   const filtered = useMemo(() => {
-    if (active === "all") return items;
-    if (active === "request") return items.filter((item) => item.kind === "request");
-    return items.filter((item) => item.kind === "prompt" && item.data.contentType === active);
-  }, [items, active]);
+    if (active === "all") return allItems;
+    if (active === "request") return allItems.filter((item) => item.kind === "request");
+    return allItems.filter((item) => item.kind === "prompt" && item.data.contentType === active);
+  }, [allItems, active]);
 
   return (
     <div className="space-y-4">

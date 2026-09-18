@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { MessageCircle } from "lucide-react";
-import { cn, formatCount } from "@/lib/utils";
+import { cn, formatCount, promptHref } from "@/lib/utils";
 import { useComments } from "./comment-provider";
 
 /**
@@ -22,11 +22,11 @@ export function CommentCountLink({
   className?: string;
 }) {
   const { getLocalComments } = useComments();
-  const count = baseCount + getLocalComments(promptId).length;
+  const count = baseCount + getLocalComments({ promptId }).length;
 
   return (
     <Link
-      href={`/prompts/${promptId}`}
+      href={promptHref({ id: promptId })}
       className={cn("flex items-center gap-1 text-xs hover:text-text", className)}
       title="Yorumlar"
     >

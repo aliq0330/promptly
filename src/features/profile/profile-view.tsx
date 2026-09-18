@@ -11,6 +11,7 @@ import { ProfileAbout } from "./profile-about";
 import { useProfileOverrides } from "./profile-overrides-provider";
 import { useHiddenPrompts } from "@/features/prompts/hidden-prompts-provider";
 import { useLike, useSave } from "@/features/prompts/like-save-provider";
+import { useLocalPrompts } from "@/features/prompts/local-prompts-provider";
 import { mockPrompts } from "@/mocks/prompts";
 import type { Prompt, PromptContentType, UserProfile } from "@/types";
 
@@ -32,7 +33,7 @@ function sortPrompts(prompts: Prompt[], sort: ProfileSortKey): Prompt[] {
 export function ProfileView({
   user: baseUser,
   isOwnProfile,
-  authorPrompts,
+  authorPrompts: mockAuthorPrompts,
   conversationId,
 }: {
   user: UserProfile;
@@ -44,6 +45,7 @@ export function ProfileView({
   const { isHidden, hidePrompt, unhidePrompt } = useHiddenPrompts();
   const { isLiked } = useLike();
   const { isSaved } = useSave();
+  const { localPrompts, getByAuthor } = useLocalPrompts();
 
   const user = isOwnProfile ? applyOverrides(baseUser) : baseUser;
 
@@ -53,12 +55,29 @@ export function ProfileView({
   const [search, setSearch] = useState("");
   const [showHidden, setShowHidden] = useState(false);
 
+  // Locally-created prompts (request answers, see local-prompts-provider.tsx)
+  // only ever belong to "me", so only the owner's own profile ever needs to
+  // merge them in — sorted newest-first, matching the server-side sort.
+  const authorPrompts = useMemo(() => {
+    if (!isOwnProfile) return mockAuthorPrompts;
+    return [...mockAuthorPrompts, ...getByAuthor(user.id)].sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    );
+  }, [isOwnProfile, mockAuthorPrompts, getByAuthor, user.id]);
+
   const remixPrompts = useMemo(
     () => authorPrompts.filter((prompt) => prompt.origin.type !== "original"),
     [authorPrompts],
   );
-  const savedPrompts = useMemo(() => mockPrompts.filter((prompt) => isSaved(prompt.id)), [isSaved]);
-  const likedPrompts = useMemo(() => mockPrompts.filter((prompt) => isLiked(prompt.id)), [isLiked]);
+  const allKnownPrompts = useMemo(() => [...mockPrompts, ...localPrompts], [localPrompts]);
+  const savedPrompts = useMemo(
+    () => allKnownPrompts.filter((prompt) => isSaved(prompt.id)),
+    [allKnownPrompts, isSaved],
+  );
+  const likedPrompts = useMemo(
+    () => allKnownPrompts.filter((prompt) => isLiked(prompt.id)),
+    [allKnownPrompts, isLiked],
+  );
 
   const tabs = useMemo(() => {
     const base: { key: ProfileTabKey; label: string; count?: number }[] = [

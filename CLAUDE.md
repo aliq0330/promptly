@@ -188,10 +188,10 @@ gerçek Supabase projesi bağlantısı yoktur.**
 4. [x] Responsive layout ve navigasyon (temel shell)
 5. [x] Ana sayfa ve prompt feed (mock veriyle)
 6. [x] Prompt detay sayfası (mock veriyle)
-7. [x] Prompt oluşturma (form + canlı önizleme; kalıcı paylaşım Supabase'e bağlı)
+7. [x] Prompt oluşturma (form + canlı önizleme; kalıcı paylaşım Supabase'e bağlı; İSTEK YANITLAMA modu artık gerçekten yayınlıyor — bkz. Bölüm 9)
 8. [x] Remix sistemi (köken zinciri + remix akışı; kalıcı yayın Supabase'e bağlı)
-9. [x] Prompt istekleri listesi (mock veriyle)
-10. [x] Prompt isteği detay ve yaratıcı yanıtlar (mock veriyle)
+9. [x] Prompt istekleri listesi (gerçek istek oluşturma + localStorage kalıcılığı — bkz. Bölüm 9)
+10. [x] Prompt isteği detay ve yaratıcı yanıtlar (gerçek yanıtlama, yorum, seçim ve yönetim — bkz. Bölüm 9)
 11. [x] Keşfet, arama ve etiketler (mock veriyle)
 12. [x] Kullanıcı profilleri (yaratıcı portföy: sekmeler, filtre/sıralama, gerçek profil düzenleme ve içerik yönetimi — bkz. Bölüm 9)
 13. [x] Takip sistemi (localStorage ile gerçek takip et/bırak; sunucu senkronizasyonu Supabase'e bağlı)
@@ -211,9 +211,9 @@ gerçek Supabase projesi bağlantısı yoktur.**
 
 ## 9. Şu Anki Durum (bu bölüm her modül sonunda güncellenir)
 
-**Son güncelleme:** Profil sayfası kapsamlı olarak yeniden tasarlandı ve
-geliştirildi (Bölüm 12'nin derinleştirilmesi — sıralı geliştirme akışını
-kesmiyor, sıradaki modül hâlâ Bölüm 17).
+**Son güncelleme:** Prompt oluşturma ve prompt isteği oluşturma sistemi
+uçtan uca uygulandı (Bölüm 9/10'un derinleştirilmesi — sıralı geliştirme
+akışını kesmiyor, sıradaki modül hâlâ Bölüm 17).
 
 **Tamamlanan:**
 - CLAUDE.md oluşturuldu.
@@ -564,6 +564,123 @@ kesmiyor, sıradaki modül hâlâ Bölüm 17).
     ve masaüstünde masonry dengeli; açık/koyu temada tutarlı; ana sayfa,
     keşfet, `/saved`, prompt detay sayfası ve beğeni butonu (Bölüm 14)
     bozulmadı.
+- **Prompt oluşturma + prompt isteği sistemi uçtan uca (Bölüm 9/10'un
+  derinleştirilmesi):** Kapsam kararı — istekte "gerçek veri akışı, sahte
+  kalıcı kayıt yok" isteniyordu ama projede hâlâ Supabase/Auth/RLS yok
+  (Bölüm 17-21 başlamadı). Bu yüzden Follow/Like/Save/Comment'te kurulan
+  aynı dürüstlük ilkesi uygulandı: **istek oluşturma ve isteğe yanıt verme
+  artık gerçekten, kalıcı olarak yayınlıyor** — ama yalnızca bu tarayıcıda
+  (localStorage), gerçek bir Supabase kaydı gibi değil. Düz "Prompt
+  Oluştur" akışı (istek/remix/kopya olmayan) CLAUDE.md §2 gereği kasıtlı
+  olarak **değiştirilmedi** — hâlâ önizleme-yalnızca, çünkü zaten çalışan,
+  belgelenmiş bir davranışı görev kapsamı dışında değiştirmemek gerekiyordu.
+  - **Oluştur seçim ekranı:** Yeni `features/prompts/create-choice.tsx` +
+    `create-gate.tsx`. `/create` artık boş ziyaret edildiğinde "Prompt
+    oluştur" / "İstek oluştur" seçim ekranı gösteriyor; `?remix=`,
+    `?remixResponse=`, `?duplicate=`, `?answerRequest=` veya `?mode=prompt`
+    taşıyan mevcut derin bağlantılar seçim ekranını atlayıp doğrudan forma
+    gidiyor — hiçbir mevcut link bozulmadı.
+  - **Yeni `features/requests/requests-provider.tsx`** (`RequestsProvider`/
+    `useRequests`, anahtar `"promptly-local-requests"`, Follow/Like ile
+    birebir aynı mimari): `addRequest`, `deleteRequest`, `updateStatus`,
+    `selectResponse`. Yalnızca "me" adına, yalnızca yerel olarak oluşturulan
+    istekler üzerinde çalışıyor — "me" hiçbir mock isteğin sahibi olmadığından
+    (hepsi diğer mock kullanıcılara ait), durum değiştirme/silme/yanıt seçme
+    yapısal olarak yalnızca kendi oluşturduğun isteklerde mümkün; bu istemci
+    tarafı bir "izin kontrolü" değil, doğrudan verinin nerede yaşadığının
+    sonucu.
+  - **Yeni `features/requests/create-request-form.tsx`** (`/requests/new`):
+    başlık (10-100 karakter), açıklama (20-500 karakter, sayaç ve doğrulama
+    mesajlarıyla), içerik türü (yeni `PromptRequest.contentType` alanı —
+    `Prompt.contentType` ile aynı union), yaratıcı yön (opsiyonel), referans
+    görsel yükleme (opsiyonel, gerçek — `resizeImageToDataUrlFit` ile
+    localStorage'a sığacak şekilde küçültülüyor), tercih edilen araç,
+    etiketler. Canlı önizleme gerçek `RequestCard` ile. Yayınlanınca gerçek
+    `PromptRequest` kaydı oluşuyor ve `/requests/local?id=…`'e yönlendiriyor
+    (bkz. altındaki "yeni route" notu).
+  - **Prompt isteğine gerçek yanıt verme:** `CreatePromptForm`'a yeni
+    `?answerRequest=<requestId>` modu eklendi — üstte "Bu isteğe yanıt
+    veriyorsun" bandı (istek sahibi + başlık + "İsteği görüntüle" +
+    "yanıt modundan çık"), buton "Yanıtı Yayınla" oluyor, ve **bu, formun
+    submit'inin gerçekten kalıcı yayın yaptığı TEK mod**: yeni
+    `features/prompts/local-prompts-provider.tsx` (`LocalPromptsProvider`/
+    `useLocalPrompts`, anahtar `"promptly-local-prompts"`) üzerinden gerçek
+    bir `Prompt` oluşturuyor, `origin: {type:"request-response", requestId,
+    responseId}` ile (responseId artık ayrı bir varlık değil, yanıtın
+    kendi id'si — eskiden `mockRequestResponses`'taki ayrı bir satırdı, artık
+    yanıt gerçek bir Prompt olduğundan ayrı bir varlığa gerek kalmadı).
+    Geçersiz/silinmiş bir isteğe yanıt linki açılırsa form yerine "İstek
+    bulunamadı" hata ekranı gösteriliyor — yanlış isteğe yanlışlıkla
+    bağlanan bir yanıt oluşmuyor. Çift gönderimi engellemek için buton
+    gönderim sırasında devre dışı bırakılıyor.
+  - **Statik export + runtime id çelişkisi (önemli mimari not):** Bu
+    proje `output:"export"` ile tamamen statik — `/prompts/[id]` ve
+    `/requests/[id]`'nin tüm yolları `generateStaticParams()` ile BUILD
+    ZAMANINDA sabitleniyor. Tarayıcıda sonradan oluşturulan bir id
+    (`local-…`) o yollarda gerçekte var olmayan bir sayfaya denk gelir ve
+    GitHub Pages'te 404 verirdi. Çözüm: yeni, parametre'siz statik rotalar
+    — `/prompts/local` ve `/requests/local` — id'yi path segment'i yerine
+    `?id=` query string'inden okuyor (query string prerender gerektirmez).
+    Yeni `lib/utils.ts` → `promptHref()` / `requestHref()` yardımcıları bu
+    ayrımı tek yerden yönetiyor (`local-` önekiyle başlayan id'ler → yeni
+    route'lar); PromptCard, PromptCardFooter, RemixSourceLink, ShareButton,
+    ProfileContentMenu, RequestCard dahil linke sahip HER bileşen bu
+    yardımcıları kullanacak şekilde güncellendi. Kod tekrarını önlemek için
+    hem `/prompts/[id]` hem `/prompts/local`, hem `/requests/[id]` hem
+    `/requests/local` aynı paylaşılan client bileşenini render ediyor
+    (`PromptDetailView`, `RequestDetailView`) — mock/yerel ayrımı yalnızca
+    hangi route'un hangi veri kaynağından prompt/isteği bulduğunda.
+  - **İstek detayında gerçek yönetim:** kendi (yerel) isteğinde "İsteği
+    kapat" / "Açık olarak işaretle" ve "İsteği sil" (iki tıklamalı onay)
+    gerçekten çalışıyor. Başkasının (veya mock) isteğinde bunlar yerine
+    "Yanıtla" butonu gösteriliyor (istek kapalıysa gizleniyor, nedeni
+    yazıyor). "Düzenle" **eklenmedi** — kapsam/süre nedeniyle bilinçli
+    olarak dışarıda bırakıldı (aşağıya bakınız).
+  - **Yanıt seçimi:** kendi isteğindeki her gerçek (yerel) yanıtın yanında
+    "Yanıtı seç" / "Seçilen yanıt" kontrolü var; seçim `PromptRequest.
+    selectedResponsePromptId` alanına (yeni) kalıcı yazılıyor, sayfa
+    yenilenince korunuyor, seçilince istek durumu otomatik "Yanıtlandı"
+    oluyor, ve seçilen yanıtın kendi detay sayfasında "Bu yanıt seçildi"
+    rozeti görünüyor. Yalnızca istek sahibi seçebiliyor — başkası (mock
+    yanıtlar için zaten mümkün değil, çünkü mock isteklerde bu kontrol hiç
+    gösterilmiyor).
+  - **Yorumlar — mevcut sistem birebir yeniden kullanıldı, paralel bir
+    sistem KURULMADI:** `PromptComment` tipine `requestId?` eklendi
+    (`promptId?` da opsiyonel yapıldı — ikisinden yalnızca biri set
+    edilir). `comment-provider.tsx`/`comment-section.tsx` artık
+    `{promptId}` veya `{requestId}` alan genel bir `CommentTarget` ile
+    çalışıyor; aynı bileşen, aynı localStorage anahtarı, aynı UI hem prompt
+    hem istek detayında. İstek kapalıysa `CommentSection`'a
+    `disabledReason` geçiriliyor — composer gizleniyor, mevcut yorumlar
+    salt okunur kalıyor. `mocks/comments.ts`'e `mockRequestComments` +
+    `getCommentsForRequest` eklendi (r1 için 2 örnek yorum).
+  - **Ana sayfa/keşfet/profil entegrasyonu:** `FeedTabs` ve `DiscoverFeed`
+    artık `useLocalPrompts()`/`useRequests()` ile yerel istekleri ve
+    yanıtları sunucudan gelen mock listeye client-side ekleyip tarihe göre
+    yeniden sıralıyor. `ProfileView` kendi profilinde yerel promptları
+    (yanıtlar dahil) `authorPrompts`'a katıyor; `/saved` de yerel promptları
+    dahil ediyor. `RequestCard`'daki yanıt sayısı artık yeni
+    `RequestResponseCount` (client) ile gerçek yerel yanıt sayısını da
+    katıyor (beğeni sayısındaki optimistik +1/-1 tekniğiyle aynı fikir).
+  - **Yan düzeltme (bug fix):** `resizeImageToDataUrlFit` eklendi
+    (`lib/utils.ts`) ve `CreatePromptForm`'un görsel yükleme alanı buna
+    geçirildi — eskiden `URL.createObjectURL` + component unmount'ta
+    `URL.revokeObjectURL` kullanıyordu, bu önizleme-yalnızca modda zararsızdı
+    ama artık gerçekten kalıcı hale gelen `answerRequest` modunda görseli
+    formdan ayrılır ayrılmaz kırık bir blob URL'e dönüştürüp her yerde
+    (feed, profil, detay) bozuk görsel gösterirdi. Artık gerçek, kalıcı bir
+    data URL kullanılıyor.
+  - Playwright ile 29 adımlık uçtan uca senaryo doğrulandı: seçim ekranı →
+    istek oluştur → gerçekten kaydediliyor → `/requests`, ana sayfa,
+    keşfette görünüyor → isteğe yorum ekle (kalıcı) → "Yanıtla" ile gerçek
+    yanıt yayınla → yanıtın kendi tam donanımlı (beğeni/yorum/remix) detay
+    sayfası var → istek detayında yanıt listeleniyor → istek sahibi yanıtı
+    seçiyor (kalıcı, durum "Yanıtlandı" oluyor) → yanıt kendi sayfasında
+    "seçildi" rozetini gösteriyor → yanıt profilde görünüyor → istek
+    silinince listeden kayboluyor. Ayrıca 21 adımlık regresyon: mock istek/
+    prompt detayları, beğeni butonu, profil, ana sayfa/keşfet/kaydedilenler/
+    arama, mevcut remix/kopya akışları, mobilde yatay taşma yok, açık/koyu
+    tema — hiçbiri bozulmadı.
 
 **Bilinen sorunlar / bilinçli basitleştirmeler:**
 - Tablet için ayrı bir navigasyon/genişlik düzeni henüz yok; `lg` (1024px)
@@ -638,5 +755,36 @@ kesmiyor, sıradaki modül hâlâ Bölüm 17).
   görsellerde tarayıcı belleği/performansı üzerinde küçük bir yavaşlama
   olabilir — gerçek bir yükleme, boyut kontrolü Supabase Storage'a
   bağlanınca (Bölüm 20) sunucu tarafında ele alınacak.
+- **Yerel istekler/yanıtlar da Follow/Like/Save ile aynı sınırlamayı
+  taşıyor:** yalnızca bu tarayıcıda yaşıyor, yalnızca "me" hesabıyla
+  oluşturulabiliyor, başka bir cihaz/tarayıcıdan görünmüyor. Bu yüzden
+  "başka bir kullanıcı isteğe yanıt versin" senaryosu gerçek çoklu kullanıcı
+  testine (Supabase Auth, Bölüm 17-21) kadar yalnızca aynı tarayıcıda "me"
+  hem istek açıp hem kendi isteğine yanıt vererek" test edilebiliyor —
+  bu dürüstçe böyle, sahte bir ikinci kullanıcı simüle edilmedi.
+- **İstek düzenleme ("Düzenle") eklenmedi:** kapsam kararı olarak yalnızca
+  "kapat/aç" ve "sil" gerçek yönetim aksiyonları olarak uygulandı; bir
+  isteğin başlığını/açıklamasını/etiketlerini sonradan değiştirme akışı
+  bu modülde yok. Şu an için istek sahibi yanlış bir istek yayınladıysa
+  silip yeniden oluşturabilir.
+- **Bildirimler bu modülde de mock/statik kaldı:** yeni bir istek
+  oluşturulduğunda, bir isteğe yanıt/yorum geldiğinde veya bir yanıt
+  seçildiğinde ilgili kullanıcıya (zaten yalnızca "me" olabileceğinden
+  kendine) gerçek bir bildirim üretilmedi — bu, Follow/Like/Comment
+  modüllerinde de aynı şekilde zaten kabul edilmiş, belgelenmiş bir
+  sınırlama (bkz. yukarıdaki maddeler); yeni bir bildirim sistemi kurmak
+  yerine mevcut sınırlama korundu, gerçek bildirimler Supabase + Auth
+  gerektiriyor (Bölüm 17-21).
+- **İstek/yanıt yetkilendirmesi RLS ile değil, veri konumuyla sağlanıyor:**
+  gerçek bir backend/RLS olmadığından "yalnızca sahibi düzenleyebilir" gibi
+  kurallar sunucu tarafında değil, İSTEMCİ tarafında (yalnızca yerel
+  diziye erişilebiliyor olmasıyla) sağlanıyor — bu, tarayıcı geliştirici
+  araçlarıyla atlatılabilecek bir güvenlik sınırı DEĞİLDİR, yalnızca bir
+  prototip davranışıdır. Gerçek yetkilendirme (RLS politikaları, sunucu
+  tarafı kullanıcı doğrulama) Bölüm 19'a bağlı.
+- **Referans görsel ve içerik türü** (`PromptRequest.referenceImage`,
+  `PromptRequest.contentType`) yeni, yerel/TASLAK alanlar — eski 6 mock
+  istekte `contentType` set edilmedi (`RequestCard` bu durumda türü rozetini
+  basitçe göstermiyor, hata vermiyor).
 
 **Sonraki modül:** Kayıt, giriş, hesap ayarları — Supabase Auth (Bölüm 17).

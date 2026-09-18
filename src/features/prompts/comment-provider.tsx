@@ -6,9 +6,18 @@ import type { PromptComment } from "@/types";
 
 const STORAGE_KEY = "promptly-local-comments";
 
+/** A comment target is either a prompt or a request — never both. */
+export type CommentTarget = { promptId: string } | { requestId: string };
+
+function matchesTarget(comment: PromptComment, target: CommentTarget): boolean {
+  return "promptId" in target
+    ? comment.promptId === target.promptId
+    : comment.requestId === target.requestId;
+}
+
 interface CommentContextValue {
-  getLocalComments: (promptId: string) => PromptComment[];
-  addComment: (promptId: string, body: string, parentId?: string | null) => void;
+  getLocalComments: (target: CommentTarget) => PromptComment[];
+  addComment: (target: CommentTarget, body: string, parentId?: string | null) => void;
 }
 
 const CommentContext = createContext<CommentContextValue | null>(null);
@@ -18,6 +27,11 @@ const CommentContext = createContext<CommentContextValue | null>(null);
  * follows/likes/saves. Authored as the "me" mock user — honest about being
  * this-browser-only, never claims to notify the author or sync to other
  * users since there's no backend yet (CLAUDE.md sections 2, 17-21).
+ *
+ * Shared between prompt detail pages and request detail pages (CLAUDE.md
+ * prompt-request module) — the same comment UI, storage, and rules apply
+ * to both, distinguished only by which of `promptId`/`requestId` a target
+ * carries.
  */
 export function CommentProvider({ children }: { children: React.ReactNode }) {
   const [localComments, setLocalComments] = useState<PromptComment[]>([]);
@@ -34,32 +48,35 @@ export function CommentProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const addComment = useCallback((promptId: string, body: string, parentId: string | null = null) => {
-    const trimmed = body.trim();
-    if (!trimmed) return;
+  const addComment = useCallback(
+    (target: CommentTarget, body: string, parentId: string | null = null) => {
+      const trimmed = body.trim();
+      if (!trimmed) return;
 
-    const comment: PromptComment = {
-      id: `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      promptId,
-      author: getUserById("me")!,
-      body: trimmed,
-      parentId,
-      createdAt: new Date().toISOString(),
-    };
+      const comment: PromptComment = {
+        id: `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        ...target,
+        author: getUserById("me")!,
+        body: trimmed,
+        parentId,
+        createdAt: new Date().toISOString(),
+      };
 
-    setLocalComments((prev) => {
-      const next = [...prev, comment];
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-      } catch {
-        // localStorage unavailable — comment still shows for this session.
-      }
-      return next;
-    });
-  }, []);
+      setLocalComments((prev) => {
+        const next = [...prev, comment];
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+        } catch {
+          // localStorage unavailable — comment still shows for this session.
+        }
+        return next;
+      });
+    },
+    [],
+  );
 
   const getLocalComments = useCallback(
-    (promptId: string) => localComments.filter((comment) => comment.promptId === promptId),
+    (target: CommentTarget) => localComments.filter((comment) => matchesTarget(comment, target)),
     [localComments],
   );
 

@@ -2,11 +2,13 @@
 
 import { PromptGrid } from "@/features/prompts/prompt-grid";
 import { useSave } from "@/features/prompts/like-save-provider";
+import { useLocalPrompts } from "@/features/prompts/local-prompts-provider";
 import { mockPrompts } from "@/mocks/prompts";
 
 export default function SavedPage() {
   const { isSaved } = useSave();
-  const saved = mockPrompts.filter((prompt) => isSaved(prompt.id));
+  const { localPrompts } = useLocalPrompts();
+  const saved = [...mockPrompts, ...localPrompts].filter((prompt) => isSaved(prompt.id));
 
   return (
     <div className="px-4 py-6 lg:px-6">

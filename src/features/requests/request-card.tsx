@@ -2,7 +2,9 @@ import Link from "next/link";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { formatRelativeTime } from "@/lib/utils";
+import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
+import { RequestResponseCount } from "./request-response-count";
+import { formatRelativeTime, requestHref } from "@/lib/utils";
 import { placeholderArt } from "@/lib/placeholder-image";
 import type { PromptRequest } from "@/types";
 
@@ -39,14 +41,26 @@ export function RequestCard({ request }: { request: PromptRequest }) {
       </div>
 
       <div className="flex flex-col gap-3 p-4">
+        {request.contentType && (
+          <div className="flex items-center gap-1.5 text-primary">
+            {(() => {
+              const Icon = CONTENT_TYPE_META[request.contentType].icon;
+              return <Icon size={14} />;
+            })()}
+            <span className="text-xs font-medium">{CONTENT_TYPE_META[request.contentType].label} İsteği</span>
+          </div>
+        )}
+
         <h3 className="text-sm font-semibold text-text">{request.title}</h3>
 
         <p className="line-clamp-2 text-sm text-text-muted">{request.description}</p>
 
-        <div className="rounded-md bg-accent-surface/60 px-3 py-2 text-xs text-text-muted">
-          <span className="font-medium text-text">Yaratıcı yön: </span>
-          <span className="line-clamp-1">{request.creativeDirection}</span>
-        </div>
+        {request.creativeDirection && (
+          <div className="rounded-md bg-accent-surface/60 px-3 py-2 text-xs text-text-muted">
+            <span className="font-medium text-text">Yaratıcı yön: </span>
+            <span className="line-clamp-1">{request.creativeDirection}</span>
+          </div>
+        )}
 
         <div className="flex flex-wrap gap-1.5">
           {request.tags.map((tag) => (
@@ -66,7 +80,7 @@ export function RequestCard({ request }: { request: PromptRequest }) {
             <span className="truncate">{request.author.displayName}</span>
             <span className="shrink-0">· {formatRelativeTime(request.createdAt)}</span>
           </Link>
-          <span className="shrink-0 text-xs text-text-muted">{request.responseCount} yanıt</span>
+          <RequestResponseCount requestId={request.id} baseCount={request.responseCount} />
         </div>
 
         <div className="pointer-events-none relative z-10 flex items-center justify-center gap-1.5 rounded-md border border-primary/30 bg-primary/5 py-2 text-sm font-medium text-primary">
@@ -76,7 +90,7 @@ export function RequestCard({ request }: { request: PromptRequest }) {
       </div>
 
       <Link
-        href={`/requests/${request.id}`}
+        href={requestHref(request)}
         className="absolute inset-0 z-0"
         aria-label={`${request.title} isteğini görüntüle ve yanıtla`}
       />

@@ -3,30 +3,43 @@
 import { useState } from "react";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { getCommentsForPrompt } from "@/mocks/comments";
+import { getCommentsForPrompt, getCommentsForRequest } from "@/mocks/comments";
 import { getUserById } from "@/mocks/users";
 import { formatRelativeTime } from "@/lib/utils";
-import { useComments } from "./comment-provider";
+import { useComments, type CommentTarget } from "./comment-provider";
 
 /**
  * Real comment thread: mock comments merged with genuinely-posted local
  * ones (persisted via CommentProvider, see CLAUDE.md section 14). Posting
  * is honestly this-browser-only — the author never gets a real
  * notification, since there's no backend yet.
+ *
+ * Shared, unmodified, between prompt detail pages (`target={{promptId}}`)
+ * and request detail pages (`target={{requestId}}`) — same UI, same
+ * storage, same rules, per the prompt-request module's explicit ask to
+ * reuse the existing comment system rather than building a parallel one.
  */
-export function CommentSection({ promptId }: { promptId: string }) {
+export function CommentSection({
+  target,
+  disabledReason,
+}: {
+  target: CommentTarget;
+  /** When set, hides the composer and shows this text instead (e.g. a closed request). */
+  disabledReason?: string;
+}) {
   const { getLocalComments, addComment } = useComments();
   const [draft, setDraft] = useState("");
   const me = getUserById("me")!;
 
-  const comments = [...getCommentsForPrompt(promptId), ...getLocalComments(promptId)].sort(
+  const mockThread = "promptId" in target ? getCommentsForPrompt(target.promptId) : getCommentsForRequest(target.requestId);
+  const comments = [...mockThread, ...getLocalComments(target)].sort(
     (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
   );
 
   function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     if (!draft.trim()) return;
-    addComment(promptId, draft);
+    addComment(target, draft);
     setDraft("");
   }
 
@@ -34,20 +47,26 @@ export function CommentSection({ promptId }: { promptId: string }) {
     <section className="space-y-3 border-t border-border pt-5">
       <h2 className="text-sm font-semibold text-text">Yorumlar ({comments.length})</h2>
 
-      <form onSubmit={handleSubmit} className="flex items-start gap-2.5">
-        <Avatar src={me.avatarUrl} alt={me.displayName} size={32} />
-        <div className="flex min-w-0 flex-1 gap-2">
-          <input
-            value={draft}
-            onChange={(event) => setDraft(event.target.value)}
-            placeholder="Bir yorum yaz..."
-            className="h-9 min-w-0 flex-1 rounded-md border border-border bg-surface px-3 text-sm text-text placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-primary"
-          />
-          <Button type="submit" size="sm" disabled={!draft.trim()}>
-            Gönder
-          </Button>
-        </div>
-      </form>
+      {disabledReason ? (
+        <p className="rounded-md bg-accent-surface/60 px-3 py-2 text-sm text-text-muted">
+          {disabledReason}
+        </p>
+      ) : (
+        <form onSubmit={handleSubmit} className="flex items-start gap-2.5">
+          <Avatar src={me.avatarUrl} alt={me.displayName} size={32} />
+          <div className="flex min-w-0 flex-1 gap-2">
+            <input
+              value={draft}
+              onChange={(event) => setDraft(event.target.value)}
+              placeholder="Bir yorum yaz..."
+              className="h-9 min-w-0 flex-1 rounded-md border border-border bg-surface px-3 text-sm text-text placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-primary"
+            />
+            <Button type="submit" size="sm" disabled={!draft.trim()}>
+              Gönder
+            </Button>
+          </div>
+        </form>
+      )}
 
       {comments.length === 0 ? (
         <p className="py-6 text-center text-sm text-text-muted">Henüz yorum yapılmadı.</p>

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Repeat2 } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
-import { formatCount } from "@/lib/utils";
+import { formatCount, promptHref } from "@/lib/utils";
 import { ShareButton } from "./share-button";
 import { LikeButton } from "./like-button";
 import { SaveButton } from "./save-button";
@@ -40,7 +40,7 @@ export function PromptCardFooter({ prompt }: { prompt: Prompt }) {
           {formatCount(prompt.remixCount)}
         </Link>
         <SaveButton promptId={prompt.id} />
-        <ShareButton url={`/prompts/${prompt.id}`} title={prompt.title} />
+        <ShareButton url={promptHref(prompt)} title={prompt.title} />
       </div>
     </div>
   );

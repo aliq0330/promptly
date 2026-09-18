@@ -62,6 +62,34 @@ export const mockComments: PromptComment[] = [
   },
 ];
 
+/**
+ * Comments on prompt requests share the same PromptComment shape (see
+ * types/index.ts) — kept as a separate mock array from mockComments only
+ * for readability, not because the underlying model differs.
+ */
+export const mockRequestComments: PromptComment[] = [
+  {
+    id: "rcm1",
+    requestId: "r1",
+    author: user("u8"),
+    body: "Ben de tam bunu arıyordum, gelen yanıtları merakla bekliyorum.",
+    parentId: null,
+    createdAt: "2026-09-14T13:00:00.000Z",
+  },
+  {
+    id: "rcm2",
+    requestId: "r1",
+    author: user("u3"),
+    body: "Gün batımı yerine mehtaplı bir versiyonu da güzel olurdu bence.",
+    parentId: null,
+    createdAt: "2026-09-14T14:10:00.000Z",
+  },
+];
+
 export function getCommentsForPrompt(promptId: string): PromptComment[] {
   return mockComments.filter((comment) => comment.promptId === promptId);
+}
+
+export function getCommentsForRequest(requestId: string): PromptComment[] {
+  return mockRequestComments.filter((comment) => comment.requestId === requestId);
 }

@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { FeedGrid } from "./feed-grid";
-import { feedItemAuthorId, feedItemPopularity, type FeedItem } from "./types";
+import { feedItemAuthorId, feedItemCreatedAt, feedItemPopularity, type FeedItem } from "./types";
 import { useFollow } from "@/features/profile/follow-provider";
+import { useLocalPrompts } from "@/features/prompts/local-prompts-provider";
+import { useRequests } from "@/features/requests/requests-provider";
 
 type TabKey = "following" | "popular" | "for-you";
 
@@ -17,13 +19,28 @@ const TABS: { key: TabKey; label: string }[] = [
 export function FeedTabs({ items }: { items: FeedItem[] }) {
   const [active, setActive] = useState<TabKey>("for-you");
   const { isFollowing } = useFollow();
+  const { localPrompts } = useLocalPrompts();
+  const { allRequests } = useRequests();
+
+  // Real requests/answers created in this browser (prompt-request module)
+  // belong in the same mixed feed as the server-rendered mock items —
+  // merged client-side since they only exist in localStorage.
+  const allItems = useMemo<FeedItem[]>(() => {
+    const localRequestItems: FeedItem[] = allRequests
+      .filter((request) => request.id.startsWith("local-req-"))
+      .map((request) => ({ kind: "request", data: request }));
+    const localPromptItems: FeedItem[] = localPrompts.map((prompt) => ({ kind: "prompt", data: prompt }));
+    return [...items, ...localRequestItems, ...localPromptItems].sort(
+      (a, b) => feedItemCreatedAt(b) - feedItemCreatedAt(a),
+    );
+  }, [items, allRequests, localPrompts]);
 
   const visible =
     active === "popular"
-      ? [...items].sort((a, b) => feedItemPopularity(b) - feedItemPopularity(a))
+      ? [...allItems].sort((a, b) => feedItemPopularity(b) - feedItemPopularity(a))
       : active === "following"
-        ? items.filter((item) => isFollowing(feedItemAuthorId(item)))
-        : items;
+        ? allItems.filter((item) => isFollowing(feedItemAuthorId(item)))
+        : allItems;
 
   return (
     <div className="space-y-4 pb-6">

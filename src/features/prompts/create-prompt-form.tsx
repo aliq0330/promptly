@@ -1,18 +1,21 @@
 "use client";
 
-import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
+import { useState, type ChangeEvent, type FormEvent } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { Copy, Repeat2, Sparkles } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Copy, Repeat2, Sparkles, X } from "lucide-react";
+import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { PromptCard } from "@/features/prompts/prompt-card";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
+import { useLocalPrompts } from "@/features/prompts/local-prompts-provider";
+import { useRequests } from "@/features/requests/requests-provider";
 import { getUserById } from "@/mocks/users";
 import { mockTags } from "@/mocks/tags";
 import { getPromptById } from "@/mocks/prompts";
 import { mockRequestResponses } from "@/mocks/request-responses";
 import { placeholderArt } from "@/lib/placeholder-image";
-import { cn } from "@/lib/utils";
+import { cn, promptHref, requestHref, resizeImageToDataUrlFit } from "@/lib/utils";
 import type { Prompt, PromptContentType, Tag } from "@/types";
 
 const CONTENT_TYPES: PromptContentType[] = ["image", "text", "video", "code", "music"];
@@ -42,22 +45,35 @@ const TOOL_SUGGESTIONS: Record<PromptContentType, string[]> = {
  * "original"` instead of a remix origin — a duplicate isn't derived from
  * someone else's work the way a remix is, it's just a starting point for a
  * fresh prompt, most often your own.
+ *
+ * `?answerRequest=<requestId>` (prompt-request module) is different from
+ * the three modes above: it's the ONLY mode where submitting actually,
+ * genuinely publishes — a real `Prompt` via `useLocalPrompts().addPrompt`,
+ * with a `request-response` origin tying it to the request. Plain
+ * creation/remix/duplicate stay preview-only exactly as before (CLAUDE.md
+ * section 2: don't change already-working, already-documented behavior
+ * beyond what was asked).
  */
 export function CreatePromptForm() {
   const me = getUserById("me")!;
+  const router = useRouter();
   const searchParams = useSearchParams();
+  const { addPrompt } = useLocalPrompts();
+  const { getRequestById } = useRequests();
 
   const remixSourceId = searchParams.get("remix");
   const remixResponseId = searchParams.get("remixResponse");
   const duplicateId = searchParams.get("duplicate");
+  const answerRequestId = searchParams.get("answerRequest");
   const sourcePrompt = remixSourceId ? getPromptById(remixSourceId) : undefined;
   const sourceResponse = remixResponseId
     ? mockRequestResponses.find((response) => response.id === remixResponseId)
     : undefined;
   const duplicateSource = duplicateId ? getPromptById(duplicateId) : undefined;
+  const answeredRequest = answerRequestId ? getRequestById(answerRequestId) : undefined;
 
   const [contentType, setContentType] = useState<PromptContentType>(
-    () => sourcePrompt?.contentType ?? duplicateSource?.contentType ?? "image",
+    () => sourcePrompt?.contentType ?? duplicateSource?.contentType ?? answeredRequest?.contentType ?? "image",
   );
   const [title, setTitle] = useState(() => {
     if (sourcePrompt) return `${sourcePrompt.title} (remix)`;
@@ -71,46 +87,41 @@ export function CreatePromptForm() {
   const [promptText, setPromptText] = useState(
     () => sourcePrompt?.promptText ?? sourceResponse?.promptText ?? duplicateSource?.promptText ?? "",
   );
-  const [tool, setTool] = useState(() => sourcePrompt?.tool ?? duplicateSource?.tool ?? "");
+  const [tool, setTool] = useState(
+    () => sourcePrompt?.tool ?? duplicateSource?.tool ?? answeredRequest?.preferredTool ?? "",
+  );
   const [selectedTags, setSelectedTags] = useState<Tag[]>(
-    () => sourcePrompt?.tags ?? sourceResponse?.tags ?? duplicateSource?.tags ?? [],
+    () => sourcePrompt?.tags ?? sourceResponse?.tags ?? duplicateSource?.tags ?? answeredRequest?.tags ?? [],
   );
   const [uploadedImage, setUploadedImage] = useState<{ url: string; width: number; height: number } | null>(
     null,
   );
+  const [imageError, setImageError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Revoke the object URL when replaced or when the form unmounts.
-  useEffect(() => {
-    return () => {
-      if (uploadedImage) URL.revokeObjectURL(uploadedImage.url);
-    };
-  }, [uploadedImage]);
+  const isAnswerMode = Boolean(answerRequestId);
+  const requestNotFound = isAnswerMode && !answeredRequest;
 
-  function handleImageChange(event: ChangeEvent<HTMLInputElement>) {
+  async function handleImageChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file) return;
-
-    const url = URL.createObjectURL(file);
-    const img = new Image();
-    img.onload = () => {
-      setUploadedImage((prev) => {
-        if (prev) URL.revokeObjectURL(prev.url);
-        return { url, width: img.naturalWidth, height: img.naturalHeight };
-      });
-    };
-    img.src = url;
+    try {
+      // A real data URL, not a blob object URL — a blob URL stops working
+      // the moment this form unmounts, which would break the image on
+      // every real, persisted answer prompt (see local-prompts-provider.tsx).
+      const resized = await resizeImageToDataUrlFit(file, 1100);
+      setUploadedImage(resized);
+      setImageError(null);
+    } catch {
+      setImageError("Görsel yüklenemedi, lütfen başka bir dosya dene.");
+    }
   }
 
   function toggleTag(tag: Tag) {
     setSelectedTags((prev) =>
       prev.some((t) => t.slug === tag.slug) ? prev.filter((t) => t.slug !== tag.slug) : [...prev, tag],
     );
-  }
-
-  function handleSubmit(event: FormEvent) {
-    event.preventDefault();
-    setSubmitted(true);
   }
 
   const origin: Prompt["origin"] = sourcePrompt
@@ -122,7 +133,45 @@ export function CreatePromptForm() {
       }
     : sourceResponse
       ? { type: "request-response", requestId: sourceResponse.requestId, responseId: sourceResponse.id }
-      : { type: "original" };
+      : answeredRequest
+        ? { type: "request-response", requestId: answeredRequest.id, responseId: "pending" }
+        : { type: "original" };
+
+  const media =
+    contentType === "image"
+      ? [
+          {
+            id: "preview-media",
+            url: uploadedImage?.url ?? placeholderArt(title || "yeni-prompt", 900, 1100),
+            width: uploadedImage?.width ?? 900,
+            height: uploadedImage?.height ?? 1100,
+            alt: title || "Önizleme görseli",
+          },
+        ]
+      : [];
+
+  function handleSubmit(event: FormEvent) {
+    event.preventDefault();
+    if (isSubmitting) return; // guards against double-submit from a double click
+
+    if (isAnswerMode && answeredRequest) {
+      setIsSubmitting(true);
+      const published = addPrompt({
+        title,
+        description,
+        promptText,
+        tool: tool || null,
+        contentType,
+        media,
+        tags: selectedTags,
+        origin,
+      });
+      router.push(promptHref(published));
+      return;
+    }
+
+    setSubmitted(true);
+  }
 
   const previewPrompt: Prompt = {
     id: "preview",
@@ -132,18 +181,7 @@ export function CreatePromptForm() {
     promptText: promptText || "Prompt metni buraya gelecek.",
     tool: tool || null,
     contentType,
-    media:
-      contentType === "image"
-        ? [
-            {
-              id: "preview-media",
-              url: uploadedImage?.url ?? placeholderArt(title || "yeni-prompt", 900, 1100),
-              width: uploadedImage?.width ?? 900,
-              height: uploadedImage?.height ?? 1100,
-              alt: title || "Önizleme görseli",
-            },
-          ]
-        : [],
+    media,
     tags: selectedTags,
     origin,
     likeCount: 0,
@@ -155,22 +193,75 @@ export function CreatePromptForm() {
     createdAt: new Date().toISOString(),
   };
 
+  if (requestNotFound) {
+    return (
+      <div className="mx-auto max-w-lg px-4 py-16 text-center">
+        <h1 className="mb-2 text-lg font-semibold text-text">İstek bulunamadı</h1>
+        <p className="mb-4 text-sm text-text-muted">
+          Yanıtlamak istediğin istek silinmiş veya artık erişilebilir değil, bu yüzden yanıtın
+          yanlış bir isteğe bağlanmasın diye burada durduk.
+        </p>
+        <Link
+          href="/requests"
+          className="inline-flex h-9 items-center rounded-md border border-border px-4 text-sm font-medium text-text hover:bg-accent-surface"
+        >
+          Prompt İsteklerine Dön
+        </Link>
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto max-w-5xl px-4 py-6 lg:px-6">
       <h1 className="mb-1 text-lg font-semibold text-text">
-        {sourcePrompt || sourceResponse
-          ? "Remix Oluştur"
-          : duplicateSource
-            ? "Kopyasını Oluştur"
-            : "Prompt Oluştur"}
+        {isAnswerMode
+          ? "İsteğe Yanıt Ver"
+          : sourcePrompt || sourceResponse
+            ? "Remix Oluştur"
+            : duplicateSource
+              ? "Kopyasını Oluştur"
+              : "Prompt Oluştur"}
       </h1>
       <p className="mb-6 text-sm text-text-muted">
-        Promptunu yaz, sağda anında önizlemesini gör. Gerçek paylaşım, Supabase entegrasyonu
-        kurulduğunda aktif olacak (bkz. CLAUDE.md Bölüm 18–21).
+        {isAnswerMode
+          ? "Yanıtını yaz, sağda anında önizlemesini gör. Yayınladığında gerçekten yayımlanır ve istek sahibine görünür olur."
+          : "Promptunu yaz, sağda anında önizlemesini gör. Gerçek paylaşım, Supabase entegrasyonu kurulduğunda aktif olacak (bkz. CLAUDE.md Bölüm 18–21)."}
       </p>
 
       <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
         <form onSubmit={handleSubmit} className="space-y-5">
+          {isAnswerMode && answeredRequest && (
+            <div className="space-y-2 rounded-md border border-primary/30 bg-primary/5 p-3 text-sm">
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-medium text-primary">Bu isteğe yanıt veriyorsun</span>
+                <Link
+                  href="/create?mode=prompt"
+                  title="Yanıt modundan çık"
+                  className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-text-muted hover:text-text"
+                >
+                  <X size={14} />
+                </Link>
+              </div>
+              <div className="flex items-center gap-2">
+                <Avatar
+                  src={answeredRequest.author.avatarUrl}
+                  alt={answeredRequest.author.displayName}
+                  size={24}
+                />
+                <span className="text-text-muted">
+                  <span className="font-medium text-text">{answeredRequest.author.displayName}</span>{" "}
+                  isteği: &ldquo;{answeredRequest.title}&rdquo;
+                </span>
+              </div>
+              <Link
+                href={requestHref(answeredRequest)}
+                className="inline-block font-medium text-primary underline"
+              >
+                İsteği görüntüle
+              </Link>
+            </div>
+          )}
+
           {(sourcePrompt || sourceResponse) && (
             <div className="flex items-start gap-2 rounded-md border border-primary/30 bg-primary/5 p-3 text-sm text-primary">
               <Repeat2 size={16} className="mt-0.5 shrink-0" />
@@ -184,7 +275,7 @@ export function CreatePromptForm() {
                   </>
                 ) : (
                   <>
-                    <Link href={`/requests/${sourceResponse!.requestId}`} className="font-medium underline">
+                    <Link href={requestHref({ id: sourceResponse!.requestId })} className="font-medium underline">
                       bir istek yanıtı
                     </Link>{" "}
                     temel alınarak dolduruldu
@@ -246,6 +337,7 @@ export function CreatePromptForm() {
               <p className="mt-1 text-xs text-text-muted">
                 Yüklemezsen sağdaki önizlemede otomatik oluşturulan bir görsel kullanılır.
               </p>
+              {imageError && <p className="mt-1 text-xs text-red-500">{imageError}</p>}
             </div>
           )}
 
@@ -343,11 +435,11 @@ export function CreatePromptForm() {
             </div>
           </div>
 
-          <Button type="submit" size="lg" className="w-full sm:w-auto">
-            Paylaş
+          <Button type="submit" size="lg" className="w-full sm:w-auto" disabled={isSubmitting}>
+            {isAnswerMode ? (isSubmitting ? "Yayınlanıyor..." : "Yanıtı Yayınla") : "Paylaş"}
           </Button>
 
-          {submitted && (
+          {submitted && !isAnswerMode && (
             <div className="flex items-start gap-2 rounded-md border border-primary/30 bg-primary/5 p-3 text-sm text-primary">
               <Sparkles size={16} className="mt-0.5 shrink-0" />
               <p>

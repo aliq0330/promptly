@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import type { Prompt, PromptRequest } from "@/types";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -80,4 +81,65 @@ export function resizeImageToDataUrl(file: File, size = 160): Promise<string> {
     };
     img.src = objectUrl;
   });
+}
+
+/**
+ * Same idea as `resizeImageToDataUrl`, but fits within a max dimension
+ * instead of center-cropping to a square — used for the request-creation
+ * reference image (features/requests), where preserving the original
+ * aspect ratio matters more than a fixed frame.
+ */
+export function resizeImageToDataUrlFit(file: File, maxDimension = 480): Promise<{
+  url: string;
+  width: number;
+  height: number;
+}> {
+  return new Promise((resolve, reject) => {
+    const objectUrl = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(1, maxDimension / Math.max(img.naturalWidth, img.naturalHeight));
+      const width = Math.round(img.naturalWidth * scale);
+      const height = Math.round(img.naturalHeight * scale);
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        URL.revokeObjectURL(objectUrl);
+        reject(new Error("2D canvas context unavailable"));
+        return;
+      }
+      ctx.drawImage(img, 0, 0, width, height);
+      URL.revokeObjectURL(objectUrl);
+      resolve({ url: canvas.toDataURL("image/jpeg", 0.85), width, height });
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error("Görsel yüklenemedi"));
+    };
+    img.src = objectUrl;
+  });
+}
+
+/**
+ * Prompts created locally in this browser (see local-prompts-provider.tsx)
+ * have no static-export page under `/prompts/[id]` — that route's paths are
+ * all fixed at build time via `generateStaticParams`, and a GitHub Pages
+ * static export can't serve a path that wasn't pre-rendered. Local prompts
+ * instead get a real detail view at the static `/prompts/local` route,
+ * identified by a query param instead of a path segment (query strings
+ * don't need pre-rendering). Every place that links to a prompt must use
+ * this helper instead of hardcoding `/prompts/${id}` so local answers work
+ * end to end (feed, profile, share, etc.).
+ */
+export function promptHref(prompt: Pick<Prompt, "id">): string {
+  return prompt.id.startsWith("local-") ? `/prompts/local?id=${prompt.id}` : `/prompts/${prompt.id}`;
+}
+
+/** Same idea as `promptHref`, for requests created locally via `/requests/new`. */
+export function requestHref(request: Pick<PromptRequest, "id">): string {
+  return request.id.startsWith("local-req-")
+    ? `/requests/local?id=${request.id}`
+    : `/requests/${request.id}`;
 }

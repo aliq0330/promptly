@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Copy, Eye, EyeOff, Link2, MoreVertical } from "lucide-react";
-import { absoluteUrl, cn } from "@/lib/utils";
+import { absoluteUrl, cn, promptHref } from "@/lib/utils";
 
 /**
  * Own-prompt management menu (CLAUDE.md section 14) — only ever shown on
@@ -56,7 +56,7 @@ export function ProfileContentMenu({
     event.preventDefault();
     event.stopPropagation();
     try {
-      await navigator.clipboard.writeText(absoluteUrl(`/prompts/${promptId}`));
+      await navigator.clipboard.writeText(absoluteUrl(promptHref({ id: promptId })));
       setCopied(true);
       setTimeout(() => setCopied(false), 1200);
     } catch {
@@ -97,14 +97,16 @@ export function ProfileContentMenu({
             <Link2 size={14} />
             {copied ? "Kopyalandı" : "Bağlantıyı kopyala"}
           </button>
-          <Link
-            href={`/create?duplicate=${promptId}`}
-            role="menuitem"
-            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-text hover:bg-accent-surface"
-          >
-            <Copy size={14} />
-            Kopyasını oluştur
-          </Link>
+          {!promptId.startsWith("local-") && (
+            <Link
+              href={`/create?duplicate=${promptId}`}
+              role="menuitem"
+              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-text hover:bg-accent-surface"
+            >
+              <Copy size={14} />
+              Kopyasını oluştur
+            </Link>
+          )}
           <button
             type="button"
             role="menuitem"

@@ -3,6 +3,7 @@ import Image from "next/image";
 import { Repeat2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { clampedAspectRatio } from "@/lib/placeholder-image";
+import { promptHref } from "@/lib/utils";
 import { PromptCardFooter } from "./prompt-card-footer";
 import { RemixSourceLink } from "./remix-source-link";
 import type { Prompt } from "@/types";
@@ -50,7 +51,7 @@ export function ImagePromptCard({ prompt }: { prompt: Prompt }) {
 
       <PromptCardFooter prompt={prompt} />
 
-      <Link href={`/prompts/${prompt.id}`} className="absolute inset-0 z-0" aria-label={prompt.title} />
+      <Link href={promptHref(prompt)} className="absolute inset-0 z-0" aria-label={prompt.title} />
     </div>
   );
 }

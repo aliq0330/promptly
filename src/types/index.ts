@@ -69,9 +69,16 @@ export interface Prompt {
   createdAt: string;
 }
 
+/**
+ * A comment belongs to exactly one of a prompt or a request — never both
+ * (see CreatePromptForm/RequestDetail's comment sections). Both fields are
+ * optional rather than a discriminated union so existing mock rows (which
+ * only ever set `promptId`) don't need touching.
+ */
 export interface PromptComment {
   id: string;
-  promptId: string;
+  promptId?: string;
+  requestId?: string;
   author: UserProfile;
   body: string;
   parentId: string | null;
@@ -87,10 +94,25 @@ export interface PromptRequest {
   description: string;
   creativeDirection: string;
   preferredTool: string | null;
+  /**
+   * Requested content type (image/text/video/code/music) — same union as
+   * `Prompt.contentType`. Older mock requests predate this field, so it's
+   * optional; new requests created via `/requests/new` always set it.
+   */
+  contentType?: PromptContentType;
+  /** Optional reference image, added by the requester for creative direction. */
+  referenceImage?: PromptMedia;
   tags: Tag[];
   status: PromptRequestStatus;
   responseCount: number;
   createdAt: string;
+  /**
+   * The id of the answer (a real `Prompt` with a `request-response` origin)
+   * the requester picked as the best fit. Only ever set by the request's
+   * own author (see requests-provider.tsx) — CLAUDE.md §28: local-only,
+   * not a real Supabase column yet.
+   */
+  selectedResponsePromptId?: string;
 }
 
 export interface PromptRequestResponse {
