@@ -1,20 +1,38 @@
 "use client";
 
-import { Avatar } from "@/components/ui/avatar";
-import { FollowButton } from "./follow-button";
+import { useState } from "react";
+import { ProfileAvatar } from "./profile-avatar";
+import { ProfileStats } from "./profile-stats";
+import { ProfileBadges } from "./profile-badges";
+import { OwnProfileActions, OtherProfileActions } from "./profile-actions";
 import { useFollow } from "./follow-provider";
-import { formatCount } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 import type { UserProfile } from "@/types";
+
+const BIO_CLAMP_LENGTH = 140;
 
 export function ProfileHeader({
   user,
-  promptCount,
-  isOwnProfile = false,
+  isOwnProfile,
+  publishedPromptCount,
+  remixCount,
+  conversationId,
+  onSelectPrompts,
+  onSelectRemixes,
 }: {
   user: UserProfile;
-  promptCount: number;
-  isOwnProfile?: boolean;
+  isOwnProfile: boolean;
+  publishedPromptCount: number;
+  remixCount: number;
+  conversationId?: string;
+  onSelectPrompts: () => void;
+  onSelectRemixes: () => void;
 }) {
+  const [bioExpanded, setBioExpanded] = useState(false);
+  const bio = user.bio ?? "";
+  const bioIsLong = bio.length > BIO_CLAMP_LENGTH;
+  const visibleBio = bioIsLong && !bioExpanded ? `${bio.slice(0, BIO_CLAMP_LENGTH).trimEnd()}…` : bio;
+
   const { isFollowing, wasInitiallyFollowing } = useFollow();
   // Optimistic count relative to the mock's static followerCount — a real
   // per-follower list doesn't exist, so this just reflects this session's
@@ -24,24 +42,55 @@ export function ProfileHeader({
 
   return (
     <div className="flex flex-col items-center gap-3 px-4 pt-8 text-center lg:px-6">
-      <Avatar src={user.avatarUrl} alt={user.displayName} size={80} />
-      <div>
-        <h1 className="text-lg font-semibold text-text">{user.displayName}</h1>
-        <p className="text-sm text-text-muted">@{user.username}</p>
+      <ProfileAvatar src={user.avatarUrl} alt={user.displayName} isOwnProfile={isOwnProfile} />
+
+      <div className="min-w-0 max-w-full">
+        <h1 className="truncate text-lg font-semibold text-text">{user.displayName}</h1>
+        <p className="truncate text-sm text-text-muted">@{user.username}</p>
       </div>
-      {user.bio && <p className="max-w-sm text-sm text-text-muted">{user.bio}</p>}
-      <div className="flex items-center gap-4 text-sm text-text-muted">
-        <span>
-          <strong className="text-text">{formatCount(promptCount)}</strong> prompt
-        </span>
-        <span>
-          <strong className="text-text">{formatCount(followerCount)}</strong> takipçi
-        </span>
-        <span>
-          <strong className="text-text">{formatCount(user.followingCount)}</strong> takip
-        </span>
-      </div>
-      {!isOwnProfile && <FollowButton userId={user.id} />}
+
+      {bio && (
+        <p className="max-w-sm text-sm text-text-muted">
+          {visibleBio}{" "}
+          {bioIsLong && (
+            <button
+              type="button"
+              onClick={() => setBioExpanded((prev) => !prev)}
+              className="font-medium text-primary hover:underline"
+            >
+              {bioExpanded ? "Daha az göster" : "Devamını gör"}
+            </button>
+          )}
+        </p>
+      )}
+
+      {user.interests && user.interests.length > 0 && (
+        <div className="flex max-w-sm flex-wrap justify-center gap-1.5">
+          {user.interests.slice(0, 4).map((interest) => (
+            <Badge key={interest} variant="outline">
+              {interest}
+            </Badge>
+          ))}
+        </div>
+      )}
+
+      <ProfileBadges publishedPromptCount={publishedPromptCount} remixCount={remixCount} />
+
+      <ProfileStats
+        promptCount={publishedPromptCount}
+        remixCount={remixCount}
+        followerCount={followerCount}
+        followingCount={user.followingCount}
+        isOwnProfile={isOwnProfile}
+        onSelectPrompts={onSelectPrompts}
+        onSelectRemixes={onSelectRemixes}
+      />
+
+      {isOwnProfile ? (
+        <OwnProfileActions username={user.username} />
+      ) : (
+        <OtherProfileActions userId={user.id} username={user.username} conversationId={conversationId} />
+      )}
     </div>
   );
 }

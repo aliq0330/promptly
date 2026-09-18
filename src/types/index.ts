@@ -15,6 +15,13 @@ export interface UserProfile {
   followerCount: number;
   followingCount: number;
   createdAt: string;
+  /**
+   * Yaratıcı ilgi alanları / kategoriler (bkz. profile/interest-options.ts).
+   * Yalnızca profil sahibi kendi profilinde düzenleyebilir (bkz.
+   * features/profile/profile-overrides-provider.tsx) — CLAUDE.md section
+   * 28: gerçek bir Supabase alanı değil, henüz yerel/mock bir alan.
+   */
+  interests?: string[];
 }
 
 export interface Tag {

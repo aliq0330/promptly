@@ -3,7 +3,7 @@
 import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Repeat2, Sparkles } from "lucide-react";
+import { Copy, Repeat2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PromptCard } from "@/features/prompts/prompt-card";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
@@ -36,6 +36,12 @@ const TOOL_SUGGESTIONS: Record<PromptContentType, string[]> = {
  * via `?remix=<promptId>` or `?remixResponse=<responseId>` prefills the
  * form from that source and tracks it as the origin, preserving the
  * remix chain (root vs. immediate source) the same way the mock data does.
+ *
+ * `?duplicate=<promptId>` (CLAUDE.md section 14, profile content menu)
+ * prefills from an existing prompt the same way, but keeps `origin:
+ * "original"` instead of a remix origin — a duplicate isn't derived from
+ * someone else's work the way a remix is, it's just a starting point for a
+ * fresh prompt, most often your own.
  */
 export function CreatePromptForm() {
   const me = getUserById("me")!;
@@ -43,28 +49,31 @@ export function CreatePromptForm() {
 
   const remixSourceId = searchParams.get("remix");
   const remixResponseId = searchParams.get("remixResponse");
+  const duplicateId = searchParams.get("duplicate");
   const sourcePrompt = remixSourceId ? getPromptById(remixSourceId) : undefined;
   const sourceResponse = remixResponseId
     ? mockRequestResponses.find((response) => response.id === remixResponseId)
     : undefined;
+  const duplicateSource = duplicateId ? getPromptById(duplicateId) : undefined;
 
   const [contentType, setContentType] = useState<PromptContentType>(
-    () => sourcePrompt?.contentType ?? "image",
+    () => sourcePrompt?.contentType ?? duplicateSource?.contentType ?? "image",
   );
   const [title, setTitle] = useState(() => {
     if (sourcePrompt) return `${sourcePrompt.title} (remix)`;
     if (sourceResponse?.title) return `${sourceResponse.title} (remix)`;
+    if (duplicateSource) return `${duplicateSource.title} (kopya)`;
     return "";
   });
   const [description, setDescription] = useState(
-    () => sourcePrompt?.description ?? sourceResponse?.description ?? "",
+    () => sourcePrompt?.description ?? sourceResponse?.description ?? duplicateSource?.description ?? "",
   );
   const [promptText, setPromptText] = useState(
-    () => sourcePrompt?.promptText ?? sourceResponse?.promptText ?? "",
+    () => sourcePrompt?.promptText ?? sourceResponse?.promptText ?? duplicateSource?.promptText ?? "",
   );
-  const [tool, setTool] = useState(() => sourcePrompt?.tool ?? "");
+  const [tool, setTool] = useState(() => sourcePrompt?.tool ?? duplicateSource?.tool ?? "");
   const [selectedTags, setSelectedTags] = useState<Tag[]>(
-    () => sourcePrompt?.tags ?? sourceResponse?.tags ?? [],
+    () => sourcePrompt?.tags ?? sourceResponse?.tags ?? duplicateSource?.tags ?? [],
   );
   const [uploadedImage, setUploadedImage] = useState<{ url: string; width: number; height: number } | null>(
     null,
@@ -149,7 +158,11 @@ export function CreatePromptForm() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-6 lg:px-6">
       <h1 className="mb-1 text-lg font-semibold text-text">
-        {sourcePrompt || sourceResponse ? "Remix Oluştur" : "Prompt Oluştur"}
+        {sourcePrompt || sourceResponse
+          ? "Remix Oluştur"
+          : duplicateSource
+            ? "Kopyasını Oluştur"
+            : "Prompt Oluştur"}
       </h1>
       <p className="mb-6 text-sm text-text-muted">
         Promptunu yaz, sağda anında önizlemesini gör. Gerçek paylaşım, Supabase entegrasyonu
@@ -178,6 +191,19 @@ export function CreatePromptForm() {
                   </>
                 )}
                 {" "}— dilediğin gibi düzenleyebilirsin, köken bağlantısı önizlemede korunuyor.
+              </p>
+            </div>
+          )}
+
+          {duplicateSource && (
+            <div className="flex items-start gap-2 rounded-md border border-primary/30 bg-primary/5 p-3 text-sm text-primary">
+              <Copy size={16} className="mt-0.5 shrink-0" />
+              <p>
+                <Link href={`/prompts/${duplicateSource.id}`} className="font-medium underline">
+                  &ldquo;{duplicateSource.title}&rdquo;
+                </Link>{" "}
+                promptunun bir kopyası olarak dolduruldu — bu bir remix değil, kendi yeni promptun
+                olarak dilediğin gibi düzenleyebilirsin.
               </p>
             </div>
           )}

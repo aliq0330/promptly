@@ -18,6 +18,7 @@ export const mockUsers: UserProfile[] = [
     followerCount: 4821,
     followingCount: 132,
     createdAt: "2024-02-14T10:00:00.000Z",
+    interests: ["Dijital Sanat", "Grafik Tasarım"],
   },
   {
     id: "u2",
@@ -30,6 +31,7 @@ export const mockUsers: UserProfile[] = [
     followerCount: 2790,
     followingCount: 84,
     createdAt: "2024-03-02T09:30:00.000Z",
+    interests: ["3D Tasarım", "Dijital Sanat"],
   },
   {
     id: "u3",
@@ -42,6 +44,7 @@ export const mockUsers: UserProfile[] = [
     followerCount: 9143,
     followingCount: 211,
     createdAt: "2023-11-20T14:15:00.000Z",
+    interests: ["Dijital Sanat", "Hikaye ve Yaratıcı Yazarlık"],
   },
   {
     id: "u4",
@@ -54,6 +57,7 @@ export const mockUsers: UserProfile[] = [
     followerCount: 1567,
     followingCount: 58,
     createdAt: "2024-05-11T08:00:00.000Z",
+    interests: ["3D Tasarım", "Fotoğrafçılık"],
   },
   {
     id: "u5",
@@ -66,6 +70,7 @@ export const mockUsers: UserProfile[] = [
     followerCount: 6320,
     followingCount: 97,
     createdAt: "2024-01-08T12:45:00.000Z",
+    interests: ["Dijital Sanat", "Oyun Geliştirme"],
   },
   {
     id: "u6",
@@ -78,6 +83,7 @@ export const mockUsers: UserProfile[] = [
     followerCount: 3402,
     followingCount: 145,
     createdAt: "2024-04-19T16:20:00.000Z",
+    interests: ["Fotoğrafçılık", "Dijital Sanat"],
   },
   {
     id: "u7",
@@ -90,6 +96,7 @@ export const mockUsers: UserProfile[] = [
     followerCount: 5218,
     followingCount: 76,
     createdAt: "2023-12-30T11:10:00.000Z",
+    interests: ["Dijital Sanat", "Video Üretimi"],
   },
   {
     id: "u8",
@@ -102,6 +109,7 @@ export const mockUsers: UserProfile[] = [
     followerCount: 2103,
     followingCount: 63,
     createdAt: "2024-06-02T13:00:00.000Z",
+    interests: ["Dijital Sanat", "Müzik ve Ses"],
   },
   {
     id: "me",
@@ -114,6 +122,7 @@ export const mockUsers: UserProfile[] = [
     followerCount: 18,
     followingCount: 4,
     createdAt: "2026-08-20T09:00:00.000Z",
+    interests: [],
   },
 ];
 

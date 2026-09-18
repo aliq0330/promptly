@@ -193,7 +193,7 @@ gerçek Supabase projesi bağlantısı yoktur.**
 9. [x] Prompt istekleri listesi (mock veriyle)
 10. [x] Prompt isteği detay ve yaratıcı yanıtlar (mock veriyle)
 11. [x] Keşfet, arama ve etiketler (mock veriyle)
-12. [x] Kullanıcı profilleri (mock veriyle)
+12. [x] Kullanıcı profilleri (yaratıcı portföy: sekmeler, filtre/sıralama, gerçek profil düzenleme ve içerik yönetimi — bkz. Bölüm 9)
 13. [x] Takip sistemi (localStorage ile gerçek takip et/bırak; sunucu senkronizasyonu Supabase'e bağlı)
 14. [x] Beğeni, yorum, kaydetme, paylaşma (beğeni/kaydetme localStorage ile gerçek; yorum ekleme gerçek/yerel; sunucu senkronizasyonu Supabase'e bağlı)
 15. [x] Bildirimler (mock veriyle)
@@ -211,7 +211,9 @@ gerçek Supabase projesi bağlantısı yoktur.**
 
 ## 9. Şu Anki Durum (bu bölüm her modül sonunda güncellenir)
 
-**Son güncelleme:** Beğeni, yorum, kaydetme, paylaşma tamamlandı — Bölüm 14 işaretlendi.
+**Son güncelleme:** Profil sayfası kapsamlı olarak yeniden tasarlandı ve
+geliştirildi (Bölüm 12'nin derinleştirilmesi — sıralı geliştirme akışını
+kesmiyor, sıradaki modül hâlâ Bölüm 17).
 
 **Tamamlanan:**
 - CLAUDE.md oluşturuldu.
@@ -454,6 +456,114 @@ gerçek Supabase projesi bağlantısı yoktur.**
     duruyor; kart üzerindeki yeni butonlar stretched-link kart navigasyonu
     ile çakışmıyor (yazar/profil linki hâlâ doğru çalışıyor); mobil + koyu
     temada bozulma yok.
+- **Profil sayfası kapsamlı yeniden tasarım (Bölüm 12'nin derinleştirilmesi):**
+  Eski profil sayfası yalnızca avatar+isim+bio+3 sayaç+takip butonu ve tek bir
+  prompt grid'iydi (sekme, filtre, sıralama, düzenleme, kaydedilenler/
+  beğeniler, boş/yükleniyor durumu yoktu). Artık gerçek bir yaratıcı portföy:
+  - **Veri modeli:** `UserProfile.interests?: string[]` eklendi (yaratıcı
+    ilgi alanı/kategori — `features/profile/interest-options.ts`'teki sabit
+    9 kategoriden). Mock kullanıcılara bio'larına uygun gerçekçi kategoriler
+    atandı; "me" boş başlıyor (dürüst — henüz seçim yapılmadı). Bu, gerçek
+    bir Supabase alanı değil, TASLAK/yerel bir alan (CLAUDE.md §28).
+  - **Yeni gerçek, localStorage'a kalıcı provider'lar** (Follow/Like/Save ile
+    birebir aynı mimari — bkz. §13, §14):
+    - `features/profile/profile-overrides-provider.tsx`
+      (`ProfileOverridesProvider`/`useProfileOverrides`, anahtar
+      `"promptly-profile-overrides"`) — yalnızca "me" hesabı için
+      displayName/bio/website/interests/avatar override'ları. Kullanıcı adı
+      **kasıtlı olarak düzenlenemez**: her profil rotası build zamanında
+      kullanıcı adına göre statik üretiliyor (`generateStaticParams`);
+      gerçek bir yeniden adlandırma sunucu tarafı routing/redirect
+      gerektirir ve bu ancak Supabase Auth ile gelir (§17).
+    - `features/prompts/hidden-prompts-provider.tsx`
+      (`HiddenPromptsProvider`/`useHiddenPrompts`, anahtar
+      `"promptly-hidden-prompts"`) — "Profilimden gizle" gerçek ve kalıcı
+      ama **silme değil**: mock prompt dizisi salt okunur ve backend yok,
+      bu yüzden hiçbir şey sunucu tarafında silinmiyor/durumu değişmiyor;
+      yalnızca bu tarayıcının kendi galeri görünümünden kaldırılıyor, prompt
+      feed/detay/başka profillerde hâlâ görünür kalıyor. Menüde "geri getir"
+      ile aynı tarayıcıdan geri alınabiliyor; profilde "N prompt gizlendi ·
+      Göster" bağlantısıyla gizlenenler tekrar görülüp geri getirilebiliyor.
+  - **Yeni component'ler** (`src/features/profile/`): `profile-view.tsx`
+    (client orkestratör — tab/filtre/sıralama/arama state'i), yeniden
+    yazılan `profile-header.tsx` (avatar + kimlik + bio "devamını gör" +
+    ilgi alanı chip'leri + rozetler + istatistikler + aksiyonlar),
+    `profile-avatar.tsx`, `profile-actions.tsx` (own vs. other tamamen ayrı
+    iki bileşen — kullanıcı asla kendini takip edemez), `profile-stats.tsx`,
+    `profile-tabs.tsx`, `profile-toolbar.tsx` (içerik türü filtresi +
+    sıralama + >8 içerikte arama), `profile-content-grid.tsx` (+
+    `profile-content-menu.tsx` kebab menüsü), `profile-empty-state.tsx`,
+    `profile-badges.tsx`, `profile-about.tsx`.
+  - **Sekmeler:** Promptlar (varsayılan) / Remixler (`origin.type !==
+    "original"`) / Hakkında her profilde; **Kaydedilenler** ve **Beğeniler**
+    yalnızca kendi profilinde (`isOwnProfile`) gösteriliyor — çünkü
+    beğeni/kaydetme verisi yalnızca "bu tarayıcının" bildiği bir şey
+    (LikeProvider/SaveProvider), başka bir kullanıcının gerçekte neyi
+    beğendiği/kaydettiği hiçbir yerde bilinmiyor; bunu başka bir profilde
+    göstermek sahte olurdu.
+  - **İstatistik etkileşimleri:** prompt/remix sayıları tıklanınca o
+    profilin ilgili sekmesine geçiyor (gerçek, client state). Takip edilen
+    sayısı yalnızca **kendi profilinde** tıklanabilir ve mevcut
+    `/following`'e gidiyor. Takipçi sayısı hiçbir profilde tıklanamaz —
+    "kim kimi takip ediyor" ilişkisi mock veri modelinde hiç yok (yalnızca
+    statik bir sayı var), böyle bir liste ekranını uydurmak §7 kuralını
+    ihlal eder.
+  - **Mesaj Gönder:** yalnızca `mocks/conversations.ts`'te o kullanıcıyla
+    gerçekten var olan bir konuşma varsa gösteriliyor (9 mock kullanıcıdan
+    5'i) ve gerçek konuşmaya yönlendiriyor; mesaj gönderme zaten bilinçli
+    olarak devre dışı (§16). Yeni konuşma başlatma yok, bu yüzden diğer 4
+    kullanıcıda buton hiç görünmüyor (sahte/ölü buton yerine).
+  - **Rozetler (`profile-badges.tsx`):** modüler ve genişletilebilir bir
+    dizi — yalnızca gerçek koşula bağlı 3 rozet var (ilk prompt, ilk remix,
+    10+ prompt); hiçbiri "kazanılmış gibi" sahte gösterilmiyor, koşul
+    sağlanmadan hiçbir rozet render edilmiyor.
+  - **Profili Düzenle (`/profile/edit`):** gerçek, çalışan form —
+    `ProfileOverridesProvider`'a yazıyor. Avatar yükleme gerçek: dosya
+    seçilince `resizeImageToDataUrl` (yeni, `lib/utils.ts`) canvas ile
+    160×160 kareye kırpıp küçük bir JPEG data URL'e çeviriyor (localStorage'a
+    sığacak boyutta) — bu, `CreatePromptForm`'un gerçek dosya yükleme
+    desenine (`Image().onload`) benzer ama sonucu gerçekten kalıcı hale
+    getiriyor. Görünen ad/biyografi (200 karakter sınırı)/web sitesi/ilgi
+    alanları düzenlenebiliyor; Kaydet gerçekten localStorage'a yazıp
+    `/profile/me`'ye yönlendiriyor, İptal hiçbir şey yazmadan geri dönüyor.
+    Sahte bir "kaydediliyor" yükleniyor durumu **eklenmedi** — localStorage
+    yazımı gerçekten senkron/anlık, sahte bir gecikme göstermek kuralın
+    ruhuna aykırı olurdu; aynı nedenle sahte bir "kayıt başarısız" hata
+    durumu da yok (localStorage yazımı network isteği gibi başarısız olmaz).
+  - **İçerik yönetim menüsü (kebab, yalnızca kendi promptlarında):**
+    orijinal görev tanımındaki "Düzenle / Taslağa al / Yeniden yayımla / Sil"
+    seçenekleri **kasıtlı olarak eklenmedi** — mock prompt dizisi durağan ve
+    backend yok, bu yüzden hiçbiri gerçekte bir şey değiştiremez; sahte
+    yapmak CLAUDE.md §2 kuralını ihlal ederdi. Bunun yerine yalnızca gerçekten
+    çalışan üç seçenek var: "Bağlantıyı kopyala" (clipboard), "Kopyasını
+    oluştur" (`/create?duplicate=<id>` — `CreatePromptForm`'a yeni bir prefill
+    modu eklendi, remix'ten farklı olarak `origin: "original"` ile), ve
+    "Profilimden gizle/geri getir" (yukarıdaki gerçek localStorage gizleme).
+  - **Boş/yükleniyor durumları:** her sekim/filtre için ayrı, gerçekçi boş
+    durum (`ProfileEmptyState`); filtre sonucu boşsa "Filtreleri temizle"
+    aksiyonu. `/profile/[username]/loading.tsx` eklendi — projede daha önce
+    hiç kullanılmayan (`git log` bunu doğruluyor) hazır `ProfileHeaderSkeleton`
+    ve `PromptCardSkeletonGrid` bileşenlerini ilk kez gerçekten bir route'a
+    bağladı. Gerçek bir ağ isteği olmadığından (statik export, senkron mock
+    veri) sahte bir "içerik yüklenemedi/yeniden dene" hata ekranı
+    **eklenmedi** — böyle bir hata senaryosu bu mimaride gerçekte oluşamaz.
+  - **Yan düzeltme (bug fix):** `ShareButton`'ın paylaşım URL'si
+    `window.location.origin + path` ile kuruluyordu ve GitHub Pages
+    `basePath` (`/promptly`) hiç eklenmiyordu — üretimde paylaşılan/kopyalanan
+    her bağlantı (prompt kartları dahil, Bölüm 14'ten beri) 404 verirdi. Yeni
+    `lib/utils.ts` → `absoluteUrl()` ile düzeltildi; hem profil paylaşımı hem
+    var olan tüm `ShareButton` kullanımları bundan yararlanıyor.
+  - Playwright ile uçtan uca doğrulandı: kendi profili ↔ başka profil doğru
+    ayrılıyor (takip butonu/Kaydedilenler-Beğeniler sekmeleri yalnızca doğru
+    tarafta); sekme geçişleri, içerik türü filtresi, sıralama; profil
+    düzenleme formu doldurup kaydedince görünen ad/bio/ilgi alanı/avatar
+    profile yansıyor ve sayfa yenilenince kalıcı kalıyor; kullanıcı adı alanı
+    devre dışı; gizle → karttan kayboluyor → "Göster" ile geri görünüyor →
+    menüden "geri getir" ile kalıcı olarak geri geliyor; kopyala akışı
+    `/create?duplicate=`'i doğru dolduruyor; mobilde yatay taşma yok; tablet
+    ve masaüstünde masonry dengeli; açık/koyu temada tutarlı; ana sayfa,
+    keşfet, `/saved`, prompt detay sayfası ve beğeni butonu (Bölüm 14)
+    bozulmadı.
 
 **Bilinen sorunlar / bilinçli basitleştirmeler:**
 - Tablet için ayrı bir navigasyon/genişlik düzeni henüz yok; `lg` (1024px)
@@ -506,5 +616,27 @@ gerçek Supabase projesi bağlantısı yoktur.**
   mock'un statik alanları + bu oturumun kendi eylemine göre ±1 optimistik
   düzeltme (takipçi sayısında kullanılan aynı teknik) — gerçek bir
   "kaç kişi beğendi" agregasyonu backend'e bağlı.
+- Profil düzenlemeleri (`ProfileOverridesProvider`), gizlenen promptlar ve
+  ilgi alanları da Follow/Like/Save ile aynı sınırlamayı taşıyor: yalnızca
+  bu tarayıcıda yaşıyor, yalnızca "me" hesabına uygulanıyor, başka bir
+  cihazdan veya gizli sekmeden bakıldığında görünmüyor.
+- Kullanıcı adı (username) değişikliği desteklenmiyor — statik export'ta
+  her profil rotası build zamanında kullanıcı adına göre üretiliyor; gerçek
+  bir yeniden adlandırma sunucu tarafı routing/redirect ister ve ancak
+  Supabase Auth ile (Bölüm 17) mümkün olur.
+- Takipçi listesi (kimlerin beni takip ettiği) hiçbir profilde
+  gösterilmiyor/tıklanamıyor — mock veri modelinde "kim kimi takip ediyor"
+  ilişkisi hiç yok, yalnızca statik bir `followerCount` sayısı var. Gerçek
+  bir liste `follows` tablosu gerektirir (Bölüm 18, 21).
+- "Profilimden gizle" bir silme değildir: mock prompt dizisi durağan ve
+  backend olmadığından hiçbir şey sunucu tarafında silinmiyor/değişmiyor;
+  yalnızca bu tarayıcının kendi galeri görünümünden kaldırılıyor ve aynı
+  tarayıcıdan geri getirilebiliyor. Gerçek silme/taslağa alma/yeniden
+  yayımlama Bölüm 18–21'e bağlı.
+- Profil düzenleme formunda avatar dışında dosya boyutu sınırlaması
+  gösterilmiyor (canvas her zaman 160×160'a küçültüyor); çok büyük
+  görsellerde tarayıcı belleği/performansı üzerinde küçük bir yavaşlama
+  olabilir — gerçek bir yükleme, boyut kontrolü Supabase Storage'a
+  bağlanınca (Bölüm 20) sunucu tarafında ele alınacak.
 
 **Sonraki modül:** Kayıt, giriş, hesap ayarları — Supabase Auth (Bölüm 17).

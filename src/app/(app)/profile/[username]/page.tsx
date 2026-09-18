@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
-import { ProfileHeader } from "@/features/profile/profile-header";
-import { PromptGrid } from "@/features/prompts/prompt-grid";
+import { ProfileView } from "@/features/profile/profile-view";
 import { getUserByUsername, mockUsers } from "@/mocks/users";
 import { getPromptsByAuthor } from "@/mocks/prompts";
+import { getConversationWithUser } from "@/mocks/conversations";
 
 export function generateStaticParams() {
   return mockUsers.map((user) => ({ username: user.username }));
@@ -17,16 +17,24 @@ export default async function ProfilePage({
   const user = getUserByUsername(username);
   if (!user) notFound();
 
-  const prompts = [...getPromptsByAuthor(user.id)].sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-  );
+  const isOwnProfile = user.id === "me";
+
+  // Everyone but the owner only ever sees published prompts — drafts have
+  // no place on a public profile even though the mock data has no draft
+  // rows to filter yet (CLAUDE.md section 8: prompt creation never
+  // persists a real draft either).
+  const authorPrompts = getPromptsByAuthor(user.id)
+    .filter((prompt) => isOwnProfile || prompt.status === "published")
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+  const conversation = isOwnProfile ? undefined : getConversationWithUser(user.id);
 
   return (
-    <div className="space-y-6 pb-6">
-      <ProfileHeader user={user} promptCount={prompts.length} isOwnProfile={user.id === "me"} />
-      <div className="px-4 lg:px-6">
-        <PromptGrid prompts={prompts} />
-      </div>
-    </div>
+    <ProfileView
+      user={user}
+      isOwnProfile={isOwnProfile}
+      authorPrompts={authorPrompts}
+      conversationId={conversation?.id}
+    />
   );
 }

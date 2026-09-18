@@ -63,3 +63,16 @@ export const mockMessages: Record<string, Message[]> = {
 export function getConversationById(id: string): Conversation | undefined {
   return mockConversations.find((conversation) => conversation.id === id);
 }
+
+/**
+ * Used by the profile page to decide whether "Mesaj Gönder" can link
+ * anywhere real — only 5 of the 9 mock users have an existing thread with
+ * "me". For the rest, no conversation exists yet and there's no way to
+ * start a new one (only viewing existing mock threads is implemented), so
+ * the button is omitted entirely rather than linking to nothing.
+ */
+export function getConversationWithUser(userId: string): Conversation | undefined {
+  return mockConversations.find((conversation) =>
+    conversation.participants.some((participant) => participant.id === userId),
+  );
+}
