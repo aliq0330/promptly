@@ -188,7 +188,7 @@ gerçek Supabase projesi bağlantısı yoktur.**
 4. [x] Responsive layout ve navigasyon (temel shell)
 5. [x] Ana sayfa ve prompt feed (mock veriyle)
 6. [x] Prompt detay sayfası (mock veriyle)
-7. [ ] Prompt oluşturma
+7. [x] Prompt oluşturma (form + canlı önizleme; kalıcı paylaşım Supabase'e bağlı)
 8. [ ] Remix sistemi
 9. [x] Prompt istekleri listesi (mock veriyle)
 10. [x] Prompt isteği detay ve yaratıcı yanıtlar (mock veriyle)
@@ -211,8 +211,8 @@ gerçek Supabase projesi bağlantısı yoktur.**
 
 ## 9. Şu Anki Durum (bu bölüm her modül sonunda güncellenir)
 
-**Son güncelleme:** Site genelinde mock kullanıcı/prompt verisiyle
-feed, keşfet, istekler, bildirimler, mesajlar ve profil sayfaları dolduruldu.
+**Son güncelleme:** Prompt oluşturma sayfası (canlı önizlemeli, gerçek
+görsel yükleme) tamamlandı — Bölüm 7 işaretlendi.
 
 **Tamamlanan:**
 - CLAUDE.md oluşturuldu.
@@ -316,6 +316,23 @@ feed, keşfet, istekler, bildirimler, mesajlar ve profil sayfaları dolduruldu.
   (`url("${svg}")`) — SVG içindeki `fill="url(#id)"` gibi referanslardaki
   parantezler tırnaksız gömülünce CSS ayrıştırmayı sessizce bozup
   `background-image: none` sonucu veriyor (bu projede yaşandı ve düzeltildi).
+- **Prompt oluşturma (`/create`, `CreatePromptForm`):** Gerçek, çalışan bir
+  form — sahte değil. İçerik türü seçici (`CONTENT_TYPE_META` ile paylaşılan
+  ikon/etiketler), başlık/açıklama/prompt metni/araç alanları, `mockTags`'ten
+  çoklu etiket seçimi, `image` türü için gerçek dosya yükleme (`URL.
+  createObjectURL` + `Image().onload` ile gerçek genişlik/yükseklik okunuyor,
+  bellek sızıntısı olmasın diye eski blob URL'i `URL.revokeObjectURL` ile
+  temizleniyor). Sağ panelde (`lg:sticky`) her alan değiştikçe canlı olarak
+  gerçek `PromptCard` bileşeniyle (aynı dispatcher, aynı kart tasarımları)
+  önizleme render ediliyor — `pointer-events-none` ile sarılı, çünkü
+  önizlemenin `/prompts/preview` gibi var olmayan bir sayfaya link vermesi
+  istenmiyor. "Paylaş" tıklandığında **kalıcı bir kayıt oluşturulmuyor** —
+  CLAUDE.md kuralına uyarak (mock veriyle çalışan buton gerçek işlem
+  yapılmış gibi göstermemeli) yalnızca dürüst bir bilgi kutusu gösteriliyor:
+  önizleme yapılabildiğini ama gerçek paylaşımın Supabase entegrasyonuna
+  (Bölüm 18–21) bağlı olduğunu açıklıyor. Playwright ile tür değişimi,
+  etiket seçimi ve gerçek dosya yükleme (geçerli bir PNG ile) uçtan uca
+  doğrulandı.
 
 **Bilinen sorunlar / bilinçli basitleştirmeler:**
 - Tablet için ayrı bir navigasyon/genişlik düzeni henüz yok; `lg` (1024px)
@@ -338,4 +355,4 @@ feed, keşfet, istekler, bildirimler, mesajlar ve profil sayfaları dolduruldu.
   farklı ölçeklerde metriklere sahip olduğundan sıralama kaba bir
   sezgiseldir — gerçek bir "trend skoru" backend tarafında hesaplanmalı.
 
-**Sonraki modül:** Prompt oluşturma (Bölüm 7).
+**Sonraki modül:** Remix sistemi (Bölüm 8).
