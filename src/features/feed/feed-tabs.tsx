@@ -4,6 +4,7 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { FeedGrid } from "./feed-grid";
 import { feedItemAuthorId, feedItemPopularity, type FeedItem } from "./types";
+import { useFollow } from "@/features/profile/follow-provider";
 
 type TabKey = "following" | "popular" | "for-you";
 
@@ -13,18 +14,15 @@ const TABS: { key: TabKey; label: string }[] = [
   { key: "for-you", label: "Sana Özel" },
 ];
 
-// Mirrors the creators followed on the Following page mock (see
-// src/mocks — no real follow graph exists yet, see CLAUDE.md section 13).
-const FOLLOWED_USER_IDS = new Set(["u1", "u3", "u5", "u7"]);
-
 export function FeedTabs({ items }: { items: FeedItem[] }) {
   const [active, setActive] = useState<TabKey>("for-you");
+  const { isFollowing } = useFollow();
 
   const visible =
     active === "popular"
       ? [...items].sort((a, b) => feedItemPopularity(b) - feedItemPopularity(a))
       : active === "following"
-        ? items.filter((item) => FOLLOWED_USER_IDS.has(feedItemAuthorId(item)))
+        ? items.filter((item) => isFollowing(feedItemAuthorId(item)))
         : items;
 
   return (

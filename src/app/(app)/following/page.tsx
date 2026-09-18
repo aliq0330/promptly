@@ -1,15 +1,16 @@
+"use client";
+
 import { CreatorList } from "@/features/profile/creator-list";
 import { PromptGrid } from "@/features/prompts/prompt-grid";
+import { useFollow } from "@/features/profile/follow-provider";
 import { mockUsers } from "@/mocks/users";
 import { mockPrompts } from "@/mocks/prompts";
 
-// Placeholder "following" graph until the follows table exists (CLAUDE.md section 13).
-const FOLLOWED_USER_IDS = ["u1", "u3", "u5", "u7"];
-
 export default function FollowingPage() {
-  const followed = mockUsers.filter((user) => FOLLOWED_USER_IDS.includes(user.id));
+  const { isFollowing } = useFollow();
+  const followed = mockUsers.filter((user) => isFollowing(user.id));
   const feed = [...mockPrompts]
-    .filter((prompt) => FOLLOWED_USER_IDS.includes(prompt.author.id))
+    .filter((prompt) => isFollowing(prompt.author.id))
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   return (

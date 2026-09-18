@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Avatar } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
+import { FollowButton } from "./follow-button";
 import { formatCount } from "@/lib/utils";
 import type { UserProfile } from "@/types";
 
@@ -14,9 +14,7 @@ export function CreatorRow({ user }: { user: UserProfile }) {
           <p className="truncate text-xs text-text-muted">{formatCount(user.followerCount)} takipçi</p>
         </div>
       </Link>
-      <Button variant="outline" size="sm" className="shrink-0">
-        Takip Ediliyor
-      </Button>
+      <FollowButton userId={user.id} className="shrink-0" />
     </div>
   );
 }

@@ -194,7 +194,7 @@ gerçek Supabase projesi bağlantısı yoktur.**
 10. [x] Prompt isteği detay ve yaratıcı yanıtlar (mock veriyle)
 11. [x] Keşfet, arama ve etiketler (mock veriyle)
 12. [x] Kullanıcı profilleri (mock veriyle)
-13. [ ] Takip sistemi (Takip Et butonu şu an görsel, işlevsel değil)
+13. [x] Takip sistemi (localStorage ile gerçek takip et/bırak; sunucu senkronizasyonu Supabase'e bağlı)
 14. [ ] Beğeni, yorum, kaydetme, paylaşma (sayılar/yorumlar salt okunur gösteriliyor)
 15. [x] Bildirimler (mock veriyle)
 16. [x] Özel mesajlaşma (mesaj gönderme henüz devre dışı)
@@ -211,7 +211,7 @@ gerçek Supabase projesi bağlantısı yoktur.**
 
 ## 9. Şu Anki Durum (bu bölüm her modül sonunda güncellenir)
 
-**Son güncelleme:** Remix sistemi tamamlandı — Bölüm 8 işaretlendi.
+**Son güncelleme:** Takip sistemi tamamlandı — Bölüm 13 işaretlendi.
 
 **Tamamlanan:**
 - CLAUDE.md oluşturuldu.
@@ -367,6 +367,38 @@ gerçek Supabase projesi bağlantısı yoktur.**
     form doğru dolduruluyor; bir istek yanıtından "Remixle" tıklanınca da
     aynı şekilde çalışıyor; 3 seviyeli zincir detay sayfasında doğru
     sırayla render ediliyor; açık/koyu tema ve mobilde bozulma yok.
+- **Takip sistemi (Bölüm 13):** Artık gerçekten çalışıyor — sahte/statik
+  bir "Takip Ediliyor" değil.
+  - Yeni `features/profile/follow-provider.tsx`: `ThemeProvider` ile aynı
+    desen — `localStorage` anahtarı `promptly-following`, seed set
+    (`INITIAL_FOLLOWED_USER_IDS = ["u1","u3","u5","u7"]`, önceki
+    dosyalara dağılmış hardcoded `FOLLOWED_USER_IDS` sabitlerinin yerini
+    aldı) sunucu render'ında ve ilk client paint'te kullanılıyor,
+    ardından `useEffect` içinde gerçek `localStorage` değeri okunup
+    uygulanıyor (hydration uyumsuzluğu olmadan). `(app)/layout.tsx`'e
+    `FollowProvider` eklendi — tüm `(app)` rotalarını sarıyor.
+  - Yeni `features/profile/follow-button.tsx`: `useFollow()` ile durumu
+    okuyup `toggleFollow()` çağıran gerçek bir buton — tıklanınca anında
+    "Takip Et" ↔ "Takip Ediliyor" arası değişiyor ve `localStorage`'a
+    yazılıyor (sayfa yenilenince kaybolmuyor — Playwright ile doğrulandı).
+  - `ProfileHeader`, `CreatorRow` ve Keşfet'teki "Öne Çıkan Yaratıcılar"
+    kartları artık bu gerçek `FollowButton`'ı kullanıyor (üçü de "use
+    client" veya client alt bileşen). Keşfet kartında aynı stretched-link
+    deseni (buton `relative z-10`, kart linki `absolute inset-0 z-0`)
+    kullanılarak buton tıklaması kart linkiyle çakışmıyor.
+  - `ProfileHeader`'daki takipçi sayısı artık `isFollowing`/
+    `wasInitiallyFollowing` karşılaştırmasıyla +1/-1 optimistik olarak
+    güncelleniyor (gerçek bir takipçi listesi olmadığından yalnızca bu
+    oturumun kendi eylemini yansıtıyor, başka kullanıcılara senkronize
+    olmuyor — bu dürüstçe böyle).
+  - `/following` sayfası ve `FeedTabs`'ın "Takip Ettiklerim" sekmesi artık
+    hardcoded listeler yerine `useFollow().isFollowing()` kullanıyor; bu
+    yüzden `/following/page.tsx` client component'e çevrildi. Bir kullanıcıyı
+    takip edince/bırakınca hem o kullanıcının profili hem Ana Sayfa'nın
+    "Takip Ettiklerim" sekmesi hem `/following` sayfası anında güncelleniyor.
+  - Playwright ile uçtan uca doğrulandı: takip et → buton değişiyor →
+    sayfa yenilenince kalıcı → `/following`'de görünüyor; takipten çık →
+    `/following`'den kayboluyor; Keşfet'teki buton kart linkiyle çakışmıyor.
 
 **Bilinen sorunlar / bilinçli basitleştirmeler:**
 - Tablet için ayrı bir navigasyon/genişlik düzeni henüz yok; `lg` (1024px)
@@ -396,4 +428,11 @@ gerçek Supabase projesi bağlantısı yoktur.**
   olduğundan bu senaryo nadirdir; ileride gerekirse `useEffect` ile
   `searchParams` değişimini izleyip formu sıfırlayan bir çözüme geçilebilir.
 
-**Sonraki modül:** Takip sistemi (Bölüm 13).
+- Takip durumu yalnızca bu tarayıcıda (`localStorage`) yaşıyor — başka bir
+  cihaz/tarayıcıda veya gizli sekmede oturum açan aynı kullanıcı takip
+  listesini görmez, ve diğer kullanıcılar birinin "beni takip etti"ğini
+  gerçekten görmez (bildirim mock verisi statik kalıyor). Gerçek çapraz
+  kullanıcı senkronizasyonu `follows` tablosu + Supabase Auth gerektirir
+  (Bölüm 17–21).
+
+**Sonraki modül:** Beğeni, yorum, kaydetme, paylaşma (Bölüm 14).

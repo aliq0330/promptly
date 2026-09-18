@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { FollowButton } from "@/features/profile/follow-button";
 import { DiscoverFeed } from "@/features/feed/discover-feed";
 import { feedItemPopularity, type FeedItem } from "@/features/feed/types";
 import { mockPrompts } from "@/mocks/prompts";
@@ -31,10 +32,9 @@ export default function DiscoverPage() {
         <h2 className="text-base font-semibold text-text">Öne Çıkan Yaratıcılar</h2>
         <div className="flex gap-3 overflow-x-auto pb-1">
           {creators.map((creator) => (
-            <Link
+            <div
               key={creator.id}
-              href={`/profile/${creator.username}`}
-              className="flex w-32 shrink-0 flex-col items-center gap-2 rounded-lg border border-border bg-surface p-4 text-center transition-colors hover:bg-accent-surface/40"
+              className="relative flex w-32 shrink-0 flex-col items-center gap-2 rounded-lg border border-border bg-surface p-4 text-center transition-colors hover:bg-accent-surface/40"
             >
               <Avatar src={creator.avatarUrl} alt={creator.displayName} size={56} />
               <span className="line-clamp-1 text-sm font-medium text-text">
@@ -43,7 +43,13 @@ export default function DiscoverPage() {
               <span className="text-xs text-text-muted">
                 {formatCount(creator.followerCount)} takipçi
               </span>
-            </Link>
+              <FollowButton userId={creator.id} className="relative z-10 w-full" />
+              <Link
+                href={`/profile/${creator.username}`}
+                className="absolute inset-0 z-0"
+                aria-label={creator.displayName}
+              />
+            </div>
           ))}
         </div>
       </section>
