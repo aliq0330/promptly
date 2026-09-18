@@ -1,21 +1,31 @@
-import { ProfileHeaderSkeleton } from "@/components/ui/profile-header-skeleton";
-import { PromptCardSkeletonGrid } from "@/components/ui/prompt-card-skeleton";
+import { notFound } from "next/navigation";
+import { ProfileHeader } from "@/features/profile/profile-header";
+import { PromptGrid } from "@/features/prompts/prompt-grid";
+import { getUserByUsername, mockUsers } from "@/mocks/users";
+import { getPromptsByAuthor } from "@/mocks/prompts";
 
 export function generateStaticParams() {
-  return [{ username: "user" }];
+  return mockUsers.map((user) => ({ username: user.username }));
 }
 
-export default function ProfilePage() {
+export default async function ProfilePage({
+  params,
+}: {
+  params: Promise<{ username: string }>;
+}) {
+  const { username } = await params;
+  const user = getUserByUsername(username);
+  if (!user) notFound();
+
+  const prompts = [...getPromptsByAuthor(user.id)].sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+  );
+
   return (
     <div className="space-y-6 pb-6">
-      <ProfileHeaderSkeleton />
-      <div className="flex justify-center">
-        <span className="rounded-sm bg-accent-surface px-2 py-0.5 text-xs font-medium text-primary">
-          Yakında
-        </span>
-      </div>
+      <ProfileHeader user={user} promptCount={prompts.length} isOwnProfile={user.id === "me"} />
       <div className="px-4 lg:px-6">
-        <PromptCardSkeletonGrid count={3} />
+        <PromptGrid prompts={prompts} />
       </div>
     </div>
   );

@@ -1,18 +1,15 @@
-import { Sparkles } from "lucide-react";
-import { FeedPlaceholderHeader } from "@/components/ui/feed-placeholder-header";
-import { ListRowSkeletonGroup } from "@/components/ui/list-row-skeleton";
+import { RequestList } from "@/features/requests/request-list";
+import { mockRequests } from "@/mocks/requests";
 
 export default function RequestsPage() {
+  const requests = [...mockRequests].sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+  );
+
   return (
-    <div className="space-y-6 pb-6">
-      <FeedPlaceholderHeader
-        icon={Sparkles}
-        title="Prompt istekleri"
-        description="Kullanıcıların yaratıcı prompt istekleri, filtreleri ve yanıt sayılarıyla burada listelenecek."
-      />
-      <div className="px-4 lg:px-6">
-        <ListRowSkeletonGroup />
-      </div>
+    <div className="px-4 py-6 lg:px-6">
+      <h1 className="mb-4 text-base font-semibold text-text">Prompt İstekleri</h1>
+      <RequestList requests={requests} />
     </div>
   );
 }

@@ -183,18 +183,18 @@ gerçek Supabase projesi bağlantısı yoktur.**
 2. [x] Proje iskeleti ve klasör mimarisi
 3. [x] Tasarım sistemi ve ortak UI bileşenleri (temel)
 4. [x] Responsive layout ve navigasyon (temel shell)
-5. [ ] Ana sayfa ve prompt feed
-6. [ ] Prompt detay sayfası
+5. [x] Ana sayfa ve prompt feed (mock veriyle)
+6. [x] Prompt detay sayfası (mock veriyle)
 7. [ ] Prompt oluşturma
 8. [ ] Remix sistemi
-9. [ ] Prompt istekleri listesi
-10. [ ] Prompt isteği detay ve yaratıcı yanıtlar
-11. [ ] Keşfet, arama ve etiketler
-12. [ ] Kullanıcı profilleri
-13. [ ] Takip sistemi
-14. [ ] Beğeni, yorum, kaydetme, paylaşma
-15. [ ] Bildirimler
-16. [ ] Özel mesajlaşma
+9. [x] Prompt istekleri listesi (mock veriyle)
+10. [x] Prompt isteği detay ve yaratıcı yanıtlar (mock veriyle)
+11. [x] Keşfet, arama ve etiketler (mock veriyle)
+12. [x] Kullanıcı profilleri (mock veriyle)
+13. [ ] Takip sistemi (Takip Et butonu şu an görsel, işlevsel değil)
+14. [ ] Beğeni, yorum, kaydetme, paylaşma (sayılar/yorumlar salt okunur gösteriliyor)
+15. [x] Bildirimler (mock veriyle)
+16. [x] Özel mesajlaşma (mesaj gönderme henüz devre dışı)
 17. [ ] Kayıt, giriş, hesap ayarları (Supabase Auth)
 18. [ ] Supabase veritabanı ve migration dosyaları
 19. [ ] RLS ve güvenlik politikaları
@@ -208,7 +208,8 @@ gerçek Supabase projesi bağlantısı yoktur.**
 
 ## 9. Şu Anki Durum (bu bölüm her modül sonunda güncellenir)
 
-**Son güncelleme:** İlk iskelet kurulumu.
+**Son güncelleme:** Site genelinde mock kullanıcı/prompt verisiyle
+feed, keşfet, istekler, bildirimler, mesajlar ve profil sayfaları dolduruldu.
 
 **Tamamlanan:**
 - CLAUDE.md oluşturuldu.
@@ -218,23 +219,41 @@ gerçek Supabase projesi bağlantısı yoktur.**
 - Design token'ları (renkler, radius, spacing, tipografi) Tailwind config
   ve CSS custom property'leri olarak tanımlandı; açık/koyu tema desteği.
 - Tema değiştirme altyapısı (localStorage tabanlı, FOUC önleyici script).
-- Temel UI bileşenleri: Button, Card, Avatar, Badge, IconButton.
+- Temel UI bileşenleri: Button, Card, Avatar, Badge, IconButton, Skeleton.
 - Uygulama shell'i: masaüstü sol navigasyon, üst header (arama, bildirim,
   mesaj, tema, profil), mobil alt navigasyon.
+- `src/mocks/` altında 9 sahte kullanıcı (+ "me" = giriş yapmış varsayılan
+  kullanıcı), 20 prompt, 6 prompt isteği + yaratıcı yanıtları, yorumlar,
+  bildirimler ve konuşmalar dolduruldu (`users.ts`, `prompts.ts`,
+  `tags.ts`, `requests.ts`, `request-responses.ts`, `comments.ts`,
+  `notifications.ts`, `conversations.ts`).
+- Prompt görselleri `src/lib/placeholder-image.ts` ile üretilen offline
+  gradient SVG'ler; üçüncü taraf görsel servislerine (picsum, pravatar vb.)
+  bağımlılık yok. Avatarlar `avatarUrl: null` + Avatar bileşeninin baş harf
+  fallback'iyle gösteriliyor.
+- Feature bileşenleri (`src/features/{feed,prompts,requests,notifications,
+  messages,profile,search}`) gerçek mock veriyle render ediliyor: ana sayfa
+  sekmeli feed (Sana Özel/Popüler/Takip Ettiklerim), keşfet (trend
+  promptlar, öne çıkan yaratıcılar, popüler etiketler, açık istekler),
+  prompt detay + yorumlar, istek detay + yanıtlar, bildirim listesi, mesaj
+  listesi + konuşma detayı, profil (header + prompt grid), etiket sayfası,
+  client-side arama.
 - Route iskeletleri (placeholder içerik) yukarıdaki sayfa haritasına göre
-  oluşturuldu — gerçek feed/prompt/istek mantığı henüz yok.
+  oluşturuldu.
 
 **Devam etmiyor / henüz yapılmadı:**
 - Supabase bağlantısı yok (client kurulumu bile henüz eklenmedi).
 - Auth yok, herkes her sayfayı görebiliyor (mock). `/login`, `/signup`,
   `/reset-password` formları arayüz olarak var ama devre dışı (`disabled`),
   gerçek işlev yok.
-- Mock veri seti henüz yok; feed, prompt detay, istekler gibi modüller
-  sırayla gerçek bileşenlerle ve mock verilerle doldurulacak.
+- Beğeni, kaydetme, takip et ve mesaj gönderme butonları görsel olarak var
+  ama tıklandığında kalıcı bir değişiklik yapmıyor (CLAUDE.md kural: mock
+  veriyle çalışan butonlar gerçek işlem yapılmış gibi geri bildirim
+  vermemeli). Prompt oluşturma ve remix akışı henüz yok.
 - Test altyapısı henüz kurulmadı.
 - `npm run lint`, `npx tsc --noEmit` ve `npm run build` çalıştırıldı, hepsi
-  hatasız geçti. Dev sunucusunda masaüstü/tablet/mobil görünümler ve
-  açık/koyu tema Playwright ile görsel olarak doğrulandı.
+  hatasız geçti (71 statik sayfa üretildi). Dev sunucusunda masaüstü/mobil
+  görünümler ve açık/koyu tema Playwright ile görsel olarak doğrulandı.
 
 **Bilinen sorunlar / bilinçli basitleştirmeler:**
 - Tablet için ayrı bir navigasyon/genişlik düzeni henüz yok; `lg` (1024px)
@@ -243,5 +262,10 @@ gerçek Supabase projesi bağlantısı yoktur.**
   ile ele alınacak.
 - Header'daki mobil logosu, sidebar'daki tam "Promptly" yazısı yerine tek
   harfli bir amblem ("P") — dar ekranlarda arama çubuğuna yer açmak için.
+- Statik export (`output: "export"`, GitHub Pages) kullanıldığı için her
+  dinamik route (`prompts/[id]`, `requests/[id]`, `profile/[username]`,
+  `tags/[tag]`, `messages/[conversationId]`) `generateStaticParams()` ile
+  mock veri setindeki TÜM id'leri döndürüyor — gerçek backend'e geçilince
+  bu fonksiyonlar kaldırılıp sunucu tarafı veri çekmeye geçilecek.
 
-**Sonraki modül:** Ana sayfa ve prompt feed (Bölüm 7).
+**Sonraki modül:** Prompt oluşturma (Bölüm 7).

@@ -4,6 +4,9 @@ const nextConfig: NextConfig = {
   output: "export",
   basePath: "/promptly",
   trailingSlash: true,
+  images: {
+    unoptimized: true,
+  },
 };
 
 export default nextConfig;

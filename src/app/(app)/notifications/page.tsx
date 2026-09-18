@@ -1,18 +1,15 @@
-import { Bell } from "lucide-react";
-import { FeedPlaceholderHeader } from "@/components/ui/feed-placeholder-header";
-import { ListRowSkeletonGroup } from "@/components/ui/list-row-skeleton";
+import { NotificationList } from "@/features/notifications/notification-list";
+import { mockNotifications } from "@/mocks/notifications";
 
 export default function NotificationsPage() {
+  const notifications = [...mockNotifications].sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+  );
+
   return (
-    <div className="space-y-6 pb-6">
-      <FeedPlaceholderHeader
-        icon={Bell}
-        title="Bildirimler"
-        description="Takip, beğeni, yorum, remix ve mesaj bildirimlerin burada listelenecek."
-      />
-      <div className="px-4 lg:px-6">
-        <ListRowSkeletonGroup />
-      </div>
+    <div className="px-4 py-6 lg:px-6">
+      <h1 className="mb-4 text-base font-semibold text-text">Bildirimler</h1>
+      <NotificationList notifications={notifications} />
     </div>
   );
 }
