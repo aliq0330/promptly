@@ -1,5 +1,10 @@
+import { Suspense } from "react";
 import { CreatePromptForm } from "@/features/prompts/create-prompt-form";
 
 export default function CreatePromptPage() {
-  return <CreatePromptForm />;
+  return (
+    <Suspense fallback={null}>
+      <CreatePromptForm />
+    </Suspense>
+  );
 }

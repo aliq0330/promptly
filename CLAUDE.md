@@ -189,7 +189,7 @@ gerçek Supabase projesi bağlantısı yoktur.**
 5. [x] Ana sayfa ve prompt feed (mock veriyle)
 6. [x] Prompt detay sayfası (mock veriyle)
 7. [x] Prompt oluşturma (form + canlı önizleme; kalıcı paylaşım Supabase'e bağlı)
-8. [ ] Remix sistemi
+8. [x] Remix sistemi (köken zinciri + remix akışı; kalıcı yayın Supabase'e bağlı)
 9. [x] Prompt istekleri listesi (mock veriyle)
 10. [x] Prompt isteği detay ve yaratıcı yanıtlar (mock veriyle)
 11. [x] Keşfet, arama ve etiketler (mock veriyle)
@@ -211,8 +211,7 @@ gerçek Supabase projesi bağlantısı yoktur.**
 
 ## 9. Şu Anki Durum (bu bölüm her modül sonunda güncellenir)
 
-**Son güncelleme:** Prompt oluşturma sayfası (canlı önizlemeli, gerçek
-görsel yükleme) tamamlandı — Bölüm 7 işaretlendi.
+**Son güncelleme:** Remix sistemi tamamlandı — Bölüm 8 işaretlendi.
 
 **Tamamlanan:**
 - CLAUDE.md oluşturuldu.
@@ -333,6 +332,41 @@ görsel yükleme) tamamlandı — Bölüm 7 işaretlendi.
   (Bölüm 18–21) bağlı olduğunu açıklıyor. Playwright ile tür değişimi,
   etiket seçimi ve gerçek dosya yükleme (geçerli bir PNG ile) uçtan uca
   doğrulandı.
+- **Remix sistemi (Bölüm 8):** Köken zinciri artık gerçekten iş görüyor.
+  - `mocks/prompts.ts`: `getRemixesOf(id)` (bir promptun doğrudan remixleri)
+    ve `getRemixChain(id)` (kökten o promptа kadar tüm zinciri
+    `origin.sourcePromptId` takip ederek döndürür) eklendi. Zinciri gerçekten
+    test etmek için 3 seviyeli bir örnek eklendi: p1 (orijinal) → p9 (remix,
+    root p1) → p29 (p9'un remixi, root yine p1) — `rootPromptId`'nin ara
+    adımlarda da doğru taşındığını kanıtlıyor. Ayrıca `request-response`
+    kökenli bir örnek eklendi: p30, r1 isteğine verilen rr1 yanıtından
+    türetildi.
+  - `RemixSourceLink` artık yalnızca `remix` değil, `request-response`
+    kökenini de gösteriyor (Sparkles ikonuyla, isteğe link vererek);
+    `origin.type !== "original"` olan her karta/detay sayfasına ekleniyor.
+  - Prompt detay sayfası: kök→...→bu-prompt breadcrumb'ı (`ChevronRight`
+    ile ayrılmış, yalnızca zincir >1 uzunluktaysa gösteriliyor), belirgin
+    "Remixle" butonu (`/create?remix=<id>`'e gerçek link) ve "Remixler (N)"
+    bölümü (`getRemixesOf` + `PromptGrid`, boşsa "Bu prompt henüz
+    remixlenmedi" mesajı) eklendi.
+  - Kart footer'ındaki remix ikonu artık prompt detayına değil, doğrudan
+    `/create?remix=<id>`'e gidiyor — tek tıkla remix başlatma.
+  - `ResponseCard`'a "Remixle" eylemi eklendi (`/create?remixResponse=<id>`).
+  - `CreatePromptForm` artık `useSearchParams()` ile `remix`/`remixResponse`
+    parametrelerini okuyor (bu yüzden `/create` sayfası `<Suspense>` ile
+    sarıldı — Next.js statik export'ta `useSearchParams` kullanan client
+    bileşenler için zorunlu), kaynak promptun/yanıtın başlık, açıklama,
+    prompt metni, araç ve etiketlerini forma dolduruyor, üstte kaynağa
+    link veren bir bilgi bandı gösteriyor, ve canlı önizlemede doğru
+    `origin` (remix → `sourcePromptId`/`rootPromptId` zinciri korunarak;
+    request-response → `requestId`/`responseId`) ile gerçek `RemixSourceLink`
+    render ediliyor. Kalıcı yayın öncekiyle aynı nedenle (Supabase yok)
+    hâlâ gerçekleşmiyor — form yalnızca önizleme + köken takibini
+    gerçek olarak yapıyor, sahte "yayınlandı" durumu yok.
+  - Playwright ile uçtan uca doğrulandı: bir prompttan "Remixle" tıklanınca
+    form doğru dolduruluyor; bir istek yanıtından "Remixle" tıklanınca da
+    aynı şekilde çalışıyor; 3 seviyeli zincir detay sayfasında doğru
+    sırayla render ediliyor; açık/koyu tema ve mobilde bozulma yok.
 
 **Bilinen sorunlar / bilinçli basitleştirmeler:**
 - Tablet için ayrı bir navigasyon/genişlik düzeni henüz yok; `lg` (1024px)
@@ -354,5 +388,12 @@ görsel yükleme) tamamlandı — Bölüm 7 işaretlendi.
 - "Popüler" sekmesinde prompt (likeCount) ve istek (responseCount×15)
   farklı ölçeklerde metriklere sahip olduğundan sıralama kaba bir
   sezgiseldir — gerçek bir "trend skoru" backend tarafında hesaplanmalı.
+- `CreatePromptForm`'daki remix ön doldurma `useState` lazy initializer ile
+  yapılıyor, yalnızca bileşen ilk mount olduğunda çalışır. Aynı `/create`
+  sekmesinde bir remix linkinden başka bir remix linkine (tam sayfa
+  yenilemeden, örn. iki farklı karttan art arda) client-side geçilirse form
+  alanları yenilenmez. Pratikte her "Remixle" tıklaması ayrı bir navigasyon
+  olduğundan bu senaryo nadirdir; ileride gerekirse `useEffect` ile
+  `searchParams` değişimini izleyip formu sıfırlayan bir çözüme geçilebilir.
 
-**Sonraki modül:** Remix sistemi (Bölüm 8).
+**Sonraki modül:** Takip sistemi (Bölüm 13).

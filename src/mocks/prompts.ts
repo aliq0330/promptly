@@ -17,8 +17,9 @@ function image(seed: string, width: number, height: number, alt: string) {
 
 /**
  * Placeholder feed content until the real prompts table + Storage exist
- * (CLAUDE.md sections 6, 8, 20). Images come from picsum.photos as visual
- * stand-ins only — they are not actual AI generations.
+ * (CLAUDE.md sections 6, 8, 20). Images are offline-generated placeholder
+ * art (see placeholder-image.ts) as visual stand-ins only — they are not
+ * actual AI generations.
  */
 export const mockPrompts: Prompt[] = [
   {
@@ -581,6 +582,46 @@ export const mockPrompts: Prompt[] = [
     status: "published",
     createdAt: "2026-09-09T13:00:00.000Z",
   },
+  {
+    id: "p29",
+    author: user("u5"),
+    title: "Kitsune remixinin gece sürümü",
+    description: "Gündüz remiksinin üzerine, yıldızlı bir gece atmosferiyle ikinci bir yorum.",
+    promptText:
+      "a mystical nine-tailed fox spirit in a bamboo forest under a starry night sky, bioluminescent fireflies, soft cool rim light, studio ghibli inspired --ar 3:4 --v 6",
+    tool: "Midjourney v6",
+    contentType: "image",
+    media: [image("29", 900, 1200, "Gece kitsune remixi")],
+    tags: [getTag("fantastik"), getTag("anime")],
+    origin: { type: "remix", sourcePromptId: "p9", rootPromptId: "p1" },
+    likeCount: 64,
+    commentCount: 6,
+    remixCount: 1,
+    isLiked: false,
+    isSaved: false,
+    status: "published",
+    createdAt: "2026-09-16T14:00:00.000Z",
+  },
+  {
+    id: "p30",
+    author: user("u1"),
+    title: "Kar çölü vahasının tam prompt sürümü",
+    description: "Bir istek yanıtından ilham alarak hazırladığım, daha ayrıntılı bir prompt.",
+    promptText:
+      "a lush green oasis with tall palm trees and a still reflective lake in the middle of a snow-covered desert, warm sunset light contrasting cold snow, surreal yet photorealistic, wide angle cinematic shot, ultra detailed",
+    tool: "Midjourney v6",
+    contentType: "image",
+    media: [image("30", 1200, 800, "Kar çölünde vaha - tam sürüm")],
+    tags: [getTag("manzara"), getTag("surreal")],
+    origin: { type: "request-response", requestId: "r1", responseId: "rr1" },
+    likeCount: 91,
+    commentCount: 8,
+    remixCount: 0,
+    isLiked: false,
+    isSaved: false,
+    status: "published",
+    createdAt: "2026-09-17T09:00:00.000Z",
+  },
 ];
 
 export function getPromptById(id: string): Prompt | undefined {
@@ -593,4 +634,27 @@ export function getPromptsByAuthor(userId: string): Prompt[] {
 
 export function getPromptsByTag(slug: string): Prompt[] {
   return mockPrompts.filter((prompt) => prompt.tags.some((tag) => tag.slug === slug));
+}
+
+/** Prompts remixed directly from this one (its "children" in the remix tree). */
+export function getRemixesOf(promptId: string): Prompt[] {
+  return mockPrompts.filter(
+    (prompt) => prompt.origin.type === "remix" && prompt.origin.sourcePromptId === promptId,
+  );
+}
+
+/**
+ * Walks the remix chain from the root ancestor down to `promptId`
+ * (inclusive), following `origin.sourcePromptId` at each step. Used to
+ * show the full lineage, not just the immediate parent (CLAUDE.md section
+ * 1: "köken zinciri korunur").
+ */
+export function getRemixChain(promptId: string): Prompt[] {
+  const chain: Prompt[] = [];
+  let current = getPromptById(promptId);
+  while (current) {
+    chain.unshift(current);
+    current = current.origin.type === "remix" ? getPromptById(current.origin.sourcePromptId) : undefined;
+  }
+  return chain;
 }

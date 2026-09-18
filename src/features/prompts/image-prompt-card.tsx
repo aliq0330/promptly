@@ -37,7 +37,7 @@ export function ImagePromptCard({ prompt }: { prompt: Prompt }) {
       <div className="flex flex-col gap-1.5 p-4">
         <h3 className="line-clamp-1 text-sm font-semibold text-text">{prompt.title}</h3>
 
-        {prompt.origin.type === "remix" && <RemixSourceLink origin={prompt.origin} />}
+        {prompt.origin.type !== "original" && <RemixSourceLink origin={prompt.origin} />}
 
         <p className="line-clamp-2 text-xs text-text-muted">{prompt.description}</p>
 

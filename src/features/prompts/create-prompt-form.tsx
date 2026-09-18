@@ -1,12 +1,16 @@
 "use client";
 
 import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
-import { Sparkles } from "lucide-react";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { Repeat2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PromptCard } from "@/features/prompts/prompt-card";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
 import { getUserById } from "@/mocks/users";
 import { mockTags } from "@/mocks/tags";
+import { getPromptById } from "@/mocks/prompts";
+import { mockRequestResponses } from "@/mocks/request-responses";
 import { placeholderArt } from "@/lib/placeholder-image";
 import { cn } from "@/lib/utils";
 import type { Prompt, PromptContentType, Tag } from "@/types";
@@ -27,16 +31,41 @@ const TOOL_SUGGESTIONS: Record<PromptContentType, string[]> = {
  * section 18-21), so submitting never claims the prompt was actually
  * saved. The honest, useful thing it *can* do is show exactly how the
  * post would render, using the same card components as the real feed.
+ *
+ * Also doubles as the remix entry point (CLAUDE.md section 8): arriving
+ * via `?remix=<promptId>` or `?remixResponse=<responseId>` prefills the
+ * form from that source and tracks it as the origin, preserving the
+ * remix chain (root vs. immediate source) the same way the mock data does.
  */
 export function CreatePromptForm() {
   const me = getUserById("me")!;
+  const searchParams = useSearchParams();
 
-  const [contentType, setContentType] = useState<PromptContentType>("image");
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [promptText, setPromptText] = useState("");
-  const [tool, setTool] = useState("");
-  const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
+  const remixSourceId = searchParams.get("remix");
+  const remixResponseId = searchParams.get("remixResponse");
+  const sourcePrompt = remixSourceId ? getPromptById(remixSourceId) : undefined;
+  const sourceResponse = remixResponseId
+    ? mockRequestResponses.find((response) => response.id === remixResponseId)
+    : undefined;
+
+  const [contentType, setContentType] = useState<PromptContentType>(
+    () => sourcePrompt?.contentType ?? "image",
+  );
+  const [title, setTitle] = useState(() => {
+    if (sourcePrompt) return `${sourcePrompt.title} (remix)`;
+    if (sourceResponse?.title) return `${sourceResponse.title} (remix)`;
+    return "";
+  });
+  const [description, setDescription] = useState(
+    () => sourcePrompt?.description ?? sourceResponse?.description ?? "",
+  );
+  const [promptText, setPromptText] = useState(
+    () => sourcePrompt?.promptText ?? sourceResponse?.promptText ?? "",
+  );
+  const [tool, setTool] = useState(() => sourcePrompt?.tool ?? "");
+  const [selectedTags, setSelectedTags] = useState<Tag[]>(
+    () => sourcePrompt?.tags ?? sourceResponse?.tags ?? [],
+  );
   const [uploadedImage, setUploadedImage] = useState<{ url: string; width: number; height: number } | null>(
     null,
   );
@@ -75,6 +104,17 @@ export function CreatePromptForm() {
     setSubmitted(true);
   }
 
+  const origin: Prompt["origin"] = sourcePrompt
+    ? {
+        type: "remix",
+        sourcePromptId: sourcePrompt.id,
+        rootPromptId:
+          sourcePrompt.origin.type === "remix" ? sourcePrompt.origin.rootPromptId : sourcePrompt.id,
+      }
+    : sourceResponse
+      ? { type: "request-response", requestId: sourceResponse.requestId, responseId: sourceResponse.id }
+      : { type: "original" };
+
   const previewPrompt: Prompt = {
     id: "preview",
     author: me,
@@ -96,7 +136,7 @@ export function CreatePromptForm() {
           ]
         : [],
     tags: selectedTags,
-    origin: { type: "original" },
+    origin,
     likeCount: 0,
     commentCount: 0,
     remixCount: 0,
@@ -108,7 +148,9 @@ export function CreatePromptForm() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-6 lg:px-6">
-      <h1 className="mb-1 text-lg font-semibold text-text">Prompt Oluştur</h1>
+      <h1 className="mb-1 text-lg font-semibold text-text">
+        {sourcePrompt || sourceResponse ? "Remix Oluştur" : "Prompt Oluştur"}
+      </h1>
       <p className="mb-6 text-sm text-text-muted">
         Promptunu yaz, sağda anında önizlemesini gör. Gerçek paylaşım, Supabase entegrasyonu
         kurulduğunda aktif olacak (bkz. CLAUDE.md Bölüm 18–21).
@@ -116,6 +158,30 @@ export function CreatePromptForm() {
 
       <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
         <form onSubmit={handleSubmit} className="space-y-5">
+          {(sourcePrompt || sourceResponse) && (
+            <div className="flex items-start gap-2 rounded-md border border-primary/30 bg-primary/5 p-3 text-sm text-primary">
+              <Repeat2 size={16} className="mt-0.5 shrink-0" />
+              <p>
+                {sourcePrompt ? (
+                  <>
+                    <Link href={`/prompts/${sourcePrompt.id}`} className="font-medium underline">
+                      &ldquo;{sourcePrompt.title}&rdquo;
+                    </Link>{" "}
+                    içeriğinin remixi olarak dolduruldu
+                  </>
+                ) : (
+                  <>
+                    <Link href={`/requests/${sourceResponse!.requestId}`} className="font-medium underline">
+                      bir istek yanıtı
+                    </Link>{" "}
+                    temel alınarak dolduruldu
+                  </>
+                )}
+                {" "}— dilediğin gibi düzenleyebilirsin, köken bağlantısı önizlemede korunuyor.
+              </p>
+            </div>
+          )}
+
           <div>
             <label className="mb-2 block text-sm font-medium text-text">İçerik Türü</label>
             <div className="flex flex-wrap gap-2">

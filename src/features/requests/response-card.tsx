@@ -1,4 +1,5 @@
-import { Heart, MessageCircle } from "lucide-react";
+import Link from "next/link";
+import { Heart, MessageCircle, Repeat2 } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { formatCount, formatRelativeTime } from "@/lib/utils";
@@ -44,6 +45,14 @@ export function ResponseCard({ response }: { response: PromptRequestResponse }) 
             <MessageCircle size={14} />
             {formatCount(response.commentCount)}
           </span>
+          <Link
+            href={`/create?remixResponse=${response.id}`}
+            className="flex items-center gap-1 text-primary hover:underline"
+            title="Bu yanıtı remixle"
+          >
+            <Repeat2 size={14} />
+            Remixle
+          </Link>
         </div>
       </div>
     </div>

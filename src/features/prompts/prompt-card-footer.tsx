@@ -42,9 +42,9 @@ export function PromptCardFooter({ prompt }: { prompt: Prompt }) {
           {formatCount(prompt.commentCount)}
         </Link>
         <Link
-          href={`/prompts/${prompt.id}`}
+          href={`/create?remix=${prompt.id}`}
           className="flex items-center gap-1 text-xs hover:text-text"
-          title="Remixler"
+          title="Bu promptu remixle"
         >
           <Repeat2 size={14} />
           {formatCount(prompt.remixCount)}
