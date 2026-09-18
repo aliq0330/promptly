@@ -1,6 +1,10 @@
 import { ImageIcon } from "lucide-react";
 import { PlaceholderPage } from "@/components/ui/placeholder-page";
 
+export function generateStaticParams() {
+  return [{ id: "1" }];
+}
+
 export default function PromptDetailPage() {
   return (
     <PlaceholderPage

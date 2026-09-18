@@ -1,6 +1,10 @@
 import { MessageCircle } from "lucide-react";
 import { PlaceholderPage } from "@/components/ui/placeholder-page";
 
+export function generateStaticParams() {
+  return [{ conversationId: "1" }];
+}
+
 export default function ConversationPage() {
   return (
     <PlaceholderPage

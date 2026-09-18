@@ -1,6 +1,10 @@
 import { User } from "lucide-react";
 import { PlaceholderPage } from "@/components/ui/placeholder-page";
 
+export function generateStaticParams() {
+  return [{ username: "user" }];
+}
+
 export default function ProfilePage() {
   return (
     <PlaceholderPage

@@ -1,6 +1,10 @@
 import { Sparkles } from "lucide-react";
 import { PlaceholderPage } from "@/components/ui/placeholder-page";
 
+export function generateStaticParams() {
+  return [{ id: "1" }];
+}
+
 export default function RequestDetailPage() {
   return (
     <PlaceholderPage
