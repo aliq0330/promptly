@@ -304,6 +304,18 @@ feed, keşfet, istekler, bildirimler, mesajlar ve profil sayfaları dolduruldu.
   `MobileNav` ve `AppShell`'in ana içerik alt boşluğu artık
   `env(safe-area-inset-bottom)`'ı hesaba katıyor (çentikli/Dynamic Island
   cihazlarda alt navigasyonun içerik ile çakışmaması için).
+- `RequestCard` artık bağımsız kart görünümüne kavuştu: diğer kart tiplerinde
+  olduğu gibi kendi `rounded-lg border bg-surface` çerçevesi ve üstte
+  `placeholder-image.ts`'den üretilen renkli bir "bokeh" banner var
+  (Sparkles ikonu + durum rozeti bindirilmiş). Daha önce yalnızca
+  `/requests`'teki ortak listeye (`RequestList`'in dış çerçevesine) güveniyordu;
+  Ana Sayfa/Keşfet karma akışında bağımsız kullanıldığında görünmez arkaplanla
+  render oluyordu. `RequestList` artık kartların kendi çerçevesine güvenerek
+  basit bir `space-y-4` yığını. Not: CSS `background-image: url(...)`
+  içine SVG data URI gömülürken **mutlaka tırnaklanmalı**
+  (`url("${svg}")`) — SVG içindeki `fill="url(#id)"` gibi referanslardaki
+  parantezler tırnaksız gömülünce CSS ayrıştırmayı sessizce bozup
+  `background-image: none` sonucu veriyor (bu projede yaşandı ve düzeltildi).
 
 **Bilinen sorunlar / bilinçli basitleştirmeler:**
 - Tablet için ayrı bir navigasyon/genişlik düzeni henüz yok; `lg` (1024px)

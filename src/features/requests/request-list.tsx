@@ -9,7 +9,7 @@ export function RequestList({ requests }: { requests: PromptRequest[] }) {
   }
 
   return (
-    <div className="overflow-hidden rounded-lg border border-border bg-surface">
+    <div className="space-y-4">
       {requests.map((request) => (
         <RequestCard key={request.id} request={request} />
       ))}
