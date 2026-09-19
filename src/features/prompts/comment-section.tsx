@@ -7,10 +7,12 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useOwnProfile } from "@/features/auth/own-profile-provider";
 import {
+  deleteComment,
   fetchCommentsForPrompt,
   fetchCommentsForRequest,
   postCommentOnPrompt,
   postCommentOnRequest,
+  updateComment,
 } from "@/lib/supabase/comments";
 import { fetchLikedCommentIds, likeComment, unlikeComment } from "@/lib/supabase/comment-likes";
 import { CommentNode, type CommentTree } from "./comment-node";
@@ -51,6 +53,15 @@ export function CommentSection({
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
   const [likeCounts, setLikeCounts] = useState<Record<string, number>>({});
   const [pendingLikeIds, setPendingLikeIds] = useState<Set<string>>(new Set());
+
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState("");
+  const [editError, setEditError] = useState<string | null>(null);
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
+
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [isDeletingId, setIsDeletingId] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const nodeRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const pendingScrollToId = useRef<string | null>(null);
@@ -205,6 +216,66 @@ export function CommentSection({
     }
   }
 
+  function startEdit(comment: PromptComment) {
+    setEditingId(comment.id);
+    setEditDraft(comment.body);
+    setEditError(null);
+    // Editing and replying to the same node at once would be confusing UI-wise.
+    if (replyingTo === comment.id) cancelReply();
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setEditDraft("");
+    setEditError(null);
+  }
+
+  async function submitEdit(id: string) {
+    const trimmed = editDraft.trim();
+    if (!trimmed || isSavingEdit) return;
+    setIsSavingEdit(true);
+    setEditError(null);
+    try {
+      const { editedAt } = await updateComment(id, trimmed);
+      setComments((prev) =>
+        prev.map((c) => (c.id === id ? { ...c, body: trimmed, editedAt } : c)),
+      );
+      cancelEdit();
+    } catch (err) {
+      setEditError(err instanceof Error ? err.message : "Yorum düzenlenemedi, lütfen tekrar dene.");
+    } finally {
+      setIsSavingEdit(false);
+    }
+  }
+
+  function cancelDeleteConfirm() {
+    setDeleteConfirmId(null);
+  }
+
+  async function requestDelete(id: string) {
+    if (deleteConfirmId !== id) {
+      setDeleteConfirmId(id);
+      return;
+    }
+    setDeleteConfirmId(null);
+    setIsDeletingId(id);
+    setDeleteError(null);
+    try {
+      await deleteComment(id);
+      // The database alone decides whether this was a real delete (no
+      // replies) or a soft delete (replies exist, preserved) — either way
+      // marking it "deleted" here is correct: a real delete just won't be
+      // in the list anymore next time this thread is fetched fresh, and a
+      // soft delete needs exactly this placeholder treatment right now.
+      const deletedAt = new Date().toISOString();
+      setComments((prev) => prev.map((c) => (c.id === id ? { ...c, body: "", deletedAt } : c)));
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : "Yorum silinemedi, lütfen tekrar dene.");
+    } finally {
+      setIsDeletingId(null);
+    }
+  }
+
   const tree: CommentTree = {
     childrenByParent,
     commentsById,
@@ -219,10 +290,23 @@ export function CommentSection({
     isPosting: isPostingReply,
     postError: replyError,
     canInteract: Boolean(user),
+    currentUserId: user?.id ?? null,
     likedIds,
     likeCounts,
     pendingLikeIds,
     onToggleLike: toggleLike,
+    editingId,
+    onStartEdit: startEdit,
+    onCancelEdit: cancelEdit,
+    editDraft,
+    onEditDraftChange: setEditDraft,
+    onSubmitEdit: submitEdit,
+    isSavingEdit,
+    editError,
+    deleteConfirmId,
+    onRequestDelete: requestDelete,
+    onCancelDeleteConfirm: cancelDeleteConfirm,
+    isDeletingId,
     registerNodeRef,
   };
 
@@ -260,6 +344,7 @@ export function CommentSection({
       )}
 
       {postError && <p className="text-sm text-red-500">{postError}</p>}
+      {deleteError && <p className="text-sm text-red-500">{deleteError}</p>}
 
       {!loaded ? (
         <p className="py-6 text-center text-sm text-text-muted">Yükleniyor…</p>

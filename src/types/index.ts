@@ -87,6 +87,16 @@ export interface PromptComment {
   /** This comment/reply's own like count — entirely independent of the post's `Prompt.likeCount` and of any other comment's count (`comment_likes` table). */
   likeCount: number;
   createdAt: string;
+  /** Set the moment `body` last changed — never touched by likes or by the delete flow below. */
+  editedAt: string | null;
+  /**
+   * Set when the author deleted this comment/reply — the row itself is
+   * kept (not hard-deleted) whenever it still has real replies, so the
+   * thread structure and those replies are never silently lost; `body` is
+   * cleared server-side and the UI shows a placeholder instead. A comment
+   * with no replies is hard-deleted instead (never appears with this set).
+   */
+  deletedAt: string | null;
 }
 
 export type PromptRequestStatus = "open" | "answered" | "closed";

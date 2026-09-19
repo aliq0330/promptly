@@ -6,20 +6,21 @@ veri modelini birebir yansıtan gerçek Postgres şemasını (CLAUDE.md Bölüm
 ve görsel yükleme için Supabase Storage bucket'larını (Bölüm 20) oluşturur.
 Dosyalar sırayla (dosya adındaki zaman damgasına göre) uygulanmalıdır.
 
-**Durum:** İlk 9 dosya — Bölüm 18 şema + Bölüm 19 RLS + Bölüm 9.2'nin
-`20260919150000_request_response_workflow.sql`'i — kullanıcı tarafından
-gerçek Supabase projesine (Dashboard → SQL Editor) başarıyla uygulandı ve
-doğrulandı. `20260919140000_storage.sql` (Bölüm 20, Storage bucket'ları)
-ve yeni `20260919160000_comment_likes_and_notifications.sql` (Bölüm 9.4,
-yorum beğenisi + yanıt/beğeni bildirimleri) bu depodan otomatik olarak
+**Durum:** İlk 10 dosya — Bölüm 18 şema + Bölüm 19 RLS + Bölüm 9.2'nin
+`20260919150000_request_response_workflow.sql`'i + Bölüm 9.4'ün
+`20260919160000_comment_likes_and_notifications.sql`'i — kullanıcı
+tarafından gerçek Supabase projesine (Dashboard → SQL Editor) başarıyla
+uygulandı ve doğrulandı. `20260919140000_storage.sql` (Bölüm 20, Storage
+bucket'ları) ve yeni `20260919170000_comment_edit_delete.sql` (Bölüm 9.5,
+yorum/yanıt düzenleme + güvenli silme) bu depodan otomatik olarak
 uygulanmadı — Claude Code'un çalıştığı ortamın ağ politikası gerçek
 Supabase projesinin veritabanına doğrudan erişimi engelliyor, bu yüzden
 yalnızca yerel, geçici bir Postgres 16 örneğinde gerçek rol simülasyonuyla
 test edildi (bkz. aşağıdaki "Nasıl doğrulandı" bölümü) — gerçek projenize
-henüz uygulanmadı. **`20260919160000` uygulanmadan** yorum/yanıt beğenme
-frontend'de hata verir (`comment_likes` tablosu ve `prompt_comments.
-like_count` kolonu henüz yok demektir) — bu migration'ı uygulamak bu
-özelliğin çalışması için **zorunlu**.
+henüz uygulanmadı. **`20260919170000` uygulanmadan** yorum/yanıt düzenleme
+ve silme frontend'de hata verir (`prompt_comments.edited_at`/`deleted_at`
+kolonları henüz yok demektir) — bu migration'ı uygulamak bu özelliğin
+çalışması için **zorunlu**.
 
 ## Nasıl uygularsınız
 
@@ -29,8 +30,8 @@ like_count` kolonu henüz yok demektir) — bu migration'ı uygulamak bu
    menüden **SQL Editor**'ü açın.
 2. `migrations/` klasöründeki her dosyayı **dosya adındaki sıraya göre**
    (20260919120000, 20260919120100, ... 20260919120600, 20260919130000,
-   20260919140000, 20260919150000, 20260919160000) tek tek açıp içeriğini
-   SQL Editor'e yapıştırıp **Run**'a basın.
+   20260919140000, 20260919150000, 20260919160000, 20260919170000) tek
+   tek açıp içeriğini SQL Editor'e yapıştırıp **Run**'a basın.
 3. Her dosya başarıyla çalıştıktan sonra bir sonrakine geçin. Bir hata
    alırsanız durdurun ve hatayı paylaşın.
 
@@ -168,6 +169,23 @@ tamamen kapalı kalır — güvenli tarafta kalan bilinçli bir ara durum.
   - `notify_comment_like()` (AFTER INSERT, `SECURITY DEFINER`) — bir
     yorum/yanıt beğenildiğinde sahibine bildirim yazar (`like` tipi).
     İkisi de kendi kendine bildirim üretmiyor.
+
+- `20260919170000_comment_edit_delete.sql` — yorum/yanıt düzenleme ve
+  güvenli silme (Bölüm 9.5). RLS zaten Bölüm 19'dan beri "yalnızca sahibi
+  güncelleyebilir/silebilir" politikalarını taşıyordu, bu migration:
+  - `prompt_comments.edited_at`/`deleted_at` — iki yeni sütun.
+  - `handle_comment_body_edit()` (BEFORE UPDATE) — yalnızca `body`
+    gerçekten değiştiğinde `edited_at`'i damgalıyor.
+  - `handle_comment_delete()` (BEFORE DELETE) — kritik güvenlik davranışı:
+    `prompt_comments.parent_id`'nin `on delete cascade` olması, bir yorumu
+    doğrudan silmenin TÜM alt yanıt ağacını beraberinde sileceği anlamına
+    geliyordu. Bu trigger, silinecek yorumun gerçek alt yanıtları varsa
+    DELETE'i iptalleyip yerine bir soft-delete UPDATE'i (`deleted_at`
+    damgalama + `body`'yi boşaltma) uyguluyor; alt yanıtı yoksa DELETE'e
+    olduğu gibi izin veriyor. Frontend her zaman aynı basit `DELETE`
+    çağrısını yapıyor — veritabanı, tek ve atomik bir işlemde, hiçbir
+    yarış durumuna açık olmadan hangi davranışın uygulanacağına karar
+    veriyor.
 
 ## Nasıl doğrulandı
 
