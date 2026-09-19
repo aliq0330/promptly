@@ -1887,6 +1887,50 @@ onun yanında ayrı, dürüstçe belgelenmiş bir katman olarak duruyor.
     hatası olmadığı 21 adımlık ek bir taramayla doğrulandı.
   - `npx tsc --noEmit`, `npm run lint` ve tam `npm run build` (92 statik
     sayfa) hatasız geçti.
+  - **Düzeltme — "Mesaj Gönder"e basınca hiçbir şey olmuyordu (gerçek
+    kullanıcı bildirdi):** Faz 6'nın ilk sürümünde `getOrCreateDirectConversation`
+    yeni bir konuşma oluştururken `supabase.from("conversations").insert({}).
+    select("id, last_message_at").single()` kullanıyordu — id'yi Postgres'in
+    `gen_random_uuid()` varsayılanına bırakıp `RETURNING` ile geri okuyordu.
+    Ama `conversations` tablosunun SELECT RLS politikası
+    `is_conversation_member(id)`: INSERT anında (üyelik satırları henüz bir
+    sonraki iki adımda ekleniyor) bu oturum için HENÜZ hiçbir üyelik satırı
+    yok, bu yüzden `RETURNING`'in gösterebileceği hiçbir satır yok —
+    `.single()` sıfır satır karşısında hata fırlatıyor. INSERT'in kendisi
+    aslında BAŞARILI oluyordu, ama uygulama yeni konuşmanın id'sini asla
+    öğrenemiyordu ve fonksiyon hata fırlatıp duruyordu. `MessageButton`'ın
+    `catch` bloğu bu hatayı yalnızca `console.error`'a yazıp sessizce
+    yutuyordu (kullanıcıya hiçbir şey göstermiyordu) — bu yüzden gerçek bir
+    kullanıcı için "Mesaj Gönder"e basmak gözle görülür hiçbir şey
+    yapmıyordu. Bu sandbox'ın ağ politikası gerçek Supabase'e erişimi
+    engellediğinden ve Faz 6'nın testleri REST yanıtlarını taklit ederek
+    (gerçek Postgres/RLS'i hiç çalıştırmadan) yapıldığından, bu spesifik
+    RLS etkileşimi hiç ortaya çıkmamıştı — yalnızca gerçek bir kullanıcının
+    gerçek projeye karşı denemesiyle fark edildi.
+    - **Düzeltme:** konuşmanın id'si artık İSTEMCİ TARAFINDA
+      (`crypto.randomUUID()`) üretiliyor ve INSERT'e açıkça yazılıyor;
+      INSERT'ten sonra hiçbir `.select()` çağrılmıyor, bu yüzden RLS'in
+      henüz var olmayan bir üyelikten dolayı `RETURNING`'i gizlemesi
+      sorunu tamamen ortadan kalkıyor. `MessageButton`'a ayrıca kullanıcıya
+      görünür bir hata mesajı eklendi (`publishError` benzeri desen) —
+      böyle bir başarısızlık bir daha olursa sessizce yutulmak yerine
+      ekranda görünecek.
+    - **Nasıl doğrulandı:** yeni bir Playwright regresyon testi, INSERT
+      isteğinin artık `select` parametresi TAŞIMADIĞINI doğruluyor ve eğer
+      taşısaydı (eski hatalı koda bir geri dönüş olsaydı) RLS'in gerçek
+      davranışını taklit ederek (boş dizi döndürerek) testin BAŞARISIZ
+      olmasını sağlıyor — yani bu regresyon artık test paketi tarafından
+      yakalanıyor. Faz 6'nın tüm 30 adımı (9+21) bu düzeltmeyle birlikte
+      tekrar çalıştırılıp yeniden doğrulandı.
+    - **Ders:** ağ seviyesinde taklit edilmiş REST yanıtlarıyla test etmek
+      (bu oturumun ağ kısıtı yüzünden Bölüm 17'den beri kullanılan yöntem)
+      uygulama mantığını doğrular ama gerçek Postgres RLS etkileşimlerini
+      DOĞRULAYAMAZ — özellikle "bir satırı INSERT edip aynı anda RETURNING
+      ile geri okuma" gibi, SELECT politikasının INSERT anındaki durum
+      üzerinden değerlendirildiği senaryolarda. Bu, Bölüm 21'in tamamında
+      (Faz 1-6) tekrarlanan, dürüstçe belirtilmiş bir sınırlamanın somut
+      bir örneği — gerçek bir kullanıcının gerçek ortamda denemesi hâlâ
+      vazgeçilmez bir doğrulama adımı.
 
 **Bilinen sorunlar / bilinçli basitleştirmeler (Bölüm 21 Faz 6 için ek —
 ve Bölüm 21'in tamamı için genel bir özet):**

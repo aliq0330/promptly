@@ -198,12 +198,26 @@ async function findDirectConversationId(userId: string, otherUserId: string): Pr
 /**
  * Finds an existing real 1:1 conversation between these two real users, or
  * creates a new one — the entry point for a real profile's "Mesaj Gönder"
- * button (CLAUDE.md Bölüm 21 Faz 6). The two membership rows are inserted
- * as two separate statements on purpose, not one multi-row insert: the
- * membership RLS policy's `WITH CHECK` for the *other* user's row relies on
- * `is_conversation_member()` already seeing this session's own row, and a
- * single multi-row INSERT doesn't guarantee that visibility across its own
- * rows the way two sequential statements do.
+ * button (CLAUDE.md Bölüm 21 Faz 6).
+ *
+ * The new conversation's id is generated CLIENT-SIDE (`crypto.randomUUID()`)
+ * instead of letting Postgres's `gen_random_uuid()` default assign it and
+ * reading it back with `.insert({}).select().single()` — that read-back is
+ * a real bug that shipped in the first version of this function: the
+ * `conversations` SELECT policy is `is_conversation_member(id)`, and at the
+ * moment of the INSERT no membership row exists yet (that's the next two
+ * statements), so the `RETURNING` clause has nothing it's allowed to show
+ * and `.single()` throws — the insert itself actually succeeds, but the
+ * caller never finds out the new conversation's id, so "Mesaj Gönder"
+ * silently did nothing. Knowing the id upfront sidesteps this chicken-and-
+ * egg RLS problem entirely; nothing needs to be read back afterward.
+ *
+ * The two membership rows are still inserted as two separate statements,
+ * not one multi-row insert: the membership RLS policy's `WITH CHECK` for
+ * the *other* user's row relies on `is_conversation_member()` already
+ * seeing this session's own row, and a single multi-row INSERT doesn't
+ * guarantee that visibility across its own rows the way two sequential
+ * statements do.
  */
 export async function getOrCreateDirectConversation(
   userId: string,
@@ -216,15 +230,11 @@ export async function getOrCreateDirectConversation(
     if (found) return found;
   }
 
-  const { data: conversation, error: conversationError } = await supabase
-    .from("conversations")
-    .insert({})
-    .select("id, last_message_at")
-    .single();
-  if (conversationError || !conversation) {
-    throw new Error(conversationError?.message ?? "Konuşma oluşturulamadı.");
+  const conversationId = crypto.randomUUID();
+  const { error: conversationError } = await supabase.from("conversations").insert({ id: conversationId });
+  if (conversationError) {
+    throw new Error(conversationError.message);
   }
-  const conversationId = conversation.id as string;
 
   try {
     const { error: selfError } = await supabase
@@ -237,6 +247,9 @@ export async function getOrCreateDirectConversation(
       .insert({ conversation_id: conversationId, user_id: otherUserId });
     if (otherError) throw new Error(otherError.message);
   } catch (err) {
+    // Best-effort — there's no DELETE policy on `conversations`, so this
+    // won't actually remove the orphaned row, but it's harmless to try and
+    // costs nothing if it no-ops.
     await supabase.from("conversations").delete().eq("id", conversationId);
     throw err instanceof Error ? err : new Error("Konuşma oluşturulamadı.");
   }
@@ -245,7 +258,7 @@ export async function getOrCreateDirectConversation(
     id: conversationId,
     participants: [otherProfile],
     lastMessage: "Henüz mesaj yok.",
-    lastMessageAt: conversation.last_message_at ?? new Date().toISOString(),
+    lastMessageAt: new Date().toISOString(),
     unreadCount: 0,
   };
 }

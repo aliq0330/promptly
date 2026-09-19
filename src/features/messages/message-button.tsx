@@ -30,6 +30,7 @@ export function MessageButton({
   const { user: authUser } = useAuth();
   const { startConversationWith } = useRealMessages();
   const [isStarting, setIsStarting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const isRealTarget = isUuid(user.id);
 
   if (!isRealTarget) {
@@ -53,19 +54,24 @@ export function MessageButton({
 
   async function handleClick() {
     setIsStarting(true);
+    setError(null);
     try {
       const conversation = await startConversationWith(user);
       router.push(messageHref(conversation));
     } catch (err) {
       console.error("startConversationWith", err);
+      setError(err instanceof Error ? err.message : "Konuşma başlatılamadı, lütfen tekrar dene.");
       setIsStarting(false);
     }
   }
 
   return (
-    <button type="button" onClick={handleClick} disabled={isStarting} className={CLASS_NAME}>
-      <MessageCircle size={14} />
-      {isStarting ? "Açılıyor..." : "Mesaj Gönder"}
-    </button>
+    <div className="flex flex-col items-center gap-1">
+      <button type="button" onClick={handleClick} disabled={isStarting} className={CLASS_NAME}>
+        <MessageCircle size={14} />
+        {isStarting ? "Açılıyor..." : "Mesaj Gönder"}
+      </button>
+      {error && <p className="text-xs text-red-500">{error}</p>}
+    </div>
   );
 }
