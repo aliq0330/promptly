@@ -18,13 +18,12 @@ const NOTIFICATION_SELECT = `
 `;
 
 /**
- * This user's real notifications, newest first. Real per Bölüm 19's RLS
- * (a user only ever sees their own), but nothing in the app writes to this
- * table yet — Bölüm 19 deliberately left no client insert policy (to stop
- * a user faking a notification "from" someone else), and no server-side
- * trigger produces one either. So this always resolves to an empty list
- * today; that's the honest, correct answer, not a bug — it becomes useful
- * the moment a future phase adds real notification generation.
+ * This user's real notifications, newest first. RLS (Bölüm 19) already
+ * limits this to the caller's own rows; a series of `SECURITY DEFINER`
+ * triggers (Bölüm 19, 20260919150000, 20260919160000, 20260919180000) now
+ * actually populate this table for likes/comments/replies/remixes/request
+ * responses/follows/messages, so this resolves to real data once any of
+ * those events happen to the signed-in user.
  */
 export async function fetchNotificationsForUser(userId: string): Promise<AppNotification[]> {
   try {
@@ -50,4 +49,35 @@ export async function fetchNotificationsForUser(userId: string): Promise<AppNoti
     console.error("fetchNotificationsForUser", err);
     return [];
   }
+}
+
+/**
+ * Marks one of the CALLER's OWN notifications read. Recipient ownership is
+ * enforced server-side by RLS (`auth.uid() = recipient_id`), not just by
+ * this `userId` filter — a client-supplied id alone proves nothing, so a
+ * mismatched id here simply matches zero rows rather than affecting
+ * someone else's notification.
+ */
+export async function markNotificationRead(notificationId: string, userId: string): Promise<void> {
+  const { error } = await supabase
+    .from("notifications")
+    .update({ is_read: true })
+    .eq("id", notificationId)
+    .eq("recipient_id", userId);
+  if (error) throw new Error(error.message);
+}
+
+/**
+ * Deletes one of the CALLER's OWN notifications. Same RLS-backed ownership
+ * guarantee as `markNotificationRead`. This only ever removes the
+ * notification row itself — it has no path to the underlying like/comment/
+ * follow/remix/message it was about.
+ */
+export async function deleteNotification(notificationId: string, userId: string): Promise<void> {
+  const { error } = await supabase
+    .from("notifications")
+    .delete()
+    .eq("id", notificationId)
+    .eq("recipient_id", userId);
+  if (error) throw new Error(error.message);
 }

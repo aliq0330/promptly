@@ -8,22 +8,19 @@ import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useOwnProfile } from "@/features/auth/own-profile-provider";
 import { useRealMessages } from "@/features/messages/real-messages-provider";
+import { useNotifications } from "@/features/notifications/notifications-provider";
 import { profileHref } from "@/lib/utils";
 
 /**
  * The "Giriş Yap" link is the real auth entry point: it only shows when
  * there's genuinely no Supabase session. Signed in, the avatar links to the
  * real signed-in user's own real profile.
- *
- * The notification bell never shows an unread dot: nothing in the app
- * writes to the real `notifications` table yet (Bölüm 19 deliberately left
- * no client insert policy, and no server-side trigger produces one either)
- * — see `/notifications`'s own empty state for the same honest limitation.
  */
 export function Header() {
   const { user, loading } = useAuth();
   const { profile: ownProfile } = useOwnProfile();
   const { conversations: realConversations } = useRealMessages();
+  const { unreadCount } = useNotifications();
   const hasUnreadMessages = realConversations.some((c) => c.unreadCount > 0);
 
   return (
@@ -62,6 +59,9 @@ export function Header() {
           className={iconButtonClassName(false, "shrink-0 relative")}
         >
           <Bell size={20} />
+          {unreadCount > 0 && (
+            <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-primary" />
+          )}
         </Link>
         <Link
           href="/messages"

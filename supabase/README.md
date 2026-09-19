@@ -11,16 +11,20 @@ Dosyalar sırayla (dosya adındaki zaman damgasına göre) uygulanmalıdır.
 `20260919160000_comment_likes_and_notifications.sql`'i — kullanıcı
 tarafından gerçek Supabase projesine (Dashboard → SQL Editor) başarıyla
 uygulandı ve doğrulandı. `20260919140000_storage.sql` (Bölüm 20, Storage
-bucket'ları) ve yeni `20260919170000_comment_edit_delete.sql` (Bölüm 9.5,
-yorum/yanıt düzenleme + güvenli silme) bu depodan otomatik olarak
-uygulanmadı — Claude Code'un çalıştığı ortamın ağ politikası gerçek
-Supabase projesinin veritabanına doğrudan erişimi engelliyor, bu yüzden
-yalnızca yerel, geçici bir Postgres 16 örneğinde gerçek rol simülasyonuyla
-test edildi (bkz. aşağıdaki "Nasıl doğrulandı" bölümü) — gerçek projenize
-henüz uygulanmadı. **`20260919170000` uygulanmadan** yorum/yanıt düzenleme
-ve silme frontend'de hata verir (`prompt_comments.edited_at`/`deleted_at`
-kolonları henüz yok demektir) — bu migration'ı uygulamak bu özelliğin
-çalışması için **zorunlu**.
+bucket'ları), `20260919170000_comment_edit_delete.sql` (Bölüm 9.5,
+yorum/yanıt düzenleme + güvenli silme) ve yeni
+`20260919180000_notification_system_completion.sql` (Bölüm 9.6, bildirim
+sistemi denetimi + tamamlaması) bu depodan otomatik olarak uygulanmadı —
+Claude Code'un çalıştığı ortamın ağ politikası gerçek Supabase projesinin
+veritabanına doğrudan erişimi engelliyor, bu yüzden yalnızca yerel, geçici
+bir Postgres 16 örneğinde gerçek rol simülasyonuyla test edildi (bkz.
+aşağıdaki "Nasıl doğrulandı" bölümü) — gerçek projenize henüz
+uygulanmadı. **`20260919170000` uygulanmadan** yorum/yanıt düzenleme ve
+silme frontend'de hata verir (`prompt_comments.edited_at`/`deleted_at`
+kolonları henüz yok demektir); **`20260919180000` uygulanmadan** beğeni/
+yorum/remix/takip/mesaj/istek olayları için gerçek bildirim üretilmez ve
+bildirimleri okundu işaretleme/silme frontend'de hata verir — ikisi de
+kendi özellikleri için **zorunlu**.
 
 ## Nasıl uygularsınız
 
@@ -30,8 +34,9 @@ kolonları henüz yok demektir) — bu migration'ı uygulamak bu özelliğin
    menüden **SQL Editor**'ü açın.
 2. `migrations/` klasöründeki her dosyayı **dosya adındaki sıraya göre**
    (20260919120000, 20260919120100, ... 20260919120600, 20260919130000,
-   20260919140000, 20260919150000, 20260919160000, 20260919170000) tek
-   tek açıp içeriğini SQL Editor'e yapıştırıp **Run**'a basın.
+   20260919140000, 20260919150000, 20260919160000, 20260919170000,
+   20260919180000) tek tek açıp içeriğini SQL Editor'e yapıştırıp
+   **Run**'a basın.
 3. Her dosya başarıyla çalıştıktan sonra bir sonrakine geçin. Bir hata
    alırsanız durdurun ve hatayı paylaşın.
 
@@ -187,6 +192,35 @@ tamamen kapalı kalır — güvenli tarafta kalan bilinçli bir ara durum.
     yarış durumuna açık olmadan hangi davranışın uygulanacağına karar
     veriyor.
 
+- `20260919180000_notification_system_completion.sql` — bildirim
+  sisteminin tam bir denetimi + eksiklerin kapatılması (Bölüm 9.6).
+  Önce mevcut 4 bildirim üreticisi (`notify_new_request_response`,
+  `notify_selected_response`, `notify_comment_reply`, `notify_comment_
+  like`) ve RLS politikaları denetlendi — hepsi doğru çalışıyordu ve
+  DEĞİŞTİRİLMEDEN korundu, yalnızca gerçek eksikler kapatıldı:
+  - `notifications.dedupe_key text` + kısmi tekil indeks — yalnızca
+    beğeni/yorum-beğenisi gibi geri çekilebilir olaylarda, o olayın
+    bildirimini atomik olarak bulup silebilmek için.
+  - "Users can delete their own notifications" — eksik olan DELETE RLS
+    politikası.
+  - İçerik silme temizleyicileri (`prompts`/`prompt_requests` AFTER
+    DELETE) — geçersiz bir hedefe işaret eden bildirimleri temizliyor.
+  - Yeni üreticiler: `notify_prompt_like`, `notify_new_remix`,
+    `notify_new_follow`, `notify_new_message`, ve `notify_comment_reply`'a
+    eklenen yeni dal (bir gönderiye/isteğe DOĞRUDAN yorum — öncesinde
+    yalnızca yanıt zinciri kapsanıyordu).
+  - `notify_selected_response` yeniden yazıldı: artık seçim değişince HEM
+    eski sahibine ("artık seçili değil") HEM yeni sahibine ("seçildi")
+    ayrı ayrı, birbirine karışmadan bildirim üretiyor.
+  - `notify_request_closed` (YENİ) — bir istek manuel kapatılınca (yalnızca
+    manuel — otomatik "yanıtlandı" geçişinde değil) gerçek yanıt vermiş
+    her kullanıcıya (istek sahibi hariç) bildirim üretiyor.
+  - **Kasıtlı olarak eklenmedi:** "istek gönderisini beğenme" bildirimi
+    (uygulamada böyle bir beğenme özelliği hiç yok) ve sistem duyurusu
+    üretimi (bir duyuru yazma arayüzü hiç yok) — ikisi de var olmayan bir
+    özelliğin bildirimini icat etmemek için kasıtlı olarak dışarıda
+    bırakıldı.
+
 ## Nasıl doğrulandı
 
 **Bölüm 18 (şema):** Gerçek projeye erişim engellendiğinden, ilk 7 dosya
@@ -314,3 +348,32 @@ Baran/Cem = yanıtlayanlar) uçtan uca gerçekten test edildi:
 Test veritabanı işlem bitince silindi. Bu senaryoların tamamı gerçekten
 çalıştırılıp sonucu doğrulandı (görsel/statik kod incelemesi değil) — ama
 yine **gerçek Supabase projenize karşı hiç çalıştırılmadı**.
+
+**Bölüm 9.6 (bildirim sistemi tamamlaması, `20260919180000`):** Aynı
+yöntemle (yerel Postgres 16, `anon`/`authenticated` rol simülasyonu, üç
+test kullanıcısı) 10 test grubu halinde uçtan uca gerçekten test edildi —
+tam liste ve sonuçlar CLAUDE.md Bölüm 9.6'da. Özet: beğeni/yorum/yanıt/
+yorum-beğenisi/remix/istek-yanıtı-seçimi-değiştirme-kaldırma/istek-kapatma/
+takip/mesaj için doğru kişiye, mükerrer olmadan, doğru geri-alma
+davranışıyla bildirim üretimi; RLS'nin başkasının bildirimini okuma/
+silmeyi engellemesi; kendi bildirimini silmenin altta yatan ilişkiye
+dokunmaması; içerik silindiğinde bildirimin temizlenmesi — hepsi
+doğrulandı. Test sırasında iki gerçek şey bulundu:
+- **Migration'ın kendi hatası (test sırasında yakalanıp düzeltildi):**
+  `on conflict (dedupe_key) do nothing` kısmi bir indeksle eşleşmiyordu
+  (PostgreSQL, kısmi indeksleri "arbiter" olarak seçebilmek için `ON
+  CONFLICT` hedefinde aynı `WHERE`'in tekrarını istiyor) — düzeltildi
+  (`on conflict (dedupe_key) where dedupe_key is not null do nothing`)
+  ve yeniden test edilip doğrulandı.
+- **Bu göreve YABANCI, önceden var olan bir şema kısıtlaması (düzeltilmedi,
+  kapsam dışı):** `prompts.source_prompt_id`'nin `on delete set null`
+  olması ile `prompts_origin_shape` CHECK kısıtının (`origin_type='remix'`
+  → `source_prompt_id` ASLA null olamaz) çakışması yüzünden, remixlenmiş
+  herhangi bir orijinal prompt BUGÜN silinmeye çalışılırsa veritabanı
+  hatasıyla reddediliyor. Bu, bildirim sistemiyle ilgisi olmayan, Bölüm
+  18'den beri var olan bir tasarım boşluğu — bu migration'ın kapsamına
+  alınmadı, düzeltme için ayrı bir mimari karar (remixleri cascade silmek
+  mi, yoksa `origin_type`'ı farklı ele almak mı) gerekiyor.
+
+Test veritabanı işlem bitince silindi. Bu, gerçek Supabase projenize karşı
+hiç çalıştırılmadı — aynı, tekrarlanan sandbox ağ kısıtı.
