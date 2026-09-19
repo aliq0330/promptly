@@ -200,7 +200,10 @@ gerçek Supabase projesi bağlantısı yoktur.**
 16. [x] Özel mesajlaşma (mesaj gönderme henüz devre dışı)
 17. [x] Kayıt, giriş, hesap ayarları (gerçek Supabase Auth bağlantısı — bkz. Bölüm 9; hesap ↔ mock profil/veri entegrasyonu Bölüm 18/21'e bağlı)
 18. [x] Supabase veritabanı ve migration dosyaları (şema tasarlandı, 7 migration dosyası yazıldı ve yerel bir Postgres 16 örneğinde gerçek olarak doğrulandı; gerçek Supabase projesine HENÜZ uygulanmadı — bkz. `supabase/README.md` ve Bölüm 9)
-19. [ ] RLS ve güvenlik politikaları
+19. [x] RLS ve güvenlik politikaları (17 tablonun tümüne gerçek erişim
+    politikaları yazıldı ve yerel bir Postgres 16 örneğinde gerçek
+    `anon`/`authenticated` rol simülasyonuyla doğrulandı; gerçek Supabase
+    projesine HENÜZ uygulanmadı — bkz. `supabase/README.md` ve Bölüm 9)
 20. [ ] Supabase Storage
 21. [ ] Frontend'in gerçek Supabase'e bağlanması
 22. [ ] Moderasyon, engelleme, raporlama
@@ -211,10 +214,12 @@ gerçek Supabase projesi bağlantısı yoktur.**
 
 ## 9. Şu Anki Durum (bu bölüm her modül sonunda güncellenir)
 
-**Son güncelleme:** Bölüm 18 — Supabase veritabanı ve migration dosyaları
-tamamlandı. Projede artık **gerçek bir Supabase projesi bağlı** (ilk kez —
-CLAUDE.md §6/§20'nin "henüz hiçbir bağlantı yok" notu bu modülle kısmen
-aşıldı: Auth bağlı, veritabanı/Storage hâlâ yok). Sıradaki modül Bölüm 18.
+**Son güncelleme:** Bölüm 19 — RLS ve güvenlik politikaları. Bölüm 18'de
+yazılan şema artık kullanıcı tarafından gerçek Supabase projesine
+uygulandı (17 tablo canlıda mevcut); bu modül o tablolara gerçek erişim
+kuralları (kim neyi okuyabilir/yazabilir) ekledi. Auth (Bölüm 17) + şema
+(Bölüm 18) + RLS (Bölüm 19) hepsi artık gerçek — yalnızca frontend hâlâ
+bunlara bağlı değil (Bölüm 21'in işi).
 
 **Tamamlanan:**
 - CLAUDE.md oluşturuldu.
@@ -990,11 +995,11 @@ aşıldı: Auth bağlı, veritabanı/Storage hâlâ yok). Sıradaki modül Böl�
     kararını ve yukarıdaki doğrulama listesini Türkçe olarak belgeliyor.
 
 **Bilinen sorunlar / bilinçli basitleştirmeler (Bölüm 18 için ek):**
-- **Migration'lar gerçek Supabase projesine henüz uygulanmadı.** Bu
-  ortamın ağ politikası `*.supabase.co`'ya (canlı Postgres bağlantısı
-  dahil) doğrudan erişimi engellediğinden, bu adım kullanıcının kendisi
-  tarafından yapılmalı — `supabase/README.md`'deki iki seçenekten biriyle
-  (Dashboard SQL Editor veya Supabase CLI).
+- **Güncelleme:** Bölüm 18'in 7 migration dosyası kullanıcı tarafından
+  gerçek Supabase projesine (`supabase/README.md`'deki Seçenek A —
+  Dashboard SQL Editor ile) başarıyla uygulandı; şema artık canlıda
+  gerçekten var. (Bölüm 19'un RLS dosyası henüz uygulanmadı — aşağıya
+  bakınız.)
 - **Frontend hâlâ %100 mock veri üzerinde çalışıyor.** Şemanın var olması,
   uygulamanın onu kullandığı anlamına gelmiyor — `src/mocks/*` ve
   localStorage tabanlı provider'lar (Follow/Like/Save/Comment/
@@ -1008,4 +1013,112 @@ aşıldı: Auth bağlı, veritabanı/Storage hâlâ yok). Sıradaki modül Böl�
   sırayla, hata çıkarsa durup paylaşarak uygulamalı (README bunu açıkça
   söylüyor).
 
-**Sonraki modül:** RLS ve güvenlik politikaları (Bölüm 19).
+- **RLS ve güvenlik politikaları (Bölüm 19):** Bölüm 18'de RLS'nin
+  "oluşturulduğu anda açık, sıfır politika" bırakıldığı 17 tabloya gerçek
+  erişim kuralları eklendi (`supabase/migrations/20260919130000_rls_
+  policies.sql`, `supabase/README.md`'de tam liste ve gerekçeleriyle
+  belgelendi):
+  - **Herkese açık okuma, sahibine özel yazma:** `profiles`, `tags`,
+    `prompt_requests`, `prompt_media`, `prompt_tags`,
+    `prompt_request_tags`, `prompt_likes`, `follows` — CLAUDE.md §1'in
+    "keşif platformu" doğasına uygun: giriş yapmamış bir ziyaretçi bile
+    içeriği görebiliyor, yalnızca sahibi (author/user) değiştirebiliyor.
+  - **`prompts`:** `status = 'published'` olanlar herkese açık, taslaklar
+    (`status = 'draft'`) yalnızca yazarına görünür — `CreatePromptForm`'un
+    henüz kullanmadığı ama şemada zaten var olan taslak durumu artık
+    veritabanı seviyesinde de anlamlı.
+  - **`prompt_saves`:** kasıtlı olarak tamamen özel (yalnızca `auth.uid()
+    = user_id`) — CLAUDE.md'nin daha önce `/saved` sayfası için de
+    belirttiği ilke ile aynı: kaydetme kişisel bir eylem, herkese açık
+    değil.
+  - **`prompt_comments`:** hedefi (prompt/istek) görülebilen herkes
+    okuyabiliyor; yazma yalnızca kendi adına VE yalnızca görülebilen bir
+    hedefe (bir taslağa gizlice yorum eklenmesi `WITH CHECK`'te
+    engelleniyor).
+  - **Mesajlaşma (`conversations`/`conversation_members`/`messages`):**
+    yalnızca o konuşmanın üyeleri erişebiliyor. Üyelik kontrolü,
+    `conversation_members`'ın kendi RLS politikasının kendi kendine sorgu
+    içinde özyinelemeli şekilde tekrar uygulanması sorununu önlemek için
+    yeni bir `SECURITY DEFINER` yardımcı fonksiyon
+    (`is_conversation_member()`) üzerinden yapılıyor — Supabase'in resmi
+    dokümantasyonunun bu tam senaryo için önerdiği standart desen.
+  - **`notifications`:** yalnızca alıcısı görebiliyor/okundu
+    işaretleyebiliyor; client tarafından ekleme/silme yok (gerçek
+    bildirimler ileride sunucu tarafı `SECURITY DEFINER`
+    trigger/fonksiyonlarla üretilecek, Bölüm 21+).
+  - **`reports`, `blocks`:** yalnızca oluşturan kullanıcı kendi
+    kayıtlarını görebiliyor; moderatör rolü/çapraz görünürlük ve durum
+    değişiklikleri Bölüm 22'nin işi, şimdilik temel sahiplik politikaları
+    yeterli.
+  - **Kritik düzeltme — sayaç trigger'ları `SECURITY DEFINER` oldu:**
+    Bölüm 18'in `like_count`/`follower_count`/`following_count`/
+    `remix_count`/`response_count`/`unread_count`/`last_message_at`
+    sayaçlarını güncelleyen 5 trigger fonksiyonu (`handle_prompt_like_
+    change`, `handle_prompt_comment_change`, `handle_follow_change`,
+    `handle_prompt_origin_change`, `handle_new_message`) BAŞKA
+    kullanıcıların satırlarını güncelliyor (ör. birinin promptunu
+    beğenmek O KİŞİNİN sayacını artırır). RLS açılınca, `SECURITY
+    DEFINER` olmadan bu güncellemeler **hatasız ama sessizce
+    başarısız olurdu** (UPDATE, RLS politikasını karşılamayan satırı
+    basitçe hiç etkilemez) — beğeni/takip/yorum/remix/mesaj sayıları
+    gerçekte artmadan kalırdı, hiçbir hata mesajı olmadan. Bu migration
+    5 fonksiyonu da `SECURITY DEFINER` + sabit `search_path` ile yeniden
+    tanımlayarak bu sorunu çözdü.
+  - **Nasıl doğrulandı (canlı erişim yine engellendiği için):** Bölüm
+    18'deki gibi süperkullanıcıyla test etmek RLS'i hiç kanıtlamaz
+    (süperkullanıcı/tablo sahibi RLS'i zaten atlar) — bu yüzden yerel test
+    veritabanına gerçek Supabase projesindeki gibi `anon`/`authenticated`
+    adında, tabloların sahibi OLMAYAN iki rol eklendi, `auth.uid()`'yi
+    taklit eden bir stub fonksiyon tanımlandı, ve üç ayrı test kullanıcısı
+    arasında rol değiştirilerek (`SET ROLE` + oturum bazlı JWT claim
+    simülasyonu) şunlar fiilen test edildi: `anon` yayındaki promptu
+    görüp taslağı göremiyor ve beğeni eklerken RLS hatası alıyor; giriş
+    yapmış bir kullanıcı başkasının promptunu beğenebiliyor ama
+    güncelleyemiyor ve `user_id` sahtekârlığı `WITH CHECK` ile
+    engelleniyor; **çapraz kullanıcı sayaç güncellemesi gerçekten
+    çalışıyor** (Baran, Ayşe'nin promptunu beğenince Ayşe'nin
+    `like_count`'u artıyor; takip edince her iki tarafın sayacı da
+    artıyor; mesaj gönderilince diğer üyenin `unread_count`'u artıyor);
+    `prompt_saves` başka kullanıcıya tamamen görünmez; mesajlaşma yalnızca
+    üyelere açık (üye olmayan biri ne okuyabiliyor ne yazabiliyor);
+    bildirimler/raporlar/engellemeler yalnızca sahibine görünür; profiller
+    herkese açık okunuyor ama yalnızca sahibi güncelleyebiliyor. **Ayrıca
+    bir negatif kontrol yapıldı:** `SECURITY DEFINER` düzeltmesi geçici
+    olarak geri alınıp aynı beğeni senaryosu tekrar çalıştırıldı — bu kez
+    `like_count` gerçekten hatasızca yanlış kaldı, düzeltme geri
+    konulunca tekrar doğru çalıştı. Bu, "`SECURITY DEFINER` olmadan
+    sessizce bozulurdu" iddiasının varsayım değil kanıtlanmış bir gerçek
+    olduğunu gösteriyor. Test veritabanı işlem bitince silindi.
+
+**Bilinen sorunlar / bilinçli basitleştirmeler (Bölüm 19 için ek):**
+- **RLS politikaları gerçek Supabase projesine henüz uygulanmadı** — yine
+  ağ politikası nedeniyle; kullanıcı `supabase/README.md`'deki talimatla
+  yalnızca `20260919130000_rls_policies.sql` dosyasını (Bölüm 18'in 7
+  dosyası zaten uygulandığı için) SQL Editor'e ekleyip çalıştırmalı.
+- **Frontend hâlâ RLS'e bağlı değil** — mock veri/localStorage
+  provider'ları değişmeden duruyor; RLS'nin gerçekten devrede olduğu
+  yalnızca gerçek Supabase sorgularıyla (Bölüm 21) fark edilir hale gelir.
+- **Moderatör/admin rolü yok:** `reports`/`blocks` politikaları yalnızca
+  "kendi kaydını gör/oluştur" düzeyinde — bir moderatörün tüm raporları
+  görüp durumunu değiştirebilmesi için ayrı bir rol sistemi (ör. `profiles`
+  üzerinde bir `role` kolonu + o role özel politikalar) gerekiyor, bu
+  Bölüm 22'nin kapsamı.
+- **Bildirim üretimi hâlâ yok:** `notifications` tablosuna client'tan
+  insert politikası kasıtlı olarak eklenmedi (bir kullanıcının başka bir
+  kullanıcı adına keyfi bildirim oluşturmasını önlemek için) — gerçek
+  bildirimler ancak sunucu tarafı `SECURITY DEFINER` trigger'larla
+  (ör. "biri seni takip etti" → `handle_follow_change`'e benzer bir
+  fonksiyon `notifications` tablosuna da satır ekler) üretilebilir; bu
+  henüz yazılmadı, ileride eklenebilir.
+- **`prompts.status='draft'` şemada var ama frontend henüz taslak akışı
+  sunmuyor** — `CreatePromptForm` her zaman `published` olarak
+  gönderiyor (zaten Supabase'e hiç bağlı değil, bkz. Bölüm 21). RLS
+  politikası taslakları doğru gizliyor, ama bunu tetikleyecek bir "Taslak
+  olarak kaydet" arayüzü henüz yok.
+- **Konuşma/üyelik ekleme politikaları ileriye dönük yazıldı ama frontend
+  hiç kullanmıyor:** mesajlaşma zaten Bölüm 16'dan beri devre dışı
+  (`mesaj gönderme henüz devre dışı`); bu migration yalnızca gerçek
+  mesajlaşma Bölüm 21'de kurulduğunda hazır bir temel bıraktı, şu an
+  hiçbir kod yolu bu politikaları egzersiz etmiyor.
+
+**Sonraki modül:** Supabase Storage (Bölüm 20).
