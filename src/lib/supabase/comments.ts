@@ -6,12 +6,13 @@ interface CommentRow {
   id: string;
   body: string;
   parent_id: string | null;
+  like_count: number;
   created_at: string;
   profiles: ProfileRow;
 }
 
 const COMMENT_SELECT = `
-  id, body, parent_id, created_at,
+  id, body, parent_id, like_count, created_at,
   profiles:author_id ( id, username, display_name, avatar_url, cover_url, bio, website, follower_count, following_count, created_at, interests )
 `;
 
@@ -22,6 +23,7 @@ function mapCommentRow(row: CommentRow, target: { promptId: string } | { request
     author: mapProfileRow(row.profiles),
     body: row.body,
     parentId: row.parent_id,
+    likeCount: row.like_count,
     createdAt: row.created_at,
   };
 }

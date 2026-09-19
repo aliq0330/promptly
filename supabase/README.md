@@ -6,21 +6,20 @@ veri modelini birebir yansıtan gerçek Postgres şemasını (CLAUDE.md Bölüm
 ve görsel yükleme için Supabase Storage bucket'larını (Bölüm 20) oluşturur.
 Dosyalar sırayla (dosya adındaki zaman damgasına göre) uygulanmalıdır.
 
-**Durum:** İlk 8 dosya (Bölüm 18 şema + Bölüm 19 RLS) kullanıcı tarafından
+**Durum:** İlk 9 dosya — Bölüm 18 şema + Bölüm 19 RLS + Bölüm 9.2'nin
+`20260919150000_request_response_workflow.sql`'i — kullanıcı tarafından
 gerçek Supabase projesine (Dashboard → SQL Editor) başarıyla uygulandı ve
 doğrulandı. `20260919140000_storage.sql` (Bölüm 20, Storage bucket'ları)
-ve yeni `20260919150000_request_response_workflow.sql` (prompt istekleri/
-yanıt sistemi sağlamlaştırması) bu depodan otomatik olarak uygulanmadı —
-Claude Code'un çalıştığı ortamın ağ politikası gerçek Supabase projesinin
-veritabanına doğrudan erişimi engelliyor, bu yüzden yalnızca yerel, geçici
-bir Postgres 16 örneğinde gerçek rol simülasyonuyla test edildi (bkz.
-aşağıdaki "Nasıl doğrulandı" bölümü) — gerçek projenize henüz
-uygulanmadı. **`20260919150000` uygulanmadan** yanıt seçme/kaldırma
-(`/create?answerRequest=…` ve istek detayındaki "Yanıtı seç") frontend'de
-hata verir (`select_prompt_request_response` fonksiyonu ve `prompts.
-show_on_profile`/`prompt_requests.closed_by_owner` kolonları henüz yok
-demektir) — bu migration'ı uygulamak bu özelliğin çalışması için
-**zorunlu**.
+ve yeni `20260919160000_comment_likes_and_notifications.sql` (Bölüm 9.4,
+yorum beğenisi + yanıt/beğeni bildirimleri) bu depodan otomatik olarak
+uygulanmadı — Claude Code'un çalıştığı ortamın ağ politikası gerçek
+Supabase projesinin veritabanına doğrudan erişimi engelliyor, bu yüzden
+yalnızca yerel, geçici bir Postgres 16 örneğinde gerçek rol simülasyonuyla
+test edildi (bkz. aşağıdaki "Nasıl doğrulandı" bölümü) — gerçek projenize
+henüz uygulanmadı. **`20260919160000` uygulanmadan** yorum/yanıt beğenme
+frontend'de hata verir (`comment_likes` tablosu ve `prompt_comments.
+like_count` kolonu henüz yok demektir) — bu migration'ı uygulamak bu
+özelliğin çalışması için **zorunlu**.
 
 ## Nasıl uygularsınız
 
@@ -30,8 +29,8 @@ demektir) — bu migration'ı uygulamak bu özelliğin çalışması için
    menüden **SQL Editor**'ü açın.
 2. `migrations/` klasöründeki her dosyayı **dosya adındaki sıraya göre**
    (20260919120000, 20260919120100, ... 20260919120600, 20260919130000,
-   20260919140000, 20260919150000) tek tek açıp içeriğini SQL Editor'e
-   yapıştırıp **Run**'a basın.
+   20260919140000, 20260919150000, 20260919160000) tek tek açıp içeriğini
+   SQL Editor'e yapıştırıp **Run**'a basın.
 3. Her dosya başarıyla çalıştıktan sonra bir sonrakine geçin. Bir hata
    alırsanız durdurun ve hatayı paylaşın.
 
@@ -147,6 +146,28 @@ tamamen kapalı kalır — güvenli tarafta kalan bilinçli bir ara durum.
     `notifications`'a client insert izni kasıtlı olarak yok — bu yüzden
     gerçek bildirim üretimi ancak böyle bir sunucu tarafı trigger'la
     mümkün, tıpkı sayaç trigger'ları gibi).
+
+- `20260919160000_comment_likes_and_notifications.sql` — yorum sistemini
+  güçlendiriyor (Bölüm 9.4): sınırsız derinlikte iç içe yanıt zaten
+  `prompt_comments.parent_id`'nin kendine referans vermesiyle Bölüm 18'den
+  beri destekleniyordu (yeni bir tablo/kolon gerekmedi), bu migration
+  yalnızca beğeni + bildirim eksiğini kapatıyor:
+  - `prompt_comments.like_count` — yeni sayaç kolonu.
+  - `comment_likes` tablosu — `prompt_likes` ile birebir aynı desen
+    (bileşik birincil anahtar, aynı kullanıcının aynı yorumu iki kez
+    beğenmesini veritabanı seviyesinde imkansız kılıyor), kendi
+    `SECURITY DEFINER` sayaç trigger'ı (`handle_comment_like_change`) ile
+    — bir yanıtın beğenilmesi ana yorumun/gönderinin beğeni sayısını hiç
+    etkilemiyor, tamamen bağımsız.
+  - RLS: `prompt_likes` ile birebir aynı — herkese açık okuma, yalnızca
+    kendi adına ekleme/silme.
+  - `notify_comment_reply()` (AFTER INSERT, `SECURITY DEFINER`) — bir
+    yoruma VEYA bir yanıta yeni bir yanıt geldiğinde üst mesajın sahibine
+    bildirim yazar (`comment_reply` tipi, Bölüm 18'den beri CHECK
+    kısıtında zaten vardı, ilk kez tetikleniyor).
+  - `notify_comment_like()` (AFTER INSERT, `SECURITY DEFINER`) — bir
+    yorum/yanıt beğenildiğinde sahibine bildirim yazar (`like` tipi).
+    İkisi de kendi kendine bildirim üretmiyor.
 
 ## Nasıl doğrulandı
 

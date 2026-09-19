@@ -82,7 +82,10 @@ export interface PromptComment {
   requestId?: string;
   author: UserProfile;
   body: string;
+  /** Points at another `PromptComment.id` — a reply can target a top-level comment OR another reply, to any depth (self-referencing `prompt_comments.parent_id`). */
   parentId: string | null;
+  /** This comment/reply's own like count — entirely independent of the post's `Prompt.likeCount` and of any other comment's count (`comment_likes` table). */
+  likeCount: number;
   createdAt: string;
 }
 
