@@ -7,27 +7,25 @@ import { ChevronRight, Repeat2 } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { PromptGrid } from "@/features/prompts/prompt-grid";
-import { RemixSourceLink } from "@/features/prompts/remix-source-link";
+import { RemixContext, RequestResponseContext } from "@/features/prompts/post-context";
 import { CommentSection } from "@/features/prompts/comment-section";
 import { LikeButton } from "@/features/prompts/like-button";
 import { SaveButton } from "@/features/prompts/save-button";
 import { CommentCountLink } from "@/features/prompts/comment-count-link";
 import { fetchRemixChain, fetchRemixesOf } from "@/lib/supabase/prompts";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
+import { PostMenu } from "@/features/prompts/post-menu";
 import { formatCount, formatRelativeTime, promptHref } from "@/lib/utils";
-import { useRealRequests } from "@/features/requests/real-requests-provider";
 import type { Prompt } from "@/types";
 
 /** The real prompt detail rendering, used by `/prompts/local?id=…`. */
 export function PromptDetailView({ prompt }: { prompt: Prompt }) {
-  const { getCached: getCachedRequest, fetchById: fetchRequestById } = useRealRequests();
   const media = prompt.media[0];
   const typeMeta = CONTENT_TYPE_META[prompt.contentType];
   const TypeIcon = typeMeta.icon;
 
   const [remixes, setRemixes] = useState<Prompt[]>([]);
   const [remixChain, setRemixChain] = useState<Prompt[]>([prompt]);
-  const [isSelectedAnswer, setIsSelectedAnswer] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -42,28 +40,6 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [prompt.id]);
-
-  useEffect(() => {
-    let cancelled = false;
-    if (prompt.origin.type !== "request-response") {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- not an answer to any request, nothing to check
-      setIsSelectedAnswer(false);
-      return;
-    }
-    const requestId = prompt.origin.requestId;
-    const cached = getCachedRequest(requestId);
-    if (cached) {
-      setIsSelectedAnswer(cached.selectedResponsePromptId === prompt.id);
-      return;
-    }
-    fetchRequestById(requestId).then((request) => {
-      if (!cancelled) setIsSelectedAnswer(request?.selectedResponsePromptId === prompt.id);
-    });
-    return () => {
-      cancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [prompt.id, prompt.origin]);
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 px-4 py-6 lg:px-6">
@@ -81,14 +57,15 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
 
         <div className="flex items-start justify-between gap-3">
           <h1 className="text-lg font-semibold text-text">{prompt.title}</h1>
-          {prompt.origin.type === "remix" && <Badge>Remix</Badge>}
+          <div className="flex shrink-0 items-center gap-2">
+            {prompt.origin.type === "remix" && <Badge>Remix</Badge>}
+            <PostMenu promptId={prompt.id} authorId={prompt.author.id} />
+          </div>
         </div>
 
-        {prompt.origin.type !== "original" && <RemixSourceLink origin={prompt.origin} />}
-        {isSelectedAnswer && (
-          <Badge variant="accent" className="w-fit">
-            Bu yanıt seçildi
-          </Badge>
+        {prompt.origin.type === "remix" && <RemixContext sourcePromptId={prompt.origin.sourcePromptId} />}
+        {prompt.origin.type === "request-response" && (
+          <RequestResponseContext requestId={prompt.origin.requestId} currentPromptId={prompt.id} />
         )}
 
         {remixChain.length > 1 && (

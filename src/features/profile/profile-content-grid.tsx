@@ -1,13 +1,13 @@
 import type { ReactNode } from "react";
 import { PromptCard } from "@/features/prompts/prompt-card";
-import { ProfileContentMenu } from "./profile-content-menu";
 import type { Prompt } from "@/types";
 
 /**
  * Same CSS multi-column masonry as the shared PromptGrid (CSS Grid
- * stretches short cards to the tallest row-mate, columns don't) — kept as
- * its own small component instead of extending PromptGrid because only the
- * profile view ever needs the per-card management menu overlay.
+ * stretches short cards to the tallest row-mate, columns don't). Each
+ * card's own header now carries its three-dot menu (copy link, and for
+ * the card's own author, duplicate/delete) — `onDeleted` only matters when
+ * `isOwnProfile`, since only then can the menu's delete action ever fire.
  */
 export function ProfileContentGrid({
   prompts,
@@ -25,13 +25,11 @@ export function ProfileContentGrid({
   return (
     <div className="columns-1 gap-4 sm:columns-2 xl:columns-3">
       {prompts.map((prompt) => (
-        <div key={prompt.id} className="relative mb-4 break-inside-avoid">
-          {isOwnProfile && (
-            <div className="absolute right-2 top-2 z-20">
-              <ProfileContentMenu promptId={prompt.id} onDeleted={() => onDeleted(prompt.id)} />
-            </div>
-          )}
-          <PromptCard prompt={prompt} />
+        <div key={prompt.id} className="mb-4 break-inside-avoid">
+          <PromptCard
+            prompt={prompt}
+            onDeleted={isOwnProfile ? () => onDeleted(prompt.id) : undefined}
+          />
         </div>
       ))}
     </div>

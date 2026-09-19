@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { CheckCircle2, MessageSquareOff, Sparkles, Trash2 } from "lucide-react";
+import { MessageSquareOff, Sparkles, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -199,10 +199,6 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
                     <div className="flex flex-wrap items-center gap-2 px-1">
                       {isSelected ? (
                         <>
-                          <span className="flex items-center gap-1 text-xs font-medium text-primary">
-                            <CheckCircle2 size={14} />
-                            Bu yanıt seçildi
-                          </span>
                           {isPendingThis ? (
                             <>
                               <span className="text-xs text-text-muted">Seçimi kaldırmak istediğine emin misin?</span>
