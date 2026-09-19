@@ -29,10 +29,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      setLoading(false);
-    });
+    supabase.auth
+      .getSession()
+      .then(({ data }) => {
+        setSession(data.session);
+        setLoading(false);
+      })
+      .catch((err) => {
+        // A real network failure throws instead of resolving — without this,
+        // `loading` would stay true forever and every page waiting on auth
+        // state (header, nav, forms) would hang.
+        console.error("getSession", err);
+        setLoading(false);
+      });
 
     const { data: listener } = supabase.auth.onAuthStateChange((event, nextSession) => {
       if (event === "PASSWORD_RECOVERY") {

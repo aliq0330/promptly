@@ -43,27 +43,33 @@ export default function SignupPage() {
     }
 
     setIsSubmitting(true);
-    const { data, error: signUpError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { display_name: displayName },
-        emailRedirectTo: absoluteUrl("/login"),
-      },
-    });
-    setIsSubmitting(false);
+    try {
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { display_name: displayName },
+          emailRedirectTo: absoluteUrl("/login"),
+        },
+      });
 
-    if (signUpError) {
-      setError(translateAuthError(signUpError.message));
-      return;
-    }
+      if (signUpError) {
+        setError(translateAuthError(signUpError.message));
+        return;
+      }
 
-    // With email confirmation enabled (this project's default), signUp
-    // returns a user but no session yet — nothing to redirect into.
-    if (data.session) {
-      router.push("/");
-    } else {
-      setCheckEmail(true);
+      // With email confirmation enabled (this project's default), signUp
+      // returns a user but no session yet — nothing to redirect into.
+      if (data.session) {
+        router.push("/");
+      } else {
+        setCheckEmail(true);
+      }
+    } catch {
+      // A real network failure throws instead of resolving — see login/page.tsx's comment.
+      setError("Bağlantı kurulamadı, lütfen tekrar dene.");
+    } finally {
+      setIsSubmitting(false);
     }
   }
 

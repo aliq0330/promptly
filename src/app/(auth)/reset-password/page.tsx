@@ -41,16 +41,21 @@ export default function ResetPasswordPage() {
     setError(null);
     setIsSubmitting(true);
 
-    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: absoluteUrl("/reset-password"),
-    });
-
-    setIsSubmitting(false);
-    if (resetError) {
-      setError(translateAuthError(resetError.message));
-      return;
+    try {
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: absoluteUrl("/reset-password"),
+      });
+      if (resetError) {
+        setError(translateAuthError(resetError.message));
+        return;
+      }
+      setLinkSent(true);
+    } catch {
+      // A real network failure throws instead of resolving — see login/page.tsx's comment.
+      setError("Bağlantı kurulamadı, lütfen tekrar dene.");
+    } finally {
+      setIsSubmitting(false);
     }
-    setLinkSent(true);
   }
 
   async function handleUpdatePassword(event: FormEvent) {
@@ -68,15 +73,20 @@ export default function ResetPasswordPage() {
     }
 
     setIsSubmitting(true);
-    const { error: updateError } = await supabase.auth.updateUser({ password });
-    setIsSubmitting(false);
-
-    if (updateError) {
-      setError(translateAuthError(updateError.message));
-      return;
+    try {
+      const { error: updateError } = await supabase.auth.updateUser({ password });
+      if (updateError) {
+        setError(translateAuthError(updateError.message));
+        return;
+      }
+      clearPasswordRecovery();
+      setPasswordUpdated(true);
+    } catch {
+      // A real network failure throws instead of resolving — see login/page.tsx's comment.
+      setError("Bağlantı kurulamadı, lütfen tekrar dene.");
+    } finally {
+      setIsSubmitting(false);
     }
-    clearPasswordRecovery();
-    setPasswordUpdated(true);
   }
 
   if (authLoading) return null;

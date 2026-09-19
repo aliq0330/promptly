@@ -32,14 +32,21 @@ export default function LoginPage() {
     setError(null);
     setIsSubmitting(true);
 
-    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
-
-    setIsSubmitting(false);
-    if (signInError) {
-      setError(translateAuthError(signInError.message));
-      return;
+    try {
+      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+      if (signInError) {
+        setError(translateAuthError(signInError.message));
+        return;
+      }
+      router.push("/");
+    } catch {
+      // A real network failure (not a structured Supabase AuthError) throws
+      // instead of resolving — without this, the button would freeze on
+      // "Giriş yapılıyor..." forever with no visible error at all.
+      setError("Bağlantı kurulamadı, lütfen tekrar dene.");
+    } finally {
+      setIsSubmitting(false);
     }
-    router.push("/");
   }
 
   return (
