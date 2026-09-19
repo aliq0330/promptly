@@ -237,6 +237,105 @@ gerçek Supabase projesi bağlantısı yoktur.**
 
 ## 9. Şu Anki Durum (bu bölüm her modül sonunda güncellenir)
 
+### 9.0 Bilinen Hatalar — Konsolide Düzeltme Listesi
+
+> Bu alt bölüm, aşağıdaki uzun geçmişe dağılmış "Bilinen sorunlar / bilinçli
+> basitleştirmeler" notlarından yalnızca GERÇEK HATA olanları (bilinçli
+> kapsam kararlarını değil — onlar zaten kendi Faz bölümlerinde "bilinçli"
+> diye işaretli duruyor) tek bir yerde topluyor, artı bu oturumda yapılan
+> taze bir kod incelemesinin (`src/lib/supabase/*.ts`'teki TÜM
+> `.insert()/.update()/.delete()` çağrıları RLS politikalarına karşı elden
+> geçirildi) bulgularını ekliyor. Amaç: bir sonraki oturumda nereden
+> başlanacağını aramadan bilmek. Her madde hangi Bölüm/Faz'da yaşadığını ve
+> ilgili tam detayın nerede olduğunu gösteriyor.
+
+**[DÜZELTİLDİ] Bölüm 21 Faz 6 — "Mesaj Gönder" gerçek RLS altında hiçbir
+şey yapmıyordu.** `getOrCreateDirectConversation`, `conversations`
+tablosuna INSERT edip hemen `RETURNING` ile id'yi geri okumaya
+çalışıyordu; ama `conversations`'ın SELECT RLS politikası
+`is_conversation_member(id)` — INSERT anında bu oturumun henüz hiçbir
+üyelik satırı yok, bu yüzden `RETURNING` boş dönüyor ve `.single()` hata
+fırlatıyordu (INSERT'in kendisi başarılı olsa bile). Hata sessizce
+yutuluyordu, kullanıcı "tıkladım, hiçbir şey olmadı" görüyordu. Konuşma
+id'si artık istemci tarafında (`crypto.randomUUID()`) üretiliyor, INSERT
+sonrası hiçbir `.select()` çağrılmıyor. Ayrıntı: Bölüm 21 Faz 6'nın
+"Düzeltme" alt maddesi.
+
+**[AÇIK — orta öncelik] Bölüm 21 Faz 6 — eşzamanlı çift tıklama iki ayrı
+konuşma oluşturabilir.** İki kullanıcı birbirine TAM AYNI ANDA "Mesaj
+Gönder"e basarsa, `findDirectConversationId`'nin "önce oku, yoksa oluştur"
+deseni atomik değil — teorik olarak iki ayrı `conversations` satırı
+oluşabilir (bir daha birleşmezler). Düzeltme adayı: sıralı
+`(least(user_a,user_b), greatest(user_a,user_b))` üzerinde bir UNIQUE
+kısıt, ya da atomik bir Postgres RPC fonksiyonu (`get_or_create_
+direct_conversation`) ile client-side "oku sonra yaz" yarışını ortadan
+kaldırmak. Dosya: `src/lib/supabase/messages.ts`.
+
+**[AÇIK — düşük öncelik, doğrulanmadı] Bölüm 21 (genel) — istek/konuşma
+yönetim aksiyonlarında "sessiz no-op" riski.** `updateRealRequestStatus`,
+`deleteRealRequest`, `selectRealRequestResponse` (`src/lib/supabase/
+requests.ts`) UPDATE/DELETE sonrası etkilenen satır sayısını hiç kontrol
+etmiyor — sahiplik tamamen RLS'e bırakılmış (RLS bu satırları başka bir
+kullanıcı için sessizce 0 satır etkiler, hata fırlatmaz). Şu an istemci
+tarafı `isOwnRequest`/`canManage` hesaplaması (`request-detail-view.tsx`)
+doğru olduğundan GERÇEK bir hata yok — ama bu, tam olarak yukarıdaki
+mesajlaşma hatasıyla aynı SINIFTAN bir tuzak: ileride bu kontrol
+regresyona uğrarsa, kullanıcı butona basar, arayüz "başarılı" gösterir,
+ama veritabanında hiçbir şey değişmemiş olabilir, hiçbir hata mesajı
+olmadan. Düzeltme adayı: bu üç fonksiyona `.select().maybeSingle()`
+ekleyip `null` dönerse (0 satır etkilendiyse) açık bir hata fırlatmak.
+
+**[DOĞRULAMA YAPILDI, YENİ HATA BULUNMADI] Bölüm 21 (genel) — INSERT+
+RETURNING RLS kalıbı, tüm dosyalar tarandı.** Konuşma hatasına benzer bir
+"SELECT politikası, INSERT anında henüz var olmayan BAŞKA bir tabloya
+bağlı" tuzağı olup olmadığını görmek için `src/lib/supabase/*.ts`'teki
+TÜM `.insert(...).select(...).single()/.maybeSingle()` çağrıları
+(`prompts`, `prompt_media`, `prompt_requests`, `prompt_comments`,
+`messages`, `profiles`) RLS politikalarına karşı tek tek elden geçirildi.
+Hiçbiri aynı tuzağa düşmüyor — her biri ya satırın KENDİ kolon değerine
+(ör. `prompts.status`) ya da INSERT'ten ÖNCE zaten var olan bir ebeveyn
+satıra (ör. `prompt_media`'nın kontrol ettiği `prompts` satırı) bakıyor.
+Ama bu yalnızca statik kod incelemesiyle doğrulandı — sandbox'ın ağ
+kısıtı yüzünden gerçek bir Supabase projesine karşı hiç çalıştırılamadı;
+gerçek bir kullanıcı bu akışlardan birinde benzer bir "tıkladım, hiçbir
+şey olmadı" davranışı görürse, ilk bakılacak yer ilgili fonksiyonun
+insert+select şeklidir.
+
+**[AÇIK — kozmetik] Bölüm 21 Faz 2 — "Profil" nav vurgusu gerçek kendi
+profilde çalışmıyor.** Sidebar/mobil nav'daki "Profil" öğesi gerçek kendi
+profili (`/profile/real?username=…`) görüntülerken vurgulanmıyor (linkin
+hedefi doğru, yalnızca aktif-görünüm hesaplaması `pathname`'e bakıyor,
+query param'a bakmıyor). Ayrıntı: Bölüm 21 Faz 2'nin bilinen sınırlaması.
+
+**[AÇIK — kozmetik] Bölüm 21 Faz 4 — `CommentCountLink` gecikmeli
+güncelleniyor.** Gerçek bir promptta yeni yorum eklendikten sonra kart/
+detay sayfası üst istatistik satırındaki yorum sayacı sayfa
+yenilenmeden GÜNCELLENMİYOR (statik `baseCount` prop'una dayanıyor,
+`CommentSection`'ın kendi state'ini paylaşmıyor). Ayrıntı: Bölüm 21 Faz
+4'ün bilinen sınırlaması.
+
+**[AÇIK — nadir edge case] Bölüm 8 (Remix sistemi) — ön doldurma yalnızca
+ilk mount'ta çalışıyor.** `CreatePromptForm`'daki remix ön doldurma
+`useState` lazy initializer kullanıyor; aynı `/create` sekmesinde bir
+remix linkinden başka bir remix linkine tam sayfa yenilemeden (client-
+side) geçilirse form alanları yenilenmiyor. Pratikte nadir (her "Remixle"
+tıklaması ayrı bir navigasyon).
+
+**[AÇIK — performans, düşük öncelik] Bölüm 21 Faz 3 — N+1 sorgu deseni.**
+Her `LikeButton`/`SaveButton`/`FollowButton` örneği (gerçek bir hedef
+için) kendi ayrı `fetchIsLiked`/`fetchIsSaved`/`fetchIsFollowing`
+sorgusunu tetikliyor. Gerçek içerik hacmi arttıkça bir feed'in tamamı
+için toplu bir `.in(...)` sorgusuna geçmek gerekebilir.
+
+**Kapsam dışı bırakılmış, hata SAYILMAYAN bilinçli sınırlamalar** (Realtime
+yok, grup sohbeti yok, taslak akışı yok, bildirim üretimi yok, kullanıcı
+adı değiştirilemiyor, tablet düzeni yok, vb.) her Faz'ın kendi "Bilinen
+sorunlar / bilinçli basitleştirmeler" alt bölümünde ayrıntılı olarak
+duruyor — burada tekrar edilmedi, çünkü bunlar düzeltilecek hatalar değil,
+kasıtlı olarak ertelenmiş kapsam kararları.
+
+---
+
 **Son güncelleme:** Bölüm 21 — Frontend'in gerçek Supabase'e bağlanması,
 Faz 6 (TAMAMLANDI). Gerçek mesajlaşma artık uçtan uca çalışıyor: iki
 gerçek hesap birbirinin gerçek profilinden "Mesaj Gönder"e basıp gerçek,
