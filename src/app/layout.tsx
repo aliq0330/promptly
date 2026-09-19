@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { Inter } from "next/font/google";
 import { ThemeProvider, themeInitScript } from "@/components/theme/theme-provider";
+import { AuthProvider } from "@/features/auth/auth-provider";
 import "./globals.css";
 
 const inter = Inter({
@@ -30,7 +31,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
       <body className="min-h-full flex flex-col bg-background text-text">
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          <AuthProvider>{children}</AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

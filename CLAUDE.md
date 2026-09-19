@@ -198,7 +198,7 @@ gerçek Supabase projesi bağlantısı yoktur.**
 14. [x] Beğeni, yorum, kaydetme, paylaşma (beğeni/kaydetme localStorage ile gerçek; yorum ekleme gerçek/yerel; sunucu senkronizasyonu Supabase'e bağlı)
 15. [x] Bildirimler (mock veriyle)
 16. [x] Özel mesajlaşma (mesaj gönderme henüz devre dışı)
-17. [ ] Kayıt, giriş, hesap ayarları (Supabase Auth)
+17. [x] Kayıt, giriş, hesap ayarları (gerçek Supabase Auth bağlantısı — bkz. Bölüm 9; hesap ↔ mock profil/veri entegrasyonu Bölüm 18/21'e bağlı)
 18. [ ] Supabase veritabanı ve migration dosyaları
 19. [ ] RLS ve güvenlik politikaları
 20. [ ] Supabase Storage
@@ -211,9 +211,10 @@ gerçek Supabase projesi bağlantısı yoktur.**
 
 ## 9. Şu Anki Durum (bu bölüm her modül sonunda güncellenir)
 
-**Son güncelleme:** Prompt oluşturma ve prompt isteği oluşturma sistemi
-uçtan uca uygulandı (Bölüm 9/10'un derinleştirilmesi — sıralı geliştirme
-akışını kesmiyor, sıradaki modül hâlâ Bölüm 17).
+**Son güncelleme:** Bölüm 17 — Kayıt, giriş, hesap ayarları (Supabase Auth)
+tamamlandı. Projede artık **gerçek bir Supabase projesi bağlı** (ilk kez —
+CLAUDE.md §6/§20'nin "henüz hiçbir bağlantı yok" notu bu modülle kısmen
+aşıldı: Auth bağlı, veritabanı/Storage hâlâ yok). Sıradaki modül Bölüm 18.
 
 **Tamamlanan:**
 - CLAUDE.md oluşturuldu.
@@ -681,6 +682,84 @@ akışını kesmiyor, sıradaki modül hâlâ Bölüm 17).
     prompt detayları, beğeni butonu, profil, ana sayfa/keşfet/kaydedilenler/
     arama, mevcut remix/kopya akışları, mobilde yatay taşma yok, açık/koyu
     tema — hiçbiri bozulmadı.
+- **Kayıt, giriş, hesap ayarları — gerçek Supabase Auth (Bölüm 17):**
+  Projeye ilk kez gerçek bir Supabase projesi bağlandı (`NEXT_PUBLIC_
+  SUPABASE_URL`/`NEXT_PUBLIC_SUPABASE_ANON_KEY`, `.env.local`'de — asla
+  commit edilmedi, `.gitignore` ile doğrulandı). `@supabase/supabase-js`
+  eklendi. Bu, projedeki **tek gerçek, sunucu tarafı backend bağlantısı** —
+  geri kalan her şey (follow/like/save/comment/profil/istek/prompt) hâlâ
+  bu tarayıcıya özel localStorage state.
+  - **Kapsam kararı:** Bu modül yalnızca "kim giriş yapmış" sorusuna gerçek
+    bir cevap veriyor. `profiles` tablosu henüz yok (Bölüm 18), bu yüzden
+    gerçek Supabase hesapları mock "me" persona'sına veya prompt/takip/
+    beğeni verisine BAĞLANMADI — bunlar bilinçli olarak aynı kalmaya devam
+    ediyor (`/profile/me` hâlâ mock "Sen" kullanıcısı, oluşturulan
+    promptlar/istekler hâlâ "me" adına). Gerçek hesap ↔ gerçek profil/veri
+    bağlantısı Bölüm 18 (şema) ve Bölüm 21'in (frontend bağlantısı) işi.
+  - **Yeni `src/lib/supabase/client.ts`:** tarayıcı Supabase client'ı
+    (`createClient`, anon key ile — bu anahtar public olacak şekilde
+    tasarlanmıştır, güvenlik sınırı RLS politikalarıdır, henüz yazılmadı,
+    Bölüm 19). Statik export'ta sunucu çalışma zamanı olmadığından
+    (middleware/route handler yok) Supabase'e erişim yalnızca tarayıcıdan.
+  - **Yeni `features/auth/auth-provider.tsx`** (`AuthProvider`/`useAuth`,
+    kök `layout.tsx`'e eklendi — tüm uygulamayı sarıyor): gerçek Supabase
+    oturumunu `getSession()` + `onAuthStateChange` ile izliyor, `user`/
+    `session`/`loading`/`isPasswordRecovery`/`signOut` sağlıyor. Session
+    kalıcılığı supabase-js'in kendi localStorage mekanizmasıyla oluyor
+    (ayrı bir "promptly-*" anahtarı değil, Supabase'in kendi anahtarı).
+  - **`/login`, `/signup`, `/reset-password`** artık gerçek, çalışan
+    formlar (eskiden hepsi `disabled` placeholder'dı):
+    - Giriş: `signInWithPassword`; zaten oturum açıksa otomatik ana
+      sayfaya yönlendiriyor.
+    - Kayıt: `signUp` — yalnızca e-posta/şifre/görünen ad topluyor;
+      görünen ad Supabase'in kendi `auth.users.user_metadata`'sına
+      **gerçekten** yazılıyor (mock değil), ama henüz hiçbir yerde
+      okunmuyor/gösterilmiyor (`profiles` yok). Proje e-posta doğrulaması
+      istiyorsa (varsayılan Supabase ayarı) "e-postanı kontrol et" ekranı
+      gösteriliyor; istemiyorsa doğrudan oturum açılıp yönlendiriliyor —
+      kod her iki durumu da (`data.session` var/yok) doğru işliyor.
+    - Şifre sıfırlama: iki gerçek mod tek sayfada — e-posta ile bağlantı
+      isteme (`resetPasswordForEmail`) ve e-postadaki bağlantıyla geri
+      dönüldüğünde (Supabase `PASSWORD_RECOVERY` olayı) otomatik olarak
+      açılan "yeni şifre belirle" formu (`updateUser`).
+    - `/settings` artık gerçek hesap sayfası: giriş yapılmışsa gerçek
+      e-posta + çalışan "şifre değiştir" formu + "çıkış yap"; giriş
+      yapılmamışsa "giriş yap" yönlendirmesi. Profil bilgileri (ad/bio/ilgi
+      alanları) hâlâ `/profile/edit`'te — iki sistem kasıtlı olarak
+      karıştırılmadı, hangisinin gerçek hesap hangisinin mock profil
+      olduğu net.
+  - **Hata mesajları Türkçeleştirildi:** yeni `features/auth/auth-errors.ts`
+    → `translateAuthError()`, Supabase'in İngilizce `AuthError.message`
+    metinlerini ("Invalid login credentials", "User already registered"
+    vb.) bilinen durumlar için Türkçeye çeviriyor, bilinmeyenlerde ham
+    mesajı gösteriyor (gizlemiyor).
+  - **Önemli operasyonel not (kullanıcı için):** Supabase projesinin
+    Authentication → URL Configuration ayarına bu uygulamanın gerçek
+    adresleri (GitHub Pages: `https://aliq0330.github.io/promptly/**`,
+    yerel geliştirme: `http://localhost:3000/promptly/**`) redirect
+    allow-list'e eklenmeli — eklenmezse şifre sıfırlama/e-posta doğrulama
+    bağlantıları Supabase tarafından reddedilir. Bu, kod tarafında
+    yapılabilecek bir şey değil, Supabase Dashboard'da elle yapılması
+    gereken bir ayar.
+  - **Test sınırlaması (dürüstçe belirtilmeli):** Bu oturumun çalıştığı
+    sandbox'ın ağ politikası, gerçek Supabase projesine (`*.supabase.co`)
+    doğrudan çıkışı engelliyor (`curl` ile doğrulandı: `403 connect_
+    rejected`, kurumsal politika). Bu yüzden gerçek e-posta gönderimi/
+    gerçek kullanıcı oluşturma bu ortamda **canlı olarak test edilemedi**.
+    Bunun yerine Playwright ile Supabase auth-js'in tam olarak çağırdığı
+    REST uç noktaları (`/auth/v1/token`, `/auth/v1/signup`, `/auth/v1/
+    recover`, `/auth/v1/logout`) ağ katmanında taklit edilerek (mock
+    response) uygulamanın KENDİ mantığı (yükleniyor durumları, hata
+    çevirisi, yönlendirmeler, e-postanı-kontrol-et ekranı, oturum açıkken
+    /login'den yönlendirme, çıkış yapınca /settings'in güncellenmesi) 13 +
+    7 = 20 adımda doğrulandı — hepsi geçti. Ayrıca 21 adımlık mevcut
+    regresyon paketi de sorunsuz geçti. **Ancak gerçek Supabase projesine
+    karşı canlı bir kayıt/giriş/şifre-sıfırlama denemesi hiç yapılmadı** —
+    bunu ya yerel makinenizde (`npm run dev`) ya da GitHub Pages'teki
+    canlı sitede bizzat denemeniz gerekiyor. Kod, Supabase'in resmi
+    `@supabase/supabase-js` v2 API'sine birebir uygun yazıldı ve build/
+    typecheck/lint hatasız, ama "gerçek projenizle uçtan uca çalışıyor"
+    iddiası ancak sizin canlı denemenizle doğrulanabilir.
 
 **Bilinen sorunlar / bilinçli basitleştirmeler:**
 - Tablet için ayrı bir navigasyon/genişlik düzeni henüz yok; `lg` (1024px)
@@ -786,5 +865,30 @@ akışını kesmiyor, sıradaki modül hâlâ Bölüm 17).
   `PromptRequest.contentType`) yeni, yerel/TASLAK alanlar — eski 6 mock
   istekte `contentType` set edilmedi (`RequestCard` bu durumda türü rozetini
   basitçe göstermiyor, hata vermiyor).
+- **Gerçek Supabase Auth ile mock veri arasında henüz köprü yok:** giriş
+  yapmış gerçek bir hesap, uygulamanın geri kalanında hâlâ "me" mock
+  persona'sını görür/kullanır — kendi gerçek promptların, gerçek takipçilerin
+  yoktur, çünkü bunlar mock veriden geliyor ve `profiles`/`prompts` gibi
+  gerçek tablolar henüz yok (Bölüm 18). Yani şu an "gerçekten giriş
+  yapabiliyorsun" ile "uygulama seni tanıyor" ayrı şeyler — ikincisi Bölüm
+  21'e kadar gerçekleşmeyecek.
+- **Hiçbir sayfa/aksiyon gerçek girişe kilitlenmedi:** mevcut mock deneyim
+  (herkes her sayfayı görebiliyor, "me" adına içerik oluşturabiliyor)
+  kasıtlı olarak değiştirilmedi — bu modülün amacı yalnızca auth
+  formlarının ve hesap ayarlarının gerçekten çalışması, mevcut sayfaların
+  girişe zorlanması değil. Sayfa erişim kısıtlamaları anlamlı hâle
+  gelmesi için gerçek kullanıcı ↔ gerçek veri bağlantısı (Bölüm 18, 21)
+  gerekiyor.
+- **Canlı ağ testi yapılamadı (bkz. yukarıdaki not):** bu geliştirme
+  ortamının ağ politikası `*.supabase.co`'ya doğrudan çıkışı engelliyor;
+  auth akışları yalnızca Playwright'ta ağ seviyesinde taklit edilen
+  (mock) Supabase yanıtlarıyla doğrulandı. Gerçek e-posta gönderimi,
+  gerçek kayıt/giriş, ve Supabase projesinin redirect URL ayarının doğru
+  yapılandırılıp yapılandırılmadığı yalnızca gerçek bir ortamda (yerel
+  makine veya canlı site) denenerek doğrulanabilir.
+- Supabase projesinin **Authentication → URL Configuration** ayarına
+  uygulamanın gerçek adresleri eklenmezse şifre sıfırlama/e-posta
+  doğrulama bağlantıları çalışmaz — bu kod dışı, Dashboard'da yapılması
+  gereken bir kurulum adımıdır (yukarıdaki not).
 
-**Sonraki modül:** Kayıt, giriş, hesap ayarları — Supabase Auth (Bölüm 17).
+**Sonraki modül:** Supabase veritabanı ve migration dosyaları (Bölüm 18).
