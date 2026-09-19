@@ -1,6 +1,7 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { mockPrompts } from "@/mocks/prompts";
+import { mockRequests } from "@/mocks/requests";
 import { mockUsers } from "@/mocks/users";
 import type { Prompt, PromptRequest, UserProfile } from "@/types";
 
@@ -263,11 +264,16 @@ export function promptHref(prompt: Pick<Prompt, "id">): string {
   return isStaticMockPrompt ? `/prompts/${prompt.id}` : `/prompts/local?id=${prompt.id}`;
 }
 
-/** Same idea as `promptHref`, for requests created locally via `/requests/new`. */
+/**
+ * Same idea as `promptHref`, for requests — covers both a request created
+ * locally via `/requests/new` (`local-req-…` ids) and, since CLAUDE.md
+ * Bölüm 21 Faz 5, a genuinely real request published to Supabase (a real
+ * UUID). Neither is one of the fixed mock ids `/requests/[id]` was
+ * pre-rendered for at build time.
+ */
 export function requestHref(request: Pick<PromptRequest, "id">): string {
-  return request.id.startsWith("local-req-")
-    ? `/requests/local?id=${request.id}`
-    : `/requests/${request.id}`;
+  const isStaticMockRequest = mockRequests.some((mock) => mock.id === request.id);
+  return isStaticMockRequest ? `/requests/${request.id}` : `/requests/local?id=${request.id}`;
 }
 
 /**

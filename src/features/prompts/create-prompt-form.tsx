@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ChangeEvent, type FormEvent } from "react";
+import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Copy, Repeat2, Sparkles, X } from "lucide-react";
@@ -13,13 +13,14 @@ import { useRealPrompts } from "@/features/prompts/real-prompts-provider";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useOwnProfile } from "@/features/auth/own-profile-provider";
 import { useRequests } from "@/features/requests/requests-provider";
+import { useRealRequests } from "@/features/requests/real-requests-provider";
 import { getUserById } from "@/mocks/users";
 import { mockTags } from "@/mocks/tags";
 import { getPromptById } from "@/mocks/prompts";
 import { mockRequestResponses } from "@/mocks/request-responses";
 import { placeholderArt } from "@/lib/placeholder-image";
-import { cn, promptHref, requestHref, resizeImageToDataUrlFit } from "@/lib/utils";
-import type { Prompt, PromptContentType, Tag } from "@/types";
+import { cn, isUuid, promptHref, requestHref, resizeImageToDataUrlFit } from "@/lib/utils";
+import type { Prompt, PromptContentType, PromptRequest, Tag } from "@/types";
 
 const CONTENT_TYPES: PromptContentType[] = ["image", "text", "video", "code", "music"];
 
@@ -58,9 +59,16 @@ const TOOL_SUGGESTIONS: Record<PromptContentType, string[]> = {
  * source in the database at all, it has no FK problem and can publish for
  * real exactly like plain creation.
  *
- * `?answerRequest=<requestId>` (prompt-request module) stays on the
- * existing `useLocalPrompts().addPrompt` localStorage path — real
- * `prompt_requests` wiring is a separate, later Bölüm 21 phase.
+ * `?answerRequest=<requestId>` (prompt-request module): answering a
+ * mock/local request is unchanged — still `useLocalPrompts().addPrompt`,
+ * no login required, exactly as before Bölüm 21 Faz 5. Answering a
+ * genuinely real request (a UUID, from Supabase) is new in Faz 5: it
+ * requires being signed in (there was no pre-existing "answer a real
+ * request" feature to preserve, unlike request *creation* which already
+ * worked without login) and publishes a real `prompts` row with
+ * `origin_type: "request_response"` + `request_id` set, via
+ * `useRealPrompts().addPrompt`'s `requestId` option — reusing Bölüm 19's
+ * already-tested trigger that increments the request's `response_count`.
  */
 export function CreatePromptForm() {
   const me = getUserById("me")!;
@@ -71,6 +79,7 @@ export function CreatePromptForm() {
   const { user } = useAuth();
   const { profile: ownProfile } = useOwnProfile();
   const { getRequestById } = useRequests();
+  const { getCached: getCachedRealRequest, fetchById: fetchRealRequestById } = useRealRequests();
 
   const remixSourceId = searchParams.get("remix");
   const remixResponseId = searchParams.get("remixResponse");
@@ -81,7 +90,38 @@ export function CreatePromptForm() {
     ? mockRequestResponses.find((response) => response.id === remixResponseId)
     : undefined;
   const duplicateSource = duplicateId ? getPromptById(duplicateId) : undefined;
-  const answeredRequest = answerRequestId ? getRequestById(answerRequestId) : undefined;
+
+  const isRealAnswerTarget = Boolean(answerRequestId && isUuid(answerRequestId));
+  const [realAnsweredRequest, setRealAnsweredRequest] = useState<PromptRequest | null>(null);
+  const [realAnswerChecked, setRealAnswerChecked] = useState(false);
+
+  useEffect(() => {
+    if (!isRealAnswerTarget || !answerRequestId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- not a real request id, nothing to fetch; resolves the "checked" state synchronously so the mock/local branch (already synchronous) doesn't wait an extra render
+      setRealAnswerChecked(true);
+      return;
+    }
+    const cached = getCachedRealRequest(answerRequestId);
+    if (cached) {
+      setRealAnsweredRequest(cached);
+      setRealAnswerChecked(true);
+      return;
+    }
+    let cancelled = false;
+    fetchRealRequestById(answerRequestId).then((request) => {
+      if (cancelled) return;
+      setRealAnsweredRequest(request);
+      setRealAnswerChecked(true);
+    });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isRealAnswerTarget, answerRequestId]);
+
+  const localAnsweredRequest =
+    answerRequestId && !isRealAnswerTarget ? getRequestById(answerRequestId) : undefined;
+  const answeredRequest = localAnsweredRequest ?? realAnsweredRequest ?? undefined;
 
   const [contentType, setContentType] = useState<PromptContentType>(
     () => sourcePrompt?.contentType ?? duplicateSource?.contentType ?? answeredRequest?.contentType ?? "image",
@@ -109,12 +149,23 @@ export function CreatePromptForm() {
   );
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imageError, setImageError] = useState<string | null>(null);
+
+  // The real target's contentType/preferredTool/tags arrive asynchronously,
+  // after the lazy `useState` initializers above already ran — backfill
+  // them once loaded (same pattern as /profile/edit's real-profile sync).
+  useEffect(() => {
+    if (!realAnsweredRequest) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing form fields once the real target request loads, since it wasn't available yet for the lazy useState initializers above
+    setContentType(realAnsweredRequest.contentType ?? "image");
+    setTool((prev) => prev || realAnsweredRequest.preferredTool || "");
+    setSelectedTags((prev) => (prev.length > 0 ? prev : realAnsweredRequest.tags ?? []));
+  }, [realAnsweredRequest]);
   const [publishError, setPublishError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const isAnswerMode = Boolean(answerRequestId);
-  const requestNotFound = isAnswerMode && !answeredRequest;
+  const requestNotFound = isAnswerMode && realAnswerChecked && !answeredRequest;
   // Plain creation and duplicate both produce `origin: "original"` and have
   // no FK pointing at a source prompt — the only two modes that can
   // publish for real (see the doc comment above for why remix can't yet).
@@ -173,6 +224,47 @@ export function CreatePromptForm() {
     if (isSubmitting) return; // guards against double-submit from a double click
 
     if (isAnswerMode && answeredRequest) {
+      if (isRealAnswerTarget && !user) {
+        // No pre-existing "answer a real request without login" feature to
+        // preserve here (unlike request creation) — same rule as plain
+        // creation: publishing something real requires an account.
+        setSubmitted(true);
+        return;
+      }
+
+      if (isRealAnswerTarget && user) {
+        if (!ownProfile) {
+          setPublishError("Profilin henüz yüklenmedi, lütfen bir an bekleyip tekrar dene.");
+          return;
+        }
+        setPublishError(null);
+        setIsSubmitting(true);
+        try {
+          const published = await addRealPrompt(
+            {
+              title,
+              description,
+              promptText,
+              tool: tool || null,
+              contentType,
+              tags: selectedTags,
+              imageFile,
+              fallbackImage:
+                contentType === "image"
+                  ? { url: media[0].url, width: media[0].width, height: media[0].height }
+                  : null,
+              requestId: answeredRequest.id,
+            },
+            ownProfile,
+          );
+          router.push(promptHref(published));
+        } catch (err) {
+          setPublishError(err instanceof Error ? err.message : "Yanıt yayınlanamadı, lütfen tekrar dene.");
+          setIsSubmitting(false);
+        }
+        return;
+      }
+
       setIsSubmitting(true);
       const published = addPrompt({
         title,
@@ -272,7 +364,11 @@ export function CreatePromptForm() {
       </h1>
       <p className="mb-6 text-sm text-text-muted">
         {isAnswerMode
-          ? "Yanıtını yaz, sağda anında önizlemesini gör. Yayınladığında gerçekten yayımlanır ve istek sahibine görünür olur."
+          ? isRealAnswerTarget
+            ? user
+              ? "Yanıtını yaz, sağda anında önizlemesini gör. Yayınladığında gerçekten, kalıcı olarak Supabase'e yayınlanır ve istek sahibine görünür olur."
+              : "Bu gerçek bir isteğe yanıt veriyorsun. Yanıtını yaz, sağda anında önizlemesini gör — ama gerçekten yayınlamak için giriş yapmış olman gerekiyor."
+            : "Yanıtını yaz, sağda anında önizlemesini gör. Yayınladığında gerçekten yayımlanır ve istek sahibine görünür olur."
           : canPublishForReal
             ? user
               ? "Promptunu yaz, sağda anında önizlemesini gör. Paylaş'a bastığında gerçekten, kalıcı olarak yayınlanır."
@@ -510,6 +606,24 @@ export function CreatePromptForm() {
               <Sparkles size={16} className="mt-0.5 shrink-0" />
               <p>
                 Önizlemeni sağda görebilirsin. Gerçekten yayınlamak için{" "}
+                <Link href="/login" className="font-medium underline">
+                  giriş yap
+                </Link>{" "}
+                ya da{" "}
+                <Link href="/signup" className="font-medium underline">
+                  hesap oluştur
+                </Link>
+                .
+              </p>
+            </div>
+          )}
+
+          {submitted && isAnswerMode && isRealAnswerTarget && !user && (
+            <div className="flex items-start gap-2 rounded-md border border-primary/30 bg-primary/5 p-3 text-sm text-primary">
+              <Sparkles size={16} className="mt-0.5 shrink-0" />
+              <p>
+                Önizlemeni sağda görebilirsin. Bu gerçek bir isteğe yanıtını gerçekten yayınlamak
+                için{" "}
                 <Link href="/login" className="font-medium underline">
                   giriş yap
                 </Link>{" "}

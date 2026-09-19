@@ -8,6 +8,7 @@ import { useFollow } from "@/features/profile/follow-provider";
 import { useLocalPrompts } from "@/features/prompts/local-prompts-provider";
 import { useRealPrompts } from "@/features/prompts/real-prompts-provider";
 import { useRequests } from "@/features/requests/requests-provider";
+import { useRealRequests } from "@/features/requests/real-requests-provider";
 
 type TabKey = "following" | "popular" | "for-you";
 
@@ -23,21 +24,24 @@ export function FeedTabs({ items }: { items: FeedItem[] }) {
   const { localPrompts } = useLocalPrompts();
   const { realPrompts } = useRealPrompts();
   const { allRequests } = useRequests();
+  const { realRequests } = useRealRequests();
 
-  // Real requests/answers created in this browser (prompt-request module)
-  // and genuinely real prompts published to Supabase (CLAUDE.md Bölüm 21)
-  // belong in the same mixed feed as the server-rendered mock items —
-  // merged client-side since neither is known at build time.
+  // Real requests/answers created in this browser (prompt-request module),
+  // genuinely real prompts, and genuinely real requests published to
+  // Supabase (CLAUDE.md Bölüm 21) all belong in the same mixed feed as the
+  // server-rendered mock items — merged client-side since none of them are
+  // known at build time.
   const allItems = useMemo<FeedItem[]>(() => {
     const localRequestItems: FeedItem[] = allRequests
       .filter((request) => request.id.startsWith("local-req-"))
       .map((request) => ({ kind: "request", data: request }));
     const localPromptItems: FeedItem[] = localPrompts.map((prompt) => ({ kind: "prompt", data: prompt }));
     const realPromptItems: FeedItem[] = realPrompts.map((prompt) => ({ kind: "prompt", data: prompt }));
-    return [...items, ...localRequestItems, ...localPromptItems, ...realPromptItems].sort(
+    const realRequestItems: FeedItem[] = realRequests.map((request) => ({ kind: "request", data: request }));
+    return [...items, ...localRequestItems, ...localPromptItems, ...realPromptItems, ...realRequestItems].sort(
       (a, b) => feedItemCreatedAt(b) - feedItemCreatedAt(a),
     );
-  }, [items, allRequests, localPrompts, realPrompts]);
+  }, [items, allRequests, localPrompts, realPrompts, realRequests]);
 
   const visible =
     active === "popular"

@@ -140,6 +140,25 @@ export async function fetchPromptsByAuthor(authorId: string): Promise<Prompt[]> 
   }
 }
 
+/** Every real answer (a prompt with `origin_type = 'request_response'`) to one real request, newest-first — for the request's detail page (CLAUDE.md Bölüm 21 Faz 5). */
+export async function fetchPromptsForRequest(requestId: string): Promise<Prompt[]> {
+  try {
+    const { data, error } = await supabase
+      .from("prompts")
+      .select(PROMPT_SELECT)
+      .eq("request_id", requestId)
+      .order("created_at", { ascending: false });
+    if (error) {
+      console.error("fetchPromptsForRequest", error);
+      return [];
+    }
+    return (data ?? []).map((row) => mapPromptRow(row as unknown as PromptRow));
+  } catch (err) {
+    console.error("fetchPromptsForRequest", err);
+    return [];
+  }
+}
+
 /** Every real prompt this user has saved, newest-first — for `/saved` and a real own-profile's "Kaydedilenler" tab (CLAUDE.md Bölüm 21 Faz 3). RLS keeps `prompt_saves` private, so this can only ever return the caller's own saves. */
 export async function fetchSavedPrompts(userId: string): Promise<Prompt[]> {
   try {
@@ -195,6 +214,8 @@ export interface CreateRealPromptInput {
   imageFile: File | null;
   /** Used for `contentType === "image"` when no file was uploaded — the same auto-generated placeholder the live preview already shows. */
   fallbackImage: { url: string; width: number; height: number } | null;
+  /** Set only when answering a real request (CLAUDE.md Bölüm 21 Faz 5) — produces `origin_type = 'request_response'` instead of `'original'`, and `handle_prompt_origin_change` (Bölüm 19) increments the request's `response_count`. */
+  requestId?: string;
 }
 
 /**
@@ -202,8 +223,8 @@ export interface CreateRealPromptInput {
  * (plus `prompt_media`/`prompt_tags`), visible to every visitor per Bölüm
  * 19's RLS policies — not a mock array, not localStorage. Only ever called
  * for `origin: "original"` prompts (plain "Prompt Oluştur" and "Kopyasını
- * Oluştur") — see real-prompts-provider.tsx for why remix/request-answer
- * don't go through here yet.
+ * Oluştur") and, since Faz 5, answering a real request — see
+ * real-prompts-provider.tsx for why remix still doesn't go through here.
  */
 export async function createRealPrompt(
   input: CreateRealPromptInput,
@@ -220,6 +241,8 @@ export async function createRealPrompt(
       tool: input.tool,
       content_type: input.contentType,
       status: "published",
+      origin_type: input.requestId ? "request_response" : "original",
+      request_id: input.requestId ?? null,
     })
     .select("id, created_at")
     .single();
@@ -300,7 +323,7 @@ export async function createRealPrompt(
     contentType: input.contentType,
     media,
     tags: input.tags,
-    origin: { type: "original" },
+    origin: input.requestId ? { type: "request-response", requestId: input.requestId, responseId: promptId } : { type: "original" },
     likeCount: 0,
     commentCount: 0,
     remixCount: 0,

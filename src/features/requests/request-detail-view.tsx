@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { CheckCircle2, MessageSquareOff, Sparkles, Trash2 } from "lucide-react";
@@ -11,11 +11,14 @@ import { Button } from "@/components/ui/button";
 import { PromptCard } from "@/features/prompts/prompt-card";
 import { CommentSection } from "@/features/prompts/comment-section";
 import { useLocalPrompts } from "@/features/prompts/local-prompts-provider";
+import { useAuth } from "@/features/auth/auth-provider";
+import { fetchPromptsForRequest } from "@/lib/supabase/prompts";
 import { ResponseCard } from "./response-card";
 import { useRequests } from "./requests-provider";
+import { useRealRequests } from "./real-requests-provider";
 import { getResponsesForRequest } from "@/mocks/request-responses";
-import { formatRelativeTime } from "@/lib/utils";
-import type { PromptRequest } from "@/types";
+import { formatRelativeTime, isUuid } from "@/lib/utils";
+import type { Prompt, PromptRequest } from "@/types";
 
 const STATUS_LABELS: Record<PromptRequest["status"], string> = {
   open: "Açık",
@@ -26,35 +29,84 @@ const STATUS_LABELS: Record<PromptRequest["status"], string> = {
 /**
  * Shared request detail rendering — used by both `/requests/[id]` (known
  * mock requests, server-rendered) and `/requests/local` (requests created
- * in this browser, which have no static page since their ids don't exist
- * at build time; see `requestHref()` in lib/utils.ts, same reasoning as
+ * in this browser, or since CLAUDE.md Bölüm 21 Faz 5, a genuinely real
+ * request; see `requestHref()` in lib/utils.ts, same reasoning as
  * `PromptDetailView`/`/prompts/local`).
  */
 export function RequestDetailView({ request }: { request: PromptRequest }) {
   const router = useRouter();
+  const { user: authUser } = useAuth();
   const { getForRequest } = useLocalPrompts();
   const { updateStatus, deleteRequest, selectResponse, getRequestById } = useRequests();
+  const {
+    getCached: getCachedRealRequest,
+    updateStatus: updateRealStatus,
+    deleteRequest: deleteRealRequest,
+    selectResponse: selectRealResponse,
+  } = useRealRequests();
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [realAnswers, setRealAnswers] = useState<Prompt[]>([]);
 
-  // Re-read the live version of the request from the provider so status/
-  // selection changes below reflect immediately without a page reload.
-  const live = getRequestById(request.id) ?? request;
+  const isRealRequest = isUuid(request.id);
+
+  // Re-read the live version of the request from the right provider so
+  // status/selection changes below reflect immediately without a page
+  // reload — mock/local requests from RequestsProvider, real ones from
+  // RealRequestsProvider's own cache (kept in sync by its own actions).
+  const live = isRealRequest ? (getCachedRealRequest(request.id) ?? request) : (getRequestById(request.id) ?? request);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!isRealRequest) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- nothing to fetch for a mock/local request
+      setRealAnswers([]);
+      return;
+    }
+    fetchPromptsForRequest(live.id).then((prompts) => {
+      if (!cancelled) setRealAnswers(prompts);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [isRealRequest, live.id]);
 
   const legacyResponses = getResponsesForRequest(live.id);
   const localAnswers = getForRequest(live.id);
-  const totalAnswers = legacyResponses.length + localAnswers.length;
+  const answerPrompts = [...localAnswers, ...realAnswers];
+  const totalAnswers = legacyResponses.length + answerPrompts.length;
 
-  const isOwnRequest = live.author.id === "me";
-  const canManage = isOwnRequest && live.id.startsWith("local-req-");
+  const isOwnRequest = isRealRequest ? authUser?.id === live.author.id : live.author.id === "me";
+  const canManage = isOwnRequest && (isRealRequest || live.id.startsWith("local-req-"));
   const isClosed = live.status === "closed";
 
-  function handleDelete() {
+  async function handleToggleStatus() {
+    const nextStatus = isClosed ? "open" : "closed";
+    if (isRealRequest) {
+      await updateRealStatus(live.id, nextStatus);
+    } else {
+      updateStatus(live.id, nextStatus);
+    }
+  }
+
+  async function handleDelete() {
     if (!confirmingDelete) {
       setConfirmingDelete(true);
       return;
     }
-    deleteRequest(live.id);
+    if (isRealRequest) {
+      await deleteRealRequest(live.id);
+    } else {
+      deleteRequest(live.id);
+    }
     router.push("/requests");
+  }
+
+  async function handleSelectResponse(promptId: string) {
+    if (isRealRequest) {
+      await selectRealResponse(live.id, promptId);
+    } else {
+      selectResponse(live.id, promptId);
+    }
   }
 
   return (
@@ -103,12 +155,7 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
         <div className="flex flex-wrap items-center gap-2 pt-1">
           {canManage ? (
             <>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => updateStatus(live.id, isClosed ? "open" : "closed")}
-              >
+              <Button type="button" variant="outline" size="sm" onClick={handleToggleStatus}>
                 <MessageSquareOff size={14} />
                 {isClosed ? "Açık olarak işaretle" : "İsteği kapat"}
               </Button>
@@ -155,7 +202,7 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
           </div>
         ) : (
           <div className="space-y-3">
-            {localAnswers.map((prompt) => (
+            {answerPrompts.map((prompt) => (
               <div key={prompt.id} className="space-y-2">
                 <PromptCard prompt={prompt} />
                 {canManage && (
@@ -168,7 +215,7 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
                     ) : (
                       <button
                         type="button"
-                        onClick={() => selectResponse(live.id, prompt.id)}
+                        onClick={() => handleSelectResponse(prompt.id)}
                         className="text-xs font-medium text-primary hover:underline"
                       >
                         Yanıtı seç

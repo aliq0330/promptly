@@ -7,6 +7,7 @@ import { feedItemCreatedAt, type FeedItem } from "./types";
 import { useLocalPrompts } from "@/features/prompts/local-prompts-provider";
 import { useRealPrompts } from "@/features/prompts/real-prompts-provider";
 import { useRequests } from "@/features/requests/requests-provider";
+import { useRealRequests } from "@/features/requests/real-requests-provider";
 
 const FILTERS = [
   { key: "all", label: "Tümü" },
@@ -25,6 +26,7 @@ export function DiscoverFeed({ items }: { items: FeedItem[] }) {
   const { localPrompts } = useLocalPrompts();
   const { realPrompts } = useRealPrompts();
   const { allRequests } = useRequests();
+  const { realRequests } = useRealRequests();
 
   const allItems = useMemo<FeedItem[]>(() => {
     const localRequestItems: FeedItem[] = allRequests
@@ -32,10 +34,11 @@ export function DiscoverFeed({ items }: { items: FeedItem[] }) {
       .map((request) => ({ kind: "request", data: request }));
     const localPromptItems: FeedItem[] = localPrompts.map((prompt) => ({ kind: "prompt", data: prompt }));
     const realPromptItems: FeedItem[] = realPrompts.map((prompt) => ({ kind: "prompt", data: prompt }));
-    return [...items, ...localRequestItems, ...localPromptItems, ...realPromptItems].sort(
+    const realRequestItems: FeedItem[] = realRequests.map((request) => ({ kind: "request", data: request }));
+    return [...items, ...localRequestItems, ...localPromptItems, ...realPromptItems, ...realRequestItems].sort(
       (a, b) => feedItemCreatedAt(b) - feedItemCreatedAt(a),
     );
-  }, [items, allRequests, localPrompts, realPrompts]);
+  }, [items, allRequests, localPrompts, realPrompts, realRequests]);
 
   const filtered = useMemo(() => {
     if (active === "all") return allItems;

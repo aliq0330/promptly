@@ -4,10 +4,12 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 import { RequestList } from "@/features/requests/request-list";
 import { useRequests } from "@/features/requests/requests-provider";
+import { useRealRequests } from "@/features/requests/real-requests-provider";
 
 export default function RequestsPage() {
   const { allRequests } = useRequests();
-  const requests = [...allRequests].sort(
+  const { realRequests } = useRealRequests();
+  const requests = [...allRequests, ...realRequests].sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
   );
 

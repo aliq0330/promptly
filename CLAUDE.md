@@ -220,8 +220,11 @@ gerçek Supabase projesi bağlantısı yoktur.**
     kalıcı olarak Supabase'e yazılıyor (`/saved` ve profildeki Kaydedilenler/
     Beğeniler sekmeleri dahil). Faz 4: gerçek bir promptta yorum ekleme
     artık gerçekten, kalıcı olarak Supabase'e yazılıyor (herkes okuyabilir,
-    yalnızca giriş yapan yazabilir); istekler/mesajlaşma hâlâ
-    mock+localStorage — bkz. Bölüm 9)
+    yalnızca giriş yapan yazabilir). Faz 5: gerçek prompt istekleri —
+    giriş yapmış bir kullanıcının istek oluşturması, gerçek bir isteği
+    yönetmesi (kapat/aç/sil/yanıt seç) ve gerçek bir isteğe gerçek bir
+    yanıt yayınlaması artık Supabase'e kalıcı olarak yazılıyor; mesajlaşma
+    hâlâ mock+localStorage — bkz. Bölüm 9)
 22. [ ] Moderasyon, engelleme, raporlama
 23. [ ] Testler, performans, erişilebilirlik
 24. [ ] Deployment ve son kalite kontrolü
@@ -231,12 +234,12 @@ gerçek Supabase projesi bağlantısı yoktur.**
 ## 9. Şu Anki Durum (bu bölüm her modül sonunda güncellenir)
 
 **Son güncelleme:** Bölüm 21 — Frontend'in gerçek Supabase'e bağlanması,
-Faz 4 (devam ediyor). Gerçek bir promptta yorum ekleme artık gerçekten,
-kalıcı olarak Supabase'e yazılıyor — herhangi bir ziyaretçi gerçek
-yorumları okuyabiliyor, yalnızca giriş yapan gerçekten yorum
-ekleyebiliyor, ve yeni yorum sayfa yenilenmeden anında görünüyor. Prompt
-istekleri ve mesajlaşma hâlâ mock veri + localStorage — bu modülün
-sonraki fazlarının işi.
+Faz 5 (devam ediyor). Gerçek prompt istekleri artık uçtan uca çalışıyor:
+giriş yapmış bir kullanıcı gerçek bir istek yayınlayabiliyor, kendi
+isteğini yönetebiliyor (kapat/aç/sil/yanıt seç), ve gerçek bir isteğe
+gerçek bir yanıt (prompt) yayınlayabiliyor — hepsi Supabase'e kalıcı
+olarak yazılıyor. Mesajlaşma hâlâ mock veri + localStorage — bu modülün
+sonraki fazının işi.
 
 **Tamamlanan:**
 - CLAUDE.md oluşturuldu.
@@ -1621,7 +1624,150 @@ sonraki fazlarının işi.
   `notifications` tablosuna client insert izni yok) yorumlar için de
   geçerli.
 
-**Sonraki adım:** Bölüm 21'in bir sonraki fazı — muhtemel adaylar: gerçek
-prompt istekleri (oluşturma/yanıtlama/seçim) veya gerçek mesajlaşma.
-Hangisiyle devam edileceği bir sonraki oturumda kullanıcıyla
-netleştirilecek.
+- **Frontend'in gerçek Supabase'e bağlanması — Faz 5 (Bölüm 21, devam
+  ediyor): gerçek prompt istekleri.** Faz 1-4 prompt/profil/beğeni/
+  kaydetme/takip/yorumu gerçek yaptı; Faz 5 aynı ilkeyi prompt-istek
+  modülüne uyguluyor — istek oluşturma, isteği yönetme (kapat/aç/sil/yanıt
+  seç) ve isteğe gerçek bir yanıt (prompt) yayınlama artık Supabase'e
+  kalıcı olarak yazılıyor.
+  - **Kapsam kararı — istek oluşturma diğer fazlardan farklı bir kural
+    izliyor:** `CreatePromptForm`'un düz "Prompt Oluştur" modu (Faz 1) ve
+    `CreateRequestForm` Faz 5'ten ÖNCE farklı durumdaydı — düz prompt
+    oluşturma hep önizleme-yalnızdı (Supabase'e bağlanana kadar), ama
+    istek oluşturma Bölüm 9'dan beri zaten gerçekten, kalıcı olarak
+    yayınlıyordu (yalnızca localStorage'a). Bu yüzden Faz 1'in "gerçek
+    yayın için giriş şart" kuralı buraya kör bir şekilde kopyalanmadı:
+    `CreateRequestForm` giriş yapılmadan da eskisi gibi çalışmaya devam
+    ediyor (yerel/localStorage), giriş yapılmışsa artık gerçek bir
+    `prompt_requests` satırına yazıyor — hangisi olduğu yalnızca YERİ
+    değiştiriyor, var olan bir özelliği asla giriş şartına bağlamıyor.
+    Bir isteği YANITLAMA (`CreatePromptForm`'un `?answerRequest=` modu) ise
+    farklı: gerçek bir isteği yanıtlamanın Faz 5'ten önce hiç var olan bir
+    hâli yoktu (yanıtlama hep `CreatePromptForm` üzerinden gitmişti ve
+    gerçek istek diye bir şey Faz 5'e kadar yoktu), bu yüzden orada Faz
+    1'in kuralı geçerli: gerçek bir isteği yanıtlamak giriş gerektiriyor
+    (mock/yerel bir isteği yanıtlamak hâlâ giriş gerektirmiyor, aynen
+    öncesi gibi).
+  - **Yeni `src/lib/supabase/requests.ts`:** `prompts.ts`'nin birebir
+    mimarisi — `RequestRow`/`REQUEST_SELECT` (yazar + `prompt_request_tags`
+    join'i), `mapRequestRow`, `fetchRecentRequests`/`fetchRequestById`
+    (ikisi de try/catch'li — Faz 2'nin dayanıklılık dersini baştan
+    uyguluyor), `createRealRequest` (referans görseli varsa gerçekten
+    `request-references` bucket'ına yüklüyor — Bölüm 20 — sonra
+    `prompt_requests` + `prompt_request_tags` satırlarını yazıyor),
+    `updateRealRequestStatus`, `deleteRealRequest`,
+    `selectRealRequestResponse` (hem `selected_response_prompt_id`'yi hem
+    `status`'u tek UPDATE'te günceller).
+  - **`src/lib/supabase/prompts.ts` genişletildi:** `CreateRealPromptInput`'a
+    opsiyonel `requestId` eklendi — set edilirse `createRealPrompt`
+    `origin_type: 'request_response'` + `request_id` yazıyor (Bölüm 19'un
+    zaten test edilmiş `handle_prompt_origin_change` trigger'ı isteğin
+    `response_count`'unu otomatik artırıyor). Yeni
+    `fetchPromptsForRequest(requestId)` — bir isteğin gerçek yanıtlarını
+    (`request_id` eşleşen promptlar) çekiyor.
+  - **Yeni `RealRequestsProvider`/`useRealRequests()`**
+    (`features/requests/real-requests-provider.tsx`) — `RealPromptsProvider`
+    ile birebir aynı şekil: `realRequests`, `getCached`, `fetchById`,
+    artı gerçek mutasyon aksiyonları (`addRequest`, `updateStatus`,
+    `deleteRequest`, `selectResponse`) — her biri Supabase'e yazıp yerel
+    state'i iyimser olarak güncelliyor. `AppProviders`'a `RequestsProvider`
+    (yerel/mock) içine eklendi.
+  - **`lib/utils.ts` → `requestHref()` genişletildi:** artık `local-req-`
+    önekine değil (Faz 1'in `promptHref` dersiyle aynı düzeltme),
+    `mockRequests` içinde olup olmadığına bakıyor — hem yerel hem gerçek
+    (UUID) istekler aynı şekilde `/requests/local?id=…`'e yönleniyor.
+  - **`LocalRequestView` (`/requests/local`) üç kaynağı sırayla dener:**
+    yerel (localStorage) → önbellekteki gerçek istekler → (bulunamazsa)
+    canlı bir Supabase sorgusu — `LocalPromptView`'ın (Faz 1) birebir aynı
+    deseni.
+  - **`RequestDetailView` gerçek/yerel ayrımını `isUuid(request.id)` ile
+    yapıyor** (Faz 1-4'ün tuttuğu genel kural): kendi isteğini yönetme
+    (kapat/aç/sil), yanıt seçme ve gerçek yanıtları listeleme
+    (`fetchPromptsForRequest`, yerel yanıtlarla birleştirilip tek listede
+    gösteriliyor) artık doğru sağlayıcıya (`useRealRequests()` vs.
+    `useRequests()`) yönleniyor.
+  - **`CreatePromptForm`'un `?answerRequest=` modu artık gerçek istekleri
+    de destekliyor:** hedef istek önce yerel/mock'ta (`useRequests()`,
+    senkron), yoksa `isUuid()` ile gerçek olup olmadığına bakılıp
+    `useRealRequests()`'in önbelleği/canlı sorgusuyla (asenkron, bir
+    `useEffect` ile) aranıyor. Gerçek hedefin `contentType`/
+    `preferredTool`/`tags` alanları asenkron geldiği için form alanlarının
+    `useState` lazy initializer'larından SONRA gelen ayrı bir `useEffect`
+    ile geri dolduruluyor (`/profile/edit`'in Faz 2'deki gerçek-profil
+    senkronizasyonuyla aynı desen — async veri, senkron initializer'larla
+    doldurulamıyor). Giriş yapılmışsa `addRealPrompt(..., { requestId })`
+    ile gerçek bir yanıt yayınlanıyor (isteğin sahibine görünür, gerçek
+    `response_count` artıyor); giriş yapılmamışsa Faz 1'in düz oluşturma
+    kuralıyla aynı şekilde yalnızca önizleme + giriş/kayıt bağlantılı bir
+    bilgi kutusu gösteriliyor (kalıcı bir yerel yanıt OLUŞTURULMUYOR —
+    yukarıdaki kapsam kararına göre bu, korunması gereken var olan bir
+    özellik değil). Mock/yerel bir isteği yanıtlamak ise değişmeden
+    localStorage üzerinden, giriş şartı olmadan çalışmaya devam ediyor.
+  - **Feed/liste entegrasyonu:** `FeedTabs`, `DiscoverFeed` ve
+    `/requests` sayfası artık `useRealRequests()`'i de `useRequests()`/
+    `useLocalPrompts()`/`useRealPrompts()` ile aynı şekilde client-side
+    birleştirip tarihe göre sıralıyor — gerçek bir istek, tıpkı yerel bir
+    istek gibi, Ana Sayfa/Keşfet/`/requests`'te diğer her şeyle karışık
+    görünüyor.
+  - **İstek yorumları bilinçli olarak bu fazın dışında bırakıldı:**
+    `CommentSection` hâlâ yalnızca `promptId` hedefleri için gerçek
+    (Faz 4), `requestId` hedefleri (mock ya da gerçek fark etmez) hâlâ
+    localStorage üzerinden çalışıyor — bkz. aşağıdaki bilinen sınırlama.
+  - **Nasıl doğrulandı:** Bu sandbox'ın ağ politikası hâlâ
+    `*.supabase.co`'ya erişimi engellediğinden, iki ayrı Playwright
+    paketiyle test edildi. (1) Sıfır ağ taklidiyle dayanıklılık: gerçek
+    bir isteğe yanıt formu (`?answerRequest=<uuid>`) ve `/requests` listesi
+    Supabase'e hiç ulaşamazken bile çökmeden/asılı kalmadan doğru
+    davrandı (birkaç saniye içinde "İstek bulunamadı" veya boş listeye
+    zarifçe düştü, sıfır `pageerror`). (2) Ağ seviyesinde taklit edilmiş
+    Supabase REST yanıtlarıyla (tarayıcı localStorage'ına gerçek
+    supabase-js oturum formatında bir session enjekte edilip `/rest/v1/
+    prompt_requests`, `/rest/v1/prompt_request_tags`, `/rest/v1/prompts`,
+    `/rest/v1/profiles` uç noktaları taklit edilerek) 18 adım uçtan uca
+    doğrulandı: giriş yapmış kullanıcı için istek oluşturma formunun
+    gerçek bir INSERT tetiklediği ve doğru sayfaya yönlendirdiği; kendi
+    gerçek isteğinde yönetim kontrollerinin (kapat/aç/sil) göründüğü ve
+    her birinin gerçek bir PATCH/DELETE tetiklediği; gerçek isteğin Ana
+    Sayfa/Keşfet/`/requests`'te göründüğü; bir yanıt seçilince
+    `selected_response_prompt_id`'nin gerçekten güncellendiği ve seçilen
+    yanıtın istek detayında "Seçilen yanıt" rozetiyle göründüğü; gerçek
+    bir isteğe `CreatePromptForm` üzerinden yanıt verilince doğru
+    `origin_type: 'request_response'` + `request_id` ile gerçek bir INSERT
+    tetiklendiği ve doğru içerik türü/araç/etiketlerin isteğin gerçek
+    alanlarından önceden dolduğu; giriş yapılmamışken gerçek bir isteği
+    yanıtlamanın "giriş yap/hesap oluştur" bilgi kutusunu gösterip HİÇBİR
+    kalıcı kayıt oluşturmadığı; ve mock bir isteği (r1) yanıtlamanın giriş
+    şartı olmadan eskisi gibi çalışmaya devam ettiği — hepsi sıfır JS
+    hatasıyla. Ayrıca masaüstü/mobil × açık/koyu tema kombinasyonlarının
+    tümünde 10 sayfalık bir regresyon taraması (yatay taşma + JS hatası
+    kontrolü) sorunsuz geçti.
+  - `npx tsc --noEmit`, `npm run lint` ve tam `npm run build` (91 statik
+    sayfa) hatasız geçti.
+
+**Bilinen sorunlar / bilinçli basitleştirmeler (Bölüm 21 Faz 5 için ek):**
+- **İstek yorumları hâlâ tamamen mock+localStorage — Faz 5'ten sonra da
+  değişmedi:** `CommentSection`'ın gerçek dal (Faz 4) yalnızca `promptId`
+  hedefleri için var; bir isteğe (gerçek olsun ya da olmasın) yapılan
+  yorumlar hâlâ yalnızca bu tarayıcıda yaşıyor. Bilinçli bir kapsam kararı
+  (yukarıya bakınız) — gerçek istek yorumları ayrı, küçük bir iş olurdu
+  (`CommentSection`'a `isUuid(target.requestId)` kontrolü eklemek ve
+  `comments.ts`'e bir `fetchCommentsForRequest`/`postCommentOnRequest`
+  çifti eklemek yeterli olurdu) ama bu fazın kapsamına alınmadı.
+- **Gerçek bir isteğin "Düzenle"si hâlâ yok** — Faz 5'ten önceki aynı
+  kapsam kararı (yalnızca kapat/aç/sil) korundu, gerçek istekler için de
+  genişletilmedi.
+- **Referans görsel boyut/format doğrulaması gerçek bir Supabase
+  projesine karşı hiç denenmedi** — Faz 1/2'deki aynı sandbox ağ kısıtı
+  burada da geçerli, yalnızca taklit edilmiş yanıtlarla test edildi.
+- **Bildirimler yine yok:** yeni bir gerçek isteğe yanıt geldiğinde ya da
+  bir yanıt seçildiğinde istek sahibine gerçek bir bildirim üretilmiyor —
+  Faz 3/4'teki aynı, belgelenmiş sınırlama.
+- **`prompt_request_tags` eklenmesi de "yumuşak" başarısız oluyor** —
+  `createRealPrompt`'un `prompt_tags`'i için Faz 1'de alınan aynı karar
+  (etiket eklemek başarısız olsa bile isteğin/yanıtın kendisi yayınlanmış
+  sayılır) `createRealRequest` için de geçerli.
+
+**Sonraki adım:** Bölüm 21'in bir sonraki (ve muhtemelen son büyük) fazı —
+gerçek mesajlaşma. Frontend'in gerçek Supabase'e bağlanması modülünün geri
+kalan tek büyük parçası bu; tamamlandığında yalnızca moderasyon (Bölüm 22)
+ve test/performans/erişilebilirlik/deployment (Bölüm 23-24) kalacak.
