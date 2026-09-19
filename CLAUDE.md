@@ -199,7 +199,7 @@ gerçek Supabase projesi bağlantısı yoktur.**
 15. [x] Bildirimler (mock veriyle)
 16. [x] Özel mesajlaşma (mesaj gönderme henüz devre dışı)
 17. [x] Kayıt, giriş, hesap ayarları (gerçek Supabase Auth bağlantısı — bkz. Bölüm 9; hesap ↔ mock profil/veri entegrasyonu Bölüm 18/21'e bağlı)
-18. [ ] Supabase veritabanı ve migration dosyaları
+18. [x] Supabase veritabanı ve migration dosyaları (şema tasarlandı, 7 migration dosyası yazıldı ve yerel bir Postgres 16 örneğinde gerçek olarak doğrulandı; gerçek Supabase projesine HENÜZ uygulanmadı — bkz. `supabase/README.md` ve Bölüm 9)
 19. [ ] RLS ve güvenlik politikaları
 20. [ ] Supabase Storage
 21. [ ] Frontend'in gerçek Supabase'e bağlanması
@@ -211,7 +211,7 @@ gerçek Supabase projesi bağlantısı yoktur.**
 
 ## 9. Şu Anki Durum (bu bölüm her modül sonunda güncellenir)
 
-**Son güncelleme:** Bölüm 17 — Kayıt, giriş, hesap ayarları (Supabase Auth)
+**Son güncelleme:** Bölüm 18 — Supabase veritabanı ve migration dosyaları
 tamamlandı. Projede artık **gerçek bir Supabase projesi bağlı** (ilk kez —
 CLAUDE.md §6/§20'nin "henüz hiçbir bağlantı yok" notu bu modülle kısmen
 aşıldı: Auth bağlı, veritabanı/Storage hâlâ yok). Sıradaki modül Bölüm 18.
@@ -914,5 +914,98 @@ aşıldı: Auth bağlı, veritabanı/Storage hâlâ yok). Sıradaki modül Böl�
   uygulamanın gerçek adresleri eklenmezse şifre sıfırlama/e-posta
   doğrulama bağlantıları çalışmaz — bu kod dışı, Dashboard'da yapılması
   gereken bir kurulum adımıdır (yukarıdaki not).
+- **Supabase veritabanı ve migration dosyaları (Bölüm 18):** `src/types/
+  index.ts`'teki mock veri modelini birebir yansıtan gerçek bir Postgres
+  şeması, `supabase/migrations/` altında 7 sıralı SQL dosyası olarak
+  yazıldı (`supabase/README.md`'de uygulama talimatları ve tam tablo
+  listesiyle belgelendi):
+  - `20260919120000_extensions_and_helpers.sql` — `pgcrypto` (uuid üretimi
+    için) ve genel `set_updated_at()` trigger fonksiyonu.
+  - `20260919120100_profiles.sql` — `profiles` tablosu (`auth.users`'a 1:1,
+    `username` benzersiz + format kontrollü, `interests text[]`,
+    `follower_count`/`following_count` sayaçları), `generate_username()`
+    fonksiyonu (e-postanın `@` öncesinden türetip çakışırsa rastgele sayı
+    ekliyor) ve `handle_new_user()` `SECURITY DEFINER` trigger'ı — Bölüm
+    17'nin gerçek `supabase.auth.signUp()` çağrısı tamamlanır tamamlanmaz
+    otomatik bir `profiles` satırı oluşturuyor (display_name'i
+    `user_metadata`'dan okuyarak).
+  - `20260919120200_prompts_and_requests.sql` — `tags`, `prompt_requests`,
+    `prompts` (origin/content_type/status için `CHECK` kısıtlamaları,
+    `prompts_origin_shape` ile `PromptOrigin` union tipinin şeklini
+    veritabanı seviyesinde zorluyor), `prompt_media`, `prompt_tags`,
+    `prompt_request_tags`. **Mimari karar:** ayrı bir
+    `prompt_request_responses` tablosu YOK — Bölüm 9/10'da zaten bir
+    isteğe verilen yanıtın `origin.type === "request-response"` olan
+    normal bir `Prompt` olduğuna karar verilmişti; şema bu kararı
+    birebir izliyor, paralel bir veri modeli kurulmadı.
+  - `20260919120300_engagement.sql` — `prompt_likes`, `prompt_saves`,
+    `prompt_comments` (`prompt_comments_exactly_one_target` CHECK'i ile
+    `promptId`/`requestId`'den tam olarak birinin dolu olmasını zorluyor),
+    `follows` (`follows_no_self_follow` CHECK), artı `like_count`,
+    `comment_count`, `follower_count`/`following_count`, `remix_count`,
+    `response_count` gibi TÜM sayaç kolonlarını her INSERT/DELETE'te
+    güncel tutan trigger fonksiyonları (read-time `COUNT()` yerine
+    denormalize edilmiş kolonlar — performans için).
+  - `20260919120400_messaging_and_notifications.sql` — `conversations`,
+    `conversation_members`, `messages` (yeni mesaj → `last_message_at` ve
+    diğer üyelerin `unread_count`'unu güncelleyen trigger), `notifications`.
+  - `20260919120500_moderation.sql` — CLAUDE.md §6'nın planladığı
+    `reports` (polimorfik `target_type`/`target_id`) ve `blocks`
+    (`blocks_no_self_block` CHECK) tabloları — uygulama mantığı henüz yok
+    (Bölüm 22), yalnızca şema hazırlandı.
+  - `20260919120600_seed_tags.sql` — `src/mocks/tags.ts`'teki 20 sabit
+    etiketi gerçek `tags` tablosuna `ON CONFLICT DO NOTHING` ile ekliyor.
+  - **RLS:** Her tabloda oluşturulduğu anda `ENABLE ROW LEVEL SECURITY`
+    çalıştırıldı, hiçbir politika yazılmadı (bilinçli olarak Bölüm 19'a
+    bırakıldı) — yani şu an `anon`/`authenticated` anahtarlarıyla hiçbir
+    tablodan tek bir satır bile okunamaz/yazılamaz; "varsayılan olarak
+    kapalı, güvenli tarafta" bir ara durum.
+  - **Nasıl doğrulandı (canlı ağ erişimi engellendiği için — bkz. Bölüm
+    17'deki not):** migration dosyaları gerçek Supabase projesine hiç
+    uygulanmadı; bunun yerine bu sandbox'ta önceden kurulu PostgreSQL 16
+    ile geçici, tek kullanımlık yerel bir veritabanı açıldı, `auth.users`
+    ve `extensions` şeması için minimal bir taklit oluşturuldu, ve 7
+    migration dosyasının TAMAMI bu veritabanına gerçekten uygulanıp şu
+    senaryolar fiilen test edildi (görsel inceleme değil, çalıştırılıp
+    sonucu doğrulanan gerçek SQL): yeni `auth.users` satırı eklenince
+    `profiles` satırının otomatik oluşması; aynı e-posta yerel-adına sahip
+    ikinci bir kullanıcı kaydolunca kullanıcı adı çakışmasının rastgele
+    ek ile doğru çözülmesi; beğenme/beğenmekten vazgeçmenin
+    `like_count`'u +1/-1 etmesi; yorum eklemenin `comment_count`'u
+    artırması; takip etmenin hem takip edilenin `follower_count`'unu hem
+    takip edenin `following_count`'unu artırması; remix oluşturmanın
+    orijinal promptun `remix_count`'unu artırması; bir isteğe yanıt
+    oluşturmanın isteğin `response_count`'unu artırması ve yanıt
+    seçmenin `selected_response_prompt_id`'yi güncelleyip durumu
+    "Yanıtlandı" yapması; ve geçersiz verilerin (aynı yorumda hem
+    `prompt_id` hem `request_id`, kendi kendini takip/engelleme,
+    `source_prompt_id` olmadan remix origin'i, geçersiz `content_type`,
+    yinelenen kullanıcı adı) hepsinin beklendiği gibi hata vererek
+    reddedilmesi; son olarak `public` şemasındaki 17 tablonun tümünde
+    RLS'nin gerçekten açık olduğu doğrulandı. Test veritabanı işlem
+    bitince silindi (`DROP DATABASE`) — depoda kalıcı bir iz bırakmadı.
+  - Yeni `supabase/README.md`: migration'ların nasıl uygulanacağını
+    (Dashboard → SQL Editor adım adım, veya `supabase link && supabase
+    db push`), her dosyanın ne oluşturduğunu, `prompt_request_responses`
+    kararını ve yukarıdaki doğrulama listesini Türkçe olarak belgeliyor.
 
-**Sonraki modül:** Supabase veritabanı ve migration dosyaları (Bölüm 18).
+**Bilinen sorunlar / bilinçli basitleştirmeler (Bölüm 18 için ek):**
+- **Migration'lar gerçek Supabase projesine henüz uygulanmadı.** Bu
+  ortamın ağ politikası `*.supabase.co`'ya (canlı Postgres bağlantısı
+  dahil) doğrudan erişimi engellediğinden, bu adım kullanıcının kendisi
+  tarafından yapılmalı — `supabase/README.md`'deki iki seçenekten biriyle
+  (Dashboard SQL Editor veya Supabase CLI).
+- **Frontend hâlâ %100 mock veri üzerinde çalışıyor.** Şemanın var olması,
+  uygulamanın onu kullandığı anlamına gelmiyor — `src/mocks/*` ve
+  localStorage tabanlı provider'lar (Follow/Like/Save/Comment/
+  LocalPrompts/Requests/ProfileOverrides/HiddenPrompts) değişmeden
+  duruyor. Gerçek bağlanma Bölüm 21'in işi.
+- Migration dosyaları yalnızca yerel bir Postgres 16 örneğinde test
+  edildi; gerçek Supabase projesinin kendine özgü uzantıları/varsayılan
+  ayarları (ör. `extensions` şemasının tam içeriği, varsayılan
+  roller/grantlar) yerel taklitte birebir aynı olmayabilir — küçük bir
+  uyumsuzluk ihtimaline karşı kullanıcı migration'ları Dashboard'da
+  sırayla, hata çıkarsa durup paylaşarak uygulamalı (README bunu açıkça
+  söylüyor).
+
+**Sonraki modül:** RLS ve güvenlik politikaları (Bölüm 19).
