@@ -760,6 +760,30 @@ aşıldı: Auth bağlı, veritabanı/Storage hâlâ yok). Sıradaki modül Böl�
     `@supabase/supabase-js` v2 API'sine birebir uygun yazıldı ve build/
     typecheck/lint hatasız, ama "gerçek projenizle uçtan uca çalışıyor"
     iddiası ancak sizin canlı denemenizle doğrulanabilir.
+  - **Düzeltme — görünürlük hatası:** İlk uygulamada `/login`/`/signup`/
+    `/settings` sayfaları çalışıyordu ama uygulamanın **hiçbir yerinde
+    bunlara giden bir bağlantı yoktu** (header, sidebar, mobil menü —
+    hiçbiri) — kullanıcı bunu fark edip bildirdi. Kök neden: "mevcut mock
+    deneyimi bozma" kararı header'a hiç dokunmama şeklinde yanlış
+    uygulanmıştı, oysa gerçek auth'un en azından GÖRÜNÜR bir giriş noktası
+    olması gerekirdi. Düzeltildi:
+    - `Header` artık `"use client"` ve `useAuth()` kullanıyor: gerçek oturum
+      yokken header'da mor bir **"Giriş Yap"** butonu beliriyor (mobilde
+      yalnızca ikon), gerçekten giriş yapılınca kayboluyor. Mock "Sen"
+      avatarı hâlâ değişmeden duruyor (o hâlâ mock deneyimin parçası).
+    - `components/layout/nav-items.ts`: masaüstü sidebar'a **"Ayarlar"**
+      linki eklendi (`/settings`) — mobil alt navigasyona eklenmedi (sabit
+      5 öğe kuralı, CLAUDE.md §5).
+    - `features/profile/profile-actions.tsx`: `OwnProfileActions`'a bir
+      dişli (Settings) ikonu eklendi (`/settings`'e) — mobilde sidebar
+      olmadığından, kendi profiline (zaten alt navigasyonda olan bir sekme)
+      giden bu yol gerçek hesap ayarlarına/çıkışa mobilde de ulaşılabilir
+      kılıyor.
+    - Playwright ile doğrulandı: çıkışlıyken header'da "Giriş Yap" görünüyor
+      ve tıklanınca gerçekten `/login`'e gidiyor; sidebar'daki ve profildeki
+      "Ayarlar" linkleri gerçekten `/settings`'e gidiyor; (mock) giriş
+      yapılınca "Giriş Yap" header'dan kayboluyor; mobilde yatay taşma yok;
+      21 adımlık mevcut regresyon paketi bozulmadı.
 
 **Bilinen sorunlar / bilinçli basitleştirmeler:**
 - Tablet için ayrı bir navigasyon/genişlik düzeni henüz yok; `lg` (1024px)

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { MessageCircle, Sparkles } from "lucide-react";
+import { MessageCircle, Settings, Sparkles } from "lucide-react";
 import { ShareButton } from "@/features/prompts/share-button";
 import { FollowButton } from "./follow-button";
 
@@ -33,6 +33,13 @@ export function OwnProfileActions({ username }: { username: string }) {
         label="Paylaş"
         className="h-9 gap-1.5 rounded-md border border-border px-4 text-sm"
       />
+      <Link
+        href="/settings"
+        title="Hesap ayarları"
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border bg-transparent text-text-muted transition-colors hover:bg-accent-surface hover:text-text"
+      >
+        <Settings size={16} />
+      </Link>
     </div>
   );
 }

@@ -4,6 +4,7 @@ import {
   Compass,
   Home,
   PlusSquare,
+  Settings,
   Sparkles,
   User,
   Users,
@@ -24,6 +25,7 @@ export const primaryNavItems: NavItem[] = [
   { href: "/saved", label: "Kaydedilenler", icon: Bookmark },
   { href: "/following", label: "Takip Ettiklerim", icon: Users },
   { href: "/profile/me", label: "Profil", icon: User },
+  { href: "/settings", label: "Ayarlar", icon: Settings },
 ];
 
 /** Reduced set shown in the mobile bottom navigation. */

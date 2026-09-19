@@ -1,14 +1,27 @@
+"use client";
+
 import Link from "next/link";
-import { Bell, MessageCircle, Search } from "lucide-react";
+import { Bell, LogIn, MessageCircle, Search } from "lucide-react";
 import { iconButtonClassName } from "@/components/ui/icon-button";
 import { Avatar } from "@/components/ui/avatar";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
+import { useAuth } from "@/features/auth/auth-provider";
 import { getUserById } from "@/mocks/users";
 import { mockNotifications } from "@/mocks/notifications";
 import { mockConversations } from "@/mocks/conversations";
 
+/**
+ * The avatar (linking to /profile/me) always reflects the "me" mock
+ * persona regardless of real auth state — CLAUDE.md section 17 kept that
+ * mock browsing experience unchanged on purpose. The "Giriş Yap" link is
+ * the actual, real auth signal: it only shows when there's genuinely no
+ * Supabase session, and disappears the moment a real login succeeds.
+ * Without this, the whole Bölüm 17 auth system has no visible entry point
+ * anywhere in the app — this was a real gap, not just a design choice.
+ */
 export function Header() {
   const me = getUserById("me")!;
+  const { user, loading } = useAuth();
   const hasUnreadNotifications = mockNotifications.some((n) => !n.isRead);
   const hasUnreadMessages = mockConversations.some((c) => c.unreadCount > 0);
 
@@ -64,6 +77,15 @@ export function Header() {
           )}
         </Link>
         <ThemeToggle />
+        {!loading && !user && (
+          <Link
+            href="/login"
+            className="ml-1 flex h-9 shrink-0 items-center gap-1.5 rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-dark"
+          >
+            <LogIn size={16} />
+            <span className="hidden sm:inline">Giriş Yap</span>
+          </Link>
+        )}
         <Link href="/profile/me" className="ml-1 shrink-0">
           <Avatar src={me.avatarUrl} alt={me.displayName} size={36} />
         </Link>
