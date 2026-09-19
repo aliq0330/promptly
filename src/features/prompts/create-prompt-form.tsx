@@ -157,10 +157,13 @@ export function CreatePromptForm() {
     }
   }, [sourcePrompt, duplicateSource, answeredRequest, fieldsSeeded, isRemixMode]);
 
+  const [showOnProfile, setShowOnProfile] = useState(true);
+
   const [publishError, setPublishError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const notFound = sourceChecked && ((isRemixMode && !sourcePrompt) || (isDuplicateMode && !duplicateSource) || (isAnswerMode && !answeredRequest));
+  const isRequestClosed = isAnswerMode && Boolean(answeredRequest) && answeredRequest?.status !== "open";
 
   async function handleImageChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -223,6 +226,7 @@ export function CreatePromptForm() {
           fallbackImage:
             contentType === "image" ? { url: media[0].url, width: media[0].width, height: media[0].height } : null,
           requestId: answeredRequest?.id,
+          showOnProfile: isAnswerMode ? showOnProfile : true,
           remixOf: sourcePrompt
             ? {
                 sourcePromptId: sourcePrompt.id,
@@ -267,6 +271,7 @@ export function CreatePromptForm() {
     isLiked: false,
     isSaved: false,
     status: "draft",
+    showOnProfile: isAnswerMode ? showOnProfile : true,
     createdAt: new Date().toISOString(),
   };
 
@@ -296,6 +301,23 @@ export function CreatePromptForm() {
           className="inline-flex h-9 items-center rounded-md border border-border px-4 text-sm font-medium text-text hover:bg-accent-surface"
         >
           {isAnswerMode ? "Prompt İsteklerine Dön" : "Keşfet'e Dön"}
+        </Link>
+      </div>
+    );
+  }
+
+  if (isRequestClosed && answeredRequest) {
+    return (
+      <div className="mx-auto max-w-lg px-4 py-16 text-center">
+        <h1 className="mb-2 text-lg font-semibold text-text">Bu istek kapandı</h1>
+        <p className="mb-4 text-sm text-text-muted">
+          Bu istek kapandı, artık yeni yanıt kabul edilmiyor.
+        </p>
+        <Link
+          href={requestHref(answeredRequest)}
+          className="inline-flex h-9 items-center rounded-md border border-border px-4 text-sm font-medium text-text hover:bg-accent-surface"
+        >
+          İsteği Görüntüle
         </Link>
       </div>
     );
@@ -343,6 +365,57 @@ export function CreatePromptForm() {
               >
                 İsteği görüntüle
               </Link>
+            </div>
+          )}
+
+          {isAnswerMode && answeredRequest && (
+            <div>
+              <label className="mb-2 block text-sm font-medium text-text">
+                Bu yanıt profilimde görünsün mü?
+              </label>
+              <div className="space-y-2">
+                <label
+                  className={cn(
+                    "flex cursor-pointer items-start gap-2.5 rounded-md border p-3 text-sm transition-colors",
+                    showOnProfile ? "border-primary bg-primary/5" : "border-border bg-surface hover:bg-accent-surface/40",
+                  )}
+                >
+                  <input
+                    type="radio"
+                    name="show-on-profile"
+                    checked={showOnProfile}
+                    onChange={() => setShowOnProfile(true)}
+                    className="mt-0.5"
+                  />
+                  <span>
+                    <span className="block font-medium text-text">Profilimde paylaş</span>
+                    <span className="block text-xs text-text-muted">
+                      Yanıtın istek sahibine gösterilir ve profilinde de normal gönderilerin gibi görünür.
+                    </span>
+                  </span>
+                </label>
+                <label
+                  className={cn(
+                    "flex cursor-pointer items-start gap-2.5 rounded-md border p-3 text-sm transition-colors",
+                    !showOnProfile ? "border-primary bg-primary/5" : "border-border bg-surface hover:bg-accent-surface/40",
+                  )}
+                >
+                  <input
+                    type="radio"
+                    name="show-on-profile"
+                    checked={!showOnProfile}
+                    onChange={() => setShowOnProfile(false)}
+                    className="mt-0.5"
+                  />
+                  <span>
+                    <span className="block font-medium text-text">Profilimde paylaşma</span>
+                    <span className="block text-xs text-text-muted">
+                      Yanıtın bu isteğin yanıtları arasında görünür. Profilinde ve normal gönderi akışında
+                      gösterilmez.
+                    </span>
+                  </span>
+                </label>
+              </div>
             </div>
           )}
 

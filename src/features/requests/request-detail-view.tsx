@@ -13,14 +13,9 @@ import { CommentSection } from "@/features/prompts/comment-section";
 import { useAuth } from "@/features/auth/auth-provider";
 import { fetchPromptsForRequest } from "@/lib/supabase/prompts";
 import { useRealRequests } from "./real-requests-provider";
+import { STATUS_LABELS, STATUS_VARIANTS } from "./request-card";
 import { formatRelativeTime } from "@/lib/utils";
 import type { Prompt, PromptRequest } from "@/types";
-
-const STATUS_LABELS: Record<PromptRequest["status"], string> = {
-  open: "Açık",
-  answered: "Yanıtlandı",
-  closed: "Kapandı",
-};
 
 /** Real request detail rendering, used by `/requests/local?id=…`. */
 export function RequestDetailView({ request }: { request: PromptRequest }) {
@@ -34,6 +29,9 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
   } = useRealRequests();
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [answers, setAnswers] = useState<Prompt[]>([]);
+  const [selectionTarget, setSelectionTarget] = useState<{ id: string; confirming: boolean } | null>(null);
+  const [selectionError, setSelectionError] = useState<string | null>(null);
+  const [isSelecting, setIsSelecting] = useState(false);
 
   // Re-read the live version of the request from the cache so status/
   // selection changes below reflect immediately without a page reload.
@@ -50,7 +48,11 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
   }, [live.id]);
 
   const isOwnRequest = authUser?.id === live.author.id;
-  const isClosed = live.status === "closed";
+  // "answered" (closed by selecting a response) and "closed" (closed
+  // manually) both mean "not accepting new answers" from a visitor's
+  // point of view — see request-card.tsx's STATUS_LABELS comment.
+  const isClosed = live.status !== "open";
+  const hasSelection = Boolean(live.selectedResponsePromptId);
 
   async function handleToggleStatus() {
     const nextStatus = isClosed ? "open" : "closed";
@@ -66,8 +68,19 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
     router.push("/requests");
   }
 
-  async function handleSelectResponse(promptId: string) {
-    await selectRealResponse(live.id, promptId);
+  async function confirmSelection(promptId: string | null) {
+    setIsSelecting(true);
+    setSelectionError(null);
+    try {
+      await selectRealResponse(live.id, promptId);
+      setSelectionTarget(null);
+    } catch (err) {
+      setSelectionError(
+        err instanceof Error ? err.message : "İşlem gerçekleştirilemedi, lütfen tekrar dene.",
+      );
+    } finally {
+      setIsSelecting(false);
+    }
   }
 
   return (
@@ -75,7 +88,7 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
       <div className="space-y-4 rounded-lg border border-border bg-surface p-5">
         <div className="flex items-start justify-between gap-3">
           <h1 className="text-lg font-semibold text-text">{live.title}</h1>
-          <Badge>{STATUS_LABELS[live.status]}</Badge>
+          <Badge variant={STATUS_VARIANTS[live.status]}>{STATUS_LABELS[live.status]}</Badge>
         </div>
         <p className="text-sm text-text-muted">{live.description}</p>
 
@@ -115,22 +128,24 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
 
         <div className="flex flex-wrap items-center gap-2 pt-1">
           {isOwnRequest ? (
-            <>
-              <Button type="button" variant="outline" size="sm" onClick={handleToggleStatus}>
-                <MessageSquareOff size={14} />
-                {isClosed ? "Açık olarak işaretle" : "İsteği kapat"}
-              </Button>
-              <Button
-                type="button"
-                variant={confirmingDelete ? "primary" : "ghost"}
-                size="sm"
-                onClick={handleDelete}
-                onBlur={() => setConfirmingDelete(false)}
-              >
-                <Trash2 size={14} />
-                {confirmingDelete ? "Emin misin? Tekrar tıkla" : "İsteği sil"}
-              </Button>
-            </>
+            !hasSelection && (
+              <>
+                <Button type="button" variant="outline" size="sm" onClick={handleToggleStatus}>
+                  <MessageSquareOff size={14} />
+                  {isClosed ? "Açık olarak işaretle" : "İsteği kapat"}
+                </Button>
+                <Button
+                  type="button"
+                  variant={confirmingDelete ? "primary" : "ghost"}
+                  size="sm"
+                  onClick={handleDelete}
+                  onBlur={() => setConfirmingDelete(false)}
+                >
+                  <Trash2 size={14} />
+                  {confirmingDelete ? "Emin misin? Tekrar tıkla" : "İsteği sil"}
+                </Button>
+              </>
+            )
           ) : (
             !isClosed && (
               <Link
@@ -142,11 +157,21 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
               </Link>
             )
           )}
+          {isOwnRequest && hasSelection && (
+            <Button
+              type="button"
+              variant={confirmingDelete ? "primary" : "ghost"}
+              size="sm"
+              onClick={handleDelete}
+              onBlur={() => setConfirmingDelete(false)}
+            >
+              <Trash2 size={14} />
+              {confirmingDelete ? "Emin misin? Tekrar tıkla" : "İsteği sil"}
+            </Button>
+          )}
         </div>
         {!isOwnRequest && isClosed && (
-          <p className="text-xs text-text-muted">
-            Bu istek kapatıldığı için yeni yanıt kabul edilmiyor.
-          </p>
+          <p className="text-xs text-text-muted">Bu istek kapandı, artık yeni yanıt kabul edilmiyor.</p>
         )}
       </div>
 
@@ -163,31 +188,89 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
           </div>
         ) : (
           <div className="space-y-3">
-            {answers.map((prompt) => (
-              <div key={prompt.id} className="space-y-2">
-                <PromptCard prompt={prompt} />
-                {isOwnRequest && (
-                  <div className="flex items-center gap-2 px-1">
-                    {live.selectedResponsePromptId === prompt.id ? (
-                      <span className="flex items-center gap-1 text-xs font-medium text-primary">
-                        <CheckCircle2 size={14} />
-                        Seçilen yanıt
-                      </span>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => handleSelectResponse(prompt.id)}
-                        className="text-xs font-medium text-primary hover:underline"
-                      >
-                        Yanıtı seç
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
-            ))}
+            {answers.map((prompt) => {
+              const isSelected = live.selectedResponsePromptId === prompt.id;
+              const isPendingThis = selectionTarget?.id === prompt.id && selectionTarget.confirming;
+
+              return (
+                <div key={prompt.id} className="space-y-2">
+                  <PromptCard prompt={prompt} />
+                  {isOwnRequest && (
+                    <div className="flex flex-wrap items-center gap-2 px-1">
+                      {isSelected ? (
+                        <>
+                          <span className="flex items-center gap-1 text-xs font-medium text-primary">
+                            <CheckCircle2 size={14} />
+                            Bu yanıt seçildi
+                          </span>
+                          {isPendingThis ? (
+                            <>
+                              <span className="text-xs text-text-muted">Seçimi kaldırmak istediğine emin misin?</span>
+                              <button
+                                type="button"
+                                onClick={() => setSelectionTarget(null)}
+                                className="text-xs font-medium text-text-muted hover:text-text"
+                              >
+                                Vazgeç
+                              </button>
+                              <button
+                                type="button"
+                                disabled={isSelecting}
+                                onClick={() => confirmSelection(null)}
+                                className="text-xs font-medium text-red-600 hover:underline"
+                              >
+                                Seçimi kaldır
+                              </button>
+                            </>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => setSelectionTarget({ id: prompt.id, confirming: true })}
+                              className="text-xs font-medium text-text-muted hover:text-text"
+                            >
+                              Seçimi kaldır
+                            </button>
+                          )}
+                        </>
+                      ) : isPendingThis ? (
+                        <>
+                          <span className="text-xs text-text-muted">
+                            Bu yanıtı seçmek istediğine emin misin? Seçtiğinde istek kapatılacak ve yeni yanıt kabul
+                            edilmeyecek.
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setSelectionTarget(null)}
+                            className="text-xs font-medium text-text-muted hover:text-text"
+                          >
+                            Vazgeç
+                          </button>
+                          <button
+                            type="button"
+                            disabled={isSelecting}
+                            onClick={() => confirmSelection(prompt.id)}
+                            className="text-xs font-medium text-primary hover:underline"
+                          >
+                            Yanıtı seç
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setSelectionTarget({ id: prompt.id, confirming: true })}
+                          className="text-xs font-medium text-primary hover:underline"
+                        >
+                          Yanıtı seç
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
+        {selectionError && <p className="text-sm text-red-500">{selectionError}</p>}
       </section>
 
       <CommentSection

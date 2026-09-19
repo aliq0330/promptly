@@ -60,6 +60,15 @@ export interface Prompt {
   isLiked: boolean;
   isSaved: boolean;
   status: "draft" | "published";
+  /**
+   * Whether this prompt appears in normal profile/feed/discover/search
+   * results — `prompts.show_on_profile`. Only meaningful for a request
+   * answer (`origin.type === "request-response"`): the author can choose
+   * to keep an answer out of their own portfolio while it still stays
+   * fully visible in the request's own answer list and at its own detail
+   * page. Always `true` for original/remix prompts.
+   */
+  showOnProfile: boolean;
   createdAt: string;
 }
 

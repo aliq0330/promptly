@@ -8,9 +8,10 @@ import { ProfileToolbar, type ProfileSortKey } from "./profile-toolbar";
 import { ProfileContentGrid } from "./profile-content-grid";
 import { ProfileEmptyState } from "./profile-empty-state";
 import { ProfileAbout } from "./profile-about";
+import { RequestList } from "@/features/requests/request-list";
 import { useAuth } from "@/features/auth/auth-provider";
 import { fetchLikedPrompts, fetchSavedPrompts } from "@/lib/supabase/prompts";
-import type { Prompt, PromptContentType, UserProfile } from "@/types";
+import type { Prompt, PromptContentType, PromptRequest, UserProfile } from "@/types";
 
 function sortPrompts(prompts: Prompt[], sort: ProfileSortKey): Prompt[] {
   const sorted = [...prompts];
@@ -31,10 +32,13 @@ export function ProfileView({
   user,
   isOwnProfile,
   authorPrompts: initialAuthorPrompts,
+  authorRequests,
 }: {
   user: UserProfile;
   isOwnProfile: boolean;
   authorPrompts: Prompt[];
+  /** This profile's own real prompt requests (Prompt İstekleri) — always public, shown on every profile, not just the owner's (CLAUDE.md prompt-request module). */
+  authorRequests: PromptRequest[];
 }) {
   const { user: authUser } = useAuth();
 
@@ -87,6 +91,7 @@ export function ProfileView({
     const base: { key: ProfileTabKey; label: string; count?: number }[] = [
       { key: "prompts", label: "Promptlar", count: authorPrompts.length },
       { key: "remixes", label: "Remixler", count: remixPrompts.length },
+      { key: "requests", label: "Prompt İstekleri", count: authorRequests.length },
     ];
     if (isOwnProfile) {
       base.push(
@@ -96,7 +101,7 @@ export function ProfileView({
     }
     base.push({ key: "about", label: "Hakkında" });
     return base;
-  }, [authorPrompts.length, remixPrompts.length, isOwnProfile, savedPrompts.length, likedPrompts.length]);
+  }, [authorPrompts.length, remixPrompts.length, authorRequests.length, isOwnProfile, savedPrompts.length, likedPrompts.length]);
 
   const activeSource = useMemo(() => {
     switch (activeTab) {
@@ -159,6 +164,21 @@ export function ProfileView({
       <div className="space-y-4 px-4 lg:px-6">
         {activeTab === "about" ? (
           <ProfileAbout user={user} />
+        ) : activeTab === "requests" ? (
+          authorRequests.length === 0 ? (
+            <ProfileEmptyState
+              icon={Sparkles}
+              title="Henüz prompt isteği oluşturulmamış."
+              description={
+                isOwnProfile
+                  ? "Topluluktan bir prompt istemek için yeni bir istek oluşturabilirsin."
+                  : "Bu kullanıcı henüz bir prompt isteği oluşturmadı."
+              }
+              action={isOwnProfile ? { label: "İstek oluştur", href: "/requests/new" } : undefined}
+            />
+          ) : (
+            <RequestList requests={authorRequests} />
+          )
         ) : (
           <>
             {activeSource.length > 0 && (

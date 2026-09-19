@@ -9,11 +9,18 @@ Dosyalar sırayla (dosya adındaki zaman damgasına göre) uygulanmalıdır.
 **Durum:** İlk 8 dosya (Bölüm 18 şema + Bölüm 19 RLS) kullanıcı tarafından
 gerçek Supabase projesine (Dashboard → SQL Editor) başarıyla uygulandı ve
 doğrulandı. `20260919140000_storage.sql` (Bölüm 20, Storage bucket'ları)
-bu depodan otomatik olarak uygulanmadı — Claude Code'un çalıştığı ortamın
-ağ politikası gerçek Supabase projesinin veritabanına doğrudan erişimi
-engelliyor, bu yüzden yalnızca yerel, geçici bir Postgres 16 örneğinde
-gerçek rol simülasyonuyla test edildi (bkz. aşağıdaki "Nasıl doğrulandı"
-bölümü) — gerçek projenize henüz uygulanmadı.
+ve yeni `20260919150000_request_response_workflow.sql` (prompt istekleri/
+yanıt sistemi sağlamlaştırması) bu depodan otomatik olarak uygulanmadı —
+Claude Code'un çalıştığı ortamın ağ politikası gerçek Supabase projesinin
+veritabanına doğrudan erişimi engelliyor, bu yüzden yalnızca yerel, geçici
+bir Postgres 16 örneğinde gerçek rol simülasyonuyla test edildi (bkz.
+aşağıdaki "Nasıl doğrulandı" bölümü) — gerçek projenize henüz
+uygulanmadı. **`20260919150000` uygulanmadan** yanıt seçme/kaldırma
+(`/create?answerRequest=…` ve istek detayındaki "Yanıtı seç") frontend'de
+hata verir (`select_prompt_request_response` fonksiyonu ve `prompts.
+show_on_profile`/`prompt_requests.closed_by_owner` kolonları henüz yok
+demektir) — bu migration'ı uygulamak bu özelliğin çalışması için
+**zorunlu**.
 
 ## Nasıl uygularsınız
 
@@ -23,8 +30,8 @@ bölümü) — gerçek projenize henüz uygulanmadı.
    menüden **SQL Editor**'ü açın.
 2. `migrations/` klasöründeki her dosyayı **dosya adındaki sıraya göre**
    (20260919120000, 20260919120100, ... 20260919120600, 20260919130000,
-   20260919140000) tek tek açıp içeriğini SQL Editor'e yapıştırıp
-   **Run**'a basın.
+   20260919140000, 20260919150000) tek tek açıp içeriğini SQL Editor'e
+   yapıştırıp **Run**'a basın.
 3. Her dosya başarıyla çalıştıktan sonra bir sonrakine geçin. Bir hata
    alırsanız durdurun ve hatayı paylaşın.
 
@@ -104,6 +111,42 @@ tamamen kapalı kalır — güvenli tarafta kalan bilinçli bir ara durum.
   bucket'lara henüz hiç yüklemiyor — hâlâ localStorage'daki base64 data
   URL'leri kullanıyor (`resizeImageToDataUrl`/`resizeImageToDataUrlFit`);
   gerçek bağlanma Bölüm 21'in işi.
+
+- `20260919150000_request_response_workflow.sql` — prompt istekleri/yanıt
+  sistemini sağlamlaştırıyor (Bölüm 9/10/21 Faz 5'in üzerine):
+  - `prompts.show_on_profile` (varsayılan `true`) — bir yanıtın (`origin_
+    type = 'request_response'` olan bir prompt) normal profil/akış/keşfet/
+    arama sonuçlarında görünüp görünmeyeceği; isteğin kendi yanıt listesinde
+    ve kendi detay sayfasında HER ZAMAN görünür kalır, bu yalnızca "normal
+    gönderi" görünürlüğünü etkiler.
+  - `prompt_requests.closed_by_owner` — isteğin "İsteği kapat" ile manuel
+    mi kapatıldığı, yoksa bir yanıt seçildiği için mi kapandığı (`status =
+    'answered'`) ayrımını tutar; bu ayrım olmadan bir isteği manuel
+    kapatıp sonra bir yanıt seçip sonra o seçimi kaldırmak isteği
+    yanlışlıkla tekrar "Açık" yapardı.
+  - `prompt_requests_status_shape` CHECK kısıtı — bir yanıt seçiliyse durum
+    yalnızca `'answered'`, seçili değilse yalnızca `'open'`/`'closed'`
+    olabilir; veritabanı seviyesinde zorunlu.
+  - `validate_prompt_response_target()` (BEFORE INSERT trigger, `prompts`)
+    — kapalı/yanıtlanmış bir isteğe yeni yanıt eklenmesini **sunucu
+    tarafında** reddeder (önceden yalnızca istemci butonu gizleniyordu).
+  - `validate_selected_response()` (BEFORE UPDATE trigger, `prompt_
+    requests`) — `selected_response_prompt_id`'nin gerçekten o isteğin bir
+    yanıtı olduğunu zorlar; bu, RPC'yi atlayıp doğrudan bir UPDATE
+    gönderen biri için bile geçerli.
+  - `select_prompt_request_response(request_id, response_prompt_id)` RPC
+    fonksiyonu — yanıt seçme/değiştirme/kaldırmayı tek, atomik bir işlemde
+    yapar: sahiplik kontrolü (anlaşılır bir hatayla, RLS'in sessiz "0 satır
+    etkilendi"si yerine), yanıtın bu isteğe ait olduğu kontrolü, ve
+    seçimi kaldırırken `closed_by_owner`'a göre doğru duruma (`'open'` ya
+    da `'closed'`) dönme mantığı.
+  - `notify_new_request_response()`/`notify_selected_response()`
+    (AFTER INSERT/UPDATE, `SECURITY DEFINER`) — bir isteğe yeni yanıt
+    geldiğinde istek sahibine, bir yanıt seçildiğinde yanıt sahibine
+    gerçek bir `notifications` satırı yazar (Bölüm 19'dan beri
+    `notifications`'a client insert izni kasıtlı olarak yok — bu yüzden
+    gerçek bildirim üretimi ancak böyle bir sunucu tarafı trigger'la
+    mümkün, tıpkı sayaç trigger'ları gibi).
 
 ## Nasıl doğrulandı
 
@@ -195,3 +238,40 @@ Test veritabanı işlem bitince silindi.
 Bu, SQL'in ve RLS/Storage politikalarının doğru ve tutarlı olduğunu
 kanıtlar — ama **gerçek Supabase projenize karşı hiç çalıştırılmadı**, bu
 adım yukarıdaki talimatlarla size kalıyor.
+
+**Bölüm 21 (prompt istekleri/yanıt sistemi sağlamlaştırması,
+`20260919150000`):** Aynı yöntemle (yerel Postgres 16, `anon`/
+`authenticated` rol simülasyonu, üç test kullanıcısı — Ayşe = istek sahibi,
+Baran/Cem = yanıtlayanlar) uçtan uca gerçekten test edildi:
+
+- Baran açık bir isteğe yanıt verince `response_count` artıyor VE Ayşe'ye
+  gerçek bir `request_response` bildirimi (doğru mesaj + `target_href`)
+  oluşuyor.
+- Ayşe, Baran'ın yanıtını seçince (`select_prompt_request_response` RPC)
+  istek `status='answered'` oluyor VE Baran'a "yanıtın seçildi" bildirimi
+  oluşuyor.
+- Cem, artık `'answered'` olan isteğe yeni bir yanıt eklemeye çalışınca
+  **veritabanı seviyesinde reddediliyor** ("Bu istek kapandı, artık yeni
+  yanıt kabul edilmiyor.").
+- Baran (istek sahibi değil) bir yanıt seçmeye çalışınca "Yalnızca isteğin
+  sahibi bir yanıt seçebilir" hatasıyla reddediliyor.
+- Var olmayan/bu isteğe ait olmayan bir yanıt id'si seçilmeye çalışılınca
+  reddediliyor.
+- Ayşe seçimi kaldırınca (hiç manuel kapatma yokken) istek doğru şekilde
+  `'open'`a dönüyor.
+- Ayşe isteği MANUEL kapatıyor (`closed_by_owner=true`) → Cem yine yeni
+  yanıt ekleyemiyor → Ayşe (kapalıyken) bir yanıt seçebiliyor
+  (`status='answered'`) → **kritik test:** Ayşe seçimi tekrar kaldırınca
+  istek `'open'` yerine doğru şekilde `'closed'`a dönüyor (manuel kapatma
+  korunuyor) — bu ayrımın tam olarak çözdüğü senaryo.
+- Doğrudan (RPC'yi atlayan) bir UPDATE ile başka bir isteğin yanıtını
+  seçmeye çalışmak `validate_selected_response` trigger'ı tarafından
+  reddediliyor — RPC'yi atlayan bir istemci bile bu kuralı çiğneyemiyor.
+- Bir seçimi hiç değiştirmeden (aynı yanıtı tekrar "seçerek") tekrarlamak
+  mükerrer bir bildirim OLUŞTURMUYOR.
+- `status='answered'` ama `selected_response_prompt_id` boş bırakmaya
+  çalışmak (veya tam tersi) CHECK kısıtı tarafından reddediliyor.
+
+Test veritabanı işlem bitince silindi. Bu senaryoların tamamı gerçekten
+çalıştırılıp sonucu doğrulandı (görsel/statik kod incelemesi değil) — ama
+yine **gerçek Supabase projenize karşı hiç çalıştırılmadı**.

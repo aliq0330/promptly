@@ -18,7 +18,7 @@ interface RealRequestsContextValue {
   getCached: (id: string) => PromptRequest | undefined;
   fetchById: (id: string) => Promise<PromptRequest | null>;
   addRequest: (input: CreateRealRequestInput, authorProfile: UserProfile) => Promise<PromptRequest>;
-  updateStatus: (id: string, status: PromptRequestStatus) => Promise<void>;
+  updateStatus: (id: string, status: Extract<PromptRequestStatus, "open" | "closed">) => Promise<void>;
   deleteRequest: (id: string) => Promise<void>;
   selectResponse: (id: string, promptId: string | null) => Promise<void>;
 }
@@ -71,7 +71,7 @@ export function RealRequestsProvider({ children }: { children: React.ReactNode }
     [user],
   );
 
-  const updateStatus = useCallback(async (id: string, status: PromptRequestStatus) => {
+  const updateStatus = useCallback(async (id: string, status: Extract<PromptRequestStatus, "open" | "closed">) => {
     await updateRealRequestStatus(id, status);
     setRealRequests((prev) => prev.map((request) => (request.id === id ? { ...request, status } : request)));
   }, []);
@@ -82,11 +82,11 @@ export function RealRequestsProvider({ children }: { children: React.ReactNode }
   }, []);
 
   const selectResponse = useCallback(async (id: string, promptId: string | null) => {
-    await selectRealRequestResponse(id, promptId);
+    const result = await selectRealRequestResponse(id, promptId);
     setRealRequests((prev) =>
       prev.map((request) =>
         request.id === id
-          ? { ...request, selectedResponsePromptId: promptId ?? undefined, status: promptId ? "answered" : "open" }
+          ? { ...request, selectedResponsePromptId: result.selectedResponsePromptId, status: result.status }
           : request,
       ),
     );

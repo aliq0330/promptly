@@ -26,6 +26,7 @@ export interface PromptRow {
   comment_count: number;
   remix_count: number;
   created_at: string;
+  show_on_profile: boolean;
   profiles: ProfileRow;
   prompt_media: { id: string; url: string; width: number; height: number; alt: string | null }[];
   prompt_tags: { tags: { slug: string; label: string } }[];
@@ -34,11 +35,30 @@ export interface PromptRow {
 export const PROMPT_SELECT = `
   id, title, description, prompt_text, tool, content_type, status,
   origin_type, source_prompt_id, root_prompt_id, request_id,
-  like_count, comment_count, remix_count, created_at,
+  like_count, comment_count, remix_count, created_at, show_on_profile,
   profiles:author_id ( id, username, display_name, avatar_url, cover_url, bio, website, follower_count, following_count, created_at, interests ),
   prompt_media ( id, url, width, height, alt ),
   prompt_tags ( tags ( slug, label ) )
 `;
+
+/**
+ * Excludes a request-answer prompt whose author chose to keep it out of
+ * normal profile/feed/discover/search results (`show_on_profile = false`)
+ * — applied (after mapping) by every query below that represents "this
+ * author's normal posts" or a general content stream. Done client-side
+ * rather than as a second `.or(...)` query filter: PostgREST ANDs a
+ * single `.or()` group with plain column filters just fine, but stacking
+ * two independent `.or()` calls in the same query has no clearly
+ * documented, verifiable combination behavior — not worth risking on a
+ * query that can't be tested against a live Supabase project from this
+ * environment. Never applied to `fetchPromptsForRequest` (the request's
+ * own answer list) or `fetchPromptById` (a direct link), which must
+ * always work regardless of this preference. Irrelevant for original/
+ * remix prompts, which always have `show_on_profile = true`.
+ */
+function filterProfileVisible(prompts: Prompt[]): Prompt[] {
+  return prompts.filter((prompt) => prompt.origin.type !== "request-response" || prompt.showOnProfile);
+}
 
 function mapOrigin(row: PromptRow): PromptOrigin {
   if (row.origin_type === "remix" && row.source_prompt_id && row.root_prompt_id) {
@@ -69,6 +89,7 @@ export function mapPromptRow(row: PromptRow): Prompt {
     likeCount: row.like_count,
     commentCount: row.comment_count,
     remixCount: row.remix_count,
+    showOnProfile: row.show_on_profile,
     // Whether *this viewer* liked/saved it is still decided entirely by the
     // localStorage LikeProvider/SaveProvider (CLAUDE.md Bölüm 14) — real
     // per-user like/save rows aren't wired yet (a later Bölüm 21 phase).
@@ -92,7 +113,7 @@ export async function fetchRecentPublishedPrompts(limit = 60): Promise<Prompt[]>
       console.error("fetchRecentPublishedPrompts", error);
       return [];
     }
-    return (data ?? []).map((row) => mapPromptRow(row as unknown as PromptRow));
+    return filterProfileVisible((data ?? []).map((row) => mapPromptRow(row as unknown as PromptRow)));
   } catch (err) {
     // A real network failure (e.g. no route to Supabase) throws instead of
     // resolving with a structured error — without this, a visitor with no
@@ -133,7 +154,7 @@ export async function fetchPromptsByAuthor(authorId: string): Promise<Prompt[]> 
       console.error("fetchPromptsByAuthor", error);
       return [];
     }
-    return (data ?? []).map((row) => mapPromptRow(row as unknown as PromptRow));
+    return filterProfileVisible((data ?? []).map((row) => mapPromptRow(row as unknown as PromptRow)));
   } catch (err) {
     console.error("fetchPromptsByAuthor", err);
     return [];
@@ -196,7 +217,7 @@ export async function fetchPromptsByAuthors(authorIds: string[], limit = 60): Pr
       console.error("fetchPromptsByAuthors", error);
       return [];
     }
-    return (data ?? []).map((row) => mapPromptRow(row as unknown as PromptRow));
+    return filterProfileVisible((data ?? []).map((row) => mapPromptRow(row as unknown as PromptRow)));
   } catch (err) {
     console.error("fetchPromptsByAuthors", err);
     return [];
@@ -220,7 +241,7 @@ export async function searchPrompts(query: string, limit = 40): Promise<Prompt[]
       console.error("searchPrompts", error);
       return [];
     }
-    return (data ?? []).map((row) => mapPromptRow(row as unknown as PromptRow));
+    return filterProfileVisible((data ?? []).map((row) => mapPromptRow(row as unknown as PromptRow)));
   } catch (err) {
     console.error("searchPrompts", err);
     return [];
@@ -312,6 +333,8 @@ export interface CreateRealPromptInput {
   requestId?: string;
   /** Set only when this is a real remix of a real prompt — produces `origin_type = 'remix'`, and `handle_prompt_origin_change` (Bölüm 19) increments the source's `remix_count`. Mutually exclusive with `requestId`. */
   remixOf?: { sourcePromptId: string; rootPromptId: string };
+  /** Only meaningful when `requestId` is set — whether this answer should also appear in the author's normal profile/feed/discover results (`prompts.show_on_profile`). Defaults to `true`; irrelevant for original/remix prompts. */
+  showOnProfile?: boolean;
 }
 
 /**
@@ -341,6 +364,7 @@ export async function createRealPrompt(
       request_id: input.requestId ?? null,
       source_prompt_id: input.remixOf?.sourcePromptId ?? null,
       root_prompt_id: input.remixOf?.rootPromptId ?? null,
+      show_on_profile: input.showOnProfile ?? true,
     })
     .select("id, created_at")
     .single();
@@ -432,6 +456,7 @@ export async function createRealPrompt(
     isLiked: false,
     isSaved: false,
     status: "published",
+    showOnProfile: input.showOnProfile ?? true,
     createdAt: inserted.created_at,
   };
 }

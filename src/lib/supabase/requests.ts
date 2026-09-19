@@ -92,6 +92,31 @@ export async function fetchRequestById(id: string): Promise<PromptRequest | null
   }
 }
 
+/**
+ * Every real request by one author, newest-first — for that profile's
+ * own "Prompt İstekleri" section. Requests have no draft/private concept
+ * (unlike prompts) — every request is always fully public per Bölüm 19's
+ * RLS ("Requests are publicly readable"), so this is safe to call for any
+ * profile, not just the viewer's own.
+ */
+export async function fetchRequestsByAuthor(authorId: string): Promise<PromptRequest[]> {
+  try {
+    const { data, error } = await supabase
+      .from("prompt_requests")
+      .select(REQUEST_SELECT)
+      .eq("author_id", authorId)
+      .order("created_at", { ascending: false });
+    if (error) {
+      console.error("fetchRequestsByAuthor", error);
+      return [];
+    }
+    return ((data ?? []) as unknown as RequestRow[]).map(mapRequestRow);
+  } catch (err) {
+    console.error("fetchRequestsByAuthor", err);
+    return [];
+  }
+}
+
 export interface CreateRealRequestInput {
   title: string;
   description: string;
@@ -173,9 +198,27 @@ export async function createRealRequest(
   };
 }
 
-/** Genuinely, permanently opens/closes a real request. RLS (Bölüm 19) only allows the request's own author to update it. */
-export async function updateRealRequestStatus(requestId: string, status: PromptRequestStatus): Promise<void> {
-  const { error } = await supabase.from("prompt_requests").update({ status }).eq("id", requestId);
+/**
+ * Genuinely, permanently opens/closes a real request MANUALLY (the
+ * "İsteği kapat"/"Açık olarak işaretle" toggle) — distinct from a request
+ * auto-closing because a response got selected (`selectRealRequestResponse`
+ * below). Only ever called with `"open"`/`"closed"`, never `"answered"` —
+ * the UI hides this toggle whenever a response is currently selected (see
+ * `RequestDetailView`), and the database's own `prompt_requests_status_
+ * shape` CHECK constraint (Bölüm 21 prompt-request hardening) would reject
+ * an attempt to set `"closed"`/`"open"` while a selection still exists
+ * anyway. `closed_by_owner` records that this was a deliberate manual
+ * close, so that later selecting-then-clearing a response doesn't
+ * accidentally reopen it (see the RPC below).
+ */
+export async function updateRealRequestStatus(
+  requestId: string,
+  status: Extract<PromptRequestStatus, "open" | "closed">,
+): Promise<void> {
+  const { error } = await supabase
+    .from("prompt_requests")
+    .update({ status, closed_by_owner: status === "closed" })
+    .eq("id", requestId);
   if (error) throw new Error(error.message);
 }
 
@@ -185,11 +228,30 @@ export async function deleteRealRequest(requestId: string): Promise<void> {
   if (error) throw new Error(error.message);
 }
 
-/** Genuinely, permanently marks (or clears) a real request's selected answer — also marks it "answered" when selecting one. */
-export async function selectRealRequestResponse(requestId: string, promptId: string | null): Promise<void> {
-  const { error } = await supabase
-    .from("prompt_requests")
-    .update({ selected_response_prompt_id: promptId, status: promptId ? "answered" : "open" })
-    .eq("id", requestId);
-  if (error) throw new Error(error.message);
+/**
+ * Genuinely, permanently selects, changes, or clears (`promptId = null`)
+ * a real request's chosen answer — via the `select_prompt_request_
+ * response` RPC (Bölüm 21 prompt-request hardening), not a direct
+ * `.update()`. That function does, atomically and server-side, everything
+ * a direct update couldn't safely do on its own: verifies the caller
+ * actually owns the request (a clear error instead of RLS's silent
+ * "0 rows affected"), verifies the chosen prompt is genuinely a real
+ * answer to *this* request (never some unrelated prompt), and — the part
+ * that matters most — decides the right status to fall back to when
+ * clearing a selection: `'open'` normally, but `'closed'` if the owner
+ * had manually closed the request before ever selecting a response, so
+ * that clearing a selection can never accidentally reopen a request the
+ * owner deliberately closed.
+ */
+export async function selectRealRequestResponse(
+  requestId: string,
+  promptId: string | null,
+): Promise<{ status: PromptRequestStatus; selectedResponsePromptId?: string }> {
+  const { data, error } = await supabase.rpc("select_prompt_request_response", {
+    p_request_id: requestId,
+    p_response_prompt_id: promptId,
+  });
+  if (error || !data) throw new Error(error?.message ?? "Yanıt seçilemedi.");
+  const row = data as { status: PromptRequestStatus; selected_response_prompt_id: string | null };
+  return { status: row.status, selectedResponsePromptId: row.selected_response_prompt_id ?? undefined };
 }

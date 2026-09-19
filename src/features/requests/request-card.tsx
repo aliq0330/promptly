@@ -7,16 +7,22 @@ import { formatCount, formatRelativeTime, profileHref, requestHref } from "@/lib
 import { placeholderArt } from "@/lib/placeholder-image";
 import type { PromptRequest } from "@/types";
 
-const STATUS_LABELS: Record<PromptRequest["status"], string> = {
+// A request is only ever shown as "Açık" (accepting responses) or
+// "Kapandı" (not accepting new ones) — "answered" (closed via a selected
+// response) and "closed" (closed manually) are both "Kapandı" from the
+// visitor's point of view; the distinction only matters server-side, for
+// deciding what a later cleared selection reverts to (see
+// select_prompt_request_response, supabase/migrations).
+export const STATUS_LABELS: Record<PromptRequest["status"], string> = {
   open: "Açık",
-  answered: "Yanıtlandı",
+  answered: "Kapandı",
   closed: "Kapandı",
 };
 
-const STATUS_VARIANTS: Record<PromptRequest["status"], "default" | "accent" | "outline"> = {
-  open: "accent",
-  answered: "default",
-  closed: "outline",
+export const STATUS_VARIANTS: Record<PromptRequest["status"], "success" | "danger"> = {
+  open: "success",
+  answered: "danger",
+  closed: "danger",
 };
 
 export function RequestCard({ request }: { request: PromptRequest }) {
