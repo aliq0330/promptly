@@ -218,7 +218,9 @@ gerçek Supabase projesi bağlantısı yoktur.**
     navigasyonun "Profil" linki artık gerçek hesaba yönleniyor. Faz 3:
     gerçek bir prompt/kullanıcıda beğeni/kaydetme/takip artık gerçekten,
     kalıcı olarak Supabase'e yazılıyor (`/saved` ve profildeki Kaydedilenler/
-    Beğeniler sekmeleri dahil); yorum/istekler/mesajlaşma hâlâ
+    Beğeniler sekmeleri dahil). Faz 4: gerçek bir promptta yorum ekleme
+    artık gerçekten, kalıcı olarak Supabase'e yazılıyor (herkes okuyabilir,
+    yalnızca giriş yapan yazabilir); istekler/mesajlaşma hâlâ
     mock+localStorage — bkz. Bölüm 9)
 22. [ ] Moderasyon, engelleme, raporlama
 23. [ ] Testler, performans, erişilebilirlik
@@ -229,12 +231,12 @@ gerçek Supabase projesi bağlantısı yoktur.**
 ## 9. Şu Anki Durum (bu bölüm her modül sonunda güncellenir)
 
 **Son güncelleme:** Bölüm 21 — Frontend'in gerçek Supabase'e bağlanması,
-Faz 3 (devam ediyor). Gerçek bir prompt/gerçek bir kullanıcı üzerinde
-beğenme, kaydetme ve takip etme artık gerçekten, kalıcı olarak Supabase'e
-yazılıyor — iki gerçek hesap birbirini gerçekten takip edebiliyor, gerçek
-bir prompt gerçekten beğenilip kaydedilebiliyor ve bu `/saved` ile profil
-sekmelerine yansıyor. Yorum ekleme, prompt istekleri ve mesajlaşma hâlâ
-mock veri + localStorage — bu modülün sonraki fazlarının işi.
+Faz 4 (devam ediyor). Gerçek bir promptta yorum ekleme artık gerçekten,
+kalıcı olarak Supabase'e yazılıyor — herhangi bir ziyaretçi gerçek
+yorumları okuyabiliyor, yalnızca giriş yapan gerçekten yorum
+ekleyebiliyor, ve yeni yorum sayfa yenilenmeden anında görünüyor. Prompt
+istekleri ve mesajlaşma hâlâ mock veri + localStorage — bu modülün
+sonraki fazlarının işi.
 
 **Tamamlanan:**
 - CLAUDE.md oluşturuldu.
@@ -1561,6 +1563,65 @@ mock veri + localStorage — bu modülün sonraki fazlarının işi.
   değil; veritabanındaki `follows_no_self_follow` CHECK kısıtı (Bölüm 18)
   son bir güvenlik ağı olarak duruyor.
 
+- **Frontend'in gerçek Supabase'e bağlanması — Faz 4 (Bölüm 21, devam
+  ediyor): gerçek yorum ekleme.** Gerçek bir promptta yorum ekleme artık
+  Faz 3'ün beğeni/kaydetme/takip'iyle aynı ilkeyle gerçek: hedef gerçekse
+  (`isUuid`) Supabase'e yazılıyor, değilse (mock/yerel prompt VEYA bir
+  istek — `prompt_requests` henüz gerçek değil) mevcut `CommentProvider`/
+  localStorage davranışı hiç değiştirilmeden kullanılıyor.
+  - **Okuma ile yazma farklı kurallara tabi — Faz 3'ten kasıtlı bir
+    sapma:** Faz 3'te beğeni/kaydetme/takip için "gerçek hedef + giriş
+    yapılmış" ikisi birden gerekliydi (okuma DA yazma DA aynı koşula
+    bağlıydı). Yorumlarda durum farklı: Bölüm 19'un RLS'i yorumları
+    HERKESE (giriş yapmamış ziyaretçi dahil) açık okunur yapıyor — bir
+    promptun yorumlarını görmek için hesap gerekmiyor, tıpkı promptun
+    kendisini görmek gibi. Bu yüzden `CommentSection` gerçek bir prompt
+    için yorumları HER ZAMAN Supabase'den çekiyor (giriş durumundan
+    bağımsız); yalnızca YAZMA (yorum kutusu) giriş gerektiriyor — giriş
+    yapılmamışsa kutunun yerine `/login`'e giden bir mesaj gösteriliyor.
+  - **Yeni `src/lib/supabase/comments.ts`:** `fetchCommentsForPrompt(id)`
+    (herkese açık okuma) ve `postCommentOnPrompt(promptId, authorId, body,
+    parentId)` (gerçek INSERT — Bölüm 19'un `handle_prompt_comment_change`
+    trigger'ı `prompts.comment_count`'u otomatik güncelliyor, bu da Faz
+    1'den beri zaten doğru okunuyordu, sadece artık gerçekten artıyor).
+  - **`CommentSection` üç kaynağı birleştiriyor:** gerçek hedefte yalnızca
+    Supabase'den gelenler; mock/yerel hedefte eskisi gibi mock yorumlar +
+    `CommentProvider`'ın localStorage yorumları. Yeni bir yorum
+    gönderildiğinde sonucun döndürdüğü gerçek satır yerel state'e hemen
+    ekleniyor — sayfa yenilenmeden görünüyor, `CommentSection`'ın kendi
+    "Yorumlar (N)" başlığı da anında doğru sayıyor.
+  - **Yanıt (reply) verme arayüzü bu fazda da eklenmedi** — mevcut
+    sınırlama (Bölüm 14'ten beri) korundu; hem şema (`prompt_comments.
+    parent_id`) hem `postCommentOnPrompt`'un imzası ileride reply
+    desteklemeye hazır, yalnızca UI'da bir "yanıtla" düğmesi eksik.
+  - **Nasıl doğrulandı (ağ seviyesinde taklit edilmiş yanıtlarla):** giriş
+    yapmamış bir ziyaretçinin gerçek bir promptun mevcut yorumunu
+    görebildiği ama yorum kutusu yerine giriş linkini gördüğü; giriş
+    yapmış bir kullanıcının yorum kutusunu görüp gönderdiğinde gerçek bir
+    INSERT'in tetiklendiği, yeni yorumun sayfa yenilenmeden anında
+    göründüğü ve "Yorumlar (N)" başlığının doğru arttığı; ayrıca mock bir
+    promptta (p1) eski localStorage davranışının (giriş yapılmadan da
+    yorum eklenebilmesi, sayfa yenilenince kalıcı kalması) hiç
+    bozulmadığı doğrulandı — hepsi sıfır JS hatasıyla.
+  - `npx tsc --noEmit`, `npm run lint` ve tam `npm run build` hatasız geçti.
+
+**Bilinen sorunlar / bilinçli basitleştirmeler (Bölüm 21 Faz 4 için ek):**
+- **`CommentCountLink` (kart/detay sayfası üst istatistik satırındaki
+  yorum sayacı) gerçek bir promptta yorum eklendikten sonra sayfa
+  yenilenmeden GÜNCELLENMİYOR** — `CommentSection`'ın kendi "Yorumlar (N)"
+  başlığı doğru/anlık, ama ayrı bir bileşen olan `CommentCountLink`
+  statik `baseCount` prop'una dayanıyor ve `CommentSection`'la state
+  paylaşmıyor. Küçük, kozmetik bir gecikme (bir sonraki tam sayfa
+  yüklemesinde doğru sayıyı gösterir) — Faz 3'ün "Profil nav vurgusu"
+  sınırlamasıyla aynı kategoriden, kasıtlı olarak bu fazda çözülmedi.
+- **İstek yorumları hâlâ tamamen mock+localStorage** — `prompt_requests`
+  gerçek olmadığından (ayrı bir faz), bir isteğe yapılan yorumlar Faz
+  1-4'ten hiç etkilenmedi.
+- **Yorum bildirimleri yok** — Faz 3'teki aynı sınırlama (Bölüm 19'un
+  `notifications` tablosuna client insert izni yok) yorumlar için de
+  geçerli.
+
 **Sonraki adım:** Bölüm 21'in bir sonraki fazı — muhtemel adaylar: gerçek
-yorum ekleme, gerçek prompt istekleri, veya gerçek mesajlaşma. Hangisiyle
-devam edileceği bir sonraki oturumda kullanıcıyla netleştirilecek.
+prompt istekleri (oluşturma/yanıtlama/seçim) veya gerçek mesajlaşma.
+Hangisiyle devam edileceği bir sonraki oturumda kullanıcıyla
+netleştirilecek.
