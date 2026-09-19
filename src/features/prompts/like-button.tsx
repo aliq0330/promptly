@@ -5,14 +5,7 @@ import { Heart } from "lucide-react";
 import { cn, formatCount } from "@/lib/utils";
 import { useLikeState } from "./use-like-state";
 
-/**
- * Real, working like toggle — genuinely persisted to Supabase for a real
- * prompt with a signed-in viewer (CLAUDE.md Bölüm 21 Faz 3), falling back
- * to the original localStorage behavior (CLAUDE.md section 14) for mock/
- * local prompts or a signed-out viewer. Works for both prompts and
- * request responses since their ids never collide ("p*"/"rr*"/a real
- * UUID) — see `useLikeState`.
- */
+/** Real, working like toggle — genuinely persisted to Supabase; shows a login link instead while signed out. */
 export function LikeButton({
   id,
   likeCount,

@@ -16,7 +16,6 @@ export function ProfileHeader({
   isOwnProfile,
   publishedPromptCount,
   remixCount,
-  conversationId,
   onSelectPrompts,
   onSelectRemixes,
 }: {
@@ -24,7 +23,6 @@ export function ProfileHeader({
   isOwnProfile: boolean;
   publishedPromptCount: number;
   remixCount: number;
-  conversationId?: string;
   onSelectPrompts: () => void;
   onSelectRemixes: () => void;
 }) {
@@ -90,7 +88,7 @@ export function ProfileHeader({
       {isOwnProfile ? (
         <OwnProfileActions user={user} />
       ) : (
-        <OtherProfileActions user={user} conversationId={conversationId} followState={followState} />
+        <OtherProfileActions user={user} followState={followState} />
       )}
     </div>
   );

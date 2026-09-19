@@ -9,30 +9,22 @@ import { useAuth } from "@/features/auth/auth-provider";
 import { useOwnProfile } from "@/features/auth/own-profile-provider";
 import { useRealMessages } from "@/features/messages/real-messages-provider";
 import { profileHref } from "@/lib/utils";
-import { getUserById } from "@/mocks/users";
-import { mockNotifications } from "@/mocks/notifications";
-import { mockConversations } from "@/mocks/conversations";
 
 /**
- * The avatar links to a real signed-in user's own real profile once it has
- * loaded (CLAUDE.md Bölüm 21 Faz 2); until then, or when signed out, it
- * falls back to the mock "me" persona — the demo browsing experience
- * Bölüm 17 deliberately kept unchanged for anyone not actually logged in.
- * The "Giriş Yap" link is the real auth signal: it only shows when
- * there's genuinely no Supabase session, and disappears the moment a real
- * login succeeds. Without this, the whole Bölüm 17 auth system has no
- * visible entry point anywhere in the app — this was a real gap, not just
- * a design choice.
+ * The "Giriş Yap" link is the real auth entry point: it only shows when
+ * there's genuinely no Supabase session. Signed in, the avatar links to the
+ * real signed-in user's own real profile.
+ *
+ * The notification bell never shows an unread dot: nothing in the app
+ * writes to the real `notifications` table yet (Bölüm 19 deliberately left
+ * no client insert policy, and no server-side trigger produces one either)
+ * — see `/notifications`'s own empty state for the same honest limitation.
  */
 export function Header() {
-  const me = getUserById("me")!;
   const { user, loading } = useAuth();
   const { profile: ownProfile } = useOwnProfile();
   const { conversations: realConversations } = useRealMessages();
-  const hasUnreadNotifications = mockNotifications.some((n) => !n.isRead);
-  const hasUnreadMessages =
-    mockConversations.some((c) => c.unreadCount > 0) || realConversations.some((c) => c.unreadCount > 0);
-  const avatarUser = user && ownProfile ? ownProfile : me;
+  const hasUnreadMessages = realConversations.some((c) => c.unreadCount > 0);
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border bg-surface/80 px-4 backdrop-blur lg:px-6">
@@ -70,9 +62,6 @@ export function Header() {
           className={iconButtonClassName(false, "shrink-0 relative")}
         >
           <Bell size={20} />
-          {hasUnreadNotifications && (
-            <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-primary" />
-          )}
         </Link>
         <Link
           href="/messages"
@@ -95,9 +84,11 @@ export function Header() {
             <span className="hidden sm:inline">Giriş Yap</span>
           </Link>
         )}
-        <Link href={user && ownProfile ? profileHref(ownProfile) : "/profile/me"} className="ml-1 shrink-0">
-          <Avatar src={avatarUser.avatarUrl} alt={avatarUser.displayName} size={36} />
-        </Link>
+        {user && ownProfile && (
+          <Link href={profileHref(ownProfile)} className="ml-1 shrink-0">
+            <Avatar src={ownProfile.avatarUrl} alt={ownProfile.displayName} size={36} />
+          </Link>
+        )}
       </div>
     </header>
   );

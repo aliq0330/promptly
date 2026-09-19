@@ -10,14 +10,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PromptCard } from "@/features/prompts/prompt-card";
 import { CommentSection } from "@/features/prompts/comment-section";
-import { useLocalPrompts } from "@/features/prompts/local-prompts-provider";
 import { useAuth } from "@/features/auth/auth-provider";
 import { fetchPromptsForRequest } from "@/lib/supabase/prompts";
-import { ResponseCard } from "./response-card";
-import { useRequests } from "./requests-provider";
 import { useRealRequests } from "./real-requests-provider";
-import { getResponsesForRequest } from "@/mocks/request-responses";
-import { formatRelativeTime, isUuid } from "@/lib/utils";
+import { formatRelativeTime } from "@/lib/utils";
 import type { Prompt, PromptRequest } from "@/types";
 
 const STATUS_LABELS: Record<PromptRequest["status"], string> = {
@@ -26,18 +22,10 @@ const STATUS_LABELS: Record<PromptRequest["status"], string> = {
   closed: "Kapandı",
 };
 
-/**
- * Shared request detail rendering — used by both `/requests/[id]` (known
- * mock requests, server-rendered) and `/requests/local` (requests created
- * in this browser, or since CLAUDE.md Bölüm 21 Faz 5, a genuinely real
- * request; see `requestHref()` in lib/utils.ts, same reasoning as
- * `PromptDetailView`/`/prompts/local`).
- */
+/** Real request detail rendering, used by `/requests/local?id=…`. */
 export function RequestDetailView({ request }: { request: PromptRequest }) {
   const router = useRouter();
   const { user: authUser } = useAuth();
-  const { getForRequest } = useLocalPrompts();
-  const { updateStatus, deleteRequest, selectResponse, getRequestById } = useRequests();
   const {
     getCached: getCachedRealRequest,
     updateStatus: updateRealStatus,
@@ -45,47 +33,28 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
     selectResponse: selectRealResponse,
   } = useRealRequests();
   const [confirmingDelete, setConfirmingDelete] = useState(false);
-  const [realAnswers, setRealAnswers] = useState<Prompt[]>([]);
+  const [answers, setAnswers] = useState<Prompt[]>([]);
 
-  const isRealRequest = isUuid(request.id);
-
-  // Re-read the live version of the request from the right provider so
-  // status/selection changes below reflect immediately without a page
-  // reload — mock/local requests from RequestsProvider, real ones from
-  // RealRequestsProvider's own cache (kept in sync by its own actions).
-  const live = isRealRequest ? (getCachedRealRequest(request.id) ?? request) : (getRequestById(request.id) ?? request);
+  // Re-read the live version of the request from the cache so status/
+  // selection changes below reflect immediately without a page reload.
+  const live = getCachedRealRequest(request.id) ?? request;
 
   useEffect(() => {
     let cancelled = false;
-    if (!isRealRequest) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- nothing to fetch for a mock/local request
-      setRealAnswers([]);
-      return;
-    }
     fetchPromptsForRequest(live.id).then((prompts) => {
-      if (!cancelled) setRealAnswers(prompts);
+      if (!cancelled) setAnswers(prompts);
     });
     return () => {
       cancelled = true;
     };
-  }, [isRealRequest, live.id]);
+  }, [live.id]);
 
-  const legacyResponses = getResponsesForRequest(live.id);
-  const localAnswers = getForRequest(live.id);
-  const answerPrompts = [...localAnswers, ...realAnswers];
-  const totalAnswers = legacyResponses.length + answerPrompts.length;
-
-  const isOwnRequest = isRealRequest ? authUser?.id === live.author.id : live.author.id === "me";
-  const canManage = isOwnRequest && (isRealRequest || live.id.startsWith("local-req-"));
+  const isOwnRequest = authUser?.id === live.author.id;
   const isClosed = live.status === "closed";
 
   async function handleToggleStatus() {
     const nextStatus = isClosed ? "open" : "closed";
-    if (isRealRequest) {
-      await updateRealStatus(live.id, nextStatus);
-    } else {
-      updateStatus(live.id, nextStatus);
-    }
+    await updateRealStatus(live.id, nextStatus);
   }
 
   async function handleDelete() {
@@ -93,20 +62,12 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
       setConfirmingDelete(true);
       return;
     }
-    if (isRealRequest) {
-      await deleteRealRequest(live.id);
-    } else {
-      deleteRequest(live.id);
-    }
+    await deleteRealRequest(live.id);
     router.push("/requests");
   }
 
   async function handleSelectResponse(promptId: string) {
-    if (isRealRequest) {
-      await selectRealResponse(live.id, promptId);
-    } else {
-      selectResponse(live.id, promptId);
-    }
+    await selectRealResponse(live.id, promptId);
   }
 
   return (
@@ -153,7 +114,7 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
         </div>
 
         <div className="flex flex-wrap items-center gap-2 pt-1">
-          {canManage ? (
+          {isOwnRequest ? (
             <>
               <Button type="button" variant="outline" size="sm" onClick={handleToggleStatus}>
                 <MessageSquareOff size={14} />
@@ -182,7 +143,7 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
             )
           )}
         </div>
-        {!canManage && isClosed && (
+        {!isOwnRequest && isClosed && (
           <p className="text-xs text-text-muted">
             Bu istek kapatıldığı için yeni yanıt kabul edilmiyor.
           </p>
@@ -190,11 +151,11 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
       </div>
 
       <section className="space-y-3">
-        <h2 className="text-sm font-semibold text-text">Yaratıcı Yanıtlar ({totalAnswers})</h2>
-        {totalAnswers === 0 ? (
+        <h2 className="text-sm font-semibold text-text">Yaratıcı Yanıtlar ({answers.length})</h2>
+        {answers.length === 0 ? (
           <div className="space-y-3 py-6 text-center text-sm text-text-muted">
             <p>Bu isteğe henüz yanıt verilmedi.</p>
-            {!isClosed && !canManage && (
+            {!isClosed && !isOwnRequest && (
               <Link href={`/create?answerRequest=${live.id}`} className="font-medium text-primary underline">
                 İlk yanıtı sen ver
               </Link>
@@ -202,10 +163,10 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
           </div>
         ) : (
           <div className="space-y-3">
-            {answerPrompts.map((prompt) => (
+            {answers.map((prompt) => (
               <div key={prompt.id} className="space-y-2">
                 <PromptCard prompt={prompt} />
-                {canManage && (
+                {isOwnRequest && (
                   <div className="flex items-center gap-2 px-1">
                     {live.selectedResponsePromptId === prompt.id ? (
                       <span className="flex items-center gap-1 text-xs font-medium text-primary">
@@ -224,9 +185,6 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
                   </div>
                 )}
               </div>
-            ))}
-            {legacyResponses.map((response) => (
-              <ResponseCard key={response.id} response={response} />
             ))}
           </div>
         )}

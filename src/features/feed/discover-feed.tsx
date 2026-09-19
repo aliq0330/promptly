@@ -4,9 +4,7 @@ import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { FeedGrid } from "./feed-grid";
 import { feedItemCreatedAt, type FeedItem } from "./types";
-import { useLocalPrompts } from "@/features/prompts/local-prompts-provider";
 import { useRealPrompts } from "@/features/prompts/real-prompts-provider";
-import { useRequests } from "@/features/requests/requests-provider";
 import { useRealRequests } from "@/features/requests/real-requests-provider";
 
 const FILTERS = [
@@ -21,24 +19,16 @@ const FILTERS = [
 
 type FilterKey = (typeof FILTERS)[number]["key"];
 
-export function DiscoverFeed({ items }: { items: FeedItem[] }) {
+export function DiscoverFeed() {
   const [active, setActive] = useState<FilterKey>("all");
-  const { localPrompts } = useLocalPrompts();
   const { realPrompts } = useRealPrompts();
-  const { allRequests } = useRequests();
   const { realRequests } = useRealRequests();
 
   const allItems = useMemo<FeedItem[]>(() => {
-    const localRequestItems: FeedItem[] = allRequests
-      .filter((request) => request.id.startsWith("local-req-"))
-      .map((request) => ({ kind: "request", data: request }));
-    const localPromptItems: FeedItem[] = localPrompts.map((prompt) => ({ kind: "prompt", data: prompt }));
-    const realPromptItems: FeedItem[] = realPrompts.map((prompt) => ({ kind: "prompt", data: prompt }));
-    const realRequestItems: FeedItem[] = realRequests.map((request) => ({ kind: "request", data: request }));
-    return [...items, ...localRequestItems, ...localPromptItems, ...realPromptItems, ...realRequestItems].sort(
-      (a, b) => feedItemCreatedAt(b) - feedItemCreatedAt(a),
-    );
-  }, [items, allRequests, localPrompts, realPrompts, realRequests]);
+    const promptItems: FeedItem[] = realPrompts.map((prompt) => ({ kind: "prompt", data: prompt }));
+    const requestItems: FeedItem[] = realRequests.map((request) => ({ kind: "request", data: request }));
+    return [...promptItems, ...requestItems].sort((a, b) => feedItemCreatedAt(b) - feedItemCreatedAt(a));
+  }, [realPrompts, realRequests]);
 
   const filtered = useMemo(() => {
     if (active === "all") return allItems;

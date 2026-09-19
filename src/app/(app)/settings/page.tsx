@@ -11,14 +11,10 @@ import { translateAuthError } from "@/features/auth/auth-errors";
 const PASSWORD_MIN_LENGTH = 6;
 
 /**
- * Real account settings (CLAUDE.md section 17) — shows the actual
- * Supabase-authenticated user's email, a genuinely working password
- * change, and sign out. Everything else CLAUDE.md's settings description
- * mentions (profile info, gizlilik, bildirim tercihleri) is intentionally
- * NOT here yet: profile fields belong to the "me" mock persona (see
- * /profile/edit, CLAUDE.md section 12) and aren't tied to a real account
- * until a `profiles` table + section 21's wiring exist. Mixing the two now
- * would misrepresent which parts are real.
+ * Real account settings — shows the actual Supabase-authenticated user's
+ * email, a genuinely working password change, and sign out. Profile fields
+ * (display name/bio/avatar/interests) live separately at `/profile/edit`,
+ * which edits the real `profiles` row.
  */
 export default function SettingsPage() {
   const { user, loading } = useAuth();

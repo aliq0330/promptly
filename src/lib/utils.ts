@@ -1,10 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { mockPrompts } from "@/mocks/prompts";
-import { mockRequests } from "@/mocks/requests";
-import { mockUsers } from "@/mocks/users";
-import { mockConversations } from "@/mocks/conversations";
-import type { Conversation, Prompt, PromptRequest, UserProfile } from "@/types";
+import type { Conversation, Prompt, PromptRequest, Tag, UserProfile } from "@/types";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -66,46 +62,9 @@ export function absoluteUrl(path: string): string {
 }
 
 /**
- * Resizes an uploaded image file down to a small square JPEG data URL —
- * used for the avatar editor (features/profile) so a real, working photo
- * upload can be persisted to localStorage (a full-resolution image would be
- * far too large for that). Center-crops to a square first so avatars don't
- * come out stretched.
- */
-export function resizeImageToDataUrl(file: File, size = 160): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const objectUrl = URL.createObjectURL(file);
-    const img = new Image();
-    img.onload = () => {
-      const canvas = document.createElement("canvas");
-      canvas.width = size;
-      canvas.height = size;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) {
-        URL.revokeObjectURL(objectUrl);
-        reject(new Error("2D canvas context unavailable"));
-        return;
-      }
-      const cropSize = Math.min(img.naturalWidth, img.naturalHeight);
-      const sx = (img.naturalWidth - cropSize) / 2;
-      const sy = (img.naturalHeight - cropSize) / 2;
-      ctx.drawImage(img, sx, sy, cropSize, cropSize, 0, 0, size, size);
-      URL.revokeObjectURL(objectUrl);
-      resolve(canvas.toDataURL("image/jpeg", 0.85));
-    };
-    img.onerror = () => {
-      URL.revokeObjectURL(objectUrl);
-      reject(new Error("Görsel yüklenemedi"));
-    };
-    img.src = objectUrl;
-  });
-}
-
-/**
- * Same idea as `resizeImageToDataUrl`, but fits within a max dimension
- * instead of center-cropping to a square — used for the request-creation
- * reference image (features/requests), where preserving the original
- * aspect ratio matters more than a fixed frame.
+ * Resizes an uploaded image file to fit within a max dimension, preserving
+ * aspect ratio — used for the request-creation reference image
+ * (features/requests) and for remix/duplicate live previews.
  */
 export function resizeImageToDataUrlFit(file: File, maxDimension = 480): Promise<{
   url: string;
@@ -194,12 +153,9 @@ export function resizeImageToBlob(
 }
 
 /**
- * Same center-crop-to-square logic as `resizeImageToDataUrl`, but resolves
- * a real `Blob` instead of a data URL — for uploading a real profile's
- * avatar to the Supabase Storage `avatars` bucket (CLAUDE.md Bölüm 20/21).
- * The data-URL version still backs the mock "me" persona's avatar edit
- * (ProfileOverridesProvider/localStorage), which has nothing to do with
- * Storage.
+ * Center-crops an uploaded image file to a square and resolves a real
+ * `Blob` — for uploading a profile avatar to the Supabase Storage
+ * `avatars` bucket (CLAUDE.md Bölüm 20/21).
  */
 export function resizeImageToSquareBlob(
   file: File,
@@ -245,59 +201,39 @@ export function resizeImageToSquareBlob(
 }
 
 /**
- * Any prompt that isn't one of the fixed mock ids baked into the static
- * export at build time (`generateStaticParams` on `/prompts/[id]`) has no
- * pre-rendered page there — a GitHub Pages static export can't serve a
- * path that didn't exist at build time. That covers two real cases: a
- * prompt created locally in this browser (see local-prompts-provider.tsx,
- * `local-…` ids) and, since CLAUDE.md Bölüm 21, a genuinely real prompt
- * published to Supabase (a real UUID). Both instead get a real detail view
- * at the static `/prompts/local` route, identified by a query param
- * instead of a path segment (query strings don't need pre-rendering,
- * unlike path segments) — see local-prompt-view.tsx for how it decides
- * which of the two sources (or neither) actually has the id. Every place
+ * Every prompt is a real Supabase row now (CLAUDE.md's mock-data removal) —
+ * none of its ids are known at build time, so a static, parameter-free
+ * route (`/prompts/local`, a real file after `next build`) always looks it
+ * up client-side by a `?id=` query param instead (query strings don't need
+ * pre-rendering, unlike a dynamic path segment a GitHub Pages static export
+ * can't serve for an id it didn't know about at build time). Every place
  * that links to a prompt must use this helper instead of hardcoding
- * `/prompts/${id}` so both cases work end to end (feed, profile, share,
- * etc.).
+ * `/prompts/${id}`.
  */
 export function promptHref(prompt: Pick<Prompt, "id">): string {
-  const isStaticMockPrompt = mockPrompts.some((mock) => mock.id === prompt.id);
-  return isStaticMockPrompt ? `/prompts/${prompt.id}` : `/prompts/local?id=${prompt.id}`;
+  return `/prompts/local?id=${prompt.id}`;
 }
 
-/**
- * Same idea as `promptHref`, for requests — covers both a request created
- * locally via `/requests/new` (`local-req-…` ids) and, since CLAUDE.md
- * Bölüm 21 Faz 5, a genuinely real request published to Supabase (a real
- * UUID). Neither is one of the fixed mock ids `/requests/[id]` was
- * pre-rendered for at build time.
- */
+/** Same idea as `promptHref`, for requests — every request is a real Supabase row. */
 export function requestHref(request: Pick<PromptRequest, "id">): string {
-  const isStaticMockRequest = mockRequests.some((mock) => mock.id === request.id);
-  return isStaticMockRequest ? `/requests/${request.id}` : `/requests/local?id=${request.id}`;
+  return `/requests/local?id=${request.id}`;
 }
 
-/**
- * Same idea as `promptHref`, for a user's profile — a real, signed-up
- * Supabase account (CLAUDE.md Bölüm 21) has a real, auto-generated
- * username that was never one of the fixed usernames `/profile/[username]`
- * was pre-rendered for at build time, so it routes to `/profile/real`
- * instead, which looks the profile up client-side by a `?username=` query
- * param.
- */
+/** Same idea as `promptHref`, for a user's profile — looked up client-side by a `?username=` query param. */
 export function profileHref(user: Pick<UserProfile, "username">): string {
-  const isStaticMockUser = mockUsers.some((mock) => mock.username === user.username);
-  return isStaticMockUser ? `/profile/${user.username}` : `/profile/real?username=${user.username}`;
+  return `/profile/real?username=${user.username}`;
+}
+
+/** Same idea as `promptHref`/`requestHref`, for a conversation — every conversation is a real Supabase row. */
+export function messageHref(conversation: Pick<Conversation, "id">): string {
+  return `/messages/local?id=${conversation.id}`;
 }
 
 /**
- * Same idea as `promptHref`/`requestHref`, for a conversation — covers a
- * genuinely real conversation (CLAUDE.md Bölüm 21 Faz 6, a real UUID from
- * Supabase's `conversations` table), which was never one of the fixed mock
- * conversation ids `/messages/[conversationId]` was pre-rendered for at
- * build time.
+ * Same idea as `promptHref`, for a tag — tags are seeded rows (see
+ * `supabase/migrations/20260919120600_seed_tags.sql`), not known at build
+ * time either, so `/tags/local` looks one up client-side by a `?tag=` slug.
  */
-export function messageHref(conversation: Pick<Conversation, "id">): string {
-  const isStaticMockConversation = mockConversations.some((mock) => mock.id === conversation.id);
-  return isStaticMockConversation ? `/messages/${conversation.id}` : `/messages/local?id=${conversation.id}`;
+export function tagHref(tag: Pick<Tag, "slug">): string {
+  return `/tags/local?tag=${tag.slug}`;
 }

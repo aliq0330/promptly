@@ -1,7 +1,6 @@
 /**
- * Shared domain types for Promptly.
- * These mirror the planned Supabase schema (see CLAUDE.md section 6) but are
- * not yet backed by a real database — used for mock data and component props.
+ * Shared domain types for Promptly — mirror the real Supabase schema (see
+ * `supabase/` migrations and `src/lib/supabase/*.ts`'s mappers).
  */
 
 export interface UserProfile {
@@ -15,12 +14,7 @@ export interface UserProfile {
   followerCount: number;
   followingCount: number;
   createdAt: string;
-  /**
-   * Yaratıcı ilgi alanları / kategoriler (bkz. profile/interest-options.ts).
-   * Yalnızca profil sahibi kendi profilinde düzenleyebilir (bkz.
-   * features/profile/profile-overrides-provider.tsx) — CLAUDE.md section
-   * 28: gerçek bir Supabase alanı değil, henüz yerel/mock bir alan.
-   */
+  /** Yaratıcı ilgi alanları / kategoriler (bkz. profile/interest-options.ts) — `profiles.interests`. */
   interests?: string[];
 }
 
@@ -71,9 +65,7 @@ export interface Prompt {
 
 /**
  * A comment belongs to exactly one of a prompt or a request — never both
- * (see CreatePromptForm/RequestDetail's comment sections). Both fields are
- * optional rather than a discriminated union so existing mock rows (which
- * only ever set `promptId`) don't need touching.
+ * (enforced by `prompt_comments_exactly_one_target`, see CommentSection).
  */
 export interface PromptComment {
   id: string;
@@ -94,11 +86,7 @@ export interface PromptRequest {
   description: string;
   creativeDirection: string;
   preferredTool: string | null;
-  /**
-   * Requested content type (image/text/video/code/music) — same union as
-   * `Prompt.contentType`. Older mock requests predate this field, so it's
-   * optional; new requests created via `/requests/new` always set it.
-   */
+  /** Requested content type (image/text/video/code/music) — same union as `Prompt.contentType`. */
   contentType?: PromptContentType;
   /** Optional reference image, added by the requester for creative direction. */
   referenceImage?: PromptMedia;
@@ -108,26 +96,11 @@ export interface PromptRequest {
   createdAt: string;
   /**
    * The id of the answer (a real `Prompt` with a `request-response` origin)
-   * the requester picked as the best fit. Only ever set by the request's
-   * own author (see requests-provider.tsx) — CLAUDE.md §28: local-only,
-   * not a real Supabase column yet.
+   * the requester picked as the best fit — `prompt_requests.
+   * selected_response_prompt_id`. Only ever set by the request's own
+   * author (RLS-enforced).
    */
   selectedResponsePromptId?: string;
-}
-
-export interface PromptRequestResponse {
-  id: string;
-  requestId: string;
-  author: UserProfile;
-  title: string | null;
-  description: string | null;
-  promptText: string;
-  media: PromptMedia[];
-  tags: Tag[];
-  likeCount: number;
-  commentCount: number;
-  isLiked: boolean;
-  createdAt: string;
 }
 
 export type NotificationType =

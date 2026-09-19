@@ -1,14 +1,14 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { FeedGrid } from "./feed-grid";
 import { feedItemAuthorId, feedItemCreatedAt, feedItemPopularity, type FeedItem } from "./types";
-import { useFollow } from "@/features/profile/follow-provider";
-import { useLocalPrompts } from "@/features/prompts/local-prompts-provider";
+import { useAuth } from "@/features/auth/auth-provider";
 import { useRealPrompts } from "@/features/prompts/real-prompts-provider";
-import { useRequests } from "@/features/requests/requests-provider";
 import { useRealRequests } from "@/features/requests/real-requests-provider";
+import { fetchFollowedProfiles } from "@/lib/supabase/profiles";
 
 type TabKey = "following" | "popular" | "for-you";
 
@@ -18,36 +18,39 @@ const TABS: { key: TabKey; label: string }[] = [
   { key: "for-you", label: "Sana Özel" },
 ];
 
-export function FeedTabs({ items }: { items: FeedItem[] }) {
+export function FeedTabs() {
   const [active, setActive] = useState<TabKey>("for-you");
-  const { isFollowing } = useFollow();
-  const { localPrompts } = useLocalPrompts();
+  const { user } = useAuth();
   const { realPrompts } = useRealPrompts();
-  const { allRequests } = useRequests();
   const { realRequests } = useRealRequests();
+  const [followedIds, setFollowedIds] = useState<Set<string>>(new Set());
 
-  // Real requests/answers created in this browser (prompt-request module),
-  // genuinely real prompts, and genuinely real requests published to
-  // Supabase (CLAUDE.md Bölüm 21) all belong in the same mixed feed as the
-  // server-rendered mock items — merged client-side since none of them are
-  // known at build time.
+  useEffect(() => {
+    let cancelled = false;
+    if (!user) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- nothing to fetch while signed out
+      setFollowedIds(new Set());
+      return;
+    }
+    fetchFollowedProfiles(user.id).then((profiles) => {
+      if (!cancelled) setFollowedIds(new Set(profiles.map((profile) => profile.id)));
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
   const allItems = useMemo<FeedItem[]>(() => {
-    const localRequestItems: FeedItem[] = allRequests
-      .filter((request) => request.id.startsWith("local-req-"))
-      .map((request) => ({ kind: "request", data: request }));
-    const localPromptItems: FeedItem[] = localPrompts.map((prompt) => ({ kind: "prompt", data: prompt }));
-    const realPromptItems: FeedItem[] = realPrompts.map((prompt) => ({ kind: "prompt", data: prompt }));
-    const realRequestItems: FeedItem[] = realRequests.map((request) => ({ kind: "request", data: request }));
-    return [...items, ...localRequestItems, ...localPromptItems, ...realPromptItems, ...realRequestItems].sort(
-      (a, b) => feedItemCreatedAt(b) - feedItemCreatedAt(a),
-    );
-  }, [items, allRequests, localPrompts, realPrompts, realRequests]);
+    const promptItems: FeedItem[] = realPrompts.map((prompt) => ({ kind: "prompt", data: prompt }));
+    const requestItems: FeedItem[] = realRequests.map((request) => ({ kind: "request", data: request }));
+    return [...promptItems, ...requestItems].sort((a, b) => feedItemCreatedAt(b) - feedItemCreatedAt(a));
+  }, [realPrompts, realRequests]);
 
   const visible =
     active === "popular"
       ? [...allItems].sort((a, b) => feedItemPopularity(b) - feedItemPopularity(a))
       : active === "following"
-        ? allItems.filter((item) => isFollowing(feedItemAuthorId(item)))
+        ? allItems.filter((item) => followedIds.has(feedItemAuthorId(item)))
         : allItems;
 
   return (
@@ -70,7 +73,17 @@ export function FeedTabs({ items }: { items: FeedItem[] }) {
         ))}
       </div>
       <div className="px-4 lg:px-6">
-        <FeedGrid items={visible} />
+        {active === "following" && !user ? (
+          <p className="py-10 text-center text-sm text-text-muted">
+            Takip ettiklerinin paylaşımlarını görmek için{" "}
+            <Link href="/login" className="font-medium text-primary underline">
+              giriş yapmalısın
+            </Link>
+            .
+          </p>
+        ) : (
+          <FeedGrid items={visible} />
+        )}
       </div>
     </div>
   );

@@ -8,13 +8,8 @@ import { ProfileToolbar, type ProfileSortKey } from "./profile-toolbar";
 import { ProfileContentGrid } from "./profile-content-grid";
 import { ProfileEmptyState } from "./profile-empty-state";
 import { ProfileAbout } from "./profile-about";
-import { useProfileOverrides } from "./profile-overrides-provider";
-import { useHiddenPrompts } from "@/features/prompts/hidden-prompts-provider";
-import { useLike, useSave } from "@/features/prompts/like-save-provider";
-import { useLocalPrompts } from "@/features/prompts/local-prompts-provider";
 import { useAuth } from "@/features/auth/auth-provider";
 import { fetchLikedPrompts, fetchSavedPrompts } from "@/lib/supabase/prompts";
-import { mockPrompts } from "@/mocks/prompts";
 import type { Prompt, PromptContentType, UserProfile } from "@/types";
 
 function sortPrompts(prompts: Prompt[], sort: ProfileSortKey): Prompt[] {
@@ -33,45 +28,45 @@ function sortPrompts(prompts: Prompt[], sort: ProfileSortKey): Prompt[] {
 }
 
 export function ProfileView({
-  user: baseUser,
+  user,
   isOwnProfile,
-  authorPrompts: mockAuthorPrompts,
-  conversationId,
+  authorPrompts: initialAuthorPrompts,
 }: {
   user: UserProfile;
   isOwnProfile: boolean;
   authorPrompts: Prompt[];
-  conversationId?: string;
 }) {
-  const { applyOverrides } = useProfileOverrides();
-  const { isHidden, hidePrompt, unhidePrompt } = useHiddenPrompts();
-  const { isLiked } = useLike();
-  const { isSaved } = useSave();
-  const { localPrompts, getByAuthor } = useLocalPrompts();
   const { user: authUser } = useAuth();
 
-  const user = isOwnProfile ? applyOverrides(baseUser) : baseUser;
+  const [authorPrompts, setAuthorPrompts] = useState(initialAuthorPrompts);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- resyncs when a freshly-fetched prompt list (a new array) replaces the previous one, e.g. navigating to a different profile
+    setAuthorPrompts(initialAuthorPrompts);
+  }, [initialAuthorPrompts]);
 
-  // Real likes/saves (a real prompt liked/saved by a real signed-in user,
-  // CLAUDE.md Bölüm 21 Faz 3) live in Supabase, not localStorage — only
-  // ever fetched for one's own profile, and only for the signed-in real
-  // viewer (RLS keeps prompt_saves private to its own user regardless).
-  const [realSavedPrompts, setRealSavedPrompts] = useState<Prompt[]>([]);
-  const [realLikedPrompts, setRealLikedPrompts] = useState<Prompt[]>([]);
+  function handleDeleted(promptId: string) {
+    setAuthorPrompts((prev) => prev.filter((prompt) => prompt.id !== promptId));
+  }
+
+  // Real likes/saves — only ever fetched for one's own profile, and only
+  // for the signed-in real viewer (RLS keeps prompt_saves private to its
+  // own user regardless).
+  const [savedPrompts, setSavedPrompts] = useState<Prompt[]>([]);
+  const [likedPrompts, setLikedPrompts] = useState<Prompt[]>([]);
 
   useEffect(() => {
     let cancelled = false;
     if (!isOwnProfile || !authUser) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- nothing to fetch for someone else's profile or a signed-out viewer
-      setRealSavedPrompts([]);
-      setRealLikedPrompts([]);
+      setSavedPrompts([]);
+      setLikedPrompts([]);
       return;
     }
     fetchSavedPrompts(authUser.id).then((prompts) => {
-      if (!cancelled) setRealSavedPrompts(prompts);
+      if (!cancelled) setSavedPrompts(prompts);
     });
     fetchLikedPrompts(authUser.id).then((prompts) => {
-      if (!cancelled) setRealLikedPrompts(prompts);
+      if (!cancelled) setLikedPrompts(prompts);
     });
     return () => {
       cancelled = true;
@@ -82,30 +77,10 @@ export function ProfileView({
   const [activeType, setActiveType] = useState<PromptContentType | "all">("all");
   const [sort, setSort] = useState<ProfileSortKey>("newest");
   const [search, setSearch] = useState("");
-  const [showHidden, setShowHidden] = useState(false);
-
-  // Locally-created prompts (request answers, see local-prompts-provider.tsx)
-  // only ever belong to "me", so only the owner's own profile ever needs to
-  // merge them in — sorted newest-first, matching the server-side sort.
-  const authorPrompts = useMemo(() => {
-    if (!isOwnProfile) return mockAuthorPrompts;
-    return [...mockAuthorPrompts, ...getByAuthor(user.id)].sort(
-      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-    );
-  }, [isOwnProfile, mockAuthorPrompts, getByAuthor, user.id]);
 
   const remixPrompts = useMemo(
     () => authorPrompts.filter((prompt) => prompt.origin.type !== "original"),
     [authorPrompts],
-  );
-  const allKnownPrompts = useMemo(() => [...mockPrompts, ...localPrompts], [localPrompts]);
-  const savedPrompts = useMemo(
-    () => [...realSavedPrompts, ...allKnownPrompts.filter((prompt) => isSaved(prompt.id))],
-    [realSavedPrompts, allKnownPrompts, isSaved],
-  );
-  const likedPrompts = useMemo(
-    () => [...realLikedPrompts, ...allKnownPrompts.filter((prompt) => isLiked(prompt.id))],
-    [realLikedPrompts, allKnownPrompts, isLiked],
   );
 
   const tabs = useMemo(() => {
@@ -137,15 +112,6 @@ export function ProfileView({
     }
   }, [activeTab, authorPrompts, remixPrompts, savedPrompts, likedPrompts]);
 
-  // Hidden prompts only ever apply to browsing your own gallery (hiding
-  // someone else's content from view is not something a viewer of their
-  // profile can meaningfully do).
-  const visibleSource = useMemo(() => {
-    if (!isOwnProfile || activeTab === "saved" || activeTab === "liked") return activeSource;
-    if (showHidden) return activeSource;
-    return activeSource.filter((prompt) => !isHidden(prompt.id));
-  }, [activeSource, isOwnProfile, activeTab, showHidden, isHidden]);
-
   const availableTypes = useMemo(() => {
     const types = new Set<PromptContentType>();
     activeSource.forEach((prompt) => types.add(prompt.contentType));
@@ -155,7 +121,7 @@ export function ProfileView({
   const normalizedSearch = search.trim().toLocaleLowerCase("tr");
 
   const filtered = useMemo(() => {
-    let items = visibleSource;
+    let items = activeSource;
     if (activeType !== "all") {
       items = items.filter((prompt) => prompt.contentType === activeType);
     }
@@ -168,7 +134,7 @@ export function ProfileView({
       );
     }
     return sortPrompts(items, sort);
-  }, [visibleSource, activeType, normalizedSearch, sort]);
+  }, [activeSource, activeType, normalizedSearch, sort]);
 
   const hasActiveFilters = activeType !== "all" || normalizedSearch.length > 0;
 
@@ -177,11 +143,6 @@ export function ProfileView({
     setSearch("");
   }
 
-  const hiddenInThisTab =
-    isOwnProfile && activeTab !== "saved" && activeTab !== "liked"
-      ? activeSource.filter((prompt) => isHidden(prompt.id)).length
-      : 0;
-
   return (
     <div className="space-y-5 pb-6">
       <ProfileHeader
@@ -189,7 +150,6 @@ export function ProfileView({
         isOwnProfile={isOwnProfile}
         publishedPromptCount={authorPrompts.length}
         remixCount={remixPrompts.length}
-        conversationId={conversationId}
         onSelectPrompts={() => setActiveTab("prompts")}
         onSelectRemixes={() => setActiveTab("remixes")}
       />
@@ -216,24 +176,10 @@ export function ProfileView({
               />
             )}
 
-            {hiddenInThisTab > 0 && (
-              <button
-                type="button"
-                onClick={() => setShowHidden((prev) => !prev)}
-                className="text-xs font-medium text-primary hover:underline"
-              >
-                {showHidden
-                  ? "Gizlenen promptları tekrar sakla"
-                  : `${hiddenInThisTab} prompt profilinden gizlendi · Göster`}
-              </button>
-            )}
-
             <ProfileContentGrid
               prompts={filtered}
-              isOwnProfile={isOwnProfile}
-              isHidden={isHidden}
-              onHide={hidePrompt}
-              onUnhide={unhidePrompt}
+              isOwnProfile={isOwnProfile && (activeTab === "prompts" || activeTab === "remixes")}
+              onDeleted={handleDeleted}
               emptyState={
                 hasActiveFilters ? (
                   <ProfileEmptyState

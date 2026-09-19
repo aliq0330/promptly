@@ -2,47 +2,42 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Copy, Eye, EyeOff, Link2, MoreVertical } from "lucide-react";
+import { Copy, Link2, Loader2, MoreVertical, Trash2 } from "lucide-react";
 import { absoluteUrl, cn, promptHref } from "@/lib/utils";
+import { deleteRealPrompt } from "@/lib/supabase/prompts";
 
 /**
- * Own-prompt management menu (CLAUDE.md section 14) — only ever shown on
- * the profile owner's own cards (wired in ProfileContentGrid, never on the
- * shared feed/discover cards). Deliberately limited to actions that are
- * genuinely real:
- *  - "Bağlantıyı kopyala" — real clipboard copy.
- *  - "Kopyasını oluştur" — real navigation that prefills /create with this
- *    prompt's fields (same prefill mechanism as the remix flow).
- *  - "Profilimden gizle" — a real, localStorage-persisted per-browser hide
- *    (see hidden-prompts-provider.tsx), NOT a delete: the prompt is static
- *    mock data with no backend, so nothing can actually be deleted or have
- *    its status changed. "Düzenle", "Taslağa al" and "Yeniden yayımla" from
- *    the original spec are intentionally omitted — none of them can be made
- *    to actually do anything without a backend, and faking them would
- *    violate CLAUDE.md's rule against pretending mock actions are real.
+ * Own-prompt management menu — every prompt is a real, deletable Supabase
+ * row now (CLAUDE.md's mock-data removal), so unlike the old mock-era
+ * version this genuinely deletes rather than merely hiding from view.
  */
 export function ProfileContentMenu({
   promptId,
-  hidden,
-  onHide,
-  onUnhide,
+  onDeleted,
 }: {
   promptId: string;
-  hidden: boolean;
-  onHide: () => void;
-  onUnhide: () => void;
+  onDeleted: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!open) return;
     function handleClickOutside(event: MouseEvent) {
-      if (ref.current && !ref.current.contains(event.target as Node)) setOpen(false);
+      if (ref.current && !ref.current.contains(event.target as Node)) {
+        setOpen(false);
+        setConfirmingDelete(false);
+      }
     }
     function handleEscape(event: KeyboardEvent) {
-      if (event.key === "Escape") setOpen(false);
+      if (event.key === "Escape") {
+        setOpen(false);
+        setConfirmingDelete(false);
+      }
     }
     document.addEventListener("mousedown", handleClickOutside);
     document.addEventListener("keydown", handleEscape);
@@ -60,7 +55,27 @@ export function ProfileContentMenu({
       setCopied(true);
       setTimeout(() => setCopied(false), 1200);
     } catch {
-      // clipboard unavailable — nothing else we can do without a backend.
+      // clipboard unavailable — nothing else we can do.
+    }
+  }
+
+  async function handleDelete(event: React.MouseEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!confirmingDelete) {
+      setConfirmingDelete(true);
+      return;
+    }
+    setIsDeleting(true);
+    setError(null);
+    try {
+      await deleteRealPrompt(promptId);
+      setOpen(false);
+      onDeleted();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Silinemedi, lütfen tekrar dene.");
+      setIsDeleting(false);
+      setConfirmingDelete(false);
     }
   }
 
@@ -97,34 +112,25 @@ export function ProfileContentMenu({
             <Link2 size={14} />
             {copied ? "Kopyalandı" : "Bağlantıyı kopyala"}
           </button>
-          {!promptId.startsWith("local-") && (
-            <Link
-              href={`/create?duplicate=${promptId}`}
-              role="menuitem"
-              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-text hover:bg-accent-surface"
-            >
-              <Copy size={14} />
-              Kopyasını oluştur
-            </Link>
-          )}
+          <Link
+            href={`/create?duplicate=${promptId}`}
+            role="menuitem"
+            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-text hover:bg-accent-surface"
+          >
+            <Copy size={14} />
+            Kopyasını oluştur
+          </Link>
           <button
             type="button"
             role="menuitem"
-            onClick={(event) => {
-              event.preventDefault();
-              event.stopPropagation();
-              setOpen(false);
-              if (hidden) {
-                onUnhide();
-              } else {
-                onHide();
-              }
-            }}
-            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-text hover:bg-accent-surface"
+            onClick={handleDelete}
+            disabled={isDeleting}
+            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-red-600 hover:bg-red-500/10"
           >
-            {hidden ? <Eye size={14} /> : <EyeOff size={14} />}
-            {hidden ? "Profilime geri getir" : "Profilimden gizle"}
+            {isDeleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+            {confirmingDelete ? "Emin misin? Tekrar tıkla" : "Sil"}
           </button>
+          {error && <p className="px-3 py-1 text-xs text-red-500">{error}</p>}
         </div>
       )}
     </div>

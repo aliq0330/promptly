@@ -21,21 +21,11 @@ interface RealPromptsContextValue {
 const RealPromptsContext = createContext<RealPromptsContextValue | null>(null);
 
 /**
- * The first genuinely real, cross-user, cross-device prompt data in this
- * app — actual rows in the Supabase `prompts` table (CLAUDE.md Bölüm 21),
- * not a mock array and not this browser's localStorage. Fetches the most
- * recent published prompts once on mount so they can be mixed into the
- * feed/discover pages the same way LocalPromptsProvider's localStorage
- * prompts already are.
- *
- * Scope is deliberately narrow (see CLAUDE.md Bölüm 21's status entry):
- * only `addPrompt` here, called only for `origin: "original"` prompts
- * (plain "Prompt Oluştur" and "Kopyasını Oluştur" in CreatePromptForm).
- * Remix can't go real yet — a real remix needs `source_prompt_id` to be an
- * actual row in `prompts`, and today's remixable content is all mock/local
- * data with no real row to point at. Answering a request also stays on
- * the existing `useLocalPrompts()` path — real `prompt_requests` wiring is
- * a separate, later phase.
+ * Every prompt in the app is a real, cross-user, cross-device row in
+ * Supabase's `prompts` table. Fetches the most recent published prompts
+ * once on mount so they can be mixed into the feed/discover pages.
+ * `addPrompt` publishes originals, remixes (`remixOf`) and request answers
+ * (`requestId`) alike.
  */
 export function RealPromptsProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();

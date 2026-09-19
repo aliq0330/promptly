@@ -13,13 +13,10 @@ import { absoluteUrl } from "@/lib/utils";
 const PASSWORD_MIN_LENGTH = 6;
 
 /**
- * Real Supabase Auth sign-up (CLAUDE.md section 17). Only collects
- * email/password/display name — display name is stored in Supabase's own
- * `auth.users.user_metadata` (a real, genuinely persisted field), not a
- * mock. There is no `profiles` table yet (CLAUDE.md section 18), so this
- * intentionally does not try to create one; the rest of the app keeps
- * using the "me" mock persona until section 21 wires real accounts to
- * real profile/prompt data.
+ * Real Supabase Auth sign-up. Collects email/password/display name;
+ * `handle_new_user` (a database trigger, see `supabase/migrations`)
+ * creates the real `profiles` row automatically once `auth.users` gets a
+ * new row, reading the display name back out of `user_metadata`.
  */
 export default function SignupPage() {
   const router = useRouter();

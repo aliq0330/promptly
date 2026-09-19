@@ -1,35 +1,41 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Search } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { PromptGrid } from "@/features/prompts/prompt-grid";
-import { mockPrompts } from "@/mocks/prompts";
-import { mockUsers } from "@/mocks/users";
+import { searchPrompts } from "@/lib/supabase/prompts";
+import { searchProfiles } from "@/lib/supabase/profiles";
 import { formatCount, profileHref } from "@/lib/utils";
+import type { Prompt, UserProfile } from "@/types";
+
+const DEBOUNCE_MS = 300;
 
 export function SearchView() {
   const [query, setQuery] = useState("");
-  const normalized = query.trim().toLocaleLowerCase("tr");
+  const [prompts, setPrompts] = useState<Prompt[]>([]);
+  const [users, setUsers] = useState<UserProfile[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const normalized = query.trim();
 
-  const prompts = useMemo(() => {
-    if (!normalized) return [];
-    return mockPrompts.filter(
-      (prompt) =>
-        prompt.title.toLocaleLowerCase("tr").includes(normalized) ||
-        prompt.tags.some((tag) => tag.label.toLocaleLowerCase("tr").includes(normalized)),
-    );
-  }, [normalized]);
-
-  const users = useMemo(() => {
-    if (!normalized) return [];
-    return mockUsers.filter(
-      (user) =>
-        user.id !== "me" &&
-        (user.displayName.toLocaleLowerCase("tr").includes(normalized) ||
-          user.username.toLocaleLowerCase("tr").includes(normalized)),
-    );
+  useEffect(() => {
+    if (!normalized) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- clears results when the query is emptied
+      setPrompts([]);
+      setUsers([]);
+      setIsSearching(false);
+      return;
+    }
+    setIsSearching(true);
+    const timeout = setTimeout(() => {
+      Promise.all([searchPrompts(normalized), searchProfiles(normalized)]).then(([foundPrompts, foundUsers]) => {
+        setPrompts(foundPrompts);
+        setUsers(foundUsers);
+        setIsSearching(false);
+      });
+    }, DEBOUNCE_MS);
+    return () => clearTimeout(timeout);
   }, [normalized]);
 
   return (
@@ -40,7 +46,7 @@ export function SearchView() {
           type="text"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="Prompt, kullanıcı veya etiket ara"
+          placeholder="Prompt veya kullanıcı ara"
           className="h-full w-full bg-transparent text-sm text-text outline-none placeholder:text-text-muted"
           autoFocus
         />
@@ -50,6 +56,8 @@ export function SearchView() {
         <p className="py-10 text-center text-sm text-text-muted">
           Aramak için bir şeyler yazmaya başla.
         </p>
+      ) : isSearching ? (
+        <p className="py-10 text-center text-sm text-text-muted">Aranıyor…</p>
       ) : (
         <div className="space-y-8">
           {users.length > 0 && (
@@ -77,7 +85,11 @@ export function SearchView() {
 
           <section className="space-y-3">
             <h2 className="text-sm font-semibold text-text">Promptlar</h2>
-            <PromptGrid prompts={prompts} />
+            {prompts.length === 0 && users.length === 0 ? (
+              <p className="py-6 text-center text-sm text-text-muted">Sonuç bulunamadı.</p>
+            ) : (
+              <PromptGrid prompts={prompts} />
+            )}
           </section>
         </div>
       )}

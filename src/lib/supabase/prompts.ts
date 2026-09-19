@@ -10,7 +10,7 @@ import type { Prompt, PromptContentType, PromptMedia, PromptOrigin, Tag, UserPro
  * supabase/migrations/20260919120200_prompts_and_requests.sql. Kept in
  * sync by hand, same as mappers.ts's ProfileRow.
  */
-interface PromptRow {
+export interface PromptRow {
   id: string;
   title: string;
   description: string;
@@ -31,7 +31,7 @@ interface PromptRow {
   prompt_tags: { tags: { slug: string; label: string } }[];
 }
 
-const PROMPT_SELECT = `
+export const PROMPT_SELECT = `
   id, title, description, prompt_text, tool, content_type, status,
   origin_type, source_prompt_id, root_prompt_id, request_id,
   like_count, comment_count, remix_count, created_at,
@@ -50,7 +50,7 @@ function mapOrigin(row: PromptRow): PromptOrigin {
   return { type: "original" };
 }
 
-function mapPromptRow(row: PromptRow): Prompt {
+export function mapPromptRow(row: PromptRow): Prompt {
   const media: PromptMedia[] = (row.prompt_media ?? [])
     .map((m) => ({ id: m.id, url: m.url, width: m.width, height: m.height, alt: m.alt ?? row.title }));
   const tags: Tag[] = (row.prompt_tags ?? []).map((pt) => ({ slug: pt.tags.slug, label: pt.tags.label }));
@@ -181,6 +181,100 @@ export async function fetchSavedPrompts(userId: string): Promise<Prompt[]> {
   }
 }
 
+/** Every real, published prompt by any of these authors, newest-first — for the "Takip Ettiklerim" feed (only ever the viewer's followed authors). */
+export async function fetchPromptsByAuthors(authorIds: string[], limit = 60): Promise<Prompt[]> {
+  if (authorIds.length === 0) return [];
+  try {
+    const { data, error } = await supabase
+      .from("prompts")
+      .select(PROMPT_SELECT)
+      .in("author_id", authorIds)
+      .eq("status", "published")
+      .order("created_at", { ascending: false })
+      .limit(limit);
+    if (error) {
+      console.error("fetchPromptsByAuthors", error);
+      return [];
+    }
+    return (data ?? []).map((row) => mapPromptRow(row as unknown as PromptRow));
+  } catch (err) {
+    console.error("fetchPromptsByAuthors", err);
+    return [];
+  }
+}
+
+/** Title/description substring search over published prompts — backs the real `/search` page. */
+export async function searchPrompts(query: string, limit = 40): Promise<Prompt[]> {
+  const trimmed = query.trim();
+  if (!trimmed) return [];
+  try {
+    const escaped = trimmed.replace(/[%,]/g, "");
+    const { data, error } = await supabase
+      .from("prompts")
+      .select(PROMPT_SELECT)
+      .eq("status", "published")
+      .or(`title.ilike.%${escaped}%,description.ilike.%${escaped}%`)
+      .order("created_at", { ascending: false })
+      .limit(limit);
+    if (error) {
+      console.error("searchPrompts", error);
+      return [];
+    }
+    return (data ?? []).map((row) => mapPromptRow(row as unknown as PromptRow));
+  } catch (err) {
+    console.error("searchPrompts", err);
+    return [];
+  }
+}
+
+/** Every real remix directly sourced from this prompt, newest-first. */
+export async function fetchRemixesOf(promptId: string): Promise<Prompt[]> {
+  try {
+    const { data, error } = await supabase
+      .from("prompts")
+      .select(PROMPT_SELECT)
+      .eq("source_prompt_id", promptId)
+      .eq("status", "published")
+      .order("created_at", { ascending: false });
+    if (error) {
+      console.error("fetchRemixesOf", error);
+      return [];
+    }
+    return (data ?? []).map((row) => mapPromptRow(row as unknown as PromptRow));
+  } catch (err) {
+    console.error("fetchRemixesOf", err);
+    return [];
+  }
+}
+
+/**
+ * Walks a real remix chain from the ultimate root down to (and including)
+ * `prompt`, one real fetch per link — `root_prompt_id` alone only names the
+ * chain's origin, not the intermediate prompts a multi-level remix passed
+ * through, so each link has to be fetched to recover its own
+ * `source_prompt_id`. Capped to guard against any (should-be-impossible,
+ * RLS/FK-enforced) cycle.
+ */
+export async function fetchRemixChain(prompt: Prompt): Promise<Prompt[]> {
+  const chain: Prompt[] = [prompt];
+  let current = prompt;
+  let guard = 0;
+  while (current.origin.type === "remix" && guard < 20) {
+    guard += 1;
+    const source = await fetchPromptById(current.origin.sourcePromptId);
+    if (!source) break;
+    chain.unshift(source);
+    current = source;
+  }
+  return chain;
+}
+
+/** Genuinely, permanently deletes a real prompt the caller owns (RLS, Bölüm 19, enforces ownership). */
+export async function deleteRealPrompt(promptId: string): Promise<void> {
+  const { error } = await supabase.from("prompts").delete().eq("id", promptId);
+  if (error) throw new Error(error.message);
+}
+
 /** Every real prompt this user has liked, newest-first — for a real own-profile's "Beğeniler" tab. Likes are public (Bölüm 19), but this is always called for "my own" liked list. */
 export async function fetchLikedPrompts(userId: string): Promise<Prompt[]> {
   try {
@@ -216,6 +310,8 @@ export interface CreateRealPromptInput {
   fallbackImage: { url: string; width: number; height: number } | null;
   /** Set only when answering a real request (CLAUDE.md Bölüm 21 Faz 5) — produces `origin_type = 'request_response'` instead of `'original'`, and `handle_prompt_origin_change` (Bölüm 19) increments the request's `response_count`. */
   requestId?: string;
+  /** Set only when this is a real remix of a real prompt — produces `origin_type = 'remix'`, and `handle_prompt_origin_change` (Bölüm 19) increments the source's `remix_count`. Mutually exclusive with `requestId`. */
+  remixOf?: { sourcePromptId: string; rootPromptId: string };
 }
 
 /**
@@ -241,8 +337,10 @@ export async function createRealPrompt(
       tool: input.tool,
       content_type: input.contentType,
       status: "published",
-      origin_type: input.requestId ? "request_response" : "original",
+      origin_type: input.remixOf ? "remix" : input.requestId ? "request_response" : "original",
       request_id: input.requestId ?? null,
+      source_prompt_id: input.remixOf?.sourcePromptId ?? null,
+      root_prompt_id: input.remixOf?.rootPromptId ?? null,
     })
     .select("id, created_at")
     .single();
@@ -323,7 +421,11 @@ export async function createRealPrompt(
     contentType: input.contentType,
     media,
     tags: input.tags,
-    origin: input.requestId ? { type: "request-response", requestId: input.requestId, responseId: promptId } : { type: "original" },
+    origin: input.remixOf
+      ? { type: "remix", sourcePromptId: input.remixOf.sourcePromptId, rootPromptId: input.remixOf.rootPromptId }
+      : input.requestId
+        ? { type: "request-response", requestId: input.requestId, responseId: promptId }
+        : { type: "original" },
     likeCount: 0,
     commentCount: 0,
     remixCount: 0,

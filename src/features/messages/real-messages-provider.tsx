@@ -15,13 +15,10 @@ interface RealMessagesContextValue {
 const RealMessagesContext = createContext<RealMessagesContextValue | null>(null);
 
 /**
- * Real, cross-user, cross-device direct messages (CLAUDE.md Bölüm 21 Faz
- * 6) — the same shape as RealPromptsProvider/RealRequestsProvider, backed
- * by the actual Supabase `conversations`/`conversation_members`/`messages`
- * tables instead of `mocks/conversations.ts`. Only ever holds a signed-in
- * real user's own conversations; a signed-out visitor or the mock "me"
- * persona still sees only `mocks/conversations.ts`'s fixed threads
- * (Bölüm 16's "mesaj gönderme henüz devre dışı" stays true for those).
+ * Real, cross-user, cross-device direct messages — the same shape as
+ * RealPromptsProvider/RealRequestsProvider, backed by the actual Supabase
+ * `conversations`/`conversation_members`/`messages` tables. Only ever
+ * holds a signed-in user's own conversations.
  */
 export function RealMessagesProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();

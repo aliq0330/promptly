@@ -15,7 +15,6 @@ export function CreateGate() {
   const searchParams = useSearchParams();
   const hasIntent =
     searchParams.get("remix") ||
-    searchParams.get("remixResponse") ||
     searchParams.get("duplicate") ||
     searchParams.get("answerRequest") ||
     searchParams.get("mode") === "prompt";

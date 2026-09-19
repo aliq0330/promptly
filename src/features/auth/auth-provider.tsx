@@ -19,15 +19,9 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 /**
- * The one genuinely real, server-backed piece of state in this app
- * (CLAUDE.md section 17) — everything else (follows, likes, profile edits,
- * local prompts/requests) is honest browser-local state, but this is an
- * actual Supabase Auth session. Scope is deliberately narrow: this tracks
- * *who is authenticated*, nothing more. It does not yet connect to a
- * `profiles` table (doesn't exist — CLAUDE.md section 18) or gate any
- * existing page — the rest of the app still runs on the "me" mock persona
- * exactly as before. Wiring a real session to real profile/prompt data is
- * CLAUDE.md section 21's job, not this one's.
+ * Tracks the real Supabase Auth session — *who is authenticated*. Paired
+ * with `OwnProfileProvider` (the signed-in user's real `profiles` row) for
+ * anything that needs their display name/avatar/username too.
  */
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);

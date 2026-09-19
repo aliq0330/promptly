@@ -26,15 +26,12 @@ interface RealRequestsContextValue {
 const RealRequestsContext = createContext<RealRequestsContextValue | null>(null);
 
 /**
- * Real, cross-user, cross-device prompt requests (CLAUDE.md Bölüm 21 Faz
- * 5) — the same `RealPromptsProvider` shape (Faz 1), backed by the actual
- * Supabase `prompt_requests` table instead of localStorage. Management
- * actions (`updateStatus`/`deleteRequest`/`selectResponse`) mirror
- * `useRequests()`'s local versions but write for real; RLS (Bölüm 19)
- * already guarantees only the request's own author can call them
- * successfully, so no client-side ownership check is needed here — same
- * reasoning `RequestsProvider`'s own doc comment already gives for the
- * local case.
+ * Real, cross-user, cross-device prompt requests — the same
+ * `RealPromptsProvider` shape, backed by the actual Supabase
+ * `prompt_requests` table. RLS (Bölüm 19) already guarantees only a
+ * request's own author can call `updateStatus`/`deleteRequest`/
+ * `selectResponse` successfully, so no client-side ownership check is
+ * needed here.
  */
 export function RealRequestsProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();

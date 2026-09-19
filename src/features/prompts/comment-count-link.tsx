@@ -3,12 +3,13 @@
 import Link from "next/link";
 import { MessageCircle } from "lucide-react";
 import { cn, formatCount, promptHref } from "@/lib/utils";
-import { useComments } from "./comment-provider";
 
 /**
- * Comment count link that reflects genuinely-posted local comments on top
- * of the mock's static commentCount, same optimistic-adjustment idea used
- * for likes/follows.
+ * Comment count link. Reflects the prompt's real, database-backed
+ * `comment_count` column at the time the card/detail page loaded — a
+ * comment posted afterwards on the same page doesn't retroactively bump
+ * this number without a reload (`CommentSection`'s own "Yorumlar (N)"
+ * heading is always live; this is a known, documented, cosmetic gap).
  */
 export function CommentCountLink({
   promptId,
@@ -21,9 +22,6 @@ export function CommentCountLink({
   size?: number;
   className?: string;
 }) {
-  const { getLocalComments } = useComments();
-  const count = baseCount + getLocalComments({ promptId }).length;
-
   return (
     <Link
       href={promptHref({ id: promptId })}
@@ -31,7 +29,7 @@ export function CommentCountLink({
       title="Yorumlar"
     >
       <MessageCircle size={size} />
-      {formatCount(count)}
+      {formatCount(baseCount)}
     </Link>
   );
 }

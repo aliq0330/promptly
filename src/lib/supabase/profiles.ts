@@ -55,6 +55,68 @@ export async function fetchProfileByUsername(username: string): Promise<UserProf
   }
 }
 
+/** Most-followed real profiles, for Keşfet's "Öne Çıkan Yaratıcılar". */
+export async function fetchTopCreators(limit = 5): Promise<UserProfile[]> {
+  try {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select(PROFILE_SELECT)
+      .order("follower_count", { ascending: false })
+      .limit(limit);
+    if (error) {
+      console.error("fetchTopCreators", error);
+      return [];
+    }
+    return (data ?? []).map((row) => mapProfileRow(row as ProfileRow));
+  } catch (err) {
+    console.error("fetchTopCreators", err);
+    return [];
+  }
+}
+
+/** Display name/username substring search — backs the real `/search` page. */
+export async function searchProfiles(query: string, limit = 20): Promise<UserProfile[]> {
+  const trimmed = query.trim();
+  if (!trimmed) return [];
+  try {
+    const escaped = trimmed.replace(/[%,]/g, "");
+    const { data, error } = await supabase
+      .from("profiles")
+      .select(PROFILE_SELECT)
+      .or(`display_name.ilike.%${escaped}%,username.ilike.%${escaped}%`)
+      .limit(limit);
+    if (error) {
+      console.error("searchProfiles", error);
+      return [];
+    }
+    return (data ?? []).map((row) => mapProfileRow(row as ProfileRow));
+  } catch (err) {
+    console.error("searchProfiles", err);
+    return [];
+  }
+}
+
+/** Every real profile this user follows — for `/following`, via the real `follows` table (public read, Bölüm 19). */
+export async function fetchFollowedProfiles(userId: string): Promise<UserProfile[]> {
+  try {
+    const { data, error } = await supabase
+      .from("follows")
+      .select(`profiles:following_id ( ${PROFILE_SELECT} )`)
+      .eq("follower_id", userId);
+    if (error) {
+      console.error("fetchFollowedProfiles", error);
+      return [];
+    }
+    return ((data ?? []) as unknown as { profiles: ProfileRow | null }[])
+      .map((row) => row.profiles)
+      .filter((row): row is ProfileRow => Boolean(row))
+      .map((row) => mapProfileRow(row));
+  } catch (err) {
+    console.error("fetchFollowedProfiles", err);
+    return [];
+  }
+}
+
 export interface UpdateOwnProfileInput {
   displayName: string;
   bio: string | null;

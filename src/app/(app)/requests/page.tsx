@@ -3,15 +3,10 @@
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { RequestList } from "@/features/requests/request-list";
-import { useRequests } from "@/features/requests/requests-provider";
 import { useRealRequests } from "@/features/requests/real-requests-provider";
 
 export default function RequestsPage() {
-  const { allRequests } = useRequests();
   const { realRequests } = useRealRequests();
-  const requests = [...allRequests, ...realRequests].sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-  );
 
   return (
     <div className="px-4 py-6 lg:px-6">
@@ -25,7 +20,7 @@ export default function RequestsPage() {
           İstek Oluştur
         </Link>
       </div>
-      <RequestList requests={requests} />
+      <RequestList requests={realRequests} />
     </div>
   );
 }

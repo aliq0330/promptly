@@ -4,28 +4,21 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { RequestDetailView } from "./request-detail-view";
-import { useRequests } from "./requests-provider";
 import { useRealRequests } from "./real-requests-provider";
 import type { PromptRequest } from "@/types";
 
 /**
- * Client-rendered counterpart to `/requests/[id]` for any request id that
- * isn't one of the fixed mock ids baked into the static export at build
- * time — see `requestHref()` in lib/utils.ts, same reasoning as
- * `LocalPromptView`/`/prompts/local`. Checks, in order: a request created
- * locally in this browser (localStorage), then a genuinely real request
- * published to Supabase (CLAUDE.md Bölüm 21 Faz 5, via a live fetch if it
- * isn't already in the recent-requests batch `RealRequestsProvider` loaded
- * on mount).
+ * Client-rendered request detail — every request is a real Supabase row
+ * now (CLAUDE.md's mock-data removal), so this looks it up client-side by a
+ * `?id=` query param: a cache hit from `RealRequestsProvider`'s recent
+ * batch, or a live fetch otherwise. See `requestHref()` in lib/utils.ts.
  */
 export function LocalRequestView() {
   const searchParams = useSearchParams();
   const id = searchParams.get("id");
-  const { getRequestById: getLocalRequestById } = useRequests();
   const { getCached, fetchById } = useRealRequests();
 
-  const localRequest = id ? getLocalRequestById(id) : undefined;
-  const cachedRealRequest = id && !localRequest ? getCached(id) : undefined;
+  const cachedRequest = id ? getCached(id) : undefined;
 
   const [fetchedRequest, setFetchedRequest] = useState<PromptRequest | null>(null);
   const [checkedRemote, setCheckedRemote] = useState(false);
@@ -33,8 +26,8 @@ export function LocalRequestView() {
   useEffect(() => {
     let cancelled = false;
 
-    if (!id || localRequest || cachedRealRequest) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- already found locally/cached, nothing async to wait on
+    if (!id || cachedRequest) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- already cached, nothing async to wait on
       setCheckedRemote(true);
       return;
     }
@@ -51,9 +44,9 @@ export function LocalRequestView() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, Boolean(localRequest), Boolean(cachedRealRequest)]);
+  }, [id, Boolean(cachedRequest)]);
 
-  const request = localRequest ?? cachedRealRequest ?? fetchedRequest ?? undefined;
+  const request = cachedRequest ?? fetchedRequest ?? undefined;
 
   if (!request && !checkedRemote) {
     return (
@@ -66,8 +59,7 @@ export function LocalRequestView() {
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
         <h1 className="mb-2 text-lg font-semibold text-text">İstek bulunamadı</h1>
         <p className="mb-4 text-sm text-text-muted">
-          Bu bağlantı başka bir tarayıcıda oluşturulmuş yerel bir isteğe ait olabilir, kaldırılmış
-          olabilir, ya da hiç var olmamış olabilir.
+          Bu istek kaldırılmış olabilir, ya da hiç var olmamış olabilir.
         </p>
         <Link
           href="/requests"

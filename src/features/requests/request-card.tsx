@@ -3,8 +3,7 @@ import { ArrowRight, Sparkles } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
-import { RequestResponseCount } from "./request-response-count";
-import { formatRelativeTime, profileHref, requestHref } from "@/lib/utils";
+import { formatCount, formatRelativeTime, profileHref, requestHref } from "@/lib/utils";
 import { placeholderArt } from "@/lib/placeholder-image";
 import type { PromptRequest } from "@/types";
 
@@ -80,7 +79,7 @@ export function RequestCard({ request }: { request: PromptRequest }) {
             <span className="truncate">{request.author.displayName}</span>
             <span className="shrink-0">· {formatRelativeTime(request.createdAt)}</span>
           </Link>
-          <RequestResponseCount requestId={request.id} baseCount={request.responseCount} />
+          <span className="shrink-0 text-xs text-text-muted">{formatCount(request.responseCount)} yanıt</span>
         </div>
 
         <div className="pointer-events-none relative z-10 flex items-center justify-center gap-1.5 rounded-md border border-primary/30 bg-primary/5 py-2 text-sm font-medium text-primary">

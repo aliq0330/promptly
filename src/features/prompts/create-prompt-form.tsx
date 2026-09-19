@@ -3,23 +3,18 @@
 import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Copy, Repeat2, Sparkles, X } from "lucide-react";
+import { Copy, Repeat2, X } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { PromptCard } from "@/features/prompts/prompt-card";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
-import { useLocalPrompts } from "@/features/prompts/local-prompts-provider";
 import { useRealPrompts } from "@/features/prompts/real-prompts-provider";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useOwnProfile } from "@/features/auth/own-profile-provider";
-import { useRequests } from "@/features/requests/requests-provider";
 import { useRealRequests } from "@/features/requests/real-requests-provider";
-import { getUserById } from "@/mocks/users";
-import { mockTags } from "@/mocks/tags";
-import { getPromptById } from "@/mocks/prompts";
-import { mockRequestResponses } from "@/mocks/request-responses";
+import { fetchAllTags } from "@/lib/supabase/tags";
 import { placeholderArt } from "@/lib/placeholder-image";
-import { cn, isUuid, promptHref, requestHref, resizeImageToDataUrlFit } from "@/lib/utils";
+import { cn, promptHref, requestHref, resizeImageToDataUrlFit } from "@/lib/utils";
 import type { Prompt, PromptContentType, PromptRequest, Tag } from "@/types";
 
 const CONTENT_TYPES: PromptContentType[] = ["image", "text", "video", "code", "music"];
@@ -32,152 +27,145 @@ const TOOL_SUGGESTIONS: Record<PromptContentType, string[]> = {
   music: ["Suno", "Udio"],
 };
 
+function LoginGate({ message }: { message: string }) {
+  return (
+    <div className="mx-auto max-w-md px-4 py-16 text-center">
+      <h1 className="mb-2 text-lg font-semibold text-text">Giriş yapmalısın</h1>
+      <p className="mb-4 text-sm text-text-muted">{message}</p>
+      <div className="flex justify-center gap-2">
+        <Link
+          href="/login"
+          className="inline-flex h-9 items-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary-dark"
+        >
+          Giriş Yap
+        </Link>
+        <Link
+          href="/signup"
+          className="inline-flex h-9 items-center rounded-md border border-border px-4 text-sm font-medium text-text hover:bg-accent-surface"
+        >
+          Hesap Oluştur
+        </Link>
+      </div>
+    </div>
+  );
+}
+
 /**
- * Real, working form (validation, image preview, live card preview) —
- * since CLAUDE.md Bölüm 21, plain "Prompt Oluştur" and "Kopyasını
- * Oluştur" (duplicate) submit for REAL when signed in: a genuine row in
- * Supabase's `prompts` table via `useRealPrompts().addPrompt`, visible to
- * every visitor, not a mock array or localStorage. Signed-out visitors can
- * still fill out and preview the form, but publishing requires an account
- * — the same way any real platform works, not a placeholder limitation.
+ * Real, working prompt creation/remix/duplicate/answer form. Every prompt
+ * and request is a real Supabase row now (CLAUDE.md's mock-data removal),
+ * so publishing always requires a signed-in account — there is no more
+ * anonymous preview-only mode.
  *
- * Also doubles as the remix entry point (CLAUDE.md section 8): arriving
- * via `?remix=<promptId>` or `?remixResponse=<responseId>` prefills the
- * form from that source and tracks it as the origin, preserving the
- * remix chain (root vs. immediate source) the same way the mock data does.
- * Remix stays preview-only even now that Supabase is connected — a real
- * remix needs `source_prompt_id` to point at an actual row in `prompts`,
- * and every remixable prompt today is mock/local data with no real row to
- * reference (remixing a genuinely real prompt will work once one exists,
- * but the source itself still can't be mock/local).
- *
- * `?duplicate=<promptId>` (CLAUDE.md section 14, profile content menu)
- * prefills from an existing prompt the same way, but keeps `origin:
- * "original"` instead of a remix origin — a duplicate isn't derived from
- * someone else's work the way a remix is, it's just a starting point for a
- * fresh prompt, most often your own. Since it doesn't reference the
- * source in the database at all, it has no FK problem and can publish for
- * real exactly like plain creation.
- *
- * `?answerRequest=<requestId>` (prompt-request module): answering a
- * mock/local request is unchanged — still `useLocalPrompts().addPrompt`,
- * no login required, exactly as before Bölüm 21 Faz 5. Answering a
- * genuinely real request (a UUID, from Supabase) is new in Faz 5: it
- * requires being signed in (there was no pre-existing "answer a real
- * request" feature to preserve, unlike request *creation* which already
- * worked without login) and publishes a real `prompts` row with
- * `origin_type: "request_response"` + `request_id` set, via
- * `useRealPrompts().addPrompt`'s `requestId` option — reusing Bölüm 19's
- * already-tested trigger that increments the request's `response_count`.
+ * Four modes, chosen by the query string:
+ *  - plain (`/create`): a fresh prompt, `origin: "original"`.
+ *  - `?remix=<promptId>`: prefilled from a real source prompt, publishes
+ *    with `origin: "remix"` pointing at it (`source_prompt_id`/
+ *    `root_prompt_id`).
+ *  - `?duplicate=<promptId>`: prefilled the same way but publishes as a
+ *    fresh `origin: "original"` — no FK back to the source.
+ *  - `?answerRequest=<requestId>`: prefilled from a real request, publishes
+ *    with `origin: "request-response"` (`request_id` set), which
+ *    increments the request's real `response_count`.
  */
 export function CreatePromptForm() {
-  const me = getUserById("me")!;
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { addPrompt } = useLocalPrompts();
-  const { addPrompt: addRealPrompt } = useRealPrompts();
   const { user } = useAuth();
   const { profile: ownProfile } = useOwnProfile();
-  const { getRequestById } = useRequests();
-  const { getCached: getCachedRealRequest, fetchById: fetchRealRequestById } = useRealRequests();
+  const { getCached: getCachedPrompt, fetchById: fetchPromptById, addPrompt } = useRealPrompts();
+  const { getCached: getCachedRequest, fetchById: fetchRequestById } = useRealRequests();
 
   const remixSourceId = searchParams.get("remix");
-  const remixResponseId = searchParams.get("remixResponse");
   const duplicateId = searchParams.get("duplicate");
   const answerRequestId = searchParams.get("answerRequest");
-  const sourcePrompt = remixSourceId ? getPromptById(remixSourceId) : undefined;
-  const sourceResponse = remixResponseId
-    ? mockRequestResponses.find((response) => response.id === remixResponseId)
-    : undefined;
-  const duplicateSource = duplicateId ? getPromptById(duplicateId) : undefined;
+  const isAnswerMode = Boolean(answerRequestId);
+  const isRemixMode = Boolean(remixSourceId);
+  const isDuplicateMode = Boolean(duplicateId);
 
-  const isRealAnswerTarget = Boolean(answerRequestId && isUuid(answerRequestId));
-  const [realAnsweredRequest, setRealAnsweredRequest] = useState<PromptRequest | null>(null);
-  const [realAnswerChecked, setRealAnswerChecked] = useState(false);
+  const [sourcePrompt, setSourcePrompt] = useState<Prompt | null>(null);
+  const [duplicateSource, setDuplicateSource] = useState<Prompt | null>(null);
+  const [answeredRequest, setAnsweredRequest] = useState<PromptRequest | null>(null);
+  const [sourceChecked, setSourceChecked] = useState(!isRemixMode && !isDuplicateMode && !isAnswerMode);
+  const [allTags, setAllTags] = useState<Tag[]>([]);
 
   useEffect(() => {
-    if (!isRealAnswerTarget || !answerRequestId) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- not a real request id, nothing to fetch; resolves the "checked" state synchronously so the mock/local branch (already synchronous) doesn't wait an extra render
-      setRealAnswerChecked(true);
-      return;
-    }
-    const cached = getCachedRealRequest(answerRequestId);
-    if (cached) {
-      setRealAnsweredRequest(cached);
-      setRealAnswerChecked(true);
-      return;
-    }
+    fetchAllTags().then(setAllTags);
+  }, []);
+
+  // Fetch whichever real source this mode needs (cache-first, then a live fetch).
+  useEffect(() => {
     let cancelled = false;
-    fetchRealRequestById(answerRequestId).then((request) => {
-      if (cancelled) return;
-      setRealAnsweredRequest(request);
-      setRealAnswerChecked(true);
-    });
+    async function load() {
+      if (isRemixMode && remixSourceId) {
+        const cached = getCachedPrompt(remixSourceId);
+        const found = cached ?? (await fetchPromptById(remixSourceId));
+        if (!cancelled) setSourcePrompt(found);
+      } else if (isDuplicateMode && duplicateId) {
+        const cached = getCachedPrompt(duplicateId);
+        const found = cached ?? (await fetchPromptById(duplicateId));
+        if (!cancelled) setDuplicateSource(found);
+      } else if (isAnswerMode && answerRequestId) {
+        const cached = getCachedRequest(answerRequestId);
+        const found = cached ?? (await fetchRequestById(answerRequestId));
+        if (!cancelled) setAnsweredRequest(found);
+      }
+      if (!cancelled) setSourceChecked(true);
+    }
+    load();
     return () => {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isRealAnswerTarget, answerRequestId]);
+  }, [isRemixMode, remixSourceId, isDuplicateMode, duplicateId, isAnswerMode, answerRequestId]);
 
-  const localAnsweredRequest =
-    answerRequestId && !isRealAnswerTarget ? getRequestById(answerRequestId) : undefined;
-  const answeredRequest = localAnsweredRequest ?? realAnsweredRequest ?? undefined;
-
-  const [contentType, setContentType] = useState<PromptContentType>(
-    () => sourcePrompt?.contentType ?? duplicateSource?.contentType ?? answeredRequest?.contentType ?? "image",
-  );
-  const [title, setTitle] = useState(() => {
-    if (sourcePrompt) return `${sourcePrompt.title} (remix)`;
-    if (sourceResponse?.title) return `${sourceResponse.title} (remix)`;
-    if (duplicateSource) return `${duplicateSource.title} (kopya)`;
-    return "";
-  });
-  const [description, setDescription] = useState(
-    () => sourcePrompt?.description ?? sourceResponse?.description ?? duplicateSource?.description ?? "",
-  );
-  const [promptText, setPromptText] = useState(
-    () => sourcePrompt?.promptText ?? sourceResponse?.promptText ?? duplicateSource?.promptText ?? "",
-  );
-  const [tool, setTool] = useState(
-    () => sourcePrompt?.tool ?? duplicateSource?.tool ?? answeredRequest?.preferredTool ?? "",
-  );
-  const [selectedTags, setSelectedTags] = useState<Tag[]>(
-    () => sourcePrompt?.tags ?? sourceResponse?.tags ?? duplicateSource?.tags ?? answeredRequest?.tags ?? [],
-  );
+  const [contentType, setContentType] = useState<PromptContentType>("image");
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [promptText, setPromptText] = useState("");
+  const [tool, setTool] = useState("");
+  const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
   const [uploadedImage, setUploadedImage] = useState<{ url: string; width: number; height: number } | null>(
     null,
   );
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imageError, setImageError] = useState<string | null>(null);
+  const [fieldsSeeded, setFieldsSeeded] = useState(false);
 
-  // The real target's contentType/preferredTool/tags arrive asynchronously,
-  // after the lazy `useState` initializers above already ran — backfill
-  // them once loaded (same pattern as /profile/edit's real-profile sync).
+  // The real source's fields arrive asynchronously — backfill the form the
+  // first time one becomes available (same pattern as /profile/edit's
+  // real-profile sync). Runs once per mode; the user is free to edit
+  // afterwards without being overwritten again.
   useEffect(() => {
-    if (!realAnsweredRequest) return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing form fields once the real target request loads, since it wasn't available yet for the lazy useState initializers above
-    setContentType(realAnsweredRequest.contentType ?? "image");
-    setTool((prev) => prev || realAnsweredRequest.preferredTool || "");
-    setSelectedTags((prev) => (prev.length > 0 ? prev : realAnsweredRequest.tags ?? []));
-  }, [realAnsweredRequest]);
+    if (fieldsSeeded) return;
+    const source = sourcePrompt ?? duplicateSource;
+    if (source) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time seed once the async source loads
+      setContentType(source.contentType);
+      setTitle(`${source.title} ${isRemixMode ? "(remix)" : "(kopya)"}`);
+      setDescription(source.description);
+      setPromptText(source.promptText);
+      setTool(source.tool ?? "");
+      setSelectedTags(source.tags);
+      setFieldsSeeded(true);
+      return;
+    }
+    if (answeredRequest) {
+      setContentType(answeredRequest.contentType ?? "image");
+      setTool(answeredRequest.preferredTool ?? "");
+      setSelectedTags(answeredRequest.tags);
+      setFieldsSeeded(true);
+    }
+  }, [sourcePrompt, duplicateSource, answeredRequest, fieldsSeeded, isRemixMode]);
+
   const [publishError, setPublishError] = useState<string | null>(null);
-  const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const isAnswerMode = Boolean(answerRequestId);
-  const requestNotFound = isAnswerMode && realAnswerChecked && !answeredRequest;
-  // Plain creation and duplicate both produce `origin: "original"` and have
-  // no FK pointing at a source prompt — the only two modes that can
-  // publish for real (see the doc comment above for why remix can't yet).
-  const canPublishForReal = !isAnswerMode && !sourcePrompt && !sourceResponse;
+  const notFound = sourceChecked && ((isRemixMode && !sourcePrompt) || (isDuplicateMode && !duplicateSource) || (isAnswerMode && !answeredRequest));
 
   async function handleImageChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file) return;
     try {
-      // A real data URL, not a blob object URL — a blob URL stops working
-      // the moment this form unmounts, which would break the image on
-      // every real, persisted answer prompt (see local-prompts-provider.tsx).
       const resized = await resizeImageToDataUrlFit(file, 1100);
       setUploadedImage(resized);
       setImageFile(file);
@@ -197,14 +185,11 @@ export function CreatePromptForm() {
     ? {
         type: "remix",
         sourcePromptId: sourcePrompt.id,
-        rootPromptId:
-          sourcePrompt.origin.type === "remix" ? sourcePrompt.origin.rootPromptId : sourcePrompt.id,
+        rootPromptId: sourcePrompt.origin.type === "remix" ? sourcePrompt.origin.rootPromptId : sourcePrompt.id,
       }
-    : sourceResponse
-      ? { type: "request-response", requestId: sourceResponse.requestId, responseId: sourceResponse.id }
-      : answeredRequest
-        ? { type: "request-response", requestId: answeredRequest.id, responseId: "pending" }
-        : { type: "original" };
+    : answeredRequest
+      ? { type: "request-response", requestId: answeredRequest.id, responseId: "pending" }
+      : { type: "original" };
 
   const media =
     contentType === "image"
@@ -221,101 +206,53 @@ export function CreatePromptForm() {
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    if (isSubmitting) return; // guards against double-submit from a double click
+    if (isSubmitting || !user || !ownProfile) return;
 
-    if (isAnswerMode && answeredRequest) {
-      if (isRealAnswerTarget && !user) {
-        // No pre-existing "answer a real request without login" feature to
-        // preserve here (unlike request creation) — same rule as plain
-        // creation: publishing something real requires an account.
-        setSubmitted(true);
-        return;
-      }
-
-      if (isRealAnswerTarget && user) {
-        if (!ownProfile) {
-          setPublishError("Profilin henüz yüklenmedi, lütfen bir an bekleyip tekrar dene.");
-          return;
-        }
-        setPublishError(null);
-        setIsSubmitting(true);
-        try {
-          const published = await addRealPrompt(
-            {
-              title,
-              description,
-              promptText,
-              tool: tool || null,
-              contentType,
-              tags: selectedTags,
-              imageFile,
-              fallbackImage:
-                contentType === "image"
-                  ? { url: media[0].url, width: media[0].width, height: media[0].height }
-                  : null,
-              requestId: answeredRequest.id,
-            },
-            ownProfile,
-          );
-          router.push(promptHref(published));
-        } catch (err) {
-          setPublishError(err instanceof Error ? err.message : "Yanıt yayınlanamadı, lütfen tekrar dene.");
-          setIsSubmitting(false);
-        }
-        return;
-      }
-
-      setIsSubmitting(true);
-      const published = addPrompt({
-        title,
-        description,
-        promptText,
-        tool: tool || null,
-        contentType,
-        media,
-        tags: selectedTags,
-        origin,
-      });
+    setPublishError(null);
+    setIsSubmitting(true);
+    try {
+      const published = await addPrompt(
+        {
+          title,
+          description,
+          promptText,
+          tool: tool || null,
+          contentType,
+          tags: selectedTags,
+          imageFile,
+          fallbackImage:
+            contentType === "image" ? { url: media[0].url, width: media[0].width, height: media[0].height } : null,
+          requestId: answeredRequest?.id,
+          remixOf: sourcePrompt
+            ? {
+                sourcePromptId: sourcePrompt.id,
+                rootPromptId: sourcePrompt.origin.type === "remix" ? sourcePrompt.origin.rootPromptId : sourcePrompt.id,
+              }
+            : undefined,
+        },
+        ownProfile,
+      );
       router.push(promptHref(published));
-      return;
+    } catch (err) {
+      setPublishError(err instanceof Error ? err.message : "Yayınlanamadı, lütfen tekrar dene.");
+      setIsSubmitting(false);
     }
-
-    if (canPublishForReal && user) {
-      if (!ownProfile) {
-        setPublishError("Profilin henüz yüklenmedi, lütfen bir an bekleyip tekrar dene.");
-        return;
-      }
-      setPublishError(null);
-      setIsSubmitting(true);
-      try {
-        const published = await addRealPrompt(
-          {
-            title,
-            description,
-            promptText,
-            tool: tool || null,
-            contentType,
-            tags: selectedTags,
-            imageFile,
-            fallbackImage:
-              contentType === "image" ? { url: media[0].url, width: media[0].width, height: media[0].height } : null,
-          },
-          ownProfile,
-        );
-        router.push(promptHref(published));
-      } catch (err) {
-        setPublishError(err instanceof Error ? err.message : "Prompt yayınlanamadı, lütfen tekrar dene.");
-        setIsSubmitting(false);
-      }
-      return;
-    }
-
-    setSubmitted(true);
   }
 
   const previewPrompt: Prompt = {
     id: "preview",
-    author: me,
+    author: ownProfile ?? {
+      id: "preview",
+      username: "sen",
+      displayName: "Sen",
+      avatarUrl: null,
+      coverUrl: null,
+      bio: null,
+      website: null,
+      followerCount: 0,
+      followingCount: 0,
+      createdAt: new Date().toISOString(),
+    },
     title: title || "Başlıksız prompt",
     description: description || "Açıklama eklenmedi.",
     promptText: promptText || "Prompt metni buraya gelecek.",
@@ -333,19 +270,32 @@ export function CreatePromptForm() {
     createdAt: new Date().toISOString(),
   };
 
-  if (requestNotFound) {
+  if (!user) {
+    return (
+      <LoginGate message="Bir prompt yayınlamak (ya da bir remix/kopya/yanıt oluşturmak) için önce giriş yapmalısın." />
+    );
+  }
+
+  if (!sourceChecked) {
+    return <div className="mx-auto max-w-lg px-4 py-16 text-center text-sm text-text-muted">Yükleniyor…</div>;
+  }
+
+  if (notFound) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
-        <h1 className="mb-2 text-lg font-semibold text-text">İstek bulunamadı</h1>
+        <h1 className="mb-2 text-lg font-semibold text-text">
+          {isAnswerMode ? "İstek bulunamadı" : "Prompt bulunamadı"}
+        </h1>
         <p className="mb-4 text-sm text-text-muted">
-          Yanıtlamak istediğin istek silinmiş veya artık erişilebilir değil, bu yüzden yanıtın
-          yanlış bir isteğe bağlanmasın diye burada durduk.
+          {isAnswerMode
+            ? "Yanıtlamak istediğin istek silinmiş veya artık erişilebilir değil."
+            : "Kaynak prompt silinmiş veya artık erişilebilir değil."}
         </p>
         <Link
-          href="/requests"
+          href={isAnswerMode ? "/requests" : "/discover"}
           className="inline-flex h-9 items-center rounded-md border border-border px-4 text-sm font-medium text-text hover:bg-accent-surface"
         >
-          Prompt İsteklerine Dön
+          {isAnswerMode ? "Prompt İsteklerine Dön" : "Keşfet'e Dön"}
         </Link>
       </div>
     );
@@ -354,26 +304,12 @@ export function CreatePromptForm() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-6 lg:px-6">
       <h1 className="mb-1 text-lg font-semibold text-text">
-        {isAnswerMode
-          ? "İsteğe Yanıt Ver"
-          : sourcePrompt || sourceResponse
-            ? "Remix Oluştur"
-            : duplicateSource
-              ? "Kopyasını Oluştur"
-              : "Prompt Oluştur"}
+        {isAnswerMode ? "İsteğe Yanıt Ver" : isRemixMode ? "Remix Oluştur" : isDuplicateMode ? "Kopyasını Oluştur" : "Prompt Oluştur"}
       </h1>
       <p className="mb-6 text-sm text-text-muted">
         {isAnswerMode
-          ? isRealAnswerTarget
-            ? user
-              ? "Yanıtını yaz, sağda anında önizlemesini gör. Yayınladığında gerçekten, kalıcı olarak Supabase'e yayınlanır ve istek sahibine görünür olur."
-              : "Bu gerçek bir isteğe yanıt veriyorsun. Yanıtını yaz, sağda anında önizlemesini gör — ama gerçekten yayınlamak için giriş yapmış olman gerekiyor."
-            : "Yanıtını yaz, sağda anında önizlemesini gör. Yayınladığında gerçekten yayımlanır ve istek sahibine görünür olur."
-          : canPublishForReal
-            ? user
-              ? "Promptunu yaz, sağda anında önizlemesini gör. Paylaş'a bastığında gerçekten, kalıcı olarak yayınlanır."
-              : "Promptunu yaz, sağda anında önizlemesini gör. Gerçekten yayınlamak için giriş yapmış olman gerekiyor — giriş yapmadan da önizleme yapabilirsin."
-            : "Promptunu yaz, sağda anında önizlemesini gör. Bu remixin kalıcı paylaşımı, kaynağın gerçek bir veritabanı kaydı olmasını gerektiriyor (mock/örnek içerikler henüz veritabanında değil) — şimdilik yalnızca önizleme yapılabiliyor."}
+          ? "Yanıtını yaz, sağda anında önizlemesini gör. Yayınladığında gerçekten, kalıcı olarak Supabase'e yayınlanır ve istek sahibine görünür olur."
+          : "Promptunu yaz, sağda anında önizlemesini gör. Paylaş'a bastığında gerçekten, kalıcı olarak yayınlanır."}
       </p>
 
       <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
@@ -383,7 +319,7 @@ export function CreatePromptForm() {
               <div className="flex items-center justify-between gap-2">
                 <span className="font-medium text-primary">Bu isteğe yanıt veriyorsun</span>
                 <Link
-                  href="/create?mode=prompt"
+                  href="/create"
                   title="Yanıt modundan çık"
                   className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-text-muted hover:text-text"
                 >
@@ -410,26 +346,14 @@ export function CreatePromptForm() {
             </div>
           )}
 
-          {(sourcePrompt || sourceResponse) && (
+          {sourcePrompt && (
             <div className="flex items-start gap-2 rounded-md border border-primary/30 bg-primary/5 p-3 text-sm text-primary">
               <Repeat2 size={16} className="mt-0.5 shrink-0" />
               <p>
-                {sourcePrompt ? (
-                  <>
-                    <Link href={`/prompts/${sourcePrompt.id}`} className="font-medium underline">
-                      &ldquo;{sourcePrompt.title}&rdquo;
-                    </Link>{" "}
-                    içeriğinin remixi olarak dolduruldu
-                  </>
-                ) : (
-                  <>
-                    <Link href={requestHref({ id: sourceResponse!.requestId })} className="font-medium underline">
-                      bir istek yanıtı
-                    </Link>{" "}
-                    temel alınarak dolduruldu
-                  </>
-                )}
-                {" "}— dilediğin gibi düzenleyebilirsin, köken bağlantısı önizlemede korunuyor.
+                <Link href={promptHref(sourcePrompt)} className="font-medium underline">
+                  &ldquo;{sourcePrompt.title}&rdquo;
+                </Link>{" "}
+                içeriğinin remixi olarak dolduruldu — dilediğin gibi düzenleyebilirsin, köken bağlantısı korunuyor.
               </p>
             </div>
           )}
@@ -438,7 +362,7 @@ export function CreatePromptForm() {
             <div className="flex items-start gap-2 rounded-md border border-primary/30 bg-primary/5 p-3 text-sm text-primary">
               <Copy size={16} className="mt-0.5 shrink-0" />
               <p>
-                <Link href={`/prompts/${duplicateSource.id}`} className="font-medium underline">
+                <Link href={promptHref(duplicateSource)} className="font-medium underline">
                   &ldquo;{duplicateSource.title}&rdquo;
                 </Link>{" "}
                 promptunun bir kopyası olarak dolduruldu — bu bir remix değil, kendi yeni promptun
@@ -562,7 +486,7 @@ export function CreatePromptForm() {
           <div>
             <label className="mb-2 block text-sm font-medium text-text">Etiketler</label>
             <div className="flex flex-wrap gap-1.5">
-              {mockTags.map((tag) => {
+              {allTags.map((tag) => {
                 const active = selectedTags.some((t) => t.slug === tag.slug);
                 return (
                   <button
@@ -584,65 +508,12 @@ export function CreatePromptForm() {
           </div>
 
           <Button type="submit" size="lg" className="w-full sm:w-auto" disabled={isSubmitting}>
-            {isAnswerMode
-              ? isSubmitting
-                ? "Yayınlanıyor..."
-                : "Yanıtı Yayınla"
-              : canPublishForReal && user
-                ? isSubmitting
-                  ? "Yayınlanıyor..."
-                  : "Paylaş"
-                : "Paylaş"}
+            {isSubmitting ? "Yayınlanıyor..." : isAnswerMode ? "Yanıtı Yayınla" : "Paylaş"}
           </Button>
 
           {publishError && (
             <div className="rounded-md border border-red-500/30 bg-red-500/5 p-3 text-sm text-red-600">
               {publishError}
-            </div>
-          )}
-
-          {submitted && !isAnswerMode && canPublishForReal && !user && (
-            <div className="flex items-start gap-2 rounded-md border border-primary/30 bg-primary/5 p-3 text-sm text-primary">
-              <Sparkles size={16} className="mt-0.5 shrink-0" />
-              <p>
-                Önizlemeni sağda görebilirsin. Gerçekten yayınlamak için{" "}
-                <Link href="/login" className="font-medium underline">
-                  giriş yap
-                </Link>{" "}
-                ya da{" "}
-                <Link href="/signup" className="font-medium underline">
-                  hesap oluştur
-                </Link>
-                .
-              </p>
-            </div>
-          )}
-
-          {submitted && isAnswerMode && isRealAnswerTarget && !user && (
-            <div className="flex items-start gap-2 rounded-md border border-primary/30 bg-primary/5 p-3 text-sm text-primary">
-              <Sparkles size={16} className="mt-0.5 shrink-0" />
-              <p>
-                Önizlemeni sağda görebilirsin. Bu gerçek bir isteğe yanıtını gerçekten yayınlamak
-                için{" "}
-                <Link href="/login" className="font-medium underline">
-                  giriş yap
-                </Link>{" "}
-                ya da{" "}
-                <Link href="/signup" className="font-medium underline">
-                  hesap oluştur
-                </Link>
-                .
-              </p>
-            </div>
-          )}
-
-          {submitted && !isAnswerMode && !canPublishForReal && (
-            <div className="flex items-start gap-2 rounded-md border border-primary/30 bg-primary/5 p-3 text-sm text-primary">
-              <Sparkles size={16} className="mt-0.5 shrink-0" />
-              <p>
-                Önizlemeni sağda görebilirsin. Bu bir remix olduğundan ve kaynağı henüz gerçek bir
-                veritabanı kaydı olmadığından kalıcı olarak yayınlanamadı.
-              </p>
             </div>
           )}
         </form>

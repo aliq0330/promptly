@@ -1,16 +1,15 @@
 "use client";
 
-import { useState, type ChangeEvent, type FormEvent } from "react";
+import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { RequestCard } from "./request-card";
-import { useRequests } from "./requests-provider";
 import { useRealRequests } from "./real-requests-provider";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useOwnProfile } from "@/features/auth/own-profile-provider";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
-import { mockTags } from "@/mocks/tags";
-import { getUserById } from "@/mocks/users";
+import { fetchAllTags } from "@/lib/supabase/tags";
 import { cn, requestHref, resizeImageToDataUrlFit } from "@/lib/utils";
 import type { PromptContentType, PromptRequest, Tag } from "@/types";
 
@@ -22,23 +21,21 @@ const DESCRIPTION_MIN = 20;
 const DESCRIPTION_MAX = 500;
 
 /**
- * Real, working request creation — unlike CreatePromptForm's plain "Prompt
- * oluştur" mode, this genuinely, persistently publishes either way (CLAUDE.md
- * §2/17-21) — the difference since Bölüm 21 Faz 5 is WHERE: signed in with
- * a real Supabase account, it's a real row in `public.prompt_requests`,
- * visible to every visitor; signed out, it stays exactly what it always
- * was — a real `PromptRequest` saved via `RequestsProvider`
- * (localStorage-only, authored as "me"). Unlike `CreatePromptForm`'s plain
- * "Prompt Oluştur" mode, signing in is never *required* here — that would
- * take away a feature that already worked before Faz 5, not just add one.
+ * Real, working request creation — a genuine row in `public.prompt_requests`,
+ * visible to every visitor (CLAUDE.md's mock-data removal: every request is
+ * a real Supabase row now, so publishing always requires a signed-in
+ * account).
  */
 export function CreateRequestForm() {
   const router = useRouter();
-  const { addRequest } = useRequests();
-  const { addRequest: addRealRequest } = useRealRequests();
+  const { addRequest } = useRealRequests();
   const { user } = useAuth();
   const { profile: ownProfile } = useOwnProfile();
-  const me = getUserById("me")!;
+
+  const [allTags, setAllTags] = useState<Tag[]>([]);
+  useEffect(() => {
+    fetchAllTags().then(setAllTags);
+  }, []);
 
   const [contentType, setContentType] = useState<PromptContentType>("image");
   const [title, setTitle] = useState("");
@@ -93,54 +90,69 @@ export function CreateRequestForm() {
     event.preventDefault();
     setTitleTouched(true);
     setDescriptionTouched(true);
-    if (!isValid || isSubmitting) return;
+    if (!isValid || isSubmitting || !user || !ownProfile) return;
 
-    if (user) {
-      if (!ownProfile) {
-        setPublishError("Profilin henüz yüklenmedi, lütfen bir an bekleyip tekrar dene.");
-        return;
-      }
-      setPublishError(null);
-      setIsSubmitting(true);
-      try {
-        const request = await addRealRequest(
-          {
-            title,
-            description,
-            creativeDirection,
-            contentType,
-            preferredTool: preferredTool || null,
-            tags: selectedTags,
-            imageFile: referenceImageFile,
-          },
-          ownProfile,
-        );
-        router.push(requestHref(request));
-      } catch (err) {
-        setPublishError(err instanceof Error ? err.message : "İstek yayınlanamadı, lütfen tekrar dene.");
-        setIsSubmitting(false);
-      }
-      return;
-    }
-
+    setPublishError(null);
     setIsSubmitting(true);
-    const request = addRequest({
-      title,
-      description,
-      creativeDirection,
-      contentType,
-      preferredTool: preferredTool || null,
-      tags: selectedTags,
-      referenceImage: referenceImage
-        ? { id: "reference", url: referenceImage.url, width: referenceImage.width, height: referenceImage.height, alt: title }
-        : undefined,
-    });
-    router.push(requestHref(request));
+    try {
+      const request = await addRequest(
+        {
+          title,
+          description,
+          creativeDirection,
+          contentType,
+          preferredTool: preferredTool || null,
+          tags: selectedTags,
+          imageFile: referenceImageFile,
+        },
+        ownProfile,
+      );
+      router.push(requestHref(request));
+    } catch (err) {
+      setPublishError(err instanceof Error ? err.message : "İstek yayınlanamadı, lütfen tekrar dene.");
+      setIsSubmitting(false);
+    }
+  }
+
+  if (!user) {
+    return (
+      <div className="mx-auto max-w-md px-4 py-16 text-center">
+        <h1 className="mb-2 text-lg font-semibold text-text">Giriş yapmalısın</h1>
+        <p className="mb-4 text-sm text-text-muted">
+          Bir prompt isteği yayınlamak için önce giriş yapmalısın.
+        </p>
+        <div className="flex justify-center gap-2">
+          <Link
+            href="/login"
+            className="inline-flex h-9 items-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary-dark"
+          >
+            Giriş Yap
+          </Link>
+          <Link
+            href="/signup"
+            className="inline-flex h-9 items-center rounded-md border border-border px-4 text-sm font-medium text-text hover:bg-accent-surface"
+          >
+            Hesap Oluştur
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   const previewRequest: PromptRequest = {
     id: "preview",
-    author: user && ownProfile ? ownProfile : me,
+    author: ownProfile ?? {
+      id: "preview",
+      username: "sen",
+      displayName: "Sen",
+      avatarUrl: null,
+      coverUrl: null,
+      bio: null,
+      website: null,
+      followerCount: 0,
+      followingCount: 0,
+      createdAt: new Date().toISOString(),
+    },
     title: title || "Başlıksız istek",
     description: description || "Açıklama eklenmedi.",
     creativeDirection,
@@ -159,9 +171,8 @@ export function CreateRequestForm() {
     <div className="mx-auto max-w-5xl px-4 py-6 lg:px-6">
       <h1 className="mb-1 text-lg font-semibold text-text">İstek Oluştur</h1>
       <p className="mb-6 text-sm text-text-muted">
-        {user
-          ? "İhtiyacın olan promptu tanımla, topluluk sana yanıt versin. Yayınladığında istek gerçekten, kalıcı olarak Supabase'e kaydedilir ve herkese görünür olur."
-          : "İhtiyacın olan promptu tanımla, topluluk sana yanıt versin. Yayınladığında istek gerçekten kaydedilir ve herkese görünür olur (giriş yapmadan bu tarayıcıda, giriş yaparsan kalıcı olarak Supabase'de)."}
+        İhtiyacın olan promptu tanımla, topluluk sana yanıt versin. Yayınladığında istek gerçekten,
+        kalıcı olarak Supabase&apos;e kaydedilir ve herkese görünür olur.
       </p>
 
       <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
@@ -286,7 +297,7 @@ export function CreateRequestForm() {
               Etiketler <span className="text-text-muted">(opsiyonel)</span>
             </label>
             <div className="flex flex-wrap gap-1.5">
-              {mockTags.map((tag) => {
+              {allTags.map((tag) => {
                 const active = selectedTags.some((t) => t.slug === tag.slug);
                 return (
                   <button

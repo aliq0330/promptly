@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ChevronRight, Repeat2 } from "lucide-react";
@@ -11,31 +12,58 @@ import { CommentSection } from "@/features/prompts/comment-section";
 import { LikeButton } from "@/features/prompts/like-button";
 import { SaveButton } from "@/features/prompts/save-button";
 import { CommentCountLink } from "@/features/prompts/comment-count-link";
-import { getRemixChain, getRemixesOf } from "@/mocks/prompts";
+import { fetchRemixChain, fetchRemixesOf } from "@/lib/supabase/prompts";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
 import { formatCount, formatRelativeTime, promptHref } from "@/lib/utils";
-import { useRequests } from "@/features/requests/requests-provider";
+import { useRealRequests } from "@/features/requests/real-requests-provider";
 import type { Prompt } from "@/types";
 
-/**
- * The actual prompt detail rendering, shared between the static
- * `/prompts/[id]` route (known mock prompts, server-rendered) and the
- * `/prompts/local` route (prompts created in this browser — e.g. request
- * answers — which have no pre-rendered static page since their ids don't
- * exist at build time; see `promptHref()` in lib/utils.ts). Keeping one
- * component means both routes render byte-identical UI and get every
- * future change for free.
- */
+/** The real prompt detail rendering, used by `/prompts/local?id=…`. */
 export function PromptDetailView({ prompt }: { prompt: Prompt }) {
-  const { getRequestById } = useRequests();
+  const { getCached: getCachedRequest, fetchById: fetchRequestById } = useRealRequests();
   const media = prompt.media[0];
-  const remixes = getRemixesOf(prompt.id);
-  const remixChain = getRemixChain(prompt.id);
   const typeMeta = CONTENT_TYPE_META[prompt.contentType];
   const TypeIcon = typeMeta.icon;
 
-  const answeredRequest = prompt.origin.type === "request-response" ? getRequestById(prompt.origin.requestId) : undefined;
-  const isSelectedAnswer = answeredRequest?.selectedResponsePromptId === prompt.id;
+  const [remixes, setRemixes] = useState<Prompt[]>([]);
+  const [remixChain, setRemixChain] = useState<Prompt[]>([prompt]);
+  const [isSelectedAnswer, setIsSelectedAnswer] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchRemixesOf(prompt.id).then((result) => {
+      if (!cancelled) setRemixes(result);
+    });
+    fetchRemixChain(prompt).then((chain) => {
+      if (!cancelled) setRemixChain(chain);
+    });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prompt.id]);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (prompt.origin.type !== "request-response") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- not an answer to any request, nothing to check
+      setIsSelectedAnswer(false);
+      return;
+    }
+    const requestId = prompt.origin.requestId;
+    const cached = getCachedRequest(requestId);
+    if (cached) {
+      setIsSelectedAnswer(cached.selectedResponsePromptId === prompt.id);
+      return;
+    }
+    fetchRequestById(requestId).then((request) => {
+      if (!cancelled) setIsSelectedAnswer(request?.selectedResponsePromptId === prompt.id);
+    });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prompt.id, prompt.origin]);
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 px-4 py-6 lg:px-6">

@@ -15,10 +15,10 @@ const COMMENT_SELECT = `
   profiles:author_id ( id, username, display_name, avatar_url, cover_url, bio, website, follower_count, following_count, created_at, interests )
 `;
 
-function mapCommentRow(row: CommentRow, promptId: string): PromptComment {
+function mapCommentRow(row: CommentRow, target: { promptId: string } | { requestId: string }): PromptComment {
   return {
     id: row.id,
-    promptId,
+    ...target,
     author: mapProfileRow(row.profiles),
     body: row.body,
     parentId: row.parent_id,
@@ -38,11 +38,46 @@ export async function fetchCommentsForPrompt(promptId: string): Promise<PromptCo
       console.error("fetchCommentsForPrompt", error);
       return [];
     }
-    return ((data ?? []) as unknown as CommentRow[]).map((row) => mapCommentRow(row, promptId));
+    return ((data ?? []) as unknown as CommentRow[]).map((row) => mapCommentRow(row, { promptId }));
   } catch (err) {
     console.error("fetchCommentsForPrompt", err);
     return [];
   }
+}
+
+/** Every real comment on a real request, oldest first — same visibility rules as a prompt's comments (Bölüm 19). */
+export async function fetchCommentsForRequest(requestId: string): Promise<PromptComment[]> {
+  try {
+    const { data, error } = await supabase
+      .from("prompt_comments")
+      .select(COMMENT_SELECT)
+      .eq("request_id", requestId)
+      .order("created_at", { ascending: true });
+    if (error) {
+      console.error("fetchCommentsForRequest", error);
+      return [];
+    }
+    return ((data ?? []) as unknown as CommentRow[]).map((row) => mapCommentRow(row, { requestId }));
+  } catch (err) {
+    console.error("fetchCommentsForRequest", err);
+    return [];
+  }
+}
+
+/** Genuinely, permanently posts a comment on a real request. */
+export async function postCommentOnRequest(
+  requestId: string,
+  authorId: string,
+  body: string,
+  parentId: string | null,
+): Promise<PromptComment> {
+  const { data, error } = await supabase
+    .from("prompt_comments")
+    .insert({ request_id: requestId, author_id: authorId, body, parent_id: parentId })
+    .select(COMMENT_SELECT)
+    .single();
+  if (error || !data) throw new Error(error?.message ?? "Yorum eklenemedi.");
+  return mapCommentRow(data as unknown as CommentRow, { requestId });
 }
 
 /** Genuinely, permanently posts a comment on a real prompt. `handle_prompt_comment_change` (Bölüm 19) keeps `prompts.comment_count` in sync, even across users. */
@@ -58,5 +93,5 @@ export async function postCommentOnPrompt(
     .select(COMMENT_SELECT)
     .single();
   if (error || !data) throw new Error(error?.message ?? "Yorum eklenemedi.");
-  return mapCommentRow(data as unknown as CommentRow, promptId);
+  return mapCommentRow(data as unknown as CommentRow, { promptId });
 }

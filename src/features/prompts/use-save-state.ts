@@ -2,67 +2,55 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/features/auth/auth-provider";
-import { useSave } from "./like-save-provider";
-import { isUuid } from "@/lib/utils";
 import { fetchIsSaved, savePrompt, unsavePrompt } from "@/lib/supabase/saves";
 
-/** Same idea as `useLikeState`, for saving — no count to track, saves are never shown as a number. */
+/** Whether the current viewer saved a real prompt — no count, saves are never shown as a number. */
 export function useSaveState(id: string) {
   const { user } = useAuth();
-  const local = useSave();
-  const isReal = isUuid(id);
 
-  const [realSaved, setRealSaved] = useState(false);
-  const [loading, setLoading] = useState(isReal);
+  const [isSaved, setIsSaved] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
-    if (!isReal || !user) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- nothing async to check for a mock/local prompt or signed-out viewer
+    if (!user) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- nothing to check while signed out
       setLoading(false);
       return;
     }
     setLoading(true);
     fetchIsSaved(id, user.id).then((result) => {
       if (!cancelled) {
-        setRealSaved(result);
+        setIsSaved(result);
         setLoading(false);
       }
     });
     return () => {
       cancelled = true;
     };
-  }, [isReal, user, id]);
+  }, [user, id]);
 
   const toggle = useCallback(async () => {
-    if (!isReal) {
-      local.toggleSave(id);
-      return;
-    }
     if (!user) return;
 
-    if (realSaved) {
-      setRealSaved(false);
+    if (isSaved) {
+      setIsSaved(false);
       try {
         await unsavePrompt(id, user.id);
       } catch (err) {
         console.error("unsavePrompt", err);
-        setRealSaved(true);
+        setIsSaved(true);
       }
     } else {
-      setRealSaved(true);
+      setIsSaved(true);
       try {
         await savePrompt(id, user.id);
       } catch (err) {
         console.error("savePrompt", err);
-        setRealSaved(false);
+        setIsSaved(false);
       }
     }
-  }, [isReal, user, realSaved, id, local]);
+  }, [user, isSaved, id]);
 
-  if (isReal) {
-    return { isSaved: realSaved, toggle, loading, canSave: Boolean(user) };
-  }
-
-  return { isSaved: local.isSaved(id), toggle, loading: false, canSave: true };
+  return { isSaved, toggle, loading, canSave: Boolean(user) };
 }

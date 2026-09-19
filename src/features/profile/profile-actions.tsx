@@ -50,17 +50,15 @@ export function OwnProfileActions({ user }: { user: UserProfile }) {
 
 export function OtherProfileActions({
   user,
-  conversationId,
   followState,
 }: {
   user: UserProfile;
-  conversationId?: string;
   followState: ReturnType<typeof useFollowState>;
 }) {
   return (
     <div className="flex flex-wrap items-center justify-center gap-2">
       <FollowButtonView {...followState} size="md" />
-      <MessageButton user={user} mockConversationId={conversationId} />
+      <MessageButton user={user} />
       <ShareButton
         url={profileHref(user)}
         title="Promptly profili"

@@ -1,87 +1,65 @@
 "use client";
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Camera, X } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { useProfileOverrides } from "@/features/profile/profile-overrides-provider";
 import { INTEREST_OPTIONS } from "@/features/profile/interest-options";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useOwnProfile } from "@/features/auth/own-profile-provider";
 import { updateOwnProfile, uploadAvatar } from "@/lib/supabase/profiles";
-import { getUserById } from "@/mocks/users";
-import { cn, profileHref, resizeImageToDataUrl } from "@/lib/utils";
+import { cn, profileHref } from "@/lib/utils";
 
 const BIO_MAX_LENGTH = 200;
 const DISPLAY_NAME_MAX_LENGTH = 40;
 
 /**
- * Two real, working modes, chosen by whether a real Supabase session
- * exists (CLAUDE.md Bölüm 21 Faz 2):
- *
- * - Signed in: edits the real `profiles` row (`updateOwnProfile`) and, if a
- *   new photo was picked, really uploads it to the `avatars` Storage
- *   bucket (Bölüm 20) — genuinely persisted, visible to every visitor, not
- *   this browser only.
- * - Signed out: exactly the original Bölüm 12/13 behavior, unchanged —
- *   edits the mock "me" account via `ProfileOverridesProvider`
- *   (localStorage only). Username is not editable in either mode: a real
- *   rename has no UI yet (Supabase itself has no username-rename flow
- *   wired up), and the mock account's routes are all statically generated
- *   from it at build time.
+ * Real, working profile editor — edits the signed-in user's real `profiles`
+ * row (`updateOwnProfile`) and, if a new photo was picked, really uploads
+ * it to the `avatars` Storage bucket (Bölüm 20): genuinely persisted,
+ * visible to every visitor. Username is not editable: Supabase itself has
+ * no username-rename flow wired up yet.
  */
 export default function EditProfilePage() {
   const router = useRouter();
-  const me = getUserById("me")!;
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { profile: ownProfile, loading: ownProfileLoading, setProfile: setOwnProfile } = useOwnProfile();
-  const { overrides, updateOverrides } = useProfileOverrides();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const isRealMode = Boolean(user);
-
-  const [displayName, setDisplayName] = useState(overrides.displayName ?? me.displayName);
-  const [bio, setBio] = useState(overrides.bio ?? me.bio ?? "");
-  const [website, setWebsite] = useState(overrides.website ?? me.website ?? "");
-  const [interests, setInterests] = useState<string[]>(overrides.interests ?? me.interests ?? []);
-  const [avatarDataUrl, setAvatarDataUrl] = useState<string | null | undefined>(overrides.avatarDataUrl);
+  const [displayName, setDisplayName] = useState("");
+  const [bio, setBio] = useState("");
+  const [website, setWebsite] = useState("");
+  const [interests, setInterests] = useState<string[]>([]);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarError, setAvatarError] = useState<string | null>(null);
   const [nameError, setNameError] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [syncedFromReal, setSyncedFromReal] = useState(false);
+  const [synced, setSynced] = useState(false);
 
-  // The mock-mode `useState` initializers above run once at mount, before a
-  // real profile has necessarily finished loading — this effect seeds the
-  // form from the real data the first time it becomes available.
+  // The form's `useState`s above start empty, before the real profile has
+  // necessarily finished loading — this effect seeds the form the first
+  // time it becomes available.
   useEffect(() => {
-    if (!isRealMode || !ownProfile || syncedFromReal) return;
+    if (!ownProfile || synced) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time seed of the form from the real profile once it loads, not a cascading update
     setDisplayName(ownProfile.displayName);
     setBio(ownProfile.bio ?? "");
     setWebsite(ownProfile.website ?? "");
     setInterests(ownProfile.interests ?? []);
-    setAvatarDataUrl(ownProfile.avatarUrl);
-    setSyncedFromReal(true);
-  }, [isRealMode, ownProfile, syncedFromReal]);
-
-  const effectiveUsername = isRealMode && ownProfile ? ownProfile.username : me.username;
-  const effectiveAvatar = avatarDataUrl !== undefined ? avatarDataUrl : me.avatarUrl;
-  const cancelHref = isRealMode && ownProfile ? profileHref(ownProfile) : "/profile/me";
+    setAvatarUrl(ownProfile.avatarUrl);
+    setSynced(true);
+  }, [ownProfile, synced]);
 
   async function handleAvatarChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file) return;
-    try {
-      const dataUrl = await resizeImageToDataUrl(file);
-      setAvatarDataUrl(dataUrl);
-      setAvatarFile(file);
-      setAvatarError(null);
-    } catch {
-      setAvatarError("Görsel yüklenemedi, lütfen başka bir dosya dene.");
-    }
+    setAvatarUrl(URL.createObjectURL(file));
+    setAvatarFile(file);
+    setAvatarError(null);
   }
 
   function toggleInterest(interest: string) {
@@ -98,46 +76,50 @@ export default function EditProfilePage() {
       return;
     }
     setNameError(null);
+    if (!user || !ownProfile) return;
 
-    if (isRealMode && user && ownProfile) {
-      setSaveError(null);
-      setIsSaving(true);
-      try {
-        let avatarUrl: string | null | undefined;
-        if (avatarFile) {
-          avatarUrl = await uploadAvatar(user.id, avatarFile);
-        } else if (avatarDataUrl === null) {
-          avatarUrl = null;
-        }
-        const updated = await updateOwnProfile(user.id, {
-          displayName: trimmedName,
-          bio: bio.trim() || null,
-          website: website.trim() || null,
-          interests,
-          avatarUrl,
-        });
-        setOwnProfile(updated);
-        router.push(profileHref(updated));
-      } catch (err) {
-        setSaveError(err instanceof Error ? err.message : "Profil kaydedilemedi, lütfen tekrar dene.");
-        setIsSaving(false);
+    setSaveError(null);
+    setIsSaving(true);
+    try {
+      let uploadedAvatarUrl: string | null | undefined;
+      if (avatarFile) {
+        uploadedAvatarUrl = await uploadAvatar(user.id, avatarFile);
+      } else if (avatarUrl === null) {
+        uploadedAvatarUrl = null;
       }
-      return;
+      const updated = await updateOwnProfile(user.id, {
+        displayName: trimmedName,
+        bio: bio.trim() || null,
+        website: website.trim() || null,
+        interests,
+        avatarUrl: uploadedAvatarUrl,
+      });
+      setOwnProfile(updated);
+      router.push(profileHref(updated));
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : "Profil kaydedilemedi, lütfen tekrar dene.");
+      setIsSaving(false);
     }
-
-    updateOverrides({
-      displayName: trimmedName,
-      bio: bio.trim(),
-      website: website.trim() || null,
-      interests,
-      avatarDataUrl,
-    });
-    router.push("/profile/me");
   }
 
-  if (isRealMode && ownProfileLoading) {
+  if (authLoading || (user && ownProfileLoading)) {
     return (
       <div className="mx-auto max-w-xl px-4 py-16 text-center text-sm text-text-muted">Yükleniyor…</div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="mx-auto max-w-md px-4 py-16 text-center">
+        <h1 className="mb-2 text-lg font-semibold text-text">Giriş yapmalısın</h1>
+        <p className="mb-4 text-sm text-text-muted">Profilini düzenlemek için önce giriş yapmalısın.</p>
+        <Link
+          href="/login"
+          className="inline-flex h-9 items-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary-dark"
+        >
+          Giriş Yap
+        </Link>
+      </div>
     );
   }
 
@@ -145,14 +127,12 @@ export default function EditProfilePage() {
     <div className="mx-auto max-w-xl px-4 py-6 lg:px-6">
       <h1 className="mb-1 text-lg font-semibold text-text">Profili Düzenle</h1>
       <p className="mb-6 text-sm text-text-muted">
-        {isRealMode
-          ? "Değişiklikler gerçekten, kalıcı olarak kaydedilir ve her ziyaretçiye görünür olur."
-          : "Değişiklikler bu tarayıcıda kalıcı olarak saklanır. Gerçek bir hesapla giriş yaparsan bu form gerçek profilini düzenler."}
+        Değişiklikler gerçekten, kalıcı olarak kaydedilir ve her ziyaretçiye görünür olur.
       </p>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="flex items-center gap-4">
-          <Avatar src={effectiveAvatar} alt={displayName || me.displayName} size={72} />
+          <Avatar src={avatarUrl} alt={displayName || "Sen"} size={72} />
           <div className="space-y-1.5">
             <div className="flex gap-2">
               <button
@@ -163,11 +143,11 @@ export default function EditProfilePage() {
                 <Camera size={14} />
                 Fotoğraf değiştir
               </button>
-              {effectiveAvatar && (
+              {avatarUrl && (
                 <button
                   type="button"
                   onClick={() => {
-                    setAvatarDataUrl(null);
+                    setAvatarUrl(null);
                     setAvatarFile(null);
                   }}
                   className="flex h-9 items-center gap-1.5 rounded-md px-2 text-sm font-medium text-text-muted transition-colors hover:text-text"
@@ -195,7 +175,7 @@ export default function EditProfilePage() {
           <input
             id="edit-username"
             type="text"
-            value={`@${effectiveUsername}`}
+            value={`@${ownProfile?.username ?? ""}`}
             disabled
             className="h-10 w-full rounded-md border border-border bg-accent-surface/40 px-3 text-sm text-text-muted"
           />
@@ -285,7 +265,11 @@ export default function EditProfilePage() {
           <Button type="submit" disabled={isSaving}>
             {isSaving ? "Kaydediliyor..." : "Kaydet"}
           </Button>
-          <Button type="button" variant="ghost" onClick={() => router.push(cancelHref)}>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => router.push(ownProfile ? profileHref(ownProfile) : "/")}
+          >
             İptal
           </Button>
         </div>

@@ -2,86 +2,70 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/features/auth/auth-provider";
-import { useLike } from "./like-save-provider";
-import { isUuid } from "@/lib/utils";
 import { fetchIsLiked, likePrompt, unlikePrompt } from "@/lib/supabase/likes";
 
 /**
- * Same real/mock split as `useFollowState`, for liking a prompt (CLAUDE.md
- * Bölüm 21 Faz 3): a real Supabase prompt (a genuine UUID — mock/local/
- * response ids never are) writes a real `prompt_likes` row when the
- * viewer is signed in; everything else keeps the existing
- * `LikeProvider`/localStorage behavior unchanged, since a mock or
- * locally-created prompt has no real row a like could reference anyway.
+ * Whether the current viewer liked a real prompt, and its real like count —
+ * every prompt is a real Supabase row now (CLAUDE.md's mock data removal).
+ * `canLike` is false while signed out: RLS requires an authenticated
+ * session to write a `prompt_likes` row.
  */
 export function useLikeState(id: string, likeCount: number) {
   const { user } = useAuth();
-  const local = useLike();
-  const isReal = isUuid(id);
 
-  const [realLiked, setRealLiked] = useState(false);
-  const [realLikeCount, setRealLikeCount] = useState(likeCount);
-  const [loading, setLoading] = useState(isReal);
+  const [isLiked, setIsLiked] = useState(false);
+  const [count, setCount] = useState(likeCount);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- resyncs when a freshly-fetched prompt (a new object) replaces the previous one
-    setRealLikeCount(likeCount);
+    setCount(likeCount);
   }, [likeCount]);
 
   useEffect(() => {
     let cancelled = false;
-    if (!isReal || !user) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- nothing async to check for a mock/local prompt or signed-out viewer
+    if (!user) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- nothing to check while signed out
       setLoading(false);
       return;
     }
     setLoading(true);
     fetchIsLiked(id, user.id).then((result) => {
       if (!cancelled) {
-        setRealLiked(result);
+        setIsLiked(result);
         setLoading(false);
       }
     });
     return () => {
       cancelled = true;
     };
-  }, [isReal, user, id]);
+  }, [user, id]);
 
   const toggle = useCallback(async () => {
-    if (!isReal) {
-      local.toggleLike(id);
-      return;
-    }
     if (!user) return;
 
-    if (realLiked) {
-      setRealLiked(false);
-      setRealLikeCount((count) => Math.max(0, count - 1));
+    if (isLiked) {
+      setIsLiked(false);
+      setCount((c) => Math.max(0, c - 1));
       try {
         await unlikePrompt(id, user.id);
       } catch (err) {
         console.error("unlikePrompt", err);
-        setRealLiked(true);
-        setRealLikeCount((count) => count + 1);
+        setIsLiked(true);
+        setCount((c) => c + 1);
       }
     } else {
-      setRealLiked(true);
-      setRealLikeCount((count) => count + 1);
+      setIsLiked(true);
+      setCount((c) => c + 1);
       try {
         await likePrompt(id, user.id);
       } catch (err) {
         console.error("likePrompt", err);
-        setRealLiked(false);
-        setRealLikeCount((count) => Math.max(0, count - 1));
+        setIsLiked(false);
+        setCount((c) => Math.max(0, c - 1));
       }
     }
-  }, [isReal, user, realLiked, id, local]);
+  }, [user, isLiked, id]);
 
-  if (isReal) {
-    return { isLiked: realLiked, likeCount: realLikeCount, toggle, loading, canLike: Boolean(user) };
-  }
-
-  const isLiked = local.isLiked(id);
-  const count = likeCount + (isLiked ? 1 : 0) - (local.wasInitiallyLiked(id) ? 1 : 0);
-  return { isLiked, likeCount: count, toggle, loading: false, canLike: true };
+  return { isLiked, likeCount: count, toggle, loading, canLike: Boolean(user) };
 }
