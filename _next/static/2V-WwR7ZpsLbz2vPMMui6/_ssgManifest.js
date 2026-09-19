@@ -1,1 +1,0 @@
-self.__SSG_MANIFEST=new Set(["\u002Fmessages\u002F[conversationId]","\u002Fprofile\u002F[username]","\u002Fprompts\u002F[id]","\u002Frequests\u002F[id]","\u002Ftags\u002F[tag]"]);self.__SSG_MANIFEST_CB&&self.__SSG_MANIFEST_CB()
