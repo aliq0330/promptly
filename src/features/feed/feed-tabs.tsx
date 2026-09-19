@@ -6,6 +6,7 @@ import { FeedGrid } from "./feed-grid";
 import { feedItemAuthorId, feedItemCreatedAt, feedItemPopularity, type FeedItem } from "./types";
 import { useFollow } from "@/features/profile/follow-provider";
 import { useLocalPrompts } from "@/features/prompts/local-prompts-provider";
+import { useRealPrompts } from "@/features/prompts/real-prompts-provider";
 import { useRequests } from "@/features/requests/requests-provider";
 
 type TabKey = "following" | "popular" | "for-you";
@@ -20,20 +21,23 @@ export function FeedTabs({ items }: { items: FeedItem[] }) {
   const [active, setActive] = useState<TabKey>("for-you");
   const { isFollowing } = useFollow();
   const { localPrompts } = useLocalPrompts();
+  const { realPrompts } = useRealPrompts();
   const { allRequests } = useRequests();
 
   // Real requests/answers created in this browser (prompt-request module)
+  // and genuinely real prompts published to Supabase (CLAUDE.md Bölüm 21)
   // belong in the same mixed feed as the server-rendered mock items —
-  // merged client-side since they only exist in localStorage.
+  // merged client-side since neither is known at build time.
   const allItems = useMemo<FeedItem[]>(() => {
     const localRequestItems: FeedItem[] = allRequests
       .filter((request) => request.id.startsWith("local-req-"))
       .map((request) => ({ kind: "request", data: request }));
     const localPromptItems: FeedItem[] = localPrompts.map((prompt) => ({ kind: "prompt", data: prompt }));
-    return [...items, ...localRequestItems, ...localPromptItems].sort(
+    const realPromptItems: FeedItem[] = realPrompts.map((prompt) => ({ kind: "prompt", data: prompt }));
+    return [...items, ...localRequestItems, ...localPromptItems, ...realPromptItems].sort(
       (a, b) => feedItemCreatedAt(b) - feedItemCreatedAt(a),
     );
-  }, [items, allRequests, localPrompts]);
+  }, [items, allRequests, localPrompts, realPrompts]);
 
   const visible =
     active === "popular"

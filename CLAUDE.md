@@ -209,7 +209,11 @@ gerçek Supabase projesi bağlantısı yoktur.**
     ve yerel bir Postgres 16 örneğinde `storage` şemasının sadık bir
     taklidiyle doğrulandı; gerçek Supabase projesine HENÜZ uygulanmadı —
     bkz. `supabase/README.md` ve Bölüm 9)
-21. [ ] Frontend'in gerçek Supabase'e bağlanması
+21. [~] Frontend'in gerçek Supabase'e bağlanması (BAŞLADI, TAMAMLANMADI —
+    Faz 1: düz "Prompt Oluştur" ve "Kopyasını Oluştur" artık gerçekten,
+    kalıcı olarak Supabase'e yayınlıyor ve feed/keşfette/kendi detay
+    sayfasında görünüyor; beğeni/kaydetme/yorum/takip/istekler/mesajlaşma/
+    profil sayfaları hâlâ mock+localStorage — bkz. Bölüm 9)
 22. [ ] Moderasyon, engelleme, raporlama
 23. [ ] Testler, performans, erişilebilirlik
 24. [ ] Deployment ve son kalite kontrolü
@@ -218,10 +222,13 @@ gerçek Supabase projesi bağlantısı yoktur.**
 
 ## 9. Şu Anki Durum (bu bölüm her modül sonunda güncellenir)
 
-**Son güncelleme:** Bölüm 20 — Supabase Storage. Auth (Bölüm 17) + şema
-(Bölüm 18) + RLS (Bölüm 19) + Storage bucket'ları (Bölüm 20) hepsi artık
-gerçek/tasarlanmış — yalnızca frontend hâlâ bunlara bağlı değil (mock
-veri + localStorage base64 data URL'leri, Bölüm 21'in işi).
+**Son güncelleme:** Bölüm 21 — Frontend'in gerçek Supabase'e bağlanması,
+Faz 1 (devam ediyor). Uygulamanın ilk gerçek, çapraz kullanıcı/çapraz
+cihaz kullanıcı içeriği artık var: düz "Prompt Oluştur" ve "Kopyasını
+Oluştur" akışları, giriş yapılmışsa, gerçekten Supabase'e yayınlıyor.
+Geri kalan her şey (beğeni/kaydetme/yorum/takip/istekler/mesajlaşma/
+profil sayfaları) hâlâ mock veri + localStorage — bu modülün sonraki
+fazlarının işi.
 
 **Tamamlanan:**
 - CLAUDE.md oluşturuldu.
@@ -1185,4 +1192,162 @@ veri + localStorage base64 data URL'leri, Bölüm 21'in işi).
   şu an gerçek bir silme/değiştirme çağrısı yapmıyor (henüz Storage'a hiç
   bağlı değil) — bu da Bölüm 21'in kapsamında.
 
-**Sonraki modül:** Frontend'in gerçek Supabase'e bağlanması (Bölüm 21).
+- **Frontend'in gerçek Supabase'e bağlanması — Faz 1 (Bölüm 21, devam
+  ediyor):** Bu, proje tarihindeki en büyük mimari geçiş — mock veri/
+  localStorage'dan gerçek, çok kullanıcılı bir backend'e geçiş. Tek
+  seferde her varlığı (prompt, istek, beğeni, takip, yorum, mesaj, profil)
+  bağlamaya çalışmak yerine, en uzun süredir belgelenmiş eksik olan ve en
+  net kapsamlı dilime bölünen kısımdan başlandı: **gerçek prompt oluşturma
+  ve görüntüleme**. Kapsam kararı ve gerekçesi aşağıda; kalan varlıklar
+  sonraki fazlara bırakıldı (bkz. bilinen sınırlamalar).
+  - **Yeni `src/lib/supabase/` veri erişim katmanı** (CLAUDE.md §2'nin
+    "mock veri ↔ gerçek servisler katman arayüzleriyle ayrılır" kuralının
+    ilk gerçek uygulaması):
+    - `mappers.ts` — `profiles` satırını `UserProfile`'a çeviren
+      `mapProfileRow`.
+    - `profiles.ts` — `fetchOwnProfile(userId)`: giriş yapmış kullanıcının
+      gerçek `profiles` satırını okur (Bölüm 18'in `handle_new_user`
+      trigger'ıyla kayıt anında otomatik oluşmuştu).
+    - `prompts.ts` — `fetchRecentPublishedPrompts()` (feed/keşfet için son
+      yayınlanan promptlar, yazar+medya+etiket join'iyle),
+      `fetchPromptById(id)` (doğrudan link için tekil sorgu),
+      `createRealPrompt(input, authorId, authorProfile)` (gerçek, kalıcı
+      yayın — aşağıda ayrıntılı).
+  - **Yeni `RealPromptsProvider`/`useRealPrompts()`**
+    (`features/prompts/real-prompts-provider.tsx`) — `LocalPromptsProvider`
+    ile birebir aynı arayüz şekli (`realPrompts`, `getCached`, `addPrompt`)
+    ama localStorage yerine gerçek Supabase sorgularıyla çalışıyor: mount
+    olduğunda son promptları çekiyor, `addPrompt` gerçek bir INSERT yapıp
+    sonucu listenin başına ekliyor (yeni yayınlanan prompt, sayfa
+    yenilenmeden anında feed'de görünüyor). `(app)/layout.tsx`'e
+    `LocalPromptsProvider`'ın içine eklendi.
+  - **`CreatePromptForm` — düz "Prompt Oluştur" ve "Kopyasını Oluştur"
+    artık GERÇEKTEN yayınlıyor (giriş yapılmışsa):** Bu, Bölüm 9/10'dan
+    beri "Supabase entegrasyonu kurulduğunda aktif olacak" diye
+    belgelenmiş en uzun süredir bekleyen TODO'nun karşılığı. Giriş
+    yapılmamışsa form hâlâ önizleme yapılabiliyor ama "Paylaş"a basınca
+    artık "Supabase yok" gibi yanlış/bayat bir mesaj değil, dürüst ve
+    normal bir platform kısıtı gösteriliyor: "gerçekten yayınlamak için
+    giriş yapmalısın" + `/login`/`/signup` linkleri. Giriş yapılmışsa
+    gerçek profil (`useOwnProfile()`, yeni `features/auth/use-own-
+    profile.ts` hook'u) yazar olarak kullanılıyor, görsel yüklendiyse
+    gerçekten `prompt-media` Storage bucket'ına (Bölüm 20) yükleniyor
+    (yüklenmediyse önizlemedeki otomatik placeholder görsel URL'i
+    doğrudan `prompt_media` satırına yazılıyor — gereksiz bir Storage
+    round-trip'i olmadan), etiketler `prompt_tags`'e ekleniyor, ve
+    başarıyla yayınlanınca gerçek promptun kendi detay sayfasına
+    yönlendiriyor. Görsel yükleme/etiketleme başarısız olursa yarım
+    kalmış bir prompt bırakmamak için oluşturulan prompt satırı geri
+    siliniyor ve kullanıcıya hata gösteriliyor.
+  - **Remix hâlâ kasıtlı olarak önizleme-yalnızca — bu bir eksiklik değil,
+    mimari bir kısıt:** Gerçek bir remixin `source_prompt_id`'sinin
+    `prompts` tablosunda GERÇEK bir satıra işaret etmesi gerekiyor (FK
+    kısıtı, Bölüm 18). Şu an remixlenebilen HER içerik mock veya yerel
+    (localStorage) veri — hiçbirinin veritabanında gerçek bir satırı yok.
+    Bu yüzden remix, kaynağı gerçek olmadığı sürece gerçek yayın
+    yapamıyor (yalnızca gerçek bir promptun remixi ileride mümkün
+    olacak). Form bunu artık doğru şekilde açıklıyor (eski "Supabase
+    entegrasyonu kurulmadı" mesajı yerine "kaynağın gerçek bir veritabanı
+    kaydı olması gerekiyor" gibi doğru bir gerekçe). "Kopyasını Oluştur"
+    ise kaynağa veritabanında hiç referans vermediğinden (yalnızca alanları
+    kopyalıyor) bu kısıttan muaf ve düz oluşturmayla aynı şekilde gerçek
+    yayınlıyor.
+  - **`?answerRequest=` (isteğe yanıt verme) kasıtlı olarak DEĞİŞTİRİLMEDİ**
+    — hâlâ `useLocalPrompts()`/localStorage üzerinden yayınlıyor. Gerçek
+    `prompt_requests` bağlanması ayrı, daha sonraki bir faz (istekler için
+    de aynı boyutta bir iş: gerçek istek oluşturma, yanıtlama, seçim vb.).
+  - **Statik export + gerçek id çelişkisi, yerel promptlarla aynı çözümle
+    genişletildi:** `promptHref()` artık `local-` önekine değil, "bu id
+    build-zamanı mock listesinde mi?" sorusuna bakıyor — hem yerel hem
+    gerçek Supabase id'leri (ikisi de mock listesinde yok) aynı şekilde
+    `/prompts/local?id=…`'e yönleniyor. `LocalPromptView`
+    (`local-prompt-view.tsx`) artık üç kaynağı sırayla deniyor: yerel
+    (localStorage) → önbellekteki gerçek promptlar → (bulunamazsa) canlı
+    bir Supabase sorgusu. Böylece doğrudan bir gerçek prompt linkine
+    gidildiğinde (feed'in ilk yüklediği son-N promptun dışında kalmış
+    olsa bile) hâlâ doğru şekilde bulunup gösteriliyor.
+  - **Feed/Keşfet entegrasyonu:** `FeedTabs` ve `DiscoverFeed` artık
+    `useRealPrompts()`'u da `useLocalPrompts()`/`useRequests()` ile aynı
+    şekilde mock listeye client-side katıp tarihe göre yeniden sıralıyor
+    — gerçek bir prompt, tıpkı yerel bir prompt gibi, Ana Sayfa/Keşfet'te
+    diğer her şeyle karışık görünüyor.
+  - **Dayanıklılık (gerçekten test edildi, varsayılmadı):** Bu sandbox'ın
+    ağ politikası `*.supabase.co`'ya erişimi hâlâ engellediğinden,
+    `npm run dev` ile gerçek tarayıcıda (Playwright) Ana Sayfa/Keşfet/
+    prompt detay sayfaları ziyaret edildi — Supabase'e yapılan istekler
+    fiilen `ERR_TUNNEL_CONNECTION_FAILED` ile başarısız oldu (konsolda
+    hata logland, beklenen ve doğru davranış) ama sayfa çökmedi: `feed
+    hâlâ mock içerikle doluydu (feed'de 62 prompt linki), hiçbir
+    `pageerror` (yakalanmamış JS istisnası) oluşmadı. Bu,
+    `fetchRecentPublishedPrompts`'un hata durumunda boş dizi döndürüp
+    sessizce yutmasının gerçekten işe yaradığını kanıtlıyor — gerçek bir
+    ziyaretçinin ağ sorunu yaşadığı bir anda da site çökmeyecek.
+  - **Gerçek yayın akışı uçtan uca doğrulandı (ağ katmanında taklit
+    edilmiş Supabase yanıtlarıyla, Bölüm 17'deki aynı yöntemle):**
+    tarayıcı localStorage'ına gerçek supabase-js oturum formatında bir
+    session enjekte edilip (`sb-<proje-ref>-auth-token`), `/rest/v1/
+    prompts`, `/rest/v1/prompt_media`, `/rest/v1/prompt_tags`, `/rest/v1/
+    profiles` uç noktaları taklit edilerek: giriş yapılmış kullanıcı için
+    form metninin doğru değiştiği ("gerçekten, kalıcı olarak yayınlanır"),
+    "Paylaş"a basınca gerçek bir INSERT isteği tetiklendiği, dönen gerçek
+    UUID ile `/prompts/local?id=<uuid>`'e yönlendirildiği, ve o sayfanın
+    (aynı id için taklit edilmiş bir GET ile) promptu doğru şekilde
+    (başlık, açıklama, prompt metni, gerçek yazar adı, içerik türü rozeti)
+    render ettiği gözlemlendi — sıfır JS hatasıyla. Görsel yüklenemedi
+    çünkü test URL'i (`example.com`) sandbox tarafından da engelleniyor —
+    bu, uygulamanın değil test ortamının bir kısıtı.
+  - `npx tsc --noEmit`, `npm run lint` ve tam `npm run build` (90 statik
+    sayfa) hatasız geçti.
+
+**Bilinen sorunlar / bilinçli basitleştirmeler (Bölüm 21 Faz 1 için ek):**
+- **Bu yalnızca Faz 1.** Beğeni, kaydetme, yorum, takip, prompt istekleri
+  (oluşturma/yanıtlama/seçim), mesajlaşma ve profil sayfaları (`/profile/
+  [username]`, `/profile/edit`) hâlâ tamamen mock veri + localStorage
+  üzerinde çalışıyor — hiçbiri bu fazda dokunulmadı. Her biri kendi
+  boyutunda ayrı bir faz gerektiriyor.
+- **Gerçek bir kullanıcının kendi profil sayfası yok:** gerçek hesaplar
+  otomatik üretilen bir kullanıcı adı alıyor (Bölüm 18), ama `/profile/
+  [username]` rotaları yalnızca mock kullanıcı adları için build-zamanında
+  üretiliyor. Bu yüzden gerçek bir promptun yazar linki şu an **404
+  verir** — bu bilinen, kasıtlı olarak bu fazda çözülmemiş bir sınır
+  (yerel/gerçek promptlarda kullanılan `/prompts/local?id=` desenine
+  benzer bir `/profile/real?...` çözümü gerekebilir, ama bu, "gerçek
+  kullanıcı profili" fazının kendi başına bir kararı/işi olmalı, prompt
+  oluşturma fazına sıkıştırılmadı).
+- **Gerçek bir promptun beğeni/kaydetme/yorum durumu hâlâ yalnızca
+  localStorage'dan geliyor** (`LikeProvider`/`SaveProvider`/
+  `CommentProvider` — mock ve yerel promptlarla tamamen aynı davranış).
+  `like_count`/`comment_count`/`remix_count` veritabanı sütunları gerçek
+  ve doğru okunuyor (yeni bir promptta 0), ama bu sayıları GERÇEKTEN
+  artıran (başka bir kullanıcının beğenmesi/yorum yapması) hiçbir yol
+  henüz yok — bu, "beğeni/yorum/takip'i gerçek yap" fazının işi.
+  Bölüm 19'un `SECURITY DEFINER` sayaç trigger'ları zaten hazır ve test
+  edilmiş durumda; yalnızca frontend'in gerçekten `prompt_likes`/
+  `prompt_comments`/`follows` tablolarına yazması eksik.
+  - **Taslak (draft) durumu hâlâ kullanılmıyor:** `createRealPrompt` her
+  zaman `status: 'published'` gönderiyor — "Taslak olarak kaydet" arayüzü
+  yok (Bölüm 19'da da not edilmişti). RLS bunu doğru gizleyecek şekilde
+  hazır, tetikleyecek arayüz yok.
+- **Görsel yükleme boyut/format doğrulaması istemci tarafında minimal:**
+  `resizeImageToBlob` her zaman 1600px'e kadar JPEG'e çeviriyor
+  (bucket'ın 10 MB sınırının çok altında kalacak şekilde), ama gerçek
+  kullanıcı dosyalarıyla (çok büyük/egzotik format girişleri) uçtan uca
+  gerçek bir Supabase projesine karşı hiç denenmedi (yalnızca taklit
+  edilmiş yanıtlarla, bkz. yukarıdaki not) — sandbox'ın ağ kısıtı burada
+  da geçerli.
+- **`prompt_tags` eklenmesi "yumuşak" başarısız oluyor:** etiket ekleme
+  hata verirse prompt yine de yayınlanmış sayılıyor (yalnızca etiketsiz) —
+  bilinçli bir seçim (yayını kaybetmek, etiketi kaybetmekten daha kötü),
+  ama bu sessiz bir başarısızlık, kullanıcıya "etiketler eklenemedi" gibi
+  ayrı bir uyarı gösterilmiyor.
+- **`useOwnProfile()` her sayfa/bileşen ağacında kendi ayrı sorgusunu
+  tetikliyor** (paylaşılan bir context/cache yok) — `CreatePromptForm`
+  dışında henüz başka hiçbir yerde kullanılmadığından şu an pratik bir
+  sorun değil, ama birden fazla yerde kullanılmaya başlarsa (profil
+  sayfası fazında olacağı gibi) tekilleştirilmesi gerekebilir.
+
+**Sonraki adım:** Bölüm 21'in bir sonraki fazı — muhtemel adaylar: gerçek
+beğeni/kaydetme/yorum/takip (Bölüm 19'un zaten hazır RLS+trigger'larını
+kullanarak), gerçek prompt istekleri, veya gerçek kullanıcı profil
+sayfaları. Hangisiyle devam edileceği bir sonraki oturumda kullanıcıyla
+netleştirilecek.

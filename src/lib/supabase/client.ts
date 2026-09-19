@@ -6,8 +6,9 @@ import { createClient } from "@supabase/supabase-js";
  * no server runtime — no middleware, no route handlers, no server actions —
  * so Supabase can only ever be talked to from the browser, using the public
  * anon key (safe to ship to the client by design; it only grants what RLS
- * policies allow, and no RLS policies exist yet — CLAUDE.md section 19).
- * Session persistence is handled by supabase-js itself via localStorage.
+ * policies allow — CLAUDE.md section 19 wrote those policies for every
+ * table). Session persistence is handled by supabase-js itself via
+ * localStorage.
  */
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;

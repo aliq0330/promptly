@@ -9,6 +9,9 @@ import { Button } from "@/components/ui/button";
 import { PromptCard } from "@/features/prompts/prompt-card";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
 import { useLocalPrompts } from "@/features/prompts/local-prompts-provider";
+import { useRealPrompts } from "@/features/prompts/real-prompts-provider";
+import { useAuth } from "@/features/auth/auth-provider";
+import { useOwnProfile } from "@/features/auth/use-own-profile";
 import { useRequests } from "@/features/requests/requests-provider";
 import { getUserById } from "@/mocks/users";
 import { mockTags } from "@/mocks/tags";
@@ -29,36 +32,44 @@ const TOOL_SUGGESTIONS: Record<PromptContentType, string[]> = {
 };
 
 /**
- * Real, working form (validation, image preview, live card preview) built
- * on top of mock data — there is no backend to publish to yet (CLAUDE.md
- * section 18-21), so submitting never claims the prompt was actually
- * saved. The honest, useful thing it *can* do is show exactly how the
- * post would render, using the same card components as the real feed.
+ * Real, working form (validation, image preview, live card preview) —
+ * since CLAUDE.md Bölüm 21, plain "Prompt Oluştur" and "Kopyasını
+ * Oluştur" (duplicate) submit for REAL when signed in: a genuine row in
+ * Supabase's `prompts` table via `useRealPrompts().addPrompt`, visible to
+ * every visitor, not a mock array or localStorage. Signed-out visitors can
+ * still fill out and preview the form, but publishing requires an account
+ * — the same way any real platform works, not a placeholder limitation.
  *
  * Also doubles as the remix entry point (CLAUDE.md section 8): arriving
  * via `?remix=<promptId>` or `?remixResponse=<responseId>` prefills the
  * form from that source and tracks it as the origin, preserving the
  * remix chain (root vs. immediate source) the same way the mock data does.
+ * Remix stays preview-only even now that Supabase is connected — a real
+ * remix needs `source_prompt_id` to point at an actual row in `prompts`,
+ * and every remixable prompt today is mock/local data with no real row to
+ * reference (remixing a genuinely real prompt will work once one exists,
+ * but the source itself still can't be mock/local).
  *
  * `?duplicate=<promptId>` (CLAUDE.md section 14, profile content menu)
  * prefills from an existing prompt the same way, but keeps `origin:
  * "original"` instead of a remix origin — a duplicate isn't derived from
  * someone else's work the way a remix is, it's just a starting point for a
- * fresh prompt, most often your own.
+ * fresh prompt, most often your own. Since it doesn't reference the
+ * source in the database at all, it has no FK problem and can publish for
+ * real exactly like plain creation.
  *
- * `?answerRequest=<requestId>` (prompt-request module) is different from
- * the three modes above: it's the ONLY mode where submitting actually,
- * genuinely publishes — a real `Prompt` via `useLocalPrompts().addPrompt`,
- * with a `request-response` origin tying it to the request. Plain
- * creation/remix/duplicate stay preview-only exactly as before (CLAUDE.md
- * section 2: don't change already-working, already-documented behavior
- * beyond what was asked).
+ * `?answerRequest=<requestId>` (prompt-request module) stays on the
+ * existing `useLocalPrompts().addPrompt` localStorage path — real
+ * `prompt_requests` wiring is a separate, later Bölüm 21 phase.
  */
 export function CreatePromptForm() {
   const me = getUserById("me")!;
   const router = useRouter();
   const searchParams = useSearchParams();
   const { addPrompt } = useLocalPrompts();
+  const { addPrompt: addRealPrompt } = useRealPrompts();
+  const { user } = useAuth();
+  const { profile: ownProfile } = useOwnProfile();
   const { getRequestById } = useRequests();
 
   const remixSourceId = searchParams.get("remix");
@@ -96,12 +107,18 @@ export function CreatePromptForm() {
   const [uploadedImage, setUploadedImage] = useState<{ url: string; width: number; height: number } | null>(
     null,
   );
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [imageError, setImageError] = useState<string | null>(null);
+  const [publishError, setPublishError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const isAnswerMode = Boolean(answerRequestId);
   const requestNotFound = isAnswerMode && !answeredRequest;
+  // Plain creation and duplicate both produce `origin: "original"` and have
+  // no FK pointing at a source prompt — the only two modes that can
+  // publish for real (see the doc comment above for why remix can't yet).
+  const canPublishForReal = !isAnswerMode && !sourcePrompt && !sourceResponse;
 
   async function handleImageChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -112,6 +129,7 @@ export function CreatePromptForm() {
       // every real, persisted answer prompt (see local-prompts-provider.tsx).
       const resized = await resizeImageToDataUrlFit(file, 1100);
       setUploadedImage(resized);
+      setImageFile(file);
       setImageError(null);
     } catch {
       setImageError("Görsel yüklenemedi, lütfen başka bir dosya dene.");
@@ -150,7 +168,7 @@ export function CreatePromptForm() {
         ]
       : [];
 
-  function handleSubmit(event: FormEvent) {
+  async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     if (isSubmitting) return; // guards against double-submit from a double click
 
@@ -167,6 +185,36 @@ export function CreatePromptForm() {
         origin,
       });
       router.push(promptHref(published));
+      return;
+    }
+
+    if (canPublishForReal && user) {
+      if (!ownProfile) {
+        setPublishError("Profilin henüz yüklenmedi, lütfen bir an bekleyip tekrar dene.");
+        return;
+      }
+      setPublishError(null);
+      setIsSubmitting(true);
+      try {
+        const published = await addRealPrompt(
+          {
+            title,
+            description,
+            promptText,
+            tool: tool || null,
+            contentType,
+            tags: selectedTags,
+            imageFile,
+            fallbackImage:
+              contentType === "image" ? { url: media[0].url, width: media[0].width, height: media[0].height } : null,
+          },
+          ownProfile,
+        );
+        router.push(promptHref(published));
+      } catch (err) {
+        setPublishError(err instanceof Error ? err.message : "Prompt yayınlanamadı, lütfen tekrar dene.");
+        setIsSubmitting(false);
+      }
       return;
     }
 
@@ -225,7 +273,11 @@ export function CreatePromptForm() {
       <p className="mb-6 text-sm text-text-muted">
         {isAnswerMode
           ? "Yanıtını yaz, sağda anında önizlemesini gör. Yayınladığında gerçekten yayımlanır ve istek sahibine görünür olur."
-          : "Promptunu yaz, sağda anında önizlemesini gör. Gerçek paylaşım, Supabase entegrasyonu kurulduğunda aktif olacak (bkz. CLAUDE.md Bölüm 18–21)."}
+          : canPublishForReal
+            ? user
+              ? "Promptunu yaz, sağda anında önizlemesini gör. Paylaş'a bastığında gerçekten, kalıcı olarak yayınlanır."
+              : "Promptunu yaz, sağda anında önizlemesini gör. Gerçekten yayınlamak için giriş yapmış olman gerekiyor — giriş yapmadan da önizleme yapabilirsin."
+            : "Promptunu yaz, sağda anında önizlemesini gör. Bu remixin kalıcı paylaşımı, kaynağın gerçek bir veritabanı kaydı olmasını gerektiriyor (mock/örnek içerikler henüz veritabanında değil) — şimdilik yalnızca önizleme yapılabiliyor."}
       </p>
 
       <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
@@ -436,15 +488,46 @@ export function CreatePromptForm() {
           </div>
 
           <Button type="submit" size="lg" className="w-full sm:w-auto" disabled={isSubmitting}>
-            {isAnswerMode ? (isSubmitting ? "Yayınlanıyor..." : "Yanıtı Yayınla") : "Paylaş"}
+            {isAnswerMode
+              ? isSubmitting
+                ? "Yayınlanıyor..."
+                : "Yanıtı Yayınla"
+              : canPublishForReal && user
+                ? isSubmitting
+                  ? "Yayınlanıyor..."
+                  : "Paylaş"
+                : "Paylaş"}
           </Button>
 
-          {submitted && !isAnswerMode && (
+          {publishError && (
+            <div className="rounded-md border border-red-500/30 bg-red-500/5 p-3 text-sm text-red-600">
+              {publishError}
+            </div>
+          )}
+
+          {submitted && !isAnswerMode && canPublishForReal && !user && (
             <div className="flex items-start gap-2 rounded-md border border-primary/30 bg-primary/5 p-3 text-sm text-primary">
               <Sparkles size={16} className="mt-0.5 shrink-0" />
               <p>
-                Önizlemeni sağda görebilirsin. Gerçek paylaşım için Supabase entegrasyonu henüz
-                kurulmadı, bu yüzden prompt kalıcı olarak kaydedilmedi.
+                Önizlemeni sağda görebilirsin. Gerçekten yayınlamak için{" "}
+                <Link href="/login" className="font-medium underline">
+                  giriş yap
+                </Link>{" "}
+                ya da{" "}
+                <Link href="/signup" className="font-medium underline">
+                  hesap oluştur
+                </Link>
+                .
+              </p>
+            </div>
+          )}
+
+          {submitted && !isAnswerMode && !canPublishForReal && (
+            <div className="flex items-start gap-2 rounded-md border border-primary/30 bg-primary/5 p-3 text-sm text-primary">
+              <Sparkles size={16} className="mt-0.5 shrink-0" />
+              <p>
+                Önizlemeni sağda görebilirsin. Bu bir remix olduğundan ve kaynağı henüz gerçek bir
+                veritabanı kaydı olmadığından kalıcı olarak yayınlanamadı.
               </p>
             </div>
           )}

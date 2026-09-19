@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { mockPrompts } from "@/mocks/prompts";
 import type { Prompt, PromptRequest } from "@/types";
 
 export function cn(...inputs: ClassValue[]) {
@@ -123,18 +124,77 @@ export function resizeImageToDataUrlFit(file: File, maxDimension = 480): Promise
 }
 
 /**
- * Prompts created locally in this browser (see local-prompts-provider.tsx)
- * have no static-export page under `/prompts/[id]` — that route's paths are
- * all fixed at build time via `generateStaticParams`, and a GitHub Pages
- * static export can't serve a path that wasn't pre-rendered. Local prompts
- * instead get a real detail view at the static `/prompts/local` route,
- * identified by a query param instead of a path segment (query strings
- * don't need pre-rendering). Every place that links to a prompt must use
- * this helper instead of hardcoding `/prompts/${id}` so local answers work
- * end to end (feed, profile, share, etc.).
+ * Same resize/scale logic as `resizeImageToDataUrlFit`, but resolves a real
+ * `Blob` (plus its content type) instead of a data URL — for uploading to
+ * Supabase Storage (CLAUDE.md Bölüm 20/21), where a data URL would just
+ * mean re-decoding base64 back into bytes for no reason. Kept as a
+ * separate function rather than a shared parameter: the data-URL version
+ * still backs every localStorage-persisted upload (avatar edit, request
+ * reference image, remix/duplicate previews), which have nothing to do
+ * with Storage.
+ */
+export function resizeImageToBlob(
+  file: File,
+  maxDimension = 1600,
+): Promise<{ blob: Blob; width: number; height: number; contentType: string }> {
+  return new Promise((resolve, reject) => {
+    const objectUrl = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(1, maxDimension / Math.max(img.naturalWidth, img.naturalHeight));
+      const width = Math.round(img.naturalWidth * scale);
+      const height = Math.round(img.naturalHeight * scale);
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        URL.revokeObjectURL(objectUrl);
+        reject(new Error("2D canvas context unavailable"));
+        return;
+      }
+      ctx.drawImage(img, 0, 0, width, height);
+      const contentType = "image/jpeg";
+      canvas.toBlob(
+        (blob) => {
+          URL.revokeObjectURL(objectUrl);
+          if (!blob) {
+            reject(new Error("Görsel işlenemedi"));
+            return;
+          }
+          resolve({ blob, width, height, contentType });
+        },
+        contentType,
+        0.9,
+      );
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error("Görsel yüklenemedi"));
+    };
+    img.src = objectUrl;
+  });
+}
+
+/**
+ * Any prompt that isn't one of the fixed mock ids baked into the static
+ * export at build time (`generateStaticParams` on `/prompts/[id]`) has no
+ * pre-rendered page there — a GitHub Pages static export can't serve a
+ * path that didn't exist at build time. That covers two real cases: a
+ * prompt created locally in this browser (see local-prompts-provider.tsx,
+ * `local-…` ids) and, since CLAUDE.md Bölüm 21, a genuinely real prompt
+ * published to Supabase (a real UUID). Both instead get a real detail view
+ * at the static `/prompts/local` route, identified by a query param
+ * instead of a path segment (query strings don't need pre-rendering,
+ * unlike path segments) — see local-prompt-view.tsx for how it decides
+ * which of the two sources (or neither) actually has the id. Every place
+ * that links to a prompt must use this helper instead of hardcoding
+ * `/prompts/${id}` so both cases work end to end (feed, profile, share,
+ * etc.).
  */
 export function promptHref(prompt: Pick<Prompt, "id">): string {
-  return prompt.id.startsWith("local-") ? `/prompts/local?id=${prompt.id}` : `/prompts/${prompt.id}`;
+  const isStaticMockPrompt = mockPrompts.some((mock) => mock.id === prompt.id);
+  return isStaticMockPrompt ? `/prompts/${prompt.id}` : `/prompts/local?id=${prompt.id}`;
 }
 
 /** Same idea as `promptHref`, for requests created locally via `/requests/new`. */

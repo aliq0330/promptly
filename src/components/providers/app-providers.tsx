@@ -5,15 +5,17 @@ import { LikeProvider, SaveProvider } from "@/features/prompts/like-save-provide
 import { CommentProvider } from "@/features/prompts/comment-provider";
 import { HiddenPromptsProvider } from "@/features/prompts/hidden-prompts-provider";
 import { LocalPromptsProvider } from "@/features/prompts/local-prompts-provider";
+import { RealPromptsProvider } from "@/features/prompts/real-prompts-provider";
 import { RequestsProvider } from "@/features/requests/requests-provider";
 
 /**
- * All of the app's real, localStorage-backed client state providers
- * (follow/like/save/comment/hide/profile-edits/local-prompts/local-requests
- * — see each provider's own file for what it does and its honesty
- * boundaries) composed in one place. Split out once nesting these
- * individually in the layout got hard to read; order between them doesn't
- * matter, none depend on another.
+ * All of the app's client state providers composed in one place — most are
+ * localStorage-backed (follow/like/save/comment/hide/profile-edits/
+ * local-prompts/local-requests, see each provider's own file for its
+ * honesty boundaries); `RealPromptsProvider` is the one exception, backed
+ * by the actual Supabase `prompts` table (CLAUDE.md Bölüm 21). Split out
+ * once nesting these individually in the layout got hard to read; order
+ * between them doesn't matter, none depend on another.
  */
 export function AppProviders({ children }: { children: ReactNode }) {
   return (
@@ -24,7 +26,9 @@ export function AppProviders({ children }: { children: ReactNode }) {
             <CommentProvider>
               <HiddenPromptsProvider>
                 <LocalPromptsProvider>
-                  <RequestsProvider>{children}</RequestsProvider>
+                  <RealPromptsProvider>
+                    <RequestsProvider>{children}</RequestsProvider>
+                  </RealPromptsProvider>
                 </LocalPromptsProvider>
               </HiddenPromptsProvider>
             </CommentProvider>
