@@ -7,6 +7,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useOwnProfile } from "@/features/auth/own-profile-provider";
+import { useRealMessages } from "@/features/messages/real-messages-provider";
 import { profileHref } from "@/lib/utils";
 import { getUserById } from "@/mocks/users";
 import { mockNotifications } from "@/mocks/notifications";
@@ -27,8 +28,10 @@ export function Header() {
   const me = getUserById("me")!;
   const { user, loading } = useAuth();
   const { profile: ownProfile } = useOwnProfile();
+  const { conversations: realConversations } = useRealMessages();
   const hasUnreadNotifications = mockNotifications.some((n) => !n.isRead);
-  const hasUnreadMessages = mockConversations.some((c) => c.unreadCount > 0);
+  const hasUnreadMessages =
+    mockConversations.some((c) => c.unreadCount > 0) || realConversations.some((c) => c.unreadCount > 0);
   const avatarUser = user && ownProfile ? ownProfile : me;
 
   return (

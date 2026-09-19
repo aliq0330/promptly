@@ -197,7 +197,7 @@ gerçek Supabase projesi bağlantısı yoktur.**
 13. [x] Takip sistemi (localStorage ile gerçek takip et/bırak; sunucu senkronizasyonu Supabase'e bağlı)
 14. [x] Beğeni, yorum, kaydetme, paylaşma (beğeni/kaydetme localStorage ile gerçek; yorum ekleme gerçek/yerel; sunucu senkronizasyonu Supabase'e bağlı)
 15. [x] Bildirimler (mock veriyle)
-16. [x] Özel mesajlaşma (mesaj gönderme henüz devre dışı)
+16. [x] Özel mesajlaşma (mock konuşmalarda mesaj gönderme hâlâ devre dışı; gerçek hesaplar arası mesajlaşma artık gerçek — bkz. Bölüm 9)
 17. [x] Kayıt, giriş, hesap ayarları (gerçek Supabase Auth bağlantısı — bkz. Bölüm 9; hesap ↔ mock profil/veri entegrasyonu Bölüm 18/21'e bağlı)
 18. [x] Supabase veritabanı ve migration dosyaları (şema tasarlandı, 7 migration dosyası yazıldı ve yerel bir Postgres 16 örneğinde gerçek olarak doğrulandı; gerçek Supabase projesine HENÜZ uygulanmadı — bkz. `supabase/README.md` ve Bölüm 9)
 19. [x] RLS ve güvenlik politikaları (17 tablonun tümüne gerçek erişim
@@ -209,7 +209,7 @@ gerçek Supabase projesi bağlantısı yoktur.**
     ve yerel bir Postgres 16 örneğinde `storage` şemasının sadık bir
     taklidiyle doğrulandı; gerçek Supabase projesine HENÜZ uygulanmadı —
     bkz. `supabase/README.md` ve Bölüm 9)
-21. [~] Frontend'in gerçek Supabase'e bağlanması (BAŞLADI, TAMAMLANMADI —
+21. [x] Frontend'in gerçek Supabase'e bağlanması (TAMAMLANDI —
     Faz 1: düz "Prompt Oluştur" ve "Kopyasını Oluştur" artık gerçekten,
     kalıcı olarak Supabase'e yayınlıyor ve feed/keşfette/kendi detay
     sayfasında görünüyor. Faz 2: gerçek kullanıcıların artık gerçek bir
@@ -223,8 +223,12 @@ gerçek Supabase projesi bağlantısı yoktur.**
     yalnızca giriş yapan yazabilir). Faz 5: gerçek prompt istekleri —
     giriş yapmış bir kullanıcının istek oluşturması, gerçek bir isteği
     yönetmesi (kapat/aç/sil/yanıt seç) ve gerçek bir isteğe gerçek bir
-    yanıt yayınlaması artık Supabase'e kalıcı olarak yazılıyor; mesajlaşma
-    hâlâ mock+localStorage — bkz. Bölüm 9)
+    yanıt yayınlaması artık Supabase'e kalıcı olarak yazılıyor. Faz 6:
+    gerçek mesajlaşma — iki gerçek hesap artık gerçekten, kalıcı olarak
+    birbirine mesaj gönderip alabiliyor. Mock deneyim (mock kullanıcılar,
+    mock konuşmalar, localStorage tabanlı beğeni/kaydetme/takip/yorum/
+    istek prototipleri) hiçbiri kaldırılmadı, gerçek hesap yolu bunların
+    yanında ayrı bir katman olarak eklendi — bkz. Bölüm 9)
 22. [ ] Moderasyon, engelleme, raporlama
 23. [ ] Testler, performans, erişilebilirlik
 24. [ ] Deployment ve son kalite kontrolü
@@ -234,12 +238,15 @@ gerçek Supabase projesi bağlantısı yoktur.**
 ## 9. Şu Anki Durum (bu bölüm her modül sonunda güncellenir)
 
 **Son güncelleme:** Bölüm 21 — Frontend'in gerçek Supabase'e bağlanması,
-Faz 5 (devam ediyor). Gerçek prompt istekleri artık uçtan uca çalışıyor:
-giriş yapmış bir kullanıcı gerçek bir istek yayınlayabiliyor, kendi
-isteğini yönetebiliyor (kapat/aç/sil/yanıt seç), ve gerçek bir isteğe
-gerçek bir yanıt (prompt) yayınlayabiliyor — hepsi Supabase'e kalıcı
-olarak yazılıyor. Mesajlaşma hâlâ mock veri + localStorage — bu modülün
-sonraki fazının işi.
+Faz 6 (TAMAMLANDI). Gerçek mesajlaşma artık uçtan uca çalışıyor: iki
+gerçek hesap birbirinin gerçek profilinden "Mesaj Gönder"e basıp gerçek,
+kalıcı bir konuşma başlatabiliyor ve mesaj gönderip alabiliyor — hepsi
+Supabase'e kalıcı olarak yazılıyor. Bu, Bölüm 21'in planlanan son fazıydı:
+prompt oluşturma/görüntüleme (Faz 1), kullanıcı profilleri (Faz 2), beğeni/
+kaydetme/takip (Faz 3), yorum ekleme (Faz 4), prompt istekleri (Faz 5) ve
+mesajlaşma (Faz 6) artık hepsi gerçek Supabase üzerinde çalışıyor — mock
+veri/localStorage deneyimi hiçbir yerde kaldırılmadı, gerçek hesap yolu
+onun yanında ayrı, dürüstçe belgelenmiş bir katman olarak duruyor.
 
 **Tamamlanan:**
 - CLAUDE.md oluşturuldu.
@@ -1767,7 +1774,163 @@ sonraki fazının işi.
   (etiket eklemek başarısız olsa bile isteğin/yanıtın kendisi yayınlanmış
   sayılır) `createRealRequest` için de geçerli.
 
-**Sonraki adım:** Bölüm 21'in bir sonraki (ve muhtemelen son büyük) fazı —
-gerçek mesajlaşma. Frontend'in gerçek Supabase'e bağlanması modülünün geri
-kalan tek büyük parçası bu; tamamlandığında yalnızca moderasyon (Bölüm 22)
-ve test/performans/erişilebilirlik/deployment (Bölüm 23-24) kalacak.
+- **Frontend'in gerçek Supabase'e bağlanması — Faz 6 (Bölüm 21,
+  TAMAMLANDI): gerçek mesajlaşma.** Bölüm 16'dan beri "mesaj gönderme
+  henüz devre dışı" diye belgelenmiş en eski TODO'nun karşılığı. Bölüm
+  19'un zaten yazılmış RLS politikaları (`is_conversation_member()`
+  `SECURITY DEFINER` yardımcı fonksiyonu dahil) ve `handle_new_message`
+  trigger'ı ilk kez gerçekten kullanılmaya başlandı — iki gerçek hesap
+  artık gerçekten, kalıcı olarak birbirine mesaj gönderip alabiliyor. Bu,
+  Bölüm 21'in planlanan son fazıydı; modül bununla TAMAMLANDI.
+  - **Kapsam kararı — mock mesajlaşma dokunulmadan kaldı:**
+    `mocks/conversations.ts`'teki 5 sabit konuşma ve `/messages/
+    [conversationId]`'nin devre dışı composer'ı hiç değişmedi — Faz 1-5'in
+    "gerçek olmayan hedefe gerçek yazım yapılamaz" ilkesinin doğal bir
+    sonucu: mock kullanıcıların gerçek bir `profiles`/`conversations`
+    satırı yok, bu yüzden onlarla "gerçekten" mesajlaşmak yapısal olarak
+    mümkün değil. Gerçek mesajlaşma yalnızca iki GERÇEK (Supabase) hesap
+    arasında çalışıyor.
+  - **Yeni `src/lib/supabase/messages.ts`:** `fetchConversationsForUser`
+    (bir kullanıcının tüm gerçek konuşmaları — `conversations` tablosunda
+    mesaj önizlemesi saklanmadığından, son mesaj metni ayrı bir sorguyla
+    çekilip JS'te eşleştiriliyor), `fetchConversationForUser` (doğrudan
+    bir linke giden tekil sorgu — RLS zaten "bu kullanıcı üye değilse
+    satır görünmez" işini yapıyor, bu yüzden "konuşma yok" ile "üye değilim"
+    ayrımı kasıtlı olarak yapılmıyor, her ikisi de aynı "bulunamadı"
+    ekranına düşüyor), `fetchMessages`, `sendMessage` (gerçek INSERT —
+    Bölüm 19'un `handle_new_message` trigger'ı `conversations.
+    last_message_at`'i ve DİĞER üyenin `unread_count`'unu otomatik
+    güncelliyor), `markConversationRead`, ve `getOrCreateDirectConversation`
+    (iki gerçek kullanıcı arasında var olan bir 1:1 konuşmayı bulur, yoksa
+    yenisini oluşturur). Hepsi try/catch'li (Faz 2'nin dayanıklılık
+    dersi baştan uygulandı).
+  - **İki üyelik satırı BİLİNÇLİ OLARAK iki ayrı INSERT ile yazılıyor,
+    tek bir çoklu-satır INSERT ile değil:** `conversation_members`'ın
+    "davet edebilme" RLS politikası (`auth.uid() = user_id OR
+    is_conversation_member(conversation_id)`) diğer kullanıcının satırını
+    yazarken bu oturumun KENDİ satırının zaten var olduğunu görebilmesine
+    dayanıyor. Tek bir çoklu-satır `INSERT ... VALUES (...), (...)`
+    ifadesinde Postgres'in bir komutun kendi işlediği önceki satırları
+    aynı komutun RLS kontrolüne görünür kılıp kılmadığı garanti/belgeli bir
+    davranış değil — bu yüzden riske girmemek için iki ayrı, sıralı INSERT
+    komutu kullanıldı (ilki kendi satırını her zaman geçen `auth.uid() =
+    user_id` koşuluyla, otomatik commit sonrası ikincisi artık gerçekten
+    var olan üyeliği görüp `is_conversation_member()` ile geçiyor).
+  - **Yeni `RealMessagesProvider`/`useRealMessages()`**
+    (`features/messages/real-messages-provider.tsx`) — `RealRequestsProvider`
+    ile aynı şekil: `conversations`, `getCached`, `refresh`,
+    `startConversationWith`. `AppProviders`'a `RealRequestsProvider`'ın
+    içine eklendi.
+  - **Yeni `messageHref(conversation)`** (`lib/utils.ts`, `promptHref`/
+    `requestHref`/`profileHref` ile birebir aynı desen): bir konuşma
+    build-zamanı mock listesinde mi diye bakıyor; değilse (gerçek, UUID
+    bir konuşma) `/messages/local?id=…`'e yönlendiriyor. `ConversationRow`
+    artık `/messages/${id}`'i elle kurmak yerine bunu kullanıyor.
+  - **Yeni `LocalConversationView`/`/messages/local`** (`local-request-
+    view.tsx`'in üç-kaynaklı desenine benzer, ama daha basit — konuşmalar
+    yalnızca gerçek olabildiğinden ikili değil): önce `RealMessagesProvider`
+    önbelleğine bakıyor (bir "Mesaj Gönder" tıklamasından hemen sonra
+    genelde burada bulunuyor, ekstra bir ağ isteği gerekmeden), yoksa
+    `fetchConversationForUser` ile canlı sorguya düşüyor. Sayfa
+    yüklenince gerçek mesaj geçmişini çekiyor ve konuşmayı okundu
+    işaretliyor; composer GERÇEKTEN gönderiyor — uygulamadaki mesaj
+    gönderebilen TEK yüzey burası (mock `/messages/[conversationId]`
+    hâlâ salt görüntüleme). Giriş yapılmamışsa (bu route için giriş her
+    zaman gerekli — gerçek bir konuşma zaten yalnızca gerçek hesaplar
+    arasında var olabilir) dürüst bir "giriş yapmalısın" ekranı gösteriyor.
+  - **Gerçek bir profilde "Mesaj Gönder":** yeni
+    `features/messages/message-button.tsx` (`MessageButton`) —
+    `FollowButtonView`/`LikeButton` ile aynı ilke: hedef gerçekse
+    (`isUuid`) ve giriş yapılmışsa tıklanınca `startConversationWith` ile
+    gerçek bir konuşma bulunup/oluşturulup oraya yönlendiriliyor; hedef
+    gerçek ama giriş yapılmamışsa `/login`'e giden bir link (Faz 3'ün
+    `FollowButtonView`'ıyla birebir aynı desen); hedef mock ise eski
+    davranış (yalnızca `mocks/conversations.ts`'te zaten var olan bir
+    thread'e link, yoksa buton hiç yok) hiç değişmeden duruyor.
+    `OtherProfileActions`'daki eski, yalnızca mock'a bakan satır içi
+    `Link` bununla değiştirildi — bu, Faz 2'nin belgelenmiş "gerçek bir
+    hesabın Mesaj Gönder butonu yok" sınırlamasını da kapatıyor.
+  - **`/messages` listesi ve header'daki okunmamış mesaj noktası** artık
+    `useRealMessages()`'i de `mockConversations`'la aynı şekilde
+    birleştiriyor — gerçek bir konuşma, tıpkı mock bir konuşma gibi,
+    listede ve header'ın kırmızı noktasında görünüyor.
+  - **Realtime KASITLI OLARAK eklenmedi** — CLAUDE.md §2'nin teknoloji
+    yığınında "Realtime (mesajlaşma için)" planlanmış olsa da, bu faz
+    yalnızca sayfa yüklendiğinde/gönderim sonrasında çekme (fetch-on-load
+    + gönderim sonrası iyimser ekleme) kullanıyor — karşı tarafın
+    gönderdiği bir mesaj, sayfa yeniden yüklenene/yeniden ziyaret
+    edilene kadar görünmüyor. Gerçek zamanlı güncelleme (`supabase.
+    channel().on('postgres_changes', ...)` aboneliği) ayrı, küçük ama net
+    bir sonraki iş — bu sandbox'ın WebSocket bağlantılarını da
+    engellediği ağ kısıtı yüzünden gerçek bir Supabase projesine karşı
+    hiç denenemezdi, bu yüzden şimdilik kapsam dışı bırakıldı.
+  - **Nasıl doğrulandı:** Bu sandbox'ın ağ politikası hâlâ
+    `*.supabase.co`'ya erişimi engellediğinden, iki katmanlı test
+    yapıldı. (1) Sıfır ağ taklidiyle dayanıklılık: `/messages` (giriş
+    yapılmış/yapılmamış) ve `/messages/local?id=<uuid>` Supabase'e hiç
+    ulaşamazken bile çökmeden/asılı kalmadan doğru davrandı (birkaç
+    saniye içinde boş listeye veya "Konuşma bulunamadı"na zarifçe düştü,
+    sıfır `pageerror`); giriş yapılmamışken `/messages/local` hiç ağ
+    isteği atmadan anında "Giriş yapmalısın" gösterdi. (2) Ağ seviyesinde
+    taklit edilmiş Supabase REST yanıtlarıyla 9 adım uçtan uca doğrulandı:
+    gerçek bir başka kullanıcının profilinde "Mesaj Gönder"in gerçekten
+    tıklanabilir olduğu; tıklanınca gerçek bir konuşma oluşturulup
+    `/messages/local?id=<uuid>`'e yönlendirdiği (ve `markConversationRead`
+    çağrıldığı); bir mesaj gönderilince gerçek bir INSERT tetiklenip
+    mesajın anında thread'de göründüğü; `/messages` listesinin gerçek
+    konuşmayı doğru katılımcı/link ile gösterdiği; ve mock bir konuşmanın
+    (`/messages/c1`) composer'ının hâlâ devre dışı kaldığı — hepsi sıfır
+    JS hatasıyla. Ayrıca header'daki okunmamış mesaj noktasının gerçek bir
+    `unread_count > 0` konuşmasıyla doğru göründüğü ve masaüstü/mobil ×
+    açık/koyu tema kombinasyonlarının tümünde (mesajlar listesi, mock
+    konuşma, gerçek konuşma sayfası, gerçek profil dahil) yatay taşma/JS
+    hatası olmadığı 21 adımlık ek bir taramayla doğrulandı.
+  - `npx tsc --noEmit`, `npm run lint` ve tam `npm run build` (92 statik
+    sayfa) hatasız geçti.
+
+**Bilinen sorunlar / bilinçli basitleştirmeler (Bölüm 21 Faz 6 için ek —
+ve Bölüm 21'in tamamı için genel bir özet):**
+- **Realtime yok:** yukarıda açıklandığı gibi, gerçek mesajlaşma şu an
+  polling/fetch-on-load ile çalışıyor; karşı tarafın mesajı anlık
+  görünmüyor, sayfa yeniden ziyaret edilmeli. Bu, CLAUDE.md §2'nin
+  planladığı Supabase Realtime kullanımının henüz gerçekleşmediği tek
+  yer.
+  - **Grup sohbeti yok, yalnızca 1:1:** `getOrCreateDirectConversation`
+  yalnızca iki kişilik konuşmalar için tasarlandı; şema (`conversation_
+  members`) teknik olarak grup sohbetini destekleyebilir ama bu hiç
+  UI/mantık olarak kurulmadı — kapsam dışı.
+- **Aynı anda çift tıklama küçük bir yarış durumu yaratabilir:** iki
+  kullanıcı birbirine TAM AYNI ANDA "Mesaj Gönder"e basarsa,
+  `findDirectConversationId`'nin "önce oku, yoksa oluştur" deseni teorik
+  olarak iki ayrı konuşma oluşturabilir (bir sonraki mesajlaşmada ikisi
+  birleşmez, ayrı iki thread olarak kalır). Gerçek kullanıcı hacmi bu
+  sandbox'ta test edilemeyecek kadar düşük olduğundan pratikte
+  gözlemlenmedi/düzeltilmedi; gerçek bir veritabanı UNIQUE kısıtı (ör.
+  sıralı `(user_a, user_b)` çifti üzerinde) bunu kalıcı olarak
+  çözebilirdi ama bu fazın kapsamına alınmadı.
+  - **Bildirim yine yok:** yeni bir mesaj geldiğinde alıcıya gerçek bir
+  bildirim üretilmiyor — Faz 3-5'teki aynı, belgelenmiş sınırlama
+  (Bölüm 19'un `notifications` tablosuna client insert izni yok).
+  Header'daki kırmızı nokta `conversation_members.unread_count`'tan
+  geliyor, bu yeterli ama ayrı bir bildirim kaydı değil.
+- **Konuşma silme/çıkma arayüzü yok:** RLS bir üyenin kendi üyelik
+  satırını silebilmesine (`DELETE`) izin veriyor ama hiçbir ekran bunu
+  tetiklemiyor — "konuşmadan ayrıl" gibi bir aksiyon bu fazda eklenmedi.
+- **Bölüm 21'in tamamı için genel özet:** Faz 1-6 hepsi aynı ilkeyi
+  izliyor — bir hedef (prompt/profil/istek/konuşma) gerçekse (`isUuid`)
+  VE gerekiyorsa giriş yapılmışsa gerçek Supabase'e yazılıyor, değilse
+  var olan mock+localStorage davranışı hiç bozulmadan duruyor. Sonuç:
+  uygulama artık iki paralel, birbirini hiç bozmayan deneyim sunuyor —
+  "mock/demo" (herkes, giriş şartsız, localStorage) ve "gerçek" (giriş
+  yapmış gerçek hesaplar, Supabase'e kalıcı). İkisi arasındaki köprü
+  (mock "me" hesabının gerçek bir Supabase hesabına dönüştürülmesi/
+  taşınması gibi) hiç kurulmadı ve muhtemelen hiç kurulmayacak — bu,
+  CLAUDE.md'nin başından beri "mock veri yalnızca geliştirme/placeholder
+  amaçlı" dediği ayrımın doğal sonucu.
+
+**Sonraki adım:** Bölüm 21 (Frontend'in gerçek Supabase'e bağlanması)
+TAMAMLANDI. Sırada Bölüm 22 (Moderasyon, engelleme, raporlama — şema
+zaten Bölüm 18'de hazırlandı, RLS Bölüm 19'da temel sahiplik
+politikalarıyla yazıldı, yalnızca frontend arayüzü/mantığı eksik) veya
+Bölüm 23 (Testler, performans, erişilebilirlik) var. Hangisiyle
+devam edileceği bir sonraki oturumda kullanıcıyla netleştirilecek.

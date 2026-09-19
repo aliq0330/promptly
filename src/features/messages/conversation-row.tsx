@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Avatar } from "@/components/ui/avatar";
-import { formatRelativeTime } from "@/lib/utils";
+import { formatRelativeTime, messageHref } from "@/lib/utils";
 import type { Conversation } from "@/types";
 
 export function ConversationRow({ conversation }: { conversation: Conversation }) {
@@ -8,7 +8,7 @@ export function ConversationRow({ conversation }: { conversation: Conversation }
 
   return (
     <Link
-      href={`/messages/${conversation.id}`}
+      href={messageHref(conversation)}
       className="flex items-center gap-3 border-b border-border px-4 py-3 transition-colors last:border-0 hover:bg-accent-surface/40"
     >
       <Avatar

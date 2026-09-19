@@ -3,7 +3,8 @@ import { twMerge } from "tailwind-merge";
 import { mockPrompts } from "@/mocks/prompts";
 import { mockRequests } from "@/mocks/requests";
 import { mockUsers } from "@/mocks/users";
-import type { Prompt, PromptRequest, UserProfile } from "@/types";
+import { mockConversations } from "@/mocks/conversations";
+import type { Conversation, Prompt, PromptRequest, UserProfile } from "@/types";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -287,4 +288,16 @@ export function requestHref(request: Pick<PromptRequest, "id">): string {
 export function profileHref(user: Pick<UserProfile, "username">): string {
   const isStaticMockUser = mockUsers.some((mock) => mock.username === user.username);
   return isStaticMockUser ? `/profile/${user.username}` : `/profile/real?username=${user.username}`;
+}
+
+/**
+ * Same idea as `promptHref`/`requestHref`, for a conversation — covers a
+ * genuinely real conversation (CLAUDE.md Bölüm 21 Faz 6, a real UUID from
+ * Supabase's `conversations` table), which was never one of the fixed mock
+ * conversation ids `/messages/[conversationId]` was pre-rendered for at
+ * build time.
+ */
+export function messageHref(conversation: Pick<Conversation, "id">): string {
+  const isStaticMockConversation = mockConversations.some((mock) => mock.id === conversation.id);
+  return isStaticMockConversation ? `/messages/${conversation.id}` : `/messages/local?id=${conversation.id}`;
 }

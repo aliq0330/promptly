@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { MessageCircle, Settings, Sparkles } from "lucide-react";
+import { Settings, Sparkles } from "lucide-react";
 import { ShareButton } from "@/features/prompts/share-button";
+import { MessageButton } from "@/features/messages/message-button";
 import { FollowButtonView } from "./follow-button";
 import { useFollowState } from "./use-follow-state";
 import { profileHref } from "@/lib/utils";
@@ -59,15 +60,7 @@ export function OtherProfileActions({
   return (
     <div className="flex flex-wrap items-center justify-center gap-2">
       <FollowButtonView {...followState} size="md" />
-      {conversationId && (
-        <Link
-          href={`/messages/${conversationId}`}
-          className="inline-flex h-9 items-center gap-1.5 rounded-md border border-border bg-transparent px-4 text-sm font-medium text-text transition-colors hover:bg-accent-surface"
-        >
-          <MessageCircle size={14} />
-          Mesaj Gönder
-        </Link>
-      )}
+      <MessageButton user={user} mockConversationId={conversationId} />
       <ShareButton
         url={profileHref(user)}
         title="Promptly profili"

@@ -1,0 +1,82 @@
+"use client";
+
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useAuth } from "@/features/auth/auth-provider";
+import { fetchConversationsForUser, getOrCreateDirectConversation } from "@/lib/supabase/messages";
+import type { Conversation, UserProfile } from "@/types";
+
+interface RealMessagesContextValue {
+  conversations: Conversation[];
+  getCached: (id: string) => Conversation | undefined;
+  refresh: () => Promise<void>;
+  startConversationWith: (otherProfile: UserProfile) => Promise<Conversation>;
+}
+
+const RealMessagesContext = createContext<RealMessagesContextValue | null>(null);
+
+/**
+ * Real, cross-user, cross-device direct messages (CLAUDE.md Bölüm 21 Faz
+ * 6) — the same shape as RealPromptsProvider/RealRequestsProvider, backed
+ * by the actual Supabase `conversations`/`conversation_members`/`messages`
+ * tables instead of `mocks/conversations.ts`. Only ever holds a signed-in
+ * real user's own conversations; a signed-out visitor or the mock "me"
+ * persona still sees only `mocks/conversations.ts`'s fixed threads
+ * (Bölüm 16's "mesaj gönderme henüz devre dışı" stays true for those).
+ */
+export function RealMessagesProvider({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!user) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- signed out, no real conversations to fetch
+      setConversations([]);
+      return;
+    }
+    fetchConversationsForUser(user.id).then((result) => {
+      if (!cancelled) setConversations(result);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
+  const refresh = useCallback(async () => {
+    if (!user) return;
+    const result = await fetchConversationsForUser(user.id);
+    setConversations(result);
+  }, [user]);
+
+  const getCached = useCallback(
+    (id: string) => conversations.find((conversation) => conversation.id === id),
+    [conversations],
+  );
+
+  const startConversationWith = useCallback(
+    async (otherProfile: UserProfile) => {
+      if (!user) throw new Error("Giriş yapmadan mesaj gönderilemez.");
+      const conversation = await getOrCreateDirectConversation(user.id, otherProfile.id, otherProfile);
+      setConversations((prev) => {
+        const exists = prev.some((c) => c.id === conversation.id);
+        const next = exists ? prev.map((c) => (c.id === conversation.id ? conversation : c)) : [conversation, ...prev];
+        return [...next].sort((a, b) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime());
+      });
+      return conversation;
+    },
+    [user],
+  );
+
+  const value = useMemo(
+    () => ({ conversations, getCached, refresh, startConversationWith }),
+    [conversations, getCached, refresh, startConversationWith],
+  );
+
+  return <RealMessagesContext.Provider value={value}>{children}</RealMessagesContext.Provider>;
+}
+
+export function useRealMessages() {
+  const ctx = useContext(RealMessagesContext);
+  if (!ctx) throw new Error("useRealMessages must be used within a RealMessagesProvider");
+  return ctx;
+}
