@@ -2,13 +2,13 @@
 
 Bu klasördeki `migrations/*.sql` dosyaları, `src/types/index.ts`'teki mock
 veri modelini birebir yansıtan gerçek Postgres şemasını (CLAUDE.md Bölüm
-18) ve her tablonun gerçek erişim kurallarını (RLS politikaları, Bölüm 19)
-oluşturur. Dosyalar sırayla (dosya adındaki zaman damgasına göre)
-uygulanmalıdır.
+18), her tablonun gerçek erişim kurallarını (RLS politikaları, Bölüm 19)
+ve görsel yükleme için Supabase Storage bucket'larını (Bölüm 20) oluşturur.
+Dosyalar sırayla (dosya adındaki zaman damgasına göre) uygulanmalıdır.
 
-**Durum:** İlk 7 dosya (Bölüm 18, şema) kullanıcı tarafından gerçek
-Supabase projesine (Dashboard → SQL Editor) başarıyla uygulandı ve
-doğrulandı. `20260919130000_rls_policies.sql` (Bölüm 19, RLS politikaları)
+**Durum:** İlk 8 dosya (Bölüm 18 şema + Bölüm 19 RLS) kullanıcı tarafından
+gerçek Supabase projesine (Dashboard → SQL Editor) başarıyla uygulandı ve
+doğrulandı. `20260919140000_storage.sql` (Bölüm 20, Storage bucket'ları)
 bu depodan otomatik olarak uygulanmadı — Claude Code'un çalıştığı ortamın
 ağ politikası gerçek Supabase projesinin veritabanına doğrudan erişimi
 engelliyor, bu yüzden yalnızca yerel, geçici bir Postgres 16 örneğinde
@@ -22,8 +22,9 @@ bölümü) — gerçek projenize henüz uygulanmadı.
 1. [Supabase Dashboard](https://supabase.com/dashboard) → projeniz → sol
    menüden **SQL Editor**'ü açın.
 2. `migrations/` klasöründeki her dosyayı **dosya adındaki sıraya göre**
-   (20260919120000, 20260919120100, ... 20260919120600, 20260919130000)
-   tek tek açıp içeriğini SQL Editor'e yapıştırıp **Run**'a basın.
+   (20260919120000, 20260919120100, ... 20260919120600, 20260919130000,
+   20260919140000) tek tek açıp içeriğini SQL Editor'e yapıştırıp
+   **Run**'a basın.
 3. Her dosya başarıyla çalıştıktan sonra bir sonrakine geçin. Bir hata
    alırsanız durdurun ve hatayı paylaşın.
 
@@ -88,6 +89,21 @@ supabase db push
 Her tabloda RLS **oluşturulduğu anda açık** olduğundan, `20260919130000`
 uygulanana kadar tüm tablolar `anon`/`authenticated` anahtarlarıyla
 tamamen kapalı kalır — güvenli tarafta kalan bilinçli bir ara durum.
+
+- `20260919140000_storage.sql` (Bölüm 20) — üç **herkese açık okuma**
+  bucket'ı oluşturuyor (uygulama bugün base64 data URL'e gömdüğü üç görsel
+  türüne birebir karşılık geliyor): `avatars` (profil fotoğrafları, 2 MB
+  sınır), `prompt-media` (`image` türü prompt görselleri, 10 MB sınır),
+  `request-references` (isteklerdeki opsiyonel referans görseli, 5 MB
+  sınır). Yazma her bucket'ta yalnızca kendi klasörüne (`{auth.uid()}/...`
+  yol öneki, `storage.foldername(name)` ile kontrol ediliyor) izinli —
+  başkasının klasörüne dosya yükleyemez/silemezsiniz. Yol kuralı (Bölüm
+  21'in frontend uygulaması için): `avatars/{user_id}/avatar.<uzantı>`,
+  `prompt-media/{user_id}/{prompt_id}-{n}.<uzantı>`,
+  `request-references/{user_id}/{request_id}.<uzantı>`. Frontend bu
+  bucket'lara henüz hiç yüklemiyor — hâlâ localStorage'daki base64 data
+  URL'leri kullanıyor (`resizeImageToDataUrl`/`resizeImageToDataUrlFit`);
+  gerçek bağlanma Bölüm 21'in işi.
 
 ## Nasıl doğrulandı
 
@@ -155,6 +171,27 @@ değil, çalıştırılıp doğrulanan SQL ile) test edildi:
 Test veritabanı her iki tur sonunda da silindi (`DROP DATABASE`) — depoda
 kalıcı bir iz bırakmadı.
 
-Bu, SQL'in ve RLS politikalarının doğru ve tutarlı olduğunu kanıtlar — ama
-**gerçek Supabase projenize karşı hiç çalıştırılmadı**, bu adım yukarıdaki
-talimatlarla size kalıyor.
+**Bölüm 20 (Storage):** Gerçek Supabase projelerinde zaten kurulu olan
+`storage` şemasının (`storage.buckets`, `storage.objects`,
+`storage.foldername()`) minimal, sadık bir taklidi yerel test
+veritabanına eklendi, ve aynı `anon`/`authenticated` rol simülasyonuyla
+şunlar test edildi:
+
+- `anon` her üç bucket'tan da nesne listeleyebiliyor (herkese açık okuma) —
+  boş bucket'ta hata değil, 0 satır dönüyor.
+- Ayşe kendi `{user_id}/avatar.jpg` yoluna avatar yükleyebiliyor; Baran'ın
+  klasörüne (`{başkasının_id}/avatar.jpg`) yüklemeye çalışınca RLS hatası
+  alıyor.
+- Yüklenen avatar `anon` dahil herkes tarafından okunabiliyor.
+- Baran, Ayşe'nin avatarını silmeye çalışınca `DELETE 0` dönüyor (RLS
+  satırı görünmez kılıyor, hata değil) — Ayşe kendi avatarını gerçekten
+  silebiliyor.
+- Aynı kural `prompt-media` ve `request-references` için de doğrulandı:
+  sahibi yükleyebiliyor, başkası aynı klasöre yükleyemiyor, giriş yapmamış
+  `anon` hiçbir bucket'a hiçbir şey yükleyemiyor.
+
+Test veritabanı işlem bitince silindi.
+
+Bu, SQL'in ve RLS/Storage politikalarının doğru ve tutarlı olduğunu
+kanıtlar — ama **gerçek Supabase projenize karşı hiç çalıştırılmadı**, bu
+adım yukarıdaki talimatlarla size kalıyor.

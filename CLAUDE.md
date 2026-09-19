@@ -204,7 +204,11 @@ gerçek Supabase projesi bağlantısı yoktur.**
     politikaları yazıldı ve yerel bir Postgres 16 örneğinde gerçek
     `anon`/`authenticated` rol simülasyonuyla doğrulandı; gerçek Supabase
     projesine HENÜZ uygulanmadı — bkz. `supabase/README.md` ve Bölüm 9)
-20. [ ] Supabase Storage
+20. [x] Supabase Storage (3 herkese açık bucket — avatars/prompt-media/
+    request-references — gerçek yol-bazlı RLS politikalarıyla tasarlandı
+    ve yerel bir Postgres 16 örneğinde `storage` şemasının sadık bir
+    taklidiyle doğrulandı; gerçek Supabase projesine HENÜZ uygulanmadı —
+    bkz. `supabase/README.md` ve Bölüm 9)
 21. [ ] Frontend'in gerçek Supabase'e bağlanması
 22. [ ] Moderasyon, engelleme, raporlama
 23. [ ] Testler, performans, erişilebilirlik
@@ -214,12 +218,10 @@ gerçek Supabase projesi bağlantısı yoktur.**
 
 ## 9. Şu Anki Durum (bu bölüm her modül sonunda güncellenir)
 
-**Son güncelleme:** Bölüm 19 — RLS ve güvenlik politikaları. Bölüm 18'de
-yazılan şema artık kullanıcı tarafından gerçek Supabase projesine
-uygulandı (17 tablo canlıda mevcut); bu modül o tablolara gerçek erişim
-kuralları (kim neyi okuyabilir/yazabilir) ekledi. Auth (Bölüm 17) + şema
-(Bölüm 18) + RLS (Bölüm 19) hepsi artık gerçek — yalnızca frontend hâlâ
-bunlara bağlı değil (Bölüm 21'in işi).
+**Son güncelleme:** Bölüm 20 — Supabase Storage. Auth (Bölüm 17) + şema
+(Bölüm 18) + RLS (Bölüm 19) + Storage bucket'ları (Bölüm 20) hepsi artık
+gerçek/tasarlanmış — yalnızca frontend hâlâ bunlara bağlı değil (mock
+veri + localStorage base64 data URL'leri, Bölüm 21'in işi).
 
 **Tamamlanan:**
 - CLAUDE.md oluşturuldu.
@@ -1121,4 +1123,66 @@ bunlara bağlı değil (Bölüm 21'in işi).
   mesajlaşma Bölüm 21'de kurulduğunda hazır bir temel bıraktı, şu an
   hiçbir kod yolu bu politikaları egzersiz etmiyor.
 
-**Sonraki modül:** Supabase Storage (Bölüm 20).
+- **Supabase Storage (Bölüm 20):** Uygulama bugün üç yerde görsel yükleme
+  yapıyor ve üçü de görseli base64 data URL olarak localStorage'a gömüyor
+  (`/profile/edit`'te avatar → `resizeImageToDataUrl`, `CreatePromptForm`'da
+  `image` türü prompt görseli, `/requests/new`'de opsiyonel referans
+  görseli → `resizeImageToDataUrlFit`) — bu, tek tarayıcıda çalışan ama
+  başka cihaz/kullanıcıya hiç senkronize olmayan, localStorage boyut
+  sınırına çarpma riski taşıyan bir geçici çözüm. Bölüm 20 bu üç kullanım
+  için gerçek Supabase Storage bucket'larını tasarladı
+  (`supabase/migrations/20260919140000_storage.sql`, `supabase/README.md`'de
+  tam gerekçesiyle belgelendi):
+  - **`avatars`** (2 MB sınır, jpeg/png/webp), **`prompt-media`** (10 MB
+    sınır, +gif), **`request-references`** (5 MB sınır) — üçü de **herkese
+    açık okuma** bucket'ı: CLAUDE.md §1'in keşif platformu doğasına uygun,
+    bu görseller zaten herkese açık prompt/profil/istek sayfalarında
+    gösteriliyor, gizlemenin bir anlamı yok.
+  - **Yazma yalnızca kendi klasörüne:** her nesnenin yolu
+    `{auth.uid()}/...` ile başlamak zorunda, `storage.foldername(name)`
+    kontrolüyle zorlanıyor — Supabase'in resmi dokümantasyonunun önerdiği
+    standart "klasör = kullanıcı" deseni (storage.objects RLS'i
+    `public.prompts`/`public.profiles` gibi tablolara ucuz şekilde JOIN
+    atamadığından, en pratik ve önerilen yol bu). Yol kuralı Bölüm 21 için
+    belgelendi: `avatars/{user_id}/avatar.<ext>`,
+    `prompt-media/{user_id}/{prompt_id}-{n}.<ext>`,
+    `request-references/{user_id}/{request_id}.<ext>`.
+  - **Nasıl doğrulandı:** Gerçek Supabase projelerinde zaten hazır gelen
+    `storage` şemasının (`storage.buckets`, `storage.objects`,
+    `storage.foldername()`) minimal ama sadık bir taklidi yerel test
+    veritabanına eklendi (Bölüm 19'daki aynı `anon`/`authenticated` rol
+    simülasyonu üzerine), ve gerçekten test edildi: `anon` (giriş
+    yapmamış) her üç bucket'tan da nesne listeleyebiliyor; Ayşe kendi
+    klasörüne avatar yükleyebiliyor ama Baran'ın klasörüne yükleyemiyor
+    (RLS hatası); yüklenen avatar `anon` dahil herkese görünür; Baran,
+    Ayşe'nin avatarını silmeye çalışınca sessizce 0 satır etkileniyor
+    (RLS satırı görünmez kılıyor), Ayşe kendi avatarını gerçekten
+    silebiliyor; aynı desen `prompt-media`/`request-references` için de
+    doğrulandı, ve `anon`'un hiçbir bucket'a hiçbir şey yükleyemediği
+    (yalnızca `authenticated` rolüne INSERT politikası tanınmış olduğu
+    için) ayrıca kanıtlandı. Test veritabanı işlem bitince silindi.
+
+**Bilinen sorunlar / bilinçli basitleştirmeler (Bölüm 20 için ek):**
+- **Storage bucket'ları gerçek Supabase projesine henüz uygulanmadı** —
+  yine ağ politikası nedeniyle; kullanıcı `supabase/README.md`'deki
+  talimatla yalnızca `20260919140000_storage.sql` dosyasını (önceki 8
+  dosya zaten uygulandığı için) SQL Editor'e ekleyip çalıştırmalı.
+- **Frontend hâlâ hiçbir dosyayı Supabase Storage'a yüklemiyor** —
+  `resizeImageToDataUrl`/`resizeImageToDataUrlFit` ve base64 data URL'ler
+  değişmeden duruyor; gerçek yükleme (Storage'a `upload()` çağrısı +
+  dönen public URL'in `avatar_url`/`prompt_media.url`/
+  `reference_image_url` gibi gerçek şema kolonlarına yazılması) Bölüm
+  21'in işi.
+  - **Bucket'lardaki `file_size_limit` değerleri seçilirken frontend'in
+  mevcut sıkıştırma hedefleriyle (avatar 160×160 küçük JPEG, prompt/istek
+  görselleri `resizeImageToDataUrlFit`'in hedeflediği boyut) kabaca
+  hizalandı, ama gerçek kullanıcı dosyalarıyla (büyük orijinal fotoğraflar)
+  test edilmedi — gerçek yükleme akışı kurulduğunda (Bölüm 21) sınırların
+  pratikte yeterli olup olmadığı görülecek.
+- **Silme/değiştirme akışı frontend'de henüz yok:** politikalar bir
+  kullanıcının kendi dosyasını silebilmesine izin veriyor (avatar için
+  ayrıca güncelleyebilmesine de), ama `/profile/edit` gibi hiçbir ekran
+  şu an gerçek bir silme/değiştirme çağrısı yapmıyor (henüz Storage'a hiç
+  bağlı değil) — bu da Bölüm 21'in kapsamında.
+
+**Sonraki modül:** Frontend'in gerçek Supabase'e bağlanması (Bölüm 21).
