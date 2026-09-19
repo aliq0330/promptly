@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { primaryNavItems } from "@/components/layout/nav-items";
+import { useProfileNavHref } from "@/features/auth/use-profile-nav-href";
 
 function isActive(pathname: string, href: string) {
   if (href === "/") return pathname === "/";
@@ -12,6 +13,7 @@ function isActive(pathname: string, href: string) {
 
 export function Sidebar() {
   const pathname = usePathname();
+  const profileNavHref = useProfileNavHref();
 
   return (
     <aside className="hidden lg:flex lg:w-64 lg:flex-col lg:border-r lg:border-border lg:bg-surface">
@@ -22,12 +24,13 @@ export function Sidebar() {
       </div>
       <nav className="flex flex-1 flex-col gap-1 px-3 py-2">
         {primaryNavItems.map((item) => {
+          const href = item.href === "/profile/me" ? profileNavHref : item.href;
           const active = isActive(pathname, item.href);
           const Icon = item.icon;
           return (
             <Link
               key={item.href}
-              href={item.href}
+              href={href}
               className={cn(
                 "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors",
                 active

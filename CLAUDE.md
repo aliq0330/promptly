@@ -212,8 +212,12 @@ gerçek Supabase projesi bağlantısı yoktur.**
 21. [~] Frontend'in gerçek Supabase'e bağlanması (BAŞLADI, TAMAMLANMADI —
     Faz 1: düz "Prompt Oluştur" ve "Kopyasını Oluştur" artık gerçekten,
     kalıcı olarak Supabase'e yayınlıyor ve feed/keşfette/kendi detay
-    sayfasında görünüyor; beğeni/kaydetme/yorum/takip/istekler/mesajlaşma/
-    profil sayfaları hâlâ mock+localStorage — bkz. Bölüm 9)
+    sayfasında görünüyor. Faz 2: gerçek kullanıcıların artık gerçek bir
+    profil sayfası var (`/profile/real`) — kendi promptları, gerçek
+    düzenleme (Storage'a avatar yükleme dahil), header/sidebar/mobil
+    navigasyonun "Profil" linki artık gerçek hesaba yönleniyor. Beğeni/
+    kaydetme/yorum/takip/istekler/mesajlaşma hâlâ mock+localStorage —
+    bkz. Bölüm 9)
 22. [ ] Moderasyon, engelleme, raporlama
 23. [ ] Testler, performans, erişilebilirlik
 24. [ ] Deployment ve son kalite kontrolü
@@ -223,12 +227,12 @@ gerçek Supabase projesi bağlantısı yoktur.**
 ## 9. Şu Anki Durum (bu bölüm her modül sonunda güncellenir)
 
 **Son güncelleme:** Bölüm 21 — Frontend'in gerçek Supabase'e bağlanması,
-Faz 1 (devam ediyor). Uygulamanın ilk gerçek, çapraz kullanıcı/çapraz
-cihaz kullanıcı içeriği artık var: düz "Prompt Oluştur" ve "Kopyasını
-Oluştur" akışları, giriş yapılmışsa, gerçekten Supabase'e yayınlıyor.
-Geri kalan her şey (beğeni/kaydetme/yorum/takip/istekler/mesajlaşma/
-profil sayfaları) hâlâ mock veri + localStorage — bu modülün sonraki
-fazlarının işi.
+Faz 2 (devam ediyor). Faz 1'in gerçek promptlarına artık gerçek bir yuva
+var: giriş yapmış bir kullanıcının kendi gerçek profil sayfası, gerçek
+profil düzenleme (Storage'a avatar yükleme dahil), ve uygulamanın her
+yerindeki "Profil" linki artık gerçek hesaba yönleniyor. Geri kalan her
+şey (beğeni/kaydetme/yorum/takip/istekler/mesajlaşma) hâlâ mock veri +
+localStorage — bu modülün sonraki fazlarının işi.
 
 **Tamamlanan:**
 - CLAUDE.md oluşturuldu.
@@ -1340,11 +1344,133 @@ fazlarının işi.
   bilinçli bir seçim (yayını kaybetmek, etiketi kaybetmekten daha kötü),
   ama bu sessiz bir başarısızlık, kullanıcıya "etiketler eklenemedi" gibi
   ayrı bir uyarı gösterilmiyor.
-- **`useOwnProfile()` her sayfa/bileşen ağacında kendi ayrı sorgusunu
-  tetikliyor** (paylaşılan bir context/cache yok) — `CreatePromptForm`
-  dışında henüz başka hiçbir yerde kullanılmadığından şu an pratik bir
-  sorun değil, ama birden fazla yerde kullanılmaya başlarsa (profil
-  sayfası fazında olacağı gibi) tekilleştirilmesi gerekebilir.
+- ~~`useOwnProfile()` her sayfa/bileşen ağacında kendi ayrı sorgusunu
+  tetikliyor~~ — Faz 2'de düzeltildi, bkz. aşağıdaki `OwnProfileProvider`
+  notu.
+
+- **Frontend'in gerçek Supabase'e bağlanması — Faz 2 (Bölüm 21, devam
+  ediyor): gerçek kullanıcı profil sayfaları.** Faz 1'in gerçek
+  promptlarının yazar linki artık 404 vermiyor — gerçek hesapların artık
+  gerçek bir profil sayfası, gerçek düzenleme ve uygulamanın her yerinde
+  doğru "Profil" navigasyonu var.
+  - **`useOwnProfile()` artık bir Context (`OwnProfileProvider`,
+    `features/auth/own-profile-provider.tsx`), plain bir hook değil:**
+    Faz 1'de yalnızca `CreatePromptForm` kullanıyordu; Faz 2'de header,
+    sidebar, mobil nav ve profil düzenleme formu da aynı veriye ihtiyaç
+    duyunca, her biri kendi ayrı sorgusunu tetiklemek yerine tek bir
+    paylaşılan fetch'e geçildi (Follow/Like/Save provider'larıyla aynı
+    mimari desende). `(app)/layout.tsx`'e `AppProviders`'ın en dışına
+    eklendi.
+  - **Yeni `src/lib/supabase/profiles.ts` fonksiyonları:**
+    `fetchProfileByUsername(username)` (başka birinin gerçek profilini
+    görüntülemek için — herkese açık, Bölüm 19 RLS'i zaten böyle),
+    `updateOwnProfile(userId, patch)` (gerçek, kalıcı `profiles`
+    güncellemesi), `uploadAvatar(userId, file)` (gerçekten `avatars`
+    Storage bucket'ına yükleyip genel URL'i döndürüyor — Bölüm 20).
+  - **Yeni `src/lib/supabase/prompts.ts` → `fetchPromptsByAuthor(authorId)`:**
+    bir profilin galerisi için — Bölüm 19'un RLS'i zaten doğru işi
+    yapıyor: ziyaretçi yalnızca yayınlanmış promptları görür, sahibi kendi
+    profilinde taslaklarını da görür, ekstra bir filtre yazmaya gerek yok.
+  - **Yeni `profileHref(user)`** (`lib/utils.ts`, `promptHref`/
+    `requestHref` ile birebir aynı desen): kullanıcı adı build-zamanı mock
+    listesinde mi diye bakıyor; değilse `/profile/real?username=…`'e
+    yönlendiriyor. Uygulamadaki TÜM profil linkleri (kart footer'ları,
+    istek kartları, yaratıcı satırları, arama sonuçları, paylaş
+    butonları) bu tek yardımcıyı kullanacak şekilde güncellendi — hiçbiri
+    artık `/profile/${username}`'i elle kurmuyor.
+  - **Yeni `RealProfileView`/`/profile/real`** (`local-prompt-view.tsx`
+    ile birebir aynı desen): `?username=` sorgu param'ından gerçek profili
+    ve `fetchPromptsByAuthor` ile gerçek promptlarını çekip mevcut
+    `ProfileView` bileşenine (aynı bileşen, mock/gerçek/yerel promptlar
+    için zaten paylaşılıyordu) besliyor. `isOwnProfile`, gösterilen
+    profilin id'si oturum açmış kullanıcının id'sine eşit mi diye bakarak
+    hesaplanıyor. Bulunamazsa dürüst bir "Profil bulunamadı" ekranı
+    gösteriyor.
+  - **`ProfileActions` refaktörü:** `OwnProfileActions`/
+    `OtherProfileActions` artık ayrı `username`/`userId` prop'ları yerine
+    tam `UserProfile` nesnesini alıyor — paylaş butonlarının URL'i artık
+    `profileHref(user)` ile doğru hesaplanıyor (gerçek bir profildeyken
+    `/profile/${username}` paylaşmak 404 üretirdi).
+  - **Header/Sidebar/MobileNav artık gerçek kimliği yansıtıyor:** Header'daki
+    avatar artık giriş yapılmışsa gerçek profile (`profileHref`), değilse
+    mock "Sen" persona'sına (`/profile/me`) gidiyor — bu, kullanıcının
+    Bölüm 17 sonrasında sorduğu "Profil sekmesi hep mock kalıyor, bu bir
+    hata mı?" sorusunun gerçek cevabı: artık hata değil, çünkü artık
+    gerçekten çözülmüş durumda. Sidebar/mobil nav'daki "Profil" öğesi de
+    yeni `useProfileNavHref()` hook'uyla aynı mantığı kullanıyor. **Bilinen
+    küçük kozmetik sınırlama:** "Profil" öğesinin aktif/vurgulu görünmesi
+    hâlâ yalnızca `pathname`'e bakıyor (`useSearchParams` gerektirmeden);
+    bu yüzden kendi gerçek profilinizi (`/profile/real?username=…`)
+    görüntülerken "Profil" sekmesi vurgulanmıyor (link doğru yere gitmesine
+    rağmen). Küçük, kasıtlı olarak çözülmemiş bir kusur.
+  - **`/profile/edit` artık iki gerçek mod:** giriş yapılmışsa gerçek
+    `profiles` satırını günceller (yeni fotoğraf seçildiyse gerçekten
+    `avatars` bucket'ına yükler); giriş yapılmamışsa Bölüm 12/13'ün
+    orijinal davranışı (mock "me" + `ProfileOverridesProvider`/
+    localStorage) hiç değişmeden duruyor. Form alanları gerçek profil
+    yüklenene kadar bir `useEffect` ile senkronize ediliyor (async veriden
+    kontrollü input'ları doldurma problemi — CreatePromptForm'un remix
+    prefill'inde olduğu gibi lazy initializer kullanılamıyor çünkü veri
+    build-zamanında değil, ağdan async geliyor). Kullanıcı adı her iki
+    modda da düzenlenemez (gerçek modda bile — Supabase'in kendi bir
+    yeniden adlandırma akışı yok, bu ayrı bir sınırlama).
+  - **Kritik dayanıklılık düzeltmesi (test sırasında bulundu):**
+    `fetchOwnProfile`/`fetchProfileByUsername`/`fetchPromptById`/
+    `fetchPromptsByAuthor`/`fetchRecentPublishedPrompts` — `.single()`/
+    `.maybeSingle()` kullanan sorgular, gerçek bir ağ hatasında (yapılı bir
+    Supabase hata nesnesiyle değil) **söz vermeyi (promise) hiç
+    çözmeyecek şekilde askıda kalabiliyordu** (Faz 1'in `try/catch`'siz
+    kodu bunu kapsamıyordu — Faz 1'in kendi testleri bu spesifik senaryoyu
+    hiç tetiklemediği için fark edilmemişti). Tüm bu fonksiyonlar artık
+    `try/catch` ile sarılı; gerçek bir ağ sorununda birkaç saniye içinde
+    (bu sandbox'ta ~6-10 saniye, engelleyen proxy'nin zaman aşımına bağlı)
+    zarifçe boş/`null` sonuca düşüyorlar, sonsuza dek "Yükleniyor…"da
+    takılı kalmıyorlar.
+  - **Nasıl doğrulandı:** Bu sandbox'ın ağ politikası hâlâ Supabase'e
+    erişimi engellediğinden, gerçek tarayıcıda (Playwright) hem "tamamen
+    erişilemez" senaryosu (yukarıdaki dayanıklılık düzeltmesi tam olarak
+    bunu kanıtlıyor — birkaç saniye sonra çökmeden "Profil bulunamadı"
+    gösteriyor) hem de ağ seviyesinde taklit edilmiş yanıtlarla uçtan uca
+    tam akış test edildi: kendi gerçek profilini görüntüleme (doğru ad/
+    bio/rozet/istatistik/gerçek prompt galeri kartı, "Profili Düzenle"
+    butonu), header avatarının ve sidebar "Profil" linkinin doğru gerçek
+    URL'e gitmesi, `/profile/edit`'in gerçek veriyle dolu gelmesi, gerçek
+    bir güncellemenin (taklit edilmiş PATCH) başarıyla kaydedilip doğru
+    sayfaya yönlendirmesi ve güncel adı göstermesi, ve son olarak
+    BAŞKASININ gerçek profilinin doğru şekilde "own=false" (Takip Et
+    butonu, düzenleme yok) render edilmesi — hepsi sıfır JS hatasıyla.
+  - `npx tsc --noEmit`, `npm run lint` ve tam `npm run build` (91 statik
+    sayfa) hatasız geçti.
+
+**Bilinen sorunlar / bilinçli basitleştirmeler (Bölüm 21 Faz 2 için ek):**
+- **Gerçek kullanıcılar arasında takip/beğeni/kaydetme/yorum hâlâ
+  localStorage'da** — bir profildeki "Takip Et" butonu (gerçek profil
+  dahil) hâlâ yalnızca bu tarayıcıda yaşıyor. Bu, Faz 1'de de belirtilen
+  bilinen bir sınırlama, Faz 2 bunu değiştirmedi.
+- **Gerçek kullanıcıların "Kaydedilenler"/"Beğeniler" sekmeleri, mock
+  kullanıcılarla birebir aynı localStorage verisini gösteriyor** — bu
+  aslında doğru/beklenen davranış (beğeni/kaydetme zaten tarayıcı bazlı,
+  kimin profili görüntülendiğinden bağımsız), ama şunu açıkça belirtmek
+  gerekir: bu sekmeler "bu gerçek hesabın gerçekten neyi beğendiği"ni
+  DEĞİL, "bu tarayıcının neyi beğendiğini düşündüğü"nü gösteriyor.
+- **Gerçek kullanıcı adı hâlâ değiştirilemiyor** — ne mock modda ne gerçek
+  modda. Gerçek modda bunun nedeni farklı: statik export kısıtı değil,
+  Supabase'in kendi username-rename akışının henüz kurulmamış olması
+  (ayrı, küçük bir iş — `profiles.username` üzerinde bir UPDATE + yeni
+  benzersizlik kontrolü yeterli olurdu, ama bu fazda kapsam dışı
+  bırakıldı).
+- **Gerçek bir hesabın "Mesaj Gönder" butonu yok:** `OtherProfileActions`
+  hâlâ yalnızca `mocks/conversations.ts`'teki statik konuşmalara dayanıyor
+  — gerçek kullanıcılar arası mesajlaşma tamamen ayrı, büyük bir faz
+  (Bölüm 16'dan beri devre dışı).
+- **Rozetler (`ProfileBadges`) gerçek promptlarla da doğru çalışıyor**
+  (ekran görüntüsünde "İlk promptunu yayımladı" gerçek veriyle tetiklendi)
+  ama bu kasıtlı bir çalışma değildi, `ProfileView`'ın zaten
+  `authorPrompts.length`'e bakan var olan mantığının doğal bir sonucu —
+  yine de doğrulandığı için not edilmeye değer.
+- **"Profil" nav öğesinin aktif vurgusu** yukarıda belirtildiği gibi
+  gerçek kendi profilde çalışmıyor (yalnızca linkin hedefi doğru,
+  vurgulama değil) — kozmetik, kasıtlı olarak bu fazda çözülmedi.
 
 **Sonraki adım:** Bölüm 21'in bir sonraki fazı — muhtemel adaylar: gerçek
 beğeni/kaydetme/yorum/takip (Bölüm 19'un zaten hazır RLS+trigger'larını

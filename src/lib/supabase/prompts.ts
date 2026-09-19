@@ -81,24 +81,63 @@ function mapPromptRow(row: PromptRow): Prompt {
 
 /** Most recent published prompts, for mixing into the feed/discover pages alongside mock + local content. */
 export async function fetchRecentPublishedPrompts(limit = 60): Promise<Prompt[]> {
-  const { data, error } = await supabase
-    .from("prompts")
-    .select(PROMPT_SELECT)
-    .eq("status", "published")
-    .order("created_at", { ascending: false })
-    .limit(limit);
-  if (error) {
-    console.error("fetchRecentPublishedPrompts", error);
+  try {
+    const { data, error } = await supabase
+      .from("prompts")
+      .select(PROMPT_SELECT)
+      .eq("status", "published")
+      .order("created_at", { ascending: false })
+      .limit(limit);
+    if (error) {
+      console.error("fetchRecentPublishedPrompts", error);
+      return [];
+    }
+    return (data ?? []).map((row) => mapPromptRow(row as unknown as PromptRow));
+  } catch (err) {
+    // A real network failure (e.g. no route to Supabase) throws instead of
+    // resolving with a structured error — without this, a visitor with no
+    // connectivity would see the feed hang loading forever instead of
+    // gracefully falling back to mock/local content only.
+    console.error("fetchRecentPublishedPrompts", err);
     return [];
   }
-  return (data ?? []).map((row) => mapPromptRow(row as unknown as PromptRow));
 }
 
 /** A single prompt by id — used when a direct link points at one that fell outside the recent-prompts batch above. RLS hides other users' drafts automatically. */
 export async function fetchPromptById(id: string): Promise<Prompt | null> {
-  const { data, error } = await supabase.from("prompts").select(PROMPT_SELECT).eq("id", id).maybeSingle();
-  if (error || !data) return null;
-  return mapPromptRow(data as unknown as PromptRow);
+  try {
+    const { data, error } = await supabase.from("prompts").select(PROMPT_SELECT).eq("id", id).maybeSingle();
+    if (error || !data) return null;
+    return mapPromptRow(data as unknown as PromptRow);
+  } catch (err) {
+    console.error("fetchPromptById", err);
+    return null;
+  }
+}
+
+/**
+ * Every real prompt by one author, newest first — for a real profile page
+ * (CLAUDE.md Bölüm 21 Faz 2). RLS (Bölüm 19) already does the right thing
+ * here without any extra filtering: a visitor gets only that author's
+ * published prompts, while the author viewing their own profile also sees
+ * their own drafts.
+ */
+export async function fetchPromptsByAuthor(authorId: string): Promise<Prompt[]> {
+  try {
+    const { data, error } = await supabase
+      .from("prompts")
+      .select(PROMPT_SELECT)
+      .eq("author_id", authorId)
+      .order("created_at", { ascending: false });
+    if (error) {
+      console.error("fetchPromptsByAuthor", error);
+      return [];
+    }
+    return (data ?? []).map((row) => mapPromptRow(row as unknown as PromptRow));
+  } catch (err) {
+    console.error("fetchPromptsByAuthor", err);
+    return [];
+  }
 }
 
 export interface CreateRealPromptInput {

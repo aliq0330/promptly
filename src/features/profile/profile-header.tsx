@@ -87,9 +87,9 @@ export function ProfileHeader({
       />
 
       {isOwnProfile ? (
-        <OwnProfileActions username={user.username} />
+        <OwnProfileActions user={user} />
       ) : (
-        <OtherProfileActions userId={user.id} username={user.username} conversationId={conversationId} />
+        <OtherProfileActions user={user} conversationId={conversationId} />
       )}
     </div>
   );

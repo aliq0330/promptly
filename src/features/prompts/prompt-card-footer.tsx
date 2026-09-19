@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Repeat2 } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
-import { formatCount, promptHref } from "@/lib/utils";
+import { formatCount, profileHref, promptHref } from "@/lib/utils";
 import { ShareButton } from "./share-button";
 import { LikeButton } from "./like-button";
 import { SaveButton } from "./save-button";
@@ -19,7 +19,7 @@ export function PromptCardFooter({ prompt }: { prompt: Prompt }) {
   return (
     <div className="relative z-10 flex items-center justify-between gap-2 border-t border-border px-4 py-3">
       <Link
-        href={`/profile/${prompt.author.username}`}
+        href={profileHref(prompt.author)}
         className="flex min-w-0 items-center gap-2 hover:opacity-80"
       >
         <Avatar src={prompt.author.avatarUrl} alt={prompt.author.displayName} size={24} />

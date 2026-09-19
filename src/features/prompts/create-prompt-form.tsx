@@ -11,7 +11,7 @@ import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
 import { useLocalPrompts } from "@/features/prompts/local-prompts-provider";
 import { useRealPrompts } from "@/features/prompts/real-prompts-provider";
 import { useAuth } from "@/features/auth/auth-provider";
-import { useOwnProfile } from "@/features/auth/use-own-profile";
+import { useOwnProfile } from "@/features/auth/own-profile-provider";
 import { useRequests } from "@/features/requests/requests-provider";
 import { getUserById } from "@/mocks/users";
 import { mockTags } from "@/mocks/tags";

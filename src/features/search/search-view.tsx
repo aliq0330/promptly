@@ -7,7 +7,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { PromptGrid } from "@/features/prompts/prompt-grid";
 import { mockPrompts } from "@/mocks/prompts";
 import { mockUsers } from "@/mocks/users";
-import { formatCount } from "@/lib/utils";
+import { formatCount, profileHref } from "@/lib/utils";
 
 export function SearchView() {
   const [query, setQuery] = useState("");
@@ -59,7 +59,7 @@ export function SearchView() {
                 {users.map((user) => (
                   <Link
                     key={user.id}
-                    href={`/profile/${user.username}`}
+                    href={profileHref(user)}
                     className="flex items-center gap-3 border-b border-border px-4 py-3 transition-colors last:border-0 hover:bg-accent-surface/40"
                   >
                     <Avatar src={user.avatarUrl} alt={user.displayName} size={40} />

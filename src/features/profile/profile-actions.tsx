@@ -4,6 +4,8 @@ import Link from "next/link";
 import { MessageCircle, Settings, Sparkles } from "lucide-react";
 import { ShareButton } from "@/features/prompts/share-button";
 import { FollowButton } from "./follow-button";
+import { profileHref } from "@/lib/utils";
+import type { UserProfile } from "@/types";
 
 /**
  * Own vs. other-profile actions are deliberately different components, not
@@ -11,7 +13,7 @@ import { FollowButton } from "./follow-button";
  * kendi profilinde kendini takip edememeli", so the two cases must never
  * accidentally share a follow button.
  */
-export function OwnProfileActions({ username }: { username: string }) {
+export function OwnProfileActions({ user }: { user: UserProfile }) {
   return (
     <div className="flex flex-wrap items-center justify-center gap-2">
       <Link
@@ -28,7 +30,7 @@ export function OwnProfileActions({ username }: { username: string }) {
         Prompt Oluştur
       </Link>
       <ShareButton
-        url={`/profile/${username}`}
+        url={profileHref(user)}
         title="Promptly profilim"
         label="Paylaş"
         className="h-9 gap-1.5 rounded-md border border-border px-4 text-sm"
@@ -45,17 +47,15 @@ export function OwnProfileActions({ username }: { username: string }) {
 }
 
 export function OtherProfileActions({
-  userId,
-  username,
+  user,
   conversationId,
 }: {
-  userId: string;
-  username: string;
+  user: UserProfile;
   conversationId?: string;
 }) {
   return (
     <div className="flex flex-wrap items-center justify-center gap-2">
-      <FollowButton userId={userId} size="md" />
+      <FollowButton userId={user.id} size="md" />
       {conversationId && (
         <Link
           href={`/messages/${conversationId}`}
@@ -66,7 +66,7 @@ export function OtherProfileActions({
         </Link>
       )}
       <ShareButton
-        url={`/profile/${username}`}
+        url={profileHref(user)}
         title="Promptly profili"
         label="Paylaş"
         className="h-9 gap-1.5 rounded-md border border-border px-4 text-sm"

@@ -8,7 +8,7 @@ import { mockPrompts } from "@/mocks/prompts";
 import { mockUsers } from "@/mocks/users";
 import { mockTags } from "@/mocks/tags";
 import { mockRequests } from "@/mocks/requests";
-import { formatCount } from "@/lib/utils";
+import { formatCount, profileHref } from "@/lib/utils";
 
 export default function DiscoverPage() {
   const trending: FeedItem[] = [
@@ -45,7 +45,7 @@ export default function DiscoverPage() {
               </span>
               <FollowButton userId={creator.id} className="relative z-10 w-full" />
               <Link
-                href={`/profile/${creator.username}`}
+                href={profileHref(creator)}
                 className="absolute inset-0 z-0"
                 aria-label={creator.displayName}
               />

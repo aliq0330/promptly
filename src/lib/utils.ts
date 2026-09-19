@@ -1,7 +1,8 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { mockPrompts } from "@/mocks/prompts";
-import type { Prompt, PromptRequest } from "@/types";
+import { mockUsers } from "@/mocks/users";
+import type { Prompt, PromptRequest, UserProfile } from "@/types";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -177,6 +178,57 @@ export function resizeImageToBlob(
 }
 
 /**
+ * Same center-crop-to-square logic as `resizeImageToDataUrl`, but resolves
+ * a real `Blob` instead of a data URL — for uploading a real profile's
+ * avatar to the Supabase Storage `avatars` bucket (CLAUDE.md Bölüm 20/21).
+ * The data-URL version still backs the mock "me" persona's avatar edit
+ * (ProfileOverridesProvider/localStorage), which has nothing to do with
+ * Storage.
+ */
+export function resizeImageToSquareBlob(
+  file: File,
+  size = 320,
+): Promise<{ blob: Blob; contentType: string }> {
+  return new Promise((resolve, reject) => {
+    const objectUrl = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        URL.revokeObjectURL(objectUrl);
+        reject(new Error("2D canvas context unavailable"));
+        return;
+      }
+      const cropSize = Math.min(img.naturalWidth, img.naturalHeight);
+      const sx = (img.naturalWidth - cropSize) / 2;
+      const sy = (img.naturalHeight - cropSize) / 2;
+      ctx.drawImage(img, sx, sy, cropSize, cropSize, 0, 0, size, size);
+      const contentType = "image/jpeg";
+      canvas.toBlob(
+        (blob) => {
+          URL.revokeObjectURL(objectUrl);
+          if (!blob) {
+            reject(new Error("Görsel işlenemedi"));
+            return;
+          }
+          resolve({ blob, contentType });
+        },
+        contentType,
+        0.9,
+      );
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error("Görsel yüklenemedi"));
+    };
+    img.src = objectUrl;
+  });
+}
+
+/**
  * Any prompt that isn't one of the fixed mock ids baked into the static
  * export at build time (`generateStaticParams` on `/prompts/[id]`) has no
  * pre-rendered page there — a GitHub Pages static export can't serve a
@@ -202,4 +254,17 @@ export function requestHref(request: Pick<PromptRequest, "id">): string {
   return request.id.startsWith("local-req-")
     ? `/requests/local?id=${request.id}`
     : `/requests/${request.id}`;
+}
+
+/**
+ * Same idea as `promptHref`, for a user's profile — a real, signed-up
+ * Supabase account (CLAUDE.md Bölüm 21) has a real, auto-generated
+ * username that was never one of the fixed usernames `/profile/[username]`
+ * was pre-rendered for at build time, so it routes to `/profile/real`
+ * instead, which looks the profile up client-side by a `?username=` query
+ * param.
+ */
+export function profileHref(user: Pick<UserProfile, "username">): string {
+  const isStaticMockUser = mockUsers.some((mock) => mock.username === user.username);
+  return isStaticMockUser ? `/profile/${user.username}` : `/profile/real?username=${user.username}`;
 }

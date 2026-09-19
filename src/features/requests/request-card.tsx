@@ -4,7 +4,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
 import { RequestResponseCount } from "./request-response-count";
-import { formatRelativeTime, requestHref } from "@/lib/utils";
+import { formatRelativeTime, profileHref, requestHref } from "@/lib/utils";
 import { placeholderArt } from "@/lib/placeholder-image";
 import type { PromptRequest } from "@/types";
 
@@ -73,7 +73,7 @@ export function RequestCard({ request }: { request: PromptRequest }) {
 
         <div className="flex items-center justify-between gap-2 pt-1">
           <Link
-            href={`/profile/${request.author.username}`}
+            href={profileHref(request.author)}
             className="relative z-10 flex min-w-0 items-center gap-2 text-xs text-text-muted hover:text-text"
           >
             <Avatar src={request.author.avatarUrl} alt={request.author.displayName} size={20} />
