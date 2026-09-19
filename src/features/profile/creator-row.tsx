@@ -14,7 +14,7 @@ export function CreatorRow({ user }: { user: UserProfile }) {
           <p className="truncate text-xs text-text-muted">{formatCount(user.followerCount)} takipçi</p>
         </div>
       </Link>
-      <FollowButton userId={user.id} className="shrink-0" />
+      <FollowButton user={user} className="shrink-0" />
     </div>
   );
 }

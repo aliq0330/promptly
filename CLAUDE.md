@@ -215,9 +215,11 @@ gerçek Supabase projesi bağlantısı yoktur.**
     sayfasında görünüyor. Faz 2: gerçek kullanıcıların artık gerçek bir
     profil sayfası var (`/profile/real`) — kendi promptları, gerçek
     düzenleme (Storage'a avatar yükleme dahil), header/sidebar/mobil
-    navigasyonun "Profil" linki artık gerçek hesaba yönleniyor. Beğeni/
-    kaydetme/yorum/takip/istekler/mesajlaşma hâlâ mock+localStorage —
-    bkz. Bölüm 9)
+    navigasyonun "Profil" linki artık gerçek hesaba yönleniyor. Faz 3:
+    gerçek bir prompt/kullanıcıda beğeni/kaydetme/takip artık gerçekten,
+    kalıcı olarak Supabase'e yazılıyor (`/saved` ve profildeki Kaydedilenler/
+    Beğeniler sekmeleri dahil); yorum/istekler/mesajlaşma hâlâ
+    mock+localStorage — bkz. Bölüm 9)
 22. [ ] Moderasyon, engelleme, raporlama
 23. [ ] Testler, performans, erişilebilirlik
 24. [ ] Deployment ve son kalite kontrolü
@@ -227,12 +229,12 @@ gerçek Supabase projesi bağlantısı yoktur.**
 ## 9. Şu Anki Durum (bu bölüm her modül sonunda güncellenir)
 
 **Son güncelleme:** Bölüm 21 — Frontend'in gerçek Supabase'e bağlanması,
-Faz 2 (devam ediyor). Faz 1'in gerçek promptlarına artık gerçek bir yuva
-var: giriş yapmış bir kullanıcının kendi gerçek profil sayfası, gerçek
-profil düzenleme (Storage'a avatar yükleme dahil), ve uygulamanın her
-yerindeki "Profil" linki artık gerçek hesaba yönleniyor. Geri kalan her
-şey (beğeni/kaydetme/yorum/takip/istekler/mesajlaşma) hâlâ mock veri +
-localStorage — bu modülün sonraki fazlarının işi.
+Faz 3 (devam ediyor). Gerçek bir prompt/gerçek bir kullanıcı üzerinde
+beğenme, kaydetme ve takip etme artık gerçekten, kalıcı olarak Supabase'e
+yazılıyor — iki gerçek hesap birbirini gerçekten takip edebiliyor, gerçek
+bir prompt gerçekten beğenilip kaydedilebiliyor ve bu `/saved` ile profil
+sekmelerine yansıyor. Yorum ekleme, prompt istekleri ve mesajlaşma hâlâ
+mock veri + localStorage — bu modülün sonraki fazlarının işi.
 
 **Tamamlanan:**
 - CLAUDE.md oluşturuldu.
@@ -1472,8 +1474,93 @@ localStorage — bu modülün sonraki fazlarının işi.
   gerçek kendi profilde çalışmıyor (yalnızca linkin hedefi doğru,
   vurgulama değil) — kozmetik, kasıtlı olarak bu fazda çözülmedi.
 
+- **Frontend'in gerçek Supabase'e bağlanması — Faz 3 (Bölüm 21, devam
+  ediyor): gerçek beğeni, kaydetme, takip.** Bölüm 19'un zaten yazılmış ve
+  test edilmiş RLS politikaları + `SECURITY DEFINER` sayaç trigger'ları
+  ilk kez gerçekten kullanılmaya başlandı — iki gerçek hesap artık
+  birbirini gerçekten takip edebiliyor, gerçek bir prompt gerçekten
+  beğenilip kaydedilebiliyor.
+  - **Mimari karar — aynı id gerçek mi sorusu, `isUuid()` ile:** Faz 1/2
+    "bu id mock listesinde mi" diye sorarken, Faz 3 üç kaynağı (mock/yerel/
+    gerçek) kesin olarak ayırması gerektiğinden (`rr*` gibi mock yanıt
+    id'leri "mock listesinde değil" testini yanlışlıkla geçerdi) yeni,
+    daha kesin bir `isUuid(id)` yardımcısı eklendi (`lib/utils.ts`) —
+    Supabase'in `gen_random_uuid()` ile ürettiği HER id gerçek bir UUID
+    formatında, mock/yerel/yanıt id'lerinin hiçbiri asla değil. Hem
+    promptlar (`prompt_likes`/`prompt_saves`) hem profiller (`follows`)
+    için aynı fonksiyon kullanılıyor.
+  - **Yeni `src/lib/supabase/{follows,likes,saves}.ts`:** her biri aynı
+    üçlü — `fetchIsX` (gerçek durumu okur), `xTarget`/`unxTarget` (gerçek
+    INSERT/DELETE). Hepsi Bölüm 19'un RLS'ine güveniyor (kendi adına
+    yazma, `WITH CHECK` sahteciliği engelliyor).
+  - **Yeni `useFollowState`/`useLikeState`/`useSaveState` hook'ları**
+    (`features/profile/use-follow-state.ts`,
+    `features/prompts/use-{like,save}-state.ts`): hedef gerçekse (`isUuid`)
+    ve giriş yapılmışsa gerçek Supabase durumunu okuyup optimistik
+    güncelleyerek yazıyor; değilse (mock/yerel hedef VEYA giriş yapılmamış
+    ziyaretçi) mevcut `FollowProvider`/`LikeProvider`/`SaveProvider`
+    localStorage davranışını **hiç değiştirmeden** kullanıyor — Faz 1'in
+    remix'te kurduğu "gerçek olmayan hedefe gerçek yazım yapılamaz"
+    ilkesinin birebir devamı. Giriş yapılmamış bir ziyaretçi gerçek bir
+    hedefte etkileşime girmeye çalışırsa (`canFollow`/`canLike`/`canSave`
+    false), buton yerine `/login`'e giden bir link gösteriliyor —
+    sessizce yutulan bir tıklama yerine.
+  - **`FollowButton` ikiye ayrıldı:** `FollowButtonView` (saf, state'i
+    prop olarak alan sunum bileşeni) ve `FollowButton` (kendi
+    `useFollowState` çağrısını yapan bağımsız sürüm, `CreatorRow`/Keşfet
+    gibi tek başına kullanımlar için). `ProfileHeader` artık
+    `useFollowState(user)`'ı YALNIZCA BİR KEZ çağırıp hem takipçi
+    sayısını hem `OtherProfileActions`'a geçirdiği `FollowButtonView`'ı
+    aynı state'ten besliyor — iki ayrı hook örneği kullanılsaydı (biri
+    sayı için, biri buton için) gerçek bir hedefte her biri kendi yerel
+    optimistik state'ini tutacağından, butona tıklayınca yanındaki sayı
+    hemen güncellenmezdi (sayfa yenilenene kadar). `LikeButton`/
+    `SaveButton` bu sorunu yaşamıyor çünkü zaten tek bir yerde
+    (`PromptCardFooter`/detay sayfası) render ediliyorlar.
+  - **`/saved` ve profildeki "Kaydedilenler"/"Beğeniler" sekmeleri artık
+    gerçek veriyi de gösteriyor:** yeni `fetchSavedPrompts(userId)`/
+    `fetchLikedPrompts(userId)` (`lib/supabase/prompts.ts`) `prompt_saves`/
+    `prompt_likes` üzerinden `prompts` tablosuna PostgREST embed sorgusu
+    yapıp gerçek promptları döndürüyor; sonuç mock/yerel listeyle
+    birleştiriliyor. Bu olmadan Faz 3'ün "gerçek kaydetme" özelliği
+    yarım kalırdı — kullanıcı bir şeyi gerçekten kaydedip hiçbir yerde
+    göremezdi.
+  - **Nasıl doğrulandı (ağ seviyesinde taklit edilmiş yanıtlarla, Bölüm
+    17'deki aynı yöntemle):** başkasının gerçek profilinde "Takip Et"e
+    basınca gerçek bir INSERT tetiklendiği VE aynı anda görünen takipçi
+    sayısının (ayrı bir hook örneği değil, aynı state) doğru arttığı;
+    gerçek bir promptta beğenme/kaydetmenin gerçek INSERT'ler tetiklediği;
+    `/saved`'in gerçekten kaydedilen promptu gösterdiği — hepsi sıfır JS
+    hatasıyla doğrulandı.
+  - `npx tsc --noEmit`, `npm run lint` ve tam `npm run build` hatasız geçti.
+
+**Bilinen sorunlar / bilinçli basitleştirmeler (Bölüm 21 Faz 3 için ek):**
+- **Yorum ekleme hâlâ gerçek değil** — `CommentProvider`/localStorage
+  hem mock hem gerçek promptlar için aynı şekilde çalışmaya devam ediyor.
+  Yapısal olarak likes/saves ile aynı desenle (`prompt_comments` +
+  `isUuid` kontrolü) gerçek yapılabilir, ama yorum listesi çekme/birleştirme
+  mantığı (var olan `CommentSection`'ın mock+yerel karışımına üçüncü bir
+  kaynak eklemesi) ayrı, biraz daha büyük bir iş olduğundan bu faza
+  sıkıştırılmadı.
+- **N+1 sorgu deseni:** her `LikeButton`/`SaveButton`/`FollowButton`
+  örneği (gerçek bir hedef için) kendi `fetchIsLiked`/`fetchIsSaved`/
+  `fetchIsFollowing` sorgusunu tetikliyor. Şu an gerçek içerik hacmi çok
+  küçük olduğundan (Faz 1 daha yeni başladı) bu pratik bir sorun değil,
+  ama gerçek içerik çoğaldıkça bir feed'in tamamı için toplu bir
+  `.in(...)` sorgusuna geçmek gerekebilir.
+- **Takip/beğeni/kaydetme bildirimleri hâlâ yok:** gerçek bir takip/
+  beğeni/kaydetme, Bölüm 19'un `notifications` tablosuna client'tan
+  insert izni olmadığından (bilinçli güvenlik kararı, bkz. Bölüm 19)
+  hiçbir bildirim üretmiyor — bu, gerçek bildirim üretimi için ayrı bir
+  faz gerektiriyor (sunucu tarafı `SECURITY DEFINER` trigger/fonksiyon).
+- **Kendi kendini takip etme kontrolü çift katmanlı ama ikinci katman
+  hiç tetiklenmiyor:** `FollowButton`/`useFollowState` teknik olarak
+  kendi profilinde de çağrılabilir ama `ProfileHeader` zaten `isOwnProfile`
+  olduğunda `OwnProfileActions`'ı (takip butonu içermeyen) render ediyor
+  — bu yüzden pratikte kendi kendini takip etme arayüzden hiç mümkün
+  değil; veritabanındaki `follows_no_self_follow` CHECK kısıtı (Bölüm 18)
+  son bir güvenlik ağı olarak duruyor.
+
 **Sonraki adım:** Bölüm 21'in bir sonraki fazı — muhtemel adaylar: gerçek
-beğeni/kaydetme/yorum/takip (Bölüm 19'un zaten hazır RLS+trigger'larını
-kullanarak), gerçek prompt istekleri, veya gerçek kullanıcı profil
-sayfaları. Hangisiyle devam edileceği bir sonraki oturumda kullanıcıyla
-netleştirilecek.
+yorum ekleme, gerçek prompt istekleri, veya gerçek mesajlaşma. Hangisiyle
+devam edileceği bir sonraki oturumda kullanıcıyla netleştirilecek.

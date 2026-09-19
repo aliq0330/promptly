@@ -5,7 +5,7 @@ import { ProfileAvatar } from "./profile-avatar";
 import { ProfileStats } from "./profile-stats";
 import { ProfileBadges } from "./profile-badges";
 import { OwnProfileActions, OtherProfileActions } from "./profile-actions";
-import { useFollow } from "./follow-provider";
+import { useFollowState } from "./use-follow-state";
 import { Badge } from "@/components/ui/badge";
 import type { UserProfile } from "@/types";
 
@@ -33,12 +33,13 @@ export function ProfileHeader({
   const bioIsLong = bio.length > BIO_CLAMP_LENGTH;
   const visibleBio = bioIsLong && !bioExpanded ? `${bio.slice(0, BIO_CLAMP_LENGTH).trimEnd()}…` : bio;
 
-  const { isFollowing, wasInitiallyFollowing } = useFollow();
-  // Optimistic count relative to the mock's static followerCount — a real
-  // per-follower list doesn't exist, so this just reflects this session's
-  // own follow/unfollow action, not a synced social count.
-  const followerCount =
-    user.followerCount + (isFollowing(user.id) ? 1 : 0) - (wasInitiallyFollowing(user.id) ? 1 : 0);
+  // Genuinely real for a real (Supabase) profile — the true `follower_
+  // count` column, kept in sync by Bölüm 19's trigger; still an
+  // optimistic local adjustment relative to the mock's static count for a
+  // mock profile, same as before. Called once here (not inside
+  // OtherProfileActions/FollowButton) so the stat below and the action
+  // button share one state instance — see FollowButtonView's comment.
+  const followState = useFollowState(user);
 
   return (
     <div className="flex flex-col items-center gap-3 px-4 pt-8 text-center lg:px-6">
@@ -79,7 +80,7 @@ export function ProfileHeader({
       <ProfileStats
         promptCount={publishedPromptCount}
         remixCount={remixCount}
-        followerCount={followerCount}
+        followerCount={followState.followerCount}
         followingCount={user.followingCount}
         isOwnProfile={isOwnProfile}
         onSelectPrompts={onSelectPrompts}
@@ -89,7 +90,7 @@ export function ProfileHeader({
       {isOwnProfile ? (
         <OwnProfileActions user={user} />
       ) : (
-        <OtherProfileActions user={user} conversationId={conversationId} />
+        <OtherProfileActions user={user} conversationId={conversationId} followState={followState} />
       )}
     </div>
   );

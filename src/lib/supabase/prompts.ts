@@ -140,6 +140,50 @@ export async function fetchPromptsByAuthor(authorId: string): Promise<Prompt[]> 
   }
 }
 
+/** Every real prompt this user has saved, newest-first — for `/saved` and a real own-profile's "Kaydedilenler" tab (CLAUDE.md Bölüm 21 Faz 3). RLS keeps `prompt_saves` private, so this can only ever return the caller's own saves. */
+export async function fetchSavedPrompts(userId: string): Promise<Prompt[]> {
+  try {
+    const { data, error } = await supabase
+      .from("prompt_saves")
+      .select(`created_at, prompts ( ${PROMPT_SELECT} )`)
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
+    if (error) {
+      console.error("fetchSavedPrompts", error);
+      return [];
+    }
+    return ((data ?? []) as unknown as { prompts: PromptRow | null }[])
+      .map((row) => row.prompts)
+      .filter((row): row is PromptRow => Boolean(row))
+      .map((row) => mapPromptRow(row));
+  } catch (err) {
+    console.error("fetchSavedPrompts", err);
+    return [];
+  }
+}
+
+/** Every real prompt this user has liked, newest-first — for a real own-profile's "Beğeniler" tab. Likes are public (Bölüm 19), but this is always called for "my own" liked list. */
+export async function fetchLikedPrompts(userId: string): Promise<Prompt[]> {
+  try {
+    const { data, error } = await supabase
+      .from("prompt_likes")
+      .select(`created_at, prompts ( ${PROMPT_SELECT} )`)
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
+    if (error) {
+      console.error("fetchLikedPrompts", error);
+      return [];
+    }
+    return ((data ?? []) as unknown as { prompts: PromptRow | null }[])
+      .map((row) => row.prompts)
+      .filter((row): row is PromptRow => Boolean(row))
+      .map((row) => mapPromptRow(row));
+  } catch (err) {
+    console.error("fetchLikedPrompts", err);
+    return [];
+  }
+}
+
 export interface CreateRealPromptInput {
   title: string;
   description: string;

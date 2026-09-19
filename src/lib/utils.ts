@@ -8,6 +8,20 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Every id Supabase generates (`gen_random_uuid()` — prompts, profiles,
+ * everything) is a real UUID; every mock id ("p1", "u3", "me"), local id
+ * ("local-…"), and mock request-response id ("rr1") never is. Used to
+ * decide, per prompt/profile, whether an interaction (like/save/comment/
+ * follow — CLAUDE.md Bölüm 21 Faz 3) should write to the real database or
+ * fall back to the existing localStorage providers.
+ */
+export function isUuid(value: string): boolean {
+  return UUID_PATTERN.test(value);
+}
+
 const RELATIVE_TIME_UNITS: [Intl.RelativeTimeFormatUnit, number][] = [
   ["year", 60 * 60 * 24 * 365],
   ["month", 60 * 60 * 24 * 30],

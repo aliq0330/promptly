@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { MessageCircle, Settings, Sparkles } from "lucide-react";
 import { ShareButton } from "@/features/prompts/share-button";
-import { FollowButton } from "./follow-button";
+import { FollowButtonView } from "./follow-button";
+import { useFollowState } from "./use-follow-state";
 import { profileHref } from "@/lib/utils";
 import type { UserProfile } from "@/types";
 
@@ -49,13 +50,15 @@ export function OwnProfileActions({ user }: { user: UserProfile }) {
 export function OtherProfileActions({
   user,
   conversationId,
+  followState,
 }: {
   user: UserProfile;
   conversationId?: string;
+  followState: ReturnType<typeof useFollowState>;
 }) {
   return (
     <div className="flex flex-wrap items-center justify-center gap-2">
-      <FollowButton userId={user.id} size="md" />
+      <FollowButtonView {...followState} size="md" />
       {conversationId && (
         <Link
           href={`/messages/${conversationId}`}

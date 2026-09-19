@@ -43,7 +43,7 @@ export default function DiscoverPage() {
               <span className="text-xs text-text-muted">
                 {formatCount(creator.followerCount)} takipçi
               </span>
-              <FollowButton userId={creator.id} className="relative z-10 w-full" />
+              <FollowButton user={creator} className="relative z-10 w-full" />
               <Link
                 href={profileHref(creator)}
                 className="absolute inset-0 z-0"

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Bookmark, Heart, Repeat2, SearchX, Sparkles } from "lucide-react";
 import { ProfileHeader } from "./profile-header";
 import { ProfileTabs, type ProfileTabKey } from "./profile-tabs";
@@ -12,6 +12,8 @@ import { useProfileOverrides } from "./profile-overrides-provider";
 import { useHiddenPrompts } from "@/features/prompts/hidden-prompts-provider";
 import { useLike, useSave } from "@/features/prompts/like-save-provider";
 import { useLocalPrompts } from "@/features/prompts/local-prompts-provider";
+import { useAuth } from "@/features/auth/auth-provider";
+import { fetchLikedPrompts, fetchSavedPrompts } from "@/lib/supabase/prompts";
 import { mockPrompts } from "@/mocks/prompts";
 import type { Prompt, PromptContentType, UserProfile } from "@/types";
 
@@ -46,8 +48,35 @@ export function ProfileView({
   const { isLiked } = useLike();
   const { isSaved } = useSave();
   const { localPrompts, getByAuthor } = useLocalPrompts();
+  const { user: authUser } = useAuth();
 
   const user = isOwnProfile ? applyOverrides(baseUser) : baseUser;
+
+  // Real likes/saves (a real prompt liked/saved by a real signed-in user,
+  // CLAUDE.md Bölüm 21 Faz 3) live in Supabase, not localStorage — only
+  // ever fetched for one's own profile, and only for the signed-in real
+  // viewer (RLS keeps prompt_saves private to its own user regardless).
+  const [realSavedPrompts, setRealSavedPrompts] = useState<Prompt[]>([]);
+  const [realLikedPrompts, setRealLikedPrompts] = useState<Prompt[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!isOwnProfile || !authUser) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- nothing to fetch for someone else's profile or a signed-out viewer
+      setRealSavedPrompts([]);
+      setRealLikedPrompts([]);
+      return;
+    }
+    fetchSavedPrompts(authUser.id).then((prompts) => {
+      if (!cancelled) setRealSavedPrompts(prompts);
+    });
+    fetchLikedPrompts(authUser.id).then((prompts) => {
+      if (!cancelled) setRealLikedPrompts(prompts);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [isOwnProfile, authUser]);
 
   const [activeTab, setActiveTab] = useState<ProfileTabKey>("prompts");
   const [activeType, setActiveType] = useState<PromptContentType | "all">("all");
@@ -71,12 +100,12 @@ export function ProfileView({
   );
   const allKnownPrompts = useMemo(() => [...mockPrompts, ...localPrompts], [localPrompts]);
   const savedPrompts = useMemo(
-    () => allKnownPrompts.filter((prompt) => isSaved(prompt.id)),
-    [allKnownPrompts, isSaved],
+    () => [...realSavedPrompts, ...allKnownPrompts.filter((prompt) => isSaved(prompt.id))],
+    [realSavedPrompts, allKnownPrompts, isSaved],
   );
   const likedPrompts = useMemo(
-    () => allKnownPrompts.filter((prompt) => isLiked(prompt.id)),
-    [allKnownPrompts, isLiked],
+    () => [...realLikedPrompts, ...allKnownPrompts.filter((prompt) => isLiked(prompt.id))],
+    [realLikedPrompts, allKnownPrompts, isLiked],
   );
 
   const tabs = useMemo(() => {

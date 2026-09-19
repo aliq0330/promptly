@@ -1,13 +1,17 @@
 "use client";
 
+import Link from "next/link";
 import { Heart } from "lucide-react";
 import { cn, formatCount } from "@/lib/utils";
-import { useLike } from "./like-save-provider";
+import { useLikeState } from "./use-like-state";
 
 /**
- * Real, working like toggle (see CLAUDE.md section 14) — persisted to
- * localStorage via LikeProvider. Works for both prompts and request
- * responses since their ids never collide ("p*" vs "rr*").
+ * Real, working like toggle — genuinely persisted to Supabase for a real
+ * prompt with a signed-in viewer (CLAUDE.md Bölüm 21 Faz 3), falling back
+ * to the original localStorage behavior (CLAUDE.md section 14) for mock/
+ * local prompts or a signed-out viewer. Works for both prompts and
+ * request responses since their ids never collide ("p*"/"rr*"/a real
+ * UUID) — see `useLikeState`.
  */
 export function LikeButton({
   id,
@@ -20,11 +24,33 @@ export function LikeButton({
   size?: number;
   className?: string;
 }) {
-  const { isLiked, wasInitiallyLiked, toggleLike } = useLike();
-  const liked = isLiked(id);
-  // Optimistic count relative to the mock's static likeCount, same
-  // technique ProfileHeader uses for the follower count.
-  const count = likeCount + (liked ? 1 : 0) - (wasInitiallyLiked(id) ? 1 : 0);
+  const { isLiked, likeCount: count, toggle, canLike } = useLikeState(id, likeCount);
+
+  const content = (
+    <>
+      <Heart size={size} fill={isLiked ? "currentColor" : "none"} />
+      {formatCount(count)}
+    </>
+  );
+
+  const sharedClassName = cn(
+    "flex items-center gap-1 rounded-sm px-1 py-0.5 text-xs transition-colors hover:text-text",
+    isLiked ? "text-primary" : "text-text-muted",
+    className,
+  );
+
+  if (!canLike) {
+    return (
+      <Link
+        href="/login"
+        onClick={(event) => event.stopPropagation()}
+        title="Beğenmek için giriş yapmalısın"
+        className={sharedClassName}
+      >
+        {content}
+      </Link>
+    );
+  }
 
   return (
     <button
@@ -32,18 +58,13 @@ export function LikeButton({
       onClick={(event) => {
         event.preventDefault();
         event.stopPropagation();
-        toggleLike(id);
+        toggle();
       }}
-      aria-pressed={liked}
-      title={liked ? "Beğenmekten vazgeç" : "Beğen"}
-      className={cn(
-        "flex items-center gap-1 rounded-sm px-1 py-0.5 text-xs transition-colors hover:text-text",
-        liked ? "text-primary" : "text-text-muted",
-        className,
-      )}
+      aria-pressed={isLiked}
+      title={isLiked ? "Beğenmekten vazgeç" : "Beğen"}
+      className={sharedClassName}
     >
-      <Heart size={size} fill={liked ? "currentColor" : "none"} />
-      {formatCount(count)}
+      {content}
     </button>
   );
 }
