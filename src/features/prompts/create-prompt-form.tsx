@@ -272,6 +272,7 @@ export function CreatePromptForm() {
     isSaved: false,
     status: "draft",
     showOnProfile: isAnswerMode ? showOnProfile : true,
+    deletedAt: null,
     createdAt: new Date().toISOString(),
   };
 

@@ -71,18 +71,21 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
         {remixChain.length > 1 && (
           <div className="flex flex-wrap items-center gap-1 text-xs text-text-muted">
             <span className="font-medium text-text">Remix zinciri:</span>
-            {remixChain.map((node, index) => (
-              <span key={node.id} className="flex items-center gap-1">
-                {index > 0 && <ChevronRight size={12} className="shrink-0" />}
-                {node.id === prompt.id ? (
-                  <span className="font-medium text-text">{node.title}</span>
-                ) : (
-                  <Link href={promptHref(node)} className="text-primary hover:underline">
-                    {node.title}
-                  </Link>
-                )}
-              </span>
-            ))}
+            {remixChain.map((node, index) => {
+              const label = node.deletedAt ? "Silinmiş paylaşım" : node.title;
+              return (
+                <span key={node.id} className="flex items-center gap-1">
+                  {index > 0 && <ChevronRight size={12} className="shrink-0" />}
+                  {node.id === prompt.id ? (
+                    <span className="font-medium text-text">{label}</span>
+                  ) : (
+                    <Link href={promptHref(node)} className="text-primary hover:underline">
+                      {label}
+                    </Link>
+                  )}
+                </span>
+              );
+            })}
           </div>
         )}
 

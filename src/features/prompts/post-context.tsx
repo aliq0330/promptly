@@ -52,6 +52,18 @@ export function RemixContext({ sourcePromptId }: { sourcePromptId: string }) {
   const source = cached ?? fetched;
   const thumbnail = source?.media[0];
 
+  if (source?.deletedAt) {
+    return (
+      <ContextBox href={promptHref({ id: sourcePromptId })}>
+        <span className="flex items-center gap-1.5 text-xs font-medium text-primary">
+          <Repeat2 size={14} />
+          Remixlenen çalışma
+        </span>
+        <span className="block text-sm text-text-muted">Bu paylaşım silindi.</span>
+      </ContextBox>
+    );
+  }
+
   return (
     <ContextBox href={promptHref({ id: sourcePromptId })}>
       <span className="flex items-center gap-1.5 text-xs font-medium text-primary">

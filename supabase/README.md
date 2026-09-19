@@ -6,25 +6,19 @@ veri modelini birebir yansıtan gerçek Postgres şemasını (CLAUDE.md Bölüm
 ve görsel yükleme için Supabase Storage bucket'larını (Bölüm 20) oluşturur.
 Dosyalar sırayla (dosya adındaki zaman damgasına göre) uygulanmalıdır.
 
-**Durum:** İlk 10 dosya — Bölüm 18 şema + Bölüm 19 RLS + Bölüm 9.2'nin
-`20260919150000_request_response_workflow.sql`'i + Bölüm 9.4'ün
-`20260919160000_comment_likes_and_notifications.sql`'i — kullanıcı
-tarafından gerçek Supabase projesine (Dashboard → SQL Editor) başarıyla
-uygulandı ve doğrulandı. `20260919140000_storage.sql` (Bölüm 20, Storage
-bucket'ları), `20260919170000_comment_edit_delete.sql` (Bölüm 9.5,
-yorum/yanıt düzenleme + güvenli silme) ve yeni
-`20260919180000_notification_system_completion.sql` (Bölüm 9.6, bildirim
-sistemi denetimi + tamamlaması) bu depodan otomatik olarak uygulanmadı —
+**Durum:** İlk 13 dosya (Bölüm 18 şema + Bölüm 19 RLS + Bölüm 20 Storage
++ Bölüm 9.2/9.4/9.5/9.6'nın `20260919150000`–`20260919180000` dosyaları)
+kullanıcı tarafından gerçek Supabase projesine (Dashboard → SQL Editor)
+başarıyla uygulandı ve doğrulandı. Yeni
+`20260919190000_prompt_safe_delete.sql` (Bölüm 9.7, remixlenmiş bir
+promptun güvenli silinmesi) bu depodan otomatik olarak uygulanmadı —
 Claude Code'un çalıştığı ortamın ağ politikası gerçek Supabase projesinin
 veritabanına doğrudan erişimi engelliyor, bu yüzden yalnızca yerel, geçici
 bir Postgres 16 örneğinde gerçek rol simülasyonuyla test edildi (bkz.
 aşağıdaki "Nasıl doğrulandı" bölümü) — gerçek projenize henüz
-uygulanmadı. **`20260919170000` uygulanmadan** yorum/yanıt düzenleme ve
-silme frontend'de hata verir (`prompt_comments.edited_at`/`deleted_at`
-kolonları henüz yok demektir); **`20260919180000` uygulanmadan** beğeni/
-yorum/remix/takip/mesaj/istek olayları için gerçek bildirim üretilmez ve
-bildirimleri okundu işaretleme/silme frontend'de hata verir — ikisi de
-kendi özellikleri için **zorunlu**.
+uygulanmadı. **`20260919190000` uygulanmadan** remixlenmiş bir promptu
+silmeye çalışmak veritabanı hatası vermeye devam eder (`prompts_origin_
+shape` CHECK kısıtı).
 
 ## Nasıl uygularsınız
 
@@ -35,8 +29,8 @@ kendi özellikleri için **zorunlu**.
 2. `migrations/` klasöründeki her dosyayı **dosya adındaki sıraya göre**
    (20260919120000, 20260919120100, ... 20260919120600, 20260919130000,
    20260919140000, 20260919150000, 20260919160000, 20260919170000,
-   20260919180000) tek tek açıp içeriğini SQL Editor'e yapıştırıp
-   **Run**'a basın.
+   20260919180000, 20260919190000) tek tek açıp içeriğini SQL Editor'e
+   yapıştırıp **Run**'a basın.
 3. Her dosya başarıyla çalıştıktan sonra bir sonrakine geçin. Bir hata
    alırsanız durdurun ve hatayı paylaşın.
 
@@ -221,6 +215,33 @@ tamamen kapalı kalır — güvenli tarafta kalan bilinçli bir ara durum.
     özelliğin bildirimini icat etmemek için kasıtlı olarak dışarıda
     bırakıldı.
 
+- `20260919190000_prompt_safe_delete.sql` — remixlenmiş bir promptun
+  güvenli silinmesi (Bölüm 9.7). Bölüm 9.6'nın test sırasında keşfettiği,
+  bildirim sisteminden bağımsız bir şema boşluğunu kapatıyor:
+  `prompts.source_prompt_id`'nin `on delete set null` olması ile
+  `prompts_origin_shape` CHECK kısıtının (`origin_type='remix'` →
+  `source_prompt_id` asla null olamaz) çakışması yüzünden, remixlenmiş
+  herhangi bir orijinal prompt silinmeye çalışıldığında veritabanı
+  hatasıyla reddediliyordu. Çözüm, Bölüm 9.5'in yorum/yanıt "güvenli
+  silme" deseninin birebir aynısı:
+  - `prompts.deleted_at` — yeni sütun.
+  - `handle_prompt_delete()` (BEFORE DELETE) — bir promptun gerçek
+    remixleri varsa, DELETE'i iptalleyip yerine bir soft-delete UPDATE'i
+    (`deleted_at` damgalama + `title`/`description`/`prompt_text`'i
+    boşaltma + `prompt_media`/`prompt_tags` satırlarını silme)
+    uyguluyor; hiç remixi yoksa DELETE'e olduğu gibi izin veriyor.
+    Frontend'in `deleteRealPrompt`'u hiç değişmedi — hâlâ aynı basit
+    `DELETE`'i gönderiyor, veritabanı hangi sonucun uygulanacağına karar
+    veriyor.
+  - Soft-deleted bir satır hâlâ var olduğundan (yalnızca içeriği
+    boşaltılmış), mevcut SELECT RLS politikası ve 20260919180000'in
+    içerik-silme bildirim-temizleme trigger'ı hiç değiştirilmedi — RLS
+    zaten satırı (published kaldığından) herkese açık okunur bırakıyor
+    ("silindi" yer tutucusu için gerekli), ve bildirim temizleme
+    trigger'ı yalnızca GERÇEK bir DELETE'te tetiklendiğinden soft-delete
+    durumunda hiç çalışmıyor (doğru — bildirim hâlâ var olan, artık
+    "silindi" gösteren bir sayfaya işaret etmeye devam ediyor).
+
 ## Nasıl doğrulandı
 
 **Bölüm 18 (şema):** Gerçek projeye erişim engellendiğinden, ilk 7 dosya
@@ -377,3 +398,24 @@ doğrulandı. Test sırasında iki gerçek şey bulundu:
 
 Test veritabanı işlem bitince silindi. Bu, gerçek Supabase projenize karşı
 hiç çalıştırılmadı — aynı, tekrarlanan sandbox ağ kısıtı.
+
+**Bölüm 9.7 (remixlenmiş prompt güvenli silme, `20260919190000`):** Aynı
+yerel test veritabanına (Bölüm 9.6'nın gerçek test verisiyle — Aylin'in
+iki gerçek remixi olan `dddddddd…` prompt'u dahil) gerçekten uygulandı ve
+3 senaryo çalıştırıldı: remixi olan bir promptu silmeye çalışmak artık
+hata VERMEDEN `DELETE 0` dönüyor (soft-delete oldu), `title`/
+`description`/`prompt_text` boşaldı, `deleted_at` damgalandı, VE
+remixlerinin `source_prompt_id`/`origin_type`'ı hiç değişmeden kaldı
+(CHECK ihlali artık hiç oluşmuyor), `prompt_media` temizlendi; remixi
+olmayan bir prompt gerçekten (`DELETE 1`) silindi; başkasının promptunu
+silme denemesi RLS tarafından sessizce 0 satır etkileyerek engellendi.
+Ayrıca `npx tsc --noEmit`, `npm run lint`, tam `npm run build` (20 rota,
+değişmedi) sıfır hatayla geçti, ve ağ seviyesinde taklit edilmiş Supabase
+REST yanıtlarıyla Playwright'ta: doğrudan bir linkle silinmiş bir
+promptun "Bu paylaşım silindi" sayfasını gösterdiği, normal bir promptun
+değişmeden render edildiği, silinmiş bir kaynağın remixinin kendi context
+kutusunda "Bu paylaşım silindi." gösterdiği (remixin kendi içeriği hiç
+etkilenmeden), ve feed'in silinmiş promptu kendi kartı olarak hiç
+göstermediği doğrulandı — hepsi sıfır JS hatasıyla. Test veritabanı işlem
+bitince silindi. Gerçek bir Supabase projesine karşı canlı doğrulama yine
+bu sandbox'ın ağ kısıtı yüzünden yapılamadı.

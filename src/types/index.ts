@@ -70,6 +70,17 @@ export interface Prompt {
    */
   showOnProfile: boolean;
   createdAt: string;
+  /**
+   * Set when this prompt was "safely" deleted while it still had real
+   * remixes pointing at it (`source_prompt_id` can never be nulled out for
+   * a remix — see `prompts_origin_shape`) — the row survives with its
+   * content cleared instead of being removed, so the remix chain never
+   * breaks. `title`/`description`/`promptText` are empty when this is set;
+   * every normal listing (feed/discover/profile/search/saved/liked)
+   * already filters these out, so this only ever needs to be checked at a
+   * direct link or in a remix-source preview. `null` for a normal prompt.
+   */
+  deletedAt: string | null;
 }
 
 /**

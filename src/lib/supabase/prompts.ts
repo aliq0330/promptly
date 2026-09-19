@@ -27,6 +27,7 @@ export interface PromptRow {
   remix_count: number;
   created_at: string;
   show_on_profile: boolean;
+  deleted_at: string | null;
   profiles: ProfileRow;
   prompt_media: { id: string; url: string; width: number; height: number; alt: string | null }[];
   prompt_tags: { tags: { slug: string; label: string } }[];
@@ -36,10 +37,22 @@ export const PROMPT_SELECT = `
   id, title, description, prompt_text, tool, content_type, status,
   origin_type, source_prompt_id, root_prompt_id, request_id,
   like_count, comment_count, remix_count, created_at, show_on_profile,
+  deleted_at,
   profiles:author_id ( id, username, display_name, avatar_url, cover_url, bio, website, follower_count, following_count, created_at, interests ),
   prompt_media ( id, url, width, height, alt ),
   prompt_tags ( tags ( slug, label ) )
 `;
+
+/**
+ * Excludes a safely-deleted prompt (`deleted_at` set — see
+ * 20260919190000_prompt_safe_delete.sql) from a normal listing. Never
+ * applied to `fetchPromptById` (a direct link must still resolve to show a
+ * "Bu paylaşım silindi." page) or the remix-source lookup used by
+ * `RemixContext` — both need to see the row exists, just emptied.
+ */
+function filterNotDeleted(prompts: Prompt[]): Prompt[] {
+  return prompts.filter((prompt) => !prompt.deletedAt);
+}
 
 /**
  * Excludes a request-answer prompt whose author chose to keep it out of
@@ -90,6 +103,7 @@ export function mapPromptRow(row: PromptRow): Prompt {
     commentCount: row.comment_count,
     remixCount: row.remix_count,
     showOnProfile: row.show_on_profile,
+    deletedAt: row.deleted_at,
     // Whether *this viewer* liked/saved it is still decided entirely by the
     // localStorage LikeProvider/SaveProvider (CLAUDE.md Bölüm 14) — real
     // per-user like/save rows aren't wired yet (a later Bölüm 21 phase).
@@ -113,7 +127,7 @@ export async function fetchRecentPublishedPrompts(limit = 60): Promise<Prompt[]>
       console.error("fetchRecentPublishedPrompts", error);
       return [];
     }
-    return filterProfileVisible((data ?? []).map((row) => mapPromptRow(row as unknown as PromptRow)));
+    return filterNotDeleted(filterProfileVisible((data ?? []).map((row) => mapPromptRow(row as unknown as PromptRow))));
   } catch (err) {
     // A real network failure (e.g. no route to Supabase) throws instead of
     // resolving with a structured error — without this, a visitor with no
@@ -154,7 +168,7 @@ export async function fetchPromptsByAuthor(authorId: string): Promise<Prompt[]> 
       console.error("fetchPromptsByAuthor", error);
       return [];
     }
-    return filterProfileVisible((data ?? []).map((row) => mapPromptRow(row as unknown as PromptRow)));
+    return filterNotDeleted(filterProfileVisible((data ?? []).map((row) => mapPromptRow(row as unknown as PromptRow))));
   } catch (err) {
     console.error("fetchPromptsByAuthor", err);
     return [];
@@ -173,7 +187,7 @@ export async function fetchPromptsForRequest(requestId: string): Promise<Prompt[
       console.error("fetchPromptsForRequest", error);
       return [];
     }
-    return (data ?? []).map((row) => mapPromptRow(row as unknown as PromptRow));
+    return filterNotDeleted((data ?? []).map((row) => mapPromptRow(row as unknown as PromptRow)));
   } catch (err) {
     console.error("fetchPromptsForRequest", err);
     return [];
@@ -192,10 +206,12 @@ export async function fetchSavedPrompts(userId: string): Promise<Prompt[]> {
       console.error("fetchSavedPrompts", error);
       return [];
     }
-    return ((data ?? []) as unknown as { prompts: PromptRow | null }[])
-      .map((row) => row.prompts)
-      .filter((row): row is PromptRow => Boolean(row))
-      .map((row) => mapPromptRow(row));
+    return filterNotDeleted(
+      ((data ?? []) as unknown as { prompts: PromptRow | null }[])
+        .map((row) => row.prompts)
+        .filter((row): row is PromptRow => Boolean(row))
+        .map((row) => mapPromptRow(row)),
+    );
   } catch (err) {
     console.error("fetchSavedPrompts", err);
     return [];
@@ -217,7 +233,7 @@ export async function fetchPromptsByAuthors(authorIds: string[], limit = 60): Pr
       console.error("fetchPromptsByAuthors", error);
       return [];
     }
-    return filterProfileVisible((data ?? []).map((row) => mapPromptRow(row as unknown as PromptRow)));
+    return filterNotDeleted(filterProfileVisible((data ?? []).map((row) => mapPromptRow(row as unknown as PromptRow))));
   } catch (err) {
     console.error("fetchPromptsByAuthors", err);
     return [];
@@ -241,7 +257,7 @@ export async function searchPrompts(query: string, limit = 40): Promise<Prompt[]
       console.error("searchPrompts", error);
       return [];
     }
-    return filterProfileVisible((data ?? []).map((row) => mapPromptRow(row as unknown as PromptRow)));
+    return filterNotDeleted(filterProfileVisible((data ?? []).map((row) => mapPromptRow(row as unknown as PromptRow))));
   } catch (err) {
     console.error("searchPrompts", err);
     return [];
@@ -261,7 +277,7 @@ export async function fetchRemixesOf(promptId: string): Promise<Prompt[]> {
       console.error("fetchRemixesOf", error);
       return [];
     }
-    return (data ?? []).map((row) => mapPromptRow(row as unknown as PromptRow));
+    return filterNotDeleted((data ?? []).map((row) => mapPromptRow(row as unknown as PromptRow)));
   } catch (err) {
     console.error("fetchRemixesOf", err);
     return [];
@@ -290,7 +306,14 @@ export async function fetchRemixChain(prompt: Prompt): Promise<Prompt[]> {
   return chain;
 }
 
-/** Genuinely, permanently deletes a real prompt the caller owns (RLS, Bölüm 19, enforces ownership). */
+/**
+ * Deletes a real prompt the caller owns (RLS, Bölüm 19, enforces
+ * ownership). Always issues the same plain DELETE — the database itself
+ * decides the real outcome (20260919190000_prompt_safe_delete.sql): a
+ * prompt with real remixes pointing at it is soft-deleted (content
+ * cleared, row survives so the remix chain never breaks) instead of
+ * actually removed; one with none is genuinely, permanently deleted.
+ */
 export async function deleteRealPrompt(promptId: string): Promise<void> {
   const { error } = await supabase.from("prompts").delete().eq("id", promptId);
   if (error) throw new Error(error.message);
@@ -308,10 +331,12 @@ export async function fetchLikedPrompts(userId: string): Promise<Prompt[]> {
       console.error("fetchLikedPrompts", error);
       return [];
     }
-    return ((data ?? []) as unknown as { prompts: PromptRow | null }[])
-      .map((row) => row.prompts)
-      .filter((row): row is PromptRow => Boolean(row))
-      .map((row) => mapPromptRow(row));
+    return filterNotDeleted(
+      ((data ?? []) as unknown as { prompts: PromptRow | null }[])
+        .map((row) => row.prompts)
+        .filter((row): row is PromptRow => Boolean(row))
+        .map((row) => mapPromptRow(row)),
+    );
   } catch (err) {
     console.error("fetchLikedPrompts", err);
     return [];
@@ -457,6 +482,7 @@ export async function createRealPrompt(
     isSaved: false,
     status: "published",
     showOnProfile: input.showOnProfile ?? true,
+    deletedAt: null,
     createdAt: inserted.created_at,
   };
 }

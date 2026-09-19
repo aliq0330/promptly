@@ -71,5 +71,22 @@ export function LocalPromptView() {
     );
   }
 
+  if (prompt.deletedAt) {
+    return (
+      <div className="mx-auto max-w-lg px-4 py-16 text-center">
+        <h1 className="mb-2 text-lg font-semibold text-text">Bu paylaşım silindi</h1>
+        <p className="mb-4 text-sm text-text-muted">
+          Yazarı bu paylaşımı sildi. Kendisinden türetilen remixler etkilenmedi, yerlerinde duruyor.
+        </p>
+        <Link
+          href="/"
+          className="inline-flex h-9 items-center rounded-md border border-border px-4 text-sm font-medium text-text hover:bg-accent-surface"
+        >
+          Ana Sayfaya Dön
+        </Link>
+      </div>
+    );
+  }
+
   return <PromptDetailView prompt={prompt} />;
 }
