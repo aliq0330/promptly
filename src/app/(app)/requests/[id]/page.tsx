@@ -1,12 +1,19 @@
-import { Sparkles } from "lucide-react";
-import { PlaceholderPage } from "@/components/ui/placeholder-page";
+import { notFound } from "next/navigation";
+import { RequestDetailView } from "@/features/requests/request-detail-view";
+import { getRequestById, mockRequests } from "@/mocks/requests";
 
-export default function RequestDetailPage() {
-  return (
-    <PlaceholderPage
-      icon={Sparkles}
-      title="Prompt isteği detayı"
-      description="İstek ayrıntıları, yaratıcı yanıtlar ve yeni yanıt oluşturma formu bu sayfada olacak."
-    />
-  );
+export function generateStaticParams() {
+  return mockRequests.map((request) => ({ id: request.id }));
+}
+
+export default async function RequestDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  const request = getRequestById(id);
+  if (!request) notFound();
+
+  return <RequestDetailView request={request} />;
 }

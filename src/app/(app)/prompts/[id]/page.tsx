@@ -1,12 +1,19 @@
-import { ImageIcon } from "lucide-react";
-import { PlaceholderPage } from "@/components/ui/placeholder-page";
+import { notFound } from "next/navigation";
+import { PromptDetailView } from "@/features/prompts/prompt-detail-view";
+import { getPromptById, mockPrompts } from "@/mocks/prompts";
 
-export default function PromptDetailPage() {
-  return (
-    <PlaceholderPage
-      icon={ImageIcon}
-      title="Prompt detayı"
-      description="Görsel, tam prompt metni, etiketler, remix zinciri ve yorumlar bu sayfada gösterilecek."
-    />
-  );
+export function generateStaticParams() {
+  return mockPrompts.map((prompt) => ({ id: prompt.id }));
+}
+
+export default async function PromptDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  const prompt = getPromptById(id);
+  if (!prompt) notFound();
+
+  return <PromptDetailView prompt={prompt} />;
 }

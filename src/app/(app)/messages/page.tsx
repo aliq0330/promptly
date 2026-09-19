@@ -1,12 +1,15 @@
-import { MessageCircle } from "lucide-react";
-import { PlaceholderPage } from "@/components/ui/placeholder-page";
+import { ConversationList } from "@/features/messages/conversation-list";
+import { mockConversations } from "@/mocks/conversations";
 
 export default function MessagesPage() {
+  const conversations = [...mockConversations].sort(
+    (a, b) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime(),
+  );
+
   return (
-    <PlaceholderPage
-      icon={MessageCircle}
-      title="Mesajlar"
-      description="Konuşma listen ve yeni konuşma başlatma seçeneği bu sayfada olacak."
-    />
+    <div className="px-4 py-6 lg:px-6">
+      <h1 className="mb-4 text-base font-semibold text-text">Mesajlar</h1>
+      <ConversationList conversations={conversations} />
+    </div>
   );
 }
