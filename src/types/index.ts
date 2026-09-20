@@ -145,7 +145,74 @@ export type NotificationType =
   | "request_response"
   | "message"
   | "message_request"
-  | "system";
+  | "system"
+  | "merge_request_received"
+  | "merge_request_accepted"
+  | "merge_request_rejected"
+  | "merge_request_withdrawn"
+  | "merge_request_cancelled";
+
+export type MergeRequestStatus = "pending" | "accepted" | "rejected" | "withdrawn" | "cancelled";
+
+/**
+ * A real merge request — remix owner offering their contribution back to
+ * an ancestor prompt (Remix Dallanma Haritası / Merge sistemi). Mirrors
+ * `merge_requests` (supabase/migrations/20260919250000_remix_merge_
+ * system.sql) 1:1; every status transition happens through a dedicated
+ * RPC (create/accept/reject/withdraw), never a raw client UPDATE.
+ */
+export interface MergeRequest {
+  id: string;
+  sourcePromptId: string;
+  targetPromptId: string;
+  requester: UserProfile;
+  targetOwner: UserProfile;
+  status: MergeRequestStatus;
+  contributionSummary: string;
+  description: string | null;
+  decisionReason: string | null;
+  decidedById: string | null;
+  decidedAt: string | null;
+  withdrawnAt: string | null;
+  resultingVersionId: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** One entry in a prompt's real merge-derived version history (`prompt_versions`) — only ever created by an accepted merge, never by a plain edit (this app has no "edit prompt" feature at all). */
+export interface PromptVersion {
+  id: string;
+  promptId: string;
+  versionNumber: number;
+  title: string;
+  description: string;
+  promptText: string;
+  tool: string | null;
+  changeSummary: string | null;
+  mergeRequestId: string | null;
+  previousVersionId: string | null;
+  createdBy: UserProfile | null;
+  createdAt: string;
+}
+
+/**
+ * One node in the real remix branching graph (Remix Dallanma Haritası) —
+ * a lightweight projection of a `Prompt` (never the full prompt object,
+ * so a node the viewer can't fully open still renders safely) plus its
+ * structural position in the tree.
+ */
+export interface RemixGraphNode {
+  id: string;
+  title: string;
+  author: UserProfile;
+  originType: "original" | "remix";
+  sourcePromptId: string | null;
+  rootPromptId: string | null;
+  isDeleted: boolean;
+  isAccessible: boolean;
+  remixCount: number;
+  createdAt: string;
+}
 
 export interface AppNotification {
   id: string;

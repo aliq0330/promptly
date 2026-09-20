@@ -1,0 +1,357 @@
+"use client";
+
+import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent, type WheelEvent as ReactWheelEvent } from "react";
+import {
+  ChevronsUpDown,
+  Crosshair,
+  EyeOff,
+  GitMerge,
+  Maximize2,
+  Minimize2,
+  Repeat2,
+  ZoomIn,
+  ZoomOut,
+} from "lucide-react";
+import { fetchRemixGraph, resolveGraphRootId } from "@/lib/supabase/remix-graph";
+import { fetchMergeRequestsForPrompts } from "@/lib/supabase/merge-requests";
+import { supabase } from "@/lib/supabase/client";
+import { computeTreeBounds, layoutRemixTree, NODE_HEIGHT, NODE_WIDTH } from "./remix-tree-layout";
+import { RemixMapNodeCard, type NodeMergeStatus } from "./remix-map-node-card";
+import { RemixNodeDetailPanel } from "./remix-node-detail-panel";
+import { cn } from "@/lib/utils";
+import type { MergeRequest, Prompt, RemixGraphNode } from "@/types";
+
+const MIN_SCALE = 0.4;
+const MAX_SCALE = 1.75;
+
+/**
+ * The right-hand "Remix Dallanma Haritası" panel next to the "Remixler"
+ * section on a prompt's detail page (Aşama 2). Real data only: every node
+ * and every merge link comes from `fetch_remix_graph`/`merge_requests`
+ * (Aşama 22 step 2's own instruction — "harita sadece dekoratif bir
+ * diyagram olmayacak"). Pan/zoom/fit are hand-rolled (pointer events + a
+ * CSS transform) rather than a charting/graph library — this app adds no
+ * new dependency for it, matching CLAUDE.md §2.
+ */
+export function RemixBranchMap({ currentPrompt }: { currentPrompt: Prompt }) {
+  const rootId = useMemo(() => resolveGraphRootId(currentPrompt), [currentPrompt]);
+
+  const [nodes, setNodes] = useState<RemixGraphNode[]>([]);
+  const [mergeRequests, setMergeRequests] = useState<MergeRequest[]>([]);
+  const [loaded, setLoaded] = useState(false);
+  const [selectedId, setSelectedId] = useState<string>(currentPrompt.id);
+  const [expanded, setExpanded] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [showMergeLinks, setShowMergeLinks] = useState(true);
+  const [minimizeDeleted, setMinimizeDeleted] = useState(false);
+
+  const [scale, setScale] = useState(1);
+  const [pan, setPan] = useState({ x: 24, y: 24 });
+  const [isDragging, setIsDragging] = useState(false);
+  const viewportRef = useRef<HTMLDivElement>(null);
+  const dragState = useRef<{ startX: number; startY: number; panX: number; panY: number } | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- resetting the loading flag before a fresh graph fetch for the new rootId, matching this codebase's established fetch-on-id-change pattern
+    setLoaded(false);
+    fetchRemixGraph(rootId).then(async (graphNodes) => {
+      if (cancelled) return;
+      setNodes(graphNodes);
+      const requests = await fetchMergeRequestsForPrompts(graphNodes.map((n) => n.id));
+      if (cancelled) return;
+      setMergeRequests(requests);
+      setLoaded(true);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [rootId]);
+
+  // Gerçek zamanlı güncelleme (Aşama 15) — yeni bir remix, yeni/kabul/
+  // reddedilmiş bir merge talebi, ya da bir silme (deleted_at değişimi)
+  // olduğunda haritayı sayfa yenilenmeden güncelliyor. Tam sayfa
+  // yenileme yerine yalnızca bu iki fetch'i tekrarlıyor — küçük bir
+  // ağaç için tam yeniden çekmek, artımlı bir patch uygulamaktan daha
+  // basit ve bu ölçekte performans sorunu yaratmıyor (Bölüm 21'in zaten
+  // bilinen "N+1/artımlı güncelleme yok" kategorisiyle aynı, dokümante
+  // edilmiş kapsam kararı).
+  useEffect(() => {
+    const channel = supabase
+      .channel(`remix-graph:${rootId}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "merge_requests" }, () => {
+        fetchMergeRequestsForPrompts(nodes.map((n) => n.id)).then(setMergeRequests);
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "prompts", filter: `root_prompt_id=eq.${rootId}` }, () => {
+        fetchRemixGraph(rootId).then(setNodes);
+      })
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- refetches by rootId; re-subscribing per nodes-array identity change would churn the channel needlessly
+  }, [rootId]);
+
+  const positions = useMemo(() => layoutRemixTree(nodes, rootId), [nodes, rootId]);
+  const bounds = useMemo(() => computeTreeBounds(positions), [positions]);
+  const nodesById = useMemo(() => new Map(nodes.map((n) => [n.id, n])), [nodes]);
+
+  const mergeStatusByNode = useMemo(() => {
+    const map = new Map<string, NodeMergeStatus>();
+    for (const req of mergeRequests) {
+      for (const id of [req.sourcePromptId, req.targetPromptId]) {
+        const existing = map.get(id) ?? { hasPending: false, hasAccepted: false };
+        if (req.status === "pending") existing.hasPending = true;
+        if (req.status === "accepted") existing.hasAccepted = true;
+        map.set(id, existing);
+      }
+    }
+    return map;
+  }, [mergeRequests]);
+
+  function fitToView() {
+    const viewport = viewportRef.current;
+    if (!viewport) return;
+    const padding = 32;
+    const nextScale = Math.min(
+      MAX_SCALE,
+      Math.max(MIN_SCALE, Math.min(
+        (viewport.clientWidth - padding) / bounds.width,
+        (viewport.clientHeight - padding) / bounds.height,
+      )),
+    );
+    setScale(Number.isFinite(nextScale) ? nextScale : 1);
+    setPan({ x: padding / 2 - bounds.minX * nextScale, y: padding / 2 });
+  }
+
+  function centerOnCurrent() {
+    const viewport = viewportRef.current;
+    const pos = positions.get(currentPrompt.id);
+    if (!viewport || !pos) return;
+    setPan({
+      x: viewport.clientWidth / 2 - (pos.x + NODE_WIDTH / 2) * scale,
+      y: viewport.clientHeight / 2 - (pos.y + NODE_HEIGHT / 2) * scale,
+    });
+  }
+
+  useEffect(() => {
+    if (loaded) fitToView();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only re-fit when a fresh graph loads, not on every scale/pan change
+  }, [loaded, nodes.length]);
+
+  function handlePointerDown(event: ReactPointerEvent<HTMLDivElement>) {
+    if ((event.target as HTMLElement).closest("button")) return;
+    dragState.current = { startX: event.clientX, startY: event.clientY, panX: pan.x, panY: pan.y };
+    setIsDragging(true);
+    (event.target as HTMLElement).setPointerCapture(event.pointerId);
+  }
+  function handlePointerMove(event: ReactPointerEvent<HTMLDivElement>) {
+    if (!dragState.current) return;
+    const dx = event.clientX - dragState.current.startX;
+    const dy = event.clientY - dragState.current.startY;
+    setPan({ x: dragState.current.panX + dx, y: dragState.current.panY + dy });
+  }
+  function handlePointerUp() {
+    dragState.current = null;
+    setIsDragging(false);
+  }
+  function handleWheel(event: ReactWheelEvent<HTMLDivElement>) {
+    event.preventDefault();
+    const delta = event.deltaY > 0 ? -0.1 : 0.1;
+    setScale((prev) => Math.min(MAX_SCALE, Math.max(MIN_SCALE, prev + delta)));
+  }
+
+  const selectedNode = nodesById.get(selectedId) ?? nodesById.get(currentPrompt.id) ?? null;
+  const nodeCount = nodes.length;
+
+  const treeCanvas = (
+    <div
+      ref={viewportRef}
+      onWheel={handleWheel}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerLeave={handlePointerUp}
+      role="img"
+      aria-label={`${nodeCount} içerikten oluşan remix dallanma haritası, odak: ${currentPrompt.title}`}
+      className={cn(
+        "relative overflow-hidden rounded-md border border-border bg-background/40",
+        expanded ? "h-[560px]" : "h-[320px]",
+      )}
+      style={{ cursor: isDragging ? "grabbing" : "grab", touchAction: "none" }}
+    >
+      <div
+        className="absolute left-0 top-0 origin-top-left"
+        style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${scale})` }}
+      >
+        <svg
+          width={bounds.width - bounds.minX + NODE_WIDTH}
+          height={bounds.maxY + NODE_HEIGHT}
+          className="absolute left-0 top-0 overflow-visible"
+          aria-hidden
+        >
+          {nodes.map((node) => {
+            if (!node.sourcePromptId) return null;
+            const from = positions.get(node.sourcePromptId);
+            const to = positions.get(node.id);
+            if (!from || !to) return null;
+            return (
+              <path
+                key={`edge-${node.id}`}
+                d={`M ${from.x - bounds.minX + NODE_WIDTH / 2} ${from.y + NODE_HEIGHT} C ${from.x - bounds.minX + NODE_WIDTH / 2} ${from.y + NODE_HEIGHT + 24}, ${to.x - bounds.minX + NODE_WIDTH / 2} ${to.y - 24}, ${to.x - bounds.minX + NODE_WIDTH / 2} ${to.y}`}
+                fill="none"
+                stroke="var(--color-border)"
+                strokeWidth={2}
+                markerEnd="url(#remix-arrow)"
+              />
+            );
+          })}
+          {showMergeLinks &&
+            mergeRequests
+              .filter((req) => positions.has(req.sourcePromptId) && positions.has(req.targetPromptId))
+              .map((req) => {
+                const from = positions.get(req.sourcePromptId)!;
+                const to = positions.get(req.targetPromptId)!;
+                const color =
+                  req.status === "accepted" ? "var(--color-primary)" : req.status === "pending" ? "#d97706" : "var(--color-text-muted)";
+                return (
+                  <line
+                    key={`merge-${req.id}`}
+                    x1={from.x - bounds.minX + NODE_WIDTH / 2}
+                    y1={from.y}
+                    x2={to.x - bounds.minX + NODE_WIDTH}
+                    y2={to.y + NODE_HEIGHT / 2}
+                    stroke={color}
+                    strokeWidth={1.75}
+                    strokeDasharray="5 4"
+                    markerEnd="url(#merge-arrow)"
+                    opacity={0.85}
+                  />
+                );
+              })}
+          <defs>
+            <marker id="remix-arrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+              <path d="M0,0 L8,4 L0,8 Z" fill="var(--color-border)" />
+            </marker>
+            <marker id="merge-arrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+              <path d="M0,0 L8,4 L0,8 Z" fill="var(--color-primary)" />
+            </marker>
+          </defs>
+        </svg>
+        {nodes.map((node) => {
+          const pos = positions.get(node.id);
+          if (!pos) return null;
+          return (
+            <RemixMapNodeCard
+              key={node.id}
+              node={node}
+              x={pos.x - bounds.minX}
+              y={pos.y}
+              isSelected={selectedId === node.id}
+              isCurrent={currentPrompt.id === node.id}
+              mergeStatus={mergeStatusByNode.get(node.id) ?? { hasPending: false, hasAccepted: false }}
+              onSelect={setSelectedId}
+            />
+          );
+        })}
+      </div>
+    </div>
+  );
+
+  return (
+    <section aria-labelledby="remix-map-heading" className="space-y-3 rounded-lg border border-border bg-surface p-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 id="remix-map-heading" className="flex items-center gap-1.5 text-sm font-semibold text-text">
+          <Repeat2 size={15} className="text-primary" />
+          Remix Dallanma Haritası
+        </h2>
+        <button
+          type="button"
+          onClick={() => setMobileOpen((v) => !v)}
+          aria-expanded={mobileOpen}
+          className="flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs text-text-muted hover:bg-accent-surface lg:hidden"
+        >
+          <ChevronsUpDown size={13} />
+          {mobileOpen ? "Haritayı gizle" : "Haritayı göster"}
+        </button>
+      </div>
+
+      <div className={cn("space-y-3", !mobileOpen && "hidden lg:block")}>
+        <div className="flex flex-wrap items-center gap-1.5 text-xs text-text-muted">
+          <span className="mr-auto rounded-sm bg-accent-surface px-2 py-1 font-medium text-primary">{nodeCount} içerik</span>
+          <button type="button" onClick={() => setScale((s) => Math.min(MAX_SCALE, s + 0.15))} aria-label="Haritayı büyüt" className="rounded-md border border-border p-1.5 hover:bg-accent-surface">
+            <ZoomIn size={14} />
+          </button>
+          <button type="button" onClick={() => setScale((s) => Math.max(MIN_SCALE, s - 0.15))} aria-label="Haritayı küçült" className="rounded-md border border-border p-1.5 hover:bg-accent-surface">
+            <ZoomOut size={14} />
+          </button>
+          <button type="button" onClick={fitToView} aria-label="Görünüme sığdır" title="Görünüme sığdır" className="rounded-md border border-border p-1.5 hover:bg-accent-surface">
+            <Maximize2 size={14} />
+          </button>
+          <button type="button" onClick={centerOnCurrent} aria-label="Merkez içeriğe dön" title="Merkez içeriğe dön" className="rounded-md border border-border p-1.5 hover:bg-accent-surface">
+            <Crosshair size={14} />
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowMergeLinks((v) => !v)}
+            aria-pressed={showMergeLinks}
+            title="Merge ilişkilerini göster/gizle"
+            className={cn("rounded-md border p-1.5 hover:bg-accent-surface", showMergeLinks ? "border-primary text-primary" : "border-border")}
+          >
+            <GitMerge size={14} />
+          </button>
+          <button
+            type="button"
+            onClick={() => setMinimizeDeleted((v) => !v)}
+            aria-pressed={minimizeDeleted}
+            title="Silinen içerikleri sadeleştir"
+            className={cn("rounded-md border p-1.5 hover:bg-accent-surface", minimizeDeleted ? "border-primary text-primary" : "border-border")}
+          >
+            <EyeOff size={14} />
+          </button>
+          <button type="button" onClick={() => setExpanded((v) => !v)} aria-label={expanded ? "Haritayı küçült" : "Haritayı genişlet"} className="rounded-md border border-border p-1.5 hover:bg-accent-surface">
+            {expanded ? <Minimize2 size={14} /> : <Maximize2 size={14} className="rotate-45" />}
+          </button>
+        </div>
+
+        {!loaded ? (
+          <div className="flex h-[320px] items-center justify-center rounded-md border border-border text-sm text-text-muted">
+            Yükleniyor…
+          </div>
+        ) : nodeCount <= 1 ? (
+          <div className="flex h-[160px] flex-col items-center justify-center gap-1 rounded-md border border-dashed border-border text-center text-sm text-text-muted">
+            <p>Bu içeriğin henüz bir remix dallanması yok.</p>
+          </div>
+        ) : (
+          treeCanvas
+        )}
+
+        <MapLegend />
+
+        {selectedNode && (
+          <RemixNodeDetailPanel
+            key={selectedNode.id}
+            node={selectedNode}
+            currentPrompt={currentPrompt}
+            allNodes={nodes}
+            mergeRequests={mergeRequests}
+            onMergeRequestsChanged={setMergeRequests}
+            onSelectNode={setSelectedId}
+          />
+        )}
+      </div>
+    </section>
+  );
+}
+
+function MapLegend() {
+  return (
+    <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-text-muted">
+      <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-accent-surface ring-1 ring-primary/50" /> Orijinal</span>
+      <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-accent-surface" /> Remix</span>
+      <span className="flex items-center gap-1"><GitMerge size={11} className="text-amber-600" /> Bekleyen merge</span>
+      <span className="flex items-center gap-1"><GitMerge size={11} className="text-primary" /> Kabul edilmiş</span>
+      <span className="flex items-center gap-1"><span className="italic">Silinmiş içerik</span> — kaynak korunuyor</span>
+    </div>
+  );
+}

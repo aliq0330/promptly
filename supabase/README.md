@@ -10,15 +10,22 @@ Dosyalar sırayla (dosya adındaki zaman damgasına göre) uygulanmalıdır.
 + Bölüm 9.2/9.4/9.5/9.6/9.7/9.8/9.9'un `20260919150000`–`20260919210000`
 dosyaları — mesajlaşma genişletmesi Faz A/B dahil) kullanıcı tarafından
 gerçek Supabase projesine (Dashboard → SQL Editor) başarıyla uygulandı ve
-doğrulandı. Yeni `20260919220000_messaging_realtime.sql` (Bölüm 9.10,
-mesajlaşma genişletmesi Faz C) bu depodan otomatik olarak uygulanmadı —
+doğrulandı. `20260919220000_messaging_realtime.sql` (Bölüm 9.10,
+mesajlaşma genişletmesi Faz C), `20260919230000_notification_targeting_
+and_previews.sql` (Bölüm 9.12, bildirim hedefleme/önizleme),
+`20260919240000_message_reactions.sql`, ve
+`20260919250000_remix_merge_system.sql` (Bölüm 9.13, Remix Dallanma
+Haritası + Merge sistemi) bu depodan otomatik olarak uygulanmadı —
 Claude Code'un çalıştığı ortamın ağ politikası gerçek Supabase projesinin
 veritabanına doğrudan erişimi (ve WebSocket erişimini de) engelliyor, bu
-yüzden yalnızca yerel, geçici bir Postgres 16 örneğinde test edildi (bkz.
-aşağıdaki "Nasıl doğrulandı" bölümü) — gerçek projenize henüz
+yüzden hepsi yalnızca yerel, geçici bir Postgres 16 örneğinde test edildi
+(bkz. aşağıdaki "Nasıl doğrulandı" bölümü) — gerçek projenize henüz
 uygulanmadı. **`20260919220000` uygulanmadan** Realtime abonelikleri
 sessizce hiç olay almaz (hiçbir hata da vermez) — mesajlaşma yalnızca
 Faz A/B'nin sayfa-yüklemede-çek davranışıyla çalışmaya devam eder.
+**`20260919250000` uygulanmadan** Remix Dallanma Haritası boş/yüklenemiyor
+görünür ve merge talebi oluşturma/kabul/red/geri çekme işlemleri hata
+verir (frontend bu RPC'ler olmadan çalışamaz — bkz. Bölüm 9.13).
 
 ## Nasıl uygularsınız
 
@@ -30,8 +37,8 @@ Faz A/B'nin sayfa-yüklemede-çek davranışıyla çalışmaya devam eder.
    (20260919120000, 20260919120100, ... 20260919120600, 20260919130000,
    20260919140000, 20260919150000, 20260919160000, 20260919170000,
    20260919180000, 20260919190000, 20260919200000, 20260919210000,
-   20260919220000) tek tek açıp içeriğini SQL Editor'e yapıştırıp
-   **Run**'a basın.
+   20260919220000, 20260919230000, 20260919240000, 20260919250000) tek
+   tek açıp içeriğini SQL Editor'e yapıştırıp **Run**'a basın.
 3. Her dosya başarıyla çalıştıktan sonra bir sonrakine geçin. Bir hata
    alırsanız durdurun ve hatayı paylaşın.
 
@@ -301,6 +308,58 @@ tamamen kapalı kalır — güvenli tarafta kalan bilinçli bir ara durum.
   RLS SELECT politikaları (Bölüm 19) hiç değişmeden Realtime yetkilendirmesi
   için de geçerli oluyor (Supabase'in belgelenmiş davranışı).
 
+- `20260919250000_remix_merge_system.sql` — Remix Dallanma Haritası + Merge
+  (birleştirme) sistemi (bkz. CLAUDE.md Bölüm 9.13). Remix ilişkisinin
+  kendisi (`prompts.source_prompt_id`/`root_prompt_id`/`origin_type`) ve
+  remix-silme güvenliği (Bölüm 9.7'nin `handle_prompt_delete` trigger'ı)
+  zaten vardı — bu migration yalnızca gerçekten eksik olan iki şeyi
+  ekliyor:
+  - **`prompt_versions`** — bir promptun merge ile kabul edilmiş sürüm
+    geçmişi (yalnızca aşağıdaki RPC'ler yazabiliyor, düz bir "düzenle"
+    işlemi hiç yok bu uygulamada). Okuma, `prompts`'ın kendi görünürlük
+    kuralıyla birebir aynı (yayınlanmış veya kendi promptun).
+  - **`merge_requests`** — bir remixin katkısını bir atasına (doğrudan
+    kaynak/kök orijinal/aradaki başka bir ata) geri sunma talebi.
+    `merge_requests_no_self_target` (kaynak≠hedef) ve
+    `merge_requests_one_pending_per_pair` (aynı çift için tek bekleyen
+    talep, kısmi unique index) veritabanı seviyesinde zorlanıyor. Yazma
+    politikası YOK — tüm durum geçişleri yalnızca RPC'ler üzerinden.
+    Şartnamenin ayrı bir "merge_contributions" tablosu önerisi bilinçli
+    olarak kurulmadı: `merge_requests` (source/target/requester) +
+    `prompt_versions` (merge_request_id/created_by/content) birleşimi
+    zaten aynı bilgiyi taşıyor.
+  - **RPC'ler** (hepsi `security definer`, istemciden hiçbir raw
+    INSERT/UPDATE izni yok): `create_merge_request` (tüm doğrulamalar
+    dahil — kaynak gerçek bir remix mi, hedef kaynağın gerçek bir atası
+    mı [20 adım guard'lı zincir yürüyüşü — bu hem "geçerli hedef" hem
+    "döngü engelleme" kuralını AYNI ANDA sağlıyor, ayrı bir döngü tespiti
+    gerekmiyor], hedef silinmemiş mi, mükerrer bekleyen talep var mı;
+    talep sahibi zaten hedefin de sahibiyse `_perform_merge_acceptance`'ı
+    çağırıp ANINDA kabul ediyor — CLAUDE.md'nin "kendi içeriğine merge'de
+    gereksiz onay akışı kurma" kararı), `accept_merge_request` (hedefin
+    canlı içeriğini —İLK merge'de— `version 1` olarak geriye dönük
+    kaydedip yeni bir `version 2` yazıyor, kaynağı SİLMİYOR/kaynağın
+    source/root ilişkisine DOKUNMUYOR, tek bir atomik transaction),
+    `reject_merge_request`, `withdraw_merge_request`,
+    `fetch_remix_graph` (tek bir recursive CTE ile TÜM ağacı getiriyor —
+    haritanın N ayrı sorgu yerine tek bir gerçek sorguya dayanması için).
+  - `handle_prompt_soft_delete_cancels_merges` — bir prompt (Bölüm 9.7'nin
+    trigger'ıyla) soft-delete olduğunda, o promptu KAYNAK olarak kullanan
+    her bekleyen merge talebini `cancelled` yapıp hedef sahibine bilgi
+    veriyor (yeni `merge_request_cancelled` bildirim tipi).
+  - `audit_log` — yalnızca merge eylemleri için minimal, salt-okunur bir
+    denetim kaydı (istemciden hiç yazılamıyor, yalnızca yukarıdaki
+    SECURITY DEFINER fonksiyonlar yazıyor).
+  - `notifications.type` CHECK'i beş yeni değer aldı:
+    `merge_request_received/accepted/rejected/withdrawn/cancelled` —
+    hepsi Bölüm 9.6/9.12'nin zaten olgun bildirim altyapısıyla (aynı
+    `SECURITY DEFINER` + `hl=` hedefleme deseni) üretiliyor.
+  - RLS görünürlüğü, Bölüm 9.7'nin kurduğu ilkeyle birebir aynı:
+    `deleted_at` HİÇ kontrol edilmiyor, yalnızca `status='published'` —
+    soft-deleted bir promptun geçmiş bir merge talebi/sürümü, ilişki
+    kaydı olarak görünmeye devam ediyor (şartnamenin "silinmiş kaynak:
+    içerik kaldırılmış, ilişki kaydı korunuyor" lejant maddesi).
+
 ## Nasıl doğrulandı
 
 **Bölüm 18 (şema):** Gerçek projeye erişim engellendiğinden, ilk 7 dosya
@@ -557,3 +616,79 @@ Realtime'ın kendi Phoenix kanal protokolü hiç simüle edilmedi — "karşı
 taraf mesaj gönderdiğinde ekranımda anında beliriyor" iddiasının tam,
 uçtan uca kanıtı yalnızca kullanıcının migration'ı kendi Supabase
 projesine uygulayıp iki gerçek hesapla bizzat denemesiyle mümkün.
+
+**Bölüm 9.13 (Remix Dallanma Haritası + Merge sistemi, `20260919250000`):**
+Yerel PostgreSQL 16'da sıfırdan kurulan bir test veritabanına, önceki
+TÜM migration'larla (18 dosya, storage hariç) birlikte gerçekten
+uygulandı ve şu senaryoların TAMAMI fiilen çalıştırılıp doğrulandı
+(beş gerçek kullanıcı — Ayşe/Mehmet/Zeynep/Can/Elif — ve gerçek bir
+A→B→C, A→D, B→E remix ağacıyla, şartnamenin kendi §20 örnek senaryosu):
+- Kök/doğrudan kaynak ilişkisi zincirin her seviyesinde doğru
+  (`root_prompt_id` ara adımlarda da doğru taşınıyor).
+- **Döngü engeli:** D'nin (zaten A'nın remixi) C'ye (B'nin remixi, kökü
+  yine A) bir merge talebiyle "bağlanmaya" çalışması reddedildi — hedef,
+  kaynağın gerçek bir atası olmadığı için (D, C'nin ne doğrudan kaynağı
+  ne bir üst atası).
+- Zeynep (C'nin sahibi) C'den A'ya gerçek bir merge talebi gönderdi →
+  `pending`, `target_owner=Ayşe`.
+- **Mükerrer talep engeli:** aynı kaynak-hedef çifti için ikinci bir
+  bekleyen talep reddedildi (kısmi unique index gerçekten çalışıyor).
+- **Yetkisiz karar engeli:** Mehmet (ne kaynağın ne hedefin sahibi) A
+  için karar veremedi.
+- Ayşe talebi kabul etti → `version 1` = A'nın eski içeriği (geriye
+  dönük backfill, Ayşe adına), `version 2` = C'nin içeriği (Zeynep
+  adına, "mor tonlara geçiş" özetiyle) → A'nın CANLI içeriği gerçekten
+  C'ninkiyle aynı oldu; **C'nin kendi source/root ilişkisi hiç
+  değişmedi** (hâlâ B/A) — merge, remix ağacını asla geriye dönük
+  değiştirmiyor.
+- **Çifte kabul engeli:** aynı talep ikinci kez kabul edilmeye
+  çalışıldığında reddedildi ("zaten karara bağlanmış").
+- Reddetme akışı: yeni bir talep üzerinde `decision_reason` doluyla
+  `rejected`.
+- Geri çekme akışı: talep sahibi geri çekti → `withdrawn` +
+  `withdrawn_at` damgalandı; **başka birinin** geri çekme denemesi
+  reddedildi ("yalnızca talebi oluşturan kişi geri çekebilir").
+- **Kendi kendine merge kısayolu:** kaynağın VE hedefin aynı sahibi
+  olduğu bir talep hiç `pending` durumuna girmeden anında `accepted`
+  döndü.
+- **Senaryo 4 (B silinir):** B soft-delete oldu (gerçek remixleri —C, E—
+  olduğundan içerik boşaldı, satır yaşadı); C ve E'nin İKİSİ de hayatta
+  kaldı (2 satır); C'nin source/root ilişkisi hâlâ B/A (B silinmiş olsa
+  da kırılmadı). B'ye kaynaklı bekleyen bir merge talebi denemesi
+  reddedildi ("kaynak içerik artık mevcut değil").
+- **Senaryo 5 (A silinir):** A soft-delete oldu (B, D gerçek remixleri
+  olduğundan); B/C/D/E'nin TAMAMI (B zaten önceden silinmişti) hayatta
+  kaldı.
+- **Kritik RLS testi:** `anon` rolü, D→A gibi geçmiş merge talebini,
+  status'u ne olursa olsun (kaynak/hedef soft-deleted bile olsa) hâlâ
+  görebiliyor — soft-deleted bir promptun ilişki kaydı asla gizlenmiyor
+  (Bölüm 9.7'nin aynı ilkesi).
+- `fetch_remix_graph` RPC'si tek bir sorguda tüm ağacı (kök + gerçek
+  remixler) doğru sayıda satırla getirdi.
+
+Ayrıca `npx tsc --noEmit`, `npm run lint`, tam `npm run build` (20 rota,
+değişmedi) sıfır hatayla geçti. Test veritabanı işlem bitince silindi.
+
+Tarayıcı tarafı, ağ seviyesinde taklit edilmiş Supabase REST/RPC
+yanıtlarıyla Playwright'ta 31 senaryo doğrulandı (masaüstü + mobil +
+koyu tema): haritanın 8 düğümlü gerçek bir ağacı (dallanma + bir silinmiş
+düğüm + onun hayatta kalan remixi dahil) doğru render etmesi; düğüm
+seçiminin doğru kaynak/kök/remix-sayısı bilgisini göstermesi; ilk-nesil
+bir remixte YALNIZCA tek bir karşılaştırma seçeneğinin (mükerrer değil)
+görünmesi, derin bir remixte ikisinin de görünmesi; yalnızca gerçek
+sahibine "Merge talebi oluştur" butonunun görünmesi; bir merge talebini
+kabul etme/reddetme/geri çekme/yeni bir talep oluşturmanın HER BİRİNİN
+gerçek bir RPC çağrısı tetikleyip arayüzü sayfa yenilenmeden
+güncellemesi; fark karşılaştırma modalının doğru başlık/alan-bazlı diff
+göstermesi; silinmiş bir düğümün "Silinmiş içerik" göstermesi VE onun
+hayatta kalan remixinin kendi kaynağını hâlâ doğru şekilde "silinmiş"
+olarak raporlaması; mobilde haritanın varsayılan olarak katlı başlayıp
+toggle ile açılması ve yatay taşma olmaması (hem katlıyken hem açıkken);
+koyu temada hatasız render — hepsi sıfır JS hatasıyla. Ayrıca bu
+oturumun önceki bölümlerine ait regresyon paketleri (bildirim merkezi,
+32 senaryo; genel 19 rotalık Supabase-tamamen-erişilemez dayanıklılık
+taraması) yeniden çalıştırılıp bozulma olmadığı doğrulandı. **Gerçek bir
+Supabase projesine karşı canlı doğrulama yine bu sandbox'ın ağ kısıtı
+yüzünden yapılamadı** (Bölüm 17'den beri tekrarlanan, dürüstçe belirtilen
+aynı sınırlama) — kullanıcının `20260919250000_remix_merge_system.sql`'i
+Dashboard'da uygulayıp bizzat denemesi gerekiyor.
