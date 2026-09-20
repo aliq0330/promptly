@@ -6,18 +6,20 @@ veri modelini birebir yansıtan gerçek Postgres şemasını (CLAUDE.md Bölüm
 ve görsel yükleme için Supabase Storage bucket'larını (Bölüm 20) oluşturur.
 Dosyalar sırayla (dosya adındaki zaman damgasına göre) uygulanmalıdır.
 
-**Durum:** İlk 14 dosya (Bölüm 18 şema + Bölüm 19 RLS + Bölüm 20 Storage
-+ Bölüm 9.2/9.4/9.5/9.6/9.7'nin `20260919150000`–`20260919190000`
-dosyaları) kullanıcı tarafından gerçek Supabase projesine (Dashboard →
-SQL Editor) başarıyla uygulandı ve doğrulandı. Yeni
-`20260919200000_messaging_content_and_edit.sql` (Bölüm 9.8, mesajlaşma
-genişletmesi Faz A) bu depodan otomatik olarak uygulanmadı — Claude
-Code'un çalıştığı ortamın ağ politikası gerçek Supabase projesinin
-veritabanına doğrudan erişimi engelliyor, bu yüzden yalnızca yerel, geçici
-bir Postgres 16 örneğinde gerçek rol simülasyonuyla test edildi (bkz.
-aşağıdaki "Nasıl doğrulandı" bölümü) — gerçek projenize henüz
-uygulanmadı. **`20260919200000` uygulanmadan** mesajlarda içerik
-paylaşımı, yanıtlama, düzenleme ve silme frontend'de hata verir.
+**Durum:** İlk 15 dosya (Bölüm 18 şema + Bölüm 19 RLS + Bölüm 20 Storage
++ Bölüm 9.2/9.4/9.5/9.6/9.7/9.8'in `20260919150000`–`20260919200000`
+dosyaları — mesajlaşma genişletmesi Faz A dahil) kullanıcı tarafından
+gerçek Supabase projesine (Dashboard → SQL Editor) başarıyla uygulandı ve
+doğrulandı. Yeni `20260919210000_messaging_requests_privacy_blocking.sql`
+(Bölüm 9.9, mesajlaşma genişletmesi Faz B) bu depodan otomatik olarak
+uygulanmadı — Claude Code'un çalıştığı ortamın ağ politikası gerçek
+Supabase projesinin veritabanına doğrudan erişimi engelliyor, bu yüzden
+yalnızca yerel, geçici bir Postgres 16 örneğinde gerçek rol
+simülasyonuyla test edildi (bkz. aşağıdaki "Nasıl doğrulandı" bölümü) —
+gerçek projenize henüz uygulanmadı. **`20260919210000` uygulanmadan**
+mesaj istekleri/gizlilik/engelleme frontend'de hata verir — özellikle
+"Mesaj Gönder" `start_direct_conversation` RPC'si veritabanında
+bulunamadığı için başarısız olur.
 
 ## Nasıl uygularsınız
 
@@ -28,8 +30,8 @@ paylaşımı, yanıtlama, düzenleme ve silme frontend'de hata verir.
 2. `migrations/` klasöründeki her dosyayı **dosya adındaki sıraya göre**
    (20260919120000, 20260919120100, ... 20260919120600, 20260919130000,
    20260919140000, 20260919150000, 20260919160000, 20260919170000,
-   20260919180000, 20260919190000, 20260919200000) tek tek açıp
-   içeriğini SQL Editor'e yapıştırıp **Run**'a basın.
+   20260919180000, 20260919190000, 20260919200000, 20260919210000) tek
+   tek açıp içeriğini SQL Editor'e yapıştırıp **Run**'a basın.
 3. Her dosya başarıyla çalıştıktan sonra bir sonrakine geçin. Bir hata
    alırsanız durdurun ve hatayı paylaşın.
 
@@ -263,6 +265,34 @@ tamamen kapalı kalır — güvenli tarafta kalan bilinçli bir ara durum.
     bu yüzden "herkesten sil" (üç alanı BİRDEN boşaltan UPDATE) kendi
     CHECK'ine çarpıp hata veriyordu — düzeltildi.
 
+- `20260919210000_messaging_requests_privacy_blocking.sql` — mesajlaşma
+  genişletmesi Faz B (Bölüm 9.9): mesaj istekleri, gizlilik ayarı,
+  engelleme. Bölüm 18'de zaten oluşturulmuş ama hiç kullanılmayan
+  `reports`/`blocks` tablolarını ilk kez gerçekten kullanmaya başlıyor —
+  bu migration'da **yeni tablo yok**, yalnızca iki sütun ekleniyor.
+  - `profiles.message_privacy` (`'everyone'`/`'followers_only'`),
+    `conversation_members.status` (`'accepted'`/`'pending'`, varsayılan
+    `'accepted'` — geriye dönük hiçbir konuşmayı "istek" yapmıyor).
+  - `is_blocked(a, b)` — `is_conversation_member()` ile aynı desende yeni
+    bir SECURITY DEFINER yardımcı; `blocks`'un SELECT politikası yalnızca
+    "kendi engellediklerini" gösterdiğinden, karşılıklı bir kontrol için
+    bu şart.
+  - `messages`/`conversation_members`'ın INSERT politikaları `is_blocked()`
+    ile genişletildi — bir engelleme artık gerçekten hem yeni konuşma
+    başlatmayı hem var olan bir konuşmada mesaj göndermeyi veritabanı
+    seviyesinde reddediyor.
+  - `handle_block_removes_follows()` — bir engelleme, iki taraf arasında
+    varsa takip ilişkisini de kaldırıyor.
+  - `start_direct_conversation(other_user_id)` RPC — konuşma başlatmanın
+    TEK giriş noktası: var olan bir konuşmayı bulur, yoksa engelleme
+    reddi + gizlilik kontrolü + alıcının doğru başlangıç durumunu
+    (zaten göndereni takip ediyorsa `'accepted'`, değilse `'pending'`)
+    hesaplayıp oluşturur. `select_prompt_request_response` (Bölüm 9.2)
+    ile aynı gerekçeyle bu karar istemciye bırakılmadı.
+  - `notifications.type` CHECK'ine `'message_request'` eklendi;
+    `notify_new_message` artık alıcının o anki durumuna göre doğru tipi/
+    metni seçiyor.
+
 ## Nasıl doğrulandı
 
 **Bölüm 18 (şema):** Gerçek projeye erişim engellendiğinden, ilk 7 dosya
@@ -458,3 +488,31 @@ yanıtlama, düzenleme, iki silme modu, "Mesajla gönder" ile paylaşım
 akışının tamamı) — hepsi sıfır JS hatasıyla. Gerçek bir Supabase
 projesine karşı canlı doğrulama yine bu sandbox'ın ağ kısıtı yüzünden
 yapılamadı.
+
+**Bölüm 9.9 (mesajlaşma genişletmesi Faz B, `20260919210000`):** Yerel
+PostgreSQL 16'da sıfırdan kurulan bir test veritabanına gerçekten
+uygulandı (storage'a hiç dokunmadığından storage stub'ı olmadan
+uygulanabildi) ve 14 senaryo çalıştırıldı: varsayılan gizlilikte takip
+etmeyen biri mesaj atınca `'pending'` + `'message_request'` bildirimi;
+aynı çifte tekrar mesaj atılınca konuşmanın yeniden kullanılması; alıcı
+kabul etmeden göndericinin mesaj göndermeye devam edebilmesi; alıcı
+yanıt verince durumun `'accepted'`e dönmesi ve bildirim tipinin
+`'message'`e dönmesi; `followers_only` gizlilikte takip etmeyenin isteği
+bile başlatamaması; takip edilince aynı denemenin doğrudan `'accepted'`
+geçmesi; `is_blocked()`'ın iki yönü de görmesi; engellenen tarafın ne var
+olan bir thread'de ne yeni bir konuşmada mesaj gönderebilmesi;
+engellemenin var olan takip ilişkisini kaldırması (ilgisiz bir ilişkinin
+etkilenmemesiyle karşılaştırmalı); engel kaldırılınca mesajlaşmanın
+gerçekten çalışması; rapor dosyalamanın değişmeden çalışması; kendine
+mesaj göndermenin reddi; `anon`'un RPC'yi hiç çağıramaması — hepsi
+gerçekten çalıştırılıp doğrulandı, test veritabanı işlem bitince silindi.
+Ayrıca `npx tsc --noEmit`, `npm run lint`, tam `npm run build` (20 rota,
+değişmedi) sıfır hatayla geçti, ve ağ seviyesinde taklit edilmiş Supabase
+REST yanıtlarıyla Playwright'ta 19 senaryo daha doğrulandı (mesaj isteği
+gönderme/görünme, pending bandı + Kabul Et/Sil, yanıtlamanın otomatik
+kabulü, ayarlardaki gizlilik radyoları, profil menüsünden engelleme +
+Mesaj Gönder'in kaybolması, engellenmiş bir thread'de composer'ın devre
+dışı kalıp engel kalkınca aktifleşmesi, kullanıcı/mesaj raporlama) —
+hepsi sıfır JS hatasıyla, artı Supabase'e hiç erişilemezken 19 rotalık bir
+dayanıklılık taraması. Gerçek bir Supabase projesine karşı canlı
+doğrulama yine bu sandbox'ın ağ kısıtı yüzünden yapılamadı.

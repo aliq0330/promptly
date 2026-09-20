@@ -18,9 +18,18 @@ import {
   markConversationRead,
   sendMessage,
 } from "@/lib/supabase/messages";
+import { fetchIsBlockedByMe, unblockUser } from "@/lib/supabase/blocks";
 import { useRealPrompts } from "@/features/prompts/real-prompts-provider";
 import { useRealRequests } from "@/features/requests/real-requests-provider";
 import type { Conversation, Message } from "@/types";
+
+/** The raw Postgres RLS-denial message for a blocked-either-direction send — translated into something a user can actually act on. */
+function translateSendError(message: string): string {
+  if (message.toLowerCase().includes("row-level security")) {
+    return "Bu mesaj gönderilemedi. Kullanıcı seni engellemiş olabilir.";
+  }
+  return message;
+}
 
 /**
  * Client-rendered counterpart to `/messages/[conversationId]` for a
@@ -39,7 +48,7 @@ export function LocalConversationView() {
   const shareParamPromptId = searchParams.get("sharePromptId");
   const shareParamRequestId = searchParams.get("shareRequestId");
   const { user } = useAuth();
-  const { getCached } = useRealMessages();
+  const { getCached, acceptRequest, declineRequest } = useRealMessages();
   const { getCached: getCachedPrompt, fetchById: fetchPromptById } = useRealPrompts();
   const { getCached: getCachedRequest, fetchById: fetchRequestById } = useRealRequests();
 
@@ -59,6 +68,9 @@ export function LocalConversationView() {
   const [editError, setEditError] = useState<string | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; mode: DeleteMode } | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [blockedByMe, setBlockedByMe] = useState(false);
+  const [isUnblocking, setIsUnblocking] = useState(false);
+  const [isDecliningRequest, setIsDecliningRequest] = useState(false);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const messagesById = new Map(messages.map((m) => [m.id, m]));
@@ -93,6 +105,27 @@ export function LocalConversationView() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, user]);
+
+  // Whether the viewer themselves has blocked the other participant — the
+  // composer disables when true. Deliberately does NOT try to detect "they
+  // blocked me" ahead of time (the blocks SELECT policy can't see that
+  // side, see fetchIsBlockedByMe's own comment) — that case only surfaces
+  // when an actual send fails, handled in handleSubmit's catch below.
+  useEffect(() => {
+    let cancelled = false;
+    const participantId = conversation?.participants[0]?.id;
+    if (!user || !participantId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- no conversation loaded yet, nothing to check
+      setBlockedByMe(false);
+      return;
+    }
+    fetchIsBlockedByMe(user.id, participantId).then((result) => {
+      if (!cancelled) setBlockedByMe(result);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [user, conversation]);
 
   // Resolves a `?sharePromptId=`/`?shareRequestId=` deep link into a real title for the composer banner — cache hit resolves synchronously via the derivation below; a miss falls back to a real fetch here.
   useEffect(() => {
@@ -148,10 +181,50 @@ export function LocalConversationView() {
         setDismissedShare(true);
         clearShareParams();
       }
+      // Replying to a pending message request auto-accepts it (Bölüm 21 Faz B) — matches how most real messaging apps treat a reply as implicit acceptance.
+      if (conversation?.myStatus === "pending") {
+        setConversation((prev) => (prev ? { ...prev, myStatus: "accepted" } : prev));
+        acceptRequest(id).catch((err) => console.error("acceptRequest (auto, on reply)", err));
+      }
     } catch (err) {
-      setSendError(err instanceof Error ? err.message : "Mesaj gönderilemedi, lütfen tekrar dene.");
+      setSendError(err instanceof Error ? translateSendError(err.message) : "Mesaj gönderilemedi, lütfen tekrar dene.");
     } finally {
       setIsSending(false);
+    }
+  }
+
+  async function handleUnblock() {
+    if (!user || !conversation) return;
+    setIsUnblocking(true);
+    try {
+      await unblockUser(user.id, conversation.participants[0].id);
+      setBlockedByMe(false);
+    } catch (err) {
+      console.error("unblockUser", err);
+    } finally {
+      setIsUnblocking(false);
+    }
+  }
+
+  async function handleAcceptRequest() {
+    if (!id) return;
+    setConversation((prev) => (prev ? { ...prev, myStatus: "accepted" } : prev));
+    try {
+      await acceptRequest(id);
+    } catch (err) {
+      console.error("acceptRequest", err);
+    }
+  }
+
+  async function handleDeclineRequest() {
+    if (!id) return;
+    setIsDecliningRequest(true);
+    try {
+      await declineRequest(id);
+      router.push("/messages");
+    } catch (err) {
+      console.error("declineRequest", err);
+      setIsDecliningRequest(false);
     }
   }
 
@@ -249,6 +322,26 @@ export function LocalConversationView() {
         <Avatar src={participant?.avatarUrl} alt={participant?.displayName ?? "Kullanıcı"} size={36} />
         <span className="text-sm font-semibold text-text">{participant?.displayName}</span>
       </div>
+      {conversation.myStatus === "pending" && (
+        <div className="flex items-center justify-between gap-3 border-b border-border bg-accent-surface/60 px-4 py-2.5 lg:px-6">
+          <p className="text-xs text-text">
+            Bu bir mesaj isteği — {participant?.displayName} seni takip etmiyor. Yanıtlarsan otomatik kabul edilir.
+          </p>
+          <div className="flex shrink-0 items-center gap-3 text-xs font-medium">
+            <button type="button" onClick={handleAcceptRequest} className="text-primary hover:underline">
+              Kabul Et
+            </button>
+            <button
+              type="button"
+              onClick={handleDeclineRequest}
+              disabled={isDecliningRequest}
+              className="text-red-600 hover:underline disabled:opacity-50"
+            >
+              {isDecliningRequest ? "Siliniyor..." : "Sil"}
+            </button>
+          </div>
+        </div>
+      )}
       <div className="flex-1 space-y-4 overflow-y-auto px-4 py-4 lg:px-6">
         {messages.length === 0 ? (
           <p className="py-10 text-center text-sm text-text-muted">
@@ -282,6 +375,14 @@ export function LocalConversationView() {
         <div ref={bottomRef} />
       </div>
       <form onSubmit={handleSubmit} className="border-t border-border p-4 lg:px-6">
+        {blockedByMe && (
+          <div className="mb-2 flex items-center justify-between gap-2 rounded-md bg-red-500/10 px-3 py-1.5 text-xs text-red-600">
+            <span>Bu kullanıcıyı engelledin, mesaj gönderemezsin.</span>
+            <button type="button" onClick={handleUnblock} disabled={isUnblocking} className="font-medium hover:underline disabled:opacity-50">
+              {isUnblocking ? "Kaldırılıyor..." : "Engeli kaldır"}
+            </button>
+          </div>
+        )}
         {replyingTo && (
           <div className="mb-2 flex items-center justify-between gap-2 rounded-md bg-accent-surface/60 px-3 py-1.5 text-xs text-text-muted">
             <span className="truncate">
@@ -315,9 +416,10 @@ export function LocalConversationView() {
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
             placeholder={pendingShare ? "İstersen bir not ekle (opsiyonel)..." : "Bir mesaj yaz..."}
-            className="h-10 min-w-0 flex-1 rounded-md border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-primary"
+            disabled={blockedByMe}
+            className="h-10 min-w-0 flex-1 rounded-md border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
           />
-          <Button type="submit" disabled={(!draft.trim() && !pendingShare) || isSending}>
+          <Button type="submit" disabled={(!draft.trim() && !pendingShare) || isSending || blockedByMe}>
             {isSending ? "Gönderiliyor..." : "Gönder"}
           </Button>
         </div>

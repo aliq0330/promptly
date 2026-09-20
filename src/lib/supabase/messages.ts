@@ -5,6 +5,7 @@ import type { Conversation, Message, UserProfile } from "@/types";
 interface MembershipRow {
   conversation_id: string;
   unread_count: number;
+  status: "accepted" | "pending";
   conversations: { id: string; last_message_at: string | null } | null;
 }
 
@@ -68,7 +69,7 @@ export async function fetchConversationsForUser(userId: string): Promise<Convers
   try {
     const { data: memberships, error } = await supabase
       .from("conversation_members")
-      .select("conversation_id, unread_count, conversations(id, last_message_at)")
+      .select("conversation_id, unread_count, status, conversations(id, last_message_at)")
       .eq("user_id", userId);
     if (error || !memberships || memberships.length === 0) return [];
 
@@ -111,6 +112,7 @@ export async function fetchConversationsForUser(userId: string): Promise<Convers
           lastMessage: previewTextFor(last),
           lastMessageAt: m.conversations?.last_message_at ?? last?.created_at ?? new Date(0).toISOString(),
           unreadCount: m.unread_count,
+          myStatus: m.status,
         };
       })
       .filter((c): c is Conversation => Boolean(c))
@@ -132,7 +134,7 @@ export async function fetchConversationForUser(conversationId: string, userId: s
   try {
     const { data: membership, error } = await supabase
       .from("conversation_members")
-      .select("conversation_id, unread_count, conversations(id, last_message_at)")
+      .select("conversation_id, unread_count, status, conversations(id, last_message_at)")
       .eq("conversation_id", conversationId)
       .eq("user_id", userId)
       .maybeSingle();
@@ -164,6 +166,7 @@ export async function fetchConversationForUser(conversationId: string, userId: s
       lastMessage: previewTextFor(last ?? undefined),
       lastMessageAt: row.conversations?.last_message_at ?? last?.created_at ?? new Date(0).toISOString(),
       unreadCount: row.unread_count,
+      myStatus: row.status,
     };
   } catch (err) {
     console.error("fetchConversationForUser", err);
@@ -271,85 +274,69 @@ export async function markConversationRead(conversationId: string, userId: strin
   }
 }
 
-async function findDirectConversationId(userId: string, otherUserId: string): Promise<string | null> {
-  const { data: mine, error } = await supabase
-    .from("conversation_members")
-    .select("conversation_id")
-    .eq("user_id", userId);
-  if (error || !mine || mine.length === 0) return null;
-  const ids = mine.map((row) => row.conversation_id as string);
-  const { data: shared } = await supabase
-    .from("conversation_members")
-    .select("conversation_id")
-    .eq("user_id", otherUserId)
-    .in("conversation_id", ids);
-  return (shared?.[0]?.conversation_id as string | undefined) ?? null;
-}
-
 /**
  * Finds an existing real 1:1 conversation between these two real users, or
- * creates a new one — the entry point for a real profile's "Mesaj Gönder"
- * button (CLAUDE.md Bölüm 21 Faz 6).
+ * starts a new one — the entry point for a real profile's "Mesaj Gönder"
+ * button (CLAUDE.md Bölüm 21 Faz 6 / Faz B).
  *
- * The new conversation's id is generated CLIENT-SIDE (`crypto.randomUUID()`)
- * instead of letting Postgres's `gen_random_uuid()` default assign it and
- * reading it back with `.insert({}).select().single()` — that read-back is
- * a real bug that shipped in the first version of this function: the
- * `conversations` SELECT policy is `is_conversation_member(id)`, and at the
- * moment of the INSERT no membership row exists yet (that's the next two
- * statements), so the `RETURNING` clause has nothing it's allowed to show
- * and `.single()` throws — the insert itself actually succeeds, but the
- * caller never finds out the new conversation's id, so "Mesaj Gönder"
- * silently did nothing. Knowing the id upfront sidesteps this chicken-and-
- * egg RLS problem entirely; nothing needs to be read back afterward.
- *
- * The two membership rows are still inserted as two separate statements,
- * not one multi-row insert: the membership RLS policy's `WITH CHECK` for
- * the *other* user's row relies on `is_conversation_member()` already
- * seeing this session's own row, and a single multi-row INSERT doesn't
- * guarantee that visibility across its own rows the way two sequential
- * statements do.
+ * Routes entirely through the `start_direct_conversation` RPC (Bölüm 21
+ * Faz B) instead of doing the find-or-create dance in JS the way the first
+ * version of this function did. That old version had a real bug: it
+ * generated the new conversation's id client-side specifically to dodge an
+ * RLS chicken-and-egg problem on the read-back (`conversations`' SELECT
+ * policy is `is_conversation_member(id)`, and at INSERT time no membership
+ * row exists yet), but it still decided "accepted" for both sides in JS.
+ * Faz B needs that decision to depend on the recipient's privacy setting
+ * and whether they already follow the sender — logic that can't be trusted
+ * to the client (a malicious client could just always insert 'accepted'
+ * and skip the request/privacy flow entirely), so it now lives entirely
+ * inside the RPC, which computes it server-side and does the same id-
+ * generation trick internally.
  */
 export async function getOrCreateDirectConversation(
   userId: string,
   otherUserId: string,
   otherProfile: UserProfile,
 ): Promise<Conversation> {
-  const existingId = await findDirectConversationId(userId, otherUserId);
-  if (existingId) {
-    const found = await fetchConversationForUser(existingId, userId);
-    if (found) return found;
+  const { data: conversationId, error } = await supabase.rpc("start_direct_conversation", {
+    other_user_id: otherUserId,
+  });
+  if (error || !conversationId) {
+    throw new Error(error?.message ?? "Konuşma başlatılamadı.");
   }
 
-  const conversationId = crypto.randomUUID();
-  const { error: conversationError } = await supabase.from("conversations").insert({ id: conversationId });
-  if (conversationError) {
-    throw new Error(conversationError.message);
-  }
+  const found = await fetchConversationForUser(conversationId as string, userId);
+  if (found) return found;
 
-  try {
-    const { error: selfError } = await supabase
-      .from("conversation_members")
-      .insert({ conversation_id: conversationId, user_id: userId });
-    if (selfError) throw new Error(selfError.message);
-
-    const { error: otherError } = await supabase
-      .from("conversation_members")
-      .insert({ conversation_id: conversationId, user_id: otherUserId });
-    if (otherError) throw new Error(otherError.message);
-  } catch (err) {
-    // Best-effort — there's no DELETE policy on `conversations`, so this
-    // won't actually remove the orphaned row, but it's harmless to try and
-    // costs nothing if it no-ops.
-    await supabase.from("conversations").delete().eq("id", conversationId);
-    throw err instanceof Error ? err : new Error("Konuşma oluşturulamadı.");
-  }
-
+  // Best-effort fallback for a conversation this fresh — fetchConversationForUser
+  // failing here would be a real anomaly, not an expected "not found", but
+  // there's no reason to show the caller a false "gone" state over it.
   return {
-    id: conversationId,
+    id: conversationId as string,
     participants: [otherProfile],
     lastMessage: "Henüz mesaj yok.",
     lastMessageAt: new Date().toISOString(),
     unreadCount: 0,
+    myStatus: "accepted",
   };
+}
+
+/** Accepts a pending message request — a plain update of the caller's own membership row, already allowed by the existing "members can update their own membership row" policy. Also called automatically after the recipient's first reply (Bölüm 21 Faz B). */
+export async function acceptMessageRequest(conversationId: string, userId: string): Promise<void> {
+  const { error } = await supabase
+    .from("conversation_members")
+    .update({ status: "accepted" })
+    .eq("conversation_id", conversationId)
+    .eq("user_id", userId);
+  if (error) throw new Error(error.message);
+}
+
+/** Declines a pending message request by leaving the conversation — a plain delete of the caller's own membership row, already allowed by the existing "members can leave a conversation" policy. Doesn't block the sender from trying again later; use blockUser for that. */
+export async function declineMessageRequest(conversationId: string, userId: string): Promise<void> {
+  const { error } = await supabase
+    .from("conversation_members")
+    .delete()
+    .eq("conversation_id", conversationId)
+    .eq("user_id", userId);
+  if (error) throw new Error(error.message);
 }

@@ -117,6 +117,34 @@ export async function fetchFollowedProfiles(userId: string): Promise<UserProfile
   }
 }
 
+export type MessagePrivacy = "everyone" | "followers_only";
+
+/**
+ * The signed-in user's own "kimler bana mesaj gönderebilir" preference
+ * (Bölüm 21 Faz B). Deliberately NOT part of `UserProfile`/`PROFILE_SELECT`
+ * — unlike display name or bio, this is only ever read for the owner's own
+ * settings page, never shown on anyone's public profile.
+ */
+export async function fetchOwnMessagePrivacy(userId: string): Promise<MessagePrivacy> {
+  try {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("message_privacy")
+      .eq("id", userId)
+      .maybeSingle();
+    if (error || !data) return "everyone";
+    return (data as { message_privacy: MessagePrivacy }).message_privacy ?? "everyone";
+  } catch (err) {
+    console.error("fetchOwnMessagePrivacy", err);
+    return "everyone";
+  }
+}
+
+export async function updateMessagePrivacy(userId: string, value: MessagePrivacy): Promise<void> {
+  const { error } = await supabase.from("profiles").update({ message_privacy: value }).eq("id", userId);
+  if (error) throw new Error(error.message);
+}
+
 export interface UpdateOwnProfileInput {
   displayName: string;
   bio: string | null;

@@ -2,7 +2,12 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/features/auth/auth-provider";
-import { fetchConversationsForUser, getOrCreateDirectConversation } from "@/lib/supabase/messages";
+import {
+  acceptMessageRequest,
+  declineMessageRequest,
+  fetchConversationsForUser,
+  getOrCreateDirectConversation,
+} from "@/lib/supabase/messages";
 import type { Conversation, UserProfile } from "@/types";
 
 interface RealMessagesContextValue {
@@ -10,6 +15,10 @@ interface RealMessagesContextValue {
   getCached: (id: string) => Conversation | undefined;
   refresh: () => Promise<void>;
   startConversationWith: (otherProfile: UserProfile) => Promise<Conversation>;
+  /** Accepts a pending message request (Bölüm 21 Faz B) — also called automatically after the recipient's first reply. */
+  acceptRequest: (conversationId: string) => Promise<void>;
+  /** Declines a pending message request by leaving it — removes it from this list entirely. */
+  declineRequest: (conversationId: string) => Promise<void>;
 }
 
 const RealMessagesContext = createContext<RealMessagesContextValue | null>(null);
@@ -64,9 +73,29 @@ export function RealMessagesProvider({ children }: { children: React.ReactNode }
     [user],
   );
 
+  const acceptRequest = useCallback(
+    async (conversationId: string) => {
+      if (!user) return;
+      setConversations((prev) =>
+        prev.map((c) => (c.id === conversationId ? { ...c, myStatus: "accepted" } : c)),
+      );
+      await acceptMessageRequest(conversationId, user.id);
+    },
+    [user],
+  );
+
+  const declineRequest = useCallback(
+    async (conversationId: string) => {
+      if (!user) return;
+      setConversations((prev) => prev.filter((c) => c.id !== conversationId));
+      await declineMessageRequest(conversationId, user.id);
+    },
+    [user],
+  );
+
   const value = useMemo(
-    () => ({ conversations, getCached, refresh, startConversationWith }),
-    [conversations, getCached, refresh, startConversationWith],
+    () => ({ conversations, getCached, refresh, startConversationWith, acceptRequest, declineRequest }),
+    [conversations, getCached, refresh, startConversationWith, acceptRequest, declineRequest],
   );
 
   return <RealMessagesContext.Provider value={value}>{children}</RealMessagesContext.Provider>;

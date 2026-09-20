@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { LogIn, LogOut, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/auth-provider";
 import { supabase } from "@/lib/supabase/client";
 import { translateAuthError } from "@/features/auth/auth-errors";
+import { fetchOwnMessagePrivacy, updateMessagePrivacy, type MessagePrivacy } from "@/lib/supabase/profiles";
 
 const PASSWORD_MIN_LENGTH = 6;
 
@@ -24,6 +25,30 @@ export default function SettingsPage() {
   const [success, setSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const [messagePrivacy, setMessagePrivacy] = useState<MessagePrivacy | null>(null);
+  const [isSavingPrivacy, setIsSavingPrivacy] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    fetchOwnMessagePrivacy(user.id).then((value) => {
+      setMessagePrivacy(value);
+    });
+  }, [user]);
+
+  async function handlePrivacyChange(value: MessagePrivacy) {
+    if (!user || isSavingPrivacy) return;
+    const previous = messagePrivacy;
+    setMessagePrivacy(value);
+    setIsSavingPrivacy(true);
+    try {
+      await updateMessagePrivacy(user.id, value);
+    } catch (err) {
+      console.error("updateMessagePrivacy", err);
+      setMessagePrivacy(previous);
+    } finally {
+      setIsSavingPrivacy(false);
+    }
+  }
 
   async function handleChangePassword(event: FormEvent) {
     event.preventDefault();
@@ -136,6 +161,48 @@ export default function SettingsPage() {
             {isSubmitting ? "Güncelleniyor..." : "Şifreyi güncelle"}
           </Button>
         </form>
+
+        <div className="space-y-2 rounded-lg border border-border bg-surface p-4">
+          <p className="text-sm font-medium text-text">Mesaj gizliliği</p>
+          <p className="text-xs text-text-muted">Kimler sana yeni bir mesaj gönderebilir?</p>
+          {messagePrivacy === null ? (
+            <p className="text-xs text-text-muted">Yükleniyor…</p>
+          ) : (
+            <div className="space-y-2 pt-1">
+              <label className="flex items-start gap-2 text-sm text-text">
+                <input
+                  type="radio"
+                  name="message-privacy"
+                  checked={messagePrivacy === "everyone"}
+                  onChange={() => handlePrivacyChange("everyone")}
+                  className="mt-0.5"
+                />
+                <span>
+                  Herkes
+                  <span className="block text-xs text-text-muted">
+                    Seni takip etmeyenlerin mesajları önce &quot;Mesaj İstekleri&quot;ne düşer, kabul edene kadar
+                    ana gelen kutunda görünmez.
+                  </span>
+                </span>
+              </label>
+              <label className="flex items-start gap-2 text-sm text-text">
+                <input
+                  type="radio"
+                  name="message-privacy"
+                  checked={messagePrivacy === "followers_only"}
+                  onChange={() => handlePrivacyChange("followers_only")}
+                  className="mt-0.5"
+                />
+                <span>
+                  Yalnızca takip ettiklerim
+                  <span className="block text-xs text-text-muted">
+                    Takip etmediğin kimse sana mesaj isteği bile gönderemez.
+                  </span>
+                </span>
+              </label>
+            </div>
+          )}
+        </div>
 
         <Button type="button" variant="outline" onClick={handleSignOut} disabled={isSigningOut}>
           <LogOut size={14} />

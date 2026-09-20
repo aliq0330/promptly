@@ -144,6 +144,7 @@ export type NotificationType =
   | "remix"
   | "request_response"
   | "message"
+  | "message_request"
   | "system";
 
 export interface AppNotification {
@@ -162,6 +163,8 @@ export interface Conversation {
   lastMessage: string;
   lastMessageAt: string;
   unreadCount: number;
+  /** This viewer's own membership status — "pending" means it's an unaccepted message request in their inbox (Bölüm 21 Faz B). */
+  myStatus: "accepted" | "pending";
 }
 
 export interface Message {

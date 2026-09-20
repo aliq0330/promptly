@@ -4,7 +4,9 @@ import Link from "next/link";
 import { Settings, Sparkles } from "lucide-react";
 import { ShareButton } from "@/features/prompts/share-button";
 import { MessageButton } from "@/features/messages/message-button";
+import { useBlockState } from "@/features/moderation/use-block-state";
 import { FollowButtonView } from "./follow-button";
+import { ProfileMoreMenu } from "./profile-more-menu";
 import { useFollowState } from "./use-follow-state";
 import { profileHref } from "@/lib/utils";
 import type { UserProfile } from "@/types";
@@ -55,16 +57,25 @@ export function OtherProfileActions({
   user: UserProfile;
   followState: ReturnType<typeof useFollowState>;
 }) {
+  const blockState = useBlockState(user);
+
   return (
     <div className="flex flex-wrap items-center justify-center gap-2">
       <FollowButtonView {...followState} size="md" />
-      <MessageButton user={user} />
+      {blockState.isBlocked ? (
+        <span className="inline-flex h-9 items-center rounded-md border border-border px-4 text-sm text-text-muted">
+          Bu kullanıcıyı engelledin
+        </span>
+      ) : (
+        <MessageButton user={user} />
+      )}
       <ShareButton
         url={profileHref(user)}
         title="Promptly profili"
         label="Paylaş"
         className="h-9 gap-1.5 rounded-md border border-border px-4 text-sm"
       />
+      <ProfileMoreMenu user={user} blockState={blockState} />
     </div>
   );
 }

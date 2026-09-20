@@ -13,6 +13,7 @@ const ICONS: Record<NotificationType, LucideIcon> = {
   remix: Repeat2,
   request_response: Sparkles,
   message: Mail,
+  message_request: Mail,
   system: Bell,
 };
 
