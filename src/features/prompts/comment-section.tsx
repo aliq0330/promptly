@@ -28,13 +28,27 @@ export type CommentTarget = { promptId: string } | { requestId: string };
  * publicly readable regardless of who's viewing (Bölüm 19's RLS) — only
  * *posting* and *liking* need a signed-in real account.
  */
+/** How long a jumped-to comment/reply stays visually flashed before fading back to normal — long enough to notice, short enough not to nag (Aşama 5: "göz yoran yanıp sönme veya aşırı hareket kullanma"). */
+const HIGHLIGHT_DURATION_MS = 2500;
+
 export function CommentSection({
   target,
   disabledReason,
+  highlightCommentId,
 }: {
   target: CommentTarget;
   /** When set, hides the composer and shows this text instead (e.g. a closed request). */
   disabledReason?: string;
+  /**
+   * A specific comment/reply to land on when arriving from a notification
+   * (`?hl=comment:<id>`, Aşama 4.2-4.4) — its whole ancestor chain is
+   * expanded, the thread scrolls to it, and it flashes briefly. If it's not
+   * in the loaded thread at all (deleted with no surviving reply of its
+   * own — Bölüm 9.5's safe-delete only preserves a node that still has
+   * replies), an honest inline notice is shown instead of silently landing
+   * at the top of the page (Aşama 6).
+   */
+  highlightCommentId?: string | null;
 }) {
   const { user } = useAuth();
   const { profile: ownProfile } = useOwnProfile();
@@ -63,8 +77,13 @@ export function CommentSection({
   const [isDeletingId, setIsDeletingId] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
+  const [highlightedId, setHighlightedId] = useState<string | null>(null);
+  const [highlightNotFound, setHighlightNotFound] = useState(false);
+
   const nodeRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const pendingScrollToId = useRef<string | null>(null);
+  const highlightTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const processedHighlightId = useRef<string | null>(null);
 
   const targetId = "promptId" in target ? target.promptId : target.requestId;
   const isPromptTarget = "promptId" in target;
@@ -86,12 +105,47 @@ export function CommentSection({
         );
         if (!cancelled) setLikedIds(liked);
       }
+
+      // Land on a specific comment/reply from a notification (Aşama 4.2-4.4)
+      // — only once per `highlightCommentId` (a like on this same thread
+      // shouldn't re-trigger the jump on every re-fetch).
+      if (highlightCommentId && processedHighlightId.current !== highlightCommentId) {
+        processedHighlightId.current = highlightCommentId;
+        const byId = new Map(result.map((c) => [c.id, c]));
+        const target = byId.get(highlightCommentId);
+        if (!target) {
+          setHighlightNotFound(true);
+        } else {
+          // Expand every ancestor so the target is actually rendered (a
+          // reply nested under a collapsed "N yanıtı göster" toggle has no
+          // DOM node to scroll to yet).
+          const ancestorIds = new Set<string>();
+          let cursor = target.parentId ? byId.get(target.parentId) : undefined;
+          while (cursor) {
+            ancestorIds.add(cursor.id);
+            cursor = cursor.parentId ? byId.get(cursor.parentId) : undefined;
+          }
+          if (ancestorIds.size > 0) {
+            setExpandedIds((prev) => new Set([...prev, ...ancestorIds]));
+          }
+          pendingScrollToId.current = highlightCommentId;
+          setHighlightedId(highlightCommentId);
+          if (highlightTimer.current) clearTimeout(highlightTimer.current);
+          highlightTimer.current = setTimeout(() => setHighlightedId(null), HIGHLIGHT_DURATION_MS);
+        }
+      }
     });
     return () => {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isPromptTarget, targetId, user?.id]);
+  }, [isPromptTarget, targetId, user?.id, highlightCommentId]);
+
+  useEffect(() => {
+    return () => {
+      if (highlightTimer.current) clearTimeout(highlightTimer.current);
+    };
+  }, []);
 
   const commentsById = useMemo(() => new Map(comments.map((c) => [c.id, c])), [comments]);
   const childrenByParent = useMemo(() => {
@@ -115,10 +169,12 @@ export function CommentSection({
     if (!pendingScrollToId.current) return;
     const el = nodeRefs.current.get(pendingScrollToId.current);
     if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
       pendingScrollToId.current = null;
     }
-  }, [comments]);
+    // `expandedIds` matters too: a highlighted reply's DOM node only exists
+    // once its ancestor chain has actually expanded and rendered it.
+  }, [comments, expandedIds]);
 
   function toggleExpand(id: string) {
     setExpandedIds((prev) => {
@@ -308,11 +364,18 @@ export function CommentSection({
     onCancelDeleteConfirm: cancelDeleteConfirm,
     isDeletingId,
     registerNodeRef,
+    highlightedId,
   };
 
   return (
     <section className="space-y-3 border-t border-border pt-5">
       <h2 className="text-sm font-semibold text-text">Yorumlar ({comments.length})</h2>
+
+      {highlightNotFound && (
+        <p className="rounded-md bg-accent-surface/60 px-3 py-2 text-sm text-text-muted">
+          Bu yorum artık mevcut değil.
+        </p>
+      )}
 
       {disabledReason ? (
         <p className="rounded-md bg-accent-surface/60 px-3 py-2 text-sm text-text-muted">

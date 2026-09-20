@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { MessageSquareOff, Sparkles, Trash2 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,12 +14,17 @@ import { useAuth } from "@/features/auth/auth-provider";
 import { fetchPromptsForRequest } from "@/lib/supabase/prompts";
 import { useRealRequests } from "./real-requests-provider";
 import { STATUS_LABELS, STATUS_VARIANTS } from "./request-card";
-import { formatRelativeTime } from "@/lib/utils";
+import { parseHighlightValue } from "@/lib/notification-utils";
+import { cn, formatRelativeTime } from "@/lib/utils";
 import type { Prompt, PromptRequest } from "@/types";
+
+/** Same fade timing as the comment-thread flash — one shared feel across the app for "you just jumped here from a notification". */
+const HIGHLIGHT_DURATION_MS = 2500;
 
 /** Real request detail rendering, used by `/requests/local?id=…`. */
 export function RequestDetailView({ request }: { request: PromptRequest }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user: authUser } = useAuth();
   const {
     getCached: getCachedRealRequest,
@@ -32,6 +37,17 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
   const [selectionTarget, setSelectionTarget] = useState<{ id: string; confirming: boolean } | null>(null);
   const [selectionError, setSelectionError] = useState<string | null>(null);
   const [isSelecting, setIsSelecting] = useState(false);
+
+  const highlight = parseHighlightValue(searchParams.get("hl"));
+  const highlightCommentId = highlight?.kind === "comment" ? highlight.id : null;
+  const highlightResponseId =
+    highlight?.kind === "response_new" || highlight?.kind === "response_selected" || highlight?.kind === "response_unselected"
+      ? highlight.id
+      : null;
+  const [flashedResponseId, setFlashedResponseId] = useState<string | null>(null);
+  const [responseHighlightNotFound, setResponseHighlightNotFound] = useState(false);
+  const responseRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+  const processedResponseHighlight = useRef<string | null>(null);
 
   // Re-read the live version of the request from the cache so status/
   // selection changes below reflect immediately without a page reload.
@@ -46,6 +62,24 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
       cancelled = true;
     };
   }, [live.id]);
+
+  // Land on the specific response a request_response notification pointed
+  // at (Aşama 4.6) — once the real answer list has loaded.
+  useEffect(() => {
+    if (!highlightResponseId || processedResponseHighlight.current === highlightResponseId) return;
+    if (answers.length === 0) return; // still loading — try again once it's populated
+    processedResponseHighlight.current = highlightResponseId;
+    const el = responseRefs.current.get(highlightResponseId);
+    if (!answers.some((a) => a.id === highlightResponseId)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time result of a lookup that only ever runs once per highlightResponseId (guarded above), not a render-time derivation
+      setResponseHighlightNotFound(true);
+      return;
+    }
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+    setFlashedResponseId(highlightResponseId);
+    const timer = setTimeout(() => setFlashedResponseId(null), HIGHLIGHT_DURATION_MS);
+    return () => clearTimeout(timer);
+  }, [answers, highlightResponseId]);
 
   const isOwnRequest = authUser?.id === live.author.id;
   // "answered" (closed by selecting a response) and "closed" (closed
@@ -177,6 +211,11 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
 
       <section className="space-y-3">
         <h2 className="text-sm font-semibold text-text">Yaratıcı Yanıtlar ({answers.length})</h2>
+        {responseHighlightNotFound && (
+          <p className="rounded-md bg-accent-surface/60 px-3 py-2 text-sm text-text-muted">
+            Bu yanıt artık mevcut değil.
+          </p>
+        )}
         {answers.length === 0 ? (
           <div className="space-y-3 py-6 text-center text-sm text-text-muted">
             <p>Bu isteğe henüz yanıt verilmedi.</p>
@@ -193,7 +232,17 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
               const isPendingThis = selectionTarget?.id === prompt.id && selectionTarget.confirming;
 
               return (
-                <div key={prompt.id} className="space-y-2">
+                <div
+                  key={prompt.id}
+                  ref={(el) => {
+                    if (el) responseRefs.current.set(prompt.id, el);
+                    else responseRefs.current.delete(prompt.id);
+                  }}
+                  className={cn(
+                    "space-y-2 rounded-lg transition-colors duration-700",
+                    flashedResponseId === prompt.id && "-m-1.5 bg-primary/10 p-1.5 ring-1 ring-primary/40",
+                  )}
+                >
                   <PromptCard prompt={prompt} />
                   {isOwnRequest && (
                     <div className="flex flex-wrap items-center gap-2 px-1">
@@ -272,6 +321,7 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
       <CommentSection
         target={{ requestId: live.id }}
         disabledReason={isClosed ? "Bu istek kapatıldığı için yeni yorum eklenemiyor." : undefined}
+        highlightCommentId={highlightCommentId}
       />
     </div>
   );

@@ -26,8 +26,12 @@ import { supabase } from "@/lib/supabase/client";
 import { fetchIsBlockedByMe, unblockUser } from "@/lib/supabase/blocks";
 import { useRealPrompts } from "@/features/prompts/real-prompts-provider";
 import { useRealRequests } from "@/features/requests/real-requests-provider";
+import { parseHighlightValue } from "@/lib/notification-utils";
 import { profileHref } from "@/lib/utils";
 import type { Conversation, Message } from "@/types";
+
+/** Same fade timing as the comment-thread/response flash — one shared feel across the app for "you just jumped here from a notification". */
+const HIGHLIGHT_DURATION_MS = 2500;
 
 /** The raw Postgres RLS-denial message for a blocked-either-direction send — translated into something a user can actually act on. */
 function translateSendError(message: string): string {
@@ -79,6 +83,12 @@ export function LocalConversationView() {
   const [isDecliningRequest, setIsDecliningRequest] = useState(false);
   const [isNearBottom, setIsNearBottom] = useState(true);
 
+  const highlight = parseHighlightValue(searchParams.get("hl"));
+  const highlightMessageId = highlight?.kind === "message" ? highlight.id : null;
+  const [flashedMessageId, setFlashedMessageId] = useState<string | null>(null);
+  const [messageHighlightNotFound, setMessageHighlightNotFound] = useState(false);
+  const processedMessageHighlight = useRef<string | null>(null);
+
   const bottomRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const isNearBottomRef = useRef(true);
@@ -124,6 +134,28 @@ export function LocalConversationView() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, user]);
+
+  // Land on the specific message a mesaj bildirimi pointed at (Aşama 4.8) —
+  // once the thread has actually loaded. A message that isn't in the loaded
+  // list (deleted for everyone and long gone, or hidden by this viewer via
+  // "benden sil" — `fetchMessages` already filters those out) gets an
+  // honest fallback instead of silently landing at the top (Aşama 6).
+  useEffect(() => {
+    if (!highlightMessageId || !checked) return;
+    if (processedMessageHighlight.current === highlightMessageId) return;
+    processedMessageHighlight.current = highlightMessageId;
+    const found = messages.some((m) => m.id === highlightMessageId);
+    if (!found) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time result of a lookup that only ever runs once per highlightMessageId (guarded above), not a render-time derivation
+      setMessageHighlightNotFound(true);
+      return;
+    }
+    const el = panelRef.current?.querySelector<HTMLElement>(`[data-message-id="${highlightMessageId}"]`);
+    el?.scrollIntoView({ behavior: "smooth", block: "center" });
+    setFlashedMessageId(highlightMessageId);
+    const timer = setTimeout(() => setFlashedMessageId(null), HIGHLIGHT_DURATION_MS);
+    return () => clearTimeout(timer);
+  }, [checked, messages, highlightMessageId]);
 
   // Gerçek zamanlı senkronizasyon (Bölüm 21 Faz C) — bu, karşı tarafın
   // gönderdiği bir mesajın sayfa yeniden ziyaret edilene kadar görünmediği,
@@ -468,6 +500,11 @@ export function LocalConversationView() {
         </div>
       )}
       <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4 lg:px-6" onScroll={handleListScroll}>
+        {messageHighlightNotFound && (
+          <p className="rounded-md bg-accent-surface/60 px-3 py-2 text-center text-xs text-text-muted">
+            Bu mesaj görüntülenemiyor.
+          </p>
+        )}
         {messages.length === 0 ? (
           <p className="py-10 text-center text-sm text-text-muted">
             Bu konuşmada henüz mesaj yok. İlk mesajı sen gönder.
@@ -480,6 +517,7 @@ export function LocalConversationView() {
               isMe={message.senderId === user.id}
               replyPreview={message.replyToMessageId ? (messagesById.get(message.replyToMessageId) ?? null) : null}
               isEditingHere={editingId === message.id}
+              isHighlighted={flashedMessageId === message.id}
               actions={{
                 onStartReply: setReplyingTo,
                 onStartEdit: startEdit,

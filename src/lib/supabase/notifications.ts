@@ -81,3 +81,18 @@ export async function deleteNotification(notificationId: string, userId: string)
     .eq("recipient_id", userId);
   if (error) throw new Error(error.message);
 }
+
+/**
+ * "Tümünü okundu işaretle" — one bulk UPDATE rather than one round-trip per
+ * unread row. Same RLS-backed ownership guarantee as the two functions
+ * above; only ever touches rows already unread, so it's safe to call even
+ * with nothing unread.
+ */
+export async function markAllNotificationsRead(userId: string): Promise<void> {
+  const { error } = await supabase
+    .from("notifications")
+    .update({ is_read: true })
+    .eq("recipient_id", userId)
+    .eq("is_read", false);
+  if (error) throw new Error(error.message);
+}

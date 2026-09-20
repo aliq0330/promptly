@@ -5,6 +5,7 @@ import { useAuth } from "@/features/auth/auth-provider";
 import {
   deleteNotification,
   fetchNotificationsForUser,
+  markAllNotificationsRead,
   markNotificationRead,
 } from "@/lib/supabase/notifications";
 import type { AppNotification } from "@/types";
@@ -14,6 +15,7 @@ interface NotificationsContextValue {
   unreadCount: number;
   refresh: () => Promise<void>;
   markRead: (id: string) => Promise<void>;
+  markAllRead: () => Promise<void>;
   remove: (id: string) => Promise<void>;
 }
 
@@ -83,11 +85,24 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     [user, notifications],
   );
 
+  const markAllRead = useCallback(async () => {
+    if (!user) return;
+    const previous = notifications;
+    if (previous.every((n) => n.isRead)) return;
+    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+    try {
+      await markAllNotificationsRead(user.id);
+    } catch (err) {
+      console.error("markAllRead", err);
+      setNotifications(previous);
+    }
+  }, [user, notifications]);
+
   const unreadCount = useMemo(() => notifications.filter((n) => !n.isRead).length, [notifications]);
 
   const value = useMemo(
-    () => ({ notifications, unreadCount, refresh, markRead, remove }),
-    [notifications, unreadCount, refresh, markRead, remove],
+    () => ({ notifications, unreadCount, refresh, markRead, markAllRead, remove }),
+    [notifications, unreadCount, refresh, markRead, markAllRead, remove],
   );
 
   return <NotificationsContext.Provider value={value}>{children}</NotificationsContext.Provider>;

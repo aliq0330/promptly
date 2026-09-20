@@ -42,6 +42,8 @@ export interface CommentTree {
   onCancelDeleteConfirm: () => void;
   isDeletingId: string | null;
   registerNodeRef: (id: string, el: HTMLDivElement | null) => void;
+  /** The comment/reply currently flashed after a notification jump (Aşama 5) — null once the flash has faded or nothing was jumped to. */
+  highlightedId: string | null;
 }
 
 /**
@@ -78,9 +80,16 @@ export function CommentNode({
   // Once indentation stops growing, the visual nesting alone no longer shows
   // who a reply is answering — this hint keeps that relationship visible.
   const showParentHint = depth > MAX_INDENT_DEPTH && parent;
+  const isHighlighted = tree.highlightedId === comment.id;
 
   return (
-    <div ref={(el) => tree.registerNodeRef(comment.id, el)} className="space-y-2">
+    <div
+      ref={(el) => tree.registerNodeRef(comment.id, el)}
+      className={cn(
+        "space-y-2 rounded-md transition-colors duration-700",
+        isHighlighted && "-m-1.5 bg-primary/10 p-1.5 ring-1 ring-primary/40",
+      )}
+    >
       <div className="flex gap-2.5">
         <Link href={profileHref(comment.author)} className="shrink-0 hover:opacity-80" aria-label={comment.author.displayName}>
           <Avatar src={comment.author.avatarUrl} alt={comment.author.displayName} size={depth === 0 ? 32 : 28} />

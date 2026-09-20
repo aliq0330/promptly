@@ -90,6 +90,7 @@ export function MessageBubble({
   isMe,
   replyPreview,
   isEditingHere,
+  isHighlighted,
   actions,
 }: {
   message: Message;
@@ -97,6 +98,8 @@ export function MessageBubble({
   /** The message this one replies to, already looked up from the loaded thread — null if it replies to nothing, or that message fell outside the loaded page. */
   replyPreview: Message | null;
   isEditingHere: boolean;
+  /** Briefly flashed after landing here from a mesaj bildirimi (Aşama 4.8/5) — same soft-purple flash used for comments/responses. */
+  isHighlighted?: boolean;
   actions: MessageBubbleActions;
 }) {
   const isDeleted = Boolean(message.deletedAt);
@@ -105,7 +108,14 @@ export function MessageBubble({
   const isDeletingHere = actions.isDeletingId === message.id;
 
   return (
-    <div data-message-id={message.id} className={cn("flex flex-col", isMe ? "items-end" : "items-start")}>
+    <div
+      data-message-id={message.id}
+      className={cn(
+        "flex flex-col rounded-md transition-colors duration-700",
+        isMe ? "items-end" : "items-start",
+        isHighlighted && "-mx-1.5 bg-primary/10 px-1.5 py-1 ring-1 ring-primary/40",
+      )}
+    >
       {replyPreview && (
         <div
           className={cn(

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useSearchParams } from "next/navigation";
 import { ChevronRight, Repeat2 } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -15,8 +16,12 @@ import { CommentCountLink } from "@/features/prompts/comment-count-link";
 import { fetchRemixChain, fetchRemixesOf } from "@/lib/supabase/prompts";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
 import { PostMenu } from "@/features/prompts/post-menu";
-import { formatCount, formatRelativeTime, promptHref } from "@/lib/utils";
+import { parseHighlightValue } from "@/lib/notification-utils";
+import { cn, formatCount, formatRelativeTime, promptHref } from "@/lib/utils";
 import type { Prompt } from "@/types";
+
+/** Same fade timing as the comment-thread flash (`comment-section.tsx`) — one shared "how long does a jumped-to thing glow" feel across the app. */
+const HIGHLIGHT_DURATION_MS = 2500;
 
 /** The real prompt detail rendering, used by `/prompts/local?id=…`. */
 export function PromptDetailView({ prompt }: { prompt: Prompt }) {
@@ -26,6 +31,21 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
 
   const [remixes, setRemixes] = useState<Prompt[]>([]);
   const [remixChain, setRemixChain] = useState<Prompt[]>([prompt]);
+
+  const searchParams = useSearchParams();
+  const highlight = parseHighlightValue(searchParams.get("hl"));
+  const highlightCommentId = highlight?.kind === "comment" ? highlight.id : null;
+  // A "gönderi beğenisi"/"remix" notification points at the post itself
+  // (Aşama 4.1/4.5) — there's nothing to scroll to (it's already the page's
+  // main content), just a brief flash to confirm this is the right one.
+  const [isPostFlashed, setIsPostFlashed] = useState(highlight?.kind === "post" && highlight.id === prompt.id);
+
+  useEffect(() => {
+    if (!isPostFlashed) return;
+    const timer = setTimeout(() => setIsPostFlashed(false), HIGHLIGHT_DURATION_MS);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only ever fires once, on mount, for the initial flash
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -42,7 +62,12 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
   }, [prompt.id]);
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6 px-4 py-6 lg:px-6">
+    <div
+      className={cn(
+        "mx-auto max-w-3xl space-y-6 px-4 py-6 transition-colors duration-700 lg:px-6",
+        isPostFlashed && "rounded-lg bg-primary/10 ring-1 ring-primary/40",
+      )}
+    >
       {media && (
         <div className="relative aspect-[4/3] w-full overflow-hidden rounded-lg bg-accent-surface">
           <Image src={media.url} alt={media.alt} fill sizes="768px" className="object-cover" />
@@ -149,7 +174,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
         )}
       </section>
 
-      <CommentSection target={{ promptId: prompt.id }} />
+      <CommentSection target={{ promptId: prompt.id }} highlightCommentId={highlightCommentId} />
     </div>
   );
 }
