@@ -3,12 +3,19 @@ import { Avatar } from "@/components/ui/avatar";
 import { formatRelativeTime, messageHref } from "@/lib/utils";
 import type { Conversation } from "@/types";
 
-export function ConversationRow({ conversation }: { conversation: Conversation }) {
+export function ConversationRow({
+  conversation,
+  shareQuery,
+}: {
+  conversation: Conversation;
+  /** Set by `/messages?sharePromptId=`/`?shareRequestId=` — appended so picking this conversation attaches the shared content there. */
+  shareQuery?: string;
+}) {
   const participant = conversation.participants[0];
 
   return (
     <Link
-      href={messageHref(conversation)}
+      href={shareQuery ? `${messageHref(conversation)}&${shareQuery}` : messageHref(conversation)}
       className="flex items-center gap-3 border-b border-border px-4 py-3 transition-colors last:border-0 hover:bg-accent-surface/40"
     >
       <Avatar

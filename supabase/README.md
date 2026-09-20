@@ -6,19 +6,18 @@ veri modelini birebir yansıtan gerçek Postgres şemasını (CLAUDE.md Bölüm
 ve görsel yükleme için Supabase Storage bucket'larını (Bölüm 20) oluşturur.
 Dosyalar sırayla (dosya adındaki zaman damgasına göre) uygulanmalıdır.
 
-**Durum:** İlk 13 dosya (Bölüm 18 şema + Bölüm 19 RLS + Bölüm 20 Storage
-+ Bölüm 9.2/9.4/9.5/9.6'nın `20260919150000`–`20260919180000` dosyaları)
-kullanıcı tarafından gerçek Supabase projesine (Dashboard → SQL Editor)
-başarıyla uygulandı ve doğrulandı. Yeni
-`20260919190000_prompt_safe_delete.sql` (Bölüm 9.7, remixlenmiş bir
-promptun güvenli silinmesi) bu depodan otomatik olarak uygulanmadı —
-Claude Code'un çalıştığı ortamın ağ politikası gerçek Supabase projesinin
+**Durum:** İlk 14 dosya (Bölüm 18 şema + Bölüm 19 RLS + Bölüm 20 Storage
++ Bölüm 9.2/9.4/9.5/9.6/9.7'nin `20260919150000`–`20260919190000`
+dosyaları) kullanıcı tarafından gerçek Supabase projesine (Dashboard →
+SQL Editor) başarıyla uygulandı ve doğrulandı. Yeni
+`20260919200000_messaging_content_and_edit.sql` (Bölüm 9.8, mesajlaşma
+genişletmesi Faz A) bu depodan otomatik olarak uygulanmadı — Claude
+Code'un çalıştığı ortamın ağ politikası gerçek Supabase projesinin
 veritabanına doğrudan erişimi engelliyor, bu yüzden yalnızca yerel, geçici
 bir Postgres 16 örneğinde gerçek rol simülasyonuyla test edildi (bkz.
 aşağıdaki "Nasıl doğrulandı" bölümü) — gerçek projenize henüz
-uygulanmadı. **`20260919190000` uygulanmadan** remixlenmiş bir promptu
-silmeye çalışmak veritabanı hatası vermeye devam eder (`prompts_origin_
-shape` CHECK kısıtı).
+uygulanmadı. **`20260919200000` uygulanmadan** mesajlarda içerik
+paylaşımı, yanıtlama, düzenleme ve silme frontend'de hata verir.
 
 ## Nasıl uygularsınız
 
@@ -29,8 +28,8 @@ shape` CHECK kısıtı).
 2. `migrations/` klasöründeki her dosyayı **dosya adındaki sıraya göre**
    (20260919120000, 20260919120100, ... 20260919120600, 20260919130000,
    20260919140000, 20260919150000, 20260919160000, 20260919170000,
-   20260919180000, 20260919190000) tek tek açıp içeriğini SQL Editor'e
-   yapıştırıp **Run**'a basın.
+   20260919180000, 20260919190000, 20260919200000) tek tek açıp
+   içeriğini SQL Editor'e yapıştırıp **Run**'a basın.
 3. Her dosya başarıyla çalıştıktan sonra bir sonrakine geçin. Bir hata
    alırsanız durdurun ve hatayı paylaşın.
 
@@ -242,6 +241,28 @@ tamamen kapalı kalır — güvenli tarafta kalan bilinçli bir ara durum.
     durumunda hiç çalışmıyor (doğru — bildirim hâlâ var olan, artık
     "silindi" gösteren bir sayfaya işaret etmeye devam ediyor).
 
+- `20260919200000_messaging_content_and_edit.sql` — mesajlaşma
+  genişletmesi Faz A (Bölüm 9.8): içerik paylaşımı, yanıtlama, düzenleme,
+  "benden sil"/"herkesten sil". `messages` tablosunun önceden hiç UPDATE
+  RLS politikası yoktu — bu yüzden ne düzenleme ne "herkesten sil" şu ana
+  kadar hiç mümkün değildi.
+  - `messages.body` artık nullable; yeni `shared_prompt_id`/
+    `shared_request_id` (FK, `on delete set null`), `reply_to_message_id`
+    (kendine referans), `edited_at`, `deleted_at`.
+  - CHECK `messages_has_content` (`deleted_at` istisnasıyla — aşağıdaki
+    hata düzeltmesine bakınız) ve `messages_shared_content_exclusive`.
+  - Yeni `message_hidden_for` tablosu — "benden sil", yalnızca o
+    kullanıcının kendi görünümünden gizler, mesaj satırını hiç etkilemez.
+  - Yeni UPDATE RLS politikası — gönderiden sonraki **15 dakika** (ürün
+    varsayılanı) içinde gönderen kendi mesajını düzenleyebiliyor/
+    "herkesten silebiliyor" (ikincisi bir DELETE değil, içeriği boşaltan
+    bir UPDATE). `handle_message_body_edit()` (Bölüm 9.5'in
+    `handle_comment_body_edit`'iyle birebir aynı) `edited_at`'i damgalıyor.
+  - **Gerçek hata düzeltmesi (yerel testte yakalandı):** ilk yazılan
+    `messages_has_content` CHECK'i `deleted_at` istisnasını içermiyordu,
+    bu yüzden "herkesten sil" (üç alanı BİRDEN boşaltan UPDATE) kendi
+    CHECK'ine çarpıp hata veriyordu — düzeltildi.
+
 ## Nasıl doğrulandı
 
 **Bölüm 18 (şema):** Gerçek projeye erişim engellendiğinden, ilk 7 dosya
@@ -419,3 +440,21 @@ etkilenmeden), ve feed'in silinmiş promptu kendi kartı olarak hiç
 göstermediği doğrulandı — hepsi sıfır JS hatasıyla. Test veritabanı işlem
 bitince silindi. Gerçek bir Supabase projesine karşı canlı doğrulama yine
 bu sandbox'ın ağ kısıtı yüzünden yapılamadı.
+
+**Bölüm 9.8 (mesajlaşma genişletmesi Faz A, `20260919200000`):** Aynı
+yerel test veritabanına gerçekten uygulandı ve 12 senaryo çalıştırıldı:
+boş mesaj reddi, hem-prompt-hem-istek reddi, yalnızca-paylaşılan-içerik
+kabulü, yanıtlama, 15 dakika içinde düzenleme + `edited_at` damgalanması,
+başkasının mesajını düzenleyememe (RLS), yalnızca beğeni/sayaç gibi
+ilgisiz bir güncellemenin `edited_at`'i etkilememesi, 15 dakika DIŞINDA
+düzenleme denemesinin reddi, "herkesten sil"in `body`'yi boşaltıp satırı
+yaşatması, "benden sil"in yalnızca o kullanıcı için gizlemesi, başkası
+adına "benden sil" kaydı oluşturulamaması, üye olmayan bir kullanıcının
+mesaj gönderememesi — hepsi gerçekten çalıştırılıp doğrulandı. Ayrıca
+`npx tsc --noEmit`, `npm run lint`, tam `npm run build` (20 rota,
+değişmedi) sıfır hatayla geçti, ve ağ seviyesinde taklit edilmiş Supabase
+REST yanıtlarıyla Playwright'ta 21 senaryo daha doğrulandı (düz mesaj,
+yanıtlama, düzenleme, iki silme modu, "Mesajla gönder" ile paylaşım
+akışının tamamı) — hepsi sıfır JS hatasıyla. Gerçek bir Supabase
+projesine karşı canlı doğrulama yine bu sandbox'ın ağ kısıtı yüzünden
+yapılamadı.

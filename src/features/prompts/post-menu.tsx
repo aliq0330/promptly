@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Copy, Link2, Loader2, MoreVertical, Trash2 } from "lucide-react";
+import { Copy, Link2, Loader2, MoreVertical, Send, Trash2 } from "lucide-react";
 import { useAuth } from "@/features/auth/auth-provider";
 import { absoluteUrl, cn, promptHref } from "@/lib/utils";
 import { deleteRealPrompt } from "@/lib/supabase/prompts";
@@ -124,6 +124,17 @@ export function PostMenu({
             <Link2 size={14} />
             {copied ? "Kopyalandı" : "Bağlantıyı kopyala"}
           </button>
+          {user && (
+            <Link
+              href={`/messages?sharePromptId=${promptId}`}
+              role="menuitem"
+              onClick={(event) => event.stopPropagation()}
+              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-text hover:bg-accent-surface"
+            >
+              <Send size={14} />
+              Mesajla gönder
+            </Link>
+          )}
           {isOwn && (
             <>
               <Link

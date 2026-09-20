@@ -168,6 +168,16 @@ export interface Message {
   id: string;
   conversationId: string;
   senderId: string;
-  body: string;
+  /** Null when this message is only a shared prompt/request with no caption text. */
+  body: string | null;
+  /** Set when this message shares a real prompt — mutually exclusive with sharedRequestId. */
+  sharedPromptId: string | null;
+  /** Set when this message shares a real prompt request — mutually exclusive with sharedPromptId. */
+  sharedRequestId: string | null;
+  /** The message this one is replying to, if any. */
+  replyToMessageId: string | null;
+  editedAt: string | null;
+  /** Set when the sender deleted this message "for everyone" — body/sharedPromptId/sharedRequestId are cleared server-side when this happens. */
+  deletedAt: string | null;
   createdAt: string;
 }

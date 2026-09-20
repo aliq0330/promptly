@@ -2,30 +2,46 @@
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { X } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useRealMessages } from "./real-messages-provider";
-import { fetchConversationForUser, fetchMessages, markConversationRead, sendMessage } from "@/lib/supabase/messages";
-import { cn, formatRelativeTime } from "@/lib/utils";
+import { MessageBubble, type DeleteMode } from "./message-bubble";
+import {
+  deleteMessageForEveryone,
+  editMessage,
+  fetchConversationForUser,
+  fetchMessages,
+  hideMessageForMe,
+  markConversationRead,
+  sendMessage,
+} from "@/lib/supabase/messages";
+import { useRealPrompts } from "@/features/prompts/real-prompts-provider";
+import { useRealRequests } from "@/features/requests/real-requests-provider";
 import type { Conversation, Message } from "@/types";
 
 /**
  * Client-rendered counterpart to `/messages/[conversationId]` for a
- * genuinely real conversation (CLAUDE.md Bölüm 21 Faz 6) — its id is a real
- * Supabase UUID, never one of the fixed mock conversation ids
- * `generateStaticParams` pre-rendered a page for at build time. Looked up
+ * genuinely real conversation (CLAUDE.md Bölüm 21 Faz 6 / Faz A). Looked up
  * by a `?id=` query param, same pattern as `/prompts/local`/`/requests/
- * local`. Unlike the mock conversation page, the composer here genuinely,
- * permanently sends — this is the one messaging surface in the whole app
- * where that's true.
+ * local`. The composer here genuinely, permanently sends — this is the one
+ * messaging surface in the whole app where that's true.
+ *
+ * `?sharePromptId=`/`?shareRequestId=` (set by a post's "Mesajla gönder")
+ * attach that content to the next message sent in this conversation.
  */
 export function LocalConversationView() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const id = searchParams.get("id");
+  const shareParamPromptId = searchParams.get("sharePromptId");
+  const shareParamRequestId = searchParams.get("shareRequestId");
   const { user } = useAuth();
   const { getCached } = useRealMessages();
+  const { getCached: getCachedPrompt, fetchById: fetchPromptById } = useRealPrompts();
+  const { getCached: getCachedRequest, fetchById: fetchRequestById } = useRealRequests();
 
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -33,7 +49,19 @@ export function LocalConversationView() {
   const [draft, setDraft] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
+
+  const [fetchedShareTitle, setFetchedShareTitle] = useState<string | null>(null);
+  const [dismissedShare, setDismissedShare] = useState(false);
+  const [replyingTo, setReplyingTo] = useState<Message | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState("");
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; mode: DeleteMode } | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
   const bottomRef = useRef<HTMLDivElement>(null);
+  const messagesById = new Map(messages.map((m) => [m.id, m]));
 
   useEffect(() => {
     let cancelled = false;
@@ -54,7 +82,7 @@ export function LocalConversationView() {
         setChecked(true);
         return;
       }
-      const [thread] = await Promise.all([fetchMessages(id), markConversationRead(id, user.id)]);
+      const [thread] = await Promise.all([fetchMessages(id, user.id), markConversationRead(id, user.id)]);
       if (cancelled) return;
       setMessages(thread);
       setChecked(true);
@@ -66,24 +94,110 @@ export function LocalConversationView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, user]);
 
+  // Resolves a `?sharePromptId=`/`?shareRequestId=` deep link into a real title for the composer banner — cache hit resolves synchronously via the derivation below; a miss falls back to a real fetch here.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- resetting state for a new share deep link, not reacting to an external system
+    setFetchedShareTitle(null);
+    setDismissedShare(false);
+    if (shareParamPromptId && !getCachedPrompt(shareParamPromptId)) {
+      fetchPromptById(shareParamPromptId).then((result) => {
+        if (result) setFetchedShareTitle(result.title);
+      });
+    } else if (shareParamRequestId && !getCachedRequest(shareParamRequestId)) {
+      fetchRequestById(shareParamRequestId).then((result) => {
+        if (result) setFetchedShareTitle(result.title);
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shareParamPromptId, shareParamRequestId]);
+
+  const pendingShare = dismissedShare
+    ? null
+    : shareParamPromptId
+      ? { type: "prompt" as const, id: shareParamPromptId, title: getCachedPrompt(shareParamPromptId)?.title ?? fetchedShareTitle ?? "Yükleniyor…" }
+      : shareParamRequestId
+        ? { type: "request" as const, id: shareParamRequestId, title: getCachedRequest(shareParamRequestId)?.title ?? fetchedShareTitle ?? "Yükleniyor…" }
+        : null;
+
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ block: "end" });
   }, [messages.length]);
 
+  function clearShareParams() {
+    if (!id) return;
+    router.replace(`/messages/local?id=${id}`);
+  }
+
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     const trimmed = draft.trim();
-    if (!trimmed || !id || !user || isSending) return;
+    if ((!trimmed && !pendingShare) || !id || !user || isSending) return;
     setIsSending(true);
     setSendError(null);
     try {
-      const sent = await sendMessage(id, user.id, trimmed);
+      const sent = await sendMessage(id, user.id, {
+        body: trimmed || undefined,
+        sharedPromptId: pendingShare?.type === "prompt" ? pendingShare.id : undefined,
+        sharedRequestId: pendingShare?.type === "request" ? pendingShare.id : undefined,
+        replyToMessageId: replyingTo?.id,
+      });
       setMessages((prev) => [...prev, sent]);
       setDraft("");
+      setReplyingTo(null);
+      if (pendingShare) {
+        setDismissedShare(true);
+        clearShareParams();
+      }
     } catch (err) {
       setSendError(err instanceof Error ? err.message : "Mesaj gönderilemedi, lütfen tekrar dene.");
     } finally {
       setIsSending(false);
+    }
+  }
+
+  function startEdit(message: Message) {
+    setEditingId(message.id);
+    setEditDraft(message.body ?? "");
+    setEditError(null);
+  }
+
+  async function submitEdit(messageId: string) {
+    if (!user || !editDraft.trim()) return;
+    setIsSavingEdit(true);
+    setEditError(null);
+    try {
+      const updated = await editMessage(messageId, user.id, editDraft.trim());
+      setMessages((prev) => prev.map((m) => (m.id === messageId ? updated : m)));
+      setEditingId(null);
+    } catch (err) {
+      setEditError(err instanceof Error ? err.message : "Düzenlenemedi, lütfen tekrar dene.");
+    } finally {
+      setIsSavingEdit(false);
+    }
+  }
+
+  async function requestDelete(messageId: string, mode: DeleteMode) {
+    if (!user) return;
+    if (!deleteConfirm || deleteConfirm.id !== messageId || deleteConfirm.mode !== mode) {
+      setDeleteConfirm({ id: messageId, mode });
+      return;
+    }
+    setDeletingId(messageId);
+    try {
+      if (mode === "everyone") {
+        await deleteMessageForEveryone(messageId, user.id);
+        setMessages((prev) =>
+          prev.map((m) => (m.id === messageId ? { ...m, body: null, sharedPromptId: null, sharedRequestId: null, deletedAt: new Date().toISOString() } : m)),
+        );
+      } else {
+        await hideMessageForMe(messageId, user.id);
+        setMessages((prev) => prev.filter((m) => m.id !== messageId));
+      }
+    } catch (err) {
+      console.error("delete message", err);
+    } finally {
+      setDeletingId(null);
+      setDeleteConfirm(null);
     }
   }
 
@@ -135,48 +249,75 @@ export function LocalConversationView() {
         <Avatar src={participant?.avatarUrl} alt={participant?.displayName ?? "Kullanıcı"} size={36} />
         <span className="text-sm font-semibold text-text">{participant?.displayName}</span>
       </div>
-      <div className="flex-1 space-y-3 overflow-y-auto px-4 py-4 lg:px-6">
+      <div className="flex-1 space-y-4 overflow-y-auto px-4 py-4 lg:px-6">
         {messages.length === 0 ? (
           <p className="py-10 text-center text-sm text-text-muted">
             Bu konuşmada henüz mesaj yok. İlk mesajı sen gönder.
           </p>
         ) : (
-          messages.map((message) => {
-            const isMe = message.senderId === user.id;
-            return (
-              <div key={message.id} className={cn("flex", isMe ? "justify-end" : "justify-start")}>
-                <div
-                  className={cn(
-                    "max-w-[75%] rounded-lg px-3 py-2 text-sm",
-                    isMe ? "bg-primary text-primary-foreground" : "bg-accent-surface text-text",
-                  )}
-                >
-                  <p>{message.body}</p>
-                  <span
-                    className={cn(
-                      "mt-1 block text-[11px]",
-                      isMe ? "text-primary-foreground/70" : "text-text-muted",
-                    )}
-                  >
-                    {formatRelativeTime(message.createdAt)}
-                  </span>
-                </div>
-              </div>
-            );
-          })
+          messages.map((message) => (
+            <MessageBubble
+              key={message.id}
+              message={message}
+              isMe={message.senderId === user.id}
+              replyPreview={message.replyToMessageId ? (messagesById.get(message.replyToMessageId) ?? null) : null}
+              isEditingHere={editingId === message.id}
+              actions={{
+                onStartReply: setReplyingTo,
+                onStartEdit: startEdit,
+                onCancelEdit: () => setEditingId(null),
+                onSubmitEdit: submitEdit,
+                editDraft,
+                onEditDraftChange: setEditDraft,
+                isSavingEdit,
+                editError,
+                onRequestDelete: requestDelete,
+                onCancelDeleteConfirm: () => setDeleteConfirm(null),
+                deleteConfirm,
+                isDeletingId: deletingId,
+              }}
+            />
+          ))
         )}
         <div ref={bottomRef} />
       </div>
       <form onSubmit={handleSubmit} className="border-t border-border p-4 lg:px-6">
+        {replyingTo && (
+          <div className="mb-2 flex items-center justify-between gap-2 rounded-md bg-accent-surface/60 px-3 py-1.5 text-xs text-text-muted">
+            <span className="truncate">
+              Yanıtlıyorsun: {replyingTo.body ?? (replyingTo.sharedPromptId ? "Bir prompt" : "Bir istek")}
+            </span>
+            <button type="button" onClick={() => setReplyingTo(null)} aria-label="Yanıtı iptal et">
+              <X size={14} />
+            </button>
+          </div>
+        )}
+        {pendingShare && (
+          <div className="mb-2 flex items-center justify-between gap-2 rounded-md bg-accent-surface/60 px-3 py-1.5 text-xs text-text-muted">
+            <span className="truncate">
+              Paylaşılıyor: {pendingShare.title} — istersen bir not ekleyip gönder
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                setDismissedShare(true);
+                clearShareParams();
+              }}
+              aria-label="Paylaşımı iptal et"
+            >
+              <X size={14} />
+            </button>
+          </div>
+        )}
         <div className="flex gap-2">
           <input
             type="text"
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
-            placeholder="Bir mesaj yaz..."
+            placeholder={pendingShare ? "İstersen bir not ekle (opsiyonel)..." : "Bir mesaj yaz..."}
             className="h-10 min-w-0 flex-1 rounded-md border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-primary"
           />
-          <Button type="submit" disabled={!draft.trim() || isSending}>
+          <Button type="submit" disabled={(!draft.trim() && !pendingShare) || isSending}>
             {isSending ? "Gönderiliyor..." : "Gönder"}
           </Button>
         </div>

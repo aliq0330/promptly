@@ -12,9 +12,17 @@ interface MessageRow {
   id: string;
   conversation_id: string;
   sender_id: string;
-  body: string;
+  body: string | null;
+  shared_prompt_id: string | null;
+  shared_request_id: string | null;
+  reply_to_message_id: string | null;
+  edited_at: string | null;
+  deleted_at: string | null;
   created_at: string;
 }
+
+const MESSAGE_SELECT =
+  "id, conversation_id, sender_id, body, shared_prompt_id, shared_request_id, reply_to_message_id, edited_at, deleted_at, created_at";
 
 function mapMessageRow(row: MessageRow): Message {
   return {
@@ -22,8 +30,31 @@ function mapMessageRow(row: MessageRow): Message {
     conversationId: row.conversation_id,
     senderId: row.sender_id,
     body: row.body,
+    sharedPromptId: row.shared_prompt_id,
+    sharedRequestId: row.shared_request_id,
+    replyToMessageId: row.reply_to_message_id,
+    editedAt: row.edited_at,
+    deletedAt: row.deleted_at,
     createdAt: row.created_at,
   };
+}
+
+interface PreviewRow {
+  body: string | null;
+  shared_prompt_id: string | null;
+  shared_request_id: string | null;
+  deleted_at: string | null;
+  created_at: string;
+}
+
+/** Renders a conversation list's one-line preview for the most recent message, honoring shared content/deletion the same way the thread itself does. */
+function previewTextFor(row: PreviewRow | undefined): string {
+  if (!row) return "Henüz mesaj yok.";
+  if (row.deleted_at) return "Bu mesaj silindi.";
+  if (row.body) return row.body;
+  if (row.shared_prompt_id) return "Bir prompt paylaştı.";
+  if (row.shared_request_id) return "Bir prompt isteği paylaştı.";
+  return "Henüz mesaj yok.";
 }
 
 /**
@@ -53,12 +84,12 @@ export async function fetchConversationsForUser(userId: string): Promise<Convers
 
     const { data: recentMessages } = await supabase
       .from("messages")
-      .select("conversation_id, body, created_at")
+      .select("conversation_id, body, shared_prompt_id, shared_request_id, deleted_at, created_at")
       .in("conversation_id", conversationIds)
       .order("created_at", { ascending: false });
 
-    const lastMessageByConversation = new Map<string, { body: string; created_at: string }>();
-    for (const msg of (recentMessages ?? []) as { conversation_id: string; body: string; created_at: string }[]) {
+    const lastMessageByConversation = new Map<string, PreviewRow>();
+    for (const msg of (recentMessages ?? []) as (PreviewRow & { conversation_id: string })[]) {
       if (!lastMessageByConversation.has(msg.conversation_id)) {
         lastMessageByConversation.set(msg.conversation_id, msg);
       }
@@ -77,7 +108,7 @@ export async function fetchConversationsForUser(userId: string): Promise<Convers
         return {
           id: m.conversation_id,
           participants: [mapProfileRow(otherProfile)],
-          lastMessage: last?.body ?? "Henüz mesaj yok.",
+          lastMessage: previewTextFor(last),
           lastMessageAt: m.conversations?.last_message_at ?? last?.created_at ?? new Date(0).toISOString(),
           unreadCount: m.unread_count,
         };
@@ -120,7 +151,7 @@ export async function fetchConversationForUser(conversationId: string, userId: s
 
     const { data: last } = await supabase
       .from("messages")
-      .select("body, created_at")
+      .select("body, shared_prompt_id, shared_request_id, deleted_at, created_at")
       .eq("conversation_id", conversationId)
       .order("created_at", { ascending: false })
       .limit(1)
@@ -130,7 +161,7 @@ export async function fetchConversationForUser(conversationId: string, userId: s
     return {
       id: conversationId,
       participants: [mapProfileRow(otherProfile)],
-      lastMessage: last?.body ?? "Henüz mesaj yok.",
+      lastMessage: previewTextFor(last ?? undefined),
       lastMessageAt: row.conversations?.last_message_at ?? last?.created_at ?? new Date(0).toISOString(),
       unreadCount: row.unread_count,
     };
@@ -140,31 +171,91 @@ export async function fetchConversationForUser(conversationId: string, userId: s
   }
 }
 
-/** Every message in a real conversation, oldest-first. RLS (Bölüm 19) already restricts this to conversation members. */
-export async function fetchMessages(conversationId: string): Promise<Message[]> {
+/**
+ * Every message in a real conversation, oldest-first, minus any this user
+ * hid "for themselves" (`message_hidden_for` — Bölüm 21 Faz A). RLS
+ * (Bölüm 19) already restricts the base query to conversation members.
+ */
+export async function fetchMessages(conversationId: string, viewerId: string): Promise<Message[]> {
   try {
-    const { data, error } = await supabase
-      .from("messages")
-      .select("id, conversation_id, sender_id, body, created_at")
-      .eq("conversation_id", conversationId)
-      .order("created_at", { ascending: true });
+    const [{ data, error }, { data: hidden }] = await Promise.all([
+      supabase
+        .from("messages")
+        .select(MESSAGE_SELECT)
+        .eq("conversation_id", conversationId)
+        .order("created_at", { ascending: true }),
+      supabase.from("message_hidden_for").select("message_id").eq("user_id", viewerId),
+    ]);
     if (error) return [];
-    return (data ?? []).map((row) => mapMessageRow(row as MessageRow));
+    const hiddenIds = new Set((hidden ?? []).map((row) => row.message_id as string));
+    return (data ?? [])
+      .map((row) => mapMessageRow(row as MessageRow))
+      .filter((message) => !hiddenIds.has(message.id));
   } catch (err) {
     console.error("fetchMessages", err);
     return [];
   }
 }
 
-/** Genuinely, permanently sends a message. Bölüm 19's handle_new_message trigger updates conversations.last_message_at and every other member's unread_count. */
-export async function sendMessage(conversationId: string, senderId: string, body: string): Promise<Message> {
+export interface SendMessageInput {
+  body?: string;
+  sharedPromptId?: string;
+  sharedRequestId?: string;
+  replyToMessageId?: string;
+}
+
+/** Genuinely, permanently sends a message — plain text, a shared prompt/request (with an optional caption), or a reply. Bölüm 19's handle_new_message trigger updates conversations.last_message_at and every other member's unread_count; the messages_has_content CHECK (Faz A) rejects a completely empty send at the database level. */
+export async function sendMessage(conversationId: string, senderId: string, input: SendMessageInput): Promise<Message> {
+  const trimmed = input.body?.trim();
   const { data, error } = await supabase
     .from("messages")
-    .insert({ conversation_id: conversationId, sender_id: senderId, body: body.trim() })
-    .select("id, conversation_id, sender_id, body, created_at")
+    .insert({
+      conversation_id: conversationId,
+      sender_id: senderId,
+      body: trimmed || null,
+      shared_prompt_id: input.sharedPromptId ?? null,
+      shared_request_id: input.sharedRequestId ?? null,
+      reply_to_message_id: input.replyToMessageId ?? null,
+    })
+    .select(MESSAGE_SELECT)
     .single();
   if (error || !data) throw new Error(error?.message ?? "Mesaj gönderilemedi.");
   return mapMessageRow(data as MessageRow);
+}
+
+/** Edits the caller's own message body — RLS (Faz A) only allows the sender, within 15 minutes of sending; `handle_message_body_edit` stamps edited_at automatically. */
+export async function editMessage(messageId: string, senderId: string, body: string): Promise<Message> {
+  const trimmed = body.trim();
+  if (!trimmed) throw new Error("Boş mesaj gönderilemez.");
+  const { data, error } = await supabase
+    .from("messages")
+    .update({ body: trimmed })
+    .eq("id", messageId)
+    .eq("sender_id", senderId)
+    .select(MESSAGE_SELECT)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error("Bu mesaj artık düzenlenemez (15 dakikalık süre dolmuş olabilir).");
+  return mapMessageRow(data as MessageRow);
+}
+
+/** "Herkesten sil" — clears the message's content for every member of the conversation. Same RLS window as editing (Faz A). */
+export async function deleteMessageForEveryone(messageId: string, senderId: string): Promise<void> {
+  const { data, error } = await supabase
+    .from("messages")
+    .update({ deleted_at: new Date().toISOString(), body: null, shared_prompt_id: null, shared_request_id: null })
+    .eq("id", messageId)
+    .eq("sender_id", senderId)
+    .select("id")
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error("Bu mesaj artık silinemez (15 dakikalık süre dolmuş olabilir).");
+}
+
+/** "Benden sil" — hides a message from only this viewer's own thread view; never touches the row itself or other members' view of it. */
+export async function hideMessageForMe(messageId: string, userId: string): Promise<void> {
+  const { error } = await supabase.from("message_hidden_for").insert({ message_id: messageId, user_id: userId });
+  if (error) throw new Error(error.message);
 }
 
 /** Marks a real conversation as read for one member — best-effort, a failure here shouldn't block viewing messages. */
