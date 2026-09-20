@@ -4708,18 +4708,18 @@ system.sql`'i Dashboard'da uygulayıp bizzat denemesi gerekiyor.
 ---
 
 **Sonraki adım:** Remix Dallanma Haritası + Merge sistemi (Bölüm 9.14)
-TAMAMLANDI. **Kullanıcının yapması gereken manuel adım (Dashboard → SQL
-Editor), sırayla, en son uygulanan `20260919210000`'den devam ederek:**
-1. `supabase/migrations/20260919220000_messaging_realtime.sql` (Bölüm
-   9.10) — bu olmadan mesajlaşmada Realtime abonelikleri sessizce hiç
-   olay almaz.
-2. `supabase/migrations/20260919230000_notification_targeting_and_
-   previews.sql` (Bölüm 9.12) — bu olmadan bildirimler içerik önizlemesi/
-   kesin hedef bilgisi (`hl=`) taşımaz.
-3. `supabase/migrations/20260919240000_message_reactions.sql` (Bölüm
-   9.13) — bu olmadan emoji tepkileri RLS reddiyle sessizce başarısız
-   olur.
-4. `supabase/migrations/20260919250000_remix_merge_system.sql` (YENİ —
-   Bölüm 9.14) — bu olmadan Remix Dallanma Haritası boş/yüklenemez
-   kalır ve merge talebi oluşturma/kabul/red/geri çekme işlemleri hata
-   verir.
+TAMAMLANDI. **Güncelleme — kullanıcı bunu doğruladı:** `20260919220000`
+(Bölüm 9.10), `20260919230000` (Bölüm 9.12), `20260919240000` (Bölüm
+9.13) ve `20260919250000` (Bölüm 9.14) migration'larının DÖRDÜ DE
+Dashboard → SQL Editor ile gerçek Supabase projesine sırayla uygulandı
+ve hatasız çalıştı — bekleyen manuel migration adımı kalmadı, şema/RPC'ler
+artık canlı projede gerçekten var (bkz. `supabase/README.md`'nin
+güncellenmiş "Durum" notu). Bunun ile "her akışın gerçek iki hesapla
+uçtan uca canlı denendiği" ayrı şeyler — bu depodaki Playwright testleri
+hâlâ yalnızca ağ seviyesinde taklit edilmiş Supabase yanıtlarıyla
+çalıştı (Claude Code'un sandbox'ı gerçek projeye hâlâ erişemiyor); yeni
+özelliklerin (Realtime senkronizasyonu, emoji tepkileri, merge akışı vb.)
+gerçek kullanıcı hesaplarıyla beklendiği gibi davrandığı kullanıcının
+kendi canlı denemesiyle doğrulanmalı. Bir sonraki modül için bu dosyanın
+başındaki kurala uyarak önce mevcut mimari denetlenmeli, yalnızca gerçek
+eksikler kapatılmalı.

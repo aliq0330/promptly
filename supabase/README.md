@@ -6,26 +6,26 @@ veri modelini birebir yansıtan gerçek Postgres şemasını (CLAUDE.md Bölüm
 ve görsel yükleme için Supabase Storage bucket'larını (Bölüm 20) oluşturur.
 Dosyalar sırayla (dosya adındaki zaman damgasına göre) uygulanmalıdır.
 
-**Durum:** İlk 16 dosya (Bölüm 18 şema + Bölüm 19 RLS + Bölüm 20 Storage
-+ Bölüm 9.2/9.4/9.5/9.6/9.7/9.8/9.9'un `20260919150000`–`20260919210000`
-dosyaları — mesajlaşma genişletmesi Faz A/B dahil) kullanıcı tarafından
-gerçek Supabase projesine (Dashboard → SQL Editor) başarıyla uygulandı ve
-doğrulandı. `20260919220000_messaging_realtime.sql` (Bölüm 9.10,
-mesajlaşma genişletmesi Faz C), `20260919230000_notification_targeting_
-and_previews.sql` (Bölüm 9.12, bildirim hedefleme/önizleme),
-`20260919240000_message_reactions.sql`, ve
-`20260919250000_remix_merge_system.sql` (Bölüm 9.13, Remix Dallanma
-Haritası + Merge sistemi) bu depodan otomatik olarak uygulanmadı —
-Claude Code'un çalıştığı ortamın ağ politikası gerçek Supabase projesinin
-veritabanına doğrudan erişimi (ve WebSocket erişimini de) engelliyor, bu
-yüzden hepsi yalnızca yerel, geçici bir Postgres 16 örneğinde test edildi
-(bkz. aşağıdaki "Nasıl doğrulandı" bölümü) — gerçek projenize henüz
-uygulanmadı. **`20260919220000` uygulanmadan** Realtime abonelikleri
-sessizce hiç olay almaz (hiçbir hata da vermez) — mesajlaşma yalnızca
-Faz A/B'nin sayfa-yüklemede-çek davranışıyla çalışmaya devam eder.
-**`20260919250000` uygulanmadan** Remix Dallanma Haritası boş/yüklenemiyor
-görünür ve merge talebi oluşturma/kabul/red/geri çekme işlemleri hata
-verir (frontend bu RPC'ler olmadan çalışamaz — bkz. Bölüm 9.13).
+**Durum:** Tüm 20 migration dosyası — Bölüm 18 şema + Bölüm 19 RLS +
+Bölüm 20 Storage'dan başlayıp, mesajlaşma genişletmesi Faz A/B/C
+(`20260919200000`–`20260919220000`, Bölüm 9.8/9.9/9.10), bildirim
+hedefleme/önizleme (`20260919230000`, Bölüm 9.12), mesaj işlem menüsü +
+emoji tepkileri (`20260919240000`, Bölüm 9.13) ve Remix Dallanma
+Haritası + Merge sistemi (`20260919250000`, Bölüm 9.14) dahil — kullanıcı
+tarafından Dashboard → SQL Editor ile gerçek Supabase projesine sırayla
+uygulandı ve hepsi hatasız çalıştı. Bu ortamın (Claude Code'un çalıştığı
+sandbox) ağ politikası gerçek Supabase projesine doğrudan erişimi
+engellediğinden, her migration önce yerel/geçici bir Postgres 16
+örneğinde test edilip (bkz. aşağıdaki "Nasıl doğrulandı" bölümü) ancak
+öyle teslim edildi — gerçek projeye fiilen uygulanması ve orada hatasız
+çalışması kullanıcının kendi ortamında gerçekleşti. **Not:** "migration
+hatasız çalıştı" ile "her yeni özellik gerçek kullanıcı hesaplarıyla
+uçtan uca canlı denendi" ayrı şeyler — bu depodaki Playwright
+testlerinin hiçbiri gerçek Supabase projesine karşı koşulmadı (yine aynı
+ağ kısıtı yüzünden), yalnızca ağ seviyesinde taklit edilmiş yanıtlarla.
+Şemanın/RPC'lerin gerçek projede var olduğu artık kesin; her akışın
+(Realtime, merge, emoji tepkileri vb.) gerçek iki hesapla beklendiği gibi
+davrandığı ancak kullanıcının kendi canlı denemesiyle doğrulanabilir.
 
 ## Nasıl uygularsınız
 
