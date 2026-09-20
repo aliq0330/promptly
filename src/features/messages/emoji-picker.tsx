@@ -42,9 +42,20 @@ export function EmojiPicker({
       role="menu"
       aria-label="Emoji tepkisi seç"
       className={cn(
-        "absolute top-full z-30 mt-1.5 flex flex-wrap items-center gap-1 rounded-2xl border border-border bg-surface p-1.5 shadow-md",
+        "absolute top-full z-30 mt-1.5 flex items-center gap-1 rounded-2xl border border-border bg-surface p-1.5 shadow-md",
         align === "right" ? "right-0" : "left-0",
-        expanded ? "w-[13.5rem]" : "w-auto",
+        // Collapsed (6 emoji + "➕"): `w-max` sizes to content regardless of
+        // the containing block's width. Without this, an absolutely
+        // positioned element with `width: auto` and only one offset
+        // (`right-0`/`left-0`) gets its shrink-to-fit width clamped to its
+        // positioned ancestor's own width — here that ancestor is the tiny
+        // `<div className="relative">` wrapping just the emoji TOGGLE
+        // button (~32px), so every emoji button wrapped onto its own line,
+        // rendering as a vertical column instead of a horizontal row (a
+        // real bug a user reported from a live screenshot). Expanded (18
+        // emoji): a fixed width so it wraps into a small grid instead of
+        // one very long horizontal strip.
+        expanded ? "w-[13.5rem] flex-wrap" : "w-max flex-nowrap",
       )}
     >
       {emojis.map((emoji) => (
