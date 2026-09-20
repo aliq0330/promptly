@@ -1,14 +1,16 @@
 "use client";
 
-import { useEffect, useRef, useState, type FormEvent, type UIEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent, type UIEvent } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { X } from "lucide-react";
+import { ArrowLeft, X } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/auth-provider";
+import { useBlockState } from "@/features/moderation/use-block-state";
+import { ProfileMoreMenu } from "@/features/profile/profile-more-menu";
 import { useRealMessages } from "./real-messages-provider";
-import { MessageBubble, type DeleteMode } from "./message-bubble";
+import { MessageBubble, type DeleteMode, type MessageReactionEntry } from "./message-bubble";
 import {
   deleteMessageForEveryone,
   editMessage,
@@ -20,15 +22,29 @@ import {
   sendMessage,
   type MessageRow,
 } from "@/lib/supabase/messages";
-import { mergeIncomingMessage, applyMessageUpdate } from "./realtime-helpers";
+import { fetchReactionsForConversation, removeMessageReaction, setMessageReaction } from "@/lib/supabase/message-reactions";
+import { mergeIncomingMessage, applyMessageUpdate, removeReactionRow, upsertReaction } from "./realtime-helpers";
 import { computeKeyboardInset } from "./viewport-helpers";
 import { supabase } from "@/lib/supabase/client";
-import { fetchIsBlockedByMe, unblockUser } from "@/lib/supabase/blocks";
 import { useRealPrompts } from "@/features/prompts/real-prompts-provider";
 import { useRealRequests } from "@/features/requests/real-requests-provider";
 import { parseHighlightValue } from "@/lib/notification-utils";
 import { profileHref } from "@/lib/utils";
-import type { Conversation, Message } from "@/types";
+import type { Conversation, Message, UserProfile } from "@/types";
+
+/** Used only to give `useBlockState` a stable, always-defined target before the real conversation/participant has loaded — hooks must run unconditionally, and `canBlock` inside it is false until a real user session exists anyway, so this placeholder never actually reaches a query with a meaningful id. */
+const EMPTY_PARTICIPANT: UserProfile = {
+  id: "",
+  username: "",
+  displayName: "",
+  avatarUrl: null,
+  coverUrl: null,
+  bio: null,
+  website: null,
+  followerCount: 0,
+  followingCount: 0,
+  createdAt: new Date(0).toISOString(),
+};
 
 /** Same fade timing as the comment-thread/response flash — one shared feel across the app for "you just jumped here from a notification". */
 const HIGHLIGHT_DURATION_MS = 2500;
@@ -78,10 +94,27 @@ export function LocalConversationView() {
   const [editError, setEditError] = useState<string | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; mode: DeleteMode } | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [blockedByMe, setBlockedByMe] = useState(false);
-  const [isUnblocking, setIsUnblocking] = useState(false);
   const [isDecliningRequest, setIsDecliningRequest] = useState(false);
   const [isNearBottom, setIsNearBottom] = useState(true);
+  // Aşama 1: which single message currently has its ⋮/emoji icons revealed
+  // via a mobile tap — activating a new one (or a tap on blank list space,
+  // see handleListBackgroundClick) automatically closes the previous one's,
+  // since this is one shared piece of state for the whole thread.
+  const [activeMessageId, setActiveMessageId] = useState<string | null>(null);
+  // Aşama 2: every reaction currently on any message in this conversation,
+  // loaded once with the thread and kept live via the Realtime subscription
+  // below — one flat list, not per-message state, so a single query/
+  // subscription covers the whole open conversation.
+  const [reactionRows, setReactionRows] = useState<{ messageId: string; userId: string; emoji: string }[]>([]);
+
+  // Profil sayfasıyla BİREBİR AYNI engelleme mekanizması (Aşama 8's "profil
+  // menüsüyle tutarlılık" — bu, `ProfileMoreMenu`'nün kendisini üst barda
+  // yeniden kullanabilmek için de gerekli, aşağıdaki header'a bakınız).
+  // `conversation` henüz yüklenmeden hook'lar koşulsuz çağrılmalı, bu
+  // yüzden gerçek katılımcı gelene kadar zararsız bir placeholder hedef
+  // kullanılıyor — `useBlockState`'in `canBlock`'u zaten oturum yokken
+  // false, ve id boş olduğunda sorgu hiçbir şeye eşleşmiyor.
+  const blockState = useBlockState(conversation?.participants[0] ?? EMPTY_PARTICIPANT);
 
   const highlight = parseHighlightValue(searchParams.get("hl"));
   const highlightMessageId = highlight?.kind === "message" ? highlight.id : null;
@@ -123,9 +156,14 @@ export function LocalConversationView() {
         setChecked(true);
         return;
       }
-      const [thread] = await Promise.all([fetchMessages(id, user.id), markConversationRead(id, user.id)]);
+      const [thread, reactions] = await Promise.all([
+        fetchMessages(id, user.id),
+        fetchReactionsForConversation(id),
+        markConversationRead(id, user.id),
+      ]);
       if (cancelled) return;
       setMessages(thread);
+      setReactionRows(reactions);
       setChecked(true);
     });
 
@@ -202,26 +240,48 @@ export function LocalConversationView() {
     };
   }, [id, user]);
 
-  // Whether the viewer themselves has blocked the other participant — the
-  // composer disables when true. Deliberately does NOT try to detect "they
-  // blocked me" ahead of time (the blocks SELECT policy can't see that
-  // side, see fetchIsBlockedByMe's own comment) — that case only surfaces
-  // when an actual send fails, handled in handleSubmit's catch below.
+  // Aynı Realtime deseni, tepkiler için (Aşama 2/6 — "tepki ekleme,
+  // değiştirme ve kaldırma gerçek zamanlı olarak karşı tarafa
+  // yansıtılmalı"). Ekleme/değiştirme aynı satırın UPSERT'i olduğundan
+  // (aynı birincil anahtar `(message_id, user_id)`) ikisi de tek bir
+  // INSERT-veya-UPDATE olayı üretiyor; DELETE, `REPLICA IDENTITY FULL`
+  // sayesinde (migration'daki not) `conversation_id` filtresini gerçekten
+  // değerlendirebiliyor.
   useEffect(() => {
-    let cancelled = false;
-    const participantId = conversation?.participants[0]?.id;
-    if (!user || !participantId) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- no conversation loaded yet, nothing to check
-      setBlockedByMe(false);
-      return;
-    }
-    fetchIsBlockedByMe(user.id, participantId).then((result) => {
-      if (!cancelled) setBlockedByMe(result);
-    });
+    if (!id || !user) return;
+
+    const channel = supabase
+      .channel(`message_reactions:${id}`)
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "message_reactions", filter: `conversation_id=eq.${id}` },
+        (payload) => {
+          const row = payload.new as { message_id: string; user_id: string; emoji: string };
+          setReactionRows((prev) => upsertReaction(prev, { messageId: row.message_id, userId: row.user_id, emoji: row.emoji }));
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "message_reactions", filter: `conversation_id=eq.${id}` },
+        (payload) => {
+          const row = payload.new as { message_id: string; user_id: string; emoji: string };
+          setReactionRows((prev) => upsertReaction(prev, { messageId: row.message_id, userId: row.user_id, emoji: row.emoji }));
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "DELETE", schema: "public", table: "message_reactions", filter: `conversation_id=eq.${id}` },
+        (payload) => {
+          const row = payload.old as { message_id: string; user_id: string };
+          setReactionRows((prev) => removeReactionRow(prev, row.message_id, row.user_id));
+        },
+      )
+      .subscribe();
+
     return () => {
-      cancelled = true;
+      supabase.removeChannel(channel);
     };
-  }, [user, conversation]);
+  }, [id, user]);
 
   // Resolves a `?sharePromptId=`/`?shareRequestId=` deep link into a real title for the composer banner — cache hit resolves synchronously via the derivation below; a miss falls back to a real fetch here.
   useEffect(() => {
@@ -307,6 +367,43 @@ export function LocalConversationView() {
     };
   }, []);
 
+  const reactionsByMessage = useMemo(() => {
+    const map = new Map<string, MessageReactionEntry[]>();
+    for (const row of reactionRows) {
+      const entries = map.get(row.messageId) ?? [];
+      entries.push({ userId: row.userId, emoji: row.emoji });
+      map.set(row.messageId, entries);
+    }
+    return map;
+  }, [reactionRows]);
+
+  // Aşama 2's "tek emoji" kuralı: aynı emojiye tekrar basmak tepkiyi
+  // kaldırır, farklı bir emoji seçmek eskisinin yerini alır — ikisi de
+  // optimistik olarak uygulanıp başarısızlıkta geri alınıyor (Follow/
+  // Like/Save provider'larından beri bu projenin standart deseni).
+  async function handleReact(messageId: string, emoji: string) {
+    if (!user || !id) return;
+    const mine = reactionRows.find((r) => r.messageId === messageId && r.userId === user.id);
+    if (mine && mine.emoji === emoji) {
+      setReactionRows((prev) => removeReactionRow(prev, messageId, user.id));
+      try {
+        await removeMessageReaction(messageId, user.id);
+      } catch (err) {
+        console.error("removeMessageReaction", err);
+        setReactionRows((prev) => upsertReaction(prev, mine));
+      }
+      return;
+    }
+    const previous = mine;
+    setReactionRows((prev) => upsertReaction(prev, { messageId, userId: user.id, emoji }));
+    try {
+      await setMessageReaction(messageId, id, user.id, emoji);
+    } catch (err) {
+      console.error("setMessageReaction", err);
+      setReactionRows((prev) => (previous ? upsertReaction(prev, previous) : removeReactionRow(prev, messageId, user.id)));
+    }
+  }
+
   function clearShareParams() {
     if (!id) return;
     router.replace(`/messages/local?id=${id}`);
@@ -344,16 +441,18 @@ export function LocalConversationView() {
     }
   }
 
-  async function handleUnblock() {
-    if (!user || !conversation) return;
-    setIsUnblocking(true);
-    try {
-      await unblockUser(user.id, conversation.participants[0].id);
-      setBlockedByMe(false);
-    } catch (err) {
-      console.error("unblockUser", err);
-    } finally {
-      setIsUnblocking(false);
+  function handleBack() {
+    // Tarayıcının kendi geri davranışıyla çakışmaması ve `/messages`'ın
+    // scroll konumunu mümkün olduğunca korumak için (Aşama 7) `router.
+    // back()` — düz bir `router.push("/messages")` her zaman sayfanın en
+    // üstüne sıfırlar. Doğrudan bir bildirim/derin bağlantıyla buraya
+    // gelinmiş olabilir (tarayıcı geçmişinde önceki sayfa hiç yok) — bu
+    // durumda `back()`'in gidecek bir yeri olmaz, bu yüzden gerçek bir
+    // geçmiş olup olmadığı kontrol ediliyor.
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      router.back();
+    } else {
+      router.push("/messages");
     }
   }
 
@@ -472,13 +571,24 @@ export function LocalConversationView() {
       ref={panelRef}
       className="fixed inset-x-0 top-16 z-10 flex flex-col bg-background bottom-[calc(4rem+env(safe-area-inset-bottom))] lg:left-64 lg:bottom-0"
     >
-      <Link
-        href={profileHref(participant)}
-        className="flex min-w-0 items-center gap-3 border-b border-border px-4 py-3 hover:bg-accent-surface/40 lg:px-6"
-      >
-        <Avatar src={participant.avatarUrl} alt={participant.displayName} size={36} />
-        <span className="truncate text-sm font-semibold text-text">{participant.displayName}</span>
-      </Link>
+      <div className="flex items-center gap-1 border-b border-border px-2 py-2 lg:px-4">
+        <button
+          type="button"
+          onClick={handleBack}
+          aria-label="Mesaj listesine dön"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-accent-surface hover:text-text"
+        >
+          <ArrowLeft size={20} />
+        </button>
+        <Link
+          href={profileHref(participant)}
+          className="flex min-w-0 flex-1 items-center gap-3 rounded-md px-1 hover:bg-accent-surface/40"
+        >
+          <Avatar src={participant.avatarUrl} alt={participant.displayName} size={36} />
+          <span className="truncate text-sm font-semibold text-text">{participant.displayName}</span>
+        </Link>
+        <ProfileMoreMenu user={participant} blockState={blockState} />
+      </div>
       {conversation.myStatus === "pending" && (
         <div className="flex items-center justify-between gap-3 border-b border-border bg-accent-surface/60 px-4 py-2.5 lg:px-6">
           <p className="text-xs text-text">
@@ -499,7 +609,18 @@ export function LocalConversationView() {
           </div>
         </div>
       )}
-      <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4 lg:px-6" onScroll={handleListScroll}>
+      <div
+        className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4 lg:px-6"
+        onScroll={handleListScroll}
+        onClick={(event) => {
+          // A tap on truly blank list space (not on any message's own
+          // wrapper, which stops propagation via its own onClick) closes
+          // whichever message currently has its icons revealed — Aşama 1's
+          // "menü ve emoji seçici dışına dokunulduğunda kapansın", for the
+          // "outside every bubble entirely" case.
+          if (event.target === event.currentTarget) setActiveMessageId(null);
+        }}
+      >
         {messageHighlightNotFound && (
           <p className="rounded-md bg-accent-surface/60 px-3 py-2 text-center text-xs text-text-muted">
             Bu mesaj görüntülenemiyor.
@@ -518,6 +639,11 @@ export function LocalConversationView() {
               replyPreview={message.replyToMessageId ? (messagesById.get(message.replyToMessageId) ?? null) : null}
               isEditingHere={editingId === message.id}
               isHighlighted={flashedMessageId === message.id}
+              isActive={activeMessageId === message.id}
+              onActivate={setActiveMessageId}
+              reactions={reactionsByMessage.get(message.id) ?? []}
+              currentUserId={user.id}
+              onReact={handleReact}
               actions={{
                 onStartReply: setReplyingTo,
                 onStartEdit: startEdit,
@@ -538,11 +664,11 @@ export function LocalConversationView() {
         <div ref={bottomRef} />
       </div>
       <form onSubmit={handleSubmit} className="border-t border-border p-4 lg:px-6">
-        {blockedByMe && (
+        {blockState.isBlocked && (
           <div className="mb-2 flex items-center justify-between gap-2 rounded-md bg-red-500/10 px-3 py-1.5 text-xs text-red-600">
             <span>Bu kullanıcıyı engelledin, mesaj gönderemezsin.</span>
-            <button type="button" onClick={handleUnblock} disabled={isUnblocking} className="font-medium hover:underline disabled:opacity-50">
-              {isUnblocking ? "Kaldırılıyor..." : "Engeli kaldır"}
+            <button type="button" onClick={() => blockState.toggle()} className="font-medium hover:underline">
+              Engeli kaldır
             </button>
           </div>
         )}
@@ -579,10 +705,10 @@ export function LocalConversationView() {
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
             placeholder={pendingShare ? "İstersen bir not ekle (opsiyonel)..." : "Bir mesaj yaz..."}
-            disabled={blockedByMe}
+            disabled={blockState.isBlocked}
             className="h-10 min-w-0 flex-1 rounded-md border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
           />
-          <Button type="submit" disabled={(!draft.trim() && !pendingShare) || isSending || blockedByMe}>
+          <Button type="submit" disabled={(!draft.trim() && !pendingShare) || isSending || blockState.isBlocked}>
             {isSending ? "Gönderiliyor..." : "Gönder"}
           </Button>
         </div>

@@ -1,4 +1,5 @@
 import type { Message } from "@/types";
+import type { MessageReactionRow } from "@/lib/supabase/message-reactions";
 
 /**
  * Pure merge logic for a Realtime `INSERT` on `messages`, kept separate
@@ -27,4 +28,25 @@ export function mergeIncomingMessage(current: Message[], incoming: Message): Mes
  */
 export function applyMessageUpdate(current: Message[], updated: Message): Message[] {
   return current.map((message) => (message.id === updated.id ? updated : message));
+}
+
+/**
+ * Pure merge logic for a Realtime INSERT/UPDATE on `message_reactions`
+ * (Aşama 2/6 — a reaction being added or its emoji changed, both land here
+ * since a change is an UPDATE on the same `(message_id, user_id)` row, see
+ * the migration's upsert). Same replace-or-append shape as
+ * `mergeIncomingMessage`/`applyMessageUpdate` above, keyed by the table's
+ * own composite primary key instead of a single `id`.
+ */
+export function upsertReaction(current: MessageReactionRow[], incoming: MessageReactionRow): MessageReactionRow[] {
+  const index = current.findIndex((r) => r.messageId === incoming.messageId && r.userId === incoming.userId);
+  if (index === -1) return [...current, incoming];
+  const next = current.slice();
+  next[index] = incoming;
+  return next;
+}
+
+/** Pure merge logic for a Realtime DELETE on `message_reactions` (a reaction removed — tapping the same emoji again). */
+export function removeReactionRow(current: MessageReactionRow[], messageId: string, userId: string): MessageReactionRow[] {
+  return current.filter((r) => !(r.messageId === messageId && r.userId === userId));
 }
