@@ -57,8 +57,6 @@ export function PromptDiffModal({
 
   const loading = subject === undefined || compare === undefined;
   const fields = subject && compare ? diffPromptContent(promptToComparable(compare), promptToComparable(subject)) : [];
-  const supportedTypes = new Set(["text", "code"]);
-  const unsupported = subject && !supportedTypes.has(subject.contentType) && subject.contentType === "image";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true" aria-labelledby="diff-modal-title">
@@ -117,17 +115,16 @@ export function PromptDiffModal({
                 </div>
               </div>
 
-              {unsupported ? (
-                <p className="rounded-md bg-accent-surface/60 px-3 py-3 text-sm text-text-muted">
-                  Bu içerik türü için fark karşılaştırması desteklenmiyor (yalnızca metin/kod alanları karşılaştırılabilir; görsel çıktının kendisi karşılaştırılmıyor).
-                </p>
-              ) : (
-                <div className="space-y-4">
-                  {fields.map((field) => (
-                    <FieldDiffBlock key={field.field} field={field} mode={mode} />
-                  ))}
-                </div>
-              )}
+              <div className="space-y-4">
+                {subject.contentType === "image" && (
+                  <p className="rounded-md bg-accent-surface/60 px-3 py-2 text-xs text-text-muted">
+                    Görselin kendisi karşılaştırılmıyor — yalnızca aşağıdaki metin alanları (başlık, açıklama, prompt metni, araç) karşılaştırılıyor.
+                  </p>
+                )}
+                {fields.map((field) => (
+                  <FieldDiffBlock key={field.field} field={field} mode={mode} />
+                ))}
+              </div>
 
               {onRequestMerge && (
                 <div className="border-t border-border pt-3">

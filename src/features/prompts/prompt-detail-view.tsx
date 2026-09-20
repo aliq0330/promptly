@@ -32,6 +32,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
 
   const [remixes, setRemixes] = useState<Prompt[]>([]);
   const [remixChain, setRemixChain] = useState<Prompt[]>([prompt]);
+  const [remixTab, setRemixTab] = useState<"remixes" | "map">("remixes");
 
   const searchParams = useSearchParams();
   const highlight = parseHighlightValue(searchParams.get("hl"));
@@ -65,11 +66,10 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
   return (
     <div
       className={cn(
-        "mx-auto max-w-3xl px-4 py-6 transition-colors duration-700 lg:max-w-5xl lg:px-6",
+        "mx-auto max-w-3xl space-y-6 px-4 py-6 transition-colors duration-700 lg:px-6",
         isPostFlashed && "rounded-lg bg-primary/10 ring-1 ring-primary/40",
       )}
     >
-      <div className="space-y-6 lg:max-w-3xl">
       {media && (
         <div className="relative aspect-[4/3] w-full overflow-hidden rounded-lg bg-accent-surface">
           <Image src={media.url} alt={media.alt} fill sizes="768px" className="object-cover" />
@@ -164,32 +164,50 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
           </Link>
         </div>
       </div>
-      </div>
 
-      {/* Remix Dallanma Haritası (§2-4), "Remixler" ile aynı yatay hizada
-          başlayan bir sağ panel — yalnızca bu blok geniş bir grid'e geçiyor,
-          sayfanın üst kısmı (başlık/görsel/açıklama) sıkışmıyor. Mobilde
-          `RemixBranchMap`'in kendi katlanabilir toggle'ı devreye giriyor. */}
-      <div className="mt-6 space-y-6 lg:grid lg:grid-cols-[1fr_360px] lg:items-start lg:space-y-0 lg:gap-6">
-        <div className="min-w-0 space-y-6 lg:max-w-3xl">
-          <section className="space-y-3 border-t border-border pt-5">
-            <h2 className="text-sm font-semibold text-text">Remixler ({remixes.length})</h2>
-            {remixes.length === 0 ? (
-              <p className="py-6 text-center text-sm text-text-muted">
-                Bu prompt henüz remixlenmedi.
-              </p>
-            ) : (
-              <PromptGrid prompts={remixes} />
+      <section className="space-y-3 border-t border-border pt-5">
+        <div role="tablist" aria-label="Remix görünümü" className="flex gap-1 border-b border-border">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={remixTab === "remixes"}
+            onClick={() => setRemixTab("remixes")}
+            className={cn(
+              "-mb-px border-b-2 px-3 py-2 text-sm font-medium transition-colors",
+              remixTab === "remixes" ? "border-primary text-primary" : "border-transparent text-text-muted hover:text-text",
             )}
-          </section>
-
-          <CommentSection target={{ promptId: prompt.id }} highlightCommentId={highlightCommentId} />
+          >
+            Remixler ({remixes.length})
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={remixTab === "map"}
+            onClick={() => setRemixTab("map")}
+            className={cn(
+              "-mb-px flex items-center gap-1.5 border-b-2 px-3 py-2 text-sm font-medium transition-colors",
+              remixTab === "map" ? "border-primary text-primary" : "border-transparent text-text-muted hover:text-text",
+            )}
+          >
+            <Repeat2 size={14} />
+            Remix Dallanma Haritası
+          </button>
         </div>
 
-        <div className="min-w-0">
+        {remixTab === "remixes" ? (
+          remixes.length === 0 ? (
+            <p className="py-6 text-center text-sm text-text-muted">
+              Bu prompt henüz remixlenmedi.
+            </p>
+          ) : (
+            <PromptGrid prompts={remixes} />
+          )
+        ) : (
           <RemixBranchMap currentPrompt={prompt} />
-        </div>
-      </div>
+        )}
+      </section>
+
+      <CommentSection target={{ promptId: prompt.id }} highlightCommentId={highlightCommentId} />
     </div>
   );
 }

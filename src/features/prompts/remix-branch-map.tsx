@@ -2,13 +2,11 @@
 
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent, type WheelEvent as ReactWheelEvent } from "react";
 import {
-  ChevronsUpDown,
   Crosshair,
   EyeOff,
   GitMerge,
   Maximize2,
   Minimize2,
-  Repeat2,
   ZoomIn,
   ZoomOut,
 } from "lucide-react";
@@ -25,13 +23,15 @@ const MIN_SCALE = 0.4;
 const MAX_SCALE = 1.75;
 
 /**
- * The right-hand "Remix Dallanma Haritası" panel next to the "Remixler"
- * section on a prompt's detail page (Aşama 2). Real data only: every node
- * and every merge link comes from `fetch_remix_graph`/`merge_requests`
- * (Aşama 22 step 2's own instruction — "harita sadece dekoratif bir
- * diyagram olmayacak"). Pan/zoom/fit are hand-rolled (pointer events + a
- * CSS transform) rather than a charting/graph library — this app adds no
- * new dependency for it, matching CLAUDE.md §2.
+ * The "Remix Dallanma Haritası" tab's content, next to "Remixler" on a
+ * prompt's detail page (`prompt-detail-view.tsx` owns the tab switcher —
+ * this component only renders once that tab is active, so it's always
+ * fully visible when mounted; no internal show/hide toggle). Real data
+ * only: every node and every merge link comes from `fetch_remix_graph`/
+ * `merge_requests` (Aşama 22 step 2's own instruction — "harita sadece
+ * dekoratif bir diyagram olmayacak"). Pan/zoom/fit are hand-rolled
+ * (pointer events + a CSS transform) rather than a charting/graph
+ * library — this app adds no new dependency for it, matching CLAUDE.md §2.
  */
 export function RemixBranchMap({ currentPrompt }: { currentPrompt: Prompt }) {
   const rootId = useMemo(() => resolveGraphRootId(currentPrompt), [currentPrompt]);
@@ -41,7 +41,6 @@ export function RemixBranchMap({ currentPrompt }: { currentPrompt: Prompt }) {
   const [loaded, setLoaded] = useState(false);
   const [selectedId, setSelectedId] = useState<string>(currentPrompt.id);
   const [expanded, setExpanded] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
   const [showMergeLinks, setShowMergeLinks] = useState(true);
   const [minimizeDeleted, setMinimizeDeleted] = useState(false);
 
@@ -259,88 +258,70 @@ export function RemixBranchMap({ currentPrompt }: { currentPrompt: Prompt }) {
   );
 
   return (
-    <section aria-labelledby="remix-map-heading" className="space-y-3 rounded-lg border border-border bg-surface p-3">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 id="remix-map-heading" className="flex items-center gap-1.5 text-sm font-semibold text-text">
-          <Repeat2 size={15} className="text-primary" />
-          Remix Dallanma Haritası
-        </h2>
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-center gap-1.5 text-xs text-text-muted">
+        <span className="mr-auto rounded-sm bg-accent-surface px-2 py-1 font-medium text-primary">{nodeCount} içerik</span>
+        <button type="button" onClick={() => setScale((s) => Math.min(MAX_SCALE, s + 0.15))} aria-label="Haritayı büyüt" className="rounded-md border border-border p-1.5 hover:bg-accent-surface">
+          <ZoomIn size={14} />
+        </button>
+        <button type="button" onClick={() => setScale((s) => Math.max(MIN_SCALE, s - 0.15))} aria-label="Haritayı küçült" className="rounded-md border border-border p-1.5 hover:bg-accent-surface">
+          <ZoomOut size={14} />
+        </button>
+        <button type="button" onClick={fitToView} aria-label="Görünüme sığdır" title="Görünüme sığdır" className="rounded-md border border-border p-1.5 hover:bg-accent-surface">
+          <Maximize2 size={14} />
+        </button>
+        <button type="button" onClick={centerOnCurrent} aria-label="Merkez içeriğe dön" title="Merkez içeriğe dön" className="rounded-md border border-border p-1.5 hover:bg-accent-surface">
+          <Crosshair size={14} />
+        </button>
         <button
           type="button"
-          onClick={() => setMobileOpen((v) => !v)}
-          aria-expanded={mobileOpen}
-          className="flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs text-text-muted hover:bg-accent-surface lg:hidden"
+          onClick={() => setShowMergeLinks((v) => !v)}
+          aria-pressed={showMergeLinks}
+          title="Merge ilişkilerini göster/gizle"
+          className={cn("rounded-md border p-1.5 hover:bg-accent-surface", showMergeLinks ? "border-primary text-primary" : "border-border")}
         >
-          <ChevronsUpDown size={13} />
-          {mobileOpen ? "Haritayı gizle" : "Haritayı göster"}
+          <GitMerge size={14} />
+        </button>
+        <button
+          type="button"
+          onClick={() => setMinimizeDeleted((v) => !v)}
+          aria-pressed={minimizeDeleted}
+          title="Silinen içerikleri sadeleştir"
+          className={cn("rounded-md border p-1.5 hover:bg-accent-surface", minimizeDeleted ? "border-primary text-primary" : "border-border")}
+        >
+          <EyeOff size={14} />
+        </button>
+        <button type="button" onClick={() => setExpanded((v) => !v)} aria-label={expanded ? "Haritayı küçült" : "Haritayı genişlet"} className="rounded-md border border-border p-1.5 hover:bg-accent-surface">
+          {expanded ? <Minimize2 size={14} /> : <Maximize2 size={14} className="rotate-45" />}
         </button>
       </div>
 
-      <div className={cn("space-y-3", !mobileOpen && "hidden lg:block")}>
-        <div className="flex flex-wrap items-center gap-1.5 text-xs text-text-muted">
-          <span className="mr-auto rounded-sm bg-accent-surface px-2 py-1 font-medium text-primary">{nodeCount} içerik</span>
-          <button type="button" onClick={() => setScale((s) => Math.min(MAX_SCALE, s + 0.15))} aria-label="Haritayı büyüt" className="rounded-md border border-border p-1.5 hover:bg-accent-surface">
-            <ZoomIn size={14} />
-          </button>
-          <button type="button" onClick={() => setScale((s) => Math.max(MIN_SCALE, s - 0.15))} aria-label="Haritayı küçült" className="rounded-md border border-border p-1.5 hover:bg-accent-surface">
-            <ZoomOut size={14} />
-          </button>
-          <button type="button" onClick={fitToView} aria-label="Görünüme sığdır" title="Görünüme sığdır" className="rounded-md border border-border p-1.5 hover:bg-accent-surface">
-            <Maximize2 size={14} />
-          </button>
-          <button type="button" onClick={centerOnCurrent} aria-label="Merkez içeriğe dön" title="Merkez içeriğe dön" className="rounded-md border border-border p-1.5 hover:bg-accent-surface">
-            <Crosshair size={14} />
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowMergeLinks((v) => !v)}
-            aria-pressed={showMergeLinks}
-            title="Merge ilişkilerini göster/gizle"
-            className={cn("rounded-md border p-1.5 hover:bg-accent-surface", showMergeLinks ? "border-primary text-primary" : "border-border")}
-          >
-            <GitMerge size={14} />
-          </button>
-          <button
-            type="button"
-            onClick={() => setMinimizeDeleted((v) => !v)}
-            aria-pressed={minimizeDeleted}
-            title="Silinen içerikleri sadeleştir"
-            className={cn("rounded-md border p-1.5 hover:bg-accent-surface", minimizeDeleted ? "border-primary text-primary" : "border-border")}
-          >
-            <EyeOff size={14} />
-          </button>
-          <button type="button" onClick={() => setExpanded((v) => !v)} aria-label={expanded ? "Haritayı küçült" : "Haritayı genişlet"} className="rounded-md border border-border p-1.5 hover:bg-accent-surface">
-            {expanded ? <Minimize2 size={14} /> : <Maximize2 size={14} className="rotate-45" />}
-          </button>
+      {!loaded ? (
+        <div className="flex h-[320px] items-center justify-center rounded-md border border-border text-sm text-text-muted">
+          Yükleniyor…
         </div>
+      ) : nodeCount <= 1 ? (
+        <div className="flex h-[160px] flex-col items-center justify-center gap-1 rounded-md border border-dashed border-border text-center text-sm text-text-muted">
+          <p>Bu içeriğin henüz bir remix dallanması yok.</p>
+        </div>
+      ) : (
+        treeCanvas
+      )}
 
-        {!loaded ? (
-          <div className="flex h-[320px] items-center justify-center rounded-md border border-border text-sm text-text-muted">
-            Yükleniyor…
-          </div>
-        ) : nodeCount <= 1 ? (
-          <div className="flex h-[160px] flex-col items-center justify-center gap-1 rounded-md border border-dashed border-border text-center text-sm text-text-muted">
-            <p>Bu içeriğin henüz bir remix dallanması yok.</p>
-          </div>
-        ) : (
-          treeCanvas
-        )}
+      <MapLegend />
 
-        <MapLegend />
-
-        {selectedNode && (
-          <RemixNodeDetailPanel
-            key={selectedNode.id}
-            node={selectedNode}
-            currentPrompt={currentPrompt}
-            allNodes={nodes}
-            mergeRequests={mergeRequests}
-            onMergeRequestsChanged={setMergeRequests}
-            onSelectNode={setSelectedId}
-          />
-        )}
-      </div>
-    </section>
+      {selectedNode && (
+        <RemixNodeDetailPanel
+          key={selectedNode.id}
+          node={selectedNode}
+          currentPrompt={currentPrompt}
+          allNodes={nodes}
+          mergeRequests={mergeRequests}
+          onMergeRequestsChanged={setMergeRequests}
+          onSelectNode={setSelectedId}
+        />
+      )}
+    </div>
   );
 }
 
