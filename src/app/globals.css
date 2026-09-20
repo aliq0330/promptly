@@ -69,3 +69,22 @@ body {
 * {
   border-color: var(--color-border);
 }
+
+/*
+ * iOS Safari auto-zooms the page when a focused input/textarea/select
+ * renders below 16px — every form control in this app (message composer,
+ * search, comments, auth forms, profile edit, request form) uses
+ * Tailwind's text-sm/text-xs (14px/12px), well under that threshold.
+ * Scoped to widths below this app's own desktop breakpoint (`lg`, 1024px
+ * — see CLAUDE.md §5's mobile-shell/masaüstü split) so desktop input
+ * sizing/design is completely untouched. Placed here, outside any
+ * `@layer`, so it wins the cascade over Tailwind's layered `text-sm`/
+ * `text-xs` utility classes without needing `!important`.
+ */
+@media (max-width: 1023px) {
+  input,
+  textarea,
+  select {
+    font-size: 16px;
+  }
+}

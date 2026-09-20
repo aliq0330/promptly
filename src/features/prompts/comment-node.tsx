@@ -1,9 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { ChevronDown, ChevronUp, CornerDownRight, Heart } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { cn, formatRelativeTime } from "@/lib/utils";
+import { cn, formatRelativeTime, profileHref } from "@/lib/utils";
 import type { PromptComment } from "@/types";
 
 /** Beyond this nesting level, indentation stops growing (mobile/readability) — the "@kime yanıt verdiği" hint below takes over showing the relationship instead. */
@@ -81,11 +82,15 @@ export function CommentNode({
   return (
     <div ref={(el) => tree.registerNodeRef(comment.id, el)} className="space-y-2">
       <div className="flex gap-2.5">
-        <Avatar src={comment.author.avatarUrl} alt={comment.author.displayName} size={depth === 0 ? 32 : 28} />
+        <Link href={profileHref(comment.author)} className="shrink-0 hover:opacity-80" aria-label={comment.author.displayName}>
+          <Avatar src={comment.author.avatarUrl} alt={comment.author.displayName} size={depth === 0 ? 32 : 28} />
+        </Link>
         <div className="min-w-0 flex-1">
           {isDeleted ? (
             <p className="text-sm italic text-text-muted">
-              <span className="font-medium not-italic text-text">{comment.author.displayName}</span>{" "}
+              <Link href={profileHref(comment.author)} className="font-medium not-italic text-text hover:underline">
+                {comment.author.displayName}
+              </Link>{" "}
               Bu yorum silindi.
             </p>
           ) : isEditingHere ? (
@@ -114,7 +119,9 @@ export function CommentNode({
             </div>
           ) : (
             <p className="text-sm break-words">
-              <span className="font-medium text-text">{comment.author.displayName}</span>{" "}
+              <Link href={profileHref(comment.author)} className="font-medium text-text hover:underline">
+                {comment.author.displayName}
+              </Link>{" "}
               {showParentHint && (
                 <span className="mr-1 inline-flex items-center gap-0.5 text-xs font-medium text-primary">
                   <CornerDownRight size={11} />@{parent.author.username}

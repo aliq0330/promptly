@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent, type UIEvent } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { X } from "lucide-react";
@@ -21,10 +21,12 @@ import {
   type MessageRow,
 } from "@/lib/supabase/messages";
 import { mergeIncomingMessage, applyMessageUpdate } from "./realtime-helpers";
+import { computeKeyboardInset } from "./viewport-helpers";
 import { supabase } from "@/lib/supabase/client";
 import { fetchIsBlockedByMe, unblockUser } from "@/lib/supabase/blocks";
 import { useRealPrompts } from "@/features/prompts/real-prompts-provider";
 import { useRealRequests } from "@/features/requests/real-requests-provider";
+import { profileHref } from "@/lib/utils";
 import type { Conversation, Message } from "@/types";
 
 /** The raw Postgres RLS-denial message for a blocked-either-direction send — translated into something a user can actually act on. */
@@ -75,9 +77,22 @@ export function LocalConversationView() {
   const [blockedByMe, setBlockedByMe] = useState(false);
   const [isUnblocking, setIsUnblocking] = useState(false);
   const [isDecliningRequest, setIsDecliningRequest] = useState(false);
+  const [isNearBottom, setIsNearBottom] = useState(true);
 
   const bottomRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const isNearBottomRef = useRef(true);
   const messagesById = new Map(messages.map((m) => [m.id, m]));
+
+  useEffect(() => {
+    isNearBottomRef.current = isNearBottom;
+  }, [isNearBottom]);
+
+  function handleListScroll(event: UIEvent<HTMLDivElement>) {
+    const el = event.currentTarget;
+    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    setIsNearBottom(distanceFromBottom < 80);
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -201,9 +216,64 @@ export function LocalConversationView() {
         ? { type: "request" as const, id: shareParamRequestId, title: getCachedRequest(shareParamRequestId)?.title ?? fetchedShareTitle ?? "Yükleniyor…" }
         : null;
 
+  // Yeni bir mesaj geldiğinde yalnızca kullanıcı zaten en alttaysa (ya da
+  // yeni mesajı kendisi gönderdiyse) en alta kaydır — eski mesajları
+  // incelerken gelen bir mesaj scroll konumunu zorla değiştirmesin.
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ block: "end" });
+    const last = messages[messages.length - 1];
+    const isOwnMessage = Boolean(last && user && last.senderId === user.id);
+    if (isNearBottomRef.current || isOwnMessage) {
+      bottomRef.current?.scrollIntoView({ block: "end" });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- deliberately only reacts to the message count changing, reads the rest fresh via refs/closures
   }, [messages.length]);
+
+  // Mobil klavye desteği (iPhone) — `panelRef`'in taban (bottom) boşluğu
+  // varsayılan olarak Tailwind sınıflarından geliyor (mobil bottom
+  // navigation + safe-area, masaüstünde 0). VisualViewport API klavye
+  // açıldığında küçülüyor; aradaki fark klavyenin kapladığı alan
+  // (`computeKeyboardInset`, ayrı bir saf fonksiyona çıkarıldı ki gerçek
+  // bir klavye olmadan da doğrulanabilsin — bu sandbox'ta gerçek bir iOS
+  // klavyesi hiç açılamıyor). Klavye kapladığı alan, CSS'in zaten ayırdığı
+  // taban boşluğundan büyükse, composer'ı klavyenin hemen üstüne çekmek
+  // için `bottom`'u JS ile klavye yüksekliğine eşitliyoruz; klavye
+  // kapanınca inline stili temizleyip CSS'e geri dönüyoruz.
+  useEffect(() => {
+    const panel = panelRef.current;
+    const vv = typeof window !== "undefined" ? window.visualViewport : null;
+    if (!panel || !vv) return;
+
+    let baselineBottom: number | null = null;
+
+    function update() {
+      if (!panel || !vv) return;
+      if (baselineBottom === null) {
+        baselineBottom = parseFloat(getComputedStyle(panel).bottom) || 0;
+      }
+      const keyboardInset = computeKeyboardInset({
+        windowInnerHeight: window.innerHeight,
+        visualViewportHeight: vv.height,
+        visualViewportOffsetTop: vv.offsetTop,
+      });
+      if (keyboardInset > baselineBottom + 1) {
+        panel.style.bottom = `${keyboardInset}px`;
+      } else {
+        panel.style.bottom = "";
+      }
+      if (isNearBottomRef.current) {
+        requestAnimationFrame(() => bottomRef.current?.scrollIntoView({ block: "end" }));
+      }
+    }
+
+    update();
+    vv.addEventListener("resize", update);
+    vv.addEventListener("scroll", update);
+    return () => {
+      vv.removeEventListener("resize", update);
+      vv.removeEventListener("scroll", update);
+      panel.style.bottom = "";
+    };
+  }, []);
 
   function clearShareParams() {
     if (!id) return;
@@ -366,11 +436,17 @@ export function LocalConversationView() {
   const participant = conversation.participants[0];
 
   return (
-    <div className="flex h-full flex-col">
-      <div className="flex items-center gap-3 border-b border-border px-4 py-3 lg:px-6">
-        <Avatar src={participant?.avatarUrl} alt={participant?.displayName ?? "Kullanıcı"} size={36} />
-        <span className="text-sm font-semibold text-text">{participant?.displayName}</span>
-      </div>
+    <div
+      ref={panelRef}
+      className="fixed inset-x-0 top-16 z-10 flex flex-col bg-background bottom-[calc(4rem+env(safe-area-inset-bottom))] lg:left-64 lg:bottom-0"
+    >
+      <Link
+        href={profileHref(participant)}
+        className="flex min-w-0 items-center gap-3 border-b border-border px-4 py-3 hover:bg-accent-surface/40 lg:px-6"
+      >
+        <Avatar src={participant.avatarUrl} alt={participant.displayName} size={36} />
+        <span className="truncate text-sm font-semibold text-text">{participant.displayName}</span>
+      </Link>
       {conversation.myStatus === "pending" && (
         <div className="flex items-center justify-between gap-3 border-b border-border bg-accent-surface/60 px-4 py-2.5 lg:px-6">
           <p className="text-xs text-text">
@@ -391,7 +467,7 @@ export function LocalConversationView() {
           </div>
         </div>
       )}
-      <div className="flex-1 space-y-4 overflow-y-auto px-4 py-4 lg:px-6">
+      <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4 lg:px-6" onScroll={handleListScroll}>
         {messages.length === 0 ? (
           <p className="py-10 text-center text-sm text-text-muted">
             Bu konuşmada henüz mesaj yok. İlk mesajı sen gönder.
