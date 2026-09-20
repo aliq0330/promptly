@@ -9,7 +9,7 @@ interface MembershipRow {
   conversations: { id: string; last_message_at: string | null } | null;
 }
 
-interface MessageRow {
+export interface MessageRow {
   id: string;
   conversation_id: string;
   sender_id: string;
@@ -25,7 +25,8 @@ interface MessageRow {
 const MESSAGE_SELECT =
   "id, conversation_id, sender_id, body, shared_prompt_id, shared_request_id, reply_to_message_id, edited_at, deleted_at, created_at";
 
-function mapMessageRow(row: MessageRow): Message {
+/** Exported so the Realtime subscription (Bölüm 21 Faz C) can map a `postgres_changes` payload row the same way a REST response is mapped — one mapping function, two delivery paths. */
+export function mapMessageRow(row: MessageRow): Message {
   return {
     id: row.id,
     conversationId: row.conversation_id,

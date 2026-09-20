@@ -15,9 +15,13 @@ import {
   fetchConversationForUser,
   fetchMessages,
   hideMessageForMe,
+  mapMessageRow,
   markConversationRead,
   sendMessage,
+  type MessageRow,
 } from "@/lib/supabase/messages";
+import { mergeIncomingMessage, applyMessageUpdate } from "./realtime-helpers";
+import { supabase } from "@/lib/supabase/client";
 import { fetchIsBlockedByMe, unblockUser } from "@/lib/supabase/blocks";
 import { useRealPrompts } from "@/features/prompts/real-prompts-provider";
 import { useRealRequests } from "@/features/requests/real-requests-provider";
@@ -104,6 +108,51 @@ export function LocalConversationView() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, user]);
+
+  // Gerçek zamanlı senkronizasyon (Bölüm 21 Faz C) — bu, karşı tarafın
+  // gönderdiği bir mesajın sayfa yeniden ziyaret edilene kadar görünmediği,
+  // Faz 6'dan beri bilinen sınırlamanın karşılığı. `messages` INSERT/UPDATE
+  // olaylarına, yalnızca bu konuşma için abone oluyor — Realtime, Bölüm 19'un
+  // `is_conversation_member(conversation_id)` SELECT politikasını zaten
+  // Postgres Changes yetkilendirmesinde kullandığından (Supabase'in
+  // belgelenmiş davranışı), üye olmayan biri bu kanala hiç abone olamıyor;
+  // ekstra bir yetkilendirme kontrolü burada gerekmiyor. Gerçek satır ↔
+  // `Message` eşlemesi `mapMessageRow`'la REST yolundaki BİREBİR aynı
+  // fonksiyon; birleştirme mantığı (`mergeIncomingMessage`/
+  // `applyMessageUpdate`) test edilebilir olsun diye saf fonksiyonlara
+  // ayrıldı — bu sandbox'ın ağ kısıtı gerçek bir WebSocket bağlantısını hiç
+  // test edemediğinden (Bölüm 21 Faz 6'dan beri bilinen sınırlama), asıl
+  // doğrulanabilir olan kısım bu.
+  useEffect(() => {
+    if (!id || !user) return;
+
+    const channel = supabase
+      .channel(`messages:${id}`)
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "messages", filter: `conversation_id=eq.${id}` },
+        (payload) => {
+          const incoming = mapMessageRow(payload.new as MessageRow);
+          setMessages((prev) => mergeIncomingMessage(prev, incoming));
+          if (incoming.senderId !== user.id) {
+            markConversationRead(id, user.id).catch((err) => console.error("markConversationRead (realtime)", err));
+          }
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "messages", filter: `conversation_id=eq.${id}` },
+        (payload) => {
+          const updated = mapMessageRow(payload.new as MessageRow);
+          setMessages((prev) => applyMessageUpdate(prev, updated));
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [id, user]);
 
   // Whether the viewer themselves has blocked the other participant — the

@@ -8,6 +8,7 @@ import {
   fetchConversationsForUser,
   getOrCreateDirectConversation,
 } from "@/lib/supabase/messages";
+import { supabase } from "@/lib/supabase/client";
 import type { Conversation, UserProfile } from "@/types";
 
 interface RealMessagesContextValue {
@@ -52,6 +53,35 @@ export function RealMessagesProvider({ children }: { children: React.ReactNode }
     if (!user) return;
     const result = await fetchConversationsForUser(user.id);
     setConversations(result);
+  }, [user]);
+
+  // Gerçek zamanlı senkronizasyon (Bölüm 21 Faz C) — bir mesaj gelince
+  // `handle_new_message` (Bölüm 18) bu kullanıcının `conversation_members`
+  // satırındaki `unread_count`'u zaten günceller; buradaki abonelik yalnızca
+  // o güncellemeyi header'ın okunmamış noktasına ve `/messages` listesinin
+  // önizleme/sıralamasına canlı yansıtıyor. Tek bir kaynaktan (kendi
+  // `conversation_members` satırlarım) gelen HER olayda tüm listeyi yeniden
+  // çekmek — INSERT (yeni bir konuşmaya eklendim), UPDATE (unread_count/
+  // status değişti), DELETE (bir konuşmadan ayrıldım) — burada gerçek
+  // içerik hacmiyle (birkaç konuşma) performans sorunu yaratmayacak kadar
+  // basit; `messages` tablosuna ayrıca abone olmaya gerek yok.
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel(`conversation-members:${user.id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "conversation_members", filter: `user_id=eq.${user.id}` },
+        () => {
+          fetchConversationsForUser(user.id).then(setConversations);
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user]);
 
   const getCached = useCallback(

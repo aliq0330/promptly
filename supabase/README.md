@@ -6,20 +6,19 @@ veri modelini birebir yansıtan gerçek Postgres şemasını (CLAUDE.md Bölüm
 ve görsel yükleme için Supabase Storage bucket'larını (Bölüm 20) oluşturur.
 Dosyalar sırayla (dosya adındaki zaman damgasına göre) uygulanmalıdır.
 
-**Durum:** İlk 15 dosya (Bölüm 18 şema + Bölüm 19 RLS + Bölüm 20 Storage
-+ Bölüm 9.2/9.4/9.5/9.6/9.7/9.8'in `20260919150000`–`20260919200000`
-dosyaları — mesajlaşma genişletmesi Faz A dahil) kullanıcı tarafından
+**Durum:** İlk 16 dosya (Bölüm 18 şema + Bölüm 19 RLS + Bölüm 20 Storage
++ Bölüm 9.2/9.4/9.5/9.6/9.7/9.8/9.9'un `20260919150000`–`20260919210000`
+dosyaları — mesajlaşma genişletmesi Faz A/B dahil) kullanıcı tarafından
 gerçek Supabase projesine (Dashboard → SQL Editor) başarıyla uygulandı ve
-doğrulandı. Yeni `20260919210000_messaging_requests_privacy_blocking.sql`
-(Bölüm 9.9, mesajlaşma genişletmesi Faz B) bu depodan otomatik olarak
-uygulanmadı — Claude Code'un çalıştığı ortamın ağ politikası gerçek
-Supabase projesinin veritabanına doğrudan erişimi engelliyor, bu yüzden
-yalnızca yerel, geçici bir Postgres 16 örneğinde gerçek rol
-simülasyonuyla test edildi (bkz. aşağıdaki "Nasıl doğrulandı" bölümü) —
-gerçek projenize henüz uygulanmadı. **`20260919210000` uygulanmadan**
-mesaj istekleri/gizlilik/engelleme frontend'de hata verir — özellikle
-"Mesaj Gönder" `start_direct_conversation` RPC'si veritabanında
-bulunamadığı için başarısız olur.
+doğrulandı. Yeni `20260919220000_messaging_realtime.sql` (Bölüm 9.10,
+mesajlaşma genişletmesi Faz C) bu depodan otomatik olarak uygulanmadı —
+Claude Code'un çalıştığı ortamın ağ politikası gerçek Supabase projesinin
+veritabanına doğrudan erişimi (ve WebSocket erişimini de) engelliyor, bu
+yüzden yalnızca yerel, geçici bir Postgres 16 örneğinde test edildi (bkz.
+aşağıdaki "Nasıl doğrulandı" bölümü) — gerçek projenize henüz
+uygulanmadı. **`20260919220000` uygulanmadan** Realtime abonelikleri
+sessizce hiç olay almaz (hiçbir hata da vermez) — mesajlaşma yalnızca
+Faz A/B'nin sayfa-yüklemede-çek davranışıyla çalışmaya devam eder.
 
 ## Nasıl uygularsınız
 
@@ -30,8 +29,9 @@ bulunamadığı için başarısız olur.
 2. `migrations/` klasöründeki her dosyayı **dosya adındaki sıraya göre**
    (20260919120000, 20260919120100, ... 20260919120600, 20260919130000,
    20260919140000, 20260919150000, 20260919160000, 20260919170000,
-   20260919180000, 20260919190000, 20260919200000, 20260919210000) tek
-   tek açıp içeriğini SQL Editor'e yapıştırıp **Run**'a basın.
+   20260919180000, 20260919190000, 20260919200000, 20260919210000,
+   20260919220000) tek tek açıp içeriğini SQL Editor'e yapıştırıp
+   **Run**'a basın.
 3. Her dosya başarıyla çalıştıktan sonra bir sonrakine geçin. Bir hata
    alırsanız durdurun ve hatayı paylaşın.
 
@@ -293,6 +293,14 @@ tamamen kapalı kalır — güvenli tarafta kalan bilinçli bir ara durum.
     `notify_new_message` artık alıcının o anki durumuna göre doğru tipi/
     metni seçiyor.
 
+- `20260919220000_messaging_realtime.sql` — mesajlaşma genişletmesi Faz C
+  (Bölüm 9.10): gerçek zamanlı senkronizasyon. **Yeni tablo/sütun/politika
+  yok** — yalnızca iki `alter publication supabase_realtime add table`
+  satırı (`messages`, `conversation_members`). Bir tablo bu publication'a
+  eklenmeden istemcideki `postgres_changes` aboneliği hiçbir olay almıyor;
+  RLS SELECT politikaları (Bölüm 19) hiç değişmeden Realtime yetkilendirmesi
+  için de geçerli oluyor (Supabase'in belgelenmiş davranışı).
+
 ## Nasıl doğrulandı
 
 **Bölüm 18 (şema):** Gerçek projeye erişim engellendiğinden, ilk 7 dosya
@@ -516,3 +524,36 @@ dışı kalıp engel kalkınca aktifleşmesi, kullanıcı/mesaj raporlama) —
 hepsi sıfır JS hatasıyla, artı Supabase'e hiç erişilemezken 19 rotalık bir
 dayanıklılık taraması. Gerçek bir Supabase projesine karşı canlı
 doğrulama yine bu sandbox'ın ağ kısıtı yüzünden yapılamadı.
+
+**Bölüm 9.10 (mesajlaşma genişletmesi Faz C, `20260919220000`):** Yerel
+PostgreSQL 16'da, gerçek bir Supabase projesinde zaten hazır gelen
+`supabase_realtime` publication'ı yerelde `create publication
+supabase_realtime;` ile taklit edilip (bu yalnızca test altyapısının
+kendi kurulumu, migration'ın bir parçası değil), önceki 16 migration'la
+birlikte gerçekten uygulandı — iki `alter publication ... add table`
+satırı da hatasız çalıştı ve `pg_publication_tables` sorgusu gerçekten
+`messages`/`conversation_members`'ı listelediğini doğruladı.
+`mergeIncomingMessage`/`applyMessageUpdate` (`src/features/messages/
+realtime-helpers.ts`), bir kopyasına değil GERÇEK dosyanın kendisine
+karşı (`node --experimental-strip-types` ile doğrudan import edilerek) 6
+senaryoyla doğrulandı: boş listeye ekleme, farklı id ekleme, aynı id'nin
+(kendi gönderiminin Realtime yankısı) sessizce yok sayılması (aynı
+referans döndüğü de doğrulandı), bir güncellemenin doğru id'yi yerine
+koyması, bilinmeyen bir id için no-op, ve bir "herkesten sil" soft-
+update'inin içeriği doğru boşaltması. Ayrıca `npx tsc --noEmit`, `npm run
+lint`, tam `npm run build` (20 rota, değişmedi) sıfır hatayla geçti.
+Tarayıcı tarafı, Playwright'ın `page.routeWebSocket()`'iyle gerçek bir
+WebSocket bağlantı denemesini (Phoenix protokolünü simüle etmeden,
+yalnızca bağlantının denendiğini gözlemleyerek) yakalayan 7 senaryoyla
+doğrulandı: hem `/messages/local?id=…` hem `/messages`'ın gerçekten
+`realtime/v1/websocket`'e doğru `apikey` ile bağlanmayı DENEDİĞİ, konuşma
+görünümünün takılı kalmadığı, ve hem REST hem WebSocket TAMAMEN
+erişilemezken üç mesajlaşma rotasında sıfır JS hatası oluştuğu. Faz B'nin
+19 senaryolu tam paketi (gerçek, engellenmiş bir WebSocket bağlantısıyla)
+ve 19 rotalık genel dayanıklılık taraması yeniden çalıştırılıp bozulma
+olmadığı doğrulandı. **Dürüstçe belirtilmeli:** bu sandbox'ın ağ politikası
+`*.supabase.co`'ya WebSocket erişimini de engellediğinden, Supabase
+Realtime'ın kendi Phoenix kanal protokolü hiç simüle edilmedi — "karşı
+taraf mesaj gönderdiğinde ekranımda anında beliriyor" iddiasının tam,
+uçtan uca kanıtı yalnızca kullanıcının migration'ı kendi Supabase
+projesine uygulayıp iki gerçek hesapla bizzat denemesiyle mümkün.
