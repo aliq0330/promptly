@@ -9,6 +9,7 @@ import { ProfileContentGrid } from "./profile-content-grid";
 import { ProfileEmptyState } from "./profile-empty-state";
 import { ProfileAbout } from "./profile-about";
 import { RequestList } from "@/features/requests/request-list";
+import { CollectionsPanel } from "@/features/collections/collections-panel";
 import { useAuth } from "@/features/auth/auth-provider";
 import { fetchLikedPrompts, fetchSavedPrompts } from "@/lib/supabase/prompts";
 import type { Prompt, PromptContentType, PromptRequest, UserProfile } from "@/types";
@@ -78,6 +79,7 @@ export function ProfileView({
   }, [isOwnProfile, authUser]);
 
   const [activeTab, setActiveTab] = useState<ProfileTabKey>("prompts");
+  const [savedSubTab, setSavedSubTab] = useState<"all" | "collections">("all");
   const [activeType, setActiveType] = useState<PromptContentType | "all">("all");
   const [sort, setSort] = useState<ProfileSortKey>("newest");
   const [search, setSearch] = useState("");
@@ -179,6 +181,65 @@ export function ProfileView({
           ) : (
             <RequestList requests={authorRequests} />
           )
+        ) : activeTab === "saved" ? (
+          <>
+            <div role="tablist" className="flex gap-1 border-b border-border">
+              {(["all", "collections"] as const).map((key) => (
+                <button
+                  key={key}
+                  type="button"
+                  role="tab"
+                  aria-selected={savedSubTab === key}
+                  onClick={() => setSavedSubTab(key)}
+                  className={
+                    savedSubTab === key
+                      ? "border-b-2 border-primary px-3 py-2 text-sm font-medium text-primary"
+                      : "border-b-2 border-transparent px-3 py-2 text-sm font-medium text-text-muted hover:text-text"
+                  }
+                >
+                  {key === "all" ? "Tümü" : "Koleksiyonlar"}
+                </button>
+              ))}
+            </div>
+
+            {savedSubTab === "collections" ? (
+              <CollectionsPanel ownerId={user.id} ownerProfile={user} />
+            ) : (
+              <>
+                {activeSource.length > 0 && (
+                  <ProfileToolbar
+                    availableTypes={availableTypes}
+                    activeType={activeType}
+                    onTypeChange={setActiveType}
+                    sort={sort}
+                    onSortChange={setSort}
+                    search={search}
+                    onSearchChange={setSearch}
+                    showSearch={activeSource.length > 8}
+                    hasActiveFilters={hasActiveFilters}
+                    onClear={clearFilters}
+                  />
+                )}
+
+                <ProfileContentGrid
+                  prompts={filtered}
+                  isOwnProfile={false}
+                  onDeleted={handleDeleted}
+                  emptyState={
+                    hasActiveFilters ? (
+                      <ProfileEmptyState
+                        icon={SearchX}
+                        title="Bu filtreye uygun içerik bulunamadı"
+                        description="Başka bir içerik türü veya sıralama seçmeyi dene."
+                      />
+                    ) : (
+                      <TabEmptyState tab={activeTab} isOwnProfile={isOwnProfile} />
+                    )
+                  }
+                />
+              </>
+            )}
+          </>
         ) : (
           <>
             {activeSource.length > 0 && (

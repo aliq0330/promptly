@@ -1,6 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import type { Conversation, Prompt, PromptRequest, Tag, UserProfile } from "@/types";
+import type { Collection, Conversation, Prompt, PromptRequest, Tag, UserProfile } from "@/types";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -236,4 +236,9 @@ export function messageHref(conversation: Pick<Conversation, "id">): string {
  */
 export function tagHref(tag: Pick<Tag, "slug">): string {
   return `/tags/local?tag=${tag.slug}`;
+}
+
+/** Same idea as `promptHref`, for a collection — every collection is a real Supabase row. */
+export function collectionHref(collection: Pick<Collection, "id">): string {
+  return `/collections/local?id=${collection.id}`;
 }
