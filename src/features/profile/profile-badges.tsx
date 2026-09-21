@@ -27,7 +27,7 @@ const BADGE_DEFINITIONS: BadgeDefinition[] = [
   {
     key: "first-remix",
     icon: Repeat2,
-    label: "İlk remixini oluşturdu",
+    label: "İlk türettiği promptu oluşturdu",
     isEarned: ({ remixCount }) => remixCount >= 1,
   },
   {

@@ -199,7 +199,7 @@ export function RemixNodeDetailPanel({
       <div className="min-w-0">
         <div className="flex items-center gap-1.5">
           <Badge variant={node.originType === "original" ? "default" : "outline"}>
-            {node.originType === "original" ? "Orijinal" : "Remix"}
+            {node.originType === "original" ? "Orijinal" : "Türet"}
           </Badge>
           {node.id === currentPrompt.id && <Badge variant="accent">Bu sayfa</Badge>}
         </div>
@@ -259,7 +259,7 @@ export function RemixNodeDetailPanel({
           </dd>
         </div>
         <div className="flex items-center gap-1.5">
-          <dt className="text-text-muted">Remix sayısı:</dt>
+          <dt className="text-text-muted">Türetme sayısı:</dt>
           <dd className="text-text">{children.length}</dd>
         </div>
       </dl>
@@ -275,7 +275,7 @@ export function RemixNodeDetailPanel({
           <Link href={`/create?remix=${node.id}`}>
             <Button type="button" variant="outline" size="sm">
               <Repeat2 size={13} />
-              Remix Oluştur
+              Türet
             </Button>
           </Link>
           {directSource && !directSource.isDeleted && (

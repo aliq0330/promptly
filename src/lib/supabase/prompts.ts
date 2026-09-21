@@ -55,22 +55,24 @@ function filterNotDeleted(prompts: Prompt[]): Prompt[] {
 }
 
 /**
- * Excludes a request-answer prompt whose author chose to keep it out of
- * normal profile/feed/discover/search results (`show_on_profile = false`)
- * — applied (after mapping) by every query below that represents "this
- * author's normal posts" or a general content stream. Done client-side
- * rather than as a second `.or(...)` query filter: PostgREST ANDs a
- * single `.or()` group with plain column filters just fine, but stacking
- * two independent `.or()` calls in the same query has no clearly
+ * Excludes a request-answer or remix prompt whose author chose to keep it
+ * out of normal profile/feed/discover/search results (`show_on_profile =
+ * false`) — applied (after mapping) by every query below that represents
+ * "this author's normal posts" or a general content stream. Done
+ * client-side rather than as a second `.or(...)` query filter: PostgREST
+ * ANDs a single `.or()` group with plain column filters just fine, but
+ * stacking two independent `.or()` calls in the same query has no clearly
  * documented, verifiable combination behavior — not worth risking on a
  * query that can't be tested against a live Supabase project from this
  * environment. Never applied to `fetchPromptsForRequest` (the request's
- * own answer list) or `fetchPromptById` (a direct link), which must
- * always work regardless of this preference. Irrelevant for original/
- * remix prompts, which always have `show_on_profile = true`.
+ * own answer list), `fetchRemixesOf`/`fetchRemixChain` (a remix's own
+ * relationship to its ancestors/descendants must always resolve
+ * regardless of this preference), or `fetchPromptById` (a direct link).
+ * Irrelevant for original prompts, which always have `show_on_profile =
+ * true`.
  */
 function filterProfileVisible(prompts: Prompt[]): Prompt[] {
-  return prompts.filter((prompt) => prompt.origin.type !== "request-response" || prompt.showOnProfile);
+  return prompts.filter((prompt) => prompt.origin.type === "original" || prompt.showOnProfile);
 }
 
 function mapOrigin(row: PromptRow): PromptOrigin {

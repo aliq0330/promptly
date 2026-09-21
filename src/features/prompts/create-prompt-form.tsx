@@ -141,7 +141,7 @@ export function CreatePromptForm() {
     if (source) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time seed once the async source loads
       setContentType(source.contentType);
-      setTitle(`${source.title} ${isRemixMode ? "(remix)" : "(kopya)"}`);
+      setTitle(`${source.title} ${isRemixMode ? "(türetme)" : "(kopya)"}`);
       setDescription(source.description);
       setPromptText(source.promptText);
       setTool(source.tool ?? "");
@@ -226,7 +226,7 @@ export function CreatePromptForm() {
           fallbackImage:
             contentType === "image" ? { url: media[0].url, width: media[0].width, height: media[0].height } : null,
           requestId: answeredRequest?.id,
-          showOnProfile: isAnswerMode ? showOnProfile : true,
+          showOnProfile: isAnswerMode || isRemixMode ? showOnProfile : true,
           remixOf: sourcePrompt
             ? {
                 sourcePromptId: sourcePrompt.id,
@@ -271,7 +271,7 @@ export function CreatePromptForm() {
     isLiked: false,
     isSaved: false,
     status: "draft",
-    showOnProfile: isAnswerMode ? showOnProfile : true,
+    showOnProfile: isAnswerMode || isRemixMode ? showOnProfile : true,
     deletedAt: null,
     createdAt: new Date().toISOString(),
   };
@@ -327,7 +327,7 @@ export function CreatePromptForm() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-6 lg:px-6">
       <h1 className="mb-1 text-lg font-semibold text-text">
-        {isAnswerMode ? "İsteğe Yanıt Ver" : isRemixMode ? "Remix Oluştur" : isDuplicateMode ? "Kopyasını Oluştur" : "Prompt Oluştur"}
+        {isAnswerMode ? "İsteğe Yanıt Ver" : isRemixMode ? "Türet" : isDuplicateMode ? "Kopyasını Oluştur" : "Prompt Oluştur"}
       </h1>
       <p className="mb-6 text-sm text-text-muted">
         {isAnswerMode
@@ -369,10 +369,10 @@ export function CreatePromptForm() {
             </div>
           )}
 
-          {isAnswerMode && answeredRequest && (
+          {(isAnswerMode || isRemixMode) && (
             <div>
               <label className="mb-2 block text-sm font-medium text-text">
-                Bu yanıt profilimde görünsün mü?
+                {isAnswerMode ? "Bu yanıt profilimde görünsün mü?" : "Bu türetme profilimde görünsün mü?"}
               </label>
               <div className="space-y-2">
                 <label
@@ -391,7 +391,9 @@ export function CreatePromptForm() {
                   <span>
                     <span className="block font-medium text-text">Profilimde paylaş</span>
                     <span className="block text-xs text-text-muted">
-                      Yanıtın istek sahibine gösterilir ve profilinde de normal gönderilerin gibi görünür.
+                      {isAnswerMode
+                        ? "Yanıtın istek sahibine gösterilir ve profilinde de normal gönderilerin gibi görünür."
+                        : "Türettiğin içerik kaynağının remix listesinde/haritasında görünmeye devam eder, ayrıca profilinde de normal gönderilerin gibi görünür."}
                     </span>
                   </span>
                 </label>
@@ -411,8 +413,9 @@ export function CreatePromptForm() {
                   <span>
                     <span className="block font-medium text-text">Profilimde paylaşma</span>
                     <span className="block text-xs text-text-muted">
-                      Yanıtın bu isteğin yanıtları arasında görünür. Profilinde ve normal gönderi akışında
-                      gösterilmez.
+                      {isAnswerMode
+                        ? "Yanıtın bu isteğin yanıtları arasında görünür. Profilinde ve normal gönderi akışında gösterilmez."
+                        : "Türettiğin içerik kaynağının remix listesinde/haritasında görünmeye devam eder. Profilinde ve normal gönderi akışında gösterilmez."}
                     </span>
                   </span>
                 </label>

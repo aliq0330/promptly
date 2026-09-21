@@ -37,8 +37,8 @@ export function RemixMapNodeCard({
   onSelect: (id: string) => void;
 }) {
   const label = node.isDeleted
-    ? `${node.originType === "original" ? "Orijinal" : "Remix"}, silinmiş — ${node.author.displayName}`
-    : `${node.originType === "original" ? "Orijinal" : "Remix"}: ${node.title}, ${node.author.displayName}`;
+    ? `${node.originType === "original" ? "Orijinal" : "Türet"}, silinmiş — ${node.author.displayName}`
+    : `${node.originType === "original" ? "Orijinal" : "Türet"}: ${node.title}, ${node.author.displayName}`;
 
   return (
     <button
@@ -62,7 +62,7 @@ export function RemixMapNodeCard({
             node.originType === "original" ? "bg-accent-surface text-primary" : "bg-accent-surface/60 text-text-muted",
           )}
         >
-          {node.originType === "original" ? "Orijinal" : "Remix"}
+          {node.originType === "original" ? "Orijinal" : "Türet"}
         </span>
         {mergeStatus.hasPending && (
           <span title="Bekleyen merge talebi" aria-label="Bekleyen merge talebi var">

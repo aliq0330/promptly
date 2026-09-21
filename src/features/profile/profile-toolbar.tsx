@@ -11,7 +11,7 @@ const SORT_LABELS: Record<ProfileSortKey, string> = {
   newest: "En yeni",
   oldest: "En eski",
   "most-liked": "En çok beğenilen",
-  "most-remixed": "En çok remixlenen",
+  "most-remixed": "En çok türetilen",
 };
 
 /**

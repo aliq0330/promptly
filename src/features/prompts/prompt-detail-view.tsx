@@ -32,7 +32,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
 
   const [remixes, setRemixes] = useState<Prompt[]>([]);
   const [remixChain, setRemixChain] = useState<Prompt[]>([prompt]);
-  const [remixTab, setRemixTab] = useState<"remixes" | "map">("remixes");
+  const [remixTab, setRemixTab] = useState<"comments" | "remixes" | "map">("comments");
 
   const searchParams = useSearchParams();
   const highlight = parseHighlightValue(searchParams.get("hl"));
@@ -85,7 +85,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
         <div className="flex items-start justify-between gap-3">
           <h1 className="text-lg font-semibold text-text">{prompt.title}</h1>
           <div className="flex shrink-0 items-center gap-2">
-            {prompt.origin.type === "remix" && <Badge>Remix</Badge>}
+            {prompt.origin.type === "remix" && <Badge>Türet</Badge>}
             <PostMenu promptId={prompt.id} authorId={prompt.author.id} />
           </div>
         </div>
@@ -97,7 +97,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
 
         {remixChain.length > 1 && (
           <div className="flex flex-wrap items-center gap-1 text-xs text-text-muted">
-            <span className="font-medium text-text">Remix zinciri:</span>
+            <span className="font-medium text-text">Türetme geçmişi:</span>
             {remixChain.map((node, index) => {
               const label = node.deletedAt ? "Silinmiş paylaşım" : node.title;
               return (
@@ -160,13 +160,25 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
             className="inline-flex h-8 items-center gap-1.5 rounded-md border border-border bg-transparent px-3 text-sm font-medium text-text transition-colors hover:bg-accent-surface"
           >
             <Repeat2 size={14} />
-            Remixle
+            Türet
           </Link>
         </div>
       </div>
 
       <section className="space-y-3 border-t border-border pt-5">
-        <div role="tablist" aria-label="Remix görünümü" className="flex gap-1 border-b border-border">
+        <div role="tablist" aria-label="Gönderi bölümleri" className="flex gap-1 border-b border-border">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={remixTab === "comments"}
+            onClick={() => setRemixTab("comments")}
+            className={cn(
+              "-mb-px border-b-2 px-3 py-2 text-sm font-medium transition-colors",
+              remixTab === "comments" ? "border-primary text-primary" : "border-transparent text-text-muted hover:text-text",
+            )}
+          >
+            Yorumlar
+          </button>
           <button
             type="button"
             role="tab"
@@ -177,7 +189,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
               remixTab === "remixes" ? "border-primary text-primary" : "border-transparent text-text-muted hover:text-text",
             )}
           >
-            Remixler ({remixes.length})
+            Türetilen promptlar ({remixes.length})
           </button>
           <button
             type="button"
@@ -194,20 +206,19 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
           </button>
         </div>
 
-        {remixTab === "remixes" ? (
-          remixes.length === 0 ? (
+        {remixTab === "comments" && (
+          <CommentSection target={{ promptId: prompt.id }} highlightCommentId={highlightCommentId} />
+        )}
+        {remixTab === "remixes" &&
+          (remixes.length === 0 ? (
             <p className="py-6 text-center text-sm text-text-muted">
               Bu prompt henüz remixlenmedi.
             </p>
           ) : (
             <PromptGrid prompts={remixes} />
-          )
-        ) : (
-          <RemixBranchMap currentPrompt={prompt} />
-        )}
+          ))}
+        {remixTab === "map" && <RemixBranchMap currentPrompt={prompt} />}
       </section>
-
-      <CommentSection target={{ promptId: prompt.id }} highlightCommentId={highlightCommentId} />
     </div>
   );
 }
