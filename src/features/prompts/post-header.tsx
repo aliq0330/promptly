@@ -16,10 +16,12 @@ export function PostHeader({
   prompt,
   subtitle,
   onDeleted,
+  collectionRemoval,
 }: {
   prompt: Prompt;
   subtitle?: string;
   onDeleted?: () => void;
+  collectionRemoval?: { isDefault: boolean; onRemove: () => Promise<void> };
 }) {
   return (
     <div className="flex items-center justify-between gap-2">
@@ -39,7 +41,7 @@ export function PostHeader({
         </span>
       </Link>
 
-      <PostMenu promptId={prompt.id} authorId={prompt.author.id} onDeleted={onDeleted} />
+      <PostMenu promptId={prompt.id} authorId={prompt.author.id} onDeleted={onDeleted} collectionRemoval={collectionRemoval} />
     </div>
   );
 }

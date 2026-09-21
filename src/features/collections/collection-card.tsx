@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Globe, Lock } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { CollectionMoreMenu } from "./collection-more-menu";
 import { placeholderArt } from "@/lib/placeholder-image";
 import { collectionHref } from "@/lib/utils";
@@ -25,7 +26,14 @@ export function CollectionCard({
           style={{ backgroundImage: `url("${collection.coverImage?.url ?? placeholderArt(collection.id, 320, 320)}")` }}
         />
         <div className="min-w-0 space-y-1 p-3">
-          <p className="truncate text-sm font-medium text-text">{collection.name}</p>
+          <div className="flex min-w-0 items-center gap-1.5">
+            <p className="truncate text-sm font-medium text-text">{collection.name}</p>
+            {collection.isDefault && (
+              <Badge variant="accent" className="shrink-0">
+                Varsayılan
+              </Badge>
+            )}
+          </div>
           <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-text-muted">
             <span className="shrink-0">{collection.itemCount} çalışma</span>
             <span className="flex shrink-0 items-center gap-1">

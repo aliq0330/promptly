@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Bookmark, GitBranch, Heart, SearchX, Sparkles } from "lucide-react";
+import { GitBranch, Heart, SearchX, Sparkles } from "lucide-react";
 import { ProfileHeader } from "./profile-header";
 import { ProfileTabs, type ProfileTabKey } from "./profile-tabs";
 import { ProfileToolbar, type ProfileSortKey } from "./profile-toolbar";
@@ -11,7 +11,7 @@ import { ProfileAbout } from "./profile-about";
 import { RequestList } from "@/features/requests/request-list";
 import { CollectionsPanel } from "@/features/collections/collections-panel";
 import { useAuth } from "@/features/auth/auth-provider";
-import { fetchLikedPrompts, fetchSavedPrompts } from "@/lib/supabase/prompts";
+import { fetchLikedPrompts } from "@/lib/supabase/prompts";
 import type { Prompt, PromptContentType, PromptRequest, UserProfile } from "@/types";
 
 function sortPrompts(prompts: Prompt[], sort: ProfileSortKey): Prompt[] {
@@ -53,23 +53,23 @@ export function ProfileView({
     setAuthorPrompts((prev) => prev.filter((prompt) => prompt.id !== promptId));
   }
 
-  // Real likes/saves — only ever fetched for one's own profile, and only
-  // for the signed-in real viewer (RLS keeps prompt_saves private to its
-  // own user regardless).
-  const [savedPrompts, setSavedPrompts] = useState<Prompt[]>([]);
+  // Real likes — only ever fetched for one's own profile, and only for the
+  // signed-in real viewer (RLS keeps prompt_likes' "did I like this"
+  // private to its own user regardless). "Kaydedilenler" no longer has a
+  // flat, separate list of its own here — it IS the collections view now
+  // (CollectionsPanel, starting with the default "Genel" collection), so
+  // there's nothing left to fetch/hold at this level for it (CLAUDE.md
+  // Bölüm 9.22 §1 — the old "Tümü" sub-tab and its state were removed
+  // structurally, not just hidden with CSS).
   const [likedPrompts, setLikedPrompts] = useState<Prompt[]>([]);
 
   useEffect(() => {
     let cancelled = false;
     if (!isOwnProfile || !authUser) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- nothing to fetch for someone else's profile or a signed-out viewer
-      setSavedPrompts([]);
       setLikedPrompts([]);
       return;
     }
-    fetchSavedPrompts(authUser.id).then((prompts) => {
-      if (!cancelled) setSavedPrompts(prompts);
-    });
     fetchLikedPrompts(authUser.id).then((prompts) => {
       if (!cancelled) setLikedPrompts(prompts);
     });
@@ -79,7 +79,6 @@ export function ProfileView({
   }, [isOwnProfile, authUser]);
 
   const [activeTab, setActiveTab] = useState<ProfileTabKey>("prompts");
-  const [savedSubTab, setSavedSubTab] = useState<"all" | "collections">("all");
   const [activeType, setActiveType] = useState<PromptContentType | "all">("all");
   const [sort, setSort] = useState<ProfileSortKey>("newest");
   const [search, setSearch] = useState("");
@@ -96,28 +95,25 @@ export function ProfileView({
       { key: "requests", label: "Prompt İstekleri", count: authorRequests.length },
     ];
     if (isOwnProfile) {
-      base.push(
-        { key: "saved", label: "Kaydedilenler", count: savedPrompts.length },
-        { key: "liked", label: "Beğeniler", count: likedPrompts.length },
-      );
+      // "Kaydedilenler" has no single flat count anymore — it's a list of
+      // collections now, not a list of prompts (Bölüm 9.22 §1).
+      base.push({ key: "saved", label: "Kaydedilenler" }, { key: "liked", label: "Beğeniler", count: likedPrompts.length });
     }
     base.push({ key: "about", label: "Hakkında" });
     return base;
-  }, [authorPrompts.length, remixPrompts.length, authorRequests.length, isOwnProfile, savedPrompts.length, likedPrompts.length]);
+  }, [authorPrompts.length, remixPrompts.length, authorRequests.length, isOwnProfile, likedPrompts.length]);
 
   const activeSource = useMemo(() => {
     switch (activeTab) {
       case "remixes":
         return remixPrompts;
-      case "saved":
-        return savedPrompts;
       case "liked":
         return likedPrompts;
       case "prompts":
       default:
         return authorPrompts;
     }
-  }, [activeTab, authorPrompts, remixPrompts, savedPrompts, likedPrompts]);
+  }, [activeTab, authorPrompts, remixPrompts, likedPrompts]);
 
   const availableTypes = useMemo(() => {
     const types = new Set<PromptContentType>();
@@ -182,64 +178,12 @@ export function ProfileView({
             <RequestList requests={authorRequests} />
           )
         ) : activeTab === "saved" ? (
-          <>
-            <div role="tablist" className="flex gap-1 border-b border-border">
-              {(["all", "collections"] as const).map((key) => (
-                <button
-                  key={key}
-                  type="button"
-                  role="tab"
-                  aria-selected={savedSubTab === key}
-                  onClick={() => setSavedSubTab(key)}
-                  className={
-                    savedSubTab === key
-                      ? "border-b-2 border-primary px-3 py-2 text-sm font-medium text-primary"
-                      : "border-b-2 border-transparent px-3 py-2 text-sm font-medium text-text-muted hover:text-text"
-                  }
-                >
-                  {key === "all" ? "Tümü" : "Koleksiyonlar"}
-                </button>
-              ))}
-            </div>
-
-            {savedSubTab === "collections" ? (
-              <CollectionsPanel ownerId={user.id} ownerProfile={user} />
-            ) : (
-              <>
-                {activeSource.length > 0 && (
-                  <ProfileToolbar
-                    availableTypes={availableTypes}
-                    activeType={activeType}
-                    onTypeChange={setActiveType}
-                    sort={sort}
-                    onSortChange={setSort}
-                    search={search}
-                    onSearchChange={setSearch}
-                    showSearch={activeSource.length > 8}
-                    hasActiveFilters={hasActiveFilters}
-                    onClear={clearFilters}
-                  />
-                )}
-
-                <ProfileContentGrid
-                  prompts={filtered}
-                  isOwnProfile={false}
-                  onDeleted={handleDeleted}
-                  emptyState={
-                    hasActiveFilters ? (
-                      <ProfileEmptyState
-                        icon={SearchX}
-                        title="Bu filtreye uygun içerik bulunamadı"
-                        description="Başka bir içerik türü veya sıralama seçmeyi dene."
-                      />
-                    ) : (
-                      <TabEmptyState tab={activeTab} isOwnProfile={isOwnProfile} />
-                    )
-                  }
-                />
-              </>
-            )}
-          </>
+          // No more separate flat "Tümü" list here — Kaydedilenler IS the
+          // collections view now, "Genel" (the default, general-save
+          // bucket) always shown first (CLAUDE.md Bölüm 9.22 §1). Removed
+          // structurally, not hidden: no sub-tab state, no filter/sort
+          // toolbar, no second data source for this tab anymore.
+          <CollectionsPanel ownerId={user.id} ownerProfile={user} />
         ) : (
           <>
             {activeSource.length > 0 && (
@@ -288,16 +232,6 @@ function TabEmptyState({ tab, isOwnProfile }: { tab: ProfileTabKey; isOwnProfile
         title="İlk türettiğin promptu oluştur"
         description="Başka bir prompttan ilham al ve kendi yorumunu kat."
         action={{ label: "Keşfet", href: "/discover" }}
-      />
-    );
-  }
-  if (tab === "saved") {
-    return (
-      <ProfileEmptyState
-        icon={Bookmark}
-        title="Kaydettiğin promptlar burada"
-        description="İlham veren promptları kaydederek daha sonra kolayca bulabilirsin."
-        action={{ label: "Promptları keşfet", href: "/discover" }}
       />
     );
   }

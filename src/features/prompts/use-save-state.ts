@@ -2,9 +2,17 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/features/auth/auth-provider";
-import { fetchIsSaved, unsavePrompt } from "@/lib/supabase/saves";
+import { isPromptSaved, removeFromSavedEverywhere } from "@/lib/supabase/collections";
 
-/** Whether the current viewer saved a real prompt — no count, saves are never shown as a number. */
+/**
+ * Whether the current viewer generally saved a real prompt — true iff it's
+ * in their own default ("Genel") collection (see `Collection.isDefault`).
+ * No count, saves are never shown as a number. This is the single source of
+ * truth for the bookmark icon everywhere it appears (feed, discover,
+ * profile, collection detail) — every instance re-fetches this fresh on
+ * mount, so a removal on one screen is always reflected correctly the next
+ * time a card for the same prompt renders (CLAUDE.md Bölüm 9.22 §16).
+ */
 export function useSaveState(id: string) {
   const { user } = useAuth();
 
@@ -20,7 +28,7 @@ export function useSaveState(id: string) {
       return;
     }
     setLoading(true);
-    fetchIsSaved(id, user.id).then((result) => {
+    isPromptSaved(id, user.id).then((result) => {
       if (!cancelled) {
         setIsSaved(result);
         setLoading(false);
@@ -32,22 +40,23 @@ export function useSaveState(id: string) {
   }, [user, id]);
 
   /**
-   * Removes the general save only (never touches collection membership —
-   * see collections.ts's "tek yönlü bağ" decision, CLAUDE.md Bölüm 9.19).
-   * Optimistic with rollback on failure; guarded against overlapping calls
-   * so a double-click can't fire two DELETEs. Resolves `true` only on a
-   * real, confirmed success, so a caller can decide whether it's honest to
-   * show a "removed" confirmation.
+   * The general "kaydedilenlerden kaldır" action — removes this prompt from
+   * the user's default collection AND every one of their other collections
+   * that also contains it (CLAUDE.md Bölüm 9.22 §7), never just from one
+   * screen's local view. Optimistic with rollback on failure; guarded
+   * against overlapping calls so a double-click can't fire two requests.
+   * Resolves `true` only on a real, confirmed success, so a caller can
+   * decide whether it's honest to show a "removed" confirmation.
    */
-  const unsave = useCallback(async () => {
+  const removeEverywhere = useCallback(async () => {
     if (!user || isToggling) return false;
     setIsToggling(true);
     setIsSaved(false);
     try {
-      await unsavePrompt(id, user.id);
+      await removeFromSavedEverywhere(id);
       return true;
     } catch (err) {
-      console.error("unsavePrompt", err);
+      console.error("removeFromSavedEverywhere", err);
       setIsSaved(true);
       return false;
     } finally {
@@ -56,9 +65,9 @@ export function useSaveState(id: string) {
   }, [user, id, isToggling]);
 
   /**
-   * Reflects a save that a caller already performed for real elsewhere
-   * (the collection-picker modal's own `addItemToCollection`, which does a
-   * genuine `prompt_saves` insert) — never a fake/optimistic guess, just
+   * Reflects a save that a caller already performed for real elsewhere (the
+   * collection-picker modal's own `addItemToCollection` onto the user's
+   * default collection specifically) — never a fake/optimistic guess, just
    * skips an unnecessary refetch of state this component already knows is
    * true.
    */
@@ -66,5 +75,14 @@ export function useSaveState(id: string) {
     setIsSaved(true);
   }, []);
 
-  return { isSaved, unsave, markSaved, loading, isToggling, canSave: Boolean(user) };
+  /**
+   * The mirror of `markSaved` — reflects a real removal that happened
+   * elsewhere (the same modal's own default-collection row being
+   * unchecked again before the modal closed) without a refetch.
+   */
+  const markUnsaved = useCallback(() => {
+    setIsSaved(false);
+  }, []);
+
+  return { isSaved, removeEverywhere, markSaved, markUnsaved, loading, isToggling, canSave: Boolean(user) };
 }

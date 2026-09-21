@@ -196,30 +196,6 @@ export async function fetchPromptsForRequest(requestId: string): Promise<Prompt[
   }
 }
 
-/** Every real prompt this user has saved, newest-first — for `/saved` and a real own-profile's "Kaydedilenler" tab (CLAUDE.md Bölüm 21 Faz 3). RLS keeps `prompt_saves` private, so this can only ever return the caller's own saves. */
-export async function fetchSavedPrompts(userId: string): Promise<Prompt[]> {
-  try {
-    const { data, error } = await supabase
-      .from("prompt_saves")
-      .select(`created_at, prompts ( ${PROMPT_SELECT} )`)
-      .eq("user_id", userId)
-      .order("created_at", { ascending: false });
-    if (error) {
-      console.error("fetchSavedPrompts", error);
-      return [];
-    }
-    return filterNotDeleted(
-      ((data ?? []) as unknown as { prompts: PromptRow | null }[])
-        .map((row) => row.prompts)
-        .filter((row): row is PromptRow => Boolean(row))
-        .map((row) => mapPromptRow(row)),
-    );
-  } catch (err) {
-    console.error("fetchSavedPrompts", err);
-    return [];
-  }
-}
-
 /** Every real, published prompt by any of these authors, newest-first — for the "Takip Ettiklerim" feed (only ever the viewer's followed authors). */
 export async function fetchPromptsByAuthors(authorIds: string[], limit = 60): Promise<Prompt[]> {
   if (authorIds.length === 0) return [];

@@ -1,6 +1,7 @@
 "use client";
 
 import { X } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Modal } from "@/components/ui/modal";
 import { CollectionForm } from "./collection-form";
 import type { Collection } from "@/types";
@@ -31,13 +32,21 @@ export function CollectionFormModal({
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-2">
-          <h2 id="collection-form-modal-title" className="text-base font-semibold text-text">
-            {isEdit ? "Koleksiyonu düzenle" : "Yeni koleksiyon oluştur"}
-          </h2>
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
+            <h2 id="collection-form-modal-title" className="text-base font-semibold text-text">
+              {isEdit ? "Koleksiyonu düzenle" : "Yeni koleksiyon oluştur"}
+            </h2>
+            {collection?.isDefault && <Badge variant="accent">Varsayılan</Badge>}
+          </div>
           <button type="button" onClick={onClose} aria-label="Kapat" className="rounded-md p-1 text-text-muted hover:bg-accent-surface hover:text-text">
             <X size={18} />
           </button>
         </div>
+        {collection?.isDefault && (
+          <p className="text-xs text-text-muted">
+            Bu senin varsayılan koleksiyonun — adını ve gizliliğini değiştirebilirsin, ama silinemez.
+          </p>
+        )}
 
         <CollectionForm
           initialName={collection?.name}
