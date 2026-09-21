@@ -21,6 +21,18 @@ export interface UserProfile {
 export interface Tag {
   slug: string;
   label: string;
+  /**
+   * Real usage stats (CLAUDE.md Bölüm 9.23, `tags.prompt_usage_count`/
+   * `request_usage_count`/`usage_count` + `created_at`) — only populated by
+   * a stats-aware query (popular/trending/all-tags/tag-detail lookups).
+   * Left `undefined` everywhere a tag is just embedded in a prompt's or
+   * request's own `tags` array (that join never selects these columns) —
+   * never rendered as `0` in that case, only omitted.
+   */
+  usageCount?: number;
+  promptUsageCount?: number;
+  requestUsageCount?: number;
+  createdAt?: string;
 }
 
 export interface PromptMedia {

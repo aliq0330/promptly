@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
+import { useState, type ChangeEvent, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -9,9 +9,11 @@ import { useRealRequests } from "./real-requests-provider";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useOwnProfile } from "@/features/auth/own-profile-provider";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
-import { fetchAllTags } from "@/lib/supabase/tags";
+import { useTagCatalog } from "@/features/tags/use-tag-catalog";
+import { useTagPicker } from "@/features/prompts/use-tag-picker";
+import { TagPicker } from "@/features/prompts/tag-picker";
 import { cn, requestHref, resizeImageToDataUrlFit } from "@/lib/utils";
-import type { PromptContentType, PromptRequest, Tag } from "@/types";
+import type { PromptContentType, PromptRequest } from "@/types";
 
 const CONTENT_TYPES: PromptContentType[] = ["image", "text", "video", "code", "music"];
 
@@ -32,17 +34,17 @@ export function CreateRequestForm() {
   const { user } = useAuth();
   const { profile: ownProfile } = useOwnProfile();
 
-  const [allTags, setAllTags] = useState<Tag[]>([]);
-  useEffect(() => {
-    fetchAllTags().then(setAllTags);
-  }, []);
+  const { catalog: tagCatalog } = useTagCatalog();
 
   const [contentType, setContentType] = useState<PromptContentType>("image");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [creativeDirection, setCreativeDirection] = useState("");
   const [preferredTool, setPreferredTool] = useState("");
-  const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
+  // İstek başlığı+açıklaması birlikte analiz ediliyor (CLAUDE.md §12) —
+  // isteğin kendi etiketleri, bir yanıtın etiketleriyle asla karıştırılmıyor
+  // (bkz. create-prompt-form.tsx'in answerRequest modu).
+  const tagPicker = useTagPicker({ title, content: description, catalog: tagCatalog });
   const [referenceImage, setReferenceImage] = useState<{ url: string; width: number; height: number } | null>(
     null,
   );
@@ -80,12 +82,6 @@ export function CreateRequestForm() {
     }
   }
 
-  function toggleTag(tag: Tag) {
-    setSelectedTags((prev) =>
-      prev.some((t) => t.slug === tag.slug) ? prev.filter((t) => t.slug !== tag.slug) : [...prev, tag],
-    );
-  }
-
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setTitleTouched(true);
@@ -102,7 +98,8 @@ export function CreateRequestForm() {
           creativeDirection,
           contentType,
           preferredTool: preferredTool || null,
-          tags: selectedTags,
+          tags: tagPicker.accepted.map((entry) => entry.tag),
+          tagSources: Object.fromEntries(tagPicker.accepted.map((entry) => [entry.tag.slug, entry.source])),
           imageFile: referenceImageFile,
         },
         ownProfile,
@@ -161,7 +158,7 @@ export function CreateRequestForm() {
     referenceImage: referenceImage
       ? { id: "reference", url: referenceImage.url, width: referenceImage.width, height: referenceImage.height, alt: title }
       : undefined,
-    tags: selectedTags,
+    tags: tagPicker.accepted.map((entry) => entry.tag),
     status: "open",
     responseCount: 0,
     createdAt: new Date().toISOString(),
@@ -296,26 +293,7 @@ export function CreateRequestForm() {
             <label className="mb-2 block text-sm font-medium text-text">
               Etiketler <span className="text-text-muted">(opsiyonel)</span>
             </label>
-            <div className="flex flex-wrap gap-1.5">
-              {allTags.map((tag) => {
-                const active = selectedTags.some((t) => t.slug === tag.slug);
-                return (
-                  <button
-                    key={tag.slug}
-                    type="button"
-                    onClick={() => toggleTag(tag)}
-                    className={cn(
-                      "rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
-                      active
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "border-border bg-surface text-text-muted hover:text-text",
-                    )}
-                  >
-                    {tag.label}
-                  </button>
-                );
-              })}
-            </div>
+            <TagPicker picker={tagPicker} />
           </div>
 
           {publishError && <p className="text-sm text-red-500">{publishError}</p>}
