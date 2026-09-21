@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/features/auth/auth-provider";
-import { fetchIsSaved, savePrompt, unsavePrompt } from "@/lib/supabase/saves";
+import { fetchIsSaved, unsavePrompt } from "@/lib/supabase/saves";
 
 /** Whether the current viewer saved a real prompt — no count, saves are never shown as a number. */
 export function useSaveState(id: string) {
@@ -10,6 +10,7 @@ export function useSaveState(id: string) {
 
   const [isSaved, setIsSaved] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [isToggling, setIsToggling] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -30,27 +31,40 @@ export function useSaveState(id: string) {
     };
   }, [user, id]);
 
-  const toggle = useCallback(async () => {
-    if (!user) return;
-
-    if (isSaved) {
-      setIsSaved(false);
-      try {
-        await unsavePrompt(id, user.id);
-      } catch (err) {
-        console.error("unsavePrompt", err);
-        setIsSaved(true);
-      }
-    } else {
+  /**
+   * Removes the general save only (never touches collection membership —
+   * see collections.ts's "tek yönlü bağ" decision, CLAUDE.md Bölüm 9.19).
+   * Optimistic with rollback on failure; guarded against overlapping calls
+   * so a double-click can't fire two DELETEs. Resolves `true` only on a
+   * real, confirmed success, so a caller can decide whether it's honest to
+   * show a "removed" confirmation.
+   */
+  const unsave = useCallback(async () => {
+    if (!user || isToggling) return false;
+    setIsToggling(true);
+    setIsSaved(false);
+    try {
+      await unsavePrompt(id, user.id);
+      return true;
+    } catch (err) {
+      console.error("unsavePrompt", err);
       setIsSaved(true);
-      try {
-        await savePrompt(id, user.id);
-      } catch (err) {
-        console.error("savePrompt", err);
-        setIsSaved(false);
-      }
+      return false;
+    } finally {
+      setIsToggling(false);
     }
-  }, [user, isSaved, id]);
+  }, [user, id, isToggling]);
 
-  return { isSaved, toggle, loading, canSave: Boolean(user) };
+  /**
+   * Reflects a save that a caller already performed for real elsewhere
+   * (the collection-picker modal's own `addItemToCollection`, which does a
+   * genuine `prompt_saves` insert) — never a fake/optimistic guess, just
+   * skips an unnecessary refetch of state this component already knows is
+   * true.
+   */
+  const markSaved = useCallback(() => {
+    setIsSaved(true);
+  }, []);
+
+  return { isSaved, unsave, markSaved, loading, isToggling, canSave: Boolean(user) };
 }
