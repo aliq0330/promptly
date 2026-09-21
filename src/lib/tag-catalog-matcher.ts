@@ -1,4 +1,5 @@
 import { normalizeTagLabel } from "./tag-normalize";
+import { CANDIDATE_TAG_LABELS } from "./tag-candidates";
 import type { Tag } from "@/types";
 
 /**
@@ -182,4 +183,53 @@ export function analyzeContent(title: string, content: string, catalog: Tag[]): 
     .map((entry) => entry.tag);
 
   return { automatic, suggested };
+}
+
+export interface CandidateTagSuggestion extends Tag {
+  /** True for every entry from this function — never a real DB row until the user explicitly accepts it (CLAUDE.md §9.24). Lets the UI/picker tell a candidate apart from an already-real low-confidence catalog suggestion. */
+  isCandidate: true;
+}
+
+/**
+ * Matches the current title+content against the large, client-side-only
+ * `CANDIDATE_TAG_LABELS` dictionary (tag-candidates.ts, CLAUDE.md §9.24) —
+ * deliberately separate from `analyzeContent`'s real-catalog matching above.
+ * A match here is NEVER promoted to a real database row on its own and NEVER
+ * lands in the `automatic` tier — it only ever surfaces as a `suggested`
+ * chip (see `useTagPicker`), and only becomes a real, queryable tag the
+ * instant a user explicitly accepts it (which calls `get_or_create_tag`,
+ * same as the manual "+ … etiketini oluştur" flow). Whole-word/phrase
+ * matches only — no agglutinative-suffix prefix matching here, unlike
+ * `analyzeContent`'s real-catalog pass: with ~3,000 candidate entries, prefix
+ * matching would flood this tier with noise it's meant to stay free of.
+ */
+export function matchCandidateSuggestions(
+  title: string,
+  content: string,
+  realCatalogSlugs: ReadonlySet<string>,
+  excludeSlugs: ReadonlySet<string>,
+  limit = 6,
+): CandidateTagSuggestion[] {
+  const combinedText = `${title} ${content}`.trim();
+  if (!combinedText) return [];
+  const normalizedText = normalizeTextForMatching(combinedText);
+  if (!normalizedText) return [];
+
+  const matches: CandidateTagSuggestion[] = [];
+  const seenSlugs = new Set<string>();
+  for (const label of CANDIDATE_TAG_LABELS) {
+    const slug = normalizeTagLabel(label);
+    if (!slug || seenSlugs.has(slug)) continue;
+    if (realCatalogSlugs.has(slug) || excludeSlugs.has(slug)) continue;
+    const normalizedLabel = normalizeTextForMatching(label);
+    if (!normalizedLabel || normalizedLabel.length < 3) continue;
+    if (hasWholeWordMatch(normalizedText, normalizedLabel)) {
+      seenSlugs.add(slug);
+      matches.push({ slug, label, isCandidate: true });
+    }
+  }
+
+  // Prefer longer, more specific phrase matches first (fewer coincidental short-word hits).
+  matches.sort((a, b) => b.label.length - a.label.length || a.label.localeCompare(b.label));
+  return matches.slice(0, limit);
 }
