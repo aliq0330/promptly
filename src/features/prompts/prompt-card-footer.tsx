@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Repeat2 } from "lucide-react";
+import { GitBranch } from "lucide-react";
 import { formatCount, promptHref } from "@/lib/utils";
 import { ShareButton } from "./share-button";
 import { LikeButton } from "./like-button";
@@ -24,9 +24,9 @@ export function PromptCardFooter({ prompt }: { prompt: Prompt }) {
       <Link
         href={`/create?remix=${prompt.id}`}
         className="flex items-center gap-1 text-xs hover:text-text"
-        title="Bu promptu remixle"
+        title="Bu promptu türet"
       >
-        <Repeat2 size={14} />
+        <GitBranch size={14} />
         {formatCount(prompt.remixCount)}
       </Link>
       <SaveButton promptId={prompt.id} />

@@ -3,7 +3,7 @@
 import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Copy, Repeat2, X } from "lucide-react";
+import { Copy, GitBranch, X } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { PromptCard } from "@/features/prompts/prompt-card";
@@ -425,7 +425,7 @@ export function CreatePromptForm() {
 
           {sourcePrompt && (
             <div className="flex items-start gap-2 rounded-md border border-primary/30 bg-primary/5 p-3 text-sm text-primary">
-              <Repeat2 size={16} className="mt-0.5 shrink-0" />
+              <GitBranch size={16} className="mt-0.5 shrink-0" />
               <p>
                 <Link href={promptHref(sourcePrompt)} className="font-medium underline">
                   &ldquo;{sourcePrompt.title}&rdquo;

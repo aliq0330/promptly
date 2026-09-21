@@ -1,4 +1,4 @@
-import { Layers, Repeat2, Sparkle } from "lucide-react";
+import { GitBranch, Layers, Sparkle } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 interface BadgeDefinition {
@@ -26,7 +26,7 @@ const BADGE_DEFINITIONS: BadgeDefinition[] = [
   },
   {
     key: "first-remix",
-    icon: Repeat2,
+    icon: GitBranch,
     label: "İlk türettiği promptu oluşturdu",
     isEarned: ({ remixCount }) => remixCount >= 1,
   },

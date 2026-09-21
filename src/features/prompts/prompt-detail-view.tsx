@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
-import { ChevronRight, Repeat2 } from "lucide-react";
+import { ChevronRight, GitBranch } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { PromptGrid } from "@/features/prompts/prompt-grid";
@@ -150,7 +150,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
               className="text-sm"
             />
             <span className="flex items-center gap-1.5">
-              <Repeat2 size={18} />
+              <GitBranch size={18} />
               {formatCount(prompt.remixCount)}
             </span>
             <SaveButton promptId={prompt.id} size={18} />
@@ -159,7 +159,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
             href={`/create?remix=${prompt.id}`}
             className="inline-flex h-8 items-center gap-1.5 rounded-md border border-border bg-transparent px-3 text-sm font-medium text-text transition-colors hover:bg-accent-surface"
           >
-            <Repeat2 size={14} />
+            <GitBranch size={14} />
             Türet
           </Link>
         </div>
@@ -201,8 +201,8 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
               remixTab === "map" ? "border-primary text-primary" : "border-transparent text-text-muted hover:text-text",
             )}
           >
-            <Repeat2 size={14} />
-            Remix Dallanma Haritası
+            <GitBranch size={14} />
+            Prompt geçmişi
           </button>
         </div>
 

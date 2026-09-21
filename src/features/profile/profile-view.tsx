@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Bookmark, Heart, Repeat2, SearchX, Sparkles } from "lucide-react";
+import { Bookmark, GitBranch, Heart, SearchX, Sparkles } from "lucide-react";
 import { ProfileHeader } from "./profile-header";
 import { ProfileTabs, type ProfileTabKey } from "./profile-tabs";
 import { ProfileToolbar, type ProfileSortKey } from "./profile-toolbar";
@@ -223,7 +223,7 @@ function TabEmptyState({ tab, isOwnProfile }: { tab: ProfileTabKey; isOwnProfile
   if (tab === "remixes") {
     return (
       <ProfileEmptyState
-        icon={Repeat2}
+        icon={GitBranch}
         title="İlk türettiğin promptu oluştur"
         description="Başka bir prompttan ilham al ve kendi yorumunu kat."
         action={{ label: "Keşfet", href: "/discover" }}

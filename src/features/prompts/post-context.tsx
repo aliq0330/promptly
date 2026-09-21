@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowUpRight, CheckCircle2, CornerUpRight, Repeat2 } from "lucide-react";
+import { ArrowUpRight, CheckCircle2, CornerUpRight, GitBranch } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useRealPrompts } from "@/features/prompts/real-prompts-provider";
@@ -56,8 +56,8 @@ export function RemixContext({ sourcePromptId }: { sourcePromptId: string }) {
     return (
       <ContextBox href={promptHref({ id: sourcePromptId })}>
         <span className="flex items-center gap-1.5 text-xs font-medium text-primary">
-          <Repeat2 size={14} />
-          Remixlenen çalışma
+          <GitBranch size={14} />
+          Türetilen çalışma
         </span>
         <span className="block text-sm text-text-muted">Bu paylaşım silindi.</span>
       </ContextBox>
@@ -67,8 +67,8 @@ export function RemixContext({ sourcePromptId }: { sourcePromptId: string }) {
   return (
     <ContextBox href={promptHref({ id: sourcePromptId })}>
       <span className="flex items-center gap-1.5 text-xs font-medium text-primary">
-        <Repeat2 size={14} />
-        Remixlenen çalışma
+        <GitBranch size={14} />
+        Türetilen çalışma
       </span>
       <span className="flex items-center gap-3">
         {thumbnail && (

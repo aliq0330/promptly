@@ -11,7 +11,6 @@ import {
   GitMerge,
   History,
   Loader2,
-  Repeat2,
   RotateCcw,
   XCircle,
 } from "lucide-react";
@@ -274,7 +273,7 @@ export function RemixNodeDetailPanel({
           </Link>
           <Link href={`/create?remix=${node.id}`}>
             <Button type="button" variant="outline" size="sm">
-              <Repeat2 size={13} />
+              <GitBranch size={13} />
               Türet
             </Button>
           </Link>

@@ -173,7 +173,7 @@ export function RemixBranchMap({ currentPrompt }: { currentPrompt: Prompt }) {
       onPointerUp={handlePointerUp}
       onPointerLeave={handlePointerUp}
       role="img"
-      aria-label={`${nodeCount} içerikten oluşan remix dallanma haritası, odak: ${currentPrompt.title}`}
+      aria-label={`${nodeCount} içerikten oluşan prompt geçmişi, odak: ${currentPrompt.title}`}
       className={cn(
         "relative overflow-hidden rounded-md border border-border bg-background/40",
         expanded ? "h-[560px]" : "h-[320px]",
