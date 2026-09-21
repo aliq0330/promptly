@@ -1,19 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Bookmark } from "lucide-react";
+import { Portal } from "@/components/ui/portal";
 import { cn } from "@/lib/utils";
 import { useSaveState } from "./use-save-state";
 import { SaveToCollectionModal } from "@/features/collections/save-to-collection-modal";
 
 /**
- * Kaydet — opens the "Koleksiyona ekle" modal instead of toggling directly
- * (CLAUDE.md koleksiyon modülü). The icon's filled state still reflects the
- * existing, unchanged general bookmark (`prompt_saves`, CLAUDE.md Bölüm 21
- * Faz 3) — adding a work to any collection also saves it generally (see
- * `addItemToCollection`), so this fills in naturally once the user adds the
- * work to at least one collection.
+ * Kaydet — a real toggle, not "always open the modal":
+ * - Not saved yet → opens the "Koleksiyona ekle" modal (create/choose a
+ *   collection; adding to one also saves generally, see
+ *   SaveToCollectionModal/collections.ts).
+ * - Already saved → tapping the filled icon removes the general save
+ *   DIRECTLY (no modal — this was the reported bug: the icon's own filled
+ *   state already means "kayıtlı", so bringing up "kaydetmek için bir
+ *   koleksiyon seç" again was backwards).
  */
 export function SaveButton({
   promptId,
@@ -24,10 +27,16 @@ export function SaveButton({
   size?: number;
   className?: string;
 }) {
-  const { isSaved: fetchedIsSaved, canSave } = useSaveState(promptId);
+  const { isSaved, unsave, markSaved, isToggling, canSave } = useSaveState(promptId);
   const [modalOpen, setModalOpen] = useState(false);
-  const [justAdded, setJustAdded] = useState(false);
-  const isSaved = fetchedIsSaved || justAdded;
+  const [showRemovedToast, setShowRemovedToast] = useState(false);
+  const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+    };
+  }, []);
 
   const sharedClassName = cn(
     "flex items-center rounded-sm px-1 py-0.5 text-xs transition-colors hover:text-text",
@@ -48,28 +57,53 @@ export function SaveButton({
     );
   }
 
+  async function handleClick(event: React.MouseEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (isToggling) return;
+
+    if (isSaved) {
+      const removed = await unsave();
+      if (removed) {
+        setShowRemovedToast(true);
+        if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+        toastTimeoutRef.current = setTimeout(() => setShowRemovedToast(false), 2200);
+      }
+      return;
+    }
+
+    setModalOpen(true);
+  }
+
   return (
     <>
       <button
         type="button"
-        onClick={(event) => {
-          event.preventDefault();
-          event.stopPropagation();
-          setModalOpen(true);
-        }}
+        onClick={handleClick}
+        disabled={isToggling}
         aria-pressed={isSaved}
-        aria-haspopup="dialog"
-        title="Koleksiyona ekle"
-        className={sharedClassName}
+        aria-haspopup={isSaved ? undefined : "dialog"}
+        title={isSaved ? "Kaydedilenlerden çıkar" : "Koleksiyona ekle"}
+        className={cn(sharedClassName, isToggling && "opacity-60")}
       >
         <Bookmark size={size} fill={isSaved ? "currentColor" : "none"} />
       </button>
+
       {modalOpen && (
-        <SaveToCollectionModal
-          promptId={promptId}
-          onClose={() => setModalOpen(false)}
-          onAdded={() => setJustAdded(true)}
-        />
+        <SaveToCollectionModal promptId={promptId} onClose={() => setModalOpen(false)} onAdded={markSaved} />
+      )}
+
+      {showRemovedToast && (
+        <Portal>
+          <div
+            role="status"
+            className="pointer-events-none fixed inset-x-0 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-[60] flex justify-center px-4 lg:bottom-6"
+          >
+            <div className="rounded-md bg-text px-3 py-2 text-sm text-background shadow-lg">
+              Kaydedilenlerden kaldırıldı.
+            </div>
+          </div>
+        </Portal>
       )}
     </>
   );
