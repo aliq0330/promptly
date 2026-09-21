@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { analyzeContent } from "@/lib/tag-catalog-matcher";
+import { analyzeContent, matchCandidateSuggestions } from "@/lib/tag-catalog-matcher";
+import { getOrCreateTag } from "@/lib/supabase/tags";
 import type { Tag } from "@/types";
 
 export type TagSource = "manual" | "automatic";
@@ -10,6 +11,17 @@ export interface AcceptedTagEntry {
   tag: Tag;
   source: TagSource;
 }
+
+/**
+ * A chip in the `suggested` tier. `isCandidate` is set only for a match from
+ * the large, client-side-only candidate dictionary (CLAUDE.md §9.24) — it
+ * has never been a real database row, so accepting it must first create one
+ * (see `acceptSuggested` below) before it can join `accepted`. Absent/false
+ * for an ordinary low-confidence match against the real, already-loaded
+ * catalog (`analyzeContent`'s own `suggested` tier), which is already real
+ * and can be accepted instantly.
+ */
+export type SuggestedTagEntry = Tag & { isCandidate?: boolean };
 
 const ANALYSIS_DEBOUNCE_MS = 400;
 
@@ -33,12 +45,23 @@ export interface UseTagPickerOptions {
 export interface UseTagPickerResult {
   /** Tags currently attached to this content — both accepted-automatic and manual, always de-duplicated by slug. */
   accepted: AcceptedTagEntry[];
-  /** Tags the analyzer thinks might be relevant but isn't confident enough to auto-add — shown for the user to pick. */
-  suggested: Tag[];
+  /** Tags the analyzer thinks might be relevant but isn't confident enough to auto-add — shown for the user to pick. Includes both real-catalog matches and candidate-dictionary matches (`isCandidate: true`). */
+  suggested: SuggestedTagEntry[];
   /** True while a debounced re-analysis is pending (not a network state — purely local/synchronous, but still worth a subtle "analiz ediliyor…" indicator per CLAUDE.md §23). */
   isAnalyzing: boolean;
-  /** Accepts a suggested chip — from this point on it's a manual tag (CLAUDE.md §5). */
-  acceptSuggested: (tag: Tag) => void;
+  /** The slug of the candidate suggestion currently being promoted to a real tag (`getOrCreateTag` in flight) — null otherwise. Accepting an already-real suggestion never sets this (it's instant). */
+  acceptingSlug: string | null;
+  /** Set when promoting a candidate suggestion to a real tag fails (network/RLS) — cleared on the next accept attempt. */
+  acceptError: string | null;
+  /**
+   * Accepts a suggested chip — from this point on it's a manual tag
+   * (CLAUDE.md §5). For an ordinary real-catalog suggestion this is
+   * instant/synchronous; for a candidate-dictionary suggestion
+   * (`isCandidate: true`) it first creates a real, live tag row via
+   * `get_or_create_tag` (CLAUDE.md §9.24) and only adds the RESOLVED real
+   * tag once that succeeds — a candidate is never added optimistically.
+   */
+  acceptSuggested: (tag: SuggestedTagEntry) => Promise<void>;
   /** Adds a tag directly (autocomplete selection or newly-created tag) — always manual, and un-dismisses it if it had been removed before. */
   addManual: (tag: Tag) => void;
   /** Removes an accepted tag. If it was automatic, it's marked dismissed so it won't be silently re-added while the text is unchanged (CLAUDE.md §5/§8). */
@@ -62,9 +85,11 @@ export function useTagPicker({ title, content, catalog, initialTags, contextTags
   const [accepted, setAccepted] = useState<AcceptedTagEntry[]>(() =>
     (initialTags ?? []).map((tag) => ({ tag, source: "manual" as const })),
   );
-  const [suggested, setSuggested] = useState<Tag[]>([]);
+  const [suggested, setSuggested] = useState<SuggestedTagEntry[]>([]);
   const [dismissedSlugs, setDismissedSlugs] = useState<Set<string>>(new Set());
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [acceptingSlug, setAcceptingSlug] = useState<string | null>(null);
+  const [acceptError, setAcceptError] = useState<string | null>(null);
 
   const lastAnalyzedKeyRef = useRef<string | null>(null);
   const acceptedRef = useRef(accepted);
@@ -111,7 +136,15 @@ export function useTagPicker({ title, content, catalog, initialTags, contextTags
       const contextSuggestions = (contextTags ?? []).filter(
         (tag) => !mergedAcceptedSlugs.has(tag.slug) && !currentDismissed.has(tag.slug),
       );
-      const suggestedPool = [...result.suggested, ...contextSuggestions];
+      // Candidate-dictionary matches (CLAUDE.md §9.24) — never real tags on
+      // their own, always suggested-tier only; excluded from the real
+      // catalog's own slugs so a since-created real tag is never suggested
+      // twice over (once as a real match, once as a "candidate").
+      const realCatalogSlugs = new Set(catalog.map((tag) => tag.slug));
+      const excludeFromCandidates = new Set([...mergedAcceptedSlugs, ...currentDismissed]);
+      const candidateMatches = matchCandidateSuggestions(title, content, realCatalogSlugs, excludeFromCandidates);
+
+      const suggestedPool: SuggestedTagEntry[] = [...result.suggested, ...contextSuggestions, ...candidateMatches];
       const seenSuggested = new Set<string>();
       const nextSuggested = suggestedPool.filter((tag) => {
         if (mergedAcceptedSlugs.has(tag.slug) || currentDismissed.has(tag.slug)) return false;
@@ -131,15 +164,40 @@ export function useTagPicker({ title, content, catalog, initialTags, contextTags
     // eslint-disable-next-line react-hooks/exhaustive-deps -- contextTags is intentionally excluded: it only ever nudges the suggested tier of the *next* natural re-analysis, re-running purely because the request's own tags array identity changed would be pointless churn.
   }, [title, content, catalog]);
 
-  const acceptSuggested = useCallback((tag: Tag) => {
-    setSuggested((prev) => prev.filter((entry) => entry.slug !== tag.slug));
-    setDismissedSlugs((prev) => {
-      if (!prev.has(tag.slug)) return prev;
-      const next = new Set(prev);
-      next.delete(tag.slug);
-      return next;
-    });
-    setAccepted((prev) => (prev.some((entry) => entry.tag.slug === tag.slug) ? prev : [...prev, { tag, source: "manual" }]));
+  const acceptSuggested = useCallback(async (tag: SuggestedTagEntry) => {
+    const commit = (finalTag: Tag) => {
+      setSuggested((prev) => prev.filter((entry) => entry.slug !== tag.slug));
+      setDismissedSlugs((prev) => {
+        if (!prev.has(tag.slug)) return prev;
+        const next = new Set(prev);
+        next.delete(tag.slug);
+        return next;
+      });
+      setAccepted((prev) =>
+        prev.some((entry) => entry.tag.slug === finalTag.slug) ? prev : [...prev, { tag: finalTag, source: "manual" as const }],
+      );
+    };
+
+    if (!tag.isCandidate) {
+      // Already a real, currently-loaded catalog tag — no network call needed.
+      commit(tag);
+      return;
+    }
+
+    // A candidate-dictionary match has never been a real row — create it
+    // (or fetch the existing one, if another user beat us to the exact same
+    // normalized label) via the same RPC the manual "+ … etiketini oluştur"
+    // flow uses, and only add the RESOLVED real tag once that succeeds.
+    setAcceptError(null);
+    setAcceptingSlug(tag.slug);
+    try {
+      const realTag = await getOrCreateTag(tag.label);
+      commit(realTag);
+    } catch (err) {
+      setAcceptError(err instanceof Error ? err.message : "Etiket oluşturulamadı, lütfen tekrar dene.");
+    } finally {
+      setAcceptingSlug(null);
+    }
   }, []);
 
   const addManual = useCallback((tag: Tag) => {
@@ -174,7 +232,17 @@ export function useTagPicker({ title, content, catalog, initialTags, contextTags
   }, []);
 
   return useMemo(
-    () => ({ accepted, suggested, isAnalyzing, acceptSuggested, addManual, removeAccepted, dismissSuggested }),
-    [accepted, suggested, isAnalyzing, acceptSuggested, addManual, removeAccepted, dismissSuggested],
+    () => ({
+      accepted,
+      suggested,
+      isAnalyzing,
+      acceptingSlug,
+      acceptError,
+      acceptSuggested,
+      addManual,
+      removeAccepted,
+      dismissSuggested,
+    }),
+    [accepted, suggested, isAnalyzing, acceptingSlug, acceptError, acceptSuggested, addManual, removeAccepted, dismissSuggested],
   );
 }

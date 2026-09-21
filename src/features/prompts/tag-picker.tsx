@@ -109,27 +109,40 @@ export function TagPicker({ picker, disabled }: TagPickerProps) {
         <div className="space-y-1.5">
           <p className="text-xs text-text-muted">Ek öneriler</p>
           <div className="flex flex-wrap gap-1.5">
-            {picker.suggested.map((tag) => (
-              <span key={tag.slug} className="inline-flex items-center gap-0.5">
-                <button
-                  type="button"
-                  onClick={() => picker.acceptSuggested(tag)}
-                  className="inline-flex items-center gap-1 rounded-full border border-dashed border-border px-2.5 py-1 text-xs font-medium text-text-muted transition-colors hover:border-primary hover:text-primary"
-                >
-                  <Plus size={11} />
-                  {tag.label}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => picker.dismissSuggested(tag.slug)}
-                  aria-label={`${tag.label} önerisini gizle`}
-                  className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-text-muted hover:bg-accent-surface hover:text-text"
-                >
-                  <X size={10} />
-                </button>
-              </span>
-            ))}
+            {picker.suggested.map((tag) => {
+              const isAccepting = picker.acceptingSlug === tag.slug;
+              return (
+                <span key={tag.slug} className="inline-flex items-center gap-0.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const promise = picker.acceptSuggested(tag);
+                      // Only a freshly-promoted candidate needs the shared
+                      // catalog cache refreshed — accepting an already-real
+                      // suggestion is instant and changes nothing server-side.
+                      if (tag.isCandidate) void promise.then(() => refresh());
+                    }}
+                    disabled={isAccepting}
+                    title={tag.isCandidate ? "Henüz gerçek bir etiket değil — seçersen gerçek, kalıcı bir etiket olarak oluşturulur." : undefined}
+                    className="inline-flex items-center gap-1 rounded-full border border-dashed border-border px-2.5 py-1 text-xs font-medium text-text-muted transition-colors hover:border-primary hover:text-primary disabled:opacity-60"
+                  >
+                    <Plus size={11} />
+                    {tag.label}
+                    {isAccepting && <span className="text-[10px] font-normal">Oluşturuluyor…</span>}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => picker.dismissSuggested(tag.slug)}
+                    aria-label={`${tag.label} önerisini gizle`}
+                    className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-text-muted hover:bg-accent-surface hover:text-text"
+                  >
+                    <X size={10} />
+                  </button>
+                </span>
+              );
+            })}
           </div>
+          {picker.acceptError && <p className="text-xs text-red-500">{picker.acceptError}</p>}
         </div>
       )}
 
