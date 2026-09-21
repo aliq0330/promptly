@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Check, FolderPlus, Loader2, Plus, X } from "lucide-react";
+import { Modal } from "@/components/ui/modal";
 import { CollectionForm } from "./collection-form";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useOwnProfile } from "@/features/auth/own-profile-provider";
@@ -65,14 +66,6 @@ export function SaveToCollectionModal({
     };
   }, [user, promptId]);
 
-  useEffect(() => {
-    function handleEscape(event: KeyboardEvent) {
-      if (event.key === "Escape") onClose();
-    }
-    document.addEventListener("keydown", handleEscape);
-    return () => document.removeEventListener("keydown", handleEscape);
-  }, [onClose]);
-
   async function handleToggle(collection: Collection) {
     if (!user || pendingIds.has(collection.id)) return;
     const isMember = memberIds.has(collection.id);
@@ -129,13 +122,7 @@ export function SaveToCollectionModal({
   }
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="save-modal-title"
-      onClick={onClose}
-    >
+    <Modal onClose={onClose} labelledBy="save-modal-title">
       <div
         className="flex max-h-[85vh] w-full max-w-md flex-col rounded-lg border border-border bg-surface p-5 shadow-lg"
         onClick={(event) => event.stopPropagation()}
@@ -214,6 +201,6 @@ export function SaveToCollectionModal({
           </>
         )}
       </div>
-    </div>
+    </Modal>
   );
 }
