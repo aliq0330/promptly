@@ -242,3 +242,40 @@ export function tagHref(tag: Pick<Tag, "slug">): string {
 export function collectionHref(collection: Pick<Collection, "id">): string {
   return `/collections/local?id=${collection.id}`;
 }
+
+/**
+ * Shared clipboard write, used by `CopyPromptButton` (Prompt Değişken
+ * Sistemi's "Kopyala" action — CLAUDE.md §10) instead of every call site
+ * repeating its own `navigator.clipboard`/`try-catch`. Falls back to the
+ * legacy `execCommand("copy")` path (a hidden, off-screen textarea) when
+ * the async Clipboard API isn't available — an insecure (non-HTTPS)
+ * context or an older browser — so "Kopyalanamadı" is only ever shown when
+ * copying has genuinely failed both ways, not just because the modern API
+ * happens to be missing.
+ */
+export async function copyTextToClipboard(text: string): Promise<boolean> {
+  if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      // fall through to the legacy path below
+    }
+  }
+  if (typeof document === "undefined") return false;
+  try {
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.style.position = "fixed";
+    textarea.style.opacity = "0";
+    textarea.style.pointerEvents = "none";
+    document.body.appendChild(textarea);
+    textarea.focus();
+    textarea.select();
+    const ok = document.execCommand("copy");
+    document.body.removeChild(textarea);
+    return ok;
+  } catch {
+    return false;
+  }
+}

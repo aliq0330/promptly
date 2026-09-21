@@ -12,13 +12,15 @@ Bölüm 9.8/9.9/9.10), bildirim hedefleme/önizleme (`20260919230000`, Bölüm
 9.12), mesaj işlem menüsü + emoji tepkileri (`20260919240000`, Bölüm 9.13),
 Remix Dallanma Haritası + Merge sistemi (`20260919250000`, Bölüm 9.14) ve
 koleksiyon sistemi (`20260919260000`–`20260919270000`, Bölüm 9.19/9.22)
-dahil — kullanıcı tarafından Dashboard → SQL Editor ile gerçek Supabase
-projesine sırayla uygulandı ve hepsi hatasız çalıştı. **En son eklenen
-`20260919280000_smart_tags.sql` (gelişmiş/canlı etiket sistemi, Bölüm
-9.23) henüz kullanıcı tarafından uygulanmadı** — yalnızca yerel bir
+dahil, ve gelişmiş/canlı etiket sistemi (`20260919280000`, Bölüm 9.23) —
+kullanıcı tarafından Dashboard → SQL Editor ile gerçek Supabase projesine
+sırayla uygulandı ve hepsi hatasız çalıştı. **En son eklenen
+`20260919290000_prompt_variables_and_edit_tracking.sql`
+(prompt değişken sistemi + kopyalama + düzenleme geçmişi/bildirimi, Bölüm
+9.25) henüz kullanıcı tarafından uygulanmadı** — yalnızca yerel bir
 Postgres 16 örneğinde gerçekten test edildi (bkz. aşağıdaki "Nasıl
-doğrulandı" bölümü ve CLAUDE.md Bölüm 9.23'ün L maddesi); kullanıcının
-Dashboard → SQL Editor ile bu son dosyayı da sıraya eklemesi gerekiyor. Bu ortamın (Claude Code'un çalıştığı
+doğrulandı" bölümü ve CLAUDE.md Bölüm 9.25); kullanıcının Dashboard → SQL
+Editor ile bu son dosyayı da sıraya eklemesi gerekiyor. Bu ortamın (Claude Code'un çalıştığı
 sandbox) ağ politikası gerçek Supabase projesine doğrudan erişimi
 engellediğinden, her migration önce yerel/geçici bir Postgres 16
 örneğinde test edilip (bkz. aşağıdaki "Nasıl doğrulandı" bölümü) ancak
@@ -42,7 +44,8 @@ davrandığı ancak kullanıcının kendi canlı denemesiyle doğrulanabilir.
    (20260919120000, 20260919120100, ... 20260919120600, 20260919130000,
    20260919140000, 20260919150000, 20260919160000, 20260919170000,
    20260919180000, 20260919190000, 20260919200000, 20260919210000,
-   20260919220000, 20260919230000, 20260919240000, 20260919250000) tek
+   20260919220000, 20260919230000, 20260919240000, 20260919250000,
+   20260919260000, 20260919270000, 20260919280000, 20260919290000) tek
    tek açıp içeriğini SQL Editor'e yapıştırıp **Run**'a basın.
 3. Her dosya başarıyla çalıştıktan sonra bir sonrakine geçin. Bir hata
    alırsanız durdurun ve hatayı paylaşın.

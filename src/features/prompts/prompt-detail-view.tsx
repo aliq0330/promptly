@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
-import { ChevronRight, GitBranch } from "lucide-react";
+import { ChevronRight, GitBranch, Wand2 } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { PromptGrid } from "@/features/prompts/prompt-grid";
@@ -14,12 +14,17 @@ import { LikeButton } from "@/features/prompts/like-button";
 import { SaveButton } from "@/features/prompts/save-button";
 import { CommentCountLink } from "@/features/prompts/comment-count-link";
 import { RemixBranchMap } from "@/features/prompts/remix-branch-map";
+import { CopyPromptButton } from "@/features/prompts/copy-prompt-button";
+import { PersonalizeModal } from "@/features/prompts/personalize-modal";
+import { EditHistoryPanel } from "@/features/prompts/edit-history-panel";
+import { useAuth } from "@/features/auth/auth-provider";
 import { fetchRemixChain, fetchRemixesOf } from "@/lib/supabase/prompts";
+import { fetchVariablesForPrompt } from "@/lib/supabase/prompt-variables";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
 import { PostMenu } from "@/features/prompts/post-menu";
 import { parseHighlightValue } from "@/lib/notification-utils";
 import { cn, formatCount, formatRelativeTime, promptHref } from "@/lib/utils";
-import type { Prompt } from "@/types";
+import type { Prompt, PromptVariable } from "@/types";
 
 /** Same fade timing as the comment-thread flash (`comment-section.tsx`) — one shared "how long does a jumped-to thing glow" feel across the app. */
 const HIGHLIGHT_DURATION_MS = 2500;
@@ -30,9 +35,13 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
   const typeMeta = CONTENT_TYPE_META[prompt.contentType];
   const TypeIcon = typeMeta.icon;
 
+  const { user } = useAuth();
+  const isOwn = user?.id === prompt.author.id;
   const [remixes, setRemixes] = useState<Prompt[]>([]);
   const [remixChain, setRemixChain] = useState<Prompt[]>([prompt]);
   const [remixTab, setRemixTab] = useState<"comments" | "remixes" | "map">("comments");
+  const [variables, setVariables] = useState<PromptVariable[]>([]);
+  const [isPersonalizeOpen, setIsPersonalizeOpen] = useState(false);
 
   const searchParams = useSearchParams();
   const highlight = parseHighlightValue(searchParams.get("hl"));
@@ -56,6 +65,9 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
     });
     fetchRemixChain(prompt).then((chain) => {
       if (!cancelled) setRemixChain(chain);
+    });
+    fetchVariablesForPrompt(prompt.id).then((result) => {
+      if (!cancelled) setVariables(result);
     });
     return () => {
       cancelled = true;
@@ -134,11 +146,24 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
         </div>
 
         <div className="rounded-md border border-border bg-surface p-3">
-          <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-text-muted">
-            Prompt Metni
-          </p>
+          <div className="mb-1 flex items-center justify-between gap-2">
+            <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">Prompt Metni</p>
+            <CopyPromptButton text={prompt.promptText} />
+          </div>
           <p className="font-mono text-sm text-text">{prompt.promptText}</p>
+          {variables.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setIsPersonalizeOpen(true)}
+              className="relative z-10 mt-3 flex items-center gap-1.5 rounded-md border border-primary/40 bg-primary/5 px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/10"
+            >
+              <Wand2 size={13} />
+              Promptu kişiselleştir
+            </button>
+          )}
         </div>
+
+        {isOwn && <EditHistoryPanel contentType="prompt" contentId={prompt.id} />}
 
         <div className="flex items-center justify-between gap-3 pt-1">
           <div className="flex items-center gap-5 text-sm text-text-muted">
@@ -219,6 +244,14 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
           ))}
         {remixTab === "map" && <RemixBranchMap currentPrompt={prompt} />}
       </section>
+
+      {isPersonalizeOpen && (
+        <PersonalizeModal
+          promptText={prompt.promptText}
+          variables={variables}
+          onClose={() => setIsPersonalizeOpen(false)}
+        />
+      )}
     </div>
   );
 }

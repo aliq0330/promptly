@@ -3,6 +3,7 @@ import {
   Bell,
   CheckCircle2,
   Code2,
+  Edit3,
   GitBranch,
   GitMerge,
   Heart,
@@ -45,6 +46,12 @@ export const NOTIFICATION_CATEGORY: Record<NotificationType, NotificationCategor
   merge_request_rejected: "posts",
   merge_request_withdrawn: "posts",
   merge_request_cancelled: "posts",
+  // Prompt Değişken Sistemi'nin düzenleme bildirimleri (Aşama 16) — bir
+  // prompt "posts" altına (like/comment/remix ile aynı kategori), bir istek
+  // "requests" altına (request_response ile aynı kategori) katılıyor; yeni
+  // bir kategori icat edilmedi.
+  prompt_edited: "posts",
+  request_edited: "requests",
 };
 
 export const CATEGORY_FILTERS: { key: "all" | NotificationCategory; label: string }[] = [
@@ -67,12 +74,13 @@ export const CATEGORY_FILTERS: { key: "all" | NotificationCategory; label: strin
  * notification is actually about.
  */
 export interface ParsedHighlight {
-  kind: "post" | "comment" | "response_new" | "response_selected" | "response_unselected" | "message" | "merge";
+  kind: "post" | "request" | "comment" | "response_new" | "response_selected" | "response_unselected" | "message" | "merge";
   id: string;
 }
 
 const HIGHLIGHT_KINDS = new Set<ParsedHighlight["kind"]>([
   "post",
+  "request",
   "comment",
   "response_new",
   "response_selected",
@@ -127,6 +135,8 @@ export const NOTIFICATION_ICONS = {
   merge_request_rejected: XCircle,
   merge_request_withdrawn: RotateCcw,
   merge_request_cancelled: Ban,
+  prompt_edited: Edit3,
+  request_edited: Edit3,
 } as const satisfies Record<string, LucideIcon>;
 
 /**
@@ -172,6 +182,10 @@ export function getNotificationIconKey(notification: AppNotification): keyof typ
       return "merge_request_withdrawn";
     case "merge_request_cancelled":
       return "merge_request_cancelled";
+    case "prompt_edited":
+      return "prompt_edited";
+    case "request_edited":
+      return "request_edited";
     case "system":
     default:
       return "system";

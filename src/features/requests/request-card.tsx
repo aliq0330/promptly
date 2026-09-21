@@ -3,6 +3,7 @@ import { ArrowRight, Sparkles } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
+import { CopyPromptButton } from "@/features/prompts/copy-prompt-button";
 import { formatCount, formatRelativeTime, profileHref, requestHref } from "@/lib/utils";
 import { placeholderArt } from "@/lib/placeholder-image";
 import type { PromptRequest } from "@/types";
@@ -58,7 +59,12 @@ export function RequestCard({ request }: { request: PromptRequest }) {
 
         <h3 className="text-sm font-semibold text-text">{request.title}</h3>
 
-        <p className="line-clamp-2 text-sm text-text-muted">{request.description}</p>
+        <div>
+          <div className="mb-1 flex justify-end">
+            <CopyPromptButton text={request.description} />
+          </div>
+          <p className="line-clamp-2 text-sm text-text-muted">{request.description}</p>
+        </div>
 
         {request.creativeDirection && (
           <div className="rounded-md bg-accent-surface/60 px-3 py-2 text-xs text-text-muted">
