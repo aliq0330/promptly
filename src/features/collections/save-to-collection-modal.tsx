@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Check, FolderPlus, Loader2, Plus, X } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Modal } from "@/components/ui/modal";
 import { CollectionForm } from "./collection-form";
 import { useAuth } from "@/features/auth/auth-provider";
@@ -11,29 +12,40 @@ import {
   createCollection,
   fetchCollectionIdsContaining,
   fetchOwnCollections,
-  removeItemFromCollection,
+  removeFromCollection,
+  removeFromSavedEverywhere,
 } from "@/lib/supabase/collections";
 import { placeholderArt } from "@/lib/placeholder-image";
 import { cn } from "@/lib/utils";
 import type { Collection } from "@/types";
 
 /**
- * "Kaydet" — opened by the bookmark icon (SaveButton) instead of an instant
- * toggle. Lists the viewer's own collections with a real add/remove-per-row
- * toggle; "+ Yeni koleksiyon oluştur" swaps this SAME modal's content to the
- * create form (never a second, stacked modal — see `view` state below), and
- * a collection created from here auto-adds the current work so the user
- * never has to repeat the toggle.
+ * "Kaydet" — opened only from an outline (not-yet-saved) bookmark; a filled
+ * bookmark never opens this again, it removes directly (see SaveButton).
+ * Lists the viewer's own collections — the default "Genel" one always
+ * included and shown first (`fetchOwnCollections` sorts it first and
+ * self-heals it into existence if it's somehow missing) — with a real
+ * add/remove-per-row toggle. Ticking the default row IS the general
+ * "kaydet" action (fills the bookmark); ticking any other collection is
+ * membership in just that collection and does not by itself generally save
+ * the prompt (CLAUDE.md Bölüm 9.22 §4/§5). "+ Yeni koleksiyon oluştur"
+ * swaps this SAME modal's content to the create form (never a second,
+ * stacked modal — see `view` state below), and a collection created from
+ * here auto-adds the current work so the user never has to repeat the
+ * toggle.
  */
 export function SaveToCollectionModal({
   promptId,
   onClose,
   onAdded,
+  onRemovedFromDefault,
 }: {
   promptId: string;
   onClose: () => void;
-  /** Called once after the first successful add to any collection — lets the caller (SaveButton) reflect the general bookmark filling in immediately, without waiting for a refetch. */
+  /** Called once after the first successful add to the DEFAULT collection specifically — lets the caller (SaveButton) reflect the general bookmark filling in immediately, without waiting for a refetch. */
   onAdded?: () => void;
+  /** Called if the default collection's row gets unchecked again while this same modal is still open — mirrors `onAdded`, keeps the outer bookmark icon's state honest without a refetch. */
+  onRemovedFromDefault?: () => void;
 }) {
   const { user } = useAuth();
   const { profile } = useOwnProfile();
@@ -72,7 +84,33 @@ export function SaveToCollectionModal({
     setPendingIds((prev) => new Set(prev).add(collection.id));
     setError(null);
 
-    // Optimistic.
+    if (isMember && collection.isDefault) {
+      // Removing the default collection's own membership is the general
+      // "kaydedilenlerden kaldır" action — it must cascade to every one of
+      // this user's OTHER collections too (Bölüm 9.22 §4/§7/§9), not just
+      // this one row.
+      const removedFrom = new Set(memberIds);
+      setMemberIds(new Set());
+      setCollections((prev) => prev.map((c) => (removedFrom.has(c.id) ? { ...c, itemCount: Math.max(0, c.itemCount - 1) } : c)));
+      try {
+        await removeFromSavedEverywhere(promptId);
+        onRemovedFromDefault?.();
+      } catch (err) {
+        // Rollback — restore exactly the prior membership/count state.
+        setMemberIds(removedFrom);
+        setCollections((prev) => prev.map((c) => (removedFrom.has(c.id) ? { ...c, itemCount: c.itemCount + 1 } : c)));
+        setError(err instanceof Error ? err.message : "İşlem başarısız oldu, lütfen tekrar dene.");
+      } finally {
+        setPendingIds((prev) => {
+          const next = new Set(prev);
+          next.delete(collection.id);
+          return next;
+        });
+      }
+      return;
+    }
+
+    // Optimistic (single-collection add/remove).
     setMemberIds((prev) => {
       const next = new Set(prev);
       if (isMember) next.delete(collection.id);
@@ -85,10 +123,10 @@ export function SaveToCollectionModal({
 
     try {
       if (isMember) {
-        await removeItemFromCollection(collection.id, promptId);
+        await removeFromCollection(collection.id, promptId);
       } else {
-        await addItemToCollection(collection.id, promptId, user.id);
-        onAdded?.();
+        await addItemToCollection(collection.id, promptId);
+        if (collection.isDefault) onAdded?.();
       }
     } catch (err) {
       // Rollback.
@@ -114,8 +152,7 @@ export function SaveToCollectionModal({
   async function handleCreate(values: { name: string; visibility: "public" | "private" }) {
     if (!user || !profile) throw new Error("Koleksiyon oluşturmak için giriş yapmalısın.");
     const created = await createCollection(values, user.id, profile);
-    await addItemToCollection(created.id, promptId, user.id);
-    onAdded?.();
+    await addItemToCollection(created.id, promptId);
     setCollections((prev) => [{ ...created, itemCount: 1 }, ...prev]);
     setMemberIds((prev) => new Set(prev).add(created.id));
     setView("list");
@@ -172,7 +209,14 @@ export function SaveToCollectionModal({
                         }}
                       />
                       <span className="min-w-0 flex-1">
-                        <span className="block truncate text-sm font-medium text-text">{collection.name}</span>
+                        <span className="flex min-w-0 items-center gap-1.5">
+                          <span className="block truncate text-sm font-medium text-text">{collection.name}</span>
+                          {collection.isDefault && (
+                            <Badge variant="accent" className="shrink-0">
+                              Varsayılan
+                            </Badge>
+                          )}
+                        </span>
                         <span className="text-xs text-text-muted">{collection.itemCount} çalışma</span>
                       </span>
                       <span

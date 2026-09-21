@@ -13,7 +13,15 @@ import type { Prompt } from "@/types";
  * empty image placeholder — there is no real preview to show for these
  * content types, so the "Kullanılan prompt" box carries the card instead.
  */
-export function TextPromptCard({ prompt, onDeleted }: { prompt: Prompt; onDeleted?: () => void }) {
+export function TextPromptCard({
+  prompt,
+  onDeleted,
+  collectionRemoval,
+}: {
+  prompt: Prompt;
+  onDeleted?: () => void;
+  collectionRemoval?: { isDefault: boolean; onRemove: () => Promise<void> };
+}) {
   const meta = CONTENT_TYPE_META[prompt.contentType];
   const Icon = meta.icon;
 
@@ -24,6 +32,7 @@ export function TextPromptCard({ prompt, onDeleted }: { prompt: Prompt; onDelete
           prompt={prompt}
           subtitle={prompt.origin.type === "request-response" ? "Yanıt paylaştı" : undefined}
           onDeleted={onDeleted}
+          collectionRemoval={collectionRemoval}
         />
 
         {prompt.origin.type === "remix" && <RemixContext sourcePromptId={prompt.origin.sourcePromptId} />}

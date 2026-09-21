@@ -91,6 +91,14 @@ export function CollectionMoreMenu({
   async function handleDelete(event: React.MouseEvent) {
     event.preventDefault();
     event.stopPropagation();
+    // Blocked entirely client-side for the default collection — no point
+    // attempting a request the backend (`collections_before_delete`
+    // trigger) will reject anyway; shows the exact required message
+    // immediately instead of a round-trip error (CLAUDE.md Bölüm 9.22 §12).
+    if (collection.isDefault) {
+      setError("Varsayılan koleksiyon silinemez. İstersen koleksiyonun adını veya gizlilik ayarını değiştirebilirsin.");
+      return;
+    }
     if (!confirmingDelete) {
       setConfirmingDelete(true);
       return;

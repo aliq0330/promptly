@@ -251,6 +251,20 @@ export interface Collection {
   coverImage: PromptMedia | null;
   createdAt: string;
   updatedAt: string;
+  /**
+   * Every user has exactly one of these — their "Genel" bucket, auto-created
+   * at signup (`handle_new_user`) and backfilled for older accounts
+   * (`ensure_default_collection`, `collections.is_default` +
+   * `collections_one_default_per_owner`, CLAUDE.md Bölüm 9.22). This is the
+   * ONLY durable way to recognize it — its `name` is freely renameable by
+   * the owner (e.g. "Favorilerim"), so nothing in this codebase may ever
+   * compare `name === "Genel"` to decide default-ness. Membership in this
+   * one collection is now the single source of truth for the general
+   * "kaydedildi" (bookmark-filled) state — see `use-save-state.ts`. It can
+   * never be deleted (blocked by a DB trigger, defense-in-depth against the
+   * frontend never offering the option either).
+   */
+  isDefault: boolean;
 }
 
 export interface Message {

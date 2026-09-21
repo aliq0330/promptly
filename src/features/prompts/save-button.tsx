@@ -27,7 +27,7 @@ export function SaveButton({
   size?: number;
   className?: string;
 }) {
-  const { isSaved, unsave, markSaved, isToggling, canSave } = useSaveState(promptId);
+  const { isSaved, removeEverywhere, markSaved, markUnsaved, isToggling, canSave } = useSaveState(promptId);
   const [modalOpen, setModalOpen] = useState(false);
   const [showRemovedToast, setShowRemovedToast] = useState(false);
   const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -63,7 +63,7 @@ export function SaveButton({
     if (isToggling) return;
 
     if (isSaved) {
-      const removed = await unsave();
+      const removed = await removeEverywhere();
       if (removed) {
         setShowRemovedToast(true);
         if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
@@ -90,7 +90,12 @@ export function SaveButton({
       </button>
 
       {modalOpen && (
-        <SaveToCollectionModal promptId={promptId} onClose={() => setModalOpen(false)} onAdded={markSaved} />
+        <SaveToCollectionModal
+          promptId={promptId}
+          onClose={() => setModalOpen(false)}
+          onAdded={markSaved}
+          onRemovedFromDefault={markUnsaved}
+        />
       )}
 
       {showRemovedToast && (

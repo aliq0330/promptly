@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Copy, Link2, Loader2, MoreVertical, Send, Trash2 } from "lucide-react";
+import { Copy, FolderMinus, Link2, Loader2, MoreVertical, Send, Trash2 } from "lucide-react";
 import { useAuth } from "@/features/auth/auth-provider";
 import { absoluteUrl, cn, promptHref } from "@/lib/utils";
 import { deleteRealPrompt } from "@/lib/supabase/prompts";
@@ -21,11 +21,25 @@ export function PostMenu({
   promptId,
   authorId,
   onDeleted,
+  collectionRemoval,
 }: {
   promptId: string;
   authorId: string;
   /** Called after a real, successful delete — lets a list (e.g. the profile grid) remove the card without a reload. */
   onDeleted?: () => void;
+  /**
+   * Present only when this card is rendered inside a collection the VIEWER
+   * owns (not necessarily the post's own author — you can save/collect
+   * someone else's post too) — adds a "kaydedilenlerden kaldır"/
+   * "koleksiyondan kaldır" action, distinct from deleting the post itself
+   * and gated by collection ownership, not post authorship (CLAUDE.md
+   * Bölüm 9.22 §8/§9/§19 — a deliberately separate operation from `Sil`).
+   */
+  collectionRemoval?: {
+    /** Whether the collection being viewed is the caller's default ("Genel") — determines the label and whether removal cascades to every other collection (the caller already does the actual cascading via `onRemove`, this only decides wording). */
+    isDefault: boolean;
+    onRemove: () => Promise<void>;
+  };
 }) {
   const { user } = useAuth();
   const isOwn = user?.id === authorId;
@@ -35,6 +49,9 @@ export function PostMenu({
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [confirmingRemove, setConfirmingRemove] = useState(false);
+  const [isRemoving, setIsRemoving] = useState(false);
+  const [removeError, setRemoveError] = useState<string | null>(null);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -43,12 +60,14 @@ export function PostMenu({
       if (ref.current && !ref.current.contains(event.target as Node)) {
         setOpen(false);
         setConfirmingDelete(false);
+        setConfirmingRemove(false);
       }
     }
     function handleEscape(event: KeyboardEvent) {
       if (event.key === "Escape") {
         setOpen(false);
         setConfirmingDelete(false);
+        setConfirmingRemove(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -88,6 +107,26 @@ export function PostMenu({
       setError(err instanceof Error ? err.message : "Silinemedi, lütfen tekrar dene.");
       setIsDeleting(false);
       setConfirmingDelete(false);
+    }
+  }
+
+  async function handleRemoveFromCollection(event: React.MouseEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!collectionRemoval) return;
+    if (!confirmingRemove) {
+      setConfirmingRemove(true);
+      return;
+    }
+    setIsRemoving(true);
+    setRemoveError(null);
+    try {
+      await collectionRemoval.onRemove();
+      setOpen(false);
+    } catch (err) {
+      setRemoveError(err instanceof Error ? err.message : "Kaldırılamadı, lütfen tekrar dene.");
+      setIsRemoving(false);
+      setConfirmingRemove(false);
     }
   }
 
@@ -134,6 +173,25 @@ export function PostMenu({
               <Send size={14} />
               Mesajla gönder
             </Link>
+          )}
+          {collectionRemoval && (
+            <>
+              <button
+                type="button"
+                role="menuitem"
+                onClick={handleRemoveFromCollection}
+                disabled={isRemoving}
+                className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-red-600 hover:bg-red-500/10"
+              >
+                {isRemoving ? <Loader2 size={14} className="animate-spin" /> : <FolderMinus size={14} />}
+                {confirmingRemove
+                  ? "Emin misin? Tekrar tıkla"
+                  : collectionRemoval.isDefault
+                    ? "Kaydedilenlerden kaldır"
+                    : "Koleksiyondan kaldır"}
+              </button>
+              {removeError && <p className="px-3 py-1 text-xs text-red-500">{removeError}</p>}
+            </>
           )}
           {isOwn && (
             <>

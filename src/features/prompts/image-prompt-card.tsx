@@ -9,7 +9,15 @@ import { PromptPreviewBox } from "./prompt-preview-box";
 import { PromptCardFooter } from "./prompt-card-footer";
 import type { Prompt } from "@/types";
 
-export function ImagePromptCard({ prompt, onDeleted }: { prompt: Prompt; onDeleted?: () => void }) {
+export function ImagePromptCard({
+  prompt,
+  onDeleted,
+  collectionRemoval,
+}: {
+  prompt: Prompt;
+  onDeleted?: () => void;
+  collectionRemoval?: { isDefault: boolean; onRemove: () => Promise<void> };
+}) {
   const media = prompt.media[0];
 
   return (
@@ -19,6 +27,7 @@ export function ImagePromptCard({ prompt, onDeleted }: { prompt: Prompt; onDelet
           prompt={prompt}
           subtitle={prompt.origin.type === "request-response" ? "Yanıt paylaştı" : undefined}
           onDeleted={onDeleted}
+          collectionRemoval={collectionRemoval}
         />
 
         {prompt.origin.type === "remix" && <RemixContext sourcePromptId={prompt.origin.sourcePromptId} />}
