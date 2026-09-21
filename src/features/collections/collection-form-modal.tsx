@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
 import { X } from "lucide-react";
+import { Modal } from "@/components/ui/modal";
 import { CollectionForm } from "./collection-form";
 import type { Collection } from "@/types";
 
@@ -22,26 +22,12 @@ export function CollectionFormModal({
   onClose: () => void;
   onSubmit: (values: { name: string; visibility: "public" | "private" }) => Promise<void>;
 }) {
-  useEffect(() => {
-    function handleEscape(event: KeyboardEvent) {
-      if (event.key === "Escape") onClose();
-    }
-    document.addEventListener("keydown", handleEscape);
-    return () => document.removeEventListener("keydown", handleEscape);
-  }, [onClose]);
-
   const isEdit = Boolean(collection);
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="collection-form-modal-title"
-      onClick={onClose}
-    >
+    <Modal onClose={onClose} labelledBy="collection-form-modal-title">
       <div
-        className="w-full max-w-md space-y-4 rounded-lg border border-border bg-surface p-5 shadow-lg"
+        className="max-h-[90vh] w-full max-w-md space-y-4 overflow-y-auto rounded-lg border border-border bg-surface p-5 shadow-lg"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-2">
@@ -61,6 +47,6 @@ export function CollectionFormModal({
           onSubmit={onSubmit}
         />
       </div>
-    </div>
+    </Modal>
   );
 }
