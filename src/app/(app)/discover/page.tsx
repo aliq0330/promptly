@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { FollowButton } from "@/features/profile/follow-button";
 import { DiscoverFeed } from "@/features/feed/discover-feed";
 import { fetchTopCreators } from "@/lib/supabase/profiles";
-import { fetchAllTags } from "@/lib/supabase/tags";
+import { fetchPopularTags } from "@/lib/supabase/tags";
 import { formatCount, profileHref, tagHref } from "@/lib/utils";
 import type { Tag, UserProfile } from "@/types";
 
@@ -17,7 +17,9 @@ export default function DiscoverPage() {
 
   useEffect(() => {
     fetchTopCreators(5).then(setCreators);
-    fetchAllTags().then(setTags);
+    // Genuinely usage-sorted now (CLAUDE.md Bölüm 9.23) — this section used
+    // to just be the full catalog sorted alphabetically.
+    fetchPopularTags(12).then(setTags);
   }, []);
 
   return (

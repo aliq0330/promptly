@@ -6,14 +6,19 @@ veri modelini birebir yansıtan gerçek Postgres şemasını (CLAUDE.md Bölüm
 ve görsel yükleme için Supabase Storage bucket'larını (Bölüm 20) oluşturur.
 Dosyalar sırayla (dosya adındaki zaman damgasına göre) uygulanmalıdır.
 
-**Durum:** Tüm 20 migration dosyası — Bölüm 18 şema + Bölüm 19 RLS +
-Bölüm 20 Storage'dan başlayıp, mesajlaşma genişletmesi Faz A/B/C
-(`20260919200000`–`20260919220000`, Bölüm 9.8/9.9/9.10), bildirim
-hedefleme/önizleme (`20260919230000`, Bölüm 9.12), mesaj işlem menüsü +
-emoji tepkileri (`20260919240000`, Bölüm 9.13) ve Remix Dallanma
-Haritası + Merge sistemi (`20260919250000`, Bölüm 9.14) dahil — kullanıcı
-tarafından Dashboard → SQL Editor ile gerçek Supabase projesine sırayla
-uygulandı ve hepsi hatasız çalıştı. Bu ortamın (Claude Code'un çalıştığı
+**Durum:** Bölüm 18 şema + Bölüm 19 RLS + Bölüm 20 Storage'dan başlayıp,
+mesajlaşma genişletmesi Faz A/B/C (`20260919200000`–`20260919220000`,
+Bölüm 9.8/9.9/9.10), bildirim hedefleme/önizleme (`20260919230000`, Bölüm
+9.12), mesaj işlem menüsü + emoji tepkileri (`20260919240000`, Bölüm 9.13),
+Remix Dallanma Haritası + Merge sistemi (`20260919250000`, Bölüm 9.14) ve
+koleksiyon sistemi (`20260919260000`–`20260919270000`, Bölüm 9.19/9.22)
+dahil — kullanıcı tarafından Dashboard → SQL Editor ile gerçek Supabase
+projesine sırayla uygulandı ve hepsi hatasız çalıştı. **En son eklenen
+`20260919280000_smart_tags.sql` (gelişmiş/canlı etiket sistemi, Bölüm
+9.23) henüz kullanıcı tarafından uygulanmadı** — yalnızca yerel bir
+Postgres 16 örneğinde gerçekten test edildi (bkz. aşağıdaki "Nasıl
+doğrulandı" bölümü ve CLAUDE.md Bölüm 9.23'ün L maddesi); kullanıcının
+Dashboard → SQL Editor ile bu son dosyayı da sıraya eklemesi gerekiyor. Bu ortamın (Claude Code'un çalıştığı
 sandbox) ağ politikası gerçek Supabase projesine doğrudan erişimi
 engellediğinden, her migration önce yerel/geçici bir Postgres 16
 örneğinde test edilip (bkz. aşağıdaki "Nasıl doğrulandı" bölümü) ancak

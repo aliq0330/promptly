@@ -3,21 +3,33 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Search } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
 import { PromptGrid } from "@/features/prompts/prompt-grid";
+import { useTagCatalog } from "@/features/tags/use-tag-catalog";
 import { searchPrompts } from "@/lib/supabase/prompts";
 import { searchProfiles } from "@/lib/supabase/profiles";
-import { formatCount, profileHref } from "@/lib/utils";
-import type { Prompt, UserProfile } from "@/types";
+import { normalizeTagLabel } from "@/lib/tag-normalize";
+import { formatCount, profileHref, tagHref } from "@/lib/utils";
+import type { Prompt, Tag, UserProfile } from "@/types";
 
 const DEBOUNCE_MS = 300;
 
 export function SearchView() {
+  const { catalog: tagCatalog } = useTagCatalog();
   const [query, setQuery] = useState("");
   const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const normalized = query.trim();
+
+  // Real, case-insensitive tag search — CLAUDE.md §16. Matches against the
+  // already-loaded real catalog (same shared cache the tag picker/discovery
+  // page use), client-side, so it stays correctly Turkish-case-aware
+  // without depending on Postgres ILIKE's locale-dependent casing.
+  const matchedTags: Tag[] = normalized
+    ? tagCatalog.filter((tag) => normalizeTagLabel(tag.label).includes(normalizeTagLabel(normalized))).slice(0, 6)
+    : [];
 
   useEffect(() => {
     if (!normalized) {
@@ -60,6 +72,21 @@ export function SearchView() {
         <p className="py-10 text-center text-sm text-text-muted">Aranıyor…</p>
       ) : (
         <div className="space-y-8">
+          {matchedTags.length > 0 && (
+            <section className="space-y-3">
+              <h2 className="text-sm font-semibold text-text">Etiketler</h2>
+              <div className="flex flex-wrap gap-2">
+                {matchedTags.map((tag) => (
+                  <Link key={tag.slug} href={tagHref(tag)}>
+                    <Badge variant="default" className="hover:bg-accent-surface/70">
+                      # {tag.label}
+                    </Badge>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
+
           {users.length > 0 && (
             <section className="space-y-3">
               <h2 className="text-sm font-semibold text-text">Kullanıcılar</h2>
@@ -85,7 +112,7 @@ export function SearchView() {
 
           <section className="space-y-3">
             <h2 className="text-sm font-semibold text-text">Promptlar</h2>
-            {prompts.length === 0 && users.length === 0 ? (
+            {prompts.length === 0 && users.length === 0 && matchedTags.length === 0 ? (
               <p className="py-6 text-center text-sm text-text-muted">Sonuç bulunamadı.</p>
             ) : (
               <PromptGrid prompts={prompts} />

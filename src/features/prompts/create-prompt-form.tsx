@@ -12,10 +12,12 @@ import { useRealPrompts } from "@/features/prompts/real-prompts-provider";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useOwnProfile } from "@/features/auth/own-profile-provider";
 import { useRealRequests } from "@/features/requests/real-requests-provider";
-import { fetchAllTags } from "@/lib/supabase/tags";
+import { useTagCatalog } from "@/features/tags/use-tag-catalog";
+import { useTagPicker } from "@/features/prompts/use-tag-picker";
+import { TagPicker } from "@/features/prompts/tag-picker";
 import { placeholderArt } from "@/lib/placeholder-image";
 import { cn, promptHref, requestHref, resizeImageToDataUrlFit } from "@/lib/utils";
-import type { Prompt, PromptContentType, PromptRequest, Tag } from "@/types";
+import type { Prompt, PromptContentType, PromptRequest } from "@/types";
 
 const CONTENT_TYPES: PromptContentType[] = ["image", "text", "video", "code", "music"];
 
@@ -86,11 +88,7 @@ export function CreatePromptForm() {
   const [duplicateSource, setDuplicateSource] = useState<Prompt | null>(null);
   const [answeredRequest, setAnsweredRequest] = useState<PromptRequest | null>(null);
   const [sourceChecked, setSourceChecked] = useState(!isRemixMode && !isDuplicateMode && !isAnswerMode);
-  const [allTags, setAllTags] = useState<Tag[]>([]);
-
-  useEffect(() => {
-    fetchAllTags().then(setAllTags);
-  }, []);
+  const { catalog: tagCatalog } = useTagCatalog();
 
   // Fetch whichever real source this mode needs (cache-first, then a live fetch).
   useEffect(() => {
@@ -123,7 +121,16 @@ export function CreatePromptForm() {
   const [description, setDescription] = useState("");
   const [promptText, setPromptText] = useState("");
   const [tool, setTool] = useState("");
-  const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
+  // CLAUDE.md §12: answering a request must NOT just copy the request's own
+  // tags — they're only passed as soft `contextTags` (nudge into the
+  // `suggested` tier, never auto-accepted); the answer's own title/prompt
+  // text genuinely drives what gets auto-tagged.
+  const tagPicker = useTagPicker({
+    title,
+    content: promptText,
+    catalog: tagCatalog,
+    contextTags: isAnswerMode ? answeredRequest?.tags : undefined,
+  });
   const [uploadedImage, setUploadedImage] = useState<{ url: string; width: number; height: number } | null>(
     null,
   );
@@ -145,16 +152,21 @@ export function CreatePromptForm() {
       setDescription(source.description);
       setPromptText(source.promptText);
       setTool(source.tool ?? "");
-      setSelectedTags(source.tags);
+      source.tags.forEach((tag) => tagPicker.addManual(tag));
       setFieldsSeeded(true);
       return;
     }
     if (answeredRequest) {
       setContentType(answeredRequest.contentType ?? "image");
       setTool(answeredRequest.preferredTool ?? "");
-      setSelectedTags(answeredRequest.tags);
+      // Deliberately NOT copying answeredRequest.tags here (CLAUDE.md §12)
+      // — they're fed into useTagPicker as contextTags instead, which only
+      // nudges the suggested tier; the answer's own live analysis (title +
+      // promptText, once the user starts writing) decides what actually
+      // gets accepted.
       setFieldsSeeded(true);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- tagPicker.addManual is stable (useCallback), not a reactive dependency worth re-running this one-time seed for
   }, [sourcePrompt, duplicateSource, answeredRequest, fieldsSeeded, isRemixMode]);
 
   const [showOnProfile, setShowOnProfile] = useState(true);
@@ -176,12 +188,6 @@ export function CreatePromptForm() {
     } catch {
       setImageError("Görsel yüklenemedi, lütfen başka bir dosya dene.");
     }
-  }
-
-  function toggleTag(tag: Tag) {
-    setSelectedTags((prev) =>
-      prev.some((t) => t.slug === tag.slug) ? prev.filter((t) => t.slug !== tag.slug) : [...prev, tag],
-    );
   }
 
   const origin: Prompt["origin"] = sourcePrompt
@@ -221,7 +227,8 @@ export function CreatePromptForm() {
           promptText,
           tool: tool || null,
           contentType,
-          tags: selectedTags,
+          tags: tagPicker.accepted.map((entry) => entry.tag),
+          tagSources: Object.fromEntries(tagPicker.accepted.map((entry) => [entry.tag.slug, entry.source])),
           imageFile,
           fallbackImage:
             contentType === "image" ? { url: media[0].url, width: media[0].width, height: media[0].height } : null,
@@ -263,7 +270,7 @@ export function CreatePromptForm() {
     tool: tool || null,
     contentType,
     media,
-    tags: selectedTags,
+    tags: tagPicker.accepted.map((entry) => entry.tag),
     origin,
     likeCount: 0,
     commentCount: 0,
@@ -562,26 +569,7 @@ export function CreatePromptForm() {
 
           <div>
             <label className="mb-2 block text-sm font-medium text-text">Etiketler</label>
-            <div className="flex flex-wrap gap-1.5">
-              {allTags.map((tag) => {
-                const active = selectedTags.some((t) => t.slug === tag.slug);
-                return (
-                  <button
-                    key={tag.slug}
-                    type="button"
-                    onClick={() => toggleTag(tag)}
-                    className={cn(
-                      "rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
-                      active
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "border-border bg-surface text-text-muted hover:text-text",
-                    )}
-                  >
-                    {tag.label}
-                  </button>
-                );
-              })}
-            </div>
+            <TagPicker picker={tagPicker} />
           </div>
 
           <Button type="submit" size="lg" className="w-full sm:w-auto" disabled={isSubmitting}>

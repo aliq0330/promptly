@@ -328,6 +328,14 @@ export interface CreateRealPromptInput {
   tool: string | null;
   contentType: PromptContentType;
   tags: Tag[];
+  /**
+   * Per-tag source (`manual` | `automatic`), keyed by slug — from the live
+   * tag picker (CLAUDE.md Bölüm 9.23 §8/§18: track whether each tag
+   * relationship was user-picked or auto-detected). A slug missing from
+   * this map (or the map itself being omitted) defaults to `manual` at the
+   * database layer.
+   */
+  tagSources?: Record<string, "manual" | "automatic">;
   /** A real uploaded file, when the author picked one. */
   imageFile: File | null;
   /** Used for `contentType === "image"` when no file was uploaded — the same auto-generated placeholder the live preview already shows. */
@@ -433,9 +441,13 @@ export async function createRealPrompt(
   if (input.tags.length > 0) {
     // Non-fatal if this fails — the prompt itself is already real and
     // published; missing tags are a lesser problem than losing the post.
-    await supabase
-      .from("prompt_tags")
-      .insert(input.tags.map((tag) => ({ prompt_id: promptId, tag_slug: tag.slug })));
+    await supabase.from("prompt_tags").insert(
+      input.tags.map((tag) => ({
+        prompt_id: promptId,
+        tag_slug: tag.slug,
+        source: input.tagSources?.[tag.slug] ?? "manual",
+      })),
+    );
   }
 
   return {

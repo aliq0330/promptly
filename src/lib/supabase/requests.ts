@@ -8,7 +8,7 @@ import type { PromptContentType, PromptRequest, PromptRequestStatus, Tag } from 
  * supabase/migrations/20260919120200_prompts_and_requests.sql. Kept in
  * sync by hand, same as prompts.ts's PromptRow.
  */
-interface RequestRow {
+export interface RequestRow {
   id: string;
   title: string;
   description: string;
@@ -26,7 +26,7 @@ interface RequestRow {
   prompt_request_tags: { tags: { slug: string; label: string } }[];
 }
 
-const REQUEST_SELECT = `
+export const REQUEST_SELECT = `
   id, title, description, creative_direction, preferred_tool, content_type,
   reference_image_url, reference_image_width, reference_image_height,
   status, selected_response_prompt_id, response_count, created_at,
@@ -34,7 +34,7 @@ const REQUEST_SELECT = `
   prompt_request_tags ( tags ( slug, label ) )
 `;
 
-function mapRequestRow(row: RequestRow): PromptRequest {
+export function mapRequestRow(row: RequestRow): PromptRequest {
   const tags: Tag[] = (row.prompt_request_tags ?? []).map((rt) => ({ slug: rt.tags.slug, label: rt.tags.label }));
   return {
     id: row.id,
@@ -124,6 +124,8 @@ export interface CreateRealRequestInput {
   contentType: PromptContentType;
   preferredTool: string | null;
   tags: Tag[];
+  /** Per-tag source (`manual` | `automatic`), keyed by slug — see `CreateRealPromptInput.tagSources` (Bölüm 9.23). */
+  tagSources?: Record<string, "manual" | "automatic">;
   /** A real uploaded file, when the requester picked one. */
   imageFile: File | null;
 }
@@ -175,9 +177,13 @@ export async function createRealRequest(
   const requestId = inserted.id as string;
 
   if (input.tags.length > 0) {
-    await supabase
-      .from("prompt_request_tags")
-      .insert(input.tags.map((tag) => ({ request_id: requestId, tag_slug: tag.slug })));
+    await supabase.from("prompt_request_tags").insert(
+      input.tags.map((tag) => ({
+        request_id: requestId,
+        tag_slug: tag.slug,
+        source: input.tagSources?.[tag.slug] ?? "manual",
+      })),
+    );
   }
 
   return {

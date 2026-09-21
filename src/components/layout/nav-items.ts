@@ -2,6 +2,7 @@ import type { LucideIcon } from "lucide-react";
 import {
   Bookmark,
   Compass,
+  Hash,
   Home,
   PlusSquare,
   Settings,
@@ -22,6 +23,7 @@ export const primaryNavItems: NavItem[] = [
   { href: "/discover", label: "Keşfet", icon: Compass },
   { href: "/create", label: "Prompt Oluştur", icon: PlusSquare },
   { href: "/requests", label: "Prompt İstekleri", icon: Sparkles },
+  { href: "/tags", label: "Etiketler", icon: Hash },
   { href: "/saved", label: "Kaydedilenler", icon: Bookmark },
   { href: "/following", label: "Takip Ettiklerim", icon: Users },
   { href: "/profile/me", label: "Profil", icon: User },
