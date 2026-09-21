@@ -3,13 +3,15 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { MessageSquareOff, Sparkles, Trash2 } from "lucide-react";
+import { MessageSquareOff, Pencil, Sparkles, Trash2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PromptCard } from "@/features/prompts/prompt-card";
 import { CommentSection } from "@/features/prompts/comment-section";
+import { CopyPromptButton } from "@/features/prompts/copy-prompt-button";
+import { EditHistoryPanel } from "@/features/prompts/edit-history-panel";
 import { useAuth } from "@/features/auth/auth-provider";
 import { fetchPromptsForRequest } from "@/lib/supabase/prompts";
 import { useRealRequests } from "./real-requests-provider";
@@ -48,6 +50,17 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
   const [responseHighlightNotFound, setResponseHighlightNotFound] = useState(false);
   const responseRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const processedResponseHighlight = useRef<string | null>(null);
+  // "İsteğini düzenledi" bildirimi (request_edited) isteğin kendisine işaret
+  // ediyor (bir yanıta/yoruma değil, PromptDetailView'ın "post" flash'ıyla
+  // birebir aynı fikir) — HIGHLIGHT_DURATION_MS sonra kendiliğinden kalkar.
+  const [isRequestFlashed, setIsRequestFlashed] = useState(highlight?.kind === "request" && highlight.id === request.id);
+
+  useEffect(() => {
+    if (!isRequestFlashed) return;
+    const timer = setTimeout(() => setIsRequestFlashed(false), HIGHLIGHT_DURATION_MS);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only ever fires once, on mount, for the initial flash
+  }, []);
 
   // Re-read the live version of the request from the cache so status/
   // selection changes below reflect immediately without a page reload.
@@ -119,12 +132,34 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
 
   return (
     <div className="space-y-6 px-4 py-6 lg:px-6">
-      <div className="space-y-4 rounded-lg border border-border bg-surface p-5">
+      <div
+        className={cn(
+          "space-y-4 rounded-lg border border-border bg-surface p-5 transition-colors duration-700",
+          isRequestFlashed && "-m-1.5 bg-primary/10 p-6 ring-1 ring-primary/40",
+        )}
+      >
         <div className="flex items-start justify-between gap-3">
           <h1 className="text-lg font-semibold text-text">{live.title}</h1>
-          <Badge variant={STATUS_VARIANTS[live.status]}>{STATUS_LABELS[live.status]}</Badge>
+          <div className="flex shrink-0 items-center gap-2">
+            <Badge variant={STATUS_VARIANTS[live.status]}>{STATUS_LABELS[live.status]}</Badge>
+            {isOwnRequest && (
+              <Link
+                href={`/requests/new?edit=${live.id}`}
+                aria-label="İsteği düzenle"
+                title="İsteği düzenle"
+                className="flex h-7 w-7 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-accent-surface hover:text-text"
+              >
+                <Pencil size={14} />
+              </Link>
+            )}
+          </div>
         </div>
-        <p className="text-sm text-text-muted">{live.description}</p>
+        <div>
+          <div className="mb-1 flex justify-end">
+            <CopyPromptButton text={live.description} />
+          </div>
+          <p className="text-sm text-text-muted">{live.description}</p>
+        </div>
 
         {live.referenceImage && (
           <div className="relative aspect-video w-full overflow-hidden rounded-md bg-accent-surface">
@@ -207,6 +242,7 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
         {!isOwnRequest && isClosed && (
           <p className="text-xs text-text-muted">Bu istek kapandı, artık yeni yanıt kabul edilmiyor.</p>
         )}
+        {isOwnRequest && <EditHistoryPanel contentType="prompt_request" contentId={live.id} />}
       </div>
 
       <section className="space-y-3">

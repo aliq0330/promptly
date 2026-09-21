@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Copy, FolderMinus, Link2, Loader2, MoreVertical, Send, Trash2 } from "lucide-react";
+import { Copy, FolderMinus, Link2, Loader2, MoreVertical, Pencil, Send, Trash2 } from "lucide-react";
 import { useAuth } from "@/features/auth/auth-provider";
 import { absoluteUrl, cn, promptHref } from "@/lib/utils";
 import { deleteRealPrompt } from "@/lib/supabase/prompts";
@@ -196,8 +196,18 @@ export function PostMenu({
           {isOwn && (
             <>
               <Link
+                href={`/create?edit=${promptId}`}
+                role="menuitem"
+                onClick={(event) => event.stopPropagation()}
+                className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-text hover:bg-accent-surface"
+              >
+                <Pencil size={14} />
+                Düzenle
+              </Link>
+              <Link
                 href={`/create?duplicate=${promptId}`}
                 role="menuitem"
+                onClick={(event) => event.stopPropagation()}
                 className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-text hover:bg-accent-surface"
               >
                 <Copy size={14} />

@@ -8,8 +8,10 @@ import {
   fetchRecentRequests,
   fetchRequestById,
   selectRealRequestResponse,
+  updateRealRequest,
   updateRealRequestStatus,
   type CreateRealRequestInput,
+  type UpdateRealRequestInput,
 } from "@/lib/supabase/requests";
 import type { PromptRequest, PromptRequestStatus, UserProfile } from "@/types";
 
@@ -18,6 +20,7 @@ interface RealRequestsContextValue {
   getCached: (id: string) => PromptRequest | undefined;
   fetchById: (id: string) => Promise<PromptRequest | null>;
   addRequest: (input: CreateRealRequestInput, authorProfile: UserProfile) => Promise<PromptRequest>;
+  updateRequest: (id: string, input: UpdateRealRequestInput) => Promise<PromptRequest>;
   updateStatus: (id: string, status: Extract<PromptRequestStatus, "open" | "closed">) => Promise<void>;
   deleteRequest: (id: string) => Promise<void>;
   selectResponse: (id: string, promptId: string | null) => Promise<void>;
@@ -71,6 +74,12 @@ export function RealRequestsProvider({ children }: { children: React.ReactNode }
     [user],
   );
 
+  const updateRequest = useCallback(async (id: string, input: UpdateRealRequestInput) => {
+    const request = await updateRealRequest(id, input);
+    setRealRequests((prev) => (prev.some((r) => r.id === id) ? prev.map((r) => (r.id === id ? request : r)) : prev));
+    return request;
+  }, []);
+
   const updateStatus = useCallback(async (id: string, status: Extract<PromptRequestStatus, "open" | "closed">) => {
     await updateRealRequestStatus(id, status);
     setRealRequests((prev) => prev.map((request) => (request.id === id ? { ...request, status } : request)));
@@ -93,8 +102,8 @@ export function RealRequestsProvider({ children }: { children: React.ReactNode }
   }, []);
 
   const value = useMemo(
-    () => ({ realRequests, getCached, fetchById, addRequest, updateStatus, deleteRequest, selectResponse }),
-    [realRequests, getCached, fetchById, addRequest, updateStatus, deleteRequest, selectResponse],
+    () => ({ realRequests, getCached, fetchById, addRequest, updateRequest, updateStatus, deleteRequest, selectResponse }),
+    [realRequests, getCached, fetchById, addRequest, updateRequest, updateStatus, deleteRequest, selectResponse],
   );
 
   return <RealRequestsContext.Provider value={value}>{children}</RealRequestsContext.Provider>;

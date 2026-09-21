@@ -204,6 +204,61 @@ export async function createRealRequest(
   };
 }
 
+export interface UpdateRealRequestInput {
+  title: string;
+  description: string;
+  creativeDirection: string;
+  preferredTool: string | null;
+  tags: Tag[];
+  tagSources?: Record<string, "manual" | "automatic">;
+}
+
+/**
+ * Genuinely, permanently edits a real request the caller owns — the first
+ * "edit an existing request" capability this app has ever had (Bölüm 21 Faz
+ * 5/9.2 deliberately left this out; the "Prompt Değişken Sistemi" module
+ * adds it for real). Deliberately narrow: `content_type`/`status`/
+ * `selected_response_prompt_id`/`reference_image_*` are never touched here
+ * — those have their own dedicated, already-working flows
+ * (`updateRealRequestStatus`/`selectRealRequestResponse`), and mixing them
+ * into a generic "edit" would blur exactly the distinction CLAUDE.md's own
+ * `record_request_edit` trigger is built to keep clean. Ownership is
+ * verified by re-selecting the row after the UPDATE, same as
+ * `updateRealPrompt` — a non-owner's call fails loudly instead of RLS's
+ * silent 0-rows-affected.
+ */
+export async function updateRealRequest(requestId: string, input: UpdateRealRequestInput): Promise<PromptRequest> {
+  const { data: updated, error: updateError } = await supabase
+    .from("prompt_requests")
+    .update({
+      title: input.title.trim(),
+      description: input.description.trim(),
+      creative_direction: input.creativeDirection.trim() || null,
+      preferred_tool: input.preferredTool,
+    })
+    .eq("id", requestId)
+    .select("id")
+    .maybeSingle();
+
+  if (updateError) throw new Error(updateError.message);
+  if (!updated) throw new Error("Bu isteği düzenleme yetkin yok.");
+
+  await supabase.from("prompt_request_tags").delete().eq("request_id", requestId);
+  if (input.tags.length > 0) {
+    await supabase.from("prompt_request_tags").insert(
+      input.tags.map((tag) => ({
+        request_id: requestId,
+        tag_slug: tag.slug,
+        source: input.tagSources?.[tag.slug] ?? "manual",
+      })),
+    );
+  }
+
+  const fresh = await fetchRequestById(requestId);
+  if (!fresh) throw new Error("İstek güncellendi ama yeniden yüklenemedi.");
+  return fresh;
+}
+
 /**
  * Genuinely, permanently opens/closes a real request MANUALLY (the
  * "İsteği kapat"/"Açık olarak işaretle" toggle) — distinct from a request

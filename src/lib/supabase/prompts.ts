@@ -476,3 +476,94 @@ export async function createRealPrompt(
     createdAt: inserted.created_at,
   };
 }
+
+export interface UpdateRealPromptInput {
+  title: string;
+  description: string;
+  promptText: string;
+  tool: string | null;
+  tags: Tag[];
+  tagSources?: Record<string, "manual" | "automatic">;
+  /** A real newly-uploaded file, if the owner chose to replace the image — `undefined`/`null` leaves the existing media untouched (unlike creation, editing never invents a placeholder image in its place). Only meaningful for `contentType === "image"`. */
+  imageFile?: File | null;
+}
+
+/**
+ * Genuinely, permanently edits a real prompt the caller owns — the first
+ * "edit an existing prompt" capability this app has ever had (see
+ * CLAUDE.md's "Prompt Değişken Sistemi" module; previously the only way a
+ * prompt's own text ever changed post-publish was accepting a merge
+ * request). Deliberately narrower than creation: `content_type`/`origin`
+ * (remix/request-answer relationship) can never change here, and an image
+ * is only replaced when a new file is actually provided. Ownership is
+ * verified by re-selecting the row after the UPDATE (RLS silently affects 0
+ * rows for a non-owner instead of erroring — CLAUDE.md Bölüm 9.0's
+ * documented "sessiz no-op" risk class; this function closes that gap for
+ * itself instead of assuming success) — a real edit ALSO fires the
+ * database's own meaningful-change trigger
+ * (`record_prompt_edit`/20260919290000), which is what actually decides
+ * whether a `content_edits` row/notification is produced, never this
+ * function's own judgement.
+ */
+export async function updateRealPrompt(promptId: string, authorId: string, input: UpdateRealPromptInput): Promise<Prompt> {
+  const { data: updated, error: updateError } = await supabase
+    .from("prompts")
+    .update({
+      title: input.title.trim(),
+      description: input.description.trim(),
+      prompt_text: input.promptText.trim(),
+      tool: input.tool,
+    })
+    .eq("id", promptId)
+    .select("id")
+    .maybeSingle();
+
+  if (updateError) throw new Error(updateError.message);
+  if (!updated) throw new Error("Bu promptu düzenleme yetkin yok.");
+
+  if (input.imageFile) {
+    try {
+      const resized = await resizeImageToBlob(input.imageFile, 1600);
+      const ext = resized.contentType === "image/png" ? "png" : "jpg";
+      const path = `${authorId}/${promptId}-${Date.now()}.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from("prompt-media")
+        .upload(path, resized.blob, { contentType: resized.contentType, upsert: true });
+      if (uploadError) throw new Error(uploadError.message);
+      const { data: publicUrlData } = supabase.storage.from("prompt-media").getPublicUrl(path);
+
+      // Replace-all, same simple pattern as tags/variables below — a prompt
+      // only ever has one media row today (a single image), so there's
+      // nothing to diff.
+      await supabase.from("prompt_media").delete().eq("prompt_id", promptId);
+      const { error: mediaError } = await supabase.from("prompt_media").insert({
+        prompt_id: promptId,
+        url: publicUrlData.publicUrl,
+        width: resized.width,
+        height: resized.height,
+        alt: input.title,
+        position: 0,
+      });
+      if (mediaError) throw new Error(mediaError.message);
+    } catch (err) {
+      throw err instanceof Error ? err : new Error("Görsel güncellenemedi.");
+    }
+  }
+
+  // Tags: replace-all (soft-fail, same precedent as createRealPrompt — a
+  // tag write failure shouldn't undo an otherwise-successful text edit).
+  await supabase.from("prompt_tags").delete().eq("prompt_id", promptId);
+  if (input.tags.length > 0) {
+    await supabase.from("prompt_tags").insert(
+      input.tags.map((tag) => ({
+        prompt_id: promptId,
+        tag_slug: tag.slug,
+        source: input.tagSources?.[tag.slug] ?? "manual",
+      })),
+    );
+  }
+
+  const fresh = await fetchPromptById(promptId);
+  if (!fresh) throw new Error("Prompt güncellendi ama yeniden yüklenemedi.");
+  return fresh;
+}

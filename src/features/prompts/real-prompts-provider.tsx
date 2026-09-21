@@ -6,7 +6,9 @@ import {
   createRealPrompt,
   fetchPromptById,
   fetchRecentPublishedPrompts,
+  updateRealPrompt,
   type CreateRealPromptInput,
+  type UpdateRealPromptInput,
 } from "@/lib/supabase/prompts";
 import type { Prompt, UserProfile } from "@/types";
 
@@ -16,6 +18,7 @@ interface RealPromptsContextValue {
   getCached: (id: string) => Prompt | undefined;
   fetchById: (id: string) => Promise<Prompt | null>;
   addPrompt: (input: CreateRealPromptInput, authorProfile: UserProfile) => Promise<Prompt>;
+  updatePrompt: (id: string, input: UpdateRealPromptInput) => Promise<Prompt>;
 }
 
 const RealPromptsContext = createContext<RealPromptsContextValue | null>(null);
@@ -69,9 +72,19 @@ export function RealPromptsProvider({ children }: { children: React.ReactNode })
     [user],
   );
 
+  const updatePrompt = useCallback(
+    async (id: string, input: UpdateRealPromptInput) => {
+      if (!user) throw new Error("Giriş yapmadan prompt düzenlenemez.");
+      const prompt = await updateRealPrompt(id, user.id, input);
+      setRealPrompts((prev) => (prev.some((p) => p.id === id) ? prev.map((p) => (p.id === id ? prompt : p)) : prev));
+      return prompt;
+    },
+    [user],
+  );
+
   const value = useMemo(
-    () => ({ realPrompts, loading, getCached, fetchById, addPrompt }),
-    [realPrompts, loading, getCached, fetchById, addPrompt],
+    () => ({ realPrompts, loading, getCached, fetchById, addPrompt, updatePrompt }),
+    [realPrompts, loading, getCached, fetchById, addPrompt, updatePrompt],
   );
 
   return <RealPromptsContext.Provider value={value}>{children}</RealPromptsContext.Provider>;

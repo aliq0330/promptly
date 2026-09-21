@@ -162,7 +162,9 @@ export type NotificationType =
   | "merge_request_accepted"
   | "merge_request_rejected"
   | "merge_request_withdrawn"
-  | "merge_request_cancelled";
+  | "merge_request_cancelled"
+  | "prompt_edited"
+  | "request_edited";
 
 export type MergeRequestStatus = "pending" | "accepted" | "rejected" | "withdrawn" | "cancelled";
 
@@ -277,6 +279,43 @@ export interface Collection {
    * frontend never offering the option either).
    */
   isDefault: boolean;
+}
+
+/**
+ * A real, user-defined `{name}` token inside a prompt's `promptText`
+ * (`public.prompt_variables` — CLAUDE.md "Prompt Değişken Sistemi"). Scoped
+ * to prompts only (covers original/remix/request-answer content alike,
+ * since all three are the same `prompts` row) — `prompt_requests` has no
+ * separate "prompt metni" field to attach variables to, a deliberate scope
+ * decision.
+ */
+export interface PromptVariable {
+  id: string;
+  promptId: string;
+  name: string;
+  defaultValue: string;
+  description: string | null;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * One real, backend-verified edit event (`public.content_edits`) — only
+ * ever created by a database trigger comparing OLD/NEW column values, never
+ * by the client claiming "I made a meaningful edit". `previousValues` is
+ * intentionally not exposed here (kept DB-only) — the UI only ever shows
+ * which fields changed and when, never the full previous text, keeping the
+ * "gizli/taslak içeriğin önceki sürümünü sızdırma" rule trivially true.
+ */
+export interface ContentEditEvent {
+  id: string;
+  contentType: "prompt" | "prompt_request";
+  contentId: string;
+  ownerId: string;
+  editorId: string;
+  changedFields: string[];
+  createdAt: string;
 }
 
 export interface Message {

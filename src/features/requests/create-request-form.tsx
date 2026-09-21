@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, type ChangeEvent, type FormEvent } from "react";
+import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { RequestCard } from "./request-card";
 import { useRealRequests } from "./real-requests-provider";
@@ -30,9 +30,13 @@ const DESCRIPTION_MAX = 500;
  */
 export function CreateRequestForm() {
   const router = useRouter();
-  const { addRequest } = useRealRequests();
+  const searchParams = useSearchParams();
+  const { addRequest, updateRequest, getCached, fetchById } = useRealRequests();
   const { user } = useAuth();
   const { profile: ownProfile } = useOwnProfile();
+
+  const editId = searchParams.get("edit");
+  const isEditMode = Boolean(editId);
 
   const { catalog: tagCatalog } = useTagCatalog();
 
@@ -54,6 +58,55 @@ export function CreateRequestForm() {
   const [descriptionTouched, setDescriptionTouched] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [publishError, setPublishError] = useState<string | null>(null);
+
+  const [editingRequest, setEditingRequest] = useState<PromptRequest | null>(null);
+  const [editForbidden, setEditForbidden] = useState(false);
+  const [editChecked, setEditChecked] = useState(!isEditMode);
+  const [fieldsSeeded, setFieldsSeeded] = useState(!isEditMode);
+
+  // Fetch the real request being edited (cache-first, then a live fetch) —
+  // same pattern as create-prompt-form.tsx's `?edit=` mode.
+  useEffect(() => {
+    if (!isEditMode || !editId) return;
+    let cancelled = false;
+    async function load() {
+      const cached = getCached(editId!);
+      const found = cached ?? (await fetchById(editId!));
+      if (cancelled) return;
+      // No shared/collaborative editing exists in this app — only the
+      // real owner's own edit can ever succeed (RLS), so this is checked
+      // up front for an honest message instead of a late RLS rejection.
+      if (found && user && found.author.id === user.id) {
+        setEditingRequest(found);
+      } else if (found) {
+        setEditForbidden(true);
+      }
+      setEditChecked(true);
+    }
+    load();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEditMode, editId, user]);
+
+  // Backfill the form once the real request loads (one-time seed, same
+  // async-source pattern as create-prompt-form.tsx). content_type/status/
+  // selection/reference image are deliberately never touched by editing
+  // (see updateRealRequest's own doc comment) — only these fields are
+  // seeded/submitted.
+  useEffect(() => {
+    if (fieldsSeeded || !editingRequest) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time seed once the async source loads
+    setContentType(editingRequest.contentType ?? "image");
+    setTitle(editingRequest.title);
+    setDescription(editingRequest.description);
+    setCreativeDirection(editingRequest.creativeDirection);
+    setPreferredTool(editingRequest.preferredTool ?? "");
+    editingRequest.tags.forEach((tag) => tagPicker.addManual(tag));
+    setFieldsSeeded(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- tagPicker.addManual is stable (useCallback)
+  }, [editingRequest, fieldsSeeded]);
 
   const titleError =
     title.trim().length === 0
@@ -91,6 +144,19 @@ export function CreateRequestForm() {
     setPublishError(null);
     setIsSubmitting(true);
     try {
+      if (isEditMode && editingRequest) {
+        const updated = await updateRequest(editingRequest.id, {
+          title,
+          description,
+          creativeDirection,
+          preferredTool: preferredTool || null,
+          tags: tagPicker.accepted.map((entry) => entry.tag),
+          tagSources: Object.fromEntries(tagPicker.accepted.map((entry) => [entry.tag.slug, entry.source])),
+        });
+        router.push(requestHref(updated));
+        return;
+      }
+
       const request = await addRequest(
         {
           title,
@@ -116,7 +182,7 @@ export function CreateRequestForm() {
       <div className="mx-auto max-w-md px-4 py-16 text-center">
         <h1 className="mb-2 text-lg font-semibold text-text">Giriş yapmalısın</h1>
         <p className="mb-4 text-sm text-text-muted">
-          Bir prompt isteği yayınlamak için önce giriş yapmalısın.
+          Bir prompt isteği yayınlamak (ya da düzenlemek) için önce giriş yapmalısın.
         </p>
         <div className="flex justify-center gap-2">
           <Link
@@ -132,6 +198,42 @@ export function CreateRequestForm() {
             Hesap Oluştur
           </Link>
         </div>
+      </div>
+    );
+  }
+
+  if (!editChecked) {
+    return <div className="mx-auto max-w-lg px-4 py-16 text-center text-sm text-text-muted">Yükleniyor…</div>;
+  }
+
+  if (editForbidden) {
+    return (
+      <div className="mx-auto max-w-lg px-4 py-16 text-center">
+        <h1 className="mb-2 text-lg font-semibold text-text">Bu isteği düzenleme yetkin yok</h1>
+        <p className="mb-4 text-sm text-text-muted">Bir isteği yalnızca kendi sahibi düzenleyebilir.</p>
+        <Link
+          href="/requests"
+          className="inline-flex h-9 items-center rounded-md border border-border px-4 text-sm font-medium text-text hover:bg-accent-surface"
+        >
+          İsteklere Dön
+        </Link>
+      </div>
+    );
+  }
+
+  if (isEditMode && !editingRequest) {
+    return (
+      <div className="mx-auto max-w-lg px-4 py-16 text-center">
+        <h1 className="mb-2 text-lg font-semibold text-text">İstek bulunamadı</h1>
+        <p className="mb-4 text-sm text-text-muted">
+          Düzenlemek istediğin istek silinmiş veya artık erişilebilir değil.
+        </p>
+        <Link
+          href="/requests"
+          className="inline-flex h-9 items-center rounded-md border border-border px-4 text-sm font-medium text-text hover:bg-accent-surface"
+        >
+          İsteklere Dön
+        </Link>
       </div>
     );
   }
@@ -157,7 +259,7 @@ export function CreateRequestForm() {
     preferredTool: preferredTool || null,
     referenceImage: referenceImage
       ? { id: "reference", url: referenceImage.url, width: referenceImage.width, height: referenceImage.height, alt: title }
-      : undefined,
+      : editingRequest?.referenceImage,
     tags: tagPicker.accepted.map((entry) => entry.tag),
     status: "open",
     responseCount: 0,
@@ -166,38 +268,50 @@ export function CreateRequestForm() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-6 lg:px-6">
-      <h1 className="mb-1 text-lg font-semibold text-text">İstek Oluştur</h1>
+      <h1 className="mb-1 text-lg font-semibold text-text">{isEditMode ? "İsteği Düzenle" : "İstek Oluştur"}</h1>
       <p className="mb-6 text-sm text-text-muted">
-        İhtiyacın olan promptu tanımla, topluluk sana yanıt versin. Yayınladığında istek gerçekten,
-        kalıcı olarak Supabase&apos;e kaydedilir ve herkese görünür olur.
+        {isEditMode
+          ? "Değişikliklerini yaz, sağda anında önizlemesini gör. Kaydet'e bastığında gerçekten, kalıcı olarak güncellenir."
+          : "İhtiyacın olan promptu tanımla, topluluk sana yanıt versin. Yayınladığında istek gerçekten, kalıcı olarak Supabase'e kaydedilir ve herkese görünür olur."}
       </p>
 
       <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <label className="mb-2 block text-sm font-medium text-text">İçerik Türü</label>
-            <div className="flex flex-wrap gap-2">
-              {CONTENT_TYPES.map((type) => {
-                const meta = CONTENT_TYPE_META[type];
-                const Icon = meta.icon;
-                return (
-                  <button
-                    key={type}
-                    type="button"
-                    onClick={() => setContentType(type)}
-                    className={cn(
-                      "flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors",
-                      contentType === type
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "border-border bg-surface text-text-muted hover:text-text",
-                    )}
-                  >
-                    <Icon size={14} />
-                    {meta.label}
-                  </button>
-                );
-              })}
-            </div>
+            {isEditMode ? (
+              <div className="flex items-center gap-1.5 text-sm text-text-muted">
+                {(() => {
+                  const Icon = CONTENT_TYPE_META[contentType].icon;
+                  return <Icon size={14} />;
+                })()}
+                {CONTENT_TYPE_META[contentType].label}
+                <span className="text-xs">(düzenlemede değiştirilemez)</span>
+              </div>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {CONTENT_TYPES.map((type) => {
+                  const meta = CONTENT_TYPE_META[type];
+                  const Icon = meta.icon;
+                  return (
+                    <button
+                      key={type}
+                      type="button"
+                      onClick={() => setContentType(type)}
+                      className={cn(
+                        "flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors",
+                        contentType === type
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-border bg-surface text-text-muted hover:text-text",
+                      )}
+                    >
+                      <Icon size={14} />
+                      {meta.label}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           <div>
@@ -262,18 +376,20 @@ export function CreateRequestForm() {
             />
           </div>
 
-          <div>
-            <label className="mb-2 block text-sm font-medium text-text">
-              Referans Görsel <span className="text-text-muted">(opsiyonel)</span>
-            </label>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleImageChange}
-              className="block w-full text-sm text-text-muted file:mr-3 file:rounded-md file:border-0 file:bg-accent-surface file:px-3 file:py-2 file:text-sm file:font-medium file:text-primary hover:file:bg-accent-surface/70"
-            />
-            {imageError && <p className="mt-1 text-xs text-red-500">{imageError}</p>}
-          </div>
+          {!isEditMode && (
+            <div>
+              <label className="mb-2 block text-sm font-medium text-text">
+                Referans Görsel <span className="text-text-muted">(opsiyonel)</span>
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+                className="block w-full text-sm text-text-muted file:mr-3 file:rounded-md file:border-0 file:bg-accent-surface file:px-3 file:py-2 file:text-sm file:font-medium file:text-primary hover:file:bg-accent-surface/70"
+              />
+              {imageError && <p className="mt-1 text-xs text-red-500">{imageError}</p>}
+            </div>
+          )}
 
           <div>
             <label htmlFor="request-tool" className="mb-1.5 block text-sm font-medium text-text">
@@ -300,9 +416,14 @@ export function CreateRequestForm() {
 
           <div className="flex gap-2">
             <Button type="submit" size="lg" disabled={isSubmitting}>
-              {isSubmitting ? "Yayınlanıyor..." : "İsteği Yayınla"}
+              {isSubmitting ? (isEditMode ? "Kaydediliyor..." : "Yayınlanıyor...") : isEditMode ? "Kaydet" : "İsteği Yayınla"}
             </Button>
-            <Button type="button" variant="ghost" size="lg" onClick={() => router.push("/requests")}>
+            <Button
+              type="button"
+              variant="ghost"
+              size="lg"
+              onClick={() => router.push(isEditMode && editingRequest ? requestHref(editingRequest) : "/requests")}
+            >
               Vazgeç
             </Button>
           </div>

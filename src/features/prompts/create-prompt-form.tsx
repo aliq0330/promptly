@@ -15,6 +15,8 @@ import { useRealRequests } from "@/features/requests/real-requests-provider";
 import { useTagCatalog } from "@/features/tags/use-tag-catalog";
 import { useTagPicker } from "@/features/prompts/use-tag-picker";
 import { TagPicker } from "@/features/prompts/tag-picker";
+import { PromptTextEditor, type DraftVariable } from "@/features/prompts/prompt-text-editor";
+import { fetchVariablesForPrompt, replaceVariablesForPrompt } from "@/lib/supabase/prompt-variables";
 import { placeholderArt } from "@/lib/placeholder-image";
 import { cn, promptHref, requestHref, resizeImageToDataUrlFit } from "@/lib/utils";
 import type { Prompt, PromptContentType, PromptRequest } from "@/types";
@@ -74,12 +76,14 @@ export function CreatePromptForm() {
   const searchParams = useSearchParams();
   const { user } = useAuth();
   const { profile: ownProfile } = useOwnProfile();
-  const { getCached: getCachedPrompt, fetchById: fetchPromptById, addPrompt } = useRealPrompts();
+  const { getCached: getCachedPrompt, fetchById: fetchPromptById, addPrompt, updatePrompt } = useRealPrompts();
   const { getCached: getCachedRequest, fetchById: fetchRequestById } = useRealRequests();
 
-  const remixSourceId = searchParams.get("remix");
-  const duplicateId = searchParams.get("duplicate");
-  const answerRequestId = searchParams.get("answerRequest");
+  const editId = searchParams.get("edit");
+  const isEditMode = Boolean(editId);
+  const remixSourceId = !isEditMode ? searchParams.get("remix") : null;
+  const duplicateId = !isEditMode ? searchParams.get("duplicate") : null;
+  const answerRequestId = !isEditMode ? searchParams.get("answerRequest") : null;
   const isAnswerMode = Boolean(answerRequestId);
   const isRemixMode = Boolean(remixSourceId);
   const isDuplicateMode = Boolean(duplicateId);
@@ -87,14 +91,33 @@ export function CreatePromptForm() {
   const [sourcePrompt, setSourcePrompt] = useState<Prompt | null>(null);
   const [duplicateSource, setDuplicateSource] = useState<Prompt | null>(null);
   const [answeredRequest, setAnsweredRequest] = useState<PromptRequest | null>(null);
-  const [sourceChecked, setSourceChecked] = useState(!isRemixMode && !isDuplicateMode && !isAnswerMode);
+  const [editingPrompt, setEditingPrompt] = useState<Prompt | null>(null);
+  const [editForbidden, setEditForbidden] = useState(false);
+  const [sourceChecked, setSourceChecked] = useState(
+    !isRemixMode && !isDuplicateMode && !isAnswerMode && !isEditMode,
+  );
   const { catalog: tagCatalog } = useTagCatalog();
 
   // Fetch whichever real source this mode needs (cache-first, then a live fetch).
   useEffect(() => {
     let cancelled = false;
     async function load() {
-      if (isRemixMode && remixSourceId) {
+      if (isEditMode && editId) {
+        const cached = getCachedPrompt(editId);
+        const found = cached ?? (await fetchPromptById(editId));
+        if (!cancelled) {
+          // No shared/collaborative editing exists in this app (CLAUDE.md
+          // "Prompt Değişken Sistemi" §11) — RLS itself only lets the real
+          // author's own UPDATE succeed, but this check gives an honest,
+          // immediate message instead of letting a non-owner fill out the
+          // whole form only to hit an RLS rejection on submit.
+          if (found && user && found.author.id === user.id) {
+            setEditingPrompt(found);
+          } else if (found) {
+            setEditForbidden(true);
+          }
+        }
+      } else if (isRemixMode && remixSourceId) {
         const cached = getCachedPrompt(remixSourceId);
         const found = cached ?? (await fetchPromptById(remixSourceId));
         if (!cancelled) setSourcePrompt(found);
@@ -114,7 +137,7 @@ export function CreatePromptForm() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isRemixMode, remixSourceId, isDuplicateMode, duplicateId, isAnswerMode, answerRequestId]);
+  }, [isEditMode, editId, isRemixMode, remixSourceId, isDuplicateMode, duplicateId, isAnswerMode, answerRequestId, user]);
 
   const [contentType, setContentType] = useState<PromptContentType>("image");
   const [title, setTitle] = useState("");
@@ -137,6 +160,7 @@ export function CreatePromptForm() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imageError, setImageError] = useState<string | null>(null);
   const [fieldsSeeded, setFieldsSeeded] = useState(false);
+  const [variables, setVariables] = useState<DraftVariable[]>([]);
 
   // The real source's fields arrive asynchronously — backfill the form the
   // first time one becomes available (same pattern as /profile/edit's
@@ -144,9 +168,29 @@ export function CreatePromptForm() {
   // afterwards without being overwritten again.
   useEffect(() => {
     if (fieldsSeeded) return;
+    if (editingPrompt) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time seed once the async source loads
+      setContentType(editingPrompt.contentType);
+      setTitle(editingPrompt.title);
+      setDescription(editingPrompt.description);
+      setPromptText(editingPrompt.promptText);
+      setTool(editingPrompt.tool ?? "");
+      editingPrompt.tags.forEach((tag) => tagPicker.addManual(tag));
+      setFieldsSeeded(true);
+      fetchVariablesForPrompt(editingPrompt.id).then((real) => {
+        setVariables(
+          real.map((variable) => ({
+            tempId: variable.id,
+            name: variable.name,
+            defaultValue: variable.defaultValue,
+            description: variable.description ?? "",
+          })),
+        );
+      });
+      return;
+    }
     const source = sourcePrompt ?? duplicateSource;
     if (source) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time seed once the async source loads
       setContentType(source.contentType);
       setTitle(`${source.title} ${isRemixMode ? "(türetme)" : "(kopya)"}`);
       setDescription(source.description);
@@ -167,14 +211,19 @@ export function CreatePromptForm() {
       setFieldsSeeded(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- tagPicker.addManual is stable (useCallback), not a reactive dependency worth re-running this one-time seed for
-  }, [sourcePrompt, duplicateSource, answeredRequest, fieldsSeeded, isRemixMode]);
+  }, [editingPrompt, sourcePrompt, duplicateSource, answeredRequest, fieldsSeeded, isRemixMode]);
 
   const [showOnProfile, setShowOnProfile] = useState(true);
 
   const [publishError, setPublishError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const notFound = sourceChecked && ((isRemixMode && !sourcePrompt) || (isDuplicateMode && !duplicateSource) || (isAnswerMode && !answeredRequest));
+  const notFound =
+    sourceChecked &&
+    ((isRemixMode && !sourcePrompt) ||
+      (isDuplicateMode && !duplicateSource) ||
+      (isAnswerMode && !answeredRequest) ||
+      (isEditMode && !editingPrompt && !editForbidden));
   const isRequestClosed = isAnswerMode && Boolean(answeredRequest) && answeredRequest?.status !== "open";
 
   async function handleImageChange(event: ChangeEvent<HTMLInputElement>) {
@@ -190,24 +239,27 @@ export function CreatePromptForm() {
     }
   }
 
-  const origin: Prompt["origin"] = sourcePrompt
-    ? {
-        type: "remix",
-        sourcePromptId: sourcePrompt.id,
-        rootPromptId: sourcePrompt.origin.type === "remix" ? sourcePrompt.origin.rootPromptId : sourcePrompt.id,
-      }
-    : answeredRequest
-      ? { type: "request-response", requestId: answeredRequest.id, responseId: "pending" }
-      : { type: "original" };
+  const origin: Prompt["origin"] = editingPrompt
+    ? editingPrompt.origin
+    : sourcePrompt
+      ? {
+          type: "remix",
+          sourcePromptId: sourcePrompt.id,
+          rootPromptId: sourcePrompt.origin.type === "remix" ? sourcePrompt.origin.rootPromptId : sourcePrompt.id,
+        }
+      : answeredRequest
+        ? { type: "request-response", requestId: answeredRequest.id, responseId: "pending" }
+        : { type: "original" };
 
+  const existingMedia = editingPrompt?.media[0];
   const media =
     contentType === "image"
       ? [
           {
             id: "preview-media",
-            url: uploadedImage?.url ?? placeholderArt(title || "yeni-prompt", 900, 1100),
-            width: uploadedImage?.width ?? 900,
-            height: uploadedImage?.height ?? 1100,
+            url: uploadedImage?.url ?? existingMedia?.url ?? placeholderArt(title || "yeni-prompt", 900, 1100),
+            width: uploadedImage?.width ?? existingMedia?.width ?? 900,
+            height: uploadedImage?.height ?? existingMedia?.height ?? 1100,
             alt: title || "Önizleme görseli",
           },
         ]
@@ -219,7 +271,34 @@ export function CreatePromptForm() {
 
     setPublishError(null);
     setIsSubmitting(true);
+    const variableDrafts = variables.map((variable) => ({
+      name: variable.name,
+      defaultValue: variable.defaultValue,
+      description: variable.description || null,
+    }));
     try {
+      if (isEditMode && editingPrompt) {
+        const updated = await updatePrompt(editingPrompt.id, {
+          title,
+          description,
+          promptText,
+          tool: tool || null,
+          tags: tagPicker.accepted.map((entry) => entry.tag),
+          tagSources: Object.fromEntries(tagPicker.accepted.map((entry) => [entry.tag.slug, entry.source])),
+          imageFile: contentType === "image" ? imageFile : undefined,
+        });
+        // Soft-fail, same precedent as tags (createRealPrompt) — the edit
+        // itself already succeeded and is already live; a variable-save
+        // hiccup shouldn't be reported as "the edit failed".
+        try {
+          await replaceVariablesForPrompt(updated.id, variableDrafts);
+        } catch (variableErr) {
+          console.error("replaceVariablesForPrompt", variableErr);
+        }
+        router.push(promptHref(updated));
+        return;
+      }
+
       const published = await addPrompt(
         {
           title,
@@ -243,6 +322,11 @@ export function CreatePromptForm() {
         },
         ownProfile,
       );
+      try {
+        await replaceVariablesForPrompt(published.id, variableDrafts);
+      } catch (variableErr) {
+        console.error("replaceVariablesForPrompt", variableErr);
+      }
       router.push(promptHref(published));
     } catch (err) {
       setPublishError(err instanceof Error ? err.message : "Yayınlanamadı, lütfen tekrar dene.");
@@ -285,7 +369,7 @@ export function CreatePromptForm() {
 
   if (!user) {
     return (
-      <LoginGate message="Bir prompt yayınlamak (ya da bir remix/kopya/yanıt oluşturmak) için önce giriş yapmalısın." />
+      <LoginGate message="Bir prompt yayınlamak, düzenlemek (ya da bir remix/kopya/yanıt oluşturmak) için önce giriş yapmalısın." />
     );
   }
 
@@ -293,16 +377,35 @@ export function CreatePromptForm() {
     return <div className="mx-auto max-w-lg px-4 py-16 text-center text-sm text-text-muted">Yükleniyor…</div>;
   }
 
+  if (editForbidden) {
+    return (
+      <div className="mx-auto max-w-lg px-4 py-16 text-center">
+        <h1 className="mb-2 text-lg font-semibold text-text">Bu promptu düzenleme yetkin yok</h1>
+        <p className="mb-4 text-sm text-text-muted">
+          Bir promptu yalnızca kendi sahibi düzenleyebilir.
+        </p>
+        <Link
+          href="/discover"
+          className="inline-flex h-9 items-center rounded-md border border-border px-4 text-sm font-medium text-text hover:bg-accent-surface"
+        >
+          Keşfet&apos;e Dön
+        </Link>
+      </div>
+    );
+  }
+
   if (notFound) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
         <h1 className="mb-2 text-lg font-semibold text-text">
-          {isAnswerMode ? "İstek bulunamadı" : "Prompt bulunamadı"}
+          {isEditMode ? "Prompt bulunamadı" : isAnswerMode ? "İstek bulunamadı" : "Prompt bulunamadı"}
         </h1>
         <p className="mb-4 text-sm text-text-muted">
-          {isAnswerMode
-            ? "Yanıtlamak istediğin istek silinmiş veya artık erişilebilir değil."
-            : "Kaynak prompt silinmiş veya artık erişilebilir değil."}
+          {isEditMode
+            ? "Düzenlemek istediğin prompt silinmiş veya artık erişilebilir değil."
+            : isAnswerMode
+              ? "Yanıtlamak istediğin istek silinmiş veya artık erişilebilir değil."
+              : "Kaynak prompt silinmiş veya artık erişilebilir değil."}
         </p>
         <Link
           href={isAnswerMode ? "/requests" : "/discover"}
@@ -334,12 +437,22 @@ export function CreatePromptForm() {
   return (
     <div className="mx-auto max-w-5xl px-4 py-6 lg:px-6">
       <h1 className="mb-1 text-lg font-semibold text-text">
-        {isAnswerMode ? "İsteğe Yanıt Ver" : isRemixMode ? "Türet" : isDuplicateMode ? "Kopyasını Oluştur" : "Prompt Oluştur"}
+        {isEditMode
+          ? "Promptu Düzenle"
+          : isAnswerMode
+            ? "İsteğe Yanıt Ver"
+            : isRemixMode
+              ? "Türet"
+              : isDuplicateMode
+                ? "Kopyasını Oluştur"
+                : "Prompt Oluştur"}
       </h1>
       <p className="mb-6 text-sm text-text-muted">
-        {isAnswerMode
-          ? "Yanıtını yaz, sağda anında önizlemesini gör. Yayınladığında gerçekten, kalıcı olarak Supabase'e yayınlanır ve istek sahibine görünür olur."
-          : "Promptunu yaz, sağda anında önizlemesini gör. Paylaş'a bastığında gerçekten, kalıcı olarak yayınlanır."}
+        {isEditMode
+          ? "Değişikliklerini yaz, sağda anında önizlemesini gör. Kaydet'e bastığında gerçekten, kalıcı olarak güncellenir."
+          : isAnswerMode
+            ? "Yanıtını yaz, sağda anında önizlemesini gör. Yayınladığında gerçekten, kalıcı olarak Supabase'e yayınlanır ve istek sahibine görünür olur."
+            : "Promptunu yaz, sağda anında önizlemesini gör. Paylaş'a bastığında gerçekten, kalıcı olarak yayınlanır."}
       </p>
 
       <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
@@ -457,33 +570,46 @@ export function CreatePromptForm() {
 
           <div>
             <label className="mb-2 block text-sm font-medium text-text">İçerik Türü</label>
-            <div className="flex flex-wrap gap-2">
-              {CONTENT_TYPES.map((type) => {
-                const meta = CONTENT_TYPE_META[type];
-                const Icon = meta.icon;
-                return (
-                  <button
-                    key={type}
-                    type="button"
-                    onClick={() => setContentType(type)}
-                    className={cn(
-                      "flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors",
-                      contentType === type
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "border-border bg-surface text-text-muted hover:text-text",
-                    )}
-                  >
-                    <Icon size={14} />
-                    {meta.label}
-                  </button>
-                );
-              })}
-            </div>
+            {isEditMode ? (
+              <div className="flex items-center gap-1.5 text-sm text-text-muted">
+                {(() => {
+                  const Icon = CONTENT_TYPE_META[contentType].icon;
+                  return <Icon size={14} />;
+                })()}
+                {CONTENT_TYPE_META[contentType].label}
+                <span className="text-xs">(düzenlemede değiştirilemez)</span>
+              </div>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {CONTENT_TYPES.map((type) => {
+                  const meta = CONTENT_TYPE_META[type];
+                  const Icon = meta.icon;
+                  return (
+                    <button
+                      key={type}
+                      type="button"
+                      onClick={() => setContentType(type)}
+                      className={cn(
+                        "flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors",
+                        contentType === type
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-border bg-surface text-text-muted hover:text-text",
+                      )}
+                    >
+                      <Icon size={14} />
+                      {meta.label}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {contentType === "image" && (
             <div>
-              <label className="mb-2 block text-sm font-medium text-text">Görsel</label>
+              <label className="mb-2 block text-sm font-medium text-text">
+                Görsel {isEditMode && <span className="text-text-muted">(opsiyonel)</span>}
+              </label>
               <input
                 type="file"
                 accept="image/*"
@@ -491,7 +617,9 @@ export function CreatePromptForm() {
                 className="block w-full text-sm text-text-muted file:mr-3 file:rounded-md file:border-0 file:bg-accent-surface file:px-3 file:py-2 file:text-sm file:font-medium file:text-primary hover:file:bg-accent-surface/70"
               />
               <p className="mt-1 text-xs text-text-muted">
-                Yüklemezsen sağdaki önizlemede otomatik oluşturulan bir görsel kullanılır.
+                {isEditMode
+                  ? "Yeni bir dosya seçmezsen mevcut görsel değişmeden kalır."
+                  : "Yüklemezsen sağdaki önizlemede otomatik oluşturulan bir görsel kullanılır."}
               </p>
               {imageError && <p className="mt-1 text-xs text-red-500">{imageError}</p>}
             </div>
@@ -533,17 +661,14 @@ export function CreatePromptForm() {
             <label htmlFor="prompt-text" className="mb-1.5 block text-sm font-medium text-text">
               Prompt Metni
             </label>
-            <textarea
+            <PromptTextEditor
               id="prompt-text"
-              required
-              rows={5}
               value={promptText}
-              onChange={(event) => setPromptText(event.target.value)}
-              placeholder="Kullandığın tam prompt metnini buraya yaz."
-              className={cn(
-                "w-full resize-none rounded-md border border-border bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted",
-                contentType === "code" && "font-mono",
-              )}
+              onChange={setPromptText}
+              variables={variables}
+              onVariablesChange={setVariables}
+              rows={5}
+              placeholder="Kullandığın tam prompt metnini buraya yaz. {ortam} gibi değişkenler tanımlayabilirsin."
             />
           </div>
 
@@ -573,7 +698,15 @@ export function CreatePromptForm() {
           </div>
 
           <Button type="submit" size="lg" className="w-full sm:w-auto" disabled={isSubmitting}>
-            {isSubmitting ? "Yayınlanıyor..." : isAnswerMode ? "Yanıtı Yayınla" : "Paylaş"}
+            {isSubmitting
+              ? isEditMode
+                ? "Kaydediliyor..."
+                : "Yayınlanıyor..."
+              : isEditMode
+                ? "Kaydet"
+                : isAnswerMode
+                  ? "Yanıtı Yayınla"
+                  : "Paylaş"}
           </Button>
 
           {publishError && (
