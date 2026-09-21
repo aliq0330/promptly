@@ -234,6 +234,25 @@ export interface Conversation {
   myStatus: "accepted" | "pending";
 }
 
+/**
+ * A real, permanent collection a user organizes saved prompts into
+ * (`collections` — supabase/migrations/20260919260000_collections.sql).
+ * Independent from the general "Kaydedilenler" bookmark (`prompt_saves`,
+ * see saves.ts) by design — a prompt can belong to zero, one or several
+ * collections regardless of whether it's also generally saved.
+ */
+export interface Collection {
+  id: string;
+  owner: UserProfile;
+  name: string;
+  visibility: "public" | "private";
+  itemCount: number;
+  /** The most recently added item's first media, or null for an empty/text-only collection — never a separate uploaded cover. */
+  coverImage: PromptMedia | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Message {
   id: string;
   conversationId: string;
