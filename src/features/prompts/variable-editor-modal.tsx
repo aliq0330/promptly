@@ -8,11 +8,14 @@ import { isValidVariableName, normalizeVariableName } from "@/lib/prompt-variabl
 import type { DraftVariable } from "./prompt-text-editor";
 
 /**
- * "Değişken ekle" / "Değişkeni düzenle" modal (CLAUDE.md §4) — one shared
- * form for both creating a brand-new variable (inserted at the editor's
- * current cursor position by the caller) and editing an existing one
- * (renaming it, which the caller then propagates into every `{oldName}`
- * token in the text — see `prompt-text-editor.tsx`'s `handleSaveVariable`).
+ * "Değişkeni düzenle" modal (CLAUDE.md §4) — renaming an existing variable
+ * (the caller then propagates the rename into every `{oldName}` token in
+ * the text — see `prompt-text-editor.tsx`'s `handleEditVariable`) or
+ * editing its default value/description. Creating a BRAND NEW variable no
+ * longer goes through this modal — that always starts from a real text
+ * selection in the editor now (`add-variable-from-selection-modal.tsx`),
+ * so a variable's name is never freely typed out of nowhere; this modal
+ * only ever adjusts a variable that already exists.
  */
 export function VariableEditorModal({
   editing,
@@ -20,16 +23,15 @@ export function VariableEditorModal({
   onClose,
   onSubmit,
 }: {
-  /** Present → edit mode (fields pre-filled); absent → create mode. */
-  editing?: DraftVariable;
+  editing: DraftVariable;
   /** Every OTHER variable's normalized name already in use on this prompt — for the duplicate-name check (excludes `editing`'s own current name). */
   existingNames: string[];
   onClose: () => void;
   onSubmit: (values: { name: string; defaultValue: string; description: string }) => void;
 }) {
-  const [name, setName] = useState(editing?.name ?? "");
-  const [defaultValue, setDefaultValue] = useState(editing?.defaultValue ?? "");
-  const [description, setDescription] = useState(editing?.description ?? "");
+  const [name, setName] = useState(editing.name);
+  const [defaultValue, setDefaultValue] = useState(editing.defaultValue);
+  const [description, setDescription] = useState(editing.description);
   const [touched, setTouched] = useState(false);
 
   const normalizedName = normalizeVariableName(name);
@@ -72,7 +74,7 @@ export function VariableEditorModal({
       >
         <div className="flex items-start justify-between gap-2">
           <h2 id="variable-editor-modal-title" className="text-base font-semibold text-text">
-            {editing ? "Değişkeni Düzenle" : "Değişken Ekle"}
+            Değişkeni Düzenle
           </h2>
           <button
             type="button"
@@ -137,7 +139,7 @@ export function VariableEditorModal({
             <Button type="button" variant="ghost" onClick={onClose}>
               Vazgeç
             </Button>
-            <Button type="submit">{editing ? "Kaydet" : "Ekle"}</Button>
+            <Button type="submit">Kaydet</Button>
           </div>
         </form>
       </div>

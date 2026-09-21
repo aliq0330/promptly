@@ -106,3 +106,26 @@ export function resolvePromptText(text: string, values: Record<string, string>):
     Object.prototype.hasOwnProperty.call(values, name) ? values[name] : match,
   );
 }
+
+/**
+ * How many times a literal, not-yet-tokenized phrase appears in `text` —
+ * used to offer a "replace every occurrence" choice when the user selects
+ * a word/phrase in the editor to turn into a variable (the same word may
+ * genuinely appear several times in a prompt before any of it becomes a
+ * `{token}`). A plain literal substring count (`split`, never a `RegExp`)
+ * — simple and consistent with this file's other string-only helpers.
+ */
+export function countRawOccurrences(text: string, needle: string): number {
+  if (!needle) return 0;
+  return text.split(needle).length - 1;
+}
+
+/**
+ * Replaces every literal occurrence of `needle` in `text` with `{name}` —
+ * used when the user opts in to turning every occurrence of a selected
+ * word/phrase into the same variable, not just the one they highlighted.
+ */
+export function replaceAllOccurrencesWithToken(text: string, needle: string, name: string): string {
+  if (!needle) return text;
+  return text.split(needle).join(`{${name}}`);
+}

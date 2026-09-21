@@ -3,13 +3,18 @@
 import { useRef, useState } from "react";
 import { Eye, FileText, Plus } from "lucide-react";
 import {
+  countRawOccurrences,
   extractVariableTokenNames,
   insertTextAtRange,
+  isValidVariableName,
+  normalizeVariableName,
   removeVariableTokenFromText,
   renameVariableTokenInText,
+  replaceAllOccurrencesWithToken,
   resolvePromptText,
 } from "@/lib/prompt-variables";
 import { cn } from "@/lib/utils";
+import { AddVariableFromSelectionModal } from "./add-variable-from-selection-modal";
 import { VariableEditorModal } from "./variable-editor-modal";
 import { VariableList } from "./variable-list";
 
@@ -54,9 +59,13 @@ export function PromptTextEditor({
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const selectionRef = useRef({ start: value.length, end: value.length });
+  const warningTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [tab, setTab] = useState<"template" | "preview">("template");
   const activeTab = variables.length === 0 ? "template" : tab;
-  const [addingVariable, setAddingVariable] = useState(false);
+  const [selectionWarning, setSelectionWarning] = useState<string | null>(null);
+  const [pendingSelection, setPendingSelection] = useState<{ start: number; end: number; rawText: string } | null>(
+    null,
+  );
   const [editingVariable, setEditingVariable] = useState<DraftVariable | null>(null);
   const [previewValues, setPreviewValues] = useState<Record<string, string>>({});
 
@@ -66,20 +75,74 @@ export function PromptTextEditor({
     selectionRef.current = { start: el.selectionStart, end: el.selectionEnd };
   }
 
-  function handleInsertVariable(values: { name: string; defaultValue: string; description: string }) {
+  function showSelectionWarning(message: string) {
+    if (warningTimer.current) clearTimeout(warningTimer.current);
+    setSelectionWarning(message);
+    warningTimer.current = setTimeout(() => setSelectionWarning(null), 4500);
+  }
+
+  // "Değişken Ekle" never opens a modal on its own — a variable's name is
+  // always the word/phrase the author actually highlighted in the prompt
+  // text, never freely typed, since the same word can genuinely appear
+  // more than once and typing an unrelated name here would silently
+  // disconnect the variable from the text it was meant to replace.
+  function handleAddVariableClick() {
     const { start, end } = selectionRef.current;
-    const { text: nextText, cursor } = insertTextAtRange(value, start, end, `{${values.name}}`);
+    const rawSelection = value.slice(start, end);
+    const leadingTrim = rawSelection.length - rawSelection.trimStart().length;
+    const trailingTrim = rawSelection.length - rawSelection.trimEnd().length;
+    const trimmed = rawSelection.trim();
+    if (!trimmed) {
+      showSelectionWarning("Önce prompt metninden kelime seçip daha sonra tıklayın.");
+      return;
+    }
+    if (!isValidVariableName(normalizeVariableName(trimmed))) {
+      showSelectionWarning(
+        "Seçilen metin değişken adı olarak kullanılamıyor (çok uzun ya da geçersiz karakter içeriyor).",
+      );
+      return;
+    }
+    setSelectionWarning(null);
+    setPendingSelection({ start: start + leadingTrim, end: end - trailingTrim, rawText: trimmed });
+  }
+
+  const pendingNormalizedName = pendingSelection ? normalizeVariableName(pendingSelection.rawText) : "";
+  const pendingOccurrenceCount = pendingSelection ? countRawOccurrences(value, pendingSelection.rawText) : 0;
+  const pendingExistingVariable = pendingSelection
+    ? (variables.find((variable) => variable.name.toLowerCase() === pendingNormalizedName.toLowerCase()) ?? null)
+    : null;
+
+  function handleConfirmAddFromSelection(values: { defaultValue: string; description: string; replaceAll: boolean }) {
+    if (!pendingSelection) return;
+    const { start, end, rawText } = pendingSelection;
+    let nextText: string;
+    let cursor: number | null;
+    if (values.replaceAll) {
+      nextText = replaceAllOccurrencesWithToken(value, rawText, pendingNormalizedName);
+      cursor = null;
+    } else {
+      const result = insertTextAtRange(value, start, end, `{${pendingNormalizedName}}`);
+      nextText = result.text;
+      cursor = result.cursor;
+    }
     onChange(nextText);
-    onVariablesChange([...variables, { tempId: makeTempId(), ...values }]);
-    setAddingVariable(false);
-    requestAnimationFrame(() => {
-      const el = textareaRef.current;
-      if (el) {
-        el.focus();
-        el.setSelectionRange(cursor, cursor);
-        selectionRef.current = { start: cursor, end: cursor };
-      }
-    });
+    if (!pendingExistingVariable) {
+      onVariablesChange([
+        ...variables,
+        { tempId: makeTempId(), name: pendingNormalizedName, defaultValue: values.defaultValue, description: values.description },
+      ]);
+    }
+    setPendingSelection(null);
+    if (cursor !== null) {
+      requestAnimationFrame(() => {
+        const el = textareaRef.current;
+        if (el) {
+          el.focus();
+          el.setSelectionRange(cursor, cursor);
+          selectionRef.current = { start: cursor, end: cursor };
+        }
+      });
+    }
   }
 
   function handleEditVariable(values: { name: string; defaultValue: string; description: string }) {
@@ -144,12 +207,14 @@ export function PromptTextEditor({
         </div>
         <button
           type="button"
-          onClick={() => setAddingVariable(true)}
+          onClick={handleAddVariableClick}
           className="flex items-center gap-1 rounded-md border border-border px-2.5 py-1 text-xs font-medium text-text-muted transition-colors hover:border-primary/40 hover:text-primary"
         >
           <Plus size={12} /> Değişken Ekle
         </button>
       </div>
+
+      {selectionWarning && <p className="text-xs text-amber-600">{selectionWarning}</p>}
 
       {activeTab === "template" ? (
         <textarea
@@ -217,11 +282,14 @@ export function PromptTextEditor({
         onDelete={handleDeleteVariable}
       />
 
-      {addingVariable && (
-        <VariableEditorModal
-          existingNames={existingNames}
-          onClose={() => setAddingVariable(false)}
-          onSubmit={handleInsertVariable}
+      {pendingSelection && (
+        <AddVariableFromSelectionModal
+          rawText={pendingSelection.rawText}
+          normalizedName={pendingNormalizedName}
+          occurrenceCount={pendingOccurrenceCount}
+          existingVariable={pendingExistingVariable}
+          onClose={() => setPendingSelection(null)}
+          onSubmit={handleConfirmAddFromSelection}
         />
       )}
       {editingVariable && (
