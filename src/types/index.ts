@@ -366,13 +366,6 @@ export interface GeneratorFieldCondition {
   equals: string;
 }
 
-export interface GeneratorCategory {
-  id: string;
-  name: string;
-  description: string;
-  order: number;
-}
-
 /**
  * One selectable option for a select/multi_select/radio field — `label` is
  * what the creator/user actually sees ("Yeşil"), `value` is the real,
@@ -390,7 +383,6 @@ export interface GeneratorFieldOption {
 
 export interface GeneratorField {
   id: string;
-  categoryId: string;
   key: string;
   label: string;
   description: string;
@@ -418,7 +410,6 @@ export interface GeneratorField {
 }
 
 export interface GeneratorSchema {
-  categories: GeneratorCategory[];
   fields: GeneratorField[];
 }
 

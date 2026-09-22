@@ -35,7 +35,7 @@ import type { GeneratorSchema, GeneratorValues } from "@/types";
  * `generator-builder.tsx`'s own doc comment). Instead, whoever RUNS a
  * generator types the real prompt/negative-prompt text directly, in two
  * plain fields at the very top of the Form tab — above the schema's own
- * categorized fields, which the runtime user fills in below. That text is
+ * fields, which the runtime user fills in below. That text is
  * written into `buildGeneratorOutput()`'s output verbatim (trimmed, never
  * rendered/substituted) — see `generator-output.ts`.
  */
