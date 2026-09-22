@@ -1,0 +1,117 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import { Search } from "lucide-react";
+import { GeneratorCard } from "./generator-card";
+import { GENERATOR_CATEGORY_TOPIC_LABELS, GENERATOR_CATEGORY_TOPICS } from "./generator-category-meta";
+import { fetchRecentPublishedGenerators, fetchTopGenerators, searchGenerators } from "@/lib/supabase/generators";
+import { cn } from "@/lib/utils";
+import type { Generator, GeneratorCategoryTopic } from "@/types";
+
+type CategoryFilter = "all" | GeneratorCategoryTopic;
+
+/** `/generators` — the real generator discovery page: category filter chips, search, and a "popular" ordering by default. */
+export function GeneratorsDiscoverView() {
+  const [generators, setGenerators] = useState<Generator[]>([]);
+  const [loaded, setLoaded] = useState(false);
+  const [category, setCategory] = useState<CategoryFilter>("all");
+  const [query, setQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<Generator[] | null>(null);
+  const [searching, setSearching] = useState(false);
+
+  useEffect(() => {
+    fetchTopGenerators(60).then((top) => {
+      // A generator with zero uses yet is still a real, published generator
+      // — fold in the most recent ones too so a brand-new generator isn't
+      // invisible on this page until someone happens to use it first.
+      fetchRecentPublishedGenerators(60).then((recent) => {
+        const byId = new Map<string, Generator>();
+        for (const g of [...top, ...recent]) byId.set(g.id, g);
+        setGenerators(Array.from(byId.values()));
+        setLoaded(true);
+      });
+    });
+  }, []);
+
+  useEffect(() => {
+    const trimmed = query.trim();
+    if (!trimmed) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- clears results when the query is emptied
+      setSearchResults(null);
+      return;
+    }
+    setSearching(true);
+    const timeout = setTimeout(() => {
+      searchGenerators(trimmed).then((results) => {
+        setSearchResults(results);
+        setSearching(false);
+      });
+    }, 300);
+    return () => clearTimeout(timeout);
+  }, [query]);
+
+  const filtered = useMemo(() => {
+    const base = searchResults ?? generators;
+    return category === "all" ? base : base.filter((g) => g.category === category);
+  }, [generators, searchResults, category]);
+
+  return (
+    <div className="mx-auto max-w-5xl space-y-6 px-4 py-6 lg:px-6">
+      <div>
+        <h1 className="mb-1 text-lg font-semibold text-text">Generatorları Keşfet</h1>
+        <p className="text-sm text-text-muted">Başkalarının oluşturduğu prompt generatorlarını kullan, remixle ya da kendi generatorunu oluştur.</p>
+      </div>
+
+      <div className="flex h-11 items-center gap-2 rounded-md border border-border bg-surface px-3">
+        <Search size={18} className="shrink-0 text-text-muted" />
+        <input
+          type="text"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder="Generator ara..."
+          className="h-full w-full bg-transparent text-sm text-text outline-none placeholder:text-text-muted"
+        />
+      </div>
+
+      <div className="flex flex-wrap gap-1.5">
+        <button
+          type="button"
+          onClick={() => setCategory("all")}
+          className={cn(
+            "rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
+            category === "all" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-surface text-text-muted hover:text-text",
+          )}
+        >
+          Tümü
+        </button>
+        {GENERATOR_CATEGORY_TOPICS.map((topic) => (
+          <button
+            key={topic}
+            type="button"
+            onClick={() => setCategory(topic)}
+            className={cn(
+              "rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
+              category === topic ? "border-primary bg-primary text-primary-foreground" : "border-border bg-surface text-text-muted hover:text-text",
+            )}
+          >
+            {GENERATOR_CATEGORY_TOPIC_LABELS[topic]}
+          </button>
+        ))}
+      </div>
+
+      {!loaded || searching ? (
+        <p className="py-10 text-center text-sm text-text-muted">Yükleniyor…</p>
+      ) : filtered.length === 0 ? (
+        <p className="py-10 text-center text-sm text-text-muted">
+          {query.trim() ? "Eşleşen bir generator bulunamadı." : "Henüz hiç generator yayınlanmadı."}
+        </p>
+      ) : (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {filtered.map((generator) => (
+            <GeneratorCard key={generator.id} generator={generator} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

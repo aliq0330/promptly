@@ -3,7 +3,7 @@
 import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Copy, GitBranch, X } from "lucide-react";
+import { Blocks, Copy, GitBranch, X } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { PromptCard } from "@/features/prompts/prompt-card";
@@ -17,9 +17,10 @@ import { useTagPicker } from "@/features/prompts/use-tag-picker";
 import { TagPicker } from "@/features/prompts/tag-picker";
 import { PromptTextEditor, type DraftVariable } from "@/features/prompts/prompt-text-editor";
 import { fetchVariablesForPrompt, replaceVariablesForPrompt } from "@/lib/supabase/prompt-variables";
+import { fetchGeneratorById, fetchGeneratorRun } from "@/lib/supabase/generators";
 import { placeholderArt } from "@/lib/placeholder-image";
-import { cn, promptHref, requestHref, resizeImageToDataUrlFit } from "@/lib/utils";
-import type { Prompt, PromptContentType, PromptRequest } from "@/types";
+import { cn, copyTextToClipboard, generatorHref, promptHref, requestHref, resizeImageToDataUrlFit } from "@/lib/utils";
+import type { Generator, GeneratorCategoryTopic, GeneratorRun, Prompt, PromptContentType, PromptRequest } from "@/types";
 
 const CONTENT_TYPES: PromptContentType[] = ["image", "text", "video", "code", "music"];
 
@@ -30,6 +31,22 @@ const TOOL_SUGGESTIONS: Record<PromptContentType, string[]> = {
   code: ["Claude Code", "GPT-4"],
   music: ["Suno", "Udio"],
 };
+
+/** A generator's own topic enum (`GeneratorCategoryTopic`) is a superset of `PromptContentType` — maps the closest real content type so "Prompt Olarak Aç" starts on a sensible tab instead of defaulting to "image" for e.g. a marketing-copy generator. */
+function contentTypeFromGeneratorCategory(category: GeneratorCategoryTopic): PromptContentType {
+  switch (category) {
+    case "image":
+      return "image";
+    case "video":
+      return "video";
+    case "audio":
+      return "music";
+    case "code":
+      return "code";
+    default:
+      return "text";
+  }
+}
 
 function LoginGate({ message }: { message: string }) {
   return (
@@ -50,6 +67,40 @@ function LoginGate({ message }: { message: string }) {
           Hesap Oluştur
         </Link>
       </div>
+    </div>
+  );
+}
+
+/**
+ * `prompts` has no `negative_prompt` column (Bölüm 9's schema wasn't
+ * extended for it — a generator's negative-prompt output has nowhere real
+ * to live on a published Prompt), so a generator run's negative prompt is
+ * never silently dropped OR force-appended into `promptText` with invented
+ * formatting — it's shown as an honest, read-only reference the author can
+ * manually fold into the prompt text (or a tool's own negative-prompt
+ * field) however makes sense for their own use case.
+ */
+function NegativePromptReference({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <div className="space-y-1.5 rounded-md border border-border bg-accent-surface/30 p-3 text-sm">
+      <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">Generatorun negatif prompt çıktısı</p>
+      <p className="whitespace-pre-wrap font-mono text-xs text-text-muted">{text}</p>
+      <button
+        type="button"
+        onClick={async () => {
+          if (await copyTextToClipboard(text)) {
+            setCopied(true);
+            setTimeout(() => setCopied(false), 1500);
+          }
+        }}
+        className="text-xs font-medium text-primary hover:underline"
+      >
+        {copied ? "Kopyalandı" : "Kopyala"}
+      </button>
+      <p className="text-xs text-text-muted">
+        Bu proje henüz ayrı bir negatif prompt alanı desteklemiyor — istersen bunu prompt metnine kendin ekleyebilirsin.
+      </p>
     </div>
   );
 }
@@ -84,17 +135,21 @@ export function CreatePromptForm() {
   const remixSourceId = !isEditMode ? searchParams.get("remix") : null;
   const duplicateId = !isEditMode ? searchParams.get("duplicate") : null;
   const answerRequestId = !isEditMode ? searchParams.get("answerRequest") : null;
+  const generatorRunId = !isEditMode ? searchParams.get("generatorRun") : null;
   const isAnswerMode = Boolean(answerRequestId);
   const isRemixMode = Boolean(remixSourceId);
   const isDuplicateMode = Boolean(duplicateId);
+  const isGeneratorRunMode = Boolean(generatorRunId);
 
   const [sourcePrompt, setSourcePrompt] = useState<Prompt | null>(null);
   const [duplicateSource, setDuplicateSource] = useState<Prompt | null>(null);
   const [answeredRequest, setAnsweredRequest] = useState<PromptRequest | null>(null);
+  const [generatorRun, setGeneratorRun] = useState<GeneratorRun | null>(null);
+  const [sourceGenerator, setSourceGenerator] = useState<Generator | null>(null);
   const [editingPrompt, setEditingPrompt] = useState<Prompt | null>(null);
   const [editForbidden, setEditForbidden] = useState(false);
   const [sourceChecked, setSourceChecked] = useState(
-    !isRemixMode && !isDuplicateMode && !isAnswerMode && !isEditMode,
+    !isRemixMode && !isDuplicateMode && !isAnswerMode && !isEditMode && !isGeneratorRunMode,
   );
   const { catalog: tagCatalog } = useTagCatalog();
 
@@ -129,6 +184,18 @@ export function CreatePromptForm() {
         const cached = getCachedRequest(answerRequestId);
         const found = cached ?? (await fetchRequestById(answerRequestId));
         if (!cancelled) setAnsweredRequest(found);
+      } else if (isGeneratorRunMode && generatorRunId) {
+        // RLS already restricts `generator_runs` SELECT to the run's own
+        // `user_id` (see the migration) — a run that isn't this signed-in
+        // user's own simply comes back `null` here, which falls through to
+        // the same honest "not found" screen every other mode already has,
+        // no separate ownership check needed.
+        const run = await fetchGeneratorRun(generatorRunId);
+        if (!cancelled) setGeneratorRun(run);
+        if (run) {
+          const gen = await fetchGeneratorById(run.generatorId);
+          if (!cancelled) setSourceGenerator(gen);
+        }
       }
       if (!cancelled) setSourceChecked(true);
     }
@@ -137,7 +204,19 @@ export function CreatePromptForm() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isEditMode, editId, isRemixMode, remixSourceId, isDuplicateMode, duplicateId, isAnswerMode, answerRequestId, user]);
+  }, [
+    isEditMode,
+    editId,
+    isRemixMode,
+    remixSourceId,
+    isDuplicateMode,
+    duplicateId,
+    isAnswerMode,
+    answerRequestId,
+    isGeneratorRunMode,
+    generatorRunId,
+    user,
+  ]);
 
   const [contentType, setContentType] = useState<PromptContentType>("image");
   const [title, setTitle] = useState("");
@@ -209,9 +288,27 @@ export function CreatePromptForm() {
       // promptText, once the user starts writing) decides what actually
       // gets accepted.
       setFieldsSeeded(true);
+      return;
+    }
+    if (generatorRun && sourceChecked) {
+      // Gated on `sourceChecked` (only set once the OTHER effect's load()
+      // has awaited BOTH the run and its generator) rather than on
+      // `generatorRun` alone — `setGeneratorRun`/`setSourceGenerator` are
+      // two separate `setState` calls straddling an `await` in that other
+      // effect, so `generatorRun` alone can already be truthy for a render
+      // where `sourceGenerator` hasn't arrived yet; seeding (and marking
+      // `fieldsSeeded`) on that earlier render would permanently skip the
+      // title/content-type fill once the generator DOES arrive a moment
+      // later, since this effect only ever runs once per `fieldsSeeded`.
+      if (sourceGenerator) {
+        setContentType(contentTypeFromGeneratorCategory(sourceGenerator.category));
+        setTitle(sourceGenerator.title);
+      }
+      setPromptText(generatorRun.generatedPrompt);
+      setFieldsSeeded(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- tagPicker.addManual is stable (useCallback), not a reactive dependency worth re-running this one-time seed for
-  }, [editingPrompt, sourcePrompt, duplicateSource, answeredRequest, fieldsSeeded, isRemixMode]);
+  }, [editingPrompt, sourcePrompt, duplicateSource, answeredRequest, generatorRun, sourceGenerator, sourceChecked, fieldsSeeded, isRemixMode]);
 
   const [showOnProfile, setShowOnProfile] = useState(true);
 
@@ -223,6 +320,7 @@ export function CreatePromptForm() {
     ((isRemixMode && !sourcePrompt) ||
       (isDuplicateMode && !duplicateSource) ||
       (isAnswerMode && !answeredRequest) ||
+      (isGeneratorRunMode && !generatorRun) ||
       (isEditMode && !editingPrompt && !editForbidden));
   const isRequestClosed = isAnswerMode && Boolean(answeredRequest) && answeredRequest?.status !== "open";
 
@@ -250,6 +348,17 @@ export function CreatePromptForm() {
       : answeredRequest
         ? { type: "request-response", requestId: answeredRequest.id, responseId: "pending" }
         : { type: "original" };
+
+  const generatedFrom =
+    !isEditMode && generatorRun && sourceGenerator
+      ? {
+          generatorId: sourceGenerator.id,
+          generatorVersionId: generatorRun.generatorVersionId,
+          generatorRunId: generatorRun.id,
+          generatorTitle: sourceGenerator.title,
+          generatorSlug: sourceGenerator.slug,
+        }
+      : null;
 
   const existingMedia = editingPrompt?.media[0];
   const media =
@@ -319,6 +428,7 @@ export function CreatePromptForm() {
                 rootPromptId: sourcePrompt.origin.type === "remix" ? sourcePrompt.origin.rootPromptId : sourcePrompt.id,
               }
             : undefined,
+          generatedFrom: generatedFrom ?? undefined,
         },
         ownProfile,
       );
@@ -364,6 +474,7 @@ export function CreatePromptForm() {
     status: "draft",
     showOnProfile: isAnswerMode || isRemixMode ? showOnProfile : true,
     deletedAt: null,
+    generatedFrom,
     createdAt: new Date().toISOString(),
   };
 
@@ -398,20 +509,22 @@ export function CreatePromptForm() {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
         <h1 className="mb-2 text-lg font-semibold text-text">
-          {isEditMode ? "Prompt bulunamadı" : isAnswerMode ? "İstek bulunamadı" : "Prompt bulunamadı"}
+          {isEditMode ? "Prompt bulunamadı" : isAnswerMode ? "İstek bulunamadı" : isGeneratorRunMode ? "Kayıt bulunamadı" : "Prompt bulunamadı"}
         </h1>
         <p className="mb-4 text-sm text-text-muted">
           {isEditMode
             ? "Düzenlemek istediğin prompt silinmiş veya artık erişilebilir değil."
             : isAnswerMode
               ? "Yanıtlamak istediğin istek silinmiş veya artık erişilebilir değil."
-              : "Kaynak prompt silinmiş veya artık erişilebilir değil."}
+              : isGeneratorRunMode
+                ? "Bu generator kaydı bulunamadı — yalnızca kendi oluşturduğun bir kaydı buradan açabilirsin."
+                : "Kaynak prompt silinmiş veya artık erişilebilir değil."}
         </p>
         <Link
-          href={isAnswerMode ? "/requests" : "/discover"}
+          href={isAnswerMode ? "/requests" : isGeneratorRunMode ? "/generators" : "/discover"}
           className="inline-flex h-9 items-center rounded-md border border-border px-4 text-sm font-medium text-text hover:bg-accent-surface"
         >
-          {isAnswerMode ? "Prompt İsteklerine Dön" : "Keşfet'e Dön"}
+          {isAnswerMode ? "Prompt İsteklerine Dön" : isGeneratorRunMode ? "Generatorlara Dön" : "Keşfet'e Dön"}
         </Link>
       </div>
     );
@@ -445,14 +558,18 @@ export function CreatePromptForm() {
               ? "Türet"
               : isDuplicateMode
                 ? "Kopyasını Oluştur"
-                : "Prompt Oluştur"}
+                : isGeneratorRunMode
+                  ? "Prompt Olarak Aç"
+                  : "Prompt Oluştur"}
       </h1>
       <p className="mb-6 text-sm text-text-muted">
         {isEditMode
           ? "Değişikliklerini yaz, sağda anında önizlemesini gör. Kaydet'e bastığında gerçekten, kalıcı olarak güncellenir."
           : isAnswerMode
             ? "Yanıtını yaz, sağda anında önizlemesini gör. Yayınladığında gerçekten, kalıcı olarak Supabase'e yayınlanır ve istek sahibine görünür olur."
-            : "Promptunu yaz, sağda anında önizlemesini gör. Paylaş'a bastığında gerçekten, kalıcı olarak yayınlanır."}
+            : isGeneratorRunMode
+              ? "Generatorun ürettiği prompt metni dolduruldu — başlık/açıklama ekleyip dilediğin gibi düzenleyebilirsin. Paylaş'a bastığında gerçekten, kalıcı olarak yayınlanır."
+              : "Promptunu yaz, sağda anında önizlemesini gör. Paylaş'a bastığında gerçekten, kalıcı olarak yayınlanır."}
       </p>
 
       <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
@@ -568,6 +685,26 @@ export function CreatePromptForm() {
             </div>
           )}
 
+          {generatorRun && (
+            <div className="flex items-start gap-2 rounded-md border border-primary/30 bg-primary/5 p-3 text-sm text-primary">
+              <Blocks size={16} className="mt-0.5 shrink-0" />
+              <p>
+                {sourceGenerator ? (
+                  <>
+                    <Link href={generatorHref(sourceGenerator)} className="font-medium underline">
+                      &ldquo;{sourceGenerator.title}&rdquo;
+                    </Link>{" "}
+                    generatoruyla oluşturulan prompt metni dolduruldu
+                  </>
+                ) : (
+                  "Bir generatorla oluşturulan prompt metni dolduruldu"
+                )}{" "}
+                — başlık/açıklama ekleyip dilediğin gibi düzenleyebilirsin, hangi generatorla oluşturulduğu
+                bağlantısı korunuyor.
+              </p>
+            </div>
+          )}
+
           <div>
             <label className="mb-2 block text-sm font-medium text-text">İçerik Türü</label>
             {isEditMode ? (
@@ -671,6 +808,10 @@ export function CreatePromptForm() {
               placeholder="Kullandığın tam prompt metnini buraya yaz. {ortam} gibi değişkenler tanımlayabilirsin."
             />
           </div>
+
+          {generatorRun?.generatedNegativePrompt && (
+            <NegativePromptReference text={generatorRun.generatedNegativePrompt} />
+          )}
 
           <div>
             <label htmlFor="prompt-tool" className="mb-1.5 block text-sm font-medium text-text">

@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { clampedAspectRatio } from "@/lib/placeholder-image";
 import { promptHref } from "@/lib/utils";
 import { PostHeader } from "./post-header";
-import { RemixContext, RequestResponseContext } from "./post-context";
+import { GeneratorSourceContext, RemixContext, RequestResponseContext } from "./post-context";
 import { PromptPreviewBox } from "./prompt-preview-box";
 import { PromptCardFooter } from "./prompt-card-footer";
 import type { Prompt } from "@/types";
@@ -34,6 +34,7 @@ export function ImagePromptCard({
         {prompt.origin.type === "request-response" && (
           <RequestResponseContext requestId={prompt.origin.requestId} currentPromptId={prompt.id} />
         )}
+        {prompt.generatedFrom && <GeneratorSourceContext generatedFrom={prompt.generatedFrom} />}
 
         <div>
           <h3 className="text-base font-semibold text-text">{prompt.title}</h3>

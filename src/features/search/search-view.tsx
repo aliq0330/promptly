@@ -6,12 +6,14 @@ import { Search } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
 import { PromptGrid } from "@/features/prompts/prompt-grid";
+import { GeneratorCard } from "@/features/generators/generator-card";
 import { useTagCatalog } from "@/features/tags/use-tag-catalog";
 import { searchPrompts } from "@/lib/supabase/prompts";
 import { searchProfiles } from "@/lib/supabase/profiles";
+import { searchGenerators } from "@/lib/supabase/generators";
 import { normalizeTagLabel } from "@/lib/tag-normalize";
 import { formatCount, profileHref, tagHref } from "@/lib/utils";
-import type { Prompt, Tag, UserProfile } from "@/types";
+import type { Generator, Prompt, Tag, UserProfile } from "@/types";
 
 const DEBOUNCE_MS = 300;
 
@@ -20,6 +22,7 @@ export function SearchView() {
   const [query, setQuery] = useState("");
   const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [users, setUsers] = useState<UserProfile[]>([]);
+  const [generators, setGenerators] = useState<Generator[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const normalized = query.trim();
 
@@ -36,16 +39,20 @@ export function SearchView() {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- clears results when the query is emptied
       setPrompts([]);
       setUsers([]);
+      setGenerators([]);
       setIsSearching(false);
       return;
     }
     setIsSearching(true);
     const timeout = setTimeout(() => {
-      Promise.all([searchPrompts(normalized), searchProfiles(normalized)]).then(([foundPrompts, foundUsers]) => {
-        setPrompts(foundPrompts);
-        setUsers(foundUsers);
-        setIsSearching(false);
-      });
+      Promise.all([searchPrompts(normalized), searchProfiles(normalized), searchGenerators(normalized)]).then(
+        ([foundPrompts, foundUsers, foundGenerators]) => {
+          setPrompts(foundPrompts);
+          setUsers(foundUsers);
+          setGenerators(foundGenerators);
+          setIsSearching(false);
+        },
+      );
     }, DEBOUNCE_MS);
     return () => clearTimeout(timeout);
   }, [normalized]);
@@ -110,9 +117,20 @@ export function SearchView() {
             </section>
           )}
 
+          {generators.length > 0 && (
+            <section className="space-y-3">
+              <h2 className="text-sm font-semibold text-text">Generatorlar</h2>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {generators.map((generator) => (
+                  <GeneratorCard key={generator.id} generator={generator} />
+                ))}
+              </div>
+            </section>
+          )}
+
           <section className="space-y-3">
             <h2 className="text-sm font-semibold text-text">Promptlar</h2>
-            {prompts.length === 0 && users.length === 0 && matchedTags.length === 0 ? (
+            {prompts.length === 0 && users.length === 0 && matchedTags.length === 0 && generators.length === 0 ? (
               <p className="py-6 text-center text-sm text-text-muted">Sonuç bulunamadı.</p>
             ) : (
               <PromptGrid prompts={prompts} />

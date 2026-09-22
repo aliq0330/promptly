@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { GitBranch, Heart, SearchX, Sparkles } from "lucide-react";
+import { Blocks, GitBranch, Heart, SearchX, Sparkles } from "lucide-react";
 import { ProfileHeader } from "./profile-header";
 import { ProfileTabs, type ProfileTabKey } from "./profile-tabs";
 import { ProfileToolbar, type ProfileSortKey } from "./profile-toolbar";
@@ -10,9 +10,10 @@ import { ProfileEmptyState } from "./profile-empty-state";
 import { ProfileAbout } from "./profile-about";
 import { RequestList } from "@/features/requests/request-list";
 import { CollectionsPanel } from "@/features/collections/collections-panel";
+import { GeneratorCard } from "@/features/generators/generator-card";
 import { useAuth } from "@/features/auth/auth-provider";
 import { fetchLikedPrompts } from "@/lib/supabase/prompts";
-import type { Prompt, PromptContentType, PromptRequest, UserProfile } from "@/types";
+import type { Generator, Prompt, PromptContentType, PromptRequest, UserProfile } from "@/types";
 
 function sortPrompts(prompts: Prompt[], sort: ProfileSortKey): Prompt[] {
   const sorted = [...prompts];
@@ -34,12 +35,15 @@ export function ProfileView({
   isOwnProfile,
   authorPrompts: initialAuthorPrompts,
   authorRequests,
+  authorGenerators,
 }: {
   user: UserProfile;
   isOwnProfile: boolean;
   authorPrompts: Prompt[];
   /** This profile's own real prompt requests (Prompt İstekleri) — always public, shown on every profile, not just the owner's (CLAUDE.md prompt-request module). */
   authorRequests: PromptRequest[];
+  /** This profile's own real generators — RLS already limits a visitor to the owner's published+public/unlisted ones, drafts only ever coming back for the owner's own profile, so no extra client-side filter is needed. */
+  authorGenerators: Generator[];
 }) {
   const { user: authUser } = useAuth();
 
@@ -93,6 +97,7 @@ export function ProfileView({
       { key: "prompts", label: "Promptlar", count: authorPrompts.length },
       { key: "remixes", label: "Türetilen promptlar", count: remixPrompts.length },
       { key: "requests", label: "Prompt İstekleri", count: authorRequests.length },
+      { key: "generators", label: "Generatorlar", count: authorGenerators.length },
     ];
     if (isOwnProfile) {
       // "Kaydedilenler" has no single flat count anymore — it's a list of
@@ -101,7 +106,7 @@ export function ProfileView({
     }
     base.push({ key: "about", label: "Hakkında" });
     return base;
-  }, [authorPrompts.length, remixPrompts.length, authorRequests.length, isOwnProfile, likedPrompts.length]);
+  }, [authorPrompts.length, remixPrompts.length, authorRequests.length, authorGenerators.length, isOwnProfile, likedPrompts.length]);
 
   const activeSource = useMemo(() => {
     switch (activeTab) {
@@ -176,6 +181,25 @@ export function ProfileView({
             />
           ) : (
             <RequestList requests={authorRequests} />
+          )
+        ) : activeTab === "generators" ? (
+          authorGenerators.length === 0 ? (
+            <ProfileEmptyState
+              icon={Blocks}
+              title="Henüz bir generator oluşturulmamış."
+              description={
+                isOwnProfile
+                  ? "Kendi prompt generatorunu oluşturup başkalarının kullanmasına açabilirsin."
+                  : "Bu kullanıcı henüz bir generator yayınlamadı."
+              }
+              action={isOwnProfile ? { label: "Generator oluştur", href: "/generators/create" } : undefined}
+            />
+          ) : (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {authorGenerators.map((generator) => (
+                <GeneratorCard key={generator.id} generator={generator} />
+              ))}
+            </div>
           )
         ) : activeTab === "saved" ? (
           // No more separate flat "Tümü" list here — Kaydedilenler IS the

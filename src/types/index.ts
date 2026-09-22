@@ -93,6 +93,15 @@ export interface Prompt {
    * direct link or in a remix-source preview. `null` for a normal prompt.
    */
   deletedAt: string | null;
+  /**
+   * Set only when this prompt was produced via "Prompt olarak aç" from a
+   * real generator run (`prompts.generator_id`/`generator_version_id`/
+   * `generator_run_id` — Generator Builder + Runtime module) — purely
+   * informational provenance metadata, orthogonal to `origin` (a
+   * generator-produced prompt is still `origin: "original"` unless it's
+   * ALSO a remix of something else).
+   */
+  generatedFrom: { generatorId: string; generatorVersionId: string; generatorRunId: string; generatorTitle: string; generatorSlug: string } | null;
 }
 
 /**
@@ -315,6 +324,145 @@ export interface ContentEditEvent {
   ownerId: string;
   editorId: string;
   changedFields: string[];
+  createdAt: string;
+}
+
+// === Generator (Generator Builder + Generator Runtime) =====================
+//
+// A generator's whole builder schema (categories + fields + template
+// sections) is stored as real, versioned JSONB on `generator_versions`
+// (`public.generator_versions.schema`/`template` —
+// supabase/migrations/20260919300000_generators.sql) rather than as
+// separate normalized tables — see that migration's own header comment for
+// the reasoning. These types mirror that JSON shape exactly; nothing here
+// is hard-coded per generator, every category/field is fully user-defined.
+
+export type GeneratorCategoryTopic = "image" | "text" | "video" | "audio" | "code" | "design" | "marketing" | "writing" | "other";
+
+export type GeneratorFieldType =
+  | "text"
+  | "textarea"
+  | "select"
+  | "multi_select"
+  | "number"
+  | "slider"
+  | "color"
+  | "checkbox"
+  | "toggle"
+  | "radio"
+  | "url";
+
+/**
+ * A field only renders/counts toward the generated prompt when its one
+ * optional condition (if set) is satisfied by the current runtime values —
+ * a deliberately minimal version of §34's conditional-field system (one
+ * condition per field, `equals` only) that's still fully generic: any field
+ * can gate any other field, by key, for any generator. Chained/AND/OR
+ * conditions and the "dependent options" idea from §35 are NOT built —
+ * documented as a conscious scope decision (CLAUDE.md).
+ */
+export interface GeneratorFieldCondition {
+  fieldKey: string;
+  equals: string;
+}
+
+export interface GeneratorCategory {
+  id: string;
+  name: string;
+  description: string;
+  order: number;
+}
+
+export interface GeneratorField {
+  id: string;
+  categoryId: string;
+  key: string;
+  label: string;
+  description: string;
+  type: GeneratorFieldType;
+  required: boolean;
+  /** select/multi_select/radio only. */
+  options: string[];
+  /** A single value for most types; multiple selected values for multi_select. */
+  defaultValue: string | string[];
+  placeholder: string;
+  min: number | null;
+  max: number | null;
+  step: number | null;
+  order: number;
+  condition: GeneratorFieldCondition | null;
+}
+
+export interface GeneratorSchema {
+  categories: GeneratorCategory[];
+  fields: GeneratorField[];
+}
+
+export interface GeneratorTemplateSection {
+  id: string;
+  title: string;
+  content: string;
+  order: number;
+  enabled: boolean;
+}
+
+export interface GeneratorTemplate {
+  sections: GeneratorTemplateSection[];
+}
+
+/** Real key/value input a generator was run with — GeneratorFieldType-shaped values, keyed by field `key`. */
+export type GeneratorValues = Record<string, string | string[]>;
+
+export type GeneratorOrigin =
+  | { type: "original" }
+  | { type: "remix"; sourceGeneratorId: string; rootGeneratorId: string };
+
+export interface Generator {
+  id: string;
+  creator: UserProfile;
+  title: string;
+  slug: string;
+  description: string;
+  coverUrl: string | null;
+  category: GeneratorCategoryTopic;
+  subcategory: string | null;
+  tags: Tag[];
+  visibility: "public" | "unlisted" | "private";
+  status: "draft" | "published" | "archived";
+  allowRemix: boolean;
+  allowPromptEditing: boolean;
+  allowSavingGeneratedPrompts: boolean;
+  enableNegativePrompt: boolean;
+  origin: GeneratorOrigin;
+  currentVersionId: string | null;
+  useCount: number;
+  saveCount: number;
+  remixCount: number;
+  isSaved: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** One real, immutable (once published) version of a generator's schema+template — `public.generator_versions`. */
+export interface GeneratorVersion {
+  id: string;
+  generatorId: string;
+  versionNumber: number;
+  schema: GeneratorSchema;
+  template: GeneratorTemplate;
+  createdBy: string;
+  createdAt: string;
+}
+
+/** One real, logged use of a generator (`public.generator_runs`) — private to whoever ran it; only the denormalized `Generator.useCount` is ever public. */
+export interface GeneratorRun {
+  id: string;
+  generatorId: string;
+  generatorVersionId: string;
+  userId: string;
+  inputValues: GeneratorValues;
+  generatedPrompt: string;
+  generatedNegativePrompt: string | null;
   createdAt: string;
 }
 

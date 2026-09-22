@@ -3,13 +3,13 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowUpRight, CheckCircle2, CornerUpRight, GitBranch } from "lucide-react";
+import { ArrowUpRight, Blocks, CheckCircle2, CornerUpRight, GitBranch } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useRealPrompts } from "@/features/prompts/real-prompts-provider";
 import { useRealRequests } from "@/features/requests/real-requests-provider";
 import { STATUS_LABELS, STATUS_VARIANTS } from "@/features/requests/request-card";
-import { promptHref, requestHref } from "@/lib/utils";
+import { generatorHref, promptHref, requestHref } from "@/lib/utils";
 import type { Prompt, PromptRequest } from "@/types";
 
 /**
@@ -151,6 +151,31 @@ export function RequestResponseContext({
 
       <span className="flex items-center gap-1 text-xs font-medium text-primary">
         İsteği görüntüle
+        <ArrowUpRight size={12} />
+      </span>
+    </ContextBox>
+  );
+}
+
+/**
+ * "Generated with [Generator]" (Generator Builder module's own §21-24
+ * bridge) — only rendered by a card whose `prompt.generatedFrom` is set.
+ * Unlike `RemixContext`/`RequestResponseContext`, no cache-then-fetch is
+ * needed: `generatedFrom` already carries the generator's real title/slug
+ * directly on the prompt row (`createRealPrompt`'s own denormalized
+ * columns), so this never needs a second network round trip just to show
+ * which generator produced this prompt.
+ */
+export function GeneratorSourceContext({ generatedFrom }: { generatedFrom: NonNullable<Prompt["generatedFrom"]> }) {
+  return (
+    <ContextBox href={generatorHref({ slug: generatedFrom.generatorSlug })}>
+      <span className="flex items-center gap-1.5 text-xs font-medium text-primary">
+        <Blocks size={14} />
+        Generator ile oluşturuldu
+      </span>
+      <span className="block truncate text-sm font-semibold text-text">&ldquo;{generatedFrom.generatorTitle}&rdquo;</span>
+      <span className="flex items-center gap-1 text-xs font-medium text-primary">
+        Generatoru gör
         <ArrowUpRight size={12} />
       </span>
     </ContextBox>

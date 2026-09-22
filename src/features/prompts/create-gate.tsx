@@ -18,6 +18,7 @@ export function CreateGate() {
     searchParams.get("duplicate") ||
     searchParams.get("answerRequest") ||
     searchParams.get("edit") ||
+    searchParams.get("generatorRun") ||
     searchParams.get("mode") === "prompt";
 
   return hasIntent ? <CreatePromptForm /> : <CreateChoice />;
