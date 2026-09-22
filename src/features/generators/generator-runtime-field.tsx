@@ -72,8 +72,8 @@ function FieldControl({
         >
           <option value="">Seç…</option>
           {field.options.map((option) => (
-            <option key={option} value={option}>
-              {option}
+            <option key={option.value} value={option.value}>
+              {option.label}
             </option>
           ))}
         </select>
@@ -83,20 +83,20 @@ function FieldControl({
         <div className="flex flex-wrap gap-2">
           {field.options.map((option) => (
             <label
-              key={option}
+              key={option.value}
               className={cn(
                 "flex cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition-colors",
-                stringValue === option ? "border-primary bg-primary/10 text-primary" : "border-border text-text-muted hover:text-text",
+                stringValue === option.value ? "border-primary bg-primary/10 text-primary" : "border-border text-text-muted hover:text-text",
               )}
             >
               <input
                 type="radio"
                 name={inputId}
-                checked={stringValue === option}
-                onChange={() => onChange(option)}
+                checked={stringValue === option.value}
+                onChange={() => onChange(option.value)}
                 className="sr-only"
               />
-              {option}
+              {option.label}
             </label>
           ))}
         </div>
@@ -105,20 +105,20 @@ function FieldControl({
       return (
         <div className="flex flex-wrap gap-2">
           {field.options.map((option) => {
-            const selected = arrayValue.includes(option);
+            const selected = arrayValue.includes(option.value);
             return (
               <button
-                key={option}
+                key={option.value}
                 type="button"
                 onClick={() =>
-                  onChange(selected ? arrayValue.filter((item) => item !== option) : [...arrayValue, option])
+                  onChange(selected ? arrayValue.filter((item) => item !== option.value) : [...arrayValue, option.value])
                 }
                 className={cn(
                   "rounded-full border px-3 py-1.5 text-sm transition-colors",
                   selected ? "border-primary bg-primary text-primary-foreground" : "border-border text-text-muted hover:text-text",
                 )}
               >
-                {option}
+                {option.label}
               </button>
             );
           })}
