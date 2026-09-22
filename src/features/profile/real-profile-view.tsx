@@ -8,7 +8,8 @@ import { useAuth } from "@/features/auth/auth-provider";
 import { fetchProfileByUsername } from "@/lib/supabase/profiles";
 import { fetchPromptsByAuthor } from "@/lib/supabase/prompts";
 import { fetchRequestsByAuthor } from "@/lib/supabase/requests";
-import type { Prompt, PromptRequest, UserProfile } from "@/types";
+import { fetchGeneratorsByAuthor } from "@/lib/supabase/generators";
+import type { Generator, Prompt, PromptRequest, UserProfile } from "@/types";
 
 /**
  * Client-rendered counterpart to `/profile/[username]` for a real, signed-up
@@ -27,6 +28,7 @@ export function RealProfileView() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [requests, setRequests] = useState<PromptRequest[]>([]);
+  const [generators, setGenerators] = useState<Generator[]>([]);
   const [status, setStatus] = useState<"loading" | "found" | "not-found">("loading");
 
   useEffect(() => {
@@ -45,14 +47,16 @@ export function RealProfileView() {
         setStatus("not-found");
         return;
       }
-      const [authorPrompts, authorRequests] = await Promise.all([
+      const [authorPrompts, authorRequests, authorGenerators] = await Promise.all([
         fetchPromptsByAuthor(result.id),
         fetchRequestsByAuthor(result.id),
+        fetchGeneratorsByAuthor(result.id),
       ]);
       if (cancelled) return;
       setProfile(result);
       setPrompts(authorPrompts);
       setRequests(authorRequests);
+      setGenerators(authorGenerators);
       setStatus("found");
     });
 
@@ -87,6 +91,12 @@ export function RealProfileView() {
   const isOwnProfile = user?.id === profile.id;
 
   return (
-    <ProfileView user={profile} isOwnProfile={isOwnProfile} authorPrompts={prompts} authorRequests={requests} />
+    <ProfileView
+      user={profile}
+      isOwnProfile={isOwnProfile}
+      authorPrompts={prompts}
+      authorRequests={requests}
+      authorGenerators={generators}
+    />
   );
 }

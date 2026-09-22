@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { promptHref } from "@/lib/utils";
 import { CONTENT_TYPE_META } from "./content-type-meta";
 import { PostHeader } from "./post-header";
-import { RemixContext, RequestResponseContext } from "./post-context";
+import { GeneratorSourceContext, RemixContext, RequestResponseContext } from "./post-context";
 import { PromptPreviewBox } from "./prompt-preview-box";
 import { PromptCardFooter } from "./prompt-card-footer";
 import type { Prompt } from "@/types";
@@ -39,6 +39,7 @@ export function TextPromptCard({
         {prompt.origin.type === "request-response" && (
           <RequestResponseContext requestId={prompt.origin.requestId} currentPromptId={prompt.id} />
         )}
+        {prompt.generatedFrom && <GeneratorSourceContext generatedFrom={prompt.generatedFrom} />}
 
         <div className="flex items-center gap-1.5 text-primary">
           <Icon size={14} />

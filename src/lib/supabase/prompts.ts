@@ -28,19 +28,25 @@ export interface PromptRow {
   created_at: string;
   show_on_profile: boolean;
   deleted_at: string | null;
+  generator_id: string | null;
+  generator_version_id: string | null;
+  generator_run_id: string | null;
   profiles: ProfileRow;
   prompt_media: { id: string; url: string; width: number; height: number; alt: string | null }[];
   prompt_tags: { tags: { slug: string; label: string } }[];
+  /** Only present when generator_id is set — the "Generated with" link's title/slug (Generator Builder module). */
+  generators: { title: string; slug: string } | null;
 }
 
 export const PROMPT_SELECT = `
   id, title, description, prompt_text, tool, content_type, status,
   origin_type, source_prompt_id, root_prompt_id, request_id,
   like_count, comment_count, remix_count, created_at, show_on_profile,
-  deleted_at,
+  deleted_at, generator_id, generator_version_id, generator_run_id,
   profiles:author_id ( id, username, display_name, avatar_url, cover_url, bio, website, follower_count, following_count, created_at, interests ),
   prompt_media ( id, url, width, height, alt ),
-  prompt_tags ( tags ( slug, label ) )
+  prompt_tags ( tags ( slug, label ) ),
+  generators ( title, slug )
 `;
 
 /**
@@ -106,6 +112,16 @@ export function mapPromptRow(row: PromptRow): Prompt {
     remixCount: row.remix_count,
     showOnProfile: row.show_on_profile,
     deletedAt: row.deleted_at,
+    generatedFrom:
+      row.generator_id && row.generator_version_id && row.generator_run_id && row.generators
+        ? {
+            generatorId: row.generator_id,
+            generatorVersionId: row.generator_version_id,
+            generatorRunId: row.generator_run_id,
+            generatorTitle: row.generators.title,
+            generatorSlug: row.generators.slug,
+          }
+        : null,
     // Whether *this viewer* liked/saved it is still decided entirely by the
     // localStorage LikeProvider/SaveProvider (CLAUDE.md Bölüm 14) — real
     // per-user like/save rows aren't wired yet (a later Bölüm 21 phase).
@@ -346,6 +362,8 @@ export interface CreateRealPromptInput {
   remixOf?: { sourcePromptId: string; rootPromptId: string };
   /** Only meaningful when `requestId` is set — whether this answer should also appear in the author's normal profile/feed/discover results (`prompts.show_on_profile`). Defaults to `true`; irrelevant for original/remix prompts. */
   showOnProfile?: boolean;
+  /** Set only when this prompt is "Open in Prompt" from a real generator run (Generator Builder module) — purely informational provenance, orthogonal to origin/remixOf/requestId (a generator output is normally `origin: "original"`). `generatorTitle`/`generatorSlug` are only needed to build the immediate return value (the caller already has them from the generator it just ran) — never trusted for anything written to the database. */
+  generatedFrom?: { generatorId: string; generatorVersionId: string; generatorRunId: string; generatorTitle: string; generatorSlug: string };
 }
 
 /**
@@ -376,6 +394,9 @@ export async function createRealPrompt(
       source_prompt_id: input.remixOf?.sourcePromptId ?? null,
       root_prompt_id: input.remixOf?.rootPromptId ?? null,
       show_on_profile: input.showOnProfile ?? true,
+      generator_id: input.generatedFrom?.generatorId ?? null,
+      generator_version_id: input.generatedFrom?.generatorVersionId ?? null,
+      generator_run_id: input.generatedFrom?.generatorRunId ?? null,
     })
     .select("id, created_at")
     .single();
@@ -473,6 +494,15 @@ export async function createRealPrompt(
     status: "published",
     showOnProfile: input.showOnProfile ?? true,
     deletedAt: null,
+    generatedFrom: input.generatedFrom
+      ? {
+          generatorId: input.generatedFrom.generatorId,
+          generatorVersionId: input.generatedFrom.generatorVersionId,
+          generatorRunId: input.generatedFrom.generatorRunId,
+          generatorTitle: input.generatedFrom.generatorTitle,
+          generatorSlug: input.generatedFrom.generatorSlug,
+        }
+      : null,
     createdAt: inserted.created_at,
   };
 }

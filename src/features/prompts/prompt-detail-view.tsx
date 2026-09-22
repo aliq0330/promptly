@@ -8,7 +8,7 @@ import { ChevronRight, GitBranch, Wand2 } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { PromptGrid } from "@/features/prompts/prompt-grid";
-import { RemixContext, RequestResponseContext } from "@/features/prompts/post-context";
+import { GeneratorSourceContext, RemixContext, RequestResponseContext } from "@/features/prompts/post-context";
 import { CommentSection } from "@/features/prompts/comment-section";
 import { LikeButton } from "@/features/prompts/like-button";
 import { SaveButton } from "@/features/prompts/save-button";
@@ -106,6 +106,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
         {prompt.origin.type === "request-response" && (
           <RequestResponseContext requestId={prompt.origin.requestId} currentPromptId={prompt.id} />
         )}
+        {prompt.generatedFrom && <GeneratorSourceContext generatedFrom={prompt.generatedFrom} />}
 
         {remixChain.length > 1 && (
           <div className="flex flex-wrap items-center gap-1 text-xs text-text-muted">

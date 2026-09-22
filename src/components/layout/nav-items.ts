@@ -1,5 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import {
+  Blocks,
   Bookmark,
   Compass,
   Hash,
@@ -22,6 +23,7 @@ export const primaryNavItems: NavItem[] = [
   { href: "/", label: "Ana Sayfa", icon: Home },
   { href: "/discover", label: "Keşfet", icon: Compass },
   { href: "/create", label: "Prompt Oluştur", icon: PlusSquare },
+  { href: "/generators", label: "Generatorlar", icon: Blocks },
   { href: "/requests", label: "Prompt İstekleri", icon: Sparkles },
   { href: "/tags", label: "Etiketler", icon: Hash },
   { href: "/saved", label: "Kaydedilenler", icon: Bookmark },
