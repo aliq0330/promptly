@@ -8098,6 +8098,131 @@ local` tasarımını bizzat denemesi gerekiyor.
   Playwright'ın simüle ettiği viewport genişlikleri doğrulandı (Bölüm
   9.11/9.13/9.31'in de belirttiği aynı donanım-erişimi sınırı).
 
+### 9.33 "Türet" terimi geri alındı — "Remix" terminolojisine dönüş
+
+Kullanıcının açık isteği üzerine ("Ben daha önce remix yerine türet
+kullanmıştım bunları eski haline getir türet olmasın") Bölüm 9.16-9.18'de
+yapılan "Remix → Türet" UI yeniden adlandırması tamamen geri alındı —
+sadece metin, hiçbir mantık/routing/ikon değişikliği yok:
+- `prompt-detail-view.tsx`: origin rozeti "Türet"→"Remix"; "Türetme
+  geçmişi:" breadcrumb→"Remix zinciri:"; "Türet" eylem butonu→"Remixle";
+  sekme etiketi "Türetilen promptlar (N)"→"Remixler (N)".
+- `create-prompt-form.tsx`: sayfa başlığı "Türet"→"Remix Oluştur";
+  "(türetme)" son eki→"(remix)"; "Bu türetme profilimde görünsün mü?"→"Bu
+  remix profilimde görünsün mü?"; iki radyo açıklaması ve bilgi bandı
+  "türet(ilen)" ifadelerinden "remix"e geri döndü.
+- `remix-map-node-card.tsx`, `remix-node-detail-panel.tsx`,
+  `remix-branch-map.tsx`: düğüm rozetleri/lejant "Türet"→"Remix";
+  "Türetme sayısı:"→"Remix sayısı:"; panel butonu "Türet"→"Remixle".
+- `profile-view.tsx`, `profile-badges.tsx`, `profile-stats.tsx`,
+  `profile-toolbar.tsx`: sekme etiketi "Türetilen promptlar"→"Remixler";
+  boş-durum başlığı, rozet metni, istatistik butonu etiketi ve sıralama
+  seçeneği hepsi "remix" köküne döndü.
+- `prompt-card-footer.tsx`, `post-context.tsx`, ve kod içi Türkçe
+  yorumlar (`copy-prompt-button.tsx`, `prompt-preview-box.tsx`,
+  `remix-branch-map.tsx`, `local-prompt-view.tsx`) da dahil, kullanıcıya
+  görünen HER "türet" kökü kelime "remix"e çevrildi.
+- **Bilinçli olarak dokunulmayan:** "Prompt geçmişi" sekme adı (Bölüm
+  9.17'de ayrı bir kullanıcı talebiyle "Remix Dallanma Haritası"ndan
+  değiştirilmişti, "türet" kelimesi hiç içermiyordu) ve `GitBranch` ikonu
+  (Bölüm 9.17'de `Repeat2`'den değiştirilmişti — metin değil, ve "remix"
+  kavramı için de anlamlı bir ikon) — kullanıcının isteği yalnızca "türet"
+  kelimesini hedefliyordu, bu ikisi kapsam dışı bırakıldı. Kod içi tip/
+  bileşen/dosya adları (`RemixGraphNode`, `isRemixMode`,
+  `remix-branch-map.tsx` vb.) zaten hiç "türet" içermiyordu, değişmedi.
+
+**Nasıl doğrulandı:** `grep -i türet` `src/` genelinde sıfır eşleşmeye
+düştü. `npx tsc --noEmit`, `npm run lint`, tam `npm run build` (25 rota,
+değişmedi) sıfır hatayla geçti. Bu görev hiçbir yeni migration
+içermiyor (tamamen metin), PR #18 olarak `main`'e merge edildi.
+
+**Bilinen sınırlamalar:** Yok — bu, önceki bir kullanıcı talebiyle
+yapılan terminoloji değişikliğini yine kullanıcının talebiyle tersine
+çeviren, kapsamı net bir düzeltme.
+
+---
+
+### 9.34 Prompt/Generator ortak sosyal mimari denetimi (AŞAMA 1 — AUDIT)
+
+Kullanıcının çok kapsamlı 62 bölümlük "Generator sistemini mevcut Prompt
+sistemiyle paralelleştirme" şartnamesi üzerine — şartnamenin kendi §43/§62
+kuralına uyularak (**"Önce rapor ver, sonra kodla"**) bu görevde HİÇBİR
+refactor kodu yazılmadı; yalnızca gerçek kaynak dosyaları/migration'lar
+okunup A-J formatında bir audit raporu üretilip kullanıcıya sohbette
+(literal metin olarak, yalnızca bu CLAUDE.md notu değil) teslim edildi.
+Kullanıcının onayı bekleniyor — onaylanmadan hiçbir PHASE 1-10 adımı
+başlamayacak.
+
+**Gerçekten okunan dosyalar (tahmin edilmedi):**
+`20260919300000_generators.sql`, `20260919120300_engagement.sql`
+(`prompt_likes`/`prompt_saves`/`prompt_comments`/`follows`),
+`20260919160000_comment_likes_and_notifications.sql` (`comment_likes`),
+`20260919120400_messaging_and_notifications.sql` (`notifications.type`
+CHECK listesi), `src/features/generators/*` (tüm dosya listesi),
+`src/features/prompts/*` (tüm dosya listesi), `generator-card.tsx`,
+`use-generator-save-state.ts`, `generator-detail-view.tsx`,
+`post-menu.tsx`, `comment-section.tsx`'in `CommentTarget` tipi,
+`src/lib/supabase/comments.ts`'in export listesi.
+
+**Özet bulgu:** Mevcut Prompt sosyal altyapısı (`prompt_likes`,
+`prompt_comments`/`comment_likes`, `collections`/`collection_items`,
+remix — `source_prompt_id`/`root_prompt_id`, `merge_requests`/
+`prompt_versions`, `notifications`) ve Generator'ın kendi sosyal altyapısı
+(`generator_saves`, `generator_tags`, remix — `source_generator_id`/
+`root_generator_id`) **şu an iki paralel, kısmen kopya sistem** —
+Generator'ın like/comment/remix-tree/collection/notification entegrasyonu
+Bölüm 9.27'de bilinçli olarak "kapsam dışı" bırakılmıştı (bkz. Bölüm
+9.27'nin "Kapsam dışı bırakılan" listesi: "Generator koleksiyonlara değil
+ayrı `generator_saves`'e kaydediliyor", "Generator'da yorum/beğeni/
+bildirim yok"). Kullanıcının şimdiki isteği tam olarak bu boşluğu
+kapatmayı ve iki sistemi ortak bir sosyal katmanda birleştirmeyi
+hedefliyor — bu, gerçek, önceden bilinen ve dokümante edilmiş bir mimari
+borç, yeni keşfedilen bir hata değil.
+
+**Denetimin ikinci somut bulgusu — "ortak sosyal katman" bugün BİLE
+tam anlamıyla generic/polimorfik değil, mevcut iki içerik türü (Prompt/
+İstek) arasında bile ayrı, elle yazılmış fonksiyonlarla kuruluyor:**
+`comment-section.tsx`'in `CommentTarget` tipi `{promptId} | {requestId}`
+(üçüncü bir `{generatorId}` kolu yok), `src/lib/supabase/comments.ts`
+`fetchCommentsForPrompt`/`fetchCommentsForRequest` ve
+`postCommentOnPrompt`/`postCommentOnRequest`'i AYRI fonksiyonlar olarak
+tutuyor (tek, polimorfik bir `content_type` sütunlu fonksiyon değil) —
+`prompt_comments` tablosunun kendisi zaten `prompt_id`/`request_id` iki
+nullable FK + "tam olarak biri dolu" CHECK deseniyle (Bölüm 9.2) kurulu.
+`PostMenu` (`post-menu.tsx`) da benzer şekilde doğrudan `promptId`/
+`authorId`/`deleteRealPrompt`'a sabitlenmiş, polimorfik değil. Bu, şartnamenin
+önerdiği "içerik-tipi + id" polimorfik tablo deseninin (§ örnek şema)
+projenin GERÇEK, mevcut konvansiyonundan FARKLI olduğu anlamına geliyor —
+mevcut konvansiyon "her içerik türü kendi nullable FK'sini/kendi ince
+sarmalayıcı fonksiyonunu alır" (aynı desen `prompt_likes`, `collection_
+items`, `prompt_tags`/`prompt_request_tags`/`generator_tags` üçlüsünde
+de tekrarlıyor). Refactor planı bu ikisinden BİRİNİ seçmeli — ya var olan
+konvansiyona uyup `prompt_comments`'e üçüncü bir `generator_id` FK'si +
+`CommentTarget`'a üçüncü bir kol eklemek (küçük, tutarlı, düşük risk), ya
+da gerçekten polimorfik bir `content_id`+`content_type` şemasına GEÇİŞ
+yapmak (büyük, riskli, `prompt_comments`/`prompt_likes`'in var olan
+milyonlarca satırlık — bugün için küçük ama ilke olarak — verisini
+taşımayı gerektirir). Kullanıcıya sunulan raporda ilk seçenek (mevcut
+konvansiyona uymak) önerildi, ikincisi kullanıcının şartnamedeki örnek
+şemasının literal okunmasına daha yakın — nihai karar kullanıcının onayına
+bırakıldı.
+
+**Generator'ın bugün SIFIR sosyal entegrasyonu olduğu doğrulandı (tahmin
+değil, kod okunarak):** `GeneratorCard`'da `LikeButton`/`CommentCountLink`/
+`SaveButton` yok (yalnızca `useCount` metni); `GeneratorDetailView`'da
+`PostMenu`/`CommentSection`/`RemixBranchMap` hiç render edilmiyor (kendi
+bespoke sil/düzenle/remix/kaydet butonları var); `useGeneratorSaveState`
+`collection_items` değil ayrı, basit bir boolean `generator_saves`
+kullanıyor; bir generator remixlendiğinde/kaydedildiğinde/kullanıldığında
+hiçbir `notifications` satırı üretilmiyor (Prompt'un `notify_new_remix`/
+`notify_prompt_like`'ıyla eşdeğer hiçbir trigger generator tarafında yok).
+
+**Sonraki adım:** Kullanıcının audit raporunu (sohbette teslim edilen A-J
+formatı + yukarıdaki iki bulgu) onaylaması bekleniyor. Onay sonrası
+Faz 1'den (§42'nin PHASE 1-10 sıralaması) başlanacak; her faz sonrası
+mevcut Prompt sisteminin regresyon testleri (bu dosyanın zaten kapsamlı
+Playwright paketleri) yeniden çalıştırılacak.
+
 ---
 
 **Sonraki adım:** Generator Builder + Generator Runtime modülü (Bölüm
@@ -8107,11 +8232,14 @@ girdisine geçirildiği mimari düzeltme (Bölüm 9.29), hazır kategori/alt
 kategori/alan şablon kütüphanesi + "Alan Ekle" seçicisi (Bölüm 9.30),
 alan-organizasyonu kategori sisteminin kaldırılıp `/generators`+
 `/generators/create`'in mobil/tablet/PC için yeniden tasarlanması (Bölüm
-9.31), ve JSON çıktısındaki alan seçimlerinin artık gerçek prompt metnine
+9.31), JSON çıktısındaki alan seçimlerinin artık gerçek prompt metnine
 de (yazılan metinle birleştirilerek) yansıması + `/generators/local`'ın
-aynı tasarım diline geçirilmesi (Bölüm 9.32) TAMAMLANDI — kullanıcının
-Dashboard'da uygulaması gereken tek yeni adım hâlâ
-`20260919300000_generators.sql` (Bölüm 9.28-9.32'nin hiçbiri yeni
-migration eklemedi, hepsi tamamen frontend katmanında kaldı). Bir sonraki
-modül için bu dosyanın başındaki kurala uyarak önce mevcut mimari
-denetlenmeli, yalnızca gerçek eksikler kapatılmalı.
+aynı tasarım diline geçirilmesi (Bölüm 9.32), ve "Türet" teriminin
+"Remix"e geri döndürülmesi (Bölüm 9.33) TAMAMLANDI. **Bekleyen büyük
+karar (Bölüm 9.34):** kullanıcı Prompt/Generator ortak sosyal mimari
+audit raporunu onayladıktan sonra büyük bir refactor başlayacak — bu,
+projenin şu ana kadarki en büyük mimari birleştirme işi olacak, dikkatli
+faz faz ilerlenmeli. Kullanıcının Dashboard'da uygulaması gereken tek
+bekleyen adım hâlâ `20260919300000_generators.sql`. Bir sonraki modül
+için bu dosyanın başındaki kurala uyarak önce mevcut mimari denetlenmeli,
+yalnızca gerçek eksikler kapatılmalı.
