@@ -27,7 +27,7 @@ const BADGE_DEFINITIONS: BadgeDefinition[] = [
   {
     key: "first-remix",
     icon: GitBranch,
-    label: "İlk türettiği promptu oluşturdu",
+    label: "İlk remixini oluşturdu",
     isEarned: ({ remixCount }) => remixCount >= 1,
   },
   {

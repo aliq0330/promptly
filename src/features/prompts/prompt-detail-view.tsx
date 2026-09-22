@@ -97,7 +97,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
         <div className="flex items-start justify-between gap-3">
           <h1 className="text-lg font-semibold text-text">{prompt.title}</h1>
           <div className="flex shrink-0 items-center gap-2">
-            {prompt.origin.type === "remix" && <Badge>Türet</Badge>}
+            {prompt.origin.type === "remix" && <Badge>Remix</Badge>}
             <PostMenu promptId={prompt.id} authorId={prompt.author.id} />
           </div>
         </div>
@@ -110,7 +110,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
 
         {remixChain.length > 1 && (
           <div className="flex flex-wrap items-center gap-1 text-xs text-text-muted">
-            <span className="font-medium text-text">Türetme geçmişi:</span>
+            <span className="font-medium text-text">Remix zinciri:</span>
             {remixChain.map((node, index) => {
               const label = node.deletedAt ? "Silinmiş paylaşım" : node.title;
               return (
@@ -186,7 +186,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
             className="inline-flex h-8 items-center gap-1.5 rounded-md border border-border bg-transparent px-3 text-sm font-medium text-text transition-colors hover:bg-accent-surface"
           >
             <GitBranch size={14} />
-            Türet
+            Remixle
           </Link>
         </div>
       </div>
@@ -215,7 +215,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
               remixTab === "remixes" ? "border-primary text-primary" : "border-transparent text-text-muted hover:text-text",
             )}
           >
-            Türetilen promptlar ({remixes.length})
+            Remixler ({remixes.length})
           </button>
           <button
             type="button"

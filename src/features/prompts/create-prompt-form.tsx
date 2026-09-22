@@ -271,7 +271,7 @@ export function CreatePromptForm() {
     const source = sourcePrompt ?? duplicateSource;
     if (source) {
       setContentType(source.contentType);
-      setTitle(`${source.title} ${isRemixMode ? "(türetme)" : "(kopya)"}`);
+      setTitle(`${source.title} ${isRemixMode ? "(remix)" : "(kopya)"}`);
       setDescription(source.description);
       setPromptText(source.promptText);
       setTool(source.tool ?? "");
@@ -555,7 +555,7 @@ export function CreatePromptForm() {
           : isAnswerMode
             ? "İsteğe Yanıt Ver"
             : isRemixMode
-              ? "Türet"
+              ? "Remix Oluştur"
               : isDuplicateMode
                 ? "Kopyasını Oluştur"
                 : isGeneratorRunMode
@@ -609,7 +609,7 @@ export function CreatePromptForm() {
           {(isAnswerMode || isRemixMode) && (
             <div>
               <label className="mb-2 block text-sm font-medium text-text">
-                {isAnswerMode ? "Bu yanıt profilimde görünsün mü?" : "Bu türetme profilimde görünsün mü?"}
+                {isAnswerMode ? "Bu yanıt profilimde görünsün mü?" : "Bu remix profilimde görünsün mü?"}
               </label>
               <div className="space-y-2">
                 <label
@@ -630,7 +630,7 @@ export function CreatePromptForm() {
                     <span className="block text-xs text-text-muted">
                       {isAnswerMode
                         ? "Yanıtın istek sahibine gösterilir ve profilinde de normal gönderilerin gibi görünür."
-                        : "Türettiğin içerik kaynağının Türetilen promptlar listesinde/Prompt geçmişinde görünmeye devam eder, ayrıca profilinde de normal gönderilerin gibi görünür."}
+                        : "Remixlediğin içerik kaynağının remix listesinde/haritasında görünmeye devam eder, ayrıca profilinde de normal gönderilerin gibi görünür."}
                     </span>
                   </span>
                 </label>
@@ -652,7 +652,7 @@ export function CreatePromptForm() {
                     <span className="block text-xs text-text-muted">
                       {isAnswerMode
                         ? "Yanıtın bu isteğin yanıtları arasında görünür. Profilinde ve normal gönderi akışında gösterilmez."
-                        : "Türettiğin içerik kaynağının Türetilen promptlar listesinde/Prompt geçmişinde görünmeye devam eder. Profilinde ve normal gönderi akışında gösterilmez."}
+                        : "Remixlediğin içerik kaynağının remix listesinde/haritasında görünmeye devam eder. Profilinde ve normal gönderi akışında gösterilmez."}
                     </span>
                   </span>
                 </label>
@@ -667,7 +667,7 @@ export function CreatePromptForm() {
                 <Link href={promptHref(sourcePrompt)} className="font-medium underline">
                   &ldquo;{sourcePrompt.title}&rdquo;
                 </Link>{" "}
-                içeriğin türetilen promptu olarak dolduruldu — dilediğin gibi düzenleyebilirsin, köken bağlantısı korunuyor.
+                içeriğinin remixi olarak dolduruldu — dilediğin gibi düzenleyebilirsin, köken bağlantısı korunuyor.
               </p>
             </div>
           )}

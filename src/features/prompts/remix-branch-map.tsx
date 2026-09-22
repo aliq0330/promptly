@@ -24,7 +24,7 @@ const MAX_SCALE = 1.75;
 
 /**
  * The "Remix Dallanma Haritası" tab's content, next to "Yorumlar" and
- * "Türetilen promptlar" on a prompt's detail page (`prompt-detail-view.tsx`
+ * "Remixler" on a prompt's detail page (`prompt-detail-view.tsx`
  * owns the tab switcher —
  * this component only renders once that tab is active, so it's always
  * fully visible when mounted; no internal show/hide toggle). Real data
@@ -330,7 +330,7 @@ function MapLegend() {
   return (
     <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-text-muted">
       <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-accent-surface ring-1 ring-primary/50" /> Orijinal</span>
-      <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-accent-surface" /> Türet</span>
+      <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-accent-surface" /> Remix</span>
       <span className="flex items-center gap-1"><GitMerge size={11} className="text-amber-600" /> Bekleyen merge</span>
       <span className="flex items-center gap-1"><GitMerge size={11} className="text-primary" /> Kabul edilmiş</span>
       <span className="flex items-center gap-1"><span className="italic">Silinmiş içerik</span> — kaynak korunuyor</span>

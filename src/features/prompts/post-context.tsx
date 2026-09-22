@@ -57,7 +57,7 @@ export function RemixContext({ sourcePromptId }: { sourcePromptId: string }) {
       <ContextBox href={promptHref({ id: sourcePromptId })}>
         <span className="flex items-center gap-1.5 text-xs font-medium text-primary">
           <GitBranch size={14} />
-          Türetilen çalışma
+          Remixlenen çalışma
         </span>
         <span className="block text-sm text-text-muted">Bu paylaşım silindi.</span>
       </ContextBox>
@@ -68,7 +68,7 @@ export function RemixContext({ sourcePromptId }: { sourcePromptId: string }) {
     <ContextBox href={promptHref({ id: sourcePromptId })}>
       <span className="flex items-center gap-1.5 text-xs font-medium text-primary">
         <GitBranch size={14} />
-        Türetilen çalışma
+        Remixlenen çalışma
       </span>
       <span className="flex items-center gap-3">
         {thumbnail && (
