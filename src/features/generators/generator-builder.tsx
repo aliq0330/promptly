@@ -12,10 +12,12 @@ import { useTagPicker } from "@/features/prompts/use-tag-picker";
 import { CategoryManager, UNCATEGORIZED_CATEGORY_ID } from "./category-manager";
 import { FieldList } from "./field-list";
 import { FieldEditorModal } from "./field-editor-modal";
+import { FieldCatalogPicker } from "./field-catalog-picker";
 import { GeneratorDetailsForm } from "./generator-details-form";
 import { GeneratorPlayground } from "./generator-playground";
 import { fieldsInCategory, makeFieldKeyFromLabel, validateGeneratorForPublish } from "@/lib/generator-template";
 import { validateGeneratorOutputMapping } from "@/lib/generator-output";
+import type { CatalogField } from "@/lib/generator-field-catalog";
 import { cn, generatorHref } from "@/lib/utils";
 import {
   createDraftGenerator,
@@ -140,6 +142,7 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
   const [version, setVersion] = useState<GeneratorVersionResult | null>(null);
   const [activeCategoryId, setActiveCategoryId] = useState<string>(() => defaultSchema().categories[0].id);
   const [editingField, setEditingField] = useState<{ field: GeneratorField | null; isNew: boolean } | null>(null);
+  const [catalogPickerOpen, setCatalogPickerOpen] = useState(false);
 
   const [loadingExisting, setLoadingExisting] = useState(Boolean(editId));
   const [notFound, setNotFound] = useState(false);
@@ -361,6 +364,46 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
     setSchema((prev) => ({ ...prev, fields: [...prev.fields, clone] }));
   }
 
+  // Converts chosen catalog entries into real `GeneratorField`s and inserts
+  // them into the currently-active category — the exact same
+  // `makeFieldKeyFromLabel`/order logic `handleDuplicateField` already uses,
+  // so there is one real place a `GeneratorField` gets constructed from
+  // something else, not two. The picker itself never builds a `GeneratorField`.
+  function handleInsertCatalogFields(catalogFields: CatalogField[]) {
+    const targetCategoryId = activeCategoryId === UNCATEGORIZED_CATEGORY_ID ? (schema.categories[0]?.id ?? "") : activeCategoryId;
+    setSchema((prev) => {
+      let existingKeys = prev.fields.map((f) => f.key);
+      const categoryFields = prev.fields.filter((f) => f.categoryId === targetCategoryId);
+      let nextOrder = categoryFields.length > 0 ? Math.max(...categoryFields.map((f) => f.order)) + 1 : 0;
+      const inserted: GeneratorField[] = [];
+      for (const catalogField of catalogFields) {
+        const key = makeFieldKeyFromLabel(catalogField.label, existingKeys);
+        existingKeys = [...existingKeys, key];
+        inserted.push({
+          id: newId("field"),
+          categoryId: targetCategoryId,
+          key,
+          label: catalogField.label,
+          description: "",
+          type: catalogField.type,
+          required: false,
+          options: catalogField.options,
+          defaultValue: catalogField.type === "multi_select" ? [] : "",
+          placeholder: catalogField.placeholder ?? "",
+          min: catalogField.min ?? null,
+          max: catalogField.max ?? null,
+          step: catalogField.step ?? null,
+          order: nextOrder,
+          condition: null,
+          jsonPath: catalogField.jsonPath,
+        });
+        nextOrder += 1;
+      }
+      return { ...prev, fields: [...prev.fields, ...inserted] };
+    });
+    setCatalogPickerOpen(false);
+  }
+
   function handleReorderFields(orderedIds: string[]) {
     setSchema((prev) => {
       const orderById = new Map(orderedIds.map((id, index) => [id, index]));
@@ -470,7 +513,7 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
           <div className="min-w-0">
             <FieldList
               fields={visibleFields}
-              onAddField={() => setEditingField({ field: null, isNew: true })}
+              onAddField={() => setCatalogPickerOpen(true)}
               onEditField={(field) => setEditingField({ field, isNew: false })}
               onDuplicateField={handleDuplicateField}
               onDeleteField={handleDeleteField}
@@ -513,6 +556,18 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
             {publishing ? "Yayınlanıyor…" : generator?.status === "published" ? "Yeniden Yayınla" : "Yayınla"}
           </Button>
         </div>
+      )}
+
+      {catalogPickerOpen && (
+        <FieldCatalogPicker
+          existingFields={schema.fields}
+          onClose={() => setCatalogPickerOpen(false)}
+          onInsert={handleInsertCatalogFields}
+          onCreateCustom={() => {
+            setCatalogPickerOpen(false);
+            setEditingField({ field: null, isNew: true });
+          }}
+        />
       )}
 
       {editingField && (
