@@ -215,7 +215,7 @@ export function isConditionSatisfiable(condition: GeneratorFieldCondition, field
   const source = fields.find((field) => field.key === condition.fieldKey);
   if (!source) return false;
   if (source.type === "select" || source.type === "radio" || source.type === "multi_select") {
-    return source.options.includes(condition.equals);
+    return source.options.some((option) => option.value === condition.equals);
   }
   return true;
 }

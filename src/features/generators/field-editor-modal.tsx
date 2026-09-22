@@ -5,7 +5,8 @@ import { Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { cn } from "@/lib/utils";
-import { makeFieldKeyFromLabel, isConditionSatisfiable } from "@/lib/generator-template";
+import { makeFieldKeyFromLabel, isConditionSatisfiable, slugifyGeneratorTitle } from "@/lib/generator-template";
+import { buildFieldOutputPreview, collectJsonPathGroups, isValidJsonPath, parseJsonPath } from "@/lib/generator-output";
 import type { GeneratorCategory, GeneratorField, GeneratorFieldType } from "@/types";
 
 const FIELD_TYPE_LABELS: Record<GeneratorFieldType, string> = {
@@ -25,11 +26,17 @@ const FIELD_TYPE_LABELS: Record<GeneratorFieldType, string> = {
 const OPTION_TYPES: GeneratorFieldType[] = ["select", "multi_select", "radio"];
 const RANGE_TYPES: GeneratorFieldType[] = ["number", "slider"];
 
+/** Sanitizes free-typed text into a valid JSON-path segment / option value — same transliteration rules as tag/variable keys elsewhere in this app, just underscored instead of hyphenated. */
+function sanitizeSegment(input: string): string {
+  return slugifyGeneratorTitle(input).replace(/-/g, "_");
+}
+
 function emptyField(categoryId: string, existingKeys: string[]): GeneratorField {
+  const key = makeFieldKeyFromLabel("field", existingKeys);
   return {
     id: `field-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     categoryId,
-    key: makeFieldKeyFromLabel("field", existingKeys),
+    key,
     label: "",
     description: "",
     type: "select",
@@ -42,6 +49,7 @@ function emptyField(categoryId: string, existingKeys: string[]): GeneratorField 
     step: null,
     order: 0,
     condition: null,
+    jsonPath: key,
   };
 }
 
@@ -53,6 +61,12 @@ function emptyField(categoryId: string, existingKeys: string[]): GeneratorField 
  * max, step) are here except two: a free-typed custom value on a
  * select-type field, and a searchable long dropdown — deliberately
  * deferred, see CLAUDE.md; every other advanced setting genuinely works.
+ *
+ * Also owns the real "Çıktı Eşleme" (Output Mapping) section from the JSON
+ * Output Engine architecture correction — every field's real `jsonPath`
+ * (where its value lands in the generator's structured JSON output) is set
+ * here, with a live single-field JSON preview and autocomplete drawn from
+ * every OTHER field's already-used path (§10/§11/§12).
  */
 export function FieldEditorModal({
   initial,
@@ -78,7 +92,10 @@ export function FieldEditorModal({
     () => initial ?? emptyField(activeCategoryId ?? categories[0]?.id ?? "", existingKeys),
   );
   const [keyTouched, setKeyTouched] = useState(!isNew);
-  const [optionDraft, setOptionDraft] = useState("");
+  const [pathTouched, setPathTouched] = useState(!isNew);
+  const [optionLabelDraft, setOptionLabelDraft] = useState("");
+  const [optionValueDraft, setOptionValueDraft] = useState("");
+  const [optionValueTouched, setOptionValueTouched] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
@@ -91,9 +108,55 @@ export function FieldEditorModal({
         : null;
   const labelError = draft.label.trim().length === 0 ? "Alan adı boş olamaz." : null;
   const optionsError = OPTION_TYPES.includes(draft.type) && draft.options.length === 0 ? "En az bir seçenek eklemelisin." : null;
+  const jsonPathError = !draft.jsonPath.trim()
+    ? "JSON yolu boş olamaz."
+    : !isValidJsonPath(draft.jsonPath)
+      ? "JSON yolu yalnızca harf, rakam, alt çizgi ve nokta içerebilir (örn. subject.eye_color)."
+      : null;
+
+  const otherFields = allFields.filter((f) => f.id !== draft.id);
+  const existingGroups = collectJsonPathGroups(otherFields);
+  const pathSegments = parseJsonPath(draft.jsonPath);
+  const pathGroup = pathSegments.length > 1 ? pathSegments[0] : "";
+  const pathProperty = pathSegments.length > 1 ? pathSegments.slice(1).join(".") : (pathSegments[0] ?? "");
+  const propertySuggestions = Array.from(
+    new Set(
+      otherFields
+        .map((f) => parseJsonPath(f.jsonPath?.trim() || f.key))
+        .filter((segments) => (pathGroup ? segments[0] === pathGroup && segments.length > 1 : segments.length === 1))
+        .map((segments) => (pathGroup ? segments.slice(1).join(".") : segments[0])),
+    ),
+  ).sort();
 
   function updateLabel(label: string) {
-    setDraft((prev) => ({ ...prev, label, key: keyTouched ? prev.key : makeFieldKeyFromLabel(label, existingKeys) }));
+    setDraft((prev) => {
+      const key = keyTouched ? prev.key : makeFieldKeyFromLabel(label, existingKeys);
+      const jsonPath = pathTouched ? prev.jsonPath : key;
+      return { ...prev, label, key, jsonPath };
+    });
+  }
+
+  function updateJsonPath(jsonPath: string) {
+    setPathTouched(true);
+    setDraft((prev) => ({ ...prev, jsonPath }));
+  }
+
+  function updatePathGroup(group: string) {
+    setPathTouched(true);
+    setDraft((prev) => {
+      const property = pathProperty || prev.key;
+      const jsonPath = group.trim() ? `${sanitizeSegment(group)}.${property}` : property;
+      return { ...prev, jsonPath };
+    });
+  }
+
+  function updatePathProperty(property: string) {
+    setPathTouched(true);
+    setDraft((prev) => {
+      const sanitizedProperty = sanitizeSegment(property) || property;
+      const jsonPath = pathGroup ? `${pathGroup}.${sanitizedProperty}` : sanitizedProperty;
+      return { ...prev, jsonPath };
+    });
   }
 
   function updateType(type: GeneratorFieldType) {
@@ -106,19 +169,23 @@ export function FieldEditorModal({
   }
 
   function addOption() {
-    const value = optionDraft.trim();
-    if (!value || draft.options.includes(value)) return;
-    setDraft((prev) => ({ ...prev, options: [...prev.options, value] }));
-    setOptionDraft("");
+    const label = optionLabelDraft.trim();
+    if (!label) return;
+    const value = (optionValueTouched ? optionValueDraft.trim() : sanitizeSegment(label)) || sanitizeSegment(label);
+    if (!value || draft.options.some((o) => o.value === value)) return;
+    setDraft((prev) => ({ ...prev, options: [...prev.options, { label, value }] }));
+    setOptionLabelDraft("");
+    setOptionValueDraft("");
+    setOptionValueTouched(false);
   }
 
-  function removeOption(option: string) {
+  function removeOption(value: string) {
     setDraft((prev) => ({
       ...prev,
-      options: prev.options.filter((o) => o !== option),
+      options: prev.options.filter((o) => o.value !== value),
       defaultValue: Array.isArray(prev.defaultValue)
-        ? prev.defaultValue.filter((v) => v !== option)
-        : prev.defaultValue === option
+        ? prev.defaultValue.filter((v) => v !== value)
+        : prev.defaultValue === value
           ? ""
           : prev.defaultValue,
     }));
@@ -128,7 +195,8 @@ export function FieldEditorModal({
     event.preventDefault();
     event.stopPropagation();
     setKeyTouched(true);
-    if (keyError || labelError || optionsError) return;
+    setPathTouched(true);
+    if (keyError || labelError || optionsError || jsonPathError) return;
     onSave(draft);
   }
 
@@ -240,9 +308,10 @@ export function FieldEditorModal({
               <label className="mb-1.5 block text-sm font-medium text-text">Options</label>
               <div className="mb-2 space-y-1.5">
                 {draft.options.map((option) => (
-                  <div key={option} className="flex items-center gap-2 rounded-md border border-border bg-background px-3 py-1.5 text-sm text-text">
-                    <span className="flex-1">{option}</span>
-                    <button type="button" onClick={() => removeOption(option)} className="text-text-muted hover:text-red-500">
+                  <div key={option.value} className="flex items-center gap-2 rounded-md border border-border bg-background px-3 py-1.5 text-sm text-text">
+                    <span className="flex-1 truncate">{option.label}</span>
+                    <span className="shrink-0 truncate font-mono text-xs text-text-muted">{option.value}</span>
+                    <button type="button" onClick={() => removeOption(option.value)} className="shrink-0 text-text-muted hover:text-red-500">
                       <X size={14} />
                     </button>
                   </div>
@@ -251,16 +320,35 @@ export function FieldEditorModal({
               <div className="flex gap-2">
                 <input
                   type="text"
-                  value={optionDraft}
-                  onChange={(event) => setOptionDraft(event.target.value)}
+                  value={optionLabelDraft}
+                  onChange={(event) => {
+                    setOptionLabelDraft(event.target.value);
+                    if (!optionValueTouched) setOptionValueDraft(sanitizeSegment(event.target.value));
+                  }}
                   onKeyDown={(event) => {
                     if (event.key === "Enter") {
                       event.preventDefault();
                       addOption();
                     }
                   }}
-                  placeholder="Yeni seçenek"
+                  placeholder="Etiket (ör. Yeşil)"
                   className="h-9 flex-1 rounded-md border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted"
+                />
+                <input
+                  type="text"
+                  value={optionValueTouched ? optionValueDraft : sanitizeSegment(optionLabelDraft)}
+                  onChange={(event) => {
+                    setOptionValueTouched(true);
+                    setOptionValueDraft(event.target.value);
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      event.preventDefault();
+                      addOption();
+                    }
+                  }}
+                  placeholder="Değer (ör. green)"
+                  className="h-9 w-28 shrink-0 rounded-md border border-border bg-background px-2 font-mono text-xs text-text placeholder:text-text-muted"
                 />
                 <Button type="button" variant="outline" size="sm" onClick={addOption}>
                   <Plus size={14} /> Option
@@ -271,6 +359,73 @@ export function FieldEditorModal({
           )}
 
           <DefaultValueField draft={draft} onChange={(defaultValue) => setDraft((prev) => ({ ...prev, defaultValue }))} />
+
+          <div className="rounded-md border border-border p-3">
+            <p className="mb-0.5 text-sm font-medium text-text">Çıktı Eşleme (Output Mapping)</p>
+            <p className="mb-3 text-xs text-text-muted">Bu alanın gerçek değeri, generatorun yapılandırılmış JSON çıktısında nereye yazılsın?</p>
+
+            <div className="mb-3 grid grid-cols-2 gap-2">
+              <div>
+                <label htmlFor="field-path-group" className="mb-1 block text-xs text-text-muted">
+                  Çıktı Grubu <span className="text-text-muted">(opsiyonel)</span>
+                </label>
+                <input
+                  id="field-path-group"
+                  type="text"
+                  list="field-path-group-suggestions"
+                  value={pathGroup}
+                  onChange={(event) => updatePathGroup(event.target.value)}
+                  placeholder="ör. subject"
+                  className="h-9 w-full rounded-md border border-border bg-background px-2 font-mono text-xs text-text placeholder:text-text-muted"
+                />
+                <datalist id="field-path-group-suggestions">
+                  {existingGroups.map((group) => (
+                    <option key={group} value={group} />
+                  ))}
+                </datalist>
+              </div>
+              <div>
+                <label htmlFor="field-path-property" className="mb-1 block text-xs text-text-muted">
+                  Özellik Adı
+                </label>
+                <input
+                  id="field-path-property"
+                  type="text"
+                  list="field-path-property-suggestions"
+                  value={pathProperty}
+                  onChange={(event) => updatePathProperty(event.target.value)}
+                  placeholder="ör. eye_color"
+                  className="h-9 w-full rounded-md border border-border bg-background px-2 font-mono text-xs text-text placeholder:text-text-muted"
+                />
+                <datalist id="field-path-property-suggestions">
+                  {propertySuggestions.map((property) => (
+                    <option key={property} value={property} />
+                  ))}
+                </datalist>
+              </div>
+            </div>
+
+            <div className="mb-3">
+              <label htmlFor="field-json-path" className="mb-1 block text-xs text-text-muted">
+                JSON Path <span className="text-text-muted">(elle de düzenleyebilirsin)</span>
+              </label>
+              <input
+                id="field-json-path"
+                type="text"
+                value={draft.jsonPath}
+                onChange={(event) => updateJsonPath(event.target.value)}
+                className="h-9 w-full rounded-md border border-border bg-background px-2 font-mono text-xs text-text"
+              />
+              {jsonPathError && <p className="mt-1 text-xs text-red-500">{jsonPathError}</p>}
+            </div>
+
+            <div>
+              <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-text-muted">Çıktı Önizlemesi</p>
+              <pre className="max-h-32 overflow-auto rounded-md border border-border bg-background p-2 font-mono text-xs text-text">
+                {jsonPathError ? "—" : JSON.stringify(buildFieldOutputPreview(draft), null, 2)}
+              </pre>
+            </div>
+          </div>
 
           <div className="rounded-md border border-border">
             <button
@@ -354,7 +509,7 @@ export function FieldEditorModal({
                           return;
                         }
                         const source = conditionSources.find((f) => f.key === fieldKey);
-                        setDraft((prev) => ({ ...prev, condition: { fieldKey, equals: source?.options[0] ?? "" } }));
+                        setDraft((prev) => ({ ...prev, condition: { fieldKey, equals: source?.options[0]?.value ?? "" } }));
                       }}
                       className="h-9 flex-1 rounded-md border border-border bg-background px-2 text-sm text-text"
                     >
@@ -372,8 +527,8 @@ export function FieldEditorModal({
                         className="h-9 flex-1 rounded-md border border-border bg-background px-2 text-sm text-text"
                       >
                         {(conditionSources.find((f) => f.key === draft.condition?.fieldKey)?.options ?? []).map((option) => (
-                          <option key={option} value={option}>
-                            {option}
+                          <option key={option.value} value={option.value}>
+                            {option.label}
                           </option>
                         ))}
                       </select>
@@ -429,18 +584,18 @@ function DefaultValueField({ draft, onChange }: { draft: GeneratorField; onChang
             <p className="text-xs text-text-muted">Önce seçenek ekle.</p>
           ) : (
             draft.options.map((option) => {
-              const isOn = selected.includes(option);
+              const isOn = selected.includes(option.value);
               return (
                 <button
-                  key={option}
+                  key={option.value}
                   type="button"
-                  onClick={() => onChange(isOn ? selected.filter((o) => o !== option) : [...selected, option])}
+                  onClick={() => onChange(isOn ? selected.filter((v) => v !== option.value) : [...selected, option.value])}
                   className={cn(
                     "rounded-full border px-2.5 py-1 text-xs",
                     isOn ? "border-primary bg-primary text-primary-foreground" : "border-border text-text-muted",
                   )}
                 >
-                  {option}
+                  {option.label}
                 </button>
               );
             })
@@ -460,8 +615,8 @@ function DefaultValueField({ draft, onChange }: { draft: GeneratorField; onChang
         <select id="field-default" value={value} onChange={(event) => onChange(event.target.value)} className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-text">
           <option value="">Yok</option>
           {draft.options.map((option) => (
-            <option key={option} value={option}>
-              {option}
+            <option key={option.value} value={option.value}>
+              {option.label}
             </option>
           ))}
         </select>

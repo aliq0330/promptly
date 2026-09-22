@@ -373,6 +373,21 @@ export interface GeneratorCategory {
   order: number;
 }
 
+/**
+ * One selectable option for a select/multi_select/radio field — `label` is
+ * what the creator/user actually sees ("Yeşil"), `value` is the real,
+ * canonical machine value that gets written into the structured JSON output
+ * (`subject.eye_color: "green"`) and into runtime `GeneratorValues`. The two
+ * are deliberately separate (per the JSON Output Engine architecture
+ * correction, CLAUDE.md) — a Turkish display label should never leak into a
+ * generator's structured output as-is unless the creator's `value` happens
+ * to equal it.
+ */
+export interface GeneratorFieldOption {
+  label: string;
+  value: string;
+}
+
 export interface GeneratorField {
   id: string;
   categoryId: string;
@@ -382,8 +397,8 @@ export interface GeneratorField {
   type: GeneratorFieldType;
   required: boolean;
   /** select/multi_select/radio only. */
-  options: string[];
-  /** A single value for most types; multiple selected values for multi_select. */
+  options: GeneratorFieldOption[];
+  /** A single value for most types; multiple selected values for multi_select — always the option's `value`, never its `label`. */
   defaultValue: string | string[];
   placeholder: string;
   min: number | null;
@@ -391,6 +406,15 @@ export interface GeneratorField {
   step: number | null;
   order: number;
   condition: GeneratorFieldCondition | null;
+  /**
+   * Where this field's real value is written in the generator's structured
+   * JSON output (dot-notation, e.g. `subject.eye_color`) — the JSON Output
+   * Engine's (`src/lib/generator-output.ts`) whole reason for existing.
+   * Falls back to the field's own `key` (a flat, top-level property) when
+   * empty/unset. Fully creator-defined — nothing in this app ever assumes a
+   * particular top-level key exists.
+   */
+  jsonPath: string;
 }
 
 export interface GeneratorSchema {
@@ -412,6 +436,17 @@ export interface GeneratorTemplate {
 
 /** Real key/value input a generator was run with — GeneratorFieldType-shaped values, keyed by field `key`. */
 export type GeneratorValues = Record<string, string | string[]>;
+
+/**
+ * A generator's real, primary output — a fully creator-defined, arbitrarily
+ * nested JSON object built by `buildGeneratorOutput()`
+ * (`src/lib/generator-output.ts`) from the schema's per-field `jsonPath`s.
+ * `prompt` (and, when the generator enables it, `negative_prompt`) are the
+ * only two reserved/always-present keys — everything else is whatever the
+ * creator's own fields define (`subject`/`environment`/`style_preset` in
+ * the spec's own examples are illustrative only, never hard-coded here).
+ */
+export type GeneratorOutput = Record<string, unknown>;
 
 export type GeneratorOrigin =
   | { type: "original" }

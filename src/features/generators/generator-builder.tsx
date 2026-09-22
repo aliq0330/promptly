@@ -16,6 +16,7 @@ import { GeneratorDetailsForm } from "./generator-details-form";
 import { TemplateEditor, emptySection } from "./template-editor";
 import { GeneratorPlayground } from "./generator-playground";
 import { fieldsInCategory, makeFieldKeyFromLabel, validateGeneratorForPublish } from "@/lib/generator-template";
+import { validateGeneratorOutputMapping } from "@/lib/generator-output";
 import { cn, generatorHref } from "@/lib/utils";
 import {
   createDraftGenerator,
@@ -358,7 +359,7 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
       ? schema.fields.filter((f) => !schema.categories.some((c) => c.id === f.categoryId)).sort((a, b) => a.order - b.order)
       : fieldsInCategory(schema, activeCategoryId);
 
-  const issues = validateGeneratorForPublish(meta.title, meta.description, schema, template);
+  const issues = [...validateGeneratorForPublish(meta.title, meta.description, schema, template), ...validateGeneratorOutputMapping(schema)];
   const errors = issues.filter((i) => i.level === "error");
   const warnings = issues.filter((i) => i.level === "warning");
 

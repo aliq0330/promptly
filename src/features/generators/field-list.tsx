@@ -116,6 +116,7 @@ export function FieldList({
                 {field.required && <span className="text-[10px] font-medium text-red-500">Zorunlu</span>}
               </div>
               <p className="mt-0.5 truncate font-mono text-xs text-primary">{`{{${field.key}}}`}</p>
+              <p className="mt-0.5 truncate font-mono text-xs text-text-muted">→ {field.jsonPath?.trim() || field.key}</p>
               {field.condition && <p className="mt-0.5 text-xs text-text-muted">Koşullu görünürlük tanımlı</p>}
             </div>
             <div className="flex shrink-0 items-center gap-0.5">
