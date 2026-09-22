@@ -1,70 +1,23 @@
 /**
  * Pure, framework-free helpers for the Generator Builder + Generator
- * Runtime module's `{{variable}}` template engine and publish validation —
- * kept dependency-free and DOM-free so the core logic can be unit-tested
- * directly (no browser needed), the same pattern already used by
- * `prompt-variables.ts`/`tag-catalog-matcher.ts` in this codebase.
+ * Runtime module's field schema (visibility conditions, default values,
+ * publish validation) — kept dependency-free and DOM-free so the core
+ * logic can be unit-tested directly (no browser needed), the same pattern
+ * already used by `prompt-variables.ts`/`tag-catalog-matcher.ts` in this
+ * codebase.
+ *
+ * NOTE — this file previously also held a `{{variable}}` prompt template
+ * rendering engine (`renderTemplate`/`renderTemplateSection`/
+ * `isNegativeSection`/`extractTemplateVariables`/`extractVariablesFromText`/
+ * `countKeyUsageInTemplate`, plus the `TemplateEditor` builder step that
+ * authored it). That step was removed: the person who BUILDS a generator no
+ * longer authors a prompt template at all — the person who USES it types
+ * the actual `prompt`/`negative_prompt` text directly, at the top of the
+ * runtime form (`generator-playground.tsx`), and that text is written into
+ * the JSON output as-is (`generator-output.ts`'s `buildGeneratorOutput`).
  */
 
-import type {
-  GeneratorField,
-  GeneratorFieldCondition,
-  GeneratorSchema,
-  GeneratorTemplate,
-  GeneratorTemplateSection,
-  GeneratorValues,
-} from "@/types";
-
-const TOKEN_PATTERN = /\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g;
-
-/** Every distinct `{{key}}` token referenced anywhere across a template's sections, in first-appearance order. */
-export function extractTemplateVariables(template: GeneratorTemplate): string[] {
-  const seen = new Set<string>();
-  const ordered: string[] = [];
-  for (const section of template.sections) {
-    for (const key of extractVariablesFromText(section.content)) {
-      if (!seen.has(key)) {
-        seen.add(key);
-        ordered.push(key);
-      }
-    }
-  }
-  return ordered;
-}
-
-/** Every distinct `{{key}}` token in one piece of raw text — the single-section building block `extractTemplateVariables` uses, also used directly by the template editor's own per-section "unknown variable" warning. */
-export function extractVariablesFromText(text: string): string[] {
-  const seen = new Set<string>();
-  const ordered: string[] = [];
-  for (const match of text.matchAll(TOKEN_PATTERN)) {
-    const key = match[1];
-    if (!seen.has(key)) {
-      seen.add(key);
-      ordered.push(key);
-    }
-  }
-  return ordered;
-}
-
-/**
- * Joins a real multi-select value list into readable prose — "A", "A and
- * B", "A, B and C" (§33's "moonlight, rim lighting, soft fill lighting and
- * volumetric lighting" example). Empty list resolves to an empty string,
- * never "undefined"/"null".
- */
-export function joinList(items: string[]): string {
-  const clean = items.filter((item) => item.trim().length > 0);
-  if (clean.length === 0) return "";
-  if (clean.length === 1) return clean[0];
-  if (clean.length === 2) return `${clean[0]} and ${clean[1]}`;
-  return `${clean.slice(0, -1).join(", ")} and ${clean[clean.length - 1]}`;
-}
-
-function stringifyValue(value: string | string[] | undefined): string {
-  if (value === undefined) return "";
-  if (Array.isArray(value)) return joinList(value);
-  return value;
-}
+import type { GeneratorField, GeneratorFieldCondition, GeneratorSchema, GeneratorValues } from "@/types";
 
 /** True when `field`'s one optional visibility condition is satisfied by the current runtime `values` — a field with no condition is always considered visible. */
 export function isFieldVisible(field: GeneratorField, values: GeneratorValues): boolean {
@@ -75,43 +28,7 @@ export function isFieldVisible(field: GeneratorField, values: GeneratorValues): 
   return actual === condition.equals;
 }
 
-/**
- * Deterministically renders a single template section's `{{key}}` tokens
- * against real field values — an UNKNOWN token (no matching field, or a
- * field hidden by its own condition, or simply missing from `values`) is
- * left as literal `{{key}}` text rather than silently vanishing/turning
- * into "undefined" (same non-negotiable rule `resolvePromptText` already
- * follows for the `{name}` prompt-variable system — a generator that
- * references a deleted/renamed field must stay visibly wrong, never
- * silently wrong).
- */
-export function renderTemplateSection(content: string, values: GeneratorValues, fields: GeneratorField[]): string {
-  const fieldsByKey = new Map(fields.map((field) => [field.key, field]));
-  return content.replace(TOKEN_PATTERN, (match, key: string) => {
-    const field = fieldsByKey.get(key);
-    if (!field || !isFieldVisible(field, values)) return match;
-    const raw = stringifyValue(values[key]);
-    return raw.trim().length > 0 ? raw : match;
-  });
-}
-
-/**
- * Renders every ENABLED section of a real template against real runtime
- * values, joining them with blank lines — the actual "Generated Prompt"
- * (§16/§17/§22) a generator produces. `renderTemplate(template, values)`
- * matches the exact shape §32 asked for.
- */
-export function renderTemplate(template: GeneratorTemplate, values: GeneratorValues, schema: GeneratorSchema): string {
-  return template.sections
-    .filter((section) => section.enabled)
-    .sort((a, b) => a.order - b.order)
-    .map((section) => renderTemplateSection(section.content, values, schema.fields))
-    .map((text) => text.trim())
-    .filter((text) => text.length > 0)
-    .join("\n\n");
-}
-
-/** A real field's default value, resolved to the type renderTemplate expects (never `undefined`). */
+/** A real field's default value, resolved to the type the runtime form expects (never `undefined`). */
 export function defaultValuesFromSchema(schema: GeneratorSchema): GeneratorValues {
   const values: GeneratorValues = {};
   for (const field of schema.fields) {
@@ -128,19 +45,20 @@ export interface GeneratorValidationIssue {
 
 /**
  * The real publish validation engine (§28) — errors block publish, warnings
- * don't. Runs the exact same checks the spec lists: title/description
- * present, at least one field, unique field keys, every `{{token}}` the
- * template references resolves to a real field, select-family fields have
- * at least one option, required fields with no default are flagged as an
- * informational warning (not an error — a required field with no default
- * just means the USER filling the form must choose, which is valid).
+ * don't. Runs the checks the spec lists that still apply now that the
+ * creator no longer authors a `{{token}}` prompt template at all (that
+ * responsibility moved to whoever RUNS the generator, who types the actual
+ * prompt/negative-prompt text directly at runtime — see
+ * `generator-playground.tsx`): title/description present, at least one
+ * field, unique field keys, select-family fields have at least one option,
+ * required fields with no default are flagged as an informational warning
+ * (not an error — a required field with no default just means the USER
+ * filling the form must choose, which is valid). There is no longer any
+ * template-content check here — a generator with zero schema fields is
+ * still blocked (above), but an "empty template" is no longer a concept
+ * this function knows about.
  */
-export function validateGeneratorForPublish(
-  title: string,
-  description: string,
-  schema: GeneratorSchema,
-  template: GeneratorTemplate,
-): GeneratorValidationIssue[] {
+export function validateGeneratorForPublish(title: string, description: string, schema: GeneratorSchema): GeneratorValidationIssue[] {
   const issues: GeneratorValidationIssue[] = [];
 
   if (title.trim().length === 0) {
@@ -172,19 +90,6 @@ export function validateGeneratorForPublish(
     if (field.required && !hasDefault) {
       issues.push({ level: "warning", message: `"${field.label}" zorunlu ama varsayılan değeri yok.`, fieldId: field.id });
     }
-  }
-
-  const knownKeys = new Set(schema.fields.map((field) => field.key));
-  const referenced = extractTemplateVariables(template);
-  for (const key of referenced) {
-    if (!knownKeys.has(key)) {
-      issues.push({ level: "error", message: `Şablonda {{${key}}} kullanılıyor ancak bu alan bulunamadı.` });
-    }
-  }
-
-  const enabledSections = template.sections.filter((section) => section.enabled);
-  if (enabledSections.length === 0 || enabledSections.every((section) => section.content.trim().length === 0)) {
-    issues.push({ level: "error", message: "Prompt template boş olamaz — en az bir aktif bölüm dolu olmalı." });
   }
 
   return issues;
@@ -223,24 +128,4 @@ export function isConditionSatisfiable(condition: GeneratorFieldCondition, field
 /** One category's real, live field count — used by the sidebar and the "8 fields in this category" delete warning (§7). */
 export function fieldsInCategory(schema: GeneratorSchema, categoryId: string): GeneratorField[] {
   return schema.fields.filter((field) => field.categoryId === categoryId).sort((a, b) => a.order - b.order);
-}
-
-/**
- * A section counts as the "Negative Prompt" half (§30) purely by its own
- * title text (case-insensitive "negative"/"negatif") — `GeneratorTemplate`
- * deliberately has no separate boolean field for this, so a generator with
- * negative-prompt support enabled is just an ordinary section the author
- * named "Negative Prompt"; nothing else in the schema treats it specially
- * except where the two halves need to be rendered/copied separately.
- */
-export function isNegativeSection(section: GeneratorTemplateSection): boolean {
-  const title = section.title.toLowerCase();
-  return title.includes("negative") || title.includes("negatif");
-}
-
-/** How many times `{{key}}` literally appears across every template section — the field-list's "bu alan şablonda N yerde kullanılıyor" delete warning (§7's field-usage-count idea, applied to the generator's own `{{key}}` syntax). */
-export function countKeyUsageInTemplate(template: GeneratorTemplate, key: string): number {
-  if (!key) return 0;
-  const pattern = new RegExp(`\\{\\{\\s*${key}\\s*\\}\\}`, "g");
-  return template.sections.reduce((total, section) => total + (section.content.match(pattern) ?? []).length, 0);
 }
