@@ -9,13 +9,12 @@ import { useAuth } from "@/features/auth/auth-provider";
 import { useOwnProfile } from "@/features/auth/own-profile-provider";
 import { useTagCatalog } from "@/features/tags/use-tag-catalog";
 import { useTagPicker } from "@/features/prompts/use-tag-picker";
-import { CategoryManager, UNCATEGORIZED_CATEGORY_ID } from "./category-manager";
 import { FieldList } from "./field-list";
 import { FieldEditorModal } from "./field-editor-modal";
 import { FieldCatalogPicker } from "./field-catalog-picker";
 import { GeneratorDetailsForm } from "./generator-details-form";
 import { GeneratorPlayground } from "./generator-playground";
-import { fieldsInCategory, makeFieldKeyFromLabel, validateGeneratorForPublish } from "@/lib/generator-template";
+import { makeFieldKeyFromLabel, validateGeneratorForPublish } from "@/lib/generator-template";
 import { validateGeneratorOutputMapping } from "@/lib/generator-output";
 import type { CatalogField } from "@/lib/generator-field-catalog";
 import { cn, generatorHref } from "@/lib/utils";
@@ -29,7 +28,7 @@ import {
   type GeneratorMetaInput,
   type GeneratorVersionResult,
 } from "@/lib/supabase/generators";
-import type { Generator, GeneratorCategory, GeneratorField, GeneratorSchema, GeneratorTemplate } from "@/types";
+import type { Generator, GeneratorField, GeneratorSchema, GeneratorTemplate } from "@/types";
 
 const STEPS = ["details", "fields", "preview", "publish"] as const;
 type Step = (typeof STEPS)[number];
@@ -61,7 +60,7 @@ function defaultMeta(): GeneratorMetaInput {
 }
 
 function defaultSchema(): GeneratorSchema {
-  return { categories: [{ id: newId("cat"), name: "Genel", description: "", order: 0 }], fields: [] };
+  return { fields: [] };
 }
 
 // The generator's `template` field on the DB row is no longer authored by
@@ -103,8 +102,9 @@ function LoginGate() {
  * A generator's own metadata (title/description/cover/category/tags/
  * visibility/settings) lives directly on `generators` and is saved
  * immediately (via `updateGeneratorMeta`) whenever the user leaves the
- * Details step — it is never versioned. Its schema (categories, fields)
- * lives on the CURRENT `generator_versions` row and is autosaved
+ * Details step — it is never versioned. Its schema (a flat, ordered field
+ * list — the earlier field-organization category system was removed, see
+ * CLAUDE.md) lives on the CURRENT `generator_versions` row and is autosaved
  * (debounced) ONLY while the generator is still a draft
  * (`saveDraftVersionContent`); once published, further schema edits stay
  * local-only until the user explicitly re-publishes, which is the one
@@ -140,7 +140,6 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
   const [template, setTemplate] = useState<GeneratorTemplate>(defaultTemplate);
   const [generator, setGenerator] = useState<Generator | null>(null);
   const [version, setVersion] = useState<GeneratorVersionResult | null>(null);
-  const [activeCategoryId, setActiveCategoryId] = useState<string>(() => defaultSchema().categories[0].id);
   const [editingField, setEditingField] = useState<{ field: GeneratorField | null; isNew: boolean } | null>(null);
   const [catalogPickerOpen, setCatalogPickerOpen] = useState(false);
 
@@ -194,11 +193,10 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
         allowSavingGeneratedPrompts: gen.allowSavingGeneratedPrompts,
         enableNegativePrompt: gen.enableNegativePrompt,
       });
-      const seedSchema = ver && ver.schema.categories.length > 0 ? ver.schema : defaultSchema();
+      const seedSchema = ver && ver.schema.fields.length > 0 ? ver.schema : defaultSchema();
       const seedTemplate = ver && ver.template.sections.length > 0 ? ver.template : defaultTemplate();
       setSchema(seedSchema);
       setTemplate(seedTemplate);
-      setActiveCategoryId(seedSchema.categories[0]?.id ?? UNCATEGORIZED_CATEGORY_ID);
       setLoadingExisting(false);
     })();
     return () => {
@@ -312,38 +310,11 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
     setStep("fields");
   }
 
-  function handleAddCategory(name: string) {
-    const nextOrder = schema.categories.length > 0 ? Math.max(...schema.categories.map((c) => c.order)) + 1 : 0;
-    const category: GeneratorCategory = { id: newId("cat"), name, description: "", order: nextOrder };
-    setSchema((prev) => ({ ...prev, categories: [...prev.categories, category] }));
-    setActiveCategoryId(category.id);
-  }
-
-  function handleRenameCategory(id: string, name: string) {
-    setSchema((prev) => ({ ...prev, categories: prev.categories.map((c) => (c.id === id ? { ...c, name } : c)) }));
-  }
-
-  function handleDeleteCategory(id: string) {
-    setSchema((prev) => ({ ...prev, categories: prev.categories.filter((c) => c.id !== id) }));
-    if (activeCategoryId === id) setActiveCategoryId(UNCATEGORIZED_CATEGORY_ID);
-  }
-
-  function handleReorderCategories(orderedIds: string[]) {
-    setSchema((prev) => ({
-      ...prev,
-      categories: orderedIds.map((id, index) => {
-        const category = prev.categories.find((c) => c.id === id)!;
-        return { ...category, order: index };
-      }),
-    }));
-  }
-
   function handleSaveField(field: GeneratorField) {
     setSchema((prev) => {
       const exists = prev.fields.some((f) => f.id === field.id);
       if (exists) return { ...prev, fields: prev.fields.map((f) => (f.id === field.id ? field : f)) };
-      const categoryFields = prev.fields.filter((f) => f.categoryId === field.categoryId);
-      const order = categoryFields.length > 0 ? Math.max(...categoryFields.map((f) => f.order)) + 1 : 0;
+      const order = prev.fields.length > 0 ? Math.max(...prev.fields.map((f) => f.order)) + 1 : 0;
       return { ...prev, fields: [...prev.fields, { ...field, order }] };
     });
     setEditingField(null);
@@ -358,30 +329,26 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
     const existingKeys = schema.fields.map((f) => f.key);
     const label = `${field.label} (kopya)`;
     const key = makeFieldKeyFromLabel(label, existingKeys);
-    const categoryFields = schema.fields.filter((f) => f.categoryId === field.categoryId);
-    const order = categoryFields.length > 0 ? Math.max(...categoryFields.map((f) => f.order)) + 1 : 0;
+    const order = schema.fields.length > 0 ? Math.max(...schema.fields.map((f) => f.order)) + 1 : 0;
     const clone: GeneratorField = { ...field, id: newId("field"), key, label, order };
     setSchema((prev) => ({ ...prev, fields: [...prev.fields, clone] }));
   }
 
-  // Converts chosen catalog entries into real `GeneratorField`s and inserts
-  // them into the currently-active category — the exact same
-  // `makeFieldKeyFromLabel`/order logic `handleDuplicateField` already uses,
-  // so there is one real place a `GeneratorField` gets constructed from
-  // something else, not two. The picker itself never builds a `GeneratorField`.
+  // Converts chosen catalog entries into real `GeneratorField`s — the exact
+  // same `makeFieldKeyFromLabel`/order logic `handleDuplicateField` already
+  // uses, so there is one real place a `GeneratorField` gets constructed
+  // from something else, not two. The picker itself never builds a
+  // `GeneratorField`.
   function handleInsertCatalogFields(catalogFields: CatalogField[]) {
-    const targetCategoryId = activeCategoryId === UNCATEGORIZED_CATEGORY_ID ? (schema.categories[0]?.id ?? "") : activeCategoryId;
     setSchema((prev) => {
       let existingKeys = prev.fields.map((f) => f.key);
-      const categoryFields = prev.fields.filter((f) => f.categoryId === targetCategoryId);
-      let nextOrder = categoryFields.length > 0 ? Math.max(...categoryFields.map((f) => f.order)) + 1 : 0;
+      let nextOrder = prev.fields.length > 0 ? Math.max(...prev.fields.map((f) => f.order)) + 1 : 0;
       const inserted: GeneratorField[] = [];
       for (const catalogField of catalogFields) {
         const key = makeFieldKeyFromLabel(catalogField.label, existingKeys);
         existingKeys = [...existingKeys, key];
         inserted.push({
           id: newId("field"),
-          categoryId: targetCategoryId,
           key,
           label: catalogField.label,
           description: "",
@@ -411,10 +378,7 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
     });
   }
 
-  const visibleFields =
-    activeCategoryId === UNCATEGORIZED_CATEGORY_ID
-      ? schema.fields.filter((f) => !schema.categories.some((c) => c.id === f.categoryId)).sort((a, b) => a.order - b.order)
-      : fieldsInCategory(schema, activeCategoryId);
+  const visibleFields = [...schema.fields].sort((a, b) => a.order - b.order);
 
   const issues = [...validateGeneratorForPublish(meta.title, meta.description, schema), ...validateGeneratorOutputMapping(schema)];
   const errors = issues.filter((i) => i.level === "error");
@@ -442,9 +406,11 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6">
-      <div className="mb-5 flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-lg font-semibold text-text">{generator ? `Generator ${generator.status === "published" ? "Düzenle" : "Taslağı"}` : "Yeni Generator"}</h1>
+    <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-surface px-4 py-3 sm:px-5">
+        <h1 className="text-base font-semibold text-text sm:text-lg">
+          {generator ? `Generator ${generator.status === "published" ? "Düzenle" : "Taslağı"}` : "Yeni Generator"}
+        </h1>
         {generator && generator.status === "draft" && (
           <p className="flex items-center gap-1.5 text-xs text-text-muted">
             {saveStatus === "saving" && (
@@ -469,8 +435,8 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
         )}
       </div>
 
-      <div role="tablist" aria-label="Generator oluşturma adımları" className="mb-5 flex flex-wrap gap-1 border-b border-border">
-        {STEPS.map((s) => (
+      <div role="tablist" aria-label="Generator oluşturma adımları" className="mb-6 -mx-1 flex gap-1 overflow-x-auto border-b border-border px-1">
+        {STEPS.map((s, index) => (
           <button
             key={s}
             type="button"
@@ -478,17 +444,25 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
             aria-selected={step === s}
             onClick={() => setStep(s)}
             className={cn(
-              "border-b-2 px-3 py-2 text-sm font-medium transition-colors",
+              "flex shrink-0 items-center gap-2 border-b-2 px-3 py-2.5 text-sm font-medium transition-colors",
               step === s ? "border-primary text-primary" : "border-transparent text-text-muted hover:text-text",
             )}
           >
+            <span
+              className={cn(
+                "flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold",
+                step === s ? "bg-primary text-primary-foreground" : "bg-accent-surface text-text-muted",
+              )}
+            >
+              {index + 1}
+            </span>
             {STEP_LABELS[s]}
           </button>
         ))}
       </div>
 
       {step === "details" && (
-        <div className="max-w-2xl space-y-4">
+        <div className="max-w-2xl space-y-4 rounded-lg border border-border bg-surface p-4 sm:p-5">
           <GeneratorDetailsForm meta={meta} onChange={(patch) => setMeta((prev) => ({ ...prev, ...patch }))} tagPicker={tagPicker} />
           {detailsError && <p className="text-sm text-red-500">{detailsError}</p>}
           <Button type="button" onClick={handleAdvanceFromDetails} disabled={creatingDraft}>
@@ -498,19 +472,8 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
       )}
 
       {step === "fields" && (
-        <div className="grid gap-6 lg:grid-cols-[200px_1fr_360px]">
-          <div className="min-w-0">
-            <CategoryManager
-              schema={schema}
-              activeCategoryId={activeCategoryId}
-              onSelectCategory={setActiveCategoryId}
-              onAddCategory={handleAddCategory}
-              onRenameCategory={handleRenameCategory}
-              onDeleteCategory={handleDeleteCategory}
-              onReorderCategories={handleReorderCategories}
-            />
-          </div>
-          <div className="min-w-0">
+        <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
+          <div className="min-w-0 rounded-lg border border-border bg-surface p-4 sm:p-5">
             <FieldList
               fields={visibleFields}
               onAddField={() => setCatalogPickerOpen(true)}
@@ -520,25 +483,25 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
               onReorderFields={handleReorderFields}
             />
           </div>
-          <div className="min-w-0 lg:sticky lg:top-4 lg:self-start">
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-muted">Canlı Önizleme</p>
-            <GeneratorPlayground schema={schema} enableNegativePrompt={meta.enableNegativePrompt} />
+          <div className="min-w-0">
+            <div className="rounded-lg border border-border bg-surface p-4 sm:p-5 lg:sticky lg:top-4">
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-text-muted">Canlı Önizleme</p>
+              <GeneratorPlayground schema={schema} enableNegativePrompt={meta.enableNegativePrompt} />
+            </div>
           </div>
         </div>
       )}
 
       {step === "preview" && (
-        <div className="max-w-2xl">
+        <div className="max-w-2xl rounded-lg border border-border bg-surface p-4 sm:p-5">
           <GeneratorPlayground schema={schema} enableNegativePrompt={meta.enableNegativePrompt} />
         </div>
       )}
 
       {step === "publish" && (
         <div className="max-w-2xl space-y-4">
-          <div className="rounded-md border border-border bg-surface p-4">
-            <p className="mb-2 text-sm font-medium text-text">
-              {schema.categories.length} kategori · {schema.fields.length} alan
-            </p>
+          <div className="rounded-lg border border-border bg-surface p-4 sm:p-5">
+            <p className="mb-2 text-sm font-medium text-text">{schema.fields.length} alan</p>
             {errors.length === 0 && warnings.length === 0 && <p className="text-sm text-green-600">Yayınlamaya hazır.</p>}
             {errors.map((issue, i) => (
               <p key={`e-${i}`} className="mt-1 flex items-start gap-1.5 text-sm text-red-500">
@@ -574,9 +537,7 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
         <FieldEditorModal
           initial={editingField.field}
           isNew={editingField.isNew}
-          categories={schema.categories.length > 0 ? schema.categories : [{ id: "", name: "Genel", description: "", order: 0 }]}
           allFields={schema.fields}
-          activeCategoryId={activeCategoryId === UNCATEGORIZED_CATEGORY_ID ? (schema.categories[0]?.id ?? null) : activeCategoryId}
           onClose={() => setEditingField(null)}
           onSave={handleSaveField}
           onDelete={editingField.field ? () => handleDeleteField(editingField.field!.id) : undefined}

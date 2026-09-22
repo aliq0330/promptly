@@ -113,7 +113,7 @@ interface GeneratorVersionRow {
 }
 
 function emptyGeneratorSchema(): GeneratorSchema {
-  return { categories: [], fields: [] };
+  return { fields: [] };
 }
 
 function emptyGeneratorTemplate(): GeneratorTemplate {

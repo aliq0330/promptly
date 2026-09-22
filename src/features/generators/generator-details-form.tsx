@@ -12,8 +12,9 @@ import type { GeneratorMetaInput } from "@/lib/supabase/generators";
 /**
  * Step 1 of the builder — the generator's own metadata (§4/§8/§27): title,
  * short description, topic category (the fixed `GeneratorCategoryTopic`
- * enum — not to be confused with the generator's own free-form schema
- * categories built in step 2), an optional free-typed subcategory, tags
+ * enum — the generator's own discovery topic, entirely unrelated to the
+ * field-organization category system that used to exist in step 2 and was
+ * removed, see CLAUDE.md), an optional free-typed subcategory, tags
  * (the shared, already-generic `TagPicker` — reused as-is, no
  * generator-specific fork), an optional cover image, visibility, and the
  * generator-level toggles (remix/prompt-editing/saving/negative-prompt).
@@ -79,7 +80,7 @@ export function GeneratorDetailsForm({
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div>
           <label htmlFor="gen-category" className="mb-1.5 block text-sm font-medium text-text">
             Kategori

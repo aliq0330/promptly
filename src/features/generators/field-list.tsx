@@ -21,9 +21,10 @@ const FIELD_TYPE_SHORT_LABELS: Record<GeneratorField["type"], string> = {
 };
 
 /**
- * The active category's field list — add/edit/duplicate/delete + drag
- * reorder (native HTML5 drag-and-drop, same convention as
- * `category-manager.tsx`).
+ * The generator's full field list — add/edit/duplicate/delete + drag
+ * reorder (native HTML5 drag-and-drop). Flat and category-free: the
+ * field-organization category system was removed (it didn't work in
+ * practice, per an explicit user report — see CLAUDE.md).
  */
 export function FieldList({
   fields,
@@ -72,8 +73,8 @@ export function FieldList({
       </div>
 
       {fields.length === 0 && (
-        <p className="rounded-md border border-dashed border-border p-4 text-center text-sm text-text-muted">
-          Bu kategoride henüz hiç alan yok — &quot;Alan ekle&quot; ile başla.
+        <p className="rounded-md border border-dashed border-border bg-accent-surface/40 p-6 text-center text-sm text-text-muted">
+          Bu generatorda henüz hiç alan yok — &quot;Alan ekle&quot; ile başla.
         </p>
       )}
 

@@ -124,8 +124,3 @@ export function isConditionSatisfiable(condition: GeneratorFieldCondition, field
   }
   return true;
 }
-
-/** One category's real, live field count — used by the sidebar and the "8 fields in this category" delete warning (§7). */
-export function fieldsInCategory(schema: GeneratorSchema, categoryId: string): GeneratorField[] {
-  return schema.fields.filter((field) => field.categoryId === categoryId).sort((a, b) => a.order - b.order);
-}

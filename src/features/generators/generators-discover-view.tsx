@@ -56,9 +56,9 @@ export function GeneratorsDiscoverView() {
   }, [generators, searchResults, category]);
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 px-4 py-6 lg:px-6">
-      <div>
-        <h1 className="mb-1 text-lg font-semibold text-text">Generatorları Keşfet</h1>
+    <div className="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:px-6">
+      <div className="rounded-lg border border-border bg-accent-surface px-4 py-5 sm:px-6 sm:py-6">
+        <h1 className="mb-1 text-lg font-semibold text-text sm:text-xl">Generatorları Keşfet</h1>
         <p className="text-sm text-text-muted">Başkalarının oluşturduğu prompt generatorlarını kullan, remixle ya da kendi generatorunu oluştur.</p>
       </div>
 
@@ -73,12 +73,12 @@ export function GeneratorsDiscoverView() {
         />
       </div>
 
-      <div className="flex flex-wrap gap-1.5">
+      <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1 sm:flex-wrap sm:overflow-visible">
         <button
           type="button"
           onClick={() => setCategory("all")}
           className={cn(
-            "rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
+            "shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
             category === "all" ? "border-primary bg-primary text-primary-foreground" : "border-border bg-surface text-text-muted hover:text-text",
           )}
         >
@@ -90,7 +90,7 @@ export function GeneratorsDiscoverView() {
             type="button"
             onClick={() => setCategory(topic)}
             className={cn(
-              "rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
+              "shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
               category === topic ? "border-primary bg-primary text-primary-foreground" : "border-border bg-surface text-text-muted hover:text-text",
             )}
           >
@@ -102,11 +102,11 @@ export function GeneratorsDiscoverView() {
       {!loaded || searching ? (
         <p className="py-10 text-center text-sm text-text-muted">Yükleniyor…</p>
       ) : filtered.length === 0 ? (
-        <p className="py-10 text-center text-sm text-text-muted">
+        <p className="rounded-lg border border-dashed border-border bg-accent-surface/40 py-10 text-center text-sm text-text-muted">
           {query.trim() ? "Eşleşen bir generator bulunamadı." : "Henüz hiç generator yayınlanmadı."}
         </p>
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((generator) => (
             <GeneratorCard key={generator.id} generator={generator} />
           ))}

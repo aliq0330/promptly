@@ -7,7 +7,7 @@ import { Modal } from "@/components/ui/modal";
 import { cn } from "@/lib/utils";
 import { makeFieldKeyFromLabel, isConditionSatisfiable, slugifyGeneratorTitle } from "@/lib/generator-template";
 import { buildFieldOutputPreview, collectJsonPathGroups, isValidJsonPath, parseJsonPath } from "@/lib/generator-output";
-import type { GeneratorCategory, GeneratorField, GeneratorFieldType } from "@/types";
+import type { GeneratorField, GeneratorFieldType } from "@/types";
 
 const FIELD_TYPE_LABELS: Record<GeneratorFieldType, string> = {
   text: "Kısa Metin",
@@ -31,11 +31,10 @@ function sanitizeSegment(input: string): string {
   return slugifyGeneratorTitle(input).replace(/-/g, "_");
 }
 
-function emptyField(categoryId: string, existingKeys: string[]): GeneratorField {
+function emptyField(existingKeys: string[]): GeneratorField {
   const key = makeFieldKeyFromLabel("field", existingKeys);
   return {
     id: `field-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-    categoryId,
     key,
     label: "",
     description: "",
@@ -71,26 +70,20 @@ function emptyField(categoryId: string, existingKeys: string[]): GeneratorField 
 export function FieldEditorModal({
   initial,
   isNew,
-  categories,
   allFields,
-  activeCategoryId,
   onClose,
   onSave,
   onDelete,
 }: {
   initial: GeneratorField | null;
   isNew: boolean;
-  categories: GeneratorCategory[];
   allFields: GeneratorField[];
-  activeCategoryId: string | null;
   onClose: () => void;
   onSave: (field: GeneratorField) => void;
   onDelete?: () => void;
 }) {
   const existingKeys = allFields.filter((f) => f.id !== initial?.id).map((f) => f.key);
-  const [draft, setDraft] = useState<GeneratorField>(
-    () => initial ?? emptyField(activeCategoryId ?? categories[0]?.id ?? "", existingKeys),
-  );
+  const [draft, setDraft] = useState<GeneratorField>(() => initial ?? emptyField(existingKeys));
   const [keyTouched, setKeyTouched] = useState(!isNew);
   const [pathTouched, setPathTouched] = useState(!isNew);
   const [optionLabelDraft, setOptionLabelDraft] = useState("");
@@ -248,41 +241,22 @@ export function FieldEditorModal({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label htmlFor="field-category" className="mb-1.5 block text-sm font-medium text-text">
-                Kategori
-              </label>
-              <select
-                id="field-category"
-                value={draft.categoryId}
-                onChange={(event) => setDraft((prev) => ({ ...prev, categoryId: event.target.value }))}
-                className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-text"
-              >
-                {categories.map((category) => (
-                  <option key={category.id} value={category.id}>
-                    {category.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label htmlFor="field-type" className="mb-1.5 block text-sm font-medium text-text">
-                Field Type
-              </label>
-              <select
-                id="field-type"
-                value={draft.type}
-                onChange={(event) => updateType(event.target.value as GeneratorFieldType)}
-                className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-text"
-              >
-                {(Object.keys(FIELD_TYPE_LABELS) as GeneratorFieldType[]).map((type) => (
-                  <option key={type} value={type}>
-                    {FIELD_TYPE_LABELS[type]}
-                  </option>
-                ))}
-              </select>
-            </div>
+          <div>
+            <label htmlFor="field-type" className="mb-1.5 block text-sm font-medium text-text">
+              Field Type
+            </label>
+            <select
+              id="field-type"
+              value={draft.type}
+              onChange={(event) => updateType(event.target.value as GeneratorFieldType)}
+              className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-text"
+            >
+              {(Object.keys(FIELD_TYPE_LABELS) as GeneratorFieldType[]).map((type) => (
+                <option key={type} value={type}>
+                  {FIELD_TYPE_LABELS[type]}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div>
