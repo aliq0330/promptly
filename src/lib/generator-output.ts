@@ -6,7 +6,7 @@
  *
  *   USER INPUT (fields) → RUNTIME STATE → [JSON OUTPUT ENGINE: jsonPath → value]  (this file)
  *   USER INPUT (prompt/negative prompt, typed directly by whoever RUNS the generator)
- *     → JSON.prompt / JSON.negative_prompt  (written verbatim, no template rendering)
+ *     → composed with the fields' own human-readable descriptions → JSON.prompt / JSON.negative_prompt
  *
  * Nothing here hard-codes a top-level key like `subject`/`environment`/
  * `style_preset` — those are only the spec's own illustrative examples. A
@@ -16,13 +16,27 @@
  *
  * NOTE — this file previously composed with `generator-template.ts`'s
  * `{{variable}}` Prompt Template Engine to compute `prompt`/`negative_prompt`
- * from a creator-authored template. That step was removed: the person who
- * BUILDS a generator no longer authors a prompt template at all — the
- * person who USES it types the actual prompt/negative-prompt text directly,
- * at the top of the runtime form, and that text is written into the output
- * as-is. `generator-template.ts`'s field-schema helpers (`isFieldVisible`,
- * `GeneratorValidationIssue`, etc.) are unrelated to that removed step and
- * are still used here unchanged.
+ * from a creator-authored template. That step was removed (Bölüm 9.29): the
+ * person who BUILDS a generator no longer authors a prompt template at
+ * all — the person who USES it types the actual prompt text directly, at
+ * the top of the runtime form. `generator-template.ts`'s field-schema
+ * helpers (`isFieldVisible`, `GeneratorValidationIssue`, etc.) are unrelated
+ * to that removed step and are still used here unchanged.
+ *
+ * UPDATE (Bölüm 9.32) — the runtime user's typed prompt is no longer the
+ * WHOLE `prompt` value: a user reported that their field selections (e.g. a
+ * video generator's duration/aspect-ratio/camera-movement choices) appeared
+ * in the structured JSON but never in the readable Prompt text — they had
+ * to type everything themselves twice. `composeFinalPromptText` below now
+ * appends a real, human-readable description of every visible, filled-in
+ * field (using the field's own `label` and, for select-family fields, the
+ * chosen option's `label` — never a raw machine `value`/`jsonPath`
+ * segment) after the user's own typed sentence. This is generic across ANY
+ * creator-defined schema (it walks `schema.fields`, not a hard-coded shape)
+ * and is NOT the old `{{variable}}` template engine — there is no
+ * creator-authored template text here, only a fixed, generic
+ * "{label}: {value}" join rule applied to whatever fields the creator
+ * happened to define.
  */
 
 import { isFieldVisible, type GeneratorValidationIssue } from "./generator-template";
@@ -104,17 +118,77 @@ function coerceFieldValue(field: GeneratorField, raw: string | string[] | undefi
 }
 
 /**
+ * One visible, filled-in field's real runtime value, turned into a short,
+ * human-readable fragment — the option's own `label` for select-family
+ * fields (never its raw `value`), the field's own `label` alone for a
+ * true checkbox/toggle (a false one contributes nothing — there's no
+ * natural-language way to describe "not selected" generically), and
+ * `"{label}: {value}"` for every other filled-in type. Returns `null` when
+ * the field has nothing to contribute (hidden by its condition, or
+ * genuinely empty) so callers can filter losslessly.
+ */
+function describeFieldValue(field: GeneratorField, values: GeneratorValues): string | null {
+  if (!isFieldVisible(field, values)) return null;
+  const raw = values[field.key];
+  const label = field.label?.trim() || field.key;
+
+  switch (field.type) {
+    case "select":
+    case "radio": {
+      const value = Array.isArray(raw) ? "" : (raw ?? "").trim();
+      if (!value) return null;
+      const optionLabel = field.options.find((o) => o.value === value)?.label ?? value;
+      return `${label}: ${optionLabel}`;
+    }
+    case "multi_select": {
+      const list = Array.isArray(raw) ? raw.filter((v) => v.trim().length > 0) : [];
+      if (list.length === 0) return null;
+      const optionLabels = list.map((value) => field.options.find((o) => o.value === value)?.label ?? value);
+      return `${label}: ${optionLabels.join(", ")}`;
+    }
+    case "checkbox":
+    case "toggle": {
+      const value = Array.isArray(raw) ? "" : (raw ?? "");
+      return value === "true" ? label : null;
+    }
+    default: {
+      const value = (Array.isArray(raw) ? "" : (raw ?? "")).trim();
+      return value.length > 0 ? `${label}: ${value}` : null;
+    }
+  }
+}
+
+/**
+ * Combines the runtime user's own typed prompt sentence with a generic,
+ * readable description of every other filled-in field (§ Bölüm 9.32) — the
+ * "JSON'un prompta çevrilmiş hali" the user asked for. Fields are read in
+ * schema order; the user's own sentence always comes first (so it reads as
+ * the main subject, with the selections as trailing descriptors) and is
+ * never discarded or rewritten, only extended.
+ */
+export function composeFinalPromptText(schema: GeneratorSchema, values: GeneratorValues, promptText: string): string {
+  const typed = promptText.trim();
+  const fieldFragments = [...schema.fields]
+    .sort((a, b) => a.order - b.order)
+    .map((field) => describeFieldValue(field, values))
+    .filter((fragment): fragment is string => fragment !== null);
+
+  if (fieldFragments.length === 0) return typed;
+  if (!typed) return fieldFragments.join(", ");
+  return `${typed}, ${fieldFragments.join(", ")}`;
+}
+
+/**
  * The real Central Output Engine — reads the schema, walks every visible
  * field's real runtime value, places it at that field's own `jsonPath`
- * (nested objects/arrays auto-constructed, §5/§6), then writes the runtime
- * user's own directly-typed `promptText`/`negativePromptText` in last, under
- * the two reserved keys — so that text always wins over any field whose own
- * `jsonPath` happened to collide with `prompt`/`negative_prompt` (surfaced
- * as a warning by `validateGeneratorOutputMapping`, never silently
- * swallowed). `promptText`/`negativePromptText` come straight from the
- * "Prompt"/"Negative Prompt" fields at the top of the runtime form — this
- * function never derives them from a template, it only trims and writes
- * them verbatim.
+ * (nested objects/arrays auto-constructed, §5/§6), then writes the real,
+ * composed prompt (`composeFinalPromptText` — the user's own typed sentence
+ * plus a readable description of every other selected field, Bölüm 9.32)
+ * and the runtime user's own directly-typed `negativePromptText` in last,
+ * under the two reserved keys — so these always win over any field whose
+ * own `jsonPath` happened to collide with `prompt`/`negative_prompt`
+ * (surfaced as a warning by `validateGeneratorOutputMapping`, never
+ * silently swallowed).
  */
 export function buildGeneratorOutput(
   schema: GeneratorSchema,
@@ -134,7 +208,7 @@ export function buildGeneratorOutput(
     assignAtPath(output, parseJsonPath(path), coerced);
   }
 
-  output.prompt = promptText.trim();
+  output.prompt = composeFinalPromptText(schema, values, promptText);
 
   if (enableNegativePrompt) {
     output.negative_prompt = negativePromptText.trim();

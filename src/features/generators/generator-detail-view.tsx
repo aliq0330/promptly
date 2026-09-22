@@ -136,101 +136,107 @@ export function GeneratorDetailView() {
   const canOpenInPrompt = generator.allowPromptEditing || generator.allowSavingGeneratedPrompts;
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6 px-4 py-6 lg:px-6">
-      {generator.coverUrl && (
-        // eslint-disable-next-line @next/next/no-img-element -- a real, potentially locally-produced data URL cover (see generator-details-form.tsx), same reasoning as that file's own cover preview
-        <img src={generator.coverUrl} alt="" className="h-48 w-full rounded-md border border-border object-cover" />
-      )}
-
-      <div className="space-y-3">
-        <div className="flex flex-wrap items-center gap-1.5">
-          <Badge variant="accent">
-            <Blocks size={11} className="mr-1" /> Generator
-          </Badge>
-          <Badge>{GENERATOR_CATEGORY_TOPIC_LABELS[generator.category]}</Badge>
-          {generator.subcategory && <Badge variant="outline">{generator.subcategory}</Badge>}
-          {generator.status === "draft" && <Badge variant="danger">Taslak</Badge>}
-          {generator.visibility === "unlisted" && generator.status === "published" && <Badge variant="outline">Yalnızca bağlantıyla</Badge>}
-          {generator.origin.type === "remix" && (
-            <Badge variant="outline">
-              <GitBranch size={11} className="mr-1" /> Remix
-            </Badge>
-          )}
-        </div>
-
-        <h1 className="text-2xl font-semibold text-text">{generator.title}</h1>
-        <p className="text-sm text-text-muted">{generator.description}</p>
-
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <Link href={profileHref(generator.creator)} className="flex items-center gap-2">
-            <Avatar src={generator.creator.avatarUrl} alt={generator.creator.displayName} size={32} />
-            <span className="text-sm font-medium text-text">{generator.creator.displayName}</span>
-          </Link>
-          <p className="text-xs text-text-muted">{formatRelativeTime(generator.createdAt)}</p>
-        </div>
-
-        {generator.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">
-            {generator.tags.map((tag) => (
-              <Badge key={tag.slug} variant="outline">
-                {tag.label}
-              </Badge>
-            ))}
+    <div className="mx-auto max-w-3xl space-y-5 px-4 py-6 sm:px-6">
+      <div className="overflow-hidden rounded-lg border border-border bg-surface">
+        {generator.coverUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element -- a real, potentially locally-produced data URL cover (see generator-details-form.tsx), same reasoning as that file's own cover preview
+          <img src={generator.coverUrl} alt="" className="h-40 w-full object-cover sm:h-56" />
+        ) : (
+          <div className="flex h-24 w-full items-center justify-center bg-accent-surface text-primary sm:h-28">
+            <Blocks size={32} />
           </div>
         )}
 
-        <div className="flex flex-wrap items-center gap-4 text-sm text-text-muted">
-          <span>{formatCount(generator.useCount)} kullanım</span>
-          <span>{formatCount(generator.saveCount)} kaydetme</span>
-          <span>{formatCount(generator.remixCount)} remix</span>
-        </div>
+        <div className="space-y-3 p-4 sm:p-5">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <Badge variant="accent">
+              <Blocks size={11} className="mr-1" /> Generator
+            </Badge>
+            <Badge>{GENERATOR_CATEGORY_TOPIC_LABELS[generator.category]}</Badge>
+            {generator.subcategory && <Badge variant="outline">{generator.subcategory}</Badge>}
+            {generator.status === "draft" && <Badge variant="danger">Taslak</Badge>}
+            {generator.visibility === "unlisted" && generator.status === "published" && <Badge variant="outline">Yalnızca bağlantıyla</Badge>}
+            {generator.origin.type === "remix" && (
+              <Badge variant="outline">
+                <GitBranch size={11} className="mr-1" /> Remix
+              </Badge>
+            )}
+          </div>
 
-        <div className="flex flex-wrap items-center gap-2 border-t border-border pt-3">
-          {isOwner ? (
-            <>
-              <Link href={`/generators/create?edit=${generator.id}`} className="inline-flex h-9 items-center gap-1.5 rounded-md border border-border px-3 text-sm font-medium text-text hover:bg-accent-surface">
-                <Pencil size={14} /> Düzenle
-              </Link>
-              <button
-                type="button"
-                onClick={handleDelete}
-                disabled={isDeleting}
-                className={cn(
-                  "inline-flex h-9 items-center gap-1.5 rounded-md border px-3 text-sm font-medium",
-                  deleteConfirm ? "border-red-500 bg-red-500/10 text-red-600" : "border-border text-text-muted hover:bg-accent-surface hover:text-red-600",
+          <h1 className="text-xl font-semibold text-text sm:text-2xl">{generator.title}</h1>
+          <p className="text-sm text-text-muted">{generator.description}</p>
+
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <Link href={profileHref(generator.creator)} className="flex items-center gap-2">
+              <Avatar src={generator.creator.avatarUrl} alt={generator.creator.displayName} size={32} />
+              <span className="text-sm font-medium text-text">{generator.creator.displayName}</span>
+            </Link>
+            <p className="text-xs text-text-muted">{formatRelativeTime(generator.createdAt)}</p>
+          </div>
+
+          {generator.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {generator.tags.map((tag) => (
+                <Badge key={tag.slug} variant="outline">
+                  {tag.label}
+                </Badge>
+              ))}
+            </div>
+          )}
+
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-md bg-accent-surface/50 px-3 py-2 text-sm text-text-muted">
+            <span>{formatCount(generator.useCount)} kullanım</span>
+            <span>{formatCount(generator.saveCount)} kaydetme</span>
+            <span>{formatCount(generator.remixCount)} remix</span>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 border-t border-border pt-3">
+            {isOwner ? (
+              <>
+                <Link href={`/generators/create?edit=${generator.id}`} className="inline-flex h-9 items-center gap-1.5 rounded-md border border-border px-3 text-sm font-medium text-text hover:bg-accent-surface">
+                  <Pencil size={14} /> Düzenle
+                </Link>
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  disabled={isDeleting}
+                  className={cn(
+                    "inline-flex h-9 items-center gap-1.5 rounded-md border px-3 text-sm font-medium",
+                    deleteConfirm ? "border-red-500 bg-red-500/10 text-red-600" : "border-border text-text-muted hover:bg-accent-surface hover:text-red-600",
+                  )}
+                >
+                  <Trash2 size={14} /> {deleteConfirm ? "Emin misin? Tekrar tıkla" : "Sil"}
+                </button>
+              </>
+            ) : (
+              <>
+                {generator.allowRemix && user && (
+                  <Button type="button" variant="outline" size="sm" onClick={handleRemix} disabled={isRemixing}>
+                    <GitBranch size={14} /> {isRemixing ? "Remix oluşturuluyor…" : "Remixle"}
+                  </Button>
                 )}
-              >
-                <Trash2 size={14} /> {deleteConfirm ? "Emin misin? Tekrar tıkla" : "Sil"}
-              </button>
-            </>
-          ) : (
-            <>
-              {generator.allowRemix && user && (
-                <Button type="button" variant="outline" size="sm" onClick={handleRemix} disabled={isRemixing}>
-                  <GitBranch size={14} /> {isRemixing ? "Remix oluşturuluyor…" : "Remixle"}
-                </Button>
-              )}
-              {saveState.canSave && (
-                <Button type="button" variant={saveState.isSaved ? "secondary" : "outline"} size="sm" onClick={saveState.toggle} disabled={saveState.isToggling}>
-                  <Bookmark size={14} fill={saveState.isSaved ? "currentColor" : "none"} /> {saveState.isSaved ? "Kaydedildi" : "Kaydet"}
-                </Button>
-              )}
-            </>
+                {saveState.canSave && (
+                  <Button type="button" variant={saveState.isSaved ? "secondary" : "outline"} size="sm" onClick={saveState.toggle} disabled={saveState.isToggling}>
+                    <Bookmark size={14} fill={saveState.isSaved ? "currentColor" : "none"} /> {saveState.isSaved ? "Kaydedildi" : "Kaydet"}
+                  </Button>
+                )}
+              </>
+            )}
+          </div>
+          {actionError && <p className="text-sm text-red-500">{actionError}</p>}
+          {!user && (
+            <p className="text-xs text-text-muted">
+              Remixlemek, kaydetmek ya da bir prompt oluşturmak için{" "}
+              <Link href="/login" className="font-medium text-primary hover:underline">
+                giriş yap
+              </Link>
+              .
+            </p>
           )}
         </div>
-        {actionError && <p className="text-sm text-red-500">{actionError}</p>}
-        {!user && (
-          <p className="text-xs text-text-muted">
-            Remixlemek, kaydetmek ya da bir prompt oluşturmak için{" "}
-            <Link href="/login" className="font-medium text-primary hover:underline">
-              giriş yap
-            </Link>
-            .
-          </p>
-        )}
       </div>
 
-      <div className="border-t border-border pt-5">
+      <div className="rounded-lg border border-border bg-surface p-4 sm:p-5">
         <h2 className="mb-3 text-sm font-semibold text-text">Generatoru Kullan</h2>
         <GeneratorPlayground
           schema={version.schema}
