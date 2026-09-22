@@ -234,7 +234,6 @@ export function GeneratorDetailView() {
         <h2 className="mb-3 text-sm font-semibold text-text">Generatoru Kullan</h2>
         <GeneratorPlayground
           schema={version.schema}
-          template={version.template}
           enableNegativePrompt={generator.enableNegativePrompt}
           renderActions={
             canOpenInPrompt

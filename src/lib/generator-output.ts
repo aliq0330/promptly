@@ -1,23 +1,32 @@
 /**
- * The Generator's JSON Output Engine — a second, separate pure layer from
- * `generator-template.ts`'s `{{variable}}` Prompt Template Engine (per the
- * architecture correction: "İki ayrı engine" — never merged into one file,
- * never deleted the template engine).
+ * The Generator's JSON Output Engine — reads the creator's schema (each
+ * field's own `jsonPath`) and the RUNTIME USER's own free-typed prompt/
+ * negative-prompt text, and produces the generator's real, structured JSON
+ * output.
  *
- *   USER INPUT → RUNTIME STATE
- *     → [JSON OUTPUT ENGINE: jsonPath → value]  (this file)
- *     → STRUCTURED JSON
- *     → [PROMPT TEMPLATE ENGINE: {{variables}}]  (generator-template.ts)
- *     → JSON.prompt / JSON.negative_prompt
+ *   USER INPUT (fields) → RUNTIME STATE → [JSON OUTPUT ENGINE: jsonPath → value]  (this file)
+ *   USER INPUT (prompt/negative prompt, typed directly by whoever RUNS the generator)
+ *     → JSON.prompt / JSON.negative_prompt  (written verbatim, no template rendering)
  *
  * Nothing here hard-codes a top-level key like `subject`/`environment`/
  * `style_preset` — those are only the spec's own illustrative examples. A
- * generator's real output shape is entirely derived, at build time, from
- * whatever `jsonPath` each of the creator's own fields declares.
+ * generator's real output shape (outside of the reserved `prompt`/
+ * `negative_prompt` keys) is entirely derived, at build time, from whatever
+ * `jsonPath` each of the creator's own fields declares.
+ *
+ * NOTE — this file previously composed with `generator-template.ts`'s
+ * `{{variable}}` Prompt Template Engine to compute `prompt`/`negative_prompt`
+ * from a creator-authored template. That step was removed: the person who
+ * BUILDS a generator no longer authors a prompt template at all — the
+ * person who USES it types the actual prompt/negative-prompt text directly,
+ * at the top of the runtime form, and that text is written into the output
+ * as-is. `generator-template.ts`'s field-schema helpers (`isFieldVisible`,
+ * `GeneratorValidationIssue`, etc.) are unrelated to that removed step and
+ * are still used here unchanged.
  */
 
-import { isFieldVisible, isNegativeSection, renderTemplate, type GeneratorValidationIssue } from "./generator-template";
-import type { GeneratorField, GeneratorOutput, GeneratorSchema, GeneratorTemplate, GeneratorValues } from "@/types";
+import { isFieldVisible, type GeneratorValidationIssue } from "./generator-template";
+import type { GeneratorField, GeneratorOutput, GeneratorSchema, GeneratorValues } from "@/types";
 
 const PATH_SEGMENT_PATTERN = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
 
@@ -97,18 +106,21 @@ function coerceFieldValue(field: GeneratorField, raw: string | string[] | undefi
 /**
  * The real Central Output Engine — reads the schema, walks every visible
  * field's real runtime value, places it at that field's own `jsonPath`
- * (nested objects/arrays auto-constructed, §5/§6), then hands the SAME
- * schema/template/values to the separate Prompt Template Engine
- * (`renderTemplate`) to compute `prompt` (and `negative_prompt`, when
- * enabled) and writes those two reserved keys in last — so the generated
- * prompt text always wins over any field whose own `jsonPath` happened to
- * collide with `prompt`/`negative_prompt` (surfaced as a warning by
- * `validateGeneratorOutputMapping`, never silently swallowed).
+ * (nested objects/arrays auto-constructed, §5/§6), then writes the runtime
+ * user's own directly-typed `promptText`/`negativePromptText` in last, under
+ * the two reserved keys — so that text always wins over any field whose own
+ * `jsonPath` happened to collide with `prompt`/`negative_prompt` (surfaced
+ * as a warning by `validateGeneratorOutputMapping`, never silently
+ * swallowed). `promptText`/`negativePromptText` come straight from the
+ * "Prompt"/"Negative Prompt" fields at the top of the runtime form — this
+ * function never derives them from a template, it only trims and writes
+ * them verbatim.
  */
 export function buildGeneratorOutput(
   schema: GeneratorSchema,
-  template: GeneratorTemplate,
   values: GeneratorValues,
+  promptText: string,
+  negativePromptText: string,
   enableNegativePrompt: boolean,
 ): GeneratorOutput {
   const output: GeneratorOutput = {};
@@ -122,12 +134,10 @@ export function buildGeneratorOutput(
     assignAtPath(output, parseJsonPath(path), coerced);
   }
 
-  const positiveTemplate: GeneratorTemplate = { sections: template.sections.filter((section) => !isNegativeSection(section)) };
-  output.prompt = renderTemplate(positiveTemplate, values, schema);
+  output.prompt = promptText.trim();
 
   if (enableNegativePrompt) {
-    const negativeTemplate: GeneratorTemplate = { sections: template.sections.filter((section) => isNegativeSection(section)) };
-    output.negative_prompt = renderTemplate(negativeTemplate, values, schema);
+    output.negative_prompt = negativePromptText.trim();
   }
 
   return output;

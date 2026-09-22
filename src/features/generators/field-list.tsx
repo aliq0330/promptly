@@ -4,8 +4,7 @@ import { useState } from "react";
 import { Copy, GripVertical, Pencil, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { countKeyUsageInTemplate } from "@/lib/generator-template";
-import type { GeneratorField, GeneratorTemplate } from "@/types";
+import type { GeneratorField } from "@/types";
 
 const FIELD_TYPE_SHORT_LABELS: Record<GeneratorField["type"], string> = {
   text: "Kısa Metin",
@@ -24,14 +23,10 @@ const FIELD_TYPE_SHORT_LABELS: Record<GeneratorField["type"], string> = {
 /**
  * The active category's field list — add/edit/duplicate/delete + drag
  * reorder (native HTML5 drag-and-drop, same convention as
- * `category-manager.tsx`). Deleting a field never touches the template's own
- * `{{key}}` text (see `generator-template.ts`'s `renderTemplateSection` doc
- * comment — an orphaned token stays visible, it never silently vanishes),
- * so this only warns about it, never blocks it.
+ * `category-manager.tsx`).
  */
 export function FieldList({
   fields,
-  template,
   onAddField,
   onEditField,
   onDuplicateField,
@@ -39,7 +34,6 @@ export function FieldList({
   onReorderFields,
 }: {
   fields: GeneratorField[];
-  template: GeneratorTemplate;
   onAddField: () => void;
   onEditField: (field: GeneratorField) => void;
   onDuplicateField: (field: GeneratorField) => void;
@@ -138,16 +132,6 @@ export function FieldList({
           </div>
         );
       })}
-      {confirmDeleteId && (() => {
-        const field = fields.find((f) => f.id === confirmDeleteId);
-        const usage = field ? countKeyUsageInTemplate(template, field.key) : 0;
-        if (usage === 0) return null;
-        return (
-          <p className="rounded-md border border-red-500/40 bg-red-500/5 p-2 text-xs text-red-600">
-            Bu alan prompt şablonunda {usage} yerde kullanılıyor. Silersen o {`{{${field?.key}}}`} referansları düz metin olarak kalır — silinmiş bir alana işaret ettiği için yayınlama sırasında hata gösterilir.
-          </p>
-        );
-      })()}
     </div>
   );
 }

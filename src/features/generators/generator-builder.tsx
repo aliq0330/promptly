@@ -13,7 +13,6 @@ import { CategoryManager, UNCATEGORIZED_CATEGORY_ID } from "./category-manager";
 import { FieldList } from "./field-list";
 import { FieldEditorModal } from "./field-editor-modal";
 import { GeneratorDetailsForm } from "./generator-details-form";
-import { TemplateEditor, emptySection } from "./template-editor";
 import { GeneratorPlayground } from "./generator-playground";
 import { fieldsInCategory, makeFieldKeyFromLabel, validateGeneratorForPublish } from "@/lib/generator-template";
 import { validateGeneratorOutputMapping } from "@/lib/generator-output";
@@ -30,12 +29,11 @@ import {
 } from "@/lib/supabase/generators";
 import type { Generator, GeneratorCategory, GeneratorField, GeneratorSchema, GeneratorTemplate } from "@/types";
 
-const STEPS = ["details", "fields", "template", "preview", "publish"] as const;
+const STEPS = ["details", "fields", "preview", "publish"] as const;
 type Step = (typeof STEPS)[number];
 const STEP_LABELS: Record<Step, string> = {
   details: "Detaylar",
   fields: "Alanlar",
-  template: "Şablon",
   preview: "Önizleme",
   publish: "Yayınla",
 };
@@ -64,8 +62,14 @@ function defaultSchema(): GeneratorSchema {
   return { categories: [{ id: newId("cat"), name: "Genel", description: "", order: 0 }], fields: [] };
 }
 
+// The generator's `template` field on the DB row is no longer authored by
+// the builder UI (see this file's own doc comment below) — kept only so
+// `saveDraftVersionContent`/`publishGenerator`/`remixGenerator`'s existing
+// signatures (and a previously-authored generator's stored template, if any)
+// round-trip unchanged. A brand-new generator's template is always this
+// single, empty, never-rendered placeholder section.
 function defaultTemplate(): GeneratorTemplate {
-  return { sections: [{ ...emptySection(0), title: "Prompt" }] };
+  return { sections: [{ id: newId("section"), title: "Prompt", content: "", order: 0, enabled: true }] };
 }
 
 function LoginGate() {
@@ -97,16 +101,26 @@ function LoginGate() {
  * A generator's own metadata (title/description/cover/category/tags/
  * visibility/settings) lives directly on `generators` and is saved
  * immediately (via `updateGeneratorMeta`) whenever the user leaves the
- * Details step — it is never versioned. Its schema/template (categories,
- * fields, template sections) lives on the CURRENT `generator_versions` row
- * and is autosaved (debounced) ONLY while the generator is still a draft
- * (`saveDraftVersionContent`); once published, further schema/template
- * edits stay local-only until the user explicitly re-publishes, which is
- * the one moment a genuinely NEW version is created (§26) — there is no
- * separate "draft version" slot to autosave post-publish edits into
- * without being consciously listed as new-version content, and silently
- * mutating an already-published version in place would break the very
- * version history §26/§29 exists for.
+ * Details step — it is never versioned. Its schema (categories, fields)
+ * lives on the CURRENT `generator_versions` row and is autosaved
+ * (debounced) ONLY while the generator is still a draft
+ * (`saveDraftVersionContent`); once published, further schema edits stay
+ * local-only until the user explicitly re-publishes, which is the one
+ * moment a genuinely NEW version is created (§26) — there is no separate
+ * "draft version" slot to autosave post-publish edits into without being
+ * consciously listed as new-version content, and silently mutating an
+ * already-published version in place would break the very version history
+ * §26/§29 exists for.
+ *
+ * The builder no longer lets the creator author a `{{variable}}` prompt
+ * template — that responsibility moved to whoever RUNS the generator, who
+ * types the real prompt/negative-prompt text directly at the top of the
+ * runtime form (`generator-playground.tsx`). This component still carries
+ * a `template` value through to the DB layer purely for round-trip
+ * compatibility with `saveDraftVersionContent`/`publishGenerator`/
+ * `remixGenerator`'s existing signatures (and so a generator authored
+ * before this change keeps whatever template content it already had
+ * stored) — it is never shown or edited in this UI.
  *
  * No draft row is created until the user actually advances past the
  * Details step with a real title/description — glancing at `/generators/
@@ -359,7 +373,7 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
       ? schema.fields.filter((f) => !schema.categories.some((c) => c.id === f.categoryId)).sort((a, b) => a.order - b.order)
       : fieldsInCategory(schema, activeCategoryId);
 
-  const issues = [...validateGeneratorForPublish(meta.title, meta.description, schema, template), ...validateGeneratorOutputMapping(schema)];
+  const issues = [...validateGeneratorForPublish(meta.title, meta.description, schema), ...validateGeneratorOutputMapping(schema)];
   const errors = issues.filter((i) => i.level === "error");
   const warnings = issues.filter((i) => i.level === "warning");
 
@@ -456,7 +470,6 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
           <div className="min-w-0">
             <FieldList
               fields={visibleFields}
-              template={template}
               onAddField={() => setEditingField({ field: null, isNew: true })}
               onEditField={(field) => setEditingField({ field, isNew: false })}
               onDuplicateField={handleDuplicateField}
@@ -466,26 +479,14 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
           </div>
           <div className="min-w-0 lg:sticky lg:top-4 lg:self-start">
             <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-muted">Canlı Önizleme</p>
-            <GeneratorPlayground schema={schema} template={template} enableNegativePrompt={meta.enableNegativePrompt} />
-          </div>
-        </div>
-      )}
-
-      {step === "template" && (
-        <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
-          <div className="min-w-0">
-            <TemplateEditor template={template} schema={schema} onChange={setTemplate} />
-          </div>
-          <div className="min-w-0 lg:sticky lg:top-4 lg:self-start">
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-muted">Canlı Önizleme</p>
-            <GeneratorPlayground schema={schema} template={template} enableNegativePrompt={meta.enableNegativePrompt} />
+            <GeneratorPlayground schema={schema} enableNegativePrompt={meta.enableNegativePrompt} />
           </div>
         </div>
       )}
 
       {step === "preview" && (
         <div className="max-w-2xl">
-          <GeneratorPlayground schema={schema} template={template} enableNegativePrompt={meta.enableNegativePrompt} />
+          <GeneratorPlayground schema={schema} enableNegativePrompt={meta.enableNegativePrompt} />
         </div>
       )}
 
@@ -493,7 +494,7 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
         <div className="max-w-2xl space-y-4">
           <div className="rounded-md border border-border bg-surface p-4">
             <p className="mb-2 text-sm font-medium text-text">
-              {schema.categories.length} kategori · {schema.fields.length} alan · {template.sections.filter((s) => s.enabled).length} aktif şablon bölümü
+              {schema.categories.length} kategori · {schema.fields.length} alan
             </p>
             {errors.length === 0 && warnings.length === 0 && <p className="text-sm text-green-600">Yayınlamaya hazır.</p>}
             {errors.map((issue, i) => (

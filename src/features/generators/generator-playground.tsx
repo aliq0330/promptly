@@ -7,7 +7,7 @@ import { buildGeneratorOutput } from "@/lib/generator-output";
 import { GeneratorRuntimeForm } from "./generator-runtime-form";
 import { GeneratedPromptPanel } from "./generated-prompt-panel";
 import { GeneratorJsonPanel } from "./generator-json-panel";
-import type { GeneratorSchema, GeneratorTemplate, GeneratorValues } from "@/types";
+import type { GeneratorSchema, GeneratorValues } from "@/types";
 
 /**
  * The one real "fill the form → get a real, structured output" surface
@@ -22,28 +22,37 @@ import type { GeneratorSchema, GeneratorTemplate, GeneratorValues } from "@/type
  * "Varsayılanlara dön" (from `GeneratedPromptPanel`/`GeneratorJsonPanel`)
  * fully resets to the schema's real defaults.
  *
- * Three tabs, per the JSON Output Engine architecture correction: FORM
- * (fill it in), JSON (the generator's real, structured output —
- * `buildGeneratorOutput()`, the primary artifact), and PROMPT (a
- * human-readable view of just that JSON's own `prompt` property — never
- * the other way around). Both the JSON and Prompt tabs are computed from
- * the exact same `buildGeneratorOutput()` call — there is only ever one
- * source of truth, the two tabs are just two different views onto it.
+ * Three tabs: FORM (fill it in), JSON (the generator's real, structured
+ * output — `buildGeneratorOutput()`, the primary artifact), and PROMPT (a
+ * human-readable view of just that JSON's own `prompt`/`negative_prompt`
+ * properties). Both the JSON and Prompt tabs are computed from the exact
+ * same `buildGeneratorOutput()` call — there is only ever one source of
+ * truth, the two tabs are just two different views onto it.
+ *
+ * ARCHITECTURE NOTE — who writes `prompt`/`negative_prompt`, and when:
+ * the generator's CREATOR no longer authors a `{{variable}}` prompt
+ * template at all (that whole step was removed from the builder — see
+ * `generator-builder.tsx`'s own doc comment). Instead, whoever RUNS a
+ * generator types the real prompt/negative-prompt text directly, in two
+ * plain fields at the very top of the Form tab — above the schema's own
+ * categorized fields, which the runtime user fills in below. That text is
+ * written into `buildGeneratorOutput()`'s output verbatim (trimmed, never
+ * rendered/substituted) — see `generator-output.ts`.
  */
 export function GeneratorPlayground({
   schema,
-  template,
   enableNegativePrompt,
   renderActions,
 }: {
   schema: GeneratorSchema;
-  template: GeneratorTemplate;
   enableNegativePrompt: boolean;
   /** Only the real runtime page passes this — the "Prompt olarak aç"/"Kaydet" buttons, given the exact live-computed state to act on. The builder's own preview passes nothing. */
   renderActions?: (state: { values: GeneratorValues; prompt: string; negativePrompt: string | null }) => React.ReactNode;
 }) {
   const [tab, setTab] = useState<"form" | "json" | "prompt">("form");
   const [values, setValues] = useState<GeneratorValues>(() => defaultValuesFromSchema(schema));
+  const [promptText, setPromptText] = useState("");
+  const [negativePromptText, setNegativePromptText] = useState("");
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- merges newly-added field defaults into live preview values whenever the schema changes, without ever discarding what the author has already typed
@@ -67,18 +76,16 @@ export function GeneratorPlayground({
 
   function handleReset() {
     setValues(defaultValuesFromSchema(schema));
+    setPromptText("");
+    setNegativePromptText("");
   }
 
   // The single, shared source of truth both the JSON tab and the Prompt tab
   // (and `renderActions`) read from — the real JSON Output Engine call
-  // (§18/§20's "central output engine" requirement). The old code called
-  // `renderTemplate()` twice, directly, right here — that's exactly the
-  // "selection inserted straight into a single prompt string" pattern the
-  // architecture correction (§22) asked to find and fix; it now happens
-  // exclusively inside `buildGeneratorOutput()`, one layer down, with the
-  // template engine's result written into the JSON's own `prompt`/
-  // `negative_prompt` properties rather than being the final output itself.
-  const output = buildGeneratorOutput(schema, template, values, enableNegativePrompt);
+  // (§18/§20's "central output engine" requirement). `promptText`/
+  // `negativePromptText` are the runtime user's own direct input, written
+  // into the output verbatim — this is the only place that happens.
+  const output = buildGeneratorOutput(schema, values, promptText, negativePromptText, enableNegativePrompt);
   const prompt = typeof output.prompt === "string" ? output.prompt : "";
   const negativePrompt = enableNegativePrompt ? (typeof output.negative_prompt === "string" ? output.negative_prompt : "") : null;
 
@@ -103,7 +110,40 @@ export function GeneratorPlayground({
       </div>
 
       {tab === "form" ? (
-        <GeneratorRuntimeForm schema={schema} values={values} onChange={handleChange} />
+        <div className="space-y-5">
+          <div className="space-y-3 rounded-md border border-border bg-surface p-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">Prompt</p>
+            <div>
+              <label htmlFor="gen-run-prompt" className="mb-1.5 block text-sm font-medium text-text">
+                Prompt
+              </label>
+              <textarea
+                id="gen-run-prompt"
+                rows={3}
+                value={promptText}
+                onChange={(event) => setPromptText(event.target.value)}
+                placeholder="Örn. Güneşli bir günde kadın oturuyor"
+                className="w-full resize-none rounded-md border border-border bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted"
+              />
+            </div>
+            {enableNegativePrompt && (
+              <div>
+                <label htmlFor="gen-run-negative-prompt" className="mb-1.5 block text-sm font-medium text-text">
+                  Negative Prompt
+                </label>
+                <textarea
+                  id="gen-run-negative-prompt"
+                  rows={2}
+                  value={negativePromptText}
+                  onChange={(event) => setNegativePromptText(event.target.value)}
+                  placeholder="Örn. sandalye yok"
+                  className="w-full resize-none rounded-md border border-border bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted"
+                />
+              </div>
+            )}
+          </div>
+          <GeneratorRuntimeForm schema={schema} values={values} onChange={handleChange} />
+        </div>
       ) : tab === "json" ? (
         <GeneratorJsonPanel output={output} onReset={handleReset} />
       ) : (
