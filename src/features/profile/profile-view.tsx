@@ -95,7 +95,7 @@ export function ProfileView({
   const tabs = useMemo(() => {
     const base: { key: ProfileTabKey; label: string; count?: number }[] = [
       { key: "prompts", label: "Promptlar", count: authorPrompts.length },
-      { key: "remixes", label: "Türetilen promptlar", count: remixPrompts.length },
+      { key: "remixes", label: "Remixler", count: remixPrompts.length },
       { key: "requests", label: "Prompt İstekleri", count: authorRequests.length },
       { key: "generators", label: "Generatorlar", count: authorGenerators.length },
     ];
@@ -253,7 +253,7 @@ function TabEmptyState({ tab, isOwnProfile }: { tab: ProfileTabKey; isOwnProfile
     return (
       <ProfileEmptyState
         icon={GitBranch}
-        title="İlk türettiğin promptu oluştur"
+        title="İlk remixini oluştur"
         description="Başka bir prompttan ilham al ve kendi yorumunu kat."
         action={{ label: "Keşfet", href: "/discover" }}
       />

@@ -84,7 +84,7 @@ export function ProfileStats({
         <Stat label="takip" value={followingCount} />
       )}
       <StatButton
-        label="türetme"
+        label="remix"
         value={remixCount}
         onClick={onSelectRemixes}
         className="hidden sm:inline"

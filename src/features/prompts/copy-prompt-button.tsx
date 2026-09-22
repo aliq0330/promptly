@@ -7,7 +7,7 @@ import { cn, copyTextToClipboard } from "@/lib/utils";
 /**
  * The one shared "Kopyala" button used directly above a real prompt text
  * block on all four content surfaces (CLAUDE.md §10) — a prompt gönderisi,
- * a türetilen/remix gönderisi and a prompt yanıtı are all the SAME
+ * a remix gönderisi and a prompt yanıtı are all the SAME
  * `prompts` row shape, so wiring this into `PromptPreviewBox` (every card)
  * and `PromptDetailView`'s own text block (both shared by all three) covers
  * all three types without any per-type special-casing; `RequestCard`/
