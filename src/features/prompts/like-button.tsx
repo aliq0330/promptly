@@ -4,20 +4,24 @@ import Link from "next/link";
 import { Heart } from "lucide-react";
 import { cn, formatCount } from "@/lib/utils";
 import { useLikeState } from "./use-like-state";
+import type { LikeableContentType } from "@/lib/supabase/likes";
 
 /** Real, working like toggle — genuinely persisted to Supabase; shows a login link instead while signed out. */
 export function LikeButton({
   id,
   likeCount,
+  contentType = "prompt",
   size = 14,
   className,
 }: {
   id: string;
   likeCount: number;
+  /** Defaults to "prompt" — every existing prompt call site keeps working unchanged. */
+  contentType?: LikeableContentType;
   size?: number;
   className?: string;
 }) {
-  const { isLiked, likeCount: count, toggle, canLike } = useLikeState(id, likeCount);
+  const { isLiked, likeCount: count, toggle, canLike } = useLikeState(id, likeCount, contentType);
 
   const content = (
     <>

@@ -12,6 +12,9 @@ import { useOwnProfile } from "@/features/auth/own-profile-provider";
 import { GeneratorPlayground } from "./generator-playground";
 import { useGeneratorSaveState } from "./use-generator-save-state";
 import { GENERATOR_CATEGORY_TOPIC_LABELS } from "./generator-category-meta";
+import { LikeButton } from "@/features/prompts/like-button";
+import { CommentCountLink } from "@/features/prompts/comment-count-link";
+import { CommentSection } from "@/features/prompts/comment-section";
 import { fetchGeneratorBySlug, fetchGeneratorVersion, deleteGenerator, recordGeneratorRun, remixGenerator, type GeneratorVersionResult } from "@/lib/supabase/generators";
 import { cn, formatCount, formatRelativeTime, profileHref } from "@/lib/utils";
 import type { Generator, GeneratorValues } from "@/types";
@@ -190,6 +193,11 @@ export function GeneratorDetailView() {
             <span>{formatCount(generator.remixCount)} remix</span>
           </div>
 
+          <div className="flex items-center gap-5 text-sm text-text-muted">
+            <LikeButton id={generator.id} likeCount={generator.likeCount} contentType="generator" size={18} className="text-sm" />
+            <CommentCountLink generatorSlug={generator.slug} baseCount={generator.commentCount} size={18} className="text-sm" />
+          </div>
+
           <div className="flex flex-wrap items-center gap-2 border-t border-border pt-3">
             {isOwner ? (
               <>
@@ -261,6 +269,8 @@ export function GeneratorDetailView() {
           }
         />
       </div>
+
+      <CommentSection target={{ generatorId: generator.id }} />
     </div>
   );
 }

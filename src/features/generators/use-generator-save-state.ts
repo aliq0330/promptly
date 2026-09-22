@@ -2,13 +2,17 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/features/auth/auth-provider";
-import { fetchIsGeneratorSaved, saveGenerator, unsaveGenerator } from "@/lib/supabase/generators";
+import { isGeneratorSaved, saveGeneratorToDefault, unsaveGeneratorFromDefault } from "@/lib/supabase/collections";
 
 /**
- * Real, per-viewer bookmark state for one generator (`generator_saves` —
- * plain boolean, unlike a prompt's collection-backed save; a generator
- * doesn't have a "which collection" concept, CLAUDE.md deliberately kept it
- * simple). Same `isToggling`-guarded optimistic-with-rollback shape as
+ * Real, per-viewer bookmark state for one generator — now backed by the
+ * real collection system (the caller's own default "Genel" collection),
+ * not the old `generator_saves` boolean table (Bölüm 9.27, atıl bırakıldı
+ * — Bölüm 9.34'ün shared-social entegrasyonu). A generator can only be
+ * saved to ONE place (the default collection) in this phase — saving it
+ * to a custom, named collection like a prompt can needs a fuller
+ * multi-collection UI, deliberately deferred (see CLAUDE.md Bölüm 9.34).
+ * Same `isToggling`-guarded optimistic-with-rollback shape as
  * `useSaveState`/`useFollowState`/`useLikeState`.
  */
 export function useGeneratorSaveState(generatorId: string) {
@@ -25,7 +29,7 @@ export function useGeneratorSaveState(generatorId: string) {
       return;
     }
     setLoading(true);
-    fetchIsGeneratorSaved(generatorId, user.id).then((result) => {
+    isGeneratorSaved(generatorId, user.id).then((result) => {
       if (!cancelled) {
         setIsSaved(result);
         setLoading(false);
@@ -42,8 +46,8 @@ export function useGeneratorSaveState(generatorId: string) {
     const next = !isSaved;
     setIsSaved(next);
     try {
-      if (next) await saveGenerator(generatorId, user.id);
-      else await unsaveGenerator(generatorId, user.id);
+      if (next) await saveGeneratorToDefault(generatorId, user.id);
+      else await unsaveGeneratorFromDefault(generatorId, user.id);
     } catch (err) {
       console.error("useGeneratorSaveState toggle", err);
       setIsSaved(!next);

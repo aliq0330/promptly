@@ -8,8 +8,10 @@ import { useAuth } from "@/features/auth/auth-provider";
 import { useOwnProfile } from "@/features/auth/own-profile-provider";
 import {
   deleteComment,
+  fetchCommentsForGenerator,
   fetchCommentsForPrompt,
   fetchCommentsForRequest,
+  postCommentOnGenerator,
   postCommentOnPrompt,
   postCommentOnRequest,
   updateComment,
@@ -18,7 +20,7 @@ import { fetchLikedCommentIds, likeComment, unlikeComment } from "@/lib/supabase
 import { CommentNode, type CommentTree } from "./comment-node";
 import type { PromptComment } from "@/types";
 
-export type CommentTarget = { promptId: string } | { requestId: string };
+export type CommentTarget = { promptId: string } | { requestId: string } | { generatorId: string };
 
 /**
  * Real, unlimited-depth comment thread — every prompt/request is a real
@@ -85,14 +87,20 @@ export function CommentSection({
   const highlightTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const processedHighlightId = useRef<string | null>(null);
 
-  const targetId = "promptId" in target ? target.promptId : target.requestId;
-  const isPromptTarget = "promptId" in target;
+  const targetKind: "prompt" | "request" | "generator" =
+    "promptId" in target ? "prompt" : "requestId" in target ? "request" : "generator";
+  const targetId = "promptId" in target ? target.promptId : "requestId" in target ? target.requestId : target.generatorId;
 
   useEffect(() => {
     let cancelled = false;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- resets when the target (a new prompt/request) changes
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- resets when the target (a new prompt/request/generator) changes
     setLoaded(false);
-    const fetcher = isPromptTarget ? fetchCommentsForPrompt(targetId) : fetchCommentsForRequest(targetId);
+    const fetcher =
+      targetKind === "prompt"
+        ? fetchCommentsForPrompt(targetId)
+        : targetKind === "request"
+          ? fetchCommentsForRequest(targetId)
+          : fetchCommentsForGenerator(targetId);
     fetcher.then(async (result) => {
       if (cancelled) return;
       setComments(result);
@@ -139,7 +147,7 @@ export function CommentSection({
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isPromptTarget, targetId, user?.id, highlightCommentId]);
+  }, [targetKind, targetId, user?.id, highlightCommentId]);
 
   useEffect(() => {
     return () => {
@@ -235,9 +243,12 @@ export function CommentSection({
     setIsPostingReply(true);
     setReplyError(null);
     try {
-      const posted = isPromptTarget
-        ? await postCommentOnPrompt(targetId, user.id, trimmed, parentId)
-        : await postCommentOnRequest(targetId, user.id, trimmed, parentId);
+      const posted =
+        targetKind === "prompt"
+          ? await postCommentOnPrompt(targetId, user.id, trimmed, parentId)
+          : targetKind === "request"
+            ? await postCommentOnRequest(targetId, user.id, trimmed, parentId)
+            : await postCommentOnGenerator(targetId, user.id, trimmed, parentId);
       setComments((prev) => [...prev, posted]);
       setLikeCounts((prev) => ({ ...prev, [posted.id]: 0 }));
       setExpandedIds((prev) => new Set(prev).add(parentId));
@@ -259,9 +270,12 @@ export function CommentSection({
     setIsPosting(true);
     setPostError(null);
     try {
-      const posted = isPromptTarget
-        ? await postCommentOnPrompt(targetId, user.id, trimmed, null)
-        : await postCommentOnRequest(targetId, user.id, trimmed, null);
+      const posted =
+        targetKind === "prompt"
+          ? await postCommentOnPrompt(targetId, user.id, trimmed, null)
+          : targetKind === "request"
+            ? await postCommentOnRequest(targetId, user.id, trimmed, null)
+            : await postCommentOnGenerator(targetId, user.id, trimmed, null);
       setComments((prev) => [...prev, posted]);
       setLikeCounts((prev) => ({ ...prev, [posted.id]: 0 }));
       setDraft("");

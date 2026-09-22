@@ -35,7 +35,7 @@ export function ProfileView({
   isOwnProfile,
   authorPrompts: initialAuthorPrompts,
   authorRequests,
-  authorGenerators,
+  authorGenerators: initialAuthorGenerators,
 }: {
   user: UserProfile;
   isOwnProfile: boolean;
@@ -55,6 +55,16 @@ export function ProfileView({
 
   function handleDeleted(promptId: string) {
     setAuthorPrompts((prev) => prev.filter((prompt) => prompt.id !== promptId));
+  }
+
+  const [authorGenerators, setAuthorGenerators] = useState(initialAuthorGenerators);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- resyncs when a freshly-fetched generator list (a new array) replaces the previous one, e.g. navigating to a different profile
+    setAuthorGenerators(initialAuthorGenerators);
+  }, [initialAuthorGenerators]);
+
+  function handleGeneratorDeleted(generatorId: string) {
+    setAuthorGenerators((prev) => prev.filter((generator) => generator.id !== generatorId));
   }
 
   // Real likes — only ever fetched for one's own profile, and only for the
@@ -197,7 +207,7 @@ export function ProfileView({
           ) : (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {authorGenerators.map((generator) => (
-                <GeneratorCard key={generator.id} generator={generator} />
+                <GeneratorCard key={generator.id} generator={generator} onDeleted={() => handleGeneratorDeleted(generator.id)} />
               ))}
             </div>
           )

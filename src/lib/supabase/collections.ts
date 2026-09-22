@@ -284,3 +284,52 @@ export async function removeFromSavedEverywhere(promptId: string): Promise<void>
   const { error } = await supabase.rpc("remove_prompt_from_saved_everywhere", { p_prompt_id: promptId });
   if (error) throw new Error(error.message);
 }
+
+// === Generator kaydetme (Bölüm 9.34 — generator_saves'in yerini alıyor) ===
+//
+// Kapsam kararı: bir prompt'un aksine, bir generator şu an yalnızca TEK bir
+// yere kaydedilebiliyor — çağıranın kendi varsayılan ("Genel") koleksiyonu.
+// `collection_items` şeması (Bölüm 9.34'ün migration'ı) zaten generic bir
+// `generator_id` taşıyor ve bir generatorun ÖZEL, isimli bir koleksiyona da
+// eklenebilmesini yapısal olarak destekliyor — ama bunun için tam bir
+// `SaveToCollectionModal` benzeri çoklu-koleksiyon arayüzü inşa etmek bu
+// fazın kapsamı dışında bırakıldı (ayrı bir UI genellemesi gerektiriyor).
+// Bu üç fonksiyon, eski `generator_saves` (Bölüm 9.27, atıl bırakıldı —
+// Bölüm 9.22'nin `prompt_saves`'i atıl bırakma kararıyla aynı gerekçe)
+// tablosunun basit boolean "kaydedildi mi" davranışını BİREBİR koruyor,
+// yalnızca artık gerçek koleksiyon sistemine (dolayısıyla gerçek `item_
+// count` sayaçlarına) bağlı.
+
+/** Whether this viewer generally saved a real generator — true iff it's in their own default ("Genel") collection. Mirrors isPromptSaved. */
+export async function isGeneratorSaved(generatorId: string, userId: string): Promise<boolean> {
+  try {
+    const { data, error } = await supabase
+      .from("collection_items")
+      .select("collection_id, collections!inner ( is_default )")
+      .eq("generator_id", generatorId)
+      .eq("collections.owner_id", userId)
+      .eq("collections.is_default", true)
+      .maybeSingle();
+    if (error) return false;
+    return Boolean(data);
+  } catch (err) {
+    console.error("isGeneratorSaved", err);
+    return false;
+  }
+}
+
+/** Adds a real generator to the caller's own default collection — self-heals the default collection id the same way fetchDefaultCollectionId does. */
+export async function saveGeneratorToDefault(generatorId: string, userId: string): Promise<void> {
+  const collectionId = await fetchDefaultCollectionId(userId);
+  if (!collectionId) throw new Error("Varsayılan koleksiyon bulunamadı.");
+  const { error } = await supabase.from("collection_items").insert({ collection_id: collectionId, generator_id: generatorId });
+  if (error) throw new Error(error.message);
+}
+
+/** Removes a real generator from the caller's own default collection. */
+export async function unsaveGeneratorFromDefault(generatorId: string, userId: string): Promise<void> {
+  const collectionId = await fetchDefaultCollectionId(userId);
+  if (!collectionId) return;
+  const { error } = await supabase.from("collection_items").delete().eq("collection_id", collectionId).eq("generator_id", generatorId);
+  if (error) throw new Error(error.message);
+}
