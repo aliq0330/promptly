@@ -112,6 +112,7 @@ export interface PromptComment {
   id: string;
   promptId?: string;
   requestId?: string;
+  generatorId?: string;
   author: UserProfile;
   body: string;
   /** Points at another `PromptComment.id` — a reply can target a top-level comment OR another reply, to any depth (self-referencing `prompt_comments.parent_id`). */
@@ -464,6 +465,8 @@ export interface Generator {
   useCount: number;
   saveCount: number;
   remixCount: number;
+  likeCount: number;
+  commentCount: number;
   isSaved: boolean;
   createdAt: string;
   updatedAt: string;

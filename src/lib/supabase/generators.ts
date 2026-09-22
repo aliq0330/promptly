@@ -49,6 +49,8 @@ export interface GeneratorRow {
   use_count: number;
   save_count: number;
   remix_count: number;
+  like_count: number;
+  comment_count: number;
   created_at: string;
   updated_at: string;
   profiles: ProfileRow;
@@ -59,7 +61,7 @@ export const GENERATOR_SELECT = `
   id, creator_id, title, slug, description, cover_url, category, subcategory,
   visibility, status, allow_remix, allow_prompt_editing, allow_saving_generated_prompts,
   enable_negative_prompt, origin_type, source_generator_id, root_generator_id,
-  current_version_id, use_count, save_count, remix_count, created_at, updated_at,
+  current_version_id, use_count, save_count, remix_count, like_count, comment_count, created_at, updated_at,
   profiles:creator_id ( id, username, display_name, avatar_url, cover_url, bio, website, follower_count, following_count, created_at, interests ),
   generator_tags ( tags ( slug, label ) )
 `;
@@ -94,6 +96,8 @@ export function mapGeneratorRow(row: GeneratorRow): Generator {
     useCount: row.use_count,
     saveCount: row.save_count,
     remixCount: row.remix_count,
+    likeCount: row.like_count,
+    commentCount: row.comment_count,
     // Per-viewer state — decided separately (useGeneratorSaveState), same
     // pattern as Prompt.isLiked/isSaved.
     isSaved: false,
@@ -382,6 +386,8 @@ export async function createDraftGenerator(
     useCount: 0,
     saveCount: 0,
     remixCount: 0,
+    likeCount: 0,
+    commentCount: 0,
     isSaved: false,
     createdAt: generatorRow.created_at as string,
     updatedAt: generatorRow.updated_at as string,
@@ -561,6 +567,8 @@ export async function remixGenerator(
     useCount: 0,
     saveCount: 0,
     remixCount: 0,
+    likeCount: 0,
+    commentCount: 0,
     isSaved: false,
     createdAt: generatorRow.created_at as string,
     updatedAt: generatorRow.updated_at as string,
@@ -633,33 +641,11 @@ export async function fetchGeneratorRun(runId: string): Promise<GeneratorRun | n
   }
 }
 
-// === Saves (bookmark) =======================================================
-
-export async function fetchIsGeneratorSaved(generatorId: string, userId: string): Promise<boolean> {
-  try {
-    const { data, error } = await supabase
-      .from("generator_saves")
-      .select("generator_id")
-      .eq("generator_id", generatorId)
-      .eq("user_id", userId)
-      .maybeSingle();
-    if (error) return false;
-    return Boolean(data);
-  } catch (err) {
-    console.error("fetchIsGeneratorSaved", err);
-    return false;
-  }
-}
-
-export async function saveGenerator(generatorId: string, userId: string): Promise<void> {
-  const { error } = await supabase.from("generator_saves").insert({ generator_id: generatorId, user_id: userId });
-  if (error) throw new Error(error.message);
-}
-
-export async function unsaveGenerator(generatorId: string, userId: string): Promise<void> {
-  const { error } = await supabase.from("generator_saves").delete().eq("generator_id", generatorId).eq("user_id", userId);
-  if (error) throw new Error(error.message);
-}
+// Saves (bookmark) — moved to src/lib/supabase/collections.ts
+// (isGeneratorSaved/saveGeneratorToDefault/unsaveGeneratorFromDefault),
+// now backed by the real collection system instead of the old
+// `generator_saves` table (Bölüm 9.34 — generator_saves atıl bırakıldı,
+// Bölüm 9.22'nin prompt_saves'i atıl bırakma kararıyla aynı gerekçe).
 
 /** Real, user-defined new tag creation for the generator tag picker — thin re-export so the builder doesn't reach into lib/supabase/tags.ts directly for this one call. */
 export { getOrCreateTag };

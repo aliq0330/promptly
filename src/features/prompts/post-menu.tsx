@@ -4,8 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Copy, FolderMinus, Link2, Loader2, MoreVertical, Pencil, Send, Trash2 } from "lucide-react";
 import { useAuth } from "@/features/auth/auth-provider";
-import { absoluteUrl, cn, promptHref } from "@/lib/utils";
+import { absoluteUrl, cn, generatorHref, promptHref } from "@/lib/utils";
 import { deleteRealPrompt } from "@/lib/supabase/prompts";
+import { deleteGenerator } from "@/lib/supabase/generators";
 
 /**
  * Every post card's three-dot menu (header, top-right) — not just the
@@ -16,14 +17,27 @@ import { deleteRealPrompt } from "@/lib/supabase/prompts";
  * author — there's no report/block feature built yet (CLAUDE.md Bölüm 22
  * is still open), so a non-owner's menu deliberately stays minimal rather
  * than showing an action that doesn't do anything real.
+ *
+ * Polymorphic since Bölüm 9.34's shared-social integration — pass exactly
+ * one of `promptId` or `generatorId` (the latter also needs `generatorSlug`
+ * for its real link). A generator's menu never shows "Kopyasını oluştur"
+ * (no duplicate flow exists for generators — remixing is its own, separate
+ * "Remixle" action on the detail page) or "Mesajla gönder" (message
+ * sharing only supports prompts/requests today, CLAUDE.md Bölüm 9.8) —
+ * both are deliberately left out rather than wired to something that
+ * doesn't actually work.
  */
 export function PostMenu({
   promptId,
+  generatorId,
+  generatorSlug,
   authorId,
   onDeleted,
   collectionRemoval,
 }: {
-  promptId: string;
+  promptId?: string;
+  generatorId?: string;
+  generatorSlug?: string;
   authorId: string;
   /** Called after a real, successful delete — lets a list (e.g. the profile grid) remove the card without a reload. */
   onDeleted?: () => void;
@@ -34,6 +48,8 @@ export function PostMenu({
    * "koleksiyondan kaldır" action, distinct from deleting the post itself
    * and gated by collection ownership, not post authorship (CLAUDE.md
    * Bölüm 9.22 §8/§9/§19 — a deliberately separate operation from `Sil`).
+   * Prompt-only today (a generator can only live in its owner's default
+   * collection so far, see use-generator-save-state.ts).
    */
   collectionRemoval?: {
     /** Whether the collection being viewed is the caller's default ("Genel") — determines the label and whether removal cascades to every other collection (the caller already does the actual cascading via `onRemove`, this only decides wording). */
@@ -43,6 +59,9 @@ export function PostMenu({
 }) {
   const { user } = useAuth();
   const isOwn = user?.id === authorId;
+  const isGenerator = Boolean(generatorId);
+  const href = isGenerator ? generatorHref({ slug: generatorSlug ?? "" }) : promptHref({ id: promptId! });
+  const editHref = isGenerator ? `/generators/create?edit=${generatorId}` : `/create?edit=${promptId}`;
 
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -82,7 +101,7 @@ export function PostMenu({
     event.preventDefault();
     event.stopPropagation();
     try {
-      await navigator.clipboard.writeText(absoluteUrl(promptHref({ id: promptId })));
+      await navigator.clipboard.writeText(absoluteUrl(href));
       setCopied(true);
       setTimeout(() => setCopied(false), 1200);
     } catch {
@@ -100,7 +119,8 @@ export function PostMenu({
     setIsDeleting(true);
     setError(null);
     try {
-      await deleteRealPrompt(promptId);
+      if (isGenerator) await deleteGenerator(generatorId!);
+      else await deleteRealPrompt(promptId!);
       setOpen(false);
       onDeleted?.();
     } catch (err) {
@@ -163,7 +183,7 @@ export function PostMenu({
             <Link2 size={14} />
             {copied ? "Kopyalandı" : "Bağlantıyı kopyala"}
           </button>
-          {user && (
+          {user && !isGenerator && (
             <Link
               href={`/messages?sharePromptId=${promptId}`}
               role="menuitem"
@@ -196,7 +216,7 @@ export function PostMenu({
           {isOwn && (
             <>
               <Link
-                href={`/create?edit=${promptId}`}
+                href={editHref}
                 role="menuitem"
                 onClick={(event) => event.stopPropagation()}
                 className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-text hover:bg-accent-surface"
@@ -204,15 +224,17 @@ export function PostMenu({
                 <Pencil size={14} />
                 Düzenle
               </Link>
-              <Link
-                href={`/create?duplicate=${promptId}`}
-                role="menuitem"
-                onClick={(event) => event.stopPropagation()}
-                className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-text hover:bg-accent-surface"
-              >
-                <Copy size={14} />
-                Kopyasını oluştur
-              </Link>
+              {!isGenerator && (
+                <Link
+                  href={`/create?duplicate=${promptId}`}
+                  role="menuitem"
+                  onClick={(event) => event.stopPropagation()}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-text hover:bg-accent-surface"
+                >
+                  <Copy size={14} />
+                  Kopyasını oluştur
+                </Link>
+              )}
               <button
                 type="button"
                 role="menuitem"

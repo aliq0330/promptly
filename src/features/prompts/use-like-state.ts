@@ -2,15 +2,17 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/features/auth/auth-provider";
-import { fetchIsLiked, likePrompt, unlikePrompt } from "@/lib/supabase/likes";
+import { fetchIsLiked, likeContent, unlikeContent, type LikeableContentType } from "@/lib/supabase/likes";
 
 /**
- * Whether the current viewer liked a real prompt, and its real like count —
- * every prompt is a real Supabase row now (CLAUDE.md's mock data removal).
+ * Whether the current viewer liked a real prompt or generator, and its
+ * real like count — every prompt/generator is a real Supabase row now
+ * (CLAUDE.md's mock data removal / Bölüm 9.34's shared social layer).
  * `canLike` is false while signed out: RLS requires an authenticated
- * session to write a `prompt_likes` row.
+ * session to write a `prompt_likes` row. `contentType` defaults to
+ * `"prompt"` so every existing prompt call site keeps working unchanged.
  */
-export function useLikeState(id: string, likeCount: number) {
+export function useLikeState(id: string, likeCount: number, contentType: LikeableContentType = "prompt") {
   const { user } = useAuth();
 
   const [isLiked, setIsLiked] = useState(false);
@@ -30,7 +32,7 @@ export function useLikeState(id: string, likeCount: number) {
       return;
     }
     setLoading(true);
-    fetchIsLiked(id, user.id).then((result) => {
+    fetchIsLiked(id, user.id, contentType).then((result) => {
       if (!cancelled) {
         setIsLiked(result);
         setLoading(false);
@@ -39,7 +41,7 @@ export function useLikeState(id: string, likeCount: number) {
     return () => {
       cancelled = true;
     };
-  }, [user, id]);
+  }, [user, id, contentType]);
 
   const toggle = useCallback(async () => {
     if (!user) return;
@@ -48,9 +50,9 @@ export function useLikeState(id: string, likeCount: number) {
       setIsLiked(false);
       setCount((c) => Math.max(0, c - 1));
       try {
-        await unlikePrompt(id, user.id);
+        await unlikeContent(id, user.id, contentType);
       } catch (err) {
-        console.error("unlikePrompt", err);
+        console.error("unlikeContent", err);
         setIsLiked(true);
         setCount((c) => c + 1);
       }
@@ -58,14 +60,14 @@ export function useLikeState(id: string, likeCount: number) {
       setIsLiked(true);
       setCount((c) => c + 1);
       try {
-        await likePrompt(id, user.id);
+        await likeContent(id, user.id, contentType);
       } catch (err) {
-        console.error("likePrompt", err);
+        console.error("likeContent", err);
         setIsLiked(false);
         setCount((c) => Math.max(0, c - 1));
       }
     }
-  }, [user, isLiked, id]);
+  }, [user, isLiked, id, contentType]);
 
   return { isLiked, likeCount: count, toggle, loading, canLike: Boolean(user) };
 }
