@@ -2,36 +2,28 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Search } from "lucide-react";
-import { GeneratorCard } from "./generator-card";
+import { PromptGrid } from "@/features/prompts/prompt-grid";
 import { GENERATOR_CATEGORY_TOPIC_LABELS, GENERATOR_CATEGORY_TOPICS } from "./generator-category-meta";
-import { fetchRecentPublishedGenerators, fetchTopGenerators, searchGenerators } from "@/lib/supabase/generators";
+import { useRealGenerators } from "./real-generators-provider";
+import { searchGenerators } from "@/lib/supabase/generators";
 import { cn } from "@/lib/utils";
 import type { Generator, GeneratorCategoryTopic } from "@/types";
 
 type CategoryFilter = "all" | GeneratorCategoryTopic;
 
-/** `/generators` — the real generator discovery page: category filter chips, search, and a "popular" ordering by default. */
+/**
+ * `/generators` — the real generator discovery page: category filter
+ * chips, search, and a "popular" ordering by default. Its base list is the
+ * SAME shared `RealGeneratorsProvider` cache the home feed/Discover use
+ * (Bölüm 9.36's Prompt/Generator parity pass) instead of its own separate
+ * fetch.
+ */
 export function GeneratorsDiscoverView() {
-  const [generators, setGenerators] = useState<Generator[]>([]);
-  const [loaded, setLoaded] = useState(false);
+  const { realGenerators } = useRealGenerators();
   const [category, setCategory] = useState<CategoryFilter>("all");
   const [query, setQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Generator[] | null>(null);
   const [searching, setSearching] = useState(false);
-
-  useEffect(() => {
-    fetchTopGenerators(60).then((top) => {
-      // A generator with zero uses yet is still a real, published generator
-      // — fold in the most recent ones too so a brand-new generator isn't
-      // invisible on this page until someone happens to use it first.
-      fetchRecentPublishedGenerators(60).then((recent) => {
-        const byId = new Map<string, Generator>();
-        for (const g of [...top, ...recent]) byId.set(g.id, g);
-        setGenerators(Array.from(byId.values()));
-        setLoaded(true);
-      });
-    });
-  }, []);
 
   useEffect(() => {
     const trimmed = query.trim();
@@ -51,12 +43,12 @@ export function GeneratorsDiscoverView() {
   }, [query]);
 
   const filtered = useMemo(() => {
-    const base = searchResults ?? generators;
+    const base = searchResults ?? realGenerators;
     return category === "all" ? base : base.filter((g) => g.category === category);
-  }, [generators, searchResults, category]);
+  }, [realGenerators, searchResults, category]);
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:px-6">
+    <div className="space-y-6 px-4 py-6 lg:px-6">
       <div className="rounded-lg border border-border bg-accent-surface px-4 py-5 sm:px-6 sm:py-6">
         <h1 className="mb-1 text-lg font-semibold text-text sm:text-xl">Generatorları Keşfet</h1>
         <p className="text-sm text-text-muted">Başkalarının oluşturduğu prompt generatorlarını kullan, remixle ya da kendi generatorunu oluştur.</p>
@@ -99,18 +91,14 @@ export function GeneratorsDiscoverView() {
         ))}
       </div>
 
-      {!loaded || searching ? (
+      {searching ? (
         <p className="py-10 text-center text-sm text-text-muted">Yükleniyor…</p>
       ) : filtered.length === 0 ? (
         <p className="rounded-lg border border-dashed border-border bg-accent-surface/40 py-10 text-center text-sm text-text-muted">
           {query.trim() ? "Eşleşen bir generator bulunamadı." : "Henüz hiç generator yayınlanmadı."}
         </p>
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((generator) => (
-            <GeneratorCard key={generator.id} generator={generator} />
-          ))}
-        </div>
+        <PromptGrid generators={filtered} />
       )}
     </div>
   );

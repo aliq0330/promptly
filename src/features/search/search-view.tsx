@@ -6,7 +6,6 @@ import { Search } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
 import { PromptGrid } from "@/features/prompts/prompt-grid";
-import { GeneratorCard } from "@/features/generators/generator-card";
 import { useTagCatalog } from "@/features/tags/use-tag-catalog";
 import { searchPrompts } from "@/lib/supabase/prompts";
 import { searchProfiles } from "@/lib/supabase/profiles";
@@ -120,11 +119,7 @@ export function SearchView() {
           {generators.length > 0 && (
             <section className="space-y-3">
               <h2 className="text-sm font-semibold text-text">Generatorlar</h2>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                {generators.map((generator) => (
-                  <GeneratorCard key={generator.id} generator={generator} />
-                ))}
-              </div>
+              <PromptGrid generators={generators} />
             </section>
           )}
 

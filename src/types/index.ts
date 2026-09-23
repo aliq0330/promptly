@@ -236,6 +236,18 @@ export interface RemixGraphNode {
   isAccessible: boolean;
   remixCount: number;
   createdAt: string;
+  /**
+   * Defaults to `"prompt"` so every existing prompt call site keeps working
+   * unchanged — a generator's own remix graph (Bölüm 9.36's Prompt/
+   * Generator parity pass, `fetch_generator_remix_graph`) sets this to
+   * `"generator"` so `RemixBranchMap`/`RemixNodeDetailPanel` know to build
+   * `generatorHref` links instead of `promptHref` ones and to hide the
+   * merge/diff actions that only make sense for a prompt's flat-text
+   * content (see that migration's own header comment for why).
+   */
+  contentType?: "prompt" | "generator";
+  /** Only set for a `contentType: "generator"` node — a generator routes by slug, not id (`generatorHref`), unlike a prompt. */
+  slug?: string;
 }
 
 export interface AppNotification {
@@ -320,7 +332,7 @@ export interface PromptVariable {
  */
 export interface ContentEditEvent {
   id: string;
-  contentType: "prompt" | "prompt_request";
+  contentType: "prompt" | "prompt_request" | "generator";
   contentId: string;
   ownerId: string;
   editorId: string;

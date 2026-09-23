@@ -3,7 +3,7 @@ import type { ContentEditEvent } from "@/types";
 
 interface ContentEditRow {
   id: string;
-  content_type: "prompt" | "prompt_request";
+  content_type: "prompt" | "prompt_request" | "generator";
   content_id: string;
   owner_id: string;
   editor_id: string;
@@ -36,7 +36,7 @@ function mapContentEditRow(row: ContentEditRow): ContentEditEvent {
  * (an owner-only "Düzenleme geçmişi" panel), never speculatively.
  */
 export async function fetchEditHistory(
-  contentType: "prompt" | "prompt_request",
+  contentType: "prompt" | "prompt_request" | "generator",
   contentId: string,
   limit = 20,
 ): Promise<ContentEditEvent[]> {

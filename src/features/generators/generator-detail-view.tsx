@@ -3,19 +3,31 @@
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Blocks, Bookmark, GitBranch, Pencil, Trash2 } from "lucide-react";
+import { Blocks, GitBranch, Pencil, Trash2 } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useOwnProfile } from "@/features/auth/own-profile-provider";
 import { GeneratorPlayground } from "./generator-playground";
-import { useGeneratorSaveState } from "./use-generator-save-state";
 import { GENERATOR_CATEGORY_TOPIC_LABELS } from "./generator-category-meta";
 import { LikeButton } from "@/features/prompts/like-button";
+import { SaveButton } from "@/features/prompts/save-button";
 import { CommentCountLink } from "@/features/prompts/comment-count-link";
 import { CommentSection } from "@/features/prompts/comment-section";
-import { fetchGeneratorBySlug, fetchGeneratorVersion, deleteGenerator, recordGeneratorRun, remixGenerator, type GeneratorVersionResult } from "@/lib/supabase/generators";
+import { EditHistoryPanel } from "@/features/prompts/edit-history-panel";
+import { PromptGrid } from "@/features/prompts/prompt-grid";
+import { RemixBranchMap } from "@/features/prompts/remix-branch-map";
+import {
+  fetchGeneratorBySlug,
+  fetchGeneratorVersion,
+  fetchRemixesOfGenerator,
+  deleteGenerator,
+  recordGeneratorRun,
+  remixGenerator,
+  type GeneratorVersionResult,
+} from "@/lib/supabase/generators";
+import { useRealGenerators } from "./real-generators-provider";
 import { cn, formatCount, formatRelativeTime, profileHref } from "@/lib/utils";
 import type { Generator, GeneratorValues } from "@/types";
 
@@ -42,6 +54,7 @@ export function GeneratorDetailView() {
   const slug = searchParams.get("slug");
   const { user } = useAuth();
   const { profile } = useOwnProfile();
+  const { removeFromCache } = useRealGenerators();
 
   const [generator, setGenerator] = useState<Generator | null>(null);
   const [version, setVersion] = useState<GeneratorVersionResult | null>(null);
@@ -51,8 +64,8 @@ export function GeneratorDetailView() {
   const [isRemixing, setIsRemixing] = useState(false);
   const [isOpeningPrompt, setIsOpeningPrompt] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
-
-  const saveState = useGeneratorSaveState(generator?.id ?? "");
+  const [sectionTab, setSectionTab] = useState<"comments" | "remixes" | "map">("comments");
+  const [remixes, setRemixes] = useState<Generator[]>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -80,6 +93,22 @@ export function GeneratorDetailView() {
     };
   }, [slug]);
 
+  useEffect(() => {
+    let cancelled = false;
+    if (!generator) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- nothing to fetch before the generator itself has loaded
+      setRemixes([]);
+      return;
+    }
+    fetchRemixesOfGenerator(generator.id).then((result) => {
+      if (!cancelled) setRemixes(result);
+    });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- refetches by id, not full object identity
+  }, [generator?.id]);
+
   if (!slug || !loaded) {
     return <div className="mx-auto max-w-lg px-4 py-16 text-center text-sm text-text-muted">{!slug ? "Generator bulunamadı." : "Yükleniyor…"}</div>;
   }
@@ -103,6 +132,7 @@ export function GeneratorDetailView() {
     setIsDeleting(true);
     try {
       await deleteGenerator(generator!.id);
+      removeFromCache(generator!.id);
       router.push("/generators");
     } catch (err) {
       setActionError(err instanceof Error ? err.message : "Silinemedi, lütfen tekrar dene.");
@@ -139,7 +169,7 @@ export function GeneratorDetailView() {
   const canOpenInPrompt = generator.allowPromptEditing || generator.allowSavingGeneratedPrompts;
 
   return (
-    <div className="mx-auto max-w-3xl space-y-5 px-4 py-6 sm:px-6">
+    <div className="mx-auto max-w-3xl space-y-6 px-4 py-6 lg:px-6">
       <div className="overflow-hidden rounded-lg border border-border bg-surface">
         {generator.coverUrl ? (
           // eslint-disable-next-line @next/next/no-img-element -- a real, potentially locally-produced data URL cover (see generator-details-form.tsx), same reasoning as that file's own cover preview
@@ -188,7 +218,6 @@ export function GeneratorDetailView() {
           )}
 
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-md bg-accent-surface/50 px-3 py-2 text-sm text-text-muted">
-            <span>{formatCount(generator.useCount)} kullanım</span>
             <span>{formatCount(generator.saveCount)} kaydetme</span>
             <span>{formatCount(generator.remixCount)} remix</span>
           </div>
@@ -196,7 +225,10 @@ export function GeneratorDetailView() {
           <div className="flex items-center gap-5 text-sm text-text-muted">
             <LikeButton id={generator.id} likeCount={generator.likeCount} contentType="generator" size={18} className="text-sm" />
             <CommentCountLink generatorSlug={generator.slug} baseCount={generator.commentCount} size={18} className="text-sm" />
+            <SaveButton generatorId={generator.id} size={18} />
           </div>
+
+          {isOwner && <EditHistoryPanel contentType="generator" contentId={generator.id} />}
 
           <div className="flex flex-wrap items-center gap-2 border-t border-border pt-3">
             {isOwner ? (
@@ -217,18 +249,12 @@ export function GeneratorDetailView() {
                 </button>
               </>
             ) : (
-              <>
-                {generator.allowRemix && user && (
-                  <Button type="button" variant="outline" size="sm" onClick={handleRemix} disabled={isRemixing}>
-                    <GitBranch size={14} /> {isRemixing ? "Remix oluşturuluyor…" : "Remixle"}
-                  </Button>
-                )}
-                {saveState.canSave && (
-                  <Button type="button" variant={saveState.isSaved ? "secondary" : "outline"} size="sm" onClick={saveState.toggle} disabled={saveState.isToggling}>
-                    <Bookmark size={14} fill={saveState.isSaved ? "currentColor" : "none"} /> {saveState.isSaved ? "Kaydedildi" : "Kaydet"}
-                  </Button>
-                )}
-              </>
+              generator.allowRemix &&
+              user && (
+                <Button type="button" variant="outline" size="sm" onClick={handleRemix} disabled={isRemixing}>
+                  <GitBranch size={14} /> {isRemixing ? "Remix oluşturuluyor…" : "Remixle"}
+                </Button>
+              )
             )}
           </div>
           {actionError && <p className="text-sm text-red-500">{actionError}</p>}
@@ -270,7 +296,56 @@ export function GeneratorDetailView() {
         />
       </div>
 
-      <CommentSection target={{ generatorId: generator.id }} />
+      <section className="space-y-3 border-t border-border pt-5">
+        <div role="tablist" aria-label="Gönderi bölümleri" className="flex gap-1 border-b border-border">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={sectionTab === "comments"}
+            onClick={() => setSectionTab("comments")}
+            className={cn(
+              "-mb-px border-b-2 px-3 py-2 text-sm font-medium transition-colors",
+              sectionTab === "comments" ? "border-primary text-primary" : "border-transparent text-text-muted hover:text-text",
+            )}
+          >
+            Yorumlar
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={sectionTab === "remixes"}
+            onClick={() => setSectionTab("remixes")}
+            className={cn(
+              "-mb-px border-b-2 px-3 py-2 text-sm font-medium transition-colors",
+              sectionTab === "remixes" ? "border-primary text-primary" : "border-transparent text-text-muted hover:text-text",
+            )}
+          >
+            Remixler ({remixes.length})
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={sectionTab === "map"}
+            onClick={() => setSectionTab("map")}
+            className={cn(
+              "-mb-px flex items-center gap-1.5 border-b-2 px-3 py-2 text-sm font-medium transition-colors",
+              sectionTab === "map" ? "border-primary text-primary" : "border-transparent text-text-muted hover:text-text",
+            )}
+          >
+            <GitBranch size={14} />
+            Prompt geçmişi
+          </button>
+        </div>
+
+        {sectionTab === "comments" && <CommentSection target={{ generatorId: generator.id }} />}
+        {sectionTab === "remixes" &&
+          (remixes.length === 0 ? (
+            <p className="py-6 text-center text-sm text-text-muted">Bu generator henüz remixlenmedi.</p>
+          ) : (
+            <PromptGrid generators={remixes} />
+          ))}
+        {sectionTab === "map" && <RemixBranchMap generator={generator} />}
+      </section>
     </div>
   );
 }

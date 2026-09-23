@@ -8,6 +8,7 @@ import { feedItemAuthorId, feedItemCreatedAt, feedItemPopularity, type FeedItem 
 import { useAuth } from "@/features/auth/auth-provider";
 import { useRealPrompts } from "@/features/prompts/real-prompts-provider";
 import { useRealRequests } from "@/features/requests/real-requests-provider";
+import { useRealGenerators } from "@/features/generators/real-generators-provider";
 import { fetchFollowedProfiles } from "@/lib/supabase/profiles";
 
 type TabKey = "following" | "popular" | "for-you";
@@ -23,6 +24,7 @@ export function FeedTabs() {
   const { user } = useAuth();
   const { realPrompts } = useRealPrompts();
   const { realRequests } = useRealRequests();
+  const { realGenerators } = useRealGenerators();
   const [followedIds, setFollowedIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -43,8 +45,9 @@ export function FeedTabs() {
   const allItems = useMemo<FeedItem[]>(() => {
     const promptItems: FeedItem[] = realPrompts.map((prompt) => ({ kind: "prompt", data: prompt }));
     const requestItems: FeedItem[] = realRequests.map((request) => ({ kind: "request", data: request }));
-    return [...promptItems, ...requestItems].sort((a, b) => feedItemCreatedAt(b) - feedItemCreatedAt(a));
-  }, [realPrompts, realRequests]);
+    const generatorItems: FeedItem[] = realGenerators.map((generator) => ({ kind: "generator", data: generator }));
+    return [...promptItems, ...requestItems, ...generatorItems].sort((a, b) => feedItemCreatedAt(b) - feedItemCreatedAt(a));
+  }, [realPrompts, realRequests, realGenerators]);
 
   const visible =
     active === "popular"

@@ -1,7 +1,13 @@
 import { supabase } from "./client";
 import { mapProfileRow, type ProfileRow } from "./mappers";
 import { PROMPT_SELECT, mapPromptRow, type PromptRow } from "./prompts";
+import type { LikeableContentType as SaveableContentType } from "./likes";
 import type { Collection, Prompt } from "@/types";
+
+/** Which real column a save target lives in — mirrors likes.ts's `targetColumn` exactly (Bölüm 9.36's Prompt/Generator parity pass, same "collection_items now holds a nullable prompt_id OR generator_id" shape as prompt_likes/prompt_comments). */
+function saveTargetColumn(contentType: SaveableContentType): "prompt_id" | "generator_id" {
+  return contentType === "generator" ? "generator_id" : "prompt_id";
+}
 
 export interface CollectionRow {
   id: string;
@@ -176,13 +182,22 @@ export async function fetchCollectionItems(collectionId: string): Promise<Prompt
   }
 }
 
-/** Whether this viewer generally saved a real prompt — true iff it's in their own default ("Genel") collection. Never based on any collection's name (it's renameable), never based on membership in any *other* collection. Replaces the old prompt_saves-backed fetchIsSaved (CLAUDE.md Bölüm 9.22 — single source of truth). */
-export async function isPromptSaved(promptId: string, userId: string): Promise<boolean> {
+/**
+ * Whether this viewer generally saved a real prompt OR generator — true iff
+ * it's in their own default ("Genel") collection. Never based on any
+ * collection's name (it's renameable), never based on membership in any
+ * *other* collection. Replaces the old prompt_saves-backed fetchIsSaved
+ * (CLAUDE.md Bölüm 9.22 — single source of truth); `contentType` defaults
+ * to `"prompt"` so every existing prompt call site keeps working unchanged
+ * (Bölüm 9.36 — the same generator now goes through this SAME function
+ * instead of its own separate `isGeneratorSaved`).
+ */
+export async function isPromptSaved(id: string, userId: string, contentType: SaveableContentType = "prompt"): Promise<boolean> {
   try {
     const { data, error } = await supabase
       .from("collection_items")
       .select("collection_id, collections!inner ( is_default )")
-      .eq("prompt_id", promptId)
+      .eq(saveTargetColumn(contentType), id)
       .eq("collections.owner_id", userId)
       .eq("collections.is_default", true)
       .maybeSingle();
@@ -194,13 +209,13 @@ export async function isPromptSaved(promptId: string, userId: string): Promise<b
   }
 }
 
-/** Which of this user's own collections already contain this prompt — powers the save modal's "+/kayıtlı" state per row. */
-export async function fetchCollectionIdsContaining(promptId: string, userId: string): Promise<Set<string>> {
+/** Which of this user's own collections already contain this prompt/generator — powers the save modal's "+/kayıtlı" state per row. `contentType` defaults to `"prompt"` so every existing prompt call site keeps working unchanged. */
+export async function fetchCollectionIdsContaining(id: string, userId: string, contentType: SaveableContentType = "prompt"): Promise<Set<string>> {
   try {
     const { data, error } = await supabase
       .from("collection_items")
       .select("collection_id, collections!inner ( owner_id )")
-      .eq("prompt_id", promptId)
+      .eq(saveTargetColumn(contentType), id)
       .eq("collections.owner_id", userId);
     if (error || !data) return new Set();
     return new Set((data as unknown as { collection_id: string }[]).map((row) => row.collection_id));
@@ -253,83 +268,42 @@ export async function deleteCollection(collectionId: string): Promise<void> {
 }
 
 /**
- * Adds a real prompt to a real collection the caller owns. This is the
- * ONLY way a prompt joins a collection now — adding it to the default
- * ("Genel") collection specifically IS the general "kaydedildi" action
- * (bookmark fills); adding it to any other collection is just membership
- * in that collection alone and does not by itself generally save the
- * prompt (CLAUDE.md Bölüm 9.22 §4 — no more silent dual-write into a
- * separate prompt_saves table, single source of truth).
+ * Adds a real prompt OR generator to a real collection the caller owns.
+ * This is the ONLY way a prompt/generator joins a collection now — adding
+ * it to the default ("Genel") collection specifically IS the general
+ * "kaydedildi" action (bookmark fills); adding it to any other collection
+ * is just membership in that collection alone and does not by itself
+ * generally save the item (CLAUDE.md Bölüm 9.22 §4 — no more silent
+ * dual-write into a separate prompt_saves table, single source of truth).
+ * `contentType` defaults to `"prompt"` so every existing prompt call site
+ * keeps working unchanged (Bölüm 9.36 — a generator now joins the SAME
+ * multi-collection system a prompt does, replacing the old
+ * default-collection-only `saveGeneratorToDefault`).
  */
-export async function addItemToCollection(collectionId: string, promptId: string): Promise<void> {
-  const { error } = await supabase.from("collection_items").insert({ collection_id: collectionId, prompt_id: promptId });
+export async function addItemToCollection(collectionId: string, id: string, contentType: SaveableContentType = "prompt"): Promise<void> {
+  const { error } = await supabase.from("collection_items").insert({ collection_id: collectionId, [saveTargetColumn(contentType)]: id });
   if (error) throw new Error(error.message);
 }
 
-/** Removes a real prompt from exactly one collection — never touches the general "kaydedildi" state or the prompt's membership in any OTHER collection (CLAUDE.md Bölüm 9.22 §8). Never call this for the caller's own default collection — use `removeFromSavedEverywhere` instead, which is a different operation with different rules (§9). */
-export async function removeFromCollection(collectionId: string, promptId: string): Promise<void> {
-  const { error } = await supabase.from("collection_items").delete().eq("collection_id", collectionId).eq("prompt_id", promptId);
+/** Removes a real prompt/generator from exactly one collection — never touches the general "kaydedildi" state or its membership in any OTHER collection (CLAUDE.md Bölüm 9.22 §8). Never call this for the caller's own default collection — use `removeFromSavedEverywhere` instead, which is a different operation with different rules (§9). */
+export async function removeFromCollection(collectionId: string, id: string, contentType: SaveableContentType = "prompt"): Promise<void> {
+  const { error } = await supabase.from("collection_items").delete().eq("collection_id", collectionId).eq(saveTargetColumn(contentType), id);
   if (error) throw new Error(error.message);
 }
 
 /**
- * The general "kaydedilenlerden kaldır" action — removes a real prompt from
- * the caller's default collection AND every one of their other collections
- * that also contains it, in one atomic server-side operation
- * (`remove_prompt_from_saved_everywhere` RPC, CLAUDE.md Bölüm 9.22 §7/§18).
- * Never touches the prompt itself, another user's saves/collections, or
- * anything beyond the caller's own `collection_items` rows.
+ * The general "kaydedilenlerden kaldır" action — removes a real prompt or
+ * generator from the caller's default collection AND every one of their
+ * other collections that also contains it, in one atomic server-side
+ * operation (`remove_prompt_from_saved_everywhere`/
+ * `remove_generator_from_saved_everywhere` RPCs, CLAUDE.md Bölüm 9.22
+ * §7/§18, widened to generators in Bölüm 9.36). Never touches the item
+ * itself, another user's saves/collections, or anything beyond the
+ * caller's own `collection_items` rows.
  */
-export async function removeFromSavedEverywhere(promptId: string): Promise<void> {
-  const { error } = await supabase.rpc("remove_prompt_from_saved_everywhere", { p_prompt_id: promptId });
-  if (error) throw new Error(error.message);
-}
-
-// === Generator kaydetme (Bölüm 9.34 — generator_saves'in yerini alıyor) ===
-//
-// Kapsam kararı: bir prompt'un aksine, bir generator şu an yalnızca TEK bir
-// yere kaydedilebiliyor — çağıranın kendi varsayılan ("Genel") koleksiyonu.
-// `collection_items` şeması (Bölüm 9.34'ün migration'ı) zaten generic bir
-// `generator_id` taşıyor ve bir generatorun ÖZEL, isimli bir koleksiyona da
-// eklenebilmesini yapısal olarak destekliyor — ama bunun için tam bir
-// `SaveToCollectionModal` benzeri çoklu-koleksiyon arayüzü inşa etmek bu
-// fazın kapsamı dışında bırakıldı (ayrı bir UI genellemesi gerektiriyor).
-// Bu üç fonksiyon, eski `generator_saves` (Bölüm 9.27, atıl bırakıldı —
-// Bölüm 9.22'nin `prompt_saves`'i atıl bırakma kararıyla aynı gerekçe)
-// tablosunun basit boolean "kaydedildi mi" davranışını BİREBİR koruyor,
-// yalnızca artık gerçek koleksiyon sistemine (dolayısıyla gerçek `item_
-// count` sayaçlarına) bağlı.
-
-/** Whether this viewer generally saved a real generator — true iff it's in their own default ("Genel") collection. Mirrors isPromptSaved. */
-export async function isGeneratorSaved(generatorId: string, userId: string): Promise<boolean> {
-  try {
-    const { data, error } = await supabase
-      .from("collection_items")
-      .select("collection_id, collections!inner ( is_default )")
-      .eq("generator_id", generatorId)
-      .eq("collections.owner_id", userId)
-      .eq("collections.is_default", true)
-      .maybeSingle();
-    if (error) return false;
-    return Boolean(data);
-  } catch (err) {
-    console.error("isGeneratorSaved", err);
-    return false;
-  }
-}
-
-/** Adds a real generator to the caller's own default collection — self-heals the default collection id the same way fetchDefaultCollectionId does. */
-export async function saveGeneratorToDefault(generatorId: string, userId: string): Promise<void> {
-  const collectionId = await fetchDefaultCollectionId(userId);
-  if (!collectionId) throw new Error("Varsayılan koleksiyon bulunamadı.");
-  const { error } = await supabase.from("collection_items").insert({ collection_id: collectionId, generator_id: generatorId });
-  if (error) throw new Error(error.message);
-}
-
-/** Removes a real generator from the caller's own default collection. */
-export async function unsaveGeneratorFromDefault(generatorId: string, userId: string): Promise<void> {
-  const collectionId = await fetchDefaultCollectionId(userId);
-  if (!collectionId) return;
-  const { error } = await supabase.from("collection_items").delete().eq("collection_id", collectionId).eq("generator_id", generatorId);
+export async function removeFromSavedEverywhere(id: string, contentType: SaveableContentType = "prompt"): Promise<void> {
+  const rpcName = contentType === "generator" ? "remove_generator_from_saved_everywhere" : "remove_prompt_from_saved_everywhere";
+  const rpcParam = contentType === "generator" ? { p_generator_id: id } : { p_prompt_id: id };
+  const { error } = await supabase.rpc(rpcName, rpcParam);
   if (error) throw new Error(error.message);
 }
