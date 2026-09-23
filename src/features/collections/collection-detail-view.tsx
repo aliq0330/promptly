@@ -7,6 +7,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Portal } from "@/components/ui/portal";
 import { PromptCard } from "@/features/prompts/prompt-card";
+import { GeneratorCard } from "@/features/generators/generator-card";
 import { CollectionFormModal } from "./collection-form-modal";
 import { CollectionMoreMenu } from "./collection-more-menu";
 import { useAuth } from "@/features/auth/auth-provider";
@@ -16,11 +17,12 @@ import {
   removeFromCollection,
   removeFromSavedEverywhere,
   updateCollection,
+  type CollectionEntry,
 } from "@/lib/supabase/collections";
 import { placeholderArt } from "@/lib/placeholder-image";
 import { profileHref } from "@/lib/utils";
 import Link from "next/link";
-import type { Collection, Prompt } from "@/types";
+import type { Collection } from "@/types";
 
 /**
  * `/collections/local?id=` — every collection is a real Supabase row, same
@@ -44,7 +46,7 @@ export function CollectionDetailView() {
   const id = searchParams.get("id");
 
   const [collection, setCollection] = useState<Collection | null>(null);
-  const [items, setItems] = useState<Prompt[]>([]);
+  const [items, setItems] = useState<CollectionEntry[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [editing, setEditing] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
@@ -90,16 +92,18 @@ export function CollectionDetailView() {
    * this IS the viewer's default collection (§9: removing from inside
    * Genel's own detail screen is the general cascade, not a scoped
    * single-collection removal) — two distinct, clearly separate backend
-   * calls (§19), never the same one reused for both.
+   * calls (§19), never the same one reused for both. Works identically for
+   * a prompt or a generator entry (both share the same `collection_items`
+   * shape since Bölüm 9.36).
    */
-  async function handleRemoveItem(promptId: string) {
+  async function handleRemoveItem(id: string, contentType: "prompt" | "generator") {
     if (!collection) return;
     if (collection.isDefault) {
-      await removeFromSavedEverywhere(promptId);
+      await removeFromSavedEverywhere(id, contentType);
     } else {
-      await removeFromCollection(collection.id, promptId);
+      await removeFromCollection(collection.id, id, contentType);
     }
-    setItems((prev) => prev.filter((prompt) => prompt.id !== promptId));
+    setItems((prev) => prev.filter((entry) => entry.data.id !== id));
     setCollection((prev) => (prev ? { ...prev, itemCount: Math.max(0, prev.itemCount - 1) } : prev));
     showToast(collection.isDefault ? "Kaydedilenlerden kaldırıldı." : "Koleksiyondan kaldırıldı.");
   }
@@ -157,18 +161,20 @@ export function CollectionDetailView() {
         <p className="py-10 text-center text-sm text-text-muted">Bu koleksiyonda henüz çalışma yok.</p>
       ) : (
         <div className="columns-1 gap-4 sm:columns-2 xl:columns-3">
-          {items.map((prompt) => (
-            <div key={prompt.id} className="mb-4 break-inside-avoid">
-              <PromptCard
-                prompt={prompt}
-                collectionRemoval={
-                  isOwner
-                    ? { isDefault: collection.isDefault, onRemove: () => handleRemoveItem(prompt.id) }
-                    : undefined
-                }
-              />
-            </div>
-          ))}
+          {items.map((entry) => {
+            const removal = isOwner
+              ? { isDefault: collection.isDefault, onRemove: () => handleRemoveItem(entry.data.id, entry.type) }
+              : undefined;
+            return (
+              <div key={entry.data.id} className="mb-4 break-inside-avoid">
+                {entry.type === "prompt" ? (
+                  <PromptCard prompt={entry.data} collectionRemoval={removal} />
+                ) : (
+                  <GeneratorCard generator={entry.data} collectionRemoval={removal} />
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
 

@@ -1,8 +1,19 @@
 import { supabase } from "./client";
 import { mapProfileRow, type ProfileRow } from "./mappers";
 import { PROMPT_SELECT, mapPromptRow, type PromptRow } from "./prompts";
+import { GENERATOR_SELECT, mapGeneratorRow, type GeneratorRow } from "./generators";
 import type { LikeableContentType as SaveableContentType } from "./likes";
-import type { Collection, Prompt } from "@/types";
+import type { Collection, Generator, Prompt } from "@/types";
+
+/**
+ * A single row in a collection's contents — a collection can hold prompts
+ * AND generators side by side (Bölüm 9.36 widened `collection_items` to a
+ * nullable `prompt_id`/`generator_id` pair, same shape as `prompt_likes`),
+ * so a flat `Prompt[]` can no longer represent it. Mirrors the `FeedItem`
+ * discriminated-union pattern already used for the mixed home/discover feed
+ * (`src/features/feed/types.ts`) rather than inventing a new shape.
+ */
+export type CollectionEntry = { type: "prompt"; data: Prompt } | { type: "generator"; data: Generator };
 
 /** Which real column a save target lives in — mirrors likes.ts's `targetColumn` exactly (Bölüm 9.36's Prompt/Generator parity pass, same "collection_items now holds a nullable prompt_id OR generator_id" shape as prompt_likes/prompt_comments). */
 function saveTargetColumn(contentType: SaveableContentType): "prompt_id" | "generator_id" {
@@ -50,8 +61,11 @@ function sortWithDefaultFirst(collections: Collection[]): Collection[] {
 /**
  * Fetches the most recently-added item's first media for each collection id
  * in one query, for use as a cheap "cover image" — never a separately
- * uploaded cover. Returns a Map keyed by collection_id; a collection with no
- * image items (or no items at all) is simply absent from the map.
+ * uploaded cover. A generator has no `prompt_media` (its "cover" is just its
+ * own `cover_url` data URL, Bölüm 9.27), so its row is checked as a second,
+ * separate fallback rather than trying to force it through the same
+ * `prompt_media` shape. Returns a Map keyed by collection_id; a collection
+ * with no image items (or no items at all) is simply absent from the map.
  */
 async function fetchCovers(collectionIds: string[]): Promise<Map<string, Collection["coverImage"]>> {
   const covers = new Map<string, Collection["coverImage"]>();
@@ -59,18 +73,23 @@ async function fetchCovers(collectionIds: string[]): Promise<Map<string, Collect
   try {
     const { data, error } = await supabase
       .from("collection_items")
-      .select("collection_id, created_at, prompts ( prompt_media ( id, url, width, height, alt ) )")
+      .select(
+        "collection_id, created_at, prompts ( prompt_media ( id, url, width, height, alt ) ), generators ( cover_url )",
+      )
       .in("collection_id", collectionIds)
       .order("created_at", { ascending: false });
     if (error || !data) return covers;
     for (const row of data as unknown as {
       collection_id: string;
       prompts: { prompt_media: { id: string; url: string; width: number; height: number; alt: string | null }[] } | null;
+      generators: { cover_url: string | null } | null;
     }[]) {
       if (covers.has(row.collection_id)) continue;
       const media = row.prompts?.prompt_media?.[0];
       if (media) {
         covers.set(row.collection_id, { id: media.id, url: media.url, width: media.width, height: media.height, alt: media.alt ?? "" });
+      } else if (row.generators?.cover_url) {
+        covers.set(row.collection_id, { id: row.collection_id, url: row.generators.cover_url, width: 320, height: 320, alt: "" });
       }
     }
     return covers;
@@ -160,22 +179,39 @@ export async function fetchDefaultCollectionId(userId: string): Promise<string |
   }
 }
 
-/** Every real prompt in a collection, newest-first — soft-deleted prompts (Bölüm 9.7) are filtered out the same way every other listing does. */
-export async function fetchCollectionItems(collectionId: string): Promise<Prompt[]> {
+/**
+ * Every real item in a collection, newest-first — a prompt OR a generator
+ * (Bölüm 9.36 widened `collection_items` itself to hold either, but this
+ * fetch was never updated to match: it only ever selected the `prompts`
+ * embed, so a row with `generator_id` set came back with `prompts: null`
+ * and was silently filtered out — the collection's real `item_count`
+ * stayed correct, since the counter trigger counts every row regardless of
+ * target, but the item itself never rendered. Fixed here by querying both
+ * embeds in the same request and mapping each row to whichever one is
+ * actually populated). Soft-deleted prompts (Bölüm 9.7) are filtered out
+ * the same way every other listing does; a generator is never soft-deleted
+ * (Bölüm 9.27 — hard delete only), so no equivalent filter is needed there.
+ */
+export async function fetchCollectionItems(collectionId: string): Promise<CollectionEntry[]> {
   try {
     const { data, error } = await supabase
       .from("collection_items")
-      .select(`created_at, prompts ( ${PROMPT_SELECT} )`)
+      .select(`created_at, prompts ( ${PROMPT_SELECT} ), generators ( ${GENERATOR_SELECT} )`)
       .eq("collection_id", collectionId)
       .order("created_at", { ascending: false });
     if (error || !data) {
       if (error) console.error("fetchCollectionItems", error);
       return [];
     }
-    return (data as unknown as { prompts: PromptRow | null }[])
-      .map((row) => row.prompts)
-      .filter((row): row is PromptRow => Boolean(row) && !row!.deleted_at)
-      .map((row) => mapPromptRow(row));
+    const entries: CollectionEntry[] = [];
+    for (const row of data as unknown as { prompts: PromptRow | null; generators: GeneratorRow | null }[]) {
+      if (row.prompts && !row.prompts.deleted_at) {
+        entries.push({ type: "prompt", data: mapPromptRow(row.prompts) });
+      } else if (row.generators) {
+        entries.push({ type: "generator", data: mapGeneratorRow(row.generators) });
+      }
+    }
+    return entries;
   } catch (err) {
     console.error("fetchCollectionItems", err);
     return [];

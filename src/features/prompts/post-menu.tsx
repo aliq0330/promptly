@@ -48,8 +48,9 @@ export function PostMenu({
    * "koleksiyondan kaldır" action, distinct from deleting the post itself
    * and gated by collection ownership, not post authorship (CLAUDE.md
    * Bölüm 9.22 §8/§9/§19 — a deliberately separate operation from `Sil`).
-   * Prompt-only today (a generator can only live in its owner's default
-   * collection so far, see use-generator-save-state.ts).
+   * Works identically for a prompt or a generator target (both live in the
+   * same multi-collection system since Bölüm 9.36) — the caller's own
+   * `onRemove` already knows which real removal call to make.
    */
   collectionRemoval?: {
     /** Whether the collection being viewed is the caller's default ("Genel") — determines the label and whether removal cascades to every other collection (the caller already does the actual cascading via `onRemove`, this only decides wording). */

@@ -20,11 +20,20 @@ import type { Generator } from "@/types";
  * full-card `Link` sits behind them at `z-0` for the rest of the card's
  * click area.
  */
-export function GeneratorCard({ generator, onDeleted }: { generator: Generator; onDeleted?: () => void }) {
+export function GeneratorCard({
+  generator,
+  onDeleted,
+  collectionRemoval,
+}: {
+  generator: Generator;
+  onDeleted?: () => void;
+  /** Same "kaydedilenlerden kaldır"/"koleksiyondan kaldır" menu entry a prompt card gets when rendered inside a collection the viewer owns (CLAUDE.md Bölüm 9.22 §8/§9, widened to generators). */
+  collectionRemoval?: { isDefault: boolean; onRemove: () => Promise<void> };
+}) {
   return (
     <div className="group relative flex flex-col gap-3 overflow-hidden rounded-lg border border-border bg-surface pt-4 transition-shadow hover:shadow-md">
       <div className="flex flex-col gap-3 px-4">
-        <PostHeader generator={generator} onDeleted={onDeleted} />
+        <PostHeader generator={generator} onDeleted={onDeleted} collectionRemoval={collectionRemoval} />
 
         {generator.coverUrl ? (
           // eslint-disable-next-line @next/next/no-img-element -- real, potentially locally-produced data URL cover
