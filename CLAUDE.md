@@ -9621,6 +9621,44 @@ aksine ekstra bir yedek alma uyarısı gerekmiyor.
   placeholder'ı render ediliyor), pratik bir etkisi yok (Bölüm 9.7'nin
   aynı notuyla birebir aynı gerekçe).
 
+### 9.42 Bilinen hata düzeltmesi: generator yorumuna yanıt yazmak / onu beğenmek hata veriyordu
+
+Bölüm 9.43'ün demo seed'i yerel PostgreSQL 16'da çalıştırılırken yakalandı:
+20260919230000'in `notify_comment_reply()` ve `notify_comment_like()`
+fonksiyonları bildirim hedefini yalnızca `prompt_id`/`request_id`'den kuruyordu;
+Bölüm 9.35'in eklediği generator yorumlarında ikisi de null olduğundan
+`target_href` null çıkıp `notifications.target_href NOT NULL` kısıtı INSERT'i
+reddediyordu — yani canlı sitede bir generator yorumuna **yanıt yazmak** veya bir
+generator yorumunu **beğenmek** hata veriyordu (üst seviye generator yorumu
+etkilenmiyordu). Yeni `20260919360000_generator_comment_notification_fix.sql`:
+`notify_comment_reply` generator yorumlarında erken dönüyor (onları zaten
+`notify_generator_comment` ele alıyor), `notify_comment_like` generator
+yorumunda generatorun kendi sayfasına (`/generators/local?slug=`) işaret ediyor.
+Başka hiçbir davranış değişmedi. Doğrulama: düzeltme öncesi seed tam bu hatayla
+düştü, sonrası 110 yanıt + tüm yorum beğenileri sıfır null href ile yazıldı.
+
+### 9.43 Demo hesap seed'i
+
+Kullanıcı isteğiyle, siteyi 15-20 gerçek insan kullanıyormuş gibi göstermek için
+`supabase/seed/` altında tekrar çalıştırılabilir bir seed eklendi (migration
+değil): `demo-content.mjs` (18 persona — bio, ilgi alanı, promptlar, istekler,
+generatorlar, yorum havuzu), `build-demo-seed.mjs` (sabit tohumlu, deterministik
+üretici) ve çıktısı `demo-users.sql`. Hesaplar `<ad>@msn.com` / `ac8d5c55`,
+doğrudan `auth.users` + `auth.identities`'e e-postası onaylı olarak yazılıyor
+(hiç e-posta gönderilmiyor); profil ve "Genel" koleksiyonu mevcut
+`handle_new_user` trigger'ıyla oluşuyor, sayaçlar/bildirimler mevcut
+trigger'larla gerçekten üretiliyor. Tüm id'ler `5eed…` önekli; script başta
+yalnızca bu id'leri silip baştan kuruyor (silme sırasında soft-delete / varsayılan
+koleksiyon koruma trigger'ları geçici olarak kapatılıyor). Görseller
+loremflickr.com (anahtar kelimeye göre gerçek Flickr fotoğrafı, `lock` ile sabit),
+avatarlar randomuser.me — sandbox bu sitelere erişemediği için görsellerin
+gerçekten yüklendiği burada doğrulanamadı. Yerel PostgreSQL 16'da tüm
+migration'larla birlikte iki kez üst üste çalıştırıldı: 18 kullanıcı, 99 prompt
+(66 görsel), 39 istek (9 yanıtlandı, 3 kapalı), 60 generator, 411 yorum, 872
+beğeni, 142 takip, 184 koleksiyon öğesi; önceden var olan gerçek bir hesap
+etkilenmedi, şifre hash'leri doğrulandı. GoTrue'nun bu kullanıcılarla gerçekten
+giriş yaptırması canlı projede denenmeli.
+
 ---
 
 **Sonraki adım:** Bilinen iki üretim hatası (Bölüm 9.40 — mesajlarda
@@ -9633,9 +9671,9 @@ bekleyen adımlar (sırayla):** `20260919300000_generators.sql` (Bölüm 9.27),
 `20260919330000_remove_remix_system.sql` (Bölüm 9.39 — geri dönüşü olmayan
 şema değişikliği, yedek alma uyarısına dikkat),
 `20260919340000_message_share_delete_fix.sql` (Bölüm 9.40 — geri dönüşü
-olmayan bir değişiklik değil), ve YENİ
-`20260919350000_request_safe_delete.sql` (Bölüm 9.41 — geri dönüşü olmayan
-bir değişiklik değil, ekstra uyarı gerekmiyor). Bölüm 9.37/9.38 hiçbir yeni
+olmayan bir değişiklik değil), `20260919350000_request_safe_delete.sql` (Bölüm 9.41), ve YENİ
+`20260919360000_generator_comment_notification_fix.sql` (Bölüm 9.42); ardından
+isteğe bağlı olarak `supabase/seed/demo-users.sql` (Bölüm 9.43). Bölüm 9.37/9.38 hiçbir yeni
 migration eklemedi. Bundan sonraki bir modül için: bu dosyanın başındaki
 kurala uyarak önce mevcut mimari denetlenmeli, yalnızca gerçek eksikler
 kapatılmalı.
