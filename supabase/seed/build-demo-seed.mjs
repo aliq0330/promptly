@@ -48,15 +48,17 @@ const slugify = (s, sep = "-") =>
   s.replace(/[çğıöşüÇĞİÖŞÜ]/g, (c) => TR_MAP[c]).toLowerCase().replace(/[^a-z0-9]+/g, sep).replace(new RegExp(`^\\${sep}+|\\${sep}+$`, "g"), "");
 
 // --- images ------------------------------------------------------------------
+// picsum.photos: gerçek fotoğraflar, seed ile sabit. loremflickr canlıda
+// güvenilir şekilde yüklenmediği için bırakıldı (keyword eşleşmesi kayboldu).
 let lock = 100;
 const SIZES = { "--ar 16:9": [1600, 900], "--ar 21:9": [1680, 720], "--ar 4:3": [1200, 900], "--ar 1:1": [1080, 1080], "--ar 3:4": [900, 1200], "--ar 4:5": [960, 1200], "--ar 9:16": [720, 1280] };
 function imageFor(promptText, keywords) {
   const ar = Object.keys(SIZES).find((k) => promptText.includes(k)) ?? "--ar 4:5";
   const [w, h] = SIZES[ar];
   lock += 1;
-  return { url: `https://loremflickr.com/${w}/${h}/${keywords}?lock=${lock}`, w, h };
+  return { url: `https://picsum.photos/seed/${slugify(keywords)}-${lock}/${w}/${h}`, w, h };
 }
-const coverFor = (keywords) => `https://loremflickr.com/1200/675/${keywords}?lock=${(lock += 1)}`;
+const coverFor = (keywords) => `https://picsum.photos/seed/${slugify(keywords)}-${(lock += 1)}/1200/675`;
 
 // --- build model ---------------------------------------------------------------
 const users = USERS.map((u, i) => ({ ...u, id: uid("user"), joined: NOW - (60 + i * 3) * DAY }));

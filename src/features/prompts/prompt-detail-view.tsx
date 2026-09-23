@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
@@ -19,7 +20,7 @@ import { fetchVariablesForPrompt } from "@/lib/supabase/prompt-variables";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
 import { PostMenu } from "@/features/prompts/post-menu";
 import { parseHighlightValue } from "@/lib/notification-utils";
-import { cn, formatRelativeTime } from "@/lib/utils";
+import { cn, formatRelativeTime, tagHref } from "@/lib/utils";
 import type { Prompt, PromptVariable } from "@/types";
 
 /** Same fade timing as the comment-thread flash (`comment-section.tsx`) — one shared "how long does a jumped-to thing glow" feel across the app. */
@@ -104,7 +105,9 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
 
         <div className="flex flex-wrap gap-1.5">
           {prompt.tags.map((tag) => (
-            <Badge key={tag.slug}>{tag.label}</Badge>
+            <Link key={tag.slug} href={tagHref(tag)}>
+              <Badge className="hover:bg-accent-surface">{tag.label}</Badge>
+            </Link>
           ))}
           {prompt.tool && <Badge variant="outline">{prompt.tool}</Badge>}
         </div>

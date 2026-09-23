@@ -17,7 +17,7 @@ import { fetchPromptsForRequest } from "@/lib/supabase/prompts";
 import { useRealRequests } from "./real-requests-provider";
 import { STATUS_LABELS, STATUS_VARIANTS } from "./request-card";
 import { parseHighlightValue } from "@/lib/notification-utils";
-import { cn, formatRelativeTime } from "@/lib/utils";
+import { cn, formatRelativeTime, tagHref } from "@/lib/utils";
 import type { Prompt, PromptRequest } from "@/types";
 
 /** Same fade timing as the comment-thread flash — one shared feel across the app for "you just jumped here from a notification". */
@@ -183,9 +183,11 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
         )}
         <div className="flex flex-wrap gap-1.5">
           {live.tags.map((tag) => (
-            <Badge key={tag.slug} variant="outline">
-              {tag.label}
-            </Badge>
+            <Link key={tag.slug} href={tagHref(tag)}>
+              <Badge variant="outline" className="hover:bg-accent-surface">
+                {tag.label}
+              </Badge>
+            </Link>
           ))}
           {live.preferredTool && <Badge variant="outline">{live.preferredTool}</Badge>}
         </div>

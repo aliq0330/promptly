@@ -23,7 +23,7 @@ import {
   type GeneratorVersionResult,
 } from "@/lib/supabase/generators";
 import { useRealGenerators } from "./real-generators-provider";
-import { cn, formatCount, formatRelativeTime, profileHref } from "@/lib/utils";
+import { cn, formatCount, formatRelativeTime, profileHref, tagHref } from "@/lib/utils";
 import type { Generator, GeneratorValues } from "@/types";
 
 /**
@@ -167,9 +167,11 @@ export function GeneratorDetailView() {
           {generator.tags.length > 0 && (
             <div className="flex flex-wrap gap-1.5">
               {generator.tags.map((tag) => (
-                <Badge key={tag.slug} variant="outline">
-                  {tag.label}
-                </Badge>
+                <Link key={tag.slug} href={tagHref(tag)}>
+                  <Badge variant="outline" className="hover:bg-accent-surface">
+                    {tag.label}
+                  </Badge>
+                </Link>
               ))}
             </div>
           )}
