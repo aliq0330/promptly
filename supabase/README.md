@@ -714,5 +714,6 @@ fotoğrafları), avatarlar randomuser.me.
 2. SQL Editor'e `demo-users.sql`'in tamamını yapıştırıp çalıştır.
 
 Tekrar çalıştırmak güvenli: yalnızca `5eed…` id'li demo hesaplarını silip
-baştan oluşturur, gerçek hesaplara dokunmaz. İçeriği değiştirmek için
+baştan oluşturur. Demo e-postalarından biriyle (ör. `veli@msn.com`) daha önce
+açılmış bir hesap varsa o hesap ve içerikleri de silinir; başka hesaplara dokunmaz. İçeriği değiştirmek için
 `demo-content.mjs`'i düzenleyip `node supabase/seed/build-demo-seed.mjs` çalıştır.

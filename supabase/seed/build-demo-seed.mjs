@@ -99,6 +99,9 @@ for (const [owner, idx, responder, title, desc, text, tool, kw, selected] of RES
 const out = [];
 const emit = (s) => out.push(s);
 const userIds = users.map((u) => q(u.id)).join(", ");
+const userEmails = users.map((u) => q(`${u.u}@${EMAIL_DOMAIN}`)).join(", ");
+// Önceki demo hesapları + demo e-postalarıyla daha önce elle açılmış hesaplar.
+const oldUsers = `select id from auth.users where id in (${userIds}) or lower(email) in (${userEmails})`;
 
 emit(`-- ============================================================================
 -- Promptly demo hesapları — OTOMATİK ÜRETİLDİ, elle düzenleme.
@@ -109,8 +112,10 @@ emit(`-- =======================================================================
 -- Giriş: <kullanıcı>@${EMAIL_DOMAIN} / ${PASSWORD}
 --
 -- Supabase Dashboard → SQL Editor'e yapıştırıp çalıştır. Tekrar çalıştırmak
--- güvenli: önce önceki demo verisini (yalnızca bu 5eed... id'li hesapları)
--- siler, sonra baştan oluşturur. Gerçek hesaplara dokunmaz.
+-- güvenli: önce önceki demo verisini (5eed... id'li hesapları)
+-- siler, sonra baştan oluşturur. DİKKAT: bu demo e-postalarından biriyle
+-- (ör. veli@${EMAIL_DOMAIN}) daha önce açılmış bir hesap varsa o hesap ve
+-- içerikleri de silinir. Başka hiçbir hesaba dokunmaz.
 -- Tüm migration'ların (20260919330000 dahil) uygulanmış olması gerekir.
 -- ============================================================================
 
@@ -123,8 +128,13 @@ alter table public.prompt_comments disable trigger user;
 alter table public.prompts disable trigger user;
 alter table public.prompt_requests disable trigger user;
 alter table public.collections disable trigger user;
-delete from public.notifications where recipient_id in (${userIds}) or actor_id in (${userIds});
-delete from auth.users where id in (${userIds});
+delete from public.notifications where recipient_id in (${oldUsers}) or actor_id in (${oldUsers});
+-- Silinecek hesapların isteklerine BAŞKA kullanıcıların verdiği yanıtlar
+-- silinmesin: istekten ayrılıp normal (original) paylaşım olarak kalıyorlar.
+update public.prompts set origin_type = 'original', request_id = null
+where request_id in (select id from public.prompt_requests where author_id in (${oldUsers}))
+  and author_id not in (${oldUsers});
+delete from auth.users where id in (${oldUsers});
 alter table public.prompt_comments enable trigger user;
 alter table public.prompts enable trigger user;
 alter table public.prompt_requests enable trigger user;

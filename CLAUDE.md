@@ -9648,7 +9648,7 @@ doğrudan `auth.users` + `auth.identities`'e e-postası onaylı olarak yazılıy
 (hiç e-posta gönderilmiyor); profil ve "Genel" koleksiyonu mevcut
 `handle_new_user` trigger'ıyla oluşuyor, sayaçlar/bildirimler mevcut
 trigger'larla gerçekten üretiliyor. Tüm id'ler `5eed…` önekli; script başta
-yalnızca bu id'leri silip baştan kuruyor (silme sırasında soft-delete / varsayılan
+bu id'leri VE demo e-postalarıyla (ör. `veli@msn.com`) daha önce elle açılmış hesapları silip baştan kuruyor (kullanıcı onayıyla — ilk canlı denemede önceden var olan bir `veli@msn.com` `users_email_partial_key` çakışmasına yol açtı; o hesapların isteklerine başka kullanıcıların verdiği yanıtlar silinmiyor, `original` paylaşıma dönüştürülüyor) (silme sırasında soft-delete / varsayılan
 koleksiyon koruma trigger'ları geçici olarak kapatılıyor). Görseller
 loremflickr.com (anahtar kelimeye göre gerçek Flickr fotoğrafı, `lock` ile sabit),
 avatarlar randomuser.me — sandbox bu sitelere erişemediği için görsellerin
