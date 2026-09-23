@@ -15,6 +15,7 @@ import {
   removeFromCollection,
   removeFromSavedEverywhere,
 } from "@/lib/supabase/collections";
+import type { LikeableContentType as SaveableContentType } from "@/lib/supabase/likes";
 import { placeholderArt } from "@/lib/placeholder-image";
 import { cn } from "@/lib/utils";
 import type { Collection } from "@/types";
@@ -28,19 +29,26 @@ import type { Collection } from "@/types";
  * add/remove-per-row toggle. Ticking the default row IS the general
  * "kaydet" action (fills the bookmark); ticking any other collection is
  * membership in just that collection and does not by itself generally save
- * the prompt (CLAUDE.md Bölüm 9.22 §4/§5). "+ Yeni koleksiyon oluştur"
+ * the item (CLAUDE.md Bölüm 9.22 §4/§5). "+ Yeni koleksiyon oluştur"
  * swaps this SAME modal's content to the create form (never a second,
  * stacked modal — see `view` state below), and a collection created from
  * here auto-adds the current work so the user never has to repeat the
  * toggle.
+ *
+ * Pass exactly one of `promptId`/`generatorId` — a generator saves through
+ * this SAME multi-collection modal a prompt does (Bölüm 9.36's Prompt/
+ * Generator parity pass), so the same "Film fikirleri" collection can hold
+ * both.
  */
 export function SaveToCollectionModal({
   promptId,
+  generatorId,
   onClose,
   onAdded,
   onRemovedFromDefault,
 }: {
-  promptId: string;
+  promptId?: string;
+  generatorId?: string;
   onClose: () => void;
   /** Called once after the first successful add to the DEFAULT collection specifically — lets the caller (SaveButton) reflect the general bookmark filling in immediately, without waiting for a refetch. */
   onAdded?: () => void;
@@ -49,6 +57,10 @@ export function SaveToCollectionModal({
 }) {
   const { user } = useAuth();
   const { profile } = useOwnProfile();
+
+  const isGenerator = Boolean(generatorId);
+  const contentId = (generatorId ?? promptId)!;
+  const contentType: SaveableContentType = isGenerator ? "generator" : "prompt";
 
   const [view, setView] = useState<"list" | "create">("list");
   const [collections, setCollections] = useState<Collection[]>([]);
@@ -65,7 +77,7 @@ export function SaveToCollectionModal({
       return;
     }
     setLoading(true);
-    Promise.all([fetchOwnCollections(user.id), fetchCollectionIdsContaining(promptId, user.id)]).then(
+    Promise.all([fetchOwnCollections(user.id), fetchCollectionIdsContaining(contentId, user.id, contentType)]).then(
       ([ownCollections, ids]) => {
         if (cancelled) return;
         setCollections(ownCollections);
@@ -76,7 +88,7 @@ export function SaveToCollectionModal({
     return () => {
       cancelled = true;
     };
-  }, [user, promptId]);
+  }, [user, contentId, contentType]);
 
   async function handleToggle(collection: Collection) {
     if (!user || pendingIds.has(collection.id)) return;
@@ -93,7 +105,7 @@ export function SaveToCollectionModal({
       setMemberIds(new Set());
       setCollections((prev) => prev.map((c) => (removedFrom.has(c.id) ? { ...c, itemCount: Math.max(0, c.itemCount - 1) } : c)));
       try {
-        await removeFromSavedEverywhere(promptId);
+        await removeFromSavedEverywhere(contentId, contentType);
         onRemovedFromDefault?.();
       } catch (err) {
         // Rollback — restore exactly the prior membership/count state.
@@ -123,9 +135,9 @@ export function SaveToCollectionModal({
 
     try {
       if (isMember) {
-        await removeFromCollection(collection.id, promptId);
+        await removeFromCollection(collection.id, contentId, contentType);
       } else {
-        await addItemToCollection(collection.id, promptId);
+        await addItemToCollection(collection.id, contentId, contentType);
         if (collection.isDefault) onAdded?.();
       }
     } catch (err) {
@@ -152,7 +164,7 @@ export function SaveToCollectionModal({
   async function handleCreate(values: { name: string; visibility: "public" | "private" }) {
     if (!user || !profile) throw new Error("Koleksiyon oluşturmak için giriş yapmalısın.");
     const created = await createCollection(values, user.id, profile);
-    await addItemToCollection(created.id, promptId);
+    await addItemToCollection(created.id, contentId, contentType);
     setCollections((prev) => [{ ...created, itemCount: 1 }, ...prev]);
     setMemberIds((prev) => new Set(prev).add(created.id));
     setView("list");

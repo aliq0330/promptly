@@ -1,10 +1,13 @@
 import { PromptCard } from "@/features/prompts/prompt-card";
 import { RequestCard } from "@/features/requests/request-card";
+import { GeneratorCard } from "@/features/generators/generator-card";
 import { feedItemKey, type FeedItem } from "./types";
 
 /**
  * Same CSS-columns masonry as PromptGrid (see prompt-grid.tsx), but for a
- * mixed list of prompts (any content type) and prompt requests.
+ * mixed list of prompts (any content type), prompt requests, and — since
+ * Bölüm 9.36's Prompt/Generator parity pass — generators too, all through
+ * the same card shell/masonry, not a separate generator feed.
  */
 export function FeedGrid({ items }: { items: FeedItem[] }) {
   if (items.length === 0) {
@@ -19,8 +22,10 @@ export function FeedGrid({ items }: { items: FeedItem[] }) {
         <div key={feedItemKey(item)} className="mb-4 break-inside-avoid">
           {item.kind === "prompt" ? (
             <PromptCard prompt={item.data} />
-          ) : (
+          ) : item.kind === "request" ? (
             <RequestCard request={item.data} />
+          ) : (
+            <GeneratorCard generator={item.data} />
           )}
         </div>
       ))}

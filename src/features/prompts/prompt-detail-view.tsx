@@ -243,7 +243,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
           ) : (
             <PromptGrid prompts={remixes} />
           ))}
-        {remixTab === "map" && <RemixBranchMap currentPrompt={prompt} />}
+        {remixTab === "map" && <RemixBranchMap prompt={prompt} />}
       </section>
 
       {isPersonalizeOpen && (

@@ -203,6 +203,26 @@ export async function fetchTopGenerators(limit = 20): Promise<Generator[]> {
   }
 }
 
+/** Every real, published, direct remix of this generator — mirrors `fetchRemixesOf` (prompts.ts) exactly, for the "Remixler" tab on a generator's own detail page (Bölüm 9.36's Prompt/Generator parity pass). */
+export async function fetchRemixesOfGenerator(generatorId: string): Promise<Generator[]> {
+  try {
+    const { data, error } = await supabase
+      .from("generators")
+      .select(GENERATOR_SELECT)
+      .eq("source_generator_id", generatorId)
+      .eq("status", "published")
+      .order("created_at", { ascending: false });
+    if (error) {
+      console.error("fetchRemixesOfGenerator", error);
+      return [];
+    }
+    return (data ?? []).map((row) => mapGeneratorRow(row as unknown as GeneratorRow));
+  } catch (err) {
+    console.error("fetchRemixesOfGenerator", err);
+    return [];
+  }
+}
+
 /** A generator by its real public slug — RLS hides a draft/private/unlisted-not-owned generator automatically (Bölüm 19-style fail-closed). */
 export async function fetchGeneratorBySlug(slug: string): Promise<Generator | null> {
   try {

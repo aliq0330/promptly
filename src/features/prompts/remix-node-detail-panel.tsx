@@ -25,11 +25,11 @@ import {
   withdrawMergeRequest,
 } from "@/lib/supabase/merge-requests";
 import { fetchVersionsForPrompt } from "@/lib/supabase/prompt-versions";
-import { cn, formatRelativeTime, profileHref, promptHref } from "@/lib/utils";
+import { cn, formatRelativeTime, generatorHref, profileHref, promptHref } from "@/lib/utils";
 import { MergeRequestModal } from "./merge-request-modal";
 import { PromptDiffModal } from "./prompt-diff-modal";
 import { VersionDiffModal } from "./version-diff-modal";
-import type { MergeRequest, MergeRequestStatus, Prompt, PromptVersion, RemixGraphNode } from "@/types";
+import type { MergeRequest, MergeRequestStatus, PromptVersion, RemixGraphNode } from "@/types";
 
 const STATUS_LABELS: Record<MergeRequestStatus, string> = {
   pending: "Bekliyor",
@@ -69,19 +69,29 @@ function upsertMergeRequests(existing: MergeRequest[], updates: MergeRequest[]):
  */
 export function RemixNodeDetailPanel({
   node,
-  currentPrompt,
+  currentId,
   allNodes,
   mergeRequests,
   onMergeRequestsChanged,
   onSelectNode,
 }: {
   node: RemixGraphNode;
-  currentPrompt: Prompt;
+  /** The id of the content whose detail page this map is embedded in (a prompt or a generator) — only used to badge "Bu sayfa". */
+  currentId: string;
   allNodes: RemixGraphNode[];
   mergeRequests: MergeRequest[];
   onMergeRequestsChanged: (next: MergeRequest[]) => void;
   onSelectNode: (id: string) => void;
 }) {
+  const isGenerator = node.contentType === "generator";
+  const hrefFor = (n: RemixGraphNode) => (n.contentType === "generator" && n.slug ? generatorHref({ slug: n.slug }) : promptHref({ id: n.id }));
+  const nodeHref = hrefFor(node);
+  // Bir generatorun remixi, bir promptun `?remix=` ön-doldurma linkinin
+  // aksine, gerçek bir sunucu çağrısıdır (`remixGenerator`) — bu yalnızca
+  // generator detay sayfasındaki mevcut, çalışan "Remixle" butonuna
+  // bağlı (dosya başındaki not). Bu yüzden burada aynı async akışı
+  // haritanın içinde tekrarlamak yerine doğrudan o sayfaya yönlendiriyor.
+  const remixActionHref = isGenerator ? nodeHref : `/create?remix=${node.id}`;
   const { user } = useAuth();
   const [showMergeModal, setShowMergeModal] = useState(false);
   const [diffTarget, setDiffTarget] = useState<DiffTarget>(null);
@@ -96,8 +106,12 @@ export function RemixNodeDetailPanel({
   // eklenmedi (spec'in kendi kuralı: olmayan veriyi göstermeye çalışma).
   useEffect(() => {
     let cancelled = false;
-    if (node.isDeleted) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- a deleted node's content is never fetched, so its version list is always empty
+    // Sürüm geçmişi/merge yalnızca promptlar için var (dosya başındaki not
+    // — bir generatorun mergelenebilir "içeriği" düz metin değil
+    // yapılandırılmış bir JSON şema/şablon) — bir generator düğümü için
+    // hiç sorgulanmıyor.
+    if (node.isDeleted || isGenerator) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- a deleted/generator node's version list is always empty
       setVersions([]);
       return;
     }
@@ -107,7 +121,7 @@ export function RemixNodeDetailPanel({
     return () => {
       cancelled = true;
     };
-  }, [node.id, node.isDeleted]);
+  }, [node.id, node.isDeleted, isGenerator]);
 
   const directSource = node.sourcePromptId ? allNodes.find((n) => n.id === node.sourcePromptId) ?? null : null;
   const rootOriginal = node.rootPromptId ? allNodes.find((n) => n.id === node.rootPromptId) ?? null : null;
@@ -147,7 +161,8 @@ export function RemixNodeDetailPanel({
   }, [node, allNodes]);
 
   const isOwnNode = user?.id === node.author.id;
-  const canCreateMergeRequest = isOwnNode && node.originType === "remix" && !node.isDeleted && ancestorCandidates.length > 0;
+  const canCreateMergeRequest =
+    isOwnNode && !isGenerator && node.originType === "remix" && !node.isDeleted && ancestorCandidates.length > 0;
 
   async function refreshRelatedRequests() {
     const updated = await fetchMergeRequestsForPrompt(node.id);
@@ -200,7 +215,7 @@ export function RemixNodeDetailPanel({
           <Badge variant={node.originType === "original" ? "default" : "outline"}>
             {node.originType === "original" ? "Orijinal" : "Remix"}
           </Badge>
-          {node.id === currentPrompt.id && <Badge variant="accent">Bu sayfa</Badge>}
+          {node.id === currentId && <Badge variant="accent">Bu sayfa</Badge>}
         </div>
         <h3 className="mt-1 truncate text-sm font-semibold text-text">{node.isDeleted ? "Silinmiş içerik" : node.title}</h3>
         <div className="mt-1 flex items-center gap-1.5 text-xs text-text-muted">
@@ -265,20 +280,20 @@ export function RemixNodeDetailPanel({
 
       {!node.isDeleted && (
         <div className="flex flex-wrap gap-1.5">
-          <Link href={promptHref({ id: node.id })}>
+          <Link href={nodeHref}>
             <Button type="button" variant="outline" size="sm">
               <ExternalLink size={13} />
               İçeriği Aç
             </Button>
           </Link>
-          <Link href={`/create?remix=${node.id}`}>
+          <Link href={remixActionHref}>
             <Button type="button" variant="outline" size="sm">
               <GitBranch size={13} />
               Remixle
             </Button>
           </Link>
           {directSource && !directSource.isDeleted && (
-            <Link href={promptHref({ id: directSource.id })}>
+            <Link href={hrefFor(directSource)}>
               <Button type="button" variant="ghost" size="sm">
                 <GitBranch size={13} />
                 Kaynağı Aç
@@ -288,7 +303,11 @@ export function RemixNodeDetailPanel({
         </div>
       )}
 
-      {!node.isDeleted && node.originType === "remix" && (directSource || rootOriginal) && (
+      {/* Farkları karşılaştır/Merge talebi bir generator düğümünde hiç
+          gösterilmiyor — dosya başındaki not: bir generatorun mergelenebilir
+          "içeriği" düz metin değil yapılandırılmış bir JSON şema/şablon,
+          mevcut diff/merge arayüzü onu doğru karşılaştıramaz. */}
+      {!isGenerator && !node.isDeleted && node.originType === "remix" && (directSource || rootOriginal) && (
         <div className="space-y-1.5 border-t border-border pt-2.5">
           <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">Farkları karşılaştır</p>
           <div className="flex flex-wrap gap-1.5">

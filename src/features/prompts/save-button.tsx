@@ -17,17 +17,29 @@ import { SaveToCollectionModal } from "@/features/collections/save-to-collection
  *   DIRECTLY (no modal — this was the reported bug: the icon's own filled
  *   state already means "kayıtlı", so bringing up "kaydetmek için bir
  *   koleksiyon seç" again was backwards).
+ *
+ * Pass exactly one of `promptId`/`generatorId` (mirrors `PostMenu`'s/
+ * `CommentCountLink`'s established pattern) — a generator uses this SAME
+ * button/modal a prompt does (Bölüm 9.36's Prompt/Generator parity pass),
+ * not a separate, simpler, modal-less save toggle.
  */
 export function SaveButton({
   promptId,
+  generatorId,
   size = 14,
   className,
 }: {
-  promptId: string;
+  promptId?: string;
+  generatorId?: string;
   size?: number;
   className?: string;
 }) {
-  const { isSaved, removeEverywhere, markSaved, markUnsaved, isToggling, canSave } = useSaveState(promptId);
+  const isGenerator = Boolean(generatorId);
+  const id = (generatorId ?? promptId)!;
+  const { isSaved, removeEverywhere, markSaved, markUnsaved, isToggling, canSave } = useSaveState(
+    id,
+    isGenerator ? "generator" : "prompt",
+  );
   const [modalOpen, setModalOpen] = useState(false);
   const [showRemovedToast, setShowRemovedToast] = useState(false);
   const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -89,14 +101,22 @@ export function SaveButton({
         <Bookmark size={size} fill={isSaved ? "currentColor" : "none"} />
       </button>
 
-      {modalOpen && (
-        <SaveToCollectionModal
-          promptId={promptId}
-          onClose={() => setModalOpen(false)}
-          onAdded={markSaved}
-          onRemovedFromDefault={markUnsaved}
-        />
-      )}
+      {modalOpen &&
+        (isGenerator ? (
+          <SaveToCollectionModal
+            generatorId={id}
+            onClose={() => setModalOpen(false)}
+            onAdded={markSaved}
+            onRemovedFromDefault={markUnsaved}
+          />
+        ) : (
+          <SaveToCollectionModal
+            promptId={id}
+            onClose={() => setModalOpen(false)}
+            onAdded={markSaved}
+            onRemovedFromDefault={markUnsaved}
+          />
+        ))}
 
       {showRemovedToast && (
         <Portal>

@@ -3,17 +3,22 @@
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/features/auth/auth-provider";
 import { isPromptSaved, removeFromSavedEverywhere } from "@/lib/supabase/collections";
+import type { LikeableContentType as SaveableContentType } from "@/lib/supabase/likes";
 
 /**
- * Whether the current viewer generally saved a real prompt — true iff it's
- * in their own default ("Genel") collection (see `Collection.isDefault`).
- * No count, saves are never shown as a number. This is the single source of
- * truth for the bookmark icon everywhere it appears (feed, discover,
- * profile, collection detail) — every instance re-fetches this fresh on
- * mount, so a removal on one screen is always reflected correctly the next
- * time a card for the same prompt renders (CLAUDE.md Bölüm 9.22 §16).
+ * Whether the current viewer generally saved a real prompt OR generator —
+ * true iff it's in their own default ("Genel") collection (see
+ * `Collection.isDefault`). No count, saves are never shown as a number.
+ * This is the single source of truth for the bookmark icon everywhere it
+ * appears (feed, discover, profile, collection detail) — every instance
+ * re-fetches this fresh on mount, so a removal on one screen is always
+ * reflected correctly the next time a card for the same prompt renders
+ * (CLAUDE.md Bölüm 9.22 §16). `contentType` defaults to `"prompt"` so every
+ * existing prompt call site keeps working unchanged — a generator now uses
+ * this SAME hook (Bölüm 9.36's Prompt/Generator parity pass), replacing the
+ * old, separate, modal-less `useGeneratorSaveState`.
  */
-export function useSaveState(id: string) {
+export function useSaveState(id: string, contentType: SaveableContentType = "prompt") {
   const { user } = useAuth();
 
   const [isSaved, setIsSaved] = useState(false);
@@ -28,7 +33,7 @@ export function useSaveState(id: string) {
       return;
     }
     setLoading(true);
-    isPromptSaved(id, user.id).then((result) => {
+    isPromptSaved(id, user.id, contentType).then((result) => {
       if (!cancelled) {
         setIsSaved(result);
         setLoading(false);
@@ -37,23 +42,23 @@ export function useSaveState(id: string) {
     return () => {
       cancelled = true;
     };
-  }, [user, id]);
+  }, [user, id, contentType]);
 
   /**
-   * The general "kaydedilenlerden kaldır" action — removes this prompt from
-   * the user's default collection AND every one of their other collections
-   * that also contains it (CLAUDE.md Bölüm 9.22 §7), never just from one
-   * screen's local view. Optimistic with rollback on failure; guarded
-   * against overlapping calls so a double-click can't fire two requests.
-   * Resolves `true` only on a real, confirmed success, so a caller can
-   * decide whether it's honest to show a "removed" confirmation.
+   * The general "kaydedilenlerden kaldır" action — removes this prompt/
+   * generator from the user's default collection AND every one of their
+   * other collections that also contains it (CLAUDE.md Bölüm 9.22 §7),
+   * never just from one screen's local view. Optimistic with rollback on
+   * failure; guarded against overlapping calls so a double-click can't fire
+   * two requests. Resolves `true` only on a real, confirmed success, so a
+   * caller can decide whether it's honest to show a "removed" confirmation.
    */
   const removeEverywhere = useCallback(async () => {
     if (!user || isToggling) return false;
     setIsToggling(true);
     setIsSaved(false);
     try {
-      await removeFromSavedEverywhere(id);
+      await removeFromSavedEverywhere(id, contentType);
       return true;
     } catch (err) {
       console.error("removeFromSavedEverywhere", err);
@@ -62,7 +67,7 @@ export function useSaveState(id: string) {
     } finally {
       setIsToggling(false);
     }
-  }, [user, id, isToggling]);
+  }, [user, id, contentType, isToggling]);
 
   /**
    * Reflects a save that a caller already performed for real elsewhere (the

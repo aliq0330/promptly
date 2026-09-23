@@ -14,6 +14,10 @@ const FIELD_LABELS: Record<string, string> = {
   tool: "Araç",
   creative_direction: "Yaratıcı Yön",
   preferred_tool: "Tercih Edilen Araç",
+  category: "Kategori",
+  subcategory: "Alt Kategori",
+  cover_url: "Kapak Görseli",
+  visibility: "Görünürlük",
 };
 
 function fieldLabel(field: string): string {
@@ -28,7 +32,7 @@ function fieldLabel(field: string): string {
  * empty query, not the real security boundary). Shows only WHICH fields
  * changed and WHEN — never the previous text itself, which stays DB-only.
  */
-export function EditHistoryPanel({ contentType, contentId }: { contentType: "prompt" | "prompt_request"; contentId: string }) {
+export function EditHistoryPanel({ contentType, contentId }: { contentType: "prompt" | "prompt_request" | "generator"; contentId: string }) {
   const [events, setEvents] = useState<ContentEditEvent[] | null>(null);
   const [expanded, setExpanded] = useState(false);
 
