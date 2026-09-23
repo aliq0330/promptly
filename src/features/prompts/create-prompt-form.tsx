@@ -316,6 +316,17 @@ export function CreatePromptForm() {
       (isGeneratorRunMode && !generatorRun) ||
       (isEditMode && !editingPrompt && !editForbidden));
   const isRequestClosed = isAnswerMode && Boolean(answeredRequest) && answeredRequest?.status !== "open";
+  /**
+   * A request's `status` alone doesn't reflect a soft-delete (Bölüm 9.5's
+   * comment-delete mantığı, `prompt_requests` için — bkz. 20260919350000)
+   * — the trigger deliberately leaves `status` untouched, so a
+   * soft-deleted request can still read `status === "open"`. Checked
+   * BEFORE `isRequestClosed` so a deleted request always shows its own,
+   * more accurate message instead of the generic "kapandı" one. The
+   * server-side `validate_prompt_response_target()` trigger is the real,
+   * atomic guarantee (this is only an earlier, friendlier UI check).
+   */
+  const isRequestDeleted = isAnswerMode && Boolean(answeredRequest?.deletedAt);
 
   async function handleImageChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -505,6 +516,23 @@ export function CreatePromptForm() {
           className="inline-flex h-9 items-center rounded-md border border-border px-4 text-sm font-medium text-text hover:bg-accent-surface"
         >
           {isAnswerMode ? "Prompt İsteklerine Dön" : isGeneratorRunMode ? "Generatorlara Dön" : "Keşfet'e Dön"}
+        </Link>
+      </div>
+    );
+  }
+
+  if (isRequestDeleted && answeredRequest) {
+    return (
+      <div className="mx-auto max-w-lg px-4 py-16 text-center">
+        <h1 className="mb-2 text-lg font-semibold text-text">Bu istek silindi</h1>
+        <p className="mb-4 text-sm text-text-muted">
+          Yazarı bu isteği sildi, artık yeni yanıt kabul edilmiyor.
+        </p>
+        <Link
+          href="/requests"
+          className="inline-flex h-9 items-center rounded-md border border-border px-4 text-sm font-medium text-text hover:bg-accent-surface"
+        >
+          Prompt İsteklerine Dön
         </Link>
       </div>
     );

@@ -71,5 +71,23 @@ export function LocalRequestView() {
     );
   }
 
+  if (request.deletedAt) {
+    return (
+      <div className="mx-auto max-w-lg px-4 py-16 text-center">
+        <h1 className="mb-2 text-lg font-semibold text-text">Bu istek silindi</h1>
+        <p className="mb-4 text-sm text-text-muted">
+          Yazarı bu isteği sildi. Bu isteğe verilmiş gerçek yanıtlar hâlâ görüntülenebilir — yalnızca
+          isteğin kendisi kaldırıldı.
+        </p>
+        <Link
+          href="/requests"
+          className="inline-flex h-9 items-center rounded-md border border-border px-4 text-sm font-medium text-text hover:bg-accent-surface"
+        >
+          Prompt İsteklerine Dön
+        </Link>
+      </div>
+    );
+  }
+
   return <RequestDetailView request={request} />;
 }

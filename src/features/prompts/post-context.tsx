@@ -58,6 +58,18 @@ export function RequestResponseContext({
   const request = cached ?? fetched;
   const isSelected = request?.selectedResponsePromptId === currentPromptId;
 
+  if (request?.deletedAt) {
+    return (
+      <ContextBox href={requestHref({ id: requestId })}>
+        <span className="flex items-center gap-1.5 text-xs font-medium text-primary">
+          <CornerUpRight size={14} />
+          Bir isteğe yanıt
+        </span>
+        <span className="block text-sm text-text-muted">Bu istek silindi.</span>
+      </ContextBox>
+    );
+  }
+
   return (
     <ContextBox href={requestHref({ id: requestId })}>
       <span className="flex items-center justify-between gap-2">
