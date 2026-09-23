@@ -7,16 +7,18 @@ import type { LikeableContentType as SaveableContentType } from "@/lib/supabase/
 
 /**
  * Whether the current viewer generally saved a real prompt OR generator —
- * true iff it's in their own default ("Genel") collection (see
- * `Collection.isDefault`). No count, saves are never shown as a number.
- * This is the single source of truth for the bookmark icon everywhere it
- * appears (feed, discover, profile, collection detail) — every instance
- * re-fetches this fresh on mount, so a removal on one screen is always
- * reflected correctly the next time a card for the same prompt renders
- * (CLAUDE.md Bölüm 9.22 §16). `contentType` defaults to `"prompt"` so every
- * existing prompt call site keeps working unchanged — a generator now uses
- * this SAME hook (Bölüm 9.36's Prompt/Generator parity pass), replacing the
- * old, separate, modal-less `useGeneratorSaveState`.
+ * true iff it's a member of ANY of their own collections, default ("Genel")
+ * or custom (Bölüm 9.38 — see `isPromptSaved`'s own doc comment for why this
+ * changed from the original "default collection only" rule). No count,
+ * saves are never shown as a number. This is the single source of truth for
+ * the bookmark icon everywhere it appears (feed, discover, profile,
+ * collection detail) — every instance re-fetches this fresh on mount, so a
+ * removal on one screen is always reflected correctly the next time a card
+ * for the same prompt renders (CLAUDE.md Bölüm 9.22 §16). `contentType`
+ * defaults to `"prompt"` so every existing prompt call site keeps working
+ * unchanged — a generator now uses this SAME hook (Bölüm 9.36's Prompt/
+ * Generator parity pass), replacing the old, separate, modal-less
+ * `useGeneratorSaveState`.
  */
 export function useSaveState(id: string, contentType: SaveableContentType = "prompt") {
   const { user } = useAuth();
@@ -71,10 +73,10 @@ export function useSaveState(id: string, contentType: SaveableContentType = "pro
 
   /**
    * Reflects a save that a caller already performed for real elsewhere (the
-   * collection-picker modal's own `addItemToCollection` onto the user's
-   * default collection specifically) — never a fake/optimistic guess, just
-   * skips an unnecessary refetch of state this component already knows is
-   * true.
+   * collection-picker modal's own `addItemToCollection`, onto ANY
+   * collection — Bölüm 9.38, not just the default one) — never a fake/
+   * optimistic guess, just skips an unnecessary refetch of state this
+   * component already knows is true.
    */
   const markSaved = useCallback(() => {
     setIsSaved(true);
@@ -82,8 +84,8 @@ export function useSaveState(id: string, contentType: SaveableContentType = "pro
 
   /**
    * The mirror of `markSaved` — reflects a real removal that happened
-   * elsewhere (the same modal's own default-collection row being
-   * unchecked again before the modal closed) without a refetch.
+   * elsewhere and left the item saved in NO collection at all (the modal's
+   * own membership-count bookkeeping, Bölüm 9.38) without a refetch.
    */
   const markUnsaved = useCallback(() => {
     setIsSaved(false);

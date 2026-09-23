@@ -107,14 +107,14 @@ export function SaveButton({
             generatorId={id}
             onClose={() => setModalOpen(false)}
             onAdded={markSaved}
-            onRemovedFromDefault={markUnsaved}
+            onRemoved={markUnsaved}
           />
         ) : (
           <SaveToCollectionModal
             promptId={id}
             onClose={() => setModalOpen(false)}
             onAdded={markSaved}
-            onRemovedFromDefault={markUnsaved}
+            onRemoved={markUnsaved}
           />
         ))}
 

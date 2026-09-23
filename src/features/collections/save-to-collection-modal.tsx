@@ -13,7 +13,6 @@ import {
   fetchCollectionIdsContaining,
   fetchOwnCollections,
   removeFromCollection,
-  removeFromSavedEverywhere,
 } from "@/lib/supabase/collections";
 import type { LikeableContentType as SaveableContentType } from "@/lib/supabase/likes";
 import { placeholderArt } from "@/lib/placeholder-image";
@@ -26,14 +25,18 @@ import type { Collection } from "@/types";
  * Lists the viewer's own collections — the default "Genel" one always
  * included and shown first (`fetchOwnCollections` sorts it first and
  * self-heals it into existence if it's somehow missing) — with a real
- * add/remove-per-row toggle. Ticking the default row IS the general
- * "kaydet" action (fills the bookmark); ticking any other collection is
- * membership in just that collection and does not by itself generally save
- * the item (CLAUDE.md Bölüm 9.22 §4/§5). "+ Yeni koleksiyon oluştur"
- * swaps this SAME modal's content to the create form (never a second,
- * stacked modal — see `view` state below), and a collection created from
- * here auto-adds the current work so the user never has to repeat the
- * toggle.
+ * add/remove-per-row toggle. Every row behaves symmetrically now (Bölüm
+ * 9.38): adding to ANY collection — default or custom — fills the outer
+ * bookmark, and it only unfills again once the item has been removed from
+ * every collection this modal shows (tracked via `memberIds.size`
+ * transitioning to/from zero, not by checking `collection.isDefault`).
+ * This replaced the original Bölüm 9.22 rule, where only the default row
+ * controlled the bookmark and a custom-collection-only save left it
+ * unfilled — confirmed as an explicit, intentional reversal with the user
+ * (AskUserQuestion) rather than assumed. "+ Yeni koleksiyon oluştur" swaps
+ * this SAME modal's content to the create form (never a second, stacked
+ * modal — see `view` state below), and a collection created from here
+ * auto-adds the current work so the user never has to repeat the toggle.
  *
  * Pass exactly one of `promptId`/`generatorId` — a generator saves through
  * this SAME multi-collection modal a prompt does (Bölüm 9.36's Prompt/
@@ -45,15 +48,15 @@ export function SaveToCollectionModal({
   generatorId,
   onClose,
   onAdded,
-  onRemovedFromDefault,
+  onRemoved,
 }: {
   promptId?: string;
   generatorId?: string;
   onClose: () => void;
-  /** Called once after the first successful add to the DEFAULT collection specifically — lets the caller (SaveButton) reflect the general bookmark filling in immediately, without waiting for a refetch. */
+  /** Called once when the item's collection-membership count goes from 0 to 1+ (first save into ANY collection, Bölüm 9.38) — lets the caller (SaveButton) reflect the general bookmark filling in immediately, without waiting for a refetch. */
   onAdded?: () => void;
-  /** Called if the default collection's row gets unchecked again while this same modal is still open — mirrors `onAdded`, keeps the outer bookmark icon's state honest without a refetch. */
-  onRemovedFromDefault?: () => void;
+  /** Called once when the item's collection-membership count drops from 1+ to 0 (removed from the LAST collection that still had it, Bölüm 9.38) — mirrors `onAdded`, keeps the outer bookmark icon's state honest without a refetch. */
+  onRemoved?: () => void;
 }) {
   const { user } = useAuth();
   const { profile } = useOwnProfile();
@@ -90,37 +93,27 @@ export function SaveToCollectionModal({
     };
   }, [user, contentId, contentType]);
 
+  /**
+   * Every row — default ("Genel") or custom — toggles symmetrically: a
+   * plain per-collection add/remove, never a cascade (Bölüm 9.38). The
+   * outer bookmark's `onAdded`/`onRemoved` fire only on the two real
+   * transitions that matter to it: going from zero collections to one-plus
+   * (first save anywhere), and dropping from one-plus back to zero (no
+   * longer saved anywhere) — checked from `memberIds.size` before and after
+   * the toggle, not from `collection.isDefault`. Cascading removal from
+   * EVERY collection at once is still a real, separate action
+   * (`removeFromSavedEverywhere`) — it's what tapping the already-filled
+   * bookmark icon itself does (see SaveButton), and what removing an item
+   * from inside the "Kaydedilenler" (Genel) detail page does
+   * (CollectionDetailView) — this modal's own per-row toggle deliberately
+   * doesn't duplicate that here.
+   */
   async function handleToggle(collection: Collection) {
     if (!user || pendingIds.has(collection.id)) return;
     const isMember = memberIds.has(collection.id);
+    const wasSavedAnywhere = memberIds.size > 0;
     setPendingIds((prev) => new Set(prev).add(collection.id));
     setError(null);
-
-    if (isMember && collection.isDefault) {
-      // Removing the default collection's own membership is the general
-      // "kaydedilenlerden kaldır" action — it must cascade to every one of
-      // this user's OTHER collections too (Bölüm 9.22 §4/§7/§9), not just
-      // this one row.
-      const removedFrom = new Set(memberIds);
-      setMemberIds(new Set());
-      setCollections((prev) => prev.map((c) => (removedFrom.has(c.id) ? { ...c, itemCount: Math.max(0, c.itemCount - 1) } : c)));
-      try {
-        await removeFromSavedEverywhere(contentId, contentType);
-        onRemovedFromDefault?.();
-      } catch (err) {
-        // Rollback — restore exactly the prior membership/count state.
-        setMemberIds(removedFrom);
-        setCollections((prev) => prev.map((c) => (removedFrom.has(c.id) ? { ...c, itemCount: c.itemCount + 1 } : c)));
-        setError(err instanceof Error ? err.message : "İşlem başarısız oldu, lütfen tekrar dene.");
-      } finally {
-        setPendingIds((prev) => {
-          const next = new Set(prev);
-          next.delete(collection.id);
-          return next;
-        });
-      }
-      return;
-    }
 
     // Optimistic (single-collection add/remove).
     setMemberIds((prev) => {
@@ -136,9 +129,10 @@ export function SaveToCollectionModal({
     try {
       if (isMember) {
         await removeFromCollection(collection.id, contentId, contentType);
+        if (wasSavedAnywhere && memberIds.size - 1 === 0) onRemoved?.();
       } else {
         await addItemToCollection(collection.id, contentId, contentType);
-        if (collection.isDefault) onAdded?.();
+        if (!wasSavedAnywhere) onAdded?.();
       }
     } catch (err) {
       // Rollback.
