@@ -22,6 +22,7 @@ export interface RequestRow {
   selected_response_prompt_id: string | null;
   response_count: number;
   created_at: string;
+  deleted_at: string | null;
   profiles: ProfileRow;
   prompt_request_tags: { tags: { slug: string; label: string } }[];
 }
@@ -29,10 +30,22 @@ export interface RequestRow {
 export const REQUEST_SELECT = `
   id, title, description, creative_direction, preferred_tool, content_type,
   reference_image_url, reference_image_width, reference_image_height,
-  status, selected_response_prompt_id, response_count, created_at,
+  status, selected_response_prompt_id, response_count, created_at, deleted_at,
   profiles:author_id ( id, username, display_name, avatar_url, cover_url, bio, website, follower_count, following_count, created_at, interests ),
   prompt_request_tags ( tags ( slug, label ) )
 `;
+
+/**
+ * Excludes a soft-deleted request (`deleted_at` set — see
+ * 20260919350000_request_safe_delete.sql) from normal listings, mirroring
+ * `filterNotDeleted()` in prompts.ts. Deliberately NOT applied to
+ * `fetchRequestById` — a direct link must still resolve the row so
+ * `LocalRequestView` can render its honest "Bu istek silindi" placeholder
+ * instead of a generic "not found".
+ */
+function filterNotDeleted(requests: PromptRequest[]): PromptRequest[] {
+  return requests.filter((request) => !request.deletedAt);
+}
 
 export function mapRequestRow(row: RequestRow): PromptRequest {
   const tags: Tag[] = (row.prompt_request_tags ?? []).map((rt) => ({ slug: rt.tags.slug, label: rt.tags.label }));
@@ -58,6 +71,7 @@ export function mapRequestRow(row: RequestRow): PromptRequest {
     responseCount: row.response_count,
     createdAt: row.created_at,
     selectedResponsePromptId: row.selected_response_prompt_id ?? undefined,
+    deletedAt: row.deleted_at,
   };
 }
 
@@ -73,7 +87,7 @@ export async function fetchRecentRequests(limit = 60): Promise<PromptRequest[]> 
       console.error("fetchRecentRequests", error);
       return [];
     }
-    return ((data ?? []) as unknown as RequestRow[]).map(mapRequestRow);
+    return filterNotDeleted(((data ?? []) as unknown as RequestRow[]).map(mapRequestRow));
   } catch (err) {
     console.error("fetchRecentRequests", err);
     return [];
@@ -110,7 +124,7 @@ export async function fetchRequestsByAuthor(authorId: string): Promise<PromptReq
       console.error("fetchRequestsByAuthor", error);
       return [];
     }
-    return ((data ?? []) as unknown as RequestRow[]).map(mapRequestRow);
+    return filterNotDeleted(((data ?? []) as unknown as RequestRow[]).map(mapRequestRow));
   } catch (err) {
     console.error("fetchRequestsByAuthor", err);
     return [];
@@ -201,6 +215,7 @@ export async function createRealRequest(
     status: "open",
     responseCount: 0,
     createdAt: inserted.created_at,
+    deletedAt: null,
   };
 }
 

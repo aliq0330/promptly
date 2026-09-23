@@ -264,6 +264,7 @@ export function CreateRequestForm() {
     status: "open",
     responseCount: 0,
     createdAt: new Date().toISOString(),
+    deletedAt: null,
   };
 
   return (

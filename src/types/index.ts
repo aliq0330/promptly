@@ -153,6 +153,18 @@ export interface PromptRequest {
    * author (RLS-enforced).
    */
   selectedResponsePromptId?: string;
+  /**
+   * `prompt_requests.deleted_at` — set only when the author tried to
+   * delete a request that had at least one real response (a `Prompt` with
+   * `origin.type === "request-response"`) still pointing at it. Mirrors
+   * `Prompt.deletedAt`'s own soft-delete pattern (Bölüm 9.5's comment
+   * delete, birebir aynı mantık): the row survives (its own responses'
+   * `requestId` must always point at something real), but its content is
+   * cleared and a "Bu istek silindi" placeholder renders instead. `null`
+   * for a normal, live request. A request with no responses is always a
+   * real, permanent DELETE — this field never gets set for it.
+   */
+  deletedAt: string | null;
 }
 
 export type NotificationType =
