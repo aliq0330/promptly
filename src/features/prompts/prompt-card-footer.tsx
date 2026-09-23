@@ -1,6 +1,4 @@
-import Link from "next/link";
-import { GitBranch } from "lucide-react";
-import { formatCount, generatorHref, promptHref } from "@/lib/utils";
+import { generatorHref, promptHref } from "@/lib/utils";
 import { ShareButton } from "./share-button";
 import { LikeButton } from "./like-button";
 import { SaveButton } from "./save-button";
@@ -17,16 +15,10 @@ type FooterTarget = { prompt: Prompt; generator?: never } | { generator: Generat
  * (§6/§24 of that pass). Author identity now lives in the card's
  * `PostHeader` instead of here (Lavender Studio card redesign), so this row
  * is action icons only. Like/save/comment are real, database-persisted
- * actions (CLAUDE.md Bölüm 21/9.35) — remix is real navigation, share is a
- * genuinely working Web Share/clipboard action.
- *
- * A generator's real remix action is an immediate server call
- * (`remixGenerator`, only wired to the detail page's "Remixle" button) —
- * not a `?remix=` prefill link like a prompt's — so this footer's remix
- * icon deliberately opens the generator's own detail page (where that real,
- * unmodified action already lives) instead of re-implementing the async
- * remix call inside every card on a feed (which would mean a per-card
- * version fetch just to have somewhere for an icon to link).
+ * actions (CLAUDE.md Bölüm 21/9.35), share is a genuinely working Web
+ * Share/clipboard action. Remix was fully removed from this platform
+ * (kullanıcının açık talebi) — no remix icon/count here anymore, evenly
+ * spaced across the remaining three actions.
  */
 export function PromptCardFooter(target: FooterTarget) {
   const view = target.generator
@@ -36,9 +28,7 @@ export function PromptCardFooter(target: FooterTarget) {
         title: target.generator.title,
         likeCount: target.generator.likeCount,
         commentCount: target.generator.commentCount,
-        remixCount: target.generator.remixCount,
         href: generatorHref(target.generator),
-        remixHref: generatorHref(target.generator),
         generatorSlug: target.generator.slug,
       }
     : {
@@ -47,9 +37,7 @@ export function PromptCardFooter(target: FooterTarget) {
         title: target.prompt.title,
         likeCount: target.prompt.likeCount,
         commentCount: target.prompt.commentCount,
-        remixCount: target.prompt.remixCount,
         href: promptHref(target.prompt),
-        remixHref: `/create?remix=${target.prompt.id}`,
         generatorSlug: undefined,
       };
 
@@ -61,14 +49,6 @@ export function PromptCardFooter(target: FooterTarget) {
       ) : (
         <CommentCountLink promptId={view.id} baseCount={view.commentCount} />
       )}
-      <Link
-        href={view.remixHref}
-        className="flex items-center gap-1 text-xs hover:text-text"
-        title={view.isGenerator ? "Bu generatoru remixle" : "Bu promptu remixle"}
-      >
-        <GitBranch size={14} />
-        {formatCount(view.remixCount)}
-      </Link>
       {view.isGenerator ? <SaveButton generatorId={view.id} /> : <SaveButton promptId={view.id} />}
       <ShareButton url={view.href} title={view.title} />
     </div>

@@ -18,13 +18,10 @@ export interface PromptRow {
   tool: string | null;
   content_type: PromptContentType;
   status: "draft" | "published";
-  origin_type: "original" | "remix" | "request_response";
-  source_prompt_id: string | null;
-  root_prompt_id: string | null;
+  origin_type: "original" | "request_response";
   request_id: string | null;
   like_count: number;
   comment_count: number;
-  remix_count: number;
   created_at: string;
   show_on_profile: boolean;
   deleted_at: string | null;
@@ -40,8 +37,8 @@ export interface PromptRow {
 
 export const PROMPT_SELECT = `
   id, title, description, prompt_text, tool, content_type, status,
-  origin_type, source_prompt_id, root_prompt_id, request_id,
-  like_count, comment_count, remix_count, created_at, show_on_profile,
+  origin_type, request_id,
+  like_count, comment_count, created_at, show_on_profile,
   deleted_at, generator_id, generator_version_id, generator_run_id,
   profiles:author_id ( id, username, display_name, avatar_url, cover_url, bio, website, follower_count, following_count, created_at, interests ),
   prompt_media ( id, url, width, height, alt ),
@@ -50,41 +47,36 @@ export const PROMPT_SELECT = `
 `;
 
 /**
- * Excludes a safely-deleted prompt (`deleted_at` set — see
- * 20260919190000_prompt_safe_delete.sql) from a normal listing. Never
- * applied to `fetchPromptById` (a direct link must still resolve to show a
- * "Bu paylaşım silindi." page) or the remix-source lookup used by
- * `RemixContext` — both need to see the row exists, just emptied.
+ * Excludes a historically soft-deleted prompt (`deleted_at` set — see
+ * 20260919190000_prompt_safe_delete.sql; nothing produces a new one of
+ * these anymore since the remix system that trigger protected was fully
+ * removed) from a normal listing. Never applied to `fetchPromptById` (a
+ * direct link must still resolve to show a "Bu paylaşım silindi." page) —
+ * that needs to see the row exists, just emptied.
  */
 function filterNotDeleted(prompts: Prompt[]): Prompt[] {
   return prompts.filter((prompt) => !prompt.deletedAt);
 }
 
 /**
- * Excludes a request-answer or remix prompt whose author chose to keep it
- * out of normal profile/feed/discover/search results (`show_on_profile =
- * false`) — applied (after mapping) by every query below that represents
- * "this author's normal posts" or a general content stream. Done
- * client-side rather than as a second `.or(...)` query filter: PostgREST
- * ANDs a single `.or()` group with plain column filters just fine, but
- * stacking two independent `.or()` calls in the same query has no clearly
- * documented, verifiable combination behavior — not worth risking on a
- * query that can't be tested against a live Supabase project from this
- * environment. Never applied to `fetchPromptsForRequest` (the request's
- * own answer list), `fetchRemixesOf`/`fetchRemixChain` (a remix's own
- * relationship to its ancestors/descendants must always resolve
- * regardless of this preference), or `fetchPromptById` (a direct link).
- * Irrelevant for original prompts, which always have `show_on_profile =
- * true`.
+ * Excludes a request-answer prompt whose author chose to keep it out of
+ * normal profile/feed/discover/search results (`show_on_profile = false`)
+ * — applied (after mapping) by every query below that represents "this
+ * author's normal posts" or a general content stream. Done client-side
+ * rather than as a second `.or(...)` query filter: PostgREST ANDs a single
+ * `.or()` group with plain column filters just fine, but stacking two
+ * independent `.or()` calls in the same query has no clearly documented,
+ * verifiable combination behavior — not worth risking on a query that
+ * can't be tested against a live Supabase project from this environment.
+ * Never applied to `fetchPromptsForRequest` (the request's own answer
+ * list) or `fetchPromptById` (a direct link). Irrelevant for original
+ * prompts, which always have `show_on_profile = true`.
  */
 function filterProfileVisible(prompts: Prompt[]): Prompt[] {
   return prompts.filter((prompt) => prompt.origin.type === "original" || prompt.showOnProfile);
 }
 
 function mapOrigin(row: PromptRow): PromptOrigin {
-  if (row.origin_type === "remix" && row.source_prompt_id && row.root_prompt_id) {
-    return { type: "remix", sourcePromptId: row.source_prompt_id, rootPromptId: row.root_prompt_id };
-  }
   if (row.origin_type === "request_response" && row.request_id) {
     return { type: "request-response", requestId: row.request_id, responseId: row.id };
   }
@@ -109,7 +101,6 @@ export function mapPromptRow(row: PromptRow): Prompt {
     origin: mapOrigin(row),
     likeCount: row.like_count,
     commentCount: row.comment_count,
-    remixCount: row.remix_count,
     showOnProfile: row.show_on_profile,
     deletedAt: row.deleted_at,
     generatedFrom:
@@ -258,55 +249,13 @@ export async function searchPrompts(query: string, limit = 40): Promise<Prompt[]
   }
 }
 
-/** Every real remix directly sourced from this prompt, newest-first. */
-export async function fetchRemixesOf(promptId: string): Promise<Prompt[]> {
-  try {
-    const { data, error } = await supabase
-      .from("prompts")
-      .select(PROMPT_SELECT)
-      .eq("source_prompt_id", promptId)
-      .eq("status", "published")
-      .order("created_at", { ascending: false });
-    if (error) {
-      console.error("fetchRemixesOf", error);
-      return [];
-    }
-    return filterNotDeleted((data ?? []).map((row) => mapPromptRow(row as unknown as PromptRow)));
-  } catch (err) {
-    console.error("fetchRemixesOf", err);
-    return [];
-  }
-}
-
-/**
- * Walks a real remix chain from the ultimate root down to (and including)
- * `prompt`, one real fetch per link — `root_prompt_id` alone only names the
- * chain's origin, not the intermediate prompts a multi-level remix passed
- * through, so each link has to be fetched to recover its own
- * `source_prompt_id`. Capped to guard against any (should-be-impossible,
- * RLS/FK-enforced) cycle.
- */
-export async function fetchRemixChain(prompt: Prompt): Promise<Prompt[]> {
-  const chain: Prompt[] = [prompt];
-  let current = prompt;
-  let guard = 0;
-  while (current.origin.type === "remix" && guard < 20) {
-    guard += 1;
-    const source = await fetchPromptById(current.origin.sourcePromptId);
-    if (!source) break;
-    chain.unshift(source);
-    current = source;
-  }
-  return chain;
-}
-
 /**
  * Deletes a real prompt the caller owns (RLS, Bölüm 19, enforces
- * ownership). Always issues the same plain DELETE — the database itself
- * decides the real outcome (20260919190000_prompt_safe_delete.sql): a
- * prompt with real remixes pointing at it is soft-deleted (content
- * cleared, row survives so the remix chain never breaks) instead of
- * actually removed; one with none is genuinely, permanently deleted.
+ * ownership) — a real, permanent DELETE. (The database used to route this
+ * through a soft-delete when the prompt still had real remixes pointing at
+ * it — Bölüm 9.7 — but that protection existed only for the remix system,
+ * which has since been fully removed; every delete is a genuine removal
+ * now.)
  */
 export async function deleteRealPrompt(promptId: string): Promise<void> {
   const { error } = await supabase.from("prompts").delete().eq("id", promptId);
@@ -358,21 +307,18 @@ export interface CreateRealPromptInput {
   fallbackImage: { url: string; width: number; height: number } | null;
   /** Set only when answering a real request (CLAUDE.md Bölüm 21 Faz 5) — produces `origin_type = 'request_response'` instead of `'original'`, and `handle_prompt_origin_change` (Bölüm 19) increments the request's `response_count`. */
   requestId?: string;
-  /** Set only when this is a real remix of a real prompt — produces `origin_type = 'remix'`, and `handle_prompt_origin_change` (Bölüm 19) increments the source's `remix_count`. Mutually exclusive with `requestId`. */
-  remixOf?: { sourcePromptId: string; rootPromptId: string };
-  /** Only meaningful when `requestId` is set — whether this answer should also appear in the author's normal profile/feed/discover results (`prompts.show_on_profile`). Defaults to `true`; irrelevant for original/remix prompts. */
+  /** Only meaningful when `requestId` is set — whether this answer should also appear in the author's normal profile/feed/discover results (`prompts.show_on_profile`). Defaults to `true`; irrelevant for an original prompt. */
   showOnProfile?: boolean;
-  /** Set only when this prompt is "Open in Prompt" from a real generator run (Generator Builder module) — purely informational provenance, orthogonal to origin/remixOf/requestId (a generator output is normally `origin: "original"`). `generatorTitle`/`generatorSlug` are only needed to build the immediate return value (the caller already has them from the generator it just ran) — never trusted for anything written to the database. */
+  /** Set only when this prompt is "Open in Prompt" from a real generator run (Generator Builder module) — purely informational provenance, orthogonal to origin/requestId (a generator output is normally `origin: "original"`). `generatorTitle`/`generatorSlug` are only needed to build the immediate return value (the caller already has them from the generator it just ran) — never trusted for anything written to the database. */
   generatedFrom?: { generatorId: string; generatorVersionId: string; generatorRunId: string; generatorTitle: string; generatorSlug: string };
 }
 
 /**
  * Genuinely, permanently publishes a prompt: a real row in `public.prompts`
  * (plus `prompt_media`/`prompt_tags`), visible to every visitor per Bölüm
- * 19's RLS policies — not a mock array, not localStorage. Only ever called
- * for `origin: "original"` prompts (plain "Prompt Oluştur" and "Kopyasını
- * Oluştur") and, since Faz 5, answering a real request — see
- * real-prompts-provider.tsx for why remix still doesn't go through here.
+ * 19's RLS policies — not a mock array, not localStorage. Called for
+ * `origin: "original"` prompts (plain "Prompt Oluştur" and "Kopyasını
+ * Oluştur") and, since Faz 5, answering a real request.
  */
 export async function createRealPrompt(
   input: CreateRealPromptInput,
@@ -389,10 +335,8 @@ export async function createRealPrompt(
       tool: input.tool,
       content_type: input.contentType,
       status: "published",
-      origin_type: input.remixOf ? "remix" : input.requestId ? "request_response" : "original",
+      origin_type: input.requestId ? "request_response" : "original",
       request_id: input.requestId ?? null,
-      source_prompt_id: input.remixOf?.sourcePromptId ?? null,
-      root_prompt_id: input.remixOf?.rootPromptId ?? null,
       show_on_profile: input.showOnProfile ?? true,
       generator_id: input.generatedFrom?.generatorId ?? null,
       generator_version_id: input.generatedFrom?.generatorVersionId ?? null,
@@ -481,14 +425,11 @@ export async function createRealPrompt(
     contentType: input.contentType,
     media,
     tags: input.tags,
-    origin: input.remixOf
-      ? { type: "remix", sourcePromptId: input.remixOf.sourcePromptId, rootPromptId: input.remixOf.rootPromptId }
-      : input.requestId
-        ? { type: "request-response", requestId: input.requestId, responseId: promptId }
-        : { type: "original" },
+    origin: input.requestId
+      ? { type: "request-response", requestId: input.requestId, responseId: promptId }
+      : { type: "original" },
     likeCount: 0,
     commentCount: 0,
-    remixCount: 0,
     isLiked: false,
     isSaved: false,
     status: "published",
@@ -521,11 +462,10 @@ export interface UpdateRealPromptInput {
 /**
  * Genuinely, permanently edits a real prompt the caller owns — the first
  * "edit an existing prompt" capability this app has ever had (see
- * CLAUDE.md's "Prompt Değişken Sistemi" module; previously the only way a
- * prompt's own text ever changed post-publish was accepting a merge
- * request). Deliberately narrower than creation: `content_type`/`origin`
- * (remix/request-answer relationship) can never change here, and an image
- * is only replaced when a new file is actually provided. Ownership is
+ * CLAUDE.md's "Prompt Değişken Sistemi" module). Deliberately narrower than
+ * creation: `content_type`/`origin` (request-answer relationship) can never
+ * change here, and an image is only replaced when a new file is actually
+ * provided. Ownership is
  * verified by re-selecting the row after the UPDATE (RLS silently affects 0
  * rows for a non-owner instead of erroring — CLAUDE.md Bölüm 9.0's
  * documented "sessiz no-op" risk class; this function closes that gap for

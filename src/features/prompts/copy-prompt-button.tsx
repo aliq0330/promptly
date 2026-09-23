@@ -6,13 +6,12 @@ import { cn, copyTextToClipboard } from "@/lib/utils";
 
 /**
  * The one shared "Kopyala" button used directly above a real prompt text
- * block on all four content surfaces (CLAUDE.md §10) — a prompt gönderisi,
- * a remix gönderisi and a prompt yanıtı are all the SAME
- * `prompts` row shape, so wiring this into `PromptPreviewBox` (every card)
- * and `PromptDetailView`'s own text block (both shared by all three) covers
- * all three types without any per-type special-casing; `RequestCard`/
- * `RequestDetailView` use this same component directly above a real
- * request's own instruction text (its `description`).
+ * block on every content surface (CLAUDE.md §10) — a prompt gönderisi and a
+ * prompt yanıtı are the SAME `prompts` row shape, so wiring this into
+ * `PromptPreviewBox` (every card) and `PromptDetailView`'s own text block
+ * (shared by both) covers both types without any per-type special-casing;
+ * `RequestCard`/`RequestDetailView` use this same component directly above
+ * a real request's own instruction text (its `description`).
  *
  * Always icon + visible "Kopyala" label together (never icon-only — §10.1),
  * keyboard/focus accessible (a real `<button>`, no custom div), and safe to

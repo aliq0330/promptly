@@ -13,7 +13,7 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Promptly",
   description:
-    "AI görsel üretim promptlarını paylaşan, keşfeden ve remixleyen yaratıcı topluluk platformu.",
+    "AI görsel üretim promptlarını paylaşan ve keşfeden yaratıcı topluluk platformu.",
 };
 
 // viewport-fit=cover is required for env(safe-area-inset-*) to resolve to

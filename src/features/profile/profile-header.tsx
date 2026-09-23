@@ -15,16 +15,12 @@ export function ProfileHeader({
   user,
   isOwnProfile,
   publishedPromptCount,
-  remixCount,
   onSelectPrompts,
-  onSelectRemixes,
 }: {
   user: UserProfile;
   isOwnProfile: boolean;
   publishedPromptCount: number;
-  remixCount: number;
   onSelectPrompts: () => void;
-  onSelectRemixes: () => void;
 }) {
   const [bioExpanded, setBioExpanded] = useState(false);
   const bio = user.bio ?? "";
@@ -73,16 +69,14 @@ export function ProfileHeader({
         </div>
       )}
 
-      <ProfileBadges publishedPromptCount={publishedPromptCount} remixCount={remixCount} />
+      <ProfileBadges publishedPromptCount={publishedPromptCount} />
 
       <ProfileStats
         promptCount={publishedPromptCount}
-        remixCount={remixCount}
         followerCount={followState.followerCount}
         followingCount={user.followingCount}
         isOwnProfile={isOwnProfile}
         onSelectPrompts={onSelectPrompts}
-        onSelectRemixes={onSelectRemixes}
       />
 
       {isOwnProfile ? (

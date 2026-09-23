@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Blocks, GitBranch } from "lucide-react";
+import { Blocks } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { GENERATOR_CATEGORY_TOPIC_LABELS } from "./generator-category-meta";
 import { generatorHref } from "@/lib/utils";
@@ -49,11 +49,6 @@ export function GeneratorCard({
             <Blocks size={10} className="mr-1" /> Generator
           </Badge>
           <Badge>{GENERATOR_CATEGORY_TOPIC_LABELS[generator.category]}</Badge>
-          {generator.origin.type === "remix" && (
-            <Badge variant="outline">
-              <GitBranch size={10} className="mr-1" /> Remix
-            </Badge>
-          )}
         </div>
 
         <div>

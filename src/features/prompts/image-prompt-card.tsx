@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { clampedAspectRatio } from "@/lib/placeholder-image";
 import { promptHref } from "@/lib/utils";
 import { PostHeader } from "./post-header";
-import { GeneratorSourceContext, RemixContext, RequestResponseContext } from "./post-context";
+import { GeneratorSourceContext, RequestResponseContext } from "./post-context";
 import { PromptPreviewBox } from "./prompt-preview-box";
 import { PromptCardFooter } from "./prompt-card-footer";
 import type { Prompt } from "@/types";
@@ -30,7 +30,6 @@ export function ImagePromptCard({
           collectionRemoval={collectionRemoval}
         />
 
-        {prompt.origin.type === "remix" && <RemixContext sourcePromptId={prompt.origin.sourcePromptId} />}
         {prompt.origin.type === "request-response" && (
           <RequestResponseContext requestId={prompt.origin.requestId} currentPromptId={prompt.id} />
         )}

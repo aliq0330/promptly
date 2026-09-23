@@ -6,9 +6,9 @@ import { Blocks, Sparkles, Wand2 } from "lucide-react";
  * empty states, etc.) — creation branches into "Prompt oluştur" (existing
  * flow, `/create?mode=prompt`), "Generator oluştur" (Generator Builder
  * module, `/generators/create`) and "İstek oluştur" (`/requests/new`).
- * Deep links that already carry intent (`?remix=`, `?remixResponse=`,
- * `?duplicate=`, `?answerRequest=`, `?edit=`, `?generatorRun=`, or
- * `?mode=`) skip this screen entirely — see create-gate.tsx.
+ * Deep links that already carry intent (`?duplicate=`, `?answerRequest=`,
+ * `?edit=`, `?generatorRun=`, or `?mode=`) skip this screen entirely — see
+ * create-gate.tsx.
  */
 export function CreateChoice() {
   return (

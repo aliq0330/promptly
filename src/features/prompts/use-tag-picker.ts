@@ -30,7 +30,7 @@ export interface UseTagPickerOptions {
   content: string;
   /** The full, real tag catalog (see `fetchAllTags`) — matched against, never invented from. */
   catalog: Tag[];
-  /** Pre-seeded accepted tags (e.g. copied from a remix/duplicate source) — always `manual`, since they weren't detected by this analysis. */
+  /** Pre-seeded accepted tags (e.g. copied from a duplicate source) — always `manual`, since they weren't detected by this analysis. */
   initialTags?: Tag[];
   /**
    * A request's own tags, when this picker backs a request-ANSWER form

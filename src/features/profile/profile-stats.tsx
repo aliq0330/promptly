@@ -43,7 +43,7 @@ function StatButton({
 
 /**
  * Only wires up the interactions CLAUDE.md section 7 asks for that a real
- * data source actually supports: prompt/remix counts switch this profile's
+ * data source actually supports: the prompt count switches this profile's
  * own tabs (no navigation needed), and — own profile only — the following
  * count links to the existing `/following` page. There is no followers- or
  * following-list data for an arbitrary OTHER user anywhere in the mock
@@ -54,20 +54,16 @@ function StatButton({
  */
 export function ProfileStats({
   promptCount,
-  remixCount,
   followerCount,
   followingCount,
   isOwnProfile,
   onSelectPrompts,
-  onSelectRemixes,
 }: {
   promptCount: number;
-  remixCount: number;
   followerCount: number;
   followingCount: number;
   isOwnProfile: boolean;
   onSelectPrompts: () => void;
-  onSelectRemixes: () => void;
 }) {
   return (
     <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-1.5">
@@ -83,12 +79,6 @@ export function ProfileStats({
       ) : (
         <Stat label="takip" value={followingCount} />
       )}
-      <StatButton
-        label="remix"
-        value={remixCount}
-        onClick={onSelectRemixes}
-        className="hidden sm:inline"
-      />
     </div>
   );
 }

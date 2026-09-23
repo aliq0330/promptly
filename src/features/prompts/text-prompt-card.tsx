@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { promptHref } from "@/lib/utils";
 import { CONTENT_TYPE_META } from "./content-type-meta";
 import { PostHeader } from "./post-header";
-import { GeneratorSourceContext, RemixContext, RequestResponseContext } from "./post-context";
+import { GeneratorSourceContext, RequestResponseContext } from "./post-context";
 import { PromptPreviewBox } from "./prompt-preview-box";
 import { PromptCardFooter } from "./prompt-card-footer";
 import type { Prompt } from "@/types";
@@ -35,7 +35,6 @@ export function TextPromptCard({
           collectionRemoval={collectionRemoval}
         />
 
-        {prompt.origin.type === "remix" && <RemixContext sourcePromptId={prompt.origin.sourcePromptId} />}
         {prompt.origin.type === "request-response" && (
           <RequestResponseContext requestId={prompt.origin.requestId} currentPromptId={prompt.id} />
         )}

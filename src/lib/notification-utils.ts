@@ -1,11 +1,8 @@
 import {
-  Ban,
   Bell,
   CheckCircle2,
   Code2,
   Edit3,
-  GitBranch,
-  GitMerge,
   Heart,
   Lock,
   Mail,
@@ -14,7 +11,6 @@ import {
   MessageCircleReply,
   RotateCcw,
   UserPlus,
-  XCircle,
   type LucideIcon,
 } from "lucide-react";
 import type { AppNotification, NotificationType } from "@/types";
@@ -30,24 +26,13 @@ export const NOTIFICATION_CATEGORY: Record<NotificationType, NotificationCategor
   like: "posts",
   comment: "posts",
   comment_reply: "posts",
-  remix: "posts",
   request_response: "requests",
   follow: "follow",
   message: "messages",
   message_request: "messages",
   system: "system",
-  // Remix Dallanma Haritası / Merge sistemi (Aşama 14) — kendi ayrı bir
-  // kategori filtresi icat etmek yerine "posts" altına katıldı: bunlar
-  // hepsi bir promptun/remixin başına gelen olaylar, tıpkı like/comment/
-  // remix gibi — yeni bir kategori, kullanıcıya yeni bir filtre öğrenmesi
-  // gerektirirdi ama gerçek bir ayrım katmazdı.
-  merge_request_received: "posts",
-  merge_request_accepted: "posts",
-  merge_request_rejected: "posts",
-  merge_request_withdrawn: "posts",
-  merge_request_cancelled: "posts",
   // Prompt Değişken Sistemi'nin düzenleme bildirimleri (Aşama 16) — bir
-  // prompt "posts" altına (like/comment/remix ile aynı kategori), bir istek
+  // prompt "posts" altına (like/comment ile aynı kategori), bir istek
   // "requests" altına (request_response ile aynı kategori) katılıyor; yeni
   // bir kategori icat edilmedi.
   prompt_edited: "posts",
@@ -74,7 +59,7 @@ export const CATEGORY_FILTERS: { key: "all" | NotificationCategory; label: strin
  * notification is actually about.
  */
 export interface ParsedHighlight {
-  kind: "post" | "request" | "comment" | "response_new" | "response_selected" | "response_unselected" | "message" | "merge";
+  kind: "post" | "request" | "comment" | "response_new" | "response_selected" | "response_unselected" | "message";
   id: string;
 }
 
@@ -86,7 +71,6 @@ const HIGHLIGHT_KINDS = new Set<ParsedHighlight["kind"]>([
   "response_selected",
   "response_unselected",
   "message",
-  "merge",
 ]);
 
 /** Parses a raw `hl` query param VALUE (e.g. from `useSearchParams().get("hl")` on the page the notification actually navigated to). */
@@ -121,7 +105,6 @@ export const NOTIFICATION_ICONS = {
   like_comment: MessageCircleHeart,
   comment: MessageCircle,
   comment_reply: MessageCircleReply,
-  remix: GitBranch,
   follow: UserPlus,
   request_response_new: Code2,
   request_response_selected: CheckCircle2,
@@ -130,11 +113,6 @@ export const NOTIFICATION_ICONS = {
   message: Mail,
   message_request: Mail,
   system: Bell,
-  merge_request_received: GitMerge,
-  merge_request_accepted: CheckCircle2,
-  merge_request_rejected: XCircle,
-  merge_request_withdrawn: RotateCcw,
-  merge_request_cancelled: Ban,
   prompt_edited: Edit3,
   request_edited: Edit3,
 } as const satisfies Record<string, LucideIcon>;
@@ -159,8 +137,6 @@ export function getNotificationIconKey(notification: AppNotification): keyof typ
       return "comment";
     case "comment_reply":
       return "comment_reply";
-    case "remix":
-      return "remix";
     case "follow":
       return "follow";
     case "request_response":
@@ -172,16 +148,6 @@ export function getNotificationIconKey(notification: AppNotification): keyof typ
       return "message";
     case "message_request":
       return "message_request";
-    case "merge_request_received":
-      return "merge_request_received";
-    case "merge_request_accepted":
-      return "merge_request_accepted";
-    case "merge_request_rejected":
-      return "merge_request_rejected";
-    case "merge_request_withdrawn":
-      return "merge_request_withdrawn";
-    case "merge_request_cancelled":
-      return "merge_request_cancelled";
     case "prompt_edited":
       return "prompt_edited";
     case "request_edited":

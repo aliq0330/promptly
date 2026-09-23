@@ -51,7 +51,7 @@ export function GeneratorsDiscoverView() {
     <div className="space-y-6 px-4 py-6 lg:px-6">
       <div className="rounded-lg border border-border bg-accent-surface px-4 py-5 sm:px-6 sm:py-6">
         <h1 className="mb-1 text-lg font-semibold text-text sm:text-xl">Generatorları Keşfet</h1>
-        <p className="text-sm text-text-muted">Başkalarının oluşturduğu prompt generatorlarını kullan, remixle ya da kendi generatorunu oluştur.</p>
+        <p className="text-sm text-text-muted">Başkalarının oluşturduğu prompt generatorlarını kullan ya da kendi generatorunu oluştur.</p>
       </div>
 
       <div className="flex h-11 items-center gap-2 rounded-md border border-border bg-surface px-3">

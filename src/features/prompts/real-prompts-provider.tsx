@@ -27,8 +27,7 @@ const RealPromptsContext = createContext<RealPromptsContextValue | null>(null);
  * Every prompt in the app is a real, cross-user, cross-device row in
  * Supabase's `prompts` table. Fetches the most recent published prompts
  * once on mount so they can be mixed into the feed/discover pages.
- * `addPrompt` publishes originals, remixes (`remixOf`) and request answers
- * (`requestId`) alike.
+ * `addPrompt` publishes originals and request answers (`requestId`) alike.
  */
 export function RealPromptsProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();

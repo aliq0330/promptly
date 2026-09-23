@@ -64,7 +64,7 @@ export function absoluteUrl(path: string): string {
 /**
  * Resizes an uploaded image file to fit within a max dimension, preserving
  * aspect ratio — used for the request-creation reference image
- * (features/requests) and for remix/duplicate live previews.
+ * (features/requests) and for duplicate live previews.
  */
 export function resizeImageToDataUrlFit(file: File, maxDimension = 480): Promise<{
   url: string;
@@ -106,8 +106,8 @@ export function resizeImageToDataUrlFit(file: File, maxDimension = 480): Promise
  * mean re-decoding base64 back into bytes for no reason. Kept as a
  * separate function rather than a shared parameter: the data-URL version
  * still backs every localStorage-persisted upload (avatar edit, request
- * reference image, remix/duplicate previews), which have nothing to do
- * with Storage.
+ * reference image, duplicate previews), which have nothing to do with
+ * Storage.
  */
 export function resizeImageToBlob(
   file: File,

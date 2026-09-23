@@ -21,8 +21,7 @@ import { deleteGenerator } from "@/lib/supabase/generators";
  * Polymorphic since Bölüm 9.34's shared-social integration — pass exactly
  * one of `promptId` or `generatorId` (the latter also needs `generatorSlug`
  * for its real link). A generator's menu never shows "Kopyasını oluştur"
- * (no duplicate flow exists for generators — remixing is its own, separate
- * "Remixle" action on the detail page) or "Mesajla gönder" (message
+ * (no duplicate flow exists for generators) or "Mesajla gönder" (message
  * sharing only supports prompts/requests today, CLAUDE.md Bölüm 9.8) —
  * both are deliberately left out rather than wired to something that
  * doesn't actually work.
