@@ -707,8 +707,9 @@ Dashboard'da uygulayıp bizzat denemesi gerekiyor.
 dolduran, tekrar çalıştırılabilir bir seed (migration DEĞİL, şemayı değiştirmez).
 18 hesap (`ali@msn.com`, `veli@msn.com`, … şifre `ac8d5c55`), 99 prompt (18'i
 isteklere yanıt), 39 prompt isteği, 60 generator, beğeniler, iç içe yorumlar,
-takipler ve koleksiyonlar oluşturur. Görseller loremflickr.com (gerçek Flickr
-fotoğrafları), avatarlar randomuser.me.
+takipler ve koleksiyonlar oluşturur. Görseller picsum.photos (gerçek fotoğraflar,
+seed ile sabit), avatarlar randomuser.me. Seed'i ilk (loremflickr'lı) sürümüyle
+çalıştırdıysan yalnızca `demo-images-fix.sql`'i çalıştırman görselleri düzeltir.
 
 1. Önce TÜM migration'ları uygula (`20260919360000_generator_comment_notification_fix.sql` dahil).
 2. SQL Editor'e `demo-users.sql`'in tamamını yapıştırıp çalıştır.
