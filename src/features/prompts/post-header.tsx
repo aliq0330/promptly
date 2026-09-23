@@ -53,6 +53,7 @@ export function PostHeader({
           generatorSlug={target.generator.slug}
           authorId={target.generator.creator.id}
           onDeleted={onDeleted}
+          collectionRemoval={collectionRemoval}
         />
       ) : (
         <PostMenu
