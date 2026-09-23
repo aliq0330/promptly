@@ -700,3 +700,20 @@ Supabase projesine karşı canlı doğrulama yine bu sandbox'ın ağ kısıtı
 yüzünden yapılamadı** (Bölüm 17'den beri tekrarlanan, dürüstçe belirtilen
 aynı sınırlama) — kullanıcının `20260919250000_remix_merge_system.sql`'i
 Dashboard'da uygulayıp bizzat denemesi gerekiyor.
+
+## Demo hesaplar (seed)
+
+`supabase/seed/demo-users.sql` — siteyi 18 gerçek kullanıcı kullanıyormuş gibi
+dolduran, tekrar çalıştırılabilir bir seed (migration DEĞİL, şemayı değiştirmez).
+18 hesap (`ali@msn.com`, `veli@msn.com`, … şifre `ac8d5c55`), 99 prompt (18'i
+isteklere yanıt), 39 prompt isteği, 60 generator, beğeniler, iç içe yorumlar,
+takipler ve koleksiyonlar oluşturur. Görseller loremflickr.com (gerçek Flickr
+fotoğrafları), avatarlar randomuser.me.
+
+1. Önce TÜM migration'ları uygula (`20260919360000_generator_comment_notification_fix.sql` dahil).
+2. SQL Editor'e `demo-users.sql`'in tamamını yapıştırıp çalıştır.
+
+Tekrar çalıştırmak güvenli: yalnızca `5eed…` id'li demo hesaplarını silip
+baştan oluşturur. Demo e-postalarından biriyle (ör. `veli@msn.com`) daha önce
+açılmış bir hesap varsa o hesap ve içerikleri de silinir; başka hesaplara dokunmaz. İçeriği değiştirmek için
+`demo-content.mjs`'i düzenleyip `node supabase/seed/build-demo-seed.mjs` çalıştır.
