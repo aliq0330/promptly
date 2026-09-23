@@ -52,7 +52,6 @@ function defaultMeta(): GeneratorMetaInput {
     subcategory: null,
     tags: [],
     visibility: "public",
-    allowRemix: true,
     allowPromptEditing: true,
     allowSavingGeneratedPrompts: true,
     enableNegativePrompt: false,
@@ -65,10 +64,10 @@ function defaultSchema(): GeneratorSchema {
 
 // The generator's `template` field on the DB row is no longer authored by
 // the builder UI (see this file's own doc comment below) — kept only so
-// `saveDraftVersionContent`/`publishGenerator`/`remixGenerator`'s existing
-// signatures (and a previously-authored generator's stored template, if any)
-// round-trip unchanged. A brand-new generator's template is always this
-// single, empty, never-rendered placeholder section.
+// `saveDraftVersionContent`/`publishGenerator`'s existing signatures (and a
+// previously-authored generator's stored template, if any) round-trip
+// unchanged. A brand-new generator's template is always this single,
+// empty, never-rendered placeholder section.
 function defaultTemplate(): GeneratorTemplate {
   return { sections: [{ id: newId("section"), title: "Prompt", content: "", order: 0, enabled: true }] };
 }
@@ -119,10 +118,10 @@ function LoginGate() {
  * types the real prompt/negative-prompt text directly at the top of the
  * runtime form (`generator-playground.tsx`). This component still carries
  * a `template` value through to the DB layer purely for round-trip
- * compatibility with `saveDraftVersionContent`/`publishGenerator`/
- * `remixGenerator`'s existing signatures (and so a generator authored
- * before this change keeps whatever template content it already had
- * stored) — it is never shown or edited in this UI.
+ * compatibility with `saveDraftVersionContent`/`publishGenerator`'s
+ * existing signatures (and so a generator authored before this change
+ * keeps whatever template content it already had stored) — it is never
+ * shown or edited in this UI.
  *
  * No draft row is created until the user actually advances past the
  * Details step with a real title/description — glancing at `/generators/
@@ -188,7 +187,6 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
         subcategory: gen.subcategory,
         tags: gen.tags,
         visibility: gen.visibility,
-        allowRemix: gen.allowRemix,
         allowPromptEditing: gen.allowPromptEditing,
         allowSavingGeneratedPrompts: gen.allowSavingGeneratedPrompts,
         enableNegativePrompt: gen.enableNegativePrompt,
@@ -556,7 +554,6 @@ function metaToGeneratorPatch(meta: GeneratorMetaInput) {
     subcategory: meta.subcategory,
     tags: meta.tags,
     visibility: meta.visibility,
-    allowRemix: meta.allowRemix,
     allowPromptEditing: meta.allowPromptEditing,
     allowSavingGeneratedPrompts: meta.allowSavingGeneratedPrompts,
     enableNegativePrompt: meta.enableNegativePrompt,

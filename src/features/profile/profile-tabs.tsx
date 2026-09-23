@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils";
 
-export type ProfileTabKey = "prompts" | "remixes" | "requests" | "generators" | "saved" | "liked" | "about";
+export type ProfileTabKey = "prompts" | "requests" | "generators" | "saved" | "liked" | "about";
 
 export function ProfileTabs({
   tabs,

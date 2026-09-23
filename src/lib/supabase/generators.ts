@@ -5,7 +5,6 @@ import { slugifyGeneratorTitle } from "@/lib/generator-template";
 import type {
   Generator,
   GeneratorCategoryTopic,
-  GeneratorOrigin,
   GeneratorRun,
   GeneratorSchema,
   GeneratorTemplate,
@@ -24,8 +23,7 @@ import type {
  * AND generator_versions.generator_id -> generators.id), which PostgREST
  * can't disambiguate in an embedded select without an explicit hint this
  * codebase's other embeds never need — fetched as a separate, explicit
- * query instead (fetchGeneratorVersion), same as fetchRemixChain already
- * does for prompts rather than trying to embed an unbounded chain.
+ * query instead (fetchGeneratorVersion).
  */
 export interface GeneratorRow {
   id: string;
@@ -38,17 +36,12 @@ export interface GeneratorRow {
   subcategory: string | null;
   visibility: "public" | "unlisted" | "private";
   status: "draft" | "published" | "archived";
-  allow_remix: boolean;
   allow_prompt_editing: boolean;
   allow_saving_generated_prompts: boolean;
   enable_negative_prompt: boolean;
-  origin_type: "original" | "remix";
-  source_generator_id: string | null;
-  root_generator_id: string | null;
   current_version_id: string | null;
   use_count: number;
   save_count: number;
-  remix_count: number;
   like_count: number;
   comment_count: number;
   created_at: string;
@@ -59,19 +52,12 @@ export interface GeneratorRow {
 
 export const GENERATOR_SELECT = `
   id, creator_id, title, slug, description, cover_url, category, subcategory,
-  visibility, status, allow_remix, allow_prompt_editing, allow_saving_generated_prompts,
-  enable_negative_prompt, origin_type, source_generator_id, root_generator_id,
-  current_version_id, use_count, save_count, remix_count, like_count, comment_count, created_at, updated_at,
+  visibility, status, allow_prompt_editing, allow_saving_generated_prompts,
+  enable_negative_prompt,
+  current_version_id, use_count, save_count, like_count, comment_count, created_at, updated_at,
   profiles:creator_id ( id, username, display_name, avatar_url, cover_url, bio, website, follower_count, following_count, created_at, interests ),
   generator_tags ( tags ( slug, label ) )
 `;
-
-function mapOrigin(row: GeneratorRow): GeneratorOrigin {
-  if (row.origin_type === "remix" && row.source_generator_id && row.root_generator_id) {
-    return { type: "remix", sourceGeneratorId: row.source_generator_id, rootGeneratorId: row.root_generator_id };
-  }
-  return { type: "original" };
-}
 
 export function mapGeneratorRow(row: GeneratorRow): Generator {
   const tags: Tag[] = (row.generator_tags ?? []).map((gt) => ({ slug: gt.tags.slug, label: gt.tags.label }));
@@ -87,15 +73,12 @@ export function mapGeneratorRow(row: GeneratorRow): Generator {
     tags,
     visibility: row.visibility,
     status: row.status,
-    allowRemix: row.allow_remix,
     allowPromptEditing: row.allow_prompt_editing,
     allowSavingGeneratedPrompts: row.allow_saving_generated_prompts,
     enableNegativePrompt: row.enable_negative_prompt,
-    origin: mapOrigin(row),
     currentVersionId: row.current_version_id,
     useCount: row.use_count,
     saveCount: row.save_count,
-    remixCount: row.remix_count,
     likeCount: row.like_count,
     commentCount: row.comment_count,
     // Per-viewer state — decided separately (useGeneratorSaveState), same
@@ -203,26 +186,6 @@ export async function fetchTopGenerators(limit = 20): Promise<Generator[]> {
   }
 }
 
-/** Every real, published, direct remix of this generator — mirrors `fetchRemixesOf` (prompts.ts) exactly, for the "Remixler" tab on a generator's own detail page (Bölüm 9.36's Prompt/Generator parity pass). */
-export async function fetchRemixesOfGenerator(generatorId: string): Promise<Generator[]> {
-  try {
-    const { data, error } = await supabase
-      .from("generators")
-      .select(GENERATOR_SELECT)
-      .eq("source_generator_id", generatorId)
-      .eq("status", "published")
-      .order("created_at", { ascending: false });
-    if (error) {
-      console.error("fetchRemixesOfGenerator", error);
-      return [];
-    }
-    return (data ?? []).map((row) => mapGeneratorRow(row as unknown as GeneratorRow));
-  } catch (err) {
-    console.error("fetchRemixesOfGenerator", err);
-    return [];
-  }
-}
-
 /** A generator by its real public slug — RLS hides a draft/private/unlisted-not-owned generator automatically (Bölüm 19-style fail-closed). */
 export async function fetchGeneratorBySlug(slug: string): Promise<Generator | null> {
   try {
@@ -322,7 +285,6 @@ export interface GeneratorMetaInput {
   subcategory: string | null;
   tags: Tag[];
   visibility: "public" | "unlisted" | "private";
-  allowRemix: boolean;
   allowPromptEditing: boolean;
   allowSavingGeneratedPrompts: boolean;
   enableNegativePrompt: boolean;
@@ -352,7 +314,6 @@ export async function createDraftGenerator(
       category: meta.category,
       subcategory: meta.subcategory,
       visibility: meta.visibility,
-      allow_remix: meta.allowRemix,
       allow_prompt_editing: meta.allowPromptEditing,
       allow_saving_generated_prompts: meta.allowSavingGeneratedPrompts,
       enable_negative_prompt: meta.enableNegativePrompt,
@@ -397,15 +358,12 @@ export async function createDraftGenerator(
     tags: meta.tags,
     visibility: meta.visibility,
     status: "draft",
-    allowRemix: meta.allowRemix,
     allowPromptEditing: meta.allowPromptEditing,
     allowSavingGeneratedPrompts: meta.allowSavingGeneratedPrompts,
     enableNegativePrompt: meta.enableNegativePrompt,
-    origin: { type: "original" },
     currentVersionId: versionRow.id as string,
     useCount: 0,
     saveCount: 0,
-    remixCount: 0,
     likeCount: 0,
     commentCount: 0,
     isSaved: false,
@@ -433,7 +391,6 @@ export async function updateGeneratorMeta(generatorId: string, meta: GeneratorMe
       category: meta.category,
       subcategory: meta.subcategory,
       visibility: meta.visibility,
-      allow_remix: meta.allowRemix,
       allow_prompt_editing: meta.allowPromptEditing,
       allow_saving_generated_prompts: meta.allowSavingGeneratedPrompts,
       enable_negative_prompt: meta.enableNegativePrompt,
@@ -510,89 +467,6 @@ export async function publishGenerator(
 export async function deleteGenerator(generatorId: string): Promise<void> {
   const { error } = await supabase.from("generators").delete().eq("id", generatorId);
   if (error) throw new Error(error.message);
-}
-
-/**
- * Remixes a real generator (§25/§69): a brand-new DRAFT generator, owned by
- * the remixer, whose first version starts as a real COPY of the source's
- * current schema/template — the original is never touched. The remixer
- * edits/publishes it independently through the same builder.
- */
-export async function remixGenerator(
-  source: Generator,
-  sourceVersion: GeneratorVersionResult,
-  creatorId: string,
-  creatorProfile: UserProfile,
-): Promise<Generator> {
-  const slug = await generateUniqueSlug(`${source.title} remix`);
-  const rootGeneratorId = source.origin.type === "remix" ? source.origin.rootGeneratorId : source.id;
-
-  const { data: generatorRow, error: generatorError } = await supabase
-    .from("generators")
-    .insert({
-      creator_id: creatorId,
-      title: `${source.title} Remix`,
-      slug,
-      description: source.description,
-      cover_url: source.coverUrl,
-      category: source.category,
-      subcategory: source.subcategory,
-      visibility: "private",
-      origin_type: "remix",
-      source_generator_id: source.id,
-      root_generator_id: rootGeneratorId,
-    })
-    .select("id, created_at, updated_at")
-    .single();
-  if (generatorError || !generatorRow) throw new Error(generatorError?.message ?? "Remix oluşturulamadı.");
-
-  const generatorId = generatorRow.id as string;
-
-  const { data: versionRow, error: versionError } = await supabase
-    .from("generator_versions")
-    .insert({
-      generator_id: generatorId,
-      version_number: 1,
-      schema: sourceVersion.schema,
-      template: sourceVersion.template,
-      created_by: creatorId,
-    })
-    .select("id")
-    .single();
-  if (versionError || !versionRow) {
-    await supabase.from("generators").delete().eq("id", generatorId);
-    throw new Error(versionError?.message ?? "Remix sürümü oluşturulamadı.");
-  }
-
-  await supabase.from("generators").update({ current_version_id: versionRow.id }).eq("id", generatorId);
-
-  return {
-    id: generatorId,
-    creator: creatorProfile,
-    title: `${source.title} Remix`,
-    slug,
-    description: source.description,
-    coverUrl: source.coverUrl,
-    category: source.category,
-    subcategory: source.subcategory,
-    tags: [],
-    visibility: "private",
-    status: "draft",
-    allowRemix: true,
-    allowPromptEditing: true,
-    allowSavingGeneratedPrompts: true,
-    enableNegativePrompt: source.enableNegativePrompt,
-    origin: { type: "remix", sourceGeneratorId: source.id, rootGeneratorId },
-    currentVersionId: versionRow.id as string,
-    useCount: 0,
-    saveCount: 0,
-    remixCount: 0,
-    likeCount: 0,
-    commentCount: 0,
-    isSaved: false,
-    createdAt: generatorRow.created_at as string,
-    updatedAt: generatorRow.updated_at as string,
-  };
 }
 
 // === Runs (§20-24, §60) =====================================================

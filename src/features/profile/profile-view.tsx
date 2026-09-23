@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Blocks, GitBranch, Heart, SearchX, Sparkles } from "lucide-react";
+import { Blocks, Heart, SearchX, Sparkles } from "lucide-react";
 import { ProfileHeader } from "./profile-header";
 import { ProfileTabs, type ProfileTabKey } from "./profile-tabs";
 import { ProfileToolbar, type ProfileSortKey } from "./profile-toolbar";
@@ -22,8 +22,6 @@ function sortPrompts(prompts: Prompt[], sort: ProfileSortKey): Prompt[] {
       return sorted.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
     case "most-liked":
       return sorted.sort((a, b) => b.likeCount - a.likeCount);
-    case "most-remixed":
-      return sorted.sort((a, b) => b.remixCount - a.remixCount);
     case "newest":
     default:
       return sorted.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
@@ -97,15 +95,9 @@ export function ProfileView({
   const [sort, setSort] = useState<ProfileSortKey>("newest");
   const [search, setSearch] = useState("");
 
-  const remixPrompts = useMemo(
-    () => authorPrompts.filter((prompt) => prompt.origin.type !== "original"),
-    [authorPrompts],
-  );
-
   const tabs = useMemo(() => {
     const base: { key: ProfileTabKey; label: string; count?: number }[] = [
       { key: "prompts", label: "Promptlar", count: authorPrompts.length },
-      { key: "remixes", label: "Remixler", count: remixPrompts.length },
       { key: "requests", label: "Prompt İstekleri", count: authorRequests.length },
       { key: "generators", label: "Generatorlar", count: authorGenerators.length },
     ];
@@ -116,19 +108,17 @@ export function ProfileView({
     }
     base.push({ key: "about", label: "Hakkında" });
     return base;
-  }, [authorPrompts.length, remixPrompts.length, authorRequests.length, authorGenerators.length, isOwnProfile, likedPrompts.length]);
+  }, [authorPrompts.length, authorRequests.length, authorGenerators.length, isOwnProfile, likedPrompts.length]);
 
   const activeSource = useMemo(() => {
     switch (activeTab) {
-      case "remixes":
-        return remixPrompts;
       case "liked":
         return likedPrompts;
       case "prompts":
       default:
         return authorPrompts;
     }
-  }, [activeTab, authorPrompts, remixPrompts, likedPrompts]);
+  }, [activeTab, authorPrompts, likedPrompts]);
 
   const availableTypes = useMemo(() => {
     const types = new Set<PromptContentType>();
@@ -167,9 +157,7 @@ export function ProfileView({
         user={user}
         isOwnProfile={isOwnProfile}
         publishedPromptCount={authorPrompts.length}
-        remixCount={remixPrompts.length}
         onSelectPrompts={() => setActiveTab("prompts")}
-        onSelectRemixes={() => setActiveTab("remixes")}
       />
 
       <ProfileTabs tabs={tabs} active={activeTab} onChange={setActiveTab} />
@@ -237,7 +225,7 @@ export function ProfileView({
 
             <ProfileContentGrid
               prompts={filtered}
-              isOwnProfile={isOwnProfile && (activeTab === "prompts" || activeTab === "remixes")}
+              isOwnProfile={isOwnProfile && activeTab === "prompts"}
               onDeleted={handleDeleted}
               emptyState={
                 hasActiveFilters ? (
@@ -259,16 +247,6 @@ export function ProfileView({
 }
 
 function TabEmptyState({ tab, isOwnProfile }: { tab: ProfileTabKey; isOwnProfile: boolean }) {
-  if (tab === "remixes") {
-    return (
-      <ProfileEmptyState
-        icon={GitBranch}
-        title="İlk remixini oluştur"
-        description="Başka bir prompttan ilham al ve kendi yorumunu kat."
-        action={{ label: "Keşfet", href: "/discover" }}
-      />
-    );
-  }
   if (tab === "liked") {
     return (
       <ProfileEmptyState

@@ -7,14 +7,14 @@ import type { Generator, Prompt } from "@/types";
 type PostHeaderTarget = { prompt: Prompt; generator?: never } | { generator: Generator; prompt?: never };
 
 /**
- * Shared top-of-card identity row for every post type (normal/remix/request
+ * Shared top-of-card identity row for every post type (normal/request
  * response, and — since Bölüm 9.36's Prompt/Generator parity pass — a
  * generator too, same shell, same avatar/name/time/menu) — avatar, display
- * name, relative time (with an optional " · Yanıt paylaştı" / " · Remix
- * paylaştı" suffix), three-dot menu. There is no "verified" concept anywhere
- * in the real schema (`profiles` has no such column) — deliberately not
- * shown here rather than faked (CLAUDE.md's "don't show a feature the
- * backend doesn't have" rule).
+ * name, relative time (with an optional " · Yanıt paylaştı" suffix),
+ * three-dot menu. There is no "verified" concept anywhere in the real
+ * schema (`profiles` has no such column) — deliberately not shown here
+ * rather than faked (CLAUDE.md's "don't show a feature the backend
+ * doesn't have" rule).
  */
 export function PostHeader({
   subtitle,

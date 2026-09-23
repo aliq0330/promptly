@@ -45,7 +45,6 @@ export interface PromptMedia {
 
 export type PromptOrigin =
   | { type: "original" }
-  | { type: "remix"; sourcePromptId: string; rootPromptId: string }
   | { type: "request-response"; requestId: string; responseId: string };
 
 /**
@@ -68,7 +67,6 @@ export interface Prompt {
   origin: PromptOrigin;
   likeCount: number;
   commentCount: number;
-  remixCount: number;
   isLiked: boolean;
   isSaved: boolean;
   status: "draft" | "published";
@@ -78,28 +76,27 @@ export interface Prompt {
    * answer (`origin.type === "request-response"`): the author can choose
    * to keep an answer out of their own portfolio while it still stays
    * fully visible in the request's own answer list and at its own detail
-   * page. Always `true` for original/remix prompts.
+   * page. Always `true` for an original prompt.
    */
   showOnProfile: boolean;
   createdAt: string;
   /**
-   * Set when this prompt was "safely" deleted while it still had real
-   * remixes pointing at it (`source_prompt_id` can never be nulled out for
-   * a remix — see `prompts_origin_shape`) — the row survives with its
-   * content cleared instead of being removed, so the remix chain never
-   * breaks. `title`/`description`/`promptText` are empty when this is set;
-   * every normal listing (feed/discover/profile/search/saved/liked)
-   * already filters these out, so this only ever needs to be checked at a
-   * direct link or in a remix-source preview. `null` for a normal prompt.
+   * Legacy/historical field — `prompts.deleted_at`. Originally set when a
+   * prompt was "safely" soft-deleted while it still had real remixes
+   * pointing at it (Bölüm 9.7); the remix system this protected has since
+   * been fully removed (kullanıcının açık talebi), so no new row is ever
+   * soft-deleted anymore — every delete is now a real, permanent DELETE.
+   * The field/column stay only so any pre-existing historical soft-deleted
+   * row (`title`/`description`/`promptText` empty) still renders its
+   * honest "Bu paylaşım silindi" placeholder instead of reappearing with
+   * blank content. `null` for a normal prompt.
    */
   deletedAt: string | null;
   /**
    * Set only when this prompt was produced via "Prompt olarak aç" from a
    * real generator run (`prompts.generator_id`/`generator_version_id`/
    * `generator_run_id` — Generator Builder + Runtime module) — purely
-   * informational provenance metadata, orthogonal to `origin` (a
-   * generator-produced prompt is still `origin: "original"` unless it's
-   * ALSO a remix of something else).
+   * informational provenance metadata, orthogonal to `origin`.
    */
   generatedFrom: { generatorId: string; generatorVersionId: string; generatorRunId: string; generatorTitle: string; generatorSlug: string } | null;
 }
@@ -163,92 +160,12 @@ export type NotificationType =
   | "like"
   | "comment"
   | "comment_reply"
-  | "remix"
   | "request_response"
   | "message"
   | "message_request"
   | "system"
-  | "merge_request_received"
-  | "merge_request_accepted"
-  | "merge_request_rejected"
-  | "merge_request_withdrawn"
-  | "merge_request_cancelled"
   | "prompt_edited"
   | "request_edited";
-
-export type MergeRequestStatus = "pending" | "accepted" | "rejected" | "withdrawn" | "cancelled";
-
-/**
- * A real merge request — remix owner offering their contribution back to
- * an ancestor prompt (Remix Dallanma Haritası / Merge sistemi). Mirrors
- * `merge_requests` (supabase/migrations/20260919250000_remix_merge_
- * system.sql) 1:1; every status transition happens through a dedicated
- * RPC (create/accept/reject/withdraw), never a raw client UPDATE.
- */
-export interface MergeRequest {
-  id: string;
-  sourcePromptId: string;
-  targetPromptId: string;
-  requester: UserProfile;
-  targetOwner: UserProfile;
-  status: MergeRequestStatus;
-  contributionSummary: string;
-  description: string | null;
-  decisionReason: string | null;
-  decidedById: string | null;
-  decidedAt: string | null;
-  withdrawnAt: string | null;
-  resultingVersionId: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
-
-/** One entry in a prompt's real merge-derived version history (`prompt_versions`) — only ever created by an accepted merge, never by a plain edit (this app has no "edit prompt" feature at all). */
-export interface PromptVersion {
-  id: string;
-  promptId: string;
-  versionNumber: number;
-  title: string;
-  description: string;
-  promptText: string;
-  tool: string | null;
-  changeSummary: string | null;
-  mergeRequestId: string | null;
-  previousVersionId: string | null;
-  createdBy: UserProfile | null;
-  createdAt: string;
-}
-
-/**
- * One node in the real remix branching graph (Remix Dallanma Haritası) —
- * a lightweight projection of a `Prompt` (never the full prompt object,
- * so a node the viewer can't fully open still renders safely) plus its
- * structural position in the tree.
- */
-export interface RemixGraphNode {
-  id: string;
-  title: string;
-  author: UserProfile;
-  originType: "original" | "remix";
-  sourcePromptId: string | null;
-  rootPromptId: string | null;
-  isDeleted: boolean;
-  isAccessible: boolean;
-  remixCount: number;
-  createdAt: string;
-  /**
-   * Defaults to `"prompt"` so every existing prompt call site keeps working
-   * unchanged — a generator's own remix graph (Bölüm 9.36's Prompt/
-   * Generator parity pass, `fetch_generator_remix_graph`) sets this to
-   * `"generator"` so `RemixBranchMap`/`RemixNodeDetailPanel` know to build
-   * `generatorHref` links instead of `promptHref` ones and to hide the
-   * merge/diff actions that only make sense for a prompt's flat-text
-   * content (see that migration's own header comment for why).
-   */
-  contentType?: "prompt" | "generator";
-  /** Only set for a `contentType: "generator"` node — a generator routes by slug, not id (`generatorHref`), unlike a prompt. */
-  slug?: string;
-}
 
 export interface AppNotification {
   id: string;
@@ -306,9 +223,9 @@ export interface Collection {
 /**
  * A real, user-defined `{name}` token inside a prompt's `promptText`
  * (`public.prompt_variables` — CLAUDE.md "Prompt Değişken Sistemi"). Scoped
- * to prompts only (covers original/remix/request-answer content alike,
- * since all three are the same `prompts` row) — `prompt_requests` has no
- * separate "prompt metni" field to attach variables to, a deliberate scope
+ * to prompts only (covers original/request-answer content alike, since
+ * both are the same `prompts` row) — `prompt_requests` has no separate
+ * "prompt metni" field to attach variables to, a deliberate scope
  * decision.
  */
 export interface PromptVariable {
@@ -452,10 +369,6 @@ export type GeneratorValues = Record<string, string | string[]>;
  */
 export type GeneratorOutput = Record<string, unknown>;
 
-export type GeneratorOrigin =
-  | { type: "original" }
-  | { type: "remix"; sourceGeneratorId: string; rootGeneratorId: string };
-
 export interface Generator {
   id: string;
   creator: UserProfile;
@@ -468,15 +381,12 @@ export interface Generator {
   tags: Tag[];
   visibility: "public" | "unlisted" | "private";
   status: "draft" | "published" | "archived";
-  allowRemix: boolean;
   allowPromptEditing: boolean;
   allowSavingGeneratedPrompts: boolean;
   enableNegativePrompt: boolean;
-  origin: GeneratorOrigin;
   currentVersionId: string | null;
   useCount: number;
   saveCount: number;
-  remixCount: number;
   likeCount: number;
   commentCount: number;
   isSaved: boolean;

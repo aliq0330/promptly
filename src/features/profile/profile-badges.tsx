@@ -1,11 +1,11 @@
-import { GitBranch, Layers, Sparkle } from "lucide-react";
+import { Layers, Sparkle } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 interface BadgeDefinition {
   key: string;
   icon: LucideIcon;
   label: string;
-  isEarned: (stats: { publishedPromptCount: number; remixCount: number }) => boolean;
+  isEarned: (stats: { publishedPromptCount: number }) => boolean;
 }
 
 /**
@@ -25,12 +25,6 @@ const BADGE_DEFINITIONS: BadgeDefinition[] = [
     isEarned: ({ publishedPromptCount }) => publishedPromptCount >= 1,
   },
   {
-    key: "first-remix",
-    icon: GitBranch,
-    label: "İlk remixini oluşturdu",
-    isEarned: ({ remixCount }) => remixCount >= 1,
-  },
-  {
     key: "prolific",
     icon: Layers,
     label: "Üretken yaratıcı (10+ prompt)",
@@ -40,13 +34,11 @@ const BADGE_DEFINITIONS: BadgeDefinition[] = [
 
 export function ProfileBadges({
   publishedPromptCount,
-  remixCount,
 }: {
   publishedPromptCount: number;
-  remixCount: number;
 }) {
   const earned = BADGE_DEFINITIONS.filter((badge) =>
-    badge.isEarned({ publishedPromptCount, remixCount }),
+    badge.isEarned({ publishedPromptCount }),
   );
 
   if (earned.length === 0) return null;

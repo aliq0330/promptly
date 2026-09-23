@@ -17,7 +17,7 @@ import type { GeneratorMetaInput } from "@/lib/supabase/generators";
  * removed, see CLAUDE.md), an optional free-typed subcategory, tags
  * (the shared, already-generic `TagPicker` — reused as-is, no
  * generator-specific fork), an optional cover image, visibility, and the
- * generator-level toggles (remix/prompt-editing/saving/negative-prompt).
+ * generator-level toggles (prompt-editing/saving/negative-prompt).
  * There is no dedicated `generator-covers` Storage bucket (this feature's
  * migration deliberately didn't add one — see CLAUDE.md), so a cover is
  * stored the same way this app already stores every localStorage-era image
@@ -163,12 +163,6 @@ export function GeneratorDetailsForm({
 
       <div className="space-y-2 rounded-md border border-border p-3">
         <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">Ayarlar</p>
-        <ToggleRow
-          label="Remixlemeye izin ver"
-          description="Başkaları bu generatoru kopyalayıp kendi sürümünü oluşturabilir."
-          checked={meta.allowRemix}
-          onChange={(checked) => onChange({ allowRemix: checked })}
-        />
         <ToggleRow
           label="Oluşturulan promptu düzenlemeye izin ver"
           description="Kullanıcı, generator çıktısını 'Prompt olarak aç'tıktan sonra elle değiştirebilir."

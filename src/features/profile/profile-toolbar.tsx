@@ -5,13 +5,12 @@ import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
 import { cn } from "@/lib/utils";
 import type { PromptContentType } from "@/types";
 
-export type ProfileSortKey = "newest" | "oldest" | "most-liked" | "most-remixed";
+export type ProfileSortKey = "newest" | "oldest" | "most-liked";
 
 const SORT_LABELS: Record<ProfileSortKey, string> = {
   newest: "En yeni",
   oldest: "En eski",
   "most-liked": "En çok beğenilen",
-  "most-remixed": "En çok remixlenen",
 };
 
 /**

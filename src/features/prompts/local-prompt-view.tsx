@@ -76,7 +76,7 @@ export function LocalPromptView() {
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
         <h1 className="mb-2 text-lg font-semibold text-text">Bu paylaşım silindi</h1>
         <p className="mb-4 text-sm text-text-muted">
-          Yazarı bu paylaşımı sildi. Kendisinden remixlenen içerikler etkilenmedi, yerlerinde duruyor.
+          Yazarı bu paylaşımı sildi.
         </p>
         <Link
           href="/"

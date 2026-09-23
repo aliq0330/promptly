@@ -1,24 +1,23 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
-import { ArrowUpRight, Blocks, CheckCircle2, CornerUpRight, GitBranch } from "lucide-react";
+import { ArrowUpRight, Blocks, CheckCircle2, CornerUpRight } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { useRealPrompts } from "@/features/prompts/real-prompts-provider";
 import { useRealRequests } from "@/features/requests/real-requests-provider";
 import { STATUS_LABELS, STATUS_VARIANTS } from "@/features/requests/request-card";
-import { generatorHref, promptHref, requestHref } from "@/lib/utils";
+import { generatorHref, requestHref } from "@/lib/utils";
 import type { Prompt, PromptRequest } from "@/types";
 
 /**
  * Lavender, left-bar-accented "this post is derived from something else"
- * boxes shown right under the post header, before the post's own title —
- * one for a remix's source prompt, one for a request response's request.
- * Both fetch the referenced row via the same cache-then-fetch pattern as
- * the rest of the app (cheap when it's already in the feed's own batch, a
- * real fetch otherwise) — replaces the old plain-text `RemixSourceLink`.
+ * box shown right under the post header, before the post's own title — a
+ * request response's request. Fetches the referenced row via the same
+ * cache-then-fetch pattern as the rest of the app (cheap when it's already
+ * in the feed's own batch, a real fetch otherwise). Remix was fully
+ * removed from this platform (kullanıcının açık talebi) — the sibling
+ * `RemixContext` box this file used to also export is gone.
  */
 function ContextBox({ href, children }: { href: string; children: React.ReactNode }) {
   return (
@@ -28,70 +27,6 @@ function ContextBox({ href, children }: { href: string; children: React.ReactNod
     >
       {children}
     </Link>
-  );
-}
-
-/** Only rendered by a card that already checked `prompt.origin.type === "remix"`. */
-export function RemixContext({ sourcePromptId }: { sourcePromptId: string }) {
-  const { getCached, fetchById } = useRealPrompts();
-  const cached = getCached(sourcePromptId);
-  const [fetched, setFetched] = useState<Prompt | null>(null);
-
-  useEffect(() => {
-    if (cached) return;
-    let cancelled = false;
-    fetchById(sourcePromptId).then((result) => {
-      if (!cancelled && result) setFetched(result);
-    });
-    return () => {
-      cancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sourcePromptId, Boolean(cached)]);
-
-  const source = cached ?? fetched;
-  const thumbnail = source?.media[0];
-
-  if (source?.deletedAt) {
-    return (
-      <ContextBox href={promptHref({ id: sourcePromptId })}>
-        <span className="flex items-center gap-1.5 text-xs font-medium text-primary">
-          <GitBranch size={14} />
-          Remixlenen çalışma
-        </span>
-        <span className="block text-sm text-text-muted">Bu paylaşım silindi.</span>
-      </ContextBox>
-    );
-  }
-
-  return (
-    <ContextBox href={promptHref({ id: sourcePromptId })}>
-      <span className="flex items-center gap-1.5 text-xs font-medium text-primary">
-        <GitBranch size={14} />
-        Remixlenen çalışma
-      </span>
-      <span className="flex items-center gap-3">
-        {thumbnail && (
-          <span className="relative h-12 w-12 shrink-0 overflow-hidden rounded-md bg-surface">
-            <Image src={thumbnail.url} alt={thumbnail.alt} fill sizes="48px" className="object-cover" />
-          </span>
-        )}
-        <span className="min-w-0">
-          <span className="block truncate text-sm font-semibold text-text">
-            {source?.title ?? "Bir prompt"}
-          </span>
-          {source && (
-            <span className="block truncate text-xs text-text-muted">
-              {source.author.displayName} tarafından paylaşıldı
-            </span>
-          )}
-        </span>
-      </span>
-      <span className="flex items-center gap-1 text-xs font-medium text-primary">
-        Orijinal gönderiyi gör
-        <ArrowUpRight size={12} />
-      </span>
-    </ContextBox>
   );
 }
 
@@ -160,11 +95,11 @@ export function RequestResponseContext({
 /**
  * "Generated with [Generator]" (Generator Builder module's own §21-24
  * bridge) — only rendered by a card whose `prompt.generatedFrom` is set.
- * Unlike `RemixContext`/`RequestResponseContext`, no cache-then-fetch is
- * needed: `generatedFrom` already carries the generator's real title/slug
- * directly on the prompt row (`createRealPrompt`'s own denormalized
- * columns), so this never needs a second network round trip just to show
- * which generator produced this prompt.
+ * Unlike `RequestResponseContext`, no cache-then-fetch is needed:
+ * `generatedFrom` already carries the generator's real title/slug directly
+ * on the prompt row (`createRealPrompt`'s own denormalized columns), so
+ * this never needs a second network round trip just to show which
+ * generator produced this prompt.
  */
 export function GeneratorSourceContext({ generatedFrom }: { generatedFrom: NonNullable<Prompt["generatedFrom"]> }) {
   return (

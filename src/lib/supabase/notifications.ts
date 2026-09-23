@@ -21,7 +21,7 @@ const NOTIFICATION_SELECT = `
  * This user's real notifications, newest first. RLS (Bölüm 19) already
  * limits this to the caller's own rows; a series of `SECURITY DEFINER`
  * triggers (Bölüm 19, 20260919150000, 20260919160000, 20260919180000) now
- * actually populate this table for likes/comments/replies/remixes/request
+ * actually populate this table for likes/comments/replies/request
  * responses/follows/messages, so this resolves to real data once any of
  * those events happen to the signed-in user.
  */
@@ -71,7 +71,7 @@ export async function markNotificationRead(notificationId: string, userId: strin
  * Deletes one of the CALLER's OWN notifications. Same RLS-backed ownership
  * guarantee as `markNotificationRead`. This only ever removes the
  * notification row itself — it has no path to the underlying like/comment/
- * follow/remix/message it was about.
+ * follow/message it was about.
  */
 export async function deleteNotification(notificationId: string, userId: string): Promise<void> {
   const { error } = await supabase

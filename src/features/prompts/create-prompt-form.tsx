@@ -3,7 +3,7 @@
 import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Blocks, Copy, GitBranch, X } from "lucide-react";
+import { Blocks, Copy, X } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { PromptCard } from "@/features/prompts/prompt-card";
@@ -106,21 +106,25 @@ function NegativePromptReference({ text }: { text: string }) {
 }
 
 /**
- * Real, working prompt creation/remix/duplicate/answer form. Every prompt
- * and request is a real Supabase row now (CLAUDE.md's mock-data removal),
- * so publishing always requires a signed-in account — there is no more
+ * Real, working prompt creation/duplicate/answer form. Every prompt and
+ * request is a real Supabase row now (CLAUDE.md's mock-data removal), so
+ * publishing always requires a signed-in account — there is no more
  * anonymous preview-only mode.
  *
- * Four modes, chosen by the query string:
+ * Modes, chosen by the query string:
  *  - plain (`/create`): a fresh prompt, `origin: "original"`.
- *  - `?remix=<promptId>`: prefilled from a real source prompt, publishes
- *    with `origin: "remix"` pointing at it (`source_prompt_id`/
- *    `root_prompt_id`).
- *  - `?duplicate=<promptId>`: prefilled the same way but publishes as a
- *    fresh `origin: "original"` — no FK back to the source.
+ *  - `?duplicate=<promptId>`: prefilled from a real source prompt but
+ *    publishes as a fresh `origin: "original"` — no FK back to the source.
  *  - `?answerRequest=<requestId>`: prefilled from a real request, publishes
  *    with `origin: "request-response"` (`request_id` set), which
  *    increments the request's real `response_count`.
+ *  - `?generatorRun=<runId>`: prefilled from a real generator run's
+ *    generated prompt text (Generator Builder's "Prompt Olarak Aç" bridge).
+ *  - `?edit=<promptId>`: editing an existing prompt the caller owns.
+ *
+ * Remix creation (a former `?remix=<promptId>` mode) was fully removed from
+ * this platform (kullanıcının açık talebi) — a "Kopyasını Oluştur"
+ * (duplicate) is not a remix and was never affected by that removal.
  */
 export function CreatePromptForm() {
   const router = useRouter();
@@ -132,16 +136,13 @@ export function CreatePromptForm() {
 
   const editId = searchParams.get("edit");
   const isEditMode = Boolean(editId);
-  const remixSourceId = !isEditMode ? searchParams.get("remix") : null;
   const duplicateId = !isEditMode ? searchParams.get("duplicate") : null;
   const answerRequestId = !isEditMode ? searchParams.get("answerRequest") : null;
   const generatorRunId = !isEditMode ? searchParams.get("generatorRun") : null;
   const isAnswerMode = Boolean(answerRequestId);
-  const isRemixMode = Boolean(remixSourceId);
   const isDuplicateMode = Boolean(duplicateId);
   const isGeneratorRunMode = Boolean(generatorRunId);
 
-  const [sourcePrompt, setSourcePrompt] = useState<Prompt | null>(null);
   const [duplicateSource, setDuplicateSource] = useState<Prompt | null>(null);
   const [answeredRequest, setAnsweredRequest] = useState<PromptRequest | null>(null);
   const [generatorRun, setGeneratorRun] = useState<GeneratorRun | null>(null);
@@ -149,7 +150,7 @@ export function CreatePromptForm() {
   const [editingPrompt, setEditingPrompt] = useState<Prompt | null>(null);
   const [editForbidden, setEditForbidden] = useState(false);
   const [sourceChecked, setSourceChecked] = useState(
-    !isRemixMode && !isDuplicateMode && !isAnswerMode && !isEditMode && !isGeneratorRunMode,
+    !isDuplicateMode && !isAnswerMode && !isEditMode && !isGeneratorRunMode,
   );
   const { catalog: tagCatalog } = useTagCatalog();
 
@@ -172,10 +173,6 @@ export function CreatePromptForm() {
             setEditForbidden(true);
           }
         }
-      } else if (isRemixMode && remixSourceId) {
-        const cached = getCachedPrompt(remixSourceId);
-        const found = cached ?? (await fetchPromptById(remixSourceId));
-        if (!cancelled) setSourcePrompt(found);
       } else if (isDuplicateMode && duplicateId) {
         const cached = getCachedPrompt(duplicateId);
         const found = cached ?? (await fetchPromptById(duplicateId));
@@ -207,8 +204,6 @@ export function CreatePromptForm() {
   }, [
     isEditMode,
     editId,
-    isRemixMode,
-    remixSourceId,
     isDuplicateMode,
     duplicateId,
     isAnswerMode,
@@ -268,14 +263,13 @@ export function CreatePromptForm() {
       });
       return;
     }
-    const source = sourcePrompt ?? duplicateSource;
-    if (source) {
-      setContentType(source.contentType);
-      setTitle(`${source.title} ${isRemixMode ? "(remix)" : "(kopya)"}`);
-      setDescription(source.description);
-      setPromptText(source.promptText);
-      setTool(source.tool ?? "");
-      source.tags.forEach((tag) => tagPicker.addManual(tag));
+    if (duplicateSource) {
+      setContentType(duplicateSource.contentType);
+      setTitle(`${duplicateSource.title} (kopya)`);
+      setDescription(duplicateSource.description);
+      setPromptText(duplicateSource.promptText);
+      setTool(duplicateSource.tool ?? "");
+      duplicateSource.tags.forEach((tag) => tagPicker.addManual(tag));
       setFieldsSeeded(true);
       return;
     }
@@ -308,7 +302,7 @@ export function CreatePromptForm() {
       setFieldsSeeded(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- tagPicker.addManual is stable (useCallback), not a reactive dependency worth re-running this one-time seed for
-  }, [editingPrompt, sourcePrompt, duplicateSource, answeredRequest, generatorRun, sourceGenerator, sourceChecked, fieldsSeeded, isRemixMode]);
+  }, [editingPrompt, duplicateSource, answeredRequest, generatorRun, sourceGenerator, sourceChecked, fieldsSeeded]);
 
   const [showOnProfile, setShowOnProfile] = useState(true);
 
@@ -317,8 +311,7 @@ export function CreatePromptForm() {
 
   const notFound =
     sourceChecked &&
-    ((isRemixMode && !sourcePrompt) ||
-      (isDuplicateMode && !duplicateSource) ||
+    ((isDuplicateMode && !duplicateSource) ||
       (isAnswerMode && !answeredRequest) ||
       (isGeneratorRunMode && !generatorRun) ||
       (isEditMode && !editingPrompt && !editForbidden));
@@ -339,15 +332,9 @@ export function CreatePromptForm() {
 
   const origin: Prompt["origin"] = editingPrompt
     ? editingPrompt.origin
-    : sourcePrompt
-      ? {
-          type: "remix",
-          sourcePromptId: sourcePrompt.id,
-          rootPromptId: sourcePrompt.origin.type === "remix" ? sourcePrompt.origin.rootPromptId : sourcePrompt.id,
-        }
-      : answeredRequest
-        ? { type: "request-response", requestId: answeredRequest.id, responseId: "pending" }
-        : { type: "original" };
+    : answeredRequest
+      ? { type: "request-response", requestId: answeredRequest.id, responseId: "pending" }
+      : { type: "original" };
 
   const generatedFrom =
     !isEditMode && generatorRun && sourceGenerator
@@ -421,13 +408,7 @@ export function CreatePromptForm() {
           fallbackImage:
             contentType === "image" ? { url: media[0].url, width: media[0].width, height: media[0].height } : null,
           requestId: answeredRequest?.id,
-          showOnProfile: isAnswerMode || isRemixMode ? showOnProfile : true,
-          remixOf: sourcePrompt
-            ? {
-                sourcePromptId: sourcePrompt.id,
-                rootPromptId: sourcePrompt.origin.type === "remix" ? sourcePrompt.origin.rootPromptId : sourcePrompt.id,
-              }
-            : undefined,
+          showOnProfile: isAnswerMode ? showOnProfile : true,
           generatedFrom: generatedFrom ?? undefined,
         },
         ownProfile,
@@ -468,11 +449,10 @@ export function CreatePromptForm() {
     origin,
     likeCount: 0,
     commentCount: 0,
-    remixCount: 0,
     isLiked: false,
     isSaved: false,
     status: "draft",
-    showOnProfile: isAnswerMode || isRemixMode ? showOnProfile : true,
+    showOnProfile: isAnswerMode ? showOnProfile : true,
     deletedAt: null,
     generatedFrom,
     createdAt: new Date().toISOString(),
@@ -480,7 +460,7 @@ export function CreatePromptForm() {
 
   if (!user) {
     return (
-      <LoginGate message="Bir prompt yayınlamak, düzenlemek (ya da bir remix/kopya/yanıt oluşturmak) için önce giriş yapmalısın." />
+      <LoginGate message="Bir prompt yayınlamak, düzenlemek (ya da bir kopya/yanıt oluşturmak) için önce giriş yapmalısın." />
     );
   }
 
@@ -554,13 +534,11 @@ export function CreatePromptForm() {
           ? "Promptu Düzenle"
           : isAnswerMode
             ? "İsteğe Yanıt Ver"
-            : isRemixMode
-              ? "Remix Oluştur"
-              : isDuplicateMode
-                ? "Kopyasını Oluştur"
-                : isGeneratorRunMode
-                  ? "Prompt Olarak Aç"
-                  : "Prompt Oluştur"}
+            : isDuplicateMode
+              ? "Kopyasını Oluştur"
+              : isGeneratorRunMode
+                ? "Prompt Olarak Aç"
+                : "Prompt Oluştur"}
       </h1>
       <p className="mb-6 text-sm text-text-muted">
         {isEditMode
@@ -606,10 +584,10 @@ export function CreatePromptForm() {
             </div>
           )}
 
-          {(isAnswerMode || isRemixMode) && (
+          {isAnswerMode && (
             <div>
               <label className="mb-2 block text-sm font-medium text-text">
-                {isAnswerMode ? "Bu yanıt profilimde görünsün mü?" : "Bu remix profilimde görünsün mü?"}
+                Bu yanıt profilimde görünsün mü?
               </label>
               <div className="space-y-2">
                 <label
@@ -628,9 +606,7 @@ export function CreatePromptForm() {
                   <span>
                     <span className="block font-medium text-text">Profilimde paylaş</span>
                     <span className="block text-xs text-text-muted">
-                      {isAnswerMode
-                        ? "Yanıtın istek sahibine gösterilir ve profilinde de normal gönderilerin gibi görünür."
-                        : "Remixlediğin içerik kaynağının remix listesinde/haritasında görünmeye devam eder, ayrıca profilinde de normal gönderilerin gibi görünür."}
+                      Yanıtın istek sahibine gösterilir ve profilinde de normal gönderilerin gibi görünür.
                     </span>
                   </span>
                 </label>
@@ -650,25 +626,11 @@ export function CreatePromptForm() {
                   <span>
                     <span className="block font-medium text-text">Profilimde paylaşma</span>
                     <span className="block text-xs text-text-muted">
-                      {isAnswerMode
-                        ? "Yanıtın bu isteğin yanıtları arasında görünür. Profilinde ve normal gönderi akışında gösterilmez."
-                        : "Remixlediğin içerik kaynağının remix listesinde/haritasında görünmeye devam eder. Profilinde ve normal gönderi akışında gösterilmez."}
+                      Yanıtın bu isteğin yanıtları arasında görünür. Profilinde ve normal gönderi akışında gösterilmez.
                     </span>
                   </span>
                 </label>
               </div>
-            </div>
-          )}
-
-          {sourcePrompt && (
-            <div className="flex items-start gap-2 rounded-md border border-primary/30 bg-primary/5 p-3 text-sm text-primary">
-              <GitBranch size={16} className="mt-0.5 shrink-0" />
-              <p>
-                <Link href={promptHref(sourcePrompt)} className="font-medium underline">
-                  &ldquo;{sourcePrompt.title}&rdquo;
-                </Link>{" "}
-                içeriğinin remixi olarak dolduruldu — dilediğin gibi düzenleyebilirsin, köken bağlantısı korunuyor.
-              </p>
             </div>
           )}
 
@@ -679,8 +641,8 @@ export function CreatePromptForm() {
                 <Link href={promptHref(duplicateSource)} className="font-medium underline">
                   &ldquo;{duplicateSource.title}&rdquo;
                 </Link>{" "}
-                promptunun bir kopyası olarak dolduruldu — bu bir remix değil, kendi yeni promptun
-                olarak dilediğin gibi düzenleyebilirsin.
+                promptunun bir kopyası olarak dolduruldu — kendi yeni promptun olarak dilediğin
+                gibi düzenleyebilirsin.
               </p>
             </div>
           )}

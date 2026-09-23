@@ -14,9 +14,8 @@ type PromptGridProps = { prompts: Prompt[]; generators?: never } | { generators:
  *
  * Pass exactly one of `prompts`/`generators` — a generator list (Bölüm
  * 9.36's Prompt/Generator parity pass: `/generators`, search's generator
- * section, a prompt's "Remixler" tab when the remixed content is a
- * generator) uses this SAME masonry, not a separate CSS grid with its own,
- * inconsistent column/gap values.
+ * section, a collection's mixed content) uses this SAME masonry, not a
+ * separate CSS grid with its own, inconsistent column/gap values.
  */
 export function PromptGrid(props: PromptGridProps) {
   const items: { key: string; node: React.ReactNode }[] = props.generators

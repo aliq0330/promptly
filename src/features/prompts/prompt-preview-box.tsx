@@ -9,12 +9,12 @@ import type { Prompt } from "@/types";
  * link to the full post. Shared by image and text/video/code/music cards
  * so there's exactly one place this preview is built, not one per card
  * shape (it replaces text-prompt-card.tsx's old bespoke version). Since a
- * prompt gönderisi, bir remix gönderisi and a prompt yanıtı are
- * all the SAME `prompts` row shape (`origin_type` is all that differs),
- * rendering the "Kopyala" button here (CLAUDE.md §10) covers all three
- * content types on every card they appear in — no per-type special-casing
- * needed. `CopyPromptButton` always copies the real, full `promptText`,
- * never this box's own `line-clamp-3`-truncated display text.
+ * prompt gönderisi and a prompt yanıtı are the SAME `prompts` row shape
+ * (`origin_type` is all that differs), rendering the "Kopyala" button here
+ * (CLAUDE.md §10) covers both content types on every card they appear in —
+ * no per-type special-casing needed. `CopyPromptButton` always copies the
+ * real, full `promptText`, never this box's own `line-clamp-3`-truncated
+ * display text.
  */
 export function PromptPreviewBox({ prompt }: { prompt: Prompt }) {
   return (
