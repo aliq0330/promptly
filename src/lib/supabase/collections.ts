@@ -220,25 +220,31 @@ export async function fetchCollectionItems(collectionId: string): Promise<Collec
 
 /**
  * Whether this viewer generally saved a real prompt OR generator — true iff
- * it's in their own default ("Genel") collection. Never based on any
- * collection's name (it's renameable), never based on membership in any
- * *other* collection. Replaces the old prompt_saves-backed fetchIsSaved
- * (CLAUDE.md Bölüm 9.22 — single source of truth); `contentType` defaults
- * to `"prompt"` so every existing prompt call site keeps working unchanged
- * (Bölüm 9.36 — the same generator now goes through this SAME function
- * instead of its own separate `isGeneratorSaved`).
+ * it's a member of ANY of their own collections (the default "Genel" one OR
+ * any custom one they created). Never based on a collection's name (it's
+ * renameable). **Changed in Bölüm 9.38** from the original Bölüm 9.22
+ * definition ("true iff it's in the default collection specifically") per
+ * an explicit user request: saving something into ONLY a custom collection
+ * used to leave the bookmark icon unfilled, which the user reported as a
+ * bug against the new multi-collection save flow (Bölüm 9.36 let a
+ * generator/prompt join any collection, but this check never widened past
+ * "Genel" to match) — confirmed with the user via AskUserQuestion that this
+ * reverses the old, deliberate decision rather than silently overriding it.
+ * Tapping the filled bookmark still removes it from EVERY collection at
+ * once (`removeFromSavedEverywhere`, unchanged) — only the fill condition
+ * changed, not what "unsave" means. `contentType` defaults to `"prompt"` so
+ * every existing prompt call site keeps working unchanged.
  */
 export async function isPromptSaved(id: string, userId: string, contentType: SaveableContentType = "prompt"): Promise<boolean> {
   try {
     const { data, error } = await supabase
       .from("collection_items")
-      .select("collection_id, collections!inner ( is_default )")
+      .select("collection_id, collections!inner ( owner_id )")
       .eq(saveTargetColumn(contentType), id)
       .eq("collections.owner_id", userId)
-      .eq("collections.is_default", true)
-      .maybeSingle();
+      .limit(1);
     if (error) return false;
-    return Boolean(data);
+    return Boolean(data && data.length > 0);
   } catch (err) {
     console.error("isPromptSaved", err);
     return false;
@@ -305,12 +311,12 @@ export async function deleteCollection(collectionId: string): Promise<void> {
 
 /**
  * Adds a real prompt OR generator to a real collection the caller owns.
- * This is the ONLY way a prompt/generator joins a collection now — adding
- * it to the default ("Genel") collection specifically IS the general
- * "kaydedildi" action (bookmark fills); adding it to any other collection
- * is just membership in that collection alone and does not by itself
- * generally save the item (CLAUDE.md Bölüm 9.22 §4 — no more silent
- * dual-write into a separate prompt_saves table, single source of truth).
+ * This is the ONLY way a prompt/generator joins a collection now — no more
+ * silent dual-write into a separate `prompt_saves` table (CLAUDE.md Bölüm
+ * 9.22 §4). Adding it to ANY collection (default "Genel" or a custom one)
+ * makes `isPromptSaved` true and fills the bookmark (Bölüm 9.38) — adding
+ * it to a second collection while already saved is still just membership
+ * in that additional collection, it doesn't create a second "save".
  * `contentType` defaults to `"prompt"` so every existing prompt call site
  * keeps working unchanged (Bölüm 9.36 — a generator now joins the SAME
  * multi-collection system a prompt does, replacing the old
@@ -321,7 +327,19 @@ export async function addItemToCollection(collectionId: string, id: string, cont
   if (error) throw new Error(error.message);
 }
 
-/** Removes a real prompt/generator from exactly one collection — never touches the general "kaydedildi" state or its membership in any OTHER collection (CLAUDE.md Bölüm 9.22 §8). Never call this for the caller's own default collection — use `removeFromSavedEverywhere` instead, which is a different operation with different rules (§9). */
+/**
+ * Removes a real prompt/generator from exactly one collection. Since Bölüm
+ * 9.38, this can now flip the bookmark to unfilled too — if that was the
+ * item's LAST remaining collection membership, `isPromptSaved` becomes
+ * false; if it's still saved in at least one other collection, the
+ * bookmark stays filled. It never touches membership in any OTHER
+ * collection (CLAUDE.md Bölüm 9.22 §8). This is a distinct operation from
+ * `removeFromSavedEverywhere` (§9), which cascades across every collection
+ * at once regardless of how many contain the item — both remain valid,
+ * separate actions the UI chooses between depending on where the removal
+ * was triggered from (a single collection row vs. the bookmark icon
+ * itself).
+ */
 export async function removeFromCollection(collectionId: string, id: string, contentType: SaveableContentType = "prompt"): Promise<void> {
   const { error } = await supabase.from("collection_items").delete().eq("collection_id", collectionId).eq(saveTargetColumn(contentType), id);
   if (error) throw new Error(error.message);
