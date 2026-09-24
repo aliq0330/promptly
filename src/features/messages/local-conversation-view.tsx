@@ -28,9 +28,11 @@ import { computeKeyboardInset } from "./viewport-helpers";
 import { supabase } from "@/lib/supabase/client";
 import { useRealPrompts } from "@/features/prompts/real-prompts-provider";
 import { useRealRequests } from "@/features/requests/real-requests-provider";
+import { useRealGenerators } from "@/features/generators/real-generators-provider";
+import { fetchGeneratorById } from "@/lib/supabase/generators";
 import { parseHighlightValue } from "@/lib/notification-utils";
-import { profileHref } from "@/lib/utils";
-import type { Conversation, Message, UserProfile } from "@/types";
+import { absoluteUrl, generatorHref, profileHref } from "@/lib/utils";
+import type { Conversation, Generator, Message, UserProfile } from "@/types";
 
 /** Used only to give `useBlockState` a stable, always-defined target before the real conversation/participant has loaded — hooks must run unconditionally, and `canBlock` inside it is false until a real user session exists anyway, so this placeholder never actually reaches a query with a meaningful id. */
 const EMPTY_PARTICIPANT: UserProfile = {
@@ -64,8 +66,13 @@ function translateSendError(message: string): string {
  * local`. The composer here genuinely, permanently sends — this is the one
  * messaging surface in the whole app where that's true.
  *
- * `?sharePromptId=`/`?shareRequestId=` (set by a post's "Mesajla gönder")
- * attach that content to the next message sent in this conversation.
+ * `?sharePromptId=`/`?shareRequestId=` (set by `ShareModal`'s "Promptly'de
+ * mesaj olarak gönder" option, Bölüm 9.52) attach that content to the next
+ * message sent in this conversation as a real, database-backed embed.
+ * `?shareGeneratorId=` (same option, for a generator) has no embed column
+ * to attach to (Bölüm 9.52's own "no new messaging schema" rule) — it's
+ * resolved into a plain-text title+link line instead, composed at send
+ * time in `handleSubmit` below.
  */
 export function LocalConversationView() {
   const searchParams = useSearchParams();
@@ -73,10 +80,12 @@ export function LocalConversationView() {
   const id = searchParams.get("id");
   const shareParamPromptId = searchParams.get("sharePromptId");
   const shareParamRequestId = searchParams.get("shareRequestId");
+  const shareParamGeneratorId = searchParams.get("shareGeneratorId");
   const { user } = useAuth();
   const { getCached, acceptRequest, declineRequest } = useRealMessages();
   const { getCached: getCachedPrompt, fetchById: fetchPromptById } = useRealPrompts();
   const { getCached: getCachedRequest, fetchById: fetchRequestById } = useRealRequests();
+  const { getCached: getCachedGenerator } = useRealGenerators();
 
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -86,6 +95,10 @@ export function LocalConversationView() {
   const [sendError, setSendError] = useState<string | null>(null);
 
   const [fetchedShareTitle, setFetchedShareTitle] = useState<string | null>(null);
+  // Only needed for a shared generator — its plain-text share line needs a
+  // real `slug` (for `generatorHref`), not just a title, and a cache miss
+  // here means fetching the whole object rather than just a title string.
+  const [fetchedShareGenerator, setFetchedShareGenerator] = useState<Generator | null>(null);
   const [dismissedShare, setDismissedShare] = useState(false);
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -283,10 +296,11 @@ export function LocalConversationView() {
     };
   }, [id, user]);
 
-  // Resolves a `?sharePromptId=`/`?shareRequestId=` deep link into a real title for the composer banner — cache hit resolves synchronously via the derivation below; a miss falls back to a real fetch here.
+  // Resolves a `?sharePromptId=`/`?shareRequestId=`/`?shareGeneratorId=` deep link into a real title (and, for a generator, the real object) for the composer banner — cache hit resolves synchronously via the derivation below; a miss falls back to a real fetch here.
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- resetting state for a new share deep link, not reacting to an external system
     setFetchedShareTitle(null);
+    setFetchedShareGenerator(null);
     setDismissedShare(false);
     if (shareParamPromptId && !getCachedPrompt(shareParamPromptId)) {
       fetchPromptById(shareParamPromptId).then((result) => {
@@ -296,9 +310,15 @@ export function LocalConversationView() {
       fetchRequestById(shareParamRequestId).then((result) => {
         if (result) setFetchedShareTitle(result.title);
       });
+    } else if (shareParamGeneratorId && !getCachedGenerator(shareParamGeneratorId)) {
+      fetchGeneratorById(shareParamGeneratorId).then((result) => {
+        if (result) setFetchedShareGenerator(result);
+      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [shareParamPromptId, shareParamRequestId]);
+  }, [shareParamPromptId, shareParamRequestId, shareParamGeneratorId]);
+
+  const shareGenerator = shareParamGeneratorId ? (getCachedGenerator(shareParamGeneratorId) ?? fetchedShareGenerator) : null;
 
   const pendingShare = dismissedShare
     ? null
@@ -306,7 +326,14 @@ export function LocalConversationView() {
       ? { type: "prompt" as const, id: shareParamPromptId, title: getCachedPrompt(shareParamPromptId)?.title ?? fetchedShareTitle ?? "Yükleniyor…" }
       : shareParamRequestId
         ? { type: "request" as const, id: shareParamRequestId, title: getCachedRequest(shareParamRequestId)?.title ?? fetchedShareTitle ?? "Yükleniyor…" }
-        : null;
+        : shareParamGeneratorId
+          ? {
+              type: "generator" as const,
+              id: shareParamGeneratorId,
+              title: shareGenerator?.title ?? "Yükleniyor…",
+              slug: shareGenerator?.slug ?? null,
+            }
+          : null;
 
   // Yeni bir mesaj geldiğinde yalnızca kullanıcı zaten en alttaysa (ya da
   // yeni mesajı kendisi gönderdiyse) en alta kaydır — eski mesajları
@@ -409,15 +436,34 @@ export function LocalConversationView() {
     router.replace(`/messages/local?id=${id}`);
   }
 
+  // A generator's share line can't be sent until its real slug (for a
+  // working link) has resolved — never send a message with a missing/
+  // broken link just because the fetch above hasn't finished yet.
+  const isGeneratorShareUnresolved = pendingShare?.type === "generator" && !pendingShare.slug;
+
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     const trimmed = draft.trim();
-    if ((!trimmed && !pendingShare) || !id || !user || isSending) return;
+    if ((!trimmed && !pendingShare) || !id || !user || isSending || isGeneratorShareUnresolved) return;
     setIsSending(true);
     setSendError(null);
     try {
+      // A generator has no rich embed column in `messages` (only
+      // shared_prompt_id/shared_request_id exist, Bölüm 9.8) — deliberately
+      // not extended with a new column for the Unified Share System task
+      // (its own hard rule: no new messaging table/column/architecture).
+      // So sharing a generator reuses the exact same plain-text `body`
+      // send path every other message already goes through, just
+      // pre-composed with its real title + link instead of a database-
+      // backed shared-content card.
+      const generatorShareLine =
+        pendingShare?.type === "generator" && pendingShare.slug
+          ? `${pendingShare.title}\n${absoluteUrl(generatorHref({ slug: pendingShare.slug }))}`
+          : null;
+      const body = generatorShareLine ? (trimmed ? `${trimmed}\n\n${generatorShareLine}` : generatorShareLine) : trimmed || undefined;
+
       const sent = await sendMessage(id, user.id, {
-        body: trimmed || undefined,
+        body,
         sharedPromptId: pendingShare?.type === "prompt" ? pendingShare.id : undefined,
         sharedRequestId: pendingShare?.type === "request" ? pendingShare.id : undefined,
         replyToMessageId: replyingTo?.id,
@@ -708,7 +754,10 @@ export function LocalConversationView() {
             disabled={blockState.isBlocked}
             className="h-10 min-w-0 flex-1 rounded-md border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
           />
-          <Button type="submit" disabled={(!draft.trim() && !pendingShare) || isSending || blockState.isBlocked}>
+          <Button
+            type="submit"
+            disabled={(!draft.trim() && !pendingShare) || isSending || blockState.isBlocked || isGeneratorShareUnresolved}
+          >
             {isSending ? "Gönderiliyor..." : "Gönder"}
           </Button>
         </div>

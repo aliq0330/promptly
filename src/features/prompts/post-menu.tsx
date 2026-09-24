@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Copy, FolderMinus, Link2, Loader2, MoreVertical, Pencil, Send, Trash2 } from "lucide-react";
+import { Copy, FolderMinus, Link2, Loader2, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { useAuth } from "@/features/auth/auth-provider";
 import { absoluteUrl, cn, generatorHref, promptHref } from "@/lib/utils";
 import { deleteRealPrompt } from "@/lib/supabase/prompts";
@@ -21,10 +21,13 @@ import { deleteGenerator } from "@/lib/supabase/generators";
  * Polymorphic since Bölüm 9.34's shared-social integration — pass exactly
  * one of `promptId` or `generatorId` (the latter also needs `generatorSlug`
  * for its real link). A generator's menu never shows "Kopyasını oluştur"
- * (no duplicate flow exists for generators) or "Mesajla gönder" (message
- * sharing only supports prompts/requests today, CLAUDE.md Bölüm 9.8) —
- * both are deliberately left out rather than wired to something that
- * doesn't actually work.
+ * (no duplicate flow exists for generators) — deliberately left out rather
+ * than wired to something that doesn't actually work.
+ *
+ * "Mesajla gönder" used to live here as its own menu item (Bölüm 9.8) —
+ * Bölüm 9.52 (Unified Share System) folded it into the "Paylaş" icon's own
+ * `ShareModal` instead ("Promptly'de mesaj olarak gönder" option), so it's
+ * no longer duplicated in this menu.
  */
 export function PostMenu({
   promptId,
@@ -183,17 +186,6 @@ export function PostMenu({
             <Link2 size={14} />
             {copied ? "Kopyalandı" : "Bağlantıyı kopyala"}
           </button>
-          {user && !isGenerator && (
-            <Link
-              href={`/messages?sharePromptId=${promptId}`}
-              role="menuitem"
-              onClick={(event) => event.stopPropagation()}
-              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-text hover:bg-surface-soft"
-            >
-              <Send size={14} />
-              Mesajla gönder
-            </Link>
-          )}
           {collectionRemoval && (
             <>
               <button

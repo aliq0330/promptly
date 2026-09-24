@@ -1,5 +1,4 @@
-import { generatorHref, promptHref } from "@/lib/utils";
-import { ShareButton } from "./share-button";
+import { ShareTriggerButton } from "./share-modal";
 import { LikeButton } from "./like-button";
 import { SaveButton } from "./save-button";
 import { CommentCountLink } from "./comment-count-link";
@@ -21,19 +20,15 @@ export function PromptCardFooter(target: FooterTarget) {
     ? {
         isGenerator: true as const,
         id: target.generator.id,
-        title: target.generator.title,
         likeCount: target.generator.likeCount,
         commentCount: target.generator.commentCount,
-        href: generatorHref(target.generator),
         generatorSlug: target.generator.slug,
       }
     : {
         isGenerator: false as const,
         id: target.prompt.id,
-        title: target.prompt.title,
         likeCount: target.prompt.likeCount,
         commentCount: target.prompt.commentCount,
-        href: promptHref(target.prompt),
         generatorSlug: undefined,
       };
 
@@ -47,7 +42,9 @@ export function PromptCardFooter(target: FooterTarget) {
       )}
       <span className="ml-auto" />
       {view.isGenerator ? <SaveButton generatorId={view.id} /> : <SaveButton promptId={view.id} />}
-      <ShareButton url={view.href} title={view.title} />
+      <ShareTriggerButton
+        target={target.generator ? { contentType: "generator", generator: target.generator } : { contentType: "prompt", prompt: target.prompt }}
+      />
     </div>
   );
 }

@@ -7,7 +7,7 @@ import { ContentTypeLabel } from "@/features/content/content-type-label";
 import { ContentTags } from "@/features/content/content-tags";
 import { contentActionClassName } from "@/features/content/action-styles";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
-import { ShareButton } from "@/features/prompts/share-button";
+import { ShareTriggerButton } from "@/features/prompts/share-modal";
 import { CopyPromptButton } from "@/features/prompts/copy-prompt-button";
 import { formatCount, formatRelativeTime, profileHref, requestHref } from "@/lib/utils";
 import type { PromptRequest } from "@/types";
@@ -89,7 +89,7 @@ export function RequestCard({ request }: { request: PromptRequest }) {
         </Link>
         <span className="ml-auto" />
         <CopyPromptButton text={request.description} className="mr-1" />
-        <ShareButton url={href} title={request.title} />
+        <ShareTriggerButton target={{ contentType: "request", request }} />
         {isOpen && (
           <Link
             href={`/create?answerRequest=${request.id}`}

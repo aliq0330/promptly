@@ -7,7 +7,7 @@ import { useSearchParams } from "next/navigation";
 import { SquareTerminal, Wand2 } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { ContentTypeLabel } from "@/features/content/content-type-label";
-import { ShareButton } from "@/features/prompts/share-button";
+import { ShareTriggerButton } from "@/features/prompts/share-modal";
 import { RelatedPrompts } from "@/features/prompts/related-prompts";
 import { CreatorSummary } from "@/features/profile/creator-summary";
 import { clampedAspectRatio } from "@/lib/placeholder-image";
@@ -24,7 +24,7 @@ import { fetchVariablesForPrompt } from "@/lib/supabase/prompt-variables";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
 import { PostMenu } from "@/features/prompts/post-menu";
 import { parseHighlightValue } from "@/lib/notification-utils";
-import { cn, formatRelativeTime, profileHref, promptHref, tagHref } from "@/lib/utils";
+import { cn, formatRelativeTime, profileHref, tagHref } from "@/lib/utils";
 import type { Prompt, PromptVariable } from "@/types";
 
 /** Same fade timing as the comment-thread flash (`comment-section.tsx`) — one shared "how long does a jumped-to thing glow" feel across the app. */
@@ -101,7 +101,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
             <LikeButton id={prompt.id} likeCount={prompt.likeCount} size={18} />
             <CommentCountLink promptId={prompt.id} baseCount={prompt.commentCount} size={18} />
             <SaveButton promptId={prompt.id} size={18} />
-            <ShareButton url={promptHref(prompt)} title={prompt.title} label="Paylaş" />
+            <ShareTriggerButton target={{ contentType: "prompt", prompt }} label="Paylaş" />
           </div>
 
           <section aria-labelledby="prompt-text-title" className="overflow-hidden rounded-lg border border-border-soft bg-surface-soft">
