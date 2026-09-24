@@ -236,6 +236,7 @@ export function CreatePromptForm() {
   const [imageError, setImageError] = useState<string | null>(null);
   const [fieldsSeeded, setFieldsSeeded] = useState(false);
   const [variables, setVariables] = useState<DraftVariable[]>([]);
+  const [showOnProfile, setShowOnProfile] = useState(true);
 
   // The real source's fields arrive asynchronously — backfill the form the
   // first time one becomes available (same pattern as /profile/edit's
@@ -250,6 +251,9 @@ export function CreatePromptForm() {
       setDescription(editingPrompt.description);
       setPromptText(editingPrompt.promptText);
       setTool(editingPrompt.tool ?? "");
+      if (editingPrompt.origin.type === "request-response") {
+        setShowOnProfile(editingPrompt.showOnProfile);
+      }
       editingPrompt.tags.forEach((tag) => tagPicker.addManual(tag));
       setFieldsSeeded(true);
       fetchVariablesForPrompt(editingPrompt.id).then((real) => {
@@ -305,8 +309,6 @@ export function CreatePromptForm() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- tagPicker.addManual is stable (useCallback), not a reactive dependency worth re-running this one-time seed for
   }, [editingPrompt, duplicateSource, answeredRequest, generatorRun, sourceGenerator, sourceChecked, fieldsSeeded]);
 
-  const [showOnProfile, setShowOnProfile] = useState(true);
-
   const [publishError, setPublishError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -328,6 +330,12 @@ export function CreatePromptForm() {
    * atomic guarantee (this is only an earlier, friendlier UI check).
    */
   const isRequestDeleted = isAnswerMode && Boolean(answeredRequest?.deletedAt);
+  // Editing an existing answer to a request needs the same profile-visibility
+  // choice a fresh answer gets (isAnswerMode) — an `original` prompt has no
+  // such concept and never reaches this branch since it's not `edit`-able
+  // from a request context.
+  const isEditingResponse = isEditMode && editingPrompt?.origin.type === "request-response";
+  const showsVisibilityChoice = isAnswerMode || isEditingResponse;
 
   async function handleImageChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -394,6 +402,7 @@ export function CreatePromptForm() {
           tags: tagPicker.accepted.map((entry) => entry.tag),
           tagSources: Object.fromEntries(tagPicker.accepted.map((entry) => [entry.tag.slug, entry.source])),
           imageFile: contentType === "image" ? imageFile : undefined,
+          showOnProfile: isEditingResponse ? showOnProfile : undefined,
         });
         // Soft-fail, same precedent as tags (createRealPrompt) — the edit
         // itself already succeeded and is already live; a variable-save
@@ -464,7 +473,7 @@ export function CreatePromptForm() {
     isLiked: false,
     isSaved: false,
     status: "draft",
-    showOnProfile: isAnswerMode ? showOnProfile : true,
+    showOnProfile: showsVisibilityChoice ? showOnProfile : true,
     deletedAt: null,
     generatedFrom,
     createdAt: new Date().toISOString(),
@@ -613,7 +622,7 @@ export function CreatePromptForm() {
             </div>
           )}
 
-          {isAnswerMode && (
+          {showsVisibilityChoice && (
             <div>
               <label className="mb-2 block text-sm font-medium text-text">
                 Bu yanıt profilimde görünsün mü?
