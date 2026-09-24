@@ -10518,6 +10518,161 @@ seçiciyi ve gerçek kalıcılığını bizzat denemesi gerekiyor.
 
 ---
 
+### 9.52 Birleşik Paylaşım Sistemi (Unified Share System) — Prompt/Generator/Prompt İsteği için tek ShareModal
+
+Kullanıcının 22 bölümlük "PROMPTLY — UNIFIED SHARE SYSTEM REDESIGN"
+şartnamesi üzerine — "Paylaş" ikonuna basmak artık doğrudan native paylaşım
+ekranını açmıyor; önce, üç içerik türünün (Prompt, Generator, Prompt
+İsteği) TAMAMINDA aynı olan bir `ShareModal` açılıyor, içinde iki büyük
+seçim kartı var: **"Promptly'de mesaj olarak gönder"** ve **"Diğer
+uygulamalarla paylaş"**. Şartnamenin kendi, defalarca tekrarlanan kesin
+kuralı harfiyen izlendi: **hiçbir yeni mesajlaşma tablosu/kolonu/API'si/
+mimarisi yazılmadı** — var olan mesajlaşma sistemi (Bölüm 21 Faz 6/9.8) ve
+var olan native paylaşım mantığı (`ShareButton`) SADECE bu yeni modale
+bağlandı, ikisi de kendi içeriğinde yeniden yazılmadı.
+
+**AŞAMA 0 — kodlamaya başlamadan önce mevcut mimari incelendi (kullanıcının
+kendi talimatı gereği):**
+- **"Mesajla gönder" akışı** (`post-menu.tsx`) — yalnızca giriş yapılmışsa
+  VE hedef bir prompt ise (`user && !isGenerator`) görünen bir `<Link
+  href="/messages?sharePromptId=<id>">`. `/messages` sayfası bu query
+  param'ı okuyup "Kime göndermek istersin?" banner'ı gösteriyor,
+  `ConversationRow`'a `shareQuery` iletiyor; bir konuşma seçilince
+  `messageHref(conversation)&sharePromptId=<id>`'e gidiliyor.
+  `LocalConversationView` bu id'yi `pendingShare` state'ine çeviriyor
+  (cache/fetch ile başlık çözümlüyor), banner gösteriyor, GERÇEK gönderim
+  anında `sendMessage(conversationId, userId, {body, sharedPromptId,
+  sharedRequestId, replyToMessageId})`'i çağırıyor — `messages` tablosunun
+  zaten var olan `shared_prompt_id`/`shared_request_id` nullable
+  kolonlarına yazıyor (Bölüm 9.8).
+- **Native paylaşım** (`share-button.tsx`) — `navigator.share()` varsa onu,
+  yoksa `navigator.clipboard.writeText()`'i çağıran, `absoluteUrl()`
+  kullanan basit bir bileşen; profil sayfası (`profile-actions.tsx`)
+  DIŞINDA prompt/generator/request'in HER kart footer'ında ve detay
+  sayfasının hero aksiyon satırında kullanılıyordu.
+- **Generator'ın mesajla paylaşımı hiç yoktu** — `PostMenu`'nün kendi
+  yorumu bile bunu açıkça belirtiyordu ("Mesajla gönder" ... yalnızca
+  prompt/istek destekliyor). `messages` şemasında bir generator'a işaret
+  eden hiçbir kolon yok.
+
+**Karar — generator'ın "mesajla gönder"i, YENİ bir şema kolonu OLMADAN
+nasıl çalışıyor:** `messages` tablosuna üçüncü bir `shared_generator_id`
+kolonu eklemek teknik olarak mümkündü, ama kullanıcının "yeni mesajlaşma
+kolonu/mimarisi yok" kuralına en güvenli, en dar yorumla uymak için hiç
+eklenmedi. Bunun yerine, generator paylaşımı TAMAMEN istemci tarafında
+kalan, yeni bir `shareGeneratorId` query param'ıyla AYNI konuşma-seçme
+ekranını (`/messages?shareGeneratorId=<id>`) kullanıyor, ve gönderim
+anında zaten var olan, düz metin `body` gönderme yoluna (`sendMessage({body:
+...})`, hiçbir yeni parametre eklenmeden) düşüyor — `LocalConversationView`
+generator'ı (cache/`fetchGeneratorById` ile) çözüp başlık+gerçek link'i
+(`generatorHref`) tek bir metin satırına (`"${title}\n${link}"`) birleştirip
+kullanıcının kendi yazdığı notun altına ekliyor. Slug henüz çözülmeden
+(nadir bir yarış durumu) Gönder butonu `isGeneratorShareUnresolved` ile
+devre dışı bırakılıyor — kırık bir link asla gönderilemiyor.
+
+**Yeni dosyalar/değişiklikler:**
+- `src/features/prompts/share-button.tsx` — native-share/clipboard
+  mekaniği `shareOrCopyLink(url, title)` adında saf, dışa açık bir
+  fonksiyona ÇIKARILDI (yeniden YAZILMADI); `ShareButton`'ın kendisi
+  davranışsal olarak birebir aynı kalıp SADECE profil paylaşımı için
+  kullanılmaya devam ediyor (`profile-actions.tsx`, kapsam dışı — bir
+  profili paylaşmak bu görevin konusu değil).
+- Yeni `src/features/prompts/share-modal.tsx`:
+  - `ShareModal` — `SaveToCollectionModal`'ın (Bölüm 9.19-9.22) `Modal`
+    tabanlı kabuğunu (başlık + kapat X + `rounded-lg border bg-surface p-5
+    shadow-lg`) temel alıyor, renkleri DEĞİL yalnızca yapı mantığını —
+    Promptly'nin kendi token'ları (Bölüm 4/9.50) kullanılıyor. Üstte gerçek
+    içerik önizlemesi (thumbnail/placeholder + rozet + başlık + açıklama),
+    altında iki seçim kartı. `ShareModalTarget` discriminated union'ı
+    (`{contentType:"prompt"|"generator"|"request", ...}`) üç içerik türünü
+    TEK bileşende parametreliyor — üç ayrı modal yazılmadı.
+  - `ShareTriggerButton` — eski `ShareButton`'la BİREBİR AYNI görünümde
+    (aynı ikon/boyut/dokunma hedefi) "Paylaş" ikonu; tıklandığında artık
+    doğrudan paylaşmak yerine `ShareModal`'ı açıyor.
+- `post-menu.tsx` — "Mesajla gönder" `<Link>` bloğu TAMAMEN kaldırıldı
+  (artık ShareModal'ın kendi seçeneği bu işi görüyor, iki yerde aynı eylem
+  ASLA yok); `Send` ikonunun kullanılmayan import'u temizlendi.
+- `prompt-card-footer.tsx`, `request-card.tsx`, `prompt-detail-view.tsx`,
+  `request-detail-view.tsx`, `generator-detail-view.tsx` — hepsindeki
+  `<ShareButton url=... title=... />` çağrıları `<ShareTriggerButton
+  target={{contentType:..., ...}} />`'a çevrildi; artık kullanılmayan
+  `promptHref`/`requestHref`/`generatorHref` import'ları (yalnızca eski
+  `ShareButton` çağrısı için tutuluyorlardı) temizlendi.
+- `src/app/(app)/messages/page.tsx` — `shareGeneratorId` query param'ı
+  üçüncü bir dal olarak eklendi (`isSharing`/`shareQuery` hesaplaması
+  genişledi, `ConversationRow`'un kendisi zaten generic pass-through
+  olduğundan hiç değişmedi).
+- `local-conversation-view.tsx` — `shareParamGeneratorId` okunuyor,
+  `fetchedShareGenerator`/`shareGenerator` ile (cache miss'te
+  `fetchGeneratorById`) gerçek generator çözülüyor, `pendingShare`
+  üçüncü bir `"generator"` koluna genişledi (id/title/slug taşıyor),
+  `handleSubmit` generator paylaşımını yukarıda açıklanan düz-metin
+  satırına çeviriyor, submit butonu slug çözülene kadar devre dışı.
+
+**Nasıl doğrulandı:** `npx tsc --noEmit`, `npm run lint`, tam `npm run
+build` (26 rota, değişmedi) sıfır hatayla geçti. Gerçek Supabase'e karşı
+canlı bir sayfa testi bu sandbox'ın ağ kısıtı yüzünden yine yapılamadı
+(Bölüm 17'den beri tekrarlanan aynı sınırlama) — bunun yerine Bölüm
+9.45/9.47'nin `/dev/image-analysis-test` emsaliyle AYNI mantıkla, geçici
+bir `/dev/share-modal-test` test sayfası eklendi: gerçek, DEĞİŞTİRİLMEMİŞ
+`PostMenu`/`ShareTriggerButton`/`ShareModal` bileşenlerini gerçekçi, elle
+kurulmuş `Prompt`/`Generator`/`PromptRequest` fixture'larına karşı render
+ediyor (statik export + Playwright, `sb-placeholder-auth-token` formatında
+gerçek supabase-js oturum şekliyle localStorage'a enjekte edilen, ağ
+isteği gerektirmeyen — `@supabase/auth-js`'in `__loadSession()`'ının
+kendi kaynağından doğrulanan — sahte bir oturumla). 21 senaryonun
+TAMAMI geçti: her iki menüde de (prompt VE generator) "Mesajla gönder"in
+HİÇ kalmadığı, sayfa genelinde bu metnin hiç bulunmadığı; üç içerik
+türünün de "Paylaş"a basınca ShareModal'ı açtığı, önizlemenin gerçek
+başlık+rozeti (Görsel/Generator · kategori/Açık) gösterdiği; "Promptly'de
+mesaj olarak gönder" linkinin prompt/istek için VAR OLAN
+`/messages?sharePromptId=`/`shareRequestId=` yoluna, generator için YENİ
+ama tamamen istemci-taraflı `/messages?shareGeneratorId=` yoluna doğru
+gittiği; "Diğer uygulamalarla paylaş"a basmanın (headless Chromium'da
+`navigator.share` yok, bu yüzden gerçekten clipboard'a düşüyor) HER ÜÇ
+içerik türü için de doğru, gerçek mutlak URL'yi panoya kopyaladığı
+(`/prompts/local?id=`, `/generators/local?slug=`, `/requests/local?id=`);
+Escape'in modalı kapattığı; sıfır JS hatası olduğu.
+
+Gerçek bir Supabase projesine karşı canlı doğrulama (gerçek bir konuşmaya
+gerçekten generator paylaşılıp gönderilmesi dahil) yine bu sandbox'ın ağ
+kısıtı yüzünden yapılamadı (Bölüm 17'den beri tekrarlanan aynı sınırlama)
+— bu görev hiçbir migration içermediğinden (mevcut `messages` şemasına hiç
+dokunulmadı), kullanıcının Dashboard'da yapması gereken ekstra bir adım
+yok; yalnızca canlı sitede üç içerik türünü de bizzat paylaşmayı denemesi
+gerekiyor.
+
+**Kapsam dışı bırakılan, hata SAYILMAYAN kararlar:**
+- **`messages` şemasına `shared_generator_id` gibi yeni bir kolon
+  eklenmedi** (yukarıda "Karar" başlığı altında gerekçesiyle açıklandı) —
+  kullanıcının "yeni mesajlaşma mimarisi yok" kuralının en dar, en güvenli
+  yorumu.
+- **Profil paylaşımı (`profile-actions.tsx`'in iki `ShareButton`'ı)
+  ShareModal'a taşınmadı** — şartname yalnızca Prompt/Generator/Prompt
+  İsteği'ni adlandırdı, bir profili paylaşmak bu üç içerik türünden biri
+  değil.
+- **Generator'dan gerçekten gönderilen mesaj bir "shared content" kartı
+  (SharedPromptCard/SharedRequestCard'ın generator karşılığı) olarak
+  RENDER edilmiyor** — çünkü veritabanında ona işaret eden bir kolon hiç
+  yok; alıcı tarafında bu, tıpkı elle yazılmış bir mesaj gibi düz metin
+  (başlık + link) olarak görünüyor — dürüst, `MessageBubble`'ın var olan,
+  değiştirilmemiş plain-body render'ına hiç dokunmadan.
+- **`/dev/share-modal-test` gerçek uygulamanın hiçbir yerinden
+  bağlanmıyor** (Bölüm 9.47'nin aynı ilkesi) — yalnızca bu görevin
+  doğrulaması için var, istenirse güvenle silinebilir.
+
+**Bilinen sınırlamalar:**
+- **Gerçek Supabase projesine karşı canlı doğrulama yapılamadı** (yukarıda
+  açıklandı) — kullanıcının kendi ortamında denemesi gerekiyor.
+- Bir generator'ın mesajla paylaşımı, prompt/istek'in aksine GERÇEK bir
+  veritabanı ilişkisi taşımıyor (yukarıda açıklandı) — alıcı mesajı
+  gördüğünde bu yalnızca düz metin, tıklanabilir bir kart değil (link
+  metnin içinde, otomatik olarak linke çevrilmiyor — bu projenin mesaj
+  balonu render'ı hiçbir URL'i otomatik linklemiyor, yalnızca `shared_
+  prompt_id`/`shared_request_id` doluysa özel bir kart render ediyor).
+
+---
+
 **Sonraki adım:** Bilinen iki üretim hatası (Bölüm 9.40 — mesajlarda
 paylaşılan içerik silme çakışması; Bölüm 9.41 — gerçek yanıtı olan bir
 isteğin silinememesi) düzeltildi, ikisi de Bölüm 9.5'in yorum soft-delete
@@ -10542,7 +10697,10 @@ hiçbir yeni migration'ı yok — tamamen frontend/statik veri katmanında.
 Bölüm 9.50 (Promptly 2.0 yeniden tasarımı) da hiçbir migration
 içermiyor — tamamen frontend. Bölüm 9.51 (isteğe verilen bir yanıtı
 düzenlerken profil görünürlüğü seçicisinin eksik olması) da hiçbir
-migration içermiyor. Yeni bir bileşen/sayfa yazılırken Bölüm 4'teki
+migration içermiyor. Bölüm 9.52 (Birleşik Paylaşım Sistemi — ShareModal)
+de hiçbir migration içermiyor; "Paylaş" artık üç içerik türünde de önce
+bu modali açıyor, "Mesajla gönder" `PostMenu`'den kaldırıldı. Yeni bir
+bileşen/sayfa yazılırken Bölüm 4'teki
 tasarım sistemi kurallarına (token'lar, ortak bileşenler, üç kompozisyon)
 uyulmalı; hex renk ya da sayfaya özel yeni kart/buton stili eklenmemeli.
 Bundan sonraki bir modül için: bu dosyanın başındaki

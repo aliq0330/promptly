@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button, buttonClassName } from "@/components/ui/button";
 import { ContentTypeLabel } from "@/features/content/content-type-label";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
-import { ShareButton } from "@/features/prompts/share-button";
+import { ShareTriggerButton } from "@/features/prompts/share-modal";
 import { PromptCard } from "@/features/prompts/prompt-card";
 import { CommentSection } from "@/features/prompts/comment-section";
 import { CopyPromptButton } from "@/features/prompts/copy-prompt-button";
@@ -20,7 +20,7 @@ import { fetchPromptsForRequest } from "@/lib/supabase/prompts";
 import { useRealRequests } from "./real-requests-provider";
 import { STATUS_LABELS, STATUS_VARIANTS } from "./request-card";
 import { parseHighlightValue } from "@/lib/notification-utils";
-import { cn, formatRelativeTime, profileHref, requestHref, tagHref } from "@/lib/utils";
+import { cn, formatRelativeTime, profileHref, tagHref } from "@/lib/utils";
 import type { Prompt, PromptRequest } from "@/types";
 
 /** Same fade timing as the comment-thread flash — one shared feel across the app for "you just jumped here from a notification". */
@@ -257,7 +257,7 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
             </Button>
           )}
           <span className="ml-auto" />
-          <ShareButton url={requestHref(live)} title={live.title} label="Paylaş" />
+          <ShareTriggerButton target={{ contentType: "request", request: live }} label="Paylaş" />
         </div>
         {!isOwnRequest && isClosed && (
           <p className="text-caption text-text-muted">Bu istek kapandı, artık yeni yanıt kabul edilmiyor.</p>

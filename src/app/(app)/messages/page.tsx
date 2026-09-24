@@ -10,12 +10,20 @@ function MessagesPageInner() {
   const searchParams = useSearchParams();
   const sharePromptId = searchParams.get("sharePromptId");
   const shareRequestId = searchParams.get("shareRequestId");
-  const isSharing = Boolean(sharePromptId || shareRequestId);
+  // A generator has no rich embed in the messages schema (Bölüm 9.52's own
+  // "no new messaging table/column" rule) — it rides this exact same
+  // conversation-picker screen anyway, purely via a client-side query
+  // param, and turns into a plain-text message (title + link) once a
+  // conversation is picked (see `LocalConversationView`).
+  const shareGeneratorId = searchParams.get("shareGeneratorId");
+  const isSharing = Boolean(sharePromptId || shareRequestId || shareGeneratorId);
   const shareQuery = sharePromptId
     ? `sharePromptId=${sharePromptId}`
     : shareRequestId
       ? `shareRequestId=${shareRequestId}`
-      : undefined;
+      : shareGeneratorId
+        ? `shareGeneratorId=${shareGeneratorId}`
+        : undefined;
 
   const accepted = conversations.filter((c) => c.myStatus === "accepted");
   const pending = conversations.filter((c) => c.myStatus === "pending");

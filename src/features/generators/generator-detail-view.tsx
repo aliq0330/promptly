@@ -9,7 +9,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonClassName } from "@/components/ui/button";
 import { ContentTypeLabel } from "@/features/content/content-type-label";
-import { ShareButton } from "@/features/prompts/share-button";
+import { ShareTriggerButton } from "@/features/prompts/share-modal";
 import { CreatorSummary } from "@/features/profile/creator-summary";
 import { useAuth } from "@/features/auth/auth-provider";
 import { GeneratorPlayground } from "./generator-playground";
@@ -27,7 +27,7 @@ import {
   type GeneratorVersionResult,
 } from "@/lib/supabase/generators";
 import { useRealGenerators } from "./real-generators-provider";
-import { cn, formatCount, formatRelativeTime, generatorHref, profileHref, tagHref } from "@/lib/utils";
+import { cn, formatCount, formatRelativeTime, profileHref, tagHref } from "@/lib/utils";
 import type { Generator, GeneratorValues } from "@/types";
 
 /**
@@ -178,7 +178,7 @@ export function GeneratorDetailView() {
             <LikeButton id={generator.id} likeCount={generator.likeCount} contentType="generator" size={18} />
             <CommentCountLink generatorSlug={generator.slug} baseCount={generator.commentCount} size={18} />
             <SaveButton generatorId={generator.id} size={18} />
-            <ShareButton url={generatorHref(generator)} title={generator.title} label="Paylaş" />
+            <ShareTriggerButton target={{ contentType: "generator", generator }} label="Paylaş" />
             <span className="ml-auto pr-2 text-caption text-text-muted">{formatCount(generator.saveCount)} kaydetme</span>
           </div>
 
