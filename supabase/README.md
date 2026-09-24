@@ -718,3 +718,24 @@ Tekrar çalıştırmak güvenli: yalnızca `5eed…` id'li demo hesaplarını si
 baştan oluşturur. Demo e-postalarından biriyle (ör. `veli@msn.com`) daha önce
 açılmış bir hesap varsa o hesap ve içerikleri de silinir; başka hesaplara dokunmaz. İçeriği değiştirmek için
 `demo-content.mjs`'i düzenleyip `node supabase/seed/build-demo-seed.mjs` çalıştır.
+
+## Edge Functions
+
+`supabase/functions/analyze-image/index.ts` — AI Vision Generator sisteminin
+kullandığı, görsel + MIME type alıp Gemini Vision'a gönderen, yapılandırılmış
+JSON döndüren fonksiyon. Bu dosya, kullanıcının Supabase Dashboard'da zaten
+çalışır durumda tuttuğu koda dayanıyor; bu repoya ilk kez bu commit'te
+eklendi (öncesinde yalnızca Dashboard'da vardı, git'te izlenmiyordu).
+
+**Deploy:** Bu sandbox'ın `*.supabase.co`'ya ağ erişimi yok (bu depodaki
+diğer her modülle aynı, tekrarlanan sınırlama — bkz. yukarısı), bu yüzden bu
+dosya buradan hiç deploy edilemedi/canlıya karşı test edilemedi. Kullanıcı
+bunu ya doğrudan Dashboard → Edge Functions → `analyze-image` → Code'a
+yapıştırıp Deploy ederek, ya da yerel makinesinde
+`supabase functions deploy analyze-image --project-ref <proje-ref>` ile
+uygulamalı. `GEMINI_API_KEY` zaten Dashboard'da bir Function Secret olarak
+duruyor — bu dosyada literal bir key yok, değişmesi gerekmiyor.
+
+**Model adı:** `GEMINI_MODEL` sabitinde (`index.ts`'in başında) — Google
+modeli tekrar değiştirirse (bir "model artık kullanılamıyor" 404'ü gibi)
+güncellenmesi gereken tek satır burası.
