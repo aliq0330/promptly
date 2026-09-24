@@ -7,7 +7,8 @@ import { EmojiPicker } from "./emoji-picker";
 import { MessageActionMenu } from "./message-action-menu";
 import { usePopoverAlign } from "./use-popover-align";
 import { canEditOrDeleteMessage } from "./message-time-limit";
-import { SharedPromptCard, SharedRequestCard } from "./shared-content-card";
+import { SharedGeneratorCard, SharedPromptCard, SharedRequestCard } from "./shared-content-card";
+import { parseGeneratorShareBody } from "./generator-share-format";
 import { cn, formatRelativeTime } from "@/lib/utils";
 import type { Message } from "@/types";
 import type { MessageBubbleActions, MessageReactionEntry } from "./message-bubble-types";
@@ -57,6 +58,26 @@ export function MessageBubble({
   actions: MessageBubbleActions;
 }) {
   const isDeleted = Boolean(message.deletedAt);
+
+  // A generator share has no database column to key off of (Bölüm 9.52) —
+  // recognized instead from its own plain-text pattern inside `body`.
+  // Never set when this message actually shares a prompt/request (those
+  // always take priority; a message only ever shares one thing).
+  const generatorShare =
+    !message.sharedPromptId && !message.sharedRequestId ? parseGeneratorShareBody(message.body) : null;
+  const displayBody = generatorShare ? generatorShare.note : message.body;
+
+  const replyGeneratorShare =
+    replyPreview && !replyPreview.sharedPromptId && !replyPreview.sharedRequestId
+      ? parseGeneratorShareBody(replyPreview.body)
+      : null;
+  const replyPreviewText = !replyPreview
+    ? null
+    : replyPreview.deletedAt
+      ? "Silinmiş mesaj"
+      : replyGeneratorShare
+        ? (replyGeneratorShare.note ?? "Bir generator")
+        : replyPreview.body ?? (replyPreview.sharedPromptId ? "Bir prompt" : "Bir istek");
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [emojiOpen, setEmojiOpen] = useState(false);
@@ -216,11 +237,7 @@ export function MessageBubble({
             isMe && "flex-row-reverse border-l-0 border-r-2 text-right",
           )}
         >
-          <span className="truncate">
-            {replyPreview.deletedAt
-              ? "Silinmiş mesaj"
-              : replyPreview.body ?? (replyPreview.sharedPromptId ? "Bir prompt" : "Bir istek")}
-          </span>
+          <span className="truncate">{replyPreviewText}</span>
         </div>
       )}
 
@@ -257,14 +274,15 @@ export function MessageBubble({
           <div className="relative flex max-w-[75%] flex-col gap-1.5">
             {message.sharedPromptId && <SharedPromptCard promptId={message.sharedPromptId} />}
             {message.sharedRequestId && <SharedRequestCard requestId={message.sharedRequestId} />}
-            {message.body && (
+            {generatorShare && <SharedGeneratorCard slug={generatorShare.slug} />}
+            {displayBody && (
               <div
                 className={cn(
                   "rounded-lg px-3 py-2 text-sm",
                   isMe ? "bg-primary text-primary-foreground" : "bg-accent-surface text-text",
                 )}
               >
-                <p className="break-words">{message.body}</p>
+                <p className="break-words">{displayBody}</p>
               </div>
             )}
             {reactions.length > 0 && (

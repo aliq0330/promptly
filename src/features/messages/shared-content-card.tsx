@@ -3,13 +3,15 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowUpRight, Sparkles, Terminal } from "lucide-react";
+import { ArrowUpRight, Blocks, Sparkles, Terminal } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useRealPrompts } from "@/features/prompts/real-prompts-provider";
 import { useRealRequests } from "@/features/requests/real-requests-provider";
+import { useRealGenerators } from "@/features/generators/real-generators-provider";
+import { fetchGeneratorBySlug } from "@/lib/supabase/generators";
 import { STATUS_LABELS, STATUS_VARIANTS } from "@/features/requests/request-card";
-import { promptHref, requestHref } from "@/lib/utils";
-import type { Prompt, PromptRequest } from "@/types";
+import { generatorHref, promptHref, requestHref } from "@/lib/utils";
+import type { Generator, Prompt, PromptRequest } from "@/types";
 
 const CARD_CLASS =
   "block w-56 space-y-1.5 rounded-md border border-border bg-surface p-2.5 text-left transition-colors hover:bg-accent-surface/60";
@@ -58,6 +60,49 @@ export function SharedPromptCard({ promptId }: { promptId: string }) {
       <span className="block truncate text-sm font-semibold text-text">{prompt?.title ?? "Yükleniyor…"}</span>
       <span className="flex items-center gap-1 text-xs text-primary">
         İçeriği aç
+        <ArrowUpRight size={11} />
+      </span>
+    </Link>
+  );
+}
+
+/**
+ * A message's shared-generator content card — same shape/behavior as
+ * `SharedPromptCard`, except it's found by SLUG (a generator's real
+ * route, `generatorHref`) rather than an id, and looked up client-side
+ * from `parseGeneratorShareBody`'s recognized plain-text pattern instead
+ * of a database column (Bölüm 9.52 — a generator has no `shared_
+ * generator_id` in `messages`). `useRealGenerators()`'s own cache is
+ * searched by slug first (no new provider), falling back to a real fetch.
+ */
+export function SharedGeneratorCard({ slug }: { slug: string }) {
+  const { realGenerators } = useRealGenerators();
+  const cached = realGenerators.find((generator) => generator.slug === slug);
+  const [fetched, setFetched] = useState<Generator | null>(null);
+
+  useEffect(() => {
+    if (cached) return;
+    let cancelled = false;
+    fetchGeneratorBySlug(slug).then((result) => {
+      if (!cancelled && result) setFetched(result);
+    });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slug, Boolean(cached)]);
+
+  const generator = cached ?? fetched;
+
+  return (
+    <Link href={generatorHref({ slug })} className={CARD_CLASS}>
+      <span className="flex items-center gap-1.5 text-xs font-medium text-primary">
+        <Blocks size={13} />
+        Paylaşılan Generator
+      </span>
+      <span className="block truncate text-sm font-semibold text-text">{generator?.title ?? "Yükleniyor…"}</span>
+      <span className="flex items-center gap-1 text-xs text-primary">
+        Generatoru aç
         <ArrowUpRight size={11} />
       </span>
     </Link>
