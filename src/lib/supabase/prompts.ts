@@ -457,6 +457,8 @@ export interface UpdateRealPromptInput {
   tagSources?: Record<string, "manual" | "automatic">;
   /** A real newly-uploaded file, if the owner chose to replace the image — `undefined`/`null` leaves the existing media untouched (unlike creation, editing never invents a placeholder image in its place). Only meaningful for `contentType === "image"`. */
   imageFile?: File | null;
+  /** Only meaningful for a `request-response` prompt (an answer to a request) — whether it should also appear in the author's normal profile/feed/discover/search results (`prompts.show_on_profile`). `undefined` leaves the column untouched (an `original` prompt is never editable here anyway, so callers editing one simply omit this). */
+  showOnProfile?: boolean;
 }
 
 /**
@@ -483,6 +485,7 @@ export async function updateRealPrompt(promptId: string, authorId: string, input
       description: input.description.trim(),
       prompt_text: input.promptText.trim(),
       tool: input.tool,
+      ...(input.showOnProfile === undefined ? {} : { show_on_profile: input.showOnProfile }),
     })
     .eq("id", promptId)
     .select("id")
