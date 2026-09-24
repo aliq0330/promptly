@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { primaryNavItems } from "@/components/layout/nav-items";
 import { useProfileNavHref } from "@/features/auth/use-profile-nav-href";
+import { useTranslation } from "@/lib/i18n/language-provider";
 
 function isActive(pathname: string, href: string) {
   if (href === "/") return pathname === "/";
@@ -14,6 +15,7 @@ function isActive(pathname: string, href: string) {
 export function Sidebar() {
   const pathname = usePathname();
   const profileNavHref = useProfileNavHref();
+  const { t } = useTranslation();
 
   return (
     <aside className="hidden lg:flex lg:w-64 lg:flex-col lg:border-r lg:border-border lg:bg-surface">
@@ -39,7 +41,7 @@ export function Sidebar() {
               )}
             >
               <Icon size={20} strokeWidth={active ? 2.25 : 2} />
-              {item.label}
+              {t(item.labelKey)}
             </Link>
           );
         })}

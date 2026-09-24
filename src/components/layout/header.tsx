@@ -9,6 +9,7 @@ import { useAuth } from "@/features/auth/auth-provider";
 import { useOwnProfile } from "@/features/auth/own-profile-provider";
 import { useRealMessages } from "@/features/messages/real-messages-provider";
 import { useNotifications } from "@/features/notifications/notifications-provider";
+import { useTranslation } from "@/lib/i18n/language-provider";
 import { profileHref } from "@/lib/utils";
 
 /**
@@ -21,13 +22,14 @@ export function Header() {
   const { profile: ownProfile } = useOwnProfile();
   const { conversations: realConversations } = useRealMessages();
   const { unreadCount } = useNotifications();
+  const { t } = useTranslation();
   const hasUnreadMessages = realConversations.some((c) => c.unreadCount > 0);
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border bg-surface/80 px-4 backdrop-blur lg:px-6">
       <Link
         href="/"
-        aria-label="Promptly ana sayfa"
+        aria-label={t("header.homeAriaLabel")}
         className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary text-sm font-bold text-primary-foreground lg:hidden"
       >
         P
@@ -39,23 +41,23 @@ export function Header() {
           className="flex h-10 w-full max-w-md items-center gap-2 rounded-md border border-border bg-background px-3 text-sm text-text-muted"
         >
           <Search size={18} className="shrink-0" />
-          <span className="truncate">Prompt, kullanıcı veya etiket ara</span>
+          <span className="truncate">{t("header.searchPlaceholder")}</span>
         </Link>
       </div>
 
       <div className="flex flex-1 items-center justify-end gap-1 lg:flex-none">
         <Link
           href="/search"
-          aria-label="Ara"
-          title="Ara"
+          aria-label={t("header.searchAriaLabel")}
+          title={t("header.searchAriaLabel")}
           className={iconButtonClassName(false, "shrink-0 lg:hidden")}
         >
           <Search size={20} />
         </Link>
         <Link
           href="/notifications"
-          aria-label="Bildirimler"
-          title="Bildirimler"
+          aria-label={t("header.notificationsAriaLabel")}
+          title={t("header.notificationsAriaLabel")}
           className={iconButtonClassName(false, "shrink-0 relative")}
         >
           <Bell size={20} />
@@ -65,8 +67,8 @@ export function Header() {
         </Link>
         <Link
           href="/messages"
-          aria-label="Mesajlar"
-          title="Mesajlar"
+          aria-label={t("header.messagesAriaLabel")}
+          title={t("header.messagesAriaLabel")}
           className={iconButtonClassName(false, "shrink-0 relative")}
         >
           <MessageCircle size={20} />
@@ -81,7 +83,7 @@ export function Header() {
             className="ml-1 flex h-9 shrink-0 items-center gap-1.5 rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-dark"
           >
             <LogIn size={16} />
-            <span className="hidden sm:inline">Giriş Yap</span>
+            <span className="hidden sm:inline">{t("header.login")}</span>
           </Link>
         )}
         {user && ownProfile && (

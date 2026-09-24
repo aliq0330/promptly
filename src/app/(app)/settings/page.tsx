@@ -8,6 +8,8 @@ import { useAuth } from "@/features/auth/auth-provider";
 import { supabase } from "@/lib/supabase/client";
 import { translateAuthError } from "@/features/auth/auth-errors";
 import { fetchOwnMessagePrivacy, updateMessagePrivacy, type MessagePrivacy } from "@/lib/supabase/profiles";
+import { useTranslation } from "@/lib/i18n/language-provider";
+import type { Language, TranslationKey } from "@/lib/i18n/translations";
 
 const PASSWORD_MIN_LENGTH = 6;
 
@@ -19,6 +21,7 @@ const PASSWORD_MIN_LENGTH = 6;
  */
 export default function SettingsPage() {
   const { user, loading } = useAuth();
+  const { t, language, setLanguage } = useTranslation();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -57,11 +60,11 @@ export default function SettingsPage() {
     setSuccess(false);
 
     if (password.length < PASSWORD_MIN_LENGTH) {
-      setError(`Şifre en az ${PASSWORD_MIN_LENGTH} karakter olmalı.`);
+      setError(`${t("settings.passwordTooShortPrefix")} ${PASSWORD_MIN_LENGTH} ${t("settings.passwordTooShortSuffix")}`);
       return;
     }
     if (password !== confirmPassword) {
-      setError("Şifreler eşleşmiyor.");
+      setError(t("settings.passwordMismatch"));
       return;
     }
 
@@ -87,49 +90,51 @@ export default function SettingsPage() {
 
   if (!user) {
     return (
-      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3 px-6 text-center">
-        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-accent-surface text-primary">
-          <Settings size={28} />
+      <div className="mx-auto max-w-md space-y-6 px-4 py-6 lg:px-6">
+        <div className="flex min-h-[40vh] flex-col items-center justify-center gap-3 text-center">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-accent-surface text-primary">
+            <Settings size={28} />
+          </div>
+          <h1 className="text-lg font-semibold text-text">{t("settings.pageTitle")}</h1>
+          <p className="max-w-sm text-sm text-text-muted">{t("settings.notLoggedInBody")}</p>
+          <Link
+            href="/login"
+            className="mt-2 inline-flex h-9 items-center gap-1.5 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary-dark"
+          >
+            <LogIn size={14} />
+            {t("settings.login")}
+          </Link>
         </div>
-        <h1 className="text-lg font-semibold text-text">Hesap ayarları</h1>
-        <p className="max-w-sm text-sm text-text-muted">
-          Hesap ayarlarını görebilmek için giriş yapmalısın.
-        </p>
-        <Link
-          href="/login"
-          className="mt-2 inline-flex h-9 items-center gap-1.5 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary-dark"
-        >
-          <LogIn size={14} />
-          Giriş yap
-        </Link>
+
+        <LanguageSection t={t} language={language} setLanguage={setLanguage} />
       </div>
     );
   }
 
   return (
     <div className="mx-auto max-w-md px-4 py-6 lg:px-6">
-      <h1 className="mb-1 text-lg font-semibold text-text">Hesap ayarları</h1>
+      <h1 className="mb-1 text-lg font-semibold text-text">{t("settings.pageTitle")}</h1>
       <p className="mb-6 text-sm text-text-muted">
-        Profil bilgileri (görünen ad, biyografi, ilgi alanları) için{" "}
+        {t("settings.profileHintBefore")}{" "}
         <Link href="/profile/edit" className="text-primary hover:underline">
-          Profili Düzenle
+          {t("settings.profileHintLink")}
         </Link>{" "}
-        sayfasını kullan — burada yalnızca gerçek hesap bilgilerin var.
+        {t("settings.profileHintAfter")}
       </p>
 
       <div className="space-y-6">
         <div className="rounded-lg border border-border bg-surface p-4">
           <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-text-muted">
-            E-posta
+            {t("settings.email")}
           </p>
           <p className="text-sm text-text">{user.email}</p>
         </div>
 
         <form onSubmit={handleChangePassword} className="space-y-3 rounded-lg border border-border bg-surface p-4">
-          <p className="text-sm font-medium text-text">Şifre değiştir</p>
+          <p className="text-sm font-medium text-text">{t("settings.changePassword")}</p>
           <div>
             <label htmlFor="settings-password" className="mb-1.5 block text-sm text-text-muted">
-              Yeni şifre
+              {t("settings.newPassword")}
             </label>
             <input
               id="settings-password"
@@ -143,7 +148,7 @@ export default function SettingsPage() {
           </div>
           <div>
             <label htmlFor="settings-confirm-password" className="mb-1.5 block text-sm text-text-muted">
-              Yeni şifre (tekrar)
+              {t("settings.newPasswordConfirm")}
             </label>
             <input
               id="settings-confirm-password"
@@ -156,17 +161,17 @@ export default function SettingsPage() {
             />
           </div>
           {error && <p className="text-sm text-red-500">{error}</p>}
-          {success && <p className="text-sm text-primary">Şifren güncellendi.</p>}
+          {success && <p className="text-sm text-primary">{t("settings.passwordUpdated")}</p>}
           <Button type="submit" size="sm" disabled={isSubmitting}>
-            {isSubmitting ? "Güncelleniyor..." : "Şifreyi güncelle"}
+            {isSubmitting ? t("settings.updating") : t("settings.updatePassword")}
           </Button>
         </form>
 
         <div className="space-y-2 rounded-lg border border-border bg-surface p-4">
-          <p className="text-sm font-medium text-text">Mesaj gizliliği</p>
-          <p className="text-xs text-text-muted">Kimler sana yeni bir mesaj gönderebilir?</p>
+          <p className="text-sm font-medium text-text">{t("settings.messagePrivacyTitle")}</p>
+          <p className="text-xs text-text-muted">{t("settings.messagePrivacyQuestion")}</p>
           {messagePrivacy === null ? (
-            <p className="text-xs text-text-muted">Yükleniyor…</p>
+            <p className="text-xs text-text-muted">{t("settings.loadingEllipsis")}</p>
           ) : (
             <div className="space-y-2 pt-1">
               <label className="flex items-start gap-2 text-sm text-text">
@@ -178,11 +183,8 @@ export default function SettingsPage() {
                   className="mt-0.5"
                 />
                 <span>
-                  Herkes
-                  <span className="block text-xs text-text-muted">
-                    Seni takip etmeyenlerin mesajları önce &quot;Mesaj İstekleri&quot;ne düşer, kabul edene kadar
-                    ana gelen kutunda görünmez.
-                  </span>
+                  {t("settings.everyone")}
+                  <span className="block text-xs text-text-muted">{t("settings.everyoneHint")}</span>
                 </span>
               </label>
               <label className="flex items-start gap-2 text-sm text-text">
@@ -194,20 +196,66 @@ export default function SettingsPage() {
                   className="mt-0.5"
                 />
                 <span>
-                  Yalnızca takip ettiklerim
-                  <span className="block text-xs text-text-muted">
-                    Takip etmediğin kimse sana mesaj isteği bile gönderemez.
-                  </span>
+                  {t("settings.followersOnly")}
+                  <span className="block text-xs text-text-muted">{t("settings.followersOnlyHint")}</span>
                 </span>
               </label>
             </div>
           )}
         </div>
 
+        <LanguageSection t={t} language={language} setLanguage={setLanguage} />
+
         <Button type="button" variant="outline" onClick={handleSignOut} disabled={isSigningOut}>
           <LogOut size={14} />
-          {isSigningOut ? "Çıkış yapılıyor..." : "Çıkış yap"}
+          {isSigningOut ? t("settings.signingOut") : t("settings.signOut")}
         </Button>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Client-only language preference (no `profiles` column, no migration —
+ * same localStorage-backed pattern as `ThemeProvider`/`ThemeToggle`).
+ * Rendered both signed-in and signed-out: unlike account fields, this
+ * isn't tied to a real Supabase user.
+ */
+function LanguageSection({
+  t,
+  language,
+  setLanguage,
+}: {
+  t: (key: TranslationKey) => string;
+  language: Language;
+  setLanguage: (language: Language) => void;
+}) {
+  return (
+    <div className="space-y-2 rounded-lg border border-border bg-surface p-4">
+      <p className="text-sm font-medium text-text">{t("settings.languageTitle")}</p>
+      <p className="text-xs text-text-muted">{t("settings.languageHint")}</p>
+      <div className="space-y-2 pt-1">
+        {/* Language names are shown in their own native form (not translated via t()) —
+            switching to English shouldn't relabel "Türkçe" as "Turkish", or a user in
+            English mode would have no way to tell which option gets them back. */}
+        <label className="flex items-center gap-2 text-sm text-text">
+          <input
+            type="radio"
+            name="language"
+            checked={language === "tr"}
+            onChange={() => setLanguage("tr")}
+          />
+          Türkçe
+        </label>
+        <label className="flex items-center gap-2 text-sm text-text">
+          <input
+            type="radio"
+            name="language"
+            checked={language === "en"}
+            onChange={() => setLanguage("en")}
+          />
+          English
+        </label>
       </div>
     </div>
   );

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { Inter } from "next/font/google";
 import { ThemeProvider, themeInitScript } from "@/components/theme/theme-provider";
+import { LanguageProvider, languageInitScript } from "@/lib/i18n/language-provider";
 import { AuthProvider } from "@/features/auth/auth-provider";
 import "./globals.css";
 
@@ -29,10 +30,13 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="tr" className={`${inter.variable} h-full antialiased`} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+        <script dangerouslySetInnerHTML={{ __html: languageInitScript }} />
       </head>
       <body className="min-h-full flex flex-col bg-background text-text">
         <ThemeProvider>
-          <AuthProvider>{children}</AuthProvider>
+          <LanguageProvider>
+            <AuthProvider>{children}</AuthProvider>
+          </LanguageProvider>
         </ThemeProvider>
       </body>
     </html>

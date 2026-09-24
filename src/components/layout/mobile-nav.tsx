@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { mobileNavItems } from "@/components/layout/nav-items";
 import { useProfileNavHref } from "@/features/auth/use-profile-nav-href";
+import { useTranslation } from "@/lib/i18n/language-provider";
 
 function isActive(pathname: string, href: string) {
   if (href === "/") return pathname === "/";
@@ -14,6 +15,7 @@ function isActive(pathname: string, href: string) {
 export function MobileNav() {
   const pathname = usePathname();
   const profileNavHref = useProfileNavHref();
+  const { t } = useTranslation();
 
   return (
     <nav
@@ -33,7 +35,7 @@ export function MobileNav() {
             )}
           >
             <Icon size={22} strokeWidth={active ? 2.25 : 2} />
-            {item.label}
+            {t(item.labelKey)}
           </Link>
         );
       })}
