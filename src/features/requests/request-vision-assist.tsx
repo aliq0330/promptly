@@ -1,32 +1,42 @@
 "use client";
 
 /**
- * "Görselden Prompt Çıkar" — AI Vision Generator sisteminin gerçek giriş
- * noktası. `GeneratorPlayground` (hem builder'ın Live Preview'ı hem gerçek
- * public generator runtime sayfası TARAFINDAN AYNI, DEĞİŞTİRİLMEDEN
- * paylaşılan bileşen) içine gömülü — yani bu özellik "gerçek Generator"da
- * (§19) otomatik olarak var, ayrı bir demo sayfası değil.
+ * "✨ Referans Görsel" — Ortak Image Analysis sisteminin `prompt_request`
+ * modu. Yalnızca `CreateRequestForm`'da, içerik türü "Görsel" seçiliyken
+ * görünür. Amaç ne bir Generator oluşturmak ne doğrudan nihai bir prompt
+ * üretmek — kullanıcının "başka bir kullanıcıdan nasıl bir prompt
+ * istediğini" daha kolay tarif edebilmesine yardımcı olmak.
  *
- * Bu bileşen yalnızca yükleme/analiz/hata-durumu UI'ını yönetiyor; AI
- * sonucunu hangi generator alanına yazacağını HİÇ bilmiyor — o eşleme,
- * merkezi olarak `src/lib/vision-analysis.ts`'te, çağıran tarafta
- * (`GeneratorPlayground`) yapılıyor (§7'nin "mapping dağınık olmasın"
- * kuralı).
+ * Bu form zaten var olan alanları (İstek Açıklaması, Yaratıcı Yön) kullanır
+ * — spec'in mockup'ındaki ayrı "stil/konu/renk paleti" alanları bu
+ * uygulamada hiç yok ve icat edilmedi; AI'nin önerileri bu iki GERÇEK alana
+ * aktarılıyor, ikisi de kullanıcının bilerek tıkladığı ayrı butonlarla.
  */
 
 import { useRef, useState, type ChangeEvent, type DragEvent } from "react";
 import { Camera, ImagePlus, Loader2, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { analyzeImageForGenerator } from "@/lib/supabase/vision-analysis";
-import type { VisionAnalysisData } from "@/lib/vision-analysis";
+import { analyzeImageForRequest } from "@/lib/supabase/image-analysis";
+import type { PromptRequestResult } from "@/lib/image-analysis-types";
 
 type Status = "idle" | "loading" | "error";
 
-export function VisionAnalysisPanel({
-  onAnalyzed,
+function suggestedFieldsLine(fields: PromptRequestResult["suggestedFields"]): string {
+  const parts: string[] = [];
+  if (fields.style) parts.push(`Stil: ${fields.style}`);
+  if (fields.subject) parts.push(`Konu: ${fields.subject}`);
+  if (fields.colorPalette) parts.push(`Renk paleti: ${fields.colorPalette}`);
+  if (fields.details) parts.push(`Detaylar: ${fields.details}`);
+  return parts.join(" · ");
+}
+
+export function RequestVisionAssist({
+  onApplyDescription,
+  onApplyCreativeDirection,
 }: {
-  onAnalyzed: (result: VisionAnalysisData, model: string | null) => void;
+  onApplyDescription: (text: string) => void;
+  onApplyCreativeDirection: (text: string) => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [file, setFile] = useState<File | null>(null);
@@ -34,6 +44,7 @@ export function VisionAnalysisPanel({
   const [status, setStatus] = useState<Status>("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [dragActive, setDragActive] = useState(false);
+  const [result, setResult] = useState<PromptRequestResult | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const busyRef = useRef(false);
 
@@ -41,6 +52,7 @@ export function VisionAnalysisPanel({
     setFile(next);
     setErrorMessage(null);
     setStatus("idle");
+    setResult(null);
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     setPreviewUrl(next ? URL.createObjectURL(next) : null);
   }
@@ -57,15 +69,13 @@ export function VisionAnalysisPanel({
   }
 
   async function handleAnalyze() {
-    // §26 — art arda tıklama/tekrar istek engeli: bir istek zaten
-    // sürüyorsa (ref, aynı render turunda state güncellemesini beklemeden
-    // hemen görünür) ikinci bir çağrı hiç başlamaz.
     if (!file || busyRef.current) return;
     busyRef.current = true;
     setStatus("loading");
     setErrorMessage(null);
+    setResult(null);
 
-    const outcome = await analyzeImageForGenerator(file);
+    const outcome = await analyzeImageForRequest(file);
     busyRef.current = false;
 
     if (!outcome.ok) {
@@ -75,28 +85,31 @@ export function VisionAnalysisPanel({
     }
 
     setStatus("idle");
-    onAnalyzed(outcome.data, outcome.model);
+    setResult(outcome.data);
   }
 
+  const analysisEntries = result ? Object.entries(result.analysis).filter(([, v]) => typeof v === "string" && v.trim()) : [];
+  const fieldsLine = result ? suggestedFieldsLine(result.suggestedFields) : "";
+
   return (
-    <div className="rounded-md border border-dashed border-border bg-accent-surface/30">
+    <div className="mb-4 rounded-md border border-dashed border-border bg-accent-surface/30">
       <button
         type="button"
         onClick={() => setExpanded((v) => !v)}
         aria-expanded={expanded}
-        aria-controls="vision-analysis-panel-body"
+        aria-controls="request-vision-assist-body"
         className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm font-medium text-text"
       >
         <Sparkles className="h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
-        <span className="flex-1">Görselden Prompt Çıkar</span>
+        <span className="flex-1">Referans Görsel</span>
         <span className="text-xs font-normal text-text-muted">{expanded ? "Gizle" : "Göster"}</span>
       </button>
 
       {expanded && (
-        <div id="vision-analysis-panel-body" className="space-y-3 border-t border-border/60 px-3 pb-3 pt-3">
+        <div id="request-vision-assist-body" className="space-y-3 border-t border-border/60 px-3 pb-3 pt-3">
           <p className="text-xs text-text-muted">
-            Bir fotoğraf yükle, yapay zekâ görseli analiz edip aşağıdaki alanları senin için doldursun — sonucu
-            dilediğin gibi değiştirebilirsin.
+            Bir görsel yükle — yapay zekâ görseli analiz ederek isteğinin açıklamasını ve yaratıcı yönünü
+            oluşturmana yardımcı olsun. Öneriler yalnızca sen kabul edersen forma yazılır.
           </p>
 
           {previewUrl ? (
@@ -164,6 +177,48 @@ export function VisionAnalysisPanel({
             <p role="alert" className="rounded-md bg-red-500/10 px-3 py-2 text-xs text-red-600">
               {errorMessage}
             </p>
+          )}
+
+          {result && (
+            <div className="space-y-3 rounded-md border border-border bg-surface p-3">
+              {analysisEntries.length > 0 && (
+                <div className="space-y-1">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">Görsel Analizi</p>
+                  <dl className="space-y-0.5 text-sm text-text">
+                    {analysisEntries.map(([key, value]) => (
+                      <div key={key} className="flex gap-1.5">
+                        <dt className="shrink-0 font-medium">{key}:</dt>
+                        <dd className="text-text-muted">{value}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                </div>
+              )}
+
+              {fieldsLine && (
+                <div className="space-y-1.5">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">Önerilen Yön</p>
+                  <p className="rounded-md bg-accent-surface/40 p-2.5 text-sm text-text">{fieldsLine}</p>
+                  <Button type="button" size="sm" variant="outline" onClick={() => onApplyCreativeDirection(fieldsLine)}>
+                    Yaratıcı Yöne Ekle
+                  </Button>
+                </div>
+              )}
+
+              {result.suggestedDescription && (
+                <div className="space-y-1.5">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">Önerilen Açıklama</p>
+                  <p className="whitespace-pre-wrap rounded-md bg-accent-surface/40 p-2.5 text-sm text-text">
+                    {result.suggestedDescription}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    <Button type="button" size="sm" onClick={() => onApplyDescription(result.suggestedDescription)}>
+                      Açıklama Alanına Yaz
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
           )}
         </div>
       )}

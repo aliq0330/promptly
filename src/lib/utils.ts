@@ -293,10 +293,9 @@ export async function copyTextToClipboard(text: string): Promise<boolean> {
 
 /**
  * Reads a File/Blob as a bare Base64 string (the `data:image/png;base64,`
- * prefix stripped) — the one shared conversion both the `/dev/image-
- * analysis-test` debug page and the real, in-app vision-analysis feature
- * (`src/lib/supabase/vision-analysis.ts`) send to the `analyze-image` Edge
- * Function, so there is only ever one implementation of this step.
+ * prefix stripped) — the one shared conversion the ortak Image Analysis
+ * client (`src/lib/supabase/image-analysis.ts`) sends to the `analyze-image`
+ * Edge Function, so there is only ever one implementation of this step.
  */
 export function readBlobAsBase64(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {

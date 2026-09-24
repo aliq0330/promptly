@@ -1,15 +1,19 @@
-// analyze-image — Promptly'nin AI Vision Generator sistemi için Supabase
-// Edge Function'ı. Görseli + MIME type'ı alır, Gemini Vision'a gönderir,
-// yapılandırılmış JSON döndürür.
+// analyze-image — Promptly'nin ORTAK Image Analysis Edge Function'ı. Görseli
+// + bir `mode` + o moda özel `context` alır, Gemini Vision'a mode'a göre
+// FARKLI bir sistem talimatıyla gönderir, yapılandırılmış JSON döndürür.
 //
-// Bu dosya, kullanıcının Dashboard'dan paylaştığı çalışan koda dayanıyor —
-// davranış (CORS, request/response şekli, analysisPrompt) DEĞİŞTİRİLMEDİ,
-// yalnızca production-hardening eklendi (bkz. her bölümün başındaki not):
-//   - Model adı artık merkezi bir sabit (GEMINI_MODEL) — değiştirmek için
-//     tek satır.
-//   - MIME type + görsel/istek gövdesi daha sıkı doğrulanıyor.
-//   - Gemini isteğine gerçek bir timeout eklendi (AbortController).
-//   - Body parse hatası artık genel 500 yerine net bir 400 dönüyor.
+// Bu, önceki (yalnızca Generator'a özel, tek amaçlı) sürümün yerini alıyor —
+// production-hardening (CORS, model sabiti, MIME/boyut doğrulaması, timeout,
+// hata kategorileri) TAMAMEN KORUNDU, yalnızca istek/yanıt şekli üç moda göre
+// genelleştirildi:
+//   - mode: "generator_builder" — Generator Builder'ın "Görselden Alanları
+//     Doldur"u: gönderilen GERÇEK alan listesine göre mapping + eksik alan
+//     önerisi.
+//   - mode: "prompt_builder" — düz prompt oluşturma sayfasının "Görselden
+//     İlham Al"ı: analiz özeti + prompt/negatif prompt.
+//   - mode: "prompt_request" — prompt isteği oluşturmanın (yalnızca içerik
+//     türü Görsel'ken) yardımcısı: analiz özeti + istek alanı önerileri +
+//     önerilen açıklama.
 //
 // GEMINI_API_KEY hâlâ yalnızca bir Supabase Edge Function Secret — bu
 // dosyada literal bir key YOK, repoya asla commit edilmemeli.
@@ -22,30 +26,35 @@ const corsHeaders = {
 
 const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
 
-// Tek, merkezi model sabiti (§12) — Google modeli tekrar değiştirirse
-// (ör. "models/gemini-X is no longer available") güncellemesi gereken TEK
-// yer burası; hem istek URL'inde hem başarılı response'un "model" alanında
-// kullanılıyor, iki yerde aynı string'i elle senkron tutmaya gerek yok.
+// Tek, merkezi model sabiti — Google modeli tekrar değiştirirse güncellemesi
+// gereken TEK yer burası; hem istek URL'inde hem başarılı response'un
+// "model" alanında kullanılıyor.
 const GEMINI_MODEL = "gemini-3.6-flash";
 const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
-// Bu proje frontend'de (src/lib/supabase/vision-analysis.ts) de aynı
-// listeyi kabul ediyor — iki taraf da senkron, birinde geçerli olan
-// diğerinde de geçerli.
+// Bu proje frontend'de (src/lib/supabase/image-analysis.ts) de aynı listeyi
+// kabul ediyor — iki taraf da senkron, birinde geçerli olan diğerinde de
+// geçerli.
 const SUPPORTED_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 // Base64 metninin kabaca gerçek bayt boyutu (4/3 oranı) — frontend zaten
-// görseli optimize edip gönderiyor (resizeImageToBlob, max 1600px), ama
-// Edge Function bu garantiye KÖRÜ KÖRÜNE güvenmiyor; doğrudan bu endpoint'e
-// atılan aşırı büyük bir payload'ı (§13 "request body validation") erken
-// reddediyor.
+// görseli optimize edip gönderiyor (resizeImageToBlob, max 1600px), ama Edge
+// Function bu garantiye KÖRÜ KÖRÜNE güvenmiyor.
 const MAX_BASE64_LENGTH = Math.ceil((15 * 1024 * 1024 * 4) / 3);
 
 // Gemini'ye giden istek sonsuza dek asılı kalmasın diye gerçek bir zaman
-// aşımı (§11 "timeout") — Edge Function'ın kendi platform sınırına
-// (genelde ~150s) çarpıp anlamsız bir hata vermesindense, burada kontrollü
-// ve erken kesiliyor.
+// aşımı.
 const GEMINI_TIMEOUT_MS = 25_000;
+
+type ImageAnalysisMode = "generator_builder" | "prompt_builder" | "prompt_request";
+const VALID_MODES: ImageAnalysisMode[] = ["generator_builder", "prompt_builder", "prompt_request"];
+
+interface GeneratorBuilderFieldContext {
+  key?: unknown;
+  label?: unknown;
+  type?: unknown;
+  options?: unknown;
+}
 
 function jsonResponse(body: unknown, status: number): Response {
   return new Response(JSON.stringify(body), {
@@ -54,248 +63,177 @@ function jsonResponse(body: unknown, status: number): Response {
   });
 }
 
-const analysisPrompt = `
-Sen Promptly platformunun görsel analiz motorusun.
-
-Gönderilen görseli çok detaylı şekilde analiz et.
-
-AMAÇ:
-
-Bu görselden Promptly'nin Generator sisteminde kullanılabilecek
-yapılandırılmış prompt parametreleri çıkarmaktır.
-
-Görselde gerçekten görülebilen özellikleri analiz et.
-
-Görselde olmayan detayları kesin gerçekmiş gibi uydurma.
-
-Belirsiz veya görselden çıkarılamayan alanları boş bırak.
-
-Özellikle aşağıdaki alanları analiz et:
-
-1. category
-2. subject
-3. style
-4. character
-5. face
-6. hair
-7. eyes
-8. eyebrows
-9. skin
-10. body
-11. clothing
-12. accessories
-13. pose
-14. action
-15. environment
-16. background
-17. architecture
-18. objects
-19. camera
-20. composition
-21. lighting
-22. atmosphere
-23. colors
-24. photography
-25. quality
-26. negative_prompt
-27. prompt
-
-KARAKTER ANALİZİ:
-
-Görselde insan/karakter varsa mümkün olduğunca analiz et:
-
-- gender presentation
-- approximate age
-- face shape
-- skin appearance
-- eye shape
-- eye color
-- eyebrow shape
-- nose shape
-- mouth/lips
-- hair style
-- hair length
-- hair color
-- body type
-- body build
-- clothing
-- accessories
-- pose
-- expression
-
-KAMERA ANALİZİ:
-
-- shot type
-- camera angle
-- camera distance
-- lens impression
-- depth of field
-- focus
-- composition
-- perspective
-
-IŞIK ANALİZİ:
-
-- lighting type
-- light direction
-- light intensity
-- color temperature
-- shadows
-
-ORTAM ANALİZİ:
-
-- location
-- background
-- weather
-- time of day
-- atmosphere
-- architecture
-- visible objects
-
-RENK ANALİZİ:
-
-Görselde baskın olarak görülen renkleri belirt.
-
-Örneğin:
-
-["black", "white", "warm beige", "purple"]
-
-Görselde açıkça görülemeyen renkleri ekleme.
-
-PROMPT:
-
-"prompt" alanında analiz edilen bilgileri doğal,
-detaylı ve kaliteli bir görüntü üretim promptuna dönüştür.
-
-Prompt;
-
-- konu
-- karakter
-- görünüm
-- kıyafet
-- poz
-- ortam
-- kamera
-- kompozisyon
-- ışık
-- renk
-- stil
-- kalite
-
-gibi analiz edilen bilgileri mümkün olduğunca birleştirmelidir.
-
-Ancak görselde bulunmayan özellikleri ekleme.
-
-GENERATOR UYUMLULUĞU:
-
-Değerleri mümkün olduğunca standart,
-kısa ve Generator alanlarına aktarılabilir şekilde üret.
-
-Örneğin göz rengi görselde açıkça yeşil görünüyorsa:
-
-"color": "green"
-
-kullan.
-
-Göz rengi belirsizse:
-
-"color": ""
-
-kullan.
-
-Benzer şekilde diğer alanlarda da tahmin yapmak yerine
-görsel kanıtına öncelik ver.
-
-ÇIKTI FORMATI:
-
-Çıktıyı SADECE GEÇERLİ JSON olarak ver.
-
-Markdown kullanma.
-
-Kod bloğu kullanma.
-
-Açıklama yazma.
-
-JSON yapısı:
-
-{
-  "category": "",
-  "subject": {
-    "type": "",
-    "description": ""
-  },
-  "style": {
-    "name": "",
-    "details": []
-  },
-  "character": {
-    "gender": "",
-    "age": "",
-    "face": {
-      "shape": "",
-      "skin": "",
-      "eyes": {
-        "shape": "",
-        "color": ""
-      },
-      "eyebrows": "",
-      "nose": "",
-      "mouth": ""
-    },
-    "hair": {
-      "style": "",
-      "length": "",
-      "color": ""
-    },
-    "body": {
-      "type": "",
-      "build": ""
-    }
-  },
-  "clothing": [],
-  "accessories": [],
-  "pose": "",
-  "action": "",
-  "environment": {
-    "location": "",
-    "background": "",
-    "weather": "",
-    "time_of_day": ""
-  },
-  "objects": [],
-  "camera": {
-    "shot_type": "",
-    "angle": "",
-    "distance": "",
-    "lens": "",
-    "focus": "",
-    "depth_of_field": ""
-  },
-  "composition": {
-    "framing": "",
-    "subject_position": "",
-    "perspective": ""
-  },
-  "lighting": {
-    "type": "",
-    "direction": "",
-    "intensity": "",
-    "temperature": "",
-    "shadows": ""
-  },
-  "colors": [],
-  "quality": "",
-  "negative_prompt": [],
-  "prompt": ""
+function asString(value: unknown, fallback = ""): string {
+  return typeof value === "string" && value.trim() ? value.trim() : fallback;
 }
 
-Tekrar:
+function asStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((v): v is string => typeof v === "string" && v.trim().length > 0);
+}
 
-- Görselde olmayan bilgileri uydurma.
-- Belirsiz alanları boş bırak.
-- Görselde gerçekten görülebilen bilgileri mümkün olduğunca detaylandır.
-- JSON dışına hiçbir şey yazma.
+/** `generator_builder` — Generator Builder'ın gönderdiği GERÇEK generator meta bilgisi + GERÇEK, creator-tanımlı alan listesine göre bir eşleme+öneri talimatı üretir. Sabit "subject/style/character" gibi hiçbir alan hiçbir yerde varsayılmıyor — her şey `context.fields`'ten geliyor. */
+function buildGeneratorBuilderPrompt(context: unknown): string {
+  const ctx = (context ?? {}) as {
+    generator?: { name?: unknown; description?: unknown; category?: unknown };
+    fields?: unknown;
+  };
+  const generator = ctx.generator ?? {};
+  const rawFields = Array.isArray(ctx.fields) ? (ctx.fields as GeneratorBuilderFieldContext[]) : [];
+
+  const fieldLines =
+    rawFields.length > 0
+      ? rawFields
+          .map((f) => {
+            const key = asString(f.key);
+            const label = asString(f.label);
+            const type = asString(f.type, "text");
+            const options = asStringArray(f.options);
+            if (!key) return null;
+            const optionsPart = options.length > 0 ? `, options: [${options.map((o) => `"${o}"`).join(", ")}]` : "";
+            return `- key: "${key}", label: "${label || key}", type: "${type}"${optionsPart}`;
+          })
+          .filter((line): line is string => Boolean(line))
+          .join("\n")
+      : "(Bu generatorda henüz hiç alan yok.)";
+
+  return `
+Sen Promptly platformunun Generator Builder'ı için görsel analiz motorusun.
+
+GENERATOR BİLGİSİ:
+İsim: ${asString(generator.name, "(belirtilmemiş)")}
+Açıklama: ${asString(generator.description, "(belirtilmemiş)")}
+Kategori: ${asString(generator.category, "(belirtilmemiş)")}
+
+MEVCUT ALANLAR:
+${fieldLines}
+
+GÖREV:
+
+1. Gönderilen görseli detaylı analiz et.
+2. Görselde GERÇEKTEN görülen bilgileri, YUKARIDAKİ mevcut alanlarla eşleştir.
+   Yalnızca yukarıdaki listede verilen "key" değerlerini kullan (örn.
+   "hair_color") — icat edilmiş/başka bir isim ASLA kullanma.
+   select/radio/multi_select tipindeki bir alan için SADECE o alanın
+   "options" listesindeki değerlerden birini yaz — listede olmayan bir
+   değer asla uydurma.
+   Görselden çıkarılamayan/belirsiz alanları "mappedValues" içine hiç ekleme.
+3. Görselde, mevcut alanların KAPSAMADIĞI ama bu generator için gerçekten
+   anlamlı olan (görselde açıkça görülen) yeni özellikler varsa, en fazla 6
+   tane yeni alan öner. Zaten var olan bir alanla aynı/çok benzer bir alanı
+   ASLA tekrar önerme.
+   Her öneri için YALNIZCA şu tiplerden birini kullan: "text", "select",
+   "multi_select", "color", "number". "select" veya "multi_select"
+   öneriyorsan görselden çıkardığın 2-6 gerçek seçenek ekle (options).
+4. Anlamlı hiçbir yeni alan yoksa "suggestedFields" dizisini boş bırak.
+
+Görselde olmayan bilgileri kesinlikle uydurma. Belirsiz alanları boş bırak.
+
+ÇIKTIYI YALNIZCA GEÇERLİ JSON OLARAK VER. Markdown kullanma. Kod bloğu
+kullanma. Açıklama yazma.
+
+JSON yapısı:
+{
+  "mappedValues": { "<field_key>": "<değer>" },
+  "suggestedFields": [
+    { "label": "", "type": "text", "options": [] }
+  ]
+}
 `;
+}
+
+/** `prompt_builder` — düz prompt oluşturma sayfasının görsel yardımcısı. Generator şeması/field mapping'iyle HİÇ ilgisi yok; amaç doğrudan bir image-generation promptu üretmek. */
+function buildPromptBuilderPrompt(): string {
+  return `
+Sen Promptly platformunun Prompt Oluşturma yardımcısı için görsel analiz
+motorusun.
+
+Gönderilen görseli analiz et: konu, karakter, stil, kompozisyon, renkler,
+ışık, ortam, arka plan, kamera açısı/perspektifi, atmosfer, materyaller,
+görsel estetik.
+
+Görselde gerçekten görülebilen özellikleri analiz et. Görselde olmayan
+detayları uydurma. Belirsiz olan hiçbir şeyi analiz özetine ekleme.
+
+GÖREV:
+
+1. "analysis" alanında, kullanıcıya gösterilecek KISA ve OKUNABİLİR bir
+   özet ver — ham teknik rapor değil. Yalnızca görselde gerçekten
+   belirgin olan 4-8 özelliği, kısa Türkçe anahtar/değer çiftleri olarak
+   ver (örn. "Konu", "Stil", "Işık", "Arka Plan", "Kompozisyon", "Renk").
+2. "prompt" alanında, analiz edilen bilgileri birleştirip yüksek kaliteli,
+   İngilizce, image-generation için optimize edilmiş, doğal akan tek bir
+   prompt metni oluştur (konu, karakter, görünüm, kıyafet, poz, ortam,
+   kamera, kompozisyon, ışık, renk, stil, kalite gibi analiz edilen
+   bilgileri mümkün olduğunca birleştir). Görselde bulunmayan özellikleri
+   ekleme.
+3. "negativePrompt" alanında, varsa görselde AÇIKÇA kaçınılması gereken
+   birkaç kısa terim ver (İngilizce, virgülle ayrılmış); anlamlı bir şey
+   yoksa boş string bırak.
+
+ÇIKTIYI YALNIZCA GEÇERLİ JSON OLARAK VER. Markdown kullanma. Kod bloğu
+kullanma. Açıklama yazma.
+
+JSON yapısı:
+{
+  "analysis": { "Konu": "", "Stil": "" },
+  "prompt": "",
+  "negativePrompt": ""
+}
+`;
+}
+
+/** `prompt_request` — yalnızca içerik türü "Görsel" seçiliyken kullanılan istek yardımcısı. Amaç ne bir Generator ne doğrudan nihai bir prompt — kullanıcının "başka birinden nasıl bir prompt istediğini" tarif etmesine yardımcı olmak. */
+function buildPromptRequestPrompt(): string {
+  return `
+Sen Promptly platformunun Prompt İsteği oluşturma yardımcısı için görsel
+analiz motorusun.
+
+Gönderilen görseli analiz et: konu, stil, kompozisyon, renk, ışık, karakter,
+kıyafet, ortam, arka plan, önemli detaylar.
+
+Amacın bir Generator oluşturmak DEĞİL, doğrudan nihai bir prompt üretmek de
+DEĞİL — kullanıcının, bu görsele benzer bir çalışma için BAŞKA bir
+kullanıcıdan nasıl bir prompt istediğini daha kolay tarif edebilmesine
+yardımcı olmak.
+
+Görselde gerçekten görülebilen özellikleri analiz et, olmayanı uydurma.
+
+GÖREV:
+
+1. "analysis" alanında, kullanıcıya gösterilecek kısa, okunabilir bir özet
+   ver (4-8 Türkçe anahtar/değer çifti, örn. "Konu", "Stil", "Renk Paleti").
+2. "suggestedFields" alanında, aşağıdaki dört alan için (yalnızca görselden
+   gerçekten çıkarılabiliyorsa) kısa, Türkçe öneriler ver: "style" (istenen
+   stil), "subject" (istenen konu), "colorPalette" (renk paleti), "details"
+   (özel detaylar — virgülle ayrılmış kısa liste). Çıkarılamayan bir alanı
+   tamamen atla (obje içine hiç ekleme).
+3. "suggestedDescription" alanında, kullanıcının bir Prompt İsteği
+   açıklaması olarak doğrudan kullanabileceği, 2-4 cümlelik, Türkçe, bu
+   görsele benzer bir çalışma istediğini anlatan bir paragraf yaz.
+
+ÇIKTIYI YALNIZCA GEÇERLİ JSON OLARAK VER. Markdown kullanma. Kod bloğu
+kullanma. Açıklama yazma.
+
+JSON yapısı:
+{
+  "analysis": { "Konu": "" },
+  "suggestedFields": { "style": "", "subject": "", "colorPalette": "", "details": "" },
+  "suggestedDescription": ""
+}
+`;
+}
+
+function buildPromptForMode(mode: ImageAnalysisMode, context: unknown): string {
+  switch (mode) {
+    case "generator_builder":
+      return buildGeneratorBuilderPrompt(context);
+    case "prompt_builder":
+      return buildPromptBuilderPrompt();
+    case "prompt_request":
+      return buildPromptRequestPrompt();
+  }
+}
 
 Deno.serve(async (req) => {
   // CORS
@@ -314,11 +252,9 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: "Sadece POST isteği kabul edilir." }, 405);
     }
 
-    // Request body — (§13/§36) JSON parse hatası artık genel 500'e değil,
-    // net bir 400'e düşüyor; önceki davranışta bu da dıştaki genel
-    // catch'e takılıp "Sunucu tarafında beklenmeyen hata oluştu" diyordu,
-    // ki bu gerçek bir sunucu hatası değil, istemcinin gönderdiği
-    // gövdenin bozuk olmasıydı.
+    // Request body — JSON parse hatası net bir 400'e düşüyor (genel 500
+    // yerine); bu gerçek bir sunucu hatası değil, istemcinin gönderdiği
+    // gövdenin bozuk olması.
     let body: Record<string, unknown>;
     try {
       body = await req.json();
@@ -326,16 +262,24 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: "Geçersiz istek gövdesi — geçerli bir JSON bekleniyor." }, 400);
     }
 
+    const mode = typeof body.mode === "string" ? (body.mode as ImageAnalysisMode) : null;
+    if (!mode || !VALID_MODES.includes(mode)) {
+      return jsonResponse(
+        { error: `Geçersiz mode. "generator_builder", "prompt_builder" veya "prompt_request" olmalı.` },
+        400,
+      );
+    }
+
     const image = body.image;
     const mimeType = typeof body.mimeType === "string" && body.mimeType.trim() ? body.mimeType : "image/jpeg";
 
-    // Görsel kontrolü — (§13) artık yalnızca "var mı" değil, gerçekten bir
-    // string mi de kontrol ediliyor.
+    // Görsel kontrolü — yalnızca "var mı" değil, gerçekten bir string mi de
+    // kontrol ediliyor.
     if (!image || typeof image !== "string") {
       return jsonResponse({ error: "Görsel gönderilmedi." }, 400);
     }
 
-    // MIME type doğrulaması (§15/§16 "invalid_image" kategorisi).
+    // MIME type doğrulaması.
     if (!SUPPORTED_MIME_TYPES.has(mimeType)) {
       return jsonResponse(
         { error: `Desteklenmeyen görsel formatı: ${mimeType}. Yalnızca JPEG, PNG veya WebP destekleniyor.` },
@@ -353,8 +297,10 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: "Görsel çok büyük." }, 400);
     }
 
+    const analysisPrompt = buildPromptForMode(mode, body.context);
+
     // =========================================================
-    // GEMINI — model adı GEMINI_MODEL sabitinden geliyor (§12)
+    // GEMINI — model adı GEMINI_MODEL sabitinden geliyor
     // =========================================================
 
     const timeoutController = new AbortController();
@@ -379,9 +325,9 @@ Deno.serve(async (req) => {
         }),
       });
     } catch (fetchError) {
-      // (§11/§16 "timeout" kategorisi) AbortController süresi dolunca
-      // fetch bir AbortError fırlatır — bunu gerçek bir ağ hatasından
-      // ayırt edip net bir "timeout" mesajı dönüyoruz.
+      // AbortController süresi dolunca fetch bir AbortError fırlatır — bunu
+      // gerçek bir ağ hatasından ayırt edip net bir "timeout" mesajı
+      // dönüyoruz.
       const isTimeout = fetchError instanceof Error && fetchError.name === "AbortError";
       console.error(isTimeout ? "Gemini API timeout" : "Gemini API network error", fetchError);
       return jsonResponse(
@@ -424,7 +370,7 @@ Deno.serve(async (req) => {
     }
 
     // Başarılı response
-    return jsonResponse({ success: true, model: GEMINI_MODEL, data: result }, 200);
+    return jsonResponse({ success: true, mode, model: GEMINI_MODEL, data: result }, 200);
   } catch (error) {
     console.error("Unexpected Error:", error);
     return jsonResponse(
