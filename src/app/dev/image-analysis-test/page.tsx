@@ -25,30 +25,12 @@ import { FunctionsHttpError } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
+import { cn, readBlobAsBase64 } from "@/lib/utils";
 
 interface ErrorInfo {
   status: number | null;
   error: string;
   details: string | null;
-}
-
-function readFileAsBase64(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result;
-      if (typeof result !== "string") {
-        reject(new Error("Dosya okunamadı."));
-        return;
-      }
-      // data:image/png;base64,AAAA... -> yalnızca "AAAA..." kısmını gönder.
-      const commaIndex = result.indexOf(",");
-      resolve(commaIndex >= 0 ? result.slice(commaIndex + 1) : result);
-    };
-    reader.onerror = () => reject(reader.error ?? new Error("Dosya okunamadı."));
-    reader.readAsDataURL(file);
-  });
 }
 
 export default function ImageAnalysisTestPage() {
@@ -57,6 +39,7 @@ export default function ImageAnalysisTestPage() {
   const [loading, setLoading] = useState(false);
   const [rawResponse, setRawResponse] = useState<unknown>(null);
   const [errorInfo, setErrorInfo] = useState<ErrorInfo | null>(null);
+  const [elapsedMs, setElapsedMs] = useState<number | null>(null);
 
   function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
     const selected = event.target.files?.[0] ?? null;
@@ -72,9 +55,11 @@ export default function ImageAnalysisTestPage() {
     setLoading(true);
     setRawResponse(null);
     setErrorInfo(null);
+    setElapsedMs(null);
+    const startedAt = performance.now();
 
     try {
-      const base64Image = await readFileAsBase64(file);
+      const base64Image = await readBlobAsBase64(file);
       const mimeType = file.type || "application/octet-stream";
 
       const { data, error } = await supabase.functions.invoke("analyze-image", {
@@ -117,6 +102,7 @@ export default function ImageAnalysisTestPage() {
         details: null,
       });
     } finally {
+      setElapsedMs(Math.round(performance.now() - startedAt));
       setLoading(false);
     }
   }
@@ -124,6 +110,10 @@ export default function ImageAnalysisTestPage() {
   const isSuccess = Boolean(
     rawResponse && typeof rawResponse === "object" && (rawResponse as Record<string, unknown>).success === true,
   );
+  const responseModel =
+    rawResponse && typeof rawResponse === "object" && typeof (rawResponse as Record<string, unknown>).model === "string"
+      ? ((rawResponse as Record<string, unknown>).model as string)
+      : null;
 
   return (
     <main className="mx-auto min-h-screen max-w-2xl space-y-6 px-4 py-10">
@@ -175,7 +165,10 @@ export default function ImageAnalysisTestPage() {
 
       {errorInfo && (
         <Card className="space-y-2 border-red-300 p-5">
-          <p className="text-sm font-semibold text-red-600">Hata</p>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-sm font-semibold text-red-600">Hata</p>
+            {elapsedMs !== null && <p className="text-xs text-text/60">{elapsedMs} ms</p>}
+          </div>
           <dl className="space-y-1 text-sm">
             <div className="flex gap-2">
               <dt className="w-20 shrink-0 text-text/60">HTTP status</dt>
@@ -197,9 +190,15 @@ export default function ImageAnalysisTestPage() {
 
       {rawResponse !== null && (
         <Card className="space-y-2 p-5">
-          <p className="text-sm font-semibold text-text">
-            {isSuccess ? "Analiz sonucu (success: true)" : "Ham response"}
-          </p>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-sm font-semibold text-text">
+              {isSuccess ? "Analiz sonucu (success: true)" : "Ham response"}
+            </p>
+            <p className="text-xs text-text/60">
+              {responseModel && <span>model: {responseModel} · </span>}
+              {elapsedMs !== null && <span>{elapsedMs} ms</span>}
+            </p>
+          </div>
           <pre className="max-h-[480px] overflow-auto rounded-md bg-accent-surface/40 p-3 text-xs text-text">
             {JSON.stringify(rawResponse, null, 2)}
           </pre>
