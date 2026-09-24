@@ -1,5 +1,7 @@
 "use client";
 
+import { PageContainer } from "@/components/ui/page-header";
+
 import { useEffect, useMemo, useState } from "react";
 import { Blocks, Heart, SearchX, Sparkles } from "lucide-react";
 import { ProfileHeader } from "./profile-header";
@@ -152,7 +154,7 @@ export function ProfileView({
   }
 
   return (
-    <div className="space-y-5 pb-6">
+    <PageContainer className="space-y-5">
       <ProfileHeader
         user={user}
         isOwnProfile={isOwnProfile}
@@ -162,7 +164,7 @@ export function ProfileView({
 
       <ProfileTabs tabs={tabs} active={activeTab} onChange={setActiveTab} />
 
-      <div className="space-y-4 px-4 lg:px-6">
+      <div className="space-y-4">
         {activeTab === "about" ? (
           <ProfileAbout user={user} />
         ) : activeTab === "requests" ? (
@@ -193,9 +195,11 @@ export function ProfileView({
               action={isOwnProfile ? { label: "Generator oluştur", href: "/generators/create" } : undefined}
             />
           ) : (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="columns-1 gap-3 sm:columns-2 sm:gap-4 xl:columns-3">
               {authorGenerators.map((generator) => (
-                <GeneratorCard key={generator.id} generator={generator} onDeleted={() => handleGeneratorDeleted(generator.id)} />
+                <div key={generator.id} className="mb-3 break-inside-avoid sm:mb-4">
+                  <GeneratorCard generator={generator} onDeleted={() => handleGeneratorDeleted(generator.id)} />
+                </div>
               ))}
             </div>
           )
@@ -242,7 +246,7 @@ export function ProfileView({
           </>
         )}
       </div>
-    </div>
+    </PageContainer>
   );
 }
 

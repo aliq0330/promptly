@@ -76,7 +76,7 @@ function defaultTemplate(): GeneratorTemplate {
 function LoginGate() {
   return (
     <div className="mx-auto max-w-md px-4 py-16 text-center">
-      <h1 className="mb-2 text-lg font-semibold text-text">Giriş yapmalısın</h1>
+      <h1 className="mb-2 text-h2 font-semibold text-text">Giriş yapmalısın</h1>
       <p className="mb-4 text-sm text-text-muted">Bir generator oluşturmak/düzenlemek için önce giriş yapmalısın.</p>
       <div className="flex justify-center gap-2">
         <Link href="/login" className="inline-flex h-9 items-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary-dark">
@@ -245,7 +245,7 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
   if (notFound) {
     return (
       <div className="mx-auto max-w-md px-4 py-16 text-center">
-        <h1 className="mb-2 text-lg font-semibold text-text">Generator bulunamadı</h1>
+        <h1 className="mb-2 text-h2 font-semibold text-text">Generator bulunamadı</h1>
         <p className="text-sm text-text-muted">Bu generator silinmiş olabilir ya da hiç var olmadı.</p>
       </div>
     );
@@ -254,7 +254,7 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
   if (notOwner) {
     return (
       <div className="mx-auto max-w-md px-4 py-16 text-center">
-        <h1 className="mb-2 text-lg font-semibold text-text">Bu generatoru düzenleme yetkin yok</h1>
+        <h1 className="mb-2 text-h2 font-semibold text-text">Bu generatoru düzenleme yetkin yok</h1>
         <p className="text-sm text-text-muted">Yalnızca bir generatorun sahibi onu düzenleyebilir.</p>
       </div>
     );
@@ -440,7 +440,7 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
   return (
     <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-surface px-4 py-3 sm:px-5">
-        <h1 className="text-base font-semibold text-text sm:text-lg">
+        <h1 className="text-h1 font-semibold text-text">
           {generator ? `Generator ${generator.status === "published" ? "Düzenle" : "Taslağı"}` : "Yeni Generator"}
         </h1>
         {generator && generator.status === "draft" && (
@@ -452,12 +452,12 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
             )}
             {saveStatus === "saved" && (
               <>
-                <CheckCircle2 size={12} className="text-green-600" /> Taslak kaydedildi
+                <CheckCircle2 size={12} className="text-success" /> Taslak kaydedildi
               </>
             )}
             {saveStatus === "error" && (
               <>
-                <AlertTriangle size={12} className="text-red-500" /> Kaydedilemedi
+                <AlertTriangle size={12} className="text-danger" /> Kaydedilemedi
               </>
             )}
           </p>
@@ -497,7 +497,7 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
         <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
           <div className="min-w-0 space-y-4 rounded-lg border border-border bg-surface p-4 sm:p-5">
             <GeneratorDetailsForm meta={meta} onChange={(patch) => setMeta((prev) => ({ ...prev, ...patch }))} tagPicker={tagPicker} />
-            {detailsError && <p className="text-sm text-red-500">{detailsError}</p>}
+            {detailsError && <p className="text-sm text-danger">{detailsError}</p>}
             <Button type="button" onClick={handleAdvanceFromDetails} disabled={creatingDraft}>
               {creatingDraft ? "Kaydediliyor…" : "İleri: Alanlar"}
             </Button>
@@ -542,19 +542,19 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
         <div className="max-w-2xl space-y-4">
           <div className="rounded-lg border border-border bg-surface p-4 sm:p-5">
             <p className="mb-2 text-sm font-medium text-text">{schema.fields.length} alan</p>
-            {errors.length === 0 && warnings.length === 0 && <p className="text-sm text-green-600">Yayınlamaya hazır.</p>}
+            {errors.length === 0 && warnings.length === 0 && <p className="text-sm text-success">Yayınlamaya hazır.</p>}
             {errors.map((issue, i) => (
-              <p key={`e-${i}`} className="mt-1 flex items-start gap-1.5 text-sm text-red-500">
+              <p key={`e-${i}`} className="mt-1 flex items-start gap-1.5 text-sm text-danger">
                 <AlertTriangle size={14} className="mt-0.5 shrink-0" /> {issue.message}
               </p>
             ))}
             {warnings.map((issue, i) => (
-              <p key={`w-${i}`} className="mt-1 flex items-start gap-1.5 text-sm text-amber-600">
+              <p key={`w-${i}`} className="mt-1 flex items-start gap-1.5 text-sm text-warning">
                 <AlertTriangle size={14} className="mt-0.5 shrink-0" /> {issue.message}
               </p>
             ))}
           </div>
-          {publishError && <p className="text-sm text-red-500">{publishError}</p>}
+          {publishError && <p className="text-sm text-danger">{publishError}</p>}
           <Button type="button" onClick={handlePublish} disabled={errors.length > 0 || publishing}>
             {publishing ? "Yayınlanıyor…" : generator?.status === "published" ? "Yeniden Yayınla" : "Yayınla"}
           </Button>

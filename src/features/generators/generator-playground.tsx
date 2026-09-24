@@ -1,7 +1,9 @@
 "use client";
 
+import { Braces, SlidersHorizontal, SquareTerminal } from "lucide-react";
+import { Tabs } from "@/components/ui/tabs";
+
 import { useEffect, useState } from "react";
-import { cn } from "@/lib/utils";
 import { defaultValuesFromSchema } from "@/lib/generator-template";
 import { buildGeneratorOutput } from "@/lib/generator-output";
 import { GeneratorRuntimeForm } from "./generator-runtime-form";
@@ -100,28 +102,22 @@ export function GeneratorPlayground({
 
   return (
     <div className="space-y-4">
-      <div role="tablist" aria-label="Önizleme görünümü" className="flex gap-1 border-b border-border">
-        {(["form", "json", "prompt"] as const).map((value) => (
-          <button
-            key={value}
-            type="button"
-            role="tab"
-            aria-selected={tab === value}
-            onClick={() => setTab(value)}
-            className={cn(
-              "border-b-2 px-3 py-2 text-sm font-medium transition-colors",
-              tab === value ? "border-primary text-primary" : "border-transparent text-text-muted hover:text-text",
-            )}
-          >
-            {value === "form" ? "Form" : value === "json" ? "JSON" : "Prompt"}
-          </button>
-        ))}
-      </div>
+      <Tabs
+        items={[
+          { key: "form", label: "Form", icon: SlidersHorizontal },
+          { key: "json", label: "JSON", icon: Braces },
+          { key: "prompt", label: "Prompt", icon: SquareTerminal },
+        ]}
+        active={tab}
+        onChange={setTab}
+        ariaLabel="Önizleme görünümü"
+        variant="segmented"
+      />
 
       {tab === "form" ? (
         <div className="space-y-5">
-          <div className="space-y-3 rounded-md border border-border bg-surface p-3">
-            <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">Prompt</p>
+          <div className="space-y-3 rounded-md border border-border-soft bg-surface-soft p-3.5">
+            <p className="text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">Kendi promptun</p>
             <div>
               <label htmlFor="gen-run-prompt" className="mb-1.5 block text-sm font-medium text-text">
                 Prompt
@@ -132,7 +128,7 @@ export function GeneratorPlayground({
                 value={promptText}
                 onChange={(event) => setPromptText(event.target.value)}
                 placeholder="Örn. Güneşli bir günde kadın oturuyor"
-                className="w-full resize-none rounded-md border border-border bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted"
+                className="w-full resize-none rounded-md border border-border bg-surface px-3 py-2 text-small text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
               />
             </div>
             {enableNegativePrompt && (
@@ -146,7 +142,7 @@ export function GeneratorPlayground({
                   value={negativePromptText}
                   onChange={(event) => setNegativePromptText(event.target.value)}
                   placeholder="Örn. sandalye yok"
-                  className="w-full resize-none rounded-md border border-border bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted"
+                  className="w-full resize-none rounded-md border border-border bg-surface px-3 py-2 text-small text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                 />
               </div>
             )}

@@ -1,6 +1,22 @@
 import { clsx, type ClassValue } from "clsx";
-import { twMerge } from "tailwind-merge";
+import { extendTailwindMerge } from "tailwind-merge";
 import type { Collection, Conversation, Generator, Prompt, PromptRequest, Tag, UserProfile } from "@/types";
+
+/**
+ * tailwind-merge taught the design system's custom tokens (globals.css).
+ * Without this it can't tell `text-caption` (a font size) from
+ * `text-text-muted` (a color) and silently drops one of them when both
+ * appear in the same `cn()` call.
+ */
+const twMerge = extendTailwindMerge({
+  extend: {
+    theme: {
+      text: ["display", "h1", "h2", "h3", "body", "small", "caption", "label"],
+      shadow: ["card", "card-hover", "pop"],
+      radius: ["xs"],
+    },
+  },
+});
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));

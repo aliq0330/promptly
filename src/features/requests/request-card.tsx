@@ -1,11 +1,15 @@
 import Link from "next/link";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { MessageSquareText, PenLine, Sparkles } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { ContentCard, ContentCardBody, ContentCardTitle } from "@/features/content/content-card";
+import { ContentTypeLabel } from "@/features/content/content-type-label";
+import { ContentTags } from "@/features/content/content-tags";
+import { contentActionClassName } from "@/features/content/action-styles";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
+import { ShareButton } from "@/features/prompts/share-button";
 import { CopyPromptButton } from "@/features/prompts/copy-prompt-button";
 import { formatCount, formatRelativeTime, profileHref, requestHref } from "@/lib/utils";
-import { placeholderArt } from "@/lib/placeholder-image";
 import type { PromptRequest } from "@/types";
 
 // A request is only ever shown as "Açık" (accepting responses) or
@@ -26,85 +30,76 @@ export const STATUS_VARIANTS: Record<PromptRequest["status"], "success" | "dange
   closed: "danger",
 };
 
+/**
+ * RequestCard — a community prompt request on the shared ContentCard shell.
+ * Same header rhythm, type line, title/description and footer as the other
+ * cards; the status badge sits where the other cards have their menu, and
+ * the footer's primary action is answering (a real link to the answer
+ * flow, only while the request is open) instead of like/save, which
+ * requests genuinely don't have.
+ */
 export function RequestCard({ request }: { request: PromptRequest }) {
-  // Requests have no media of their own — same offline generated art as
-  // prompt cards (see placeholder-image.ts) gives the card the same
-  // colorful identity instead of a plain text-only box.
-  const banner = placeholderArt(request.id, 800, 240);
+  const href = requestHref(request);
+  const typeMeta = request.contentType ? CONTENT_TYPE_META[request.contentType] : null;
+  const isOpen = request.status === "open";
 
   return (
-    <div className="group relative flex flex-col overflow-hidden rounded-lg border border-border bg-surface transition-shadow hover:shadow-md">
-      <div
-        className="relative flex h-24 w-full shrink-0 items-center justify-center bg-accent-surface bg-cover bg-center"
-        style={{ backgroundImage: `url("${banner}")` }}
-      >
-        <span className="flex h-10 w-10 items-center justify-center rounded-full bg-black/20 text-white backdrop-blur-sm">
-          <Sparkles size={18} />
-        </span>
-        <Badge variant={STATUS_VARIANTS[request.status]} className="absolute right-2 top-2 shadow-sm">
-          {STATUS_LABELS[request.status]}
-        </Badge>
-      </div>
+    <ContentCard href={href}>
+      <ContentCardBody>
+        <div className="flex items-center justify-between gap-2">
+          <Link
+            href={profileHref(request.author)}
+            className="group/author relative z-10 flex min-w-0 items-center gap-2.5 rounded-md"
+          >
+            <Avatar src={request.author.avatarUrl} alt={request.author.displayName} size={32} />
+            <span className="min-w-0 leading-tight">
+              <span className="block truncate text-label font-semibold text-text group-hover/author:text-primary">
+                {request.author.displayName}
+              </span>
+              <span className="block truncate text-caption text-text-muted">
+                @{request.author.username} · {formatRelativeTime(request.createdAt)}
+              </span>
+            </span>
+          </Link>
+          <Badge variant={STATUS_VARIANTS[request.status]} className="shrink-0">
+            <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-current" />
+            {STATUS_LABELS[request.status]}
+          </Badge>
+        </div>
 
-      <div className="flex flex-col gap-3 p-4">
-        {request.contentType && (
-          <div className="flex items-center gap-1.5 text-primary">
-            {(() => {
-              const Icon = CONTENT_TYPE_META[request.contentType].icon;
-              return <Icon size={14} />;
-            })()}
-            <span className="text-xs font-medium">{CONTENT_TYPE_META[request.contentType].label} İsteği</span>
-          </div>
-        )}
-
-        <h3 className="text-sm font-semibold text-text">{request.title}</h3>
-
-        <div>
-          <div className="mb-1 flex justify-end">
-            <CopyPromptButton text={request.description} />
-          </div>
-          <p className="line-clamp-2 text-sm text-text-muted">{request.description}</p>
+        <div className="space-y-2">
+          <ContentTypeLabel icon={Sparkles} label="Prompt İsteği" detail={typeMeta?.label ?? request.preferredTool} />
+          <ContentCardTitle href={href} title={request.title} description={request.description} />
         </div>
 
         {request.creativeDirection && (
-          <div className="rounded-md bg-accent-surface/60 px-3 py-2 text-xs text-text-muted">
-            <span className="font-medium text-text">Yaratıcı yön: </span>
-            <span className="line-clamp-1">{request.creativeDirection}</span>
-          </div>
+          <p className="rounded-md border border-border-soft bg-surface-soft px-3 py-2 text-caption text-text-secondary">
+            <span className="font-semibold text-text">Yaratıcı yön · </span>
+            <span className="line-clamp-2 inline">{request.creativeDirection}</span>
+          </p>
         )}
 
-        <div className="flex flex-wrap gap-1.5">
-          {request.tags.map((tag) => (
-            <Badge key={tag.slug} variant="outline">
-              {tag.label}
-            </Badge>
-          ))}
-          {request.preferredTool && <Badge variant="outline">{request.preferredTool}</Badge>}
-        </div>
+        <ContentTags tags={request.tags} />
+      </ContentCardBody>
 
-        <div className="flex items-center justify-between gap-2 pt-1">
+      <div className="relative z-10 flex items-center gap-0.5 border-t border-border-soft px-2 py-1.5">
+        <Link href={href} className={contentActionClassName(false)} aria-label={`${formatCount(request.responseCount)} yanıt`}>
+          <MessageSquareText size={16} strokeWidth={1.75} />
+          <span aria-hidden>{formatCount(request.responseCount)} yanıt</span>
+        </Link>
+        <span className="ml-auto" />
+        <CopyPromptButton text={request.description} className="mr-1" />
+        <ShareButton url={href} title={request.title} />
+        {isOpen && (
           <Link
-            href={profileHref(request.author)}
-            className="relative z-10 flex min-w-0 items-center gap-2 text-xs text-text-muted hover:text-text"
+            href={`/create?answerRequest=${request.id}`}
+            className="relative z-10 ml-1 inline-flex h-8 items-center gap-1.5 rounded-md bg-primary-soft px-3 text-label font-semibold text-primary transition-colors duration-200 hover:bg-primary hover:text-primary-foreground"
           >
-            <Avatar src={request.author.avatarUrl} alt={request.author.displayName} size={20} />
-            <span className="truncate">{request.author.displayName}</span>
-            <span className="shrink-0">· {formatRelativeTime(request.createdAt)}</span>
+            <PenLine size={14} />
+            Yanıtla
           </Link>
-          <span className="shrink-0 text-xs text-text-muted">{formatCount(request.responseCount)} yanıt</span>
-        </div>
-
-        <div className="pointer-events-none relative z-10 flex items-center justify-center gap-1.5 rounded-md border border-primary/30 bg-primary/5 py-2 text-sm font-medium text-primary">
-          İsteği Görüntüle ve Yanıtla
-          <ArrowRight size={14} />
-        </div>
+        )}
       </div>
-
-      <Link
-        href={requestHref(request)}
-        className="absolute inset-0 z-0"
-        aria-label={`${request.title} isteğini görüntüle ve yanıtla`}
-      />
-    </div>
+    </ContentCard>
   );
 }

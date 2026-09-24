@@ -128,7 +128,7 @@ export function CollectionMoreMenu({
         aria-label="Koleksiyon seçenekleri"
         aria-haspopup="menu"
         aria-expanded={open}
-        className="flex h-7 w-7 items-center justify-center rounded-full bg-surface/90 text-text-muted shadow-sm transition-colors hover:bg-accent-surface hover:text-text"
+        className="flex h-7 w-7 items-center justify-center rounded-full bg-surface/90 text-text-muted shadow-sm transition-colors hover:bg-surface-soft hover:text-text"
       >
         <MoreVertical size={16} />
       </button>
@@ -139,7 +139,7 @@ export function CollectionMoreMenu({
             ref={menuRef}
             role="menu"
             style={{ position: "fixed", top: position.top, left: position.left, width: MENU_WIDTH }}
-            className="z-50 overflow-hidden rounded-md border border-border bg-surface py-1 shadow-md"
+            className="z-50 overflow-hidden rounded-md border border-border-soft bg-surface-elevated py-1 shadow-pop animate-pop-in"
             onClick={(event) => event.stopPropagation()}
           >
             <button
@@ -151,7 +151,7 @@ export function CollectionMoreMenu({
                 setOpen(false);
                 onEdit();
               }}
-              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-text hover:bg-accent-surface"
+              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-text hover:bg-surface-soft"
             >
               <Pencil size={14} />
               Koleksiyonu düzenle
@@ -161,12 +161,12 @@ export function CollectionMoreMenu({
               role="menuitem"
               onClick={handleDelete}
               disabled={isDeleting}
-              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-red-600 hover:bg-red-500/10"
+              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-danger hover:bg-danger/10"
             >
               {isDeleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
               {confirmingDelete ? "Emin misin? Tekrar tıkla" : "Koleksiyonu sil"}
             </button>
-            {error && <p className="px-3 py-1 text-xs text-red-500">{error}</p>}
+            {error && <p className="px-3 py-1 text-xs text-danger">{error}</p>}
           </div>
         </Portal>
       )}

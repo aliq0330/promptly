@@ -4,9 +4,13 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
-import { Wand2 } from "lucide-react";
+import { SquareTerminal, Wand2 } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
+import { ContentTypeLabel } from "@/features/content/content-type-label";
+import { ShareButton } from "@/features/prompts/share-button";
+import { RelatedPrompts } from "@/features/prompts/related-prompts";
+import { CreatorSummary } from "@/features/profile/creator-summary";
+import { clampedAspectRatio } from "@/lib/placeholder-image";
 import { GeneratorSourceContext, RequestResponseContext } from "@/features/prompts/post-context";
 import { CommentSection } from "@/features/prompts/comment-section";
 import { LikeButton } from "@/features/prompts/like-button";
@@ -20,7 +24,7 @@ import { fetchVariablesForPrompt } from "@/lib/supabase/prompt-variables";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
 import { PostMenu } from "@/features/prompts/post-menu";
 import { parseHighlightValue } from "@/lib/notification-utils";
-import { cn, formatRelativeTime, tagHref } from "@/lib/utils";
+import { cn, formatRelativeTime, profileHref, promptHref, tagHref } from "@/lib/utils";
 import type { Prompt, PromptVariable } from "@/types";
 
 /** Same fade timing as the comment-thread flash (`comment-section.tsx`) — one shared "how long does a jumped-to thing glow" feel across the app. */
@@ -30,7 +34,6 @@ const HIGHLIGHT_DURATION_MS = 2500;
 export function PromptDetailView({ prompt }: { prompt: Prompt }) {
   const media = prompt.media[0];
   const typeMeta = CONTENT_TYPE_META[prompt.contentType];
-  const TypeIcon = typeMeta.icon;
 
   const { user } = useAuth();
   const isOwn = user?.id === prompt.author.id;
@@ -63,90 +66,109 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
   }, [prompt.id]);
 
   return (
-    <div
-      className={cn(
-        "mx-auto max-w-3xl space-y-6 px-4 py-6 transition-colors duration-700 lg:px-6",
-        isPostFlashed && "rounded-lg bg-primary/10 ring-1 ring-primary/40",
-      )}
-    >
-      {media && (
-        <div className="relative aspect-[4/3] w-full overflow-hidden rounded-lg bg-accent-surface">
-          <Image src={media.url} alt={media.alt} fill sizes="768px" className="object-cover" />
-        </div>
-      )}
-
-      <div className="space-y-3">
-        <div className="flex items-center gap-1.5 text-primary">
-          <TypeIcon size={14} />
-          <span className="text-xs font-medium">{typeMeta.label} Prompt</span>
-        </div>
-
-        <div className="flex items-start justify-between gap-3">
-          <h1 className="text-lg font-semibold text-text">{prompt.title}</h1>
-          <div className="flex shrink-0 items-center gap-2">
-            <PostMenu promptId={prompt.id} authorId={prompt.author.id} />
-          </div>
-        </div>
-
-        {prompt.origin.type === "request-response" && (
-          <RequestResponseContext requestId={prompt.origin.requestId} currentPromptId={prompt.id} />
-        )}
-        {prompt.generatedFrom && <GeneratorSourceContext generatedFrom={prompt.generatedFrom} />}
-
-        <p className="text-sm text-text-muted">{prompt.description}</p>
-
-        <div className="flex items-center gap-2">
-          <Avatar src={prompt.author.avatarUrl} alt={prompt.author.displayName} size={32} />
-          <div className="text-sm">
-            <p className="font-medium text-text">{prompt.author.displayName}</p>
-            <p className="text-xs text-text-muted">{formatRelativeTime(prompt.createdAt)}</p>
-          </div>
-        </div>
-
-        <div className="flex flex-wrap gap-1.5">
-          {prompt.tags.map((tag) => (
-            <Link key={tag.slug} href={tagHref(tag)}>
-              <Badge className="hover:bg-accent-surface">{tag.label}</Badge>
-            </Link>
-          ))}
-          {prompt.tool && <Badge variant="outline">{prompt.tool}</Badge>}
-        </div>
-
-        <div className="rounded-md border border-border bg-surface p-3">
-          <div className="mb-1 flex items-center justify-between gap-2">
-            <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">Prompt Metni</p>
-            <CopyPromptButton text={prompt.promptText} />
-          </div>
-          <p className="font-mono text-sm text-text">{prompt.promptText}</p>
-          {variables.length > 0 && (
-            <button
-              type="button"
-              onClick={() => setIsPersonalizeOpen(true)}
-              className="relative z-10 mt-3 flex items-center gap-1.5 rounded-md border border-primary/40 bg-primary/5 px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/10"
-            >
-              <Wand2 size={13} />
-              Promptu kişiselleştir
-            </button>
+    <div className="mx-auto w-full max-w-6xl px-3 py-5 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
+      <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-8">
+        <article
+          className={cn(
+            "min-w-0 space-y-5 rounded-lg transition-colors duration-700",
+            isPostFlashed && "bg-primary/10 ring-1 ring-primary/40",
           )}
-        </div>
+        >
+          <header className="space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <ContentTypeLabel icon={typeMeta.icon} label={`${typeMeta.label} Prompt`} detail={prompt.tool} />
+              <PostMenu promptId={prompt.id} authorId={prompt.author.id} />
+            </div>
+            <h1 className="text-h1 font-semibold text-text">{prompt.title}</h1>
+            {prompt.description && <p className="max-w-2xl text-body text-text-secondary">{prompt.description}</p>}
+            <Link href={profileHref(prompt.author)} className="group inline-flex items-center gap-2.5 rounded-md">
+              <Avatar src={prompt.author.avatarUrl} alt={prompt.author.displayName} size={32} />
+              <span className="leading-tight">
+                <span className="block text-label font-semibold text-text group-hover:text-primary">{prompt.author.displayName}</span>
+                <span className="block text-caption text-text-muted">
+                  @{prompt.author.username} · {formatRelativeTime(prompt.createdAt)}
+                </span>
+              </span>
+            </Link>
+          </header>
 
-        {isOwn && <EditHistoryPanel contentType="prompt" contentId={prompt.id} />}
+          {prompt.origin.type === "request-response" && (
+            <RequestResponseContext requestId={prompt.origin.requestId} currentPromptId={prompt.id} />
+          )}
+          {prompt.generatedFrom && <GeneratorSourceContext generatedFrom={prompt.generatedFrom} />}
 
-        <div className="flex items-center gap-5 pt-1 text-sm text-text-muted">
-          <LikeButton id={prompt.id} likeCount={prompt.likeCount} size={18} className="text-sm" />
-          <CommentCountLink
-            promptId={prompt.id}
-            baseCount={prompt.commentCount}
-            size={18}
-            className="text-sm"
-          />
-          <SaveButton promptId={prompt.id} size={18} />
-        </div>
+          <div className="flex flex-wrap items-center gap-0.5 border-y border-border-soft py-1.5">
+            <LikeButton id={prompt.id} likeCount={prompt.likeCount} size={18} />
+            <CommentCountLink promptId={prompt.id} baseCount={prompt.commentCount} size={18} />
+            <SaveButton promptId={prompt.id} size={18} />
+            <ShareButton url={promptHref(prompt)} title={prompt.title} label="Paylaş" />
+          </div>
+
+          <section aria-labelledby="prompt-text-title" className="overflow-hidden rounded-lg border border-border-soft bg-surface-soft">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border-soft px-4 py-2.5">
+              <h2 id="prompt-text-title" className="flex items-center gap-1.5 font-sans text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">
+                <SquareTerminal size={14} />
+                Prompt Metni
+              </h2>
+              <div className="flex items-center gap-2">
+                {variables.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setIsPersonalizeOpen(true)}
+                    className="relative z-10 inline-flex h-9 items-center gap-1.5 rounded-sm border border-primary/30 bg-primary-soft px-3 text-label font-medium text-primary transition-colors hover:border-primary/60"
+                  >
+                    <Wand2 size={14} />
+                    Promptu kişiselleştir
+                  </button>
+                )}
+                <CopyPromptButton text={prompt.promptText} size="md" />
+              </div>
+            </div>
+            <p className="prompt-text whitespace-pre-wrap break-words px-4 py-4 text-[0.875rem] text-text">{prompt.promptText}</p>
+          </section>
+
+          {media && (
+            <figure className="space-y-2">
+              <div
+                className="relative w-full overflow-hidden rounded-lg border border-border-soft bg-surface-soft"
+                // Supporting output preview, not a hero image: capped at ~480px tall.
+                style={{
+                  aspectRatio: clampedAspectRatio(media.width, media.height),
+                  maxWidth: `${Math.round(480 * clampedAspectRatio(media.width, media.height))}px`,
+                }}
+              >
+                <Image src={media.url} alt={media.alt} fill sizes="(min-width: 1024px) 720px, 100vw" className="object-cover" />
+              </div>
+              <figcaption className="text-caption text-text-muted">Çıktı — bu promptla üretilen sonuç</figcaption>
+            </figure>
+          )}
+
+          {prompt.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {prompt.tags.map((tag) => (
+                <Link
+                  key={tag.slug}
+                  href={tagHref(tag)}
+                  className="inline-flex h-7 items-center rounded-full border border-border-soft bg-surface px-2.5 text-caption font-medium text-text-secondary transition-colors hover:border-primary/40 hover:text-primary"
+                >
+                  #{tag.label}
+                </Link>
+              ))}
+            </div>
+          )}
+
+          {isOwn && <EditHistoryPanel contentType="prompt" contentId={prompt.id} />}
+
+          <section className="rounded-lg border border-border-soft bg-surface p-4 sm:p-5">
+            <CommentSection target={{ promptId: prompt.id }} highlightCommentId={highlightCommentId} />
+          </section>
+        </article>
+
+        <aside className="mt-6 space-y-5 lg:sticky lg:top-24 lg:mt-0 lg:self-start">
+          <CreatorSummary creator={prompt.author} isOwn={isOwn} />
+          <RelatedPrompts prompt={prompt} />
+        </aside>
       </div>
-
-      <section className="space-y-3 border-t border-border pt-5">
-        <CommentSection target={{ promptId: prompt.id }} highlightCommentId={highlightCommentId} />
-      </section>
 
       {isPersonalizeOpen && (
         <PersonalizeModal

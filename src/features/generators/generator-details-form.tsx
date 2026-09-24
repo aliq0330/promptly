@@ -142,7 +142,7 @@ export function GeneratorDetailsForm({
             <input type="file" accept="image/*" onChange={handleCoverChange} className="hidden" />
           </label>
         )}
-        {coverError && <p className="mt-1 text-xs text-red-500">{coverError}</p>}
+        {coverError && <p className="mt-1 text-xs text-danger">{coverError}</p>}
       </div>
 
       <div>

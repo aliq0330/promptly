@@ -1,38 +1,41 @@
-import { ArrowRight, Terminal } from "lucide-react";
+import { SquareTerminal } from "lucide-react";
 import { CopyPromptButton } from "./copy-prompt-button";
 import { cn } from "@/lib/utils";
 import type { Prompt } from "@/types";
 
 /**
- * The lavender "Kullanılan prompt" box shown on every card regardless of
- * content type — a short, clamped preview of the actual prompt text plus a
- * link to the full post. Shared by image and text/video/code/music cards
- * so there's exactly one place this preview is built, not one per card
- * shape (it replaces text-prompt-card.tsx's old bespoke version). Since a
- * prompt gönderisi and a prompt yanıtı are the SAME `prompts` row shape
- * (`origin_type` is all that differs), rendering the "Kopyala" button here
- * (CLAUDE.md §10) covers both content types on every card they appear in —
- * no per-type special-casing needed. `CopyPromptButton` always copies the
- * real, full `promptText`, never this box's own `line-clamp-3`-truncated
- * display text.
+ * The prompt block — Promptly's signature element. The literal prompt text
+ * is always shown in the same calm monospace panel (`prompt-text` utility),
+ * so on every card the thing you actually copy is visually distinct from
+ * the title/description written about it. Shared by every prompt card
+ * (and a request response, which is the same `prompts` row shape).
+ * `CopyPromptButton` always copies the real, full `promptText`, never this
+ * block's clamped display text.
  */
-export function PromptPreviewBox({ prompt }: { prompt: Prompt }) {
+export function PromptPreviewBox({ prompt, lines = 4 }: { prompt: Prompt; lines?: 3 | 4 | 6 }) {
   return (
-    <div className="rounded-md bg-accent-surface/60 p-3">
-      <div className="mb-1.5 flex items-center justify-between gap-2">
-        <div className="flex items-center gap-1.5 text-primary">
-          <Terminal size={14} />
-          <span className="text-xs font-semibold">Kullanılan prompt</span>
-        </div>
+    <div className="relative overflow-hidden rounded-md border border-border-soft bg-surface-soft">
+      <div className="flex items-center justify-between gap-2 px-3 pt-2">
+        <span className="flex items-center gap-1.5 text-caption font-semibold tracking-wide text-text-muted">
+          <SquareTerminal size={13} strokeWidth={2} />
+          Prompt
+        </span>
         <CopyPromptButton text={prompt.promptText} />
       </div>
-      <p className={cn("line-clamp-3 text-xs text-text-muted", prompt.contentType === "code" && "font-mono")}>
-        {prompt.promptText}
-      </p>
-      <span className="pointer-events-none mt-1.5 flex items-center gap-1 text-xs font-medium text-primary">
-        Promptun tamamını gör
-        <ArrowRight size={12} />
-      </span>
+      {/* Padding lives on the wrapper: padding on the clamped element itself
+          would reveal part of the next (clamped-away) line. */}
+      <div className="px-3 pb-3 pt-1.5">
+        <p
+          className={cn(
+            "prompt-text break-words whitespace-pre-line text-text-secondary",
+            lines === 3 && "line-clamp-3",
+            lines === 4 && "line-clamp-4",
+            lines === 6 && "line-clamp-6",
+          )}
+        >
+          {prompt.promptText}
+        </p>
+      </div>
     </div>
   );
 }

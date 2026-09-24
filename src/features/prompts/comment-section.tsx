@@ -1,5 +1,7 @@
 "use client";
 
+import { Skeleton } from "@/components/ui/skeleton";
+
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Avatar } from "@/components/ui/avatar";
@@ -382,21 +384,24 @@ export function CommentSection({
   };
 
   return (
-    <section className="space-y-3 border-t border-border pt-5">
-      <h2 className="text-sm font-semibold text-text">Yorumlar ({comments.length})</h2>
+    <section className="space-y-4">
+      <h2 className="flex items-center gap-2 text-h3 font-semibold text-text">
+        Yorumlar
+        <span className="rounded-xs bg-surface-soft px-1.5 font-sans text-caption font-semibold tabular-nums text-text-muted">{comments.length}</span>
+      </h2>
 
       {highlightNotFound && (
-        <p className="rounded-md bg-accent-surface/60 px-3 py-2 text-sm text-text-muted">
+        <p className="rounded-md bg-surface-soft px-3 py-2.5 text-small text-text-muted">
           Bu yorum artık mevcut değil.
         </p>
       )}
 
       {disabledReason ? (
-        <p className="rounded-md bg-accent-surface/60 px-3 py-2 text-sm text-text-muted">
+        <p className="rounded-md bg-surface-soft px-3 py-2.5 text-small text-text-muted">
           {disabledReason}
         </p>
       ) : !user ? (
-        <p className="rounded-md bg-accent-surface/60 px-3 py-2 text-sm text-text-muted">
+        <p className="rounded-md bg-surface-soft px-3 py-2.5 text-small text-text-muted">
           Yorum yapmak için{" "}
           <Link href="/login" className="font-medium text-primary underline">
             giriş yapmalısın
@@ -411,7 +416,7 @@ export function CommentSection({
               value={draft}
               onChange={(event) => setDraft(event.target.value)}
               placeholder="Bir yorum yaz..."
-              className="h-9 min-w-0 flex-1 rounded-md border border-border bg-surface px-3 text-sm text-text placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-primary"
+              className="h-9 min-w-0 flex-1 rounded-md border border-border bg-surface px-3 text-small text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
             <Button type="submit" size="sm" disabled={!draft.trim() || isPosting}>
               {isPosting ? "Gönderiliyor..." : "Gönder"}
@@ -420,13 +425,23 @@ export function CommentSection({
         </form>
       )}
 
-      {postError && <p className="text-sm text-red-500">{postError}</p>}
-      {deleteError && <p className="text-sm text-red-500">{deleteError}</p>}
+      {postError && <p className="text-sm text-danger">{postError}</p>}
+      {deleteError && <p className="text-sm text-danger">{deleteError}</p>}
 
       {!loaded ? (
-        <p className="py-6 text-center text-sm text-text-muted">Yükleniyor…</p>
+        <div className="space-y-3" role="status" aria-label="Yorumlar yükleniyor">
+          {[0, 1].map((i) => (
+            <div key={i} className="flex gap-2.5">
+              <Skeleton className="h-8 w-8 rounded-full" />
+              <div className="flex-1 space-y-1.5 pt-1">
+                <Skeleton className="h-3 w-32" />
+                <Skeleton className="h-3 w-2/3" />
+              </div>
+            </div>
+          ))}
+        </div>
       ) : topLevel.length === 0 ? (
-        <p className="py-6 text-center text-sm text-text-muted">Henüz yorum yapılmadı.</p>
+        <p className="rounded-md border border-dashed border-border py-6 text-center text-small text-text-muted">Henüz yorum yapılmadı. İlk yorumu sen yaz.</p>
       ) : (
         <div className="space-y-4">
           {topLevel.map((comment) => (

@@ -65,7 +65,7 @@ export function ProfileMoreMenu({
         aria-label="Profil seçenekleri"
         aria-haspopup="menu"
         aria-expanded={open}
-        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border bg-transparent text-text-muted transition-colors hover:bg-accent-surface hover:text-text"
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border bg-transparent text-text-muted transition-colors hover:bg-surface-soft hover:text-text"
       >
         <MoreVertical size={16} />
       </button>
@@ -73,15 +73,15 @@ export function ProfileMoreMenu({
       {open && (
         <div
           role="menu"
-          className="absolute right-0 top-10 z-30 w-64 space-y-3 rounded-md border border-border bg-surface p-3 shadow-md"
+          className="absolute right-0 top-10 z-30 w-64 space-y-3 rounded-md border border-border-soft bg-surface-elevated p-3 shadow-pop animate-pop-in"
         >
           <button
             type="button"
             role="menuitem"
             onClick={handleBlockClick}
             className={cn(
-              "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-accent-surface",
-              blockState.isBlocked ? "text-text" : "text-red-600",
+              "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-surface-soft",
+              blockState.isBlocked ? "text-text" : "text-danger",
             )}
           >
             <Ban size={14} />

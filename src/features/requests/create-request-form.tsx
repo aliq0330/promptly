@@ -181,7 +181,7 @@ export function CreateRequestForm() {
   if (!user) {
     return (
       <div className="mx-auto max-w-md px-4 py-16 text-center">
-        <h1 className="mb-2 text-lg font-semibold text-text">Giriş yapmalısın</h1>
+        <h1 className="mb-2 text-h2 font-semibold text-text">Giriş yapmalısın</h1>
         <p className="mb-4 text-sm text-text-muted">
           Bir prompt isteği yayınlamak (ya da düzenlemek) için önce giriş yapmalısın.
         </p>
@@ -210,7 +210,7 @@ export function CreateRequestForm() {
   if (editForbidden) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
-        <h1 className="mb-2 text-lg font-semibold text-text">Bu isteği düzenleme yetkin yok</h1>
+        <h1 className="mb-2 text-h2 font-semibold text-text">Bu isteği düzenleme yetkin yok</h1>
         <p className="mb-4 text-sm text-text-muted">Bir isteği yalnızca kendi sahibi düzenleyebilir.</p>
         <Link
           href="/requests"
@@ -225,7 +225,7 @@ export function CreateRequestForm() {
   if (isEditMode && !editingRequest) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
-        <h1 className="mb-2 text-lg font-semibold text-text">İstek bulunamadı</h1>
+        <h1 className="mb-2 text-h2 font-semibold text-text">İstek bulunamadı</h1>
         <p className="mb-4 text-sm text-text-muted">
           Düzenlemek istediğin istek silinmiş veya artık erişilebilir değil.
         </p>
@@ -269,8 +269,8 @@ export function CreateRequestForm() {
   };
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-6 lg:px-6">
-      <h1 className="mb-1 text-lg font-semibold text-text">{isEditMode ? "İsteği Düzenle" : "İstek Oluştur"}</h1>
+    <div className="mx-auto max-w-5xl px-3 py-5 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
+      <h1 className="mb-1 text-h1 font-semibold text-text">{isEditMode ? "İsteği Düzenle" : "İstek Oluştur"}</h1>
       <p className="mb-6 text-sm text-text-muted">
         {isEditMode
           ? "Değişikliklerini yaz, sağda anında önizlemesini gör. Kaydet'e bastığında gerçekten, kalıcı olarak güncellenir."
@@ -342,10 +342,10 @@ export function CreateRequestForm() {
               placeholder="Örn. Bilim kurgu film afişi için sinematik prompt arıyorum"
               className={cn(
                 "h-10 w-full rounded-md border bg-background px-3 text-sm text-text placeholder:text-text-muted",
-                titleTouched && titleError ? "border-red-500" : "border-border",
+                titleTouched && titleError ? "border-danger" : "border-border",
               )}
             />
-            {titleTouched && titleError && <p className="mt-1 text-xs text-red-500">{titleError}</p>}
+            {titleTouched && titleError && <p className="mt-1 text-xs text-danger">{titleError}</p>}
           </div>
 
           <div>
@@ -365,11 +365,11 @@ export function CreateRequestForm() {
               placeholder="Ne istediğini ayrıntılı şekilde anlat: atmosfer, stil, ışık, kompozisyon..."
               className={cn(
                 "w-full resize-none rounded-md border bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted",
-                descriptionTouched && descriptionError ? "border-red-500" : "border-border",
+                descriptionTouched && descriptionError ? "border-danger" : "border-border",
               )}
             />
             {descriptionTouched && descriptionError && (
-              <p className="mt-1 text-xs text-red-500">{descriptionError}</p>
+              <p className="mt-1 text-xs text-danger">{descriptionError}</p>
             )}
           </div>
 
@@ -398,7 +398,7 @@ export function CreateRequestForm() {
                 onChange={handleImageChange}
                 className="block w-full text-sm text-text-muted file:mr-3 file:rounded-md file:border-0 file:bg-accent-surface file:px-3 file:py-2 file:text-sm file:font-medium file:text-primary hover:file:bg-accent-surface/70"
               />
-              {imageError && <p className="mt-1 text-xs text-red-500">{imageError}</p>}
+              {imageError && <p className="mt-1 text-xs text-danger">{imageError}</p>}
             </div>
           )}
 
@@ -423,7 +423,7 @@ export function CreateRequestForm() {
             <TagPicker picker={tagPicker} />
           </div>
 
-          {publishError && <p className="text-sm text-red-500">{publishError}</p>}
+          {publishError && <p className="text-sm text-danger">{publishError}</p>}
 
           <div className="flex gap-2">
             <Button type="submit" size="lg" disabled={isSubmitting}>

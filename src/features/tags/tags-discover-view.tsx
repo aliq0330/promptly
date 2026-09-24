@@ -54,9 +54,9 @@ export function TagsDiscoverView() {
   }, [allTags, normalizedQuery, sortMode]);
 
   return (
-    <div className="mx-auto max-w-4xl space-y-8 px-4 py-6 lg:px-6">
+    <div className="mx-auto max-w-4xl space-y-8 px-3 py-5 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
       <div>
-        <h1 className="mb-1 text-lg font-semibold text-text">Etiketleri Keşfet</h1>
+        <h1 className="mb-1 text-h1 font-semibold text-text">Etiketleri Keşfet</h1>
         <p className="text-sm text-text-muted">
           Popüler ve yükselen etiketleri incele, ya da doğrudan aradığın etikete git.
         </p>
@@ -82,7 +82,7 @@ export function TagsDiscoverView() {
           <section className="space-y-3">
             <div className="flex items-center gap-1.5">
               <Flame size={16} className="text-primary" />
-              <h2 className="text-sm font-semibold text-text">Popüler Etiketler</h2>
+              <h2 className="text-h3 font-semibold text-text">Popüler Etiketler</h2>
             </div>
             <TagChipRow tags={popular} emptyMessage="Henüz yeterli kullanım verisi yok." />
           </section>
@@ -90,7 +90,7 @@ export function TagsDiscoverView() {
           <section className="space-y-3">
             <div className="flex items-center gap-1.5">
               <Sparkles size={16} className="text-primary" />
-              <h2 className="text-sm font-semibold text-text">Yükselen Etiketler</h2>
+              <h2 className="text-h3 font-semibold text-text">Yükselen Etiketler</h2>
             </div>
             {trending.length === 0 ? (
               <p className="text-sm text-text-muted">
@@ -112,14 +112,14 @@ export function TagsDiscoverView() {
           <section className="space-y-3">
             <div className="flex items-center gap-1.5">
               <Hash size={16} className="text-primary" />
-              <h2 className="text-sm font-semibold text-text">Yeni Eklenenler</h2>
+              <h2 className="text-h3 font-semibold text-text">Yeni Eklenenler</h2>
             </div>
             <TagChipRow tags={newest} emptyMessage="Henüz yeni bir etiket yok." />
           </section>
 
           <section className="space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <h2 className="text-sm font-semibold text-text">Tüm Etiketler ({allTags.length})</h2>
+              <h2 className="text-h3 font-semibold text-text">Tüm Etiketler ({allTags.length})</h2>
               <div className="flex gap-1.5">
                 {(["popular", "newest", "az"] as SortMode[]).map((mode) => (
                   <button
@@ -163,7 +163,7 @@ function TagChipRow({ tags, emptyMessage }: { tags: Tag[]; emptyMessage: string 
 function TagResultsSection({ title, tags, emptyMessage }: { title?: string; tags: Tag[]; emptyMessage: string }) {
   return (
     <div className="space-y-3">
-      {title && <h2 className="text-sm font-semibold text-text">{title}</h2>}
+      {title && <h2 className="text-h3 font-semibold text-text">{title}</h2>}
       {tags.length === 0 ? (
         <p className="py-6 text-center text-sm text-text-muted">{emptyMessage}</p>
       ) : (

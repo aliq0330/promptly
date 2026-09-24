@@ -36,54 +36,58 @@ export function ProfileHeader({
   const followState = useFollowState(user);
 
   return (
-    <div className="flex flex-col items-center gap-3 px-4 pt-8 text-center lg:px-6">
-      <ProfileAvatar src={user.avatarUrl} alt={user.displayName} isOwnProfile={isOwnProfile} />
+    <header className="rounded-lg border border-border-soft bg-surface p-5 shadow-card sm:p-6">
+      <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:gap-6">
+        <ProfileAvatar src={user.avatarUrl} alt={user.displayName} isOwnProfile={isOwnProfile} />
 
-      <div className="min-w-0 max-w-full">
-        <h1 className="truncate text-lg font-semibold text-text">{user.displayName}</h1>
-        <p className="truncate text-sm text-text-muted">@{user.username}</p>
-      </div>
+        <div className="min-w-0 flex-1 space-y-4">
+          <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+            <div className="min-w-0">
+              <h1 className="truncate text-h1 font-semibold text-text">{user.displayName}</h1>
+              <p className="truncate text-small text-text-muted">@{user.username}</p>
+            </div>
+            {isOwnProfile ? (
+              <OwnProfileActions user={user} />
+            ) : (
+              <OtherProfileActions user={user} followState={followState} />
+            )}
+          </div>
 
-      {bio && (
-        <p className="max-w-sm text-sm text-text-muted">
-          {visibleBio}{" "}
-          {bioIsLong && (
-            <button
-              type="button"
-              onClick={() => setBioExpanded((prev) => !prev)}
-              className="font-medium text-primary hover:underline"
-            >
-              {bioExpanded ? "Daha az göster" : "Devamını gör"}
-            </button>
+          {bio && (
+            <p className="max-w-2xl text-body text-text-secondary">
+              {visibleBio}{" "}
+              {bioIsLong && (
+                <button
+                  type="button"
+                  onClick={() => setBioExpanded((prev) => !prev)}
+                  className="font-medium text-primary hover:underline"
+                >
+                  {bioExpanded ? "Daha az göster" : "Devamını gör"}
+                </button>
+              )}
+            </p>
           )}
-        </p>
-      )}
 
-      {user.interests && user.interests.length > 0 && (
-        <div className="flex max-w-sm flex-wrap justify-center gap-1.5">
-          {user.interests.slice(0, 4).map((interest) => (
-            <Badge key={interest} variant="outline">
-              {interest}
-            </Badge>
-          ))}
+          {((user.interests && user.interests.length > 0) || publishedPromptCount > 0) && (
+            <div className="flex flex-wrap items-center gap-1.5">
+              {user.interests?.slice(0, 4).map((interest) => (
+                <Badge key={interest} variant="neutral">
+                  {interest}
+                </Badge>
+              ))}
+              <ProfileBadges publishedPromptCount={publishedPromptCount} />
+            </div>
+          )}
+
+          <ProfileStats
+            promptCount={publishedPromptCount}
+            followerCount={followState.followerCount}
+            followingCount={user.followingCount}
+            isOwnProfile={isOwnProfile}
+            onSelectPrompts={onSelectPrompts}
+          />
         </div>
-      )}
-
-      <ProfileBadges publishedPromptCount={publishedPromptCount} />
-
-      <ProfileStats
-        promptCount={publishedPromptCount}
-        followerCount={followState.followerCount}
-        followingCount={user.followingCount}
-        isOwnProfile={isOwnProfile}
-        onSelectPrompts={onSelectPrompts}
-      />
-
-      {isOwnProfile ? (
-        <OwnProfileActions user={user} />
-      ) : (
-        <OtherProfileActions user={user} followState={followState} />
-      )}
-    </div>
+      </div>
+    </header>
   );
 }

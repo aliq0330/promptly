@@ -162,7 +162,7 @@ export function PostMenu({
         aria-label="Gönderi seçenekleri"
         aria-haspopup="menu"
         aria-expanded={open}
-        className="flex h-7 w-7 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-accent-surface hover:text-text"
+        className="flex h-8 w-8 items-center justify-center rounded-md text-text-muted transition-colors duration-200 hover:bg-surface-soft hover:text-text"
       >
         <MoreVertical size={16} />
       </button>
@@ -171,14 +171,14 @@ export function PostMenu({
         <div
           role="menu"
           className={cn(
-            "absolute right-0 top-8 z-30 w-52 overflow-hidden rounded-md border border-border bg-surface py-1 shadow-md",
+            "absolute right-0 top-8 z-30 w-52 overflow-hidden rounded-md border border-border-soft bg-surface-elevated py-1 shadow-pop animate-pop-in",
           )}
         >
           <button
             type="button"
             role="menuitem"
             onClick={handleCopyLink}
-            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-text hover:bg-accent-surface"
+            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-text hover:bg-surface-soft"
           >
             <Link2 size={14} />
             {copied ? "Kopyalandı" : "Bağlantıyı kopyala"}
@@ -188,7 +188,7 @@ export function PostMenu({
               href={`/messages?sharePromptId=${promptId}`}
               role="menuitem"
               onClick={(event) => event.stopPropagation()}
-              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-text hover:bg-accent-surface"
+              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-text hover:bg-surface-soft"
             >
               <Send size={14} />
               Mesajla gönder
@@ -201,7 +201,7 @@ export function PostMenu({
                 role="menuitem"
                 onClick={handleRemoveFromCollection}
                 disabled={isRemoving}
-                className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-red-600 hover:bg-red-500/10"
+                className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-danger hover:bg-danger/10"
               >
                 {isRemoving ? <Loader2 size={14} className="animate-spin" /> : <FolderMinus size={14} />}
                 {confirmingRemove
@@ -210,7 +210,7 @@ export function PostMenu({
                     ? "Kaydedilenlerden kaldır"
                     : "Koleksiyondan kaldır"}
               </button>
-              {removeError && <p className="px-3 py-1 text-xs text-red-500">{removeError}</p>}
+              {removeError && <p className="px-3 py-1 text-xs text-danger">{removeError}</p>}
             </>
           )}
           {isOwn && (
@@ -219,7 +219,7 @@ export function PostMenu({
                 href={editHref}
                 role="menuitem"
                 onClick={(event) => event.stopPropagation()}
-                className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-text hover:bg-accent-surface"
+                className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-text hover:bg-surface-soft"
               >
                 <Pencil size={14} />
                 Düzenle
@@ -229,7 +229,7 @@ export function PostMenu({
                   href={`/create?duplicate=${promptId}`}
                   role="menuitem"
                   onClick={(event) => event.stopPropagation()}
-                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-text hover:bg-accent-surface"
+                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-text hover:bg-surface-soft"
                 >
                   <Copy size={14} />
                   Kopyasını oluştur
@@ -240,14 +240,14 @@ export function PostMenu({
                 role="menuitem"
                 onClick={handleDelete}
                 disabled={isDeleting}
-                className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-red-600 hover:bg-red-500/10"
+                className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-danger hover:bg-danger/10"
               >
                 {isDeleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
                 {confirmingDelete ? "Emin misin? Tekrar tıkla" : "Sil"}
               </button>
             </>
           )}
-          {error && <p className="px-3 py-1 text-xs text-red-500">{error}</p>}
+          {error && <p className="px-3 py-1 text-xs text-danger">{error}</p>}
         </div>
       )}
     </div>

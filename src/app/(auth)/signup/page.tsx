@@ -79,7 +79,7 @@ export default function SignupPage() {
         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent-surface text-primary">
           <MailCheck size={22} />
         </div>
-        <h1 className="text-lg font-semibold text-text">E-postanı kontrol et</h1>
+        <h1 className="text-h2 font-semibold text-text">E-postanı kontrol et</h1>
         <p className="text-sm text-text-muted">
           <strong className="text-text">{email}</strong> adresine bir doğrulama bağlantısı
           gönderdik. Hesabını etkinleştirmek için bağlantıya tıkla, sonra giriş yapabilirsin.
@@ -96,7 +96,7 @@ export default function SignupPage() {
       <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent-surface text-primary">
         <UserPlus size={22} />
       </div>
-      <h1 className="text-lg font-semibold text-text">Kayıt ol</h1>
+      <h1 className="text-h2 font-semibold text-text">Kayıt ol</h1>
 
       <div className="w-full space-y-3 text-left">
         <div>
@@ -144,7 +144,7 @@ export default function SignupPage() {
         </div>
       </div>
 
-      {error && <p className="text-sm text-red-500">{error}</p>}
+      {error && <p className="text-sm text-danger">{error}</p>}
 
       <Button type="submit" className="w-full" disabled={isSubmitting}>
         {isSubmitting ? "Hesap oluşturuluyor..." : "Hesap oluştur"}

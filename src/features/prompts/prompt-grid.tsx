@@ -1,3 +1,5 @@
+import { Blocks, SquareTerminal } from "lucide-react";
+import { EmptyState } from "@/components/ui/empty-state";
 import { PromptCard } from "./prompt-card";
 import { GeneratorCard } from "@/features/generators/generator-card";
 import type { Generator, Prompt } from "@/types";
@@ -24,16 +26,18 @@ export function PromptGrid(props: PromptGridProps) {
 
   if (items.length === 0) {
     return (
-      <p className="py-10 text-center text-sm text-text-muted">
-        {props.generators ? "Henüz gösterilecek generator yok." : "Henüz gösterilecek prompt yok."}
-      </p>
+      <EmptyState
+        icon={props.generators ? Blocks : SquareTerminal}
+        title={props.generators ? "Henüz gösterilecek generator yok." : "Henüz gösterilecek prompt yok."}
+        compact
+      />
     );
   }
 
   return (
-    <div className="columns-1 gap-4 sm:columns-2 xl:columns-3">
+    <div className="columns-1 gap-3 sm:columns-2 sm:gap-4 xl:columns-3">
       {items.map((item) => (
-        <div key={item.key} className="mb-4 break-inside-avoid">
+        <div key={item.key} className="mb-3 break-inside-avoid sm:mb-4">
           {item.node}
         </div>
       ))}

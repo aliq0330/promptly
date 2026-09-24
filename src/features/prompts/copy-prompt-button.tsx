@@ -67,14 +67,14 @@ export function CopyPromptButton({
       aria-label={displayLabel}
       title={state === "failed" ? "Kopyalanamadı, lütfen tekrar dene." : undefined}
       className={cn(
-        "relative z-10 inline-flex min-h-[28px] shrink-0 items-center gap-1.5 rounded-md border px-2.5 py-1.5 font-medium transition-colors",
+        "relative z-10 inline-flex shrink-0 items-center gap-1.5 rounded-sm border font-medium transition-[background-color,border-color,color] duration-200 ease-soft",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-        size === "sm" ? "text-xs" : "text-sm",
+        size === "sm" ? "h-7 px-2 text-caption" : "h-9 px-3 text-label",
         state === "copied"
-          ? "border-primary/40 bg-primary/10 text-primary"
+          ? "border-primary/30 bg-primary-soft text-primary"
           : state === "failed"
-            ? "border-red-500/40 bg-red-500/5 text-red-600"
-            : "border-border bg-surface text-text-muted hover:border-primary/40 hover:text-primary",
+            ? "border-danger/40 bg-danger/5 text-danger"
+            : "border-border-soft bg-surface text-text-secondary hover:border-border hover:text-text",
         className,
       )}
     >

@@ -68,7 +68,7 @@ export function VariableList({
                   <button
                     type="button"
                     onClick={() => onDelete(variable)}
-                    className="whitespace-nowrap rounded-md bg-red-500/10 px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-500/20"
+                    className="whitespace-nowrap rounded-md bg-danger/10 px-2 py-1 text-xs font-medium text-danger hover:bg-danger/20"
                   >
                     {usageCount > 0
                       ? `Bu değişken prompt metninde ${usageCount} yerde kullanılıyor. Silersen bu alanlar da kaldırılacak. Onayla`
@@ -79,7 +79,7 @@ export function VariableList({
                     type="button"
                     onClick={() => setConfirmingId(variable.tempId)}
                     aria-label={`${variable.name} değişkenini sil`}
-                    className="flex h-7 w-7 items-center justify-center rounded-md text-text-muted transition-colors hover:bg-red-500/10 hover:text-red-600"
+                    className="flex h-7 w-7 items-center justify-center rounded-md text-text-muted transition-colors hover:bg-danger/10 hover:text-danger"
                   >
                     <Trash2 size={13} />
                   </button>

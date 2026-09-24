@@ -1,5 +1,7 @@
 "use client";
 
+import { EmptyState } from "@/components/ui/empty-state";
+
 import { useEffect, useState } from "react";
 import { FolderPlus, Plus } from "lucide-react";
 import { CollectionCard } from "./collection-card";
@@ -42,20 +44,21 @@ export function CollectionsPanel({ ownerId, ownerProfile }: { ownerId: string; o
       <button
         type="button"
         onClick={() => setFormMode("create")}
-        className="flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-border py-2.5 text-sm font-medium text-text transition-colors hover:bg-accent-surface"
+        className="flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-border py-2.5 text-label font-medium text-text-secondary transition-colors hover:border-primary/40 hover:bg-surface-soft hover:text-primary"
       >
         <Plus size={16} />
         Koleksiyon oluştur
       </button>
 
       {collections.length === 0 ? (
-        <div className="space-y-3 py-10 text-center">
-          <FolderPlus size={32} className="mx-auto text-text-muted" />
-          <p className="text-sm font-medium text-text">Henüz koleksiyonun yok</p>
-          <p className="text-sm text-text-muted">Kaydettiğin çalışmaları düzenlemek için bir koleksiyon oluştur.</p>
-        </div>
+        <EmptyState
+          icon={FolderPlus}
+          title="Henüz koleksiyonun yok"
+          description="Kaydettiğin çalışmaları düzenlemek için bir koleksiyon oluştur."
+          className="border-0"
+        />
       ) : (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-x-3 gap-y-5 pt-2 sm:grid-cols-3 sm:gap-x-4 lg:grid-cols-4">
           {collections.map((collection) => (
             <CollectionCard
               key={collection.id}

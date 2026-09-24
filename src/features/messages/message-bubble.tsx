@@ -251,7 +251,7 @@ export function MessageBubble({
                 İptal
               </Button>
             </div>
-            {actions.editError && <p className="text-xs text-red-500">{actions.editError}</p>}
+            {actions.editError && <p className="text-xs text-danger">{actions.editError}</p>}
           </div>
         ) : (
           <div className="relative flex max-w-[75%] flex-col gap-1.5">

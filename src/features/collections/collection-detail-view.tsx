@@ -1,5 +1,11 @@
 "use client";
 
+import { FolderOpen } from "lucide-react";
+import { EmptyState } from "@/components/ui/empty-state";
+import { PageContainer } from "@/components/ui/page-header";
+import { DetailSkeleton, NotFoundBlock } from "@/components/ui/detail-skeleton";
+import { CollectionCover } from "./collection-card";
+
 import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Globe, Lock } from "lucide-react";
@@ -19,7 +25,6 @@ import {
   updateCollection,
   type CollectionEntry,
 } from "@/lib/supabase/collections";
-import { placeholderArt } from "@/lib/placeholder-image";
 import { profileHref } from "@/lib/utils";
 import Link from "next/link";
 import type { Collection } from "@/types";
@@ -109,31 +114,24 @@ export function CollectionDetailView() {
   }
 
   if (!id || (loaded && !collection)) {
-    return (
-      <div className="mx-auto max-w-lg px-4 py-16 text-center text-sm text-text-muted">
-        Koleksiyon bulunamadı — silinmiş veya sadece sahibine görünür olabilir.
-      </div>
-    );
+    return <NotFoundBlock title="Koleksiyon bulunamadı" description="Silinmiş veya sadece sahibine görünür olabilir." />;
   }
 
   if (!loaded || !collection) {
-    return <p className="py-16 text-center text-sm text-text-muted">Yükleniyor…</p>;
+    return <DetailSkeleton />;
   }
 
   const isOwner = user?.id === collection.owner.id;
 
   return (
-    <div className="space-y-6 px-4 py-6 lg:px-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-        <div
-          className="h-32 w-32 shrink-0 rounded-lg bg-cover bg-center"
-          style={{ backgroundImage: `url("${collection.coverImage?.url ?? placeholderArt(collection.id, 320, 320)}")` }}
-        />
+    <PageContainer className="space-y-6">
+      <header className="flex flex-col gap-4 rounded-lg border border-border-soft bg-surface p-4 shadow-card sm:flex-row sm:items-start sm:p-5">
+        <CollectionCover collection={collection} className="h-24 w-24 shrink-0 rounded-md sm:h-28 sm:w-28" />
         <div className="min-w-0 flex-1 space-y-2">
           <div className="flex items-start justify-between gap-2">
             <div className="flex min-w-0 flex-wrap items-center gap-2">
-              <h1 className="text-lg font-semibold text-text">{collection.name}</h1>
-              {collection.isDefault && <Badge variant="accent">Varsayılan</Badge>}
+              <h1 className="text-h1 font-semibold text-text">{collection.name}</h1>
+              {collection.isDefault && <Badge variant="default">Varsayılan</Badge>}
             </div>
             {isOwner && (
               <CollectionMoreMenu
@@ -143,30 +141,30 @@ export function CollectionDetailView() {
               />
             )}
           </div>
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-text-muted">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-small text-text-muted">
             <span>{collection.itemCount} çalışma</span>
             <span className="flex items-center gap-1">
               {collection.visibility === "public" ? <Globe size={14} /> : <Lock size={14} />}
               {collection.visibility === "public" ? "Herkese açık" : "Sadece ben"}
             </span>
           </div>
-          <Link href={profileHref(collection.owner)} className="flex w-fit items-center gap-2 text-sm text-text hover:underline">
+          <Link href={profileHref(collection.owner)} className="flex w-fit items-center gap-2 text-label font-medium text-text hover:text-primary">
             <Avatar src={collection.owner.avatarUrl} alt={collection.owner.displayName} size={20} />
             {collection.owner.displayName}
           </Link>
         </div>
-      </div>
+      </header>
 
       {items.length === 0 ? (
-        <p className="py-10 text-center text-sm text-text-muted">Bu koleksiyonda henüz çalışma yok.</p>
+        <EmptyState icon={FolderOpen} title="Bu koleksiyonda henüz çalışma yok." description="Bir prompt ya da generator kaydederken bu koleksiyonu seçebilirsin." action={{ label: "Keşfet'e git", href: "/discover" }} />
       ) : (
-        <div className="columns-1 gap-4 sm:columns-2 xl:columns-3">
+        <div className="columns-1 gap-3 sm:columns-2 sm:gap-4 xl:columns-3">
           {items.map((entry) => {
             const removal = isOwner
               ? { isDefault: collection.isDefault, onRemove: () => handleRemoveItem(entry.data.id, entry.type) }
               : undefined;
             return (
-              <div key={entry.data.id} className="mb-4 break-inside-avoid">
+              <div key={entry.data.id} className="mb-3 break-inside-avoid sm:mb-4">
                 {entry.type === "prompt" ? (
                   <PromptCard prompt={entry.data} collectionRemoval={removal} />
                 ) : (
@@ -194,12 +192,12 @@ export function CollectionDetailView() {
         <Portal>
           <div
             role="status"
-            className="pointer-events-none fixed inset-x-0 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-[60] flex justify-center px-4 lg:bottom-6"
+            className="pointer-events-none fixed inset-x-0 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-[60] flex justify-center px-4 md:bottom-6"
           >
-            <div className="rounded-md bg-text px-3 py-2 text-sm text-background shadow-lg">{toast}</div>
+            <div className="animate-pop-in rounded-md bg-text px-3.5 py-2 text-small text-background shadow-pop">{toast}</div>
           </div>
         </Portal>
       )}
-    </div>
+    </PageContainer>
   );
 }

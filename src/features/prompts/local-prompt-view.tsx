@@ -1,5 +1,6 @@
 "use client";
 
+import { DetailSkeleton } from "@/components/ui/detail-skeleton";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -49,15 +50,13 @@ export function LocalPromptView() {
   const prompt = cachedPrompt ?? fetchedPrompt ?? undefined;
 
   if (!prompt && !checkedRemote) {
-    return (
-      <div className="mx-auto max-w-lg px-4 py-16 text-center text-sm text-text-muted">Yükleniyor…</div>
-    );
+    return <DetailSkeleton />;
   }
 
   if (!prompt) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
-        <h1 className="mb-2 text-lg font-semibold text-text">Prompt bulunamadı</h1>
+        <h1 className="mb-2 text-h2 font-semibold text-text">Prompt bulunamadı</h1>
         <p className="mb-4 text-sm text-text-muted">
           Bu prompt kaldırılmış olabilir, ya da hiç var olmamış olabilir.
         </p>
@@ -74,7 +73,7 @@ export function LocalPromptView() {
   if (prompt.deletedAt) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
-        <h1 className="mb-2 text-lg font-semibold text-text">Bu paylaşım silindi</h1>
+        <h1 className="mb-2 text-h2 font-semibold text-text">Bu paylaşım silindi</h1>
         <p className="mb-4 text-sm text-text-muted">
           Yazarı bu paylaşımı sildi.
         </p>

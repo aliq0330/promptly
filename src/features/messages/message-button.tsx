@@ -48,7 +48,7 @@ export function MessageButton({ user }: { user: UserProfile }) {
         <MessageCircle size={14} />
         {isStarting ? "Açılıyor..." : "Mesaj Gönder"}
       </button>
-      {error && <p className="text-xs text-red-500">{error}</p>}
+      {error && <p className="text-xs text-danger">{error}</p>}
     </div>
   );
 }

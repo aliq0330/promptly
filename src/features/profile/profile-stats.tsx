@@ -3,6 +3,9 @@
 import Link from "next/link";
 import { formatCount, cn } from "@/lib/utils";
 
+const STAT_CLASS = "flex flex-col items-start text-caption text-text-muted";
+const STAT_VALUE_CLASS = "font-display text-h2 font-semibold tabular-nums leading-tight text-text";
+
 function Stat({
   label,
   value,
@@ -13,8 +16,9 @@ function Stat({
   className?: string;
 }) {
   return (
-    <span className={cn("text-sm text-text-muted", className)}>
-      <strong className="text-text">{formatCount(value)}</strong> {label}
+    <span className={cn(STAT_CLASS, className)}>
+      <strong className={STAT_VALUE_CLASS}>{formatCount(value)}</strong>
+      {label}
     </span>
   );
 }
@@ -34,9 +38,10 @@ function StatButton({
     <button
       type="button"
       onClick={onClick}
-      className={cn("rounded-sm text-sm text-text-muted transition-colors hover:text-text", className)}
+      className={cn(STAT_CLASS, "rounded-sm transition-colors hover:text-text", className)}
     >
-      <strong className="text-text">{formatCount(value)}</strong> {label}
+      <strong className={STAT_VALUE_CLASS}>{formatCount(value)}</strong>
+      {label}
     </button>
   );
 }
@@ -66,15 +71,13 @@ export function ProfileStats({
   onSelectPrompts: () => void;
 }) {
   return (
-    <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-1.5">
+    <div className="flex flex-wrap items-stretch divide-x divide-border-soft border-t border-border-soft pt-4 *:px-5 *:first:pl-0">
       <StatButton label="prompt" value={promptCount} onClick={onSelectPrompts} />
       <Stat label="takipçi" value={followerCount} />
       {isOwnProfile ? (
-        <Link
-          href="/following"
-          className="rounded-sm text-sm text-text-muted transition-colors hover:text-text"
-        >
-          <strong className="text-text">{formatCount(followingCount)}</strong> takip
+        <Link href="/following" className={cn(STAT_CLASS, "rounded-sm transition-colors hover:text-text")}>
+          <strong className={STAT_VALUE_CLASS}>{formatCount(followingCount)}</strong>
+          takip
         </Link>
       ) : (
         <Stat label="takip" value={followingCount} />

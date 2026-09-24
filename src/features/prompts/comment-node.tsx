@@ -124,7 +124,7 @@ export function CommentNode({
                   İptal
                 </Button>
               </div>
-              {tree.editError && <p className="text-xs text-red-500">{tree.editError}</p>}
+              {tree.editError && <p className="text-xs text-danger">{tree.editError}</p>}
             </div>
           ) : (
             <p className="text-sm break-words">
@@ -178,7 +178,7 @@ export function CommentNode({
                     onClick={() => tree.onRequestDelete(comment.id)}
                     onBlur={tree.onCancelDeleteConfirm}
                     disabled={isDeletingHere}
-                    className={cn("hover:text-text", isConfirmingDelete && "font-medium text-red-600")}
+                    className={cn("hover:text-text", isConfirmingDelete && "font-medium text-danger")}
                   >
                     {isDeletingHere ? "Siliniyor..." : isConfirmingDelete ? "Emin misin? Tekrar tıkla" : "Sil"}
                   </button>
@@ -215,7 +215,7 @@ export function CommentNode({
                   İptal
                 </Button>
               </div>
-              {tree.postError && <p className="text-xs text-red-500">{tree.postError}</p>}
+              {tree.postError && <p className="text-xs text-danger">{tree.postError}</p>}
             </form>
           )}
 

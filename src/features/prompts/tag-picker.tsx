@@ -142,7 +142,7 @@ export function TagPicker({ picker, disabled }: TagPickerProps) {
               );
             })}
           </div>
-          {picker.acceptError && <p className="text-xs text-red-500">{picker.acceptError}</p>}
+          {picker.acceptError && <p className="text-xs text-danger">{picker.acceptError}</p>}
         </div>
       )}
 
@@ -189,7 +189,7 @@ export function TagPicker({ picker, disabled }: TagPickerProps) {
               )}
             </div>
           )}
-          {createError && <p className="mt-1 text-xs text-red-500">{createError}</p>}
+          {createError && <p className="mt-1 text-xs text-danger">{createError}</p>}
         </div>
       )}
 

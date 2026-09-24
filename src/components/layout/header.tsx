@@ -11,6 +11,7 @@ import { useRealMessages } from "@/features/messages/real-messages-provider";
 import { useNotifications } from "@/features/notifications/notifications-provider";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { profileHref } from "@/lib/utils";
+import { BrandMark } from "@/components/layout/brand-mark";
 
 /**
  * The "Giriş Yap" link is the real auth entry point: it only shows when
@@ -26,31 +27,32 @@ export function Header() {
   const hasUnreadMessages = realConversations.some((c) => c.unreadCount > 0);
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border bg-surface/80 px-4 backdrop-blur lg:px-6">
+    <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border-soft bg-background/85 px-3 backdrop-blur-md sm:px-5 lg:px-8">
       <Link
         href="/"
         aria-label={t("header.homeAriaLabel")}
-        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary text-sm font-bold text-primary-foreground lg:hidden"
+        className="flex shrink-0 items-center gap-2 rounded-md md:hidden"
       >
-        P
+        <BrandMark size={30} />
+        <span className="font-display text-[1.05rem] font-semibold tracking-tight text-text">Promptly</span>
       </Link>
 
-      <div className="hidden min-w-0 flex-1 items-center lg:flex">
+      <div className="hidden min-w-0 flex-1 items-center md:flex">
         <Link
           href="/search"
-          className="flex h-10 w-full max-w-md items-center gap-2 rounded-md border border-border bg-background px-3 text-sm text-text-muted"
+          className="group flex h-10 w-full max-w-lg items-center gap-2.5 rounded-md border border-border-soft bg-surface px-3 text-small text-text-muted shadow-xs transition-colors duration-200 hover:border-border"
         >
-          <Search size={18} className="shrink-0" />
+          <Search size={17} className="shrink-0" />
           <span className="truncate">{t("header.searchPlaceholder")}</span>
         </Link>
       </div>
 
-      <div className="flex flex-1 items-center justify-end gap-1 lg:flex-none">
+      <div className="flex flex-1 items-center justify-end gap-0.5 md:flex-none">
         <Link
           href="/search"
           aria-label={t("header.searchAriaLabel")}
           title={t("header.searchAriaLabel")}
-          className={iconButtonClassName(false, "shrink-0 lg:hidden")}
+          className={iconButtonClassName(false, "shrink-0 md:hidden")}
         >
           <Search size={20} />
         </Link>
@@ -80,14 +82,14 @@ export function Header() {
         {!loading && !user && (
           <Link
             href="/login"
-            className="ml-1 flex h-9 shrink-0 items-center gap-1.5 rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-dark"
+            className="ml-1.5 flex h-9 shrink-0 items-center gap-1.5 rounded-md bg-text px-3 text-label font-semibold text-background transition-opacity duration-200 hover:opacity-90"
           >
             <LogIn size={16} />
             <span className="hidden sm:inline">{t("header.login")}</span>
           </Link>
         )}
         {user && ownProfile && (
-          <Link href={profileHref(ownProfile)} className="ml-1 shrink-0">
+          <Link href={profileHref(ownProfile)} className="ml-1.5 shrink-0 rounded-full" aria-label={ownProfile.displayName}>
             <Avatar src={ownProfile.avatarUrl} alt={ownProfile.displayName} size={36} />
           </Link>
         )}

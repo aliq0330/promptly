@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Bookmark } from "lucide-react";
 import { Portal } from "@/components/ui/portal";
 import { cn } from "@/lib/utils";
+import { contentActionClassName } from "@/features/content/action-styles";
 import { useSaveState } from "./use-save-state";
 import { SaveToCollectionModal } from "@/features/collections/save-to-collection-modal";
 
@@ -26,7 +27,7 @@ import { SaveToCollectionModal } from "@/features/collections/save-to-collection
 export function SaveButton({
   promptId,
   generatorId,
-  size = 14,
+  size = 16,
   className,
 }: {
   promptId?: string;
@@ -50,11 +51,7 @@ export function SaveButton({
     };
   }, []);
 
-  const sharedClassName = cn(
-    "flex items-center rounded-sm px-1 py-0.5 text-xs transition-colors hover:text-text",
-    isSaved ? "text-primary" : "text-text-muted",
-    className,
-  );
+  const sharedClassName = contentActionClassName(isSaved, className);
 
   if (!canSave) {
     return (
@@ -62,9 +59,10 @@ export function SaveButton({
         href="/login"
         onClick={(event) => event.stopPropagation()}
         title="Kaydetmek için giriş yapmalısın"
+        aria-label="Kaydetmek için giriş yap"
         className={sharedClassName}
       >
-        <Bookmark size={size} />
+        <Bookmark size={size} strokeWidth={1.75} />
       </Link>
     );
   }
@@ -96,9 +94,10 @@ export function SaveButton({
         aria-pressed={isSaved}
         aria-haspopup={isSaved ? undefined : "dialog"}
         title={isSaved ? "Kaydedilenlerden çıkar" : "Koleksiyona ekle"}
+        aria-label={isSaved ? "Kaydedilenlerden çıkar" : "Koleksiyona ekle"}
         className={cn(sharedClassName, isToggling && "opacity-60")}
       >
-        <Bookmark size={size} fill={isSaved ? "currentColor" : "none"} />
+        <Bookmark size={size} fill={isSaved ? "currentColor" : "none"} strokeWidth={1.75} />
       </button>
 
       {modalOpen &&
@@ -122,9 +121,9 @@ export function SaveButton({
         <Portal>
           <div
             role="status"
-            className="pointer-events-none fixed inset-x-0 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-[60] flex justify-center px-4 lg:bottom-6"
+            className="pointer-events-none fixed inset-x-0 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-[60] flex justify-center px-4 md:bottom-6"
           >
-            <div className="rounded-md bg-text px-3 py-2 text-sm text-background shadow-lg">
+            <div className="animate-pop-in rounded-md bg-text px-3.5 py-2 text-small text-background shadow-pop">
               Kaydedilenlerden kaldırıldı.
             </div>
           </div>

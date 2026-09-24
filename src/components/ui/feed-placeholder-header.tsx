@@ -23,7 +23,7 @@ export function FeedPlaceholderHeader({
         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent-surface text-primary">
           <Icon size={18} />
         </div>
-        <h1 className="text-base font-semibold text-text">{title}</h1>
+        <h1 className="text-h1 font-semibold text-text">{title}</h1>
         <span className="rounded-sm bg-accent-surface px-2 py-0.5 text-xs font-medium text-primary">
           Yakında
         </span>
