@@ -95,6 +95,29 @@ export function FieldCatalogPicker({
     });
   }
 
+  /**
+   * "Tümünü seç" per subgroup (e.g. Kimlik's 6 fields — cinsiyet, yaş grubu,
+   * karakter türü, rol, kişilik, yüz şekli — in one click) — the user's own
+   * explicit request. A toggle, not a one-way add like `addPackage`: if every
+   * still-selectable field in the subgroup is already checked, it clears
+   * them all; otherwise it selects the remaining ones. Fields already in the
+   * generator's schema are never touched either way (same rule as everywhere
+   * else in this picker).
+   */
+  function toggleSubgroup(fields: CatalogField[]) {
+    const selectable = fields.filter((f) => !isAlreadyInSchema(f));
+    if (selectable.length === 0) return;
+    const allSelected = selectable.every((f) => selectedIds.has(f.id));
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      for (const field of selectable) {
+        if (allSelected) next.delete(field.id);
+        else next.add(field.id);
+      }
+      return next;
+    });
+  }
+
   const searchResults = useMemo(() => (query.trim() ? searchCatalogFields(query, normalizeTagLabel) : []), [query]);
   const selectedCount = selectedIds.size;
 
@@ -217,18 +240,37 @@ export function FieldCatalogPicker({
                             const isSubOpen = expandedSubgroupId === subgroup.id;
                             const fields = fieldsInSubgroup(category.id, subgroup.id);
                             if (fields.length === 0) return null;
+                            const selectableFields = fields.filter((f) => !isAlreadyInSchema(f));
+                            const allSubgroupSelected = selectableFields.length > 0 && selectableFields.every((f) => selectedIds.has(f.id));
                             return (
                               <div key={subgroup.id}>
-                                <button
-                                  type="button"
-                                  onClick={() => setExpandedSubgroupId(isSubOpen ? null : subgroup.id)}
-                                  className="flex w-full items-center justify-between gap-2 rounded-md px-2 py-1.5 text-left text-xs font-medium text-text-muted hover:bg-accent-surface hover:text-text"
-                                >
-                                  <span>
-                                    {subgroup.label} <span className="text-text-muted">({fields.length})</span>
-                                  </span>
-                                  {isSubOpen ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
-                                </button>
+                                <div className="flex items-center justify-between gap-2 rounded-md px-1 hover:bg-accent-surface">
+                                  <button
+                                    type="button"
+                                    onClick={() => setExpandedSubgroupId(isSubOpen ? null : subgroup.id)}
+                                    className="flex flex-1 items-center gap-1 py-1.5 pl-1 text-left text-xs font-medium text-text-muted hover:text-text"
+                                  >
+                                    {isSubOpen ? <ChevronDown size={13} className="shrink-0" /> : <ChevronRight size={13} className="shrink-0" />}
+                                    <span>
+                                      {subgroup.label} <span className="text-text-muted">({fields.length})</span>
+                                    </span>
+                                  </button>
+                                  <label
+                                    className={cn(
+                                      "flex shrink-0 items-center gap-1 pr-1 text-[11px] font-medium",
+                                      selectableFields.length === 0 ? "cursor-not-allowed text-text-muted/50" : "cursor-pointer text-text-muted hover:text-primary",
+                                    )}
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      className="h-3 w-3"
+                                      checked={allSubgroupSelected}
+                                      disabled={selectableFields.length === 0}
+                                      onChange={() => toggleSubgroup(fields)}
+                                    />
+                                    Tümünü seç
+                                  </label>
+                                </div>
                                 {isSubOpen && <div className="mt-1 space-y-1 pl-2">{fields.map((field) => renderFieldRow(field))}</div>}
                               </div>
                             );
