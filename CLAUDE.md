@@ -10651,12 +10651,6 @@ gerekiyor.
   ShareModal'a taşınmadı** — şartname yalnızca Prompt/Generator/Prompt
   İsteği'ni adlandırdı, bir profili paylaşmak bu üç içerik türünden biri
   değil.
-- **Generator'dan gerçekten gönderilen mesaj bir "shared content" kartı
-  (SharedPromptCard/SharedRequestCard'ın generator karşılığı) olarak
-  RENDER edilmiyor** — çünkü veritabanında ona işaret eden bir kolon hiç
-  yok; alıcı tarafında bu, tıpkı elle yazılmış bir mesaj gibi düz metin
-  (başlık + link) olarak görünüyor — dürüst, `MessageBubble`'ın var olan,
-  değiştirilmemiş plain-body render'ına hiç dokunmadan.
 - **`/dev/share-modal-test` gerçek uygulamanın hiçbir yerinden
   bağlanmıyor** (Bölüm 9.47'nin aynı ilkesi) — yalnızca bu görevin
   doğrulaması için var, istenirse güvenle silinebilir.
@@ -10664,12 +10658,68 @@ gerekiyor.
 **Bilinen sınırlamalar:**
 - **Gerçek Supabase projesine karşı canlı doğrulama yapılamadı** (yukarıda
   açıklandı) — kullanıcının kendi ortamında denemesi gerekiyor.
-- Bir generator'ın mesajla paylaşımı, prompt/istek'in aksine GERÇEK bir
-  veritabanı ilişkisi taşımıyor (yukarıda açıklandı) — alıcı mesajı
-  gördüğünde bu yalnızca düz metin, tıklanabilir bir kart değil (link
-  metnin içinde, otomatik olarak linke çevrilmiyor — bu projenin mesaj
-  balonu render'ı hiçbir URL'i otomatik linklemiyor, yalnızca `shared_
-  prompt_id`/`shared_request_id` doluysa özel bir kart render ediyor).
+
+**Düzeltme — paylaşılan generator mesajda düz metin/ham link olarak
+görünüyordu (kullanıcı ekran görüntüsüyle bildirdi):** İlk sürümde
+generator paylaşımı, `messages` tablosunda ona işaret eden bir kolon hiç
+olmadığından, tamamen düz metin (`"${title}\n${link}"`) olarak
+gönderiliyordu — bu, `MessageBubble`'ın `sharedPromptId`/`sharedRequestId`
+doluysa render ettiği gerçek "Paylaşılan Prompt"/"Paylaşılan İstek"
+kartlarının aksine, alıcıya çıplak bir URL satırı olarak görünüyordu
+(kullanıcının ekran görüntüsündeki tam olarak bu: `"Moda Editoryal Çekim
+https://.../generators/local?slug=..."` düz metin balonu). Kullanıcının
+"diğerleri gibi yap" talebi üzerine, **`messages` şemasına HÂLÂ hiçbir yeni
+kolon eklenmeden** (Bölüm 9.52'nin kendi "yeni mesajlaşma mimarisi yok"
+kuralı bozulmadan) düzeltildi: `body` metni artık RENDER ANINDA, kendi
+tanıdık formatına göre taranıp gerçek bir karta çevriliyor.
+- Yeni `src/features/messages/generator-share-format.ts` — TEK, paylaşılan
+  bir format tanımı: `composeGeneratorShareBody(note, title, slug)` (gönderim
+  anında, `local-conversation-view.tsx`'in `handleSubmit`'i artık bunu
+  çağırıyor, eskiden orada elle kurulan satır ifadesinin yerine) ve
+  `parseGeneratorShareBody(body)` (render anında, `message-bubble.tsx`) —
+  aynı formatı iki ayrı yerde elle tekrar tanımlamak yerine tek kaynaktan.
+  Parse fonksiyonu, formatın kendi düzenine göre (satır sırasına bakarak,
+  yalnızca regex ile "içinde geçiyor mu" değil) hem kullanıcının eklediği
+  isteğe bağlı notu hem gerçek slug'ı ayıklıyor.
+- Yeni `SharedGeneratorCard` (`shared-content-card.tsx`) —
+  `SharedPromptCard`/`SharedRequestCard`'ın BİREBİR AYNI görsel/davranış
+  deseni (aynı `CARD_CLASS`, "Yükleniyor…" durumu, gerçek `generatorHref`
+  linki), yalnızca id yerine SLUG ile arıyor: önce `useRealGenerators()`'ın
+  zaten var olan cache'inde slug'a göre tarıyor (yeni bir provider/context
+  icat edilmedi), yoksa gerçek bir `fetchGeneratorBySlug` çağrısına
+  düşüyor.
+- `message-bubble.tsx`: bir mesajın `sharedPromptId`/`sharedRequestId`'si
+  yoksa `body`'si `parseGeneratorShareBody` ile taranıyor; eşleşirse
+  `<SharedGeneratorCard slug=.../>` render edilip yalnızca kullanıcının
+  eklediği NOT (varsa) ayrı bir düz metin balonu olarak kalıyor — ham
+  başlık+link satırı ARTIK HİÇBİR ZAMAN görünür metin olarak render
+  edilmiyor. Yanıtlanan bir mesajın önizleme satırı (`replyPreviewText`)
+  de aynı ayrımı yapıyor ("Bir prompt"/"Bir istek" ile birebir aynı
+  düzeyde, artık "Bir generator" da var) — var olan "gerçek bir not varsa
+  onu, yoksa jenerik etiketi göster" önceliği (prompt/istek için zaten
+  var olan davranış) hiç bozulmadan korundu.
+- **Nasıl doğrulandı:** `npx tsc --noEmit`/`npm run lint`/tam `npm run
+  build` sıfır hatayla geçti. `/dev/share-modal-test`'e (Bölüm 9.52'nin
+  kendi test sayfası) gerçek `composeGeneratorShareBody`'den üretilmiş bir
+  fixture mesajla render edilen gerçek bir `MessageBubble` eklenip 26
+  senaryolu Playwright paketi (önceki 21 + bu düzeltmenin 5 yeni senaryosu)
+  yeniden çalıştırıldı — hepsi geçti: paylaşılan generator'ın gerçekten
+  "Paylaşılan Generator" kartı + gerçek `generatorHref` linki render ettiği,
+  gönderenin kendi notunun ("Bak bunu dene") ayrı, düz bir balon olarak
+  kaldığı, ham `generators/local?slug=...` metninin sayfanın hiçbir
+  yerinde görünür metin olarak bulunmadığı — hepsi sıfır (gerçek) JS
+  hatasıyla (yalnızca bu sandbox'ın `*.supabase.co`'ya erişimi engelleyen,
+  Bölüm 17'den beri bilinen ağ kısıtının ürettiği beklenen `ERR_TUNNEL_
+  CONNECTION_FAILED` konsol gürültüsü hariç).
+- **Bilinen sınırlama (yeni):** bu, yalnızca `SharedGeneratorCard`'ın
+  KENDİ render'ı için geçerli — mesajın ham `body` metninde hâlâ tam
+  URL var (veritabanında öyle saklanıyor), yalnızca `MessageBubble`
+  bunu render ANINDA gizleyip kartla değiştiriyor. Bu formatı üretmeyen
+  (elle, "Bak: <link>" gibi serbestçe yazılmış) bir mesaj ASLA bir karta
+  dönüşmüyor — yalnızca `composeGeneratorShareBody`'nin ürettiği TAM
+  formatı (bir önceki satırda başlık, hemen ardından `/generators/local?
+  slug=` içeren bir satır) tanıyor, bu da beklenen/istenen bir sınır
+  (rastgele bir mesajı yanlışlıkla bir generator kartına çevirmemeli).
 
 ---
 

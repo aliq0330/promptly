@@ -14,7 +14,10 @@
  */
 import { PostMenu } from "@/features/prompts/post-menu";
 import { ShareTriggerButton } from "@/features/prompts/share-modal";
-import type { Generator, Prompt, PromptRequest, UserProfile } from "@/types";
+import { RealGeneratorsProvider } from "@/features/generators/real-generators-provider";
+import { MessageBubble, type MessageBubbleActions } from "@/features/messages/message-bubble";
+import { composeGeneratorShareBody } from "@/features/messages/generator-share-format";
+import type { Generator, Message, Prompt, PromptRequest, UserProfile } from "@/types";
 
 const AUTHOR: UserProfile = {
   id: "5eed0000-0000-4000-8000-000000000001",
@@ -99,6 +102,37 @@ export const FIXTURE_REQUEST: PromptRequest = {
   deletedAt: null,
 };
 
+const NOOP_MESSAGE_ACTIONS: MessageBubbleActions = {
+  onStartReply: () => {},
+  onStartEdit: () => {},
+  onCancelEdit: () => {},
+  onSubmitEdit: () => {},
+  editDraft: "",
+  onEditDraftChange: () => {},
+  isSavingEdit: false,
+  editError: null,
+  onRequestDelete: () => {},
+  onCancelDeleteConfirm: () => {},
+  deleteConfirm: null,
+  isDeletingId: null,
+};
+
+// Built through the REAL `composeGeneratorShareBody` (the exact function
+// `local-conversation-view.tsx` calls at send time) so this fixture proves
+// the actual compose→parse round trip, not a hand-typed guess at the format.
+export const FIXTURE_GENERATOR_SHARE_MESSAGE: Message = {
+  id: "5eed0000-0000-4000-8000-0000000000d1",
+  conversationId: "5eed0000-0000-4000-8000-0000000000e1",
+  senderId: AUTHOR.id,
+  body: composeGeneratorShareBody("Bak bunu dene", FIXTURE_GENERATOR.title, FIXTURE_GENERATOR.slug),
+  sharedPromptId: null,
+  sharedRequestId: null,
+  replyToMessageId: null,
+  editedAt: null,
+  deletedAt: null,
+  createdAt: "2026-01-04T00:00:00Z",
+};
+
 export default function ShareModalTestPage() {
   return (
     <main className="mx-auto max-w-2xl space-y-10 p-6">
@@ -125,6 +159,24 @@ export default function ShareModalTestPage() {
         <div className="flex items-center gap-3">
           <ShareTriggerButton target={{ contentType: "request", request: FIXTURE_REQUEST }} label="Paylaş" />
         </div>
+      </section>
+
+      <section className="space-y-2 rounded-lg border border-border p-4" data-testid="generator-message-bubble-section">
+        <h2 className="text-sm font-semibold text-text">Mesaj balonu — paylaşılan generator</h2>
+        <RealGeneratorsProvider>
+          <MessageBubble
+            message={FIXTURE_GENERATOR_SHARE_MESSAGE}
+            isMe={false}
+            replyPreview={null}
+            isEditingHere={false}
+            isActive={false}
+            onActivate={() => {}}
+            reactions={[]}
+            currentUserId={null}
+            onReact={() => {}}
+            actions={NOOP_MESSAGE_ACTIONS}
+          />
+        </RealGeneratorsProvider>
       </section>
     </main>
   );

@@ -31,7 +31,8 @@ import { useRealRequests } from "@/features/requests/real-requests-provider";
 import { useRealGenerators } from "@/features/generators/real-generators-provider";
 import { fetchGeneratorById } from "@/lib/supabase/generators";
 import { parseHighlightValue } from "@/lib/notification-utils";
-import { absoluteUrl, generatorHref, profileHref } from "@/lib/utils";
+import { profileHref } from "@/lib/utils";
+import { composeGeneratorShareBody } from "./generator-share-format";
 import type { Conversation, Generator, Message, UserProfile } from "@/types";
 
 /** Used only to give `useBlockState` a stable, always-defined target before the real conversation/participant has loaded — hooks must run unconditionally, and `canBlock` inside it is false until a real user session exists anyway, so this placeholder never actually reaches a query with a meaningful id. */
@@ -453,14 +454,15 @@ export function LocalConversationView() {
       // not extended with a new column for the Unified Share System task
       // (its own hard rule: no new messaging table/column/architecture).
       // So sharing a generator reuses the exact same plain-text `body`
-      // send path every other message already goes through, just
-      // pre-composed with its real title + link instead of a database-
-      // backed shared-content card.
-      const generatorShareLine =
+      // send path every other message already goes through, composed via
+      // `composeGeneratorShareBody` (shared with `message-bubble.tsx`'s
+      // matching parser, so a shared generator still renders as a real
+      // card, Bölüm 9.52's follow-up fix) instead of a database-backed
+      // shared-content card.
+      const body =
         pendingShare?.type === "generator" && pendingShare.slug
-          ? `${pendingShare.title}\n${absoluteUrl(generatorHref({ slug: pendingShare.slug }))}`
-          : null;
-      const body = generatorShareLine ? (trimmed ? `${trimmed}\n\n${generatorShareLine}` : generatorShareLine) : trimmed || undefined;
+          ? composeGeneratorShareBody(trimmed, pendingShare.title, pendingShare.slug)
+          : trimmed || undefined;
 
       const sent = await sendMessage(id, user.id, {
         body,
