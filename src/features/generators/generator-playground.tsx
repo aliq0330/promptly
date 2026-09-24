@@ -1,15 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Sparkles, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { defaultValuesFromSchema } from "@/lib/generator-template";
 import { buildGeneratorOutput } from "@/lib/generator-output";
-import { mapVisionResultToFieldValues, readNegativePromptSeed, readPromptSeed, type VisionAnalysisData } from "@/lib/vision-analysis";
 import { GeneratorRuntimeForm } from "./generator-runtime-form";
 import { GeneratedPromptPanel } from "./generated-prompt-panel";
 import { GeneratorJsonPanel } from "./generator-json-panel";
-import { VisionAnalysisPanel } from "./vision-analysis-panel";
 import type { GeneratorSchema, GeneratorValues } from "@/types";
 
 /**
@@ -41,6 +38,15 @@ import type { GeneratorSchema, GeneratorValues } from "@/types";
  * fields, which the runtime user fills in below. That text is
  * written into `buildGeneratorOutput()`'s output verbatim (trimmed, never
  * rendered/substituted) — see `generator-output.ts`.
+ *
+ * This component has NO image-analysis/AI assist of its own — it is shared
+ * verbatim by both the builder's Live Preview and the real public runtime
+ * page, and the Image Analysis system's Generator mode (`GeneratorVisionAssist`,
+ * "Görselden Alanları Doldur") is deliberately kept OUT of it: that assist
+ * needs write access to the generator's own `schema` (to add new fields via
+ * the existing custom-field system), which this component doesn't own, and
+ * it must never appear on the real runtime page. It lives instead directly
+ * in `generator-builder.tsx`'s "Alanlar" step.
  */
 export function GeneratorPlayground({
   schema,
@@ -56,7 +62,6 @@ export function GeneratorPlayground({
   const [values, setValues] = useState<GeneratorValues>(() => defaultValuesFromSchema(schema));
   const [promptText, setPromptText] = useState("");
   const [negativePromptText, setNegativePromptText] = useState("");
-  const [visionSummary, setVisionSummary] = useState<string | null>(null);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- merges newly-added field defaults into live preview values whenever the schema changes, without ever discarding what the author has already typed
@@ -82,34 +87,6 @@ export function GeneratorPlayground({
     setValues(defaultValuesFromSchema(schema));
     setPromptText("");
     setNegativePromptText("");
-    setVisionSummary(null);
-  }
-
-  /**
-   * AI Vision Generator sisteminin merkezi eşleme adımı (§7) — burada,
-   * `schema`'yı zaten sahip olan tek yerde çağrılıyor. Yalnızca EŞLEŞEN
-   * alanlar `values`'a yazılıyor (`{...prev, ...mapped.values}` —
-   * eşleşmeyen alanlara hiç dokunulmuyor, kullanıcının önceden girdiği
-   * hiçbir değer sessizce silinmiyor). AI'nin ürettiği `prompt` metni
-   * SADECE Prompt kutusunun başlangıç değeri oluyor (§20) — kullanıcı
-   * onu istediği gibi değiştirebilir (§9), ve final prompt yine mevcut
-   * `composeFinalPromptText` motoru üzerinden (yukarıdaki `output`
-   * hesaplaması, hiç değişmeden) üretiliyor.
-   */
-  function handleVisionResult(result: VisionAnalysisData) {
-    const mapped = mapVisionResultToFieldValues(schema, result);
-    setValues((prev) => ({ ...prev, ...mapped.values }));
-    const promptSeed = readPromptSeed(result);
-    if (promptSeed) setPromptText(promptSeed);
-    if (enableNegativePrompt) {
-      const negativeSeed = readNegativePromptSeed(result);
-      if (negativeSeed) setNegativePromptText(negativeSeed);
-    }
-    setVisionSummary(
-      mapped.matchedFieldKeys.length > 0
-        ? `Analiz tamamlandı — ${mapped.matchedFieldKeys.length} alan otomatik dolduruldu. Aşağıdan istediğini değiştirebilirsin.`
-        : "Analiz tamamlandı — görselden bu şemadaki alanlarla eşleşen bir değer çıkarılamadı, ama prompt metni dolduruldu.",
-    );
   }
 
   // The single, shared source of truth both the JSON tab and the Prompt tab
@@ -143,23 +120,6 @@ export function GeneratorPlayground({
 
       {tab === "form" ? (
         <div className="space-y-5">
-          <VisionAnalysisPanel onAnalyzed={handleVisionResult} />
-
-          {visionSummary && (
-            <div className="flex items-start gap-2 rounded-md bg-primary/10 px-3 py-2 text-xs text-text">
-              <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" aria-hidden="true" />
-              <p className="flex-1">{visionSummary}</p>
-              <button
-                type="button"
-                onClick={() => setVisionSummary(null)}
-                aria-label="Bu bilgiyi kapat"
-                className="shrink-0 text-text-muted hover:text-text"
-              >
-                <X className="h-3.5 w-3.5" aria-hidden="true" />
-              </button>
-            </div>
-          )}
-
           <div className="space-y-3 rounded-md border border-border bg-surface p-3">
             <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">Prompt</p>
             <div>

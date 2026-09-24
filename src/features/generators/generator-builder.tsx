@@ -14,8 +14,10 @@ import { FieldEditorModal } from "./field-editor-modal";
 import { FieldCatalogPicker } from "./field-catalog-picker";
 import { GeneratorDetailsForm } from "./generator-details-form";
 import { GeneratorPlayground } from "./generator-playground";
+import { GeneratorVisionAssist } from "./generator-vision-assist";
 import { makeFieldKeyFromLabel, validateGeneratorForPublish } from "@/lib/generator-template";
 import { validateGeneratorOutputMapping } from "@/lib/generator-output";
+import type { CleanSuggestedField } from "@/lib/generator-vision-mapping";
 import type { CatalogField } from "@/lib/generator-field-catalog";
 import { cn, generatorHref } from "@/lib/utils";
 import {
@@ -332,41 +334,74 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
     setSchema((prev) => ({ ...prev, fields: [...prev.fields, clone] }));
   }
 
-  // Converts chosen catalog entries into real `GeneratorField`s — the exact
-  // same `makeFieldKeyFromLabel`/order logic `handleDuplicateField` already
-  // uses, so there is one real place a `GeneratorField` gets constructed
-  // from something else, not two. The picker itself never builds a
-  // `GeneratorField`.
-  function handleInsertCatalogFields(catalogFields: CatalogField[]) {
+  // The single, real place a `GeneratorField` ever gets constructed from
+  // something else — the hazır-alan-kütüphanesi picker (`CatalogField[]`)
+  // AND the Image Analysis system's "Önerilen Yeni Alanlar" (`CleanSuggestedField[]`,
+  // `generator-vision-assist.tsx`) both funnel through this one function.
+  // Neither caller ever builds a `GeneratorField` itself.
+  function insertFieldDescriptors(
+    descriptors: {
+      label: string;
+      type: GeneratorField["type"];
+      options: GeneratorField["options"];
+      jsonPath?: string;
+      placeholder?: string;
+      min?: number | null;
+      max?: number | null;
+      step?: number | null;
+    }[],
+  ) {
     setSchema((prev) => {
       let existingKeys = prev.fields.map((f) => f.key);
       let nextOrder = prev.fields.length > 0 ? Math.max(...prev.fields.map((f) => f.order)) + 1 : 0;
       const inserted: GeneratorField[] = [];
-      for (const catalogField of catalogFields) {
-        const key = makeFieldKeyFromLabel(catalogField.label, existingKeys);
+      for (const descriptor of descriptors) {
+        const key = makeFieldKeyFromLabel(descriptor.label, existingKeys);
         existingKeys = [...existingKeys, key];
         inserted.push({
           id: newId("field"),
           key,
-          label: catalogField.label,
+          label: descriptor.label,
           description: "",
-          type: catalogField.type,
+          type: descriptor.type,
           required: false,
-          options: catalogField.options,
-          defaultValue: catalogField.type === "multi_select" ? [] : "",
-          placeholder: catalogField.placeholder ?? "",
-          min: catalogField.min ?? null,
-          max: catalogField.max ?? null,
-          step: catalogField.step ?? null,
+          options: descriptor.options,
+          defaultValue: descriptor.type === "multi_select" ? [] : "",
+          placeholder: descriptor.placeholder ?? "",
+          min: descriptor.min ?? null,
+          max: descriptor.max ?? null,
+          step: descriptor.step ?? null,
           order: nextOrder,
           condition: null,
-          jsonPath: catalogField.jsonPath,
+          jsonPath: descriptor.jsonPath?.trim() || key,
         });
         nextOrder += 1;
       }
       return { ...prev, fields: [...prev.fields, ...inserted] };
     });
+  }
+
+  function handleInsertCatalogFields(catalogFields: CatalogField[]) {
+    insertFieldDescriptors(catalogFields);
     setCatalogPickerOpen(false);
+  }
+
+  // The Image Analysis system's "Önerilen Yeni Alanlar" — only ever called
+  // once the user has explicitly checked which suggestions to add and
+  // pressed "Seçilenleri Uygula" (`generator-vision-assist.tsx`). Never
+  // triggered automatically.
+  function handleAddSuggestedFields(suggested: CleanSuggestedField[]) {
+    insertFieldDescriptors(suggested);
+  }
+
+  // Applies AI-mapped values from a reference image onto EXISTING fields'
+  // `defaultValue` — again, only for fields the user explicitly kept
+  // checked. Fields not present in `values` are left completely untouched.
+  function handleApplyVisionValues(values: Record<string, string | string[]>) {
+    setSchema((prev) => ({
+      ...prev,
+      fields: prev.fields.map((field) => (field.key in values ? { ...field, defaultValue: values[field.key] } : field)),
+    }));
   }
 
   function handleReorderFields(orderedIds: string[]) {
@@ -472,6 +507,12 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
       {step === "fields" && (
         <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
           <div className="min-w-0 rounded-lg border border-border bg-surface p-4 sm:p-5">
+            <GeneratorVisionAssist
+              meta={meta}
+              fields={schema.fields}
+              onApplyValues={handleApplyVisionValues}
+              onAddFields={handleAddSuggestedFields}
+            />
             <FieldList
               fields={visibleFields}
               onAddField={() => setCatalogPickerOpen(true)}

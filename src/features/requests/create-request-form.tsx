@@ -12,6 +12,7 @@ import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
 import { useTagCatalog } from "@/features/tags/use-tag-catalog";
 import { useTagPicker } from "@/features/prompts/use-tag-picker";
 import { TagPicker } from "@/features/prompts/tag-picker";
+import { RequestVisionAssist } from "./request-vision-assist";
 import { cn, requestHref, resizeImageToDataUrlFit } from "@/lib/utils";
 import type { PromptContentType, PromptRequest } from "@/types";
 
@@ -314,6 +315,15 @@ export function CreateRequestForm() {
               </div>
             )}
           </div>
+
+          {!isEditMode && contentType === "image" && (
+            <RequestVisionAssist
+              onApplyDescription={(text) => setDescription((prev) => (prev.trim() ? `${prev}\n\n${text}` : text))}
+              onApplyCreativeDirection={(text) =>
+                setCreativeDirection((prev) => (prev.trim() ? `${prev} · ${text}` : text))
+              }
+            />
+          )}
 
           <div>
             <label htmlFor="request-title" className="mb-1.5 flex items-center justify-between text-sm font-medium text-text">

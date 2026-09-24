@@ -1,26 +1,28 @@
 /**
- * AI Vision Generator sisteminin tek Supabase erişim noktası — mevcut,
- * zaten kurulu Supabase client'ı (`@/lib/supabase/client`, CLAUDE.md Bölüm
- * 17) ile mevcut, zaten deploy edilmiş `analyze-image` Edge Function'ını
- * çağırıyor. Yeni bir Supabase client YOK, hardcode edilmiş bir URL YOK —
- * `supabase.functions.invoke()` hedef URL'i mevcut client'ın kendi
- * `NEXT_PUBLIC_SUPABASE_URL` yapılandırmasından türetiyor (`/dev/image-
- * analysis-test` test sayfasıyla BİREBİR AYNI çağrı yolu — CLAUDE.md'nin
- * "yeni paralel sistem kurma" kuralına uyarak aynı fonksiyon burada da
- * kullanılıyor, ikinci bir invoke deseni icat edilmedi).
+ * Ortak Image Analysis sisteminin TEK Supabase erişim noktası — mevcut,
+ * zaten kurulu Supabase client'ı (`@/lib/supabase/client`) ile mevcut,
+ * zaten deploy edilmiş `analyze-image` Edge Function'ını çağırıyor. Bu
+ * dosya, üç ayrı kullanım (Generator Builder, Prompt Builder, Prompt
+ * Request Builder) için tek bir ortak `analyzeImage()` çağırıcısı + üç ince,
+ * tipli sarmalayıcı sağlıyor — üç ayrı invoke deseni yok.
  *
- * Hata kategorileri (§16) — ham Gemini/Edge Function metni KULLANICIYA
- * HİÇ gösterilmiyor, yalnızca `console.error` ile developer log'una
- * yazılıyor; kullanıcı her zaman `FRIENDLY_MESSAGES`'teki Türkçe, kısa
- * mesajı görüyor.
+ * Hata kategorileri — ham Gemini/Edge Function metni KULLANICIYA HİÇ
+ * gösterilmiyor, yalnızca `console.error` ile developer log'una yazılıyor;
+ * kullanıcı her zaman `FRIENDLY_MESSAGES`'teki Türkçe, kısa mesajı görüyor.
  */
 
 import { FunctionsFetchError, FunctionsHttpError, FunctionsRelayError } from "@supabase/supabase-js";
 import { supabase } from "./client";
 import { readBlobAsBase64, resizeImageToBlob } from "@/lib/utils";
-import type { VisionAnalysisData } from "@/lib/vision-analysis";
+import type {
+  GeneratorBuilderContext,
+  GeneratorBuilderResult,
+  ImageAnalysisMode,
+  PromptBuilderResult,
+  PromptRequestResult,
+} from "@/lib/image-analysis-types";
 
-export type VisionAnalysisErrorKind =
+export type ImageAnalysisErrorKind =
   | "api_key"
   | "model"
   | "invalid_image"
@@ -29,16 +31,16 @@ export type VisionAnalysisErrorKind =
   | "timeout"
   | "unknown";
 
-export interface VisionAnalysisError {
-  kind: VisionAnalysisErrorKind;
+export interface ImageAnalysisError {
+  kind: ImageAnalysisErrorKind;
   message: string;
 }
 
-export type VisionAnalysisOutcome =
-  | { ok: true; data: VisionAnalysisData; model: string | null }
-  | { ok: false; error: VisionAnalysisError };
+export type ImageAnalysisOutcome<TData> =
+  | { ok: true; data: TData; model: string | null }
+  | { ok: false; error: ImageAnalysisError };
 
-const FRIENDLY_MESSAGES: Record<VisionAnalysisErrorKind, string> = {
+const FRIENDLY_MESSAGES: Record<ImageAnalysisErrorKind, string> = {
   api_key: "Görsel analiz servisi şu anda yapılandırma sorunu yaşıyor. Lütfen daha sonra tekrar dene.",
   model: "Görsel analiz servisi şu anda kullanılamıyor. Lütfen daha sonra tekrar dene.",
   invalid_image: "Bu görsel analiz edilemedi. Lütfen JPEG, PNG veya WebP formatında bir görsel seç.",
@@ -48,15 +50,15 @@ const FRIENDLY_MESSAGES: Record<VisionAnalysisErrorKind, string> = {
   unknown: "Görsel analiz sırasında bir sorun oluştu. Lütfen tekrar dene.",
 };
 
-/** §15 — mevcut sistem hangi görsel formatlarını destekliyorsa (HEIC vb. dahil edilmedi, tarayıcı desteği garanti değil). */
+/** Bu sistemin desteklediği görsel formatları (HEIC vb. dahil edilmedi, tarayıcı desteği garanti değil). */
 const SUPPORTED_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
-/** §14'ün "5-10 MB'lık bir dosyayı reddetme, gerekirse optimize et" kuralının kaynak-taraflı üst sınırı — bunun üstü zaten mantıksız derecede büyük bir dosya demektir. */
+/** Kaynak dosya için üst sınır — bunun üstü zaten mantıksız derecede büyük bir dosya demektir, optimize etmeye bile değmez. */
 const MAX_SOURCE_BYTES = 20 * 1024 * 1024;
 
 const REQUEST_TIMEOUT_MS = 30_000;
 
-function categorizeFromText(text: string): VisionAnalysisErrorKind {
+function categorizeFromText(text: string): ImageAnalysisErrorKind {
   const lower = text.toLowerCase();
   if (lower.includes("api key") || lower.includes("api_key") || lower.includes("unauthorized") || lower.includes("permission")) {
     return "api_key";
@@ -68,13 +70,18 @@ function categorizeFromText(text: string): VisionAnalysisErrorKind {
 }
 
 /**
- * §2/§14 — görseli optimize edip (max 1600px, JPEG) mevcut `analyze-image`
- * Edge Function'ına gönderir, ve response'u güvenle validate edip (§13)
- * kategorize edilmiş, kullanıcı dostu bir sonuca çevirir (§16). Aynı
- * görseli tekrar analiz etmek (§10) — çağıran taraf bu fonksiyonu aynı
- * dosyayla tekrar çağırır, ayrı bir "yeniden analiz" kod yolu yok.
+ * Ortak, mode-bazlı analiz çağrısı — görseli optimize edip (max 1600px,
+ * JPEG) `analyze-image` Edge Function'ına `{ mode, context, image,
+ * mimeType }` olarak gönderir, response'u güvenle validate edip kategorize
+ * edilmiş, kullanıcı dostu bir sonuca çevirir. Üç mode de aynı fonksiyonu
+ * kullanıyor — yalnızca `mode`/`context` ve dönen `data`'nın TypeScript
+ * tipi değişiyor (bkz. aşağıdaki üç ince sarmalayıcı).
  */
-export async function analyzeImageForGenerator(file: File): Promise<VisionAnalysisOutcome> {
+async function analyzeImage<TData>(
+  file: File,
+  mode: ImageAnalysisMode,
+  context: unknown,
+): Promise<ImageAnalysisOutcome<TData>> {
   if (!SUPPORTED_MIME_TYPES.has(file.type)) {
     return { ok: false, error: { kind: "invalid_image", message: FRIENDLY_MESSAGES.invalid_image } };
   }
@@ -92,18 +99,18 @@ export async function analyzeImageForGenerator(file: File): Promise<VisionAnalys
     base64Image = await readBlobAsBase64(blob);
     mimeType = contentType;
   } catch (err) {
-    console.error("[vision-analysis] görsel işlenemedi", err);
+    console.error("[image-analysis] görsel işlenemedi", err);
     return { ok: false, error: { kind: "invalid_image", message: FRIENDLY_MESSAGES.invalid_image } };
   }
 
   try {
     const { data, error } = await supabase.functions.invoke("analyze-image", {
-      body: { image: base64Image, mimeType },
+      body: { mode, context, image: base64Image, mimeType },
       timeout: REQUEST_TIMEOUT_MS,
     });
 
     if (error) {
-      let kind: VisionAnalysisErrorKind = "unknown";
+      let kind: ImageAnalysisErrorKind = "unknown";
       let rawMessage = error.message;
 
       if (error instanceof FunctionsHttpError) {
@@ -125,37 +132,54 @@ export async function analyzeImageForGenerator(file: File): Promise<VisionAnalys
             : categorizeFromText(rawMessage);
       } else if (error instanceof FunctionsFetchError) {
         // Doğal `timeout` seçeneği süresi dolunca fetch'i AbortController ile
-        // iptal ediyor — bu da burada bir FunctionsFetchError olarak geliyor,
-        // context'i (ham fetch hatası) "AbortError" adını taşıyor.
+        // iptal ediyor — bu da burada bir FunctionsFetchError olarak geliyor.
         const context = error.context as { name?: string } | undefined;
         kind = context?.name === "AbortError" ? "timeout" : "network";
       } else if (error instanceof FunctionsRelayError) {
         kind = "network";
       }
 
-      console.error("[vision-analysis] analyze-image hatası", rawMessage, error);
+      console.error("[image-analysis] analyze-image hatası", rawMessage, error);
       return { ok: false, error: { kind, message: FRIENDLY_MESSAGES[kind] } };
     }
 
     if (!data || typeof data !== "object") {
-      console.error("[vision-analysis] beklenmeyen response şekli", data);
+      console.error("[image-analysis] beklenmeyen response şekli", data);
       return { ok: false, error: { kind: "malformed_response", message: FRIENDLY_MESSAGES.malformed_response } };
     }
 
     const payload = data as { success?: unknown; data?: unknown; model?: unknown; error?: unknown };
     if (payload.success !== true || !payload.data || typeof payload.data !== "object") {
       const kind = typeof payload.error === "string" ? categorizeFromText(payload.error) : "malformed_response";
-      console.error("[vision-analysis] analyze-image success:false", payload);
+      console.error("[image-analysis] analyze-image success:false", payload);
       return { ok: false, error: { kind, message: FRIENDLY_MESSAGES[kind] } };
     }
 
     return {
       ok: true,
-      data: payload.data as VisionAnalysisData,
+      data: payload.data as TData,
       model: typeof payload.model === "string" ? payload.model : null,
     };
   } catch (err) {
-    console.error("[vision-analysis] beklenmeyen hata", err);
+    console.error("[image-analysis] beklenmeyen hata", err);
     return { ok: false, error: { kind: "unknown", message: FRIENDLY_MESSAGES.unknown } };
   }
+}
+
+/** Yalnızca Generator Builder'ın "Alanlar" adımında kullanılır — asla Generator'ın gerçek public runtime sayfasında (`/generators/local`). */
+export function analyzeImageForGenerator(
+  file: File,
+  context: GeneratorBuilderContext,
+): Promise<ImageAnalysisOutcome<GeneratorBuilderResult>> {
+  return analyzeImage<GeneratorBuilderResult>(file, "generator_builder", context);
+}
+
+/** Prompt oluşturma sayfasının "Görselden İlham Al" yardımcısı — Generator şema/field mapping'iyle hiç ilgisi yok. */
+export function analyzeImageForPrompt(file: File): Promise<ImageAnalysisOutcome<PromptBuilderResult>> {
+  return analyzeImage<PromptBuilderResult>(file, "prompt_builder", {});
+}
+
+/** Prompt İsteği oluşturma sayfasının, yalnızca içerik türü "Görsel" iken görünen yardımcısı. */
+export function analyzeImageForRequest(file: File): Promise<ImageAnalysisOutcome<PromptRequestResult>> {
+  return analyzeImage<PromptRequestResult>(file, "prompt_request", { contentType: "image" });
 }

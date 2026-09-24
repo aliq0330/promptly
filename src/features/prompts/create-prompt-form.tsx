@@ -16,6 +16,7 @@ import { useTagCatalog } from "@/features/tags/use-tag-catalog";
 import { useTagPicker } from "@/features/prompts/use-tag-picker";
 import { TagPicker } from "@/features/prompts/tag-picker";
 import { PromptTextEditor, type DraftVariable } from "@/features/prompts/prompt-text-editor";
+import { PromptVisionAssist } from "@/features/prompts/prompt-vision-assist";
 import { fetchVariablesForPrompt, replaceVariablesForPrompt } from "@/lib/supabase/prompt-variables";
 import { fetchGeneratorById, fetchGeneratorRun } from "@/lib/supabase/generators";
 import { placeholderArt } from "@/lib/placeholder-image";
@@ -731,6 +732,14 @@ export function CreatePromptForm() {
               </div>
             )}
           </div>
+
+          {contentType === "image" && (
+            <PromptVisionAssist
+              onApplyPrompt={(text, mode) =>
+                setPromptText((prev) => (mode === "replace" || !prev.trim() ? text : `${prev}\n\n${text}`))
+              }
+            />
+          )}
 
           {contentType === "image" && (
             <div>
