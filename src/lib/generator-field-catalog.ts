@@ -182,6 +182,7 @@ export const CATALOG_CATEGORIES: CatalogCategory[] = [
       { id: "aperture", label: "Diyafram" },
       { id: "focus", label: "Odak" },
       { id: "movement", label: "Kamera Hareketi" },
+      { id: "settings", label: "Çekim Ayarları" },
     ],
   },
   {
@@ -269,6 +270,18 @@ export const CATALOG_CATEGORIES: CatalogCategory[] = [
     ],
   },
   {
+    id: "marketing",
+    label: "Pazarlama & Kampanya",
+    subgroups: [
+      { id: "campaign", label: "Kampanya Türü" },
+      { id: "platform", label: "Platform" },
+      { id: "audience", label: "Hedef Kitle" },
+      { id: "cta", label: "Çağrı (CTA)" },
+      { id: "tone", label: "Ton" },
+      { id: "format", label: "Format" },
+    ],
+  },
+  {
     id: "video",
     label: "Video",
     subgroups: [
@@ -276,6 +289,19 @@ export const CATALOG_CATEGORIES: CatalogCategory[] = [
       { id: "format", label: "Format" },
       { id: "movement", label: "Hareket" },
       { id: "transition", label: "Geçiş" },
+    ],
+  },
+  {
+    id: "audio",
+    label: "Ses & Müzik",
+    subgroups: [
+      { id: "genre", label: "Tür / Janr" },
+      { id: "mood", label: "Ruh Hali" },
+      { id: "instrument", label: "Enstrüman" },
+      { id: "vocal", label: "Vokal" },
+      { id: "tempo", label: "Tempo / Ritim" },
+      { id: "production", label: "Prodüksiyon" },
+      { id: "duration", label: "Süre" },
     ],
   },
   {
@@ -289,6 +315,7 @@ export const CATALOG_CATEGORIES: CatalogCategory[] = [
       { id: "length", label: "Uzunluk" },
       { id: "structure", label: "Yapı" },
       { id: "output", label: "Output" },
+      { id: "seo", label: "SEO" },
     ],
   },
   {
@@ -300,6 +327,7 @@ export const CATALOG_CATEGORIES: CatalogCategory[] = [
       { id: "database", label: "Database" },
       { id: "architecture", label: "Mimari" },
       { id: "output", label: "Output" },
+      { id: "testing", label: "Test" },
     ],
   },
   {
@@ -319,6 +347,7 @@ export const CATALOG_CATEGORIES: CatalogCategory[] = [
       { id: "layout", label: "Layout" },
       { id: "component", label: "Component" },
       { id: "style", label: "Design Style" },
+      { id: "accessibility", label: "Erişilebilirlik" },
     ],
   },
   {
@@ -376,6 +405,7 @@ export const CATALOG_FIELDS: CatalogField[] = [
   { id: "char_height", label: "Boy", type: "select", categoryId: "character", subgroupId: "body", jsonPath: "body.height", options: opts(["Çok Kısa", "Kısa", "Orta", "Uzun", "Çok Uzun"]) },
   { id: "char_muscle_level", label: "Kas Seviyesi", type: "select", categoryId: "character", subgroupId: "body", jsonPath: "body.muscle_level", options: opts(["Düşük", "Orta", "Yüksek", "Çok Yüksek"]) },
   { id: "char_body_proportion", label: "Vücut Oranı", type: "select", categoryId: "character", subgroupId: "body", jsonPath: "body.proportion", options: opts(["Gerçekçi", "Stilize", "Anime", "Karikatürize"]) },
+  { id: "char_posture", label: "Duruş", type: "select", categoryId: "character", subgroupId: "body", jsonPath: "body.posture", options: opts(["Dik", "Rahat", "Kambur", "Gururlu", "Yorgun", "Askeri"]) },
 
   // ===== 2. Kıyafet & Moda =====
   { id: "cloth_style", label: "Stil", type: "select", categoryId: "clothing", subgroupId: "style", jsonPath: "clothing.style", options: opts(["Casual", "Formal", "Streetwear", "Luxury", "Vintage", "Minimal", "Sportif", "Goth", "Punk", "Cyberpunk", "Fantasy", "Traditional"]) },
@@ -442,6 +472,9 @@ export const CATALOG_FIELDS: CatalogField[] = [
   { id: "cam_aperture", label: "Diyafram", type: "select", categoryId: "camera", subgroupId: "aperture", jsonPath: "camera.aperture", options: opts(["f/1.2", "f/1.4", "f/1.8", "f/2.8", "f/4", "f/5.6", "f/8", "f/11"]) },
   { id: "cam_focus", label: "Odak", type: "select", categoryId: "camera", subgroupId: "focus", jsonPath: "camera.focus", options: opts(["Konu Odakta", "Arka Plan Odakta", "Her Şey Odakta", "Shallow Depth of Field", "Deep Depth of Field"]) },
   { id: "cam_movement", label: "Kamera Hareketi", type: "select", categoryId: "camera", subgroupId: "movement", jsonPath: "camera.movement", options: opts(["Sabit", "Pan", "Tilt", "Dolly", "Tracking", "Handheld", "Orbit"]) },
+  { id: "cam_iso", label: "ISO", type: "select", categoryId: "camera", subgroupId: "settings", jsonPath: "camera.iso", options: opts(["100", "200", "400", "800", "1600", "3200", "6400"]) },
+  { id: "cam_shutter_speed", label: "Enstantane Hızı", type: "select", categoryId: "camera", subgroupId: "settings", jsonPath: "camera.shutter_speed", options: opts(["1/2000", "1/1000", "1/500", "1/250", "1/125", "1/60", "1/30", "1sn (Long Exposure)"]) },
+  { id: "cam_white_balance", label: "Beyaz Ayarı", type: "select", categoryId: "camera", subgroupId: "settings", jsonPath: "camera.white_balance", options: opts(["Otomatik", "Gün Işığı", "Bulutlu", "Tungsten", "Floresan", "Gölge"]) },
 
   // ===== 10. Görsel Stil =====
   { id: "style_realism", label: "Gerçekçilik", type: "select", categoryId: "visual_style", subgroupId: "realism", jsonPath: "style.realism", options: opts(["Photorealistic", "Hyperrealistic", "Realistic", "Stylized Realism", "Semi-Realistic"]) },
@@ -502,6 +535,20 @@ export const CATALOG_FIELDS: CatalogField[] = [
   { id: "product_ad_style", label: "Reklam Stili", type: "select", categoryId: "product", subgroupId: "ad", jsonPath: "product.ad_style", options: opts(["Luxury", "Minimal", "Premium", "Commercial", "Editorial", "Social Media Ad"]) },
   { id: "product_reference_url", label: "Referans Görsel URL", type: "url", categoryId: "product", subgroupId: "product", jsonPath: "product.reference_url", options: [], placeholder: "https://…" },
 
+  // ===== 17b. Pazarlama & Kampanya =====
+  { id: "marketing_campaign", label: "Kampanya Türü", type: "select", categoryId: "marketing", subgroupId: "campaign", jsonPath: "marketing.campaign_type", options: opts(["Sosyal Medya Reklamı", "Google Ads", "Email Kampanyası", "Influencer İşbirliği", "Lansman Kampanyası", "İndirim Kampanyası", "Marka Bilinirliği", "Yeniden Hedefleme"]) },
+  { id: "marketing_goal", label: "Kampanya Hedefi", type: "select", categoryId: "marketing", subgroupId: "campaign", jsonPath: "marketing.goal", options: opts(["Satış", "Trafik", "Marka Bilinirliği", "Takipçi Kazanımı", "Lead Toplama", "Uygulama İndirme"]) },
+  { id: "marketing_platform", label: "Platform", type: "multi_select", categoryId: "marketing", subgroupId: "platform", jsonPath: "marketing.platforms", options: opts(["Instagram", "Facebook", "TikTok", "YouTube", "LinkedIn", "Twitter/X", "Google", "E-posta", "Web Sitesi"]) },
+  { id: "marketing_ad_format", label: "Reklam Formatı", type: "select", categoryId: "marketing", subgroupId: "platform", jsonPath: "marketing.ad_format", options: opts(["Statik Görsel", "Carousel", "Kısa Video", "Story", "Banner", "Newsletter"]) },
+  { id: "marketing_audience", label: "Hedef Kitle", type: "select", categoryId: "marketing", subgroupId: "audience", jsonPath: "marketing.audience.segment", options: opts(["Genç Yetişkin", "Aile", "Profesyonel", "Öğrenci", "Girişimci", "Kadın", "Erkek", "Genel"]) },
+  { id: "marketing_audience_age", label: "Yaş Aralığı", type: "select", categoryId: "marketing", subgroupId: "audience", jsonPath: "marketing.audience.age_range", options: opts(["13-17", "18-24", "25-34", "35-44", "45-54", "55+"]) },
+  { id: "marketing_cta", label: "Çağrı (CTA)", type: "select", categoryId: "marketing", subgroupId: "cta", jsonPath: "marketing.cta.button_text", options: opts(["Şimdi Al", "Kaydol", "Daha Fazla Bilgi", "Ücretsiz Dene", "İletişime Geç", "İndir", "Sepete Ekle"]) },
+  { id: "marketing_urgency", label: "Aciliyet Vurgusu", type: "select", categoryId: "marketing", subgroupId: "cta", jsonPath: "marketing.cta.urgency", options: opts(["Yok", "Sınırlı Süre", "Sınırlı Stok", "Son Gün", "Yalnızca Bugün"]) },
+  { id: "marketing_tone", label: "Ton", type: "select", categoryId: "marketing", subgroupId: "tone", jsonPath: "marketing.tone", options: opts(["Enerjik", "Güven Verici", "Eğlenceli", "Lüks", "Samimi", "Profesyonel", "Cesur"]) },
+  { id: "marketing_discount", label: "İndirim Oranı (%)", type: "number", categoryId: "marketing", subgroupId: "tone", jsonPath: "marketing.discount_percent", options: [], min: 0, max: 100, step: 5 },
+  { id: "marketing_headline", label: "Başlık Fikri", type: "text", categoryId: "marketing", subgroupId: "format", jsonPath: "marketing.headline", options: [], placeholder: "Örn. Yaza Hazır Ol, %30 İndirim" },
+  { id: "marketing_brand_voice", label: "Marka Sesi", type: "select", categoryId: "marketing", subgroupId: "format", jsonPath: "marketing.brand_voice", options: opts(["Ciddi/Kurumsal", "Arkadaşça", "Esprili", "İlham Verici", "Cesur/Rahatsız Edici"]) },
+
   // ===== 18. Video =====
   { id: "video_type", label: "Video Türü", type: "select", categoryId: "video", subgroupId: "type", jsonPath: "video.type", options: opts(["Cinematic", "Commercial", "Short Film", "Music Video", "Social Media", "Product Video", "Animation"]) },
   { id: "video_duration", label: "Süre (sn)", type: "select", categoryId: "video", subgroupId: "format", jsonPath: "video.duration_seconds", options: opts(["3", "5", "10", "15", "30", "60"]) },
@@ -510,6 +557,20 @@ export const CATALOG_FIELDS: CatalogField[] = [
   { id: "video_camera_movement", label: "Kamera Hareketi", type: "select", categoryId: "video", subgroupId: "movement", jsonPath: "video.camera_movement", options: opts(["Static", "Pan", "Tilt", "Dolly", "Tracking", "Orbit", "Handheld", "Crane"]) },
   { id: "video_character_movement", label: "Karakter Hareketi", type: "multi_select", categoryId: "video", subgroupId: "movement", jsonPath: "video.character_movement", options: opts(["Walk", "Run", "Turn", "Look", "Gesture", "Fight", "Dance", "Sit", "Stand"]) },
   { id: "video_transition", label: "Geçiş", type: "select", categoryId: "video", subgroupId: "transition", jsonPath: "video.transition", options: opts(["Cut", "Fade", "Dissolve", "Zoom", "Match Cut", "Whip Pan"]) },
+
+  // ===== 18b. Ses & Müzik =====
+  { id: "audio_genre", label: "Tür / Janr", type: "select", categoryId: "audio", subgroupId: "genre", jsonPath: "audio.genre", options: opts(["Pop", "Rock", "Hip-Hop", "Elektronik", "Klasik", "Jazz", "Lo-fi", "Ambient", "Folk", "Metal", "R&B", "Sinematik"]) },
+  { id: "audio_subgenre", label: "Alt Tür", type: "text", categoryId: "audio", subgroupId: "genre", jsonPath: "audio.subgenre", options: [], placeholder: "Örn. Synthwave, Deep House" },
+  { id: "audio_mood", label: "Ruh Hali", type: "select", categoryId: "audio", subgroupId: "mood", jsonPath: "audio.mood", options: opts(["Enerjik", "Sakin", "Hüzünlü", "Karanlık", "Romantik", "Epik", "Gizemli", "Neşeli", "Gergin", "Rahatlatıcı"]) },
+  { id: "audio_energy", label: "Enerji Seviyesi", type: "slider", categoryId: "audio", subgroupId: "mood", jsonPath: "audio.energy_level", options: [], min: 0, max: 100, step: 5 },
+  { id: "audio_instrument", label: "Ana Enstrüman", type: "multi_select", categoryId: "audio", subgroupId: "instrument", jsonPath: "audio.instruments", options: opts(["Piyano", "Gitar", "Keman", "Davul", "Bas", "Synth", "Flüt", "Saksafon", "Orkestra", "Perküsyon"]) },
+  { id: "audio_vocal", label: "Vokal", type: "select", categoryId: "audio", subgroupId: "vocal", jsonPath: "audio.vocal.style", options: opts(["Enstrümantal (Vokalsiz)", "Erkek Vokal", "Kadın Vokal", "Koro", "Rap", "Fısıltı", "Opera Tarzı", "Duet"]) },
+  { id: "audio_vocal_language", label: "Vokal Dili", type: "select", categoryId: "audio", subgroupId: "vocal", jsonPath: "audio.vocal.language", options: opts(["Türkçe", "İngilizce", "Yok", "Çok Dilli"]) },
+  { id: "audio_tempo", label: "Tempo", type: "select", categoryId: "audio", subgroupId: "tempo", jsonPath: "audio.tempo", options: opts(["Çok Yavaş", "Yavaş", "Orta", "Hızlı", "Çok Hızlı"]) },
+  { id: "audio_bpm", label: "BPM", type: "number", categoryId: "audio", subgroupId: "tempo", jsonPath: "audio.bpm", options: [], min: 40, max: 220, step: 1 },
+  { id: "audio_production", label: "Prodüksiyon", type: "select", categoryId: "audio", subgroupId: "production", jsonPath: "audio.production_style", options: opts(["Stüdyo Kalitesi", "Lo-fi / Ham", "Canlı Kayıt", "Elektronik / Sentetik", "Akustik"]) },
+  { id: "audio_effects", label: "Ses Efektleri", type: "multi_select", categoryId: "audio", subgroupId: "production", jsonPath: "audio.effects", options: opts(["Reverb", "Echo", "Distortion", "Autotune", "Vinyl Crackle", "Sidechain"]) },
+  { id: "audio_duration", label: "Süre", type: "select", categoryId: "audio", subgroupId: "duration", jsonPath: "audio.duration", options: opts(["15sn", "30sn", "1dk", "2dk", "3dk", "Tam Şarkı"]) },
 
   // ===== 19. Metin & İçerik =====
   { id: "text_content_type", label: "İçerik Türü", type: "select", categoryId: "text", subgroupId: "content_type", jsonPath: "content.type", options: opts(["Blog", "Makale", "Sosyal Medya", "Reklam", "E-posta", "Ürün Açıklaması", "Haber", "Senaryo", "Hikâye", "Şiir"]) },
@@ -520,6 +581,8 @@ export const CATALOG_FIELDS: CatalogField[] = [
   { id: "text_word_count", label: "Kelime Sayısı", type: "number", categoryId: "text", subgroupId: "length", jsonPath: "content.word_count", options: [], min: 0, step: 50 },
   { id: "text_structure", label: "Yapı", type: "multi_select", categoryId: "text", subgroupId: "structure", jsonPath: "content.structure", options: opts(["Başlık", "Giriş", "Bölümler", "Maddeler", "Sonuç", "CTA"]) },
   { id: "text_output", label: "Output Formatı", type: "select", categoryId: "text", subgroupId: "output", jsonPath: "content.output_format", options: opts(["Plain Text", "Markdown", "JSON", "HTML", "Table", "Bullets"]) },
+  { id: "text_seo_keyword", label: "Anahtar Kelime", type: "text", categoryId: "text", subgroupId: "seo", jsonPath: "content.seo.keyword", options: [], placeholder: "Örn. organik kahve çekirdeği" },
+  { id: "text_meta_description", label: "Meta Açıklama", type: "textarea", categoryId: "text", subgroupId: "seo", jsonPath: "content.seo.meta_description", options: [] },
 
   // ===== 20. Kod & Yazılım =====
   { id: "code_language", label: "Programlama Dili", type: "select", categoryId: "code", subgroupId: "language", jsonPath: "code.language", options: opts(["TypeScript", "JavaScript", "Python", "Java", "C#", "C++", "Go", "Rust", "PHP", "SQL", "Swift", "Kotlin"]) },
@@ -527,6 +590,8 @@ export const CATALOG_FIELDS: CatalogField[] = [
   { id: "code_database", label: "Database", type: "select", categoryId: "code", subgroupId: "database", jsonPath: "code.database", options: opts(["PostgreSQL", "MySQL", "SQLite", "MongoDB", "Supabase", "Firebase", "Redis"]) },
   { id: "code_architecture", label: "Mimari", type: "select", categoryId: "code", subgroupId: "architecture", jsonPath: "code.architecture", options: opts(["Monolith", "REST API", "GraphQL", "Microservices", "Serverless", "Event Driven"]) },
   { id: "code_output", label: "Output", type: "multi_select", categoryId: "code", subgroupId: "output", jsonPath: "code.output", options: opts(["Code", "Explanation", "Tests", "Documentation", "JSON", "Diff", "File Structure"]) },
+  { id: "code_test_type", label: "Test Türü", type: "select", categoryId: "code", subgroupId: "testing", jsonPath: "code.test.type", options: opts(["Unit Test", "Integration Test", "E2E Test", "Snapshot Test", "Yok"]) },
+  { id: "code_test_coverage", label: "Test Coverage Hedefi (%)", type: "number", categoryId: "code", subgroupId: "testing", jsonPath: "code.test.coverage_target", options: [], min: 0, max: 100, step: 5 },
 
   // ===== 21. AI / Prompt Ayarları =====
   { id: "ai_model", label: "Model", type: "select", categoryId: "ai", subgroupId: "model", jsonPath: "ai.model", options: opts(["GPT", "Claude", "Gemini", "Llama", "Mistral", "Image Model", "Video Model", "Custom Model"]) },
@@ -541,6 +606,8 @@ export const CATALOG_FIELDS: CatalogField[] = [
   { id: "uiux_layout", label: "Layout", type: "select", categoryId: "uiux", subgroupId: "layout", jsonPath: "ui.layout", options: opts(["Dashboard", "Landing Page", "Feed", "Profile", "Settings", "Admin", "E-commerce", "SaaS"]) },
   { id: "uiux_component", label: "Component", type: "multi_select", categoryId: "uiux", subgroupId: "component", jsonPath: "ui.components", options: opts(["Navbar", "Sidebar", "Card", "Modal", "Form", "Table", "Tabs", "Accordion", "Dropdown", "Toast", "Search", "Pagination"]) },
   { id: "uiux_style", label: "Design Style", type: "select", categoryId: "uiux", subgroupId: "style", jsonPath: "ui.design_style", options: opts(["Minimal", "Glassmorphism", "Neumorphism", "Editorial", "Luxury", "Brutalist", "Soft UI", "Material", "Apple-like", "Futuristic"]) },
+  { id: "uiux_accessibility_level", label: "Erişilebilirlik Seviyesi", type: "select", categoryId: "uiux", subgroupId: "accessibility", jsonPath: "ui.accessibility.level", options: opts(["A", "AA", "AAA"]) },
+  { id: "uiux_color_contrast", label: "Renk Kontrastı", type: "select", categoryId: "uiux", subgroupId: "accessibility", jsonPath: "ui.accessibility.color_contrast", options: opts(["Standart", "Yüksek Kontrast", "Renk Körü Dostu"]) },
 
   // ===== 23. Fotoğraf =====
   { id: "photo_type", label: "Fotoğraf Türü", type: "select", categoryId: "photo", subgroupId: "type", jsonPath: "photo.type", options: opts(["Portrait", "Fashion", "Street", "Landscape", "Product", "Architecture", "Food", "Automotive", "Wedding", "Documentary"]) },
@@ -569,6 +636,21 @@ export const CATALOG_PACKAGES: CatalogPackage[] = [
   { id: "pkg_composition", label: "Composition", fieldIds: ["comp_position", "comp_framing", "comp_depth", "comp_perspective", "comp_technique"] },
   { id: "pkg_effects", label: "Effects", fieldIds: ["fx_light", "fx_atmospheric", "fx_energy", "fx_camera"] },
   { id: "pkg_quality", label: "Quality", fieldIds: ["quality_level", "quality_anatomy_errors", "quality_visual_errors", "quality_unwanted_style"] },
+  { id: "pkg_fantasy", label: "Fantasy Setup", fieldIds: ["fantasy_character", "fantasy_creature", "fantasy_world", "fantasy_magic"] },
+  { id: "pkg_scifi", label: "Sci-Fi Setup", fieldIds: ["scifi_character", "scifi_technology", "scifi_location", "scifi_style"] },
+  { id: "pkg_weapons", label: "Weapons & Gear", fieldIds: ["weapon_melee", "weapon_ranged", "weapon_defense", "weapon_detail"] },
+  { id: "pkg_product_shot", label: "Product Shot", fieldIds: ["product_category", "product_shot", "product_background", "product_ad_style"] },
+  { id: "pkg_video_basics", label: "Video Basics", fieldIds: ["video_type", "video_duration", "video_aspect_ratio", "video_camera_movement"] },
+  { id: "pkg_content_brief", label: "Content Brief", fieldIds: ["text_content_type", "text_audience", "text_tone", "text_length"] },
+  { id: "pkg_code_project", label: "Code Project", fieldIds: ["code_language", "code_framework", "code_database", "code_output"] },
+  { id: "pkg_ai_settings", label: "AI Prompt Settings", fieldIds: ["ai_model", "ai_temperature", "ai_role", "ai_objective"] },
+  { id: "pkg_ui_screen", label: "UI Screen", fieldIds: ["uiux_platform", "uiux_layout", "uiux_component", "uiux_style"] },
+  { id: "pkg_photo_shoot", label: "Photo Shoot", fieldIds: ["photo_type", "photo_technique", "photo_character"] },
+  { id: "pkg_music_track", label: "Music Track", fieldIds: ["audio_genre", "audio_mood", "audio_instrument", "audio_tempo"] },
+  { id: "pkg_ad_campaign", label: "Ad Campaign", fieldIds: ["marketing_campaign", "marketing_platform", "marketing_audience", "marketing_cta"] },
+  { id: "pkg_accessories", label: "Accessories", fieldIds: ["acc_necklace", "acc_earrings", "acc_ring", "acc_head", "acc_glasses"] },
+  { id: "pkg_visual_style", label: "Visual Style", fieldIds: ["style_realism", "style_art", "style_cinematic", "style_design"] },
+  { id: "pkg_color_palette", label: "Color Palette", fieldIds: ["color_primary", "color_secondary", "color_palette", "color_saturation"] },
 ];
 
 const CATALOG_FIELDS_BY_ID = new Map(CATALOG_FIELDS.map((field) => [field.id, field]));

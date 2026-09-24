@@ -32,12 +32,11 @@ import {
 } from "@/lib/supabase/generators";
 import type { Generator, GeneratorField, GeneratorSchema, GeneratorTemplate } from "@/types";
 
-const STEPS = ["details", "fields", "preview", "publish"] as const;
+const STEPS = ["details", "fields", "publish"] as const;
 type Step = (typeof STEPS)[number];
 const STEP_LABELS: Record<Step, string> = {
   details: "Detaylar",
   fields: "Alanlar",
-  preview: "Önizleme",
   publish: "Yayınla",
 };
 
@@ -495,12 +494,20 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
       </div>
 
       {step === "details" && (
-        <div className="max-w-2xl space-y-4 rounded-lg border border-border bg-surface p-4 sm:p-5">
-          <GeneratorDetailsForm meta={meta} onChange={(patch) => setMeta((prev) => ({ ...prev, ...patch }))} tagPicker={tagPicker} />
-          {detailsError && <p className="text-sm text-red-500">{detailsError}</p>}
-          <Button type="button" onClick={handleAdvanceFromDetails} disabled={creatingDraft}>
-            {creatingDraft ? "Kaydediliyor…" : "İleri: Alanlar"}
-          </Button>
+        <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
+          <div className="min-w-0 space-y-4 rounded-lg border border-border bg-surface p-4 sm:p-5">
+            <GeneratorDetailsForm meta={meta} onChange={(patch) => setMeta((prev) => ({ ...prev, ...patch }))} tagPicker={tagPicker} />
+            {detailsError && <p className="text-sm text-red-500">{detailsError}</p>}
+            <Button type="button" onClick={handleAdvanceFromDetails} disabled={creatingDraft}>
+              {creatingDraft ? "Kaydediliyor…" : "İleri: Alanlar"}
+            </Button>
+          </div>
+          <div className="min-w-0">
+            <div className="rounded-lg border border-border bg-surface p-4 sm:p-5 lg:sticky lg:top-4">
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-text-muted">Canlı Önizleme</p>
+              <GeneratorPlayground schema={schema} enableNegativePrompt={meta.enableNegativePrompt} />
+            </div>
+          </div>
         </div>
       )}
 
@@ -528,12 +535,6 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
               <GeneratorPlayground schema={schema} enableNegativePrompt={meta.enableNegativePrompt} />
             </div>
           </div>
-        </div>
-      )}
-
-      {step === "preview" && (
-        <div className="max-w-2xl rounded-lg border border-border bg-surface p-4 sm:p-5">
-          <GeneratorPlayground schema={schema} enableNegativePrompt={meta.enableNegativePrompt} />
         </div>
       )}
 
