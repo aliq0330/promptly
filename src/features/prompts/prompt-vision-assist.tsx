@@ -77,7 +77,9 @@ export function PromptVisionAssist({
     setResult(outcome.data);
   }
 
-  const analysisEntries = result ? Object.entries(result.analysis).filter(([, v]) => typeof v === "string" && v.trim()) : [];
+  const analysisEntries = result
+    ? Object.entries(result.analysis ?? {}).filter(([, v]) => typeof v === "string" && v.trim())
+    : [];
 
   return (
     <div className="mb-4 rounded-md border border-dashed border-border bg-accent-surface/30">

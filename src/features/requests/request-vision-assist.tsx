@@ -22,12 +22,13 @@ import type { PromptRequestResult } from "@/lib/image-analysis-types";
 
 type Status = "idle" | "loading" | "error";
 
-function suggestedFieldsLine(fields: PromptRequestResult["suggestedFields"]): string {
+function suggestedFieldsLine(fields: PromptRequestResult["suggestedFields"] | undefined): string {
+  const safe = fields ?? {};
   const parts: string[] = [];
-  if (fields.style) parts.push(`Stil: ${fields.style}`);
-  if (fields.subject) parts.push(`Konu: ${fields.subject}`);
-  if (fields.colorPalette) parts.push(`Renk paleti: ${fields.colorPalette}`);
-  if (fields.details) parts.push(`Detaylar: ${fields.details}`);
+  if (safe.style) parts.push(`Stil: ${safe.style}`);
+  if (safe.subject) parts.push(`Konu: ${safe.subject}`);
+  if (safe.colorPalette) parts.push(`Renk paleti: ${safe.colorPalette}`);
+  if (safe.details) parts.push(`Detaylar: ${safe.details}`);
   return parts.join(" · ");
 }
 
@@ -88,7 +89,9 @@ export function RequestVisionAssist({
     setResult(outcome.data);
   }
 
-  const analysisEntries = result ? Object.entries(result.analysis).filter(([, v]) => typeof v === "string" && v.trim()) : [];
+  const analysisEntries = result
+    ? Object.entries(result.analysis ?? {}).filter(([, v]) => typeof v === "string" && v.trim())
+    : [];
   const fieldsLine = result ? suggestedFieldsLine(result.suggestedFields) : "";
 
   return (

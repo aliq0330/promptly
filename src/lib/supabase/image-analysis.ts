@@ -70,6 +70,44 @@ function categorizeFromText(text: string): ImageAnalysisErrorKind {
 }
 
 /**
+ * `payload.data`'nın gerçekten o `mode`'un beklediği şekilde olup olmadığını
+ * doğrular. Bu, Edge Function'ın eski (mode'suz, düz şemalı) sürümünün hâlâ
+ * canlıda çalıştığı (yani kullanıcının `supabase functions deploy
+ * analyze-image` komutunu henüz çalıştırmadığı) durumu erkenden, açık bir
+ * `malformed_response` hatasıyla yakalıyor — aksi hâlde eski şeklin sessizce
+ * "hiçbir şey bulunamadı" (Generator) ya da yakalanmamış bir TypeError
+ * (Prompt/İstek) üretmesi riski vardı.
+ */
+function validateModeShape(mode: ImageAnalysisMode, value: unknown): boolean {
+  if (!value || typeof value !== "object") return false;
+  const record = value as Record<string, unknown>;
+  switch (mode) {
+    case "generator_builder":
+      return (
+        "mappedValues" in record &&
+        typeof record.mappedValues === "object" &&
+        record.mappedValues !== null &&
+        "suggestedFields" in record &&
+        Array.isArray(record.suggestedFields)
+      );
+    case "prompt_builder":
+      return "analysis" in record && typeof record.analysis === "object" && record.analysis !== null && typeof record.prompt === "string";
+    case "prompt_request":
+      return (
+        "analysis" in record &&
+        typeof record.analysis === "object" &&
+        record.analysis !== null &&
+        "suggestedFields" in record &&
+        typeof record.suggestedFields === "object" &&
+        record.suggestedFields !== null &&
+        typeof record.suggestedDescription === "string"
+      );
+    default:
+      return false;
+  }
+}
+
+/**
  * Ortak, mode-bazlı analiz çağrısı — görseli optimize edip (max 1600px,
  * JPEG) `analyze-image` Edge Function'ına `{ mode, context, image,
  * mimeType }` olarak gönderir, response'u güvenle validate edip kategorize
@@ -153,6 +191,14 @@ async function analyzeImage<TData>(
       const kind = typeof payload.error === "string" ? categorizeFromText(payload.error) : "malformed_response";
       console.error("[image-analysis] analyze-image success:false", payload);
       return { ok: false, error: { kind, message: FRIENDLY_MESSAGES[kind] } };
+    }
+
+    if (!validateModeShape(mode, payload.data)) {
+      console.error(
+        `[image-analysis] "${mode}" modu için beklenmeyen response şekli — Edge Function henüz yeniden deploy edilmemiş (eski, mode'suz sürüm) olabilir. Bkz. "supabase functions deploy analyze-image".`,
+        payload.data,
+      );
+      return { ok: false, error: { kind: "malformed_response", message: FRIENDLY_MESSAGES.malformed_response } };
     }
 
     return {
