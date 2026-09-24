@@ -1,5 +1,6 @@
 "use client";
 
+import { DetailSkeleton } from "@/components/ui/detail-skeleton";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -66,15 +67,13 @@ export function RealProfileView() {
   }, [username]);
 
   if (status === "loading") {
-    return (
-      <div className="mx-auto max-w-lg px-4 py-16 text-center text-sm text-text-muted">Yükleniyor…</div>
-    );
+    return <DetailSkeleton />;
   }
 
   if (status === "not-found" || !profile) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
-        <h1 className="mb-2 text-lg font-semibold text-text">Profil bulunamadı</h1>
+        <h1 className="mb-2 text-h2 font-semibold text-text">Profil bulunamadı</h1>
         <p className="mb-4 text-sm text-text-muted">
           Bu kullanıcı adına sahip bir hesap yok, ya da hesap silinmiş olabilir.
         </p>

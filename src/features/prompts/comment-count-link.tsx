@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { MessageCircle } from "lucide-react";
-import { cn, formatCount, generatorHref, promptHref } from "@/lib/utils";
+import { formatCount, generatorHref, promptHref } from "@/lib/utils";
+import { contentActionClassName } from "@/features/content/action-styles";
 
 /**
  * Comment count link. Reflects the target's real, database-backed
@@ -18,7 +19,7 @@ export function CommentCountLink({
   promptId,
   generatorSlug,
   baseCount,
-  size = 14,
+  size = 16,
   className,
 }: {
   promptId?: string;
@@ -31,11 +32,12 @@ export function CommentCountLink({
   return (
     <Link
       href={href}
-      className={cn("flex items-center gap-1 text-xs hover:text-text", className)}
+      className={contentActionClassName(false, className)}
       title="Yorumlar"
+      aria-label={`Yorumlar (${formatCount(baseCount)})`}
     >
-      <MessageCircle size={size} />
-      {formatCount(baseCount)}
+      <MessageCircle size={size} strokeWidth={1.75} />
+      <span aria-hidden>{formatCount(baseCount)}</span>
     </Link>
   );
 }

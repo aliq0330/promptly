@@ -97,7 +97,7 @@ export default function ResetPasswordPage() {
         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent-surface text-primary">
           <CheckCircle2 size={22} />
         </div>
-        <h1 className="text-lg font-semibold text-text">Şifren güncellendi</h1>
+        <h1 className="text-h2 font-semibold text-text">Şifren güncellendi</h1>
         <Button className="w-full" onClick={() => router.push("/")}>
           Ana sayfaya git
         </Button>
@@ -111,7 +111,7 @@ export default function ResetPasswordPage() {
         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent-surface text-primary">
           <KeyRound size={22} />
         </div>
-        <h1 className="text-lg font-semibold text-text">Yeni şifre belirle</h1>
+        <h1 className="text-h2 font-semibold text-text">Yeni şifre belirle</h1>
 
         <div className="w-full space-y-3 text-left">
           <div>
@@ -144,7 +144,7 @@ export default function ResetPasswordPage() {
           </div>
         </div>
 
-        {error && <p className="text-sm text-red-500">{error}</p>}
+        {error && <p className="text-sm text-danger">{error}</p>}
 
         <Button type="submit" className="w-full" disabled={isSubmitting}>
           {isSubmitting ? "Güncelleniyor..." : "Şifreyi güncelle"}
@@ -159,7 +159,7 @@ export default function ResetPasswordPage() {
         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent-surface text-primary">
           <CheckCircle2 size={22} />
         </div>
-        <h1 className="text-lg font-semibold text-text">Bağlantı gönderildi</h1>
+        <h1 className="text-h2 font-semibold text-text">Bağlantı gönderildi</h1>
         <p className="text-sm text-text-muted">
           <strong className="text-text">{email}</strong> adresine bir şifre sıfırlama bağlantısı
           gönderdik.
@@ -176,7 +176,7 @@ export default function ResetPasswordPage() {
       <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent-surface text-primary">
         <KeyRound size={22} />
       </div>
-      <h1 className="text-lg font-semibold text-text">Şifreni sıfırla</h1>
+      <h1 className="text-h2 font-semibold text-text">Şifreni sıfırla</h1>
       <p className="text-sm text-text-muted">
         E-posta adresini gir, sana bir sıfırlama bağlantısı gönderelim.
       </p>
@@ -196,7 +196,7 @@ export default function ResetPasswordPage() {
         />
       </div>
 
-      {error && <p className="text-sm text-red-500">{error}</p>}
+      {error && <p className="text-sm text-danger">{error}</p>}
 
       <Button type="submit" className="w-full" disabled={isSubmitting}>
         {isSubmitting ? "Gönderiliyor..." : "Sıfırlama bağlantısı gönder"}

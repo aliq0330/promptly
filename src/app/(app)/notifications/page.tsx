@@ -21,9 +21,9 @@ export default function NotificationsPage() {
   const hasUnread = notifications.some((n) => !n.isRead);
 
   return (
-    <div className="px-4 py-6 lg:px-6">
+    <div className="mx-auto w-full max-w-3xl px-3 py-5 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-base font-semibold text-text">Bildirimler</h1>
+        <h1 className="text-h1 font-semibold text-text">Bildirimler</h1>
         <button
           type="button"
           onClick={markAllRead}

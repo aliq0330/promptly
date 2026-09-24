@@ -9,6 +9,7 @@ import { FollowButtonView } from "./follow-button";
 import { ProfileMoreMenu } from "./profile-more-menu";
 import { useFollowState } from "./use-follow-state";
 import { profileHref } from "@/lib/utils";
+import { buttonClassName } from "@/components/ui/button";
 import type { UserProfile } from "@/types";
 
 /**
@@ -19,16 +20,13 @@ import type { UserProfile } from "@/types";
  */
 export function OwnProfileActions({ user }: { user: UserProfile }) {
   return (
-    <div className="flex flex-wrap items-center justify-center gap-2">
-      <Link
-        href="/profile/edit"
-        className="inline-flex h-9 items-center rounded-md border border-border bg-transparent px-4 text-sm font-medium text-text transition-colors hover:bg-accent-surface"
-      >
+    <div className="flex flex-wrap items-center gap-2">
+      <Link href="/profile/edit" className={buttonClassName({ size: "sm", variant: "outline", className: "h-9" })}>
         Profili Düzenle
       </Link>
       <Link
         href="/create"
-        className="inline-flex h-9 items-center gap-1.5 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-dark"
+        className={buttonClassName({ size: "sm", className: "h-9" })}
       >
         <Sparkles size={14} />
         Prompt Oluştur
@@ -37,12 +35,13 @@ export function OwnProfileActions({ user }: { user: UserProfile }) {
         url={profileHref(user)}
         title="Promptly profilim"
         label="Paylaş"
-        className="h-9 gap-1.5 rounded-md border border-border px-4 text-sm"
+        className="h-9 border border-border bg-surface px-3.5 text-text"
       />
       <Link
         href="/settings"
         title="Hesap ayarları"
-        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border bg-transparent text-text-muted transition-colors hover:bg-accent-surface hover:text-text"
+        aria-label="Hesap ayarları"
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border bg-surface text-text-muted transition-colors hover:bg-surface-soft hover:text-text"
       >
         <Settings size={16} />
       </Link>
@@ -60,7 +59,7 @@ export function OtherProfileActions({
   const blockState = useBlockState(user);
 
   return (
-    <div className="flex flex-wrap items-center justify-center gap-2">
+    <div className="flex flex-wrap items-center gap-2">
       <FollowButtonView {...followState} size="md" />
       {blockState.isBlocked ? (
         <span className="inline-flex h-9 items-center rounded-md border border-border px-4 text-sm text-text-muted">
@@ -73,7 +72,7 @@ export function OtherProfileActions({
         url={profileHref(user)}
         title="Promptly profili"
         label="Paylaş"
-        className="h-9 gap-1.5 rounded-md border border-border px-4 text-sm"
+        className="h-9 border border-border bg-surface px-3.5 text-text"
       />
       <ProfileMoreMenu user={user} blockState={blockState} />
     </div>

@@ -10,6 +10,7 @@ import { translateAuthError } from "@/features/auth/auth-errors";
 import { fetchOwnMessagePrivacy, updateMessagePrivacy, type MessagePrivacy } from "@/lib/supabase/profiles";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Language, TranslationKey } from "@/lib/i18n/translations";
+import { AppearancePicker } from "@/components/theme/appearance-picker";
 
 const PASSWORD_MIN_LENGTH = 6;
 
@@ -90,12 +91,12 @@ export default function SettingsPage() {
 
   if (!user) {
     return (
-      <div className="mx-auto max-w-md space-y-6 px-4 py-6 lg:px-6">
+      <div className="mx-auto max-w-md space-y-6 px-3 py-5 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
         <div className="flex min-h-[40vh] flex-col items-center justify-center gap-3 text-center">
           <div className="flex h-14 w-14 items-center justify-center rounded-full bg-accent-surface text-primary">
             <Settings size={28} />
           </div>
-          <h1 className="text-lg font-semibold text-text">{t("settings.pageTitle")}</h1>
+          <h1 className="text-h1 font-semibold text-text">{t("settings.pageTitle")}</h1>
           <p className="max-w-sm text-sm text-text-muted">{t("settings.notLoggedInBody")}</p>
           <Link
             href="/login"
@@ -106,14 +107,15 @@ export default function SettingsPage() {
           </Link>
         </div>
 
+        <AppearanceSection t={t} />
         <LanguageSection t={t} language={language} setLanguage={setLanguage} />
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-md px-4 py-6 lg:px-6">
-      <h1 className="mb-1 text-lg font-semibold text-text">{t("settings.pageTitle")}</h1>
+    <div className="mx-auto max-w-md px-3 py-5 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
+      <h1 className="mb-1 text-h1 font-semibold text-text">{t("settings.pageTitle")}</h1>
       <p className="mb-6 text-sm text-text-muted">
         {t("settings.profileHintBefore")}{" "}
         <Link href="/profile/edit" className="text-primary hover:underline">
@@ -160,7 +162,7 @@ export default function SettingsPage() {
               className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted"
             />
           </div>
-          {error && <p className="text-sm text-red-500">{error}</p>}
+          {error && <p className="text-sm text-danger">{error}</p>}
           {success && <p className="text-sm text-primary">{t("settings.passwordUpdated")}</p>}
           <Button type="submit" size="sm" disabled={isSubmitting}>
             {isSubmitting ? t("settings.updating") : t("settings.updatePassword")}
@@ -204,6 +206,7 @@ export default function SettingsPage() {
           )}
         </div>
 
+        <AppearanceSection t={t} />
         <LanguageSection t={t} language={language} setLanguage={setLanguage} />
 
         <Button type="button" variant="outline" onClick={handleSignOut} disabled={isSigningOut}>
@@ -211,6 +214,19 @@ export default function SettingsPage() {
           {isSigningOut ? t("settings.signingOut") : t("settings.signOut")}
         </Button>
       </div>
+    </div>
+  );
+}
+
+/** Palette + light/dark mode — client-only, same storage model as the language preference. */
+function AppearanceSection({ t }: { t: (key: TranslationKey) => string }) {
+  return (
+    <div className="space-y-3 rounded-lg border border-border bg-surface p-4">
+      <div>
+        <p className="text-sm font-medium text-text">{t("settings.appearanceTitle")}</p>
+        <p className="text-xs text-text-muted">{t("settings.appearanceHint")}</p>
+      </div>
+      <AppearancePicker />
     </div>
   );
 }

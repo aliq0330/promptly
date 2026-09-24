@@ -527,7 +527,7 @@ export function LocalConversationView() {
   if (!user) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
-        <h1 className="mb-2 text-lg font-semibold text-text">Giriş yapmalısın</h1>
+        <h1 className="mb-2 text-h2 font-semibold text-text">Giriş yapmalısın</h1>
         <p className="mb-4 text-sm text-text-muted">
           Gerçek konuşmaları görebilmek için giriş yapmış olman gerekiyor.
         </p>
@@ -550,7 +550,7 @@ export function LocalConversationView() {
   if (!conversation) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
-        <h1 className="mb-2 text-lg font-semibold text-text">Konuşma bulunamadı</h1>
+        <h1 className="mb-2 text-h2 font-semibold text-text">Konuşma bulunamadı</h1>
         <p className="mb-4 text-sm text-text-muted">
           Bu konuşma silinmiş olabilir, ya da bu hesap bu konuşmanın bir üyesi değil.
         </p>
@@ -569,7 +569,7 @@ export function LocalConversationView() {
   return (
     <div
       ref={panelRef}
-      className="fixed inset-x-0 top-16 z-10 flex flex-col bg-background bottom-[calc(4rem+env(safe-area-inset-bottom))] lg:left-64 lg:bottom-0"
+      className="fixed inset-x-0 top-16 z-10 flex flex-col bg-background bottom-[calc(4rem+env(safe-area-inset-bottom))] md:left-[72px] md:bottom-0 lg:left-64"
     >
       <div className="flex items-center gap-1 border-b border-border px-2 py-2 lg:px-4">
         <button
@@ -602,7 +602,7 @@ export function LocalConversationView() {
               type="button"
               onClick={handleDeclineRequest}
               disabled={isDecliningRequest}
-              className="text-red-600 hover:underline disabled:opacity-50"
+              className="text-danger hover:underline disabled:opacity-50"
             >
               {isDecliningRequest ? "Siliniyor..." : "Sil"}
             </button>
@@ -665,7 +665,7 @@ export function LocalConversationView() {
       </div>
       <form onSubmit={handleSubmit} className="border-t border-border p-4 lg:px-6">
         {blockState.isBlocked && (
-          <div className="mb-2 flex items-center justify-between gap-2 rounded-md bg-red-500/10 px-3 py-1.5 text-xs text-red-600">
+          <div className="mb-2 flex items-center justify-between gap-2 rounded-md bg-danger/10 px-3 py-1.5 text-xs text-danger">
             <span>Bu kullanıcıyı engelledin, mesaj gönderemezsin.</span>
             <button type="button" onClick={() => blockState.toggle()} className="font-medium hover:underline">
               Engeli kaldır
@@ -712,7 +712,7 @@ export function LocalConversationView() {
             {isSending ? "Gönderiliyor..." : "Gönder"}
           </Button>
         </div>
-        {sendError && <p className="mt-2 text-xs text-red-500">{sendError}</p>}
+        {sendError && <p className="mt-2 text-xs text-danger">{sendError}</p>}
       </form>
     </div>
   );

@@ -1,85 +1,435 @@
 @import "tailwindcss";
 
 /*
- * Lavender Studio design tokens.
- * Single source of truth for color, radius and font tokens — see CLAUDE.md
- * section 4. Do not redefine these values in individual components.
+ * ============================================================================
+ * PROMPTLY 2.0 DESIGN SYSTEM — token layer
+ * ============================================================================
+ * Single source of truth for every color, radius, shadow, type size and
+ * motion value in the app (CLAUDE.md §4 / Bölüm 9.50). Components never
+ * hardcode a hex value — they use the semantic utilities generated from the
+ * `@theme inline` block below (`bg-surface`, `text-text-muted`,
+ * `border-border-soft`, `bg-primary-soft`, `text-danger`, `shadow-card`...).
+ *
+ * Two independent axes, both set on <html> before first paint by
+ * `themeInitScript` (theme-provider.tsx):
+ *   - mode:    `.dark` class              → light / dark
+ *   - palette: `data-palette` attribute   → lavender (default) / ocean / forest / sand
+ *
+ * Every palette defines the SAME full set of raw `--p-*` variables in both
+ * modes, so every component renders correctly in all 8 combinations without
+ * a single palette-specific class anywhere in the component tree. Palette
+ * selectors match any element (not only <html>), so a subtree can preview
+ * another palette with real tokens (the Settings swatches do exactly this).
+ *
+ * Legacy token names (`accent-surface`, `primary-dark`, `accent`) used
+ * throughout the pre-2.0 codebase are kept as aliases of the new semantic
+ * tokens so nothing that already works has to change to pick up a theme.
  */
 
-:root {
-  --color-background: #f8f7fc;
-  --color-surface: #ffffff;
-  --color-surface-elevated: #ffffff;
-  --color-accent-surface: #ede9fe;
-  --color-accent: #7c3aed;
-  --color-primary: #7c3aed;
-  --color-primary-dark: #5b21b6;
-  --color-primary-foreground: #ffffff;
-  --color-text: #27233a;
-  --color-text-muted: #6b6480;
-  --color-border: #e4e0f2;
+/* ---------------------------------------------------------------------------
+ * Palette: Lavender (default) — calm violet, the original Promptly identity
+ * ------------------------------------------------------------------------- */
+:root,
+[data-palette="lavender"] {
+  --p-bg: #f7f6fb;
+  --p-surface: #ffffff;
+  --p-surface-soft: #f3f1f9;
+  --p-surface-elevated: #ffffff;
+  --p-text: #1f1c2e;
+  --p-text-secondary: #4a4560;
+  --p-text-muted: #6f6a84;
+  --p-border: #e3dfee;
+  --p-border-soft: #eeebf5;
+  --p-border-strong: #cfc8e2;
+  --p-primary: #6a3de0;
+  --p-primary-hover: #5730c2;
+  --p-primary-soft: #efe9fd;
+  --p-primary-fg: #ffffff;
+  --p-secondary: #1f9e8f;
+  --p-shadow: 38 24 84;
 
-  --radius-sm: 0.5rem;
-  --radius-md: 0.75rem;
-  --radius-lg: 1rem;
-  --radius-xl: 1.5rem;
+  --p-success: #15803d;
+  --p-warning: #b45309;
+  --p-danger: #d12f2f;
 }
 
-:root.dark {
-  --color-background: #14121e;
-  --color-surface: #201c2b;
-  --color-surface-elevated: #302741;
-  --color-accent-surface: #302741;
-  --color-accent: #d2c1ff;
-  --color-primary: #b9a1ff;
-  --color-primary-dark: #d2c1ff;
-  --color-primary-foreground: #14121e;
-  --color-text: #f4f0ff;
-  --color-text-muted: #a79fc2;
-  --color-border: #332c47;
+:root.dark,
+.dark [data-palette="lavender"] {
+  --p-bg: #121019;
+  --p-surface: #1a1724;
+  --p-surface-soft: #221e2e;
+  --p-surface-elevated: #27223a;
+  --p-text: #f2effa;
+  --p-text-secondary: #cbc5dc;
+  --p-text-muted: #968fad;
+  --p-border: #2e2940;
+  --p-border-soft: #25202f;
+  --p-border-strong: #433b5c;
+  --p-primary: #b49dff;
+  --p-primary-hover: #cab9ff;
+  --p-primary-soft: #2a2342;
+  --p-primary-fg: #16121f;
+  --p-secondary: #5fd3c2;
+  --p-shadow: 0 0 0;
+
+  --p-success: #4ade80;
+  --p-warning: #fbbf24;
+  --p-danger: #f87171;
 }
 
+/* ---------------------------------------------------------------------------
+ * Palette: Ocean — deep navy with an electric blue accent
+ * ------------------------------------------------------------------------- */
+[data-palette="ocean"] {
+  --p-bg: #f5f7fb;
+  --p-surface: #ffffff;
+  --p-surface-soft: #eef2f9;
+  --p-surface-elevated: #ffffff;
+  --p-text: #0f1a33;
+  --p-text-secondary: #3a4763;
+  --p-text-muted: #616d87;
+  --p-border: #dee5f0;
+  --p-border-soft: #eaeff6;
+  --p-border-strong: #c5d0e2;
+  --p-primary: #2856e0;
+  --p-primary-hover: #1f45bd;
+  --p-primary-soft: #e7eefd;
+  --p-primary-fg: #ffffff;
+  --p-secondary: #0f9fb5;
+  --p-shadow: 15 30 70;
+}
+
+.dark[data-palette="ocean"],
+.dark [data-palette="ocean"] {
+  --p-bg: #0a0f1e;
+  --p-surface: #111a2d;
+  --p-surface-soft: #172137;
+  --p-surface-elevated: #1b2741;
+  --p-text: #edf2fb;
+  --p-text-secondary: #c1cbe0;
+  --p-text-muted: #8392ae;
+  --p-border: #22304d;
+  --p-border-soft: #1a2640;
+  --p-border-strong: #33456b;
+  --p-primary: #7aa3ff;
+  --p-primary-hover: #9cbbff;
+  --p-primary-soft: #182a4f;
+  --p-primary-fg: #0a0f1e;
+  --p-secondary: #4fd1e3;
+  --p-shadow: 0 0 0;
+}
+
+/* ---------------------------------------------------------------------------
+ * Palette: Forest — deep green with a fresh mint accent
+ * ------------------------------------------------------------------------- */
+[data-palette="forest"] {
+  --p-bg: #f5f8f6;
+  --p-surface: #ffffff;
+  --p-surface-soft: #edf3ef;
+  --p-surface-elevated: #ffffff;
+  --p-text: #13231b;
+  --p-text-secondary: #3b4f45;
+  --p-text-muted: #5f7067;
+  --p-border: #dce7e0;
+  --p-border-soft: #e9f0ec;
+  --p-border-strong: #c1d3c8;
+  --p-primary: #1b7453;
+  --p-primary-hover: #155d43;
+  --p-primary-soft: #e0f1e8;
+  --p-primary-fg: #ffffff;
+  --p-secondary: #b7791f;
+  --p-shadow: 18 50 35;
+}
+
+.dark[data-palette="forest"],
+.dark [data-palette="forest"] {
+  --p-bg: #0c1310;
+  --p-surface: #131c18;
+  --p-surface-soft: #19241f;
+  --p-surface-elevated: #1e2b25;
+  --p-text: #e9f3ee;
+  --p-text-secondary: #bdcdc4;
+  --p-text-muted: #869a8f;
+  --p-border: #24342d;
+  --p-border-soft: #1c2924;
+  --p-border-strong: #35493f;
+  --p-primary: #62d6a8;
+  --p-primary-hover: #88e2bf;
+  --p-primary-soft: #16332a;
+  --p-primary-fg: #0c1310;
+  --p-secondary: #f0b95c;
+  --p-shadow: 0 0 0;
+}
+
+/* ---------------------------------------------------------------------------
+ * Palette: Sand — warm neutrals with a coral accent
+ * ------------------------------------------------------------------------- */
+[data-palette="sand"] {
+  --p-bg: #faf7f3;
+  --p-surface: #ffffff;
+  --p-surface-soft: #f4eee7;
+  --p-surface-elevated: #ffffff;
+  --p-text: #2a211b;
+  --p-text-secondary: #56483e;
+  --p-text-muted: #76695f;
+  --p-border: #ece3d8;
+  --p-border-soft: #f3ece4;
+  --p-border-strong: #dccdbd;
+  --p-primary: #b7432a;
+  --p-primary-hover: #9a3822;
+  --p-primary-soft: #fbe8e1;
+  --p-primary-fg: #ffffff;
+  --p-secondary: #3d7a8c;
+  --p-shadow: 80 45 25;
+}
+
+.dark[data-palette="sand"],
+.dark [data-palette="sand"] {
+  --p-bg: #16120f;
+  --p-surface: #1f1915;
+  --p-surface-soft: #28211c;
+  --p-surface-elevated: #2d251f;
+  --p-text: #f6efe8;
+  --p-text-secondary: #d4c7ba;
+  --p-text-muted: #a19181;
+  --p-border: #382e26;
+  --p-border-soft: #2c241f;
+  --p-border-strong: #4d4035;
+  --p-primary: #ff8c6e;
+  --p-primary-hover: #ffa88f;
+  --p-primary-soft: #3a241c;
+  --p-primary-fg: #1a120e;
+  --p-secondary: #7fc3d6;
+  --p-shadow: 0 0 0;
+}
+
+/* ---------------------------------------------------------------------------
+ * Semantic tokens → Tailwind utilities
+ * ------------------------------------------------------------------------- */
 @theme inline {
-  --color-background: var(--color-background);
-  --color-surface: var(--color-surface);
-  --color-surface-elevated: var(--color-surface-elevated);
-  --color-accent-surface: var(--color-accent-surface);
-  --color-accent: var(--color-accent);
-  --color-primary: var(--color-primary);
-  --color-primary-dark: var(--color-primary-dark);
-  --color-primary-foreground: var(--color-primary-foreground);
-  --color-text: var(--color-text);
-  --color-text-muted: var(--color-text-muted);
-  --color-border: var(--color-border);
+  /* Surfaces */
+  --color-background: var(--p-bg);
+  --color-surface: var(--p-surface);
+  --color-surface-soft: var(--p-surface-soft);
+  --color-surface-elevated: var(--p-surface-elevated);
 
-  --radius-sm: var(--radius-sm);
-  --radius-md: var(--radius-md);
-  --radius-lg: var(--radius-lg);
-  --radius-xl: var(--radius-xl);
+  /* Text (utility names: text-text / text-text-secondary / text-text-muted) */
+  --color-text: var(--p-text);
+  --color-text-secondary: var(--p-text-secondary);
+  --color-text-muted: var(--p-text-muted);
 
-  --font-sans: var(--font-inter);
+  /* Borders */
+  --color-border: var(--p-border);
+  --color-border-soft: var(--p-border-soft);
+  --color-border-strong: var(--p-border-strong);
+
+  /* Brand */
+  --color-primary: var(--p-primary);
+  --color-primary-hover: var(--p-primary-hover);
+  --color-primary-soft: var(--p-primary-soft);
+  --color-primary-foreground: var(--p-primary-fg);
+  --color-secondary: var(--p-secondary);
+
+  /* Status */
+  --color-success: var(--p-success);
+  --color-warning: var(--p-warning);
+  --color-danger: var(--p-danger);
+
+  /* Legacy aliases (pre-2.0 names, still used across the codebase) */
+  --color-accent-surface: var(--p-primary-soft);
+  --color-accent: var(--p-primary);
+  --color-primary-dark: var(--p-primary-hover);
+
+  /* Radius — moderate, never pill-shaped cards */
+  --radius-xs: 0.375rem;
+  --radius-sm: 0.5rem;
+  --radius-md: 0.625rem;
+  --radius-lg: 0.875rem;
+  --radius-xl: 1.25rem;
+
+  /* Shadows — tinted by the palette, deliberately faint */
+  --shadow-xs: 0 1px 2px rgb(var(--p-shadow) / 0.05);
+  --shadow-sm: 0 1px 2px rgb(var(--p-shadow) / 0.06), 0 1px 1px rgb(var(--p-shadow) / 0.03);
+  --shadow-card: 0 1px 2px rgb(var(--p-shadow) / 0.04);
+  --shadow-card-hover: 0 6px 20px -8px rgb(var(--p-shadow) / 0.16);
+  --shadow-md: 0 6px 20px -8px rgb(var(--p-shadow) / 0.16);
+  --shadow-lg: 0 16px 40px -12px rgb(var(--p-shadow) / 0.22), 0 2px 6px rgb(var(--p-shadow) / 0.06);
+  --shadow-pop: 0 16px 40px -12px rgb(var(--p-shadow) / 0.22), 0 2px 6px rgb(var(--p-shadow) / 0.06);
+
+  /* Fonts */
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-display-face), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-mono-face), ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Type scale: Display / H1 / H2 / H3 / Body / Small / Caption / Label */
+  --text-display: 2.25rem;
+  --text-display--line-height: 1.1;
+  --text-display--letter-spacing: -0.02em;
+  --text-h1: 1.625rem;
+  --text-h1--line-height: 1.2;
+  --text-h1--letter-spacing: -0.016em;
+  --text-h2: 1.25rem;
+  --text-h2--line-height: 1.3;
+  --text-h2--letter-spacing: -0.015em;
+  --text-h3: 1.0625rem;
+  --text-h3--line-height: 1.35;
+  --text-h3--letter-spacing: -0.01em;
+  --text-body: 0.9375rem;
+  --text-body--line-height: 1.6;
+  --text-small: 0.875rem;
+  --text-small--line-height: 1.5;
+  --text-caption: 0.75rem;
+  --text-caption--line-height: 1.4;
+  --text-label: 0.8125rem;
+  --text-label--line-height: 1.3;
+
+  /* Motion */
+  --ease-soft: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --animate-fade-in: fade-in 200ms var(--ease-soft) both;
+  --animate-pop-in: pop-in 220ms var(--ease-soft) both;
+  --animate-sheet-up: sheet-up 260ms var(--ease-soft) both;
+  --animate-shimmer: shimmer 1.6s linear infinite;
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  @keyframes pop-in {
+    from {
+      opacity: 0;
+      transform: translateY(4px) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+  @keyframes sheet-up {
+    from {
+      transform: translateY(100%);
+    }
+    to {
+      transform: translateY(0);
+    }
+  }
+  @keyframes shimmer {
+    from {
+      background-position: 200% 0;
+    }
+    to {
+      background-position: -200% 0;
+    }
+  }
 }
 
-body {
-  background: var(--color-background);
-  color: var(--color-text);
-  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+/* ---------------------------------------------------------------------------
+ * Base
+ * ------------------------------------------------------------------------- */
+/* In `@layer base` so every Tailwind utility (layered later) still wins. */
+@layer base {
+  html {
+    color-scheme: light;
+  }
+  html.dark {
+    color-scheme: dark;
+  }
+
+  body {
+    background: var(--color-background);
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  *,
+  ::before,
+  ::after {
+    border-color: var(--color-border);
+  }
+
+  ::selection {
+    background: var(--color-primary-soft);
+    color: var(--color-text);
+  }
+
+  /*
+   * Keyboard focus fallback for every interactive element that doesn't style
+   * its own focus state. `:where()` keeps specificity at zero, so a
+   * component's own `focus-visible:ring-*` / `outline-none` always wins.
+   */
+  :where(a, button, input, textarea, select, summary, [tabindex]):focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+  }
+
+  input[type="radio"],
+  input[type="checkbox"],
+  input[type="range"],
+  progress {
+    accent-color: var(--color-primary);
+  }
 }
 
-* {
-  border-color: var(--color-border);
+/*
+ * The literal prompt text — the core content of this platform. Always
+ * rendered in the same calm monospace block so a prompt reads as "the thing
+ * you copy", distinct from titles/descriptions around it.
+ */
+@utility prompt-text {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  line-height: 1.65;
+  letter-spacing: -0.005em;
+}
+
+/* Theme-aware skeleton shimmer. */
+@utility skeleton-shimmer {
+  background-color: var(--color-surface-soft);
+  background-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in oklab, var(--color-border) 55%, transparent) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: var(--animate-shimmer);
+}
+
+/* Horizontal chip rows that scroll on narrow screens without a visible bar. */
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 /*
  * iOS Safari auto-zooms the page when a focused input/textarea/select
- * renders below 16px — every form control in this app (message composer,
- * search, comments, auth forms, profile edit, request form) uses
- * Tailwind's text-sm/text-xs (14px/12px), well under that threshold.
- * Scoped to widths below this app's own desktop breakpoint (`lg`, 1024px
- * — see CLAUDE.md §5's mobile-shell/masaüstü split) so desktop input
- * sizing/design is completely untouched. Placed here, outside any
- * `@layer`, so it wins the cascade over Tailwind's layered `text-sm`/
- * `text-xs` utility classes without needing `!important`.
+ * renders below 16px — every form control in this app uses Tailwind's
+ * text-sm/text-xs (14px/12px), well under that threshold. Scoped to widths
+ * below the desktop breakpoint (`lg`, 1024px) so desktop input sizing is
+ * untouched. Placed outside any `@layer` so it wins over layered utilities
+ * without `!important`.
  */
 @media (max-width: 1023px) {
   input,

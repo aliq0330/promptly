@@ -54,7 +54,7 @@ export default function LoginPage() {
       <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent-surface text-primary">
         <LogIn size={22} />
       </div>
-      <h1 className="text-lg font-semibold text-text">Giriş yap</h1>
+      <h1 className="text-h2 font-semibold text-text">Giriş yap</h1>
 
       <div className="w-full space-y-3 text-left">
         <div>
@@ -92,7 +92,7 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {error && <p className="text-sm text-red-500">{error}</p>}
+      {error && <p className="text-sm text-danger">{error}</p>}
 
       <Button type="submit" className="w-full" disabled={isSubmitting}>
         {isSubmitting ? "Giriş yapılıyor..." : "Giriş yap"}

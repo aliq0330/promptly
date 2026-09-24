@@ -1,3 +1,4 @@
+import { Code2, Feather, FileText, ImageIcon, Megaphone, Music, PenTool, Shapes, Video, type LucideIcon } from "lucide-react";
 import type { GeneratorCategoryTopic } from "@/types";
 
 /**
@@ -20,3 +21,16 @@ export const GENERATOR_CATEGORY_TOPIC_LABELS: Record<GeneratorCategoryTopic, str
 };
 
 export const GENERATOR_CATEGORY_TOPICS = Object.keys(GENERATOR_CATEGORY_TOPIC_LABELS) as GeneratorCategoryTopic[];
+
+/** One icon per topic, used by filter chips and card type labels. */
+export const GENERATOR_CATEGORY_TOPIC_ICONS: Record<GeneratorCategoryTopic, LucideIcon> = {
+  image: ImageIcon,
+  text: FileText,
+  video: Video,
+  audio: Music,
+  code: Code2,
+  design: PenTool,
+  marketing: Megaphone,
+  writing: Feather,
+  other: Shapes,
+};

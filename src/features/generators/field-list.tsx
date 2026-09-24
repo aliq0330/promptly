@@ -108,7 +108,7 @@ export function FieldList({
                 <span className="rounded-sm bg-accent-surface px-1.5 py-0.5 text-[10px] font-medium text-text-muted">
                   {FIELD_TYPE_SHORT_LABELS[field.type]}
                 </span>
-                {field.required && <span className="text-[10px] font-medium text-red-500">Zorunlu</span>}
+                {field.required && <span className="text-[10px] font-medium text-danger">Zorunlu</span>}
               </div>
               <p className="mt-0.5 truncate font-mono text-xs text-primary">{`{{${field.key}}}`}</p>
               <p className="mt-0.5 truncate font-mono text-xs text-text-muted">→ {field.jsonPath?.trim() || field.key}</p>
@@ -125,7 +125,7 @@ export function FieldList({
                 type="button"
                 onClick={() => (isConfirming ? (onDeleteField(field.id), setConfirmDeleteId(null)) : setConfirmDeleteId(field.id))}
                 aria-label="Alanı sil"
-                className={cn("rounded p-1.5", isConfirming ? "bg-red-600 text-white" : "text-text-muted hover:bg-accent-surface hover:text-red-600")}
+                className={cn("rounded p-1.5", isConfirming ? "bg-danger text-white" : "text-text-muted hover:bg-accent-surface hover:text-danger")}
               >
                 <Trash2 size={14} />
               </button>

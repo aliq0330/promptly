@@ -28,9 +28,9 @@ export function GeneratorJsonPanel({ output, onReset }: { output: GeneratorOutpu
   }
 
   return (
-    <div className="space-y-3 rounded-md border border-border bg-background p-3">
-      <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">JSON Çıktısı</p>
-      <pre className="max-h-96 w-full overflow-auto whitespace-pre-wrap rounded-md border border-border bg-surface p-3 font-mono text-xs text-text">
+    <div className="space-y-3 rounded-md border border-border-soft bg-surface-soft p-3.5">
+      <p className="text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">JSON Çıktısı</p>
+      <pre className="max-h-96 w-full overflow-auto whitespace-pre-wrap rounded-md border border-border-soft bg-surface p-3 font-mono text-caption leading-relaxed text-text">
         {text}
       </pre>
       <div className="flex items-center gap-3">

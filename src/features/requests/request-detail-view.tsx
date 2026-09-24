@@ -3,11 +3,14 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { MessageSquareOff, Pencil, Sparkles, Trash2 } from "lucide-react";
+import { MessageSquareOff, PenLine, Pencil, Sparkles, Trash2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonClassName } from "@/components/ui/button";
+import { ContentTypeLabel } from "@/features/content/content-type-label";
+import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
+import { ShareButton } from "@/features/prompts/share-button";
 import { PromptCard } from "@/features/prompts/prompt-card";
 import { CommentSection } from "@/features/prompts/comment-section";
 import { CopyPromptButton } from "@/features/prompts/copy-prompt-button";
@@ -17,7 +20,7 @@ import { fetchPromptsForRequest } from "@/lib/supabase/prompts";
 import { useRealRequests } from "./real-requests-provider";
 import { STATUS_LABELS, STATUS_VARIANTS } from "./request-card";
 import { parseHighlightValue } from "@/lib/notification-utils";
-import { cn, formatRelativeTime, tagHref } from "@/lib/utils";
+import { cn, formatRelativeTime, profileHref, requestHref, tagHref } from "@/lib/utils";
 import type { Prompt, PromptRequest } from "@/types";
 
 /** Same fade timing as the comment-thread flash — one shared feel across the app for "you just jumped here from a notification". */
@@ -130,74 +133,90 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
     }
   }
 
+  const typeMeta = live.contentType ? CONTENT_TYPE_META[live.contentType] : null;
+
   return (
-    <div className="space-y-6 px-4 py-6 lg:px-6">
-      <div
+    <div className="mx-auto w-full max-w-3xl space-y-6 px-3 py-5 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
+      <article
         className={cn(
-          "space-y-4 rounded-lg border border-border bg-surface p-5 transition-colors duration-700",
-          isRequestFlashed && "-m-1.5 bg-primary/10 p-6 ring-1 ring-primary/40",
+          "space-y-5 rounded-lg border border-border-soft bg-surface p-5 shadow-card transition-colors duration-700 sm:p-6",
+          isRequestFlashed && "bg-primary/10 ring-1 ring-primary/40",
         )}
       >
-        <div className="flex items-start justify-between gap-3">
-          <h1 className="text-lg font-semibold text-text">{live.title}</h1>
-          <div className="flex shrink-0 items-center gap-2">
-            <Badge variant={STATUS_VARIANTS[live.status]}>{STATUS_LABELS[live.status]}</Badge>
-            {isOwnRequest && (
-              <Link
-                href={`/requests/new?edit=${live.id}`}
-                aria-label="İsteği düzenle"
-                title="İsteği düzenle"
-                className="flex h-7 w-7 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-accent-surface hover:text-text"
-              >
-                <Pencil size={14} />
-              </Link>
-            )}
+        <header className="space-y-3">
+          <div className="flex items-center justify-between gap-3">
+            <ContentTypeLabel icon={Sparkles} label="Prompt İsteği" detail={typeMeta?.label ?? live.preferredTool} />
+            <div className="flex shrink-0 items-center gap-1.5">
+              <Badge variant={STATUS_VARIANTS[live.status]}>
+                <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-current" />
+                {STATUS_LABELS[live.status]}
+              </Badge>
+              {isOwnRequest && (
+                <Link
+                  href={`/requests/new?edit=${live.id}`}
+                  aria-label="İsteği düzenle"
+                  title="İsteği düzenle"
+                  className="flex h-8 w-8 items-center justify-center rounded-md text-text-muted transition-colors hover:bg-surface-soft hover:text-text"
+                >
+                  <Pencil size={15} />
+                </Link>
+              )}
+            </div>
           </div>
-        </div>
-        <div>
-          <div className="mb-1 flex justify-end">
+          <h1 className="text-h1 font-semibold text-text">{live.title}</h1>
+          <Link href={profileHref(live.author)} className="group inline-flex items-center gap-2.5 rounded-md">
+            <Avatar src={live.author.avatarUrl} alt={live.author.displayName} size={32} />
+            <span className="leading-tight">
+              <span className="block text-label font-semibold text-text group-hover:text-primary">{live.author.displayName}</span>
+              <span className="block text-caption text-text-muted">
+                @{live.author.username} · {formatRelativeTime(live.createdAt)}
+              </span>
+            </span>
+          </Link>
+        </header>
+
+        <section aria-labelledby="request-brief-title" className="overflow-hidden rounded-lg border border-border-soft bg-surface-soft">
+          <div className="flex items-center justify-between gap-2 border-b border-border-soft px-4 py-2.5">
+            <h2 id="request-brief-title" className="font-sans text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">
+              İstek
+            </h2>
             <CopyPromptButton text={live.description} />
           </div>
-          <p className="text-sm text-text-muted">{live.description}</p>
-        </div>
+          <p className="whitespace-pre-wrap px-4 py-4 text-body text-text">{live.description}</p>
+        </section>
 
         {live.referenceImage && (
-          <div className="relative aspect-video w-full overflow-hidden rounded-md bg-accent-surface">
-            <Image
-              src={live.referenceImage.url}
-              alt={live.referenceImage.alt}
-              fill
-              sizes="768px"
-              className="object-cover"
-            />
-          </div>
+          <figure className="space-y-2">
+            <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-border-soft bg-surface-soft">
+              <Image src={live.referenceImage.url} alt={live.referenceImage.alt} fill sizes="768px" className="object-cover" />
+            </div>
+            <figcaption className="text-caption text-text-muted">Referans görsel</figcaption>
+          </figure>
         )}
 
         {live.creativeDirection && (
-          <div className="rounded-md bg-accent-surface p-3 text-sm text-text">
-            <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-text-muted">
-              Yaratıcı Yön
-            </p>
-            {live.creativeDirection}
+          <div className="rounded-md border-l-2 border-primary bg-primary-soft/50 px-4 py-3">
+            <p className="mb-1 text-caption font-semibold uppercase tracking-[0.08em] text-primary">Yaratıcı Yön</p>
+            <p className="text-small text-text">{live.creativeDirection}</p>
           </div>
         )}
-        <div className="flex flex-wrap gap-1.5">
-          {live.tags.map((tag) => (
-            <Link key={tag.slug} href={tagHref(tag)}>
-              <Badge variant="outline" className="hover:bg-accent-surface">
-                {tag.label}
-              </Badge>
-            </Link>
-          ))}
-          {live.preferredTool && <Badge variant="outline">{live.preferredTool}</Badge>}
-        </div>
-        <div className="flex items-center gap-2 pt-1 text-xs text-text-muted">
-          <Avatar src={live.author.avatarUrl} alt={live.author.displayName} size={24} />
-          <span>{live.author.displayName}</span>
-          <span>· {formatRelativeTime(live.createdAt)}</span>
-        </div>
 
-        <div className="flex flex-wrap items-center gap-2 pt-1">
+        {(live.tags.length > 0 || live.preferredTool) && (
+          <div className="flex flex-wrap gap-1.5">
+            {live.tags.map((tag) => (
+              <Link
+                key={tag.slug}
+                href={tagHref(tag)}
+                className="inline-flex h-7 items-center rounded-full border border-border-soft bg-surface px-2.5 text-caption font-medium text-text-secondary transition-colors hover:border-primary/40 hover:text-primary"
+              >
+                #{tag.label}
+              </Link>
+            ))}
+            {live.preferredTool && <Badge variant="neutral">{live.preferredTool}</Badge>}
+          </div>
+        )}
+
+        <div className="flex flex-wrap items-center gap-2 border-t border-border-soft pt-4">
           {isOwnRequest ? (
             !hasSelection && (
               <>
@@ -207,7 +226,7 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
                 </Button>
                 <Button
                   type="button"
-                  variant={confirmingDelete ? "primary" : "ghost"}
+                  variant={confirmingDelete ? "danger" : "ghost"}
                   size="sm"
                   onClick={handleDelete}
                   onBlur={() => setConfirmingDelete(false)}
@@ -219,11 +238,8 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
             )
           ) : (
             !isClosed && (
-              <Link
-                href={`/create?answerRequest=${live.id}`}
-                className="inline-flex h-9 items-center gap-1.5 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary-dark"
-              >
-                <Sparkles size={14} />
+              <Link href={`/create?answerRequest=${live.id}`} className={buttonClassName({ size: "sm", className: "h-9" })}>
+                <PenLine size={14} />
                 Yanıtla
               </Link>
             )
@@ -231,7 +247,7 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
           {isOwnRequest && hasSelection && (
             <Button
               type="button"
-              variant={confirmingDelete ? "primary" : "ghost"}
+              variant={confirmingDelete ? "danger" : "ghost"}
               size="sm"
               onClick={handleDelete}
               onBlur={() => setConfirmingDelete(false)}
@@ -240,22 +256,27 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
               {confirmingDelete ? "Emin misin? Tekrar tıkla" : "İsteği sil"}
             </Button>
           )}
+          <span className="ml-auto" />
+          <ShareButton url={requestHref(live)} title={live.title} label="Paylaş" />
         </div>
         {!isOwnRequest && isClosed && (
-          <p className="text-xs text-text-muted">Bu istek kapandı, artık yeni yanıt kabul edilmiyor.</p>
+          <p className="text-caption text-text-muted">Bu istek kapandı, artık yeni yanıt kabul edilmiyor.</p>
         )}
         {isOwnRequest && <EditHistoryPanel contentType="prompt_request" contentId={live.id} />}
-      </div>
+      </article>
 
       <section className="space-y-3">
-        <h2 className="text-sm font-semibold text-text">Yaratıcı Yanıtlar ({answers.length})</h2>
+        <h2 className="flex items-center gap-2 text-h2 font-semibold text-text">
+          Yaratıcı Yanıtlar
+          <span className="rounded-xs bg-surface-soft px-1.5 font-sans text-caption font-semibold tabular-nums text-text-muted">{answers.length}</span>
+        </h2>
         {responseHighlightNotFound && (
-          <p className="rounded-md bg-accent-surface/60 px-3 py-2 text-sm text-text-muted">
+          <p className="rounded-md bg-surface-soft px-3 py-2.5 text-small text-text-muted">
             Bu yanıt artık mevcut değil.
           </p>
         )}
         {answers.length === 0 ? (
-          <div className="space-y-3 py-6 text-center text-sm text-text-muted">
+          <div className="space-y-3 rounded-lg border border-dashed border-border py-8 text-center text-small text-text-muted">
             <p>Bu isteğe henüz yanıt verilmedi.</p>
             {!isClosed && !isOwnRequest && (
               <Link href={`/create?answerRequest=${live.id}`} className="font-medium text-primary underline">
@@ -300,7 +321,7 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
                                 type="button"
                                 disabled={isSelecting}
                                 onClick={() => confirmSelection(null)}
-                                className="text-xs font-medium text-red-600 hover:underline"
+                                className="text-xs font-medium text-danger hover:underline"
                               >
                                 Seçimi kaldır
                               </button>
@@ -353,14 +374,16 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
             })}
           </div>
         )}
-        {selectionError && <p className="text-sm text-red-500">{selectionError}</p>}
+        {selectionError && <p className="text-sm text-danger">{selectionError}</p>}
       </section>
 
-      <CommentSection
-        target={{ requestId: live.id }}
-        disabledReason={isClosed ? "Bu istek kapatıldığı için yeni yorum eklenemiyor." : undefined}
-        highlightCommentId={highlightCommentId}
-      />
+      <section className="rounded-lg border border-border-soft bg-surface p-4 sm:p-5">
+        <CommentSection
+          target={{ requestId: live.id }}
+          disabledReason={isClosed ? "Bu istek kapatıldığı için yeni yorum eklenemiyor." : undefined}
+          highlightCommentId={highlightCommentId}
+        />
+      </section>
     </div>
   );
 }

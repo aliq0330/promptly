@@ -33,15 +33,15 @@ export function PostHeader({
     <div className="flex items-center justify-between gap-2">
       <Link
         href={profileHref(author)}
-        className="relative z-10 flex min-w-0 items-center gap-2.5 hover:opacity-80"
+        className="group/author relative z-10 flex min-w-0 items-center gap-2.5 rounded-md"
       >
-        <Avatar src={author.avatarUrl} alt={author.displayName} size={36} />
-        <span className="min-w-0">
-          <span className="block truncate text-sm font-semibold text-text">
+        <Avatar src={author.avatarUrl} alt={author.displayName} size={32} />
+        <span className="min-w-0 leading-tight">
+          <span className="block truncate text-label font-semibold text-text group-hover/author:text-primary">
             {author.displayName}
           </span>
-          <span className="block truncate text-xs text-text-muted">
-            {formatRelativeTime(createdAt)}
+          <span className="block truncate text-caption text-text-muted">
+            @{author.username} · {formatRelativeTime(createdAt)}
             {subtitle ? ` · ${subtitle}` : ""}
           </span>
         </span>

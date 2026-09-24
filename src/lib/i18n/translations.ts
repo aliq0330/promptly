@@ -32,6 +32,11 @@ export const translations = {
   "nav.createShort": { tr: "Oluştur", en: "Create" },
   "nav.requestsShort": { tr: "İstekler", en: "Requests" },
 
+  "nav.groupDiscover": { tr: "Keşfet", en: "Discover" },
+  "nav.groupLibrary": { tr: "Kütüphanem", en: "My library" },
+  "nav.primaryLabel": { tr: "Ana gezinme", en: "Main navigation" },
+  "nav.tagline": { tr: "Prompt topluluğu", en: "Prompt community" },
+
   // ---- Header ----
   "header.homeAriaLabel": { tr: "Promptly ana sayfa", en: "Promptly home" },
   "header.searchPlaceholder": { tr: "Prompt, kullanıcı veya etiket ara", en: "Search prompts, users, or tags" },
@@ -74,6 +79,19 @@ export const translations = {
     tr: "Takip etmediğin kimse sana mesaj isteği bile gönderemez.",
     en: "Anyone you don't follow can't even send you a message request.",
   },
+  "settings.appearanceTitle": { tr: "Görünüm", en: "Appearance" },
+  "settings.appearanceHint": {
+    tr: "Renk temasını ve açık/koyu modu seç. Bu tercih yalnızca bu tarayıcıda saklanır.",
+    en: "Choose a color theme and light/dark mode. This preference is only stored on this browser.",
+  },
+  "settings.modeLabel": { tr: "Mod", en: "Mode" },
+  "settings.modeLight": { tr: "Açık", en: "Light" },
+  "settings.modeDark": { tr: "Koyu", en: "Dark" },
+  "settings.paletteLabel": { tr: "Renk teması", en: "Color theme" },
+  "settings.palette.lavender": { tr: "Lavanta", en: "Lavender" },
+  "settings.palette.ocean": { tr: "Okyanus", en: "Ocean" },
+  "settings.palette.forest": { tr: "Orman", en: "Forest" },
+  "settings.palette.sand": { tr: "Kum", en: "Sand" },
   "settings.languageTitle": { tr: "Dil", en: "Language" },
   "settings.languageHint": {
     tr: "Arayüz dilini seç. Bu tercih yalnızca bu tarayıcıda saklanır.",

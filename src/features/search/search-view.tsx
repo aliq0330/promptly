@@ -25,6 +25,13 @@ export function SearchView() {
   const [isSearching, setIsSearching] = useState(false);
   const normalized = query.trim();
 
+  // Prefill from `?q=` (the Explore page's search box hands off here).
+  useEffect(() => {
+    const initial = new URLSearchParams(window.location.search).get("q");
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time read of the URL on mount
+    if (initial) setQuery(initial);
+  }, []);
+
   // Real, case-insensitive tag search — CLAUDE.md §16. Matches against the
   // already-loaded real catalog (same shared cache the tag picker/discovery
   // page use), client-side, so it stays correctly Turkish-case-aware
@@ -57,7 +64,7 @@ export function SearchView() {
   }, [normalized]);
 
   return (
-    <div className="space-y-6 px-4 py-6 lg:px-6">
+    <div className="mx-auto w-full max-w-[1400px] space-y-6 px-3 py-5 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
       <div className="flex h-11 items-center gap-2 rounded-md border border-border bg-surface px-3">
         <Search size={18} className="shrink-0 text-text-muted" />
         <input
@@ -80,7 +87,7 @@ export function SearchView() {
         <div className="space-y-8">
           {matchedTags.length > 0 && (
             <section className="space-y-3">
-              <h2 className="text-sm font-semibold text-text">Etiketler</h2>
+              <h2 className="text-h3 font-semibold text-text">Etiketler</h2>
               <div className="flex flex-wrap gap-2">
                 {matchedTags.map((tag) => (
                   <Link key={tag.slug} href={tagHref(tag)}>
@@ -95,7 +102,7 @@ export function SearchView() {
 
           {users.length > 0 && (
             <section className="space-y-3">
-              <h2 className="text-sm font-semibold text-text">Kullanıcılar</h2>
+              <h2 className="text-h3 font-semibold text-text">Kullanıcılar</h2>
               <div className="overflow-hidden rounded-lg border border-border bg-surface">
                 {users.map((user) => (
                   <Link
@@ -118,13 +125,13 @@ export function SearchView() {
 
           {generators.length > 0 && (
             <section className="space-y-3">
-              <h2 className="text-sm font-semibold text-text">Generatorlar</h2>
+              <h2 className="text-h3 font-semibold text-text">Generatorlar</h2>
               <PromptGrid generators={generators} />
             </section>
           )}
 
           <section className="space-y-3">
-            <h2 className="text-sm font-semibold text-text">Promptlar</h2>
+            <h2 className="text-h3 font-semibold text-text">Promptlar</h2>
             {prompts.length === 0 && users.length === 0 && matchedTags.length === 0 && generators.length === 0 ? (
               <p className="py-6 text-center text-sm text-text-muted">Sonuç bulunamadı.</p>
             ) : (

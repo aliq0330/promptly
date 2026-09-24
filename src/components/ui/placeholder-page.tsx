@@ -18,7 +18,7 @@ export function PlaceholderPage({ icon: Icon, title, description }: PlaceholderP
       <div className="flex h-14 w-14 items-center justify-center rounded-full bg-accent-surface text-primary">
         <Icon size={28} />
       </div>
-      <h1 className="text-lg font-semibold text-text">{title}</h1>
+      <h1 className="text-h1 font-semibold text-text">{title}</h1>
       <p className="max-w-sm text-sm text-text-muted">{description}</p>
       <span className="mt-2 rounded-sm bg-accent-surface px-2 py-1 text-xs font-medium text-primary">
         Yakında

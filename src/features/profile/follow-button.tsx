@@ -7,8 +7,8 @@ import { useFollowState } from "./use-follow-state";
 import type { UserProfile } from "@/types";
 
 const SIZE_CLASSES: Record<"sm" | "md", string> = {
-  sm: "h-8 px-3 text-sm gap-1.5",
-  md: "h-10 px-4 text-sm gap-2",
+  sm: "h-8 px-3 text-label gap-1.5",
+  md: "h-10 px-4 text-small gap-2",
 };
 
 interface FollowButtonViewProps {
@@ -36,7 +36,7 @@ export function FollowButtonView({ isFollowing, toggle, canFollow, loading, size
         href="/login"
         title="Takip etmek için giriş yapmalısın"
         className={cn(
-          "inline-flex items-center justify-center rounded-md bg-primary font-medium text-primary-foreground transition-colors hover:bg-primary-dark",
+          "inline-flex items-center justify-center rounded-md bg-primary font-medium text-primary-foreground transition-colors duration-200 hover:bg-primary-hover",
           SIZE_CLASSES[size],
           className,
         )}

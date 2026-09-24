@@ -61,16 +61,33 @@ export function Modal({
     };
   }, [onClose]);
 
+  // Layout: a vertical flex column where the panel row uses auto margins
+  // (never `items-center`/`items-end`, which clip the top of a panel taller
+  // than the viewport so it can't be scrolled into view).
+  //   - mobile (<sm): the panel docks to the bottom edge as a sheet —
+  //     full width, square bottom corners, slides up.
+  //   - sm and up:   a centered dialog that fades + scales in.
+  // Every panel in the app is `w-full max-w-* rounded-lg border ... shadow-lg`,
+  // so the sheet treatment is applied with direct-child (`*:`) variants here
+  // instead of editing each modal.
   return (
     <Portal>
       <div
-        className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/40 p-4"
+        className="fixed inset-0 z-50 flex flex-col overflow-y-auto bg-[rgb(10_8_20/0.45)] animate-fade-in backdrop-blur-[2px] sm:p-4"
         role="dialog"
         aria-modal="true"
         aria-labelledby={labelledBy}
         onClick={onClose}
       >
-        {children}
+        <div
+          className={
+            "mt-auto flex w-full justify-center animate-sheet-up sm:mb-auto sm:animate-pop-in " +
+            "*:shadow-pop max-sm:*:max-w-none max-sm:*:rounded-b-none max-sm:*:border-x-0 max-sm:*:border-b-0 " +
+            "max-sm:*:pb-[max(1.25rem,env(safe-area-inset-bottom))]"
+          }
+        >
+          {children}
+        </div>
       </div>
     </Portal>
   );

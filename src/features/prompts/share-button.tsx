@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { Share2 } from "lucide-react";
-import { absoluteUrl, cn } from "@/lib/utils";
+import { absoluteUrl } from "@/lib/utils";
+import { contentActionClassName } from "@/features/content/action-styles";
 
 /**
  * The only fully working social action on the card — uses the real Web
@@ -53,13 +54,9 @@ export function ShareButton({
       onClick={handleShare}
       aria-label="Paylaş"
       title={copied ? "Bağlantı kopyalandı" : "Paylaş"}
-      className={cn(
-        "flex items-center gap-1 rounded-sm px-1 py-0.5 text-xs transition-colors hover:text-text",
-        copied ? "text-primary" : "text-text-muted",
-        className,
-      )}
+      className={contentActionClassName(copied, className)}
     >
-      <Share2 size={14} />
+      <Share2 size={16} strokeWidth={1.75} />
       {label && <span>{copied ? "Kopyalandı" : label}</span>}
     </button>
   );

@@ -224,7 +224,7 @@ export function FieldEditorModal({
               placeholder="Örn. Göz rengi"
               className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted"
             />
-            {labelError && <p className="mt-1 text-xs text-red-500">{labelError}</p>}
+            {labelError && <p className="mt-1 text-xs text-danger">{labelError}</p>}
           </div>
 
           <div>
@@ -274,7 +274,7 @@ export function FieldEditorModal({
               className="h-10 w-full rounded-md border border-border bg-background px-3 font-mono text-sm text-text"
             />
             <p className="mt-1 font-mono text-xs text-primary">{`{{${draft.key || "…"}}}`}</p>
-            {keyError && <p className="mt-1 text-xs text-red-500">{keyError}</p>}
+            {keyError && <p className="mt-1 text-xs text-danger">{keyError}</p>}
           </div>
 
           {OPTION_TYPES.includes(draft.type) && (
@@ -285,7 +285,7 @@ export function FieldEditorModal({
                   <div key={option.value} className="flex items-center gap-2 rounded-md border border-border bg-background px-3 py-1.5 text-sm text-text">
                     <span className="flex-1 truncate">{option.label}</span>
                     <span className="shrink-0 truncate font-mono text-xs text-text-muted">{option.value}</span>
-                    <button type="button" onClick={() => removeOption(option.value)} className="shrink-0 text-text-muted hover:text-red-500">
+                    <button type="button" onClick={() => removeOption(option.value)} className="shrink-0 text-text-muted hover:text-danger">
                       <X size={14} />
                     </button>
                   </div>
@@ -328,7 +328,7 @@ export function FieldEditorModal({
                   <Plus size={14} /> Option
                 </Button>
               </div>
-              {optionsError && <p className="mt-1 text-xs text-red-500">{optionsError}</p>}
+              {optionsError && <p className="mt-1 text-xs text-danger">{optionsError}</p>}
             </div>
           )}
 
@@ -390,7 +390,7 @@ export function FieldEditorModal({
                 onChange={(event) => updateJsonPath(event.target.value)}
                 className="h-9 w-full rounded-md border border-border bg-background px-2 font-mono text-xs text-text"
               />
-              {jsonPathError && <p className="mt-1 text-xs text-red-500">{jsonPathError}</p>}
+              {jsonPathError && <p className="mt-1 text-xs text-danger">{jsonPathError}</p>}
             </div>
 
             <div>
@@ -509,7 +509,7 @@ export function FieldEditorModal({
                     )}
                   </div>
                   {draft.condition && !isConditionSatisfiable(draft.condition, allFields) && (
-                    <p className="mt-1 text-xs text-red-500">Seçilen koşul kaynağı artık geçerli değil.</p>
+                    <p className="mt-1 text-xs text-danger">Seçilen koşul kaynağı artık geçerli değil.</p>
                   )}
                 </div>
               </div>
@@ -528,7 +528,7 @@ export function FieldEditorModal({
                     }
                     onDelete();
                   }}
-                  className={cn("text-sm font-medium", confirmDelete ? "text-red-600" : "text-text-muted hover:text-red-600")}
+                  className={cn("text-sm font-medium", confirmDelete ? "text-danger" : "text-text-muted hover:text-danger")}
                 >
                   {confirmDelete ? "Emin misin? Tekrar tıkla" : "Sil"}
                 </button>

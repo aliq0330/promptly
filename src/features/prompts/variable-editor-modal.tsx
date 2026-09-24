@@ -104,7 +104,7 @@ export function VariableEditorModal({
             {normalizedName && (
               <p className="mt-1.5 font-mono text-xs text-primary">{`{${normalizedName}}`}</p>
             )}
-            {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
+            {error && <p className="mt-1 text-xs text-danger">{error}</p>}
           </div>
 
           <div>

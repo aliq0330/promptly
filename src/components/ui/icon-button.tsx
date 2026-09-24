@@ -9,9 +9,9 @@ export interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement>
 /** Shared visual style, reused by non-<button> elements (e.g. Link) that need the same look. */
 export const iconButtonClassName = (active?: boolean, className?: string) =>
   cn(
-    "inline-flex h-10 w-10 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-accent-surface hover:text-text",
+    "inline-flex h-10 w-10 items-center justify-center rounded-full text-text-muted transition-colors duration-200 hover:bg-surface-soft hover:text-text",
     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-    active && "bg-accent-surface text-primary",
+    active && "bg-primary-soft text-primary",
     className,
   );
 

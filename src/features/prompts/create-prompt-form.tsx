@@ -52,7 +52,7 @@ function contentTypeFromGeneratorCategory(category: GeneratorCategoryTopic): Pro
 function LoginGate({ message }: { message: string }) {
   return (
     <div className="mx-auto max-w-md px-4 py-16 text-center">
-      <h1 className="mb-2 text-lg font-semibold text-text">Giriş yapmalısın</h1>
+      <h1 className="mb-2 text-h2 font-semibold text-text">Giriş yapmalısın</h1>
       <p className="mb-4 text-sm text-text-muted">{message}</p>
       <div className="flex justify-center gap-2">
         <Link
@@ -483,7 +483,7 @@ export function CreatePromptForm() {
   if (editForbidden) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
-        <h1 className="mb-2 text-lg font-semibold text-text">Bu promptu düzenleme yetkin yok</h1>
+        <h1 className="mb-2 text-h2 font-semibold text-text">Bu promptu düzenleme yetkin yok</h1>
         <p className="mb-4 text-sm text-text-muted">
           Bir promptu yalnızca kendi sahibi düzenleyebilir.
         </p>
@@ -500,7 +500,7 @@ export function CreatePromptForm() {
   if (notFound) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
-        <h1 className="mb-2 text-lg font-semibold text-text">
+        <h1 className="mb-2 text-h2 font-semibold text-text">
           {isEditMode ? "Prompt bulunamadı" : isAnswerMode ? "İstek bulunamadı" : isGeneratorRunMode ? "Kayıt bulunamadı" : "Prompt bulunamadı"}
         </h1>
         <p className="mb-4 text-sm text-text-muted">
@@ -525,7 +525,7 @@ export function CreatePromptForm() {
   if (isRequestDeleted && answeredRequest) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
-        <h1 className="mb-2 text-lg font-semibold text-text">Bu istek silindi</h1>
+        <h1 className="mb-2 text-h2 font-semibold text-text">Bu istek silindi</h1>
         <p className="mb-4 text-sm text-text-muted">
           Yazarı bu isteği sildi, artık yeni yanıt kabul edilmiyor.
         </p>
@@ -542,7 +542,7 @@ export function CreatePromptForm() {
   if (isRequestClosed && answeredRequest) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
-        <h1 className="mb-2 text-lg font-semibold text-text">Bu istek kapandı</h1>
+        <h1 className="mb-2 text-h2 font-semibold text-text">Bu istek kapandı</h1>
         <p className="mb-4 text-sm text-text-muted">
           Bu istek kapandı, artık yeni yanıt kabul edilmiyor.
         </p>
@@ -557,8 +557,8 @@ export function CreatePromptForm() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-6 lg:px-6">
-      <h1 className="mb-1 text-lg font-semibold text-text">
+    <div className="mx-auto max-w-5xl px-3 py-5 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
+      <h1 className="mb-1 text-h1 font-semibold text-text">
         {isEditMode
           ? "Promptu Düzenle"
           : isAnswerMode
@@ -757,7 +757,7 @@ export function CreatePromptForm() {
                   ? "Yeni bir dosya seçmezsen mevcut görsel değişmeden kalır."
                   : "Yüklemezsen sağdaki önizlemede otomatik oluşturulan bir görsel kullanılır."}
               </p>
-              {imageError && <p className="mt-1 text-xs text-red-500">{imageError}</p>}
+              {imageError && <p className="mt-1 text-xs text-danger">{imageError}</p>}
             </div>
           )}
 
@@ -850,7 +850,7 @@ export function CreatePromptForm() {
           </Button>
 
           {publishError && (
-            <div className="rounded-md border border-red-500/30 bg-red-500/5 p-3 text-sm text-red-600">
+            <div className="rounded-md border border-danger/30 bg-danger/5 p-3 text-sm text-danger">
               {publishError}
             </div>
           )}

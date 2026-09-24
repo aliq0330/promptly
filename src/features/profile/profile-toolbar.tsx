@@ -1,8 +1,9 @@
 "use client";
 
+import { Chip } from "@/components/ui/chip";
+
 import { Search, X } from "lucide-react";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
-import { cn } from "@/lib/utils";
 import type { PromptContentType } from "@/types";
 
 export type ProfileSortKey = "newest" | "oldest" | "most-liked";
@@ -44,46 +45,22 @@ export function ProfileToolbar({
   return (
     <div className="space-y-2.5">
       <div className="flex items-center gap-2">
-        <div className="flex flex-1 gap-1.5 overflow-x-auto [&::-webkit-scrollbar]:hidden">
-          <button
-            type="button"
-            onClick={() => onTypeChange("all")}
-            className={cn(
-              "shrink-0 rounded-full border px-3 py-1 text-xs font-medium transition-colors",
-              activeType === "all"
-                ? "border-primary bg-primary text-primary-foreground"
-                : "border-border bg-surface text-text-muted hover:text-text",
-            )}
-          >
+        <div className="scrollbar-none flex flex-1 gap-2 overflow-x-auto">
+          <Chip selected={activeType === "all"} onClick={() => onTypeChange("all")}>
             Tümü
-          </button>
-          {availableTypes.map((type) => {
-            const meta = CONTENT_TYPE_META[type];
-            const Icon = meta.icon;
-            return (
-              <button
-                key={type}
-                type="button"
-                onClick={() => onTypeChange(type)}
-                className={cn(
-                  "flex shrink-0 items-center gap-1 rounded-full border px-3 py-1 text-xs font-medium transition-colors",
-                  activeType === type
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-border bg-surface text-text-muted hover:text-text",
-                )}
-              >
-                <Icon size={12} />
-                {meta.label}
-              </button>
-            );
-          })}
+          </Chip>
+          {availableTypes.map((type) => (
+            <Chip key={type} icon={CONTENT_TYPE_META[type].icon} selected={activeType === type} onClick={() => onTypeChange(type)}>
+              {CONTENT_TYPE_META[type].label}
+            </Chip>
+          ))}
         </div>
 
         <select
           value={sort}
           onChange={(event) => onSortChange(event.target.value as ProfileSortKey)}
           aria-label="Sırala"
-          className="h-8 shrink-0 rounded-md border border-border bg-surface px-2 text-xs font-medium text-text"
+          className="h-8 shrink-0 rounded-md border border-border bg-surface px-2 text-label font-medium text-text"
         >
           {(Object.keys(SORT_LABELS) as ProfileSortKey[]).map((key) => (
             <option key={key} value={key}>
@@ -95,14 +72,14 @@ export function ProfileToolbar({
 
       {showSearch && (
         <div className="flex items-center gap-2">
-          <div className="flex h-9 flex-1 items-center gap-2 rounded-md border border-border bg-surface px-3">
+          <div className="flex h-9 flex-1 items-center gap-2 rounded-md border border-border-soft bg-surface px-3 focus-within:border-primary">
             <Search size={14} className="shrink-0 text-text-muted" />
             <input
               type="text"
               value={search}
               onChange={(event) => onSearchChange(event.target.value)}
               placeholder="Bu profildeki promptlarda ara"
-              className="h-full w-full bg-transparent text-sm text-text outline-none placeholder:text-text-muted"
+              className="h-full w-full bg-transparent text-small text-text outline-none placeholder:text-text-muted"
             />
           </div>
           {hasActiveFilters && (

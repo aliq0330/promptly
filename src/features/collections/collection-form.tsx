@@ -88,7 +88,7 @@ export function CollectionForm({
         </div>
       </div>
 
-      {error && <p className="text-sm text-red-500">{error}</p>}
+      {error && <p className="text-sm text-danger">{error}</p>}
 
       <div className="flex items-center justify-end gap-2 pt-1">
         {onCancel && (

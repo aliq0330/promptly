@@ -44,20 +44,20 @@ export function ProfileBadges({
   if (earned.length === 0) return null;
 
   return (
-    <div className="flex flex-wrap items-center justify-center gap-1.5">
+    <>
       {earned.map((badge) => {
         const Icon = badge.icon;
         return (
           <span
             key={badge.key}
             title={badge.label}
-            className="flex items-center gap-1 rounded-full bg-accent-surface px-2.5 py-1 text-xs font-medium text-primary"
+            className="flex items-center gap-1 rounded-xs bg-primary-soft px-2 py-0.5 text-caption font-medium text-primary"
           >
             <Icon size={12} />
             {badge.label}
           </span>
         );
       })}
-    </div>
+    </>
   );
 }

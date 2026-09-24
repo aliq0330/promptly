@@ -21,14 +21,14 @@ export function GeneratedPromptPanel({
   onReset?: () => void;
 }) {
   return (
-    <div className="space-y-3 rounded-md border border-border bg-background p-3">
-      <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">
+    <div className="space-y-3 rounded-md border border-border-soft bg-surface-soft p-3.5">
+      <p className="text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">
         {negativePrompt !== undefined ? "Positive Prompt" : "Generated Prompt"}
       </p>
       <CopyableBlock text={prompt} />
       {negativePrompt !== undefined && negativePrompt !== null && negativePrompt.trim().length > 0 && (
         <>
-          <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">Negative Prompt</p>
+          <p className="text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">Negative Prompt</p>
           <CopyableBlock text={negativePrompt} tone="muted" />
         </>
       )}
@@ -72,7 +72,7 @@ function CopyableBlock({ text, tone = "default" }: { text: string; tone?: "defau
 }
 
 function cnPre(tone: "default" | "muted") {
-  return `w-full whitespace-pre-wrap rounded-md border border-border p-3 font-mono text-sm ${
-    tone === "muted" ? "bg-accent-surface/30 text-text-muted" : "bg-surface text-text"
+  return `prompt-text w-full whitespace-pre-wrap break-words rounded-md border border-border-soft p-3 ${
+    tone === "muted" ? "bg-surface-soft text-text-muted" : "bg-surface text-text"
   }`;
 }

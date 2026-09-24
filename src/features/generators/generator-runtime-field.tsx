@@ -28,7 +28,7 @@ export function GeneratorRuntimeField({
     <div>
       <label htmlFor={inputId} className="mb-1.5 block text-sm font-medium text-text">
         {field.label}
-        {field.required && <span className="ml-1 text-red-500">*</span>}
+        {field.required && <span className="ml-1 text-danger">*</span>}
       </label>
       {field.description && <p className="mb-1.5 text-xs text-text-muted">{field.description}</p>}
       <FieldControl field={field} inputId={inputId} value={value} onChange={(next) => onChange(field.key, next)} />

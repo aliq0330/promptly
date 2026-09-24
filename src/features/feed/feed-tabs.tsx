@@ -1,8 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
-import { cn } from "@/lib/utils";
+import { Blocks, Flame, LayoutGrid, SquareTerminal, Sparkles, Stars, UserCheck } from "lucide-react";
+import { Tabs } from "@/components/ui/tabs";
+import { Chip, ChipRow } from "@/components/ui/chip";
+import { EmptyState } from "@/components/ui/empty-state";
+import { PromptCardSkeletonGrid } from "@/components/ui/prompt-card-skeleton";
 import { FeedGrid } from "./feed-grid";
 import { feedItemAuthorId, feedItemCreatedAt, feedItemPopularity, type FeedItem } from "./types";
 import { useAuth } from "@/features/auth/auth-provider";
@@ -12,17 +15,26 @@ import { useRealGenerators } from "@/features/generators/real-generators-provide
 import { fetchFollowedProfiles } from "@/lib/supabase/profiles";
 
 type TabKey = "following" | "popular" | "for-you";
+type KindFilter = "all" | FeedItem["kind"];
 
-const TABS: { key: TabKey; label: string }[] = [
-  { key: "following", label: "Takip Ettiklerim" },
-  { key: "popular", label: "Popüler" },
-  { key: "for-you", label: "Sana Özel" },
+const TABS = [
+  { key: "for-you" as const, label: "Sana Özel", icon: Stars },
+  { key: "popular" as const, label: "Popüler", icon: Flame },
+  { key: "following" as const, label: "Takip Ettiklerim", icon: UserCheck },
+];
+
+const KIND_FILTERS: { key: KindFilter; label: string; icon: typeof LayoutGrid }[] = [
+  { key: "all", label: "Tümü", icon: LayoutGrid },
+  { key: "prompt", label: "Promptlar", icon: SquareTerminal },
+  { key: "generator", label: "Generatorlar", icon: Blocks },
+  { key: "request", label: "İstekler", icon: Sparkles },
 ];
 
 export function FeedTabs() {
   const [active, setActive] = useState<TabKey>("for-you");
+  const [kind, setKind] = useState<KindFilter>("all");
   const { user } = useAuth();
-  const { realPrompts } = useRealPrompts();
+  const { realPrompts, loading } = useRealPrompts();
   const { realRequests } = useRealRequests();
   const { realGenerators } = useRealGenerators();
   const [followedIds, setFollowedIds] = useState<Set<string>>(new Set());
@@ -49,45 +61,46 @@ export function FeedTabs() {
     return [...promptItems, ...requestItems, ...generatorItems].sort((a, b) => feedItemCreatedAt(b) - feedItemCreatedAt(a));
   }, [realPrompts, realRequests, realGenerators]);
 
-  const visible =
-    active === "popular"
-      ? [...allItems].sort((a, b) => feedItemPopularity(b) - feedItemPopularity(a))
-      : active === "following"
-        ? allItems.filter((item) => followedIds.has(feedItemAuthorId(item)))
-        : allItems;
+  const visible = useMemo(() => {
+    const byTab =
+      active === "popular"
+        ? [...allItems].sort((a, b) => feedItemPopularity(b) - feedItemPopularity(a))
+        : active === "following"
+          ? allItems.filter((item) => followedIds.has(feedItemAuthorId(item)))
+          : allItems;
+    return kind === "all" ? byTab : byTab.filter((item) => item.kind === kind);
+  }, [allItems, active, followedIds, kind]);
 
   return (
-    <div className="space-y-4 pb-6">
-      <div className="flex gap-1 border-b border-border px-4 lg:px-6">
-        {TABS.map((tab) => (
-          <button
-            key={tab.key}
-            type="button"
-            onClick={() => setActive(tab.key)}
-            className={cn(
-              "border-b-2 px-3 py-2.5 text-sm font-medium transition-colors",
-              active === tab.key
-                ? "border-primary text-primary"
-                : "border-transparent text-text-muted hover:text-text",
-            )}
-          >
-            {tab.label}
-          </button>
-        ))}
+    <section className="space-y-4" aria-label="Akış">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <Tabs items={TABS} active={active} onChange={setActive} ariaLabel="Akış görünümü" variant="segmented" />
+        <ChipRow>
+          {KIND_FILTERS.map((filter) => (
+            <Chip key={filter.key} icon={filter.icon} selected={kind === filter.key} onClick={() => setKind(filter.key)}>
+              {filter.label}
+            </Chip>
+          ))}
+        </ChipRow>
       </div>
-      <div className="px-4 lg:px-6">
-        {active === "following" && !user ? (
-          <p className="py-10 text-center text-sm text-text-muted">
-            Takip ettiklerinin paylaşımlarını görmek için{" "}
-            <Link href="/login" className="font-medium text-primary underline">
-              giriş yapmalısın
-            </Link>
-            .
-          </p>
-        ) : (
-          <FeedGrid items={visible} />
-        )}
-      </div>
-    </div>
+
+      {active === "following" && !user ? (
+        <EmptyState
+          icon={UserCheck}
+          title="Takip ettiklerin burada görünür"
+          description="Takip ettiğin yaratıcıların promptlarını ve generatorlarını görmek için giriş yap."
+          action={{ label: "Giriş yap", href: "/login" }}
+        />
+      ) : loading && allItems.length === 0 ? (
+        <PromptCardSkeletonGrid count={6} />
+      ) : (
+        <FeedGrid
+          items={visible}
+          emptyTitle={active === "following" ? "Takip ettiklerinden henüz paylaşım yok" : "Henüz gösterilecek içerik yok."}
+          emptyDescription={active === "following" ? "Keşfet'ten yeni yaratıcılar bulup takip edebilirsin." : undefined}
+          emptyAction={active === "following" ? { label: "Keşfet'e git", href: "/discover" } : undefined}
+        />
+      )}
+    </section>
   );
 }

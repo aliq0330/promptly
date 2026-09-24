@@ -301,15 +301,15 @@ export default function ImageAnalysisTestPage() {
               spellCheck={false}
               className="w-full rounded-md border border-border bg-surface p-3 font-mono text-xs text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             />
-            {contextError && <p className="text-xs text-red-600">{contextError}</p>}
+            {contextError && <p className="text-xs text-danger">{contextError}</p>}
           </div>
         )}
       </Card>
 
       {result?.outcome && (
-        <Card className={cn("space-y-2 p-5", !result.outcome.ok && "border-red-300")}>
+        <Card className={cn("space-y-2 p-5", !result.outcome.ok && "border-danger/40")}>
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className={cn("text-sm font-semibold", result.outcome.ok ? "text-text" : "text-red-600")}>
+            <p className={cn("text-sm font-semibold", result.outcome.ok ? "text-text" : "text-danger")}>
               {result.outcome.ok ? "Başarılı" : `Hata — ${result.outcome.error.kind}`}
             </p>
             <p className="text-xs text-text/60">
@@ -327,9 +327,9 @@ export default function ImageAnalysisTestPage() {
       )}
 
       {result?.raw && (
-        <Card className={cn("space-y-2 p-5", !result.raw.ok && "border-red-300")}>
+        <Card className={cn("space-y-2 p-5", !result.raw.ok && "border-danger/40")}>
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className={cn("text-sm font-semibold", result.raw.ok ? "text-text" : "text-red-600")}>
+            <p className={cn("text-sm font-semibold", result.raw.ok ? "text-text" : "text-danger")}>
               Ham response {result.raw.status !== null ? `(HTTP ${result.raw.status})` : ""}
             </p>
             <p className="text-xs text-text/60">{result.elapsedMs} ms</p>

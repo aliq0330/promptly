@@ -1,5 +1,6 @@
 "use client";
 
+import { DetailSkeleton } from "@/components/ui/detail-skeleton";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Hash } from "lucide-react";
@@ -76,13 +77,13 @@ export function TagView() {
   }
 
   if (!loaded) {
-    return <div className="mx-auto max-w-lg px-4 py-16 text-center text-sm text-text-muted">Yükleniyor…</div>;
+    return <DetailSkeleton />;
   }
 
   if (!tag) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
-        <h1 className="mb-2 text-lg font-semibold text-text">Etiket bulunamadı</h1>
+        <h1 className="mb-2 text-h2 font-semibold text-text">Etiket bulunamadı</h1>
         <p className="text-sm text-text-muted">Bu etiket silinmiş veya hiç var olmamış olabilir.</p>
       </div>
     );
@@ -91,25 +92,25 @@ export function TagView() {
   const totalCount = tag.usageCount ?? prompts.length + requests.length;
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6 px-4 py-6 lg:px-6">
+    <div className="mx-auto max-w-3xl space-y-6 px-3 py-5 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
       <div>
         <div className="mb-1 flex items-center gap-1.5">
           <Hash size={20} className="text-primary" />
-          <h1 className="text-lg font-semibold text-text">{tag.label}</h1>
+          <h1 className="text-h1 font-semibold text-text">{tag.label}</h1>
         </div>
         <p className="text-sm text-text-muted">{formatCount(totalCount)} içerikte kullanıldı</p>
       </div>
 
       {requests.length > 0 && (
         <section className="space-y-3">
-          <h2 className="text-sm font-semibold text-text">Prompt İstekleri ({requests.length})</h2>
+          <h2 className="text-h3 font-semibold text-text">Prompt İstekleri ({requests.length})</h2>
           <RequestList requests={requests} />
         </section>
       )}
 
       <section className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-sm font-semibold text-text">Promptlar ({filteredPrompts.length})</h2>
+          <h2 className="text-h3 font-semibold text-text">Promptlar ({filteredPrompts.length})</h2>
           <div className="flex gap-1.5">
             {(["newest", "popular"] as SortMode[]).map((mode) => (
               <button

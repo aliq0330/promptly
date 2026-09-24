@@ -214,7 +214,7 @@ export function PromptTextEditor({
         </button>
       </div>
 
-      {selectionWarning && <p className="text-xs text-amber-600">{selectionWarning}</p>}
+      {selectionWarning && <p className="text-xs text-warning">{selectionWarning}</p>}
 
       {activeTab === "template" ? (
         <textarea
@@ -269,7 +269,7 @@ export function PromptTextEditor({
       )}
 
       {orphanTokens.length > 0 && (
-        <p className="text-xs text-amber-600">
+        <p className="text-xs text-warning">
           Metinde tanımlanmamış değişken(ler) var: {orphanTokens.map((name) => `{${name}}`).join(", ")} — bunları
           &quot;Değişken Ekle&quot; ile tanımlayabilirsin.
         </p>

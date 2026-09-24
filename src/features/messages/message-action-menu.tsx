@@ -27,7 +27,7 @@ function ReportMessageMenuItem({ messageId }: { messageId: string }) {
         type="button"
         role="menuitem"
         onClick={() => setOpen(true)}
-        className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-text hover:bg-accent-surface"
+        className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-text hover:bg-surface-soft"
       >
         <Flag size={14} />
         Şikayet Et
@@ -93,8 +93,8 @@ function MenuItem({
       onBlur={onBlur}
       disabled={disabled}
       className={cn(
-        "flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-accent-surface disabled:pointer-events-none disabled:opacity-60",
-        danger ? "text-red-600 hover:bg-red-500/10" : "text-text",
+        "flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-surface-soft disabled:pointer-events-none disabled:opacity-60",
+        danger ? "text-danger hover:bg-danger/10" : "text-text",
       )}
     >
       {icon}
@@ -147,7 +147,7 @@ export function MessageActionMenu({
       role="menu"
       aria-label="Mesaj seçenekleri"
       className={cn(
-        "absolute top-full z-30 mt-1.5 w-52 overflow-hidden rounded-md border border-border bg-surface py-1 shadow-md",
+        "absolute top-full z-30 mt-1.5 w-52 overflow-hidden rounded-md border border-border-soft bg-surface-elevated py-1 shadow-pop animate-pop-in",
         align === "right" ? "right-0" : "left-0",
       )}
     >

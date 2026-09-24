@@ -36,7 +36,7 @@ export default function FollowingPage() {
   if (!loading && !user) {
     return (
       <div className="mx-auto max-w-md px-4 py-16 text-center">
-        <h1 className="mb-2 text-lg font-semibold text-text">Giriş yapmalısın</h1>
+        <h1 className="mb-2 text-h2 font-semibold text-text">Giriş yapmalısın</h1>
         <p className="mb-4 text-sm text-text-muted">
           Takip ettiklerini görmek için önce giriş yapmalısın.
         </p>
@@ -51,13 +51,13 @@ export default function FollowingPage() {
   }
 
   return (
-    <div className="space-y-6 px-4 py-6 lg:px-6">
+    <div className="mx-auto w-full max-w-[1400px] space-y-6 px-3 py-5 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
       <section className="space-y-3">
-        <h1 className="text-base font-semibold text-text">Takip Ettiklerim</h1>
+        <h1 className="text-h1 font-semibold text-text">Takip Ettiklerim</h1>
         <CreatorList users={followed} />
       </section>
       <section className="space-y-3">
-        <h2 className="text-sm font-semibold text-text">Son paylaşımları</h2>
+        <h2 className="text-h3 font-semibold text-text">Son paylaşımları</h2>
         <PromptGrid prompts={feed} />
       </section>
     </div>

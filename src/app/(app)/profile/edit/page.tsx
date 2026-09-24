@@ -111,7 +111,7 @@ export default function EditProfilePage() {
   if (!user) {
     return (
       <div className="mx-auto max-w-md px-4 py-16 text-center">
-        <h1 className="mb-2 text-lg font-semibold text-text">Giriş yapmalısın</h1>
+        <h1 className="mb-2 text-h2 font-semibold text-text">Giriş yapmalısın</h1>
         <p className="mb-4 text-sm text-text-muted">Profilini düzenlemek için önce giriş yapmalısın.</p>
         <Link
           href="/login"
@@ -124,8 +124,8 @@ export default function EditProfilePage() {
   }
 
   return (
-    <div className="mx-auto max-w-xl px-4 py-6 lg:px-6">
-      <h1 className="mb-1 text-lg font-semibold text-text">Profili Düzenle</h1>
+    <div className="mx-auto max-w-xl px-3 py-5 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
+      <h1 className="mb-1 text-h1 font-semibold text-text">Profili Düzenle</h1>
       <p className="mb-6 text-sm text-text-muted">
         Değişiklikler gerçekten, kalıcı olarak kaydedilir ve her ziyaretçiye görünür olur.
       </p>
@@ -164,7 +164,7 @@ export default function EditProfilePage() {
               onChange={handleAvatarChange}
               className="hidden"
             />
-            {avatarError && <p className="text-xs text-red-500">{avatarError}</p>}
+            {avatarError && <p className="text-xs text-danger">{avatarError}</p>}
           </div>
         </div>
 
@@ -197,10 +197,10 @@ export default function EditProfilePage() {
             onChange={(event) => setDisplayName(event.target.value)}
             className={cn(
               "h-10 w-full rounded-md border bg-background px-3 text-sm text-text",
-              nameError ? "border-red-500" : "border-border",
+              nameError ? "border-danger" : "border-border",
             )}
           />
-          {nameError && <p className="mt-1 text-xs text-red-500">{nameError}</p>}
+          {nameError && <p className="mt-1 text-xs text-danger">{nameError}</p>}
         </div>
 
         <div>
@@ -259,7 +259,7 @@ export default function EditProfilePage() {
           </div>
         </div>
 
-        {saveError && <p className="text-sm text-red-500">{saveError}</p>}
+        {saveError && <p className="text-sm text-danger">{saveError}</p>}
 
         <div className="flex gap-2 pt-2">
           <Button type="submit" disabled={isSaving}>

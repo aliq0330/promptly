@@ -1,7 +1,7 @@
 "use client";
 
 import { CATEGORY_FILTERS, type NotificationCategory } from "@/lib/notification-utils";
-import { cn } from "@/lib/utils";
+import { Chip, ChipRow } from "@/components/ui/chip";
 
 /**
  * Category pills (Aşama 1.2) — purely a client-side filter over the
@@ -18,23 +18,12 @@ export function NotificationCategoryFilter({
   onChange: (category: "all" | NotificationCategory) => void;
 }) {
   return (
-    <div className="-mx-4 mb-4 flex gap-2 overflow-x-auto px-4 pb-1 lg:mx-0 lg:px-0">
+    <ChipRow className="mb-4">
       {CATEGORY_FILTERS.map((filter) => (
-        <button
-          key={filter.key}
-          type="button"
-          onClick={() => onChange(filter.key)}
-          aria-pressed={active === filter.key}
-          className={cn(
-            "shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
-            active === filter.key
-              ? "border-primary bg-primary text-primary-foreground"
-              : "border-border bg-surface text-text-muted hover:text-text",
-          )}
-        >
+        <Chip key={filter.key} selected={active === filter.key} onClick={() => onChange(filter.key)}>
           {filter.label}
-        </button>
+        </Chip>
       ))}
-    </div>
+    </ChipRow>
   );
 }
