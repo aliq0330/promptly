@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { MessageCircle } from "lucide-react";
-import { formatCount, generatorHref, promptHref, requestHref } from "@/lib/utils";
+import { formatCount, generatorHref, promptHref, requestHref, resultHref } from "@/lib/utils";
 import { contentActionClassName } from "@/features/content/action-styles";
 
 /**
@@ -23,11 +23,14 @@ import { contentActionClassName } from "@/features/content/action-styles";
  * CARD lands directly on the actual comment thread instead of the top of
  * the page, and clicking it from the detail page itself just scrolls down
  * to it. No new navigation/scroll system — plain anchor behavior.
+ *
+ * `resultId` (Kullanıcı Sonuçları) follows the same one-of pattern.
  */
 export function CommentCountLink({
   promptId,
   generatorSlug,
   requestId,
+  resultId,
   baseCount,
   size = 16,
   className,
@@ -35,6 +38,7 @@ export function CommentCountLink({
   promptId?: string;
   generatorSlug?: string;
   requestId?: string;
+  resultId?: string;
   baseCount: number;
   size?: number;
   className?: string;
@@ -43,7 +47,9 @@ export function CommentCountLink({
     ? generatorHref({ slug: generatorSlug })
     : requestId
       ? requestHref({ id: requestId })
-      : promptHref({ id: promptId! });
+      : resultId
+        ? resultHref({ id: resultId })
+        : promptHref({ id: promptId! });
   const href = `${baseHref}#comments`;
   return (
     <Link

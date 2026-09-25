@@ -13,16 +13,18 @@ import {
   fetchCommentsForGenerator,
   fetchCommentsForPrompt,
   fetchCommentsForRequest,
+  fetchCommentsForResult,
   postCommentOnGenerator,
   postCommentOnPrompt,
   postCommentOnRequest,
+  postCommentOnResult,
   updateComment,
 } from "@/lib/supabase/comments";
 import { fetchLikedCommentIds, likeComment, unlikeComment } from "@/lib/supabase/comment-likes";
 import { CommentNode, type CommentTree } from "./comment-node";
 import type { PromptComment } from "@/types";
 
-export type CommentTarget = { promptId: string } | { requestId: string } | { generatorId: string };
+export type CommentTarget = { promptId: string } | { requestId: string } | { generatorId: string } | { resultId: string };
 
 /**
  * Real, unlimited-depth comment thread — every prompt/request is a real
@@ -89,21 +91,43 @@ export function CommentSection({
   const highlightTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const processedHighlightId = useRef<string | null>(null);
 
-  const targetKind: "prompt" | "request" | "generator" =
-    "promptId" in target ? "prompt" : "requestId" in target ? "request" : "generator";
-  const targetId = "promptId" in target ? target.promptId : "requestId" in target ? target.requestId : target.generatorId;
+  const targetKind: "prompt" | "request" | "generator" | "result" =
+    "promptId" in target
+      ? "prompt"
+      : "requestId" in target
+        ? "request"
+        : "generatorId" in target
+          ? "generator"
+          : "result";
+  const targetId =
+    "promptId" in target
+      ? target.promptId
+      : "requestId" in target
+        ? target.requestId
+        : "generatorId" in target
+          ? target.generatorId
+          : target.resultId;
+
+  // Small dispatch helpers instead of repeating a four-way ternary at each
+  // of the three call sites below (initial fetch, top-level post, reply).
+  function fetchCommentsForTarget(kind: typeof targetKind, id: string) {
+    if (kind === "prompt") return fetchCommentsForPrompt(id);
+    if (kind === "request") return fetchCommentsForRequest(id);
+    if (kind === "generator") return fetchCommentsForGenerator(id);
+    return fetchCommentsForResult(id);
+  }
+  function postCommentForTarget(kind: typeof targetKind, id: string, userId: string, body: string, parentId: string | null) {
+    if (kind === "prompt") return postCommentOnPrompt(id, userId, body, parentId);
+    if (kind === "request") return postCommentOnRequest(id, userId, body, parentId);
+    if (kind === "generator") return postCommentOnGenerator(id, userId, body, parentId);
+    return postCommentOnResult(id, userId, body, parentId);
+  }
 
   useEffect(() => {
     let cancelled = false;
     // eslint-disable-next-line react-hooks/set-state-in-effect -- resets when the target (a new prompt/request/generator) changes
     setLoaded(false);
-    const fetcher =
-      targetKind === "prompt"
-        ? fetchCommentsForPrompt(targetId)
-        : targetKind === "request"
-          ? fetchCommentsForRequest(targetId)
-          : fetchCommentsForGenerator(targetId);
-    fetcher.then(async (result) => {
+    fetchCommentsForTarget(targetKind, targetId).then(async (result) => {
       if (cancelled) return;
       setComments(result);
       setLikeCounts(Object.fromEntries(result.map((c) => [c.id, c.likeCount])));
@@ -245,12 +269,7 @@ export function CommentSection({
     setIsPostingReply(true);
     setReplyError(null);
     try {
-      const posted =
-        targetKind === "prompt"
-          ? await postCommentOnPrompt(targetId, user.id, trimmed, parentId)
-          : targetKind === "request"
-            ? await postCommentOnRequest(targetId, user.id, trimmed, parentId)
-            : await postCommentOnGenerator(targetId, user.id, trimmed, parentId);
+      const posted = await postCommentForTarget(targetKind, targetId, user.id, trimmed, parentId);
       setComments((prev) => [...prev, posted]);
       setLikeCounts((prev) => ({ ...prev, [posted.id]: 0 }));
       setExpandedIds((prev) => new Set(prev).add(parentId));
@@ -272,12 +291,7 @@ export function CommentSection({
     setIsPosting(true);
     setPostError(null);
     try {
-      const posted =
-        targetKind === "prompt"
-          ? await postCommentOnPrompt(targetId, user.id, trimmed, null)
-          : targetKind === "request"
-            ? await postCommentOnRequest(targetId, user.id, trimmed, null)
-            : await postCommentOnGenerator(targetId, user.id, trimmed, null);
+      const posted = await postCommentForTarget(targetKind, targetId, user.id, trimmed, null);
       setComments((prev) => [...prev, posted]);
       setLikeCounts((prev) => ({ ...prev, [posted.id]: 0 }));
       setDraft("");

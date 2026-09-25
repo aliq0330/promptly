@@ -4,6 +4,7 @@ import {
   Code2,
   Edit3,
   Heart,
+  ImagePlus,
   Lock,
   Mail,
   MessageCircle,
@@ -45,6 +46,9 @@ export const NOTIFICATION_CATEGORY: Record<NotificationType, NotificationCategor
   edit_suggestion_received: "posts",
   edit_suggestion_accepted: "posts",
   edit_suggestion_rejected: "posts",
+  // Kullanıcı Sonuçları modülü — bir prompt üzerindeki bir etkileşim,
+  // aynı "posts" kategorisine katılıyor.
+  prompt_result_shared: "posts",
 };
 
 export const CATEGORY_FILTERS: { key: "all" | NotificationCategory; label: string }[] = [
@@ -127,6 +131,7 @@ export const NOTIFICATION_ICONS = {
   edit_suggestion_received: PenLine,
   edit_suggestion_accepted: CheckCircle2,
   edit_suggestion_rejected: XCircle,
+  prompt_result_shared: ImagePlus,
 } as const satisfies Record<string, LucideIcon>;
 
 /**
@@ -170,6 +175,8 @@ export function getNotificationIconKey(notification: AppNotification): keyof typ
       return "edit_suggestion_accepted";
     case "edit_suggestion_rejected":
       return "edit_suggestion_rejected";
+    case "prompt_result_shared":
+      return "prompt_result_shared";
     case "system":
     default:
       return "system";

@@ -1,20 +1,22 @@
 import { supabase } from "./client";
 
 /**
- * `prompt_likes` now holds likes for three content types (Bölüm 9.34's
+ * `prompt_likes` now holds likes for four content types (Bölüm 9.34's
  * shared-social migration, widened to requests by the "Prompt İsteği
- * Etkileşim ve Menü Sistemi Eşitleme" görevi) — a nullable `prompt_id`,
- * `generator_id`, OR `request_id`, exactly one of the three (DB-level
- * CHECK). The table's own name stayed `prompt_likes` (same reasoning
- * `prompt_comments` already accepted for holding request comments too —
- * renaming a live table is a bigger, riskier migration than the naming
- * mismatch is worth).
+ * Etkileşim ve Menü Sistemi Eşitleme" görevi, and to Kullanıcı Sonuçları by
+ * the "Kullanıcı Sonuçları / Prompt Çıktıları" görevi) — a nullable
+ * `prompt_id`, `generator_id`, `request_id`, OR `result_id`, exactly one of
+ * the four (DB-level CHECK). The table's own name stayed `prompt_likes`
+ * (same reasoning `prompt_comments` already accepted for holding request/
+ * result comments too — renaming a live table is a bigger, riskier
+ * migration than the naming mismatch is worth).
  */
-export type LikeableContentType = "prompt" | "generator" | "request";
+export type LikeableContentType = "prompt" | "generator" | "request" | "prompt_result";
 
-function targetColumn(contentType: LikeableContentType): "prompt_id" | "generator_id" | "request_id" {
+function targetColumn(contentType: LikeableContentType): "prompt_id" | "generator_id" | "request_id" | "result_id" {
   if (contentType === "generator") return "generator_id";
   if (contentType === "request") return "request_id";
+  if (contentType === "prompt_result") return "result_id";
   return "prompt_id";
 }
 
