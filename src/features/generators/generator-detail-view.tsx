@@ -4,12 +4,13 @@ import { DetailSkeleton, NotFoundBlock } from "@/components/ui/detail-skeleton";
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowRight, Blocks, Pencil, SlidersHorizontal, SquareTerminal, Trash2 } from "lucide-react";
+import { ArrowRight, Blocks, SlidersHorizontal, SquareTerminal } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Button, buttonClassName } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { ContentTypeLabel } from "@/features/content/content-type-label";
 import { ShareTriggerButton } from "@/features/prompts/share-modal";
+import { PostMenu } from "@/features/prompts/post-menu";
 import { CreatorSummary } from "@/features/profile/creator-summary";
 import { useAuth } from "@/features/auth/auth-provider";
 import { GeneratorPlayground } from "./generator-playground";
@@ -22,12 +23,11 @@ import { EditHistoryPanel } from "@/features/prompts/edit-history-panel";
 import {
   fetchGeneratorBySlug,
   fetchGeneratorVersion,
-  deleteGenerator,
   recordGeneratorRun,
   type GeneratorVersionResult,
 } from "@/lib/supabase/generators";
 import { useRealGenerators } from "./real-generators-provider";
-import { cn, formatCount, formatRelativeTime, profileHref, tagHref } from "@/lib/utils";
+import { formatCount, formatRelativeTime, profileHref, tagHref } from "@/lib/utils";
 import type { Generator, GeneratorValues } from "@/types";
 
 /**
@@ -57,8 +57,6 @@ export function GeneratorDetailView() {
   const [generator, setGenerator] = useState<Generator | null>(null);
   const [version, setVersion] = useState<GeneratorVersionResult | null>(null);
   const [loaded, setLoaded] = useState(false);
-  const [deleteConfirm, setDeleteConfirm] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
   const [isOpeningPrompt, setIsOpeningPrompt] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
@@ -103,20 +101,9 @@ export function GeneratorDetailView() {
 
   const isOwner = user?.id === generator.creator.id;
 
-  async function handleDelete() {
-    if (!deleteConfirm) {
-      setDeleteConfirm(true);
-      return;
-    }
-    setIsDeleting(true);
-    try {
-      await deleteGenerator(generator!.id);
-      removeFromCache(generator!.id);
-      router.push("/generators");
-    } catch (err) {
-      setActionError(err instanceof Error ? err.message : "Silinemedi, lütfen tekrar dene.");
-      setIsDeleting(false);
-    }
+  function handleDeleted() {
+    removeFromCache(generator!.id);
+    router.push("/generators");
   }
 
   async function handleOpenInPrompt(state: { values: GeneratorValues; prompt: string; negativePrompt: string | null }) {
@@ -151,6 +138,12 @@ export function GeneratorDetailView() {
               <div className="flex flex-wrap items-center gap-1.5">
                 {generator.status === "draft" && <Badge variant="warning">Taslak</Badge>}
                 {generator.visibility === "unlisted" && generator.status === "published" && <Badge variant="outline">Yalnızca bağlantıyla</Badge>}
+                <PostMenu
+                  generatorId={generator.id}
+                  generatorSlug={generator.slug}
+                  authorId={generator.creator.id}
+                  onDeleted={handleDeleted}
+                />
               </div>
             </div>
             <div className="flex items-start gap-4">
@@ -251,26 +244,6 @@ export function GeneratorDetailView() {
         </article>
 
         <aside className="mt-6 space-y-5 lg:sticky lg:top-24 lg:mt-0 lg:self-start">
-          {isOwner && (
-            <div className="flex flex-wrap items-center gap-2 rounded-lg border border-border-soft bg-surface p-3">
-              <Link href={`/generators/create?edit=${generator.id}`} className={buttonClassName({ size: "sm", variant: "outline", className: "flex-1" })}>
-                <Pencil size={14} /> Düzenle
-              </Link>
-              <button
-                type="button"
-                onClick={handleDelete}
-                disabled={isDeleting}
-                className={buttonClassName({
-                  size: "sm",
-                  variant: deleteConfirm ? "danger" : "ghost",
-                  className: cn("flex-1", !deleteConfirm && "text-text-muted hover:text-danger"),
-                })}
-              >
-                <Trash2 size={14} /> {deleteConfirm ? "Emin misin? Tekrar tıkla" : "Sil"}
-              </button>
-            </div>
-          )}
-
           <CreatorSummary creator={generator.creator} isOwn={isOwner} />
 
           {fields.length > 0 && (
