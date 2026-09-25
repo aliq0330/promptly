@@ -121,35 +121,38 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
             <ShareTriggerButton target={{ contentType: "prompt", prompt }} label="Paylaş" />
           </div>
 
+          {((user && !isOwn) || variables.length > 0) && (
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              {user && !isOwn && (
+                <button
+                  type="button"
+                  onClick={() => setIsSuggestModalOpen(true)}
+                  className="relative z-10 inline-flex h-9 items-center gap-1.5 rounded-sm border border-primary/30 bg-primary-soft px-3 text-label font-medium text-primary transition-colors hover:border-primary/60"
+                >
+                  <PenLine size={14} />
+                  Düzenleme öner
+                </button>
+              )}
+              {variables.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setIsPersonalizeOpen(true)}
+                  className="relative z-10 inline-flex h-9 items-center gap-1.5 rounded-sm border border-primary/30 bg-primary-soft px-3 text-label font-medium text-primary transition-colors hover:border-primary/60"
+                >
+                  <Wand2 size={14} />
+                  Promptu kişiselleştir
+                </button>
+              )}
+            </div>
+          )}
+
           <section aria-labelledby="prompt-text-title" className="overflow-hidden rounded-lg border border-border-soft bg-surface-soft">
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border-soft px-4 py-2.5">
               <h2 id="prompt-text-title" className="flex items-center gap-1.5 font-sans text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">
                 <SquareTerminal size={14} />
                 Prompt Metni
               </h2>
-              <div className="flex flex-wrap items-center gap-2">
-                {user && !isOwn && (
-                  <button
-                    type="button"
-                    onClick={() => setIsSuggestModalOpen(true)}
-                    className="relative z-10 inline-flex h-9 items-center gap-1.5 rounded-sm border border-primary/30 bg-primary-soft px-3 text-label font-medium text-primary transition-colors hover:border-primary/60"
-                  >
-                    <PenLine size={14} />
-                    Düzenleme öner
-                  </button>
-                )}
-                {variables.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => setIsPersonalizeOpen(true)}
-                    className="relative z-10 inline-flex h-9 items-center gap-1.5 rounded-sm border border-primary/30 bg-primary-soft px-3 text-label font-medium text-primary transition-colors hover:border-primary/60"
-                  >
-                    <Wand2 size={14} />
-                    Promptu kişiselleştir
-                  </button>
-                )}
-                <CopyPromptButton text={livePromptText} size="md" />
-              </div>
+              <CopyPromptButton text={livePromptText} size="md" />
             </div>
             <p className="prompt-text whitespace-pre-wrap break-words px-4 py-4 text-[0.875rem] text-text">{livePromptText}</p>
           </section>
