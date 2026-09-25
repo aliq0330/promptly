@@ -264,6 +264,7 @@ export function CreateRequestForm() {
     tags: tagPicker.accepted.map((entry) => entry.tag),
     status: "open",
     responseCount: 0,
+    likeCount: 0,
     createdAt: new Date().toISOString(),
     deletedAt: null,
   };

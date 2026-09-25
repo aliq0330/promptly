@@ -1,17 +1,21 @@
 import { supabase } from "./client";
 
 /**
- * `prompt_likes` now holds likes for two content types (Bölüm 9.34's
- * shared-social migration) — a nullable `prompt_id` OR a nullable
- * `generator_id`, never both (DB-level CHECK). The table's own name
- * stayed `prompt_likes` (same reasoning `prompt_comments` already
- * accepted for holding request comments too — renaming a live table is a
- * bigger, riskier migration than the naming mismatch is worth).
+ * `prompt_likes` now holds likes for three content types (Bölüm 9.34's
+ * shared-social migration, widened to requests by the "Prompt İsteği
+ * Etkileşim ve Menü Sistemi Eşitleme" görevi) — a nullable `prompt_id`,
+ * `generator_id`, OR `request_id`, exactly one of the three (DB-level
+ * CHECK). The table's own name stayed `prompt_likes` (same reasoning
+ * `prompt_comments` already accepted for holding request comments too —
+ * renaming a live table is a bigger, riskier migration than the naming
+ * mismatch is worth).
  */
-export type LikeableContentType = "prompt" | "generator";
+export type LikeableContentType = "prompt" | "generator" | "request";
 
-function targetColumn(contentType: LikeableContentType): "prompt_id" | "generator_id" {
-  return contentType === "generator" ? "generator_id" : "prompt_id";
+function targetColumn(contentType: LikeableContentType): "prompt_id" | "generator_id" | "request_id" {
+  if (contentType === "generator") return "generator_id";
+  if (contentType === "request") return "request_id";
+  return "prompt_id";
 }
 
 /** Did this viewer already like this real prompt/generator? RLS (Bölüm 19) makes likes publicly readable. */

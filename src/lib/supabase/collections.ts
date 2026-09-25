@@ -2,7 +2,10 @@ import { supabase } from "./client";
 import { mapProfileRow, type ProfileRow } from "./mappers";
 import { PROMPT_SELECT, mapPromptRow, type PromptRow } from "./prompts";
 import { GENERATOR_SELECT, mapGeneratorRow, type GeneratorRow } from "./generators";
-import type { LikeableContentType as SaveableContentType } from "./likes";
+import type { LikeableContentType } from "./likes";
+
+/** See `use-save-state.ts`'s identical note — saving never targets a request. */
+type SaveableContentType = Extract<LikeableContentType, "prompt" | "generator">;
 import type { Collection, Generator, Prompt } from "@/types";
 
 /**

@@ -21,6 +21,7 @@ export interface RequestRow {
   status: PromptRequestStatus;
   selected_response_prompt_id: string | null;
   response_count: number;
+  like_count: number;
   created_at: string;
   deleted_at: string | null;
   profiles: ProfileRow;
@@ -30,7 +31,7 @@ export interface RequestRow {
 export const REQUEST_SELECT = `
   id, title, description, creative_direction, preferred_tool, content_type,
   reference_image_url, reference_image_width, reference_image_height,
-  status, selected_response_prompt_id, response_count, created_at, deleted_at,
+  status, selected_response_prompt_id, response_count, like_count, created_at, deleted_at,
   profiles:author_id ( id, username, display_name, avatar_url, cover_url, bio, website, follower_count, following_count, created_at, interests ),
   prompt_request_tags ( tags ( slug, label ) )
 `;
@@ -69,6 +70,7 @@ export function mapRequestRow(row: RequestRow): PromptRequest {
     tags,
     status: row.status,
     responseCount: row.response_count,
+    likeCount: row.like_count,
     createdAt: row.created_at,
     selectedResponsePromptId: row.selected_response_prompt_id ?? undefined,
     deletedAt: row.deleted_at,
@@ -214,6 +216,7 @@ export async function createRealRequest(
     tags: input.tags,
     status: "open",
     responseCount: 0,
+    likeCount: 0,
     createdAt: inserted.created_at,
     deletedAt: null,
   };
