@@ -3,17 +3,18 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { MessageSquareOff, PenLine, Sparkles } from "lucide-react";
+import { MessageSquareOff, PenLine, Reply, Sparkles } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonClassName } from "@/components/ui/button";
 import { ContentTypeLabel } from "@/features/content/content-type-label";
+import { contentActionClassName } from "@/features/content/action-styles";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
 import { ShareTriggerButton } from "@/features/prompts/share-modal";
 import { PromptCard } from "@/features/prompts/prompt-card";
 import { CommentSection } from "@/features/prompts/comment-section";
-import { CopyPromptButton } from "@/features/prompts/copy-prompt-button";
+import { CommentCountLink } from "@/features/prompts/comment-count-link";
 import { EditHistoryPanel } from "@/features/prompts/edit-history-panel";
 import { LikeButton } from "@/features/prompts/like-button";
 import { PostMenu } from "@/features/prompts/post-menu";
@@ -22,7 +23,7 @@ import { fetchPromptsForRequest } from "@/lib/supabase/prompts";
 import { useRealRequests } from "./real-requests-provider";
 import { STATUS_LABELS, STATUS_VARIANTS } from "./request-card";
 import { parseHighlightValue } from "@/lib/notification-utils";
-import { cn, formatRelativeTime, profileHref, tagHref } from "@/lib/utils";
+import { cn, formatCount, formatRelativeTime, profileHref, tagHref } from "@/lib/utils";
 import type { Prompt, PromptRequest } from "@/types";
 
 /** Same fade timing as the comment-thread flash — one shared feel across the app for "you just jumped here from a notification". */
@@ -104,6 +105,11 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
   // point of view — see request-card.tsx's STATUS_LABELS comment.
   const isClosed = live.status !== "open";
   const hasSelection = Boolean(live.selectedResponsePromptId);
+  // Own-request status management ("İsteği kapat/aç") or the "Yanıtla" CTA
+  // — genuinely distinct from the like/comment/reply/share action row above
+  // (Prompt has no equivalent of either), so it's not part of the "SADECE 4
+  // aksiyon" row; only rendered when there's actually something to show.
+  const showManagementAction = isOwnRequest ? !hasSelection : !isClosed;
 
   async function handleToggleStatus() {
     const nextStatus = isClosed ? "open" : "closed";
@@ -170,16 +176,37 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
           </Link>
         </header>
 
+        {/*
+          "Aksiyon satırı" (Prompt İsteği Aksiyon Satırı Son Düzenleme
+          görevi) — SADECE 4 gerçek aksiyon, Prompt'un kendi action row'uyla
+          aynı bileşenler/mantık: Beğeni · Yorum · Yanıt (gerçek yanıt
+          sayısı — bu sayfada zaten aşağıda görünen "Yaratıcı Yanıtlar"
+          bölümüne kaydırıyor, yeni bir davranış icat edilmedi), sonra HER
+          ZAMAN en sağda Paylaş. Kart ile birebir aynı 4 öğe/sıra — hiçbir
+          "Kopyala" yok (Prompt İsteği'ne özel olarak kaldırıldı, genel
+          Prompt sistemindeki Kopyala butonuna dokunulmadı).
+        */}
         <div className="flex flex-wrap items-center gap-0.5 border-y border-border-soft py-1.5">
           <LikeButton id={live.id} likeCount={live.likeCount} contentType="request" size={18} />
+          <CommentCountLink requestId={live.id} baseCount={live.commentCount} size={18} />
+          <a
+            href="#request-responses"
+            className={contentActionClassName(false)}
+            title="Yanıtlar"
+            aria-label={`Yanıtlar (${formatCount(live.responseCount)})`}
+          >
+            <Reply size={18} strokeWidth={1.75} />
+            <span aria-hidden>{formatCount(live.responseCount)}</span>
+          </a>
+          <span className="ml-auto" />
+          <ShareTriggerButton target={{ contentType: "request", request: live }} label="Paylaş" />
         </div>
 
         <section aria-labelledby="request-brief-title" className="overflow-hidden rounded-lg border border-border-soft bg-surface-soft">
-          <div className="flex items-center justify-between gap-2 border-b border-border-soft px-4 py-2.5">
+          <div className="border-b border-border-soft px-4 py-2.5">
             <h2 id="request-brief-title" className="font-sans text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">
               İstek
             </h2>
-            <CopyPromptButton text={live.description} />
           </div>
           <p className="whitespace-pre-wrap px-4 py-4 text-body text-text">{live.description}</p>
         </section>
@@ -215,30 +242,28 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
           </div>
         )}
 
-        <div className="flex flex-wrap items-center gap-2 border-t border-border-soft pt-4">
-          {isOwnRequest
-            ? !hasSelection && (
-                <Button type="button" variant="outline" size="sm" onClick={handleToggleStatus}>
-                  <MessageSquareOff size={14} />
-                  {isClosed ? "Açık olarak işaretle" : "İsteği kapat"}
-                </Button>
-              )
-            : !isClosed && (
-                <Link href={`/create?answerRequest=${live.id}`} className={buttonClassName({ size: "sm", className: "h-9" })}>
-                  <PenLine size={14} />
-                  Yanıtla
-                </Link>
-              )}
-          <span className="ml-auto" />
-          <ShareTriggerButton target={{ contentType: "request", request: live }} label="Paylaş" />
-        </div>
+        {showManagementAction && (
+          <div className="flex flex-wrap items-center gap-2 border-t border-border-soft pt-4">
+            {isOwnRequest ? (
+              <Button type="button" variant="outline" size="sm" onClick={handleToggleStatus}>
+                <MessageSquareOff size={14} />
+                {isClosed ? "Açık olarak işaretle" : "İsteği kapat"}
+              </Button>
+            ) : (
+              <Link href={`/create?answerRequest=${live.id}`} className={buttonClassName({ size: "sm", className: "h-9" })}>
+                <PenLine size={14} />
+                Yanıtla
+              </Link>
+            )}
+          </div>
+        )}
         {!isOwnRequest && isClosed && (
           <p className="text-caption text-text-muted">Bu istek kapandı, artık yeni yanıt kabul edilmiyor.</p>
         )}
         {isOwnRequest && <EditHistoryPanel contentType="prompt_request" contentId={live.id} />}
       </article>
 
-      <section className="space-y-3">
+      <section id="request-responses" className="scroll-mt-20 space-y-3">
         <h2 className="flex items-center gap-2 text-h2 font-semibold text-text">
           Yaratıcı Yanıtlar
           <span className="rounded-xs bg-surface-soft px-1.5 font-sans text-caption font-semibold tabular-nums text-text-muted">{answers.length}</span>

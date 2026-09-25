@@ -147,6 +147,8 @@ export interface PromptRequest {
   responseCount: number;
   /** Real, database-backed like count (`prompt_requests.like_count`) — the same `prompt_likes` system a prompt/generator uses (see `LikeableContentType`). */
   likeCount: number;
+  /** Real, database-backed comment count (`prompt_requests.comment_count`) — the same `prompt_comments`/`handle_prompt_comment_change` system a prompt/generator uses. */
+  commentCount: number;
   createdAt: string;
   /**
    * The id of the answer (a real `Prompt` with a `request-response` origin)

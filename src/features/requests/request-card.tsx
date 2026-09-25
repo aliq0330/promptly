@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { MessageSquareText, PenLine, Sparkles } from "lucide-react";
+import { Reply, Sparkles } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ContentCard, ContentCardBody, ContentCardTitle } from "@/features/content/content-card";
@@ -8,8 +8,8 @@ import { ContentTags } from "@/features/content/content-tags";
 import { contentActionClassName } from "@/features/content/action-styles";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
 import { ShareTriggerButton } from "@/features/prompts/share-modal";
-import { CopyPromptButton } from "@/features/prompts/copy-prompt-button";
 import { LikeButton } from "@/features/prompts/like-button";
+import { CommentCountLink } from "@/features/prompts/comment-count-link";
 import { PostMenu } from "@/features/prompts/post-menu";
 import { formatCount, formatRelativeTime, profileHref, requestHref } from "@/lib/utils";
 import type { PromptRequest } from "@/types";
@@ -34,18 +34,24 @@ export const STATUS_VARIANTS: Record<PromptRequest["status"], "success" | "dange
 
 /**
  * RequestCard — a community prompt request on the shared ContentCard shell.
- * Same header rhythm, type line, title/description and footer as the other
- * cards, and — since the "Prompt İsteği Etkileşim ve Menü Sistemi
- * Eşitleme" görevi — the same real like button and the same `PostMenu`
- * three-dot menu (Bağlantıyı kopyala/Düzenle/Sil) every other card has, in
- * the same top-right spot next to the status badge. The footer's own
- * "yanıt" (response) link and "Yanıtla" action (only while open) stay
- * unchanged — genuinely distinct from Save, which requests still don't have.
+ * Same header rhythm, type line, title/description as the other cards, and
+ * — since the "Prompt İsteği Etkileşim ve Menü Sistemi Eşitleme" görevi —
+ * the same real like button and the same `PostMenu` three-dot menu
+ * (Bağlantıyı kopyala/Düzenle/Sil) every other card has, in the same
+ * top-right spot next to the status badge.
+ *
+ * The footer ("aksiyon satırı") is deliberately exactly four items, per the
+ * "Prompt İsteği Aksiyon Satırı Son Düzenleme" görevi — Beğeni · Yorum ·
+ * Yanıt (real response count, existing link/behavior, just restyled), then
+ * Paylaş always last. No "Kopyala" (removed — Prompt İsteği-specific, the
+ * general Prompt system's own copy button is untouched), and no "Yanıtla"
+ * CTA crammed in here either — that stays a detail-page-only action; the
+ * "Yanıt" count here is the entry point into the request (same href it
+ * already had).
  */
 export function RequestCard({ request, onDeleted }: { request: PromptRequest; onDeleted?: () => void }) {
   const href = requestHref(request);
   const typeMeta = request.contentType ? CONTENT_TYPE_META[request.contentType] : null;
-  const isOpen = request.status === "open";
 
   return (
     <ContentCard href={href}>
@@ -91,22 +97,13 @@ export function RequestCard({ request, onDeleted }: { request: PromptRequest; on
 
       <div className="relative z-10 flex items-center gap-0.5 border-t border-border-soft px-2 py-1.5">
         <LikeButton id={request.id} likeCount={request.likeCount} contentType="request" />
-        <Link href={href} className={contentActionClassName(false)} aria-label={`${formatCount(request.responseCount)} yanıt`}>
-          <MessageSquareText size={16} strokeWidth={1.75} />
-          <span aria-hidden>{formatCount(request.responseCount)} yanıt</span>
+        <CommentCountLink requestId={request.id} baseCount={request.commentCount} />
+        <Link href={href} className={contentActionClassName(false)} title="Yanıtlar" aria-label={`Yanıtlar (${formatCount(request.responseCount)})`}>
+          <Reply size={16} strokeWidth={1.75} />
+          <span aria-hidden>{formatCount(request.responseCount)}</span>
         </Link>
         <span className="ml-auto" />
-        <CopyPromptButton text={request.description} className="mr-1" />
         <ShareTriggerButton target={{ contentType: "request", request }} />
-        {isOpen && (
-          <Link
-            href={`/create?answerRequest=${request.id}`}
-            className="relative z-10 ml-1 inline-flex h-8 items-center gap-1.5 rounded-md bg-primary-soft px-3 text-label font-semibold text-primary transition-colors duration-200 hover:bg-primary hover:text-primary-foreground"
-          >
-            <PenLine size={14} />
-            Yanıtla
-          </Link>
-        )}
       </div>
     </ContentCard>
   );
