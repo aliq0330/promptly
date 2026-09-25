@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ChevronDown, ChevronUp, SquareTerminal } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +10,9 @@ import { DetailSkeleton, NotFoundBlock } from "@/components/ui/detail-skeleton";
 import { CommentSection } from "@/features/prompts/comment-section";
 import { CommentCountLink } from "@/features/prompts/comment-count-link";
 import { DiffText } from "@/features/prompts/diff-text";
+import { EditResultModal } from "@/features/prompts/edit-result-modal";
 import { LikeButton } from "@/features/prompts/like-button";
+import { PostMenu } from "@/features/prompts/post-menu";
 import { ResultTypePreview } from "@/features/prompts/result-type-preview";
 import { ShareTriggerButton } from "@/features/prompts/share-modal";
 import { RESULT_MEDIA_TYPE_LABELS } from "@/lib/prompt-result-media";
@@ -25,12 +27,14 @@ import type { PromptResult } from "@/types";
  * here — the grid/card never loads any of this up front (§16/§17).
  */
 export function ResultDetailView() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const id = searchParams.get("id");
 
   const [result, setResult] = useState<PromptResult | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [isModificationOpen, setIsModificationOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -58,6 +62,21 @@ export function ResultDetailView() {
     return <NotFoundBlock title="Sonuç bulunamadı" description="Bu sonuç silinmiş ya da hiç var olmamış olabilir." />;
   }
 
+  // After deleting your own result there's nothing left on this page to
+  // show — head back to the real origin (prompt or generator) instead of
+  // leaving the viewer stranded on a now-empty page.
+  function handleDeleted() {
+    router.push(result!.originalPrompt ? promptHref(result!.originalPrompt) : generatorHref(result!.originalGenerator!));
+  }
+
+  // Refetches rather than fabricating an updated object client-side —
+  // same reasoning `PromptResultsSection.handleAdded` already uses: the
+  // real, stored row is the only source of truth.
+  function handleUpdated() {
+    setIsEditOpen(false);
+    fetchResultById(id!).then((found) => setResult(found));
+  }
+
   return (
     <div className="mx-auto w-full max-w-2xl px-3 py-5 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
       <article className="min-w-0 space-y-5">
@@ -76,6 +95,7 @@ export function ResultDetailView() {
             <div className="flex flex-wrap items-center gap-1.5">
               <Badge variant="neutral">{RESULT_MEDIA_TYPE_LABELS[result.mediaType]}</Badge>
               {result.tool && <Badge variant="outline">{result.tool}</Badge>}
+              <PostMenu resultId={result.id} authorId={result.creator.id} onDeleted={handleDeleted} onEdit={() => setIsEditOpen(true)} />
             </div>
           </header>
 
@@ -171,6 +191,8 @@ export function ResultDetailView() {
             <CommentSection target={{ resultId: result.id }} />
           </section>
       </article>
+
+      {isEditOpen && <EditResultModal result={result} onClose={() => setIsEditOpen(false)} onUpdated={handleUpdated} />}
     </div>
   );
 }

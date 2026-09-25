@@ -309,6 +309,37 @@ export async function createPromptResult(input: CreatePromptResultInput, creator
   return resultId;
 }
 
+/**
+ * The only fields a result's owner can genuinely change after sharing it —
+ * never the underlying media file or its origin (a `prompt_results_before_
+ * update_guard` BEFORE UPDATE trigger enforces this at the DB level, not
+ * just by this function's own shape). `textContent` only makes sense (and
+ * is only sent) for a text/other result; `modification` only makes sense
+ * (and is only sent) for a prompt-origin result — the caller decides which
+ * to include based on `result.mediaType`/`result.originalPrompt`.
+ */
+export interface UpdatePromptResultInput {
+  tool: string;
+  textContent?: string;
+  modification?: { hasModification: boolean; modificationSummary: string; modifiedPromptText: string };
+}
+
+/** Genuinely, permanently edits a real result the caller owns — RLS (the migration) enforces `auth.uid() = creator_id`. */
+export async function updatePromptResult(resultId: string, input: UpdatePromptResultInput): Promise<void> {
+  const patch: Record<string, unknown> = { tool: input.tool.trim() || null };
+  if (input.textContent !== undefined) patch.text_content = input.textContent.trim();
+  if (input.modification) {
+    const hasModification = input.modification.hasModification;
+    patch.has_modification = hasModification;
+    patch.modification_summary =
+      hasModification && input.modification.modificationSummary.trim() ? input.modification.modificationSummary.trim() : null;
+    patch.modified_prompt_text =
+      hasModification && input.modification.modifiedPromptText.trim() ? input.modification.modifiedPromptText.trim() : null;
+  }
+  const { error } = await supabase.from("prompt_results").update(patch).eq("id", resultId);
+  if (error) throw new Error(error.message);
+}
+
 /** Deletes a real result the caller owns — RLS (the migration) enforces `auth.uid() = creator_id`. */
 export async function deletePromptResult(resultId: string): Promise<void> {
   const { error } = await supabase.from("prompt_results").delete().eq("id", resultId);

@@ -25,12 +25,15 @@ import { deletePromptResult } from "@/lib/supabase/prompt-results";
  * Sistemi Eşitleme" görevi, and to a fourth (a Kullanıcı Sonucu) by the
  * "Kullanıcı Sonuçları / Prompt Çıktıları" görevi — pass exactly one of
  * `promptId`, `generatorId` (also needs `generatorSlug` for its real link),
- * `requestId`, or `resultId`. A generator's, request's, or result's menu
- * never shows "Kopyasını oluştur" (no duplicate flow exists for any of the
- * three), and a result's menu additionally never shows "Düzenle" (a result
- * can only be shared or deleted, never edited — CLAUDE.md §23) — both
- * deliberately left out rather than wired to something that doesn't
- * actually work.
+ * `requestId`, or `resultId`. A generator's or request's menu never shows
+ * "Kopyasını oluştur" (no duplicate flow exists for either) — deliberately
+ * left out rather than wired to something that doesn't actually work.
+ *
+ * A result has no dedicated full-page edit route the way a prompt/
+ * generator/request does (it's only ever created via a modal, never a
+ * page) — so its "Düzenle" doesn't navigate anywhere; pass `onEdit` and it
+ * opens whatever the caller wants (in practice, `EditResultModal`) instead
+ * of rendering a `<Link>`.
  *
  * "Mesajla gönder" used to live here as its own menu item (Bölüm 9.8) —
  * Bölüm 9.52 (Unified Share System) folded it into the "Paylaş" icon's own
@@ -45,6 +48,7 @@ export function PostMenu({
   resultId,
   authorId,
   onDeleted,
+  onEdit,
   collectionRemoval,
 }: {
   promptId?: string;
@@ -55,6 +59,8 @@ export function PostMenu({
   authorId: string;
   /** Called after a real, successful delete — lets a list (e.g. the profile grid) remove the card without a reload. */
   onDeleted?: () => void;
+  /** Only meaningful for a result target — opens the caller's own edit modal instead of navigating. Ignored for every other target (they always use `editHref`). */
+  onEdit?: () => void;
   /**
    * Present only when this card is rendered inside a collection the VIEWER
    * owns (not necessarily the post's own author — you can save/collect
@@ -233,7 +239,24 @@ export function PostMenu({
           )}
           {isOwn && (
             <>
-              {!isResult && (
+              {isResult ? (
+                onEdit && (
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={(event) => {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      setOpen(false);
+                      onEdit();
+                    }}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-text hover:bg-surface-soft"
+                  >
+                    <Pencil size={14} />
+                    Düzenle
+                  </button>
+                )
+              ) : (
                 <Link
                   href={editHref}
                   role="menuitem"
