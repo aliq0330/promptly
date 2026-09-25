@@ -5,26 +5,42 @@ import { Loader2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/features/auth/auth-provider";
-import { fetchResultsForPrompt } from "@/lib/supabase/prompt-results";
-import { AddResultModal } from "./add-result-modal";
+import { fetchResultsForGenerator, fetchResultsForPrompt } from "@/lib/supabase/prompt-results";
+import { AddResultModal, type AddResultModalTarget } from "./add-result-modal";
 import { ResultCard } from "./result-card";
 import type { PromptResultSummary } from "@/types";
 
 const PAGE_SIZE = 6;
 
 /**
- * "Kullanıcı sonuçları" section (CLAUDE.md §1/§15/§16/§17) — sits directly
- * under a prompt's own content on its detail page. Only ever fetches one
- * page of compact summaries at a time (never every result up front); "Daha
- * fazla yükle" reveals the next page into the same grid instead of a
- * separate full-gallery route (a deliberate scope decision — the checklist
- * only requires "pagination/infinite loading mevcut", not a dedicated
- * page). Adding a result triggers a real refetch of the first page rather
- * than fabricating a client-side summary object that could drift from what
- * the server actually stored.
+ * The section's own target — a prompt or a generator. Not the modal's
+ * `AddResultModalTarget` by accident: they happen to carry the same shape
+ * today, but this one is what decides which `fetchResultsFor*` call runs,
+ * the modal's is what decides which `createPromptResult` source is built —
+ * keeping them as two small, named types (rather than one shared prop
+ * threaded through both) is what actually lets each call site stay a
+ * one-line dispatch instead of a wider, leakier shared prop.
  */
-export function PromptResultsSection({ promptId, promptText }: { promptId: string; promptText: string }) {
+export type PromptResultsSectionTarget = { type: "prompt"; promptId: string; promptText: string } | { type: "generator"; generatorId: string };
+
+/**
+ * "Kullanıcı sonuçları" section (CLAUDE.md §1/§15/§16/§17, ve Generator
+ * Local entegrasyonu şartnamesi §1/§22) — sits directly under a prompt's OR
+ * a generator's own content on its detail page; the exact same component,
+ * same cards, same modal, same pagination either way (§22's "TEK SİSTEM"
+ * kuralı — no second results system, only a different `target`). Only ever
+ * fetches one page of compact summaries at a time (never every result up
+ * front); "Daha fazla yükle" reveals the next page into the same grid
+ * instead of a separate full-gallery route (a deliberate scope decision —
+ * the checklist only requires "pagination/infinite loading mevcut", not a
+ * dedicated page). Adding a result triggers a real refetch of the first
+ * page rather than fabricating a client-side summary object that could
+ * drift from what the server actually stored.
+ */
+export function PromptResultsSection({ target }: { target: PromptResultsSectionTarget }) {
   const { user } = useAuth();
+  const isPromptTarget = target.type === "prompt";
+  const targetId = isPromptTarget ? target.promptId : target.generatorId;
   const [results, setResults] = useState<PromptResultSummary[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -32,11 +48,17 @@ export function PromptResultsSection({ promptId, promptText }: { promptId: strin
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
 
+  function fetchPage(offset: number) {
+    return isPromptTarget
+      ? fetchResultsForPrompt(targetId, { limit: PAGE_SIZE, offset })
+      : fetchResultsForGenerator(targetId, { limit: PAGE_SIZE, offset });
+  }
+
   useEffect(() => {
     let cancelled = false;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- resets when the prompt or reloadKey changes
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- resets when the target or reloadKey changes
     setLoading(true);
-    fetchResultsForPrompt(promptId, { limit: PAGE_SIZE, offset: 0 }).then(({ results: fetched, total: fetchedTotal }) => {
+    fetchPage(0).then(({ results: fetched, total: fetchedTotal }) => {
       if (cancelled) return;
       setResults(fetched);
       setTotal(fetchedTotal);
@@ -45,14 +67,19 @@ export function PromptResultsSection({ promptId, promptText }: { promptId: strin
     return () => {
       cancelled = true;
     };
-  }, [promptId, reloadKey]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fetchPage is a fresh closure every render but only ever depends on targetId/isPromptTarget, both already in this deps array
+  }, [targetId, isPromptTarget, reloadKey]);
 
   async function handleLoadMore() {
     setLoadingMore(true);
-    const { results: more } = await fetchResultsForPrompt(promptId, { limit: PAGE_SIZE, offset: results.length });
+    const { results: more } = await fetchPage(results.length);
     setResults((prev) => [...prev, ...more]);
     setLoadingMore(false);
   }
+
+  const modalTarget: AddResultModalTarget = isPromptTarget
+    ? { type: "prompt", promptId: target.promptId, promptText: target.promptText }
+    : { type: "generator", generatorId: target.generatorId };
 
   function handleAdded() {
     setIsAddOpen(false);
@@ -72,7 +99,11 @@ export function PromptResultsSection({ promptId, promptText }: { promptId: strin
           </Button>
         )}
       </div>
-      {user && <p className="text-caption text-text-muted">Bu promptu kullanarak oluşturduğun sonucu paylaş.</p>}
+      {user && (
+        <p className="text-caption text-text-muted">
+          {isPromptTarget ? "Bu promptu kullanarak oluşturduğun sonucu paylaş." : "Bu generatoru kullanarak oluşturduğun sonucu paylaş."}
+        </p>
+      )}
 
       {loading ? (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
@@ -82,7 +113,9 @@ export function PromptResultsSection({ promptId, promptText }: { promptId: strin
         </div>
       ) : results.length === 0 ? (
         <p className="rounded-lg border border-dashed border-border-soft bg-surface-soft px-4 py-6 text-center text-caption text-text-muted">
-          Henüz kimse bu promptu kullanarak oluşturduğu bir sonucu paylaşmadı.
+          {isPromptTarget
+            ? "Henüz kimse bu promptu kullanarak oluşturduğu bir sonucu paylaşmadı."
+            : "Henüz kimse bu generatoru kullanarak oluşturduğu bir sonucu paylaşmadı."}
         </p>
       ) : (
         <>
@@ -102,9 +135,7 @@ export function PromptResultsSection({ promptId, promptText }: { promptId: strin
         </>
       )}
 
-      {isAddOpen && (
-        <AddResultModal promptId={promptId} promptText={promptText} onClose={() => setIsAddOpen(false)} onAdded={handleAdded} />
-      )}
+      {isAddOpen && <AddResultModal target={modalTarget} onClose={() => setIsAddOpen(false)} onAdded={handleAdded} />}
     </section>
   );
 }

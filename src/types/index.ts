@@ -150,7 +150,9 @@ export type PromptResultMediaType = "image" | "video" | "audio" | "text" | "othe
  */
 export interface PromptResultSummary {
   id: string;
-  promptId: string;
+  /** Exactly one of `promptId`/`generatorId` is ever set (DB-level CHECK) — a result hangs off a real prompt OR a real generator, never both, never neither. */
+  promptId?: string;
+  generatorId?: string;
   creator: UserProfile;
   mediaType: PromptResultMediaType;
   /** A genuinely small preview — a resized image thumbnail, a captured video poster frame, or (for audio, which has no real extractable thumbnail) a deterministic offline placeholder cover. Never set for text/other. */
@@ -174,8 +176,10 @@ export interface PromptResult extends PromptResultSummary {
   /** The full prompt text the creator says they actually used, if they chose to provide one instead of/alongside a plain-language summary. */
   modifiedPromptText: string | null;
   commentCount: number;
-  /** The original prompt this result was made from — just enough to render the "Bu sonuç hangi promptla oluşturuldu?" back-link card without a second round-trip. */
-  originalPrompt: { id: string; title: string; description: string; promptText: string };
+  /** Set only for a prompt-origin result — just enough to render the "Bu sonuç hangi promptla oluşturuldu?" back-link card (+ a prompt-comparison diff when modified) without a second round-trip. */
+  originalPrompt?: { id: string; title: string; description: string; promptText: string };
+  /** Set only for a generator-origin result — just enough to render the "Bu sonuç şu generator kullanılarak oluşturuldu" back-link card. Never carries a modification comparison (§5/§23 — a generator result never has one). */
+  originalGenerator?: { id: string; title: string; slug: string };
 }
 
 export type PromptRequestStatus = "open" | "answered" | "closed";

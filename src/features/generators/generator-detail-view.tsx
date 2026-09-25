@@ -20,6 +20,7 @@ import { SaveButton } from "@/features/prompts/save-button";
 import { CommentCountLink } from "@/features/prompts/comment-count-link";
 import { CommentSection } from "@/features/prompts/comment-section";
 import { EditHistoryPanel } from "@/features/prompts/edit-history-panel";
+import { PromptResultsSection } from "@/features/prompts/prompt-results-section";
 import {
   fetchGeneratorBySlug,
   fetchGeneratorVersion,
@@ -220,6 +221,8 @@ export function GeneratorDetailView() {
               />
             </div>
           </section>
+
+          <PromptResultsSection target={{ type: "generator", generatorId: generator.id }} />
 
           {generator.tags.length > 0 && (
             <div className="flex flex-wrap gap-1.5">

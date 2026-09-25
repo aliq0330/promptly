@@ -15,7 +15,7 @@ import { ResultTypePreview } from "@/features/prompts/result-type-preview";
 import { ShareTriggerButton } from "@/features/prompts/share-modal";
 import { RESULT_MEDIA_TYPE_LABELS } from "@/lib/prompt-result-media";
 import { fetchResultById } from "@/lib/supabase/prompt-results";
-import { formatRelativeTime, profileHref, promptHref } from "@/lib/utils";
+import { formatRelativeTime, generatorHref, profileHref, promptHref } from "@/lib/utils";
 import type { PromptResult } from "@/types";
 
 /**
@@ -88,21 +88,43 @@ export function ResultDetailView() {
             <ShareTriggerButton target={{ contentType: "prompt_result", result }} label="Paylaş" />
           </div>
 
-          <section aria-labelledby="result-origin-title" className="space-y-2 rounded-lg border border-border-soft bg-surface-soft p-4">
-            <h2 id="result-origin-title" className="flex items-center gap-1.5 font-sans text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">
-              <SquareTerminal size={14} />
-              Bu sonuç hangi promptla oluşturuldu?
-            </h2>
-            <Link href={promptHref(result.originalPrompt)} className="block rounded-md border border-border-soft bg-surface p-3 transition-colors hover:border-primary/40">
-              <p className="truncate text-label font-semibold text-text">{result.originalPrompt.title}</p>
-              {result.originalPrompt.description && (
-                <p className="mt-0.5 line-clamp-2 text-caption text-text-muted">{result.originalPrompt.description}</p>
-              )}
-              <p className="mt-1.5 text-caption font-medium text-primary">Promptu görüntüle →</p>
-            </Link>
-          </section>
+          {result.originalPrompt ? (
+            <section aria-labelledby="result-origin-title" className="space-y-2 rounded-lg border border-border-soft bg-surface-soft p-4">
+              <h2 id="result-origin-title" className="flex items-center gap-1.5 font-sans text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">
+                <SquareTerminal size={14} />
+                Bu sonuç hangi promptla oluşturuldu?
+              </h2>
+              <Link href={promptHref(result.originalPrompt)} className="block rounded-md border border-border-soft bg-surface p-3 transition-colors hover:border-primary/40">
+                <p className="truncate text-label font-semibold text-text">{result.originalPrompt.title}</p>
+                {result.originalPrompt.description && (
+                  <p className="mt-0.5 line-clamp-2 text-caption text-text-muted">{result.originalPrompt.description}</p>
+                )}
+                <p className="mt-1.5 text-caption font-medium text-primary">Promptu görüntüle →</p>
+              </Link>
+            </section>
+          ) : (
+            result.originalGenerator && (
+              // Generator-origin result (Generator Local entegrasyonu §13) — same back-link
+              // idea as the prompt card above, minus any prompt-modification comparison
+              // (§5/§23 — that feature doesn't exist for a generator-sourced result at all).
+              <section aria-labelledby="result-origin-title" className="space-y-2 rounded-lg border border-border-soft bg-surface-soft p-4">
+                <h2 id="result-origin-title" className="flex items-center gap-1.5 font-sans text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">
+                  <SquareTerminal size={14} />
+                  Bu sonuç hangi generatorla oluşturuldu?
+                </h2>
+                <Link
+                  href={generatorHref(result.originalGenerator)}
+                  className="block rounded-md border border-border-soft bg-surface p-3 transition-colors hover:border-primary/40"
+                >
+                  <p className="truncate text-label font-semibold text-text">{result.originalGenerator.title}</p>
+                  <p className="mt-0.5 text-caption text-text-muted">Bu sonuç bu generator kullanılarak oluşturuldu.</p>
+                  <p className="mt-1.5 text-caption font-medium text-primary">Generatoru görüntüle →</p>
+                </Link>
+              </section>
+            )
+          )}
 
-          {result.hasModification && (
+          {result.hasModification && result.originalPrompt && (
             <section className="rounded-lg border border-border-soft bg-surface">
               <button
                 type="button"
