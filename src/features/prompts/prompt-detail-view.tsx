@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
-import { SquareTerminal, Wand2 } from "lucide-react";
+import { PenLine, SquareTerminal, Wand2 } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { ContentTypeLabel } from "@/features/content/content-type-label";
 import { ShareTriggerButton } from "@/features/prompts/share-modal";
@@ -19,6 +19,9 @@ import { CommentCountLink } from "@/features/prompts/comment-count-link";
 import { CopyPromptButton } from "@/features/prompts/copy-prompt-button";
 import { PersonalizeModal } from "@/features/prompts/personalize-modal";
 import { EditHistoryPanel } from "@/features/prompts/edit-history-panel";
+import { SuggestEditModal } from "@/features/prompts/suggest-edit-modal";
+import { EditSuggestionsPanel } from "@/features/prompts/edit-suggestions-panel";
+import { PromptHistoryPanel } from "@/features/prompts/prompt-history-panel";
 import { useAuth } from "@/features/auth/auth-provider";
 import { fetchVariablesForPrompt } from "@/lib/supabase/prompt-variables";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
@@ -39,10 +42,17 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
   const isOwn = user?.id === prompt.author.id;
   const [variables, setVariables] = useState<PromptVariable[]>([]);
   const [isPersonalizeOpen, setIsPersonalizeOpen] = useState(false);
+  const [isSuggestModalOpen, setIsSuggestModalOpen] = useState(false);
+  // The prompt's own display text, lifted into local state so accepting a
+  // real edit suggestion (Düzenleme Önerisi modülü) updates the page
+  // instantly — `prompt` itself is a prop from a parent that only refetches
+  // on its own next navigation, never this exact instance.
+  const [livePromptText, setLivePromptText] = useState(prompt.promptText);
 
   const searchParams = useSearchParams();
   const highlight = parseHighlightValue(searchParams.get("hl"));
   const highlightCommentId = highlight?.kind === "comment" ? highlight.id : null;
+  const highlightSuggestionId = highlight?.kind === "suggestion" ? highlight.id : null;
   // A "gönderi beğenisi" notification points at the post itself (Aşama
   // 4.1) — there's nothing to scroll to (it's already the page's main
   // content), just a brief flash to confirm this is the right one.
@@ -111,7 +121,17 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
                 <SquareTerminal size={14} />
                 Prompt Metni
               </h2>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                {user && !isOwn && (
+                  <button
+                    type="button"
+                    onClick={() => setIsSuggestModalOpen(true)}
+                    className="relative z-10 inline-flex h-9 items-center gap-1.5 rounded-sm border border-primary/30 bg-primary-soft px-3 text-label font-medium text-primary transition-colors hover:border-primary/60"
+                  >
+                    <PenLine size={14} />
+                    Düzenleme öner
+                  </button>
+                )}
                 {variables.length > 0 && (
                   <button
                     type="button"
@@ -122,10 +142,10 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
                     Promptu kişiselleştir
                   </button>
                 )}
-                <CopyPromptButton text={prompt.promptText} size="md" />
+                <CopyPromptButton text={livePromptText} size="md" />
               </div>
             </div>
-            <p className="prompt-text whitespace-pre-wrap break-words px-4 py-4 text-[0.875rem] text-text">{prompt.promptText}</p>
+            <p className="prompt-text whitespace-pre-wrap break-words px-4 py-4 text-[0.875rem] text-text">{livePromptText}</p>
           </section>
 
           {media && (
@@ -158,6 +178,17 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
             </div>
           )}
 
+          {isOwn && (
+            <EditSuggestionsPanel
+              promptId={prompt.id}
+              currentPromptText={livePromptText}
+              highlightSuggestionId={highlightSuggestionId}
+              onAccepted={setLivePromptText}
+            />
+          )}
+
+          <PromptHistoryPanel promptId={prompt.id} />
+
           {isOwn && <EditHistoryPanel contentType="prompt" contentId={prompt.id} />}
 
           <section id="comments" className="scroll-mt-20 rounded-lg border border-border-soft bg-surface p-4 sm:p-5">
@@ -173,9 +204,18 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
 
       {isPersonalizeOpen && (
         <PersonalizeModal
-          promptText={prompt.promptText}
+          promptText={livePromptText}
           variables={variables}
           onClose={() => setIsPersonalizeOpen(false)}
+        />
+      )}
+
+      {isSuggestModalOpen && user && (
+        <SuggestEditModal
+          promptId={prompt.id}
+          proposerId={user.id}
+          promptText={livePromptText}
+          onClose={() => setIsSuggestModalOpen(false)}
         />
       )}
     </div>

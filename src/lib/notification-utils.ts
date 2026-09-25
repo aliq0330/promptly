@@ -9,8 +9,10 @@ import {
   MessageCircle,
   MessageCircleHeart,
   MessageCircleReply,
+  PenLine,
   RotateCcw,
   UserPlus,
+  XCircle,
   type LucideIcon,
 } from "lucide-react";
 import type { AppNotification, NotificationType } from "@/types";
@@ -37,6 +39,12 @@ export const NOTIFICATION_CATEGORY: Record<NotificationType, NotificationCategor
   // bir kategori icat edilmedi.
   prompt_edited: "posts",
   request_edited: "requests",
+  // Düzenleme Önerisi ve Sürüm Geçmişi modülü — bir prompt üzerindeki bir
+  // etkileşim olduğundan aynı "posts" kategorisine katılıyor, yeni bir
+  // kategori icat edilmedi.
+  edit_suggestion_received: "posts",
+  edit_suggestion_accepted: "posts",
+  edit_suggestion_rejected: "posts",
 };
 
 export const CATEGORY_FILTERS: { key: "all" | NotificationCategory; label: string }[] = [
@@ -59,7 +67,7 @@ export const CATEGORY_FILTERS: { key: "all" | NotificationCategory; label: strin
  * notification is actually about.
  */
 export interface ParsedHighlight {
-  kind: "post" | "request" | "comment" | "response_new" | "response_selected" | "response_unselected" | "message";
+  kind: "post" | "request" | "comment" | "response_new" | "response_selected" | "response_unselected" | "message" | "suggestion";
   id: string;
 }
 
@@ -71,6 +79,7 @@ const HIGHLIGHT_KINDS = new Set<ParsedHighlight["kind"]>([
   "response_selected",
   "response_unselected",
   "message",
+  "suggestion",
 ]);
 
 /** Parses a raw `hl` query param VALUE (e.g. from `useSearchParams().get("hl")` on the page the notification actually navigated to). */
@@ -115,6 +124,9 @@ export const NOTIFICATION_ICONS = {
   system: Bell,
   prompt_edited: Edit3,
   request_edited: Edit3,
+  edit_suggestion_received: PenLine,
+  edit_suggestion_accepted: CheckCircle2,
+  edit_suggestion_rejected: XCircle,
 } as const satisfies Record<string, LucideIcon>;
 
 /**
@@ -152,6 +164,12 @@ export function getNotificationIconKey(notification: AppNotification): keyof typ
       return "prompt_edited";
     case "request_edited":
       return "request_edited";
+    case "edit_suggestion_received":
+      return "edit_suggestion_received";
+    case "edit_suggestion_accepted":
+      return "edit_suggestion_accepted";
+    case "edit_suggestion_rejected":
+      return "edit_suggestion_rejected";
     case "system":
     default:
       return "system";
