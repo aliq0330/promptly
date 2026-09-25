@@ -27,7 +27,7 @@ import {
   type GeneratorVersionResult,
 } from "@/lib/supabase/generators";
 import { useRealGenerators } from "./real-generators-provider";
-import { formatCount, formatRelativeTime, profileHref, tagHref } from "@/lib/utils";
+import { formatRelativeTime, profileHref, tagHref } from "@/lib/utils";
 import type { Generator, GeneratorValues } from "@/types";
 
 /**
@@ -167,12 +167,21 @@ export function GeneratorDetailView() {
             </Link>
           </header>
 
+          {/*
+            Standardized action row (Promptly Etkileşim Butonları Düzeni
+            görevi) — Beğeni/Yorum/Kaydet grouped on the left, Paylaş always
+            alone on the far right, identical to PromptCardFooter/
+            PromptDetailView/RequestDetailView. The old trailing "X
+            kaydetme" community count (right of Paylaş) is gone — it was the
+            one place any content type showed an aggregate count in this
+            row, and it pushed Paylaş out of the standard rightmost spot.
+          */}
           <div className="flex flex-wrap items-center gap-0.5 border-y border-border-soft py-1.5">
             <LikeButton id={generator.id} likeCount={generator.likeCount} contentType="generator" size={18} />
             <CommentCountLink generatorSlug={generator.slug} baseCount={generator.commentCount} size={18} />
             <SaveButton generatorId={generator.id} size={18} />
+            <span className="ml-auto" />
             <ShareTriggerButton target={{ contentType: "generator", generator }} label="Paylaş" />
-            <span className="ml-auto pr-2 text-caption text-text-muted">{formatCount(generator.saveCount)} kaydetme</span>
           </div>
 
           <section aria-labelledby="generator-use-title" className="overflow-hidden rounded-lg border border-border-soft bg-surface">

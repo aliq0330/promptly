@@ -8,11 +8,13 @@ type FooterTarget = { prompt: Prompt; generator?: never } | { generator: Generat
 
 /**
  * ContentActions — the one action row every content card uses (every prompt
- * content type AND a generator): Like · Comment on the left, Save · Share
- * on the right. Same icons, order, spacing and touch targets everywhere.
- * Like/save/comment are the real, database-persisted actions (CLAUDE.md
- * Bölüm 21/9.35/9.36 — Save opens the shared collection modal for both
- * prompts and generators), share is the real Web Share/clipboard action.
+ * content type AND a generator): Beğeni · Yorum · Kaydet grouped together
+ * on the left, Paylaş always alone on the far right (Promptly Etkileşim
+ * Butonları Düzeni görevi — Paylaş never joins the left group). Same icons,
+ * order, spacing and touch targets everywhere. Like/save/comment are the
+ * real, database-persisted actions (CLAUDE.md Bölüm 21/9.35/9.36 — Save
+ * opens the shared collection modal for both prompts and generators),
+ * share opens the shared `ShareModal` (never a direct native-share call).
  * No new action system — this only arranges the existing components.
  */
 export function PromptCardFooter(target: FooterTarget) {
@@ -40,8 +42,8 @@ export function PromptCardFooter(target: FooterTarget) {
       ) : (
         <CommentCountLink promptId={view.id} baseCount={view.commentCount} />
       )}
-      <span className="ml-auto" />
       {view.isGenerator ? <SaveButton generatorId={view.id} /> : <SaveButton promptId={view.id} />}
+      <span className="ml-auto" />
       <ShareTriggerButton
         target={target.generator ? { contentType: "generator", generator: target.generator } : { contentType: "prompt", prompt: target.prompt }}
       />
