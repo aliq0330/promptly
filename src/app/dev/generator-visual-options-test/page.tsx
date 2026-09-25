@@ -18,11 +18,17 @@ import { GeneratorRuntimeForm } from "@/features/generators/generator-runtime-fo
 import { GeneratorRuntimeField } from "@/features/generators/generator-runtime-field";
 import { FieldEditorModal } from "@/features/generators/field-editor-modal";
 import { FieldCatalogPicker } from "@/features/generators/field-catalog-picker";
-import type { CatalogField } from "@/lib/generator-field-catalog";
+import { CATALOG_FIELDS, type CatalogField } from "@/lib/generator-field-catalog";
 import { makeFieldKeyFromLabel } from "@/lib/generator-template";
 import { buildGeneratorOutput } from "@/lib/generator-output";
-import { placeholderArt } from "@/lib/placeholder-image";
 import type { GeneratorField, GeneratorSchema, GeneratorValues } from "@/types";
+
+/** Real catalog options (with the real concept icons/colors) rather than synthetic ones — proves the runtime form renders the actual production catalog art, not a stand-in. */
+function catalogOptionsOf(fieldId: string) {
+  const field = CATALOG_FIELDS.find((f) => f.id === fieldId);
+  if (!field) throw new Error(`Catalog field not found: ${fieldId}`);
+  return field.options;
+}
 
 /** The exact same conversion `generator-builder.tsx`'s `insertFieldDescriptors` does — reproduced here (not imported, it's a closure inside that component) so this harness exercises the real end-to-end catalog→schema→runtime path with the catalog's own, non-synthetic default images/colors. */
 function catalogFieldToGeneratorField(field: CatalogField, existingKeys: string[]): GeneratorField {
@@ -46,6 +52,8 @@ function catalogFieldToGeneratorField(field: CatalogField, existingKeys: string[
   };
 }
 
+/** Real catalog icons (`char_hair_style`), trimmed to a small fixed set so existing UI-mechanic assertions (aria-pressed, editor add/remove counts) stay stable — the images themselves are the REAL, production `conceptIcon()` output, not a placeholder stand-in. */
+const HAIR_STYLE_LABELS = ["Düz", "Dalgalı", "Kıvırcık", "Topuz"];
 const IMAGE_FIELD: GeneratorField = {
   id: "f-hair-style",
   key: "hair_style",
@@ -53,11 +61,7 @@ const IMAGE_FIELD: GeneratorField = {
   description: "",
   type: "select",
   required: false,
-  options: ["Düz", "Dalgalı", "Kıvırcık", "Topuz"].map((label) => ({
-    label,
-    value: label.toLowerCase(),
-    image: placeholderArt(`hair_style:${label}`, 160, 160),
-  })),
+  options: catalogOptionsOf("char_hair_style").filter((o) => HAIR_STYLE_LABELS.includes(o.label)),
   defaultValue: "",
   placeholder: "",
   min: null,
@@ -70,18 +74,21 @@ const IMAGE_FIELD: GeneratorField = {
 
 const MULTI_IMAGE_FIELD: GeneratorField = {
   ...IMAGE_FIELD,
-  id: "f-accessories",
-  key: "accessories",
+  id: "f-pose",
+  key: "pose",
   label: "Aksesuarlar",
   type: "multi_select",
   jsonPath: "accessories",
-  options: ["Şapka", "Gözlük", "Kolye"].map((label) => ({
-    label,
-    value: label.toLowerCase(),
-    image: placeholderArt(`accessory:${label}`, 160, 160),
-  })),
+  // Real `pose_base` icons repurposed for a multi-select fixture (this app
+  // has no real multi-select image field yet) — still genuine conceptIcon()
+  // output, just borrowed from another family for this UI-mechanics test.
+  options: catalogOptionsOf("pose_base")
+    .slice(0, 3)
+    .map((o, i) => ({ ...o, label: ["Şapka", "Gözlük", "Kolye"][i], value: ["sapka", "gozluk", "kolye"][i] })),
 };
 
+/** Real catalog colors (`char_hair_color`), trimmed to a small fixed set for the same UI-mechanic stability reason as IMAGE_FIELD above. */
+const HAIR_COLOR_LABELS = ["Siyah", "Kahverengi", "Sarı"];
 const COLOR_FIELD: GeneratorField = {
   id: "f-hair-color",
   key: "hair_color",
@@ -89,11 +96,7 @@ const COLOR_FIELD: GeneratorField = {
   description: "",
   type: "select",
   required: false,
-  options: [
-    { label: "Siyah", value: "siyah", color: "#1C1310" },
-    { label: "Kahverengi", value: "kahverengi", color: "#5A3825" },
-    { label: "Sarı", value: "sari", color: "#D6B56A" },
-  ],
+  options: catalogOptionsOf("char_hair_color").filter((o) => HAIR_COLOR_LABELS.includes(o.label)),
   defaultValue: "",
   placeholder: "",
   min: null,
@@ -128,8 +131,32 @@ const PLAIN_FIELD: GeneratorField = {
 
 const SCHEMA: GeneratorSchema = { fields: [IMAGE_FIELD, MULTI_IMAGE_FIELD, COLOR_FIELD, PLAIN_FIELD] };
 
+/** All 8 real, production image-backed catalog fields at full scale (their actual option counts) — for a visual sanity check that every concept icon is genuinely distinct and relevant, not a repeated/random shape. */
+const GALLERY_FIELD_IDS = ["char_face_shape", "char_eye_shape", "char_hair_length", "char_hair_style", "cloth_top", "pose_base", "cam_angle", "photo_type"];
+const GALLERY_FIELDS: GeneratorField[] = GALLERY_FIELD_IDS.map((id, index) => {
+  const catalogField = CATALOG_FIELDS.find((f) => f.id === id)!;
+  return {
+    id: `gallery-${id}`,
+    key: id,
+    label: catalogField.label,
+    description: "",
+    type: catalogField.type,
+    required: false,
+    options: catalogField.options,
+    defaultValue: "",
+    placeholder: "",
+    min: null,
+    max: null,
+    step: null,
+    order: index,
+    condition: null,
+    jsonPath: catalogField.jsonPath ?? id,
+  };
+});
+
 export default function GeneratorVisualOptionsTestPage() {
   const [values, setValues] = useState<GeneratorValues>({});
+  const [galleryValues, setGalleryValues] = useState<GeneratorValues>({});
   const [editorOpen, setEditorOpen] = useState(false);
   const [editedField, setEditedField] = useState<GeneratorField>(IMAGE_FIELD);
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -144,6 +171,11 @@ export default function GeneratorVisualOptionsTestPage() {
 
       <section data-testid="runtime-form" className="space-y-4 rounded-lg border border-border p-4">
         <GeneratorRuntimeForm schema={SCHEMA} values={values} onChange={(key, value) => setValues((prev) => ({ ...prev, [key]: value }))} />
+      </section>
+
+      <section data-testid="concept-icon-gallery" className="space-y-6 rounded-lg border border-border p-4">
+        <h2 className="text-sm font-semibold text-text">8 real catalog image-backed fields, full option sets</h2>
+        <GeneratorRuntimeForm schema={{ fields: GALLERY_FIELDS }} values={galleryValues} onChange={(key, value) => setGalleryValues((prev) => ({ ...prev, [key]: value }))} />
       </section>
 
       <section data-testid="json-output" className="rounded-lg border border-border p-4">
