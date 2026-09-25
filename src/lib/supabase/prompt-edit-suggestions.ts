@@ -1,6 +1,6 @@
 import { supabase } from "./client";
 import { mapProfileRow, type ProfileRow } from "./mappers";
-import type { PromptEditSuggestion } from "@/types";
+import type { PromptEditSuggestion, UserProfile } from "@/types";
 
 interface SuggestionRow {
   id: string;
@@ -36,11 +36,14 @@ function mapSuggestionRow(row: SuggestionRow): PromptEditSuggestion {
 }
 
 /**
- * Every edit suggestion on one prompt, newest first — RLS only ever lets
- * this resolve to real rows for the caller's own suggestions (as proposer)
- * or the prompt's own owner (see `20260919390000_prompt_edit_suggestions.
- * sql`), so calling this for someone else's prompt as neither always
- * safely resolves to `[]`, same precedent as `fetchEditHistory`.
+ * Every edit suggestion on one prompt, newest first — RLS lets this resolve
+ * to real rows for the caller's own suggestions (as proposer), the prompt's
+ * own owner, OR (since `20260919400000_edit_suggestion_public_credit.sql`)
+ * anyone at all once a suggestion is `accepted` (a merged suggestion is
+ * public credit, not a private negotiation anymore — see
+ * `fetchContributorsForPrompt` below, which relies on exactly this). A
+ * still-pending/rejected suggestion stays visible only to its own
+ * proposer/owner, same precedent as `fetchEditHistory`.
  */
 export async function fetchSuggestionsForPrompt(promptId: string): Promise<PromptEditSuggestion[]> {
   try {
@@ -56,6 +59,61 @@ export async function fetchSuggestionsForPrompt(promptId: string): Promise<Promp
     return ((data ?? []) as unknown as SuggestionRow[]).map(mapSuggestionRow);
   } catch (err) {
     console.error("fetchSuggestionsForPrompt", err);
+    return [];
+  }
+}
+
+/** One real person whose accepted edit suggestion(s) shaped a prompt's current content — see `fetchContributorsForPrompt`. */
+export interface PromptContributor {
+  proposer: UserProfile;
+  /** How many of this person's suggestions on this exact prompt have been accepted — never counts pending/rejected ones. */
+  contributionCount: number;
+  /** When their most recent accepted suggestion was resolved — used to order the list, most recent first. */
+  lastAcceptedAt: string;
+}
+
+/**
+ * Everyone whose edit suggestion on this prompt has been genuinely
+ * ACCEPTED — the real "Katkıda Bulunanlar" list shown next to the prompt
+ * owner's own profile card. Publicly readable wherever the prompt itself is
+ * (RLS, `20260919400000_edit_suggestion_public_credit.sql`): a merged
+ * suggestion is real, public credit, not a private negotiation. The same
+ * person can have contributed more than once — this dedupes by proposer and
+ * keeps a real count instead of listing them repeatedly.
+ */
+export async function fetchContributorsForPrompt(promptId: string): Promise<PromptContributor[]> {
+  try {
+    const { data, error } = await supabase
+      .from("prompt_edit_suggestions")
+      .select(SUGGESTION_SELECT)
+      .eq("prompt_id", promptId)
+      .eq("status", "accepted")
+      .order("resolved_at", { ascending: false });
+    if (error) {
+      console.error("fetchContributorsForPrompt", error);
+      return [];
+    }
+    const rows = (data ?? []) as unknown as SuggestionRow[];
+    const byProposer = new Map<string, PromptContributor>();
+    for (const row of rows) {
+      const proposer = mapProfileRow(row.profiles);
+      const existing = byProposer.get(proposer.id);
+      if (existing) {
+        existing.contributionCount += 1;
+      } else {
+        byProposer.set(proposer.id, {
+          proposer,
+          contributionCount: 1,
+          lastAcceptedAt: row.resolved_at ?? row.created_at,
+        });
+      }
+    }
+    // `rows` is already newest-resolved-first, so `Map` insertion order
+    // already reflects that for the first-seen (most recent) contributor —
+    // no extra sort needed.
+    return Array.from(byProposer.values());
+  } catch (err) {
+    console.error("fetchContributorsForPrompt", err);
     return [];
   }
 }
