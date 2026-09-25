@@ -265,6 +265,7 @@ export function CreateRequestForm() {
     status: "open",
     responseCount: 0,
     likeCount: 0,
+    commentCount: 0,
     createdAt: new Date().toISOString(),
     deletedAt: null,
   };

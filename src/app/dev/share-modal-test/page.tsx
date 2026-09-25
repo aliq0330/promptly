@@ -99,6 +99,7 @@ export const FIXTURE_REQUEST: PromptRequest = {
   status: "open",
   responseCount: 2,
   likeCount: 5,
+  commentCount: 3,
   createdAt: "2026-01-03T00:00:00Z",
   deletedAt: null,
 };
