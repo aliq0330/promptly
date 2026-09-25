@@ -45,7 +45,7 @@ export function ProfileToolbar({
   return (
     <div className="space-y-2.5">
       <div className="flex items-center gap-2">
-        <div className="scrollbar-none flex flex-1 gap-2 overflow-x-auto">
+        <div className="scrollbar-none flex flex-1 touch-pan-x gap-2 overflow-x-auto overscroll-x-contain">
           <Chip selected={activeType === "all"} onClick={() => onTypeChange("all")}>
             Tümü
           </Chip>

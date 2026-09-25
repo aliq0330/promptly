@@ -15,7 +15,12 @@ export interface TabItem<K extends string> {
  * inside a `role="tablist"`:
  *   - `underline` — section navigation inside a page (profile sections).
  *   - `segmented` — switching the view of one list (feed: Takip/Popüler/Sana Özel).
- * Both scroll horizontally on narrow screens instead of wrapping.
+ * Both scroll horizontally on narrow screens instead of wrapping. `touch-
+ * pan-x` locks the touch gesture to horizontal panning (so a swipe that
+ * isn't perfectly horizontal doesn't also drag the whole page vertically)
+ * and `overscroll-x-contain` stops that horizontal scroll from chaining
+ * into the page's own vertical scroll once it hits an edge — both real
+ * mobile bugs on iOS Safari, not cosmetic.
  */
 export function Tabs<K extends string>({
   items,
@@ -37,7 +42,7 @@ export function Tabs<K extends string>({
       role="tablist"
       aria-label={ariaLabel}
       className={cn(
-        "scrollbar-none flex overflow-x-auto",
+        "scrollbar-none flex touch-pan-x overflow-x-auto overscroll-x-contain",
         variant === "underline" ? "gap-1 border-b border-border-soft" : "w-fit max-w-full gap-1 rounded-md bg-surface-soft p-1",
         className,
       )}
