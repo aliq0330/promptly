@@ -22,6 +22,7 @@ import { EditHistoryPanel } from "@/features/prompts/edit-history-panel";
 import { SuggestEditModal } from "@/features/prompts/suggest-edit-modal";
 import { EditSuggestionsPanel } from "@/features/prompts/edit-suggestions-panel";
 import { PromptHistoryPanel } from "@/features/prompts/prompt-history-panel";
+import { ContributorsPanel } from "@/features/prompts/contributors-panel";
 import { useAuth } from "@/features/auth/auth-provider";
 import { fetchVariablesForPrompt } from "@/lib/supabase/prompt-variables";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
@@ -48,6 +49,10 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
   // instantly — `prompt` itself is a prop from a parent that only refetches
   // on its own next navigation, never this exact instance.
   const [livePromptText, setLivePromptText] = useState(prompt.promptText);
+  // Bumped whenever the owner accepts a suggestion this session — forces
+  // `ContributorsPanel` to remount and refetch so a brand-new contributor
+  // shows up immediately, without a page reload.
+  const [contributorsRefreshKey, setContributorsRefreshKey] = useState(0);
 
   const searchParams = useSearchParams();
   const highlight = parseHighlightValue(searchParams.get("hl"));
@@ -183,7 +188,10 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
               promptId={prompt.id}
               currentPromptText={livePromptText}
               highlightSuggestionId={highlightSuggestionId}
-              onAccepted={setLivePromptText}
+              onAccepted={(newPromptText) => {
+                setLivePromptText(newPromptText);
+                setContributorsRefreshKey((prev) => prev + 1);
+              }}
             />
           )}
 
@@ -198,6 +206,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
 
         <aside className="mt-6 space-y-5 lg:sticky lg:top-24 lg:mt-0 lg:self-start">
           <CreatorSummary creator={prompt.author} isOwn={isOwn} />
+          <ContributorsPanel key={contributorsRefreshKey} promptId={prompt.id} />
           <RelatedPrompts prompt={prompt} />
         </aside>
       </div>
