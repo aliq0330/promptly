@@ -1,6 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { extendTailwindMerge } from "tailwind-merge";
-import type { Collection, Conversation, Generator, Prompt, PromptRequest, Tag, UserProfile } from "@/types";
+import type { Collection, Conversation, Generator, Prompt, PromptRequest, PromptResultSummary, Tag, UserProfile } from "@/types";
 
 /**
  * tailwind-merge taught the design system's custom tokens (globals.css).
@@ -268,6 +268,11 @@ export function collectionHref(collection: Pick<Collection, "id">): string {
  */
 export function generatorHref(generator: Pick<Generator, "slug">): string {
   return `/generators/local?slug=${generator.slug}`;
+}
+
+/** Same idea as `promptHref`, for a Kullanıcı Sonucu — every result is a real Supabase row (`public.prompt_results`). */
+export function resultHref(result: Pick<PromptResultSummary, "id">): string {
+  return `/results/local?id=${result.id}`;
 }
 
 /**

@@ -18,7 +18,10 @@ const COMMENT_SELECT = `
   profiles:author_id ( id, username, display_name, avatar_url, cover_url, bio, website, follower_count, following_count, created_at, interests )
 `;
 
-function mapCommentRow(row: CommentRow, target: { promptId: string } | { requestId: string } | { generatorId: string }): PromptComment {
+function mapCommentRow(
+  row: CommentRow,
+  target: { promptId: string } | { requestId: string } | { generatorId: string } | { resultId: string },
+): PromptComment {
   return {
     id: row.id,
     ...target,
@@ -135,6 +138,41 @@ export async function postCommentOnPrompt(
     .single();
   if (error || !data) throw new Error(error?.message ?? "Yorum eklenemedi.");
   return mapCommentRow(data as unknown as CommentRow, { promptId });
+}
+
+/** Every real comment on a real Kullanıcı Sonucu, oldest first — publicly readable wherever the result's own prompt is (Bölüm 19's RLS, widened by the "Kullanıcı Sonuçları" migration). */
+export async function fetchCommentsForResult(resultId: string): Promise<PromptComment[]> {
+  try {
+    const { data, error } = await supabase
+      .from("prompt_comments")
+      .select(COMMENT_SELECT)
+      .eq("result_id", resultId)
+      .order("created_at", { ascending: true });
+    if (error) {
+      console.error("fetchCommentsForResult", error);
+      return [];
+    }
+    return ((data ?? []) as unknown as CommentRow[]).map((row) => mapCommentRow(row, { resultId }));
+  } catch (err) {
+    console.error("fetchCommentsForResult", err);
+    return [];
+  }
+}
+
+/** Genuinely, permanently posts a comment on a real Kullanıcı Sonucu. `handle_prompt_comment_change` keeps `prompt_results.comment_count` in sync, even across users. */
+export async function postCommentOnResult(
+  resultId: string,
+  authorId: string,
+  body: string,
+  parentId: string | null,
+): Promise<PromptComment> {
+  const { data, error } = await supabase
+    .from("prompt_comments")
+    .insert({ result_id: resultId, author_id: authorId, body, parent_id: parentId })
+    .select(COMMENT_SELECT)
+    .single();
+  if (error || !data) throw new Error(error?.message ?? "Yorum eklenemedi.");
+  return mapCommentRow(data as unknown as CommentRow, { resultId });
 }
 
 /**

@@ -23,6 +23,7 @@ import { SuggestEditModal } from "@/features/prompts/suggest-edit-modal";
 import { EditSuggestionsPanel } from "@/features/prompts/edit-suggestions-panel";
 import { PromptHistoryPanel } from "@/features/prompts/prompt-history-panel";
 import { ContributorsPanel } from "@/features/prompts/contributors-panel";
+import { PromptResultsSection } from "@/features/prompts/prompt-results-section";
 import { useAuth } from "@/features/auth/auth-provider";
 import { fetchVariablesForPrompt } from "@/lib/supabase/prompt-variables";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
@@ -182,6 +183,8 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
               ))}
             </div>
           )}
+
+          <PromptResultsSection promptId={prompt.id} promptText={livePromptText} />
 
           {isOwn && (
             <EditSuggestionsPanel

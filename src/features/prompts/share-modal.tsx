@@ -10,15 +10,17 @@ import { STATUS_LABELS, STATUS_VARIANTS } from "@/features/requests/request-card
 import { GENERATOR_CATEGORY_TOPIC_LABELS } from "@/features/generators/generator-category-meta";
 import { contentActionClassName } from "@/features/content/action-styles";
 import { placeholderArt } from "@/lib/placeholder-image";
-import { generatorHref, promptHref, requestHref } from "@/lib/utils";
+import { RESULT_MEDIA_TYPE_LABELS } from "@/lib/prompt-result-media";
+import { generatorHref, promptHref, requestHref, resultHref } from "@/lib/utils";
 import { CONTENT_TYPE_META } from "./content-type-meta";
 import { shareOrCopyLink } from "./share-button";
-import type { Generator, Prompt, PromptRequest } from "@/types";
+import type { Generator, Prompt, PromptRequest, PromptResult } from "@/types";
 
 export type ShareModalTarget =
   | { contentType: "prompt"; prompt: Prompt }
   | { contentType: "generator"; generator: Generator }
-  | { contentType: "request"; request: PromptRequest };
+  | { contentType: "request"; request: PromptRequest }
+  | { contentType: "prompt_result"; result: PromptResult };
 
 interface SharePreview {
   id: string;
@@ -28,8 +30,18 @@ interface SharePreview {
   badgeLabel: string;
   badgeVariant: "neutral" | "success" | "danger";
   href: string;
-  /** The query string a `/messages?...` deep link needs to attach this content to the next message sent (Bölüm 9.8's existing pattern — `shareGeneratorId` is new but purely client-side, never written to the database). */
-  messageParam: string;
+  /**
+   * The query string a `/messages?...` deep link needs to attach this
+   * content to the next message sent (Bölüm 9.8's existing pattern —
+   * `shareGeneratorId` is new but purely client-side, never written to the
+   * database). `null` when this content type has no message-sharing
+   * support at all (a Kullanıcı Sonucu — `messages` has no `shared_result_
+   * id` column and adding one is out of this feature's scope, CLAUDE.md
+   * §24's "gereksiz yeni sistemler oluşturma") — the modal simply hides
+   * that option in that case rather than pointing at something that
+   * doesn't work.
+   */
+  messageParam: string | null;
 }
 
 function getSharePreview(target: ShareModalTarget): SharePreview {
@@ -59,16 +71,29 @@ function getSharePreview(target: ShareModalTarget): SharePreview {
       messageParam: `shareGeneratorId=${generator.id}`,
     };
   }
-  const request = target.request;
+  if (target.contentType === "request") {
+    const request = target.request;
+    return {
+      id: request.id,
+      title: request.title,
+      description: request.description,
+      thumbnailUrl: request.referenceImage?.url ?? null,
+      badgeLabel: STATUS_LABELS[request.status],
+      badgeVariant: STATUS_VARIANTS[request.status],
+      href: requestHref(request),
+      messageParam: `shareRequestId=${request.id}`,
+    };
+  }
+  const result = target.result;
   return {
-    id: request.id,
-    title: request.title,
-    description: request.description,
-    thumbnailUrl: request.referenceImage?.url ?? null,
-    badgeLabel: STATUS_LABELS[request.status],
-    badgeVariant: STATUS_VARIANTS[request.status],
-    href: requestHref(request),
-    messageParam: `shareRequestId=${request.id}`,
+    id: result.id,
+    title: `${result.creator.displayName} — ${result.originalPrompt.title}`,
+    description: result.mediaType === "text" || result.mediaType === "other" ? result.textContent ?? "" : "",
+    thumbnailUrl: result.thumbnailUrl,
+    badgeLabel: RESULT_MEDIA_TYPE_LABELS[result.mediaType],
+    badgeVariant: "neutral",
+    href: resultHref(result),
+    messageParam: null,
   };
 }
 
@@ -149,7 +174,7 @@ export function ShareModal({ target, onClose }: { target: ShareModalTarget; onCl
         </div>
 
         <div className="mt-4 space-y-2">
-          {user && (
+          {user && preview.messageParam && (
             <Link
               href={`/messages?${preview.messageParam}`}
               onClick={onClose}

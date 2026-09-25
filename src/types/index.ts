@@ -102,14 +102,16 @@ export interface Prompt {
 }
 
 /**
- * A comment belongs to exactly one of a prompt or a request — never both
- * (enforced by `prompt_comments_exactly_one_target`, see CommentSection).
+ * A comment belongs to exactly one of a prompt, a request, a generator, or a
+ * Kullanıcı Sonucu — never more than one (enforced by `prompt_comments_
+ * exactly_one_target`, see CommentSection).
  */
 export interface PromptComment {
   id: string;
   promptId?: string;
   requestId?: string;
   generatorId?: string;
+  resultId?: string;
   author: UserProfile;
   body: string;
   /** Points at another `PromptComment.id` — a reply can target a top-level comment OR another reply, to any depth (self-referencing `prompt_comments.parent_id`). */
@@ -127,6 +129,53 @@ export interface PromptComment {
    * with no replies is hard-deleted instead (never appears with this set).
    */
   deletedAt: string | null;
+}
+
+// === Kullanıcı Sonuçları / Prompt Çıktıları ================================
+//
+// A real, standalone "I used this prompt and got this" artifact
+// (`public.prompt_results`) attached under its original prompt — this is
+// NOT a remix/fork: the sharer never creates a prompt of their own, `prompt`
+// itself is never touched, and there's no separate `prompts` row for it
+// (see the migration's own header for the full architecture note).
+
+export type PromptResultMediaType = "image" | "video" | "audio" | "text" | "other";
+
+/**
+ * The compact, card-safe shape — deliberately excludes the full-size
+ * `mediaUrl`/`textContent`/modification detail fields (CLAUDE.md §16/§17:
+ * a result grid must never eagerly load full media/metadata, only enough
+ * for a small thumbnail). `fetchResultsForPrompt` returns this; only
+ * `fetchResultById` (the detail page) fetches the full `PromptResult`.
+ */
+export interface PromptResultSummary {
+  id: string;
+  promptId: string;
+  creator: UserProfile;
+  mediaType: PromptResultMediaType;
+  /** A genuinely small preview — a resized image thumbnail, a captured video poster frame, or (for audio, which has no real extractable thumbnail) a deterministic offline placeholder cover. Never set for text/other. */
+  thumbnailUrl: string | null;
+  /** Only meaningful for text/other results — used for the card's short text preview. `null` for image/video/audio. */
+  textContent: string | null;
+  tool: string | null;
+  hasModification: boolean;
+  likeCount: number;
+  createdAt: string;
+}
+
+/** The full shape — only ever fetched for one result at a time, when its own detail page actually opens (CLAUDE.md §16's "büyük medya/detay verisi yalnızca detay açılınca yüklenir"). */
+export interface PromptResult extends PromptResultSummary {
+  /** The real, full-size file — the original image, the video file, or the audio file. `null` for text/other (see `textContent` instead). */
+  mediaUrl: string | null;
+  /** Only set for `mediaType === "image"` — its real, non-distorted aspect ratio for the detail viewer. `null` otherwise (a `<video>`/`<audio>` element sizes itself). */
+  width: number | null;
+  height: number | null;
+  modificationSummary: string | null;
+  /** The full prompt text the creator says they actually used, if they chose to provide one instead of/alongside a plain-language summary. */
+  modifiedPromptText: string | null;
+  commentCount: number;
+  /** The original prompt this result was made from — just enough to render the "Bu sonuç hangi promptla oluşturuldu?" back-link card without a second round-trip. */
+  originalPrompt: { id: string; title: string; description: string; promptText: string };
 }
 
 export type PromptRequestStatus = "open" | "answered" | "closed";
@@ -184,7 +233,8 @@ export type NotificationType =
   | "request_edited"
   | "edit_suggestion_received"
   | "edit_suggestion_accepted"
-  | "edit_suggestion_rejected";
+  | "edit_suggestion_rejected"
+  | "prompt_result_shared";
 
 export interface AppNotification {
   id: string;

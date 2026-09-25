@@ -4,10 +4,11 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Copy, FolderMinus, Link2, Loader2, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { useAuth } from "@/features/auth/auth-provider";
-import { absoluteUrl, cn, generatorHref, promptHref, requestHref } from "@/lib/utils";
+import { absoluteUrl, cn, generatorHref, promptHref, requestHref, resultHref } from "@/lib/utils";
 import { deleteRealPrompt } from "@/lib/supabase/prompts";
 import { deleteGenerator } from "@/lib/supabase/generators";
 import { deleteRealRequest } from "@/lib/supabase/requests";
+import { deletePromptResult } from "@/lib/supabase/prompt-results";
 
 /**
  * Every post card's three-dot menu (header, top-right) — not just the
@@ -21,11 +22,15 @@ import { deleteRealRequest } from "@/lib/supabase/requests";
  *
  * Polymorphic since Bölüm 9.34's shared-social integration, widened to a
  * third target (a Prompt İsteği) by the "Prompt İsteği Etkileşim ve Menü
- * Sistemi Eşitleme" görevi — pass exactly one of `promptId`, `generatorId`
- * (also needs `generatorSlug` for its real link), or `requestId`. A
- * generator's or request's menu never shows "Kopyasını oluştur" (no
- * duplicate flow exists for either) — deliberately left out rather than
- * wired to something that doesn't actually work.
+ * Sistemi Eşitleme" görevi, and to a fourth (a Kullanıcı Sonucu) by the
+ * "Kullanıcı Sonuçları / Prompt Çıktıları" görevi — pass exactly one of
+ * `promptId`, `generatorId` (also needs `generatorSlug` for its real link),
+ * `requestId`, or `resultId`. A generator's, request's, or result's menu
+ * never shows "Kopyasını oluştur" (no duplicate flow exists for any of the
+ * three), and a result's menu additionally never shows "Düzenle" (a result
+ * can only be shared or deleted, never edited — CLAUDE.md §23) — both
+ * deliberately left out rather than wired to something that doesn't
+ * actually work.
  *
  * "Mesajla gönder" used to live here as its own menu item (Bölüm 9.8) —
  * Bölüm 9.52 (Unified Share System) folded it into the "Paylaş" icon's own
@@ -37,6 +42,7 @@ export function PostMenu({
   generatorId,
   generatorSlug,
   requestId,
+  resultId,
   authorId,
   onDeleted,
   collectionRemoval,
@@ -45,6 +51,7 @@ export function PostMenu({
   generatorId?: string;
   generatorSlug?: string;
   requestId?: string;
+  resultId?: string;
   authorId: string;
   /** Called after a real, successful delete — lets a list (e.g. the profile grid) remove the card without a reload. */
   onDeleted?: () => void;
@@ -69,11 +76,14 @@ export function PostMenu({
   const isOwn = user?.id === authorId;
   const isGenerator = Boolean(generatorId);
   const isRequest = Boolean(requestId);
+  const isResult = Boolean(resultId);
   const href = isGenerator
     ? generatorHref({ slug: generatorSlug ?? "" })
     : isRequest
       ? requestHref({ id: requestId! })
-      : promptHref({ id: promptId! });
+      : isResult
+        ? resultHref({ id: resultId! })
+        : promptHref({ id: promptId! });
   const editHref = isGenerator
     ? `/generators/create?edit=${generatorId}`
     : isRequest
@@ -138,6 +148,7 @@ export function PostMenu({
     try {
       if (isGenerator) await deleteGenerator(generatorId!);
       else if (isRequest) await deleteRealRequest(requestId!);
+      else if (isResult) await deletePromptResult(resultId!);
       else await deleteRealPrompt(promptId!);
       setOpen(false);
       onDeleted?.();
@@ -222,16 +233,18 @@ export function PostMenu({
           )}
           {isOwn && (
             <>
-              <Link
-                href={editHref}
-                role="menuitem"
-                onClick={(event) => event.stopPropagation()}
-                className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-text hover:bg-surface-soft"
-              >
-                <Pencil size={14} />
-                Düzenle
-              </Link>
-              {!isGenerator && !isRequest && (
+              {!isResult && (
+                <Link
+                  href={editHref}
+                  role="menuitem"
+                  onClick={(event) => event.stopPropagation()}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-text hover:bg-surface-soft"
+                >
+                  <Pencil size={14} />
+                  Düzenle
+                </Link>
+              )}
+              {!isGenerator && !isRequest && !isResult && (
                 <Link
                   href={`/create?duplicate=${promptId}`}
                   role="menuitem"
