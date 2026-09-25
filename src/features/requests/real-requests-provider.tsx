@@ -23,6 +23,8 @@ interface RealRequestsContextValue {
   updateRequest: (id: string, input: UpdateRealRequestInput) => Promise<PromptRequest>;
   updateStatus: (id: string, status: Extract<PromptRequestStatus, "open" | "closed">) => Promise<void>;
   deleteRequest: (id: string) => Promise<void>;
+  /** Removes a request from the cache without calling the delete API again — for a caller (`PostMenu`'s `onDeleted`) that already did the real, successful delete itself. Mirrors `RealGeneratorsProvider.removeFromCache`. */
+  removeFromCache: (id: string) => void;
   selectResponse: (id: string, promptId: string | null) => Promise<void>;
 }
 
@@ -90,6 +92,10 @@ export function RealRequestsProvider({ children }: { children: React.ReactNode }
     setRealRequests((prev) => prev.filter((request) => request.id !== id));
   }, []);
 
+  const removeFromCache = useCallback((id: string) => {
+    setRealRequests((prev) => prev.filter((request) => request.id !== id));
+  }, []);
+
   const selectResponse = useCallback(async (id: string, promptId: string | null) => {
     const result = await selectRealRequestResponse(id, promptId);
     setRealRequests((prev) =>
@@ -102,8 +108,18 @@ export function RealRequestsProvider({ children }: { children: React.ReactNode }
   }, []);
 
   const value = useMemo(
-    () => ({ realRequests, getCached, fetchById, addRequest, updateRequest, updateStatus, deleteRequest, selectResponse }),
-    [realRequests, getCached, fetchById, addRequest, updateRequest, updateStatus, deleteRequest, selectResponse],
+    () => ({
+      realRequests,
+      getCached,
+      fetchById,
+      addRequest,
+      updateRequest,
+      updateStatus,
+      deleteRequest,
+      removeFromCache,
+      selectResponse,
+    }),
+    [realRequests, getCached, fetchById, addRequest, updateRequest, updateStatus, deleteRequest, removeFromCache, selectResponse],
   );
 
   return <RealRequestsContext.Provider value={value}>{children}</RealRequestsContext.Provider>;

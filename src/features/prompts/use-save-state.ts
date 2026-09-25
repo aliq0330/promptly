@@ -3,7 +3,17 @@
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/features/auth/auth-provider";
 import { isPromptSaved, removeFromSavedEverywhere } from "@/lib/supabase/collections";
-import type { LikeableContentType as SaveableContentType } from "@/lib/supabase/likes";
+import type { LikeableContentType } from "@/lib/supabase/likes";
+
+/**
+ * Saving only ever targets a prompt or a generator — a request has no save/
+ * collection feature (this task's own scope: "[Kaydet varsa mevcut
+ * davranışı]"). Narrowed via `Extract` rather than re-aliasing
+ * `LikeableContentType` directly, so widening the like system (adding
+ * `"request"`, above) can never silently let a request flow through the
+ * save code path too.
+ */
+type SaveableContentType = Extract<LikeableContentType, "prompt" | "generator">;
 
 /**
  * Whether the current viewer generally saved a real prompt OR generator —

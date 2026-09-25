@@ -14,7 +14,10 @@ import {
   fetchOwnCollections,
   removeFromCollection,
 } from "@/lib/supabase/collections";
-import type { LikeableContentType as SaveableContentType } from "@/lib/supabase/likes";
+import type { LikeableContentType } from "@/lib/supabase/likes";
+
+/** See `use-save-state.ts`'s identical note — saving never targets a request. */
+type SaveableContentType = Extract<LikeableContentType, "prompt" | "generator">;
 import { placeholderArt } from "@/lib/placeholder-image";
 import { cn } from "@/lib/utils";
 import type { Collection } from "@/types";

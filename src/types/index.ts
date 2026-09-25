@@ -145,6 +145,8 @@ export interface PromptRequest {
   tags: Tag[];
   status: PromptRequestStatus;
   responseCount: number;
+  /** Real, database-backed like count (`prompt_requests.like_count`) — the same `prompt_likes` system a prompt/generator uses (see `LikeableContentType`). */
+  likeCount: number;
   createdAt: string;
   /**
    * The id of the answer (a real `Prompt` with a `request-response` origin)

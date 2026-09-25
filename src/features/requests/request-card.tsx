@@ -9,6 +9,8 @@ import { contentActionClassName } from "@/features/content/action-styles";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
 import { ShareTriggerButton } from "@/features/prompts/share-modal";
 import { CopyPromptButton } from "@/features/prompts/copy-prompt-button";
+import { LikeButton } from "@/features/prompts/like-button";
+import { PostMenu } from "@/features/prompts/post-menu";
 import { formatCount, formatRelativeTime, profileHref, requestHref } from "@/lib/utils";
 import type { PromptRequest } from "@/types";
 
@@ -33,12 +35,14 @@ export const STATUS_VARIANTS: Record<PromptRequest["status"], "success" | "dange
 /**
  * RequestCard — a community prompt request on the shared ContentCard shell.
  * Same header rhythm, type line, title/description and footer as the other
- * cards; the status badge sits where the other cards have their menu, and
- * the footer's primary action is answering (a real link to the answer
- * flow, only while the request is open) instead of like/save, which
- * requests genuinely don't have.
+ * cards, and — since the "Prompt İsteği Etkileşim ve Menü Sistemi
+ * Eşitleme" görevi — the same real like button and the same `PostMenu`
+ * three-dot menu (Bağlantıyı kopyala/Düzenle/Sil) every other card has, in
+ * the same top-right spot next to the status badge. The footer's own
+ * "yanıt" (response) link and "Yanıtla" action (only while open) stay
+ * unchanged — genuinely distinct from Save, which requests still don't have.
  */
-export function RequestCard({ request }: { request: PromptRequest }) {
+export function RequestCard({ request, onDeleted }: { request: PromptRequest; onDeleted?: () => void }) {
   const href = requestHref(request);
   const typeMeta = request.contentType ? CONTENT_TYPE_META[request.contentType] : null;
   const isOpen = request.status === "open";
@@ -61,10 +65,13 @@ export function RequestCard({ request }: { request: PromptRequest }) {
               </span>
             </span>
           </Link>
-          <Badge variant={STATUS_VARIANTS[request.status]} className="shrink-0">
-            <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-current" />
-            {STATUS_LABELS[request.status]}
-          </Badge>
+          <div className="flex shrink-0 items-center gap-1">
+            <Badge variant={STATUS_VARIANTS[request.status]}>
+              <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-current" />
+              {STATUS_LABELS[request.status]}
+            </Badge>
+            <PostMenu requestId={request.id} authorId={request.author.id} onDeleted={onDeleted} />
+          </div>
         </div>
 
         <div className="space-y-2">
@@ -83,6 +90,7 @@ export function RequestCard({ request }: { request: PromptRequest }) {
       </ContentCardBody>
 
       <div className="relative z-10 flex items-center gap-0.5 border-t border-border-soft px-2 py-1.5">
+        <LikeButton id={request.id} likeCount={request.likeCount} contentType="request" />
         <Link href={href} className={contentActionClassName(false)} aria-label={`${formatCount(request.responseCount)} yanıt`}>
           <MessageSquareText size={16} strokeWidth={1.75} />
           <span aria-hidden>{formatCount(request.responseCount)} yanıt</span>

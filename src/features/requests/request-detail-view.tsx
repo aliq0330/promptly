@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { MessageSquareOff, PenLine, Pencil, Sparkles, Trash2 } from "lucide-react";
+import { MessageSquareOff, PenLine, Sparkles } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +15,8 @@ import { PromptCard } from "@/features/prompts/prompt-card";
 import { CommentSection } from "@/features/prompts/comment-section";
 import { CopyPromptButton } from "@/features/prompts/copy-prompt-button";
 import { EditHistoryPanel } from "@/features/prompts/edit-history-panel";
+import { LikeButton } from "@/features/prompts/like-button";
+import { PostMenu } from "@/features/prompts/post-menu";
 import { useAuth } from "@/features/auth/auth-provider";
 import { fetchPromptsForRequest } from "@/lib/supabase/prompts";
 import { useRealRequests } from "./real-requests-provider";
@@ -34,10 +36,9 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
   const {
     getCached: getCachedRealRequest,
     updateStatus: updateRealStatus,
-    deleteRequest: deleteRealRequest,
+    removeFromCache,
     selectResponse: selectRealResponse,
   } = useRealRequests();
-  const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [answers, setAnswers] = useState<Prompt[]>([]);
   const [selectionTarget, setSelectionTarget] = useState<{ id: string; confirming: boolean } | null>(null);
   const [selectionError, setSelectionError] = useState<string | null>(null);
@@ -109,12 +110,15 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
     await updateRealStatus(live.id, nextStatus);
   }
 
-  async function handleDelete() {
-    if (!confirmingDelete) {
-      setConfirmingDelete(true);
-      return;
-    }
-    await deleteRealRequest(live.id);
+  /**
+   * `PostMenu` already performed the real, successful delete itself (or
+   * Bölüm 9.41's safe-delete soft-deleted it) — this only reflects that
+   * outcome: drop it from the shared cache so `/requests` doesn't show a
+   * stale card, then navigate away. Mirrors `GeneratorDetailView`'s
+   * `handleDeleted`/`removeFromCache` (Bölüm 9.55), same reasoning.
+   */
+  function handleDeleted() {
+    removeFromCache(live.id);
     router.push("/requests");
   }
 
@@ -151,16 +155,7 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
                 <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-current" />
                 {STATUS_LABELS[live.status]}
               </Badge>
-              {isOwnRequest && (
-                <Link
-                  href={`/requests/new?edit=${live.id}`}
-                  aria-label="İsteği düzenle"
-                  title="İsteği düzenle"
-                  className="flex h-8 w-8 items-center justify-center rounded-md text-text-muted transition-colors hover:bg-surface-soft hover:text-text"
-                >
-                  <Pencil size={15} />
-                </Link>
-              )}
+              <PostMenu requestId={live.id} authorId={live.author.id} onDeleted={handleDeleted} />
             </div>
           </div>
           <h1 className="text-h1 font-semibold text-text">{live.title}</h1>
@@ -174,6 +169,10 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
             </span>
           </Link>
         </header>
+
+        <div className="flex flex-wrap items-center gap-0.5 border-y border-border-soft py-1.5">
+          <LikeButton id={live.id} likeCount={live.likeCount} contentType="request" size={18} />
+        </div>
 
         <section aria-labelledby="request-brief-title" className="overflow-hidden rounded-lg border border-border-soft bg-surface-soft">
           <div className="flex items-center justify-between gap-2 border-b border-border-soft px-4 py-2.5">
@@ -217,45 +216,19 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
         )}
 
         <div className="flex flex-wrap items-center gap-2 border-t border-border-soft pt-4">
-          {isOwnRequest ? (
-            !hasSelection && (
-              <>
+          {isOwnRequest
+            ? !hasSelection && (
                 <Button type="button" variant="outline" size="sm" onClick={handleToggleStatus}>
                   <MessageSquareOff size={14} />
                   {isClosed ? "Açık olarak işaretle" : "İsteği kapat"}
                 </Button>
-                <Button
-                  type="button"
-                  variant={confirmingDelete ? "danger" : "ghost"}
-                  size="sm"
-                  onClick={handleDelete}
-                  onBlur={() => setConfirmingDelete(false)}
-                >
-                  <Trash2 size={14} />
-                  {confirmingDelete ? "Emin misin? Tekrar tıkla" : "İsteği sil"}
-                </Button>
-              </>
-            )
-          ) : (
-            !isClosed && (
-              <Link href={`/create?answerRequest=${live.id}`} className={buttonClassName({ size: "sm", className: "h-9" })}>
-                <PenLine size={14} />
-                Yanıtla
-              </Link>
-            )
-          )}
-          {isOwnRequest && hasSelection && (
-            <Button
-              type="button"
-              variant={confirmingDelete ? "danger" : "ghost"}
-              size="sm"
-              onClick={handleDelete}
-              onBlur={() => setConfirmingDelete(false)}
-            >
-              <Trash2 size={14} />
-              {confirmingDelete ? "Emin misin? Tekrar tıkla" : "İsteği sil"}
-            </Button>
-          )}
+              )
+            : !isClosed && (
+                <Link href={`/create?answerRequest=${live.id}`} className={buttonClassName({ size: "sm", className: "h-9" })}>
+                  <PenLine size={14} />
+                  Yanıtla
+                </Link>
+              )}
           <span className="ml-auto" />
           <ShareTriggerButton target={{ contentType: "request", request: live }} label="Paylaş" />
         </div>
@@ -378,11 +351,15 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
       </section>
 
       <section className="rounded-lg border border-border-soft bg-surface p-4 sm:p-5">
-        <CommentSection
-          target={{ requestId: live.id }}
-          disabledReason={isClosed ? "Bu istek kapatıldığı için yeni yorum eklenemiyor." : undefined}
-          highlightCommentId={highlightCommentId}
-        />
+        {/*
+          Kapalı bir istekte de yorumlar/yanıtlar AÇIK kalmalı — "kapalı"
+          yalnızca isteğin yeni bir tam yanıt (Prompt) kabul etmediği
+          anlamına geliyor (yukarıdaki "Yanıtla" linki/`validate_prompt_
+          response_target` sunucu kontrolü), yorum sistemine hiç dokunmuyor.
+          `PromptDetailView` de zaten hiç `disabledReason` geçirmiyor —
+          burası da artık aynı, koşulsuz davranışı kullanıyor.
+        */}
+        <CommentSection target={{ requestId: live.id }} highlightCommentId={highlightCommentId} />
       </section>
     </div>
   );
