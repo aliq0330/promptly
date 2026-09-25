@@ -1,13 +1,16 @@
 "use client";
 
-import { useState } from "react";
-import { Plus, X } from "lucide-react";
+import { useRef, useState } from "react";
+import { ImagePlus, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
-import { cn } from "@/lib/utils";
+import { cn, resizeImageToDataUrlFit } from "@/lib/utils";
 import { makeFieldKeyFromLabel, isConditionSatisfiable, slugifyGeneratorTitle } from "@/lib/generator-template";
 import { buildFieldOutputPreview, collectJsonPathGroups, isValidJsonPath, parseJsonPath } from "@/lib/generator-output";
 import type { GeneratorField, GeneratorFieldType } from "@/types";
+
+/** Sentinel `imageUploadTarget` value meaning "the image being picked belongs to the not-yet-added option row", not an existing one. */
+const NEW_OPTION_IMAGE_TARGET = "__new_option__";
 
 const FIELD_TYPE_LABELS: Record<GeneratorFieldType, string> = {
   text: "Kısa Metin",
@@ -92,6 +95,50 @@ export function FieldEditorModal({
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
+  // Default/custom option visuals (CLAUDE.md "Generator Hazır Alanları +
+  // Varsayılan Görsel Seçenekleri", §8/§9/§10) — a hazır alan's options can
+  // already arrive with a real `image`/`color` (see generator-field-catalog.ts);
+  // this state only drives the upload UI to VIEW/REPLACE/REMOVE them, scoped
+  // to this one generator's own copy of the field (never the shared catalog).
+  const [newOptionImage, setNewOptionImage] = useState<string | null>(null);
+  const [imageUploadTarget, setImageUploadTarget] = useState<string | null>(null);
+  const [imageUploadBusy, setImageUploadBusy] = useState(false);
+  const [imageUploadError, setImageUploadError] = useState<string | null>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+
+  function updateOptionImage(value: string, image: string | undefined) {
+    setDraft((prev) => ({ ...prev, options: prev.options.map((o) => (o.value === value ? { ...o, image } : o)) }));
+  }
+
+  function updateOptionColor(value: string, color: string | undefined) {
+    setDraft((prev) => ({ ...prev, options: prev.options.map((o) => (o.value === value ? { ...o, color } : o)) }));
+  }
+
+  function openImagePicker(target: string) {
+    setImageUploadError(null);
+    setImageUploadTarget(target);
+    imageInputRef.current?.click();
+  }
+
+  async function handleImageFileChosen(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    const target = imageUploadTarget;
+    if (!file || !target) return;
+    setImageUploadBusy(true);
+    setImageUploadError(null);
+    try {
+      const { url } = await resizeImageToDataUrlFit(file, 240);
+      if (target === NEW_OPTION_IMAGE_TARGET) setNewOptionImage(url);
+      else updateOptionImage(target, url);
+    } catch {
+      setImageUploadError("Görsel yüklenemedi, lütfen farklı bir dosya dene.");
+    } finally {
+      setImageUploadBusy(false);
+      setImageUploadTarget(null);
+    }
+  }
+
   const keyError = !draft.key.trim()
     ? "Değişken adı boş olamaz."
     : !/^[a-z0-9_]+$/.test(draft.key)
@@ -166,10 +213,11 @@ export function FieldEditorModal({
     if (!label) return;
     const value = (optionValueTouched ? optionValueDraft.trim() : sanitizeSegment(label)) || sanitizeSegment(label);
     if (!value || draft.options.some((o) => o.value === value)) return;
-    setDraft((prev) => ({ ...prev, options: [...prev.options, { label, value }] }));
+    setDraft((prev) => ({ ...prev, options: [...prev.options, { label, value, image: newOptionImage ?? undefined }] }));
     setOptionLabelDraft("");
     setOptionValueDraft("");
     setOptionValueTouched(false);
+    setNewOptionImage(null);
   }
 
   function removeOption(value: string) {
@@ -280,18 +328,64 @@ export function FieldEditorModal({
           {OPTION_TYPES.includes(draft.type) && (
             <div>
               <label className="mb-1.5 block text-sm font-medium text-text">Options</label>
+              {/* Single hidden file input shared by every "Görsel ekle/değiştir" trigger below — `imageUploadTarget` says which option (or the pending new-option row, via NEW_OPTION_IMAGE_TARGET) the next chosen file belongs to. */}
+              <input ref={imageInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageFileChosen} />
               <div className="mb-2 space-y-1.5">
                 {draft.options.map((option) => (
-                  <div key={option.value} className="flex items-center gap-2 rounded-md border border-border bg-background px-3 py-1.5 text-sm text-text">
-                    <span className="flex-1 truncate">{option.label}</span>
+                  <div key={option.value} className="flex flex-wrap items-center gap-2 rounded-md border border-border bg-background px-3 py-1.5 text-sm text-text">
+                    {option.image ? (
+                      <span className="relative h-7 w-7 shrink-0">
+                        {/* eslint-disable-next-line @next/next/no-img-element -- data URL preview, never a remote asset */}
+                        <img src={option.image} alt="" className="h-7 w-7 rounded object-cover" />
+                        <button
+                          type="button"
+                          onClick={() => updateOptionImage(option.value, undefined)}
+                          title="Görseli kaldır"
+                          aria-label="Görseli kaldır"
+                          className="absolute -right-1 -top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-danger text-white"
+                        >
+                          <X size={8} />
+                        </button>
+                      </span>
+                    ) : option.color ? (
+                      <input
+                        type="color"
+                        value={option.color}
+                        onChange={(event) => updateOptionColor(option.value, event.target.value)}
+                        title="Rengi değiştir"
+                        aria-label="Rengi değiştir"
+                        className="h-6 w-6 shrink-0 cursor-pointer rounded border border-border bg-background p-0"
+                      />
+                    ) : null}
+                    <span className="min-w-0 flex-1 truncate">{option.label}</span>
                     <span className="shrink-0 truncate font-mono text-xs text-text-muted">{option.value}</span>
-                    <button type="button" onClick={() => removeOption(option.value)} className="shrink-0 text-text-muted hover:text-danger">
+                    <button
+                      type="button"
+                      onClick={() => openImagePicker(option.value)}
+                      title={option.image ? "Görseli değiştir" : "Görsel ekle"}
+                      aria-label={option.image ? "Görseli değiştir" : "Görsel ekle"}
+                      className="shrink-0 text-text-muted hover:text-primary"
+                    >
+                      <ImagePlus size={14} />
+                    </button>
+                    {option.color && (
+                      <button
+                        type="button"
+                        onClick={() => updateOptionColor(option.value, undefined)}
+                        title="Rengi kaldır"
+                        aria-label="Rengi kaldır"
+                        className="shrink-0 text-text-muted hover:text-danger"
+                      >
+                        <X size={12} />
+                      </button>
+                    )}
+                    <button type="button" onClick={() => removeOption(option.value)} title="Seçeneği sil" aria-label="Seçeneği sil" className="shrink-0 text-text-muted hover:text-danger">
                       <X size={14} />
                     </button>
                   </div>
                 ))}
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <input
                   type="text"
                   value={optionLabelDraft}
@@ -324,10 +418,26 @@ export function FieldEditorModal({
                   placeholder="Değer (ör. green)"
                   className="h-9 w-28 shrink-0 rounded-md border border-border bg-background px-2 font-mono text-xs text-text placeholder:text-text-muted"
                 />
+                <button
+                  type="button"
+                  onClick={() => (newOptionImage ? setNewOptionImage(null) : openImagePicker(NEW_OPTION_IMAGE_TARGET))}
+                  title={newOptionImage ? "Görseli kaldır" : "Görsel yükle"}
+                  aria-label={newOptionImage ? "Görseli kaldır" : "Görsel yükle"}
+                  className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-md border", newOptionImage ? "border-primary" : "border-border text-text-muted hover:text-primary")}
+                >
+                  {newOptionImage ? (
+                    // eslint-disable-next-line @next/next/no-img-element -- data URL preview, never a remote asset
+                    <img src={newOptionImage} alt="" className="h-full w-full rounded-md object-cover" />
+                  ) : (
+                    <ImagePlus size={15} />
+                  )}
+                </button>
                 <Button type="button" variant="outline" size="sm" onClick={addOption}>
                   <Plus size={14} /> Option
                 </Button>
               </div>
+              {imageUploadBusy && <p className="mt-1 text-xs text-text-muted">Görsel yükleniyor…</p>}
+              {imageUploadError && <p className="mt-1 text-xs text-danger">{imageUploadError}</p>}
               {optionsError && <p className="mt-1 text-xs text-danger">{optionsError}</p>}
             </div>
           )}

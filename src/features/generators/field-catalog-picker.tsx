@@ -150,6 +150,19 @@ export function FieldCatalogPicker({
         <span className="min-w-0 flex-1">
           <input type="checkbox" className="sr-only" checked={selected || used} disabled={used} onChange={() => toggleField(field)} />
           <span className="flex flex-wrap items-center gap-1.5">
+            {field.options[0]?.image ? (
+              // eslint-disable-next-line @next/next/no-img-element -- tiny data-URL preview thumbnail, never a remote asset
+              <img src={field.options[0].image} alt="" className="h-4 w-4 shrink-0 rounded object-cover" title="Bu alan varsayılan görsellerle geliyor" />
+            ) : (
+              field.options[0]?.color && (
+                <span
+                  className="h-3 w-3 shrink-0 rounded-full border border-border/60"
+                  style={{ backgroundColor: field.options[0].color }}
+                  aria-hidden="true"
+                  title="Bu alan varsayılan renklerle geliyor"
+                />
+              )
+            )}
             <span className="truncate font-medium text-text">{field.label}</span>
             <span className="rounded-sm bg-accent-surface px-1.5 py-0.5 text-[10px] font-medium text-text-muted">{FIELD_TYPE_SHORT_LABELS[field.type]}</span>
           </span>

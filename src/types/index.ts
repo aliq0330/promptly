@@ -321,6 +321,26 @@ export interface GeneratorFieldCondition {
 export interface GeneratorFieldOption {
   label: string;
   value: string;
+  /**
+   * Optional, UI-only thumbnail (a data URL — uploaded or auto-generated,
+   * same "no external image-service dependency" rule as this app's other
+   * offline placeholder art) shown when picking this option. Purely
+   * representational: the JSON Output Engine and prompt generation
+   * (`generator-output.ts`) never read this, only ever `value`/`label` —
+   * see CLAUDE.md's "Generator Hazır Alanları + Varsayılan Görsel
+   * Seçenekleri" module. Optional and additive, so a generator saved before
+   * this feature existed (no option ever carries it) renders exactly as it
+   * always did — plain text/chip UI, never broken.
+   */
+  image?: string;
+  /**
+   * Optional, UI-only swatch color (hex, e.g. `#5A3825`) shown next to this
+   * option's label — for color-name options (Saç Rengi: Kahverengi, Göz
+   * Rengi: Mavi, …), never for the free-pick `"color"` field type (that
+   * already has its own live color input, no options at all). Same
+   * UI-only/backward-compatible rule as `image` above.
+   */
+  color?: string;
 }
 
 export interface GeneratorField {

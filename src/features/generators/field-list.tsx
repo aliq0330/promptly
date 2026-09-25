@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Copy, GripVertical, Pencil, Plus, Trash2 } from "lucide-react";
+import { Copy, GripVertical, Image as ImageIcon, Pencil, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { GeneratorField } from "@/types";
@@ -108,6 +108,14 @@ export function FieldList({
                 <span className="rounded-sm bg-accent-surface px-1.5 py-0.5 text-[10px] font-medium text-text-muted">
                   {FIELD_TYPE_SHORT_LABELS[field.type]}
                 </span>
+                {field.options.some((o) => o.image || o.color) && (
+                  <span
+                    className="flex items-center gap-0.5 rounded-sm bg-accent-surface px-1.5 py-0.5 text-[10px] font-medium text-text-muted"
+                    title="Bu alanın görsel/renk destekli seçenekleri var"
+                  >
+                    <ImageIcon size={10} /> Görsel destekli
+                  </span>
+                )}
                 {field.required && <span className="text-[10px] font-medium text-danger">Zorunlu</span>}
               </div>
               <p className="mt-0.5 truncate font-mono text-xs text-primary">{`{{${field.key}}}`}</p>
