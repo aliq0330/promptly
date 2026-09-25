@@ -16,6 +16,13 @@ import { contentActionClassName } from "@/features/content/action-styles";
  * request's own social footer — pass exactly one of `promptId`/
  * `generatorSlug`/`requestId`, matching `LikeButton`'s `contentType`
  * pattern.
+ *
+ * The href always ends in `#comments` — every detail page's own comment
+ * section carries that same id (`scroll-mt-20`, matching the request
+ * detail page's `#request-responses` anchor), so clicking this from a
+ * CARD lands directly on the actual comment thread instead of the top of
+ * the page, and clicking it from the detail page itself just scrolls down
+ * to it. No new navigation/scroll system — plain anchor behavior.
  */
 export function CommentCountLink({
   promptId,
@@ -32,11 +39,12 @@ export function CommentCountLink({
   size?: number;
   className?: string;
 }) {
-  const href = generatorSlug
+  const baseHref = generatorSlug
     ? generatorHref({ slug: generatorSlug })
     : requestId
       ? requestHref({ id: requestId })
       : promptHref({ id: promptId! });
+  const href = `${baseHref}#comments`;
   return (
     <Link
       href={href}

@@ -247,7 +247,7 @@ export function GeneratorDetailView() {
             </p>
           )}
 
-          <section className="rounded-lg border border-border-soft bg-surface p-4 sm:p-5">
+          <section id="comments" className="scroll-mt-20 rounded-lg border border-border-soft bg-surface p-4 sm:p-5">
             <CommentSection target={{ generatorId: generator.id }} />
           </section>
         </article>

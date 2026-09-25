@@ -375,7 +375,7 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
         {selectionError && <p className="text-sm text-danger">{selectionError}</p>}
       </section>
 
-      <section className="rounded-lg border border-border-soft bg-surface p-4 sm:p-5">
+      <section id="comments" className="scroll-mt-20 rounded-lg border border-border-soft bg-surface p-4 sm:p-5">
         {/*
           Kapalı bir istekte de yorumlar/yanıtlar AÇIK kalmalı — "kapalı"
           yalnızca isteğin yeni bir tam yanıt (Prompt) kabul etmediği

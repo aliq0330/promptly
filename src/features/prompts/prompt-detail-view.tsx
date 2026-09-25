@@ -160,7 +160,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
 
           {isOwn && <EditHistoryPanel contentType="prompt" contentId={prompt.id} />}
 
-          <section className="rounded-lg border border-border-soft bg-surface p-4 sm:p-5">
+          <section id="comments" className="scroll-mt-20 rounded-lg border border-border-soft bg-surface p-4 sm:p-5">
             <CommentSection target={{ promptId: prompt.id }} highlightCommentId={highlightCommentId} />
           </section>
         </article>
