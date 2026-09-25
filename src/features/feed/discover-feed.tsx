@@ -107,7 +107,7 @@ export function DiscoverFeed() {
             <TrendingUp size={13} />
             Trend
           </span>
-          <div className="scrollbar-none -mx-3 flex gap-2 overflow-x-auto px-3 sm:mx-0 sm:px-0">
+          <div className="scrollbar-none -mx-3 flex touch-pan-x gap-2 overflow-x-auto overscroll-x-contain px-3 sm:mx-0 sm:px-0">
             {tags.map((tag) => (
               <Link
                 key={tag.slug}

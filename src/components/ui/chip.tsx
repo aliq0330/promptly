@@ -27,12 +27,17 @@ export const Chip = forwardRef<
 ));
 Chip.displayName = "Chip";
 
-/** Horizontal chip row: wraps on desktop, scrolls edge-to-edge on mobile. */
+/**
+ * Horizontal chip row: wraps on desktop, scrolls edge-to-edge on mobile.
+ * `touch-pan-x`/`overscroll-x-contain` keep a horizontal swipe from also
+ * scrolling the page vertically or chaining into it at the edge (same
+ * real iOS Safari fix as `Tabs`).
+ */
 export function ChipRow({ className, children }: { className?: string; children: React.ReactNode }) {
   return (
     <div
       className={cn(
-        "scrollbar-none -mx-3 flex gap-2 overflow-x-auto px-3 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0",
+        "scrollbar-none -mx-3 flex touch-pan-x gap-2 overflow-x-auto overscroll-x-contain px-3 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0",
         className,
       )}
     >

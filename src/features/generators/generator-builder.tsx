@@ -467,7 +467,11 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
         )}
       </div>
 
-      <div role="tablist" aria-label="Generator oluşturma adımları" className="mb-6 -mx-1 flex gap-1 overflow-x-auto border-b border-border px-1">
+      <div
+        role="tablist"
+        aria-label="Generator oluşturma adımları"
+        className="mb-6 -mx-1 flex touch-pan-x gap-1 overflow-x-auto overscroll-x-contain border-b border-border px-1"
+      >
         {STEPS.map((s, index) => (
           <button
             key={s}
