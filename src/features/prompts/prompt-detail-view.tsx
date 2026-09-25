@@ -101,6 +101,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
             <LikeButton id={prompt.id} likeCount={prompt.likeCount} size={18} />
             <CommentCountLink promptId={prompt.id} baseCount={prompt.commentCount} size={18} />
             <SaveButton promptId={prompt.id} size={18} />
+            <span className="ml-auto" />
             <ShareTriggerButton target={{ contentType: "prompt", prompt }} label="Paylaş" />
           </div>
 
