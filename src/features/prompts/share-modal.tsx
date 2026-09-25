@@ -85,9 +85,10 @@ function getSharePreview(target: ShareModalTarget): SharePreview {
     };
   }
   const result = target.result;
+  const originTitle = result.originalPrompt?.title ?? result.originalGenerator?.title ?? "";
   return {
     id: result.id,
-    title: `${result.creator.displayName} — ${result.originalPrompt.title}`,
+    title: originTitle ? `${result.creator.displayName} — ${originTitle}` : result.creator.displayName,
     description: result.mediaType === "text" || result.mediaType === "other" ? result.textContent ?? "" : "",
     thumbnailUrl: result.thumbnailUrl,
     badgeLabel: RESULT_MEDIA_TYPE_LABELS[result.mediaType],

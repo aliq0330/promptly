@@ -5,7 +5,8 @@ import type { PromptResult, PromptResultMediaType, PromptResultSummary } from "@
 
 interface ResultSummaryRow {
   id: string;
-  prompt_id: string;
+  prompt_id: string | null;
+  generator_id: string | null;
   media_type: PromptResultMediaType;
   thumbnail_url: string | null;
   text_content: string | null;
@@ -24,14 +25,15 @@ interface ResultSummaryRow {
  * that fetches the rest, and only for one result at a time.
  */
 const RESULT_LIST_SELECT = `
-  id, prompt_id, media_type, thumbnail_url, text_content, tool, has_modification, like_count, created_at,
+  id, prompt_id, generator_id, media_type, thumbnail_url, text_content, tool, has_modification, like_count, created_at,
   profiles:creator_id ( id, username, display_name, avatar_url, cover_url, bio, website, follower_count, following_count, created_at, interests )
 `;
 
 function mapResultSummaryRow(row: ResultSummaryRow): PromptResultSummary {
   return {
     id: row.id,
-    promptId: row.prompt_id,
+    promptId: row.prompt_id ?? undefined,
+    generatorId: row.generator_id ?? undefined,
     creator: mapProfileRow(row.profiles),
     mediaType: row.media_type,
     thumbnailUrl: row.thumbnail_url,
@@ -71,6 +73,34 @@ export async function fetchResultsForPrompt(
   }
 }
 
+/**
+ * The Generator Local page's own equivalent of `fetchResultsForPrompt` —
+ * same narrow summary shape, same one-page-at-a-time contract, just a
+ * different `.eq()` column. Not a second results system: same table, same
+ * row shape, same `ResultCard`/`PromptResultsSection` consume both.
+ */
+export async function fetchResultsForGenerator(
+  generatorId: string,
+  { limit = 6, offset = 0 }: { limit?: number; offset?: number } = {},
+): Promise<{ results: PromptResultSummary[]; total: number }> {
+  try {
+    const { data, error, count } = await supabase
+      .from("prompt_results")
+      .select(RESULT_LIST_SELECT, { count: "exact" })
+      .eq("generator_id", generatorId)
+      .order("created_at", { ascending: false })
+      .range(offset, offset + limit - 1);
+    if (error) {
+      console.error("fetchResultsForGenerator", error);
+      return { results: [], total: 0 };
+    }
+    return { results: ((data ?? []) as unknown as ResultSummaryRow[]).map(mapResultSummaryRow), total: count ?? 0 };
+  } catch (err) {
+    console.error("fetchResultsForGenerator", err);
+    return { results: [], total: 0 };
+  }
+}
+
 interface ResultDetailRow extends ResultSummaryRow {
   media_url: string | null;
   width: number | null;
@@ -78,14 +108,16 @@ interface ResultDetailRow extends ResultSummaryRow {
   modification_summary: string | null;
   modified_prompt_text: string | null;
   comment_count: number;
-  prompts: { id: string; title: string; description: string; prompt_text: string };
+  prompts: { id: string; title: string; description: string; prompt_text: string } | null;
+  generators: { id: string; title: string; slug: string } | null;
 }
 
 const RESULT_DETAIL_SELECT = `
-  id, prompt_id, media_type, media_url, thumbnail_url, width, height, text_content, tool, has_modification,
+  id, prompt_id, generator_id, media_type, media_url, thumbnail_url, width, height, text_content, tool, has_modification,
   modification_summary, modified_prompt_text, like_count, comment_count, created_at,
   profiles:creator_id ( id, username, display_name, avatar_url, cover_url, bio, website, follower_count, following_count, created_at, interests ),
-  prompts:prompt_id ( id, title, description, prompt_text )
+  prompts:prompt_id ( id, title, description, prompt_text ),
+  generators:generator_id ( id, title, slug )
 `;
 
 function mapResultDetailRow(row: ResultDetailRow): PromptResult {
@@ -97,21 +129,20 @@ function mapResultDetailRow(row: ResultDetailRow): PromptResult {
     modificationSummary: row.modification_summary,
     modifiedPromptText: row.modified_prompt_text,
     commentCount: row.comment_count,
-    originalPrompt: {
-      id: row.prompts.id,
-      title: row.prompts.title,
-      description: row.prompts.description,
-      promptText: row.prompts.prompt_text,
-    },
+    originalPrompt: row.prompts
+      ? { id: row.prompts.id, title: row.prompts.title, description: row.prompts.description, promptText: row.prompts.prompt_text }
+      : undefined,
+    originalGenerator: row.generators ? { id: row.generators.id, title: row.generators.title, slug: row.generators.slug } : undefined,
   };
 }
 
 /**
- * The full shape of one real result, including its own original prompt's
- * title/description/promptText (embedded via the one join above) so the
- * detail page's "Bu sonuç hangi promptla oluşturuldu?" card never needs a
- * second round-trip. RLS (the migration) already limits this to a result
- * whose own prompt is readable.
+ * The full shape of one real result, including its own origin's (a real
+ * prompt OR a real generator — never both, per the `prompt_results_
+ * exactly_one_source` CHECK) title/description snapshot (embedded via one
+ * of the two joins above) so the detail page's "Bu sonuç hangi promptla/
+ * generatorla oluşturuldu?" card never needs a second round-trip. RLS (the
+ * migration) already limits this to a result whose own origin is readable.
  */
 export async function fetchResultById(id: string): Promise<PromptResult | null> {
   try {
@@ -141,26 +172,36 @@ function extensionForRawFile(file: File): string {
   return fromName && fromName.length <= 5 ? fromName.toLowerCase() : "bin";
 }
 
+/**
+ * A result's real origin — exactly one of the two (never both, matching the
+ * `prompt_results_exactly_one_source` CHECK). The "Promptu değiştirdin mi?"
+ * modification fields only exist on the `prompt` variant at all — a
+ * generator-origin result has no prompt to diff against and CLAUDE.md §5/
+ * §23 says that whole feature simply doesn't exist there, so it's not just
+ * hidden in the UI, it's absent from the type.
+ */
+export type CreatePromptResultSource =
+  | { type: "prompt"; promptId: string; hasModification: boolean; modificationSummary: string; modifiedPromptText: string }
+  | { type: "generator"; generatorId: string };
+
 export interface CreatePromptResultInput {
-  promptId: string;
+  source: CreatePromptResultSource;
   /** Set for an image/video/audio result — mutually exclusive with `textContent` (the compose modal only ever fills one). */
   file: File | null;
   /** Set for a text result — the raw text output being shared. */
   textContent: string;
   tool: string;
-  hasModification: boolean;
-  modificationSummary: string;
-  modifiedPromptText: string;
 }
 
 /**
- * Genuinely, permanently shares a real result under a real prompt — never a
- * new `prompts` row, never a remix (CLAUDE.md §19). The result's id is
- * generated client-side (`crypto.randomUUID()`, same reasoning as Bölüm 21
- * Faz 6's `getOrCreateDirectConversation` fix: every media file needs a
- * real storage path *before* the one `prompt_results` INSERT can happen,
- * since the row's own CHECK constraint requires its media shape to already
- * be correct at insert time — there's no valid "insert first, fill in media
+ * Genuinely, permanently shares a real result under a real prompt OR a real
+ * generator — never a new `prompts`/`generators` row, never a remix
+ * (CLAUDE.md §19/§22). The result's id is generated client-side
+ * (`crypto.randomUUID()`, same reasoning as Bölüm 21 Faz 6's
+ * `getOrCreateDirectConversation` fix: every media file needs a real
+ * storage path *before* the one `prompt_results` INSERT can happen, since
+ * the row's own CHECK constraint requires its media shape to already be
+ * correct at insert time — there's no valid "insert first, fill in media
  * after" intermediate state here, unlike `createRealPrompt`'s separate
  * `prompt_media` table).
  */
@@ -239,9 +280,18 @@ export async function createPromptResult(input: CreatePromptResultInput, creator
     throw new Error("Bir dosya yükle veya paylaşacağın metni gir.");
   }
 
+  // Destructured into its own local const — a plain `input.source.xxx`
+  // access chain doesn't narrow reliably across a separately-derived
+  // boolean (the object property isn't `readonly`), but a direct local
+  // binding to the union itself does.
+  const { source } = input;
+  const isPromptSource = source.type === "prompt";
+  const hasModification = isPromptSource && source.hasModification;
+
   const { error } = await supabase.from("prompt_results").insert({
     id: resultId,
-    prompt_id: input.promptId,
+    prompt_id: isPromptSource ? source.promptId : null,
+    generator_id: isPromptSource ? null : source.generatorId,
     creator_id: creatorId,
     media_type: mediaType,
     media_url: mediaUrl,
@@ -250,9 +300,9 @@ export async function createPromptResult(input: CreatePromptResultInput, creator
     height,
     text_content: textContent,
     tool: input.tool.trim() || null,
-    has_modification: input.hasModification,
-    modification_summary: input.hasModification && input.modificationSummary.trim() ? input.modificationSummary.trim() : null,
-    modified_prompt_text: input.hasModification && input.modifiedPromptText.trim() ? input.modifiedPromptText.trim() : null,
+    has_modification: hasModification,
+    modification_summary: isPromptSource && hasModification && source.modificationSummary.trim() ? source.modificationSummary.trim() : null,
+    modified_prompt_text: isPromptSource && hasModification && source.modifiedPromptText.trim() ? source.modifiedPromptText.trim() : null,
   });
   if (error) throw new Error(error.message);
 

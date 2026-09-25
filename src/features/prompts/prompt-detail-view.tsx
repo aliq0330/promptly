@@ -184,7 +184,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
             </div>
           )}
 
-          <PromptResultsSection promptId={prompt.id} promptText={livePromptText} />
+          <PromptResultsSection target={{ type: "prompt", promptId: prompt.id, promptText: livePromptText }} />
 
           {isOwn && (
             <EditSuggestionsPanel
