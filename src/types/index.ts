@@ -181,7 +181,10 @@ export type NotificationType =
   | "message_request"
   | "system"
   | "prompt_edited"
-  | "request_edited";
+  | "request_edited"
+  | "edit_suggestion_received"
+  | "edit_suggestion_accepted"
+  | "edit_suggestion_rejected";
 
 export interface AppNotification {
   id: string;
@@ -271,6 +274,60 @@ export interface ContentEditEvent {
   editorId: string;
   changedFields: string[];
   createdAt: string;
+}
+
+/**
+ * One real, full snapshot of a prompt's content (`public.prompt_versions`)
+ * — "Düzenleme Önerisi ve Sürüm Geçmişi" module. Unlike `ContentEditEvent`
+ * (a lightweight, owner-only audit log of WHICH fields changed), this is a
+ * complete, publicly-readable-wherever-the-prompt-is copy of title/
+ * description/promptText/tool at that point in time, created either when
+ * the prompt's own author edited it directly (`source: "owner_edit"`) or
+ * when they accepted someone else's edit suggestion
+ * (`source: "edit_suggestion_accepted"`, `suggestionId` set). `version 1`
+ * is always the content immediately before the very first such edit — a
+ * database trigger backfills it retroactively the first time this feature
+ * ever touches a given prompt, never a fabricated earlier history.
+ */
+export interface PromptVersion {
+  id: string;
+  promptId: string;
+  versionNumber: number;
+  title: string;
+  description: string;
+  promptText: string;
+  tool: string | null;
+  source: "initial" | "owner_edit" | "edit_suggestion_accepted";
+  suggestionId: string | null;
+  createdBy: string;
+  createdAt: string;
+}
+
+export type PromptEditSuggestionStatus = "pending" | "accepted" | "rejected";
+
+/**
+ * A real, standalone "please consider changing this" proposal made by
+ * someone OTHER than the prompt's own author (`public.
+ * prompt_edit_suggestions`) — deliberately NOT a remix/fork: the proposer
+ * never creates a prompt of their own, and nothing here ever mutates the
+ * real prompt unless its actual owner explicitly accepts it (see
+ * `acceptEditSuggestion`/`rejectEditSuggestion`, `src/lib/supabase/
+ * prompt-edit-suggestions.ts`). `proposedPromptText` is optional — the
+ * proposer may write out a full suggested replacement, or just leave a
+ * plain-language note; either way the owner always sees and can still edit
+ * the final text before it's ever applied.
+ */
+export interface PromptEditSuggestion {
+  id: string;
+  promptId: string;
+  proposer: UserProfile;
+  ownerId: string;
+  suggestionText: string;
+  proposedPromptText: string | null;
+  status: PromptEditSuggestionStatus;
+  createdAt: string;
+  resolvedAt: string | null;
+  acceptedVersionId: string | null;
 }
 
 // === Generator (Generator Builder + Generator Runtime) =====================
