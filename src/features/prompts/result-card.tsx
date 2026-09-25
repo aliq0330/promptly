@@ -21,11 +21,18 @@ import type { PromptResultSummary } from "@/types";
  * shadow treatment is tuned for a full-width post, not a small square tile)
  * takes the whole card to `resultHref`, with the avatar link and like
  * button as independently-clickable `relative z-10` islands on top of it.
+ *
+ * The `<Link>` is rendered LAST, not first, even though it's `z-0` — CSS
+ * paints same-tier positioned siblings (z-index:0/auto) in DOM order, so a
+ * z-0 element placed BEFORE the preview would end up painted (and hit-
+ * tested) UNDER it, silently swallowing clicks on the image/video/audio
+ * preview (`ContentCard`, the shared shell every other card type uses,
+ * gets this right the same way — its own stretched link is the last
+ * child too).
  */
 export function ResultCard({ result }: { result: PromptResultSummary }) {
   return (
     <div className="group relative flex flex-col overflow-hidden rounded-lg border border-border-soft bg-surface transition-[border-color,box-shadow] duration-200 ease-soft hover:border-border hover:shadow-card-hover">
-      <Link href={resultHref(result)} className="absolute inset-0 z-0" aria-label={`${result.creator.displayName} sonucu`} />
       <ResultTypePreview result={result} size="card" />
       <div className="flex flex-col gap-1.5 p-2.5">
         <Link href={profileHref(result.creator)} className="relative z-10 flex min-w-0 items-center gap-1.5">
@@ -54,6 +61,7 @@ export function ResultCard({ result }: { result: PromptResultSummary }) {
           <LikeButton id={result.id} likeCount={result.likeCount} contentType="prompt_result" size={14} />
         </div>
       </div>
+      <Link href={resultHref(result)} className="absolute inset-0 z-0" aria-label={`${result.creator.displayName} sonucu`} />
     </div>
   );
 }
