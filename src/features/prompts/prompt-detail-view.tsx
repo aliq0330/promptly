@@ -1,5 +1,6 @@
 "use client";
 
+import { ToolLine } from "@/features/content/tool-chips";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import Image from "next/image";
@@ -95,7 +96,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
         >
           <header className="space-y-3">
             <div className="flex items-center justify-between gap-3">
-              <ContentTypeLabel icon={typeMeta.icon} label={`${t(typeMeta.labelKey)} Prompt`} detail={prompt.tool} />
+              <ContentTypeLabel icon={typeMeta.icon} label={`${t(typeMeta.labelKey)} Prompt`} detail={null} />
               <PostMenu promptId={prompt.id} authorId={prompt.author.id} />
             </div>
             <h1 className="text-h1 font-semibold text-text">{prompt.title}</h1>
@@ -172,6 +173,8 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
               <figcaption className="text-caption text-text-muted">{t("prompt.outputCaption")}</figcaption>
             </figure>
           )}
+
+          <ToolLine label={t("tool.recommendedLabel")} refs={prompt.tools} legacy={prompt.tool} />
 
           <TaxonomyLinks contentType={prompt.contentType} category={prompt.category} subcategory={prompt.subcategory} />
 

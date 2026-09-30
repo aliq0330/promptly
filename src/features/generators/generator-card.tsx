@@ -1,5 +1,6 @@
 "use client";
 
+import { ToolChips } from "@/features/content/tool-chips";
 import { ArrowRight, Blocks, SlidersHorizontal } from "lucide-react";
 import { generatorHref } from "@/lib/utils";
 import { ContentCard, ContentCardBody, ContentCardTitle } from "@/features/content/content-card";
@@ -65,6 +66,7 @@ export function GeneratorCard({
           </span>
         </div>
 
+        <ToolChips refs={generator.tools} />
         <ContentTags tags={generator.tags} />
       </ContentCardBody>
 

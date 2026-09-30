@@ -1,5 +1,6 @@
 "use client";
 
+import { ToolChips } from "@/features/content/tool-chips";
 import Link from "next/link";
 import { Reply, Sparkles } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
@@ -86,7 +87,7 @@ export function RequestCard({ request, onDeleted }: { request: PromptRequest; on
         </div>
 
         <div className="space-y-2">
-          <ContentTypeLabel icon={Sparkles} label={t("request.title")} detail={typeMeta ? t(typeMeta.labelKey) : request.preferredTool} />
+          <ContentTypeLabel icon={Sparkles} label={t("request.title")} detail={typeMeta ? t(typeMeta.labelKey) : request.tools.length ? null : request.preferredTool} />
           <ContentCardTitle href={href} title={request.title} description={request.description} />
         </div>
 
@@ -97,6 +98,7 @@ export function RequestCard({ request, onDeleted }: { request: PromptRequest; on
           </p>
         )}
 
+        <ToolChips refs={request.tools} />
         <ContentTags tags={request.tags} />
       </ContentCardBody>
 

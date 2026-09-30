@@ -1,3 +1,4 @@
+import { normalizeToolRefs } from "@/lib/ai-tool-catalog";
 import { supabase } from "./client";
 import { resizeImageToBlob } from "@/lib/utils";
 import { translateForRuntime } from "@/lib/i18n/translations";
@@ -17,6 +18,7 @@ export interface RequestRow {
   description: string;
   creative_direction: string | null;
   preferred_tool: string | null;
+  tools: string[] | null;
   content_type: string | null;
   category: string | null;
   subcategory: string | null;
@@ -35,7 +37,7 @@ export interface RequestRow {
 }
 
 export const REQUEST_SELECT = `
-  id, title, description, creative_direction, preferred_tool, content_type, category, subcategory,
+  id, title, description, creative_direction, preferred_tool, tools, content_type, category, subcategory,
   reference_image_url, reference_image_width, reference_image_height,
   status, selected_response_prompt_id, response_count, like_count, comment_count, created_at, deleted_at,
   profiles:author_id ( id, username, display_name, avatar_url, cover_url, bio, website, follower_count, following_count, created_at, interests ),
@@ -65,6 +67,7 @@ export function mapRequestRow(row: RequestRow): PromptRequest {
     description: row.description,
     creativeDirection: row.creative_direction ?? "",
     preferredTool: row.preferred_tool,
+    tools: normalizeToolRefs(row.tools),
     contentType: legacy?.contentType,
     ...(legacy ? sanitizeTaxonomy(legacy.contentType, row.category ?? legacy.category, row.subcategory) : { category: null, subcategory: null }),
     referenceImage: row.reference_image_url
@@ -173,6 +176,7 @@ export interface CreateRealRequestInput {
   category?: string | null;
   subcategory?: string | null;
   preferredTool: string | null;
+  tools?: string[];
   tags: Tag[];
   /** Per-tag source (`manual` | `automatic`), keyed by slug — see `CreateRealPromptInput.tagSources` (Bölüm 9.23). */
   tagSources?: Record<string, "manual" | "automatic">;
@@ -212,6 +216,7 @@ export async function createRealRequest(
       description: input.description.trim(),
       creative_direction: input.creativeDirection.trim() || null,
       preferred_tool: input.preferredTool,
+      tools: input.tools ?? [],
       content_type: input.contentType,
       ...taxonomyColumns(input.contentType, input.category, input.subcategory),
       reference_image_url: referenceImage?.url ?? null,
@@ -244,6 +249,7 @@ export async function createRealRequest(
     description: input.description.trim(),
     creativeDirection: input.creativeDirection.trim(),
     preferredTool: input.preferredTool,
+    tools: input.tools ?? [],
     contentType: input.contentType,
     ...sanitizeTaxonomy(input.contentType, input.category, input.subcategory),
     referenceImage: referenceImage
@@ -267,6 +273,7 @@ export interface UpdateRealRequestInput {
   description: string;
   creativeDirection: string;
   preferredTool: string | null;
+  tools?: string[];
   tags: Tag[];
   tagSources?: Record<string, "manual" | "automatic">;
 }
@@ -293,6 +300,7 @@ export async function updateRealRequest(requestId: string, input: UpdateRealRequ
       description: input.description.trim(),
       creative_direction: input.creativeDirection.trim() || null,
       preferred_tool: input.preferredTool,
+      ...(input.tools === undefined ? {} : { tools: input.tools }),
       ...(input.category === undefined ? {} : { category: input.category, subcategory: input.subcategory ?? null }),
     })
     .eq("id", requestId)

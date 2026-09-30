@@ -1,5 +1,6 @@
 "use client";
 
+import { ToolLine } from "@/features/content/tool-chips";
 import { DetailSkeleton, NotFoundBlock } from "@/components/ui/detail-skeleton";
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -225,6 +226,8 @@ export function GeneratorDetailView() {
           </section>
 
           <PromptResultsSection target={{ type: "generator", generatorId: generator.id }} />
+
+          <ToolLine label={t("tool.recommendedLabel")} refs={generator.tools} />
 
           {generator.tags.length > 0 && (
             <div className="flex flex-wrap gap-1.5">

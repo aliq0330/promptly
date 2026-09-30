@@ -1,4 +1,5 @@
 "use client";
+import { ToolPicker } from "@/features/content/tool-picker";
 
 import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 import Link from "next/link";
@@ -48,7 +49,9 @@ export function CreateRequestForm() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [creativeDirection, setCreativeDirection] = useState("");
+  // Legacy free-text tool: no longer editable, only carried through unchanged so old requests keep it.
   const [preferredTool, setPreferredTool] = useState("");
+  const [tools, setTools] = useState<string[]>([]);
   // İstek başlığı+açıklaması birlikte analiz ediliyor (CLAUDE.md §12) —
   // isteğin kendi etiketleri, bir yanıtın etiketleriyle asla karıştırılmıyor
   // (bkz. create-prompt-form.tsx'in answerRequest modu).
@@ -109,6 +112,7 @@ export function CreateRequestForm() {
     setDescription(editingRequest.description);
     setCreativeDirection(editingRequest.creativeDirection);
     setPreferredTool(editingRequest.preferredTool ?? "");
+    setTools(editingRequest.tools ?? []);
     editingRequest.tags.forEach((tag) => tagPicker.addManual(tag));
     setFieldsSeeded(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- tagPicker.addManual is stable (useCallback)
@@ -158,6 +162,7 @@ export function CreateRequestForm() {
           category,
           subcategory,
           preferredTool: preferredTool || null,
+          tools,
           tags: tagPicker.accepted.map((entry) => entry.tag),
           tagSources: Object.fromEntries(tagPicker.accepted.map((entry) => [entry.tag.slug, entry.source])),
         });
@@ -174,6 +179,7 @@ export function CreateRequestForm() {
           category,
           subcategory,
           preferredTool: preferredTool || null,
+          tools,
           tags: tagPicker.accepted.map((entry) => entry.tag),
           tagSources: Object.fromEntries(tagPicker.accepted.map((entry) => [entry.tag.slug, entry.source])),
           imageFile: referenceImageFile,
@@ -265,6 +271,7 @@ export function CreateRequestForm() {
     category,
     subcategory,
     preferredTool: preferredTool || null,
+          tools,
     referenceImage: referenceImage
       ? { id: "reference", url: referenceImage.url, width: referenceImage.width, height: referenceImage.height, alt: title }
       : editingRequest?.referenceImage,
@@ -383,19 +390,13 @@ export function CreateRequestForm() {
             </div>
           )}
 
-          <div>
-            <label htmlFor="request-tool" className="mb-1.5 block text-sm font-medium text-text">
-              {t("request.preferredTool")} <span className="text-text-muted">({t("common.optional")})</span>
-            </label>
-            <input
-              id="request-tool"
-              type="text"
-              value={preferredTool}
-              onChange={(event) => setPreferredTool(event.target.value)}
-              placeholder={t("request.preferredToolPlaceholder")}
-              className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted"
-            />
-          </div>
+          <ToolPicker
+            label={t("tool.preferredLabel")}
+            value={tools}
+            onChange={setTools}
+            contentType={contentType}
+            category={category}
+          />
 
           <div>
             <label className="mb-2 block text-sm font-medium text-text">

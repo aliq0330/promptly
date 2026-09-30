@@ -1,5 +1,6 @@
 "use client";
 
+import { ToolLine } from "@/features/content/tool-chips";
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -167,7 +168,7 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
       >
         <header className="space-y-3">
           <div className="flex items-center justify-between gap-3">
-            <ContentTypeLabel icon={Sparkles} label={t("request.title")} detail={typeMeta ? t(typeMeta.labelKey) : live.preferredTool} />
+            <ContentTypeLabel icon={Sparkles} label={t("request.title")} detail={typeMeta ? t(typeMeta.labelKey) : null} />
             <div className="flex shrink-0 items-center gap-1.5">
               <Badge variant={STATUS_VARIANTS[live.status]}>
                 <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-current" />
@@ -249,7 +250,9 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
 
         {live.contentType && <TaxonomyLinks contentType={live.contentType} category={live.category} subcategory={live.subcategory} />}
 
-        {(live.tags.length > 0 || live.preferredTool) && (
+        <ToolLine label={t("tool.preferredLabel")} refs={live.tools} legacy={live.preferredTool} />
+
+        {live.tags.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
             {live.tags.map((tag) => (
               <Link
@@ -260,7 +263,6 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
                 #{tag.label}
               </Link>
             ))}
-            {live.preferredTool && <Badge variant="neutral">{live.preferredTool}</Badge>}
           </div>
         )}
 

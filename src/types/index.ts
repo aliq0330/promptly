@@ -62,6 +62,8 @@ export interface Prompt {
   description: string;
   promptText: string;
   tool: string | null;
+  /** Recommended tool/model refs ("toolId" or "toolId:modelId", max 3) — see lib/ai-tool-catalog.ts. */
+  tools: string[];
   contentType: PromptContentType;
   /** Taxonomy category/subcategory slug (see lib/content-taxonomy.ts) — optional, null when never chosen. */
   category: string | null;
@@ -195,6 +197,7 @@ export interface PromptRequest {
   description: string;
   creativeDirection: string;
   preferredTool: string | null;
+  tools: string[];
   /** Requested content type (image/text/audio/video) — same union as `Prompt.contentType`. */
   contentType?: PromptContentType;
   category: string | null;
@@ -527,6 +530,7 @@ export interface Generator {
   slug: string;
   description: string;
   coverUrl: string | null;
+  tools: string[];
   contentType: PromptContentType;
   /** Taxonomy category/subcategory slug (see lib/content-taxonomy.ts) — optional. */
   category: string | null;
