@@ -11454,3 +11454,5 @@ yukarıda 8-9. maddelerde.
 - localStorage tamamen kalkmadı: ilk boyamada flaş olmaması ve giriş yapmamış ziyaretçi için önbellek; girişte hesap değeri her zaman kazanır.
 - İlk açılış dili (kayıtlı tercih yokken): saat dilimi Europe/Istanbul → Türkçe, aksi hâlde İngilizce (`languageInitScript`). IP tabanlı gerçek ülke tespiti değil; yurt dışındaki Türkçe kullanıcı İngilizce görür, kendi seçimiyle değiştirir.
 - Doğrulama: tsc, lint, build temiz; canlıda iki cihazla uçtan uca denenmedi.
+
+**Güncelleme (9.57):** Sitenin varsayılan paleti artık **Kum (sand)**. `themeInitScript` ve `ThemeProvider` her zaman `data-palette` özniteliğini yazıyor (kayıtlı seçim yoksa `DEFAULT_PALETTE`); `globals.css`'te varsayılan `:root` tokenları Kum bloğuna taşındı, Lavanta artık açık `data-palette="lavender"` ile seçiliyor. Tarayıcıda yeni ziyaretçi için açık/koyu iki modda Kum token'ları doğrulandı.
