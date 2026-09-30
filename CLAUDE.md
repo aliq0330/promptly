@@ -154,6 +154,39 @@ Tek tasarım sistemi, üç kompozisyon (`AppShell`):
   "Oluştur" butonu), detay sayfalarında sağ yardımcı sütun.
 - Dokunma hedefleri ≥ 36px, uzun prompt metinleri taşmaz (`break-words`).
 
+## 4.5 Çok Dillilik (Türkçe / İngilizce) — Bağlayıcı Kural
+
+Site iki dillidir (Türkçe varsayılan/İngilizce). **Bundan sonra eklenen HER
+özellik, sayfa, modül, modal, bildirim, hata/toast/doğrulama mesajı iki dilde
+de çalışmalıdır** — yalnızca Türkçe hardcoded metin içeren bir modül
+tamamlanmış sayılmaz. Ayrıntı ve mimari: Bölüm 9.49, 9.56, 9.57.
+
+- Kullanıcıya görünen her metin `src/lib/i18n/translations.ts`'e `{tr, en}`
+  çiftiyle eklenir ve bileşende `useTranslation().t("anahtar")` ile okunur.
+  Yeni anahtar eklemeden önce aynı metin için var olan anahtar aranır
+  (`grep`), varsa yeniden kullanılır.
+- Bileşen olmayan kodda (`lib/*.ts`, `lib/supabase/*.ts` hataları)
+  `translateForRuntime(key, params?)` kullanılır. Tarih/göreli zaman için
+  `formatRelativeTime(..., language)` — `language` argümanı unutulmaz.
+- Modül seviyesinde BİR KEZ hesaplanan çevrilmiş sabit yazılmaz (dil sonradan
+  değişince donuk kalır); fonksiyon veya `t()` çağrısı kullanılır. Varsayılan
+  prop değerinde `t()` çağrılamaz: `prop ?? t("anahtar")` kullanılır.
+- Veritabanında saklanan değerler (slug, enum, option `value`) çevrilmez;
+  yalnızca görünen etiket `Record<Değer, TranslationKey>` haritasıyla çevrilir.
+- ÇEVRİLMEYENLER: kullanıcı içeriği (prompt/yorum/biyografi/kullanıcı adı/
+  kullanıcının yazdığı etiket), marka/teknik adlar (Promptly, Supabase,
+  JSON, GPT, Midjourney...), "Prompt" kelimesi, kod yorumları.
+- Statik veri dosyalarına (katalog, aday etiketler vb.) yeni Türkçe metin
+  eklenirse İngilizce karşılığı da eklenir (bkz. `generator-field-catalog-en.ts`).
+- SQL trigger'ların ürettiği bildirim metni Türkçe kalır; yeni bir bildirim
+  cümlesi eklenirse `src/lib/notification-message.ts`'e kalıbı ve
+  `translations.ts`'e `notifMsg.*` karşılığı da eklenir.
+- Bir görev bitmeden: `npx tsc --noEmit`, `npm run lint`, `npm run build`
+  temiz olmalı ve raporda "İngilizce karşılıkları eklendi mi" açıkça
+  belirtilmelidir.
+
+---
+
 ## 5. Sayfa Haritası
 
 | Route | Açıklama |
