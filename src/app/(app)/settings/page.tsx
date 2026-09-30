@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
-import { LogIn, LogOut, Settings } from "lucide-react";
+import { LogIn, LogOut, Settings, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/auth-provider";
 import { supabase } from "@/lib/supabase/client";
@@ -10,6 +10,7 @@ import { translateAuthError } from "@/features/auth/auth-errors";
 import { fetchOwnMessagePrivacy, updateMessagePrivacy, type MessagePrivacy } from "@/lib/supabase/profiles";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Language, TranslationKey } from "@/lib/i18n/translations";
+import { useIsModerator } from "@/features/moderation/use-is-moderator";
 import { AppearancePicker } from "@/components/theme/appearance-picker";
 
 const PASSWORD_MIN_LENGTH = 6;
@@ -23,6 +24,7 @@ const PASSWORD_MIN_LENGTH = 6;
 export default function SettingsPage() {
   const { user, loading } = useAuth();
   const { t, language, setLanguage } = useTranslation();
+  const isModerator = useIsModerator();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -125,6 +127,15 @@ export default function SettingsPage() {
       </p>
 
       <div className="space-y-6">
+        {isModerator && (
+          <Link
+            href="/moderation"
+            className="flex items-center gap-3 rounded-lg border border-border bg-surface p-4 text-sm font-medium text-text hover:bg-surface-soft"
+          >
+            <ShieldCheck size={18} className="text-primary" />
+            {t("nav.moderation")}
+          </Link>
+        )}
         <div className="rounded-lg border border-border bg-surface p-4">
           <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-text-muted">
             {t("settings.email")}
