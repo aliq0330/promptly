@@ -14,6 +14,8 @@ import {
   fetchCommentsForPrompt,
   fetchCommentsForRequest,
   fetchCommentsForResult,
+  fetchCommentsForWorkflow,
+  postCommentOnWorkflow,
   postCommentOnGenerator,
   postCommentOnPrompt,
   postCommentOnRequest,
@@ -25,7 +27,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import { CommentNode, type CommentTree } from "./comment-node";
 import type { PromptComment } from "@/types";
 
-export type CommentTarget = { promptId: string } | { requestId: string } | { generatorId: string } | { resultId: string };
+export type CommentTarget = { promptId: string } | { requestId: string } | { generatorId: string } | { resultId: string } | { workflowId: string };
 
 /**
  * Real, unlimited-depth comment thread — every prompt/request is a real
@@ -93,14 +95,16 @@ export function CommentSection({
   const highlightTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const processedHighlightId = useRef<string | null>(null);
 
-  const targetKind: "prompt" | "request" | "generator" | "result" =
+  const targetKind: "prompt" | "request" | "generator" | "result" | "workflow" =
     "promptId" in target
       ? "prompt"
       : "requestId" in target
         ? "request"
         : "generatorId" in target
           ? "generator"
-          : "result";
+          : "workflowId" in target
+            ? "workflow"
+            : "result";
   const targetId =
     "promptId" in target
       ? target.promptId
@@ -108,7 +112,9 @@ export function CommentSection({
         ? target.requestId
         : "generatorId" in target
           ? target.generatorId
-          : target.resultId;
+          : "workflowId" in target
+            ? target.workflowId
+            : target.resultId;
 
   // Small dispatch helpers instead of repeating a four-way ternary at each
   // of the three call sites below (initial fetch, top-level post, reply).
@@ -116,12 +122,14 @@ export function CommentSection({
     if (kind === "prompt") return fetchCommentsForPrompt(id);
     if (kind === "request") return fetchCommentsForRequest(id);
     if (kind === "generator") return fetchCommentsForGenerator(id);
+    if (kind === "workflow") return fetchCommentsForWorkflow(id);
     return fetchCommentsForResult(id);
   }
   function postCommentForTarget(kind: typeof targetKind, id: string, userId: string, body: string, parentId: string | null) {
     if (kind === "prompt") return postCommentOnPrompt(id, userId, body, parentId);
     if (kind === "request") return postCommentOnRequest(id, userId, body, parentId);
     if (kind === "generator") return postCommentOnGenerator(id, userId, body, parentId);
+    if (kind === "workflow") return postCommentOnWorkflow(id, userId, body, parentId);
     return postCommentOnResult(id, userId, body, parentId);
   }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AlertTriangle, ArrowLeft, ChevronDown, X } from "lucide-react";
@@ -16,6 +16,9 @@ import type { WorkflowContentRef, WorkflowStep } from "@/types";
 import { AddContentModal } from "./add-content-modal";
 import { ContentPane, GeneralPane, IOPane, SettingsPane, StepPreview } from "./step-panes";
 import { StepList } from "./step-list";
+import { TagPicker } from "@/features/prompts/tag-picker";
+import { useTagPicker } from "@/features/prompts/use-tag-picker";
+import { useTagCatalog } from "@/features/tags/use-tag-catalog";
 import { useLayoutMode } from "./use-layout-mode";
 import { EMPTY_META, WorkflowMetaForm, type WorkflowMeta } from "./workflow-meta-form";
 import type { TranslationKey } from "@/lib/i18n/translations";
@@ -42,6 +45,9 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
   const [workflowId, setWorkflowId] = useState<string | null>(editId);
   const [loadState, setLoadState] = useState<LoadState>(editId ? "loading" : "ready");
   const [meta, setMeta] = useState<WorkflowMeta>(EMPTY_META);
+  const { catalog } = useTagCatalog();
+  const tagPicker = useTagPicker({ title: meta.title, content: meta.description, catalog });
+  const tagsSeededRef = useRef(false);
   const [steps, setSteps] = useState<WorkflowStep[]>([]);
   const [status, setStatus] = useState<"draft" | "published">("draft");
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -73,6 +79,10 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
         category: result.workflow.category,
         tools: result.workflow.tools,
       });
+      if (!tagsSeededRef.current) {
+        tagsSeededRef.current = true;
+        for (const tag of result.workflow.tags) tagPicker.addManual(tag);
+      }
       setSteps(result.steps);
       setStatus(result.workflow.status);
       setSelectedId(result.steps[0]?.id ?? null);
@@ -81,6 +91,7 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- addManual is stable; seeded once per load
   }, [editId, user, authLoading]);
 
   // Unsaved changes: ask before the tab closes.
@@ -178,7 +189,7 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
     setSaveState("saving");
     setSaveError(null);
     try {
-      const id = await saveWorkflow({ id: workflowId, ...meta, status: target, steps }, user.id);
+      const id = await saveWorkflow({ id: workflowId, ...meta, tags: tagPicker.accepted.map((entry) => entry.tag), status: target, steps }, user.id);
       setWorkflowId(id);
       setStatus(target);
       setDirty(false);
@@ -356,6 +367,10 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
                 touch();
               }}
             />
+            <div className="mt-4">
+              <label className="mb-1.5 block text-sm font-medium text-text">{t("generator.tagsLabel")}</label>
+              <TagPicker picker={tagPicker} />
+            </div>
           </div>
         )}
       </section>

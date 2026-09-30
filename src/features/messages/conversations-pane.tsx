@@ -29,14 +29,17 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
   // param, and turns into a plain-text message (title + link) once a
   // conversation is picked (see `LocalConversationView`).
   const shareGeneratorId = searchParams.get("shareGeneratorId");
-  const isSharing = Boolean(sharePromptId || shareRequestId || shareGeneratorId);
+  const shareWorkflowId = searchParams.get("shareWorkflowId");
+  const isSharing = Boolean(sharePromptId || shareRequestId || shareGeneratorId || shareWorkflowId);
   const shareQuery = sharePromptId
     ? `sharePromptId=${sharePromptId}`
     : shareRequestId
       ? `shareRequestId=${shareRequestId}`
       : shareGeneratorId
         ? `shareGeneratorId=${shareGeneratorId}`
-        : undefined;
+        : shareWorkflowId
+          ? `shareWorkflowId=${shareWorkflowId}`
+          : undefined;
 
   const activeId = pathname.startsWith("/messages/local") ? searchParams.get("id") : null;
 

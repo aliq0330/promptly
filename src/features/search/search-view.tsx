@@ -14,12 +14,14 @@ import { searchPrompts } from "@/lib/supabase/prompts";
 import { searchProfiles } from "@/lib/supabase/profiles";
 import { searchRequests } from "@/lib/supabase/requests";
 import { searchGenerators } from "@/lib/supabase/generators";
+import { searchWorkflows } from "@/lib/supabase/workflows";
+import { WorkflowCard } from "@/features/workflows/workflow-card";
 import { searchTags } from "@/lib/supabase/tags";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TaxonomyFilterValue } from "@/lib/content-taxonomy";
 import type { ContentSearchFilters } from "@/lib/supabase/taxonomy-query";
 import { formatCount, profileHref, tagHref } from "@/lib/utils";
-import type { Generator, Prompt, PromptRequest, Tag, UserProfile } from "@/types";
+import type { Generator, Prompt, PromptRequest, Tag, UserProfile, Workflow } from "@/types";
 
 const DEBOUNCE_MS = 300;
 type Sort = NonNullable<ContentSearchFilters["sort"]>;
@@ -41,6 +43,7 @@ export function SearchView({ idle }: { idle?: ReactNode } = {}) {
   const [tags, setTags] = useState<Tag[]>([]);
   const [generators, setGenerators] = useState<Generator[]>([]);
   const [requests, setRequests] = useState<PromptRequest[]>([]);
+  const [workflows, setWorkflows] = useState<Workflow[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const normalized = text.trim();
   const hasTokens = tokens.length > 0;
@@ -67,6 +70,7 @@ export function SearchView({ idle }: { idle?: ReactNode } = {}) {
       setTags([]);
       setGenerators([]);
       setRequests([]);
+      setWorkflows([]);
       setIsSearching(false);
       return;
     }
@@ -80,9 +84,10 @@ export function SearchView({ idle }: { idle?: ReactNode } = {}) {
       };
       // Plain text only (no chips): people and tags are results too.
       const textOnly = !hasTokens;
-      const [foundPrompts, foundGenerators, foundRequests, foundUsers, foundTags] = await Promise.all([
+      const [foundPrompts, foundGenerators, foundWorkflows, foundRequests, foundUsers, foundTags] = await Promise.all([
         kinds.includes("prompt") ? searchPrompts(normalized, filters) : [],
         kinds.includes("generator") ? searchGenerators(normalized, filters) : [],
+        kinds.includes("workflow") ? searchWorkflows(normalized, filters) : [],
         kinds.includes("request") ? searchRequests(normalized, filters) : [],
         textOnly ? searchProfiles(normalized) : [],
         textOnly ? searchTags(normalized, 6) : [],
@@ -90,6 +95,7 @@ export function SearchView({ idle }: { idle?: ReactNode } = {}) {
       if (cancelled) return;
       setPrompts(foundPrompts);
       setGenerators(foundGenerators);
+      setWorkflows(foundWorkflows);
       setRequests(foundRequests);
       setUsers(foundUsers);
       setTags(foundTags);
@@ -103,7 +109,7 @@ export function SearchView({ idle }: { idle?: ReactNode } = {}) {
   }, [normalized, filterKey, active]);
 
   const nothingFound =
-    prompts.length === 0 && users.length === 0 && tags.length === 0 && generators.length === 0 && requests.length === 0;
+    prompts.length === 0 && users.length === 0 && tags.length === 0 && generators.length === 0 && workflows.length === 0 && requests.length === 0;
   const taxonomy: TaxonomyFilterValue = { contentType: singleMedia, category, subcategory };
 
   return (
@@ -187,6 +193,19 @@ export function SearchView({ idle }: { idle?: ReactNode } = {}) {
             <section className="space-y-3">
               <h2 className="text-h3 font-semibold text-text">{t("nav.generators")}</h2>
               <PromptGrid generators={generators} />
+            </section>
+          )}
+
+          {workflows.length > 0 && (
+            <section className="space-y-3">
+              <h2 className="text-h3 font-semibold text-text">{t("nav.workflows")}</h2>
+              <div className="columns-1 gap-3 sm:columns-2 sm:gap-4 xl:columns-3">
+                {workflows.map((workflow) => (
+                  <div key={workflow.id} className="mb-3 break-inside-avoid sm:mb-4">
+                    <WorkflowCard workflow={workflow} />
+                  </div>
+                ))}
+              </div>
             </section>
           )}
 

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { MessageCircle } from "lucide-react";
-import { formatCount, generatorHref, promptHref, requestHref, resultHref } from "@/lib/utils";
+import { formatCount, generatorHref, promptHref, requestHref, resultHref, workflowHref } from "@/lib/utils";
 import { contentActionClassName } from "@/features/content/action-styles";
 import { useTranslation } from "@/lib/i18n/language-provider";
 
@@ -32,6 +32,7 @@ export function CommentCountLink({
   generatorSlug,
   requestId,
   resultId,
+  workflowId,
   baseCount,
   size = 16,
   className,
@@ -40,12 +41,15 @@ export function CommentCountLink({
   generatorSlug?: string;
   requestId?: string;
   resultId?: string;
+  workflowId?: string;
   baseCount: number;
   size?: number;
   className?: string;
 }) {
   const { t } = useTranslation();
-  const baseHref = generatorSlug
+  const baseHref = workflowId
+    ? workflowHref({ id: workflowId })
+    : generatorSlug
     ? generatorHref({ slug: generatorSlug })
     : requestId
       ? requestHref({ id: requestId })

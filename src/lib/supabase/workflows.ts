@@ -6,11 +6,12 @@ import { GENERATOR_SELECT, mapGeneratorRow, type GeneratorRow } from "./generato
 import { REQUEST_SELECT, mapRequestRow, type RequestRow } from "./requests";
 import { connectionsFromSteps } from "@/lib/workflow-logic";
 import { normalizeToolRefs } from "@/lib/ai-tool-catalog";
+import { applyAdvancedFilters, hasSearchFilter, sanitizeSearchText, tagJoinSelect, type ContentSearchFilters } from "./taxonomy-query";
 import { generatorHref, promptHref, requestHref } from "@/lib/utils";
 import { translateForRuntime } from "@/lib/i18n/translations";
-import type { Generator, Prompt, PromptContentType, PromptRequest, Workflow, WorkflowContentRef, WorkflowInput, WorkflowIO, WorkflowStep, WorkflowStepType } from "@/types";
+import type { Generator, Prompt, PromptContentType, Tag, PromptRequest, Workflow, WorkflowContentRef, WorkflowInput, WorkflowIO, WorkflowStep, WorkflowStepType } from "@/types";
 
-interface WorkflowRow {
+export interface WorkflowRow {
   id: string;
   creator_id: string;
   title: string;
@@ -20,19 +21,23 @@ interface WorkflowRow {
   category: string | null;
   tools: string[] | null;
   status: "draft" | "published";
+  like_count: number | null;
+  comment_count: number | null;
   created_at: string;
   updated_at: string;
   profiles: ProfileRow;
   workflow_steps: { count: number }[] | null;
+  workflow_tags: { tags: { slug: string; label: string } }[] | null;
 }
 
-const WORKFLOW_SELECT = `
-  id, creator_id, title, description, cover_url, content_types, category, tools, status, created_at, updated_at,
+export const WORKFLOW_SELECT = `
+  id, creator_id, title, description, cover_url, content_types, category, tools, status, like_count, comment_count, created_at, updated_at,
   profiles:creator_id ( ${PROFILE_SELECT} ),
-  workflow_steps ( count )
+  workflow_steps ( count ),
+  workflow_tags ( tags ( slug, label ) )
 `;
 
-function mapWorkflowRow(row: WorkflowRow): Workflow {
+export function mapWorkflowRow(row: WorkflowRow): Workflow {
   return {
     id: row.id,
     creator: mapProfileRow(row.profiles),
@@ -44,6 +49,9 @@ function mapWorkflowRow(row: WorkflowRow): Workflow {
     tools: normalizeToolRefs(row.tools),
     status: row.status,
     stepCount: row.workflow_steps?.[0]?.count ?? 0,
+    likeCount: row.like_count ?? 0,
+    commentCount: row.comment_count ?? 0,
+    tags: (row.workflow_tags ?? []).map((wt): Tag => ({ slug: wt.tags.slug, label: wt.tags.label })),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -79,6 +87,37 @@ export async function fetchRecentWorkflows(limit = 40): Promise<Workflow[]> {
     return (data ?? []).map((row) => mapWorkflowRow(row as unknown as WorkflowRow));
   } catch (err) {
     console.error("fetchRecentWorkflows", err);
+    return [];
+  }
+}
+
+/**
+ * Workflow search — same shared advanced-search filters as prompts/
+ * generators/requests. A workflow chains several content types instead of
+ * having one, so a media-type chip matches when the workflow chains that
+ * type; a workflow has no tags and no shared-taxonomy category/subcategory,
+ * so only a category/subcategory filter can never match it; tag chips match its own tags.
+ */
+export async function searchWorkflows(query: string, filters: ContentSearchFilters = {}, limit = 20): Promise<Workflow[]> {
+  const escaped = sanitizeSearchText(query);
+  if (!escaped && !hasSearchFilter(filters)) return [];
+  if (filters.taxonomy?.category || filters.taxonomy?.subcategory) return [];
+  try {
+    let request = supabase.from("workflows").select(WORKFLOW_SELECT + tagJoinSelect("workflow_tags", filters.tagSlugs)).eq("status", "published");
+    if (escaped) request = request.or(`title.ilike.%${escaped}%,description.ilike.%${escaped}%`);
+    if (filters.authorId) request = request.eq("creator_id", filters.authorId);
+    const mediaTypes = [...(filters.contentTypes ?? []), ...(filters.taxonomy?.contentType ? [filters.taxonomy.contentType] : [])];
+    if (mediaTypes.length) request = request.overlaps("content_types", mediaTypes);
+    request = applyAdvancedFilters(request, { authorIds: filters.authorIds, toolRefs: filters.toolRefs, tagSlugs: filters.tagSlugs }, "creator_id");
+    const order = filters.sort === "popular" ? "like_count" : "created_at";
+    const { data, error } = await request.order(order, { ascending: false }).limit(limit);
+    if (error) {
+      console.error("searchWorkflows", error);
+      return [];
+    }
+    return (data ?? []).map((row) => mapWorkflowRow(row as unknown as WorkflowRow));
+  } catch (err) {
+    console.error("searchWorkflows", err);
     return [];
   }
 }
@@ -223,6 +262,7 @@ export interface SaveWorkflowInput {
   contentTypes: PromptContentType[];
   category: string | null;
   tools: string[];
+  tags: Tag[];
   status: "draft" | "published";
   steps: WorkflowStep[];
 }
@@ -261,6 +301,13 @@ export async function saveWorkflow(input: SaveWorkflowInput, creatorId: string):
     inputs: step.inputs,
     outputs: step.outputs,
   }));
+  await supabase.from("workflow_tags").delete().eq("workflow_id", id as string);
+  if (input.tags.length > 0) {
+    const { error: tagError } = await supabase
+      .from("workflow_tags")
+      .insert(input.tags.map((tag) => ({ workflow_id: id, tag_slug: tag.slug })));
+    if (tagError) throw new Error(tagError.message);
+  }
   const { error: rpcError } = await supabase.rpc("save_workflow_graph", {
     p_workflow_id: id,
     p_steps: stepsPayload,

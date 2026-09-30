@@ -3,33 +3,35 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowDown, ArrowRight, ExternalLink, Pencil, Trash2, Workflow as WorkflowIcon } from "lucide-react";
+import { ArrowDown, ArrowRight, ExternalLink, Workflow as WorkflowIcon } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Button, buttonClassName } from "@/components/ui/button";
 import { DetailSkeleton, NotFoundBlock } from "@/components/ui/detail-skeleton";
 import { ContentTypeLabel } from "@/features/content/content-type-label";
 import { ToolLine } from "@/features/content/tool-chips";
-import { ShareButton } from "@/features/prompts/share-button";
+import { PostMenu } from "@/features/prompts/post-menu";
+import { LikeButton } from "@/features/prompts/like-button";
+import { SaveButton } from "@/features/prompts/save-button";
+import { CommentCountLink } from "@/features/prompts/comment-count-link";
+import { CommentSection } from "@/features/prompts/comment-section";
+import { ShareTriggerButton } from "@/features/prompts/share-modal";
+import { useRealWorkflows } from "./real-workflows-provider";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
-import { useAuth } from "@/features/auth/auth-provider";
-import { deleteWorkflow, fetchWorkflowById } from "@/lib/supabase/workflows";
+import { fetchWorkflowById } from "@/lib/supabase/workflows";
 import { incomingLinks } from "@/lib/workflow-logic";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import { cn, profileHref } from "@/lib/utils";
+import { cn, formatRelativeTime, profileHref, tagHref } from "@/lib/utils";
 import type { Workflow, WorkflowStep } from "@/types";
 import { categoryLabel, MEDIA_ICON, STEP_TYPE_META, stepSubtitle } from "./step-meta";
-import { workflowHref } from "./workflow-card";
 
 /** Read-only workflow page: who made it, what it's for, and the ordered steps — each links to its prompt / generator / request. */
 export function WorkflowDetailView() {
   const { t, language } = useTranslation();
   const router = useRouter();
-  const { user } = useAuth();
-  const id = useSearchParams().get("id");
+  const searchParams = useSearchParams();
+  const { removeFromCache } = useRealWorkflows();
+  const id = searchParams.get("id");
   const [data, setData] = useState<{ workflow: Workflow; steps: WorkflowStep[] } | null | undefined>(undefined);
-  const [confirmDelete, setConfirmDelete] = useState(false);
-  const [deleteError, setDeleteError] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -45,75 +47,81 @@ export function WorkflowDetailView() {
   if (!data) return <NotFoundBlock title={t("workflow.notFoundTitle")} description={t("workflow.notFoundBody")} />;
 
   const { workflow, steps } = data;
-  const isOwner = user?.id === workflow.creator.id;
   const category = categoryLabel(workflow.contentTypes, workflow.category, language);
-
-  async function handleDelete() {
-    if (!confirmDelete) {
-      setConfirmDelete(true);
-      return;
-    }
-    try {
-      await deleteWorkflow(workflow.id);
-      router.push("/workflows");
-    } catch {
-      setDeleteError(true);
-      setConfirmDelete(false);
-    }
-  }
+  const highlight = searchParams.get("hl");
+  const highlightCommentId = highlight?.startsWith("comment:") ? highlight.slice("comment:".length) : null;
 
   return (
-    <div className="mx-auto w-full max-w-3xl space-y-6 px-3 py-5 sm:px-5 sm:py-6 lg:px-8">
-      <header className="overflow-hidden rounded-lg border border-border-soft bg-surface shadow-card">
-        {workflow.coverUrl && (
-          // eslint-disable-next-line @next/next/no-img-element -- real local data-URL cover
-          <img src={workflow.coverUrl} alt="" className="aspect-video w-full object-cover" />
-        )}
-        <div className="space-y-3 p-4 sm:p-5">
-          <div className="flex flex-wrap items-center justify-between gap-2">
+    <div className="mx-auto w-full max-w-3xl space-y-6 px-3 py-5 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
+      <article className="min-w-0 space-y-5">
+        <header className="space-y-3">
+          <div className="flex items-center justify-between gap-3">
             <ContentTypeLabel icon={WorkflowIcon} label={t("workflow.singular")} detail={category} />
-            {workflow.status === "draft" && <Badge variant="warning">{t("workflow.draftBadge")}</Badge>}
+            <div className="flex items-center gap-2">
+              {workflow.status === "draft" && <Badge variant="warning">{t("workflow.draftBadge")}</Badge>}
+              <PostMenu
+                workflowId={workflow.id}
+                authorId={workflow.creator.id}
+                onDeleted={() => {
+                  removeFromCache(workflow.id);
+                  router.push("/workflows");
+                }}
+              />
+            </div>
           </div>
           <h1 className="text-h1 font-semibold text-text">{workflow.title}</h1>
-          {workflow.description && <p className="text-body text-text-secondary">{workflow.description}</p>}
-          <Link href={profileHref(workflow.creator)} className="inline-flex max-w-full items-center gap-2.5 rounded-md">
+          {workflow.description && <p className="max-w-2xl text-body text-text-secondary">{workflow.description}</p>}
+          <Link href={profileHref(workflow.creator)} className="group inline-flex max-w-full items-center gap-2.5 rounded-md">
             <Avatar src={workflow.creator.avatarUrl} alt={workflow.creator.displayName} size={32} />
-            <span className="min-w-0">
-              <span className="block truncate text-sm font-medium text-text">{workflow.creator.displayName}</span>
-              <span className="block truncate text-caption text-text-muted">@{workflow.creator.username}</span>
+            <span className="min-w-0 leading-tight">
+              <span className="block truncate text-label font-semibold text-text group-hover:text-primary">{workflow.creator.displayName}</span>
+              <span className="block truncate text-caption text-text-muted">
+                @{workflow.creator.username} · {formatRelativeTime(workflow.createdAt, language)}
+              </span>
             </span>
           </Link>
-          <div className="flex flex-wrap items-center gap-1.5">
-            {workflow.contentTypes.map((type) => {
-              const Icon = CONTENT_TYPE_META[type].icon;
-              return (
-                <span key={type} className="inline-flex h-6 items-center gap-1 rounded-full bg-surface-soft px-2.5 text-caption font-medium text-text-secondary">
-                  <Icon size={11} />
-                  {t(CONTENT_TYPE_META[type].labelKey)}
-                </span>
-              );
-            })}
-            <span className="text-caption text-text-muted">{t("workflow.stepCount", { count: String(steps.length) })}</span>
-          </div>
-          <ToolLine label={t("tool.recommendedLabel")} refs={workflow.tools} />
-          <div className="flex flex-wrap items-center gap-2 border-t border-border-soft pt-3">
-            <ShareButton url={workflowHref(workflow)} title={workflow.title} />
-            {isOwner && (
-              <>
-                <Link href={`/workflows/create?edit=${workflow.id}`} className={buttonClassName({ variant: "outline", size: "sm" })}>
-                  <Pencil size={14} />
-                  {t("workflow.edit")}
-                </Link>
-                <Button type="button" variant={confirmDelete ? "danger" : "outline"} size="sm" onClick={handleDelete} onBlur={() => setConfirmDelete(false)}>
-                  <Trash2 size={14} />
-                  {confirmDelete ? t("workflow.confirmDeleteWorkflow") : t("workflow.deleteWorkflow")}
-                </Button>
-              </>
-            )}
-          </div>
-          {deleteError && <p className="text-sm text-danger">{t("workflow.deleteFailed")}</p>}
+        </header>
+
+        <div className="flex flex-wrap items-center gap-0.5 border-y border-border-soft py-1.5">
+          <LikeButton id={workflow.id} likeCount={workflow.likeCount} contentType="workflow" size={18} />
+          <CommentCountLink workflowId={workflow.id} baseCount={workflow.commentCount} size={18} />
+          <SaveButton workflowId={workflow.id} size={18} />
+          <span className="ml-auto" />
+          <ShareTriggerButton target={{ contentType: "workflow", workflow }} label={t("common.share")} />
         </div>
-      </header>
+
+        {workflow.coverUrl && (
+          // eslint-disable-next-line @next/next/no-img-element -- real local data-URL cover
+          <img src={workflow.coverUrl} alt="" className="aspect-video w-full rounded-lg border border-border-soft object-cover" />
+        )}
+
+        <div className="flex flex-wrap items-center gap-1.5">
+          {workflow.contentTypes.map((type) => {
+            const Icon = CONTENT_TYPE_META[type].icon;
+            return (
+              <span key={type} className="inline-flex h-6 items-center gap-1 rounded-full bg-surface-soft px-2.5 text-caption font-medium text-text-secondary">
+                <Icon size={11} />
+                {t(CONTENT_TYPE_META[type].labelKey)}
+              </span>
+            );
+          })}
+          <span className="text-caption text-text-muted">{t("workflow.stepCount", { count: String(steps.length) })}</span>
+        </div>
+        <ToolLine label={t("tool.recommendedLabel")} refs={workflow.tools} />
+
+        {workflow.tags.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {workflow.tags.map((tag) => (
+              <Link
+                key={tag.slug}
+                href={tagHref(tag)}
+                className="inline-flex h-7 items-center rounded-full border border-border-soft bg-surface px-2.5 text-caption font-medium text-text-secondary transition-colors hover:border-primary/40 hover:text-primary"
+              >
+                #{tag.label}
+              </Link>
+            ))}
+          </div>
+        )}
 
       <section aria-labelledby="workflow-steps-heading" className="space-y-1">
         <h2 id="workflow-steps-heading" className="mb-3 text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">
@@ -216,6 +224,11 @@ export function WorkflowDetailView() {
           })}
         </ol>
       </section>
+
+        <section id="comments" className="scroll-mt-20 rounded-lg border border-border-soft bg-surface p-4 sm:p-5">
+          <CommentSection target={{ workflowId: workflow.id }} highlightCommentId={highlightCommentId} />
+        </section>
+      </article>
     </div>
   );
 }
