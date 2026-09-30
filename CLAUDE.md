@@ -11355,14 +11355,24 @@ buraya bakılmalı):
    `generators.ts`, `messages.ts`, `image-analysis.ts` (+ `FRIENDLY_
    MESSAGES` sabitinin `friendlyMessages()` fonksiyonuna çevrilmesi —
    yukarıdaki "modül-seviyeli statik sabit tuzağı" notu).
-9. [ ] **Kalan `formatRelativeTime` çağrı yerlerinin `language` parametresi
-   eksikliği için son bir tarama** — bu görev boyunca fırsat buldukça
-   (Generator/Mesajlaşma/Bildirim alt sistemlerinde) düzeltildi, ama
-   `lib/supabase`/Koleksiyonlar/Auth taramaları sırasında `formatRelativeTime`
-   kullanan YENİ bir çağrı yeri bulunmadı — yine de repo genelinde tek,
-   kapsamlı bir `grep -rn "formatRelativeTime("` taraması yapılıp HİÇBİR
-   çağrının `language` argümanını unutmadığı doğrulanmadı; bu adım henüz
-   TAMAMLANMADI.
+9. [x] **Kalan `formatRelativeTime` çağrı yerlerinin `language` parametresi
+   eksikliği için son tarama** — repo genelinde `grep -rn "formatRelativeTime("`
+   ile bulunan TÜM 15 çağrı yeri (`generator-detail-view.tsx`,
+   `notification-row.tsx`, `edit-history-panel.tsx` ×2, `result-detail-
+   view.tsx`, `prompt-detail-view.tsx`, `prompt-history-panel.tsx`,
+   `result-card.tsx`, `edit-suggestions-panel.tsx`, `comment-node.tsx`,
+   `post-header.tsx`, `request-detail-view.tsx`, `request-card.tsx`,
+   `message-bubble.tsx`, `conversation-row.tsx`) kontrol edildi — HEPSİ
+   zaten `language` argümanını doğru geçiriyor (bu görev boyunca fırsat
+   buldukça alt sistem taramalarında düzeltilmişti, bu son tarama sıfır
+   yeni düzeltme gerektirdi, yalnızca doğruladı). `formatRelativeTime`'ın
+   kendisi `language: Language = "tr"` varsayılan parametresi taşıdığından
+   (eksik bir çağrı `tsc` hatası ÜRETMEZ, sessizce Türkçeye düşer) bu
+   tarama `tsc`'ye güvenmeden, doğrudan grep ile yapıldı. `formatJoinDate`
+   (profile-about.tsx) varsayılansız/zorunlu bir `language` parametresi
+   kullanıyor — `tsc` zaten her çağrı yerini garanti ediyor. Diğer
+   `lib/utils.ts` biçimlendiricileri (`formatCount`) dile duyarlı değil,
+   kapsam dışı.
 10. [ ] **Repo geneli son Türkçe grep taraması + build doğrulaması** —
     ÖNEMLİ METODOLOJİ NOTU: yalnızca Türkçe'ye özgü karakterlere
     ([çğıöşüÇĞİÖŞÜ]) bakan bir grep, tamamen ASCII harflerden oluşan
