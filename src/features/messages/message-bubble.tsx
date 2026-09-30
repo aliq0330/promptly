@@ -144,7 +144,12 @@ export function MessageBubble({
   const iconsRef = useRef<HTMLDivElement>(null);
 
   const myReaction = currentUserId ? (reactions.find((r) => r.userId === currentUserId)?.emoji ?? null) : null;
-  const isRevealed = isActive || menuOpen || emojiOpen;
+  // Tailwind's `group-hover:` only fires under `@media (hover: hover)`, which
+  // touch-primary devices with a trackpad/mouse attached (iPad) report as
+  // false — so hover is tracked with pointer events instead, ignoring real
+  // touch pointers (those keep the tap-to-reveal behaviour via `isActive`).
+  const [isHovered, setIsHovered] = useState(false);
+  const isRevealed = isActive || menuOpen || emojiOpen || isHovered;
 
   function handleReactSelect(emoji: string) {
     onReact(message.id, emoji);
@@ -163,7 +168,7 @@ export function MessageBubble({
       onClick={(event) => event.stopPropagation()}
       className={cn(
         "flex shrink-0 items-center gap-0.5 transition-opacity",
-        isRevealed ? "opacity-100" : "opacity-0 group-hover:opacity-100 focus-within:opacity-100",
+        isRevealed ? "opacity-100" : "opacity-0 focus-within:opacity-100",
       )}
     >
       <div className="relative">
@@ -226,6 +231,10 @@ export function MessageBubble({
       data-message-id={message.id}
       data-message-wrapper
       onClick={() => onActivate(isActive ? null : message.id)}
+      onPointerEnter={(event) => {
+        if (event.pointerType !== "touch") setIsHovered(true);
+      }}
+      onPointerLeave={() => setIsHovered(false)}
       className={cn(
         "group flex flex-col rounded-md transition-colors duration-700",
         isMe ? "items-end" : "items-start",

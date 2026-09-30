@@ -1,59 +1,26 @@
 "use client";
 
 import { Suspense } from "react";
-import { useSearchParams } from "next/navigation";
-import { ConversationList } from "@/features/messages/conversation-list";
-import { useRealMessages } from "@/features/messages/real-messages-provider";
+import { MessageCircle } from "lucide-react";
+import { ConversationsPane } from "@/features/messages/conversations-pane";
 import { useTranslation } from "@/lib/i18n/language-provider";
 
 function MessagesPageInner() {
   const { t } = useTranslation();
-  const { conversations } = useRealMessages();
-  const searchParams = useSearchParams();
-  const sharePromptId = searchParams.get("sharePromptId");
-  const shareRequestId = searchParams.get("shareRequestId");
-  // A generator has no rich embed in the messages schema (Bölüm 9.52's own
-  // "no new messaging table/column" rule) — it rides this exact same
-  // conversation-picker screen anyway, purely via a client-side query
-  // param, and turns into a plain-text message (title + link) once a
-  // conversation is picked (see `LocalConversationView`).
-  const shareGeneratorId = searchParams.get("shareGeneratorId");
-  const isSharing = Boolean(sharePromptId || shareRequestId || shareGeneratorId);
-  const shareQuery = sharePromptId
-    ? `sharePromptId=${sharePromptId}`
-    : shareRequestId
-      ? `shareRequestId=${shareRequestId}`
-      : shareGeneratorId
-        ? `shareGeneratorId=${shareGeneratorId}`
-        : undefined;
-
-  const accepted = conversations.filter((c) => c.myStatus === "accepted");
-  const pending = conversations.filter((c) => c.myStatus === "pending");
-
   return (
-    <div className="mx-auto w-full max-w-3xl px-3 py-5 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
-      <h1 className="mb-4 text-h1 font-semibold text-text">{t("header.messagesAriaLabel")}</h1>
-      {isSharing && (
-        <p className="mb-4 rounded-md bg-accent-surface/60 px-3 py-2 text-sm text-text">
-          {t("messages.pickAConversationBody")}
-        </p>
-      )}
-      {pending.length > 0 && (
-        <div className="mb-6">
-          <h2 className="mb-2 text-h3 font-semibold text-text">{t("messages.messageRequestsHeading")} ({pending.length})</h2>
-          <p className="mb-2 text-xs text-text-muted">
-            {t("messages.messageRequestsHint")}
-          </p>
-          <ConversationList conversations={pending} shareQuery={shareQuery} />
-        </div>
-      )}
-      {pending.length > 0 && accepted.length > 0 && (
-        <h2 className="mb-2 text-h3 font-semibold text-text">{t("messages.chatsHeading")}</h2>
-      )}
-      {(accepted.length > 0 || pending.length === 0) && (
-        <ConversationList conversations={accepted} shareQuery={shareQuery} />
-      )}
-    </div>
+    <>
+      {/* Phone: the list is the whole page. On tablet/desktop the layout
+          already shows it in the left pane, so this side is the "no chat
+          selected" placeholder instead. */}
+      <div className="md:hidden">
+        <ConversationsPane />
+      </div>
+      <div className="hidden h-full flex-col items-center justify-center gap-2 px-6 text-center md:flex">
+        <MessageCircle size={40} className="text-text-muted" strokeWidth={1.5} />
+        <h2 className="text-h3 font-semibold text-text">{t("messages.selectConversationTitle")}</h2>
+        <p className="max-w-xs text-sm text-text-muted">{t("messages.selectConversationBody")}</p>
+      </div>
+    </>
   );
 }
 

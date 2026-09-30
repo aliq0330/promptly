@@ -1069,6 +1069,10 @@ export const translations = {
   "messages.messageRequestsHeading": { tr: "Mesaj İstekleri", en: "Message Requests" },
   "messages.messageRequestsHint": { tr: "Seni takip etmeyen kişilerden gelen mesajlar burada bekler — açıp yanıtlarsan otomatik kabul edilir.", en: "Messages from people who don't follow you wait here — opening and replying accepts them automatically." },
   "messages.chatsHeading": { tr: "Sohbetler", en: "Chats" },
+  "messages.searchConversations": { tr: "Sohbetlerde ara", en: "Search conversations" },
+  "messages.noConversationMatches": { tr: "Aramanla eşleşen sohbet yok.", en: "No conversations match your search." },
+  "messages.selectConversationTitle": { tr: "Bir sohbet seç", en: "Select a conversation" },
+  "messages.selectConversationBody": { tr: "Soldaki listeden bir kişi seçerek mesajlaşmaya başla.", en: "Pick someone from the list to start chatting." },
 
   // ---- Notifications ----
   "notifications.markAllRead": { tr: "Tümünü okundu işaretle", en: "Mark all as read" },

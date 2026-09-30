@@ -2,17 +2,20 @@
 
 import Link from "next/link";
 import { Avatar } from "@/components/ui/avatar";
-import { formatRelativeTime, messageHref } from "@/lib/utils";
+import { cn, formatRelativeTime, messageHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Conversation } from "@/types";
 
 export function ConversationRow({
   conversation,
   shareQuery,
+  isActive,
 }: {
   conversation: Conversation;
   /** Set by `/messages?sharePromptId=`/`?shareRequestId=` — appended so picking this conversation attaches the shared content there. */
   shareQuery?: string;
+  /** The conversation currently open beside the list (tablet/desktop two-pane view). */
+  isActive?: boolean;
 }) {
   const { t, language } = useTranslation();
   const participant = conversation.participants[0];
@@ -20,7 +23,11 @@ export function ConversationRow({
   return (
     <Link
       href={shareQuery ? `${messageHref(conversation)}&${shareQuery}` : messageHref(conversation)}
-      className="flex items-center gap-3 border-b border-border px-4 py-3 transition-colors last:border-0 hover:bg-accent-surface/40"
+      aria-current={isActive ? "page" : undefined}
+      className={cn(
+        "flex items-center gap-3 border-b border-border px-4 py-3 transition-colors last:border-0 hover:bg-accent-surface/40",
+        isActive && "bg-primary-soft hover:bg-primary-soft",
+      )}
     >
       <Avatar
         src={participant?.avatarUrl}
