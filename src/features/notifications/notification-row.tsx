@@ -4,6 +4,7 @@ import Link from "next/link";
 import { X } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { NOTIFICATION_ICONS, getNotificationIconKey } from "@/lib/notification-utils";
+import { localizeNotificationMessage } from "@/lib/notification-message";
 import { cn, formatRelativeTime } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { AppNotification } from "@/types";
@@ -58,7 +59,7 @@ export function NotificationRow({ notification, onRead, onDelete }: Notification
           {notification.actor && (
             <span className="font-semibold">{notification.actor.displayName} </span>
           )}
-          <span className="text-text-muted">{notification.message}</span>
+          <span className="text-text-muted">{localizeNotificationMessage(notification.message, language, t)}</span>
         </p>
         <span className="text-xs text-text-muted">{formatRelativeTime(notification.createdAt, language)}</span>
       </div>
