@@ -1,7 +1,7 @@
 "use client";
 import { ToolPicker } from "@/features/content/tool-picker";
 
-import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Blocks, Copy, X } from "lucide-react";
@@ -16,6 +16,8 @@ import { useRealRequests } from "@/features/requests/real-requests-provider";
 import { useTagCatalog } from "@/features/tags/use-tag-catalog";
 import { useTagPicker } from "@/features/prompts/use-tag-picker";
 import { TagPicker } from "@/features/prompts/tag-picker";
+import { ExtraSettingsSection } from "@/features/prompts/extra-settings-panel";
+import { composePrompt, groupIdsFor, groupsFor, sanitizeSelection, type SettingSelection } from "@/lib/prompt-extra-settings";
 import { PromptTextEditor, type DraftVariable } from "@/features/prompts/prompt-text-editor";
 import { PromptVisionAssist } from "@/features/prompts/prompt-vision-assist";
 import { fetchVariablesForPrompt, replaceVariablesForPrompt } from "@/lib/supabase/prompt-variables";
@@ -201,6 +203,17 @@ export function CreatePromptForm() {
   // Legacy free-text tool: only carried through unchanged; the picker below writes `tools`.
   const [tool, setTool] = useState("");
   const [tools, setTools] = useState<string[]>([]);
+  // "Ek Ayar Önerileri": the textarea stays the ORIGINAL text; the selection is
+  // kept separately and only composed into what is saved/previewed.
+  const [extraSettings, setExtraSettings] = useState<SettingSelection>({});
+  const extraGroups = useMemo(
+    () => groupsFor(groupIdsFor(contentType, category, subcategory, tools)),
+    [contentType, category, subcategory, tools],
+  );
+  const finalPromptText = useMemo(
+    () => composePrompt(promptText, sanitizeSelection(extraSettings, extraGroups), extraGroups),
+    [promptText, extraSettings, extraGroups],
+  );
   // CLAUDE.md §12: answering a request must NOT just copy the request's own
   // tags — they're only passed as soft `contextTags` (nudge into the
   // `suggested` tier, never auto-accepted); the answer's own title/prompt
@@ -390,7 +403,7 @@ export function CreatePromptForm() {
         const updated = await updatePrompt(editingPrompt.id, {
           title,
           description,
-          promptText,
+          promptText: finalPromptText,
           tool: tool || null,
           tools,
           category,
@@ -416,7 +429,7 @@ export function CreatePromptForm() {
         {
           title,
           description,
-          promptText,
+          promptText: finalPromptText,
           tool: tool || null,
           tools,
           contentType,
@@ -461,7 +474,7 @@ export function CreatePromptForm() {
     },
     title: title || t("prompt.untitledPrompt"),
     description: description || t("prompt.noDescriptionAdded"),
-    promptText: promptText || t("prompt.promptTextPlaceholderPreview"),
+    promptText: promptText ? finalPromptText : t("prompt.promptTextPlaceholderPreview"),
     tool: tool || null,
           tools,
     contentType,
@@ -700,6 +713,7 @@ export function CreatePromptForm() {
           <TaxonomyPicker
             value={{ contentType, category, subcategory }}
             onChange={(next) => {
+              if (next.contentType !== contentType) setExtraSettings({});
               setContentType(next.contentType);
               setCategory(next.category);
               setSubcategory(next.subcategory);
@@ -780,6 +794,15 @@ export function CreatePromptForm() {
               placeholder={t("prompt.promptTextPlaceholder")}
             />
           </div>
+
+          <ExtraSettingsSection
+            contentType={contentType}
+            groups={extraGroups}
+            value={extraSettings}
+            onChange={setExtraSettings}
+            promptText={promptText}
+            hasTool={tools.length > 0}
+          />
 
           {generatorRun?.generatedNegativePrompt && (
             <NegativePromptReference text={generatorRun.generatedNegativePrompt} />
