@@ -1,4 +1,5 @@
 import { supabase } from "./client";
+import { withoutBlocked } from "./blocked-users";
 import { translateForRuntime } from "@/lib/i18n/translations";
 import { mapProfileRow, type ProfileRow } from "./mappers";
 import type { PromptComment } from "@/types";
@@ -48,7 +49,7 @@ export async function fetchCommentsForPrompt(promptId: string): Promise<PromptCo
       console.error("fetchCommentsForPrompt", error);
       return [];
     }
-    return ((data ?? []) as unknown as CommentRow[]).map((row) => mapCommentRow(row, { promptId }));
+    return withoutBlocked(((data ?? []) as unknown as CommentRow[]).map((row) => mapCommentRow(row, { promptId })), (c) => c.author.id);
   } catch (err) {
     console.error("fetchCommentsForPrompt", err);
     return [];
@@ -67,7 +68,7 @@ export async function fetchCommentsForRequest(requestId: string): Promise<Prompt
       console.error("fetchCommentsForRequest", error);
       return [];
     }
-    return ((data ?? []) as unknown as CommentRow[]).map((row) => mapCommentRow(row, { requestId }));
+    return withoutBlocked(((data ?? []) as unknown as CommentRow[]).map((row) => mapCommentRow(row, { requestId })), (c) => c.author.id);
   } catch (err) {
     console.error("fetchCommentsForRequest", err);
     return [];
@@ -86,7 +87,7 @@ export async function fetchCommentsForGenerator(generatorId: string): Promise<Pr
       console.error("fetchCommentsForGenerator", error);
       return [];
     }
-    return ((data ?? []) as unknown as CommentRow[]).map((row) => mapCommentRow(row, { generatorId }));
+    return withoutBlocked(((data ?? []) as unknown as CommentRow[]).map((row) => mapCommentRow(row, { generatorId })), (c) => c.author.id);
   } catch (err) {
     console.error("fetchCommentsForGenerator", err);
     return [];
@@ -153,7 +154,7 @@ export async function fetchCommentsForResult(resultId: string): Promise<PromptCo
       console.error("fetchCommentsForResult", error);
       return [];
     }
-    return ((data ?? []) as unknown as CommentRow[]).map((row) => mapCommentRow(row, { resultId }));
+    return withoutBlocked(((data ?? []) as unknown as CommentRow[]).map((row) => mapCommentRow(row, { resultId })), (c) => c.author.id);
   } catch (err) {
     console.error("fetchCommentsForResult", err);
     return [];
@@ -188,7 +189,7 @@ export async function fetchCommentsForWorkflow(workflowId: string): Promise<Prom
       console.error("fetchCommentsForWorkflow", error);
       return [];
     }
-    return ((data ?? []) as unknown as CommentRow[]).map((row) => mapCommentRow(row, { workflowId }));
+    return withoutBlocked(((data ?? []) as unknown as CommentRow[]).map((row) => mapCommentRow(row, { workflowId })), (c) => c.author.id);
   } catch (err) {
     console.error("fetchCommentsForWorkflow", err);
     return [];

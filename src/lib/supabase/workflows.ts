@@ -1,4 +1,5 @@
 import { supabase } from "./client";
+import { withoutBlocked } from "./blocked-users";
 import { PROFILE_SELECT } from "./profiles";
 import { mapProfileRow, type ProfileRow } from "./mappers";
 import { PROMPT_SELECT, mapPromptRow, type PromptRow } from "./prompts";
@@ -84,7 +85,7 @@ export async function fetchRecentWorkflows(limit = 40): Promise<Workflow[]> {
       console.error("fetchRecentWorkflows", error);
       return [];
     }
-    return (data ?? []).map((row) => mapWorkflowRow(row as unknown as WorkflowRow));
+    return withoutBlocked((data ?? []).map((row) => mapWorkflowRow(row as unknown as WorkflowRow)), (w) => w.creator.id);
   } catch (err) {
     console.error("fetchRecentWorkflows", err);
     return [];
@@ -115,7 +116,7 @@ export async function searchWorkflows(query: string, filters: ContentSearchFilte
       console.error("searchWorkflows", error);
       return [];
     }
-    return (data ?? []).map((row) => mapWorkflowRow(row as unknown as WorkflowRow));
+    return withoutBlocked((data ?? []).map((row) => mapWorkflowRow(row as unknown as WorkflowRow)), (w) => w.creator.id);
   } catch (err) {
     console.error("searchWorkflows", err);
     return [];
