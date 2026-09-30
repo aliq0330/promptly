@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Blocks, Heart, SearchX, Sparkles, Workflow as WorkflowIcon } from "lucide-react";
 import { ProfileHeader } from "./profile-header";
 import { ProfileTabs, type ProfileTabKey } from "./profile-tabs";
+import { Tabs } from "@/components/ui/tabs";
 import { ProfileToolbar, type ProfileSortKey } from "./profile-toolbar";
 import { ProfileContentGrid } from "./profile-content-grid";
 import { ProfileEmptyState } from "./profile-empty-state";
@@ -19,6 +20,8 @@ import { fetchLikedPrompts } from "@/lib/supabase/prompts";
 import { fetchWorkflowsByCreator } from "@/lib/supabase/workflows";
 import { WorkflowCard } from "@/features/workflows/workflow-card";
 import type { Generator, Prompt, PromptContentType, PromptRequest, UserProfile, Workflow } from "@/types";
+
+type PostKind = "prompts" | "requests" | "generators" | "workflows";
 
 function sortPrompts(prompts: Prompt[], sort: ProfileSortKey): Prompt[] {
   const sorted = [...prompts];
@@ -106,17 +109,36 @@ export function ProfileView({
     };
   }, [user.id]);
 
-  const [activeTab, setActiveTab] = useState<ProfileTabKey>("prompts");
+  const [activeTab, setActiveTab] = useState<ProfileTabKey>("posts");
+  const [postKind, setPostKind] = useState<PostKind>("prompts");
   const [activeType, setActiveType] = useState<PromptContentType | "all">("all");
   const [sort, setSort] = useState<ProfileSortKey>("newest");
   const [search, setSearch] = useState("");
 
+  // Published posts only — an owner's drafts (visible to them via RLS) aren't "posts" yet.
+  const postCounts = useMemo(
+    () => ({
+      prompts: authorPrompts.length,
+      requests: authorRequests.length,
+      generators: authorGenerators.filter((g) => g.status === "published").length,
+      workflows: workflows.filter((w) => w.status === "published").length,
+    }),
+    [authorPrompts.length, authorRequests.length, authorGenerators, workflows],
+  );
+
+  const postKindTabs = useMemo(
+    () => [
+      { key: "prompts" as const, label: t("feed.filterPrompts"), count: postCounts.prompts },
+      { key: "requests" as const, label: t("nav.requests"), count: postCounts.requests },
+      { key: "generators" as const, label: t("nav.generators"), count: postCounts.generators },
+      { key: "workflows" as const, label: t("nav.workflows"), count: postCounts.workflows },
+    ],
+    [postCounts, t],
+  );
+
   const tabs = useMemo(() => {
     const base: { key: ProfileTabKey; label: string; count?: number }[] = [
-      { key: "prompts", label: t("feed.filterPrompts"), count: authorPrompts.length },
-      { key: "requests", label: t("nav.requests"), count: authorRequests.length },
-      { key: "generators", label: t("nav.generators"), count: authorGenerators.length },
-      { key: "workflows", label: t("nav.workflows"), count: workflows.length },
+      { key: "posts", label: t("profile.tabPosts"), count: postCounts.prompts + postCounts.requests + postCounts.generators + postCounts.workflows },
     ];
     if (isOwnProfile) {
       // "Kaydedilenler" has no single flat count anymore — it's a list of
@@ -125,13 +147,12 @@ export function ProfileView({
     }
     base.push({ key: "about", label: t("profile.tabAbout") });
     return base;
-  }, [authorPrompts.length, authorRequests.length, authorGenerators.length, workflows.length, isOwnProfile, likedPrompts.length, t]);
+  }, [postCounts, isOwnProfile, likedPrompts.length, t]);
 
   const activeSource = useMemo(() => {
     switch (activeTab) {
       case "liked":
         return likedPrompts;
-      case "prompts":
       default:
         return authorPrompts;
     }
@@ -173,16 +194,19 @@ export function ProfileView({
       <ProfileHeader
         user={user}
         isOwnProfile={isOwnProfile}
-        publishedPromptCount={authorPrompts.length}
-        onSelectPrompts={() => setActiveTab("prompts")}
+        postCounts={postCounts}
+        onSelectPosts={() => setActiveTab("posts")}
       />
 
       <ProfileTabs tabs={tabs} active={activeTab} onChange={setActiveTab} />
 
       <div className="space-y-4">
+        {activeTab === "posts" && (
+          <Tabs items={postKindTabs} active={postKind} onChange={setPostKind} ariaLabel={t("profile.postKindsAriaLabel")} variant="segmented" />
+        )}
         {activeTab === "about" ? (
           <ProfileAbout user={user} />
-        ) : activeTab === "requests" ? (
+        ) : activeTab === "posts" && postKind === "requests" ? (
           authorRequests.length === 0 ? (
             <ProfileEmptyState
               icon={Sparkles}
@@ -197,7 +221,7 @@ export function ProfileView({
           ) : (
             <RequestList requests={authorRequests} />
           )
-        ) : activeTab === "generators" ? (
+        ) : activeTab === "posts" && postKind === "generators" ? (
           authorGenerators.length === 0 ? (
             <ProfileEmptyState
               icon={Blocks}
@@ -218,7 +242,7 @@ export function ProfileView({
               ))}
             </div>
           )
-        ) : activeTab === "workflows" ? (
+        ) : activeTab === "posts" && postKind === "workflows" ? (
           workflows.length === 0 ? (
             <ProfileEmptyState
               icon={WorkflowIcon}
@@ -261,7 +285,7 @@ export function ProfileView({
 
             <ProfileContentGrid
               prompts={filtered}
-              isOwnProfile={isOwnProfile && activeTab === "prompts"}
+              isOwnProfile={isOwnProfile && activeTab === "posts"}
               onDeleted={handleDeleted}
               emptyState={
                 hasActiveFilters ? (

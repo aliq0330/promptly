@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Blocks, Sparkles, SquareTerminal } from "lucide-react";
+import { ArrowRight, Blocks, Sparkles, SquareTerminal, Workflow } from "lucide-react";
+import { ContributionMap } from "@/features/profile/contribution-map";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
 
@@ -36,19 +37,26 @@ const OPTIONS = [
     bodyKey: "create.requestBody" as TranslationKey,
     hintKey: "create.requestHint" as TranslationKey,
   },
+  {
+    href: "/workflows/create",
+    icon: Workflow,
+    titleKey: "create.workflowTitle" as TranslationKey,
+    bodyKey: "create.workflowBody" as TranslationKey,
+    hintKey: "create.workflowHint" as TranslationKey,
+  },
 ] as const;
 
 export function CreateChoice() {
   const { t } = useTranslation();
   return (
-    <div className="mx-auto w-full max-w-4xl px-3 py-8 sm:px-5 sm:py-12 lg:px-8">
+    <div className="mx-auto w-full max-w-5xl px-3 py-8 sm:px-5 sm:py-12 lg:px-8">
       <div className="mb-8 space-y-2 text-center">
         <p className="text-caption font-semibold uppercase tracking-[0.08em] text-primary">{t("create.eyebrow")}</p>
         <h1 className="text-h1 font-semibold text-text">{t("create.title")}</h1>
         <p className="mx-auto max-w-lg text-small text-text-muted">{t("create.subtitle")}</p>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-3 sm:gap-4">
+      <div className="grid gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
         {OPTIONS.map((option) => (
           <Link
             key={option.href}
@@ -66,6 +74,10 @@ export function CreateChoice() {
             <span className="mt-auto pt-1 text-caption font-medium text-text-secondary">{t(option.hintKey)}</span>
           </Link>
         ))}
+      </div>
+
+      <div className="mt-8">
+        <ContributionMap />
       </div>
     </div>
   );
