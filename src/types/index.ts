@@ -591,3 +591,64 @@ export interface Message {
   deletedAt: string | null;
   createdAt: string;
 }
+
+/* ---------------------------------------------------------------------- */
+/* Workflows — see supabase/migrations/20260919470000_workflows.sql        */
+/* ---------------------------------------------------------------------- */
+
+export type WorkflowStepType = "prompt" | "generator" | "request";
+
+/** One named input or output of a step. */
+export interface WorkflowIO {
+  id: string;
+  label: string;
+}
+
+/** An input, optionally fed by an EARLIER step's output. */
+export interface WorkflowInput extends WorkflowIO {
+  source: { stepId: string; outputId: string } | null;
+}
+
+/** Light summary of the prompt / generator / request a step points to (never a copy). */
+export interface WorkflowContentRef {
+  type: WorkflowStepType;
+  id: string;
+  title: string;
+  contentType: PromptContentType | null;
+  category: string | null;
+  authorName: string;
+  authorUsername: string;
+  thumbnailUrl: string | null;
+  /** false for an unpublished generator/draft — others can't open it. */
+  published: boolean;
+  href: string;
+}
+
+export interface WorkflowStep {
+  id: string;
+  title: string;
+  description: string;
+  instructions: string;
+  stepType: WorkflowStepType;
+  /** null while the step has no content yet (or its content was deleted — see `contentMissing`). */
+  content: WorkflowContentRef | null;
+  /** The step referenced content that no longer exists / isn't visible. */
+  contentMissing: boolean;
+  inputs: WorkflowInput[];
+  outputs: WorkflowIO[];
+}
+
+export interface Workflow {
+  id: string;
+  creator: UserProfile;
+  title: string;
+  description: string;
+  coverUrl: string | null;
+  contentTypes: PromptContentType[];
+  category: string | null;
+  tools: string[];
+  status: "draft" | "published";
+  stepCount: number;
+  createdAt: string;
+  updatedAt: string;
+}

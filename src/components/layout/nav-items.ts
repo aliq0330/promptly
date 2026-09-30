@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { Blocks, Bookmark, Compass, Hash, Home, Plus, Settings, Sparkles, User, Users } from "lucide-react";
+import { Blocks, Bookmark, Compass, Hash, Home, Plus, Settings, Sparkles, User, Users, Workflow } from "lucide-react";
 import type { TranslationKey } from "@/lib/i18n/translations";
 
 export interface NavItem {
@@ -30,6 +30,7 @@ export const navGroups: NavGroup[] = [
       { href: "/", labelKey: "nav.home", icon: Home },
       { href: "/discover", labelKey: "nav.discover", icon: Compass },
       { href: "/generators", labelKey: "nav.generators", icon: Blocks },
+      { href: "/workflows", labelKey: "nav.workflows", icon: Workflow },
       { href: "/requests", labelKey: "nav.requests", icon: Sparkles },
       { href: "/tags", labelKey: "nav.tags", icon: Hash },
     ],

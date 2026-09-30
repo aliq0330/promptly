@@ -3,7 +3,7 @@
 import { PageContainer } from "@/components/ui/page-header";
 
 import { useEffect, useMemo, useState } from "react";
-import { Blocks, Heart, SearchX, Sparkles } from "lucide-react";
+import { Blocks, Heart, SearchX, Sparkles, Workflow as WorkflowIcon } from "lucide-react";
 import { ProfileHeader } from "./profile-header";
 import { ProfileTabs, type ProfileTabKey } from "./profile-tabs";
 import { ProfileToolbar, type ProfileSortKey } from "./profile-toolbar";
@@ -16,7 +16,9 @@ import { GeneratorCard } from "@/features/generators/generator-card";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { fetchLikedPrompts } from "@/lib/supabase/prompts";
-import type { Generator, Prompt, PromptContentType, PromptRequest, UserProfile } from "@/types";
+import { fetchWorkflowsByCreator } from "@/lib/supabase/workflows";
+import { WorkflowCard } from "@/features/workflows/workflow-card";
+import type { Generator, Prompt, PromptContentType, PromptRequest, UserProfile, Workflow } from "@/types";
 
 function sortPrompts(prompts: Prompt[], sort: ProfileSortKey): Prompt[] {
   const sorted = [...prompts];
@@ -94,6 +96,16 @@ export function ProfileView({
     };
   }, [isOwnProfile, authUser]);
 
+  // RLS: a visitor gets this creator's published workflows, the owner their drafts too.
+  const [workflows, setWorkflows] = useState<Workflow[]>([]);
+  useEffect(() => {
+    let cancelled = false;
+    fetchWorkflowsByCreator(user.id).then((list) => !cancelled && setWorkflows(list));
+    return () => {
+      cancelled = true;
+    };
+  }, [user.id]);
+
   const [activeTab, setActiveTab] = useState<ProfileTabKey>("prompts");
   const [activeType, setActiveType] = useState<PromptContentType | "all">("all");
   const [sort, setSort] = useState<ProfileSortKey>("newest");
@@ -104,6 +116,7 @@ export function ProfileView({
       { key: "prompts", label: t("feed.filterPrompts"), count: authorPrompts.length },
       { key: "requests", label: t("nav.requests"), count: authorRequests.length },
       { key: "generators", label: t("nav.generators"), count: authorGenerators.length },
+      { key: "workflows", label: t("nav.workflows"), count: workflows.length },
     ];
     if (isOwnProfile) {
       // "Kaydedilenler" has no single flat count anymore — it's a list of
@@ -112,7 +125,7 @@ export function ProfileView({
     }
     base.push({ key: "about", label: t("profile.tabAbout") });
     return base;
-  }, [authorPrompts.length, authorRequests.length, authorGenerators.length, isOwnProfile, likedPrompts.length, t]);
+  }, [authorPrompts.length, authorRequests.length, authorGenerators.length, workflows.length, isOwnProfile, likedPrompts.length, t]);
 
   const activeSource = useMemo(() => {
     switch (activeTab) {
@@ -201,6 +214,23 @@ export function ProfileView({
               {authorGenerators.map((generator) => (
                 <div key={generator.id} className="mb-3 break-inside-avoid sm:mb-4">
                   <GeneratorCard generator={generator} onDeleted={() => handleGeneratorDeleted(generator.id)} />
+                </div>
+              ))}
+            </div>
+          )
+        ) : activeTab === "workflows" ? (
+          workflows.length === 0 ? (
+            <ProfileEmptyState
+              icon={WorkflowIcon}
+              title={t("workflow.noneYetTitle")}
+              description={isOwnProfile ? t("workflow.noneYetBody") : t("workflow.noneYetOtherBody")}
+              action={isOwnProfile ? { label: t("workflow.create"), href: "/workflows/create" } : undefined}
+            />
+          ) : (
+            <div className="columns-1 gap-3 sm:columns-2 sm:gap-4 xl:columns-3">
+              {workflows.map((workflow) => (
+                <div key={workflow.id} className="mb-3 break-inside-avoid sm:mb-4">
+                  <WorkflowCard workflow={workflow} />
                 </div>
               ))}
             </div>

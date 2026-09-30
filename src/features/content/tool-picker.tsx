@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { Check, Plus, Search, X } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
-import type { ContentTypeId } from "@/lib/content-taxonomy";
+import { CONTENT_TYPE_IDS, type ContentTypeId } from "@/lib/content-taxonomy";
 import {
   MAX_TOOLS,
   findTool,
@@ -28,12 +28,15 @@ export function ToolPicker({
   value,
   onChange,
   contentType,
+  contentTypes,
   category,
 }: {
   label: string;
   value: string[];
   onChange: (next: string[]) => void;
-  contentType: ContentTypeId;
+  /** One content type (forms) — or several (workflows, via `contentTypes`, which wins). */
+  contentType?: ContentTypeId;
+  contentTypes?: ContentTypeId[];
   category?: string | null;
 }) {
   const { t } = useTranslation();
@@ -76,7 +79,7 @@ export function ToolPicker({
       {open && (
         <ToolPickerModal
           initial={value}
-          contentType={contentType}
+          contentTypes={contentTypes?.length ? contentTypes : contentType ? [contentType] : []}
           category={category}
           onClose={() => setOpen(false)}
           onApply={(next) => {
@@ -91,13 +94,13 @@ export function ToolPicker({
 
 function ToolPickerModal({
   initial,
-  contentType,
+  contentTypes,
   category,
   onClose,
   onApply,
 }: {
   initial: string[];
-  contentType: ContentTypeId;
+  contentTypes: ContentTypeId[];
   category?: string | null;
   onClose: () => void;
   onApply: (next: string[]) => void;
@@ -105,10 +108,15 @@ function ToolPickerModal({
   const { t } = useTranslation();
   const [draft, setDraft] = useState<string[]>(initial);
   const [query, setQuery] = useState("");
-  const tools = useMemo(
-    () => searchTools(getToolsForContentType(contentType, category), query),
-    [contentType, category, query],
-  );
+  // No type chosen yet (a new workflow) → every type's tools, so the field is usable immediately.
+  const tools = useMemo(() => {
+    const types = contentTypes.length ? contentTypes : CONTENT_TYPE_IDS;
+    const seen = new Set<string>();
+    const all = types
+      .flatMap((type) => getToolsForContentType(type, category))
+      .filter((tool) => (seen.has(tool.id) ? false : (seen.add(tool.id), true)));
+    return searchTools(all, query);
+  }, [contentTypes, category, query]);
   // Keep already-selected tools that don't match the current type visible so they can be removed.
   const orphan = draft.filter((ref) => !tools.some((tool) => tool.id === parseToolRef(ref).toolId));
   const atMax = draft.length >= MAX_TOOLS;
