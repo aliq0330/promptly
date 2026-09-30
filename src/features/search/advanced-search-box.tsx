@@ -43,12 +43,15 @@ export function AdvancedSearchBox({
   text,
   onTextChange,
   autoFocus,
+  hideKindSuggestions,
 }: {
   tokens: SearchToken[];
   onTokensChange: (next: SearchToken[]) => void;
   text: string;
   onTextChange: (next: string) => void;
   autoFocus?: boolean;
+  /** Single-type list pages: the content-type (prompt/request/…) chips are pointless there. */
+  hideKindSuggestions?: boolean;
 }) {
   const { t } = useTranslation();
   const id = useId();
@@ -93,7 +96,7 @@ export function AdvancedSearchBox({
     if (!word.startsWith("@")) tags.forEach((tag) => out.push({ kind: "tag", tag }));
     if (!word.startsWith("@") && !word.startsWith("#")) {
       CONTENT_TYPE_IDS.filter((type) => matches(t(CONTENT_TYPE_META[type].labelKey))).forEach((type) => out.push({ kind: "media", type }));
-      (["prompt", "request", "generator", "workflow"] as ContentKind[])
+      (hideKindSuggestions ? [] : (["prompt", "request", "generator", "workflow"] as ContentKind[]))
         .filter((kind) => matches(t(KIND_LABEL[kind])))
         .forEach((kind) => out.push({ kind: "content", type: kind }));
       if (word) searchTools(AI_TOOLS.filter((tool) => tool.isActive), word).slice(0, 4).forEach((tool) => out.push({ kind: "tool", toolId: tool.id }));
@@ -101,7 +104,7 @@ export function AdvancedSearchBox({
     return out
       .filter((token) => !selected.has(tokenKey(token)))
       .sort((a, b) => GROUP_ORDER.indexOf(a.kind) - GROUP_ORDER.indexOf(b.kind));
-  }, [word, users, tags, selected, t]);
+  }, [word, users, tags, selected, t, hideKindSuggestions]);
 
   useEffect(() => {
     function handleOutside(event: MouseEvent) {
