@@ -1,12 +1,16 @@
+"use client";
+
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { BrandMark } from "@/components/layout/brand-mark";
+import { useTranslation } from "@/lib/i18n/language-provider";
 
 /**
  * Auth pages: a calm split on desktop (a short statement of what Promptly
  * is, beside the form) and a single centered form card on mobile.
  */
 export default function AuthGroupLayout({ children }: { children: ReactNode }) {
+  const { t } = useTranslation();
   return (
     <div className="flex min-h-screen bg-background">
       <aside className="relative hidden w-[44%] max-w-xl flex-col justify-between overflow-hidden border-r border-border-soft bg-surface p-10 lg:flex">
@@ -15,9 +19,9 @@ export default function AuthGroupLayout({ children }: { children: ReactNode }) {
           <span className="font-display text-[1.2rem] font-semibold tracking-tight text-text">Promptly</span>
         </Link>
         <div className="space-y-5">
-          <h2 className="text-display font-semibold text-text">Promptları keşfet, geliştir, paylaş.</h2>
+          <h2 className="text-display font-semibold text-text">{t("home.heroTitle")}</h2>
           <p className="max-w-sm text-body text-text-secondary">
-            Görsel, metin, kod, video ve müzik promptlarını paylaşan; generatorlarla yapılandırılmış prompt oluşturan bir topluluk.
+            {t("auth.taglineDescription")}
           </p>
           <div aria-hidden className="space-y-2 pt-2">
             {["cinematic portrait, neon rain, 85mm", "system: you are a senior reviewer…", "lo-fi hip hop, 80 bpm, vinyl crackle"].map(
@@ -34,7 +38,7 @@ export default function AuthGroupLayout({ children }: { children: ReactNode }) {
             )}
           </div>
         </div>
-        <p className="text-caption text-text-muted">Prompt topluluğu</p>
+        <p className="text-caption text-text-muted">{t("nav.tagline")}</p>
       </aside>
 
       <div className="flex flex-1 flex-col items-center justify-center px-4 py-12">

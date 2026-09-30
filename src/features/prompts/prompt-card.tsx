@@ -1,9 +1,12 @@
+"use client";
+
 import Image from "next/image";
 import { clampedAspectRatio } from "@/lib/placeholder-image";
 import { promptHref } from "@/lib/utils";
 import { ContentCard, ContentCardBody, ContentCardTitle } from "@/features/content/content-card";
 import { ContentTypeLabel } from "@/features/content/content-type-label";
 import { ContentTags } from "@/features/content/content-tags";
+import { useTranslation } from "@/lib/i18n/language-provider";
 import { CONTENT_TYPE_META } from "./content-type-meta";
 import { PostHeader } from "./post-header";
 import { GeneratorSourceContext, RequestResponseContext } from "./post-context";
@@ -35,6 +38,7 @@ export function PromptCard({
   /** Only passed by a collection's own detail page — see PostMenu. */
   collectionRemoval?: CollectionRemoval;
 }) {
+  const { t } = useTranslation();
   const meta = CONTENT_TYPE_META[prompt.contentType];
   const href = promptHref(prompt);
   const media = prompt.contentType === "image" ? prompt.media[0] : undefined;
@@ -45,7 +49,7 @@ export function PromptCard({
       <ContentCardBody>
         <PostHeader
           prompt={prompt}
-          subtitle={isResponse ? "Yanıt paylaştı" : undefined}
+          subtitle={isResponse ? t("prompt.sharedAReply") : undefined}
           onDeleted={onDeleted}
           collectionRemoval={collectionRemoval}
         />
@@ -56,7 +60,7 @@ export function PromptCard({
         {prompt.generatedFrom && <GeneratorSourceContext generatedFrom={prompt.generatedFrom} />}
 
         <div className="space-y-2">
-          <ContentTypeLabel icon={meta.icon} label={`${meta.label} Prompt`} detail={prompt.tool} />
+          <ContentTypeLabel icon={meta.icon} label={`${t(meta.labelKey)} Prompt`} detail={prompt.tool} />
           <ContentCardTitle href={href} title={prompt.title} description={prompt.description} />
         </div>
 
@@ -72,7 +76,7 @@ export function PromptCard({
               className="object-cover"
             />
             <figcaption className="absolute bottom-2 left-2 rounded-xs bg-black/55 px-1.5 py-0.5 text-caption font-medium text-white backdrop-blur-sm">
-              Çıktı
+              {t("prompt.output")}
             </figcaption>
           </figure>
         )}

@@ -17,6 +17,7 @@
  * the JSON output as-is (`generator-output.ts`'s `buildGeneratorOutput`).
  */
 
+import { translateForRuntime } from "@/lib/i18n/translations";
 import type { GeneratorField, GeneratorFieldCondition, GeneratorSchema, GeneratorValues } from "@/types";
 
 /** True when `field`'s one optional visibility condition is satisfied by the current runtime `values` — a field with no condition is always considered visible. */
@@ -62,33 +63,37 @@ export function validateGeneratorForPublish(title: string, description: string, 
   const issues: GeneratorValidationIssue[] = [];
 
   if (title.trim().length === 0) {
-    issues.push({ level: "error", message: "Generator başlığı boş olamaz." });
+    issues.push({ level: "error", message: translateForRuntime("field.validationTitleEmpty") });
   }
   if (description.trim().length === 0) {
-    issues.push({ level: "error", message: "Kısa açıklama boş olamaz." });
+    issues.push({ level: "error", message: translateForRuntime("field.validationDescriptionEmpty") });
   }
   if (schema.fields.length === 0) {
-    issues.push({ level: "error", message: "En az bir alan eklemelisin." });
+    issues.push({ level: "error", message: translateForRuntime("field.validationNoFields") });
   }
 
   const seenKeys = new Set<string>();
   for (const field of schema.fields) {
     if (seenKeys.has(field.key)) {
-      issues.push({ level: "error", message: `"${field.label}" alanının değişken adı (${field.key}) başka bir alanla aynı.`, fieldId: field.id });
+      issues.push({
+        level: "error",
+        message: translateForRuntime("field.validationDuplicateKey", { label: field.label, key: field.key }),
+        fieldId: field.id,
+      });
     }
     seenKeys.add(field.key);
 
     if (field.label.trim().length === 0) {
-      issues.push({ level: "error", message: "Bir alanın adı boş bırakılamaz.", fieldId: field.id });
+      issues.push({ level: "error", message: translateForRuntime("field.validationEmptyLabel"), fieldId: field.id });
     }
 
     if (["select", "multi_select", "radio"].includes(field.type) && field.options.length === 0) {
-      issues.push({ level: "error", message: `"${field.label}" için en az bir seçenek eklemelisin.`, fieldId: field.id });
+      issues.push({ level: "error", message: translateForRuntime("field.validationNeedsOption", { label: field.label }), fieldId: field.id });
     }
 
     const hasDefault = Array.isArray(field.defaultValue) ? field.defaultValue.length > 0 : field.defaultValue.trim().length > 0;
     if (field.required && !hasDefault) {
-      issues.push({ level: "warning", message: `"${field.label}" zorunlu ama varsayılan değeri yok.`, fieldId: field.id });
+      issues.push({ level: "warning", message: translateForRuntime("field.validationRequiredNoDefault", { label: field.label }), fieldId: field.id });
     }
   }
 

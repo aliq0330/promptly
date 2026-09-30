@@ -4,6 +4,7 @@ import { useState } from "react";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
+import { useTranslation } from "@/lib/i18n/language-provider";
 import type { DraftVariable } from "./prompt-text-editor";
 
 /**
@@ -46,6 +47,7 @@ export function AddVariableFromSelectionModal({
   onClose: () => void;
   onSubmit: (values: { defaultValue: string; description: string; replaceAll: boolean }) => void;
 }) {
+  const { t } = useTranslation();
   const [defaultValue, setDefaultValue] = useState(rawText);
   const [description, setDescription] = useState("");
   const [replaceAll, setReplaceAll] = useState(false);
@@ -67,12 +69,12 @@ export function AddVariableFromSelectionModal({
       >
         <div className="flex items-start justify-between gap-2">
           <h2 id="add-variable-modal-title" className="text-base font-semibold text-text">
-            Değişken Ekle
+            {t("variable.addTitle")}
           </h2>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Kapat"
+            aria-label={t("common.close")}
             className="rounded-md p-1 text-text-muted hover:bg-accent-surface hover:text-text"
           >
             <X size={18} />
@@ -82,7 +84,7 @@ export function AddVariableFromSelectionModal({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="add-variable-name" className="mb-1.5 block text-sm font-medium text-text">
-              Değişken Adı
+              {t("variable.nameLabel")}
             </label>
             <input
               id="add-variable-name"
@@ -94,20 +96,20 @@ export function AddVariableFromSelectionModal({
             />
             <p className="mt-1.5 font-mono text-xs text-primary">{`{${normalizedName}}`}</p>
             <p className="mt-1 text-xs text-text-muted">
-              Prompt metninden seçtiğin kelime/ifade — burada değiştirilemez.
+              {t("variable.nameFromSelectionHint")}
             </p>
           </div>
 
           {existingVariable ? (
             <div className="space-y-1.5 rounded-md border border-primary/30 bg-primary/5 p-3 text-sm">
-              <p className="font-medium text-primary">Bu isimde bir değişken zaten var</p>
+              <p className="font-medium text-primary">{t("variable.alreadyExistsTitle")}</p>
               <p className="text-xs text-text-muted">
-                Seçtiğin metin, mevcut <span className="font-mono">{`{${normalizedName}}`}</span> değişkenine
-                bağlanacak — yeni bir değişken oluşturulmayacak.
+                {t("variable.willLinkPrefix")} <span className="font-mono">{`{${normalizedName}}`}</span>{" "}
+                {t("variable.willLinkSuffix")}
               </p>
               {existingVariable.defaultValue && (
                 <p className="text-xs text-text-muted">
-                  Varsayılan değer: <span className="text-text">{existingVariable.defaultValue}</span>
+                  {t("variable.existingDefaultValue")} <span className="text-text">{existingVariable.defaultValue}</span>
                 </p>
               )}
             </div>
@@ -115,7 +117,7 @@ export function AddVariableFromSelectionModal({
             <>
               <div>
                 <label htmlFor="add-variable-default" className="mb-1.5 block text-sm font-medium text-text">
-                  Varsayılan Değer <span className="text-text-muted">(opsiyonel)</span>
+                  {t("variable.defaultValueLabel")} <span className="text-text-muted">({t("common.optional")})</span>
                 </label>
                 <input
                   id="add-variable-default"
@@ -127,14 +129,14 @@ export function AddVariableFromSelectionModal({
               </div>
               <div>
                 <label htmlFor="add-variable-description" className="mb-1.5 block text-sm font-medium text-text">
-                  Açıklama <span className="text-text-muted">(opsiyonel)</span>
+                  {t("variable.descriptionLabel")} <span className="text-text-muted">({t("common.optional")})</span>
                 </label>
                 <textarea
                   id="add-variable-description"
                   rows={2}
                   value={description}
                   onChange={(event) => setDescription(event.target.value)}
-                  placeholder="Örn. Sahnenin geçeceği ortamı belirt."
+                  placeholder={t("variable.descriptionPlaceholder")}
                   className="w-full resize-none rounded-md border border-border bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted"
                 />
               </div>
@@ -149,18 +151,15 @@ export function AddVariableFromSelectionModal({
                 onChange={(event) => setReplaceAll(event.target.checked)}
                 className="mt-0.5"
               />
-              <span>
-                Metinde &ldquo;{rawText}&rdquo; toplam {occurrenceCount} yerde geçiyor — tümünü bu değişkenle
-                değiştir.
-              </span>
+              <span>{t("variable.replaceAllOccurrences", { text: rawText, count: occurrenceCount })}</span>
             </label>
           )}
 
           <div className="flex justify-end gap-2 pt-1">
             <Button type="button" variant="ghost" onClick={onClose}>
-              Vazgeç
+              {t("common.cancel")}
             </Button>
-            <Button type="submit">{existingVariable ? "Bağla" : "Ekle"}</Button>
+            <Button type="submit">{existingVariable ? t("variable.link") : t("variable.add")}</Button>
           </div>
         </form>
       </div>

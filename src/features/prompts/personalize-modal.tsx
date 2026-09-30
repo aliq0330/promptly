@@ -4,6 +4,7 @@ import { useState } from "react";
 import { X } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
 import { resolvePromptText } from "@/lib/prompt-variables";
+import { useTranslation } from "@/lib/i18n/language-provider";
 import { CopyPromptButton } from "./copy-prompt-button";
 import type { PromptVariable } from "@/types";
 
@@ -26,6 +27,7 @@ export function PersonalizeModal({
   variables: PromptVariable[];
   onClose: () => void;
 }) {
+  const { t } = useTranslation();
   const defaults = Object.fromEntries(variables.map((variable) => [variable.name, variable.defaultValue]));
   const [values, setValues] = useState<Record<string, string>>(defaults);
 
@@ -40,12 +42,12 @@ export function PersonalizeModal({
       >
         <div className="flex items-start justify-between gap-2">
           <h2 id="personalize-modal-title" className="text-base font-semibold text-text">
-            Promptu Kişiselleştir
+            {t("prompt.customizePrompt")}
           </h2>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Kapat"
+            aria-label={t("common.close")}
             className="rounded-md p-1 text-text-muted hover:bg-accent-surface hover:text-text"
           >
             <X size={18} />
@@ -65,7 +67,7 @@ export function PersonalizeModal({
                   type="text"
                   value={values[variable.name] ?? ""}
                   onChange={(event) => setValues((prev) => ({ ...prev, [variable.name]: event.target.value }))}
-                  placeholder={variable.defaultValue || "Değer gir"}
+                  placeholder={variable.defaultValue || t("prompt.enterValue")}
                   className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted"
                 />
               </div>
@@ -76,13 +78,13 @@ export function PersonalizeModal({
                 onClick={() => setValues(defaults)}
                 className="text-xs font-medium text-primary hover:underline"
               >
-                Varsayılanlara dön
+                {t("prompt.resetToDefaults")}
               </button>
             )}
           </div>
 
           <div>
-            <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-text-muted">Önizleme</p>
+            <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-text-muted">{t("prompt.preview")}</p>
             <div className="whitespace-pre-wrap rounded-md border border-border bg-background px-3 py-2 font-mono text-sm text-text">
               {resolvedText}
             </div>
@@ -90,8 +92,8 @@ export function PersonalizeModal({
         </div>
 
         <div className="flex flex-wrap items-center gap-2 border-t border-border pt-3">
-          <CopyPromptButton text={resolvedText} label="Promptu Kopyala" size="md" />
-          <CopyPromptButton text={promptText} label="Şablonu Kopyala" size="md" />
+          <CopyPromptButton text={resolvedText} label={t("prompt.copyPrompt")} size="md" />
+          <CopyPromptButton text={promptText} label={t("prompt.copyTemplate")} size="md" />
         </div>
       </div>
     </Modal>

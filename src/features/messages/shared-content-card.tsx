@@ -11,6 +11,7 @@ import { useRealGenerators } from "@/features/generators/real-generators-provide
 import { fetchGeneratorBySlug } from "@/lib/supabase/generators";
 import { STATUS_LABELS, STATUS_VARIANTS } from "@/features/requests/request-card";
 import { generatorHref, promptHref, requestHref } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Generator, Prompt, PromptRequest } from "@/types";
 
 const CARD_CLASS =
@@ -18,6 +19,7 @@ const CARD_CLASS =
 
 /** A message's shared-prompt content card — a real prompt, or "Bu içerik artık mevcut değil" for one that's gone/emptied (Bölüm 9.7's safe-delete). */
 export function SharedPromptCard({ promptId }: { promptId: string }) {
+  const { t } = useTranslation();
   const { getCached, fetchById } = useRealPrompts();
   const cached = getCached(promptId);
   const [fetched, setFetched] = useState<Prompt | null>(null);
@@ -41,7 +43,7 @@ export function SharedPromptCard({ promptId }: { promptId: string }) {
   if (unavailable) {
     return (
       <div className={CARD_CLASS}>
-        <span className="text-xs text-text-muted">Bu içerik artık mevcut değil.</span>
+        <span className="text-xs text-text-muted">{t("messages.contentNoLongerAvailable")}</span>
       </div>
     );
   }
@@ -50,16 +52,16 @@ export function SharedPromptCard({ promptId }: { promptId: string }) {
     <Link href={promptHref({ id: promptId })} className={CARD_CLASS}>
       <span className="flex items-center gap-1.5 text-xs font-medium text-primary">
         <Terminal size={13} />
-        Paylaşılan Prompt
+        {t("messages.sharedPrompt")}
       </span>
       {thumbnail && (
         <span className="relative block h-24 w-full overflow-hidden rounded-sm bg-background">
           <Image src={thumbnail.url} alt={thumbnail.alt} fill sizes="220px" className="object-cover" />
         </span>
       )}
-      <span className="block truncate text-sm font-semibold text-text">{prompt?.title ?? "Yükleniyor…"}</span>
+      <span className="block truncate text-sm font-semibold text-text">{prompt?.title ?? t("common.loading")}</span>
       <span className="flex items-center gap-1 text-xs text-primary">
-        İçeriği aç
+        {t("messages.openContent")}
         <ArrowUpRight size={11} />
       </span>
     </Link>
@@ -76,6 +78,7 @@ export function SharedPromptCard({ promptId }: { promptId: string }) {
  * searched by slug first (no new provider), falling back to a real fetch.
  */
 export function SharedGeneratorCard({ slug }: { slug: string }) {
+  const { t } = useTranslation();
   const { realGenerators } = useRealGenerators();
   const cached = realGenerators.find((generator) => generator.slug === slug);
   const [fetched, setFetched] = useState<Generator | null>(null);
@@ -98,11 +101,11 @@ export function SharedGeneratorCard({ slug }: { slug: string }) {
     <Link href={generatorHref({ slug })} className={CARD_CLASS}>
       <span className="flex items-center gap-1.5 text-xs font-medium text-primary">
         <Blocks size={13} />
-        Paylaşılan Generator
+        {t("messages.sharedGenerator")}
       </span>
-      <span className="block truncate text-sm font-semibold text-text">{generator?.title ?? "Yükleniyor…"}</span>
+      <span className="block truncate text-sm font-semibold text-text">{generator?.title ?? t("common.loading")}</span>
       <span className="flex items-center gap-1 text-xs text-primary">
-        Generatoru aç
+        {t("messages.openGenerator")}
         <ArrowUpRight size={11} />
       </span>
     </Link>
@@ -111,6 +114,7 @@ export function SharedGeneratorCard({ slug }: { slug: string }) {
 
 /** A message's shared-request content card — same shape as `SharedPromptCard`. */
 export function SharedRequestCard({ requestId }: { requestId: string }) {
+  const { t } = useTranslation();
   const { getCached, fetchById } = useRealRequests();
   const cached = getCached(requestId);
   const [fetched, setFetched] = useState<PromptRequest | null>(null);
@@ -134,15 +138,15 @@ export function SharedRequestCard({ requestId }: { requestId: string }) {
       <span className="flex items-center justify-between gap-2">
         <span className="flex items-center gap-1.5 text-xs font-medium text-primary">
           <Sparkles size={13} />
-          Paylaşılan İstek
+          {t("messages.sharedRequest")}
         </span>
-        {request && <Badge variant={STATUS_VARIANTS[request.status]}>{STATUS_LABELS[request.status]}</Badge>}
+        {request && <Badge variant={STATUS_VARIANTS[request.status]}>{t(STATUS_LABELS[request.status])}</Badge>}
       </span>
       <span className="block truncate text-sm font-semibold text-text">
-        {request ? `"${request.title}"` : "Yükleniyor…"}
+        {request ? `"${request.title}"` : t("common.loading")}
       </span>
       <span className="flex items-center gap-1 text-xs text-primary">
-        İsteği görüntüle
+        {t("messages.viewRequest")}
         <ArrowUpRight size={11} />
       </span>
     </Link>

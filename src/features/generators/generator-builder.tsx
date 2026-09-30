@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useOwnProfile } from "@/features/auth/own-profile-provider";
 import { useTagCatalog } from "@/features/tags/use-tag-catalog";
+import { useTranslation } from "@/lib/i18n/language-provider";
+import type { TranslationKey } from "@/lib/i18n/translations";
 import { useTagPicker } from "@/features/prompts/use-tag-picker";
 import { FieldList } from "./field-list";
 import { FieldEditorModal } from "./field-editor-modal";
@@ -34,10 +36,10 @@ import type { Generator, GeneratorField, GeneratorSchema, GeneratorTemplate } fr
 
 const STEPS = ["details", "fields", "publish"] as const;
 type Step = (typeof STEPS)[number];
-const STEP_LABELS: Record<Step, string> = {
-  details: "Detaylar",
-  fields: "Alanlar",
-  publish: "Yayınla",
+const STEP_LABEL_KEYS: Record<Step, TranslationKey> = {
+  details: "generator.stepDetails",
+  fields: "generator.stepFields",
+  publish: "generator.stepPublish",
 };
 
 function newId(prefix: string): string {
@@ -74,16 +76,17 @@ function defaultTemplate(): GeneratorTemplate {
 }
 
 function LoginGate() {
+  const { t } = useTranslation();
   return (
     <div className="mx-auto max-w-md px-4 py-16 text-center">
-      <h1 className="mb-2 text-h2 font-semibold text-text">Giriş yapmalısın</h1>
-      <p className="mb-4 text-sm text-text-muted">Bir generator oluşturmak/düzenlemek için önce giriş yapmalısın.</p>
+      <h1 className="mb-2 text-h2 font-semibold text-text">{t("auth.loginRequiredTitle")}</h1>
+      <p className="mb-4 text-sm text-text-muted">{t("generator.loginRequiredBody")}</p>
       <div className="flex justify-center gap-2">
         <Link href="/login" className="inline-flex h-9 items-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary-dark">
-          Giriş Yap
+          {t("common.login")}
         </Link>
         <Link href="/signup" className="inline-flex h-9 items-center rounded-md border border-border px-4 text-sm font-medium text-text hover:bg-accent-surface">
-          Hesap Oluştur
+          {t("auth.createAccount")}
         </Link>
       </div>
     </div>
@@ -129,6 +132,7 @@ function LoginGate() {
  * create` and leaving never litters the database with an empty draft.
  */
 export function GeneratorBuilder({ editId }: { editId: string | null }) {
+  const { t } = useTranslation();
   const router = useRouter();
   const { user } = useAuth();
   const { profile } = useOwnProfile();
@@ -245,8 +249,8 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
   if (notFound) {
     return (
       <div className="mx-auto max-w-md px-4 py-16 text-center">
-        <h1 className="mb-2 text-h2 font-semibold text-text">Generator bulunamadı</h1>
-        <p className="text-sm text-text-muted">Bu generator silinmiş olabilir ya da hiç var olmadı.</p>
+        <h1 className="mb-2 text-h2 font-semibold text-text">{t("generator.linkNotFoundTitle")}</h1>
+        <p className="text-sm text-text-muted">{t("generator.notFoundBodyShort")}</p>
       </div>
     );
   }
@@ -254,8 +258,8 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
   if (notOwner) {
     return (
       <div className="mx-auto max-w-md px-4 py-16 text-center">
-        <h1 className="mb-2 text-h2 font-semibold text-text">Bu generatoru düzenleme yetkin yok</h1>
-        <p className="text-sm text-text-muted">Yalnızca bir generatorun sahibi onu düzenleyebilir.</p>
+        <h1 className="mb-2 text-h2 font-semibold text-text">{t("generator.notOwnerTitle")}</h1>
+        <p className="text-sm text-text-muted">{t("generator.notOwnerBody")}</p>
       </div>
     );
   }
@@ -280,7 +284,7 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
       setVersion(result.version);
       return result;
     } catch (err) {
-      setDetailsError(err instanceof Error ? err.message : "Generator oluşturulamadı, lütfen tekrar dene.");
+      setDetailsError(err instanceof Error ? err.message : t("generator.createFailed"));
       return null;
     } finally {
       setCreatingDraft(false);
@@ -289,7 +293,7 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
 
   async function handleAdvanceFromDetails() {
     if (!meta.title.trim() || !meta.description.trim()) {
-      setDetailsError("Başlık ve kısa açıklama zorunlu.");
+      setDetailsError(t("generator.titleAndDescriptionRequired"));
       return;
     }
     setDetailsError(null);
@@ -302,7 +306,7 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
         await updateGeneratorMeta(generator.id, submitMeta);
         setGenerator((prev) => (prev ? { ...prev, ...metaToGeneratorPatch(submitMeta) } : prev));
       } catch (err) {
-        setDetailsError(err instanceof Error ? err.message : "Kaydedilemedi, lütfen tekrar dene.");
+        setDetailsError(err instanceof Error ? err.message : t("common.saveFailedRetry"));
         return;
       }
     }
@@ -326,7 +330,7 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
 
   function handleDuplicateField(field: GeneratorField) {
     const existingKeys = schema.fields.map((f) => f.key);
-    const label = `${field.label} (kopya)`;
+    const label = `${field.label} ${t("common.copySuffix")}`;
     const key = makeFieldKeyFromLabel(label, existingKeys);
     const order = schema.fields.length > 0 ? Math.max(...schema.fields.map((f) => f.order)) + 1 : 0;
     const clone: GeneratorField = { ...field, id: newId("field"), key, label, order };
@@ -431,7 +435,7 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
       setVersion(newVersion);
       router.push(generatorHref(publishedGenerator));
     } catch (err) {
-      setPublishError(err instanceof Error ? err.message : "Yayınlanamadı, lütfen tekrar dene.");
+      setPublishError(err instanceof Error ? err.message : t("generator.publishFailed"));
     } finally {
       setPublishing(false);
     }
@@ -441,35 +445,35 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
     <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-surface px-4 py-3 sm:px-5">
         <h1 className="text-h1 font-semibold text-text">
-          {generator ? `Generator ${generator.status === "published" ? "Düzenle" : "Taslağı"}` : "Yeni Generator"}
+          {generator ? t(generator.status === "published" ? "generator.editHeading" : "generator.draftHeading") : t("generator.newHeading")}
         </h1>
         {generator && generator.status === "draft" && (
           <p className="flex items-center gap-1.5 text-xs text-text-muted">
             {saveStatus === "saving" && (
               <>
-                <Loader2 size={12} className="animate-spin" /> Kaydediliyor…
+                <Loader2 size={12} className="animate-spin" /> {t("generator.savingEllipsis")}
               </>
             )}
             {saveStatus === "saved" && (
               <>
-                <CheckCircle2 size={12} className="text-success" /> Taslak kaydedildi
+                <CheckCircle2 size={12} className="text-success" /> {t("generator.draftSaved")}
               </>
             )}
             {saveStatus === "error" && (
               <>
-                <AlertTriangle size={12} className="text-danger" /> Kaydedilemedi
+                <AlertTriangle size={12} className="text-danger" /> {t("generator.saveFailed")}
               </>
             )}
           </p>
         )}
         {generator && generator.status === "published" && (
-          <p className="text-xs text-text-muted">Yayında — değişiklikler yalnızca yeniden yayınlayınca kalıcı olur.</p>
+          <p className="text-xs text-text-muted">{t("generator.publishedEditsHint")}</p>
         )}
       </div>
 
       <div
         role="tablist"
-        aria-label="Generator oluşturma adımları"
+        aria-label={t("generator.builderStepsAriaLabel")}
         className="mb-6 -mx-1 flex touch-pan-x gap-1 overflow-x-auto overscroll-x-contain border-b border-border px-1"
       >
         {STEPS.map((s, index) => (
@@ -492,7 +496,7 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
             >
               {index + 1}
             </span>
-            {STEP_LABELS[s]}
+            {t(STEP_LABEL_KEYS[s])}
           </button>
         ))}
       </div>
@@ -503,12 +507,12 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
             <GeneratorDetailsForm meta={meta} onChange={(patch) => setMeta((prev) => ({ ...prev, ...patch }))} tagPicker={tagPicker} />
             {detailsError && <p className="text-sm text-danger">{detailsError}</p>}
             <Button type="button" onClick={handleAdvanceFromDetails} disabled={creatingDraft}>
-              {creatingDraft ? "Kaydediliyor…" : "İleri: Alanlar"}
+              {creatingDraft ? t("generator.savingEllipsis") : t("generator.nextFields")}
             </Button>
           </div>
           <div className="min-w-0">
             <div className="rounded-lg border border-border bg-surface p-4 sm:p-5 lg:sticky lg:top-4">
-              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-text-muted">Canlı Önizleme</p>
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-text-muted">{t("generator.livePreview")}</p>
               <GeneratorPlayground schema={schema} enableNegativePrompt={meta.enableNegativePrompt} />
             </div>
           </div>
@@ -535,7 +539,7 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
           </div>
           <div className="min-w-0">
             <div className="rounded-lg border border-border bg-surface p-4 sm:p-5 lg:sticky lg:top-4">
-              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-text-muted">Canlı Önizleme</p>
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-text-muted">{t("generator.livePreview")}</p>
               <GeneratorPlayground schema={schema} enableNegativePrompt={meta.enableNegativePrompt} />
             </div>
           </div>
@@ -545,8 +549,8 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
       {step === "publish" && (
         <div className="max-w-2xl space-y-4">
           <div className="rounded-lg border border-border bg-surface p-4 sm:p-5">
-            <p className="mb-2 text-sm font-medium text-text">{schema.fields.length} alan</p>
-            {errors.length === 0 && warnings.length === 0 && <p className="text-sm text-success">Yayınlamaya hazır.</p>}
+            <p className="mb-2 text-sm font-medium text-text">{t("generator.fieldCount", { count: schema.fields.length })}</p>
+            {errors.length === 0 && warnings.length === 0 && <p className="text-sm text-success">{t("generator.readyToPublish")}</p>}
             {errors.map((issue, i) => (
               <p key={`e-${i}`} className="mt-1 flex items-start gap-1.5 text-sm text-danger">
                 <AlertTriangle size={14} className="mt-0.5 shrink-0" /> {issue.message}
@@ -560,7 +564,7 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
           </div>
           {publishError && <p className="text-sm text-danger">{publishError}</p>}
           <Button type="button" onClick={handlePublish} disabled={errors.length > 0 || publishing}>
-            {publishing ? "Yayınlanıyor…" : generator?.status === "published" ? "Yeniden Yayınla" : "Yayınla"}
+            {publishing ? t("generator.publishing") : generator?.status === "published" ? t("generator.republish") : t("generator.publish")}
           </Button>
         </div>
       )}

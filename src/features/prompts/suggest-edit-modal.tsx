@@ -5,6 +5,7 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { fetchOwnPendingSuggestion, proposeEditSuggestion } from "@/lib/supabase/prompt-edit-suggestions";
+import { useTranslation } from "@/lib/i18n/language-provider";
 
 /**
  * "Düzenleme öner" compose modal (CLAUDE.md şartnamesi §2) — always opened
@@ -32,6 +33,7 @@ export function SuggestEditModal({
   promptText: string;
   onClose: () => void;
 }) {
+  const { t } = useTranslation();
   const [pendingCheck, setPendingCheck] = useState<"checking" | "already-pending" | "ready">("checking");
   const [suggestionText, setSuggestionText] = useState("");
   const [proposedPromptText, setProposedPromptText] = useState("");
@@ -61,7 +63,7 @@ export function SuggestEditModal({
       await proposeEditSuggestion(promptId, proposerId, trimmed, proposedPromptText);
       setSent(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Öneri gönderilemedi, lütfen tekrar dene.");
+      setError(err instanceof Error ? err.message : t("prompt.suggestionFailed"));
     } finally {
       setIsSubmitting(false);
     }
@@ -75,12 +77,12 @@ export function SuggestEditModal({
       >
         <div className="flex items-start justify-between gap-2">
           <h2 id="suggest-edit-modal-title" className="text-base font-semibold text-text">
-            Düzenleme öner
+            {t("prompt.suggestEdit")}
           </h2>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Kapat"
+            aria-label={t("common.close")}
             className="rounded-md p-1 text-text-muted hover:bg-accent-surface hover:text-text"
           >
             <X size={18} />
@@ -88,33 +90,33 @@ export function SuggestEditModal({
         </div>
 
         {pendingCheck === "checking" ? (
-          <p className="py-4 text-sm text-text-muted">Kontrol ediliyor…</p>
+          <p className="py-4 text-sm text-text-muted">{t("prompt.checking")}</p>
         ) : pendingCheck === "already-pending" ? (
           <div className="space-y-4">
             <p className="rounded-md border border-warning/30 bg-warning/10 px-3 py-2 text-sm text-warning">
-              Zaten bekleyen bir düzenleme önerin var.
+              {t("prompt.alreadyHasPendingSuggestion")}
             </p>
             <div className="flex justify-end">
               <Button type="button" onClick={onClose}>
-                Kapat
+                {t("common.close")}
               </Button>
             </div>
           </div>
         ) : sent ? (
           <div className="space-y-4">
             <p className="rounded-md border border-success/30 bg-success/10 px-3 py-2 text-sm text-success">
-              Öneri gönderildi. Prompt sahibi kabul ederse promptun yeni bir sürümü oluşacak.
+              {t("prompt.suggestionSent")}
             </p>
             <div className="flex justify-end">
               <Button type="button" onClick={onClose}>
-                Kapat
+                {t("common.close")}
               </Button>
             </div>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-text-muted">Mevcut prompt metni</p>
+              <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-text-muted">{t("prompt.currentPromptText")}</p>
               <p className="max-h-32 overflow-y-auto whitespace-pre-wrap rounded-md border border-border-soft bg-surface-soft px-3 py-2 font-mono text-xs text-text-muted">
                 {promptText}
               </p>
@@ -122,7 +124,7 @@ export function SuggestEditModal({
 
             <div>
               <label htmlFor="suggest-edit-text" className="mb-1.5 block text-sm font-medium text-text">
-                Bu promptta neyin değiştirilmesini öneriyorsun?
+                {t("prompt.suggestEditQuestion")}
               </label>
               <textarea
                 id="suggest-edit-text"
@@ -130,7 +132,7 @@ export function SuggestEditModal({
                 value={suggestionText}
                 onChange={(event) => setSuggestionText(event.target.value)}
                 maxLength={2000}
-                placeholder="Örn. Arka planı cyberpunk şehir yap ve ışığı mavi neon olarak değiştir."
+                placeholder={t("prompt.suggestEditPlaceholder")}
                 className="w-full resize-none rounded-md border border-border bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted"
                 autoFocus
               />
@@ -139,14 +141,14 @@ export function SuggestEditModal({
             {showProposedField ? (
               <div>
                 <label htmlFor="suggest-edit-proposed" className="mb-1.5 block text-sm font-medium text-text">
-                  Önerdiğin yeni prompt metni <span className="text-text-muted">(opsiyonel)</span>
+                  {t("prompt.proposedNewText")} <span className="text-text-muted">({t("common.optional")})</span>
                 </label>
                 <textarea
                   id="suggest-edit-proposed"
                   rows={4}
                   value={proposedPromptText}
                   onChange={(event) => setProposedPromptText(event.target.value)}
-                  placeholder="Tam olarak nasıl bir prompt metni önerdiğini buraya yazabilirsin — sahip önizleyip karşılaştırabilecek."
+                  placeholder={t("prompt.proposedNewTextPlaceholder")}
                   className="w-full resize-none rounded-md border border-border bg-background px-3 py-2 font-mono text-xs text-text placeholder:text-text-muted"
                 />
               </div>
@@ -156,7 +158,7 @@ export function SuggestEditModal({
                 onClick={() => setShowProposedField(true)}
                 className="text-xs font-medium text-primary hover:underline"
               >
-                + Tam bir prompt metni de önerebilirsin (opsiyonel)
+                {t("prompt.suggestFullTextToggle")}
               </button>
             )}
 
@@ -164,10 +166,10 @@ export function SuggestEditModal({
 
             <div className="flex justify-end gap-2 pt-1">
               <Button type="button" variant="ghost" onClick={onClose}>
-                İptal
+                {t("common.cancel")}
               </Button>
               <Button type="submit" disabled={!suggestionText.trim() || isSubmitting}>
-                {isSubmitting ? "Gönderiliyor…" : "Öneriyi gönder"}
+                {isSubmitting ? t("common.sending") : t("prompt.sendSuggestion")}
               </Button>
             </div>
           </form>

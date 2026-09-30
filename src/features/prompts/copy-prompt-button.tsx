@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { Check, Copy } from "lucide-react";
 import { cn, copyTextToClipboard } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n/language-provider";
 
 /**
  * The one shared "Kopyala" button used directly above a real prompt text
@@ -21,7 +22,7 @@ import { cn, copyTextToClipboard } from "@/lib/utils";
  */
 export function CopyPromptButton({
   text,
-  label = "Kopyala",
+  label,
   className,
   size = "sm",
 }: {
@@ -31,6 +32,7 @@ export function CopyPromptButton({
   className?: string;
   size?: "sm" | "md";
 }) {
+  const { t } = useTranslation();
   const [state, setState] = useState<"idle" | "copied" | "failed">("idle");
   const resetTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isBusyRef = useRef(false);
@@ -58,14 +60,14 @@ export function CopyPromptButton({
   }
 
   const Icon = state === "copied" ? Check : Copy;
-  const displayLabel = state === "copied" ? "Kopyalandı" : state === "failed" ? "Kopyalanamadı" : label;
+  const displayLabel = state === "copied" ? t("common.copied") : state === "failed" ? t("prompt.copyFailed") : (label ?? t("common.copy"));
 
   return (
     <button
       type="button"
       onClick={handleClick}
       aria-label={displayLabel}
-      title={state === "failed" ? "Kopyalanamadı, lütfen tekrar dene." : undefined}
+      title={state === "failed" ? t("prompt.copyFailedRetry") : undefined}
       className={cn(
         "relative z-10 inline-flex shrink-0 items-center gap-1.5 rounded-sm border font-medium transition-[background-color,border-color,color] duration-200 ease-soft",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Pencil, Trash2 } from "lucide-react";
 import { countVariableUsages } from "@/lib/prompt-variables";
+import { useTranslation } from "@/lib/i18n/language-provider";
 import type { DraftVariable } from "./prompt-text-editor";
 
 /**
@@ -25,6 +26,7 @@ export function VariableList({
   onEdit: (variable: DraftVariable) => void;
   onDelete: (variable: DraftVariable) => void;
 }) {
+  const { t } = useTranslation();
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
 
   if (variables.length === 0) return null;
@@ -32,7 +34,7 @@ export function VariableList({
   return (
     <div className="space-y-2 rounded-md border border-border bg-surface p-3">
       <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">
-        Değişkenler ({variables.length})
+        {t("variable.sectionHeading", { count: variables.length })}
       </p>
       <ul className="space-y-1.5">
         {variables.map((variable) => {
@@ -49,7 +51,7 @@ export function VariableList({
                   <span className="ml-2 truncate text-xs text-text-muted">→ {variable.defaultValue}</span>
                 )}
                 <span className="ml-2 text-xs text-text-muted">
-                  {usageCount === 0 ? "metinde hiç kullanılmıyor" : `${usageCount} yerde kullanılıyor`}
+                  {usageCount === 0 ? t("variable.unusedInText") : t("variable.usedInCount", { count: usageCount })}
                 </span>
               </div>
               <div className="flex shrink-0 items-center gap-1">
@@ -59,7 +61,7 @@ export function VariableList({
                     setConfirmingId(null);
                     onEdit(variable);
                   }}
-                  aria-label={`${variable.name} değişkenini düzenle`}
+                  aria-label={t("variable.editAriaLabel", { name: variable.name })}
                   className="flex h-7 w-7 items-center justify-center rounded-md text-text-muted transition-colors hover:bg-accent-surface hover:text-text"
                 >
                   <Pencil size={13} />
@@ -71,14 +73,14 @@ export function VariableList({
                     className="whitespace-nowrap rounded-md bg-danger/10 px-2 py-1 text-xs font-medium text-danger hover:bg-danger/20"
                   >
                     {usageCount > 0
-                      ? `Bu değişken prompt metninde ${usageCount} yerde kullanılıyor. Silersen bu alanlar da kaldırılacak. Onayla`
-                      : "Sil, emin misin?"}
+                      ? t("variable.deleteWithUsagesConfirm", { count: usageCount })
+                      : t("variable.deleteConfirm")}
                   </button>
                 ) : (
                   <button
                     type="button"
                     onClick={() => setConfirmingId(variable.tempId)}
-                    aria-label={`${variable.name} değişkenini sil`}
+                    aria-label={t("variable.deleteAriaLabel", { name: variable.name })}
                     className="flex h-7 w-7 items-center justify-center rounded-md text-text-muted transition-colors hover:bg-danger/10 hover:text-danger"
                   >
                     <Trash2 size={13} />

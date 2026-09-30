@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Check, Copy, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { copyTextToClipboard } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n/language-provider";
 
 /**
  * The real "Generated Prompt" block (§17/§22) — shown identically in the
@@ -20,15 +21,16 @@ export function GeneratedPromptPanel({
   negativePrompt?: string | null;
   onReset?: () => void;
 }) {
+  const { t } = useTranslation();
   return (
     <div className="space-y-3 rounded-md border border-border-soft bg-surface-soft p-3.5">
       <p className="text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">
-        {negativePrompt !== undefined ? "Positive Prompt" : "Generated Prompt"}
+        {negativePrompt !== undefined ? t("generator.positivePrompt") : t("generator.generatedPrompt")}
       </p>
       <CopyableBlock text={prompt} />
       {negativePrompt !== undefined && negativePrompt !== null && negativePrompt.trim().length > 0 && (
         <>
-          <p className="text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">Negative Prompt</p>
+          <p className="text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">{t("generator.negativePrompt")}</p>
           <CopyableBlock text={negativePrompt} tone="muted" />
         </>
       )}
@@ -38,7 +40,7 @@ export function GeneratedPromptPanel({
           onClick={onReset}
           className="flex items-center gap-1.5 text-xs font-medium text-text-muted hover:text-text"
         >
-          <RotateCcw size={12} /> Varsayılanlara dön
+          <RotateCcw size={12} /> {t("generator.resetToDefaults")}
         </button>
       )}
     </div>
@@ -46,6 +48,7 @@ export function GeneratedPromptPanel({
 }
 
 function CopyableBlock({ text, tone = "default" }: { text: string; tone?: "default" | "muted" }) {
+  const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
 
   async function handleCopy() {
@@ -61,11 +64,11 @@ function CopyableBlock({ text, tone = "default" }: { text: string; tone?: "defau
       <pre
         className={cnPre(tone)}
       >
-        {text || "Alanları doldurdukça prompt burada oluşacak."}
+        {text || t("generator.promptWillAppearHere")}
       </pre>
       <Button type="button" variant="outline" size="sm" onClick={handleCopy} disabled={!text}>
         {copied ? <Check size={14} /> : <Copy size={14} />}
-        {copied ? "Kopyalandı" : "Kopyala"}
+        {copied ? t("common.copied") : t("common.copy")}
       </Button>
     </div>
   );

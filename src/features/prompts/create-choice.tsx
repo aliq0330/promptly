@@ -1,5 +1,9 @@
+"use client";
+
 import Link from "next/link";
 import { ArrowRight, Blocks, Sparkles, SquareTerminal } from "lucide-react";
+import { useTranslation } from "@/lib/i18n/language-provider";
+import type { TranslationKey } from "@/lib/i18n/translations";
 
 /**
  * The picker shown when a user hits a bare "Oluştur" entry point (nav,
@@ -14,35 +18,34 @@ const OPTIONS = [
   {
     href: "/create?mode=prompt",
     icon: SquareTerminal,
-    title: "Prompt oluştur",
-    body: "Hazır bir promptu paylaş; türünü, aracını ve etiketlerini ekle.",
-    hint: "Görsel · Metin · Kod · Video · Müzik",
+    titleKey: "create.promptTitle" as TranslationKey,
+    bodyKey: "create.promptBody" as TranslationKey,
+    hintKey: "create.promptHint" as TranslationKey,
   },
   {
     href: "/generators/create",
     icon: Blocks,
-    title: "Generator oluştur",
-    body: "Kod yazmadan parametrik bir prompt oluşturucu kur, toplulukla paylaş.",
-    hint: "Alanlar · Seçenekler · JSON çıktı",
+    titleKey: "create.generatorTitle" as TranslationKey,
+    bodyKey: "create.generatorBody" as TranslationKey,
+    hintKey: "create.generatorHint" as TranslationKey,
   },
   {
     href: "/requests/new",
     icon: Sparkles,
-    title: "İstek oluştur",
-    body: "İhtiyacın olan promptu tarif et, topluluk yanıtlasın.",
-    hint: "Topluluk yanıtları",
+    titleKey: "create.requestTitle" as TranslationKey,
+    bodyKey: "create.requestBody" as TranslationKey,
+    hintKey: "create.requestHint" as TranslationKey,
   },
 ] as const;
 
 export function CreateChoice() {
+  const { t } = useTranslation();
   return (
     <div className="mx-auto w-full max-w-4xl px-3 py-8 sm:px-5 sm:py-12 lg:px-8">
       <div className="mb-8 space-y-2 text-center">
-        <p className="text-caption font-semibold uppercase tracking-[0.08em] text-primary">Oluştur</p>
-        <h1 className="text-h1 font-semibold text-text">Ne oluşturmak istersin?</h1>
-        <p className="mx-auto max-w-lg text-small text-text-muted">
-          Hazır bir prompt paylaşabilir, kendi prompt generatorunu oluşturabilir veya topluluktan bir prompt isteyebilirsin.
-        </p>
+        <p className="text-caption font-semibold uppercase tracking-[0.08em] text-primary">{t("create.eyebrow")}</p>
+        <h1 className="text-h1 font-semibold text-text">{t("create.title")}</h1>
+        <p className="mx-auto max-w-lg text-small text-text-muted">{t("create.subtitle")}</p>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-3 sm:gap-4">
@@ -56,11 +59,11 @@ export function CreateChoice() {
               <option.icon size={20} strokeWidth={1.9} />
             </span>
             <span className="flex w-full items-center justify-between gap-2 text-h3 font-semibold text-text">
-              {option.title}
+              {t(option.titleKey)}
               <ArrowRight size={16} className="text-text-muted transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-primary" />
             </span>
-            <span className="text-small text-text-muted">{option.body}</span>
-            <span className="mt-auto pt-1 text-caption font-medium text-text-secondary">{option.hint}</span>
+            <span className="text-small text-text-muted">{t(option.bodyKey)}</span>
+            <span className="mt-auto pt-1 text-caption font-medium text-text-secondary">{t(option.hintKey)}</span>
           </Link>
         ))}
       </div>

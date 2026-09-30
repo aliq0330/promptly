@@ -31,6 +31,8 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { analyzeImageForGenerator } from "@/lib/supabase/image-analysis";
 import { resolveGeneratorVisionMapping, sanitizeSuggestedFields, type CleanSuggestedField } from "@/lib/generator-vision-mapping";
+import { useTranslation } from "@/lib/i18n/language-provider";
+import { GENERATOR_FIELD_TYPE_LABELS } from "./generator-category-meta";
 import type { GeneratorMetaInput } from "@/lib/supabase/generators";
 import type { GeneratorField } from "@/types";
 
@@ -54,6 +56,7 @@ export function GeneratorVisionAssist({
   onApplyValues: (values: Record<string, string | string[]>) => void;
   onAddFields: (fields: CleanSuggestedField[]) => void;
 }) {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -139,7 +142,7 @@ export function GeneratorVisionAssist({
     setCheckedSuggestionLabels(new Set(suggestions.map((s) => s.label)));
 
     if (rows.length === 0 && suggestions.length === 0) {
-      setAppliedMessage("Analiz tamamlandı — görselden bu generatorla eşleşen bir değer veya yeni alan önerisi çıkarılamadı.");
+      setAppliedMessage(t("vision.noMatchOrSuggestion"));
     }
   }
 
@@ -172,9 +175,9 @@ export function GeneratorVisionAssist({
     if (fieldsToAdd.length > 0) onAddFields(fieldsToAdd);
 
     const parts: string[] = [];
-    if (Object.keys(valuesToApply).length > 0) parts.push(`${Object.keys(valuesToApply).length} alanın değeri güncellendi`);
-    if (fieldsToAdd.length > 0) parts.push(`${fieldsToAdd.length} yeni alan eklendi`);
-    setAppliedMessage(parts.length > 0 ? `${parts.join(", ")}.` : "Hiçbir şey seçilmedi.");
+    if (Object.keys(valuesToApply).length > 0) parts.push(t("vision.fieldsValuesUpdatedCount", { count: Object.keys(valuesToApply).length }));
+    if (fieldsToAdd.length > 0) parts.push(t("vision.newFieldsAddedCount", { count: fieldsToAdd.length }));
+    setAppliedMessage(parts.length > 0 ? `${parts.join(", ")}.` : t("vision.nothingSelected"));
 
     // Uygulanan satırları listeden çıkar — aynı sonucu tekrar uygulamak
     // istemesin diye, ama panel açık kalıp yeni bir görsel denenebilsin.
@@ -194,15 +197,14 @@ export function GeneratorVisionAssist({
         className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm font-medium text-text"
       >
         <Sparkles className="h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
-        <span className="flex-1">Görselden Alanları Doldur</span>
-        <span className="text-xs font-normal text-text-muted">{expanded ? "Gizle" : "Göster"}</span>
+        <span className="flex-1">{t("vision.generatorTitle")}</span>
+        <span className="text-xs font-normal text-text-muted">{expanded ? t("vision.hide") : t("vision.show")}</span>
       </button>
 
       {expanded && (
         <div id="generator-vision-assist-body" className="space-y-3 border-t border-border/60 px-3 pb-3 pt-3">
           <p className="text-xs text-text-muted">
-            Bir referans görsel yükle — yapay zekâ görseli analiz edip mevcut alanlarını doldurmana ve eksik olabilecek
-            yeni alanlar önermesine yardımcı olsun. Hiçbir şey senin onayın olmadan uygulanmaz.
+            {t("vision.generatorIntro")}
           </p>
 
           {previewUrl ? (
@@ -216,7 +218,7 @@ export function GeneratorVisionAssist({
               <button
                 type="button"
                 onClick={() => setSelectedFile(null)}
-                aria-label="Görseli kaldır"
+                aria-label={t("vision.removeImage")}
                 className="rounded-full p-1 text-text-muted hover:bg-accent-surface hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               >
                 <X className="h-4 w-4" aria-hidden="true" />
@@ -236,11 +238,11 @@ export function GeneratorVisionAssist({
               )}
             >
               <ImagePlus className="h-6 w-6 text-text-muted" aria-hidden="true" />
-              <p className="text-xs text-text-muted">Görseli buraya sürükle bırak veya</p>
+              <p className="text-xs text-text-muted">{t("vision.dropHint")}</p>
               <div className="flex flex-wrap justify-center gap-2">
                 <Button type="button" variant="outline" size="sm" onClick={() => inputRef.current?.click()}>
                   <Camera className="h-4 w-4" aria-hidden="true" />
-                  Görsel seç
+                  {t("vision.chooseImage")}
                 </Button>
               </div>
               <input
@@ -249,7 +251,7 @@ export function GeneratorVisionAssist({
                 accept="image/jpeg,image/png,image/webp"
                 className="hidden"
                 onChange={handleInputChange}
-                aria-label="Analiz edilecek görseli seç"
+                aria-label={t("vision.pickImageAriaLabel")}
               />
             </div>
           )}
@@ -257,11 +259,11 @@ export function GeneratorVisionAssist({
           <div className="flex flex-wrap items-center gap-3">
             <Button type="button" size="sm" onClick={handleAnalyze} disabled={!file || status === "loading"}>
               {status === "loading" ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Sparkles className="h-4 w-4" aria-hidden="true" />}
-              {status === "loading" ? "Analiz ediliyor…" : "Analiz Et"}
+              {status === "loading" ? t("vision.analyzing") : t("vision.analyze")}
             </Button>
             {status === "loading" && (
               <span role="status" className="text-xs text-text-muted">
-                Bu birkaç saniye sürebilir.
+                {t("vision.mayTakeSeconds")}
               </span>
             )}
           </div>
@@ -276,7 +278,7 @@ export function GeneratorVisionAssist({
             <div className="space-y-3 rounded-md border border-border bg-surface p-3">
               {matchedRows.length > 0 && (
                 <div className="space-y-1.5">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">Eşleşen Değerler</p>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">{t("vision.matchedValues")}</p>
                   {matchedRows.map((row) => (
                     <label key={row.key} className="flex cursor-pointer items-start gap-2 text-sm text-text">
                       <input
@@ -295,7 +297,7 @@ export function GeneratorVisionAssist({
 
               {suggestedFields.length > 0 && (
                 <div className="space-y-1.5">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">Önerilen Yeni Alanlar</p>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">{t("vision.suggestedNewFields")}</p>
                   {suggestedFields.map((suggestion) => (
                     <label key={suggestion.label} className="flex cursor-pointer items-start gap-2 text-sm text-text">
                       <input
@@ -307,7 +309,7 @@ export function GeneratorVisionAssist({
                       <span>
                         <span className="font-medium">+ {suggestion.label}</span>{" "}
                         <span className="text-text-muted">
-                          ({suggestion.type === "select" ? "seçim" : suggestion.type === "multi_select" ? "çoklu seçim" : suggestion.type === "color" ? "renk" : suggestion.type === "number" ? "sayı" : "metin"}
+                          ({t(GENERATOR_FIELD_TYPE_LABELS[suggestion.type])}
                           {suggestion.options.length > 0 ? `: ${suggestion.options.map((o) => o.label).join(", ")}` : ""})
                         </span>
                       </span>
@@ -323,7 +325,7 @@ export function GeneratorVisionAssist({
                 onClick={handleApply}
                 disabled={checkedValueKeys.size === 0 && checkedSuggestionLabels.size === 0}
               >
-                Seçilenleri Uygula
+                {t("vision.applySelected")}
               </Button>
             </div>
           )}
@@ -335,7 +337,7 @@ export function GeneratorVisionAssist({
               <button
                 type="button"
                 onClick={() => setAppliedMessage(null)}
-                aria-label="Bu bilgiyi kapat"
+                aria-label={t("vision.closeThisInfo")}
                 className="shrink-0 text-text-muted hover:text-text"
               >
                 <X className="h-3.5 w-3.5" aria-hidden="true" />

@@ -32,6 +32,8 @@ import { useRealGenerators } from "@/features/generators/real-generators-provide
 import { fetchGeneratorById } from "@/lib/supabase/generators";
 import { parseHighlightValue } from "@/lib/notification-utils";
 import { profileHref } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n/language-provider";
+import { translateForRuntime } from "@/lib/i18n/translations";
 import { composeGeneratorShareBody } from "./generator-share-format";
 import type { Conversation, Generator, Message, UserProfile } from "@/types";
 
@@ -55,7 +57,7 @@ const HIGHLIGHT_DURATION_MS = 2500;
 /** The raw Postgres RLS-denial message for a blocked-either-direction send — translated into something a user can actually act on. */
 function translateSendError(message: string): string {
   if (message.toLowerCase().includes("row-level security")) {
-    return "Bu mesaj gönderilemedi. Kullanıcı seni engellemiş olabilir.";
+    return translateForRuntime("messages.blockedSendError");
   }
   return message;
 }
@@ -76,6 +78,7 @@ function translateSendError(message: string): string {
  * time in `handleSubmit` below.
  */
 export function LocalConversationView() {
+  const { t } = useTranslation();
   const searchParams = useSearchParams();
   const router = useRouter();
   const id = searchParams.get("id");
@@ -324,14 +327,14 @@ export function LocalConversationView() {
   const pendingShare = dismissedShare
     ? null
     : shareParamPromptId
-      ? { type: "prompt" as const, id: shareParamPromptId, title: getCachedPrompt(shareParamPromptId)?.title ?? fetchedShareTitle ?? "Yükleniyor…" }
+      ? { type: "prompt" as const, id: shareParamPromptId, title: getCachedPrompt(shareParamPromptId)?.title ?? fetchedShareTitle ?? t("common.loading") }
       : shareParamRequestId
-        ? { type: "request" as const, id: shareParamRequestId, title: getCachedRequest(shareParamRequestId)?.title ?? fetchedShareTitle ?? "Yükleniyor…" }
+        ? { type: "request" as const, id: shareParamRequestId, title: getCachedRequest(shareParamRequestId)?.title ?? fetchedShareTitle ?? t("common.loading") }
         : shareParamGeneratorId
           ? {
               type: "generator" as const,
               id: shareParamGeneratorId,
-              title: shareGenerator?.title ?? "Yükleniyor…",
+              title: shareGenerator?.title ?? t("common.loading"),
               slug: shareGenerator?.slug ?? null,
             }
           : null;
@@ -483,7 +486,7 @@ export function LocalConversationView() {
         acceptRequest(id).catch((err) => console.error("acceptRequest (auto, on reply)", err));
       }
     } catch (err) {
-      setSendError(err instanceof Error ? translateSendError(err.message) : "Mesaj gönderilemedi, lütfen tekrar dene.");
+      setSendError(err instanceof Error ? translateSendError(err.message) : t("messages.sendFailed"));
     } finally {
       setIsSending(false);
     }
@@ -541,7 +544,7 @@ export function LocalConversationView() {
       setMessages((prev) => prev.map((m) => (m.id === messageId ? updated : m)));
       setEditingId(null);
     } catch (err) {
-      setEditError(err instanceof Error ? err.message : "Düzenlenemedi, lütfen tekrar dene.");
+      setEditError(err instanceof Error ? err.message : t("messages.editFailed"));
     } finally {
       setIsSavingEdit(false);
     }
@@ -575,15 +578,15 @@ export function LocalConversationView() {
   if (!user) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
-        <h1 className="mb-2 text-h2 font-semibold text-text">Giriş yapmalısın</h1>
+        <h1 className="mb-2 text-h2 font-semibold text-text">{t("auth.loginRequiredTitle")}</h1>
         <p className="mb-4 text-sm text-text-muted">
-          Gerçek konuşmaları görebilmek için giriş yapmış olman gerekiyor.
+          {t("messages.loginRequiredToViewBody")}
         </p>
         <Link
           href="/login"
           className="inline-flex h-9 items-center rounded-md border border-border px-4 text-sm font-medium text-text hover:bg-accent-surface"
         >
-          Giriş Yap
+          {t("common.login")}
         </Link>
       </div>
     );
@@ -591,22 +594,22 @@ export function LocalConversationView() {
 
   if (!checked) {
     return (
-      <div className="mx-auto max-w-lg px-4 py-16 text-center text-sm text-text-muted">Yükleniyor…</div>
+      <div className="mx-auto max-w-lg px-4 py-16 text-center text-sm text-text-muted">{t("common.loading")}</div>
     );
   }
 
   if (!conversation) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
-        <h1 className="mb-2 text-h2 font-semibold text-text">Konuşma bulunamadı</h1>
+        <h1 className="mb-2 text-h2 font-semibold text-text">{t("messages.conversationNotFoundTitle")}</h1>
         <p className="mb-4 text-sm text-text-muted">
-          Bu konuşma silinmiş olabilir, ya da bu hesap bu konuşmanın bir üyesi değil.
+          {t("messages.conversationNotFoundBody")}
         </p>
         <Link
           href="/messages"
           className="inline-flex h-9 items-center rounded-md border border-border px-4 text-sm font-medium text-text hover:bg-accent-surface"
         >
-          Mesajlara Dön
+          {t("messages.backToMessages")}
         </Link>
       </div>
     );
@@ -623,7 +626,7 @@ export function LocalConversationView() {
         <button
           type="button"
           onClick={handleBack}
-          aria-label="Mesaj listesine dön"
+          aria-label={t("messages.backToListAriaLabel")}
           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-accent-surface hover:text-text"
         >
           <ArrowLeft size={20} />
@@ -640,11 +643,11 @@ export function LocalConversationView() {
       {conversation.myStatus === "pending" && (
         <div className="flex items-center justify-between gap-3 border-b border-border bg-accent-surface/60 px-4 py-2.5 lg:px-6">
           <p className="text-xs text-text">
-            Bu bir mesaj isteği — {participant?.displayName} seni takip etmiyor. Yanıtlarsan otomatik kabul edilir.
+            {t("messages.pendingRequestNotice", { name: participant?.displayName ?? "" })}
           </p>
           <div className="flex shrink-0 items-center gap-3 text-xs font-medium">
             <button type="button" onClick={handleAcceptRequest} className="text-primary hover:underline">
-              Kabul Et
+              {t("messages.acceptAction")}
             </button>
             <button
               type="button"
@@ -652,7 +655,7 @@ export function LocalConversationView() {
               disabled={isDecliningRequest}
               className="text-danger hover:underline disabled:opacity-50"
             >
-              {isDecliningRequest ? "Siliniyor..." : "Sil"}
+              {isDecliningRequest ? t("messages.deletingEllipsis") : t("common.delete")}
             </button>
           </div>
         </div>
@@ -671,12 +674,12 @@ export function LocalConversationView() {
       >
         {messageHighlightNotFound && (
           <p className="rounded-md bg-accent-surface/60 px-3 py-2 text-center text-xs text-text-muted">
-            Bu mesaj görüntülenemiyor.
+            {t("messages.messageNotViewable")}
           </p>
         )}
         {messages.length === 0 ? (
           <p className="py-10 text-center text-sm text-text-muted">
-            Bu konuşmada henüz mesaj yok. İlk mesajı sen gönder.
+            {t("messages.noMessagesYet")}
           </p>
         ) : (
           messages.map((message) => (
@@ -714,18 +717,18 @@ export function LocalConversationView() {
       <form onSubmit={handleSubmit} className="border-t border-border p-4 lg:px-6">
         {blockState.isBlocked && (
           <div className="mb-2 flex items-center justify-between gap-2 rounded-md bg-danger/10 px-3 py-1.5 text-xs text-danger">
-            <span>Bu kullanıcıyı engelledin, mesaj gönderemezsin.</span>
+            <span>{t("messages.youBlockedCantSend")}</span>
             <button type="button" onClick={() => blockState.toggle()} className="font-medium hover:underline">
-              Engeli kaldır
+              {t("profile.unblock")}
             </button>
           </div>
         )}
         {replyingTo && (
           <div className="mb-2 flex items-center justify-between gap-2 rounded-md bg-accent-surface/60 px-3 py-1.5 text-xs text-text-muted">
             <span className="truncate">
-              Yanıtlıyorsun: {replyingTo.body ?? (replyingTo.sharedPromptId ? "Bir prompt" : "Bir istek")}
+              {t("messages.replyingToPrefix")} {replyingTo.body ?? (replyingTo.sharedPromptId ? t("messages.aPrompt") : t("request.aRequest"))}
             </span>
-            <button type="button" onClick={() => setReplyingTo(null)} aria-label="Yanıtı iptal et">
+            <button type="button" onClick={() => setReplyingTo(null)} aria-label={t("messages.cancelReplyAriaLabel")}>
               <X size={14} />
             </button>
           </div>
@@ -733,7 +736,7 @@ export function LocalConversationView() {
         {pendingShare && (
           <div className="mb-2 flex items-center justify-between gap-2 rounded-md bg-accent-surface/60 px-3 py-1.5 text-xs text-text-muted">
             <span className="truncate">
-              Paylaşılıyor: {pendingShare.title} — istersen bir not ekleyip gönder
+              {t("messages.sharingPrefix")} {pendingShare.title} — {t("messages.sharingSuffix")}
             </span>
             <button
               type="button"
@@ -741,7 +744,7 @@ export function LocalConversationView() {
                 setDismissedShare(true);
                 clearShareParams();
               }}
-              aria-label="Paylaşımı iptal et"
+              aria-label={t("messages.cancelShareAriaLabel")}
             >
               <X size={14} />
             </button>
@@ -752,7 +755,7 @@ export function LocalConversationView() {
             type="text"
             value={draft}
             onChange={(event) => setDraft(event.target.value)}
-            placeholder={pendingShare ? "İstersen bir not ekle (opsiyonel)..." : "Bir mesaj yaz..."}
+            placeholder={pendingShare ? t("messages.addNotePlaceholder") : t("messages.writeMessagePlaceholder")}
             disabled={blockState.isBlocked}
             className="h-10 min-w-0 flex-1 rounded-md border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
           />
@@ -760,7 +763,7 @@ export function LocalConversationView() {
             type="submit"
             disabled={(!draft.trim() && !pendingShare) || isSending || blockState.isBlocked || isGeneratorShareUnresolved}
           >
-            {isSending ? "Gönderiliyor..." : "Gönder"}
+            {isSending ? t("messages.sendingEllipsis") : t("common.send")}
           </Button>
         </div>
         {sendError && <p className="mt-2 text-xs text-danger">{sendError}</p>}

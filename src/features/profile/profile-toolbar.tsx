@@ -4,14 +4,16 @@ import { Chip } from "@/components/ui/chip";
 
 import { Search, X } from "lucide-react";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
+import { useTranslation } from "@/lib/i18n/language-provider";
+import type { TranslationKey } from "@/lib/i18n/translations";
 import type { PromptContentType } from "@/types";
 
 export type ProfileSortKey = "newest" | "oldest" | "most-liked";
 
-const SORT_LABELS: Record<ProfileSortKey, string> = {
-  newest: "En yeni",
-  oldest: "En eski",
-  "most-liked": "En çok beğenilen",
+const SORT_LABELS: Record<ProfileSortKey, TranslationKey> = {
+  newest: "profile.sortNewest",
+  oldest: "profile.sortOldest",
+  "most-liked": "profile.sortMostLiked",
 };
 
 /**
@@ -42,16 +44,17 @@ export function ProfileToolbar({
   hasActiveFilters: boolean;
   onClear: () => void;
 }) {
+  const { t } = useTranslation();
   return (
     <div className="space-y-2.5">
       <div className="flex items-center gap-2">
         <div className="scrollbar-none flex flex-1 touch-pan-x gap-2 overflow-x-auto overscroll-x-contain">
           <Chip selected={activeType === "all"} onClick={() => onTypeChange("all")}>
-            Tümü
+            {t("common.all")}
           </Chip>
           {availableTypes.map((type) => (
             <Chip key={type} icon={CONTENT_TYPE_META[type].icon} selected={activeType === type} onClick={() => onTypeChange(type)}>
-              {CONTENT_TYPE_META[type].label}
+              {t(CONTENT_TYPE_META[type].labelKey)}
             </Chip>
           ))}
         </div>
@@ -59,12 +62,12 @@ export function ProfileToolbar({
         <select
           value={sort}
           onChange={(event) => onSortChange(event.target.value as ProfileSortKey)}
-          aria-label="Sırala"
+          aria-label={t("profile.sortAriaLabel")}
           className="h-8 shrink-0 rounded-md border border-border bg-surface px-2 text-label font-medium text-text"
         >
           {(Object.keys(SORT_LABELS) as ProfileSortKey[]).map((key) => (
             <option key={key} value={key}>
-              {SORT_LABELS[key]}
+              {t(SORT_LABELS[key])}
             </option>
           ))}
         </select>
@@ -78,7 +81,7 @@ export function ProfileToolbar({
               type="text"
               value={search}
               onChange={(event) => onSearchChange(event.target.value)}
-              placeholder="Bu profildeki promptlarda ara"
+              placeholder={t("profile.searchPlaceholder")}
               className="h-full w-full bg-transparent text-small text-text outline-none placeholder:text-text-muted"
             />
           </div>
@@ -89,7 +92,7 @@ export function ProfileToolbar({
               className="flex h-9 shrink-0 items-center gap-1 rounded-md border border-border px-3 text-xs font-medium text-text-muted transition-colors hover:text-text"
             >
               <X size={12} />
-              Temizle
+              {t("profile.clearFilters")}
             </button>
           )}
         </div>

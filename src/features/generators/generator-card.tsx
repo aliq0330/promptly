@@ -1,3 +1,5 @@
+"use client";
+
 import { ArrowRight, Blocks, SlidersHorizontal } from "lucide-react";
 import { generatorHref } from "@/lib/utils";
 import { ContentCard, ContentCardBody, ContentCardTitle } from "@/features/content/content-card";
@@ -5,6 +7,7 @@ import { ContentTypeLabel } from "@/features/content/content-type-label";
 import { ContentTags } from "@/features/content/content-tags";
 import { PostHeader } from "@/features/prompts/post-header";
 import { PromptCardFooter } from "@/features/prompts/prompt-card-footer";
+import { useTranslation } from "@/lib/i18n/language-provider";
 import { GENERATOR_CATEGORY_TOPIC_LABELS } from "./generator-category-meta";
 import type { Generator } from "@/types";
 
@@ -26,8 +29,9 @@ export function GeneratorCard({
   /** Same "kaydedilenlerden kaldır"/"koleksiyondan kaldır" menu entry a prompt card gets inside a collection the viewer owns. */
   collectionRemoval?: { isDefault: boolean; onRemove: () => Promise<void> };
 }) {
+  const { t } = useTranslation();
   const href = generatorHref(generator);
-  const topic = GENERATOR_CATEGORY_TOPIC_LABELS[generator.category];
+  const topic = t(GENERATOR_CATEGORY_TOPIC_LABELS[generator.category]);
 
   return (
     <ContentCard href={href}>
@@ -35,7 +39,7 @@ export function GeneratorCard({
         <PostHeader generator={generator} onDeleted={onDeleted} collectionRemoval={collectionRemoval} />
 
         <div className="space-y-2">
-          <ContentTypeLabel icon={Blocks} label="Generator" detail={topic} />
+          <ContentTypeLabel icon={Blocks} label={t("generator.singular")} detail={topic} />
           <ContentCardTitle href={href} title={generator.title} description={generator.description} />
         </div>
 
@@ -49,14 +53,14 @@ export function GeneratorCard({
             </span>
           )}
           <span className="min-w-0 flex-1 leading-tight">
-            <span className="block text-caption text-text-muted">Yapılandırılmış prompt oluşturucu</span>
+            <span className="block text-caption text-text-muted">{t("generator.structuredPromptBuilder")}</span>
             <span className="block truncate text-label font-medium text-text">
               {generator.subcategory ? `${topic} · ${generator.subcategory}` : topic}
-              {generator.enableNegativePrompt ? " · Negatif prompt" : ""}
+              {generator.enableNegativePrompt ? ` · ${t("generator.negativePromptSuffix")}` : ""}
             </span>
           </span>
           <span className="flex shrink-0 items-center gap-1 rounded-sm bg-surface px-2 py-1 text-caption font-semibold text-primary shadow-xs transition-colors duration-200 group-hover:bg-primary group-hover:text-primary-foreground">
-            Kullan
+            {t("generator.use")}
             <ArrowRight size={12} />
           </span>
         </div>

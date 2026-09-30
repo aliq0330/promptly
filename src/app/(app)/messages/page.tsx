@@ -4,8 +4,10 @@ import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { ConversationList } from "@/features/messages/conversation-list";
 import { useRealMessages } from "@/features/messages/real-messages-provider";
+import { useTranslation } from "@/lib/i18n/language-provider";
 
 function MessagesPageInner() {
+  const { t } = useTranslation();
   const { conversations } = useRealMessages();
   const searchParams = useSearchParams();
   const sharePromptId = searchParams.get("sharePromptId");
@@ -30,24 +32,23 @@ function MessagesPageInner() {
 
   return (
     <div className="mx-auto w-full max-w-3xl px-3 py-5 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
-      <h1 className="mb-4 text-h1 font-semibold text-text">Mesajlar</h1>
+      <h1 className="mb-4 text-h1 font-semibold text-text">{t("header.messagesAriaLabel")}</h1>
       {isSharing && (
         <p className="mb-4 rounded-md bg-accent-surface/60 px-3 py-2 text-sm text-text">
-          Kime göndermek istersin? Bir konuşma seç — yalnızca mevcut konuşmalarına gönderebilirsin, yeni bir
-          konuşma buradan başlatılamaz.
+          {t("messages.pickAConversationBody")}
         </p>
       )}
       {pending.length > 0 && (
         <div className="mb-6">
-          <h2 className="mb-2 text-h3 font-semibold text-text">Mesaj İstekleri ({pending.length})</h2>
+          <h2 className="mb-2 text-h3 font-semibold text-text">{t("messages.messageRequestsHeading")} ({pending.length})</h2>
           <p className="mb-2 text-xs text-text-muted">
-            Seni takip etmeyen kişilerden gelen mesajlar burada bekler — açıp yanıtlarsan otomatik kabul edilir.
+            {t("messages.messageRequestsHint")}
           </p>
           <ConversationList conversations={pending} shareQuery={shareQuery} />
         </div>
       )}
       {pending.length > 0 && accepted.length > 0 && (
-        <h2 className="mb-2 text-h3 font-semibold text-text">Sohbetler</h2>
+        <h2 className="mb-2 text-h3 font-semibold text-text">{t("messages.chatsHeading")}</h2>
       )}
       {(accepted.length > 0 || pending.length === 0) && (
         <ConversationList conversations={accepted} shareQuery={shareQuery} />

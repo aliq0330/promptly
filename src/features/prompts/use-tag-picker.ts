@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { analyzeContent, matchCandidateSuggestions } from "@/lib/tag-catalog-matcher";
 import { getOrCreateTag } from "@/lib/supabase/tags";
+import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Tag } from "@/types";
 
 export type TagSource = "manual" | "automatic";
@@ -82,6 +83,7 @@ export interface UseTagPickerResult {
  * the text hasn't materially changed (§5/§8's central, "EN ÖNEMLİ" rule).
  */
 export function useTagPicker({ title, content, catalog, initialTags, contextTags }: UseTagPickerOptions): UseTagPickerResult {
+  const { t } = useTranslation();
   const [accepted, setAccepted] = useState<AcceptedTagEntry[]>(() =>
     (initialTags ?? []).map((tag) => ({ tag, source: "manual" as const })),
   );
@@ -194,11 +196,11 @@ export function useTagPicker({ title, content, catalog, initialTags, contextTags
       const realTag = await getOrCreateTag(tag.label);
       commit(realTag);
     } catch (err) {
-      setAcceptError(err instanceof Error ? err.message : "Etiket oluşturulamadı, lütfen tekrar dene.");
+      setAcceptError(err instanceof Error ? err.message : t("tagPicker.createFailed"));
     } finally {
       setAcceptingSlug(null);
     }
-  }, []);
+  }, [t]);
 
   const addManual = useCallback((tag: Tag) => {
     setSuggested((prev) => prev.filter((entry) => entry.slug !== tag.slug));

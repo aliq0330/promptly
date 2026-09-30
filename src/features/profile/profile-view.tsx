@@ -14,6 +14,7 @@ import { RequestList } from "@/features/requests/request-list";
 import { CollectionsPanel } from "@/features/collections/collections-panel";
 import { GeneratorCard } from "@/features/generators/generator-card";
 import { useAuth } from "@/features/auth/auth-provider";
+import { useTranslation } from "@/lib/i18n/language-provider";
 import { fetchLikedPrompts } from "@/lib/supabase/prompts";
 import type { Generator, Prompt, PromptContentType, PromptRequest, UserProfile } from "@/types";
 
@@ -45,6 +46,7 @@ export function ProfileView({
   /** This profile's own real generators — RLS already limits a visitor to the owner's published+public/unlisted ones, drafts only ever coming back for the owner's own profile, so no extra client-side filter is needed. */
   authorGenerators: Generator[];
 }) {
+  const { t } = useTranslation();
   const { user: authUser } = useAuth();
 
   const [authorPrompts, setAuthorPrompts] = useState(initialAuthorPrompts);
@@ -99,18 +101,18 @@ export function ProfileView({
 
   const tabs = useMemo(() => {
     const base: { key: ProfileTabKey; label: string; count?: number }[] = [
-      { key: "prompts", label: "Promptlar", count: authorPrompts.length },
-      { key: "requests", label: "Prompt İstekleri", count: authorRequests.length },
-      { key: "generators", label: "Generatorlar", count: authorGenerators.length },
+      { key: "prompts", label: t("feed.filterPrompts"), count: authorPrompts.length },
+      { key: "requests", label: t("nav.requests"), count: authorRequests.length },
+      { key: "generators", label: t("nav.generators"), count: authorGenerators.length },
     ];
     if (isOwnProfile) {
       // "Kaydedilenler" has no single flat count anymore — it's a list of
       // collections now, not a list of prompts (Bölüm 9.22 §1).
-      base.push({ key: "saved", label: "Kaydedilenler" }, { key: "liked", label: "Beğeniler", count: likedPrompts.length });
+      base.push({ key: "saved", label: t("profile.tabSaved") }, { key: "liked", label: t("profile.tabLiked"), count: likedPrompts.length });
     }
-    base.push({ key: "about", label: "Hakkında" });
+    base.push({ key: "about", label: t("profile.tabAbout") });
     return base;
-  }, [authorPrompts.length, authorRequests.length, authorGenerators.length, isOwnProfile, likedPrompts.length]);
+  }, [authorPrompts.length, authorRequests.length, authorGenerators.length, isOwnProfile, likedPrompts.length, t]);
 
   const activeSource = useMemo(() => {
     switch (activeTab) {
@@ -171,13 +173,13 @@ export function ProfileView({
           authorRequests.length === 0 ? (
             <ProfileEmptyState
               icon={Sparkles}
-              title="Henüz prompt isteği oluşturulmamış."
+              title={t("profile.noRequestsYetTitle")}
               description={
                 isOwnProfile
-                  ? "Topluluktan bir prompt istemek için yeni bir istek oluşturabilirsin."
-                  : "Bu kullanıcı henüz bir prompt isteği oluşturmadı."
+                  ? t("profile.noRequestsYetOwnBody")
+                  : t("profile.noRequestsYetOtherBody")
               }
-              action={isOwnProfile ? { label: "İstek oluştur", href: "/requests/new" } : undefined}
+              action={isOwnProfile ? { label: t("create.requestTitle"), href: "/requests/new" } : undefined}
             />
           ) : (
             <RequestList requests={authorRequests} />
@@ -186,13 +188,13 @@ export function ProfileView({
           authorGenerators.length === 0 ? (
             <ProfileEmptyState
               icon={Blocks}
-              title="Henüz bir generator oluşturulmamış."
+              title={t("profile.noGeneratorsYetTitle")}
               description={
                 isOwnProfile
-                  ? "Kendi prompt generatorunu oluşturup başkalarının kullanmasına açabilirsin."
-                  : "Bu kullanıcı henüz bir generator yayınlamadı."
+                  ? t("profile.noGeneratorsYetOwnBody")
+                  : t("profile.noGeneratorsYetOtherBody")
               }
-              action={isOwnProfile ? { label: "Generator oluştur", href: "/generators/create" } : undefined}
+              action={isOwnProfile ? { label: t("create.generatorTitle"), href: "/generators/create" } : undefined}
             />
           ) : (
             <div className="columns-1 gap-3 sm:columns-2 sm:gap-4 xl:columns-3">
@@ -235,8 +237,8 @@ export function ProfileView({
                 hasActiveFilters ? (
                   <ProfileEmptyState
                     icon={SearchX}
-                    title="Bu filtreye uygun içerik bulunamadı"
-                    description="Başka bir içerik türü veya sıralama seçmeyi dene."
+                    title={t("profile.noMatchForFilterTitle")}
+                    description={t("profile.noMatchForFilterBody")}
                   />
                 ) : (
                   <TabEmptyState tab={activeTab} isOwnProfile={isOwnProfile} />
@@ -251,22 +253,23 @@ export function ProfileView({
 }
 
 function TabEmptyState({ tab, isOwnProfile }: { tab: ProfileTabKey; isOwnProfile: boolean }) {
+  const { t } = useTranslation();
   if (tab === "liked") {
     return (
       <ProfileEmptyState
         icon={Heart}
-        title="Beğendiğin promptlar burada"
-        description="Beğendiğin promptlar burada listelenir."
-        action={{ label: "Promptları keşfet", href: "/discover" }}
+        title={t("profile.likedPromptsHereTitle")}
+        description={t("profile.likedPromptsHereBody")}
+        action={{ label: t("profile.explorePrompts"), href: "/discover" }}
       />
     );
   }
   return (
     <ProfileEmptyState
       icon={Sparkles}
-      title="Yaratıcı yolculuğun burada başlıyor"
-      description="İlk promptunu oluştur ve galerini keşfedilmeye aç."
-      action={isOwnProfile ? { label: "Prompt oluştur", href: "/create" } : undefined}
+      title={t("profile.creativeJourneyStartsHereTitle")}
+      description={t("profile.creativeJourneyStartsHereBody")}
+      action={isOwnProfile ? { label: t("create.promptTitle"), href: "/create" } : undefined}
     />
   );
 }

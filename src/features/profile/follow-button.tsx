@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n/language-provider";
 import { useFollowState } from "./use-follow-state";
 import type { UserProfile } from "@/types";
 
@@ -30,18 +31,19 @@ interface FollowButtonViewProps {
  * move the count next to it until the whole profile reloaded.
  */
 export function FollowButtonView({ isFollowing, toggle, canFollow, loading, size = "sm", className }: FollowButtonViewProps) {
+  const { t } = useTranslation();
   if (!canFollow) {
     return (
       <Link
         href="/login"
-        title="Takip etmek için giriş yapmalısın"
+        title={t("common.loginToFollowTitle")}
         className={cn(
           "inline-flex items-center justify-center rounded-md bg-primary font-medium text-primary-foreground transition-colors duration-200 hover:bg-primary-hover",
           SIZE_CLASSES[size],
           className,
         )}
       >
-        Takip Et
+        {t("common.follow")}
       </Link>
     );
   }
@@ -55,7 +57,7 @@ export function FollowButtonView({ isFollowing, toggle, canFollow, loading, size
       disabled={loading}
       className={className}
     >
-      {isFollowing ? "Takip Ediliyor" : "Takip Et"}
+      {isFollowing ? t("common.unfollow") : t("common.follow")}
     </Button>
   );
 }

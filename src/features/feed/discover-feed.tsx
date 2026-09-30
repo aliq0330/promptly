@@ -19,16 +19,18 @@ import { useRealGenerators } from "@/features/generators/real-generators-provide
 import { fetchTopCreators } from "@/lib/supabase/profiles";
 import { fetchPopularTags } from "@/lib/supabase/tags";
 import { tagHref } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n/language-provider";
+import type { TranslationKey } from "@/lib/i18n/translations";
 import type { GeneratorCategoryTopic, PromptContentType, Tag, UserProfile } from "@/types";
 
 type Section = "all" | "prompts" | "generators" | "requests" | "creators";
 
-const SECTIONS = [
-  { key: "all" as const, label: "Tümü", icon: LayoutGrid },
-  { key: "prompts" as const, label: "Promptlar", icon: SquareTerminal },
-  { key: "generators" as const, label: "Generatorlar", icon: Blocks },
-  { key: "requests" as const, label: "İstekler", icon: Sparkles },
-  { key: "creators" as const, label: "Yaratıcılar", icon: Users },
+const SECTIONS: { key: Section; labelKey: TranslationKey; icon: typeof LayoutGrid }[] = [
+  { key: "all", labelKey: "common.all", icon: LayoutGrid },
+  { key: "prompts", labelKey: "feed.filterPrompts", icon: SquareTerminal },
+  { key: "generators", labelKey: "nav.generators", icon: Blocks },
+  { key: "requests", labelKey: "nav.requestsShort", icon: Sparkles },
+  { key: "creators", labelKey: "discover.creators", icon: Users },
 ];
 
 const PROMPT_TYPES = Object.keys(CONTENT_TYPE_META) as PromptContentType[];
@@ -40,6 +42,7 @@ const PROMPT_TYPES = Object.keys(CONTENT_TYPE_META) as PromptContentType[];
  * shared caches (RealPrompts/Requests/Generators providers), no new API.
  */
 export function DiscoverFeed() {
+  const { t } = useTranslation();
   const router = useRouter();
   const [section, setSection] = useState<Section>("all");
   const [promptType, setPromptType] = useState<PromptContentType | "all">("all");
@@ -82,7 +85,7 @@ export function DiscoverFeed() {
     <div className="space-y-6">
       <form onSubmit={handleSearch} role="search" className="relative">
         <label htmlFor="discover-search" className="sr-only">
-          Prompt, generator, kullanıcı veya etiket ara
+          {t("discover.searchPlaceholder")}
         </label>
         <Search size={18} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" />
         <input
@@ -90,14 +93,14 @@ export function DiscoverFeed() {
           type="search"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="Prompt, generator, kullanıcı veya etiket ara"
+          placeholder={t("discover.searchPlaceholder")}
           className="h-12 w-full rounded-lg border border-border-soft bg-surface pl-11 pr-24 text-small text-text shadow-card placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
         />
         <button
           type="submit"
           className="absolute right-1.5 top-1/2 h-9 -translate-y-1/2 rounded-md bg-text px-4 text-label font-semibold text-background transition-opacity hover:opacity-90"
         >
-          Ara
+          {t("discover.search")}
         </button>
       </form>
 
@@ -105,7 +108,7 @@ export function DiscoverFeed() {
         <div className="flex items-center gap-3">
           <span className="hidden shrink-0 items-center gap-1.5 text-caption font-semibold uppercase tracking-[0.08em] text-text-muted sm:flex">
             <TrendingUp size={13} />
-            Trend
+            {t("discover.trending")}
           </span>
           <div className="scrollbar-none -mx-3 flex touch-pan-x gap-2 overflow-x-auto overscroll-x-contain px-3 sm:mx-0 sm:px-0">
             {tags.map((tag) => (
@@ -123,16 +126,21 @@ export function DiscoverFeed() {
       )}
 
       <div className="space-y-3">
-        <Tabs items={SECTIONS} active={section} onChange={setSection} ariaLabel="Keşfet bölümleri" />
+        <Tabs
+          items={SECTIONS.map((s) => ({ key: s.key, label: t(s.labelKey), icon: s.icon }))}
+          active={section}
+          onChange={setSection}
+          ariaLabel={t("discover.sectionsAriaLabel")}
+        />
 
         {section === "prompts" && (
           <ChipRow>
             <Chip selected={promptType === "all"} onClick={() => setPromptType("all")}>
-              Tüm türler
+              {t("discover.allTypes")}
             </Chip>
             {PROMPT_TYPES.map((type) => (
               <Chip key={type} icon={CONTENT_TYPE_META[type].icon} selected={promptType === type} onClick={() => setPromptType(type)}>
-                {CONTENT_TYPE_META[type].label}
+                {t(CONTENT_TYPE_META[type].labelKey)}
               </Chip>
             ))}
           </ChipRow>
@@ -140,11 +148,11 @@ export function DiscoverFeed() {
         {section === "generators" && (
           <ChipRow>
             <Chip selected={topic === "all"} onClick={() => setTopic("all")}>
-              Tüm kategoriler
+              {t("discover.allCategories")}
             </Chip>
             {GENERATOR_CATEGORY_TOPICS.map((key) => (
               <Chip key={key} icon={GENERATOR_CATEGORY_TOPIC_ICONS[key]} selected={topic === key} onClick={() => setTopic(key)}>
-                {GENERATOR_CATEGORY_TOPIC_LABELS[key]}
+                {t(GENERATOR_CATEGORY_TOPIC_LABELS[key])}
               </Chip>
             ))}
           </ChipRow>
@@ -152,10 +160,10 @@ export function DiscoverFeed() {
         {section === "requests" && (
           <ChipRow>
             <Chip selected={!openOnly} onClick={() => setOpenOnly(false)}>
-              Tüm istekler
+              {t("discover.allRequests")}
             </Chip>
             <Chip selected={openOnly} onClick={() => setOpenOnly(true)}>
-              Yalnızca açık
+              {t("request.openOnly")}
             </Chip>
           </ChipRow>
         )}
@@ -165,7 +173,7 @@ export function DiscoverFeed() {
         creators === null ? (
           <PromptCardSkeletonGrid count={3} />
         ) : creators.length === 0 ? (
-          <EmptyState icon={Users} title="Henüz öne çıkan yaratıcı yok" />
+          <EmptyState icon={Users} title={t("discover.noCreatorsYet")} />
         ) : (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3">
             {creators.map((creator) => (
@@ -176,7 +184,7 @@ export function DiscoverFeed() {
       ) : loading && items.length === 0 ? (
         <PromptCardSkeletonGrid count={6} />
       ) : (
-        <FeedGrid items={items} emptyTitle="Bu filtreye uyan içerik yok" emptyDescription="Başka bir tür veya kategori seçmeyi dene." />
+        <FeedGrid items={items} emptyTitle={t("discover.noMatchTitle")} emptyDescription={t("discover.noMatchDescription")} />
       )}
     </div>
   );

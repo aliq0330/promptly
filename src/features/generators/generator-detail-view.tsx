@@ -13,6 +13,7 @@ import { ShareTriggerButton } from "@/features/prompts/share-modal";
 import { PostMenu } from "@/features/prompts/post-menu";
 import { CreatorSummary } from "@/features/profile/creator-summary";
 import { useAuth } from "@/features/auth/auth-provider";
+import { useTranslation } from "@/lib/i18n/language-provider";
 import { GeneratorPlayground } from "./generator-playground";
 import { GENERATOR_CATEGORY_TOPIC_LABELS } from "./generator-category-meta";
 import { LikeButton } from "@/features/prompts/like-button";
@@ -49,6 +50,7 @@ import type { Generator, GeneratorValues } from "@/types";
  * fields on its own.
  */
 export function GeneratorDetailView() {
+  const { t, language } = useTranslation();
   const router = useRouter();
   const searchParams = useSearchParams();
   const slug = searchParams.get("slug");
@@ -88,14 +90,14 @@ export function GeneratorDetailView() {
   }, [slug]);
 
   if (!slug || !loaded) {
-    return !slug ? <NotFoundBlock title="Generator bulunamadı" description="Bağlantı eksik ya da hatalı görünüyor." /> : <DetailSkeleton />;
+    return !slug ? <NotFoundBlock title={t("generator.linkNotFoundTitle")} description={t("common.brokenLinkHint")} /> : <DetailSkeleton />;
   }
 
   if (!generator || !version) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
-        <h1 className="mb-2 text-h2 font-semibold text-text">Generator bulunamadı</h1>
-        <p className="text-sm text-text-muted">Bu generator silinmiş, gizli veya hiç var olmamış olabilir.</p>
+        <h1 className="mb-2 text-h2 font-semibold text-text">{t("generator.linkNotFoundTitle")}</h1>
+        <p className="text-sm text-text-muted">{t("generator.notFoundBody")}</p>
       </div>
     );
   }
@@ -115,7 +117,7 @@ export function GeneratorDetailView() {
       const run = await recordGeneratorRun(generator.id, version.id, user.id, state.values, state.prompt, state.negativePrompt);
       router.push(`/create?generatorRun=${run.id}`);
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : "Kayıt oluşturulamadı, lütfen tekrar dene.");
+      setActionError(err instanceof Error ? err.message : t("generator.recordFailed"));
       setIsOpeningPrompt(false);
     }
   }
@@ -133,12 +135,12 @@ export function GeneratorDetailView() {
             <div className="flex flex-wrap items-center justify-between gap-2">
               <ContentTypeLabel
                 icon={Blocks}
-                label="Generator"
-                detail={generator.subcategory ? `${topic} · ${generator.subcategory}` : topic}
+                label={t("generator.singular")}
+                detail={generator.subcategory ? `${t(topic)} · ${generator.subcategory}` : t(topic)}
               />
               <div className="flex flex-wrap items-center gap-1.5">
-                {generator.status === "draft" && <Badge variant="warning">Taslak</Badge>}
-                {generator.visibility === "unlisted" && generator.status === "published" && <Badge variant="outline">Yalnızca bağlantıyla</Badge>}
+                {generator.status === "draft" && <Badge variant="warning">{t("generator.draftBadge")}</Badge>}
+                {generator.visibility === "unlisted" && generator.status === "published" && <Badge variant="outline">{t("generator.unlistedBadge")}</Badge>}
                 <PostMenu
                   generatorId={generator.id}
                   generatorSlug={generator.slug}
@@ -162,7 +164,7 @@ export function GeneratorDetailView() {
               <span className="leading-tight">
                 <span className="block text-label font-semibold text-text group-hover:text-primary">{generator.creator.displayName}</span>
                 <span className="block text-caption text-text-muted">
-                  @{generator.creator.username} · {formatRelativeTime(generator.createdAt)}
+                  @{generator.creator.username} · {formatRelativeTime(generator.createdAt, language)}
                 </span>
               </span>
             </Link>
@@ -182,18 +184,18 @@ export function GeneratorDetailView() {
             <CommentCountLink generatorSlug={generator.slug} baseCount={generator.commentCount} size={18} />
             <SaveButton generatorId={generator.id} size={18} />
             <span className="ml-auto" />
-            <ShareTriggerButton target={{ contentType: "generator", generator }} label="Paylaş" />
+            <ShareTriggerButton target={{ contentType: "generator", generator }} label={t("common.share")} />
           </div>
 
           <section aria-labelledby="generator-use-title" className="overflow-hidden rounded-lg border border-border-soft bg-surface">
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border-soft bg-surface-soft px-4 py-3">
               <h2 id="generator-use-title" className="text-h3 font-semibold text-text">
-                Generatoru Kullan
+                {t("generator.useThisGenerator")}
               </h2>
               <p className="flex items-center gap-1.5 text-caption text-text-muted">
-                <SlidersHorizontal size={13} /> Parametreleri seç
+                <SlidersHorizontal size={13} /> {t("generator.chooseParameters")}
                 <ArrowRight size={12} />
-                <SquareTerminal size={13} /> Promptunu al
+                <SquareTerminal size={13} /> {t("generator.getYourPrompt")}
               </p>
             </div>
             <div className="p-4 sm:p-5">
@@ -205,13 +207,13 @@ export function GeneratorDetailView() {
                     ? (state) =>
                         user ? (
                           <Button type="button" onClick={() => handleOpenInPrompt(state)} disabled={isOpeningPrompt || !state.prompt.trim()}>
-                            {isOpeningPrompt ? "Açılıyor…" : "Prompt Olarak Aç"}
+                            {isOpeningPrompt ? t("generator.opening") : t("generator.openAsPrompt")}
                           </Button>
                         ) : (
                           <p className="text-caption text-text-muted">
-                            Bu çıktıyı gerçek bir prompt olarak açmak için{" "}
+                            {t("generator.loginToOpenAsPromptPrefix")}{" "}
                             <Link href="/login" className="font-medium text-primary hover:underline">
-                              giriş yap
+                              {t("common.login")}
                             </Link>
                             .
                           </p>
@@ -242,9 +244,9 @@ export function GeneratorDetailView() {
           {actionError && <p className="text-small text-danger">{actionError}</p>}
           {!user && (
             <p className="text-caption text-text-muted">
-              Kaydetmek ya da bir prompt oluşturmak için{" "}
+              {t("generator.loginToSaveOrCreatePrefix")}{" "}
               <Link href="/login" className="font-medium text-primary hover:underline">
-                giriş yap
+                {t("common.login")}
               </Link>
               .
             </p>
@@ -261,7 +263,7 @@ export function GeneratorDetailView() {
           {fields.length > 0 && (
             <section aria-labelledby="generator-structure-title" className="space-y-2">
               <h2 id="generator-structure-title" className="px-1 font-sans text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">
-                Prompt yapısı · {fields.length} parametre
+                {t("generator.promptStructureHeading")} · {t("generator.parameterCount", { count: fields.length })}
               </h2>
               <ul className="divide-y divide-border-soft overflow-hidden rounded-lg border border-border-soft bg-surface">
                 {fields.map((field) => (

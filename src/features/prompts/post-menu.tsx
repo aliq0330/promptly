@@ -9,6 +9,7 @@ import { deleteRealPrompt } from "@/lib/supabase/prompts";
 import { deleteGenerator } from "@/lib/supabase/generators";
 import { deleteRealRequest } from "@/lib/supabase/requests";
 import { deletePromptResult } from "@/lib/supabase/prompt-results";
+import { useTranslation } from "@/lib/i18n/language-provider";
 
 /**
  * Every post card's three-dot menu (header, top-right) — not just the
@@ -78,6 +79,7 @@ export function PostMenu({
     onRemove: () => Promise<void>;
   };
 }) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const isOwn = user?.id === authorId;
   const isGenerator = Boolean(generatorId);
@@ -159,7 +161,7 @@ export function PostMenu({
       setOpen(false);
       onDeleted?.();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Silinemedi, lütfen tekrar dene.");
+      setError(err instanceof Error ? err.message : t("common.deleteFailed"));
       setIsDeleting(false);
       setConfirmingDelete(false);
     }
@@ -179,7 +181,7 @@ export function PostMenu({
       await collectionRemoval.onRemove();
       setOpen(false);
     } catch (err) {
-      setRemoveError(err instanceof Error ? err.message : "Kaldırılamadı, lütfen tekrar dene.");
+      setRemoveError(err instanceof Error ? err.message : t("common.removeFailed"));
       setIsRemoving(false);
       setConfirmingRemove(false);
     }
@@ -194,7 +196,7 @@ export function PostMenu({
           event.stopPropagation();
           setOpen((prev) => !prev);
         }}
-        aria-label="Gönderi seçenekleri"
+        aria-label={t("common.postOptions")}
         aria-haspopup="menu"
         aria-expanded={open}
         className="flex h-8 w-8 items-center justify-center rounded-md text-text-muted transition-colors duration-200 hover:bg-surface-soft hover:text-text"
@@ -216,7 +218,7 @@ export function PostMenu({
             className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-text hover:bg-surface-soft"
           >
             <Link2 size={14} />
-            {copied ? "Kopyalandı" : "Bağlantıyı kopyala"}
+            {copied ? t("common.copied") : t("common.copyLink")}
           </button>
           {collectionRemoval && (
             <>
@@ -229,10 +231,10 @@ export function PostMenu({
               >
                 {isRemoving ? <Loader2 size={14} className="animate-spin" /> : <FolderMinus size={14} />}
                 {confirmingRemove
-                  ? "Emin misin? Tekrar tıkla"
+                  ? t("common.confirmDelete")
                   : collectionRemoval.isDefault
-                    ? "Kaydedilenlerden kaldır"
-                    : "Koleksiyondan kaldır"}
+                    ? t("common.removeFromSaved")
+                    : t("common.removeFromCollection")}
               </button>
               {removeError && <p className="px-3 py-1 text-xs text-danger">{removeError}</p>}
             </>
@@ -253,7 +255,7 @@ export function PostMenu({
                     className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-text hover:bg-surface-soft"
                   >
                     <Pencil size={14} />
-                    Düzenle
+                    {t("common.edit")}
                   </button>
                 )
               ) : (
@@ -264,7 +266,7 @@ export function PostMenu({
                   className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-text hover:bg-surface-soft"
                 >
                   <Pencil size={14} />
-                  Düzenle
+                  {t("common.edit")}
                 </Link>
               )}
               {!isGenerator && !isRequest && !isResult && (
@@ -275,7 +277,7 @@ export function PostMenu({
                   className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-text hover:bg-surface-soft"
                 >
                   <Copy size={14} />
-                  Kopyasını oluştur
+                  {t("common.duplicate")}
                 </Link>
               )}
               <button
@@ -286,7 +288,7 @@ export function PostMenu({
                 className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-danger hover:bg-danger/10"
               >
                 {isDeleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
-                {confirmingDelete ? "Emin misin? Tekrar tıkla" : "Sil"}
+                {confirmingDelete ? t("common.confirmDelete") : t("common.delete")}
               </button>
             </>
           )}

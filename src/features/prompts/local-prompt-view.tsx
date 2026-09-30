@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { PromptDetailView } from "./prompt-detail-view";
 import { useRealPrompts } from "./real-prompts-provider";
+import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Prompt } from "@/types";
 
 /**
@@ -15,6 +16,7 @@ import type { Prompt } from "@/types";
  * batch, or a live fetch otherwise. See `promptHref()` in lib/utils.ts.
  */
 export function LocalPromptView() {
+  const { t } = useTranslation();
   const searchParams = useSearchParams();
   const id = searchParams.get("id");
   const { getCached, fetchById } = useRealPrompts();
@@ -56,15 +58,15 @@ export function LocalPromptView() {
   if (!prompt) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
-        <h1 className="mb-2 text-h2 font-semibold text-text">Prompt bulunamadı</h1>
+        <h1 className="mb-2 text-h2 font-semibold text-text">{t("prompt.notFoundTitle")}</h1>
         <p className="mb-4 text-sm text-text-muted">
-          Bu prompt kaldırılmış olabilir, ya da hiç var olmamış olabilir.
+          {t("prompt.notFoundBody")}
         </p>
         <Link
           href="/"
           className="inline-flex h-9 items-center rounded-md border border-border px-4 text-sm font-medium text-text hover:bg-accent-surface"
         >
-          Ana Sayfaya Dön
+          {t("common.backToHome")}
         </Link>
       </div>
     );
@@ -73,15 +75,15 @@ export function LocalPromptView() {
   if (prompt.deletedAt) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
-        <h1 className="mb-2 text-h2 font-semibold text-text">Bu paylaşım silindi</h1>
+        <h1 className="mb-2 text-h2 font-semibold text-text">{t("prompt.deletedTitle")}</h1>
         <p className="mb-4 text-sm text-text-muted">
-          Yazarı bu paylaşımı sildi.
+          {t("prompt.deletedBody")}
         </p>
         <Link
           href="/"
           className="inline-flex h-9 items-center rounded-md border border-border px-4 text-sm font-medium text-text hover:bg-accent-surface"
         >
-          Ana Sayfaya Dön
+          {t("common.backToHome")}
         </Link>
       </div>
     );

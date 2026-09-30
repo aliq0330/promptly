@@ -17,6 +17,7 @@ import { Camera, ImagePlus, Loader2, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn, copyTextToClipboard } from "@/lib/utils";
 import { analyzeImageForPrompt } from "@/lib/supabase/image-analysis";
+import { useTranslation } from "@/lib/i18n/language-provider";
 import type { PromptBuilderResult } from "@/lib/image-analysis-types";
 
 type Status = "idle" | "loading" | "error";
@@ -26,6 +27,7 @@ export function PromptVisionAssist({
 }: {
   onApplyPrompt: (prompt: string, mode: "replace" | "append") => void;
 }) {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -91,15 +93,14 @@ export function PromptVisionAssist({
         className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm font-medium text-text"
       >
         <Sparkles className="h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
-        <span className="flex-1">Görselden İlham Al</span>
-        <span className="text-xs font-normal text-text-muted">{expanded ? "Gizle" : "Göster"}</span>
+        <span className="flex-1">{t("vision.promptTitle")}</span>
+        <span className="text-xs font-normal text-text-muted">{expanded ? t("vision.hide") : t("vision.show")}</span>
       </button>
 
       {expanded && (
         <div id="prompt-vision-assist-body" className="space-y-3 border-t border-border/60 px-3 pb-3 pt-3">
           <p className="text-xs text-text-muted">
-            Referans bir görsel yükle — yapay zekâ görseli analiz edip senin için bir prompt önersin. Sonucu dilediğin
-            gibi değiştirebilir, ekleyebilir veya hiç kullanmayabilirsin.
+            {t("vision.promptIntro")}
           </p>
 
           {previewUrl ? (
@@ -113,7 +114,7 @@ export function PromptVisionAssist({
               <button
                 type="button"
                 onClick={() => setSelectedFile(null)}
-                aria-label="Görseli kaldır"
+                aria-label={t("vision.removeImage")}
                 className="rounded-full p-1 text-text-muted hover:bg-accent-surface hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               >
                 <X className="h-4 w-4" aria-hidden="true" />
@@ -133,11 +134,11 @@ export function PromptVisionAssist({
               )}
             >
               <ImagePlus className="h-6 w-6 text-text-muted" aria-hidden="true" />
-              <p className="text-xs text-text-muted">Görseli buraya sürükle bırak veya</p>
+              <p className="text-xs text-text-muted">{t("vision.dropHint")}</p>
               <div className="flex flex-wrap justify-center gap-2">
                 <Button type="button" variant="outline" size="sm" onClick={() => inputRef.current?.click()}>
                   <Camera className="h-4 w-4" aria-hidden="true" />
-                  Görsel seç
+                  {t("vision.chooseImage")}
                 </Button>
               </div>
               <input
@@ -146,7 +147,7 @@ export function PromptVisionAssist({
                 accept="image/jpeg,image/png,image/webp"
                 className="hidden"
                 onChange={handleInputChange}
-                aria-label="Analiz edilecek görseli seç"
+                aria-label={t("vision.pickImageAriaLabel")}
               />
             </div>
           )}
@@ -154,11 +155,11 @@ export function PromptVisionAssist({
           <div className="flex flex-wrap items-center gap-3">
             <Button type="button" size="sm" onClick={handleAnalyze} disabled={!file || status === "loading"}>
               {status === "loading" ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Sparkles className="h-4 w-4" aria-hidden="true" />}
-              {status === "loading" ? "Analiz ediliyor…" : "Analiz Et"}
+              {status === "loading" ? t("vision.analyzing") : t("vision.analyze")}
             </Button>
             {status === "loading" && (
               <span role="status" className="text-xs text-text-muted">
-                Bu birkaç saniye sürebilir.
+                {t("vision.mayTakeSeconds")}
               </span>
             )}
           </div>
@@ -173,7 +174,7 @@ export function PromptVisionAssist({
             <div className="space-y-3 rounded-md border border-border bg-surface p-3">
               {analysisEntries.length > 0 && (
                 <div className="space-y-1">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">Görsel Analizi</p>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">{t("vision.imageAnalysis")}</p>
                   <dl className="space-y-0.5 text-sm text-text">
                     {analysisEntries.map(([key, value]) => (
                       <div key={key} className="flex gap-1.5">
@@ -187,14 +188,14 @@ export function PromptVisionAssist({
 
               {result.prompt && (
                 <div className="space-y-1.5">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">Oluşturulan Prompt</p>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">{t("vision.generatedPrompt")}</p>
                   <p className="whitespace-pre-wrap rounded-md bg-accent-surface/40 p-2.5 text-sm text-text">{result.prompt}</p>
                   <div className="flex flex-wrap gap-2">
                     <Button type="button" size="sm" onClick={() => onApplyPrompt(result.prompt, "replace")}>
-                      Prompt Alanına Yaz
+                      {t("vision.writeToPromptField")}
                     </Button>
                     <Button type="button" size="sm" variant="outline" onClick={() => onApplyPrompt(result.prompt, "append")}>
-                      Prompta Ekle
+                      {t("vision.appendToPrompt")}
                     </Button>
                   </div>
                 </div>
@@ -202,7 +203,7 @@ export function PromptVisionAssist({
 
               {result.negativePrompt && (
                 <div className="space-y-1">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">Kaçınılması Önerilen Öğeler</p>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">{t("vision.avoidThese")}</p>
                   <p className="whitespace-pre-wrap rounded-md bg-accent-surface/40 p-2.5 font-mono text-xs text-text-muted">
                     {result.negativePrompt}
                   </p>
@@ -216,7 +217,7 @@ export function PromptVisionAssist({
                     }}
                     className="text-xs font-medium text-primary hover:underline"
                   >
-                    {copiedNegative ? "Kopyalandı" : "Kopyala"}
+                    {copiedNegative ? t("common.copied") : t("common.copy")}
                   </button>
                 </div>
               )}

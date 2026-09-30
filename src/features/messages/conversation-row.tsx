@@ -1,6 +1,9 @@
+"use client";
+
 import Link from "next/link";
 import { Avatar } from "@/components/ui/avatar";
 import { formatRelativeTime, messageHref } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Conversation } from "@/types";
 
 export function ConversationRow({
@@ -11,6 +14,7 @@ export function ConversationRow({
   /** Set by `/messages?sharePromptId=`/`?shareRequestId=` — appended so picking this conversation attaches the shared content there. */
   shareQuery?: string;
 }) {
+  const { t, language } = useTranslation();
   const participant = conversation.participants[0];
 
   return (
@@ -20,7 +24,7 @@ export function ConversationRow({
     >
       <Avatar
         src={participant?.avatarUrl}
-        alt={participant?.displayName ?? "Kullanıcı"}
+        alt={participant?.displayName ?? t("common.genericUser")}
         size={44}
       />
       <div className="min-w-0 flex-1">
@@ -29,7 +33,7 @@ export function ConversationRow({
             {participant?.displayName}
           </span>
           <span className="shrink-0 text-xs text-text-muted">
-            {formatRelativeTime(conversation.lastMessageAt)}
+            {formatRelativeTime(conversation.lastMessageAt, language)}
           </span>
         </div>
         <p className="truncate text-xs text-text-muted">{conversation.lastMessage}</p>

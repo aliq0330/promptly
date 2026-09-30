@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ProfileView } from "./profile-view";
 import { useAuth } from "@/features/auth/auth-provider";
+import { useTranslation } from "@/lib/i18n/language-provider";
 import { fetchProfileByUsername } from "@/lib/supabase/profiles";
 import { fetchPromptsByAuthor } from "@/lib/supabase/prompts";
 import { fetchRequestsByAuthor } from "@/lib/supabase/requests";
@@ -22,6 +23,7 @@ import type { Generator, Prompt, PromptRequest, UserProfile } from "@/types";
  * lib/utils.ts for which profiles route here vs. the static pages.
  */
 export function RealProfileView() {
+  const { t } = useTranslation();
   const searchParams = useSearchParams();
   const username = searchParams.get("username");
   const { user } = useAuth();
@@ -73,15 +75,15 @@ export function RealProfileView() {
   if (status === "not-found" || !profile) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
-        <h1 className="mb-2 text-h2 font-semibold text-text">Profil bulunamadı</h1>
+        <h1 className="mb-2 text-h2 font-semibold text-text">{t("profile.profileNotFoundTitle")}</h1>
         <p className="mb-4 text-sm text-text-muted">
-          Bu kullanıcı adına sahip bir hesap yok, ya da hesap silinmiş olabilir.
+          {t("profile.profileNotFoundBody")}
         </p>
         <Link
           href="/"
           className="inline-flex h-9 items-center rounded-md border border-border px-4 text-sm font-medium text-text hover:bg-accent-surface"
         >
-          Ana Sayfaya Dön
+          {t("common.backToHome")}
         </Link>
       </div>
     );

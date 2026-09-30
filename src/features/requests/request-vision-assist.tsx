@@ -18,17 +18,18 @@ import { Camera, ImagePlus, Loader2, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { analyzeImageForRequest } from "@/lib/supabase/image-analysis";
+import { useTranslation, type TFunction } from "@/lib/i18n/language-provider";
 import type { PromptRequestResult } from "@/lib/image-analysis-types";
 
 type Status = "idle" | "loading" | "error";
 
-function suggestedFieldsLine(fields: PromptRequestResult["suggestedFields"] | undefined): string {
+function suggestedFieldsLine(fields: PromptRequestResult["suggestedFields"] | undefined, t: TFunction): string {
   const safe = fields ?? {};
   const parts: string[] = [];
-  if (safe.style) parts.push(`Stil: ${safe.style}`);
-  if (safe.subject) parts.push(`Konu: ${safe.subject}`);
-  if (safe.colorPalette) parts.push(`Renk paleti: ${safe.colorPalette}`);
-  if (safe.details) parts.push(`Detaylar: ${safe.details}`);
+  if (safe.style) parts.push(`${t("vision.fieldStyle")}: ${safe.style}`);
+  if (safe.subject) parts.push(`${t("vision.fieldSubject")}: ${safe.subject}`);
+  if (safe.colorPalette) parts.push(`${t("vision.fieldColorPalette")}: ${safe.colorPalette}`);
+  if (safe.details) parts.push(`${t("vision.fieldDetails")}: ${safe.details}`);
   return parts.join(" · ");
 }
 
@@ -39,6 +40,7 @@ export function RequestVisionAssist({
   onApplyDescription: (text: string) => void;
   onApplyCreativeDirection: (text: string) => void;
 }) {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -92,7 +94,7 @@ export function RequestVisionAssist({
   const analysisEntries = result
     ? Object.entries(result.analysis ?? {}).filter(([, v]) => typeof v === "string" && v.trim())
     : [];
-  const fieldsLine = result ? suggestedFieldsLine(result.suggestedFields) : "";
+  const fieldsLine = result ? suggestedFieldsLine(result.suggestedFields, t) : "";
 
   return (
     <div className="mb-4 rounded-md border border-dashed border-border bg-accent-surface/30">
@@ -104,15 +106,14 @@ export function RequestVisionAssist({
         className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm font-medium text-text"
       >
         <Sparkles className="h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
-        <span className="flex-1">Referans Görsel</span>
-        <span className="text-xs font-normal text-text-muted">{expanded ? "Gizle" : "Göster"}</span>
+        <span className="flex-1">{t("vision.requestTitle")}</span>
+        <span className="text-xs font-normal text-text-muted">{expanded ? t("vision.hide") : t("vision.show")}</span>
       </button>
 
       {expanded && (
         <div id="request-vision-assist-body" className="space-y-3 border-t border-border/60 px-3 pb-3 pt-3">
           <p className="text-xs text-text-muted">
-            Bir görsel yükle — yapay zekâ görseli analiz ederek isteğinin açıklamasını ve yaratıcı yönünü
-            oluşturmana yardımcı olsun. Öneriler yalnızca sen kabul edersen forma yazılır.
+            {t("vision.requestIntro")}
           </p>
 
           {previewUrl ? (
@@ -126,7 +127,7 @@ export function RequestVisionAssist({
               <button
                 type="button"
                 onClick={() => setSelectedFile(null)}
-                aria-label="Görseli kaldır"
+                aria-label={t("vision.removeImage")}
                 className="rounded-full p-1 text-text-muted hover:bg-accent-surface hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               >
                 <X className="h-4 w-4" aria-hidden="true" />
@@ -146,11 +147,11 @@ export function RequestVisionAssist({
               )}
             >
               <ImagePlus className="h-6 w-6 text-text-muted" aria-hidden="true" />
-              <p className="text-xs text-text-muted">Görseli buraya sürükle bırak veya</p>
+              <p className="text-xs text-text-muted">{t("vision.dropHint")}</p>
               <div className="flex flex-wrap justify-center gap-2">
                 <Button type="button" variant="outline" size="sm" onClick={() => inputRef.current?.click()}>
                   <Camera className="h-4 w-4" aria-hidden="true" />
-                  Görsel seç
+                  {t("vision.chooseImage")}
                 </Button>
               </div>
               <input
@@ -159,7 +160,7 @@ export function RequestVisionAssist({
                 accept="image/jpeg,image/png,image/webp"
                 className="hidden"
                 onChange={handleInputChange}
-                aria-label="Analiz edilecek görseli seç"
+                aria-label={t("vision.pickImageAriaLabel")}
               />
             </div>
           )}
@@ -167,11 +168,11 @@ export function RequestVisionAssist({
           <div className="flex flex-wrap items-center gap-3">
             <Button type="button" size="sm" onClick={handleAnalyze} disabled={!file || status === "loading"}>
               {status === "loading" ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Sparkles className="h-4 w-4" aria-hidden="true" />}
-              {status === "loading" ? "Analiz ediliyor…" : "Analiz Et"}
+              {status === "loading" ? t("vision.analyzing") : t("vision.analyze")}
             </Button>
             {status === "loading" && (
               <span role="status" className="text-xs text-text-muted">
-                Bu birkaç saniye sürebilir.
+                {t("vision.mayTakeSeconds")}
               </span>
             )}
           </div>
@@ -186,7 +187,7 @@ export function RequestVisionAssist({
             <div className="space-y-3 rounded-md border border-border bg-surface p-3">
               {analysisEntries.length > 0 && (
                 <div className="space-y-1">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">Görsel Analizi</p>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">{t("vision.imageAnalysis")}</p>
                   <dl className="space-y-0.5 text-sm text-text">
                     {analysisEntries.map(([key, value]) => (
                       <div key={key} className="flex gap-1.5">
@@ -200,23 +201,23 @@ export function RequestVisionAssist({
 
               {fieldsLine && (
                 <div className="space-y-1.5">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">Önerilen Yön</p>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">{t("vision.suggestedDirection")}</p>
                   <p className="rounded-md bg-accent-surface/40 p-2.5 text-sm text-text">{fieldsLine}</p>
                   <Button type="button" size="sm" variant="outline" onClick={() => onApplyCreativeDirection(fieldsLine)}>
-                    Yaratıcı Yöne Ekle
+                    {t("vision.addToCreativeDirection")}
                   </Button>
                 </div>
               )}
 
               {result.suggestedDescription && (
                 <div className="space-y-1.5">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">Önerilen Açıklama</p>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">{t("vision.suggestedDescription")}</p>
                   <p className="whitespace-pre-wrap rounded-md bg-accent-surface/40 p-2.5 text-sm text-text">
                     {result.suggestedDescription}
                   </p>
                   <div className="flex flex-wrap gap-2">
                     <Button type="button" size="sm" onClick={() => onApplyDescription(result.suggestedDescription)}>
-                      Açıklama Alanına Yaz
+                      {t("vision.writeToDescriptionField")}
                     </Button>
                   </div>
                 </div>

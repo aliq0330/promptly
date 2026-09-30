@@ -10,11 +10,28 @@ import {
 } from "react";
 import { translations, type Language, type TranslationKey } from "./translations";
 
+/** Values substituted into a `{{token}}` placeholder inside a translation string. */
+type TranslationParams = Record<string, string | number>;
+
+/**
+ * The shape of `useTranslation().t` — exported so a plain (non-component)
+ * helper function called from within a component's render (e.g. a shared
+ * "compose this display string" function) can accept it as a parameter
+ * instead of duplicating its own lookup logic. See `suggestedFieldsLine`
+ * in `request-vision-assist.tsx` and `getSharePreview` in `share-modal.tsx`.
+ */
+export type TFunction = (key: TranslationKey, params?: TranslationParams) => string;
+
 interface LanguageContextValue {
   language: Language;
   setLanguage: (language: Language) => void;
-  /** Translates a key to the current language, falling back to the key itself (never crashes on a missing entry). */
-  t: (key: TranslationKey) => string;
+  /**
+   * Translates a key to the current language, falling back to the key
+   * itself (never crashes on a missing entry). Pass `params` to substitute
+   * `{{token}}` placeholders inside the translated string — e.g.
+   * `t("notifications.commentedTimes", { user: "Ali", count: 3 })`.
+   */
+  t: TFunction;
 }
 
 const LanguageContext = createContext<LanguageContextValue | null>(null);
@@ -59,7 +76,13 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const t = useCallback(
-    (key: TranslationKey) => translations[key]?.[language] ?? key,
+    (key: TranslationKey, params?: TranslationParams) => {
+      const raw = translations[key]?.[language] ?? key;
+      if (!params) return raw;
+      return raw.replace(/\{\{(\w+)\}\}/g, (match, token: string) =>
+        token in params ? String(params[token]) : match,
+      );
+    },
     [language],
   );
 

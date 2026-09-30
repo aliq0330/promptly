@@ -1,6 +1,9 @@
+"use client";
+
 import Link from "next/link";
 import { Avatar } from "@/components/ui/avatar";
 import { formatRelativeTime, profileHref } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n/language-provider";
 import { PostMenu } from "./post-menu";
 import type { Generator, Prompt } from "@/types";
 
@@ -26,6 +29,7 @@ export function PostHeader({
   onDeleted?: () => void;
   collectionRemoval?: { isDefault: boolean; onRemove: () => Promise<void> };
 }) {
+  const { language } = useTranslation();
   const author = target.generator ? target.generator.creator : target.prompt.author;
   const createdAt = target.generator ? target.generator.createdAt : target.prompt.createdAt;
 
@@ -41,7 +45,7 @@ export function PostHeader({
             {author.displayName}
           </span>
           <span className="block truncate text-caption text-text-muted">
-            @{author.username} · {formatRelativeTime(createdAt)}
+            @{author.username} · {formatRelativeTime(createdAt, language)}
             {subtitle ? ` · ${subtitle}` : ""}
           </span>
         </span>

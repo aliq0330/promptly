@@ -1,8 +1,11 @@
+"use client";
+
 import Link from "next/link";
 import { X } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { NOTIFICATION_ICONS, getNotificationIconKey } from "@/lib/notification-utils";
 import { cn, formatRelativeTime } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n/language-provider";
 import type { AppNotification } from "@/types";
 
 interface NotificationRowProps {
@@ -22,6 +25,7 @@ interface NotificationRowProps {
  * yalnızca renkle anlamlandırılmasın" applies just as much to unread state).
  */
 export function NotificationRow({ notification, onRead, onDelete }: NotificationRowProps) {
+  const { t, language } = useTranslation();
   const iconKey = getNotificationIconKey(notification);
   const Icon = NOTIFICATION_ICONS[iconKey];
 
@@ -56,18 +60,18 @@ export function NotificationRow({ notification, onRead, onDelete }: Notification
           )}
           <span className="text-text-muted">{notification.message}</span>
         </p>
-        <span className="text-xs text-text-muted">{formatRelativeTime(notification.createdAt)}</span>
+        <span className="text-xs text-text-muted">{formatRelativeTime(notification.createdAt, language)}</span>
       </div>
       {!notification.isRead && (
         <span className="flex shrink-0 items-center gap-1">
-          <span className="sr-only">Okunmadı</span>
+          <span className="sr-only">{t("notifications.unreadSr")}</span>
           <span aria-hidden className="h-2 w-2 rounded-full bg-primary" />
         </span>
       )}
       <button
         type="button"
-        aria-label="Bildirimi sil"
-        title="Bildirimi sil"
+        aria-label={t("notifications.deleteNotification")}
+        title={t("notifications.deleteNotification")}
         onClick={(event) => {
           event.preventDefault();
           event.stopPropagation();

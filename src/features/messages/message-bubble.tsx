@@ -10,6 +10,7 @@ import { canEditOrDeleteMessage } from "./message-time-limit";
 import { SharedGeneratorCard, SharedPromptCard, SharedRequestCard } from "./shared-content-card";
 import { parseGeneratorShareBody } from "./generator-share-format";
 import { cn, formatRelativeTime } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Message } from "@/types";
 import type { MessageBubbleActions, MessageReactionEntry } from "./message-bubble-types";
 
@@ -57,6 +58,7 @@ export function MessageBubble({
   onReact: (messageId: string, emoji: string) => void;
   actions: MessageBubbleActions;
 }) {
+  const { t, language } = useTranslation();
   const isDeleted = Boolean(message.deletedAt);
 
   // A generator share has no database column to key off of (Bölüm 9.52) —
@@ -74,10 +76,10 @@ export function MessageBubble({
   const replyPreviewText = !replyPreview
     ? null
     : replyPreview.deletedAt
-      ? "Silinmiş mesaj"
+      ? t("messages.deletedMessage")
       : replyGeneratorShare
-        ? (replyGeneratorShare.note ?? "Bir generator")
-        : replyPreview.body ?? (replyPreview.sharedPromptId ? "Bir prompt" : "Bir istek");
+        ? (replyGeneratorShare.note ?? t("messages.aGenerator"))
+        : replyPreview.body ?? (replyPreview.sharedPromptId ? t("messages.aPrompt") : t("request.aRequest"));
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [emojiOpen, setEmojiOpen] = useState(false);
@@ -187,7 +189,7 @@ export function MessageBubble({
       <div className="relative">
         <button
           type="button"
-          aria-label="Mesaj seçenekleri"
+          aria-label={t("messages.messageOptionsAriaLabel")}
           aria-haspopup="menu"
           aria-expanded={menuOpen}
           onClick={(event) => {
@@ -244,7 +246,7 @@ export function MessageBubble({
       <div className={cn("flex items-center gap-1", isMe ? "flex-row-reverse" : "flex-row")}>
         {isDeleted ? (
           <div className="max-w-[75%] rounded-lg bg-accent-surface/40 px-3 py-2 text-sm italic text-text-muted">
-            Bu mesaj silindi.
+            {t("messages.thisMessageWasDeleted")}
           </div>
         ) : isEditingHere ? (
           <div className="w-full max-w-[75%] space-y-1.5" onClick={(event) => event.stopPropagation()}>
@@ -262,10 +264,10 @@ export function MessageBubble({
                 disabled={!actions.editDraft.trim() || actions.isSavingEdit}
                 onClick={() => actions.onSubmitEdit(message.id)}
               >
-                {actions.isSavingEdit ? "Kaydediliyor..." : "Kaydet"}
+                {actions.isSavingEdit ? t("common.saving") : t("common.save")}
               </Button>
               <Button type="button" variant="ghost" size="sm" onClick={actions.onCancelEdit}>
-                İptal
+                {t("common.cancelAction")}
               </Button>
             </div>
             {actions.editError && <p className="text-xs text-danger">{actions.editError}</p>}
@@ -306,8 +308,8 @@ export function MessageBubble({
 
       <div className={cn("mt-2 flex flex-wrap items-center gap-2 text-[11px] text-text-muted", isMe && "flex-row-reverse")}>
         <span>
-          {formatRelativeTime(message.createdAt)}
-          {message.editedAt && !isDeleted && " · düzenlendi"}
+          {formatRelativeTime(message.createdAt, language)}
+          {message.editedAt && !isDeleted && ` · ${t("comments.edited")}`}
         </span>
       </div>
     </div>

@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { LikeButton } from "@/features/prompts/like-button";
 import { ResultTypePreview } from "@/features/prompts/result-type-preview";
 import { formatRelativeTime, profileHref, resultHref } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n/language-provider";
 import type { PromptResultSummary } from "@/types";
 
 /**
@@ -31,6 +32,7 @@ import type { PromptResultSummary } from "@/types";
  * child too).
  */
 export function ResultCard({ result }: { result: PromptResultSummary }) {
+  const { t, language } = useTranslation();
   return (
     <div className="group relative flex flex-col overflow-hidden rounded-lg border border-border-soft bg-surface transition-[border-color,box-shadow] duration-200 ease-soft hover:border-border hover:shadow-card-hover">
       <ResultTypePreview result={result} size="card" />
@@ -41,7 +43,7 @@ export function ResultCard({ result }: { result: PromptResultSummary }) {
             <span className="block truncate text-caption font-medium text-text hover:text-primary">
               @{result.creator.username}
             </span>
-            <span className="block truncate text-[0.65rem] text-text-muted">{formatRelativeTime(result.createdAt)}</span>
+            <span className="block truncate text-[0.65rem] text-text-muted">{formatRelativeTime(result.createdAt, language)}</span>
           </span>
         </Link>
         <div className="flex flex-wrap items-center gap-1">
@@ -53,7 +55,7 @@ export function ResultCard({ result }: { result: PromptResultSummary }) {
           {result.hasModification && (
             <Badge variant="outline" className="gap-0.5">
               <PencilLine size={10} />
-              Değişiklik
+              {t("result.modificationBadge")}
             </Badge>
           )}
         </div>
@@ -61,7 +63,7 @@ export function ResultCard({ result }: { result: PromptResultSummary }) {
           <LikeButton id={result.id} likeCount={result.likeCount} contentType="prompt_result" size={14} />
         </div>
       </div>
-      <Link href={resultHref(result)} className="absolute inset-0 z-0" aria-label={`${result.creator.displayName} sonucu`} />
+      <Link href={resultHref(result)} className="absolute inset-0 z-0" aria-label={t("result.cardAriaLabel", { name: result.creator.displayName })} />
     </div>
   );
 }

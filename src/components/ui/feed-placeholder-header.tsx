@@ -1,4 +1,7 @@
+"use client";
+
 import type { LucideIcon } from "lucide-react";
+import { useTranslation } from "@/lib/i18n/language-provider";
 
 interface FeedPlaceholderHeaderProps {
   icon: LucideIcon;
@@ -17,6 +20,7 @@ export function FeedPlaceholderHeader({
   title,
   description,
 }: FeedPlaceholderHeaderProps) {
+  const { t } = useTranslation();
   return (
     <div className="flex flex-col gap-2 px-4 pt-6 lg:px-6">
       <div className="flex items-center gap-2">
@@ -25,7 +29,7 @@ export function FeedPlaceholderHeader({
         </div>
         <h1 className="text-h1 font-semibold text-text">{title}</h1>
         <span className="rounded-sm bg-accent-surface px-2 py-0.5 text-xs font-medium text-primary">
-          Yakında
+          {t("common.comingSoon")}
         </span>
       </div>
       <p className="max-w-md text-sm text-text-muted">{description}</p>

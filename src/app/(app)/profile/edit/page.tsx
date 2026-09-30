@@ -6,9 +6,10 @@ import { useRouter } from "next/navigation";
 import { Camera, X } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { INTEREST_OPTIONS } from "@/features/profile/interest-options";
+import { INTEREST_OPTION_LABELS, INTEREST_OPTIONS } from "@/features/profile/interest-options";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useOwnProfile } from "@/features/auth/own-profile-provider";
+import { useTranslation } from "@/lib/i18n/language-provider";
 import { updateOwnProfile, uploadAvatar } from "@/lib/supabase/profiles";
 import { cn, profileHref } from "@/lib/utils";
 
@@ -23,6 +24,7 @@ const DISPLAY_NAME_MAX_LENGTH = 40;
  * no username-rename flow wired up yet.
  */
 export default function EditProfilePage() {
+  const { t } = useTranslation();
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   const { profile: ownProfile, loading: ownProfileLoading, setProfile: setOwnProfile } = useOwnProfile();
@@ -72,7 +74,7 @@ export default function EditProfilePage() {
     event.preventDefault();
     const trimmedName = displayName.trim();
     if (!trimmedName) {
-      setNameError("Görünen ad boş bırakılamaz.");
+      setNameError(t("profile.displayNameEmptyError"));
       return;
     }
     setNameError(null);
@@ -97,27 +99,27 @@ export default function EditProfilePage() {
       setOwnProfile(updated);
       router.push(profileHref(updated));
     } catch (err) {
-      setSaveError(err instanceof Error ? err.message : "Profil kaydedilemedi, lütfen tekrar dene.");
+      setSaveError(err instanceof Error ? err.message : t("profile.saveFailed"));
       setIsSaving(false);
     }
   }
 
   if (authLoading || (user && ownProfileLoading)) {
     return (
-      <div className="mx-auto max-w-xl px-4 py-16 text-center text-sm text-text-muted">Yükleniyor…</div>
+      <div className="mx-auto max-w-xl px-4 py-16 text-center text-sm text-text-muted">{t("common.loading")}</div>
     );
   }
 
   if (!user) {
     return (
       <div className="mx-auto max-w-md px-4 py-16 text-center">
-        <h1 className="mb-2 text-h2 font-semibold text-text">Giriş yapmalısın</h1>
-        <p className="mb-4 text-sm text-text-muted">Profilini düzenlemek için önce giriş yapmalısın.</p>
+        <h1 className="mb-2 text-h2 font-semibold text-text">{t("auth.loginRequiredTitle")}</h1>
+        <p className="mb-4 text-sm text-text-muted">{t("profile.loginRequiredToEditBody")}</p>
         <Link
           href="/login"
           className="inline-flex h-9 items-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary-dark"
         >
-          Giriş Yap
+          {t("common.login")}
         </Link>
       </div>
     );
@@ -125,14 +127,14 @@ export default function EditProfilePage() {
 
   return (
     <div className="mx-auto max-w-xl px-3 py-5 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
-      <h1 className="mb-1 text-h1 font-semibold text-text">Profili Düzenle</h1>
+      <h1 className="mb-1 text-h1 font-semibold text-text">{t("profile.editProfileHeading")}</h1>
       <p className="mb-6 text-sm text-text-muted">
-        Değişiklikler gerçekten, kalıcı olarak kaydedilir ve her ziyaretçiye görünür olur.
+        {t("profile.editProfileHint")}
       </p>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="flex items-center gap-4">
-          <Avatar src={avatarUrl} alt={displayName || "Sen"} size={72} />
+          <Avatar src={avatarUrl} alt={displayName || t("profile.you")} size={72} />
           <div className="space-y-1.5">
             <div className="flex gap-2">
               <button
@@ -141,7 +143,7 @@ export default function EditProfilePage() {
                 className="flex h-9 items-center gap-1.5 rounded-md border border-border bg-transparent px-3 text-sm font-medium text-text transition-colors hover:bg-accent-surface"
               >
                 <Camera size={14} />
-                Fotoğraf değiştir
+                {t("profile.changePhoto")}
               </button>
               {avatarUrl && (
                 <button
@@ -153,7 +155,7 @@ export default function EditProfilePage() {
                   className="flex h-9 items-center gap-1.5 rounded-md px-2 text-sm font-medium text-text-muted transition-colors hover:text-text"
                 >
                   <X size={14} />
-                  Kaldır
+                  {t("common.remove")}
                 </button>
               )}
             </div>
@@ -170,7 +172,7 @@ export default function EditProfilePage() {
 
         <div>
           <label htmlFor="edit-username" className="mb-1.5 block text-sm font-medium text-text">
-            Kullanıcı adı
+            {t("profile.usernameLabel")}
           </label>
           <input
             id="edit-username"
@@ -180,13 +182,13 @@ export default function EditProfilePage() {
             className="h-10 w-full rounded-md border border-border bg-accent-surface/40 px-3 text-sm text-text-muted"
           />
           <p className="mt-1 text-xs text-text-muted">
-            Kullanıcı adı değişikliği henüz desteklenmiyor.
+            {t("profile.usernameNotEditable")}
           </p>
         </div>
 
         <div>
           <label htmlFor="edit-display-name" className="mb-1.5 block text-sm font-medium text-text">
-            Görünen ad
+            {t("profile.displayNameLabel")}
           </label>
           <input
             id="edit-display-name"
@@ -205,7 +207,7 @@ export default function EditProfilePage() {
 
         <div>
           <label htmlFor="edit-bio" className="mb-1.5 flex items-center justify-between text-sm font-medium text-text">
-            Biyografi
+            {t("profile.bioLabel")}
             <span className="text-xs font-normal text-text-muted">
               {bio.length}/{BIO_MAX_LENGTH}
             </span>
@@ -216,27 +218,27 @@ export default function EditProfilePage() {
             maxLength={BIO_MAX_LENGTH}
             value={bio}
             onChange={(event) => setBio(event.target.value)}
-            placeholder="Kendini ve yaratıcı çalışmalarını kısaca tanıt."
+            placeholder={t("profile.bioPlaceholder")}
             className="w-full resize-none rounded-md border border-border bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted"
           />
         </div>
 
         <div>
           <label htmlFor="edit-website" className="mb-1.5 block text-sm font-medium text-text">
-            Web sitesi <span className="text-text-muted">(opsiyonel)</span>
+            {t("profile.websiteLabel")} <span className="text-text-muted">({t("common.optional")})</span>
           </label>
           <input
             id="edit-website"
             type="text"
             value={website}
             onChange={(event) => setWebsite(event.target.value)}
-            placeholder="ornek.com"
+            placeholder={t("profile.websitePlaceholder")}
             className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted"
           />
         </div>
 
         <div>
-          <label className="mb-2 block text-sm font-medium text-text">Yaratıcı İlgi Alanları</label>
+          <label className="mb-2 block text-sm font-medium text-text">{t("profile.creativeInterests")}</label>
           <div className="flex flex-wrap gap-1.5">
             {INTEREST_OPTIONS.map((interest) => {
               const active = interests.includes(interest);
@@ -252,7 +254,7 @@ export default function EditProfilePage() {
                       : "border-border bg-surface text-text-muted hover:text-text",
                   )}
                 >
-                  {interest}
+                  {t(INTEREST_OPTION_LABELS[interest])}
                 </button>
               );
             })}
@@ -263,14 +265,14 @@ export default function EditProfilePage() {
 
         <div className="flex gap-2 pt-2">
           <Button type="submit" disabled={isSaving}>
-            {isSaving ? "Kaydediliyor..." : "Kaydet"}
+            {isSaving ? t("common.saving") : t("common.save")}
           </Button>
           <Button
             type="button"
             variant="ghost"
             onClick={() => router.push(ownProfile ? profileHref(ownProfile) : "/")}
           >
-            İptal
+            {t("common.cancelAction")}
           </Button>
         </div>
       </form>

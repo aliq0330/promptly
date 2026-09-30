@@ -8,18 +8,20 @@ import { PromptGrid } from "@/features/prompts/prompt-grid";
 import { RequestList } from "@/features/requests/request-list";
 import { fetchPromptsByTag, fetchRequestsByTagSlug, fetchTagBySlug } from "@/lib/supabase/tags";
 import { formatCount, cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n/language-provider";
+import type { TranslationKey } from "@/lib/i18n/translations";
 import type { Prompt, PromptContentType, PromptRequest, Tag } from "@/types";
 
 type ContentFilter = "all" | PromptContentType;
 type SortMode = "newest" | "popular";
 
-const CONTENT_FILTERS: { value: ContentFilter; label: string }[] = [
-  { value: "all", label: "Tümü" },
-  { value: "image", label: "Görsel" },
-  { value: "text", label: "Metin" },
-  { value: "video", label: "Video" },
-  { value: "code", label: "Kod" },
-  { value: "music", label: "Müzik" },
+const CONTENT_FILTERS: { value: ContentFilter; labelKey: TranslationKey }[] = [
+  { value: "all", labelKey: "common.all" },
+  { value: "image", labelKey: "contentType.image" },
+  { value: "text", labelKey: "contentType.text" },
+  { value: "video", labelKey: "contentType.video" },
+  { value: "code", labelKey: "contentType.code" },
+  { value: "music", labelKey: "contentType.music" },
 ];
 
 /**
@@ -33,6 +35,7 @@ const CONTENT_FILTERS: { value: ContentFilter; label: string }[] = [
  * slug as a heading.
  */
 export function TagView() {
+  const { t } = useTranslation();
   const searchParams = useSearchParams();
   const slug = searchParams.get("tag");
   const [tag, setTag] = useState<Tag | null>(null);
@@ -73,7 +76,7 @@ export function TagView() {
   }, [prompts, contentFilter, sortMode]);
 
   if (!slug) {
-    return <div className="mx-auto max-w-lg px-4 py-16 text-center text-sm text-text-muted">Etiket bulunamadı.</div>;
+    return <div className="mx-auto max-w-lg px-4 py-16 text-center text-sm text-text-muted">{t("tag.notFound")}.</div>;
   }
 
   if (!loaded) {
@@ -83,8 +86,8 @@ export function TagView() {
   if (!tag) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
-        <h1 className="mb-2 text-h2 font-semibold text-text">Etiket bulunamadı</h1>
-        <p className="text-sm text-text-muted">Bu etiket silinmiş veya hiç var olmamış olabilir.</p>
+        <h1 className="mb-2 text-h2 font-semibold text-text">{t("tag.notFound")}</h1>
+        <p className="text-sm text-text-muted">{t("tag.notFoundBody")}</p>
       </div>
     );
   }
@@ -98,19 +101,19 @@ export function TagView() {
           <Hash size={20} className="text-primary" />
           <h1 className="text-h1 font-semibold text-text">{tag.label}</h1>
         </div>
-        <p className="text-sm text-text-muted">{formatCount(totalCount)} içerikte kullanıldı</p>
+        <p className="text-sm text-text-muted">{t("tag.usedInCount", { count: formatCount(totalCount) })}</p>
       </div>
 
       {requests.length > 0 && (
         <section className="space-y-3">
-          <h2 className="text-h3 font-semibold text-text">Prompt İstekleri ({requests.length})</h2>
+          <h2 className="text-h3 font-semibold text-text">{t("tag.requestsHeading", { count: requests.length })}</h2>
           <RequestList requests={requests} />
         </section>
       )}
 
       <section className="space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-h3 font-semibold text-text">Promptlar ({filteredPrompts.length})</h2>
+          <h2 className="text-h3 font-semibold text-text">{t("tag.promptsHeading", { count: filteredPrompts.length })}</h2>
           <div className="flex gap-1.5">
             {(["newest", "popular"] as SortMode[]).map((mode) => (
               <button
@@ -124,7 +127,7 @@ export function TagView() {
                     : "border-border bg-surface text-text-muted hover:text-text",
                 )}
               >
-                {mode === "newest" ? "En Yeni" : "Popüler"}
+                {mode === "newest" ? t("profile.sortNewest") : t("home.tabPopular")}
               </button>
             ))}
           </div>
@@ -143,14 +146,14 @@ export function TagView() {
                   : "border-border bg-surface text-text-muted hover:text-text",
               )}
             >
-              {filter.label}
+              {t(filter.labelKey)}
             </button>
           ))}
         </div>
 
         {filteredPrompts.length === 0 ? (
           <p className="py-10 text-center text-sm text-text-muted">
-            {contentFilter === "all" ? "Bu etikete sahip bir prompt henüz yok." : "Bu türde, bu etikete sahip bir prompt yok."}
+            {contentFilter === "all" ? t("tag.emptyAll") : t("tag.emptyForFilter")}
           </p>
         ) : (
           <PromptGrid prompts={filteredPrompts} />
@@ -158,7 +161,7 @@ export function TagView() {
       </section>
 
       {requests.length === 0 && prompts.length === 0 && (
-        <p className="py-10 text-center text-sm text-text-muted">Bu etikete sahip içerik henüz yok.</p>
+        <p className="py-10 text-center text-sm text-text-muted">{t("tag.emptyEverything")}</p>
       )}
     </div>
   );

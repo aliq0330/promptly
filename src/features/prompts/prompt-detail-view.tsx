@@ -30,6 +30,7 @@ import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
 import { PostMenu } from "@/features/prompts/post-menu";
 import { parseHighlightValue } from "@/lib/notification-utils";
 import { cn, formatRelativeTime, profileHref, tagHref } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Prompt, PromptVariable } from "@/types";
 
 /** Same fade timing as the comment-thread flash (`comment-section.tsx`) — one shared "how long does a jumped-to thing glow" feel across the app. */
@@ -37,6 +38,7 @@ const HIGHLIGHT_DURATION_MS = 2500;
 
 /** The real prompt detail rendering, used by `/prompts/local?id=…`. */
 export function PromptDetailView({ prompt }: { prompt: Prompt }) {
+  const { t, language } = useTranslation();
   const media = prompt.media[0];
   const typeMeta = CONTENT_TYPE_META[prompt.contentType];
 
@@ -92,7 +94,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
         >
           <header className="space-y-3">
             <div className="flex items-center justify-between gap-3">
-              <ContentTypeLabel icon={typeMeta.icon} label={`${typeMeta.label} Prompt`} detail={prompt.tool} />
+              <ContentTypeLabel icon={typeMeta.icon} label={`${t(typeMeta.labelKey)} Prompt`} detail={prompt.tool} />
               <PostMenu promptId={prompt.id} authorId={prompt.author.id} />
             </div>
             <h1 className="text-h1 font-semibold text-text">{prompt.title}</h1>
@@ -102,7 +104,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
               <span className="leading-tight">
                 <span className="block text-label font-semibold text-text group-hover:text-primary">{prompt.author.displayName}</span>
                 <span className="block text-caption text-text-muted">
-                  @{prompt.author.username} · {formatRelativeTime(prompt.createdAt)}
+                  @{prompt.author.username} · {formatRelativeTime(prompt.createdAt, language)}
                 </span>
               </span>
             </Link>
@@ -118,14 +120,14 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
             <CommentCountLink promptId={prompt.id} baseCount={prompt.commentCount} size={18} />
             <SaveButton promptId={prompt.id} size={18} />
             <span className="ml-auto" />
-            <ShareTriggerButton target={{ contentType: "prompt", prompt }} label="Paylaş" />
+            <ShareTriggerButton target={{ contentType: "prompt", prompt }} label={t("common.share")} />
           </div>
 
           <section aria-labelledby="prompt-text-title" className="overflow-hidden rounded-lg border border-border-soft bg-surface-soft">
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border-soft px-4 py-2.5">
               <h2 id="prompt-text-title" className="flex items-center gap-1.5 font-sans text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">
                 <SquareTerminal size={14} />
-                Prompt Metni
+                {t("prompt.promptTextHeading")}
               </h2>
               <div className="flex flex-wrap items-center gap-2">
                 {user && !isOwn && (
@@ -135,7 +137,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
                     className="relative z-10 inline-flex h-9 items-center gap-1.5 rounded-sm border border-primary/30 bg-primary-soft px-3 text-label font-medium text-primary transition-colors hover:border-primary/60"
                   >
                     <PenLine size={14} />
-                    Düzenleme öner
+                    {t("prompt.suggestEdit")}
                   </button>
                 )}
                 {variables.length > 0 && (
@@ -145,7 +147,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
                     className="relative z-10 inline-flex h-9 items-center gap-1.5 rounded-sm border border-primary/30 bg-primary-soft px-3 text-label font-medium text-primary transition-colors hover:border-primary/60"
                   >
                     <Wand2 size={14} />
-                    Promptu kişiselleştir
+                    {t("prompt.customizePrompt")}
                   </button>
                 )}
                 <CopyPromptButton text={livePromptText} size="md" />
@@ -166,7 +168,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
               >
                 <Image src={media.url} alt={media.alt} fill sizes="(min-width: 1024px) 720px, 100vw" className="object-cover" />
               </div>
-              <figcaption className="text-caption text-text-muted">Çıktı — bu promptla üretilen sonuç</figcaption>
+              <figcaption className="text-caption text-text-muted">{t("prompt.outputCaption")}</figcaption>
             </figure>
           )}
 

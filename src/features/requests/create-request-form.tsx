@@ -14,6 +14,7 @@ import { useTagPicker } from "@/features/prompts/use-tag-picker";
 import { TagPicker } from "@/features/prompts/tag-picker";
 import { RequestVisionAssist } from "./request-vision-assist";
 import { cn, requestHref, resizeImageToDataUrlFit } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n/language-provider";
 import type { PromptContentType, PromptRequest } from "@/types";
 
 const CONTENT_TYPES: PromptContentType[] = ["image", "text", "video", "code", "music"];
@@ -30,6 +31,7 @@ const DESCRIPTION_MAX = 500;
  * account).
  */
 export function CreateRequestForm() {
+  const { t } = useTranslation();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { addRequest, updateRequest, getCached, fetchById } = useRealRequests();
@@ -111,15 +113,15 @@ export function CreateRequestForm() {
 
   const titleError =
     title.trim().length === 0
-      ? "Başlık boş bırakılamaz."
+      ? t("request.titleEmptyError")
       : title.trim().length < TITLE_MIN
-        ? `Başlık en az ${TITLE_MIN} karakter olmalı.`
+        ? t("request.titleTooShortError", { min: TITLE_MIN })
         : null;
   const descriptionError =
     description.trim().length === 0
-      ? "Açıklama boş bırakılamaz."
+      ? t("request.descriptionEmptyError")
       : description.trim().length < DESCRIPTION_MIN
-        ? `Açıklama en az ${DESCRIPTION_MIN} karakter olmalı — ne istediğini biraz daha ayrıntılandır.`
+        ? t("request.descriptionTooShortError", { min: DESCRIPTION_MIN })
         : null;
   const isValid = !titleError && !descriptionError;
 
@@ -132,7 +134,7 @@ export function CreateRequestForm() {
       setReferenceImageFile(file);
       setImageError(null);
     } catch {
-      setImageError("Görsel yüklenemedi, lütfen başka bir dosya dene.");
+      setImageError(t("prompt.imageUploadFailed"));
     }
   }
 
@@ -173,7 +175,7 @@ export function CreateRequestForm() {
       );
       router.push(requestHref(request));
     } catch (err) {
-      setPublishError(err instanceof Error ? err.message : "İstek yayınlanamadı, lütfen tekrar dene.");
+      setPublishError(err instanceof Error ? err.message : t("request.publishFailed"));
       setIsSubmitting(false);
     }
   }
@@ -181,22 +183,20 @@ export function CreateRequestForm() {
   if (!user) {
     return (
       <div className="mx-auto max-w-md px-4 py-16 text-center">
-        <h1 className="mb-2 text-h2 font-semibold text-text">Giriş yapmalısın</h1>
-        <p className="mb-4 text-sm text-text-muted">
-          Bir prompt isteği yayınlamak (ya da düzenlemek) için önce giriş yapmalısın.
-        </p>
+        <h1 className="mb-2 text-h2 font-semibold text-text">{t("auth.loginRequiredTitle")}</h1>
+        <p className="mb-4 text-sm text-text-muted">{t("request.loginToCreateMessage")}</p>
         <div className="flex justify-center gap-2">
           <Link
             href="/login"
             className="inline-flex h-9 items-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary-dark"
           >
-            Giriş Yap
+            {t("header.login")}
           </Link>
           <Link
             href="/signup"
             className="inline-flex h-9 items-center rounded-md border border-border px-4 text-sm font-medium text-text hover:bg-accent-surface"
           >
-            Hesap Oluştur
+            {t("auth.createAccount")}
           </Link>
         </div>
       </div>
@@ -204,19 +204,19 @@ export function CreateRequestForm() {
   }
 
   if (!editChecked) {
-    return <div className="mx-auto max-w-lg px-4 py-16 text-center text-sm text-text-muted">Yükleniyor…</div>;
+    return <div className="mx-auto max-w-lg px-4 py-16 text-center text-sm text-text-muted">{t("common.loading")}</div>;
   }
 
   if (editForbidden) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
-        <h1 className="mb-2 text-h2 font-semibold text-text">Bu isteği düzenleme yetkin yok</h1>
-        <p className="mb-4 text-sm text-text-muted">Bir isteği yalnızca kendi sahibi düzenleyebilir.</p>
+        <h1 className="mb-2 text-h2 font-semibold text-text">{t("request.noEditPermissionTitle")}</h1>
+        <p className="mb-4 text-sm text-text-muted">{t("request.noEditPermissionBody")}</p>
         <Link
           href="/requests"
           className="inline-flex h-9 items-center rounded-md border border-border px-4 text-sm font-medium text-text hover:bg-accent-surface"
         >
-          İsteklere Dön
+          {t("request.backToRequests")}
         </Link>
       </div>
     );
@@ -225,15 +225,13 @@ export function CreateRequestForm() {
   if (isEditMode && !editingRequest) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
-        <h1 className="mb-2 text-h2 font-semibold text-text">İstek bulunamadı</h1>
-        <p className="mb-4 text-sm text-text-muted">
-          Düzenlemek istediğin istek silinmiş veya artık erişilebilir değil.
-        </p>
+        <h1 className="mb-2 text-h2 font-semibold text-text">{t("request.requestNotFound")}</h1>
+        <p className="mb-4 text-sm text-text-muted">{t("request.editSourceGoneBody")}</p>
         <Link
           href="/requests"
           className="inline-flex h-9 items-center rounded-md border border-border px-4 text-sm font-medium text-text hover:bg-accent-surface"
         >
-          İsteklere Dön
+          {t("request.backToRequests")}
         </Link>
       </div>
     );
@@ -244,7 +242,7 @@ export function CreateRequestForm() {
     author: ownProfile ?? {
       id: "preview",
       username: "sen",
-      displayName: "Sen",
+      displayName: t("prompt.previewAuthorName"),
       avatarUrl: null,
       coverUrl: null,
       bio: null,
@@ -253,8 +251,8 @@ export function CreateRequestForm() {
       followingCount: 0,
       createdAt: new Date().toISOString(),
     },
-    title: title || "Başlıksız istek",
-    description: description || "Açıklama eklenmedi.",
+    title: title || t("request.untitledRequest"),
+    description: description || t("prompt.noDescriptionAdded"),
     creativeDirection,
     contentType,
     preferredTool: preferredTool || null,
@@ -272,25 +270,23 @@ export function CreateRequestForm() {
 
   return (
     <div className="mx-auto max-w-5xl px-3 py-5 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
-      <h1 className="mb-1 text-h1 font-semibold text-text">{isEditMode ? "İsteği Düzenle" : "İstek Oluştur"}</h1>
+      <h1 className="mb-1 text-h1 font-semibold text-text">{isEditMode ? t("request.editRequestTitle") : t("request.createRequestTitle")}</h1>
       <p className="mb-6 text-sm text-text-muted">
-        {isEditMode
-          ? "Değişikliklerini yaz, sağda anında önizlemesini gör. Kaydet'e bastığında gerçekten, kalıcı olarak güncellenir."
-          : "İhtiyacın olan promptu tanımla, topluluk sana yanıt versin. Yayınladığında istek gerçekten, kalıcı olarak Supabase'e kaydedilir ve herkese görünür olur."}
+        {isEditMode ? t("prompt.editPromptHint") : t("request.createRequestHint")}
       </p>
 
       <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="mb-2 block text-sm font-medium text-text">İçerik Türü</label>
+            <label className="mb-2 block text-sm font-medium text-text">{t("prompt.contentTypeLabel")}</label>
             {isEditMode ? (
               <div className="flex items-center gap-1.5 text-sm text-text-muted">
                 {(() => {
                   const Icon = CONTENT_TYPE_META[contentType].icon;
                   return <Icon size={14} />;
                 })()}
-                {CONTENT_TYPE_META[contentType].label}
-                <span className="text-xs">(düzenlemede değiştirilemez)</span>
+                {t(CONTENT_TYPE_META[contentType].labelKey)}
+                <span className="text-xs">{t("prompt.notEditableWhileEditing")}</span>
               </div>
             ) : (
               <div className="flex flex-wrap gap-2">
@@ -310,7 +306,7 @@ export function CreateRequestForm() {
                       )}
                     >
                       <Icon size={14} />
-                      {meta.label}
+                      {t(meta.labelKey)}
                     </button>
                   );
                 })}
@@ -329,7 +325,7 @@ export function CreateRequestForm() {
 
           <div>
             <label htmlFor="request-title" className="mb-1.5 flex items-center justify-between text-sm font-medium text-text">
-              İstek Başlığı
+              {t("request.requestTitleLabel")}
               <span className="text-xs font-normal text-text-muted">
                 {title.length}/{TITLE_MAX}
               </span>
@@ -341,7 +337,7 @@ export function CreateRequestForm() {
               value={title}
               onChange={(event) => setTitle(event.target.value)}
               onBlur={() => setTitleTouched(true)}
-              placeholder="Örn. Bilim kurgu film afişi için sinematik prompt arıyorum"
+              placeholder={t("request.titlePlaceholder")}
               className={cn(
                 "h-10 w-full rounded-md border bg-background px-3 text-sm text-text placeholder:text-text-muted",
                 titleTouched && titleError ? "border-danger" : "border-border",
@@ -352,7 +348,7 @@ export function CreateRequestForm() {
 
           <div>
             <label htmlFor="request-description" className="mb-1.5 flex items-center justify-between text-sm font-medium text-text">
-              İstek Açıklaması
+              {t("request.requestDescriptionLabel")}
               <span className="text-xs font-normal text-text-muted">
                 {description.length}/{DESCRIPTION_MAX}
               </span>
@@ -364,7 +360,7 @@ export function CreateRequestForm() {
               value={description}
               onChange={(event) => setDescription(event.target.value)}
               onBlur={() => setDescriptionTouched(true)}
-              placeholder="Ne istediğini ayrıntılı şekilde anlat: atmosfer, stil, ışık, kompozisyon..."
+              placeholder={t("request.descriptionPlaceholder")}
               className={cn(
                 "w-full resize-none rounded-md border bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted",
                 descriptionTouched && descriptionError ? "border-danger" : "border-border",
@@ -377,14 +373,14 @@ export function CreateRequestForm() {
 
           <div>
             <label htmlFor="request-direction" className="mb-1.5 block text-sm font-medium text-text">
-              Yaratıcı Yön <span className="text-text-muted">(opsiyonel)</span>
+              {t("request.creativeDirection")} <span className="text-text-muted">({t("common.optional")})</span>
             </label>
             <textarea
               id="request-direction"
               rows={2}
               value={creativeDirection}
               onChange={(event) => setCreativeDirection(event.target.value)}
-              placeholder="Örn. Sürreal ama fotogerçekçi bir denge olsun, gün batımı ışığı tercih ederim."
+              placeholder={t("request.creativeDirectionPlaceholder")}
               className="w-full resize-none rounded-md border border-border bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted"
             />
           </div>
@@ -392,7 +388,7 @@ export function CreateRequestForm() {
           {!isEditMode && (
             <div>
               <label className="mb-2 block text-sm font-medium text-text">
-                Referans Görsel <span className="text-text-muted">(opsiyonel)</span>
+                {t("request.referenceImage")} <span className="text-text-muted">({t("common.optional")})</span>
               </label>
               <input
                 type="file"
@@ -406,21 +402,21 @@ export function CreateRequestForm() {
 
           <div>
             <label htmlFor="request-tool" className="mb-1.5 block text-sm font-medium text-text">
-              Tercih Edilen Araç <span className="text-text-muted">(opsiyonel)</span>
+              {t("request.preferredTool")} <span className="text-text-muted">({t("common.optional")})</span>
             </label>
             <input
               id="request-tool"
               type="text"
               value={preferredTool}
               onChange={(event) => setPreferredTool(event.target.value)}
-              placeholder="Örn. Midjourney"
+              placeholder={t("request.preferredToolPlaceholder")}
               className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted"
             />
           </div>
 
           <div>
             <label className="mb-2 block text-sm font-medium text-text">
-              Etiketler <span className="text-text-muted">(opsiyonel)</span>
+              {t("forms.tags")} <span className="text-text-muted">({t("common.optional")})</span>
             </label>
             <TagPicker picker={tagPicker} />
           </div>
@@ -429,7 +425,7 @@ export function CreateRequestForm() {
 
           <div className="flex gap-2">
             <Button type="submit" size="lg" disabled={isSubmitting}>
-              {isSubmitting ? (isEditMode ? "Kaydediliyor..." : "Yayınlanıyor...") : isEditMode ? "Kaydet" : "İsteği Yayınla"}
+              {isSubmitting ? (isEditMode ? t("common.saving") : t("prompt.publishing")) : isEditMode ? t("common.save") : t("request.publishRequest")}
             </Button>
             <Button
               type="button"
@@ -437,15 +433,13 @@ export function CreateRequestForm() {
               size="lg"
               onClick={() => router.push(isEditMode && editingRequest ? requestHref(editingRequest) : "/requests")}
             >
-              Vazgeç
+              {t("common.cancel")}
             </Button>
           </div>
         </form>
 
         <div className="lg:sticky lg:top-20 lg:self-start">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-muted">
-            Canlı Önizleme
-          </p>
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-muted">{t("forms.livePreview")}</p>
           <div className="pointer-events-none select-none">
             <RequestCard request={previewRequest} />
           </div>

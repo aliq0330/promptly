@@ -4,6 +4,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Loader2, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { Portal } from "@/components/ui/portal";
 import { deleteCollection } from "@/lib/supabase/collections";
+import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Collection } from "@/types";
 
 const MENU_WIDTH = 208; // w-52
@@ -33,6 +34,7 @@ export function CollectionMoreMenu({
   onEdit: () => void;
   onDeleted: () => void;
 }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -96,7 +98,7 @@ export function CollectionMoreMenu({
     // trigger) will reject anyway; shows the exact required message
     // immediately instead of a round-trip error (CLAUDE.md Bölüm 9.22 §12).
     if (collection.isDefault) {
-      setError("Varsayılan koleksiyon silinemez. İstersen koleksiyonun adını veya gizlilik ayarını değiştirebilirsin.");
+      setError(t("collection.deleteBlockedDefault"));
       return;
     }
     if (!confirmingDelete) {
@@ -109,7 +111,7 @@ export function CollectionMoreMenu({
       await deleteCollection(collection.id);
       onDeleted();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Silinemedi, lütfen tekrar dene.");
+      setError(err instanceof Error ? err.message : t("common.deleteFailed"));
       setIsDeleting(false);
       setConfirmingDelete(false);
     }
@@ -125,7 +127,7 @@ export function CollectionMoreMenu({
           event.stopPropagation();
           setOpen((prev) => !prev);
         }}
-        aria-label="Koleksiyon seçenekleri"
+        aria-label={t("collection.optionsAriaLabel")}
         aria-haspopup="menu"
         aria-expanded={open}
         className="flex h-7 w-7 items-center justify-center rounded-full bg-surface/90 text-text-muted shadow-sm transition-colors hover:bg-surface-soft hover:text-text"
@@ -154,7 +156,7 @@ export function CollectionMoreMenu({
               className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-text hover:bg-surface-soft"
             >
               <Pencil size={14} />
-              Koleksiyonu düzenle
+              {t("collection.editTitle")}
             </button>
             <button
               type="button"
@@ -164,7 +166,7 @@ export function CollectionMoreMenu({
               className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-danger hover:bg-danger/10"
             >
               {isDeleting ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
-              {confirmingDelete ? "Emin misin? Tekrar tıkla" : "Koleksiyonu sil"}
+              {confirmingDelete ? t("common.confirmDelete") : t("collection.delete")}
             </button>
             {error && <p className="px-3 py-1 text-xs text-danger">{error}</p>}
           </div>

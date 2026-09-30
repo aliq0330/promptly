@@ -4,25 +4,23 @@ import { useEffect, useState } from "react";
 import { History } from "lucide-react";
 import { fetchEditHistory } from "@/lib/supabase/content-edits";
 import { formatRelativeTime } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n/language-provider";
+import type { TranslationKey } from "@/lib/i18n/translations";
 import type { ContentEditEvent } from "@/types";
 
-/** Raw DB column name → the Turkish label shown to the owner (§15's "Değiştirilen alanlar"). Never shows the actual previous text (§12/§19 — content_edits doesn't even expose it, see ContentEditEvent). */
-const FIELD_LABELS: Record<string, string> = {
-  title: "Başlık",
-  description: "Açıklama",
-  prompt_text: "Prompt Metni",
-  tool: "Araç",
-  creative_direction: "Yaratıcı Yön",
-  preferred_tool: "Tercih Edilen Araç",
-  category: "Kategori",
-  subcategory: "Alt Kategori",
-  cover_url: "Kapak Görseli",
-  visibility: "Görünürlük",
+/** Raw DB column name → the translation key shown to the owner (§15's "Değiştirilen alanlar"). Never shows the actual previous text (§12/§19 — content_edits doesn't even expose it, see ContentEditEvent). */
+const FIELD_LABEL_KEYS: Record<string, TranslationKey> = {
+  title: "forms.title",
+  description: "forms.shortDescription",
+  prompt_text: "prompt.promptTextHeading",
+  tool: "forms.toolModel",
+  creative_direction: "request.creativeDirection",
+  preferred_tool: "request.preferredTool",
+  category: "editHistory.category",
+  subcategory: "editHistory.subcategory",
+  cover_url: "editHistory.coverImage",
+  visibility: "editHistory.visibility",
 };
-
-function fieldLabel(field: string): string {
-  return FIELD_LABELS[field] ?? field;
-}
 
 /**
  * Owner-only "Son düzenleme"/"Düzenleme geçmişi" panel (CLAUDE.md §15) —
@@ -33,8 +31,14 @@ function fieldLabel(field: string): string {
  * changed and WHEN — never the previous text itself, which stays DB-only.
  */
 export function EditHistoryPanel({ contentType, contentId }: { contentType: "prompt" | "prompt_request" | "generator"; contentId: string }) {
+  const { t, language } = useTranslation();
   const [events, setEvents] = useState<ContentEditEvent[] | null>(null);
   const [expanded, setExpanded] = useState(false);
+
+  function fieldLabel(field: string): string {
+    const key = FIELD_LABEL_KEYS[field];
+    return key ? t(key) : field;
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -58,14 +62,14 @@ export function EditHistoryPanel({ contentType, contentId }: { contentType: "pro
         className="flex items-center gap-1.5 font-medium text-text-muted transition-colors hover:text-text"
       >
         <History size={13} />
-        Son düzenleme: {formatRelativeTime(latest.createdAt)} · Düzenleme geçmişi
+        {t("editHistory.lastEdited")}: {formatRelativeTime(latest.createdAt, language)} · {t("editHistory.editHistory")}
       </button>
       {expanded && (
         <ul className="mt-2 space-y-1.5 border-l border-border pl-3">
           {events.map((event) => (
             <li key={event.id}>
               <span className="text-text">{event.changedFields.map(fieldLabel).join(", ")}</span>{" "}
-              <span>· {formatRelativeTime(event.createdAt)}</span>
+              <span>· {formatRelativeTime(event.createdAt, language)}</span>
             </li>
           ))}
         </ul>

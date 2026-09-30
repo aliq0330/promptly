@@ -5,6 +5,7 @@ import { ChevronDown, ChevronUp, CornerDownRight, Heart } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { cn, formatRelativeTime, profileHref } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n/language-provider";
 import type { PromptComment } from "@/types";
 
 /** Beyond this nesting level, indentation stops growing (mobile/readability) — the "@kime yanıt verdiği" hint below takes over showing the relationship instead. */
@@ -63,6 +64,7 @@ export function CommentNode({
   depth: number;
   tree: CommentTree;
 }) {
+  const { t, language } = useTranslation();
   const children = tree.childrenByParent.get(comment.id) ?? [];
   const hasChildren = children.length > 0;
   const isExpanded = tree.expandedIds.has(comment.id);
@@ -100,7 +102,7 @@ export function CommentNode({
               <Link href={profileHref(comment.author)} className="font-medium not-italic text-text hover:underline">
                 {comment.author.displayName}
               </Link>{" "}
-              Bu yorum silindi.
+              {t("comments.thisCommentWasDeleted")}
             </p>
           ) : isEditingHere ? (
             <div className="space-y-1.5">
@@ -118,10 +120,10 @@ export function CommentNode({
                   disabled={!tree.editDraft.trim() || tree.isSavingEdit}
                   onClick={() => tree.onSubmitEdit(comment.id)}
                 >
-                  {tree.isSavingEdit ? "Kaydediliyor..." : "Kaydet"}
+                  {tree.isSavingEdit ? t("common.saving") : t("common.save")}
                 </Button>
                 <Button type="button" variant="ghost" size="sm" onClick={tree.onCancelEdit}>
-                  İptal
+                  {t("common.cancel")}
                 </Button>
               </div>
               {tree.editError && <p className="text-xs text-danger">{tree.editError}</p>}
@@ -143,14 +145,14 @@ export function CommentNode({
           {!isDeleted && !isEditingHere && (
             <div className="mt-0.5 flex flex-wrap items-center gap-3 text-xs text-text-muted">
               <span>
-                {formatRelativeTime(comment.createdAt)}
-                {comment.editedAt && " · düzenlendi"}
+                {formatRelativeTime(comment.createdAt, language)}
+                {comment.editedAt && ` · ${t("comments.edited")}`}
               </span>
               <button
                 type="button"
                 onClick={() => tree.onToggleLike(comment.id)}
                 disabled={!tree.canInteract || isLikePending}
-                title={tree.canInteract ? undefined : "Beğenmek için giriş yapmalısın"}
+                title={tree.canInteract ? undefined : t("prompt.loginToLike")}
                 className={cn(
                   "flex items-center gap-1 rounded-sm py-0.5 transition-colors hover:text-text disabled:pointer-events-none disabled:opacity-60",
                   isLiked && "text-primary",
@@ -165,13 +167,13 @@ export function CommentNode({
                   onClick={() => (isReplyingHere ? tree.onCancelReply() : tree.onStartReply(comment.id))}
                   className="font-medium hover:text-text"
                 >
-                  Yanıtla
+                  {t("request.reply")}
                 </button>
               )}
               {isOwn && (
                 <>
                   <button type="button" onClick={() => tree.onStartEdit(comment)} className="hover:text-text">
-                    Düzenle
+                    {t("common.edit")}
                   </button>
                   <button
                     type="button"
@@ -180,7 +182,7 @@ export function CommentNode({
                     disabled={isDeletingHere}
                     className={cn("hover:text-text", isConfirmingDelete && "font-medium text-danger")}
                   >
-                    {isDeletingHere ? "Siliniyor..." : isConfirmingDelete ? "Emin misin? Tekrar tıkla" : "Sil"}
+                    {isDeletingHere ? t("common.deleting") : isConfirmingDelete ? t("common.confirmDelete") : t("common.delete")}
                   </button>
                 </>
               )}
@@ -196,23 +198,22 @@ export function CommentNode({
               className="mt-2 space-y-1.5"
             >
               <p className="text-xs text-text-muted">
-                <span className="font-medium text-primary">@{comment.author.username}</span> kullanıcısına yanıt
-                veriyorsun.
+                <span className="font-medium text-primary">@{comment.author.username}</span> {t("comments.replyingToSuffix")}
               </p>
               <textarea
                 value={tree.replyDraft}
                 onChange={(event) => tree.onReplyDraftChange(event.target.value)}
                 rows={2}
                 autoFocus
-                placeholder="Yanıtını yaz..."
+                placeholder={t("comments.writeAReply")}
                 className="w-full resize-none rounded-md border border-border bg-surface px-3 py-1.5 text-sm text-text placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-primary"
               />
               <div className="flex items-center gap-2">
                 <Button type="submit" size="sm" disabled={!tree.replyDraft.trim() || tree.isPosting}>
-                  {tree.isPosting ? "Gönderiliyor..." : "Gönder"}
+                  {tree.isPosting ? t("common.sending") : t("common.send")}
                 </Button>
                 <Button type="button" variant="ghost" size="sm" onClick={tree.onCancelReply}>
-                  İptal
+                  {t("common.cancel")}
                 </Button>
               </div>
               {tree.postError && <p className="text-xs text-danger">{tree.postError}</p>}
@@ -226,7 +227,11 @@ export function CommentNode({
               className="mt-1.5 flex items-center gap-1 text-xs font-medium text-primary hover:underline"
             >
               {isExpanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
-              {isExpanded ? "Yanıtları gizle" : `${children.length} yanıtı göster`}
+              {isExpanded
+                ? t("comments.hideReplies")
+                : children.length === 1
+                  ? t("comments.showReplySingular")
+                  : t("comments.showRepliesPlural", { count: children.length })}
             </button>
           )}
         </div>

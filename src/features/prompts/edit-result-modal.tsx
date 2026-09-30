@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { RESULT_MEDIA_TYPE_LABELS } from "@/lib/prompt-result-media";
 import { updatePromptResult } from "@/lib/supabase/prompt-results";
+import { useTranslation } from "@/lib/i18n/language-provider";
 import type { PromptResult } from "@/types";
 
 /** Same free-text "tool" suggestions as `AddResultModal` — one list, shared by create and edit. */
@@ -34,6 +35,7 @@ const TOOL_SUGGESTIONS = [
  * a generator-origin one) the "Promptu değiştirdin mi?" fields.
  */
 export function EditResultModal({ result, onClose, onUpdated }: { result: PromptResult; onClose: () => void; onUpdated: () => void }) {
+  const { t } = useTranslation();
   const isTextLike = result.mediaType === "text" || result.mediaType === "other";
   const isPromptOrigin = Boolean(result.originalPrompt);
 
@@ -61,7 +63,7 @@ export function EditResultModal({ result, onClose, onUpdated }: { result: Prompt
       });
       onUpdated();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Sonuç güncellenemedi, lütfen tekrar dene.");
+      setError(err instanceof Error ? err.message : t("result.updateFailed"));
     } finally {
       setIsSubmitting(false);
     }
@@ -75,12 +77,12 @@ export function EditResultModal({ result, onClose, onUpdated }: { result: Prompt
       >
         <div className="flex items-start justify-between gap-2">
           <h2 id="edit-result-modal-title" className="text-base font-semibold text-text">
-            Sonucu düzenle
+            {t("result.modalEditTitle")}
           </h2>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Kapat"
+            aria-label={t("common.close")}
             className="rounded-md p-1 text-text-muted hover:bg-accent-surface hover:text-text"
           >
             <X size={18} />
@@ -91,7 +93,7 @@ export function EditResultModal({ result, onClose, onUpdated }: { result: Prompt
           {isTextLike ? (
             <div>
               <label htmlFor="edit-result-text" className="mb-1.5 block text-sm font-medium text-text">
-                Paylaştığın metin
+                {t("result.sharedText")}
               </label>
               <textarea
                 id="edit-result-text"
@@ -103,14 +105,13 @@ export function EditResultModal({ result, onClose, onUpdated }: { result: Prompt
             </div>
           ) : (
             <p className="rounded-md border border-border-soft bg-surface-soft px-3 py-2 text-xs text-text-muted">
-              {RESULT_MEDIA_TYPE_LABELS[result.mediaType]} dosyası değiştirilemez — yalnızca aşağıdaki bilgileri güncelleyebilirsin. Farklı bir
-              dosya paylaşmak için yeni bir sonuç ekle.
+              {t(RESULT_MEDIA_TYPE_LABELS[result.mediaType])} {t("result.mediaFileLocked")}
             </p>
           )}
 
           <div>
             <label htmlFor="edit-result-tool" className="mb-1.5 block text-sm font-medium text-text">
-              Araç / Model <span className="text-text-muted">(opsiyonel)</span>
+              {t("result.toolFieldLabel")} <span className="text-text-muted">({t("common.optional")})</span>
             </label>
             <input
               id="edit-result-tool"
@@ -118,7 +119,7 @@ export function EditResultModal({ result, onClose, onUpdated }: { result: Prompt
               type="text"
               value={tool}
               onChange={(event) => setTool(event.target.value)}
-              placeholder="Örn. Midjourney v6"
+              placeholder={t("result.toolFieldPlaceholder")}
               className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted"
             />
             <datalist id="edit-result-tool-suggestions">
@@ -131,7 +132,7 @@ export function EditResultModal({ result, onClose, onUpdated }: { result: Prompt
           {isPromptOrigin && (
             <>
               <div>
-                <p className="mb-1.5 text-sm font-medium text-text">Promptu değiştirdin mi?</p>
+                <p className="mb-1.5 text-sm font-medium text-text">{t("result.didYouModifyPrompt")}</p>
                 <div className="flex gap-1 rounded-md border border-border-soft bg-surface-soft p-1">
                   {([false, true] as const).map((value) => (
                     <button
@@ -142,7 +143,7 @@ export function EditResultModal({ result, onClose, onUpdated }: { result: Prompt
                         hasModification === value ? "bg-surface text-text shadow-card" : "text-text-muted hover:text-text"
                       }`}
                     >
-                      {value ? "Evet" : "Hayır"}
+                      {value ? t("common.yes") : t("common.no")}
                     </button>
                   ))}
                 </div>
@@ -152,20 +153,20 @@ export function EditResultModal({ result, onClose, onUpdated }: { result: Prompt
                 <div className="space-y-3 rounded-md border border-border-soft bg-surface-soft p-3">
                   <div>
                     <label htmlFor="edit-result-mod-summary" className="mb-1.5 block text-sm font-medium text-text">
-                      Kullandığın değişiklikler <span className="text-text-muted">(kısa özet)</span>
+                      {t("result.modificationSummaryLabel")} <span className="text-text-muted">({t("result.modificationSummaryShort")})</span>
                     </label>
                     <input
                       id="edit-result-mod-summary"
                       type="text"
                       value={modificationSummary}
                       onChange={(event) => setModificationSummary(event.target.value)}
-                      placeholder="Örn. Arka planı değiştirdim, ışığı daha sıcak yaptım."
+                      placeholder={t("result.modificationSummaryPlaceholder")}
                       className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted"
                     />
                   </div>
                   {result.originalPrompt && (
                     <div>
-                      <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-text-muted">Orijinal prompt metni</p>
+                      <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-text-muted">{t("result.originalPromptText")}</p>
                       <p className="max-h-24 overflow-y-auto whitespace-pre-wrap rounded-md border border-border-soft bg-background px-3 py-2 font-mono text-xs text-text-muted">
                         {result.originalPrompt.promptText}
                       </p>
@@ -173,7 +174,7 @@ export function EditResultModal({ result, onClose, onUpdated }: { result: Prompt
                   )}
                   <div>
                     <label htmlFor="edit-result-mod-text" className="mb-1.5 block text-sm font-medium text-text">
-                      Kullandığın tam prompt metni <span className="text-text-muted">(opsiyonel)</span>
+                      {t("result.fullModifiedTextLabel")} <span className="text-text-muted">({t("common.optional")})</span>
                     </label>
                     <textarea
                       id="edit-result-mod-text"
@@ -192,10 +193,10 @@ export function EditResultModal({ result, onClose, onUpdated }: { result: Prompt
 
           <div className="flex justify-end gap-2 pt-1">
             <Button type="button" variant="ghost" onClick={onClose}>
-              İptal
+              {t("common.cancel")}
             </Button>
             <Button type="submit" disabled={!canSubmit || isSubmitting}>
-              {isSubmitting ? "Kaydediliyor…" : "Kaydet"}
+              {isSubmitting ? t("common.saving") : t("common.save")}
             </Button>
           </div>
         </form>

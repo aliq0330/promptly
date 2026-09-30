@@ -1,8 +1,11 @@
+"use client";
+
 import { Inbox, type LucideIcon } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PromptCard } from "@/features/prompts/prompt-card";
 import { RequestCard } from "@/features/requests/request-card";
 import { GeneratorCard } from "@/features/generators/generator-card";
+import { useTranslation } from "@/lib/i18n/language-provider";
 import { feedItemKey, type FeedItem } from "./types";
 
 /**
@@ -14,7 +17,7 @@ import { feedItemKey, type FeedItem } from "./types";
 export function FeedGrid({
   items,
   emptyIcon = Inbox,
-  emptyTitle = "Henüz gösterilecek içerik yok.",
+  emptyTitle,
   emptyDescription,
   emptyAction,
 }: {
@@ -24,11 +27,12 @@ export function FeedGrid({
   emptyDescription?: string;
   emptyAction?: { label: string; href: string };
 }) {
+  const { t } = useTranslation();
   if (items.length === 0) {
     return (
       <EmptyState
         icon={emptyIcon}
-        title={emptyTitle}
+        title={emptyTitle ?? t("feed.emptyDefault")}
         description={emptyDescription}
         action={emptyAction}
       />

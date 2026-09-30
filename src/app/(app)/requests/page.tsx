@@ -8,10 +8,12 @@ import { Chip, ChipRow } from "@/components/ui/chip";
 import { PageContainer, PageHeader } from "@/components/ui/page-header";
 import { RequestList } from "@/features/requests/request-list";
 import { useRealRequests } from "@/features/requests/real-requests-provider";
+import { useTranslation } from "@/lib/i18n/language-provider";
 
 type StatusFilter = "all" | "open" | "closed";
 
 export default function RequestsPage() {
+  const { t } = useTranslation();
   const { realRequests } = useRealRequests();
   const [status, setStatus] = useState<StatusFilter>("all");
 
@@ -35,14 +37,14 @@ export default function RequestsPage() {
   return (
     <PageContainer className="space-y-6">
       <PageHeader
-        eyebrow="Topluluk"
+        eyebrow={t("request.communityEyebrow")}
         icon={Sparkles}
-        title="Prompt İstekleri"
-        description="Aradığın promptu tarif et, topluluk yanıtlasın. Ya da açık bir isteğe kendi promptunla yanıt ver."
+        title={t("nav.requests")}
+        description={t("request.pageDescription")}
         actions={
           <Link href="/requests/new" className={buttonClassName({ size: "sm" })}>
             <Plus size={15} />
-            İstek Oluştur
+            {t("request.createRequestTitle")}
           </Link>
         }
       />
@@ -50,9 +52,9 @@ export default function RequestsPage() {
       <ChipRow>
         {(
           [
-            ["all", "Tümü"],
-            ["open", "Açık"],
-            ["closed", "Kapandı"],
+            ["all", t("common.all")],
+            ["open", t("request.statusOpen")],
+            ["closed", t("request.statusClosed")],
           ] as const
         ).map(([key, label]) => (
           <Chip key={key} selected={status === key} onClick={() => setStatus(key)}>

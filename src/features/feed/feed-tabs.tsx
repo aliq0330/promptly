@@ -13,24 +13,27 @@ import { useRealPrompts } from "@/features/prompts/real-prompts-provider";
 import { useRealRequests } from "@/features/requests/real-requests-provider";
 import { useRealGenerators } from "@/features/generators/real-generators-provider";
 import { fetchFollowedProfiles } from "@/lib/supabase/profiles";
+import { useTranslation } from "@/lib/i18n/language-provider";
+import type { TranslationKey } from "@/lib/i18n/translations";
 
 type TabKey = "following" | "popular" | "for-you";
 type KindFilter = "all" | FeedItem["kind"];
 
-const TABS = [
-  { key: "for-you" as const, label: "Sana Özel", icon: Stars },
-  { key: "popular" as const, label: "Popüler", icon: Flame },
-  { key: "following" as const, label: "Takip Ettiklerim", icon: UserCheck },
+const TABS: { key: TabKey; labelKey: TranslationKey; icon: typeof Stars }[] = [
+  { key: "for-you", labelKey: "home.tabForYou", icon: Stars },
+  { key: "popular", labelKey: "home.tabPopular", icon: Flame },
+  { key: "following", labelKey: "nav.following", icon: UserCheck },
 ];
 
-const KIND_FILTERS: { key: KindFilter; label: string; icon: typeof LayoutGrid }[] = [
-  { key: "all", label: "Tümü", icon: LayoutGrid },
-  { key: "prompt", label: "Promptlar", icon: SquareTerminal },
-  { key: "generator", label: "Generatorlar", icon: Blocks },
-  { key: "request", label: "İstekler", icon: Sparkles },
+const KIND_FILTERS: { key: KindFilter; labelKey: TranslationKey; icon: typeof LayoutGrid }[] = [
+  { key: "all", labelKey: "common.all", icon: LayoutGrid },
+  { key: "prompt", labelKey: "feed.filterPrompts", icon: SquareTerminal },
+  { key: "generator", labelKey: "nav.generators", icon: Blocks },
+  { key: "request", labelKey: "nav.requestsShort", icon: Sparkles },
 ];
 
 export function FeedTabs() {
+  const { t } = useTranslation();
   const [active, setActive] = useState<TabKey>("for-you");
   const [kind, setKind] = useState<KindFilter>("all");
   const { user } = useAuth();
@@ -72,13 +75,19 @@ export function FeedTabs() {
   }, [allItems, active, followedIds, kind]);
 
   return (
-    <section className="space-y-4" aria-label="Akış">
+    <section className="space-y-4" aria-label={t("feed.ariaLabel")}>
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <Tabs items={TABS} active={active} onChange={setActive} ariaLabel="Akış görünümü" variant="segmented" />
+        <Tabs
+          items={TABS.map((tab) => ({ key: tab.key, label: t(tab.labelKey), icon: tab.icon }))}
+          active={active}
+          onChange={setActive}
+          ariaLabel={t("feed.viewAriaLabel")}
+          variant="segmented"
+        />
         <ChipRow>
           {KIND_FILTERS.map((filter) => (
             <Chip key={filter.key} icon={filter.icon} selected={kind === filter.key} onClick={() => setKind(filter.key)}>
-              {filter.label}
+              {t(filter.labelKey)}
             </Chip>
           ))}
         </ChipRow>
@@ -87,18 +96,18 @@ export function FeedTabs() {
       {active === "following" && !user ? (
         <EmptyState
           icon={UserCheck}
-          title="Takip ettiklerin burada görünür"
-          description="Takip ettiğin yaratıcıların promptlarını ve generatorlarını görmek için giriş yap."
-          action={{ label: "Giriş yap", href: "/login" }}
+          title={t("feed.emptyFollowingTitle")}
+          description={t("feed.emptyFollowingDescription")}
+          action={{ label: t("common.login"), href: "/login" }}
         />
       ) : loading && allItems.length === 0 ? (
         <PromptCardSkeletonGrid count={6} />
       ) : (
         <FeedGrid
           items={visible}
-          emptyTitle={active === "following" ? "Takip ettiklerinden henüz paylaşım yok" : "Henüz gösterilecek içerik yok."}
-          emptyDescription={active === "following" ? "Keşfet'ten yeni yaratıcılar bulup takip edebilirsin." : undefined}
-          emptyAction={active === "following" ? { label: "Keşfet'e git", href: "/discover" } : undefined}
+          emptyTitle={active === "following" ? t("feed.emptyFollowingNoPosts") : t("feed.emptyDefault")}
+          emptyDescription={active === "following" ? t("feed.emptyFollowingHint") : undefined}
+          emptyAction={active === "following" ? { label: t("feed.goToDiscover"), href: "/discover" } : undefined}
         />
       )}
     </section>

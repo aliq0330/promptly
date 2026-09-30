@@ -7,6 +7,7 @@ import { MessageCircle } from "lucide-react";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useRealMessages } from "./real-messages-provider";
 import { messageHref } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n/language-provider";
 import type { UserProfile } from "@/types";
 
 const CLASS_NAME =
@@ -14,6 +15,7 @@ const CLASS_NAME =
 
 /** "Mesaj Gönder" — finds or starts a real 1:1 conversation and navigates to it (CLAUDE.md Bölüm 21 Faz 6). */
 export function MessageButton({ user }: { user: UserProfile }) {
+  const { t } = useTranslation();
   const router = useRouter();
   const { user: authUser } = useAuth();
   const { startConversationWith } = useRealMessages();
@@ -22,9 +24,9 @@ export function MessageButton({ user }: { user: UserProfile }) {
 
   if (!authUser) {
     return (
-      <Link href="/login" title="Mesaj göndermek için giriş yapmalısın" className={CLASS_NAME}>
+      <Link href="/login" title={t("messages.loginToSendTitle")} className={CLASS_NAME}>
         <MessageCircle size={14} />
-        Mesaj Gönder
+        {t("messages.sendMessage")}
       </Link>
     );
   }
@@ -37,7 +39,7 @@ export function MessageButton({ user }: { user: UserProfile }) {
       router.push(messageHref(conversation));
     } catch (err) {
       console.error("startConversationWith", err);
-      setError(err instanceof Error ? err.message : "Konuşma başlatılamadı, lütfen tekrar dene.");
+      setError(err instanceof Error ? err.message : t("messages.startConversationFailed"));
       setIsStarting(false);
     }
   }
@@ -46,7 +48,7 @@ export function MessageButton({ user }: { user: UserProfile }) {
     <div className="flex flex-col items-center gap-1">
       <button type="button" onClick={handleClick} disabled={isStarting} className={CLASS_NAME}>
         <MessageCircle size={14} />
-        {isStarting ? "Açılıyor..." : "Mesaj Gönder"}
+        {isStarting ? t("messages.startingEllipsis") : t("messages.sendMessage")}
       </button>
       {error && <p className="text-xs text-danger">{error}</p>}
     </div>

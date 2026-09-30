@@ -6,6 +6,7 @@ import { Tabs } from "@/components/ui/tabs";
 import { useEffect, useState } from "react";
 import { defaultValuesFromSchema } from "@/lib/generator-template";
 import { buildGeneratorOutput } from "@/lib/generator-output";
+import { useTranslation } from "@/lib/i18n/language-provider";
 import { GeneratorRuntimeForm } from "./generator-runtime-form";
 import { GeneratedPromptPanel } from "./generated-prompt-panel";
 import { GeneratorJsonPanel } from "./generator-json-panel";
@@ -60,6 +61,7 @@ export function GeneratorPlayground({
   /** Only the real runtime page passes this — the "Prompt olarak aç"/"Kaydet" buttons, given the exact live-computed state to act on. The builder's own preview passes nothing. */
   renderActions?: (state: { values: GeneratorValues; prompt: string; negativePrompt: string | null }) => React.ReactNode;
 }) {
+  const { t } = useTranslation();
   const [tab, setTab] = useState<"form" | "json" | "prompt">("form");
   const [values, setValues] = useState<GeneratorValues>(() => defaultValuesFromSchema(schema));
   const [promptText, setPromptText] = useState("");
@@ -110,14 +112,14 @@ export function GeneratorPlayground({
         ]}
         active={tab}
         onChange={setTab}
-        ariaLabel="Önizleme görünümü"
+        ariaLabel={t("generator.previewViewAriaLabel")}
         variant="segmented"
       />
 
       {tab === "form" ? (
         <div className="space-y-5">
           <div className="space-y-3 rounded-md border border-border-soft bg-surface-soft p-3.5">
-            <p className="text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">Kendi promptun</p>
+            <p className="text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">{t("generator.yourOwnPrompt")}</p>
             <div>
               <label htmlFor="gen-run-prompt" className="mb-1.5 block text-sm font-medium text-text">
                 Prompt
@@ -127,21 +129,21 @@ export function GeneratorPlayground({
                 rows={3}
                 value={promptText}
                 onChange={(event) => setPromptText(event.target.value)}
-                placeholder="Örn. Güneşli bir günde kadın oturuyor"
+                placeholder={t("generator.promptFieldPlaceholder")}
                 className="w-full resize-none rounded-md border border-border bg-surface px-3 py-2 text-small text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
               />
             </div>
             {enableNegativePrompt && (
               <div>
                 <label htmlFor="gen-run-negative-prompt" className="mb-1.5 block text-sm font-medium text-text">
-                  Negative Prompt
+                  {t("generator.negativePrompt")}
                 </label>
                 <textarea
                   id="gen-run-negative-prompt"
                   rows={2}
                   value={negativePromptText}
                   onChange={(event) => setNegativePromptText(event.target.value)}
-                  placeholder="Örn. sandalye yok"
+                  placeholder={t("generator.negativePromptFieldPlaceholder")}
                   className="w-full resize-none rounded-md border border-border bg-surface px-3 py-2 text-small text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                 />
               </div>

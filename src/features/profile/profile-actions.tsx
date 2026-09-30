@@ -10,6 +10,7 @@ import { ProfileMoreMenu } from "./profile-more-menu";
 import { useFollowState } from "./use-follow-state";
 import { profileHref } from "@/lib/utils";
 import { buttonClassName } from "@/components/ui/button";
+import { useTranslation } from "@/lib/i18n/language-provider";
 import type { UserProfile } from "@/types";
 
 /**
@@ -19,28 +20,29 @@ import type { UserProfile } from "@/types";
  * accidentally share a follow button.
  */
 export function OwnProfileActions({ user }: { user: UserProfile }) {
+  const { t } = useTranslation();
   return (
     <div className="flex flex-wrap items-center gap-2">
       <Link href="/profile/edit" className={buttonClassName({ size: "sm", variant: "outline", className: "h-9" })}>
-        Profili Düzenle
+        {t("profile.editProfileHeading")}
       </Link>
       <Link
         href="/create"
         className={buttonClassName({ size: "sm", className: "h-9" })}
       >
         <Sparkles size={14} />
-        Prompt Oluştur
+        {t("create.promptTitle")}
       </Link>
       <ShareButton
         url={profileHref(user)}
-        title="Promptly profilim"
-        label="Paylaş"
+        title={t("profile.myProfileShareTitle")}
+        label={t("common.share")}
         className="h-9 border border-border bg-surface px-3.5 text-text"
       />
       <Link
         href="/settings"
-        title="Hesap ayarları"
-        aria-label="Hesap ayarları"
+        title={t("settings.pageTitle")}
+        aria-label={t("settings.pageTitle")}
         className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border bg-surface text-text-muted transition-colors hover:bg-surface-soft hover:text-text"
       >
         <Settings size={16} />
@@ -56,6 +58,7 @@ export function OtherProfileActions({
   user: UserProfile;
   followState: ReturnType<typeof useFollowState>;
 }) {
+  const { t } = useTranslation();
   const blockState = useBlockState(user);
 
   return (
@@ -63,15 +66,15 @@ export function OtherProfileActions({
       <FollowButtonView {...followState} size="md" />
       {blockState.isBlocked ? (
         <span className="inline-flex h-9 items-center rounded-md border border-border px-4 text-sm text-text-muted">
-          Bu kullanıcıyı engelledin
+          {t("profile.youBlockedThisUser")}
         </span>
       ) : (
         <MessageButton user={user} />
       )}
       <ShareButton
         url={profileHref(user)}
-        title="Promptly profili"
-        label="Paylaş"
+        title={t("profile.otherProfileShareTitle")}
+        label={t("common.share")}
         className="h-9 border border-border bg-surface px-3.5 text-text"
       />
       <ProfileMoreMenu user={user} blockState={blockState} />

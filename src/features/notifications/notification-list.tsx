@@ -1,4 +1,7 @@
+"use client";
+
 import { NotificationRow } from "./notification-row";
+import { useTranslation } from "@/lib/i18n/language-provider";
 import type { AppNotification } from "@/types";
 
 interface NotificationListProps {
@@ -12,10 +15,11 @@ export function NotificationList({
   notifications,
   onRead,
   onDelete,
-  emptyMessage = "Henüz bildirimin yok.",
+  emptyMessage,
 }: NotificationListProps) {
+  const { t } = useTranslation();
   if (notifications.length === 0) {
-    return <p className="py-10 text-center text-sm text-text-muted">{emptyMessage}</p>;
+    return <p className="py-10 text-center text-sm text-text-muted">{emptyMessage ?? t("notifications.noneYet")}</p>;
   }
 
   return (

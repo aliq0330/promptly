@@ -14,6 +14,7 @@ import {
   resolvePromptText,
 } from "@/lib/prompt-variables";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n/language-provider";
 import { AddVariableFromSelectionModal } from "./add-variable-from-selection-modal";
 import { VariableEditorModal } from "./variable-editor-modal";
 import { VariableList } from "./variable-list";
@@ -57,6 +58,7 @@ export function PromptTextEditor({
   placeholder?: string;
   className?: string;
 }) {
+  const { t } = useTranslation();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const selectionRef = useRef({ start: value.length, end: value.length });
   const warningTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -93,13 +95,11 @@ export function PromptTextEditor({
     const trailingTrim = rawSelection.length - rawSelection.trimEnd().length;
     const trimmed = rawSelection.trim();
     if (!trimmed) {
-      showSelectionWarning("Önce prompt metninden kelime seçip daha sonra tıklayın.");
+      showSelectionWarning(t("variable.selectFirstWarning"));
       return;
     }
     if (!isValidVariableName(normalizeVariableName(trimmed))) {
-      showSelectionWarning(
-        "Seçilen metin değişken adı olarak kullanılamıyor (çok uzun ya da geçersiz karakter içeriyor).",
-      );
+      showSelectionWarning(t("variable.invalidSelectionWarning"));
       return;
     }
     setSelectionWarning(null);
@@ -190,19 +190,19 @@ export function PromptTextEditor({
               activeTab === "template" ? "bg-accent-surface text-text" : "text-text-muted hover:text-text",
             )}
           >
-            <FileText size={12} /> Şablon
+            <FileText size={12} /> {t("variable.templateTab")}
           </button>
           <button
             type="button"
             onClick={() => setTab("preview")}
             disabled={variables.length === 0}
-            title={variables.length === 0 ? "Önizlemek için önce en az bir değişken ekle." : undefined}
+            title={variables.length === 0 ? t("variable.previewDisabledHint") : undefined}
             className={cn(
               "flex items-center gap-1 rounded px-2.5 py-1 font-medium transition-colors disabled:opacity-40",
               activeTab === "preview" ? "bg-accent-surface text-text" : "text-text-muted hover:text-text",
             )}
           >
-            <Eye size={12} /> Önizleme
+            <Eye size={12} /> {t("variable.previewTab")}
           </button>
         </div>
         <button
@@ -210,7 +210,7 @@ export function PromptTextEditor({
           onClick={handleAddVariableClick}
           className="flex items-center gap-1 rounded-md border border-border px-2.5 py-1 text-xs font-medium text-text-muted transition-colors hover:border-primary/40 hover:text-primary"
         >
-          <Plus size={12} /> Değişken Ekle
+          <Plus size={12} /> {t("variable.addVariableAction")}
         </button>
       </div>
 
@@ -262,7 +262,7 @@ export function PromptTextEditor({
               onClick={() => setPreviewValues({})}
               className="text-xs font-medium text-primary hover:underline"
             >
-              Varsayılanlara dön
+              {t("variable.resetToDefaults")}
             </button>
           )}
         </div>
@@ -270,8 +270,7 @@ export function PromptTextEditor({
 
       {orphanTokens.length > 0 && (
         <p className="text-xs text-warning">
-          Metinde tanımlanmamış değişken(ler) var: {orphanTokens.map((name) => `{${name}}`).join(", ")} — bunları
-          &quot;Değişken Ekle&quot; ile tanımlayabilirsin.
+          {t("variable.orphanTokensWarning", { tokens: orphanTokens.map((name) => `{${name}}`).join(", ") })}
         </p>
       )}
 

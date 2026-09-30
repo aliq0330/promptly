@@ -7,6 +7,7 @@ import { Modal } from "@/components/ui/modal";
 import { useAuth } from "@/features/auth/auth-provider";
 import { RESULT_MEDIA_TYPE_LABELS, detectMediaTypeFromFile } from "@/lib/prompt-result-media";
 import { createPromptResult } from "@/lib/supabase/prompt-results";
+import { useTranslation } from "@/lib/i18n/language-provider";
 import type { PromptResultMediaType } from "@/types";
 
 type Mode = "file" | "text";
@@ -60,6 +61,7 @@ export function AddResultModal({
   onClose: () => void;
   onAdded: () => void;
 }) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const isPromptTarget = target.type === "prompt";
   const [mode, setMode] = useState<Mode>("file");
@@ -86,7 +88,7 @@ export function AddResultModal({
     if (!detected) {
       setFile(null);
       setDetectedType(null);
-      setFileError("Bu dosya türü desteklenmiyor. Lütfen bir görsel, video veya ses dosyası seç.");
+      setFileError(t("result.fileUnsupported"));
       event.target.value = "";
       return;
     }
@@ -117,7 +119,7 @@ export function AddResultModal({
       );
       onAdded();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Sonuç paylaşılamadı, lütfen tekrar dene.");
+      setError(err instanceof Error ? err.message : t("result.shareFailed"));
     } finally {
       setIsSubmitting(false);
     }
@@ -131,19 +133,19 @@ export function AddResultModal({
       >
         <div className="flex items-start justify-between gap-2">
           <h2 id="add-result-modal-title" className="text-base font-semibold text-text">
-            Sonuç ekle
+            {t("result.modalAddTitle")}
           </h2>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Kapat"
+            aria-label={t("common.close")}
             className="rounded-md p-1 text-text-muted hover:bg-accent-surface hover:text-text"
           >
             <X size={18} />
           </button>
         </div>
         <p className="text-sm text-text-muted">
-          {isPromptTarget ? "Bu promptu kullanarak oluşturduğun sonucu paylaş." : "Bu generatoru kullanarak oluşturduğun sonucu paylaş."}
+          {isPromptTarget ? t("result.sharePromptHint") : t("result.shareGeneratorHint")}
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -157,7 +159,7 @@ export function AddResultModal({
                   mode === option ? "bg-surface text-text shadow-card" : "text-text-muted hover:text-text"
                 }`}
               >
-                {option === "file" ? "Dosya yükle" : "Metin gir"}
+                {option === "file" ? t("result.modeFile") : t("result.modeText")}
               </button>
             ))}
           </div>
@@ -165,7 +167,7 @@ export function AddResultModal({
           {mode === "file" ? (
             <div>
               <label htmlFor="result-file" className="mb-1.5 block text-sm font-medium text-text">
-                Görsel, video veya ses dosyası
+                {t("result.fileFieldLabel")}
               </label>
               <input
                 id="result-file"
@@ -176,7 +178,7 @@ export function AddResultModal({
               />
               {detectedType && (
                 <p className="mt-1.5 text-xs text-text-muted">
-                  Algılanan tür: <span className="font-medium text-text">{RESULT_MEDIA_TYPE_LABELS[detectedType]}</span>
+                  {t("result.detectedType")} <span className="font-medium text-text">{t(RESULT_MEDIA_TYPE_LABELS[detectedType])}</span>
                 </p>
               )}
               {fileError && <p className="mt-1.5 text-xs text-danger">{fileError}</p>}
@@ -184,14 +186,14 @@ export function AddResultModal({
           ) : (
             <div>
               <label htmlFor="result-text" className="mb-1.5 block text-sm font-medium text-text">
-                Paylaşacağın metin
+                {t("result.textFieldLabel")}
               </label>
               <textarea
                 id="result-text"
                 rows={4}
                 value={textContent}
                 onChange={(event) => setTextContent(event.target.value)}
-                placeholder="Bu promptu kullanarak elde ettiğin metin çıktısını buraya yapıştır."
+                placeholder={t("result.textFieldPlaceholder")}
                 className="w-full resize-none rounded-md border border-border bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted"
               />
             </div>
@@ -199,7 +201,7 @@ export function AddResultModal({
 
           <div>
             <label htmlFor="result-tool" className="mb-1.5 block text-sm font-medium text-text">
-              Araç / Model <span className="text-text-muted">(opsiyonel)</span>
+              {t("result.toolFieldLabel")} <span className="text-text-muted">({t("common.optional")})</span>
             </label>
             <input
               id="result-tool"
@@ -207,7 +209,7 @@ export function AddResultModal({
               type="text"
               value={tool}
               onChange={(event) => setTool(event.target.value)}
-              placeholder="Örn. Midjourney v6"
+              placeholder={t("result.toolFieldPlaceholder")}
               className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted"
             />
             <datalist id="result-tool-suggestions">
@@ -225,7 +227,7 @@ export function AddResultModal({
           {isPromptTarget && (
             <>
               <div>
-                <p className="mb-1.5 text-sm font-medium text-text">Promptu değiştirdin mi?</p>
+                <p className="mb-1.5 text-sm font-medium text-text">{t("result.didYouModifyPrompt")}</p>
                 <div className="flex gap-1 rounded-md border border-border-soft bg-surface-soft p-1">
                   {([false, true] as const).map((value) => (
                     <button
@@ -236,7 +238,7 @@ export function AddResultModal({
                         hasModification === value ? "bg-surface text-text shadow-card" : "text-text-muted hover:text-text"
                       }`}
                     >
-                      {value ? "Evet" : "Hayır"}
+                      {value ? t("common.yes") : t("common.no")}
                     </button>
                   ))}
                 </div>
@@ -246,33 +248,33 @@ export function AddResultModal({
                 <div className="space-y-3 rounded-md border border-border-soft bg-surface-soft p-3">
                   <div>
                     <label htmlFor="result-mod-summary" className="mb-1.5 block text-sm font-medium text-text">
-                      Kullandığın değişiklikler <span className="text-text-muted">(kısa özet)</span>
+                      {t("result.modificationSummaryLabel")} <span className="text-text-muted">({t("result.modificationSummaryShort")})</span>
                     </label>
                     <input
                       id="result-mod-summary"
                       type="text"
                       value={modificationSummary}
                       onChange={(event) => setModificationSummary(event.target.value)}
-                      placeholder="Örn. Arka planı değiştirdim, ışığı daha sıcak yaptım."
+                      placeholder={t("result.modificationSummaryPlaceholder")}
                       className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted"
                     />
                   </div>
                   <div>
-                    <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-text-muted">Orijinal prompt metni</p>
+                    <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-text-muted">{t("result.originalPromptText")}</p>
                     <p className="max-h-24 overflow-y-auto whitespace-pre-wrap rounded-md border border-border-soft bg-background px-3 py-2 font-mono text-xs text-text-muted">
                       {target.promptText}
                     </p>
                   </div>
                   <div>
                     <label htmlFor="result-mod-text" className="mb-1.5 block text-sm font-medium text-text">
-                      Kullandığın tam prompt metni <span className="text-text-muted">(opsiyonel)</span>
+                      {t("result.fullModifiedTextLabel")} <span className="text-text-muted">({t("common.optional")})</span>
                     </label>
                     <textarea
                       id="result-mod-text"
                       rows={4}
                       value={modifiedPromptText}
                       onChange={(event) => setModifiedPromptText(event.target.value)}
-                      placeholder="Değiştirdiğin tam prompt metnini buraya yazarsan, sonucun detay sayfasında orijinaliyle karşılaştırmalı gösterilir."
+                      placeholder={t("result.fullModifiedTextPlaceholder")}
                       className="w-full resize-none rounded-md border border-border bg-background px-3 py-2 font-mono text-xs text-text placeholder:text-text-muted"
                     />
                   </div>
@@ -285,10 +287,10 @@ export function AddResultModal({
 
           <div className="flex justify-end gap-2 pt-1">
             <Button type="button" variant="ghost" onClick={onClose}>
-              İptal
+              {t("common.cancel")}
             </Button>
             <Button type="submit" disabled={!canSubmit || isSubmitting}>
-              {isSubmitting ? "Paylaşılıyor…" : "Paylaş"}
+              {isSubmitting ? t("result.publishing") : t("result.publish")}
             </Button>
           </div>
         </form>

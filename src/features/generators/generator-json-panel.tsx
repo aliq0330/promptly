@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Check, Copy, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { copyTextToClipboard } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n/language-provider";
 import type { GeneratorOutput } from "@/types";
 
 /**
@@ -16,6 +17,7 @@ import type { GeneratorOutput } from "@/types";
  * assumes any other top-level key exists.
  */
 export function GeneratorJsonPanel({ output, onReset }: { output: GeneratorOutput; onReset?: () => void }) {
+  const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
   const text = JSON.stringify(output, null, 2);
 
@@ -29,14 +31,14 @@ export function GeneratorJsonPanel({ output, onReset }: { output: GeneratorOutpu
 
   return (
     <div className="space-y-3 rounded-md border border-border-soft bg-surface-soft p-3.5">
-      <p className="text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">JSON Çıktısı</p>
+      <p className="text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">{t("generator.jsonOutput")}</p>
       <pre className="max-h-96 w-full overflow-auto whitespace-pre-wrap rounded-md border border-border-soft bg-surface p-3 font-mono text-caption leading-relaxed text-text">
         {text}
       </pre>
       <div className="flex items-center gap-3">
         <Button type="button" variant="outline" size="sm" onClick={handleCopy}>
           {copied ? <Check size={14} /> : <Copy size={14} />}
-          {copied ? "Kopyalandı" : "JSON'u Kopyala"}
+          {copied ? t("common.copied") : t("generator.copyJson")}
         </Button>
         {onReset && (
           <button
@@ -44,7 +46,7 @@ export function GeneratorJsonPanel({ output, onReset }: { output: GeneratorOutpu
             onClick={onReset}
             className="flex items-center gap-1.5 text-xs font-medium text-text-muted hover:text-text"
           >
-            <RotateCcw size={12} /> Varsayılanlara dön
+            <RotateCcw size={12} /> {t("generator.resetToDefaults")}
           </button>
         )}
       </div>

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { formatCount, cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n/language-provider";
 
 const STAT_CLASS = "flex flex-col items-start text-caption text-text-muted";
 const STAT_VALUE_CLASS = "font-display text-h2 font-semibold tabular-nums leading-tight text-text";
@@ -70,17 +71,18 @@ export function ProfileStats({
   isOwnProfile: boolean;
   onSelectPrompts: () => void;
 }) {
+  const { t } = useTranslation();
   return (
     <div className="flex flex-wrap items-stretch divide-x divide-border-soft border-t border-border-soft pt-4 *:px-5 *:first:pl-0">
       <StatButton label="prompt" value={promptCount} onClick={onSelectPrompts} />
-      <Stat label="takipçi" value={followerCount} />
+      <Stat label={t("profile.followersSuffix")} value={followerCount} />
       {isOwnProfile ? (
         <Link href="/following" className={cn(STAT_CLASS, "rounded-sm transition-colors hover:text-text")}>
           <strong className={STAT_VALUE_CLASS}>{formatCount(followingCount)}</strong>
-          takip
+          {t("profile.followingSuffix")}
         </Link>
       ) : (
-        <Stat label="takip" value={followingCount} />
+        <Stat label={t("profile.followingSuffix")} value={followingCount} />
       )}
     </div>
   );
