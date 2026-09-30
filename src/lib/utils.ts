@@ -1,6 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { extendTailwindMerge } from "tailwind-merge";
-import type { Language } from "@/lib/i18n/translations";
+import { translateForRuntime, type Language } from "@/lib/i18n/translations";
 import type { Collection, Conversation, Generator, Prompt, PromptRequest, PromptResultSummary, Tag, UserProfile } from "@/types";
 
 /**
@@ -124,7 +124,7 @@ export function resizeImageToDataUrlFit(file: File, maxDimension = 480): Promise
     };
     img.onerror = () => {
       URL.revokeObjectURL(objectUrl);
-      reject(new Error("Görsel yüklenemedi"));
+      reject(new Error(translateForRuntime("image.loadFailed")));
     };
     img.src = objectUrl;
   });
@@ -166,7 +166,7 @@ export function resizeImageToBlob(
         (blob) => {
           URL.revokeObjectURL(objectUrl);
           if (!blob) {
-            reject(new Error("Görsel işlenemedi"));
+            reject(new Error(translateForRuntime("image.processFailed")));
             return;
           }
           resolve({ blob, width, height, contentType });
@@ -177,7 +177,7 @@ export function resizeImageToBlob(
     };
     img.onerror = () => {
       URL.revokeObjectURL(objectUrl);
-      reject(new Error("Görsel yüklenemedi"));
+      reject(new Error(translateForRuntime("image.loadFailed")));
     };
     img.src = objectUrl;
   });
@@ -214,7 +214,7 @@ export function resizeImageToSquareBlob(
         (blob) => {
           URL.revokeObjectURL(objectUrl);
           if (!blob) {
-            reject(new Error("Görsel işlenemedi"));
+            reject(new Error(translateForRuntime("image.processFailed")));
             return;
           }
           resolve({ blob, contentType });
@@ -225,7 +225,7 @@ export function resizeImageToSquareBlob(
     };
     img.onerror = () => {
       URL.revokeObjectURL(objectUrl);
-      reject(new Error("Görsel yüklenemedi"));
+      reject(new Error(translateForRuntime("image.loadFailed")));
     };
     img.src = objectUrl;
   });
