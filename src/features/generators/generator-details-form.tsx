@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Image as ImageIcon, X } from "lucide-react";
 import { TagPicker } from "@/features/prompts/tag-picker";
 import type { UseTagPickerResult } from "@/features/prompts/use-tag-picker";
+import { useTranslation } from "@/lib/i18n/language-provider";
 import { GENERATOR_CATEGORY_TOPIC_LABELS, GENERATOR_CATEGORY_TOPICS } from "./generator-category-meta";
 import { resizeImageToDataUrlFit } from "@/lib/utils";
 import type { GeneratorCategoryTopic } from "@/types";
@@ -34,6 +35,7 @@ export function GeneratorDetailsForm({
   onChange: (patch: Partial<GeneratorMetaInput>) => void;
   tagPicker: UseTagPickerResult;
 }) {
+  const { t } = useTranslation();
   const [coverError, setCoverError] = useState<string | null>(null);
 
   async function handleCoverChange(event: React.ChangeEvent<HTMLInputElement>) {
@@ -44,7 +46,7 @@ export function GeneratorDetailsForm({
       const resized = await resizeImageToDataUrlFit(file, 900);
       onChange({ coverUrl: resized.url });
     } catch {
-      setCoverError("Görsel yüklenemedi, lütfen başka bir dosya dene.");
+      setCoverError(t("prompt.imageUploadFailed"));
     } finally {
       event.target.value = "";
     }
@@ -54,28 +56,28 @@ export function GeneratorDetailsForm({
     <div className="space-y-5">
       <div>
         <label htmlFor="gen-title" className="mb-1.5 block text-sm font-medium text-text">
-          Generator başlığı
+          {t("generator.titleFieldLabel")}
         </label>
         <input
           id="gen-title"
           type="text"
           value={meta.title}
           onChange={(event) => onChange({ title: event.target.value })}
-          placeholder="Örn. Sinematik Karakter Generatoru"
+          placeholder={t("generator.titlePlaceholder")}
           className="h-11 w-full rounded-md border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted"
         />
       </div>
 
       <div>
         <label htmlFor="gen-description" className="mb-1.5 block text-sm font-medium text-text">
-          Kısa açıklama
+          {t("generator.shortDescriptionLabel")}
         </label>
         <textarea
           id="gen-description"
           rows={3}
           value={meta.description}
           onChange={(event) => onChange({ description: event.target.value })}
-          placeholder="Bu generator ne üretiyor, kimin için?"
+          placeholder={t("generator.shortDescriptionPlaceholder")}
           className="w-full resize-none rounded-md border border-border bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted"
         />
       </div>
@@ -83,7 +85,7 @@ export function GeneratorDetailsForm({
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div>
           <label htmlFor="gen-category" className="mb-1.5 block text-sm font-medium text-text">
-            Kategori
+            {t("generator.categoryLabel")}
           </label>
           <select
             id="gen-category"
@@ -93,34 +95,34 @@ export function GeneratorDetailsForm({
           >
             {GENERATOR_CATEGORY_TOPICS.map((topic) => (
               <option key={topic} value={topic}>
-                {GENERATOR_CATEGORY_TOPIC_LABELS[topic]}
+                {t(GENERATOR_CATEGORY_TOPIC_LABELS[topic])}
               </option>
             ))}
           </select>
         </div>
         <div>
           <label htmlFor="gen-subcategory" className="mb-1.5 block text-sm font-medium text-text">
-            Alt kategori <span className="text-text-muted">(opsiyonel)</span>
+            {t("generator.subcategoryLabel")} <span className="text-text-muted">({t("common.optional")})</span>
           </label>
           <input
             id="gen-subcategory"
             type="text"
             value={meta.subcategory ?? ""}
             onChange={(event) => onChange({ subcategory: event.target.value || null })}
-            placeholder="Örn. Karakter Tasarımı"
+            placeholder={t("generator.subcategoryPlaceholder")}
             className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted"
           />
         </div>
       </div>
 
       <div>
-        <label className="mb-1.5 block text-sm font-medium text-text">Etiketler</label>
+        <label className="mb-1.5 block text-sm font-medium text-text">{t("generator.tagsLabel")}</label>
         <TagPicker picker={tagPicker} />
       </div>
 
       <div>
         <label className="mb-1.5 block text-sm font-medium text-text">
-          Kapak görseli <span className="text-text-muted">(opsiyonel)</span>
+          {t("generator.coverImageLabel")} <span className="text-text-muted">({t("common.optional")})</span>
         </label>
         {meta.coverUrl ? (
           <div className="relative h-32 w-full max-w-xs overflow-hidden rounded-md border border-border">
@@ -129,7 +131,7 @@ export function GeneratorDetailsForm({
             <button
               type="button"
               onClick={() => onChange({ coverUrl: null })}
-              aria-label="Kapak görselini kaldır"
+              aria-label={t("generator.removeCoverImageAriaLabel")}
               className="absolute right-1.5 top-1.5 rounded-full bg-black/60 p-1 text-white hover:bg-black/80"
             >
               <X size={14} />
@@ -138,7 +140,7 @@ export function GeneratorDetailsForm({
         ) : (
           <label className="flex h-32 w-full max-w-xs cursor-pointer flex-col items-center justify-center gap-1.5 rounded-md border border-dashed border-border text-text-muted hover:border-primary hover:text-primary">
             <ImageIcon size={22} />
-            <span className="text-xs">Görsel seç</span>
+            <span className="text-xs">{t("generator.chooseImage")}</span>
             <input type="file" accept="image/*" onChange={handleCoverChange} className="hidden" />
           </label>
         )}
@@ -147,7 +149,7 @@ export function GeneratorDetailsForm({
 
       <div>
         <label htmlFor="gen-visibility" className="mb-1.5 block text-sm font-medium text-text">
-          Görünürlük
+          {t("generator.visibilityLabel")}
         </label>
         <select
           id="gen-visibility"
@@ -155,29 +157,29 @@ export function GeneratorDetailsForm({
           onChange={(event) => onChange({ visibility: event.target.value as GeneratorMetaInput["visibility"] })}
           className="h-10 w-full max-w-xs rounded-md border border-border bg-background px-3 text-sm text-text"
         >
-          <option value="public">Herkese açık — Keşfet ve aramada görünür</option>
-          <option value="unlisted">Yalnızca bağlantıyla — listelenmez, linki olan kullanabilir</option>
-          <option value="private">Gizli — yalnızca sen görebilirsin</option>
+          <option value="public">{t("generator.visibilityPublic")}</option>
+          <option value="unlisted">{t("generator.visibilityUnlisted")}</option>
+          <option value="private">{t("generator.visibilityPrivate")}</option>
         </select>
       </div>
 
       <div className="space-y-2 rounded-md border border-border p-3">
-        <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">Ayarlar</p>
+        <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">{t("generator.settingsHeading")}</p>
         <ToggleRow
-          label="Oluşturulan promptu düzenlemeye izin ver"
-          description="Kullanıcı, generator çıktısını 'Prompt olarak aç'tıktan sonra elle değiştirebilir."
+          label={t("generator.allowPromptEditingLabel")}
+          description={t("generator.allowPromptEditingDescription")}
           checked={meta.allowPromptEditing}
           onChange={(checked) => onChange({ allowPromptEditing: checked })}
         />
         <ToggleRow
-          label="Oluşturulan promptu kaydetmeye izin ver"
-          description="Kullanıcı çıktıyı doğrudan gerçek bir Prompt olarak yayınlayıp kaydedebilir."
+          label={t("generator.allowSavingLabel")}
+          description={t("generator.allowSavingDescription")}
           checked={meta.allowSavingGeneratedPrompts}
           onChange={(checked) => onChange({ allowSavingGeneratedPrompts: checked })}
         />
         <ToggleRow
-          label="Negatif prompt desteği"
-          description="Görsel üretim generatorları için ayrı bir 'Negative Prompt' bölümü ekler."
+          label={t("generator.negativePromptSupportLabel")}
+          description={t("generator.negativePromptSupportDescription")}
           checked={meta.enableNegativePrompt}
           onChange={(checked) => onChange({ enableNegativePrompt: checked })}
         />

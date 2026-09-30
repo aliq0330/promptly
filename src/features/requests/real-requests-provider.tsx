@@ -13,6 +13,7 @@ import {
   type CreateRealRequestInput,
   type UpdateRealRequestInput,
 } from "@/lib/supabase/requests";
+import { useTranslation } from "@/lib/i18n/language-provider";
 import type { PromptRequest, PromptRequestStatus, UserProfile } from "@/types";
 
 interface RealRequestsContextValue {
@@ -39,6 +40,7 @@ const RealRequestsContext = createContext<RealRequestsContextValue | null>(null)
  * needed here.
  */
 export function RealRequestsProvider({ children }: { children: React.ReactNode }) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [realRequests, setRealRequests] = useState<PromptRequest[]>([]);
 
@@ -68,12 +70,12 @@ export function RealRequestsProvider({ children }: { children: React.ReactNode }
 
   const addRequest = useCallback(
     async (input: CreateRealRequestInput, authorProfile: UserProfile) => {
-      if (!user) throw new Error("Giriş yapmadan istek yayınlanamaz.");
+      if (!user) throw new Error(t("request.loginRequiredToPublish"));
       const request = await createRealRequest(input, user.id, authorProfile);
       setRealRequests((prev) => [request, ...prev]);
       return request;
     },
-    [user],
+    [user, t],
   );
 
   const updateRequest = useCallback(async (id: string, input: UpdateRealRequestInput) => {

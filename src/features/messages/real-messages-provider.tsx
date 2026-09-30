@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/features/auth/auth-provider";
+import { useTranslation } from "@/lib/i18n/language-provider";
 import {
   acceptMessageRequest,
   declineMessageRequest,
@@ -31,6 +32,7 @@ const RealMessagesContext = createContext<RealMessagesContextValue | null>(null)
  * holds a signed-in user's own conversations.
  */
 export function RealMessagesProvider({ children }: { children: React.ReactNode }) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [conversations, setConversations] = useState<Conversation[]>([]);
 
@@ -91,7 +93,7 @@ export function RealMessagesProvider({ children }: { children: React.ReactNode }
 
   const startConversationWith = useCallback(
     async (otherProfile: UserProfile) => {
-      if (!user) throw new Error("Giriş yapmadan mesaj gönderilemez.");
+      if (!user) throw new Error(t("messages.loginRequiredToSend"));
       const conversation = await getOrCreateDirectConversation(user.id, otherProfile.id, otherProfile);
       setConversations((prev) => {
         const exists = prev.some((c) => c.id === conversation.id);
@@ -100,7 +102,7 @@ export function RealMessagesProvider({ children }: { children: React.ReactNode }
       });
       return conversation;
     },
-    [user],
+    [user, t],
   );
 
   const acceptRequest = useCallback(

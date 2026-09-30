@@ -1,5 +1,8 @@
+"use client";
+
 import { Blocks, SquareTerminal } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
+import { useTranslation } from "@/lib/i18n/language-provider";
 import { PromptCard } from "./prompt-card";
 import { GeneratorCard } from "@/features/generators/generator-card";
 import type { Generator, Prompt } from "@/types";
@@ -20,6 +23,7 @@ type PromptGridProps = { prompts: Prompt[]; generators?: never } | { generators:
  * separate CSS grid with its own, inconsistent column/gap values.
  */
 export function PromptGrid(props: PromptGridProps) {
+  const { t } = useTranslation();
   const items: { key: string; node: React.ReactNode }[] = props.generators
     ? props.generators.map((generator) => ({ key: generator.id, node: <GeneratorCard generator={generator} /> }))
     : props.prompts.map((prompt) => ({ key: prompt.id, node: <PromptCard prompt={prompt} /> }));
@@ -28,7 +32,7 @@ export function PromptGrid(props: PromptGridProps) {
     return (
       <EmptyState
         icon={props.generators ? Blocks : SquareTerminal}
-        title={props.generators ? "Henüz gösterilecek generator yok." : "Henüz gösterilecek prompt yok."}
+        title={props.generators ? t("generator.noGeneratorsToShow") : t("prompt.noPromptsToShow")}
         compact
       />
     );

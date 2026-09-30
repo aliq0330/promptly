@@ -4,6 +4,7 @@ import { X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Modal } from "@/components/ui/modal";
 import { CollectionForm } from "./collection-form";
+import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Collection } from "@/types";
 
 /**
@@ -23,6 +24,7 @@ export function CollectionFormModal({
   onClose: () => void;
   onSubmit: (values: { name: string; visibility: "public" | "private" }) => Promise<void>;
 }) {
+  const { t } = useTranslation();
   const isEdit = Boolean(collection);
 
   return (
@@ -34,24 +36,24 @@ export function CollectionFormModal({
         <div className="flex items-start justify-between gap-2">
           <div className="flex min-w-0 flex-wrap items-center gap-2">
             <h2 id="collection-form-modal-title" className="text-base font-semibold text-text">
-              {isEdit ? "Koleksiyonu düzenle" : "Yeni koleksiyon oluştur"}
+              {isEdit ? t("collection.editTitle") : t("collection.createNewTitle")}
             </h2>
-            {collection?.isDefault && <Badge variant="accent">Varsayılan</Badge>}
+            {collection?.isDefault && <Badge variant="accent">{t("collection.defaultBadge")}</Badge>}
           </div>
-          <button type="button" onClick={onClose} aria-label="Kapat" className="rounded-md p-1 text-text-muted hover:bg-accent-surface hover:text-text">
+          <button type="button" onClick={onClose} aria-label={t("common.close")} className="rounded-md p-1 text-text-muted hover:bg-accent-surface hover:text-text">
             <X size={18} />
           </button>
         </div>
         {collection?.isDefault && (
           <p className="text-xs text-text-muted">
-            Bu senin varsayılan koleksiyonun — adını ve gizliliğini değiştirebilirsin, ama silinemez.
+            {t("collection.defaultHint")}
           </p>
         )}
 
         <CollectionForm
           initialName={collection?.name}
           initialVisibility={collection?.visibility}
-          submitLabel={isEdit ? "Kaydet" : "Oluştur"}
+          submitLabel={isEdit ? t("common.save") : t("common.create")}
           onCancel={onClose}
           onSubmit={onSubmit}
         />

@@ -20,6 +20,7 @@ import type { LikeableContentType } from "@/lib/supabase/likes";
 type SaveableContentType = Extract<LikeableContentType, "prompt" | "generator">;
 import { placeholderArt } from "@/lib/placeholder-image";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Collection } from "@/types";
 
 /**
@@ -61,6 +62,7 @@ export function SaveToCollectionModal({
   /** Called once when the item's collection-membership count drops from 1+ to 0 (removed from the LAST collection that still had it, Bölüm 9.38) — mirrors `onAdded`, keeps the outer bookmark icon's state honest without a refetch. */
   onRemoved?: () => void;
 }) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { profile } = useOwnProfile();
 
@@ -148,7 +150,7 @@ export function SaveToCollectionModal({
       setCollections((prev) =>
         prev.map((c) => (c.id === collection.id ? { ...c, itemCount: c.itemCount + (isMember ? 1 : -1) } : c)),
       );
-      setError(err instanceof Error ? err.message : "İşlem başarısız oldu, lütfen tekrar dene.");
+      setError(err instanceof Error ? err.message : t("common.actionFailedRetry"));
     } finally {
       setPendingIds((prev) => {
         const next = new Set(prev);
@@ -159,7 +161,7 @@ export function SaveToCollectionModal({
   }
 
   async function handleCreate(values: { name: string; visibility: "public" | "private" }) {
-    if (!user || !profile) throw new Error("Koleksiyon oluşturmak için giriş yapmalısın.");
+    if (!user || !profile) throw new Error(t("collection.loginRequiredToCreate"));
     const created = await createCollection(values, user.id, profile);
     await addItemToCollection(created.id, contentId, contentType);
     setCollections((prev) => [{ ...created, itemCount: 1 }, ...prev]);
@@ -176,28 +178,28 @@ export function SaveToCollectionModal({
         <div className="flex items-start justify-between gap-2">
           <div>
             <h2 id="save-modal-title" className="text-base font-semibold text-text">
-              {view === "create" ? "Yeni koleksiyon oluştur" : "Kaydet"}
+              {view === "create" ? t("collection.createNewTitle") : t("common.save")}
             </h2>
-            {view === "list" && <p className="text-xs text-text-muted">Bu çalışmayı kaydetmek için bir koleksiyon seç.</p>}
+            {view === "list" && <p className="text-xs text-text-muted">{t("collection.pickToSaveHint")}</p>}
           </div>
-          <button type="button" onClick={onClose} aria-label="Kapat" className="rounded-md p-1 text-text-muted hover:bg-accent-surface hover:text-text">
+          <button type="button" onClick={onClose} aria-label={t("common.close")} className="rounded-md p-1 text-text-muted hover:bg-accent-surface hover:text-text">
             <X size={18} />
           </button>
         </div>
 
         {view === "create" ? (
           <div className="mt-4">
-            <CollectionForm submitLabel="Oluştur" onCancel={() => setView("list")} onSubmit={handleCreate} />
+            <CollectionForm submitLabel={t("common.create")} onCancel={() => setView("list")} onSubmit={handleCreate} />
           </div>
         ) : (
           <>
             <div className="mt-4 min-h-0 flex-1 space-y-2 overflow-y-auto">
               {loading ? (
-                <p className="py-8 text-center text-sm text-text-muted">Yükleniyor…</p>
+                <p className="py-8 text-center text-sm text-text-muted">{t("common.loading")}</p>
               ) : collections.length === 0 ? (
                 <div className="space-y-3 py-4 text-center">
                   <FolderPlus size={28} className="mx-auto text-text-muted" />
-                  <p className="text-sm text-text-muted">Henüz bir koleksiyonun yok. İlk koleksiyonunu oluşturarak başla.</p>
+                  <p className="text-sm text-text-muted">{t("collection.noneYetHint")}</p>
                 </div>
               ) : (
                 collections.map((collection) => {
@@ -222,11 +224,11 @@ export function SaveToCollectionModal({
                           <span className="block truncate text-sm font-medium text-text">{collection.name}</span>
                           {collection.isDefault && (
                             <Badge variant="accent" className="shrink-0">
-                              Varsayılan
+                              {t("collection.defaultBadge")}
                             </Badge>
                           )}
                         </span>
-                        <span className="text-xs text-text-muted">{collection.itemCount} çalışma</span>
+                        <span className="text-xs text-text-muted">{t("collection.itemCount", { count: collection.itemCount })}</span>
                       </span>
                       <span
                         className={cn(
@@ -249,7 +251,7 @@ export function SaveToCollectionModal({
               className="mt-3 flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-border py-2.5 text-sm font-medium text-text transition-colors hover:bg-accent-surface"
             >
               <Plus size={16} />
-              Yeni koleksiyon oluştur
+              {t("collection.createNewTitle")}
             </button>
           </>
         )}

@@ -26,6 +26,7 @@ import {
   type CollectionEntry,
 } from "@/lib/supabase/collections";
 import { profileHref } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n/language-provider";
 import Link from "next/link";
 import type { Collection } from "@/types";
 
@@ -45,6 +46,7 @@ import type { Collection } from "@/types";
  * from the list the moment the backend confirms it, no refresh needed).
  */
 export function CollectionDetailView() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -110,11 +112,11 @@ export function CollectionDetailView() {
     }
     setItems((prev) => prev.filter((entry) => entry.data.id !== id));
     setCollection((prev) => (prev ? { ...prev, itemCount: Math.max(0, prev.itemCount - 1) } : prev));
-    showToast(collection.isDefault ? "Kaydedilenlerden kaldırıldı." : "Koleksiyondan kaldırıldı.");
+    showToast(collection.isDefault ? t("collection.removedFromSavedToast") : t("collection.removedFromCollectionToast"));
   }
 
   if (!id || (loaded && !collection)) {
-    return <NotFoundBlock title="Koleksiyon bulunamadı" description="Silinmiş veya sadece sahibine görünür olabilir." />;
+    return <NotFoundBlock title={t("collection.notFoundTitle")} description={t("collection.notFoundDescription")} />;
   }
 
   if (!loaded || !collection) {
@@ -131,7 +133,7 @@ export function CollectionDetailView() {
           <div className="flex items-start justify-between gap-2">
             <div className="flex min-w-0 flex-wrap items-center gap-2">
               <h1 className="text-h1 font-semibold text-text">{collection.name}</h1>
-              {collection.isDefault && <Badge variant="default">Varsayılan</Badge>}
+              {collection.isDefault && <Badge variant="default">{t("collection.defaultBadge")}</Badge>}
             </div>
             {isOwner && (
               <CollectionMoreMenu
@@ -142,10 +144,10 @@ export function CollectionDetailView() {
             )}
           </div>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-small text-text-muted">
-            <span>{collection.itemCount} çalışma</span>
+            <span>{t("collection.itemCount", { count: collection.itemCount })}</span>
             <span className="flex items-center gap-1">
               {collection.visibility === "public" ? <Globe size={14} /> : <Lock size={14} />}
-              {collection.visibility === "public" ? "Herkese açık" : "Sadece ben"}
+              {collection.visibility === "public" ? t("collection.visibilityPublicShort") : t("collection.visibilityPrivateShort")}
             </span>
           </div>
           <Link href={profileHref(collection.owner)} className="flex w-fit items-center gap-2 text-label font-medium text-text hover:text-primary">
@@ -156,7 +158,7 @@ export function CollectionDetailView() {
       </header>
 
       {items.length === 0 ? (
-        <EmptyState icon={FolderOpen} title="Bu koleksiyonda henüz çalışma yok." description="Bir prompt ya da generator kaydederken bu koleksiyonu seçebilirsin." action={{ label: "Keşfet'e git", href: "/discover" }} />
+        <EmptyState icon={FolderOpen} title={t("collection.emptyItemsTitle")} description={t("collection.emptyItemsDescription")} action={{ label: t("feed.goToDiscover"), href: "/discover" }} />
       ) : (
         <div className="columns-1 gap-3 sm:columns-2 sm:gap-4 xl:columns-3">
           {items.map((entry) => {

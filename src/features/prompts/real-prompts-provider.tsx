@@ -10,6 +10,7 @@ import {
   type CreateRealPromptInput,
   type UpdateRealPromptInput,
 } from "@/lib/supabase/prompts";
+import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Prompt, UserProfile } from "@/types";
 
 interface RealPromptsContextValue {
@@ -30,6 +31,7 @@ const RealPromptsContext = createContext<RealPromptsContextValue | null>(null);
  * `addPrompt` publishes originals and request answers (`requestId`) alike.
  */
 export function RealPromptsProvider({ children }: { children: React.ReactNode }) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [realPrompts, setRealPrompts] = useState<Prompt[]>([]);
   const [loading, setLoading] = useState(true);
@@ -63,22 +65,22 @@ export function RealPromptsProvider({ children }: { children: React.ReactNode })
 
   const addPrompt = useCallback(
     async (input: CreateRealPromptInput, authorProfile: UserProfile) => {
-      if (!user) throw new Error("Giriş yapmadan prompt yayınlanamaz.");
+      if (!user) throw new Error(t("prompt.loginRequiredToPublish"));
       const prompt = await createRealPrompt(input, user.id, authorProfile);
       setRealPrompts((prev) => [prompt, ...prev]);
       return prompt;
     },
-    [user],
+    [user, t],
   );
 
   const updatePrompt = useCallback(
     async (id: string, input: UpdateRealPromptInput) => {
-      if (!user) throw new Error("Giriş yapmadan prompt düzenlenemez.");
+      if (!user) throw new Error(t("prompt.loginRequiredToEdit"));
       const prompt = await updateRealPrompt(id, user.id, input);
       setRealPrompts((prev) => (prev.some((p) => p.id === id) ? prev.map((p) => (p.id === id ? prompt : p)) : prev));
       return prompt;
     },
-    [user],
+    [user, t],
   );
 
   const value = useMemo(

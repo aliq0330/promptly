@@ -1,14 +1,15 @@
 import { placeholderArt } from "@/lib/placeholder-image";
 import { resizeImageToBlob } from "@/lib/utils";
+import { translateForRuntime, type TranslationKey } from "@/lib/i18n/translations";
 import type { PromptResultMediaType } from "@/types";
 
-/** Turkish label for a result's media type — shared by the card, the share preview badge, and the detail page. */
-export const RESULT_MEDIA_TYPE_LABELS: Record<PromptResultMediaType, string> = {
-  image: "Görsel",
-  video: "Video",
-  audio: "Ses",
-  text: "Metin",
-  other: "Diğer",
+/** Translation key for a result's media type — shared by the card, the share preview badge, and the detail page. Look up with `useTranslation().t()` at each render site. */
+export const RESULT_MEDIA_TYPE_LABELS: Record<PromptResultMediaType, TranslationKey> = {
+  image: "contentType.image",
+  video: "contentType.video",
+  audio: "result.mediaAudio",
+  text: "contentType.text",
+  other: "result.mediaOther",
 };
 
 /**
@@ -87,7 +88,7 @@ export function captureVideoPosterBlob(file: File): Promise<ResizedBlob> {
         (blob) => {
           cleanup();
           if (!blob) {
-            reject(new Error("Video kapak görseli oluşturulamadı."));
+            reject(new Error(translateForRuntime("result.videoPosterFailed")));
             return;
           }
           resolve({ blob, width, height, contentType: "image/jpeg" });
@@ -98,7 +99,7 @@ export function captureVideoPosterBlob(file: File): Promise<ResizedBlob> {
     };
     video.onerror = () => {
       cleanup();
-      reject(new Error("Video dosyası okunamadı."));
+      reject(new Error(translateForRuntime("result.videoReadFailed")));
     };
   });
 }

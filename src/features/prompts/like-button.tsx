@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Heart } from "lucide-react";
 import { formatCount } from "@/lib/utils";
 import { contentActionClassName } from "@/features/content/action-styles";
+import { useTranslation } from "@/lib/i18n/language-provider";
 import { useLikeState } from "./use-like-state";
 import type { LikeableContentType } from "@/lib/supabase/likes";
 
@@ -23,6 +24,7 @@ export function LikeButton({
   className?: string;
 }) {
   const { isLiked, likeCount: count, toggle, canLike } = useLikeState(id, likeCount, contentType);
+  const { t } = useTranslation();
 
   const content = (
     <>
@@ -38,8 +40,8 @@ export function LikeButton({
       <Link
         href="/login"
         onClick={(event) => event.stopPropagation()}
-        title="Beğenmek için giriş yapmalısın"
-        aria-label={`Beğenmek için giriş yap (${formatCount(count)} beğeni)`}
+        title={t("prompt.loginToLike")}
+        aria-label={t("prompt.loginToLikeAria", { count })}
         className={sharedClassName}
       >
         {content}
@@ -56,8 +58,8 @@ export function LikeButton({
         toggle();
       }}
       aria-pressed={isLiked}
-      title={isLiked ? "Beğenmekten vazgeç" : "Beğen"}
-      aria-label={`Beğen (${formatCount(count)} beğeni)`}
+      title={isLiked ? t("prompt.unlike") : t("prompt.like")}
+      aria-label={t("prompt.likeAria", { count })}
       className={sharedClassName}
     >
       {content}

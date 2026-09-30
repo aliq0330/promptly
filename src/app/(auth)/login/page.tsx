@@ -8,12 +8,14 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/auth-provider";
 import { supabase } from "@/lib/supabase/client";
 import { translateAuthError } from "@/features/auth/auth-errors";
+import { useTranslation } from "@/lib/i18n/language-provider";
 
 /**
  * Real Supabase Auth sign-in (CLAUDE.md section 17) — genuinely
  * authenticates against the connected Supabase project, not mock data.
  */
 export default function LoginPage() {
+  const { t } = useTranslation();
   const router = useRouter();
   const { session, loading: authLoading } = useAuth();
   const [email, setEmail] = useState("");
@@ -43,7 +45,7 @@ export default function LoginPage() {
       // A real network failure (not a structured Supabase AuthError) throws
       // instead of resolving — without this, the button would freeze on
       // "Giriş yapılıyor..." forever with no visible error at all.
-      setError("Bağlantı kurulamadı, lütfen tekrar dene.");
+      setError(t("auth.connectionFailedRetry"));
     } finally {
       setIsSubmitting(false);
     }
@@ -54,12 +56,12 @@ export default function LoginPage() {
       <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent-surface text-primary">
         <LogIn size={22} />
       </div>
-      <h1 className="text-h2 font-semibold text-text">Giriş yap</h1>
+      <h1 className="text-h2 font-semibold text-text">{t("common.login")}</h1>
 
       <div className="w-full space-y-3 text-left">
         <div>
           <label htmlFor="login-email" className="mb-1.5 block text-sm font-medium text-text">
-            E-posta
+            {t("settings.email")}
           </label>
           <input
             id="login-email"
@@ -74,10 +76,10 @@ export default function LoginPage() {
         <div>
           <div className="mb-1.5 flex items-center justify-between">
             <label htmlFor="login-password" className="block text-sm font-medium text-text">
-              Şifre
+              {t("auth.passwordLabel")}
             </label>
             <Link href="/reset-password" className="text-xs text-primary hover:underline">
-              Şifreni mi unuttun?
+              {t("auth.forgotPassword")}
             </Link>
           </div>
           <input
@@ -95,12 +97,12 @@ export default function LoginPage() {
       {error && <p className="text-sm text-danger">{error}</p>}
 
       <Button type="submit" className="w-full" disabled={isSubmitting}>
-        {isSubmitting ? "Giriş yapılıyor..." : "Giriş yap"}
+        {isSubmitting ? t("auth.loggingIn") : t("common.login")}
       </Button>
       <p className="text-xs text-text-muted">
-        Hesabın yok mu?{" "}
+        {t("auth.noAccountYet")}{" "}
         <Link href="/signup" className="text-primary hover:underline">
-          Kayıt ol
+          {t("auth.signUp")}
         </Link>
       </p>
     </form>

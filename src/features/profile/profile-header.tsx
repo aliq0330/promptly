@@ -7,6 +7,8 @@ import { ProfileBadges } from "./profile-badges";
 import { OwnProfileActions, OtherProfileActions } from "./profile-actions";
 import { useFollowState } from "./use-follow-state";
 import { Badge } from "@/components/ui/badge";
+import { useTranslation } from "@/lib/i18n/language-provider";
+import { INTEREST_OPTION_LABELS, type InterestOption } from "./interest-options";
 import type { UserProfile } from "@/types";
 
 const BIO_CLAMP_LENGTH = 140;
@@ -22,6 +24,7 @@ export function ProfileHeader({
   publishedPromptCount: number;
   onSelectPrompts: () => void;
 }) {
+  const { t } = useTranslation();
   const [bioExpanded, setBioExpanded] = useState(false);
   const bio = user.bio ?? "";
   const bioIsLong = bio.length > BIO_CLAMP_LENGTH;
@@ -62,7 +65,7 @@ export function ProfileHeader({
                   onClick={() => setBioExpanded((prev) => !prev)}
                   className="font-medium text-primary hover:underline"
                 >
-                  {bioExpanded ? "Daha az göster" : "Devamını gör"}
+                  {t(bioExpanded ? "common.showLess" : "common.readMore")}
                 </button>
               )}
             </p>
@@ -72,7 +75,7 @@ export function ProfileHeader({
             <div className="flex flex-wrap items-center gap-1.5">
               {user.interests?.slice(0, 4).map((interest) => (
                 <Badge key={interest} variant="neutral">
-                  {interest}
+                  {interest in INTEREST_OPTION_LABELS ? t(INTEREST_OPTION_LABELS[interest as InterestOption]) : interest}
                 </Badge>
               ))}
               <ProfileBadges publishedPromptCount={publishedPromptCount} />

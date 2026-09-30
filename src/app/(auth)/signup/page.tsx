@@ -9,6 +9,7 @@ import { useAuth } from "@/features/auth/auth-provider";
 import { supabase } from "@/lib/supabase/client";
 import { translateAuthError } from "@/features/auth/auth-errors";
 import { absoluteUrl } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n/language-provider";
 
 const PASSWORD_MIN_LENGTH = 6;
 
@@ -19,6 +20,7 @@ const PASSWORD_MIN_LENGTH = 6;
  * new row, reading the display name back out of `user_metadata`.
  */
 export default function SignupPage() {
+  const { t } = useTranslation();
   const router = useRouter();
   const { session, loading: authLoading } = useAuth();
   const [displayName, setDisplayName] = useState("");
@@ -38,7 +40,7 @@ export default function SignupPage() {
     setError(null);
 
     if (password.length < PASSWORD_MIN_LENGTH) {
-      setError(`Şifre en az ${PASSWORD_MIN_LENGTH} karakter olmalı.`);
+      setError(t("auth.passwordMinLengthError", { min: PASSWORD_MIN_LENGTH }));
       return;
     }
 
@@ -67,7 +69,7 @@ export default function SignupPage() {
       }
     } catch {
       // A real network failure throws instead of resolving — see login/page.tsx's comment.
-      setError("Bağlantı kurulamadı, lütfen tekrar dene.");
+      setError(t("auth.connectionFailedRetry"));
     } finally {
       setIsSubmitting(false);
     }
@@ -79,13 +81,12 @@ export default function SignupPage() {
         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent-surface text-primary">
           <MailCheck size={22} />
         </div>
-        <h1 className="text-h2 font-semibold text-text">E-postanı kontrol et</h1>
+        <h1 className="text-h2 font-semibold text-text">{t("auth.checkEmailTitle")}</h1>
         <p className="text-sm text-text-muted">
-          <strong className="text-text">{email}</strong> adresine bir doğrulama bağlantısı
-          gönderdik. Hesabını etkinleştirmek için bağlantıya tıkla, sonra giriş yapabilirsin.
+          <strong className="text-text">{email}</strong> {t("auth.checkEmailBodySuffix")}
         </p>
         <Link href="/login" className="text-sm font-medium text-primary hover:underline">
-          Giriş sayfasına dön
+          {t("auth.backToLogin")}
         </Link>
       </div>
     );
@@ -96,12 +97,12 @@ export default function SignupPage() {
       <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent-surface text-primary">
         <UserPlus size={22} />
       </div>
-      <h1 className="text-h2 font-semibold text-text">Kayıt ol</h1>
+      <h1 className="text-h2 font-semibold text-text">{t("auth.signUp")}</h1>
 
       <div className="w-full space-y-3 text-left">
         <div>
           <label htmlFor="signup-name" className="mb-1.5 block text-sm font-medium text-text">
-            Görünen ad
+            {t("profile.displayNameLabel")}
           </label>
           <input
             id="signup-name"
@@ -115,7 +116,7 @@ export default function SignupPage() {
         </div>
         <div>
           <label htmlFor="signup-email" className="mb-1.5 block text-sm font-medium text-text">
-            E-posta
+            {t("settings.email")}
           </label>
           <input
             id="signup-email"
@@ -129,7 +130,7 @@ export default function SignupPage() {
         </div>
         <div>
           <label htmlFor="signup-password" className="mb-1.5 block text-sm font-medium text-text">
-            Şifre
+            {t("auth.passwordLabel")}
           </label>
           <input
             id="signup-password"
@@ -140,19 +141,19 @@ export default function SignupPage() {
             onChange={(event) => setPassword(event.target.value)}
             className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted"
           />
-          <p className="mt-1 text-xs text-text-muted">En az {PASSWORD_MIN_LENGTH} karakter.</p>
+          <p className="mt-1 text-xs text-text-muted">{t("auth.minCharsHint", { min: PASSWORD_MIN_LENGTH })}</p>
         </div>
       </div>
 
       {error && <p className="text-sm text-danger">{error}</p>}
 
       <Button type="submit" className="w-full" disabled={isSubmitting}>
-        {isSubmitting ? "Hesap oluşturuluyor..." : "Hesap oluştur"}
+        {isSubmitting ? t("auth.creatingAccount") : t("auth.createAccountButton")}
       </Button>
       <p className="text-xs text-text-muted">
-        Zaten hesabın var mı?{" "}
+        {t("auth.alreadyHaveAccount")}{" "}
         <Link href="/login" className="text-primary hover:underline">
-          Giriş yap
+          {t("common.login")}
         </Link>
       </p>
     </form>

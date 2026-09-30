@@ -4,21 +4,9 @@ import { useState } from "react";
 import { Copy, GripVertical, Image as ImageIcon, Pencil, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n/language-provider";
+import { GENERATOR_FIELD_TYPE_LABELS } from "./generator-category-meta";
 import type { GeneratorField } from "@/types";
-
-const FIELD_TYPE_SHORT_LABELS: Record<GeneratorField["type"], string> = {
-  text: "Kısa Metin",
-  textarea: "Uzun Metin",
-  select: "Seçim",
-  multi_select: "Çoklu Seçim",
-  number: "Sayı",
-  slider: "Kaydırıcı",
-  color: "Renk",
-  checkbox: "Onay Kutusu",
-  toggle: "Açma/Kapama",
-  radio: "Radio",
-  url: "URL",
-};
 
 /**
  * The generator's full field list — add/edit/duplicate/delete + drag
@@ -41,6 +29,7 @@ export function FieldList({
   onDeleteField: (fieldId: string) => void;
   onReorderFields: (orderedIds: string[]) => void;
 }) {
+  const { t } = useTranslation();
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [dragId, setDragId] = useState<string | null>(null);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
@@ -66,15 +55,15 @@ export function FieldList({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">Alanlar</p>
+        <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">{t("field.fieldsHeading")}</p>
         <Button type="button" size="sm" variant="outline" onClick={onAddField}>
-          <Plus size={14} /> Alan ekle
+          <Plus size={14} /> {t("field.addField")}
         </Button>
       </div>
 
       {fields.length === 0 && (
         <p className="rounded-md border border-dashed border-border bg-accent-surface/40 p-6 text-center text-sm text-text-muted">
-          Bu generatorda henüz hiç alan yok — &quot;Alan ekle&quot; ile başla.
+          {t("generator.noFieldsYetStart")}
         </p>
       )}
 
@@ -104,35 +93,35 @@ export function FieldList({
             </span>
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-1.5">
-                <p className="truncate text-sm font-medium text-text">{field.label || "(adsız alan)"}</p>
+                <p className="truncate text-sm font-medium text-text">{field.label || t("field.unnamedField")}</p>
                 <span className="rounded-sm bg-accent-surface px-1.5 py-0.5 text-[10px] font-medium text-text-muted">
-                  {FIELD_TYPE_SHORT_LABELS[field.type]}
+                  {t(GENERATOR_FIELD_TYPE_LABELS[field.type])}
                 </span>
                 {field.options.some((o) => o.image || o.color) && (
                   <span
                     className="flex items-center gap-0.5 rounded-sm bg-accent-surface px-1.5 py-0.5 text-[10px] font-medium text-text-muted"
-                    title="Bu alanın görsel/renk destekli seçenekleri var"
+                    title={t("field.imageSupportHint")}
                   >
-                    <ImageIcon size={10} /> Görsel destekli
+                    <ImageIcon size={10} /> {t("field.imageSupported")}
                   </span>
                 )}
-                {field.required && <span className="text-[10px] font-medium text-danger">Zorunlu</span>}
+                {field.required && <span className="text-[10px] font-medium text-danger">{t("field.required")}</span>}
               </div>
               <p className="mt-0.5 truncate font-mono text-xs text-primary">{`{{${field.key}}}`}</p>
               <p className="mt-0.5 truncate font-mono text-xs text-text-muted">→ {field.jsonPath?.trim() || field.key}</p>
-              {field.condition && <p className="mt-0.5 text-xs text-text-muted">Koşullu görünürlük tanımlı</p>}
+              {field.condition && <p className="mt-0.5 text-xs text-text-muted">{t("field.conditionalVisibilityDefined")}</p>}
             </div>
             <div className="flex shrink-0 items-center gap-0.5">
-              <button type="button" onClick={() => onEditField(field)} aria-label="Alanı düzenle" className="rounded p-1.5 text-text-muted hover:bg-accent-surface hover:text-text">
+              <button type="button" onClick={() => onEditField(field)} aria-label={t("field.editField")} className="rounded p-1.5 text-text-muted hover:bg-accent-surface hover:text-text">
                 <Pencil size={14} />
               </button>
-              <button type="button" onClick={() => onDuplicateField(field)} aria-label="Alanı çoğalt" className="rounded p-1.5 text-text-muted hover:bg-accent-surface hover:text-text">
+              <button type="button" onClick={() => onDuplicateField(field)} aria-label={t("field.duplicateField")} className="rounded p-1.5 text-text-muted hover:bg-accent-surface hover:text-text">
                 <Copy size={14} />
               </button>
               <button
                 type="button"
                 onClick={() => (isConfirming ? (onDeleteField(field.id), setConfirmDeleteId(null)) : setConfirmDeleteId(field.id))}
-                aria-label="Alanı sil"
+                aria-label={t("field.deleteField")}
                 className={cn("rounded p-1.5", isConfirming ? "bg-danger text-white" : "text-text-muted hover:bg-accent-surface hover:text-danger")}
               >
                 <Trash2 size={14} />

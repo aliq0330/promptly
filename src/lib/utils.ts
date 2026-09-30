@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { extendTailwindMerge } from "tailwind-merge";
+import type { Language } from "@/lib/i18n/translations";
 import type { Collection, Conversation, Generator, Prompt, PromptRequest, PromptResultSummary, Tag, UserProfile } from "@/types";
 
 /**
@@ -45,16 +46,30 @@ const RELATIVE_TIME_UNITS: [Intl.RelativeTimeFormatUnit, number][] = [
   ["minute", 60],
 ];
 
-const relativeTimeFormatter = new Intl.RelativeTimeFormat("tr", { numeric: "auto" });
+// One formatter per language, built lazily — `Intl.RelativeTimeFormat` picks
+// the correct plural/grammar rules ("1 minute ago" vs "5 minutes ago", "az
+// önce" vs "5 dakika önce") for whichever locale it's given, so no separate
+// pluralization logic is needed here.
+const relativeTimeFormatters: Record<Language, Intl.RelativeTimeFormat> = {
+  tr: new Intl.RelativeTimeFormat("tr", { numeric: "auto" }),
+  en: new Intl.RelativeTimeFormat("en", { numeric: "auto" }),
+};
 
-export function formatRelativeTime(isoDate: string): string {
+/**
+ * Defaults to Turkish for any caller that hasn't been updated to pass the
+ * viewer's real language yet — every UI call site should pass `useLanguage().
+ * language` so this respects the site-wide language toggle (CLAUDE.md's i18n
+ * audit).
+ */
+export function formatRelativeTime(isoDate: string, language: Language = "tr"): string {
+  const formatter = relativeTimeFormatters[language];
   const diffSeconds = (new Date(isoDate).getTime() - Date.now()) / 1000;
   for (const [unit, secondsInUnit] of RELATIVE_TIME_UNITS) {
     if (Math.abs(diffSeconds) >= secondsInUnit) {
-      return relativeTimeFormatter.format(Math.round(diffSeconds / secondsInUnit), unit);
+      return formatter.format(Math.round(diffSeconds / secondsInUnit), unit);
     }
   }
-  return relativeTimeFormatter.format(Math.round(diffSeconds), "second");
+  return formatter.format(Math.round(diffSeconds), "second");
 }
 
 export function formatCount(count: number): string {

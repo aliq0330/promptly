@@ -18,6 +18,7 @@ import { ShareTriggerButton } from "@/features/prompts/share-modal";
 import { RESULT_MEDIA_TYPE_LABELS } from "@/lib/prompt-result-media";
 import { fetchResultById } from "@/lib/supabase/prompt-results";
 import { formatRelativeTime, generatorHref, profileHref, promptHref } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n/language-provider";
 import type { PromptResult } from "@/types";
 
 /**
@@ -27,6 +28,7 @@ import type { PromptResult } from "@/types";
  * here — the grid/card never loads any of this up front (§16/§17).
  */
 export function ResultDetailView() {
+  const { t, language } = useTranslation();
   const router = useRouter();
   const searchParams = useSearchParams();
   const id = searchParams.get("id");
@@ -55,11 +57,11 @@ export function ResultDetailView() {
   }, [id]);
 
   if (!id || !loaded) {
-    return !id ? <NotFoundBlock title="Sonuç bulunamadı" description="Bağlantı eksik ya da hatalı görünüyor." /> : <DetailSkeleton />;
+    return !id ? <NotFoundBlock title={t("result.notFoundTitle")} description={t("common.brokenLinkHint")} /> : <DetailSkeleton />;
   }
 
   if (!result) {
-    return <NotFoundBlock title="Sonuç bulunamadı" description="Bu sonuç silinmiş ya da hiç var olmamış olabilir." />;
+    return <NotFoundBlock title={t("result.notFoundTitle")} description={t("result.notFoundGone")} />;
   }
 
   // After deleting your own result there's nothing left on this page to
@@ -88,12 +90,12 @@ export function ResultDetailView() {
                   {result.creator.displayName}
                 </span>
                 <span className="block truncate text-caption text-text-muted">
-                  @{result.creator.username} · {formatRelativeTime(result.createdAt)}
+                  @{result.creator.username} · {formatRelativeTime(result.createdAt, language)}
                 </span>
               </span>
             </Link>
             <div className="flex flex-wrap items-center gap-1.5">
-              <Badge variant="neutral">{RESULT_MEDIA_TYPE_LABELS[result.mediaType]}</Badge>
+              <Badge variant="neutral">{t(RESULT_MEDIA_TYPE_LABELS[result.mediaType])}</Badge>
               {result.tool && <Badge variant="outline">{result.tool}</Badge>}
               <PostMenu resultId={result.id} authorId={result.creator.id} onDeleted={handleDeleted} onEdit={() => setIsEditOpen(true)} />
             </div>
@@ -105,21 +107,21 @@ export function ResultDetailView() {
             <LikeButton id={result.id} likeCount={result.likeCount} contentType="prompt_result" size={18} />
             <CommentCountLink resultId={result.id} baseCount={result.commentCount} size={18} />
             <span className="ml-auto" />
-            <ShareTriggerButton target={{ contentType: "prompt_result", result }} label="Paylaş" />
+            <ShareTriggerButton target={{ contentType: "prompt_result", result }} label={t("common.share")} />
           </div>
 
           {result.originalPrompt ? (
             <section aria-labelledby="result-origin-title" className="space-y-2 rounded-lg border border-border-soft bg-surface-soft p-4">
               <h2 id="result-origin-title" className="flex items-center gap-1.5 font-sans text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">
                 <SquareTerminal size={14} />
-                Bu sonuç hangi promptla oluşturuldu?
+                {t("result.madeWithWhichPrompt")}
               </h2>
               <Link href={promptHref(result.originalPrompt)} className="block rounded-md border border-border-soft bg-surface p-3 transition-colors hover:border-primary/40">
                 <p className="truncate text-label font-semibold text-text">{result.originalPrompt.title}</p>
                 {result.originalPrompt.description && (
                   <p className="mt-0.5 line-clamp-2 text-caption text-text-muted">{result.originalPrompt.description}</p>
                 )}
-                <p className="mt-1.5 text-caption font-medium text-primary">Promptu görüntüle →</p>
+                <p className="mt-1.5 text-caption font-medium text-primary">{t("result.viewPrompt")}</p>
               </Link>
             </section>
           ) : (
@@ -130,15 +132,15 @@ export function ResultDetailView() {
               <section aria-labelledby="result-origin-title" className="space-y-2 rounded-lg border border-border-soft bg-surface-soft p-4">
                 <h2 id="result-origin-title" className="flex items-center gap-1.5 font-sans text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">
                   <SquareTerminal size={14} />
-                  Bu sonuç hangi generatorla oluşturuldu?
+                  {t("result.madeWithWhichGenerator")}
                 </h2>
                 <Link
                   href={generatorHref(result.originalGenerator)}
                   className="block rounded-md border border-border-soft bg-surface p-3 transition-colors hover:border-primary/40"
                 >
                   <p className="truncate text-label font-semibold text-text">{result.originalGenerator.title}</p>
-                  <p className="mt-0.5 text-caption text-text-muted">Bu sonuç bu generator kullanılarak oluşturuldu.</p>
-                  <p className="mt-1.5 text-caption font-medium text-primary">Generatoru görüntüle →</p>
+                  <p className="mt-0.5 text-caption text-text-muted">{t("result.madeWithThisGenerator")}</p>
+                  <p className="mt-1.5 text-caption font-medium text-primary">{t("result.viewGenerator")}</p>
                 </Link>
               </section>
             )
@@ -152,7 +154,7 @@ export function ResultDetailView() {
                 className="flex w-full items-center justify-between gap-2 px-4 py-3 text-left"
               >
                 <span className="text-label font-medium text-text">
-                  Bu sonuçta değişiklik yapıldı{result.modificationSummary ? ` — ${result.modificationSummary}` : ""}
+                  {t("result.modifiedBadge")}{result.modificationSummary ? ` — ${result.modificationSummary}` : ""}
                 </span>
                 {isModificationOpen ? (
                   <ChevronUp size={16} className="shrink-0 text-text-muted" />
@@ -165,13 +167,13 @@ export function ResultDetailView() {
                   {result.modifiedPromptText ? (
                     <div className="grid gap-3 sm:grid-cols-2">
                       <div>
-                        <p className="mb-1 text-caption font-semibold uppercase tracking-wide text-text-muted">Orijinal</p>
+                        <p className="mb-1 text-caption font-semibold uppercase tracking-wide text-text-muted">{t("result.original")}</p>
                         <div className="max-h-40 overflow-y-auto rounded-md border border-border-soft bg-surface-soft p-2.5">
                           <DiffText before={result.originalPrompt.promptText} after={result.modifiedPromptText} />
                         </div>
                       </div>
                       <div>
-                        <p className="mb-1 text-caption font-semibold uppercase tracking-wide text-text-muted">Kullanıcı değişikliği</p>
+                        <p className="mb-1 text-caption font-semibold uppercase tracking-wide text-text-muted">{t("result.userModification")}</p>
                         <p className="max-h-40 overflow-y-auto whitespace-pre-wrap rounded-md border border-border-soft bg-surface-soft p-2.5 font-mono text-xs text-text">
                           {result.modifiedPromptText}
                         </p>
@@ -179,7 +181,7 @@ export function ResultDetailView() {
                     </div>
                   ) : (
                     <p className="text-caption text-text-muted">
-                      {result.modificationSummary || "Sonucu paylaşan kullanıcı promptu değiştirdiğini belirtti."}
+                      {result.modificationSummary || t("result.modifiedNoDetail")}
                     </p>
                   )}
                 </div>

@@ -21,6 +21,7 @@ import { fetchVariablesForPrompt, replaceVariablesForPrompt } from "@/lib/supaba
 import { fetchGeneratorById, fetchGeneratorRun } from "@/lib/supabase/generators";
 import { placeholderArt } from "@/lib/placeholder-image";
 import { cn, copyTextToClipboard, generatorHref, promptHref, requestHref, resizeImageToDataUrlFit } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Generator, GeneratorCategoryTopic, GeneratorRun, Prompt, PromptContentType, PromptRequest } from "@/types";
 
 const CONTENT_TYPES: PromptContentType[] = ["image", "text", "video", "code", "music"];
@@ -50,22 +51,23 @@ function contentTypeFromGeneratorCategory(category: GeneratorCategoryTopic): Pro
 }
 
 function LoginGate({ message }: { message: string }) {
+  const { t } = useTranslation();
   return (
     <div className="mx-auto max-w-md px-4 py-16 text-center">
-      <h1 className="mb-2 text-h2 font-semibold text-text">Giriş yapmalısın</h1>
+      <h1 className="mb-2 text-h2 font-semibold text-text">{t("auth.loginRequiredTitle")}</h1>
       <p className="mb-4 text-sm text-text-muted">{message}</p>
       <div className="flex justify-center gap-2">
         <Link
           href="/login"
           className="inline-flex h-9 items-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary-dark"
         >
-          Giriş Yap
+          {t("header.login")}
         </Link>
         <Link
           href="/signup"
           className="inline-flex h-9 items-center rounded-md border border-border px-4 text-sm font-medium text-text hover:bg-accent-surface"
         >
-          Hesap Oluştur
+          {t("auth.createAccount")}
         </Link>
       </div>
     </div>
@@ -82,10 +84,11 @@ function LoginGate({ message }: { message: string }) {
  * field) however makes sense for their own use case.
  */
 function NegativePromptReference({ text }: { text: string }) {
+  const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
   return (
     <div className="space-y-1.5 rounded-md border border-border bg-accent-surface/30 p-3 text-sm">
-      <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">Generatorun negatif prompt çıktısı</p>
+      <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">{t("prompt.negativePromptOutput")}</p>
       <p className="whitespace-pre-wrap font-mono text-xs text-text-muted">{text}</p>
       <button
         type="button"
@@ -97,11 +100,9 @@ function NegativePromptReference({ text }: { text: string }) {
         }}
         className="text-xs font-medium text-primary hover:underline"
       >
-        {copied ? "Kopyalandı" : "Kopyala"}
+        {copied ? t("common.copied") : t("common.copy")}
       </button>
-      <p className="text-xs text-text-muted">
-        Bu proje henüz ayrı bir negatif prompt alanı desteklemiyor — istersen bunu prompt metnine kendin ekleyebilirsin.
-      </p>
+      <p className="text-xs text-text-muted">{t("prompt.negativePromptHint")}</p>
     </div>
   );
 }
@@ -128,6 +129,7 @@ function NegativePromptReference({ text }: { text: string }) {
  * (duplicate) is not a remix and was never affected by that removal.
  */
 export function CreatePromptForm() {
+  const { t } = useTranslation();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useAuth();
@@ -270,7 +272,7 @@ export function CreatePromptForm() {
     }
     if (duplicateSource) {
       setContentType(duplicateSource.contentType);
-      setTitle(`${duplicateSource.title} (kopya)`);
+      setTitle(`${duplicateSource.title} ${t("common.copySuffix")}`);
       setDescription(duplicateSource.description);
       setPromptText(duplicateSource.promptText);
       setTool(duplicateSource.tool ?? "");
@@ -346,7 +348,7 @@ export function CreatePromptForm() {
       setImageFile(file);
       setImageError(null);
     } catch {
-      setImageError("Görsel yüklenemedi, lütfen başka bir dosya dene.");
+      setImageError(t("prompt.imageUploadFailed"));
     }
   }
 
@@ -376,7 +378,7 @@ export function CreatePromptForm() {
             url: uploadedImage?.url ?? existingMedia?.url ?? placeholderArt(title || "yeni-prompt", 900, 1100),
             width: uploadedImage?.width ?? existingMedia?.width ?? 900,
             height: uploadedImage?.height ?? existingMedia?.height ?? 1100,
-            alt: title || "Önizleme görseli",
+            alt: title || t("prompt.previewImageAlt"),
           },
         ]
       : [];
@@ -441,7 +443,7 @@ export function CreatePromptForm() {
       }
       router.push(promptHref(published));
     } catch (err) {
-      setPublishError(err instanceof Error ? err.message : "Yayınlanamadı, lütfen tekrar dene.");
+      setPublishError(err instanceof Error ? err.message : t("prompt.publishFailed"));
       setIsSubmitting(false);
     }
   }
@@ -451,7 +453,7 @@ export function CreatePromptForm() {
     author: ownProfile ?? {
       id: "preview",
       username: "sen",
-      displayName: "Sen",
+      displayName: t("prompt.previewAuthorName"),
       avatarUrl: null,
       coverUrl: null,
       bio: null,
@@ -460,9 +462,9 @@ export function CreatePromptForm() {
       followingCount: 0,
       createdAt: new Date().toISOString(),
     },
-    title: title || "Başlıksız prompt",
-    description: description || "Açıklama eklenmedi.",
-    promptText: promptText || "Prompt metni buraya gelecek.",
+    title: title || t("prompt.untitledPrompt"),
+    description: description || t("prompt.noDescriptionAdded"),
+    promptText: promptText || t("prompt.promptTextPlaceholderPreview"),
     tool: tool || null,
     contentType,
     media,
@@ -480,27 +482,23 @@ export function CreatePromptForm() {
   };
 
   if (!user) {
-    return (
-      <LoginGate message="Bir prompt yayınlamak, düzenlemek (ya da bir kopya/yanıt oluşturmak) için önce giriş yapmalısın." />
-    );
+    return <LoginGate message={t("prompt.loginToCreateMessage")} />;
   }
 
   if (!sourceChecked) {
-    return <div className="mx-auto max-w-lg px-4 py-16 text-center text-sm text-text-muted">Yükleniyor…</div>;
+    return <div className="mx-auto max-w-lg px-4 py-16 text-center text-sm text-text-muted">{t("common.loading")}</div>;
   }
 
   if (editForbidden) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
-        <h1 className="mb-2 text-h2 font-semibold text-text">Bu promptu düzenleme yetkin yok</h1>
-        <p className="mb-4 text-sm text-text-muted">
-          Bir promptu yalnızca kendi sahibi düzenleyebilir.
-        </p>
+        <h1 className="mb-2 text-h2 font-semibold text-text">{t("prompt.noEditPermissionTitle")}</h1>
+        <p className="mb-4 text-sm text-text-muted">{t("prompt.noEditPermissionBody")}</p>
         <Link
           href="/discover"
           className="inline-flex h-9 items-center rounded-md border border-border px-4 text-sm font-medium text-text hover:bg-accent-surface"
         >
-          Keşfet&apos;e Dön
+          {t("common.backToDiscover")}
         </Link>
       </div>
     );
@@ -510,22 +508,28 @@ export function CreatePromptForm() {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
         <h1 className="mb-2 text-h2 font-semibold text-text">
-          {isEditMode ? "Prompt bulunamadı" : isAnswerMode ? "İstek bulunamadı" : isGeneratorRunMode ? "Kayıt bulunamadı" : "Prompt bulunamadı"}
+          {isEditMode
+            ? t("prompt.promptNotFound")
+            : isAnswerMode
+              ? t("request.requestNotFound")
+              : isGeneratorRunMode
+                ? t("generator.runNotFound")
+                : t("prompt.promptNotFound")}
         </h1>
         <p className="mb-4 text-sm text-text-muted">
           {isEditMode
-            ? "Düzenlemek istediğin prompt silinmiş veya artık erişilebilir değil."
+            ? t("prompt.editSourceGoneBody")
             : isAnswerMode
-              ? "Yanıtlamak istediğin istek silinmiş veya artık erişilebilir değil."
+              ? t("request.answerSourceGoneBody")
               : isGeneratorRunMode
-                ? "Bu generator kaydı bulunamadı — yalnızca kendi oluşturduğun bir kaydı buradan açabilirsin."
-                : "Kaynak prompt silinmiş veya artık erişilebilir değil."}
+                ? t("generator.runNotFoundBody")
+                : t("prompt.duplicateSourceGoneBody")}
         </p>
         <Link
           href={isAnswerMode ? "/requests" : isGeneratorRunMode ? "/generators" : "/discover"}
           className="inline-flex h-9 items-center rounded-md border border-border px-4 text-sm font-medium text-text hover:bg-accent-surface"
         >
-          {isAnswerMode ? "Prompt İsteklerine Dön" : isGeneratorRunMode ? "Generatorlara Dön" : "Keşfet'e Dön"}
+          {isAnswerMode ? t("common.backToRequests") : isGeneratorRunMode ? t("common.backToGenerators") : t("common.backToDiscover")}
         </Link>
       </div>
     );
@@ -534,15 +538,13 @@ export function CreatePromptForm() {
   if (isRequestDeleted && answeredRequest) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
-        <h1 className="mb-2 text-h2 font-semibold text-text">Bu istek silindi</h1>
-        <p className="mb-4 text-sm text-text-muted">
-          Yazarı bu isteği sildi, artık yeni yanıt kabul edilmiyor.
-        </p>
+        <h1 className="mb-2 text-h2 font-semibold text-text">{t("request.thisRequestDeletedTitle")}</h1>
+        <p className="mb-4 text-sm text-text-muted">{t("request.requestDeletedNoNewReplies")}</p>
         <Link
           href="/requests"
           className="inline-flex h-9 items-center rounded-md border border-border px-4 text-sm font-medium text-text hover:bg-accent-surface"
         >
-          Prompt İsteklerine Dön
+          {t("common.backToRequests")}
         </Link>
       </div>
     );
@@ -551,15 +553,13 @@ export function CreatePromptForm() {
   if (isRequestClosed && answeredRequest) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
-        <h1 className="mb-2 text-h2 font-semibold text-text">Bu istek kapandı</h1>
-        <p className="mb-4 text-sm text-text-muted">
-          Bu istek kapandı, artık yeni yanıt kabul edilmiyor.
-        </p>
+        <h1 className="mb-2 text-h2 font-semibold text-text">{t("request.thisRequestClosedTitle")}</h1>
+        <p className="mb-4 text-sm text-text-muted">{t("request.requestClosedNoNewReplies")}</p>
         <Link
           href={requestHref(answeredRequest)}
           className="inline-flex h-9 items-center rounded-md border border-border px-4 text-sm font-medium text-text hover:bg-accent-surface"
         >
-          İsteği Görüntüle
+          {t("request.viewRequest")}
         </Link>
       </div>
     );
@@ -569,23 +569,23 @@ export function CreatePromptForm() {
     <div className="mx-auto max-w-5xl px-3 py-5 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
       <h1 className="mb-1 text-h1 font-semibold text-text">
         {isEditMode
-          ? "Promptu Düzenle"
+          ? t("prompt.editPromptTitle")
           : isAnswerMode
-            ? "İsteğe Yanıt Ver"
+            ? t("prompt.answerRequestTitle")
             : isDuplicateMode
-              ? "Kopyasını Oluştur"
+              ? t("prompt.duplicateTitle")
               : isGeneratorRunMode
-                ? "Prompt Olarak Aç"
-                : "Prompt Oluştur"}
+                ? t("prompt.openAsPromptTitle")
+                : t("prompt.createPromptTitle")}
       </h1>
       <p className="mb-6 text-sm text-text-muted">
         {isEditMode
-          ? "Değişikliklerini yaz, sağda anında önizlemesini gör. Kaydet'e bastığında gerçekten, kalıcı olarak güncellenir."
+          ? t("prompt.editPromptHint")
           : isAnswerMode
-            ? "Yanıtını yaz, sağda anında önizlemesini gör. Yayınladığında gerçekten, kalıcı olarak Supabase'e yayınlanır ve istek sahibine görünür olur."
+            ? t("prompt.answerRequestHint")
             : isGeneratorRunMode
-              ? "Generatorun ürettiği prompt metni dolduruldu — başlık/açıklama ekleyip dilediğin gibi düzenleyebilirsin. Paylaş'a bastığında gerçekten, kalıcı olarak yayınlanır."
-              : "Promptunu yaz, sağda anında önizlemesini gör. Paylaş'a bastığında gerçekten, kalıcı olarak yayınlanır."}
+              ? t("prompt.generatorRunHint")
+              : t("prompt.createPromptHint")}
       </p>
 
       <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
@@ -593,10 +593,10 @@ export function CreatePromptForm() {
           {isAnswerMode && answeredRequest && (
             <div className="space-y-2 rounded-md border border-primary/30 bg-primary/5 p-3 text-sm">
               <div className="flex items-center justify-between gap-2">
-                <span className="font-medium text-primary">Bu isteğe yanıt veriyorsun</span>
+                <span className="font-medium text-primary">{t("prompt.answeringThisRequest")}</span>
                 <Link
                   href="/create"
-                  title="Yanıt modundan çık"
+                  title={t("prompt.exitAnswerMode")}
                   className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-text-muted hover:text-text"
                 >
                   <X size={14} />
@@ -610,23 +610,21 @@ export function CreatePromptForm() {
                 />
                 <span className="text-text-muted">
                   <span className="font-medium text-text">{answeredRequest.author.displayName}</span>{" "}
-                  isteği: &ldquo;{answeredRequest.title}&rdquo;
+                  {t("prompt.requestColon")} &ldquo;{answeredRequest.title}&rdquo;
                 </span>
               </div>
               <Link
                 href={requestHref(answeredRequest)}
                 className="inline-block font-medium text-primary underline"
               >
-                İsteği görüntüle
+                {t("request.viewRequest")}
               </Link>
             </div>
           )}
 
           {showsVisibilityChoice && (
             <div>
-              <label className="mb-2 block text-sm font-medium text-text">
-                Bu yanıt profilimde görünsün mü?
-              </label>
+              <label className="mb-2 block text-sm font-medium text-text">{t("prompt.showOnProfileQuestion")}</label>
               <div className="space-y-2">
                 <label
                   className={cn(
@@ -642,10 +640,8 @@ export function CreatePromptForm() {
                     className="mt-0.5"
                   />
                   <span>
-                    <span className="block font-medium text-text">Profilimde paylaş</span>
-                    <span className="block text-xs text-text-muted">
-                      Yanıtın istek sahibine gösterilir ve profilinde de normal gönderilerin gibi görünür.
-                    </span>
+                    <span className="block font-medium text-text">{t("prompt.shareOnProfile")}</span>
+                    <span className="block text-xs text-text-muted">{t("prompt.shareOnProfileHint")}</span>
                   </span>
                 </label>
                 <label
@@ -662,10 +658,8 @@ export function CreatePromptForm() {
                     className="mt-0.5"
                   />
                   <span>
-                    <span className="block font-medium text-text">Profilimde paylaşma</span>
-                    <span className="block text-xs text-text-muted">
-                      Yanıtın bu isteğin yanıtları arasında görünür. Profilinde ve normal gönderi akışında gösterilmez.
-                    </span>
+                    <span className="block font-medium text-text">{t("prompt.dontShareOnProfile")}</span>
+                    <span className="block text-xs text-text-muted">{t("prompt.dontShareOnProfileHint")}</span>
                   </span>
                 </label>
               </div>
@@ -679,8 +673,7 @@ export function CreatePromptForm() {
                 <Link href={promptHref(duplicateSource)} className="font-medium underline">
                   &ldquo;{duplicateSource.title}&rdquo;
                 </Link>{" "}
-                promptunun bir kopyası olarak dolduruldu — kendi yeni promptun olarak dilediğin
-                gibi düzenleyebilirsin.
+                {t("prompt.duplicatePrefillHint")}
               </p>
             </div>
           )}
@@ -694,27 +687,26 @@ export function CreatePromptForm() {
                     <Link href={generatorHref(sourceGenerator)} className="font-medium underline">
                       &ldquo;{sourceGenerator.title}&rdquo;
                     </Link>{" "}
-                    generatoruyla oluşturulan prompt metni dolduruldu
+                    {t("prompt.generatorRunPrefillWithSource")}
                   </>
                 ) : (
-                  "Bir generatorla oluşturulan prompt metni dolduruldu"
+                  t("prompt.generatorRunPrefillNoSource")
                 )}{" "}
-                — başlık/açıklama ekleyip dilediğin gibi düzenleyebilirsin, hangi generatorla oluşturulduğu
-                bağlantısı korunuyor.
+                {t("prompt.generatorRunPrefillHint")}
               </p>
             </div>
           )}
 
           <div>
-            <label className="mb-2 block text-sm font-medium text-text">İçerik Türü</label>
+            <label className="mb-2 block text-sm font-medium text-text">{t("prompt.contentTypeLabel")}</label>
             {isEditMode ? (
               <div className="flex items-center gap-1.5 text-sm text-text-muted">
                 {(() => {
                   const Icon = CONTENT_TYPE_META[contentType].icon;
                   return <Icon size={14} />;
                 })()}
-                {CONTENT_TYPE_META[contentType].label}
-                <span className="text-xs">(düzenlemede değiştirilemez)</span>
+                {t(CONTENT_TYPE_META[contentType].labelKey)}
+                <span className="text-xs">{t("prompt.notEditableWhileEditing")}</span>
               </div>
             ) : (
               <div className="flex flex-wrap gap-2">
@@ -734,7 +726,7 @@ export function CreatePromptForm() {
                       )}
                     >
                       <Icon size={14} />
-                      {meta.label}
+                      {t(meta.labelKey)}
                     </button>
                   );
                 })}
@@ -753,7 +745,7 @@ export function CreatePromptForm() {
           {contentType === "image" && (
             <div>
               <label className="mb-2 block text-sm font-medium text-text">
-                Görsel {isEditMode && <span className="text-text-muted">(opsiyonel)</span>}
+                {t("prompt.imageLabel")} {isEditMode && <span className="text-text-muted">({t("common.optional")})</span>}
               </label>
               <input
                 type="file"
@@ -762,9 +754,7 @@ export function CreatePromptForm() {
                 className="block w-full text-sm text-text-muted file:mr-3 file:rounded-md file:border-0 file:bg-accent-surface file:px-3 file:py-2 file:text-sm file:font-medium file:text-primary hover:file:bg-accent-surface/70"
               />
               <p className="mt-1 text-xs text-text-muted">
-                {isEditMode
-                  ? "Yeni bir dosya seçmezsen mevcut görsel değişmeden kalır."
-                  : "Yüklemezsen sağdaki önizlemede otomatik oluşturulan bir görsel kullanılır."}
+                {isEditMode ? t("prompt.imageEditHint") : t("prompt.imageUploadHint")}
               </p>
               {imageError && <p className="mt-1 text-xs text-danger">{imageError}</p>}
             </div>
@@ -772,7 +762,7 @@ export function CreatePromptForm() {
 
           <div>
             <label htmlFor="prompt-title" className="mb-1.5 block text-sm font-medium text-text">
-              Başlık
+              {t("forms.title")}
             </label>
             <input
               id="prompt-title"
@@ -781,14 +771,14 @@ export function CreatePromptForm() {
               maxLength={80}
               value={title}
               onChange={(event) => setTitle(event.target.value)}
-              placeholder="Örn. Ay ışığında bekleyen kitsune"
+              placeholder={t("prompt.titlePlaceholder")}
               className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted"
             />
           </div>
 
           <div>
             <label htmlFor="prompt-description" className="mb-1.5 block text-sm font-medium text-text">
-              Kısa Açıklama
+              {t("forms.shortDescription")}
             </label>
             <textarea
               id="prompt-description"
@@ -797,14 +787,14 @@ export function CreatePromptForm() {
               rows={2}
               value={description}
               onChange={(event) => setDescription(event.target.value)}
-              placeholder="Bu prompt ne üretiyor, bir cümleyle özetle."
+              placeholder={t("prompt.descriptionPlaceholder")}
               className="w-full resize-none rounded-md border border-border bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted"
             />
           </div>
 
           <div>
             <label htmlFor="prompt-text" className="mb-1.5 block text-sm font-medium text-text">
-              Prompt Metni
+              {t("prompt.promptTextHeading")}
             </label>
             <PromptTextEditor
               id="prompt-text"
@@ -813,7 +803,7 @@ export function CreatePromptForm() {
               variables={variables}
               onVariablesChange={setVariables}
               rows={5}
-              placeholder="Kullandığın tam prompt metnini buraya yaz. {ortam} gibi değişkenler tanımlayabilirsin."
+              placeholder={t("prompt.promptTextPlaceholder")}
             />
           </div>
 
@@ -823,7 +813,7 @@ export function CreatePromptForm() {
 
           <div>
             <label htmlFor="prompt-tool" className="mb-1.5 block text-sm font-medium text-text">
-              Araç / Model <span className="text-text-muted">(opsiyonel)</span>
+              {t("forms.toolModel")} <span className="text-text-muted">({t("common.optional")})</span>
             </label>
             <input
               id="prompt-tool"
@@ -831,7 +821,7 @@ export function CreatePromptForm() {
               type="text"
               value={tool}
               onChange={(event) => setTool(event.target.value)}
-              placeholder="Örn. Midjourney v6"
+              placeholder={t("forms.toolModelPlaceholder")}
               className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted"
             />
             <datalist id="tool-suggestions">
@@ -842,20 +832,20 @@ export function CreatePromptForm() {
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium text-text">Etiketler</label>
+            <label className="mb-2 block text-sm font-medium text-text">{t("forms.tags")}</label>
             <TagPicker picker={tagPicker} />
           </div>
 
           <Button type="submit" size="lg" className="w-full sm:w-auto" disabled={isSubmitting}>
             {isSubmitting
               ? isEditMode
-                ? "Kaydediliyor..."
-                : "Yayınlanıyor..."
+                ? t("common.saving")
+                : t("prompt.publishing")
               : isEditMode
-                ? "Kaydet"
+                ? t("common.save")
                 : isAnswerMode
-                  ? "Yanıtı Yayınla"
-                  : "Paylaş"}
+                  ? t("prompt.publishReply")
+                  : t("common.share")}
           </Button>
 
           {publishError && (
@@ -866,9 +856,7 @@ export function CreatePromptForm() {
         </form>
 
         <div className="lg:sticky lg:top-20 lg:self-start">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-muted">
-            Canlı Önizleme
-          </p>
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-muted">{t("forms.livePreview")}</p>
           <div className="pointer-events-none select-none">
             <PromptCard prompt={previewPrompt} />
           </div>

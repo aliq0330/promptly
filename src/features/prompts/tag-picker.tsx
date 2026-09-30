@@ -6,6 +6,7 @@ import { useTagCatalog } from "@/features/tags/use-tag-catalog";
 import { findExistingTagByLabel, getOrCreateTag } from "@/lib/supabase/tags";
 import { normalizeTagLabel } from "@/lib/tag-normalize";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n/language-provider";
 import type { UseTagPickerResult } from "./use-tag-picker";
 import type { Tag } from "@/types";
 
@@ -26,6 +27,7 @@ interface TagPickerProps {
  * normalized match exists (§9/§10).
  */
 export function TagPicker({ picker, disabled }: TagPickerProps) {
+  const { t } = useTranslation();
   const { catalog, refresh } = useTagCatalog();
   const [query, setQuery] = useState("");
   const [isCreating, setIsCreating] = useState(false);
@@ -54,7 +56,7 @@ export function TagPicker({ picker, disabled }: TagPickerProps) {
       refresh();
       setQuery("");
     } catch (err) {
-      setCreateError(err instanceof Error ? err.message : "Etiket oluşturulamadı, lütfen tekrar dene.");
+      setCreateError(err instanceof Error ? err.message : t("tagPicker.createFailed"));
     } finally {
       setIsCreating(false);
     }
@@ -81,18 +83,18 @@ export function TagPicker({ picker, disabled }: TagPickerProps) {
               )}
             >
               {source === "automatic" && (
-                <span title="Başlık ve prompt içeriğine göre otomatik önerildi." className="inline-flex shrink-0">
+                <span title={t("tagPicker.autoSuggestedTitle")} className="inline-flex shrink-0">
                   <Sparkles size={11} aria-hidden="true" />
-                  <span className="sr-only">Otomatik önerildi</span>
+                  <span className="sr-only">{t("tagPicker.autoSuggestedSr")}</span>
                 </span>
               )}
               <span>{tag.label}</span>
-              {source === "automatic" && <span className="text-[10px] font-normal opacity-80">· Otomatik</span>}
+              {source === "automatic" && <span className="text-[10px] font-normal opacity-80">· {t("tagPicker.automatic")}</span>}
               {!disabled && (
                 <button
                   type="button"
                   onClick={() => picker.removeAccepted(tag.slug)}
-                  aria-label={`${tag.label} etiketini kaldır`}
+                  aria-label={t("tagPicker.removeTagAriaLabel", { label: tag.label })}
                   className="ml-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full hover:bg-black/10"
                 >
                   <X size={11} />
@@ -103,11 +105,11 @@ export function TagPicker({ picker, disabled }: TagPickerProps) {
         </div>
       )}
 
-      {picker.isAnalyzing && <p className="text-xs text-text-muted">İçerik analiz ediliyor…</p>}
+      {picker.isAnalyzing && <p className="text-xs text-text-muted">{t("tagPicker.analyzing")}</p>}
 
       {!disabled && picker.suggested.length > 0 && (
         <div className="space-y-1.5">
-          <p className="text-xs text-text-muted">Ek öneriler</p>
+          <p className="text-xs text-text-muted">{t("tagPicker.moreSuggestions")}</p>
           <div className="flex flex-wrap gap-1.5">
             {picker.suggested.map((tag) => {
               const isAccepting = picker.acceptingSlug === tag.slug;
@@ -123,17 +125,17 @@ export function TagPicker({ picker, disabled }: TagPickerProps) {
                       if (tag.isCandidate) void promise.then(() => refresh());
                     }}
                     disabled={isAccepting}
-                    title={tag.isCandidate ? "Henüz gerçek bir etiket değil — seçersen gerçek, kalıcı bir etiket olarak oluşturulur." : undefined}
+                    title={tag.isCandidate ? t("tagPicker.candidateHint") : undefined}
                     className="inline-flex items-center gap-1 rounded-full border border-dashed border-border px-2.5 py-1 text-xs font-medium text-text-muted transition-colors hover:border-primary hover:text-primary disabled:opacity-60"
                   >
                     <Plus size={11} />
                     {tag.label}
-                    {isAccepting && <span className="text-[10px] font-normal">Oluşturuluyor…</span>}
+                    {isAccepting && <span className="text-[10px] font-normal">{t("tagPicker.creating")}</span>}
                   </button>
                   <button
                     type="button"
                     onClick={() => picker.dismissSuggested(tag.slug)}
-                    aria-label={`${tag.label} önerisini gizle`}
+                    aria-label={t("tagPicker.dismissSuggestionAriaLabel", { label: tag.label })}
                     className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-text-muted hover:bg-accent-surface hover:text-text"
                   >
                     <X size={10} />
@@ -155,7 +157,7 @@ export function TagPicker({ picker, disabled }: TagPickerProps) {
               setQuery(event.target.value);
               setCreateError(null);
             }}
-            placeholder="Etiket ara veya oluştur..."
+            placeholder={t("tagPicker.searchOrCreatePlaceholder")}
             className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted"
           />
           {normalizedQuery && (
@@ -169,7 +171,7 @@ export function TagPicker({ picker, disabled }: TagPickerProps) {
                 >
                   <span>{tag.label}</span>
                   {typeof tag.usageCount === "number" && (
-                    <span className="shrink-0 text-xs text-text-muted">{tag.usageCount} kullanım</span>
+                    <span className="shrink-0 text-xs text-text-muted">{t("tagPicker.usageCount", { count: tag.usageCount })}</span>
                   )}
                 </button>
               ))}
@@ -181,11 +183,11 @@ export function TagPicker({ picker, disabled }: TagPickerProps) {
                   className="flex w-full items-center gap-1.5 border-t border-border px-3 py-2 text-left text-sm font-medium text-primary hover:bg-accent-surface disabled:opacity-60"
                 >
                   <Plus size={13} />
-                  {isCreating ? "Oluşturuluyor…" : `"${query.trim()}" etiketini oluştur`}
+                  {isCreating ? t("tagPicker.creating") : t("tagPicker.createTagAction", { label: query.trim() })}
                 </button>
               )}
               {matches.length === 0 && !canCreateNew && (
-                <p className="px-3 py-2 text-sm text-text-muted">Eşleşme bulunamadı.</p>
+                <p className="px-3 py-2 text-sm text-text-muted">{t("tagPicker.noMatch")}</p>
               )}
             </div>
           )}
@@ -194,7 +196,7 @@ export function TagPicker({ picker, disabled }: TagPickerProps) {
       )}
 
       <p className="text-xs text-text-muted">
-        Etiketler başlık ve prompt içeriğine göre otomatik önerilir. İstediğin gibi değiştirebilirsin.
+        {t("tagPicker.autoHint")}
       </p>
     </div>
   );

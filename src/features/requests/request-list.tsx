@@ -1,11 +1,22 @@
+"use client";
+
 import { Sparkles } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
+import { useTranslation } from "@/lib/i18n/language-provider";
 import { RequestCard } from "./request-card";
 import type { PromptRequest } from "@/types";
 
 export function RequestList({ requests }: { requests: PromptRequest[] }) {
+  const { t } = useTranslation();
   if (requests.length === 0) {
-    return <EmptyState icon={Sparkles} title="Henüz gösterilecek istek yok." description="Bir prompta ihtiyacın varsa ilk isteği sen oluştur." action={{ label: "İstek oluştur", href: "/requests/new" }} />;
+    return (
+      <EmptyState
+        icon={Sparkles}
+        title={t("request.emptyListTitle")}
+        description={t("request.emptyListBody")}
+        action={{ label: t("create.requestTitle"), href: "/requests/new" }}
+      />
+    );
   }
 
   return (

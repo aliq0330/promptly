@@ -7,23 +7,25 @@ import { Modal } from "@/components/ui/modal";
 import { cn, resizeImageToDataUrlFit } from "@/lib/utils";
 import { makeFieldKeyFromLabel, isConditionSatisfiable, slugifyGeneratorTitle } from "@/lib/generator-template";
 import { buildFieldOutputPreview, collectJsonPathGroups, isValidJsonPath, parseJsonPath } from "@/lib/generator-output";
+import { useTranslation } from "@/lib/i18n/language-provider";
+import type { TranslationKey } from "@/lib/i18n/translations";
 import type { GeneratorField, GeneratorFieldType } from "@/types";
 
 /** Sentinel `imageUploadTarget` value meaning "the image being picked belongs to the not-yet-added option row", not an existing one. */
 const NEW_OPTION_IMAGE_TARGET = "__new_option__";
 
-const FIELD_TYPE_LABELS: Record<GeneratorFieldType, string> = {
-  text: "Kısa Metin",
-  textarea: "Uzun Metin",
-  select: "Seçim Listesi",
-  multi_select: "Çoklu Seçim",
-  number: "Sayı",
-  slider: "Kaydırıcı",
-  color: "Renk",
-  checkbox: "Onay Kutusu",
-  toggle: "Açma/Kapama",
-  radio: "Tekli Seçim (Radio)",
-  url: "Bağlantı (URL)",
+const FIELD_TYPE_LABEL_KEYS: Record<GeneratorFieldType, TranslationKey> = {
+  text: "fieldTypeFull.text",
+  textarea: "fieldTypeFull.textarea",
+  select: "fieldTypeFull.select",
+  multi_select: "fieldTypeFull.multiSelect",
+  number: "fieldTypeFull.number",
+  slider: "fieldTypeFull.slider",
+  color: "fieldTypeFull.color",
+  checkbox: "fieldTypeFull.checkbox",
+  toggle: "fieldTypeFull.toggle",
+  radio: "fieldTypeFull.radio",
+  url: "fieldTypeFull.url",
 };
 
 const OPTION_TYPES: GeneratorFieldType[] = ["select", "multi_select", "radio"];
@@ -85,6 +87,7 @@ export function FieldEditorModal({
   onSave: (field: GeneratorField) => void;
   onDelete?: () => void;
 }) {
+  const { t } = useTranslation();
   const existingKeys = allFields.filter((f) => f.id !== initial?.id).map((f) => f.key);
   const [draft, setDraft] = useState<GeneratorField>(() => initial ?? emptyField(existingKeys));
   const [keyTouched, setKeyTouched] = useState(!isNew);
@@ -132,7 +135,7 @@ export function FieldEditorModal({
       if (target === NEW_OPTION_IMAGE_TARGET) setNewOptionImage(url);
       else updateOptionImage(target, url);
     } catch {
-      setImageUploadError("Görsel yüklenemedi, lütfen farklı bir dosya dene.");
+      setImageUploadError(t("field.editorImageUploadFailed"));
     } finally {
       setImageUploadBusy(false);
       setImageUploadTarget(null);
@@ -140,18 +143,18 @@ export function FieldEditorModal({
   }
 
   const keyError = !draft.key.trim()
-    ? "Değişken adı boş olamaz."
+    ? t("field.variableNameEmptyError")
     : !/^[a-z0-9_]+$/.test(draft.key)
-      ? "Değişken adı yalnızca küçük harf, rakam ve alt çizgi (_) içerebilir."
+      ? t("field.variableNameInvalidChars")
       : existingKeys.includes(draft.key)
-        ? "Bu değişken adı zaten kullanılıyor."
+        ? t("field.variableNameTaken")
         : null;
-  const labelError = draft.label.trim().length === 0 ? "Alan adı boş olamaz." : null;
-  const optionsError = OPTION_TYPES.includes(draft.type) && draft.options.length === 0 ? "En az bir seçenek eklemelisin." : null;
+  const labelError = draft.label.trim().length === 0 ? t("field.nameEmptyError") : null;
+  const optionsError = OPTION_TYPES.includes(draft.type) && draft.options.length === 0 ? t("field.needsAtLeastOneOption") : null;
   const jsonPathError = !draft.jsonPath.trim()
-    ? "JSON yolu boş olamaz."
+    ? t("field.jsonPathEmptyError")
     : !isValidJsonPath(draft.jsonPath)
-      ? "JSON yolu yalnızca harf, rakam, alt çizgi ve nokta içerebilir (örn. subject.eye_color)."
+      ? t("field.jsonPathInvalidError")
       : null;
 
   const otherFields = allFields.filter((f) => f.id !== draft.id);
@@ -251,9 +254,9 @@ export function FieldEditorModal({
       >
         <div className="mb-4 flex items-center justify-between">
           <h2 id="field-editor-title" className="text-base font-semibold text-text">
-            {isNew ? "Alan Oluştur" : "Alanı Düzenle"}
+            {isNew ? t("field.createTitle") : t("field.editTitle")}
           </h2>
-          <button type="button" onClick={onClose} aria-label="Kapat" className="rounded-md p-1 text-text-muted hover:bg-accent-surface hover:text-text">
+          <button type="button" onClick={onClose} aria-label={t("common.close")} className="rounded-md p-1 text-text-muted hover:bg-accent-surface hover:text-text">
             <X size={18} />
           </button>
         </div>
@@ -261,7 +264,7 @@ export function FieldEditorModal({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="field-label" className="mb-1.5 block text-sm font-medium text-text">
-              Alan adı
+              {t("field.fieldName")}
             </label>
             <input
               id="field-label"
@@ -269,7 +272,7 @@ export function FieldEditorModal({
               autoFocus
               value={draft.label}
               onChange={(event) => updateLabel(event.target.value)}
-              placeholder="Örn. Göz rengi"
+              placeholder={t("field.fieldNamePlaceholder")}
               className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted"
             />
             {labelError && <p className="mt-1 text-xs text-danger">{labelError}</p>}
@@ -277,21 +280,21 @@ export function FieldEditorModal({
 
           <div>
             <label htmlFor="field-description" className="mb-1.5 block text-sm font-medium text-text">
-              Açıklama <span className="text-text-muted">(opsiyonel)</span>
+              {t("variable.descriptionLabel")} <span className="text-text-muted">({t("common.optional")})</span>
             </label>
             <textarea
               id="field-description"
               rows={2}
               value={draft.description}
               onChange={(event) => setDraft((prev) => ({ ...prev, description: event.target.value }))}
-              placeholder="Bu alan ne belirler?"
+              placeholder={t("field.descriptionPlaceholder")}
               className="w-full resize-none rounded-md border border-border bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted"
             />
           </div>
 
           <div>
             <label htmlFor="field-type" className="mb-1.5 block text-sm font-medium text-text">
-              Field Type
+              {t("field.fieldTypeLabel")}
             </label>
             <select
               id="field-type"
@@ -299,9 +302,9 @@ export function FieldEditorModal({
               onChange={(event) => updateType(event.target.value as GeneratorFieldType)}
               className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-text"
             >
-              {(Object.keys(FIELD_TYPE_LABELS) as GeneratorFieldType[]).map((type) => (
+              {(Object.keys(FIELD_TYPE_LABEL_KEYS) as GeneratorFieldType[]).map((type) => (
                 <option key={type} value={type}>
-                  {FIELD_TYPE_LABELS[type]}
+                  {t(FIELD_TYPE_LABEL_KEYS[type])}
                 </option>
               ))}
             </select>
@@ -309,7 +312,7 @@ export function FieldEditorModal({
 
           <div>
             <label htmlFor="field-key" className="mb-1.5 block text-sm font-medium text-text">
-              Variable
+              {t("field.variableLabel")}
             </label>
             <input
               id="field-key"
@@ -327,7 +330,7 @@ export function FieldEditorModal({
 
           {OPTION_TYPES.includes(draft.type) && (
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-text">Options</label>
+              <label className="mb-1.5 block text-sm font-medium text-text">{t("field.optionsLabel")}</label>
               {/* Single hidden file input shared by every "Görsel ekle/değiştir" trigger below — `imageUploadTarget` says which option (or the pending new-option row, via NEW_OPTION_IMAGE_TARGET) the next chosen file belongs to. */}
               <input ref={imageInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageFileChosen} />
               <div className="mb-2 space-y-1.5">
@@ -340,8 +343,8 @@ export function FieldEditorModal({
                         <button
                           type="button"
                           onClick={() => updateOptionImage(option.value, undefined)}
-                          title="Görseli kaldır"
-                          aria-label="Görseli kaldır"
+                          title={t("field.removeImage")}
+                          aria-label={t("field.removeImage")}
                           className="absolute -right-1 -top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-danger text-white"
                         >
                           <X size={8} />
@@ -352,8 +355,8 @@ export function FieldEditorModal({
                         type="color"
                         value={option.color}
                         onChange={(event) => updateOptionColor(option.value, event.target.value)}
-                        title="Rengi değiştir"
-                        aria-label="Rengi değiştir"
+                        title={t("field.changeColor")}
+                        aria-label={t("field.changeColor")}
                         className="h-6 w-6 shrink-0 cursor-pointer rounded border border-border bg-background p-0"
                       />
                     ) : null}
@@ -362,8 +365,8 @@ export function FieldEditorModal({
                     <button
                       type="button"
                       onClick={() => openImagePicker(option.value)}
-                      title={option.image ? "Görseli değiştir" : "Görsel ekle"}
-                      aria-label={option.image ? "Görseli değiştir" : "Görsel ekle"}
+                      title={option.image ? t("field.changeImage") : t("field.addImage")}
+                      aria-label={option.image ? t("field.changeImage") : t("field.addImage")}
                       className="shrink-0 text-text-muted hover:text-primary"
                     >
                       <ImagePlus size={14} />
@@ -372,14 +375,14 @@ export function FieldEditorModal({
                       <button
                         type="button"
                         onClick={() => updateOptionColor(option.value, undefined)}
-                        title="Rengi kaldır"
-                        aria-label="Rengi kaldır"
+                        title={t("field.removeColor")}
+                        aria-label={t("field.removeColor")}
                         className="shrink-0 text-text-muted hover:text-danger"
                       >
                         <X size={12} />
                       </button>
                     )}
-                    <button type="button" onClick={() => removeOption(option.value)} title="Seçeneği sil" aria-label="Seçeneği sil" className="shrink-0 text-text-muted hover:text-danger">
+                    <button type="button" onClick={() => removeOption(option.value)} title={t("field.deleteOption")} aria-label={t("field.deleteOption")} className="shrink-0 text-text-muted hover:text-danger">
                       <X size={14} />
                     </button>
                   </div>
@@ -399,7 +402,7 @@ export function FieldEditorModal({
                       addOption();
                     }
                   }}
-                  placeholder="Etiket (ör. Yeşil)"
+                  placeholder={t("field.optionLabelPlaceholder")}
                   className="h-9 flex-1 rounded-md border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted"
                 />
                 <input
@@ -415,14 +418,14 @@ export function FieldEditorModal({
                       addOption();
                     }
                   }}
-                  placeholder="Değer (ör. green)"
+                  placeholder={t("field.optionValuePlaceholder")}
                   className="h-9 w-28 shrink-0 rounded-md border border-border bg-background px-2 font-mono text-xs text-text placeholder:text-text-muted"
                 />
                 <button
                   type="button"
                   onClick={() => (newOptionImage ? setNewOptionImage(null) : openImagePicker(NEW_OPTION_IMAGE_TARGET))}
-                  title={newOptionImage ? "Görseli kaldır" : "Görsel yükle"}
-                  aria-label={newOptionImage ? "Görseli kaldır" : "Görsel yükle"}
+                  title={newOptionImage ? t("field.removeImage") : t("field.uploadImage")}
+                  aria-label={newOptionImage ? t("field.removeImage") : t("field.uploadImage")}
                   className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-md border", newOptionImage ? "border-primary" : "border-border text-text-muted hover:text-primary")}
                 >
                   {newOptionImage ? (
@@ -433,10 +436,10 @@ export function FieldEditorModal({
                   )}
                 </button>
                 <Button type="button" variant="outline" size="sm" onClick={addOption}>
-                  <Plus size={14} /> Option
+                  <Plus size={14} /> {t("field.optionButton")}
                 </Button>
               </div>
-              {imageUploadBusy && <p className="mt-1 text-xs text-text-muted">Görsel yükleniyor…</p>}
+              {imageUploadBusy && <p className="mt-1 text-xs text-text-muted">{t("field.imageUploading")}</p>}
               {imageUploadError && <p className="mt-1 text-xs text-danger">{imageUploadError}</p>}
               {optionsError && <p className="mt-1 text-xs text-danger">{optionsError}</p>}
             </div>
@@ -445,13 +448,13 @@ export function FieldEditorModal({
           <DefaultValueField draft={draft} onChange={(defaultValue) => setDraft((prev) => ({ ...prev, defaultValue }))} />
 
           <div className="rounded-md border border-border p-3">
-            <p className="mb-0.5 text-sm font-medium text-text">Çıktı Eşleme (Output Mapping)</p>
-            <p className="mb-3 text-xs text-text-muted">Bu alanın gerçek değeri, generatorun yapılandırılmış JSON çıktısında nereye yazılsın?</p>
+            <p className="mb-0.5 text-sm font-medium text-text">{t("field.outputMappingTitle")}</p>
+            <p className="mb-3 text-xs text-text-muted">{t("field.outputMappingHint")}</p>
 
             <div className="mb-3 grid grid-cols-2 gap-2">
               <div>
                 <label htmlFor="field-path-group" className="mb-1 block text-xs text-text-muted">
-                  Çıktı Grubu <span className="text-text-muted">(opsiyonel)</span>
+                  {t("field.outputGroup")} <span className="text-text-muted">({t("common.optional")})</span>
                 </label>
                 <input
                   id="field-path-group"
@@ -459,7 +462,7 @@ export function FieldEditorModal({
                   list="field-path-group-suggestions"
                   value={pathGroup}
                   onChange={(event) => updatePathGroup(event.target.value)}
-                  placeholder="ör. subject"
+                  placeholder={t("field.outputGroupPlaceholder")}
                   className="h-9 w-full rounded-md border border-border bg-background px-2 font-mono text-xs text-text placeholder:text-text-muted"
                 />
                 <datalist id="field-path-group-suggestions">
@@ -470,7 +473,7 @@ export function FieldEditorModal({
               </div>
               <div>
                 <label htmlFor="field-path-property" className="mb-1 block text-xs text-text-muted">
-                  Özellik Adı
+                  {t("field.propertyName")}
                 </label>
                 <input
                   id="field-path-property"
@@ -478,7 +481,7 @@ export function FieldEditorModal({
                   list="field-path-property-suggestions"
                   value={pathProperty}
                   onChange={(event) => updatePathProperty(event.target.value)}
-                  placeholder="ör. eye_color"
+                  placeholder={t("field.propertyNamePlaceholder")}
                   className="h-9 w-full rounded-md border border-border bg-background px-2 font-mono text-xs text-text placeholder:text-text-muted"
                 />
                 <datalist id="field-path-property-suggestions">
@@ -491,7 +494,7 @@ export function FieldEditorModal({
 
             <div className="mb-3">
               <label htmlFor="field-json-path" className="mb-1 block text-xs text-text-muted">
-                JSON Path <span className="text-text-muted">(elle de düzenleyebilirsin)</span>
+                JSON Path <span className="text-text-muted">({t("field.jsonPathManualHint")})</span>
               </label>
               <input
                 id="field-json-path"
@@ -504,7 +507,7 @@ export function FieldEditorModal({
             </div>
 
             <div>
-              <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-text-muted">Çıktı Önizlemesi</p>
+              <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-text-muted">{t("field.outputPreview")}</p>
               <pre className="max-h-32 overflow-auto rounded-md border border-border bg-background p-2 font-mono text-xs text-text">
                 {jsonPathError ? "—" : JSON.stringify(buildFieldOutputPreview(draft), null, 2)}
               </pre>
@@ -517,8 +520,8 @@ export function FieldEditorModal({
               onClick={() => setShowAdvanced((prev) => !prev)}
               className="flex w-full items-center justify-between px-3 py-2 text-left text-sm font-medium text-text"
             >
-              Advanced
-              <span className="text-xs text-text-muted">{showAdvanced ? "Gizle" : "Göster"}</span>
+              {t("field.advanced")}
+              <span className="text-xs text-text-muted">{showAdvanced ? t("vision.hide") : t("vision.show")}</span>
             </button>
             {showAdvanced && (
               <div className="space-y-3 border-t border-border p-3">
@@ -528,13 +531,13 @@ export function FieldEditorModal({
                     checked={draft.required}
                     onChange={(event) => setDraft((prev) => ({ ...prev, required: event.target.checked }))}
                   />
-                  Required
+                  {t("field.required2")}
                 </label>
 
                 {!OPTION_TYPES.includes(draft.type) && draft.type !== "checkbox" && draft.type !== "toggle" && (
                   <div>
                     <label htmlFor="field-placeholder" className="mb-1 block text-xs text-text-muted">
-                      Placeholder
+                      {t("field.placeholder")}
                     </label>
                     <input
                       id="field-placeholder"
@@ -549,7 +552,7 @@ export function FieldEditorModal({
                 {RANGE_TYPES.includes(draft.type) && (
                   <div className="grid grid-cols-3 gap-2">
                     <div>
-                      <label className="mb-1 block text-xs text-text-muted">Minimum</label>
+                      <label className="mb-1 block text-xs text-text-muted">{t("field.minimum")}</label>
                       <input
                         type="number"
                         value={draft.min ?? ""}
@@ -558,7 +561,7 @@ export function FieldEditorModal({
                       />
                     </div>
                     <div>
-                      <label className="mb-1 block text-xs text-text-muted">Maximum</label>
+                      <label className="mb-1 block text-xs text-text-muted">{t("field.maximum")}</label>
                       <input
                         type="number"
                         value={draft.max ?? ""}
@@ -567,7 +570,7 @@ export function FieldEditorModal({
                       />
                     </div>
                     <div>
-                      <label className="mb-1 block text-xs text-text-muted">Step</label>
+                      <label className="mb-1 block text-xs text-text-muted">{t("field.step")}</label>
                       <input
                         type="number"
                         value={draft.step ?? ""}
@@ -580,7 +583,7 @@ export function FieldEditorModal({
 
                 <div>
                   <label htmlFor="field-condition-source" className="mb-1 block text-xs text-text-muted">
-                    Görünürlük (§34 — koşullu alan)
+                    {t("field.visibilityConditionalLabel")}
                   </label>
                   <div className="flex gap-2">
                     <select
@@ -597,7 +600,7 @@ export function FieldEditorModal({
                       }}
                       className="h-9 flex-1 rounded-md border border-border bg-background px-2 text-sm text-text"
                     >
-                      <option value="">Her zaman görünür</option>
+                      <option value="">{t("field.alwaysVisible")}</option>
                       {conditionSources.map((source) => (
                         <option key={source.id} value={source.key}>
                           {source.label} =
@@ -619,7 +622,7 @@ export function FieldEditorModal({
                     )}
                   </div>
                   {draft.condition && !isConditionSatisfiable(draft.condition, allFields) && (
-                    <p className="mt-1 text-xs text-danger">Seçilen koşul kaynağı artık geçerli değil.</p>
+                    <p className="mt-1 text-xs text-danger">{t("field.conditionSourceGoneError")}</p>
                   )}
                 </div>
               </div>
@@ -640,15 +643,15 @@ export function FieldEditorModal({
                   }}
                   className={cn("text-sm font-medium", confirmDelete ? "text-danger" : "text-text-muted hover:text-danger")}
                 >
-                  {confirmDelete ? "Emin misin? Tekrar tıkla" : "Sil"}
+                  {confirmDelete ? t("common.confirmDelete") : t("common.delete")}
                 </button>
               )}
             </div>
             <div className="flex gap-2">
               <Button type="button" variant="ghost" onClick={onClose}>
-                Cancel
+                {t("common.cancel")}
               </Button>
-              <Button type="submit">{isNew ? "Add Field" : "Kaydet"}</Button>
+              <Button type="submit">{isNew ? t("field.addFieldSubmit") : t("common.save")}</Button>
             </div>
           </div>
         </form>
@@ -658,14 +661,15 @@ export function FieldEditorModal({
 }
 
 function DefaultValueField({ draft, onChange }: { draft: GeneratorField; onChange: (value: string | string[]) => void }) {
+  const { t } = useTranslation();
   if (draft.type === "multi_select") {
     const selected = Array.isArray(draft.defaultValue) ? draft.defaultValue : [];
     return (
       <div>
-        <label className="mb-1.5 block text-sm font-medium text-text">Default value</label>
+        <label className="mb-1.5 block text-sm font-medium text-text">{t("field.defaultValueLabel")}</label>
         <div className="flex flex-wrap gap-2">
           {draft.options.length === 0 ? (
-            <p className="text-xs text-text-muted">Önce seçenek ekle.</p>
+            <p className="text-xs text-text-muted">{t("field.addOptionFirst")}</p>
           ) : (
             draft.options.map((option) => {
               const isOn = selected.includes(option.value);
@@ -694,10 +698,10 @@ function DefaultValueField({ draft, onChange }: { draft: GeneratorField; onChang
     return (
       <div>
         <label htmlFor="field-default" className="mb-1.5 block text-sm font-medium text-text">
-          Default value
+          {t("field.defaultValueLabel")}
         </label>
         <select id="field-default" value={value} onChange={(event) => onChange(event.target.value)} className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-text">
-          <option value="">Yok</option>
+          <option value="">{t("field.none")}</option>
           {draft.options.map((option) => (
             <option key={option.value} value={option.value}>
               {option.label}
@@ -712,7 +716,7 @@ function DefaultValueField({ draft, onChange }: { draft: GeneratorField; onChang
     return (
       <label className="flex cursor-pointer items-center gap-2 text-sm text-text">
         <input type="checkbox" checked={draft.defaultValue === "true"} onChange={(event) => onChange(String(event.target.checked))} />
-        Varsayılan olarak açık
+        {t("field.onByDefault")}
       </label>
     );
   }
@@ -721,7 +725,7 @@ function DefaultValueField({ draft, onChange }: { draft: GeneratorField; onChang
   return (
     <div>
       <label htmlFor="field-default" className="mb-1.5 block text-sm font-medium text-text">
-        Default value <span className="text-text-muted">(opsiyonel)</span>
+        {t("field.defaultValueLabel")} <span className="text-text-muted">({t("common.optional")})</span>
       </label>
       <input
         id="field-default"

@@ -5,6 +5,7 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { isValidVariableName, normalizeVariableName } from "@/lib/prompt-variables";
+import { useTranslation } from "@/lib/i18n/language-provider";
 import type { DraftVariable } from "./prompt-text-editor";
 
 /**
@@ -29,6 +30,7 @@ export function VariableEditorModal({
   onClose: () => void;
   onSubmit: (values: { name: string; defaultValue: string; description: string }) => void;
 }) {
+  const { t } = useTranslation();
   const [name, setName] = useState(editing.name);
   const [defaultValue, setDefaultValue] = useState(editing.defaultValue);
   const [description, setDescription] = useState(editing.description);
@@ -38,11 +40,11 @@ export function VariableEditorModal({
   const error = !touched
     ? null
     : normalizedName.length === 0
-      ? "Değişken adı boş bırakılamaz."
+      ? t("variable.nameEmptyError")
       : !isValidVariableName(normalizedName)
-        ? "Değişken adı süslü parantez veya boşluk içeremez, en fazla 40 karakter olmalı."
+        ? t("variable.nameInvalidError")
         : existingNames.includes(normalizedName.toLowerCase())
-          ? "Bu prompt içinde aynı isimde başka bir değişken zaten var."
+          ? t("variable.nameDuplicateError")
           : null;
 
   function handleSubmit(event: React.FormEvent) {
@@ -74,12 +76,12 @@ export function VariableEditorModal({
       >
         <div className="flex items-start justify-between gap-2">
           <h2 id="variable-editor-modal-title" className="text-base font-semibold text-text">
-            Değişkeni Düzenle
+            {t("variable.editTitle")}
           </h2>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Kapat"
+            aria-label={t("common.close")}
             className="rounded-md p-1 text-text-muted hover:bg-accent-surface hover:text-text"
           >
             <X size={18} />
@@ -89,7 +91,7 @@ export function VariableEditorModal({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="variable-name" className="mb-1.5 block text-sm font-medium text-text">
-              Değişken Adı
+              {t("variable.nameLabel")}
             </label>
             <input
               id="variable-name"
@@ -98,7 +100,7 @@ export function VariableEditorModal({
               value={name}
               onChange={(event) => setName(event.target.value)}
               onBlur={() => setTouched(true)}
-              placeholder="Örn. ortam"
+              placeholder={t("variable.namePlaceholder")}
               className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted"
             />
             {normalizedName && (
@@ -109,37 +111,37 @@ export function VariableEditorModal({
 
           <div>
             <label htmlFor="variable-default" className="mb-1.5 block text-sm font-medium text-text">
-              Varsayılan Değer <span className="text-text-muted">(opsiyonel)</span>
+              {t("variable.defaultValueLabel")} <span className="text-text-muted">({t("common.optional")})</span>
             </label>
             <input
               id="variable-default"
               type="text"
               value={defaultValue}
               onChange={(event) => setDefaultValue(event.target.value)}
-              placeholder="Örn. sisli orman"
+              placeholder={t("variable.defaultValuePlaceholder")}
               className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted"
             />
           </div>
 
           <div>
             <label htmlFor="variable-description" className="mb-1.5 block text-sm font-medium text-text">
-              Açıklama <span className="text-text-muted">(opsiyonel)</span>
+              {t("variable.descriptionLabel")} <span className="text-text-muted">({t("common.optional")})</span>
             </label>
             <textarea
               id="variable-description"
               rows={2}
               value={description}
               onChange={(event) => setDescription(event.target.value)}
-              placeholder="Örn. Sahnenin geçeceği ortamı belirt."
+              placeholder={t("variable.descriptionPlaceholder")}
               className="w-full resize-none rounded-md border border-border bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted"
             />
           </div>
 
           <div className="flex justify-end gap-2 pt-1">
             <Button type="button" variant="ghost" onClick={onClose}>
-              Vazgeç
+              {t("common.cancel")}
             </Button>
-            <Button type="submit">Kaydet</Button>
+            <Button type="submit">{t("common.save")}</Button>
           </div>
         </form>
       </div>

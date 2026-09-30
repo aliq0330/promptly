@@ -5,6 +5,7 @@ import { Blocks, PenLine, Sparkles } from "lucide-react";
 import { buttonClassName } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useOwnProfile } from "@/features/auth/own-profile-provider";
+import { useTranslation } from "@/lib/i18n/language-provider";
 
 /**
  * Top of the home page. Signed out: a compact explanation of what Promptly
@@ -14,6 +15,7 @@ import { useOwnProfile } from "@/features/auth/own-profile-provider";
 export function HomeIntro() {
   const { user, loading } = useAuth();
   const { profile } = useOwnProfile();
+  const { t } = useTranslation();
 
   if (loading) return <div className="h-[92px]" aria-hidden />;
 
@@ -22,9 +24,9 @@ export function HomeIntro() {
       <section className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-h2 font-semibold text-text">
-            Merhaba{profile ? `, ${profile.displayName.split(" ")[0]}` : ""}
+            {t("home.greeting")}{profile ? `, ${profile.displayName.split(" ")[0]}` : ""}
           </h1>
-          <p className="text-small text-text-muted">Bugün hangi promptu paylaşacaksın?</p>
+          <p className="text-small text-text-muted">{t("home.greetingSubtitle")}</p>
         </div>
         <QuickActions />
       </section>
@@ -34,12 +36,9 @@ export function HomeIntro() {
   return (
     <section className="relative overflow-hidden rounded-lg border border-border-soft bg-surface px-5 py-6 shadow-card sm:px-7 sm:py-7">
       <div className="relative z-10 max-w-xl space-y-3">
-        <p className="text-caption font-semibold uppercase tracking-[0.08em] text-primary">Prompt topluluğu</p>
-        <h1 className="text-h1 font-semibold text-text sm:text-display">Promptları keşfet, geliştir, paylaş.</h1>
-        <p className="text-small text-text-secondary sm:text-body">
-          Görsel, metin, kod, video ve müzik için promptlar; generatorlarla yapılandırılmış prompt oluşturma ve
-          topluluktan prompt istekleri — hepsi tek yerde.
-        </p>
+        <p className="text-caption font-semibold uppercase tracking-[0.08em] text-primary">{t("nav.tagline")}</p>
+        <h1 className="text-h1 font-semibold text-text sm:text-display">{t("home.heroTitle")}</h1>
+        <p className="text-small text-text-secondary sm:text-body">{t("home.heroDescription")}</p>
         <div className="pt-1">
           <QuickActions />
         </div>
@@ -50,19 +49,20 @@ export function HomeIntro() {
 }
 
 function QuickActions() {
+  const { t } = useTranslation();
   return (
     <div className="flex flex-wrap gap-2">
       <Link href="/create?mode=prompt" className={buttonClassName({ size: "sm" })}>
         <PenLine size={15} />
-        Prompt paylaş
+        {t("home.sharePrompt")}
       </Link>
       <Link href="/generators" className={buttonClassName({ size: "sm", variant: "outline" })}>
         <Blocks size={15} />
-        Generator kullan
+        {t("home.useGenerator")}
       </Link>
       <Link href="/requests/new" className={buttonClassName({ size: "sm", variant: "ghost" })}>
         <Sparkles size={15} />
-        İstek aç
+        {t("home.openRequest")}
       </Link>
     </div>
   );

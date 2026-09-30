@@ -24,6 +24,7 @@ import { useRealRequests } from "./real-requests-provider";
 import { STATUS_LABELS, STATUS_VARIANTS } from "./request-card";
 import { parseHighlightValue } from "@/lib/notification-utils";
 import { cn, formatCount, formatRelativeTime, profileHref, tagHref } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Prompt, PromptRequest } from "@/types";
 
 /** Same fade timing as the comment-thread flash — one shared feel across the app for "you just jumped here from a notification". */
@@ -31,6 +32,7 @@ const HIGHLIGHT_DURATION_MS = 2500;
 
 /** Real request detail rendering, used by `/requests/local?id=…`. */
 export function RequestDetailView({ request }: { request: PromptRequest }) {
+  const { t, language } = useTranslation();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user: authUser } = useAuth();
@@ -136,7 +138,7 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
       setSelectionTarget(null);
     } catch (err) {
       setSelectionError(
-        err instanceof Error ? err.message : "İşlem gerçekleştirilemedi, lütfen tekrar dene.",
+        err instanceof Error ? err.message : t("common.errorGeneric"),
       );
     } finally {
       setIsSelecting(false);
@@ -155,11 +157,11 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
       >
         <header className="space-y-3">
           <div className="flex items-center justify-between gap-3">
-            <ContentTypeLabel icon={Sparkles} label="Prompt İsteği" detail={typeMeta?.label ?? live.preferredTool} />
+            <ContentTypeLabel icon={Sparkles} label={t("request.title")} detail={typeMeta ? t(typeMeta.labelKey) : live.preferredTool} />
             <div className="flex shrink-0 items-center gap-1.5">
               <Badge variant={STATUS_VARIANTS[live.status]}>
                 <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-current" />
-                {STATUS_LABELS[live.status]}
+                {t(STATUS_LABELS[live.status])}
               </Badge>
               <PostMenu requestId={live.id} authorId={live.author.id} onDeleted={handleDeleted} />
             </div>
@@ -170,7 +172,7 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
             <span className="leading-tight">
               <span className="block text-label font-semibold text-text group-hover:text-primary">{live.author.displayName}</span>
               <span className="block text-caption text-text-muted">
-                @{live.author.username} · {formatRelativeTime(live.createdAt)}
+                @{live.author.username} · {formatRelativeTime(live.createdAt, language)}
               </span>
             </span>
           </Link>
@@ -192,20 +194,20 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
           <a
             href="#request-responses"
             className={contentActionClassName(false)}
-            title="Yanıtlar"
-            aria-label={`Yanıtlar (${formatCount(live.responseCount)})`}
+            title={t("request.replies")}
+            aria-label={`${t("request.replies")} (${formatCount(live.responseCount)})`}
           >
             <Reply size={18} strokeWidth={1.75} />
             <span aria-hidden>{formatCount(live.responseCount)}</span>
           </a>
           <span className="ml-auto" />
-          <ShareTriggerButton target={{ contentType: "request", request: live }} label="Paylaş" />
+          <ShareTriggerButton target={{ contentType: "request", request: live }} label={t("common.share")} />
         </div>
 
         <section aria-labelledby="request-brief-title" className="overflow-hidden rounded-lg border border-border-soft bg-surface-soft">
           <div className="border-b border-border-soft px-4 py-2.5">
             <h2 id="request-brief-title" className="font-sans text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">
-              İstek
+              {t("request.title")}
             </h2>
           </div>
           <p className="whitespace-pre-wrap px-4 py-4 text-body text-text">{live.description}</p>
@@ -216,13 +218,13 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
             <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-border-soft bg-surface-soft">
               <Image src={live.referenceImage.url} alt={live.referenceImage.alt} fill sizes="768px" className="object-cover" />
             </div>
-            <figcaption className="text-caption text-text-muted">Referans görsel</figcaption>
+            <figcaption className="text-caption text-text-muted">{t("request.referenceImage")}</figcaption>
           </figure>
         )}
 
         {live.creativeDirection && (
           <div className="rounded-md border-l-2 border-primary bg-primary-soft/50 px-4 py-3">
-            <p className="mb-1 text-caption font-semibold uppercase tracking-[0.08em] text-primary">Yaratıcı Yön</p>
+            <p className="mb-1 text-caption font-semibold uppercase tracking-[0.08em] text-primary">{t("request.creativeDirection")}</p>
             <p className="text-small text-text">{live.creativeDirection}</p>
           </div>
         )}
@@ -247,38 +249,38 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
             {isOwnRequest ? (
               <Button type="button" variant="outline" size="sm" onClick={handleToggleStatus}>
                 <MessageSquareOff size={14} />
-                {isClosed ? "Açık olarak işaretle" : "İsteği kapat"}
+                {isClosed ? t("request.markAsOpen") : t("request.closeRequest")}
               </Button>
             ) : (
               <Link href={`/create?answerRequest=${live.id}`} className={buttonClassName({ size: "sm", className: "h-9" })}>
                 <PenLine size={14} />
-                Yanıtla
+                {t("request.reply")}
               </Link>
             )}
           </div>
         )}
         {!isOwnRequest && isClosed && (
-          <p className="text-caption text-text-muted">Bu istek kapandı, artık yeni yanıt kabul edilmiyor.</p>
+          <p className="text-caption text-text-muted">{t("request.requestClosedNoNewReplies")}</p>
         )}
         {isOwnRequest && <EditHistoryPanel contentType="prompt_request" contentId={live.id} />}
       </article>
 
       <section id="request-responses" className="scroll-mt-20 space-y-3">
         <h2 className="flex items-center gap-2 text-h2 font-semibold text-text">
-          Yaratıcı Yanıtlar
+          {t("request.creativeReplies")}
           <span className="rounded-xs bg-surface-soft px-1.5 font-sans text-caption font-semibold tabular-nums text-text-muted">{answers.length}</span>
         </h2>
         {responseHighlightNotFound && (
           <p className="rounded-md bg-surface-soft px-3 py-2.5 text-small text-text-muted">
-            Bu yanıt artık mevcut değil.
+            {t("request.replyNoLongerAvailable")}
           </p>
         )}
         {answers.length === 0 ? (
           <div className="space-y-3 rounded-lg border border-dashed border-border py-8 text-center text-small text-text-muted">
-            <p>Bu isteğe henüz yanıt verilmedi.</p>
+            <p>{t("request.noRepliesYet")}</p>
             {!isClosed && !isOwnRequest && (
               <Link href={`/create?answerRequest=${live.id}`} className="font-medium text-primary underline">
-                İlk yanıtı sen ver
+                {t("request.beTheFirstToReply")}
               </Link>
             )}
           </div>
@@ -307,13 +309,13 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
                         <>
                           {isPendingThis ? (
                             <>
-                              <span className="text-xs text-text-muted">Seçimi kaldırmak istediğine emin misin?</span>
+                              <span className="text-xs text-text-muted">{t("request.confirmUnselect")}</span>
                               <button
                                 type="button"
                                 onClick={() => setSelectionTarget(null)}
                                 className="text-xs font-medium text-text-muted hover:text-text"
                               >
-                                Vazgeç
+                                {t("common.cancel")}
                               </button>
                               <button
                                 type="button"
@@ -321,7 +323,7 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
                                 onClick={() => confirmSelection(null)}
                                 className="text-xs font-medium text-danger hover:underline"
                               >
-                                Seçimi kaldır
+                                {t("request.unselectReply")}
                               </button>
                             </>
                           ) : (
@@ -330,22 +332,19 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
                               onClick={() => setSelectionTarget({ id: prompt.id, confirming: true })}
                               className="text-xs font-medium text-text-muted hover:text-text"
                             >
-                              Seçimi kaldır
+                              {t("request.unselectReply")}
                             </button>
                           )}
                         </>
                       ) : isPendingThis ? (
                         <>
-                          <span className="text-xs text-text-muted">
-                            Bu yanıtı seçmek istediğine emin misin? Seçtiğinde istek kapatılacak ve yeni yanıt kabul
-                            edilmeyecek.
-                          </span>
+                          <span className="text-xs text-text-muted">{t("request.confirmSelect")}</span>
                           <button
                             type="button"
                             onClick={() => setSelectionTarget(null)}
                             className="text-xs font-medium text-text-muted hover:text-text"
                           >
-                            Vazgeç
+                            {t("common.cancel")}
                           </button>
                           <button
                             type="button"
@@ -353,7 +352,7 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
                             onClick={() => confirmSelection(prompt.id)}
                             className="text-xs font-medium text-primary hover:underline"
                           >
-                            Yanıtı seç
+                            {t("request.selectReply")}
                           </button>
                         </>
                       ) : (
@@ -362,7 +361,7 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
                           onClick={() => setSelectionTarget({ id: prompt.id, confirming: true })}
                           className="text-xs font-medium text-primary hover:underline"
                         >
-                          Yanıtı seç
+                          {t("request.selectReply")}
                         </button>
                       )}
                     </div>

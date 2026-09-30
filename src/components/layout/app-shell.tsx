@@ -1,7 +1,10 @@
+"use client";
+
 import type { ReactNode } from "react";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { MobileNav } from "@/components/layout/mobile-nav";
+import { useTranslation } from "@/lib/i18n/language-provider";
 
 interface AppShellProps {
   children: ReactNode;
@@ -16,13 +19,14 @@ interface AppShellProps {
  *   desktop (lg+):  256px grouped sidebar + header + content (+ optional aside)
  */
 export function AppShell({ children, aside }: AppShellProps) {
+  const { t } = useTranslation();
   return (
     <div className="flex min-h-screen">
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[70] focus:rounded-md focus:bg-surface focus:px-3 focus:py-2 focus:text-label focus:shadow-pop"
       >
-        İçeriğe geç
+        {t("common.skipToContent")}
       </a>
       <Sidebar />
       <div className="flex min-w-0 flex-1 flex-col">

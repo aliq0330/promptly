@@ -1,4 +1,7 @@
+"use client";
+
 import { Skeleton } from "@/components/ui/skeleton";
+import { useTranslation } from "@/lib/i18n/language-provider";
 
 /** Mirrors ContentCard's anatomy: header → type line → title → prompt block → actions. */
 export function PromptCardSkeleton() {
@@ -34,8 +37,9 @@ export function PromptCardSkeleton() {
 }
 
 export function PromptCardSkeletonGrid({ count = 6 }: { count?: number }) {
+  const { t } = useTranslation();
   return (
-    <div className="columns-1 gap-3 sm:columns-2 sm:gap-4 xl:columns-3" role="status" aria-label="Yükleniyor">
+    <div className="columns-1 gap-3 sm:columns-2 sm:gap-4 xl:columns-3" role="status" aria-label={t("common.loadingAriaLabel")}>
       {Array.from({ length: count }).map((_, i) => (
         <div key={i} className="mb-3 break-inside-avoid sm:mb-4">
           <PromptCardSkeleton />

@@ -21,6 +21,7 @@ import {
   updateComment,
 } from "@/lib/supabase/comments";
 import { fetchLikedCommentIds, likeComment, unlikeComment } from "@/lib/supabase/comment-likes";
+import { useTranslation } from "@/lib/i18n/language-provider";
 import { CommentNode, type CommentTree } from "./comment-node";
 import type { PromptComment } from "@/types";
 
@@ -56,6 +57,7 @@ export function CommentSection({
    */
   highlightCommentId?: string | null;
 }) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { profile: ownProfile } = useOwnProfile();
   const [draft, setDraft] = useState("");
@@ -277,7 +279,7 @@ export function CommentSection({
       setReplyingTo(null);
       setReplyDraft("");
     } catch (err) {
-      setReplyError(err instanceof Error ? err.message : "Yanıt eklenemedi, lütfen tekrar dene.");
+      setReplyError(err instanceof Error ? err.message : t("comments.replyFailed"));
     } finally {
       setIsPostingReply(false);
     }
@@ -296,7 +298,7 @@ export function CommentSection({
       setLikeCounts((prev) => ({ ...prev, [posted.id]: 0 }));
       setDraft("");
     } catch (err) {
-      setPostError(err instanceof Error ? err.message : "Yorum eklenemedi, lütfen tekrar dene.");
+      setPostError(err instanceof Error ? err.message : t("comments.postFailed"));
     } finally {
       setIsPosting(false);
     }
@@ -328,7 +330,7 @@ export function CommentSection({
       );
       cancelEdit();
     } catch (err) {
-      setEditError(err instanceof Error ? err.message : "Yorum düzenlenemedi, lütfen tekrar dene.");
+      setEditError(err instanceof Error ? err.message : t("comments.editFailed"));
     } finally {
       setIsSavingEdit(false);
     }
@@ -356,7 +358,7 @@ export function CommentSection({
       const deletedAt = new Date().toISOString();
       setComments((prev) => prev.map((c) => (c.id === id ? { ...c, body: "", deletedAt } : c)));
     } catch (err) {
-      setDeleteError(err instanceof Error ? err.message : "Yorum silinemedi, lütfen tekrar dene.");
+      setDeleteError(err instanceof Error ? err.message : t("comments.deleteFailed"));
     } finally {
       setIsDeletingId(null);
     }
@@ -400,13 +402,13 @@ export function CommentSection({
   return (
     <section className="space-y-4">
       <h2 className="flex items-center gap-2 text-h3 font-semibold text-text">
-        Yorumlar
+        {t("comments.title")}
         <span className="rounded-xs bg-surface-soft px-1.5 font-sans text-caption font-semibold tabular-nums text-text-muted">{comments.length}</span>
       </h2>
 
       {highlightNotFound && (
         <p className="rounded-md bg-surface-soft px-3 py-2.5 text-small text-text-muted">
-          Bu yorum artık mevcut değil.
+          {t("comments.thisCommentNotAvailable")}
         </p>
       )}
 
@@ -416,24 +418,24 @@ export function CommentSection({
         </p>
       ) : !user ? (
         <p className="rounded-md bg-surface-soft px-3 py-2.5 text-small text-text-muted">
-          Yorum yapmak için{" "}
+          {t("comments.loginToCommentPrefix")}{" "}
           <Link href="/login" className="font-medium text-primary underline">
-            giriş yapmalısın
+            {t("comments.loginToCommentLink")}
           </Link>
           .
         </p>
       ) : (
         <form onSubmit={handleSubmit} className="flex items-start gap-2.5">
-          <Avatar src={ownProfile?.avatarUrl ?? null} alt={ownProfile?.displayName ?? "Sen"} size={32} />
+          <Avatar src={ownProfile?.avatarUrl ?? null} alt={ownProfile?.displayName ?? t("prompt.previewAuthorName")} size={32} />
           <div className="flex min-w-0 flex-1 gap-2">
             <input
               value={draft}
               onChange={(event) => setDraft(event.target.value)}
-              placeholder="Bir yorum yaz..."
+              placeholder={t("comments.writeAComment")}
               className="h-9 min-w-0 flex-1 rounded-md border border-border bg-surface px-3 text-small text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
             <Button type="submit" size="sm" disabled={!draft.trim() || isPosting}>
-              {isPosting ? "Gönderiliyor..." : "Gönder"}
+              {isPosting ? t("common.sending") : t("common.send")}
             </Button>
           </div>
         </form>
@@ -443,7 +445,7 @@ export function CommentSection({
       {deleteError && <p className="text-sm text-danger">{deleteError}</p>}
 
       {!loaded ? (
-        <div className="space-y-3" role="status" aria-label="Yorumlar yükleniyor">
+        <div className="space-y-3" role="status" aria-label={t("comments.loadingComments")}>
           {[0, 1].map((i) => (
             <div key={i} className="flex gap-2.5">
               <Skeleton className="h-8 w-8 rounded-full" />
@@ -455,7 +457,7 @@ export function CommentSection({
           ))}
         </div>
       ) : topLevel.length === 0 ? (
-        <p className="rounded-md border border-dashed border-border py-6 text-center text-small text-text-muted">Henüz yorum yapılmadı. İlk yorumu sen yaz.</p>
+        <p className="rounded-md border border-dashed border-border py-6 text-center text-small text-text-muted">{t("comments.noCommentsYet")}</p>
       ) : (
         <div className="space-y-4">
           {topLevel.map((comment) => (

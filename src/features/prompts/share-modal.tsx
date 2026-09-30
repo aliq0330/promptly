@@ -12,6 +12,8 @@ import { contentActionClassName } from "@/features/content/action-styles";
 import { placeholderArt } from "@/lib/placeholder-image";
 import { RESULT_MEDIA_TYPE_LABELS } from "@/lib/prompt-result-media";
 import { generatorHref, promptHref, requestHref, resultHref } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n/language-provider";
+import type { TranslationKey } from "@/lib/i18n/translations";
 import { CONTENT_TYPE_META } from "./content-type-meta";
 import { shareOrCopyLink } from "./share-button";
 import type { Generator, Prompt, PromptRequest, PromptResult } from "@/types";
@@ -44,7 +46,7 @@ interface SharePreview {
   messageParam: string | null;
 }
 
-function getSharePreview(target: ShareModalTarget): SharePreview {
+function getSharePreview(target: ShareModalTarget, t: (key: TranslationKey) => string): SharePreview {
   if (target.contentType === "prompt") {
     const prompt = target.prompt;
     return {
@@ -52,7 +54,7 @@ function getSharePreview(target: ShareModalTarget): SharePreview {
       title: prompt.title,
       description: prompt.description,
       thumbnailUrl: prompt.media[0]?.url ?? null,
-      badgeLabel: CONTENT_TYPE_META[prompt.contentType].label,
+      badgeLabel: t(CONTENT_TYPE_META[prompt.contentType].labelKey),
       badgeVariant: "neutral",
       href: promptHref(prompt),
       messageParam: `sharePromptId=${prompt.id}`,
@@ -65,7 +67,7 @@ function getSharePreview(target: ShareModalTarget): SharePreview {
       title: generator.title,
       description: generator.description,
       thumbnailUrl: generator.coverUrl,
-      badgeLabel: `Generator · ${GENERATOR_CATEGORY_TOPIC_LABELS[generator.category]}`,
+      badgeLabel: `${t("generator.singular")} · ${t(GENERATOR_CATEGORY_TOPIC_LABELS[generator.category])}`,
       badgeVariant: "neutral",
       href: generatorHref(generator),
       messageParam: `shareGeneratorId=${generator.id}`,
@@ -78,7 +80,7 @@ function getSharePreview(target: ShareModalTarget): SharePreview {
       title: request.title,
       description: request.description,
       thumbnailUrl: request.referenceImage?.url ?? null,
-      badgeLabel: STATUS_LABELS[request.status],
+      badgeLabel: t(STATUS_LABELS[request.status]),
       badgeVariant: STATUS_VARIANTS[request.status],
       href: requestHref(request),
       messageParam: `shareRequestId=${request.id}`,
@@ -91,7 +93,7 @@ function getSharePreview(target: ShareModalTarget): SharePreview {
     title: originTitle ? `${result.creator.displayName} — ${originTitle}` : result.creator.displayName,
     description: result.mediaType === "text" || result.mediaType === "other" ? result.textContent ?? "" : "",
     thumbnailUrl: result.thumbnailUrl,
-    badgeLabel: RESULT_MEDIA_TYPE_LABELS[result.mediaType],
+    badgeLabel: t(RESULT_MEDIA_TYPE_LABELS[result.mediaType]),
     badgeVariant: "neutral",
     href: resultHref(result),
     messageParam: null,
@@ -127,8 +129,9 @@ function getSharePreview(target: ShareModalTarget): SharePreview {
  */
 export function ShareModal({ target, onClose }: { target: ShareModalTarget; onClose: () => void }) {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
-  const preview = getSharePreview(target);
+  const preview = getSharePreview(target, t);
 
   async function handleNativeShare() {
     const result = await shareOrCopyLink(preview.href, preview.title);
@@ -148,12 +151,12 @@ export function ShareModal({ target, onClose }: { target: ShareModalTarget; onCl
       >
         <div className="flex items-start justify-between gap-2">
           <h2 id="share-modal-title" className="text-base font-semibold text-text">
-            Paylaş
+            {t("common.share")}
           </h2>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Kapat"
+            aria-label={t("common.close")}
             className="rounded-md p-1 text-text-muted hover:bg-accent-surface hover:text-text"
           >
             <X size={18} />
@@ -185,8 +188,8 @@ export function ShareModal({ target, onClose }: { target: ShareModalTarget; onCl
                 <Send size={18} />
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block text-sm font-semibold text-text">Promptly&apos;de mesaj olarak gönder</span>
-                <span className="block text-xs text-text-muted">Bir kullanıcıya veya gruba doğrudan gönder</span>
+                <span className="block text-sm font-semibold text-text">{t("share.sendAsMessage")}</span>
+                <span className="block text-xs text-text-muted">{t("share.sendAsMessageHint")}</span>
               </span>
               <ChevronRight size={16} className="shrink-0 text-text-muted" />
             </Link>
@@ -201,9 +204,9 @@ export function ShareModal({ target, onClose }: { target: ShareModalTarget; onCl
             </span>
             <span className="min-w-0 flex-1">
               <span className="block text-sm font-semibold text-text">
-                {copied ? "Bağlantı kopyalandı" : "Diğer uygulamalarla paylaş"}
+                {copied ? t("common.linkCopied") : t("share.shareElsewhere")}
               </span>
-              <span className="block text-xs text-text-muted">Linki kopyala veya farklı uygulamalarda paylaş</span>
+              <span className="block text-xs text-text-muted">{t("share.shareElsewhereHint")}</span>
             </span>
             <ChevronRight size={16} className="shrink-0 text-text-muted" />
           </button>
@@ -228,6 +231,7 @@ export function ShareTriggerButton({
   label?: string;
   className?: string;
 }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
 
   return (
@@ -239,8 +243,8 @@ export function ShareTriggerButton({
           event.stopPropagation();
           setOpen(true);
         }}
-        aria-label="Paylaş"
-        title="Paylaş"
+        aria-label={t("common.share")}
+        title={t("common.share")}
         className={contentActionClassName(false, className)}
       >
         <Share2 size={16} strokeWidth={1.75} />

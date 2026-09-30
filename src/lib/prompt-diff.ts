@@ -70,19 +70,25 @@ export function diffWords(before: string, after: string): DiffToken[] {
   return merged;
 }
 
-/** One named field's before/after pair — only ever produced for fields that actually differ (see `diffPromptFields`). */
+/**
+ * One named field's before/after pair — only ever produced for fields that
+ * actually differ (see `diffPromptFields`). No `label` here — this is a
+ * plain (non-component) module, so the caller looks up the display label
+ * for `key` itself via `useTranslation().t()` (see `FIELD_DIFF_LABEL_KEYS`
+ * below).
+ */
 export interface FieldDiff {
   key: "title" | "description" | "promptText" | "tool";
-  label: string;
   before: string;
   after: string;
 }
 
-const FIELD_LABELS: Record<FieldDiff["key"], string> = {
-  title: "Başlık",
-  description: "Açıklama",
-  promptText: "Prompt Metni",
-  tool: "Araç",
+/** `FieldDiff.key` → the translation key for its display label — the caller does `t(FIELD_DIFF_LABEL_KEYS[diff.key])`. */
+export const FIELD_DIFF_LABEL_KEYS: Record<FieldDiff["key"], import("@/lib/i18n/translations").TranslationKey> = {
+  title: "forms.title",
+  description: "forms.shortDescription",
+  promptText: "prompt.promptTextHeading",
+  tool: "forms.toolModel",
 };
 
 /**
@@ -103,5 +109,5 @@ export function diffPromptFields(
   ];
   return pairs
     .filter((pair) => pair.before !== pair.after)
-    .map((pair) => ({ key: pair.key, label: FIELD_LABELS[pair.key], before: pair.before, after: pair.after }));
+    .map((pair) => ({ key: pair.key, before: pair.before, after: pair.after }));
 }

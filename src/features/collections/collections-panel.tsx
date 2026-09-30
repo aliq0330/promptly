@@ -7,6 +7,7 @@ import { FolderPlus, Plus } from "lucide-react";
 import { CollectionCard } from "./collection-card";
 import { CollectionFormModal } from "./collection-form-modal";
 import { createCollection, fetchOwnCollections, updateCollection } from "@/lib/supabase/collections";
+import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Collection, UserProfile } from "@/types";
 
 /**
@@ -16,6 +17,7 @@ import type { Collection, UserProfile } from "@/types";
  * belongs to the viewer regardless of its visibility flag.
  */
 export function CollectionsPanel({ ownerId, ownerProfile }: { ownerId: string; ownerProfile: UserProfile }) {
+  const { t } = useTranslation();
   const [collections, setCollections] = useState<Collection[]>([]);
   const [loading, setLoading] = useState(true);
   const [formMode, setFormMode] = useState<"none" | "create" | { edit: Collection }>("none");
@@ -36,7 +38,7 @@ export function CollectionsPanel({ ownerId, ownerProfile }: { ownerId: string; o
   }, [ownerId]);
 
   if (loading) {
-    return <p className="py-10 text-center text-sm text-text-muted">Yükleniyor…</p>;
+    return <p className="py-10 text-center text-sm text-text-muted">{t("common.loading")}</p>;
   }
 
   return (
@@ -47,14 +49,14 @@ export function CollectionsPanel({ ownerId, ownerProfile }: { ownerId: string; o
         className="flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-border py-2.5 text-label font-medium text-text-secondary transition-colors hover:border-primary/40 hover:bg-surface-soft hover:text-primary"
       >
         <Plus size={16} />
-        Koleksiyon oluştur
+        {t("collection.createButton")}
       </button>
 
       {collections.length === 0 ? (
         <EmptyState
           icon={FolderPlus}
-          title="Henüz koleksiyonun yok"
-          description="Kaydettiğin çalışmaları düzenlemek için bir koleksiyon oluştur."
+          title={t("collection.emptyTitle")}
+          description={t("collection.emptyDescription")}
           className="border-0"
         />
       ) : (

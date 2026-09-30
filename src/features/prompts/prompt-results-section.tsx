@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/features/auth/auth-provider";
 import { fetchResultsForGenerator, fetchResultsForPrompt } from "@/lib/supabase/prompt-results";
+import { useTranslation } from "@/lib/i18n/language-provider";
 import { AddResultModal, type AddResultModalTarget } from "./add-result-modal";
 import { ResultCard } from "./result-card";
 import type { PromptResultSummary } from "@/types";
@@ -38,6 +39,7 @@ export type PromptResultsSectionTarget = { type: "prompt"; promptId: string; pro
  * drift from what the server actually stored.
  */
 export function PromptResultsSection({ target }: { target: PromptResultsSectionTarget }) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const isPromptTarget = target.type === "prompt";
   const targetId = isPromptTarget ? target.promptId : target.generatorId;
@@ -90,18 +92,18 @@ export function PromptResultsSection({ target }: { target: PromptResultsSectionT
     <section className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-label font-semibold text-text">
-          Kullanıcı sonuçları{total > 0 && <span className="ml-1.5 text-text-muted">{total}</span>}
+          {t("result.sectionTitle")}{total > 0 && <span className="ml-1.5 text-text-muted">{total}</span>}
         </h2>
         {user && (
           <Button type="button" size="sm" variant="outline" onClick={() => setIsAddOpen(true)}>
             <Plus size={14} />
-            Sonuç ekle
+            {t("result.addResult")}
           </Button>
         )}
       </div>
       {user && (
         <p className="text-caption text-text-muted">
-          {isPromptTarget ? "Bu promptu kullanarak oluşturduğun sonucu paylaş." : "Bu generatoru kullanarak oluşturduğun sonucu paylaş."}
+          {isPromptTarget ? t("result.sharePromptHint") : t("result.shareGeneratorHint")}
         </p>
       )}
 
@@ -113,9 +115,7 @@ export function PromptResultsSection({ target }: { target: PromptResultsSectionT
         </div>
       ) : results.length === 0 ? (
         <p className="rounded-lg border border-dashed border-border-soft bg-surface-soft px-4 py-6 text-center text-caption text-text-muted">
-          {isPromptTarget
-            ? "Henüz kimse bu promptu kullanarak oluşturduğu bir sonucu paylaşmadı."
-            : "Henüz kimse bu generatoru kullanarak oluşturduğu bir sonucu paylaşmadı."}
+          {isPromptTarget ? t("result.emptyPromptHint") : t("result.emptyGeneratorHint")}
         </p>
       ) : (
         <>
@@ -128,7 +128,7 @@ export function PromptResultsSection({ target }: { target: PromptResultsSectionT
             <div className="flex justify-center">
               <Button type="button" size="sm" variant="ghost" onClick={handleLoadMore} disabled={loadingMore}>
                 {loadingMore && <Loader2 size={14} className="animate-spin" />}
-                Daha fazla yükle ({total - results.length})
+                {t("result.loadMoreCount", { count: total - results.length })}
               </Button>
             </div>
           )}

@@ -1,9 +1,14 @@
+"use client";
+
 import { Calendar, Globe } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useTranslation } from "@/lib/i18n/language-provider";
+import type { Language } from "@/lib/i18n/translations";
+import { INTEREST_OPTION_LABELS, type InterestOption } from "./interest-options";
 import type { UserProfile } from "@/types";
 
-function formatJoinDate(isoDate: string): string {
-  return new Date(isoDate).toLocaleDateString("tr-TR", { year: "numeric", month: "long" });
+function formatJoinDate(isoDate: string, language: Language): string {
+  return new Date(isoDate).toLocaleDateString(language === "en" ? "en-US" : "tr-TR", { year: "numeric", month: "long" });
 }
 
 /**
@@ -14,6 +19,7 @@ function formatJoinDate(isoDate: string): string {
  * exist for real.
  */
 export function ProfileAbout({ user }: { user: UserProfile }) {
+  const { t, language } = useTranslation();
   const hasAnything = user.bio || user.website || (user.interests && user.interests.length > 0);
 
   return (
@@ -34,18 +40,18 @@ export function ProfileAbout({ user }: { user: UserProfile }) {
         )}
         <p className="flex items-center gap-2">
           <Calendar size={15} className="shrink-0" />
-          {formatJoinDate(user.createdAt)} tarihinde katıldı
+          {t("profile.joinedOn", { date: formatJoinDate(user.createdAt, language) })}
         </p>
       </div>
 
       {user.interests && user.interests.length > 0 && (
         <div className="space-y-2">
           <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">
-            Yaratıcı İlgi Alanları
+            {t("profile.creativeInterests")}
           </p>
           <div className="flex flex-wrap gap-1.5">
             {user.interests.map((interest) => (
-              <Badge key={interest}>{interest}</Badge>
+              <Badge key={interest}>{interest in INTEREST_OPTION_LABELS ? t(INTEREST_OPTION_LABELS[interest as InterestOption]) : interest}</Badge>
             ))}
           </div>
         </div>
@@ -53,7 +59,7 @@ export function ProfileAbout({ user }: { user: UserProfile }) {
 
       {!hasAnything && (
         <p className="py-6 text-center text-sm text-text-muted">
-          Bu kullanıcı henüz profiline ek bilgi eklemedi.
+          {t("profile.noAdditionalInfo")}
         </p>
       )}
     </div>

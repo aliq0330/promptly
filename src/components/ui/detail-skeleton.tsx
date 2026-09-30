@@ -1,9 +1,13 @@
+"use client";
+
 import { Skeleton } from "@/components/ui/skeleton";
+import { useTranslation } from "@/lib/i18n/language-provider";
 
 /** Loading placeholder for every detail page (prompt, generator, request, tag, collection). */
 export function DetailSkeleton() {
+  const { t } = useTranslation();
   return (
-    <div className="mx-auto w-full max-w-6xl px-3 py-5 sm:px-5 sm:py-6 lg:px-8 lg:py-8" role="status" aria-label="Yükleniyor">
+    <div className="mx-auto w-full max-w-6xl px-3 py-5 sm:px-5 sm:py-6 lg:px-8 lg:py-8" role="status" aria-label={t("common.loadingAriaLabel")}>
       <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-8">
         <div className="space-y-5">
           <Skeleton className="h-4 w-36" />

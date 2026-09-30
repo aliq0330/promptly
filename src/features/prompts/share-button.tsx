@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Share2 } from "lucide-react";
 import { absoluteUrl } from "@/lib/utils";
 import { contentActionClassName } from "@/features/content/action-styles";
+import { useTranslation } from "@/lib/i18n/language-provider";
 
 /**
  * The actual native-share/clipboard mechanics, pulled out of `ShareButton`
@@ -58,6 +59,7 @@ export function ShareButton({
   label?: string;
   className?: string;
 }) {
+  const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
 
   async function handleShare(event: React.MouseEvent) {
@@ -74,12 +76,12 @@ export function ShareButton({
     <button
       type="button"
       onClick={handleShare}
-      aria-label="Paylaş"
-      title={copied ? "Bağlantı kopyalandı" : "Paylaş"}
+      aria-label={t("common.share")}
+      title={copied ? t("common.linkCopied") : t("common.share")}
       className={contentActionClassName(copied, className)}
     >
       <Share2 size={16} strokeWidth={1.75} />
-      {label && <span>{copied ? "Kopyalandı" : label}</span>}
+      {label && <span>{copied ? t("common.copied") : label}</span>}
     </button>
   );
 }

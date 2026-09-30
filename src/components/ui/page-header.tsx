@@ -1,6 +1,9 @@
+"use client";
+
 import Link from "next/link";
 import { ArrowRight, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n/language-provider";
 
 /** Top-of-page title block: optional eyebrow, title, one-line description, actions. */
 export function PageHeader({
@@ -40,7 +43,7 @@ export function SectionHeader({
   title,
   description,
   href,
-  linkLabel = "Tümünü gör",
+  linkLabel,
   className,
 }: {
   title: string;
@@ -49,6 +52,8 @@ export function SectionHeader({
   linkLabel?: string;
   className?: string;
 }) {
+  const { t } = useTranslation();
+  const resolvedLinkLabel = linkLabel ?? t("common.viewAll");
   return (
     <div className={cn("flex items-end justify-between gap-3", className)}>
       <div className="min-w-0">
@@ -60,7 +65,7 @@ export function SectionHeader({
           href={href}
           className="inline-flex shrink-0 items-center gap-1 text-label font-medium text-text-secondary transition-colors hover:text-primary"
         >
-          {linkLabel}
+          {resolvedLinkLabel}
           <ArrowRight size={14} />
         </Link>
       )}

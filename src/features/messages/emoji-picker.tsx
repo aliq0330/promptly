@@ -3,6 +3,7 @@
 import { useState, type RefObject } from "react";
 import { Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n/language-provider";
 
 /** Aşama 2's required minimum set, in the given order. */
 const QUICK_EMOJIS = ["❤️", "😂", "😮", "😢", "😡", "👍"];
@@ -33,6 +34,7 @@ export function EmojiPicker({
   /** Attached to the root so `usePopoverAlign` can measure it against the viewport and flip sides if it would overflow. */
   panelRef?: RefObject<HTMLDivElement | null>;
 }) {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   const emojis = expanded ? [...QUICK_EMOJIS, ...MORE_EMOJIS] : QUICK_EMOJIS;
 
@@ -40,7 +42,7 @@ export function EmojiPicker({
     <div
       ref={panelRef}
       role="menu"
-      aria-label="Emoji tepkisi seç"
+      aria-label={t("messages.chooseEmojiReaction")}
       className={cn(
         "absolute top-full z-30 mt-1.5 flex items-center gap-1 rounded-2xl border border-border bg-surface p-1.5 shadow-md",
         align === "right" ? "right-0" : "left-0",
@@ -64,7 +66,7 @@ export function EmojiPicker({
           type="button"
           role="menuitemradio"
           onClick={() => onSelect(emoji)}
-          aria-label={`${emoji} tepkisi ver`}
+          aria-label={t("messages.giveEmojiReaction", { emoji })}
           aria-checked={myReaction === emoji}
           className={cn(
             "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-base leading-none transition-transform hover:scale-110 hover:bg-accent-surface",
@@ -78,7 +80,7 @@ export function EmojiPicker({
         <button
           type="button"
           onClick={() => setExpanded(true)}
-          aria-label="Daha fazla emoji göster"
+          aria-label={t("messages.showMoreEmoji")}
           className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-accent-surface hover:text-text"
         >
           <Plus size={16} />

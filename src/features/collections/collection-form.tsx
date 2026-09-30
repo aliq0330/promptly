@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Globe, Loader2, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n/language-provider";
 
 const NAME_MAX = 80;
 
@@ -27,6 +28,7 @@ export function CollectionForm({
   onSubmit: (values: { name: string; visibility: "public" | "private" }) => Promise<void>;
   onCancel?: () => void;
 }) {
+  const { t } = useTranslation();
   const [name, setName] = useState(initialName);
   const [visibility, setVisibility] = useState<"public" | "private">(initialVisibility);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -43,7 +45,7 @@ export function CollectionForm({
     try {
       await onSubmit({ name: trimmed, visibility });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "İşlem başarısız oldu, lütfen tekrar dene.");
+      setError(err instanceof Error ? err.message : t("common.actionFailedRetry"));
       setIsSubmitting(false);
     }
   }
@@ -52,14 +54,14 @@ export function CollectionForm({
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-1.5">
         <label htmlFor="collection-name" className="text-xs font-semibold uppercase tracking-wide text-text-muted">
-          Koleksiyon adı
+          {t("collection.nameLabel")}
         </label>
         <input
           id="collection-name"
           value={name}
           onChange={(event) => setName(event.target.value)}
           maxLength={NAME_MAX}
-          placeholder="Koleksiyon adını yaz..."
+          placeholder={t("collection.namePlaceholder")}
           autoFocus
           className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-primary"
         />
@@ -69,19 +71,19 @@ export function CollectionForm({
       </div>
 
       <div className="space-y-1.5">
-        <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">Gizlilik</p>
+        <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">{t("collection.privacyLabel")}</p>
         <div className="space-y-2">
           <VisibilityOption
             icon={Globe}
-            title="Herkese açık"
-            description="Koleksiyonunu herkes görebilir."
+            title={t("collection.visibilityPublicShort")}
+            description={t("collection.visibilityPublicDescription")}
             selected={visibility === "public"}
             onSelect={() => setVisibility("public")}
           />
           <VisibilityOption
             icon={Lock}
-            title="Sadece ben"
-            description="Sadece sen görebilirsin."
+            title={t("collection.visibilityPrivateShort")}
+            description={t("collection.visibilityPrivateDescription")}
             selected={visibility === "private"}
             onSelect={() => setVisibility("private")}
           />
@@ -93,7 +95,7 @@ export function CollectionForm({
       <div className="flex items-center justify-end gap-2 pt-1">
         {onCancel && (
           <Button type="button" variant="ghost" onClick={onCancel} disabled={isSubmitting}>
-            İptal
+            {t("common.cancelAction")}
           </Button>
         )}
         <Button type="submit" disabled={!isValid || isSubmitting} className={onCancel ? undefined : "w-full justify-center"}>

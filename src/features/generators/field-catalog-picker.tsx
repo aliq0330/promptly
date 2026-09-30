@@ -14,21 +14,9 @@ import {
   searchCatalogFields,
   type CatalogField,
 } from "@/lib/generator-field-catalog";
-import type { GeneratorField, GeneratorFieldType } from "@/types";
-
-const FIELD_TYPE_SHORT_LABELS: Record<GeneratorFieldType, string> = {
-  text: "Kısa Metin",
-  textarea: "Uzun Metin",
-  select: "Seçim",
-  multi_select: "Çoklu Seçim",
-  number: "Sayı",
-  slider: "Kaydırıcı",
-  color: "Renk",
-  checkbox: "Onay Kutusu",
-  toggle: "Açma/Kapama",
-  radio: "Radio",
-  url: "URL",
-};
+import { useTranslation } from "@/lib/i18n/language-provider";
+import { GENERATOR_FIELD_TYPE_LABELS } from "./generator-category-meta";
+import type { GeneratorField } from "@/types";
 
 /**
  * "Alan Ekle" modal, catalog step (the user's "HAZIR KATEGORİ / ALT
@@ -64,6 +52,7 @@ export function FieldCatalogPicker({
   onInsert: (fields: CatalogField[]) => void;
   onCreateCustom: () => void;
 }) {
+  const { t } = useTranslation();
   const [query, setQuery] = useState("");
   const [expandedCategoryId, setExpandedCategoryId] = useState<string | null>(null);
   const [expandedSubgroupId, setExpandedSubgroupId] = useState<string | null>(null);
@@ -152,22 +141,22 @@ export function FieldCatalogPicker({
           <span className="flex flex-wrap items-center gap-1.5">
             {field.options[0]?.image ? (
               // eslint-disable-next-line @next/next/no-img-element -- tiny data-URL preview thumbnail, never a remote asset
-              <img src={field.options[0].image} alt="" className="h-4 w-4 shrink-0 rounded object-cover" title="Bu alan varsayılan görsellerle geliyor" />
+              <img src={field.options[0].image} alt="" className="h-4 w-4 shrink-0 rounded object-cover" title={t("fieldCatalog.imageHint")} />
             ) : (
               field.options[0]?.color && (
                 <span
                   className="h-3 w-3 shrink-0 rounded-full border border-border/60"
                   style={{ backgroundColor: field.options[0].color }}
                   aria-hidden="true"
-                  title="Bu alan varsayılan renklerle geliyor"
+                  title={t("fieldCatalog.colorHint")}
                 />
               )
             )}
             <span className="truncate font-medium text-text">{field.label}</span>
-            <span className="rounded-sm bg-accent-surface px-1.5 py-0.5 text-[10px] font-medium text-text-muted">{FIELD_TYPE_SHORT_LABELS[field.type]}</span>
+            <span className="rounded-sm bg-accent-surface px-1.5 py-0.5 text-[10px] font-medium text-text-muted">{t(GENERATOR_FIELD_TYPE_LABELS[field.type])}</span>
           </span>
           {breadcrumb && <span className="mt-0.5 block truncate text-xs text-text-muted">{breadcrumb}</span>}
-          {used && <span className="mt-0.5 block text-xs text-primary">Zaten eklendi</span>}
+          {used && <span className="mt-0.5 block text-xs text-primary">{t("fieldCatalog.alreadyAdded")}</span>}
         </span>
       </label>
     );
@@ -178,9 +167,9 @@ export function FieldCatalogPicker({
       <div className="flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-lg" onClick={(event) => event.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-border p-4">
           <h2 id="field-catalog-title" className="text-base font-semibold text-text">
-            Hazır Alan Kütüphanesinden Ekle
+            {t("fieldCatalog.title")}
           </h2>
-          <button type="button" onClick={onClose} aria-label="Kapat" className="rounded-md p-1 text-text-muted hover:bg-accent-surface hover:text-text">
+          <button type="button" onClick={onClose} aria-label={t("common.close")} className="rounded-md p-1 text-text-muted hover:bg-accent-surface hover:text-text">
             <X size={18} />
           </button>
         </div>
@@ -192,7 +181,7 @@ export function FieldCatalogPicker({
               type="text"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Alan ara… (örn. göz rengi, ışık, kamera açısı)"
+              placeholder={t("fieldCatalog.searchPlaceholder")}
               className="h-10 w-full rounded-md border border-border bg-background pl-9 pr-3 text-sm text-text placeholder:text-text-muted"
             />
           </div>
@@ -201,8 +190,8 @@ export function FieldCatalogPicker({
         <div className="min-h-0 flex-1 overflow-y-auto p-4">
           {query.trim() ? (
             <div className="space-y-1.5">
-              <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-text-muted">{searchResults.length} sonuç</p>
-              {searchResults.length === 0 && <p className="rounded-md border border-dashed border-border p-4 text-center text-sm text-text-muted">Eşleşen bir alan bulunamadı.</p>}
+              <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-text-muted">{t("fieldCatalog.resultsCount", { count: searchResults.length })}</p>
+              {searchResults.length === 0 && <p className="rounded-md border border-dashed border-border p-4 text-center text-sm text-text-muted">{t("fieldCatalog.noFieldMatch")}</p>}
               {searchResults.map((field) => {
                 const category = CATALOG_CATEGORIES.find((c) => c.id === field.categoryId);
                 const subgroup = category?.subgroups.find((s) => s.id === field.subgroupId);
@@ -212,7 +201,7 @@ export function FieldCatalogPicker({
           ) : (
             <div className="space-y-5">
               <div>
-                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-muted">Hazır Paketler</p>
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-muted">{t("fieldCatalog.readyPackages")}</p>
                 <div className="flex flex-wrap gap-1.5">
                   {CATALOG_PACKAGES.map((pkg) => {
                     const fields = packageFields(pkg);
@@ -231,7 +220,7 @@ export function FieldCatalogPicker({
               </div>
 
               <div className="space-y-1.5">
-                <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-text-muted">Kategoriler</p>
+                <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-text-muted">{t("fieldCatalog.categories")}</p>
                 {CATALOG_CATEGORIES.map((category) => {
                   const isCategoryOpen = expandedCategoryId === category.id;
                   return (
@@ -281,7 +270,7 @@ export function FieldCatalogPicker({
                                       disabled={selectableFields.length === 0}
                                       onChange={() => toggleSubgroup(fields)}
                                     />
-                                    Tümünü seç
+                                    {t("fieldCatalog.selectAll")}
                                   </label>
                                 </div>
                                 {isSubOpen && <div className="mt-1 space-y-1 pl-2">{fields.map((field) => renderFieldRow(field))}</div>}
@@ -300,12 +289,12 @@ export function FieldCatalogPicker({
 
         <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border p-4">
           <button type="button" onClick={onCreateCustom} className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline">
-            <Plus size={14} /> Özel Alan Oluştur
+            <Plus size={14} /> {t("fieldCatalog.createCustomField")}
           </button>
           <div className="flex items-center gap-2">
-            <p className="text-xs text-text-muted">{selectedCount > 0 ? `${selectedCount} alan seçili` : "Hiç alan seçilmedi"}</p>
+            <p className="text-xs text-text-muted">{selectedCount > 0 ? t("fieldCatalog.fieldsSelectedCount", { count: selectedCount }) : t("fieldCatalog.noFieldsSelected")}</p>
             <Button type="button" onClick={handleInsert} disabled={selectedCount === 0}>
-              Ekle {selectedCount > 0 ? `(${selectedCount})` : ""}
+              {t("variable.add")} {selectedCount > 0 ? `(${selectedCount})` : ""}
             </Button>
           </div>
         </div>

@@ -8,13 +8,15 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { acceptEditSuggestion, fetchSuggestionsForPrompt, rejectEditSuggestion } from "@/lib/supabase/prompt-edit-suggestions";
 import { formatRelativeTime, profileHref } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n/language-provider";
+import type { TranslationKey } from "@/lib/i18n/translations";
 import { DiffText } from "./diff-text";
 import type { PromptEditSuggestion } from "@/types";
 
-const STATUS_LABEL: Record<PromptEditSuggestion["status"], string> = {
-  pending: "Bekliyor",
-  accepted: "Kabul edildi",
-  rejected: "Reddedildi",
+const STATUS_LABEL_KEYS: Record<PromptEditSuggestion["status"], TranslationKey> = {
+  pending: "editSuggestion.statusPending",
+  accepted: "editSuggestion.statusAccepted",
+  rejected: "editSuggestion.statusRejected",
 };
 const STATUS_VARIANT: Record<PromptEditSuggestion["status"], "warning" | "success" | "danger"> = {
   pending: "warning",
@@ -43,6 +45,7 @@ export function EditSuggestionsPanel({
   /** Called with the newly-published prompt text right after a real accept succeeds, so the page's own prompt display updates without a reload. */
   onAccepted: (newPromptText: string) => void;
 }) {
+  const { t, language } = useTranslation();
   const [suggestions, setSuggestions] = useState<PromptEditSuggestion[] | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(highlightSuggestionId ?? null);
   const [acceptDraftId, setAcceptDraftId] = useState<string | null>(null);
@@ -84,7 +87,7 @@ export function EditSuggestionsPanel({
       onAccepted(draftText.trim());
       setAcceptDraftId(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Kabul edilemedi, lütfen tekrar dene.");
+      setError(err instanceof Error ? err.message : t("editSuggestion.acceptFailed"));
     } finally {
       setBusyId(null);
     }
@@ -106,7 +109,7 @@ export function EditSuggestionsPanel({
       );
       setConfirmingRejectId(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Reddedilemedi, lütfen tekrar dene.");
+      setError(err instanceof Error ? err.message : t("editSuggestion.rejectFailed"));
     } finally {
       setBusyId(null);
     }
@@ -118,7 +121,7 @@ export function EditSuggestionsPanel({
   return (
     <section className="space-y-3 rounded-lg border border-border-soft bg-surface p-4 sm:p-5">
       <h2 className="text-label font-semibold text-text">
-        Düzenleme Önerileri {pending.length > 0 && <span className="text-primary">({pending.length})</span>}
+        {t("editSuggestion.title")} {pending.length > 0 && <span className="text-primary">({pending.length})</span>}
       </h2>
 
       <ul className="space-y-3">
@@ -140,10 +143,10 @@ export function EditSuggestionsPanel({
                   <Avatar src={suggestion.proposer.avatarUrl} alt={suggestion.proposer.displayName} size={28} />
                   <span className="text-sm">
                     <span className="font-medium text-text">{suggestion.proposer.displayName}</span>{" "}
-                    <span className="text-text-muted">· {formatRelativeTime(suggestion.createdAt)}</span>
+                    <span className="text-text-muted">· {formatRelativeTime(suggestion.createdAt, language)}</span>
                   </span>
                 </Link>
-                <Badge variant={STATUS_VARIANT[suggestion.status]}>{STATUS_LABEL[suggestion.status]}</Badge>
+                <Badge variant={STATUS_VARIANT[suggestion.status]}>{t(STATUS_LABEL_KEYS[suggestion.status])}</Badge>
               </div>
 
               <p className="mt-2 whitespace-pre-wrap text-sm text-text">{suggestion.suggestionText}</p>
@@ -154,24 +157,21 @@ export function EditSuggestionsPanel({
                 className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
               >
                 {isExpanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
-                {isExpanded ? "Önizlemeyi gizle" : "Önizle"}
+                {isExpanded ? t("editSuggestion.hidePreview") : t("editSuggestion.preview")}
               </button>
 
               {isExpanded && (
                 <div className="mt-2 space-y-2 rounded-md border border-border-soft bg-background p-3">
                   {suggestion.proposedPromptText ? (
                     <>
-                      <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">Mevcut → Önerilen</p>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">{t("editSuggestion.currentToProposed")}</p>
                       <DiffText before={currentPromptText} after={suggestion.proposedPromptText} />
                     </>
                   ) : (
                     <>
-                      <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">Mevcut prompt metni</p>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">{t("prompt.currentPromptText")}</p>
                       <p className="prompt-text whitespace-pre-wrap break-words text-sm text-text-muted">{currentPromptText}</p>
-                      <p className="text-xs text-text-muted">
-                        Bu öneri yalnızca bir not içeriyor, hazır bir prompt metni önermiyor — kabul edersen aşağıda kendi yeni
-                        metnini yazabilirsin.
-                      </p>
+                      <p className="text-xs text-text-muted">{t("editSuggestion.noteOnlyHint")}</p>
                     </>
                   )}
                 </div>
@@ -181,9 +181,7 @@ export function EditSuggestionsPanel({
                 <div className="mt-3 space-y-2">
                   {isAccepting ? (
                     <div className="space-y-2 rounded-md border border-primary/30 bg-primary/5 p-3">
-                      <p className="text-xs font-medium text-text">
-                        Onaylamadan önce son hâlini düzenleyebilirsin — kaydettiğinde promptun yeni bir sürümü oluşacak.
-                      </p>
+                      <p className="text-xs font-medium text-text">{t("editSuggestion.editBeforeAcceptHint")}</p>
                       <textarea
                         rows={4}
                         value={draftText}
@@ -193,10 +191,10 @@ export function EditSuggestionsPanel({
                       <div className="flex flex-wrap items-center gap-2">
                         <Button type="button" size="sm" onClick={() => confirmAccept(suggestion)} disabled={isBusy || !draftText.trim()}>
                           {isBusy ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
-                          Kabul Et ve Yayınla
+                          {t("editSuggestion.acceptAndPublish")}
                         </Button>
                         <Button type="button" size="sm" variant="ghost" onClick={() => setAcceptDraftId(null)} disabled={isBusy}>
-                          Vazgeç
+                          {t("common.cancel")}
                         </Button>
                       </div>
                     </div>
@@ -204,11 +202,11 @@ export function EditSuggestionsPanel({
                     <div className="flex flex-wrap gap-2">
                       <Button type="button" size="sm" onClick={() => startAccept(suggestion)} disabled={isBusy}>
                         <Check size={14} />
-                        Kabul Et
+                        {t("editSuggestion.accept")}
                       </Button>
                       <Button type="button" size="sm" variant="danger" onClick={() => handleReject(suggestion)} disabled={isBusy}>
                         {isBusy ? <Loader2 size={14} className="animate-spin" /> : <X size={14} />}
-                        {confirmingRejectId === suggestion.id ? "Emin misin? Tekrar tıkla" : "Reddet"}
+                        {confirmingRejectId === suggestion.id ? t("common.confirmDelete") : t("editSuggestion.reject")}
                       </Button>
                     </div>
                   )}

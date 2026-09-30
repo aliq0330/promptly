@@ -6,6 +6,7 @@ import { Bookmark } from "lucide-react";
 import { Portal } from "@/components/ui/portal";
 import { cn } from "@/lib/utils";
 import { contentActionClassName } from "@/features/content/action-styles";
+import { useTranslation } from "@/lib/i18n/language-provider";
 import { useSaveState } from "./use-save-state";
 import { SaveToCollectionModal } from "@/features/collections/save-to-collection-modal";
 
@@ -35,6 +36,7 @@ export function SaveButton({
   size?: number;
   className?: string;
 }) {
+  const { t } = useTranslation();
   const isGenerator = Boolean(generatorId);
   const id = (generatorId ?? promptId)!;
   const { isSaved, removeEverywhere, markSaved, markUnsaved, isToggling, canSave } = useSaveState(
@@ -58,8 +60,8 @@ export function SaveButton({
       <Link
         href="/login"
         onClick={(event) => event.stopPropagation()}
-        title="Kaydetmek için giriş yapmalısın"
-        aria-label="Kaydetmek için giriş yap"
+        title={t("prompt.loginToSave")}
+        aria-label={t("prompt.loginToSave")}
         className={sharedClassName}
       >
         <Bookmark size={size} strokeWidth={1.75} />
@@ -93,8 +95,8 @@ export function SaveButton({
         disabled={isToggling}
         aria-pressed={isSaved}
         aria-haspopup={isSaved ? undefined : "dialog"}
-        title={isSaved ? "Kaydedilenlerden çıkar" : "Koleksiyona ekle"}
-        aria-label={isSaved ? "Kaydedilenlerden çıkar" : "Koleksiyona ekle"}
+        title={isSaved ? t("prompt.removeFromSaved") : t("prompt.addToCollection")}
+        aria-label={isSaved ? t("prompt.removeFromSaved") : t("prompt.addToCollection")}
         className={cn(sharedClassName, isToggling && "opacity-60")}
       >
         <Bookmark size={size} fill={isSaved ? "currentColor" : "none"} strokeWidth={1.75} />
@@ -124,7 +126,7 @@ export function SaveButton({
             className="pointer-events-none fixed inset-x-0 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-[60] flex justify-center px-4 md:bottom-6"
           >
             <div className="animate-pop-in rounded-md bg-text px-3.5 py-2 text-small text-background shadow-pop">
-              Kaydedilenlerden kaldırıldı.
+              {t("prompt.removedFromSavedToast")}
             </div>
           </div>
         </Portal>

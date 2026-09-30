@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import Link from "next/link";
 import { promptHref } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n/language-provider";
 import { CONTENT_TYPE_META } from "./content-type-meta";
 import { useRealPrompts } from "./real-prompts-provider";
 import type { Prompt } from "@/types";
@@ -13,6 +14,7 @@ import type { Prompt } from "@/types";
  * add a little. Renders nothing when there's nothing genuinely related.
  */
 export function RelatedPrompts({ prompt, limit = 4 }: { prompt: Prompt; limit?: number }) {
+  const { t } = useTranslation();
   const { realPrompts } = useRealPrompts();
 
   const related = useMemo(() => {
@@ -38,7 +40,7 @@ export function RelatedPrompts({ prompt, limit = 4 }: { prompt: Prompt; limit?: 
   return (
     <section aria-labelledby="related-prompts-title" className="space-y-2">
       <h2 id="related-prompts-title" className="px-1 text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">
-        Benzer promptlar
+        {t("prompt.relatedPrompts")}
       </h2>
       <ul className="divide-y divide-border-soft overflow-hidden rounded-lg border border-border-soft bg-surface">
         {related.map((item) => {
@@ -53,7 +55,7 @@ export function RelatedPrompts({ prompt, limit = 4 }: { prompt: Prompt; limit?: 
                 <span className="min-w-0 leading-tight">
                   <span className="line-clamp-2 text-label font-semibold text-text">{item.title}</span>
                   <span className="mt-0.5 block truncate text-caption text-text-muted">
-                    {meta.label} · {item.author.displayName}
+                    {t(meta.labelKey)} · {item.author.displayName}
                   </span>
                 </span>
               </Link>

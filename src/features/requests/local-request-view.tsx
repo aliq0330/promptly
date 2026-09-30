@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { RequestDetailView } from "./request-detail-view";
 import { useRealRequests } from "./real-requests-provider";
+import { useTranslation } from "@/lib/i18n/language-provider";
 import type { PromptRequest } from "@/types";
 
 /**
@@ -15,6 +16,7 @@ import type { PromptRequest } from "@/types";
  * batch, or a live fetch otherwise. See `requestHref()` in lib/utils.ts.
  */
 export function LocalRequestView() {
+  const { t } = useTranslation();
   const searchParams = useSearchParams();
   const id = searchParams.get("id");
   const { getCached, fetchById } = useRealRequests();
@@ -56,15 +58,15 @@ export function LocalRequestView() {
   if (!request) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
-        <h1 className="mb-2 text-h2 font-semibold text-text">İstek bulunamadı</h1>
+        <h1 className="mb-2 text-h2 font-semibold text-text">{t("request.requestNotFound")}</h1>
         <p className="mb-4 text-sm text-text-muted">
-          Bu istek kaldırılmış olabilir, ya da hiç var olmamış olabilir.
+          {t("request.notFoundBody")}
         </p>
         <Link
           href="/requests"
           className="inline-flex h-9 items-center rounded-md border border-border px-4 text-sm font-medium text-text hover:bg-accent-surface"
         >
-          Prompt İsteklerine Dön
+          {t("request.backToRequests")}
         </Link>
       </div>
     );
@@ -73,16 +75,15 @@ export function LocalRequestView() {
   if (request.deletedAt) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
-        <h1 className="mb-2 text-h2 font-semibold text-text">Bu istek silindi</h1>
+        <h1 className="mb-2 text-h2 font-semibold text-text">{t("request.thisRequestDeletedTitle")}</h1>
         <p className="mb-4 text-sm text-text-muted">
-          Yazarı bu isteği sildi. Bu isteğe verilmiş gerçek yanıtlar hâlâ görüntülenebilir — yalnızca
-          isteğin kendisi kaldırıldı.
+          {t("request.deletedButRepliesVisibleBody")}
         </p>
         <Link
           href="/requests"
           className="inline-flex h-9 items-center rounded-md border border-border px-4 text-sm font-medium text-text hover:bg-accent-surface"
         >
-          Prompt İsteklerine Dön
+          {t("request.backToRequests")}
         </Link>
       </div>
     );

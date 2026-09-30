@@ -4,6 +4,7 @@ import Link from "next/link";
 import { MessageCircle } from "lucide-react";
 import { formatCount, generatorHref, promptHref, requestHref, resultHref } from "@/lib/utils";
 import { contentActionClassName } from "@/features/content/action-styles";
+import { useTranslation } from "@/lib/i18n/language-provider";
 
 /**
  * Comment count link. Reflects the target's real, database-backed
@@ -43,6 +44,7 @@ export function CommentCountLink({
   size?: number;
   className?: string;
 }) {
+  const { t } = useTranslation();
   const baseHref = generatorSlug
     ? generatorHref({ slug: generatorSlug })
     : requestId
@@ -55,8 +57,8 @@ export function CommentCountLink({
     <Link
       href={href}
       className={contentActionClassName(false, className)}
-      title="Yorumlar"
-      aria-label={`Yorumlar (${formatCount(baseCount)})`}
+      title={t("comments.title")}
+      aria-label={`${t("comments.title")} (${formatCount(baseCount)})`}
     >
       <MessageCircle size={size} strokeWidth={1.75} />
       <span aria-hidden>{formatCount(baseCount)}</span>

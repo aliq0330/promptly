@@ -1,10 +1,14 @@
+"use client";
+
 import { Layers, Sparkle } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { useTranslation } from "@/lib/i18n/language-provider";
+import type { TranslationKey } from "@/lib/i18n/translations";
 
 interface BadgeDefinition {
   key: string;
   icon: LucideIcon;
-  label: string;
+  labelKey: TranslationKey;
   isEarned: (stats: { publishedPromptCount: number }) => boolean;
 }
 
@@ -21,13 +25,13 @@ const BADGE_DEFINITIONS: BadgeDefinition[] = [
   {
     key: "first-prompt",
     icon: Sparkle,
-    label: "İlk promptunu yayımladı",
+    labelKey: "profile.badgeFirstPrompt",
     isEarned: ({ publishedPromptCount }) => publishedPromptCount >= 1,
   },
   {
     key: "prolific",
     icon: Layers,
-    label: "Üretken yaratıcı (10+ prompt)",
+    labelKey: "profile.badgeProlific",
     isEarned: ({ publishedPromptCount }) => publishedPromptCount >= 10,
   },
 ];
@@ -37,6 +41,7 @@ export function ProfileBadges({
 }: {
   publishedPromptCount: number;
 }) {
+  const { t } = useTranslation();
   const earned = BADGE_DEFINITIONS.filter((badge) =>
     badge.isEarned({ publishedPromptCount }),
   );
@@ -47,14 +52,15 @@ export function ProfileBadges({
     <>
       {earned.map((badge) => {
         const Icon = badge.icon;
+        const label = t(badge.labelKey);
         return (
           <span
             key={badge.key}
-            title={badge.label}
+            title={label}
             className="flex items-center gap-1 rounded-xs bg-primary-soft px-2 py-0.5 text-caption font-medium text-primary"
           >
             <Icon size={12} />
-            {badge.label}
+            {label}
           </span>
         );
       })}

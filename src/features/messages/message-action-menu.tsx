@@ -5,11 +5,13 @@ import { CornerUpLeft, Flag, Pencil, Trash2 } from "lucide-react";
 import { useAuth } from "@/features/auth/auth-provider";
 import { fileReport } from "@/lib/supabase/reports";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Message } from "@/types";
 import type { DeleteMode, MessageBubbleActions } from "./message-bubble-types";
 
 /** Compact inline "Şikayet Et" — this app has no modal (Bölüm 9.2), so it expands into a one-line reason field inside the menu itself instead of opening a second layer. */
 function ReportMessageMenuItem({ messageId }: { messageId: string }) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState("");
@@ -18,7 +20,7 @@ function ReportMessageMenuItem({ messageId }: { messageId: string }) {
 
   if (!user) return null;
   if (done) {
-    return <p className="px-3 py-2 text-sm text-text-muted">Şikayet edildi.</p>;
+    return <p className="px-3 py-2 text-sm text-text-muted">{t("messages.reported")}</p>;
   }
 
   if (!open) {
@@ -30,7 +32,7 @@ function ReportMessageMenuItem({ messageId }: { messageId: string }) {
         className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-text hover:bg-surface-soft"
       >
         <Flag size={14} />
-        Şikayet Et
+        {t("messages.reportAction")}
       </button>
     );
   }
@@ -54,16 +56,16 @@ function ReportMessageMenuItem({ messageId }: { messageId: string }) {
         type="text"
         value={reason}
         onChange={(event) => setReason(event.target.value)}
-        placeholder="Neden?"
+        placeholder={t("messages.reportReasonPlaceholder")}
         autoFocus
         className="h-8 w-full rounded border border-border bg-background px-2 text-xs text-text placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-primary"
       />
       <div className="flex items-center gap-3 text-xs">
         <button type="button" onClick={handleSubmit} disabled={!reason.trim() || isSubmitting} className="font-medium text-primary disabled:opacity-50">
-          Gönder
+          {t("common.send")}
         </button>
         <button type="button" onClick={() => setOpen(false)} className="text-text-muted hover:text-text">
-          İptal
+          {t("common.cancelAction")}
         </button>
       </div>
     </div>
@@ -133,6 +135,7 @@ export function MessageActionMenu({
   /** Attached to the root so `usePopoverAlign` can measure it against the viewport and flip sides if it would overflow. */
   panelRef?: RefObject<HTMLDivElement | null>;
 }) {
+  const { t } = useTranslation();
   const isConfirmingDeleteEveryone = actions.deleteConfirm?.id === message.id && actions.deleteConfirm.mode === "everyone";
   const isConfirmingDeleteMe = actions.deleteConfirm?.id === message.id && actions.deleteConfirm.mode === "me";
   const isDeletingHere = actions.isDeletingId === message.id;
@@ -145,7 +148,7 @@ export function MessageActionMenu({
     <div
       ref={panelRef}
       role="menu"
-      aria-label="Mesaj seçenekleri"
+      aria-label={t("messages.messageOptionsAriaLabel")}
       className={cn(
         "absolute top-full z-30 mt-1.5 w-52 overflow-hidden rounded-md border border-border-soft bg-surface-elevated py-1 shadow-pop animate-pop-in",
         align === "right" ? "right-0" : "left-0",
@@ -153,7 +156,7 @@ export function MessageActionMenu({
     >
       <MenuItem
         icon={<CornerUpLeft size={14} />}
-        label="Yanıtla"
+        label={t("request.reply")}
         onClick={() => {
           onReply();
           onClose();
@@ -165,7 +168,7 @@ export function MessageActionMenu({
           {canEditOrDelete && (
             <MenuItem
               icon={<Pencil size={14} />}
-              label="Düzenle"
+              label={t("common.edit")}
               onClick={() => {
                 actions.onStartEdit(message);
                 onClose();
@@ -174,7 +177,7 @@ export function MessageActionMenu({
           )}
           <MenuItem
             icon={<Trash2 size={14} />}
-            label={isDeletingHere && actions.deleteConfirm?.mode === "me" ? "Siliniyor..." : isConfirmingDeleteMe ? "Emin misin? Tekrar tıkla" : "Benden sil"}
+            label={isDeletingHere && actions.deleteConfirm?.mode === "me" ? t("messages.deletingEllipsis") : isConfirmingDeleteMe ? t("common.confirmDelete") : t("messages.deleteForMe")}
             onClick={() => requestDelete("me")}
             onBlur={actions.onCancelDeleteConfirm}
             disabled={isDeletingHere}
@@ -184,10 +187,10 @@ export function MessageActionMenu({
               icon={<Trash2 size={14} />}
               label={
                 isDeletingHere && actions.deleteConfirm?.mode === "everyone"
-                  ? "Siliniyor..."
+                  ? t("messages.deletingEllipsis")
                   : isConfirmingDeleteEveryone
-                    ? "Emin misin? Tekrar tıkla"
-                    : "Herkesten sil"
+                    ? t("common.confirmDelete")
+                    : t("messages.deleteForEveryone")
               }
               onClick={() => requestDelete("everyone")}
               onBlur={actions.onCancelDeleteConfirm}
@@ -197,8 +200,8 @@ export function MessageActionMenu({
           )}
           {!canEditOrDelete && (
             <div className="border-t border-border px-3 py-2 text-xs text-text-muted">
-              <p>Düzenleme süresi doldu.</p>
-              <p>Herkesten silme süresi doldu.</p>
+              <p>{t("messages.editWindowExpired")}</p>
+              <p>{t("messages.deleteForEveryoneWindowExpired")}</p>
             </div>
           )}
         </>
@@ -207,7 +210,7 @@ export function MessageActionMenu({
           <ReportMessageMenuItem messageId={message.id} />
           <MenuItem
             icon={<Trash2 size={14} />}
-            label={isDeletingHere && actions.deleteConfirm?.mode === "me" ? "Siliniyor..." : isConfirmingDeleteMe ? "Emin misin? Tekrar tıkla" : "Benden sil"}
+            label={isDeletingHere && actions.deleteConfirm?.mode === "me" ? t("messages.deletingEllipsis") : isConfirmingDeleteMe ? t("common.confirmDelete") : t("messages.deleteForMe")}
             onClick={() => requestDelete("me")}
             onBlur={actions.onCancelDeleteConfirm}
             disabled={isDeletingHere}

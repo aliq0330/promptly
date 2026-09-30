@@ -5,6 +5,7 @@ import { Bookmark, FolderOpen, Globe, Lock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { CollectionMoreMenu } from "./collection-more-menu";
 import { cn, collectionHref } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Collection } from "@/types";
 
 /** One collection in the profile "Koleksiyonlar" grid — cover, name, item count, visibility, and (owner-only) manage menu. */
@@ -17,6 +18,7 @@ export function CollectionCard({
   onEdit: () => void;
   onDeleted: () => void;
 }) {
+  const { t } = useTranslation();
   return (
     <article className="group relative min-w-0">
       {/* Two offset "pages" behind the cover — a quiet library-stack motif. */}
@@ -30,15 +32,15 @@ export function CollectionCard({
               <p className="truncate text-label font-semibold text-text">{collection.name}</p>
               {collection.isDefault && (
                 <Badge variant="default" className="shrink-0">
-                  Varsayılan
+                  {t("collection.defaultBadge")}
                 </Badge>
               )}
             </div>
             <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-caption text-text-muted">
-              <span className="shrink-0 tabular-nums">{collection.itemCount} çalışma</span>
+              <span className="shrink-0 tabular-nums">{t("collection.itemCount", { count: collection.itemCount })}</span>
               <span className="flex shrink-0 items-center gap-1">
                 {collection.visibility === "public" ? <Globe size={12} /> : <Lock size={12} />}
-                {collection.visibility === "public" ? "Herkese açık" : "Sadece ben"}
+                {collection.visibility === "public" ? t("collection.visibilityPublicShort") : t("collection.visibilityPrivateShort")}
               </span>
             </div>
           </div>

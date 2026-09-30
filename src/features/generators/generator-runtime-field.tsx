@@ -2,6 +2,7 @@
 
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n/language-provider";
 import type { GeneratorField, GeneratorFieldOption, GeneratorValues } from "@/types";
 
 /**
@@ -65,6 +66,7 @@ function FieldControl({
   value: string | string[] | undefined;
   onChange: (value: string | string[]) => void;
 }) {
+  const { t } = useTranslation();
   const stringValue = Array.isArray(value) ? "" : (value ?? "");
   const arrayValue = Array.isArray(value) ? value : [];
 
@@ -94,7 +96,7 @@ function FieldControl({
           onChange={(event) => onChange(event.target.value)}
           className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-text"
         >
-          <option value="">Seç…</option>
+          <option value="">{t("field.selectEllipsis")}</option>
           {field.options.map((option) => (
             <option key={option.value} value={option.value}>
               {option.label}
@@ -233,7 +235,7 @@ function FieldControl({
       return (
         <label className="flex cursor-pointer items-center gap-2 text-sm text-text">
           <input type="checkbox" checked={stringValue === "true"} onChange={(event) => onChange(String(event.target.checked))} />
-          {field.placeholder || "Etkinleştir"}
+          {field.placeholder || t("field.enableCheckbox")}
         </label>
       );
     case "toggle":

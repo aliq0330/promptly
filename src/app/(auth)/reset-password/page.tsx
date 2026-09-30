@@ -9,6 +9,7 @@ import { useAuth } from "@/features/auth/auth-provider";
 import { supabase } from "@/lib/supabase/client";
 import { translateAuthError } from "@/features/auth/auth-errors";
 import { absoluteUrl } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n/language-provider";
 
 const PASSWORD_MIN_LENGTH = 6;
 
@@ -24,6 +25,7 @@ const PASSWORD_MIN_LENGTH = 6;
  *     be rejected.
  */
 export default function ResetPasswordPage() {
+  const { t } = useTranslation();
   const router = useRouter();
   const { isPasswordRecovery, clearPasswordRecovery, loading: authLoading } = useAuth();
 
@@ -52,7 +54,7 @@ export default function ResetPasswordPage() {
       setLinkSent(true);
     } catch {
       // A real network failure throws instead of resolving — see login/page.tsx's comment.
-      setError("Bağlantı kurulamadı, lütfen tekrar dene.");
+      setError(t("auth.connectionFailedRetry"));
     } finally {
       setIsSubmitting(false);
     }
@@ -64,11 +66,11 @@ export default function ResetPasswordPage() {
     setError(null);
 
     if (password.length < PASSWORD_MIN_LENGTH) {
-      setError(`Şifre en az ${PASSWORD_MIN_LENGTH} karakter olmalı.`);
+      setError(t("auth.passwordMinLengthError", { min: PASSWORD_MIN_LENGTH }));
       return;
     }
     if (password !== confirmPassword) {
-      setError("Şifreler eşleşmiyor.");
+      setError(t("settings.passwordMismatch"));
       return;
     }
 
@@ -83,7 +85,7 @@ export default function ResetPasswordPage() {
       setPasswordUpdated(true);
     } catch {
       // A real network failure throws instead of resolving — see login/page.tsx's comment.
-      setError("Bağlantı kurulamadı, lütfen tekrar dene.");
+      setError(t("auth.connectionFailedRetry"));
     } finally {
       setIsSubmitting(false);
     }
@@ -97,9 +99,9 @@ export default function ResetPasswordPage() {
         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent-surface text-primary">
           <CheckCircle2 size={22} />
         </div>
-        <h1 className="text-h2 font-semibold text-text">Şifren güncellendi</h1>
+        <h1 className="text-h2 font-semibold text-text">{t("auth.passwordUpdatedTitle")}</h1>
         <Button className="w-full" onClick={() => router.push("/")}>
-          Ana sayfaya git
+          {t("auth.goToHome")}
         </Button>
       </div>
     );
@@ -111,12 +113,12 @@ export default function ResetPasswordPage() {
         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent-surface text-primary">
           <KeyRound size={22} />
         </div>
-        <h1 className="text-h2 font-semibold text-text">Yeni şifre belirle</h1>
+        <h1 className="text-h2 font-semibold text-text">{t("auth.setNewPasswordTitle")}</h1>
 
         <div className="w-full space-y-3 text-left">
           <div>
             <label htmlFor="new-password" className="mb-1.5 block text-sm font-medium text-text">
-              Yeni şifre
+              {t("auth.newPasswordLabel")}
             </label>
             <input
               id="new-password"
@@ -130,7 +132,7 @@ export default function ResetPasswordPage() {
           </div>
           <div>
             <label htmlFor="confirm-password" className="mb-1.5 block text-sm font-medium text-text">
-              Yeni şifre (tekrar)
+              {t("auth.confirmNewPasswordLabel")}
             </label>
             <input
               id="confirm-password"
@@ -147,7 +149,7 @@ export default function ResetPasswordPage() {
         {error && <p className="text-sm text-danger">{error}</p>}
 
         <Button type="submit" className="w-full" disabled={isSubmitting}>
-          {isSubmitting ? "Güncelleniyor..." : "Şifreyi güncelle"}
+          {isSubmitting ? t("settings.updating") : t("settings.updatePassword")}
         </Button>
       </form>
     );
@@ -159,13 +161,12 @@ export default function ResetPasswordPage() {
         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent-surface text-primary">
           <CheckCircle2 size={22} />
         </div>
-        <h1 className="text-h2 font-semibold text-text">Bağlantı gönderildi</h1>
+        <h1 className="text-h2 font-semibold text-text">{t("auth.linkSentTitle")}</h1>
         <p className="text-sm text-text-muted">
-          <strong className="text-text">{email}</strong> adresine bir şifre sıfırlama bağlantısı
-          gönderdik.
+          <strong className="text-text">{email}</strong> {t("auth.resetLinkSentBodySuffix")}
         </p>
         <Link href="/login" className="text-sm font-medium text-primary hover:underline">
-          Giriş sayfasına dön
+          {t("auth.backToLogin")}
         </Link>
       </div>
     );
@@ -176,14 +177,14 @@ export default function ResetPasswordPage() {
       <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent-surface text-primary">
         <KeyRound size={22} />
       </div>
-      <h1 className="text-h2 font-semibold text-text">Şifreni sıfırla</h1>
+      <h1 className="text-h2 font-semibold text-text">{t("auth.resetPasswordTitle")}</h1>
       <p className="text-sm text-text-muted">
-        E-posta adresini gir, sana bir sıfırlama bağlantısı gönderelim.
+        {t("auth.resetInstructions")}
       </p>
 
       <div className="w-full text-left">
         <label htmlFor="reset-email" className="mb-1.5 block text-sm font-medium text-text">
-          E-posta
+          {t("settings.email")}
         </label>
         <input
           id="reset-email"
@@ -199,10 +200,10 @@ export default function ResetPasswordPage() {
       {error && <p className="text-sm text-danger">{error}</p>}
 
       <Button type="submit" className="w-full" disabled={isSubmitting}>
-        {isSubmitting ? "Gönderiliyor..." : "Sıfırlama bağlantısı gönder"}
+        {isSubmitting ? t("messages.sendingEllipsis") : t("auth.sendResetLink")}
       </Button>
       <Link href="/login" className="text-xs text-primary hover:underline">
-        Giriş sayfasına dön
+        {t("auth.backToLogin")}
       </Link>
     </form>
   );

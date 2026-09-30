@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { useRealRequests } from "@/features/requests/real-requests-provider";
 import { STATUS_LABELS, STATUS_VARIANTS } from "@/features/requests/request-card";
 import { generatorHref, requestHref } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Prompt, PromptRequest } from "@/types";
 
 /**
@@ -38,6 +39,7 @@ export function RequestResponseContext({
   /** This response's own prompt id — compared against the request's `selectedResponsePromptId` for the "Bu yanıt seçildi" tag. */
   currentPromptId: string;
 }) {
+  const { t } = useTranslation();
   const { getCached, fetchById } = useRealRequests();
   const cached = getCached(requestId);
   const [fetched, setFetched] = useState<PromptRequest | null>(null);
@@ -62,9 +64,9 @@ export function RequestResponseContext({
       <ContextBox href={requestHref({ id: requestId })}>
         <span className="flex items-center gap-1.5 text-caption font-medium text-text-muted">
           <CornerUpRight size={13} />
-          Bir isteğe yanıt
+          {t("prompt.replyToARequest")}
         </span>
-        <span className="block text-small text-text-muted">Bu istek silindi.</span>
+        <span className="block text-small text-text-muted">{t("request.thisRequestWasDeleted")}</span>
       </ContextBox>
     );
   }
@@ -75,22 +77,22 @@ export function RequestResponseContext({
         <span className="flex min-w-0 items-center gap-1.5 text-caption font-medium text-text-muted">
           <CornerUpRight size={13} className="shrink-0 text-primary" />
           <span className="truncate">
-            Bir isteğe yanıt
+            {t("prompt.replyToARequest")}
             {request && <> · {request.author.displayName}</>}
           </span>
         </span>
-        {request && <Badge variant={STATUS_VARIANTS[request.status]}>{STATUS_LABELS[request.status]}</Badge>}
+        {request && <Badge variant={STATUS_VARIANTS[request.status]}>{t(STATUS_LABELS[request.status])}</Badge>}
       </span>
 
       <span className="flex items-center gap-1 text-label font-semibold text-text">
-        <span className="truncate">{request?.title ?? "Bir istek"}</span>
+        <span className="truncate">{request?.title ?? t("request.aRequest")}</span>
         <ArrowUpRight size={13} className="shrink-0 text-text-muted transition-colors group-hover/ctx:text-primary" />
       </span>
 
       {isSelected && (
         <span className="mt-1 flex w-fit items-center gap-1 rounded-xs bg-success/12 px-2 py-0.5 text-caption font-medium text-success">
           <CheckCircle2 size={12} />
-          Bu yanıt seçildi
+          {t("request.thisReplyWasSelected")}
         </span>
       )}
     </ContextBox>
@@ -107,11 +109,12 @@ export function RequestResponseContext({
  * generator produced this prompt.
  */
 export function GeneratorSourceContext({ generatedFrom }: { generatedFrom: NonNullable<Prompt["generatedFrom"]> }) {
+  const { t } = useTranslation();
   return (
     <ContextBox href={generatorHref({ slug: generatedFrom.generatorSlug })}>
       <span className="flex items-center gap-1.5 text-caption font-medium text-text-muted">
         <Blocks size={13} className="shrink-0 text-primary" />
-        Generator ile oluşturuldu
+        {t("prompt.madeWithGenerator")}
       </span>
       <span className="flex items-center gap-1 text-label font-semibold text-text">
         <span className="truncate">{generatedFrom.generatorTitle}</span>

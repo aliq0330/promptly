@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { Reply, Sparkles } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
@@ -12,18 +14,20 @@ import { LikeButton } from "@/features/prompts/like-button";
 import { CommentCountLink } from "@/features/prompts/comment-count-link";
 import { PostMenu } from "@/features/prompts/post-menu";
 import { formatCount, formatRelativeTime, profileHref, requestHref } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n/language-provider";
+import type { TranslationKey } from "@/lib/i18n/translations";
 import type { PromptRequest } from "@/types";
 
-// A request is only ever shown as "Açık" (accepting responses) or
-// "Kapandı" (not accepting new ones) — "answered" (closed via a selected
-// response) and "closed" (closed manually) are both "Kapandı" from the
-// visitor's point of view; the distinction only matters server-side, for
-// deciding what a later cleared selection reverts to (see
+// A request is only ever shown as "Açık"/"Open" (accepting responses) or
+// "Kapandı"/"Closed" (not accepting new ones) — "answered" (closed via a
+// selected response) and "closed" (closed manually) are both "Kapandı" from
+// the visitor's point of view; the distinction only matters server-side,
+// for deciding what a later cleared selection reverts to (see
 // select_prompt_request_response, supabase/migrations).
-export const STATUS_LABELS: Record<PromptRequest["status"], string> = {
-  open: "Açık",
-  answered: "Kapandı",
-  closed: "Kapandı",
+export const STATUS_LABELS: Record<PromptRequest["status"], TranslationKey> = {
+  open: "request.statusOpen",
+  answered: "request.statusClosed",
+  closed: "request.statusClosed",
 };
 
 export const STATUS_VARIANTS: Record<PromptRequest["status"], "success" | "danger"> = {
@@ -50,6 +54,7 @@ export const STATUS_VARIANTS: Record<PromptRequest["status"], "success" | "dange
  * already had).
  */
 export function RequestCard({ request, onDeleted }: { request: PromptRequest; onDeleted?: () => void }) {
+  const { t, language } = useTranslation();
   const href = requestHref(request);
   const typeMeta = request.contentType ? CONTENT_TYPE_META[request.contentType] : null;
 
@@ -67,27 +72,27 @@ export function RequestCard({ request, onDeleted }: { request: PromptRequest; on
                 {request.author.displayName}
               </span>
               <span className="block truncate text-caption text-text-muted">
-                @{request.author.username} · {formatRelativeTime(request.createdAt)}
+                @{request.author.username} · {formatRelativeTime(request.createdAt, language)}
               </span>
             </span>
           </Link>
           <div className="flex shrink-0 items-center gap-1">
             <Badge variant={STATUS_VARIANTS[request.status]}>
               <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-current" />
-              {STATUS_LABELS[request.status]}
+              {t(STATUS_LABELS[request.status])}
             </Badge>
             <PostMenu requestId={request.id} authorId={request.author.id} onDeleted={onDeleted} />
           </div>
         </div>
 
         <div className="space-y-2">
-          <ContentTypeLabel icon={Sparkles} label="Prompt İsteği" detail={typeMeta?.label ?? request.preferredTool} />
+          <ContentTypeLabel icon={Sparkles} label={t("request.title")} detail={typeMeta ? t(typeMeta.labelKey) : request.preferredTool} />
           <ContentCardTitle href={href} title={request.title} description={request.description} />
         </div>
 
         {request.creativeDirection && (
           <p className="rounded-md border border-border-soft bg-surface-soft px-3 py-2 text-caption text-text-secondary">
-            <span className="font-semibold text-text">Yaratıcı yön · </span>
+            <span className="font-semibold text-text">{t("request.creativeDirection")} · </span>
             <span className="line-clamp-2 inline">{request.creativeDirection}</span>
           </p>
         )}
@@ -98,7 +103,7 @@ export function RequestCard({ request, onDeleted }: { request: PromptRequest; on
       <div className="relative z-10 flex items-center gap-0.5 border-t border-border-soft px-2 py-1.5">
         <LikeButton id={request.id} likeCount={request.likeCount} contentType="request" />
         <CommentCountLink requestId={request.id} baseCount={request.commentCount} />
-        <Link href={href} className={contentActionClassName(false)} title="Yanıtlar" aria-label={`Yanıtlar (${formatCount(request.responseCount)})`}>
+        <Link href={href} className={contentActionClassName(false)} title={t("request.replies")} aria-label={`${t("request.replies")} (${formatCount(request.responseCount)})`}>
           <Reply size={16} strokeWidth={1.75} />
           <span aria-hidden>{formatCount(request.responseCount)}</span>
         </Link>

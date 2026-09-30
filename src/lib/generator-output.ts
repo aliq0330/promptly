@@ -40,6 +40,7 @@
  */
 
 import { isFieldVisible, type GeneratorValidationIssue } from "./generator-template";
+import { translateForRuntime } from "@/lib/i18n/translations";
 import type { GeneratorField, GeneratorOutput, GeneratorSchema, GeneratorValues } from "@/types";
 
 const PATH_SEGMENT_PATTERN = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
@@ -240,7 +241,7 @@ export function previewValueForField(field: GeneratorField): unknown {
       const def = Array.isArray(field.defaultValue) ? "" : field.defaultValue;
       if (def.trim()) return def;
       if ((field.type === "select" || field.type === "radio") && field.options.length > 0) return field.options[0].value;
-      return "değer";
+      return translateForRuntime("field.previewFallbackValue");
     }
   }
 }
@@ -293,15 +294,15 @@ export function validateGeneratorOutputMapping(schema: GeneratorSchema): Generat
 
   for (const field of schema.fields) {
     const rawPath = field.jsonPath?.trim() || field.key;
-    const label = field.label || field.key || "(adsız alan)";
+    const label = field.label || field.key || translateForRuntime("field.unnamedField");
     if (!rawPath) {
-      issues.push({ level: "error", message: `"${label}" alanının çıktı JSON yolu boş olamaz.`, fieldId: field.id });
+      issues.push({ level: "error", message: translateForRuntime("field.outputPathEmpty", { label }), fieldId: field.id });
       continue;
     }
     if (!isValidJsonPath(rawPath)) {
       issues.push({
         level: "error",
-        message: `"${label}" alanının JSON yolu geçersiz — yalnızca harf, rakam, alt çizgi ve nokta kullanabilirsin (örn. subject.eye_color).`,
+        message: translateForRuntime("field.outputPathInvalid", { label }),
         fieldId: field.id,
       });
       continue;
@@ -311,7 +312,7 @@ export function validateGeneratorOutputMapping(schema: GeneratorSchema): Generat
     if (RESERVED_TOP_LEVEL_KEYS.has(segments[0])) {
       issues.push({
         level: "warning",
-        message: `"${label}" alanının JSON yolu ayrılmış "${segments[0]}" anahtarıyla başlıyor — bu değer, oluşturulan prompt metniyle değiştirilecek.`,
+        message: translateForRuntime("field.outputPathReserved", { label, segment: segments[0] }),
         fieldId: field.id,
       });
     }
@@ -325,7 +326,7 @@ export function validateGeneratorOutputMapping(schema: GeneratorSchema): Generat
     if (owners.length > 1) {
       issues.push({
         level: "warning",
-        message: `${owners.map((owner) => `"${owner}"`).join(", ")} alanları aynı JSON yoluna (${path}) yazıyor — yalnızca sonuncusu çıktıda görünecek.`,
+        message: translateForRuntime("field.outputPathConflict", { owners: owners.map((owner) => `"${owner}"`).join(", "), path }),
       });
     }
   }

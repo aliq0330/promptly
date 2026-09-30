@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { Avatar } from "@/components/ui/avatar";
 import { fetchContributorsForPrompt, type PromptContributor } from "@/lib/supabase/prompt-edit-suggestions";
 import { profileHref } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n/language-provider";
 
 /**
  * "Katkıda Bulunanlar" — rendered right next to the prompt owner's own
@@ -17,6 +18,7 @@ import { profileHref } from "@/lib/utils";
  * accepted — an honest, common case, not an error.
  */
 export function ContributorsPanel({ promptId }: { promptId: string }) {
+  const { t } = useTranslation();
   const [contributors, setContributors] = useState<PromptContributor[] | null>(null);
 
   useEffect(() => {
@@ -32,8 +34,8 @@ export function ContributorsPanel({ promptId }: { promptId: string }) {
   if (!contributors || contributors.length === 0) return null;
 
   return (
-    <section aria-label="Katkıda Bulunanlar" className="space-y-3 rounded-lg border border-border-soft bg-surface p-4">
-      <p className="text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">Katkıda Bulunanlar</p>
+    <section aria-label={t("contributors.title")} className="space-y-3 rounded-lg border border-border-soft bg-surface p-4">
+      <p className="text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">{t("contributors.title")}</p>
       <ul className="space-y-2.5">
         {contributors.map((contributor) => (
           <li key={contributor.proposer.id}>
@@ -45,8 +47,8 @@ export function ContributorsPanel({ promptId }: { promptId: string }) {
                 </span>
                 <span className="block truncate text-caption text-text-muted">
                   {contributor.contributionCount > 1
-                    ? `${contributor.contributionCount} düzenleme önerisi kabul edildi`
-                    : "Düzenleme önerisi kabul edildi"}
+                    ? t("contributors.acceptedCountPlural", { count: contributor.contributionCount })
+                    : t("contributors.acceptedSingular")}
                 </span>
               </span>
             </Link>

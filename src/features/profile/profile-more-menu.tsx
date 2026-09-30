@@ -5,6 +5,7 @@ import { Ban, MoreVertical } from "lucide-react";
 import { ReportButton } from "@/features/moderation/report-button";
 import { useBlockState } from "@/features/moderation/use-block-state";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n/language-provider";
 import type { UserProfile } from "@/types";
 
 /**
@@ -20,6 +21,7 @@ export function ProfileMoreMenu({
   user: UserProfile;
   blockState: ReturnType<typeof useBlockState>;
 }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [confirmingBlock, setConfirmingBlock] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -62,7 +64,7 @@ export function ProfileMoreMenu({
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
-        aria-label="Profil seçenekleri"
+        aria-label={t("profile.profileOptionsAriaLabel")}
         aria-haspopup="menu"
         aria-expanded={open}
         className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border bg-transparent text-text-muted transition-colors hover:bg-surface-soft hover:text-text"
@@ -85,10 +87,10 @@ export function ProfileMoreMenu({
             )}
           >
             <Ban size={14} />
-            {blockState.isBlocked ? "Engeli kaldır" : confirmingBlock ? "Emin misin? Tekrar tıkla" : "Engelle"}
+            {blockState.isBlocked ? t("profile.unblock") : confirmingBlock ? t("common.confirmDelete") : t("profile.block")}
           </button>
           <div className="border-t border-border pt-3">
-            <ReportButton targetType="user" targetId={user.id} label="Bu kullanıcıyı şikayet et" />
+            <ReportButton targetType="user" targetId={user.id} label={t("profile.reportThisUser")} />
           </div>
         </div>
       )}

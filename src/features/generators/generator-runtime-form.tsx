@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { isFieldVisible } from "@/lib/generator-template";
+import { useTranslation } from "@/lib/i18n/language-provider";
 import { GeneratorRuntimeField } from "./generator-runtime-field";
 import type { GeneratorSchema, GeneratorValues } from "@/types";
 
@@ -23,13 +24,14 @@ export function GeneratorRuntimeForm({
   values: GeneratorValues;
   onChange: (key: string, value: string | string[]) => void;
 }) {
+  const { t } = useTranslation();
   const fields = useMemo(
     () => [...schema.fields].sort((a, b) => a.order - b.order).filter((field) => isFieldVisible(field, values)),
     [schema, values],
   );
 
   if (schema.fields.length === 0) {
-    return <p className="text-sm text-text-muted">Bu generatorda henüz hiç alan yok.</p>;
+    return <p className="text-sm text-text-muted">{t("generator.noFieldsYet")}</p>;
   }
 
   return (
