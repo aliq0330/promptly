@@ -11384,19 +11384,48 @@ buraya bakılmalı):
     bilinçli Türkçe kaldı. Kasıtlı Türkçe veri dosyaları (katalog, aday
     etiketler, ikon/vision eşleme, interest-options, `/dev/*`) çevrilmedi.
     `tsc`, `lint` ve tam `next build` temiz.
-11. [ ] **Final 12 maddelik i18n teknik raporunun yazılması** — toplam
-    anahtar sayısı (öncesi/sonrası), değiştirilen bileşen/sayfa/modal
-    sayısı, çevrilen generator kataloğu string'leri (dürüstçe belirtilmesi
-    gereken bilinen boşluk: `src/lib/generator-field-catalog.ts`'teki
-    KATALOG VERİSİNİN kendisi — yani 26 kategori/~196 alanın etiket/
-    seçenek metinleri — bu görevin kapsamında HİÇ çevrilmedi, çünkü bunlar
-    Bölüm 9.30/9.48/9.53'ün kurduğu, `t()` çağırmayan, tamamen statik
-    Türkçe veri dosyasıdır; İngilizce modda bir generator oluştururken
-    hazır alan kütüphanesindeki kategori/alan/seçenek adları hâlâ Türkçe
-    görünecektir — bu, şartnamenin ne "kullanıcı içeriği" ne "UI metni"
-    kategorisine tam oturmayan, ayrı bir kapsam kararı gerektiren bir
-    alan), hata/toast/doğrulama string'leri, değiştirilen dosyalar, test
-    sonuçları, build sonucu. Henüz TAMAMLANMADI.
+11. [x] **Final i18n teknik raporu — TAMAMLANDI** (aşağıda).
+
+**Final i18n raporu (12 madde):**
+1. **Mimari:** Bölüm 9.49'un düz `key -> {tr, en}` sözlüğü, `LanguageProvider`/
+   `useTranslation()`/`t()` ve `promptly-language` localStorage tercihi
+   DEĞİŞTİRİLMEDİ; yeni kütüphane eklenmedi. Yalnızca ad alanlarına göre
+   yeni anahtarlar eklendi (`common.*`, `nav.*`, `prompt.*`, `request.*`,
+   `generator.*`, `profile.*`, `messages.*`, `collection.*`, `tag.*`,
+   `search.*`, `report.*`, `image.*` vb.).
+2. **Anahtar sayısı:** `translations.ts` artık yaklaşık 979 anahtar içeriyor
+   (Bölüm 9.49 sonunda yalnızca nav/header/settings kabuğu vardı).
+3. **Kapsam:** ~187 `src` dosyası değişti; generator, profil, mesajlaşma,
+   bildirimler, koleksiyonlar, auth, ortak UI, discover/following/requests/
+   saved/tags/search sayfaları, modallar ve `lib/supabase/*` hata
+   mesajları çevrildi.
+4. **Yeni yardımcılar:** `translateForRuntime()` (React dışı kod),
+   dile duyarlı `formatRelativeTime`, `getRuntimeLanguage()`; değer/etiket
+   ayrımı için `INTEREST_OPTION_LABELS` gibi `Record<Value, TranslationKey>`
+   haritaları.
+5. **Hata/toast/doğrulama metinleri:** `lib/supabase/*.ts` (14 dosya),
+   `lib/utils.ts` görsel hataları, `auth-errors.ts`, `image-analysis.ts`
+   (`friendlyMessages()` fonksiyona çevrildi) dile duyarlı.
+6. **Bu denetimde bulunup düzeltilen gerçek hatalar:** paylaşılan istek
+   kartında çevrilmemiş ham anahtar görünmesi; eksik `language` argümanlı
+   `formatRelativeTime` çağrıları; `useCallback` deps'inde eksik `t`.
+7. **Bilinçli Türkçe bırakılanlar:** kod yorumları, `client.ts` env hatası,
+   `console.error` teşhis logları, dil seçicideki "Türkçe"/"English",
+   `layout.tsx` statik SEO açıklaması, kullanıcı içeriği, marka/teknik adlar.
+8. **AÇIK BOŞLUK — generator kataloğu:** `generator-field-catalog.ts`
+   (26 kategori/~196 alan/29 paket), `tag-candidates.ts`, ikon/vision
+   eşlemeleri statik Türkçe veri dosyalarıdır; İngilizce modda hazır alan
+   kütüphanesindeki kategori/alan/seçenek adları hâlâ Türkçe görünür.
+9. **AÇIK BOŞLUK — bildirim metinleri:** `notifications.message` SQL
+   trigger'larında sunucu tarafında Türkçe üretiliyor; istemci `t()` ile
+   çevrilemez, backend değişikliği (yapılandırılmış `{type, params}`)
+   gerekir. Yapılamadı.
+10. **Diğer kapsam dışı:** `/dev/*` test sayfaları.
+11. **Test:** `npx tsc --noEmit`, `npm run lint` ve tam `next build`
+    (26 statik rota) temiz. Tarayıcıda uçtan uca İngilizce/Türkçe geçiş
+    taraması bu sandbox'ta (Supabase erişimi yok) yeni yazılmadı.
+12. **Sonraki öneri:** katalog verisini `{tr,en}` çiftli hale getirmek ve
+    bildirimleri yapılandırılmış şekle taşımak (ayrı görevler).
 
 **Bilinen, kapsam dışı bırakılan boşluk (raporda dürüstçe belirtilecek):**
 `AppNotification.message`, SQL migration trigger'ları (Bölüm 9.6/9.12'nin
@@ -11408,7 +11437,5 @@ istemcinin kendi `t()` ile render etmesi gibi) ayrı bir değişiklik
 gerektirir. Bu görevin kapsamına alınmadı, sessizce atlanmadı — raporda
 açıkça "yapılamadı" diye işaretlenecek.
 
-**Sonraki adım:** Madde 9 (formatRelativeTime son tarama) ve Madde 10
-(repo geneli grep + build doğrulaması) sırayla yapılacak, her biri
-tamamlandığında ayrı bir commit+push ile kaydedilecek, ardından Madde 11
-(final rapor) yazılıp bu bölüme eklenecek.
+**Sonraki adım:** i18n görevi (Madde 1-11) tamamlandı; açık boşluklar
+yukarıda 8-9. maddelerde.
