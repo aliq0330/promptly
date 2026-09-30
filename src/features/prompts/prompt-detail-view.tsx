@@ -99,11 +99,11 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
             </div>
             <h1 className="text-h1 font-semibold text-text">{prompt.title}</h1>
             {prompt.description && <p className="max-w-2xl text-body text-text-secondary">{prompt.description}</p>}
-            <Link href={profileHref(prompt.author)} className="group inline-flex items-center gap-2.5 rounded-md">
+            <Link href={profileHref(prompt.author)} className="group inline-flex max-w-full items-center gap-2.5 rounded-md">
               <Avatar src={prompt.author.avatarUrl} alt={prompt.author.displayName} size={32} />
-              <span className="leading-tight">
-                <span className="block text-label font-semibold text-text group-hover:text-primary">{prompt.author.displayName}</span>
-                <span className="block text-caption text-text-muted">
+              <span className="min-w-0 leading-tight">
+                <span className="block truncate text-label font-semibold text-text group-hover:text-primary">{prompt.author.displayName}</span>
+                <span className="block truncate text-caption text-text-muted">
                   @{prompt.author.username} · {formatRelativeTime(prompt.createdAt, language)}
                 </span>
               </span>
