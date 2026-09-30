@@ -72,7 +72,7 @@ export function RealRequestsProvider({ children }: { children: React.ReactNode }
     async (input: CreateRealRequestInput, authorProfile: UserProfile) => {
       if (!user) throw new Error(t("request.loginRequiredToPublish"));
       const request = await createRealRequest(input, user.id, authorProfile);
-      setRealRequests((prev) => [request, ...prev]);
+      if (!request.isDraft) setRealRequests((prev) => [request, ...prev]);
       return request;
     },
     [user, t],
@@ -80,7 +80,10 @@ export function RealRequestsProvider({ children }: { children: React.ReactNode }
 
   const updateRequest = useCallback(async (id: string, input: UpdateRealRequestInput) => {
     const request = await updateRealRequest(id, input);
-    setRealRequests((prev) => (prev.some((r) => r.id === id) ? prev.map((r) => (r.id === id ? request : r)) : prev));
+    setRealRequests((prev) => {
+      if (prev.some((r) => r.id === id)) return prev.map((r) => (r.id === id ? request : r));
+      return input.publish ? [request, ...prev] : prev;
+    });
     return request;
   }, []);
 

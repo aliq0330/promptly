@@ -7,5 +7,5 @@ import { GeneratorBuilder } from "./generator-builder";
 export function GeneratorCreateGate() {
   const searchParams = useSearchParams();
   const editId = searchParams.get("edit");
-  return <GeneratorBuilder editId={editId} />;
+  return <GeneratorBuilder key={editId ?? "new"} editId={editId} />;
 }

@@ -33,6 +33,7 @@ export interface RequestRow {
   comment_count: number;
   created_at: string;
   deleted_at: string | null;
+  is_draft: boolean;
   profiles: ProfileRow;
   prompt_request_tags: { tags: { slug: string; label: string } }[];
 }
@@ -40,7 +41,7 @@ export interface RequestRow {
 export const REQUEST_SELECT = `
   id, title, description, creative_direction, preferred_tool, tools, content_type, category, subcategory,
   reference_image_url, reference_image_width, reference_image_height,
-  status, selected_response_prompt_id, response_count, like_count, comment_count, created_at, deleted_at,
+  status, selected_response_prompt_id, response_count, like_count, comment_count, created_at, deleted_at, is_draft,
   profiles:author_id ( id, username, display_name, avatar_url, cover_url, bio, website, follower_count, following_count, created_at, interests ),
   prompt_request_tags ( tags ( slug, label ) )
 `;
@@ -54,7 +55,7 @@ export const REQUEST_SELECT = `
  * instead of a generic "not found".
  */
 function filterNotDeleted(requests: PromptRequest[]): PromptRequest[] {
-  return requests.filter((request) => !request.deletedAt);
+  return requests.filter((request) => !request.deletedAt && !request.isDraft);
 }
 
 export function mapRequestRow(row: RequestRow): PromptRequest {
@@ -88,6 +89,7 @@ export function mapRequestRow(row: RequestRow): PromptRequest {
     createdAt: row.created_at,
     selectedResponsePromptId: row.selected_response_prompt_id ?? undefined,
     deletedAt: row.deleted_at,
+    isDraft: row.is_draft ?? false,
   };
 }
 
@@ -184,6 +186,8 @@ export interface CreateRealRequestInput {
   tagSources?: Record<string, "manual" | "automatic">;
   /** A real uploaded file, when the requester picked one. */
   imageFile: File | null;
+  /** Saves as a private draft (`is_draft = true`) instead of publishing. */
+  isDraft?: boolean;
 }
 
 /**
@@ -224,6 +228,7 @@ export async function createRealRequest(
       reference_image_url: referenceImage?.url ?? null,
       reference_image_width: referenceImage?.width ?? null,
       reference_image_height: referenceImage?.height ?? null,
+      is_draft: input.isDraft ?? false,
     })
     .select("id, created_at")
     .single();
@@ -264,6 +269,7 @@ export async function createRealRequest(
     commentCount: 0,
     createdAt: inserted.created_at,
     deletedAt: null,
+    isDraft: input.isDraft ?? false,
   };
 }
 
@@ -278,6 +284,8 @@ export interface UpdateRealRequestInput {
   tools?: string[];
   tags: Tag[];
   tagSources?: Record<string, "manual" | "automatic">;
+  /** Publishes a draft (`is_draft` → false) once everything else is saved; the database then restarts `created_at` and counts its tags. */
+  publish?: boolean;
 }
 
 /**
@@ -321,6 +329,12 @@ export async function updateRealRequest(requestId: string, input: UpdateRealRequ
         source: input.tagSources?.[tag.slug] ?? "manual",
       })),
     );
+  }
+
+  if (input.publish) {
+    // Last on purpose: the publish trigger counts the tags written above.
+    const { error: publishError } = await supabase.from("prompt_requests").update({ is_draft: false }).eq("id", requestId).eq("is_draft", true);
+    if (publishError) throw new Error(publishError.message);
   }
 
   const fresh = await fetchRequestById(requestId);

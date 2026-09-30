@@ -22,6 +22,7 @@ import { validateGeneratorOutputMapping } from "@/lib/generator-output";
 import type { CleanSuggestedField } from "@/lib/generator-vision-mapping";
 import type { CatalogField } from "@/lib/generator-field-catalog";
 import { cn, generatorHref } from "@/lib/utils";
+import { KindDraftsButton } from "@/features/drafts/kind-drafts-button";
 import {
   createDraftGenerator,
   fetchGeneratorById,
@@ -473,6 +474,7 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
         {generator && generator.status === "published" && (
           <p className="text-xs text-text-muted">{t("generator.publishedEditsHint")}</p>
         )}
+        <KindDraftsButton kind="generator" />
       </div>
 
       <div

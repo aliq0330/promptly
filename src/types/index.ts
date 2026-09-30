@@ -232,6 +232,8 @@ export interface PromptRequest {
    * real, permanent DELETE — this field never gets set for it.
    */
   deletedAt: string | null;
+  /** `prompt_requests.is_draft` — a private draft only its author can see; drafts never appear in any list but the author's own "Taslaklar". */
+  isDraft?: boolean;
 }
 
 export type NotificationType =
