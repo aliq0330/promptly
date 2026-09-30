@@ -7,6 +7,7 @@ import { Blocks, Heart, SearchX, Sparkles, Workflow as WorkflowIcon } from "luci
 import { ProfileHeader } from "./profile-header";
 import { ProfileTabs, type ProfileTabKey } from "./profile-tabs";
 import { Tabs } from "@/components/ui/tabs";
+import { ContributionMap } from "./contribution-map";
 import { ProfileToolbar, type ProfileSortKey } from "./profile-toolbar";
 import { ProfileContentGrid } from "./profile-content-grid";
 import { ProfileEmptyState } from "./profile-empty-state";
@@ -197,6 +198,8 @@ export function ProfileView({
         postCounts={postCounts}
         onSelectPosts={() => setActiveTab("posts")}
       />
+
+      <ContributionMap userId={user.id} />
 
       <ProfileTabs tabs={tabs} active={activeTab} onChange={setActiveTab} />
 

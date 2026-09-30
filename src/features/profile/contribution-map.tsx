@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useAuth } from "@/features/auth/auth-provider";
 import { useLanguage } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
 import { dayKey, fetchContributionCounts } from "@/lib/supabase/contributions";
@@ -20,10 +19,9 @@ function levelFor(count: number): number {
 /**
  * GitHub-style post map: one dot per day for the last 6 months, columns
  * are weeks (Monday first), darker = more posts that day. Counts the
- * signed-in user's own published prompts, requests, generators and workflows.
+ * profile owner's published prompts, requests, generators and workflows.
  */
-export function ContributionMap() {
-  const { user } = useAuth();
+export function ContributionMap({ userId }: { userId: string }) {
   const { t, language } = useLanguage();
   const [counts, setCounts] = useState<Record<string, number>>({});
 
@@ -48,9 +46,7 @@ export function ContributionMap() {
     return { weeks: cols, start: from, todayKey: dayKey(today) };
   }, []);
 
-  const userId = user?.id;
   useEffect(() => {
-    if (!userId) return;
     let cancelled = false;
     fetchContributionCounts(userId, start).then((result) => {
       if (!cancelled) setCounts(result);
@@ -59,8 +55,6 @@ export function ContributionMap() {
       cancelled = true;
     };
   }, [userId, start]);
-
-  if (!user) return null;
 
   const total = Object.values(counts).reduce((sum, n) => sum + n, 0);
   const locale = language === "tr" ? "tr-TR" : "en-US";

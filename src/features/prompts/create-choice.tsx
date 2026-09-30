@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { ArrowRight, Blocks, Sparkles, SquareTerminal, Workflow } from "lucide-react";
-import { ContributionMap } from "@/features/profile/contribution-map";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
 
@@ -74,10 +73,6 @@ export function CreateChoice() {
             <span className="mt-auto pt-1 text-caption font-medium text-text-secondary">{t(option.hintKey)}</span>
           </Link>
         ))}
-      </div>
-
-      <div className="mt-8">
-        <ContributionMap />
       </div>
     </div>
   );
