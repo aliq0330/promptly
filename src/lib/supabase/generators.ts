@@ -1,3 +1,4 @@
+import { normalizeToolRefs } from "@/lib/ai-tool-catalog";
 import { supabase } from "./client";
 import { translateForRuntime } from "@/lib/i18n/translations";
 import { mapProfileRow, type ProfileRow } from "./mappers";
@@ -35,6 +36,7 @@ export interface GeneratorRow {
   slug: string;
   description: string;
   cover_url: string | null;
+  tools: string[] | null;
   content_type: string;
   category: string | null;
   subcategory: string | null;
@@ -55,7 +57,7 @@ export interface GeneratorRow {
 }
 
 export const GENERATOR_SELECT = `
-  id, creator_id, title, slug, description, cover_url, content_type, category, subcategory,
+  id, creator_id, title, slug, description, cover_url, tools, content_type, category, subcategory,
   visibility, status, allow_prompt_editing, allow_saving_generated_prompts,
   enable_negative_prompt,
   current_version_id, use_count, save_count, like_count, comment_count, created_at, updated_at,
@@ -72,6 +74,7 @@ export function mapGeneratorRow(row: GeneratorRow): Generator {
     slug: row.slug,
     description: row.description,
     coverUrl: row.cover_url,
+    tools: normalizeToolRefs(row.tools),
     contentType: normalizeLegacyContentType(row.content_type).contentType,
     ...sanitizeTaxonomy(normalizeLegacyContentType(row.content_type).contentType, row.category, row.subcategory),
     tags,
@@ -283,6 +286,7 @@ export interface GeneratorMetaInput {
   title: string;
   description: string;
   coverUrl: string | null;
+  tools: string[];
   contentType: PromptContentType;
   category: string | null;
   subcategory: string | null;
@@ -314,6 +318,7 @@ export async function createDraftGenerator(
       slug,
       description: meta.description.trim(),
       cover_url: meta.coverUrl,
+      tools: meta.tools,
       content_type: meta.contentType,
       ...taxonomyColumns(meta.contentType, meta.category, meta.subcategory),
       visibility: meta.visibility,
@@ -356,6 +361,7 @@ export async function createDraftGenerator(
     slug,
     description: meta.description.trim(),
     coverUrl: meta.coverUrl,
+    tools: meta.tools,
     contentType: meta.contentType,
     ...sanitizeTaxonomy(meta.contentType, meta.category, meta.subcategory),
     tags: meta.tags,
@@ -391,6 +397,7 @@ export async function updateGeneratorMeta(generatorId: string, meta: GeneratorMe
       title: meta.title.trim(),
       description: meta.description.trim(),
       cover_url: meta.coverUrl,
+      tools: meta.tools,
       content_type: meta.contentType,
       ...taxonomyColumns(meta.contentType, meta.category, meta.subcategory),
       visibility: meta.visibility,

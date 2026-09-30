@@ -1,5 +1,6 @@
 "use client";
 
+import { ToolChips } from "@/features/content/tool-chips";
 import Image from "next/image";
 import { clampedAspectRatio } from "@/lib/placeholder-image";
 import { promptHref } from "@/lib/utils";
@@ -60,7 +61,7 @@ export function PromptCard({
         {prompt.generatedFrom && <GeneratorSourceContext generatedFrom={prompt.generatedFrom} />}
 
         <div className="space-y-2">
-          <ContentTypeLabel icon={meta.icon} label={`${t(meta.labelKey)} Prompt`} detail={prompt.tool} />
+          <ContentTypeLabel icon={meta.icon} label={`${t(meta.labelKey)} Prompt`} detail={prompt.tools.length ? null : prompt.tool} />
           <ContentCardTitle href={href} title={prompt.title} description={prompt.description} />
         </div>
 
@@ -81,6 +82,7 @@ export function PromptCard({
           </figure>
         )}
 
+        <ToolChips refs={prompt.tools} />
         <ContentTags tags={prompt.tags} />
       </ContentCardBody>
 

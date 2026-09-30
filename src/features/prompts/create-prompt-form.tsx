@@ -1,4 +1,5 @@
 "use client";
+import { ToolPicker } from "@/features/content/tool-picker";
 
 import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 import Link from "next/link";
@@ -24,12 +25,6 @@ import { cn, copyTextToClipboard, generatorHref, promptHref, requestHref, resize
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Generator, GeneratorRun, Prompt, PromptContentType, PromptRequest } from "@/types";
 
-const TOOL_SUGGESTIONS: Record<PromptContentType, string[]> = {
-  image: ["Midjourney v6", "Stable Diffusion XL", "DALL-E 3", "NovelAI"],
-  text: ["Claude", "GPT-4", "Claude Code"],
-  audio: ["Suno", "Udio", "ElevenLabs"],
-  video: ["Sora", "Runway Gen-3"],
-};
 
 function LoginGate({ message }: { message: string }) {
   const { t } = useTranslation();
@@ -203,7 +198,9 @@ export function CreatePromptForm() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [promptText, setPromptText] = useState("");
+  // Legacy free-text tool: only carried through unchanged; the picker below writes `tools`.
   const [tool, setTool] = useState("");
+  const [tools, setTools] = useState<string[]>([]);
   // CLAUDE.md §12: answering a request must NOT just copy the request's own
   // tags — they're only passed as soft `contextTags` (nudge into the
   // `suggested` tier, never auto-accepted); the answer's own title/prompt
@@ -238,6 +235,7 @@ export function CreatePromptForm() {
       setDescription(editingPrompt.description);
       setPromptText(editingPrompt.promptText);
       setTool(editingPrompt.tool ?? "");
+      setTools(editingPrompt.tools ?? []);
       if (editingPrompt.origin.type === "request-response") {
         setShowOnProfile(editingPrompt.showOnProfile);
       }
@@ -263,6 +261,7 @@ export function CreatePromptForm() {
       setDescription(duplicateSource.description);
       setPromptText(duplicateSource.promptText);
       setTool(duplicateSource.tool ?? "");
+      setTools(duplicateSource.tools ?? []);
       duplicateSource.tags.forEach((tag) => tagPicker.addManual(tag));
       setFieldsSeeded(true);
       return;
@@ -272,6 +271,7 @@ export function CreatePromptForm() {
       setCategory(answeredRequest.category);
       setSubcategory(answeredRequest.subcategory);
       setTool(answeredRequest.preferredTool ?? "");
+      setTools(answeredRequest.tools ?? []);
       // Deliberately NOT copying answeredRequest.tags here (CLAUDE.md §12)
       // — they're fed into useTagPicker as contextTags instead, which only
       // nudges the suggested tier; the answer's own live analysis (title +
@@ -392,6 +392,7 @@ export function CreatePromptForm() {
           description,
           promptText,
           tool: tool || null,
+          tools,
           category,
           subcategory,
           tags: tagPicker.accepted.map((entry) => entry.tag),
@@ -417,6 +418,7 @@ export function CreatePromptForm() {
           description,
           promptText,
           tool: tool || null,
+          tools,
           contentType,
           category,
           subcategory,
@@ -461,6 +463,7 @@ export function CreatePromptForm() {
     description: description || t("prompt.noDescriptionAdded"),
     promptText: promptText || t("prompt.promptTextPlaceholderPreview"),
     tool: tool || null,
+          tools,
     contentType,
     category,
     subcategory,
@@ -782,25 +785,13 @@ export function CreatePromptForm() {
             <NegativePromptReference text={generatorRun.generatedNegativePrompt} />
           )}
 
-          <div>
-            <label htmlFor="prompt-tool" className="mb-1.5 block text-sm font-medium text-text">
-              {t("forms.toolModel")} <span className="text-text-muted">({t("common.optional")})</span>
-            </label>
-            <input
-              id="prompt-tool"
-              list="tool-suggestions"
-              type="text"
-              value={tool}
-              onChange={(event) => setTool(event.target.value)}
-              placeholder={t("forms.toolModelPlaceholder")}
-              className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted"
-            />
-            <datalist id="tool-suggestions">
-              {TOOL_SUGGESTIONS[contentType].map((suggestion) => (
-                <option key={suggestion} value={suggestion} />
-              ))}
-            </datalist>
-          </div>
+          <ToolPicker
+            label={t("tool.recommendedLabel")}
+            value={tools}
+            onChange={setTools}
+            contentType={contentType}
+            category={category}
+          />
 
           <div>
             <label className="mb-2 block text-sm font-medium text-text">{t("forms.tags")}</label>

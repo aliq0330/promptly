@@ -1,5 +1,6 @@
 "use client";
 
+import { ToolPicker } from "@/features/content/tool-picker";
 import { useState } from "react";
 import { Image as ImageIcon, X } from "lucide-react";
 import { TagPicker } from "@/features/prompts/tag-picker";
@@ -84,6 +85,14 @@ export function GeneratorDetailsForm({
       <TaxonomyPicker
         value={{ contentType: meta.contentType, category: meta.category, subcategory: meta.subcategory }}
         onChange={(next) => onChange({ contentType: next.contentType, category: next.category, subcategory: next.subcategory })}
+      />
+
+      <ToolPicker
+        label={t("tool.recommendedLabel")}
+        value={meta.tools}
+        onChange={(next) => onChange({ tools: next })}
+        contentType={meta.contentType}
+        category={meta.category}
       />
 
       <div>

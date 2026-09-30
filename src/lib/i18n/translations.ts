@@ -458,6 +458,13 @@ export const translations = {
   // ---- Generic form field labels ----
   "forms.title": { tr: "Başlık", en: "Title" },
   "forms.shortDescription": { tr: "Kısa Açıklama", en: "Short Description" },
+  "tool.add": { tr: "Araç ekle", en: "Add tool" },
+  "tool.pickerTitle": { tr: "Araç / model seç", en: "Choose tools / models" },
+  "tool.maxHint": { tr: "En fazla {{max}} araç seçebilirsin.", en: "You can pick up to {{max}} tools." },
+  "tool.search": { tr: "Araç veya model ara", en: "Search tools or models" },
+  "tool.noResults": { tr: "Eşleşen araç yok.", en: "No matching tools." },
+  "tool.recommendedLabel": { tr: "Tavsiye edilen araç/model", en: "Recommended tool/model" },
+  "tool.preferredLabel": { tr: "Tercih edilen araç/model", en: "Preferred tool/model" },
   "forms.toolModel": { tr: "Araç / Model", en: "Tool / Model" },
   "forms.toolModelPlaceholder": { tr: "Örn. Midjourney v6", en: "e.g. Midjourney v6" },
   "forms.tags": { tr: "Etiketler", en: "Tags" },

@@ -1,3 +1,4 @@
+import { normalizeToolRefs } from "@/lib/ai-tool-catalog";
 import { supabase } from "./client";
 import { placeholderArt } from "@/lib/placeholder-image";
 import { resizeImageToBlob } from "@/lib/utils";
@@ -19,6 +20,7 @@ export interface PromptRow {
   description: string;
   prompt_text: string;
   tool: string | null;
+  tools: string[] | null;
   content_type: string;
   category: string | null;
   subcategory: string | null;
@@ -41,7 +43,7 @@ export interface PromptRow {
 }
 
 export const PROMPT_SELECT = `
-  id, title, description, prompt_text, tool, content_type, category, subcategory, status,
+  id, title, description, prompt_text, tool, tools, content_type, category, subcategory, status,
   origin_type, request_id,
   like_count, comment_count, created_at, show_on_profile,
   deleted_at, generator_id, generator_version_id, generator_run_id,
@@ -102,6 +104,7 @@ export function mapPromptRow(row: PromptRow): Prompt {
     description: row.description,
     promptText: row.prompt_text,
     tool: row.tool,
+    tools: normalizeToolRefs(row.tools),
     contentType,
     ...sanitizeTaxonomy(contentType, row.category ?? category, row.subcategory),
     media,
@@ -298,6 +301,7 @@ export interface CreateRealPromptInput {
   description: string;
   promptText: string;
   tool: string | null;
+  tools?: string[];
   contentType: PromptContentType;
   category?: string | null;
   subcategory?: string | null;
@@ -342,6 +346,7 @@ export async function createRealPrompt(
       description: input.description.trim(),
       prompt_text: input.promptText.trim(),
       tool: input.tool,
+      tools: input.tools ?? [],
       content_type: input.contentType,
       ...taxonomyColumns(input.contentType, input.category, input.subcategory),
       status: "published",
@@ -432,6 +437,7 @@ export async function createRealPrompt(
     description: input.description.trim(),
     promptText: input.promptText.trim(),
     tool: input.tool,
+    tools: input.tools ?? [],
     contentType: input.contentType,
     ...sanitizeTaxonomy(input.contentType, input.category, input.subcategory),
     media,
@@ -467,6 +473,7 @@ export interface UpdateRealPromptInput {
   description: string;
   promptText: string;
   tool: string | null;
+  tools?: string[];
   tags: Tag[];
   tagSources?: Record<string, "manual" | "automatic">;
   /** A real newly-uploaded file, if the owner chose to replace the image — `undefined`/`null` leaves the existing media untouched (unlike creation, editing never invents a placeholder image in its place). Only meaningful for `contentType === "image"`. */
@@ -499,6 +506,7 @@ export async function updateRealPrompt(promptId: string, authorId: string, input
       description: input.description.trim(),
       prompt_text: input.promptText.trim(),
       tool: input.tool,
+      ...(input.tools === undefined ? {} : { tools: input.tools }),
       ...(input.category === undefined ? {} : { category: input.category, subcategory: input.subcategory ?? null }),
       ...(input.showOnProfile === undefined ? {} : { show_on_profile: input.showOnProfile }),
     })
