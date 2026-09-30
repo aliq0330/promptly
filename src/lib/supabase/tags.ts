@@ -1,4 +1,5 @@
 import { supabase } from "./client";
+import { translateForRuntime } from "@/lib/i18n/translations";
 import { PROMPT_SELECT, mapPromptRow, type PromptRow } from "./prompts";
 import { normalizeTagLabel } from "@/lib/tag-normalize";
 import type { Prompt, PromptRequest, Tag } from "@/types";
@@ -163,7 +164,7 @@ export function findExistingTagByLabel(catalog: Tag[], label: string): Tag | nul
  */
 export async function getOrCreateTag(label: string): Promise<Tag> {
   const { data, error } = await supabase.rpc("get_or_create_tag", { p_label: label });
-  if (error || !data) throw new Error(error?.message ?? "Etiket oluşturulamadı.");
+  if (error || !data) throw new Error(error?.message ?? translateForRuntime("tag.createFailed"));
   const row = data as { slug: string; label: string };
   return { slug: row.slug, label: row.label };
 }

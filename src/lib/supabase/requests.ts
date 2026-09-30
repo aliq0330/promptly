@@ -1,5 +1,6 @@
 import { supabase } from "./client";
 import { resizeImageToBlob } from "@/lib/utils";
+import { translateForRuntime } from "@/lib/i18n/translations";
 import { mapProfileRow, type ProfileRow } from "./mappers";
 import type { PromptContentType, PromptRequest, PromptRequestStatus, Tag } from "@/types";
 
@@ -189,7 +190,7 @@ export async function createRealRequest(
     .single();
 
   if (insertError || !inserted) {
-    throw new Error(insertError?.message ?? "İstek kaydedilemedi.");
+    throw new Error(insertError?.message ?? translateForRuntime("request.saveFailed"));
   }
 
   const requestId = inserted.id as string;
@@ -262,7 +263,7 @@ export async function updateRealRequest(requestId: string, input: UpdateRealRequ
     .maybeSingle();
 
   if (updateError) throw new Error(updateError.message);
-  if (!updated) throw new Error("Bu isteği düzenleme yetkin yok.");
+  if (!updated) throw new Error(translateForRuntime("request.noEditPermission"));
 
   await supabase.from("prompt_request_tags").delete().eq("request_id", requestId);
   if (input.tags.length > 0) {
@@ -276,7 +277,7 @@ export async function updateRealRequest(requestId: string, input: UpdateRealRequ
   }
 
   const fresh = await fetchRequestById(requestId);
-  if (!fresh) throw new Error("İstek güncellendi ama yeniden yüklenemedi.");
+  if (!fresh) throw new Error(translateForRuntime("request.updatedButReloadFailed"));
   return fresh;
 }
 
@@ -333,7 +334,7 @@ export async function selectRealRequestResponse(
     p_request_id: requestId,
     p_response_prompt_id: promptId,
   });
-  if (error || !data) throw new Error(error?.message ?? "Yanıt seçilemedi.");
+  if (error || !data) throw new Error(error?.message ?? translateForRuntime("request.responseSelectFailed"));
   const row = data as { status: PromptRequestStatus; selected_response_prompt_id: string | null };
   return { status: row.status, selectedResponsePromptId: row.selected_response_prompt_id ?? undefined };
 }

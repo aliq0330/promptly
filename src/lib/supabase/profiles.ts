@@ -1,5 +1,6 @@
 import { supabase } from "./client";
 import { resizeImageToSquareBlob } from "@/lib/utils";
+import { translateForRuntime } from "@/lib/i18n/translations";
 import type { UserProfile } from "@/types";
 import { mapProfileRow, type ProfileRow } from "./mappers";
 
@@ -173,7 +174,7 @@ export async function updateOwnProfile(userId: string, input: UpdateOwnProfileIn
     .select(PROFILE_SELECT)
     .single();
 
-  if (error || !data) throw new Error(error?.message ?? "Profil güncellenemedi.");
+  if (error || !data) throw new Error(error?.message ?? translateForRuntime("profile.updateFailed"));
   return mapProfileRow(data as ProfileRow);
 }
 

@@ -1,4 +1,5 @@
 import { supabase } from "./client";
+import { translateForRuntime } from "@/lib/i18n/translations";
 
 export type ReportTargetType = "prompt" | "comment" | "request" | "user" | "message";
 
@@ -16,7 +17,7 @@ export async function fileReport(
   reason: string,
 ): Promise<void> {
   const trimmed = reason.trim();
-  if (!trimmed) throw new Error("Bir şikayet nedeni yazmalısın.");
+  if (!trimmed) throw new Error(translateForRuntime("report.reasonRequired"));
   const { error } = await supabase.from("reports").insert({
     reporter_id: reporterId,
     target_type: targetType,

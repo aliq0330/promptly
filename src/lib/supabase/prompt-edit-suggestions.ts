@@ -1,4 +1,5 @@
 import { supabase } from "./client";
+import { translateForRuntime } from "@/lib/i18n/translations";
 import { mapProfileRow, type ProfileRow } from "./mappers";
 import type { PromptEditSuggestion, UserProfile } from "@/types";
 
@@ -167,7 +168,7 @@ export async function proposeEditSuggestion(
   });
   if (error) {
     if (error.code === "23505") {
-      throw new Error("Zaten bekleyen bir düzenleme önerin var.");
+      throw new Error(translateForRuntime("prompt.alreadyHasPendingSuggestion"));
     }
     throw new Error(error.message);
   }

@@ -1,4 +1,5 @@
 import { supabase } from "./client";
+import { translateForRuntime } from "@/lib/i18n/translations";
 import { mapProfileRow, type ProfileRow } from "./mappers";
 import { audioPlaceholderCover, captureVideoPosterBlob, detectMediaTypeFromFile, prepareImageResultUploads } from "@/lib/prompt-result-media";
 import type { PromptResult, PromptResultMediaType, PromptResultSummary } from "@/types";
@@ -220,7 +221,7 @@ export async function createPromptResult(input: CreatePromptResultInput, creator
   if (input.file) {
     const detected = detectMediaTypeFromFile(input.file);
     if (!detected) {
-      throw new Error("Bu dosya türü şu an desteklenmiyor. Lütfen görsel, video veya ses dosyası yükle.");
+      throw new Error(translateForRuntime("result.unsupportedFileType"));
     }
     mediaType = detected;
 
@@ -277,7 +278,7 @@ export async function createPromptResult(input: CreatePromptResultInput, creator
     mediaType = "text";
     textContent = trimmedText;
   } else {
-    throw new Error("Bir dosya yükle veya paylaşacağın metni gir.");
+    throw new Error(translateForRuntime("result.needFileOrText"));
   }
 
   // Destructured into its own local const — a plain `input.source.xxx`

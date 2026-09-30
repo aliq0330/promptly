@@ -11218,3 +11218,256 @@ uyulmalı; hex renk ya da sayfaya özel yeni kart/buton stili eklenmemeli.
 Bundan sonraki bir modül için: bu dosyanın başındaki
 kurala uyarak önce mevcut mimari denetlenmeli, yalnızca gerçek eksikler
 kapatılmalı.
+
+### 9.56 Kapsamlı Türkçe → İngilizce i18n Denetimi ve Uygulaması (devam ediyor)
+
+Kullanıcının "PROMPTLY — COMPLETE TURKISH → ENGLISH I18N AUDIT &
+IMPLEMENTATION" başlıklı, 42 maddelik kapsamlı şartnamesi üzerine —
+**"İngilizce seçildiğinde site tamamen İngilizce olmalı; yalnızca sidebar/
+header/settings İngilizce olup içerik sayfalarının Türkçe kalması KABUL
+EDİLMEZ"** kuralı bağlayıcı. Bu, Bölüm 9.49'un kurduğu dil altyapısını
+(`LanguageProvider`/`useLanguage()`/`useTranslation()`/`t()`/
+`TranslationKey`, `promptly-language` localStorage anahtarı, `<html lang>`,
+`languageInitScript`) **DEĞİŞTİRMEDEN**, yalnızca genişleterek yapılıyor —
+yeni bir i18n kütüphanesi eklenmedi, mevcut düz `key -> {tr, en}` mimarisi
+(`src/lib/i18n/translations.ts`) korunuyor, yalnızca ad alanına göre
+gruplanmış (`common.*`, `nav.*`, `prompt.*`, `request.*`, `generator.*`,
+`field.*`, `profile.*`, `messages.*`, `notifications.*`, `collection.*`,
+`auth.*`, `discover.*`, `following.*`, `saved.*`, `result.*`, `variable.*`,
+`tag.*`, `report.*`, `vision.*` vb.) yeni anahtarlar ekleniyor.
+
+**Bağlayıcı kurallar (şartnameden):**
+- Kullanıcı içeriği (prompt başlığı/açıklaması/metni, yorumlar, kullanıcı
+  adları, biyografiler, kullanıcının kendi yazdığı etiket adları) ASLA
+  otomatik çevrilmiyor — olduğu gibi gösteriliyor.
+- Marka/teknik adlar (Promptly, Supabase, Next.js, React, TypeScript,
+  Tailwind, GitHub, Claude, Gemini, GPT, Midjourney, Suno, JSON, HTML,
+  Markdown, Instagram, TikTok, teknik formatlar) hiçbir zaman çevrilmiyor.
+  "Prompt" kelimesi her iki dilde de "Prompt" kalıyor.
+- İngilizce metin gerçek, doğal ürün dili olmalı — literal/makine çevirisi
+  değil.
+- Her yeni anahtar EKLENMEDEN önce `translations.ts` içinde aynı Türkçe
+  kaynak metnin zaten bir karşılığı olup olmadığı `grep` ile kontrol
+  ediliyor — varsa yeniden kullanılıyor, aynı metnin iki farklı anahtar
+  altında yinelenmesi engelleniyor.
+- **Aynı İngilizce kavramın Türkçe kaynakta gerçekten FARKLI kelime/
+  noktalama ile iki (veya daha fazla) yerde var olduğu durumlarda** (ör.
+  "İptal" vs "Vazgeç", "Siliniyor…" vs "Siliniyor...", period'lu vs
+  period'suz aynı cümle) orijinal Türkçe metni sessizce birleştirmemek
+  için AYRI anahtarlar açılıyor (`common.cancelAction` vs `common.cancel`,
+  `messages.editWindowExpiredError` vs `messages.editWindowExpired` gibi).
+
+**Mimari desenler (bu bölüm boyunca tekrar tekrar kullanıldı):**
+- **Hook-çağıran-hook:** bir bileşen zaten `useTranslation()` çağırabiliyorsa
+  doğrudan çağırıyor; aynı dosyadaki AYRI bir fonksiyon/alt bileşen kendi
+  `useTranslation()` çağrısını kendisi yapıyor.
+- **Düz (component olmayan) fonksiyonlar için `translateForRuntime(key,
+  params?)`:** `src/lib/i18n/translations.ts`'teki bu yardımcı,
+  `document.documentElement.lang`'i doğrudan okuyup (React ağacının dışında)
+  `t()` ile birebir aynı `{{token}}` interpolasyonunu uyguluyor — `src/lib/
+  *.ts` ve `src/lib/supabase/*.ts` gibi hook çağıramayan modüllerin
+  fırlattığı gerçek, kullanıcıya gösterilen `Error` mesajları için
+  kullanılıyor.
+- **Modül-seviyeli statik sabit tuzağı:** bir dosyanın en üstünde BİR KEZ
+  hesaplanıp modül önbelleğe alınan bir `Record<..., string>` (örn. eski
+  `FRIENDLY_MESSAGES`), dil sonradan değiştirilse bile İLK YÜKLEMEDEKİ dile
+  donuk kalır — `src/lib/supabase/image-analysis.ts`'te bu, sabiti her
+  çağrıda yeniden hesaplayan bir `friendlyMessages()` fonksiyonuna
+  çevrilerek düzeltildi.
+- **Değer/etiket ayrımı:** saklanan bir sabit değerler kümesi (ör.
+  `INTEREST_OPTIONS`, `GENERATOR_CATEGORY_TOPIC_LABELS`) hem VERİTABANINDA
+  saklanan değer hem kendi görüntü etiketi olarak kullanılıyorsa, saklanan
+  dizi/değerler HİÇ değiştirilmiyor (var olan veriyi bozmamak için);
+  yanına yeni bir `Record<Value, TranslationKey>` haritası ekleniyor, her
+  görüntüleme yeri bu haritadan `t(map[value])` okuyacak şekilde
+  güncelleniyor (bilinmeyen bir değer için güvenli `value in MAP`
+  fallback'i ile).
+- **Varsayılan prop değeri bir hook çağıramaz:** `paramName = "Türkçe
+  literal"` gibi bir varsayılan parametre değeri, bileşen gövdesinde
+  `paramName ?? t("key")` şeklinde hesaplanan opsiyonel bir prop'a
+  çevriliyor.
+
+**Bilinçli olarak Türkçe bırakılan, kullanıcı-arayüzü DIŞI metinler:**
+- Kod içi Türkçe yorumlar/dokümantasyon (hiçbir zaman çevrilmiyor — bu
+  dosyanın kendisi ve kod yorumları geliştirici dokümantasyonu, kullanıcı
+  arayüzü değil).
+- `src/lib/supabase/client.ts`'in üstteki ortam değişkeni eksikliği hatası
+  — React ağacı hiç kurulmadan, derleme/deploy zamanında (yani bir gerçek
+  kullanıcının hiçbir zaman göremeyeceği bir yapılandırma hatası olarak)
+  fırlıyor.
+- `src/lib/supabase/image-analysis.ts`'teki `console.error(...)` satırları
+  — dosyanın kendi belgelediği kural gereği (ham Gemini/Edge Function
+  hatası KULLANICIYA HİÇ gösterilmiyor, yalnızca developer log'una
+  yazılıyor) bunlar zaten tamamen geliştirici-taraflı teşhis metinleri;
+  kullanıcının GERÇEKTEN gördüğü metin her zaman `friendlyMessages()`'ten
+  gelen, dile göre çevrilen kısa mesaj.
+- `/settings`'teki dil seçicisinin kendi "Türkçe"/"English" etiketleri
+  (Bölüm 9.49'da zaten kasıtlı olarak `t()` ile SARILMADI — İngilizce
+  moddayken "Türkçe" seçeneğinin "Turkish"e dönüşmesi, kullanıcının hangi
+  seçeneğin onu Türkçeye geri döndüreceğini bir daha ayırt edememesine yol
+  açardı).
+
+**Gerçek, önceden var olan hatalar bu denetim sırasında bulunup düzeltildi
+(çeviri işinden bağımsız, gerçek buglar):**
+- `shared-content-card.tsx`: bir paylaşılan istek kartındaki durum rozeti
+  `STATUS_LABELS[request.status]`'i (bir `TranslationKey`) `t()`
+  sarmalayıcısı OLMADAN doğrudan render ediyordu — ekranda çevrilmiş metin
+  yerine ham anahtar string'i ("request.statusOpen" gibi) görünürdü.
+- Birkaç `formatRelativeTime(...)` çağrı yeri (`generator-detail-view.tsx`,
+  `conversation-row.tsx`, `message-bubble.tsx`, `notification-row.tsx`) yeni
+  eklenen `language` parametresini unutmuştu.
+- Birkaç `useCallback` bağımlılık dizisinde (`real-prompts-provider.tsx`,
+  `use-tag-picker.ts`, `real-requests-provider.tsx`) çağrılan `t`
+  fonksiyonu deps dizisine eklenmemişti (`react-hooks/exhaustive-deps`).
+
+---
+
+**İLERLEME LİSTESİ VE KALAN PLAN** (bu bölüm her alt görev tamamlandıkça
+güncellenip commit+push edilecek — kaldığın yerden devam etmek için
+buraya bakılmalı):
+
+1. [x] **Generator alt sistemi** — builder, runtime alanları, doğrulama
+   mesajları (`generator-builder.tsx`, `generator-runtime-field.tsx`,
+   `generator-details-form.tsx`, `generator-detail-view.tsx`,
+   `generator-template.ts`, `generator-output.ts`, ve 17 dosya toplamda).
+2. [x] **Profil alt sistemi** — header, aksiyonlar, rozetler, istatistikler,
+   sekmeler, `/profile/edit` sayfası, `INTEREST_OPTION_LABELS` haritası
+   (15 dosya).
+3. [x] **Mesajlaşma alt sistemi** — konuşma listesi/satırı, mesaj
+   balonları, composer, aksiyon menüsü, `translateSendError` (13 dosya).
+4. [x] **Bildirimler alt sistemi** — liste, satır, `/notifications` sayfası.
+5. [x] **Koleksiyonlar alt sistemi** — kart, form, form modalı, kebab
+   menü, detay görünümü, kaydetme modalı (7 dosya + yeni `collection.*`
+   anahtar ad alanı).
+6. [x] **Auth sayfaları + paylaşılan UI kabuğu** — login/signup/
+   reset-password, auth layout, `translateAuthError` (artık
+   `getRuntimeLanguage()` ile dile duyarlı), app-shell, theme-toggle,
+   detail-skeleton, feed-placeholder-header, page-header/section-header,
+   placeholder-page, prompt-card-skeleton.
+7. [x] **Kalan app-level sayfalar** — discover, following, requests, saved
+   (settings zaten çevrilmişti, yalnızca kasıtlı "Türkçe"/"English" native
+   dil adları hariç doğrulandı).
+8. [x] **`lib/supabase/*.ts` içindeki fırlatılan Türkçe hata mesajları** —
+   14 dosyanın tamamı: `client.ts` (kasıtlı olarak Türkçe bırakıldı — bkz.
+   yukarı), `collections.ts`, `comments.ts`, `profiles.ts`,
+   `prompt-edit-suggestions.ts`, `prompt-variables.ts`, `reports.ts`,
+   `tags.ts`, `prompt-results.ts`, `requests.ts`, `prompts.ts`,
+   `generators.ts`, `messages.ts`, `image-analysis.ts` (+ `FRIENDLY_
+   MESSAGES` sabitinin `friendlyMessages()` fonksiyonuna çevrilmesi —
+   yukarıdaki "modül-seviyeli statik sabit tuzağı" notu).
+9. [x] **Kalan `formatRelativeTime` çağrı yerlerinin `language` parametresi
+   eksikliği için son tarama** — repo genelinde `grep -rn "formatRelativeTime("`
+   ile bulunan TÜM 15 çağrı yeri (`generator-detail-view.tsx`,
+   `notification-row.tsx`, `edit-history-panel.tsx` ×2, `result-detail-
+   view.tsx`, `prompt-detail-view.tsx`, `prompt-history-panel.tsx`,
+   `result-card.tsx`, `edit-suggestions-panel.tsx`, `comment-node.tsx`,
+   `post-header.tsx`, `request-detail-view.tsx`, `request-card.tsx`,
+   `message-bubble.tsx`, `conversation-row.tsx`) kontrol edildi — HEPSİ
+   zaten `language` argümanını doğru geçiriyor (bu görev boyunca fırsat
+   buldukça alt sistem taramalarında düzeltilmişti, bu son tarama sıfır
+   yeni düzeltme gerektirdi, yalnızca doğruladı). `formatRelativeTime`'ın
+   kendisi `language: Language = "tr"` varsayılan parametresi taşıdığından
+   (eksik bir çağrı `tsc` hatası ÜRETMEZ, sessizce Türkçeye düşer) bu
+   tarama `tsc`'ye güvenmeden, doğrudan grep ile yapıldı. `formatJoinDate`
+   (profile-about.tsx) varsayılansız/zorunlu bir `language` parametresi
+   kullanıyor — `tsc` zaten her çağrı yerini garanti ediyor. Diğer
+   `lib/utils.ts` biçimlendiricileri (`formatCount`) dile duyarlı değil,
+   kapsam dışı.
+10. [~] **Repo geneli son Türkçe grep taraması + build doğrulaması —
+    BAŞLADI, TAMAMLANMADI.**
+    - **ÖNEMLİ METODOLOJİ NOTU (bulundu):** yalnızca Türkçe'ye özgü
+      karakterlere ([çğıöşüÇĞİÖŞÜ]) bakan bir grep iki şeyi KAÇIRIYOR: (a)
+      tamamen ASCII harflerden oluşan Türkçe kelimeler (ör. "mesaj",
+      "silindi", "yok" — Bölüm 9.56'nın ilk sürümünde `messages.ts`'te
+      gerçekten yaşandı), (b) çok satırlı `{/* ... */}` JSX yorum
+      bloklarının İLK satırdan SONRAKİ satırları (bu satırlar `//`/`*`/`/*`
+      ile BAŞLAMADIĞI için basit bir yorum-hariç-tutma regex'i onları kod
+      sanıyor — `request-detail-view.tsx`'te bu, GERÇEK bir hata değil
+      SAHTE bir pozitif üretti, dosya zaten tamamen çevrilmişti).
+    - **Şu ana kadar tam repo taraması (`find src -name "*.ts" -o -name
+      "*.tsx"` + özel karakter grep'i) ÇALIŞTIRILDI ve şu GERÇEK, önceki
+      8 maddede hiç kapsanmamış eksikler BULUNDU:**
+      - **[x] DÜZELTİLDİ:** `src/lib/notification-utils.ts`'teki
+        `CATEGORY_FILTERS` sabiti (`/notifications` sayfasının kategori
+        filtre çipleri — "Gönderiler"/"Takip"/"Sistem" dahil) düz
+        `label: string` yerine `labelKey: TranslationKey` kullanacak
+        şekilde değiştirildi, `notification-category-filter.tsx` artık
+        `t(filter.labelKey)` çağırıyor. Yeni anahtarlar:
+        `notifications.categoryPosts/categoryFollow/categorySystem`
+        (`common.all`/`nav.requestsShort`/`header.messagesAriaLabel`
+        yeniden kullanıldı). `tsc`/`lint` temiz, henüz commit+push
+        edilmedi (bir sonraki adım).
+      - **[ ] BULUNDU, HENÜZ DÜZELTİLMEDİ — `src/features/tags/tags-
+        discover-view.tsx`** (`/tags` sayfası — arama, Popüler/Yükselen/
+        Yeni Eklenenler bölümleri, tam katalog + sıralama): dosyanın
+        TAMAMI hiç `useTranslation()` çağırmıyor, tüm başlıklar/
+        placeholder'lar/boş-durum mesajları/sıralama etiketleri
+        (`Etiketleri Keşfet`, `Popüler Etiketler`, `Yükselen Etiketler`,
+        `Yeni Eklenenler`, `Tüm Etiketler`, `Popüler`/`En Yeni`, boş-durum
+        mesajları, "{{count}} kullanım" suffix'i — bu SONUNCUSU için
+        `tagPicker.usageCount` anahtarının tam olarak nasıl kullanıldığı
+        (`t("tagPicker.usageCount", { count: tag.usageCount })`)
+        `tag-picker.tsx`'te doğrulanmıştı, aynı deseni burada da kullan)
+        hâlâ ham Türkçe. `home.tabPopular` ("Popüler") zaten reuse için
+        bulunmuştu. **Kod yazılmadı, yalnızca tespit edildi.**
+      - **[ ] HENÜZ HİÇ İNCELENMEDİ** (yalnızca dosya adı + özel-karakter
+        sayısı tespit edildi, içerik henüz okunmadı): `src/features/
+        search/search-view.tsx` (6), `src/features/moderation/report-
+        button.tsx` (6), `src/features/prompts/add-result-modal.tsx` (1),
+        ve `generator-detail-view.tsx`/`generator-template.ts`/`emoji-
+        picker.tsx`/`notification-row.tsx`/`field-editor-modal.tsx`/
+        `app/layout.tsx`'teki KALAN birkaç satırın hepsinin (bu dosyaların
+        çoğu zaten Task 1-4'te büyük ölçüde çevrilmişti, kalan 1-4 satırlık
+        izler ya kod yorumu ya da gerçek, küçük bir kaçak olabilir —
+        HER BİRİ TEK TEK doğrulanmalı, varsayılmamalı).
+      - **Kasıtlı olarak Türkçe bırakılması GEREKEN, veri/test dosyaları
+        (çeviri kapsamı DIŞI, ama raporda MUTLAKA dürüstçe belirtilmeli):**
+        `src/lib/generator-field-catalog.ts` (269 satır — Bölüm 9.30/9.48/
+        9.53'ün generator hazır alan kütüphanesi VERİSİ, `t()` hiç
+        kullanmıyor, tamamen statik Türkçe kategori/alan/seçenek adları),
+        `src/lib/tag-candidates.ts` (90 — Bölüm 9.24'ün aday etiket
+        sözlüğü VERİSİ), `src/lib/generator-option-art.ts` (30),
+        `src/lib/generator-vision-mapping.ts` (24), `src/lib/tag-
+        normalize.ts` (13 — muhtemelen yalnızca transliterasyon char
+        map'i, `generator-template.ts`'teki `ç→c` map'iyle aynı kategori,
+        DOĞRULANMALI), `src/features/profile/interest-options.ts` (16 —
+        Bölüm 9.2'de zaten değer/etiket ayrımı UYGULANMIŞTI,
+        `INTEREST_OPTION_LABELS` haritası var, saklanan dizinin kendisinin
+        Türkçe kalması BEKLENEN/doğru davranış — DOĞRULANMALI ama muhtemelen
+        sahte pozitif), `src/app/dev/image-analysis-test/page.tsx` (19),
+        `src/app/dev/share-modal-test/page.tsx` (14), `src/app/dev/
+        generator-visual-options-test/page.tsx` (11) — üçü de Bölüm 9.45/
+        9.47/9.52'nin "yalnızca geliştirici test harness'i, uygulamanın
+        hiçbir yerinden import edilmiyor" diye belgelediği geçici sayfalar.
+    - **Henüz YAPILMAYAN:** tam `npm run build` (yalnızca `tsc --noEmit` +
+      `npm run lint` her adımdan sonra çalıştırıldı, gerçek `next build`
+      hiç çalıştırılmadı), ve yukarıdaki "bulundu, düzeltilmedi"/"hiç
+      incelenmedi" listesinin tamamının kapatılması.
+11. [ ] **Final 12 maddelik i18n teknik raporunun yazılması** — toplam
+    anahtar sayısı (öncesi/sonrası), değiştirilen bileşen/sayfa/modal
+    sayısı, çevrilen generator kataloğu string'leri (dürüstçe belirtilmesi
+    gereken bilinen boşluk: `src/lib/generator-field-catalog.ts`'teki
+    KATALOG VERİSİNİN kendisi — yani 26 kategori/~196 alanın etiket/
+    seçenek metinleri — bu görevin kapsamında HİÇ çevrilmedi, çünkü bunlar
+    Bölüm 9.30/9.48/9.53'ün kurduğu, `t()` çağırmayan, tamamen statik
+    Türkçe veri dosyasıdır; İngilizce modda bir generator oluştururken
+    hazır alan kütüphanesindeki kategori/alan/seçenek adları hâlâ Türkçe
+    görünecektir — bu, şartnamenin ne "kullanıcı içeriği" ne "UI metni"
+    kategorisine tam oturmayan, ayrı bir kapsam kararı gerektiren bir
+    alan), hata/toast/doğrulama string'leri, değiştirilen dosyalar, test
+    sonuçları, build sonucu. Henüz TAMAMLANMADI.
+
+**Bilinen, kapsam dışı bırakılan boşluk (raporda dürüstçe belirtilecek):**
+`AppNotification.message`, SQL migration trigger'ları (Bölüm 9.6/9.12'nin
+`20260919230000` migration'ı) tarafından SUNUCU TARAFINDA, Türkçe olarak
+oluşturulan dinamik bir metindir — bu, istemci tarafı bir `t()` çağrısıyla
+çevrilemez, backend/veritabanı tarafında (yeni trigger fonksiyonları veya
+`message` yerine yapılandırılmış bir `{type, params}` şekli yazıp
+istemcinin kendi `t()` ile render etmesi gibi) ayrı bir değişiklik
+gerektirir. Bu görevin kapsamına alınmadı, sessizce atlanmadı — raporda
+açıkça "yapılamadı" diye işaretlenecek.
+
+**Sonraki adım:** Madde 9 (formatRelativeTime son tarama) ve Madde 10
+(repo geneli grep + build doğrulaması) sırayla yapılacak, her biri
+tamamlandığında ayrı bir commit+push ile kaydedilecek, ardından Madde 11
+(final rapor) yazılıp bu bölüme eklenecek.

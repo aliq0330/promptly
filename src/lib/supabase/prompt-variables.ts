@@ -1,4 +1,5 @@
 import { supabase } from "./client";
+import { translateForRuntime } from "@/lib/i18n/translations";
 import type { PromptVariable } from "@/types";
 
 interface PromptVariableRow {
@@ -78,6 +79,6 @@ export async function replaceVariablesForPrompt(promptId: string, drafts: Variab
       })),
     )
     .select(VARIABLE_SELECT);
-  if (insertError || !data) throw new Error(insertError?.message ?? "Değişkenler kaydedilemedi.");
+  if (insertError || !data) throw new Error(insertError?.message ?? translateForRuntime("variable.saveFailed"));
   return (data as PromptVariableRow[]).map(mapVariableRow);
 }

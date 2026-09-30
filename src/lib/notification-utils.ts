@@ -17,6 +17,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import type { AppNotification, NotificationType } from "@/types";
+import type { TranslationKey } from "@/lib/i18n/translations";
 
 /**
  * The bildirim merkezi's category filter (Aşama 1.2) groups the existing
@@ -51,13 +52,13 @@ export const NOTIFICATION_CATEGORY: Record<NotificationType, NotificationCategor
   prompt_result_shared: "posts",
 };
 
-export const CATEGORY_FILTERS: { key: "all" | NotificationCategory; label: string }[] = [
-  { key: "all", label: "Tümü" },
-  { key: "posts", label: "Gönderiler" },
-  { key: "requests", label: "İstekler" },
-  { key: "follow", label: "Takip" },
-  { key: "messages", label: "Mesajlar" },
-  { key: "system", label: "Sistem" },
+export const CATEGORY_FILTERS: { key: "all" | NotificationCategory; labelKey: TranslationKey }[] = [
+  { key: "all", labelKey: "common.all" },
+  { key: "posts", labelKey: "notifications.categoryPosts" },
+  { key: "requests", labelKey: "nav.requestsShort" },
+  { key: "follow", labelKey: "notifications.categoryFollow" },
+  { key: "messages", labelKey: "header.messagesAriaLabel" },
+  { key: "system", labelKey: "notifications.categorySystem" },
 ];
 
 /**

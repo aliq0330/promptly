@@ -1,4 +1,5 @@
 import { supabase } from "./client";
+import { translateForRuntime } from "@/lib/i18n/translations";
 import { mapProfileRow, type ProfileRow } from "./mappers";
 import type { PromptComment } from "@/types";
 
@@ -188,7 +189,7 @@ export async function updateComment(commentId: string, body: string): Promise<{ 
     .eq("id", commentId)
     .select("edited_at")
     .single();
-  if (error || !data) throw new Error(error?.message ?? "Yorum düzenlenemedi.");
+  if (error || !data) throw new Error(error?.message ?? translateForRuntime("comments.updateFailed"));
   return { editedAt: data.edited_at as string };
 }
 

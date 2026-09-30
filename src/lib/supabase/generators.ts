@@ -1,4 +1,5 @@
 import { supabase } from "./client";
+import { translateForRuntime } from "@/lib/i18n/translations";
 import { mapProfileRow, type ProfileRow } from "./mappers";
 import { getOrCreateTag } from "./tags";
 import { slugifyGeneratorTitle } from "@/lib/generator-template";
@@ -267,7 +268,7 @@ async function generateUniqueSlug(title: string): Promise<string> {
     attempt += 1;
     candidate = `${base}-${attempt}`;
   }
-  throw new Error("Benzersiz bir bağlantı oluşturulamadı, lütfen başlığı değiştirip tekrar dene.");
+  throw new Error(translateForRuntime("generator.uniqueSlugFailed"));
 }
 
 async function replaceGeneratorTags(generatorId: string, tags: Tag[]): Promise<void> {
@@ -320,7 +321,7 @@ export async function createDraftGenerator(
     })
     .select("id, created_at, updated_at")
     .single();
-  if (generatorError || !generatorRow) throw new Error(generatorError?.message ?? "Generator oluşturulamadı.");
+  if (generatorError || !generatorRow) throw new Error(generatorError?.message ?? translateForRuntime("generator.createFailedShort"));
 
   const generatorId = generatorRow.id as string;
 
@@ -341,7 +342,7 @@ export async function createDraftGenerator(
     .single();
   if (versionError || !versionRow) {
     await supabase.from("generators").delete().eq("id", generatorId);
-    throw new Error(versionError?.message ?? "Generator sürümü oluşturulamadı.");
+    throw new Error(versionError?.message ?? translateForRuntime("generator.versionCreateFailed"));
   }
 
   await supabase.from("generators").update({ current_version_id: versionRow.id }).eq("id", generatorId);
@@ -399,7 +400,7 @@ export async function updateGeneratorMeta(generatorId: string, meta: GeneratorMe
     .select("id")
     .maybeSingle();
   if (error) throw new Error(error.message);
-  if (!data) throw new Error("Bu generatoru düzenleme yetkin yok.");
+  if (!data) throw new Error(translateForRuntime("generator.noEditPermission"));
   await replaceGeneratorTags(generatorId, meta.tags);
 }
 
@@ -433,7 +434,7 @@ export async function publishGenerator(
     const { error } = await supabase.from("generators").update({ status: "published" }).eq("id", generator.id);
     if (error) throw new Error(error.message);
     const fresh = await fetchGeneratorVersion(generator.currentVersionId);
-    if (!fresh) throw new Error("Yayınlandı ama sürüm yeniden yüklenemedi.");
+    if (!fresh) throw new Error(translateForRuntime("generator.publishedButReloadFailed"));
     return fresh;
   }
 
@@ -452,7 +453,7 @@ export async function publishGenerator(
     .insert({ generator_id: generator.id, version_number: nextVersionNumber, schema, template, created_by: creatorId })
     .select("id, generator_id, version_number, schema, template, created_by, created_at")
     .single();
-  if (versionError || !versionRow) throw new Error(versionError?.message ?? "Yeni sürüm oluşturulamadı.");
+  if (versionError || !versionRow) throw new Error(versionError?.message ?? translateForRuntime("generator.newVersionCreateFailed"));
 
   const { error: updateError } = await supabase
     .from("generators")
@@ -516,7 +517,7 @@ export async function recordGeneratorRun(
     })
     .select("id, generator_id, generator_version_id, user_id, input_values, generated_prompt, generated_negative_prompt, created_at")
     .single();
-  if (error || !data) throw new Error(error?.message ?? "Kayıt oluşturulamadı.");
+  if (error || !data) throw new Error(error?.message ?? translateForRuntime("generator.recordCreateFailed"));
   return mapRunRow(data as unknown as GeneratorRunRow);
 }
 
