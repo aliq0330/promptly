@@ -27,7 +27,7 @@ export function sanitizeSearchText(text: string): string {
 }
 
 /** One aliased inner embed per tag (`t0`, `t1`, ...) so several tags can be AND-ed server-side. */
-export function tagJoinSelect(table: "prompt_tags" | "prompt_request_tags" | "generator_tags", slugs: string[] | undefined): string {
+export function tagJoinSelect(table: "prompt_tags" | "prompt_request_tags" | "generator_tags" | "workflow_tags", slugs: string[] | undefined): string {
   return (slugs ?? []).map((_, i) => `, t${i}:${table}!inner(tag_slug)`).join("");
 }
 

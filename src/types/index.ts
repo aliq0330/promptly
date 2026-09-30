@@ -652,6 +652,7 @@ export interface Workflow {
   stepCount: number;
   likeCount: number;
   commentCount: number;
+  tags: Tag[];
   createdAt: string;
   updatedAt: string;
 }

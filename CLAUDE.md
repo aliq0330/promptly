@@ -4177,10 +4177,15 @@ paylaşıyor. Yeni paralel sistem yazılmadı — mevcut ortak katmanlar
   (yazar başlığı, menü, kaydet, paylaş), tür çipi, paylaşım modalı, Keşfet sekmesi,
   detay sayfası, ve giriş yapmış oturumda beğeni/kaydet/yorum isteklerinin
   `workflow_id` taşıdığı doğrulandı. Gerçek Supabase'e karşı canlı test yapılamadı.
-- **Kullanıcının uygulaması gereken migration:** `20260919480000_workflow_social.sql`
-  (Dashboard → SQL Editor). Uygulanmadan beğeni/yorum/kaydetme workflow'da hata verir.
-- **Bilinen sınırlamalar:** workflow'un etiketi yok (etiket aramasında çıkmaz);
-  workflow için ayrı düzenleme geçmişi/öneri sistemi yok.
+- **Etiketler:** `20260919490000_workflow_tags.sql` — `workflow_tags` (prompt/
+  generator ile aynı join deseni, mevcut `tags` kataloğu ve `TagPicker`/
+  `useTagPicker`). Editörde etiket seçici, kartta `ContentTags`, detayda etiket
+  linkleri, aramada etiket çipi workflow'larda da çalışır.
+- **Migration'lar canlı projeye uygulandı** (`workflow_social`, `workflow_tags`;
+  sütunlar, sayaçlar, trigger'lar ve tablo canlıda doğrulandı).
+- **Bilinen sınırlamalar:** etiket sayfası (`/tags/local`) workflow'ları
+  listelemiyor (generator'lar da yok); workflow için ayrı düzenleme
+  geçmişi/öneri sistemi yok.
 
 ---
 

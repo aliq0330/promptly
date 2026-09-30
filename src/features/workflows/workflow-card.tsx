@@ -5,6 +5,7 @@ import { workflowHref } from "@/lib/utils";
 import { ContentCard, ContentCardBody, ContentCardTitle } from "@/features/content/content-card";
 import { ContentTypeLabel } from "@/features/content/content-type-label";
 import { ToolChips } from "@/features/content/tool-chips";
+import { ContentTags } from "@/features/content/content-tags";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
 import { PostHeader } from "@/features/prompts/post-header";
 import { PromptCardFooter } from "@/features/prompts/prompt-card-footer";
@@ -79,6 +80,7 @@ export function WorkflowCard({
         </div>
 
         <ToolChips refs={workflow.tools} />
+        <ContentTags tags={workflow.tags} />
       </ContentCardBody>
 
       <PromptCardFooter workflow={workflow} />

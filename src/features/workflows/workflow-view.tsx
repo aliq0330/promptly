@@ -20,7 +20,7 @@ import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
 import { fetchWorkflowById } from "@/lib/supabase/workflows";
 import { incomingLinks } from "@/lib/workflow-logic";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import { cn, formatRelativeTime, profileHref } from "@/lib/utils";
+import { cn, formatRelativeTime, profileHref, tagHref } from "@/lib/utils";
 import type { Workflow, WorkflowStep } from "@/types";
 import { categoryLabel, MEDIA_ICON, STEP_TYPE_META, stepSubtitle } from "./step-meta";
 
@@ -108,6 +108,20 @@ export function WorkflowDetailView() {
           <span className="text-caption text-text-muted">{t("workflow.stepCount", { count: String(steps.length) })}</span>
         </div>
         <ToolLine label={t("tool.recommendedLabel")} refs={workflow.tools} />
+
+        {workflow.tags.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {workflow.tags.map((tag) => (
+              <Link
+                key={tag.slug}
+                href={tagHref(tag)}
+                className="inline-flex h-7 items-center rounded-full border border-border-soft bg-surface px-2.5 text-caption font-medium text-text-secondary transition-colors hover:border-primary/40 hover:text-primary"
+              >
+                #{tag.label}
+              </Link>
+            ))}
+          </div>
+        )}
 
       <section aria-labelledby="workflow-steps-heading" className="space-y-1">
         <h2 id="workflow-steps-heading" className="mb-3 text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">
