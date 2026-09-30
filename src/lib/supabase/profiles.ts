@@ -5,7 +5,7 @@ import { translateForRuntime } from "@/lib/i18n/translations";
 import type { UserProfile } from "@/types";
 import { mapProfileRow, type ProfileRow } from "./mappers";
 
-const PROFILE_SELECT =
+export const PROFILE_SELECT =
   "id, username, display_name, avatar_url, cover_url, bio, website, follower_count, following_count, created_at, interests";
 
 /**

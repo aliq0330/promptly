@@ -4121,6 +4121,15 @@ hard-code etmez.
   gövdesi, Keşfet/İstekler filtreleri ve mobil taşma doğrulandı; gerçek
   Supabase'e karşı denenmedi. Kategori isimleri TR/EN eklendi.
 
+### 9.59 Workflow sistemi (içerikleri adım adım bağlama)
+
+Workflow, mevcut Prompt / Generator / Prompt İsteği içeriklerini sıralı adımlara bağlayan ve bir adımın çıktısının sonraki adımın girdisi olduğunu tanımlayan bir organizasyon katmanıdır. **Hiçbir model çalıştırmaz**; içerik kopyalamaz/değiştirmez, yalnızca referans verir.
+- **DB** (`20260919470000_workflows.sql`, canlıya uygulandı): `workflows` (draft/published, content_types[], category, tools[]), `workflow_steps` (step_type + prompt_id/generator_id/request_id `on delete set null`, inputs/outputs jsonb), `workflow_connections`. RLS: yayınlanmış herkese, taslak yalnızca sahibine; adım/bağlantılar workflow görünürlüğünü izler. Tüm grafı tek transaction'da yazan `save_workflow_graph` RPC'si (security invoker). Bağlantılar editörde tek kaynaktan (`inputs[].source`) türetilir.
+- **Mantık** `lib/workflow-logic.ts` (saf, test edildi): adım işlemleri, `sanitizeLinks` (bağlantı yalnızca ÖNCEKİ adımın çıktısından gelebilir; sıra/silme sonrası geçersizler düşer ve bildirilir), `validateWorkflow` (taslak: ad; yayın: en az 1 adım, her adım adlı ve içerikli). Veri katmanı `lib/supabase/workflows.ts` (içerik özetleri 3 toplu sorguyla çözülür).
+- **UI** `features/workflows/`: `/workflows` (liste), `/workflows/create[?edit=id]` (editör), `/workflows/local?id=` (görüntüleme). Editör: masaüstü ≥1200 üç kolon (adımlar · genel + girdi/çıktı · içerik/önizleme/ayarlar), tablet 768–1199 iki kolon + 4 sekmeli detay, mobil tek kolon + adım başına bottom sheet (`useLayoutMode`). Sürükle-bırak (native) + yukarı/aşağı butonları. İçerik ekleme modalı: mevcut içerik (arama) veya sıfırdan oluştur (normal create fonksiyonları; generator taslak olarak). Taksonomi/`ToolPicker` (artık birden çok tür) yeniden kullanıldı. Profilde "Workflow'lar" sekmesi, sidebar'da "Workflow'lar".
+- **Sınırlar:** arama chip'lerinde workflow türü yok; ShareModal (mesajla gönder) workflow'u desteklemez (yalnızca yerel paylaşım); adım içeriği silinirse adım "içerik silinmiş" olur.
+- **Test:** ağ taklitli Playwright — 5 adımlı senaryo (P,P,G,P,P; 4 bağlantı), taslak/yayın doğrulama, sıra değişince bağlantı temizleme, çoğalt/sil, görüntüleme; tablet ve mobilde taşma yok. Gerçek Supabase'e karşı denenmedi.
+
 ---
 
 **Sonraki adım:** Mesajlaşma genişletmesinin 3 fazı da (Faz A — Bölüm
