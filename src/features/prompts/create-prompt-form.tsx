@@ -588,8 +588,8 @@ export function CreatePromptForm() {
               : t("prompt.createPromptHint")}
       </p>
 
-      <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
-        <form onSubmit={handleSubmit} className="space-y-5">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_360px]">
+        <form onSubmit={handleSubmit} className="min-w-0 space-y-5">
           {isAnswerMode && answeredRequest && (
             <div className="space-y-2 rounded-md border border-primary/30 bg-primary/5 p-3 text-sm">
               <div className="flex items-center justify-between gap-2">
@@ -817,7 +817,7 @@ export function CreatePromptForm() {
           )}
         </form>
 
-        <div className="lg:sticky lg:top-20 lg:self-start">
+        <div className="min-w-0 lg:sticky lg:top-20 lg:self-start">
           <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-muted">{t("forms.livePreview")}</p>
           <div className="pointer-events-none select-none">
             <PromptCard prompt={previewPrompt} />

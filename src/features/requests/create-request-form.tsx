@@ -291,8 +291,8 @@ export function CreateRequestForm() {
         {isEditMode ? t("prompt.editPromptHint") : t("request.createRequestHint")}
       </p>
 
-      <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
-        <form onSubmit={handleSubmit} className="space-y-5">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_360px]">
+        <form onSubmit={handleSubmit} className="min-w-0 space-y-5">
           <TaxonomyPicker
             value={{ contentType, category, subcategory }}
             onChange={(next) => {
@@ -422,7 +422,7 @@ export function CreateRequestForm() {
           </div>
         </form>
 
-        <div className="lg:sticky lg:top-20 lg:self-start">
+        <div className="min-w-0 lg:sticky lg:top-20 lg:self-start">
           <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-muted">{t("forms.livePreview")}</p>
           <div className="pointer-events-none select-none">
             <RequestCard request={previewRequest} />
