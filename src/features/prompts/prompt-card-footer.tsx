@@ -33,7 +33,7 @@ export function PromptCardFooter(target: FooterTarget) {
       ) : target.generator ? (
         <>
           <LikeButton id={target.generator.id} likeCount={target.generator.likeCount} contentType="generator" />
-          <CommentCountLink generatorSlug={target.generator.slug} baseCount={target.generator.commentCount} />
+          <CommentCountLink generatorSlug={target.generator.slug} generatorId={target.generator.id} baseCount={target.generator.commentCount} />
           <SaveButton generatorId={target.generator.id} />
         </>
       ) : (

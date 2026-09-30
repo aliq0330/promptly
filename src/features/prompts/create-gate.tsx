@@ -20,5 +20,13 @@ export function CreateGate() {
     searchParams.get("generatorRun") ||
     searchParams.get("mode") === "prompt";
 
-  return hasIntent ? <CreatePromptForm /> : <CreateChoice />;
+  // The form seeds its fields once, on mount. Keying it by the deep-link
+  // params remounts it (fresh prefill) when a client-side navigation moves
+  // from one intent to another (e.g. duplicate=A → duplicate=B) without a
+  // full page reload.
+  const formKey = ["duplicate", "answerRequest", "edit", "generatorRun", "mode"]
+    .map((name) => searchParams.get(name) ?? "")
+    .join("|");
+
+  return hasIntent ? <CreatePromptForm key={formKey} /> : <CreateChoice />;
 }

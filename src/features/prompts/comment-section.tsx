@@ -1,5 +1,6 @@
 "use client";
 
+import { bumpCommentCount } from "./comment-count-store";
 import { Skeleton } from "@/components/ui/skeleton";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -280,6 +281,7 @@ export function CommentSection({
     setReplyError(null);
     try {
       const posted = await postCommentForTarget(targetKind, targetId, user.id, trimmed, parentId);
+      bumpCommentCount(targetId, 1);
       setComments((prev) => [...prev, posted]);
       setLikeCounts((prev) => ({ ...prev, [posted.id]: 0 }));
       setExpandedIds((prev) => new Set(prev).add(parentId));
@@ -302,6 +304,7 @@ export function CommentSection({
     setPostError(null);
     try {
       const posted = await postCommentForTarget(targetKind, targetId, user.id, trimmed, null);
+      bumpCommentCount(targetId, 1);
       setComments((prev) => [...prev, posted]);
       setLikeCounts((prev) => ({ ...prev, [posted.id]: 0 }));
       setDraft("");
@@ -358,6 +361,9 @@ export function CommentSection({
     setDeleteError(null);
     try {
       await deleteComment(id);
+      // A comment with replies is soft-deleted (still counted); only a real
+      // delete lowers the stored comment_count.
+      if (!childrenByParent.has(id)) bumpCommentCount(targetId, -1);
       // The database alone decides whether this was a real delete (no
       // replies) or a soft delete (replies exist, preserved) — either way
       // marking it "deleted" here is correct: a real delete just won't be

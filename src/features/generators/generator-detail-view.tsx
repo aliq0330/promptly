@@ -182,7 +182,7 @@ export function GeneratorDetailView() {
           */}
           <div className="flex flex-wrap items-center gap-0.5 border-y border-border-soft py-1.5">
             <LikeButton id={generator.id} likeCount={generator.likeCount} contentType="generator" size={18} />
-            <CommentCountLink generatorSlug={generator.slug} baseCount={generator.commentCount} size={18} />
+            <CommentCountLink generatorSlug={generator.slug} generatorId={generator.id} baseCount={generator.commentCount} size={18} />
             <SaveButton generatorId={generator.id} size={18} />
             <span className="ml-auto" />
             <ShareTriggerButton target={{ contentType: "generator", generator }} label={t("common.share")} />

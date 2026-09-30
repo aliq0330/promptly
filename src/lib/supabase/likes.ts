@@ -1,4 +1,5 @@
 import { supabase } from "./client";
+import { batcherRegistry } from "./batched-lookup";
 
 /**
  * `prompt_likes` now holds likes for four content types (Bölüm 9.34's
@@ -21,21 +22,19 @@ function targetColumn(contentType: LikeableContentType): "prompt_id" | "generato
   return "prompt_id";
 }
 
-/** Did this viewer already like this real prompt/generator? RLS (Bölüm 19) makes likes publicly readable. */
+const likeLookup = batcherRegistry((key) => {
+  const [userId, contentType] = key.split("|") as [string, LikeableContentType];
+  const column = targetColumn(contentType);
+  return async (ids) => {
+    const { data, error } = await supabase.from("prompt_likes").select(column).eq("user_id", userId).in(column, ids);
+    if (error || !data) return new Set();
+    return new Set((data as unknown as Record<string, string>[]).map((row) => row[column]));
+  };
+});
+
+/** Did this viewer already like this target? RLS (Bölüm 19) makes likes publicly readable. Concurrent calls (one per card) are batched into one query. */
 export async function fetchIsLiked(id: string, userId: string, contentType: LikeableContentType = "prompt"): Promise<boolean> {
-  try {
-    const { data, error } = await supabase
-      .from("prompt_likes")
-      .select("user_id")
-      .eq(targetColumn(contentType), id)
-      .eq("user_id", userId)
-      .maybeSingle();
-    if (error) return false;
-    return Boolean(data);
-  } catch (err) {
-    console.error("fetchIsLiked", err);
-    return false;
-  }
+  return likeLookup(`${userId}|${contentType}`)(id);
 }
 
 /** Genuinely, permanently likes a real prompt or generator. `handle_prompt_like_change` (Bölüm 19/9.34) keeps like_count in sync, even across users. */
