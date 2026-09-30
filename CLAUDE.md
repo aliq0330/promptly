@@ -4187,6 +4187,11 @@ paylaşıyor. Yeni paralel sistem yazılmadı — mevcut ortak katmanlar
   listelemiyor (generator'lar da yok); workflow için ayrı düzenleme
   geçmişi/öneri sistemi yok.
 
+### 9.61 Workflow detay sayfası yeniden tasarımı + karma etiket sayfası
+
+- `/workflows/local` artık Prompt/Generator detay sayfalarıyla aynı aileden: `max-w-6xl`, masaüstünde `[içerik | 300px yan sütun]`, tablet/mobilde tek sütun (yan sütun altta). Yan sütun: `CreatorSummary` (Takip Et), "Workflow bilgileri" (adım sayısı, tür), "Kullanılan araçlar", "Benzer workflow'lar" (yüklü önbellekten etiket/yazar/tür puanı, yeni API yok). Adım kartları kompakt; adım türü çipi (Prompt/Generator/İstek · tür). Beğeni/Yorum/Kaydet/Paylaş/menü aynı mevcut bileşenler; mantık/veri değişmedi.
+- Etiket sayfası (`/tags/local`) artık prompt + generator + workflow + istek kartlarını tek masonry'de karışık gösteriyor (`FeedGrid`); üstte Tümü/Prompt/Generator/Workflow/Prompt İstekleri sekmeleri (prompt taksonomi filtresi yalnızca Tümü/Prompt'ta). Yeni `fetchGeneratorsByTagSlug`/`fetchWorkflowsByTagSlug` (`generator_tags`/`workflow_tags`, yalnızca yayınlanmış). Bölüm 9.60'ın "etiket sayfası workflow listelemiyor" sınırlaması kalktı. Migration yok; tarayıcıda görsel doğrulama yapılmadı (tsc/lint/build temiz).
+
 ---
 
 **Sonraki adım:** Mesajlaşma genişletmesinin 3 fazı da (Faz A — Bölüm

@@ -4,16 +4,18 @@ import { DetailSkeleton } from "@/components/ui/detail-skeleton";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Hash } from "lucide-react";
-import { PromptGrid } from "@/features/prompts/prompt-grid";
-import { RequestList } from "@/features/requests/request-list";
-import { fetchPromptsByTag, fetchRequestsByTagSlug, fetchTagBySlug } from "@/lib/supabase/tags";
+import { FeedGrid } from "@/features/feed/feed-grid";
+import type { FeedItem } from "@/features/feed/types";
+import { Tabs } from "@/components/ui/tabs";
+import { fetchGeneratorsByTagSlug, fetchPromptsByTag, fetchRequestsByTagSlug, fetchTagBySlug, fetchWorkflowsByTagSlug } from "@/lib/supabase/tags";
 import { formatCount, cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { TaxonomyFilter } from "@/features/content/taxonomy-filter";
 import { EMPTY_TAXONOMY_FILTER, matchesTaxonomy, type TaxonomyFilterValue } from "@/lib/content-taxonomy";
-import type { Prompt, PromptRequest, Tag } from "@/types";
+import type { Generator, Prompt, PromptRequest, Tag, Workflow } from "@/types";
 
 type SortMode = "newest" | "popular";
+type KindFilter = "all" | "prompt" | "generator" | "workflow" | "request";
 
 /**
  * Client-rendered counterpart to the old static `/tags/[tag]` — tags are
@@ -32,6 +34,9 @@ export function TagView() {
   const [tag, setTag] = useState<Tag | null>(null);
   const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [requests, setRequests] = useState<PromptRequest[]>([]);
+  const [generators, setGenerators] = useState<Generator[]>([]);
+  const [workflows, setWorkflows] = useState<Workflow[]>([]);
+  const [kind, setKind] = useState<KindFilter>("all");
   const [loaded, setLoaded] = useState(false);
   const [taxonomy, setTaxonomy] = useState<TaxonomyFilterValue>(EMPTY_TAXONOMY_FILTER);
   const [sortMode, setSortMode] = useState<SortMode>("newest");
@@ -44,12 +49,20 @@ export function TagView() {
       return;
     }
     setLoaded(false);
-    Promise.all([fetchTagBySlug(slug), fetchPromptsByTag(slug), fetchRequestsByTagSlug(slug)]).then(
-      ([foundTag, foundPrompts, foundRequests]) => {
+    Promise.all([
+      fetchTagBySlug(slug),
+      fetchPromptsByTag(slug),
+      fetchRequestsByTagSlug(slug),
+      fetchGeneratorsByTagSlug(slug),
+      fetchWorkflowsByTagSlug(slug),
+    ]).then(
+      ([foundTag, foundPrompts, foundRequests, foundGenerators, foundWorkflows]) => {
         if (cancelled) return;
         setTag(foundTag);
         setPrompts(foundPrompts);
         setRequests(foundRequests);
+        setGenerators(foundGenerators);
+        setWorkflows(foundWorkflows);
         setLoaded(true);
       },
     );
@@ -58,13 +71,17 @@ export function TagView() {
     };
   }, [slug]);
 
-  const filteredPrompts = useMemo(() => {
-    const filtered = prompts.filter((p) => matchesTaxonomy(p, taxonomy));
-    const sorted = [...filtered];
-    if (sortMode === "popular") sorted.sort((a, b) => b.likeCount - a.likeCount);
-    else sorted.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-    return sorted;
-  }, [prompts, taxonomy, sortMode]);
+  const items = useMemo<FeedItem[]>(() => {
+    const promptItems: FeedItem[] = kind === "all" || kind === "prompt" ? prompts.filter((p) => matchesTaxonomy(p, taxonomy)).map((data) => ({ kind: "prompt", data })) : [];
+    const otherItems: FeedItem[] = [
+      ...(kind === "all" || kind === "request" ? requests.map((data): FeedItem => ({ kind: "request", data })) : []),
+      ...(kind === "all" || kind === "generator" ? generators.map((data): FeedItem => ({ kind: "generator", data })) : []),
+      ...(kind === "all" || kind === "workflow" ? workflows.map((data): FeedItem => ({ kind: "workflow", data })) : []),
+    ];
+    const created = (i: FeedItem) => new Date(i.data.createdAt).getTime();
+    const likes = (i: FeedItem) => (i.kind === "request" ? i.data.responseCount : i.data.likeCount);
+    return [...promptItems, ...otherItems].sort((a, b) => (sortMode === "popular" ? likes(b) - likes(a) : created(b) - created(a)));
+  }, [prompts, requests, generators, workflows, kind, taxonomy, sortMode]);
 
   if (!slug) {
     return <div className="mx-auto max-w-lg px-4 py-16 text-center text-sm text-text-muted">{t("tag.notFound")}.</div>;
@@ -83,10 +100,10 @@ export function TagView() {
     );
   }
 
-  const totalCount = tag.usageCount ?? prompts.length + requests.length;
+  const totalCount = tag.usageCount ?? prompts.length + requests.length + generators.length + workflows.length;
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6 px-3 py-5 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
+    <div className="mx-auto max-w-6xl space-y-5 px-3 py-5 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
       <div>
         <div className="mb-1 flex items-center gap-1.5">
           <Hash size={20} className="text-primary" />
@@ -95,49 +112,39 @@ export function TagView() {
         <p className="text-sm text-text-muted">{t("tag.usedInCount", { count: formatCount(totalCount) })}</p>
       </div>
 
-      {requests.length > 0 && (
-        <section className="space-y-3">
-          <h2 className="text-h3 font-semibold text-text">{t("tag.requestsHeading", { count: requests.length })}</h2>
-          <RequestList requests={requests} />
-        </section>
-      )}
+      <Tabs
+        variant="segmented"
+        ariaLabel={t("tag.filtersAria")}
+        active={kind}
+        onChange={setKind}
+        items={[
+          { key: "all", label: t("common.all") },
+          { key: "prompt", label: t("tag.filterPrompts") },
+          { key: "generator", label: t("tag.filterGenerators") },
+          { key: "workflow", label: t("tag.filterWorkflows") },
+          { key: "request", label: t("tag.filterRequests") },
+        ]}
+      />
 
-      <section className="space-y-3">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-h3 font-semibold text-text">{t("tag.promptsHeading", { count: filteredPrompts.length })}</h2>
-          <div className="flex gap-1.5">
-            {(["newest", "popular"] as SortMode[]).map((mode) => (
-              <button
-                key={mode}
-                type="button"
-                onClick={() => setSortMode(mode)}
-                className={cn(
-                  "rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
-                  sortMode === mode
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-border bg-surface text-text-muted hover:text-text",
-                )}
-              >
-                {mode === "newest" ? t("profile.sortNewest") : t("home.tabPopular")}
-              </button>
-            ))}
-          </div>
-        </div>
+      <div className="flex gap-1.5">
+        {(["newest", "popular"] as SortMode[]).map((mode) => (
+          <button
+            key={mode}
+            type="button"
+            onClick={() => setSortMode(mode)}
+            className={cn(
+              "rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
+              sortMode === mode ? "border-primary bg-primary text-primary-foreground" : "border-border bg-surface text-text-muted hover:text-text",
+            )}
+          >
+            {mode === "newest" ? t("profile.sortNewest") : t("home.tabPopular")}
+          </button>
+        ))}
+      </div>
 
-        <TaxonomyFilter value={taxonomy} onChange={setTaxonomy} />
+      {(kind === "all" || kind === "prompt") && <TaxonomyFilter value={taxonomy} onChange={setTaxonomy} />}
 
-        {filteredPrompts.length === 0 ? (
-          <p className="py-10 text-center text-sm text-text-muted">
-            {taxonomy.contentType ? t("tag.emptyForFilter") : t("tag.emptyAll")}
-          </p>
-        ) : (
-          <PromptGrid prompts={filteredPrompts} />
-        )}
-      </section>
-
-      {requests.length === 0 && prompts.length === 0 && (
-        <p className="py-10 text-center text-sm text-text-muted">{t("tag.emptyEverything")}</p>
-      )}
+      <FeedGrid items={items} emptyTitle={taxonomy.contentType && kind === "prompt" ? t("tag.emptyForFilter") : t("tag.emptyAll")} />
     </div>
   );
 }
