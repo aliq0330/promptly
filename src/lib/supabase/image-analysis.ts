@@ -8,12 +8,14 @@
  *
  * Hata kategorileri — ham Gemini/Edge Function metni KULLANICIYA HİÇ
  * gösterilmiyor, yalnızca `console.error` ile developer log'una yazılıyor;
- * kullanıcı her zaman `FRIENDLY_MESSAGES`'teki Türkçe, kısa mesajı görüyor.
+ * kullanıcı her zaman `friendlyMessages()`'teki kısa, dile göre çevrilen
+ * mesajı görüyor (bkz. `translateForRuntime`, `<html lang>`'e göre TR/EN).
  */
 
 import { FunctionsFetchError, FunctionsHttpError, FunctionsRelayError } from "@supabase/supabase-js";
 import { supabase } from "./client";
 import { readBlobAsBase64, resizeImageToBlob } from "@/lib/utils";
+import { translateForRuntime } from "@/lib/i18n/translations";
 import type {
   GeneratorBuilderContext,
   GeneratorBuilderResult,
@@ -40,15 +42,24 @@ export type ImageAnalysisOutcome<TData> =
   | { ok: true; data: TData; model: string | null }
   | { ok: false; error: ImageAnalysisError };
 
-const FRIENDLY_MESSAGES: Record<ImageAnalysisErrorKind, string> = {
-  api_key: "Görsel analiz servisi şu anda yapılandırma sorunu yaşıyor. Lütfen daha sonra tekrar dene.",
-  model: "Görsel analiz servisi şu anda kullanılamıyor. Lütfen daha sonra tekrar dene.",
-  invalid_image: "Bu görsel analiz edilemedi. Lütfen JPEG, PNG veya WebP formatında bir görsel seç.",
-  network: "Bağlantı sorunu nedeniyle analiz tamamlanamadı. İnternet bağlantını kontrol edip tekrar dene.",
-  malformed_response: "Analiz sonucu okunamadı. Lütfen tekrar dene.",
-  timeout: "Analiz beklenenden uzun sürdü ve zaman aşımına uğradı. Lütfen tekrar dene.",
-  unknown: "Görsel analiz sırasında bir sorun oluştu. Lütfen tekrar dene.",
-};
+/**
+ * Built fresh on every call (never a module-level static const) so it
+ * always reflects the CURRENT `<html lang>` — `translateForRuntime()`
+ * reads that at call time, and this module is imported/cached once, so a
+ * static const here would freeze the language at whatever it was on first
+ * import.
+ */
+function friendlyMessages(): Record<ImageAnalysisErrorKind, string> {
+  return {
+    api_key: translateForRuntime("vision.errorApiKey"),
+    model: translateForRuntime("vision.errorModel"),
+    invalid_image: translateForRuntime("vision.errorInvalidImage"),
+    network: translateForRuntime("vision.errorNetwork"),
+    malformed_response: translateForRuntime("vision.errorMalformedResponse"),
+    timeout: translateForRuntime("vision.errorTimeout"),
+    unknown: translateForRuntime("vision.errorUnknown"),
+  };
+}
 
 /** Bu sistemin desteklediği görsel formatları (HEIC vb. dahil edilmedi, tarayıcı desteği garanti değil). */
 const SUPPORTED_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
@@ -120,13 +131,14 @@ async function analyzeImage<TData>(
   mode: ImageAnalysisMode,
   context: unknown,
 ): Promise<ImageAnalysisOutcome<TData>> {
+  const friendly = friendlyMessages();
   if (!SUPPORTED_MIME_TYPES.has(file.type)) {
-    return { ok: false, error: { kind: "invalid_image", message: FRIENDLY_MESSAGES.invalid_image } };
+    return { ok: false, error: { kind: "invalid_image", message: friendly.invalid_image } };
   }
   if (file.size > MAX_SOURCE_BYTES) {
     return {
       ok: false,
-      error: { kind: "invalid_image", message: "Bu görsel çok büyük. Lütfen 20 MB'tan küçük bir dosya seç." },
+      error: { kind: "invalid_image", message: translateForRuntime("vision.errorFileTooLarge") },
     };
   }
 
@@ -138,7 +150,7 @@ async function analyzeImage<TData>(
     mimeType = contentType;
   } catch (err) {
     console.error("[image-analysis] görsel işlenemedi", err);
-    return { ok: false, error: { kind: "invalid_image", message: FRIENDLY_MESSAGES.invalid_image } };
+    return { ok: false, error: { kind: "invalid_image", message: friendly.invalid_image } };
   }
 
   try {
@@ -178,19 +190,19 @@ async function analyzeImage<TData>(
       }
 
       console.error("[image-analysis] analyze-image hatası", rawMessage, error);
-      return { ok: false, error: { kind, message: FRIENDLY_MESSAGES[kind] } };
+      return { ok: false, error: { kind, message: friendly[kind] } };
     }
 
     if (!data || typeof data !== "object") {
       console.error("[image-analysis] beklenmeyen response şekli", data);
-      return { ok: false, error: { kind: "malformed_response", message: FRIENDLY_MESSAGES.malformed_response } };
+      return { ok: false, error: { kind: "malformed_response", message: friendly.malformed_response } };
     }
 
     const payload = data as { success?: unknown; data?: unknown; model?: unknown; error?: unknown };
     if (payload.success !== true || !payload.data || typeof payload.data !== "object") {
       const kind = typeof payload.error === "string" ? categorizeFromText(payload.error) : "malformed_response";
       console.error("[image-analysis] analyze-image success:false", payload);
-      return { ok: false, error: { kind, message: FRIENDLY_MESSAGES[kind] } };
+      return { ok: false, error: { kind, message: friendly[kind] } };
     }
 
     if (!validateModeShape(mode, payload.data)) {
@@ -198,7 +210,7 @@ async function analyzeImage<TData>(
         `[image-analysis] "${mode}" modu için beklenmeyen response şekli — Edge Function henüz yeniden deploy edilmemiş (eski, mode'suz sürüm) olabilir. Bkz. "supabase functions deploy analyze-image".`,
         payload.data,
       );
-      return { ok: false, error: { kind: "malformed_response", message: FRIENDLY_MESSAGES.malformed_response } };
+      return { ok: false, error: { kind: "malformed_response", message: friendly.malformed_response } };
     }
 
     return {
@@ -208,7 +220,7 @@ async function analyzeImage<TData>(
     };
   } catch (err) {
     console.error("[image-analysis] beklenmeyen hata", err);
-    return { ok: false, error: { kind: "unknown", message: FRIENDLY_MESSAGES.unknown } };
+    return { ok: false, error: { kind: "unknown", message: friendly.unknown } };
   }
 }
 

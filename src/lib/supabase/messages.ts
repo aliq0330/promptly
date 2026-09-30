@@ -1,4 +1,5 @@
 import { supabase } from "./client";
+import { translateForRuntime } from "@/lib/i18n/translations";
 import { mapProfileRow, type ProfileRow } from "./mappers";
 import type { Conversation, Message, UserProfile } from "@/types";
 
@@ -51,12 +52,12 @@ interface PreviewRow {
 
 /** Renders a conversation list's one-line preview for the most recent message, honoring shared content/deletion the same way the thread itself does. */
 function previewTextFor(row: PreviewRow | undefined): string {
-  if (!row) return "Henüz mesaj yok.";
-  if (row.deleted_at) return "Bu mesaj silindi.";
+  if (!row) return translateForRuntime("messages.noMessagesYetShort");
+  if (row.deleted_at) return translateForRuntime("messages.thisMessageWasDeleted");
   if (row.body) return row.body;
-  if (row.shared_prompt_id) return "Bir prompt paylaştı.";
-  if (row.shared_request_id) return "Bir prompt isteği paylaştı.";
-  return "Henüz mesaj yok.";
+  if (row.shared_prompt_id) return translateForRuntime("messages.sharedAPromptPreview");
+  if (row.shared_request_id) return translateForRuntime("messages.sharedARequestPreview");
+  return translateForRuntime("messages.noMessagesYetShort");
 }
 
 /**
@@ -223,14 +224,14 @@ export async function sendMessage(conversationId: string, senderId: string, inpu
     })
     .select(MESSAGE_SELECT)
     .single();
-  if (error || !data) throw new Error(error?.message ?? "Mesaj gönderilemedi.");
+  if (error || !data) throw new Error(error?.message ?? translateForRuntime("messages.sendFailedShort"));
   return mapMessageRow(data as MessageRow);
 }
 
 /** Edits the caller's own message body — RLS (Faz A) only allows the sender, within 15 minutes of sending; `handle_message_body_edit` stamps edited_at automatically. */
 export async function editMessage(messageId: string, senderId: string, body: string): Promise<Message> {
   const trimmed = body.trim();
-  if (!trimmed) throw new Error("Boş mesaj gönderilemez.");
+  if (!trimmed) throw new Error(translateForRuntime("messages.emptyMessageNotAllowed"));
   const { data, error } = await supabase
     .from("messages")
     .update({ body: trimmed })
@@ -239,7 +240,7 @@ export async function editMessage(messageId: string, senderId: string, body: str
     .select(MESSAGE_SELECT)
     .maybeSingle();
   if (error) throw new Error(error.message);
-  if (!data) throw new Error("Bu mesaj artık düzenlenemez (15 dakikalık süre dolmuş olabilir).");
+  if (!data) throw new Error(translateForRuntime("messages.editWindowExpiredError"));
   return mapMessageRow(data as MessageRow);
 }
 
@@ -253,7 +254,7 @@ export async function deleteMessageForEveryone(messageId: string, senderId: stri
     .select("id")
     .maybeSingle();
   if (error) throw new Error(error.message);
-  if (!data) throw new Error("Bu mesaj artık silinemez (15 dakikalık süre dolmuş olabilir).");
+  if (!data) throw new Error(translateForRuntime("messages.deleteWindowExpired"));
 }
 
 /** "Benden sil" — hides a message from only this viewer's own thread view; never touches the row itself or other members' view of it. */
@@ -303,7 +304,7 @@ export async function getOrCreateDirectConversation(
     other_user_id: otherUserId,
   });
   if (error || !conversationId) {
-    throw new Error(error?.message ?? "Konuşma başlatılamadı.");
+    throw new Error(error?.message ?? translateForRuntime("messages.startConversationFailedShort"));
   }
 
   const found = await fetchConversationForUser(conversationId as string, userId);
@@ -315,7 +316,7 @@ export async function getOrCreateDirectConversation(
   return {
     id: conversationId as string,
     participants: [otherProfile],
-    lastMessage: "Henüz mesaj yok.",
+    lastMessage: translateForRuntime("messages.noMessagesYetShort"),
     lastMessageAt: new Date().toISOString(),
     unreadCount: 0,
     myStatus: "accepted",

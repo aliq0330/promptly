@@ -1,6 +1,7 @@
 import { supabase } from "./client";
 import { placeholderArt } from "@/lib/placeholder-image";
 import { resizeImageToBlob } from "@/lib/utils";
+import { translateForRuntime } from "@/lib/i18n/translations";
 import { mapProfileRow, type ProfileRow } from "./mappers";
 import type { Prompt, PromptContentType, PromptMedia, PromptOrigin, Tag, UserProfile } from "@/types";
 
@@ -385,7 +386,7 @@ export async function createRealPrompt(
         })
         .select("id, url, width, height, alt")
         .single();
-      if (mediaError || !mediaRow) throw new Error(mediaError?.message ?? "Görsel kaydedilemedi.");
+      if (mediaError || !mediaRow) throw new Error(mediaError?.message ?? translateForRuntime("prompt.imageSaveFailed"));
 
       media = [
         {
@@ -399,7 +400,7 @@ export async function createRealPrompt(
     } catch (err) {
       // Don't leave a half-published image prompt with no image behind.
       await supabase.from("prompts").delete().eq("id", promptId);
-      throw err instanceof Error ? err : new Error("Görsel yüklenemedi.");
+      throw err instanceof Error ? err : new Error(translateForRuntime("prompt.imageUploadFailedShort"));
     }
   }
 
@@ -492,7 +493,7 @@ export async function updateRealPrompt(promptId: string, authorId: string, input
     .maybeSingle();
 
   if (updateError) throw new Error(updateError.message);
-  if (!updated) throw new Error("Bu promptu düzenleme yetkin yok.");
+  if (!updated) throw new Error(translateForRuntime("prompt.noEditPermission"));
 
   if (input.imageFile) {
     try {
@@ -519,7 +520,7 @@ export async function updateRealPrompt(promptId: string, authorId: string, input
       });
       if (mediaError) throw new Error(mediaError.message);
     } catch (err) {
-      throw err instanceof Error ? err : new Error("Görsel güncellenemedi.");
+      throw err instanceof Error ? err : new Error(translateForRuntime("prompt.imageUpdateFailed"));
     }
   }
 
@@ -537,6 +538,6 @@ export async function updateRealPrompt(promptId: string, authorId: string, input
   }
 
   const fresh = await fetchPromptById(promptId);
-  if (!fresh) throw new Error("Prompt güncellendi ama yeniden yüklenemedi.");
+  if (!fresh) throw new Error(translateForRuntime("prompt.updatedButReloadFailed"));
   return fresh;
 }

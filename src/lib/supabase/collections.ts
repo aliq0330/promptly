@@ -1,4 +1,5 @@
 import { supabase } from "./client";
+import { translateForRuntime } from "@/lib/i18n/translations";
 import { mapProfileRow, type ProfileRow } from "./mappers";
 import { PROMPT_SELECT, mapPromptRow, type PromptRow } from "./prompts";
 import { GENERATOR_SELECT, mapGeneratorRow, type GeneratorRow } from "./generators";
@@ -280,7 +281,7 @@ export async function createCollection(
     .insert({ owner_id: ownerId, name: input.name.trim(), visibility: input.visibility })
     .select("id, created_at, updated_at")
     .single();
-  if (error || !data) throw new Error(error?.message ?? "Koleksiyon oluşturulamadı.");
+  if (error || !data) throw new Error(error?.message ?? translateForRuntime("collection.createFailed"));
   return {
     id: data.id,
     owner: ownerProfile,
