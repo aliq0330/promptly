@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { MessageSquareOff, PenLine, Reply, Sparkles } from "lucide-react";
+import { MessageSquareOff, PenLine, Reply, Sparkles, SquareTerminal } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +18,9 @@ import { CommentCountLink } from "@/features/prompts/comment-count-link";
 import { EditHistoryPanel } from "@/features/prompts/edit-history-panel";
 import { LikeButton } from "@/features/prompts/like-button";
 import { PostMenu } from "@/features/prompts/post-menu";
+import { CreatorSummary } from "@/features/profile/creator-summary";
+import { clampedAspectRatio } from "@/lib/placeholder-image";
+import { RelatedRequests } from "./related-requests";
 import { useAuth } from "@/features/auth/auth-provider";
 import { fetchPromptsForRequest } from "@/lib/supabase/prompts";
 import { useRealRequests } from "./real-requests-provider";
@@ -145,13 +148,19 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
     }
   }
 
+  // Older references may have no stored dimensions (0) — fall back to 4:3 instead of NaN.
+  const referenceRatio = live.referenceImage?.width && live.referenceImage.height
+    ? clampedAspectRatio(live.referenceImage.width, live.referenceImage.height)
+    : 4 / 3;
+
   const typeMeta = live.contentType ? CONTENT_TYPE_META[live.contentType] : null;
 
   return (
-    <div className="mx-auto w-full max-w-3xl space-y-6 px-3 py-5 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
+    <div className="mx-auto w-full max-w-6xl px-3 py-5 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
+      <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-8">
       <article
         className={cn(
-          "space-y-5 rounded-lg border border-border-soft bg-surface p-5 shadow-card transition-colors duration-700 sm:p-6",
+          "min-w-0 space-y-5 rounded-lg transition-colors duration-700",
           isRequestFlashed && "bg-primary/10 ring-1 ring-primary/40",
         )}
       >
@@ -166,12 +175,12 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
               <PostMenu requestId={live.id} authorId={live.author.id} onDeleted={handleDeleted} />
             </div>
           </div>
-          <h1 className="text-h1 font-semibold text-text">{live.title}</h1>
-          <Link href={profileHref(live.author)} className="group inline-flex items-center gap-2.5 rounded-md">
+          <h1 className="break-words text-h1 font-semibold text-text">{live.title}</h1>
+          <Link href={profileHref(live.author)} className="group inline-flex max-w-full items-center gap-2.5 rounded-md">
             <Avatar src={live.author.avatarUrl} alt={live.author.displayName} size={32} />
-            <span className="leading-tight">
-              <span className="block text-label font-semibold text-text group-hover:text-primary">{live.author.displayName}</span>
-              <span className="block text-caption text-text-muted">
+            <span className="min-w-0 leading-tight">
+              <span className="block truncate text-label font-semibold text-text group-hover:text-primary">{live.author.displayName}</span>
+              <span className="block truncate text-caption text-text-muted">
                 @{live.author.username} · {formatRelativeTime(live.createdAt, language)}
               </span>
             </span>
@@ -206,17 +215,25 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
 
         <section aria-labelledby="request-brief-title" className="overflow-hidden rounded-lg border border-border-soft bg-surface-soft">
           <div className="border-b border-border-soft px-4 py-2.5">
-            <h2 id="request-brief-title" className="font-sans text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">
+            <h2 id="request-brief-title" className="flex items-center gap-1.5 font-sans text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">
+              <SquareTerminal size={14} />
               {t("request.title")}
             </h2>
           </div>
-          <p className="whitespace-pre-wrap px-4 py-4 text-body text-text">{live.description}</p>
+          <p className="prompt-text whitespace-pre-wrap break-words px-4 py-4 text-[0.875rem] text-text">{live.description}</p>
         </section>
 
         {live.referenceImage && (
           <figure className="space-y-2">
-            <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-border-soft bg-surface-soft">
-              <Image src={live.referenceImage.url} alt={live.referenceImage.alt} fill sizes="768px" className="object-cover" />
+            <div
+              className="relative w-full overflow-hidden rounded-lg border border-border-soft bg-surface-soft"
+              // Supporting preview, not a hero image: capped at ~480px tall (same as the prompt page).
+              style={{
+                aspectRatio: referenceRatio,
+                maxWidth: `${Math.round(480 * referenceRatio)}px`,
+              }}
+            >
+              <Image src={live.referenceImage.url} alt={live.referenceImage.alt} fill sizes="(min-width: 1024px) 720px, 100vw" className="object-cover" />
             </div>
             <figcaption className="text-caption text-text-muted">{t("request.referenceImage")}</figcaption>
           </figure>
@@ -263,8 +280,6 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
           <p className="text-caption text-text-muted">{t("request.requestClosedNoNewReplies")}</p>
         )}
         {isOwnRequest && <EditHistoryPanel contentType="prompt_request" contentId={live.id} />}
-      </article>
-
       <section id="request-responses" className="scroll-mt-20 space-y-3">
         <h2 className="flex items-center gap-2 text-h2 font-semibold text-text">
           {t("request.creativeReplies")}
@@ -385,6 +400,41 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
         */}
         <CommentSection target={{ requestId: live.id }} highlightCommentId={highlightCommentId} />
       </section>
+      </article>
+
+      <aside className="mt-6 space-y-5 lg:sticky lg:top-24 lg:mt-0 lg:self-start">
+        <CreatorSummary creator={live.author} isOwn={isOwnRequest} />
+        <ContributorsList answers={answers} />
+        <RelatedRequests request={live} />
+      </aside>
+      </div>
     </div>
+  );
+}
+
+/** Distinct authors of the real replies loaded above — no extra query, nothing rendered until there is at least one. */
+function ContributorsList({ answers }: { answers: Prompt[] }) {
+  const { t } = useTranslation();
+  const authors = Array.from(new Map(answers.map((a) => [a.author.id, a.author])).values());
+  if (authors.length === 0) return null;
+  return (
+    <section aria-labelledby="request-contributors-title" className="space-y-2">
+      <h2 id="request-contributors-title" className="px-1 text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">
+        {t("request.contributors")}
+      </h2>
+      <ul className="divide-y divide-border-soft overflow-hidden rounded-lg border border-border-soft bg-surface">
+        {authors.slice(0, 6).map((author) => (
+          <li key={author.id}>
+            <Link href={profileHref(author)} className="flex items-center gap-2.5 px-3.5 py-2.5 transition-colors duration-200 hover:bg-surface-soft">
+              <Avatar src={author.avatarUrl} alt={author.displayName} size={28} />
+              <span className="min-w-0 leading-tight">
+                <span className="block truncate text-label font-semibold text-text">{author.displayName}</span>
+                <span className="block truncate text-caption text-text-muted">@{author.username}</span>
+              </span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }

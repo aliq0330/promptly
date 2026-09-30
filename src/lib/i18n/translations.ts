@@ -261,6 +261,8 @@ export const translations = {
   "request.title": { tr: "Prompt İsteği", en: "Prompt Request" },
   "request.creativeDirection": { tr: "Yaratıcı yön", en: "Creative direction" },
   "request.replies": { tr: "Yanıtlar", en: "Replies" },
+  "request.relatedRequests": { tr: "Benzer prompt istekleri", en: "Related Prompt Requests" },
+  "request.contributors": { tr: "İsteğe katkıda bulunanlar", en: "Contributors" },
   "request.thisRequestWasDeleted": { tr: "Bu istek silindi.", en: "This request was deleted." },
   "request.aRequest": { tr: "Bir istek", en: "A request" },
   "request.thisReplyWasSelected": { tr: "Bu yanıt seçildi", en: "This reply was selected" },
