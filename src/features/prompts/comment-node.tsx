@@ -5,6 +5,7 @@ import { ChevronDown, ChevronUp, CornerDownRight, Heart } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { cn, formatRelativeTime, profileHref } from "@/lib/utils";
+import { ReportButton } from "@/features/moderation/report-button";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { PromptComment } from "@/types";
 
@@ -169,6 +170,9 @@ export function CommentNode({
                 >
                   {t("request.reply")}
                 </button>
+              )}
+              {!isOwn && tree.currentUserId && (
+                <ReportButton targetType="comment" targetId={comment.id} menuItem={false} />
               )}
               {isOwn && (
                 <>

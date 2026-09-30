@@ -15,10 +15,13 @@ export function ReportButton({
   targetType,
   targetId,
   label,
+  menuItem = true,
 }: {
   targetType: ReportTargetType;
   targetId: string;
   label?: string;
+  /** False when rendered outside a `role="menu"` (e.g. under a comment). */
+  menuItem?: boolean;
 }) {
   const { user } = useAuth();
   const { t } = useTranslation();
@@ -38,7 +41,7 @@ export function ReportButton({
     return (
       <button
         type="button"
-        role="menuitem"
+        role={menuItem ? "menuitem" : undefined}
         onClick={() => setOpen(true)}
         className="flex items-center gap-1.5 text-sm text-text-muted hover:text-text"
       >

@@ -1,5 +1,6 @@
 import { normalizeToolRefs } from "@/lib/ai-tool-catalog";
 import { supabase } from "./client";
+import { withoutBlocked } from "./blocked-users";
 import { resizeImageToBlob } from "@/lib/utils";
 import { translateForRuntime } from "@/lib/i18n/translations";
 import { normalizeLegacyContentType, sanitizeTaxonomy } from "@/lib/content-taxonomy";
@@ -102,7 +103,7 @@ export async function fetchRecentRequests(limit = 60): Promise<PromptRequest[]> 
       console.error("fetchRecentRequests", error);
       return [];
     }
-    return filterNotDeleted(((data ?? []) as unknown as RequestRow[]).map(mapRequestRow));
+    return withoutBlocked(filterNotDeleted(((data ?? []) as unknown as RequestRow[]).map(mapRequestRow)), (r) => r.author.id);
   } catch (err) {
     console.error("fetchRecentRequests", err);
     return [];
@@ -125,7 +126,7 @@ export async function searchRequests(query: string, filters: ContentSearchFilter
       console.error("searchRequests", error);
       return [];
     }
-    return filterNotDeleted(((data ?? []) as unknown as RequestRow[]).map(mapRequestRow));
+    return withoutBlocked(filterNotDeleted(((data ?? []) as unknown as RequestRow[]).map(mapRequestRow)), (r) => r.author.id);
   } catch (err) {
     console.error("searchRequests", err);
     return [];

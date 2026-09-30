@@ -1,5 +1,6 @@
 import { normalizeToolRefs } from "@/lib/ai-tool-catalog";
 import { supabase } from "./client";
+import { withoutBlocked } from "./blocked-users";
 import { placeholderArt } from "@/lib/placeholder-image";
 import { resizeImageToBlob } from "@/lib/utils";
 import { translateForRuntime } from "@/lib/i18n/translations";
@@ -147,7 +148,7 @@ export async function fetchRecentPublishedPrompts(limit = 60): Promise<Prompt[]>
       console.error("fetchRecentPublishedPrompts", error);
       return [];
     }
-    return filterNotDeleted(filterProfileVisible((data ?? []).map((row) => mapPromptRow(row as unknown as PromptRow))));
+    return withoutBlocked(filterNotDeleted(filterProfileVisible((data ?? []).map((row) => mapPromptRow(row as unknown as PromptRow)))), (p) => p.author.id);
   } catch (err) {
     // A real network failure (e.g. no route to Supabase) throws instead of
     // resolving with a structured error — without this, a visitor with no
@@ -207,7 +208,7 @@ export async function fetchPromptsForRequest(requestId: string): Promise<Prompt[
       console.error("fetchPromptsForRequest", error);
       return [];
     }
-    return filterNotDeleted((data ?? []).map((row) => mapPromptRow(row as unknown as PromptRow)));
+    return withoutBlocked(filterNotDeleted((data ?? []).map((row) => mapPromptRow(row as unknown as PromptRow))), (p) => p.author.id);
   } catch (err) {
     console.error("fetchPromptsForRequest", err);
     return [];
@@ -229,7 +230,7 @@ export async function fetchPromptsByAuthors(authorIds: string[], limit = 60): Pr
       console.error("fetchPromptsByAuthors", error);
       return [];
     }
-    return filterNotDeleted(filterProfileVisible((data ?? []).map((row) => mapPromptRow(row as unknown as PromptRow))));
+    return withoutBlocked(filterNotDeleted(filterProfileVisible((data ?? []).map((row) => mapPromptRow(row as unknown as PromptRow)))), (p) => p.author.id);
   } catch (err) {
     console.error("fetchPromptsByAuthors", err);
     return [];
@@ -255,7 +256,7 @@ export async function searchPrompts(query: string, filters: ContentSearchFilters
       console.error("searchPrompts", error);
       return [];
     }
-    return filterNotDeleted(filterProfileVisible((data ?? []).map((row) => mapPromptRow(row as unknown as PromptRow))));
+    return withoutBlocked(filterNotDeleted(filterProfileVisible((data ?? []).map((row) => mapPromptRow(row as unknown as PromptRow)))), (p) => p.author.id);
   } catch (err) {
     console.error("searchPrompts", err);
     return [];

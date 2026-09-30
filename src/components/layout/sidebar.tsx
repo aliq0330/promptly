@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Plus } from "lucide-react";
+import { Plus, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BrandMark } from "@/components/layout/brand-mark";
 import { isNavItemActive, navGroups, PROFILE_NAV_PLACEHOLDER, settingsNavItem, type NavItem } from "@/components/layout/nav-items";
 import { useProfileNavHref } from "@/features/auth/use-profile-nav-href";
+import { useIsModerator } from "@/features/moderation/use-is-moderator";
 import { useTranslation } from "@/lib/i18n/language-provider";
 
 /**
@@ -19,6 +20,7 @@ export function Sidebar() {
   const pathname = usePathname();
   const profileNavHref = useProfileNavHref();
   const { t } = useTranslation();
+  const isModerator = useIsModerator();
 
   function renderItem(item: NavItem) {
     const href = item.href === PROFILE_NAV_PLACEHOLDER ? profileNavHref : item.href;
@@ -80,7 +82,10 @@ export function Sidebar() {
       </nav>
 
       <div className="border-t border-border-soft px-3 py-3 lg:px-4">
-        <ul>{renderItem(settingsNavItem)}</ul>
+        <ul className="space-y-0.5">
+          {isModerator && renderItem({ href: "/moderation", labelKey: "nav.moderation", icon: ShieldCheck })}
+          {renderItem(settingsNavItem)}
+        </ul>
       </div>
     </aside>
   );

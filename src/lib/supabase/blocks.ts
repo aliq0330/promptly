@@ -1,4 +1,5 @@
 import { supabase } from "./client";
+import { invalidateBlockedIds } from "./blocked-users";
 
 /**
  * Does `blockerId` currently block `blockedId`? Only readable from the
@@ -32,10 +33,12 @@ export async function fetchIsBlockedByMe(blockerId: string, blockedId: string): 
  */
 export async function blockUser(blockerId: string, blockedId: string): Promise<void> {
   const { error } = await supabase.from("blocks").insert({ blocker_id: blockerId, blocked_id: blockedId });
+  invalidateBlockedIds();
   if (error) throw new Error(error.message);
 }
 
 export async function unblockUser(blockerId: string, blockedId: string): Promise<void> {
   const { error } = await supabase.from("blocks").delete().eq("blocker_id", blockerId).eq("blocked_id", blockedId);
+  invalidateBlockedIds();
   if (error) throw new Error(error.message);
 }

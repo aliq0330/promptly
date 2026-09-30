@@ -10,6 +10,7 @@ import { deleteGenerator } from "@/lib/supabase/generators";
 import { deleteWorkflow } from "@/lib/supabase/workflows";
 import { deleteRealRequest } from "@/lib/supabase/requests";
 import { deletePromptResult } from "@/lib/supabase/prompt-results";
+import { ReportButton } from "@/features/moderation/report-button";
 import { useTranslation } from "@/lib/i18n/language-provider";
 
 /**
@@ -18,9 +19,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
  * (`ProfileContentMenu`, now folded in here since every card gets a header
  * with this menu, not just the profile grid). "Bağlantıyı kopyala" works
  * for anyone; "Kopyasını oluştur"/"Sil" only appear for the post's own
- * author — there's no report/block feature built yet (CLAUDE.md Bölüm 22
- * is still open), so a non-owner's menu deliberately stays minimal rather
- * than showing an action that doesn't do anything real.
+ * author — a non-owner also gets "Şikayet Et" (Bölüm 22, real `reports` row).
  *
  * Polymorphic since Bölüm 9.34's shared-social integration, widened to a
  * third target (a Prompt İsteği) by the "Prompt İsteği Etkileşim ve Menü
@@ -300,6 +299,14 @@ export function PostMenu({
                 {confirmingDelete ? t("common.confirmDelete") : t("common.delete")}
               </button>
             </>
+          )}
+          {!isOwn && user && !isResult && (
+            <div className="px-3 py-2" onClick={(event) => event.stopPropagation()}>
+              <ReportButton
+                targetType={isWorkflow ? "workflow" : isGenerator ? "generator" : isRequest ? "request" : "prompt"}
+                targetId={(workflowId ?? generatorId ?? requestId ?? promptId)!}
+              />
+            </div>
           )}
           {error && <p className="px-3 py-1 text-xs text-danger">{error}</p>}
         </div>

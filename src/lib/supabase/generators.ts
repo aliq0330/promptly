@@ -1,5 +1,6 @@
 import { normalizeToolRefs } from "@/lib/ai-tool-catalog";
 import { supabase } from "./client";
+import { withoutBlocked } from "./blocked-users";
 import { translateForRuntime } from "@/lib/i18n/translations";
 import { mapProfileRow, type ProfileRow } from "./mappers";
 import { getOrCreateTag } from "./tags";
@@ -165,7 +166,7 @@ export async function fetchRecentPublishedGenerators(limit = 60): Promise<Genera
       console.error("fetchRecentPublishedGenerators", error);
       return [];
     }
-    return (data ?? []).map((row) => mapGeneratorRow(row as unknown as GeneratorRow));
+    return withoutBlocked((data ?? []).map((row) => mapGeneratorRow(row as unknown as GeneratorRow)), (g) => g.creator.id);
   } catch (err) {
     console.error("fetchRecentPublishedGenerators", err);
     return [];
@@ -186,7 +187,7 @@ export async function fetchTopGenerators(limit = 20): Promise<Generator[]> {
       console.error("fetchTopGenerators", error);
       return [];
     }
-    return (data ?? []).map((row) => mapGeneratorRow(row as unknown as GeneratorRow));
+    return withoutBlocked((data ?? []).map((row) => mapGeneratorRow(row as unknown as GeneratorRow)), (g) => g.creator.id);
   } catch (err) {
     console.error("fetchTopGenerators", err);
     return [];
@@ -254,7 +255,7 @@ export async function searchGenerators(query: string, filters: ContentSearchFilt
       console.error("searchGenerators", error);
       return [];
     }
-    return (data ?? []).map((row) => mapGeneratorRow(row as unknown as GeneratorRow));
+    return withoutBlocked((data ?? []).map((row) => mapGeneratorRow(row as unknown as GeneratorRow)), (g) => g.creator.id);
   } catch (err) {
     console.error("searchGenerators", err);
     return [];
