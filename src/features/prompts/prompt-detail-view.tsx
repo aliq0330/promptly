@@ -9,6 +9,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { ContentTypeLabel } from "@/features/content/content-type-label";
 import { ShareTriggerButton } from "@/features/prompts/share-modal";
 import { RelatedPrompts } from "@/features/prompts/related-prompts";
+import { TaxonomyLinks } from "@/features/content/taxonomy-links";
 import { CreatorSummary } from "@/features/profile/creator-summary";
 import { clampedAspectRatio } from "@/lib/placeholder-image";
 import { GeneratorSourceContext, RequestResponseContext } from "@/features/prompts/post-context";
@@ -171,6 +172,8 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
               <figcaption className="text-caption text-text-muted">{t("prompt.outputCaption")}</figcaption>
             </figure>
           )}
+
+          <TaxonomyLinks contentType={prompt.contentType} category={prompt.category} subcategory={prompt.subcategory} />
 
           {prompt.tags.length > 0 && (
             <div className="flex flex-wrap gap-1.5">

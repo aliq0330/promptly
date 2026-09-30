@@ -1,6 +1,8 @@
 import { supabase } from "./client";
 import { resizeImageToBlob } from "@/lib/utils";
 import { translateForRuntime } from "@/lib/i18n/translations";
+import { normalizeLegacyContentType, sanitizeTaxonomy } from "@/lib/content-taxonomy";
+import { applyTaxonomyFilter, taxonomyColumns, type ContentSearchFilters } from "./taxonomy-query";
 import { mapProfileRow, type ProfileRow } from "./mappers";
 import type { PromptContentType, PromptRequest, PromptRequestStatus, Tag } from "@/types";
 
@@ -15,7 +17,9 @@ export interface RequestRow {
   description: string;
   creative_direction: string | null;
   preferred_tool: string | null;
-  content_type: PromptContentType | null;
+  content_type: string | null;
+  category: string | null;
+  subcategory: string | null;
   reference_image_url: string | null;
   reference_image_width: number | null;
   reference_image_height: number | null;
@@ -31,7 +35,7 @@ export interface RequestRow {
 }
 
 export const REQUEST_SELECT = `
-  id, title, description, creative_direction, preferred_tool, content_type,
+  id, title, description, creative_direction, preferred_tool, content_type, category, subcategory,
   reference_image_url, reference_image_width, reference_image_height,
   status, selected_response_prompt_id, response_count, like_count, comment_count, created_at, deleted_at,
   profiles:author_id ( id, username, display_name, avatar_url, cover_url, bio, website, follower_count, following_count, created_at, interests ),
@@ -52,6 +56,8 @@ function filterNotDeleted(requests: PromptRequest[]): PromptRequest[] {
 
 export function mapRequestRow(row: RequestRow): PromptRequest {
   const tags: Tag[] = (row.prompt_request_tags ?? []).map((rt) => ({ slug: rt.tags.slug, label: rt.tags.label }));
+  // Rows written before the 4-type taxonomy may still say code/music — read them as their new type.
+  const legacy = row.content_type ? normalizeLegacyContentType(row.content_type) : null;
   return {
     id: row.id,
     author: mapProfileRow(row.profiles),
@@ -59,7 +65,8 @@ export function mapRequestRow(row: RequestRow): PromptRequest {
     description: row.description,
     creativeDirection: row.creative_direction ?? "",
     preferredTool: row.preferred_tool,
-    contentType: row.content_type ?? undefined,
+    contentType: legacy?.contentType,
+    ...(legacy ? sanitizeTaxonomy(legacy.contentType, row.category ?? legacy.category, row.subcategory) : { category: null, subcategory: null }),
     referenceImage: row.reference_image_url
       ? {
           id: `${row.id}-reference`,
@@ -95,6 +102,28 @@ export async function fetchRecentRequests(limit = 60): Promise<PromptRequest[]> 
     return filterNotDeleted(((data ?? []) as unknown as RequestRow[]).map(mapRequestRow));
   } catch (err) {
     console.error("fetchRecentRequests", err);
+    return [];
+  }
+}
+
+/** Text and/or taxonomy/author search over real requests (same filter shape as prompts/generators). */
+export async function searchRequests(query: string, filters: ContentSearchFilters = {}, limit = 40): Promise<PromptRequest[]> {
+  const escaped = query.trim().replace(/[%,]/g, "");
+  const hasFilter = Boolean(filters.authorId || filters.taxonomy?.contentType);
+  if (!escaped && !hasFilter) return [];
+  try {
+    let request = supabase.from("prompt_requests").select(REQUEST_SELECT);
+    if (escaped) request = request.or(`title.ilike.%${escaped}%,description.ilike.%${escaped}%`);
+    if (filters.authorId) request = request.eq("author_id", filters.authorId);
+    request = applyTaxonomyFilter(request, filters.taxonomy);
+    const { data, error } = await request.order("created_at", { ascending: false }).limit(limit);
+    if (error) {
+      console.error("searchRequests", error);
+      return [];
+    }
+    return filterNotDeleted(((data ?? []) as unknown as RequestRow[]).map(mapRequestRow));
+  } catch (err) {
+    console.error("searchRequests", err);
     return [];
   }
 }
@@ -141,6 +170,8 @@ export interface CreateRealRequestInput {
   description: string;
   creativeDirection: string;
   contentType: PromptContentType;
+  category?: string | null;
+  subcategory?: string | null;
   preferredTool: string | null;
   tags: Tag[];
   /** Per-tag source (`manual` | `automatic`), keyed by slug — see `CreateRealPromptInput.tagSources` (Bölüm 9.23). */
@@ -182,6 +213,7 @@ export async function createRealRequest(
       creative_direction: input.creativeDirection.trim() || null,
       preferred_tool: input.preferredTool,
       content_type: input.contentType,
+      ...taxonomyColumns(input.contentType, input.category, input.subcategory),
       reference_image_url: referenceImage?.url ?? null,
       reference_image_width: referenceImage?.width ?? null,
       reference_image_height: referenceImage?.height ?? null,
@@ -213,6 +245,7 @@ export async function createRealRequest(
     creativeDirection: input.creativeDirection.trim(),
     preferredTool: input.preferredTool,
     contentType: input.contentType,
+    ...sanitizeTaxonomy(input.contentType, input.category, input.subcategory),
     referenceImage: referenceImage
       ? { id: `${requestId}-reference`, url: referenceImage.url, width: referenceImage.width, height: referenceImage.height, alt: input.title }
       : undefined,
@@ -227,6 +260,9 @@ export async function createRealRequest(
 }
 
 export interface UpdateRealRequestInput {
+  /** Taxonomy level(s) — `undefined` leaves the columns untouched, `null` clears them. `content_type` itself is never editable. */
+  category?: string | null;
+  subcategory?: string | null;
   title: string;
   description: string;
   creativeDirection: string;
@@ -257,6 +293,7 @@ export async function updateRealRequest(requestId: string, input: UpdateRealRequ
       description: input.description.trim(),
       creative_direction: input.creativeDirection.trim() || null,
       preferred_tool: input.preferredTool,
+      ...(input.category === undefined ? {} : { category: input.category, subcategory: input.subcategory ?? null }),
     })
     .eq("id", requestId)
     .select("id")

@@ -3,15 +3,16 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Blocks, Hash, LayoutGrid, Search, Sparkles, SquareTerminal, TrendingUp, Users } from "lucide-react";
+import { Blocks, Hash, LayoutGrid, Sparkles, SquareTerminal, TrendingUp, Users } from "lucide-react";
 import { Tabs } from "@/components/ui/tabs";
 import { Chip, ChipRow } from "@/components/ui/chip";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PromptCardSkeletonGrid } from "@/components/ui/prompt-card-skeleton";
 import { FeedGrid } from "./feed-grid";
 import { feedItemCreatedAt, type FeedItem } from "./types";
-import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
-import { GENERATOR_CATEGORY_TOPICS, GENERATOR_CATEGORY_TOPIC_ICONS, GENERATOR_CATEGORY_TOPIC_LABELS } from "@/features/generators/generator-category-meta";
+import { TaxonomyFilter } from "@/features/content/taxonomy-filter";
+import { SmartSearchInput } from "@/features/search/smart-search-input";
+import { EMPTY_TAXONOMY_FILTER, matchesTaxonomy, type TaxonomyFilterValue } from "@/lib/content-taxonomy";
 import { CreatorCard } from "@/features/profile/creator-card";
 import { useRealPrompts } from "@/features/prompts/real-prompts-provider";
 import { useRealRequests } from "@/features/requests/real-requests-provider";
@@ -21,7 +22,7 @@ import { fetchPopularTags } from "@/lib/supabase/tags";
 import { tagHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
-import type { GeneratorCategoryTopic, PromptContentType, Tag, UserProfile } from "@/types";
+import type { Tag, UserProfile } from "@/types";
 
 type Section = "all" | "prompts" | "generators" | "requests" | "creators";
 
@@ -33,8 +34,6 @@ const SECTIONS: { key: Section; labelKey: TranslationKey; icon: typeof LayoutGri
   { key: "creators", labelKey: "discover.creators", icon: Users },
 ];
 
-const PROMPT_TYPES = Object.keys(CONTENT_TYPE_META) as PromptContentType[];
-
 /**
  * Explore — search, trending tags, and one place to browse every kind of
  * content: all, prompts (by content type), generators (by topic), requests
@@ -45,8 +44,7 @@ export function DiscoverFeed() {
   const { t } = useTranslation();
   const router = useRouter();
   const [section, setSection] = useState<Section>("all");
-  const [promptType, setPromptType] = useState<PromptContentType | "all">("all");
-  const [topic, setTopic] = useState<GeneratorCategoryTopic | "all">("all");
+  const [taxonomy, setTaxonomy] = useState<TaxonomyFilterValue>(EMPTY_TAXONOMY_FILTER);
   const [openOnly, setOpenOnly] = useState(false);
   const [query, setQuery] = useState("");
   const [creators, setCreators] = useState<UserProfile[] | null>(null);
@@ -63,17 +61,18 @@ export function DiscoverFeed() {
 
   const items = useMemo<FeedItem[]>(() => {
     const prompts: FeedItem[] = realPrompts
-      .filter((prompt) => promptType === "all" || prompt.contentType === promptType)
+      .filter((prompt) => matchesTaxonomy(prompt, taxonomy))
       .map((prompt) => ({ kind: "prompt", data: prompt }));
     const generators: FeedItem[] = realGenerators
-      .filter((generator) => topic === "all" || generator.category === topic)
+      .filter((generator) => matchesTaxonomy(generator, taxonomy))
       .map((generator) => ({ kind: "generator", data: generator }));
     const requests: FeedItem[] = realRequests
+      .filter((request) => matchesTaxonomy(request, taxonomy))
       .filter((request) => !openOnly || request.status === "open")
       .map((request) => ({ kind: "request", data: request }));
     const pick = section === "prompts" ? prompts : section === "generators" ? generators : section === "requests" ? requests : [...prompts, ...generators, ...requests];
     return pick.sort((a, b) => feedItemCreatedAt(b) - feedItemCreatedAt(a));
-  }, [realPrompts, realGenerators, realRequests, promptType, topic, openOnly, section]);
+  }, [realPrompts, realGenerators, realRequests, taxonomy, openOnly, section]);
 
   function handleSearch(event: FormEvent) {
     event.preventDefault();
@@ -83,26 +82,21 @@ export function DiscoverFeed() {
 
   return (
     <div className="space-y-6">
-      <form onSubmit={handleSearch} role="search" className="relative">
-        <label htmlFor="discover-search" className="sr-only">
-          {t("discover.searchPlaceholder")}
-        </label>
-        <Search size={18} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" />
-        <input
-          id="discover-search"
-          type="search"
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder={t("discover.searchPlaceholder")}
-          className="h-12 w-full rounded-lg border border-border-soft bg-surface pl-11 pr-24 text-small text-text shadow-card placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-        />
-        <button
-          type="submit"
-          className="absolute right-1.5 top-1/2 h-9 -translate-y-1/2 rounded-md bg-text px-4 text-label font-semibold text-background transition-opacity hover:opacity-90"
-        >
-          {t("discover.search")}
-        </button>
-      </form>
+      <SmartSearchInput
+        id="discover-search"
+        value={query}
+        onChange={setQuery}
+        onSubmit={handleSearch}
+        placeholder={t("discover.searchPlaceholder")}
+        submitButton={
+          <button
+            type="submit"
+            className="absolute right-1.5 top-1/2 h-9 -translate-y-1/2 rounded-md bg-text px-4 text-label font-semibold text-background transition-opacity hover:opacity-90"
+          >
+            {t("discover.search")}
+          </button>
+        }
+      />
 
       {tags.length > 0 && (
         <div className="flex items-center gap-3">
@@ -133,30 +127,7 @@ export function DiscoverFeed() {
           ariaLabel={t("discover.sectionsAriaLabel")}
         />
 
-        {section === "prompts" && (
-          <ChipRow>
-            <Chip selected={promptType === "all"} onClick={() => setPromptType("all")}>
-              {t("discover.allTypes")}
-            </Chip>
-            {PROMPT_TYPES.map((type) => (
-              <Chip key={type} icon={CONTENT_TYPE_META[type].icon} selected={promptType === type} onClick={() => setPromptType(type)}>
-                {t(CONTENT_TYPE_META[type].labelKey)}
-              </Chip>
-            ))}
-          </ChipRow>
-        )}
-        {section === "generators" && (
-          <ChipRow>
-            <Chip selected={topic === "all"} onClick={() => setTopic("all")}>
-              {t("discover.allCategories")}
-            </Chip>
-            {GENERATOR_CATEGORY_TOPICS.map((key) => (
-              <Chip key={key} icon={GENERATOR_CATEGORY_TOPIC_ICONS[key]} selected={topic === key} onClick={() => setTopic(key)}>
-                {t(GENERATOR_CATEGORY_TOPIC_LABELS[key])}
-              </Chip>
-            ))}
-          </ChipRow>
-        )}
+        {section !== "creators" && <TaxonomyFilter value={taxonomy} onChange={setTaxonomy} />}
         {section === "requests" && (
           <ChipRow>
             <Chip selected={!openOnly} onClick={() => setOpenOnly(false)}>

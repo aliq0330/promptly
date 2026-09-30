@@ -1,4 +1,4 @@
-import { Code2, FileText, ImageIcon, Music, Video } from "lucide-react";
+import { FileText, ImageIcon, Music, Video } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import type { PromptContentType } from "@/types";
@@ -11,7 +11,6 @@ import type { PromptContentType } from "@/types";
 export const CONTENT_TYPE_META: Record<PromptContentType, { icon: LucideIcon; labelKey: TranslationKey }> = {
   image: { icon: ImageIcon, labelKey: "contentType.image" },
   text: { icon: FileText, labelKey: "contentType.text" },
+  audio: { icon: Music, labelKey: "contentType.audio" },
   video: { icon: Video, labelKey: "contentType.video" },
-  code: { icon: Code2, labelKey: "contentType.code" },
-  music: { icon: Music, labelKey: "contentType.music" },
 };

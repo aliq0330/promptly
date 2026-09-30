@@ -8,7 +8,7 @@ import { ContentTags } from "@/features/content/content-tags";
 import { PostHeader } from "@/features/prompts/post-header";
 import { PromptCardFooter } from "@/features/prompts/prompt-card-footer";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import { GENERATOR_CATEGORY_TOPIC_LABELS } from "./generator-category-meta";
+import { taxonomyPathLabel } from "@/lib/content-taxonomy";
 import type { Generator } from "@/types";
 
 /**
@@ -29,9 +29,9 @@ export function GeneratorCard({
   /** Same "kaydedilenlerden kaldır"/"koleksiyondan kaldır" menu entry a prompt card gets inside a collection the viewer owns. */
   collectionRemoval?: { isDefault: boolean; onRemove: () => Promise<void> };
 }) {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const href = generatorHref(generator);
-  const topic = t(GENERATOR_CATEGORY_TOPIC_LABELS[generator.category]);
+  const topic = taxonomyPathLabel(generator, language);
 
   return (
     <ContentCard href={href}>
@@ -55,7 +55,7 @@ export function GeneratorCard({
           <span className="min-w-0 flex-1 leading-tight">
             <span className="block text-caption text-text-muted">{t("generator.structuredPromptBuilder")}</span>
             <span className="block truncate text-label font-medium text-text">
-              {generator.subcategory ? `${topic} · ${generator.subcategory}` : topic}
+              {topic}
               {generator.enableNegativePrompt ? ` · ${t("generator.negativePromptSuffix")}` : ""}
             </span>
           </span>

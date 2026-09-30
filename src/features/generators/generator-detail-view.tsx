@@ -15,7 +15,7 @@ import { CreatorSummary } from "@/features/profile/creator-summary";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { GeneratorPlayground } from "./generator-playground";
-import { GENERATOR_CATEGORY_TOPIC_LABELS } from "./generator-category-meta";
+import { taxonomyPathLabel } from "@/lib/content-taxonomy";
 import { LikeButton } from "@/features/prompts/like-button";
 import { SaveButton } from "@/features/prompts/save-button";
 import { CommentCountLink } from "@/features/prompts/comment-count-link";
@@ -124,7 +124,7 @@ export function GeneratorDetailView() {
 
   const canOpenInPrompt = generator.allowPromptEditing || generator.allowSavingGeneratedPrompts;
 
-  const topic = GENERATOR_CATEGORY_TOPIC_LABELS[generator.category];
+  const topic = taxonomyPathLabel(generator, language);
   const fields = [...version.schema.fields].sort((a, b) => a.order - b.order);
 
   return (
@@ -136,7 +136,7 @@ export function GeneratorDetailView() {
               <ContentTypeLabel
                 icon={Blocks}
                 label={t("generator.singular")}
-                detail={generator.subcategory ? `${t(topic)} · ${generator.subcategory}` : t(topic)}
+                detail={topic}
               />
               <div className="flex flex-wrap items-center gap-1.5">
                 {generator.status === "draft" && <Badge variant="warning">{t("generator.draftBadge")}</Badge>}

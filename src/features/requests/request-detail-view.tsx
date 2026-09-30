@@ -18,6 +18,7 @@ import { CommentCountLink } from "@/features/prompts/comment-count-link";
 import { EditHistoryPanel } from "@/features/prompts/edit-history-panel";
 import { LikeButton } from "@/features/prompts/like-button";
 import { PostMenu } from "@/features/prompts/post-menu";
+import { TaxonomyLinks } from "@/features/content/taxonomy-links";
 import { CreatorSummary } from "@/features/profile/creator-summary";
 import { clampedAspectRatio } from "@/lib/placeholder-image";
 import { RelatedRequests } from "./related-requests";
@@ -245,6 +246,8 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
             <p className="text-small text-text">{live.creativeDirection}</p>
           </div>
         )}
+
+        {live.contentType && <TaxonomyLinks contentType={live.contentType} category={live.category} subcategory={live.subcategory} />}
 
         {(live.tags.length > 0 || live.preferredTool) && (
           <div className="flex flex-wrap gap-1.5">
