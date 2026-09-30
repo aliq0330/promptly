@@ -1,3 +1,4 @@
+import type { ContentTypeId } from "@/lib/content-taxonomy";
 /**
  * Shared domain types for Promptly — mirror the real Supabase schema (see
  * `supabase/` migrations and `src/lib/supabase/*.ts`'s mappers).
@@ -52,7 +53,7 @@ export type PromptOrigin =
  * prompts share the platform (see CLAUDE.md section 1). Only "image"
  * prompts render a media preview — the rest use a compact text-first card.
  */
-export type PromptContentType = "image" | "text" | "video" | "code" | "music";
+export type PromptContentType = ContentTypeId;
 
 export interface Prompt {
   id: string;
@@ -62,6 +63,9 @@ export interface Prompt {
   promptText: string;
   tool: string | null;
   contentType: PromptContentType;
+  /** Taxonomy category/subcategory slug (see lib/content-taxonomy.ts) — optional, null when never chosen. */
+  category: string | null;
+  subcategory: string | null;
   media: PromptMedia[];
   tags: Tag[];
   origin: PromptOrigin;
@@ -191,8 +195,10 @@ export interface PromptRequest {
   description: string;
   creativeDirection: string;
   preferredTool: string | null;
-  /** Requested content type (image/text/video/code/music) — same union as `Prompt.contentType`. */
+  /** Requested content type (image/text/audio/video) — same union as `Prompt.contentType`. */
   contentType?: PromptContentType;
+  category: string | null;
+  subcategory: string | null;
   /** Optional reference image, added by the requester for creative direction. */
   referenceImage?: PromptMedia;
   tags: Tag[];
@@ -394,8 +400,6 @@ export interface PromptEditSuggestion {
 // the reasoning. These types mirror that JSON shape exactly; nothing here
 // is hard-coded per generator, every category/field is fully user-defined.
 
-export type GeneratorCategoryTopic = "image" | "text" | "video" | "audio" | "code" | "design" | "marketing" | "writing" | "other";
-
 export type GeneratorFieldType =
   | "text"
   | "textarea"
@@ -523,7 +527,9 @@ export interface Generator {
   slug: string;
   description: string;
   coverUrl: string | null;
-  category: GeneratorCategoryTopic;
+  contentType: PromptContentType;
+  /** Taxonomy category/subcategory slug (see lib/content-taxonomy.ts) — optional. */
+  category: string | null;
   subcategory: string | null;
   tags: Tag[];
   visibility: "public" | "unlisted" | "private";

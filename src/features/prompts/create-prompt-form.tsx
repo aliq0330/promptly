@@ -7,7 +7,7 @@ import { Blocks, Copy, X } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { PromptCard } from "@/features/prompts/prompt-card";
-import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
+import { TaxonomyPicker } from "@/features/content/taxonomy-picker";
 import { useRealPrompts } from "@/features/prompts/real-prompts-provider";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useOwnProfile } from "@/features/auth/own-profile-provider";
@@ -22,33 +22,14 @@ import { fetchGeneratorById, fetchGeneratorRun } from "@/lib/supabase/generators
 import { placeholderArt } from "@/lib/placeholder-image";
 import { cn, copyTextToClipboard, generatorHref, promptHref, requestHref, resizeImageToDataUrlFit } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import type { Generator, GeneratorCategoryTopic, GeneratorRun, Prompt, PromptContentType, PromptRequest } from "@/types";
-
-const CONTENT_TYPES: PromptContentType[] = ["image", "text", "video", "code", "music"];
+import type { Generator, GeneratorRun, Prompt, PromptContentType, PromptRequest } from "@/types";
 
 const TOOL_SUGGESTIONS: Record<PromptContentType, string[]> = {
   image: ["Midjourney v6", "Stable Diffusion XL", "DALL-E 3", "NovelAI"],
-  text: ["Claude", "GPT-4"],
+  text: ["Claude", "GPT-4", "Claude Code"],
+  audio: ["Suno", "Udio", "ElevenLabs"],
   video: ["Sora", "Runway Gen-3"],
-  code: ["Claude Code", "GPT-4"],
-  music: ["Suno", "Udio"],
 };
-
-/** A generator's own topic enum (`GeneratorCategoryTopic`) is a superset of `PromptContentType` — maps the closest real content type so "Prompt Olarak Aç" starts on a sensible tab instead of defaulting to "image" for e.g. a marketing-copy generator. */
-function contentTypeFromGeneratorCategory(category: GeneratorCategoryTopic): PromptContentType {
-  switch (category) {
-    case "image":
-      return "image";
-    case "video":
-      return "video";
-    case "audio":
-      return "music";
-    case "code":
-      return "code";
-    default:
-      return "text";
-  }
-}
 
 function LoginGate({ message }: { message: string }) {
   const { t } = useTranslation();
@@ -217,6 +198,8 @@ export function CreatePromptForm() {
   ]);
 
   const [contentType, setContentType] = useState<PromptContentType>("image");
+  const [category, setCategory] = useState<string | null>(null);
+  const [subcategory, setSubcategory] = useState<string | null>(null);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [promptText, setPromptText] = useState("");
@@ -249,6 +232,8 @@ export function CreatePromptForm() {
     if (editingPrompt) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time seed once the async source loads
       setContentType(editingPrompt.contentType);
+      setCategory(editingPrompt.category);
+      setSubcategory(editingPrompt.subcategory);
       setTitle(editingPrompt.title);
       setDescription(editingPrompt.description);
       setPromptText(editingPrompt.promptText);
@@ -272,6 +257,8 @@ export function CreatePromptForm() {
     }
     if (duplicateSource) {
       setContentType(duplicateSource.contentType);
+      setCategory(duplicateSource.category);
+      setSubcategory(duplicateSource.subcategory);
       setTitle(`${duplicateSource.title} ${t("common.copySuffix")}`);
       setDescription(duplicateSource.description);
       setPromptText(duplicateSource.promptText);
@@ -282,6 +269,8 @@ export function CreatePromptForm() {
     }
     if (answeredRequest) {
       setContentType(answeredRequest.contentType ?? "image");
+      setCategory(answeredRequest.category);
+      setSubcategory(answeredRequest.subcategory);
       setTool(answeredRequest.preferredTool ?? "");
       // Deliberately NOT copying answeredRequest.tags here (CLAUDE.md §12)
       // — they're fed into useTagPicker as contextTags instead, which only
@@ -302,7 +291,9 @@ export function CreatePromptForm() {
       // title/content-type fill once the generator DOES arrive a moment
       // later, since this effect only ever runs once per `fieldsSeeded`.
       if (sourceGenerator) {
-        setContentType(contentTypeFromGeneratorCategory(sourceGenerator.category));
+        setContentType(sourceGenerator.contentType);
+        setCategory(sourceGenerator.category);
+        setSubcategory(sourceGenerator.subcategory);
         setTitle(sourceGenerator.title);
       }
       setPromptText(generatorRun.generatedPrompt);
@@ -401,6 +392,8 @@ export function CreatePromptForm() {
           description,
           promptText,
           tool: tool || null,
+          category,
+          subcategory,
           tags: tagPicker.accepted.map((entry) => entry.tag),
           tagSources: Object.fromEntries(tagPicker.accepted.map((entry) => [entry.tag.slug, entry.source])),
           imageFile: contentType === "image" ? imageFile : undefined,
@@ -425,6 +418,8 @@ export function CreatePromptForm() {
           promptText,
           tool: tool || null,
           contentType,
+          category,
+          subcategory,
           tags: tagPicker.accepted.map((entry) => entry.tag),
           tagSources: Object.fromEntries(tagPicker.accepted.map((entry) => [entry.tag.slug, entry.source])),
           imageFile,
@@ -467,6 +462,8 @@ export function CreatePromptForm() {
     promptText: promptText || t("prompt.promptTextPlaceholderPreview"),
     tool: tool || null,
     contentType,
+    category,
+    subcategory,
     media,
     tags: tagPicker.accepted.map((entry) => entry.tag),
     origin,
@@ -697,42 +694,16 @@ export function CreatePromptForm() {
             </div>
           )}
 
-          <div>
-            <label className="mb-2 block text-sm font-medium text-text">{t("prompt.contentTypeLabel")}</label>
-            {isEditMode ? (
-              <div className="flex items-center gap-1.5 text-sm text-text-muted">
-                {(() => {
-                  const Icon = CONTENT_TYPE_META[contentType].icon;
-                  return <Icon size={14} />;
-                })()}
-                {t(CONTENT_TYPE_META[contentType].labelKey)}
-                <span className="text-xs">{t("prompt.notEditableWhileEditing")}</span>
-              </div>
-            ) : (
-              <div className="flex flex-wrap gap-2">
-                {CONTENT_TYPES.map((type) => {
-                  const meta = CONTENT_TYPE_META[type];
-                  const Icon = meta.icon;
-                  return (
-                    <button
-                      key={type}
-                      type="button"
-                      onClick={() => setContentType(type)}
-                      className={cn(
-                        "flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors",
-                        contentType === type
-                          ? "border-primary bg-primary text-primary-foreground"
-                          : "border-border bg-surface text-text-muted hover:text-text",
-                      )}
-                    >
-                      <Icon size={14} />
-                      {t(meta.labelKey)}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+          <TaxonomyPicker
+            value={{ contentType, category, subcategory }}
+            onChange={(next) => {
+              setContentType(next.contentType);
+              setCategory(next.category);
+              setSubcategory(next.subcategory);
+            }}
+            lockContentType={isEditMode}
+            lockedHint={t("prompt.notEditableWhileEditing")}
+          />
 
           {contentType === "image" && (
             <PromptVisionAssist

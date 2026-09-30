@@ -4,19 +4,17 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Blocks, Copy, Plus, Search, SlidersHorizontal, SquareMousePointer } from "lucide-react";
 import { buttonClassName } from "@/components/ui/button";
-import { Chip, ChipRow } from "@/components/ui/chip";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageContainer, PageHeader } from "@/components/ui/page-header";
 import { PromptCardSkeletonGrid } from "@/components/ui/prompt-card-skeleton";
 import { PromptGrid } from "@/features/prompts/prompt-grid";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
-import { GENERATOR_CATEGORY_TOPIC_ICONS, GENERATOR_CATEGORY_TOPIC_LABELS, GENERATOR_CATEGORY_TOPICS } from "./generator-category-meta";
+import { TaxonomyFilter } from "@/features/content/taxonomy-filter";
+import { EMPTY_TAXONOMY_FILTER, matchesTaxonomy, type TaxonomyFilterValue } from "@/lib/content-taxonomy";
 import { useRealGenerators } from "./real-generators-provider";
 import { searchGenerators } from "@/lib/supabase/generators";
-import type { Generator, GeneratorCategoryTopic } from "@/types";
-
-type CategoryFilter = "all" | GeneratorCategoryTopic;
+import type { Generator } from "@/types";
 
 const STEPS = [
   { icon: SquareMousePointer, titleKey: "generator.step1Title" as TranslationKey, bodyKey: "generator.step1Body" as TranslationKey },
@@ -34,7 +32,7 @@ const STEPS = [
 export function GeneratorsDiscoverView() {
   const { t } = useTranslation();
   const { realGenerators } = useRealGenerators();
-  const [category, setCategory] = useState<CategoryFilter>("all");
+  const [taxonomy, setTaxonomy] = useState<TaxonomyFilterValue>(EMPTY_TAXONOMY_FILTER);
   const [query, setQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Generator[] | null>(null);
   const [searching, setSearching] = useState(false);
@@ -58,8 +56,8 @@ export function GeneratorsDiscoverView() {
 
   const filtered = useMemo(() => {
     const base = searchResults ?? realGenerators;
-    return category === "all" ? base : base.filter((g) => g.category === category);
-  }, [realGenerators, searchResults, category]);
+    return base.filter((g) => matchesTaxonomy(g, taxonomy));
+  }, [realGenerators, searchResults, taxonomy]);
 
   return (
     <PageContainer className="space-y-6">
@@ -110,16 +108,7 @@ export function GeneratorsDiscoverView() {
           />
         </div>
 
-        <ChipRow>
-          <Chip selected={category === "all"} onClick={() => setCategory("all")}>
-            {t("common.all")}
-          </Chip>
-          {GENERATOR_CATEGORY_TOPICS.map((topic) => (
-            <Chip key={topic} icon={GENERATOR_CATEGORY_TOPIC_ICONS[topic]} selected={category === topic} onClick={() => setCategory(topic)}>
-              {t(GENERATOR_CATEGORY_TOPIC_LABELS[topic])}
-            </Chip>
-          ))}
-        </ChipRow>
+        <TaxonomyFilter value={taxonomy} onChange={setTaxonomy} />
       </div>
 
       {searching ? (

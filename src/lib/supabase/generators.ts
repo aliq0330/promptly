@@ -2,10 +2,12 @@ import { supabase } from "./client";
 import { translateForRuntime } from "@/lib/i18n/translations";
 import { mapProfileRow, type ProfileRow } from "./mappers";
 import { getOrCreateTag } from "./tags";
+import { normalizeLegacyContentType, sanitizeTaxonomy } from "@/lib/content-taxonomy";
+import { applyTaxonomyFilter, taxonomyColumns, type ContentSearchFilters } from "./taxonomy-query";
 import { slugifyGeneratorTitle } from "@/lib/generator-template";
 import type {
   Generator,
-  GeneratorCategoryTopic,
+  PromptContentType,
   GeneratorRun,
   GeneratorSchema,
   GeneratorTemplate,
@@ -33,7 +35,8 @@ export interface GeneratorRow {
   slug: string;
   description: string;
   cover_url: string | null;
-  category: GeneratorCategoryTopic;
+  content_type: string;
+  category: string | null;
   subcategory: string | null;
   visibility: "public" | "unlisted" | "private";
   status: "draft" | "published" | "archived";
@@ -52,7 +55,7 @@ export interface GeneratorRow {
 }
 
 export const GENERATOR_SELECT = `
-  id, creator_id, title, slug, description, cover_url, category, subcategory,
+  id, creator_id, title, slug, description, cover_url, content_type, category, subcategory,
   visibility, status, allow_prompt_editing, allow_saving_generated_prompts,
   enable_negative_prompt,
   current_version_id, use_count, save_count, like_count, comment_count, created_at, updated_at,
@@ -69,8 +72,8 @@ export function mapGeneratorRow(row: GeneratorRow): Generator {
     slug: row.slug,
     description: row.description,
     coverUrl: row.cover_url,
-    category: row.category,
-    subcategory: row.subcategory,
+    contentType: normalizeLegacyContentType(row.content_type).contentType,
+    ...sanitizeTaxonomy(normalizeLegacyContentType(row.content_type).contentType, row.category, row.subcategory),
     tags,
     visibility: row.visibility,
     status: row.status,
@@ -230,19 +233,17 @@ export async function fetchGeneratorsByAuthor(creatorId: string): Promise<Genera
 }
 
 /** Title/description substring search over published+public generators — backs `/search`'s "Generatorlar" section. */
-export async function searchGenerators(query: string, limit = 20): Promise<Generator[]> {
+export async function searchGenerators(query: string, filters: ContentSearchFilters = {}, limit = 20): Promise<Generator[]> {
   const trimmed = query.trim();
-  if (!trimmed) return [];
+  const hasFilter = Boolean(filters.authorId || filters.taxonomy?.contentType);
+  if (!trimmed && !hasFilter) return [];
   try {
     const escaped = trimmed.replace(/[%,]/g, "");
-    const { data, error } = await supabase
-      .from("generators")
-      .select(GENERATOR_SELECT)
-      .eq("status", "published")
-      .eq("visibility", "public")
-      .or(`title.ilike.%${escaped}%,description.ilike.%${escaped}%`)
-      .order("use_count", { ascending: false })
-      .limit(limit);
+    let request = supabase.from("generators").select(GENERATOR_SELECT).eq("status", "published").eq("visibility", "public");
+    if (escaped) request = request.or(`title.ilike.%${escaped}%,description.ilike.%${escaped}%`);
+    if (filters.authorId) request = request.eq("creator_id", filters.authorId);
+    request = applyTaxonomyFilter(request, filters.taxonomy);
+    const { data, error } = await request.order("use_count", { ascending: false }).limit(limit);
     if (error) {
       console.error("searchGenerators", error);
       return [];
@@ -282,7 +283,8 @@ export interface GeneratorMetaInput {
   title: string;
   description: string;
   coverUrl: string | null;
-  category: GeneratorCategoryTopic;
+  contentType: PromptContentType;
+  category: string | null;
   subcategory: string | null;
   tags: Tag[];
   visibility: "public" | "unlisted" | "private";
@@ -312,8 +314,8 @@ export async function createDraftGenerator(
       slug,
       description: meta.description.trim(),
       cover_url: meta.coverUrl,
-      category: meta.category,
-      subcategory: meta.subcategory,
+      content_type: meta.contentType,
+      ...taxonomyColumns(meta.contentType, meta.category, meta.subcategory),
       visibility: meta.visibility,
       allow_prompt_editing: meta.allowPromptEditing,
       allow_saving_generated_prompts: meta.allowSavingGeneratedPrompts,
@@ -354,8 +356,8 @@ export async function createDraftGenerator(
     slug,
     description: meta.description.trim(),
     coverUrl: meta.coverUrl,
-    category: meta.category,
-    subcategory: meta.subcategory,
+    contentType: meta.contentType,
+    ...sanitizeTaxonomy(meta.contentType, meta.category, meta.subcategory),
     tags: meta.tags,
     visibility: meta.visibility,
     status: "draft",
@@ -389,8 +391,8 @@ export async function updateGeneratorMeta(generatorId: string, meta: GeneratorMe
       title: meta.title.trim(),
       description: meta.description.trim(),
       cover_url: meta.coverUrl,
-      category: meta.category,
-      subcategory: meta.subcategory,
+      content_type: meta.contentType,
+      ...taxonomyColumns(meta.contentType, meta.category, meta.subcategory),
       visibility: meta.visibility,
       allow_prompt_editing: meta.allowPromptEditing,
       allow_saving_generated_prompts: meta.allowSavingGeneratedPrompts,

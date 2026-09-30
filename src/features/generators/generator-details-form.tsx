@@ -5,9 +5,8 @@ import { Image as ImageIcon, X } from "lucide-react";
 import { TagPicker } from "@/features/prompts/tag-picker";
 import type { UseTagPickerResult } from "@/features/prompts/use-tag-picker";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import { GENERATOR_CATEGORY_TOPIC_LABELS, GENERATOR_CATEGORY_TOPICS } from "./generator-category-meta";
+import { TaxonomyPicker } from "@/features/content/taxonomy-picker";
 import { resizeImageToDataUrlFit } from "@/lib/utils";
-import type { GeneratorCategoryTopic } from "@/types";
 import type { GeneratorMetaInput } from "@/lib/supabase/generators";
 
 /**
@@ -82,38 +81,10 @@ export function GeneratorDetailsForm({
         />
       </div>
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <div>
-          <label htmlFor="gen-category" className="mb-1.5 block text-sm font-medium text-text">
-            {t("generator.categoryLabel")}
-          </label>
-          <select
-            id="gen-category"
-            value={meta.category}
-            onChange={(event) => onChange({ category: event.target.value as GeneratorCategoryTopic })}
-            className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-text"
-          >
-            {GENERATOR_CATEGORY_TOPICS.map((topic) => (
-              <option key={topic} value={topic}>
-                {t(GENERATOR_CATEGORY_TOPIC_LABELS[topic])}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label htmlFor="gen-subcategory" className="mb-1.5 block text-sm font-medium text-text">
-            {t("generator.subcategoryLabel")} <span className="text-text-muted">({t("common.optional")})</span>
-          </label>
-          <input
-            id="gen-subcategory"
-            type="text"
-            value={meta.subcategory ?? ""}
-            onChange={(event) => onChange({ subcategory: event.target.value || null })}
-            placeholder={t("generator.subcategoryPlaceholder")}
-            className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted"
-          />
-        </div>
-      </div>
+      <TaxonomyPicker
+        value={{ contentType: meta.contentType, category: meta.category, subcategory: meta.subcategory }}
+        onChange={(next) => onChange({ contentType: next.contentType, category: next.category, subcategory: next.subcategory })}
+      />
 
       <div>
         <label className="mb-1.5 block text-sm font-medium text-text">{t("generator.tagsLabel")}</label>

@@ -6,6 +6,8 @@ import { Plus, Sparkles } from "lucide-react";
 import { buttonClassName } from "@/components/ui/button";
 import { Chip, ChipRow } from "@/components/ui/chip";
 import { PageContainer, PageHeader } from "@/components/ui/page-header";
+import { TaxonomyFilter } from "@/features/content/taxonomy-filter";
+import { EMPTY_TAXONOMY_FILTER, matchesTaxonomy, type TaxonomyFilterValue } from "@/lib/content-taxonomy";
 import { RequestList } from "@/features/requests/request-list";
 import { useRealRequests } from "@/features/requests/real-requests-provider";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -16,22 +18,24 @@ export default function RequestsPage() {
   const { t } = useTranslation();
   const { realRequests } = useRealRequests();
   const [status, setStatus] = useState<StatusFilter>("all");
+  const [taxonomy, setTaxonomy] = useState<TaxonomyFilterValue>(EMPTY_TAXONOMY_FILTER);
+  const filteredByType = useMemo(() => realRequests.filter((request) => matchesTaxonomy(request, taxonomy)), [realRequests, taxonomy]);
 
   const counts = useMemo(
     () => ({
-      all: realRequests.length,
-      open: realRequests.filter((request) => request.status === "open").length,
-      closed: realRequests.filter((request) => request.status !== "open").length,
+      all: filteredByType.length,
+      open: filteredByType.filter((request) => request.status === "open").length,
+      closed: filteredByType.filter((request) => request.status !== "open").length,
     }),
-    [realRequests],
+    [filteredByType],
   );
 
   const visible = useMemo(
     () =>
       status === "all"
-        ? realRequests
-        : realRequests.filter((request) => (status === "open" ? request.status === "open" : request.status !== "open")),
-    [realRequests, status],
+        ? filteredByType
+        : filteredByType.filter((request) => (status === "open" ? request.status === "open" : request.status !== "open")),
+    [filteredByType, status],
   );
 
   return (
@@ -48,6 +52,8 @@ export default function RequestsPage() {
           </Link>
         }
       />
+
+      <TaxonomyFilter value={taxonomy} onChange={setTaxonomy} />
 
       <ChipRow>
         {(

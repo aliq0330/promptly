@@ -3,6 +3,8 @@ import { placeholderArt } from "@/lib/placeholder-image";
 import { resizeImageToBlob } from "@/lib/utils";
 import { translateForRuntime } from "@/lib/i18n/translations";
 import { mapProfileRow, type ProfileRow } from "./mappers";
+import { normalizeLegacyContentType, sanitizeTaxonomy } from "@/lib/content-taxonomy";
+import { applyTaxonomyFilter, taxonomyColumns, type ContentSearchFilters } from "./taxonomy-query";
 import type { Prompt, PromptContentType, PromptMedia, PromptOrigin, Tag, UserProfile } from "@/types";
 
 /**
@@ -17,7 +19,9 @@ export interface PromptRow {
   description: string;
   prompt_text: string;
   tool: string | null;
-  content_type: PromptContentType;
+  content_type: string;
+  category: string | null;
+  subcategory: string | null;
   status: "draft" | "published";
   origin_type: "original" | "request_response";
   request_id: string | null;
@@ -37,7 +41,7 @@ export interface PromptRow {
 }
 
 export const PROMPT_SELECT = `
-  id, title, description, prompt_text, tool, content_type, status,
+  id, title, description, prompt_text, tool, content_type, category, subcategory, status,
   origin_type, request_id,
   like_count, comment_count, created_at, show_on_profile,
   deleted_at, generator_id, generator_version_id, generator_run_id,
@@ -88,6 +92,8 @@ export function mapPromptRow(row: PromptRow): Prompt {
   const media: PromptMedia[] = (row.prompt_media ?? [])
     .map((m) => ({ id: m.id, url: m.url, width: m.width, height: m.height, alt: m.alt ?? row.title }));
   const tags: Tag[] = (row.prompt_tags ?? []).map((pt) => ({ slug: pt.tags.slug, label: pt.tags.label }));
+  // Rows written before the 4-type taxonomy may still say code/music — read them as their new type.
+  const { contentType, category } = normalizeLegacyContentType(row.content_type);
 
   return {
     id: row.id,
@@ -96,7 +102,8 @@ export function mapPromptRow(row: PromptRow): Prompt {
     description: row.description,
     promptText: row.prompt_text,
     tool: row.tool,
-    contentType: row.content_type,
+    contentType,
+    ...sanitizeTaxonomy(contentType, row.category ?? category, row.subcategory),
     media,
     tags,
     origin: mapOrigin(row),
@@ -227,18 +234,17 @@ export async function fetchPromptsByAuthors(authorIds: string[], limit = 60): Pr
 }
 
 /** Title/description substring search over published prompts — backs the real `/search` page. */
-export async function searchPrompts(query: string, limit = 40): Promise<Prompt[]> {
+export async function searchPrompts(query: string, filters: ContentSearchFilters = {}, limit = 40): Promise<Prompt[]> {
   const trimmed = query.trim();
-  if (!trimmed) return [];
+  const hasFilter = Boolean(filters.authorId || filters.taxonomy?.contentType);
+  if (!trimmed && !hasFilter) return [];
   try {
     const escaped = trimmed.replace(/[%,]/g, "");
-    const { data, error } = await supabase
-      .from("prompts")
-      .select(PROMPT_SELECT)
-      .eq("status", "published")
-      .or(`title.ilike.%${escaped}%,description.ilike.%${escaped}%`)
-      .order("created_at", { ascending: false })
-      .limit(limit);
+    let request = supabase.from("prompts").select(PROMPT_SELECT).eq("status", "published");
+    if (escaped) request = request.or(`title.ilike.%${escaped}%,description.ilike.%${escaped}%`);
+    if (filters.authorId) request = request.eq("author_id", filters.authorId);
+    request = applyTaxonomyFilter(request, filters.taxonomy);
+    const { data, error } = await request.order("created_at", { ascending: false }).limit(limit);
     if (error) {
       console.error("searchPrompts", error);
       return [];
@@ -293,6 +299,8 @@ export interface CreateRealPromptInput {
   promptText: string;
   tool: string | null;
   contentType: PromptContentType;
+  category?: string | null;
+  subcategory?: string | null;
   tags: Tag[];
   /**
    * Per-tag source (`manual` | `automatic`), keyed by slug — from the live
@@ -335,6 +343,7 @@ export async function createRealPrompt(
       prompt_text: input.promptText.trim(),
       tool: input.tool,
       content_type: input.contentType,
+      ...taxonomyColumns(input.contentType, input.category, input.subcategory),
       status: "published",
       origin_type: input.requestId ? "request_response" : "original",
       request_id: input.requestId ?? null,
@@ -424,6 +433,7 @@ export async function createRealPrompt(
     promptText: input.promptText.trim(),
     tool: input.tool,
     contentType: input.contentType,
+    ...sanitizeTaxonomy(input.contentType, input.category, input.subcategory),
     media,
     tags: input.tags,
     origin: input.requestId
@@ -450,6 +460,9 @@ export async function createRealPrompt(
 }
 
 export interface UpdateRealPromptInput {
+  /** Taxonomy level(s) — `undefined` leaves the columns untouched, `null` clears them. `content_type` itself is never editable. */
+  category?: string | null;
+  subcategory?: string | null;
   title: string;
   description: string;
   promptText: string;
@@ -486,6 +499,7 @@ export async function updateRealPrompt(promptId: string, authorId: string, input
       description: input.description.trim(),
       prompt_text: input.promptText.trim(),
       tool: input.tool,
+      ...(input.category === undefined ? {} : { category: input.category, subcategory: input.subcategory ?? null }),
       ...(input.showOnProfile === undefined ? {} : { show_on_profile: input.showOnProfile }),
     })
     .eq("id", promptId)

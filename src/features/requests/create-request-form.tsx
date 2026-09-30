@@ -8,7 +8,7 @@ import { RequestCard } from "./request-card";
 import { useRealRequests } from "./real-requests-provider";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useOwnProfile } from "@/features/auth/own-profile-provider";
-import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
+import { TaxonomyPicker } from "@/features/content/taxonomy-picker";
 import { useTagCatalog } from "@/features/tags/use-tag-catalog";
 import { useTagPicker } from "@/features/prompts/use-tag-picker";
 import { TagPicker } from "@/features/prompts/tag-picker";
@@ -17,7 +17,6 @@ import { cn, requestHref, resizeImageToDataUrlFit } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { PromptContentType, PromptRequest } from "@/types";
 
-const CONTENT_TYPES: PromptContentType[] = ["image", "text", "video", "code", "music"];
 
 const TITLE_MIN = 10;
 const TITLE_MAX = 100;
@@ -44,6 +43,8 @@ export function CreateRequestForm() {
   const { catalog: tagCatalog } = useTagCatalog();
 
   const [contentType, setContentType] = useState<PromptContentType>("image");
+  const [category, setCategory] = useState<string | null>(null);
+  const [subcategory, setSubcategory] = useState<string | null>(null);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [creativeDirection, setCreativeDirection] = useState("");
@@ -102,6 +103,8 @@ export function CreateRequestForm() {
     if (fieldsSeeded || !editingRequest) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time seed once the async source loads
     setContentType(editingRequest.contentType ?? "image");
+    setCategory(editingRequest.category);
+    setSubcategory(editingRequest.subcategory);
     setTitle(editingRequest.title);
     setDescription(editingRequest.description);
     setCreativeDirection(editingRequest.creativeDirection);
@@ -152,6 +155,8 @@ export function CreateRequestForm() {
           title,
           description,
           creativeDirection,
+          category,
+          subcategory,
           preferredTool: preferredTool || null,
           tags: tagPicker.accepted.map((entry) => entry.tag),
           tagSources: Object.fromEntries(tagPicker.accepted.map((entry) => [entry.tag.slug, entry.source])),
@@ -166,6 +171,8 @@ export function CreateRequestForm() {
           description,
           creativeDirection,
           contentType,
+          category,
+          subcategory,
           preferredTool: preferredTool || null,
           tags: tagPicker.accepted.map((entry) => entry.tag),
           tagSources: Object.fromEntries(tagPicker.accepted.map((entry) => [entry.tag.slug, entry.source])),
@@ -255,6 +262,8 @@ export function CreateRequestForm() {
     description: description || t("prompt.noDescriptionAdded"),
     creativeDirection,
     contentType,
+    category,
+    subcategory,
     preferredTool: preferredTool || null,
     referenceImage: referenceImage
       ? { id: "reference", url: referenceImage.url, width: referenceImage.width, height: referenceImage.height, alt: title }
@@ -277,42 +286,16 @@ export function CreateRequestForm() {
 
       <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
         <form onSubmit={handleSubmit} className="space-y-5">
-          <div>
-            <label className="mb-2 block text-sm font-medium text-text">{t("prompt.contentTypeLabel")}</label>
-            {isEditMode ? (
-              <div className="flex items-center gap-1.5 text-sm text-text-muted">
-                {(() => {
-                  const Icon = CONTENT_TYPE_META[contentType].icon;
-                  return <Icon size={14} />;
-                })()}
-                {t(CONTENT_TYPE_META[contentType].labelKey)}
-                <span className="text-xs">{t("prompt.notEditableWhileEditing")}</span>
-              </div>
-            ) : (
-              <div className="flex flex-wrap gap-2">
-                {CONTENT_TYPES.map((type) => {
-                  const meta = CONTENT_TYPE_META[type];
-                  const Icon = meta.icon;
-                  return (
-                    <button
-                      key={type}
-                      type="button"
-                      onClick={() => setContentType(type)}
-                      className={cn(
-                        "flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors",
-                        contentType === type
-                          ? "border-primary bg-primary text-primary-foreground"
-                          : "border-border bg-surface text-text-muted hover:text-text",
-                      )}
-                    >
-                      <Icon size={14} />
-                      {t(meta.labelKey)}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+          <TaxonomyPicker
+            value={{ contentType, category, subcategory }}
+            onChange={(next) => {
+              setContentType(next.contentType);
+              setCategory(next.category);
+              setSubcategory(next.subcategory);
+            }}
+            lockContentType={isEditMode}
+            lockedHint={t("prompt.notEditableWhileEditing")}
+          />
 
           {!isEditMode && contentType === "image" && (
             <RequestVisionAssist

@@ -7,7 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Modal } from "@/components/ui/modal";
 import { useAuth } from "@/features/auth/auth-provider";
 import { STATUS_LABELS, STATUS_VARIANTS } from "@/features/requests/request-card";
-import { GENERATOR_CATEGORY_TOPIC_LABELS } from "@/features/generators/generator-category-meta";
+import { taxonomyPathLabel } from "@/lib/content-taxonomy";
+import type { Language } from "@/lib/i18n/translations";
 import { contentActionClassName } from "@/features/content/action-styles";
 import { placeholderArt } from "@/lib/placeholder-image";
 import { RESULT_MEDIA_TYPE_LABELS } from "@/lib/prompt-result-media";
@@ -46,7 +47,7 @@ interface SharePreview {
   messageParam: string | null;
 }
 
-function getSharePreview(target: ShareModalTarget, t: (key: TranslationKey) => string): SharePreview {
+function getSharePreview(target: ShareModalTarget, t: (key: TranslationKey) => string, language: Language): SharePreview {
   if (target.contentType === "prompt") {
     const prompt = target.prompt;
     return {
@@ -67,7 +68,7 @@ function getSharePreview(target: ShareModalTarget, t: (key: TranslationKey) => s
       title: generator.title,
       description: generator.description,
       thumbnailUrl: generator.coverUrl,
-      badgeLabel: `${t("generator.singular")} · ${t(GENERATOR_CATEGORY_TOPIC_LABELS[generator.category])}`,
+      badgeLabel: `${t("generator.singular")} · ${taxonomyPathLabel(generator, language, true)}`,
       badgeVariant: "neutral",
       href: generatorHref(generator),
       messageParam: `shareGeneratorId=${generator.id}`,
@@ -129,9 +130,9 @@ function getSharePreview(target: ShareModalTarget, t: (key: TranslationKey) => s
  */
 export function ShareModal({ target, onClose }: { target: ShareModalTarget; onClose: () => void }) {
   const { user } = useAuth();
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const [copied, setCopied] = useState(false);
-  const preview = getSharePreview(target, t);
+  const preview = getSharePreview(target, t, language);
 
   async function handleNativeShare() {
     const result = await shareOrCopyLink(preview.href, preview.title);

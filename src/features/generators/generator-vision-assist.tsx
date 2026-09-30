@@ -51,7 +51,7 @@ export function GeneratorVisionAssist({
   onApplyValues,
   onAddFields,
 }: {
-  meta: Pick<GeneratorMetaInput, "title" | "description" | "category">;
+  meta: Pick<GeneratorMetaInput, "title" | "description" | "contentType" | "category">;
   fields: GeneratorField[];
   onApplyValues: (values: Record<string, string | string[]>) => void;
   onAddFields: (fields: CleanSuggestedField[]) => void;
@@ -107,7 +107,7 @@ export function GeneratorVisionAssist({
     resetResult();
 
     const outcome = await analyzeImageForGenerator(file, {
-      generator: { name: meta.title, description: meta.description, category: meta.category },
+      generator: { name: meta.title, description: meta.description, category: meta.category ?? meta.contentType },
       fields: fields.map((f) => ({
         key: f.key,
         label: f.label,

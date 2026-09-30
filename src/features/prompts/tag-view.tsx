@@ -9,20 +9,11 @@ import { RequestList } from "@/features/requests/request-list";
 import { fetchPromptsByTag, fetchRequestsByTagSlug, fetchTagBySlug } from "@/lib/supabase/tags";
 import { formatCount, cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import type { TranslationKey } from "@/lib/i18n/translations";
-import type { Prompt, PromptContentType, PromptRequest, Tag } from "@/types";
+import { TaxonomyFilter } from "@/features/content/taxonomy-filter";
+import { EMPTY_TAXONOMY_FILTER, matchesTaxonomy, type TaxonomyFilterValue } from "@/lib/content-taxonomy";
+import type { Prompt, PromptRequest, Tag } from "@/types";
 
-type ContentFilter = "all" | PromptContentType;
 type SortMode = "newest" | "popular";
-
-const CONTENT_FILTERS: { value: ContentFilter; labelKey: TranslationKey }[] = [
-  { value: "all", labelKey: "common.all" },
-  { value: "image", labelKey: "contentType.image" },
-  { value: "text", labelKey: "contentType.text" },
-  { value: "video", labelKey: "contentType.video" },
-  { value: "code", labelKey: "contentType.code" },
-  { value: "music", labelKey: "contentType.music" },
-];
 
 /**
  * Client-rendered counterpart to the old static `/tags/[tag]` — tags are
@@ -42,7 +33,7 @@ export function TagView() {
   const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [requests, setRequests] = useState<PromptRequest[]>([]);
   const [loaded, setLoaded] = useState(false);
-  const [contentFilter, setContentFilter] = useState<ContentFilter>("all");
+  const [taxonomy, setTaxonomy] = useState<TaxonomyFilterValue>(EMPTY_TAXONOMY_FILTER);
   const [sortMode, setSortMode] = useState<SortMode>("newest");
 
   useEffect(() => {
@@ -68,12 +59,12 @@ export function TagView() {
   }, [slug]);
 
   const filteredPrompts = useMemo(() => {
-    const filtered = contentFilter === "all" ? prompts : prompts.filter((p) => p.contentType === contentFilter);
+    const filtered = prompts.filter((p) => matchesTaxonomy(p, taxonomy));
     const sorted = [...filtered];
     if (sortMode === "popular") sorted.sort((a, b) => b.likeCount - a.likeCount);
     else sorted.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     return sorted;
-  }, [prompts, contentFilter, sortMode]);
+  }, [prompts, taxonomy, sortMode]);
 
   if (!slug) {
     return <div className="mx-auto max-w-lg px-4 py-16 text-center text-sm text-text-muted">{t("tag.notFound")}.</div>;
@@ -133,27 +124,11 @@ export function TagView() {
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-1.5">
-          {CONTENT_FILTERS.map((filter) => (
-            <button
-              key={filter.value}
-              type="button"
-              onClick={() => setContentFilter(filter.value)}
-              className={cn(
-                "rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
-                contentFilter === filter.value
-                  ? "border-primary bg-primary text-primary-foreground"
-                  : "border-border bg-surface text-text-muted hover:text-text",
-              )}
-            >
-              {t(filter.labelKey)}
-            </button>
-          ))}
-        </div>
+        <TaxonomyFilter value={taxonomy} onChange={setTaxonomy} />
 
         {filteredPrompts.length === 0 ? (
           <p className="py-10 text-center text-sm text-text-muted">
-            {contentFilter === "all" ? t("tag.emptyAll") : t("tag.emptyForFilter")}
+            {taxonomy.contentType ? t("tag.emptyForFilter") : t("tag.emptyAll")}
           </p>
         ) : (
           <PromptGrid prompts={filteredPrompts} />
