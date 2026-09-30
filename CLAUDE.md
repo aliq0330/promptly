@@ -11412,14 +11412,21 @@ buraya bakılmalı):
 7. **Bilinçli Türkçe bırakılanlar:** kod yorumları, `client.ts` env hatası,
    `console.error` teşhis logları, dil seçicideki "Türkçe"/"English",
    `layout.tsx` statik SEO açıklaması, kullanıcı içeriği, marka/teknik adlar.
-8. **AÇIK BOŞLUK — generator kataloğu:** `generator-field-catalog.ts`
-   (26 kategori/~196 alan/29 paket), `tag-candidates.ts`, ikon/vision
-   eşlemeleri statik Türkçe veri dosyalarıdır; İngilizce modda hazır alan
-   kütüphanesindeki kategori/alan/seçenek adları hâlâ Türkçe görünür.
-9. **AÇIK BOŞLUK — bildirim metinleri:** `notifications.message` SQL
-   trigger'larında sunucu tarafında Türkçe üretiliyor; istemci `t()` ile
-   çevrilemez, backend değişikliği (yapılandırılmış `{type, params}`)
-   gerekir. Yapılamadı.
+8. **[KAPATILDI] Generator kataloğu:** yeni `src/lib/generator-field-catalog-en.ts`
+   1216 katalog metninin (kategori/alt kategori/alan/seçenek/paket
+   etiketleri, placeholder'lar) İngilizce karşılığını tutuyor; katalog
+   verisi (option `value` slug'ları, `jsonPath`) DEĞİŞMEDİ. Picker artık
+   `catalogText()` ile görüntülüyor, arama iki dilde çalışıyor, mükerrer
+   alan kontrolü iki dili de sayıyor, ve bir alan generatora eklenirken
+   `localizeCatalogField()` ile o anki dilde yazılıyor (option değerleri/
+   görseller/renkler aynı). Sayılar, f-stop'lar, format ve marka/teknoloji
+   adları bilinçli olarak iki dilde aynı. `tag-candidates.ts` (etiket
+   adları, kalıcı veri) çevrilmedi.
+9. **[KAPATILDI] Bildirim metinleri:** SQL trigger'ları ve eski satırlar
+   dokunulmadan, yeni `src/lib/notification-message.ts` bilinen Türkçe
+   cümle şablonlarını tanıyıp aktif dilde yeniden üretiyor (tırnak içindeki
+   kullanıcı içeriği aynen geçer; bilinmeyen metin olduğu gibi kalır).
+   `notification-row.tsx` bunu kullanıyor. Migration gerekmedi.
 10. **Diğer kapsam dışı:** `/dev/*` test sayfaları.
 11. **Test:** `npx tsc --noEmit`, `npm run lint` ve tam `next build`
     (26 statik rota) temiz. Tarayıcıda uçtan uca İngilizce/Türkçe geçiş

@@ -54,6 +54,7 @@
 
 import { slugifyGeneratorTitle } from "./generator-template";
 import { conceptIcon } from "./generator-option-art";
+import { catalogTextMatches } from "./generator-field-catalog-en";
 import type { GeneratorFieldType } from "@/types";
 
 export interface CatalogOption {
@@ -741,7 +742,6 @@ export function searchCatalogFields(query: string, normalize: (value: string) =>
   return CATALOG_FIELDS.filter((field) => {
     const category = CATALOG_CATEGORIES.find((c) => c.id === field.categoryId);
     const subgroup = category?.subgroups.find((s) => s.id === field.subgroupId);
-    const haystack = normalize(`${field.label} ${subgroup?.label ?? ""} ${category?.label ?? ""}`);
-    return haystack.includes(needle);
+    return [field.label, subgroup?.label ?? "", category?.label ?? ""].some((text) => catalogTextMatches(text, needle, normalize));
   });
 }

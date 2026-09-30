@@ -14,7 +14,8 @@ import {
   searchCatalogFields,
   type CatalogField,
 } from "@/lib/generator-field-catalog";
-import { useTranslation } from "@/lib/i18n/language-provider";
+import { useTranslation, useLanguage } from "@/lib/i18n/language-provider";
+import { catalogText, localizeCatalogField } from "@/lib/generator-field-catalog-en";
 import { GENERATOR_FIELD_TYPE_LABELS } from "./generator-category-meta";
 import type { GeneratorField } from "@/types";
 
@@ -53,6 +54,7 @@ export function FieldCatalogPicker({
   onCreateCustom: () => void;
 }) {
   const { t } = useTranslation();
+  const { language } = useLanguage();
   const [query, setQuery] = useState("");
   const [expandedCategoryId, setExpandedCategoryId] = useState<string | null>(null);
   const [expandedSubgroupId, setExpandedSubgroupId] = useState<string | null>(null);
@@ -61,7 +63,8 @@ export function FieldCatalogPicker({
   const alreadyUsedLabels = useMemo(() => new Set(existingFields.map((f) => normalizeTagLabel(f.label))), [existingFields]);
 
   function isAlreadyInSchema(field: CatalogField): boolean {
-    return alreadyUsedLabels.has(normalizeTagLabel(field.label));
+    // Existing schemas may have been built in either language.
+    return alreadyUsedLabels.has(normalizeTagLabel(field.label)) || alreadyUsedLabels.has(normalizeTagLabel(catalogText(field.label, "en")));
   }
 
   function toggleField(field: CatalogField) {
@@ -114,7 +117,7 @@ export function FieldCatalogPicker({
     const allCatalogFields = CATALOG_CATEGORIES.flatMap((category) => category.subgroups.flatMap((sub) => fieldsInSubgroup(category.id, sub.id)));
     const chosen = allCatalogFields.filter((field) => selectedIds.has(field.id));
     if (chosen.length === 0) return;
-    onInsert(chosen);
+    onInsert(chosen.map((field) => localizeCatalogField(field, language)));
   }
 
   function renderFieldRow(field: CatalogField, breadcrumb?: string) {
@@ -152,7 +155,7 @@ export function FieldCatalogPicker({
                 />
               )
             )}
-            <span className="truncate font-medium text-text">{field.label}</span>
+            <span className="truncate font-medium text-text">{catalogText(field.label, language)}</span>
             <span className="rounded-sm bg-accent-surface px-1.5 py-0.5 text-[10px] font-medium text-text-muted">{t(GENERATOR_FIELD_TYPE_LABELS[field.type])}</span>
           </span>
           {breadcrumb && <span className="mt-0.5 block truncate text-xs text-text-muted">{breadcrumb}</span>}
@@ -195,7 +198,7 @@ export function FieldCatalogPicker({
               {searchResults.map((field) => {
                 const category = CATALOG_CATEGORIES.find((c) => c.id === field.categoryId);
                 const subgroup = category?.subgroups.find((s) => s.id === field.subgroupId);
-                return renderFieldRow(field, category && subgroup ? `${category.label} · ${subgroup.label}` : undefined);
+                return renderFieldRow(field, category && subgroup ? `${catalogText(category.label, language)} · ${catalogText(subgroup.label, language)}` : undefined);
               })}
             </div>
           ) : (
@@ -212,7 +215,7 @@ export function FieldCatalogPicker({
                         onClick={() => addPackage(fields)}
                         className="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-text hover:bg-accent-surface"
                       >
-                        <Blocks size={12} /> {pkg.label} <span className="text-text-muted">({fields.length})</span>
+                        <Blocks size={12} /> {catalogText(pkg.label, language)} <span className="text-text-muted">({fields.length})</span>
                       </button>
                     );
                   })}
@@ -233,7 +236,7 @@ export function FieldCatalogPicker({
                         }}
                         className="flex w-full items-center justify-between gap-2 p-2.5 text-left text-sm font-medium text-text hover:bg-accent-surface"
                       >
-                        <span className="truncate">{category.label}</span>
+                        <span className="truncate">{catalogText(category.label, language)}</span>
                         {isCategoryOpen ? <ChevronDown size={15} className="shrink-0 text-text-muted" /> : <ChevronRight size={15} className="shrink-0 text-text-muted" />}
                       </button>
                       {isCategoryOpen && (
@@ -254,7 +257,7 @@ export function FieldCatalogPicker({
                                   >
                                     {isSubOpen ? <ChevronDown size={13} className="shrink-0" /> : <ChevronRight size={13} className="shrink-0" />}
                                     <span>
-                                      {subgroup.label} <span className="text-text-muted">({fields.length})</span>
+                                      {catalogText(subgroup.label, language)} <span className="text-text-muted">({fields.length})</span>
                                     </span>
                                   </button>
                                   <label
