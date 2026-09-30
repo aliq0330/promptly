@@ -16,6 +16,8 @@ const PREVIEW_TEMPLATES: [prefix: string, key: string, hasNoPreviewForm: boolean
   ["Generatorunu beğendi", "notifMsg.likedGenerator", false],
   ["Paylaşımına yorum yaptı", "notifMsg.commentedPost", true],
   ["Generatoruna yorum yaptı", "notifMsg.commentedGenerator", false],
+  ["Workflow'unu beğendi", "notifMsg.likedWorkflow", false],
+  ["Workflow'una yorum yaptı", "notifMsg.commentedWorkflow", false],
   ["Sonucuna yorum yaptı", "notifMsg.commentedResult", false],
   ["İsteğine yorum yaptı", "notifMsg.commentedRequest", true],
   ["Yorumuna yanıt verdi", "notifMsg.repliedComment", true],

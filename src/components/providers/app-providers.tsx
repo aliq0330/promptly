@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { OwnProfileProvider } from "@/features/auth/own-profile-provider";
 import { RealPromptsProvider } from "@/features/prompts/real-prompts-provider";
 import { RealRequestsProvider } from "@/features/requests/real-requests-provider";
+import { RealWorkflowsProvider } from "@/features/workflows/real-workflows-provider";
 import { RealGeneratorsProvider } from "@/features/generators/real-generators-provider";
 import { RealMessagesProvider } from "@/features/messages/real-messages-provider";
 import { NotificationsProvider } from "@/features/notifications/notifications-provider";
@@ -19,9 +20,11 @@ export function AppProviders({ children }: { children: ReactNode }) {
       <RealPromptsProvider>
         <RealRequestsProvider>
           <RealGeneratorsProvider>
-            <RealMessagesProvider>
-              <NotificationsProvider>{children}</NotificationsProvider>
-            </RealMessagesProvider>
+            <RealWorkflowsProvider>
+              <RealMessagesProvider>
+                <NotificationsProvider>{children}</NotificationsProvider>
+              </RealMessagesProvider>
+            </RealWorkflowsProvider>
           </RealGeneratorsProvider>
         </RealRequestsProvider>
       </RealPromptsProvider>

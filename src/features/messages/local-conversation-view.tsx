@@ -35,6 +35,9 @@ import { profileHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { translateForRuntime } from "@/lib/i18n/translations";
 import { composeGeneratorShareBody } from "./generator-share-format";
+import { composeWorkflowShareBody } from "./workflow-share-format";
+import { fetchWorkflowById } from "@/lib/supabase/workflows";
+import { useRealWorkflows } from "@/features/workflows/real-workflows-provider";
 import type { Conversation, Generator, Message, UserProfile } from "@/types";
 
 /** Used only to give `useBlockState` a stable, always-defined target before the real conversation/participant has loaded — hooks must run unconditionally, and `canBlock` inside it is false until a real user session exists anyway, so this placeholder never actually reaches a query with a meaningful id. */
@@ -85,11 +88,13 @@ export function LocalConversationView() {
   const shareParamPromptId = searchParams.get("sharePromptId");
   const shareParamRequestId = searchParams.get("shareRequestId");
   const shareParamGeneratorId = searchParams.get("shareGeneratorId");
+  const shareParamWorkflowId = searchParams.get("shareWorkflowId");
   const { user } = useAuth();
   const { getCached, acceptRequest, declineRequest } = useRealMessages();
   const { getCached: getCachedPrompt, fetchById: fetchPromptById } = useRealPrompts();
   const { getCached: getCachedRequest, fetchById: fetchRequestById } = useRealRequests();
   const { getCached: getCachedGenerator } = useRealGenerators();
+  const { getCached: getCachedWorkflow } = useRealWorkflows();
 
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -103,6 +108,7 @@ export function LocalConversationView() {
   // real `slug` (for `generatorHref`), not just a title, and a cache miss
   // here means fetching the whole object rather than just a title string.
   const [fetchedShareGenerator, setFetchedShareGenerator] = useState<Generator | null>(null);
+  const [fetchedShareWorkflowTitle, setFetchedShareWorkflowTitle] = useState<string | null>(null);
   const [dismissedShare, setDismissedShare] = useState(false);
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -305,6 +311,7 @@ export function LocalConversationView() {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- resetting state for a new share deep link, not reacting to an external system
     setFetchedShareTitle(null);
     setFetchedShareGenerator(null);
+    setFetchedShareWorkflowTitle(null);
     setDismissedShare(false);
     if (shareParamPromptId && !getCachedPrompt(shareParamPromptId)) {
       fetchPromptById(shareParamPromptId).then((result) => {
@@ -314,13 +321,17 @@ export function LocalConversationView() {
       fetchRequestById(shareParamRequestId).then((result) => {
         if (result) setFetchedShareTitle(result.title);
       });
+    } else if (shareParamWorkflowId && !getCachedWorkflow(shareParamWorkflowId)) {
+      fetchWorkflowById(shareParamWorkflowId).then((result) => {
+        if (result) setFetchedShareWorkflowTitle(result.workflow.title);
+      });
     } else if (shareParamGeneratorId && !getCachedGenerator(shareParamGeneratorId)) {
       fetchGeneratorById(shareParamGeneratorId).then((result) => {
         if (result) setFetchedShareGenerator(result);
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [shareParamPromptId, shareParamRequestId, shareParamGeneratorId]);
+  }, [shareParamPromptId, shareParamRequestId, shareParamGeneratorId, shareParamWorkflowId]);
 
   const shareGenerator = shareParamGeneratorId ? (getCachedGenerator(shareParamGeneratorId) ?? fetchedShareGenerator) : null;
 
@@ -337,7 +348,14 @@ export function LocalConversationView() {
               title: shareGenerator?.title ?? t("common.loading"),
               slug: shareGenerator?.slug ?? null,
             }
-          : null;
+          : shareParamWorkflowId
+            ? {
+                type: "workflow" as const,
+                id: shareParamWorkflowId,
+                title: getCachedWorkflow(shareParamWorkflowId)?.title ?? fetchedShareWorkflowTitle ?? t("common.loading"),
+                resolved: Boolean(getCachedWorkflow(shareParamWorkflowId) ?? fetchedShareWorkflowTitle),
+              }
+            : null;
 
   // Yeni bir mesaj geldiğinde yalnızca kullanıcı zaten en alttaysa (ya da
   // yeni mesajı kendisi gönderdiyse) en alta kaydır — eski mesajları
@@ -443,7 +461,8 @@ export function LocalConversationView() {
   // A generator's share line can't be sent until its real slug (for a
   // working link) has resolved — never send a message with a missing/
   // broken link just because the fetch above hasn't finished yet.
-  const isGeneratorShareUnresolved = pendingShare?.type === "generator" && !pendingShare.slug;
+  const isGeneratorShareUnresolved =
+    (pendingShare?.type === "generator" && !pendingShare.slug) || (pendingShare?.type === "workflow" && !pendingShare.resolved);
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -465,7 +484,9 @@ export function LocalConversationView() {
       const body =
         pendingShare?.type === "generator" && pendingShare.slug
           ? composeGeneratorShareBody(trimmed, pendingShare.title, pendingShare.slug)
-          : trimmed || undefined;
+          : pendingShare?.type === "workflow"
+            ? composeWorkflowShareBody(trimmed, pendingShare.title, pendingShare.id)
+            : trimmed || undefined;
 
       const sent = await sendMessage(id, user.id, {
         body,

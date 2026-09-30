@@ -118,6 +118,7 @@ export interface PromptComment {
   requestId?: string;
   generatorId?: string;
   resultId?: string;
+  workflowId?: string;
   author: UserProfile;
   body: string;
   /** Points at another `PromptComment.id` — a reply can target a top-level comment OR another reply, to any depth (self-referencing `prompt_comments.parent_id`). */
@@ -649,6 +650,8 @@ export interface Workflow {
   tools: string[];
   status: "draft" | "published";
   stepCount: number;
+  likeCount: number;
+  commentCount: number;
   createdAt: string;
   updatedAt: string;
 }

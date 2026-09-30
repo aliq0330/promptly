@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Blocks, Hash, LayoutGrid, Sparkles, SquareTerminal, TrendingUp, Users } from "lucide-react";
+import { Blocks, Hash, LayoutGrid, Sparkles, SquareTerminal, TrendingUp, Users, Workflow as WorkflowIcon } from "lucide-react";
 import { Tabs } from "@/components/ui/tabs";
 import { Chip, ChipRow } from "@/components/ui/chip";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -16,6 +16,7 @@ import { CreatorCard } from "@/features/profile/creator-card";
 import { useRealPrompts } from "@/features/prompts/real-prompts-provider";
 import { useRealRequests } from "@/features/requests/real-requests-provider";
 import { useRealGenerators } from "@/features/generators/real-generators-provider";
+import { useRealWorkflows } from "@/features/workflows/real-workflows-provider";
 import { fetchTopCreators } from "@/lib/supabase/profiles";
 import { fetchPopularTags } from "@/lib/supabase/tags";
 import { tagHref } from "@/lib/utils";
@@ -23,12 +24,13 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import type { Tag, UserProfile } from "@/types";
 
-type Section = "all" | "prompts" | "generators" | "requests" | "creators";
+type Section = "all" | "prompts" | "generators" | "workflows" | "requests" | "creators";
 
 const SECTIONS: { key: Section; labelKey: TranslationKey; icon: typeof LayoutGrid }[] = [
   { key: "all", labelKey: "common.all", icon: LayoutGrid },
   { key: "prompts", labelKey: "feed.filterPrompts", icon: SquareTerminal },
   { key: "generators", labelKey: "nav.generators", icon: Blocks },
+  { key: "workflows", labelKey: "nav.workflows", icon: WorkflowIcon },
   { key: "requests", labelKey: "nav.requestsShort", icon: Sparkles },
   { key: "creators", labelKey: "discover.creators", icon: Users },
 ];
@@ -49,6 +51,7 @@ export function DiscoverFeed() {
   const { realPrompts, loading } = useRealPrompts();
   const { realRequests } = useRealRequests();
   const { realGenerators } = useRealGenerators();
+  const { realWorkflows } = useRealWorkflows();
 
   useEffect(() => {
     // Genuinely usage-sorted (CLAUDE.md Bölüm 9.23).
@@ -63,13 +66,26 @@ export function DiscoverFeed() {
     const generators: FeedItem[] = realGenerators
       .filter((generator) => matchesTaxonomy(generator, taxonomy))
       .map((generator) => ({ kind: "generator", data: generator }));
+    // A workflow spans several content types — it matches a content-type filter when it chains that type (it has no category/subcategory of its own in the shared taxonomy).
+    const workflows: FeedItem[] = realWorkflows
+      .filter((workflow) => (!taxonomy.contentType || workflow.contentTypes.includes(taxonomy.contentType)) && !taxonomy.category && !taxonomy.subcategory)
+      .map((workflow) => ({ kind: "workflow", data: workflow }));
     const requests: FeedItem[] = realRequests
       .filter((request) => matchesTaxonomy(request, taxonomy))
       .filter((request) => !openOnly || request.status === "open")
       .map((request) => ({ kind: "request", data: request }));
-    const pick = section === "prompts" ? prompts : section === "generators" ? generators : section === "requests" ? requests : [...prompts, ...generators, ...requests];
+    const pick =
+      section === "prompts"
+        ? prompts
+        : section === "generators"
+          ? generators
+          : section === "workflows"
+            ? workflows
+            : section === "requests"
+              ? requests
+              : [...prompts, ...generators, ...workflows, ...requests];
     return pick.sort((a, b) => feedItemCreatedAt(b) - feedItemCreatedAt(a));
-  }, [realPrompts, realGenerators, realRequests, taxonomy, openOnly, section]);
+  }, [realPrompts, realGenerators, realWorkflows, realRequests, taxonomy, openOnly, section]);
 
   const idleContent = (
     <div className="space-y-6">

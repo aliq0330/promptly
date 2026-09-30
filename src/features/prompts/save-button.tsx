@@ -28,20 +28,22 @@ import { SaveToCollectionModal } from "@/features/collections/save-to-collection
 export function SaveButton({
   promptId,
   generatorId,
+  workflowId,
   size = 16,
   className,
 }: {
   promptId?: string;
   generatorId?: string;
+  workflowId?: string;
   size?: number;
   className?: string;
 }) {
   const { t } = useTranslation();
-  const isGenerator = Boolean(generatorId);
-  const id = (generatorId ?? promptId)!;
+  const id = (workflowId ?? generatorId ?? promptId)!;
+  const contentType = workflowId ? "workflow" : generatorId ? "generator" : "prompt";
   const { isSaved, removeEverywhere, markSaved, markUnsaved, isToggling, canSave } = useSaveState(
     id,
-    isGenerator ? "generator" : "prompt",
+    contentType,
   );
   const [modalOpen, setModalOpen] = useState(false);
   const [showRemovedToast, setShowRemovedToast] = useState(false);
@@ -102,22 +104,14 @@ export function SaveButton({
         <Bookmark size={size} fill={isSaved ? "currentColor" : "none"} strokeWidth={1.75} />
       </button>
 
-      {modalOpen &&
-        (isGenerator ? (
-          <SaveToCollectionModal
-            generatorId={id}
-            onClose={() => setModalOpen(false)}
-            onAdded={markSaved}
-            onRemoved={markUnsaved}
-          />
-        ) : (
-          <SaveToCollectionModal
-            promptId={id}
-            onClose={() => setModalOpen(false)}
-            onAdded={markSaved}
-            onRemoved={markUnsaved}
-          />
-        ))}
+      {modalOpen && (
+        <SaveToCollectionModal
+          {...(contentType === "workflow" ? { workflowId: id } : contentType === "generator" ? { generatorId: id } : { promptId: id })}
+          onClose={() => setModalOpen(false)}
+          onAdded={markSaved}
+          onRemoved={markUnsaved}
+        />
+      )}
 
       {showRemovedToast && (
         <Portal>

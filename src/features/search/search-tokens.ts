@@ -3,7 +3,7 @@ import type { ContentSearchFilters } from "@/lib/supabase/taxonomy-query";
 import { findTool } from "@/lib/ai-tool-catalog";
 import type { Tag, UserProfile } from "@/types";
 
-export type ContentKind = "prompt" | "request" | "generator";
+export type ContentKind = "prompt" | "request" | "generator" | "workflow";
 
 /** One chip in the advanced search box. */
 export type SearchToken =
@@ -13,7 +13,7 @@ export type SearchToken =
   | { kind: "content"; type: ContentKind }
   | { kind: "tool"; toolId: string };
 
-export const ALL_KINDS: ContentKind[] = ["prompt", "request", "generator"];
+export const ALL_KINDS: ContentKind[] = ["prompt", "request", "generator", "workflow"];
 
 export function tokenKey(token: SearchToken): string {
   switch (token.kind) {

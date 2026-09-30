@@ -21,7 +21,7 @@ const COMMENT_SELECT = `
 
 function mapCommentRow(
   row: CommentRow,
-  target: { promptId: string } | { requestId: string } | { generatorId: string } | { resultId: string },
+  target: { promptId: string } | { requestId: string } | { generatorId: string } | { resultId: string } | { workflowId: string },
 ): PromptComment {
   return {
     id: row.id,
@@ -174,6 +174,41 @@ export async function postCommentOnResult(
     .single();
   if (error || !data) throw new Error(error?.message ?? "Yorum eklenemedi.");
   return mapCommentRow(data as unknown as CommentRow, { resultId });
+}
+
+/** Every real comment on a real workflow, oldest first — publicly readable wherever the workflow itself is (same shared `prompt_comments` layer as a prompt/generator). */
+export async function fetchCommentsForWorkflow(workflowId: string): Promise<PromptComment[]> {
+  try {
+    const { data, error } = await supabase
+      .from("prompt_comments")
+      .select(COMMENT_SELECT)
+      .eq("workflow_id", workflowId)
+      .order("created_at", { ascending: true });
+    if (error) {
+      console.error("fetchCommentsForWorkflow", error);
+      return [];
+    }
+    return ((data ?? []) as unknown as CommentRow[]).map((row) => mapCommentRow(row, { workflowId }));
+  } catch (err) {
+    console.error("fetchCommentsForWorkflow", err);
+    return [];
+  }
+}
+
+/** Genuinely, permanently posts a comment on a real workflow. `handle_prompt_comment_change` keeps `workflows.comment_count` in sync, even across users. */
+export async function postCommentOnWorkflow(
+  workflowId: string,
+  authorId: string,
+  body: string,
+  parentId: string | null,
+): Promise<PromptComment> {
+  const { data, error } = await supabase
+    .from("prompt_comments")
+    .insert({ workflow_id: workflowId, author_id: authorId, body, parent_id: parentId })
+    .select(COMMENT_SELECT)
+    .single();
+  if (error || !data) throw new Error(error?.message ?? translateForRuntime("comments.postFailed"));
+  return mapCommentRow(data as unknown as CommentRow, { workflowId });
 }
 
 /**

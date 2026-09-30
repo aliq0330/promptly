@@ -7,8 +7,9 @@ import { EmojiPicker } from "./emoji-picker";
 import { MessageActionMenu } from "./message-action-menu";
 import { usePopoverAlign } from "./use-popover-align";
 import { canEditOrDeleteMessage } from "./message-time-limit";
-import { SharedGeneratorCard, SharedPromptCard, SharedRequestCard } from "./shared-content-card";
+import { SharedGeneratorCard, SharedPromptCard, SharedRequestCard, SharedWorkflowCard } from "./shared-content-card";
 import { parseGeneratorShareBody } from "./generator-share-format";
+import { parseWorkflowShareBody } from "./workflow-share-format";
 import { cn, formatRelativeTime } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Message } from "@/types";
@@ -67,11 +68,17 @@ export function MessageBubble({
   // always take priority; a message only ever shares one thing).
   const generatorShare =
     !message.sharedPromptId && !message.sharedRequestId ? parseGeneratorShareBody(message.body) : null;
-  const displayBody = generatorShare ? generatorShare.note : message.body;
+  const workflowShare =
+    !message.sharedPromptId && !message.sharedRequestId && !generatorShare ? parseWorkflowShareBody(message.body) : null;
+  const displayBody = generatorShare ? generatorShare.note : workflowShare ? workflowShare.note : message.body;
 
   const replyGeneratorShare =
     replyPreview && !replyPreview.sharedPromptId && !replyPreview.sharedRequestId
       ? parseGeneratorShareBody(replyPreview.body)
+      : null;
+  const replyWorkflowShare =
+    replyPreview && !replyPreview.sharedPromptId && !replyPreview.sharedRequestId && !replyGeneratorShare
+      ? parseWorkflowShareBody(replyPreview.body)
       : null;
   const replyPreviewText = !replyPreview
     ? null
@@ -79,7 +86,9 @@ export function MessageBubble({
       ? t("messages.deletedMessage")
       : replyGeneratorShare
         ? (replyGeneratorShare.note ?? t("messages.aGenerator"))
-        : replyPreview.body ?? (replyPreview.sharedPromptId ? t("messages.aPrompt") : t("request.aRequest"));
+        : replyWorkflowShare
+          ? (replyWorkflowShare.note ?? t("messages.aWorkflow"))
+          : replyPreview.body ?? (replyPreview.sharedPromptId ? t("messages.aPrompt") : t("request.aRequest"));
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [emojiOpen, setEmojiOpen] = useState(false);
@@ -286,6 +295,7 @@ export function MessageBubble({
             {message.sharedPromptId && <SharedPromptCard promptId={message.sharedPromptId} />}
             {message.sharedRequestId && <SharedRequestCard requestId={message.sharedRequestId} />}
             {generatorShare && <SharedGeneratorCard slug={generatorShare.slug} />}
+            {workflowShare && <SharedWorkflowCard workflowId={workflowShare.id} />}
             {displayBody && (
               <div
                 className={cn(

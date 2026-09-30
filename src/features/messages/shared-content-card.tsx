@@ -3,16 +3,18 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowUpRight, Blocks, Sparkles, Terminal } from "lucide-react";
+import { ArrowUpRight, Blocks, Sparkles, Terminal, Workflow as WorkflowIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useRealPrompts } from "@/features/prompts/real-prompts-provider";
 import { useRealRequests } from "@/features/requests/real-requests-provider";
 import { useRealGenerators } from "@/features/generators/real-generators-provider";
 import { fetchGeneratorBySlug } from "@/lib/supabase/generators";
+import { fetchWorkflowById } from "@/lib/supabase/workflows";
+import { useRealWorkflows } from "@/features/workflows/real-workflows-provider";
 import { STATUS_LABELS, STATUS_VARIANTS } from "@/features/requests/request-card";
-import { generatorHref, promptHref, requestHref } from "@/lib/utils";
+import { generatorHref, promptHref, requestHref, workflowHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import type { Generator, Prompt, PromptRequest } from "@/types";
+import type { Generator, Prompt, PromptRequest, Workflow } from "@/types";
 
 const CARD_CLASS =
   "block w-56 space-y-1.5 rounded-md border border-border bg-surface p-2.5 text-left transition-colors hover:bg-accent-surface/60";
@@ -106,6 +108,42 @@ export function SharedGeneratorCard({ slug }: { slug: string }) {
       <span className="block truncate text-sm font-semibold text-text">{generator?.title ?? t("common.loading")}</span>
       <span className="flex items-center gap-1 text-xs text-primary">
         {t("messages.openGenerator")}
+        <ArrowUpRight size={11} />
+      </span>
+    </Link>
+  );
+}
+
+/** A message's shared-workflow content card — same shape as `SharedGeneratorCard`, found by id (parsed from the plain-text share block, see `workflow-share-format.ts`). */
+export function SharedWorkflowCard({ workflowId }: { workflowId: string }) {
+  const { t } = useTranslation();
+  const { getCached } = useRealWorkflows();
+  const cached = getCached(workflowId);
+  const [fetched, setFetched] = useState<Workflow | null>(null);
+
+  useEffect(() => {
+    if (cached) return;
+    let cancelled = false;
+    fetchWorkflowById(workflowId).then((result) => {
+      if (!cancelled && result) setFetched(result.workflow);
+    });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [workflowId, Boolean(cached)]);
+
+  const workflow = cached ?? fetched;
+
+  return (
+    <Link href={workflowHref({ id: workflowId })} className={CARD_CLASS}>
+      <span className="flex items-center gap-1.5 text-xs font-medium text-primary">
+        <WorkflowIcon size={13} />
+        {t("messages.sharedWorkflow")}
+      </span>
+      <span className="block truncate text-sm font-semibold text-text">{workflow?.title ?? t("common.loading")}</span>
+      <span className="flex items-center gap-1 text-xs text-primary">
+        {t("messages.openWorkflow")}
         <ArrowUpRight size={11} />
       </span>
     </Link>

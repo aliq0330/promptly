@@ -285,6 +285,11 @@ export function generatorHref(generator: Pick<Generator, "slug">): string {
   return `/generators/local?slug=${generator.slug}`;
 }
 
+/** Same idea as `promptHref`, for a Workflow — a real Supabase row (`public.workflows`), always the parameterless static route + `?id=`. */
+export function workflowHref(workflow: { id: string }): string {
+  return `/workflows/local?id=${workflow.id}`;
+}
+
 /** Same idea as `promptHref`, for a Kullanıcı Sonucu — every result is a real Supabase row (`public.prompt_results`). */
 export function resultHref(result: Pick<PromptResultSummary, "id">): string {
   return `/results/local?id=${result.id}`;
