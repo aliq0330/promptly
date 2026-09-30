@@ -506,7 +506,7 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
       </div>
 
       {step === "details" && (
-        <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
           <div className="min-w-0 space-y-4 rounded-lg border border-border bg-surface p-4 sm:p-5">
             <GeneratorDetailsForm meta={meta} onChange={(patch) => setMeta((prev) => ({ ...prev, ...patch }))} tagPicker={tagPicker} />
             {detailsError && <p className="text-sm text-danger">{detailsError}</p>}
@@ -524,7 +524,7 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
       )}
 
       {step === "fields" && (
-        <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
           <div className="min-w-0 rounded-lg border border-border bg-surface p-4 sm:p-5">
             <GeneratorVisionAssist
               meta={meta}
