@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { Flag } from "lucide-react";
 import { useAuth } from "@/features/auth/auth-provider";
+import { useTranslation } from "@/lib/i18n/language-provider";
 import { fileReport, type ReportTargetType } from "@/lib/supabase/reports";
 
 /**
@@ -13,13 +14,14 @@ import { fileReport, type ReportTargetType } from "@/lib/supabase/reports";
 export function ReportButton({
   targetType,
   targetId,
-  label = "Şikayet Et",
+  label,
 }: {
   targetType: ReportTargetType;
   targetId: string;
   label?: string;
 }) {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -29,7 +31,7 @@ export function ReportButton({
   if (!user) return null;
 
   if (done) {
-    return <p className="text-xs text-text-muted">Şikayet edildi.</p>;
+    return <p className="text-xs text-text-muted">{t("messages.reported")}</p>;
   }
 
   if (!open) {
@@ -41,7 +43,7 @@ export function ReportButton({
         className="flex items-center gap-1.5 text-sm text-text-muted hover:text-text"
       >
         <Flag size={14} />
-        {label}
+        {label ?? t("messages.reportAction")}
       </button>
     );
   }
@@ -55,7 +57,7 @@ export function ReportButton({
       await fileReport(user!.id, targetType, targetId, reason);
       setDone(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Şikayet gönderilemedi, lütfen tekrar dene.");
+      setError(err instanceof Error ? err.message : t("report.failed"));
     } finally {
       setIsSubmitting(false);
     }
@@ -66,7 +68,7 @@ export function ReportButton({
       <textarea
         value={reason}
         onChange={(event) => setReason(event.target.value)}
-        placeholder="Şikayet nedenini yaz..."
+        placeholder={t("report.reasonPlaceholder")}
         rows={2}
         autoFocus
         className="w-full resize-none rounded-md border border-border bg-surface px-2 py-1.5 text-sm text-text placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-primary"
@@ -77,7 +79,7 @@ export function ReportButton({
           disabled={!reason.trim() || isSubmitting}
           className="text-sm font-medium text-primary hover:underline disabled:opacity-50"
         >
-          {isSubmitting ? "Gönderiliyor..." : "Gönder"}
+          {isSubmitting ? t("report.sending") : t("common.send")}
         </button>
         <button
           type="button"
@@ -88,7 +90,7 @@ export function ReportButton({
           }}
           className="text-sm text-text-muted hover:text-text"
         >
-          İptal
+          {t("common.cancelAction")}
         </button>
       </div>
       {error && <p className="text-xs text-danger">{error}</p>}

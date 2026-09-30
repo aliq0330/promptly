@@ -11373,76 +11373,17 @@ buraya bakılmalı):
    kullanıyor — `tsc` zaten her çağrı yerini garanti ediyor. Diğer
    `lib/utils.ts` biçimlendiricileri (`formatCount`) dile duyarlı değil,
    kapsam dışı.
-10. [~] **Repo geneli son Türkçe grep taraması + build doğrulaması —
-    BAŞLADI, TAMAMLANMADI.**
-    - **ÖNEMLİ METODOLOJİ NOTU (bulundu):** yalnızca Türkçe'ye özgü
-      karakterlere ([çğıöşüÇĞİÖŞÜ]) bakan bir grep iki şeyi KAÇIRIYOR: (a)
-      tamamen ASCII harflerden oluşan Türkçe kelimeler (ör. "mesaj",
-      "silindi", "yok" — Bölüm 9.56'nın ilk sürümünde `messages.ts`'te
-      gerçekten yaşandı), (b) çok satırlı `{/* ... */}` JSX yorum
-      bloklarının İLK satırdan SONRAKİ satırları (bu satırlar `//`/`*`/`/*`
-      ile BAŞLAMADIĞI için basit bir yorum-hariç-tutma regex'i onları kod
-      sanıyor — `request-detail-view.tsx`'te bu, GERÇEK bir hata değil
-      SAHTE bir pozitif üretti, dosya zaten tamamen çevrilmişti).
-    - **Şu ana kadar tam repo taraması (`find src -name "*.ts" -o -name
-      "*.tsx"` + özel karakter grep'i) ÇALIŞTIRILDI ve şu GERÇEK, önceki
-      8 maddede hiç kapsanmamış eksikler BULUNDU:**
-      - **[x] DÜZELTİLDİ:** `src/lib/notification-utils.ts`'teki
-        `CATEGORY_FILTERS` sabiti (`/notifications` sayfasının kategori
-        filtre çipleri — "Gönderiler"/"Takip"/"Sistem" dahil) düz
-        `label: string` yerine `labelKey: TranslationKey` kullanacak
-        şekilde değiştirildi, `notification-category-filter.tsx` artık
-        `t(filter.labelKey)` çağırıyor. Yeni anahtarlar:
-        `notifications.categoryPosts/categoryFollow/categorySystem`
-        (`common.all`/`nav.requestsShort`/`header.messagesAriaLabel`
-        yeniden kullanıldı). `tsc`/`lint` temiz, henüz commit+push
-        edilmedi (bir sonraki adım).
-      - **[ ] BULUNDU, HENÜZ DÜZELTİLMEDİ — `src/features/tags/tags-
-        discover-view.tsx`** (`/tags` sayfası — arama, Popüler/Yükselen/
-        Yeni Eklenenler bölümleri, tam katalog + sıralama): dosyanın
-        TAMAMI hiç `useTranslation()` çağırmıyor, tüm başlıklar/
-        placeholder'lar/boş-durum mesajları/sıralama etiketleri
-        (`Etiketleri Keşfet`, `Popüler Etiketler`, `Yükselen Etiketler`,
-        `Yeni Eklenenler`, `Tüm Etiketler`, `Popüler`/`En Yeni`, boş-durum
-        mesajları, "{{count}} kullanım" suffix'i — bu SONUNCUSU için
-        `tagPicker.usageCount` anahtarının tam olarak nasıl kullanıldığı
-        (`t("tagPicker.usageCount", { count: tag.usageCount })`)
-        `tag-picker.tsx`'te doğrulanmıştı, aynı deseni burada da kullan)
-        hâlâ ham Türkçe. `home.tabPopular` ("Popüler") zaten reuse için
-        bulunmuştu. **Kod yazılmadı, yalnızca tespit edildi.**
-      - **[ ] HENÜZ HİÇ İNCELENMEDİ** (yalnızca dosya adı + özel-karakter
-        sayısı tespit edildi, içerik henüz okunmadı): `src/features/
-        search/search-view.tsx` (6), `src/features/moderation/report-
-        button.tsx` (6), `src/features/prompts/add-result-modal.tsx` (1),
-        ve `generator-detail-view.tsx`/`generator-template.ts`/`emoji-
-        picker.tsx`/`notification-row.tsx`/`field-editor-modal.tsx`/
-        `app/layout.tsx`'teki KALAN birkaç satırın hepsinin (bu dosyaların
-        çoğu zaten Task 1-4'te büyük ölçüde çevrilmişti, kalan 1-4 satırlık
-        izler ya kod yorumu ya da gerçek, küçük bir kaçak olabilir —
-        HER BİRİ TEK TEK doğrulanmalı, varsayılmamalı).
-      - **Kasıtlı olarak Türkçe bırakılması GEREKEN, veri/test dosyaları
-        (çeviri kapsamı DIŞI, ama raporda MUTLAKA dürüstçe belirtilmeli):**
-        `src/lib/generator-field-catalog.ts` (269 satır — Bölüm 9.30/9.48/
-        9.53'ün generator hazır alan kütüphanesi VERİSİ, `t()` hiç
-        kullanmıyor, tamamen statik Türkçe kategori/alan/seçenek adları),
-        `src/lib/tag-candidates.ts` (90 — Bölüm 9.24'ün aday etiket
-        sözlüğü VERİSİ), `src/lib/generator-option-art.ts` (30),
-        `src/lib/generator-vision-mapping.ts` (24), `src/lib/tag-
-        normalize.ts` (13 — muhtemelen yalnızca transliterasyon char
-        map'i, `generator-template.ts`'teki `ç→c` map'iyle aynı kategori,
-        DOĞRULANMALI), `src/features/profile/interest-options.ts` (16 —
-        Bölüm 9.2'de zaten değer/etiket ayrımı UYGULANMIŞTI,
-        `INTEREST_OPTION_LABELS` haritası var, saklanan dizinin kendisinin
-        Türkçe kalması BEKLENEN/doğru davranış — DOĞRULANMALI ama muhtemelen
-        sahte pozitif), `src/app/dev/image-analysis-test/page.tsx` (19),
-        `src/app/dev/share-modal-test/page.tsx` (14), `src/app/dev/
-        generator-visual-options-test/page.tsx` (11) — üçü de Bölüm 9.45/
-        9.47/9.52'nin "yalnızca geliştirici test harness'i, uygulamanın
-        hiçbir yerinden import edilmiyor" diye belgelediği geçici sayfalar.
-    - **Henüz YAPILMAYAN:** tam `npm run build` (yalnızca `tsc --noEmit` +
-      `npm run lint` her adımdan sonra çalıştırıldı, gerçek `next build`
-      hiç çalıştırılmadı), ve yukarıdaki "bulundu, düzeltilmedi"/"hiç
-      incelenmedi" listesinin tamamının kapatılması.
+10. [x] **Repo geneli son Türkçe grep taraması + build doğrulaması —
+    TAMAMLANDI.** Çevrilen son eksikler: `tags-discover-view.tsx` (`/tags`),
+    `search-view.tsx`, `report-button.tsx`, `lib/utils.ts` görsel hata
+    mesajları (`translateForRuntime`). Tek tek doğrulanan diğer dosyalar
+    (`add-result-modal`, `request-detail-view`, `generator-detail-view`,
+    `emoji-picker`, `generator-template`, `notification-utils`) yalnızca kod
+    yorumu / transliterasyon haritası içeriyordu; `auth-errors.ts` zaten
+    `{tr,en}` çiftli; `app/layout.tsx` statik SEO `metadata` açıklaması
+    bilinçli Türkçe kaldı. Kasıtlı Türkçe veri dosyaları (katalog, aday
+    etiketler, ikon/vision eşleme, interest-options, `/dev/*`) çevrilmedi.
+    `tsc`, `lint` ve tam `next build` temiz.
 11. [ ] **Final 12 maddelik i18n teknik raporunun yazılması** — toplam
     anahtar sayısı (öncesi/sonrası), değiştirilen bileşen/sayfa/modal
     sayısı, çevrilen generator kataloğu string'leri (dürüstçe belirtilmesi

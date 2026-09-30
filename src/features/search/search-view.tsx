@@ -10,6 +10,7 @@ import { useTagCatalog } from "@/features/tags/use-tag-catalog";
 import { searchPrompts } from "@/lib/supabase/prompts";
 import { searchProfiles } from "@/lib/supabase/profiles";
 import { searchGenerators } from "@/lib/supabase/generators";
+import { useTranslation } from "@/lib/i18n/language-provider";
 import { normalizeTagLabel } from "@/lib/tag-normalize";
 import { formatCount, profileHref, tagHref } from "@/lib/utils";
 import type { Generator, Prompt, Tag, UserProfile } from "@/types";
@@ -17,6 +18,7 @@ import type { Generator, Prompt, Tag, UserProfile } from "@/types";
 const DEBOUNCE_MS = 300;
 
 export function SearchView() {
+  const { t } = useTranslation();
   const { catalog: tagCatalog } = useTagCatalog();
   const [query, setQuery] = useState("");
   const [prompts, setPrompts] = useState<Prompt[]>([]);
@@ -71,7 +73,7 @@ export function SearchView() {
           type="text"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="Prompt veya kullanıcı ara"
+          placeholder={t("search.placeholder")}
           className="h-full w-full bg-transparent text-sm text-text outline-none placeholder:text-text-muted"
           autoFocus
         />
@@ -79,15 +81,15 @@ export function SearchView() {
 
       {!normalized ? (
         <p className="py-10 text-center text-sm text-text-muted">
-          Aramak için bir şeyler yazmaya başla.
+          {t("search.startTyping")}
         </p>
       ) : isSearching ? (
-        <p className="py-10 text-center text-sm text-text-muted">Aranıyor…</p>
+        <p className="py-10 text-center text-sm text-text-muted">{t("search.searching")}</p>
       ) : (
         <div className="space-y-8">
           {matchedTags.length > 0 && (
             <section className="space-y-3">
-              <h2 className="text-h3 font-semibold text-text">Etiketler</h2>
+              <h2 className="text-h3 font-semibold text-text">{t("nav.tags")}</h2>
               <div className="flex flex-wrap gap-2">
                 {matchedTags.map((tag) => (
                   <Link key={tag.slug} href={tagHref(tag)}>
@@ -102,7 +104,7 @@ export function SearchView() {
 
           {users.length > 0 && (
             <section className="space-y-3">
-              <h2 className="text-h3 font-semibold text-text">Kullanıcılar</h2>
+              <h2 className="text-h3 font-semibold text-text">{t("search.usersHeading")}</h2>
               <div className="overflow-hidden rounded-lg border border-border bg-surface">
                 {users.map((user) => (
                   <Link
@@ -114,7 +116,7 @@ export function SearchView() {
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium text-text">{user.displayName}</p>
                       <p className="truncate text-xs text-text-muted">
-                        @{user.username} · {formatCount(user.followerCount)} takipçi
+                        @{user.username} · {formatCount(user.followerCount)} {t("profile.followersSuffix")}
                       </p>
                     </div>
                   </Link>
@@ -125,15 +127,15 @@ export function SearchView() {
 
           {generators.length > 0 && (
             <section className="space-y-3">
-              <h2 className="text-h3 font-semibold text-text">Generatorlar</h2>
+              <h2 className="text-h3 font-semibold text-text">{t("nav.generators")}</h2>
               <PromptGrid generators={generators} />
             </section>
           )}
 
           <section className="space-y-3">
-            <h2 className="text-h3 font-semibold text-text">Promptlar</h2>
+            <h2 className="text-h3 font-semibold text-text">{t("feed.filterPrompts")}</h2>
             {prompts.length === 0 && users.length === 0 && matchedTags.length === 0 && generators.length === 0 ? (
-              <p className="py-6 text-center text-sm text-text-muted">Sonuç bulunamadı.</p>
+              <p className="py-6 text-center text-sm text-text-muted">{t("common.noResults")}</p>
             ) : (
               <PromptGrid prompts={prompts} />
             )}

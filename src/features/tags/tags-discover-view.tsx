@@ -6,6 +6,7 @@ import { Flame, Hash, Search, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { fetchAllTagsWithStats, fetchPopularTags, fetchTrendingTags, type TrendingTag } from "@/lib/supabase/tags";
 import { formatCount, tagHref } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n/language-provider";
 import { normalizeTagLabel } from "@/lib/tag-normalize";
 import type { Tag } from "@/types";
 
@@ -18,6 +19,7 @@ type SortMode = "popular" | "newest" | "az";
  * newly-added tags, and the full catalog with search/sort.
  */
 export function TagsDiscoverView() {
+  const { t } = useTranslation();
   const [popular, setPopular] = useState<Tag[]>([]);
   const [trending, setTrending] = useState<TrendingTag[]>([]);
   const [allTags, setAllTags] = useState<Tag[]>([]);
@@ -56,9 +58,9 @@ export function TagsDiscoverView() {
   return (
     <div className="mx-auto max-w-4xl space-y-8 px-3 py-5 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
       <div>
-        <h1 className="mb-1 text-h1 font-semibold text-text">Etiketleri Keşfet</h1>
+        <h1 className="mb-1 text-h1 font-semibold text-text">{t("tag.discoverTitle")}</h1>
         <p className="text-sm text-text-muted">
-          Popüler ve yükselen etiketleri incele, ya da doğrudan aradığın etikete git.
+          {t("tag.discoverIntro")}
         </p>
       </div>
 
@@ -68,33 +70,33 @@ export function TagsDiscoverView() {
           type="text"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="Etiket ara..."
+          placeholder={t("tag.searchPlaceholder")}
           className="h-full w-full bg-transparent text-sm text-text outline-none placeholder:text-text-muted"
         />
       </div>
 
       {!loaded ? (
-        <p className="py-10 text-center text-sm text-text-muted">Yükleniyor…</p>
+        <p className="py-10 text-center text-sm text-text-muted">{t("common.loading")}</p>
       ) : normalizedQuery ? (
-        <TagResultsSection title={`"${query.trim()}" için sonuçlar`} tags={filteredAll} emptyMessage="Eşleşen etiket bulunamadı." />
+        <TagResultsSection title={t("tag.resultsFor", { query: query.trim() })} tags={filteredAll} emptyMessage={t("tag.noMatch")} />
       ) : (
         <>
           <section className="space-y-3">
             <div className="flex items-center gap-1.5">
               <Flame size={16} className="text-primary" />
-              <h2 className="text-h3 font-semibold text-text">Popüler Etiketler</h2>
+              <h2 className="text-h3 font-semibold text-text">{t("tag.popularHeading")}</h2>
             </div>
-            <TagChipRow tags={popular} emptyMessage="Henüz yeterli kullanım verisi yok." />
+            <TagChipRow tags={popular} emptyMessage={t("tag.noUsageData")} />
           </section>
 
           <section className="space-y-3">
             <div className="flex items-center gap-1.5">
               <Sparkles size={16} className="text-primary" />
-              <h2 className="text-h3 font-semibold text-text">Yükselen Etiketler</h2>
+              <h2 className="text-h3 font-semibold text-text">{t("tag.risingHeading")}</h2>
             </div>
             {trending.length === 0 ? (
               <p className="text-sm text-text-muted">
-                Son dönemde yükselen bir etiket için henüz yeterli gerçek veri yok.
+                {t("tag.noRising")}
               </p>
             ) : (
               <div className="flex flex-wrap gap-2">
@@ -112,14 +114,14 @@ export function TagsDiscoverView() {
           <section className="space-y-3">
             <div className="flex items-center gap-1.5">
               <Hash size={16} className="text-primary" />
-              <h2 className="text-h3 font-semibold text-text">Yeni Eklenenler</h2>
+              <h2 className="text-h3 font-semibold text-text">{t("tag.newHeading")}</h2>
             </div>
-            <TagChipRow tags={newest} emptyMessage="Henüz yeni bir etiket yok." />
+            <TagChipRow tags={newest} emptyMessage={t("tag.noNewTags")} />
           </section>
 
           <section className="space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <h2 className="text-h3 font-semibold text-text">Tüm Etiketler ({allTags.length})</h2>
+              <h2 className="text-h3 font-semibold text-text">{t("tag.allHeading", { count: allTags.length })}</h2>
               <div className="flex gap-1.5">
                 {(["popular", "newest", "az"] as SortMode[]).map((mode) => (
                   <button
@@ -132,12 +134,12 @@ export function TagsDiscoverView() {
                         : "border-border bg-surface text-text-muted hover:text-text"
                     }`}
                   >
-                    {mode === "popular" ? "Popüler" : mode === "newest" ? "En Yeni" : "A-Z"}
+                    {mode === "popular" ? t("home.tabPopular") : mode === "newest" ? t("tag.sortNewest") : "A-Z"}
                   </button>
                 ))}
               </div>
             </div>
-            <TagResultsSection tags={filteredAll} emptyMessage="Henüz hiç etiket yok." />
+            <TagResultsSection tags={filteredAll} emptyMessage={t("tag.noTagsAtAll")} />
           </section>
         </>
       )}
@@ -161,6 +163,7 @@ function TagChipRow({ tags, emptyMessage }: { tags: Tag[]; emptyMessage: string 
 }
 
 function TagResultsSection({ title, tags, emptyMessage }: { title?: string; tags: Tag[]; emptyMessage: string }) {
+  const { t } = useTranslation();
   return (
     <div className="space-y-3">
       {title && <h2 className="text-h3 font-semibold text-text">{title}</h2>}
@@ -176,7 +179,7 @@ function TagResultsSection({ title, tags, emptyMessage }: { title?: string; tags
             >
               <span className="text-sm font-medium text-text">#{tag.label}</span>
               <span className="text-xs text-text-muted">
-                {formatCount(tag.usageCount ?? 0)} kullanım
+                {t("tagPicker.usageCount", { count: formatCount(tag.usageCount ?? 0) })}
               </span>
             </Link>
           ))}
