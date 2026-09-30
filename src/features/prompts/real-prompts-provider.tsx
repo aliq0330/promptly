@@ -67,7 +67,7 @@ export function RealPromptsProvider({ children }: { children: React.ReactNode })
     async (input: CreateRealPromptInput, authorProfile: UserProfile) => {
       if (!user) throw new Error(t("prompt.loginRequiredToPublish"));
       const prompt = await createRealPrompt(input, user.id, authorProfile);
-      setRealPrompts((prev) => [prompt, ...prev]);
+      if (prompt.status === "published") setRealPrompts((prev) => [prompt, ...prev]);
       return prompt;
     },
     [user, t],
@@ -77,7 +77,10 @@ export function RealPromptsProvider({ children }: { children: React.ReactNode })
     async (id: string, input: UpdateRealPromptInput) => {
       if (!user) throw new Error(t("prompt.loginRequiredToEdit"));
       const prompt = await updateRealPrompt(id, user.id, input);
-      setRealPrompts((prev) => (prev.some((p) => p.id === id) ? prev.map((p) => (p.id === id ? prompt : p)) : prev));
+      setRealPrompts((prev) => {
+        if (prev.some((p) => p.id === id)) return prev.map((p) => (p.id === id ? prompt : p));
+        return input.publish ? [prompt, ...prev] : prev;
+      });
       return prompt;
     },
     [user, t],

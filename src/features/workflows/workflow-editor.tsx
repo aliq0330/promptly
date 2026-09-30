@@ -22,6 +22,7 @@ import { useTagCatalog } from "@/features/tags/use-tag-catalog";
 import { useLayoutMode } from "./use-layout-mode";
 import { EMPTY_META, WorkflowMetaForm, type WorkflowMeta } from "./workflow-meta-form";
 import type { TranslationKey } from "@/lib/i18n/translations";
+import { KindDraftsButton } from "@/features/drafts/kind-drafts-button";
 
 type SaveState = "idle" | "saving" | "saved" | "error";
 type LoadState = "loading" | "ready" | "notfound" | "forbidden";
@@ -321,6 +322,7 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
             {t("workflow.publish")}
           </Button>
         </div>
+        <KindDraftsButton kind="workflow" />
       </div>
 
       {saveError && <p className="rounded-md border border-danger/40 bg-danger/5 p-3 text-sm text-danger">{saveError}</p>}

@@ -16,6 +16,7 @@ import { TagPicker } from "@/features/prompts/tag-picker";
 import { RequestVisionAssist } from "./request-vision-assist";
 import { cn, requestHref, resizeImageToDataUrlFit } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
+import { KindDraftsButton } from "@/features/drafts/kind-drafts-button";
 import type { PromptContentType, PromptRequest } from "@/types";
 
 
@@ -35,6 +36,7 @@ export function CreateRequestForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { addRequest, updateRequest, getCached, fetchById } = useRealRequests();
+  const [draftNotice, setDraftNotice] = useState(false);
   const { user } = useAuth();
   const { profile: ownProfile } = useOwnProfile();
 
@@ -67,6 +69,7 @@ export function CreateRequestForm() {
   const [publishError, setPublishError] = useState<string | null>(null);
 
   const [editingRequest, setEditingRequest] = useState<PromptRequest | null>(null);
+  const isEditingDraft = isEditMode && Boolean(editingRequest?.isDraft);
   const [editForbidden, setEditForbidden] = useState(false);
   const [editChecked, setEditChecked] = useState(!isEditMode);
   const [fieldsSeeded, setFieldsSeeded] = useState(!isEditMode);
@@ -145,6 +148,59 @@ export function CreateRequestForm() {
     }
   }
 
+  async function handleSaveDraft() {
+    if (isSubmitting || !user || !ownProfile) return;
+    if (!title.trim()) {
+      setTitleTouched(true);
+      setPublishError(t("draft.titleRequired"));
+      return;
+    }
+    setPublishError(null);
+    setDraftNotice(false);
+    setIsSubmitting(true);
+    const tagsInput = {
+      tags: tagPicker.accepted.map((entry) => entry.tag),
+      tagSources: Object.fromEntries(tagPicker.accepted.map((entry) => [entry.tag.slug, entry.source])),
+    };
+    try {
+      if (isEditMode && editingRequest) {
+        await updateRequest(editingRequest.id, {
+          title,
+          description,
+          creativeDirection,
+          category,
+          subcategory,
+          preferredTool: preferredTool || null,
+          tools,
+          ...tagsInput,
+        });
+        setDraftNotice(true);
+        setIsSubmitting(false);
+        return;
+      }
+      const draft = await addRequest(
+        {
+          title,
+          description,
+          creativeDirection,
+          contentType,
+          category,
+          subcategory,
+          preferredTool: preferredTool || null,
+          tools,
+          ...tagsInput,
+          imageFile: referenceImageFile,
+          isDraft: true,
+        },
+        ownProfile,
+      );
+      router.push(`/requests/new?edit=${draft.id}`);
+    } catch (err) {
+      setPublishError(err instanceof Error ? err.message : t("draft.saveFailed"));
+      setIsSubmitting(false);
+    }
+  }
+
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setTitleTouched(true);
@@ -165,6 +221,7 @@ export function CreateRequestForm() {
           tools,
           tags: tagPicker.accepted.map((entry) => entry.tag),
           tagSources: Object.fromEntries(tagPicker.accepted.map((entry) => [entry.tag.slug, entry.source])),
+          publish: isEditingDraft,
         });
         router.push(requestHref(updated));
         return;
@@ -286,7 +343,10 @@ export function CreateRequestForm() {
 
   return (
     <div className="mx-auto max-w-5xl px-3 py-5 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
-      <h1 className="mb-1 text-h1 font-semibold text-text">{isEditMode ? t("request.editRequestTitle") : t("request.createRequestTitle")}</h1>
+      <div className="mb-1 flex items-start justify-between gap-3">
+        <h1 className="text-h1 font-semibold text-text">{isEditMode ? t("request.editRequestTitle") : t("request.createRequestTitle")}</h1>
+        <KindDraftsButton kind="request" />
+      </div>
       <p className="mb-6 text-sm text-text-muted">
         {isEditMode ? t("prompt.editPromptHint") : t("request.createRequestHint")}
       </p>
@@ -407,10 +467,25 @@ export function CreateRequestForm() {
 
           {publishError && <p className="text-sm text-danger">{publishError}</p>}
 
-          <div className="flex gap-2">
+          {draftNotice && <p className="text-sm text-success">{t("draft.saved")}</p>}
+
+          <div className="flex flex-wrap gap-2">
             <Button type="submit" size="lg" disabled={isSubmitting}>
-              {isSubmitting ? (isEditMode ? t("common.saving") : t("prompt.publishing")) : isEditMode ? t("common.save") : t("request.publishRequest")}
+              {isSubmitting
+                ? isEditMode && !isEditingDraft
+                  ? t("common.saving")
+                  : t("prompt.publishing")
+                : isEditingDraft
+                  ? t("draft.publish")
+                  : isEditMode
+                    ? t("common.save")
+                    : t("request.publishRequest")}
             </Button>
+            {(!isEditMode || isEditingDraft) && (
+              <Button type="button" variant="outline" size="lg" disabled={isSubmitting} onClick={() => void handleSaveDraft()}>
+                {isEditingDraft ? t("draft.saveDraft") : t("draft.saveAsDraft")}
+              </Button>
+            )}
             <Button
               type="button"
               variant="ghost"
