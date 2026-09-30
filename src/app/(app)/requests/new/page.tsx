@@ -1,10 +1,10 @@
 import { Suspense } from "react";
-import { CreateRequestForm } from "@/features/requests/create-request-form";
+import { CreateRequestGate } from "@/features/requests/create-request-gate";
 
 export default function NewRequestPage() {
   return (
     <Suspense fallback={null}>
-      <CreateRequestForm />
+      <CreateRequestGate />
     </Suspense>
   );
 }

@@ -345,17 +345,33 @@ export async function updateRealRequestStatus(
   requestId: string,
   status: Extract<PromptRequestStatus, "open" | "closed">,
 ): Promise<void> {
-  const { error } = await supabase
+  // `.select()` so a silent RLS "0 rows affected" surfaces as an error
+  // instead of the UI reporting success on an unchanged row.
+  const { data, error } = await supabase
     .from("prompt_requests")
     .update({ status, closed_by_owner: status === "closed" })
-    .eq("id", requestId);
+    .eq("id", requestId)
+    .select("id");
   if (error) throw new Error(error.message);
+  if (!data || data.length === 0) throw new Error(translateForRuntime("request.noEditPermission"));
 }
 
 /** Genuinely, permanently deletes a real request the caller owns. */
 export async function deleteRealRequest(requestId: string): Promise<void> {
-  const { error } = await supabase.from("prompt_requests").delete().eq("id", requestId);
+  const { data, error } = await supabase.from("prompt_requests").delete().eq("id", requestId).select("id");
   if (error) throw new Error(error.message);
+  if (data && data.length > 0) return;
+  // A request with real answers is soft-deleted by a BEFORE DELETE trigger
+  // (the DELETE itself reports 0 rows) — that's a success. Anything else
+  // with 0 rows means RLS silently refused.
+  const { data: remaining } = await supabase
+    .from("prompt_requests")
+    .select("id, deleted_at")
+    .eq("id", requestId)
+    .maybeSingle();
+  if (remaining && !(remaining as { deleted_at: string | null }).deleted_at) {
+    throw new Error(translateForRuntime("request.noEditPermission"));
+  }
 }
 
 /**

@@ -1,4 +1,5 @@
 import { supabase } from "./client";
+import { batcherRegistry } from "./batched-lookup";
 import { translateForRuntime } from "@/lib/i18n/translations";
 import { mapProfileRow, type ProfileRow } from "./mappers";
 import { PROMPT_SELECT, mapPromptRow, type PromptRow } from "./prompts";
@@ -247,20 +248,22 @@ export async function fetchCollectionItems(collectionId: string): Promise<Collec
  * every existing prompt call site keeps working unchanged.
  */
 export async function isPromptSaved(id: string, userId: string, contentType: SaveableContentType = "prompt"): Promise<boolean> {
-  try {
+  return saveLookup(`${userId}|${contentType}`)(id);
+}
+
+const saveLookup = batcherRegistry((key) => {
+  const [userId, contentType] = key.split("|") as [string, SaveableContentType];
+  const column = saveTargetColumn(contentType);
+  return async (ids) => {
     const { data, error } = await supabase
       .from("collection_items")
-      .select("collection_id, collections!inner ( owner_id )")
-      .eq(saveTargetColumn(contentType), id)
+      .select(`${column}, collections!inner ( owner_id )`)
       .eq("collections.owner_id", userId)
-      .limit(1);
-    if (error) return false;
-    return Boolean(data && data.length > 0);
-  } catch (err) {
-    console.error("isPromptSaved", err);
-    return false;
-  }
-}
+      .in(column, ids);
+    if (error || !data) return new Set();
+    return new Set((data as unknown as Record<string, string>[]).map((row) => row[column]));
+  };
+});
 
 /** Which of this user's own collections already contain this prompt/generator — powers the save modal's "+/kayıtlı" state per row. `contentType` defaults to `"prompt"` so every existing prompt call site keeps working unchanged. */
 export async function fetchCollectionIdsContaining(id: string, userId: string, contentType: SaveableContentType = "prompt"): Promise<Set<string>> {

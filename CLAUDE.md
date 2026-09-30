@@ -323,7 +323,7 @@ id'si artık istemci tarafında (`crypto.randomUUID()`) üretiliyor, INSERT
 sonrası hiçbir `.select()` çağrılmıyor. Ayrıntı: Bölüm 21 Faz 6'nın
 "Düzeltme" alt maddesi.
 
-**[AÇIK — orta öncelik] Bölüm 21 Faz 6 — eşzamanlı çift tıklama iki ayrı
+**[DÜZELTİLDİ — Bölüm 9.64] Bölüm 21 Faz 6 — eşzamanlı çift tıklama iki ayrı
 konuşma oluşturabilir.** İki kullanıcı birbirine TAM AYNI ANDA "Mesaj
 Gönder"e basarsa, `findDirectConversationId`'nin "önce oku, yoksa oluştur"
 deseni atomik değil — teorik olarak iki ayrı `conversations` satırı
@@ -333,7 +333,7 @@ kısıt, ya da atomik bir Postgres RPC fonksiyonu (`get_or_create_
 direct_conversation`) ile client-side "oku sonra yaz" yarışını ortadan
 kaldırmak. Dosya: `src/lib/supabase/messages.ts`.
 
-**[AÇIK — düşük öncelik, doğrulanmadı] Bölüm 21 (genel) — istek/konuşma
+**[DÜZELTİLDİ — Bölüm 9.64] Bölüm 21 (genel) — istek/konuşma
 yönetim aksiyonlarında "sessiz no-op" riski.** `updateRealRequestStatus`,
 `deleteRealRequest`, `selectRealRequestResponse` (`src/lib/supabase/
 requests.ts`) UPDATE/DELETE sonrası etkilenen satır sayısını hiç kontrol
@@ -369,21 +369,21 @@ profili (`/profile/real?username=…`) görüntülerken vurgulanmıyor (linkin
 hedefi doğru, yalnızca aktif-görünüm hesaplaması `pathname`'e bakıyor,
 query param'a bakmıyor). Ayrıntı: Bölüm 21 Faz 2'nin bilinen sınırlaması.
 
-**[AÇIK — kozmetik] Bölüm 21 Faz 4 — `CommentCountLink` gecikmeli
+**[DÜZELTİLDİ — Bölüm 9.64] Bölüm 21 Faz 4 — `CommentCountLink` gecikmeli
 güncelleniyor.** Gerçek bir promptta yeni yorum eklendikten sonra kart/
 detay sayfası üst istatistik satırındaki yorum sayacı sayfa
 yenilenmeden GÜNCELLENMİYOR (statik `baseCount` prop'una dayanıyor,
 `CommentSection`'ın kendi state'ini paylaşmıyor). Ayrıntı: Bölüm 21 Faz
 4'ün bilinen sınırlaması.
 
-**[AÇIK — nadir edge case] Bölüm 8 (Remix sistemi) — ön doldurma yalnızca
+**[DÜZELTİLDİ — Bölüm 9.64] Bölüm 8 (Remix sistemi) — ön doldurma yalnızca
 ilk mount'ta çalışıyor.** `CreatePromptForm`'daki remix ön doldurma
 `useState` lazy initializer kullanıyor; aynı `/create` sekmesinde bir
 remix linkinden başka bir remix linkine tam sayfa yenilemeden (client-
 side) geçilirse form alanları yenilenmiyor. Pratikte nadir (her "Remixle"
 tıklaması ayrı bir navigasyon).
 
-**[AÇIK — performans, düşük öncelik] Bölüm 21 Faz 3 — N+1 sorgu deseni.**
+**[DÜZELTİLDİ — Bölüm 9.64] Bölüm 21 Faz 3 — N+1 sorgu deseni.**
 Her `LikeButton`/`SaveButton`/`FollowButton` örneği (gerçek bir hedef
 için) kendi ayrı `fetchIsLiked`/`fetchIsSaved`/`fetchIsFollowing`
 sorgusunu tetikliyor. Gerçek içerik hacmi arttıkça bir feed'in tamamı
@@ -11622,3 +11622,12 @@ Migration `20260919500000_moderation.sql` (canlı projeye MCP ile uygulandı; `a
 - i18n: `moderation.*`/`nav.moderation` TR+EN eklendi.
 - Doğrulama: tsc/lint/build temiz; canlı DB'de rol yükseltme ve kuyruk erişimi sıradan kullanıcıda reddedildi, aliq03'te çalıştı; ağ taklitli Playwright 6/6. Gerçek şikâyet→karar akışı canlıda uçtan uca denenmedi.
 - Bilinçli sınır: kullanıcı yasaklama/askıya alma yok (kullanıcı şikâyeti yalnızca incelenir); etiket sayfası ve profil listeleri engel filtresinin dışında; açık sayfalardaki önbellekli akış engelden sonra yenilemeyle güncellenir.
+
+### 9.64 Bilinen hataların kapatılması (Bölüm 9.0 listesi)
+
+- **Eşzamanlı "Mesaj Gönder":** `20260919510000_direct_conversation_lock.sql` (canlıya uygulandı) — `start_direct_conversation` artık çift başına `pg_advisory_xact_lock` alıyor; ikinci çağrı birincinin commit'ini bekleyip var olan konuşmayı buluyor.
+- **Sessiz 0 satır:** `updateRealRequestStatus` ve `deleteRealRequest` etkilenen satırı kontrol ediyor (`.select()`), RLS reddederse hata fırlatıyor. Silmede gerçek yanıtı olan istek trigger'la soft-delete olur (DELETE 0 satır bildirir) — bu başarı sayılıyor. `selectRealRequestResponse` zaten RPC ile sahiplik doğruluyordu.
+- **Yorum sayacı:** `comment-count-store.ts` — `CommentSection` yorum ekleyince/(yanıtsız) silince `CommentCountLink` anında güncelleniyor. Generator için linke `generatorId` eklendi.
+- **N+1:** `batched-lookup.ts` — aynı anda istenen beğeni/kaydet/takip durumları tek `.in()` sorgusunda toplanıyor (12 ms pencere, 150'lik parçalar). `fetchIsLiked`/`isPromptSaved`/`fetchIsFollowing` imzaları aynı.
+- **Ön doldurma:** `CreateGate` formu, `/requests/new` için `CreateRequestGate` — intent parametrelerine `key` verip client-side geçişte formu yeniden mount ediyor (remix kalktığından duplicate/answerRequest/edit/generatorRun kapsanıyor).
+- Doğrulama: tsc/lint/build temiz; batcher node ile test edildi (1 sorgu, 320 id → 3 sorgu, hata → false). Tarayıcıda ve gerçek Supabase'de denenmedi; eşzamanlılık kilidi gerçek çift istekle test edilmedi.
