@@ -46,7 +46,14 @@ export const languageInitScript = `
 (function () {
   try {
     var stored = localStorage.getItem("${STORAGE_KEY}");
-    var lang = stored === "en" ? "en" : "tr";
+    var lang;
+    if (stored === "en" || stored === "tr") {
+      lang = stored;
+    } else {
+      // First visit, no choice yet: Turkey (Istanbul time zone) → Turkish, anywhere else → English.
+      var tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      lang = tz === "Europe/Istanbul" || tz === "Asia/Istanbul" ? "tr" : "en";
+    }
     document.documentElement.lang = lang;
   } catch (e) {}
 })();

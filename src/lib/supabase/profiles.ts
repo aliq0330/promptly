@@ -196,3 +196,36 @@ export async function uploadAvatar(userId: string, file: File): Promise<string> 
   const { data } = supabase.storage.from("avatars").getPublicUrl(path);
   return `${data.publicUrl}?v=${Date.now()}`;
 }
+
+export interface OwnPreferences {
+  language: "tr" | "en" | null;
+  themeMode: "light" | "dark" | null;
+  themePalette: "lavender" | "ocean" | "forest" | "sand" | null;
+}
+
+/** The signed-in user's saved language/theme choices (null = never chosen explicitly). */
+export async function fetchOwnPreferences(userId: string): Promise<OwnPreferences | null> {
+  try {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("language, theme_mode, theme_palette")
+      .eq("id", userId)
+      .maybeSingle();
+    if (error || !data) return null;
+    const row = data as { language: OwnPreferences["language"]; theme_mode: OwnPreferences["themeMode"]; theme_palette: OwnPreferences["themePalette"] };
+    return { language: row.language, themeMode: row.theme_mode, themePalette: row.theme_palette };
+  } catch (err) {
+    console.error("fetchOwnPreferences", err);
+    return null;
+  }
+}
+
+export async function updateOwnPreferences(userId: string, patch: Partial<OwnPreferences>): Promise<void> {
+  const row: Record<string, unknown> = {};
+  if (patch.language !== undefined) row.language = patch.language;
+  if (patch.themeMode !== undefined) row.theme_mode = patch.themeMode;
+  if (patch.themePalette !== undefined) row.theme_palette = patch.themePalette;
+  if (Object.keys(row).length === 0) return;
+  const { error } = await supabase.from("profiles").update(row).eq("id", userId);
+  if (error) throw new Error(error.message);
+}

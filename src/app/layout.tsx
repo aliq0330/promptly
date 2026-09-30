@@ -4,6 +4,7 @@ import { Inter, Instrument_Sans, JetBrains_Mono } from "next/font/google";
 import { ThemeProvider, themeInitScript } from "@/components/theme/theme-provider";
 import { LanguageProvider, languageInitScript } from "@/lib/i18n/language-provider";
 import { AuthProvider } from "@/features/auth/auth-provider";
+import { PreferencesSync } from "@/features/auth/preferences-sync";
 import "./globals.css";
 
 const inter = Inter({
@@ -50,7 +51,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body className="min-h-full flex flex-col bg-background text-text">
         <ThemeProvider>
           <LanguageProvider>
-            <AuthProvider>{children}</AuthProvider>
+            <AuthProvider>
+              <PreferencesSync />
+              {children}
+            </AuthProvider>
           </LanguageProvider>
         </ThemeProvider>
       </body>
