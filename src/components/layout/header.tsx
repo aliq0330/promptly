@@ -39,7 +39,7 @@ export function Header() {
 
       <div className="hidden min-w-0 flex-1 items-center md:flex">
         <Link
-          href="/search"
+          href="/discover"
           className="group flex h-10 w-full max-w-lg items-center gap-2.5 rounded-md border border-border-soft bg-surface px-3 text-small text-text-muted shadow-xs transition-colors duration-200 hover:border-border"
         >
           <Search size={17} className="shrink-0" />
@@ -49,7 +49,7 @@ export function Header() {
 
       <div className="flex flex-1 items-center justify-end gap-0.5 md:flex-none">
         <Link
-          href="/search"
+          href="/discover"
           aria-label={t("header.searchAriaLabel")}
           title={t("header.searchAriaLabel")}
           className={iconButtonClassName(false, "shrink-0 md:hidden")}

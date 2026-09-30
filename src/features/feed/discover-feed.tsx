@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Blocks, Hash, LayoutGrid, Sparkles, SquareTerminal, TrendingUp, Users } from "lucide-react";
 import { Tabs } from "@/components/ui/tabs";
 import { Chip, ChipRow } from "@/components/ui/chip";
@@ -11,7 +10,7 @@ import { PromptCardSkeletonGrid } from "@/components/ui/prompt-card-skeleton";
 import { FeedGrid } from "./feed-grid";
 import { feedItemCreatedAt, type FeedItem } from "./types";
 import { TaxonomyFilter } from "@/features/content/taxonomy-filter";
-import { SmartSearchInput } from "@/features/search/smart-search-input";
+import { SearchView } from "@/features/search/search-view";
 import { EMPTY_TAXONOMY_FILTER, matchesTaxonomy, type TaxonomyFilterValue } from "@/lib/content-taxonomy";
 import { CreatorCard } from "@/features/profile/creator-card";
 import { useRealPrompts } from "@/features/prompts/real-prompts-provider";
@@ -42,11 +41,9 @@ const SECTIONS: { key: Section; labelKey: TranslationKey; icon: typeof LayoutGri
  */
 export function DiscoverFeed() {
   const { t } = useTranslation();
-  const router = useRouter();
   const [section, setSection] = useState<Section>("all");
   const [taxonomy, setTaxonomy] = useState<TaxonomyFilterValue>(EMPTY_TAXONOMY_FILTER);
   const [openOnly, setOpenOnly] = useState(false);
-  const [query, setQuery] = useState("");
   const [creators, setCreators] = useState<UserProfile[] | null>(null);
   const [tags, setTags] = useState<Tag[]>([]);
   const { realPrompts, loading } = useRealPrompts();
@@ -74,30 +71,8 @@ export function DiscoverFeed() {
     return pick.sort((a, b) => feedItemCreatedAt(b) - feedItemCreatedAt(a));
   }, [realPrompts, realGenerators, realRequests, taxonomy, openOnly, section]);
 
-  function handleSearch(event: FormEvent) {
-    event.preventDefault();
-    const q = query.trim();
-    router.push(q ? `/search?q=${encodeURIComponent(q)}` : "/search");
-  }
-
-  return (
+  const idleContent = (
     <div className="space-y-6">
-      <SmartSearchInput
-        id="discover-search"
-        value={query}
-        onChange={setQuery}
-        onSubmit={handleSearch}
-        placeholder={t("discover.searchPlaceholder")}
-        submitButton={
-          <button
-            type="submit"
-            className="absolute right-1.5 top-1/2 h-9 -translate-y-1/2 rounded-md bg-text px-4 text-label font-semibold text-background transition-opacity hover:opacity-90"
-          >
-            {t("discover.search")}
-          </button>
-        }
-      />
-
       {tags.length > 0 && (
         <div className="flex items-center gap-3">
           <span className="hidden shrink-0 items-center gap-1.5 text-caption font-semibold uppercase tracking-[0.08em] text-text-muted sm:flex">
@@ -159,4 +134,6 @@ export function DiscoverFeed() {
       )}
     </div>
   );
+
+  return <SearchView idle={idleContent} />;
 }

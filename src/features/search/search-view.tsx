@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
@@ -24,7 +24,12 @@ import type { Generator, Prompt, PromptRequest, Tag, UserProfile } from "@/types
 const DEBOUNCE_MS = 300;
 type Sort = NonNullable<ContentSearchFilters["sort"]>;
 
-export function SearchView() {
+/**
+ * The chip search + its results. On Explore it is embedded: `idle` is what
+ * shows while there is no query (the normal Explore content); once chips or
+ * text exist, results replace it.
+ */
+export function SearchView({ idle }: { idle?: ReactNode } = {}) {
   const { t } = useTranslation();
   const [tokens, setTokens] = useState<SearchToken[]>([]);
   const [text, setText] = useState("");
@@ -102,9 +107,9 @@ export function SearchView() {
   const taxonomy: TaxonomyFilterValue = { contentType: singleMedia, category, subcategory };
 
   return (
-    <div className="mx-auto w-full max-w-[1400px] space-y-6 px-3 py-5 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
+    <div className={idle ? "space-y-6" : "mx-auto w-full max-w-[1400px] space-y-6 px-3 py-5 sm:px-5 sm:py-6 lg:px-8 lg:py-8"}>
       <div className="space-y-3">
-        <AdvancedSearchBox tokens={tokens} onTokensChange={setTokens} text={text} onTextChange={setText} autoFocus />
+        <AdvancedSearchBox tokens={tokens} onTokensChange={setTokens} text={text} onTextChange={setText} autoFocus={!idle} />
         {singleMedia && (
           <TaxonomyFilter
             value={taxonomy}
@@ -133,7 +138,7 @@ export function SearchView() {
       </div>
 
       {!active ? (
-        <p className="py-10 text-center text-sm text-text-muted">
+        idle ?? <p className="py-10 text-center text-sm text-text-muted">
           {t("search.startTyping")}
         </p>
       ) : isSearching ? (
