@@ -1182,6 +1182,9 @@ export const translations = {
   "vision.errorTimeout": { tr: "Analiz beklenenden uzun sürdü ve zaman aşımına uğradı. Lütfen tekrar dene.", en: "The analysis took longer than expected and timed out. Please try again." },
   "vision.errorUnknown": { tr: "Görsel analiz sırasında bir sorun oluştu. Lütfen tekrar dene.", en: "Something went wrong during image analysis. Please try again." },
   "vision.errorFileTooLarge": { tr: "Bu görsel çok büyük. Lütfen 20 MB'tan küçük bir dosya seç.", en: "This image is too large. Please choose a file under 20 MB." },
+  "notifications.categoryPosts": { tr: "Gönderiler", en: "Posts" },
+  "notifications.categoryFollow": { tr: "Takip", en: "Follow" },
+  "notifications.categorySystem": { tr: "Sistem", en: "System" },
 } as const satisfies Record<string, { tr: string; en: string }>;
 
 export type TranslationKey = keyof typeof translations;

@@ -2,6 +2,7 @@
 
 import { CATEGORY_FILTERS, type NotificationCategory } from "@/lib/notification-utils";
 import { Chip, ChipRow } from "@/components/ui/chip";
+import { useTranslation } from "@/lib/i18n/language-provider";
 
 /**
  * Category pills (Aşama 1.2) — purely a client-side filter over the
@@ -17,11 +18,12 @@ export function NotificationCategoryFilter({
   active: "all" | NotificationCategory;
   onChange: (category: "all" | NotificationCategory) => void;
 }) {
+  const { t } = useTranslation();
   return (
     <ChipRow className="mb-4">
       {CATEGORY_FILTERS.map((filter) => (
         <Chip key={filter.key} selected={active === filter.key} onClick={() => onChange(filter.key)}>
-          {filter.label}
+          {t(filter.labelKey)}
         </Chip>
       ))}
     </ChipRow>
