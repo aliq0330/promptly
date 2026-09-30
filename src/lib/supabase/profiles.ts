@@ -1,3 +1,4 @@
+import { sanitizeSearchText } from "./taxonomy-query";
 import { supabase } from "./client";
 import { resizeImageToSquareBlob } from "@/lib/utils";
 import { translateForRuntime } from "@/lib/i18n/translations";
@@ -80,7 +81,8 @@ export async function searchProfiles(query: string, limit = 20): Promise<UserPro
   const trimmed = query.trim();
   if (!trimmed) return [];
   try {
-    const escaped = trimmed.replace(/[%,]/g, "");
+    const escaped = sanitizeSearchText(trimmed.replace(/^@/, ""));
+    if (!escaped) return [];
     const { data, error } = await supabase
       .from("profiles")
       .select(PROFILE_SELECT)

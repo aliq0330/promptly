@@ -5,7 +5,7 @@ import { resizeImageToBlob } from "@/lib/utils";
 import { translateForRuntime } from "@/lib/i18n/translations";
 import { mapProfileRow, type ProfileRow } from "./mappers";
 import { normalizeLegacyContentType, sanitizeTaxonomy } from "@/lib/content-taxonomy";
-import { applyTaxonomyFilter, taxonomyColumns, type ContentSearchFilters } from "./taxonomy-query";
+import { applyTaxonomyFilter, taxonomyColumns, type ContentSearchFilters, applyAdvancedFilters, hasSearchFilter, sanitizeSearchText, tagJoinSelect } from "./taxonomy-query";
 import type { Prompt, PromptContentType, PromptMedia, PromptOrigin, Tag, UserProfile } from "@/types";
 
 /**
@@ -238,16 +238,19 @@ export async function fetchPromptsByAuthors(authorIds: string[], limit = 60): Pr
 
 /** Title/description substring search over published prompts — backs the real `/search` page. */
 export async function searchPrompts(query: string, filters: ContentSearchFilters = {}, limit = 40): Promise<Prompt[]> {
-  const trimmed = query.trim();
-  const hasFilter = Boolean(filters.authorId || filters.taxonomy?.contentType);
-  if (!trimmed && !hasFilter) return [];
+  const escaped = sanitizeSearchText(query);
+  if (!escaped && !hasSearchFilter(filters)) return [];
   try {
-    const escaped = trimmed.replace(/[%,]/g, "");
-    let request = supabase.from("prompts").select(PROMPT_SELECT).eq("status", "published");
+    let request = supabase
+      .from("prompts")
+      .select(PROMPT_SELECT + tagJoinSelect("prompt_tags", filters.tagSlugs))
+      .eq("status", "published");
     if (escaped) request = request.or(`title.ilike.%${escaped}%,description.ilike.%${escaped}%`);
     if (filters.authorId) request = request.eq("author_id", filters.authorId);
-    request = applyTaxonomyFilter(request, filters.taxonomy);
-    const { data, error } = await request.order("created_at", { ascending: false }).limit(limit);
+    request = applyAdvancedFilters(applyTaxonomyFilter(request, filters.taxonomy), filters, "author_id");
+    const { data, error } = await request
+      .order(filters.sort === "popular" ? "like_count" : "created_at", { ascending: false })
+      .limit(limit);
     if (error) {
       console.error("searchPrompts", error);
       return [];
