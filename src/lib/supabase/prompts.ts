@@ -63,7 +63,7 @@ export const PROMPT_SELECT = `
  * that needs to see the row exists, just emptied.
  */
 function filterNotDeleted(prompts: Prompt[]): Prompt[] {
-  return prompts.filter((prompt) => !prompt.deletedAt);
+  return prompts.filter((prompt) => !prompt.deletedAt && prompt.status !== "draft");
 }
 
 /**
@@ -328,6 +328,8 @@ export interface CreateRealPromptInput {
   showOnProfile?: boolean;
   /** Set only when this prompt is "Open in Prompt" from a real generator run (Generator Builder module) — purely informational provenance, orthogonal to origin/requestId (a generator output is normally `origin: "original"`). `generatorTitle`/`generatorSlug` are only needed to build the immediate return value (the caller already has them from the generator it just ran) — never trusted for anything written to the database. */
   generatedFrom?: { generatorId: string; generatorVersionId: string; generatorRunId: string; generatorTitle: string; generatorSlug: string };
+  /** Saves as a private draft (`status = 'draft'`) instead of publishing — only the author can see it until `publish` is set on an edit. */
+  isDraft?: boolean;
 }
 
 /**
@@ -353,7 +355,7 @@ export async function createRealPrompt(
       tools: input.tools ?? [],
       content_type: input.contentType,
       ...taxonomyColumns(input.contentType, input.category, input.subcategory),
-      status: "published",
+      status: input.isDraft ? "draft" : "published",
       origin_type: input.requestId ? "request_response" : "original",
       request_id: input.requestId ?? null,
       show_on_profile: input.showOnProfile ?? true,
@@ -453,7 +455,7 @@ export async function createRealPrompt(
     commentCount: 0,
     isLiked: false,
     isSaved: false,
-    status: "published",
+    status: input.isDraft ? "draft" : "published",
     showOnProfile: input.showOnProfile ?? true,
     deletedAt: null,
     generatedFrom: input.generatedFrom
@@ -484,6 +486,8 @@ export interface UpdateRealPromptInput {
   imageFile?: File | null;
   /** Only meaningful for a `request-response` prompt (an answer to a request) — whether it should also appear in the author's normal profile/feed/discover/search results (`prompts.show_on_profile`). `undefined` leaves the column untouched (an `original` prompt is never editable here anyway, so callers editing one simply omit this). */
   showOnProfile?: boolean;
+  /** Publishes a draft (`status` draft → published) once everything else is saved; the database then restarts `created_at` and counts its tags. */
+  publish?: boolean;
 }
 
 /**
@@ -561,6 +565,12 @@ export async function updateRealPrompt(promptId: string, authorId: string, input
         source: input.tagSources?.[tag.slug] ?? "manual",
       })),
     );
+  }
+
+  if (input.publish) {
+    // Last on purpose: the publish trigger counts the tags written above.
+    const { error: publishError } = await supabase.from("prompts").update({ status: "published" }).eq("id", promptId).eq("status", "draft");
+    if (publishError) throw new Error(publishError.message);
   }
 
   const fresh = await fetchPromptById(promptId);

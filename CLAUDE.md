@@ -11631,3 +11631,14 @@ Migration `20260919500000_moderation.sql` (canlı projeye MCP ile uygulandı; `a
 - **N+1:** `batched-lookup.ts` — aynı anda istenen beğeni/kaydet/takip durumları tek `.in()` sorgusunda toplanıyor (12 ms pencere, 150'lik parçalar). `fetchIsLiked`/`isPromptSaved`/`fetchIsFollowing` imzaları aynı.
 - **Ön doldurma:** `CreateGate` formu, `/requests/new` için `CreateRequestGate` — intent parametrelerine `key` verip client-side geçişte formu yeniden mount ediyor (remix kalktığından duplicate/answerRequest/edit/generatorRun kapsanıyor).
 - Doğrulama: tsc/lint/build temiz; batcher node ile test edildi (1 sorgu, 320 id → 3 sorgu, hata → false). Tarayıcıda ve gerçek Supabase'de denenmedi; eşzamanlılık kilidi gerçek çift istekle test edilmedi.
+
+### 9.65 Taslaklar (prompt, prompt isteği, generator, workflow)
+
+Dört oluşturma sayfasının (`/create`, `/requests/new`, `/generators/create`, `/workflows/create`) header'ının en sağında ortak **"Taslaklar (N)"** butonu var (`features/drafts/`: `DraftsButton` + `KindDraftsButton`, `lib/supabase/drafts.ts`). Tıklayınca yalnızca o içerik türünün taslaklarını (başlık, son düzenleme, Devam et / Sil — iki tıklamalı onay) `Modal` ile listeler; "Devam et" sayfanın kendi `?edit=<id>` moduna gider.
+- **Prompt:** `prompts.status='draft'` (zaten vardı). Formda "Taslak olarak kaydet" (yalnızca düz oluşturma/kopya modlarında; isteğe yanıt ve generator-run modlarında yok) ve taslağı düzenlerken "Taslağı kaydet" + "Yayınla". Yayın, etiketler yazıldıktan sonra ayrı bir `status: published` UPDATE'iyle yapılır.
+- **Prompt isteği:** yeni `prompt_requests.is_draft` kolonu; SELECT RLS'i `not is_draft or author` olarak değişti. Akış promptla aynı (`publish` seçeneği).
+- **Generator/Workflow:** zaten draft/published vardı; yalnızca liste UI'ı eklendi. Editörler `?edit=` değişince `key` ile yeniden mount olur.
+- **Migration `20260919520000_drafts.sql` (canlıya uygulandı):** yayınlanınca `created_at` yayın anına çekilir; etiket sayaçları (`handle_*_tag_change`, `count_tags_on_publish`) taslağı saymaz, yayınlanınca sayar; `trending_tags` taslak istekleri hariç tutar; taslak düzenlemeleri düzenleme/sürüm geçmişine yazılmaz (`record_prompt_edit/version`, `record_request_edit`). Canlı DB'de geri alınan bir transaction'la doğrulandı (etiket sayacı 0→0→1, `created_at` sıfırlandı, istek için aynı).
+- Listeler taslakları gizler: `filterNotDeleted` (prompt/istek) ve etiket sayfası taslakları eler; taslaklar yalnızca "Taslaklar"da görünür.
+- Bilinçli sınırlar: otomatik kayıt yok (generator hariç); isteğe-yanıt ve generator-run promptları taslak olamaz; taslak başka içerikle (yorum/kaydet) etkileşime girmez.
+- Doğrulama: tsc/lint/build temiz; tarayıcıda uçtan uca denenmedi (sandbox Supabase'e erişemiyor). EN karşılıkları eklendi (`draft.*`).

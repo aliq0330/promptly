@@ -214,6 +214,7 @@ export async function fetchRequestsByTagSlug(slug: string, limit = 60): Promise<
       .map((row) => row.prompt_requests)
       .filter((row): row is RequestRow => Boolean(row))
       .map((row) => mapRequestRow(row))
+      .filter((request) => !request.isDraft)
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   } catch (err) {
     console.error("fetchRequestsByTagSlug", err);

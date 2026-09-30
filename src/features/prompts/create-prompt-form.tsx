@@ -25,6 +25,7 @@ import { fetchGeneratorById, fetchGeneratorRun } from "@/lib/supabase/generators
 import { placeholderArt } from "@/lib/placeholder-image";
 import { cn, copyTextToClipboard, generatorHref, promptHref, requestHref, resizeImageToDataUrlFit } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
+import { KindDraftsButton } from "@/features/drafts/kind-drafts-button";
 import type { Generator, GeneratorRun, Prompt, PromptContentType, PromptRequest } from "@/types";
 
 
@@ -317,6 +318,9 @@ export function CreatePromptForm() {
 
   const [publishError, setPublishError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [draftNotice, setDraftNotice] = useState(false);
+  const isEditingDraft = isEditMode && editingPrompt?.status === "draft";
+  const canSaveDraft = !isAnswerMode && !isGeneratorRunMode && (!isEditMode || isEditingDraft);
 
   const notFound =
     sourceChecked &&
@@ -387,6 +391,76 @@ export function CreatePromptForm() {
         ]
       : [];
 
+  async function handleSaveDraft() {
+    if (isSubmitting || !user || !ownProfile) return;
+    if (!title.trim()) {
+      setPublishError(t("draft.titleRequired"));
+      return;
+    }
+    setPublishError(null);
+    setDraftNotice(false);
+    setIsSubmitting(true);
+    const variableDrafts = variables.map((variable) => ({
+      name: variable.name,
+      defaultValue: variable.defaultValue,
+      description: variable.description || null,
+    }));
+    const tagsInput = {
+      tags: tagPicker.accepted.map((entry) => entry.tag),
+      tagSources: Object.fromEntries(tagPicker.accepted.map((entry) => [entry.tag.slug, entry.source])),
+    };
+    try {
+      if (isEditMode && editingPrompt) {
+        const updated = await updatePrompt(editingPrompt.id, {
+          title,
+          description,
+          promptText: finalPromptText,
+          tool: tool || null,
+          tools,
+          category,
+          subcategory,
+          ...tagsInput,
+          imageFile: contentType === "image" ? imageFile : undefined,
+        });
+        try {
+          await replaceVariablesForPrompt(updated.id, variableDrafts);
+        } catch (variableErr) {
+          console.error("replaceVariablesForPrompt", variableErr);
+        }
+        setDraftNotice(true);
+        setIsSubmitting(false);
+        return;
+      }
+      const draft = await addPrompt(
+        {
+          title,
+          description,
+          promptText: finalPromptText,
+          tool: tool || null,
+          tools,
+          contentType,
+          category,
+          subcategory,
+          ...tagsInput,
+          imageFile,
+          fallbackImage:
+            contentType === "image" ? { url: media[0].url, width: media[0].width, height: media[0].height } : null,
+          isDraft: true,
+        },
+        ownProfile,
+      );
+      try {
+        await replaceVariablesForPrompt(draft.id, variableDrafts);
+      } catch (variableErr) {
+        console.error("replaceVariablesForPrompt", variableErr);
+      }
+      router.push(`/create?edit=${draft.id}`);
+    } catch (err) {
+      setPublishError(err instanceof Error ? err.message : t("draft.saveFailed"));
+      setIsSubmitting(false);
+    }
+  }
+
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     if (isSubmitting || !user || !ownProfile) return;
@@ -412,6 +486,7 @@ export function CreatePromptForm() {
           tagSources: Object.fromEntries(tagPicker.accepted.map((entry) => [entry.tag.slug, entry.source])),
           imageFile: contentType === "image" ? imageFile : undefined,
           showOnProfile: isEditingResponse ? showOnProfile : undefined,
+          publish: isEditingDraft,
         });
         // Soft-fail, same precedent as tags (createRealPrompt) — the edit
         // itself already succeeded and is already live; a variable-save
@@ -580,7 +655,8 @@ export function CreatePromptForm() {
 
   return (
     <div className="mx-auto max-w-5xl px-3 py-5 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
-      <h1 className="mb-1 text-h1 font-semibold text-text">
+      <div className="mb-1 flex items-start justify-between gap-3">
+      <h1 className="text-h1 font-semibold text-text">
         {isEditMode
           ? t("prompt.editPromptTitle")
           : isAnswerMode
@@ -591,6 +667,8 @@ export function CreatePromptForm() {
                 ? t("prompt.openAsPromptTitle")
                 : t("prompt.createPromptTitle")}
       </h1>
+      <KindDraftsButton kind="prompt" />
+      </div>
       <p className="mb-6 text-sm text-text-muted">
         {isEditMode
           ? t("prompt.editPromptHint")
@@ -821,17 +899,27 @@ export function CreatePromptForm() {
             <TagPicker picker={tagPicker} />
           </div>
 
-          <Button type="submit" size="lg" className="w-full sm:w-auto" disabled={isSubmitting}>
-            {isSubmitting
-              ? isEditMode
-                ? t("common.saving")
-                : t("prompt.publishing")
-              : isEditMode
-                ? t("common.save")
-                : isAnswerMode
-                  ? t("prompt.publishReply")
-                  : t("common.share")}
-          </Button>
+          <div className="flex flex-wrap items-center gap-3">
+            <Button type="submit" size="lg" className="w-full sm:w-auto" disabled={isSubmitting}>
+              {isSubmitting
+                ? isEditMode && !isEditingDraft
+                  ? t("common.saving")
+                  : t("prompt.publishing")
+                : isEditingDraft
+                  ? t("draft.publish")
+                  : isEditMode
+                    ? t("common.save")
+                    : isAnswerMode
+                      ? t("prompt.publishReply")
+                      : t("common.share")}
+            </Button>
+            {canSaveDraft && (
+              <Button type="button" variant="outline" size="lg" className="w-full sm:w-auto" disabled={isSubmitting} onClick={() => void handleSaveDraft()}>
+                {isEditingDraft ? t("draft.saveDraft") : t("draft.saveAsDraft")}
+              </Button>
+            )}
+          </div>
+          {draftNotice && <p className="text-sm text-success">{t("draft.saved")}</p>}
 
           {publishError && (
             <div className="rounded-md border border-danger/30 bg-danger/5 p-3 text-sm text-danger">
