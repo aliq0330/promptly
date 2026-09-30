@@ -4,7 +4,7 @@ import { translateForRuntime } from "@/lib/i18n/translations";
 import { mapProfileRow, type ProfileRow } from "./mappers";
 import { getOrCreateTag } from "./tags";
 import { normalizeLegacyContentType, sanitizeTaxonomy } from "@/lib/content-taxonomy";
-import { applyTaxonomyFilter, taxonomyColumns, type ContentSearchFilters } from "./taxonomy-query";
+import { applyTaxonomyFilter, taxonomyColumns, type ContentSearchFilters, applyAdvancedFilters, hasSearchFilter, sanitizeSearchText, tagJoinSelect } from "./taxonomy-query";
 import { slugifyGeneratorTitle } from "@/lib/generator-template";
 import type {
   Generator,
@@ -237,16 +237,19 @@ export async function fetchGeneratorsByAuthor(creatorId: string): Promise<Genera
 
 /** Title/description substring search over published+public generators — backs `/search`'s "Generatorlar" section. */
 export async function searchGenerators(query: string, filters: ContentSearchFilters = {}, limit = 20): Promise<Generator[]> {
-  const trimmed = query.trim();
-  const hasFilter = Boolean(filters.authorId || filters.taxonomy?.contentType);
-  if (!trimmed && !hasFilter) return [];
+  const escaped = sanitizeSearchText(query);
+  if (!escaped && !hasSearchFilter(filters)) return [];
   try {
-    const escaped = trimmed.replace(/[%,]/g, "");
-    let request = supabase.from("generators").select(GENERATOR_SELECT).eq("status", "published").eq("visibility", "public");
+    let request = supabase
+      .from("generators")
+      .select(GENERATOR_SELECT + tagJoinSelect("generator_tags", filters.tagSlugs))
+      .eq("status", "published")
+      .eq("visibility", "public");
     if (escaped) request = request.or(`title.ilike.%${escaped}%,description.ilike.%${escaped}%`);
     if (filters.authorId) request = request.eq("creator_id", filters.authorId);
-    request = applyTaxonomyFilter(request, filters.taxonomy);
-    const { data, error } = await request.order("use_count", { ascending: false }).limit(limit);
+    request = applyAdvancedFilters(applyTaxonomyFilter(request, filters.taxonomy), filters, "creator_id");
+    const order = filters.sort === "new" ? "created_at" : filters.sort === "popular" ? "like_count" : "use_count";
+    const { data, error } = await request.order(order, { ascending: false }).limit(limit);
     if (error) {
       console.error("searchGenerators", error);
       return [];

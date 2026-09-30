@@ -1,3 +1,4 @@
+import { sanitizeSearchText } from "./taxonomy-query";
 import { supabase } from "./client";
 import { translateForRuntime } from "@/lib/i18n/translations";
 import { PROMPT_SELECT, mapPromptRow, type PromptRow } from "./prompts";
@@ -214,6 +215,30 @@ export async function fetchRequestsByTagSlug(slug: string, limit = 60): Promise<
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   } catch (err) {
     console.error("fetchRequestsByTagSlug", err);
+    return [];
+  }
+}
+
+/** Server-side tag autocomplete: real tags whose label/slug contains the text, most-used first. Small, bounded. */
+export async function searchTags(query: string, limit = 6): Promise<Tag[]> {
+  const text = sanitizeSearchText(query.replace(/^#/, ""));
+  if (!text) return [];
+  try {
+    const slug = normalizeTagLabel(text);
+    const filters = [`label.ilike.%${text}%`, ...(slug ? [`slug.ilike.%${slug}%`] : [])].join(",");
+    const { data, error } = await supabase
+      .from("tags")
+      .select("slug, label")
+      .or(filters)
+      .order("usage_count", { ascending: false })
+      .limit(limit);
+    if (error) {
+      console.error("searchTags", error);
+      return [];
+    }
+    return (data ?? []) as Tag[];
+  } catch (err) {
+    console.error("searchTags", err);
     return [];
   }
 }

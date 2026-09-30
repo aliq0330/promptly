@@ -3,7 +3,7 @@ import { supabase } from "./client";
 import { resizeImageToBlob } from "@/lib/utils";
 import { translateForRuntime } from "@/lib/i18n/translations";
 import { normalizeLegacyContentType, sanitizeTaxonomy } from "@/lib/content-taxonomy";
-import { applyTaxonomyFilter, taxonomyColumns, type ContentSearchFilters } from "./taxonomy-query";
+import { applyAdvancedFilters, applyTaxonomyFilter, hasSearchFilter, sanitizeSearchText, tagJoinSelect, taxonomyColumns, type ContentSearchFilters } from "./taxonomy-query";
 import { mapProfileRow, type ProfileRow } from "./mappers";
 import type { PromptContentType, PromptRequest, PromptRequestStatus, Tag } from "@/types";
 
@@ -111,15 +111,16 @@ export async function fetchRecentRequests(limit = 60): Promise<PromptRequest[]> 
 
 /** Text and/or taxonomy/author search over real requests (same filter shape as prompts/generators). */
 export async function searchRequests(query: string, filters: ContentSearchFilters = {}, limit = 40): Promise<PromptRequest[]> {
-  const escaped = query.trim().replace(/[%,]/g, "");
-  const hasFilter = Boolean(filters.authorId || filters.taxonomy?.contentType);
-  if (!escaped && !hasFilter) return [];
+  const escaped = sanitizeSearchText(query);
+  if (!escaped && !hasSearchFilter(filters)) return [];
   try {
-    let request = supabase.from("prompt_requests").select(REQUEST_SELECT);
+    let request = supabase.from("prompt_requests").select(REQUEST_SELECT + tagJoinSelect("prompt_request_tags", filters.tagSlugs));
     if (escaped) request = request.or(`title.ilike.%${escaped}%,description.ilike.%${escaped}%`);
     if (filters.authorId) request = request.eq("author_id", filters.authorId);
-    request = applyTaxonomyFilter(request, filters.taxonomy);
-    const { data, error } = await request.order("created_at", { ascending: false }).limit(limit);
+    request = applyAdvancedFilters(applyTaxonomyFilter(request, filters.taxonomy), filters, "author_id");
+    const { data, error } = await request
+      .order(filters.sort === "popular" ? "response_count" : "created_at", { ascending: false })
+      .limit(limit);
     if (error) {
       console.error("searchRequests", error);
       return [];
