@@ -13,7 +13,7 @@
  * Two independent axes, both set on <html> before first paint by
  * `themeInitScript` (theme-provider.tsx):
  *   - mode:    `.dark` class              → light / dark
- *   - palette: `data-palette` attribute   → lavender (default) / ocean / forest / sand
+ *   - palette: `data-palette` attribute   → lavender / ocean / forest / sand (default)
  *
  * Every palette defines the SAME full set of raw `--p-*` variables in both
  * modes, so every component renders correctly in all 8 combinations without
@@ -27,9 +27,8 @@
  */
 
 /* ---------------------------------------------------------------------------
- * Palette: Lavender (default) — calm violet, the original Promptly identity
+ * Palette: Lavender — calm violet, the original Promptly identity
  * ------------------------------------------------------------------------- */
-:root,
 [data-palette="lavender"] {
   --p-bg: #f7f6fb;
   --p-surface: #ffffff;
@@ -53,7 +52,7 @@
   --p-danger: #d12f2f;
 }
 
-:root.dark,
+.dark[data-palette="lavender"],
 .dark [data-palette="lavender"] {
   --p-bg: #121019;
   --p-surface: #1a1724;
@@ -162,8 +161,10 @@
 }
 
 /* ---------------------------------------------------------------------------
- * Palette: Sand — warm neutrals with a coral accent
+ * Palette: Sand (default) — warm neutrals with a coral accent
  * ------------------------------------------------------------------------- */
+/* Sand is the site default: also applies when no palette attribute is set. */
+:root:not([data-palette]),
 [data-palette="sand"] {
   --p-bg: #faf7f3;
   --p-surface: #ffffff;
@@ -183,6 +184,7 @@
   --p-shadow: 80 45 25;
 }
 
+.dark:root:not([data-palette]),
 .dark[data-palette="sand"],
 .dark [data-palette="sand"] {
   --p-bg: #16120f;

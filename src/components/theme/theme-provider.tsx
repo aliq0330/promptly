@@ -19,6 +19,9 @@ export type Theme = "light" | "dark";
 export const PALETTES = ["lavender", "ocean", "forest", "sand"] as const;
 export type Palette = (typeof PALETTES)[number];
 
+/** Site default until the visitor (or their account) picks another one. */
+export const DEFAULT_PALETTE: Palette = "sand";
+
 interface ThemeContextValue {
   theme: Theme;
   setTheme: (theme: Theme) => void;
@@ -51,16 +54,14 @@ export const themeInitScript = `
       : (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
     root.classList.toggle("dark", theme === "dark");
     var palette = localStorage.getItem("${PALETTE_STORAGE_KEY}");
-    if (${JSON.stringify(PALETTES)}.indexOf(palette) > 0) {
-      root.setAttribute("data-palette", palette);
-    }
+    root.setAttribute("data-palette", ${JSON.stringify(PALETTES)}.indexOf(palette) >= 0 ? palette : "${DEFAULT_PALETTE}");
   } catch (e) {}
 })();
 `;
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<Theme>("light");
-  const [palette, setPaletteState] = useState<Palette>("lavender");
+  const [palette, setPaletteState] = useState<Palette>(DEFAULT_PALETTE);
 
   // The real theme/palette are applied to <html> synchronously by
   // themeInitScript before hydration (to avoid a flash); this effect only
@@ -71,7 +72,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const attr = root.getAttribute("data-palette");
     /* eslint-disable react-hooks/set-state-in-effect */
     setThemeState(root.classList.contains("dark") ? "dark" : "light");
-    setPaletteState(isPalette(attr) ? attr : "lavender");
+    setPaletteState(isPalette(attr) ? attr : DEFAULT_PALETTE);
     /* eslint-enable react-hooks/set-state-in-effect */
   }, []);
 
@@ -92,8 +93,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const setPalette = useCallback((next: Palette) => {
     setPaletteState(next);
     const root = document.documentElement;
-    if (next === "lavender") root.removeAttribute("data-palette");
-    else root.setAttribute("data-palette", next);
+    root.setAttribute("data-palette", next);
     try {
       localStorage.setItem(PALETTE_STORAGE_KEY, next);
     } catch {
