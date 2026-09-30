@@ -16,13 +16,13 @@ const BIO_CLAMP_LENGTH = 140;
 export function ProfileHeader({
   user,
   isOwnProfile,
-  publishedPromptCount,
-  onSelectPrompts,
+  postCounts,
+  onSelectPosts,
 }: {
   user: UserProfile;
   isOwnProfile: boolean;
-  publishedPromptCount: number;
-  onSelectPrompts: () => void;
+  postCounts: { prompts: number; requests: number; generators: number; workflows: number };
+  onSelectPosts: () => void;
 }) {
   const { t } = useTranslation();
   const [bioExpanded, setBioExpanded] = useState(false);
@@ -71,23 +71,23 @@ export function ProfileHeader({
             </p>
           )}
 
-          {((user.interests && user.interests.length > 0) || publishedPromptCount > 0) && (
+          {((user.interests && user.interests.length > 0) || postCounts.prompts > 0) && (
             <div className="flex flex-wrap items-center gap-1.5">
               {user.interests?.slice(0, 4).map((interest) => (
                 <Badge key={interest} variant="neutral">
                   {interest in INTEREST_OPTION_LABELS ? t(INTEREST_OPTION_LABELS[interest as InterestOption]) : interest}
                 </Badge>
               ))}
-              <ProfileBadges publishedPromptCount={publishedPromptCount} />
+              <ProfileBadges publishedPromptCount={postCounts.prompts} />
             </div>
           )}
 
           <ProfileStats
-            promptCount={publishedPromptCount}
+            postCounts={postCounts}
             followerCount={followState.followerCount}
             followingCount={user.followingCount}
             isOwnProfile={isOwnProfile}
-            onSelectPrompts={onSelectPrompts}
+            onSelectPosts={onSelectPosts}
           />
         </div>
       </div>

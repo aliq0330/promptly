@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Settings, Sparkles } from "lucide-react";
+import { Settings } from "lucide-react";
 import { ShareButton } from "@/features/prompts/share-button";
 import { MessageButton } from "@/features/messages/message-button";
 import { useBlockState } from "@/features/moderation/use-block-state";
@@ -25,13 +25,6 @@ export function OwnProfileActions({ user }: { user: UserProfile }) {
     <div className="flex flex-wrap items-center gap-2">
       <Link href="/profile/edit" className={buttonClassName({ size: "sm", variant: "outline", className: "h-9" })}>
         {t("profile.editProfileHeading")}
-      </Link>
-      <Link
-        href="/create"
-        className={buttonClassName({ size: "sm", className: "h-9" })}
-      >
-        <Sparkles size={14} />
-        {t("create.promptTitle")}
       </Link>
       <ShareButton
         url={profileHref(user)}

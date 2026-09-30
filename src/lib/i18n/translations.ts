@@ -173,7 +173,7 @@ export const translations = {
   // ---- Create-choice picker (`/create` with no intent) ----
   "create.eyebrow": { tr: "Oluştur", en: "Create" },
   "create.title": { tr: "Ne oluşturmak istersin?", en: "What do you want to create?" },
-  "create.subtitle": { tr: "Hazır bir prompt paylaşabilir, kendi prompt generatorunu oluşturabilir veya topluluktan bir prompt isteyebilirsin.", en: "Share a ready-made prompt, build your own prompt generator, or ask the community for one." },
+  "create.subtitle": { tr: "Hazır bir prompt paylaşabilir, kendi prompt generatorunu kurabilir, bir workflow oluşturabilir veya topluluktan bir prompt isteyebilirsin.", en: "Share a ready-made prompt, build your own prompt generator, create a workflow, or ask the community for one." },
   "create.promptTitle": { tr: "Prompt oluştur", en: "Create a prompt" },
   "create.promptBody": { tr: "Hazır bir promptu paylaş; türünü, aracını ve etiketlerini ekle.", en: "Share a ready-made prompt — add its type, tool, and tags." },
   "create.promptHint": { tr: "Görsel · Metin · Kod · Video · Müzik", en: "Image · Text · Code · Video · Music" },
@@ -1484,6 +1484,17 @@ export const translations = {
   "draft.kindRequest": { tr: "Prompt İsteği", en: "Prompt Request" },
   "draft.kindGenerator": { tr: "Generator", en: "Generator" },
   "draft.kindWorkflow": { tr: "Workflow", en: "Workflow" },
+  "profile.tabPosts": { tr: "Gönderiler", en: "Posts" },
+  "profile.postsSuffix": { tr: "gönderi", en: "posts" },
+  "profile.postKindRequest": { tr: "Prompt İsteği", en: "Prompt Request" },
+  "profile.postKindsAriaLabel": { tr: "Gönderi türleri", en: "Post types" },
+  "create.workflowTitle": { tr: "Workflow oluştur", en: "Create a workflow" },
+  "create.workflowBody": { tr: "Prompt, generator ve istekleri adım adım bir iş akışında birbirine bağla.", en: "Chain prompts, generators and requests into a step-by-step workflow." },
+  "create.workflowHint": { tr: "Adımlar · Girdi / çıktı", en: "Steps · Inputs / outputs" },
+  "contrib.title": { tr: "{{count}} katkı son 6 ayda", en: "{{count}} contributions in the last 6 months" },
+  "contrib.less": { tr: "Az", en: "Less" },
+  "contrib.more": { tr: "Çok", en: "More" },
+  "contrib.cellLabel": { tr: "{{date}}: {{count}} gönderi", en: "{{date}}: {{count}} posts" },
 } as const satisfies Record<string, { tr: string; en: string }>;
 
 export type TranslationKey = keyof typeof translations;

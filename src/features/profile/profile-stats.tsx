@@ -59,22 +59,24 @@ function StatButton({
  * the "don't fake it" rule.
  */
 export function ProfileStats({
-  promptCount,
+  postCounts,
   followerCount,
   followingCount,
   isOwnProfile,
-  onSelectPrompts,
+  onSelectPosts,
 }: {
-  promptCount: number;
+  postCounts: { prompts: number; requests: number; generators: number; workflows: number };
   followerCount: number;
   followingCount: number;
   isOwnProfile: boolean;
-  onSelectPrompts: () => void;
+  onSelectPosts: () => void;
 }) {
   const { t } = useTranslation();
+  const total = postCounts.prompts + postCounts.requests + postCounts.generators + postCounts.workflows;
   return (
-    <div className="flex flex-wrap items-stretch divide-x divide-border-soft border-t border-border-soft pt-4 *:px-5 *:first:pl-0">
-      <StatButton label="prompt" value={promptCount} onClick={onSelectPrompts} />
+    <div className="space-y-3 border-t border-border-soft pt-4">
+    <div className="flex flex-wrap items-stretch divide-x divide-border-soft *:px-5 *:first:pl-0">
+      <StatButton label={t("profile.postsSuffix")} value={total} onClick={onSelectPosts} />
       <Stat label={t("profile.followersSuffix")} value={followerCount} />
       {isOwnProfile ? (
         <Link href="/following" className={cn(STAT_CLASS, "rounded-sm transition-colors hover:text-text")}>
@@ -84,6 +86,15 @@ export function ProfileStats({
       ) : (
         <Stat label={t("profile.followingSuffix")} value={followingCount} />
       )}
+    </div>
+    <p className="text-caption text-text-muted">
+      {[
+        `${postCounts.prompts} Prompt`,
+        `${postCounts.requests} ${t("profile.postKindRequest")}`,
+        `${postCounts.generators} Generator`,
+        `${postCounts.workflows} Workflow`,
+      ].join(" · ")}
+    </p>
     </div>
   );
 }
