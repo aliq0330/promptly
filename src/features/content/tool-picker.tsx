@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Check, Plus, Search, X } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
@@ -120,11 +120,24 @@ function ToolPickerModal({
   // Keep already-selected tools that don't match the current type visible so they can be removed.
   const orphan = draft.filter((ref) => !tools.some((tool) => tool.id === parseToolRef(ref).toolId));
   const atMax = draft.length >= MAX_TOOLS;
+  const listRef = useRef<HTMLUListElement>(null);
+
+  // Expanding model chips grows the row; keep the whole row in view without jumping the list.
+  function revealRow(toolId: string) {
+    requestAnimationFrame(() => {
+      listRef.current
+        ?.querySelector<HTMLElement>(`[data-tool-row="${toolId}"]`)
+        ?.scrollIntoView({ block: "nearest" });
+    });
+  }
 
   function toggle(toolId: string) {
     const existing = draft.find((ref) => parseToolRef(ref).toolId === toolId);
     if (existing) setDraft(draft.filter((ref) => ref !== existing));
-    else if (!atMax) setDraft([...draft, makeToolRef(toolId)]);
+    else if (!atMax) {
+      setDraft([...draft, makeToolRef(toolId)]);
+      revealRow(toolId);
+    }
   }
   function setModel(toolId: string, modelId: string | null) {
     setDraft(draft.map((ref) => (parseToolRef(ref).toolId === toolId ? makeToolRef(toolId, modelId) : ref)));
@@ -158,7 +171,7 @@ function ToolPickerModal({
             className="h-10 w-full rounded-md border border-border bg-background pl-9 pr-3 text-sm text-text placeholder:text-text-muted"
           />
         </div>
-        <ul className="-mx-1 min-h-0 flex-1 space-y-1 overflow-y-auto px-1">
+        <ul ref={listRef} className="-mx-1 min-h-0 flex-1 space-y-1 overflow-y-auto px-1 [overflow-anchor:none]">
           {tools.length === 0 && orphan.length === 0 && (
             <li className="py-6 text-center text-sm text-text-muted">{t("tool.noResults")}</li>
           )}
@@ -170,7 +183,7 @@ function ToolPickerModal({
             const disabled = !selected && atMax;
             const modelId = selectedRef ? parseToolRef(selectedRef).modelId : null;
             return (
-              <li key={toolId} className="rounded-md border border-border-soft">
+              <li key={toolId} data-tool-row={toolId} className="rounded-md border border-border-soft">
                 <button
                   type="button"
                   onClick={() => toggle(toolId)}
