@@ -11657,3 +11657,7 @@ Dört oluşturma sayfasının (`/create`, `/requests/new`, `/generators/create`,
 - İstekler sayfası Açık/Kapandı filtresini `extra` + `postFilter` ile korur. Workflow'da kategori yok: yalnızca tür çipleri (workflow'un zincirlediği türlerle eşleşir).
 - Sidebar'a "Promptlar" (`/prompts`) eklendi; mobil alt navigasyona eklenmedi (5 öğe kuralı).
 - TR+EN eklendi (`nav.prompts`, `prompts.*`, `request.step*`, `workflow.step*`). Migration yok. tsc/lint/build temiz; tarayıcıda gerçek veriyle denenmedi.
+
+### 9.68 Araç / model seçici sabit yükseklik
+
+`ToolPicker` modalı (`features/content/tool-picker.tsx`) artık sabit yüksekliğe sahip (mobil `80dvh`, `sm`+ `600px`, en fazla `85dvh`); bir aracın model çipleri açılınca alt sheet'in üst kenarı yukarı zıplamıyor, yalnızca iç liste kayıyor. Yeni metin yok (EN eklemesi gerekmedi), migration yok.

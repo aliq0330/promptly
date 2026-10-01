@@ -133,7 +133,7 @@ function ToolPickerModal({
   return (
     <Modal onClose={onClose} labelledBy="tool-picker-title">
       <div
-        className="flex max-h-[85vh] w-full max-w-lg flex-col rounded-lg border border-border bg-surface p-5 shadow-lg"
+        className="flex h-[80dvh] max-h-[85dvh] w-full max-w-lg flex-col sm:h-[600px] rounded-lg border border-border bg-surface p-5 shadow-lg"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="mb-3 flex items-start justify-between gap-2">
