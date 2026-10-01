@@ -1,8 +1,9 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase/client";
+import { useRouter, usePathname } from "next/navigation";
 
 interface AuthContextValue {
   user: User | null;
@@ -27,6 +28,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
+  const router = useRouter();
+  const pathname = usePathname();
+  // Ref so the one-time auth listener always sees the current path.
+  const pathnameRef = useRef(pathname);
+  useEffect(() => {
+    pathnameRef.current = pathname;
+  }, [pathname]);
 
   useEffect(() => {
     supabase.auth
@@ -46,13 +54,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { data: listener } = supabase.auth.onAuthStateChange((event, nextSession) => {
       if (event === "PASSWORD_RECOVERY") {
         setIsPasswordRecovery(true);
+        // Safety net: if Supabase's Site URL / redirect allow-list sent the
+        // recovery link to some other page (e.g. the home page), still land
+        // on the reset form instead of leaving the user stranded.
+        if (!pathnameRef.current.startsWith("/reset-password")) {
+          router.replace("/reset-password");
+        }
       }
       setSession(nextSession);
       setLoading(false);
     });
 
     return () => listener.subscription.unsubscribe();
-  }, []);
+  }, [router]);
 
   async function signOut() {
     await supabase.auth.signOut();
