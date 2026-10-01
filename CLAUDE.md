@@ -11677,3 +11677,7 @@ Dört oluşturma sayfasının (`/create`, `/requests/new`, `/generators/create`,
 ### 9.72 "Ek Ayar Önerileri": prompta yazılan metin site diline uyuyor
 
 Önceden yalnızca buton/çip etiketleri dile uyuyordu, prompta eklenen parçalar (`promptFragment`) hep İngilizceydi. Artık her seçenek için Türkçe karşılık var (`TR_FRAGMENTS`, `groupId:optionId` anahtarlı, `promptFragmentTr`); `composePrompt(..., language)` ve çip tooltip'i (`settingFragment`) aktif dile göre yazar. Midjourney parametreleri (`--ar` vb.) iki dilde aynı. Seçimler id olarak saklandığından dil değişince önizleme yeni dilde yeniden kurulur; kaydedilmiş prompt düz metin olduğundan kayıt anındaki dilde kalır. Not: görsel araçları çoğunlukla İngilizce prompta daha iyi yanıt verir. Yeni arayüz metni yok; migration yok.
+
+### 9.73 "Ek Ayar Önerileri": Türkçe modda İngilizce prompt parçası seçeneği
+
+Panelde (yalnızca Türkçe modda) "Prompt parçalarını İngilizce yaz" kutusu var; işaretliyken eklenen parçalar ve tooltip İngilizce yazılır, etiketler Türkçe kalır. Durum formda tutulur (`englishFragments`), varsayılan kapalı; kaydedilen/önizlenen metin buna göre oluşur. TR+EN metin eklendi (`extra.englishFragments*`). Migration yok.
