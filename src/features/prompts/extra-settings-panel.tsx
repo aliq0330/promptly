@@ -27,6 +27,8 @@ export function ExtraSettingsSection({
   groups,
   value,
   onChange,
+  englishFragments,
+  onEnglishFragmentsChange,
   promptText,
   hasTool,
 }: {
@@ -34,6 +36,8 @@ export function ExtraSettingsSection({
   groups: SettingGroup[];
   value: SettingSelection;
   onChange: (next: SettingSelection) => void;
+  englishFragments: boolean;
+  onEnglishFragmentsChange: (value: boolean) => void;
   promptText: string;
   hasTool: boolean;
 }) {
@@ -44,7 +48,8 @@ export function ExtraSettingsSection({
     const option = g.options.find((o) => o.id === applied[g.id]);
     return option ? [{ groupId: g.id, label: settingLabel(option, language), groupLabel: settingLabel(g, language) }] : [];
   });
-  const composed = composePrompt(promptText, applied, groups, language);
+  const fragmentLanguage = englishFragments ? "en" : language;
+  const composed = composePrompt(promptText, applied, groups, fragmentLanguage);
 
   return (
     <div className="space-y-2">
@@ -110,6 +115,8 @@ export function ExtraSettingsSection({
           initial={applied}
           promptText={promptText}
           hasTool={hasTool}
+          englishFragments={englishFragments}
+          onEnglishFragmentsChange={onEnglishFragmentsChange}
           onClose={() => setOpen(false)}
           onApply={(next) => {
             onChange(next);
@@ -127,6 +134,8 @@ function ExtraSettingsPanel({
   initial,
   promptText,
   hasTool,
+  englishFragments,
+  onEnglishFragmentsChange,
   onClose,
   onApply,
 }: {
@@ -135,13 +144,16 @@ function ExtraSettingsPanel({
   initial: SettingSelection;
   promptText: string;
   hasTool: boolean;
+  englishFragments: boolean;
+  onEnglishFragmentsChange: (value: boolean) => void;
   onClose: () => void;
   onApply: (next: SettingSelection) => void;
 }) {
   const { t, language } = useTranslation();
   const [draft, setDraft] = useState<SettingSelection>(initial);
   const presets = SETTING_PRESETS.filter((p) => p.contentType === contentType);
-  const composed = composePrompt(promptText, draft, groups, language);
+  const fragmentLanguage = englishFragments ? "en" : language;
+  const composed = composePrompt(promptText, draft, groups, fragmentLanguage);
   const selectedCount = Object.keys(draft).length;
 
   useEffect(() => {
@@ -211,6 +223,16 @@ function ExtraSettingsPanel({
               </section>
             )}
 
+            {language === "tr" && (
+              <label className="flex cursor-pointer items-start gap-2.5 rounded-md border border-border-soft bg-surface-soft px-3 py-2.5">
+                <input type="checkbox" data-english-fragments checked={englishFragments} onChange={(e) => onEnglishFragmentsChange(e.target.checked)} className="mt-0.5" />
+                <span>
+                  <span className="block text-label font-semibold text-text">{t("extra.englishFragments")}</span>
+                  <span className="block text-caption text-text-secondary">{t("extra.englishFragmentsHint")}</span>
+                </span>
+              </label>
+            )}
+
             {hasTool && groups.some((g) => g.kind === "suffix") && <p className="rounded-md bg-primary-soft px-3 py-2 text-caption text-text-secondary">{t("extra.toolHint")}</p>}
 
             {groups.map((g) => (
@@ -218,7 +240,7 @@ function ExtraSettingsPanel({
                 <h3 className="mb-2 text-label font-semibold text-text">{settingLabel(g, language)}</h3>
                 <div className="flex flex-wrap gap-2">
                   {g.options.map((option) => (
-                    <Chip key={option.id} selected={draft[g.id] === option.id} onClick={() => toggle(g.id, option.id)} title={settingFragment(option, language)} data-option={`${g.id}:${option.id}`}>
+                    <Chip key={option.id} selected={draft[g.id] === option.id} onClick={() => toggle(g.id, option.id)} title={settingFragment(option, fragmentLanguage)} data-option={`${g.id}:${option.id}`}>
                       {settingLabel(option, language)}
                     </Chip>
                   ))}

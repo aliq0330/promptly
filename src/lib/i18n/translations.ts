@@ -530,6 +530,8 @@ export const translations = {
   "extra.count": { tr: "{{count}} ayar", en: "{{count}} settings" },
   "extra.selected": { tr: "Seçili ayarlar", en: "Selected settings" },
   "extra.removeAria": { tr: "{{name}} ayarını kaldır", en: "Remove {{name}}" },
+  "extra.englishFragments": { tr: "Prompt parçalarını İngilizce yaz", en: "Write prompt fragments in English" },
+  "extra.englishFragmentsHint": { tr: "Görsel araçlar çoğunlukla İngilizce prompta daha iyi yanıt verir.", en: "Image tools usually respond better to English prompts." },
   "extra.clear": { tr: "Temizle", en: "Clear all" },
   "extra.apply": { tr: "Prompta uygula", en: "Apply to prompt" },
   "extra.close": { tr: "Kapat", en: "Close" },

@@ -207,13 +207,16 @@ export function CreatePromptForm() {
   // "Ek Ayar Önerileri": the textarea stays the ORIGINAL text; the selection is
   // kept separately and only composed into what is saved/previewed.
   const [extraSettings, setExtraSettings] = useState<SettingSelection>({});
+  // Lets Turkish-mode users still write the appended fragments in English.
+  const [englishFragments, setEnglishFragments] = useState(false);
+  const fragmentLanguage = englishFragments ? "en" : language;
   const extraGroups = useMemo(
     () => groupsFor(groupIdsFor(contentType, category, subcategory, tools)),
     [contentType, category, subcategory, tools],
   );
   const finalPromptText = useMemo(
-    () => composePrompt(promptText, sanitizeSelection(extraSettings, extraGroups), extraGroups, language),
-    [promptText, extraSettings, extraGroups, language],
+    () => composePrompt(promptText, sanitizeSelection(extraSettings, extraGroups), extraGroups, fragmentLanguage),
+    [promptText, extraSettings, extraGroups, fragmentLanguage],
   );
   // CLAUDE.md §12: answering a request must NOT just copy the request's own
   // tags — they're only passed as soft `contextTags` (nudge into the
@@ -878,6 +881,8 @@ export function CreatePromptForm() {
             groups={extraGroups}
             value={extraSettings}
             onChange={setExtraSettings}
+            englishFragments={englishFragments}
+            onEnglishFragmentsChange={setEnglishFragments}
             promptText={promptText}
             hasTool={tools.length > 0}
           />
