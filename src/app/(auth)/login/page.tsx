@@ -35,10 +35,37 @@ export default function LoginPage() {
     setIsSubmitting(true);
 
     try {
-      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
-      if (signInError) {
-        setError(translateAuthError(signInError.message));
-        return;
+      const identifier = email.trim();
+      if (identifier.includes("@")) {
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: identifier,
+          password,
+        });
+        if (signInError) {
+          setError(translateAuthError(signInError.message));
+          return;
+        }
+      } else {
+        // Username login: resolved server-side (the email never reaches the
+        // browser); only a session comes back.
+        const { data, error: fnError } = await supabase.functions.invoke("username-login", {
+          body: { identifier, password },
+        });
+        if (fnError || !data?.access_token) {
+          const status = (fnError as { context?: Response } | null)?.context?.status;
+          setError(
+            status === 429 ? t("auth.tooManyAttempts") : t("auth.invalidCredentials"),
+          );
+          return;
+        }
+        const { error: sessionError } = await supabase.auth.setSession({
+          access_token: data.access_token,
+          refresh_token: data.refresh_token,
+        });
+        if (sessionError) {
+          setError(t("auth.invalidCredentials"));
+          return;
+        }
       }
       router.push("/");
     } catch {
@@ -61,13 +88,15 @@ export default function LoginPage() {
       <div className="w-full space-y-3 text-left">
         <div>
           <label htmlFor="login-email" className="mb-1.5 block text-sm font-medium text-text">
-            {t("settings.email")}
+            {t("auth.emailOrUsername")}
           </label>
           <input
             id="login-email"
-            type="email"
+            type="text"
             required
-            autoComplete="email"
+            autoComplete="username"
+            autoCapitalize="none"
+            autoCorrect="off"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
             className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted"
