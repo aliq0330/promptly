@@ -17,7 +17,7 @@ import type { KeysetCursor } from "@/lib/supabase/pagination";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { PromptRequest, PromptRequestStatus, UserProfile } from "@/types";
 
-const PAGE_SIZE = 24;
+const PAGE_SIZE = 60;
 
 interface RealRequestsContextValue {
   realRequests: PromptRequest[];
@@ -50,6 +50,7 @@ export function RealRequestsProvider({ children }: { children: React.ReactNode }
   const { user } = useAuth();
   const [realRequests, setRealRequests] = useState<PromptRequest[]>([]);
   const [loadingMore, setLoadingMore] = useState(false);
+  const loadingRef = useRef(false);
   const cursorRef = useRef<KeysetCursor | null>(null);
   const [hasMore, setHasMore] = useState(true);
 
@@ -67,7 +68,10 @@ export function RealRequestsProvider({ children }: { children: React.ReactNode }
   }, []);
 
   const loadMore = useCallback(async () => {
-    if (loadingMore || !cursorRef.current) return;
+    // See the matching note in `real-prompts-provider.tsx` — `loadingRef`
+    // (not the `loadingMore` state) guards against a same-tick double-click.
+    if (loadingRef.current || !cursorRef.current) return;
+    loadingRef.current = true;
     setLoadingMore(true);
     try {
       const page = await fetchRecentRequests(PAGE_SIZE, cursorRef.current);
@@ -78,9 +82,10 @@ export function RealRequestsProvider({ children }: { children: React.ReactNode }
       cursorRef.current = page.nextCursor;
       setHasMore(page.nextCursor !== null);
     } finally {
+      loadingRef.current = false;
       setLoadingMore(false);
     }
-  }, [loadingMore]);
+  }, []);
 
   const getCached = useCallback(
     (id: string) => realRequests.find((request) => request.id === id),

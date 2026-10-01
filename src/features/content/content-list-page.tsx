@@ -195,11 +195,24 @@ export function ContentListPage<T extends { id: string; contentType?: string | n
       {(loading && baseItems.length === 0 && !active) || searching ? (
         <PromptCardSkeletonGrid count={3} />
       ) : visible.length === 0 ? (
+        // In browse mode (no active search), the currently loaded page can
+        // legitimately have zero items matching the media-type chip even
+        // while `hasMore` is true — a matching item may just be further
+        // back. Falling through to the generic "nothing here, go create
+        // one" empty state would strand the user on a false dead end, so
+        // this branch offers "load more" instead of (never alongside) the
+        // create action.
         <EmptyState
           icon={icon}
-          title={active ? t("search.noMatchingFilters") : emptyTitle}
-          description={active ? t("generator.tryDifferentSearch") : emptyBody}
-          action={active ? undefined : { label: createLabel, href: createHref }}
+          title={active || hasMore ? t("search.noMatchingFilters") : emptyTitle}
+          description={active ? t("generator.tryDifferentSearch") : hasMore ? t("search.noMatchingFiltersOnPage") : emptyBody}
+          action={
+            active
+              ? undefined
+              : hasMore
+                ? { label: loadingMore ? t("common.loadingMore") : t("common.loadMore"), onClick: () => onLoadMore?.() }
+                : { label: createLabel, href: createHref }
+          }
         />
       ) : (
         <>

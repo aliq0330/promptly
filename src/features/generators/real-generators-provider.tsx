@@ -5,7 +5,7 @@ import { fetchRecentPublishedGenerators, fetchTopGenerators } from "@/lib/supaba
 import type { KeysetCursor } from "@/lib/supabase/pagination";
 import type { Generator } from "@/types";
 
-const PAGE_SIZE = 24;
+const PAGE_SIZE = 60;
 
 interface RealGeneratorsContextValue {
   realGenerators: Generator[];
@@ -31,6 +31,7 @@ const RealGeneratorsContext = createContext<RealGeneratorsContextValue | null>(n
 export function RealGeneratorsProvider({ children }: { children: React.ReactNode }) {
   const [realGenerators, setRealGenerators] = useState<Generator[]>([]);
   const [loadingMore, setLoadingMore] = useState(false);
+  const loadingRef = useRef(false);
   const cursorRef = useRef<KeysetCursor | null>(null);
   const [hasMore, setHasMore] = useState(true);
 
@@ -50,7 +51,10 @@ export function RealGeneratorsProvider({ children }: { children: React.ReactNode
   }, []);
 
   const loadMore = useCallback(async () => {
-    if (loadingMore || !cursorRef.current) return;
+    // See the matching note in `real-prompts-provider.tsx` — `loadingRef`
+    // (not the `loadingMore` state) guards against a same-tick double-click.
+    if (loadingRef.current || !cursorRef.current) return;
+    loadingRef.current = true;
     setLoadingMore(true);
     try {
       const page = await fetchRecentPublishedGenerators(PAGE_SIZE, cursorRef.current);
@@ -61,9 +65,10 @@ export function RealGeneratorsProvider({ children }: { children: React.ReactNode
       cursorRef.current = page.nextCursor;
       setHasMore(page.nextCursor !== null);
     } finally {
+      loadingRef.current = false;
       setLoadingMore(false);
     }
-  }, [loadingMore]);
+  }, []);
 
   const getCached = useCallback((id: string) => realGenerators.find((generator) => generator.id === id), [realGenerators]);
 

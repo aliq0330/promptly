@@ -1455,6 +1455,10 @@ export const translations = {
   "search.clear": { tr: "Temizle", en: "Clear" },
   "search.removeFilter": { tr: "Filtreyi kaldır", en: "Remove filter" },
   "search.noMatchingFilters": { tr: "Bu filtrelerle eşleşen içerik bulunamadı.", en: "No content matches these filters." },
+  "search.noMatchingFiltersOnPage": {
+    tr: "Şu an yüklenmiş içerikte bu filtreyle eşleşen bir şey yok — daha fazla yükleyince çıkabilir.",
+    en: "Nothing loaded so far matches this filter — loading more might turn one up.",
+  },
   "search.chipPlaceholder": { tr: "Kullanıcı, etiket, tür veya araç ekle…", en: "Add a user, tag, type or tool…" },
   "search.sortLabel": { tr: "Sırala", en: "Sort" },
   "search.sortRelevant": { tr: "İlgili", en: "Relevant" },
