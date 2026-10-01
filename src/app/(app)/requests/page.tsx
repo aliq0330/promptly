@@ -14,7 +14,7 @@ type StatusFilter = "all" | "open" | "closed";
 
 export default function RequestsPage() {
   const { t } = useTranslation();
-  const { realRequests } = useRealRequests();
+  const { realRequests, hasMore, loadingMore, loadMore } = useRealRequests();
   const [status, setStatus] = useState<StatusFilter>("all");
   const postFilter = useMemo(
     () => (items: PromptRequest[]) =>
@@ -56,6 +56,9 @@ export default function RequestsPage() {
       renderItems={(items) => <RequestList requests={items} />}
       emptyTitle={t("request.emptyListTitle")}
       emptyBody={t("request.emptyListBody")}
+      hasMore={hasMore}
+      loadingMore={loadingMore}
+      onLoadMore={loadMore}
     />
   );
 }

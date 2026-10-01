@@ -1,0 +1,15 @@
+-- Bildirimlere gerçek zamanlı (Realtime) güncelleme ekler — mesajlaşmanın
+-- Bölüm 21 Faz C'de (20260919220000_messaging_realtime.sql) kurduğu AYNI
+-- desen: tek işi `notifications` tablosunu Supabase'in "Postgres Changes"
+-- yayınına (`supabase_realtime` publication) eklemek. Yeni tablo/sütun/
+-- politika yok — bir tablo bu yayına eklenmeden `supabase.channel(...).on(
+-- 'postgres_changes', ...)` o tablo için hiçbir olay almıyor, bu yalnızca o
+-- proje ayarını açan bir SQL.
+--
+-- Güvenlik: Realtime, bir "Postgres Changes" aboneliğini o tablonun RLS
+-- SELECT politikasına göre yetkilendiriyor (abone olan bağlantının
+-- auth.uid()'sine göre) — `notifications` üzerindeki "yalnızca kendi
+-- bildirimini oku" politikası (Bölüm 19/20260919180000) hiç değişmedi, bu
+-- yüzden bir kullanıcı REST üzerinden göremediği bir bildirimi Realtime
+-- üzerinden de göremiyor.
+alter publication supabase_realtime add table public.notifications;

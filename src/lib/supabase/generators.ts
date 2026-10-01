@@ -1,6 +1,7 @@
 import { normalizeToolRefs } from "@/lib/ai-tool-catalog";
 import { supabase } from "./client";
 import { withoutBlocked } from "./blocked-users";
+import { applyKeysetCursor, nextCursorFrom, type KeysetCursor } from "./pagination";
 import { translateForRuntime } from "@/lib/i18n/translations";
 import { mapProfileRow, type ProfileRow } from "./mappers";
 import { getOrCreateTag } from "./tags";
@@ -152,24 +153,44 @@ export async function fetchGeneratorVersion(versionId: string): Promise<Generato
   }
 }
 
-/** Most recently published generators — for `/generators` discovery. */
-export async function fetchRecentPublishedGenerators(limit = 60): Promise<Generator[]> {
+export interface GeneratorsPage {
+  items: Generator[];
+  nextCursor: KeysetCursor | null;
+}
+
+/**
+ * Most recently published generators, keyset-paginated by `created_at`/`id`
+ * — the real "Daha fazla yükle" source behind `/generators`'s browse view.
+ * `RealGeneratorsProvider` still separately seeds the cache with a fixed
+ * top-by-`use_count` batch (`fetchTopGenerators`, unpaginated — a bounded
+ * "trending" window, not a stream to page through); "load more" only ever
+ * extends the chronological portion.
+ */
+export async function fetchRecentPublishedGenerators(limit = 24, cursor?: KeysetCursor): Promise<GeneratorsPage> {
   try {
-    const { data, error } = await supabase
-      .from("generators")
-      .select(GENERATOR_SELECT)
-      .eq("status", "published")
-      .eq("visibility", "public")
-      .order("created_at", { ascending: false })
-      .limit(limit);
+    const request = applyKeysetCursor(
+      supabase
+        .from("generators")
+        .select(GENERATOR_SELECT)
+        .eq("status", "published")
+        .eq("visibility", "public")
+        .order("created_at", { ascending: false })
+        .order("id", { ascending: false })
+        .limit(limit),
+      "created_at",
+      cursor,
+    );
+    const { data, error } = await request;
     if (error) {
       console.error("fetchRecentPublishedGenerators", error);
-      return [];
+      return { items: [], nextCursor: null };
     }
-    return withoutBlocked((data ?? []).map((row) => mapGeneratorRow(row as unknown as GeneratorRow)), (g) => g.creator.id);
+    const rows = (data ?? []) as unknown as GeneratorRow[];
+    const items = await withoutBlocked(rows.map(mapGeneratorRow), (g) => g.creator.id);
+    return { items, nextCursor: nextCursorFrom(rows, limit, (row) => row.created_at) };
   } catch (err) {
     console.error("fetchRecentPublishedGenerators", err);
-    return [];
+    return { items: [], nextCursor: null };
   }
 }
 

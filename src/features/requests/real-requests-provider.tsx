@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@/features/auth/auth-provider";
 import {
   createRealRequest,
@@ -13,11 +13,17 @@ import {
   type CreateRealRequestInput,
   type UpdateRealRequestInput,
 } from "@/lib/supabase/requests";
+import type { KeysetCursor } from "@/lib/supabase/pagination";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { PromptRequest, PromptRequestStatus, UserProfile } from "@/types";
 
+const PAGE_SIZE = 24;
+
 interface RealRequestsContextValue {
   realRequests: PromptRequest[];
+  hasMore: boolean;
+  loadingMore: boolean;
+  loadMore: () => Promise<void>;
   getCached: (id: string) => PromptRequest | undefined;
   fetchById: (id: string) => Promise<PromptRequest | null>;
   addRequest: (input: CreateRealRequestInput, authorProfile: UserProfile) => Promise<PromptRequest>;
@@ -43,16 +49,38 @@ export function RealRequestsProvider({ children }: { children: React.ReactNode }
   const { t } = useTranslation();
   const { user } = useAuth();
   const [realRequests, setRealRequests] = useState<PromptRequest[]>([]);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const cursorRef = useRef<KeysetCursor | null>(null);
+  const [hasMore, setHasMore] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
-    fetchRecentRequests().then((requests) => {
-      if (!cancelled) setRealRequests(requests);
+    fetchRecentRequests(PAGE_SIZE).then((page) => {
+      if (cancelled) return;
+      setRealRequests(page.items);
+      cursorRef.current = page.nextCursor;
+      setHasMore(page.nextCursor !== null);
     });
     return () => {
       cancelled = true;
     };
   }, []);
+
+  const loadMore = useCallback(async () => {
+    if (loadingMore || !cursorRef.current) return;
+    setLoadingMore(true);
+    try {
+      const page = await fetchRecentRequests(PAGE_SIZE, cursorRef.current);
+      setRealRequests((prev) => {
+        const seen = new Set(prev.map((r) => r.id));
+        return [...prev, ...page.items.filter((r) => !seen.has(r.id))];
+      });
+      cursorRef.current = page.nextCursor;
+      setHasMore(page.nextCursor !== null);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [loadingMore]);
 
   const getCached = useCallback(
     (id: string) => realRequests.find((request) => request.id === id),
@@ -115,6 +143,9 @@ export function RealRequestsProvider({ children }: { children: React.ReactNode }
   const value = useMemo(
     () => ({
       realRequests,
+      hasMore,
+      loadingMore,
+      loadMore,
       getCached,
       fetchById,
       addRequest,
@@ -124,7 +155,20 @@ export function RealRequestsProvider({ children }: { children: React.ReactNode }
       removeFromCache,
       selectResponse,
     }),
-    [realRequests, getCached, fetchById, addRequest, updateRequest, updateStatus, deleteRequest, removeFromCache, selectResponse],
+    [
+      realRequests,
+      hasMore,
+      loadingMore,
+      loadMore,
+      getCached,
+      fetchById,
+      addRequest,
+      updateRequest,
+      updateStatus,
+      deleteRequest,
+      removeFromCache,
+      selectResponse,
+    ],
   );
 
   return <RealRequestsContext.Provider value={value}>{children}</RealRequestsContext.Provider>;

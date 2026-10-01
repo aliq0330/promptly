@@ -9,7 +9,7 @@ import { WorkflowCard } from "./workflow-card";
 
 export function WorkflowsListView() {
   const { t } = useTranslation();
-  const { realWorkflows: workflows, loading } = useRealWorkflows();
+  const { realWorkflows: workflows, loading, hasMore, loadingMore, loadMore } = useRealWorkflows();
   return (
     <ContentListPage
       icon={WorkflowIcon}
@@ -39,6 +39,9 @@ export function WorkflowsListView() {
       )}
       emptyTitle={t("workflow.noneYetTitle")}
       emptyBody={t("workflow.noneYetBody")}
+      hasMore={hasMore}
+      loadingMore={loadingMore}
+      onLoadMore={loadMore}
     />
   );
 }

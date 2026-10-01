@@ -1,6 +1,7 @@
 import { normalizeToolRefs } from "@/lib/ai-tool-catalog";
 import { supabase } from "./client";
 import { withoutBlocked } from "./blocked-users";
+import { applyKeysetCursor, nextCursorFrom, type KeysetCursor } from "./pagination";
 import { resizeImageToBlob } from "@/lib/utils";
 import { translateForRuntime } from "@/lib/i18n/translations";
 import { normalizeLegacyContentType, sanitizeTaxonomy } from "@/lib/content-taxonomy";
@@ -93,22 +94,41 @@ export function mapRequestRow(row: RequestRow): PromptRequest {
   };
 }
 
-/** Most recent requests (any status), for mixing into the feed/discover pages alongside mock + local content. */
-export async function fetchRecentRequests(limit = 60): Promise<PromptRequest[]> {
+export interface RequestsPage {
+  items: PromptRequest[];
+  nextCursor: KeysetCursor | null;
+}
+
+/**
+ * Most recent requests (any status), keyset-paginated by `created_at`/`id` —
+ * the real "Daha fazla yükle" source behind `/requests`'s browse view (and
+ * the feed/discover pages' initial, unfiltered load). See `prompts.ts`'s
+ * `fetchRecentPublishedPrompts` for why `nextCursor` is derived from the raw
+ * DB rows rather than from `items.length`.
+ */
+export async function fetchRecentRequests(limit = 24, cursor?: KeysetCursor): Promise<RequestsPage> {
   try {
-    const { data, error } = await supabase
-      .from("prompt_requests")
-      .select(REQUEST_SELECT)
-      .order("created_at", { ascending: false })
-      .limit(limit);
+    const request = applyKeysetCursor(
+      supabase
+        .from("prompt_requests")
+        .select(REQUEST_SELECT)
+        .order("created_at", { ascending: false })
+        .order("id", { ascending: false })
+        .limit(limit),
+      "created_at",
+      cursor,
+    );
+    const { data, error } = await request;
     if (error) {
       console.error("fetchRecentRequests", error);
-      return [];
+      return { items: [], nextCursor: null };
     }
-    return withoutBlocked(filterNotDeleted(((data ?? []) as unknown as RequestRow[]).map(mapRequestRow)), (r) => r.author.id);
+    const rows = (data ?? []) as unknown as RequestRow[];
+    const items = await withoutBlocked(filterNotDeleted(rows.map(mapRequestRow)), (r) => r.author.id);
+    return { items, nextCursor: nextCursorFrom(rows, limit, (row) => row.created_at) };
   } catch (err) {
     console.error("fetchRecentRequests", err);
-    return [];
+    return { items: [], nextCursor: null };
   }
 }
 

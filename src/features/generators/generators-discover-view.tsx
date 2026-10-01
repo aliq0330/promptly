@@ -10,7 +10,7 @@ import { useRealGenerators } from "./real-generators-provider";
 /** `/generators` — the shared list-page layout scoped to generators. */
 export function GeneratorsDiscoverView() {
   const { t } = useTranslation();
-  const { realGenerators } = useRealGenerators();
+  const { realGenerators, hasMore, loadingMore, loadMore } = useRealGenerators();
   return (
     <ContentListPage
       icon={Blocks}
@@ -29,6 +29,9 @@ export function GeneratorsDiscoverView() {
       renderItems={(items) => <PromptGrid generators={items} />}
       emptyTitle={t("generator.noGeneratorsPublishedYet")}
       emptyBody={t("generator.createFirstOneHint")}
+      hasMore={hasMore}
+      loadingMore={loadingMore}
+      onLoadMore={loadMore}
     />
   );
 }

@@ -463,7 +463,7 @@ export const CATALOG_FIELDS: CatalogField[] = [
   { id: "char_bangs", label: "Perçem", type: "select", categoryId: "character", subgroupId: "hair", jsonPath: "hair.bangs", options: opts(["Yok", "Düz", "Yan", "Perde", "Kısa"]) },
   { id: "char_beard", label: "Sakal", type: "select", categoryId: "character", subgroupId: "facial_hair", jsonPath: "facial_hair.beard", options: opts(["Yok", "Kirli Sakal", "Kısa", "Orta", "Uzun", "Tam Sakal"]) },
   { id: "char_mustache", label: "Bıyık", type: "select", categoryId: "character", subgroupId: "facial_hair", jsonPath: "facial_hair.mustache", options: opts(["Yok", "İnce", "Kalın", "Klasik", "Dönük"]) },
-  { id: "char_body_type", label: "Vücut Tipi", type: "select", categoryId: "character", subgroupId: "body", jsonPath: "body.type", options: opts(["Zayıf", "İnce", "Atletik", "Fit", "Kaslı", "Güçlü", "Kilolu"]) },
+  { id: "char_body_type", label: "Vücut Tipi", type: "select", categoryId: "character", subgroupId: "body", jsonPath: "body.type", options: imgOpts("char_body_type", ["Zayıf", "İnce", "Atletik", "Fit", "Kaslı", "Güçlü", "Kilolu"]) },
   { id: "char_height", label: "Boy", type: "select", categoryId: "character", subgroupId: "body", jsonPath: "body.height", options: opts(["Çok Kısa", "Kısa", "Orta", "Uzun", "Çok Uzun"]) },
   { id: "char_muscle_level", label: "Kas Seviyesi", type: "select", categoryId: "character", subgroupId: "body", jsonPath: "body.muscle_level", options: opts(["Düşük", "Orta", "Yüksek", "Çok Yüksek"]) },
   { id: "char_body_proportion", label: "Vücut Oranı", type: "select", categoryId: "character", subgroupId: "body", jsonPath: "body.proportion", options: opts(["Gerçekçi", "Stilize", "Anime", "Karikatürize"]) },
@@ -475,7 +475,7 @@ export const CATALOG_FIELDS: CatalogField[] = [
   { id: "cloth_top", label: "Üst Türü", type: "select", categoryId: "clothing", subgroupId: "top", jsonPath: "clothing.top.type", options: imgOpts("cloth_top", ["Tişört", "Gömlek", "Bluz", "Kazak", "Sweatshirt", "Hoodie", "Ceket", "Deri Ceket", "Mont", "Kaban", "Zırh"]) },
   { id: "cloth_top_sleeve", label: "Kol Tipi", type: "select", categoryId: "clothing", subgroupId: "top", jsonPath: "clothing.top.sleeve", options: opts(["Kısa", "Uzun", "Kolsuz", "Bol", "Dar"]) },
   { id: "cloth_top_collar", label: "Yaka", type: "select", categoryId: "clothing", subgroupId: "top", jsonPath: "clothing.top.collar", options: opts(["Yuvarlak", "V Yaka", "Gömlek Yaka", "Balıkçı", "Açık Yaka"]) },
-  { id: "cloth_bottom", label: "Alt Türü", type: "select", categoryId: "clothing", subgroupId: "bottom", jsonPath: "clothing.bottom.type", options: opts(["Jean", "Pantolon", "Şort", "Etek", "Tayt", "Kargo Pantolon", "Eşofman"]) },
+  { id: "cloth_bottom", label: "Alt Türü", type: "select", categoryId: "clothing", subgroupId: "bottom", jsonPath: "clothing.bottom.type", options: imgOpts("cloth_bottom", ["Jean", "Pantolon", "Şort", "Etek", "Tayt", "Kargo Pantolon", "Eşofman"]) },
   { id: "cloth_bottom_fit", label: "Kesim", type: "select", categoryId: "clothing", subgroupId: "bottom", jsonPath: "clothing.bottom.fit", options: opts(["Dar Kesim", "İnce Kesim", "Normal Kesim", "Rahat Kesim", "Bol Kesim", "Bol Paça"]) },
   { id: "cloth_shoes", label: "Ayakkabı Türü", type: "select", categoryId: "clothing", subgroupId: "shoes", jsonPath: "clothing.shoes.type", options: opts(["Sneaker", "Bot", "Çizme", "Topuklu", "Sandalet", "Loafer", "Spor Ayakkabı"]) },
   { id: "cloth_shoes_color", label: "Ayakkabı Rengi", type: "select", categoryId: "clothing", subgroupId: "shoes", jsonPath: "clothing.shoes.color", options: colorOpts([["Siyah", "#1C1310"], ["Beyaz", "#F5F3EE"], ["Kahverengi", "#6B4A30"], ["Kırmızı", "#A3262A"], ["Gümüş", "#C7C9CC"], ["Altın", "#C9A227"]]) },
@@ -489,7 +489,7 @@ export const CATALOG_FIELDS: CatalogField[] = [
   { id: "acc_necklace", label: "Kolye", type: "select", categoryId: "accessory", subgroupId: "jewelry", jsonPath: "accessories.jewelry.necklace", options: opts(["Yok", "İnce Zincir", "Kalın Zincir", "Taşlı Kolye", "Madalyon"]) },
   { id: "acc_earrings", label: "Küpe", type: "select", categoryId: "accessory", subgroupId: "jewelry", jsonPath: "accessories.jewelry.earrings", options: opts(["Yok", "Halka", "Taşlı", "Sade", "Piercing"]) },
   { id: "acc_ring", label: "Yüzük", type: "select", categoryId: "accessory", subgroupId: "jewelry", jsonPath: "accessories.jewelry.ring", options: opts(["Yok", "Sade Yüzük", "Taşlı Yüzük", "Büyülü Yüzük"]) },
-  { id: "acc_head", label: "Baş Aksesuarı", type: "select", categoryId: "accessory", subgroupId: "head", jsonPath: "accessories.head", options: opts(["Yok", "Şapka", "Bere", "Taç", "Bandana", "Saç Aksesuarı"]) },
+  { id: "acc_head", label: "Baş Aksesuarı", type: "select", categoryId: "accessory", subgroupId: "head", jsonPath: "accessories.head", options: imgOpts("acc_head", ["Yok", "Şapka", "Bere", "Taç", "Bandana", "Saç Aksesuarı"]) },
   { id: "acc_glasses", label: "Gözlük", type: "select", categoryId: "accessory", subgroupId: "face", jsonPath: "accessories.face.glasses", options: opts(["Yok", "Şeffaf Gözlük", "Güneş Gözlüğü", "Maske", "Yüz Piercingi"]) },
   { id: "acc_bag", label: "Çanta", type: "select", categoryId: "accessory", subgroupId: "other", jsonPath: "accessories.bag", options: opts(["Yok", "Çanta", "Sırt Çantası", "Bel Çantası"]) },
   { id: "acc_extras", label: "Diğer Aksesuarlar", type: "multi_select", categoryId: "accessory", subgroupId: "other", jsonPath: "accessories.extras", options: opts(["Eldiven", "Saat", "Bileklik", "Kulaklık", "Telefon", "Anahtarlık", "Broş"]) },
@@ -502,7 +502,7 @@ export const CATALOG_FIELDS: CatalogField[] = [
   { id: "pose_movement", label: "Hareket Karakteri", type: "select", categoryId: "pose", subgroupId: "movement", jsonPath: "pose.movement", options: opts(["Statik", "Doğal", "Dinamik", "Aksiyon", "Hızlı", "Yavaş", "Zarif"]) },
 
   // ===== 5. Yüz İfadesi =====
-  { id: "expr_emotion", label: "Duygu", type: "select", categoryId: "expression", subgroupId: "emotion", jsonPath: "expression.emotion", options: opts(["Mutlu", "Üzgün", "Öfkeli", "Korkmuş", "Şaşkın", "Sakin", "Gizemli", "Ciddi", "Romantik", "Kararlı", "Neşeli"]) },
+  { id: "expr_emotion", label: "Duygu", type: "select", categoryId: "expression", subgroupId: "emotion", jsonPath: "expression.emotion", options: imgOpts("expr_emotion", ["Mutlu", "Üzgün", "Öfkeli", "Korkmuş", "Şaşkın", "Sakin", "Gizemli", "Ciddi", "Romantik", "Kararlı", "Neşeli"]) },
   { id: "expr_eyes", label: "Göz İfadesi", type: "select", categoryId: "expression", subgroupId: "eyes", jsonPath: "expression.eyes", options: opts(["Yumuşak Bakış", "Yoğun Bakış", "Keskin Bakış", "Uykulu", "Şaşkın", "Kameraya Bakış", "Uzaklara Bakış"]) },
   { id: "expr_mouth", label: "Ağız", type: "select", categoryId: "expression", subgroupId: "mouth", jsonPath: "expression.mouth", options: opts(["Kapalı", "Hafif Gülümseme", "Gülümseme", "Kahkaha", "Ciddi", "Hafif Açık"]) },
   { id: "expr_intensity", label: "Yoğunluk", type: "slider", categoryId: "expression", subgroupId: "intensity", jsonPath: "expression.intensity", options: [], min: 0, max: 100, step: 5 },
@@ -559,7 +559,7 @@ export const CATALOG_FIELDS: CatalogField[] = [
 
   // ===== 12. Kompozisyon =====
   { id: "comp_position", label: "Konu Konumu", type: "select", categoryId: "composition", subgroupId: "position", jsonPath: "composition.subject_position", options: opts(["Merkez", "Sol", "Sağ", "Üst", "Alt", "Köşe"]) },
-  { id: "comp_framing", label: "Kadraj", type: "select", categoryId: "composition", subgroupId: "framing", jsonPath: "composition.framing", options: opts(["Tam Kare", "Orta Plan", "Yakın Çekim", "Geniş Çekim", "Ekstrem Geniş Çekim"]) },
+  { id: "comp_framing", label: "Kadraj", type: "select", categoryId: "composition", subgroupId: "framing", jsonPath: "composition.framing", options: imgOpts("comp_framing", ["Tam Kare", "Orta Plan", "Yakın Çekim", "Geniş Çekim", "Ekstrem Geniş Çekim"]) },
   { id: "comp_depth", label: "Derinlik", type: "select", categoryId: "composition", subgroupId: "depth", jsonPath: "composition.depth", options: opts(["Ön Plan", "Orta Plan", "Arka Plan", "Katmanlı"]) },
   { id: "comp_perspective", label: "Perspektif", type: "select", categoryId: "composition", subgroupId: "perspective", jsonPath: "composition.perspective", options: opts(["Normal", "Geniş", "Derin", "Çarpıtılmış", "Zorlanmış Perspektif"]) },
   { id: "comp_technique", label: "Kompozisyon Tekniği", type: "select", categoryId: "composition", subgroupId: "technique", jsonPath: "composition.technique", options: opts(["Üçte Bir Kuralı", "Merkezi Kompozisyon", "Simetri", "Yönlendirici Çizgiler", "Çerçeveleme", "Negatif Alan", "Diyagonal Kompozisyon", "Katmanlama", "Altın Oran"]) },
@@ -585,7 +585,7 @@ export const CATALOG_FIELDS: CatalogField[] = [
   { id: "scifi_style", label: "Stil", type: "select", categoryId: "scifi", subgroupId: "style", jsonPath: "scifi.style", options: opts(["Cyberpunk", "Synthwave", "Fütüristik", "Endüstriyel Bilim Kurgu", "Retro-Fütürizm", "Uzay Operası"]) },
 
   // ===== 16. Silah & Ekipman =====
-  { id: "weapon_melee", label: "Yakın Dövüş Silahı", type: "select", categoryId: "weapon", subgroupId: "melee", jsonPath: "equipment.melee_weapon", options: opts(["Kılıç", "Katana", "Balta", "Mızrak", "Hançer", "Çekiç", "Asa"]) },
+  { id: "weapon_melee", label: "Yakın Dövüş Silahı", type: "select", categoryId: "weapon", subgroupId: "melee", jsonPath: "equipment.melee_weapon", options: imgOpts("weapon_melee", ["Kılıç", "Katana", "Balta", "Mızrak", "Hançer", "Çekiç", "Asa"]) },
   { id: "weapon_ranged", label: "Uzak Dövüş Silahı", type: "select", categoryId: "weapon", subgroupId: "ranged", jsonPath: "equipment.ranged_weapon", options: opts(["Yay", "Arbalet", "Enerji Silahı", "Bilim Kurgu Silahı", "Fantastik Menzilli Silah"]) },
   { id: "weapon_defense", label: "Savunma Ekipmanı", type: "multi_select", categoryId: "weapon", subgroupId: "defense", jsonPath: "equipment.defense", options: opts(["Kalkan", "Zırh", "Kask", "Eldiven", "Omuzluk"]) },
   { id: "weapon_detail", label: "Ekipman Detayı", type: "select", categoryId: "weapon", subgroupId: "detail", jsonPath: "equipment.material_detail", options: opts(["Metal", "Deri", "Ahşap", "Kristal", "Enerji", "Rün", "Gravür"]) },

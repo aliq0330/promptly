@@ -184,6 +184,158 @@ const PHOTO_TYPES: Record<string, string> = {
   Belgesel: `<rect x="24" y="34" width="40" height="30" rx="3"/><circle cx="44" cy="49" r="8"/><path d="M64 42 L80 32 L80 66 L64 56 Z" fill="${FILL_SOFT}"/>`,
 };
 
+// ---------------------------------------------------------------------------
+// Vücut Tipi (body type) — same torso silhouette, width parametrized per
+// label (CLAUDE.md's "tam sayfalama" follow-up task also expanded the visual
+// library — see its own note for why this family and the five below it were
+// picked: genuinely distinguishable by shape, not just a color swap).
+// ---------------------------------------------------------------------------
+const BODY_TYPE_WIDTH: Record<string, number> = {
+  Zayıf: 9,
+  İnce: 12,
+  Atletik: 16,
+  Fit: 15,
+  Kaslı: 19,
+  Güçlü: 21,
+  Kilolu: 23,
+};
+
+function bodyTypeIcon(label: string): string {
+  const w = BODY_TYPE_WIDTH[label] ?? 15;
+  const head = `<circle cx="50" cy="20" r="9"/>`;
+  const torso = `<path d="M${50 - w} 34 C${50 - w} 30 ${50 + w} 30 ${50 + w} 34 L${50 + w + 4} 68 L${50 - w - 4} 68 Z" fill="${FILL_SOFT}" stroke="${LINE_SOFT}"/>`;
+  const legs = `<path d="M${(50 - w / 2).toFixed(1)} 68 L44 92 M${(50 + w / 2).toFixed(1)} 68 L56 92"/>`;
+  return `${torso}${head}${legs}`;
+}
+
+// ---------------------------------------------------------------------------
+// Duygu (facial expression) — one shared face template (circle + eyes),
+// eyebrow and mouth paths vary per emotion.
+// ---------------------------------------------------------------------------
+function expressionFace(brows: string, mouth: string, eyes?: string): string {
+  const face = `<circle cx="50" cy="50" r="28"/>`;
+  const defaultEyes = `<circle cx="39" cy="46" r="3" fill="${LINE}"/><circle cx="61" cy="46" r="3" fill="${LINE}"/>`;
+  return `${face}${brows}${eyes ?? defaultEyes}${mouth}`;
+}
+const EXPRESSIONS: Record<string, string> = {
+  Mutlu: expressionFace(
+    `<path d="M32 36 C35 33 42 33 45 36 M55 36 C58 33 65 33 68 36" stroke="${LINE_SOFT}"/>`,
+    `<path d="M34 58 C40 68 60 68 66 58"/>`,
+  ),
+  Üzgün: expressionFace(
+    `<path d="M32 38 C37 34 44 36 46 40 M54 40 C56 36 63 34 68 38" stroke="${LINE_SOFT}"/>`,
+    `<path d="M36 64 C42 56 58 56 64 64"/>`,
+  ),
+  Öfkeli: expressionFace(
+    `<path d="M32 34 L46 40 M68 34 L54 40" stroke="${LINE_SOFT}"/>`,
+    `<path d="M36 62 L64 62"/>`,
+  ),
+  Korkmuş: expressionFace(
+    `<path d="M32 32 C36 28 44 28 47 32 M53 32 C56 28 64 28 68 32" stroke="${LINE_SOFT}"/>`,
+    `<circle cx="50" cy="62" r="6" fill="${CARD_BG}"/>`,
+    `<circle cx="39" cy="46" r="4.5" fill="${LINE}"/><circle cx="61" cy="46" r="4.5" fill="${LINE}"/>`,
+  ),
+  Şaşkın: expressionFace(
+    `<path d="M32 30 L47 32 M68 30 L53 32" stroke="${LINE_SOFT}"/>`,
+    `<ellipse cx="50" cy="63" rx="7" ry="9" fill="${CARD_BG}"/>`,
+    `<circle cx="39" cy="46" r="4.5" fill="${LINE}"/><circle cx="61" cy="46" r="4.5" fill="${LINE}"/>`,
+  ),
+  Sakin: expressionFace(
+    `<path d="M33 36 L45 37 M55 37 L67 36" stroke="${LINE_SOFT}"/>`,
+    `<path d="M40 60 L60 60"/>`,
+    `<path d="M34 46 L44 46 M56 46 L66 46"/>`,
+  ),
+  Gizemli: expressionFace(
+    `<path d="M32 32 C36 28 44 28 47 32 M55 37 L67 37" stroke="${LINE_SOFT}"/>`,
+    `<path d="M38 60 C44 62 54 62 63 56"/>`,
+  ),
+  Ciddi: expressionFace(
+    `<path d="M33 38 L45 38 M55 38 L67 38" stroke="${LINE_SOFT}"/>`,
+    `<path d="M38 61 L62 61"/>`,
+    `<path d="M35 46 L43 46 M57 46 L65 46"/>`,
+  ),
+  Romantik: expressionFace(
+    `<path d="M32 35 C35 31 43 31 46 35 M54 35 C57 31 65 31 68 35" stroke="${LINE_SOFT}"/>`,
+    `<path d="M38 59 C43 65 57 65 62 59"/>`,
+    `<circle cx="39" cy="46" r="3" fill="${LINE}"/><circle cx="61" cy="46" r="3" fill="${LINE}"/><circle cx="30" cy="54" r="4" fill="${FILL_SOFT}"/><circle cx="70" cy="54" r="4" fill="${FILL_SOFT}"/>`,
+  ),
+  Kararlı: expressionFace(
+    `<path d="M32 36 L46 39 M68 36 L54 39" stroke="${LINE_SOFT}"/>`,
+    `<path d="M38 61 L62 61"/><path d="M36 74 L64 74" stroke="${LINE_SOFT}"/>`,
+  ),
+  Neşeli: expressionFace(
+    `<path d="M31 34 C35 29 44 29 47 34 M53 34 C56 29 65 29 69 34" stroke="${LINE_SOFT}"/>`,
+    `<path d="M32 56 C38 70 62 70 68 56 Z" fill="${FILL_SOFT}"/><path d="M40 60 L60 60" stroke="${LINE}"/>`,
+  ),
+};
+
+// ---------------------------------------------------------------------------
+// Kadraj (shot framing) — a viewfinder frame with a subject sized/cropped to
+// depict how tight or wide the shot is.
+// ---------------------------------------------------------------------------
+interface FramingSpec {
+  headY: number;
+  headR: number;
+  /** y of the body's bottom edge inside the frame — `null` means the body runs off the bottom (a crop, not a full figure). */
+  bodyBottom: number | null;
+}
+const FRAMING_SPECS: Record<string, FramingSpec> = {
+  "Tam Kare": { headY: 30, headR: 6, bodyBottom: 84 },
+  "Orta Plan": { headY: 34, headR: 10, bodyBottom: null },
+  "Yakın Çekim": { headY: 50, headR: 20, bodyBottom: null },
+  "Geniş Çekim": { headY: 68, headR: 4, bodyBottom: 90 },
+  "Ekstrem Geniş Çekim": { headY: 76, headR: 2.5, bodyBottom: 92 },
+};
+function framingIcon(label: string): string {
+  const spec = FRAMING_SPECS[label];
+  if (!spec) return fallbackGlyph(label);
+  const frame = `<rect x="14" y="14" width="72" height="72" rx="4"/><path d="M14 22 L14 14 L22 14 M78 14 L86 14 L86 22 M86 78 L86 86 L78 86 M22 86 L14 86 L14 78" stroke="${LINE_SOFT}"/>`;
+  const head = `<circle cx="50" cy="${spec.headY}" r="${spec.headR}" fill="${FILL_SOFT}"/>`;
+  const body =
+    spec.bodyBottom !== null
+      ? `<path d="M50 ${spec.headY + spec.headR} L50 ${spec.bodyBottom} M${(50 - spec.headR).toFixed(1)} ${spec.bodyBottom} L${(50 + spec.headR).toFixed(1)} ${spec.bodyBottom}" stroke="${LINE_SOFT}"/>`
+      : `<path d="M${(50 - spec.headR * 1.5).toFixed(1)} 86 C${(50 - spec.headR * 1.5).toFixed(1)} ${(spec.headY + spec.headR + 6).toFixed(1)} ${(50 + spec.headR * 1.5).toFixed(1)} ${(spec.headY + spec.headR + 6).toFixed(1)} ${(50 + spec.headR * 1.5).toFixed(1)} 86" fill="${FILL_SOFT}" stroke="${LINE_SOFT}"/>`;
+  return `${frame}${body}${head}`;
+}
+
+// ---------------------------------------------------------------------------
+// Yakın Dövüş Silahı (melee weapon) — a representative silhouette per type.
+// ---------------------------------------------------------------------------
+const WEAPONS_MELEE: Record<string, string> = {
+  Kılıç: `<path d="M50 16 L50 70" stroke-width="4"/><path d="M36 38 L64 38" stroke-width="4"/><path d="M50 70 L50 84" stroke="${LINE_SOFT}" stroke-width="5"/>`,
+  Katana: `<path d="M34 24 C50 20 64 34 60 60" stroke-width="4"/><path d="M46 46 L58 50" stroke-width="3"/><path d="M60 60 L68 78" stroke="${LINE_SOFT}" stroke-width="5"/>`,
+  Balta: `<path d="M50 20 L50 84" stroke-width="4"/><path d="M50 22 C66 18 74 30 66 42 C58 46 50 42 50 34 Z" fill="${FILL_SOFT}"/>`,
+  Mızrak: `<path d="M50 14 L50 86" stroke-width="3"/><path d="M50 14 L42 30 L58 30 Z" fill="${FILL_SOFT}"/>`,
+  Hançer: `<path d="M50 30 L50 68" stroke-width="4"/><path d="M38 44 L62 44" stroke-width="4"/><path d="M50 68 L50 80" stroke="${LINE_SOFT}" stroke-width="5"/>`,
+  Çekiç: `<path d="M50 32 L50 84" stroke-width="4"/><rect x="34" y="14" width="32" height="18" rx="3" fill="${FILL_SOFT}"/>`,
+  Asa: `<path d="M50 30 L50 86" stroke-width="3"/><circle cx="50" cy="20" r="11" fill="${FILL_SOFT}"/>`,
+};
+
+// ---------------------------------------------------------------------------
+// Alt Türü (clothing bottom) — leg garment silhouettes.
+// ---------------------------------------------------------------------------
+const CLOTHING_BOTTOMS: Record<string, string> = {
+  Jean: `<path d="M34 20 L66 20 L68 86 L54 86 L50 44 L46 86 L32 86 Z" fill="${FILL_SOFT}"/><path d="M50 20 L50 44" stroke="${LINE}"/>`,
+  Pantolon: `<path d="M36 20 L64 20 L66 86 L54 86 L50 46 L46 86 L34 86 Z" fill="${FILL_SOFT}"/>`,
+  Şort: `<path d="M36 20 L64 20 L66 52 L54 52 L50 42 L46 52 L34 52 Z" fill="${FILL_SOFT}"/>`,
+  Etek: `<path d="M38 20 L62 20 L74 78 L26 78 Z" fill="${FILL_SOFT}"/>`,
+  Tayt: `<path d="M40 20 L60 20 L58 86 L52 86 L50 46 L48 86 L42 86 Z" fill="${FILL_SOFT}"/>`,
+  "Kargo Pantolon": `<path d="M36 20 L64 20 L66 86 L54 86 L50 46 L46 86 L34 86 Z" fill="${FILL_SOFT}"/><rect x="26" y="50" width="10" height="14" rx="2" stroke="${LINE_SOFT}"/><rect x="64" y="50" width="10" height="14" rx="2" stroke="${LINE_SOFT}"/>`,
+  Eşofman: `<path d="M34 20 L66 20 L64 80 C60 84 56 84 53 80 L50 48 L47 80 C44 84 40 84 36 80 Z" fill="${FILL_SOFT}"/>`,
+};
+
+// ---------------------------------------------------------------------------
+// Baş Aksesuarı (head accessory) — head silhouette + accessory.
+// ---------------------------------------------------------------------------
+const HEAD_ACCESSORIES: Record<string, string> = {
+  Yok: `<circle cx="50" cy="52" r="24"/>`,
+  Şapka: `<circle cx="50" cy="56" r="22"/><path d="M26 36 C30 22 70 22 74 36 Z" fill="${FILL_SOFT}"/><ellipse cx="50" cy="36" rx="30" ry="5" fill="${FILL_SOFT}" stroke="${LINE_SOFT}"/>`,
+  Bere: `<circle cx="50" cy="56" r="22"/><path d="M28 38 C28 20 72 20 72 38 C72 30 28 30 28 38 Z" fill="${FILL_SOFT}"/><circle cx="50" cy="18" r="4" fill="${FILL_SOFT}"/>`,
+  Taç: `<circle cx="50" cy="56" r="22"/><path d="M28 38 L32 22 L42 34 L50 18 L58 34 L68 22 L72 38 Z" fill="${FILL_SOFT}"/>`,
+  Bandana: `<circle cx="50" cy="56" r="22"/><path d="M28 42 C28 28 72 28 72 42 L62 36 L50 40 L38 36 Z" fill="${FILL_SOFT}"/><path d="M72 42 L84 52 L74 54 Z" fill="${FILL_SOFT}"/>`,
+  "Saç Aksesuarı": `<circle cx="50" cy="56" r="22"/><path d="M68 34 C74 30 80 34 78 40 C84 40 84 48 78 48 C80 54 74 58 68 54 Z" fill="${FILL_SOFT}" stroke="${LINE_SOFT}"/>`,
+};
+
 function lookupOrFallback(map: Record<string, string>, label: string): string {
   return map[label] ?? fallbackGlyph(label);
 }
@@ -212,6 +364,18 @@ export function conceptIcon(fieldSeed: string, label: string, width: number, hei
       return card(lookupOrFallback(CAMERA_ANGLES, label), width, height);
     case "photo_type":
       return card(lookupOrFallback(PHOTO_TYPES, label), width, height);
+    case "char_body_type":
+      return card(bodyTypeIcon(label), width, height);
+    case "expr_emotion":
+      return card(lookupOrFallback(EXPRESSIONS, label), width, height);
+    case "comp_framing":
+      return card(framingIcon(label), width, height);
+    case "weapon_melee":
+      return card(lookupOrFallback(WEAPONS_MELEE, label), width, height);
+    case "cloth_bottom":
+      return card(lookupOrFallback(CLOTHING_BOTTOMS, label), width, height);
+    case "acc_head":
+      return card(lookupOrFallback(HEAD_ACCESSORIES, label), width, height);
     default:
       return card(fallbackGlyph(label), width, height);
   }

@@ -8,6 +8,7 @@ import {
   markAllNotificationsRead,
   markNotificationRead,
 } from "@/lib/supabase/notifications";
+import { supabase } from "@/lib/supabase/client";
 import type { AppNotification } from "@/types";
 
 interface NotificationsContextValue {
@@ -51,6 +52,33 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     if (!user) return;
     const result = await fetchNotificationsForUser(user.id);
     setNotifications(result);
+  }, [user]);
+
+  // Gerçek zamanlı senkronizasyon (Bölüm 9.78'in belgelediği, mesajlaşmanın
+  // Bölüm 21 Faz C'de kurduğu AYNI desen) — `notifications` tablosu
+  // `supabase_realtime` yayınına eklendi (20260919530000). Bu kullanıcının
+  // KENDİ satırlarındaki HER olayda (INSERT — yeni bir bildirim; UPDATE —
+  // başka bir cihazdan okundu işaretlendi; DELETE — başka bir cihazdan
+  // silindi) tüm listeyi yeniden çekiyor — mesajlaşmanın `conversation_
+  // members` aboneliğiyle birebir aynı "basit tut" kararı, gerçek bildirim
+  // hacmi (birkaç/birkaç onlarca satır) bunu haklı çıkarıyor.
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel(`notifications:${user.id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "notifications", filter: `recipient_id=eq.${user.id}` },
+        () => {
+          fetchNotificationsForUser(user.id).then(setNotifications);
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user]);
 
   const markRead = useCallback(

@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
 import { Plus } from "lucide-react";
-import { buttonClassName } from "@/components/ui/button";
+import { Button, buttonClassName } from "@/components/ui/button";
 import { Chip, ChipRow } from "@/components/ui/chip";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageContainer, PageHeader } from "@/components/ui/page-header";
@@ -54,6 +54,9 @@ export function ContentListPage<T extends { id: string; contentType?: string | n
   renderItems,
   emptyTitle,
   emptyBody,
+  hasMore = false,
+  loadingMore = false,
+  onLoadMore,
 }: {
   icon: LucideIcon;
   eyebrow: string;
@@ -72,6 +75,10 @@ export function ContentListPage<T extends { id: string; contentType?: string | n
   renderItems: (items: T[]) => ReactNode;
   emptyTitle: string;
   emptyBody: string;
+  /** Whether a further real page of `baseItems` exists beyond what's already loaded (CLAUDE.md's keyset-paginated "Daha fazla yükle" — only meaningful in browse mode, never while actively searching/filtering). */
+  hasMore?: boolean;
+  loadingMore?: boolean;
+  onLoadMore?: () => void;
 }) {
   const { t } = useTranslation();
   const [tokens, setTokens] = useState<SearchToken[]>([]);
@@ -195,7 +202,16 @@ export function ContentListPage<T extends { id: string; contentType?: string | n
           action={active ? undefined : { label: createLabel, href: createHref }}
         />
       ) : (
-        renderItems(visible)
+        <>
+          {renderItems(visible)}
+          {!active && hasMore && (
+            <div className="flex justify-center pt-2">
+              <Button variant="outline" onClick={onLoadMore} disabled={loadingMore}>
+                {loadingMore ? t("common.loadingMore") : t("common.loadMore")}
+              </Button>
+            </div>
+          )}
+        </>
       )}
     </PageContainer>
   );

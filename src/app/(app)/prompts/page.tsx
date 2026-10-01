@@ -9,7 +9,7 @@ import { searchPrompts } from "@/lib/supabase/prompts";
 
 export default function PromptsPage() {
   const { t } = useTranslation();
-  const { realPrompts, loading } = useRealPrompts();
+  const { realPrompts, loading, hasMore, loadingMore, loadMore } = useRealPrompts();
   return (
     <ContentListPage
       icon={SquareTerminal}
@@ -29,6 +29,9 @@ export default function PromptsPage() {
       renderItems={(items) => <PromptGrid prompts={items} />}
       emptyTitle={t("prompts.emptyTitle")}
       emptyBody={t("prompts.emptyBody")}
+      hasMore={hasMore}
+      loadingMore={loadingMore}
+      onLoadMore={loadMore}
     />
   );
 }

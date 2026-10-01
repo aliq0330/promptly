@@ -1,5 +1,6 @@
 import { supabase } from "./client";
 import { withoutBlocked } from "./blocked-users";
+import { applyKeysetCursor, nextCursorFrom, type KeysetCursor } from "./pagination";
 import { PROFILE_SELECT } from "./profiles";
 import { mapProfileRow, type ProfileRow } from "./mappers";
 import { PROMPT_SELECT, mapPromptRow, type PromptRow } from "./prompts";
@@ -72,23 +73,40 @@ interface StepRow {
   outputs: WorkflowIO[] | null;
 }
 
-/** Recent published workflows (RLS: plus the caller's own drafts — filtered out here). */
-export async function fetchRecentWorkflows(limit = 40): Promise<Workflow[]> {
+export interface WorkflowsPage {
+  items: Workflow[];
+  nextCursor: KeysetCursor | null;
+}
+
+/**
+ * Recent published workflows (RLS: plus the caller's own drafts — filtered
+ * out here), keyset-paginated by `created_at`/`id` — the real "Daha fazla
+ * yükle" source behind `/workflows`'s browse view.
+ */
+export async function fetchRecentWorkflows(limit = 24, cursor?: KeysetCursor): Promise<WorkflowsPage> {
   try {
-    const { data, error } = await supabase
-      .from("workflows")
-      .select(WORKFLOW_SELECT)
-      .eq("status", "published")
-      .order("created_at", { ascending: false })
-      .limit(limit);
+    const request = applyKeysetCursor(
+      supabase
+        .from("workflows")
+        .select(WORKFLOW_SELECT)
+        .eq("status", "published")
+        .order("created_at", { ascending: false })
+        .order("id", { ascending: false })
+        .limit(limit),
+      "created_at",
+      cursor,
+    );
+    const { data, error } = await request;
     if (error) {
       console.error("fetchRecentWorkflows", error);
-      return [];
+      return { items: [], nextCursor: null };
     }
-    return withoutBlocked((data ?? []).map((row) => mapWorkflowRow(row as unknown as WorkflowRow)), (w) => w.creator.id);
+    const rows = (data ?? []) as unknown as WorkflowRow[];
+    const items = await withoutBlocked(rows.map(mapWorkflowRow), (w) => w.creator.id);
+    return { items, nextCursor: nextCursorFrom(rows, limit, (row) => row.created_at) };
   } catch (err) {
     console.error("fetchRecentWorkflows", err);
-    return [];
+    return { items: [], nextCursor: null };
   }
 }
 

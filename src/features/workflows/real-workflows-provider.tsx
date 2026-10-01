@@ -1,12 +1,18 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { fetchRecentWorkflows } from "@/lib/supabase/workflows";
+import type { KeysetCursor } from "@/lib/supabase/pagination";
 import type { Workflow } from "@/types";
+
+const PAGE_SIZE = 24;
 
 interface RealWorkflowsContextValue {
   realWorkflows: Workflow[];
   loading: boolean;
+  hasMore: boolean;
+  loadingMore: boolean;
+  loadMore: () => Promise<void>;
   getCached: (id: string) => Workflow | undefined;
   removeFromCache: (id: string) => void;
 }
@@ -17,17 +23,24 @@ const RealWorkflowsContext = createContext<RealWorkflowsContextValue | null>(nul
  * Real, cross-user published workflows — same shape as `RealGeneratorsProvider`
  * (one shared, app-wide cache so the home feed, Discover and `/workflows`
  * don't each run their own duplicate fetch). Workflow is a first-class
- * content type next to prompts, generators and requests.
+ * content type next to prompts, generators and requests. `loadMore()`
+ * keyset-paginates by `created_at`/`id` (CLAUDE.md's "tam sayfalama"
+ * follow-up) instead of staying capped at a fixed batch.
  */
 export function RealWorkflowsProvider({ children }: { children: React.ReactNode }) {
   const [realWorkflows, setRealWorkflows] = useState<Workflow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const cursorRef = useRef<KeysetCursor | null>(null);
+  const [hasMore, setHasMore] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
-    fetchRecentWorkflows(60).then((workflows) => {
+    fetchRecentWorkflows(PAGE_SIZE).then((page) => {
       if (cancelled) return;
-      setRealWorkflows(workflows);
+      setRealWorkflows(page.items);
+      cursorRef.current = page.nextCursor;
+      setHasMore(page.nextCursor !== null);
       setLoading(false);
     });
     return () => {
@@ -35,12 +48,31 @@ export function RealWorkflowsProvider({ children }: { children: React.ReactNode 
     };
   }, []);
 
+  const loadMore = useCallback(async () => {
+    if (loadingMore || !cursorRef.current) return;
+    setLoadingMore(true);
+    try {
+      const page = await fetchRecentWorkflows(PAGE_SIZE, cursorRef.current);
+      setRealWorkflows((prev) => {
+        const seen = new Set(prev.map((w) => w.id));
+        return [...prev, ...page.items.filter((w) => !seen.has(w.id))];
+      });
+      cursorRef.current = page.nextCursor;
+      setHasMore(page.nextCursor !== null);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [loadingMore]);
+
   const getCached = useCallback((id: string) => realWorkflows.find((workflow) => workflow.id === id), [realWorkflows]);
   const removeFromCache = useCallback((id: string) => {
     setRealWorkflows((prev) => prev.filter((workflow) => workflow.id !== id));
   }, []);
 
-  const value = useMemo(() => ({ realWorkflows, loading, getCached, removeFromCache }), [realWorkflows, loading, getCached, removeFromCache]);
+  const value = useMemo(
+    () => ({ realWorkflows, loading, hasMore, loadingMore, loadMore, getCached, removeFromCache }),
+    [realWorkflows, loading, hasMore, loadingMore, loadMore, getCached, removeFromCache],
+  );
   return <RealWorkflowsContext.Provider value={value}>{children}</RealWorkflowsContext.Provider>;
 }
 

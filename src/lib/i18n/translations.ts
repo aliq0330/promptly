@@ -237,6 +237,8 @@ export const translations = {
   "common.yes": { tr: "Evet", en: "Yes" },
   "common.no": { tr: "Hayır", en: "No" },
   "common.loading": { tr: "Yükleniyor…", en: "Loading…" },
+  "common.loadMore": { tr: "Daha fazla yükle", en: "Load more" },
+  "common.loadingMore": { tr: "Yükleniyor…", en: "Loading…" },
   "common.error": { tr: "Bir hata oluştu.", en: "Something went wrong." },
   "common.errorGeneric": { tr: "Bir şeyler ters gitti. Lütfen tekrar dene.", en: "Something went wrong. Please try again." },
   "common.retry": { tr: "Tekrar dene", en: "Try again" },

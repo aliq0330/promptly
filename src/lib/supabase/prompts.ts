@@ -1,6 +1,7 @@
 import { normalizeToolRefs } from "@/lib/ai-tool-catalog";
 import { supabase } from "./client";
 import { withoutBlocked } from "./blocked-users";
+import { applyKeysetCursor, nextCursorFrom, type KeysetCursor } from "./pagination";
 import { placeholderArt } from "@/lib/placeholder-image";
 import { resizeImageToBlob } from "@/lib/utils";
 import { translateForRuntime } from "@/lib/i18n/translations";
@@ -135,27 +136,50 @@ export function mapPromptRow(row: PromptRow): Prompt {
   };
 }
 
-/** Most recent published prompts, for mixing into the feed/discover pages alongside mock + local content. */
-export async function fetchRecentPublishedPrompts(limit = 60): Promise<Prompt[]> {
+export interface PromptsPage {
+  items: Prompt[];
+  /** Pass this back as `cursor` to fetch the next page; `null` once there's nothing left. */
+  nextCursor: KeysetCursor | null;
+}
+
+/**
+ * Most recent published prompts, keyset-paginated by `created_at`/`id` — the
+ * real "Daha fazla yükle" source behind `/prompts`'s browse view (and the
+ * feed/discover pages' initial, unfiltered load). `withoutBlocked`/
+ * `filterNotDeleted`/`filterProfileVisible` run AFTER the DB query, so a
+ * page can legitimately come back with fewer items than `limit` even when
+ * more real rows exist further back — `nextCursor` is derived from the raw
+ * DB rows (before that filtering), never from `items.length`, so "load
+ * more" still reaches them on the next call.
+ */
+export async function fetchRecentPublishedPrompts(limit = 24, cursor?: KeysetCursor): Promise<PromptsPage> {
   try {
-    const { data, error } = await supabase
-      .from("prompts")
-      .select(PROMPT_SELECT)
-      .eq("status", "published")
-      .order("created_at", { ascending: false })
-      .limit(limit);
+    const request = applyKeysetCursor(
+      supabase
+        .from("prompts")
+        .select(PROMPT_SELECT)
+        .eq("status", "published")
+        .order("created_at", { ascending: false })
+        .order("id", { ascending: false })
+        .limit(limit),
+      "created_at",
+      cursor,
+    );
+    const { data, error } = await request;
     if (error) {
       console.error("fetchRecentPublishedPrompts", error);
-      return [];
+      return { items: [], nextCursor: null };
     }
-    return withoutBlocked(filterNotDeleted(filterProfileVisible((data ?? []).map((row) => mapPromptRow(row as unknown as PromptRow)))), (p) => p.author.id);
+    const rows = (data ?? []) as unknown as PromptRow[];
+    const items = await withoutBlocked(filterNotDeleted(filterProfileVisible(rows.map(mapPromptRow))), (p) => p.author.id);
+    return { items, nextCursor: nextCursorFrom(rows, limit, (row) => row.created_at) };
   } catch (err) {
     // A real network failure (e.g. no route to Supabase) throws instead of
     // resolving with a structured error — without this, a visitor with no
     // connectivity would see the feed hang loading forever instead of
-    // gracefully falling back to mock/local content only.
+    // gracefully falling back gracefully.
     console.error("fetchRecentPublishedPrompts", err);
-    return [];
+    return { items: [], nextCursor: null };
   }
 }
 
