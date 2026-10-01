@@ -11673,3 +11673,7 @@ Dört oluşturma sayfasının (`/create`, `/requests/new`, `/generators/create`,
 ### 9.71 "Ek Ayar Önerileri" paneli: tablet/masaüstünde ortalanmış modal
 
 `extra-settings-panel.tsx`: `md`+ genişlikte panel artık sağdan açılan drawer değil, ekran ortasında (araç/model seçici gibi) modal; mobil (<md) alttan açılan bottom sheet aynen korundu. İçerik/seçenek/mantık değişmedi. Yeni metin yok (EN gerekmedi), migration yok.
+
+### 9.72 "Ek Ayar Önerileri": prompta yazılan metin site diline uyuyor
+
+Önceden yalnızca buton/çip etiketleri dile uyuyordu, prompta eklenen parçalar (`promptFragment`) hep İngilizceydi. Artık her seçenek için Türkçe karşılık var (`TR_FRAGMENTS`, `groupId:optionId` anahtarlı, `promptFragmentTr`); `composePrompt(..., language)` ve çip tooltip'i (`settingFragment`) aktif dile göre yazar. Midjourney parametreleri (`--ar` vb.) iki dilde aynı. Seçimler id olarak saklandığından dil değişince önizleme yeni dilde yeniden kurulur; kaydedilmiş prompt düz metin olduğundan kayıt anındaki dilde kalır. Not: görsel araçları çoğunlukla İngilizce prompta daha iyi yanıt verir. Yeni arayüz metni yok; migration yok.

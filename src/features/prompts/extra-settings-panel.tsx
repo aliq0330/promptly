@@ -10,6 +10,7 @@ import {
   SETTING_PRESETS,
   composePrompt,
   sanitizeSelection,
+  settingFragment,
   settingLabel,
   type SettingGroup,
   type SettingSelection,
@@ -43,7 +44,7 @@ export function ExtraSettingsSection({
     const option = g.options.find((o) => o.id === applied[g.id]);
     return option ? [{ groupId: g.id, label: settingLabel(option, language), groupLabel: settingLabel(g, language) }] : [];
   });
-  const composed = composePrompt(promptText, applied, groups);
+  const composed = composePrompt(promptText, applied, groups, language);
 
   return (
     <div className="space-y-2">
@@ -140,7 +141,7 @@ function ExtraSettingsPanel({
   const { t, language } = useTranslation();
   const [draft, setDraft] = useState<SettingSelection>(initial);
   const presets = SETTING_PRESETS.filter((p) => p.contentType === contentType);
-  const composed = composePrompt(promptText, draft, groups);
+  const composed = composePrompt(promptText, draft, groups, language);
   const selectedCount = Object.keys(draft).length;
 
   useEffect(() => {
@@ -217,7 +218,7 @@ function ExtraSettingsPanel({
                 <h3 className="mb-2 text-label font-semibold text-text">{settingLabel(g, language)}</h3>
                 <div className="flex flex-wrap gap-2">
                   {g.options.map((option) => (
-                    <Chip key={option.id} selected={draft[g.id] === option.id} onClick={() => toggle(g.id, option.id)} title={option.promptFragment} data-option={`${g.id}:${option.id}`}>
+                    <Chip key={option.id} selected={draft[g.id] === option.id} onClick={() => toggle(g.id, option.id)} title={settingFragment(option, language)} data-option={`${g.id}:${option.id}`}>
                       {settingLabel(option, language)}
                     </Chip>
                   ))}

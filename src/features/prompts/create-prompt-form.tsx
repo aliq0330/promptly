@@ -108,7 +108,7 @@ function NegativePromptReference({ text }: { text: string }) {
  * (duplicate) is not a remix and was never affected by that removal.
  */
 export function CreatePromptForm() {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useAuth();
@@ -212,8 +212,8 @@ export function CreatePromptForm() {
     [contentType, category, subcategory, tools],
   );
   const finalPromptText = useMemo(
-    () => composePrompt(promptText, sanitizeSelection(extraSettings, extraGroups), extraGroups),
-    [promptText, extraSettings, extraGroups],
+    () => composePrompt(promptText, sanitizeSelection(extraSettings, extraGroups), extraGroups, language),
+    [promptText, extraSettings, extraGroups, language],
   );
   // CLAUDE.md §12: answering a request must NOT just copy the request's own
   // tags — they're only passed as soft `contextTags` (nudge into the
