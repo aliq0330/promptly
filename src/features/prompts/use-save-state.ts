@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/features/auth/auth-provider";
 import { isPromptSaved, removeFromSavedEverywhere } from "@/lib/supabase/collections";
+import { engagementStore, useEngagementEntry } from "@/features/content/engagement-store";
 import type { LikeableContentType } from "@/lib/supabase/likes";
 
 /**
@@ -19,42 +20,40 @@ type SaveableContentType = Extract<LikeableContentType, "prompt" | "generator" |
  * Whether the current viewer generally saved a real prompt OR generator —
  * true iff it's a member of ANY of their own collections, default ("Genel")
  * or custom (Bölüm 9.38 — see `isPromptSaved`'s own doc comment for why this
- * changed from the original "default collection only" rule). No count,
- * saves are never shown as a number. This is the single source of truth for
- * the bookmark icon everywhere it appears (feed, discover, profile,
- * collection detail) — every instance re-fetches this fresh on mount, so a
- * removal on one screen is always reflected correctly the next time a card
- * for the same prompt renders (CLAUDE.md Bölüm 9.22 §16). `contentType`
- * defaults to `"prompt"` so every existing prompt call site keeps working
- * unchanged — a generator now uses this SAME hook (Bölüm 9.36's Prompt/
- * Generator parity pass), replacing the old, separate, modal-less
- * `useGeneratorSaveState`.
+ * changed from the original "default collection only" rule). This is the
+ * single source of truth for the bookmark icon everywhere it appears (feed,
+ * discover, profile, collection detail). `contentType` defaults to
+ * `"prompt"` so every existing prompt call site keeps working unchanged —
+ * a generator now uses this SAME hook (Bölüm 9.36's Prompt/Generator parity
+ * pass), replacing the old, separate, modal-less `useGeneratorSaveState`.
+ *
+ * `saveCount` is the real, trigger-maintained `save_count` column (CLAUDE.md
+ * — one save per distinct user, not per collection; adding to a second of
+ * your OWN collections doesn't bump it again). Like `isSaved`, it's read/
+ * written through `engagement-store` rather than local `useState` — once
+ * any component for this id has mounted this session, its count lives
+ * there, so navigating to a different page never shows a stale 0 again
+ * (the same fix applied to likes/follows), and
+ * `engagement-realtime-provider.tsx` converges it across tabs/other users.
  */
-export function useSaveState(id: string, contentType: SaveableContentType = "prompt") {
+export function useSaveState(id: string, contentType: SaveableContentType = "prompt", saveCount = 0) {
   const { user } = useAuth();
-
-  const [isSaved, setIsSaved] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const key = engagementStore.keyOf("save", contentType, id);
+  const entry = useEngagementEntry("save", contentType, id, saveCount);
   const [isToggling, setIsToggling] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
-    if (!user) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- nothing to check while signed out
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
+    if (!user) return;
+    const { activeChecked } = engagementStore.readActive(key);
+    if (activeChecked) return;
     isPromptSaved(id, user.id, contentType).then((result) => {
-      if (!cancelled) {
-        setIsSaved(result);
-        setLoading(false);
-      }
+      if (!cancelled) engagementStore.setActive(key, result);
     });
     return () => {
       cancelled = true;
     };
-  }, [user, id, contentType]);
+  }, [user, id, contentType, key]);
 
   /**
    * The general "kaydedilenlerden kaldır" action — removes this prompt/
@@ -64,42 +63,55 @@ export function useSaveState(id: string, contentType: SaveableContentType = "pro
    * failure; guarded against overlapping calls so a double-click can't fire
    * two requests. Resolves `true` only on a real, confirmed success, so a
    * caller can decide whether it's honest to show a "removed" confirmation.
+   * This is always a true zero-collections transition (only called while
+   * `isSaved` is true), so it's always a real -1 to the shared count.
    */
   const removeEverywhere = useCallback(async () => {
     if (!user || isToggling) return false;
     setIsToggling(true);
-    setIsSaved(false);
+    engagementStore.applyToggle(key, false, -1);
     try {
       await removeFromSavedEverywhere(id, contentType);
       return true;
     } catch (err) {
       console.error("removeFromSavedEverywhere", err);
-      setIsSaved(true);
+      engagementStore.applyToggle(key, true, 1);
       return false;
     } finally {
       setIsToggling(false);
     }
-  }, [user, id, contentType, isToggling]);
+  }, [user, id, contentType, isToggling, key]);
 
   /**
    * Reflects a save that a caller already performed for real elsewhere (the
    * collection-picker modal's own `addItemToCollection`, onto ANY
-   * collection — Bölüm 9.38, not just the default one) — never a fake/
-   * optimistic guess, just skips an unnecessary refetch of state this
-   * component already knows is true.
+   * collection — Bölüm 9.38) — never a fake/optimistic guess.
+   * `SaveToCollectionModal` only calls this on the real zero→one-plus
+   * transition (`!wasSavedAnywhere`), so it's always a genuine +1, matching
+   * exactly what the server's own per-owner-dedup `save_count` trigger will
+   * also compute for that same transition.
    */
   const markSaved = useCallback(() => {
-    setIsSaved(true);
-  }, []);
+    engagementStore.applyToggle(key, true, 1);
+  }, [key]);
 
   /**
    * The mirror of `markSaved` — reflects a real removal that happened
    * elsewhere and left the item saved in NO collection at all (the modal's
-   * own membership-count bookkeeping, Bölüm 9.38) without a refetch.
+   * own membership-count bookkeeping, Bölüm 9.38), always a genuine -1.
    */
   const markUnsaved = useCallback(() => {
-    setIsSaved(false);
-  }, []);
+    engagementStore.applyToggle(key, false, -1);
+  }, [key]);
 
-  return { isSaved, removeEverywhere, markSaved, markUnsaved, loading, isToggling, canSave: Boolean(user) };
+  return {
+    isSaved: entry.active,
+    saveCount: entry.count,
+    removeEverywhere,
+    markSaved,
+    markUnsaved,
+    loading: Boolean(user) && !entry.activeChecked,
+    isToggling,
+    canSave: Boolean(user),
+  };
 }

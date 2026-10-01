@@ -562,6 +562,7 @@ export function CreatePromptForm() {
     tags: tagPicker.accepted.map((entry) => entry.tag),
     origin,
     likeCount: 0,
+    saveCount: 0,
     commentCount: 0,
     isLiked: false,
     isSaved: false,

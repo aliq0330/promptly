@@ -24,6 +24,7 @@ export interface WorkflowRow {
   tools: string[] | null;
   status: "draft" | "published";
   like_count: number | null;
+  save_count: number | null;
   comment_count: number | null;
   created_at: string;
   updated_at: string;
@@ -33,7 +34,7 @@ export interface WorkflowRow {
 }
 
 export const WORKFLOW_SELECT = `
-  id, creator_id, title, description, cover_url, content_types, category, tools, status, like_count, comment_count, created_at, updated_at,
+  id, creator_id, title, description, cover_url, content_types, category, tools, status, like_count, save_count, comment_count, created_at, updated_at,
   profiles:creator_id ( ${PROFILE_SELECT} ),
   workflow_steps ( count ),
   workflow_tags ( tags ( slug, label ) )
@@ -52,6 +53,7 @@ export function mapWorkflowRow(row: WorkflowRow): Workflow {
     status: row.status,
     stepCount: row.workflow_steps?.[0]?.count ?? 0,
     likeCount: row.like_count ?? 0,
+    saveCount: row.save_count ?? 0,
     commentCount: row.comment_count ?? 0,
     tags: (row.workflow_tags ?? []).map((wt): Tag => ({ slug: wt.tags.slug, label: wt.tags.label })),
     createdAt: row.created_at,

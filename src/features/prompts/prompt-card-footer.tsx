@@ -28,19 +28,19 @@ export function PromptCardFooter(target: FooterTarget) {
         <>
           <LikeButton id={target.workflow.id} likeCount={target.workflow.likeCount} contentType="workflow" />
           <CommentCountLink workflowId={target.workflow.id} baseCount={target.workflow.commentCount} />
-          <SaveButton workflowId={target.workflow.id} />
+          <SaveButton workflowId={target.workflow.id} saveCount={target.workflow.saveCount} />
         </>
       ) : target.generator ? (
         <>
           <LikeButton id={target.generator.id} likeCount={target.generator.likeCount} contentType="generator" />
           <CommentCountLink generatorSlug={target.generator.slug} generatorId={target.generator.id} baseCount={target.generator.commentCount} />
-          <SaveButton generatorId={target.generator.id} />
+          <SaveButton generatorId={target.generator.id} saveCount={target.generator.saveCount} />
         </>
       ) : (
         <>
           <LikeButton id={target.prompt.id} likeCount={target.prompt.likeCount} contentType="prompt" />
           <CommentCountLink promptId={target.prompt.id} baseCount={target.prompt.commentCount} />
-          <SaveButton promptId={target.prompt.id} />
+          <SaveButton promptId={target.prompt.id} saveCount={target.prompt.saveCount} />
         </>
       )}
       <span className="ml-auto" />

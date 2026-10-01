@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Bookmark } from "lucide-react";
 import { Portal } from "@/components/ui/portal";
-import { cn } from "@/lib/utils";
+import { cn, formatCount } from "@/lib/utils";
 import { contentActionClassName } from "@/features/content/action-styles";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { useSaveState } from "./use-save-state";
@@ -29,21 +29,25 @@ export function SaveButton({
   promptId,
   generatorId,
   workflowId,
+  saveCount = 0,
   size = 16,
   className,
 }: {
   promptId?: string;
   generatorId?: string;
   workflowId?: string;
+  /** Real, trigger-maintained `save_count` column — the count seed for this id's engagement-store entry. */
+  saveCount?: number;
   size?: number;
   className?: string;
 }) {
   const { t } = useTranslation();
   const id = (workflowId ?? generatorId ?? promptId)!;
   const contentType = workflowId ? "workflow" : generatorId ? "generator" : "prompt";
-  const { isSaved, removeEverywhere, markSaved, markUnsaved, isToggling, canSave } = useSaveState(
+  const { isSaved, saveCount: count, removeEverywhere, markSaved, markUnsaved, isToggling, canSave } = useSaveState(
     id,
     contentType,
+    saveCount,
   );
   const [modalOpen, setModalOpen] = useState(false);
   const [showRemovedToast, setShowRemovedToast] = useState(false);
@@ -63,10 +67,11 @@ export function SaveButton({
         href="/login"
         onClick={(event) => event.stopPropagation()}
         title={t("prompt.loginToSave")}
-        aria-label={t("prompt.loginToSave")}
+        aria-label={t("prompt.loginToSaveAria", { count })}
         className={sharedClassName}
       >
         <Bookmark size={size} strokeWidth={1.75} />
+        <span aria-hidden>{formatCount(count)}</span>
       </Link>
     );
   }
@@ -98,10 +103,11 @@ export function SaveButton({
         aria-pressed={isSaved}
         aria-haspopup={isSaved ? undefined : "dialog"}
         title={isSaved ? t("prompt.removeFromSaved") : t("prompt.addToCollection")}
-        aria-label={isSaved ? t("prompt.removeFromSaved") : t("prompt.addToCollection")}
+        aria-label={isSaved ? t("prompt.removeFromSaved") : t("prompt.saveAria", { count })}
         className={cn(sharedClassName, isToggling && "opacity-60")}
       >
         <Bookmark size={size} fill={isSaved ? "currentColor" : "none"} strokeWidth={1.75} />
+        <span aria-hidden>{formatCount(count)}</span>
       </button>
 
       {modalOpen && (

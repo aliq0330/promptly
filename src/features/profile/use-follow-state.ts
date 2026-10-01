@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect } from "react";
 import { useAuth } from "@/features/auth/auth-provider";
 import { fetchIsFollowing, followUser, unfollowUser } from "@/lib/supabase/follows";
+import { engagementStore, useEngagementEntry } from "@/features/content/engagement-store";
 import type { UserProfile } from "@/types";
 
 /**
@@ -11,63 +12,49 @@ import type { UserProfile } from "@/types";
  * data removal), so this always talks to the real `follows` table.
  * `canFollow` is false while signed out: RLS requires an authenticated
  * session to write a `follows` row.
+ *
+ * Reads/writes `engagement-store` instead of local `useState` — the SAME
+ * fix `useLikeState` got (CLAUDE.md), extended to follows: a standalone
+ * `FollowButton` on a creator row and `ProfileHeader`'s own call for the
+ * same user now share one live count instead of each starting from
+ * whatever stale `followerCount` their own cached profile object carried.
  */
 export function useFollowState(target: UserProfile) {
   const { user } = useAuth();
-
-  const [isFollowing, setIsFollowing] = useState(false);
-  const [followerCount, setFollowerCount] = useState(target.followerCount);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- resyncs when a freshly-fetched profile (a new object) replaces the previous one
-    setFollowerCount(target.followerCount);
-  }, [target.followerCount]);
+  const key = engagementStore.keyOf("follow", "", target.id);
+  const entry = useEngagementEntry("follow", "", target.id, target.followerCount);
 
   useEffect(() => {
     let cancelled = false;
-    if (!user) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- nothing to check while signed out
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
+    if (!user) return;
+    const { activeChecked } = engagementStore.readActive(key);
+    if (activeChecked) return;
     fetchIsFollowing(user.id, target.id).then((result) => {
-      if (!cancelled) {
-        setIsFollowing(result);
-        setLoading(false);
-      }
+      if (!cancelled) engagementStore.setActive(key, result);
     });
     return () => {
       cancelled = true;
     };
-  }, [user, target.id]);
+  }, [user, target.id, key]);
 
   const toggle = useCallback(async () => {
     if (!user) return; // canFollow is false in this case — nothing to toggle
-
-    if (isFollowing) {
-      setIsFollowing(false);
-      setFollowerCount((count) => Math.max(0, count - 1));
-      try {
-        await unfollowUser(user.id, target.id);
-      } catch (err) {
-        console.error("unfollowUser", err);
-        setIsFollowing(true);
-        setFollowerCount((count) => count + 1);
-      }
-    } else {
-      setIsFollowing(true);
-      setFollowerCount((count) => count + 1);
-      try {
-        await followUser(user.id, target.id);
-      } catch (err) {
-        console.error("followUser", err);
-        setIsFollowing(false);
-        setFollowerCount((count) => Math.max(0, count - 1));
-      }
+    const wasFollowing = engagementStore.readActive(key).active;
+    engagementStore.applyToggle(key, !wasFollowing, wasFollowing ? -1 : 1);
+    try {
+      if (wasFollowing) await unfollowUser(user.id, target.id);
+      else await followUser(user.id, target.id);
+    } catch (err) {
+      console.error(wasFollowing ? "unfollowUser" : "followUser", err);
+      engagementStore.applyToggle(key, wasFollowing, wasFollowing ? 1 : -1);
     }
-  }, [user, isFollowing, target.id]);
+  }, [user, target.id, key]);
 
-  return { isFollowing, followerCount, toggle, loading, canFollow: Boolean(user) };
+  return {
+    isFollowing: entry.active,
+    followerCount: entry.count,
+    toggle,
+    loading: Boolean(user) && !entry.activeChecked,
+    canFollow: Boolean(user),
+  };
 }

@@ -120,7 +120,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
           <div className="flex flex-wrap items-center gap-0.5 border-y border-border-soft py-1.5">
             <LikeButton id={prompt.id} likeCount={prompt.likeCount} size={18} />
             <CommentCountLink promptId={prompt.id} baseCount={prompt.commentCount} size={18} />
-            <SaveButton promptId={prompt.id} size={18} />
+            <SaveButton promptId={prompt.id} saveCount={prompt.saveCount} size={18} />
             <span className="ml-auto" />
             <ShareTriggerButton target={{ contentType: "prompt", prompt }} label={t("common.share")} />
           </div>

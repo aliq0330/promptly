@@ -353,8 +353,10 @@ export const translations = {
   "prompt.like": { tr: "Beğen", en: "Like" },
   "prompt.likeAria": { tr: "Beğen ({{count}} beğeni)", en: "Like ({{count}} likes)" },
   "prompt.loginToSave": { tr: "Kaydetmek için giriş yapmalısın", en: "Log in to save this" },
+  "prompt.loginToSaveAria": { tr: "Kaydetmek için giriş yap ({{count}} kayıt)", en: "Log in to save ({{count}} saves)" },
   "prompt.removeFromSaved": { tr: "Kaydedilenlerden çıkar", en: "Remove from saved" },
   "prompt.addToCollection": { tr: "Koleksiyona ekle", en: "Add to collection" },
+  "prompt.saveAria": { tr: "Kaydet ({{count}} kayıt)", en: "Save ({{count}} saves)" },
   "prompt.removedFromSavedToast": { tr: "Kaydedilenlerden kaldırıldı.", en: "Removed from saved." },
   "comments.title": { tr: "Yorumlar", en: "Comments" },
 

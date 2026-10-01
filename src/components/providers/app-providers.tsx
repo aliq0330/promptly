@@ -6,13 +6,16 @@ import { RealWorkflowsProvider } from "@/features/workflows/real-workflows-provi
 import { RealGeneratorsProvider } from "@/features/generators/real-generators-provider";
 import { RealMessagesProvider } from "@/features/messages/real-messages-provider";
 import { NotificationsProvider } from "@/features/notifications/notifications-provider";
+import { EngagementRealtimeProvider } from "@/features/content/engagement-realtime-provider";
 
 /**
  * All of the app's client state providers composed in one place — every one
  * backed by the real Supabase `profiles`/`prompts`/`prompt_requests`/
  * `generators`/`conversations`/`notifications` tables (CLAUDE.md's
  * mock-data removal). Order between them doesn't matter, none depend on
- * another.
+ * another. `EngagementRealtimeProvider` is a childless, side-effect-only
+ * sibling (same shape as `PreferencesSync` in `layout.tsx`) — it has no
+ * context value to share, just a subscription to keep alive.
  */
 export function AppProviders({ children }: { children: ReactNode }) {
   return (
@@ -22,7 +25,10 @@ export function AppProviders({ children }: { children: ReactNode }) {
           <RealGeneratorsProvider>
             <RealWorkflowsProvider>
               <RealMessagesProvider>
-                <NotificationsProvider>{children}</NotificationsProvider>
+                <NotificationsProvider>
+                  <EngagementRealtimeProvider />
+                  {children}
+                </NotificationsProvider>
               </RealMessagesProvider>
             </RealWorkflowsProvider>
           </RealGeneratorsProvider>

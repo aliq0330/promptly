@@ -176,7 +176,7 @@ export function WorkflowDetailView() {
               baseCount={workflow.commentCount}
               size={18}
             />
-            <SaveButton workflowId={workflow.id} size={18} />
+            <SaveButton workflowId={workflow.id} saveCount={workflow.saveCount} size={18} />
             <span className="ml-auto" />
             <ShareTriggerButton
               target={{ contentType: "workflow", workflow }}

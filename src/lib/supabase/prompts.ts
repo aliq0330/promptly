@@ -30,6 +30,7 @@ export interface PromptRow {
   origin_type: "original" | "request_response";
   request_id: string | null;
   like_count: number;
+  save_count: number;
   comment_count: number;
   created_at: string;
   show_on_profile: boolean;
@@ -47,7 +48,7 @@ export interface PromptRow {
 export const PROMPT_SELECT = `
   id, title, description, prompt_text, tool, tools, content_type, category, subcategory, status,
   origin_type, request_id,
-  like_count, comment_count, created_at, show_on_profile,
+  like_count, save_count, comment_count, created_at, show_on_profile,
   deleted_at, generator_id, generator_version_id, generator_run_id,
   profiles:author_id ( id, username, display_name, avatar_url, cover_url, bio, website, follower_count, following_count, created_at, interests ),
   prompt_media ( id, url, width, height, alt ),
@@ -113,6 +114,7 @@ export function mapPromptRow(row: PromptRow): Prompt {
     tags,
     origin: mapOrigin(row),
     likeCount: row.like_count,
+    saveCount: row.save_count,
     commentCount: row.comment_count,
     showOnProfile: row.show_on_profile,
     deletedAt: row.deleted_at,
@@ -476,6 +478,7 @@ export async function createRealPrompt(
       ? { type: "request-response", requestId: input.requestId, responseId: promptId }
       : { type: "original" },
     likeCount: 0,
+    saveCount: 0,
     commentCount: 0,
     isLiked: false,
     isSaved: false,

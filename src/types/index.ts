@@ -72,6 +72,8 @@ export interface Prompt {
   tags: Tag[];
   origin: PromptOrigin;
   likeCount: number;
+  /** Real, trigger-maintained `prompts.save_count` — one per distinct user who saved it into ANY of their own collections, not per collection. */
+  saveCount: number;
   commentCount: number;
   isLiked: boolean;
   isSaved: boolean;
@@ -653,6 +655,8 @@ export interface Workflow {
   status: "draft" | "published";
   stepCount: number;
   likeCount: number;
+  /** Real, trigger-maintained `workflows.save_count` — same "one per distinct user" rule as `Prompt.saveCount`/`Generator.saveCount`. */
+  saveCount: number;
   commentCount: number;
   tags: Tag[];
   createdAt: string;

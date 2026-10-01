@@ -55,6 +55,7 @@ export const FIXTURE_PROMPT: Prompt = {
   tags: [],
   origin: { type: "original" },
   likeCount: 12,
+  saveCount: 4,
   commentCount: 3,
   isLiked: false,
   isSaved: false,
