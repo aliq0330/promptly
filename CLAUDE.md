@@ -11669,3 +11669,7 @@ Dört oluşturma sayfasının (`/create`, `/requests/new`, `/generators/create`,
 ### 9.70 Araç / model seçici: model çipleri araç adının satırında
 
 `ToolPicker` listesinde model çipleri artık araç satırının altında ayrı bir blok değil, araç adının bulunduğu satırda (adın yanında, dar ekranda aynı satır kutusu içinde alta sarar). Satır kutusu `li`'ye taşındı, seçim butonu ile çipler kardeş. Yeni metin yok, migration yok.
+
+### 9.71 "Ek Ayar Önerileri" paneli: tablet/masaüstünde ortalanmış modal
+
+`extra-settings-panel.tsx`: `md`+ genişlikte panel artık sağdan açılan drawer değil, ekran ortasında (araç/model seçici gibi) modal; mobil (<md) alttan açılan bottom sheet aynen korundu. İçerik/seçenek/mantık değişmedi. Yeni metin yok (EN gerekmedi), migration yok.
