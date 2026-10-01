@@ -7,7 +7,15 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/auth-provider";
 import { supabase } from "@/lib/supabase/client";
 import { translateAuthError } from "@/features/auth/auth-errors";
-import { fetchOwnMessagePrivacy, updateMessagePrivacy, type MessagePrivacy } from "@/lib/supabase/profiles";
+import {
+  fetchOwnMessagePrivacy,
+  updateMessagePrivacy,
+  updateOwnUsername,
+  USERNAME_PATTERN,
+  type MessagePrivacy,
+} from "@/lib/supabase/profiles";
+import { useOwnProfile } from "@/features/auth/own-profile-provider";
+import { absoluteUrl } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Language, TranslationKey } from "@/lib/i18n/translations";
 import { useIsModerator } from "@/features/moderation/use-is-moderator";
@@ -25,6 +33,15 @@ export default function SettingsPage() {
   const { user, loading } = useAuth();
   const { t, language, setLanguage } = useTranslation();
   const isModerator = useIsModerator();
+  const { profile, refresh: refreshProfile } = useOwnProfile();
+  const [newEmail, setNewEmail] = useState("");
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [emailSent, setEmailSent] = useState(false);
+  const [isSavingEmail, setIsSavingEmail] = useState(false);
+  const [newUsername, setNewUsername] = useState<string | null>(null);
+  const [usernameError, setUsernameError] = useState<string | null>(null);
+  const [usernameSaved, setUsernameSaved] = useState(false);
+  const [isSavingUsername, setIsSavingUsername] = useState(false);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -53,6 +70,56 @@ export default function SettingsPage() {
       setMessagePrivacy(previous);
     } finally {
       setIsSavingPrivacy(false);
+    }
+  }
+
+  async function handleChangeEmail(event: FormEvent) {
+    event.preventDefault();
+    if (isSavingEmail) return;
+    setEmailError(null);
+    setEmailSent(false);
+    const next = newEmail.trim();
+    if (!next || next.toLowerCase() === (user?.email ?? "").toLowerCase()) {
+      setEmailError(t("settings.emailSame"));
+      return;
+    }
+    setIsSavingEmail(true);
+    const { error: updateError } = await supabase.auth.updateUser(
+      { email: next },
+      { emailRedirectTo: absoluteUrl("/settings") },
+    );
+    setIsSavingEmail(false);
+    if (updateError) {
+      setEmailError(translateAuthError(updateError.message));
+      return;
+    }
+    setNewEmail("");
+    setEmailSent(true);
+  }
+
+  async function handleChangeUsername(event: FormEvent) {
+    event.preventDefault();
+    if (isSavingUsername || !user) return;
+    setUsernameError(null);
+    setUsernameSaved(false);
+    const next = (newUsername ?? "").trim().toLowerCase();
+    if (next === profile?.username) {
+      setUsernameError(t("settings.usernameSame"));
+      return;
+    }
+    if (!USERNAME_PATTERN.test(next)) {
+      setUsernameError(t("settings.usernameInvalid"));
+      return;
+    }
+    setIsSavingUsername(true);
+    try {
+      await updateOwnUsername(user.id, next);
+      await refreshProfile();
+      setUsernameSaved(true);
+    } catch (err) {
+      setUsernameError(err instanceof Error ? err.message : t("settings.usernameInvalid"));
+    } finally {
+      setIsSavingUsername(false);
     }
   }
 
@@ -136,12 +203,62 @@ export default function SettingsPage() {
             {t("nav.moderation")}
           </Link>
         )}
-        <div className="rounded-lg border border-border bg-surface p-4">
-          <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-text-muted">
-            {t("settings.email")}
-          </p>
-          <p className="text-sm text-text">{user.email}</p>
-        </div>
+        <form onSubmit={handleChangeUsername} className="space-y-3 rounded-lg border border-border bg-surface p-4">
+          <p className="text-sm font-medium text-text">{t("settings.usernameTitle")}</p>
+          <p className="text-xs text-text-muted">{t("settings.usernameHint")}</p>
+          <div>
+            <label htmlFor="settings-username" className="mb-1.5 block text-sm text-text-muted">
+              {t("settings.usernameLabel")}
+            </label>
+            <input
+              id="settings-username"
+              type="text"
+              required
+              minLength={3}
+              maxLength={30}
+              autoComplete="username"
+              autoCapitalize="none"
+              autoCorrect="off"
+              value={newUsername ?? profile?.username ?? ""}
+              onChange={(event) => setNewUsername(event.target.value)}
+              className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted"
+            />
+          </div>
+          {usernameError && <p className="text-sm text-danger">{usernameError}</p>}
+          {usernameSaved && <p className="text-sm text-primary">{t("settings.usernameUpdated")}</p>}
+          <Button type="submit" size="sm" disabled={isSavingUsername || !profile}>
+            {isSavingUsername ? t("settings.updating") : t("settings.updateUsername")}
+          </Button>
+        </form>
+
+        <form onSubmit={handleChangeEmail} className="space-y-3 rounded-lg border border-border bg-surface p-4">
+          <p className="text-sm font-medium text-text">{t("settings.changeEmail")}</p>
+          <div>
+            <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-text-muted">
+              {t("settings.email")}
+            </p>
+            <p className="text-sm text-text">{user.email}</p>
+          </div>
+          <div>
+            <label htmlFor="settings-new-email" className="mb-1.5 block text-sm text-text-muted">
+              {t("settings.newEmail")}
+            </label>
+            <input
+              id="settings-new-email"
+              type="email"
+              required
+              autoComplete="email"
+              value={newEmail}
+              onChange={(event) => setNewEmail(event.target.value)}
+              className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted"
+            />
+          </div>
+          {emailError && <p className="text-sm text-danger">{emailError}</p>}
+          {emailSent && <p className="text-sm text-primary">{t("settings.emailConfirmationSent")}</p>}
+          <Button type="submit" size="sm" disabled={isSavingEmail}>
+            {isSavingEmail ? t("settings.updating") : t("settings.updateEmail")}
+          </Button>
+        </form>
 
         <form onSubmit={handleChangePassword} className="space-y-3 rounded-lg border border-border bg-surface p-4">
           <p className="text-sm font-medium text-text">{t("settings.changePassword")}</p>

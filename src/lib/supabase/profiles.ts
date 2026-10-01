@@ -180,6 +180,33 @@ export async function updateOwnProfile(userId: string, input: UpdateOwnProfileIn
   return mapProfileRow(data as ProfileRow);
 }
 
+export const USERNAME_PATTERN = /^[a-z0-9_.]{3,30}$/;
+
+/**
+ * Changes the signed-in user's username (unique, `profiles_username_format`).
+ * Throws a translated Error: "taken" on a unique violation, "invalid" on a
+ * format violation. Old profile links using the previous username stop
+ * resolving (profile URLs are `?username=`-based).
+ */
+export async function updateOwnUsername(userId: string, username: string): Promise<void> {
+  const next = username.trim().toLowerCase();
+  if (!USERNAME_PATTERN.test(next)) throw new Error(translateForRuntime("settings.usernameInvalid"));
+
+  const { data, error } = await supabase
+    .from("profiles")
+    .update({ username: next })
+    .eq("id", userId)
+    .select("id")
+    .maybeSingle();
+
+  if (error) {
+    if (error.code === "23505") throw new Error(translateForRuntime("settings.usernameTaken"));
+    if (error.code === "23514") throw new Error(translateForRuntime("settings.usernameInvalid"));
+    throw new Error(error.message);
+  }
+  if (!data) throw new Error(translateForRuntime("profile.updateFailed"));
+}
+
 /**
  * Uploads a real avatar to the `avatars` Storage bucket (CLAUDE.md Bölüm
  * 20) under this user's own folder — the only path RLS lets them write to
