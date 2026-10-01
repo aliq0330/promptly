@@ -18,7 +18,7 @@ import type { ContentTypeId } from "@/lib/content-taxonomy";
 
 /**
  * Trigger row + applied chips. The panel itself (mobile bottom sheet,
- * tablet/desktop right drawer) is only mounted while open, so only the
+ * tablet/desktop centered modal) is only mounted while open, so only the
  * groups relevant to the current type/category are ever rendered.
  */
 export function ExtraSettingsSection({
@@ -171,7 +171,7 @@ function ExtraSettingsPanel({
 
   return (
     <Portal>
-      <div className="fixed inset-0 z-50 animate-fade-in bg-[rgb(10_8_20/0.45)] backdrop-blur-[2px]" onClick={onClose}>
+      <div className="fixed inset-0 z-50 animate-fade-in bg-[rgb(10_8_20/0.45)] backdrop-blur-[2px] md:flex md:items-center md:justify-center md:p-4" onClick={onClose}>
         <div
           role="dialog"
           aria-modal="true"
@@ -180,7 +180,7 @@ function ExtraSettingsPanel({
           onClick={(event) => event.stopPropagation()}
           className={
             "absolute inset-x-0 bottom-0 flex max-h-[90dvh] flex-col rounded-t-xl border border-b-0 border-border bg-surface shadow-pop animate-sheet-up " +
-            "md:inset-y-0 md:left-auto md:right-0 md:max-h-none md:w-[440px] md:rounded-none md:border-y-0 md:border-r-0 md:border-b lg:w-[480px] md:animate-fade-in"
+            "md:static md:inset-auto md:max-h-[85dvh] md:w-full md:max-w-lg md:rounded-lg md:border md:animate-pop-in"
           }
         >
           <div className="flex items-start gap-3 border-b border-border-soft px-4 py-3">
