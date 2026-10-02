@@ -14,11 +14,12 @@ import { TagPicker } from "@/features/prompts/tag-picker";
 import { useTagPicker } from "@/features/prompts/use-tag-picker";
 import { useTagCatalog } from "@/features/tags/use-tag-catalog";
 import { fetchPresetById, savePreset } from "@/lib/supabase/presets";
-import { groupIdsFor, groupsFor, sanitizeSelection, type SettingSelection } from "@/lib/prompt-extra-settings";
+import { sanitizeSelection, type PresetField, type PresetSelection } from "@/lib/preset-fields";
+import { adoptForPreset, resolvePresetFields } from "@/lib/preset-utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn, presetHref } from "@/lib/utils";
 import { PresetCard } from "./preset-card";
-import { SettingGroupsEditor } from "./setting-groups-editor";
+import { PresetFieldsBuilder } from "./preset-fields-builder";
 import type { Preset, PromptContentType } from "@/types";
 
 type Visibility = "public" | "private" | "draft";
@@ -35,7 +36,7 @@ const INPUT_CLASS =
  * preview. Same two-column create layout as the request form.
  */
 export function PresetEditor({ editId }: { editId: string | null }) {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   const { profile: ownProfile } = useOwnProfile();
@@ -47,7 +48,8 @@ export function PresetEditor({ editId }: { editId: string | null }) {
   const [category, setCategory] = useState<string | null>(null);
   const [subcategory, setSubcategory] = useState<string | null>(null);
   const [tools, setTools] = useState<string[]>([]);
-  const [selection, setSelection] = useState<SettingSelection>({});
+  const [fields, setFields] = useState<PresetField[]>([]);
+  const [selection, setSelection] = useState<PresetSelection>({});
   const [cover, setCover] = useState<MultiImageItem[]>([]);
   const [visibility, setVisibility] = useState<Visibility>("public");
   const tagPicker = useTagPicker({ title, content: description, catalog });
@@ -59,9 +61,7 @@ export function PresetEditor({ editId }: { editId: string | null }) {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const groups = useMemo(() => groupsFor(groupIdsFor(contentType, category, subcategory, tools)), [contentType, category, subcategory, tools]);
-  const effectiveSelection = useMemo(() => sanitizeSelection(selection, groups), [selection, groups]);
-  const parameterCount = Object.keys(effectiveSelection).length;
+  const effectiveSelection = useMemo(() => sanitizeSelection(selection, fields), [selection, fields]);
 
   useEffect(() => {
     if (!editId || authLoading || !user) return;
@@ -77,7 +77,10 @@ export function PresetEditor({ editId }: { editId: string | null }) {
       setCategory(preset.category);
       setSubcategory(preset.subcategory);
       setTools(preset.tools);
-      setSelection(preset.selection);
+      // Catalog-only (older) presets become the user's own editable fields.
+      const adopted = adoptForPreset(resolvePresetFields(preset), preset.selection, language, preset.id);
+      setFields(adopted.fields);
+      setSelection(adopted.selection);
       setCover(preset.coverUrl ? [{ key: "existing-cover", url: preset.coverUrl, width: 0, height: 0 }] : []);
       setVisibility(preset.status === "draft" ? "draft" : preset.visibility);
       if (!tagsSeededRef.current) {
@@ -100,8 +103,8 @@ export function PresetEditor({ editId }: { editId: string | null }) {
     setTitleTouched(true);
     setError(null);
     if (title.trim().length < 3) return;
-    if (visibility !== "draft" && parameterCount === 0) {
-      setError(t("preset.errorNoParameters"));
+    if (visibility !== "draft" && fields.length === 0) {
+      setError(t("presetBuilder.errorNoFields"));
       return;
     }
     setIsSaving(true);
@@ -116,6 +119,7 @@ export function PresetEditor({ editId }: { editId: string | null }) {
           category,
           subcategory,
           tools,
+          fields,
           selection: effectiveSelection,
           tags: tagPicker.accepted.map((entry) => entry.tag),
           status: visibility === "draft" ? "draft" : "published",
@@ -183,6 +187,7 @@ export function PresetEditor({ editId }: { editId: string | null }) {
     category,
     subcategory,
     tools,
+    fields,
     selection: effectiveSelection,
     status: visibility === "draft" ? "draft" : "published",
     visibility: visibility === "private" ? "private" : "public",
@@ -246,7 +251,10 @@ export function PresetEditor({ editId }: { editId: string | null }) {
           <TaxonomyPicker
             value={{ contentType, category, subcategory }}
             onChange={(next) => {
-              if (next.contentType !== contentType) setSelection({});
+              if (next.contentType !== contentType) {
+                setFields([]);
+                setSelection({});
+              }
               setContentType(next.contentType);
               setCategory(next.category);
               setSubcategory(next.subcategory);
@@ -255,15 +263,18 @@ export function PresetEditor({ editId }: { editId: string | null }) {
 
           <ToolPicker label={t("tool.recommendedLabel")} value={tools} onChange={setTools} contentType={contentType} category={category} />
 
-          <section aria-labelledby="preset-params-title" className="space-y-4 rounded-lg border border-border bg-surface p-4">
-            <div>
-              <h2 id="preset-params-title" className="text-label font-semibold text-text">
-                {t("preset.parametersTitle")} <span className="text-text-muted">({parameterCount})</span>
-              </h2>
-              <p className="text-caption text-text-secondary">{t("preset.parametersHint")}</p>
-            </div>
-            <SettingGroupsEditor groups={groups} selection={effectiveSelection} onChange={setSelection} />
-          </section>
+          <PresetFieldsBuilder
+            contentType={contentType}
+            category={category}
+            subcategory={subcategory}
+            tools={tools}
+            fields={fields}
+            selection={effectiveSelection}
+            onChange={(nextFields, nextSelection) => {
+              setFields(nextFields);
+              setSelection(nextSelection);
+            }}
+          />
 
           <MultiImagePicker items={cover} onChange={setCover} max={1} label={t("preset.coverLabel")} />
 

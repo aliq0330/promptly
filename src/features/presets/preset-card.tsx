@@ -34,7 +34,7 @@ export function PresetCard({
 }) {
   const { t, language } = useTranslation();
   const href = presetHref(preset);
-  const entries = presetParameterEntries(preset.selection, language);
+  const entries = presetParameterEntries(preset, language);
   const shown = entries.slice(0, 3);
   const category = taxonomyPathLabel(preset, language, true);
 
@@ -59,9 +59,9 @@ export function PresetCard({
           {shown.length > 0 && (
             <ul className="flex flex-wrap gap-1.5" aria-label={t("preset.contentsTitle")}>
               {shown.map((entry) => (
-                <li key={entry.groupId} className="inline-flex max-w-full items-center gap-1 rounded-full bg-surface px-2.5 py-0.5 text-caption text-text-secondary">
-                  <span className="shrink-0 text-text-muted">{entry.groupLabel}:</span>
-                  <span className="truncate font-medium text-text">{entry.optionLabel}</span>
+                <li key={entry.fieldId} className="inline-flex max-w-full items-center gap-1 rounded-full bg-surface px-2.5 py-0.5 text-caption text-text-secondary">
+                  <span className="shrink-0 text-text-muted">{entry.fieldLabel}:</span>
+                  <span className="truncate font-medium text-text">{entry.valueLabel}</span>
                 </li>
               ))}
               {entries.length > shown.length && (

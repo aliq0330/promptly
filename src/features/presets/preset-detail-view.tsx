@@ -22,7 +22,7 @@ import { ShareTriggerButton } from "@/features/prompts/share-modal";
 import { StatisticsButton } from "@/features/statistics/statistics-button";
 import { fetchPresetById, recordPresetUse } from "@/lib/supabase/presets";
 import { taxonomyPathLabel } from "@/lib/content-taxonomy";
-import { presetParameterEntries } from "@/lib/preset-utils";
+import { presetParameterCount, presetParameterEntries } from "@/lib/preset-utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { formatCount, formatRelativeTime, presetHref, profileHref, tagHref } from "@/lib/utils";
 import { useRealPresets } from "./real-presets-provider";
@@ -80,7 +80,7 @@ export function PresetDetailView() {
   if (preset === undefined) return <DetailSkeleton />;
   if (!preset) return <NotFoundBlock title={t("preset.notFoundTitle")} description={t("preset.notFoundBody")} />;
 
-  const entries = presetParameterEntries(preset.selection, language);
+  const entries = presetParameterEntries(preset, language);
   const category = taxonomyPathLabel(preset, language, true);
   const isOwn = user?.id === preset.creator.id;
   const highlight = searchParams.get("hl");
@@ -181,9 +181,9 @@ export function PresetDetailView() {
             ) : (
               <dl className="grid gap-px bg-border-soft sm:grid-cols-2">
                 {entries.map((entry) => (
-                  <div key={entry.groupId} className="flex items-baseline justify-between gap-3 bg-surface px-4 py-2.5">
-                    <dt className="shrink-0 text-small text-text-muted">{entry.groupLabel}</dt>
-                    <dd className="min-w-0 truncate text-right text-small font-semibold text-text">{entry.optionLabel}</dd>
+                  <div key={entry.fieldId} className="flex items-baseline justify-between gap-3 bg-surface px-4 py-2.5">
+                    <dt className="shrink-0 text-small text-text-muted">{entry.fieldLabel}</dt>
+                    <dd className="min-w-0 truncate text-right text-small font-semibold text-text">{entry.valueLabel}</dd>
                   </div>
                 ))}
               </dl>
@@ -254,7 +254,7 @@ export function PresetDetailView() {
                       <span className="min-w-0 leading-tight">
                         <span className="line-clamp-2 text-label font-semibold text-text">{p.title}</span>
                         <span className="mt-0.5 block truncate text-caption text-text-muted">
-                          {t("preset.paramCount", { count: Object.keys(p.selection).length })} · {p.creator.displayName}
+                          {t("preset.paramCount", { count: presetParameterCount(p) })} · {p.creator.displayName}
                         </span>
                       </span>
                     </Link>

@@ -5,6 +5,7 @@ import { ThemeProvider, themeInitScript } from "@/components/theme/theme-provide
 import { LanguageProvider, languageInitScript } from "@/lib/i18n/language-provider";
 import { AuthProvider } from "@/features/auth/auth-provider";
 import { PreferencesSync } from "@/features/auth/preferences-sync";
+import { TaxonomyHydrator } from "@/features/content/taxonomy-hydrator";
 import "./globals.css";
 
 const inter = Inter({
@@ -53,6 +54,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <LanguageProvider>
             <AuthProvider>
               <PreferencesSync />
+              <TaxonomyHydrator />
               {children}
             </AuthProvider>
           </LanguageProvider>

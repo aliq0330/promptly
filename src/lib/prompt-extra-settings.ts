@@ -1,64 +1,56 @@
 /**
- * "Ek Ayar Önerileri" — optional, static prompt-setting suggestions shown
- * inside the Prompt creation form. No AI: every option carries a fixed,
- * `promptFragment` (English, plus a Turkish `promptFragmentTr`); the composed prompt is the user's ORIGINAL text
- * plus the fragments of the selected options, never a rewrite of it.
+ * PLATFORM CATALOG of "hazır alanlar" (preset fields) and "Promptly Hazır
+ * Ayarları" (platform presets) — the built-in side of the Hazır Ayar system,
+ * written in exactly the shapes the user's own database rows use
+ * (`PresetField` / `PresetOption`, `src/lib/preset-fields.ts`), so it can be
+ * moved into Supabase tables later without touching a consumer.
  *
- * Data model: ContentType -> Category -> SettingGroup -> SettingOption.
- * Content types/categories are the EXISTING taxonomy slugs
- * (`content-taxonomy.ts`); this file only decides which groups apply to a
- * (type, category, subcategory) via `groupIdsFor`, so the panel renders only
- * the relevant groups. Presets are plain `{ id, selection }` data, shaped so
- * user-saved presets can reuse the same type later.
+ * Which fields apply is decided by `fieldIdsFor(type, category, subcategory,
+ * tools)` against the EXISTING taxonomy slugs (`taxonomy-seed.ts`) — a
+ * Görsel › İnsan & Karakter › Portre form is offered Camera/Lens/Lighting/
+ * Pose/Outfit/Makeup/Hair…, a Product form Camera/Product presentation/
+ * Background/Material… — everything else stays one tap away behind "+ Alan
+ * Ekle". No AI: each option carries a fixed English phrase (and a Turkish
+ * counterpart); the composed prompt is the user's ORIGINAL text plus the
+ * phrases of the selected values, never a rewrite of it.
+ *
+ * Ids are stable and double as selection keys. Option `value`s of the original
+ * single-select groups equal the option ids older presets were saved with, so
+ * `{ groupId: optionId }` presets keep working unchanged.
  */
-import type { Language } from "@/lib/i18n/translations";
 import type { ContentTypeId } from "@/lib/content-taxonomy";
 import { parseToolRef } from "@/lib/ai-tool-catalog";
+import type { Bilingual, PresetField, PresetFieldConfig, PresetFieldType, PresetSelection } from "@/lib/preset-fields";
 
-export interface SettingOption {
-  id: string;
-  en: string;
-  tr: string;
-  /** Static English text appended to the prompt. */
-  promptFragment: string;
-  /** Turkish counterpart, used when the site language is Turkish. */
-  promptFragmentTr: string;
-  description?: string;
-  sortOrder: number;
-}
+/** `[value, en, tr, English phrase, Turkish phrase?]` — the Turkish phrase falls back to `TR_FRAGMENTS`, then to the English one. */
+type Row = readonly [value: string, en: string, tr: string, fragment: string, fragmentTr?: string];
 
-export interface SettingGroup {
-  id: string;
-  en: string;
-  tr: string;
-  /** `suffix` groups are tool parameters (e.g. Midjourney `--ar`), appended after the sentence. */
-  kind: "phrase" | "suffix";
-  options: SettingOption[];
-}
-
-export interface SettingPreset {
-  id: string;
-  en: string;
-  tr: string;
-  emoji: string;
-  contentType: ContentTypeId;
-  /** groupId -> optionId. `userId` is reserved for future user-saved presets. */
-  selection: Record<string, string>;
-  userId?: string;
-}
-
-export type SettingSelection = Record<string, string>;
-
-type Row = readonly [id: string, en: string, tr: string, fragment: string];
-
-function group(id: string, en: string, tr: string, rows: readonly Row[], kind: "phrase" | "suffix" = "phrase"): SettingGroup {
+function group(id: string, en: string, tr: string, rows: readonly Row[], kind: "phrase" | "suffix" = "phrase", type: PresetFieldType = "single_select"): PresetField {
   return {
     id,
-    en,
-    tr,
+    presetId: null,
+    name: en,
+    i18n: { en, tr },
+    type,
     kind,
-    options: rows.map(([oid, oen, otr, fragment], index) => ({ id: oid, en: oen, tr: otr, promptFragment: fragment, promptFragmentTr: TR_FRAGMENTS[`${id}:${oid}`] ?? fragment, sortOrder: index })),
+    source: "platform",
+    sortOrder: 0,
+    config: {},
+    options: rows.map(([value, oen, otr, fragment, fragmentTr], index) => ({
+      id: `${id}:${value}`,
+      fieldId: id,
+      label: oen,
+      value,
+      sortOrder: index,
+      i18n: { en: oen, tr: otr },
+      fragment: { en: fragment, tr: fragmentTr ?? TR_FRAGMENTS[`${id}:${value}`] ?? fragment },
+    })),
   };
+}
+
+/** A non-option field (slider / number / toggle / color / text) with an optional prompt template (`{value}`). */
+function valueField(id: string, en: string, tr: string, type: Exclude<PresetFieldType, "single_select" | "multi_select" | "dropdown">, config: PresetFieldConfig = {}, template?: Bilingual): PresetField {
+  return { id, presetId: null, name: en, i18n: { en, tr }, type, kind: "phrase", source: "platform", sortOrder: 0, options: [], config: { ...config, template } };
 }
 
 /** Turkish prompt fragments, keyed `groupId:optionId`. Tool-parameter (suffix) groups are language-neutral. */
@@ -298,9 +290,9 @@ const TR_FRAGMENTS: Record<string, string> = {
   "aspect_video:21_9": "21:9 ultra geniş görsel oranında",
 };
 
-const GROUPS: Record<string, SettingGroup> = {};
-function def(g: SettingGroup) {
-  GROUPS[g.id] = g;
+const FIELDS: Record<string, PresetField> = {};
+function def(field: PresetField) {
+  FIELDS[field.id] = field;
 }
 
 // ---- Image / Video shared camera + look ---------------------------------
@@ -312,6 +304,8 @@ def(group("lens", "Lens", "Lens", [
   ["135mm", "135mm", "135mm", "shot with a 135mm telephoto lens"],
   ["macro", "Macro", "Makro", "shot with a macro lens"],
   ["fisheye", "Fisheye", "Balık gözü", "shot with a fisheye lens"],
+  ["wide_angle", "Wide angle", "Geniş açı", "shot with a wide-angle lens", "geniş açılı lensle çekilmiş"],
+  ["telephoto", "Telephoto", "Tele lens", "shot with a telephoto lens", "tele lensle çekilmiş"],
 ]));
 def(group("angle", "Camera angle", "Kamera açısı", [
   ["eye_level", "Eye level", "Göz hizası", "at eye level"],
@@ -350,6 +344,9 @@ def(group("lighting", "Lighting", "Işık", [
   ["backlit", "Backlit", "Arkadan ışık", "backlit with a soft rim light"],
   ["neon", "Neon", "Neon", "lit by neon lights"],
   ["low_key", "Low key", "Low key", "in low-key lighting"],
+  ["hard", "Hard light", "Sert ışık", "in hard, high-contrast light", "sert, yüksek kontrastlı ışıkta"],
+  ["rim", "Rim light", "Kenar ışığı", "with a defined rim light", "belirgin bir kenar ışığıyla"],
+  ["cinematic", "Cinematic lighting", "Sinematik ışık", "with cinematic lighting", "sinematik ışıkla"],
 ]));
 def(group("time_of_day", "Time of day", "Günün zamanı", [
   ["sunrise", "Sunrise", "Gün doğumu", "at sunrise"],
@@ -395,6 +392,10 @@ def(group("style", "Style", "Stil", [
   ["minimalist", "Minimalist", "Minimalist", "in a minimalist style"],
   ["vintage", "Vintage", "Vintage", "with a vintage film aesthetic"],
   ["cyberpunk", "Cyberpunk", "Cyberpunk", "in a cyberpunk style"],
+  ["editorial", "Editorial", "Editoryal", "in an editorial style", "editoryal bir tarzda"],
+  ["illustration", "Illustration", "İllüstrasyon", "as an illustration", "bir illüstrasyon olarak"],
+  ["concept_art", "Concept art", "Konsept sanat", "as concept art", "konsept sanat olarak"],
+  ["digital_art", "Digital art", "Dijital sanat", "as digital art", "dijital sanat olarak"],
 ]));
 def(group("color", "Color", "Renk", [
   ["warm", "Warm", "Sıcak", "with a warm color palette"],
@@ -404,6 +405,7 @@ def(group("color", "Color", "Renk", [
   ["vibrant", "Vibrant", "Canlı", "with vibrant, saturated colors"],
   ["muted", "Muted", "Soluk / doğal", "with muted, natural tones"],
   ["black_white", "Black & white", "Siyah-beyaz", "in black and white"],
+  ["neutral", "Neutral", "Nötr", "with a neutral color palette", "nötr bir renk paletiyle"],
 ]));
 def(group("background", "Background", "Arka plan", [
   ["city_street", "City street", "Şehir sokağı", "against a bustling city street"],
@@ -419,6 +421,14 @@ def(group("composition", "Composition", "Kompozisyon", [
   ["symmetry", "Symmetrical", "Simetrik", "with a symmetrical composition"],
   ["leading_lines", "Leading lines", "Yönlendirici çizgiler", "with strong leading lines"],
   ["negative_space", "Negative space", "Boş alan", "with generous negative space"],
+  ["close_up", "Close-up", "Yakın plan", "in a close-up shot", "yakın plan çekimde"],
+  ["medium_shot", "Medium shot", "Orta plan", "in a medium shot", "orta plan çekimde"],
+  ["full_body", "Full body", "Boydan", "in a full-body shot", "boydan çekimde"],
+  ["wide_shot", "Wide shot", "Geniş plan", "in a wide shot", "geniş plan çekimde"],
+  ["low_angle", "Low angle", "Alçak açı", "from a low angle", "alçak açıdan"],
+  ["high_angle", "High angle", "Yüksek açı", "from a high angle", "yüksek açıdan"],
+  ["eye_level", "Eye level", "Göz hizası", "at eye level", "göz hizasından"],
+  ["overhead", "Overhead", "Tepeden", "from directly overhead", "tam tepeden"],
 ]));
 def(group("aspect_ratio", "Aspect ratio", "Görsel oranı", [
   ["1_1", "1:1", "1:1", "in a square 1:1 aspect ratio"],
@@ -427,7 +437,7 @@ def(group("aspect_ratio", "Aspect ratio", "Görsel oranı", [
   ["9_16", "9:16", "9:16", "in a 9:16 vertical aspect ratio"],
   ["3_2", "3:2", "3:2", "in a 3:2 aspect ratio"],
 ]));
-def(group("product_placement", "Product placement", "Ürün konumu", [
+def(group("product_placement", "Product presentation", "Ürün sunumu", [
   ["hero", "Centered hero", "Ortada kahraman", "with the product centered as the hero"],
   ["floating", "Floating", "Havada", "with the product floating in mid-air"],
   ["surface", "On surface", "Yüzey üstünde", "resting on a reflective surface"],
@@ -628,6 +638,134 @@ def(group("aspect_video", "Aspect ratio", "Aspect ratio", [
   ["21_9", "21:9", "21:9", "in a 21:9 ultrawide aspect ratio"],
 ]));
 
+// ---- Hazır alanlar added in the Hazır Ayar rework -------------------------
+def(group("camera", "Camera", "Kamera", [
+  ["dslr", "DSLR", "DSLR", "shot on a DSLR camera", "bir DSLR kamerayla çekilmiş"],
+  ["mirrorless", "Mirrorless", "Aynasız", "shot on a mirrorless camera", "aynasız bir kamerayla çekilmiş"],
+  ["iphone", "iPhone", "iPhone", "shot on an iPhone", "iPhone ile çekilmiş"],
+  ["cinema", "Cinema camera", "Sinema kamerası", "shot on a cinema camera", "sinema kamerasıyla çekilmiş"],
+  ["film_35mm", "35mm film camera", "35mm film kamera", "shot on a 35mm film camera", "35mm film kamerayla çekilmiş"],
+  ["medium_format", "Medium format", "Orta format", "shot on a medium format camera", "orta format kamerayla çekilmiş"],
+  ["drone", "Drone camera", "Drone kamerası", "shot with a drone camera", "drone kamerasıyla çekilmiş"],
+]));
+def(group("visual_atmosphere", "Atmosphere", "Atmosfer", [
+  ["cinematic", "Cinematic", "Sinematik", "with a cinematic atmosphere", "sinematik bir atmosferle"],
+  ["moody", "Moody", "Duygusal", "with a moody atmosphere", "duygusal, kasvetli bir atmosferle"],
+  ["dreamy", "Dreamy", "Rüya gibi", "with a dreamy atmosphere", "rüya gibi bir atmosferle"],
+  ["dark", "Dark", "Karanlık", "with a dark atmosphere", "karanlık bir atmosferle"],
+  ["bright", "Bright", "Parlak", "with a bright, airy atmosphere", "parlak, havadar bir atmosferle"],
+  ["luxury", "Luxury", "Lüks", "with a luxurious atmosphere", "lüks bir atmosferle"],
+  ["futuristic", "Futuristic", "Fütüristik", "with a futuristic atmosphere", "fütüristik bir atmosferle"],
+  ["minimal", "Minimal", "Minimal", "with a minimal, calm atmosphere", "minimal, sakin bir atmosferle"],
+]));
+def(group("texture", "Texture", "Doku", [
+  ["smooth", "Smooth", "Pürüzsüz", "with smooth textures", "pürüzsüz dokularla"],
+  ["rough", "Rough", "Pürüzlü", "with rough, tactile textures", "pürüzlü, dokunsal dokularla"],
+  ["grainy", "Grainy", "Greinli", "with visible film grain", "belirgin film greniyle"],
+  ["soft", "Soft", "Yumuşak", "with soft, velvety textures", "yumuşak, kadifemsi dokularla"],
+  ["wet", "Wet", "Islak", "with wet, glistening surfaces", "ıslak, parlayan yüzeylerle"],
+  ["dusty", "Dusty", "Tozlu", "with a dusty, weathered texture", "tozlu, yıpranmış bir dokuyla"],
+]));
+def(group("outfit", "Outfit", "Kıyafet", [
+  ["casual", "Casual", "Günlük", "wearing casual clothes", "günlük kıyafetler giymiş"],
+  ["formal", "Formal", "Resmi", "wearing formal attire", "resmi kıyafetler giymiş"],
+  ["business_suit", "Business suit", "Takım elbise", "wearing a tailored business suit", "ince dikimli bir takım elbise giymiş"],
+  ["evening_gown", "Evening gown", "Abiye", "wearing an elegant evening gown", "şık bir abiye giymiş"],
+  ["streetwear", "Streetwear", "Sokak stili", "wearing streetwear", "sokak stili kıyafetler giymiş"],
+  ["sportswear", "Sportswear", "Spor giyim", "wearing sportswear", "spor giyim giymiş"],
+  ["traditional", "Traditional", "Geleneksel", "wearing traditional clothing", "geleneksel kıyafetler giymiş"],
+  ["fantasy_armor", "Fantasy armor", "Fantastik zırh", "wearing ornate fantasy armor", "süslü bir fantastik zırh giymiş"],
+]));
+def(group("makeup", "Makeup", "Makyaj", [
+  ["natural", "Natural", "Doğal", "with natural, minimal makeup", "doğal, minimal bir makyajla"],
+  ["glam", "Glam", "Gösterişli", "with glamorous makeup", "gösterişli bir makyajla"],
+  ["bold_lips", "Bold lips", "Belirgin dudak", "with bold lipstick", "belirgin bir ruj rengiyle"],
+  ["smoky_eye", "Smoky eye", "Smokey göz", "with a smoky eye look", "smokey göz makyajıyla"],
+  ["editorial", "Editorial", "Editoryal", "with avant-garde editorial makeup", "avangart editoryal bir makyajla"],
+  ["none", "No makeup", "Makyajsız", "with no makeup", "makyajsız"],
+]));
+def(group("setting", "Setting", "Mekân", [
+  ["studio", "Studio", "Stüdyo", "in a photography studio", "bir fotoğraf stüdyosunda"],
+  ["cafe", "Café", "Kafe", "in a cozy café", "samimi bir kafede"],
+  ["beach", "Beach", "Sahil", "on a beach", "bir sahilde"],
+  ["forest", "Forest", "Orman", "in a forest", "bir ormanda"],
+  ["rooftop", "Rooftop", "Çatı", "on a city rooftop", "bir şehir çatısında"],
+  ["living_room", "Living room", "Oturma odası", "in a living room", "bir oturma odasında"],
+  ["library", "Library", "Kütüphane", "in a library", "bir kütüphanede"],
+  ["desert", "Desert", "Çöl", "in a desert", "bir çölde"],
+]));
+def(group("film_style", "Film style", "Film stili", [
+  ["kodak_portra", "Kodak Portra", "Kodak Portra", "in the style of Kodak Portra film", "Kodak Portra film stilinde"],
+  ["fuji_velvia", "Fuji Velvia", "Fuji Velvia", "in the style of Fuji Velvia film", "Fuji Velvia film stilinde"],
+  ["cinestill_800t", "CineStill 800T", "CineStill 800T", "in the style of CineStill 800T film", "CineStill 800T film stilinde"],
+  ["polaroid", "Polaroid", "Polaroid", "with a Polaroid instant-film look", "Polaroid anlık film görünümüyle"],
+  ["bw_film", "Black & white film", "Siyah beyaz film", "in the style of black and white film", "siyah beyaz film stilinde"],
+]));
+def(group("fps", "FPS", "FPS", [
+  ["24", "24 fps", "24 fps", "shot at 24 fps", "24 fps ile çekilmiş"],
+  ["30", "30 fps", "30 fps", "shot at 30 fps", "30 fps ile çekilmiş"],
+  ["60", "60 fps", "60 fps", "shot at 60 fps", "60 fps ile çekilmiş"],
+  ["120", "120 fps", "120 fps", "shot at 120 fps for slow motion", "yavaş çekim için 120 fps ile çekilmiş"],
+], "phrase", "dropdown"));
+def(group("motion", "Motion", "Hareket", [
+  ["slow_motion", "Slow motion", "Yavaş çekim", "in slow motion", "yavaş çekimde"],
+  ["time_lapse", "Time-lapse", "Time-lapse", "as a time-lapse", "time-lapse olarak"],
+  ["hyperlapse", "Hyperlapse", "Hyperlapse", "as a hyperlapse", "hyperlapse olarak"],
+  ["freeze_frame", "Freeze frame", "Dondurulmuş kare", "with a freeze frame", "dondurulmuş bir kareyle"],
+  ["smooth", "Smooth motion", "Akıcı hareket", "with smooth, fluid motion", "akıcı, pürüzsüz hareketle"],
+  ["fast_cuts", "Fast cuts", "Hızlı kesmeler", "with fast cuts", "hızlı kesmelerle"],
+]));
+def(group("transition", "Transition", "Geçiş", [
+  ["hard_cut", "Hard cut", "Sert kesme", "using hard cuts", "sert kesmelerle"],
+  ["fade", "Fade", "Karartma", "with fade transitions", "karartma geçişleriyle"],
+  ["dissolve", "Dissolve", "Çapraz geçiş", "with dissolve transitions", "çapraz geçişlerle"],
+  ["whip_pan", "Whip pan", "Whip pan", "with whip-pan transitions", "whip-pan geçişleriyle"],
+  ["match_cut", "Match cut", "Match cut", "with match cuts", "match cut geçişleriyle"],
+]));
+def(group("audio_type", "Sound type", "Ses türü", [
+  ["music", "Music", "Müzik", "as a music track", "bir müzik parçası olarak"],
+  ["voiceover", "Voiceover", "Seslendirme", "as a voiceover", "bir seslendirme olarak"],
+  ["sfx", "Sound effect", "Ses efekti", "as a sound effect", "bir ses efekti olarak"],
+  ["ambience", "Ambience", "Ortam sesi", "as an ambient soundscape", "bir ortam sesi olarak"],
+  ["podcast", "Podcast", "Podcast", "as a podcast segment", "bir podcast bölümü olarak"],
+  ["jingle", "Jingle", "Jingle", "as a short jingle", "kısa bir jingle olarak"],
+]));
+def(group("writing_style", "Writing style", "Yazım stili", [
+  ["conversational", "Conversational", "Sohbet havasında", "in a conversational writing style", "sohbet havasında bir yazım stiliyle"],
+  ["academic", "Academic", "Akademik", "in an academic writing style", "akademik bir yazım stiliyle"],
+  ["journalistic", "Journalistic", "Gazetecilik", "in a journalistic style", "gazetecilik üslubuyla"],
+  ["poetic", "Poetic", "Şiirsel", "in a poetic style", "şiirsel bir üslupla"],
+  ["technical", "Technical", "Teknik", "in a clear technical style", "açık, teknik bir üslupla"],
+  ["narrative", "Narrative", "Anlatı", "in a narrative style", "anlatı üslubuyla"],
+]));
+def(group("text_format", "Format", "Format", [
+  ["blog_post", "Blog post", "Blog yazısı", "formatted as a blog post", "blog yazısı formatında"],
+  ["email", "Email", "E-posta", "formatted as an email", "e-posta formatında"],
+  ["social_post", "Social post", "Sosyal medya gönderisi", "formatted as a social media post", "sosyal medya gönderisi formatında"],
+  ["script", "Script", "Senaryo", "formatted as a script", "senaryo formatında"],
+  ["listicle", "Listicle", "Liste yazısı", "formatted as a listicle", "liste yazısı formatında"],
+  ["essay", "Essay", "Deneme", "formatted as an essay", "deneme formatında"],
+]));
+def(group("purpose", "Purpose", "Amaç", [
+  ["inform", "Inform", "Bilgilendirmek", "with the purpose of informing", "bilgilendirmek amacıyla"],
+  ["persuade", "Persuade", "İkna etmek", "with the purpose of persuading", "ikna etmek amacıyla"],
+  ["entertain", "Entertain", "Eğlendirmek", "with the purpose of entertaining", "eğlendirmek amacıyla"],
+  ["educate", "Educate", "Öğretmek", "with the purpose of teaching", "öğretmek amacıyla"],
+  ["inspire", "Inspire", "İlham vermek", "with the purpose of inspiring", "ilham vermek amacıyla"],
+]));
+def(group("pov", "Point of view", "Perspektif", [
+  ["first_person", "First person", "Birinci tekil", "written in the first person", "birinci tekil şahısla yazılmış"],
+  ["second_person", "Second person", "İkinci tekil", "written in the second person", "ikinci tekil şahısla yazılmış"],
+  ["third_person", "Third person", "Üçüncü tekil", "written in the third person", "üçüncü tekil şahısla yazılmış"],
+]));
+def(valueField("light_intensity", "Light intensity", "Işık yoğunluğu", "slider", { min: 0, max: 100, step: 5, unit: "%" }, { en: "with {value}% light intensity", tr: "%{value} ışık yoğunluğuyla" }));
+def(valueField("detail_level", "Detail level", "Detay seviyesi", "slider", { min: 0, max: 100, step: 5, unit: "%" }, { en: "at {value}% level of detail", tr: "%{value} detay seviyesinde" }));
+def(valueField("bpm", "BPM", "BPM", "number", { min: 40, max: 220, step: 1 }, { en: "at {value} BPM", tr: "{value} BPM tempoda" }));
+def(valueField("hdr", "HDR", "HDR", "toggle", {}, { en: "in HDR", tr: "HDR ile" }));
+def(valueField("high_detail", "Highly detailed", "Çok detaylı", "toggle", {}, { en: "highly detailed", tr: "çok detaylı" }));
+def(valueField("accent_color", "Accent color", "Vurgu rengi", "color", {}, { en: "with {value} as the accent color", tr: "vurgu rengi olarak {value} ile" }));
+
+
 // ---- Tool parameters (suffix) -------------------------------------------
 def(group("mj_ar", "Aspect ratio (--ar)", "Oran (--ar)", [
   ["1_1", "1:1", "1:1", "--ar 1:1"],
@@ -646,36 +784,39 @@ def(group("mj_chaos", "Chaos (--chaos)", "Kaos (--chaos)", [
   ["high", "High", "Yüksek", "--chaos 60"],
 ], "suffix"));
 
-const MIDJOURNEY_GROUPS = ["mj_ar", "mj_stylize", "mj_chaos"];
+const MIDJOURNEY_FIELDS = ["mj_ar", "mj_stylize", "mj_chaos"];
 
-const IMAGE_DEFAULT = ["lens", "angle", "framing", "dof", "lighting", "style", "color", "background", "composition", "aspect_ratio"];
-const IMAGE_PORTRAIT = ["lens", "angle", "framing", "lighting", "pose", "skin", "hair", "style", "color", "background", "aspect_ratio"];
-const IMAGE_PRODUCT = ["lens", "lighting", "product_placement", "background", "composition", "commercial_style", "material", "color", "aspect_ratio"];
-const IMAGE_ARCH = ["lens", "perspective", "lighting", "time_of_day", "weather", "material", "arch_style", "framing", "aspect_ratio"];
+const IMAGE_DEFAULT = ["camera", "lens", "composition", "lighting", "style", "visual_atmosphere", "color", "background", "dof", "aspect_ratio"];
+const IMAGE_PORTRAIT = ["camera", "lens", "lighting", "composition", "pose", "outfit", "makeup", "hair", "skin", "style", "visual_atmosphere", "color", "background", "light_intensity", "aspect_ratio"];
+const IMAGE_PRODUCT = ["camera", "lens", "lighting", "product_placement", "background", "material", "composition", "commercial_style", "color", "high_detail", "aspect_ratio"];
+const IMAGE_ARCH = ["camera", "lens", "perspective", "lighting", "time_of_day", "weather", "material", "arch_style", "composition", "setting", "aspect_ratio"];
+const IMAGE_PHOTO = ["camera", "lens", "lighting", "composition", "time_of_day", "weather", "film_style", "color", "visual_atmosphere", "aspect_ratio"];
+const IMAGE_NATURE = ["camera", "lens", "lighting", "time_of_day", "weather", "composition", "color", "visual_atmosphere", "aspect_ratio"];
+const IMAGE_ART = ["style", "visual_atmosphere", "color", "lighting", "composition", "texture", "high_detail", "aspect_ratio"];
+const IMAGE_DESIGN = ["style", "color", "composition", "background", "texture", "aspect_ratio"];
 
-const TEXT_DEFAULT = ["tone", "audience", "length", "structure", "language"];
-const TEXT_AD = ["tone", "audience", "length", "cta", "platform", "sales_goal", "language"];
+const TEXT_DEFAULT = ["tone", "audience", "length", "writing_style", "text_format", "purpose", "pov", "structure", "language"];
+const TEXT_AD = ["tone", "audience", "length", "cta", "platform", "sales_goal", "purpose", "language"];
 const TEXT_CODE = ["length", "structure", "code_detail", "language"];
 
-const AUDIO_MUSIC = ["genre", "vocal", "tempo", "instrument", "mood", "atmosphere", "duration_audio", "sound_character"];
+const AUDIO_MUSIC = ["audio_type", "genre", "tempo", "bpm", "mood", "instrument", "vocal", "atmosphere", "duration_audio", "sound_character"];
 const AUDIO_VOICE = ["vocal", "tempo", "mood", "duration_audio", "sound_character"];
-const AUDIO_SFX = ["atmosphere", "mood", "duration_audio", "sound_character"];
+const AUDIO_SFX = ["audio_type", "atmosphere", "mood", "duration_audio", "sound_character"];
 
-const VIDEO_DEFAULT = ["camera_move", "angle", "shot", "lighting", "style_video", "atmosphere", "duration_video", "aspect_video"];
-const VIDEO_SOCIAL = ["shot", "camera_move", "style_video", "duration_video", "aspect_video"];
+const VIDEO_DEFAULT = ["camera_move", "shot", "lens", "lighting", "motion", "transition", "style_video", "visual_atmosphere", "fps", "duration_video", "aspect_video", "hdr"];
+const VIDEO_SOCIAL = ["shot", "camera_move", "motion", "transition", "style_video", "fps", "duration_video", "aspect_video"];
 
-/** Group ids relevant to a taxonomy position, in display (and composition) order. */
-export function groupIdsFor(
-  type: ContentTypeId,
-  category: string | null,
-  subcategory: string | null,
-  tools: readonly string[] = [],
-): string[] {
+/** Field ids relevant to a taxonomy position, in display (and composition) order. */
+export function fieldIdsFor(type: ContentTypeId, category: string | null, subcategory: string | null, tools: readonly string[] = []): string[] {
   let ids: string[];
   if (type === "image") {
     if (subcategory === "portrait" || subcategory === "portrait_photography" || category === "human_character") ids = IMAGE_PORTRAIT;
     else if (category === "product_commercial" || subcategory === "product_photography") ids = IMAGE_PRODUCT;
     else if (category === "spaces" || subcategory === "architectural_photography") ids = IMAGE_ARCH;
+    else if (category === "photography") ids = IMAGE_PHOTO;
+    else if (category === "nature_environment") ids = IMAGE_NATURE;
+    else if (category === "art_illustration" || category === "style") ids = IMAGE_ART;
+    else if (category === "design") ids = IMAGE_DESIGN;
     else ids = IMAGE_DEFAULT;
   } else if (type === "text") {
     if (category === "marketing" || subcategory === "ad_copy" || subcategory === "social_media_caption") ids = TEXT_AD;
@@ -689,72 +830,82 @@ export function groupIdsFor(
     ids = category === "social_media" || category === "advertising" ? VIDEO_SOCIAL : VIDEO_DEFAULT;
   }
   if (type === "image" && tools.some((ref) => parseToolRef(ref).toolId === "midjourney")) {
-    return [...ids, ...MIDJOURNEY_GROUPS];
+    return [...ids, ...MIDJOURNEY_FIELDS];
   }
   return ids;
 }
 
-/** One setting group by id (any content type) — `undefined` for an id this catalog doesn't know (e.g. a preset saved against an older catalog). */
-export function getSettingGroup(id: string): SettingGroup | undefined {
-  return GROUPS[id];
+/** One catalog field by id — `undefined` for an id this catalog doesn't know (a user field, or a preset saved against an older catalog). */
+export function getCatalogField(id: string): PresetField | undefined {
+  return FIELDS[id];
 }
 
-/** Every group in catalog order (the order they are defined above) — used to list a preset's parameters in a stable, meaningful order. */
-export function allSettingGroups(): SettingGroup[] {
-  return Object.values(GROUPS);
+/** Every catalog field in catalog order. */
+export function allCatalogFields(): PresetField[] {
+  return Object.values(FIELDS);
 }
 
-export function groupsFor(ids: readonly string[]): SettingGroup[] {
-  return ids.map((id) => GROUPS[id]).filter((g): g is SettingGroup => Boolean(g));
+export function catalogFields(ids: readonly string[]): PresetField[] {
+  return ids.map((id) => FIELDS[id]).filter((f): f is PresetField => Boolean(f));
 }
 
-export function settingFragment(option: SettingOption, language: Language): string {
-  return language === "en" ? option.promptFragment : option.promptFragmentTr;
-}
-
-export function settingLabel(item: { en: string; tr: string }, language: Language): string {
-  return language === "en" ? item.en : item.tr;
-}
-
-/** Drops selections whose group is not part of `groups` or whose option no longer exists. */
-export function sanitizeSelection(selection: SettingSelection, groups: readonly SettingGroup[]): SettingSelection {
-  const out: SettingSelection = {};
-  for (const g of groups) {
-    const optionId = selection[g.id];
-    if (optionId && g.options.some((o) => o.id === optionId)) out[g.id] = optionId;
+/**
+ * Catalog fields that make sense for a content type, for the "+ Alan Ekle"
+ * list: the ones recommended for the current taxonomy position first, then
+ * every other field used by that type's recommendation lists.
+ */
+export function catalogFieldsForType(type: ContentTypeId): PresetField[] {
+  const pools: Record<ContentTypeId, string[][]> = {
+    image: [IMAGE_DEFAULT, IMAGE_PORTRAIT, IMAGE_PRODUCT, IMAGE_ARCH, IMAGE_PHOTO, IMAGE_NATURE, IMAGE_ART, IMAGE_DESIGN, ["framing", "angle", "detail_level", "accent_color"]],
+    text: [TEXT_DEFAULT, TEXT_AD, TEXT_CODE],
+    audio: [AUDIO_MUSIC, AUDIO_VOICE, AUDIO_SFX],
+    video: [VIDEO_DEFAULT, VIDEO_SOCIAL, ["angle", "detail_level"]],
+  };
+  const seen = new Set<string>();
+  const out: PresetField[] = [];
+  for (const pool of pools[type]) {
+    for (const id of pool) {
+      if (seen.has(id) || !FIELDS[id]) continue;
+      seen.add(id);
+      out.push(FIELDS[id]);
+    }
   }
   return out;
 }
 
-/**
- * ORIGINAL prompt + selected fragments (group order). The original is never
- * modified: with no selection it is returned untouched. Tool parameters
- * (`suffix` groups) go after the sentence.
- */
-export function composePrompt(original: string, selection: SettingSelection, groups: readonly SettingGroup[], language: Language = "en"): string {
-  const phrases: string[] = [];
-  const suffixes: string[] = [];
-  for (const g of groups) {
-    const option = g.options.find((o) => o.id === selection[g.id]);
-    if (!option) continue;
-    (g.kind === "suffix" ? suffixes : phrases).push(settingFragment(option, language));
-  }
-  if (phrases.length === 0 && suffixes.length === 0) return original;
-  const base = original.trim().replace(/[.\s]+$/, "");
-  const sentence = [base, ...phrases].filter(Boolean).join(", ");
-  const withStop = sentence ? `${sentence}.` : "";
-  return [withStop, ...suffixes].filter(Boolean).join(" ");
+/** A "Promptly Hazır Ayarı" — a ready-made starting configuration shipped with the platform. */
+export interface PlatformPreset {
+  id: string;
+  en: string;
+  tr: string;
+  emoji: string;
+  contentType: ContentTypeId;
+  /** Taxonomy category it suits best (offered first when the form's category matches). */
+  category?: string;
+  /** `{ fieldId: value }` — see `PresetSelection`. */
+  selection: PresetSelection;
 }
 
-export const SETTING_PRESETS: SettingPreset[] = [
+export const PLATFORM_PRESETS: PlatformPreset[] = [
+  { id: "cinematic_portrait", en: "Cinematic portrait", tr: "Sinema portresi", emoji: "🎞️", contentType: "image", category: "human_character", selection: { camera: "dslr", lens: "85mm", lighting: "cinematic", composition: "close_up", visual_atmosphere: "cinematic", color: "warm", dof: "shallow", light_intensity: 70 } },
+  { id: "pro_portrait", en: "Professional portrait", tr: "Profesyonel portre", emoji: "📸", contentType: "image", category: "human_character", selection: { lens: "85mm", angle: "eye_level", framing: "medium", lighting: "soft", skin: "natural", background: "blurred" } },
+  { id: "fashion_editorial", en: "Fashion editorial", tr: "Moda editoryali", emoji: "👗", contentType: "image", category: "human_character", selection: { camera: "mirrorless", lens: "85mm", lighting: "studio", composition: "full_body", style: "editorial", outfit: "streetwear", color: "neutral", background: "studio_backdrop" } },
+  { id: "moody_street", en: "Moody street photo", tr: "Duygusal sokak fotoğrafı", emoji: "🌆", contentType: "image", category: "photography", selection: { camera: "film_35mm", lens: "35mm", lighting: "neon", time_of_day: "night", film_style: "cinestill_800t", visual_atmosphere: "moody", weather: "rainy" } },
+  { id: "golden_landscape", en: "Golden-hour landscape", tr: "Altın saat manzarası", emoji: "🌅", contentType: "image", category: "nature_environment", selection: { lens: "24mm", lighting: "golden_hour", composition: "thirds", time_of_day: "sunset", weather: "clear", color: "warm" } },
   { id: "cinematic", en: "Cinematic", tr: "Sinematik", emoji: "🎬", contentType: "image", selection: { lens: "85mm", dof: "shallow", lighting: "dramatic", style: "cinematic" } },
-  { id: "pro_portrait", en: "Professional portrait", tr: "Profesyonel portre", emoji: "📸", contentType: "image", selection: { lens: "85mm", angle: "eye_level", framing: "medium", lighting: "soft", skin: "natural", background: "blurred" } },
-  { id: "anime", en: "Anime", tr: "Anime", emoji: "🎨", contentType: "image", selection: { style: "anime", color: "vibrant", lighting: "soft", composition: "thirds" } },
-  { id: "product_studio", en: "Studio product", tr: "Stüdyo ürün", emoji: "🛍️", contentType: "image", selection: { lens: "50mm", lighting: "studio", background: "white", commercial_style: "ecommerce", product_placement: "hero" } },
-  { id: "marketing_copy", en: "Persuasive marketing", tr: "İkna edici pazarlama", emoji: "📣", contentType: "text", selection: { tone: "persuasive", length: "short", cta: "buy_now" } },
-  { id: "blog_post", en: "Friendly blog post", tr: "Samimi blog yazısı", emoji: "✍️", contentType: "text", selection: { tone: "friendly", structure: "headings", length: "medium" } },
-  { id: "chill_lofi", en: "Chill lo-fi", tr: "Sakin lo-fi", emoji: "🎧", contentType: "audio", selection: { genre: "lofi", tempo: "slow", mood: "calm", vocal: "instrumental" } },
-  { id: "epic_score", en: "Epic score", tr: "Epik film müziği", emoji: "🎻", contentType: "audio", selection: { genre: "orchestral", mood: "epic", instrument: "strings", tempo: "mid" } },
-  { id: "cinematic_video", en: "Cinematic scene", tr: "Sinematik sahne", emoji: "🎥", contentType: "video", selection: { camera_move: "dolly_in", angle: "low_angle", lighting: "dramatic", style_video: "cinematic", aspect_video: "21_9" } },
-  { id: "vertical_social", en: "Vertical social clip", tr: "Dikey sosyal klip", emoji: "📱", contentType: "video", selection: { shot: "close_up", camera_move: "handheld", duration_video: "15s", aspect_video: "9_16" } },
+  { id: "anime", en: "Anime", tr: "Anime", emoji: "🎨", contentType: "image", category: "art_illustration", selection: { style: "anime", color: "vibrant", lighting: "soft", composition: "thirds" } },
+  { id: "product_studio", en: "Studio product", tr: "Stüdyo ürün", emoji: "🛍️", contentType: "image", category: "product_commercial", selection: { lens: "50mm", lighting: "studio", background: "white", commercial_style: "ecommerce", product_placement: "hero", high_detail: true } },
+  { id: "luxury_product", en: "Luxury product ad", tr: "Lüks ürün reklamı", emoji: "💎", contentType: "image", category: "product_commercial", selection: { camera: "medium_format", lighting: "dramatic", background: "gradient", commercial_style: "luxury", material: "glossy", visual_atmosphere: "luxury" } },
+  { id: "modern_interior", en: "Modern interior", tr: "Modern iç mekân", emoji: "🏠", contentType: "image", category: "spaces", selection: { lens: "24mm", perspective: "wide_interior", lighting: "natural", arch_style: "modern", material: "wood", color: "neutral" } },
+  { id: "marketing_copy", en: "Persuasive marketing", tr: "İkna edici pazarlama", emoji: "📣", contentType: "text", category: "marketing", selection: { tone: "persuasive", length: "short", cta: "buy_now", purpose: "persuade" } },
+  { id: "blog_post", en: "Friendly blog post", tr: "Samimi blog yazısı", emoji: "✍️", contentType: "text", selection: { tone: "friendly", structure: "headings", length: "medium", text_format: "blog_post" } },
+  { id: "chill_lofi", en: "Chill lo-fi", tr: "Sakin lo-fi", emoji: "🎧", contentType: "audio", category: "music", selection: { genre: "lofi", tempo: "slow", mood: "calm", vocal: "instrumental", bpm: 78 } },
+  { id: "epic_score", en: "Epic score", tr: "Epik film müziği", emoji: "🎻", contentType: "audio", category: "music", selection: { genre: "orchestral", mood: "epic", instrument: "strings", tempo: "mid" } },
+  { id: "cinematic_video", en: "Cinematic scene", tr: "Sinematik sahne", emoji: "🎥", contentType: "video", category: "cinematic", selection: { camera_move: "dolly_in", angle: "low_angle", lighting: "dramatic", style_video: "cinematic", aspect_video: "21_9", fps: "24", hdr: true } },
+  { id: "vertical_social", en: "Vertical social clip", tr: "Dikey sosyal klip", emoji: "📱", contentType: "video", category: "social_media", selection: { shot: "close_up", camera_move: "handheld", duration_video: "15s", aspect_video: "9_16", motion: "fast_cuts" } },
 ];
+
+export function platformPresetsFor(type: ContentTypeId, category: string | null): PlatformPreset[] {
+  const list = PLATFORM_PRESETS.filter((p) => p.contentType === type);
+  return [...list.filter((p) => category && p.category === category), ...list.filter((p) => !(category && p.category === category))];
+}

@@ -14,6 +14,7 @@ import {
   type ContentSearchFilters,
 } from "./taxonomy-query";
 import { translateForRuntime } from "@/lib/i18n/translations";
+import { type PresetField, type PresetFieldConfig, type PresetFieldType, type PresetOption, type PresetSelection } from "@/lib/preset-fields";
 import type { Preset, PromptContentType, Tag } from "@/types";
 
 export interface PresetRow {
@@ -26,7 +27,7 @@ export interface PresetRow {
   category: string | null;
   subcategory: string | null;
   tools: string[] | null;
-  selection: Record<string, string> | null;
+  selection: PresetSelection | null;
   status: "draft" | "published";
   visibility: "public" | "private";
   use_count: number | null;
@@ -57,6 +58,7 @@ export function mapPresetRow(row: PresetRow): Preset {
     category: row.category,
     subcategory: row.subcategory,
     tools: normalizeToolRefs(row.tools),
+    fields: [],
     selection: row.selection && typeof row.selection === "object" ? row.selection : {},
     status: row.status,
     visibility: row.visibility,
@@ -68,6 +70,90 @@ export function mapPresetRow(row: PresetRow): Preset {
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Fields / options (the user's own, `preset_fields` + `preset_options`)
+// ---------------------------------------------------------------------------
+
+interface OptionRow {
+  id: string;
+  field_id: string;
+  label: string;
+  value: string;
+  sort_order: number;
+  fragment_en: string | null;
+  fragment_tr: string | null;
+}
+interface FieldRow {
+  id: string;
+  owner_id: string;
+  preset_id: string | null;
+  name: string;
+  type: PresetFieldType;
+  kind: "phrase" | "suffix" | null;
+  content_types: string[] | null;
+  config: PresetFieldConfig | null;
+  sort_order: number;
+  preset_options: OptionRow[] | null;
+}
+
+const FIELD_SELECT = "id, owner_id, preset_id, name, type, kind, content_types, config, sort_order, preset_options ( id, field_id, label, value, sort_order, fragment_en, fragment_tr )";
+
+function mapOptionRow(row: OptionRow): PresetOption {
+  return {
+    id: row.id,
+    fieldId: row.field_id,
+    label: row.label,
+    value: row.value,
+    sortOrder: row.sort_order,
+    fragment: row.fragment_en || row.fragment_tr ? { en: row.fragment_en ?? "", tr: row.fragment_tr ?? "" } : undefined,
+  };
+}
+
+export function mapFieldRow(row: FieldRow): PresetField {
+  return {
+    id: row.id,
+    presetId: row.preset_id,
+    name: row.name,
+    type: row.type,
+    kind: row.kind ?? "phrase",
+    sortOrder: row.sort_order,
+    config: row.config && typeof row.config === "object" ? row.config : {},
+    contentTypes: row.content_types ?? [],
+    source: "user",
+    options: (row.preset_options ?? []).map(mapOptionRow).sort((a, b) => a.sortOrder - b.sortOrder),
+  };
+}
+
+/**
+ * Attaches each preset's own fields. A SEPARATE query on purpose: if the
+ * field tables aren't there yet (migration pending) or the call fails, the
+ * presets still load — they just show the parameters the platform catalog
+ * knows, exactly as before custom fields existed.
+ */
+async function withFields(presets: Preset[]): Promise<Preset[]> {
+  if (presets.length === 0) return presets;
+  try {
+    const { data, error } = await supabase
+      .from("preset_fields")
+      .select(FIELD_SELECT)
+      .in(
+        "preset_id",
+        presets.map((p) => p.id),
+      )
+      .order("sort_order", { ascending: true });
+    if (error || !data) return presets;
+    const byPreset = new Map<string, PresetField[]>();
+    for (const row of data as unknown as FieldRow[]) {
+      if (!row.preset_id) continue;
+      if (!byPreset.has(row.preset_id)) byPreset.set(row.preset_id, []);
+      byPreset.get(row.preset_id)!.push(mapFieldRow(row));
+    }
+    return presets.map((p) => ({ ...p, fields: byPreset.get(p.id) ?? [] }));
+  } catch {
+    return presets;
+  }
 }
 
 export interface PresetsPage {
@@ -96,7 +182,7 @@ export async function fetchRecentPresets(limit = 24, cursor?: KeysetCursor): Pro
       return { items: [], nextCursor: null };
     }
     const rows = (data ?? []) as unknown as PresetRow[];
-    const items = await withoutBlocked(rows.map(mapPresetRow), (p) => p.creator.id);
+    const items = await withFields(await withoutBlocked(rows.map(mapPresetRow), (p) => p.creator.id));
     return { items, nextCursor: nextCursorFrom(rows, limit, (row) => row.created_at) };
   } catch (err) {
     console.error("fetchRecentPresets", err);
@@ -123,7 +209,7 @@ export async function searchPresets(query: string, filters: ContentSearchFilters
       console.error("searchPresets", error);
       return [];
     }
-    return withoutBlocked((data ?? []).map((row) => mapPresetRow(row as unknown as PresetRow)), (p) => p.creator.id);
+    return withFields(await withoutBlocked((data ?? []).map((row) => mapPresetRow(row as unknown as PresetRow)), (p) => p.creator.id));
   } catch (err) {
     console.error("searchPresets", err);
     return [];
@@ -138,7 +224,7 @@ export async function fetchPresetById(id: string): Promise<Preset | null> {
       if (error) console.error("fetchPresetById", error);
       return null;
     }
-    return mapPresetRow(data as unknown as PresetRow);
+    return (await withFields([mapPresetRow(data as unknown as PresetRow)]))[0];
   } catch (err) {
     console.error("fetchPresetById", err);
     return null;
@@ -157,7 +243,7 @@ export async function fetchPresetsByCreator(creatorId: string): Promise<Preset[]
       console.error("fetchPresetsByCreator", error);
       return [];
     }
-    return (data ?? []).map((row) => mapPresetRow(row as unknown as PresetRow));
+    return withFields((data ?? []).map((row) => mapPresetRow(row as unknown as PresetRow)));
   } catch (err) {
     console.error("fetchPresetsByCreator", err);
     return [];
@@ -190,7 +276,7 @@ export async function fetchSavedPresets(userId: string): Promise<Preset[]> {
       seen.add(row.presets.id);
       out.push(mapPresetRow(row.presets));
     }
-    return out;
+    return withFields(out);
   } catch (err) {
     console.error("fetchSavedPresets", err);
     return [];
@@ -209,11 +295,13 @@ export async function fetchPresetsByTagSlug(slug: string, limit = 60): Promise<P
       console.error("fetchPresetsByTagSlug", error);
       return [];
     }
-    return ((data ?? []) as unknown as { presets: PresetRow | null }[])
+    return withFields(
+      ((data ?? []) as unknown as { presets: PresetRow | null }[])
       .map((row) => row.presets)
       .filter((row): row is PresetRow => Boolean(row) && row!.status === "published" && row!.visibility === "public")
       .map(mapPresetRow)
-      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+    );
   } catch (err) {
     console.error("fetchPresetsByTagSlug", err);
     return [];
@@ -229,7 +317,9 @@ export interface SavePresetInput {
   category: string | null;
   subcategory: string | null;
   tools: string[];
-  selection: Record<string, string>;
+  /** The preset's own fields (new ids are fine — the selection is keyed by them); platform-catalog keys in the selection need no field row. */
+  fields: PresetField[];
+  selection: PresetSelection;
   tags: Tag[];
   status: "draft" | "published";
   visibility: "public" | "private";
@@ -260,12 +350,95 @@ export async function savePreset(input: SavePresetInput, creatorId: string): Pro
     if (error) throw new Error(error.message);
     id = data.id as string;
   }
+  await replacePresetFields(id as string, creatorId, input.fields);
   await supabase.from("preset_tags").delete().eq("preset_id", id as string);
   if (input.tags.length > 0) {
     const { error } = await supabase.from("preset_tags").insert(input.tags.map((tag) => ({ preset_id: id, tag_slug: tag.slug })));
     if (error) throw new Error(error.message);
   }
   return id as string;
+}
+
+function fieldInsertRow(field: PresetField, ownerId: string, presetId: string | null, sortOrder: number) {
+  return {
+    id: field.id,
+    owner_id: ownerId,
+    preset_id: presetId,
+    name: field.name.trim(),
+    type: field.type,
+    kind: field.kind ?? "phrase",
+    content_types: field.contentTypes ?? [],
+    config: field.config ?? {},
+    sort_order: sortOrder,
+  };
+}
+
+function optionInsertRows(field: PresetField) {
+  return field.options.map((option, index) => ({
+    id: option.id,
+    field_id: field.id,
+    label: option.label.trim(),
+    value: (option.value || option.label).trim(),
+    sort_order: index,
+    fragment_en: option.fragment?.en || null,
+    fragment_tr: option.fragment?.tr || null,
+  }));
+}
+
+/** Replaces ALL of a preset's own fields (and their options) with `fields` — the builder always holds the complete list. */
+async function replacePresetFields(presetId: string, ownerId: string, fields: PresetField[]): Promise<void> {
+  const del = await supabase.from("preset_fields").delete().eq("preset_id", presetId);
+  if (del.error) {
+    // Table missing (migration pending): only a preset with no own fields can still be saved.
+    if (fields.length === 0) return;
+    throw new Error(del.error.message);
+  }
+  if (fields.length === 0) return;
+  const inserted = await supabase.from("preset_fields").insert(fields.map((field, index) => fieldInsertRow(field, ownerId, presetId, index)));
+  if (inserted.error) throw new Error(inserted.error.message);
+  const optionRows = fields.flatMap(optionInsertRows);
+  if (optionRows.length > 0) {
+    const options = await supabase.from("preset_options").insert(optionRows);
+    if (options.error) throw new Error(options.error.message);
+  }
+}
+
+/** The viewer's own field library ("Alanlarım"): fields not tied to a preset, reusable in any prompt/preset. */
+export async function fetchOwnLibraryFields(userId: string): Promise<PresetField[]> {
+  try {
+    const { data, error } = await supabase
+      .from("preset_fields")
+      .select(FIELD_SELECT)
+      .eq("owner_id", userId)
+      .is("preset_id", null)
+      .order("created_at", { ascending: true })
+      .limit(200);
+    if (error || !data) return [];
+    return (data as unknown as FieldRow[]).map(mapFieldRow);
+  } catch {
+    return [];
+  }
+}
+
+/** Creates or updates one library field (+ replaces its options). Returns the saved field. */
+export async function saveLibraryField(field: PresetField, userId: string): Promise<PresetField> {
+  const base = { ...fieldInsertRow(field, userId, null, field.sortOrder) };
+  const { error } = await supabase.from("preset_fields").upsert(base, { onConflict: "id" });
+  if (error) throw new Error(error.message);
+  const del = await supabase.from("preset_options").delete().eq("field_id", field.id);
+  if (del.error) throw new Error(del.error.message);
+  const optionRows = optionInsertRows(field);
+  if (optionRows.length > 0) {
+    const options = await supabase.from("preset_options").insert(optionRows);
+    if (options.error) throw new Error(options.error.message);
+  }
+  return { ...field, presetId: null, source: "user" };
+}
+
+export async function deleteLibraryField(id: string): Promise<void> {
+  const { data, error } = await supabase.from("preset_fields").delete().eq("id", id).select("id");
+  if (error) throw new Error(error.message);
+  if (!data || data.length === 0) throw new Error(translateForRuntime("preset.errorDelete"));
 }
 
 export async function deletePreset(id: string): Promise<void> {
