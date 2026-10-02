@@ -12,6 +12,7 @@ import { ProfileToolbar, type ProfileSortKey } from "./profile-toolbar";
 import { ProfileContentGrid } from "./profile-content-grid";
 import { ProfileEmptyState } from "./profile-empty-state";
 import { ProfileAbout } from "./profile-about";
+import { ProfileDraftsPanel } from "./profile-drafts-panel";
 import { RequestList } from "@/features/requests/request-list";
 import { CollectionsPanel } from "@/features/collections/collections-panel";
 import { GeneratorCard } from "@/features/generators/generator-card";
@@ -142,6 +143,10 @@ export function ProfileView({
       { key: "posts", label: t("profile.tabPosts"), count: postCounts.prompts + postCounts.requests + postCounts.generators + postCounts.workflows },
     ];
     if (isOwnProfile) {
+      // Taslaklar (drafts) is owner-only, same as Kaydedilenler/Beğeniler —
+      // RLS already hides draft rows from anyone else, this just keeps the
+      // tab itself from ever being offered to a visitor (Bölüm 9.65/9.66).
+      base.push({ key: "drafts", label: t("profile.tabDrafts") });
       // "Kaydedilenler" has no single flat count anymore — it's a list of
       // collections now, not a list of prompts (Bölüm 9.22 §1).
       base.push({ key: "saved", label: t("profile.tabSaved") }, { key: "liked", label: t("profile.tabLiked"), count: likedPrompts.length });
@@ -269,6 +274,12 @@ export function ProfileView({
           // structurally, not hidden: no sub-tab state, no filter/sort
           // toolbar, no second data source for this tab anymore.
           <CollectionsPanel ownerId={user.id} ownerProfile={user} />
+        ) : activeTab === "drafts" ? (
+          // Owner-only (the tab itself is only ever offered when
+          // isOwnProfile, see `tabs` above) — all four content types'
+          // drafts, reusing the same fetch/delete/continue flow as the
+          // per-creation-page "Taslaklar (N)" button (Bölüm 9.65).
+          <ProfileDraftsPanel userId={user.id} />
         ) : (
           <>
             {activeSource.length > 0 && (

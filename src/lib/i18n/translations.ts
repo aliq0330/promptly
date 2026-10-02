@@ -1538,6 +1538,8 @@ export const translations = {
   "profile.postsSuffix": { tr: "gönderi", en: "posts" },
   "profile.postKindRequest": { tr: "Prompt İsteği", en: "Prompt Request" },
   "profile.postKindsAriaLabel": { tr: "Gönderi türleri", en: "Post types" },
+  "profile.tabDrafts": { tr: "Taslaklar", en: "Drafts" },
+  "profile.draftKindsAriaLabel": { tr: "Taslak türleri", en: "Draft types" },
   "create.workflowTitle": { tr: "Workflow oluştur", en: "Create a workflow" },
   "create.workflowBody": { tr: "Prompt, generator ve istekleri adım adım bir iş akışında birbirine bağla.", en: "Chain prompts, generators and requests into a step-by-step workflow." },
   "create.workflowHint": { tr: "Adımlar · Girdi / çıktı", en: "Steps · Inputs / outputs" },
