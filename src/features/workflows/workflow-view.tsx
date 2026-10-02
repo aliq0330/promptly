@@ -15,6 +15,7 @@ import { DetailSkeleton, NotFoundBlock } from "@/components/ui/detail-skeleton";
 import { ContentTypeLabel } from "@/features/content/content-type-label";
 import { ToolChips, ToolLine } from "@/features/content/tool-chips";
 import { CreatorSummary } from "@/features/profile/creator-summary";
+import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { useAuth } from "@/features/auth/auth-provider";
 import { PostMenu } from "@/features/prompts/post-menu";
 import { LikeButton } from "@/features/prompts/like-button";
@@ -53,6 +54,7 @@ export function WorkflowDetailView() {
   const [data, setData] = useState<
     { workflow: Workflow; steps: WorkflowStep[] } | null | undefined
   >(undefined);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -185,11 +187,46 @@ export function WorkflowDetailView() {
           </div>
 
           {workflow.coverUrl && (
-            // eslint-disable-next-line @next/next/no-img-element -- real local data-URL cover
-            <img
-              src={workflow.coverUrl}
-              alt=""
-              className="aspect-video w-full rounded-lg border border-border-soft object-cover"
+            <button
+              type="button"
+              onClick={() => setLightboxIndex(0)}
+              aria-label={t("media.viewFullscreen")}
+              className="relative block w-full"
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element -- real local data-URL cover */}
+              <img
+                src={workflow.coverUrl}
+                alt=""
+                className="aspect-video w-full rounded-lg border border-border-soft object-cover"
+              />
+              {workflow.media.length > 1 && (
+                <span className="absolute bottom-2 right-2 rounded bg-black/70 px-1.5 py-0.5 text-caption font-medium text-white">
+                  {t("media.moreImagesBadge", { count: workflow.media.length - 1 })}
+                </span>
+              )}
+            </button>
+          )}
+          {workflow.media.length > 1 && (
+            <div className="flex gap-2 overflow-x-auto">
+              {workflow.media.slice(1).map((item, index) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => setLightboxIndex(index + 1)}
+                  aria-label={t("media.viewFullscreen")}
+                  className="h-14 w-14 shrink-0 overflow-hidden rounded-md border border-border-soft"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element -- thumbnail strip, same source list as the cover */}
+                  <img src={item.url} alt="" className="h-full w-full object-cover" />
+                </button>
+              ))}
+            </div>
+          )}
+          {lightboxIndex !== null && (
+            <ImageLightbox
+              images={workflow.media.map((item) => ({ url: item.url, alt: item.alt }))}
+              initialIndex={lightboxIndex}
+              onClose={() => setLightboxIndex(null)}
             />
           )}
 

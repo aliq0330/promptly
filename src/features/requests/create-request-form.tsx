@@ -1,7 +1,7 @@
 "use client";
 import { ToolPicker } from "@/features/content/tool-picker";
 
-import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,9 @@ import { useTagCatalog } from "@/features/tags/use-tag-catalog";
 import { useTagPicker } from "@/features/prompts/use-tag-picker";
 import { TagPicker } from "@/features/prompts/tag-picker";
 import { RequestVisionAssist } from "./request-vision-assist";
-import { cn, requestHref, resizeImageToDataUrlFit } from "@/lib/utils";
+import { MultiImagePicker } from "@/features/content/multi-image-picker";
+import { multiImageItemFromMedia, toDeferredMediaInputs, type MultiImageItem } from "@/lib/supabase/media-input";
+import { cn, requestHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { KindDraftsButton } from "@/features/drafts/kind-drafts-button";
 import type { PromptContentType, PromptRequest } from "@/types";
@@ -58,11 +60,7 @@ export function CreateRequestForm() {
   // isteğin kendi etiketleri, bir yanıtın etiketleriyle asla karıştırılmıyor
   // (bkz. create-prompt-form.tsx'in answerRequest modu).
   const tagPicker = useTagPicker({ title, content: description, catalog: tagCatalog });
-  const [referenceImage, setReferenceImage] = useState<{ url: string; width: number; height: number } | null>(
-    null,
-  );
-  const [referenceImageFile, setReferenceImageFile] = useState<File | null>(null);
-  const [imageError, setImageError] = useState<string | null>(null);
+  const [images, setImages] = useState<MultiImageItem[]>([]);
   const [titleTouched, setTitleTouched] = useState(false);
   const [descriptionTouched, setDescriptionTouched] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -102,9 +100,8 @@ export function CreateRequestForm() {
 
   // Backfill the form once the real request loads (one-time seed, same
   // async-source pattern as create-prompt-form.tsx). content_type/status/
-  // selection/reference image are deliberately never touched by editing
-  // (see updateRealRequest's own doc comment) — only these fields are
-  // seeded/submitted.
+  // selection are deliberately never touched by editing (see
+  // updateRealRequest's own doc comment) — reference images ARE editable.
   useEffect(() => {
     if (fieldsSeeded || !editingRequest) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time seed once the async source loads
@@ -116,6 +113,7 @@ export function CreateRequestForm() {
     setCreativeDirection(editingRequest.creativeDirection);
     setPreferredTool(editingRequest.preferredTool ?? "");
     setTools(editingRequest.tools ?? []);
+    setImages(multiImageItemFromMedia(editingRequest.media));
     editingRequest.tags.forEach((tag) => tagPicker.addManual(tag));
     setFieldsSeeded(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- tagPicker.addManual is stable (useCallback)
@@ -134,19 +132,6 @@ export function CreateRequestForm() {
         ? t("request.descriptionTooShortError", { min: DESCRIPTION_MIN })
         : null;
   const isValid = !titleError && !descriptionError;
-
-  async function handleImageChange(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    try {
-      const resized = await resizeImageToDataUrlFit(file, 480);
-      setReferenceImage(resized);
-      setReferenceImageFile(file);
-      setImageError(null);
-    } catch {
-      setImageError(t("prompt.imageUploadFailed"));
-    }
-  }
 
   async function handleSaveDraft() {
     if (isSubmitting || !user || !ownProfile) return;
@@ -173,6 +158,7 @@ export function CreateRequestForm() {
           preferredTool: preferredTool || null,
           tools,
           ...tagsInput,
+          images: toDeferredMediaInputs(images),
         });
         setDraftNotice(true);
         setIsSubmitting(false);
@@ -189,7 +175,7 @@ export function CreateRequestForm() {
           preferredTool: preferredTool || null,
           tools,
           ...tagsInput,
-          imageFile: referenceImageFile,
+          images: toDeferredMediaInputs(images),
           isDraft: true,
         },
         ownProfile,
@@ -221,6 +207,7 @@ export function CreateRequestForm() {
           tools,
           tags: tagPicker.accepted.map((entry) => entry.tag),
           tagSources: Object.fromEntries(tagPicker.accepted.map((entry) => [entry.tag.slug, entry.source])),
+          images: toDeferredMediaInputs(images),
           publish: isEditingDraft,
         });
         router.push(requestHref(updated));
@@ -239,7 +226,7 @@ export function CreateRequestForm() {
           tools,
           tags: tagPicker.accepted.map((entry) => entry.tag),
           tagSources: Object.fromEntries(tagPicker.accepted.map((entry) => [entry.tag.slug, entry.source])),
-          imageFile: referenceImageFile,
+          images: toDeferredMediaInputs(images),
         },
         ownProfile,
       );
@@ -328,10 +315,11 @@ export function CreateRequestForm() {
     category,
     subcategory,
     preferredTool: preferredTool || null,
-          tools,
-    referenceImage: referenceImage
-      ? { id: "reference", url: referenceImage.url, width: referenceImage.width, height: referenceImage.height, alt: title }
-      : editingRequest?.referenceImage,
+    tools,
+    media: images.map((item, index) => ({ id: item.existingId ?? `preview-${index}`, url: item.url, width: item.width, height: item.height, alt: title })),
+    referenceImage: images[0]
+      ? { id: images[0].existingId ?? "preview-0", url: images[0].url, width: images[0].width, height: images[0].height, alt: title }
+      : undefined,
     tags: tagPicker.accepted.map((entry) => entry.tag),
     status: "open",
     responseCount: 0,
@@ -435,20 +423,7 @@ export function CreateRequestForm() {
             />
           </div>
 
-          {!isEditMode && (
-            <div>
-              <label className="mb-2 block text-sm font-medium text-text">
-                {t("request.referenceImage")} <span className="text-text-muted">({t("common.optional")})</span>
-              </label>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageChange}
-                className="block w-full text-sm text-text-muted file:mr-3 file:rounded-md file:border-0 file:bg-accent-surface file:px-3 file:py-2 file:text-sm file:font-medium file:text-primary hover:file:bg-accent-surface/70"
-              />
-              {imageError && <p className="mt-1 text-xs text-danger">{imageError}</p>}
-            </div>
-          )}
+          <MultiImagePicker items={images} onChange={setImages} label={t("request.referenceImage")} />
 
           <ToolPicker
             label={t("tool.preferredLabel")}

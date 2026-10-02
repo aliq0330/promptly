@@ -11,7 +11,8 @@ import { normalizeToolRefs } from "@/lib/ai-tool-catalog";
 import { applyAdvancedFilters, hasSearchFilter, sanitizeSearchText, tagJoinSelect, type ContentSearchFilters } from "./taxonomy-query";
 import { generatorHref, promptHref, requestHref } from "@/lib/utils";
 import { translateForRuntime } from "@/lib/i18n/translations";
-import type { Generator, Prompt, PromptContentType, Tag, PromptRequest, Workflow, WorkflowContentRef, WorkflowInput, WorkflowIO, WorkflowStep, WorkflowStepType } from "@/types";
+import type { MultiImageItem } from "./media-input";
+import type { Generator, Prompt, PromptContentType, PromptMedia, Tag, PromptRequest, Workflow, WorkflowContentRef, WorkflowInput, WorkflowIO, WorkflowStep, WorkflowStepType } from "@/types";
 
 export interface WorkflowRow {
   id: string;
@@ -31,22 +32,34 @@ export interface WorkflowRow {
   profiles: ProfileRow;
   workflow_steps: { count: number }[] | null;
   workflow_tags: { tags: { slug: string; label: string } }[] | null;
+  workflow_media: { id: string; url: string; width: number; height: number; alt: string | null; position: number }[] | null;
 }
 
 export const WORKFLOW_SELECT = `
   id, creator_id, title, description, cover_url, content_types, category, tools, status, like_count, save_count, comment_count, created_at, updated_at,
   profiles:creator_id ( ${PROFILE_SELECT} ),
   workflow_steps ( count ),
-  workflow_tags ( tags ( slug, label ) )
+  workflow_tags ( tags ( slug, label ) ),
+  workflow_media ( id, url, width, height, alt, position )
 `;
 
 export function mapWorkflowRow(row: WorkflowRow): Workflow {
+  const media: PromptMedia[] =
+    (row.workflow_media ?? []).length > 0
+      ? row.workflow_media!
+          .slice()
+          .sort((a, b) => a.position - b.position)
+          .map((m) => ({ id: m.id, url: m.url, width: m.width, height: m.height, alt: m.alt ?? row.title }))
+      : row.cover_url
+        ? [{ id: `${row.id}-cover`, url: row.cover_url, width: 0, height: 0, alt: row.title }]
+        : [];
   return {
     id: row.id,
     creator: mapProfileRow(row.profiles),
     title: row.title,
     description: row.description,
-    coverUrl: row.cover_url,
+    media,
+    coverUrl: media[0]?.url ?? null,
     contentTypes: (row.content_types ?? []) as PromptContentType[],
     category: row.category,
     tools: normalizeToolRefs(row.tools),
@@ -279,7 +292,8 @@ export interface SaveWorkflowInput {
   id: string | null;
   title: string;
   description: string;
-  coverUrl: string | null;
+  /** Zero or more cover images, in order — already fully-resolved local data URLs (`MultiImagePicker`'s own preview IS the final value, same "no Storage bucket" decision as Generator, Bölüm 9.27). */
+  media: MultiImageItem[];
   contentTypes: PromptContentType[];
   category: string | null;
   tools: string[];
@@ -290,10 +304,11 @@ export interface SaveWorkflowInput {
 
 /** Creates or updates the workflow row, then replaces its whole step graph in one RPC transaction. Returns the id. */
 export async function saveWorkflow(input: SaveWorkflowInput, creatorId: string): Promise<string> {
+  const resolvedMedia = input.media.map((item) => ({ url: item.url, width: item.width, height: item.height, alt: input.title }));
   const columns = {
     title: input.title.trim(),
     description: input.description.trim(),
-    cover_url: input.coverUrl,
+    cover_url: resolvedMedia[0]?.url ?? null,
     content_types: input.contentTypes,
     category: input.category,
     tools: input.tools,
@@ -309,6 +324,14 @@ export async function saveWorkflow(input: SaveWorkflowInput, creatorId: string):
     if (error) throw new Error(error.message);
     id = data.id as string;
   }
+
+  await supabase.from("workflow_media").delete().eq("workflow_id", id as string);
+  if (resolvedMedia.length > 0) {
+    await supabase.from("workflow_media").insert(
+      resolvedMedia.map((d, index) => ({ workflow_id: id as string, url: d.url, width: d.width, height: d.height, alt: d.alt, position: index })),
+    );
+  }
+
   const stepsPayload = input.steps.map((step, position) => ({
     id: step.id,
     position,

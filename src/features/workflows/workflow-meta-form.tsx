@@ -1,29 +1,27 @@
 "use client";
 
-import { useState } from "react";
-import { X } from "lucide-react";
 import { Chip, ChipRow } from "@/components/ui/chip";
 import { ToolPicker } from "@/features/content/tool-picker";
+import { MultiImagePicker } from "@/features/content/multi-image-picker";
+import type { MultiImageItem } from "@/lib/supabase/media-input";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
 import { CONTENT_TYPE_IDS, getCategories, taxonomyLabel, type ContentTypeId } from "@/lib/content-taxonomy";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import { resizeImageToDataUrlFit } from "@/lib/utils";
 
 export interface WorkflowMeta {
   title: string;
   description: string;
-  coverUrl: string | null;
+  media: MultiImageItem[];
   contentTypes: ContentTypeId[];
   category: string | null;
   tools: string[];
 }
 
-export const EMPTY_META: WorkflowMeta = { title: "", description: "", coverUrl: null, contentTypes: [], category: null, tools: [] };
+export const EMPTY_META: WorkflowMeta = { title: "", description: "", media: [], contentTypes: [], category: null, tools: [] };
 
 /** Workflow-level details: cover, name, description, content types (multi), category (only of the chosen types) and recommended tools. */
 export function WorkflowMetaForm({ meta, onChange, titleError }: { meta: WorkflowMeta; onChange: (patch: Partial<WorkflowMeta>) => void; titleError?: boolean }) {
   const { t, language } = useTranslation();
-  const [coverError, setCoverError] = useState(false);
 
   // Categories exist per content type; show only those of the selected types.
   const categories = meta.contentTypes.flatMap((type) => getCategories(type).map((category) => ({ type, category })));
@@ -34,44 +32,9 @@ export function WorkflowMetaForm({ meta, onChange, titleError }: { meta: Workflo
     onChange({ contentTypes: next, category: stillValid ? meta.category : null });
   }
 
-  async function handleCover(file: File | undefined) {
-    if (!file) return;
-    try {
-      const image = await resizeImageToDataUrlFit(file, 900);
-      setCoverError(false);
-      onChange({ coverUrl: image.url });
-    } catch {
-      setCoverError(true);
-    }
-  }
-
   return (
     <div className="grid gap-4 md:grid-cols-[minmax(0,220px)_minmax(0,1fr)]">
-      <div>
-        <p className="mb-1.5 text-sm font-medium text-text">
-          {t("workflow.coverLabel")} <span className="text-text-muted">({t("common.optional")})</span>
-        </p>
-        {meta.coverUrl ? (
-          <div className="relative aspect-video w-full max-w-xs overflow-hidden rounded-md border border-border md:max-w-none">
-            {/* eslint-disable-next-line @next/next/no-img-element -- real local data URL */}
-            <img src={meta.coverUrl} alt="" className="h-full w-full object-cover" />
-            <button
-              type="button"
-              onClick={() => onChange({ coverUrl: null })}
-              aria-label={t("workflow.coverRemove")}
-              className="absolute right-1.5 top-1.5 rounded-full bg-black/60 p-1 text-white hover:bg-black/80"
-            >
-              <X size={14} />
-            </button>
-          </div>
-        ) : (
-          <label className="flex aspect-video w-full max-w-xs cursor-pointer items-center justify-center rounded-md border border-dashed border-border-strong bg-surface-soft text-label font-medium text-text-secondary hover:border-primary md:max-w-none">
-            {t("workflow.coverAdd")}
-            <input type="file" accept="image/*" className="sr-only" onChange={(event) => handleCover(event.target.files?.[0])} />
-          </label>
-        )}
-        {coverError && <p className="mt-1 text-caption text-danger">{t("prompt.imageUploadFailed")}</p>}
-      </div>
+      <MultiImagePicker items={meta.media} onChange={(media) => onChange({ media })} label={t("workflow.coverLabel")} max={4} />
 
       <div className="min-w-0 space-y-4">
         <div>

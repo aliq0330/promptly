@@ -1,13 +1,11 @@
 "use client";
 
 import { ToolPicker } from "@/features/content/tool-picker";
-import { useState } from "react";
-import { Image as ImageIcon, X } from "lucide-react";
 import { TagPicker } from "@/features/prompts/tag-picker";
 import type { UseTagPickerResult } from "@/features/prompts/use-tag-picker";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { TaxonomyPicker } from "@/features/content/taxonomy-picker";
-import { resizeImageToDataUrlFit } from "@/lib/utils";
+import { MultiImagePicker } from "@/features/content/multi-image-picker";
 import type { GeneratorMetaInput } from "@/lib/supabase/generators";
 
 /**
@@ -17,14 +15,15 @@ import type { GeneratorMetaInput } from "@/lib/supabase/generators";
  * field-organization category system that used to exist in step 2 and was
  * removed, see CLAUDE.md), an optional free-typed subcategory, tags
  * (the shared, already-generic `TagPicker` — reused as-is, no
- * generator-specific fork), an optional cover image, visibility, and the
- * generator-level toggles (prompt-editing/saving/negative-prompt).
- * There is no dedicated `generator-covers` Storage bucket (this feature's
- * migration deliberately didn't add one — see CLAUDE.md), so a cover is
- * stored the same way this app already stores every localStorage-era image
- * (avatar edit, request reference image): a real, compact data URL, written
- * straight into `generators.cover_url` — a real Postgres `text` column has
- * no size ceiling the way `localStorage` does, so this is not a downgrade.
+ * generator-specific fork), zero or more cover images (`MultiImagePicker`),
+ * visibility, and the generator-level toggles (prompt-editing/saving/
+ * negative-prompt). There is no dedicated `generator-covers` Storage
+ * bucket (this feature's migration deliberately didn't add one — see
+ * CLAUDE.md), so each cover is stored the same way this app already stores
+ * every localStorage-era image (avatar edit, request reference image): a
+ * real, compact data URL, in a real `generator_media` row — a real
+ * Postgres `text` column has no size ceiling the way `localStorage` does,
+ * so this is not a downgrade.
  */
 export function GeneratorDetailsForm({
   meta,
@@ -36,21 +35,6 @@ export function GeneratorDetailsForm({
   tagPicker: UseTagPickerResult;
 }) {
   const { t } = useTranslation();
-  const [coverError, setCoverError] = useState<string | null>(null);
-
-  async function handleCoverChange(event: React.ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    setCoverError(null);
-    try {
-      const resized = await resizeImageToDataUrlFit(file, 900);
-      onChange({ coverUrl: resized.url });
-    } catch {
-      setCoverError(t("prompt.imageUploadFailed"));
-    } finally {
-      event.target.value = "";
-    }
-  }
 
   return (
     <div className="space-y-5">
@@ -100,32 +84,7 @@ export function GeneratorDetailsForm({
         <TagPicker picker={tagPicker} />
       </div>
 
-      <div>
-        <label className="mb-1.5 block text-sm font-medium text-text">
-          {t("generator.coverImageLabel")} <span className="text-text-muted">({t("common.optional")})</span>
-        </label>
-        {meta.coverUrl ? (
-          <div className="relative h-32 w-full max-w-xs overflow-hidden rounded-md border border-border">
-            {/* eslint-disable-next-line @next/next/no-img-element -- a real, local data URL, not a remote URL next/image would need to be configured for */}
-            <img src={meta.coverUrl} alt="" className="h-full w-full object-cover" />
-            <button
-              type="button"
-              onClick={() => onChange({ coverUrl: null })}
-              aria-label={t("generator.removeCoverImageAriaLabel")}
-              className="absolute right-1.5 top-1.5 rounded-full bg-black/60 p-1 text-white hover:bg-black/80"
-            >
-              <X size={14} />
-            </button>
-          </div>
-        ) : (
-          <label className="flex h-32 w-full max-w-xs cursor-pointer flex-col items-center justify-center gap-1.5 rounded-md border border-dashed border-border text-text-muted hover:border-primary hover:text-primary">
-            <ImageIcon size={22} />
-            <span className="text-xs">{t("generator.chooseImage")}</span>
-            <input type="file" accept="image/*" onChange={handleCoverChange} className="hidden" />
-          </label>
-        )}
-        {coverError && <p className="mt-1 text-xs text-danger">{coverError}</p>}
-      </div>
+      <MultiImagePicker items={meta.media} onChange={(media) => onChange({ media })} label={t("generator.coverImageLabel")} />
 
       <div>
         <label htmlFor="gen-visibility" className="mb-1.5 block text-sm font-medium text-text">

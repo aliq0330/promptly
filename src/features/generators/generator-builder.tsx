@@ -22,6 +22,7 @@ import { validateGeneratorOutputMapping } from "@/lib/generator-output";
 import type { CleanSuggestedField } from "@/lib/generator-vision-mapping";
 import type { CatalogField } from "@/lib/generator-field-catalog";
 import { cn, generatorHref } from "@/lib/utils";
+import { multiImageItemFromMedia } from "@/lib/supabase/media-input";
 import { KindDraftsButton } from "@/features/drafts/kind-drafts-button";
 import {
   createDraftGenerator,
@@ -51,7 +52,7 @@ function defaultMeta(): GeneratorMetaInput {
   return {
     title: "",
     description: "",
-    coverUrl: null,
+    media: [],
     tools: [],
     contentType: "image",
     category: null,
@@ -190,7 +191,7 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
       setMeta({
         title: gen.title,
         description: gen.description,
-        coverUrl: gen.coverUrl,
+        media: multiImageItemFromMedia(gen.media),
         tools: gen.tools,
         contentType: gen.contentType,
         category: gen.category,
@@ -605,7 +606,14 @@ function metaToGeneratorPatch(meta: GeneratorMetaInput) {
   return {
     title: meta.title.trim(),
     description: meta.description.trim(),
-    coverUrl: meta.coverUrl,
+    media: meta.media.map((item, index) => ({
+      id: item.existingId ?? `media-${index}`,
+      url: item.url,
+      width: item.width,
+      height: item.height,
+      alt: meta.title.trim(),
+    })),
+    coverUrl: meta.media[0]?.url ?? null,
     tools: meta.tools,
     contentType: meta.contentType,
     category: meta.category,

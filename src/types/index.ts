@@ -205,7 +205,15 @@ export interface PromptRequest {
   contentType?: PromptContentType;
   category: string | null;
   subcategory: string | null;
-  /** Optional reference image, added by the requester for creative direction. */
+  /**
+   * Real, ordered reference images (`prompt_request_media`) — zero or more,
+   * added by the requester for creative direction (mood-board style).
+   * `referenceImage` below is kept, unchanged, as a derived convenience
+   * (`media[0]`) so every pre-existing single-image call site keeps
+   * working untouched.
+   */
+  media: PromptMedia[];
+  /** Derived convenience — the first entry of `media`, if any. Prefer `media` for new code. */
   referenceImage?: PromptMedia;
   tags: Tag[];
   status: PromptRequestStatus;
@@ -534,6 +542,9 @@ export interface Generator {
   title: string;
   slug: string;
   description: string;
+  /** Real, ordered cover images (`generator_media`) — zero or more. `coverUrl` below is kept, unchanged, as a derived convenience (`media[0]?.url`) so every pre-existing single-cover call site keeps working untouched. */
+  media: PromptMedia[];
+  /** Derived convenience — `media[0]?.url`. Prefer `media` for new code. */
   coverUrl: string | null;
   tools: string[];
   contentType: PromptContentType;
@@ -648,6 +659,9 @@ export interface Workflow {
   creator: UserProfile;
   title: string;
   description: string;
+  /** Real, ordered cover images (`workflow_media`) — zero or more. `coverUrl` below is kept, unchanged, as a derived convenience (`media[0]?.url`) so every pre-existing single-cover call site keeps working untouched. */
+  media: PromptMedia[];
+  /** Derived convenience — `media[0]?.url`. Prefer `media` for new code. */
   coverUrl: string | null;
   contentTypes: PromptContentType[];
   category: string | null;

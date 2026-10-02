@@ -123,8 +123,17 @@ function applyToggle(key: string, active: boolean, delta: number) {
 export function useEngagementEntry(kind: EngagementKind, scope: string, id: string, baseCount: number): Entry {
   const key = keyOf(kind, scope, id);
   ensureSeeded(key, baseCount);
+  // Third arg (`getServerSnapshot`) matters for `output: "export"`'s static
+  // prerendering, which really does execute this hook server-side at build
+  // time (e.g. a /dev/* harness rendering fixture cards synchronously,
+  // unlike the real app's pages, which only ever mount a card after an
+  // async client fetch). There's no real client/server divergence to
+  // reconcile here — `ensureSeeded` above already resolved this key's entry
+  // synchronously during render, so the same snapshot function is correct
+  // for both.
   return useSyncExternalStore(
     (onChange) => subscribeKey(key, onChange),
+    () => getSnapshot(key),
     () => getSnapshot(key),
   );
 }

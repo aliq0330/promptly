@@ -6,6 +6,7 @@ import { placeholderArt } from "@/lib/placeholder-image";
 import { resizeImageToBlob } from "@/lib/utils";
 import { translateForRuntime } from "@/lib/i18n/translations";
 import { mapProfileRow, type ProfileRow } from "./mappers";
+import { resolveMediaInputs, type MediaInput } from "./media-input";
 import { normalizeLegacyContentType, sanitizeTaxonomy } from "@/lib/content-taxonomy";
 import { applyTaxonomyFilter, taxonomyColumns, type ContentSearchFilters, applyAdvancedFilters, hasSearchFilter, sanitizeSearchText, tagJoinSelect } from "./taxonomy-query";
 import type { Prompt, PromptContentType, PromptMedia, PromptOrigin, Tag, UserProfile } from "@/types";
@@ -39,7 +40,7 @@ export interface PromptRow {
   generator_version_id: string | null;
   generator_run_id: string | null;
   profiles: ProfileRow;
-  prompt_media: { id: string; url: string; width: number; height: number; alt: string | null }[];
+  prompt_media: { id: string; url: string; width: number; height: number; alt: string | null; position: number }[];
   prompt_tags: { tags: { slug: string; label: string } }[];
   /** Only present when generator_id is set — the "Generated with" link's title/slug (Generator Builder module). */
   generators: { title: string; slug: string } | null;
@@ -51,7 +52,7 @@ export const PROMPT_SELECT = `
   like_count, save_count, comment_count, created_at, show_on_profile,
   deleted_at, generator_id, generator_version_id, generator_run_id,
   profiles:author_id ( id, username, display_name, avatar_url, cover_url, bio, website, follower_count, following_count, created_at, interests ),
-  prompt_media ( id, url, width, height, alt ),
+  prompt_media ( id, url, width, height, alt, position ),
   prompt_tags ( tags ( slug, label ) ),
   generators ( title, slug )
 `;
@@ -95,6 +96,8 @@ function mapOrigin(row: PromptRow): PromptOrigin {
 
 export function mapPromptRow(row: PromptRow): Prompt {
   const media: PromptMedia[] = (row.prompt_media ?? [])
+    .slice()
+    .sort((a, b) => a.position - b.position)
     .map((m) => ({ id: m.id, url: m.url, width: m.width, height: m.height, alt: m.alt ?? row.title }));
   const tags: Tag[] = (row.prompt_tags ?? []).map((pt) => ({ slug: pt.tags.slug, label: pt.tags.label }));
   // Rows written before the 4-type taxonomy may still say code/music — read them as their new type.
@@ -344,10 +347,12 @@ export interface CreateRealPromptInput {
    * database layer.
    */
   tagSources?: Record<string, "manual" | "automatic">;
-  /** A real uploaded file, when the author picked one. */
-  imageFile: File | null;
-  /** Used for `contentType === "image"` when no file was uploaded — the same auto-generated placeholder the live preview already shows. */
-  fallbackImage: { url: string; width: number; height: number } | null;
+  /**
+   * Zero or more images, in the order the author arranged them — only
+   * meaningful for `contentType === "image"`. Empty falls back to the same
+   * auto-generated placeholder the live preview already shows (one row).
+   */
+  images: MediaInput[];
   /** Set only when answering a real request (CLAUDE.md Bölüm 21 Faz 5) — produces `origin_type = 'request_response'` instead of `'original'`, and `handle_prompt_origin_change` (Bölüm 19) increments the request's `response_count`. */
   requestId?: string;
   /** Only meaningful when `requestId` is set — whether this answer should also appear in the author's normal profile/feed/discover results (`prompts.show_on_profile`). Defaults to `true`; irrelevant for an original prompt. */
@@ -401,48 +406,45 @@ export async function createRealPrompt(
 
   if (input.contentType === "image") {
     try {
-      let descriptor: { url: string; width: number; height: number };
-
-      if (input.imageFile) {
-        const resized = await resizeImageToBlob(input.imageFile, 1600);
+      const resolved = await resolveMediaInputs(input.images, input.title, async (file, index) => {
+        const resized = await resizeImageToBlob(file, 1600);
         const ext = resized.contentType === "image/png" ? "png" : "jpg";
-        const path = `${authorId}/${promptId}-0.${ext}`;
+        const path = `${authorId}/${promptId}-${index}.${ext}`;
         const { error: uploadError } = await supabase.storage
           .from("prompt-media")
           .upload(path, resized.blob, { contentType: resized.contentType, upsert: true });
         if (uploadError) throw new Error(uploadError.message);
-
         const { data: publicUrlData } = supabase.storage.from("prompt-media").getPublicUrl(path);
-        descriptor = { url: publicUrlData.publicUrl, width: resized.width, height: resized.height };
-      } else if (input.fallbackImage) {
-        descriptor = input.fallbackImage;
-      } else {
-        descriptor = { url: placeholderArt(input.title || promptId, 900, 1100), width: 900, height: 1100 };
-      }
+        return { url: publicUrlData.publicUrl, width: resized.width, height: resized.height };
+      });
 
-      const { data: mediaRow, error: mediaError } = await supabase
+      const descriptors =
+        resolved.length > 0
+          ? resolved
+          : [{ url: placeholderArt(input.title || promptId, 900, 1100), width: 900, height: 1100, alt: input.title }];
+
+      const { data: mediaRows, error: mediaError } = await supabase
         .from("prompt_media")
-        .insert({
-          prompt_id: promptId,
-          url: descriptor.url,
-          width: descriptor.width,
-          height: descriptor.height,
-          alt: input.title,
-          position: 0,
-        })
-        .select("id, url, width, height, alt")
-        .single();
-      if (mediaError || !mediaRow) throw new Error(mediaError?.message ?? translateForRuntime("prompt.imageSaveFailed"));
+        .insert(
+          descriptors.map((d, index) => ({
+            prompt_id: promptId,
+            url: d.url,
+            width: d.width,
+            height: d.height,
+            alt: d.alt,
+            position: index,
+          })),
+        )
+        .select("id, url, width, height, alt");
+      if (mediaError || !mediaRows) throw new Error(mediaError?.message ?? translateForRuntime("prompt.imageSaveFailed"));
 
-      media = [
-        {
-          id: mediaRow.id,
-          url: mediaRow.url,
-          width: mediaRow.width,
-          height: mediaRow.height,
-          alt: mediaRow.alt ?? input.title,
-        },
-      ];
+      media = mediaRows.map((row) => ({
+        id: row.id,
+        url: row.url,
+        width: row.width,
+        height: row.height,
+        alt: row.alt ?? input.title,
+      }));
     } catch (err) {
       // Don't leave a half-published image prompt with no image behind.
       await supabase.from("prompts").delete().eq("id", promptId);
@@ -509,8 +511,14 @@ export interface UpdateRealPromptInput {
   tools?: string[];
   tags: Tag[];
   tagSources?: Record<string, "manual" | "automatic">;
-  /** A real newly-uploaded file, if the owner chose to replace the image — `undefined`/`null` leaves the existing media untouched (unlike creation, editing never invents a placeholder image in its place). Only meaningful for `contentType === "image"`. */
-  imageFile?: File | null;
+  /**
+   * The full, final ordered set of images if the owner changed anything
+   * about them (added/removed/reordered) — `undefined` leaves the existing
+   * media completely untouched (unlike creation, editing never invents a
+   * placeholder image in its place). Replace-all, same as creation. Only
+   * meaningful for `contentType === "image"`.
+   */
+  images?: MediaInput[];
   /** Only meaningful for a `request-response` prompt (an answer to a request) — whether it should also appear in the author's normal profile/feed/discover/search results (`prompts.show_on_profile`). `undefined` leaves the column untouched (an `original` prompt is never editable here anyway, so callers editing one simply omit this). */
   showOnProfile?: boolean;
   /** Publishes a draft (`status` draft → published) once everything else is saved; the database then restarts `created_at` and counts its tags. */
@@ -552,30 +560,40 @@ export async function updateRealPrompt(promptId: string, authorId: string, input
   if (updateError) throw new Error(updateError.message);
   if (!updated) throw new Error(translateForRuntime("prompt.noEditPermission"));
 
-  if (input.imageFile) {
+  if (input.images) {
     try {
-      const resized = await resizeImageToBlob(input.imageFile, 1600);
-      const ext = resized.contentType === "image/png" ? "png" : "jpg";
-      const path = `${authorId}/${promptId}-${Date.now()}.${ext}`;
-      const { error: uploadError } = await supabase.storage
-        .from("prompt-media")
-        .upload(path, resized.blob, { contentType: resized.contentType, upsert: true });
-      if (uploadError) throw new Error(uploadError.message);
-      const { data: publicUrlData } = supabase.storage.from("prompt-media").getPublicUrl(path);
-
-      // Replace-all, same simple pattern as tags/variables below — a prompt
-      // only ever has one media row today (a single image), so there's
-      // nothing to diff.
-      await supabase.from("prompt_media").delete().eq("prompt_id", promptId);
-      const { error: mediaError } = await supabase.from("prompt_media").insert({
-        prompt_id: promptId,
-        url: publicUrlData.publicUrl,
-        width: resized.width,
-        height: resized.height,
-        alt: input.title,
-        position: 0,
+      // A fresh timestamp prefix (rather than `-{index}`) avoids colliding
+      // with any surviving `.existing` upload at the same index — this is a
+      // replace-all, so the old rows (and their storage objects, orphaned
+      // but harmless/invisible once nothing points at them) are gone the
+      // moment the new `prompt_media` rows are inserted below.
+      const stamp = Date.now();
+      const resolved = await resolveMediaInputs(input.images, input.title, async (file, index) => {
+        const resized = await resizeImageToBlob(file, 1600);
+        const ext = resized.contentType === "image/png" ? "png" : "jpg";
+        const path = `${authorId}/${promptId}-${stamp}-${index}.${ext}`;
+        const { error: uploadError } = await supabase.storage
+          .from("prompt-media")
+          .upload(path, resized.blob, { contentType: resized.contentType, upsert: true });
+        if (uploadError) throw new Error(uploadError.message);
+        const { data: publicUrlData } = supabase.storage.from("prompt-media").getPublicUrl(path);
+        return { url: publicUrlData.publicUrl, width: resized.width, height: resized.height };
       });
-      if (mediaError) throw new Error(mediaError.message);
+
+      await supabase.from("prompt_media").delete().eq("prompt_id", promptId);
+      if (resolved.length > 0) {
+        const { error: mediaError } = await supabase.from("prompt_media").insert(
+          resolved.map((d, index) => ({
+            prompt_id: promptId,
+            url: d.url,
+            width: d.width,
+            height: d.height,
+            alt: d.alt,
+            position: index,
+          })),
+        );
+        if (mediaError) throw new Error(mediaError.message);
+      }
     } catch (err) {
       throw err instanceof Error ? err : new Error(translateForRuntime("prompt.imageUpdateFailed"));
     }

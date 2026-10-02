@@ -16,7 +16,6 @@ import { createRealPrompt, searchPrompts } from "@/lib/supabase/prompts";
 import { createRealRequest, searchRequests } from "@/lib/supabase/requests";
 import { createDraftGenerator, searchGenerators } from "@/lib/supabase/generators";
 import { generatorRef, promptRef, requestRef } from "@/lib/supabase/workflows";
-import { placeholderArt } from "@/lib/placeholder-image";
 import { taxonomyPathLabel, type TaxonomySelection } from "@/lib/content-taxonomy";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
@@ -233,8 +232,7 @@ function ScratchForm({ type, onSelect }: { type: WorkflowStepType; onSelect: (re
             description: "",
             promptText: body,
             tool: null,
-            imageFile: null,
-            fallbackImage: taxonomy.contentType === "image" ? { url: placeholderArt(name, 900, 1100), width: 900, height: 1100 } : null,
+            images: [],
           },
           user.id,
           profile,
@@ -242,7 +240,7 @@ function ScratchForm({ type, onSelect }: { type: WorkflowStepType; onSelect: (re
         onSelect(promptRef(prompt));
       } else if (type === "request") {
         const request = await createRealRequest(
-          { ...common, title: name, description: body, creativeDirection: "", preferredTool: null, imageFile: null },
+          { ...common, title: name, description: body, creativeDirection: "", preferredTool: null, images: [] },
           user.id,
           profile,
         );
@@ -252,7 +250,7 @@ function ScratchForm({ type, onSelect }: { type: WorkflowStepType; onSelect: (re
           {
             title: name,
             description: body,
-            coverUrl: null,
+            media: [],
             tools,
             contentType: taxonomy.contentType,
             category: taxonomy.category,

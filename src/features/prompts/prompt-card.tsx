@@ -1,8 +1,6 @@
 "use client";
 
 import { ToolChips } from "@/features/content/tool-chips";
-import Image from "next/image";
-import { clampedAspectRatio } from "@/lib/placeholder-image";
 import { promptHref } from "@/lib/utils";
 import { ContentCard, ContentCardBody, ContentCardTitle } from "@/features/content/content-card";
 import { ContentTypeLabel } from "@/features/content/content-type-label";
@@ -13,6 +11,7 @@ import { PostHeader } from "./post-header";
 import { GeneratorSourceContext, RequestResponseContext } from "./post-context";
 import { PromptPreviewBox } from "./prompt-preview-box";
 import { PromptCardFooter } from "./prompt-card-footer";
+import { OutputThumbnailStrip } from "./multi-image-output-options";
 import type { Prompt } from "@/types";
 
 type CollectionRemoval = { isDefault: boolean; onRemove: () => Promise<void> };
@@ -27,7 +26,10 @@ type CollectionRemoval = { isDefault: boolean; onRemove: () => Promise<void> };
  *
  * The prompt itself is the hero; an image prompt's generated result is a
  * supporting "çıktı" preview under it (never taller than square), never the
- * whole card — Promptly is a prompt community, not an image gallery.
+ * whole card — Promptly is a prompt community, not an image gallery. More
+ * than one output image adds a small, non-interactive preview strip below
+ * the cover (`OutputThumbnailStrip`) rather than enlarging the card's own
+ * footprint — browsing every image is a detail-page job (the lightbox).
  */
 export function PromptCard({
   prompt,
@@ -42,7 +44,7 @@ export function PromptCard({
   const { t } = useTranslation();
   const meta = CONTENT_TYPE_META[prompt.contentType];
   const href = promptHref(prompt);
-  const media = prompt.contentType === "image" ? prompt.media[0] : undefined;
+  const media = prompt.contentType === "image" ? prompt.media : [];
   const isResponse = prompt.origin.type === "request-response";
 
   return (
@@ -65,22 +67,9 @@ export function PromptCard({
           <ContentCardTitle href={href} title={prompt.title} description={prompt.description} />
         </div>
 
-        <PromptPreviewBox prompt={prompt} lines={media ? 3 : 4} />
+        <PromptPreviewBox prompt={prompt} lines={media.length > 0 ? 3 : 4} />
 
-        {media && (
-          <figure className="relative w-full overflow-hidden rounded-md border border-border-soft bg-surface-soft" style={{ aspectRatio: Math.max(1, clampedAspectRatio(media.width, media.height)) }}>
-            <Image
-              src={media.url}
-              alt={media.alt}
-              fill
-              sizes="(min-width: 1280px) 30vw, (min-width: 640px) 45vw, 100vw"
-              className="object-cover"
-            />
-            <figcaption className="absolute bottom-2 left-2 rounded-xs bg-black/55 px-1.5 py-0.5 text-caption font-medium text-white backdrop-blur-sm">
-              {t("prompt.output")}
-            </figcaption>
-          </figure>
-        )}
+        {media.length > 0 && <OutputThumbnailStrip media={media} />}
 
         <ToolChips refs={prompt.tools} />
         <ContentTags tags={prompt.tags} />

@@ -22,6 +22,7 @@ import { PostMenu } from "@/features/prompts/post-menu";
 import { TaxonomyLinks } from "@/features/content/taxonomy-links";
 import { CreatorSummary } from "@/features/profile/creator-summary";
 import { clampedAspectRatio } from "@/lib/placeholder-image";
+import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { RelatedRequests } from "./related-requests";
 import { useAuth } from "@/features/auth/auth-provider";
 import { fetchPromptsForRequest } from "@/lib/supabase/prompts";
@@ -48,6 +49,7 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
     selectResponse: selectRealResponse,
   } = useRealRequests();
   const [answers, setAnswers] = useState<Prompt[]>([]);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [selectionTarget, setSelectionTarget] = useState<{ id: string; confirming: boolean } | null>(null);
   const [selectionError, setSelectionError] = useState<string | null>(null);
   const [isSelecting, setIsSelecting] = useState(false);
@@ -227,8 +229,11 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
 
         {live.referenceImage && (
           <figure className="space-y-2">
-            <div
-              className="relative w-full overflow-hidden rounded-lg border border-border-soft bg-surface-soft"
+            <button
+              type="button"
+              onClick={() => setLightboxIndex(0)}
+              aria-label={t("media.viewFullscreen")}
+              className="relative block w-full overflow-hidden rounded-lg border border-border-soft bg-surface-soft"
               // Supporting preview, not a hero image: capped at ~480px tall (same as the prompt page).
               style={{
                 aspectRatio: referenceRatio,
@@ -236,9 +241,32 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
               }}
             >
               <Image src={live.referenceImage.url} alt={live.referenceImage.alt} fill sizes="(min-width: 1024px) 720px, 100vw" className="object-cover" />
-            </div>
+            </button>
             <figcaption className="text-caption text-text-muted">{t("request.referenceImage")}</figcaption>
+            {live.media.length > 1 && (
+              <div className="flex flex-wrap gap-2">
+                {live.media.slice(1).map((extra, index) => (
+                  <button
+                    key={extra.id}
+                    type="button"
+                    onClick={() => setLightboxIndex(index + 1)}
+                    aria-label={t("media.viewFullscreen")}
+                    className="h-16 w-16 overflow-hidden rounded-md border border-border-soft"
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element -- a small thumbnail strip */}
+                    <img src={extra.url} alt={extra.alt} className="h-full w-full object-cover" />
+                  </button>
+                ))}
+              </div>
+            )}
           </figure>
+        )}
+        {lightboxIndex !== null && (
+          <ImageLightbox
+            images={live.media.map((item) => ({ url: item.url, alt: item.alt }))}
+            initialIndex={lightboxIndex}
+            onClose={() => setLightboxIndex(null)}
+          />
         )}
 
         {live.creativeDirection && (

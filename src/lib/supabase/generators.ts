@@ -8,9 +8,11 @@ import { getOrCreateTag } from "./tags";
 import { normalizeLegacyContentType, sanitizeTaxonomy } from "@/lib/content-taxonomy";
 import { applyTaxonomyFilter, taxonomyColumns, type ContentSearchFilters, applyAdvancedFilters, hasSearchFilter, sanitizeSearchText, tagJoinSelect } from "./taxonomy-query";
 import { slugifyGeneratorTitle } from "@/lib/generator-template";
+import type { MultiImageItem } from "./media-input";
 import type {
   Generator,
   PromptContentType,
+  PromptMedia,
   GeneratorRun,
   GeneratorSchema,
   GeneratorTemplate,
@@ -56,6 +58,7 @@ export interface GeneratorRow {
   updated_at: string;
   profiles: ProfileRow;
   generator_tags: { tags: { slug: string; label: string } }[];
+  generator_media: { id: string; url: string; width: number; height: number; alt: string | null; position: number }[];
 }
 
 export const GENERATOR_SELECT = `
@@ -64,18 +67,29 @@ export const GENERATOR_SELECT = `
   enable_negative_prompt,
   current_version_id, use_count, save_count, like_count, comment_count, created_at, updated_at,
   profiles:creator_id ( id, username, display_name, avatar_url, cover_url, bio, website, follower_count, following_count, created_at, interests ),
-  generator_tags ( tags ( slug, label ) )
+  generator_tags ( tags ( slug, label ) ),
+  generator_media ( id, url, width, height, alt, position )
 `;
 
 export function mapGeneratorRow(row: GeneratorRow): Generator {
   const tags: Tag[] = (row.generator_tags ?? []).map((gt) => ({ slug: gt.tags.slug, label: gt.tags.label }));
+  const media: PromptMedia[] =
+    (row.generator_media ?? []).length > 0
+      ? row.generator_media
+          .slice()
+          .sort((a, b) => a.position - b.position)
+          .map((m) => ({ id: m.id, url: m.url, width: m.width, height: m.height, alt: m.alt ?? row.title }))
+      : row.cover_url
+        ? [{ id: `${row.id}-cover`, url: row.cover_url, width: 0, height: 0, alt: row.title }]
+        : [];
   return {
     id: row.id,
     creator: mapProfileRow(row.profiles),
     title: row.title,
     slug: row.slug,
     description: row.description,
-    coverUrl: row.cover_url,
+    media,
+    coverUrl: media[0]?.url ?? null,
     tools: normalizeToolRefs(row.tools),
     contentType: normalizeLegacyContentType(row.content_type).contentType,
     ...sanitizeTaxonomy(normalizeLegacyContentType(row.content_type).contentType, row.category, row.subcategory),
@@ -310,7 +324,16 @@ async function replaceGeneratorTags(generatorId: string, tags: Tag[]): Promise<v
 export interface GeneratorMetaInput {
   title: string;
   description: string;
-  coverUrl: string | null;
+  /**
+   * Zero or more cover images, in the order the creator arranged them.
+   * Each item's `url`/`width`/`height` is already a fully-resolved local
+   * data URL the moment it's picked (`MultiImagePicker`'s own
+   * `resizeImageToDataUrlFit` preview IS the final, persisted value here —
+   * Bölüm 9.27's "no Storage bucket for a generator cover" decision, now
+   * applying to every entry instead of just one) — nothing further to
+   * resolve/upload at save time, unlike Prompt/Request's `MediaInput`.
+   */
+  media: MultiImageItem[];
   tools: string[];
   contentType: PromptContentType;
   category: string | null;
@@ -335,6 +358,7 @@ export async function createDraftGenerator(
   creatorProfile: UserProfile,
 ): Promise<{ generator: Generator; version: GeneratorVersionResult }> {
   const slug = await generateUniqueSlug(meta.title || "generator");
+  const resolvedMedia = meta.media.map((item) => ({ url: item.url, width: item.width, height: item.height, alt: meta.title }));
   const { data: generatorRow, error: generatorError } = await supabase
     .from("generators")
     .insert({
@@ -342,7 +366,7 @@ export async function createDraftGenerator(
       title: meta.title.trim(),
       slug,
       description: meta.description.trim(),
-      cover_url: meta.coverUrl,
+      cover_url: resolvedMedia[0]?.url ?? null,
       tools: meta.tools,
       content_type: meta.contentType,
       ...taxonomyColumns(meta.contentType, meta.category, meta.subcategory),
@@ -356,6 +380,12 @@ export async function createDraftGenerator(
   if (generatorError || !generatorRow) throw new Error(generatorError?.message ?? translateForRuntime("generator.createFailedShort"));
 
   const generatorId = generatorRow.id as string;
+
+  if (resolvedMedia.length > 0) {
+    await supabase.from("generator_media").insert(
+      resolvedMedia.map((d, index) => ({ generator_id: generatorId, url: d.url, width: d.width, height: d.height, alt: d.alt, position: index })),
+    );
+  }
 
   if (meta.tags.length > 0) {
     await replaceGeneratorTags(generatorId, meta.tags);
@@ -385,7 +415,8 @@ export async function createDraftGenerator(
     title: meta.title.trim(),
     slug,
     description: meta.description.trim(),
-    coverUrl: meta.coverUrl,
+    media: resolvedMedia.map((d, index) => ({ id: `${generatorId}-media-${index}`, url: d.url, width: d.width, height: d.height, alt: d.alt })),
+    coverUrl: resolvedMedia[0]?.url ?? null,
     tools: meta.tools,
     contentType: meta.contentType,
     ...sanitizeTaxonomy(meta.contentType, meta.category, meta.subcategory),
@@ -416,12 +447,13 @@ export async function createDraftGenerator(
  * the row after the UPDATE.
  */
 export async function updateGeneratorMeta(generatorId: string, meta: GeneratorMetaInput): Promise<void> {
+  const resolvedMedia = meta.media.map((item) => ({ url: item.url, width: item.width, height: item.height, alt: meta.title }));
   const { data, error } = await supabase
     .from("generators")
     .update({
       title: meta.title.trim(),
       description: meta.description.trim(),
-      cover_url: meta.coverUrl,
+      cover_url: resolvedMedia[0]?.url ?? null,
       tools: meta.tools,
       content_type: meta.contentType,
       ...taxonomyColumns(meta.contentType, meta.category, meta.subcategory),
@@ -435,6 +467,13 @@ export async function updateGeneratorMeta(generatorId: string, meta: GeneratorMe
     .maybeSingle();
   if (error) throw new Error(error.message);
   if (!data) throw new Error(translateForRuntime("generator.noEditPermission"));
+
+  await supabase.from("generator_media").delete().eq("generator_id", generatorId);
+  if (resolvedMedia.length > 0) {
+    await supabase.from("generator_media").insert(
+      resolvedMedia.map((d, index) => ({ generator_id: generatorId, url: d.url, width: d.width, height: d.height, alt: d.alt, position: index })),
+    );
+  }
   await replaceGeneratorTags(generatorId, meta.tags);
 }
 

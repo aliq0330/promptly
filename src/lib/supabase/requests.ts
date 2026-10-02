@@ -7,7 +7,8 @@ import { translateForRuntime } from "@/lib/i18n/translations";
 import { normalizeLegacyContentType, sanitizeTaxonomy } from "@/lib/content-taxonomy";
 import { applyAdvancedFilters, applyTaxonomyFilter, hasSearchFilter, sanitizeSearchText, tagJoinSelect, taxonomyColumns, type ContentSearchFilters } from "./taxonomy-query";
 import { mapProfileRow, type ProfileRow } from "./mappers";
-import type { PromptContentType, PromptRequest, PromptRequestStatus, Tag } from "@/types";
+import { resolveMediaInputs, type MediaInput } from "./media-input";
+import type { PromptContentType, PromptMedia, PromptRequest, PromptRequestStatus, Tag } from "@/types";
 
 /**
  * Hand-written mirror of the `public.prompt_requests` row shape — see
@@ -37,6 +38,7 @@ export interface RequestRow {
   is_draft: boolean;
   profiles: ProfileRow;
   prompt_request_tags: { tags: { slug: string; label: string } }[];
+  prompt_request_media: { id: string; url: string; width: number; height: number; alt: string | null; position: number }[];
 }
 
 export const REQUEST_SELECT = `
@@ -44,7 +46,8 @@ export const REQUEST_SELECT = `
   reference_image_url, reference_image_width, reference_image_height,
   status, selected_response_prompt_id, response_count, like_count, comment_count, created_at, deleted_at, is_draft,
   profiles:author_id ( id, username, display_name, avatar_url, cover_url, bio, website, follower_count, following_count, created_at, interests ),
-  prompt_request_tags ( tags ( slug, label ) )
+  prompt_request_tags ( tags ( slug, label ) ),
+  prompt_request_media ( id, url, width, height, alt, position )
 `;
 
 /**
@@ -61,6 +64,23 @@ function filterNotDeleted(requests: PromptRequest[]): PromptRequest[] {
 
 export function mapRequestRow(row: RequestRow): PromptRequest {
   const tags: Tag[] = (row.prompt_request_tags ?? []).map((rt) => ({ slug: rt.tags.slug, label: rt.tags.label }));
+  const media: PromptMedia[] =
+    (row.prompt_request_media ?? []).length > 0
+      ? row.prompt_request_media
+          .slice()
+          .sort((a, b) => a.position - b.position)
+          .map((m) => ({ id: m.id, url: m.url, width: m.width, height: m.height, alt: m.alt ?? row.title }))
+      : row.reference_image_url
+        ? [
+            {
+              id: `${row.id}-reference`,
+              url: row.reference_image_url,
+              width: row.reference_image_width ?? 0,
+              height: row.reference_image_height ?? 0,
+              alt: row.title,
+            },
+          ]
+        : [];
   // Rows written before the 4-type taxonomy may still say code/music — read them as their new type.
   const legacy = row.content_type ? normalizeLegacyContentType(row.content_type) : null;
   return {
@@ -73,15 +93,8 @@ export function mapRequestRow(row: RequestRow): PromptRequest {
     tools: normalizeToolRefs(row.tools),
     contentType: legacy?.contentType,
     ...(legacy ? sanitizeTaxonomy(legacy.contentType, row.category ?? legacy.category, row.subcategory) : { category: null, subcategory: null }),
-    referenceImage: row.reference_image_url
-      ? {
-          id: `${row.id}-reference`,
-          url: row.reference_image_url,
-          width: row.reference_image_width ?? 0,
-          height: row.reference_image_height ?? 0,
-          alt: row.title,
-        }
-      : undefined,
+    media,
+    referenceImage: media[0],
     tags,
     status: row.status,
     responseCount: row.response_count,
@@ -204,8 +217,8 @@ export interface CreateRealRequestInput {
   tags: Tag[];
   /** Per-tag source (`manual` | `automatic`), keyed by slug — see `CreateRealPromptInput.tagSources` (Bölüm 9.23). */
   tagSources?: Record<string, "manual" | "automatic">;
-  /** A real uploaded file, when the requester picked one. */
-  imageFile: File | null;
+  /** Zero or more reference images, in the order the requester arranged them (mood-board style). */
+  images: MediaInput[];
   /** Saves as a private draft (`is_draft = true`) instead of publishing. */
   isDraft?: boolean;
 }
@@ -220,23 +233,27 @@ export async function createRealRequest(
   authorId: string,
   authorProfile: PromptRequest["author"],
 ): Promise<PromptRequest> {
-  let referenceImage: { url: string; width: number; height: number } | null = null;
-
-  if (input.imageFile) {
-    const resized = await resizeImageToBlob(input.imageFile, 1000);
+  // Generated client-side so the per-image storage path (`{requestId}-{n}`)
+  // is already known before the row itself exists — same "id first, upload
+  // second" pattern `createPromptResult`/`getOrCreateDirectConversation`
+  // already use elsewhere in this codebase.
+  const requestId = crypto.randomUUID();
+  const resolved = await resolveMediaInputs(input.images, input.title, async (file, index) => {
+    const resized = await resizeImageToBlob(file, 1000);
     const ext = resized.contentType === "image/png" ? "png" : "jpg";
-    const path = `${authorId}/${Date.now()}.${ext}`;
+    const path = `${authorId}/${requestId}-${index}.${ext}`;
     const { error: uploadError } = await supabase.storage
       .from("request-references")
       .upload(path, resized.blob, { contentType: resized.contentType, upsert: true });
     if (uploadError) throw new Error(uploadError.message);
     const { data: publicUrlData } = supabase.storage.from("request-references").getPublicUrl(path);
-    referenceImage = { url: publicUrlData.publicUrl, width: resized.width, height: resized.height };
-  }
+    return { url: publicUrlData.publicUrl, width: resized.width, height: resized.height };
+  });
 
   const { data: inserted, error: insertError } = await supabase
     .from("prompt_requests")
     .insert({
+      id: requestId,
       author_id: authorId,
       title: input.title.trim(),
       description: input.description.trim(),
@@ -245,9 +262,9 @@ export async function createRealRequest(
       tools: input.tools ?? [],
       content_type: input.contentType,
       ...taxonomyColumns(input.contentType, input.category, input.subcategory),
-      reference_image_url: referenceImage?.url ?? null,
-      reference_image_width: referenceImage?.width ?? null,
-      reference_image_height: referenceImage?.height ?? null,
+      reference_image_url: resolved[0]?.url ?? null,
+      reference_image_width: resolved[0]?.width ?? null,
+      reference_image_height: resolved[0]?.height ?? null,
       is_draft: input.isDraft ?? false,
     })
     .select("id, created_at")
@@ -257,7 +274,18 @@ export async function createRealRequest(
     throw new Error(insertError?.message ?? translateForRuntime("request.saveFailed"));
   }
 
-  const requestId = inserted.id as string;
+  if (resolved.length > 0) {
+    await supabase.from("prompt_request_media").insert(
+      resolved.map((d, index) => ({
+        request_id: requestId,
+        url: d.url,
+        width: d.width,
+        height: d.height,
+        alt: d.alt,
+        position: index,
+      })),
+    );
+  }
 
   if (input.tags.length > 0) {
     await supabase.from("prompt_request_tags").insert(
@@ -269,6 +297,8 @@ export async function createRealRequest(
     );
   }
 
+  const media: PromptMedia[] = resolved.map((d, index) => ({ id: `${requestId}-media-${index}`, url: d.url, width: d.width, height: d.height, alt: d.alt }));
+
   return {
     id: requestId,
     author: authorProfile,
@@ -279,9 +309,8 @@ export async function createRealRequest(
     tools: input.tools ?? [],
     contentType: input.contentType,
     ...sanitizeTaxonomy(input.contentType, input.category, input.subcategory),
-    referenceImage: referenceImage
-      ? { id: `${requestId}-reference`, url: referenceImage.url, width: referenceImage.width, height: referenceImage.height, alt: input.title }
-      : undefined,
+    media,
+    referenceImage: media[0],
     tags: input.tags,
     status: "open",
     responseCount: 0,
@@ -304,6 +333,12 @@ export interface UpdateRealRequestInput {
   tools?: string[];
   tags: Tag[];
   tagSources?: Record<string, "manual" | "automatic">;
+  /**
+   * The full, final ordered set of reference images if the owner changed
+   * anything about them — `undefined` leaves the existing media untouched.
+   * Replace-all, same as `updateRealPrompt`'s own `images`.
+   */
+  images?: MediaInput[];
   /** Publishes a draft (`is_draft` → false) once everything else is saved; the database then restarts `created_at` and counts its tags. */
   publish?: boolean;
 }
@@ -313,16 +348,17 @@ export interface UpdateRealRequestInput {
  * "edit an existing request" capability this app has ever had (Bölüm 21 Faz
  * 5/9.2 deliberately left this out; the "Prompt Değişken Sistemi" module
  * adds it for real). Deliberately narrow: `content_type`/`status`/
- * `selected_response_prompt_id`/`reference_image_*` are never touched here
- * — those have their own dedicated, already-working flows
- * (`updateRealRequestStatus`/`selectRealRequestResponse`), and mixing them
- * into a generic "edit" would blur exactly the distinction CLAUDE.md's own
- * `record_request_edit` trigger is built to keep clean. Ownership is
- * verified by re-selecting the row after the UPDATE, same as
- * `updateRealPrompt` — a non-owner's call fails loudly instead of RLS's
- * silent 0-rows-affected.
+ * `selected_response_prompt_id` are never touched here — those have their
+ * own dedicated, already-working flows (`updateRealRequestStatus`/
+ * `selectRealRequestResponse`), and mixing them into a generic "edit" would
+ * blur exactly the distinction CLAUDE.md's own `record_request_edit`
+ * trigger is built to keep clean. Reference images (`images`) ARE editable
+ * here, unlike before this content-type gained its own `prompt_request_
+ * media` table. Ownership is verified by re-selecting the row after the
+ * UPDATE, same as `updateRealPrompt` — a non-owner's call fails loudly
+ * instead of RLS's silent 0-rows-affected.
  */
-export async function updateRealRequest(requestId: string, input: UpdateRealRequestInput): Promise<PromptRequest> {
+export async function updateRealRequest(requestId: string, authorId: string, input: UpdateRealRequestInput): Promise<PromptRequest> {
   const { data: updated, error: updateError } = await supabase
     .from("prompt_requests")
     .update({
@@ -339,6 +375,42 @@ export async function updateRealRequest(requestId: string, input: UpdateRealRequ
 
   if (updateError) throw new Error(updateError.message);
   if (!updated) throw new Error(translateForRuntime("request.noEditPermission"));
+
+  if (input.images) {
+    const stamp = Date.now();
+    const resolved = await resolveMediaInputs(input.images, input.title, async (file, index) => {
+      const resized = await resizeImageToBlob(file, 1000);
+      const ext = resized.contentType === "image/png" ? "png" : "jpg";
+      const path = `${authorId}/${requestId}-${stamp}-${index}.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from("request-references")
+        .upload(path, resized.blob, { contentType: resized.contentType, upsert: true });
+      if (uploadError) throw new Error(uploadError.message);
+      const { data: publicUrlData } = supabase.storage.from("request-references").getPublicUrl(path);
+      return { url: publicUrlData.publicUrl, width: resized.width, height: resized.height };
+    });
+    await supabase.from("prompt_request_media").delete().eq("request_id", requestId);
+    if (resolved.length > 0) {
+      await supabase.from("prompt_request_media").insert(
+        resolved.map((d, index) => ({
+          request_id: requestId,
+          url: d.url,
+          width: d.width,
+          height: d.height,
+          alt: d.alt,
+          position: index,
+        })),
+      );
+    }
+    await supabase
+      .from("prompt_requests")
+      .update({
+        reference_image_url: resolved[0]?.url ?? null,
+        reference_image_width: resolved[0]?.width ?? null,
+        reference_image_height: resolved[0]?.height ?? null,
+      })
+      .eq("id", requestId);
+  }
 
   await supabase.from("prompt_request_tags").delete().eq("request_id", requestId);
   if (input.tags.length > 0) {

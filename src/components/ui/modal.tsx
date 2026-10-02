@@ -14,7 +14,8 @@ import { Portal } from "./portal";
 let lockCount = 0;
 let previousBodyOverflow = "";
 
-function lockBodyScroll() {
+/** Exported for `ImageLightbox` — the same shared, ref-counted lock, not a second one. */
+export function lockBodyScroll() {
   if (lockCount === 0) {
     previousBodyOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -22,7 +23,7 @@ function lockBodyScroll() {
   lockCount += 1;
 }
 
-function unlockBodyScroll() {
+export function unlockBodyScroll() {
   lockCount = Math.max(0, lockCount - 1);
   if (lockCount === 0) {
     document.body.style.overflow = previousBodyOverflow;

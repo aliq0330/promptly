@@ -111,14 +111,18 @@ export function RealRequestsProvider({ children }: { children: React.ReactNode }
     [user, t],
   );
 
-  const updateRequest = useCallback(async (id: string, input: UpdateRealRequestInput) => {
-    const request = await updateRealRequest(id, input);
-    setRealRequests((prev) => {
-      if (prev.some((r) => r.id === id)) return prev.map((r) => (r.id === id ? request : r));
-      return input.publish ? [request, ...prev] : prev;
-    });
-    return request;
-  }, []);
+  const updateRequest = useCallback(
+    async (id: string, input: UpdateRealRequestInput) => {
+      if (!user) throw new Error(t("request.loginRequiredToPublish"));
+      const request = await updateRealRequest(id, user.id, input);
+      setRealRequests((prev) => {
+        if (prev.some((r) => r.id === id)) return prev.map((r) => (r.id === id ? request : r));
+        return input.publish ? [request, ...prev] : prev;
+      });
+      return request;
+    },
+    [user, t],
+  );
 
   const updateStatus = useCallback(async (id: string, status: Extract<PromptRequestStatus, "open" | "closed">) => {
     await updateRealRequestStatus(id, status);

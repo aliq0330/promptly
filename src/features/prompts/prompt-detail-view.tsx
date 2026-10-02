@@ -13,6 +13,7 @@ import { RelatedPrompts } from "@/features/prompts/related-prompts";
 import { TaxonomyLinks } from "@/features/content/taxonomy-links";
 import { CreatorSummary } from "@/features/profile/creator-summary";
 import { clampedAspectRatio } from "@/lib/placeholder-image";
+import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { GeneratorSourceContext, RequestResponseContext } from "@/features/prompts/post-context";
 import { CommentSection } from "@/features/prompts/comment-section";
 import { LikeButton } from "@/features/prompts/like-button";
@@ -43,6 +44,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
   const { t, language } = useTranslation();
   const media = prompt.media[0];
   const typeMeta = CONTENT_TYPE_META[prompt.contentType];
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   const { user } = useAuth();
   const isOwn = user?.id === prompt.author.id;
@@ -160,8 +162,11 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
 
           {media && (
             <figure className="space-y-2">
-              <div
-                className="relative w-full overflow-hidden rounded-lg border border-border-soft bg-surface-soft"
+              <button
+                type="button"
+                onClick={() => setLightboxIndex(0)}
+                aria-label={t("media.viewFullscreen")}
+                className="relative block w-full overflow-hidden rounded-lg border border-border-soft bg-surface-soft"
                 // Supporting output preview, not a hero image: capped at ~480px tall.
                 style={{
                   aspectRatio: clampedAspectRatio(media.width, media.height),
@@ -169,9 +174,32 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
                 }}
               >
                 <Image src={media.url} alt={media.alt} fill sizes="(min-width: 1024px) 720px, 100vw" className="object-cover" />
-              </div>
+              </button>
               <figcaption className="text-caption text-text-muted">{t("prompt.outputCaption")}</figcaption>
+              {prompt.media.length > 1 && (
+                <div className="flex flex-wrap gap-2">
+                  {prompt.media.slice(1).map((extra, index) => (
+                    <button
+                      key={extra.id}
+                      type="button"
+                      onClick={() => setLightboxIndex(index + 1)}
+                      aria-label={t("media.viewFullscreen")}
+                      className="h-16 w-16 overflow-hidden rounded-md border border-border-soft"
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element -- a small thumbnail strip, next/image's sizing overhead isn't worth it here */}
+                      <img src={extra.url} alt={extra.alt} className="h-full w-full object-cover" />
+                    </button>
+                  ))}
+                </div>
+              )}
             </figure>
+          )}
+          {lightboxIndex !== null && (
+            <ImageLightbox
+              images={prompt.media.map((item) => ({ url: item.url, alt: item.alt }))}
+              initialIndex={lightboxIndex}
+              onClose={() => setLightboxIndex(null)}
+            />
           )}
 
           <ToolLine label={t("tool.recommendedLabel")} refs={prompt.tools} legacy={prompt.tool} />

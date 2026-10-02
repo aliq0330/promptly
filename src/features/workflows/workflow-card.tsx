@@ -50,8 +50,15 @@ export function WorkflowCard({
 
         <div className="flex items-center gap-3 rounded-md border border-border-soft bg-surface-soft p-2.5">
           {workflow.coverUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element -- real, potentially locally-produced data URL cover
-            <img src={workflow.coverUrl} alt="" className="h-12 w-12 shrink-0 rounded-sm object-cover" />
+            <span className="relative block h-12 w-12 shrink-0 overflow-hidden rounded-sm">
+              {/* eslint-disable-next-line @next/next/no-img-element -- real, potentially locally-produced data URL cover */}
+              <img src={workflow.coverUrl} alt="" className="h-full w-full object-cover" />
+              {workflow.media.length > 1 && (
+                <span className="absolute bottom-0 right-0 rounded-tl-sm bg-black/70 px-0.5 text-[0.6rem] font-medium leading-tight text-white">
+                  {t("media.moreImagesBadge", { count: workflow.media.length - 1 })}
+                </span>
+              )}
+            </span>
           ) : (
             <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-sm bg-primary-soft text-primary">
               <WorkflowIcon size={20} strokeWidth={1.75} />

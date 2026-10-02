@@ -31,6 +31,7 @@ import {
 } from "@/lib/supabase/generators";
 import { useRealGenerators } from "./real-generators-provider";
 import { formatRelativeTime, profileHref, tagHref } from "@/lib/utils";
+import { ImageLightbox } from "@/components/ui/image-lightbox";
 import type { Generator, GeneratorValues } from "@/types";
 
 /**
@@ -63,6 +64,7 @@ export function GeneratorDetailView() {
   const [loaded, setLoaded] = useState(false);
   const [isOpeningPrompt, setIsOpeningPrompt] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -152,14 +154,49 @@ export function GeneratorDetailView() {
             </div>
             <div className="flex items-start gap-4">
               {generator.coverUrl && (
-                // eslint-disable-next-line @next/next/no-img-element -- a real, potentially locally-produced data URL cover (see generator-details-form.tsx)
-                <img src={generator.coverUrl} alt="" className="h-16 w-16 shrink-0 rounded-md border border-border-soft object-cover sm:h-20 sm:w-20" />
+                <button
+                  type="button"
+                  onClick={() => setLightboxIndex(0)}
+                  aria-label={t("media.viewFullscreen")}
+                  className="relative h-16 w-16 shrink-0 overflow-hidden rounded-md border border-border-soft sm:h-20 sm:w-20"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element -- a real, potentially locally-produced data URL cover (see generator-details-form.tsx) */}
+                  <img src={generator.coverUrl} alt="" className="h-full w-full object-cover" />
+                  {generator.media.length > 1 && (
+                    <span className="absolute bottom-0.5 right-0.5 rounded bg-black/70 px-1 text-[0.65rem] font-medium text-white">
+                      {t("media.moreImagesBadge", { count: generator.media.length - 1 })}
+                    </span>
+                  )}
+                </button>
               )}
               <div className="min-w-0 space-y-2">
                 <h1 className="text-h1 font-semibold text-text">{generator.title}</h1>
                 <p className="max-w-2xl text-body text-text-secondary">{generator.description}</p>
               </div>
             </div>
+            {generator.media.length > 1 && (
+              <div className="flex gap-2 overflow-x-auto">
+                {generator.media.slice(1).map((item, index) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => setLightboxIndex(index + 1)}
+                    aria-label={t("media.viewFullscreen")}
+                    className="h-14 w-14 shrink-0 overflow-hidden rounded-md border border-border-soft"
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element -- thumbnail strip, same source list as the cover */}
+                    <img src={item.url} alt="" className="h-full w-full object-cover" />
+                  </button>
+                ))}
+              </div>
+            )}
+            {lightboxIndex !== null && (
+              <ImageLightbox
+                images={generator.media.map((item) => ({ url: item.url, alt: item.alt }))}
+                initialIndex={lightboxIndex}
+                onClose={() => setLightboxIndex(null)}
+              />
+            )}
             <Link href={profileHref(generator.creator)} className="group inline-flex items-center gap-2.5 rounded-md">
               <Avatar src={generator.creator.avatarUrl} alt={generator.creator.displayName} size={32} />
               <span className="leading-tight">

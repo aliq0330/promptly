@@ -12,6 +12,7 @@ import { fetchWorkflowById, saveWorkflow } from "@/lib/supabase/workflows";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { duplicateStep, moveStep, newStep, sanitizeLinks, validateWorkflow, type WorkflowIssue } from "@/lib/workflow-logic";
 import { cn } from "@/lib/utils";
+import { multiImageItemFromMedia } from "@/lib/supabase/media-input";
 import type { WorkflowContentRef, WorkflowStep } from "@/types";
 import { AddContentModal } from "./add-content-modal";
 import { ContentPane, GeneralPane, IOPane, SettingsPane, StepPreview } from "./step-panes";
@@ -75,7 +76,7 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
       setMeta({
         title: result.workflow.title,
         description: result.workflow.description,
-        coverUrl: result.workflow.coverUrl,
+        media: multiImageItemFromMedia(result.workflow.media),
         contentTypes: result.workflow.contentTypes,
         category: result.workflow.category,
         tools: result.workflow.tools,

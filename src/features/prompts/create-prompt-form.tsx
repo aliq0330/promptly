@@ -1,7 +1,7 @@
 "use client";
 import { ToolPicker } from "@/features/content/tool-picker";
 
-import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Blocks, Copy, X } from "lucide-react";
@@ -23,7 +23,9 @@ import { PromptVisionAssist } from "@/features/prompts/prompt-vision-assist";
 import { fetchVariablesForPrompt, replaceVariablesForPrompt } from "@/lib/supabase/prompt-variables";
 import { fetchGeneratorById, fetchGeneratorRun } from "@/lib/supabase/generators";
 import { placeholderArt } from "@/lib/placeholder-image";
-import { cn, copyTextToClipboard, generatorHref, promptHref, requestHref, resizeImageToDataUrlFit } from "@/lib/utils";
+import { MultiImagePicker } from "@/features/content/multi-image-picker";
+import { multiImageItemFromMedia, toDeferredMediaInputs, type MultiImageItem } from "@/lib/supabase/media-input";
+import { cn, copyTextToClipboard, generatorHref, promptHref, requestHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { KindDraftsButton } from "@/features/drafts/kind-drafts-button";
 import type { Generator, GeneratorRun, Prompt, PromptContentType, PromptRequest } from "@/types";
@@ -228,11 +230,7 @@ export function CreatePromptForm() {
     catalog: tagCatalog,
     contextTags: isAnswerMode ? answeredRequest?.tags : undefined,
   });
-  const [uploadedImage, setUploadedImage] = useState<{ url: string; width: number; height: number } | null>(
-    null,
-  );
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imageError, setImageError] = useState<string | null>(null);
+  const [images, setImages] = useState<MultiImageItem[]>([]);
   const [fieldsSeeded, setFieldsSeeded] = useState(false);
   const [variables, setVariables] = useState<DraftVariable[]>([]);
   const [showOnProfile, setShowOnProfile] = useState(true);
@@ -253,6 +251,7 @@ export function CreatePromptForm() {
       setPromptText(editingPrompt.promptText);
       setTool(editingPrompt.tool ?? "");
       setTools(editingPrompt.tools ?? []);
+      setImages(multiImageItemFromMedia(editingPrompt.media));
       if (editingPrompt.origin.type === "request-response") {
         setShowOnProfile(editingPrompt.showOnProfile);
       }
@@ -279,6 +278,7 @@ export function CreatePromptForm() {
       setPromptText(duplicateSource.promptText);
       setTool(duplicateSource.tool ?? "");
       setTools(duplicateSource.tools ?? []);
+      setImages(multiImageItemFromMedia(duplicateSource.media));
       duplicateSource.tags.forEach((tag) => tagPicker.addManual(tag));
       setFieldsSeeded(true);
       return;
@@ -350,19 +350,6 @@ export function CreatePromptForm() {
   const isEditingResponse = isEditMode && editingPrompt?.origin.type === "request-response";
   const showsVisibilityChoice = isAnswerMode || isEditingResponse;
 
-  async function handleImageChange(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    try {
-      const resized = await resizeImageToDataUrlFit(file, 1100);
-      setUploadedImage(resized);
-      setImageFile(file);
-      setImageError(null);
-    } catch {
-      setImageError(t("prompt.imageUploadFailed"));
-    }
-  }
-
   const origin: Prompt["origin"] = editingPrompt
     ? editingPrompt.origin
     : answeredRequest
@@ -380,18 +367,25 @@ export function CreatePromptForm() {
         }
       : null;
 
-  const existingMedia = editingPrompt?.media[0];
   const media =
     contentType === "image"
-      ? [
-          {
-            id: "preview-media",
-            url: uploadedImage?.url ?? existingMedia?.url ?? placeholderArt(title || "yeni-prompt", 900, 1100),
-            width: uploadedImage?.width ?? existingMedia?.width ?? 900,
-            height: uploadedImage?.height ?? existingMedia?.height ?? 1100,
+      ? images.length > 0
+        ? images.map((item, index) => ({
+            id: item.existingId ?? `preview-media-${index}`,
+            url: item.url,
+            width: item.width,
+            height: item.height,
             alt: title || t("prompt.previewImageAlt"),
-          },
-        ]
+          }))
+        : [
+            {
+              id: "preview-media",
+              url: placeholderArt(title || "yeni-prompt", 900, 1100),
+              width: 900,
+              height: 1100,
+              alt: title || t("prompt.previewImageAlt"),
+            },
+          ]
       : [];
 
   async function handleSaveDraft() {
@@ -423,7 +417,7 @@ export function CreatePromptForm() {
           category,
           subcategory,
           ...tagsInput,
-          imageFile: contentType === "image" ? imageFile : undefined,
+          images: contentType === "image" ? toDeferredMediaInputs(images) : undefined,
         });
         try {
           await replaceVariablesForPrompt(updated.id, variableDrafts);
@@ -445,9 +439,7 @@ export function CreatePromptForm() {
           category,
           subcategory,
           ...tagsInput,
-          imageFile,
-          fallbackImage:
-            contentType === "image" ? { url: media[0].url, width: media[0].width, height: media[0].height } : null,
+          images: contentType === "image" ? toDeferredMediaInputs(images) : [],
           isDraft: true,
         },
         ownProfile,
@@ -487,7 +479,7 @@ export function CreatePromptForm() {
           subcategory,
           tags: tagPicker.accepted.map((entry) => entry.tag),
           tagSources: Object.fromEntries(tagPicker.accepted.map((entry) => [entry.tag.slug, entry.source])),
-          imageFile: contentType === "image" ? imageFile : undefined,
+          images: contentType === "image" ? toDeferredMediaInputs(images) : undefined,
           showOnProfile: isEditingResponse ? showOnProfile : undefined,
           publish: isEditingDraft,
         });
@@ -515,9 +507,7 @@ export function CreatePromptForm() {
           subcategory,
           tags: tagPicker.accepted.map((entry) => entry.tag),
           tagSources: Object.fromEntries(tagPicker.accepted.map((entry) => [entry.tag.slug, entry.source])),
-          imageFile,
-          fallbackImage:
-            contentType === "image" ? { url: media[0].url, width: media[0].width, height: media[0].height } : null,
+          images: contentType === "image" ? toDeferredMediaInputs(images) : [],
           requestId: answeredRequest?.id,
           showOnProfile: isAnswerMode ? showOnProfile : true,
           generatedFrom: generatedFrom ?? undefined,
@@ -813,21 +803,12 @@ export function CreatePromptForm() {
           )}
 
           {contentType === "image" && (
-            <div>
-              <label className="mb-2 block text-sm font-medium text-text">
-                {t("prompt.imageLabel")} {isEditMode && <span className="text-text-muted">({t("common.optional")})</span>}
-              </label>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageChange}
-                className="block w-full text-sm text-text-muted file:mr-3 file:rounded-md file:border-0 file:bg-accent-surface file:px-3 file:py-2 file:text-sm file:font-medium file:text-primary hover:file:bg-accent-surface/70"
-              />
-              <p className="mt-1 text-xs text-text-muted">
-                {isEditMode ? t("prompt.imageEditHint") : t("prompt.imageUploadHint")}
-              </p>
-              {imageError && <p className="mt-1 text-xs text-danger">{imageError}</p>}
-            </div>
+            <MultiImagePicker
+              items={images}
+              onChange={setImages}
+              label={t("prompt.imageLabel")}
+              hint={isEditMode ? t("prompt.imageEditHint") : t("prompt.imageUploadHint")}
+            />
           )}
 
           <div>
