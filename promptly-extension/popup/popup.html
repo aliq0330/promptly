@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Promptly</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <header class="head">
+      <span class="logo">✦</span>
+      <h1>Promptly</h1>
+    </header>
+
+    <main>
+      <section id="empty" class="empty" hidden>
+        <p class="empty-title">Henüz yakalanan prompt yok</p>
+        <p class="empty-hint">
+          Herhangi bir sayfada bir prompt metnini seç, sağ tıkla ve
+          <strong>“✦ Promptly'ye Kaydet”</strong> seçeneğini kullan.
+        </p>
+      </section>
+
+      <section id="capture" hidden>
+        <label for="text" class="label">Yakalanan prompt</label>
+        <textarea id="text" rows="8" spellcheck="false"></textarea>
+        <div class="meta">
+          <span id="count"></span>
+          <a id="source" target="_blank" rel="noopener noreferrer"></a>
+        </div>
+
+        <div class="actions">
+          <button id="copy" type="button" class="btn">Kopyala</button>
+          <button id="clear" type="button" class="btn">Temizle</button>
+          <button id="save" type="button" class="btn primary" disabled
+            title="Giriş ve kaydetme sonraki aşamada bağlanacak">Kaydet</button>
+        </div>
+        <p class="note">Hesap bağlantısı ve kaydetme henüz aktif değil.</p>
+      </section>
+    </main>
+
+    <script src="popup.js"></script>
+  </body>
+</html>

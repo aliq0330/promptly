@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "Promptly",
+  "version": "0.1.0",
+  "description": "Web'de seçtiğin promptları sağ tıkla Promptly'ye kaydet.",
+  "minimum_chrome_version": "127",
+  "permissions": ["contextMenus", "storage"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "Promptly",
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  }
+}
