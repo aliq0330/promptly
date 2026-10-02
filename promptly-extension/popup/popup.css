@@ -68,3 +68,21 @@ textarea:focus-visible, .btn:focus-visible, a:focus-visible {
 .empty-title { margin: 0 0 6px; font-weight: 600; }
 .empty-hint { margin: 0; color: var(--muted); }
 [hidden] { display: none !important; }
+.user { margin-left: auto; color: var(--muted); font-size: 12px; }
+.link { background: none; border: 0; padding: 0; color: var(--primary); font: inherit; cursor: pointer; }
+.head .link { margin-left: auto; }
+.user:not([hidden]) + .link { margin-left: 8px; }
+.stack { display: flex; flex-direction: column; }
+.field {
+  width: 100%; padding: 8px 10px; margin-bottom: 10px;
+  border: 1px solid var(--border); border-radius: 10px;
+  background: var(--surface); color: var(--text); font: inherit;
+}
+.field.mono { font: 12.5px/1.5 ui-monospace, "SF Mono", Menlo, Consolas, monospace; resize: vertical; margin-bottom: 0; }
+.field:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.check { display: flex; align-items: center; gap: 6px; margin: 10px 0; color: var(--muted); font-size: 12px; }
+.error { margin: 0 0 8px; color: #d6455d; font-size: 12px; }
+.ok { margin: 0 0 8px; color: #1f9d6b; font-size: 12px; }
+
+.meta { margin-bottom: 10px; }
+.stack .note { margin: 0 0 10px; }

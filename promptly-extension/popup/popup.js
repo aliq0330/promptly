@@ -1,46 +1,118 @@
 // Promptly Extension — popup
-// background.js'in storage'a yazdığı bekleyen yakalamayı gösterir.
+// Giriş + background.js'in yakaladığı metni Promptly'ye kaydetme.
 
 const STORAGE_KEY = "pendingCapture";
+const $ = (id) => document.getElementById(id);
 
 const els = {
-  empty: document.getElementById("empty"),
-  capture: document.getElementById("capture"),
-  text: document.getElementById("text"),
-  count: document.getElementById("count"),
-  source: document.getElementById("source"),
-  copy: document.getElementById("copy"),
-  clear: document.getElementById("clear"),
+  user: $("user"), logout: $("logout"),
+  login: $("login"), identifier: $("identifier"), password: $("password"),
+  loginBtn: $("login-btn"), loginError: $("login-error"),
+  empty: $("empty"), capture: $("capture"),
+  title: $("title"), text: $("text"), count: $("count"), source: $("source"),
+  type: $("type"), publish: $("publish"),
+  saveBtn: $("save"), saveError: $("save-error"),
+  done: $("done"), doneTitle: $("done-title"), doneLink: $("done-link"),
+  copy: $("copy"), clear: $("clear"),
 };
 
-function render(capture) {
-  const has = Boolean(capture && capture.text);
-  els.empty.hidden = has;
-  els.capture.hidden = !has;
-  if (!has) return;
+let session = null;
+let currentCapture = null;
+let savedResult = null;
 
-  els.text.value = capture.text;
-  els.count.textContent = `${capture.text.length} karakter`;
+function showMessage(el, msg) {
+  el.textContent = msg || "";
+  el.hidden = !msg;
+}
 
-  // Yalnızca http(s) bağlantıları tıklanabilir yap.
-  let href = "";
-  try {
-    const u = new URL(capture.pageUrl);
-    if (u.protocol === "http:" || u.protocol === "https:") href = u.href;
-  } catch {
-    /* geçersiz URL */
-  }
-  if (href) {
-    els.source.href = href;
-    els.source.textContent = capture.pageTitle || new URL(href).hostname;
-    els.source.hidden = false;
-  } else {
-    els.source.hidden = true;
+function guessTitle(text) {
+  const first = text.split("\n").find((l) => l.trim()) || "";
+  const t = first.trim();
+  return t.length > 60 ? `${t.slice(0, 57)}…` : t;
+}
+
+function render() {
+  const loggedIn = Boolean(session);
+  const has = Boolean(currentCapture && currentCapture.text);
+
+  els.logout.hidden = !loggedIn;
+  els.user.hidden = !loggedIn;
+  els.login.hidden = loggedIn;
+  els.done.hidden = !loggedIn || !savedResult;
+  els.empty.hidden = !loggedIn || has || Boolean(savedResult);
+  els.capture.hidden = !loggedIn || !has;
+  if (!loggedIn || !has) return;
+
+  // Kullanıcı düzenlemeye başladıysa taslağı ezme: yalnızca yeni yakalamada doldur.
+  if (els.capture.dataset.capturedAt !== currentCapture.capturedAt) {
+    els.capture.dataset.capturedAt = currentCapture.capturedAt;
+    els.text.value = currentCapture.text;
+    els.title.value = guessTitle(currentCapture.text);
+    els.count.textContent = `${currentCapture.text.length} karakter`;
+    showMessage(els.saveError, "");
+
+    let href = "";
+    try {
+      const u = new URL(currentCapture.pageUrl);
+      if (u.protocol === "http:" || u.protocol === "https:") href = u.href;
+    } catch { /* geçersiz URL */ }
+    els.source.hidden = !href;
+    if (href) {
+      els.source.href = href;
+      els.source.textContent = currentCapture.pageTitle || new URL(href).hostname;
+    }
   }
 }
 
+els.login.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  showMessage(els.loginError, "");
+  els.loginBtn.disabled = true;
+  try {
+    session = await PromptlyApi.login(els.identifier.value, els.password.value);
+    els.password.value = "";
+    await loadUser();
+    render();
+  } catch (err) {
+    showMessage(els.loginError, err.message);
+  } finally {
+    els.loginBtn.disabled = false;
+  }
+});
+
+els.logout.addEventListener("click", async () => {
+  await PromptlyApi.logout();
+  session = null;
+  render();
+});
+
 els.text.addEventListener("input", () => {
   els.count.textContent = `${els.text.value.length} karakter`;
+});
+
+els.capture.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  showMessage(els.saveError, "");
+  els.saveBtn.disabled = true;
+  try {
+    const result = await PromptlyApi.savePrompt({
+      title: els.title.value,
+      text: els.text.value,
+      contentType: els.type.value,
+      sourceUrl: els.source.hidden ? "" : els.source.href,
+      publish: els.publish.checked,
+    });
+    const published = els.publish.checked;
+    savedResult = result;
+    els.doneTitle.textContent = published ? "Yayınlandı ✦" : "Taslak olarak kaydedildi ✦";
+    els.doneLink.href = result.url;
+    els.doneLink.textContent = published ? "Prompt'u aç" : "Düzenle ve yayınla";
+    await chrome.storage.local.remove(STORAGE_KEY);
+    await chrome.action.setBadgeText({ text: "" });
+  } catch (err) {
+    showMessage(els.saveError, err.message);
+  }
+  els.saveBtn.disabled = false;
 });
 
 els.copy.addEventListener("click", async () => {
@@ -58,14 +130,23 @@ els.clear.addEventListener("click", async () => {
   await chrome.action.setBadgeText({ text: "" });
 });
 
-// Popup açıkken yeni bir yakalama gelirse/temizlenirse güncelle.
 chrome.storage.onChanged.addListener((changes, area) => {
-  if (area === "local" && changes[STORAGE_KEY]) render(changes[STORAGE_KEY].newValue);
+  if (area !== "local" || !changes[STORAGE_KEY]) return;
+  currentCapture = changes[STORAGE_KEY].newValue || null;
+  if (currentCapture) savedResult = null;
+  if (!currentCapture) els.capture.dataset.capturedAt = "";
+  render();
 });
 
+async function loadUser() {
+  const profile = session ? await PromptlyApi.getProfile(session) : null;
+  els.user.textContent = profile ? `@${profile.username}` : session?.email || "";
+}
+
 (async function init() {
-  const data = await chrome.storage.local.get(STORAGE_KEY);
-  render(data[STORAGE_KEY]);
-  // Popup açıldı → rozet artık gereksiz.
+  session = await PromptlyApi.getSession();
+  currentCapture = (await chrome.storage.local.get(STORAGE_KEY))[STORAGE_KEY] || null;
+  render();
+  if (session) loadUser();
   await chrome.action.setBadgeText({ text: "" });
 })();

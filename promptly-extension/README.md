@@ -7,13 +7,18 @@ Bağımsız Manifest V3 uzantısı; Promptly uygulamasından ayrıdır, ona doku
 2. **Paketlenmemiş öğe yükle** → bu `promptly-extension` klasörünü seç
 
 ## Kullanım
-Herhangi bir sayfada metin seç → sağ tık → **✦ Promptly'ye Kaydet**.
-Seçili metin popup'ta açılır (popup açılamazsa uzantı simgesinde "1" rozeti çıkar).
+1. Uzantı popup'ından Promptly hesabınla giriş yap (e-posta **veya** kullanıcı adı).
+2. Herhangi bir sayfada metin seç → sağ tık → **✦ Promptly'ye Kaydet**.
+3. Popup'ta başlığı/türü düzenle → **Kaydet**. Varsayılan **taslak**tır
+   (kaynak sayfa bağlantısı açıklamaya yazılır); "Hemen yayınla" ile yayınlanır.
 
 ## Mimari
-- `background.js` — service worker: sağ tık menüsü, seçimi `chrome.storage.local`'a (`pendingCapture`) yazar
-- `popup/` — yakalanan metni gösterir, kopyala/temizle; "Kaydet" henüz devre dışı
+- `background.js` — sağ tık menüsü; seçimi `chrome.storage.local`'a (`pendingCapture`) yazar
+- `config.js` — Supabase URL + **anon key** (public; güvenlik RLS ile). Service role key asla konmaz.
+- `api.js` — fetch tabanlı GoTrue girişi (kullanıcı adı için `username-login` Edge Function),
+  token yenileme, `prompts` tablosuna insert (RLS: yalnızca kendi `author_id`'n)
+- `popup/` — giriş formu, yakalama/kaydetme formu
 
-## Sonraki aşama
-Supabase Auth (`chrome.identity` veya Promptly oturumu) ve `prompts` tablosuna kaydetme.
-Uzantıya anon key koymak güvenlidir (RLS sınırı); service role key asla konmaz.
+## Notlar
+- Taslaklar Promptly'de `/create?edit=<id>` ile açılıp yayınlanır.
+- Etiket/kategori ve çok dilli arayüz henüz yok (metinler Türkçe).
