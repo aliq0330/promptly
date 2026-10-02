@@ -7,21 +7,24 @@ Bağımsız Manifest V3 uzantısı; Promptly uygulamasından ayrıdır, ona doku
 2. **Paketlenmemiş öğe yükle** → bu `promptly-extension` klasörünü seç
 
 ## Kullanım
-1. Uzantı popup'ından Promptly hesabınla giriş yap (e-posta **veya** kullanıcı adı).
-2. Herhangi bir sayfada metin seç → sağ tık → **✦ Promptly'ye Kaydet**.
-3. Popup'ta başlığı, türü, kategoriyi/alt kategoriyi ve etiketleri düzenle → **Kaydet**. Varsayılan **taslak**tır
-   (kaynak sayfa bağlantısı açıklamaya yazılır); "Hemen yayınla" ile yayınlanır.
+- Herhangi bir sayfada metin seç → sağ tık → **✦ Promptly'ye Kaydet**.
+- **Giriş yapılmışsa** metin hemen Promptly'de **taslak** olarak kaydedilir (rozet: ✓).
+- **Giriş yapılmamışsa** metin yalnızca bu cihazda (uzantıda) bekler (rozet: bekleyen sayısı).
+  Popup'tan giriş yapınca bekleyenler otomatik olarak taslaklara kaydedilir.
+- Uzantıdan **yayınlama yoktur**. Kaydedilen taslağı popup'taki bağlantıyla sitede açıp
+  başlık/kategori/etiketi düzenleyerek yayınlarsın.
 
 ## Mimari
-- `background.js` — sağ tık menüsü; seçimi `chrome.storage.local`'a (`pendingCapture`) yazar
-- `config.js` — Supabase URL + **anon key** (public; güvenlik RLS ile). Service role key asla konmaz.
-- `i18n.js` — TR/EN metinleri (dil: sağ üstteki TR/EN düğmesi; varsayılan tarayıcı dili)
-- `taxonomy.js` — kategori ağacı; `src/lib/content-taxonomy.ts`'ten üretildi (elle düzenleme, slug'lar DB ile aynı)
+- `background.js` — sağ tık menüsü. Her yakalama önce `queue`'ya yazılır, sonra oturum varsa
+  sırayla `prompts` tablosuna `status: "draft"` olarak gönderilir. Tüm yazmalar tek bir sıradan geçer
+  (çift kayıt/kayıp yok). Kuyruktan çıkarma, kayıt başarılı olduktan sonra yapılır.
+- `queue.js` — `chrome.storage.local` kuyruğu, kayıt geçmişi (son 10), son hata
 - `api.js` — fetch tabanlı GoTrue girişi (kullanıcı adı için `username-login` Edge Function),
-  token yenileme, `prompts` tablosuna insert (RLS: yalnızca kendi `author_id`'n)
-- `popup/` — giriş formu, yakalama/kaydetme formu
+  token yenileme, taslak insert (RLS: yalnızca kendi `author_id`'n)
+- `config.js` — Supabase URL + **anon key** (public; güvenlik RLS ile). Service role key asla konmaz.
+- `i18n.js` — TR/EN metinleri (sağ üstteki TR/EN düğmesi; varsayılan tarayıcı dili)
+- `popup/` — giriş, bekleyenler (kaldır/tekrar dene), taslaklara kaydedilenler
 
 ## Notlar
-- Taslaklar Promptly'de `/create?edit=<id>` ile açılıp yayınlanır.
-- Etiketler siteyle aynı kurallarla çalışır: var olan etiketler aranır, yeni etiket kaydederken `get_or_create_tag` RPC'siyle oluşur (en fazla 10).
-- Taksonomi sitede değişirse `taxonomy.js` yeniden üretilmeli.
+- Taslaklar `content_type: text`, kaynak sayfa bağlantısı açıklamaya yazılır; başlık metnin ilk satırından türetilir.
+- Gönderim başarısız olursa (ağ/RLS) öğe kuyrukta kalır, popup'ta hata ve "Tekrar dene" görünür.

@@ -92,48 +92,27 @@ const PromptlyApi = (() => {
     return { ...baseHeaders, Authorization: `Bearer ${session.accessToken}`, ...extra };
   }
 
-  // Etiket kataloğunda ara (herkese açık okuma). Boş sorgu → en çok kullanılanlar.
-  async function searchTags(query, limit = 8) {
+  // Yakalanan metni TASLAK olarak kaydeder. Yayınlama uzantıdan yapılmaz —
+  // kullanıcı sitede taslağı açıp yayınlar.
+  async function saveDraft({ title, text, sourceUrl }) {
     const session = await getSession();
-    const q = query.trim().replace(/[%,()*]/g, " ");
-    const filter = q ? `&label=ilike.*${encodeURIComponent(q)}*` : "";
-    const res = await fetch(
-      `${supabaseUrl}/rest/v1/tags?select=slug,label&order=usage_count.desc&limit=${limit}${filter}`,
-      { headers: session ? authHeaders(session) : baseHeaders },
-    );
-    return res.ok ? res.json() : [];
-  }
-
-  // Yeni etiket: tek yazma yolu sunucudaki doğrulamalı RPC (tags'e doğrudan INSERT yok).
-  async function getOrCreateTag(session, label) {
-    const res = await fetch(`${supabaseUrl}/rest/v1/rpc/get_or_create_tag`, {
-      method: "POST",
-      headers: authHeaders(session),
-      body: JSON.stringify({ p_label: label }),
-    });
-    const row = await res.json().catch(() => null);
-    return res.ok && row && row.slug ? { slug: row.slug, label: row.label } : null;
-  }
-
-  // Yakalanan metni Promptly'de prompt olarak kaydeder (varsayılan: taslak).
-  // tags: [{slug,label}] (var olan) veya [{label,isNew:true}] (oluşturulacak).
-  async function savePrompt({ title, text, contentType, category, subcategory, tags, sourceUrl, publish }) {
-    const session = await getSession();
-    if (!session) throw new Error(PromptlyI18n.t("sessionExpired"));
+    if (!session) {
+      const err = new Error(PromptlyI18n.t("sessionExpired"));
+      err.code = "no_session";
+      throw err;
+    }
 
     const res = await fetch(`${supabaseUrl}/rest/v1/prompts`, {
       method: "POST",
       headers: authHeaders(session, { Prefer: "return=representation" }),
       body: JSON.stringify({
         author_id: session.userId,
-        title: title.trim(),
+        title: title.trim() || PromptlyI18n.t("untitled"),
         description: sourceUrl ? `${PromptlyI18n.t("sourcePrefix")}: ${sourceUrl}` : "",
         prompt_text: text.trim(),
-        content_type: contentType,
-        category: category || null,
-        subcategory: category ? subcategory || null : null,
+        content_type: "text",
         tools: [],
-        status: publish ? "published" : "draft",
+        status: "draft",
         origin_type: "original",
       }),
     });
@@ -142,35 +121,8 @@ const PromptlyApi = (() => {
       throw new Error((data && data.message) || PromptlyI18n.t("saveFailed"));
     }
     const id = data[0].id;
-
-    // Etiketler: siteyle aynı kural — başarısız olursa prompt yine de kayıtlıdır.
-    if (tags && tags.length) {
-      try {
-        const resolved = [];
-        for (const tag of tags) {
-          resolved.push(tag.isNew ? await getOrCreateTag(session, tag.label) : tag);
-        }
-        const rows = resolved
-          .filter(Boolean)
-          .filter((t, i, arr) => arr.findIndex((o) => o.slug === t.slug) === i)
-          .map((t) => ({ prompt_id: id, tag_slug: t.slug, source: "manual" }));
-        if (rows.length) {
-          await fetch(`${supabaseUrl}/rest/v1/prompt_tags`, {
-            method: "POST",
-            headers: authHeaders(session),
-            body: JSON.stringify(rows),
-          });
-        }
-      } catch (err) {
-        console.error("[promptly-ext] tags", err);
-      }
-    }
-
-    return {
-      id,
-      url: publish ? `${siteUrl}/prompts/local/?id=${id}` : `${siteUrl}/create/?edit=${id}`,
-    };
+    return { id, url: `${siteUrl}/create/?edit=${id}` };
   }
 
-  return { login, logout, getSession, getProfile, searchTags, savePrompt };
+  return { login, logout, getSession, getProfile, saveDraft };
 })();
