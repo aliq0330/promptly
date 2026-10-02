@@ -88,7 +88,7 @@ export function FeedTabs() {
           ariaLabel={t("feed.viewAriaLabel")}
           variant="segmented"
         />
-        <ChipRow>
+        <ChipRow scroll>
           {KIND_FILTERS.map((filter) => (
             <Chip key={filter.key} icon={filter.icon} selected={kind === filter.key} onClick={() => setKind(filter.key)}>
               {t(filter.labelKey)}

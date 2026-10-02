@@ -32,12 +32,18 @@ Chip.displayName = "Chip";
  * `touch-pan-x`/`overscroll-x-contain` keep a horizontal swipe from also
  * scrolling the page vertically or chaining into it at the edge (same
  * real iOS Safari fix as `Tabs`).
+ *
+ * `scroll` opts a row out of the desktop wrap: it always stays a single,
+ * horizontally scrollable line (the `Tabs` component's own behavior) —
+ * for a row sitting next to other controls where wrapping to a second
+ * line would push that layout down instead of just taking more height.
  */
-export function ChipRow({ className, children }: { className?: string; children: React.ReactNode }) {
+export function ChipRow({ className, scroll, children }: { className?: string; scroll?: boolean; children: React.ReactNode }) {
   return (
     <div
       className={cn(
-        "scrollbar-none -mx-3 flex touch-pan-x gap-2 overflow-x-auto overscroll-x-contain px-3 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0",
+        "scrollbar-none -mx-3 flex touch-pan-x gap-2 overflow-x-auto overscroll-x-contain px-3",
+        scroll ? "sm:mx-0 sm:px-0" : "sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0",
         className,
       )}
     >
