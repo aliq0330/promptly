@@ -694,6 +694,16 @@ export function groupIdsFor(
   return ids;
 }
 
+/** One setting group by id (any content type) — `undefined` for an id this catalog doesn't know (e.g. a preset saved against an older catalog). */
+export function getSettingGroup(id: string): SettingGroup | undefined {
+  return GROUPS[id];
+}
+
+/** Every group in catalog order (the order they are defined above) — used to list a preset's parameters in a stable, meaningful order. */
+export function allSettingGroups(): SettingGroup[] {
+  return Object.values(GROUPS);
+}
+
 export function groupsFor(ids: readonly string[]): SettingGroup[] {
   return ids.map((id) => GROUPS[id]).filter((g): g is SettingGroup => Boolean(g));
 }

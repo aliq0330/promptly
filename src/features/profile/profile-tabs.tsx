@@ -3,7 +3,7 @@
 import { Tabs } from "@/components/ui/tabs";
 import { useTranslation } from "@/lib/i18n/language-provider";
 
-export type ProfileTabKey = "posts" | "drafts" | "saved" | "liked" | "about";
+export type ProfileTabKey = "posts" | "presets" | "drafts" | "saved" | "liked" | "about";
 
 export function ProfileTabs({
   tabs,

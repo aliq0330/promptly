@@ -10,7 +10,8 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import { GeneratorRuntimeForm } from "./generator-runtime-form";
 import { GeneratedPromptPanel } from "./generated-prompt-panel";
 import { GeneratorJsonPanel } from "./generator-json-panel";
-import type { GeneratorSchema, GeneratorValues } from "@/types";
+import { GeneratorPresetBar } from "./generator-preset-bar";
+import type { GeneratorSchema, GeneratorValues, PromptContentType } from "@/types";
 
 /**
  * The one real "fill the form → get a real, structured output" surface
@@ -55,9 +56,12 @@ export function GeneratorPlayground({
   schema,
   enableNegativePrompt,
   renderActions,
+  presetContext,
 }: {
   schema: GeneratorSchema;
   enableNegativePrompt: boolean;
+  /** When set, the Form tab shows the "Hazır ayar" bar (pick / save a preset) for this media type + taxonomy. */
+  presetContext?: { contentType: PromptContentType; category: string | null; subcategory: string | null };
   /** Only the real runtime page passes this — the "Prompt olarak aç"/"Kaydet" buttons, given the exact live-computed state to act on. The builder's own preview passes nothing. */
   renderActions?: (state: { values: GeneratorValues; prompt: string; negativePrompt: string | null }) => React.ReactNode;
 }) {
@@ -118,6 +122,16 @@ export function GeneratorPlayground({
 
       {tab === "form" ? (
         <div className="space-y-5">
+          {presetContext && (
+            <GeneratorPresetBar
+              schema={schema}
+              values={values}
+              onValuesChange={setValues}
+              contentType={presetContext.contentType}
+              category={presetContext.category}
+              subcategory={presetContext.subcategory}
+            />
+          )}
           <div className="space-y-3 rounded-md border border-border-soft bg-surface-soft p-3.5">
             <p className="text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">{t("generator.yourOwnPrompt")}</p>
             <div>

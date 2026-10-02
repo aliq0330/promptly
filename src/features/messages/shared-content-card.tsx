@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowUpRight, Blocks, Sparkles, Terminal, Workflow as WorkflowIcon } from "lucide-react";
+import { ArrowUpRight, Blocks, SlidersHorizontal, Sparkles, Terminal, Workflow as WorkflowIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useRealPrompts } from "@/features/prompts/real-prompts-provider";
 import { useRealRequests } from "@/features/requests/real-requests-provider";
@@ -11,10 +11,12 @@ import { useRealGenerators } from "@/features/generators/real-generators-provide
 import { fetchGeneratorBySlug } from "@/lib/supabase/generators";
 import { fetchWorkflowById } from "@/lib/supabase/workflows";
 import { useRealWorkflows } from "@/features/workflows/real-workflows-provider";
+import { fetchPresetById } from "@/lib/supabase/presets";
+import { useRealPresets } from "@/features/presets/real-presets-provider";
 import { STATUS_LABELS, STATUS_VARIANTS } from "@/features/requests/request-card";
-import { generatorHref, promptHref, requestHref, workflowHref } from "@/lib/utils";
+import { generatorHref, presetHref, promptHref, requestHref, workflowHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import type { Generator, Prompt, PromptRequest, Workflow } from "@/types";
+import type { Generator, Preset, Prompt, PromptRequest, Workflow } from "@/types";
 
 const CARD_CLASS =
   "block w-56 space-y-1.5 rounded-md border border-border bg-surface p-2.5 text-left transition-colors hover:bg-accent-surface/60";
@@ -144,6 +146,42 @@ export function SharedWorkflowCard({ workflowId }: { workflowId: string }) {
       <span className="block truncate text-sm font-semibold text-text">{workflow?.title ?? t("common.loading")}</span>
       <span className="flex items-center gap-1 text-xs text-primary">
         {t("messages.openWorkflow")}
+        <ArrowUpRight size={11} />
+      </span>
+    </Link>
+  );
+}
+
+/** A message's shared-preset content card — same shape as `SharedWorkflowCard`, found by id (parsed from the plain-text share block, see `preset-share-format.ts`). */
+export function SharedPresetCard({ presetId }: { presetId: string }) {
+  const { t } = useTranslation();
+  const { getCached } = useRealPresets();
+  const cached = getCached(presetId);
+  const [fetched, setFetched] = useState<Preset | null>(null);
+
+  useEffect(() => {
+    if (cached) return;
+    let cancelled = false;
+    fetchPresetById(presetId).then((result) => {
+      if (!cancelled && result) setFetched(result);
+    });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [presetId, Boolean(cached)]);
+
+  const preset = cached ?? fetched;
+
+  return (
+    <Link href={presetHref({ id: presetId })} className={CARD_CLASS}>
+      <span className="flex items-center gap-1.5 text-xs font-medium text-primary">
+        <SlidersHorizontal size={13} />
+        {t("messages.sharedPreset")}
+      </span>
+      <span className="block truncate text-sm font-semibold text-text">{preset?.title ?? t("common.loading")}</span>
+      <span className="flex items-center gap-1 text-xs text-primary">
+        {t("messages.openPreset")}
         <ArrowUpRight size={11} />
       </span>
     </Link>

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Blocks, FileText, Sparkles, SquareTerminal, Trash2, Workflow as WorkflowIcon } from "lucide-react";
+import { Blocks, FileText, SlidersHorizontal, Sparkles, SquareTerminal, Trash2, Workflow as WorkflowIcon } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs } from "@/components/ui/tabs";
@@ -16,12 +16,13 @@ import type { TranslationKey } from "@/lib/i18n/translations";
 type DraftFilter = "all" | DraftKind;
 type DraftRow = DraftItem & { kind: DraftKind };
 
-const KIND_ORDER: DraftKind[] = ["prompt", "request", "generator", "workflow"];
+const KIND_ORDER: DraftKind[] = ["prompt", "request", "generator", "workflow", "preset"];
 const KIND_META: Record<DraftKind, { labelKey: TranslationKey; icon: LucideIcon }> = {
   prompt: { labelKey: "draft.kindPrompt", icon: SquareTerminal },
   request: { labelKey: "draft.kindRequest", icon: Sparkles },
   generator: { labelKey: "draft.kindGenerator", icon: Blocks },
   workflow: { labelKey: "draft.kindWorkflow", icon: WorkflowIcon },
+  preset: { labelKey: "draft.kindPreset", icon: SlidersHorizontal },
 };
 
 /**
@@ -57,7 +58,7 @@ export function ProfileDraftsPanel({ userId }: { userId: string }) {
   }, [refresh]);
 
   const counts = useMemo(() => {
-    const base: Record<DraftKind, number> = { prompt: 0, request: 0, generator: 0, workflow: 0 };
+    const base: Record<DraftKind, number> = { prompt: 0, request: 0, generator: 0, workflow: 0, preset: 0 };
     rows?.forEach((row) => {
       base[row.kind] += 1;
     });

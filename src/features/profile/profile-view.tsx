@@ -3,7 +3,7 @@
 import { PageContainer } from "@/components/ui/page-header";
 
 import { useEffect, useMemo, useState } from "react";
-import { Blocks, Heart, SearchX, Sparkles, Workflow as WorkflowIcon } from "lucide-react";
+import { Blocks, Heart, SearchX, SlidersHorizontal, Sparkles, Workflow as WorkflowIcon } from "lucide-react";
 import { ProfileHeader } from "./profile-header";
 import { ProfileTabs, type ProfileTabKey } from "./profile-tabs";
 import { Tabs } from "@/components/ui/tabs";
@@ -21,9 +21,12 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import { fetchLikedPrompts } from "@/lib/supabase/prompts";
 import { fetchWorkflowsByCreator } from "@/lib/supabase/workflows";
 import { WorkflowCard } from "@/features/workflows/workflow-card";
-import type { Generator, Prompt, PromptContentType, PromptRequest, UserProfile, Workflow } from "@/types";
+import { fetchPresetsByCreator } from "@/lib/supabase/presets";
+import { PresetCard } from "@/features/presets/preset-card";
+import { ProfilePresetsPanel } from "@/features/presets/profile-presets-panel";
+import type { Generator, Preset, Prompt, PromptContentType, PromptRequest, UserProfile, Workflow } from "@/types";
 
-type PostKind = "prompts" | "requests" | "generators" | "workflows";
+type PostKind = "prompts" | "requests" | "generators" | "workflows" | "presets";
 
 function sortPrompts(prompts: Prompt[], sort: ProfileSortKey): Prompt[] {
   const sorted = [...prompts];
@@ -111,6 +114,16 @@ export function ProfileView({
     };
   }, [user.id]);
 
+  // Same RLS rule: a visitor gets this creator's public published presets, the owner all of theirs (private + drafts).
+  const [presets, setPresets] = useState<Preset[]>([]);
+  useEffect(() => {
+    let cancelled = false;
+    fetchPresetsByCreator(user.id).then((list) => !cancelled && setPresets(list));
+    return () => {
+      cancelled = true;
+    };
+  }, [user.id]);
+
   const [activeTab, setActiveTab] = useState<ProfileTabKey>("posts");
   const [postKind, setPostKind] = useState<PostKind>("prompts");
   const [activeType, setActiveType] = useState<PromptContentType | "all">("all");
@@ -124,8 +137,9 @@ export function ProfileView({
       requests: authorRequests.length,
       generators: authorGenerators.filter((g) => g.status === "published").length,
       workflows: workflows.filter((w) => w.status === "published").length,
+      presets: presets.filter((p) => p.status === "published").length,
     }),
-    [authorPrompts.length, authorRequests.length, authorGenerators, workflows],
+    [authorPrompts.length, authorRequests.length, authorGenerators, workflows, presets],
   );
 
   const postKindTabs = useMemo(
@@ -134,13 +148,15 @@ export function ProfileView({
       { key: "requests" as const, label: t("nav.requests"), count: postCounts.requests },
       { key: "generators" as const, label: t("nav.generators"), count: postCounts.generators },
       { key: "workflows" as const, label: t("nav.workflows"), count: postCounts.workflows },
+      { key: "presets" as const, label: t("nav.presets"), count: postCounts.presets },
     ],
     [postCounts, t],
   );
 
   const tabs = useMemo(() => {
     const base: { key: ProfileTabKey; label: string; count?: number }[] = [
-      { key: "posts", label: t("profile.tabPosts"), count: postCounts.prompts + postCounts.requests + postCounts.generators + postCounts.workflows },
+      { key: "posts", label: t("profile.tabPosts"), count: postCounts.prompts + postCounts.requests + postCounts.generators + postCounts.workflows + postCounts.presets },
+      { key: "presets", label: t("nav.presets"), count: postCounts.presets },
     ];
     if (isOwnProfile) {
       // Taslaklar (drafts) is owner-only, same as Kaydedilenler/Beğeniler —
@@ -263,6 +279,25 @@ export function ProfileView({
               {workflows.map((workflow) => (
                 <div key={workflow.id} className="mb-3 break-inside-avoid sm:mb-4">
                   <WorkflowCard workflow={workflow} />
+                </div>
+              ))}
+            </div>
+          )
+        ) : activeTab === "presets" ? (
+          <ProfilePresetsPanel ownerId={user.id} isOwn={isOwnProfile} created={presets} />
+        ) : activeTab === "posts" && postKind === "presets" ? (
+          presets.length === 0 ? (
+            <ProfileEmptyState
+              icon={SlidersHorizontal}
+              title={t("preset.noneYetTitle")}
+              description={isOwnProfile ? t("preset.noneYetBody") : t("preset.noneYetOtherBody")}
+              action={isOwnProfile ? { label: t("preset.create"), href: "/presets/create" } : undefined}
+            />
+          ) : (
+            <div className="columns-1 gap-3 sm:columns-2 sm:gap-4 xl:columns-3">
+              {presets.map((preset) => (
+                <div key={preset.id} className="mb-3 break-inside-avoid sm:mb-4">
+                  <PresetCard preset={preset} />
                 </div>
               ))}
             </div>

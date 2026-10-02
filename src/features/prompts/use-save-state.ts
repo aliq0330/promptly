@@ -14,7 +14,7 @@ import type { LikeableContentType } from "@/lib/supabase/likes";
  * `"request"`, above) can never silently let a request flow through the
  * save code path too.
  */
-type SaveableContentType = Extract<LikeableContentType, "prompt" | "generator" | "workflow">;
+type SaveableContentType = Extract<LikeableContentType, "prompt" | "generator" | "workflow" | "preset">;
 
 /**
  * Whether the current viewer generally saved a real prompt OR generator —

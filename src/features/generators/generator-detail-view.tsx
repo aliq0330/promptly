@@ -242,6 +242,7 @@ export function GeneratorDetailView() {
               <GeneratorPlayground
                 schema={version.schema}
                 enableNegativePrompt={generator.enableNegativePrompt}
+                presetContext={{ contentType: generator.contentType, category: generator.category, subcategory: generator.subcategory }}
                 renderActions={
                   canOpenInPrompt
                     ? (state) =>

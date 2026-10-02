@@ -22,7 +22,7 @@ const COMMENT_SELECT = `
 
 function mapCommentRow(
   row: CommentRow,
-  target: { promptId: string } | { requestId: string } | { generatorId: string } | { resultId: string } | { workflowId: string },
+  target: { promptId: string } | { requestId: string } | { generatorId: string } | { resultId: string } | { workflowId: string } | { presetId: string },
 ): PromptComment {
   return {
     id: row.id,
@@ -194,6 +194,41 @@ export async function fetchCommentsForWorkflow(workflowId: string): Promise<Prom
     console.error("fetchCommentsForWorkflow", err);
     return [];
   }
+}
+
+/** Every real comment on a real preset (Hazır Ayar), oldest first — same shared `prompt_comments` layer, visible wherever the preset is. */
+export async function fetchCommentsForPreset(presetId: string): Promise<PromptComment[]> {
+  try {
+    const { data, error } = await supabase
+      .from("prompt_comments")
+      .select(COMMENT_SELECT)
+      .eq("preset_id", presetId)
+      .order("created_at", { ascending: true });
+    if (error) {
+      console.error("fetchCommentsForPreset", error);
+      return [];
+    }
+    return withoutBlocked(((data ?? []) as unknown as CommentRow[]).map((row) => mapCommentRow(row, { presetId })), (c) => c.author.id);
+  } catch (err) {
+    console.error("fetchCommentsForPreset", err);
+    return [];
+  }
+}
+
+/** Genuinely, permanently posts a comment on a real preset. `handle_prompt_comment_change` keeps `presets.comment_count` in sync, even across users. */
+export async function postCommentOnPreset(
+  presetId: string,
+  authorId: string,
+  body: string,
+  parentId: string | null,
+): Promise<PromptComment> {
+  const { data, error } = await supabase
+    .from("prompt_comments")
+    .insert({ preset_id: presetId, author_id: authorId, body, parent_id: parentId })
+    .select(COMMENT_SELECT)
+    .single();
+  if (error || !data) throw new Error(error?.message ?? translateForRuntime("comments.postFailed"));
+  return mapCommentRow(data as unknown as CommentRow, { presetId });
 }
 
 /** Genuinely, permanently posts a comment on a real workflow. `handle_prompt_comment_change` keeps `workflows.comment_count` in sync, even across users. */

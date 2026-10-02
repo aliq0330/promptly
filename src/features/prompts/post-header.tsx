@@ -5,12 +5,13 @@ import { Avatar } from "@/components/ui/avatar";
 import { formatRelativeTime, profileHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { PostMenu } from "./post-menu";
-import type { Generator, Prompt, Workflow } from "@/types";
+import type { Generator, Preset, Prompt, Workflow } from "@/types";
 
 type PostHeaderTarget =
-  | { prompt: Prompt; generator?: never; workflow?: never }
-  | { generator: Generator; prompt?: never; workflow?: never }
-  | { workflow: Workflow; prompt?: never; generator?: never };
+  | { prompt: Prompt; generator?: never; workflow?: never; preset?: never }
+  | { generator: Generator; prompt?: never; workflow?: never; preset?: never }
+  | { workflow: Workflow; prompt?: never; generator?: never; preset?: never }
+  | { preset: Preset; prompt?: never; generator?: never; workflow?: never };
 
 /**
  * Shared top-of-card identity row for every post type (normal/request
@@ -33,8 +34,8 @@ export function PostHeader({
   collectionRemoval?: { isDefault: boolean; onRemove: () => Promise<void> };
 }) {
   const { language } = useTranslation();
-  const author = target.workflow ? target.workflow.creator : target.generator ? target.generator.creator : target.prompt.author;
-  const createdAt = target.workflow ? target.workflow.createdAt : target.generator ? target.generator.createdAt : target.prompt.createdAt;
+  const author = target.preset ? target.preset.creator : target.workflow ? target.workflow.creator : target.generator ? target.generator.creator : target.prompt.author;
+  const createdAt = target.preset ? target.preset.createdAt : target.workflow ? target.workflow.createdAt : target.generator ? target.generator.createdAt : target.prompt.createdAt;
 
   return (
     <div className="flex items-center justify-between gap-2">
@@ -54,7 +55,14 @@ export function PostHeader({
         </span>
       </Link>
 
-      {target.workflow ? (
+      {target.preset ? (
+        <PostMenu
+          presetId={target.preset.id}
+          authorId={target.preset.creator.id}
+          onDeleted={onDeleted}
+          collectionRemoval={collectionRemoval}
+        />
+      ) : target.workflow ? (
         <PostMenu
           workflowId={target.workflow.id}
           authorId={target.workflow.creator.id}

@@ -65,14 +65,14 @@ export function ProfileStats({
   isOwnProfile,
   onSelectPosts,
 }: {
-  postCounts: { prompts: number; requests: number; generators: number; workflows: number };
+  postCounts: { prompts: number; requests: number; generators: number; workflows: number; presets: number };
   followerCount: number;
   followingCount: number;
   isOwnProfile: boolean;
   onSelectPosts: () => void;
 }) {
   const { t } = useTranslation();
-  const total = postCounts.prompts + postCounts.requests + postCounts.generators + postCounts.workflows;
+  const total = postCounts.prompts + postCounts.requests + postCounts.generators + postCounts.workflows + postCounts.presets;
   return (
     <div className="space-y-3 border-t border-border-soft pt-4">
     <div className="flex flex-wrap items-stretch divide-x divide-border-soft *:px-5 *:first:pl-0">
@@ -93,6 +93,7 @@ export function ProfileStats({
         `${postCounts.requests} ${t("profile.postKindRequest")}`,
         `${postCounts.generators} Generator`,
         `${postCounts.workflows} Workflow`,
+        `${postCounts.presets} ${t("preset.singular")}`,
       ].join(" · ")}
     </p>
     </div>

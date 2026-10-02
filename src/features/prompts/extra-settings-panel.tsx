@@ -1,21 +1,23 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { ChevronRight, Sparkles, X } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { BookmarkPlus, ChevronRight, Sparkles, X } from "lucide-react";
 import { Portal } from "@/components/ui/portal";
 import { Button } from "@/components/ui/button";
-import { Chip } from "@/components/ui/chip";
 import { useTranslation } from "@/lib/i18n/language-provider";
+import { useAuth } from "@/features/auth/auth-provider";
+import { PresetPicker } from "@/features/presets/preset-picker";
+import { SavePresetModal } from "@/features/presets/save-preset-modal";
+import { recordPresetUse } from "@/lib/supabase/presets";
 import {
-  SETTING_PRESETS,
   composePrompt,
   sanitizeSelection,
-  settingFragment,
   settingLabel,
   type SettingGroup,
   type SettingSelection,
 } from "@/lib/prompt-extra-settings";
 import type { ContentTypeId } from "@/lib/content-taxonomy";
+import { SettingGroupsEditor } from "@/features/presets/setting-groups-editor";
 
 /**
  * Trigger row + applied chips. The panel itself (mobile bottom sheet,
@@ -31,6 +33,9 @@ export function ExtraSettingsSection({
   onEnglishFragmentsChange,
   promptText,
   hasTool,
+  category = null,
+  subcategory = null,
+  tools = [],
 }: {
   contentType: ContentTypeId;
   groups: SettingGroup[];
@@ -40,6 +45,10 @@ export function ExtraSettingsSection({
   onEnglishFragmentsChange: (value: boolean) => void;
   promptText: string;
   hasTool: boolean;
+  /** Carried into "Yeni hazır ayar olarak kaydet" so the saved preset keeps the form's taxonomy/tools. */
+  category?: string | null;
+  subcategory?: string | null;
+  tools?: string[];
 }) {
   const { t, language } = useTranslation();
   const [open, setOpen] = useState(false);
@@ -115,6 +124,9 @@ export function ExtraSettingsSection({
           initial={applied}
           promptText={promptText}
           hasTool={hasTool}
+          category={category}
+          subcategory={subcategory}
+          tools={tools}
           englishFragments={englishFragments}
           onEnglishFragmentsChange={onEnglishFragmentsChange}
           onClose={() => setOpen(false)}
@@ -134,6 +146,9 @@ function ExtraSettingsPanel({
   initial,
   promptText,
   hasTool,
+  category,
+  subcategory,
+  tools,
   englishFragments,
   onEnglishFragmentsChange,
   onClose,
@@ -144,14 +159,23 @@ function ExtraSettingsPanel({
   initial: SettingSelection;
   promptText: string;
   hasTool: boolean;
+  category: string | null;
+  subcategory: string | null;
+  tools: string[];
   englishFragments: boolean;
   onEnglishFragmentsChange: (value: boolean) => void;
   onClose: () => void;
   onApply: (next: SettingSelection) => void;
 }) {
   const { t, language } = useTranslation();
+  const { user } = useAuth();
   const [draft, setDraft] = useState<SettingSelection>(initial);
-  const presets = SETTING_PRESETS.filter((p) => p.contentType === contentType);
+  const [savingPreset, setSavingPreset] = useState(false);
+  // Escape inside the nested save-preset modal must close only that modal.
+  const savingPresetRef = useRef(false);
+  useEffect(() => {
+    savingPresetRef.current = savingPreset;
+  }, [savingPreset]);
   const fragmentLanguage = englishFragments ? "en" : language;
   const composed = composePrompt(promptText, draft, groups, fragmentLanguage);
   const selectedCount = Object.keys(draft).length;
@@ -160,7 +184,7 @@ function ExtraSettingsPanel({
     const previous = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     function onKey(event: KeyboardEvent) {
-      if (event.key === "Escape") onClose();
+      if (event.key === "Escape" && !savingPresetRef.current) onClose();
     }
     document.addEventListener("keydown", onKey);
     return () => {
@@ -169,17 +193,10 @@ function ExtraSettingsPanel({
     };
   }, [onClose]);
 
-  function toggle(groupId: string, optionId: string) {
-    setDraft((prev) => {
-      const next = { ...prev };
-      if (next[groupId] === optionId) delete next[groupId];
-      else next[groupId] = optionId;
-      return next;
-    });
-  }
-
-  function applyPreset(selection: SettingSelection) {
+  function applyPreset(selection: SettingSelection, preset: { id: string } | null) {
+    // Only fills the draft — everything stays editable (a preset is a starting configuration).
     setDraft(sanitizeSelection({ ...draft, ...selection }, groups));
+    if (preset && user) void recordPresetUse(preset.id, user.id);
   }
 
   return (
@@ -210,18 +227,7 @@ function ExtraSettingsPanel({
           </div>
 
           <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-4 py-4">
-            {presets.length > 0 && (
-              <section aria-label={t("extra.presets")}>
-                <h3 className="mb-2 text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">{t("extra.presets")}</h3>
-                <div className="flex flex-wrap gap-2">
-                  {presets.map((preset) => (
-                    <Chip key={preset.id} onClick={() => applyPreset(preset.selection)}>
-                      <span aria-hidden>{preset.emoji}</span> {settingLabel(preset, language)}
-                    </Chip>
-                  ))}
-                </div>
-              </section>
-            )}
+            <PresetPicker contentType={contentType} onApply={applyPreset} />
 
             {language === "tr" && (
               <label className="flex cursor-pointer items-start gap-2.5 rounded-md border border-border-soft bg-surface-soft px-3 py-2.5">
@@ -235,18 +241,7 @@ function ExtraSettingsPanel({
 
             {hasTool && groups.some((g) => g.kind === "suffix") && <p className="rounded-md bg-primary-soft px-3 py-2 text-caption text-text-secondary">{t("extra.toolHint")}</p>}
 
-            {groups.map((g) => (
-              <section key={g.id} aria-label={settingLabel(g, language)}>
-                <h3 className="mb-2 text-label font-semibold text-text">{settingLabel(g, language)}</h3>
-                <div className="flex flex-wrap gap-2">
-                  {g.options.map((option) => (
-                    <Chip key={option.id} selected={draft[g.id] === option.id} onClick={() => toggle(g.id, option.id)} title={settingFragment(option, fragmentLanguage)} data-option={`${g.id}:${option.id}`}>
-                      {settingLabel(option, language)}
-                    </Chip>
-                  ))}
-                </div>
-              </section>
-            ))}
+            <SettingGroupsEditor groups={groups} selection={draft} onChange={(next) => setDraft(sanitizeSelection(next, groups))} fragmentLanguage={fragmentLanguage} />
 
             <section className="rounded-md border border-border-soft bg-surface-soft p-3">
               <h3 className="mb-1 text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">{t("extra.preview")}</h3>
@@ -257,15 +252,31 @@ function ExtraSettingsPanel({
           </div>
 
           <div className="flex items-center justify-between gap-2 border-t border-border-soft px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-            <Button type="button" variant="ghost" onClick={() => setDraft({})} disabled={selectedCount === 0}>
-              {t("extra.clear")}
-            </Button>
+            <div className="flex items-center gap-1">
+              <Button type="button" variant="ghost" onClick={() => setDraft({})} disabled={selectedCount === 0}>
+                {t("extra.clear")}
+              </Button>
+              <Button type="button" variant="ghost" onClick={() => setSavingPreset(true)} disabled={selectedCount === 0}>
+                <BookmarkPlus size={16} aria-hidden />
+                {t("preset.saveAsNew")}
+              </Button>
+            </div>
             <Button type="button" onClick={() => onApply(draft)}>
               {t("extra.apply")}
             </Button>
           </div>
         </div>
       </div>
+      {savingPreset && (
+        <SavePresetModal
+          contentType={contentType}
+          category={category}
+          subcategory={subcategory}
+          tools={tools}
+          selection={sanitizeSelection(draft, groups)}
+          onClose={() => setSavingPreset(false)}
+        />
+      )}
     </Portal>
   );
 }

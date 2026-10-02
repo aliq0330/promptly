@@ -21,7 +21,7 @@ export function ProfileHeader({
 }: {
   user: UserProfile;
   isOwnProfile: boolean;
-  postCounts: { prompts: number; requests: number; generators: number; workflows: number };
+  postCounts: { prompts: number; requests: number; generators: number; workflows: number; presets: number };
   onSelectPosts: () => void;
 }) {
   const { t } = useTranslation();

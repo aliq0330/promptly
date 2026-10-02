@@ -30,7 +30,8 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
   // conversation is picked (see `LocalConversationView`).
   const shareGeneratorId = searchParams.get("shareGeneratorId");
   const shareWorkflowId = searchParams.get("shareWorkflowId");
-  const isSharing = Boolean(sharePromptId || shareRequestId || shareGeneratorId || shareWorkflowId);
+  const sharePresetId = searchParams.get("sharePresetId");
+  const isSharing = Boolean(sharePromptId || shareRequestId || shareGeneratorId || shareWorkflowId || sharePresetId);
   const shareQuery = sharePromptId
     ? `sharePromptId=${sharePromptId}`
     : shareRequestId
@@ -39,7 +40,9 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
         ? `shareGeneratorId=${shareGeneratorId}`
         : shareWorkflowId
           ? `shareWorkflowId=${shareWorkflowId}`
-          : undefined;
+          : sharePresetId
+            ? `sharePresetId=${sharePresetId}`
+            : undefined;
 
   const activeId = pathname.startsWith("/messages/local") ? searchParams.get("id") : null;
 

@@ -15,6 +15,7 @@ import { Portal } from "@/components/ui/portal";
 import { PromptCard } from "@/features/prompts/prompt-card";
 import { GeneratorCard } from "@/features/generators/generator-card";
 import { WorkflowCard } from "@/features/workflows/workflow-card";
+import { PresetCard } from "@/features/presets/preset-card";
 import { CollectionFormModal } from "./collection-form-modal";
 import { CollectionMoreMenu } from "./collection-more-menu";
 import { useAuth } from "@/features/auth/auth-provider";
@@ -104,7 +105,7 @@ export function CollectionDetailView() {
    * a prompt or a generator entry (both share the same `collection_items`
    * shape since Bölüm 9.36).
    */
-  async function handleRemoveItem(id: string, contentType: "prompt" | "generator" | "workflow") {
+  async function handleRemoveItem(id: string, contentType: "prompt" | "generator" | "workflow" | "preset") {
     if (!collection) return;
     if (collection.isDefault) {
       await removeFromSavedEverywhere(id, contentType);
@@ -172,6 +173,8 @@ export function CollectionDetailView() {
                   <PromptCard prompt={entry.data} collectionRemoval={removal} />
                 ) : entry.type === "generator" ? (
                   <GeneratorCard generator={entry.data} collectionRemoval={removal} />
+                ) : entry.type === "preset" ? (
+                  <PresetCard preset={entry.data} collectionRemoval={removal} />
                 ) : (
                   <WorkflowCard workflow={entry.data} collectionRemoval={removal} />
                 )}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Blocks, Flame, LayoutGrid, SquareTerminal, Sparkles, Stars, UserCheck, Workflow as WorkflowIcon } from "lucide-react";
+import { Blocks, Flame, LayoutGrid, SquareTerminal, SlidersHorizontal, Sparkles, Stars, UserCheck, Workflow as WorkflowIcon } from "lucide-react";
 import { Tabs } from "@/components/ui/tabs";
 import { Chip, ChipRow } from "@/components/ui/chip";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -13,6 +13,7 @@ import { useRealPrompts } from "@/features/prompts/real-prompts-provider";
 import { useRealRequests } from "@/features/requests/real-requests-provider";
 import { useRealGenerators } from "@/features/generators/real-generators-provider";
 import { useRealWorkflows } from "@/features/workflows/real-workflows-provider";
+import { useRealPresets } from "@/features/presets/real-presets-provider";
 import { fetchFollowedProfiles } from "@/lib/supabase/profiles";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
@@ -32,6 +33,7 @@ const KIND_FILTERS: { key: KindFilter; labelKey: TranslationKey; icon: typeof La
   { key: "generator", labelKey: "nav.generators", icon: Blocks },
   { key: "request", labelKey: "nav.requestsShort", icon: Sparkles },
   { key: "workflow", labelKey: "nav.workflows", icon: WorkflowIcon },
+  { key: "preset", labelKey: "nav.presets", icon: SlidersHorizontal },
 ];
 
 export function FeedTabs() {
@@ -43,6 +45,7 @@ export function FeedTabs() {
   const { realRequests } = useRealRequests();
   const { realGenerators } = useRealGenerators();
   const { realWorkflows } = useRealWorkflows();
+  const { realPresets } = useRealPresets();
   const [followedIds, setFollowedIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -65,8 +68,9 @@ export function FeedTabs() {
     const requestItems: FeedItem[] = realRequests.map((request) => ({ kind: "request", data: request }));
     const generatorItems: FeedItem[] = realGenerators.map((generator) => ({ kind: "generator", data: generator }));
     const workflowItems: FeedItem[] = realWorkflows.map((workflow) => ({ kind: "workflow", data: workflow }));
-    return [...promptItems, ...requestItems, ...generatorItems, ...workflowItems].sort((a, b) => feedItemCreatedAt(b) - feedItemCreatedAt(a));
-  }, [realPrompts, realRequests, realGenerators, realWorkflows]);
+    const presetItems: FeedItem[] = realPresets.map((preset) => ({ kind: "preset", data: preset }));
+    return [...promptItems, ...requestItems, ...generatorItems, ...workflowItems, ...presetItems].sort((a, b) => feedItemCreatedAt(b) - feedItemCreatedAt(a));
+  }, [realPrompts, realRequests, realGenerators, realWorkflows, realPresets]);
 
   const visible = useMemo(() => {
     const byTab =

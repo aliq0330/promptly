@@ -16,6 +16,8 @@ import {
   fetchCommentsForRequest,
   fetchCommentsForResult,
   fetchCommentsForWorkflow,
+  fetchCommentsForPreset,
+  postCommentOnPreset,
   postCommentOnWorkflow,
   postCommentOnGenerator,
   postCommentOnPrompt,
@@ -28,7 +30,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import { CommentNode, type CommentTree } from "./comment-node";
 import type { PromptComment } from "@/types";
 
-export type CommentTarget = { promptId: string } | { requestId: string } | { generatorId: string } | { resultId: string } | { workflowId: string };
+export type CommentTarget = { promptId: string } | { requestId: string } | { generatorId: string } | { resultId: string } | { workflowId: string } | { presetId: string };
 
 /**
  * Real, unlimited-depth comment thread — every prompt/request is a real
@@ -96,7 +98,7 @@ export function CommentSection({
   const highlightTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const processedHighlightId = useRef<string | null>(null);
 
-  const targetKind: "prompt" | "request" | "generator" | "result" | "workflow" =
+  const targetKind: "prompt" | "request" | "generator" | "result" | "workflow" | "preset" =
     "promptId" in target
       ? "prompt"
       : "requestId" in target
@@ -105,7 +107,9 @@ export function CommentSection({
           ? "generator"
           : "workflowId" in target
             ? "workflow"
-            : "result";
+            : "presetId" in target
+              ? "preset"
+              : "result";
   const targetId =
     "promptId" in target
       ? target.promptId
@@ -115,7 +119,9 @@ export function CommentSection({
           ? target.generatorId
           : "workflowId" in target
             ? target.workflowId
-            : target.resultId;
+            : "presetId" in target
+              ? target.presetId
+              : target.resultId;
 
   // Small dispatch helpers instead of repeating a four-way ternary at each
   // of the three call sites below (initial fetch, top-level post, reply).
@@ -124,6 +130,7 @@ export function CommentSection({
     if (kind === "request") return fetchCommentsForRequest(id);
     if (kind === "generator") return fetchCommentsForGenerator(id);
     if (kind === "workflow") return fetchCommentsForWorkflow(id);
+    if (kind === "preset") return fetchCommentsForPreset(id);
     return fetchCommentsForResult(id);
   }
   function postCommentForTarget(kind: typeof targetKind, id: string, userId: string, body: string, parentId: string | null) {
@@ -131,6 +138,7 @@ export function CommentSection({
     if (kind === "request") return postCommentOnRequest(id, userId, body, parentId);
     if (kind === "generator") return postCommentOnGenerator(id, userId, body, parentId);
     if (kind === "workflow") return postCommentOnWorkflow(id, userId, body, parentId);
+    if (kind === "preset") return postCommentOnPreset(id, userId, body, parentId);
     return postCommentOnResult(id, userId, body, parentId);
   }
 

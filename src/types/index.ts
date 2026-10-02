@@ -121,6 +121,7 @@ export interface PromptComment {
   generatorId?: string;
   resultId?: string;
   workflowId?: string;
+  presetId?: string;
   author: UserProfile;
   body: string;
   /** Points at another `PromptComment.id` — a reply can target a top-level comment OR another reply, to any depth (self-referencing `prompt_comments.parent_id`). */
@@ -672,6 +673,39 @@ export interface Workflow {
   /** Real, trigger-maintained `workflows.save_count` — same "one per distinct user" rule as `Prompt.saveCount`/`Generator.saveCount`. */
   saveCount: number;
   commentCount: number;
+  tags: Tag[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * Hazır Ayar (Preset) — Promptly's 5th first-class content type (CLAUDE.md
+ * Bölüm 9.83). A reusable, structured settings pack: a content type +
+ * (shared-taxonomy) category + recommended tools + a `selection` — the very
+ * same `{ settingGroupId: optionId }` shape the Prompt form's "Ek Ayar
+ * Önerileri" (Bölüm 9.62) uses, so one preset applies to the Prompt form and
+ * to a Generator against the same fixed group/option catalog. It is a
+ * STARTING configuration, never a locked one.
+ */
+export interface Preset {
+  id: string;
+  creator: UserProfile;
+  title: string;
+  description: string;
+  coverUrl: string | null;
+  contentType: PromptContentType;
+  category: string | null;
+  subcategory: string | null;
+  tools: string[];
+  /** `{ groupId: optionId }` — see `src/lib/prompt-extra-settings.ts`. */
+  selection: Record<string, string>;
+  status: "draft" | "published";
+  visibility: "public" | "private";
+  /** Real, trigger-maintained counters (`presets.*_count`). `useCount` = times "Bu hazır ayarı kullan" was pressed. */
+  useCount: number;
+  likeCount: number;
+  commentCount: number;
+  saveCount: number;
   tags: Tag[];
   createdAt: string;
   updatedAt: string;

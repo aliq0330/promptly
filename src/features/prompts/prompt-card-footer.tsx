@@ -3,12 +3,13 @@ import { LikeButton } from "./like-button";
 import { SaveButton } from "./save-button";
 import { CommentCountLink } from "./comment-count-link";
 import { StatisticsButton } from "@/features/statistics/statistics-button";
-import type { Generator, Prompt, Workflow } from "@/types";
+import type { Generator, Preset, Prompt, Workflow } from "@/types";
 
 type FooterTarget =
-  | { prompt: Prompt; generator?: never; workflow?: never }
-  | { generator: Generator; prompt?: never; workflow?: never }
-  | { workflow: Workflow; prompt?: never; generator?: never };
+  | { prompt: Prompt; generator?: never; workflow?: never; preset?: never }
+  | { generator: Generator; prompt?: never; workflow?: never; preset?: never }
+  | { workflow: Workflow; prompt?: never; generator?: never; preset?: never }
+  | { preset: Preset; prompt?: never; generator?: never; workflow?: never };
 
 /**
  * ContentActions — the one action row every content card uses (every prompt
@@ -25,7 +26,14 @@ type FooterTarget =
 export function PromptCardFooter(target: FooterTarget) {
   return (
     <div className="relative z-10 flex items-center gap-0.5 border-t border-border-soft px-2 py-1.5">
-      {target.workflow ? (
+      {target.preset ? (
+        <>
+          <LikeButton id={target.preset.id} likeCount={target.preset.likeCount} contentType="preset" />
+          <CommentCountLink presetId={target.preset.id} baseCount={target.preset.commentCount} />
+          <SaveButton presetId={target.preset.id} saveCount={target.preset.saveCount} />
+          <StatisticsButton target={{ contentType: "preset", contentId: target.preset.id, likeCount: target.preset.likeCount, commentCount: target.preset.commentCount, saveCount: target.preset.saveCount, useCount: target.preset.useCount }} />
+        </>
+      ) : target.workflow ? (
         <>
           <LikeButton id={target.workflow.id} likeCount={target.workflow.likeCount} contentType="workflow" />
           <CommentCountLink workflowId={target.workflow.id} baseCount={target.workflow.commentCount} />
@@ -50,7 +58,9 @@ export function PromptCardFooter(target: FooterTarget) {
       <span className="ml-auto" />
       <ShareTriggerButton
         target={
-          target.workflow
+          target.preset
+            ? { contentType: "preset", preset: target.preset }
+            : target.workflow
             ? { contentType: "workflow", workflow: target.workflow }
             : target.generator
               ? { contentType: "generator", generator: target.generator }

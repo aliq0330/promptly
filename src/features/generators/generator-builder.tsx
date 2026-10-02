@@ -520,7 +520,11 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
           <div className="min-w-0">
             <div className="rounded-lg border border-border bg-surface p-4 sm:p-5 lg:sticky lg:top-4">
               <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-text-muted">{t("generator.livePreview")}</p>
-              <GeneratorPlayground schema={schema} enableNegativePrompt={meta.enableNegativePrompt} />
+              <GeneratorPlayground
+                schema={schema}
+                enableNegativePrompt={meta.enableNegativePrompt}
+                presetContext={{ contentType: meta.contentType, category: meta.category, subcategory: meta.subcategory }}
+              />
             </div>
           </div>
         </div>
@@ -547,7 +551,11 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
           <div className="min-w-0">
             <div className="rounded-lg border border-border bg-surface p-4 sm:p-5 lg:sticky lg:top-4">
               <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-text-muted">{t("generator.livePreview")}</p>
-              <GeneratorPlayground schema={schema} enableNegativePrompt={meta.enableNegativePrompt} />
+              <GeneratorPlayground
+                schema={schema}
+                enableNegativePrompt={meta.enableNegativePrompt}
+                presetContext={{ contentType: meta.contentType, category: meta.category, subcategory: meta.subcategory }}
+              />
             </div>
           </div>
         </div>

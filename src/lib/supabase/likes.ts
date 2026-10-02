@@ -12,9 +12,10 @@ import { batcherRegistry } from "./batched-lookup";
  * result comments too — renaming a live table is a bigger, riskier
  * migration than the naming mismatch is worth).
  */
-export type LikeableContentType = "prompt" | "generator" | "request" | "prompt_result" | "workflow";
+export type LikeableContentType = "prompt" | "generator" | "request" | "prompt_result" | "workflow" | "preset";
 
-function targetColumn(contentType: LikeableContentType): "prompt_id" | "generator_id" | "request_id" | "result_id" | "workflow_id" {
+function targetColumn(contentType: LikeableContentType): "prompt_id" | "generator_id" | "request_id" | "result_id" | "workflow_id" | "preset_id" {
+  if (contentType === "preset") return "preset_id";
   if (contentType === "workflow") return "workflow_id";
   if (contentType === "generator") return "generator_id";
   if (contentType === "request") return "request_id";
