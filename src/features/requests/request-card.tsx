@@ -13,6 +13,7 @@ import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
 import { ShareTriggerButton } from "@/features/prompts/share-modal";
 import { LikeButton } from "@/features/prompts/like-button";
 import { CommentCountLink } from "@/features/prompts/comment-count-link";
+import { StatisticsButton } from "@/features/statistics/statistics-button";
 import { PostMenu } from "@/features/prompts/post-menu";
 import { formatCount, formatRelativeTime, profileHref, requestHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -109,6 +110,7 @@ export function RequestCard({ request, onDeleted }: { request: PromptRequest; on
           <Reply size={16} strokeWidth={1.75} />
           <span aria-hidden>{formatCount(request.responseCount)}</span>
         </Link>
+        <StatisticsButton target={{ contentType: "request", contentId: request.id, likeCount: request.likeCount, commentCount: request.commentCount }} />
         <span className="ml-auto" />
         <ShareTriggerButton target={{ contentType: "request", request }} />
       </div>

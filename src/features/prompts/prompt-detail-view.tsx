@@ -19,6 +19,7 @@ import { CommentSection } from "@/features/prompts/comment-section";
 import { LikeButton } from "@/features/prompts/like-button";
 import { SaveButton } from "@/features/prompts/save-button";
 import { CommentCountLink } from "@/features/prompts/comment-count-link";
+import { StatisticsButton } from "@/features/statistics/statistics-button";
 import { CopyPromptButton } from "@/features/prompts/copy-prompt-button";
 import { PersonalizeModal } from "@/features/prompts/personalize-modal";
 import { EditHistoryPanel } from "@/features/prompts/edit-history-panel";
@@ -123,6 +124,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
             <LikeButton id={prompt.id} likeCount={prompt.likeCount} size={18} />
             <CommentCountLink promptId={prompt.id} baseCount={prompt.commentCount} size={18} />
             <SaveButton promptId={prompt.id} saveCount={prompt.saveCount} size={18} />
+            <StatisticsButton target={{ contentType: "prompt", contentId: prompt.id, likeCount: prompt.likeCount, commentCount: prompt.commentCount, saveCount: prompt.saveCount }} size={18} label={t("statistics.title")} />
             <span className="ml-auto" />
             <ShareTriggerButton target={{ contentType: "prompt", prompt }} label={t("common.share")} />
           </div>
