@@ -1558,6 +1558,20 @@ export const translations = {
   "contrib.less": { tr: "Az", en: "Less" },
   "contrib.more": { tr: "Çok", en: "More" },
   "contrib.cellLabel": { tr: "{{date}}: {{count}} gönderi", en: "{{date}}: {{count}} posts" },
+  "statistics.title": { tr: "İstatistikler", en: "Statistics" },
+  "statistics.open": { tr: "İstatistikleri görüntüle", en: "View statistics" },
+  "statistics.tabsAria": { tr: "Etkileşim türleri", en: "Interaction types" },
+  "statistics.tileLikes": { tr: "Beğeni", en: "Likes" },
+  "statistics.tileComments": { tr: "Yorum", en: "Comments" },
+  "statistics.tileSaves": { tr: "Kaydetme", en: "Saves" },
+  "statistics.tabLikes": { tr: "Beğenenler", en: "Liked by" },
+  "statistics.tabComments": { tr: "Yorum Yapanlar", en: "Commenters" },
+  "statistics.tabSaves": { tr: "Kaydedenler", en: "Saved by" },
+  "statistics.emptyLikes": { tr: "Henüz kimse beğenmedi.", en: "No likes yet." },
+  "statistics.emptyComments": { tr: "Henüz yorum yapılmadı.", en: "No comments yet." },
+  "statistics.emptySaves": { tr: "Henüz kimse kaydetmedi.", en: "No saves yet." },
+  "statistics.deletedUser": { tr: "Silinmiş kullanıcı", en: "Deleted user" },
+  "statistics.loadFailed": { tr: "Liste yüklenemedi.", en: "Couldn't load the list." },
 } as const satisfies Record<string, { tr: string; en: string }>;
 
 export type TranslationKey = keyof typeof translations;

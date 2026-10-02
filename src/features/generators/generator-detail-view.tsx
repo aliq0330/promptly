@@ -20,6 +20,7 @@ import { taxonomyPathLabel } from "@/lib/content-taxonomy";
 import { LikeButton } from "@/features/prompts/like-button";
 import { SaveButton } from "@/features/prompts/save-button";
 import { CommentCountLink } from "@/features/prompts/comment-count-link";
+import { StatisticsButton } from "@/features/statistics/statistics-button";
 import { CommentSection } from "@/features/prompts/comment-section";
 import { EditHistoryPanel } from "@/features/prompts/edit-history-panel";
 import { PromptResultsSection } from "@/features/prompts/prompt-results-section";
@@ -221,6 +222,7 @@ export function GeneratorDetailView() {
             <LikeButton id={generator.id} likeCount={generator.likeCount} contentType="generator" size={18} />
             <CommentCountLink generatorSlug={generator.slug} generatorId={generator.id} baseCount={generator.commentCount} size={18} />
             <SaveButton generatorId={generator.id} saveCount={generator.saveCount} size={18} />
+            <StatisticsButton target={{ contentType: "generator", contentId: generator.id, likeCount: generator.likeCount, commentCount: generator.commentCount, saveCount: generator.saveCount }} size={18} label={t("statistics.title")} />
             <span className="ml-auto" />
             <ShareTriggerButton target={{ contentType: "generator", generator }} label={t("common.share")} />
           </div>

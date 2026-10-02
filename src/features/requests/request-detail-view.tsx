@@ -16,6 +16,7 @@ import { ShareTriggerButton } from "@/features/prompts/share-modal";
 import { PromptCard } from "@/features/prompts/prompt-card";
 import { CommentSection } from "@/features/prompts/comment-section";
 import { CommentCountLink } from "@/features/prompts/comment-count-link";
+import { StatisticsButton } from "@/features/statistics/statistics-button";
 import { EditHistoryPanel } from "@/features/prompts/edit-history-panel";
 import { LikeButton } from "@/features/prompts/like-button";
 import { PostMenu } from "@/features/prompts/post-menu";
@@ -213,6 +214,7 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
             <Reply size={18} strokeWidth={1.75} />
             <span aria-hidden>{formatCount(live.responseCount)}</span>
           </a>
+          <StatisticsButton target={{ contentType: "request", contentId: live.id, likeCount: live.likeCount, commentCount: live.commentCount }} size={18} label={t("statistics.title")} />
           <span className="ml-auto" />
           <ShareTriggerButton target={{ contentType: "request", request: live }} label={t("common.share")} />
         </div>

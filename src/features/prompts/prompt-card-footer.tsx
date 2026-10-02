@@ -2,6 +2,7 @@ import { ShareTriggerButton } from "./share-modal";
 import { LikeButton } from "./like-button";
 import { SaveButton } from "./save-button";
 import { CommentCountLink } from "./comment-count-link";
+import { StatisticsButton } from "@/features/statistics/statistics-button";
 import type { Generator, Prompt, Workflow } from "@/types";
 
 type FooterTarget =
@@ -14,7 +15,7 @@ type FooterTarget =
  * content type, a generator AND a workflow): Beğeni · Yorum · Kaydet grouped
  * together on the left, Paylaş always alone on the far right (Promptly
  * Etkileşim Butonları Düzeni görevi — Paylaş never joins the left group).
- * Same icons, order, spacing and touch targets everywhere. Like/save/comment
+ * Plus the İstatistikler action (Bölüm 9.82) right after Kaydet. Same icons, order, spacing and touch targets everywhere. Like/save/comment
  * are the real, database-persisted actions (CLAUDE.md Bölüm 21/9.35/9.36 —
  * Save opens the shared collection modal for prompts, generators and
  * workflows), share opens the shared `ShareModal` (never a direct
@@ -29,18 +30,21 @@ export function PromptCardFooter(target: FooterTarget) {
           <LikeButton id={target.workflow.id} likeCount={target.workflow.likeCount} contentType="workflow" />
           <CommentCountLink workflowId={target.workflow.id} baseCount={target.workflow.commentCount} />
           <SaveButton workflowId={target.workflow.id} saveCount={target.workflow.saveCount} />
+          <StatisticsButton target={{ contentType: "workflow", contentId: target.workflow.id, likeCount: target.workflow.likeCount, commentCount: target.workflow.commentCount, saveCount: target.workflow.saveCount }} />
         </>
       ) : target.generator ? (
         <>
           <LikeButton id={target.generator.id} likeCount={target.generator.likeCount} contentType="generator" />
           <CommentCountLink generatorSlug={target.generator.slug} generatorId={target.generator.id} baseCount={target.generator.commentCount} />
           <SaveButton generatorId={target.generator.id} saveCount={target.generator.saveCount} />
+          <StatisticsButton target={{ contentType: "generator", contentId: target.generator.id, likeCount: target.generator.likeCount, commentCount: target.generator.commentCount, saveCount: target.generator.saveCount }} />
         </>
       ) : (
         <>
           <LikeButton id={target.prompt.id} likeCount={target.prompt.likeCount} contentType="prompt" />
           <CommentCountLink promptId={target.prompt.id} baseCount={target.prompt.commentCount} />
           <SaveButton promptId={target.prompt.id} saveCount={target.prompt.saveCount} />
+          <StatisticsButton target={{ contentType: "prompt", contentId: target.prompt.id, likeCount: target.prompt.likeCount, commentCount: target.prompt.commentCount, saveCount: target.prompt.saveCount }} />
         </>
       )}
       <span className="ml-auto" />
