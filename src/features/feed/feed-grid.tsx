@@ -6,6 +6,7 @@ import { PromptCard } from "@/features/prompts/prompt-card";
 import { RequestCard } from "@/features/requests/request-card";
 import { GeneratorCard } from "@/features/generators/generator-card";
 import { WorkflowCard } from "@/features/workflows/workflow-card";
+import { PresetCard } from "@/features/presets/preset-card";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { feedItemKey, type FeedItem } from "./types";
 
@@ -50,6 +51,8 @@ export function FeedGrid({
             <RequestCard request={item.data} />
           ) : item.kind === "generator" ? (
             <GeneratorCard generator={item.data} />
+          ) : item.kind === "preset" ? (
+            <PresetCard preset={item.data} />
           ) : (
             <WorkflowCard workflow={item.data} />
           )}

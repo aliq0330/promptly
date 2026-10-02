@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Blocks, Sparkles, SquareTerminal, Workflow } from "lucide-react";
+import { ArrowRight, Blocks, SlidersHorizontal, Sparkles, SquareTerminal, Workflow } from "lucide-react";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
 
@@ -43,6 +43,13 @@ const OPTIONS = [
     bodyKey: "create.workflowBody" as TranslationKey,
     hintKey: "create.workflowHint" as TranslationKey,
   },
+  {
+    href: "/presets/create",
+    icon: SlidersHorizontal,
+    titleKey: "create.presetTitle" as TranslationKey,
+    bodyKey: "create.presetBody" as TranslationKey,
+    hintKey: "create.presetHint" as TranslationKey,
+  },
 ] as const;
 
 export function CreateChoice() {
@@ -55,7 +62,7 @@ export function CreateChoice() {
         <p className="mx-auto max-w-lg text-small text-text-muted">{t("create.subtitle")}</p>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
         {OPTIONS.map((option) => (
           <Link
             key={option.href}

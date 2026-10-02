@@ -1,0 +1,323 @@
+"use client";
+
+import { useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { useAuth } from "@/features/auth/auth-provider";
+import { useOwnProfile } from "@/features/auth/own-profile-provider";
+import { KindDraftsButton } from "@/features/drafts/kind-drafts-button";
+import { MultiImagePicker, type MultiImageItem } from "@/features/content/multi-image-picker";
+import { TaxonomyPicker } from "@/features/content/taxonomy-picker";
+import { ToolPicker } from "@/features/content/tool-picker";
+import { TagPicker } from "@/features/prompts/tag-picker";
+import { useTagPicker } from "@/features/prompts/use-tag-picker";
+import { useTagCatalog } from "@/features/tags/use-tag-catalog";
+import { fetchPresetById, savePreset } from "@/lib/supabase/presets";
+import { groupIdsFor, groupsFor, sanitizeSelection, type SettingSelection } from "@/lib/prompt-extra-settings";
+import { useTranslation } from "@/lib/i18n/language-provider";
+import { cn, presetHref } from "@/lib/utils";
+import { PresetCard } from "./preset-card";
+import { SettingGroupsEditor } from "./setting-groups-editor";
+import type { Preset, PromptContentType } from "@/types";
+
+type Visibility = "public" | "private" | "draft";
+
+const INPUT_CLASS =
+  "w-full rounded-md border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
+
+/**
+ * Hazır Ayar create/edit form (`/presets/create`, `?edit=<id>`): name,
+ * description, content type → category → subcategory (the shared taxonomy),
+ * recommended tool/model, parameters (the SAME catalog the Prompt form's "Ek
+ * Ayar Önerileri" uses, shown for the chosen type/category), tags, cover and
+ * visibility (Herkese açık / Sadece ben / Taslak) with a live `PresetCard`
+ * preview. Same two-column create layout as the request form.
+ */
+export function PresetEditor({ editId }: { editId: string | null }) {
+  const { t } = useTranslation();
+  const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
+  const { profile: ownProfile } = useOwnProfile();
+  const { catalog } = useTagCatalog();
+
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [contentType, setContentType] = useState<PromptContentType>("image");
+  const [category, setCategory] = useState<string | null>(null);
+  const [subcategory, setSubcategory] = useState<string | null>(null);
+  const [tools, setTools] = useState<string[]>([]);
+  const [selection, setSelection] = useState<SettingSelection>({});
+  const [cover, setCover] = useState<MultiImageItem[]>([]);
+  const [visibility, setVisibility] = useState<Visibility>("public");
+  const tagPicker = useTagPicker({ title, content: description, catalog });
+  const tagsSeededRef = useRef(false);
+
+  const [editing, setEditing] = useState<Preset | null>(null);
+  const [loadState, setLoadState] = useState<"loading" | "ready" | "notfound" | "forbidden">(editId ? "loading" : "ready");
+  const [titleTouched, setTitleTouched] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const groups = useMemo(() => groupsFor(groupIdsFor(contentType, category, subcategory, tools)), [contentType, category, subcategory, tools]);
+  const effectiveSelection = useMemo(() => sanitizeSelection(selection, groups), [selection, groups]);
+  const parameterCount = Object.keys(effectiveSelection).length;
+
+  useEffect(() => {
+    if (!editId || authLoading || !user) return;
+    let cancelled = false;
+    fetchPresetById(editId).then((preset) => {
+      if (cancelled) return;
+      if (!preset) return setLoadState("notfound");
+      if (preset.creator.id !== user.id) return setLoadState("forbidden");
+      setEditing(preset);
+      setTitle(preset.title);
+      setDescription(preset.description);
+      setContentType(preset.contentType);
+      setCategory(preset.category);
+      setSubcategory(preset.subcategory);
+      setTools(preset.tools);
+      setSelection(preset.selection);
+      setCover(preset.coverUrl ? [{ key: "existing-cover", url: preset.coverUrl, width: 0, height: 0 }] : []);
+      setVisibility(preset.status === "draft" ? "draft" : preset.visibility);
+      if (!tagsSeededRef.current) {
+        tagsSeededRef.current = true;
+        preset.tags.forEach((tag) => tagPicker.addManual(tag));
+      }
+      setLoadState("ready");
+    });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- addManual is stable; seeded once per load
+  }, [editId, user, authLoading]);
+
+  const titleError = titleTouched && title.trim().length < 3;
+
+  async function handleSubmit(event?: React.FormEvent) {
+    event?.preventDefault();
+    if (!user || isSaving) return;
+    setTitleTouched(true);
+    setError(null);
+    if (title.trim().length < 3) return;
+    if (visibility !== "draft" && parameterCount === 0) {
+      setError(t("preset.errorNoParameters"));
+      return;
+    }
+    setIsSaving(true);
+    try {
+      const id = await savePreset(
+        {
+          id: editId,
+          title,
+          description,
+          coverUrl: cover[0]?.url ?? null,
+          contentType,
+          category,
+          subcategory,
+          tools,
+          selection: effectiveSelection,
+          tags: tagPicker.accepted.map((entry) => entry.tag),
+          status: visibility === "draft" ? "draft" : "published",
+          visibility: visibility === "private" ? "private" : "public",
+        },
+        user.id,
+      );
+      router.push(visibility === "draft" ? "/presets" : presetHref({ id }));
+    } catch (err) {
+      console.error("savePreset", err);
+      setError(err instanceof Error && err.message ? err.message : t("preset.errorSave"));
+      setIsSaving(false);
+    }
+  }
+
+  if (authLoading || loadState === "loading") {
+    return <div className="mx-auto max-w-lg px-4 py-16 text-center text-sm text-text-muted">{t("common.loading")}</div>;
+  }
+  if (!user) {
+    return (
+      <div className="mx-auto max-w-lg px-4 py-16 text-center">
+        <h1 className="mb-2 text-h2 font-semibold text-text">{t("auth.loginRequiredTitle")}</h1>
+        <p className="mb-4 text-sm text-text-muted">{t("preset.loginRequiredBody")}</p>
+        <div className="flex justify-center gap-2">
+          <Link href="/login" className="inline-flex h-9 items-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary-hover">
+            {t("header.login")}
+          </Link>
+          <Link href="/signup" className="inline-flex h-9 items-center rounded-md border border-border px-4 text-sm font-medium text-text hover:bg-accent-surface">
+            {t("auth.createAccount")}
+          </Link>
+        </div>
+      </div>
+    );
+  }
+  if (loadState === "notfound" || loadState === "forbidden") {
+    return (
+      <div className="mx-auto max-w-lg px-4 py-16 text-center">
+        <h1 className="mb-2 text-h2 font-semibold text-text">{loadState === "forbidden" ? t("preset.noEditPermissionTitle") : t("preset.notFoundTitle")}</h1>
+        <p className="mb-4 text-sm text-text-muted">{loadState === "forbidden" ? t("preset.noEditPermissionBody") : t("preset.notFoundBody")}</p>
+        <Link href="/presets" className="inline-flex h-9 items-center rounded-md border border-border px-4 text-sm font-medium text-text hover:bg-accent-surface">
+          {t("preset.backToPresets")}
+        </Link>
+      </div>
+    );
+  }
+
+  const previewPreset: Preset = {
+    id: "preview",
+    creator: ownProfile ?? {
+      id: "preview",
+      username: "sen",
+      displayName: t("prompt.previewAuthorName"),
+      avatarUrl: null,
+      coverUrl: null,
+      bio: null,
+      website: null,
+      followerCount: 0,
+      followingCount: 0,
+      createdAt: new Date().toISOString(),
+    },
+    title: title || t("preset.untitled"),
+    description: description || t("prompt.noDescriptionAdded"),
+    coverUrl: cover[0]?.url ?? null,
+    contentType,
+    category,
+    subcategory,
+    tools,
+    selection: effectiveSelection,
+    status: visibility === "draft" ? "draft" : "published",
+    visibility: visibility === "private" ? "private" : "public",
+    useCount: 0,
+    likeCount: 0,
+    commentCount: 0,
+    saveCount: 0,
+    tags: tagPicker.accepted.map((entry) => entry.tag),
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+
+  const visibilityOptions: { value: Visibility; labelKey: "preset.visPublic" | "preset.visPrivate" | "preset.visDraft"; hintKey: "preset.visPublicHint" | "preset.visPrivateHint" | "preset.visDraftHint" }[] = [
+    { value: "public", labelKey: "preset.visPublic", hintKey: "preset.visPublicHint" },
+    { value: "private", labelKey: "preset.visPrivate", hintKey: "preset.visPrivateHint" },
+    { value: "draft", labelKey: "preset.visDraft", hintKey: "preset.visDraftHint" },
+  ];
+
+  return (
+    <div className="mx-auto max-w-5xl px-3 py-5 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
+      <div className="mb-1 flex items-start justify-between gap-3">
+        <h1 className="text-h1 font-semibold text-text">{editId ? t("preset.editTitle") : t("preset.createTitle")}</h1>
+        <KindDraftsButton kind="preset" />
+      </div>
+      <p className="mb-6 text-sm text-text-muted">{t("preset.createHint")}</p>
+
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_360px]">
+        <form onSubmit={handleSubmit} className="min-w-0 space-y-5">
+          <div>
+            <label htmlFor="preset-title" className="mb-1.5 block text-sm font-medium text-text">
+              {t("preset.titleLabel")} <span className="text-danger">*</span>
+            </label>
+            <input
+              id="preset-title"
+              value={title}
+              maxLength={120}
+              onChange={(event) => setTitle(event.target.value)}
+              onBlur={() => setTitleTouched(true)}
+              placeholder={t("preset.titlePlaceholder")}
+              aria-invalid={titleError}
+              className={cn(INPUT_CLASS, "h-11 aria-[invalid=true]:border-danger")}
+            />
+            {titleError && <p className="mt-1 text-caption text-danger">{t("preset.errorTitle")}</p>}
+          </div>
+
+          <div>
+            <label htmlFor="preset-desc" className="mb-1.5 block text-sm font-medium text-text">
+              {t("preset.descriptionLabel")} <span className="text-text-muted">({t("common.optional")})</span>
+            </label>
+            <textarea
+              id="preset-desc"
+              rows={3}
+              value={description}
+              maxLength={1000}
+              onChange={(event) => setDescription(event.target.value)}
+              placeholder={t("preset.descriptionPlaceholder")}
+              className={cn(INPUT_CLASS, "resize-none py-2")}
+            />
+          </div>
+
+          <TaxonomyPicker
+            value={{ contentType, category, subcategory }}
+            onChange={(next) => {
+              if (next.contentType !== contentType) setSelection({});
+              setContentType(next.contentType);
+              setCategory(next.category);
+              setSubcategory(next.subcategory);
+            }}
+          />
+
+          <ToolPicker label={t("tool.recommendedLabel")} value={tools} onChange={setTools} contentType={contentType} category={category} />
+
+          <section aria-labelledby="preset-params-title" className="space-y-4 rounded-lg border border-border bg-surface p-4">
+            <div>
+              <h2 id="preset-params-title" className="text-label font-semibold text-text">
+                {t("preset.parametersTitle")} <span className="text-text-muted">({parameterCount})</span>
+              </h2>
+              <p className="text-caption text-text-secondary">{t("preset.parametersHint")}</p>
+            </div>
+            <SettingGroupsEditor groups={groups} selection={effectiveSelection} onChange={setSelection} />
+          </section>
+
+          <MultiImagePicker items={cover} onChange={setCover} max={1} label={t("preset.coverLabel")} />
+
+          <div>
+            <label className="mb-2 block text-sm font-medium text-text">
+              {t("forms.tags")} <span className="text-text-muted">({t("common.optional")})</span>
+            </label>
+            <TagPicker picker={tagPicker} />
+          </div>
+
+          <fieldset>
+            <legend className="mb-2 text-sm font-medium text-text">{t("preset.visibilityLabel")}</legend>
+            <div className="grid gap-2 sm:grid-cols-3">
+              {visibilityOptions.map((option) => (
+                <label
+                  key={option.value}
+                  className={cn(
+                    "flex cursor-pointer flex-col gap-0.5 rounded-md border p-3 transition-colors",
+                    visibility === option.value ? "border-primary bg-primary-soft" : "border-border bg-surface hover:bg-surface-soft",
+                  )}
+                >
+                  <span className="flex items-center gap-2 text-label font-semibold text-text">
+                    <input type="radio" name="preset-visibility" value={option.value} checked={visibility === option.value} onChange={() => setVisibility(option.value)} />
+                    {t(option.labelKey)}
+                  </span>
+                  <span className="pl-6 text-caption text-text-secondary">{t(option.hintKey)}</span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
+
+          {error && (
+            <p role="alert" className="text-sm text-danger">
+              {error}
+            </p>
+          )}
+
+          <div className="flex flex-wrap gap-2">
+            <Button type="submit" size="lg" disabled={isSaving}>
+              {isSaving ? t("common.saving") : visibility === "draft" ? t("draft.saveDraft") : editId ? t("common.save") : t("preset.publish")}
+            </Button>
+            <Button type="button" variant="ghost" size="lg" onClick={() => router.push(editing ? presetHref(editing) : "/presets")}>
+              {t("common.cancel")}
+            </Button>
+          </div>
+        </form>
+
+        <div className="min-w-0 lg:sticky lg:top-20 lg:self-start">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-muted">{t("forms.livePreview")}</p>
+          <div className="pointer-events-none select-none">
+            <PresetCard preset={previewPreset} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

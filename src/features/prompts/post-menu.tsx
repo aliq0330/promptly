@@ -4,10 +4,11 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Copy, FolderMinus, Link2, Loader2, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { useAuth } from "@/features/auth/auth-provider";
-import { absoluteUrl, cn, generatorHref, promptHref, requestHref, resultHref, workflowHref } from "@/lib/utils";
+import { absoluteUrl, cn, generatorHref, presetHref, promptHref, requestHref, resultHref, workflowHref } from "@/lib/utils";
 import { deleteRealPrompt } from "@/lib/supabase/prompts";
 import { deleteGenerator } from "@/lib/supabase/generators";
 import { deleteWorkflow } from "@/lib/supabase/workflows";
+import { deletePreset } from "@/lib/supabase/presets";
 import { deleteRealRequest } from "@/lib/supabase/requests";
 import { deletePromptResult } from "@/lib/supabase/prompt-results";
 import { ReportButton } from "@/features/moderation/report-button";
@@ -48,6 +49,7 @@ export function PostMenu({
   requestId,
   resultId,
   workflowId,
+  presetId,
   authorId,
   onDeleted,
   onEdit,
@@ -59,6 +61,7 @@ export function PostMenu({
   requestId?: string;
   resultId?: string;
   workflowId?: string;
+  presetId?: string;
   authorId: string;
   /** Called after a real, successful delete — lets a list (e.g. the profile grid) remove the card without a reload. */
   onDeleted?: () => void;
@@ -88,7 +91,10 @@ export function PostMenu({
   const isRequest = Boolean(requestId);
   const isResult = Boolean(resultId);
   const isWorkflow = Boolean(workflowId);
-  const href = isWorkflow
+  const isPreset = Boolean(presetId);
+  const href = isPreset
+    ? presetHref({ id: presetId! })
+    : isWorkflow
     ? workflowHref({ id: workflowId! })
     : isGenerator
     ? generatorHref({ slug: generatorSlug ?? "" })
@@ -97,7 +103,9 @@ export function PostMenu({
       : isResult
         ? resultHref({ id: resultId! })
         : promptHref({ id: promptId! });
-  const editHref = isWorkflow
+  const editHref = isPreset
+    ? `/presets/create?edit=${presetId}`
+    : isWorkflow
     ? `/workflows/create?edit=${workflowId}`
     : isGenerator
     ? `/generators/create?edit=${generatorId}`
@@ -161,7 +169,8 @@ export function PostMenu({
     setIsDeleting(true);
     setError(null);
     try {
-      if (isWorkflow) await deleteWorkflow(workflowId!);
+      if (isPreset) await deletePreset(presetId!);
+      else if (isWorkflow) await deleteWorkflow(workflowId!);
       else if (isGenerator) await deleteGenerator(generatorId!);
       else if (isRequest) await deleteRealRequest(requestId!);
       else if (isResult) await deletePromptResult(resultId!);
@@ -277,7 +286,7 @@ export function PostMenu({
                   {t("common.edit")}
                 </Link>
               )}
-              {!isGenerator && !isRequest && !isResult && !isWorkflow && (
+              {!isGenerator && !isRequest && !isResult && !isWorkflow && !isPreset && (
                 <Link
                   href={`/create?duplicate=${promptId}`}
                   role="menuitem"
@@ -303,8 +312,8 @@ export function PostMenu({
           {!isOwn && user && !isResult && (
             <div className="px-3 py-2" onClick={(event) => event.stopPropagation()}>
               <ReportButton
-                targetType={isWorkflow ? "workflow" : isGenerator ? "generator" : isRequest ? "request" : "prompt"}
-                targetId={(workflowId ?? generatorId ?? requestId ?? promptId)!}
+                targetType={isPreset ? "preset" : isWorkflow ? "workflow" : isGenerator ? "generator" : isRequest ? "request" : "prompt"}
+                targetId={(presetId ?? workflowId ?? generatorId ?? requestId ?? promptId)!}
               />
             </div>
           )}

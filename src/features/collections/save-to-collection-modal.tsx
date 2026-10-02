@@ -17,7 +17,7 @@ import {
 import type { LikeableContentType } from "@/lib/supabase/likes";
 
 /** See `use-save-state.ts`'s identical note — saving never targets a request. */
-type SaveableContentType = Extract<LikeableContentType, "prompt" | "generator" | "workflow">;
+type SaveableContentType = Extract<LikeableContentType, "prompt" | "generator" | "workflow" | "preset">;
 import { placeholderArt } from "@/lib/placeholder-image";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -51,6 +51,7 @@ export function SaveToCollectionModal({
   promptId,
   generatorId,
   workflowId,
+  presetId,
   onClose,
   onAdded,
   onRemoved,
@@ -58,6 +59,7 @@ export function SaveToCollectionModal({
   promptId?: string;
   generatorId?: string;
   workflowId?: string;
+  presetId?: string;
   onClose: () => void;
   /** Called once when the item's collection-membership count goes from 0 to 1+ (first save into ANY collection, Bölüm 9.38) — lets the caller (SaveButton) reflect the general bookmark filling in immediately, without waiting for a refetch. */
   onAdded?: () => void;
@@ -68,8 +70,8 @@ export function SaveToCollectionModal({
   const { user } = useAuth();
   const { profile } = useOwnProfile();
 
-  const contentId = (workflowId ?? generatorId ?? promptId)!;
-  const contentType: SaveableContentType = workflowId ? "workflow" : generatorId ? "generator" : "prompt";
+  const contentId = (presetId ?? workflowId ?? generatorId ?? promptId)!;
+  const contentType: SaveableContentType = presetId ? "preset" : workflowId ? "workflow" : generatorId ? "generator" : "prompt";
 
   const [view, setView] = useState<"list" | "create">("list");
   const [collections, setCollections] = useState<Collection[]>([]);

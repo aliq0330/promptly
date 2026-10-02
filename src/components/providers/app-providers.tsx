@@ -3,6 +3,7 @@ import { OwnProfileProvider } from "@/features/auth/own-profile-provider";
 import { RealPromptsProvider } from "@/features/prompts/real-prompts-provider";
 import { RealRequestsProvider } from "@/features/requests/real-requests-provider";
 import { RealWorkflowsProvider } from "@/features/workflows/real-workflows-provider";
+import { RealPresetsProvider } from "@/features/presets/real-presets-provider";
 import { RealGeneratorsProvider } from "@/features/generators/real-generators-provider";
 import { RealMessagesProvider } from "@/features/messages/real-messages-provider";
 import { NotificationsProvider } from "@/features/notifications/notifications-provider";
@@ -24,12 +25,14 @@ export function AppProviders({ children }: { children: ReactNode }) {
         <RealRequestsProvider>
           <RealGeneratorsProvider>
             <RealWorkflowsProvider>
-              <RealMessagesProvider>
-                <NotificationsProvider>
-                  <EngagementRealtimeProvider />
-                  {children}
-                </NotificationsProvider>
-              </RealMessagesProvider>
+              <RealPresetsProvider>
+                <RealMessagesProvider>
+                  <NotificationsProvider>
+                    <EngagementRealtimeProvider />
+                    {children}
+                  </NotificationsProvider>
+                </RealMessagesProvider>
+              </RealPresetsProvider>
             </RealWorkflowsProvider>
           </RealGeneratorsProvider>
         </RealRequestsProvider>

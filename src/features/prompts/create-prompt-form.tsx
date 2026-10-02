@@ -22,13 +22,15 @@ import { PromptTextEditor, type DraftVariable } from "@/features/prompts/prompt-
 import { PromptVisionAssist } from "@/features/prompts/prompt-vision-assist";
 import { fetchVariablesForPrompt, replaceVariablesForPrompt } from "@/lib/supabase/prompt-variables";
 import { fetchGeneratorById, fetchGeneratorRun } from "@/lib/supabase/generators";
+import { fetchPresetById } from "@/lib/supabase/presets";
+import { useRealPresets } from "@/features/presets/real-presets-provider";
 import { placeholderArt } from "@/lib/placeholder-image";
 import { MultiImagePicker } from "@/features/content/multi-image-picker";
 import { multiImageItemFromMedia, toDeferredMediaInputs, type MultiImageItem } from "@/lib/supabase/media-input";
 import { cn, copyTextToClipboard, generatorHref, promptHref, requestHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { KindDraftsButton } from "@/features/drafts/kind-drafts-button";
-import type { Generator, GeneratorRun, Prompt, PromptContentType, PromptRequest } from "@/types";
+import type { Generator, GeneratorRun, Preset, Prompt, PromptContentType, PromptRequest } from "@/types";
 
 
 function LoginGate({ message }: { message: string }) {
@@ -117,12 +119,16 @@ export function CreatePromptForm() {
   const { profile: ownProfile } = useOwnProfile();
   const { getCached: getCachedPrompt, fetchById: fetchPromptById, addPrompt, updatePrompt } = useRealPrompts();
   const { getCached: getCachedRequest, fetchById: fetchRequestById } = useRealRequests();
+  const { getCached: getCachedPreset } = useRealPresets();
 
   const editId = searchParams.get("edit");
   const isEditMode = Boolean(editId);
   const duplicateId = !isEditMode ? searchParams.get("duplicate") : null;
   const answerRequestId = !isEditMode ? searchParams.get("answerRequest") : null;
   const generatorRunId = !isEditMode ? searchParams.get("generatorRun") : null;
+  // "Bu hazır ayarı kullan" deep link: only pre-fills the starting configuration, everything stays editable.
+  const presetId = !isEditMode ? searchParams.get("preset") : null;
+  const isPresetMode = Boolean(presetId);
   const isAnswerMode = Boolean(answerRequestId);
   const isDuplicateMode = Boolean(duplicateId);
   const isGeneratorRunMode = Boolean(generatorRunId);
@@ -133,8 +139,9 @@ export function CreatePromptForm() {
   const [sourceGenerator, setSourceGenerator] = useState<Generator | null>(null);
   const [editingPrompt, setEditingPrompt] = useState<Prompt | null>(null);
   const [editForbidden, setEditForbidden] = useState(false);
+  const [sourcePreset, setSourcePreset] = useState<Preset | null>(null);
   const [sourceChecked, setSourceChecked] = useState(
-    !isDuplicateMode && !isAnswerMode && !isEditMode && !isGeneratorRunMode,
+    !isDuplicateMode && !isAnswerMode && !isEditMode && !isGeneratorRunMode && !isPresetMode,
   );
   const { catalog: tagCatalog } = useTagCatalog();
 
@@ -165,6 +172,10 @@ export function CreatePromptForm() {
         const cached = getCachedRequest(answerRequestId);
         const found = cached ?? (await fetchRequestById(answerRequestId));
         if (!cancelled) setAnsweredRequest(found);
+      } else if (isPresetMode && presetId) {
+        // A missing/private preset just means nothing is pre-filled — the form is still a normal create form.
+        const found = getCachedPreset(presetId) ?? (await fetchPresetById(presetId));
+        if (!cancelled) setSourcePreset(found);
       } else if (isGeneratorRunMode && generatorRunId) {
         // RLS already restricts `generator_runs` SELECT to the run's own
         // `user_id` (see the migration) — a run that isn't this signed-in
@@ -194,6 +205,8 @@ export function CreatePromptForm() {
     answerRequestId,
     isGeneratorRunMode,
     generatorRunId,
+    isPresetMode,
+    presetId,
     user,
   ]);
 
@@ -297,6 +310,17 @@ export function CreatePromptForm() {
       setFieldsSeeded(true);
       return;
     }
+    if (isPresetMode && sourceChecked) {
+      if (sourcePreset) {
+        setContentType(sourcePreset.contentType);
+        setCategory(sourcePreset.category);
+        setSubcategory(sourcePreset.subcategory);
+        setTools(sourcePreset.tools);
+        setExtraSettings(sourcePreset.selection);
+      }
+      setFieldsSeeded(true);
+      return;
+    }
     if (generatorRun && sourceChecked) {
       // Gated on `sourceChecked` (only set once the OTHER effect's load()
       // has awaited BOTH the run and its generator) rather than on
@@ -317,7 +341,7 @@ export function CreatePromptForm() {
       setFieldsSeeded(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- tagPicker.addManual is stable (useCallback), not a reactive dependency worth re-running this one-time seed for
-  }, [editingPrompt, duplicateSource, answeredRequest, generatorRun, sourceGenerator, sourceChecked, fieldsSeeded]);
+  }, [editingPrompt, duplicateSource, answeredRequest, generatorRun, sourceGenerator, sourcePreset, isPresetMode, sourceChecked, fieldsSeeded]);
 
   const [publishError, setPublishError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -867,6 +891,9 @@ export function CreatePromptForm() {
             onEnglishFragmentsChange={setEnglishFragments}
             promptText={promptText}
             hasTool={tools.length > 0}
+            category={category}
+            subcategory={subcategory}
+            tools={tools}
           />
 
           {generatorRun?.generatedNegativePrompt && (

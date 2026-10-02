@@ -8,14 +8,15 @@ import { FeedGrid } from "@/features/feed/feed-grid";
 import type { FeedItem } from "@/features/feed/types";
 import { Tabs } from "@/components/ui/tabs";
 import { fetchGeneratorsByTagSlug, fetchPromptsByTag, fetchRequestsByTagSlug, fetchTagBySlug, fetchWorkflowsByTagSlug } from "@/lib/supabase/tags";
+import { fetchPresetsByTagSlug } from "@/lib/supabase/presets";
 import { formatCount, cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { TaxonomyFilter } from "@/features/content/taxonomy-filter";
 import { EMPTY_TAXONOMY_FILTER, matchesTaxonomy, type TaxonomyFilterValue } from "@/lib/content-taxonomy";
-import type { Generator, Prompt, PromptRequest, Tag, Workflow } from "@/types";
+import type { Generator, Preset, Prompt, PromptRequest, Tag, Workflow } from "@/types";
 
 type SortMode = "newest" | "popular";
-type KindFilter = "all" | "prompt" | "generator" | "workflow" | "request";
+type KindFilter = "all" | "prompt" | "generator" | "workflow" | "preset" | "request";
 
 /**
  * Client-rendered counterpart to the old static `/tags/[tag]` — tags are
@@ -36,6 +37,7 @@ export function TagView() {
   const [requests, setRequests] = useState<PromptRequest[]>([]);
   const [generators, setGenerators] = useState<Generator[]>([]);
   const [workflows, setWorkflows] = useState<Workflow[]>([]);
+  const [presets, setPresets] = useState<Preset[]>([]);
   const [kind, setKind] = useState<KindFilter>("all");
   const [loaded, setLoaded] = useState(false);
   const [taxonomy, setTaxonomy] = useState<TaxonomyFilterValue>(EMPTY_TAXONOMY_FILTER);
@@ -55,14 +57,16 @@ export function TagView() {
       fetchRequestsByTagSlug(slug),
       fetchGeneratorsByTagSlug(slug),
       fetchWorkflowsByTagSlug(slug),
+      fetchPresetsByTagSlug(slug),
     ]).then(
-      ([foundTag, foundPrompts, foundRequests, foundGenerators, foundWorkflows]) => {
+      ([foundTag, foundPrompts, foundRequests, foundGenerators, foundWorkflows, foundPresets]) => {
         if (cancelled) return;
         setTag(foundTag);
         setPrompts(foundPrompts);
         setRequests(foundRequests);
         setGenerators(foundGenerators);
         setWorkflows(foundWorkflows);
+        setPresets(foundPresets);
         setLoaded(true);
       },
     );
@@ -77,11 +81,12 @@ export function TagView() {
       ...(kind === "all" || kind === "request" ? requests.map((data): FeedItem => ({ kind: "request", data })) : []),
       ...(kind === "all" || kind === "generator" ? generators.map((data): FeedItem => ({ kind: "generator", data })) : []),
       ...(kind === "all" || kind === "workflow" ? workflows.map((data): FeedItem => ({ kind: "workflow", data })) : []),
+      ...(kind === "all" || kind === "preset" ? presets.map((data): FeedItem => ({ kind: "preset", data })) : []),
     ];
     const created = (i: FeedItem) => new Date(i.data.createdAt).getTime();
     const likes = (i: FeedItem) => (i.kind === "request" ? i.data.responseCount : i.data.likeCount);
     return [...promptItems, ...otherItems].sort((a, b) => (sortMode === "popular" ? likes(b) - likes(a) : created(b) - created(a)));
-  }, [prompts, requests, generators, workflows, kind, taxonomy, sortMode]);
+  }, [prompts, requests, generators, workflows, presets, kind, taxonomy, sortMode]);
 
   if (!slug) {
     return <div className="mx-auto max-w-lg px-4 py-16 text-center text-sm text-text-muted">{t("tag.notFound")}.</div>;
@@ -100,7 +105,7 @@ export function TagView() {
     );
   }
 
-  const totalCount = tag.usageCount ?? prompts.length + requests.length + generators.length + workflows.length;
+  const totalCount = tag.usageCount ?? prompts.length + requests.length + generators.length + workflows.length + presets.length;
 
   return (
     <div className="mx-auto max-w-6xl space-y-5 px-3 py-5 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
@@ -122,6 +127,7 @@ export function TagView() {
           { key: "prompt", label: t("tag.filterPrompts") },
           { key: "generator", label: t("tag.filterGenerators") },
           { key: "workflow", label: t("tag.filterWorkflows") },
+          { key: "preset", label: t("tag.filterPresets") },
           { key: "request", label: t("tag.filterRequests") },
         ]}
       />

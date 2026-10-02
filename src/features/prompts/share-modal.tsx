@@ -12,18 +12,19 @@ import type { Language } from "@/lib/i18n/translations";
 import { contentActionClassName } from "@/features/content/action-styles";
 import { placeholderArt } from "@/lib/placeholder-image";
 import { RESULT_MEDIA_TYPE_LABELS } from "@/lib/prompt-result-media";
-import { generatorHref, promptHref, requestHref, resultHref, workflowHref } from "@/lib/utils";
+import { generatorHref, presetHref, promptHref, requestHref, resultHref, workflowHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import { CONTENT_TYPE_META } from "./content-type-meta";
 import { shareOrCopyLink } from "./share-button";
-import type { Generator, Prompt, PromptRequest, PromptResult, Workflow } from "@/types";
+import type { Generator, Preset, Prompt, PromptRequest, PromptResult, Workflow } from "@/types";
 
 export type ShareModalTarget =
   | { contentType: "prompt"; prompt: Prompt }
   | { contentType: "generator"; generator: Generator }
   | { contentType: "request"; request: PromptRequest }
   | { contentType: "workflow"; workflow: Workflow }
+  | { contentType: "preset"; preset: Preset }
   | { contentType: "prompt_result"; result: PromptResult };
 
 interface SharePreview {
@@ -86,6 +87,19 @@ function getSharePreview(target: ShareModalTarget, t: (key: TranslationKey) => s
       badgeVariant: "neutral",
       href: workflowHref(workflow),
       messageParam: `shareWorkflowId=${workflow.id}`,
+    };
+  }
+  if (target.contentType === "preset") {
+    const preset = target.preset;
+    return {
+      id: preset.id,
+      title: preset.title,
+      description: preset.description,
+      thumbnailUrl: preset.coverUrl,
+      badgeLabel: `${t("preset.singular")} · ${taxonomyPathLabel(preset, language, true)}`,
+      badgeVariant: "neutral",
+      href: presetHref(preset),
+      messageParam: `sharePresetId=${preset.id}`,
     };
   }
   if (target.contentType === "request") {

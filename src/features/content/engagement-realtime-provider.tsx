@@ -60,6 +60,11 @@ export function EngagementRealtimeProvider() {
       )
       .on(
         "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "presets" },
+        (payload) => applyLikeSave("preset", payload.new as { id: string; like_count?: number; save_count?: number }),
+      )
+      .on(
+        "postgres_changes",
         { event: "UPDATE", schema: "public", table: "prompt_requests" },
         (payload) => applyLikeSave("request", payload.new as { id: string; like_count?: number }),
       )

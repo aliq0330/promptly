@@ -36,6 +36,9 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import { translateForRuntime } from "@/lib/i18n/translations";
 import { composeGeneratorShareBody } from "./generator-share-format";
 import { composeWorkflowShareBody } from "./workflow-share-format";
+import { composePresetShareBody } from "./preset-share-format";
+import { fetchPresetById } from "@/lib/supabase/presets";
+import { useRealPresets } from "@/features/presets/real-presets-provider";
 import { fetchWorkflowById } from "@/lib/supabase/workflows";
 import { useRealWorkflows } from "@/features/workflows/real-workflows-provider";
 import type { Conversation, Generator, Message, UserProfile } from "@/types";
@@ -89,12 +92,14 @@ export function LocalConversationView() {
   const shareParamRequestId = searchParams.get("shareRequestId");
   const shareParamGeneratorId = searchParams.get("shareGeneratorId");
   const shareParamWorkflowId = searchParams.get("shareWorkflowId");
+  const shareParamPresetId = searchParams.get("sharePresetId");
   const { user } = useAuth();
   const { getCached, acceptRequest, declineRequest } = useRealMessages();
   const { getCached: getCachedPrompt, fetchById: fetchPromptById } = useRealPrompts();
   const { getCached: getCachedRequest, fetchById: fetchRequestById } = useRealRequests();
   const { getCached: getCachedGenerator } = useRealGenerators();
   const { getCached: getCachedWorkflow } = useRealWorkflows();
+  const { getCached: getCachedPreset } = useRealPresets();
 
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -109,6 +114,7 @@ export function LocalConversationView() {
   // here means fetching the whole object rather than just a title string.
   const [fetchedShareGenerator, setFetchedShareGenerator] = useState<Generator | null>(null);
   const [fetchedShareWorkflowTitle, setFetchedShareWorkflowTitle] = useState<string | null>(null);
+  const [fetchedSharePresetTitle, setFetchedSharePresetTitle] = useState<string | null>(null);
   const [dismissedShare, setDismissedShare] = useState(false);
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -312,6 +318,7 @@ export function LocalConversationView() {
     setFetchedShareTitle(null);
     setFetchedShareGenerator(null);
     setFetchedShareWorkflowTitle(null);
+    setFetchedSharePresetTitle(null);
     setDismissedShare(false);
     if (shareParamPromptId && !getCachedPrompt(shareParamPromptId)) {
       fetchPromptById(shareParamPromptId).then((result) => {
@@ -325,13 +332,17 @@ export function LocalConversationView() {
       fetchWorkflowById(shareParamWorkflowId).then((result) => {
         if (result) setFetchedShareWorkflowTitle(result.workflow.title);
       });
+    } else if (shareParamPresetId && !getCachedPreset(shareParamPresetId)) {
+      fetchPresetById(shareParamPresetId).then((result) => {
+        if (result) setFetchedSharePresetTitle(result.title);
+      });
     } else if (shareParamGeneratorId && !getCachedGenerator(shareParamGeneratorId)) {
       fetchGeneratorById(shareParamGeneratorId).then((result) => {
         if (result) setFetchedShareGenerator(result);
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [shareParamPromptId, shareParamRequestId, shareParamGeneratorId, shareParamWorkflowId]);
+  }, [shareParamPromptId, shareParamRequestId, shareParamGeneratorId, shareParamWorkflowId, shareParamPresetId]);
 
   const shareGenerator = shareParamGeneratorId ? (getCachedGenerator(shareParamGeneratorId) ?? fetchedShareGenerator) : null;
 
@@ -355,7 +366,14 @@ export function LocalConversationView() {
                 title: getCachedWorkflow(shareParamWorkflowId)?.title ?? fetchedShareWorkflowTitle ?? t("common.loading"),
                 resolved: Boolean(getCachedWorkflow(shareParamWorkflowId) ?? fetchedShareWorkflowTitle),
               }
-            : null;
+            : shareParamPresetId
+              ? {
+                  type: "preset" as const,
+                  id: shareParamPresetId,
+                  title: getCachedPreset(shareParamPresetId)?.title ?? fetchedSharePresetTitle ?? t("common.loading"),
+                  resolved: Boolean(getCachedPreset(shareParamPresetId) ?? fetchedSharePresetTitle),
+                }
+              : null;
 
   // Yeni bir mesaj geldiğinde yalnızca kullanıcı zaten en alttaysa (ya da
   // yeni mesajı kendisi gönderdiyse) en alta kaydır — eski mesajları
@@ -462,7 +480,8 @@ export function LocalConversationView() {
   // working link) has resolved — never send a message with a missing/
   // broken link just because the fetch above hasn't finished yet.
   const isGeneratorShareUnresolved =
-    (pendingShare?.type === "generator" && !pendingShare.slug) || (pendingShare?.type === "workflow" && !pendingShare.resolved);
+    (pendingShare?.type === "generator" && !pendingShare.slug) || (pendingShare?.type === "workflow" && !pendingShare.resolved) ||
+    (pendingShare?.type === "preset" && !pendingShare.resolved);
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -486,7 +505,9 @@ export function LocalConversationView() {
           ? composeGeneratorShareBody(trimmed, pendingShare.title, pendingShare.slug)
           : pendingShare?.type === "workflow"
             ? composeWorkflowShareBody(trimmed, pendingShare.title, pendingShare.id)
-            : trimmed || undefined;
+            : pendingShare?.type === "preset"
+              ? composePresetShareBody(trimmed, pendingShare.title, pendingShare.id)
+              : trimmed || undefined;
 
       const sent = await sendMessage(id, user.id, {
         body,

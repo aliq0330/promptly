@@ -29,6 +29,7 @@ export function SaveButton({
   promptId,
   generatorId,
   workflowId,
+  presetId,
   saveCount = 0,
   size = 16,
   className,
@@ -36,14 +37,15 @@ export function SaveButton({
   promptId?: string;
   generatorId?: string;
   workflowId?: string;
+  presetId?: string;
   /** Real, trigger-maintained `save_count` column — the count seed for this id's engagement-store entry. */
   saveCount?: number;
   size?: number;
   className?: string;
 }) {
   const { t } = useTranslation();
-  const id = (workflowId ?? generatorId ?? promptId)!;
-  const contentType = workflowId ? "workflow" : generatorId ? "generator" : "prompt";
+  const id = (presetId ?? workflowId ?? generatorId ?? promptId)!;
+  const contentType = presetId ? "preset" : workflowId ? "workflow" : generatorId ? "generator" : "prompt";
   const { isSaved, saveCount: count, removeEverywhere, markSaved, markUnsaved, isToggling, canSave } = useSaveState(
     id,
     contentType,
@@ -112,7 +114,7 @@ export function SaveButton({
 
       {modalOpen && (
         <SaveToCollectionModal
-          {...(contentType === "workflow" ? { workflowId: id } : contentType === "generator" ? { generatorId: id } : { promptId: id })}
+          {...(contentType === "preset" ? { presetId: id } : contentType === "workflow" ? { workflowId: id } : contentType === "generator" ? { generatorId: id } : { promptId: id })}
           onClose={() => setModalOpen(false)}
           onAdded={markSaved}
           onRemoved={markUnsaved}

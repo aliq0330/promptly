@@ -21,6 +21,7 @@ const KIND_LABEL: Record<ContentKind, TranslationKey> = {
   request: "request.title",
   generator: "generator.singular",
   workflow: "workflow.singular",
+  preset: "preset.singular",
 };
 const GROUP_LABEL: Record<SearchToken["kind"], TranslationKey> = {
   user: "search.groupUsers",
@@ -96,7 +97,7 @@ export function AdvancedSearchBox({
     if (!word.startsWith("@")) tags.forEach((tag) => out.push({ kind: "tag", tag }));
     if (!word.startsWith("@") && !word.startsWith("#")) {
       CONTENT_TYPE_IDS.filter((type) => matches(t(CONTENT_TYPE_META[type].labelKey))).forEach((type) => out.push({ kind: "media", type }));
-      (hideKindSuggestions ? [] : (["prompt", "request", "generator", "workflow"] as ContentKind[]))
+      (hideKindSuggestions ? [] : (["prompt", "request", "generator", "workflow", "preset"] as ContentKind[]))
         .filter((kind) => matches(t(KIND_LABEL[kind])))
         .forEach((kind) => out.push({ kind: "content", type: kind }));
       if (word) searchTools(AI_TOOLS.filter((tool) => tool.isActive), word).slice(0, 4).forEach((tool) => out.push({ kind: "tool", toolId: tool.id }));

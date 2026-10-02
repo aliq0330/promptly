@@ -5,11 +5,12 @@ import { mapProfileRow, type ProfileRow } from "./mappers";
 import { PROMPT_SELECT, mapPromptRow, type PromptRow } from "./prompts";
 import { GENERATOR_SELECT, mapGeneratorRow, type GeneratorRow } from "./generators";
 import { WORKFLOW_SELECT, mapWorkflowRow, type WorkflowRow } from "./workflows";
+import { PRESET_SELECT, mapPresetRow, type PresetRow } from "./presets";
 import type { LikeableContentType } from "./likes";
 
 /** See `use-save-state.ts`'s identical note — saving never targets a request. */
-type SaveableContentType = Extract<LikeableContentType, "prompt" | "generator" | "workflow">;
-import type { Collection, Generator, Prompt, Workflow } from "@/types";
+type SaveableContentType = Extract<LikeableContentType, "prompt" | "generator" | "workflow" | "preset">;
+import type { Collection, Generator, Preset, Prompt, Workflow } from "@/types";
 
 /**
  * A single row in a collection's contents — a collection can hold prompts
@@ -19,10 +20,11 @@ import type { Collection, Generator, Prompt, Workflow } from "@/types";
  * discriminated-union pattern already used for the mixed home/discover feed
  * (`src/features/feed/types.ts`) rather than inventing a new shape.
  */
-export type CollectionEntry = { type: "prompt"; data: Prompt } | { type: "generator"; data: Generator } | { type: "workflow"; data: Workflow };
+export type CollectionEntry = { type: "prompt"; data: Prompt } | { type: "generator"; data: Generator } | { type: "workflow"; data: Workflow } | { type: "preset"; data: Preset };
 
 /** Which real column a save target lives in — mirrors likes.ts's `targetColumn` exactly (Bölüm 9.36's Prompt/Generator parity pass, same "collection_items now holds a nullable prompt_id OR generator_id" shape as prompt_likes/prompt_comments). */
-function saveTargetColumn(contentType: SaveableContentType): "prompt_id" | "generator_id" | "workflow_id" {
+function saveTargetColumn(contentType: SaveableContentType): "prompt_id" | "generator_id" | "workflow_id" | "preset_id" {
+  if (contentType === "preset") return "preset_id";
   if (contentType === "workflow") return "workflow_id";
   return contentType === "generator" ? "generator_id" : "prompt_id";
 }
@@ -81,7 +83,7 @@ async function fetchCovers(collectionIds: string[]): Promise<Map<string, Collect
     const { data, error } = await supabase
       .from("collection_items")
       .select(
-        "collection_id, created_at, prompts ( prompt_media ( id, url, width, height, alt ) ), generators ( cover_url ), workflows ( cover_url )",
+        "collection_id, created_at, prompts ( prompt_media ( id, url, width, height, alt ) ), generators ( cover_url ), workflows ( cover_url ), presets ( cover_url )",
       )
       .in("collection_id", collectionIds)
       .order("created_at", { ascending: false });
@@ -91,6 +93,7 @@ async function fetchCovers(collectionIds: string[]): Promise<Map<string, Collect
       prompts: { prompt_media: { id: string; url: string; width: number; height: number; alt: string | null }[] } | null;
       generators: { cover_url: string | null } | null;
       workflows: { cover_url: string | null } | null;
+      presets: { cover_url: string | null } | null;
     }[]) {
       if (covers.has(row.collection_id)) continue;
       const media = row.prompts?.prompt_media?.[0];
@@ -100,6 +103,8 @@ async function fetchCovers(collectionIds: string[]): Promise<Map<string, Collect
         covers.set(row.collection_id, { id: row.collection_id, url: row.generators.cover_url, width: 320, height: 320, alt: "" });
       } else if (row.workflows?.cover_url) {
         covers.set(row.collection_id, { id: row.collection_id, url: row.workflows.cover_url, width: 320, height: 320, alt: "" });
+      } else if (row.presets?.cover_url) {
+        covers.set(row.collection_id, { id: row.collection_id, url: row.presets.cover_url, width: 320, height: 320, alt: "" });
       }
     }
     return covers;
@@ -206,7 +211,7 @@ export async function fetchCollectionItems(collectionId: string): Promise<Collec
   try {
     const { data, error } = await supabase
       .from("collection_items")
-      .select(`created_at, prompts ( ${PROMPT_SELECT} ), generators ( ${GENERATOR_SELECT} ), workflows ( ${WORKFLOW_SELECT} )`)
+      .select(`created_at, prompts ( ${PROMPT_SELECT} ), generators ( ${GENERATOR_SELECT} ), workflows ( ${WORKFLOW_SELECT} ), presets ( ${PRESET_SELECT} )`)
       .eq("collection_id", collectionId)
       .order("created_at", { ascending: false });
     if (error || !data) {
@@ -214,13 +219,15 @@ export async function fetchCollectionItems(collectionId: string): Promise<Collec
       return [];
     }
     const entries: CollectionEntry[] = [];
-    for (const row of data as unknown as { prompts: PromptRow | null; generators: GeneratorRow | null; workflows: WorkflowRow | null }[]) {
+    for (const row of data as unknown as { prompts: PromptRow | null; generators: GeneratorRow | null; workflows: WorkflowRow | null; presets: PresetRow | null }[]) {
       if (row.prompts && !row.prompts.deleted_at) {
         entries.push({ type: "prompt", data: mapPromptRow(row.prompts) });
       } else if (row.generators) {
         entries.push({ type: "generator", data: mapGeneratorRow(row.generators) });
       } else if (row.workflows) {
         entries.push({ type: "workflow", data: mapWorkflowRow(row.workflows) });
+      } else if (row.presets) {
+        entries.push({ type: "preset", data: mapPresetRow(row.presets) });
       }
     }
     return entries;
@@ -371,13 +378,21 @@ export async function removeFromCollection(collectionId: string, id: string, con
  */
 export async function removeFromSavedEverywhere(id: string, contentType: SaveableContentType = "prompt"): Promise<void> {
   const rpcName =
-    contentType === "workflow"
+    contentType === "preset"
+      ? "remove_preset_from_saved_everywhere"
+      : contentType === "workflow"
       ? "remove_workflow_from_saved_everywhere"
       : contentType === "generator"
         ? "remove_generator_from_saved_everywhere"
         : "remove_prompt_from_saved_everywhere";
   const rpcParam =
-    contentType === "workflow" ? { p_workflow_id: id } : contentType === "generator" ? { p_generator_id: id } : { p_prompt_id: id };
+    contentType === "preset"
+      ? { p_preset_id: id }
+      : contentType === "workflow"
+        ? { p_workflow_id: id }
+        : contentType === "generator"
+          ? { p_generator_id: id }
+          : { p_prompt_id: id };
   const { error } = await supabase.rpc(rpcName, rpcParam);
   if (error) throw new Error(error.message);
 }

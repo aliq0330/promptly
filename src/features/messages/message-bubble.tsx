@@ -7,9 +7,10 @@ import { EmojiPicker } from "./emoji-picker";
 import { MessageActionMenu } from "./message-action-menu";
 import { usePopoverAlign } from "./use-popover-align";
 import { canEditOrDeleteMessage } from "./message-time-limit";
-import { SharedGeneratorCard, SharedPromptCard, SharedRequestCard, SharedWorkflowCard } from "./shared-content-card";
+import { SharedGeneratorCard, SharedPromptCard, SharedPresetCard, SharedRequestCard, SharedWorkflowCard } from "./shared-content-card";
 import { parseGeneratorShareBody } from "./generator-share-format";
 import { parseWorkflowShareBody } from "./workflow-share-format";
+import { parsePresetShareBody } from "./preset-share-format";
 import { cn, formatRelativeTime } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Message } from "@/types";
@@ -70,7 +71,9 @@ export function MessageBubble({
     !message.sharedPromptId && !message.sharedRequestId ? parseGeneratorShareBody(message.body) : null;
   const workflowShare =
     !message.sharedPromptId && !message.sharedRequestId && !generatorShare ? parseWorkflowShareBody(message.body) : null;
-  const displayBody = generatorShare ? generatorShare.note : workflowShare ? workflowShare.note : message.body;
+  const presetShare =
+    !message.sharedPromptId && !message.sharedRequestId && !generatorShare && !workflowShare ? parsePresetShareBody(message.body) : null;
+  const displayBody = generatorShare ? generatorShare.note : workflowShare ? workflowShare.note : presetShare ? presetShare.note : message.body;
 
   const replyGeneratorShare =
     replyPreview && !replyPreview.sharedPromptId && !replyPreview.sharedRequestId
@@ -80,6 +83,10 @@ export function MessageBubble({
     replyPreview && !replyPreview.sharedPromptId && !replyPreview.sharedRequestId && !replyGeneratorShare
       ? parseWorkflowShareBody(replyPreview.body)
       : null;
+  const replyPresetShare =
+    replyPreview && !replyPreview.sharedPromptId && !replyPreview.sharedRequestId && !replyGeneratorShare && !replyWorkflowShare
+      ? parsePresetShareBody(replyPreview.body)
+      : null;
   const replyPreviewText = !replyPreview
     ? null
     : replyPreview.deletedAt
@@ -88,7 +95,9 @@ export function MessageBubble({
         ? (replyGeneratorShare.note ?? t("messages.aGenerator"))
         : replyWorkflowShare
           ? (replyWorkflowShare.note ?? t("messages.aWorkflow"))
-          : replyPreview.body ?? (replyPreview.sharedPromptId ? t("messages.aPrompt") : t("request.aRequest"));
+          : replyPresetShare
+            ? (replyPresetShare.note ?? t("messages.aPreset"))
+            : replyPreview.body ?? (replyPreview.sharedPromptId ? t("messages.aPrompt") : t("request.aRequest"));
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [emojiOpen, setEmojiOpen] = useState(false);
@@ -296,6 +305,7 @@ export function MessageBubble({
             {message.sharedRequestId && <SharedRequestCard requestId={message.sharedRequestId} />}
             {generatorShare && <SharedGeneratorCard slug={generatorShare.slug} />}
             {workflowShare && <SharedWorkflowCard workflowId={workflowShare.id} />}
+            {presetShare && <SharedPresetCard presetId={presetShare.id} />}
             {displayBody && (
               <div
                 className={cn(
