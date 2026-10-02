@@ -1,7 +1,8 @@
 /**
  * Central content taxonomy — the ONE source for content types, categories
- * and subcategories across prompts, prompt requests, generators, search,
- * explore and every filter. Nothing else in the app hard-codes a category.
+ * and subcategories across prompts, prompt requests, generators, presets,
+ * search, explore and every filter. Nothing else in the app hard-codes a
+ * category.
  *
  * Shape: content type -> category -> subcategory. Every level has a stable,
  * English, snake_case slug (what is stored in the database and used in
@@ -9,71 +10,24 @@
  * language)` with the same `Language` the rest of the app uses. Label keys
  * follow `taxonomy.<type>.<category>[.<subcategory>]`.
  *
+ * Source of truth: the `taxonomy_categories` / `taxonomy_subcategories`
+ * tables. This module is a synchronous in-memory registry (so search parsing,
+ * filters and labels never wait on the network) that starts from the bundled
+ * seed (`taxonomy-seed.ts`, the same data the migration inserts) and is
+ * REPLACED by the live rows as soon as `hydrateTaxonomy()` is called
+ * (`TaxonomyHydrator`). Inactive rows are hidden from pickers but still
+ * resolve (an old item keeps its readable label).
+ *
  * Only the requested level is ever materialised by the UI: pickers/filters
  * call `getCategories(type)` / `getSubcategories(...)`, so a type's
  * subcategories are never rendered until it (and its category) is chosen.
  */
 import type { Language } from "@/lib/i18n/translations";
 import { normalizeTagLabel } from "@/lib/tag-normalize";
+import { CONTENT_TYPE_IDS, TAXONOMY_SEED, TYPE_LABELS, type ContentTypeId, type Pair } from "@/lib/taxonomy-seed";
 
-export type ContentTypeId = "image" | "text" | "audio" | "video";
-export const CONTENT_TYPE_IDS: readonly ContentTypeId[] = ["image", "text", "audio", "video"];
-
-/** [English, Türkçe] */
-type Pair = readonly [string, string];
-type RawCategory = readonly [Pair, readonly Pair[]];
-
-const P = (en: string, tr: string): Pair => [en, tr];
-
-const RAW: Record<ContentTypeId, readonly RawCategory[]> = {
-  image: [
-    [P("Human & Character", "İnsan & Karakter"), [P("Portrait", "Portre"), P("Character", "Karakter"), P("Character Design", "Karakter Tasarımı"), P("Human", "İnsan"), P("Child", "Çocuk"), P("Elderly", "Yaşlı"), P("Group", "Grup"), P("Couple", "Çift"), P("Fashion", "Moda"), P("Beauty", "Güzellik"), P("Makeup", "Makyaj"), P("Hair", "Saç"), P("Body & Pose", "Vücut / Poz")]],
-    [P("Photography", "Fotoğrafçılık"), [P("Portrait Photography", "Portre Fotoğrafçılığı"), P("Street Photography", "Sokak Fotoğrafçılığı"), P("Landscape", "Manzara"), P("Nature", "Doğa"), P("Night Photography", "Gece Fotoğrafçılığı"), P("Studio", "Stüdyo"), P("Wedding", "Düğün"), P("Travel", "Seyahat"), P("Architectural Photography", "Mimari Fotoğraf"), P("Product Photography", "Ürün Fotoğrafı"), P("Food Photography", "Yemek Fotoğrafı"), P("Fashion Photography", "Moda Fotoğrafı"), P("Macro", "Makro"), P("Wildlife", "Vahşi Yaşam")]],
-    [P("Art & Illustration", "Sanat & İllüstrasyon"), [P("Digital Art", "Dijital Sanat"), P("Concept Art", "Konsept Sanat"), P("Illustration", "İllüstrasyon"), P("Cartoon", "Karikatür"), P("Drawing", "Çizim"), P("Oil Painting", "Yağlı Boya"), P("Watercolor", "Suluboya"), P("Sketch", "Eskiz"), P("Pixel Art", "Pixel Art"), P("Poster", "Poster"), P("Collage", "Kolaj")]],
-    [P("Style", "Stil"), [P("Realistic", "Gerçekçi"), P("Cinematic", "Sinematik"), P("Anime", "Anime"), P("Manga", "Manga"), P("3D", "3D"), P("Pixar-style", "Pixar Benzeri"), P("Cyberpunk", "Cyberpunk"), P("Fantasy", "Fantastik"), P("Retro", "Retro"), P("Vintage", "Vintage"), P("Minimalist", "Minimalist"), P("Noir", "Noir"), P("Steampunk", "Steampunk"), P("Dark Fantasy", "Dark Fantasy"), P("Low Poly", "Low Poly")]],
-    [P("Product & Commercial", "Ürün & Ticari"), [P("Product", "Ürün"), P("Advertising", "Reklam"), P("E-commerce", "E-ticaret"), P("Packaging", "Ambalaj"), P("Brand", "Marka"), P("Logo", "Logo"), P("Product Mockup", "Ürün Mockup"), P("Cosmetics", "Kozmetik"), P("Clothing", "Giyim"), P("Technology", "Teknoloji")]],
-    [P("Spaces", "Mekân"), [P("Architecture", "Mimari"), P("Interior", "İç Mekân"), P("Exterior", "Dış Mekân"), P("Home", "Ev"), P("Office", "Ofis"), P("Restaurant", "Restoran"), P("Store", "Mağaza"), P("City", "Şehir"), P("Village", "Köy"), P("Futuristic City", "Fütüristik Şehir")]],
-    [P("Nature & Environment", "Doğa & Çevre"), [P("Landscape", "Manzara"), P("Mountain", "Dağ"), P("Sea", "Deniz"), P("Forest", "Orman"), P("Desert", "Çöl"), P("Animal", "Hayvan"), P("Plant", "Bitki"), P("Space", "Uzay"), P("Planet", "Gezegen"), P("Weather", "Hava Durumu")]],
-    [P("Design", "Tasarım"), [P("UI", "UI"), P("UX", "UX"), P("Web Design", "Web Tasarım"), P("Mobile App", "Mobil Uygulama"), P("Dashboard", "Dashboard"), P("Poster", "Poster"), P("Banner", "Banner"), P("Social Media", "Sosyal Medya"), P("Presentation", "Sunum"), P("Infographic", "Infografik")]],
-  ],
-  text: [
-    [P("Writing", "Yazarlık"), [P("Story", "Hikâye"), P("Novel", "Roman"), P("Screenplay", "Senaryo"), P("Poetry", "Şiir"), P("Dialogue", "Diyalog"), P("Character Writing", "Karakter Yazımı"), P("World Building", "Dünya Kurma"), P("Fiction", "Kurgu"), P("Creative Writing", "Yaratıcı Yazarlık")]],
-    [P("Social Media", "Sosyal Medya"), [P("Instagram", "Instagram"), P("TikTok", "TikTok"), P("YouTube", "YouTube"), P("X / Twitter", "X / Twitter"), P("LinkedIn", "LinkedIn"), P("Facebook", "Facebook"), P("Social Media Caption", "Sosyal Medya Açıklaması"), P("Social Media Post", "Sosyal Medya Gönderisi"), P("Viral Content", "Viral İçerik")]],
-    [P("Marketing", "Pazarlama"), [P("Ad Copy", "Reklam Metni"), P("Sales Copy", "Satış Metni"), P("Product Description", "Ürün Açıklaması"), P("Landing Page", "Landing Page"), P("Email Marketing", "E-posta Pazarlama"), P("Campaign", "Kampanya"), P("Brand Copy", "Marka Metni"), P("Slogan", "Slogan"), P("CTA", "CTA")]],
-    [P("SEO", "SEO"), [P("SEO Article", "SEO Makalesi"), P("Blog", "Blog"), P("Keyword", "Anahtar Kelime"), P("Meta Description", "Meta Description"), P("Headline", "Başlık"), P("Product SEO", "Ürün SEO"), P("Content Optimization", "İçerik Optimizasyonu")]],
-    [P("Business & Professional", "İş & Profesyonel"), [P("Email", "E-posta"), P("Resume", "CV"), P("Cover Letter", "Ön Yazı"), P("Report", "Rapor"), P("Presentation", "Sunum"), P("Meeting Summary", "Toplantı Özeti"), P("Business Plan", "İş Planı"), P("Proposal", "Teklif"), P("Documentation", "Dokümantasyon")]],
-    [P("Education", "Eğitim"), [P("Lesson", "Ders"), P("Homework", "Ödev"), P("Exam", "Sınav"), P("Quiz", "Quiz"), P("Lesson Plan", "Ders Planı"), P("Summary", "Özet"), P("Flashcard", "Flashcard"), P("Teacher", "Öğretmen"), P("Student", "Öğrenci")]],
-    [P("Research", "Araştırma"), [P("Research", "Araştırma"), P("Summarization", "Özetleme"), P("Analysis", "Analiz"), P("Comparison", "Karşılaştırma"), P("Data Analysis", "Veri Analizi"), P("Literature", "Literatür"), P("Reporting", "Raporlama")]],
-    [P("Coding", "Kodlama"), [P("Code", "Kod"), P("Web", "Web"), P("Mobile", "Mobil"), P("Frontend", "Frontend"), P("Backend", "Backend"), P("JavaScript", "JavaScript"), P("TypeScript", "TypeScript"), P("Python", "Python"), P("SQL", "SQL"), P("API", "API"), P("Debugging", "Debugging"), P("Automation", "Otomasyon")]],
-  ],
-  audio: [
-    [P("Music", "Müzik"), [P("Song", "Şarkı"), P("Instrumental", "Enstrümantal"), P("Beat", "Beat"), P("Electronic", "Elektronik"), P("Rock", "Rock"), P("Pop", "Pop"), P("Hip Hop", "Hip Hop"), P("Rap", "Rap"), P("Jazz", "Jazz"), P("Classical", "Klasik"), P("Ambient", "Ambient"), P("Lo-fi", "Lo-fi"), P("Synthwave", "Synthwave"), P("Metal", "Metal"), P("Folk", "Folk"), P("Film Score", "Film Müziği"), P("Game Music", "Oyun Müziği")]],
-    [P("Vocals", "Vokal"), [P("Female Vocal", "Kadın Vokal"), P("Male Vocal", "Erkek Vokal"), P("Choir", "Koro"), P("Backing Vocal", "Arka Vokal"), P("Rap Vocal", "Rap Vokal"), P("Spoken Word", "Spoken Word")]],
-    [P("Voiceover", "Seslendirme"), [P("Advertisement", "Reklam"), P("Dubbing", "Dublaj"), P("Story", "Hikâye"), P("Podcast", "Podcast"), P("Education", "Eğitim"), P("Narrator", "Anlatıcı"), P("Character Voice", "Karakter Sesi")]],
-    [P("Sound Effects", "Ses Efektleri"), [P("SFX", "SFX"), P("Cinematic Effect", "Sinematik Efekt"), P("Game Effect", "Oyun Efekti"), P("Nature Sounds", "Doğa Sesleri"), P("Ambience", "Ortam"), P("Foley", "Foley"), P("UI Sounds", "UI Sesleri"), P("Transition Sounds", "Geçiş Sesleri")]],
-    [P("Podcast", "Podcast"), [P("Podcast Intro", "Podcast Giriş"), P("Podcast Outro", "Podcast Çıkış"), P("Podcast Conversation", "Podcast Konuşması"), P("Interview", "Röportaj"), P("Storytelling", "Hikâye Anlatımı")]],
-    [P("Ambience", "Ortam"), [P("Rain", "Yağmur"), P("Forest", "Orman"), P("City", "Şehir"), P("Cafe", "Kafe"), P("Sea", "Deniz"), P("Storm", "Fırtına"), P("Space", "Uzay"), P("Horror", "Korku"), P("Ambient", "Ambient")]],
-  ],
-  video: [
-    [P("Cinematic", "Sinematik"), [P("Film", "Film"), P("Cinematic Scene", "Sinematik Sahne"), P("Trailer", "Trailer"), P("Teaser", "Teaser"), P("Film Intro", "Film Intro"), P("Film Outro", "Film Outro")]],
-    [P("Social Media", "Sosyal Medya"), [P("TikTok", "TikTok"), P("Reels", "Reels"), P("Shorts", "Shorts"), P("YouTube", "YouTube"), P("Story", "Story"), P("Viral Video", "Viral Video")]],
-    [P("Advertising", "Reklam"), [P("Product Ad", "Ürün Reklamı"), P("Brand Ad", "Marka Reklamı"), P("Social Media Ad", "Sosyal Medya Reklamı"), P("UGC", "UGC"), P("Product Presentation", "Ürün Tanıtımı"), P("Campaign", "Kampanya")]],
-    [P("Animation", "Animasyon"), [P("2D", "2D"), P("3D", "3D"), P("Anime", "Anime"), P("Motion Graphics", "Motion Graphics"), P("Character Animation", "Character Animation"), P("Explainer", "Explainer"), P("Cartoon", "Cartoon")]],
-    [P("Music Video", "Müzik Videosu"), [P("Music Video", "Klip"), P("Lyric Video", "Lyric Video"), P("Visualizer", "Visualizer"), P("Concert", "Konser"), P("Performance", "Performans")]],
-    [P("Education", "Eğitim"), [P("Tutorial", "Tutorial"), P("Lesson", "Ders"), P("Explainer", "Explainer"), P("Presentation", "Sunum"), P("Screen Recording", "Ekran Kaydı"), P("Educational Animation", "Eğitim Animasyonu")]],
-    [P("Story & Entertainment", "Hikâye & Eğlence"), [P("Short Film", "Kısa Film"), P("Story", "Hikâye"), P("Comedy", "Komedi"), P("Horror", "Korku"), P("Action", "Aksiyon"), P("Drama", "Dram"), P("Fantasy", "Fantastik"), P("Sci-Fi", "Bilim Kurgu")]],
-    [P("Visual Effects", "Görsel Efekt"), [P("VFX", "VFX"), P("CGI", "CGI"), P("Green Screen", "Green Screen"), P("Transition", "Transition"), P("Slow Motion", "Slow Motion"), P("Time Lapse", "Time Lapse"), P("Camera Effects", "Camera Effects")]],
-    [P("Product & Commercial", "Ürün & Ticari"), [P("Product Video", "Ürün Videosu"), P("E-commerce", "E-ticaret"), P("Product Presentation", "Ürün Tanıtımı"), P("Fashion", "Moda"), P("Automotive", "Otomobil"), P("Technology", "Teknoloji"), P("Restaurant", "Restoran")]],
-    [P("Documentary", "Belgesel"), [P("Nature", "Doğa"), P("History", "Tarih"), P("Science", "Bilim"), P("Travel", "Seyahat"), P("Interview", "Röportaj"), P("News", "Haber")]],
-  ],
-};
-
-const TYPE_LABELS: Record<ContentTypeId, Pair> = {
-  image: ["Image", "Görsel"],
-  text: ["Text", "Metin"],
-  audio: ["Audio", "Ses"],
-  video: ["Video", "Video"],
-};
+export { CONTENT_TYPE_IDS };
+export type { ContentTypeId };
 
 function slugify(en: string): string {
   return en
@@ -83,45 +37,178 @@ function slugify(en: string): string {
 }
 
 export interface TaxonomySubcategory {
+  /** Stable slug — the value stored on content. */
   id: string;
+  slug: string;
   type: ContentTypeId;
   categoryId: string;
   labelKey: string;
+  /** `[en, tr]` or `null`. */
+  description: Pair | null;
+  sortOrder: number;
+  isActive: boolean;
 }
 export interface TaxonomyCategory {
+  /** Stable slug — the value stored on content (the database row also has its own uuid). */
   id: string;
+  slug: string;
   type: ContentTypeId;
   labelKey: string;
+  /** Lucide icon name (kebab-case), resolved by `taxonomy-icons.ts`. */
+  icon: string | null;
+  description: Pair | null;
+  sortOrder: number;
+  isActive: boolean;
+  /** Active subcategories only, in display order. */
   subcategories: TaxonomySubcategory[];
 }
 
-// `labelKey -> [tr, en]`, filled while the tree is built.
+/** Rows as read from the database (see `lib/supabase/taxonomy.ts`). */
+export interface TaxonomyDbCategory {
+  dbId: string;
+  contentType: ContentTypeId;
+  slug: string;
+  nameEn: string;
+  nameTr: string;
+  icon: string | null;
+  descriptionEn: string | null;
+  descriptionTr: string | null;
+  sortOrder: number;
+  isActive: boolean;
+}
+export interface TaxonomyDbSubcategory {
+  categoryDbId: string;
+  slug: string;
+  nameEn: string;
+  nameTr: string;
+  descriptionEn: string | null;
+  descriptionTr: string | null;
+  sortOrder: number;
+  isActive: boolean;
+}
+
+// `labelKey -> [en, tr]`, filled while the tree is built.
 const LABELS = new Map<string, Pair>();
 
 export function contentTypeLabelKey(type: ContentTypeId): string {
   return `taxonomy.${type}`;
 }
 
-const TREE: Record<ContentTypeId, TaxonomyCategory[]> = { image: [], text: [], audio: [], video: [] };
+/** Every category incl. inactive ones (label/sanitise lookups). */
+let ALL: Record<ContentTypeId, TaxonomyCategory[]> = { image: [], text: [], audio: [], video: [] };
+/** Active categories with active subcategories only — what pickers show. */
+let TREE: Record<ContentTypeId, TaxonomyCategory[]> = { image: [], text: [], audio: [], video: [] };
+/** Every subcategory incl. inactive, per `type:categorySlug`. */
+let ALL_SUBS = new Map<string, TaxonomySubcategory[]>();
+let entryIndex: TaxonomyEntry[] | null = null;
 
-for (const type of CONTENT_TYPE_IDS) {
-  LABELS.set(contentTypeLabelKey(type), TYPE_LABELS[type]);
-  for (const [[catEn, catTr], subs] of RAW[type]) {
-    const catId = slugify(catEn);
-    const catKey = `taxonomy.${type}.${catId}`;
-    LABELS.set(catKey, [catEn, catTr]);
-    TREE[type].push({
-      id: catId,
-      type,
-      labelKey: catKey,
-      subcategories: subs.map(([subEn, subTr]) => {
+const listeners = new Set<() => void>();
+let version = 0;
+export function subscribeTaxonomy(listener: () => void): () => void {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+}
+/** Bumps whenever the registry is replaced — components re-read via `useSyncExternalStore`. */
+export function getTaxonomyVersion(): number {
+  return version;
+}
+
+function install(all: Record<ContentTypeId, TaxonomyCategory[]>, subs: Map<string, TaxonomySubcategory[]>) {
+  ALL = all;
+  ALL_SUBS = subs;
+  TREE = { image: [], text: [], audio: [], video: [] };
+  for (const type of CONTENT_TYPE_IDS) {
+    TREE[type] = all[type]
+      .filter((c) => c.isActive)
+      .sort((a, b) => a.sortOrder - b.sortOrder)
+      .map((c) => ({ ...c, subcategories: c.subcategories.filter((s) => s.isActive).sort((a, b) => a.sortOrder - b.sortOrder) }));
+  }
+  entryIndex = null;
+}
+
+function buildFromSeed(): { all: Record<ContentTypeId, TaxonomyCategory[]>; subs: Map<string, TaxonomySubcategory[]> } {
+  const all: Record<ContentTypeId, TaxonomyCategory[]> = { image: [], text: [], audio: [], video: [] };
+  const subs = new Map<string, TaxonomySubcategory[]>();
+  for (const type of CONTENT_TYPE_IDS) {
+    LABELS.set(contentTypeLabelKey(type), TYPE_LABELS[type]);
+    TAXONOMY_SEED[type].forEach(([[catEn, catTr], rawSubs, icon, [descEn, descTr]], catIndex) => {
+      const catId = slugify(catEn);
+      const catKey = `taxonomy.${type}.${catId}`;
+      LABELS.set(catKey, [catEn, catTr]);
+      const subList: TaxonomySubcategory[] = rawSubs.map(([subEn, subTr], subIndex) => {
         const subId = slugify(subEn);
         const labelKey = `${catKey}.${subId}`;
         LABELS.set(labelKey, [subEn, subTr]);
-        return { id: subId, type, categoryId: catId, labelKey };
-      }),
+        return { id: subId, slug: subId, type, categoryId: catId, labelKey, description: null, sortOrder: subIndex, isActive: true };
+      });
+      subs.set(`${type}:${catId}`, subList);
+      all[type].push({ id: catId, slug: catId, type, labelKey: catKey, icon, description: [descEn, descTr], sortOrder: catIndex, isActive: true, subcategories: subList });
     });
   }
+  return { all, subs };
+}
+
+{
+  const seeded = buildFromSeed();
+  install(seeded.all, seeded.subs);
+}
+
+/**
+ * Replaces the bundled seed with the live database rows. A content type the
+ * database has no categories for keeps its seed (so a partially populated
+ * table never empties a picker).
+ */
+export function hydrateTaxonomy(categories: TaxonomyDbCategory[], subcategories: TaxonomyDbSubcategory[]): void {
+  const seeded = buildFromSeed();
+  const all = { ...seeded.all };
+  const subs = new Map(seeded.subs);
+  const byType = new Map<ContentTypeId, TaxonomyDbCategory[]>();
+  for (const row of categories) {
+    if (!byType.has(row.contentType)) byType.set(row.contentType, []);
+    byType.get(row.contentType)!.push(row);
+  }
+  const dbSubsByCategory = new Map<string, TaxonomyDbSubcategory[]>();
+  for (const row of subcategories) {
+    if (!dbSubsByCategory.has(row.categoryDbId)) dbSubsByCategory.set(row.categoryDbId, []);
+    dbSubsByCategory.get(row.categoryDbId)!.push(row);
+  }
+  for (const [type, rows] of byType) {
+    // Drop this type's seed labels/subs, then rebuild it from the rows.
+    for (const key of Array.from(subs.keys())) if (key.startsWith(`${type}:`)) subs.delete(key);
+    all[type] = rows.map((row) => {
+      const catKey = `taxonomy.${type}.${row.slug}`;
+      LABELS.set(catKey, [row.nameEn, row.nameTr]);
+      const subList: TaxonomySubcategory[] = (dbSubsByCategory.get(row.dbId) ?? []).map((sub) => {
+        const labelKey = `${catKey}.${sub.slug}`;
+        LABELS.set(labelKey, [sub.nameEn, sub.nameTr]);
+        return {
+          id: sub.slug,
+          slug: sub.slug,
+          type,
+          categoryId: row.slug,
+          labelKey,
+          description: sub.descriptionEn || sub.descriptionTr ? [sub.descriptionEn ?? "", sub.descriptionTr ?? ""] : null,
+          sortOrder: sub.sortOrder,
+          isActive: sub.isActive,
+        };
+      });
+      subs.set(`${type}:${row.slug}`, subList);
+      return {
+        id: row.slug,
+        slug: row.slug,
+        type,
+        labelKey: catKey,
+        icon: row.icon,
+        description: row.descriptionEn || row.descriptionTr ? [row.descriptionEn ?? "", row.descriptionTr ?? ""] : null,
+        sortOrder: row.sortOrder,
+        isActive: row.isActive,
+        subcategories: subList,
+      };
+    });
+  }
+  install(all, subs);
+  version += 1;
+  listeners.forEach((listener) => listener());
 }
 
 /** Visible label for any taxonomy node (`labelKey`), in the active language. */
@@ -135,23 +222,27 @@ export function isContentTypeId(value: unknown): value is ContentTypeId {
   return typeof value === "string" && (CONTENT_TYPE_IDS as readonly string[]).includes(value);
 }
 
+/** Active categories of a type, in display order. */
 export function getCategories(type: ContentTypeId): TaxonomyCategory[] {
   return TREE[type];
 }
+/** Any category of the type (inactive ones included, so an old value still resolves). */
 export function findCategory(type: ContentTypeId, categoryId: string | null | undefined): TaxonomyCategory | null {
   if (!categoryId) return null;
-  return TREE[type].find((c) => c.id === categoryId) ?? null;
+  return ALL[type].find((c) => c.id === categoryId) ?? null;
 }
+/** Active subcategories of a category. */
 export function getSubcategories(type: ContentTypeId, categoryId: string | null | undefined): TaxonomySubcategory[] {
-  return findCategory(type, categoryId)?.subcategories ?? [];
+  if (!categoryId) return [];
+  return TREE[type].find((c) => c.id === categoryId)?.subcategories ?? [];
 }
 export function findSubcategory(
   type: ContentTypeId,
   categoryId: string | null | undefined,
   subcategoryId: string | null | undefined,
 ): TaxonomySubcategory | null {
-  if (!subcategoryId) return null;
-  return getSubcategories(type, categoryId).find((s) => s.id === subcategoryId) ?? null;
+  if (!subcategoryId || !categoryId) return null;
+  return ALL_SUBS.get(`${type}:${categoryId}`)?.find((s) => s.id === subcategoryId) ?? null;
 }
 
 export interface TaxonomySelection {
@@ -210,8 +301,6 @@ export type TaxonomyEntry =
   | { kind: "type"; type: ContentTypeId; keys: string[]; labelKey: string }
   | { kind: "category"; type: ContentTypeId; categoryId: string; keys: string[]; labelKey: string }
   | { kind: "subcategory"; type: ContentTypeId; categoryId: string; subcategoryId: string; keys: string[]; labelKey: string };
-
-let entryIndex: TaxonomyEntry[] | null = null;
 
 /** Comparison key: case/accent-insensitive (also folds â/î/û, e.g. "Hikâye" ~ "hikaye"). */
 function norm(text: string): string {

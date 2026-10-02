@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Portal } from "./portal";
 
 /**
@@ -22,6 +22,13 @@ export function lockBodyScroll() {
   }
   lockCount += 1;
 }
+
+/**
+ * Open modals, oldest first. Escape closes only the TOPMOST one, so a modal
+ * opened from inside another (field editor over the preset panel, say) closes
+ * alone instead of taking its parent down with it.
+ */
+const openModals: symbol[] = [];
 
 export function unlockBodyScroll() {
   lockCount = Math.max(0, lockCount - 1);
@@ -50,17 +57,27 @@ export function Modal({
   labelledBy: string;
   children: React.ReactNode;
 }) {
+  // Registered once per mount (not per `onClose` identity) so a parent
+  // re-rendering never re-orders the stack and steals Escape from its child.
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  });
   useEffect(() => {
     lockBodyScroll();
+    const id = Symbol("modal");
+    openModals.push(id);
     function handleEscape(event: KeyboardEvent) {
-      if (event.key === "Escape") onClose();
+      if (event.key === "Escape" && openModals[openModals.length - 1] === id) onCloseRef.current();
     }
     document.addEventListener("keydown", handleEscape);
     return () => {
       document.removeEventListener("keydown", handleEscape);
+      const index = openModals.indexOf(id);
+      if (index >= 0) openModals.splice(index, 1);
       unlockBodyScroll();
     };
-  }, [onClose]);
+  }, []);
 
   // Layout: a vertical flex column where the panel row uses auto margins
   // (never `items-center`/`items-end`, which clip the top of a panel taller

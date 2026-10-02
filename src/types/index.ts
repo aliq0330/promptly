@@ -1,4 +1,5 @@
 import type { ContentTypeId } from "@/lib/content-taxonomy";
+import type { PresetField, PresetSelection } from "@/lib/preset-fields";
 /**
  * Shared domain types for Promptly — mirror the real Supabase schema (see
  * `supabase/` migrations and `src/lib/supabase/*.ts`'s mappers).
@@ -697,8 +698,15 @@ export interface Preset {
   category: string | null;
   subcategory: string | null;
   tools: string[];
-  /** `{ groupId: optionId }` — see `src/lib/prompt-extra-settings.ts`. */
-  selection: Record<string, string>;
+  /**
+   * The user's own fields (`preset_fields` + `preset_options`), each with its
+   * own option list. Empty for a preset saved before custom fields existed or
+   * built only from platform fields — those are resolved from the catalog
+   * (`resolvePresetFields`).
+   */
+  fields: PresetField[];
+  /** `{ fieldId: value }` — the default values (see `src/lib/preset-fields.ts`); old presets' `{ groupId: optionId }` is the same shape. */
+  selection: PresetSelection;
   status: "draft" | "published";
   visibility: "public" | "private";
   /** Real, trigger-maintained counters (`presets.*_count`). `useCount` = times "Bu hazır ayarı kullan" was pressed. */

@@ -17,7 +17,9 @@ import { useTagCatalog } from "@/features/tags/use-tag-catalog";
 import { useTagPicker } from "@/features/prompts/use-tag-picker";
 import { TagPicker } from "@/features/prompts/tag-picker";
 import { ExtraSettingsSection } from "@/features/prompts/extra-settings-panel";
-import { composePrompt, groupIdsFor, groupsFor, sanitizeSelection, type SettingSelection } from "@/lib/prompt-extra-settings";
+import { catalogFields, fieldIdsFor } from "@/lib/prompt-extra-settings";
+import { composePrompt, mergeFields, sanitizeSelection, type PresetField, type PresetSelection } from "@/lib/preset-fields";
+import { resolvePresetFields } from "@/lib/preset-utils";
 import { PromptTextEditor, type DraftVariable } from "@/features/prompts/prompt-text-editor";
 import { PromptVisionAssist } from "@/features/prompts/prompt-vision-assist";
 import { fetchVariablesForPrompt, replaceVariablesForPrompt } from "@/lib/supabase/prompt-variables";
@@ -221,17 +223,19 @@ export function CreatePromptForm() {
   const [tools, setTools] = useState<string[]>([]);
   // "Ek Ayar Önerileri": the textarea stays the ORIGINAL text; the selection is
   // kept separately and only composed into what is saved/previewed.
-  const [extraSettings, setExtraSettings] = useState<SettingSelection>({});
+  const [extraSettings, setExtraSettings] = useState<PresetSelection>({});
+  // Fields the user added on top of the recommended ones (platform, their own or a preset's).
+  const [extraFields, setExtraFields] = useState<PresetField[]>([]);
   // Lets Turkish-mode users still write the appended fragments in English.
   const [englishFragments, setEnglishFragments] = useState(false);
   const fragmentLanguage = englishFragments ? "en" : language;
-  const extraGroups = useMemo(
-    () => groupsFor(groupIdsFor(contentType, category, subcategory, tools)),
-    [contentType, category, subcategory, tools],
+  const extraAllFields = useMemo(
+    () => mergeFields(catalogFields(fieldIdsFor(contentType, category, subcategory, tools)), extraFields),
+    [contentType, category, subcategory, tools, extraFields],
   );
   const finalPromptText = useMemo(
-    () => composePrompt(promptText, sanitizeSelection(extraSettings, extraGroups), extraGroups, fragmentLanguage),
-    [promptText, extraSettings, extraGroups, fragmentLanguage],
+    () => composePrompt(promptText, sanitizeSelection(extraSettings, extraAllFields), extraAllFields, fragmentLanguage),
+    [promptText, extraSettings, extraAllFields, fragmentLanguage],
   );
   // CLAUDE.md §12: answering a request must NOT just copy the request's own
   // tags — they're only passed as soft `contextTags` (nudge into the
@@ -317,6 +321,9 @@ export function CreatePromptForm() {
         setSubcategory(sourcePreset.subcategory);
         setTools(sourcePreset.tools);
         setExtraSettings(sourcePreset.selection);
+        // Its own fields (and any catalog field the recommendations don't already cover).
+        const recommendedIds = new Set(fieldIdsFor(sourcePreset.contentType, sourcePreset.category, sourcePreset.subcategory, sourcePreset.tools));
+        setExtraFields(resolvePresetFields(sourcePreset).filter((f) => !recommendedIds.has(f.id)));
       }
       setFieldsSeeded(true);
       return;
@@ -809,7 +816,10 @@ export function CreatePromptForm() {
           <TaxonomyPicker
             value={{ contentType, category, subcategory }}
             onChange={(next) => {
-              if (next.contentType !== contentType) setExtraSettings({});
+              if (next.contentType !== contentType) {
+                setExtraSettings({});
+                setExtraFields([]);
+              }
               setContentType(next.contentType);
               setCategory(next.category);
               setSubcategory(next.subcategory);
@@ -884,9 +894,10 @@ export function CreatePromptForm() {
 
           <ExtraSettingsSection
             contentType={contentType}
-            groups={extraGroups}
             value={extraSettings}
             onChange={setExtraSettings}
+            extraFields={extraFields}
+            onExtraFieldsChange={setExtraFields}
             englishFragments={englishFragments}
             onEnglishFragmentsChange={setEnglishFragments}
             promptText={promptText}

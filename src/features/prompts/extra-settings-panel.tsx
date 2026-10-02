@@ -1,34 +1,34 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { BookmarkPlus, ChevronRight, Sparkles, X } from "lucide-react";
-import { Portal } from "@/components/ui/portal";
+import { useMemo, useState } from "react";
+import { BookmarkPlus, ChevronRight, Plus, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useTranslation } from "@/lib/i18n/language-provider";
+import { Modal } from "@/components/ui/modal";
 import { useAuth } from "@/features/auth/auth-provider";
-import { PresetPicker } from "@/features/presets/preset-picker";
-import { SavePresetModal } from "@/features/presets/save-preset-modal";
-import { recordPresetUse } from "@/lib/supabase/presets";
-import {
-  composePrompt,
-  sanitizeSelection,
-  settingLabel,
-  type SettingGroup,
-  type SettingSelection,
-} from "@/lib/prompt-extra-settings";
+import { AddFieldModal } from "@/features/presets/add-field-modal";
+import { PresetBuilderModal } from "@/features/presets/preset-builder-modal";
+import { PresetFieldList } from "@/features/presets/preset-field-list";
+import { PresetPicker, type PresetBundle } from "@/features/presets/preset-picker";
+import { SelectionSummary } from "@/features/presets/selection-summary";
 import type { ContentTypeId } from "@/lib/content-taxonomy";
-import { SettingGroupsEditor } from "@/features/presets/setting-groups-editor";
+import { useTranslation } from "@/lib/i18n/language-provider";
+import { catalogFields, fieldIdsFor } from "@/lib/prompt-extra-settings";
+import { composePrompt, countSelected, mergeFields, sanitizeSelection, type PresetField, type PresetSelection } from "@/lib/preset-fields";
+import { recordPresetUse } from "@/lib/supabase/presets";
 
 /**
- * Trigger row + applied chips. The panel itself (mobile bottom sheet,
- * tablet/desktop centered modal) is only mounted while open, so only the
- * groups relevant to the current type/category are ever rendered.
+ * The prompt form's "Ek Ayar Önerileri" row + applied chips. The panel
+ * (Promptly / my presets, fields to pick values from, "+ Alan Ekle", "Seçtiklerin")
+ * only mounts while open. Fields offered by default follow the form's
+ * type → category → subcategory (`fieldIdsFor`); anything else is added with
+ * "+ Alan Ekle" and kept in `extraFields` so it survives closing the panel.
  */
 export function ExtraSettingsSection({
   contentType,
-  groups,
   value,
   onChange,
+  extraFields,
+  onExtraFieldsChange,
   englishFragments,
   onEnglishFragmentsChange,
   promptText,
@@ -38,27 +38,27 @@ export function ExtraSettingsSection({
   tools = [],
 }: {
   contentType: ContentTypeId;
-  groups: SettingGroup[];
-  value: SettingSelection;
-  onChange: (next: SettingSelection) => void;
+  value: PresetSelection;
+  onChange: (next: PresetSelection) => void;
+  /** Fields the user added on top of the recommended ones (platform, their own, or a preset's). */
+  extraFields: PresetField[];
+  onExtraFieldsChange: (next: PresetField[]) => void;
   englishFragments: boolean;
   onEnglishFragmentsChange: (value: boolean) => void;
   promptText: string;
   hasTool: boolean;
-  /** Carried into "Yeni hazır ayar olarak kaydet" so the saved preset keeps the form's taxonomy/tools. */
   category?: string | null;
   subcategory?: string | null;
   tools?: string[];
 }) {
   const { t, language } = useTranslation();
   const [open, setOpen] = useState(false);
-  const applied = useMemo(() => sanitizeSelection(value, groups), [value, groups]);
-  const appliedEntries = groups.flatMap((g) => {
-    const option = g.options.find((o) => o.id === applied[g.id]);
-    return option ? [{ groupId: g.id, label: settingLabel(option, language), groupLabel: settingLabel(g, language) }] : [];
-  });
+  const recommended = useMemo(() => catalogFields(fieldIdsFor(contentType, category, subcategory, tools)), [contentType, category, subcategory, tools]);
+  const allFields = useMemo(() => mergeFields(recommended, extraFields), [recommended, extraFields]);
+  const applied = useMemo(() => sanitizeSelection(value, allFields), [value, allFields]);
+  const count = countSelected(applied, allFields);
   const fragmentLanguage = englishFragments ? "en" : language;
-  const composed = composePrompt(promptText, applied, groups, fragmentLanguage);
+  const composed = composePrompt(promptText, applied, allFields, fragmentLanguage);
 
   return (
     <div className="space-y-2">
@@ -73,40 +73,13 @@ export function ExtraSettingsSection({
           <span className="block text-label font-semibold text-text">{t("extra.title")}</span>
           <span className="block text-caption text-text-secondary">{t("extra.hint")}</span>
         </span>
-        {appliedEntries.length > 0 && (
-          <span className="shrink-0 rounded-full bg-primary px-2 py-0.5 text-caption font-semibold text-primary-foreground">
-            {t("extra.count", { count: appliedEntries.length })}
-          </span>
-        )}
+        {count > 0 && <span className="shrink-0 rounded-full bg-primary px-2 py-0.5 text-caption font-semibold text-primary-foreground">{t("extra.count", { count })}</span>}
         <ChevronRight size={16} className="shrink-0 text-text-muted" aria-hidden />
       </button>
 
-      {appliedEntries.length > 0 && (
+      {count > 0 && (
         <div className="space-y-2">
-          <ul className="flex flex-wrap gap-1.5" aria-label={t("extra.selected")}>
-            {appliedEntries.map((entry) => (
-              <li key={entry.groupId} data-extra-chip={entry.groupId} className="inline-flex items-center gap-1 rounded-full bg-primary-soft py-1 pl-2.5 pr-1 text-caption font-medium text-text">
-                <span className="text-text-muted">{entry.groupLabel}:</span> {entry.label}
-                <button
-                  type="button"
-                  aria-label={t("extra.removeAria", { name: entry.label })}
-                  onClick={() => {
-                    const next = { ...applied };
-                    delete next[entry.groupId];
-                    onChange(next);
-                  }}
-                  className="grid h-5 w-5 place-items-center rounded-full text-text-muted hover:bg-surface hover:text-text"
-                >
-                  <X size={12} />
-                </button>
-              </li>
-            ))}
-            <li>
-              <button type="button" onClick={() => onChange({})} className="px-1.5 py-1 text-caption font-medium text-text-muted underline hover:text-text">
-                {t("extra.clear")}
-              </button>
-            </li>
-          </ul>
+          <SelectionSummary fields={allFields} selection={applied} onChange={onChange} />
           <div className="rounded-md border border-border-soft bg-surface-soft p-3">
             <p className="mb-1 text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">{t("extra.savedPrompt")}</p>
             <p data-extra-composed className="prompt-text whitespace-pre-wrap break-words text-small text-text">
@@ -120,18 +93,20 @@ export function ExtraSettingsSection({
       {open && (
         <ExtraSettingsPanel
           contentType={contentType}
-          groups={groups}
-          initial={applied}
-          promptText={promptText}
-          hasTool={hasTool}
           category={category}
           subcategory={subcategory}
           tools={tools}
+          recommended={recommended}
+          initialExtra={extraFields}
+          initial={applied}
+          promptText={promptText}
+          hasTool={hasTool}
           englishFragments={englishFragments}
           onEnglishFragmentsChange={onEnglishFragmentsChange}
           onClose={() => setOpen(false)}
-          onApply={(next) => {
-            onChange(next);
+          onApply={(nextSelection, nextExtra) => {
+            onExtraFieldsChange(nextExtra);
+            onChange(nextSelection);
             setOpen(false);
           }}
         />
@@ -142,76 +117,73 @@ export function ExtraSettingsSection({
 
 function ExtraSettingsPanel({
   contentType,
-  groups,
-  initial,
-  promptText,
-  hasTool,
   category,
   subcategory,
   tools,
+  recommended,
+  initialExtra,
+  initial,
+  promptText,
+  hasTool,
   englishFragments,
   onEnglishFragmentsChange,
   onClose,
   onApply,
 }: {
   contentType: ContentTypeId;
-  groups: SettingGroup[];
-  initial: SettingSelection;
-  promptText: string;
-  hasTool: boolean;
   category: string | null;
   subcategory: string | null;
   tools: string[];
+  recommended: PresetField[];
+  initialExtra: PresetField[];
+  initial: PresetSelection;
+  promptText: string;
+  hasTool: boolean;
   englishFragments: boolean;
   onEnglishFragmentsChange: (value: boolean) => void;
   onClose: () => void;
-  onApply: (next: SettingSelection) => void;
+  onApply: (selection: PresetSelection, extraFields: PresetField[]) => void;
 }) {
   const { t, language } = useTranslation();
   const { user } = useAuth();
-  const [draft, setDraft] = useState<SettingSelection>(initial);
-  const [savingPreset, setSavingPreset] = useState(false);
-  // Escape inside the nested save-preset modal must close only that modal.
-  const savingPresetRef = useRef(false);
-  useEffect(() => {
-    savingPresetRef.current = savingPreset;
-  }, [savingPreset]);
+  const [draft, setDraft] = useState<PresetSelection>(initial);
+  const [extra, setExtra] = useState<PresetField[]>(initialExtra);
+  const [adding, setAdding] = useState(false);
+  const [builder, setBuilder] = useState<"empty" | "current" | null>(null);
+  const [presetsVersion, setPresetsVersion] = useState(0);
+  const fields = useMemo(() => mergeFields(recommended, extra), [recommended, extra]);
   const fragmentLanguage = englishFragments ? "en" : language;
-  const composed = composePrompt(promptText, draft, groups, fragmentLanguage);
-  const selectedCount = Object.keys(draft).length;
+  const clean = useMemo(() => sanitizeSelection(draft, fields), [draft, fields]);
+  const composed = composePrompt(promptText, clean, fields, fragmentLanguage);
+  const selectedCount = countSelected(clean, fields);
+  const recommendedIds = useMemo(() => new Set(recommended.map((f) => f.id)), [recommended]);
 
-  useEffect(() => {
-    const previous = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    function onKey(event: KeyboardEvent) {
-      if (event.key === "Escape" && !savingPresetRef.current) onClose();
-    }
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.body.style.overflow = previous;
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [onClose]);
-
-  function applyPreset(selection: SettingSelection, preset: { id: string } | null) {
+  function applyBundle(bundle: PresetBundle, preset: { id: string } | null) {
     // Only fills the draft — everything stays editable (a preset is a starting configuration).
-    setDraft(sanitizeSelection({ ...draft, ...selection }, groups));
+    const nextExtra = mergeFields(extra, bundle.fields.filter((f) => !recommendedIds.has(f.id)));
+    const nextFields = mergeFields(recommended, nextExtra);
+    setExtra(nextExtra);
+    setDraft(sanitizeSelection({ ...clean, ...bundle.selection }, nextFields));
     if (preset && user) void recordPresetUse(preset.id, user.id);
   }
 
+  function removeExtraField(field: PresetField) {
+    setExtra((current) => current.filter((f) => f.id !== field.id));
+    setDraft((current) => {
+      const next = { ...current };
+      delete next[field.id];
+      return next;
+    });
+  }
+
   return (
-    <Portal>
-      <div className="fixed inset-0 z-50 animate-fade-in bg-[rgb(10_8_20/0.45)] backdrop-blur-[2px] md:flex md:items-center md:justify-center md:p-4" onClick={onClose}>
+    <>
+      <Modal onClose={onClose} labelledBy="extra-settings-title">
         <div
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="extra-settings-title"
+          role="document"
           data-extra-panel
           onClick={(event) => event.stopPropagation()}
-          className={
-            "absolute inset-x-0 bottom-0 flex max-h-[90dvh] flex-col rounded-t-xl border border-b-0 border-border bg-surface shadow-pop animate-sheet-up " +
-            "md:static md:inset-auto md:max-h-[85dvh] md:w-full md:max-w-lg md:rounded-lg md:border md:animate-pop-in"
-          }
+          className="flex max-h-[92dvh] w-full max-w-2xl flex-col rounded-lg border border-border bg-surface shadow-pop"
         >
           <div className="flex items-start gap-3 border-b border-border-soft px-4 py-3">
             <Sparkles size={18} className="mt-0.5 shrink-0 text-primary" aria-hidden />
@@ -227,7 +199,9 @@ function ExtraSettingsPanel({
           </div>
 
           <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-4 py-4">
-            <PresetPicker contentType={contentType} onApply={applyPreset} />
+            <SelectionSummary fields={fields} selection={clean} onChange={setDraft} className="rounded-md border border-border-soft bg-surface-soft p-3" />
+
+            <PresetPicker contentType={contentType} category={category} onApply={applyBundle} onCreate={() => setBuilder("empty")} refreshKey={presetsVersion} />
 
             {language === "tr" && (
               <label className="flex cursor-pointer items-start gap-2.5 rounded-md border border-border-soft bg-surface-soft px-3 py-2.5">
@@ -239,9 +213,27 @@ function ExtraSettingsPanel({
               </label>
             )}
 
-            {hasTool && groups.some((g) => g.kind === "suffix") && <p className="rounded-md bg-primary-soft px-3 py-2 text-caption text-text-secondary">{t("extra.toolHint")}</p>}
+            {hasTool && fields.some((f) => f.kind === "suffix") && <p className="rounded-md bg-primary-soft px-3 py-2 text-caption text-text-secondary">{t("extra.toolHint")}</p>}
 
-            <SettingGroupsEditor groups={groups} selection={draft} onChange={(next) => setDraft(sanitizeSelection(next, groups))} fragmentLanguage={fragmentLanguage} />
+            <section aria-labelledby="extra-fields-title" className="space-y-2.5">
+              <div className="flex items-center justify-between gap-2">
+                <h3 id="extra-fields-title" className="text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">
+                  {t("presetField.fieldsHeading")} <span className="tabular-nums">({fields.length})</span>
+                </h3>
+                <Button type="button" variant="outline" size="sm" onClick={() => setAdding(true)} data-add-field-open>
+                  <Plus size={14} aria-hidden />
+                  {t("presetField.addShort")}
+                </Button>
+              </div>
+              <PresetFieldList
+                fields={fields}
+                selection={clean}
+                onChange={setDraft}
+                fragmentLanguage={fragmentLanguage}
+                onRemoveField={(field) => removeExtraField(field)}
+                removableIds={new Set(extra.map((f) => f.id))}
+              />
+            </section>
 
             <section className="rounded-md border border-border-soft bg-surface-soft p-3">
               <h3 className="mb-1 text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">{t("extra.preview")}</h3>
@@ -256,27 +248,54 @@ function ExtraSettingsPanel({
               <Button type="button" variant="ghost" onClick={() => setDraft({})} disabled={selectedCount === 0}>
                 {t("extra.clear")}
               </Button>
-              <Button type="button" variant="ghost" onClick={() => setSavingPreset(true)} disabled={selectedCount === 0}>
+              <Button type="button" variant="ghost" onClick={() => setBuilder("current")} disabled={selectedCount === 0} data-save-as-preset>
                 <BookmarkPlus size={16} aria-hidden />
-                {t("preset.saveAsNew")}
+                <span className="hidden sm:inline">{t("preset.saveAsNew")}</span>
               </Button>
             </div>
-            <Button type="button" onClick={() => onApply(draft)}>
+            <Button type="button" onClick={() => onApply(clean, extra)} data-apply-settings>
               {t("extra.apply")}
             </Button>
           </div>
         </div>
-      </div>
-      {savingPreset && (
-        <SavePresetModal
+      </Modal>
+
+      {adding && (
+        <AddFieldModal
           contentType={contentType}
           category={category}
           subcategory={subcategory}
           tools={tools}
-          selection={sanitizeSelection(draft, groups)}
-          onClose={() => setSavingPreset(false)}
+          existingIds={new Set(fields.map((f) => f.id))}
+          target="form"
+          onAdd={(added) => setExtra((current) => mergeFields(current, added.filter((f) => !recommendedIds.has(f.id))))}
+          onLibraryUpdate={(updated) => setExtra((current) => current.map((f) => (f.id === updated.id ? updated : f)))}
+          onLibraryDelete={(id) => {
+            setExtra((current) => current.filter((f) => f.id !== id));
+            setDraft((current) => {
+              const next = { ...current };
+              delete next[id];
+              return next;
+            });
+          }}
+          onClose={() => setAdding(false)}
         />
       )}
-    </Portal>
+
+      {builder && (
+        <PresetBuilderModal
+          contentType={contentType}
+          category={category}
+          subcategory={subcategory}
+          tools={tools}
+          seed={builder === "current" ? { fields, selection: clean } : undefined}
+          onSaved={() => {
+            setBuilder(null);
+            setPresetsVersion((v) => v + 1);
+          }}
+          onClose={() => setBuilder(null)}
+        />
+      )}
+    </>
   );
 }

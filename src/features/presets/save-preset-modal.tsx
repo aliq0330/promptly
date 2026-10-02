@@ -9,6 +9,7 @@ import { useAuth } from "@/features/auth/auth-provider";
 import { useRealPresets } from "./real-presets-provider";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { presetParameterCount } from "@/lib/preset-utils";
+import type { PresetField, PresetSelection } from "@/lib/preset-fields";
 import { savePreset } from "@/lib/supabase/presets";
 import { cn, presetHref } from "@/lib/utils";
 import type { PromptContentType } from "@/types";
@@ -24,6 +25,7 @@ export function SavePresetModal({
   category,
   subcategory,
   tools,
+  fields,
   selection,
   defaultTitle,
   onClose,
@@ -32,7 +34,8 @@ export function SavePresetModal({
   category: string | null;
   subcategory: string | null;
   tools: string[];
-  selection: Record<string, string>;
+  fields: PresetField[];
+  selection: PresetSelection;
   defaultTitle?: string;
   onClose: () => void;
 }) {
@@ -45,7 +48,7 @@ export function SavePresetModal({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [savedId, setSavedId] = useState<string | null>(null);
-  const count = presetParameterCount(selection);
+  const count = presetParameterCount({ fields, selection });
 
   async function handleSave() {
     if (!user || saving) return;
@@ -61,7 +64,7 @@ export function SavePresetModal({
     setError(null);
     try {
       const id = await savePreset(
-        { id: null, title, description, coverUrl: null, contentType, category, subcategory, tools, selection, tags: [], status: "published", visibility },
+        { id: null, title, description, coverUrl: null, contentType, category, subcategory, tools, fields, selection, tags: [], status: "published", visibility },
         user.id,
       );
       reload();

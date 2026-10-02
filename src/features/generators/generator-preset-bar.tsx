@@ -7,7 +7,7 @@ import { useAuth } from "@/features/auth/auth-provider";
 import { PresetPicker } from "@/features/presets/preset-picker";
 import { SavePresetModal } from "@/features/presets/save-preset-modal";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import { applyPresetToGeneratorValues, generatorValuesToPresetSelection } from "@/lib/preset-generator-mapping";
+import { applyPresetToGeneratorValues, generatorValuesToPreset } from "@/lib/preset-generator-mapping";
 import { recordPresetUse } from "@/lib/supabase/presets";
 import type { GeneratorSchema, GeneratorValues, PromptContentType } from "@/types";
 
@@ -39,8 +39,8 @@ export function GeneratorPresetBar({
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
-  const currentSelection = generatorValuesToPresetSelection(schema, values);
-  const savable = Object.keys(currentSelection).length > 0;
+  const current = generatorValuesToPreset(schema, values);
+  const savable = current.fields.length > 0;
 
   if (schema.fields.length === 0) return null;
 
@@ -58,8 +58,8 @@ export function GeneratorPresetBar({
       {open && (
         <PresetPicker
           contentType={contentType}
-          onApply={(selection, preset) => {
-            const result = applyPresetToGeneratorValues(schema, values, selection);
+          onApply={(bundle, preset) => {
+            const result = applyPresetToGeneratorValues(schema, values, bundle);
             onValuesChange(result.values);
             setNotice(result.applied > 0 ? t("preset.generatorApplied", { count: result.applied }) : t("preset.generatorNoMatch"));
             if (preset && user) void recordPresetUse(preset.id, user.id);
@@ -77,7 +77,8 @@ export function GeneratorPresetBar({
           category={category}
           subcategory={subcategory}
           tools={[]}
-          selection={currentSelection}
+          fields={current.fields}
+          selection={current.selection}
           onClose={() => setSaving(false)}
         />
       )}
