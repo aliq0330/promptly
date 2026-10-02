@@ -11,69 +11,80 @@
       <span class="logo">✦</span>
       <h1>Promptly</h1>
       <span id="user" class="user" hidden></span>
-      <button id="logout" type="button" class="link" hidden>Çıkış</button>
+      <button id="logout" type="button" class="link" data-i18n="signOut" hidden></button>
+      <button id="lang" type="button" class="lang" data-i18n-aria="language"></button>
     </header>
 
     <main>
-      <!-- Giriş -->
       <form id="login" class="stack" hidden>
-        <p class="note">Promptları kaydetmek için Promptly hesabınla giriş yap.</p>
-        <label class="label" for="identifier">E-posta veya kullanıcı adı</label>
+        <p class="note" data-i18n="loginHint"></p>
+        <label class="label" for="identifier" data-i18n="identifier"></label>
         <input id="identifier" class="field" autocomplete="username" required />
-        <label class="label" for="password">Şifre</label>
+        <label class="label" for="password" data-i18n="password"></label>
         <input id="password" class="field" type="password" autocomplete="current-password" required />
         <p id="login-error" class="error" role="alert" hidden></p>
-        <button id="login-btn" type="submit" class="btn primary">Giriş yap</button>
+        <button id="login-btn" type="submit" class="btn primary" data-i18n="signIn"></button>
       </form>
 
-      <!-- Yakalama yok -->
       <section id="empty" class="empty" hidden>
-        <p class="empty-title">Henüz yakalanan prompt yok</p>
-        <p class="empty-hint">
-          Herhangi bir sayfada bir prompt metnini seç, sağ tıkla ve
-          <strong>“✦ Promptly'ye Kaydet”</strong> seçeneğini kullan.
-        </p>
+        <p class="empty-title" data-i18n="emptyTitle"></p>
+        <p class="empty-hint" data-i18n="emptyHint"></p>
       </section>
 
-      <!-- Kaydedildi -->
       <section id="done" class="empty" hidden>
         <p id="done-title" class="empty-title"></p>
         <p class="empty-hint"><a id="done-link" target="_blank" rel="noopener noreferrer"></a></p>
       </section>
 
-      <!-- Yakalama + kaydetme -->
       <form id="capture" class="stack" hidden>
-        <label class="label" for="title">Başlık</label>
+        <label class="label" for="title" data-i18n="title"></label>
         <input id="title" class="field" maxlength="120" required />
 
-        <label class="label" for="text">Prompt</label>
-        <textarea id="text" class="field mono" rows="7" spellcheck="false" required></textarea>
+        <label class="label" for="text" data-i18n="prompt"></label>
+        <textarea id="text" class="field mono" rows="6" spellcheck="false" required></textarea>
         <div class="meta">
           <span id="count"></span>
           <a id="source" target="_blank" rel="noopener noreferrer"></a>
         </div>
 
-        <label class="label" for="type">İçerik türü</label>
-        <select id="type" class="field">
-          <option value="text">Metin</option>
-          <option value="image">Görsel</option>
-          <option value="video">Video</option>
-          <option value="audio">Ses</option>
-        </select>
+        <div class="row">
+          <div>
+            <label class="label" for="type" data-i18n="contentType"></label>
+            <select id="type" class="field"></select>
+          </div>
+          <div>
+            <label class="label" for="category" data-i18n="category"></label>
+            <select id="category" class="field"></select>
+          </div>
+        </div>
+        <div id="subcategory-wrap" hidden>
+          <label class="label" for="subcategory" data-i18n="subcategory"></label>
+          <select id="subcategory" class="field"></select>
+        </div>
 
-        <label class="check"><input id="publish" type="checkbox" /> Hemen yayınla (aksi hâlde taslak)</label>
+        <label class="label" for="tag-input" data-i18n="tags"></label>
+        <div id="tag-chips" class="chips"></div>
+        <div class="tag-box">
+          <input id="tag-input" class="field" autocomplete="off" maxlength="60" data-i18n-placeholder="tagsPlaceholder" />
+          <ul id="tag-suggest" class="suggest" role="listbox" hidden></ul>
+        </div>
+        <p id="tag-note" class="note" hidden></p>
+
+        <label class="check"><input id="publish" type="checkbox" /> <span data-i18n="publishNow"></span></label>
 
         <p id="save-error" class="error" role="alert" hidden></p>
 
         <div class="actions">
-          <button id="copy" type="button" class="btn">Kopyala</button>
-          <button id="clear" type="button" class="btn">Temizle</button>
-          <button id="save" type="submit" class="btn primary">Kaydet</button>
+          <button id="copy" type="button" class="btn" data-i18n="copy"></button>
+          <button id="clear" type="button" class="btn" data-i18n="clear"></button>
+          <button id="save" type="submit" class="btn primary" data-i18n="save"></button>
         </div>
       </form>
     </main>
 
+    <script src="../i18n.js"></script>
     <script src="../config.js"></script>
+    <script src="../taxonomy.js"></script>
     <script src="../api.js"></script>
     <script src="popup.js"></script>
   </body>
