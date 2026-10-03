@@ -20,6 +20,7 @@ import { requestHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { KindDraftsButton } from "@/features/drafts/kind-drafts-button";
 import { CreateFormActions } from "@/features/content/create-form-actions";
+import { FormSection } from "@/features/content/form-section";
 import type { ContentVisibility, PromptContentType, PromptRequest } from "@/types";
 
 
@@ -347,83 +348,85 @@ export function CreateRequestForm() {
       </p>
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_360px]">
-        <form onSubmit={handleSubmit} className="min-w-0 space-y-5">
-          <TaxonomyPicker
-            value={{ contentType, category, subcategory }}
-            onChange={(next) => {
-              setContentType(next.contentType);
-              setCategory(next.category);
-              setSubcategory(next.subcategory);
-            }}
-            lockContentType={isEditMode}
-            lockedHint={t("prompt.notEditableWhileEditing")}
-          />
-
-          <TitleField
-            id="request-title"
-            label={t("request.requestTitleLabel")}
-            value={title}
-            onChange={setTitle}
-            onBlur={() => setTitleTouched(true)}
-            placeholder={t("request.titlePlaceholder")}
-            maxLength={TITLE_MAX}
-            required
-            showCounter
-            error={titleTouched ? titleError : null}
-          />
-
-          <DescriptionField
-            id="request-description"
-            label={t("request.requestDescriptionLabel")}
-            value={description}
-            onChange={setDescription}
-            onBlur={() => setDescriptionTouched(true)}
-            placeholder={t("request.descriptionPlaceholder")}
-            maxLength={DESCRIPTION_MAX}
-            required
-            showCounter
-            error={descriptionTouched ? descriptionError : null}
-          />
-
-          <MultiImagePicker items={images} onChange={setImages} label={t("request.referenceImage")} />
-
-          {!isEditMode && contentType === "image" && (
-            <RequestVisionAssist
-              onApplyDescription={(text) => setDescription((prev) => (prev.trim() ? `${prev}\n\n${text}` : text))}
-              onApplyCreativeDirection={(text) =>
-                setCreativeDirection((prev) => (prev.trim() ? `${prev} · ${text}` : text))
-              }
+        <form onSubmit={handleSubmit} className="min-w-0 space-y-4">
+          <FormSection title={t("taxonomy.categoryLabel")}>
+            <TaxonomyPicker
+              bare
+              value={{ contentType, category, subcategory }}
+              onChange={(next) => {
+                setContentType(next.contentType);
+                setCategory(next.category);
+                setSubcategory(next.subcategory);
+              }}
+              lockContentType={isEditMode}
+              lockedHint={t("prompt.notEditableWhileEditing")}
             />
-          )}
+          </FormSection>
 
-          <ToolPicker
-            label={t("tool.preferredLabel")}
-            value={tools}
-            onChange={setTools}
-            contentType={contentType}
-            category={category}
-          />
+          <FormSection title={t("formSection.basics")}>
+            <div className="space-y-4">
+              <TitleField
+                id="request-title"
+                label={t("request.requestTitleLabel")}
+                value={title}
+                onChange={setTitle}
+                onBlur={() => setTitleTouched(true)}
+                placeholder={t("request.titlePlaceholder")}
+                maxLength={TITLE_MAX}
+                required
+                showCounter
+                error={titleTouched ? titleError : null}
+              />
 
-          <div>
-            <label htmlFor="request-direction" className="mb-1.5 block text-sm font-medium text-text">
-              {t("request.creativeDirection")} <span className="font-normal text-text-muted">({t("common.optional")})</span>
-            </label>
+              <DescriptionField
+                id="request-description"
+                label={t("request.requestDescriptionLabel")}
+                value={description}
+                onChange={setDescription}
+                onBlur={() => setDescriptionTouched(true)}
+                placeholder={t("request.descriptionPlaceholder")}
+                maxLength={DESCRIPTION_MAX}
+                required
+                showCounter
+                error={descriptionTouched ? descriptionError : null}
+              />
+            </div>
+          </FormSection>
+
+          <FormSection title={t("request.referenceImage")}>
+            <div className="space-y-4">
+              <MultiImagePicker items={images} onChange={setImages} />
+
+              {!isEditMode && contentType === "image" && (
+                <RequestVisionAssist
+                  onApplyDescription={(text) => setDescription((prev) => (prev.trim() ? `${prev}\n\n${text}` : text))}
+                  onApplyCreativeDirection={(text) =>
+                    setCreativeDirection((prev) => (prev.trim() ? `${prev} · ${text}` : text))
+                  }
+                />
+              )}
+            </div>
+          </FormSection>
+
+          <FormSection title={t("formSection.tool")}>
+            <ToolPicker value={tools} onChange={setTools} contentType={contentType} category={category} />
+          </FormSection>
+
+          <FormSection title={t("request.creativeDirection")}>
             <textarea
               id="request-direction"
+              aria-label={t("request.creativeDirection")}
               rows={3}
               value={creativeDirection}
               onChange={(event) => setCreativeDirection(event.target.value)}
               placeholder={t("request.creativeDirectionPlaceholder")}
               className="w-full resize-none rounded-md border border-border bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted"
             />
-          </div>
+          </FormSection>
 
-          <div>
-            <label className="mb-2 block text-sm font-medium text-text">
-              {t("forms.tags")} <span className="text-text-muted">({t("common.optional")})</span>
-            </label>
+          <FormSection title={t("forms.tags")}>
             <TagPicker picker={tagPicker} />
-          </div>
+          </FormSection>
 
           <CreateFormActions
             visibility={visibility}

@@ -4,6 +4,7 @@ import { MultiImagePicker } from "@/features/content/multi-image-picker";
 import { TitleField, DescriptionField } from "@/features/content/core-fields";
 import { TaxonomyPicker } from "@/features/content/taxonomy-picker";
 import { ToolPicker } from "@/features/content/tool-picker";
+import { FormSection, FormSections } from "@/features/content/form-section";
 import { TagPicker } from "@/features/prompts/tag-picker";
 import type { UseTagPickerResult } from "@/features/prompts/use-tag-picker";
 import type { ContentTypeId } from "@/lib/content-taxonomy";
@@ -42,52 +43,52 @@ export function WorkflowMetaForm({
   const { t } = useTranslation();
 
   return (
-    <div className="space-y-5">
-      <TaxonomyPicker
-        value={{ contentType: meta.contentType, category: meta.category, subcategory: meta.subcategory }}
-        onChange={(next) => onChange({ contentType: next.contentType, category: next.category, subcategory: next.subcategory })}
-      />
-
-      <TitleField
-        id="wf-title"
-        label={t("workflow.titleLabel")}
-        value={meta.title}
-        onChange={(title) => onChange({ title })}
-        placeholder={t("workflow.titlePlaceholder")}
-        maxLength={120}
-        required
-        error={titleError ? t("workflow.issueTitleRequired") : null}
-      />
-
-      <DescriptionField
-        id="wf-desc"
-        label={t("workflow.descriptionLabel")}
-        value={meta.description}
-        onChange={(description) => onChange({ description })}
-        placeholder={t("workflow.descriptionPlaceholder")}
-        maxLength={1000}
-        optional
-      />
-
-      <MultiImagePicker items={meta.media} onChange={(media) => onChange({ media })} label={t("workflow.coverLabel")} max={4} />
-
-      <div>
-        <ToolPicker
-          label={t("tool.recommendedLabel")}
-          value={meta.tools}
-          onChange={(tools) => onChange({ tools })}
-          contentType={meta.contentType}
-          category={meta.category}
+    <FormSections>
+      <FormSection title={t("taxonomy.categoryLabel")}>
+        <TaxonomyPicker
+          bare
+          value={{ contentType: meta.contentType, category: meta.category, subcategory: meta.subcategory }}
+          onChange={(next) => onChange({ contentType: next.contentType, category: next.category, subcategory: next.subcategory })}
         />
-        <p className="mt-1 text-caption text-text-muted">{t("workflow.noteToolsMeta")}</p>
-      </div>
+      </FormSection>
 
-      <div>
-        <label className="mb-2 block text-sm font-medium text-text">
-          {t("forms.tags")} <span className="font-normal text-text-muted">({t("common.optional")})</span>
-        </label>
+      <FormSection title={t("formSection.basics")}>
+        <div className="space-y-4">
+          <TitleField
+            id="wf-title"
+            label={t("workflow.titleLabel")}
+            value={meta.title}
+            onChange={(title) => onChange({ title })}
+            placeholder={t("workflow.titlePlaceholder")}
+            maxLength={120}
+            required
+            error={titleError ? t("workflow.issueTitleRequired") : null}
+          />
+
+          <DescriptionField
+            id="wf-desc"
+            label={t("workflow.descriptionLabel")}
+            value={meta.description}
+            onChange={(description) => onChange({ description })}
+            placeholder={t("workflow.descriptionPlaceholder")}
+            maxLength={1000}
+            optional
+          />
+        </div>
+      </FormSection>
+
+      <FormSection title={t("formSection.cover")}>
+        <MultiImagePicker items={meta.media} onChange={(media) => onChange({ media })} max={4} />
+      </FormSection>
+
+      <FormSection title={t("formSection.tool")}>
+        <ToolPicker value={meta.tools} onChange={(tools) => onChange({ tools })} contentType={meta.contentType} category={meta.category} />
+        <p className="mt-2 text-caption text-text-muted">{t("workflow.noteToolsMeta")}</p>
+      </FormSection>
+
+      <FormSection title={t("forms.tags")}>
         <TagPicker picker={tagPicker} />
-      </div>
-    </div>
+      </FormSection>
+    </FormSections>
   );
 }

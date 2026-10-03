@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Plus, SlidersHorizontal, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
+import { FormSection } from "@/features/content/form-section";
 import type { ContentTypeId } from "@/lib/content-taxonomy";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { getCatalogField } from "@/lib/prompt-extra-settings";
@@ -74,20 +75,17 @@ export function PresetParametersBuilder({
   }
 
   return (
-    <section aria-labelledby="builder-fields-title" className="space-y-3 rounded-lg border border-border bg-surface p-4">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h2 id="builder-fields-title" className="text-label font-semibold text-text">
-            {t("presetBuilder.fieldsTitle")} <span className="text-text-muted">({rowIds.length})</span>
-          </h2>
-          <p className="text-caption text-text-secondary">{t("presetBuilder.fieldsHint")}</p>
-        </div>
+    <FormSection
+      title={`${t("presetBuilder.fieldsTitle")} (${rowIds.length})`}
+      description={t("presetBuilder.fieldsHint")}
+      action={
         <Button type="button" size="sm" onClick={() => setAdding(true)} data-builder-add-field>
           <Plus size={14} aria-hidden />
           {t("presetField.addShort")}
         </Button>
-      </div>
-
+      }
+      className="space-y-3"
+    >
       {rowIds.length === 0 ? (
         <EmptyState compact icon={SlidersHorizontal} title={t("presetBuilder.emptyTitle")} description={t("presetBuilder.emptyBody")} action={{ label: t("presetField.addTitle"), onClick: () => setAdding(true) }} />
       ) : (
@@ -153,7 +151,7 @@ export function PresetParametersBuilder({
           onClose={() => setAdding(false)}
         />
       )}
-    </section>
+    </FormSection>
   );
 }
 

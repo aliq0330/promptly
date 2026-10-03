@@ -7,6 +7,7 @@ import { useAuth } from "@/features/auth/auth-provider";
 import { useOwnProfile } from "@/features/auth/own-profile-provider";
 import { KindDraftsButton } from "@/features/drafts/kind-drafts-button";
 import { CreateFormActions } from "@/features/content/create-form-actions";
+import { FormSection } from "@/features/content/form-section";
 import { MultiImagePicker, type MultiImageItem } from "@/features/content/multi-image-picker";
 import { TaxonomyPicker } from "@/features/content/taxonomy-picker";
 import { ToolPicker } from "@/features/content/tool-picker";
@@ -209,45 +210,56 @@ export function PresetEditor({ editId }: { editId: string | null }) {
       <p className="mb-6 text-sm text-text-muted">{t("preset.createHint")}</p>
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_360px]">
-        <form onSubmit={handleSubmit} className="min-w-0 space-y-5">
-          <TaxonomyPicker
-            value={{ contentType, category, subcategory }}
-            onChange={(next) => {
-              if (next.contentType !== contentType) {
-                setFields([]);
-                setSelection({});
-              }
-              setContentType(next.contentType);
-              setCategory(next.category);
-              setSubcategory(next.subcategory);
-            }}
-          />
+        <form onSubmit={handleSubmit} className="min-w-0 space-y-4">
+          <FormSection title={t("taxonomy.categoryLabel")}>
+            <TaxonomyPicker
+              bare
+              value={{ contentType, category, subcategory }}
+              onChange={(next) => {
+                if (next.contentType !== contentType) {
+                  setFields([]);
+                  setSelection({});
+                }
+                setContentType(next.contentType);
+                setCategory(next.category);
+                setSubcategory(next.subcategory);
+              }}
+            />
+          </FormSection>
 
-          <TitleField
-            id="preset-title"
-            label={t("preset.titleLabel")}
-            value={title}
-            onChange={setTitle}
-            onBlur={() => setTitleTouched(true)}
-            placeholder={t("preset.titlePlaceholder")}
-            maxLength={120}
-            required
-            error={titleError ? t("preset.errorTitle") : null}
-          />
+          <FormSection title={t("formSection.basics")}>
+            <div className="space-y-4">
+              <TitleField
+                id="preset-title"
+                label={t("preset.titleLabel")}
+                value={title}
+                onChange={setTitle}
+                onBlur={() => setTitleTouched(true)}
+                placeholder={t("preset.titlePlaceholder")}
+                maxLength={120}
+                required
+                error={titleError ? t("preset.errorTitle") : null}
+              />
 
-          <DescriptionField
-            id="preset-desc"
-            label={t("preset.descriptionLabel")}
-            value={description}
-            onChange={setDescription}
-            placeholder={t("preset.descriptionPlaceholder")}
-            maxLength={1000}
-            optional
-          />
+              <DescriptionField
+                id="preset-desc"
+                label={t("preset.descriptionLabel")}
+                value={description}
+                onChange={setDescription}
+                placeholder={t("preset.descriptionPlaceholder")}
+                maxLength={1000}
+                optional
+              />
+            </div>
+          </FormSection>
 
-          <MultiImagePicker items={cover} onChange={setCover} max={1} label={t("preset.coverLabel")} />
+          <FormSection title={t("formSection.cover")}>
+            <MultiImagePicker items={cover} onChange={setCover} max={1} />
+          </FormSection>
 
-          <ToolPicker label={t("tool.recommendedLabel")} value={tools} onChange={setTools} contentType={contentType} category={category} />
+          <FormSection title={t("formSection.tool")}>
+            <ToolPicker value={tools} onChange={setTools} contentType={contentType} category={category} />
+          </FormSection>
 
           <PresetParametersBuilder
             contentType={contentType}
@@ -262,12 +274,9 @@ export function PresetEditor({ editId }: { editId: string | null }) {
             }}
           />
 
-          <div>
-            <label className="mb-2 block text-sm font-medium text-text">
-              {t("forms.tags")} <span className="text-text-muted">({t("common.optional")})</span>
-            </label>
+          <FormSection title={t("forms.tags")}>
             <TagPicker picker={tagPicker} />
-          </div>
+          </FormSection>
 
           <CreateFormActions
             visibility={visibility}

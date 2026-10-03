@@ -219,6 +219,7 @@ export function PromptTextEditor({
       {activeTab === "template" ? (
         <textarea
           id={id}
+          aria-label={t("prompt.promptTextHeading")}
           ref={textareaRef}
           required
           value={value}
