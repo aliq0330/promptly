@@ -1712,6 +1712,23 @@ export const translations = {
   "preset.noSavedTitle": { tr: "Henüz kaydettiğin hazır ayar yok", en: "You haven't saved any presets yet" },
   "preset.noSavedBody": { tr: "Beğendiğin hazır ayarlarda \"Listeme Ekle\"ye bas; burada toplanır.", en: "Tap \"Add to my list\" on presets you like and they'll collect here." },
   "preset.discover": { tr: "Hazır ayarları keşfet", en: "Discover presets" },
+
+  // Çalıştır (run in an AI tool)
+  "run.button": { tr: "Çalıştır", en: "Run" },
+  "run.hint": { tr: "Prompt seçtiğin araca aktarılır; aktarılamazsa panoya kopyalanır.", en: "The prompt is sent to the tool you pick; if that isn't possible it's copied to your clipboard." },
+  "run.generatedPrompt": { tr: "Oluşturulan prompt", en: "Generated prompt" },
+  "run.pickTool": { tr: "Araç seç", en: "Choose a tool" },
+  "run.recommended": { tr: "Tavsiye edilen", en: "Recommended" },
+  "run.lastUsed": { tr: "Son kullanılan", en: "Last used" },
+  "run.moreTools": { tr: "Diğer AI araçları", en: "Other AI tools" },
+  "run.fewerTools": { tr: "Daha az göster", en: "Show fewer" },
+  "run.openedPrefilled": { tr: "{{tool}} açıldı, prompt hazır.", en: "{{tool}} opened with your prompt." },
+  "run.alsoCopied": { tr: "Ayrıca panoya da kopyalandı.", en: "It's also on your clipboard." },
+  "run.copiedPasteReady": { tr: "Prompt kopyalandı, yapıştırmaya hazır. AI aracında metin alanına yapıştırabilirsin.", en: "Prompt copied, ready to paste. Paste it into the text box in the AI tool." },
+  "run.copyFailed": { tr: "Prompt kopyalanamadı. Promptu manuel olarak kopyalayabilirsin.", en: "Couldn't copy the prompt. You can copy it manually." },
+  "run.popupBlocked": { tr: "{{tool}} yeni sekmede açılamadı.", en: "Couldn't open {{tool}} in a new tab." },
+  "run.openManually": { tr: "{{tool}} aracını aç", en: "Open {{tool}}" },
+  "run.manualCopyLabel": { tr: "Prompt metni", en: "Prompt text" },
 } as const satisfies Record<string, { tr: string; en: string }>;
 
 export type TranslationKey = keyof typeof translations;

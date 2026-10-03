@@ -205,6 +205,20 @@
   --p-shadow: 0 0 0;
 }
 
+/* Status colors are palette-independent: defined once here so every palette
+ * (not just lavender) gets them. Lavender's identical values stay harmless. */
+:root {
+  --p-success: #15803d;
+  --p-warning: #b45309;
+  --p-danger: #d12f2f;
+}
+
+.dark {
+  --p-success: #4ade80;
+  --p-warning: #fbbf24;
+  --p-danger: #f87171;
+}
+
 /* ---------------------------------------------------------------------------
  * Semantic tokens → Tailwind utilities
  * ------------------------------------------------------------------------- */

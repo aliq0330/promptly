@@ -1,5 +1,6 @@
 "use client";
 
+import { RunButton } from "@/features/content/run-with-ai";
 import { ToolLine } from "@/features/content/tool-chips";
 import { DetailSkeleton, NotFoundBlock } from "@/components/ui/detail-skeleton";
 import { useEffect, useState } from "react";
@@ -32,6 +33,7 @@ import {
 } from "@/lib/supabase/generators";
 import { useRealGenerators } from "./real-generators-provider";
 import { formatRelativeTime, profileHref, tagHref } from "@/lib/utils";
+import { composeRunText } from "@/lib/run-with-ai";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
 import type { Generator, GeneratorValues } from "@/types";
 
@@ -242,24 +244,29 @@ export function GeneratorDetailView() {
               <GeneratorPlayground
                 schema={version.schema}
                 enableNegativePrompt={generator.enableNegativePrompt}
-                renderActions={
-                  canOpenInPrompt
-                    ? (state) =>
-                        user ? (
-                          <Button type="button" onClick={() => handleOpenInPrompt(state)} disabled={isOpeningPrompt || !state.prompt.trim()}>
-                            {isOpeningPrompt ? t("generator.opening") : t("generator.openAsPrompt")}
-                          </Button>
-                        ) : (
-                          <p className="text-caption text-text-muted">
-                            {t("generator.loginToOpenAsPromptPrefix")}{" "}
-                            <Link href="/login" className="font-medium text-primary hover:underline">
-                              {t("common.login")}
-                            </Link>
-                            .
-                          </p>
-                        )
-                    : undefined
-                }
+                renderActions={(state) => (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <RunButton
+                      text={composeRunText(state.prompt, state.negativePrompt)}
+                      recommendedRefs={generator.tools}
+                      preview
+                    />
+                    {canOpenInPrompt &&
+                      (user ? (
+                        <Button type="button" onClick={() => handleOpenInPrompt(state)} disabled={isOpeningPrompt || !state.prompt.trim()}>
+                          {isOpeningPrompt ? t("generator.opening") : t("generator.openAsPrompt")}
+                        </Button>
+                      ) : (
+                        <p className="text-caption text-text-muted">
+                          {t("generator.loginToOpenAsPromptPrefix")}{" "}
+                          <Link href="/login" className="font-medium text-primary hover:underline">
+                            {t("common.login")}
+                          </Link>
+                          .
+                        </p>
+                      ))}
+                  </div>
+                )}
               />
             </div>
           </section>
