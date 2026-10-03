@@ -30,7 +30,6 @@ export interface PresetRow {
   selection: PresetSelection | null;
   status: "draft" | "published";
   visibility: "public" | "private";
-  use_count: number | null;
   like_count: number | null;
   comment_count: number | null;
   save_count: number | null;
@@ -42,7 +41,7 @@ export interface PresetRow {
 
 export const PRESET_SELECT = `
   id, creator_id, title, description, cover_url, content_type, category, subcategory, tools, selection, status, visibility,
-  use_count, like_count, comment_count, save_count, created_at, updated_at,
+  like_count, comment_count, save_count, created_at, updated_at,
   profiles:creator_id ( ${PROFILE_SELECT} ),
   preset_tags ( tags ( slug, label ) )
 `;
@@ -62,7 +61,6 @@ export function mapPresetRow(row: PresetRow): Preset {
     selection: row.selection && typeof row.selection === "object" ? row.selection : {},
     status: row.status,
     visibility: row.visibility,
-    useCount: row.use_count ?? 0,
     likeCount: row.like_count ?? 0,
     commentCount: row.comment_count ?? 0,
     saveCount: row.save_count ?? 0,
@@ -203,7 +201,7 @@ export async function searchPresets(query: string, filters: ContentSearchFilters
     if (escaped) request = request.or(`title.ilike.%${escaped}%,description.ilike.%${escaped}%`);
     if (filters.authorId) request = request.eq("creator_id", filters.authorId);
     request = applyAdvancedFilters(applyTaxonomyFilter(request, filters.taxonomy), filters, "creator_id");
-    const order = filters.sort === "new" ? "created_at" : "use_count";
+    const order = filters.sort === "new" ? "created_at" : "like_count";
     const { data, error } = await request.order(order, { ascending: false }).limit(limit);
     if (error) {
       console.error("searchPresets", error);
@@ -403,56 +401,8 @@ async function replacePresetFields(presetId: string, ownerId: string, fields: Pr
   }
 }
 
-/** The viewer's own field library ("Alanlarım"): fields not tied to a preset, reusable in any prompt/preset. */
-export async function fetchOwnLibraryFields(userId: string): Promise<PresetField[]> {
-  try {
-    const { data, error } = await supabase
-      .from("preset_fields")
-      .select(FIELD_SELECT)
-      .eq("owner_id", userId)
-      .is("preset_id", null)
-      .order("created_at", { ascending: true })
-      .limit(200);
-    if (error || !data) return [];
-    return (data as unknown as FieldRow[]).map(mapFieldRow);
-  } catch {
-    return [];
-  }
-}
-
-/** Creates or updates one library field (+ replaces its options). Returns the saved field. */
-export async function saveLibraryField(field: PresetField, userId: string): Promise<PresetField> {
-  const base = { ...fieldInsertRow(field, userId, null, field.sortOrder) };
-  const { error } = await supabase.from("preset_fields").upsert(base, { onConflict: "id" });
-  if (error) throw new Error(error.message);
-  const del = await supabase.from("preset_options").delete().eq("field_id", field.id);
-  if (del.error) throw new Error(del.error.message);
-  const optionRows = optionInsertRows(field);
-  if (optionRows.length > 0) {
-    const options = await supabase.from("preset_options").insert(optionRows);
-    if (options.error) throw new Error(options.error.message);
-  }
-  return { ...field, presetId: null, source: "user" };
-}
-
-export async function deleteLibraryField(id: string): Promise<void> {
-  const { data, error } = await supabase.from("preset_fields").delete().eq("id", id).select("id");
-  if (error) throw new Error(error.message);
-  if (!data || data.length === 0) throw new Error(translateForRuntime("preset.errorDelete"));
-}
-
 export async function deletePreset(id: string): Promise<void> {
   const { data, error } = await supabase.from("presets").delete().eq("id", id).select("id");
   if (error) throw new Error(error.message);
   if (!data || data.length === 0) throw new Error(translateForRuntime("preset.errorDelete"));
-}
-
-/**
- * Records one real "Bu hazır ayarı kullan" press (`preset_uses` row → the
- * `presets.use_count` trigger). Fire-and-forget by design: the user's
- * navigation never waits on, or fails because of, the counter.
- */
-export async function recordPresetUse(presetId: string, userId: string): Promise<void> {
-  const { error } = await supabase.from("preset_uses").insert({ preset_id: presetId, user_id: userId });
-  if (error) console.error("recordPresetUse", error);
 }

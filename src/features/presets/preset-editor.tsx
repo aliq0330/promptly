@@ -15,11 +15,11 @@ import { useTagPicker } from "@/features/prompts/use-tag-picker";
 import { useTagCatalog } from "@/features/tags/use-tag-catalog";
 import { fetchPresetById, savePreset } from "@/lib/supabase/presets";
 import { sanitizeSelection, type PresetField, type PresetSelection } from "@/lib/preset-fields";
-import { adoptForPreset, resolvePresetFields } from "@/lib/preset-utils";
+import { normalizePresetForEditing, resolvePresetFields } from "@/lib/preset-utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn, presetHref } from "@/lib/utils";
 import { PresetCard } from "./preset-card";
-import { PresetFieldsBuilder } from "./preset-fields-builder";
+import { PresetParametersBuilder } from "./preset-parameters-builder";
 import type { Preset, PromptContentType } from "@/types";
 
 type Visibility = "public" | "private" | "draft";
@@ -61,7 +61,7 @@ export function PresetEditor({ editId }: { editId: string | null }) {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const effectiveSelection = useMemo(() => sanitizeSelection(selection, fields), [selection, fields]);
+  const effectiveSelection = useMemo(() => sanitizeSelection(selection, resolvePresetFields({ fields, selection })), [selection, fields]);
 
   useEffect(() => {
     if (!editId || authLoading || !user) return;
@@ -77,8 +77,8 @@ export function PresetEditor({ editId }: { editId: string | null }) {
       setCategory(preset.category);
       setSubcategory(preset.subcategory);
       setTools(preset.tools);
-      // Catalog-only (older) presets become the user's own editable fields.
-      const adopted = adoptForPreset(resolvePresetFields(preset), preset.selection, language, preset.id);
+      // One value per field: a preset saved before that rule keeps only the chosen option of each of its own fields.
+      const adopted = normalizePresetForEditing(preset.fields, preset.selection, language);
       setFields(adopted.fields);
       setSelection(adopted.selection);
       setCover(preset.coverUrl ? [{ key: "existing-cover", url: preset.coverUrl, width: 0, height: 0 }] : []);
@@ -103,10 +103,13 @@ export function PresetEditor({ editId }: { editId: string | null }) {
     setTitleTouched(true);
     setError(null);
     if (title.trim().length < 3) return;
-    if (visibility !== "draft" && fields.length === 0) {
+    if (visibility !== "draft" && Object.keys(effectiveSelection).length === 0) {
       setError(t("presetBuilder.errorNoFields"));
       return;
     }
+    // Own fields need a name and a value; anything half-typed is left out of the saved preset.
+    const savedFields = fields.filter((f) => f.name.trim() && effectiveSelection[f.id] !== undefined);
+    const savedSelection = sanitizeSelection(effectiveSelection, resolvePresetFields({ fields: savedFields, selection: effectiveSelection }));
     setIsSaving(true);
     try {
       const id = await savePreset(
@@ -119,8 +122,8 @@ export function PresetEditor({ editId }: { editId: string | null }) {
           category,
           subcategory,
           tools,
-          fields,
-          selection: effectiveSelection,
+          fields: savedFields,
+          selection: savedSelection,
           tags: tagPicker.accepted.map((entry) => entry.tag),
           status: visibility === "draft" ? "draft" : "published",
           visibility: visibility === "private" ? "private" : "public",
@@ -191,7 +194,6 @@ export function PresetEditor({ editId }: { editId: string | null }) {
     selection: effectiveSelection,
     status: visibility === "draft" ? "draft" : "published",
     visibility: visibility === "private" ? "private" : "public",
-    useCount: 0,
     likeCount: 0,
     commentCount: 0,
     saveCount: 0,
@@ -263,13 +265,13 @@ export function PresetEditor({ editId }: { editId: string | null }) {
 
           <ToolPicker label={t("tool.recommendedLabel")} value={tools} onChange={setTools} contentType={contentType} category={category} />
 
-          <PresetFieldsBuilder
+          <PresetParametersBuilder
             contentType={contentType}
             category={category}
             subcategory={subcategory}
             tools={tools}
             fields={fields}
-            selection={effectiveSelection}
+            selection={selection}
             onChange={(nextFields, nextSelection) => {
               setFields(nextFields);
               setSelection(nextSelection);

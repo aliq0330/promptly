@@ -31,7 +31,7 @@ export function PromptCardFooter(target: FooterTarget) {
           <LikeButton id={target.preset.id} likeCount={target.preset.likeCount} contentType="preset" />
           <CommentCountLink presetId={target.preset.id} baseCount={target.preset.commentCount} />
           <SaveButton presetId={target.preset.id} saveCount={target.preset.saveCount} />
-          <StatisticsButton target={{ contentType: "preset", contentId: target.preset.id, likeCount: target.preset.likeCount, commentCount: target.preset.commentCount, saveCount: target.preset.saveCount, useCount: target.preset.useCount }} />
+          <StatisticsButton target={{ contentType: "preset", contentId: target.preset.id, likeCount: target.preset.likeCount, commentCount: target.preset.commentCount, saveCount: target.preset.saveCount }} />
         </>
       ) : target.workflow ? (
         <>

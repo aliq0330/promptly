@@ -709,8 +709,7 @@ export interface Preset {
   selection: PresetSelection;
   status: "draft" | "published";
   visibility: "public" | "private";
-  /** Real, trigger-maintained counters (`presets.*_count`). `useCount` = times "Bu hazır ayarı kullan" was pressed. */
-  useCount: number;
+  /** Real, trigger-maintained counters (`presets.*_count`). */
   likeCount: number;
   commentCount: number;
   saveCount: number;

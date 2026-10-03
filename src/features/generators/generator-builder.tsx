@@ -523,7 +523,6 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
               <GeneratorPlayground
                 schema={schema}
                 enableNegativePrompt={meta.enableNegativePrompt}
-                presetContext={{ contentType: meta.contentType, category: meta.category, subcategory: meta.subcategory }}
               />
             </div>
           </div>
@@ -554,7 +553,6 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
               <GeneratorPlayground
                 schema={schema}
                 enableNegativePrompt={meta.enableNegativePrompt}
-                presetContext={{ contentType: meta.contentType, category: meta.category, subcategory: meta.subcategory }}
               />
             </div>
           </div>

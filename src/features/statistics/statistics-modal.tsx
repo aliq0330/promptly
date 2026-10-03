@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Bookmark, Heart, MessageCircle, SlidersHorizontal, X } from "lucide-react";
+import { Bookmark, Heart, MessageCircle, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
 import { Tabs, type TabItem } from "@/components/ui/tabs";
@@ -28,8 +28,6 @@ export interface StatisticsTarget {
   commentCount: number;
   /** Ignored for prompt requests — they can't be saved. */
   saveCount?: number;
-  /** Hazır Ayar only — how many times "Bu hazır ayarı kullan" was pressed (`presets.use_count`); shown as a fourth tile. */
-  useCount?: number;
 }
 
 /**
@@ -106,12 +104,6 @@ export function StatisticsModal({ target, onClose }: { target: StatisticsTarget;
           })}
         </div>
 
-        {typeof target.useCount === "number" && (
-          <p className="mx-4 mt-2 flex items-center justify-center gap-1.5 rounded-md border border-border-soft bg-surface-soft px-2 py-2 text-small font-medium text-text-secondary">
-            <SlidersHorizontal size={14} strokeWidth={1.75} className="text-primary" aria-hidden />
-            {t("preset.useCount", { count: formatCount(target.useCount) })}
-          </p>
-        )}
 
         <div className="mt-3 px-4">
           <Tabs items={tabItems} active={active} onChange={selectTab} ariaLabel={t("statistics.tabsAria")} />
