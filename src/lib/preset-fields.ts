@@ -301,6 +301,33 @@ export function mergeFields(current: readonly PresetField[], incoming: readonly 
   return [...current, ...incoming.filter((f) => !seen.has(f.id))];
 }
 
+/** Options a user typed for a field on the current creation screen only (`{ [fieldId]: options }`). */
+export type CustomOptions = Record<string, PresetOption[]>;
+
+/** `fields` with the temporary options appended to their option lists (fields without any are returned as is). */
+export function withCustomOptions(fields: readonly PresetField[], custom: CustomOptions): PresetField[] {
+  return fields.map((field) => {
+    const extra = custom[field.id];
+    if (!extra || extra.length === 0 || !isOptionField(field.type)) return field;
+    const known = new Set(field.options.map((o) => o.value));
+    return { ...field, options: [...field.options, ...extra.filter((o) => !known.has(o.value))] };
+  });
+}
+
+/**
+ * The option a typed text stands for: an existing option when the text matches
+ * one (case-insensitive, either language), otherwise a new temporary option
+ * whose value is the text. `null` for blank text.
+ */
+export function resolveTypedOption(field: PresetField, text: string): { option: PresetOption; isNew: boolean } | null {
+  const clean = text.trim().replace(/\s+/g, " ").slice(0, 120);
+  if (!clean) return null;
+  const key = clean.toLowerCase();
+  const existing = field.options.find((o) => [o.value, o.label, o.i18n?.en, o.i18n?.tr].some((s) => s && s.toLowerCase() === key));
+  if (existing) return { option: existing, isNew: false };
+  return { option: { id: newId(), fieldId: field.id, label: clean, value: clean, sortOrder: field.options.length }, isNew: true };
+}
+
 /** Moves `index` by `delta` in `items`, re-numbering `sortOrder`. */
 export function moveItem<T extends { sortOrder: number }>(items: readonly T[], index: number, delta: -1 | 1): T[] {
   const target = index + delta;

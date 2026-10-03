@@ -8,7 +8,7 @@ import { Modal } from "@/components/ui/modal";
 import type { ContentTypeId } from "@/lib/content-taxonomy";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { catalogFieldsForType, fieldIdsFor } from "@/lib/prompt-extra-settings";
-import { fieldName, type PresetField, type PresetValue } from "@/lib/preset-fields";
+import { fieldName, isOptionField, resolveTypedOption, type PresetField, type PresetValue } from "@/lib/preset-fields";
 import { newOwnField, singleChoiceField, toStoredValue } from "@/lib/preset-utils";
 import { normalizeTagLabel } from "@/lib/tag-normalize";
 import { cn } from "@/lib/utils";
@@ -68,6 +68,26 @@ export function PresetAddParameterModal({
     setOpen(null);
   }
 
+  /**
+   * "+ Seçenek oluştur" inside a catalog field: a typed text that matches an
+   * option just picks it; a new one becomes a preset-owned single-select field
+   * named like the catalog field (a catalog key can't carry a value its option
+   * list doesn't know), so the value is saved with the preset.
+   */
+  function createOption(field: PresetField, text: string): undefined {
+    const resolved = resolveTypedOption(singleChoiceField(field), text);
+    if (!resolved) return undefined;
+    if (!resolved.isNew) {
+      pick(field, resolved.option.value);
+      return undefined;
+    }
+    const { field: own, value } = newOwnField(fieldName(field, language), resolved.option.value);
+    onAddOwn(own, value);
+    setAdded((current) => new Set(current).add(field.id));
+    setOpen(null);
+    return undefined;
+  }
+
   function handleCreate(event: React.FormEvent) {
     event.preventDefault();
     event.stopPropagation();
@@ -108,7 +128,12 @@ export function PresetAddParameterModal({
         <Collapsible open={isOpen && !taken}>
           <div className="border-t border-border-soft px-3 py-3">
             <p className="mb-2 text-caption text-text-secondary">{t("presetBuilder.pickOne")}</p>
-            <PresetFieldInput field={singleChoiceField(field)} value={undefined} onChange={(value) => pick(field, value)} />
+            <PresetFieldInput
+              field={singleChoiceField(field)}
+              value={undefined}
+              onChange={(value) => pick(field, value)}
+              onCreateOption={isOptionField(field.type) ? (text) => createOption(field, text) : undefined}
+            />
           </div>
         </Collapsible>
       </li>
