@@ -24,6 +24,7 @@ import type { CatalogField } from "@/lib/generator-field-catalog";
 import { cn, generatorHref } from "@/lib/utils";
 import { multiImageItemFromMedia } from "@/lib/supabase/media-input";
 import { KindDraftsButton } from "@/features/drafts/kind-drafts-button";
+import { CreateFormActions } from "@/features/content/create-form-actions";
 import {
   createDraftGenerator,
   fetchGeneratorById,
@@ -161,6 +162,8 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [publishing, setPublishing] = useState(false);
   const [publishError, setPublishError] = useState<string | null>(null);
+  const [savingDraft, setSavingDraft] = useState(false);
+  const [draftNotice, setDraftNotice] = useState(false);
 
   const tagPicker = useTagPicker({ title: meta.title, content: meta.description, catalog });
 
@@ -426,6 +429,31 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
   const errors = issues.filter((i) => i.level === "error");
   const warnings = issues.filter((i) => i.level === "warning");
 
+  /** "Taslağa kaydet": makes sure the draft row exists, then saves details + the current fields in one go. */
+  async function handleSaveDraft() {
+    if (!user || savingDraft || publishing) return;
+    if (!meta.title.trim()) {
+      setPublishError(t("draft.titleRequired"));
+      return;
+    }
+    setSavingDraft(true);
+    setPublishError(null);
+    setDraftNotice(false);
+    try {
+      const draft = await ensureDraftExists();
+      if (!draft) return;
+      const submitMeta = metaForSubmit();
+      await updateGeneratorMeta(draft.generator.id, submitMeta);
+      await saveDraftVersionContent(draft.version.id, schema, template);
+      setGenerator((prev) => ({ ...(prev ?? draft.generator), ...metaToGeneratorPatch(submitMeta) }));
+      setDraftNotice(true);
+    } catch (err) {
+      setPublishError(err instanceof Error ? err.message : t("draft.saveFailed"));
+    } finally {
+      setSavingDraft(false);
+    }
+  }
+
   async function handlePublish() {
     if (errors.length > 0 || !user) return;
     setPublishing(true);
@@ -575,10 +603,28 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
               </p>
             ))}
           </div>
-          {publishError && <p className="text-sm text-danger">{publishError}</p>}
-          <Button type="button" onClick={handlePublish} disabled={errors.length > 0 || publishing}>
-            {publishing ? t("generator.publishing") : generator?.status === "published" ? t("generator.republish") : t("generator.publish")}
-          </Button>
+          <div className="rounded-lg border border-border bg-surface p-4 sm:p-5">
+            <CreateFormActions
+              className="border-t-0 pt-0"
+              visibility={meta.visibility === "private" ? "private" : "public"}
+              onVisibilityChange={(next) =>
+                // "Yalnızca bağlantıyla" (unlisted) isn't a switch state — an existing unlisted generator stays unlisted until the owner flips the switch.
+                setMeta((prev) => ({ ...prev, visibility: next === "private" ? "private" : prev.visibility === "unlisted" ? "unlisted" : "public" }))
+              }
+              onSaveDraft={generator?.status === "published" ? undefined : () => void handleSaveDraft()}
+              onPublish={() => void handlePublish()}
+              busy={publishing || savingDraft}
+              publishDisabled={errors.length > 0}
+              publishLabel={publishing ? t("generator.publishing") : generator?.status === "published" ? t("generator.republish") : t("common.share")}
+            >
+              {draftNotice && <p className="text-sm text-success">{t("draft.saved")}</p>}
+              {publishError && (
+                <p role="alert" className="text-sm text-danger">
+                  {publishError}
+                </p>
+              )}
+            </CreateFormActions>
+          </div>
         </div>
       )}
 

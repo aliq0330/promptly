@@ -12,7 +12,7 @@ import { applyAdvancedFilters, hasSearchFilter, sanitizeSearchText, tagJoinSelec
 import { generatorHref, promptHref, requestHref } from "@/lib/utils";
 import { translateForRuntime } from "@/lib/i18n/translations";
 import type { MultiImageItem } from "./media-input";
-import type { Generator, Prompt, PromptContentType, PromptMedia, Tag, PromptRequest, Workflow, WorkflowContentRef, WorkflowInput, WorkflowIO, WorkflowStep, WorkflowStepType } from "@/types";
+import type { ContentVisibility, Generator, Prompt, PromptContentType, PromptMedia, Tag, PromptRequest, Workflow, WorkflowContentRef, WorkflowInput, WorkflowIO, WorkflowStep, WorkflowStepType } from "@/types";
 
 export interface WorkflowRow {
   id: string;
@@ -24,6 +24,7 @@ export interface WorkflowRow {
   category: string | null;
   tools: string[] | null;
   status: "draft" | "published";
+  visibility: "public" | "private" | null;
   like_count: number | null;
   save_count: number | null;
   comment_count: number | null;
@@ -36,7 +37,7 @@ export interface WorkflowRow {
 }
 
 export const WORKFLOW_SELECT = `
-  id, creator_id, title, description, cover_url, content_types, category, tools, status, like_count, save_count, comment_count, created_at, updated_at,
+  id, creator_id, title, description, cover_url, content_types, category, tools, status, visibility, like_count, save_count, comment_count, created_at, updated_at,
   profiles:creator_id ( ${PROFILE_SELECT} ),
   workflow_steps ( count ),
   workflow_tags ( tags ( slug, label ) ),
@@ -64,6 +65,7 @@ export function mapWorkflowRow(row: WorkflowRow): Workflow {
     category: row.category,
     tools: normalizeToolRefs(row.tools),
     status: row.status,
+    visibility: row.visibility === "private" ? "private" : "public",
     stepCount: row.workflow_steps?.[0]?.count ?? 0,
     likeCount: row.like_count ?? 0,
     saveCount: row.save_count ?? 0,
@@ -299,6 +301,8 @@ export interface SaveWorkflowInput {
   tools: string[];
   tags: Tag[];
   status: "draft" | "published";
+  /** "Herkese açık" (default) / "Sadece ben" — `workflows.visibility`. */
+  visibility?: ContentVisibility;
   steps: WorkflowStep[];
 }
 
@@ -313,6 +317,7 @@ export async function saveWorkflow(input: SaveWorkflowInput, creatorId: string):
     category: input.category,
     tools: input.tools,
     status: input.status,
+    ...(input.visibility === undefined ? {} : { visibility: input.visibility }),
   };
   let id = input.id;
   if (id) {

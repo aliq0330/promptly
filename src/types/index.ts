@@ -56,6 +56,9 @@ export type PromptOrigin =
  */
 export type PromptContentType = ContentTypeId;
 
+/** Who can see a published post: everyone, or only its author (the shared "Görünürlük" switch, CLAUDE.md §9.88). */
+export type ContentVisibility = "public" | "private";
+
 export interface Prompt {
   id: string;
   author: UserProfile;
@@ -88,6 +91,8 @@ export interface Prompt {
    * page. Always `true` for an original prompt.
    */
   showOnProfile: boolean;
+  /** "Herkese açık" / "Sadece ben" — `prompts.visibility`. */
+  visibility: ContentVisibility;
   createdAt: string;
   /**
    * Legacy/historical field — `prompts.deleted_at`. Originally set when a
@@ -246,6 +251,8 @@ export interface PromptRequest {
   deletedAt: string | null;
   /** `prompt_requests.is_draft` — a private draft only its author can see; drafts never appear in any list but the author's own "Taslaklar". */
   isDraft?: boolean;
+  /** "Herkese açık" / "Sadece ben" — `prompt_requests.visibility`; absent = public. */
+  visibility?: ContentVisibility;
 }
 
 export type NotificationType =
@@ -669,6 +676,8 @@ export interface Workflow {
   category: string | null;
   tools: string[];
   status: "draft" | "published";
+  /** "Herkese açık" / "Sadece ben" — `workflows.visibility`. */
+  visibility: ContentVisibility;
   stepCount: number;
   likeCount: number;
   /** Real, trigger-maintained `workflows.save_count` — same "one per distinct user" rule as `Prompt.saveCount`/`Generator.saveCount`. */

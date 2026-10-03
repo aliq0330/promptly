@@ -4,7 +4,6 @@ import { ToolPicker } from "@/features/content/tool-picker";
 import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Button } from "@/components/ui/button";
 import { RequestCard } from "./request-card";
 import { useRealRequests } from "./real-requests-provider";
 import { useAuth } from "@/features/auth/auth-provider";
@@ -19,7 +18,8 @@ import { multiImageItemFromMedia, toDeferredMediaInputs, type MultiImageItem } f
 import { cn, requestHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { KindDraftsButton } from "@/features/drafts/kind-drafts-button";
-import type { PromptContentType, PromptRequest } from "@/types";
+import { CreateFormActions } from "@/features/content/create-form-actions";
+import type { ContentVisibility, PromptContentType, PromptRequest } from "@/types";
 
 
 const TITLE_MIN = 10;
@@ -61,6 +61,7 @@ export function CreateRequestForm() {
   // (bkz. create-prompt-form.tsx'in answerRequest modu).
   const tagPicker = useTagPicker({ title, content: description, catalog: tagCatalog });
   const [images, setImages] = useState<MultiImageItem[]>([]);
+  const [visibility, setVisibility] = useState<ContentVisibility>("public");
   const [titleTouched, setTitleTouched] = useState(false);
   const [descriptionTouched, setDescriptionTouched] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -114,6 +115,7 @@ export function CreateRequestForm() {
     setPreferredTool(editingRequest.preferredTool ?? "");
     setTools(editingRequest.tools ?? []);
     setImages(multiImageItemFromMedia(editingRequest.media));
+    setVisibility(editingRequest.visibility ?? "public");
     editingRequest.tags.forEach((tag) => tagPicker.addManual(tag));
     setFieldsSeeded(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- tagPicker.addManual is stable (useCallback)
@@ -159,6 +161,7 @@ export function CreateRequestForm() {
           tools,
           ...tagsInput,
           images: toDeferredMediaInputs(images),
+          visibility,
         });
         setDraftNotice(true);
         setIsSubmitting(false);
@@ -176,6 +179,7 @@ export function CreateRequestForm() {
           tools,
           ...tagsInput,
           images: toDeferredMediaInputs(images),
+          visibility,
           isDraft: true,
         },
         ownProfile,
@@ -208,6 +212,7 @@ export function CreateRequestForm() {
           tags: tagPicker.accepted.map((entry) => entry.tag),
           tagSources: Object.fromEntries(tagPicker.accepted.map((entry) => [entry.tag.slug, entry.source])),
           images: toDeferredMediaInputs(images),
+          visibility,
           publish: isEditingDraft,
         });
         router.push(requestHref(updated));
@@ -227,6 +232,7 @@ export function CreateRequestForm() {
           tags: tagPicker.accepted.map((entry) => entry.tag),
           tagSources: Object.fromEntries(tagPicker.accepted.map((entry) => [entry.tag.slug, entry.source])),
           images: toDeferredMediaInputs(images),
+          visibility,
         },
         ownProfile,
       );
@@ -440,36 +446,28 @@ export function CreateRequestForm() {
             <TagPicker picker={tagPicker} />
           </div>
 
-          {publishError && <p className="text-sm text-danger">{publishError}</p>}
-
-          {draftNotice && <p className="text-sm text-success">{t("draft.saved")}</p>}
-
-          <div className="flex flex-wrap gap-2">
-            <Button type="submit" size="lg" disabled={isSubmitting}>
-              {isSubmitting
+          <CreateFormActions
+            visibility={visibility}
+            onVisibilityChange={setVisibility}
+            onSaveDraft={!isEditMode || isEditingDraft ? () => void handleSaveDraft() : undefined}
+            busy={isSubmitting}
+            publishLabel={
+              isSubmitting
                 ? isEditMode && !isEditingDraft
                   ? t("common.saving")
                   : t("prompt.publishing")
-                : isEditingDraft
-                  ? t("draft.publish")
-                  : isEditMode
-                    ? t("common.save")
-                    : t("request.publishRequest")}
-            </Button>
-            {(!isEditMode || isEditingDraft) && (
-              <Button type="button" variant="outline" size="lg" disabled={isSubmitting} onClick={() => void handleSaveDraft()}>
-                {isEditingDraft ? t("draft.saveDraft") : t("draft.saveAsDraft")}
-              </Button>
+                : isEditMode && !isEditingDraft
+                  ? t("common.save")
+                  : t("common.share")
+            }
+          >
+            {draftNotice && <p className="text-sm text-success">{t("draft.saved")}</p>}
+            {publishError && (
+              <p role="alert" className="text-sm text-danger">
+                {publishError}
+              </p>
             )}
-            <Button
-              type="button"
-              variant="ghost"
-              size="lg"
-              onClick={() => router.push(isEditMode && editingRequest ? requestHref(editingRequest) : "/requests")}
-            >
-              {t("common.cancel")}
-            </Button>
-          </div>
+          </CreateFormActions>
         </form>
 
         <div className="min-w-0 lg:sticky lg:top-20 lg:self-start">

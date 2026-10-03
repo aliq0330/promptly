@@ -4,9 +4,8 @@ import { ToolPicker } from "@/features/content/tool-picker";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Blocks, Copy, X } from "lucide-react";
+import { Blocks, Copy, Eye, EyeOff, X } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
 import { PromptCard } from "@/features/prompts/prompt-card";
 import { TaxonomyPicker } from "@/features/content/taxonomy-picker";
 import { useRealPrompts } from "@/features/prompts/real-prompts-provider";
@@ -26,10 +25,12 @@ import { fetchGeneratorById, fetchGeneratorRun } from "@/lib/supabase/generators
 import { placeholderArt } from "@/lib/placeholder-image";
 import { MultiImagePicker } from "@/features/content/multi-image-picker";
 import { multiImageItemFromMedia, toDeferredMediaInputs, type MultiImageItem } from "@/lib/supabase/media-input";
-import { cn, copyTextToClipboard, generatorHref, promptHref, requestHref } from "@/lib/utils";
+import { copyTextToClipboard, generatorHref, promptHref, requestHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { KindDraftsButton } from "@/features/drafts/kind-drafts-button";
-import type { Generator, GeneratorRun, Prompt, PromptContentType, PromptRequest } from "@/types";
+import { CreateFormActions } from "@/features/content/create-form-actions";
+import { SwitchRow } from "@/features/content/visibility-switch";
+import type { ContentVisibility, Generator, GeneratorRun, Prompt, PromptContentType, PromptRequest } from "@/types";
 
 
 function LoginGate({ message }: { message: string }) {
@@ -245,6 +246,7 @@ export function CreatePromptForm() {
   const [fieldsSeeded, setFieldsSeeded] = useState(false);
   const [variables, setVariables] = useState<DraftVariable[]>([]);
   const [showOnProfile, setShowOnProfile] = useState(true);
+  const [visibility, setVisibility] = useState<ContentVisibility>("public");
 
   // The real source's fields arrive asynchronously — backfill the form the
   // first time one becomes available (same pattern as /profile/edit's
@@ -265,6 +267,7 @@ export function CreatePromptForm() {
       setImages(multiImageItemFromMedia(editingPrompt.media));
       if (editingPrompt.origin.type === "request-response") {
         setShowOnProfile(editingPrompt.showOnProfile);
+        setVisibility(editingPrompt.visibility);
       }
       editingPrompt.tags.forEach((tag) => tagPicker.addManual(tag));
       setFieldsSeeded(true);
@@ -429,6 +432,7 @@ export function CreatePromptForm() {
           subcategory,
           ...tagsInput,
           images: contentType === "image" ? toDeferredMediaInputs(images) : undefined,
+          visibility: showsVisibilityChoice ? undefined : visibility,
         });
         try {
           await replaceVariablesForPrompt(updated.id, variableDrafts);
@@ -451,6 +455,7 @@ export function CreatePromptForm() {
           subcategory,
           ...tagsInput,
           images: contentType === "image" ? toDeferredMediaInputs(images) : [],
+          visibility: showsVisibilityChoice ? undefined : visibility,
           isDraft: true,
         },
         ownProfile,
@@ -492,6 +497,8 @@ export function CreatePromptForm() {
           tagSources: Object.fromEntries(tagPicker.accepted.map((entry) => [entry.tag.slug, entry.source])),
           images: contentType === "image" ? toDeferredMediaInputs(images) : undefined,
           showOnProfile: isEditingResponse ? showOnProfile : undefined,
+          // An answer to a request stays public — the request's owner has to be able to see it.
+          visibility: showsVisibilityChoice ? undefined : visibility,
           publish: isEditingDraft,
         });
         // Soft-fail, same precedent as tags (createRealPrompt) — the edit
@@ -521,6 +528,7 @@ export function CreatePromptForm() {
           images: contentType === "image" ? toDeferredMediaInputs(images) : [],
           requestId: answeredRequest?.id,
           showOnProfile: isAnswerMode ? showOnProfile : true,
+          visibility: showsVisibilityChoice ? undefined : visibility,
           generatedFrom: generatedFrom ?? undefined,
         },
         ownProfile,
@@ -569,6 +577,7 @@ export function CreatePromptForm() {
     isSaved: false,
     status: "draft",
     showOnProfile: showsVisibilityChoice ? showOnProfile : true,
+    visibility: showsVisibilityChoice ? "public" : visibility,
     deletedAt: null,
     generatedFrom,
     createdAt: new Date().toISOString(),
@@ -718,50 +727,6 @@ export function CreatePromptForm() {
             </div>
           )}
 
-          {showsVisibilityChoice && (
-            <div>
-              <label className="mb-2 block text-sm font-medium text-text">{t("prompt.showOnProfileQuestion")}</label>
-              <div className="space-y-2">
-                <label
-                  className={cn(
-                    "flex cursor-pointer items-start gap-2.5 rounded-md border p-3 text-sm transition-colors",
-                    showOnProfile ? "border-primary bg-primary/5" : "border-border bg-surface hover:bg-accent-surface/40",
-                  )}
-                >
-                  <input
-                    type="radio"
-                    name="show-on-profile"
-                    checked={showOnProfile}
-                    onChange={() => setShowOnProfile(true)}
-                    className="mt-0.5"
-                  />
-                  <span>
-                    <span className="block font-medium text-text">{t("prompt.shareOnProfile")}</span>
-                    <span className="block text-xs text-text-muted">{t("prompt.shareOnProfileHint")}</span>
-                  </span>
-                </label>
-                <label
-                  className={cn(
-                    "flex cursor-pointer items-start gap-2.5 rounded-md border p-3 text-sm transition-colors",
-                    !showOnProfile ? "border-primary bg-primary/5" : "border-border bg-surface hover:bg-accent-surface/40",
-                  )}
-                >
-                  <input
-                    type="radio"
-                    name="show-on-profile"
-                    checked={!showOnProfile}
-                    onChange={() => setShowOnProfile(false)}
-                    className="mt-0.5"
-                  />
-                  <span>
-                    <span className="block font-medium text-text">{t("prompt.dontShareOnProfile")}</span>
-                    <span className="block text-xs text-text-muted">{t("prompt.dontShareOnProfileHint")}</span>
-                  </span>
-                </label>
-              </div>
-            </div>
-          )}
-
           {duplicateSource && (
             <div className="flex items-start gap-2 rounded-md border border-primary/30 bg-primary/5 p-3 text-sm text-primary">
               <Copy size={16} className="mt-0.5 shrink-0" />
@@ -907,33 +872,44 @@ export function CreatePromptForm() {
             <TagPicker picker={tagPicker} />
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
-            <Button type="submit" size="lg" className="w-full sm:w-auto" disabled={isSubmitting}>
-              {isSubmitting
+          <CreateFormActions
+            visibility={showsVisibilityChoice ? undefined : visibility}
+            onVisibilityChange={showsVisibilityChoice ? undefined : setVisibility}
+            extra={
+              showsVisibilityChoice ? (
+                <div>
+                  <p className="mb-2 text-sm font-medium text-text">{t("prompt.showOnProfileQuestion")}</p>
+                  <SwitchRow
+                    checked={showOnProfile}
+                    onChange={setShowOnProfile}
+                    icon={showOnProfile ? <Eye size={18} strokeWidth={1.75} /> : <EyeOff size={18} strokeWidth={1.75} />}
+                    title={showOnProfile ? t("prompt.shareOnProfile") : t("prompt.dontShareOnProfile")}
+                    description={showOnProfile ? t("prompt.shareOnProfileHint") : t("prompt.dontShareOnProfileHint")}
+                    ariaLabel={t("prompt.showOnProfileQuestion")}
+                    disabled={isSubmitting}
+                  />
+                </div>
+              ) : undefined
+            }
+            onSaveDraft={canSaveDraft ? () => void handleSaveDraft() : undefined}
+            busy={isSubmitting}
+            publishLabel={
+              isSubmitting
                 ? isEditMode && !isEditingDraft
                   ? t("common.saving")
                   : t("prompt.publishing")
-                : isEditingDraft
-                  ? t("draft.publish")
-                  : isEditMode
-                    ? t("common.save")
-                    : isAnswerMode
-                      ? t("prompt.publishReply")
-                      : t("common.share")}
-            </Button>
-            {canSaveDraft && (
-              <Button type="button" variant="outline" size="lg" className="w-full sm:w-auto" disabled={isSubmitting} onClick={() => void handleSaveDraft()}>
-                {isEditingDraft ? t("draft.saveDraft") : t("draft.saveAsDraft")}
-              </Button>
+                : isEditMode && !isEditingDraft
+                  ? t("common.save")
+                  : t("common.share")
+            }
+          >
+            {draftNotice && <p className="text-sm text-success">{t("draft.saved")}</p>}
+            {publishError && (
+              <div role="alert" className="rounded-md border border-danger/30 bg-danger/5 p-3 text-sm text-danger">
+                {publishError}
+              </div>
             )}
-          </div>
-          {draftNotice && <p className="text-sm text-success">{t("draft.saved")}</p>}
-
-          {publishError && (
-            <div className="rounded-md border border-danger/30 bg-danger/5 p-3 text-sm text-danger">
-              {publishError}
-            </div>
-          )}
+          </CreateFormActions>
         </form>
 
         <div className="min-w-0 lg:sticky lg:top-20 lg:self-start">

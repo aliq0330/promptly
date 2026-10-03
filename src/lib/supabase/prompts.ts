@@ -9,7 +9,7 @@ import { mapProfileRow, type ProfileRow } from "./mappers";
 import { resolveMediaInputs, type MediaInput } from "./media-input";
 import { normalizeLegacyContentType, sanitizeTaxonomy } from "@/lib/content-taxonomy";
 import { applyTaxonomyFilter, taxonomyColumns, type ContentSearchFilters, applyAdvancedFilters, hasSearchFilter, sanitizeSearchText, tagJoinSelect } from "./taxonomy-query";
-import type { Prompt, PromptContentType, PromptMedia, PromptOrigin, Tag, UserProfile } from "@/types";
+import type { ContentVisibility, Prompt, PromptContentType, PromptMedia, PromptOrigin, Tag, UserProfile } from "@/types";
 
 /**
  * Hand-written mirror of the `public.prompts` row shape (joined with its
@@ -35,6 +35,7 @@ export interface PromptRow {
   comment_count: number;
   created_at: string;
   show_on_profile: boolean;
+  visibility: "public" | "private";
   deleted_at: string | null;
   generator_id: string | null;
   generator_version_id: string | null;
@@ -49,7 +50,7 @@ export interface PromptRow {
 export const PROMPT_SELECT = `
   id, title, description, prompt_text, tool, tools, content_type, category, subcategory, status,
   origin_type, request_id,
-  like_count, save_count, comment_count, created_at, show_on_profile,
+  like_count, save_count, comment_count, created_at, show_on_profile, visibility,
   deleted_at, generator_id, generator_version_id, generator_run_id,
   profiles:author_id ( id, username, display_name, avatar_url, cover_url, bio, website, follower_count, following_count, created_at, interests ),
   prompt_media ( id, url, width, height, alt, position ),
@@ -120,6 +121,7 @@ export function mapPromptRow(row: PromptRow): Prompt {
     saveCount: row.save_count,
     commentCount: row.comment_count,
     showOnProfile: row.show_on_profile,
+    visibility: row.visibility ?? "public",
     deletedAt: row.deleted_at,
     generatedFrom:
       row.generator_id && row.generator_version_id && row.generator_run_id && row.generators
@@ -359,6 +361,8 @@ export interface CreateRealPromptInput {
   showOnProfile?: boolean;
   /** Set only when this prompt is "Open in Prompt" from a real generator run (Generator Builder module) — purely informational provenance, orthogonal to origin/requestId (a generator output is normally `origin: "original"`). `generatorTitle`/`generatorSlug` are only needed to build the immediate return value (the caller already has them from the generator it just ran) — never trusted for anything written to the database. */
   generatedFrom?: { generatorId: string; generatorVersionId: string; generatorRunId: string; generatorTitle: string; generatorSlug: string };
+  /** "Herkese açık" (default) or "Sadece ben" (`prompts.visibility`); a request answer is always public so the request's owner can see it. */
+  visibility?: ContentVisibility;
   /** Saves as a private draft (`status = 'draft'`) instead of publishing — only the author can see it until `publish` is set on an edit. */
   isDraft?: boolean;
 }
@@ -390,6 +394,7 @@ export async function createRealPrompt(
       origin_type: input.requestId ? "request_response" : "original",
       request_id: input.requestId ?? null,
       show_on_profile: input.showOnProfile ?? true,
+      visibility: input.visibility ?? "public",
       generator_id: input.generatedFrom?.generatorId ?? null,
       generator_version_id: input.generatedFrom?.generatorVersionId ?? null,
       generator_run_id: input.generatedFrom?.generatorRunId ?? null,
@@ -486,6 +491,7 @@ export async function createRealPrompt(
     isSaved: false,
     status: input.isDraft ? "draft" : "published",
     showOnProfile: input.showOnProfile ?? true,
+    visibility: input.visibility ?? "public",
     deletedAt: null,
     generatedFrom: input.generatedFrom
       ? {
@@ -521,6 +527,8 @@ export interface UpdateRealPromptInput {
   images?: MediaInput[];
   /** Only meaningful for a `request-response` prompt (an answer to a request) — whether it should also appear in the author's normal profile/feed/discover/search results (`prompts.show_on_profile`). `undefined` leaves the column untouched (an `original` prompt is never editable here anyway, so callers editing one simply omit this). */
   showOnProfile?: boolean;
+  /** `undefined` leaves the column untouched. */
+  visibility?: ContentVisibility;
   /** Publishes a draft (`status` draft → published) once everything else is saved; the database then restarts `created_at` and counts its tags. */
   publish?: boolean;
 }
@@ -552,6 +560,7 @@ export async function updateRealPrompt(promptId: string, authorId: string, input
       ...(input.tools === undefined ? {} : { tools: input.tools }),
       ...(input.category === undefined ? {} : { category: input.category, subcategory: input.subcategory ?? null }),
       ...(input.showOnProfile === undefined ? {} : { show_on_profile: input.showOnProfile }),
+      ...(input.visibility === undefined ? {} : { visibility: input.visibility }),
     })
     .eq("id", promptId)
     .select("id")

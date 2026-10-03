@@ -16,7 +16,7 @@ import type { GeneratorMetaInput } from "@/lib/supabase/generators";
  * removed, see CLAUDE.md), an optional free-typed subcategory, tags
  * (the shared, already-generic `TagPicker` — reused as-is, no
  * generator-specific fork), zero or more cover images (`MultiImagePicker`),
- * visibility, and the generator-level toggles (prompt-editing/saving/
+ and the generator-level toggles (visibility lives in the shared footer of the last step), (prompt-editing/saving/
  * negative-prompt). There is no dedicated `generator-covers` Storage
  * bucket (this feature's migration deliberately didn't add one — see
  * CLAUDE.md), so each cover is stored the same way this app already stores
@@ -85,22 +85,6 @@ export function GeneratorDetailsForm({
       </div>
 
       <MultiImagePicker items={meta.media} onChange={(media) => onChange({ media })} label={t("generator.coverImageLabel")} />
-
-      <div>
-        <label htmlFor="gen-visibility" className="mb-1.5 block text-sm font-medium text-text">
-          {t("generator.visibilityLabel")}
-        </label>
-        <select
-          id="gen-visibility"
-          value={meta.visibility}
-          onChange={(event) => onChange({ visibility: event.target.value as GeneratorMetaInput["visibility"] })}
-          className="h-10 w-full max-w-xs rounded-md border border-border bg-background px-3 text-sm text-text"
-        >
-          <option value="public">{t("generator.visibilityPublic")}</option>
-          <option value="unlisted">{t("generator.visibilityUnlisted")}</option>
-          <option value="private">{t("generator.visibilityPrivate")}</option>
-        </select>
-      </div>
 
       <div className="space-y-2 rounded-md border border-border p-3">
         <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">{t("generator.settingsHeading")}</p>
