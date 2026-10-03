@@ -5,6 +5,7 @@ import { X } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
 import { resolvePromptText } from "@/lib/prompt-variables";
 import { useTranslation } from "@/lib/i18n/language-provider";
+import { RunButton } from "@/features/content/run-with-ai";
 import { CopyPromptButton } from "./copy-prompt-button";
 import type { PromptVariable } from "@/types";
 
@@ -21,10 +22,13 @@ import type { PromptVariable } from "@/types";
 export function PersonalizeModal({
   promptText,
   variables,
+  recommendedRefs,
   onClose,
 }: {
   promptText: string;
   variables: PromptVariable[];
+  /** Recommended tools of the prompt — surfaced first in "Çalıştır". */
+  recommendedRefs?: string[] | null;
   onClose: () => void;
 }) {
   const { t } = useTranslation();
@@ -94,6 +98,7 @@ export function PersonalizeModal({
         <div className="flex flex-wrap items-center gap-2 border-t border-border pt-3">
           <CopyPromptButton text={resolvedText} label={t("prompt.copyPrompt")} size="md" />
           <CopyPromptButton text={promptText} label={t("prompt.copyTemplate")} size="md" />
+          <RunButton text={resolvedText} recommendedRefs={recommendedRefs} className="sm:ml-auto" />
         </div>
       </div>
     </Modal>

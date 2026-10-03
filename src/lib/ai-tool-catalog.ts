@@ -14,6 +14,22 @@ export interface AiToolModel {
   name: string;
 }
 
+/**
+ * How the "Çalıştır" feature hands a prompt to this tool. Promptly never
+ * calls a model — it only opens the tool's own site/app. On phones the OS
+ * routes these https URLs to the installed app (universal/app links) and
+ * falls back to the web page otherwise, so no custom URL schemes are used
+ * (an uninstalled app would show an error instead of the web fallback).
+ */
+export interface AiToolRun {
+  /** Where the tool opens; also the fallback when a prompt can't be pre-filled. */
+  webUrl: string;
+  /** URL template with a `{prompt}` placeholder for tools that accept a pre-filled prompt via query string. */
+  prefillUrl?: string;
+  /** Shown in the first group of the run menu even when it isn't the recommended tool. */
+  featured?: boolean;
+}
+
 export interface AiTool {
   id: string;
   name: string;
@@ -26,40 +42,44 @@ export interface AiTool {
   isActive: boolean;
   icon: "image" | "text" | "audio" | "video" | "code";
   website?: string;
+  /** Present = the tool can be a "Çalıştır" target (see lib/run-with-ai.ts). */
+  run?: AiToolRun;
 }
 
 const m = (id: string, name: string): AiToolModel => ({ id, name });
 
 export const AI_TOOLS: AiTool[] = [
   // Image
-  { id: "midjourney", name: "Midjourney", provider: "Midjourney", types: ["image"], icon: "image", isActive: true, website: "https://www.midjourney.com", models: [m("v7", "V7"), m("v6-1", "V6.1"), m("niji-7", "Niji 7")] },
-  { id: "gpt-image", name: "GPT Image", provider: "OpenAI", types: ["image"], icon: "image", isActive: true, models: [m("gpt-image-1", "GPT Image 1")] },
+  { id: "midjourney", name: "Midjourney", provider: "Midjourney", types: ["image"], icon: "image", isActive: true, website: "https://www.midjourney.com", run: { webUrl: "https://www.midjourney.com/imagine" }, models: [m("v7", "V7"), m("v6-1", "V6.1"), m("niji-7", "Niji 7")] },
+  { id: "gpt-image", name: "GPT Image", provider: "OpenAI", types: ["image"], icon: "image", isActive: true, run: { webUrl: "https://chatgpt.com/", prefillUrl: "https://chatgpt.com/?q={prompt}" }, models: [m("gpt-image-1", "GPT Image 1")] },
   { id: "flux", name: "FLUX", provider: "Black Forest Labs", types: ["image"], icon: "image", isActive: true, models: [m("flux-1-1-pro", "FLUX 1.1 Pro"), m("flux-kontext", "FLUX Kontext")] },
-  { id: "imagen", name: "Imagen", provider: "Google", types: ["image"], icon: "image", isActive: true, models: [m("imagen-4", "Imagen 4")] },
-  { id: "nano-banana", name: "Nano Banana", provider: "Google", types: ["image"], icon: "image", isActive: true, models: [] },
-  { id: "ideogram", name: "Ideogram", provider: "Ideogram", types: ["image"], icon: "image", isActive: true, models: [m("v3", "3.0")] },
-  { id: "firefly", name: "Adobe Firefly", provider: "Adobe", types: ["image"], icon: "image", isActive: true, models: [] },
+  { id: "imagen", name: "Imagen", provider: "Google", types: ["image"], icon: "image", isActive: true, run: { webUrl: "https://gemini.google.com/app" }, models: [m("imagen-4", "Imagen 4")] },
+  { id: "nano-banana", name: "Nano Banana", provider: "Google", types: ["image"], icon: "image", isActive: true, run: { webUrl: "https://gemini.google.com/app" }, models: [] },
+  { id: "ideogram", name: "Ideogram", provider: "Ideogram", types: ["image"], icon: "image", isActive: true, run: { webUrl: "https://ideogram.ai/" }, models: [m("v3", "3.0")] },
+  { id: "firefly", name: "Adobe Firefly", provider: "Adobe", types: ["image"], icon: "image", isActive: true, run: { webUrl: "https://firefly.adobe.com/" }, models: [] },
   // Video
   { id: "veo", name: "Veo", provider: "Google", types: ["video"], icon: "video", isActive: true, models: [m("veo-3-1", "Veo 3.1")] },
-  { id: "runway", name: "Runway", provider: "Runway", types: ["video"], icon: "video", isActive: true, models: [m("gen-4-5", "Gen-4.5"), m("gen-4", "Gen-4")] },
+  { id: "runway", name: "Runway", provider: "Runway", types: ["video"], icon: "video", isActive: true, run: { webUrl: "https://app.runwayml.com/" }, models: [m("gen-4-5", "Gen-4.5"), m("gen-4", "Gen-4")] },
   { id: "seedance", name: "Seedance", provider: "ByteDance", types: ["video"], icon: "video", isActive: true, models: [m("seedance-2-5", "Seedance 2.5")] },
-  { id: "kling", name: "Kling", provider: "Kuaishou", types: ["video"], icon: "video", isActive: true, models: [] },
-  { id: "luma", name: "Luma", provider: "Luma AI", types: ["video"], icon: "video", isActive: true, models: [] },
+  { id: "kling", name: "Kling", provider: "Kuaishou", types: ["video"], icon: "video", isActive: true, run: { webUrl: "https://klingai.com/" }, models: [] },
+  { id: "luma", name: "Luma", provider: "Luma AI", types: ["video"], icon: "video", isActive: true, run: { webUrl: "https://lumalabs.ai/dream-machine" }, models: [] },
   { id: "wan", name: "Wan", provider: "Alibaba", types: ["video"], icon: "video", isActive: true, models: [] },
   { id: "grok-imagine", name: "Grok Imagine Video", provider: "xAI", types: ["video"], icon: "video", isActive: true, models: [] },
   // Audio
-  { id: "suno", name: "Suno", provider: "Suno", types: ["audio"], icon: "audio", isActive: true, models: [m("v6", "v6")] },
+  { id: "suno", name: "Suno", provider: "Suno", types: ["audio"], icon: "audio", isActive: true, run: { webUrl: "https://suno.com/create" }, models: [m("v6", "v6")] },
   { id: "udio", name: "Udio", provider: "Udio", types: ["audio"], icon: "audio", isActive: true, models: [] },
   { id: "elevenlabs", name: "ElevenLabs", provider: "ElevenLabs", types: ["audio"], icon: "audio", isActive: true, models: [m("music-v2-5", "Music v2.5"), m("text-to-sound", "Text to Sound")] },
   { id: "lyria", name: "Google Lyria", provider: "Google", types: ["audio"], icon: "audio", isActive: true, models: [] },
   // Text
-  { id: "chatgpt", name: "ChatGPT", provider: "OpenAI", types: ["text"], icon: "text", isActive: true, models: [] },
-  { id: "claude", name: "Claude", provider: "Anthropic", types: ["text"], icon: "text", isActive: true, models: [m("opus", "Claude Opus"), m("sonnet", "Claude Sonnet"), m("haiku", "Claude Haiku")] },
-  { id: "gemini", name: "Gemini", provider: "Google", types: ["text"], icon: "text", isActive: true, models: [] },
-  { id: "grok", name: "Grok", provider: "xAI", types: ["text"], icon: "text", isActive: true, models: [] },
-  { id: "deepseek", name: "DeepSeek", provider: "DeepSeek", types: ["text"], icon: "text", isActive: true, models: [] },
-  { id: "qwen", name: "Qwen", provider: "Alibaba", types: ["text"], icon: "text", isActive: true, models: [] },
-  { id: "mistral", name: "Mistral", provider: "Mistral AI", types: ["text"], icon: "text", isActive: true, models: [] },
+  { id: "chatgpt", name: "ChatGPT", provider: "OpenAI", types: ["text"], icon: "text", isActive: true, run: { webUrl: "https://chatgpt.com/", prefillUrl: "https://chatgpt.com/?q={prompt}", featured: true }, models: [] },
+  { id: "claude", name: "Claude", provider: "Anthropic", types: ["text"], icon: "text", isActive: true, run: { webUrl: "https://claude.ai/new", prefillUrl: "https://claude.ai/new?q={prompt}", featured: true }, models: [m("opus", "Claude Opus"), m("sonnet", "Claude Sonnet"), m("haiku", "Claude Haiku")] },
+  { id: "gemini", name: "Gemini", provider: "Google", types: ["text"], icon: "text", isActive: true, run: { webUrl: "https://gemini.google.com/app", featured: true }, models: [] },
+  { id: "grok", name: "Grok", provider: "xAI", types: ["text"], icon: "text", isActive: true, run: { webUrl: "https://grok.com/", prefillUrl: "https://grok.com/?q={prompt}" }, models: [] },
+  { id: "perplexity", name: "Perplexity", provider: "Perplexity", types: ["text"], icon: "text", isActive: true, run: { webUrl: "https://www.perplexity.ai/", prefillUrl: "https://www.perplexity.ai/search?q={prompt}" }, models: [] },
+  { id: "ms-copilot", name: "Microsoft Copilot", provider: "Microsoft", types: ["text"], icon: "text", isActive: true, run: { webUrl: "https://copilot.microsoft.com/", prefillUrl: "https://copilot.microsoft.com/?q={prompt}" }, models: [] },
+  { id: "deepseek", name: "DeepSeek", provider: "DeepSeek", types: ["text"], icon: "text", isActive: true, run: { webUrl: "https://chat.deepseek.com/" }, models: [] },
+  { id: "qwen", name: "Qwen", provider: "Alibaba", types: ["text"], icon: "text", isActive: true, run: { webUrl: "https://chat.qwen.ai/" }, models: [] },
+  { id: "mistral", name: "Mistral", provider: "Mistral AI", types: ["text"], icon: "text", isActive: true, run: { webUrl: "https://chat.mistral.ai/chat", prefillUrl: "https://chat.mistral.ai/chat?q={prompt}" }, models: [] },
   // Coding (text › coding)
   { id: "claude-code", name: "Claude Code", provider: "Anthropic", types: ["text"], category: "coding", icon: "code", isActive: true, models: [] },
   { id: "cursor", name: "Cursor", provider: "Anysphere", types: ["text"], category: "coding", icon: "code", isActive: true, models: [] },

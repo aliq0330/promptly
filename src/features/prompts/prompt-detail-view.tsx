@@ -1,5 +1,6 @@
 "use client";
 
+import { RunButton } from "@/features/content/run-with-ai";
 import { ToolLine } from "@/features/content/tool-chips";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -157,6 +158,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
                   </button>
                 )}
                 <CopyPromptButton text={livePromptText} size="md" />
+                <RunButton text={livePromptText} recommendedRefs={prompt.tools} />
               </div>
             </div>
             <p className="prompt-text whitespace-pre-wrap break-words px-4 py-4 text-[0.875rem] text-text">{livePromptText}</p>
@@ -256,6 +258,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
         <PersonalizeModal
           promptText={livePromptText}
           variables={variables}
+          recommendedRefs={prompt.tools}
           onClose={() => setIsPersonalizeOpen(false)}
         />
       )}
