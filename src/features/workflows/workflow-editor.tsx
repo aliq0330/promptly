@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AlertTriangle, ArrowLeft, ChevronDown, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { Tabs } from "@/components/ui/tabs";
 import { useAuth } from "@/features/auth/auth-provider";
@@ -13,7 +12,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import { duplicateStep, moveStep, newStep, sanitizeLinks, validateWorkflow, type WorkflowIssue } from "@/lib/workflow-logic";
 import { cn } from "@/lib/utils";
 import { multiImageItemFromMedia } from "@/lib/supabase/media-input";
-import type { WorkflowContentRef, WorkflowStep } from "@/types";
+import type { ContentVisibility, WorkflowContentRef, WorkflowStep } from "@/types";
 import { AddContentModal } from "./add-content-modal";
 import { ContentPane, GeneralPane, IOPane, SettingsPane, StepPreview } from "./step-panes";
 import { StepList } from "./step-list";
@@ -24,6 +23,7 @@ import { useLayoutMode } from "./use-layout-mode";
 import { EMPTY_META, WorkflowMetaForm, type WorkflowMeta } from "./workflow-meta-form";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import { KindDraftsButton } from "@/features/drafts/kind-drafts-button";
+import { CreateFormActions } from "@/features/content/create-form-actions";
 
 type SaveState = "idle" | "saving" | "saved" | "error";
 type LoadState = "loading" | "ready" | "notfound" | "forbidden";
@@ -59,6 +59,7 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
   const [issues, setIssues] = useState<WorkflowIssue[]>([]);
   const [notice, setNotice] = useState<string | null>(null);
   const [metaOpen, setMetaOpen] = useState(!editId);
+  const [visibility, setVisibility] = useState<ContentVisibility>("public");
   const [addTarget, setAddTarget] = useState<AddTarget>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [centerTab, setCenterTab] = useState<"general" | "io">("general");
@@ -87,6 +88,7 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
       }
       setSteps(result.steps);
       setStatus(result.workflow.status);
+      setVisibility(result.workflow.visibility);
       setSelectedId(result.steps[0]?.id ?? null);
       setLoadState("ready");
     });
@@ -191,7 +193,7 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
     setSaveState("saving");
     setSaveError(null);
     try {
-      const id = await saveWorkflow({ id: workflowId, ...meta, tags: tagPicker.accepted.map((entry) => entry.tag), status: target, steps }, user.id);
+      const id = await saveWorkflow({ id: workflowId, ...meta, tags: tagPicker.accepted.map((entry) => entry.tag), status: target, visibility, steps }, user.id);
       setWorkflowId(id);
       setStatus(target);
       setDirty(false);
@@ -315,33 +317,9 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
         >
           {stateLabel}
         </span>
-        <div className="flex w-full flex-wrap gap-2 sm:w-auto">
-          <Button type="button" variant="outline" disabled={saveState === "saving"} onClick={() => handleSave("draft")} className="flex-1 sm:flex-none">
-            {t("workflow.saveDraft")}
-          </Button>
-          <Button type="button" disabled={saveState === "saving"} onClick={() => handleSave("published")} className="flex-1 sm:flex-none">
-            {t("workflow.publish")}
-          </Button>
-        </div>
         <KindDraftsButton kind="workflow" />
       </div>
 
-      {saveError && <p className="rounded-md border border-danger/40 bg-danger/5 p-3 text-sm text-danger">{saveError}</p>}
-      {issues.length > 0 && (
-        <div role="alert" className="rounded-md border border-warning/40 bg-warning/5 p-3">
-          <p className="mb-1 flex items-center gap-1.5 text-sm font-semibold text-text">
-            <AlertTriangle size={14} className="text-warning" />
-            {t("workflow.issuesHeading")}
-          </p>
-          <ul className="list-disc space-y-0.5 pl-5 text-caption text-text-secondary">
-            {issues.map((issue, i) => (
-              <li key={i} className={issue.level === "error" ? "text-danger" : ""}>
-                {issueMessage(issue)}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
       {notice && (
         <p className="flex items-start justify-between gap-2 rounded-md bg-primary-soft p-2.5 text-caption text-primary">
           {notice}
@@ -451,6 +429,38 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
           </div>
         </Modal>
       )}
+
+      <section className={card}>
+        <CreateFormActions
+          className="border-t-0 pt-0"
+          visibility={visibility}
+          onVisibilityChange={(next) => {
+            setVisibility(next);
+            touch();
+          }}
+          onSaveDraft={status === "published" ? undefined : () => handleSave("draft")}
+          onPublish={() => handleSave("published")}
+          busy={saveState === "saving"}
+          publishLabel={saveState === "saving" ? t("workflow.saving") : status === "published" ? t("common.save") : t("common.share")}
+        >
+            {saveError && <p role="alert" className="rounded-md border border-danger/40 bg-danger/5 p-3 text-sm text-danger">{saveError}</p>}
+            {issues.length > 0 && (
+              <div role="alert" className="rounded-md border border-warning/40 bg-warning/5 p-3">
+                <p className="mb-1 flex items-center gap-1.5 text-sm font-semibold text-text">
+                  <AlertTriangle size={14} className="text-warning" />
+                  {t("workflow.issuesHeading")}
+                </p>
+                <ul className="list-disc space-y-0.5 pl-5 text-caption text-text-secondary">
+                  {issues.map((issue, i) => (
+                    <li key={i} className={issue.level === "error" ? "text-danger" : ""}>
+                      {issueMessage(issue)}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+        </CreateFormActions>
+      </section>
 
       {addTarget && (
         <AddContentModal

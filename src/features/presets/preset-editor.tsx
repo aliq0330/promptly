@@ -3,10 +3,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useOwnProfile } from "@/features/auth/own-profile-provider";
 import { KindDraftsButton } from "@/features/drafts/kind-drafts-button";
+import { CreateFormActions } from "@/features/content/create-form-actions";
 import { MultiImagePicker, type MultiImageItem } from "@/features/content/multi-image-picker";
 import { TaxonomyPicker } from "@/features/content/taxonomy-picker";
 import { ToolPicker } from "@/features/content/tool-picker";
@@ -20,9 +20,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn, presetHref } from "@/lib/utils";
 import { PresetCard } from "./preset-card";
 import { PresetParametersBuilder } from "./preset-parameters-builder";
-import type { Preset, PromptContentType } from "@/types";
-
-type Visibility = "public" | "private" | "draft";
+import type { ContentVisibility, Preset, PromptContentType } from "@/types";
 
 const INPUT_CLASS =
   "w-full rounded-md border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
@@ -32,8 +30,8 @@ const INPUT_CLASS =
  * description, content type → category → subcategory (the shared taxonomy),
  * recommended tool/model, parameters (the SAME catalog the Prompt form's "Ek
  * Ayar Önerileri" uses, shown for the chosen type/category), tags, cover and
- * visibility (Herkese açık / Sadece ben / Taslak) with a live `PresetCard`
- * preview. Same two-column create layout as the request form.
+ * and the shared footer (Görünürlük switch, Taslağa kaydet / Paylaş) with a
+ * live `PresetCard` preview. Same two-column create layout as the request form.
  */
 export function PresetEditor({ editId }: { editId: string | null }) {
   const { t, language } = useTranslation();
@@ -51,11 +49,10 @@ export function PresetEditor({ editId }: { editId: string | null }) {
   const [fields, setFields] = useState<PresetField[]>([]);
   const [selection, setSelection] = useState<PresetSelection>({});
   const [cover, setCover] = useState<MultiImageItem[]>([]);
-  const [visibility, setVisibility] = useState<Visibility>("public");
+  const [visibility, setVisibility] = useState<ContentVisibility>("public");
   const tagPicker = useTagPicker({ title, content: description, catalog });
   const tagsSeededRef = useRef(false);
 
-  const [editing, setEditing] = useState<Preset | null>(null);
   const [loadState, setLoadState] = useState<"loading" | "ready" | "notfound" | "forbidden">(editId ? "loading" : "ready");
   const [titleTouched, setTitleTouched] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -70,7 +67,6 @@ export function PresetEditor({ editId }: { editId: string | null }) {
       if (cancelled) return;
       if (!preset) return setLoadState("notfound");
       if (preset.creator.id !== user.id) return setLoadState("forbidden");
-      setEditing(preset);
       setTitle(preset.title);
       setDescription(preset.description);
       setContentType(preset.contentType);
@@ -82,7 +78,7 @@ export function PresetEditor({ editId }: { editId: string | null }) {
       setFields(adopted.fields);
       setSelection(adopted.selection);
       setCover(preset.coverUrl ? [{ key: "existing-cover", url: preset.coverUrl, width: 0, height: 0 }] : []);
-      setVisibility(preset.status === "draft" ? "draft" : preset.visibility);
+      setVisibility(preset.visibility);
       if (!tagsSeededRef.current) {
         tagsSeededRef.current = true;
         preset.tags.forEach((tag) => tagPicker.addManual(tag));
@@ -97,13 +93,17 @@ export function PresetEditor({ editId }: { editId: string | null }) {
 
   const titleError = titleTouched && title.trim().length < 3;
 
-  async function handleSubmit(event?: React.FormEvent) {
+  function handleSubmit(event?: React.FormEvent) {
     event?.preventDefault();
+    return save(false);
+  }
+
+  async function save(asDraft: boolean) {
     if (!user || isSaving) return;
     setTitleTouched(true);
     setError(null);
     if (title.trim().length < 3) return;
-    if (visibility !== "draft" && Object.keys(effectiveSelection).length === 0) {
+    if (!asDraft && Object.keys(effectiveSelection).length === 0) {
       setError(t("presetBuilder.errorNoFields"));
       return;
     }
@@ -125,12 +125,12 @@ export function PresetEditor({ editId }: { editId: string | null }) {
           fields: savedFields,
           selection: savedSelection,
           tags: tagPicker.accepted.map((entry) => entry.tag),
-          status: visibility === "draft" ? "draft" : "published",
-          visibility: visibility === "private" ? "private" : "public",
+          status: asDraft ? "draft" : "published",
+          visibility,
         },
         user.id,
       );
-      router.push(visibility === "draft" ? "/presets" : presetHref({ id }));
+      router.push(asDraft ? "/presets" : presetHref({ id }));
     } catch (err) {
       console.error("savePreset", err);
       setError(err instanceof Error && err.message ? err.message : t("preset.errorSave"));
@@ -192,8 +192,8 @@ export function PresetEditor({ editId }: { editId: string | null }) {
     tools,
     fields,
     selection: effectiveSelection,
-    status: visibility === "draft" ? "draft" : "published",
-    visibility: visibility === "private" ? "private" : "public",
+    status: "published",
+    visibility,
     likeCount: 0,
     commentCount: 0,
     saveCount: 0,
@@ -201,12 +201,6 @@ export function PresetEditor({ editId }: { editId: string | null }) {
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
-
-  const visibilityOptions: { value: Visibility; labelKey: "preset.visPublic" | "preset.visPrivate" | "preset.visDraft"; hintKey: "preset.visPublicHint" | "preset.visPrivateHint" | "preset.visDraftHint" }[] = [
-    { value: "public", labelKey: "preset.visPublic", hintKey: "preset.visPublicHint" },
-    { value: "private", labelKey: "preset.visPrivate", hintKey: "preset.visPrivateHint" },
-    { value: "draft", labelKey: "preset.visDraft", hintKey: "preset.visDraftHint" },
-  ];
 
   return (
     <div className="mx-auto max-w-5xl px-3 py-5 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
@@ -287,41 +281,19 @@ export function PresetEditor({ editId }: { editId: string | null }) {
             <TagPicker picker={tagPicker} />
           </div>
 
-          <fieldset>
-            <legend className="mb-2 text-sm font-medium text-text">{t("preset.visibilityLabel")}</legend>
-            <div className="grid gap-2 sm:grid-cols-3">
-              {visibilityOptions.map((option) => (
-                <label
-                  key={option.value}
-                  className={cn(
-                    "flex cursor-pointer flex-col gap-0.5 rounded-md border p-3 transition-colors",
-                    visibility === option.value ? "border-primary bg-primary-soft" : "border-border bg-surface hover:bg-surface-soft",
-                  )}
-                >
-                  <span className="flex items-center gap-2 text-label font-semibold text-text">
-                    <input type="radio" name="preset-visibility" value={option.value} checked={visibility === option.value} onChange={() => setVisibility(option.value)} />
-                    {t(option.labelKey)}
-                  </span>
-                  <span className="pl-6 text-caption text-text-secondary">{t(option.hintKey)}</span>
-                </label>
-              ))}
-            </div>
-          </fieldset>
-
-          {error && (
-            <p role="alert" className="text-sm text-danger">
-              {error}
-            </p>
-          )}
-
-          <div className="flex flex-wrap gap-2">
-            <Button type="submit" size="lg" disabled={isSaving}>
-              {isSaving ? t("common.saving") : visibility === "draft" ? t("draft.saveDraft") : editId ? t("common.save") : t("preset.publish")}
-            </Button>
-            <Button type="button" variant="ghost" size="lg" onClick={() => router.push(editing ? presetHref(editing) : "/presets")}>
-              {t("common.cancel")}
-            </Button>
-          </div>
+          <CreateFormActions
+            visibility={visibility}
+            onVisibilityChange={setVisibility}
+            onSaveDraft={() => void save(true)}
+            busy={isSaving}
+            publishLabel={isSaving ? t("common.saving") : editId ? t("common.save") : t("common.share")}
+          >
+            {error && (
+              <p role="alert" className="text-sm text-danger">
+                {error}
+              </p>
+            )}
+          </CreateFormActions>
         </form>
 
         <div className="min-w-0 lg:sticky lg:top-20 lg:self-start">

@@ -8,7 +8,7 @@ import { normalizeLegacyContentType, sanitizeTaxonomy } from "@/lib/content-taxo
 import { applyAdvancedFilters, applyTaxonomyFilter, hasSearchFilter, sanitizeSearchText, tagJoinSelect, taxonomyColumns, type ContentSearchFilters } from "./taxonomy-query";
 import { mapProfileRow, type ProfileRow } from "./mappers";
 import { resolveMediaInputs, type MediaInput } from "./media-input";
-import type { PromptContentType, PromptMedia, PromptRequest, PromptRequestStatus, Tag } from "@/types";
+import type { ContentVisibility, PromptContentType, PromptMedia, PromptRequest, PromptRequestStatus, Tag } from "@/types";
 
 /**
  * Hand-written mirror of the `public.prompt_requests` row shape — see
@@ -36,6 +36,7 @@ export interface RequestRow {
   created_at: string;
   deleted_at: string | null;
   is_draft: boolean;
+  visibility: "public" | "private";
   profiles: ProfileRow;
   prompt_request_tags: { tags: { slug: string; label: string } }[];
   prompt_request_media: { id: string; url: string; width: number; height: number; alt: string | null; position: number }[];
@@ -44,7 +45,7 @@ export interface RequestRow {
 export const REQUEST_SELECT = `
   id, title, description, creative_direction, preferred_tool, tools, content_type, category, subcategory,
   reference_image_url, reference_image_width, reference_image_height,
-  status, selected_response_prompt_id, response_count, like_count, comment_count, created_at, deleted_at, is_draft,
+  status, selected_response_prompt_id, response_count, like_count, comment_count, created_at, deleted_at, is_draft, visibility,
   profiles:author_id ( id, username, display_name, avatar_url, cover_url, bio, website, follower_count, following_count, created_at, interests ),
   prompt_request_tags ( tags ( slug, label ) ),
   prompt_request_media ( id, url, width, height, alt, position )
@@ -104,6 +105,7 @@ export function mapRequestRow(row: RequestRow): PromptRequest {
     selectedResponsePromptId: row.selected_response_prompt_id ?? undefined,
     deletedAt: row.deleted_at,
     isDraft: row.is_draft ?? false,
+    visibility: row.visibility ?? "public",
   };
 }
 
@@ -219,6 +221,8 @@ export interface CreateRealRequestInput {
   tagSources?: Record<string, "manual" | "automatic">;
   /** Zero or more reference images, in the order the requester arranged them (mood-board style). */
   images: MediaInput[];
+  /** "Herkese açık" (default) or "Sadece ben" (`prompt_requests.visibility`). */
+  visibility?: ContentVisibility;
   /** Saves as a private draft (`is_draft = true`) instead of publishing. */
   isDraft?: boolean;
 }
@@ -266,6 +270,7 @@ export async function createRealRequest(
       reference_image_width: resolved[0]?.width ?? null,
       reference_image_height: resolved[0]?.height ?? null,
       is_draft: input.isDraft ?? false,
+      visibility: input.visibility ?? "public",
     })
     .select("id, created_at")
     .single();
@@ -319,6 +324,7 @@ export async function createRealRequest(
     createdAt: inserted.created_at,
     deletedAt: null,
     isDraft: input.isDraft ?? false,
+    visibility: input.visibility ?? "public",
   };
 }
 
@@ -339,6 +345,8 @@ export interface UpdateRealRequestInput {
    * Replace-all, same as `updateRealPrompt`'s own `images`.
    */
   images?: MediaInput[];
+  /** `undefined` leaves the column untouched. */
+  visibility?: ContentVisibility;
   /** Publishes a draft (`is_draft` → false) once everything else is saved; the database then restarts `created_at` and counts its tags. */
   publish?: boolean;
 }
@@ -368,6 +376,7 @@ export async function updateRealRequest(requestId: string, authorId: string, inp
       preferred_tool: input.preferredTool,
       ...(input.tools === undefined ? {} : { tools: input.tools }),
       ...(input.category === undefined ? {} : { category: input.category, subcategory: input.subcategory ?? null }),
+      ...(input.visibility === undefined ? {} : { visibility: input.visibility }),
     })
     .eq("id", requestId)
     .select("id")
