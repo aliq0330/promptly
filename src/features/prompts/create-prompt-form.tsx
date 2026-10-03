@@ -15,6 +15,7 @@ import { useRealRequests } from "@/features/requests/real-requests-provider";
 import { useTagCatalog } from "@/features/tags/use-tag-catalog";
 import { useTagPicker } from "@/features/prompts/use-tag-picker";
 import { TagPicker } from "@/features/prompts/tag-picker";
+import { TitleField, DescriptionField } from "@/features/content/core-fields";
 import { ExtraSettingsSection } from "@/features/prompts/extra-settings-panel";
 import { catalogFields, catalogFieldsForType, fieldIdsFor } from "@/lib/prompt-extra-settings";
 import { composePrompt, mergeFields, sanitizeSelection, withCustomOptions, type CustomOptions, type PresetField, type PresetSelection } from "@/lib/preset-fields";
@@ -774,13 +775,27 @@ export function CreatePromptForm() {
             lockedHint={t("prompt.notEditableWhileEditing")}
           />
 
-          {contentType === "image" && (
-            <PromptVisionAssist
-              onApplyPrompt={(text, mode) =>
-                setPromptText((prev) => (mode === "replace" || !prev.trim() ? text : `${prev}\n\n${text}`))
-              }
-            />
-          )}
+          <TitleField
+            id="prompt-title"
+            label={t("forms.title")}
+            value={title}
+            onChange={setTitle}
+            placeholder={t("prompt.titlePlaceholder")}
+            maxLength={80}
+            required
+            nativeRequired
+          />
+
+          <DescriptionField
+            id="prompt-description"
+            label={t("forms.shortDescription")}
+            value={description}
+            onChange={setDescription}
+            placeholder={t("prompt.descriptionPlaceholder")}
+            maxLength={200}
+            required
+            nativeRequired
+          />
 
           {contentType === "image" && (
             <MultiImagePicker
@@ -791,37 +806,21 @@ export function CreatePromptForm() {
             />
           )}
 
-          <div>
-            <label htmlFor="prompt-title" className="mb-1.5 block text-sm font-medium text-text">
-              {t("forms.title")}
-            </label>
-            <input
-              id="prompt-title"
-              type="text"
-              required
-              maxLength={80}
-              value={title}
-              onChange={(event) => setTitle(event.target.value)}
-              placeholder={t("prompt.titlePlaceholder")}
-              className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted"
+          {contentType === "image" && (
+            <PromptVisionAssist
+              onApplyPrompt={(text, mode) =>
+                setPromptText((prev) => (mode === "replace" || !prev.trim() ? text : `${prev}\n\n${text}`))
+              }
             />
-          </div>
+          )}
 
-          <div>
-            <label htmlFor="prompt-description" className="mb-1.5 block text-sm font-medium text-text">
-              {t("forms.shortDescription")}
-            </label>
-            <textarea
-              id="prompt-description"
-              required
-              maxLength={200}
-              rows={2}
-              value={description}
-              onChange={(event) => setDescription(event.target.value)}
-              placeholder={t("prompt.descriptionPlaceholder")}
-              className="w-full resize-none rounded-md border border-border bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted"
-            />
-          </div>
+          <ToolPicker
+            label={t("tool.recommendedLabel")}
+            value={tools}
+            onChange={setTools}
+            contentType={contentType}
+            category={category}
+          />
 
           <div>
             <label htmlFor="prompt-text" className="mb-1.5 block text-sm font-medium text-text">
@@ -858,14 +857,6 @@ export function CreatePromptForm() {
           {generatorRun?.generatedNegativePrompt && (
             <NegativePromptReference text={generatorRun.generatedNegativePrompt} />
           )}
-
-          <ToolPicker
-            label={t("tool.recommendedLabel")}
-            value={tools}
-            onChange={setTools}
-            contentType={contentType}
-            category={category}
-          />
 
           <div>
             <label className="mb-2 block text-sm font-medium text-text">{t("forms.tags")}</label>

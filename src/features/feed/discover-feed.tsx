@@ -69,9 +69,9 @@ export function DiscoverFeed() {
     const generators: FeedItem[] = realGenerators
       .filter((generator) => matchesTaxonomy(generator, taxonomy))
       .map((generator) => ({ kind: "generator", data: generator }));
-    // A workflow spans several content types — it matches a content-type filter when it chains that type (it has no category/subcategory of its own in the shared taxonomy).
+    // A workflow spans several content types — it matches a content-type filter when it chains that type; category/subcategory are its own (shared taxonomy).
     const workflows: FeedItem[] = realWorkflows
-      .filter((workflow) => (!taxonomy.contentType || workflow.contentTypes.includes(taxonomy.contentType)) && !taxonomy.category && !taxonomy.subcategory)
+      .filter((workflow) => (!taxonomy.contentType || workflow.contentTypes.includes(taxonomy.contentType)) && (!taxonomy.category || workflow.category === taxonomy.category) && (!taxonomy.subcategory || workflow.subcategory === taxonomy.subcategory))
       .map((workflow) => ({ kind: "workflow", data: workflow }));
     // A preset carries the shared taxonomy (type/category/subcategory) like a prompt/generator, so the same filter applies.
     const presets: FeedItem[] = realPresets

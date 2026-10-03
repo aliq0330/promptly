@@ -17,13 +17,11 @@ import { fetchPresetById, savePreset } from "@/lib/supabase/presets";
 import { sanitizeSelection, type PresetField, type PresetSelection } from "@/lib/preset-fields";
 import { normalizePresetForEditing, resolvePresetFields } from "@/lib/preset-utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import { cn, presetHref } from "@/lib/utils";
+import { presetHref } from "@/lib/utils";
+import { TitleField, DescriptionField } from "@/features/content/core-fields";
 import { PresetCard } from "./preset-card";
 import { PresetParametersBuilder } from "./preset-parameters-builder";
 import type { ContentVisibility, Preset, PromptContentType } from "@/types";
-
-const INPUT_CLASS =
-  "w-full rounded-md border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
 
 /**
  * Hazır Ayar create/edit form (`/presets/create`, `?edit=<id>`): name,
@@ -212,38 +210,6 @@ export function PresetEditor({ editId }: { editId: string | null }) {
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_360px]">
         <form onSubmit={handleSubmit} className="min-w-0 space-y-5">
-          <div>
-            <label htmlFor="preset-title" className="mb-1.5 block text-sm font-medium text-text">
-              {t("preset.titleLabel")} <span className="text-danger">*</span>
-            </label>
-            <input
-              id="preset-title"
-              value={title}
-              maxLength={120}
-              onChange={(event) => setTitle(event.target.value)}
-              onBlur={() => setTitleTouched(true)}
-              placeholder={t("preset.titlePlaceholder")}
-              aria-invalid={titleError}
-              className={cn(INPUT_CLASS, "h-11 aria-[invalid=true]:border-danger")}
-            />
-            {titleError && <p className="mt-1 text-caption text-danger">{t("preset.errorTitle")}</p>}
-          </div>
-
-          <div>
-            <label htmlFor="preset-desc" className="mb-1.5 block text-sm font-medium text-text">
-              {t("preset.descriptionLabel")} <span className="text-text-muted">({t("common.optional")})</span>
-            </label>
-            <textarea
-              id="preset-desc"
-              rows={3}
-              value={description}
-              maxLength={1000}
-              onChange={(event) => setDescription(event.target.value)}
-              placeholder={t("preset.descriptionPlaceholder")}
-              className={cn(INPUT_CLASS, "resize-none py-2")}
-            />
-          </div>
-
           <TaxonomyPicker
             value={{ contentType, category, subcategory }}
             onChange={(next) => {
@@ -256,6 +222,30 @@ export function PresetEditor({ editId }: { editId: string | null }) {
               setSubcategory(next.subcategory);
             }}
           />
+
+          <TitleField
+            id="preset-title"
+            label={t("preset.titleLabel")}
+            value={title}
+            onChange={setTitle}
+            onBlur={() => setTitleTouched(true)}
+            placeholder={t("preset.titlePlaceholder")}
+            maxLength={120}
+            required
+            error={titleError ? t("preset.errorTitle") : null}
+          />
+
+          <DescriptionField
+            id="preset-desc"
+            label={t("preset.descriptionLabel")}
+            value={description}
+            onChange={setDescription}
+            placeholder={t("preset.descriptionPlaceholder")}
+            maxLength={1000}
+            optional
+          />
+
+          <MultiImagePicker items={cover} onChange={setCover} max={1} label={t("preset.coverLabel")} />
 
           <ToolPicker label={t("tool.recommendedLabel")} value={tools} onChange={setTools} contentType={contentType} category={category} />
 
@@ -271,8 +261,6 @@ export function PresetEditor({ editId }: { editId: string | null }) {
               setSelection(nextSelection);
             }}
           />
-
-          <MultiImagePicker items={cover} onChange={setCover} max={1} label={t("preset.coverLabel")} />
 
           <div>
             <label className="mb-2 block text-sm font-medium text-text">
