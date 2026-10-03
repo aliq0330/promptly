@@ -5,6 +5,7 @@ import { Check, Copy, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { copyTextToClipboard } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
+import { ScrollablePrompt } from "@/features/content/scrollable-prompt";
 
 /**
  * The real "Generated Prompt" block (§17/§22) — shown identically in the
@@ -61,11 +62,9 @@ function CopyableBlock({ text, tone = "default" }: { text: string; tone?: "defau
 
   return (
     <div className="space-y-2">
-      <pre
-        className={cnPre(tone)}
-      >
+      <ScrollablePrompt as="pre" className={cnPre(tone)}>
         {text || t("generator.promptWillAppearHere")}
-      </pre>
+      </ScrollablePrompt>
       <Button type="button" variant="outline" size="sm" onClick={handleCopy} disabled={!text}>
         {copied ? <Check size={14} /> : <Copy size={14} />}
         {copied ? t("common.copied") : t("common.copy")}
@@ -75,7 +74,7 @@ function CopyableBlock({ text, tone = "default" }: { text: string; tone?: "defau
 }
 
 function cnPre(tone: "default" | "muted") {
-  return `prompt-text w-full whitespace-pre-wrap break-words rounded-md border border-border-soft p-3 ${
+  return `w-full rounded-md border border-border-soft p-3 ${
     tone === "muted" ? "bg-surface-soft text-text-muted" : "bg-surface text-text"
   }`;
 }

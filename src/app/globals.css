@@ -429,6 +429,23 @@
   }
 }
 
+/* Thin, calm vertical scrollbar for inner scroll areas (e.g. long prompt text). */
+@utility scrollbar-thin-soft {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border-strong) transparent;
+  &::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background-color: var(--color-border-strong);
+    border-radius: 9999px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

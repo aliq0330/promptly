@@ -33,6 +33,7 @@ import { parseHighlightValue } from "@/lib/notification-utils";
 import { cn, formatCount, formatRelativeTime, profileHref, tagHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Prompt, PromptRequest } from "@/types";
+import { ScrollablePrompt } from "@/features/content/scrollable-prompt";
 
 /** Same fade timing as the comment-thread flash — one shared feel across the app for "you just jumped here from a notification". */
 const HIGHLIGHT_DURATION_MS = 2500;
@@ -226,7 +227,7 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
               {t("request.title")}
             </h2>
           </div>
-          <p className="prompt-text whitespace-pre-wrap break-words px-4 py-4 text-[0.875rem] text-text">{live.description}</p>
+          <ScrollablePrompt className="px-4 py-4 text-[0.875rem] text-text">{live.description}</ScrollablePrompt>
         </section>
 
         {live.referenceImage && (

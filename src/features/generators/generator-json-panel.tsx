@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { copyTextToClipboard } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { GeneratorOutput } from "@/types";
+import { ScrollablePrompt } from "@/features/content/scrollable-prompt";
 
 /**
  * The real, structured JSON output panel (§14/§19 of the JSON Output
@@ -32,9 +33,9 @@ export function GeneratorJsonPanel({ output, onReset }: { output: GeneratorOutpu
   return (
     <div className="space-y-3 rounded-md border border-border-soft bg-surface-soft p-3.5">
       <p className="text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">{t("generator.jsonOutput")}</p>
-      <pre className="max-h-96 w-full overflow-auto whitespace-pre-wrap rounded-md border border-border-soft bg-surface p-3 font-mono text-caption leading-relaxed text-text">
+      <ScrollablePrompt as="pre" className="w-full rounded-md border border-border-soft bg-surface p-3 text-caption leading-relaxed text-text">
         {text}
-      </pre>
+      </ScrollablePrompt>
       <div className="flex items-center gap-3">
         <Button type="button" variant="outline" size="sm" onClick={handleCopy}>
           {copied ? <Check size={14} /> : <Copy size={14} />}
