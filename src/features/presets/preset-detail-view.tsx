@@ -3,10 +3,9 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowRight, SlidersHorizontal, Wand2 } from "lucide-react";
+import { SlidersHorizontal } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { buttonClassName } from "@/components/ui/button";
 import { DetailSkeleton, NotFoundBlock } from "@/components/ui/detail-skeleton";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { ContentTypeLabel } from "@/features/content/content-type-label";
@@ -20,13 +19,13 @@ import { CommentCountLink } from "@/features/prompts/comment-count-link";
 import { CommentSection } from "@/features/prompts/comment-section";
 import { ShareTriggerButton } from "@/features/prompts/share-modal";
 import { StatisticsButton } from "@/features/statistics/statistics-button";
-import { fetchPresetById, recordPresetUse } from "@/lib/supabase/presets";
+import { fetchPresetById } from "@/lib/supabase/presets";
 import { taxonomyPathLabel } from "@/lib/content-taxonomy";
 import { presetParameterCount, presetParameterEntries } from "@/lib/preset-utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import { formatCount, formatRelativeTime, presetHref, profileHref, tagHref } from "@/lib/utils";
+import { formatRelativeTime, presetHref, profileHref, tagHref } from "@/lib/utils";
 import { useRealPresets } from "./real-presets-provider";
-import { PresetListButton } from "./preset-list-button";
+import { PresetSaveCta } from "./preset-save-cta";
 import type { Preset } from "@/types";
 
 /**
@@ -85,19 +84,6 @@ export function PresetDetailView() {
   const isOwn = user?.id === preset.creator.id;
   const highlight = searchParams.get("hl");
   const highlightCommentId = highlight?.startsWith("comment:") ? highlight.slice("comment:".length) : null;
-  const useHref = `/create?preset=${preset.id}`;
-
-  function handleUse() {
-    if (user && preset) void recordPresetUse(preset.id, user.id);
-  }
-
-  const useButton = (
-    <Link href={useHref} onClick={handleUse} className={buttonClassName({ size: "lg" })}>
-      <Wand2 size={18} aria-hidden />
-      {t("preset.use")}
-      <ArrowRight size={16} aria-hidden />
-    </Link>
-  );
 
   return (
     <div className="mx-auto w-full max-w-6xl px-3 py-5 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
@@ -140,7 +126,7 @@ export function PresetDetailView() {
             <CommentCountLink presetId={preset.id} baseCount={preset.commentCount} size={18} />
             <SaveButton presetId={preset.id} saveCount={preset.saveCount} size={18} />
             <StatisticsButton
-              target={{ contentType: "preset", contentId: preset.id, likeCount: preset.likeCount, commentCount: preset.commentCount, saveCount: preset.saveCount, useCount: preset.useCount }}
+              target={{ contentType: "preset", contentId: preset.id, likeCount: preset.likeCount, commentCount: preset.commentCount, saveCount: preset.saveCount }}
               size={18}
               label={t("statistics.title")}
             />
@@ -148,16 +134,15 @@ export function PresetDetailView() {
             <ShareTriggerButton target={{ contentType: "preset", preset }} label={t("common.share")} />
           </div>
 
-          <div className="flex flex-wrap items-start gap-3 rounded-lg border border-primary/20 bg-primary-soft/50 p-4">
-            <div className="min-w-0 flex-1 space-y-1">
-              <p className="text-label font-semibold text-text">{t("preset.useTitle")}</p>
-              <p className="text-small text-text-secondary">{t("preset.useHint")}</p>
+          {!isOwn && (
+            <div className="flex flex-wrap items-start gap-3 rounded-lg border border-primary/20 bg-primary-soft/50 p-4">
+              <div className="min-w-0 flex-1 space-y-1">
+                <p className="text-label font-semibold text-text">{t("preset.saveTitle")}</p>
+                <p className="text-small text-text-secondary">{t("preset.saveHint")}</p>
+              </div>
+              <PresetSaveCta presetId={preset.id} saveCount={preset.saveCount} />
             </div>
-            <div className="flex flex-wrap items-start gap-2">
-              {useButton}
-              {!isOwn && <PresetListButton presetId={preset.id} saveCount={preset.saveCount} />}
-            </div>
-          </div>
+          )}
 
           {preset.coverUrl && (
             <button type="button" onClick={() => setLightbox(true)} aria-label={t("media.viewFullscreen")} className="block w-full">
@@ -227,10 +212,6 @@ export function PresetDetailView() {
               <div className="flex items-center justify-between gap-3 px-3.5 py-2.5">
                 <dt className="text-text-muted">{t("preset.parameters")}</dt>
                 <dd className="font-semibold tabular-nums text-text">{entries.length}</dd>
-              </div>
-              <div className="flex items-center justify-between gap-3 px-3.5 py-2.5">
-                <dt className="text-text-muted">{t("preset.usesLabel")}</dt>
-                <dd className="font-semibold tabular-nums text-text">{formatCount(preset.useCount)}</dd>
               </div>
               <div className="flex items-center justify-between gap-3 px-3.5 py-2.5">
                 <dt className="text-text-muted">{t("preset.categoryLabel")}</dt>

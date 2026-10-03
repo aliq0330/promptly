@@ -1,27 +1,29 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { BookmarkPlus, ChevronRight, Plus, Sparkles, X } from "lucide-react";
+import { ChevronDown, ChevronRight, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Collapsible } from "@/components/ui/collapsible";
 import { Modal } from "@/components/ui/modal";
-import { useAuth } from "@/features/auth/auth-provider";
-import { AddFieldModal } from "@/features/presets/add-field-modal";
-import { PresetBuilderModal } from "@/features/presets/preset-builder-modal";
+import { Tabs } from "@/components/ui/tabs";
 import { PresetFieldList } from "@/features/presets/preset-field-list";
-import { PresetPicker, type PresetBundle } from "@/features/presets/preset-picker";
+import { PresetLists, type PresetBundle } from "@/features/presets/preset-picker";
 import { SelectionSummary } from "@/features/presets/selection-summary";
 import type { ContentTypeId } from "@/lib/content-taxonomy";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import { catalogFields, fieldIdsFor } from "@/lib/prompt-extra-settings";
+import { catalogFields, catalogFieldsForType, fieldIdsFor } from "@/lib/prompt-extra-settings";
 import { composePrompt, countSelected, mergeFields, sanitizeSelection, type PresetField, type PresetSelection } from "@/lib/preset-fields";
-import { recordPresetUse } from "@/lib/supabase/presets";
+import { cn } from "@/lib/utils";
 
 /**
- * The prompt form's "Ek Ayar Önerileri" row + applied chips. The panel
- * (Promptly / my presets, fields to pick values from, "+ Alan Ekle", "Seçtiklerin")
- * only mounts while open. Fields offered by default follow the form's
- * type → category → subcategory (`fieldIdsFor`); anything else is added with
- * "+ Alan Ekle" and kept in `extraFields` so it survives closing the panel.
+ * The prompt form's "Ek Ayar Önerileri" row + applied chips. The panel only
+ * mounts while open and has three tabs — Alanlar (the platform's fields, the
+ * ones recommended for the form's type → category → subcategory first),
+ * Kaydettiklerim (presets saved with the ordinary save) and Topluluk
+ * (Paylaştıklarım / Diğerleri). Nothing can be CREATED here: presets and their
+ * custom fields are made on the preset page. `extraFields` holds the
+ * preset-owned fields an applied preset brought along, so they survive closing
+ * the panel.
  */
 export function ExtraSettingsSection({
   contentType,
@@ -40,7 +42,7 @@ export function ExtraSettingsSection({
   contentType: ContentTypeId;
   value: PresetSelection;
   onChange: (next: PresetSelection) => void;
-  /** Fields the user added on top of the recommended ones (platform, their own, or a preset's). */
+  /** Preset-owned fields an applied preset brought along (not part of the platform catalog). */
   extraFields: PresetField[];
   onExtraFieldsChange: (next: PresetField[]) => void;
   englishFragments: boolean;
@@ -54,7 +56,8 @@ export function ExtraSettingsSection({
   const { t, language } = useTranslation();
   const [open, setOpen] = useState(false);
   const recommended = useMemo(() => catalogFields(fieldIdsFor(contentType, category, subcategory, tools)), [contentType, category, subcategory, tools]);
-  const allFields = useMemo(() => mergeFields(recommended, extraFields), [recommended, extraFields]);
+  const catalog = useMemo(() => mergeFields(recommended, catalogFieldsForType(contentType)), [recommended, contentType]);
+  const allFields = useMemo(() => mergeFields(catalog, extraFields), [catalog, extraFields]);
   const applied = useMemo(() => sanitizeSelection(value, allFields), [value, allFields]);
   const count = countSelected(applied, allFields);
   const fragmentLanguage = englishFragments ? "en" : language;
@@ -94,9 +97,8 @@ export function ExtraSettingsSection({
         <ExtraSettingsPanel
           contentType={contentType}
           category={category}
-          subcategory={subcategory}
-          tools={tools}
           recommended={recommended}
+          catalog={catalog}
           initialExtra={extraFields}
           initial={applied}
           promptText={promptText}
@@ -115,12 +117,13 @@ export function ExtraSettingsSection({
   );
 }
 
+type PanelTab = "fields" | "saved" | "community";
+
 function ExtraSettingsPanel({
   contentType,
   category,
-  subcategory,
-  tools,
   recommended,
+  catalog,
   initialExtra,
   initial,
   promptText,
@@ -132,9 +135,8 @@ function ExtraSettingsPanel({
 }: {
   contentType: ContentTypeId;
   category: string | null;
-  subcategory: string | null;
-  tools: string[];
   recommended: PresetField[];
+  catalog: PresetField[];
   initialExtra: PresetField[];
   initial: PresetSelection;
   promptText: string;
@@ -145,26 +147,27 @@ function ExtraSettingsPanel({
   onApply: (selection: PresetSelection, extraFields: PresetField[]) => void;
 }) {
   const { t, language } = useTranslation();
-  const { user } = useAuth();
   const [draft, setDraft] = useState<PresetSelection>(initial);
   const [extra, setExtra] = useState<PresetField[]>(initialExtra);
-  const [adding, setAdding] = useState(false);
-  const [builder, setBuilder] = useState<"empty" | "current" | null>(null);
-  const [presetsVersion, setPresetsVersion] = useState(0);
-  const fields = useMemo(() => mergeFields(recommended, extra), [recommended, extra]);
+  const [tab, setTab] = useState<PanelTab>("fields");
+  const [showOthers, setShowOthers] = useState(false);
+  const fields = useMemo(() => mergeFields(catalog, extra), [catalog, extra]);
   const fragmentLanguage = englishFragments ? "en" : language;
   const clean = useMemo(() => sanitizeSelection(draft, fields), [draft, fields]);
   const composed = composePrompt(promptText, clean, fields, fragmentLanguage);
   const selectedCount = countSelected(clean, fields);
+  const catalogIds = useMemo(() => new Set(catalog.map((f) => f.id)), [catalog]);
   const recommendedIds = useMemo(() => new Set(recommended.map((f) => f.id)), [recommended]);
+  const topFields = useMemo(() => mergeFields(recommended, extra), [recommended, extra]);
+  const otherFields = useMemo(() => catalog.filter((f) => !recommendedIds.has(f.id)), [catalog, recommendedIds]);
 
-  function applyBundle(bundle: PresetBundle, preset: { id: string } | null) {
+  function applyBundle(bundle: PresetBundle) {
     // Only fills the draft — everything stays editable (a preset is a starting configuration).
-    const nextExtra = mergeFields(extra, bundle.fields.filter((f) => !recommendedIds.has(f.id)));
-    const nextFields = mergeFields(recommended, nextExtra);
+    const nextExtra = mergeFields(extra, bundle.fields.filter((f) => !catalogIds.has(f.id)));
+    const nextFields = mergeFields(catalog, nextExtra);
     setExtra(nextExtra);
     setDraft(sanitizeSelection({ ...clean, ...bundle.selection }, nextFields));
-    if (preset && user) void recordPresetUse(preset.id, user.id);
+    setTab("fields");
   }
 
   function removeExtraField(field: PresetField) {
@@ -175,6 +178,12 @@ function ExtraSettingsPanel({
       return next;
     });
   }
+
+  const tabs: { key: PanelTab; label: string }[] = [
+    { key: "fields", label: t("extra.tabFields") },
+    { key: "saved", label: t("extra.tabSaved") },
+    { key: "community", label: t("extra.tabCommunity") },
+  ];
 
   return (
     <>
@@ -201,8 +210,6 @@ function ExtraSettingsPanel({
           <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-4 py-4">
             <SelectionSummary fields={fields} selection={clean} onChange={setDraft} className="rounded-md border border-border-soft bg-surface-soft p-3" />
 
-            <PresetPicker contentType={contentType} category={category} onApply={applyBundle} onCreate={() => setBuilder("empty")} refreshKey={presetsVersion} />
-
             {language === "tr" && (
               <label className="flex cursor-pointer items-start gap-2.5 rounded-md border border-border-soft bg-surface-soft px-3 py-2.5">
                 <input type="checkbox" data-english-fragments checked={englishFragments} onChange={(e) => onEnglishFragmentsChange(e.target.checked)} className="mt-0.5" />
@@ -215,25 +222,44 @@ function ExtraSettingsPanel({
 
             {hasTool && fields.some((f) => f.kind === "suffix") && <p className="rounded-md bg-primary-soft px-3 py-2 text-caption text-text-secondary">{t("extra.toolHint")}</p>}
 
-            <section aria-labelledby="extra-fields-title" className="space-y-2.5">
-              <div className="flex items-center justify-between gap-2">
+            <Tabs variant="segmented" ariaLabel={t("extra.presets")} active={tab} onChange={setTab} items={tabs} />
+
+            {tab === "fields" ? (
+              <section aria-labelledby="extra-fields-title" className="space-y-2.5">
                 <h3 id="extra-fields-title" className="text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">
-                  {t("presetField.fieldsHeading")} <span className="tabular-nums">({fields.length})</span>
+                  {t("presetField.fieldsHeading")} <span className="tabular-nums">({topFields.length})</span>
                 </h3>
-                <Button type="button" variant="outline" size="sm" onClick={() => setAdding(true)} data-add-field-open>
-                  <Plus size={14} aria-hidden />
-                  {t("presetField.addShort")}
-                </Button>
-              </div>
-              <PresetFieldList
-                fields={fields}
-                selection={clean}
-                onChange={setDraft}
-                fragmentLanguage={fragmentLanguage}
-                onRemoveField={(field) => removeExtraField(field)}
-                removableIds={new Set(extra.map((f) => f.id))}
-              />
-            </section>
+                <PresetFieldList
+                  fields={topFields}
+                  selection={clean}
+                  onChange={setDraft}
+                  fragmentLanguage={fragmentLanguage}
+                  onRemoveField={(field) => removeExtraField(field)}
+                  removableIds={new Set(extra.map((f) => f.id))}
+                />
+                {otherFields.length > 0 && (
+                  <div className="space-y-2">
+                    <button
+                      type="button"
+                      aria-expanded={showOthers}
+                      onClick={() => setShowOthers((v) => !v)}
+                      data-show-other-fields
+                      className="flex w-full items-center justify-between gap-2 rounded-md border border-dashed border-border-strong px-3 py-2 text-left text-label font-semibold text-text-secondary hover:border-primary hover:text-text"
+                    >
+                      <span>
+                        {t("presetField.others")} <span className="tabular-nums">({otherFields.length})</span>
+                      </span>
+                      <ChevronDown size={16} className={cn("transition-transform duration-200", showOthers && "rotate-180")} aria-hidden />
+                    </button>
+                    <Collapsible open={showOthers}>
+                      <PresetFieldList fields={otherFields} selection={clean} onChange={setDraft} fragmentLanguage={fragmentLanguage} defaultOpenFirst={false} />
+                    </Collapsible>
+                  </div>
+                )}
+              </section>
+            ) : (
+              <PresetLists tab={tab} contentType={contentType} category={category} onApply={applyBundle} />
+            )}
 
             <section className="rounded-md border border-border-soft bg-surface-soft p-3">
               <h3 className="mb-1 text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">{t("extra.preview")}</h3>
@@ -248,10 +274,6 @@ function ExtraSettingsPanel({
               <Button type="button" variant="ghost" onClick={() => setDraft({})} disabled={selectedCount === 0}>
                 {t("extra.clear")}
               </Button>
-              <Button type="button" variant="ghost" onClick={() => setBuilder("current")} disabled={selectedCount === 0} data-save-as-preset>
-                <BookmarkPlus size={16} aria-hidden />
-                <span className="hidden sm:inline">{t("preset.saveAsNew")}</span>
-              </Button>
             </div>
             <Button type="button" onClick={() => onApply(clean, extra)} data-apply-settings>
               {t("extra.apply")}
@@ -260,42 +282,6 @@ function ExtraSettingsPanel({
         </div>
       </Modal>
 
-      {adding && (
-        <AddFieldModal
-          contentType={contentType}
-          category={category}
-          subcategory={subcategory}
-          tools={tools}
-          existingIds={new Set(fields.map((f) => f.id))}
-          target="form"
-          onAdd={(added) => setExtra((current) => mergeFields(current, added.filter((f) => !recommendedIds.has(f.id))))}
-          onLibraryUpdate={(updated) => setExtra((current) => current.map((f) => (f.id === updated.id ? updated : f)))}
-          onLibraryDelete={(id) => {
-            setExtra((current) => current.filter((f) => f.id !== id));
-            setDraft((current) => {
-              const next = { ...current };
-              delete next[id];
-              return next;
-            });
-          }}
-          onClose={() => setAdding(false)}
-        />
-      )}
-
-      {builder && (
-        <PresetBuilderModal
-          contentType={contentType}
-          category={category}
-          subcategory={subcategory}
-          tools={tools}
-          seed={builder === "current" ? { fields, selection: clean } : undefined}
-          onSaved={() => {
-            setBuilder(null);
-            setPresetsVersion((v) => v + 1);
-          }}
-          onClose={() => setBuilder(null)}
-        />
-      )}
     </>
   );
 }

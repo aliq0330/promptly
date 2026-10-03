@@ -11,8 +11,7 @@
  * value shaped by the field type (option `value` string for single-select /
  * dropdown, `string[]` for multi-select, text, number, boolean, `#rrggbb`).
  * The prompt text is DERIVED from it (`composePrompt`) — an id is never
- * written into a prompt, and the same structured values are what a Generator
- * receives (`preset-generator-mapping.ts`).
+ * written into a prompt.
  *
  * Fields come from two places that share this one shape: the platform catalog
  * (`prompt-extra-settings.ts`, `source: "platform"`, ids are stable slugs like

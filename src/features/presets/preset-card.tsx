@@ -73,7 +73,7 @@ export function PresetCard({
           )}
           <div className="flex items-center justify-between gap-2 text-caption text-text-muted">
             <span>
-              {t("preset.paramCount", { count: entries.length })} · {t("preset.useCount", { count: preset.useCount })}
+              {t("preset.paramCount", { count: entries.length })}
             </span>
             <span className="flex shrink-0 items-center gap-1 font-semibold text-primary transition-colors duration-200 group-hover:text-primary-hover">
               {t("preset.view")}
