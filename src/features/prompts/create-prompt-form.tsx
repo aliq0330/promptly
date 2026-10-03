@@ -17,8 +17,8 @@ import { useTagCatalog } from "@/features/tags/use-tag-catalog";
 import { useTagPicker } from "@/features/prompts/use-tag-picker";
 import { TagPicker } from "@/features/prompts/tag-picker";
 import { ExtraSettingsSection } from "@/features/prompts/extra-settings-panel";
-import { catalogFields, fieldIdsFor } from "@/lib/prompt-extra-settings";
-import { composePrompt, mergeFields, sanitizeSelection, type PresetField, type PresetSelection } from "@/lib/preset-fields";
+import { catalogFields, catalogFieldsForType, fieldIdsFor } from "@/lib/prompt-extra-settings";
+import { composePrompt, mergeFields, sanitizeSelection, withCustomOptions, type CustomOptions, type PresetField, type PresetSelection } from "@/lib/preset-fields";
 import { PromptTextEditor, type DraftVariable } from "@/features/prompts/prompt-text-editor";
 import { PromptVisionAssist } from "@/features/prompts/prompt-vision-assist";
 import { fetchVariablesForPrompt, replaceVariablesForPrompt } from "@/lib/supabase/prompt-variables";
@@ -212,12 +212,20 @@ export function CreatePromptForm() {
   const [extraSettings, setExtraSettings] = useState<PresetSelection>({});
   // Fields the user added on top of the recommended ones (platform, their own or a preset's).
   const [extraFields, setExtraFields] = useState<PresetField[]>([]);
+  // Options typed with "+ Seçenek oluştur" — temporary, only for this form.
+  const [customOptions, setCustomOptions] = useState<CustomOptions>({});
   // Lets Turkish-mode users still write the appended fragments in English.
   const [englishFragments, setEnglishFragments] = useState(false);
   const fragmentLanguage = englishFragments ? "en" : language;
+  // Every catalog field of the type (not only the recommended ones: the panel's
+  // "Diğer alanlar" can be chosen too) plus the added fields and typed options.
   const extraAllFields = useMemo(
-    () => mergeFields(catalogFields(fieldIdsFor(contentType, category, subcategory, tools)), extraFields),
-    [contentType, category, subcategory, tools, extraFields],
+    () =>
+      withCustomOptions(
+        mergeFields(mergeFields(catalogFields(fieldIdsFor(contentType, category, subcategory, tools)), catalogFieldsForType(contentType)), extraFields),
+        customOptions,
+      ),
+    [contentType, category, subcategory, tools, extraFields, customOptions],
   );
   const finalPromptText = useMemo(
     () => composePrompt(promptText, sanitizeSelection(extraSettings, extraAllFields), extraAllFields, fragmentLanguage),
@@ -791,6 +799,7 @@ export function CreatePromptForm() {
               if (next.contentType !== contentType) {
                 setExtraSettings({});
                 setExtraFields([]);
+                setCustomOptions({});
               }
               setContentType(next.contentType);
               setCategory(next.category);
@@ -870,6 +879,8 @@ export function CreatePromptForm() {
             onChange={setExtraSettings}
             extraFields={extraFields}
             onExtraFieldsChange={setExtraFields}
+            customOptions={customOptions}
+            onCustomOptionsChange={setCustomOptions}
             englishFragments={englishFragments}
             onEnglishFragmentsChange={setEnglishFragments}
             promptText={promptText}

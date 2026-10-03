@@ -12,7 +12,17 @@ import { SelectionSummary } from "@/features/presets/selection-summary";
 import type { ContentTypeId } from "@/lib/content-taxonomy";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { catalogFields, catalogFieldsForType, fieldIdsFor } from "@/lib/prompt-extra-settings";
-import { composePrompt, countSelected, mergeFields, sanitizeSelection, type PresetField, type PresetSelection } from "@/lib/preset-fields";
+import {
+  composePrompt,
+  countSelected,
+  mergeFields,
+  resolveTypedOption,
+  sanitizeSelection,
+  withCustomOptions,
+  type CustomOptions,
+  type PresetField,
+  type PresetSelection,
+} from "@/lib/preset-fields";
 import { cn } from "@/lib/utils";
 
 /**
@@ -31,6 +41,8 @@ export function ExtraSettingsSection({
   onChange,
   extraFields,
   onExtraFieldsChange,
+  customOptions,
+  onCustomOptionsChange,
   englishFragments,
   onEnglishFragmentsChange,
   promptText,
@@ -45,6 +57,9 @@ export function ExtraSettingsSection({
   /** Preset-owned fields an applied preset brought along (not part of the platform catalog). */
   extraFields: PresetField[];
   onExtraFieldsChange: (next: PresetField[]) => void;
+  /** Options typed with "+ Seçenek oluştur" — temporary, kept only for this form. */
+  customOptions: CustomOptions;
+  onCustomOptionsChange: (next: CustomOptions) => void;
   englishFragments: boolean;
   onEnglishFragmentsChange: (value: boolean) => void;
   promptText: string;
@@ -57,7 +72,7 @@ export function ExtraSettingsSection({
   const [open, setOpen] = useState(false);
   const recommended = useMemo(() => catalogFields(fieldIdsFor(contentType, category, subcategory, tools)), [contentType, category, subcategory, tools]);
   const catalog = useMemo(() => mergeFields(recommended, catalogFieldsForType(contentType)), [recommended, contentType]);
-  const allFields = useMemo(() => mergeFields(catalog, extraFields), [catalog, extraFields]);
+  const allFields = useMemo(() => withCustomOptions(mergeFields(catalog, extraFields), customOptions), [catalog, extraFields, customOptions]);
   const applied = useMemo(() => sanitizeSelection(value, allFields), [value, allFields]);
   const count = countSelected(applied, allFields);
   const fragmentLanguage = englishFragments ? "en" : language;
@@ -100,14 +115,16 @@ export function ExtraSettingsSection({
           recommended={recommended}
           catalog={catalog}
           initialExtra={extraFields}
+          initialCustom={customOptions}
           initial={applied}
           promptText={promptText}
           hasTool={hasTool}
           englishFragments={englishFragments}
           onEnglishFragmentsChange={onEnglishFragmentsChange}
           onClose={() => setOpen(false)}
-          onApply={(nextSelection, nextExtra) => {
+          onApply={(nextSelection, nextExtra, nextCustom) => {
             onExtraFieldsChange(nextExtra);
+            onCustomOptionsChange(nextCustom);
             onChange(nextSelection);
             setOpen(false);
           }}
@@ -125,6 +142,7 @@ function ExtraSettingsPanel({
   recommended,
   catalog,
   initialExtra,
+  initialCustom,
   initial,
   promptText,
   hasTool,
@@ -138,28 +156,38 @@ function ExtraSettingsPanel({
   recommended: PresetField[];
   catalog: PresetField[];
   initialExtra: PresetField[];
+  initialCustom: CustomOptions;
   initial: PresetSelection;
   promptText: string;
   hasTool: boolean;
   englishFragments: boolean;
   onEnglishFragmentsChange: (value: boolean) => void;
   onClose: () => void;
-  onApply: (selection: PresetSelection, extraFields: PresetField[]) => void;
+  onApply: (selection: PresetSelection, extraFields: PresetField[], customOptions: CustomOptions) => void;
 }) {
   const { t, language } = useTranslation();
   const [draft, setDraft] = useState<PresetSelection>(initial);
   const [extra, setExtra] = useState<PresetField[]>(initialExtra);
+  const [custom, setCustom] = useState<CustomOptions>(initialCustom);
   const [tab, setTab] = useState<PanelTab>("fields");
   const [showOthers, setShowOthers] = useState(false);
-  const fields = useMemo(() => mergeFields(catalog, extra), [catalog, extra]);
+  const fields = useMemo(() => withCustomOptions(mergeFields(catalog, extra), custom), [catalog, extra, custom]);
   const fragmentLanguage = englishFragments ? "en" : language;
   const clean = useMemo(() => sanitizeSelection(draft, fields), [draft, fields]);
   const composed = composePrompt(promptText, clean, fields, fragmentLanguage);
   const selectedCount = countSelected(clean, fields);
   const catalogIds = useMemo(() => new Set(catalog.map((f) => f.id)), [catalog]);
   const recommendedIds = useMemo(() => new Set(recommended.map((f) => f.id)), [recommended]);
-  const topFields = useMemo(() => mergeFields(recommended, extra), [recommended, extra]);
-  const otherFields = useMemo(() => catalog.filter((f) => !recommendedIds.has(f.id)), [catalog, recommendedIds]);
+  const topFields = useMemo(() => withCustomOptions(mergeFields(recommended, extra), custom), [recommended, extra, custom]);
+  const otherFields = useMemo(() => withCustomOptions(catalog.filter((f) => !recommendedIds.has(f.id)), custom), [catalog, recommendedIds, custom]);
+
+  /** "+ Seçenek oluştur": remembers the typed option for this form and returns the value to select. */
+  function createOption(field: PresetField, text: string): string | undefined {
+    const resolved = resolveTypedOption(field, text);
+    if (!resolved) return undefined;
+    if (resolved.isNew) setCustom((current) => ({ ...current, [field.id]: [...(current[field.id] ?? []), resolved.option] }));
+    return resolved.option.value;
+  }
 
   function applyBundle(bundle: PresetBundle) {
     // Only fills the draft — everything stays editable (a preset is a starting configuration).
@@ -236,6 +264,7 @@ function ExtraSettingsPanel({
                   fragmentLanguage={fragmentLanguage}
                   onRemoveField={(field) => removeExtraField(field)}
                   removableIds={new Set(extra.map((f) => f.id))}
+                  onCreateOption={createOption}
                 />
                 {otherFields.length > 0 && (
                   <div className="space-y-2">
@@ -252,7 +281,7 @@ function ExtraSettingsPanel({
                       <ChevronDown size={16} className={cn("transition-transform duration-200", showOthers && "rotate-180")} aria-hidden />
                     </button>
                     <Collapsible open={showOthers}>
-                      <PresetFieldList fields={otherFields} selection={clean} onChange={setDraft} fragmentLanguage={fragmentLanguage} defaultOpenFirst={false} />
+                      <PresetFieldList fields={otherFields} selection={clean} onChange={setDraft} fragmentLanguage={fragmentLanguage} defaultOpenFirst={false} onCreateOption={createOption} />
                     </Collapsible>
                   </div>
                 )}
@@ -275,7 +304,7 @@ function ExtraSettingsPanel({
                 {t("extra.clear")}
               </Button>
             </div>
-            <Button type="button" onClick={() => onApply(clean, extra)} data-apply-settings>
+            <Button type="button" onClick={() => onApply(clean, extra, custom)} data-apply-settings>
               {t("extra.apply")}
             </Button>
           </div>

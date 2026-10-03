@@ -21,6 +21,7 @@ export function PresetFieldList({
   onRemoveField,
   removableIds,
   defaultOpenFirst = true,
+  onCreateOption,
 }: {
   fields: readonly PresetField[];
   selection: PresetSelection;
@@ -31,6 +32,8 @@ export function PresetFieldList({
   /** Restricts "Alanı kaldır" to these ids (the recommended fields stay). */
   removableIds?: ReadonlySet<string>;
   defaultOpenFirst?: boolean;
+  /** When set, option fields offer "+ Seçenek oluştur"; returns the option value to select. */
+  onCreateOption?: (field: PresetField, text: string) => string | undefined;
 }) {
   const { t, language } = useTranslation();
   const [open, setOpen] = useState<Set<string>>(() => new Set(defaultOpenFirst && fields[0] ? [fields[0].id] : []));
@@ -73,6 +76,7 @@ export function PresetFieldList({
                   field={field}
                   value={selection[field.id]}
                   fragmentLanguage={fragmentLanguage}
+                  onCreateOption={onCreateOption ? (text) => onCreateOption(field, text) : undefined}
                   onChange={(value) => {
                     const next = { ...selection };
                     if (value === undefined) delete next[field.id];
