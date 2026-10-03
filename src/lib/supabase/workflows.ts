@@ -21,6 +21,7 @@ export interface WorkflowRow {
   description: string;
   cover_url: string | null;
   content_types: string[] | null;
+  subcategory: string | null;
   category: string | null;
   tools: string[] | null;
   status: "draft" | "published";
@@ -37,7 +38,7 @@ export interface WorkflowRow {
 }
 
 export const WORKFLOW_SELECT = `
-  id, creator_id, title, description, cover_url, content_types, category, tools, status, visibility, like_count, save_count, comment_count, created_at, updated_at,
+  id, creator_id, title, description, cover_url, content_types, category, subcategory, tools, status, visibility, like_count, save_count, comment_count, created_at, updated_at,
   profiles:creator_id ( ${PROFILE_SELECT} ),
   workflow_steps ( count ),
   workflow_tags ( tags ( slug, label ) ),
@@ -63,6 +64,7 @@ export function mapWorkflowRow(row: WorkflowRow): Workflow {
     coverUrl: media[0]?.url ?? null,
     contentTypes: (row.content_types ?? []) as PromptContentType[],
     category: row.category,
+    subcategory: row.subcategory ?? null,
     tools: normalizeToolRefs(row.tools),
     status: row.status,
     visibility: row.visibility === "private" ? "private" : "public",
@@ -131,19 +133,20 @@ export async function fetchRecentWorkflows(limit = 24, cursor?: KeysetCursor): P
  * Workflow search — same shared advanced-search filters as prompts/
  * generators/requests. A workflow chains several content types instead of
  * having one, so a media-type chip matches when the workflow chains that
- * type; a workflow has no tags and no shared-taxonomy category/subcategory,
- * so only a category/subcategory filter can never match it; tag chips match its own tags.
+ * type (the main type or any type its steps link to); category/subcategory
+ * match the workflow's own shared-taxonomy category/subcategory; tag chips match its own tags.
  */
 export async function searchWorkflows(query: string, filters: ContentSearchFilters = {}, limit = 20): Promise<Workflow[]> {
   const escaped = sanitizeSearchText(query);
   if (!escaped && !hasSearchFilter(filters)) return [];
-  if (filters.taxonomy?.category || filters.taxonomy?.subcategory) return [];
   try {
     let request = supabase.from("workflows").select(WORKFLOW_SELECT + tagJoinSelect("workflow_tags", filters.tagSlugs)).eq("status", "published");
     if (escaped) request = request.or(`title.ilike.%${escaped}%,description.ilike.%${escaped}%`);
     if (filters.authorId) request = request.eq("creator_id", filters.authorId);
     const mediaTypes = [...(filters.contentTypes ?? []), ...(filters.taxonomy?.contentType ? [filters.taxonomy.contentType] : [])];
     if (mediaTypes.length) request = request.overlaps("content_types", mediaTypes);
+    if (filters.taxonomy?.category) request = request.eq("category", filters.taxonomy.category);
+    if (filters.taxonomy?.subcategory) request = request.eq("subcategory", filters.taxonomy.subcategory);
     request = applyAdvancedFilters(request, { authorIds: filters.authorIds, toolRefs: filters.toolRefs, tagSlugs: filters.tagSlugs }, "creator_id");
     const order = filters.sort === "popular" ? "like_count" : "created_at";
     const { data, error } = await request.order(order, { ascending: false }).limit(limit);
@@ -298,6 +301,7 @@ export interface SaveWorkflowInput {
   media: MultiImageItem[];
   contentTypes: PromptContentType[];
   category: string | null;
+  subcategory?: string | null;
   tools: string[];
   tags: Tag[];
   status: "draft" | "published";
@@ -315,6 +319,7 @@ export async function saveWorkflow(input: SaveWorkflowInput, creatorId: string):
     cover_url: resolvedMedia[0]?.url ?? null,
     content_types: input.contentTypes,
     category: input.category,
+    subcategory: input.subcategory ?? null,
     tools: input.tools,
     status: input.status,
     ...(input.visibility === undefined ? {} : { visibility: input.visibility }),

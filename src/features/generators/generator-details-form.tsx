@@ -1,5 +1,6 @@
 "use client";
 
+import { TitleField, DescriptionField } from "@/features/content/core-fields";
 import { ToolPicker } from "@/features/content/tool-picker";
 import { TagPicker } from "@/features/prompts/tag-picker";
 import type { UseTagPickerResult } from "@/features/prompts/use-tag-picker";
@@ -38,38 +39,30 @@ export function GeneratorDetailsForm({
 
   return (
     <div className="space-y-5">
-      <div>
-        <label htmlFor="gen-title" className="mb-1.5 block text-sm font-medium text-text">
-          {t("generator.titleFieldLabel")}
-        </label>
-        <input
-          id="gen-title"
-          type="text"
-          value={meta.title}
-          onChange={(event) => onChange({ title: event.target.value })}
-          placeholder={t("generator.titlePlaceholder")}
-          className="h-11 w-full rounded-md border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted"
-        />
-      </div>
-
-      <div>
-        <label htmlFor="gen-description" className="mb-1.5 block text-sm font-medium text-text">
-          {t("generator.shortDescriptionLabel")}
-        </label>
-        <textarea
-          id="gen-description"
-          rows={3}
-          value={meta.description}
-          onChange={(event) => onChange({ description: event.target.value })}
-          placeholder={t("generator.shortDescriptionPlaceholder")}
-          className="w-full resize-none rounded-md border border-border bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted"
-        />
-      </div>
-
       <TaxonomyPicker
         value={{ contentType: meta.contentType, category: meta.category, subcategory: meta.subcategory }}
         onChange={(next) => onChange({ contentType: next.contentType, category: next.category, subcategory: next.subcategory })}
       />
+
+      <TitleField
+        id="gen-title"
+        label={t("generator.titleFieldLabel")}
+        value={meta.title}
+        onChange={(title) => onChange({ title })}
+        placeholder={t("generator.titlePlaceholder")}
+        required
+      />
+
+      <DescriptionField
+        id="gen-description"
+        label={t("generator.shortDescriptionLabel")}
+        value={meta.description}
+        onChange={(description) => onChange({ description })}
+        placeholder={t("generator.shortDescriptionPlaceholder")}
+        required
+      />
+
+      <MultiImagePicker items={meta.media} onChange={(media) => onChange({ media })} label={t("generator.coverImageLabel")} />
 
       <ToolPicker
         label={t("tool.recommendedLabel")}
@@ -80,11 +73,11 @@ export function GeneratorDetailsForm({
       />
 
       <div>
-        <label className="mb-1.5 block text-sm font-medium text-text">{t("generator.tagsLabel")}</label>
+        <label className="mb-2 block text-sm font-medium text-text">
+          {t("generator.tagsLabel")} <span className="font-normal text-text-muted">({t("common.optional")})</span>
+        </label>
         <TagPicker picker={tagPicker} />
       </div>
-
-      <MultiImagePicker items={meta.media} onChange={(media) => onChange({ media })} label={t("generator.coverImageLabel")} />
 
       <div className="space-y-2 rounded-md border border-border p-3">
         <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">{t("generator.settingsHeading")}</p>

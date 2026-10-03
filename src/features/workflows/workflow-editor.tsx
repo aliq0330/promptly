@@ -16,7 +16,6 @@ import type { ContentVisibility, WorkflowContentRef, WorkflowStep } from "@/type
 import { AddContentModal } from "./add-content-modal";
 import { ContentPane, GeneralPane, IOPane, SettingsPane, StepPreview } from "./step-panes";
 import { StepList } from "./step-list";
-import { TagPicker } from "@/features/prompts/tag-picker";
 import { useTagPicker } from "@/features/prompts/use-tag-picker";
 import { useTagCatalog } from "@/features/tags/use-tag-catalog";
 import { useLayoutMode } from "./use-layout-mode";
@@ -78,8 +77,9 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
         title: result.workflow.title,
         description: result.workflow.description,
         media: multiImageItemFromMedia(result.workflow.media),
-        contentTypes: result.workflow.contentTypes,
+        contentType: (result.workflow.contentTypes[0] ?? "image") as WorkflowMeta["contentType"],
         category: result.workflow.category,
+        subcategory: result.workflow.subcategory,
         tools: result.workflow.tools,
       });
       if (!tagsSeededRef.current) {
@@ -193,7 +193,11 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
     setSaveState("saving");
     setSaveError(null);
     try {
-      const id = await saveWorkflow({ id: workflowId, ...meta, tags: tagPicker.accepted.map((entry) => entry.tag), status: target, visibility, steps }, user.id);
+      // content_types = the main type plus the types of the content the steps link to (what the workflow "chains").
+      const contentTypes = Array.from(new Set([meta.contentType, ...steps.map((step) => step.content?.contentType).filter((type): type is NonNullable<typeof type> => Boolean(type))]));
+      const { contentType: _mainType, ...rest } = meta;
+      void _mainType;
+      const id = await saveWorkflow({ id: workflowId, ...rest, contentTypes, tags: tagPicker.accepted.map((entry) => entry.tag), status: target, visibility, steps }, user.id);
       setWorkflowId(id);
       setStatus(target);
       setDirty(false);
@@ -342,16 +346,13 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
           <div className="mt-4">
             <WorkflowMetaForm
               meta={meta}
+              tagPicker={tagPicker}
               titleError={issues.some((i) => i.code === "titleRequired")}
               onChange={(patch) => {
                 setMeta((prev) => ({ ...prev, ...patch }));
                 touch();
               }}
             />
-            <div className="mt-4">
-              <label className="mb-1.5 block text-sm font-medium text-text">{t("generator.tagsLabel")}</label>
-              <TagPicker picker={tagPicker} />
-            </div>
           </div>
         )}
       </section>

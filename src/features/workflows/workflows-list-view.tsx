@@ -26,8 +26,11 @@ export function WorkflowsListView() {
       baseItems={workflows.map((w) => ({ ...w, contentType: null }))}
       loading={loading}
       search={searchWorkflows}
-      showCategories={false}
-      matches={(item, value) => !value.contentType || item.contentTypes.includes(value.contentType)}
+      matches={(item, value) =>
+        (!value.contentType || item.contentTypes.includes(value.contentType)) &&
+        (!value.category || item.category === value.category) &&
+        (!value.subcategory || item.subcategory === value.subcategory)
+      }
       renderItems={(items) => (
         <div className="columns-1 gap-3 sm:columns-2 sm:gap-4 xl:columns-3">
           {items.map((workflow) => (

@@ -674,6 +674,7 @@ export interface Workflow {
   coverUrl: string | null;
   contentTypes: PromptContentType[];
   category: string | null;
+  subcategory: string | null;
   tools: string[];
   status: "draft" | "published";
   /** "Herkese açık" / "Sadece ben" — `workflows.visibility`. */

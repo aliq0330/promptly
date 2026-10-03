@@ -12,10 +12,11 @@ import { TaxonomyPicker } from "@/features/content/taxonomy-picker";
 import { useTagCatalog } from "@/features/tags/use-tag-catalog";
 import { useTagPicker } from "@/features/prompts/use-tag-picker";
 import { TagPicker } from "@/features/prompts/tag-picker";
+import { TitleField, DescriptionField } from "@/features/content/core-fields";
 import { RequestVisionAssist } from "./request-vision-assist";
 import { MultiImagePicker } from "@/features/content/multi-image-picker";
 import { multiImageItemFromMedia, toDeferredMediaInputs, type MultiImageItem } from "@/lib/supabase/media-input";
-import { cn, requestHref } from "@/lib/utils";
+import { requestHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { KindDraftsButton } from "@/features/drafts/kind-drafts-button";
 import { CreateFormActions } from "@/features/content/create-form-actions";
@@ -358,6 +359,34 @@ export function CreateRequestForm() {
             lockedHint={t("prompt.notEditableWhileEditing")}
           />
 
+          <TitleField
+            id="request-title"
+            label={t("request.requestTitleLabel")}
+            value={title}
+            onChange={setTitle}
+            onBlur={() => setTitleTouched(true)}
+            placeholder={t("request.titlePlaceholder")}
+            maxLength={TITLE_MAX}
+            required
+            showCounter
+            error={titleTouched ? titleError : null}
+          />
+
+          <DescriptionField
+            id="request-description"
+            label={t("request.requestDescriptionLabel")}
+            value={description}
+            onChange={setDescription}
+            onBlur={() => setDescriptionTouched(true)}
+            placeholder={t("request.descriptionPlaceholder")}
+            maxLength={DESCRIPTION_MAX}
+            required
+            showCounter
+            error={descriptionTouched ? descriptionError : null}
+          />
+
+          <MultiImagePicker items={images} onChange={setImages} label={t("request.referenceImage")} />
+
           {!isEditMode && contentType === "image" && (
             <RequestVisionAssist
               onApplyDescription={(text) => setDescription((prev) => (prev.trim() ? `${prev}\n\n${text}` : text))}
@@ -367,70 +396,6 @@ export function CreateRequestForm() {
             />
           )}
 
-          <div>
-            <label htmlFor="request-title" className="mb-1.5 flex items-center justify-between text-sm font-medium text-text">
-              {t("request.requestTitleLabel")}
-              <span className="text-xs font-normal text-text-muted">
-                {title.length}/{TITLE_MAX}
-              </span>
-            </label>
-            <input
-              id="request-title"
-              type="text"
-              maxLength={TITLE_MAX}
-              value={title}
-              onChange={(event) => setTitle(event.target.value)}
-              onBlur={() => setTitleTouched(true)}
-              placeholder={t("request.titlePlaceholder")}
-              className={cn(
-                "h-10 w-full rounded-md border bg-background px-3 text-sm text-text placeholder:text-text-muted",
-                titleTouched && titleError ? "border-danger" : "border-border",
-              )}
-            />
-            {titleTouched && titleError && <p className="mt-1 text-xs text-danger">{titleError}</p>}
-          </div>
-
-          <div>
-            <label htmlFor="request-description" className="mb-1.5 flex items-center justify-between text-sm font-medium text-text">
-              {t("request.requestDescriptionLabel")}
-              <span className="text-xs font-normal text-text-muted">
-                {description.length}/{DESCRIPTION_MAX}
-              </span>
-            </label>
-            <textarea
-              id="request-description"
-              maxLength={DESCRIPTION_MAX}
-              rows={4}
-              value={description}
-              onChange={(event) => setDescription(event.target.value)}
-              onBlur={() => setDescriptionTouched(true)}
-              placeholder={t("request.descriptionPlaceholder")}
-              className={cn(
-                "w-full resize-none rounded-md border bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted",
-                descriptionTouched && descriptionError ? "border-danger" : "border-border",
-              )}
-            />
-            {descriptionTouched && descriptionError && (
-              <p className="mt-1 text-xs text-danger">{descriptionError}</p>
-            )}
-          </div>
-
-          <div>
-            <label htmlFor="request-direction" className="mb-1.5 block text-sm font-medium text-text">
-              {t("request.creativeDirection")} <span className="text-text-muted">({t("common.optional")})</span>
-            </label>
-            <textarea
-              id="request-direction"
-              rows={2}
-              value={creativeDirection}
-              onChange={(event) => setCreativeDirection(event.target.value)}
-              placeholder={t("request.creativeDirectionPlaceholder")}
-              className="w-full resize-none rounded-md border border-border bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted"
-            />
-          </div>
-
-          <MultiImagePicker items={images} onChange={setImages} label={t("request.referenceImage")} />
-
           <ToolPicker
             label={t("tool.preferredLabel")}
             value={tools}
@@ -438,6 +403,20 @@ export function CreateRequestForm() {
             contentType={contentType}
             category={category}
           />
+
+          <div>
+            <label htmlFor="request-direction" className="mb-1.5 block text-sm font-medium text-text">
+              {t("request.creativeDirection")} <span className="font-normal text-text-muted">({t("common.optional")})</span>
+            </label>
+            <textarea
+              id="request-direction"
+              rows={3}
+              value={creativeDirection}
+              onChange={(event) => setCreativeDirection(event.target.value)}
+              placeholder={t("request.creativeDirectionPlaceholder")}
+              className="w-full resize-none rounded-md border border-border bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted"
+            />
+          </div>
 
           <div>
             <label className="mb-2 block text-sm font-medium text-text">
