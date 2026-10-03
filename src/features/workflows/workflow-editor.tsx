@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { AlertTriangle, ArrowLeft, ChevronDown, X } from "lucide-react";
+import { AlertTriangle, ArrowLeft, X } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
 import { Tabs } from "@/components/ui/tabs";
 import { useAuth } from "@/features/auth/auth-provider";
@@ -57,7 +57,6 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [issues, setIssues] = useState<WorkflowIssue[]>([]);
   const [notice, setNotice] = useState<string | null>(null);
-  const [metaOpen, setMetaOpen] = useState(!editId);
   const [visibility, setVisibility] = useState<ContentVisibility>("public");
   const [addTarget, setAddTarget] = useState<AddTarget>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -333,29 +332,18 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
         </p>
       )}
 
-      {/* Details */}
-      <section className={card}>
-        <button type="button" onClick={() => setMetaOpen((v) => !v)} aria-expanded={metaOpen} className="flex w-full items-center justify-between gap-2 text-left">
-          <span className="min-w-0">
-            <span className="block text-sm font-semibold text-text">{t("workflow.infoHeading")}</span>
-            {!metaOpen && <span className="block truncate text-caption text-text-muted">{meta.title || t("workflow.titlePlaceholder")}</span>}
-          </span>
-          <ChevronDown size={18} className={cn("shrink-0 text-text-muted transition-transform", metaOpen && "rotate-180")} />
-        </button>
-        {metaOpen && (
-          <div className="mt-4">
-            <WorkflowMetaForm
-              meta={meta}
-              tagPicker={tagPicker}
-              titleError={issues.some((i) => i.code === "titleRequired")}
-              onChange={(patch) => {
-                setMeta((prev) => ({ ...prev, ...patch }));
-                touch();
-              }}
-            />
-          </div>
-        )}
-      </section>
+      {/* Details — one card per main section (Kategori, Temel Bilgiler, Kapak, Araç/Model, Etiketler) */}
+      <div className="mx-auto w-full max-w-3xl">
+      <WorkflowMetaForm
+        meta={meta}
+        tagPicker={tagPicker}
+        titleError={issues.some((i) => i.code === "titleRequired")}
+        onChange={(patch) => {
+          setMeta((prev) => ({ ...prev, ...patch }));
+          touch();
+        }}
+      />
+      </div>
 
       {/* Steps + step editor */}
       {mode === "desktop" && (
@@ -431,9 +419,8 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
         </Modal>
       )}
 
-      <section className={card}>
-        <CreateFormActions
-          className="border-t-0 pt-0"
+      <CreateFormActions
+        className="mx-auto w-full max-w-3xl"
           visibility={visibility}
           onVisibilityChange={(next) => {
             setVisibility(next);
@@ -461,7 +448,6 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
               </div>
             )}
         </CreateFormActions>
-      </section>
 
       {addTarget && (
         <AddContentModal

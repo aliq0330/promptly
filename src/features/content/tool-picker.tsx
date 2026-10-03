@@ -31,7 +31,8 @@ export function ToolPicker({
   contentTypes,
   category,
 }: {
-  label: string;
+  /** Omit inside a `FormSection` that already carries the heading. */
+  label?: string;
   value: string[];
   onChange: (next: string[]) => void;
   /** One content type (forms) — or several (workflows, via `contentTypes`, which wins). */
@@ -45,9 +46,11 @@ export function ToolPicker({
 
   return (
     <div>
-      <label className="mb-1.5 block text-sm font-medium text-text">
-        {label} <span className="text-text-muted">({t("common.optional")})</span>
-      </label>
+      {label && (
+        <label className="mb-1.5 block text-sm font-medium text-text">
+          {label} <span className="text-text-muted">({t("common.optional")})</span>
+        </label>
+      )}
       <div className="flex flex-wrap items-center gap-2">
         {resolved.map((item) => (
           <span

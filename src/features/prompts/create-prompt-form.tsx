@@ -30,6 +30,7 @@ import { copyTextToClipboard, generatorHref, promptHref, requestHref } from "@/l
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { KindDraftsButton } from "@/features/drafts/kind-drafts-button";
 import { CreateFormActions } from "@/features/content/create-form-actions";
+import { FormSection } from "@/features/content/form-section";
 import { SwitchRow } from "@/features/content/visibility-switch";
 import type { ContentVisibility, Generator, GeneratorRun, Prompt, PromptContentType, PromptRequest } from "@/types";
 
@@ -695,7 +696,7 @@ export function CreatePromptForm() {
       </p>
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_360px]">
-        <form onSubmit={handleSubmit} className="min-w-0 space-y-5">
+        <form onSubmit={handleSubmit} className="min-w-0 space-y-4">
           {isAnswerMode && answeredRequest && (
             <div className="space-y-2 rounded-md border border-primary/30 bg-primary/5 p-3 text-sm">
               <div className="flex items-center justify-between gap-2">
@@ -759,109 +760,110 @@ export function CreatePromptForm() {
             </div>
           )}
 
-          <TaxonomyPicker
-            value={{ contentType, category, subcategory }}
-            onChange={(next) => {
-              if (next.contentType !== contentType) {
-                setExtraSettings({});
-                setExtraFields([]);
-                setCustomOptions({});
-              }
-              setContentType(next.contentType);
-              setCategory(next.category);
-              setSubcategory(next.subcategory);
-            }}
-            lockContentType={isEditMode}
-            lockedHint={t("prompt.notEditableWhileEditing")}
-          />
+          <FormSection title={t("taxonomy.categoryLabel")}>
+            <TaxonomyPicker
+              bare
+              value={{ contentType, category, subcategory }}
+              onChange={(next) => {
+                if (next.contentType !== contentType) {
+                  setExtraSettings({});
+                  setExtraFields([]);
+                  setCustomOptions({});
+                }
+                setContentType(next.contentType);
+                setCategory(next.category);
+                setSubcategory(next.subcategory);
+              }}
+              lockContentType={isEditMode}
+              lockedHint={t("prompt.notEditableWhileEditing")}
+            />
+          </FormSection>
 
-          <TitleField
-            id="prompt-title"
-            label={t("forms.title")}
-            value={title}
-            onChange={setTitle}
-            placeholder={t("prompt.titlePlaceholder")}
-            maxLength={80}
-            required
-            nativeRequired
-          />
+          <FormSection title={t("formSection.basics")}>
+            <div className="space-y-4">
+              <TitleField
+                id="prompt-title"
+                label={t("forms.title")}
+                value={title}
+                onChange={setTitle}
+                placeholder={t("prompt.titlePlaceholder")}
+                maxLength={80}
+                required
+                nativeRequired
+              />
 
-          <DescriptionField
-            id="prompt-description"
-            label={t("forms.shortDescription")}
-            value={description}
-            onChange={setDescription}
-            placeholder={t("prompt.descriptionPlaceholder")}
-            maxLength={200}
-            required
-            nativeRequired
-          />
+              <DescriptionField
+                id="prompt-description"
+                label={t("forms.shortDescription")}
+                value={description}
+                onChange={setDescription}
+                placeholder={t("prompt.descriptionPlaceholder")}
+                maxLength={200}
+                required
+                nativeRequired
+              />
+            </div>
+          </FormSection>
 
           {contentType === "image" && (
-            <MultiImagePicker
-              items={images}
-              onChange={setImages}
-              label={t("prompt.imageLabel")}
-              hint={isEditMode ? t("prompt.imageEditHint") : t("prompt.imageUploadHint")}
-            />
+            <FormSection title={t("formSection.images")}>
+              <div className="space-y-4">
+                <MultiImagePicker
+                  items={images}
+                  onChange={setImages}
+                  hint={isEditMode ? t("prompt.imageEditHint") : t("prompt.imageUploadHint")}
+                />
+                <PromptVisionAssist
+                  onApplyPrompt={(text, mode) =>
+                    setPromptText((prev) => (mode === "replace" || !prev.trim() ? text : `${prev}\n\n${text}`))
+                  }
+                />
+              </div>
+            </FormSection>
           )}
 
-          {contentType === "image" && (
-            <PromptVisionAssist
-              onApplyPrompt={(text, mode) =>
-                setPromptText((prev) => (mode === "replace" || !prev.trim() ? text : `${prev}\n\n${text}`))
-              }
-            />
-          )}
+          <FormSection title={t("formSection.tool")}>
+            <ToolPicker value={tools} onChange={setTools} contentType={contentType} category={category} />
+          </FormSection>
 
-          <ToolPicker
-            label={t("tool.recommendedLabel")}
-            value={tools}
-            onChange={setTools}
-            contentType={contentType}
-            category={category}
-          />
+          <FormSection title={t("formSection.prompt")}>
+            <div className="space-y-4">
+              <PromptTextEditor
+                id="prompt-text"
+                value={promptText}
+                onChange={setPromptText}
+                variables={variables}
+                onVariablesChange={setVariables}
+                rows={5}
+                placeholder={t("prompt.promptTextPlaceholder")}
+              />
 
-          <div>
-            <label htmlFor="prompt-text" className="mb-1.5 block text-sm font-medium text-text">
-              {t("prompt.promptTextHeading")}
-            </label>
-            <PromptTextEditor
-              id="prompt-text"
-              value={promptText}
-              onChange={setPromptText}
-              variables={variables}
-              onVariablesChange={setVariables}
-              rows={5}
-              placeholder={t("prompt.promptTextPlaceholder")}
-            />
-          </div>
+              <ExtraSettingsSection
+                contentType={contentType}
+                value={extraSettings}
+                onChange={setExtraSettings}
+                extraFields={extraFields}
+                onExtraFieldsChange={setExtraFields}
+                customOptions={customOptions}
+                onCustomOptionsChange={setCustomOptions}
+                englishFragments={englishFragments}
+                onEnglishFragmentsChange={setEnglishFragments}
+                promptText={promptText}
+                hasTool={tools.length > 0}
+                category={category}
+                subcategory={subcategory}
+                tools={tools}
+              />
 
-          <ExtraSettingsSection
-            contentType={contentType}
-            value={extraSettings}
-            onChange={setExtraSettings}
-            extraFields={extraFields}
-            onExtraFieldsChange={setExtraFields}
-            customOptions={customOptions}
-            onCustomOptionsChange={setCustomOptions}
-            englishFragments={englishFragments}
-            onEnglishFragmentsChange={setEnglishFragments}
-            promptText={promptText}
-            hasTool={tools.length > 0}
-            category={category}
-            subcategory={subcategory}
-            tools={tools}
-          />
+              {generatorRun?.generatedNegativePrompt && (
+                <NegativePromptReference text={generatorRun.generatedNegativePrompt} />
+              )}
+            </div>
+          </FormSection>
 
-          {generatorRun?.generatedNegativePrompt && (
-            <NegativePromptReference text={generatorRun.generatedNegativePrompt} />
-          )}
-
-          <div>
-            <label className="mb-2 block text-sm font-medium text-text">{t("forms.tags")}</label>
+          <FormSection title={t("forms.tags")}>
             <TagPicker picker={tagPicker} />
-          </div>
+          </FormSection>
 
           <CreateFormActions
             visibility={showsVisibilityChoice ? undefined : visibility}

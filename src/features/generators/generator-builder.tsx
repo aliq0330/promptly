@@ -25,6 +25,7 @@ import { cn, generatorHref } from "@/lib/utils";
 import { multiImageItemFromMedia } from "@/lib/supabase/media-input";
 import { KindDraftsButton } from "@/features/drafts/kind-drafts-button";
 import { CreateFormActions } from "@/features/content/create-form-actions";
+import { FormSection } from "@/features/content/form-section";
 import {
   createDraftGenerator,
   fetchGeneratorById,
@@ -538,12 +539,14 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
 
       {step === "details" && (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
-          <div className="min-w-0 space-y-4 rounded-lg border border-border bg-surface p-4 sm:p-5">
+          <div className="min-w-0 space-y-4">
             <GeneratorDetailsForm meta={meta} onChange={(patch) => setMeta((prev) => ({ ...prev, ...patch }))} tagPicker={tagPicker} />
-            {detailsError && <p className="text-sm text-danger">{detailsError}</p>}
-            <Button type="button" onClick={handleAdvanceFromDetails} disabled={creatingDraft}>
-              {creatingDraft ? t("generator.savingEllipsis") : t("generator.nextFields")}
-            </Button>
+            <FormSection>
+              {detailsError && <p className="mb-3 text-sm text-danger">{detailsError}</p>}
+              <Button type="button" onClick={handleAdvanceFromDetails} disabled={creatingDraft}>
+                {creatingDraft ? t("generator.savingEllipsis") : t("generator.nextFields")}
+              </Button>
+            </FormSection>
           </div>
           <div className="min-w-0">
             <div className="rounded-lg border border-border bg-surface p-4 sm:p-5 lg:sticky lg:top-4">
@@ -559,7 +562,7 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
 
       {step === "fields" && (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
-          <div className="min-w-0 rounded-lg border border-border bg-surface p-4 sm:p-5">
+          <FormSection>
             <GeneratorVisionAssist
               meta={meta}
               fields={schema.fields}
@@ -574,7 +577,7 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
               onDeleteField={handleDeleteField}
               onReorderFields={handleReorderFields}
             />
-          </div>
+          </FormSection>
           <div className="min-w-0">
             <div className="rounded-lg border border-border bg-surface p-4 sm:p-5 lg:sticky lg:top-4">
               <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-text-muted">{t("generator.livePreview")}</p>
@@ -603,9 +606,7 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
               </p>
             ))}
           </div>
-          <div className="rounded-lg border border-border bg-surface p-4 sm:p-5">
-            <CreateFormActions
-              className="border-t-0 pt-0"
+          <CreateFormActions
               visibility={meta.visibility === "private" ? "private" : "public"}
               onVisibilityChange={(next) =>
                 // "Yalnızca bağlantıyla" (unlisted) isn't a switch state — an existing unlisted generator stays unlisted until the owner flips the switch.
@@ -624,7 +625,6 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
                 </p>
               )}
             </CreateFormActions>
-          </div>
         </div>
       )}
 

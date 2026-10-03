@@ -1,20 +1,21 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { Children, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
 import type { ContentVisibility } from "@/types";
+import { FormSection } from "./form-section";
 import { VisibilitySwitch } from "./visibility-switch";
 
 /**
  * The end of every creation form (Prompt, Prompt İsteği, Generator, Workflow,
  * Hazır Ayar), always the same:
  *
- *   ─────────────────
- *   Görünürlük  [switch]      (+ `extra`, e.g. an answer's "show on profile")
- *   ─────────────────
- *                 [Taslağa kaydet] [Paylaş]
+ *   ┌ Görünürlük card ─────┐   [switch] (+ `extra`, e.g. an answer's "show on profile")
+ *   └──────────────────────┘
+ *   ┌ actions card ────────┐   [Taslağa kaydet] [Paylaş]
+ *   └──────────────────────┘
  *
  * "Paylaş" is the primary action; with no `onPublish` it is the form's submit
  * button, so the form's own `onSubmit` (and its validation) stays the single
@@ -52,33 +53,38 @@ export function CreateFormActions({
   className?: string;
 }) {
   const { t } = useTranslation();
+  const hasNotices = Children.toArray(children).length > 0;
   const showVisibility = visibility !== undefined && onVisibilityChange !== undefined;
   return (
-    <div className={cn("space-y-4 border-t border-border-soft pt-5", className)} data-create-form-actions>
+    <div className={cn("min-w-0 space-y-4", className)} data-create-form-actions>
       {(showVisibility || extra) && (
-        <div className="space-y-3">
-          {showVisibility && <VisibilitySwitch value={visibility} onChange={onVisibilityChange} disabled={busy} />}
-          {extra}
-        </div>
+        <FormSection title={t("visibility.label")}>
+          <div className="space-y-3">
+            {showVisibility && <VisibilitySwitch value={visibility} onChange={onVisibilityChange} disabled={busy} hideLabel />}
+            {extra}
+          </div>
+        </FormSection>
       )}
-      {children}
-      <div className="flex gap-2 border-t border-border-soft pt-4 sm:justify-end">
-        {onSaveDraft && (
-          <Button type="button" variant="outline" size="lg" disabled={busy} onClick={onSaveDraft} className="min-w-0 flex-1 px-4 sm:flex-none sm:px-6" data-action="save-draft">
-            {saveDraftLabel ?? t("createActions.saveDraft")}
+      <FormSection>
+        {hasNotices && <div className="mb-4 space-y-3">{children}</div>}
+        <div className="flex gap-2 sm:justify-end">
+          {onSaveDraft && (
+            <Button type="button" variant="outline" size="lg" disabled={busy} onClick={onSaveDraft} className="min-w-0 flex-1 px-4 sm:flex-none sm:px-6" data-action="save-draft">
+              {saveDraftLabel ?? t("createActions.saveDraft")}
+            </Button>
+          )}
+          <Button
+            type={onPublish ? "button" : "submit"}
+            size="lg"
+            disabled={busy || publishDisabled}
+            onClick={onPublish}
+            className={cn("min-w-0 px-4 sm:px-8", onSaveDraft ? "flex-1 sm:flex-none" : "w-full sm:w-auto")}
+            data-action="publish"
+          >
+            {publishLabel ?? t("common.share")}
           </Button>
-        )}
-        <Button
-          type={onPublish ? "button" : "submit"}
-          size="lg"
-          disabled={busy || publishDisabled}
-          onClick={onPublish}
-          className={cn("min-w-0 px-4 sm:px-8", onSaveDraft ? "flex-1 sm:flex-none" : "w-full sm:w-auto")}
-          data-action="publish"
-        >
-          {publishLabel ?? t("common.share")}
-        </Button>
-      </div>
+        </div>
+      </FormSection>
     </div>
   );
 }

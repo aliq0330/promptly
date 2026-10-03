@@ -40,12 +40,15 @@ export function TaxonomyPicker({
   onChange,
   lockContentType = false,
   lockedHint,
+  bare = false,
 }: {
   value: TaxonomySelection;
   onChange: (next: TaxonomySelection) => void;
   /** Editing an existing item: the type can't change, category/subcategory still can. */
   lockContentType?: boolean;
   lockedHint?: string;
+  /** Inside a `FormSection` that already carries the "Kategori" heading: drop the picker's own title line. */
+  bare?: boolean;
 }) {
   const { t, language } = useTranslation();
   useTaxonomyVersion();
@@ -82,9 +85,11 @@ export function TaxonomyPicker({
     <div>
       <div className="mb-2 flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-sm font-medium text-text">
-            {t("taxonomy.categoryLabel")} <span className="font-normal text-text-muted">({t("common.optional")})</span>
-          </p>
+          {!bare && (
+            <p className="text-sm font-medium text-text">
+              {t("taxonomy.categoryLabel")} <span className="font-normal text-text-muted">({t("common.optional")})</span>
+            </p>
+          )}
           <p className="text-caption text-text-secondary">{t("taxonomy.categoryHint")}</p>
         </div>
         {value.category && (

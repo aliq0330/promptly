@@ -79,18 +79,21 @@ export function VisibilitySwitch({
   onChange,
   disabled,
   className,
+  hideLabel,
 }: {
   value: ContentVisibility;
   onChange: (next: ContentVisibility) => void;
   disabled?: boolean;
   className?: string;
+  /** The surrounding card already carries the "Görünürlük" heading. */
+  hideLabel?: boolean;
 }) {
   const { t } = useTranslation();
   const isPublic = value === "public";
   const title = isPublic ? t("visibility.public") : t("visibility.private");
   return (
     <div className={className} data-visibility-switch>
-      <p className="mb-2 text-sm font-medium text-text">{t("visibility.label")}</p>
+      {!hideLabel && <p className="mb-2 text-sm font-medium text-text">{t("visibility.label")}</p>}
       <SwitchRow
         checked={isPublic}
         onChange={(next) => onChange(next ? "public" : "private")}
