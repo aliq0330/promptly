@@ -12456,7 +12456,11 @@ Oluştur ekranındaki kategori seçimi ve "Ek Ayar Önerileri" yeniden kuruldu; 
 - **Doğrulama:** `tsc`, `lint`, `next build` temiz; migration+RLS yerel PostgreSQL 16'da; ağ taklitli Playwright: taksonomi 25/25 (mobil/tablet/masaüstü), panel akışı 28/28, mobil+EN panel, DB'den taksonomi hydrate, `/presets/create` render. Gerçek Supabase'e karşı denenmedi.
 - **Sınırlar:** kategori/alt kategori tek seçim; platform kataloğu kodda statik (DB'den yönetilmez); taksonomi yönetim ekranı yok; generator eşlemesi yalnızca isim eşleşen alanlara uygular.
 
-### 9.85 Hazır Ayarlar sadeleştirmesi — yalnızca Prompt'a ait, alan başına tek değer, normal kaydetme
+### 9.85 Kategori seçici: tek iç içe ağaç (tür → kategori → alt kategori)
+
+`TaxonomyPicker` (`features/content/taxonomy-picker.tsx`; prompt/istek/generator/hazır ayar formlarının ortak alanı) artık tür çipleri + master/detail yerine tek bir iç içe accordion ağacı: İçerik türü (zorunlu) → Kategori → Alt kategori; her seviyede tek açık dal, yaprak seviyesi radio, üstte "Görsel › Fotoğrafçılık › Portre" breadcrumb'ı, "Seçimi temizle". Tür değişince kategori sıfırlanır (eski sözleşme); düzenlemede tür kilitli (yalnız o tür görünür). Props, `TaxonomySelection` ve DB/veri katmanı değişmedi; tek responsive düzen (`@container` ile tablet/masaüstünde daha ferah satırlar), dikey çizgi + dirsek bağlantılarıyla hiyerarşi. i18n: `taxonomy.selectedPath/categoryCount/typeSelectedAria` TR+EN. Migration yok. Doğrulama: tsc/lint/build temiz; ağ taklitli bir test sayfasıyla Playwright (320/375/430/768/1024/1280, açık/koyu) akış + yatay taşma yok (sayfa sonra silindi); gerçek Supabase'e ve fiziksel cihaza karşı denenmedi.
+
+### 9.86 Hazır Ayarlar sadeleştirmesi — yalnızca Prompt'a ait, alan başına tek değer, normal kaydetme
 
 Bölüm 9.83/9.84'ün hazır ayar tasarımındaki mantık karışıklığı (alan *şablonu* ile *değer*in aynı ekranda karışması, generator bağımlılığı) kullanıcıyla sohbette netleştirilip düzeltildi. **Migration yok** (kullanılmayan `preset_uses`, `presets.use_count` ve `preset_id null` kütüphane alanları DB'de dokunulmadan duruyor).
 - **Generatordan ayrıldı:** `generator-preset-bar.tsx`, `preset-generator-mapping.ts` ve `GeneratorPlayground`'un `presetContext` prop'u silindi; hazır ayar yalnızca Prompt formunda kullanılır. `/create?preset=` derin bağlantısı da kalktı.
