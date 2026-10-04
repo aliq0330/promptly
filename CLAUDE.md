@@ -4202,6 +4202,12 @@ Prompt ve Generator'da prompt metninin yanına **[Kopyala] [Çalıştır]**. Pro
 - **Yan düzeltme (önceden var olan hata):** `--p-success/warning/danger` yalnızca Lavanta paletinde tanımlıydı; varsayılan Kum (ve Okyanus/Orman) altında `text-danger/success/warning` sitenin her yerinde çözümlenmiyordu. Palete bağlı olmayan `:root`/`.dark` taban değerleri eklendi (`globals.css`).
 - i18n: `run.*` TR+EN. **Doğrulama:** tsc/lint/build temiz; `runWithAI` mantığı tsx ile, modal ise geçici harness'le Playwright'ta (mobil 390: sıralama, öneri etiketi, "diğer araçlar", Claude URL'inin `?q=` ile açılması, panoya yazım, Gemini'de kopyala-fallback, önizleme + seçim + onay; 12/12) denendi, harness silindi. Gerçek AI sitelerinin prompt'u URL'den gerçekten kabul ettiği (siteler değişebilir) ve gerçek telefonda uygulama yönlendirmesi denenmedi.
 
+### 9.92 Uzun prompt metni: ortak kaydırılabilir alan
+
+Detay sayfalarında uzun prompt metni sayfayı uzatmıyor: `src/features/content/scrollable-prompt.tsx` (`ScrollablePrompt`, `as="p"|"pre"`) tek ortak yüzey. Responsive üst sınır (`max-h` mobil 18rem → sm 20rem → md 26rem → lg 30rem), kısa metinde scrollbar yok, `overscroll-contain` (kaydırma sayfaya zincirlenmez), satır sonları korunur, uzun kelimeler `overflow-wrap:anywhere` ile kırılır (yatay taşma yok), `prompt-text` mono stili aynı, klavye için `tabIndex=0` + odak halkası. İnce scrollbar için `globals.css`'e `scrollbar-thin-soft` utility'si (yalnızca mevcut token'lar). Aksiyon satırları (Kopyala, Kişiselleştir, Çalıştır) kaydırma alanının dışında, başlık çubuğunda kalır.
+- Bağlandığı yerler: `prompt-detail-view.tsx` (Prompt Metni), `request-detail-view.tsx` (İstek metni), `generated-prompt-panel.tsx` (Generator pozitif/negatif prompt), `generator-json-panel.tsx` (JSON çıktısı; eski `max-h-96` yerine). Workflow detayında prompt metni yok (yalnızca içerik referansları), dokunulmadı; kartlardaki `line-clamp`'li önizlemeler ve oluşturma formları kapsam dışı.
+- Migration yok; yeni metin yok (İngilizce karşılık gerekmedi). Doğrulama: tsc/lint/build temiz; geçici sayfayla Playwright (masaüstü/tablet/mobil, 200 satırlık + 400 karakterlik tek kelime): metin 288–480px'e sabitleniyor, sayfa uzamıyor, kısa metinde scrollbar yok, yatay taşma yok, iç kaydırma sayfayı/aksiyonları oynatmıyor (18/18); sayfa sonra silindi. Gerçek Supabase'e karşı denenmedi.
+
 ---
 
 **Sonraki adım:** Mesajlaşma genişletmesinin 3 fazı da (Faz A — Bölüm

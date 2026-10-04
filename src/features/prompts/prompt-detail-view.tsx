@@ -37,6 +37,7 @@ import { parseHighlightValue } from "@/lib/notification-utils";
 import { cn, formatRelativeTime, profileHref, tagHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Prompt, PromptVariable } from "@/types";
+import { ScrollablePrompt } from "@/features/content/scrollable-prompt";
 
 /** Same fade timing as the comment-thread flash (`comment-section.tsx`) — one shared "how long does a jumped-to thing glow" feel across the app. */
 const HIGHLIGHT_DURATION_MS = 2500;
@@ -161,7 +162,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
                 <RunButton text={livePromptText} recommendedRefs={prompt.tools} />
               </div>
             </div>
-            <p className="prompt-text whitespace-pre-wrap break-words px-4 py-4 text-[0.875rem] text-text">{livePromptText}</p>
+            <ScrollablePrompt className="px-4 py-4 text-[0.875rem] text-text">{livePromptText}</ScrollablePrompt>
           </section>
 
           {media && (
