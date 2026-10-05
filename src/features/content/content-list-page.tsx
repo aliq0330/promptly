@@ -24,7 +24,12 @@ export interface ListPageStep {
   bodyKey: TranslationKey;
 }
 
-type Sort = NonNullable<ContentSearchFilters["sort"]>;
+type SortKey = "newest" | "oldest" | "most-liked";
+const SORT_LABELS: Record<SortKey, TranslationKey> = {
+  newest: "profile.sortNewest",
+  oldest: "profile.sortOldest",
+  "most-liked": "profile.sortMostLiked",
+};
 const DEBOUNCE_MS = 300;
 
 /**
@@ -35,7 +40,7 @@ const DEBOUNCE_MS = 300;
  * returns the other three kinds — and reuses the site's advanced search
  * (users, tags, tools, media type, sort) through the page's own `search`.
  */
-export function ContentListPage<T extends { id: string; contentType?: string | null; category?: string | null; subcategory?: string | null }>({
+export function ContentListPage<T extends { id: string; createdAt: string; likeCount: number; contentType?: string | null; category?: string | null; subcategory?: string | null }>({
   icon,
   eyebrow,
   title,
@@ -83,7 +88,7 @@ export function ContentListPage<T extends { id: string; contentType?: string | n
   const { t } = useTranslation();
   const [tokens, setTokens] = useState<SearchToken[]>([]);
   const [text, setText] = useState("");
-  const [sort, setSort] = useState<Sort>("relevant");
+  const [sort, setSort] = useState<SortKey>("newest");
   const [taxonomy, setTaxonomy] = useState<TaxonomyFilterValue>(EMPTY_TAXONOMY_FILTER);
   const [results, setResults] = useState<T[] | null>(null);
   const [searching, setSearching] = useState(false);
@@ -105,7 +110,8 @@ export function ContentListPage<T extends { id: string; contentType?: string | n
       const filters: ContentSearchFilters = {
         ...tokenFilters,
         taxonomy: taxonomy.contentType ? taxonomy : undefined,
-        sort,
+        // The server only picks which top-N rows come back; the exact order is applied client-side below.
+        sort: sort === "most-liked" ? "popular" : "new",
       };
       const found = await search(normalized, filters);
       if (cancelled) return;
@@ -121,8 +127,15 @@ export function ContentListPage<T extends { id: string; contentType?: string | n
 
   const visible = useMemo(() => {
     const list = results ?? baseItems.filter((item) => (matches ? matches(item, taxonomy) : matchesTaxonomy(item, taxonomy)));
-    return postFilter ? postFilter(list) : list;
-  }, [results, baseItems, taxonomy, matches, postFilter]);
+    const filtered = postFilter ? postFilter(list) : list;
+    return [...filtered].sort((a, b) =>
+      sort === "most-liked"
+        ? b.likeCount - a.likeCount || b.createdAt.localeCompare(a.createdAt)
+        : sort === "oldest"
+          ? a.createdAt.localeCompare(b.createdAt)
+          : b.createdAt.localeCompare(a.createdAt),
+    );
+  }, [results, baseItems, taxonomy, matches, postFilter, sort]);
 
   return (
     <PageContainer className="space-y-6">
@@ -180,15 +193,20 @@ export function ContentListPage<T extends { id: string; contentType?: string | n
             ))}
           </ChipRow>
         )}
-        {active && (
-          <ChipRow>
-            {(["relevant", "new", "popular"] as Sort[]).map((value) => (
-              <Chip key={value} selected={sort === value} onClick={() => setSort(value)}>
-                {t(value === "relevant" ? "search.sortRelevant" : value === "new" ? "search.sortNew" : "search.sortPopular")}
-              </Chip>
+        <div className="flex justify-end">
+          <select
+            value={sort}
+            onChange={(event) => setSort(event.target.value as SortKey)}
+            aria-label={t("profile.sortAriaLabel")}
+            className="h-9 shrink-0 rounded-md border border-border bg-surface px-3 text-label font-medium text-text"
+          >
+            {(Object.keys(SORT_LABELS) as SortKey[]).map((key) => (
+              <option key={key} value={key}>
+                {t(SORT_LABELS[key])}
+              </option>
             ))}
-          </ChipRow>
-        )}
+          </select>
+        </div>
         {extra}
       </div>
 

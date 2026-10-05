@@ -183,6 +183,16 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
             <ShareTriggerButton target={{ contentType: "prompt", prompt }} label={t("common.share")} />
           </div>
 
+          {variables.length > 0 && (
+            <PromptVariableInputs
+              variables={variables}
+              values={variableValues}
+              isCustomized={isCustomized}
+              onChange={(name, value) => setVariableOverrides((prev) => ({ ...prev, [name]: value }))}
+              onReset={() => setVariableOverrides({})}
+            />
+          )}
+
           <section aria-labelledby="prompt-text-title" className="overflow-hidden rounded-lg border border-border-soft bg-surface-soft">
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border-soft px-4 py-2.5">
               <h2 id="prompt-text-title" className="flex items-center gap-1.5 font-sans text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">
@@ -204,16 +214,6 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
                 <RunButton text={displayText} recommendedRefs={prompt.tools} />
               </div>
             </div>
-            {variables.length > 0 && (
-              <PromptVariableInputs
-                variables={variables}
-                values={variableValues}
-                template={livePromptText}
-                isCustomized={isCustomized}
-                onChange={(name, value) => setVariableOverrides((prev) => ({ ...prev, [name]: value }))}
-                onReset={() => setVariableOverrides({})}
-              />
-            )}
             <ScrollablePrompt className="px-4 py-4 text-[0.875rem] text-text">{displayText}</ScrollablePrompt>
           </section>
 
