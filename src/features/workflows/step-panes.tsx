@@ -127,6 +127,7 @@ export function ContentPane({
           {t("workflow.createNew")}
         </Button>
       </div>
+      {step.stepType === "request" && <p className="text-caption text-danger">{t("workflow.requestStepLegacy")}</p>}
       <p className="text-caption text-text-muted">{t("workflow.contentIsReference")}</p>
     </div>
   );
@@ -199,7 +200,7 @@ export function IOPane({ step, steps, index, onChange }: PaneProps) {
                 <option value="">{sources.length ? t("workflow.noLink") : t("workflow.noSourcesBefore")}</option>
                 {sources.map(({ step: from, stepIndex, output }) => (
                   <option key={`${from.id}::${output.id}`} value={`${from.id}::${output.id}`}>
-                    {t("workflow.stepN", { n: String(stepIndex + 1) })} — {output.label || t("workflow.outputLabel")}
+                    {t("workflow.sourceOption", { n: String(stepIndex + 1), label: output.label || t("workflow.outputLabel") })}
                   </option>
                 ))}
               </select>

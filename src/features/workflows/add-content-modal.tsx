@@ -11,23 +11,23 @@ import { useAuth } from "@/features/auth/auth-provider";
 import { useOwnProfile } from "@/features/auth/own-profile-provider";
 import { useRealPrompts } from "@/features/prompts/real-prompts-provider";
 import { useRealGenerators } from "@/features/generators/real-generators-provider";
-import { useRealRequests } from "@/features/requests/real-requests-provider";
 import { createRealPrompt, searchPrompts } from "@/lib/supabase/prompts";
-import { createRealRequest, searchRequests } from "@/lib/supabase/requests";
 import { createDraftGenerator, searchGenerators } from "@/lib/supabase/generators";
-import { generatorRef, promptRef, requestRef } from "@/lib/supabase/workflows";
+import { generatorRef, promptRef } from "@/lib/supabase/workflows";
+import { PICKABLE_STEP_TYPES } from "@/lib/workflow-logic";
 import { taxonomyPathLabel, type TaxonomySelection } from "@/lib/content-taxonomy";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
 import type { WorkflowContentRef, WorkflowStepType } from "@/types";
 import { MEDIA_ICON, STEP_TYPE_META } from "./step-meta";
 
-const TYPES: WorkflowStepType[] = ["prompt", "generator", "request"];
+/** Prompt requests are not workflow steps — only these can be added. */
+const TYPES = PICKABLE_STEP_TYPES;
 const inputClass = "h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted";
 
 /**
- * Add / replace a step's content: pick an existing prompt / generator /
- * prompt request, or create a new one right here. Creation only writes the
+ * Add / replace a step's content: pick an existing prompt or generator,
+ * or create a new one right here. Creation only writes the
  * content record (through the normal create functions) — nothing is run.
  * Bottom sheet on mobile, dialog on larger screens (via `Modal`).
  */
@@ -43,7 +43,8 @@ export function AddContentModal({
   onClose: () => void;
 }) {
   const { t } = useTranslation();
-  const [type, setType] = useState<WorkflowStepType>(initialType);
+  // A legacy "request" step opens on Prompt: it can only be swapped for a prompt or a generator.
+  const [type, setType] = useState<WorkflowStepType>(TYPES.includes(initialType) ? initialType : "prompt");
   const [mode, setMode] = useState<"existing" | "scratch">(initialMode);
 
   return (
@@ -96,7 +97,6 @@ function ExistingList({ type, onSelect }: { type: WorkflowStepType; onSelect: (r
   const { t, language } = useTranslation();
   const { realPrompts } = useRealPrompts();
   const { realGenerators } = useRealGenerators();
-  const { realRequests } = useRealRequests();
   const [query, setQuery] = useState("");
   const [found, setFound] = useState<WorkflowContentRef[] | null>(null);
   const [added, setAdded] = useState<string | null>(null);
@@ -105,9 +105,8 @@ function ExistingList({ type, onSelect }: { type: WorkflowStepType; onSelect: (r
   // Empty query: the already-loaded recent content; typing: a debounced server search.
   const recent = useMemo<WorkflowContentRef[]>(() => {
     if (type === "prompt") return realPrompts.slice(0, 30).map(promptRef);
-    if (type === "generator") return realGenerators.slice(0, 30).map(generatorRef);
-    return realRequests.slice(0, 30).map(requestRef);
-  }, [type, realPrompts, realGenerators, realRequests]);
+    return realGenerators.slice(0, 30).map(generatorRef);
+  }, [type, realPrompts, realGenerators]);
 
   useEffect(() => {
     if (!text) {
@@ -120,9 +119,7 @@ function ExistingList({ type, onSelect }: { type: WorkflowStepType; onSelect: (r
       const refs =
         type === "prompt"
           ? (await searchPrompts(text, {}, 20)).map(promptRef)
-          : type === "generator"
-            ? (await searchGenerators(text, {}, 20)).map(generatorRef)
-            : (await searchRequests(text, {}, 20)).map(requestRef);
+          : (await searchGenerators(text, {}, 20)).map(generatorRef);
       if (!cancelled) setFound(refs);
     }, 300);
     return () => {
@@ -210,9 +207,8 @@ function ScratchForm({ type, onSelect }: { type: WorkflowStepType; onSelect: (re
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const bodyLabel =
-    type === "prompt" ? t("workflow.newPromptText") : type === "generator" ? t("workflow.newGeneratorDescription") : t("workflow.newRequestDescription");
-  const nameLabel = type === "prompt" ? t("workflow.newPromptName") : type === "generator" ? t("workflow.newGeneratorName") : t("workflow.newRequestTitle");
+  const bodyLabel = type === "prompt" ? t("workflow.newPromptText") : t("workflow.newGeneratorDescription");
+  const nameLabel = type === "prompt" ? t("workflow.newPromptName") : t("workflow.newGeneratorName");
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -238,13 +234,6 @@ function ScratchForm({ type, onSelect }: { type: WorkflowStepType; onSelect: (re
           profile,
         );
         onSelect(promptRef(prompt));
-      } else if (type === "request") {
-        const request = await createRealRequest(
-          { ...common, title: name, description: body, creativeDirection: "", preferredTool: null, images: [] },
-          user.id,
-          profile,
-        );
-        onSelect(requestRef(request));
       } else {
         const { generator } = await createDraftGenerator(
           {
@@ -297,7 +286,7 @@ function ScratchForm({ type, onSelect }: { type: WorkflowStepType; onSelect: (re
       </div>
       <TaxonomyPicker value={taxonomy} onChange={setTaxonomy} />
       <ToolPicker
-        label={type === "request" ? t("tool.preferredLabel") : t("tool.recommendedLabel")}
+        label={t("tool.recommendedLabel")}
         value={tools}
         onChange={setTools}
         contentType={taxonomy.contentType}

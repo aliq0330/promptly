@@ -9,7 +9,7 @@ import { Tabs } from "@/components/ui/tabs";
 import { useAuth } from "@/features/auth/auth-provider";
 import { fetchWorkflowById, saveWorkflow } from "@/lib/supabase/workflows";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import { duplicateStep, moveStep, newStep, sanitizeLinks, validateWorkflow, type WorkflowIssue } from "@/lib/workflow-logic";
+import { appendLinkedStep, duplicateStep, moveStep, newStep, sanitizeLinks, validateWorkflow, type WorkflowIssue } from "@/lib/workflow-logic";
 import { cn } from "@/lib/utils";
 import { multiImageItemFromMedia } from "@/lib/supabase/media-input";
 import type { ContentVisibility, WorkflowContentRef, WorkflowStep } from "@/types";
@@ -41,7 +41,7 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
   const { t } = useTranslation();
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
-  const mode = useLayoutMode();
+  const [rootRef, mode] = useLayoutMode();
 
   const [workflowId, setWorkflowId] = useState<string | null>(editId);
   const [loadState, setLoadState] = useState<LoadState>(editId ? "loading" : "ready");
@@ -140,7 +140,8 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
       return;
     }
     const step = { ...newStep(ref.type), title: ref.title, content: ref };
-    commitSteps([...steps, step]);
+    // The new step's first input is wired to the previous step's output by default (changeable in Girdi / Çıktı).
+    commitSteps(appendLinkedStep(steps, step, t("workflow.defaultOutputLabel")));
     setSelectedId(step.id);
     setDetailTab("general");
   }
@@ -175,6 +176,7 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
       stepNoContent: "workflow.issueStepContent",
       stepContentMissing: "workflow.issueStepMissing",
       unpublishedGenerator: "workflow.warnUnpublished",
+      stepRequestNotAllowed: "workflow.issueStepRequest",
     };
     return t(keys[issue.code], { n });
   }
@@ -209,11 +211,9 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
     }
   }
 
-  if (authLoading || loadState === "loading" || mode === null) {
-    return <div className="mx-auto max-w-lg px-4 py-16 text-center text-sm text-text-muted">{t("common.loading")}</div>;
-  }
-  if (!user) {
-    return (
+  const gate = authLoading || loadState === "loading" || mode === null ? (
+    <div className="mx-auto max-w-lg px-4 py-16 text-center text-sm text-text-muted">{t("common.loading")}</div>
+  ) : !user ? (
       <div className="mx-auto max-w-md px-4 py-16 text-center">
         <h1 className="mb-2 text-h2 font-semibold text-text">{t("auth.loginRequiredTitle")}</h1>
         <p className="mb-4 text-sm text-text-muted">{t("workflow.loginRequired")}</p>
@@ -221,10 +221,7 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
           {t("header.login")}
         </Link>
       </div>
-    );
-  }
-  if (loadState === "notfound" || loadState === "forbidden") {
-    return (
+  ) : loadState === "notfound" || loadState === "forbidden" ? (
       <div className="mx-auto max-w-md px-4 py-16 text-center">
         <h1 className="mb-2 text-h2 font-semibold text-text">{t("workflow.notFoundTitle")}</h1>
         <p className="mb-4 text-sm text-text-muted">{loadState === "forbidden" ? t("workflow.notYours") : t("workflow.notFoundBody")}</p>
@@ -232,8 +229,7 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
           {t("workflow.pageTitle")}
         </Link>
       </div>
-    );
-  }
+  ) : null;
 
   const stateLabel =
     saveState === "saving"
@@ -305,7 +301,10 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
     </div>
   );
 
+  if (gate || !user || mode === null) return <div ref={rootRef} className="w-full min-w-0">{gate}</div>;
+
   return (
+    <div ref={rootRef} className="w-full min-w-0">
     <div className="mx-auto w-full max-w-[1400px] space-y-4 px-3 py-5 sm:px-5 sm:py-6 lg:px-8">
       {/* Top bar */}
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
@@ -347,8 +346,8 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
 
       {/* Steps + step editor */}
       {mode === "desktop" && (
-        <div className="grid grid-cols-[280px_minmax(0,1fr)_320px] items-start gap-4">
-          <section className={cn(card, "sticky top-20")}>
+        <div className="grid grid-cols-[minmax(220px,260px)_minmax(0,1fr)_minmax(240px,300px)] items-start gap-4">
+          <section className={cn(card, "sticky top-20 min-w-0 max-h-[calc(100dvh-6rem)] overflow-y-auto")}>
             <h2 className="mb-3 text-sm font-semibold text-text">{t("workflow.stepsHeading")}</h2>
             {list}
           </section>
@@ -370,7 +369,7 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
               <p className="py-10 text-center text-sm text-text-muted">{t("workflow.selectStepHint")}</p>
             )}
           </section>
-          <section className={cn(card, "sticky top-20 space-y-5")}>
+          <section className={cn(card, "sticky top-20 min-w-0 max-h-[calc(100dvh-6rem)] space-y-5 overflow-y-auto")}>
             {panes ? (
               <>
                 {panes.content}
@@ -385,8 +384,8 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
       )}
 
       {mode === "tablet" && (
-        <div className="grid grid-cols-[260px_minmax(0,1fr)] items-start gap-4">
-          <section className={cn(card, "sticky top-20")}>
+        <div className="grid grid-cols-[minmax(200px,240px)_minmax(0,1fr)] items-start gap-4">
+          <section className={cn(card, "sticky top-20 min-w-0 max-h-[calc(100dvh-6rem)] overflow-y-auto")}>
             <h2 className="mb-3 text-sm font-semibold text-text">{t("workflow.stepsHeading")}</h2>
             {list}
           </section>
@@ -457,6 +456,7 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
           onClose={() => setAddTarget(null)}
         />
       )}
+    </div>
     </div>
   );
 }

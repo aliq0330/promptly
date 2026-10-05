@@ -25,6 +25,35 @@ export function newStep(stepType: WorkflowStepType): WorkflowStep {
   };
 }
 
+/** Step types a user may ADD. "request" stays in `WorkflowStepType` only so old workflows still load/render; it can no longer be chosen or saved. */
+export const PICKABLE_STEP_TYPES: WorkflowStepType[] = ["prompt", "generator"];
+
+export function isPickableStepType(type: WorkflowStepType): boolean {
+  return PICKABLE_STEP_TYPES.includes(type);
+}
+
+/**
+ * Appends a new step to the end of the chain. Every step needs an output so
+ * the next one has something to take, so a step (and the previous one, if it
+ * has none yet) gets a default output; the new step's first input is then
+ * linked to the previous step's output. Only a starting point — the user can
+ * re-point or unlink it. Nothing already wired is touched.
+ */
+export function appendLinkedStep(steps: WorkflowStep[], step: WorkflowStep, defaultOutputLabel: string): WorkflowStep[] {
+  const withOutput = (s: WorkflowStep): WorkflowStep =>
+    s.outputs.length > 0 ? s : { ...s, outputs: [{ id: newId(), label: defaultOutputLabel }] };
+  const next = withOutput(step);
+  const prev = steps[steps.length - 1];
+  if (!prev) return [next];
+  const prevFixed = withOutput(prev);
+  const source = prevFixed.outputs[0];
+  const linked: WorkflowStep =
+    next.inputs.length > 0
+      ? next
+      : { ...next, inputs: [{ id: newId(), label: source.label, source: { stepId: prevFixed.id, outputId: source.id } }] };
+  return [...steps.slice(0, -1), prevFixed, linked];
+}
+
 /** Copy of a step with fresh ids; its inputs are unlinked (a copy must be wired on purpose). */
 export function duplicateStep(step: WorkflowStep, copyLabel: string): WorkflowStep {
   return {
@@ -110,7 +139,7 @@ export function outgoingCount(steps: WorkflowStep[], stepId: string): number {
   return steps.reduce((sum, s) => sum + s.inputs.filter((i) => i.source?.stepId === stepId).length, 0);
 }
 
-export type WorkflowIssueCode = "titleRequired" | "noSteps" | "stepNoTitle" | "stepNoContent" | "stepContentMissing" | "unpublishedGenerator";
+export type WorkflowIssueCode = "titleRequired" | "noSteps" | "stepNoTitle" | "stepNoContent" | "stepContentMissing" | "unpublishedGenerator" | "stepRequestNotAllowed";
 export interface WorkflowIssue {
   level: "error" | "warning";
   code: WorkflowIssueCode;
@@ -125,6 +154,10 @@ export interface WorkflowIssue {
 export function validateWorkflow(meta: { title: string }, steps: WorkflowStep[], forPublish: boolean): WorkflowIssue[] {
   const issues: WorkflowIssue[] = [];
   if (!meta.title.trim()) issues.push({ level: "error", code: "titleRequired" });
+  // Prompt requests are not workflow steps (old workflows may still hold one) — blocks drafts too; the server refuses them as well.
+  steps.forEach((step, stepIndex) => {
+    if (!isPickableStepType(step.stepType)) issues.push({ level: "error", code: "stepRequestNotAllowed", stepId: step.id, stepIndex });
+  });
   if (!forPublish) return issues;
   if (steps.length === 0) issues.push({ level: "error", code: "noSteps" });
   steps.forEach((step, stepIndex) => {
