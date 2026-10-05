@@ -305,7 +305,7 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
 
   return (
     <div ref={rootRef} className="w-full min-w-0">
-    <div className="mx-auto w-full max-w-[1400px] space-y-4 px-3 py-5 sm:px-5 sm:py-6 lg:px-8">
+    <div className="mx-auto w-full max-w-6xl space-y-4 px-3 py-5 sm:px-5 sm:py-6 lg:px-8">
       {/* Top bar */}
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
         <Link href="/workflows" className="inline-flex h-9 items-center gap-1.5 rounded-md px-2 text-label font-medium text-text-secondary hover:bg-surface-soft hover:text-text">
@@ -332,7 +332,6 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
       )}
 
       {/* Details — one card per main section (Kategori, Temel Bilgiler, Kapak, Araç/Model, Etiketler) */}
-      <div className="mx-auto w-full max-w-3xl">
       <WorkflowMetaForm
         meta={meta}
         tagPicker={tagPicker}
@@ -342,7 +341,6 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
           touch();
         }}
       />
-      </div>
 
       {/* Steps + step editor */}
       {mode === "desktop" && (
@@ -419,7 +417,6 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
       )}
 
       <CreateFormActions
-        className="mx-auto w-full max-w-3xl"
           visibility={visibility}
           onVisibilityChange={(next) => {
             setVisibility(next);
