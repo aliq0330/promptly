@@ -9,7 +9,6 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import { CONTENT_TYPE_META } from "./content-type-meta";
 import { PostHeader } from "./post-header";
 import { GeneratorSourceContext, RequestResponseContext } from "./post-context";
-import { PromptPreviewBox } from "./prompt-preview-box";
 import { PromptCardFooter } from "./prompt-card-footer";
 import { OutputThumbnailStrip } from "./multi-image-output-options";
 import type { Prompt } from "@/types";
@@ -21,12 +20,13 @@ type CollectionRemoval = { isDefault: boolean; onRemove: () => Promise<void> };
  * video / code / music) and for a request response (same `prompts` row).
  *
  *   Creator  →  provenance (request / generator)  →  type · tool
- *   →  title + description  →  PROMPT BLOCK  →  output preview (image only)
+ *   →  title + description  →  output preview (image only)
  *   →  tags  →  actions
  *
- * The prompt itself is the hero; an image prompt's generated result is a
- * supporting "çıktı" preview under it (never taller than square), never the
- * whole card — Promptly is a prompt community, not an image gallery. More
+ * The prompt text itself is deliberately NOT on the card — it is revealed on
+ * the detail page. An image prompt's generated result is a supporting
+ * "çıktı" preview (never taller than square), never the whole card —
+ * Promptly is a prompt community, not an image gallery. More
  * than one output image adds a small, non-interactive preview strip below
  * the cover (`OutputThumbnailStrip`) rather than enlarging the card's own
  * footprint — browsing every image is a detail-page job (the lightbox).
@@ -66,8 +66,6 @@ export function PromptCard({
           <ContentTypeLabel icon={meta.icon} label={`${t(meta.labelKey)} Prompt`} detail={prompt.tools.length ? null : prompt.tool} />
           <ContentCardTitle href={href} title={prompt.title} description={prompt.description} />
         </div>
-
-        <PromptPreviewBox prompt={prompt} lines={media.length > 0 ? 3 : 4} />
 
         {media.length > 0 && <OutputThumbnailStrip media={media} />}
 

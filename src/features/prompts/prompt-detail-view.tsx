@@ -3,10 +3,10 @@
 import { RunButton } from "@/features/content/run-with-ai";
 import { ToolLine } from "@/features/content/tool-chips";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
-import { PenLine, SquareTerminal, Wand2 } from "lucide-react";
+import { PenLine, SquareTerminal } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { ContentTypeLabel } from "@/features/content/content-type-label";
 import { ShareTriggerButton } from "@/features/prompts/share-modal";
@@ -22,7 +22,7 @@ import { SaveButton } from "@/features/prompts/save-button";
 import { CommentCountLink } from "@/features/prompts/comment-count-link";
 import { StatisticsButton } from "@/features/statistics/statistics-button";
 import { CopyPromptButton } from "@/features/prompts/copy-prompt-button";
-import { PersonalizeModal } from "@/features/prompts/personalize-modal";
+import { PromptVariableInputs } from "@/features/prompts/prompt-variable-inputs";
 import { EditHistoryPanel } from "@/features/prompts/edit-history-panel";
 import { SuggestEditModal } from "@/features/prompts/suggest-edit-modal";
 import { EditSuggestionsPanel } from "@/features/prompts/edit-suggestions-panel";
@@ -31,6 +31,7 @@ import { ContributorsPanel } from "@/features/prompts/contributors-panel";
 import { PromptResultsSection } from "@/features/prompts/prompt-results-section";
 import { useAuth } from "@/features/auth/auth-provider";
 import { fetchVariablesForPrompt } from "@/lib/supabase/prompt-variables";
+import { resolvePromptText } from "@/lib/prompt-variables";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
 import { PostMenu } from "@/features/prompts/post-menu";
 import { parseHighlightValue } from "@/lib/notification-utils";
@@ -52,7 +53,8 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
   const { user } = useAuth();
   const isOwn = user?.id === prompt.author.id;
   const [variables, setVariables] = useState<PromptVariable[]>([]);
-  const [isPersonalizeOpen, setIsPersonalizeOpen] = useState(false);
+  // Viewer-typed overrides per variable name; anything not typed falls back to the default.
+  const [variableOverrides, setVariableOverrides] = useState<Record<string, string>>({});
   const [isSuggestModalOpen, setIsSuggestModalOpen] = useState(false);
   // The prompt's own display text, lifted into local state so accepting a
   // real edit suggestion (Düzenleme Önerisi modülü) updates the page
@@ -63,6 +65,14 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
   // `ContributorsPanel` to remount and refetch so a brand-new contributor
   // shows up immediately, without a page reload.
   const [contributorsRefreshKey, setContributorsRefreshKey] = useState(0);
+
+  const variableValues = useMemo(
+    () => Object.fromEntries(variables.map((variable) => [variable.name, variableOverrides[variable.name] ?? variable.defaultValue])),
+    [variables, variableOverrides],
+  );
+  const isCustomized = variables.some((variable) => variable.name in variableOverrides && variableOverrides[variable.name] !== variable.defaultValue);
+  // What the viewer sees, copies and runs: the template with their values substituted.
+  const displayText = variables.length > 0 ? resolvePromptText(livePromptText, variableValues) : livePromptText;
 
   const searchParams = useSearchParams();
   const highlight = parseHighlightValue(searchParams.get("hl"));
@@ -117,54 +127,6 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
             </Link>
           </header>
 
-          {prompt.origin.type === "request-response" && (
-            <RequestResponseContext requestId={prompt.origin.requestId} currentPromptId={prompt.id} />
-          )}
-          {prompt.generatedFrom && <GeneratorSourceContext generatedFrom={prompt.generatedFrom} />}
-
-          <div className="flex flex-wrap items-center gap-0.5 border-y border-border-soft py-1.5">
-            <LikeButton id={prompt.id} likeCount={prompt.likeCount} size={18} />
-            <CommentCountLink promptId={prompt.id} baseCount={prompt.commentCount} size={18} />
-            <SaveButton promptId={prompt.id} saveCount={prompt.saveCount} size={18} />
-            <StatisticsButton target={{ contentType: "prompt", contentId: prompt.id, likeCount: prompt.likeCount, commentCount: prompt.commentCount, saveCount: prompt.saveCount }} size={18} label={t("statistics.title")} />
-            <span className="ml-auto" />
-            <ShareTriggerButton target={{ contentType: "prompt", prompt }} label={t("common.share")} />
-          </div>
-
-          <section aria-labelledby="prompt-text-title" className="overflow-hidden rounded-lg border border-border-soft bg-surface-soft">
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border-soft px-4 py-2.5">
-              <h2 id="prompt-text-title" className="flex items-center gap-1.5 font-sans text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">
-                <SquareTerminal size={14} />
-                {t("prompt.promptTextHeading")}
-              </h2>
-              <div className="flex flex-wrap items-center gap-2">
-                {user && !isOwn && (
-                  <button
-                    type="button"
-                    onClick={() => setIsSuggestModalOpen(true)}
-                    className="relative z-10 inline-flex h-9 items-center gap-1.5 rounded-sm border border-primary/30 bg-primary-soft px-3 text-label font-medium text-primary transition-colors hover:border-primary/60"
-                  >
-                    <PenLine size={14} />
-                    {t("prompt.suggestEdit")}
-                  </button>
-                )}
-                {variables.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => setIsPersonalizeOpen(true)}
-                    className="relative z-10 inline-flex h-9 items-center gap-1.5 rounded-sm border border-primary/30 bg-primary-soft px-3 text-label font-medium text-primary transition-colors hover:border-primary/60"
-                  >
-                    <Wand2 size={14} />
-                    {t("prompt.customizePrompt")}
-                  </button>
-                )}
-                <CopyPromptButton text={livePromptText} size="md" />
-                <RunButton text={livePromptText} recommendedRefs={prompt.tools} />
-              </div>
-            </div>
-            <ScrollablePrompt className="px-4 py-4 text-[0.875rem] text-text">{livePromptText}</ScrollablePrompt>
-          </section>
-
           {media && (
             <figure className="space-y-2">
               <button
@@ -206,6 +168,54 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
               onClose={() => setLightboxIndex(null)}
             />
           )}
+
+          {prompt.origin.type === "request-response" && (
+            <RequestResponseContext requestId={prompt.origin.requestId} currentPromptId={prompt.id} />
+          )}
+          {prompt.generatedFrom && <GeneratorSourceContext generatedFrom={prompt.generatedFrom} />}
+
+          <div className="flex flex-wrap items-center gap-0.5 border-y border-border-soft py-1.5">
+            <LikeButton id={prompt.id} likeCount={prompt.likeCount} size={18} />
+            <CommentCountLink promptId={prompt.id} baseCount={prompt.commentCount} size={18} />
+            <SaveButton promptId={prompt.id} saveCount={prompt.saveCount} size={18} />
+            <StatisticsButton target={{ contentType: "prompt", contentId: prompt.id, likeCount: prompt.likeCount, commentCount: prompt.commentCount, saveCount: prompt.saveCount }} size={18} label={t("statistics.title")} />
+            <span className="ml-auto" />
+            <ShareTriggerButton target={{ contentType: "prompt", prompt }} label={t("common.share")} />
+          </div>
+
+          <section aria-labelledby="prompt-text-title" className="overflow-hidden rounded-lg border border-border-soft bg-surface-soft">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border-soft px-4 py-2.5">
+              <h2 id="prompt-text-title" className="flex items-center gap-1.5 font-sans text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">
+                <SquareTerminal size={14} />
+                {t("prompt.promptTextHeading")}
+              </h2>
+              <div className="flex flex-wrap items-center gap-2">
+                {user && !isOwn && (
+                  <button
+                    type="button"
+                    onClick={() => setIsSuggestModalOpen(true)}
+                    className="relative z-10 inline-flex h-9 items-center gap-1.5 rounded-sm border border-primary/30 bg-primary-soft px-3 text-label font-medium text-primary transition-colors hover:border-primary/60"
+                  >
+                    <PenLine size={14} />
+                    {t("prompt.suggestEdit")}
+                  </button>
+                )}
+                <CopyPromptButton text={displayText} size="md" />
+                <RunButton text={displayText} recommendedRefs={prompt.tools} />
+              </div>
+            </div>
+            {variables.length > 0 && (
+              <PromptVariableInputs
+                variables={variables}
+                values={variableValues}
+                template={livePromptText}
+                isCustomized={isCustomized}
+                onChange={(name, value) => setVariableOverrides((prev) => ({ ...prev, [name]: value }))}
+                onReset={() => setVariableOverrides({})}
+              />
+            )}
+            <ScrollablePrompt className="px-4 py-4 text-[0.875rem] text-text">{displayText}</ScrollablePrompt>
+          </section>
 
           <ToolLine label={t("tool.recommendedLabel")} refs={prompt.tools} legacy={prompt.tool} />
 
@@ -254,15 +264,6 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
           <RelatedPrompts prompt={prompt} />
         </aside>
       </div>
-
-      {isPersonalizeOpen && (
-        <PersonalizeModal
-          promptText={livePromptText}
-          variables={variables}
-          recommendedRefs={prompt.tools}
-          onClose={() => setIsPersonalizeOpen(false)}
-        />
-      )}
 
       {isSuggestModalOpen && user && (
         <SuggestEditModal
