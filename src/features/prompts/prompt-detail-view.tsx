@@ -38,8 +38,14 @@ import { PostMenu } from "@/features/prompts/post-menu";
 import { parseHighlightValue } from "@/lib/notification-utils";
 import { cn, formatRelativeTime, profileHref, tagHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import type { Prompt, PromptVariable } from "@/types";
+import type { Prompt, PromptVariable, PromptVersion } from "@/types";
+import type { DnaSection } from "@/lib/prompt-dna/types";
+import { fetchDnaSections } from "@/lib/supabase/prompt-dna";
+import { fetchVersionsForPrompt } from "@/lib/supabase/prompt-versions";
+import { Tabs, type TabItem } from "@/components/ui/tabs";
 import { ScrollablePrompt } from "@/features/content/scrollable-prompt";
+
+type PromptTab = "prompt" | "history" | "dna";
 
 /** Same fade timing as the comment-thread flash (`comment-section.tsx`) — one shared "how long does a jumped-to thing glow" feel across the app. */
 const HIGHLIGHT_DURATION_MS = 2500;
@@ -56,6 +62,9 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
   const [variables, setVariables] = useState<PromptVariable[]>([]);
   // Viewer-typed overrides per variable name; anything not typed falls back to the default.
   const [variableOverrides, setVariableOverrides] = useState<Record<string, string>>({});
+  const [dnaSections, setDnaSections] = useState<DnaSection[]>([]);
+  const [versions, setVersions] = useState<PromptVersion[]>([]);
+  const [activeTab, setActiveTab] = useState<PromptTab>("prompt");
   const [isSuggestModalOpen, setIsSuggestModalOpen] = useState(false);
   // The prompt's own display text, lifted into local state so accepting a
   // real edit suggestion (Düzenleme Önerisi modülü) updates the page
@@ -96,10 +105,25 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
     fetchVariablesForPrompt(prompt.id).then((result) => {
       if (!cancelled) setVariables(result);
     });
+    fetchDnaSections(prompt.id).then((result) => {
+      if (!cancelled) setDnaSections(result);
+    });
+    fetchVersionsForPrompt(prompt.id).then((result) => {
+      if (!cancelled) setVersions(result);
+    });
     return () => {
       cancelled = true;
     };
   }, [prompt.id]);
+
+  // Tabs under the action bar. History exists for anyone when versions
+  // exist (and always for the owner, whose edit log lives there); DNA only
+  // when the author accepted some. Prompt is always there and the default.
+  const tabItems: TabItem<PromptTab>[] = [
+    { key: "prompt", label: t("promptTabs.prompt") },
+    ...(versions.length > 0 || isOwn ? [{ key: "history" as const, label: t("promptTabs.history") }] : []),
+    ...(dnaSections.length > 0 ? [{ key: "dna" as const, label: t("promptTabs.dna") }] : []),
+  ];
 
   return (
     <div className="mx-auto w-full max-w-6xl px-3 py-5 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
@@ -184,7 +208,11 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
             <ShareTriggerButton target={{ contentType: "prompt", prompt }} label={t("common.share")} />
           </div>
 
-          {variables.length > 0 && (
+          {tabItems.length > 1 && (
+            <Tabs items={tabItems} active={activeTab} onChange={setActiveTab} ariaLabel={t("promptTabs.ariaLabel")} />
+          )}
+
+          {activeTab === "prompt" && variables.length > 0 && (
             <PromptVariableInputs
               variables={variables}
               values={variableValues}
@@ -194,6 +222,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
             />
           )}
 
+          {activeTab === "prompt" && (
           <section aria-labelledby="prompt-text-title" className="overflow-hidden rounded-lg border border-border-soft bg-surface-soft">
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border-soft px-4 py-2.5">
               <h2 id="prompt-text-title" className="flex items-center gap-1.5 font-sans text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">
@@ -229,8 +258,17 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
                 : displayText}
             </ScrollablePrompt>
           </section>
+          )}
 
-          <PromptDnaDisplay promptId={prompt.id} />
+          {activeTab === "history" && (
+            <div className="space-y-4">
+              <PromptHistoryPanel versions={versions} />
+              {isOwn && <EditHistoryPanel contentType="prompt" contentId={prompt.id} />}
+              {versions.length === 0 && !isOwn && <p className="text-small text-text-muted">{t("promptTabs.historyEmpty")}</p>}
+            </div>
+          )}
+
+          {activeTab === "dna" && <PromptDnaDisplay sections={dnaSections} />}
 
           <ToolLine label={t("tool.recommendedLabel")} refs={prompt.tools} legacy={prompt.tool} />
 
@@ -263,10 +301,6 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
               }}
             />
           )}
-
-          <PromptHistoryPanel promptId={prompt.id} />
-
-          {isOwn && <EditHistoryPanel contentType="prompt" contentId={prompt.id} />}
 
           <section id="comments" className="scroll-mt-20 rounded-lg border border-border-soft bg-surface p-4 sm:p-5">
             <CommentSection target={{ promptId: prompt.id }} highlightCommentId={highlightCommentId} />

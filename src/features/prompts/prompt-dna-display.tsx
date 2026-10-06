@@ -1,30 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { Dna } from "lucide-react";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import { fetchDnaSections } from "@/lib/supabase/prompt-dna";
 import type { DnaSection } from "@/lib/prompt-dna/types";
 import { DNA_ICONS, dnaSectionLabel } from "./dna-section-meta";
 
 /**
- * The prompt's DNA on its detail page: only the sections the author
- * accepted, in the fixed canonical order. Renders nothing for a prompt
- * without DNA (older prompts, or authors who skipped it).
+ * The prompt's DNA (the "Prompt DNA" tab of its detail page): only the
+ * sections the author accepted, in the fixed canonical order. The caller
+ * fetches them (it needs the count to decide whether the tab exists) and
+ * only renders this for a prompt that has DNA.
  */
-export function PromptDnaDisplay({ promptId }: { promptId: string }) {
+export function PromptDnaDisplay({ sections }: { sections: DnaSection[] }) {
   const { t } = useTranslation();
-  const [sections, setSections] = useState<DnaSection[]>([]);
-
-  useEffect(() => {
-    let cancelled = false;
-    fetchDnaSections(promptId).then((result) => {
-      if (!cancelled) setSections(result);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [promptId]);
 
   if (sections.length === 0) return null;
 
