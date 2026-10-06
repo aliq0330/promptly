@@ -379,14 +379,19 @@ function buildSections(original: string, candidates: Candidate[]): DnaDetectedSe
     let unique = [...byKey.values()];
 
     // Drop spans fully covered by a longer span of the same section ("neon" inside "neon ışıklar").
+    // Two entries that cover exactly the same words ("svelte*" and "sveltekit") keep one: the higher
+    // confidence, then the earlier one — never both dropped.
     unique = unique.filter(
-      (a) =>
+      (a, ai) =>
         !unique.some(
-          (b) =>
+          (b, bi) =>
             b !== a &&
             b.start <= a.start &&
             b.end >= a.end &&
-            (b.start < a.start || b.end > a.end || RANK[b.confidence] >= RANK[a.confidence]),
+            (b.start < a.start ||
+              b.end > a.end ||
+              RANK[b.confidence] > RANK[a.confidence] ||
+              (RANK[b.confidence] === RANK[a.confidence] && bi < ai)),
         ),
     );
     unique.sort((a, b) => a.start - b.start);

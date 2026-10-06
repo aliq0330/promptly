@@ -49,7 +49,7 @@ test("camera settings are extracted: focal length, aperture, iso", () => {
 // --- style, output, lighting ------------------------------------------------------
 
 test("style, output formats and lighting are detected", () => {
-  assert.deepEqual(section("sinematik anime tarzı", "style").map(foldText), ["sinematik", "anime"]);
+  assert.deepEqual(section("sinematik anime tarzı", "style").map(foldText), ["sinematik", "anime tarzi"]);
   assert.deepEqual(section("4K, 16:9, ultra detaylı", "output"), ["4K", "16:9", "ultra detaylı"]);
   assert.deepEqual(section("1920x1080 ve 60 fps", "output"), ["1920x1080", "60 fps"]);
   assert.deepEqual(section("yumuşak ışık ve golden hour", "lighting").map(foldText), ["yumusak isik", "golden hour"]);
@@ -258,4 +258,47 @@ test("completeness counts only the content type's relevant sections", () => {
   assert.deepEqual(completeness(sections, "text"), { filled: 1, total: relevantSections("text").length });
   assert.equal(addMenuOrder("image").at(-1), "custom");
   assert.deepEqual(contentPieces("A, b;C"), ["a", "b", "c"]);
+});
+
+// --- the large dictionary ---------------------------------------------------------------
+
+test("everyday words that merely START like a dictionary term stay undetected", () => {
+  const prompt = [
+    "kazanmak kaza kurtarmak kuşak ayrıntı sinemasever mimarlık gelince titanyum koreografi peruk sessizce bolum kremlin",
+    "pilot project general purpose hero section dark mode input field primary key",
+  ].join(" ");
+  assert.deepEqual(analyzePromptDna(prompt).sections.map((s) => s.type), []);
+});
+
+test("ordinary work requests do not invent scene or music sections", () => {
+  const prompt = "Bu kodu incele, hataları bul ve düzelt. Kodun okunabilirliğini artır, gereksiz tekrarları kaldır.";
+  const found = types(prompt);
+  for (const unexpected of ["character", "location", "weather", "lighting", "style", "audio", "motion"] as DnaSectionType[]) {
+    assert.ok(!found.includes(unexpected), `unexpected ${unexpected}`);
+  }
+});
+
+test("inflected multi-word phrases are matched (gün doğumunda, kuş bakışı açıdan)", () => {
+  assert.deepEqual(section("Kapadokya'da gün doğumunda balonlar", "time").map(foldText), ["gun dogumunda"]);
+  assert.deepEqual(section("Rim lighting ile aydınlatılmış", "lighting").map(foldText), ["rim lighting"]);
+});
+
+test("dictionary coverage: characters, creatures and professions", () => {
+  assert.deepEqual(section("a wizard and a wolf", "character"), ["wizard", "wolf"]);
+  assert.deepEqual(section("yaşlı bir balıkçı ve kırmızı bir kuş", "character").map(foldText), ["yasli bir balikci", "kus"]);
+  assert.deepEqual(section("Anneler günü için", "character"), []);
+  assert.deepEqual(section("kadın vokal, akustik gitar", "character"), []);
+});
+
+test("dictionary coverage: places, art movements and music", () => {
+  assert.deepEqual(section("Santorini ve Kyoto'da", "location"), ["Santorini", "Kyoto"]);
+  assert.deepEqual(section("Rönesans ve barok esinli, Van Gogh tarzı", "style").map(foldText), ["ronesans", "barok", "van gogh tarzi"]);
+  assert.deepEqual(section("lofi hip hop, 80 bpm, rhodes piano", "audio").map(foldText), ["lofi hip hop", "80 bpm", "rhodes", "piano"].filter((value, index, all) => all.indexOf(value) === index));
+});
+
+test("dictionary coverage: technology, platforms, roles and languages", () => {
+  assert.deepEqual(section("SvelteKit, Prisma ve Vercel ile", "technology"), ["SvelteKit", "Prisma", "Vercel"]);
+  assert.deepEqual(section("TikTok ve YouTube Shorts için", "platform"), ["TikTok", "YouTube Shorts"]);
+  assert.deepEqual(section("Sen deneyimli bir pazarlama uzmanısın.", "role"), ["deneyimli bir pazarlama uzmanı"]);
+  assert.deepEqual(section("Reply in French.", "language"), ["Reply in French"]);
 });
