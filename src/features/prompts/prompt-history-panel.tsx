@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { History } from "lucide-react";
 import { diffPromptFields, FIELD_DIFF_LABEL_KEYS } from "@/lib/prompt-diff";
-import { fetchVersionsForPrompt } from "@/lib/supabase/prompt-versions";
 import { formatRelativeTime } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
@@ -24,22 +23,11 @@ const SOURCE_LABEL_KEYS: Record<PromptVersion["source"], TranslationKey> = {
  * prompt that's never had a version created (never edited, never accepted a
  * suggestion) — an honest, common case, not an error.
  */
-export function PromptHistoryPanel({ promptId }: { promptId: string }) {
+export function PromptHistoryPanel({ versions }: { versions: PromptVersion[] }) {
   const { t, language } = useTranslation();
-  const [versions, setVersions] = useState<PromptVersion[] | null>(null);
   const [comparingId, setComparingId] = useState<string | null>(null);
 
-  useEffect(() => {
-    let cancelled = false;
-    fetchVersionsForPrompt(promptId).then((result) => {
-      if (!cancelled) setVersions(result);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [promptId]);
-
-  if (!versions || versions.length === 0) return null;
+  if (versions.length === 0) return null;
 
   // `fetchVersionsForPrompt` orders newest-first, so each version's
   // immediate predecessor is simply the next item in this same array.
