@@ -31,7 +31,7 @@ import { ContributorsPanel } from "@/features/prompts/contributors-panel";
 import { PromptResultsSection } from "@/features/prompts/prompt-results-section";
 import { useAuth } from "@/features/auth/auth-provider";
 import { fetchVariablesForPrompt } from "@/lib/supabase/prompt-variables";
-import { resolvePromptText } from "@/lib/prompt-variables";
+import { resolvePromptText, segmentPromptText } from "@/lib/prompt-variables";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
 import { PostMenu } from "@/features/prompts/post-menu";
 import { parseHighlightValue } from "@/lib/notification-utils";
@@ -214,7 +214,19 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
                 <RunButton text={displayText} recommendedRefs={prompt.tools} />
               </div>
             </div>
-            <ScrollablePrompt className="px-4 py-4 text-[0.875rem] text-text">{displayText}</ScrollablePrompt>
+            <ScrollablePrompt className="px-4 py-4 text-[0.875rem] text-text">
+              {variables.length > 0
+                ? segmentPromptText(livePromptText, variableValues).map((segment, index) =>
+                    segment.isVariable ? (
+                      <mark key={index} className="rounded-sm bg-primary-soft px-1 font-semibold text-primary">
+                        {segment.text}
+                      </mark>
+                    ) : (
+                      segment.text
+                    ),
+                  )
+                : displayText}
+            </ScrollablePrompt>
           </section>
 
           <ToolLine label={t("tool.recommendedLabel")} refs={prompt.tools} legacy={prompt.tool} />

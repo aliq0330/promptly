@@ -108,6 +108,25 @@ export function resolvePromptText(text: string, values: Record<string, string>):
 }
 
 /**
+ * Same resolution as `resolvePromptText`, but returned as segments so the UI
+ * can highlight the substituted variable values inside the prompt.
+ */
+export function segmentPromptText(text: string, values: Record<string, string>): { text: string; isVariable: boolean }[] {
+  const segments: { text: string; isVariable: boolean }[] = [];
+  let last = 0;
+  for (const match of text.matchAll(TOKEN_PATTERN)) {
+    const index = match.index ?? 0;
+    const name = match[1];
+    if (!Object.prototype.hasOwnProperty.call(values, name)) continue;
+    if (index > last) segments.push({ text: text.slice(last, index), isVariable: false });
+    if (values[name]) segments.push({ text: values[name], isVariable: true });
+    last = index + match[0].length;
+  }
+  if (last < text.length) segments.push({ text: text.slice(last), isVariable: false });
+  return segments;
+}
+
+/**
  * How many times a literal, not-yet-tokenized phrase appears in `text` —
  * used to offer a "replace every occurrence" choice when the user selects
  * a word/phrase in the editor to turn into a variable (the same word may
