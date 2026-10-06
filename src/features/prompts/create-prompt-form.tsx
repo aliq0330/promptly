@@ -20,6 +20,9 @@ import { ExtraSettingsSection } from "@/features/prompts/extra-settings-panel";
 import { catalogFields, catalogFieldsForType, fieldIdsFor } from "@/lib/prompt-extra-settings";
 import { composePrompt, mergeFields, sanitizeSelection, withCustomOptions, type CustomOptions, type PresetField, type PresetSelection } from "@/lib/preset-fields";
 import { PromptTextEditor, type DraftVariable } from "@/features/prompts/prompt-text-editor";
+import { PromptDnaEditor } from "@/features/prompts/prompt-dna-editor";
+import { fetchDnaSections, replaceDnaSections } from "@/lib/supabase/prompt-dna";
+import type { DnaSection } from "@/lib/prompt-dna/types";
 import { PromptVisionAssist } from "@/features/prompts/prompt-vision-assist";
 import { fetchVariablesForPrompt, replaceVariablesForPrompt } from "@/lib/supabase/prompt-variables";
 import { fetchGeneratorById, fetchGeneratorRun } from "@/lib/supabase/generators";
@@ -247,6 +250,10 @@ export function CreatePromptForm() {
   const [images, setImages] = useState<MultiImageItem[]>([]);
   const [fieldsSeeded, setFieldsSeeded] = useState(false);
   const [variables, setVariables] = useState<DraftVariable[]>([]);
+  // Prompt DNA: only sections the user accepted/added (suggestions live inside the editor).
+  const [dnaSections, setDnaSections] = useState<DnaSection[]>([]);
+  // Editing: don't overwrite the saved DNA before it has loaded.
+  const [dnaLoaded, setDnaLoaded] = useState(!isEditMode);
   const [showOnProfile, setShowOnProfile] = useState(true);
   const [visibility, setVisibility] = useState<ContentVisibility>("public");
 
@@ -273,6 +280,10 @@ export function CreatePromptForm() {
       }
       editingPrompt.tags.forEach((tag) => tagPicker.addManual(tag));
       setFieldsSeeded(true);
+      fetchDnaSections(editingPrompt.id).then((real) => {
+        setDnaSections(real);
+        setDnaLoaded(true);
+      });
       fetchVariablesForPrompt(editingPrompt.id).then((real) => {
         setVariables(
           real.map((variable) => ({
@@ -404,6 +415,16 @@ export function CreatePromptForm() {
           ]
       : [];
 
+  /** Soft-fail like variables/tags: the prompt itself is already saved. */
+  async function saveDna(promptId: string) {
+    if (!dnaLoaded || (!isEditMode && dnaSections.length === 0)) return;
+    try {
+      await replaceDnaSections(promptId, dnaSections);
+    } catch (dnaErr) {
+      console.error("replaceDnaSections", dnaErr);
+    }
+  }
+
   async function handleSaveDraft() {
     if (isSubmitting || !user || !ownProfile) return;
     if (!title.trim()) {
@@ -441,6 +462,7 @@ export function CreatePromptForm() {
         } catch (variableErr) {
           console.error("replaceVariablesForPrompt", variableErr);
         }
+        await saveDna(updated.id);
         setDraftNotice(true);
         setIsSubmitting(false);
         return;
@@ -467,6 +489,7 @@ export function CreatePromptForm() {
       } catch (variableErr) {
         console.error("replaceVariablesForPrompt", variableErr);
       }
+      await saveDna(draft.id);
       router.push(`/create?edit=${draft.id}`);
     } catch (err) {
       setPublishError(err instanceof Error ? err.message : t("draft.saveFailed"));
@@ -511,6 +534,7 @@ export function CreatePromptForm() {
         } catch (variableErr) {
           console.error("replaceVariablesForPrompt", variableErr);
         }
+        await saveDna(updated.id);
         router.push(promptHref(updated));
         return;
       }
@@ -540,6 +564,7 @@ export function CreatePromptForm() {
       } catch (variableErr) {
         console.error("replaceVariablesForPrompt", variableErr);
       }
+      await saveDna(published.id);
       router.push(promptHref(published));
     } catch (err) {
       setPublishError(err instanceof Error ? err.message : t("prompt.publishFailed"));
@@ -859,6 +884,10 @@ export function CreatePromptForm() {
                 <NegativePromptReference text={generatorRun.generatedNegativePrompt} />
               )}
             </div>
+          </FormSection>
+
+          <FormSection title={t("dna.title")} description={t("dna.description")}>
+            <PromptDnaEditor promptText={promptText} contentType={contentType} sections={dnaSections} onChange={setDnaSections} />
           </FormSection>
 
           <FormSection title={t("forms.tags")}>

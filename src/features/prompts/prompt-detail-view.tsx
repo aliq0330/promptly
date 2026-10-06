@@ -22,6 +22,7 @@ import { SaveButton } from "@/features/prompts/save-button";
 import { CommentCountLink } from "@/features/prompts/comment-count-link";
 import { StatisticsButton } from "@/features/statistics/statistics-button";
 import { CopyPromptButton } from "@/features/prompts/copy-prompt-button";
+import { PromptDnaDisplay } from "@/features/prompts/prompt-dna-display";
 import { PromptVariableInputs } from "@/features/prompts/prompt-variable-inputs";
 import { EditHistoryPanel } from "@/features/prompts/edit-history-panel";
 import { SuggestEditModal } from "@/features/prompts/suggest-edit-modal";
@@ -228,6 +229,8 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
                 : displayText}
             </ScrollablePrompt>
           </section>
+
+          <PromptDnaDisplay promptId={prompt.id} />
 
           <ToolLine label={t("tool.recommendedLabel")} refs={prompt.tools} legacy={prompt.tool} />
 
