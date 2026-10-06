@@ -9,6 +9,7 @@ import { PromptGrid } from "@/features/prompts/prompt-grid";
 import { RequestList } from "@/features/requests/request-list";
 import { TaxonomyFilter } from "@/features/content/taxonomy-filter";
 import { AdvancedSearchBox } from "./advanced-search-box";
+import { findTool } from "@/lib/ai-tool-catalog";
 import { tokensToQuery, type SearchToken } from "./search-tokens";
 import { searchPrompts } from "@/lib/supabase/prompts";
 import { searchProfiles } from "@/lib/supabase/profiles";
@@ -72,6 +73,9 @@ export function SearchView({ idle }: { idle?: ReactNode } = {}) {
       setTokens([{ kind: "media", type }]);
       setSubFilter({ category: cat?.id ?? null, subcategory: sub?.id ?? null });
     }
+    // Tool links from a post: `?tool=<id>` -> tool chip (matches the tool and its models).
+    const toolId = params.get("tool");
+    if (toolId && findTool(toolId)) setTokens((prev) => [...prev, { kind: "tool", toolId }]);
     /* eslint-enable react-hooks/set-state-in-effect */
   }, []);
 
