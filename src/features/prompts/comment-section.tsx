@@ -1,5 +1,6 @@
 "use client";
 
+import type { LikeToggleResult } from "@/components/ui/like-toggle";
 import { bumpCommentCount } from "./comment-count-store";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -238,8 +239,8 @@ export function CommentSection({
     });
   }
 
-  async function toggleLike(id: string) {
-    if (!user || pendingLikeIds.has(id)) return;
+  async function toggleLike(id: string): Promise<LikeToggleResult> {
+    if (!user || pendingLikeIds.has(id)) return "ignored";
     const wasLiked = likedIds.has(id);
     setPendingLikeIds((prev) => new Set(prev).add(id));
     setLikedIds((prev) => {
@@ -252,6 +253,7 @@ export function CommentSection({
     try {
       if (wasLiked) await unlikeComment(id, user.id);
       else await likeComment(id, user.id);
+      return wasLiked ? "unliked" : "liked";
     } catch (err) {
       console.error("toggleCommentLike", err);
       setLikedIds((prev) => {
@@ -261,6 +263,7 @@ export function CommentSection({
         return next;
       });
       setLikeCounts((prev) => ({ ...prev, [id]: Math.max(0, (prev[id] ?? 0) + (wasLiked ? 1 : -1)) }));
+      return "failed";
     } finally {
       setPendingLikeIds((prev) => {
         const next = new Set(prev);

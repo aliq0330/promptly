@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { Heart } from "lucide-react";
-import { formatCount } from "@/lib/utils";
+import { cn, formatCount } from "@/lib/utils";
+import { LikeToggle } from "@/components/ui/like-toggle";
 import { contentActionClassName } from "@/features/content/action-styles";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { useLikeState } from "./use-like-state";
@@ -26,14 +27,7 @@ export function LikeButton({
   const { isLiked, likeCount: count, toggle, canLike } = useLikeState(id, likeCount, contentType);
   const { t } = useTranslation();
 
-  const content = (
-    <>
-      <Heart size={size} fill={isLiked ? "currentColor" : "none"} strokeWidth={1.75} />
-      <span aria-hidden>{formatCount(count)}</span>
-    </>
-  );
-
-  const sharedClassName = contentActionClassName(isLiked, className);
+  const sharedClassName = contentActionClassName(false, cn(isLiked && "text-danger hover:text-danger", className));
 
   if (!canLike) {
     return (
@@ -44,25 +38,21 @@ export function LikeButton({
         aria-label={t("prompt.loginToLikeAria", { count })}
         className={sharedClassName}
       >
-        {content}
+        <Heart size={size} strokeWidth={1.75} />
+        <span aria-hidden>{formatCount(count)}</span>
       </Link>
     );
   }
 
   return (
-    <button
-      type="button"
-      onClick={(event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        toggle();
-      }}
-      aria-pressed={isLiked}
+    <LikeToggle
+      liked={isLiked}
+      count={count}
+      size={size}
+      onToggle={toggle}
       title={isLiked ? t("prompt.unlike") : t("prompt.like")}
-      aria-label={t("prompt.likeAria", { count })}
+      label={t(isLiked ? "prompt.unlikeAria" : "prompt.likeAria", { count })}
       className={sharedClassName}
-    >
-      {content}
-    </button>
+    />
   );
 }

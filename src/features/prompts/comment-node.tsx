@@ -1,7 +1,8 @@
 "use client";
 
+import { LikeToggle, type LikeToggleResult } from "@/components/ui/like-toggle";
 import Link from "next/link";
-import { ChevronDown, ChevronUp, CornerDownRight, Heart } from "lucide-react";
+import { ChevronDown, ChevronUp, CornerDownRight } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { cn, formatRelativeTime, profileHref } from "@/lib/utils";
@@ -30,7 +31,7 @@ export interface CommentTree {
   likedIds: Set<string>;
   likeCounts: Record<string, number>;
   pendingLikeIds: Set<string>;
-  onToggleLike: (id: string) => void;
+  onToggleLike: (id: string) => Promise<LikeToggleResult>;
   editingId: string | null;
   onStartEdit: (comment: PromptComment) => void;
   onCancelEdit: () => void;
@@ -149,19 +150,20 @@ export function CommentNode({
                 {formatRelativeTime(comment.createdAt, language)}
                 {comment.editedAt && ` · ${t("comments.edited")}`}
               </span>
-              <button
-                type="button"
-                onClick={() => tree.onToggleLike(comment.id)}
+              <LikeToggle
+                liked={isLiked}
+                count={likeCount}
+                size={13}
+                hideZero
+                onToggle={() => tree.onToggleLike(comment.id)}
                 disabled={!tree.canInteract || isLikePending}
                 title={tree.canInteract ? undefined : t("prompt.loginToLike")}
+                label={t(isLiked ? "prompt.unlikeAria" : "prompt.likeAria", { count: likeCount })}
                 className={cn(
-                  "flex items-center gap-1 rounded-sm py-0.5 transition-colors hover:text-text disabled:pointer-events-none disabled:opacity-60",
-                  isLiked && "text-primary",
+                  "flex items-center gap-1 rounded-sm py-0.5 transition-colors hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:pointer-events-none disabled:opacity-60",
+                  isLiked && "text-danger hover:text-danger",
                 )}
-              >
-                <Heart size={13} fill={isLiked ? "currentColor" : "none"} />
-                {likeCount > 0 && likeCount}
-              </button>
+              />
               {tree.canInteract && (
                 <button
                   type="button"
