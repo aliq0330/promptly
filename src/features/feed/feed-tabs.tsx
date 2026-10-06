@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Blocks, Flame, LayoutGrid, SquareTerminal, SlidersHorizontal, Sparkles, Stars, UserCheck, Workflow as WorkflowIcon } from "lucide-react";
 import { Tabs } from "@/components/ui/tabs";
-import { Chip, ChipRow } from "@/components/ui/chip";
+import { Chip } from "@/components/ui/chip";
+import { ChipSortRow, SortSelect, type ContentSortKey } from "@/features/content/sort-select";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PromptCardSkeletonGrid } from "@/components/ui/prompt-card-skeleton";
 import { FeedGrid } from "./feed-grid";
@@ -20,12 +21,6 @@ import type { TranslationKey } from "@/lib/i18n/translations";
 
 type TabKey = "following" | "popular" | "for-you";
 type KindFilter = "all" | FeedItem["kind"];
-type SortKey = "newest" | "oldest" | "most-liked";
-const SORT_LABELS: Record<SortKey, TranslationKey> = {
-  newest: "profile.sortNewest",
-  oldest: "profile.sortOldest",
-  "most-liked": "profile.sortMostLiked",
-};
 
 const TABS: { key: TabKey; labelKey: TranslationKey; icon: typeof Stars }[] = [
   { key: "for-you", labelKey: "home.tabForYou", icon: Stars },
@@ -46,7 +41,7 @@ export function FeedTabs() {
   const { t } = useTranslation();
   const [active, setActive] = useState<TabKey>("for-you");
   const [kind, setKind] = useState<KindFilter>("all");
-  const [sort, setSort] = useState<SortKey>("newest");
+  const [sort, setSort] = useState<ContentSortKey>("newest");
   const { user } = useAuth();
   const { realPrompts, loading } = useRealPrompts();
   const { realRequests } = useRealRequests();
@@ -100,27 +95,13 @@ export function FeedTabs() {
           ariaLabel={t("feed.viewAriaLabel")}
           variant="segmented"
         />
-        <ChipRow scroll>
+        <ChipSortRow sort={<SortSelect value={sort} onChange={setSort} />} className="lg:max-w-[60%]">
           {KIND_FILTERS.map((filter) => (
             <Chip key={filter.key} icon={filter.icon} selected={kind === filter.key} onClick={() => setKind(filter.key)}>
               {t(filter.labelKey)}
             </Chip>
           ))}
-        </ChipRow>
-      </div>
-      <div className="flex justify-end">
-        <select
-          value={sort}
-          onChange={(event) => setSort(event.target.value as SortKey)}
-          aria-label={t("profile.sortAriaLabel")}
-          className="h-9 shrink-0 rounded-md border border-border bg-surface px-3 text-label font-medium text-text"
-        >
-          {(Object.keys(SORT_LABELS) as SortKey[]).map((key) => (
-            <option key={key} value={key}>
-              {t(SORT_LABELS[key])}
-            </option>
-          ))}
-        </select>
+        </ChipSortRow>
       </div>
 
       {active === "following" && !user ? (

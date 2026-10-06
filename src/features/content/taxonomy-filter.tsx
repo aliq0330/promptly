@@ -9,6 +9,7 @@ import {
   taxonomyLabel,
   type TaxonomyFilterValue,
 } from "@/lib/content-taxonomy";
+import { ChipSortRow } from "@/features/content/sort-select";
 import { useTranslation } from "@/lib/i18n/language-provider";
 
 /**
@@ -21,31 +22,38 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 export function TaxonomyFilter({
   value,
   onChange,
+  sort,
 }: {
   value: TaxonomyFilterValue;
   onChange: (next: TaxonomyFilterValue) => void;
+  /** Optional sort select, pinned to the right of the type chips on the same line. */
+  sort?: React.ReactNode;
 }) {
   const { t, language } = useTranslation();
   const categories = value.contentType ? getCategories(value.contentType) : [];
   const subcategories = value.contentType ? getSubcategories(value.contentType, value.category) : [];
 
+  const typeChips = (
+    <>
+      <Chip selected={!value.contentType} onClick={() => onChange({ contentType: null, category: null, subcategory: null })}>
+        {t("common.all")}
+      </Chip>
+      {CONTENT_TYPE_IDS.map((type) => (
+        <Chip
+          key={type}
+          icon={CONTENT_TYPE_META[type].icon}
+          selected={value.contentType === type}
+          onClick={() => onChange({ contentType: type, category: null, subcategory: null })}
+        >
+          {t(CONTENT_TYPE_META[type].labelKey)}
+        </Chip>
+      ))}
+    </>
+  );
+
   return (
     <div className="space-y-2">
-      <ChipRow>
-        <Chip selected={!value.contentType} onClick={() => onChange({ contentType: null, category: null, subcategory: null })}>
-          {t("common.all")}
-        </Chip>
-        {CONTENT_TYPE_IDS.map((type) => (
-          <Chip
-            key={type}
-            icon={CONTENT_TYPE_META[type].icon}
-            selected={value.contentType === type}
-            onClick={() => onChange({ contentType: type, category: null, subcategory: null })}
-          >
-            {t(CONTENT_TYPE_META[type].labelKey)}
-          </Chip>
-        ))}
-      </ChipRow>
+      {sort ? <ChipSortRow sort={sort}>{typeChips}</ChipSortRow> : <ChipRow>{typeChips}</ChipRow>}
       {value.contentType && (
         <ChipRow>
           <Chip selected={!value.category} onClick={() => onChange({ ...value, category: null, subcategory: null })}>

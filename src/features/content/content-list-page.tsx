@@ -5,10 +5,11 @@ import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
 import { Plus } from "lucide-react";
 import { Button, buttonClassName } from "@/components/ui/button";
-import { Chip, ChipRow } from "@/components/ui/chip";
+import { Chip } from "@/components/ui/chip";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageContainer, PageHeader } from "@/components/ui/page-header";
 import { PromptCardSkeletonGrid } from "@/components/ui/prompt-card-skeleton";
+import { ChipSortRow, SortSelect, type ContentSortKey } from "@/features/content/sort-select";
 import { TaxonomyFilter } from "@/features/content/taxonomy-filter";
 import { AdvancedSearchBox } from "@/features/search/advanced-search-box";
 import { tokensToQuery, type SearchToken } from "@/features/search/search-tokens";
@@ -24,12 +25,6 @@ export interface ListPageStep {
   bodyKey: TranslationKey;
 }
 
-type SortKey = "newest" | "oldest" | "most-liked";
-const SORT_LABELS: Record<SortKey, TranslationKey> = {
-  newest: "profile.sortNewest",
-  oldest: "profile.sortOldest",
-  "most-liked": "profile.sortMostLiked",
-};
 const DEBOUNCE_MS = 300;
 
 /**
@@ -88,8 +83,9 @@ export function ContentListPage<T extends { id: string; createdAt: string; likeC
   const { t } = useTranslation();
   const [tokens, setTokens] = useState<SearchToken[]>([]);
   const [text, setText] = useState("");
-  const [sort, setSort] = useState<SortKey>("newest");
+  const [sort, setSort] = useState<ContentSortKey>("newest");
   const [taxonomy, setTaxonomy] = useState<TaxonomyFilterValue>(EMPTY_TAXONOMY_FILTER);
+  const sortSelect = <SortSelect value={sort} onChange={setSort} />;
   const [results, setResults] = useState<T[] | null>(null);
   const [searching, setSearching] = useState(false);
   const normalized = text.trim();
@@ -175,9 +171,9 @@ export function ContentListPage<T extends { id: string; createdAt: string; likeC
       <div className="space-y-3">
         <AdvancedSearchBox tokens={tokens} onTokensChange={setTokens} text={text} onTextChange={setText} hideKindSuggestions />
         {showCategories ? (
-          <TaxonomyFilter value={taxonomy} onChange={setTaxonomy} />
+          <TaxonomyFilter value={taxonomy} onChange={setTaxonomy} sort={sortSelect} />
         ) : (
-          <ChipRow>
+          <ChipSortRow sort={sortSelect}>
             <Chip selected={!taxonomy.contentType} onClick={() => setTaxonomy(EMPTY_TAXONOMY_FILTER)}>
               {t("common.all")}
             </Chip>
@@ -191,22 +187,8 @@ export function ContentListPage<T extends { id: string; createdAt: string; likeC
                 {t(CONTENT_TYPE_META[type].labelKey)}
               </Chip>
             ))}
-          </ChipRow>
+          </ChipSortRow>
         )}
-        <div className="flex justify-end">
-          <select
-            value={sort}
-            onChange={(event) => setSort(event.target.value as SortKey)}
-            aria-label={t("profile.sortAriaLabel")}
-            className="h-9 shrink-0 rounded-md border border-border bg-surface px-3 text-label font-medium text-text"
-          >
-            {(Object.keys(SORT_LABELS) as SortKey[]).map((key) => (
-              <option key={key} value={key}>
-                {t(SORT_LABELS[key])}
-              </option>
-            ))}
-          </select>
-        </div>
         {extra}
       </div>
 

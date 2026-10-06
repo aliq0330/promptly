@@ -9,6 +9,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { PromptCardSkeletonGrid } from "@/components/ui/prompt-card-skeleton";
 import { FeedGrid } from "./feed-grid";
 import { feedItemCreatedAt, feedItemPopularity, type FeedItem } from "./types";
+import { SortSelect, type ContentSortKey } from "@/features/content/sort-select";
 import { TaxonomyFilter } from "@/features/content/taxonomy-filter";
 import { SearchView } from "@/features/search/search-view";
 import { EMPTY_TAXONOMY_FILTER, matchesTaxonomy, type TaxonomyFilterValue } from "@/lib/content-taxonomy";
@@ -27,12 +28,6 @@ import type { Tag, UserProfile } from "@/types";
 
 type Section = "all" | "prompts" | "generators" | "workflows" | "presets" | "requests" | "creators";
 
-type SortKey = "newest" | "oldest" | "most-liked";
-const SORT_LABELS: Record<SortKey, TranslationKey> = {
-  newest: "profile.sortNewest",
-  oldest: "profile.sortOldest",
-  "most-liked": "profile.sortMostLiked",
-};
 
 const SECTIONS: { key: Section; labelKey: TranslationKey; icon: typeof LayoutGrid }[] = [
   { key: "all", labelKey: "common.all", icon: LayoutGrid },
@@ -55,7 +50,7 @@ export function DiscoverFeed() {
   const [section, setSection] = useState<Section>("all");
   const [taxonomy, setTaxonomy] = useState<TaxonomyFilterValue>(EMPTY_TAXONOMY_FILTER);
   const [openOnly, setOpenOnly] = useState(false);
-  const [sort, setSort] = useState<SortKey>("newest");
+  const [sort, setSort] = useState<ContentSortKey>("newest");
   const [creators, setCreators] = useState<UserProfile[] | null>(null);
   const [tags, setTags] = useState<Tag[]>([]);
   const { realPrompts, loading } = useRealPrompts();
@@ -137,23 +132,7 @@ export function DiscoverFeed() {
           ariaLabel={t("discover.sectionsAriaLabel")}
         />
 
-        {section !== "creators" && <TaxonomyFilter value={taxonomy} onChange={setTaxonomy} />}
-        {section !== "creators" && (
-          <div className="flex justify-end">
-            <select
-              value={sort}
-              onChange={(event) => setSort(event.target.value as SortKey)}
-              aria-label={t("profile.sortAriaLabel")}
-              className="h-9 shrink-0 rounded-md border border-border bg-surface px-3 text-label font-medium text-text"
-            >
-              {(Object.keys(SORT_LABELS) as SortKey[]).map((key) => (
-                <option key={key} value={key}>
-                  {t(SORT_LABELS[key])}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
+        {section !== "creators" && <TaxonomyFilter value={taxonomy} onChange={setTaxonomy} sort={<SortSelect value={sort} onChange={setSort} />} />}
         {section === "requests" && (
           <ChipRow>
             <Chip selected={!openOnly} onClick={() => setOpenOnly(false)}>
