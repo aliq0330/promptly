@@ -20,7 +20,7 @@ import { searchPresets } from "@/lib/supabase/presets";
 import { PresetCard } from "@/features/presets/preset-card";
 import { searchTags } from "@/lib/supabase/tags";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import type { TaxonomyFilterValue } from "@/lib/content-taxonomy";
+import { findCategory, findSubcategory, isContentTypeId, type TaxonomyFilterValue } from "@/lib/content-taxonomy";
 import type { ContentSearchFilters } from "@/lib/supabase/taxonomy-query";
 import { formatCount, profileHref, tagHref } from "@/lib/utils";
 import type { Generator, Prompt, PromptRequest, Preset, Tag, UserProfile, Workflow } from "@/types";
@@ -60,9 +60,19 @@ export function SearchView({ idle }: { idle?: ReactNode } = {}) {
 
   // Prefill from `?q=` (the Explore page's search box hands off here).
   useEffect(() => {
-    const initial = new URLSearchParams(window.location.search).get("q");
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time read of the URL on mount
+    const params = new URLSearchParams(window.location.search);
+    const initial = params.get("q");
+    const type = params.get("type");
+    /* eslint-disable react-hooks/set-state-in-effect -- one-time read of the URL on mount */
     if (initial) setText(initial);
+    // Category links from a post: `?type=&category=&subcategory=` -> media chip + taxonomy filter.
+    if (isContentTypeId(type)) {
+      const cat = findCategory(type, params.get("category"));
+      const sub = cat ? findSubcategory(type, cat.id, params.get("subcategory")) : null;
+      setTokens([{ kind: "media", type }]);
+      setSubFilter({ category: cat?.id ?? null, subcategory: sub?.id ?? null });
+    }
+    /* eslint-enable react-hooks/set-state-in-effect */
   }, []);
 
   useEffect(() => {

@@ -11352,6 +11352,10 @@ Prompt oluştururken, ham prompt metninden ilgili "DNA bölümlerini" (konu, mek
 
 `/prompts/local`'da aksiyon çubuğunun (Beğeni · Yorum · Kaydet · İstatistik · Paylaş) altındaki ayırıcıdan sonra ortak `Tabs` ile yan yana sekmeler: **Prompt** (varsayılan; değişken alanları + prompt metni, Kopyala/Çalıştır), **Prompt geçmişi** (herkese açık sürüm geçmişi `PromptHistoryPanel` + yalnızca sahibine `EditHistoryPanel`), **Prompt DNA** (`PromptDnaDisplay`). Sürüm geçmişi sekmesi sürüm varsa ya da görüntüleyen sahibiyse, DNA sekmesi yalnızca DNA varsa görünür; tek sekme kalırsa çubuk hiç gösterilmez. Veriler (`fetchDnaSections`, `fetchVersionsForPrompt`) artık üst bileşende çekilir ve panellere prop olarak geçer. Başlık/tür/etiket/sonuçlar/öneriler/yorumlar yerinde kaldı. TR+EN `promptTabs.*` eklendi. Migration yok. tsc/lint/build temiz; tarayıcıda denenmedi.
 
+### 9.101 Kategori linki → arama sonuçsuz hatası
+
+Gönderideki kategori/alt kategori çipleri (`TaxonomyLinks`) `/search?q=Görsel İnsan Karakter` açıyordu; ama arama sayfası chip tabanlı olduktan sonra `?q=` yalnızca serbest metin oluyor ve taksonomi ayrıştırılmıyordu → başlık/açıklamada o metin aranıp sonuç çıkmıyordu. Artık çipler `/search?type=&category=&subcategory=` açar (slug'lar, dilden bağımsız); `SearchView` bunu mount'ta medya chip'i + `TaxonomyFilter` seçimine çevirir (sunucu tarafı `content_type/category/subcategory` filtresi). `?q=` aynen çalışır. Migration, yeni metin yok. tsc/lint/build temiz; gerçek veriyle denenmedi.
+
 ---
 
 **Sonraki adım:** Bilinen iki üretim hatası (Bölüm 9.40 — mesajlarda
