@@ -12547,3 +12547,7 @@ Prompt, Prompt İsteği, Generator (Detaylar/Yayınla adımları), Workflow ve H
 
 - `/prompts`, `/requests`, `/generators`, `/workflows`, `/presets` (ortak `ContentListPage`): profil araç çubuğundaki gibi her zaman görünen sağa hizalı **En yeni / En eski / En çok beğenilen** seçici (varsayılan En yeni); eski arama-sırası çipleri (İlgili/Yeni/Popüler) kaldırıldı. Sıralama yüklü + arama sonuçları üzerinde istemcide (`createdAt`/`likeCount`) uygulanır; arama sunucuya yalnızca hangi N satırın geleceğini söyler (`new`/`popular`). Sayfalama "Daha fazla yükle" ile yüklenen kümeyi sıralar, tüm veritabanını değil.
 - Prompt detayında değişken alanları artık prompt bloğunun içinde değil, hemen üstünde ayrı kartta; "Şablonu Kopyala" kaldırıldı. Migration yok; yeni metin yok.
+
+### 9.96 Ana Sayfa/Keşfet sıralama seçici + prompt metninde belirgin değişkenler
+
+`/` (FeedTabs) ve `/discover` (DiscoverFeed) artık profildeki gibi En yeni / En eski / En çok beğenilen seçiciye sahip (istemci tarafı, yüklü akış üzerinde; Ana Sayfa'da "Popüler" sekmesi seçiciyi "En çok beğenilen"e, diğer sekmeler "En yeni"ye ayarlar). Prompt detayında değişken değerleri metnin içinde vurgulu (`segmentPromptText` + `<mark>`); kopyalama/Çalıştır düz metni kullanır. Yeni metin yok, migration yok.

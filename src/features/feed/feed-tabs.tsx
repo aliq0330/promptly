@@ -20,6 +20,12 @@ import type { TranslationKey } from "@/lib/i18n/translations";
 
 type TabKey = "following" | "popular" | "for-you";
 type KindFilter = "all" | FeedItem["kind"];
+type SortKey = "newest" | "oldest" | "most-liked";
+const SORT_LABELS: Record<SortKey, TranslationKey> = {
+  newest: "profile.sortNewest",
+  oldest: "profile.sortOldest",
+  "most-liked": "profile.sortMostLiked",
+};
 
 const TABS: { key: TabKey; labelKey: TranslationKey; icon: typeof Stars }[] = [
   { key: "for-you", labelKey: "home.tabForYou", icon: Stars },
@@ -40,6 +46,7 @@ export function FeedTabs() {
   const { t } = useTranslation();
   const [active, setActive] = useState<TabKey>("for-you");
   const [kind, setKind] = useState<KindFilter>("all");
+  const [sort, setSort] = useState<SortKey>("newest");
   const { user } = useAuth();
   const { realPrompts, loading } = useRealPrompts();
   const { realRequests } = useRealRequests();
@@ -73,14 +80,12 @@ export function FeedTabs() {
   }, [realPrompts, realRequests, realGenerators, realWorkflows, realPresets]);
 
   const visible = useMemo(() => {
-    const byTab =
-      active === "popular"
-        ? [...allItems].sort((a, b) => feedItemPopularity(b) - feedItemPopularity(a))
-        : active === "following"
-          ? allItems.filter((item) => followedIds.has(feedItemAuthorId(item)))
-          : allItems;
-    return kind === "all" ? byTab : byTab.filter((item) => item.kind === kind);
-  }, [allItems, active, followedIds, kind]);
+    const byTab = active === "following" ? allItems.filter((item) => followedIds.has(feedItemAuthorId(item))) : allItems;
+    const byKind = kind === "all" ? byTab : byTab.filter((item) => item.kind === kind);
+    return [...byKind].sort((a, b) =>
+      sort === "most-liked" ? feedItemPopularity(b) - feedItemPopularity(a) || feedItemCreatedAt(b) - feedItemCreatedAt(a) : sort === "oldest" ? feedItemCreatedAt(a) - feedItemCreatedAt(b) : feedItemCreatedAt(b) - feedItemCreatedAt(a),
+    );
+  }, [allItems, active, followedIds, kind, sort]);
 
   return (
     <section className="space-y-4" aria-label={t("feed.ariaLabel")}>
@@ -88,7 +93,10 @@ export function FeedTabs() {
         <Tabs
           items={TABS.map((tab) => ({ key: tab.key, label: t(tab.labelKey), icon: tab.icon }))}
           active={active}
-          onChange={setActive}
+          onChange={(tab) => {
+            setActive(tab);
+            setSort(tab === "popular" ? "most-liked" : "newest");
+          }}
           ariaLabel={t("feed.viewAriaLabel")}
           variant="segmented"
         />
@@ -99,6 +107,20 @@ export function FeedTabs() {
             </Chip>
           ))}
         </ChipRow>
+      </div>
+      <div className="flex justify-end">
+        <select
+          value={sort}
+          onChange={(event) => setSort(event.target.value as SortKey)}
+          aria-label={t("profile.sortAriaLabel")}
+          className="h-9 shrink-0 rounded-md border border-border bg-surface px-3 text-label font-medium text-text"
+        >
+          {(Object.keys(SORT_LABELS) as SortKey[]).map((key) => (
+            <option key={key} value={key}>
+              {t(SORT_LABELS[key])}
+            </option>
+          ))}
+        </select>
       </div>
 
       {active === "following" && !user ? (
