@@ -361,6 +361,7 @@ export const translations = {
   "prompt.loginToLikeAria": { tr: "Beğenmek için giriş yap ({{count}} beğeni)", en: "Log in to like ({{count}} likes)" },
   "prompt.unlike": { tr: "Beğenmekten vazgeç", en: "Unlike" },
   "prompt.like": { tr: "Beğen", en: "Like" },
+  "prompt.unlikeAria": { tr: "Beğeniyi kaldır ({{count}} beğeni)", en: "Remove like ({{count}} likes)" },
   "prompt.likeAria": { tr: "Beğen ({{count}} beğeni)", en: "Like ({{count}} likes)" },
   "prompt.loginToSave": { tr: "Kaydetmek için giriş yapmalısın", en: "Log in to save this" },
   "prompt.loginToSaveAria": { tr: "Kaydetmek için giriş yap ({{count}} kayıt)", en: "Log in to save ({{count}} saves)" },

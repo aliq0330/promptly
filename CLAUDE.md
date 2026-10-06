@@ -12551,3 +12551,10 @@ Prompt, Prompt İsteği, Generator (Detaylar/Yayınla adımları), Workflow ve H
 ### 9.96 Ana Sayfa/Keşfet sıralama seçici + prompt metninde belirgin değişkenler
 
 `/` (FeedTabs) ve `/discover` (DiscoverFeed) artık profildeki gibi En yeni / En eski / En çok beğenilen seçiciye sahip (istemci tarafı, yüklü akış üzerinde; Ana Sayfa'da "Popüler" sekmesi seçiciyi "En çok beğenilen"e, diğer sekmeler "En yeni"ye ayarlar). Prompt detayında değişken değerleri metnin içinde vurgulu (`segmentPromptText` + `<mark>`); kopyalama/Çalıştır düz metni kullanır. Yeni metin yok, migration yok.
+
+### 9.97 Animasyonlu ortak Beğeni (Like) etkileşimi
+
+Tüm beğeni yüzeyleri (prompt/istek/generator/workflow/hazır ayar kart ve detayları, yorum beğenileri) tek ortak bileşeni kullanıyor: `components/ui/like-toggle.tsx` (`LikeToggle`). Başarılı beğenide kalp "pop" (1→1.25→.95→1), halka + 10 parçacık (token renkleri: `danger`/`primary`/`secondary`), sayaç yukarı/aşağı yuvarlanır (`RollingCount`, `tabular-nums`); beğeniyi kaldırmada yalnız yumuşak dolgu/renk geçişi. Beğenilmiş kalp `text-danger`. `prefers-reduced-motion`'da parçacık/halka/pop/sayaç animasyonu kapalı. Efektler `pointer-events-none`, yerleşimi etkilemez.
+- Veri akışı değişmedi: `useLikeState` (engagement-store + Supabase) aynı; `toggle` artık `"liked"|"unliked"|"failed"|"ignored"` döner ve modül-seviyeli bir in-flight kümesiyle (aynı hedef için) çift istek/çift sayım engellenir. Hata → mevcut rollback, burst yok. Yorum beğenisi (`comment-section.tsx`) aynı sonucu döndürür; `comment-node.tsx` `LikeToggle` kullanır.
+- Keyframe'ler `globals.css` `@theme` içinde (`heart-pop`, `like-ring`, `like-particle`, `count-in/out`). Yeni bağımlılık yok. i18n: `prompt.unlikeAria` TR+EN eklendi (aria-label duruma göre). `aria-pressed` korunur.
+- Doğrulama: tsc/lint/build temiz; geçici sayfada Playwright (390px): burst 10 parçacık + halka, sayaç yuvarlanması, unlike'ta burst yok, hata geri alma, yatay taşma yok. Gerçek Supabase'e karşı denenmedi. Migration yok.

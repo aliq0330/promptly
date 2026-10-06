@@ -4,6 +4,14 @@ import { useCallback, useEffect } from "react";
 import { useAuth } from "@/features/auth/auth-provider";
 import { fetchIsLiked, likeContent, unlikeContent, type LikeableContentType } from "@/lib/supabase/likes";
 import { engagementStore, useEngagementEntry } from "@/features/content/engagement-store";
+import type { LikeToggleResult } from "@/components/ui/like-toggle";
+
+/**
+ * Targets whose like/unlike request is still in flight. Module-level on
+ * purpose: a card and a detail page showing the same item share one guard,
+ * so rapid clicks never fire duplicate requests or double-apply the count.
+ */
+const inFlight = new Set<string>();
 
 /**
  * Whether the current viewer liked a real prompt or generator, and its
@@ -38,16 +46,21 @@ export function useLikeState(id: string, likeCount: number, contentType: Likeabl
     };
   }, [user, id, contentType, key]);
 
-  const toggle = useCallback(async () => {
-    if (!user) return;
+  const toggle = useCallback(async (): Promise<LikeToggleResult> => {
+    if (!user || inFlight.has(key)) return "ignored";
+    inFlight.add(key);
     const wasLiked = engagementStore.readActive(key).active;
     engagementStore.applyToggle(key, !wasLiked, wasLiked ? -1 : 1);
     try {
       if (wasLiked) await unlikeContent(id, user.id, contentType);
       else await likeContent(id, user.id, contentType);
+      return wasLiked ? "unliked" : "liked";
     } catch (err) {
       console.error(wasLiked ? "unlikeContent" : "likeContent", err);
       engagementStore.applyToggle(key, wasLiked, wasLiked ? 1 : -1);
+      return "failed";
+    } finally {
+      inFlight.delete(key);
     }
   }, [user, id, contentType, key]);
 
