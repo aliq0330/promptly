@@ -7,8 +7,8 @@ import { useRouter } from "next/navigation";
 export default function SearchPage() {
   const router = useRouter();
   useEffect(() => {
-    const q = new URLSearchParams(window.location.search).get("q");
-    router.replace(q ? `/discover?q=${encodeURIComponent(q)}` : "/discover");
+    // Forward every param (q, type, category, subcategory) to Explore.
+    router.replace(`/discover${window.location.search}`);
   }, [router]);
   return null;
 }
