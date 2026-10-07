@@ -5,8 +5,8 @@ import { ImagePlus, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { cn, resizeImageToDataUrlFit } from "@/lib/utils";
-import { makeFieldKeyFromLabel, isConditionSatisfiable, slugifyGeneratorTitle } from "@/lib/generator-template";
-import { buildFieldOutputPreview, collectJsonPathGroups, isValidJsonPath, parseJsonPath } from "@/lib/generator-output";
+import { makeFieldKeyFromLabel, slugifyGeneratorTitle } from "@/lib/generator-template";
+import { isValidJsonPath } from "@/lib/generator-output";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import type { GeneratorField, GeneratorFieldType } from "@/types";
@@ -29,7 +29,6 @@ const FIELD_TYPE_LABEL_KEYS: Record<GeneratorFieldType, TranslationKey> = {
 };
 
 const OPTION_TYPES: GeneratorFieldType[] = ["select", "multi_select", "radio"];
-const RANGE_TYPES: GeneratorFieldType[] = ["number", "slider"];
 
 /** Sanitizes free-typed text into a valid JSON-path segment / option value — same transliteration rules as tag/variable keys elsewhere in this app, just underscored instead of hyphenated. */
 function sanitizeSegment(input: string): string {
@@ -93,9 +92,6 @@ export function FieldEditorModal({
   const [keyTouched, setKeyTouched] = useState(!isNew);
   const [pathTouched, setPathTouched] = useState(!isNew);
   const [optionLabelDraft, setOptionLabelDraft] = useState("");
-  const [optionValueDraft, setOptionValueDraft] = useState("");
-  const [optionValueTouched, setOptionValueTouched] = useState(false);
-  const [showAdvanced, setShowAdvanced] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   // Default/custom option visuals (CLAUDE.md "Generator Hazır Alanları +
@@ -157,48 +153,11 @@ export function FieldEditorModal({
       ? t("field.jsonPathInvalidError")
       : null;
 
-  const otherFields = allFields.filter((f) => f.id !== draft.id);
-  const existingGroups = collectJsonPathGroups(otherFields);
-  const pathSegments = parseJsonPath(draft.jsonPath);
-  const pathGroup = pathSegments.length > 1 ? pathSegments[0] : "";
-  const pathProperty = pathSegments.length > 1 ? pathSegments.slice(1).join(".") : (pathSegments[0] ?? "");
-  const propertySuggestions = Array.from(
-    new Set(
-      otherFields
-        .map((f) => parseJsonPath(f.jsonPath?.trim() || f.key))
-        .filter((segments) => (pathGroup ? segments[0] === pathGroup && segments.length > 1 : segments.length === 1))
-        .map((segments) => (pathGroup ? segments.slice(1).join(".") : segments[0])),
-    ),
-  ).sort();
-
   function updateLabel(label: string) {
     setDraft((prev) => {
       const key = keyTouched ? prev.key : makeFieldKeyFromLabel(label, existingKeys);
       const jsonPath = pathTouched ? prev.jsonPath : key;
       return { ...prev, label, key, jsonPath };
-    });
-  }
-
-  function updateJsonPath(jsonPath: string) {
-    setPathTouched(true);
-    setDraft((prev) => ({ ...prev, jsonPath }));
-  }
-
-  function updatePathGroup(group: string) {
-    setPathTouched(true);
-    setDraft((prev) => {
-      const property = pathProperty || prev.key;
-      const jsonPath = group.trim() ? `${sanitizeSegment(group)}.${property}` : property;
-      return { ...prev, jsonPath };
-    });
-  }
-
-  function updatePathProperty(property: string) {
-    setPathTouched(true);
-    setDraft((prev) => {
-      const sanitizedProperty = sanitizeSegment(property) || property;
-      const jsonPath = pathGroup ? `${pathGroup}.${sanitizedProperty}` : sanitizedProperty;
-      return { ...prev, jsonPath };
     });
   }
 
@@ -214,12 +173,10 @@ export function FieldEditorModal({
   function addOption() {
     const label = optionLabelDraft.trim();
     if (!label) return;
-    const value = (optionValueTouched ? optionValueDraft.trim() : sanitizeSegment(label)) || sanitizeSegment(label);
+    const value = sanitizeSegment(label);
     if (!value || draft.options.some((o) => o.value === value)) return;
     setDraft((prev) => ({ ...prev, options: [...prev.options, { label, value, image: newOptionImage ?? undefined }] }));
     setOptionLabelDraft("");
-    setOptionValueDraft("");
-    setOptionValueTouched(false);
     setNewOptionImage(null);
   }
 
@@ -243,8 +200,6 @@ export function FieldEditorModal({
     if (keyError || labelError || optionsError || jsonPathError) return;
     onSave(draft);
   }
-
-  const conditionSources = allFields.filter((f) => f.id !== draft.id && OPTION_TYPES.includes(f.type) && f.options.length > 0);
 
   return (
     <Modal onClose={onClose} labelledBy="field-editor-title">
@@ -276,6 +231,7 @@ export function FieldEditorModal({
               className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted"
             />
             {labelError && <p className="mt-1 text-xs text-danger">{labelError}</p>}
+            {!labelError && keyError && <p className="mt-1 text-xs text-danger">{keyError}</p>}
           </div>
 
           <div>
@@ -308,24 +264,6 @@ export function FieldEditorModal({
                 </option>
               ))}
             </select>
-          </div>
-
-          <div>
-            <label htmlFor="field-key" className="mb-1.5 block text-sm font-medium text-text">
-              {t("field.variableLabel")}
-            </label>
-            <input
-              id="field-key"
-              type="text"
-              value={draft.key}
-              onChange={(event) => {
-                setKeyTouched(true);
-                setDraft((prev) => ({ ...prev, key: event.target.value.toLowerCase() }));
-              }}
-              className="h-10 w-full rounded-md border border-border bg-background px-3 font-mono text-sm text-text"
-            />
-            <p className="mt-1 font-mono text-xs text-primary">{`{{${draft.key || "…"}}}`}</p>
-            {keyError && <p className="mt-1 text-xs text-danger">{keyError}</p>}
           </div>
 
           {OPTION_TYPES.includes(draft.type) && (
@@ -394,7 +332,6 @@ export function FieldEditorModal({
                   value={optionLabelDraft}
                   onChange={(event) => {
                     setOptionLabelDraft(event.target.value);
-                    if (!optionValueTouched) setOptionValueDraft(sanitizeSegment(event.target.value));
                   }}
                   onKeyDown={(event) => {
                     if (event.key === "Enter") {
@@ -405,22 +342,9 @@ export function FieldEditorModal({
                   placeholder={t("field.optionLabelPlaceholder")}
                   className="h-9 flex-1 rounded-md border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted"
                 />
-                <input
-                  type="text"
-                  value={optionValueTouched ? optionValueDraft : sanitizeSegment(optionLabelDraft)}
-                  onChange={(event) => {
-                    setOptionValueTouched(true);
-                    setOptionValueDraft(event.target.value);
-                  }}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter") {
-                      event.preventDefault();
-                      addOption();
-                    }
-                  }}
-                  placeholder={t("field.optionValuePlaceholder")}
-                  className="h-9 w-28 shrink-0 rounded-md border border-border bg-background px-2 font-mono text-xs text-text placeholder:text-text-muted"
-                />
+                <Button type="button" size="sm" onClick={addOption}>
+                  {t("field.addInline")}
+                </Button>
                 <button
                   type="button"
                   onClick={() => (newOptionImage ? setNewOptionImage(null) : openImagePicker(NEW_OPTION_IMAGE_TARGET))}
@@ -444,190 +368,6 @@ export function FieldEditorModal({
               {optionsError && <p className="mt-1 text-xs text-danger">{optionsError}</p>}
             </div>
           )}
-
-          <DefaultValueField draft={draft} onChange={(defaultValue) => setDraft((prev) => ({ ...prev, defaultValue }))} />
-
-          <div className="rounded-md border border-border p-3">
-            <p className="mb-0.5 text-sm font-medium text-text">{t("field.outputMappingTitle")}</p>
-            <p className="mb-3 text-xs text-text-muted">{t("field.outputMappingHint")}</p>
-
-            <div className="mb-3 grid grid-cols-2 gap-2">
-              <div>
-                <label htmlFor="field-path-group" className="mb-1 block text-xs text-text-muted">
-                  {t("field.outputGroup")} <span className="text-text-muted">({t("common.optional")})</span>
-                </label>
-                <input
-                  id="field-path-group"
-                  type="text"
-                  list="field-path-group-suggestions"
-                  value={pathGroup}
-                  onChange={(event) => updatePathGroup(event.target.value)}
-                  placeholder={t("field.outputGroupPlaceholder")}
-                  className="h-9 w-full rounded-md border border-border bg-background px-2 font-mono text-xs text-text placeholder:text-text-muted"
-                />
-                <datalist id="field-path-group-suggestions">
-                  {existingGroups.map((group) => (
-                    <option key={group} value={group} />
-                  ))}
-                </datalist>
-              </div>
-              <div>
-                <label htmlFor="field-path-property" className="mb-1 block text-xs text-text-muted">
-                  {t("field.propertyName")}
-                </label>
-                <input
-                  id="field-path-property"
-                  type="text"
-                  list="field-path-property-suggestions"
-                  value={pathProperty}
-                  onChange={(event) => updatePathProperty(event.target.value)}
-                  placeholder={t("field.propertyNamePlaceholder")}
-                  className="h-9 w-full rounded-md border border-border bg-background px-2 font-mono text-xs text-text placeholder:text-text-muted"
-                />
-                <datalist id="field-path-property-suggestions">
-                  {propertySuggestions.map((property) => (
-                    <option key={property} value={property} />
-                  ))}
-                </datalist>
-              </div>
-            </div>
-
-            <div className="mb-3">
-              <label htmlFor="field-json-path" className="mb-1 block text-xs text-text-muted">
-                JSON Path <span className="text-text-muted">({t("field.jsonPathManualHint")})</span>
-              </label>
-              <input
-                id="field-json-path"
-                type="text"
-                value={draft.jsonPath}
-                onChange={(event) => updateJsonPath(event.target.value)}
-                className="h-9 w-full rounded-md border border-border bg-background px-2 font-mono text-xs text-text"
-              />
-              {jsonPathError && <p className="mt-1 text-xs text-danger">{jsonPathError}</p>}
-            </div>
-
-            <div>
-              <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-text-muted">{t("field.outputPreview")}</p>
-              <pre className="max-h-32 overflow-auto rounded-md border border-border bg-background p-2 font-mono text-xs text-text">
-                {jsonPathError ? "—" : JSON.stringify(buildFieldOutputPreview(draft), null, 2)}
-              </pre>
-            </div>
-          </div>
-
-          <div className="rounded-md border border-border">
-            <button
-              type="button"
-              onClick={() => setShowAdvanced((prev) => !prev)}
-              className="flex w-full items-center justify-between px-3 py-2 text-left text-sm font-medium text-text"
-            >
-              {t("field.advanced")}
-              <span className="text-xs text-text-muted">{showAdvanced ? t("vision.hide") : t("vision.show")}</span>
-            </button>
-            {showAdvanced && (
-              <div className="space-y-3 border-t border-border p-3">
-                <label className="flex cursor-pointer items-center gap-2 text-sm text-text">
-                  <input
-                    type="checkbox"
-                    checked={draft.required}
-                    onChange={(event) => setDraft((prev) => ({ ...prev, required: event.target.checked }))}
-                  />
-                  {t("field.required2")}
-                </label>
-
-                {!OPTION_TYPES.includes(draft.type) && draft.type !== "checkbox" && draft.type !== "toggle" && (
-                  <div>
-                    <label htmlFor="field-placeholder" className="mb-1 block text-xs text-text-muted">
-                      {t("field.placeholder")}
-                    </label>
-                    <input
-                      id="field-placeholder"
-                      type="text"
-                      value={draft.placeholder}
-                      onChange={(event) => setDraft((prev) => ({ ...prev, placeholder: event.target.value }))}
-                      className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm text-text"
-                    />
-                  </div>
-                )}
-
-                {RANGE_TYPES.includes(draft.type) && (
-                  <div className="grid grid-cols-3 gap-2">
-                    <div>
-                      <label className="mb-1 block text-xs text-text-muted">{t("field.minimum")}</label>
-                      <input
-                        type="number"
-                        value={draft.min ?? ""}
-                        onChange={(event) => setDraft((prev) => ({ ...prev, min: event.target.value === "" ? null : Number(event.target.value) }))}
-                        className="h-9 w-full rounded-md border border-border bg-background px-2 text-sm text-text"
-                      />
-                    </div>
-                    <div>
-                      <label className="mb-1 block text-xs text-text-muted">{t("field.maximum")}</label>
-                      <input
-                        type="number"
-                        value={draft.max ?? ""}
-                        onChange={(event) => setDraft((prev) => ({ ...prev, max: event.target.value === "" ? null : Number(event.target.value) }))}
-                        className="h-9 w-full rounded-md border border-border bg-background px-2 text-sm text-text"
-                      />
-                    </div>
-                    <div>
-                      <label className="mb-1 block text-xs text-text-muted">{t("field.step")}</label>
-                      <input
-                        type="number"
-                        value={draft.step ?? ""}
-                        onChange={(event) => setDraft((prev) => ({ ...prev, step: event.target.value === "" ? null : Number(event.target.value) }))}
-                        className="h-9 w-full rounded-md border border-border bg-background px-2 text-sm text-text"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                <div>
-                  <label htmlFor="field-condition-source" className="mb-1 block text-xs text-text-muted">
-                    {t("field.visibilityConditionalLabel")}
-                  </label>
-                  <div className="flex gap-2">
-                    <select
-                      id="field-condition-source"
-                      value={draft.condition?.fieldKey ?? ""}
-                      onChange={(event) => {
-                        const fieldKey = event.target.value;
-                        if (!fieldKey) {
-                          setDraft((prev) => ({ ...prev, condition: null }));
-                          return;
-                        }
-                        const source = conditionSources.find((f) => f.key === fieldKey);
-                        setDraft((prev) => ({ ...prev, condition: { fieldKey, equals: source?.options[0]?.value ?? "" } }));
-                      }}
-                      className="h-9 flex-1 rounded-md border border-border bg-background px-2 text-sm text-text"
-                    >
-                      <option value="">{t("field.alwaysVisible")}</option>
-                      {conditionSources.map((source) => (
-                        <option key={source.id} value={source.key}>
-                          {source.label} =
-                        </option>
-                      ))}
-                    </select>
-                    {draft.condition && (
-                      <select
-                        value={draft.condition.equals}
-                        onChange={(event) => setDraft((prev) => (prev.condition ? { ...prev, condition: { ...prev.condition, equals: event.target.value } } : prev))}
-                        className="h-9 flex-1 rounded-md border border-border bg-background px-2 text-sm text-text"
-                      >
-                        {(conditionSources.find((f) => f.key === draft.condition?.fieldKey)?.options ?? []).map((option) => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </select>
-                    )}
-                  </div>
-                  {draft.condition && !isConditionSatisfiable(draft.condition, allFields) && (
-                    <p className="mt-1 text-xs text-danger">{t("field.conditionSourceGoneError")}</p>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
 
           <div className="flex items-center justify-between pt-1">
             <div>
@@ -657,83 +397,5 @@ export function FieldEditorModal({
         </form>
       </div>
     </Modal>
-  );
-}
-
-function DefaultValueField({ draft, onChange }: { draft: GeneratorField; onChange: (value: string | string[]) => void }) {
-  const { t } = useTranslation();
-  if (draft.type === "multi_select") {
-    const selected = Array.isArray(draft.defaultValue) ? draft.defaultValue : [];
-    return (
-      <div>
-        <label className="mb-1.5 block text-sm font-medium text-text">{t("field.defaultValueLabel")}</label>
-        <div className="flex flex-wrap gap-2">
-          {draft.options.length === 0 ? (
-            <p className="text-xs text-text-muted">{t("field.addOptionFirst")}</p>
-          ) : (
-            draft.options.map((option) => {
-              const isOn = selected.includes(option.value);
-              return (
-                <button
-                  key={option.value}
-                  type="button"
-                  onClick={() => onChange(isOn ? selected.filter((v) => v !== option.value) : [...selected, option.value])}
-                  className={cn(
-                    "rounded-full border px-2.5 py-1 text-xs",
-                    isOn ? "border-primary bg-primary text-primary-foreground" : "border-border text-text-muted",
-                  )}
-                >
-                  {option.label}
-                </button>
-              );
-            })
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  if (draft.type === "select" || draft.type === "radio") {
-    const value = Array.isArray(draft.defaultValue) ? "" : draft.defaultValue;
-    return (
-      <div>
-        <label htmlFor="field-default" className="mb-1.5 block text-sm font-medium text-text">
-          {t("field.defaultValueLabel")}
-        </label>
-        <select id="field-default" value={value} onChange={(event) => onChange(event.target.value)} className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-text">
-          <option value="">{t("field.none")}</option>
-          {draft.options.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-      </div>
-    );
-  }
-
-  if (draft.type === "checkbox" || draft.type === "toggle") {
-    return (
-      <label className="flex cursor-pointer items-center gap-2 text-sm text-text">
-        <input type="checkbox" checked={draft.defaultValue === "true"} onChange={(event) => onChange(String(event.target.checked))} />
-        {t("field.onByDefault")}
-      </label>
-    );
-  }
-
-  const value = Array.isArray(draft.defaultValue) ? "" : draft.defaultValue;
-  return (
-    <div>
-      <label htmlFor="field-default" className="mb-1.5 block text-sm font-medium text-text">
-        {t("field.defaultValueLabel")} <span className="text-text-muted">({t("common.optional")})</span>
-      </label>
-      <input
-        id="field-default"
-        type={draft.type === "number" || draft.type === "slider" ? "number" : "text"}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-text"
-      />
-    </div>
   );
 }
