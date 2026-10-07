@@ -4216,6 +4216,10 @@ Detay sayfalarında uzun prompt metni sayfayı uzatmıyor: `src/features/content
 - **Katkı haritası:** kaydırma alanı sağ uca (güncel ay) kaydırılarak başlıyor.
 - Migration yok. tsc/lint/build temiz; tarayıcıda denenmedi.
 
+### 9.104 Ayarlar > Gizlilik: Engellenenler satırı doğru yere taşındı
+
+Bölüm 9.103'te "Engellenenler" bağlantısı yanlışlıkla giriş yapılmamış görünüme eklenmişti, bu yüzden giriş yapmış kullanıcı Ayarlar'da görmüyordu. Artık "Gizlilik" başlığı altında, mesaj gizliliği kutusunun hemen altında (giriş yapmış görünüm); giriş yapmamış görünümden kaldırıldı (engeller hesap gerektirir). Migration yok. tsc/lint/build temiz; tarayıcıda denenmedi.
+
 ---
 
 **Sonraki adım:** Mesajlaşma genişletmesinin 3 fazı da (Faz A — Bölüm

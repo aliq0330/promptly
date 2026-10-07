@@ -176,14 +176,6 @@ export default function SettingsPage() {
           </Link>
         </div>
 
-        <Link href="/settings/blocked" className="flex items-center justify-between rounded-lg border border-border bg-surface p-4 transition-colors hover:border-border-strong">
-          <span>
-            <span className="block text-sm font-medium text-text">{t("settings.blockedUsers")}</span>
-            <span className="block text-xs text-text-muted">{t("settings.blockedUsersHint")}</span>
-          </span>
-          <ChevronRight size={16} className="text-text-muted" />
-        </Link>
-
         <AppearanceSection t={t} />
         <LanguageSection t={t} language={language} setLanguage={setLanguage} />
       </div>
@@ -342,6 +334,14 @@ export default function SettingsPage() {
             </div>
           )}
         </div>
+
+        <Link href="/settings/blocked" className="flex items-center justify-between rounded-lg border border-border bg-surface p-4 transition-colors hover:border-border-strong">
+          <span>
+            <span className="block text-sm font-medium text-text">{t("settings.blockedUsers")}</span>
+            <span className="block text-xs text-text-muted">{t("settings.blockedUsersHint")}</span>
+          </span>
+          <ChevronRight size={16} className="text-text-muted" />
+        </Link>
 
         <AppearanceSection t={t} />
         <LanguageSection t={t} language={language} setLanguage={setLanguage} />
