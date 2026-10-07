@@ -8,6 +8,7 @@ import { Modal } from "@/components/ui/modal";
 import { Tabs } from "@/components/ui/tabs";
 import { PresetFieldList } from "@/features/presets/preset-field-list";
 import { PresetLists, type PresetBundle } from "@/features/presets/preset-picker";
+import { PresetPreviewModal } from "@/features/presets/preset-preview-modal";
 import { SelectionSummary } from "@/features/presets/selection-summary";
 import type { ContentTypeId } from "@/lib/content-taxonomy";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -24,16 +25,18 @@ import {
   type PresetSelection,
 } from "@/lib/preset-fields";
 import { cn } from "@/lib/utils";
+import { resolvePresetFields } from "@/lib/preset-utils";
+import type { Preset } from "@/types";
 
 /**
- * The prompt form's "Ek Ayar Önerileri" row + applied chips. The panel only
- * mounts while open and has three tabs — Alanlar (the platform's fields, the
- * ones recommended for the form's type → category → subcategory first),
- * Kaydettiklerim (presets saved with the ordinary save) and Topluluk
- * (Paylaştıklarım / Diğerleri). Nothing can be CREATED here: presets and their
- * custom fields are made on the preset page. `extraFields` holds the
- * preset-owned fields an applied preset brought along, so they survive closing
- * the panel.
+ * The prompt form's "Hazır Ayarlar ve Ek Alan Önerileri" row + applied chips.
+ * The panel only mounts while open and has three tabs, in this order:
+ * Topluluk (one list of everyone's presets with a "Ben" toggle; the default),
+ * Kaydettiklerim (presets saved with the ordinary save) and Alanlar (the
+ * platform's fields, those recommended for the form's type → category →
+ * subcategory first). Nothing can be CREATED here: presets and their custom
+ * fields are made on the preset page. `extraFields` holds the preset-owned
+ * fields an applied preset brought along, so they survive closing the panel.
  */
 export function ExtraSettingsSection({
   contentType,
@@ -169,7 +172,9 @@ function ExtraSettingsPanel({
   const [draft, setDraft] = useState<PresetSelection>(initial);
   const [extra, setExtra] = useState<PresetField[]>(initialExtra);
   const [custom, setCustom] = useState<CustomOptions>(initialCustom);
-  const [tab, setTab] = useState<PanelTab>("fields");
+  const [tab, setTab] = useState<PanelTab>("community");
+  const [previewing, setPreviewing] = useState<Preset | null>(null);
+  const [savedVersion, setSavedVersion] = useState(0);
   const [showOthers, setShowOthers] = useState(false);
   const fields = useMemo(() => withCustomOptions(mergeFields(catalog, extra), custom), [catalog, extra, custom]);
   const fragmentLanguage = englishFragments ? "en" : language;
@@ -208,9 +213,9 @@ function ExtraSettingsPanel({
   }
 
   const tabs: { key: PanelTab; label: string }[] = [
-    { key: "fields", label: t("extra.tabFields") },
-    { key: "saved", label: t("extra.tabSaved") },
     { key: "community", label: t("extra.tabCommunity") },
+    { key: "saved", label: t("extra.tabSaved") },
+    { key: "fields", label: t("extra.tabFields") },
   ];
 
   return (
@@ -287,7 +292,15 @@ function ExtraSettingsPanel({
                 )}
               </section>
             ) : (
-              <PresetLists tab={tab} contentType={contentType} category={category} onApply={applyBundle} />
+              <PresetLists
+                tab={tab}
+                contentType={contentType}
+                category={category}
+                onApply={applyBundle}
+                onPreview={setPreviewing}
+                savedVersion={savedVersion}
+                onSavedChange={() => setSavedVersion((v) => v + 1)}
+              />
             )}
 
             <section className="rounded-md border border-border-soft bg-surface-soft p-3">
@@ -311,6 +324,17 @@ function ExtraSettingsPanel({
         </div>
       </Modal>
 
+      {previewing && (
+        <PresetPreviewModal
+          preset={previewing}
+          onClose={() => setPreviewing(null)}
+          onSavedChange={() => setSavedVersion((v) => v + 1)}
+          onApply={() => {
+            applyBundle({ fields: resolvePresetFields(previewing), selection: previewing.selection });
+            setPreviewing(null);
+          }}
+        />
+      )}
     </>
   );
 }

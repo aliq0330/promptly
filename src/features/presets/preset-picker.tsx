@@ -1,16 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
-import { ExternalLink } from "lucide-react";
-import { Tabs } from "@/components/ui/tabs";
+import { Chip } from "@/components/ui/chip";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { ContentTypeId } from "@/lib/content-taxonomy";
 import type { PresetField, PresetSelection } from "@/lib/preset-fields";
 import { presetParameterEntries, resolvePresetFields } from "@/lib/preset-utils";
 import { fetchPresetsByCreator, fetchRecentPresets, fetchSavedPresets } from "@/lib/supabase/presets";
-import { presetHref } from "@/lib/utils";
 import type { Preset } from "@/types";
 import { PresetSaveCta } from "./preset-save-cta";
 
@@ -21,7 +18,6 @@ export interface PresetBundle {
 }
 
 export type PresetListTab = "saved" | "community";
-type CommunityTab = "mine" | "others";
 
 /** A preset of the same media type as the form, those matching the form's category first. */
 function sameType(items: Preset[] | undefined, contentType: ContentTypeId, category: string | null): Preset[] {
@@ -31,36 +27,44 @@ function sameType(items: Preset[] | undefined, contentType: ContentTypeId, categ
 }
 
 /**
- * The preset tabs of the Prompt form's "Ek Ayar Önerileri" panel:
+ * The preset tabs of the Prompt form's "Hazır Ayarlar ve Ek Alan Önerileri"
+ * panel:
  *
+ *  - `community` — "Topluluk": one list of everyone's published public presets
+ *    (the viewer's own mixed in). A "Ben" toggle on top narrows it to the
+ *    viewer's own published presets (public or private). Every row can be
+ *    applied ("Uygula") or saved ("Kaydet", not on one's own), and tapping the
+ *    row previews its parameters (`onPreview`).
  *  - `saved` — "Kaydettiklerim": presets the viewer saved with the ordinary
  *    save (any collection), applied with "Uygula".
- *  - `community` — "Topluluk": "Paylaştıklarım" (the viewer's own published
- *    presets, public or private, applied directly) and "Diğerleri" (other
- *    people's public presets — these are only SAVED here; once saved they show
- *    up under Kaydettiklerim and are applied from there).
  *
  * Only presets of the form's media type are shown. Applying only fills the form
- * — it stays fully editable. Lists load lazily, the first time they are shown,
- * and "Kaydettiklerim" reloads when something is saved/unsaved from "Diğerleri".
+ * — it stays fully editable. Lists load lazily, the first time they are shown;
+ * "Kaydettiklerim" reloads when `savedVersion` changes (something was saved or
+ * unsaved here or in the preview).
  */
 export function PresetLists({
   tab,
   contentType,
   category = null,
   onApply,
+  onPreview,
+  savedVersion,
+  onSavedChange,
 }: {
   tab: PresetListTab;
   contentType: ContentTypeId;
   category?: string | null;
   onApply: (bundle: PresetBundle) => void;
+  onPreview: (preset: Preset) => void;
+  savedVersion: number;
+  onSavedChange: () => void;
 }) {
   const { t, language } = useTranslation();
   const { user } = useAuth();
-  const [communityTab, setCommunityTab] = useState<CommunityTab>("mine");
-  const [lists, setLists] = useState<{ saved?: Preset[]; mine?: Preset[]; others?: Preset[] }>({});
-  const [savedVersion, setSavedVersion] = useState(0);
-  const need: keyof typeof lists = tab === "saved" ? "saved" : communityTab;
+  const [onlyMine, setOnlyMine] = useState(false);
+  const [lists, setLists] = useState<{ saved?: Preset[]; mine?: Preset[]; all?: Preset[] }>({});
+  const need: keyof typeof lists = tab === "saved" ? "saved" : onlyMine ? "mine" : "all";
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- a save/unsave elsewhere invalidates the cached "Kaydettiklerim" list
@@ -69,10 +73,10 @@ export function PresetLists({
 
   useEffect(() => {
     if (lists[need] !== undefined) return;
-    if (need !== "others" && !user) return;
+    if (need !== "all" && !user) return;
     let cancelled = false;
     const load = async (): Promise<Preset[]> => {
-      if (need === "others") return (await fetchRecentPresets(60)).items.filter((p) => p.creator.id !== user?.id);
+      if (need === "all") return (await fetchRecentPresets(60)).items;
       if (!user) return [];
       if (need === "mine") return (await fetchPresetsByCreator(user.id)).filter((p) => p.status === "published");
       return fetchSavedPresets(user.id);
@@ -89,38 +93,37 @@ export function PresetLists({
     return { fields: resolvePresetFields(preset), selection: preset.selection };
   }
 
-  const renderRow = (preset: Preset, action: "apply" | "save") => {
+  const renderRow = (preset: Preset, withSave: boolean) => {
     const entries = presetParameterEntries(preset, language);
     const summary = entries.slice(0, 3);
+    const isOwn = user?.id === preset.creator.id;
     return (
-      <li key={preset.id} data-preset-row={preset.id} className="flex items-center gap-2 rounded-md border border-border-soft bg-surface px-3 py-2">
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-label font-semibold text-text">{preset.title}</p>
-          <p className="truncate text-caption text-text-muted">
-            {preset.creator.displayName} · {t("preset.paramCount", { count: entries.length })}
-          </p>
-          {summary.length > 0 && <p className="truncate text-caption text-text-secondary">{summary.map((entry) => `${entry.fieldLabel}: ${entry.valueLabel}`).join(" · ")}</p>}
-        </div>
-        <Link
-          href={presetHref(preset)}
-          target="_blank"
-          aria-label={t("preset.openInNewTab", { name: preset.title })}
-          className="grid h-9 w-9 shrink-0 place-items-center rounded-md border border-border-soft text-text-muted hover:bg-surface-soft hover:text-text"
+      <li key={preset.id} data-preset-row={preset.id} className="flex items-center gap-2 rounded-md border border-border-soft bg-surface p-1.5 pl-1.5">
+        <button
+          type="button"
+          data-preset-open={preset.id}
+          onClick={() => onPreview(preset)}
+          aria-haspopup="dialog"
+          aria-label={t("preset.previewAria", { name: preset.title })}
+          className="min-w-0 flex-1 rounded-md px-1.5 py-1 text-left hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
         >
-          <ExternalLink size={14} />
-        </Link>
-        {action === "apply" ? (
+          <span className="block truncate text-label font-semibold text-text">{preset.title}</span>
+          <span className="block truncate text-caption text-text-muted">
+            {preset.creator.displayName} · {t("preset.paramCount", { count: entries.length })}
+          </span>
+          {summary.length > 0 && <span className="block truncate text-caption text-text-secondary">{summary.map((entry) => `${entry.fieldLabel}: ${entry.valueLabel}`).join(" · ")}</span>}
+        </button>
+        <div className="flex shrink-0 flex-col items-stretch gap-1 sm:flex-row sm:items-center">
+          {withSave && !isOwn && <PresetSaveCta presetId={preset.id} saveCount={preset.saveCount} size="sm" onChange={onSavedChange} />}
           <button
             type="button"
             data-preset-pick={preset.id}
             onClick={() => onApply(bundleOf(preset))}
-            className="inline-flex h-9 shrink-0 items-center rounded-md bg-primary px-3 text-small font-medium text-primary-foreground hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="inline-flex h-9 shrink-0 items-center justify-center rounded-md bg-primary px-3 text-small font-medium text-primary-foreground hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
             {t("common.apply")}
           </button>
-        ) : (
-          <PresetSaveCta presetId={preset.id} saveCount={preset.saveCount} size="sm" onChange={() => setSavedVersion((v) => v + 1)} />
-        )}
+        </div>
       </li>
     );
   };
@@ -133,41 +136,28 @@ export function PresetLists({
     const saved = sameType(lists.saved, contentType, category);
     return (
       <div className="space-y-2">
-        {!user ? loginRequired : lists.saved === undefined ? loading : saved.length === 0 ? empty(t("extra.savedEmpty")) : <ul className="space-y-1.5">{saved.map((p) => renderRow(p, "apply"))}</ul>}
+        {!user ? loginRequired : lists.saved === undefined ? loading : saved.length === 0 ? empty(t("extra.savedEmpty")) : <ul className="space-y-1.5">{saved.map((p) => renderRow(p, false))}</ul>}
       </div>
     );
   }
 
-  const mine = sameType(lists.mine, contentType, category);
-  const others = sameType(lists.others, contentType, category);
+  const current = sameType(lists[onlyMine ? "mine" : "all"], contentType, category);
   return (
     <div className="space-y-3">
-      <Tabs
-        variant="segmented"
-        ariaLabel={t("extra.tabCommunity")}
-        active={communityTab}
-        onChange={setCommunityTab}
-        items={[
-          { key: "mine", label: t("extra.communityMine") },
-          { key: "others", label: t("extra.communityOthers") },
-        ]}
-      />
-      {communityTab === "mine" ? (
-        !user ? (
-          loginRequired
-        ) : lists.mine === undefined ? (
-          loading
-        ) : mine.length === 0 ? (
-          empty(t("extra.mineEmpty"))
-        ) : (
-          <ul className="space-y-1.5">{mine.map((p) => renderRow(p, "apply"))}</ul>
-        )
-      ) : lists.others === undefined ? (
+      <div className="flex items-center justify-between gap-2">
+        <Chip selected={onlyMine} onClick={() => setOnlyMine((v) => !v)} data-community-mine>
+          {t("extra.communityMe")}
+        </Chip>
+        <p className="min-w-0 truncate text-caption text-text-muted">{t("extra.communityTapHint")}</p>
+      </div>
+      {onlyMine && !user ? (
+        loginRequired
+      ) : lists[onlyMine ? "mine" : "all"] === undefined ? (
         loading
-      ) : others.length === 0 ? (
-        empty(t("extra.othersEmpty"))
+      ) : current.length === 0 ? (
+        empty(onlyMine ? t("extra.mineEmpty") : t("extra.othersEmpty"))
       ) : (
-        <ul className="space-y-1.5">{others.map((p) => renderRow(p, "save"))}</ul>
+        <ul className="space-y-1.5">{current.map((p) => renderRow(p, true))}</ul>
       )}
     </div>
   );
