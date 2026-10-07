@@ -15,6 +15,7 @@ import { AdvancedSearchBox } from "@/features/search/advanced-search-box";
 import { tokensToQuery, type SearchToken } from "@/features/search/search-tokens";
 import { CONTENT_TYPE_IDS, EMPTY_TAXONOMY_FILTER, matchesTaxonomy, type TaxonomyFilterValue } from "@/lib/content-taxonomy";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
+import type { HeaderArtVariant } from "@/components/ui/header-art";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import type { ContentSearchFilters } from "@/lib/supabase/taxonomy-query";
@@ -37,6 +38,7 @@ const DEBOUNCE_MS = 300;
  */
 export function ContentListPage<T extends { id: string; createdAt: string; likeCount: number; contentType?: string | null; category?: string | null; subcategory?: string | null }>({
   icon,
+  art,
   eyebrow,
   title,
   description,
@@ -59,6 +61,8 @@ export function ContentListPage<T extends { id: string; createdAt: string; likeC
   onLoadMore,
 }: {
   icon: LucideIcon;
+  /** Decorative header illustration. */
+  art?: HeaderArtVariant;
   eyebrow: string;
   title: string;
   description: string;
@@ -138,6 +142,7 @@ export function ContentListPage<T extends { id: string; createdAt: string; likeC
       <PageHeader
         eyebrow={eyebrow}
         icon={icon}
+        art={art}
         title={title}
         description={description}
         actions={

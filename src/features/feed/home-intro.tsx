@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Blocks, PenLine, Sparkles } from "lucide-react";
 import { buttonClassName } from "@/components/ui/button";
+import { HeaderArt } from "@/components/ui/header-art";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useOwnProfile } from "@/features/auth/own-profile-provider";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -21,14 +22,17 @@ export function HomeIntro() {
 
   if (user) {
     return (
-      <section className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
+      <section className="relative flex flex-col gap-3 overflow-hidden rounded-lg border border-border-soft bg-surface px-4 py-5 shadow-card sm:flex-row sm:items-center sm:justify-between sm:px-6">
+        <HeaderArt variant="home" className="absolute right-0 top-0 hidden h-full opacity-80 lg:block" />
+        <div className="relative z-10">
           <h1 className="text-h2 font-semibold text-text">
             {t("home.greeting")}{profile ? `, ${profile.displayName.split(" ")[0]}` : ""}
           </h1>
           <p className="text-small text-text-muted">{t("home.greetingSubtitle")}</p>
         </div>
-        <QuickActions />
+        <div className="relative z-10 lg:mr-56">
+          <QuickActions />
+        </div>
       </section>
     );
   }
@@ -44,6 +48,7 @@ export function HomeIntro() {
         </div>
       </div>
       <PromptMotif />
+      <HeaderArt variant="home" className="absolute -right-3 -top-1 h-24 opacity-50 sm:h-full sm:opacity-90 lg:hidden" />
     </section>
   );
 }

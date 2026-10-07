@@ -14,6 +14,7 @@ export function GeneratorsDiscoverView() {
   return (
     <ContentListPage
       icon={Blocks}
+      art="generators"
       eyebrow={t("nav.generators")}
       title={t("generator.discoverTitle")}
       description={t("generator.discoverDescription")}

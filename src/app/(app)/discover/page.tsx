@@ -12,6 +12,7 @@ export default function DiscoverPage() {
       <PageHeader
         eyebrow={t("nav.discover")}
         icon={Compass}
+        art="discover"
         title={t("discover.pageTitle")}
         description={t("discover.pageDescription")}
       />

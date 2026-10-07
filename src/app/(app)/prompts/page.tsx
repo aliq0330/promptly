@@ -13,6 +13,7 @@ export default function PromptsPage() {
   return (
     <ContentListPage
       icon={SquareTerminal}
+      art="prompts"
       eyebrow={t("prompts.eyebrow")}
       title={t("prompts.pageTitle")}
       description={t("prompts.pageDescription")}
