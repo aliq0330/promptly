@@ -18,7 +18,6 @@ import { generatorRef, promptRef } from "@/lib/supabase/workflows";
 import { absoluteUrl, copyTextToClipboard, studioHref } from "@/lib/utils";
 import { AddSourceModal, type PickedItem } from "./add-source-modal";
 import { ComparePane, DRAFT_ID } from "./compare-pane";
-import { DnaPane } from "./dna-pane";
 import { GeneratorPane } from "./generator-pane";
 import { PresetPane } from "./preset-pane";
 import { PromptPane } from "./prompt-pane";
@@ -37,7 +36,8 @@ type TopTab = "work" | "compare" | "versions";
 
 function refsFromParams(params: URLSearchParams): StudioRef[] {
   return STUDIO_KINDS.flatMap((kind) => {
-    const id = params.get(kind);
+    // Old links used `?dna=<promptId>`: a prompt's DNA now comes with the prompt.
+    const id = params.get(kind) ?? (kind === "prompt" ? params.get("dna") : null);
     return id ? [{ kind, id }] : [];
   });
 }
@@ -95,7 +95,6 @@ export function StudioView() {
     () =>
       studioHref({
         prompt: state.sources.prompt?.prompt.id,
-        dna: state.sources.dna?.promptId,
         generator: state.sources.generator?.generator.slug,
         preset: state.sources.preset?.preset.id,
         workflow: state.sources.workflow?.workflow.id,
@@ -120,8 +119,8 @@ export function StudioView() {
   const result = useMemo(() => composeStudioResult(state.draft, language, enableNegative), [state.draft, language, enableNegative]);
   const firstVersionId = state.versions[0]?.id ?? "";
 
-  async function attachRef(ref: StudioRef, withDna: boolean) {
-    const loaded: LoadedSource[] = await loadStudioSource(ref, { withDna });
+  async function attachRef(ref: StudioRef) {
+    const loaded: LoadedSource[] = await loadStudioSource(ref);
     if (loaded.length === 0) {
       flash(t("studio.loadError"));
       return;
@@ -145,13 +144,13 @@ export function StudioView() {
       return;
     }
     setPickerMode(null);
-    void attachRef({ kind: item.kind, id: item.id }, item.kind === "prompt");
+    void attachRef({ kind: item.kind, id: item.id });
   }
 
   function openStepContent(step: WorkflowStep) {
     if (!step.content) return;
     const kind: StudioKind = step.stepType === "generator" ? "generator" : "prompt";
-    void attachRef({ kind, id: step.content.id }, kind === "prompt");
+    void attachRef({ kind, id: step.content.id });
   }
 
   function newStudio() {
@@ -184,8 +183,7 @@ export function StudioView() {
 
   const editor = (() => {
     if (!active) return null;
-    if (active === "prompt") return <PromptPane draft={state.draft} baseline={state.baseline} edit={studio.edit} />;
-    if (active === "dna") return <DnaPane draft={state.draft} contentType={state.sources.dna?.contentType ?? "text"} edit={studio.edit} />;
+    if (active === "prompt") return <PromptPane draft={state.draft} baseline={state.baseline} contentType={state.sources.prompt?.prompt.contentType ?? "text"} edit={studio.edit} />;
     if (active === "generator") return <GeneratorPane draft={state.draft} edit={studio.edit} />;
     if (active === "preset" && state.sources.preset) return <PresetPane draft={state.draft} preset={state.sources.preset.preset} edit={studio.edit} />;
     if (active === "workflow") return <WorkflowPane draft={state.draft} edit={studio.edit} onAddStep={() => setPickerMode("step")} onOpenStepContent={openStepContent} />;

@@ -26,7 +26,7 @@ export function PromptDnaDisplay({ sections, studioPromptId }: { sections: DnaSe
         </h2>
         <span className="flex items-center gap-3">
           <span className="text-caption text-text-muted">{t("dna.sectionsCount", { count: sections.length })}</span>
-          {studioPromptId && <OpenInStudioButton size="sm" refs={{ prompt: studioPromptId, dna: studioPromptId }} />}
+          {studioPromptId && <OpenInStudioButton size="sm" refs={{ prompt: studioPromptId }} />}
         </span>
       </div>
       <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">

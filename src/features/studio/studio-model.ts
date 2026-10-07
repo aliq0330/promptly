@@ -14,13 +14,12 @@ import type { DnaSection } from "@/lib/prompt-dna/types";
 import type { StudioSnapshot } from "@/lib/studio-diff";
 import type { Generator, GeneratorOutput, GeneratorTemplate, Preset, Prompt, Workflow } from "@/types";
 
-export type StudioKind = "prompt" | "dna" | "generator" | "preset" | "workflow";
-export const STUDIO_KINDS: StudioKind[] = ["prompt", "dna", "generator", "preset", "workflow"];
+export type StudioKind = "prompt" | "generator" | "preset" | "workflow";
+export const STUDIO_KINDS: StudioKind[] = ["prompt", "generator", "preset", "workflow"];
 
 /** The ORIGINAL records a Studio session is attached to. Studio never writes to any of them. */
 export interface StudioSources {
   prompt?: { prompt: Prompt };
-  dna?: { promptId: string; title: string; contentType: string };
   generator?: { generator: Generator; template: GeneratorTemplate };
   preset?: { preset: Preset };
   workflow?: { workflow: Workflow };
@@ -37,40 +36,34 @@ export interface StudioVersion {
 }
 
 export type LoadedSource =
-  | { kind: "prompt"; source: NonNullable<StudioSources["prompt"]>; piece: NonNullable<StudioSnapshot["prompt"]> }
-  | { kind: "dna"; source: NonNullable<StudioSources["dna"]>; piece: DnaSection[] }
+  // A prompt always brings its DNA along (edited in the prompt editor's "DNA" tab, not a separate source).
+  | { kind: "prompt"; source: NonNullable<StudioSources["prompt"]>; piece: NonNullable<StudioSnapshot["prompt"]>; dna: DnaSection[] }
   | { kind: "generator"; source: NonNullable<StudioSources["generator"]>; piece: NonNullable<StudioSnapshot["generator"]> }
   | { kind: "preset"; source: NonNullable<StudioSources["preset"]>; piece: NonNullable<StudioSnapshot["preset"]> }
   | { kind: "workflow"; source: NonNullable<StudioSources["workflow"]>; piece: NonNullable<StudioSnapshot["workflow"]> };
 
-/** A reference to a library item: prompt/dna/preset/workflow by id, generator by slug (or id). */
+/** A reference to a library item: prompt/preset/workflow by id, generator by slug (or id). */
 export interface StudioRef {
   kind: StudioKind;
   id: string;
 }
 
 /**
- * Loads one source (plus, when `withDna` is set, a prompt's DNA as a separate DNA source when
- * it has one) from the real library. Returns [] if it can't be found/read.
+ * Loads one source from the real library (a prompt also loads its DNA). Returns [] if it can't be found/read.
  */
-export async function loadStudioSource(ref: StudioRef, opts: { withDna?: boolean } = {}): Promise<LoadedSource[]> {
-  if (ref.kind === "prompt" || ref.kind === "dna") {
+export async function loadStudioSource(ref: StudioRef): Promise<LoadedSource[]> {
+  if (ref.kind === "prompt") {
     const prompt = await fetchPromptById(ref.id);
     if (!prompt || prompt.deletedAt) return [];
-    const out: LoadedSource[] = [];
-    if (ref.kind === "prompt") {
-      const variables = await fetchVariablesForPrompt(prompt.id);
-      out.push({
+    const [variables, sections] = await Promise.all([fetchVariablesForPrompt(prompt.id), fetchDnaSections(prompt.id)]);
+    return [
+      {
         kind: "prompt",
         source: { prompt },
         piece: { title: prompt.title, text: prompt.promptText, variables: variables.map((v) => ({ name: v.name, value: v.defaultValue })) },
-      });
-    }
-    if (ref.kind === "dna" || opts.withDna === true) {
-      const sections = await fetchDnaSections(prompt.id);
-      if (sections.length > 0 || ref.kind === "dna") out.push({ kind: "dna", source: { promptId: prompt.id, title: prompt.title, contentType: prompt.contentType }, piece: sections });
-    }
-    return out;
+        dna: sections,
+      },
+    ];
   }
 
   if (ref.kind === "generator") {
