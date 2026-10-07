@@ -243,7 +243,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
                 )}
                 <CopyPromptButton text={displayText} size="md" />
                 <RunButton text={displayText} recommendedRefs={prompt.tools} />
-                <OpenInStudioButton refs={{ prompt: prompt.id, dna: dnaSections.length > 0 ? prompt.id : undefined }} />
+                <OpenInStudioButton refs={{ prompt: prompt.id }} />
               </div>
             </div>
             <ScrollablePrompt className="px-4 py-4 text-[0.875rem] text-text">

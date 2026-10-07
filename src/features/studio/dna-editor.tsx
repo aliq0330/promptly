@@ -8,11 +8,11 @@ import { PromptDnaEditor } from "@/features/prompts/prompt-dna-editor";
 type Update = (fn: (draft: StudioSnapshot) => StudioSnapshot, key?: string | null) => void;
 
 /**
- * The existing Prompt DNA editor, bound to the Studio draft. When a section's
+ * The existing Prompt DNA editor (the "DNA" tab of the prompt editor), bound to the Studio draft. When a section's
  * text changes and its old text appears in the DRAFT prompt, the draft prompt
  * follows (so the result preview moves); the original prompt is never written.
  */
-export function DnaPane({ draft, contentType, edit }: { draft: StudioSnapshot; contentType: string; edit: Update }) {
+export function DnaEditor({ draft, contentType, edit }: { draft: StudioSnapshot; contentType: string; edit: Update }) {
   const { t } = useTranslation();
   const sections = draft.dna ?? [];
   const promptText = draft.prompt?.text ?? sections.map((s) => s.content).join(", ");

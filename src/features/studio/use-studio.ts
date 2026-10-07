@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useReducer } from "react";
 import { cloneSnapshot, diffSnapshots, EMPTY_SNAPSHOT, snapshotsEqual, type StudioSnapshot } from "@/lib/studio-diff";
-import type { LoadedSource, StudioKind, StudioSources, StudioVersion } from "./studio-model";
+import { STUDIO_KINDS, type LoadedSource, type StudioKind, type StudioSources, type StudioVersion } from "./studio-model";
 
 const HISTORY_LIMIT = 100;
 const COALESCE_MS = 900;
@@ -40,9 +40,7 @@ const INITIAL: StudioState = { sources: {}, baseline: EMPTY_SNAPSHOT, draft: EMP
 function pieceOf(loaded: LoadedSource): Partial<StudioSnapshot> {
   switch (loaded.kind) {
     case "prompt":
-      return { prompt: loaded.piece };
-    case "dna":
-      return { dna: loaded.piece };
+      return { prompt: loaded.piece, dna: loaded.dna };
     case "generator":
       return { generator: loaded.piece };
     case "preset":
@@ -53,7 +51,7 @@ function pieceOf(loaded: LoadedSource): Partial<StudioSnapshot> {
 }
 
 function clearPiece(snapshot: StudioSnapshot, kind: StudioKind): StudioSnapshot {
-  return { ...snapshot, [kind]: null };
+  return kind === "prompt" ? { ...snapshot, prompt: null, dna: null } : { ...snapshot, [kind]: null };
 }
 
 function pushHistory(state: StudioState, key: string | null, at: number): HistoryEntry[] {
@@ -74,7 +72,12 @@ function reducer(state: StudioState, action: Action): StudioState {
       for (const loaded of action.loaded) {
         sources = { ...sources, [loaded.kind]: loaded.source };
         const piece = cloneSnapshot({ ...EMPTY_SNAPSHOT, ...pieceOf(loaded) });
-        const apply = (snapshot: StudioSnapshot) => ({ ...snapshot, [loaded.kind]: piece[loaded.kind] });
+        const keys = Object.keys(pieceOf(loaded)) as (keyof StudioSnapshot)[];
+        const apply = (snapshot: StudioSnapshot): StudioSnapshot => {
+          const next = { ...snapshot };
+          for (const key of keys) (next as Record<string, unknown>)[key] = piece[key];
+          return next;
+        };
         baseline = apply(baseline);
         draft = apply(draft);
         // The untouched "Orijinal" version keeps tracking what was attached before any edit.
@@ -97,7 +100,7 @@ function reducer(state: StudioState, action: Action): StudioState {
     case "detach": {
       const sources = { ...state.sources };
       delete sources[action.kind];
-      const remaining = (["prompt", "dna", "generator", "preset", "workflow"] as StudioKind[]).filter((k) => sources[k]);
+      const remaining = STUDIO_KINDS.filter((k) => sources[k]);
       return {
         ...state,
         sources,
@@ -144,7 +147,7 @@ function reducer(state: StudioState, action: Action): StudioState {
       const restored = cloneSnapshot(version.snapshot);
       const next: StudioSnapshot = {
         prompt: state.sources.prompt ? restored.prompt : null,
-        dna: state.sources.dna ? restored.dna : null,
+        dna: state.sources.prompt ? restored.dna : null,
         generator: state.sources.generator ? restored.generator : null,
         preset: state.sources.preset ? restored.preset : null,
         workflow: state.sources.workflow ? restored.workflow : null,

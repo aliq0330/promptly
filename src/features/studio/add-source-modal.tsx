@@ -19,7 +19,7 @@ import { KIND_ICONS } from "./studio-meta";
 import type { StudioKind } from "./studio-model";
 
 export type PickedItem =
-  | { kind: "prompt" | "dna"; id: string; title: string; subtitle: string; prompt: Prompt }
+  | { kind: "prompt"; id: string; title: string; subtitle: string; prompt: Prompt }
   | { kind: "generator"; id: string; title: string; subtitle: string; generator: Generator }
   | { kind: "preset"; id: string; title: string; subtitle: string; preset: Preset }
   | { kind: "workflow"; id: string; title: string; subtitle: string; workflow: Workflow };
@@ -30,7 +30,7 @@ interface Row {
 }
 
 function rowsFor(kind: StudioKind, prompts: Prompt[], generators: Generator[], presets: Preset[], workflows: Workflow[]): Row[] {
-  if (kind === "prompt" || kind === "dna") {
+  if (kind === "prompt") {
     return prompts.map((p) => ({ key: p.id, item: { kind, id: p.id, title: p.title, subtitle: p.author.displayName, prompt: p } }));
   }
   if (kind === "generator") return generators.map((g) => ({ key: g.id, item: { kind, id: g.slug, title: g.title, subtitle: g.creator.displayName, generator: g } }));
@@ -78,7 +78,7 @@ export function AddSourceModal({
     setSearching(true);
     const timer = window.setTimeout(async () => {
       const [p, g, pr, w] = await Promise.all([
-        kind === "prompt" || kind === "dna" ? searchPrompts(text, {}, 30) : Promise.resolve([] as Prompt[]),
+        kind === "prompt" ? searchPrompts(text, {}, 30) : Promise.resolve([] as Prompt[]),
         kind === "generator" ? searchGenerators(text, {}, 30) : Promise.resolve([] as Generator[]),
         kind === "preset" ? searchPresets(text, {}, 30) : Promise.resolve([] as Preset[]),
         kind === "workflow" ? searchWorkflows(text, {}, 30) : Promise.resolve([] as Workflow[]),
@@ -132,7 +132,6 @@ export function AddSourceModal({
               className="h-11 w-full rounded-md border border-border bg-background pl-9 pr-3 text-body text-text placeholder:text-text-muted focus:border-primary"
             />
           </label>
-          {kind === "dna" && <p className="text-caption text-text-secondary">{t("studio.dnaPickHint")}</p>}
         </div>
         <ul className="mt-2 min-h-0 flex-1 space-y-1 overflow-y-auto px-2 pb-3">
           {searching && rows.length === 0 && (

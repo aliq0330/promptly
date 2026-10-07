@@ -3,21 +3,24 @@
 import { useMemo, useRef, useState } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Tabs } from "@/components/ui/tabs";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { extractVariableTokenNames, insertTextAtRange, isValidVariableName, normalizeVariableName } from "@/lib/prompt-variables";
 import type { StudioSnapshot } from "@/lib/studio-diff";
 import { PromptVariableInputs } from "@/features/prompts/prompt-variable-inputs";
 import type { PromptVariable } from "@/types";
+import { DnaEditor } from "./dna-editor";
 
 type Update = (fn: (draft: StudioSnapshot) => StudioSnapshot, key?: string | null) => void;
 
 /** Studio's prompt editor: the draft title + text, and the existing `{variable}` system (same tokens, same inputs as the prompt page). */
-export function PromptPane({ draft, baseline, edit }: { draft: StudioSnapshot; baseline: StudioSnapshot; edit: Update }) {
+export function PromptPane({ draft, baseline, contentType, edit }: { draft: StudioSnapshot; baseline: StudioSnapshot; contentType: string; edit: Update }) {
   const { t } = useTranslation();
   const prompt = draft.prompt;
   const textRef = useRef<HTMLTextAreaElement>(null);
   const [newName, setNewName] = useState("");
   const [nameError, setNameError] = useState<string | null>(null);
+  const [view, setView] = useState<"text" | "dna">("text");
 
   const pseudoVariables = useMemo<PromptVariable[]>(
     () =>
@@ -81,8 +84,31 @@ export function PromptPane({ draft, baseline, edit }: { draft: StudioSnapshot; b
     );
   }
 
+  const tabs = (
+    <Tabs
+      variant="segmented"
+      ariaLabel={t("studio.kind.prompt")}
+      active={view}
+      onChange={setView}
+      items={[
+        { key: "text" as const, label: t("studio.promptTab.text") },
+        { key: "dna" as const, label: t("studio.promptTab.dna"), count: draft.dna?.length ?? 0 },
+      ]}
+    />
+  );
+
+  if (view === "dna") {
+    return (
+      <div className="space-y-4">
+        {tabs}
+        <DnaEditor draft={draft} contentType={contentType} edit={edit} />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-5">
+      {tabs}
       <div>
         <label htmlFor="studio-prompt-title" className="mb-1.5 block text-small font-medium text-text">
           {t("studio.promptTitle")}
