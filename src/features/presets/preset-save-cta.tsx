@@ -20,10 +20,13 @@ export function PresetSaveCta({
   saveCount,
   size = "lg",
   onChange,
+  iconOnly = false,
 }: {
   presetId: string;
   saveCount: number;
   size?: "sm" | "lg";
+  /** Icon-only (no text) button; the label moves to aria-label. */
+  iconOnly?: boolean;
   /** Called after the saved state changed (so a list of saved presets can reload). */
   onChange?: () => void;
 }) {
@@ -35,9 +38,9 @@ export function PresetSaveCta({
 
   if (!canSave) {
     return (
-      <Button type="button" size={size} onClick={() => requireAuth("save")} aria-haspopup="dialog">
+      <Button type="button" size={size} onClick={() => requireAuth("save")} aria-haspopup="dialog" aria-label={iconOnly ? t("preset.save") : undefined} className={iconOnly ? "h-9 w-9 px-0" : undefined}>
         <Bookmark size={iconSize} aria-hidden />
-        {t("preset.save")}
+        {!iconOnly && t("preset.save")}
       </Button>
     );
   }
@@ -52,9 +55,11 @@ export function PresetSaveCta({
         disabled={isToggling}
         aria-pressed={isSaved}
         aria-haspopup={isSaved ? undefined : "dialog"}
+        aria-label={iconOnly ? (isSaved ? t("preset.saved") : t("preset.save")) : undefined}
+        className={iconOnly ? "h-9 w-9 px-0" : undefined}
       >
         {isSaved ? <Check size={iconSize} aria-hidden /> : <Bookmark size={iconSize} aria-hidden />}
-        {isSaved ? t("preset.saved") : t("preset.save")}
+        {!iconOnly && (isSaved ? t("preset.saved") : t("preset.save"))}
       </Button>
       {modalOpen && (
         <SaveToCollectionModal

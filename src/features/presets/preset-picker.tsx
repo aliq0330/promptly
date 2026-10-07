@@ -113,8 +113,7 @@ export function PresetLists({
           </span>
           {summary.length > 0 && <span className="block truncate text-caption text-text-secondary">{summary.map((entry) => `${entry.fieldLabel}: ${entry.valueLabel}`).join(" · ")}</span>}
         </button>
-        <div className="flex shrink-0 flex-col items-stretch gap-1 sm:flex-row sm:items-center">
-          {withSave && !isOwn && <PresetSaveCta presetId={preset.id} saveCount={preset.saveCount} size="sm" onChange={onSavedChange} />}
+        <div className="flex shrink-0 items-center gap-1">
           <button
             type="button"
             data-preset-pick={preset.id}
@@ -123,6 +122,7 @@ export function PresetLists({
           >
             {t("common.apply")}
           </button>
+          {withSave && !isOwn && <PresetSaveCta presetId={preset.id} saveCount={preset.saveCount} size="sm" iconOnly onChange={onSavedChange} />}
         </div>
       </li>
     );
