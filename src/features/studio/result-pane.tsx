@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Sparkles } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { diffWords, type StudioSnapshot } from "@/lib/studio-diff";
@@ -17,7 +18,20 @@ import { composeStudioResult, type StudioSources } from "./studio-model";
  * preset → generator), computed locally. Studio runs no model; "Çalıştır" is
  * the app's normal open-in-AI flow. Kept visually separate from the editors.
  */
-export function ResultPane({ draft, baseline, sources, changeCount }: { draft: StudioSnapshot; baseline: StudioSnapshot; sources: StudioSources; changeCount: number }) {
+export function ResultPane({
+  draft,
+  baseline,
+  sources,
+  changeCount,
+  onCreate,
+}: {
+  draft: StudioSnapshot;
+  baseline: StudioSnapshot;
+  sources: StudioSources;
+  changeCount: number;
+  /** Opens "Yeni olarak oluştur" — the same flow as the header button. */
+  onCreate?: () => void;
+}) {
   const { t, language } = useTranslation();
   const [showDiff, setShowDiff] = useState(false);
   const [showJson, setShowJson] = useState(false);
@@ -47,6 +61,12 @@ export function ResultPane({ draft, baseline, sources, changeCount }: { draft: S
               <RunButton text={runText} recommendedRefs={tools} preview size="md" />
             </span>
           </div>
+          {onCreate && (
+            <Button type="button" variant="outline" onClick={onCreate} className="h-11 w-full">
+              <Sparkles className="h-4 w-4" aria-hidden />
+              {t("studio.createAs")}
+            </Button>
+          )}
           {segments ? (
             <ScrollablePrompt>
               <DiffText segments={segments} />

@@ -35,7 +35,7 @@ export function Header() {
         className="flex shrink-0 items-center gap-2 rounded-md md:hidden"
       >
         <BrandMark size={30} />
-        <span className="font-display text-[1.05rem] font-semibold tracking-tight text-text">Promptly</span>
+        <span className="font-display text-[1.05rem] font-semibold tracking-tight text-text max-[359px]:hidden">Promptly</span>
       </Link>
 
       <div className="hidden min-w-0 flex-1 items-center md:flex">

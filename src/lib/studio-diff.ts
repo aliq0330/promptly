@@ -18,7 +18,7 @@ export interface StudioVariable {
 export interface StudioSnapshot {
   prompt: { title: string; text: string; variables: StudioVariable[] } | null;
   dna: DnaSection[] | null;
-  generator: { title: string; schema: GeneratorSchema; values: GeneratorValues } | null;
+  generator: { title: string; schema: GeneratorSchema; values: GeneratorValues; /** Field keys protected from variations. */ locked?: string[] } | null;
   preset: { title: string; fields: PresetField[]; selection: PresetSelection } | null;
   workflow: { title: string; steps: WorkflowStep[] } | null;
 }
