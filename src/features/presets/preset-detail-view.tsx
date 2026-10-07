@@ -1,5 +1,6 @@
 "use client";
 
+import { OpenInStudioButton } from "@/features/studio/open-in-studio";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -131,6 +132,7 @@ export function PresetDetailView() {
               label={t("statistics.title")}
             />
             <span className="ml-auto" />
+            <OpenInStudioButton size="sm" refs={{ preset: preset.id }} />
             <ShareTriggerButton target={{ contentType: "preset", preset }} label={t("common.share")} />
           </div>
 

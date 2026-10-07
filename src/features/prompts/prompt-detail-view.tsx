@@ -1,6 +1,7 @@
 "use client";
 
 import { RunButton } from "@/features/content/run-with-ai";
+import { OpenInStudioButton } from "@/features/studio/open-in-studio";
 import { ToolLine } from "@/features/content/tool-chips";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -242,6 +243,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
                 )}
                 <CopyPromptButton text={displayText} size="md" />
                 <RunButton text={displayText} recommendedRefs={prompt.tools} />
+                <OpenInStudioButton refs={{ prompt: prompt.id, dna: dnaSections.length > 0 ? prompt.id : undefined }} />
               </div>
             </div>
             <ScrollablePrompt className="px-4 py-4 text-[0.875rem] text-text">
@@ -268,7 +270,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
             </div>
           )}
 
-          {activeTab === "dna" && <PromptDnaDisplay sections={dnaSections} />}
+          {activeTab === "dna" && <PromptDnaDisplay sections={dnaSections} studioPromptId={prompt.id} />}
 
           <ToolLine label={t("tool.recommendedLabel")} refs={prompt.tools} legacy={prompt.tool} />
 
