@@ -5,8 +5,10 @@ import { usePathname } from "next/navigation";
 import { Plus, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BrandMark } from "@/components/layout/brand-mark";
-import { isNavItemActive, navGroups, PROFILE_NAV_PLACEHOLDER, settingsNavItem, type NavItem } from "@/components/layout/nav-items";
+import { filterNavItems, guestLoginNavItem, isNavItemActive, navGroups, PROFILE_NAV_PLACEHOLDER, settingsNavItem, type NavItem } from "@/components/layout/nav-items";
 import { useProfileNavHref } from "@/features/auth/use-profile-nav-href";
+import { useAuthStatus } from "@/features/auth/use-auth-status";
+import { useAuthPrompt } from "@/features/auth/auth-prompt-provider";
 import { useIsModerator } from "@/features/moderation/use-is-moderator";
 import { useTranslation } from "@/lib/i18n/language-provider";
 
@@ -21,6 +23,17 @@ export function Sidebar() {
   const profileNavHref = useProfileNavHref();
   const { t } = useTranslation();
   const isModerator = useIsModerator();
+  const status = useAuthStatus();
+  const { requireAuth } = useAuthPrompt();
+  const isAuthenticated = status === "authenticated";
+  const visibleGroups = navGroups
+    .map((group) => ({ ...group, items: filterNavItems(group.items, isAuthenticated) }))
+    .filter((group) => group.items.length > 0);
+  const bottomItems: NavItem[] = isAuthenticated
+    ? [...(isModerator ? [{ href: "/moderation", labelKey: "nav.moderation" as const, icon: ShieldCheck }] : []), settingsNavItem]
+    : status === "unauthenticated"
+      ? [guestLoginNavItem]
+      : [];
 
   function renderItem(item: NavItem) {
     const href = item.href === PROFILE_NAV_PLACEHOLDER ? profileNavHref : item.href;
@@ -59,18 +72,31 @@ export function Sidebar() {
       </div>
 
       <div className="px-3 pb-2 lg:px-4">
-        <Link
-          href="/create"
-          title={t("nav.createShort")}
-          className="flex h-10 items-center justify-center gap-2 rounded-md bg-primary text-label font-semibold text-primary-foreground shadow-xs transition-colors duration-200 hover:bg-primary-hover"
-        >
-          <Plus size={18} strokeWidth={2.4} />
-          <span className="sr-only lg:not-sr-only">{t("nav.createShort")}</span>
-        </Link>
+        {status === "unauthenticated" ? (
+          <button
+            type="button"
+            onClick={() => requireAuth("create")}
+            aria-haspopup="dialog"
+            title={t("nav.createShort")}
+            className="flex h-10 w-full items-center justify-center gap-2 rounded-md bg-primary text-label font-semibold text-primary-foreground shadow-xs transition-colors duration-200 hover:bg-primary-hover"
+          >
+            <Plus size={18} strokeWidth={2.4} />
+            <span className="sr-only lg:not-sr-only">{t("nav.createShort")}</span>
+          </button>
+        ) : (
+          <Link
+            href="/create"
+            title={t("nav.createShort")}
+            className="flex h-10 items-center justify-center gap-2 rounded-md bg-primary text-label font-semibold text-primary-foreground shadow-xs transition-colors duration-200 hover:bg-primary-hover"
+          >
+            <Plus size={18} strokeWidth={2.4} />
+            <span className="sr-only lg:not-sr-only">{t("nav.createShort")}</span>
+          </Link>
+        )}
       </div>
 
       <nav aria-label={t("nav.primaryLabel")} className="flex flex-1 flex-col gap-4 overflow-y-auto px-3 py-3 lg:px-4">
-        {navGroups.map((group) => (
+        {visibleGroups.map((group) => (
           <div key={group.labelKey}>
             <p className="mb-1 hidden px-3 text-caption font-semibold uppercase tracking-[0.08em] text-text-muted lg:block">
               {t(group.labelKey)}
@@ -81,12 +107,11 @@ export function Sidebar() {
         ))}
       </nav>
 
-      <div className="border-t border-border-soft px-3 py-3 lg:px-4">
-        <ul className="space-y-0.5">
-          {isModerator && renderItem({ href: "/moderation", labelKey: "nav.moderation", icon: ShieldCheck })}
-          {renderItem(settingsNavItem)}
-        </ul>
-      </div>
+      {bottomItems.length > 0 && (
+        <div className="border-t border-border-soft px-3 py-3 lg:px-4">
+          <ul className="space-y-0.5">{bottomItems.map(renderItem)}</ul>
+        </div>
+      )}
     </aside>
   );
 }

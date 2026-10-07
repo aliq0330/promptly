@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import { Bookmark } from "lucide-react";
 import { Portal } from "@/components/ui/portal";
 import { cn, formatCount } from "@/lib/utils";
 import { contentActionClassName } from "@/features/content/action-styles";
 import { useTranslation } from "@/lib/i18n/language-provider";
+import { useAuthPrompt } from "@/features/auth/auth-prompt-provider";
 import { useSaveState } from "./use-save-state";
 import { SaveToCollectionModal } from "@/features/collections/save-to-collection-modal";
 
@@ -44,6 +44,7 @@ export function SaveButton({
   className?: string;
 }) {
   const { t } = useTranslation();
+  const { requireAuth } = useAuthPrompt();
   const id = (presetId ?? workflowId ?? generatorId ?? promptId)!;
   const contentType = presetId ? "preset" : workflowId ? "workflow" : generatorId ? "generator" : "prompt";
   const { isSaved, saveCount: count, removeEverywhere, markSaved, markUnsaved, isToggling, canSave } = useSaveState(
@@ -65,16 +66,21 @@ export function SaveButton({
 
   if (!canSave) {
     return (
-      <Link
-        href="/login"
-        onClick={(event) => event.stopPropagation()}
+      <button
+        type="button"
+        onClick={(event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          requireAuth("save");
+        }}
+        aria-haspopup="dialog"
         title={t("prompt.loginToSave")}
         aria-label={t("prompt.loginToSaveAria", { count })}
         className={sharedClassName}
       >
         <Bookmark size={size} strokeWidth={1.75} />
         <span aria-hidden>{formatCount(count)}</span>
-      </Link>
+      </button>
     );
   }
 

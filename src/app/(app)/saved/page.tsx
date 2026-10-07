@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { useAuth } from "@/features/auth/auth-provider";
 import { fetchDefaultCollectionId } from "@/lib/supabase/collections";
 import { collectionHref } from "@/lib/utils";
@@ -20,7 +19,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
  */
 export default function SavedPage() {
   const { t } = useTranslation();
-  const { user, loading } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
   const [error, setError] = useState(false);
 
@@ -39,21 +38,6 @@ export default function SavedPage() {
       cancelled = true;
     };
   }, [user, router]);
-
-  if (!loading && !user) {
-    return (
-      <div className="mx-auto max-w-md px-4 py-16 text-center">
-        <h1 className="mb-2 text-h2 font-semibold text-text">{t("auth.loginRequiredTitle")}</h1>
-        <p className="mb-4 text-sm text-text-muted">{t("saved.loginRequiredBody")}</p>
-        <Link
-          href="/login"
-          className="inline-flex h-9 items-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary-dark"
-        >
-          {t("header.login")}
-        </Link>
-      </div>
-    );
-  }
 
   if (error) {
     return (

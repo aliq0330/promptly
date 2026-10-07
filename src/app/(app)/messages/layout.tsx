@@ -2,6 +2,7 @@
 
 import { Suspense, type ReactNode } from "react";
 import { ConversationsPane } from "@/features/messages/conversations-pane";
+import { RequireAuth } from "@/features/auth/require-auth";
 
 /**
  * Shared frame for `/messages` and `/messages/local`. Phone (< md): just the
@@ -12,6 +13,14 @@ import { ConversationsPane } from "@/features/messages/conversations-pane";
  * stops growing on very wide screens.
  */
 export default function MessagesLayout({ children }: { children: ReactNode }) {
+  return (
+    <RequireAuth>
+      <MessagesFrame>{children}</MessagesFrame>
+    </RequireAuth>
+  );
+}
+
+function MessagesFrame({ children }: { children: ReactNode }) {
   return (
     <div className="md:fixed md:bottom-0 md:left-[72px] md:right-0 md:top-16 md:z-10 md:bg-background lg:left-64">
       <div className="mx-auto flex h-full max-w-[1500px] md:border-x md:border-border">

@@ -9,6 +9,7 @@ import { useAuth } from "@/features/auth/auth-provider";
 import { supabase } from "@/lib/supabase/client";
 import { translateAuthError } from "@/features/auth/auth-errors";
 import { absoluteUrl } from "@/lib/utils";
+import { readNextParam } from "@/lib/auth-redirect";
 import { useTranslation } from "@/lib/i18n/language-provider";
 
 const PASSWORD_MIN_LENGTH = 6;
@@ -31,7 +32,7 @@ export default function SignupPage() {
   const [checkEmail, setCheckEmail] = useState(false);
 
   useEffect(() => {
-    if (!authLoading && session) router.replace("/");
+    if (!authLoading && session) router.replace(readNextParam() ?? "/");
   }, [authLoading, session, router]);
 
   async function handleSubmit(event: FormEvent) {
@@ -63,7 +64,7 @@ export default function SignupPage() {
       // With email confirmation enabled (this project's default), signUp
       // returns a user but no session yet — nothing to redirect into.
       if (data.session) {
-        router.push("/");
+        router.push(readNextParam() ?? "/");
       } else {
         setCheckEmail(true);
       }

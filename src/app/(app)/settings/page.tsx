@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
-import { ChevronRight, LogIn, LogOut, Settings, ShieldCheck } from "lucide-react";
+import { ChevronRight, LogOut, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/auth-provider";
 import { supabase } from "@/lib/supabase/client";
@@ -156,31 +156,8 @@ export default function SettingsPage() {
     await supabase.auth.signOut();
   }
 
-  if (loading) return null;
-
-  if (!user) {
-    return (
-      <div className="mx-auto max-w-md space-y-6 px-3 py-5 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
-        <div className="flex min-h-[40vh] flex-col items-center justify-center gap-3 text-center">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-accent-surface text-primary">
-            <Settings size={28} />
-          </div>
-          <h1 className="text-h1 font-semibold text-text">{t("settings.pageTitle")}</h1>
-          <p className="max-w-sm text-sm text-text-muted">{t("settings.notLoggedInBody")}</p>
-          <Link
-            href="/login"
-            className="mt-2 inline-flex h-9 items-center gap-1.5 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary-dark"
-          >
-            <LogIn size={14} />
-            {t("settings.login")}
-          </Link>
-        </div>
-
-        <AppearanceSection t={t} />
-        <LanguageSection t={t} language={language} setLanguage={setLanguage} />
-      </div>
-    );
-  }
+  // The route is wrapped in <RequireAuth>, so a guest never gets here.
+  if (loading || !user) return null;
 
   return (
     <div className="mx-auto max-w-md px-3 py-5 sm:px-5 sm:py-6 lg:px-8 lg:py-8">

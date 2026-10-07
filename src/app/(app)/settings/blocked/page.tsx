@@ -14,7 +14,7 @@ import type { UserProfile } from "@/types";
 
 export default function BlockedUsersPage() {
   const { t } = useTranslation();
-  const { user, loading } = useAuth();
+  const { user } = useAuth();
   const [blocked, setBlocked] = useState<UserProfile[] | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState("");
@@ -43,17 +43,6 @@ export default function BlockedUsersPage() {
     } finally {
       setBusyId(null);
     }
-  }
-
-  if (!loading && !user) {
-    return (
-      <div className="mx-auto max-w-md px-4 py-16 text-center">
-        <h1 className="mb-2 text-h2 font-semibold text-text">{t("auth.loginRequiredTitle")}</h1>
-        <Link href="/login" className="mt-4 inline-flex h-9 items-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary-dark">
-          {t("header.login")}
-        </Link>
-      </div>
-    );
   }
 
   return (

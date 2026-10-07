@@ -549,6 +549,11 @@ export const translations = {
   // ---- Auth (shared across pages) ----
   "auth.loginRequiredTitle": { tr: "Giriş yapmalısın", en: "You need to log in" },
   "auth.createAccount": { tr: "Hesap Oluştur", en: "Create Account" },
+  "auth.gateComment": { tr: "Yorum yapmak için giriş yapmalısın", en: "Log in to leave a comment" },
+  "auth.gateCreate": { tr: "Giriş yaparak içerik oluşturmaya başlayabilirsin.", en: "Log in to start creating content." },
+  "auth.gateGeneric": { tr: "Bu işlem için giriş yapmalısın", en: "You need to log in to do this" },
+  "auth.redirectingToLogin": { tr: "Giriş sayfasına yönlendiriliyorsun…", en: "Redirecting to log in…" },
+  "header.switchLanguage": { tr: "Dili değiştir (Türkçe / English)", en: "Switch language (Türkçe / English)" },
 
   // ---- Generic form field labels ----
   "forms.title": { tr: "Başlık", en: "Title" },

@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { MessageCircle } from "lucide-react";
 import { useAuth } from "@/features/auth/auth-provider";
+import { useAuthPrompt } from "@/features/auth/auth-prompt-provider";
 import { useRealMessages } from "./real-messages-provider";
 import { messageHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -18,16 +18,23 @@ export function MessageButton({ user }: { user: UserProfile }) {
   const { t } = useTranslation();
   const router = useRouter();
   const { user: authUser } = useAuth();
+  const { requireAuth } = useAuthPrompt();
   const { startConversationWith } = useRealMessages();
   const [isStarting, setIsStarting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   if (!authUser) {
     return (
-      <Link href="/login" title={t("messages.loginToSendTitle")} className={CLASS_NAME}>
+      <button
+        type="button"
+        onClick={() => requireAuth("message")}
+        aria-haspopup="dialog"
+        title={t("messages.loginToSendTitle")}
+        className={CLASS_NAME}
+      >
         <MessageCircle size={14} />
         {t("messages.sendMessage")}
-      </Link>
+      </button>
     );
   }
 

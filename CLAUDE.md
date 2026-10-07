@@ -11372,6 +11372,15 @@ Gönderideki kategori/alt kategori çipleri (`TaxonomyLinks`) `/search?q=Görsel
 
 Detay sayfalarındaki "Tavsiye edilen araç/model" çipleri (`ToolLine` → `ToolChips linked`) artık `/discover?tool=<id>` bağlantısı; model çipi ilgili aracın aramasına gider (araç çipi araç + tüm modellerini eşler). Eski serbest metin araç `?q=` ile aranır. `SearchView` mount'ta `?tool=`'u (`findTool` ile doğrulayıp) araç çipine çevirir. Kartlardaki çipler bağlantı değil (kart stretched-link'i). `/search` yönlendirmesi tüm parametreleri zaten taşıyor (9.101). Migration yok; yeni metin yok.
 
+### 9.105 Auth-aware navigasyon ve guest aksiyonları
+
+Tek auth kaynağı Supabase oturumu (`AuthProvider`); `useAuthStatus()` → `loading | authenticated | unauthenticated`. Üye-özel öğeler yalnızca `authenticated`'da render edilir (CSS ile gizleme yok); `loading`'de ne guest ne üye UI'ı çıkar (header'da avatar yeri, mobil alt nav'da profil yeri boş yer tutucu → kayma yok).
+- **Nav yapılandırması:** `nav-items.ts` → `NavItem.visibility` ("public"/"authenticated") + `filterNavItems`. Üye-özel: Kaydedilenler, Takip Ettiklerim, Profil, Ayarlar (+ header'da Bildirimler/Mesajlar, moderatör için Moderasyon). Guest: sidebar altında ve mobil alt nav'ın profil yerinde "Giriş Yap"; header'da Giriş Yap. Mobil alt nav her durumda 5 slot.
+- **Guest aksiyonları:** Beğeni, Kaydet, Takip, Mesaj Gönder, Hazır ayar Kaydet, yorum yazma/yorum beğenisi ve Oluştur (sidebar + mobil) artık `/login` linki yerine ortak giriş diyaloğunu açar (`auth-prompt-provider.tsx`, `useAuthPrompt().requireAuth(reason)`; oturum çözülürken açmaz). Paylaş guest'e açık kalır; beğeni/yorum animasyonları değişmedi.
+- **Route koruması:** `RequireAuth` (`features/auth/require-auth.tsx`) `/messages`, `/notifications`, `/saved`, `/following`, `/followers`, `/settings` (+`/settings/blocked`), `/profile/edit` layout'larında; guest `/login?next=…`'e yönlendirilir, giriş/kayıt sonrası `next`'e döner (`lib/auth-redirect.ts`, yalnız uygulama-içi yol kabul edilir). Public içerik/profil/etiket sayfaları açık.
+- **Karar:** `/settings` guest'e kapandığı için dil değiştirme kaybolmasın diye guest header'ına küçük dil anahtarı eklendi (üyede Ayarlar'da).
+- **Doğrulama:** tsc/lint (0 hata)/build temiz; ağ taklitli Playwright 109/109 (390/820/1440 × guest/üye: gizli linkler, diyalog, yönlendirmeler, public rotalar, JS'siz HTML'de guest/üye öğesi yok). Gerçek Supabase'e ve guest Beğeni/Kaydet/Takip/Yorum tıklamasına veriyle uçtan uca bakılmadı. Migration yok; TR+EN eklendi (`auth.gate*`, `auth.redirectingToLogin`, `header.switchLanguage`).
+
 ---
 
 **Sonraki adım:** Bilinen iki üretim hatası (Bölüm 9.40 — mesajlarda

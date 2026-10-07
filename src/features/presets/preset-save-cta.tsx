@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { Bookmark, Check } from "lucide-react";
-import { Button, buttonClassName } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { SaveToCollectionModal } from "@/features/collections/save-to-collection-modal";
 import { useSaveState } from "@/features/prompts/use-save-state";
 import { useTranslation } from "@/lib/i18n/language-provider";
+import { useAuthPrompt } from "@/features/auth/auth-prompt-provider";
 
 /**
  * The labelled "Kaydet" ⇄ "✓ Kaydedildi" button on a preset's detail page. It
@@ -28,16 +28,17 @@ export function PresetSaveCta({
   onChange?: () => void;
 }) {
   const { t } = useTranslation();
+  const { requireAuth } = useAuthPrompt();
   const { isSaved, removeEverywhere, markSaved, markUnsaved, isToggling, canSave } = useSaveState(presetId, "preset", saveCount);
   const [modalOpen, setModalOpen] = useState(false);
   const iconSize = size === "sm" ? 14 : 18;
 
   if (!canSave) {
     return (
-      <Link href="/login" className={buttonClassName({ size })}>
+      <Button type="button" size={size} onClick={() => requireAuth("save")} aria-haspopup="dialog">
         <Bookmark size={iconSize} aria-hidden />
         {t("preset.save")}
-      </Link>
+      </Button>
     );
   }
 

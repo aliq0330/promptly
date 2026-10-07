@@ -156,7 +156,7 @@ export function CommentNode({
                 size={13}
                 hideZero
                 onToggle={() => tree.onToggleLike(comment.id)}
-                disabled={!tree.canInteract || isLikePending}
+                disabled={isLikePending}
                 title={tree.canInteract ? undefined : t("prompt.loginToLike")}
                 label={t(isLiked ? "prompt.unlikeAria" : "prompt.likeAria", { count: likeCount })}
                 className={cn(

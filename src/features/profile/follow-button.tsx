@@ -1,9 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
+import { useAuthPrompt } from "@/features/auth/auth-prompt-provider";
 import { useFollowState } from "./use-follow-state";
 import type { UserProfile } from "@/types";
 
@@ -32,10 +32,17 @@ interface FollowButtonViewProps {
  */
 export function FollowButtonView({ isFollowing, toggle, canFollow, loading, size = "sm", className }: FollowButtonViewProps) {
   const { t } = useTranslation();
+  const { requireAuth } = useAuthPrompt();
   if (!canFollow) {
     return (
-      <Link
-        href="/login"
+      <button
+        type="button"
+        onClick={(event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          requireAuth("follow");
+        }}
+        aria-haspopup="dialog"
         title={t("common.loginToFollowTitle")}
         className={cn(
           "inline-flex items-center justify-center rounded-md bg-primary font-medium text-primary-foreground transition-colors duration-200 hover:bg-primary-hover",
@@ -44,7 +51,7 @@ export function FollowButtonView({ isFollowing, toggle, canFollow, loading, size
         )}
       >
         {t("common.follow")}
-      </Link>
+      </button>
     );
   }
 

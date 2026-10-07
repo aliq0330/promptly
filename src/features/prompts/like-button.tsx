@@ -1,15 +1,15 @@
 "use client";
 
-import Link from "next/link";
 import { Heart } from "lucide-react";
 import { cn, formatCount } from "@/lib/utils";
 import { LikeToggle } from "@/components/ui/like-toggle";
 import { contentActionClassName } from "@/features/content/action-styles";
 import { useTranslation } from "@/lib/i18n/language-provider";
+import { useAuthPrompt } from "@/features/auth/auth-prompt-provider";
 import { useLikeState } from "./use-like-state";
 import type { LikeableContentType } from "@/lib/supabase/likes";
 
-/** Real, working like toggle — genuinely persisted to Supabase; shows a login link instead while signed out. */
+/** Real, working like toggle — genuinely persisted to Supabase; opens the login dialog instead while signed out. */
 export function LikeButton({
   id,
   likeCount,
@@ -26,21 +26,27 @@ export function LikeButton({
 }) {
   const { isLiked, likeCount: count, toggle, canLike } = useLikeState(id, likeCount, contentType);
   const { t } = useTranslation();
+  const { requireAuth } = useAuthPrompt();
 
   const sharedClassName = contentActionClassName(false, cn(isLiked && "text-danger hover:text-danger", className));
 
   if (!canLike) {
     return (
-      <Link
-        href="/login"
-        onClick={(event) => event.stopPropagation()}
+      <button
+        type="button"
+        onClick={(event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          requireAuth("like");
+        }}
+        aria-haspopup="dialog"
         title={t("prompt.loginToLike")}
         aria-label={t("prompt.loginToLikeAria", { count })}
         className={sharedClassName}
       >
         <Heart size={size} strokeWidth={1.75} />
         <span aria-hidden>{formatCount(count)}</span>
-      </Link>
+      </button>
     );
   }
 
