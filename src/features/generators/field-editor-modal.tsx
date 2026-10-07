@@ -231,6 +231,7 @@ export function FieldEditorModal({
               className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted"
             />
             {labelError && <p className="mt-1 text-xs text-danger">{labelError}</p>}
+            {!labelError && keyError && <p className="mt-1 text-xs text-danger">{keyError}</p>}
           </div>
 
           <div>
@@ -263,24 +264,6 @@ export function FieldEditorModal({
                 </option>
               ))}
             </select>
-          </div>
-
-          <div>
-            <label htmlFor="field-key" className="mb-1.5 block text-sm font-medium text-text">
-              {t("field.variableLabel")}
-            </label>
-            <input
-              id="field-key"
-              type="text"
-              value={draft.key}
-              onChange={(event) => {
-                setKeyTouched(true);
-                setDraft((prev) => ({ ...prev, key: event.target.value.toLowerCase() }));
-              }}
-              className="h-10 w-full rounded-md border border-border bg-background px-3 font-mono text-sm text-text"
-            />
-            <p className="mt-1 font-mono text-xs text-primary">{`{{${draft.key || "…"}}}`}</p>
-            {keyError && <p className="mt-1 text-xs text-danger">{keyError}</p>}
           </div>
 
           {OPTION_TYPES.includes(draft.type) && (
