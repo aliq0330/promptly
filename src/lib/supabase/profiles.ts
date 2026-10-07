@@ -120,6 +120,48 @@ export async function fetchFollowedProfiles(userId: string): Promise<UserProfile
   }
 }
 
+/** Every real profile that follows this user — for `/followers`, via the real `follows` table (public read, Bölüm 19). */
+export async function fetchFollowerProfiles(userId: string): Promise<UserProfile[]> {
+  try {
+    const { data, error } = await supabase
+      .from("follows")
+      .select(`profiles:follower_id ( ${PROFILE_SELECT} )`)
+      .eq("following_id", userId);
+    if (error) {
+      console.error("fetchFollowerProfiles", error);
+      return [];
+    }
+    return ((data ?? []) as unknown as { profiles: ProfileRow | null }[])
+      .map((row) => row.profiles)
+      .filter((row): row is ProfileRow => Boolean(row))
+      .map((row) => mapProfileRow(row));
+  } catch (err) {
+    console.error("fetchFollowerProfiles", err);
+    return [];
+  }
+}
+
+/** Profiles the signed-in user has blocked (the `blocks` SELECT policy only exposes the blocker's own rows). */
+export async function fetchBlockedProfiles(userId: string): Promise<UserProfile[]> {
+  try {
+    const { data, error } = await supabase
+      .from("blocks")
+      .select(`profiles:blocked_id ( ${PROFILE_SELECT} )`)
+      .eq("blocker_id", userId);
+    if (error) {
+      console.error("fetchBlockedProfiles", error);
+      return [];
+    }
+    return ((data ?? []) as unknown as { profiles: ProfileRow | null }[])
+      .map((row) => row.profiles)
+      .filter((row): row is ProfileRow => Boolean(row))
+      .map((row) => mapProfileRow(row));
+  } catch (err) {
+    console.error("fetchBlockedProfiles", err);
+    return [];
+  }
+}
+
 export type MessagePrivacy = "everyone" | "followers_only";
 
 /**

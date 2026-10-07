@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
-import { LogIn, LogOut, Settings, ShieldCheck } from "lucide-react";
+import { ChevronRight, LogIn, LogOut, Settings, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/auth-provider";
 import { supabase } from "@/lib/supabase/client";
@@ -176,6 +176,14 @@ export default function SettingsPage() {
           </Link>
         </div>
 
+        <Link href="/settings/blocked" className="flex items-center justify-between rounded-lg border border-border bg-surface p-4 transition-colors hover:border-border-strong">
+          <span>
+            <span className="block text-sm font-medium text-text">{t("settings.blockedUsers")}</span>
+            <span className="block text-xs text-text-muted">{t("settings.blockedUsersHint")}</span>
+          </span>
+          <ChevronRight size={16} className="text-text-muted" />
+        </Link>
+
         <AppearanceSection t={t} />
         <LanguageSection t={t} language={language} setLanguage={setLanguage} />
       </div>
@@ -297,6 +305,7 @@ export default function SettingsPage() {
           </Button>
         </form>
 
+        <h2 className="pt-2 text-h3 font-semibold text-text">{t("settings.privacyTitle")}</h2>
         <div className="space-y-2 rounded-lg border border-border bg-surface p-4">
           <p className="text-sm font-medium text-text">{t("settings.messagePrivacyTitle")}</p>
           <p className="text-xs text-text-muted">{t("settings.messagePrivacyQuestion")}</p>
