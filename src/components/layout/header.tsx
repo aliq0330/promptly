@@ -1,15 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { Bell, LogIn, MessageCircle, Search } from "lucide-react";
+import { Bell, Languages, LogIn, MessageCircle, Search } from "lucide-react";
 import { iconButtonClassName } from "@/components/ui/icon-button";
 import { Avatar } from "@/components/ui/avatar";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
-import { useAuth } from "@/features/auth/auth-provider";
+import { useAuthStatus } from "@/features/auth/use-auth-status";
 import { useOwnProfile } from "@/features/auth/own-profile-provider";
 import { useRealMessages } from "@/features/messages/real-messages-provider";
 import { useNotifications } from "@/features/notifications/notifications-provider";
 import { useTranslation } from "@/lib/i18n/language-provider";
+import { IconButton } from "@/components/ui/icon-button";
 import { profileHref } from "@/lib/utils";
 import { BrandMark } from "@/components/layout/brand-mark";
 
@@ -19,11 +20,11 @@ import { BrandMark } from "@/components/layout/brand-mark";
  * real signed-in user's own real profile.
  */
 export function Header() {
-  const { user, loading } = useAuth();
+  const status = useAuthStatus();
   const { profile: ownProfile } = useOwnProfile();
   const { conversations: realConversations } = useRealMessages();
   const { unreadCount } = useNotifications();
-  const { t } = useTranslation();
+  const { t, language, setLanguage } = useTranslation();
   const hasUnreadMessages = realConversations.some((c) => c.unreadCount > 0);
 
   return (
@@ -56,43 +57,62 @@ export function Header() {
         >
           <Search size={20} />
         </Link>
-        <Link
-          href="/notifications"
-          aria-label={t("header.notificationsAriaLabel")}
-          title={t("header.notificationsAriaLabel")}
-          className={iconButtonClassName(false, "shrink-0 relative")}
-        >
-          <Bell size={20} />
-          {unreadCount > 0 && (
-            <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-primary" />
-          )}
-        </Link>
-        <Link
-          href="/messages"
-          aria-label={t("header.messagesAriaLabel")}
-          title={t("header.messagesAriaLabel")}
-          className={iconButtonClassName(false, "shrink-0 relative")}
-        >
-          <MessageCircle size={20} />
-          {hasUnreadMessages && (
-            <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-primary" />
-          )}
-        </Link>
+        {status === "authenticated" && (
+          <>
+            <Link
+              href="/notifications"
+              aria-label={t("header.notificationsAriaLabel")}
+              title={t("header.notificationsAriaLabel")}
+              className={iconButtonClassName(false, "shrink-0 relative")}
+            >
+              <Bell size={20} />
+              {unreadCount > 0 && (
+                <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-primary" />
+              )}
+            </Link>
+            <Link
+              href="/messages"
+              aria-label={t("header.messagesAriaLabel")}
+              title={t("header.messagesAriaLabel")}
+              className={iconButtonClassName(false, "shrink-0 relative")}
+            >
+              <MessageCircle size={20} />
+              {hasUnreadMessages && (
+                <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-primary" />
+              )}
+            </Link>
+          </>
+        )}
         <ThemeToggle />
-        {!loading && !user && (
-          <Link
-            href="/login"
-            className="ml-1.5 flex h-9 shrink-0 items-center gap-1.5 rounded-md bg-text px-3 text-label font-semibold text-background transition-opacity duration-200 hover:opacity-90"
-          >
-            <LogIn size={16} />
-            <span className="hidden sm:inline">{t("header.login")}</span>
-          </Link>
+        {status === "unauthenticated" && (
+          <>
+            {/* Guests can't reach /settings, so the language switch lives here for them. */}
+            <IconButton
+              label={t("header.switchLanguage")}
+              onClick={() => setLanguage(language === "tr" ? "en" : "tr")}
+              className="shrink-0"
+            >
+              <Languages size={20} />
+            </IconButton>
+            <Link
+              href="/login"
+              className="ml-1.5 flex h-9 shrink-0 items-center gap-1.5 rounded-md bg-text px-3 text-label font-semibold text-background transition-opacity duration-200 hover:opacity-90"
+            >
+              <LogIn size={16} />
+              <span className="hidden sm:inline">{t("header.login")}</span>
+            </Link>
+          </>
         )}
-        {user && ownProfile && (
-          <Link href={profileHref(ownProfile)} className="ml-1.5 shrink-0 rounded-full" aria-label={ownProfile.displayName}>
-            <Avatar src={ownProfile.avatarUrl} alt={ownProfile.displayName} size={36} />
-          </Link>
-        )}
+        {/* While the session (or own profile) is still resolving, hold the avatar's space so nothing shifts. */}
+        {status === "loading" && <span aria-hidden className="ml-1.5 h-9 w-9 shrink-0" />}
+        {status === "authenticated" &&
+          (ownProfile ? (
+            <Link href={profileHref(ownProfile)} className="ml-1.5 shrink-0 rounded-full" aria-label={ownProfile.displayName}>
+              <Avatar src={ownProfile.avatarUrl} alt={ownProfile.displayName} size={36} />
+            </Link>
+          ) : (
+            <span aria-hidden className="ml-1.5 h-9 w-9 shrink-0 rounded-full bg-surface-soft" />
+          ))}
       </div>
     </header>
   );

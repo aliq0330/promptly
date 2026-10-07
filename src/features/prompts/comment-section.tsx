@@ -5,9 +5,9 @@ import { bumpCommentCount } from "./comment-count-store";
 import { Skeleton } from "@/components/ui/skeleton";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import Link from "next/link";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { useAuthPrompt } from "@/features/auth/auth-prompt-provider";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useOwnProfile } from "@/features/auth/own-profile-provider";
 import {
@@ -65,6 +65,7 @@ export function CommentSection({
 }) {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const { requireAuth } = useAuthPrompt();
   const { profile: ownProfile } = useOwnProfile();
   const [draft, setDraft] = useState("");
   const [postError, setPostError] = useState<string | null>(null);
@@ -240,7 +241,11 @@ export function CommentSection({
   }
 
   async function toggleLike(id: string): Promise<LikeToggleResult> {
-    if (!user || pendingLikeIds.has(id)) return "ignored";
+    if (!user) {
+      requireAuth("like");
+      return "ignored";
+    }
+    if (pendingLikeIds.has(id)) return "ignored";
     const wasLiked = likedIds.has(id);
     setPendingLikeIds((prev) => new Set(prev).add(id));
     setLikedIds((prev) => {
@@ -444,9 +449,14 @@ export function CommentSection({
       ) : !user ? (
         <p className="rounded-md bg-surface-soft px-3 py-2.5 text-small text-text-muted">
           {t("comments.loginToCommentPrefix")}{" "}
-          <Link href="/login" className="font-medium text-primary underline">
+          <button
+            type="button"
+            onClick={() => requireAuth("comment")}
+            aria-haspopup="dialog"
+            className="font-medium text-primary underline"
+          >
             {t("comments.loginToCommentLink")}
-          </Link>
+          </button>
           .
         </p>
       ) : (
