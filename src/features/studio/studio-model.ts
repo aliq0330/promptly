@@ -10,6 +10,7 @@ import { composePrompt } from "@/lib/preset-fields";
 import { resolvePresetFields } from "@/lib/preset-utils";
 import { resolvePromptText } from "@/lib/prompt-variables";
 import type { Language } from "@/lib/i18n/translations";
+import { generatorHref, presetHref, promptHref, workflowHref } from "@/lib/utils";
 import type { DnaSection } from "@/lib/prompt-dna/types";
 import type { StudioSnapshot } from "@/lib/studio-diff";
 import type { Generator, GeneratorOutput, GeneratorTemplate, Preset, Prompt, Workflow } from "@/types";
@@ -25,14 +26,31 @@ export interface StudioSources {
   workflow?: { workflow: Workflow };
 }
 
+export type StudioVersionKind = "original" | "version" | "variation";
+
 export interface StudioVersion {
+  /** A uuid, so the same id is the row id once the session is stored. */
   id: string;
   number: number;
   label: string;
   snapshot: StudioSnapshot;
   createdAt: string;
-  /** The untouched "Orijinal" version created when the first source is attached. */
-  original: boolean;
+  /** "original" = the untouched state created when the first source is attached; "variation" = made with "+ Varyasyon". */
+  kind: StudioVersionKind;
+  /** The version a variation was made from. */
+  parentId: string | null;
+}
+
+/** Library references of the attached sources (prompt/preset/workflow by id, generator by slug) — what a stored session reopens from. */
+export type StudioRefs = Partial<Record<StudioKind, string>>;
+
+export function refsOf(sources: StudioSources): StudioRefs {
+  return {
+    ...(sources.prompt ? { prompt: sources.prompt.prompt.id } : {}),
+    ...(sources.generator ? { generator: sources.generator.generator.slug } : {}),
+    ...(sources.preset ? { preset: sources.preset.preset.id } : {}),
+    ...(sources.workflow ? { workflow: sources.workflow.workflow.id } : {}),
+  };
 }
 
 export type LoadedSource =
@@ -90,6 +108,27 @@ export async function loadStudioSource(ref: StudioRef): Promise<LoadedSource[]> 
   const loaded = await fetchWorkflowById(ref.id);
   if (!loaded) return [];
   return [{ kind: "workflow", source: { workflow: loaded.workflow }, piece: { title: loaded.workflow.title, steps: loaded.steps } }];
+}
+
+/** Folds loaded sources into the `StudioSources` shape (one per kind). */
+export function sourcesFromLoaded(loaded: LoadedSource[]): StudioSources {
+  const sources: StudioSources = {};
+  for (const item of loaded) {
+    if (item.kind === "prompt") sources.prompt = item.source;
+    else if (item.kind === "generator") sources.generator = item.source;
+    else if (item.kind === "preset") sources.preset = item.source;
+    else sources.workflow = item.source;
+  }
+  return sources;
+}
+
+/** The original's own page, so a source card can offer "Aç" without touching the original. */
+export function sourceHref(kind: StudioKind, sources: StudioSources): string | null {
+  if (kind === "prompt" && sources.prompt) return promptHref(sources.prompt.prompt);
+  if (kind === "generator" && sources.generator) return generatorHref(sources.generator.generator);
+  if (kind === "preset" && sources.preset) return presetHref(sources.preset.preset);
+  if (kind === "workflow" && sources.workflow) return workflowHref(sources.workflow.workflow);
+  return null;
 }
 
 export interface StudioResult {

@@ -16,11 +16,11 @@ export const DRAFT_ID = "draft";
 
 export function versionName(version: StudioVersion, t: (key: TranslationKey, params?: Record<string, string | number>) => string): string {
   const base = `V${version.number}`;
-  const label = version.original ? t("studio.originalVersion") : version.label;
+  const label = version.kind === "original" ? t("studio.originalVersion") : version.label;
   return label ? `${base} — ${label}` : base;
 }
 
-const AREA_KEYS: Record<DiffEntry["area"], TranslationKey> = {
+export const AREA_KEYS: Record<DiffEntry["area"], TranslationKey> = {
   prompt: "studio.area.prompt",
   variables: "studio.area.variables",
   dna: "studio.area.dna",
@@ -95,9 +95,9 @@ export function ComparePane({
       <div className="lg:hidden">
         <Tabs
           items={[
-            { key: "diff" as const, label: t("studio.differences") },
             { key: "a" as const, label: a.name.split(" ")[0] },
             { key: "b" as const, label: b.name.split(" ")[0] },
+            { key: "diff" as const, label: t("studio.differences") },
           ]}
           active={view}
           onChange={setView}

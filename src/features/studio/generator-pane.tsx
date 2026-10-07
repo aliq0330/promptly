@@ -30,7 +30,30 @@ export function GeneratorPane({ draft, edit }: { draft: StudioSnapshot; edit: Up
   const fields = generator.schema.fields;
 
   function updateSchema(next: GeneratorSchema, key: string | null = null) {
-    edit((d) => (d.generator ? { ...d, generator: { ...d.generator, schema: next, values: syncValues(next, d.generator.values) } } : d), key);
+    edit(
+      (d) =>
+        d.generator
+          ? {
+              ...d,
+              generator: {
+                ...d.generator,
+                schema: next,
+                values: syncValues(next, d.generator.values),
+                // A removed field can't stay locked.
+                locked: (d.generator.locked ?? []).filter((lockedKey) => next.fields.some((f) => f.key === lockedKey)),
+              },
+            }
+          : d,
+      key,
+    );
+  }
+
+  function toggleLock(key: string) {
+    edit((d) => {
+      if (!d.generator) return d;
+      const locked = d.generator.locked ?? [];
+      return { ...d, generator: { ...d.generator, locked: locked.includes(key) ? locked.filter((k) => k !== key) : [...locked, key] } };
+    });
   }
 
   function saveField(field: GeneratorField) {
@@ -77,11 +100,16 @@ export function GeneratorPane({ draft, edit }: { draft: StudioSnapshot; edit: Up
         variant="segmented"
       />
       {tab === "values" ? (
+        <>
+          <p className="rounded-md bg-surface-soft p-3 text-caption text-text-secondary">{t("studio.lockHint")}</p>
         <GeneratorRuntimeForm
           schema={generator.schema}
           values={generator.values}
+          lockedKeys={generator.locked ?? []}
+          onToggleLock={toggleLock}
           onChange={(key, value) => edit((d) => (d.generator ? { ...d, generator: { ...d.generator, values: { ...d.generator.values, [key]: value } } } : d), `gen-${key}`)}
         />
+        </>
       ) : (
         <FieldList
           fields={fields}
