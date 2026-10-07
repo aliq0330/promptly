@@ -13,6 +13,7 @@ export function WorkflowsListView() {
   return (
     <ContentListPage
       icon={WorkflowIcon}
+      art="workflows"
       eyebrow={t("nav.workflows")}
       title={t("workflow.pageTitle")}
       description={t("workflow.pageDescription")}

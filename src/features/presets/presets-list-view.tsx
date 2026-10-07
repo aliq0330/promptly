@@ -13,6 +13,7 @@ export function PresetsListView() {
   return (
     <ContentListPage
       icon={SlidersHorizontal}
+      art="presets"
       eyebrow={t("nav.presets")}
       title={t("preset.pageTitle")}
       description={t("preset.pageDescription")}
