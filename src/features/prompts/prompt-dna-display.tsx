@@ -3,6 +3,7 @@
 import { Dna } from "lucide-react";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { DnaSection } from "@/lib/prompt-dna/types";
+import { OpenInStudioButton } from "@/features/studio/open-in-studio";
 import { DNA_ICONS, dnaSectionLabel } from "./dna-section-meta";
 
 /**
@@ -11,7 +12,7 @@ import { DNA_ICONS, dnaSectionLabel } from "./dna-section-meta";
  * fetches them (it needs the count to decide whether the tab exists) and
  * only renders this for a prompt that has DNA.
  */
-export function PromptDnaDisplay({ sections }: { sections: DnaSection[] }) {
+export function PromptDnaDisplay({ sections, studioPromptId }: { sections: DnaSection[]; studioPromptId?: string }) {
   const { t } = useTranslation();
 
   if (sections.length === 0) return null;
@@ -23,7 +24,10 @@ export function PromptDnaDisplay({ sections }: { sections: DnaSection[] }) {
           <Dna size={14} />
           {t("dna.title")}
         </h2>
-        <span className="text-caption text-text-muted">{t("dna.sectionsCount", { count: sections.length })}</span>
+        <span className="flex items-center gap-3">
+          <span className="text-caption text-text-muted">{t("dna.sectionsCount", { count: sections.length })}</span>
+          {studioPromptId && <OpenInStudioButton size="sm" refs={{ prompt: studioPromptId, dna: studioPromptId }} />}
+        </span>
       </div>
       <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
         {sections.map((section) => {
