@@ -973,7 +973,7 @@ export const translations = {
   "field.visibilityConditionalLabel": { tr: "Görünürlük (§34 — koşullu alan)", en: "Visibility (conditional field)" },
   "field.alwaysVisible": { tr: "Her zaman görünür", en: "Always visible" },
   "field.conditionSourceGoneError": { tr: "Seçilen koşul kaynağı artık geçerli değil.", en: "The selected condition source is no longer valid." },
-  "field.addFieldSubmit": { tr: "Add Field", en: "Add Field" },
+  "field.addFieldSubmit": { tr: "Alan ekle", en: "Add Field" },
   "field.defaultValueLabel": { tr: "Default value", en: "Default value" },
   "field.addOptionFirst": { tr: "Önce seçenek ekle.", en: "Add an option first." },
   "field.none": { tr: "Yok", en: "None" },
