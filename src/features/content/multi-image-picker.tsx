@@ -77,7 +77,7 @@ export function MultiImagePicker({
       )}
       <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5">
         {items.map((item, index) => (
-          <figure key={item.key} className="group relative aspect-square overflow-hidden rounded-md border border-border bg-surface-soft">
+          <figure key={item.key} className="relative aspect-square overflow-hidden rounded-md border border-border bg-surface-soft">
             {/* eslint-disable-next-line @next/next/no-img-element -- a local preview data URL or an already-stored real URL, never a next/image-optimizable remote asset list */}
             <img src={item.url} alt="" className="h-full w-full object-cover" draggable={false} />
             <button
@@ -85,29 +85,29 @@ export function MultiImagePicker({
               onClick={() => remove(item.key)}
               disabled={disabled}
               aria-label={t("media.removeImage")}
-              className="absolute right-1 top-1 rounded-full bg-black/60 p-1 text-white opacity-0 transition-opacity hover:bg-black/80 focus-visible:opacity-100 group-hover:opacity-100"
+              className="absolute right-1 top-1 flex h-7 w-7 items-center justify-center rounded-full bg-black/70 text-white transition-colors hover:bg-black/85 disabled:opacity-50"
             >
-              <X size={13} />
+              <X size={15} />
             </button>
             {items.length > 1 && (
-              <div className="absolute inset-x-1 bottom-1 flex justify-between opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100">
+              <div className="absolute inset-x-1 bottom-1 flex justify-between">
                 <button
                   type="button"
                   onClick={() => move(item.key, -1)}
                   disabled={disabled || index === 0}
                   aria-label={t("media.moveLeft")}
-                  className="rounded-full bg-black/60 p-1 text-white hover:bg-black/80 disabled:pointer-events-none disabled:opacity-30"
+                  className="flex h-7 w-7 items-center justify-center rounded-full bg-black/70 text-white hover:bg-black/85 disabled:pointer-events-none disabled:opacity-30"
                 >
-                  <ChevronLeft size={13} />
+                  <ChevronLeft size={15} />
                 </button>
                 <button
                   type="button"
                   onClick={() => move(item.key, 1)}
                   disabled={disabled || index === items.length - 1}
                   aria-label={t("media.moveRight")}
-                  className="rounded-full bg-black/60 p-1 text-white hover:bg-black/80 disabled:pointer-events-none disabled:opacity-30"
+                  className="flex h-7 w-7 items-center justify-center rounded-full bg-black/70 text-white hover:bg-black/85 disabled:pointer-events-none disabled:opacity-30"
                 >
-                  <ChevronRight size={13} />
+                  <ChevronRight size={15} />
                 </button>
               </div>
             )}

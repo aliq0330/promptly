@@ -51,7 +51,7 @@ function StatButton({
  * Only wires up the interactions CLAUDE.md section 7 asks for that a real
  * data source actually supports: the prompt count switches this profile's
  * own tabs (no navigation needed), and — own profile only — the following
- * count links to the existing `/following` page. There is no followers- or
+ * counts link to the existing `/following` and `/followers` pages. There is no followers- or
  * following-list data for an arbitrary OTHER user anywhere in the mock
  * model (only a static count), so the follower count is never a link
  * anywhere, and the following count is only a link on your own profile —
@@ -77,7 +77,14 @@ export function ProfileStats({
     <div className="space-y-3 border-t border-border-soft pt-4">
     <div className="flex flex-wrap items-stretch divide-x divide-border-soft *:px-5 *:first:pl-0">
       <StatButton label={t("profile.postsSuffix")} value={total} onClick={onSelectPosts} />
-      <Stat label={t("profile.followersSuffix")} value={followerCount} />
+      {isOwnProfile ? (
+        <Link href="/followers" className={cn(STAT_CLASS, "rounded-sm transition-colors hover:text-text")}>
+          <strong className={STAT_VALUE_CLASS}>{formatCount(followerCount)}</strong>
+          {t("profile.followersSuffix")}
+        </Link>
+      ) : (
+        <Stat label={t("profile.followersSuffix")} value={followerCount} />
+      )}
       {isOwnProfile ? (
         <Link href="/following" className={cn(STAT_CLASS, "rounded-sm transition-colors hover:text-text")}>
           <strong className={STAT_VALUE_CLASS}>{formatCount(followingCount)}</strong>

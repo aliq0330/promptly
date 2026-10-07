@@ -4,11 +4,11 @@ import { CreatorRow } from "./creator-row";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { UserProfile } from "@/types";
 
-export function CreatorList({ users }: { users: UserProfile[] }) {
+export function CreatorList({ users, emptyMessage }: { users: UserProfile[]; emptyMessage?: string }) {
   const { t } = useTranslation();
   if (users.length === 0) {
     return (
-      <p className="py-10 text-center text-sm text-text-muted">{t("profile.notFollowingAnyoneYet")}</p>
+      <p className="py-10 text-center text-sm text-text-muted">{emptyMessage ?? t("profile.notFollowingAnyoneYet")}</p>
     );
   }
 

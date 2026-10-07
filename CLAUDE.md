@@ -4208,6 +4208,14 @@ Detay sayfalarında uzun prompt metni sayfayı uzatmıyor: `src/features/content
 - Bağlandığı yerler: `prompt-detail-view.tsx` (Prompt Metni), `request-detail-view.tsx` (İstek metni), `generated-prompt-panel.tsx` (Generator pozitif/negatif prompt), `generator-json-panel.tsx` (JSON çıktısı; eski `max-h-96` yerine). Workflow detayında prompt metni yok (yalnızca içerik referansları), dokunulmadı; kartlardaki `line-clamp`'li önizlemeler ve oluşturma formları kapsam dışı.
 - Migration yok; yeni metin yok (İngilizce karşılık gerekmedi). Doğrulama: tsc/lint/build temiz; geçici sayfayla Playwright (masaüstü/tablet/mobil, 200 satırlık + 400 karakterlik tek kelime): metin 288–480px'e sabitleniyor, sayfa uzamıyor, kısa metinde scrollbar yok, yatay taşma yok, iç kaydırma sayfayı/aksiyonları oynatmıyor (18/18); sayfa sonra silindi. Gerçek Supabase'e karşı denenmedi.
 
+### 9.103 Görsel kaldırma, takipçi listesi, Engellenenler, katkı haritası
+
+- **Görsel kaldırma:** `MultiImagePicker` (Prompt/İstek/Generator/Workflow/Hazır Ayar kapağı) kaldır/taşı düğmeleri yalnızca hover'da görünüyordu, dokunmatikte kullanılamıyordu; artık her zaman görünür (28px). Kayıt tarafı zaten tüm görseller silinince de doğru yazıyor (replace-all + eski `cover_url` kolonu null'lanıyor).
+- **Takipçilerim:** yeni `/followers` sayfası (`fetchFollowerProfiles`, engellenenler süzülür); profilde yalnızca kendi profilinde takipçi sayısı bu sayfaya link, başkasının profilinde düz sayı (takip listesiyle aynı kural).
+- **Ayarlar → Gizlilik:** "Gizlilik" başlığı altında mesaj gizliliği + "Engellenenler" satırı → `/settings/blocked` (`fetchBlockedProfiles`, satır başına "Engeli kaldır" = `unblockUser`, engel önbelleği geçersiz kılınır). TR+EN eklendi (`settings.privacyTitle/blockedUsers*`, `nav.followers`, `profile.noFollowersYet`, `followers.*`).
+- **Katkı haritası:** kaydırma alanı sağ uca (güncel ay) kaydırılarak başlıyor.
+- Migration yok. tsc/lint/build temiz; tarayıcıda denenmedi.
+
 ---
 
 **Sonraki adım:** Mesajlaşma genişletmesinin 3 fazı da (Faz A — Bölüm

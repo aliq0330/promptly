@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useLanguage } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
 import { dayKey, fetchContributionCounts } from "@/lib/supabase/contributions";
@@ -24,6 +24,7 @@ function levelFor(count: number): number {
 export function ContributionMap({ userId }: { userId: string }) {
   const { t, language } = useLanguage();
   const [counts, setCounts] = useState<Record<string, number>>({});
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const { weeks, start, todayKey } = useMemo(() => {
     const today = new Date();
@@ -45,6 +46,12 @@ export function ContributionMap({ userId }: { userId: string }) {
     }
     return { weeks: cols, start: from, todayKey: dayKey(today) };
   }, []);
+
+  // Start at the right edge so the current month is visible first.
+  useLayoutEffect(() => {
+    const el = scrollRef.current;
+    if (el) el.scrollLeft = el.scrollWidth;
+  }, [weeks]);
 
   useEffect(() => {
     let cancelled = false;
@@ -73,7 +80,7 @@ export function ContributionMap({ userId }: { userId: string }) {
   return (
     <section className="rounded-lg border border-border-soft bg-surface p-4 shadow-card sm:p-5" aria-label={t("contrib.title", { count: total })}>
       <h2 className="mb-4 text-center text-h3 font-semibold text-text-secondary">{t("contrib.title", { count: total })}</h2>
-      <div className="scrollbar-none overflow-x-auto pb-1">
+      <div ref={scrollRef} className="scrollbar-none overflow-x-auto pb-1">
         <div className="mx-auto flex w-max gap-1.5">
           <div className="flex flex-col gap-[3px] pt-5 text-[10px] leading-3 text-text-muted" aria-hidden>
             {dayLabels.map((label, i) => (
