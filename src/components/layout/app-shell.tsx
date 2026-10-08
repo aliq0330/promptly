@@ -32,7 +32,7 @@ export function AppShell({ children, aside }: AppShellProps) {
       <div className="flex min-w-0 flex-1 flex-col">
         <Header />
         <div className="flex flex-1">
-          <main id="main-content" className="min-w-0 flex-1 pb-[calc(6.5rem+env(safe-area-inset-bottom))] md:pb-10">
+          <main id="main-content" className="min-w-0 flex-1 pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-10">
             {children}
           </main>
           {aside ? (
