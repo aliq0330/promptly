@@ -13,10 +13,10 @@
  * Two independent axes, both set on <html> before first paint by
  * `themeInitScript` (theme-provider.tsx):
  *   - mode:    `.dark` class              → light / dark
- *   - palette: `data-palette` attribute   → lavender / ocean / forest / sand (default)
+ *   - palette: `data-palette` attribute   → mono / lavender / ocean / forest / sand (default)
  *
  * Every palette defines the SAME full set of raw `--p-*` variables in both
- * modes, so every component renders correctly in all 8 combinations without
+ * modes, so every component renders correctly in all 10 combinations without
  * a single palette-specific class anywhere in the component tree. Palette
  * selectors match any element (not only <html>), so a subtree can preview
  * another palette with real tokens (the Settings swatches do exactly this).
@@ -157,6 +157,49 @@
   --p-primary-soft: #16332a;
   --p-primary-fg: #0c1310;
   --p-secondary: #f0b95c;
+  --p-shadow: 0 0 0;
+}
+
+/* ---------------------------------------------------------------------------
+ * Palette: White (mono) — a professional, neutral black-and-white palette.
+ * Zinc greys, ink-black primary (white in dark mode), a quiet blue secondary.
+ * ------------------------------------------------------------------------- */
+[data-palette="mono"] {
+  --p-bg: #f7f7f8;
+  --p-surface: #ffffff;
+  --p-surface-soft: #f1f1f3;
+  --p-surface-elevated: #ffffff;
+  --p-text: #09090b;
+  --p-text-secondary: #3f3f46;
+  --p-text-muted: #5f5f68;
+  --p-border: #e4e4e7;
+  --p-border-soft: #ececee;
+  --p-border-strong: #d4d4d8;
+  --p-primary: #18181b;
+  --p-primary-hover: #3f3f46;
+  --p-primary-soft: #ececef;
+  --p-primary-fg: #ffffff;
+  --p-secondary: #1d4ed8;
+  --p-shadow: 9 9 11;
+}
+
+.dark[data-palette="mono"],
+.dark [data-palette="mono"] {
+  --p-bg: #09090b;
+  --p-surface: #111113;
+  --p-surface-soft: #18181b;
+  --p-surface-elevated: #1c1c1f;
+  --p-text: #fafafa;
+  --p-text-secondary: #d4d4d8;
+  --p-text-muted: #a1a1aa;
+  --p-border: #27272a;
+  --p-border-soft: #1f1f22;
+  --p-border-strong: #3f3f46;
+  --p-primary: #f4f4f5;
+  --p-primary-hover: #ffffff;
+  --p-primary-soft: #26262a;
+  --p-primary-fg: #09090b;
+  --p-secondary: #60a5fa;
   --p-shadow: 0 0 0;
 }
 

@@ -129,11 +129,12 @@ tokenları tanıyacak şekilde genişletildi — aksi hâlde `text-caption` ile
 boyamadan önce `<html>`'e uygulanır, localStorage'da (`promptly-theme`,
 `promptly-palette`) tutulur, `/settings → Görünüm`'den seçilir:
 - mod: `.dark` sınıfı (açık/koyu)
-- palet: `data-palette` = `lavender` (varsayılan) / `ocean` (lacivert +
-  elektrik mavisi) / `forest` (orman + nane) / `sand` (kum + mercan)
+- palet: `data-palette` = `mono` (Beyaz — nötr siyah-beyaz, profesyonel) /
+  `lavender` / `ocean` (lacivert + elektrik mavisi) / `forest` (orman + nane) /
+  `sand` (kum + mercan, varsayılan — Bölüm 9.57)
 
-Her palet her iki modda aynı tam token setini tanımlar (8 kombinasyonun
-hepsinde 88/88 metin/zemin çifti WCAG AA ≥ 4.5:1 — Bölüm 9.50). Palet
+Her palet her iki modda aynı tam token setini tanımlar (10 kombinasyonun
+hepsinde metin/zemin çiftleri WCAG AA ≥ 4.5:1 — Bölüm 9.50, 9.114). Palet
 seçicileri her elemente uyar, bu yüzden bir alt ağaç başka paletin gerçek
 tokenlarıyla önizlenebilir (Ayarlar'daki renk örnekleri böyle çalışır).
 
@@ -11442,6 +11443,15 @@ Yalnızca görünüm; veri/iş mantığı/prop sözleşmeleri aynı. Migration y
 - **Giriş animasyonu:** yeni `animate-rise-in` (380 ms, 8px yukarı + opaklık). Dolum kipi **`backwards`** — animasyon bitince transform kalmaz; kalsaydı kart wrapper'ı stacking context oluşturup açık menüyü bir sonraki kartın altına hapsederdi. Kart ızgaraları (`PromptGrid`, `FeedGrid`, `RequestList`, `FocusGrid`) `staggerStyle(index)` (`components/ui/entrance.ts`, 35 ms adım, en çok 8 adım) ile kademeli giriyor; "Daha fazla yükle" ile gelen kartlar yalnızca yenileri canlanır. `DetailShell`, `PageHeader`, Ayarlar, Engellenenler ve auth kartı da aynı girişi kullanıyor.
 - **Tema geçişi:** mod/palet değişince `<html>`'e 360 ms boyunca `.theme-transition` eklenir; renkler 300 ms'de yumuşakça geçer, sonra sınıf kalkar (normal hover/odak hızını etkilemez). `prefers-reduced-motion`'da devre dışı.
 - **Doğrulama:** `tsc`, `lint` (yalnız önceden var olan 5 uyarı), `npm test` 46/46, `next build --webpack` temiz. Ağ taklitli Playwright: `/prompts` kartlarında animasyon sonrası kalan transform 0/7, tema geçiş sınıfı eklenip kaldırılıyor, Prompt oluştur formu (1280 / 390 koyu) ve liste sayfası taşmasız, sayfa hatası yok. Gerçek Supabase'e ve fiziksel cihaza karşı denenmedi.
+
+### 9.114 5. renk paleti: Beyaz (mono) — açık ve koyu
+
+Kullanıcı isteğiyle 4 paletin (Lavanta/Okyanus/Orman/Kum, hepsinin zaten açık+koyu sürümü var) yanına profesyonel, nötr bir **Beyaz** palet eklendi; o da açık ve koyu modda tam token setini tanımlıyor.
+- **Renkler (`globals.css`, `[data-palette="mono"]`):** açık — `#f7f7f8` zemin, saf beyaz yüzey, zinc griler, mürekkep siyahı birincil (`#18181b`, beyaz ön plan), sakin mavi ikincil; koyu — `#09090b` zemin, `#111113` yüzey, birincil beyaz (`#f4f4f5`, siyah ön plan). Tüm metin rengi × zemin ve birincil/birincil-yumuşak çiftleri ≥ 4.5:1 (hesaplandı).
+- `PALETTES` = `["mono", "lavender", "ocean", "forest", "sand"]` (seçicide ilk sırada); varsayılan hâlâ Kum. Ayarlar → Görünüm ızgarası 3/5 sütun. TR+EN `settings.palette.mono` ("Beyaz"/"White").
+- **Migration `20260919630000_mono_palette.sql` (canlıya uygulandı, MCP ile doğrulandı):** `profiles_theme_palette_check` artık `'mono'` değerini de kabul ediyor — yoksa Beyaz'ı seçen kullanıcının tercihi hesaba yazılamazdı.
+- **Doğrulama:** `tsc`, `lint`, `npm test` 46/46, `next build --webpack` temiz; ağ taklitli Playwright: `/prompts`, Ayarlar, Prompt oluştur — Beyaz açık/koyu, 390/1100/1280/1440'ta taşma ve sayfa hatası yok. Gerçek hesapla tercih kaydı canlıda denenmedi.
+- **Not:** Beyaz'da birincil renk siyah olduğundan bağlantılar (`text-primary`) metinden renkle değil kalınlık/altı çizili hover ile ayrılır — bilinçli tercih.
 
 ---
 

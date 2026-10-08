@@ -19,7 +19,7 @@ export function AppearancePicker() {
     <div className="space-y-4">
       <fieldset>
         <legend className="mb-2 text-label font-medium text-text-secondary">{t("settings.paletteLabel")}</legend>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
           {PALETTES.map((option) => (
             <PaletteSwatch
               key={option}
