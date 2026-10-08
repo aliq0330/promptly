@@ -81,12 +81,6 @@ export function CreateChoice() {
           </Link>
         ))}
       </div>
-      <p className="mt-6 text-center text-small text-text-secondary">
-        {t("studio.createChoiceHint")}{" "}
-        <Link href="/studio" className="font-medium text-primary hover:underline">
-          {t("studio.createChoiceLink")}
-        </Link>
-      </p>
     </div>
   );
 }

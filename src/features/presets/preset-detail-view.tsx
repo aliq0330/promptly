@@ -1,6 +1,5 @@
 "use client";
 
-import { OpenInStudioButton } from "@/features/studio/open-in-studio";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { SlidersHorizontal } from "lucide-react";
@@ -162,14 +161,7 @@ export function PresetDetailView() {
           <DetailByline person={preset.creator} createdAt={preset.createdAt} language={language} />
         </header>
 
-        <DetailActionBar
-          trailing={
-            <>
-              <OpenInStudioButton size="sm" refs={{ preset: preset.id }} />
-              <ShareTriggerButton target={{ contentType: "preset", preset }} label={t("common.share")} />
-            </>
-          }
-        >
+        <DetailActionBar trailing={<ShareTriggerButton target={{ contentType: "preset", preset }} label={t("common.share")} />}>
           <LikeButton id={preset.id} likeCount={preset.likeCount} contentType="preset" size={18} />
           <CommentCountLink presetId={preset.id} baseCount={preset.commentCount} size={18} />
           <SaveButton presetId={preset.id} saveCount={preset.saveCount} size={18} />

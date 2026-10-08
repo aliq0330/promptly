@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { Blocks, Bookmark, Compass, FlaskConical, Hash, Home, LogIn, Plus, Settings, SlidersHorizontal, Sparkles, SquareTerminal, User, Users, Workflow } from "lucide-react";
+import { Blocks, Bookmark, Compass, Hash, Home, LogIn, Plus, Settings, SlidersHorizontal, Sparkles, SquareTerminal, User, Users, Workflow } from "lucide-react";
 import type { TranslationKey } from "@/lib/i18n/translations";
 
 /** Who may see a nav entry: everyone, or only a signed-in member. */
@@ -45,7 +45,6 @@ export const navGroups: NavGroup[] = [
   {
     labelKey: "nav.groupLibrary",
     items: [
-      { href: "/studio", labelKey: "nav.studio", icon: FlaskConical },
       { href: "/saved", labelKey: "nav.saved", icon: Bookmark, match: "/saved", visibility: "authenticated" },
       { href: "/following", labelKey: "nav.following", icon: Users, visibility: "authenticated" },
       { href: PROFILE_NAV_PLACEHOLDER, labelKey: "nav.profile", icon: User, match: "/profile", visibility: "authenticated" },
