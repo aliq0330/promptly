@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Workflow as WorkflowIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { OpenInStudioButton } from "@/features/studio/open-in-studio";
 import { DetailSkeleton, NotFoundBlock } from "@/components/ui/detail-skeleton";
 import { ContentTypeLabel } from "@/features/content/content-type-label";
 import { ToolChips, ToolLine } from "@/features/content/tool-chips";
@@ -181,14 +180,7 @@ export function WorkflowDetailView() {
           <DetailByline person={workflow.creator} createdAt={workflow.createdAt} language={language} />
         </header>
 
-        <DetailActionBar
-          trailing={
-            <>
-              <OpenInStudioButton size="sm" refs={{ workflow: workflow.id }} />
-              <ShareTriggerButton target={{ contentType: "workflow", workflow }} label={t("common.share")} />
-            </>
-          }
-        >
+        <DetailActionBar trailing={<ShareTriggerButton target={{ contentType: "workflow", workflow }} label={t("common.share")} />}>
           <LikeButton id={workflow.id} likeCount={workflow.likeCount} contentType="workflow" size={18} />
           <CommentCountLink workflowId={workflow.id} baseCount={workflow.commentCount} size={18} />
           <SaveButton workflowId={workflow.id} saveCount={workflow.saveCount} size={18} />

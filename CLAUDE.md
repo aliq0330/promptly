@@ -11453,6 +11453,14 @@ Kullanıcı isteğiyle 4 paletin (Lavanta/Okyanus/Orman/Kum, hepsinin zaten aç�
 - **Doğrulama:** `tsc`, `lint`, `npm test` 46/46, `next build --webpack` temiz; ağ taklitli Playwright: `/prompts`, Ayarlar, Prompt oluştur — Beyaz açık/koyu, 390/1100/1280/1440'ta taşma ve sayfa hatası yok. Gerçek hesapla tercih kaydı canlıda denenmedi.
 - **Not:** Beyaz'da birincil renk siyah olduğundan bağlantılar (`text-primary`) metinden renkle değil kalınlık/altı çizili hover ile ayrılır — bilinçli tercih.
 
+### 9.115 Studio tamamen kaldırıldı
+
+Kullanıcı isteğiyle Studio (Bölüm 9.106, 9.108 ve Studio'ya bağlanan her şey) kaldırıldı; bu iki bölüm artık **tarihsel kayıttır**, kod yoktur.
+- Silinenler: `/studio` rotası, `src/features/studio/` (tüm klasör), `lib/studio-diff.ts`, `lib/studio-v2.ts` (+ testleri), `lib/supabase/studio-sessions.ts`, `studioHref()` (`lib/utils.ts`), ~185 `studio.*`/`nav.studio` çeviri anahtarı, `package.json` test betiğinden iki Studio test dosyası.
+- Çıkarılan girişler: sidebar/tablet rayı "Studio" öğesi, Oluştur ekranındaki "Studio'yu aç" bağlantısı, Prompt/Generator/Workflow/Hazır Ayar detaylarındaki ve Prompt DNA sekmesindeki "Studio'da Aç" butonları. Studio'ya özel opsiyonel prop'lar da kalktı: `GeneratorRuntimeForm` kilit (`lockedKeys`/`onToggleLock`), `PromptDnaEditor` bölüm seçimi (`selectedId`/`onSelectSection`), `PromptDnaDisplay` `studioPromptId`. Prompt DNA, Generator, Workflow, Hazır Ayar ve "Çalıştır" davranışı değişmedi.
+- Veritabanı: `supabase/migrations/20260919640000_remove_studio.sql` (`studio_sessions` + `studio_session_versions` drop) YAZILDI ama **canlıya uygulanmadı** — canlıda 1 oturum + 1 versiyon gerçek veri var ve drop geri alınamaz. Uygulamak için SQL Editor'de çalıştırılmalı; uygulanana kadar tablolar atıl durur (hiçbir kod okumaz). Tablolara başka tablodan FK yok (kontrol edildi). Eski migration dosyaları silinmedi.
+- Kalan "studio" geçişleri Studio özelliği değil: fotoğraf stüdyosu kelimesi (ışık/arka plan sözlükleri, etiket adayları), "Lavender Studio" tasarım adı.
+
 ---
 
 **Sonraki adım:** Bilinen iki üretim hatası (Bölüm 9.40 — mesajlarda

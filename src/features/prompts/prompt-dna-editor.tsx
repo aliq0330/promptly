@@ -49,16 +49,11 @@ export function PromptDnaEditor({
   contentType,
   sections,
   onChange,
-  selectedId = null,
-  onSelectSection,
 }: {
   promptText: string;
   contentType: string;
   sections: DnaSection[];
   onChange: (sections: DnaSection[]) => void;
-  /** Studio only: lets a section card be selected (e.g. to highlight its words in the prompt). */
-  selectedId?: string | null;
-  onSelectSection?: (section: DnaSection | null) => void;
 }) {
   const { t } = useTranslation();
   const [analysis, setAnalysis] = useState<DnaAnalysis>(EMPTY_ANALYSIS);
@@ -239,7 +234,7 @@ export function PromptDnaEditor({
               <li
                 key={section.id}
                 data-dna-section={section.id}
-                className={cn("min-w-0 rounded-md border bg-surface p-3", isEditing ? "border-primary/50 sm:col-span-2" : selectedId === section.id ? "border-primary bg-primary-soft/40" : "border-border-soft")}
+                className={cn("min-w-0 rounded-md border bg-surface p-3", isEditing ? "border-primary/50 sm:col-span-2" : "border-border-soft")}
               >
                 {isEditing && editing ? (
                   <div className="space-y-2">
@@ -279,30 +274,14 @@ export function PromptDnaEditor({
                 ) : (
                   <div className="flex items-start gap-2">
                     <Icon size={16} className="mt-0.5 shrink-0 text-text-muted" aria-hidden="true" />
-                    {(() => {
-                      const body = (
-                        <>
-                          <p className="flex flex-wrap items-center gap-1.5 text-label font-semibold text-text">
-                            {heading}
-                            {section.source === "auto" && section.confidence === "low" && <Badge variant="neutral">{t("dna.suggestedBadge")}</Badge>}
-                            {section.source === "manual" && section.type !== "custom" && <Badge variant="neutral">{t("dna.editedBadge")}</Badge>}
-                          </p>
-                          <p className="mt-0.5 break-words text-small text-text-secondary">{section.content}</p>
-                        </>
-                      );
-                      return onSelectSection ? (
-                        <button
-                          type="button"
-                          onClick={() => onSelectSection(selectedId === section.id ? null : section)}
-                          aria-pressed={selectedId === section.id}
-                          className="min-h-9 min-w-0 flex-1 rounded-md text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                        >
-                          {body}
-                        </button>
-                      ) : (
-                        <div className="min-w-0 flex-1">{body}</div>
-                      );
-                    })()}
+                    <div className="min-w-0 flex-1">
+                      <p className="flex flex-wrap items-center gap-1.5 text-label font-semibold text-text">
+                        {heading}
+                        {section.source === "auto" && section.confidence === "low" && <Badge variant="neutral">{t("dna.suggestedBadge")}</Badge>}
+                        {section.source === "manual" && section.type !== "custom" && <Badge variant="neutral">{t("dna.editedBadge")}</Badge>}
+                      </p>
+                      <p className="mt-0.5 break-words text-small text-text-secondary">{section.content}</p>
+                    </div>
                     <div className="-my-1 -mr-1 flex shrink-0">
                       <button
                         type="button"

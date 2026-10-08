@@ -359,19 +359,3 @@ export function readBlobAsBase64(blob: Blob): Promise<string> {
     reader.readAsDataURL(blob);
   });
 }
-
-/**
- * `/studio?prompt=…&generator=<slug>…` — Studio is one parameterless static
- * page (static export), so what it opens is carried in the query. One source
- * per kind: prompt (its DNA comes with it) / generator (slug) /
- * preset / workflow.
- */
-export function studioHref(refs: { prompt?: string; generator?: string; preset?: string; workflow?: string } = {}): string {
-  const params = new URLSearchParams();
-  for (const key of ["prompt", "generator", "preset", "workflow"] as const) {
-    const value = refs[key];
-    if (value) params.set(key, value);
-  }
-  const query = params.toString();
-  return query ? `/studio?${query}` : "/studio";
-}

@@ -1,7 +1,6 @@
 "use client";
 
 import { RunButton } from "@/features/content/run-with-ai";
-import { OpenInStudioButton } from "@/features/studio/open-in-studio";
 import { ToolLine } from "@/features/content/tool-chips";
 import { DetailSkeleton, NotFoundBlock } from "@/components/ui/detail-skeleton";
 import { useEffect, useState } from "react";
@@ -264,7 +263,6 @@ export function GeneratorDetailView() {
                       recommendedRefs={generator.tools}
                       preview
                     />
-                    <OpenInStudioButton refs={{ generator: generator.slug }} />
                     {canOpenInPrompt &&
                       (user ? (
                         <Button type="button" onClick={() => handleOpenInPrompt(state)} disabled={isOpeningPrompt || !state.prompt.trim()}>
