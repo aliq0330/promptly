@@ -2,6 +2,7 @@
 
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
+import { fieldControlClassName } from "@/components/ui/field";
 
 /**
  * The Başlık and Açıklama fields shared by every creation screen (Prompt,
@@ -46,7 +47,7 @@ function FieldLabel({ id, label, required, optional, counter }: { id: string; la
   );
 }
 
-const CONTROL = "w-full rounded-md border bg-background px-3 text-sm text-text placeholder:text-text-muted";
+const CONTROL = fieldControlClassName;
 
 export function TitleField({ id, label, value, onChange, placeholder, maxLength, required, optional, showCounter, error, onBlur, nativeRequired }: CoreFieldProps) {
   return (

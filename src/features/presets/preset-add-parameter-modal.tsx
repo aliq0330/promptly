@@ -13,9 +13,9 @@ import { newOwnField, singleChoiceField, toStoredValue } from "@/lib/preset-util
 import { normalizeTagLabel } from "@/lib/tag-normalize";
 import { cn } from "@/lib/utils";
 import { PresetFieldInput } from "./preset-field-input";
+import { fieldControlClassName } from "@/components/ui/field";
 
-const INPUT =
-  "h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
+const INPUT = `h-10 ${fieldControlClassName}`;
 
 /**
  * "+ Alan Ekle" for a preset: the platform's fields for this content type are

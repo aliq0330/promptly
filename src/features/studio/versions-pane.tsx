@@ -49,7 +49,7 @@ export function VersionsPane({
             onChange={(event) => setLabel(event.target.value)}
             maxLength={60}
             placeholder={t("studio.versionLabelPlaceholder")}
-            className="h-11 w-full min-w-0 rounded-md border border-border bg-background px-3 text-body text-text placeholder:text-text-muted focus:border-primary"
+            className="h-11 w-full min-w-0 rounded-lg border border-border bg-background px-3 text-body text-text placeholder:text-text-muted focus:border-primary/60 shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong"
           />
         </label>
         <Button type="submit" disabled={!unsaved} className="h-11 shrink-0">

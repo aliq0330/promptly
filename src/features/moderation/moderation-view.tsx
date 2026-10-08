@@ -174,7 +174,7 @@ function ReportCard({ report, onDone }: { report: ModerationReport; onDone: () =
             onChange={(event) => setNote(event.target.value)}
             placeholder={t("moderation.notePlaceholder")}
             maxLength={300}
-            className="w-full rounded-md border border-border bg-surface px-3 py-1.5 text-small text-text placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-primary"
+            className="w-full rounded-lg border border-border bg-surface px-3 py-1.5 text-small text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/15 shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
           />
           <div className="flex flex-wrap gap-2">
             <Button size="sm" variant="secondary" disabled={busy} onClick={() => run("dismissed")}>

@@ -420,7 +420,7 @@ export function CreateRequestForm() {
               value={creativeDirection}
               onChange={(event) => setCreativeDirection(event.target.value)}
               placeholder={t("request.creativeDirectionPlaceholder")}
-              className="w-full resize-none rounded-md border border-border bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted"
+              className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
             />
           </FormSection>
 

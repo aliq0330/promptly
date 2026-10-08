@@ -130,7 +130,7 @@ export function GeneratorPlayground({
                 value={promptText}
                 onChange={(event) => setPromptText(event.target.value)}
                 placeholder={t("generator.promptFieldPlaceholder")}
-                className="w-full resize-none rounded-md border border-border bg-surface px-3 py-2 text-small text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                className="w-full resize-none rounded-lg border border-border bg-surface px-3 py-2 text-small text-text placeholder:text-text-muted focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/20 shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong"
               />
             </div>
             {enableNegativePrompt && (
@@ -144,7 +144,7 @@ export function GeneratorPlayground({
                   value={negativePromptText}
                   onChange={(event) => setNegativePromptText(event.target.value)}
                   placeholder={t("generator.negativePromptFieldPlaceholder")}
-                  className="w-full resize-none rounded-md border border-border bg-surface px-3 py-2 text-small text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  className="w-full resize-none rounded-lg border border-border bg-surface px-3 py-2 text-small text-text placeholder:text-text-muted focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/20 shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong"
                 />
               </div>
             )}

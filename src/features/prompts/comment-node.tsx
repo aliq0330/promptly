@@ -113,7 +113,7 @@ export function CommentNode({
                 onChange={(event) => tree.onEditDraftChange(event.target.value)}
                 rows={2}
                 autoFocus
-                className="w-full resize-none rounded-md border border-border bg-surface px-3 py-1.5 text-sm text-text focus:outline-none focus:ring-1 focus:ring-primary"
+                className="w-full resize-none rounded-lg border border-border bg-surface px-3 py-1.5 text-sm text-text focus:outline-none focus:ring-2 focus:ring-primary/15 shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
               />
               <div className="flex items-center gap-2">
                 <Button
@@ -212,7 +212,7 @@ export function CommentNode({
                 rows={2}
                 autoFocus
                 placeholder={t("comments.writeAReply")}
-                className="w-full resize-none rounded-md border border-border bg-surface px-3 py-1.5 text-sm text-text placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-primary"
+                className="w-full resize-none rounded-lg border border-border bg-surface px-3 py-1.5 text-sm text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/15 shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
               />
               <div className="flex items-center gap-2">
                 <Button type="submit" size="sm" disabled={!tree.replyDraft.trim() || tree.isPosting}>

@@ -79,7 +79,7 @@ function FieldControl({
           value={stringValue}
           placeholder={field.placeholder}
           onChange={(event) => onChange(event.target.value)}
-          className="w-full resize-none rounded-md border border-border bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted"
+          className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
         />
       );
     case "select": {
@@ -188,7 +188,7 @@ function FieldControl({
           step={field.step ?? undefined}
           placeholder={field.placeholder}
           onChange={(event) => onChange(event.target.value)}
-          className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted"
+          className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
         />
       );
     case "slider": {
@@ -227,7 +227,7 @@ function FieldControl({
             value={stringValue}
             placeholder="#7c3aed"
             onChange={(event) => onChange(event.target.value)}
-            className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted"
+            className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
           />
         </div>
       );
@@ -266,7 +266,7 @@ function FieldControl({
           value={stringValue}
           placeholder={field.placeholder || "https://…"}
           onChange={(event) => onChange(event.target.value)}
-          className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted"
+          className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
         />
       );
     case "text":
@@ -278,7 +278,7 @@ function FieldControl({
           value={stringValue}
           placeholder={field.placeholder}
           onChange={(event) => onChange(event.target.value)}
-          className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted"
+          className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
         />
       );
   }

@@ -13,9 +13,9 @@ import {
   type PresetValue,
 } from "@/lib/preset-fields";
 import { cn } from "@/lib/utils";
+import { fieldControlClassName } from "@/components/ui/field";
 
-const INPUT =
-  "w-full rounded-md border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
+const INPUT = fieldControlClassName;
 
 /**
  * "+ Seçenek oluştur": the first entry of an option list. Opens a one-line

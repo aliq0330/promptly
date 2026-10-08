@@ -228,7 +228,7 @@ export function FieldEditorModal({
               value={draft.label}
               onChange={(event) => updateLabel(event.target.value)}
               placeholder={t("field.fieldNamePlaceholder")}
-              className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted"
+              className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
             />
             {labelError && <p className="mt-1 text-xs text-danger">{labelError}</p>}
             {!labelError && keyError && <p className="mt-1 text-xs text-danger">{keyError}</p>}
@@ -244,7 +244,7 @@ export function FieldEditorModal({
               value={draft.description}
               onChange={(event) => setDraft((prev) => ({ ...prev, description: event.target.value }))}
               placeholder={t("field.descriptionPlaceholder")}
-              className="w-full resize-none rounded-md border border-border bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted"
+              className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
             />
           </div>
 

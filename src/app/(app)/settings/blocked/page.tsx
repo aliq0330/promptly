@@ -46,7 +46,7 @@ export default function BlockedUsersPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-xl animate-fade-in space-y-5 px-3 py-5 sm:px-5 sm:py-7 lg:px-8 lg:py-10">
+    <div className="mx-auto w-full max-w-xl animate-rise-in space-y-5 px-3 py-5 sm:px-5 sm:py-7 lg:px-8 lg:py-10">
       <Link href="/settings" className="inline-flex items-center gap-1 text-sm text-text-muted hover:text-text">
         <ArrowLeft size={14} />
         {t("settings.backToSettings")}

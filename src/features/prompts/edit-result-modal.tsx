@@ -100,7 +100,7 @@ export function EditResultModal({ result, onClose, onUpdated }: { result: Prompt
                 rows={4}
                 value={textContent}
                 onChange={(event) => setTextContent(event.target.value)}
-                className="w-full resize-none rounded-md border border-border bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted"
+                className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
               />
             </div>
           ) : (
@@ -120,7 +120,7 @@ export function EditResultModal({ result, onClose, onUpdated }: { result: Prompt
               value={tool}
               onChange={(event) => setTool(event.target.value)}
               placeholder={t("result.toolFieldPlaceholder")}
-              className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted"
+              className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
             />
             <datalist id="edit-result-tool-suggestions">
               {TOOL_SUGGESTIONS.map((suggestion) => (
@@ -161,7 +161,7 @@ export function EditResultModal({ result, onClose, onUpdated }: { result: Prompt
                       value={modificationSummary}
                       onChange={(event) => setModificationSummary(event.target.value)}
                       placeholder={t("result.modificationSummaryPlaceholder")}
-                      className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted"
+                      className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
                     />
                   </div>
                   {result.originalPrompt && (
@@ -181,7 +181,7 @@ export function EditResultModal({ result, onClose, onUpdated }: { result: Prompt
                       rows={4}
                       value={modifiedPromptText}
                       onChange={(event) => setModifiedPromptText(event.target.value)}
-                      className="w-full resize-none rounded-md border border-border bg-background px-3 py-2 font-mono text-xs text-text placeholder:text-text-muted"
+                      className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 font-mono text-xs text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
                     />
                   </div>
                 </div>

@@ -171,7 +171,7 @@ function ToolPickerModal({
             onChange={(event) => setQuery(event.target.value)}
             placeholder={t("tool.search")}
             aria-label={t("tool.search")}
-            className="h-10 w-full rounded-md border border-border bg-background pl-9 pr-3 text-sm text-text placeholder:text-text-muted"
+            className="h-10 w-full rounded-lg border border-border bg-background pl-9 pr-3 text-sm text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
           />
         </div>
         <ul ref={listRef} className="-mx-1 min-h-0 flex-1 space-y-1 overflow-y-auto px-1 [overflow-anchor:none]">

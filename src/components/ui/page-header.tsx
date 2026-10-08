@@ -27,7 +27,7 @@ export function PageHeader({
 }) {
   if (art) {
     return (
-      <header className={cn("relative overflow-hidden rounded-xl border border-border-soft bg-surface px-5 py-6 shadow-card sm:px-8 sm:py-8", className)}>
+      <header className={cn("relative animate-rise-in overflow-hidden rounded-xl border border-border-soft bg-surface px-5 py-6 shadow-card sm:px-8 sm:py-8", className)}>
         <div className="relative z-10 flex flex-col gap-4">
           <div className="min-w-0 space-y-2 sm:max-w-[60%]">
             {eyebrow && (

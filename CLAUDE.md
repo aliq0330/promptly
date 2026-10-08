@@ -11433,7 +11433,15 @@ Yalnızca görünüm; veri/iş mantığı/prop sözleşmeleri aynı. Migration y
 - **Başlıklar:** yorum bölümü başlığı ve arama sonuç grupları (Etiketler, Kullanıcılar, Generatorlar…) Eyebrow + sayı rozeti (`ResultsHeading`); kullanıcı sonuç listesi kart.
 - **Paletler:** Lavanta/Okyanus/Orman açık modda Kum ile aynı rafine: biraz daha derin zemin, hafif tonlu yüzey, daha koyu mürekkep/ikincil/soluk metin; koyu modda zemin bir ton koyulaştı (kartlar ayrışsın). 4 metin rengi × 4 zemin + birincil-ön/birincil — 8 kombinasyonun hepsi ≥ 4.5:1 (hesaplandı).
 - **Doğrulama:** `tsc`, `lint` (yalnız önceden var olan 5 uyarı), `npm test` 46/46, `next build --webpack` temiz. Ağ taklitli Playwright: giriş/kayıt, Ayarlar (oturum enjekte, 4 palet, açık/koyu), Mesajlar, Studio, arama; 390/1100/1440 yatay taşma yok. Ara sıra görülen React #418 uyarısı önceden de var. Bir konuşmanın içi (balonlar) gerçek veriyle ekran görüntüsünde denetlenmedi; Supabase'e/fiziksel cihaza karşı denenmedi.
-- **Kalan:** hareket/geçiş cilası; oluşturma formlarının iç alanlarının `fieldInputClassName`'e taşınması.
+- **Kalan:** hareket/geçiş cilası; oluşturma formlarının iç alanlarının `fieldInputClassName`'e taşınması. → Bölüm 9.113'te yapıldı.
+
+### 9.113 Premium görünüm — Faz 4: ortak form alanları + hareket cilası
+
+Yalnızca görünüm; veri/iş mantığı/prop sözleşmeleri aynı. Migration yok, yeni metin yok.
+- **Form alanları:** `field.tsx`'e yüksekliksiz `fieldControlClassName` eklendi (`fieldInputClassName` = `h-11` + bu). `core-fields.tsx`'in `CONTROL`'ü ve hazır ayar dosyalarının `INPUT` sabitleri artık bunu kullanıyor. Oluşturma formları, generator/workflow/Studio panelleri ve modallardaki ~60 ham input/textarea/select sınıfı betikle aynı görünüme çekildi (`rounded-lg`, `shadow-xs`, hover/odak kenarlığı; yükseklikler ve yazı boyutları korundu). Betik yalnızca `bg-background|bg-surface` + (`placeholder:`|`resize-none`|`focus:border-primary`) taşıyan ve `flex`/`inline-flex` içermeyen dizeleri değiştirdi (butonlar dokunulmadı).
+- **Giriş animasyonu:** yeni `animate-rise-in` (380 ms, 8px yukarı + opaklık). Dolum kipi **`backwards`** — animasyon bitince transform kalmaz; kalsaydı kart wrapper'ı stacking context oluşturup açık menüyü bir sonraki kartın altına hapsederdi. Kart ızgaraları (`PromptGrid`, `FeedGrid`, `RequestList`, `FocusGrid`) `staggerStyle(index)` (`components/ui/entrance.ts`, 35 ms adım, en çok 8 adım) ile kademeli giriyor; "Daha fazla yükle" ile gelen kartlar yalnızca yenileri canlanır. `DetailShell`, `PageHeader`, Ayarlar, Engellenenler ve auth kartı da aynı girişi kullanıyor.
+- **Tema geçişi:** mod/palet değişince `<html>`'e 360 ms boyunca `.theme-transition` eklenir; renkler 300 ms'de yumuşakça geçer, sonra sınıf kalkar (normal hover/odak hızını etkilemez). `prefers-reduced-motion`'da devre dışı.
+- **Doğrulama:** `tsc`, `lint` (yalnız önceden var olan 5 uyarı), `npm test` 46/46, `next build --webpack` temiz. Ağ taklitli Playwright: `/prompts` kartlarında animasyon sonrası kalan transform 0/7, tema geçiş sınıfı eklenip kaldırılıyor, Prompt oluştur formu (1280 / 390 koyu) ve liste sayfası taşmasız, sayfa hatası yok. Gerçek Supabase'e ve fiziksel cihaza karşı denenmedi.
 
 ---
 

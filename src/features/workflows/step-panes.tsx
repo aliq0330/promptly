@@ -11,7 +11,7 @@ import type { WorkflowStep } from "@/types";
 import { MEDIA_ICON, STEP_TYPE_META, stepSubtitle } from "./step-meta";
 
 const inputClass =
-  "h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted";
+  "h-10 w-full rounded-lg border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60";
 
 interface PaneProps {
   step: WorkflowStep;
@@ -47,7 +47,7 @@ export function GeneralPane({ step, onChange }: Pick<PaneProps, "step" | "onChan
           value={step.description}
           onChange={(event) => onChange({ description: event.target.value })}
           placeholder={t("workflow.stepDescriptionPlaceholder")}
-          className="w-full resize-none rounded-md border border-border bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted"
+          className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
         />
       </div>
       <div>
@@ -60,7 +60,7 @@ export function GeneralPane({ step, onChange }: Pick<PaneProps, "step" | "onChan
           value={step.instructions}
           onChange={(event) => onChange({ instructions: event.target.value })}
           placeholder={t("workflow.instructionsPlaceholder")}
-          className="w-full resize-none rounded-md border border-border bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted"
+          className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
         />
       </div>
     </div>

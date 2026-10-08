@@ -13,9 +13,9 @@ import { fromStoredValue, rewordOwnField, singleChoiceField, toStoredValue } fro
 import { cn } from "@/lib/utils";
 import { PresetAddParameterModal } from "./preset-add-parameter-modal";
 import { PresetFieldInput } from "./preset-field-input";
+import { fieldControlClassName } from "@/components/ui/field";
 
-const INPUT =
-  "h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
+const INPUT = `h-10 ${fieldControlClassName}`;
 
 /**
  * The "parameters" part of the preset editor. The list is the preset itself:

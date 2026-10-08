@@ -6,6 +6,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import { PromptCard } from "./prompt-card";
 import { GeneratorCard } from "@/features/generators/generator-card";
 import type { Generator, Prompt } from "@/types";
+import { staggerStyle } from "@/components/ui/entrance";
 
 type PromptGridProps = { prompts: Prompt[]; generators?: never } | { generators: Generator[]; prompts?: never };
 
@@ -40,8 +41,8 @@ export function PromptGrid(props: PromptGridProps) {
 
   return (
     <div className="columns-1 gap-3 sm:columns-2 sm:gap-4 xl:columns-3">
-      {items.map((item) => (
-        <div key={item.key} className="mb-3 break-inside-avoid sm:mb-4">
+      {items.map((item, index) => (
+        <div key={item.key} className="mb-3 animate-rise-in break-inside-avoid sm:mb-4" style={staggerStyle(index)}>
           {item.node}
         </div>
       ))}

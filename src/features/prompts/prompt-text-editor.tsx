@@ -230,7 +230,7 @@ export function PromptTextEditor({
           onBlur={trackSelection}
           rows={rows}
           placeholder={placeholder}
-          className="w-full resize-y rounded-md border border-border bg-background px-3 py-2 font-mono text-sm text-text placeholder:text-text-muted"
+          className="w-full resize-y rounded-lg border border-border bg-background px-3 py-2 font-mono text-sm text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
         />
       ) : (
         <div className="space-y-3 rounded-md border border-border bg-background p-3">

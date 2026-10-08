@@ -74,7 +74,7 @@ export function ComparePane({
   const select = (value: string, onPick: (id: string) => void, label: string) => (
     <label className="min-w-0 flex-1">
       <span className="mb-1 block text-caption font-medium text-text-muted">{label}</span>
-      <select value={value} onChange={(event) => onPick(event.target.value)} className="h-11 w-full min-w-0 rounded-md border border-border bg-background px-2 text-small text-text focus:border-primary">
+      <select value={value} onChange={(event) => onPick(event.target.value)} className="h-11 w-full min-w-0 rounded-lg border border-border bg-background px-2 text-small text-text focus:border-primary/60 shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong">
         {options.map((o) => (
           <option key={o.id} value={o.id}>
             {o.name}

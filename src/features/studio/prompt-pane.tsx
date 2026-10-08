@@ -117,7 +117,7 @@ export function PromptPane({ draft, baseline, contentType, edit }: { draft: Stud
           id="studio-prompt-title"
           value={prompt.title}
           onChange={(event) => edit((d) => (d.prompt ? { ...d, prompt: { ...d.prompt, title: event.target.value } } : d), "prompt-title")}
-          className="h-11 w-full min-w-0 rounded-md border border-border bg-background px-3 text-body text-text focus:border-primary"
+          className="h-11 w-full min-w-0 rounded-lg border border-border bg-background px-3 text-body text-text focus:border-primary/60 shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong"
         />
       </div>
 
@@ -133,7 +133,7 @@ export function PromptPane({ draft, baseline, contentType, edit }: { draft: Stud
           onChange={(event) => setText(event.target.value)}
           rows={10}
           spellCheck={false}
-          className="prompt-text max-h-[28rem] min-h-40 w-full min-w-0 resize-y rounded-md border border-border bg-background p-3 text-small text-text focus:border-primary"
+          className="prompt-text max-h-[28rem] min-h-40 w-full min-w-0 resize-y rounded-lg border border-border bg-background p-3 text-small text-text focus:border-primary/60 shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong"
         />
       </div>
 
