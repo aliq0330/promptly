@@ -168,7 +168,7 @@ export function CollectionDetailView() {
               ? { isDefault: collection.isDefault, onRemove: () => handleRemoveItem(entry.data.id, entry.type) }
               : undefined;
             return (
-              <div key={entry.data.id} className="mb-3 break-inside-avoid sm:mb-4">
+              <div key={entry.data.id} className="pb-3 break-inside-avoid sm:pb-4">
                 {entry.type === "prompt" ? (
                   <PromptCard prompt={entry.data} collectionRemoval={removal} />
                 ) : entry.type === "generator" ? (

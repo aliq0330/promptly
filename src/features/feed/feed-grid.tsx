@@ -45,7 +45,7 @@ export function FeedGrid({
   return (
     <div className="columns-1 gap-3 sm:columns-2 sm:gap-4 xl:columns-3">
       {items.map((item, index) => (
-        <div key={feedItemKey(item)} className="mb-3 animate-grid-in break-inside-avoid sm:mb-4" style={staggerStyle(index)}>
+        <div key={feedItemKey(item)} className="pb-3 animate-grid-in break-inside-avoid sm:pb-4" style={staggerStyle(index)}>
           {item.kind === "prompt" ? (
             <PromptCard prompt={item.data} />
           ) : item.kind === "request" ? (

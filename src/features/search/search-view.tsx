@@ -222,7 +222,7 @@ export function SearchView({ idle }: { idle?: ReactNode } = {}) {
               <ResultsHeading count={workflows.length}>{t("nav.workflows")}</ResultsHeading>
               <div className="columns-1 gap-3 sm:columns-2 sm:gap-4 xl:columns-3">
                 {workflows.map((workflow) => (
-                  <div key={workflow.id} className="mb-3 break-inside-avoid sm:mb-4">
+                  <div key={workflow.id} className="pb-3 break-inside-avoid sm:pb-4">
                     <WorkflowCard workflow={workflow} />
                   </div>
                 ))}
@@ -235,7 +235,7 @@ export function SearchView({ idle }: { idle?: ReactNode } = {}) {
               <ResultsHeading count={presets.length}>{t("nav.presets")}</ResultsHeading>
               <div className="columns-1 gap-3 sm:columns-2 sm:gap-4 xl:columns-3">
                 {presets.map((preset) => (
-                  <div key={preset.id} className="mb-3 break-inside-avoid sm:mb-4">
+                  <div key={preset.id} className="pb-3 break-inside-avoid sm:pb-4">
                     <PresetCard preset={preset} />
                   </div>
                 ))}

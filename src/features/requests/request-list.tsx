@@ -23,7 +23,7 @@ export function RequestList({ requests }: { requests: PromptRequest[] }) {
   return (
     <div className="columns-1 gap-4 md:columns-2 2xl:columns-3">
       {requests.map((request, index) => (
-        <div key={request.id} className="mb-4 animate-grid-in break-inside-avoid" style={staggerStyle(index)}>
+        <div key={request.id} className="pb-4 animate-grid-in break-inside-avoid" style={staggerStyle(index)}>
           <RequestCard request={request} />
         </div>
       ))}

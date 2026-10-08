@@ -41,7 +41,7 @@ export function PromptCardSkeletonGrid({ count = 6 }: { count?: number }) {
   return (
     <div className="columns-1 gap-3 sm:columns-2 sm:gap-4 xl:columns-3" role="status" aria-label={t("common.loadingAriaLabel")}>
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="mb-3 break-inside-avoid sm:mb-4">
+        <div key={i} className="pb-3 break-inside-avoid sm:pb-4">
           <PromptCardSkeleton />
         </div>
       ))}
