@@ -277,7 +277,7 @@ export function ShareTriggerButton({
         className={contentActionClassName(false, className)}
       >
         <Share2 size={16} strokeWidth={1.75} />
-        {label && <span>{label}</span>}
+        {label && <span className="hidden sm:inline">{label}</span>}
       </button>
       {open && <ShareModal target={target} onClose={() => setOpen(false)} />}
     </>

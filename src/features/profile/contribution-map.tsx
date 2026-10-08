@@ -78,7 +78,7 @@ export function ContributionMap({ userId }: { userId: string }) {
   });
 
   return (
-    <section className="rounded-lg border border-border-soft bg-surface p-4 shadow-card sm:p-5" aria-label={t("contrib.title", { count: total })}>
+    <section className="rounded-xl border border-border-soft bg-surface p-4 shadow-card sm:p-6" aria-label={t("contrib.title", { count: total })}>
       <h2 className="mb-4 text-center text-h3 font-semibold text-text-secondary">{t("contrib.title", { count: total })}</h2>
       <div ref={scrollRef} className="scrollbar-none overflow-x-auto pb-1">
         <div className="mx-auto flex w-max gap-1.5">

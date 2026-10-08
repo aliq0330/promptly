@@ -8,7 +8,6 @@ import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowRight, Blocks, SlidersHorizontal, SquareTerminal } from "lucide-react";
-import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ContentTypeLabel } from "@/features/content/content-type-label";
@@ -33,7 +32,7 @@ import {
   type GeneratorVersionResult,
 } from "@/lib/supabase/generators";
 import { useRealGenerators } from "./real-generators-provider";
-import { formatRelativeTime, profileHref, tagHref } from "@/lib/utils";
+import { AsideSection, DetailActionBar, DetailAside, DetailByline, DetailComments, DetailLede, DetailShell, DetailTags, DetailTitle } from "@/features/content/detail-parts";
 import { composeRunText } from "@/lib/run-with-ai";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
 import type { Generator, GeneratorValues } from "@/types";
@@ -134,11 +133,34 @@ export function GeneratorDetailView() {
   const topic = taxonomyPathLabel(generator, language);
   const fields = [...version.schema.fields].sort((a, b) => a.order - b.order);
 
+  const aside = (
+    <DetailAside>
+      <CreatorSummary creator={generator.creator} isOwn={isOwner} />
+
+      {fields.length > 0 && (
+        <AsideSection
+          id="generator-structure-title"
+          title={`${t("generator.promptStructureHeading")} · ${t("generator.parameterCount", { count: fields.length })}`}
+        >
+          <ul className="divide-y divide-border-soft">
+            {fields.map((field) => (
+              <li key={field.id} className="flex items-center justify-between gap-3 px-3.5 py-2.5">
+                <span className="min-w-0 truncate text-label font-medium text-text">{field.label}</span>
+                <code className="shrink-0 truncate rounded-xs bg-surface-soft px-1.5 py-0.5 font-mono text-[0.6875rem] text-text-muted">
+                  {field.jsonPath || field.key}
+                </code>
+              </li>
+            ))}
+          </ul>
+        </AsideSection>
+      )}
+    </DetailAside>
+  );
+
   return (
-    <div className="mx-auto w-full max-w-6xl px-3 py-5 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
-      <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-8">
-        <article className="min-w-0 space-y-5">
-          <header className="space-y-3">
+    <DetailShell aside={aside}>
+        <article className="min-w-0 space-y-6">
+          <header className="space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <ContentTypeLabel
                 icon={Blocks}
@@ -162,7 +184,7 @@ export function GeneratorDetailView() {
                   type="button"
                   onClick={() => setLightboxIndex(0)}
                   aria-label={t("media.viewFullscreen")}
-                  className="relative h-16 w-16 shrink-0 overflow-hidden rounded-md border border-border-soft sm:h-20 sm:w-20"
+                  className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border border-border-soft shadow-card sm:h-20 sm:w-20"
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element -- a real, potentially locally-produced data URL cover (see generator-details-form.tsx) */}
                   <img src={generator.coverUrl} alt="" className="h-full w-full object-cover" />
@@ -174,8 +196,8 @@ export function GeneratorDetailView() {
                 </button>
               )}
               <div className="min-w-0 space-y-2">
-                <h1 className="text-h1 font-semibold text-text">{generator.title}</h1>
-                <p className="max-w-2xl text-body text-text-secondary">{generator.description}</p>
+                <DetailTitle>{generator.title}</DetailTitle>
+                <DetailLede>{generator.description}</DetailLede>
               </div>
             </div>
             {generator.media.length > 1 && (
@@ -201,15 +223,7 @@ export function GeneratorDetailView() {
                 onClose={() => setLightboxIndex(null)}
               />
             )}
-            <Link href={profileHref(generator.creator)} className="group inline-flex items-center gap-2.5 rounded-md">
-              <Avatar src={generator.creator.avatarUrl} alt={generator.creator.displayName} size={32} />
-              <span className="leading-tight">
-                <span className="block text-label font-semibold text-text group-hover:text-primary">{generator.creator.displayName}</span>
-                <span className="block text-caption text-text-muted">
-                  @{generator.creator.username} · {formatRelativeTime(generator.createdAt, language)}
-                </span>
-              </span>
-            </Link>
+            <DetailByline person={generator.creator} createdAt={generator.createdAt} language={language} />
           </header>
 
           {/*
@@ -221,18 +235,16 @@ export function GeneratorDetailView() {
             one place any content type showed an aggregate count in this
             row, and it pushed Paylaş out of the standard rightmost spot.
           */}
-          <div className="flex flex-wrap items-center gap-0.5 border-y border-border-soft py-1.5">
+          <DetailActionBar trailing={<ShareTriggerButton target={{ contentType: "generator", generator }} label={t("common.share")} />}>
             <LikeButton id={generator.id} likeCount={generator.likeCount} contentType="generator" size={18} />
             <CommentCountLink generatorSlug={generator.slug} generatorId={generator.id} baseCount={generator.commentCount} size={18} />
             <SaveButton generatorId={generator.id} saveCount={generator.saveCount} size={18} />
             <StatisticsButton target={{ contentType: "generator", contentId: generator.id, likeCount: generator.likeCount, commentCount: generator.commentCount, saveCount: generator.saveCount }} size={18} label={t("statistics.title")} />
-            <span className="ml-auto" />
-            <ShareTriggerButton target={{ contentType: "generator", generator }} label={t("common.share")} />
-          </div>
+          </DetailActionBar>
 
-          <section aria-labelledby="generator-use-title" className="overflow-hidden rounded-lg border border-border-soft bg-surface">
+          <section aria-labelledby="generator-use-title" className="overflow-hidden rounded-xl border border-border-soft bg-surface shadow-card">
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border-soft bg-surface-soft px-4 py-3">
-              <h2 id="generator-use-title" className="text-h3 font-semibold text-text">
+              <h2 id="generator-use-title" className="font-display text-h3 font-semibold text-text">
                 {t("generator.useThisGenerator")}
               </h2>
               <p className="flex items-center gap-1.5 text-caption text-text-muted">
@@ -277,19 +289,7 @@ export function GeneratorDetailView() {
 
           <ToolLine label={t("tool.recommendedLabel")} refs={generator.tools} />
 
-          {generator.tags.length > 0 && (
-            <div className="flex flex-wrap gap-1.5">
-              {generator.tags.map((tag) => (
-                <Link
-                  key={tag.slug}
-                  href={tagHref(tag)}
-                  className="inline-flex h-7 items-center rounded-full border border-border-soft bg-surface px-2.5 text-caption font-medium text-text-secondary transition-colors hover:border-primary/40 hover:text-primary"
-                >
-                  #{tag.label}
-                </Link>
-              ))}
-            </div>
-          )}
+          <DetailTags tags={generator.tags} />
 
           {isOwner && <EditHistoryPanel contentType="generator" contentId={generator.id} />}
           {actionError && <p className="text-small text-danger">{actionError}</p>}
@@ -303,33 +303,10 @@ export function GeneratorDetailView() {
             </p>
           )}
 
-          <section id="comments" className="scroll-mt-20 rounded-lg border border-border-soft bg-surface p-4 sm:p-5">
+          <DetailComments>
             <CommentSection target={{ generatorId: generator.id }} />
-          </section>
+          </DetailComments>
         </article>
-
-        <aside className="mt-6 space-y-5 lg:sticky lg:top-24 lg:mt-0 lg:self-start">
-          <CreatorSummary creator={generator.creator} isOwn={isOwner} />
-
-          {fields.length > 0 && (
-            <section aria-labelledby="generator-structure-title" className="space-y-2">
-              <h2 id="generator-structure-title" className="px-1 font-sans text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">
-                {t("generator.promptStructureHeading")} · {t("generator.parameterCount", { count: fields.length })}
-              </h2>
-              <ul className="divide-y divide-border-soft overflow-hidden rounded-lg border border-border-soft bg-surface">
-                {fields.map((field) => (
-                  <li key={field.id} className="flex items-center justify-between gap-3 px-3.5 py-2.5">
-                    <span className="min-w-0 truncate text-label font-medium text-text">{field.label}</span>
-                    <code className="shrink-0 truncate rounded-xs bg-surface-soft px-1.5 py-0.5 font-mono text-[0.6875rem] text-text-muted">
-                      {field.jsonPath || field.key}
-                    </code>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
-        </aside>
-      </div>
-    </div>
+    </DetailShell>
   );
 }

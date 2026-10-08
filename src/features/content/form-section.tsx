@@ -26,11 +26,11 @@ export function FormSection({
   className?: string;
 } & Omit<React.HTMLAttributes<HTMLElement>, "title">) {
   return (
-    <section className={cn("min-w-0 rounded-lg border border-border bg-surface p-4 sm:p-5", className)} {...rest}>
+    <section className={cn("min-w-0 rounded-xl border border-border-soft bg-surface p-4 shadow-card sm:p-6", className)} {...rest}>
       {(title || action) && (
         <div className="mb-4 flex items-start justify-between gap-3">
           <div className="min-w-0">
-            {title && <h2 className="text-sm font-semibold text-text">{title}</h2>}
+            {title && <h2 className="text-[0.9375rem] font-semibold tracking-[-0.01em] text-text">{title}</h2>}
             {description && <p className="mt-0.5 text-caption text-text-secondary">{description}</p>}
           </div>
           {action}

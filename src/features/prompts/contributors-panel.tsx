@@ -6,6 +6,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { fetchContributorsForPrompt, type PromptContributor } from "@/lib/supabase/prompt-edit-suggestions";
 import { profileHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
+import { DetailCard, Eyebrow } from "@/features/content/detail-parts";
 
 /**
  * "Katkıda Bulunanlar" — rendered right next to the prompt owner's own
@@ -34,8 +35,8 @@ export function ContributorsPanel({ promptId }: { promptId: string }) {
   if (!contributors || contributors.length === 0) return null;
 
   return (
-    <section aria-label={t("contributors.title")} className="space-y-3 rounded-lg border border-border-soft bg-surface p-4">
-      <p className="text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">{t("contributors.title")}</p>
+    <DetailCard aria-label={t("contributors.title")} className="space-y-3 p-4">
+      <Eyebrow>{t("contributors.title")}</Eyebrow>
       <ul className="space-y-2.5">
         {contributors.map((contributor) => (
           <li key={contributor.proposer.id}>
@@ -55,6 +56,6 @@ export function ContributorsPanel({ promptId }: { promptId: string }) {
           </li>
         ))}
       </ul>
-    </section>
+    </DetailCard>
   );
 }

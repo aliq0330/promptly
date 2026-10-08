@@ -39,14 +39,14 @@ export function ProfileHeader({
   const followState = useFollowState(user);
 
   return (
-    <header className="rounded-lg border border-border-soft bg-surface p-5 shadow-card sm:p-6">
+    <header className="rounded-xl border border-border-soft bg-surface p-5 shadow-card sm:p-8">
       <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:gap-6">
         <ProfileAvatar src={user.avatarUrl} alt={user.displayName} isOwnProfile={isOwnProfile} />
 
         <div className="min-w-0 flex-1 space-y-4">
           <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
             <div className="min-w-0">
-              <h1 className="truncate text-h1 font-semibold text-text">{user.displayName}</h1>
+              <h1 className="truncate text-h1 text-text">{user.displayName}</h1>
               <p className="truncate text-small text-text-muted">@{user.username}</p>
             </div>
             {isOwnProfile ? (
@@ -57,7 +57,7 @@ export function ProfileHeader({
           </div>
 
           {bio && (
-            <p className="max-w-2xl text-body text-text-secondary">
+            <p className="max-w-2xl text-body leading-relaxed text-text-secondary sm:text-[1.0625rem]">
               {visibleBio}{" "}
               {bioIsLong && (
                 <button

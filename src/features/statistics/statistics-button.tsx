@@ -44,7 +44,7 @@ export function StatisticsButton({
         className={contentActionClassName(false, className)}
       >
         <ChartNoAxesColumn size={size} strokeWidth={1.75} />
-        {label && <span>{label}</span>}
+        {label && <span className="hidden sm:inline">{label}</span>}
       </button>
       {open && <StatisticsModal target={target} onClose={close} />}
     </>
