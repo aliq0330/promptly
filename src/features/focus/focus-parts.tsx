@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import type { LucideIcon } from "lucide-react";
+import { Reply, type LucideIcon } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
-import { cn, profileHref } from "@/lib/utils";
+import { cn, formatCount, profileHref, requestHref } from "@/lib/utils";
+import { contentActionClassName } from "@/features/content/action-styles";
+import { useTranslation } from "@/lib/i18n/language-provider";
 import { LikeButton } from "@/features/prompts/like-button";
 import { SaveButton } from "@/features/prompts/save-button";
 import { CommentCountLink } from "@/features/prompts/comment-count-link";
@@ -70,6 +72,7 @@ export function FocusTitle({ href, title, onImage = false, className }: { href: 
  * fit a two-column phone layout.
  */
 export function FocusActions({ item }: { item: FeedItem }) {
+  const { t } = useTranslation();
   return (
     <div className="relative z-10 flex items-center justify-between gap-0.5 border-t border-border-soft px-1 py-1 [&_a]:gap-1 [&_a]:px-1.5 [&_button]:gap-1 [&_button]:px-1.5">
       {item.kind === "prompt" ? (
@@ -100,6 +103,15 @@ export function FocusActions({ item }: { item: FeedItem }) {
         <>
           <LikeButton id={item.data.id} likeCount={item.data.likeCount} contentType="request" />
           <CommentCountLink requestId={item.data.id} baseCount={item.data.commentCount} />
+          <Link
+            href={requestHref(item.data)}
+            className={contentActionClassName(false)}
+            title={t("request.replies")}
+            aria-label={`${t("request.replies")} (${formatCount(item.data.responseCount)})`}
+          >
+            <Reply size={16} strokeWidth={1.75} />
+            <span aria-hidden>{formatCount(item.data.responseCount)}</span>
+          </Link>
         </>
       )}
     </div>
