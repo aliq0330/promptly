@@ -364,6 +364,10 @@
    * transform remains once it finishes: a lingering transform would create a
    * stacking context and trap a card's open menu under the next card. */
   --animate-rise-in: rise-in 380ms var(--ease-soft) backwards;
+  /* Masonry items: opacity only. A translate here shifts the first card of each
+   * CSS column by different amounts mid-animation (mobile Safari renders that
+   * as misaligned tops), so grid items never move. */
+  --animate-grid-in: fade-in 300ms var(--ease-soft) backwards;
   --animate-sheet-up: sheet-up 260ms var(--ease-soft) both;
   --animate-shimmer: shimmer 1.6s linear infinite;
   --animate-heart-pop: heart-pop 420ms cubic-bezier(0.34, 1.56, 0.64, 1) both;

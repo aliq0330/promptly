@@ -17,7 +17,7 @@ export function FocusGrid({ items }: { items: FeedItem[] }) {
   return (
     <div className="columns-2 gap-2.5 sm:gap-3 md:columns-3 xl:columns-4">
       {items.map((item, index) => (
-        <div key={feedItemKey(item)} className="mb-2.5 animate-rise-in break-inside-avoid sm:mb-3" style={staggerStyle(index)}>
+        <div key={feedItemKey(item)} className="mb-2.5 animate-grid-in break-inside-avoid sm:mb-3" style={staggerStyle(index)}>
           <FocusCard item={item} />
         </div>
       ))}
