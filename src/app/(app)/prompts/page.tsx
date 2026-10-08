@@ -28,6 +28,7 @@ export default function PromptsPage() {
       loading={loading}
       search={searchPrompts}
       renderItems={(items) => <PromptGrid prompts={items} />}
+      focusKind="prompt"
       emptyTitle={t("prompts.emptyTitle")}
       emptyBody={t("prompts.emptyBody")}
       hasMore={hasMore}

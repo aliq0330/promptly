@@ -36,6 +36,7 @@ export function PresetsListView() {
           ))}
         </div>
       )}
+      focusKind="preset"
       emptyTitle={t("preset.noneYetTitle")}
       emptyBody={t("preset.noneYetBody")}
       hasMore={hasMore}

@@ -1632,6 +1632,11 @@ export const translations = {
   "statistics.deletedUser": { tr: "Silinmiş kullanıcı", en: "Deleted user" },
   "statistics.loadFailed": { tr: "Liste yüklenemedi.", en: "Couldn't load the list." },
   "nav.presets": { tr: "Hazır Ayarlar", en: "Presets" },
+  "view.switcherAria": { tr: "Görünüm modu", en: "View mode" },
+  "view.card": { tr: "Kart", en: "Card" },
+  "view.focus": { tr: "Odak", en: "Focus" },
+  "view.cardTitle": { tr: "Kart görünümü: her içerik hakkında ayrıntılı bilgi", en: "Card view: full details for each item" },
+  "view.focusTitle": { tr: "Odak görünümü: içeriğin kendisi öne çıkar", en: "Focus view: the content itself comes first" },
   "draft.kindPreset": { tr: "Hazır Ayar", en: "Preset" },
   // ---- Hazır alanlar (preset fields) ----
   "presetBuilder.fieldsTitle": { tr: "Alanlar", en: "Fields" },

@@ -4,7 +4,8 @@ import { DetailSkeleton } from "@/components/ui/detail-skeleton";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Hash } from "lucide-react";
-import { FeedGrid } from "@/features/feed/feed-grid";
+import { FeedItemsView } from "@/features/feed/feed-items-view";
+import { ViewModeSwitcher } from "@/features/content/view-mode-switcher";
 import type { FeedItem } from "@/features/feed/types";
 import { Tabs } from "@/components/ui/tabs";
 import { fetchGeneratorsByTagSlug, fetchPromptsByTag, fetchRequestsByTagSlug, fetchTagBySlug, fetchWorkflowsByTagSlug } from "@/lib/supabase/tags";
@@ -132,7 +133,8 @@ export function TagView() {
         ]}
       />
 
-      <div className="flex gap-1.5">
+      <div className="flex items-center justify-between gap-2">
+       <div className="flex gap-1.5">
         {(["newest", "popular"] as SortMode[]).map((mode) => (
           <button
             key={mode}
@@ -146,11 +148,13 @@ export function TagView() {
             {mode === "newest" ? t("profile.sortNewest") : t("home.tabPopular")}
           </button>
         ))}
+       </div>
+       <ViewModeSwitcher />
       </div>
 
       {(kind === "all" || kind === "prompt") && <TaxonomyFilter value={taxonomy} onChange={setTaxonomy} />}
 
-      <FeedGrid items={items} emptyTitle={taxonomy.contentType && kind === "prompt" ? t("tag.emptyForFilter") : t("tag.emptyAll")} />
+      <FeedItemsView items={items} emptyTitle={taxonomy.contentType && kind === "prompt" ? t("tag.emptyForFilter") : t("tag.emptyAll")} />
     </div>
   );
 }
