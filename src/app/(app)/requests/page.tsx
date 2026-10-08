@@ -55,6 +55,7 @@ export default function RequestsPage() {
         </ChipRow>
       }
       renderItems={(items) => <RequestList requests={items} />}
+      focusKind="request"
       emptyTitle={t("request.emptyListTitle")}
       emptyBody={t("request.emptyListBody")}
       hasMore={hasMore}

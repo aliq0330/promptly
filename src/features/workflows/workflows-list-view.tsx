@@ -41,6 +41,7 @@ export function WorkflowsListView() {
           ))}
         </div>
       )}
+      focusKind="workflow"
       emptyTitle={t("workflow.noneYetTitle")}
       emptyBody={t("workflow.noneYetBody")}
       hasMore={hasMore}

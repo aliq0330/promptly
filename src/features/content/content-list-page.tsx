@@ -9,7 +9,11 @@ import { Chip } from "@/components/ui/chip";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageContainer, PageHeader } from "@/components/ui/page-header";
 import { PromptCardSkeletonGrid } from "@/components/ui/prompt-card-skeleton";
-import { ChipSortRow, SortSelect, type ContentSortKey } from "@/features/content/sort-select";
+import { ChipSortRow, type ContentSortKey } from "@/features/content/sort-select";
+import { MobileViewSwitcherRow, SortAndViewControls } from "@/features/content/list-controls";
+import { useViewMode } from "@/features/content/view-mode-store";
+import { FocusGrid } from "@/features/focus/focus-grid";
+import type { FeedItem } from "@/features/feed/types";
 import { TaxonomyFilter } from "@/features/content/taxonomy-filter";
 import { AdvancedSearchBox } from "@/features/search/advanced-search-box";
 import { tokensToQuery, type SearchToken } from "@/features/search/search-tokens";
@@ -54,6 +58,7 @@ export function ContentListPage<T extends { id: string; createdAt: string; likeC
   postFilter,
   extra,
   renderItems,
+  focusKind,
   emptyTitle,
   emptyBody,
   hasMore = false,
@@ -77,6 +82,8 @@ export function ContentListPage<T extends { id: string; createdAt: string; likeC
   postFilter?: (items: T[]) => T[];
   extra?: ReactNode;
   renderItems: (items: T[]) => ReactNode;
+  /** What the items are, so the Focus View ("Odak") can render them; `renderItems` stays the Card view. */
+  focusKind?: FeedItem["kind"];
   emptyTitle: string;
   emptyBody: string;
   /** Whether a further real page of `baseItems` exists beyond what's already loaded (CLAUDE.md's keyset-paginated "Daha fazla yükle" — only meaningful in browse mode, never while actively searching/filtering). */
@@ -89,7 +96,8 @@ export function ContentListPage<T extends { id: string; createdAt: string; likeC
   const [text, setText] = useState("");
   const [sort, setSort] = useState<ContentSortKey>("newest");
   const [taxonomy, setTaxonomy] = useState<TaxonomyFilterValue>(EMPTY_TAXONOMY_FILTER);
-  const sortSelect = <SortSelect value={sort} onChange={setSort} />;
+  const [viewMode] = useViewMode();
+  const sortSelect = <SortAndViewControls sort={sort} onSortChange={setSort} />;
   const [results, setResults] = useState<T[] | null>(null);
   const [searching, setSearching] = useState(false);
   const normalized = text.trim();
@@ -175,6 +183,7 @@ export function ContentListPage<T extends { id: string; createdAt: string; likeC
 
       <div className="space-y-3">
         <AdvancedSearchBox tokens={tokens} onTokensChange={setTokens} text={text} onTextChange={setText} hideKindSuggestions />
+        <MobileViewSwitcherRow />
         {showCategories ? (
           <TaxonomyFilter value={taxonomy} onChange={setTaxonomy} sort={sortSelect} />
         ) : (
@@ -221,7 +230,11 @@ export function ContentListPage<T extends { id: string; createdAt: string; likeC
         />
       ) : (
         <>
-          {renderItems(visible)}
+          {focusKind && viewMode === "focus" ? (
+            <FocusGrid items={visible.map((data) => ({ kind: focusKind, data }) as unknown as FeedItem)} />
+          ) : (
+            renderItems(visible)
+          )}
           {!active && hasMore && (
             <div className="flex justify-center pt-2">
               <Button variant="outline" onClick={onLoadMore} disabled={loadingMore}>

@@ -4,10 +4,11 @@ import { useEffect, useMemo, useState } from "react";
 import { Blocks, Flame, LayoutGrid, SquareTerminal, SlidersHorizontal, Sparkles, Stars, UserCheck, Workflow as WorkflowIcon } from "lucide-react";
 import { Tabs } from "@/components/ui/tabs";
 import { Chip } from "@/components/ui/chip";
-import { ChipSortRow, SortSelect, type ContentSortKey } from "@/features/content/sort-select";
+import { ChipSortRow, type ContentSortKey } from "@/features/content/sort-select";
+import { MobileViewSwitcherRow, SortAndViewControls } from "@/features/content/list-controls";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PromptCardSkeletonGrid } from "@/components/ui/prompt-card-skeleton";
-import { FeedGrid } from "./feed-grid";
+import { FeedItemsView } from "./feed-items-view";
 import { feedItemAuthorId, feedItemCreatedAt, feedItemPopularity, type FeedItem } from "./types";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useRealPrompts } from "@/features/prompts/real-prompts-provider";
@@ -95,7 +96,8 @@ export function FeedTabs() {
           ariaLabel={t("feed.viewAriaLabel")}
           variant="segmented"
         />
-        <ChipSortRow sort={<SortSelect value={sort} onChange={setSort} />} className="lg:max-w-[60%]">
+        <MobileViewSwitcherRow />
+        <ChipSortRow sort={<SortAndViewControls sort={sort} onSortChange={setSort} />} className="lg:max-w-[60%]">
           {KIND_FILTERS.map((filter) => (
             <Chip key={filter.key} icon={filter.icon} selected={kind === filter.key} onClick={() => setKind(filter.key)}>
               {t(filter.labelKey)}
@@ -114,7 +116,7 @@ export function FeedTabs() {
       ) : loading && allItems.length === 0 ? (
         <PromptCardSkeletonGrid count={6} />
       ) : (
-        <FeedGrid
+        <FeedItemsView
           items={visible}
           emptyTitle={active === "following" ? t("feed.emptyFollowingNoPosts") : t("feed.emptyDefault")}
           emptyDescription={active === "following" ? t("feed.emptyFollowingHint") : undefined}

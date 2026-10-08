@@ -7,9 +7,10 @@ import { Tabs } from "@/components/ui/tabs";
 import { Chip, ChipRow } from "@/components/ui/chip";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PromptCardSkeletonGrid } from "@/components/ui/prompt-card-skeleton";
-import { FeedGrid } from "./feed-grid";
+import { FeedItemsView } from "./feed-items-view";
 import { feedItemCreatedAt, feedItemPopularity, type FeedItem } from "./types";
-import { SortSelect, type ContentSortKey } from "@/features/content/sort-select";
+import { type ContentSortKey } from "@/features/content/sort-select";
+import { MobileViewSwitcherRow, SortAndViewControls } from "@/features/content/list-controls";
 import { TaxonomyFilter } from "@/features/content/taxonomy-filter";
 import { SearchView } from "@/features/search/search-view";
 import { EMPTY_TAXONOMY_FILTER, matchesTaxonomy, type TaxonomyFilterValue } from "@/lib/content-taxonomy";
@@ -132,7 +133,12 @@ export function DiscoverFeed() {
           ariaLabel={t("discover.sectionsAriaLabel")}
         />
 
-        {section !== "creators" && <TaxonomyFilter value={taxonomy} onChange={setTaxonomy} sort={<SortSelect value={sort} onChange={setSort} />} />}
+        {section !== "creators" && (
+          <>
+            <MobileViewSwitcherRow />
+            <TaxonomyFilter value={taxonomy} onChange={setTaxonomy} sort={<SortAndViewControls sort={sort} onSortChange={setSort} />} />
+          </>
+        )}
         {section === "requests" && (
           <ChipRow>
             <Chip selected={!openOnly} onClick={() => setOpenOnly(false)}>
@@ -160,7 +166,7 @@ export function DiscoverFeed() {
       ) : loading && items.length === 0 ? (
         <PromptCardSkeletonGrid count={6} />
       ) : (
-        <FeedGrid items={items} emptyTitle={t("discover.noMatchTitle")} emptyDescription={t("discover.noMatchDescription")} />
+        <FeedItemsView items={items} emptyTitle={t("discover.noMatchTitle")} emptyDescription={t("discover.noMatchDescription")} />
       )}
     </div>
   );
