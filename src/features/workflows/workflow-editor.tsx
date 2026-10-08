@@ -28,7 +28,7 @@ type SaveState = "idle" | "saving" | "saved" | "error";
 type LoadState = "loading" | "ready" | "notfound" | "forbidden";
 type AddTarget = { stepId: string | null; initialMode: "existing" | "scratch" } | null;
 
-const card = "rounded-lg border border-border bg-surface p-4 sm:p-5";
+const card = "rounded-xl border border-border-soft bg-surface p-4 shadow-card sm:p-6";
 
 /**
  * The workflow editor: name/details on top, then the step timeline and the

@@ -549,7 +549,7 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
             </FormSection>
           </div>
           <div className="min-w-0">
-            <div className="rounded-lg border border-border bg-surface p-4 sm:p-5 lg:sticky lg:top-4">
+            <div className="rounded-xl border border-border-soft bg-surface p-4 shadow-card sm:p-6 lg:sticky lg:top-4">
               <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-text-muted">{t("generator.livePreview")}</p>
               <GeneratorPlayground
                 schema={schema}
@@ -579,7 +579,7 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
             />
           </FormSection>
           <div className="min-w-0">
-            <div className="rounded-lg border border-border bg-surface p-4 sm:p-5 lg:sticky lg:top-4">
+            <div className="rounded-xl border border-border-soft bg-surface p-4 shadow-card sm:p-6 lg:sticky lg:top-4">
               <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-text-muted">{t("generator.livePreview")}</p>
               <GeneratorPlayground
                 schema={schema}
@@ -592,7 +592,7 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
 
       {step === "publish" && (
         <div className="max-w-2xl space-y-4">
-          <div className="rounded-lg border border-border bg-surface p-4 sm:p-5">
+          <div className="rounded-xl border border-border-soft bg-surface p-4 shadow-card sm:p-6">
             <p className="mb-2 text-sm font-medium text-text">{t("generator.fieldCount", { count: schema.fields.length })}</p>
             {errors.length === 0 && warnings.length === 0 && <p className="text-sm text-success">{t("generator.readyToPublish")}</p>}
             {errors.map((issue, i) => (

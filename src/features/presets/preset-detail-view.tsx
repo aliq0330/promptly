@@ -2,10 +2,8 @@
 
 import { OpenInStudioButton } from "@/features/studio/open-in-studio";
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { SlidersHorizontal } from "lucide-react";
-import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { DetailSkeleton, NotFoundBlock } from "@/components/ui/detail-skeleton";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
@@ -24,7 +22,20 @@ import { fetchPresetById } from "@/lib/supabase/presets";
 import { taxonomyPathLabel } from "@/lib/content-taxonomy";
 import { presetParameterCount, presetParameterEntries } from "@/lib/preset-utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import { formatRelativeTime, presetHref, profileHref, tagHref } from "@/lib/utils";
+import { presetHref } from "@/lib/utils";
+import {
+  AsideLinkRow,
+  AsideSection,
+  DetailActionBar,
+  DetailAside,
+  DetailByline,
+  DetailComments,
+  DetailLede,
+  DetailShell,
+  DetailTags,
+  DetailTitle,
+  Eyebrow,
+} from "@/features/content/detail-parts";
 import { useRealPresets } from "./real-presets-provider";
 import { PresetSaveCta } from "./preset-save-cta";
 import type { Preset } from "@/types";
@@ -86,168 +97,149 @@ export function PresetDetailView() {
   const highlight = searchParams.get("hl");
   const highlightCommentId = highlight?.startsWith("comment:") ? highlight.slice("comment:".length) : null;
 
-  return (
-    <div className="mx-auto w-full max-w-6xl px-3 py-5 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
-      <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-8">
-        <article className="min-w-0 space-y-5">
-          <header className="space-y-3">
-            <div className="flex items-center justify-between gap-3">
-              <ContentTypeLabel icon={SlidersHorizontal} label={t("preset.singular")} detail={category} />
-              <div className="flex items-center gap-2">
-                {preset.status === "draft" ? (
-                  <Badge variant="warning">{t("preset.draftBadge")}</Badge>
-                ) : preset.visibility === "private" ? (
-                  <Badge variant="neutral">{t("preset.privateBadge")}</Badge>
-                ) : null}
-                <PostMenu
-                  presetId={preset.id}
-                  authorId={preset.creator.id}
-                  onDeleted={() => {
-                    removeFromCache(preset.id);
-                    router.push("/presets");
-                  }}
+  const aside = (
+    <DetailAside>
+      <CreatorSummary creator={preset.creator} isOwn={isOwn} />
+
+      <AsideSection id="preset-info-title" title={t("preset.sidebarInfo")}>
+        <dl className="divide-y divide-border-soft text-small">
+          <div className="flex items-center justify-between gap-3 px-3.5 py-2.5">
+            <dt className="text-text-muted">{t("preset.parameters")}</dt>
+            <dd className="font-semibold tabular-nums text-text">{entries.length}</dd>
+          </div>
+          <div className="flex items-center justify-between gap-3 px-3.5 py-2.5">
+            <dt className="text-text-muted">{t("preset.categoryLabel")}</dt>
+            <dd className="truncate font-semibold text-text">{category}</dd>
+          </div>
+        </dl>
+      </AsideSection>
+
+      {similar.length > 0 && (
+        <AsideSection id="preset-similar-title" title={t("preset.similar")}>
+          <ul className="divide-y divide-border-soft">
+            {similar.map((p) => (
+              <li key={p.id}>
+                <AsideLinkRow
+                  href={presetHref(p)}
+                  icon={SlidersHorizontal}
+                  title={p.title}
+                  meta={`${t("preset.paramCount", { count: presetParameterCount(p) })} · ${p.creator.displayName}`}
                 />
-              </div>
-            </div>
-            <h1 className="text-h1 font-semibold text-text">{preset.title}</h1>
-            {preset.description && <p className="max-w-2xl text-body text-text-secondary">{preset.description}</p>}
-            <Link href={profileHref(preset.creator)} className="group inline-flex max-w-full items-center gap-2.5 rounded-md">
-              <Avatar src={preset.creator.avatarUrl} alt={preset.creator.displayName} size={32} />
-              <span className="min-w-0 leading-tight">
-                <span className="block truncate text-label font-semibold text-text group-hover:text-primary">{preset.creator.displayName}</span>
-                <span className="block truncate text-caption text-text-muted">
-                  @{preset.creator.username} · {formatRelativeTime(preset.createdAt, language)}
-                </span>
-              </span>
-            </Link>
-          </header>
+              </li>
+            ))}
+          </ul>
+        </AsideSection>
+      )}
+    </DetailAside>
+  );
 
-          <div className="flex flex-wrap items-center gap-0.5 border-y border-border-soft py-1.5">
-            <LikeButton id={preset.id} likeCount={preset.likeCount} contentType="preset" size={18} />
-            <CommentCountLink presetId={preset.id} baseCount={preset.commentCount} size={18} />
-            <SaveButton presetId={preset.id} saveCount={preset.saveCount} size={18} />
-            <StatisticsButton
-              target={{ contentType: "preset", contentId: preset.id, likeCount: preset.likeCount, commentCount: preset.commentCount, saveCount: preset.saveCount }}
-              size={18}
-              label={t("statistics.title")}
-            />
-            <span className="ml-auto" />
-            <OpenInStudioButton size="sm" refs={{ preset: preset.id }} />
-            <ShareTriggerButton target={{ contentType: "preset", preset }} label={t("common.share")} />
+  return (
+    <DetailShell aside={aside}>
+      <article className="min-w-0 space-y-6">
+        <header className="space-y-4">
+          <div className="flex items-center justify-between gap-3">
+            <ContentTypeLabel icon={SlidersHorizontal} label={t("preset.singular")} detail={category} />
+            <div className="flex items-center gap-2">
+              {preset.status === "draft" ? (
+                <Badge variant="warning">{t("preset.draftBadge")}</Badge>
+              ) : preset.visibility === "private" ? (
+                <Badge variant="neutral">{t("preset.privateBadge")}</Badge>
+              ) : null}
+              <PostMenu
+                presetId={preset.id}
+                authorId={preset.creator.id}
+                onDeleted={() => {
+                  removeFromCache(preset.id);
+                  router.push("/presets");
+                }}
+              />
+            </div>
           </div>
-
-          {!isOwn && (
-            <div className="flex flex-wrap items-start gap-3 rounded-lg border border-primary/20 bg-primary-soft/50 p-4">
-              <div className="min-w-0 flex-1 space-y-1">
-                <p className="text-label font-semibold text-text">{t("preset.saveTitle")}</p>
-                <p className="text-small text-text-secondary">{t("preset.saveHint")}</p>
-              </div>
-              <PresetSaveCta presetId={preset.id} saveCount={preset.saveCount} />
-            </div>
-          )}
-
-          {preset.coverUrl && (
-            <button type="button" onClick={() => setLightbox(true)} aria-label={t("media.viewFullscreen")} className="block w-full">
-              {/* eslint-disable-next-line @next/next/no-img-element -- real local data-URL cover */}
-              <img src={preset.coverUrl} alt="" className="aspect-video w-full rounded-lg border border-border-soft object-cover" />
-            </button>
-          )}
-          {lightbox && preset.coverUrl && (
-            <ImageLightbox images={[{ url: preset.coverUrl, alt: preset.title }]} initialIndex={0} onClose={() => setLightbox(false)} />
-          )}
-
-          <section aria-labelledby="preset-contents-title" className="overflow-hidden rounded-lg border border-border-soft bg-surface-soft">
-            <div className="border-b border-border-soft px-4 py-2.5">
-              <h2 id="preset-contents-title" className="flex items-center gap-1.5 font-sans text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">
-                <SlidersHorizontal size={13} aria-hidden />
-                {t("preset.contentsTitle")}
-              </h2>
-            </div>
-            {entries.length === 0 ? (
-              <p className="px-4 py-4 text-small text-text-muted">{t("preset.noParameters")}</p>
-            ) : (
-              <dl className="grid gap-px bg-border-soft sm:grid-cols-2">
-                {entries.map((entry) => (
-                  <div key={entry.fieldId} className="flex items-baseline justify-between gap-3 bg-surface px-4 py-2.5">
-                    <dt className="shrink-0 text-small text-text-muted">{entry.fieldLabel}</dt>
-                    <dd className="min-w-0 truncate text-right text-small font-semibold text-text">{entry.valueLabel}</dd>
-                  </div>
-                ))}
-              </dl>
-            )}
-          </section>
-
-          <div className="space-y-2">
-            <p className="text-caption font-medium text-text-muted">{t("tool.recommendedLabel")}</p>
-            {preset.tools.length > 0 ? (
-              <ToolChips refs={preset.tools} />
-            ) : (
-              <span className="inline-flex h-6 items-center rounded-full bg-surface-soft px-2.5 text-caption font-medium text-text-secondary">{t("preset.generalTool")}</span>
-            )}
+          <div className="space-y-3">
+            <DetailTitle>{preset.title}</DetailTitle>
+            {preset.description && <DetailLede>{preset.description}</DetailLede>}
           </div>
+          <DetailByline person={preset.creator} createdAt={preset.createdAt} language={language} />
+        </header>
 
-          {preset.tags.length > 0 && (
-            <div className="flex flex-wrap gap-1.5">
-              {preset.tags.map((tag) => (
-                <Link
-                  key={tag.slug}
-                  href={tagHref(tag)}
-                  className="inline-flex h-7 items-center rounded-full border border-border-soft bg-surface px-2.5 text-caption font-medium text-text-secondary transition-colors hover:border-primary/40 hover:text-primary"
-                >
-                  #{tag.label}
-                </Link>
+        <DetailActionBar
+          trailing={
+            <>
+              <OpenInStudioButton size="sm" refs={{ preset: preset.id }} />
+              <ShareTriggerButton target={{ contentType: "preset", preset }} label={t("common.share")} />
+            </>
+          }
+        >
+          <LikeButton id={preset.id} likeCount={preset.likeCount} contentType="preset" size={18} />
+          <CommentCountLink presetId={preset.id} baseCount={preset.commentCount} size={18} />
+          <SaveButton presetId={preset.id} saveCount={preset.saveCount} size={18} />
+          <StatisticsButton
+            target={{ contentType: "preset", contentId: preset.id, likeCount: preset.likeCount, commentCount: preset.commentCount, saveCount: preset.saveCount }}
+            size={18}
+            label={t("statistics.title")}
+          />
+        </DetailActionBar>
+
+        {!isOwn && (
+          <div className="flex flex-wrap items-start gap-3 rounded-xl border border-primary/20 bg-primary-soft/50 p-4 sm:p-5">
+            <div className="min-w-0 flex-1 space-y-1">
+              <p className="text-label font-semibold text-text">{t("preset.saveTitle")}</p>
+              <p className="text-small text-text-secondary">{t("preset.saveHint")}</p>
+            </div>
+            <PresetSaveCta presetId={preset.id} saveCount={preset.saveCount} />
+          </div>
+        )}
+
+        {preset.coverUrl && (
+          <button
+            type="button"
+            onClick={() => setLightbox(true)}
+            aria-label={t("media.viewFullscreen")}
+            className="block w-full overflow-hidden rounded-xl border border-border-soft shadow-card"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element -- real local data-URL cover */}
+            <img src={preset.coverUrl} alt="" className="aspect-video w-full object-cover" />
+          </button>
+        )}
+        {lightbox && preset.coverUrl && (
+          <ImageLightbox images={[{ url: preset.coverUrl, alt: preset.title }]} initialIndex={0} onClose={() => setLightbox(false)} />
+        )}
+
+        <section aria-labelledby="preset-contents-title" className="overflow-hidden rounded-xl border border-border-soft bg-surface-soft shadow-card">
+          <div className="border-b border-border-soft px-4 py-3">
+            <Eyebrow as="h2" id="preset-contents-title" icon={SlidersHorizontal}>
+              {t("preset.contentsTitle")}
+            </Eyebrow>
+          </div>
+          {entries.length === 0 ? (
+            <p className="px-4 py-4 text-small text-text-muted">{t("preset.noParameters")}</p>
+          ) : (
+            <dl className="grid gap-px bg-border-soft sm:grid-cols-2">
+              {entries.map((entry) => (
+                <div key={entry.fieldId} className="flex items-baseline justify-between gap-3 bg-surface px-4 py-2.5">
+                  <dt className="shrink-0 text-small text-text-muted">{entry.fieldLabel}</dt>
+                  <dd className="min-w-0 truncate text-right text-small font-semibold text-text">{entry.valueLabel}</dd>
+                </div>
               ))}
-            </div>
-          )}
-
-          <CommentSection target={{ presetId: preset.id }} highlightCommentId={highlightCommentId} />
-        </article>
-
-        <aside className="mt-8 space-y-5 lg:mt-0">
-          <CreatorSummary creator={preset.creator} isOwn={isOwn} />
-
-          <section aria-labelledby="preset-info-title" className="space-y-2">
-            <h2 id="preset-info-title" className="px-1 text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">
-              {t("preset.sidebarInfo")}
-            </h2>
-            <dl className="divide-y divide-border-soft overflow-hidden rounded-lg border border-border-soft bg-surface text-small">
-              <div className="flex items-center justify-between gap-3 px-3.5 py-2.5">
-                <dt className="text-text-muted">{t("preset.parameters")}</dt>
-                <dd className="font-semibold tabular-nums text-text">{entries.length}</dd>
-              </div>
-              <div className="flex items-center justify-between gap-3 px-3.5 py-2.5">
-                <dt className="text-text-muted">{t("preset.categoryLabel")}</dt>
-                <dd className="truncate font-semibold text-text">{category}</dd>
-              </div>
             </dl>
-          </section>
-
-          {similar.length > 0 && (
-            <section aria-labelledby="preset-similar-title" className="space-y-2">
-              <h2 id="preset-similar-title" className="px-1 text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">
-                {t("preset.similar")}
-              </h2>
-              <ul className="divide-y divide-border-soft overflow-hidden rounded-lg border border-border-soft bg-surface">
-                {similar.map((p) => (
-                  <li key={p.id}>
-                    <Link href={presetHref(p)} className="flex items-start gap-3 px-3.5 py-3 transition-colors duration-200 hover:bg-surface-soft">
-                      <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-sm bg-primary-soft text-primary">
-                        <SlidersHorizontal size={14} />
-                      </span>
-                      <span className="min-w-0 leading-tight">
-                        <span className="line-clamp-2 text-label font-semibold text-text">{p.title}</span>
-                        <span className="mt-0.5 block truncate text-caption text-text-muted">
-                          {t("preset.paramCount", { count: presetParameterCount(p) })} · {p.creator.displayName}
-                        </span>
-                      </span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </section>
           )}
-        </aside>
-      </div>
-    </div>
+        </section>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-caption font-medium text-text-muted">{t("tool.recommendedLabel")}</span>
+          {preset.tools.length > 0 ? (
+            <ToolChips refs={preset.tools} />
+          ) : (
+            <span className="inline-flex h-6 items-center rounded-full bg-surface-soft px-2.5 text-caption font-medium text-text-secondary">{t("preset.generalTool")}</span>
+          )}
+        </div>
+
+        <DetailTags tags={preset.tags} />
+
+        <DetailComments>
+          <CommentSection target={{ presetId: preset.id }} highlightCommentId={highlightCommentId} />
+        </DetailComments>
+      </article>
+    </DetailShell>
   );
 }

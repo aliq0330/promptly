@@ -3,12 +3,10 @@
 import { RunButton } from "@/features/content/run-with-ai";
 import { OpenInStudioButton } from "@/features/studio/open-in-studio";
 import { ToolLine } from "@/features/content/tool-chips";
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { PenLine, SquareTerminal } from "lucide-react";
-import { Avatar } from "@/components/ui/avatar";
 import { ContentTypeLabel } from "@/features/content/content-type-label";
 import { ShareTriggerButton } from "@/features/prompts/share-modal";
 import { RelatedPrompts } from "@/features/prompts/related-prompts";
@@ -37,7 +35,8 @@ import { resolvePromptText, segmentPromptText } from "@/lib/prompt-variables";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
 import { PostMenu } from "@/features/prompts/post-menu";
 import { parseHighlightValue } from "@/lib/notification-utils";
-import { cn, formatRelativeTime, profileHref, tagHref } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import { DetailActionBar, DetailAside, DetailByline, DetailComments, DetailLede, DetailShell, DetailTags, DetailTitle, Eyebrow } from "@/features/content/detail-parts";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Prompt, PromptVariable, PromptVersion } from "@/types";
 import type { DnaSection } from "@/lib/prompt-dna/types";
@@ -127,30 +126,31 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
   ];
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-3 py-5 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
-      <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-8">
+    <DetailShell
+      aside={
+        <DetailAside>
+          <CreatorSummary creator={prompt.author} isOwn={isOwn} />
+          <ContributorsPanel key={contributorsRefreshKey} promptId={prompt.id} />
+          <RelatedPrompts prompt={prompt} />
+        </DetailAside>
+      }
+    >
         <article
           className={cn(
-            "min-w-0 space-y-5 rounded-lg transition-colors duration-700",
+            "min-w-0 space-y-6 rounded-lg transition-colors duration-700",
             isPostFlashed && "bg-primary/10 ring-1 ring-primary/40",
           )}
         >
-          <header className="space-y-3">
+          <header className="space-y-4">
             <div className="flex items-center justify-between gap-3">
               <ContentTypeLabel icon={typeMeta.icon} label={`${t(typeMeta.labelKey)} Prompt`} detail={null} />
               <PostMenu promptId={prompt.id} authorId={prompt.author.id} />
             </div>
-            <h1 className="text-h1 font-semibold text-text">{prompt.title}</h1>
-            {prompt.description && <p className="max-w-2xl text-body text-text-secondary">{prompt.description}</p>}
-            <Link href={profileHref(prompt.author)} className="group inline-flex max-w-full items-center gap-2.5 rounded-md">
-              <Avatar src={prompt.author.avatarUrl} alt={prompt.author.displayName} size={32} />
-              <span className="min-w-0 leading-tight">
-                <span className="block truncate text-label font-semibold text-text group-hover:text-primary">{prompt.author.displayName}</span>
-                <span className="block truncate text-caption text-text-muted">
-                  @{prompt.author.username} · {formatRelativeTime(prompt.createdAt, language)}
-                </span>
-              </span>
-            </Link>
+            <div className="space-y-3">
+              <DetailTitle>{prompt.title}</DetailTitle>
+              {prompt.description && <DetailLede>{prompt.description}</DetailLede>}
+            </div>
+            <DetailByline person={prompt.author} createdAt={prompt.createdAt} language={language} />
           </header>
 
           {media && (
@@ -159,7 +159,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
                 type="button"
                 onClick={() => setLightboxIndex(0)}
                 aria-label={t("media.viewFullscreen")}
-                className="relative block w-full overflow-hidden rounded-lg border border-border-soft bg-surface-soft"
+                className="relative block w-full overflow-hidden rounded-xl border border-border-soft bg-surface-soft shadow-card"
                 // Supporting output preview, not a hero image: capped at ~480px tall.
                 style={{
                   aspectRatio: clampedAspectRatio(media.width, media.height),
@@ -200,14 +200,12 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
           )}
           {prompt.generatedFrom && <GeneratorSourceContext generatedFrom={prompt.generatedFrom} />}
 
-          <div className="flex flex-wrap items-center gap-0.5 border-y border-border-soft py-1.5">
+          <DetailActionBar trailing={<ShareTriggerButton target={{ contentType: "prompt", prompt }} label={t("common.share")} />}>
             <LikeButton id={prompt.id} likeCount={prompt.likeCount} size={18} />
             <CommentCountLink promptId={prompt.id} baseCount={prompt.commentCount} size={18} />
             <SaveButton promptId={prompt.id} saveCount={prompt.saveCount} size={18} />
             <StatisticsButton target={{ contentType: "prompt", contentId: prompt.id, likeCount: prompt.likeCount, commentCount: prompt.commentCount, saveCount: prompt.saveCount }} size={18} label={t("statistics.title")} />
-            <span className="ml-auto" />
-            <ShareTriggerButton target={{ contentType: "prompt", prompt }} label={t("common.share")} />
-          </div>
+          </DetailActionBar>
 
           {tabItems.length > 1 && (
             <Tabs items={tabItems} active={activeTab} onChange={setActiveTab} ariaLabel={t("promptTabs.ariaLabel")} />
@@ -224,12 +222,11 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
           )}
 
           {activeTab === "prompt" && (
-          <section aria-labelledby="prompt-text-title" className="overflow-hidden rounded-lg border border-border-soft bg-surface-soft">
+          <section aria-labelledby="prompt-text-title" className="overflow-hidden rounded-xl border border-border-soft bg-surface-soft shadow-card">
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border-soft px-4 py-2.5">
-              <h2 id="prompt-text-title" className="flex items-center gap-1.5 font-sans text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">
-                <SquareTerminal size={14} />
+              <Eyebrow as="h2" id="prompt-text-title" icon={SquareTerminal}>
                 {t("prompt.promptTextHeading")}
-              </h2>
+              </Eyebrow>
               <div className="flex flex-wrap items-center gap-2">
                 {user && !isOwn && (
                   <button
@@ -276,19 +273,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
 
           <TaxonomyLinks contentType={prompt.contentType} category={prompt.category} subcategory={prompt.subcategory} />
 
-          {prompt.tags.length > 0 && (
-            <div className="flex flex-wrap gap-1.5">
-              {prompt.tags.map((tag) => (
-                <Link
-                  key={tag.slug}
-                  href={tagHref(tag)}
-                  className="inline-flex h-7 items-center rounded-full border border-border-soft bg-surface px-2.5 text-caption font-medium text-text-secondary transition-colors hover:border-primary/40 hover:text-primary"
-                >
-                  #{tag.label}
-                </Link>
-              ))}
-            </div>
-          )}
+          <DetailTags tags={prompt.tags} />
 
           <PromptResultsSection target={{ type: "prompt", promptId: prompt.id, promptText: livePromptText }} />
 
@@ -304,17 +289,10 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
             />
           )}
 
-          <section id="comments" className="scroll-mt-20 rounded-lg border border-border-soft bg-surface p-4 sm:p-5">
+          <DetailComments>
             <CommentSection target={{ promptId: prompt.id }} highlightCommentId={highlightCommentId} />
-          </section>
+          </DetailComments>
         </article>
-
-        <aside className="mt-6 space-y-5 lg:sticky lg:top-24 lg:mt-0 lg:self-start">
-          <CreatorSummary creator={prompt.author} isOwn={isOwn} />
-          <ContributorsPanel key={contributorsRefreshKey} promptId={prompt.id} />
-          <RelatedPrompts prompt={prompt} />
-        </aside>
-      </div>
 
       {isSuggestModalOpen && user && (
         <SuggestEditModal
@@ -324,6 +302,6 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
           onClose={() => setIsSuggestModalOpen(false)}
         />
       )}
-    </div>
+    </DetailShell>
   );
 }

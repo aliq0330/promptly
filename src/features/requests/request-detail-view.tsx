@@ -30,7 +30,8 @@ import { fetchPromptsForRequest } from "@/lib/supabase/prompts";
 import { useRealRequests } from "./real-requests-provider";
 import { STATUS_LABELS, STATUS_VARIANTS } from "./request-card";
 import { parseHighlightValue } from "@/lib/notification-utils";
-import { cn, formatCount, formatRelativeTime, profileHref, tagHref } from "@/lib/utils";
+import { cn, formatCount, profileHref } from "@/lib/utils";
+import { AsideSection, DetailActionBar, DetailAside, DetailByline, DetailComments, DetailShell, DetailTags, DetailTitle, Eyebrow } from "@/features/content/detail-parts";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Prompt, PromptRequest } from "@/types";
 import { ScrollablePrompt } from "@/features/content/scrollable-prompt";
@@ -162,15 +163,22 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
   const typeMeta = live.contentType ? CONTENT_TYPE_META[live.contentType] : null;
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-3 py-5 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
-      <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-8">
+    <DetailShell
+      aside={
+        <DetailAside>
+          <CreatorSummary creator={live.author} isOwn={isOwnRequest} />
+          <ContributorsList answers={answers} />
+          <RelatedRequests request={live} />
+        </DetailAside>
+      }
+    >
       <article
         className={cn(
-          "min-w-0 space-y-5 rounded-lg transition-colors duration-700",
+          "min-w-0 space-y-6 rounded-lg transition-colors duration-700",
           isRequestFlashed && "bg-primary/10 ring-1 ring-primary/40",
         )}
       >
-        <header className="space-y-3">
+        <header className="space-y-4">
           <div className="flex items-center justify-between gap-3">
             <ContentTypeLabel icon={Sparkles} label={t("request.title")} detail={typeMeta ? t(typeMeta.labelKey) : null} />
             <div className="flex shrink-0 items-center gap-1.5">
@@ -181,16 +189,8 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
               <PostMenu requestId={live.id} authorId={live.author.id} onDeleted={handleDeleted} />
             </div>
           </div>
-          <h1 className="break-words text-h1 font-semibold text-text">{live.title}</h1>
-          <Link href={profileHref(live.author)} className="group inline-flex max-w-full items-center gap-2.5 rounded-md">
-            <Avatar src={live.author.avatarUrl} alt={live.author.displayName} size={32} />
-            <span className="min-w-0 leading-tight">
-              <span className="block truncate text-label font-semibold text-text group-hover:text-primary">{live.author.displayName}</span>
-              <span className="block truncate text-caption text-text-muted">
-                @{live.author.username} · {formatRelativeTime(live.createdAt, language)}
-              </span>
-            </span>
-          </Link>
+          <DetailTitle>{live.title}</DetailTitle>
+          <DetailByline person={live.author} createdAt={live.createdAt} language={language} />
         </header>
 
         {/*
@@ -203,7 +203,7 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
           "Kopyala" yok (Prompt İsteği'ne özel olarak kaldırıldı, genel
           Prompt sistemindeki Kopyala butonuna dokunulmadı).
         */}
-        <div className="flex flex-wrap items-center gap-0.5 border-y border-border-soft py-1.5">
+        <DetailActionBar trailing={<ShareTriggerButton target={{ contentType: "request", request: live }} label={t("common.share")} />}>
           <LikeButton id={live.id} likeCount={live.likeCount} contentType="request" size={18} />
           <CommentCountLink requestId={live.id} baseCount={live.commentCount} size={18} />
           <a
@@ -216,16 +216,13 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
             <span aria-hidden>{formatCount(live.responseCount)}</span>
           </a>
           <StatisticsButton target={{ contentType: "request", contentId: live.id, likeCount: live.likeCount, commentCount: live.commentCount }} size={18} label={t("statistics.title")} />
-          <span className="ml-auto" />
-          <ShareTriggerButton target={{ contentType: "request", request: live }} label={t("common.share")} />
-        </div>
+        </DetailActionBar>
 
-        <section aria-labelledby="request-brief-title" className="overflow-hidden rounded-lg border border-border-soft bg-surface-soft">
-          <div className="border-b border-border-soft px-4 py-2.5">
-            <h2 id="request-brief-title" className="flex items-center gap-1.5 font-sans text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">
-              <SquareTerminal size={14} />
+        <section aria-labelledby="request-brief-title" className="overflow-hidden rounded-xl border border-border-soft bg-surface-soft shadow-card">
+          <div className="border-b border-border-soft px-4 py-3">
+            <Eyebrow as="h2" id="request-brief-title" icon={SquareTerminal}>
               {t("request.title")}
-            </h2>
+            </Eyebrow>
           </div>
           <ScrollablePrompt className="px-4 py-4 text-[0.875rem] text-text">{live.description}</ScrollablePrompt>
         </section>
@@ -236,7 +233,7 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
               type="button"
               onClick={() => setLightboxIndex(0)}
               aria-label={t("media.viewFullscreen")}
-              className="relative block w-full overflow-hidden rounded-lg border border-border-soft bg-surface-soft"
+              className="relative block w-full overflow-hidden rounded-xl border border-border-soft bg-surface-soft shadow-card"
               // Supporting preview, not a hero image: capped at ~480px tall (same as the prompt page).
               style={{
                 aspectRatio: referenceRatio,
@@ -273,9 +270,11 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
         )}
 
         {live.creativeDirection && (
-          <div className="rounded-md border-l-2 border-primary bg-primary-soft/50 px-4 py-3">
-            <p className="mb-1 text-caption font-semibold uppercase tracking-[0.08em] text-primary">{t("request.creativeDirection")}</p>
-            <p className="text-small text-text">{live.creativeDirection}</p>
+          <div className="rounded-r-lg border-l-2 border-primary bg-primary-soft/50 px-4 py-3.5">
+            <Eyebrow tone="primary" className="mb-2">
+              {t("request.creativeDirection")}
+            </Eyebrow>
+            <p className="font-serif text-[1.0625rem] leading-relaxed text-text">{live.creativeDirection}</p>
           </div>
         )}
 
@@ -283,19 +282,7 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
 
         <ToolLine label={t("tool.preferredLabel")} refs={live.tools} legacy={live.preferredTool} />
 
-        {live.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">
-            {live.tags.map((tag) => (
-              <Link
-                key={tag.slug}
-                href={tagHref(tag)}
-                className="inline-flex h-7 items-center rounded-full border border-border-soft bg-surface px-2.5 text-caption font-medium text-text-secondary transition-colors hover:border-primary/40 hover:text-primary"
-              >
-                #{tag.label}
-              </Link>
-            ))}
-          </div>
-        )}
+        <DetailTags tags={live.tags} />
 
         {showManagementAction && (
           <div className="flex flex-wrap items-center gap-2 border-t border-border-soft pt-4">
@@ -317,7 +304,7 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
         )}
         {isOwnRequest && <EditHistoryPanel contentType="prompt_request" contentId={live.id} />}
       <section id="request-responses" className="scroll-mt-20 space-y-3">
-        <h2 className="flex items-center gap-2 text-h2 font-semibold text-text">
+        <h2 className="flex items-center gap-2 text-h2 text-text">
           {t("request.creativeReplies")}
           <span className="rounded-xs bg-surface-soft px-1.5 font-sans text-caption font-semibold tabular-nums text-text-muted">{answers.length}</span>
         </h2>
@@ -327,7 +314,7 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
           </p>
         )}
         {answers.length === 0 ? (
-          <div className="space-y-3 rounded-lg border border-dashed border-border py-8 text-center text-small text-text-muted">
+          <div className="space-y-3 rounded-xl border border-dashed border-border py-8 text-center text-small text-text-muted">
             <p>{t("request.noRepliesYet")}</p>
             {!isClosed && !isOwnRequest && (
               <Link href={`/create?answerRequest=${live.id}`} className="font-medium text-primary underline">
@@ -425,7 +412,7 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
         {selectionError && <p className="text-sm text-danger">{selectionError}</p>}
       </section>
 
-      <section id="comments" className="scroll-mt-20 rounded-lg border border-border-soft bg-surface p-4 sm:p-5">
+      <DetailComments>
         {/*
           Kapalı bir istekte de yorumlar/yanıtlar AÇIK kalmalı — "kapalı"
           yalnızca isteğin yeni bir tam yanıt (Prompt) kabul etmediği
@@ -435,16 +422,9 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
           burası da artık aynı, koşulsuz davranışı kullanıyor.
         */}
         <CommentSection target={{ requestId: live.id }} highlightCommentId={highlightCommentId} />
-      </section>
+      </DetailComments>
       </article>
-
-      <aside className="mt-6 space-y-5 lg:sticky lg:top-24 lg:mt-0 lg:self-start">
-        <CreatorSummary creator={live.author} isOwn={isOwnRequest} />
-        <ContributorsList answers={answers} />
-        <RelatedRequests request={live} />
-      </aside>
-      </div>
-    </div>
+    </DetailShell>
   );
 }
 
@@ -454,23 +434,20 @@ function ContributorsList({ answers }: { answers: Prompt[] }) {
   const authors = Array.from(new Map(answers.map((a) => [a.author.id, a.author])).values());
   if (authors.length === 0) return null;
   return (
-    <section aria-labelledby="request-contributors-title" className="space-y-2">
-      <h2 id="request-contributors-title" className="px-1 text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">
-        {t("request.contributors")}
-      </h2>
-      <ul className="divide-y divide-border-soft overflow-hidden rounded-lg border border-border-soft bg-surface">
+    <AsideSection id="request-contributors-title" title={t("request.contributors")}>
+      <ul className="divide-y divide-border-soft">
         {authors.slice(0, 6).map((author) => (
           <li key={author.id}>
-            <Link href={profileHref(author)} className="flex items-center gap-2.5 px-3.5 py-2.5 transition-colors duration-200 hover:bg-surface-soft">
+            <Link href={profileHref(author)} className="group flex items-center gap-2.5 px-3.5 py-2.5 transition-colors duration-200 hover:bg-surface-soft">
               <Avatar src={author.avatarUrl} alt={author.displayName} size={28} />
               <span className="min-w-0 leading-tight">
-                <span className="block truncate text-label font-semibold text-text">{author.displayName}</span>
+                <span className="block truncate text-label font-semibold text-text transition-colors group-hover:text-primary">{author.displayName}</span>
                 <span className="block truncate text-caption text-text-muted">@{author.username}</span>
               </span>
             </Link>
           </li>
         ))}
       </ul>
-    </section>
+    </AsideSection>
   );
 }

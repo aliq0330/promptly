@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import Link from "next/link";
+import { AsideLinkRow, AsideSection } from "@/features/content/detail-parts";
 import { promptHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { CONTENT_TYPE_META } from "./content-type-meta";
@@ -38,31 +38,22 @@ export function RelatedPrompts({ prompt, limit = 4 }: { prompt: Prompt; limit?: 
   if (related.length === 0) return null;
 
   return (
-    <section aria-labelledby="related-prompts-title" className="space-y-2">
-      <h2 id="related-prompts-title" className="px-1 text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">
-        {t("prompt.relatedPrompts")}
-      </h2>
-      <ul className="divide-y divide-border-soft overflow-hidden rounded-lg border border-border-soft bg-surface">
+    <AsideSection id="related-prompts-title" title={t("prompt.relatedPrompts")}>
+      <ul className="divide-y divide-border-soft">
         {related.map((item) => {
           const meta = CONTENT_TYPE_META[item.contentType];
-          const Icon = meta.icon;
           return (
             <li key={item.id}>
-              <Link href={promptHref(item)} className="flex items-start gap-3 px-3.5 py-3 transition-colors duration-200 hover:bg-surface-soft">
-                <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-sm bg-primary-soft text-primary">
-                  <Icon size={14} />
-                </span>
-                <span className="min-w-0 leading-tight">
-                  <span className="line-clamp-2 text-label font-semibold text-text">{item.title}</span>
-                  <span className="mt-0.5 block truncate text-caption text-text-muted">
-                    {t(meta.labelKey)} · {item.author.displayName}
-                  </span>
-                </span>
-              </Link>
+              <AsideLinkRow
+                href={promptHref(item)}
+                icon={meta.icon}
+                title={item.title}
+                meta={`${t(meta.labelKey)} · ${item.author.displayName}`}
+              />
             </li>
           );
         })}
       </ul>
-    </section>
+    </AsideSection>
   );
 }
