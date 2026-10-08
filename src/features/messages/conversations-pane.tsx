@@ -7,6 +7,7 @@ import { ConversationList } from "./conversation-list";
 import { useRealMessages } from "./real-messages-provider";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
+import { Eyebrow } from "@/features/content/detail-parts";
 
 /**
  * The conversation list (message requests + chats) with its own search box.
@@ -66,7 +67,7 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
   return (
     <div className={cn("flex min-h-0 flex-1 flex-col", embedded ? "" : "mx-auto w-full max-w-3xl px-3 py-5 sm:px-5 sm:py-6")}>
       <div className={cn(embedded && "px-4 pt-4")}>
-        <h1 className="mb-3 text-h1 font-semibold text-text">{t("header.messagesAriaLabel")}</h1>
+        <h1 className={cn("mb-3 text-text", embedded ? "text-h2" : "text-h1")}>{t("header.messagesAriaLabel")}</h1>
         <label className="relative mb-3 block">
           <span className="sr-only">{t("messages.searchConversations")}</span>
           <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
@@ -75,11 +76,11 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder={t("messages.searchConversations")}
-            className="h-10 w-full rounded-full border border-border bg-surface pl-9 pr-3 text-sm text-text placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-primary"
+            className="h-10 w-full rounded-full border border-border-soft bg-background pl-9 pr-3 text-sm text-text shadow-xs transition-colors duration-200 ease-soft placeholder:text-text-muted hover:border-border-strong focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
           />
         </label>
         {isSharing && (
-          <p className="mb-3 rounded-md bg-accent-surface/60 px-3 py-2 text-sm text-text">
+          <p className="mb-3 rounded-lg border border-primary/20 bg-primary-soft/50 px-3 py-2 text-sm text-text">
             {t("messages.pickAConversationBody")}
           </p>
         )}
@@ -91,17 +92,19 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
           <>
             {pending.length > 0 && (
               <div className="mb-4">
-                <h2 className={cn("mb-1 text-h3 font-semibold text-text", embedded && "px-4")}>
+                <Eyebrow as="h2" className={cn("mb-1.5", embedded ? "px-4" : "px-1")}>
                   {t("messages.messageRequestsHeading")} ({pending.length})
-                </h2>
-                <p className={cn("mb-2 text-xs text-text-muted", embedded && "px-4")}>
+                </Eyebrow>
+                <p className={cn("mb-2 text-xs text-text-muted", embedded ? "px-4" : "px-1")}>
                   {t("messages.messageRequestsHint")}
                 </p>
                 <ConversationList conversations={pending} shareQuery={shareQuery} activeId={activeId} flush={embedded} />
               </div>
             )}
             {pending.length > 0 && accepted.length > 0 && (
-              <h2 className={cn("mb-2 text-h3 font-semibold text-text", embedded && "px-4")}>{t("messages.chatsHeading")}</h2>
+              <Eyebrow as="h2" className={cn("mb-2", embedded ? "px-4" : "px-1")}>
+                {t("messages.chatsHeading")}
+              </Eyebrow>
             )}
             {(accepted.length > 0 || pending.length === 0) && (
               <ConversationList conversations={accepted} shareQuery={shareQuery} activeId={activeId} flush={embedded} />

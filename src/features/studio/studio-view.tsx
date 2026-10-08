@@ -398,7 +398,7 @@ export function StudioView() {
         <button type="button" className={`${iconButton} order-1`} onClick={goHome} aria-label={t("studio.backToStudio")} title={t("studio.backToStudio")}>
           <ArrowLeft className="h-4 w-4" aria-hidden />
         </button>
-        <span className="order-1 hidden h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary sm:flex">
+        <span className="order-1 hidden h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border-soft bg-primary-soft text-primary shadow-xs sm:flex">
           <FlaskConical className="h-5 w-5" strokeWidth={1.75} aria-hidden />
         </span>
         <div className="order-2 min-w-0 flex-1 basis-40">
@@ -525,7 +525,7 @@ export function StudioView() {
               </section>
               <div className="min-w-0 space-y-4 @min-[680px]:col-start-2 @min-[680px]:row-start-2 @min-[1000px]:sticky @min-[1000px]:top-20 @min-[1000px]:col-start-3 @min-[1000px]:row-start-1 @min-[1000px]:self-start">
                 <CompositionView draft={deferredDraft} active={active} onSelect={studio.setActive} finalText={result.text} />
-                <div className="min-w-0 rounded-lg border border-border-soft bg-surface p-4">
+                <div className="min-w-0 rounded-xl border border-border-soft bg-surface p-4 shadow-card">
                   <ResultPane draft={deferredDraft} baseline={state.baseline} sources={state.sources} changeCount={changes.length} onCreate={openCreate} />
                 </div>
                 <div className="@min-[1000px]:hidden">

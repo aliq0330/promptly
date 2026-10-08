@@ -57,7 +57,7 @@ export function SaveNewModal({
 
   return (
     <Modal onClose={onClose} labelledBy="studio-save-title">
-      <div className="flex max-h-[85dvh] w-full max-w-md flex-col overflow-y-auto rounded-lg border border-border bg-surface p-5 shadow-lg" onClick={(event) => event.stopPropagation()}>
+      <div className="flex max-h-[85dvh] w-full max-w-md flex-col overflow-y-auto rounded-xl border border-border-soft bg-surface p-5 shadow-pop" onClick={(event) => event.stopPropagation()}>
         <div className="mb-1 flex items-start justify-between gap-3">
           <h2 id="studio-save-title" className="text-h3 font-semibold text-text">
             {t("studio.saveNew")}

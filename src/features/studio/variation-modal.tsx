@@ -38,7 +38,7 @@ export function VariationModal({
   return (
     <Modal onClose={onClose} labelledBy="studio-variation-title">
       <form
-        className="flex max-h-[85dvh] w-full max-w-md flex-col gap-4 overflow-y-auto rounded-lg border border-border bg-surface p-5 shadow-lg"
+        className="flex max-h-[85dvh] w-full max-w-md flex-col gap-4 overflow-y-auto rounded-xl border border-border-soft bg-surface p-5 shadow-pop"
         onClick={(event) => event.stopPropagation()}
         onSubmit={(event) => {
           event.preventDefault();

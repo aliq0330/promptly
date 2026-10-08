@@ -24,6 +24,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import { findCategory, findSubcategory, isContentTypeId, type TaxonomyFilterValue } from "@/lib/content-taxonomy";
 import type { ContentSearchFilters } from "@/lib/supabase/taxonomy-query";
 import { formatCount, profileHref, tagHref } from "@/lib/utils";
+import { Eyebrow } from "@/features/content/detail-parts";
 import type { Generator, Prompt, PromptRequest, Preset, Tag, UserProfile, Workflow } from "@/types";
 
 const DEBOUNCE_MS = 300;
@@ -173,7 +174,7 @@ export function SearchView({ idle }: { idle?: ReactNode } = {}) {
         <div className="space-y-8">
           {tags.length > 0 && (
             <section className="space-y-3">
-              <h2 className="text-h3 font-semibold text-text">{t("nav.tags")}</h2>
+              <ResultsHeading count={tags.length}>{t("nav.tags")}</ResultsHeading>
               <div className="flex flex-wrap gap-2">
                 {tags.map((tag) => (
                   <Link key={tag.slug} href={tagHref(tag)}>
@@ -188,17 +189,17 @@ export function SearchView({ idle }: { idle?: ReactNode } = {}) {
 
           {users.length > 0 && (
             <section className="space-y-3">
-              <h2 className="text-h3 font-semibold text-text">{t("search.usersHeading")}</h2>
-              <div className="overflow-hidden rounded-lg border border-border bg-surface">
+              <ResultsHeading count={users.length}>{t("search.usersHeading")}</ResultsHeading>
+              <div className="overflow-hidden rounded-xl border border-border-soft bg-surface shadow-card">
                 {users.map((user) => (
                   <Link
                     key={user.id}
                     href={profileHref(user)}
-                    className="flex items-center gap-3 border-b border-border px-4 py-3 transition-colors last:border-0 hover:bg-accent-surface/40"
+                    className="group flex items-center gap-3 border-b border-border-soft px-4 py-3 transition-colors duration-200 ease-soft last:border-0 hover:bg-surface-soft"
                   >
                     <Avatar src={user.avatarUrl} alt={user.displayName} size={40} />
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-medium text-text">{user.displayName}</p>
+                      <p className="truncate text-sm font-semibold tracking-[-0.01em] text-text transition-colors group-hover:text-primary">{user.displayName}</p>
                       <p className="truncate text-xs text-text-muted">
                         @{user.username} · {formatCount(user.followerCount)} {t("profile.followersSuffix")}
                       </p>
@@ -211,14 +212,14 @@ export function SearchView({ idle }: { idle?: ReactNode } = {}) {
 
           {generators.length > 0 && (
             <section className="space-y-3">
-              <h2 className="text-h3 font-semibold text-text">{t("nav.generators")}</h2>
+              <ResultsHeading count={generators.length}>{t("nav.generators")}</ResultsHeading>
               <PromptGrid generators={generators} />
             </section>
           )}
 
           {workflows.length > 0 && (
             <section className="space-y-3">
-              <h2 className="text-h3 font-semibold text-text">{t("nav.workflows")}</h2>
+              <ResultsHeading count={workflows.length}>{t("nav.workflows")}</ResultsHeading>
               <div className="columns-1 gap-3 sm:columns-2 sm:gap-4 xl:columns-3">
                 {workflows.map((workflow) => (
                   <div key={workflow.id} className="mb-3 break-inside-avoid sm:mb-4">
@@ -231,7 +232,7 @@ export function SearchView({ idle }: { idle?: ReactNode } = {}) {
 
           {presets.length > 0 && (
             <section className="space-y-3">
-              <h2 className="text-h3 font-semibold text-text">{t("nav.presets")}</h2>
+              <ResultsHeading count={presets.length}>{t("nav.presets")}</ResultsHeading>
               <div className="columns-1 gap-3 sm:columns-2 sm:gap-4 xl:columns-3">
                 {presets.map((preset) => (
                   <div key={preset.id} className="mb-3 break-inside-avoid sm:mb-4">
@@ -244,14 +245,14 @@ export function SearchView({ idle }: { idle?: ReactNode } = {}) {
 
           {requests.length > 0 && (
             <section className="space-y-3">
-              <h2 className="text-h3 font-semibold text-text">{t("search.requestsHeading")}</h2>
+              <ResultsHeading count={requests.length}>{t("search.requestsHeading")}</ResultsHeading>
               <RequestList requests={requests} />
             </section>
           )}
 
           {prompts.length > 0 && (
             <section className="space-y-3">
-              <h2 className="text-h3 font-semibold text-text">{t("feed.filterPrompts")}</h2>
+              <ResultsHeading count={prompts.length}>{t("feed.filterPrompts")}</ResultsHeading>
               <PromptGrid prompts={prompts} />
             </section>
           )}
@@ -263,5 +264,15 @@ export function SearchView({ idle }: { idle?: ReactNode } = {}) {
         </div>
       )}
     </div>
+  );
+}
+
+/** A results group heading: the editorial eyebrow plus the group's count. */
+function ResultsHeading({ children, count }: { children: ReactNode; count: number }) {
+  return (
+    <Eyebrow as="h2" className="px-1">
+      {children}
+      <span className="rounded-xs bg-surface-soft px-1.5 py-0.5 tabular-nums tracking-normal text-text-muted">{count}</span>
+    </Eyebrow>
   );
 }

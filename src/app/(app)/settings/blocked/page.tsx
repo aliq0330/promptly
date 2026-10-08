@@ -46,21 +46,21 @@ export default function BlockedUsersPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-xl space-y-4 px-4 py-6 sm:px-6">
+    <div className="mx-auto w-full max-w-xl animate-fade-in space-y-5 px-3 py-5 sm:px-5 sm:py-7 lg:px-8 lg:py-10">
       <Link href="/settings" className="inline-flex items-center gap-1 text-sm text-text-muted hover:text-text">
         <ArrowLeft size={14} />
         {t("settings.backToSettings")}
       </Link>
-      <h1 className="text-h1 font-semibold text-text">{t("settings.blockedUsers")}</h1>
+      <h1 className="text-h1 text-text">{t("settings.blockedUsers")}</h1>
       {error && <p className="text-sm text-danger">{error}</p>}
       {blocked === null ? (
         <p className="py-10 text-center text-sm text-text-muted">{t("settings.loadingEllipsis")}</p>
       ) : blocked.length === 0 ? (
-        <p className="py-10 text-center text-sm text-text-muted">{t("settings.blockedEmpty")}</p>
+        <p className="rounded-xl border border-dashed border-border-soft py-10 text-center text-sm text-text-muted">{t("settings.blockedEmpty")}</p>
       ) : (
-        <div className="overflow-hidden rounded-lg border border-border bg-surface">
+        <div className="overflow-hidden rounded-xl border border-border-soft bg-surface shadow-card">
           {blocked.map((profile) => (
-            <div key={profile.id} className="flex items-center gap-3 border-b border-border px-4 py-3 last:border-0">
+            <div key={profile.id} className="flex items-center gap-3 border-b border-border-soft px-4 py-3 last:border-0">
               <Link href={profileHref(profile)} className="flex min-w-0 flex-1 items-center gap-3">
                 <Avatar src={profile.avatarUrl} alt={profile.displayName} size={44} />
                 <div className="min-w-0">

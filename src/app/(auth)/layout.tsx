@@ -19,7 +19,7 @@ export default function AuthGroupLayout({ children }: { children: ReactNode }) {
           <span className="font-serif text-[1.35rem] font-semibold tracking-[-0.02em] text-text">Promptly</span>
         </Link>
         <div className="space-y-5">
-          <h2 className="text-display font-semibold text-text">{t("home.heroTitle")}</h2>
+          <h2 className="max-w-md text-display text-text">{t("home.heroTitle")}</h2>
           <p className="max-w-sm text-body text-text-secondary">
             {t("auth.taglineDescription")}
           </p>
@@ -28,7 +28,7 @@ export default function AuthGroupLayout({ children }: { children: ReactNode }) {
               (line, index) => (
                 <div
                   key={line}
-                  className="prompt-text flex max-w-sm items-center gap-2 rounded-md border border-border-soft bg-surface-soft px-3 py-2 text-text-muted"
+                  className="prompt-text flex max-w-sm items-center gap-2 rounded-lg border border-border-soft bg-surface-soft px-3 py-2 text-text-muted shadow-xs"
                   style={{ opacity: 1 - index * 0.25 }}
                 >
                   <span className="text-primary">›</span>
@@ -46,7 +46,7 @@ export default function AuthGroupLayout({ children }: { children: ReactNode }) {
           <BrandMark size={30} />
           <span className="font-serif text-[1.3rem] font-semibold tracking-[-0.02em] text-text">Promptly</span>
         </Link>
-        <div className="w-full max-w-sm rounded-lg border border-border-soft bg-surface p-6 shadow-card sm:p-7">{children}</div>
+        <div className="w-full max-w-sm animate-fade-in rounded-xl border border-border-soft bg-surface p-6 shadow-card sm:p-8">{children}</div>
       </div>
     </div>
   );

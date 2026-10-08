@@ -30,19 +30,19 @@
  * Palette: Lavender — calm violet, the original Promptly identity
  * ------------------------------------------------------------------------- */
 [data-palette="lavender"] {
-  --p-bg: #f7f6fb;
-  --p-surface: #ffffff;
-  --p-surface-soft: #f3f1f9;
+  --p-bg: #f3f1f9;
+  --p-surface: #fefdff;
+  --p-surface-soft: #edeaf6;
   --p-surface-elevated: #ffffff;
-  --p-text: #1f1c2e;
-  --p-text-secondary: #4a4560;
-  --p-text-muted: #6f6a84;
-  --p-border: #e3dfee;
-  --p-border-soft: #eeebf5;
+  --p-text: #1b1828;
+  --p-text-secondary: #463f5c;
+  --p-text-muted: #666079;
+  --p-border: #e0dbec;
+  --p-border-soft: #eae6f3;
   --p-border-strong: #cfc8e2;
   --p-primary: #6a3de0;
   --p-primary-hover: #5730c2;
-  --p-primary-soft: #efe9fd;
+  --p-primary-soft: #ece5fd;
   --p-primary-fg: #ffffff;
   --p-secondary: #1f9e8f;
   --p-shadow: 38 24 84;
@@ -54,7 +54,7 @@
 
 .dark[data-palette="lavender"],
 .dark [data-palette="lavender"] {
-  --p-bg: #121019;
+  --p-bg: #0f0d15;
   --p-surface: #1a1724;
   --p-surface-soft: #221e2e;
   --p-surface-elevated: #27223a;
@@ -80,19 +80,19 @@
  * Palette: Ocean — deep navy with an electric blue accent
  * ------------------------------------------------------------------------- */
 [data-palette="ocean"] {
-  --p-bg: #f5f7fb;
-  --p-surface: #ffffff;
-  --p-surface-soft: #eef2f9;
+  --p-bg: #f1f4f9;
+  --p-surface: #fdfeff;
+  --p-surface-soft: #e9eef7;
   --p-surface-elevated: #ffffff;
-  --p-text: #0f1a33;
-  --p-text-secondary: #3a4763;
-  --p-text-muted: #616d87;
-  --p-border: #dee5f0;
-  --p-border-soft: #eaeff6;
+  --p-text: #0d1730;
+  --p-text-secondary: #36435f;
+  --p-text-muted: #5a6680;
+  --p-border: #dae2ee;
+  --p-border-soft: #e6ecf4;
   --p-border-strong: #c5d0e2;
   --p-primary: #2856e0;
   --p-primary-hover: #1f45bd;
-  --p-primary-soft: #e7eefd;
+  --p-primary-soft: #e4ecfd;
   --p-primary-fg: #ffffff;
   --p-secondary: #0f9fb5;
   --p-shadow: 15 30 70;
@@ -100,7 +100,7 @@
 
 .dark[data-palette="ocean"],
 .dark [data-palette="ocean"] {
-  --p-bg: #0a0f1e;
+  --p-bg: #080c18;
   --p-surface: #111a2d;
   --p-surface-soft: #172137;
   --p-surface-elevated: #1b2741;
@@ -122,19 +122,19 @@
  * Palette: Forest — deep green with a fresh mint accent
  * ------------------------------------------------------------------------- */
 [data-palette="forest"] {
-  --p-bg: #f5f8f6;
-  --p-surface: #ffffff;
-  --p-surface-soft: #edf3ef;
+  --p-bg: #f1f5f2;
+  --p-surface: #fdfefd;
+  --p-surface-soft: #e8efea;
   --p-surface-elevated: #ffffff;
-  --p-text: #13231b;
-  --p-text-secondary: #3b4f45;
-  --p-text-muted: #5f7067;
-  --p-border: #dce7e0;
-  --p-border-soft: #e9f0ec;
+  --p-text: #11201a;
+  --p-text-secondary: #384b41;
+  --p-text-muted: #596a61;
+  --p-border: #d8e4dc;
+  --p-border-soft: #e5ede8;
   --p-border-strong: #c1d3c8;
   --p-primary: #1b7453;
   --p-primary-hover: #155d43;
-  --p-primary-soft: #e0f1e8;
+  --p-primary-soft: #ddefe5;
   --p-primary-fg: #ffffff;
   --p-secondary: #b7791f;
   --p-shadow: 18 50 35;
@@ -142,7 +142,7 @@
 
 .dark[data-palette="forest"],
 .dark [data-palette="forest"] {
-  --p-bg: #0c1310;
+  --p-bg: #0a100d;
   --p-surface: #131c18;
   --p-surface-soft: #19241f;
   --p-surface-elevated: #1e2b25;

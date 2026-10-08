@@ -29,6 +29,7 @@ import {
 import { fetchLikedCommentIds, likeComment, unlikeComment } from "@/lib/supabase/comment-likes";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { CommentNode, type CommentTree } from "./comment-node";
+import { Eyebrow } from "@/features/content/detail-parts";
 import type { PromptComment } from "@/types";
 
 export type CommentTarget = { promptId: string } | { requestId: string } | { generatorId: string } | { resultId: string } | { workflowId: string } | { presetId: string };
@@ -431,10 +432,10 @@ export function CommentSection({
 
   return (
     <section className="space-y-4">
-      <h2 className="flex items-center gap-2 text-h3 font-semibold text-text">
+      <Eyebrow as="h2">
         {t("comments.title")}
-        <span className="rounded-xs bg-surface-soft px-1.5 font-sans text-caption font-semibold tabular-nums text-text-muted">{comments.length}</span>
-      </h2>
+        <span className="rounded-xs bg-surface-soft px-1.5 py-0.5 tabular-nums tracking-normal text-text-muted">{comments.length}</span>
+      </Eyebrow>
 
       {highlightNotFound && (
         <p className="rounded-md bg-surface-soft px-3 py-2.5 text-small text-text-muted">

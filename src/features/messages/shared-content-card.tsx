@@ -19,7 +19,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Generator, Preset, Prompt, PromptRequest, Workflow } from "@/types";
 
 const CARD_CLASS =
-  "block w-56 space-y-1.5 rounded-md border border-border bg-surface p-2.5 text-left transition-colors hover:bg-accent-surface/60";
+  "block w-56 space-y-1.5 rounded-xl border border-border-soft bg-surface p-2.5 text-left shadow-card transition-colors duration-200 ease-soft hover:border-border-strong";
 
 /** A message's shared-prompt content card — a real prompt, or "Bu içerik artık mevcut değil" for one that's gone/emptied (Bölüm 9.7's safe-delete). */
 export function SharedPromptCard({ promptId }: { promptId: string }) {

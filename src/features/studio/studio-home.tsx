@@ -59,11 +59,11 @@ export function StudioHome({ onNew, onOpen, onContinue }: { onNew: (startWith?: 
     <div className="space-y-6">
       <div className="flex min-w-0 flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border-soft bg-primary-soft text-primary shadow-xs">
             <FlaskConical className="h-5 w-5" strokeWidth={1.75} aria-hidden />
           </span>
           <div className="min-w-0">
-            <h1 className="font-display text-h2 font-semibold text-text">{t("studio.title")}</h1>
+            <h1 className="text-h1 text-text">{t("studio.title")}</h1>
             <p className="text-small text-text-secondary">{t("studio.homeSubtitle")}</p>
           </div>
         </div>
@@ -77,7 +77,7 @@ export function StudioHome({ onNew, onOpen, onContinue }: { onNew: (startWith?: 
         <button
           type="button"
           onClick={onContinue}
-          className="flex min-h-14 w-full items-center justify-between gap-3 rounded-lg border border-primary/50 bg-primary-soft/50 px-4 py-3 text-left text-small font-medium text-text hover:bg-primary-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          className="flex min-h-14 w-full items-center justify-between gap-3 rounded-xl border border-primary/50 bg-primary-soft/50 px-4 py-3 text-left text-small font-medium text-text hover:bg-primary-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
         >
           {t("studio.continueWorkspace")}
           <ChevronRight className="h-4 w-4 shrink-0 text-primary" aria-hidden />
@@ -94,7 +94,7 @@ export function StudioHome({ onNew, onOpen, onContinue }: { onNew: (startWith?: 
                 key={kind}
                 type="button"
                 onClick={() => onNew(kind)}
-                className="flex min-h-14 items-center gap-2.5 rounded-lg border border-border-soft bg-surface px-3 py-2 text-left text-small font-medium text-text transition-colors hover:border-primary hover:bg-primary-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                className="flex min-h-14 items-center gap-2.5 rounded-xl border border-border-soft bg-surface px-3 py-2 text-left text-small font-medium text-text shadow-xs transition-colors hover:border-primary hover:bg-primary-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               >
                 <Icon className="h-4 w-4 shrink-0 text-primary" strokeWidth={1.75} aria-hidden />
                 <span className="min-w-0 truncate">{t(`studio.kind.${kind}` as const)}</span>
@@ -112,18 +112,18 @@ export function StudioHome({ onNew, onOpen, onContinue }: { onNew: (startWith?: 
             <Skeleton className="h-20 w-full" />
           </div>
         ) : !user ? (
-          <div className="rounded-lg border border-dashed border-border-strong bg-surface p-5 text-center">
+          <div className="rounded-xl border border-dashed border-border-strong bg-surface p-5 text-center">
             <p className="text-small text-text-secondary">{t("studio.homeGuest")}</p>
             <Button type="button" variant="outline" onClick={() => requireAuth("create")} className="mt-3 h-11">
               {t("common.login")}
             </Button>
           </div>
         ) : sessions && sessions.length === 0 ? (
-          <p className="rounded-lg border border-dashed border-border-strong bg-surface p-5 text-center text-small text-text-secondary">{t("studio.homeEmpty")}</p>
+          <p className="rounded-xl border border-dashed border-border-strong bg-surface p-5 text-center text-small text-text-secondary">{t("studio.homeEmpty")}</p>
         ) : (
           <ul className="grid gap-2 @min-[620px]:grid-cols-2">
             {sessions?.map((session) => (
-              <li key={session.id} className="flex min-w-0 items-stretch rounded-lg border border-border-soft bg-surface transition-colors hover:border-primary/60">
+              <li key={session.id} className="flex min-w-0 items-stretch rounded-xl border border-border-soft bg-surface shadow-card transition-colors hover:border-primary/60">
                 <button
                   type="button"
                   onClick={() => onOpen(session.id)}

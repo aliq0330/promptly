@@ -72,7 +72,7 @@ export function VersionsPane({
           const parent = version.parentId ? versions.find((v) => v.id === version.parentId) : null;
           const isCurrent = JSON.stringify(version.snapshot) === JSON.stringify(draft);
           return (
-            <li key={version.id} className="rounded-lg border border-border-soft bg-surface p-3">
+            <li key={version.id} className="rounded-xl border border-border-soft bg-surface p-3 shadow-card">
               <div className="flex flex-wrap items-center gap-2">
                 <History className="h-4 w-4 shrink-0 text-text-muted" aria-hidden />
                 <span className="min-w-0 flex-1 truncate text-small font-semibold text-text">{versionName(version, t)}</span>

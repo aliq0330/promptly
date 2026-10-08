@@ -201,7 +201,7 @@ export function MessageBubble({
             setEmojiOpen((prev) => !prev);
             setMenuOpen(false);
           }}
-          className="flex h-8 w-8 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-accent-surface hover:text-text"
+          className="flex h-8 w-8 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-surface-soft hover:text-text"
         >
           <SmilePlus size={16} />
         </button>
@@ -221,7 +221,7 @@ export function MessageBubble({
             setMenuOpen((prev) => !prev);
             setEmojiOpen(false);
           }}
-          className="flex h-8 w-8 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-accent-surface hover:text-text"
+          className="flex h-8 w-8 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-surface-soft hover:text-text"
         >
           <MoreHorizontal size={16} />
         </button>
@@ -262,7 +262,7 @@ export function MessageBubble({
       {replyPreview && (
         <div
           className={cn(
-            "mb-1 flex max-w-[75%] items-center gap-1 rounded-t-md border-l-2 border-primary bg-accent-surface/50 px-2 py-1 text-xs text-text-muted",
+            "mb-1 flex max-w-[75%] items-center gap-1 rounded-lg border-l-2 border-primary bg-surface-soft px-2.5 py-1 text-xs text-text-muted",
             isMe && "flex-row-reverse border-l-0 border-r-2 text-right",
           )}
         >
@@ -272,7 +272,7 @@ export function MessageBubble({
 
       <div className={cn("flex items-center gap-1", isMe ? "flex-row-reverse" : "flex-row")}>
         {isDeleted ? (
-          <div className="max-w-[75%] rounded-lg bg-accent-surface/40 px-3 py-2 text-sm italic text-text-muted">
+          <div className="max-w-[75%] rounded-2xl border border-dashed border-border-soft px-3.5 py-2 text-sm italic text-text-muted">
             {t("messages.thisMessageWasDeleted")}
           </div>
         ) : isEditingHere ? (
@@ -282,7 +282,7 @@ export function MessageBubble({
               onChange={(event) => actions.onEditDraftChange(event.target.value)}
               rows={2}
               autoFocus
-              className="w-full resize-none rounded-md border border-border bg-surface px-3 py-1.5 text-sm text-text focus:outline-none focus:ring-1 focus:ring-primary"
+              className="w-full resize-none rounded-xl border border-border-soft bg-surface px-3 py-1.5 text-sm text-text shadow-xs focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
             />
             <div className="flex items-center gap-2">
               <Button
@@ -309,8 +309,8 @@ export function MessageBubble({
             {displayBody && (
               <div
                 className={cn(
-                  "rounded-lg px-3 py-2 text-sm",
-                  isMe ? "bg-primary text-primary-foreground" : "bg-accent-surface text-text",
+                  "rounded-2xl px-3.5 py-2 text-sm leading-relaxed shadow-xs",
+                  isMe ? "rounded-br-md bg-primary text-primary-foreground" : "rounded-bl-md border border-border-soft bg-surface text-text",
                 )}
               >
                 <p className="break-words">{displayBody}</p>
@@ -322,7 +322,7 @@ export function MessageBubble({
                   <span
                     key={reaction.userId}
                     data-reaction-emoji={reaction.emoji}
-                    className="flex h-5 w-5 items-center justify-center rounded-full border border-border bg-surface text-[11px] leading-none shadow-sm"
+                    className="flex h-5 w-5 items-center justify-center rounded-full border border-border-soft bg-surface text-[11px] leading-none shadow-sm"
                   >
                     {reaction.emoji}
                   </span>
