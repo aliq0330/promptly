@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -25,12 +26,43 @@ export function MobileNav() {
     return status === "unauthenticated" ? guestLoginNavItem : null;
   });
 
+  // Scrolling down shrinks/dims the bar; scrolling up, hovering, touching or
+  // focusing inside it brings it back to full size.
+  const [scrolledDown, setScrolledDown] = useState(false);
+  const [engaged, setEngaged] = useState(false);
+  useEffect(() => {
+    let lastY = window.scrollY;
+    const onScroll = () => {
+      const y = window.scrollY;
+      const delta = y - lastY;
+      if (y < 24) setScrolledDown(false);
+      else if (delta > 6) setScrolledDown(true);
+      else if (delta < -6) setScrolledDown(false);
+      if (Math.abs(delta) > 6) lastY = y;
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+  const compact = scrolledDown && !engaged;
+
   return (
     <nav
       aria-label={t("nav.primaryLabel")}
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-border-soft bg-surface/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl backdrop-saturate-150 md:hidden"
+      className="pointer-events-none fixed inset-x-0 bottom-[calc(0.5rem+env(safe-area-inset-bottom))] z-40 flex justify-center px-3 md:hidden"
     >
-      <ul className="flex h-16 items-stretch">
+      <ul
+        onPointerEnter={() => setEngaged(true)}
+        onPointerLeave={() => setEngaged(false)}
+        onPointerDown={() => setEngaged(true)}
+        onPointerUp={() => setEngaged(false)}
+        onPointerCancel={() => setEngaged(false)}
+        onFocus={() => setEngaged(true)}
+        onBlur={() => setEngaged(false)}
+        className={cn(
+          "pointer-events-auto flex items-stretch rounded-[1.75rem] border border-border-soft bg-surface-elevated shadow-pop backdrop-blur-xl backdrop-saturate-150 transition-[width,height,opacity] duration-300 ease-soft motion-reduce:transition-none",
+          compact ? "h-14 w-[82%] opacity-70" : "h-16 w-full opacity-100",
+        )}
+      >
         {items.map((item, index) => {
           if (!item) return <li key={`slot-${index}`} aria-hidden className="flex flex-1" />;
           const href = item.href === PROFILE_NAV_PLACEHOLDER ? profileNavHref : item.href;
