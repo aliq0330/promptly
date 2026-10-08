@@ -271,7 +271,7 @@ export async function uploadAvatar(userId: string, file: File): Promise<string> 
 export interface OwnPreferences {
   language: "tr" | "en" | null;
   themeMode: "light" | "dark" | null;
-  themePalette: "lavender" | "ocean" | "forest" | "sand" | null;
+  themePalette: "mono" | "lavender" | "ocean" | "forest" | "sand" | null;
 }
 
 /** The signed-in user's saved language/theme choices (null = never chosen explicitly). */

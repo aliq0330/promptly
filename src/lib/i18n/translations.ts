@@ -159,6 +159,7 @@ export const translations = {
   "settings.modeLight": { tr: "Açık", en: "Light" },
   "settings.modeDark": { tr: "Koyu", en: "Dark" },
   "settings.paletteLabel": { tr: "Renk teması", en: "Color theme" },
+  "settings.palette.mono": { tr: "Beyaz", en: "White" },
   "settings.palette.lavender": { tr: "Lavanta", en: "Lavender" },
   "settings.palette.ocean": { tr: "Okyanus", en: "Ocean" },
   "settings.palette.forest": { tr: "Orman", en: "Forest" },
