@@ -12758,3 +12758,7 @@ Kart/Odak ızgaralarında (`PromptGrid`, `FeedGrid`, `RequestList`, `FocusGrid`)
 ### 9.119 Masonry sütun hizası: boşluk `margin` yerine `padding`
 
 Odak/Kart ızgaralarında ikinci sütunun ilk kartı ~10px aşağıda başlıyordu (mobil Safari). Kök neden: WebKit, CSS sütunlarında önceki sütunun son öğesinin `margin-bottom`'ını bir sonraki sütunun tepesine taşıyor (Bölüm 9.118'deki animasyon değişikliği bunu çözmemişti). Tüm `break-inside-avoid` sarmalayıcılarında (feed, prompt, istek, odak, profil, koleksiyon, hazır ayar, workflow, arama, skeleton) boşluk `mb-*` yerine `pb-*` ile veriliyor. Görsel boşluk aynı; yalnızca sınıf değişikliği. Yeni kolonlu ızgara eklenirken `mb-*` değil `pb-*` kullanılmalı. Migration, yeni metin yok. Gerçek iOS Safari'de denenmedi.
+
+### 9.120 Mobil alt navigasyon: yüzen yuvarlak çubuk + kaydırınca küçülme
+
+`MobileNav` artık kenarlara yapışık şerit değil, altta yüzen yuvarlak köşeli (`rounded-[1.75rem]`, `shadow-pop`) bir çubuk (`bottom: 0.5rem + safe-area`, yanlarda 12px). Sayfa aşağı kaydırılınca (scroll delta > 6px, `scrollY ≥ 24`) yükseklik h-16→h-14, genişlik %100→%82 ve opaklık %70 olur; yukarı kaydırınca, sayfanın başında, üzerine gelince/dokununca/odaklanınca (`pointer*`, `focus`) eski haline döner. `prefers-reduced-motion`'da geçiş yok. Yer kaplamayı etkileyen ofsetler 0.5rem artırıldı: `AppShell` alt boşluğu (6.5rem), konuşma paneli `bottom` (5rem; klavye mantığı taban değeri CSS'ten okuduğu için değişmedi), iki toast (6rem). Yeni metin yok (İngilizce gerekmedi), migration yok. Gerçek cihazda/tarayıcıda denenmedi.
