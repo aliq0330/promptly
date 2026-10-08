@@ -25,7 +25,7 @@ export function ProfileContentGrid({
   return (
     <div className="columns-1 gap-4 sm:columns-2 xl:columns-3">
       {prompts.map((prompt) => (
-        <div key={prompt.id} className="mb-4 break-inside-avoid">
+        <div key={prompt.id} className="pb-4 break-inside-avoid">
           <PromptCard
             prompt={prompt}
             onDeleted={isOwnProfile ? () => onDeleted(prompt.id) : undefined}
