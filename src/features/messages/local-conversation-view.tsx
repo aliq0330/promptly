@@ -5,12 +5,15 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, X } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useBlockState } from "@/features/moderation/use-block-state";
 import { ProfileMoreMenu } from "@/features/profile/profile-more-menu";
 import { useRealMessages } from "./real-messages-provider";
 import { MessageBubble, type DeleteMode, type MessageReactionEntry } from "./message-bubble";
+import { MessageComposer, useImageDrop } from "./message-composer";
+import { PendingMessageBubble, type PendingSend } from "./pending-message-bubble";
+import { useComposerImages } from "./use-composer-images";
+import { removeMessageImages, uploadMessageImage } from "@/lib/supabase/message-images";
 import {
   deleteMessageForEveryone,
   editMessage,
@@ -41,7 +44,7 @@ import { fetchPresetById } from "@/lib/supabase/presets";
 import { useRealPresets } from "@/features/presets/real-presets-provider";
 import { fetchWorkflowById } from "@/lib/supabase/workflows";
 import { useRealWorkflows } from "@/features/workflows/real-workflows-provider";
-import type { Conversation, Generator, Message, UserProfile } from "@/types";
+import type { Conversation, Generator, Message, MessageAttachment, UserProfile } from "@/types";
 
 /** Used only to give `useBlockState` a stable, always-defined target before the real conversation/participant has loaded — hooks must run unconditionally, and `canBlock` inside it is false until a real user session exists anyway, so this placeholder never actually reaches a query with a meaningful id. */
 const EMPTY_PARTICIPANT: UserProfile = {
@@ -107,6 +110,10 @@ export function LocalConversationView() {
   const [draft, setDraft] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
+  const composerImages = useComposerImages();
+  // Photo messages that have left the composer but aren't real rows yet (uploading, or failed and awaiting a retry).
+  const [pendingSends, setPendingSends] = useState<PendingSend[]>([]);
+  const pendingRef = useRef<PendingSend[]>([]);
 
   const [fetchedShareTitle, setFetchedShareTitle] = useState<string | null>(null);
   // Only needed for a shared generator — its plain-text share line needs a
@@ -144,6 +151,8 @@ export function LocalConversationView() {
   // kullanılıyor — `useBlockState`'in `canBlock`'u zaten oturum yokken
   // false, ve id boş olduğunda sorgu hiçbir şeye eşleşmiyor.
   const blockState = useBlockState(conversation?.participants[0] ?? EMPTY_PARTICIPANT);
+  // Desktop drag-and-drop of photos anywhere on the conversation panel.
+  const imageDrop = useImageDrop(composerImages.addFiles, !blockState.isBlocked);
 
   const highlight = parseHighlightValue(searchParams.get("hl"));
   const highlightMessageId = highlight?.kind === "message" ? highlight.id : null;
@@ -159,6 +168,18 @@ export function LocalConversationView() {
   useEffect(() => {
     isNearBottomRef.current = isNearBottom;
   }, [isNearBottom]);
+
+  useEffect(() => {
+    pendingRef.current = pendingSends;
+  }, [pendingSends]);
+
+  // Revoke any local previews still held by unsent photo messages when the thread unmounts.
+  useEffect(
+    () => () => {
+      for (const pending of pendingRef.current) for (const image of pending.images) URL.revokeObjectURL(image.previewUrl);
+    },
+    [],
+  );
 
   function handleListScroll(event: UIEvent<HTMLDivElement>) {
     const el = event.currentTarget;
@@ -380,12 +401,12 @@ export function LocalConversationView() {
   // incelerken gelen bir mesaj scroll konumunu zorla değiştirmesin.
   useEffect(() => {
     const last = messages[messages.length - 1];
-    const isOwnMessage = Boolean(last && user && last.senderId === user.id);
+    const isOwnMessage = Boolean(last && user && last.senderId === user.id) || pendingRef.current.length > 0;
     if (isNearBottomRef.current || isOwnMessage) {
       bottomRef.current?.scrollIntoView({ block: "end" });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- deliberately only reacts to the message count changing, reads the rest fresh via refs/closures
-  }, [messages.length]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- deliberately only reacts to the message/pending counts changing, reads the rest fresh via refs/closures
+  }, [messages.length, pendingSends.length]);
 
   // Mobil klavye desteği (iPhone) — `panelRef`'in taban (bottom) boşluğu
   // varsayılan olarak Tailwind sınıflarından geliyor (mobil bottom
@@ -483,50 +504,150 @@ export function LocalConversationView() {
     (pendingShare?.type === "generator" && !pendingShare.slug) || (pendingShare?.type === "workflow" && !pendingShare.resolved) ||
     (pendingShare?.type === "preset" && !pendingShare.resolved);
 
+  /** The finished `body` for an outgoing message — generator/workflow/preset shares have no embed column (Bölüm 9.52), so they're composed into the text itself. */
+  function composeOutgoingBody(trimmed: string): string | undefined {
+    // A generator has no rich embed column in `messages` (only
+    // shared_prompt_id/shared_request_id exist, Bölüm 9.8) — deliberately
+    // not extended with a new column for the Unified Share System task
+    // (its own hard rule: no new messaging table/column/architecture).
+    // So sharing a generator reuses the exact same plain-text `body`
+    // send path every other message already goes through, composed via
+    // `composeGeneratorShareBody` (shared with `message-bubble.tsx`'s
+    // matching parser, so a shared generator still renders as a real
+    // card, Bölüm 9.52's follow-up fix) instead of a database-backed
+    // shared-content card.
+    return pendingShare?.type === "generator" && pendingShare.slug
+      ? composeGeneratorShareBody(trimmed, pendingShare.title, pendingShare.slug)
+      : pendingShare?.type === "workflow"
+        ? composeWorkflowShareBody(trimmed, pendingShare.title, pendingShare.id)
+        : pendingShare?.type === "preset"
+          ? composePresetShareBody(trimmed, pendingShare.title, pendingShare.id)
+          : trimmed || undefined;
+  }
+
+  function afterSuccessfulSend() {
+    // Replying to a pending message request auto-accepts it (Bölüm 21 Faz B) — matches how most real messaging apps treat a reply as implicit acceptance.
+    if (id && conversation?.myStatus === "pending") {
+      setConversation((prev) => (prev ? { ...prev, myStatus: "accepted" } : prev));
+      acceptRequest(id).catch((err) => console.error("acceptRequest (auto, on reply)", err));
+    }
+  }
+
+  function patchPending(pendingId: string, patch: Partial<PendingSend>) {
+    setPendingSends((prev) => prev.map((p) => (p.id === pendingId ? { ...p, ...patch } : p)));
+  }
+
+  function dropPending(pendingId: string, { revoke }: { revoke: boolean }) {
+    const target = pendingRef.current.find((p) => p.id === pendingId);
+    if (revoke && target) for (const image of target.images) URL.revokeObjectURL(image.previewUrl);
+    setPendingSends((prev) => prev.filter((p) => p.id !== pendingId));
+  }
+
+  /**
+   * Upload → insert for one photo message. Safe to call again for a failed
+   * one: photos that already uploaded are reused (`uploaded`), and the
+   * message keeps the same client-generated id, so a retry — or the Realtime
+   * echo of an earlier attempt that actually went through — can never
+   * produce a second copy.
+   */
+  async function runPendingSend(initial: PendingSend) {
+    if (!id || !user) return;
+    patchPending(initial.id, { status: "sending", error: null });
+    const uploaded = [...initial.uploaded];
+    try {
+      for (let i = 0; i < initial.images.length; i += 1) {
+        if (uploaded[i]) continue;
+        const prepared = initial.images[i].prepared;
+        if (!prepared) throw new Error(t("image.processFailed"));
+        uploaded[i] = await uploadMessageImage(id, user.id, prepared);
+        patchPending(initial.id, { uploaded: [...uploaded] });
+      }
+      const sent = await sendMessage(id, user.id, {
+        id: initial.id,
+        body: initial.body,
+        attachments: uploaded.filter((a): a is MessageAttachment => Boolean(a)),
+        sharedPromptId: initial.sharedPromptId,
+        sharedRequestId: initial.sharedRequestId,
+        replyToMessageId: initial.replyToMessageId,
+      });
+      setMessages((prev) => mergeIncomingMessage(prev, sent));
+      dropPending(initial.id, { revoke: true });
+      afterSuccessfulSend();
+    } catch (err) {
+      console.error("send photo message", err);
+      const raw = err instanceof Error ? err.message : "";
+      if (raw.toLowerCase().includes("duplicate key")) {
+        // An earlier attempt did land — the message exists (Realtime/refetch shows it); nothing to retry.
+        dropPending(initial.id, { revoke: true });
+        if (user) fetchMessages(id, user.id).then(setMessages);
+        return;
+      }
+      patchPending(initial.id, { status: "failed", error: raw ? translateSendError(raw) : t("messages.sendFailed") });
+    }
+  }
+
+  function retryPending(pendingId: string) {
+    const target = pendingRef.current.find((p) => p.id === pendingId);
+    if (target && target.status === "failed") void runPendingSend(target);
+  }
+
+  async function discardPending(pendingId: string) {
+    const target = pendingRef.current.find((p) => p.id === pendingId);
+    dropPending(pendingId, { revoke: true });
+    // Photos that already reached storage but will never be attached to a message.
+    const orphaned = (target?.uploaded ?? []).filter((a): a is MessageAttachment => Boolean(a));
+    if (orphaned.length > 0) await removeMessageImages(orphaned.map((a) => a.path));
+  }
+
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     const trimmed = draft.trim();
-    if ((!trimmed && !pendingShare) || !id || !user || isSending || isGeneratorShareUnresolved) return;
+    const stagedImages = composerImages.images.filter((image) => image.status === "ready");
+    const hasPhotos = stagedImages.length > 0;
+    if ((!trimmed && !pendingShare && !hasPhotos) || !id || !user || isSending || isGeneratorShareUnresolved || composerImages.isPreparing) return;
+
+    if (hasPhotos) {
+      // Optimistic: the composer empties and the message appears right away with its local previews; upload + insert run in the background.
+      const pending: PendingSend = {
+        id: crypto.randomUUID(),
+        body: composeOutgoingBody(trimmed),
+        sharedPromptId: pendingShare?.type === "prompt" ? pendingShare.id : undefined,
+        sharedRequestId: pendingShare?.type === "request" ? pendingShare.id : undefined,
+        replyToMessageId: replyingTo?.id,
+        images: composerImages.take(),
+        uploaded: stagedImages.map(() => null),
+        status: "sending",
+        error: null,
+      };
+      setPendingSends((prev) => [...prev, pending]);
+      setDraft("");
+      setReplyingTo(null);
+      setSendError(null);
+      if (pendingShare) {
+        setDismissedShare(true);
+        clearShareParams();
+      }
+      void runPendingSend(pending);
+      return;
+    }
+
     setIsSending(true);
     setSendError(null);
     try {
-      // A generator has no rich embed column in `messages` (only
-      // shared_prompt_id/shared_request_id exist, Bölüm 9.8) — deliberately
-      // not extended with a new column for the Unified Share System task
-      // (its own hard rule: no new messaging table/column/architecture).
-      // So sharing a generator reuses the exact same plain-text `body`
-      // send path every other message already goes through, composed via
-      // `composeGeneratorShareBody` (shared with `message-bubble.tsx`'s
-      // matching parser, so a shared generator still renders as a real
-      // card, Bölüm 9.52's follow-up fix) instead of a database-backed
-      // shared-content card.
-      const body =
-        pendingShare?.type === "generator" && pendingShare.slug
-          ? composeGeneratorShareBody(trimmed, pendingShare.title, pendingShare.slug)
-          : pendingShare?.type === "workflow"
-            ? composeWorkflowShareBody(trimmed, pendingShare.title, pendingShare.id)
-            : pendingShare?.type === "preset"
-              ? composePresetShareBody(trimmed, pendingShare.title, pendingShare.id)
-              : trimmed || undefined;
-
       const sent = await sendMessage(id, user.id, {
-        body,
+        body: composeOutgoingBody(trimmed),
         sharedPromptId: pendingShare?.type === "prompt" ? pendingShare.id : undefined,
         sharedRequestId: pendingShare?.type === "request" ? pendingShare.id : undefined,
         replyToMessageId: replyingTo?.id,
       });
-      setMessages((prev) => [...prev, sent]);
+      setMessages((prev) => mergeIncomingMessage(prev, sent));
       setDraft("");
       setReplyingTo(null);
       if (pendingShare) {
         setDismissedShare(true);
         clearShareParams();
       }
-      // Replying to a pending message request auto-accepts it (Bölüm 21 Faz B) — matches how most real messaging apps treat a reply as implicit acceptance.
-      if (conversation?.myStatus === "pending") {
-        setConversation((prev) => (prev ? { ...prev, myStatus: "accepted" } : prev));
-        acceptRequest(id).catch((err) => console.error("acceptRequest (auto, on reply)", err));
-      }
+      afterSuccessfulSend();
     } catch (err) {
       setSendError(err instanceof Error ? translateSendError(err.message) : t("messages.sendFailed"));
     } finally {
@@ -578,11 +699,14 @@ export function LocalConversationView() {
   }
 
   async function submitEdit(messageId: string) {
-    if (!user || !editDraft.trim()) return;
+    const target = messages.find((m) => m.id === messageId);
+    const hasPhotos = (target?.attachments.length ?? 0) > 0;
+    // A photo message may have its caption emptied; a text-only one may not (that would leave nothing).
+    if (!user || (!editDraft.trim() && !hasPhotos)) return;
     setIsSavingEdit(true);
     setEditError(null);
     try {
-      const updated = await editMessage(messageId, user.id, editDraft.trim());
+      const updated = await editMessage(messageId, user.id, editDraft.trim(), hasPhotos);
       setMessages((prev) => prev.map((m) => (m.id === messageId ? updated : m)));
       setEditingId(null);
     } catch (err) {
@@ -601,9 +725,11 @@ export function LocalConversationView() {
     setDeletingId(messageId);
     try {
       if (mode === "everyone") {
-        await deleteMessageForEveryone(messageId, user.id);
+        await deleteMessageForEveryone(messageId, user.id, messages.find((m) => m.id === messageId)?.attachments ?? []);
         setMessages((prev) =>
-          prev.map((m) => (m.id === messageId ? { ...m, body: null, sharedPromptId: null, sharedRequestId: null, deletedAt: new Date().toISOString() } : m)),
+          prev.map((m) =>
+            m.id === messageId ? { ...m, body: null, sharedPromptId: null, sharedRequestId: null, attachments: [], deletedAt: new Date().toISOString() } : m,
+          ),
         );
       } else {
         await hideMessageForMe(messageId, user.id);
@@ -658,10 +784,13 @@ export function LocalConversationView() {
   }
 
   const participant = conversation.participants[0];
+  // A pending bubble is hidden the instant its real message is in the thread (the INSERT response or the Realtime echo, whichever lands first) — never both at once.
+  const visiblePending = pendingSends.filter((p) => !messagesById.has(p.id));
 
   return (
     <div
       ref={panelRef}
+      {...imageDrop.handlers}
       className="fixed inset-x-0 top-16 z-10 flex flex-col bg-background bottom-[calc(4rem+env(safe-area-inset-bottom))] md:static md:inset-auto md:z-auto md:h-full md:min-h-0 md:flex-1"
     >
       <div className="flex items-center gap-1 border-b border-border-soft bg-surface px-2 py-2 lg:px-4">
@@ -722,7 +851,7 @@ export function LocalConversationView() {
             {t("messages.messageNotViewable")}
           </p>
         )}
-        {messages.length === 0 ? (
+        {messages.length === 0 && visiblePending.length === 0 ? (
           <p className="py-10 text-center text-sm text-text-muted">
             {t("messages.noMessagesYet")}
           </p>
@@ -757,62 +886,71 @@ export function LocalConversationView() {
             />
           ))
         )}
+        {visiblePending.map((pending) => (
+          <PendingMessageBubble key={pending.id} pending={pending} onRetry={retryPending} onDiscard={discardPending} />
+        ))}
         <div ref={bottomRef} />
       </div>
-      <form onSubmit={handleSubmit} className="border-t border-border-soft bg-surface p-3 sm:p-4 lg:px-6">
-        {blockState.isBlocked && (
-          <div className="mb-2 flex items-center justify-between gap-2 rounded-lg bg-danger/10 px-3 py-1.5 text-xs text-danger">
-            <span>{t("messages.youBlockedCantSend")}</span>
-            <button type="button" onClick={() => blockState.toggle()} className="font-medium hover:underline">
-              {t("profile.unblock")}
-            </button>
-          </div>
-        )}
-        {replyingTo && (
-          <div className="mb-2 flex items-center justify-between gap-2 rounded-lg border border-border-soft bg-surface-soft px-3 py-1.5 text-xs text-text-muted">
-            <span className="truncate">
-              {t("messages.replyingToPrefix")} {replyingTo.body ?? (replyingTo.sharedPromptId ? t("messages.aPrompt") : t("request.aRequest"))}
-            </span>
-            <button type="button" onClick={() => setReplyingTo(null)} aria-label={t("messages.cancelReplyAriaLabel")}>
-              <X size={14} />
-            </button>
-          </div>
-        )}
-        {pendingShare && (
-          <div className="mb-2 flex items-center justify-between gap-2 rounded-lg border border-border-soft bg-surface-soft px-3 py-1.5 text-xs text-text-muted">
-            <span className="truncate">
-              {t("messages.sharingPrefix")} {pendingShare.title} — {t("messages.sharingSuffix")}
-            </span>
-            <button
-              type="button"
-              onClick={() => {
-                setDismissedShare(true);
-                clearShareParams();
-              }}
-              aria-label={t("messages.cancelShareAriaLabel")}
-            >
-              <X size={14} />
-            </button>
-          </div>
-        )}
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={draft}
-            onChange={(event) => setDraft(event.target.value)}
-            placeholder={pendingShare ? t("messages.addNotePlaceholder") : t("messages.writeMessagePlaceholder")}
-            disabled={blockState.isBlocked}
-            className="h-10 min-w-0 flex-1 rounded-full border border-border-soft bg-background px-4 text-sm text-text shadow-xs transition-colors duration-200 ease-soft placeholder:text-text-muted hover:border-border-strong focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15 disabled:opacity-50"
-          />
-          <Button
-            type="submit"
-            disabled={(!draft.trim() && !pendingShare) || isSending || blockState.isBlocked || isGeneratorShareUnresolved}
-          >
-            {isSending ? t("messages.sendingEllipsis") : t("common.send")}
-          </Button>
-        </div>
-        {sendError && <p className="mt-2 text-xs text-danger">{sendError}</p>}
-      </form>
+      <MessageComposer
+        draft={draft}
+        onDraftChange={setDraft}
+        placeholder={pendingShare ? t("messages.addNotePlaceholder") : t("messages.writeMessagePlaceholder")}
+        disabled={blockState.isBlocked}
+        canSend={
+          (Boolean(draft.trim()) || Boolean(pendingShare) || composerImages.images.length > 0) &&
+          !isSending &&
+          !composerImages.isPreparing &&
+          !isGeneratorShareUnresolved
+        }
+        isSending={isSending}
+        onSubmit={handleSubmit}
+        images={composerImages.images}
+        imageNotice={composerImages.notice}
+        onAddFiles={composerImages.addFiles}
+        onRemoveImage={composerImages.remove}
+        onDismissNotice={composerImages.dismissNotice}
+        error={sendError}
+        dragActive={imageDrop.isDragging}
+        banners={
+          <>
+    {blockState.isBlocked && (
+      <div className="mb-2 flex items-center justify-between gap-2 rounded-lg bg-danger/10 px-3 py-1.5 text-xs text-danger">
+        <span>{t("messages.youBlockedCantSend")}</span>
+        <button type="button" onClick={() => blockState.toggle()} className="font-medium hover:underline">
+          {t("profile.unblock")}
+        </button>
+      </div>
+    )}
+    {replyingTo && (
+      <div className="mb-2 flex items-center justify-between gap-2 rounded-lg border border-border-soft bg-surface-soft px-3 py-1.5 text-xs text-text-muted">
+        <span className="truncate">
+          {t("messages.replyingToPrefix")} {replyingTo.body ?? (replyingTo.sharedPromptId ? t("messages.aPrompt") : replyingTo.attachments.length > 0 ? t("messages.aPhoto") : t("request.aRequest"))}
+        </span>
+        <button type="button" onClick={() => setReplyingTo(null)} aria-label={t("messages.cancelReplyAriaLabel")}>
+          <X size={14} />
+        </button>
+      </div>
+    )}
+    {pendingShare && (
+      <div className="mb-2 flex items-center justify-between gap-2 rounded-lg border border-border-soft bg-surface-soft px-3 py-1.5 text-xs text-text-muted">
+        <span className="truncate">
+          {t("messages.sharingPrefix")} {pendingShare.title} — {t("messages.sharingSuffix")}
+        </span>
+        <button
+          type="button"
+          onClick={() => {
+            setDismissedShare(true);
+            clearShareParams();
+          }}
+          aria-label={t("messages.cancelShareAriaLabel")}
+        >
+          <X size={14} />
+        </button>
+      </div>
+    )}
+          </>
+        }
+      />
     </div>
   );
 }

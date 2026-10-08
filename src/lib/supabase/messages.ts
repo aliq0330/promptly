@@ -1,7 +1,8 @@
 import { supabase } from "./client";
 import { translateForRuntime } from "@/lib/i18n/translations";
 import { mapProfileRow, type ProfileRow } from "./mappers";
-import type { Conversation, Message, UserProfile } from "@/types";
+import type { Conversation, Message, MessageAttachment, UserProfile } from "@/types";
+import { removeMessageImages } from "./message-images";
 
 interface MembershipRow {
   conversation_id: string;
@@ -18,13 +19,32 @@ export interface MessageRow {
   shared_prompt_id: string | null;
   shared_request_id: string | null;
   reply_to_message_id: string | null;
+  attachments: unknown;
   edited_at: string | null;
   deleted_at: string | null;
   created_at: string;
 }
 
 const MESSAGE_SELECT =
-  "id, conversation_id, sender_id, body, shared_prompt_id, shared_request_id, reply_to_message_id, edited_at, deleted_at, created_at";
+  "id, conversation_id, sender_id, body, shared_prompt_id, shared_request_id, reply_to_message_id, attachments, edited_at, deleted_at, created_at";
+
+/** Defensive read of the `attachments` jsonb column — anything that isn't a well-formed `{path, mime}` entry is dropped rather than trusted. */
+function parseAttachments(raw: unknown): MessageAttachment[] {
+  if (!Array.isArray(raw)) return [];
+  const result: MessageAttachment[] = [];
+  for (const entry of raw) {
+    if (!entry || typeof entry !== "object") continue;
+    const { path, width, height, mime } = entry as Record<string, unknown>;
+    if (typeof path !== "string" || !path) continue;
+    result.push({
+      path,
+      width: typeof width === "number" ? width : null,
+      height: typeof height === "number" ? height : null,
+      mime: typeof mime === "string" ? mime : "image/jpeg",
+    });
+  }
+  return result;
+}
 
 /** Exported so the Realtime subscription (Bölüm 21 Faz C) can map a `postgres_changes` payload row the same way a REST response is mapped — one mapping function, two delivery paths. */
 export function mapMessageRow(row: MessageRow): Message {
@@ -36,6 +56,7 @@ export function mapMessageRow(row: MessageRow): Message {
     sharedPromptId: row.shared_prompt_id,
     sharedRequestId: row.shared_request_id,
     replyToMessageId: row.reply_to_message_id,
+    attachments: parseAttachments(row.attachments),
     editedAt: row.edited_at,
     deletedAt: row.deleted_at,
     createdAt: row.created_at,
@@ -46,6 +67,7 @@ interface PreviewRow {
   body: string | null;
   shared_prompt_id: string | null;
   shared_request_id: string | null;
+  attachments?: unknown;
   deleted_at: string | null;
   created_at: string;
 }
@@ -57,6 +79,7 @@ function previewTextFor(row: PreviewRow | undefined): string {
   if (row.body) return row.body;
   if (row.shared_prompt_id) return translateForRuntime("messages.sharedAPromptPreview");
   if (row.shared_request_id) return translateForRuntime("messages.sharedARequestPreview");
+  if (parseAttachments(row.attachments).length > 0) return translateForRuntime("messages.sentAPhotoPreview");
   return translateForRuntime("messages.noMessagesYetShort");
 }
 
@@ -87,7 +110,7 @@ export async function fetchConversationsForUser(userId: string): Promise<Convers
 
     const { data: recentMessages } = await supabase
       .from("messages")
-      .select("conversation_id, body, shared_prompt_id, shared_request_id, deleted_at, created_at")
+      .select("conversation_id, body, shared_prompt_id, shared_request_id, attachments, deleted_at, created_at")
       .in("conversation_id", conversationIds)
       .order("created_at", { ascending: false });
 
@@ -155,7 +178,7 @@ export async function fetchConversationForUser(conversationId: string, userId: s
 
     const { data: last } = await supabase
       .from("messages")
-      .select("body, shared_prompt_id, shared_request_id, deleted_at, created_at")
+      .select("body, shared_prompt_id, shared_request_id, attachments, deleted_at, created_at")
       .eq("conversation_id", conversationId)
       .order("created_at", { ascending: false })
       .limit(1)
@@ -203,7 +226,10 @@ export async function fetchMessages(conversationId: string, viewerId: string): P
 }
 
 export interface SendMessageInput {
+  /** Client-generated message id — lets the optimistic bubble, a retry, and the Realtime echo of this same INSERT all be recognised as ONE message (no duplicates). */
+  id?: string;
   body?: string;
+  attachments?: MessageAttachment[];
   sharedPromptId?: string;
   sharedRequestId?: string;
   replyToMessageId?: string;
@@ -215,9 +241,11 @@ export async function sendMessage(conversationId: string, senderId: string, inpu
   const { data, error } = await supabase
     .from("messages")
     .insert({
+      ...(input.id ? { id: input.id } : {}),
       conversation_id: conversationId,
       sender_id: senderId,
       body: trimmed || null,
+      attachments: input.attachments ?? [],
       shared_prompt_id: input.sharedPromptId ?? null,
       shared_request_id: input.sharedRequestId ?? null,
       reply_to_message_id: input.replyToMessageId ?? null,
@@ -229,12 +257,12 @@ export async function sendMessage(conversationId: string, senderId: string, inpu
 }
 
 /** Edits the caller's own message body — RLS (Faz A) only allows the sender, within 15 minutes of sending; `handle_message_body_edit` stamps edited_at automatically. */
-export async function editMessage(messageId: string, senderId: string, body: string): Promise<Message> {
+export async function editMessage(messageId: string, senderId: string, body: string, allowEmpty = false): Promise<Message> {
   const trimmed = body.trim();
-  if (!trimmed) throw new Error(translateForRuntime("messages.emptyMessageNotAllowed"));
+  if (!trimmed && !allowEmpty) throw new Error(translateForRuntime("messages.emptyMessageNotAllowed"));
   const { data, error } = await supabase
     .from("messages")
-    .update({ body: trimmed })
+    .update({ body: trimmed || null })
     .eq("id", messageId)
     .eq("sender_id", senderId)
     .select(MESSAGE_SELECT)
@@ -245,16 +273,18 @@ export async function editMessage(messageId: string, senderId: string, body: str
 }
 
 /** "Herkesten sil" — clears the message's content for every member of the conversation. Same RLS window as editing (Faz A). */
-export async function deleteMessageForEveryone(messageId: string, senderId: string): Promise<void> {
+export async function deleteMessageForEveryone(messageId: string, senderId: string, attachments: MessageAttachment[] = []): Promise<void> {
   const { data, error } = await supabase
     .from("messages")
-    .update({ deleted_at: new Date().toISOString(), body: null, shared_prompt_id: null, shared_request_id: null })
+    .update({ deleted_at: new Date().toISOString(), body: null, shared_prompt_id: null, shared_request_id: null, attachments: [] })
     .eq("id", messageId)
     .eq("sender_id", senderId)
     .select("id")
     .maybeSingle();
   if (error) throw new Error(error.message);
   if (!data) throw new Error(translateForRuntime("messages.deleteWindowExpired"));
+  // The row's content is gone for everyone — the files go too (best-effort; a failure here only leaves an unreachable orphan, never a visible photo).
+  if (attachments.length > 0) await removeMessageImages(attachments.map((a) => a.path));
 }
 
 /** "Benden sil" — hides a message from only this viewer's own thread view; never touches the row itself or other members' view of it. */

@@ -141,6 +141,7 @@ const FIXTURE_GENERATOR_SHARE_MESSAGE: Message = {
   body: composeGeneratorShareBody("Bak bunu dene", FIXTURE_GENERATOR.title, FIXTURE_GENERATOR.slug),
   sharedPromptId: null,
   sharedRequestId: null,
+  attachments: [],
   replyToMessageId: null,
   editedAt: null,
   deletedAt: null,

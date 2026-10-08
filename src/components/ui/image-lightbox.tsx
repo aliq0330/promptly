@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { Portal } from "./portal";
 import { lockBodyScroll, unlockBodyScroll } from "./modal";
@@ -36,6 +36,7 @@ export function ImageLightbox({
   const { t } = useTranslation();
   const [index, setIndex] = useState(initialIndex);
   const hasMultiple = images.length > 1;
+  const touchStart = useRef<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     lockBodyScroll();
@@ -63,7 +64,7 @@ export function ImageLightbox({
         aria-label={t("media.imageGalleryLabel")}
         onClick={onClose}
       >
-        <div className="flex items-center justify-between px-4 py-3 text-white/90" onClick={(event) => event.stopPropagation()}>
+        <div className="flex items-center justify-between px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] text-white/90" onClick={(event) => event.stopPropagation()}>
           {hasMultiple ? (
             <span className="text-sm tabular-nums">
               {index + 1} / {images.length}
@@ -81,7 +82,23 @@ export function ImageLightbox({
           </button>
         </div>
 
-        <div className="relative flex min-h-0 flex-1 items-center justify-center px-4 pb-4" onClick={(event) => event.stopPropagation()}>
+        <div
+          className="relative flex min-h-0 flex-1 items-center justify-center px-4 pb-4"
+          onClick={(event) => event.stopPropagation()}
+          // Horizontal swipe to move between photos (touch). A two-finger pinch is left to the browser's own zoom.
+          onTouchStart={(event) => {
+            touchStart.current = hasMultiple && event.touches.length === 1 ? { x: event.touches[0].clientX, y: event.touches[0].clientY } : null;
+          }}
+          onTouchEnd={(event) => {
+            const start = touchStart.current;
+            touchStart.current = null;
+            if (!start || event.changedTouches.length !== 1) return;
+            const dx = event.changedTouches[0].clientX - start.x;
+            const dy = event.changedTouches[0].clientY - start.y;
+            if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+            setIndex((prev) => (dx < 0 ? (prev + 1) % images.length : (prev - 1 + images.length) % images.length));
+          }}
+        >
           {hasMultiple && (
             <button
               type="button"

@@ -599,6 +599,14 @@ export interface GeneratorRun {
   createdAt: string;
 }
 
+/** A photo attached to a message — `path` is the object key inside the private `message-images` bucket (read through short-lived signed URLs, never stored as a URL). */
+export interface MessageAttachment {
+  path: string;
+  width: number | null;
+  height: number | null;
+  mime: string;
+}
+
 export interface Message {
   id: string;
   conversationId: string;
@@ -611,8 +619,10 @@ export interface Message {
   sharedRequestId: string | null;
   /** The message this one is replying to, if any. */
   replyToMessageId: string | null;
+  /** Photos sent with (or instead of) text — empty for every message that has none. */
+  attachments: MessageAttachment[];
   editedAt: string | null;
-  /** Set when the sender deleted this message "for everyone" — body/sharedPromptId/sharedRequestId are cleared server-side when this happens. */
+  /** Set when the sender deleted this message "for everyone" — body/sharedPromptId/sharedRequestId/attachments are cleared server-side when this happens. */
   deletedAt: string | null;
   createdAt: string;
 }
