@@ -19,17 +19,20 @@ export function ContentTypeLabel({
   className?: string;
 }) {
   return (
-    <p className={cn("flex min-w-0 items-center gap-1.5 text-caption font-medium text-text-secondary", className)}>
-      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-xs bg-primary-soft text-primary">
-        <Icon size={12} strokeWidth={2.25} />
-      </span>
+    <p
+      className={cn(
+        "flex min-w-0 items-center gap-1.5 text-[0.6875rem] font-semibold uppercase leading-none tracking-[0.07em] text-text-secondary",
+        className,
+      )}
+    >
+      <Icon size={13} strokeWidth={2.1} aria-hidden className="shrink-0 text-primary" />
       <span className="shrink-0">{label}</span>
       {detail && (
         <>
           <span aria-hidden className="text-border-strong">
-            ·
+            /
           </span>
-          <span className="truncate text-text-muted">{detail}</span>
+          <span className="truncate font-medium normal-case tracking-normal text-text-muted">{detail}</span>
         </>
       )}
     </p>

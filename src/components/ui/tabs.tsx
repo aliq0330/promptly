@@ -43,7 +43,7 @@ export function Tabs<K extends string>({
       aria-label={ariaLabel}
       className={cn(
         "scrollbar-none flex touch-pan-x overflow-x-auto overscroll-x-contain",
-        variant === "underline" ? "gap-1 border-b border-border-soft" : "w-fit max-w-full gap-1 rounded-md bg-surface-soft p-1",
+        variant === "underline" ? "gap-1 border-b border-border-soft" : "w-fit max-w-full gap-0.5 rounded-lg border border-border-soft bg-surface-soft p-0.5",
         className,
       )}
     >
@@ -65,8 +65,8 @@ export function Tabs<K extends string>({
                     selected ? "border-primary text-text" : "border-transparent text-text-muted hover:text-text",
                   )
                 : cn(
-                    "h-8 rounded-sm px-3",
-                    selected ? "bg-surface text-text shadow-xs" : "text-text-muted hover:text-text",
+                    "h-8 rounded-md px-3",
+                    selected ? "bg-surface text-text shadow-sm ring-1 ring-border-soft" : "text-text-muted hover:text-text",
                   ),
             )}
           >

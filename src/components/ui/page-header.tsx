@@ -27,21 +27,22 @@ export function PageHeader({
 }) {
   if (art) {
     return (
-      <header className={cn("relative overflow-hidden rounded-lg border border-border-soft bg-surface px-4 py-5 shadow-card sm:px-6 sm:py-6", className)}>
+      <header className={cn("relative overflow-hidden rounded-xl border border-border-soft bg-surface px-5 py-6 shadow-card sm:px-8 sm:py-8", className)}>
         <div className="relative z-10 flex flex-col gap-4">
-          <div className="min-w-0 space-y-1.5 sm:max-w-[60%]">
+          <div className="min-w-0 space-y-2 sm:max-w-[60%]">
             {eyebrow && (
               <p className="flex items-center gap-1.5 text-caption font-semibold uppercase tracking-[0.08em] text-primary">
                 {Icon && <Icon size={13} strokeWidth={2.25} />}
                 {eyebrow}
               </p>
             )}
-            <h1 className="text-h1 font-semibold text-text">{title}</h1>
-            {description && <p className="max-w-2xl text-small text-text-muted">{description}</p>}
+            <h1 className="text-h1 font-medium text-text">{title}</h1>
+            {description && <p className="max-w-2xl text-small text-text-muted sm:text-body">{description}</p>}
           </div>
           {actions && <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>}
         </div>
-        <HeaderArt variant={art} className="absolute right-0 top-0 h-28 opacity-90 sm:right-4 sm:top-1/2 sm:h-36 sm:-translate-y-1/2" />
+        {/* Decorative; hidden on phones where it would sit on top of the title/description. */}
+        <HeaderArt variant={art} className="absolute right-4 top-1/2 hidden h-36 -translate-y-1/2 opacity-90 sm:block lg:right-8 lg:h-40" />
       </header>
     );
   }
@@ -54,8 +55,8 @@ export function PageHeader({
             {eyebrow}
           </p>
         )}
-        <h1 className="text-h1 font-semibold text-text">{title}</h1>
-        {description && <p className="max-w-2xl text-small text-text-muted">{description}</p>}
+        <h1 className="text-h1 font-medium text-text">{title}</h1>
+        {description && <p className="max-w-2xl text-small text-text-muted sm:text-body">{description}</p>}
       </div>
       {actions && <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>}
     </header>
@@ -81,7 +82,7 @@ export function SectionHeader({
   return (
     <div className={cn("flex items-end justify-between gap-3", className)}>
       <div className="min-w-0">
-        <h2 className="text-h2 font-semibold text-text">{title}</h2>
+        <h2 className="text-h2 font-medium text-text">{title}</h2>
         {description && <p className="mt-0.5 text-small text-text-muted">{description}</p>}
       </div>
       {href && (

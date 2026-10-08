@@ -166,16 +166,16 @@
 /* Sand is the site default: also applies when no palette attribute is set. */
 :root:not([data-palette]),
 [data-palette="sand"] {
-  --p-bg: #faf7f3;
-  --p-surface: #ffffff;
-  --p-surface-soft: #f4eee7;
+  --p-bg: #f7f3ed;
+  --p-surface: #fffdfa;
+  --p-surface-soft: #f3ede5;
   --p-surface-elevated: #ffffff;
-  --p-text: #2a211b;
-  --p-text-secondary: #56483e;
-  --p-text-muted: #76695f;
-  --p-border: #ece3d8;
-  --p-border-soft: #f3ece4;
-  --p-border-strong: #dccdbd;
+  --p-text: #221a14;
+  --p-text-secondary: #52443a;
+  --p-text-muted: #74665b;
+  --p-border: #e8dfd3;
+  --p-border-soft: #efe8de;
+  --p-border-strong: #d8c9b8;
   --p-primary: #b7432a;
   --p-primary-hover: #9a3822;
   --p-primary-soft: #fbe8e1;
@@ -187,16 +187,16 @@
 .dark:root:not([data-palette]),
 .dark[data-palette="sand"],
 .dark [data-palette="sand"] {
-  --p-bg: #16120f;
-  --p-surface: #1f1915;
-  --p-surface-soft: #28211c;
-  --p-surface-elevated: #2d251f;
-  --p-text: #f6efe8;
-  --p-text-secondary: #d4c7ba;
-  --p-text-muted: #a19181;
-  --p-border: #382e26;
-  --p-border-soft: #2c241f;
-  --p-border-strong: #4d4035;
+  --p-bg: #13100d;
+  --p-surface: #1c1814;
+  --p-surface-soft: #25201b;
+  --p-surface-elevated: #2a241e;
+  --p-text: #f6efe7;
+  --p-text-secondary: #d3c6b8;
+  --p-text-muted: #a39383;
+  --p-border: #342b24;
+  --p-border-soft: #29231e;
+  --p-border-strong: #4a3e34;
   --p-primary: #ff8c6e;
   --p-primary-hover: #ffa88f;
   --p-primary-soft: #3a241c;
@@ -211,12 +211,20 @@
   --p-success: #15803d;
   --p-warning: #b45309;
   --p-danger: #d12f2f;
+  /* Shadow strength multiplier + the 1px top "light catch" on raised surfaces.
+   * Dark mode needs much stronger (black) shadows to read at all, and a faint
+   * white inner highlight to separate stacked surfaces — the premium detail
+   * that keeps dark cards from looking flat. */
+  --p-sa: 1;
+  --p-highlight: rgb(255 255 255 / 0);
 }
 
 .dark {
   --p-success: #4ade80;
   --p-warning: #fbbf24;
   --p-danger: #f87171;
+  --p-sa: 4;
+  --p-highlight: rgb(255 255 255 / 0.045);
 }
 
 /* ---------------------------------------------------------------------------
@@ -263,30 +271,36 @@
   --radius-lg: 0.875rem;
   --radius-xl: 1.25rem;
 
-  /* Shadows — tinted by the palette, deliberately faint */
-  --shadow-xs: 0 1px 2px rgb(var(--p-shadow) / 0.05);
-  --shadow-sm: 0 1px 2px rgb(var(--p-shadow) / 0.06), 0 1px 1px rgb(var(--p-shadow) / 0.03);
-  --shadow-card: 0 1px 2px rgb(var(--p-shadow) / 0.04);
-  --shadow-card-hover: 0 6px 20px -8px rgb(var(--p-shadow) / 0.16);
-  --shadow-md: 0 6px 20px -8px rgb(var(--p-shadow) / 0.16);
-  --shadow-lg: 0 16px 40px -12px rgb(var(--p-shadow) / 0.22), 0 2px 6px rgb(var(--p-shadow) / 0.06);
-  --shadow-pop: 0 16px 40px -12px rgb(var(--p-shadow) / 0.22), 0 2px 6px rgb(var(--p-shadow) / 0.06);
+  /* Shadows — tinted by the palette, layered (hairline + soft ambient), with
+   * a 1px top highlight in dark mode (`--p-highlight`). */
+  --shadow-xs: 0 1px 2px rgb(var(--p-shadow) / calc(0.05 * var(--p-sa)));
+  --shadow-sm: 0 1px 2px rgb(var(--p-shadow) / calc(0.06 * var(--p-sa))), 0 1px 1px rgb(var(--p-shadow) / calc(0.03 * var(--p-sa))), inset 0 1px 0 var(--p-highlight);
+  --shadow-card: 0 1px 1px rgb(var(--p-shadow) / calc(0.03 * var(--p-sa))), 0 2px 6px -2px rgb(var(--p-shadow) / calc(0.05 * var(--p-sa))), inset 0 1px 0 var(--p-highlight);
+  --shadow-card-hover: 0 1px 2px rgb(var(--p-shadow) / calc(0.04 * var(--p-sa))), 0 14px 32px -16px rgb(var(--p-shadow) / calc(0.24 * var(--p-sa))), inset 0 1px 0 var(--p-highlight);
+  --shadow-md: 0 6px 20px -8px rgb(var(--p-shadow) / calc(0.16 * var(--p-sa)));
+  --shadow-lg: 0 18px 44px -14px rgb(var(--p-shadow) / calc(0.24 * var(--p-sa))), 0 2px 6px rgb(var(--p-shadow) / calc(0.06 * var(--p-sa))), inset 0 1px 0 var(--p-highlight);
+  --shadow-pop: 0 24px 56px -18px rgb(var(--p-shadow) / calc(0.28 * var(--p-sa))), 0 3px 10px -2px rgb(var(--p-shadow) / calc(0.08 * var(--p-sa))), inset 0 1px 0 var(--p-highlight);
 
   /* Fonts */
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-display-face), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-mono-face), ui-monospace, SFMono-Regular, Menlo, monospace;
+  /* Editorial serif for page-level headings (display / h1 / h2 — see the
+   * `@layer components` rule below). Card titles and UI stay sans. */
+  --font-serif: var(--font-serif-face), ui-serif, Georgia, serif;
 
-  /* Type scale: Display / H1 / H2 / H3 / Body / Small / Caption / Label */
-  --text-display: 2.25rem;
-  --text-display--line-height: 1.1;
-  --text-display--letter-spacing: -0.02em;
-  --text-h1: 1.625rem;
-  --text-h1--line-height: 1.2;
-  --text-h1--letter-spacing: -0.016em;
-  --text-h2: 1.25rem;
-  --text-h2--line-height: 1.3;
-  --text-h2--letter-spacing: -0.015em;
+  /* Type scale: Display / H1 / H2 / H3 / Body / Small / Caption / Label.
+   * The three editorial sizes breathe with the viewport (clamp) so page
+   * titles feel generous on desktop without crowding a phone. */
+  --text-display: clamp(2.125rem, 1.55rem + 2vw, 3rem);
+  --text-display--line-height: 1.04;
+  --text-display--letter-spacing: -0.022em;
+  --text-h1: clamp(1.75rem, 1.5rem + 0.9vw, 2.25rem);
+  --text-h1--line-height: 1.1;
+  --text-h1--letter-spacing: -0.018em;
+  --text-h2: clamp(1.3125rem, 1.2rem + 0.35vw, 1.5rem);
+  --text-h2--line-height: 1.22;
+  --text-h2--letter-spacing: -0.012em;
   --text-h3: 1.0625rem;
   --text-h3--line-height: 1.35;
   --text-h3--letter-spacing: -0.01em;
@@ -419,11 +433,17 @@
     color-scheme: dark;
   }
 
+  html {
+    scrollbar-color: var(--color-border-strong) transparent;
+  }
+
   body {
     background: var(--color-background);
     color: var(--color-text);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
 
   *,
@@ -451,6 +471,11 @@
   h2,
   h3 {
     font-family: var(--font-display);
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
   }
 
   input[type="radio"],
@@ -458,6 +483,24 @@
   input[type="range"],
   progress {
     accent-color: var(--color-primary);
+  }
+}
+
+/*
+ * Editorial headings: every page-level title (`text-display` / `text-h1` /
+ * `text-h2`) is set in the serif. In `@layer components`, so an explicit
+ * `font-sans` / `font-display` utility on an element (stat numbers, small UI
+ * headings) still wins — this only changes the default voice of big titles.
+ */
+@layer components {
+  .text-display,
+  .text-h1,
+  .text-h2 {
+    font-family: var(--font-serif);
+    font-optical-sizing: auto;
+    /* One editorial weight for every serif title, whatever font-* utility the
+     * heading carries (semibold reads heavy in a serif at display sizes). */
+    font-variation-settings: "wght" 530;
   }
 }
 

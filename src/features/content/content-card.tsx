@@ -32,7 +32,7 @@ export function ContentCard({
     <article
       className={cn(
         "group relative flex flex-col rounded-lg border border-border-soft bg-surface shadow-card",
-        "transition-[border-color,box-shadow] duration-200 ease-soft hover:border-border hover:shadow-card-hover",
+        "transition-[border-color,box-shadow] duration-300 ease-soft hover:border-border hover:shadow-card-hover",
         className,
       )}
     >
@@ -64,7 +64,7 @@ export function ContentCardTitle({
 }) {
   return (
     <div className="space-y-1">
-      <h3 className="text-h3 font-semibold text-text">
+      <h3 className="text-[1.0625rem] font-semibold leading-snug tracking-[-0.012em] text-text">
         <Link
           href={href}
           className="relative z-10 rounded-xs outline-none decoration-primary/40 underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-primary"
@@ -72,7 +72,7 @@ export function ContentCardTitle({
           {title}
         </Link>
       </h3>
-      {description && <p className="line-clamp-2 text-small text-text-muted">{description}</p>}
+      {description && <p className="line-clamp-2 text-small leading-relaxed text-text-muted">{description}</p>}
     </div>
   );
 }

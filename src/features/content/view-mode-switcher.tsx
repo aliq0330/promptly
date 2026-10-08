@@ -42,7 +42,7 @@ export function ViewModeSwitcher({ className }: { className?: string }) {
               "inline-flex h-11 min-w-11 items-center justify-center gap-1.5 rounded-md px-2.5 text-label font-medium md:h-9 md:min-w-9",
               "transition-[background-color,color,box-shadow] duration-200 ease-soft",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 focus-visible:ring-offset-surface-soft",
-              active ? "bg-primary text-primary-foreground shadow-xs" : "text-text-secondary hover:bg-surface hover:text-text",
+              active ? "bg-surface text-text shadow-sm ring-1 ring-border-soft [&_svg]:text-primary" : "text-text-muted hover:text-text",
             )}
           >
             <option.icon size={16} strokeWidth={1.9} aria-hidden />

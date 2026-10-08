@@ -22,7 +22,7 @@ export function HomeIntro() {
 
   if (user) {
     return (
-      <section className="relative flex flex-col gap-3 overflow-hidden rounded-lg border border-border-soft bg-surface px-4 py-5 shadow-card sm:flex-row sm:items-center sm:justify-between sm:px-6">
+      <section className="relative flex flex-col gap-3 overflow-hidden rounded-xl border border-border-soft bg-surface px-5 py-6 shadow-card sm:flex-row sm:items-center sm:justify-between sm:px-8">
         <HeaderArt variant="home" className="absolute right-0 top-0 hidden h-full opacity-80 lg:block" />
         <div className="relative z-10">
           <h1 className="text-h2 font-semibold text-text">
@@ -38,7 +38,7 @@ export function HomeIntro() {
   }
 
   return (
-    <section className="relative overflow-hidden rounded-lg border border-border-soft bg-surface px-5 py-6 shadow-card sm:px-7 sm:py-7">
+    <section className="relative overflow-hidden rounded-xl border border-border-soft bg-surface px-5 py-7 shadow-card sm:px-8 sm:py-9">
       <div className="relative z-10 max-w-xl space-y-3">
         <p className="text-caption font-semibold uppercase tracking-[0.08em] text-primary">{t("nav.tagline")}</p>
         <h1 className="text-h1 font-semibold text-text sm:text-display">{t("home.heroTitle")}</h1>
@@ -48,7 +48,7 @@ export function HomeIntro() {
         </div>
       </div>
       <PromptMotif />
-      <HeaderArt variant="home" className="absolute -right-3 -top-1 h-24 opacity-50 sm:h-full sm:opacity-90 lg:hidden" />
+      <HeaderArt variant="home" className="absolute -right-3 -top-1 hidden h-full opacity-90 sm:block lg:hidden" />
     </section>
   );
 }

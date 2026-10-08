@@ -102,7 +102,9 @@ editorial, soft; gereksiz gradient / glassmorphism / neon / ağır gölge yok.
 orta seviye radius (kart `rounded-lg` = 14px), 200ms `ease-soft` geçişler.
 
 **Fontlar** (`src/app/layout.tsx`, `next/font`): gövde **Inter**, başlıklar
-**Instrument Sans** (`font-display`, h1–h3 otomatik), prompt metni
+**Instrument Sans** (`font-display`, h1–h3 otomatik), sayfa düzeyi başlıklar
+(`text-display`/`text-h1`/`text-h2`) editorial serif **Newsreader**
+(`font-serif`, Bölüm 9.110), prompt metni
 **JetBrains Mono** (`prompt-text` utility — platformun imza öğesi: kopyalanan
 şey her yerde aynı mono blokta görünür). İkon: **lucide-react**, kartlarda
 `strokeWidth` 1.75; aynı işlev her yerde aynı ikon (Beğeni `Heart`, Yorum
@@ -11396,6 +11398,18 @@ Tek auth kaynağı Supabase oturumu (`AuthProvider`); `useAuthStatus()` → `loa
 - **Doğrulama:** `tsc`/`lint`/`build` (placeholder env) temiz; ağ taklitli Playwright 72/72 — 320/375/390/430/768/1024/1280/1440 yatay taşma yok, boş durum, 5 kaynak, düzenleme→sonuç, değişken ekle/düzenle, geri al, hazır ayar uygula, generator/DNA/workflow adım bağlama, versiyon + karşılaştırma + geri yükleme, kaynak çıkarma (URL eşlenir), yeni Prompt/Workflow taslağı oluşturma (orijinale PATCH/DELETE yok), misafir giriş diyaloğu, mobil chip/dokunma, koyu tema. Gerçek Supabase'e/gerçek cihaza karşı denenmedi.
 - **i18n:** `studio.*`/`nav.studio` TR+EN eklendi. **Bilinçli sınırlar:** Test Senaryoları sekmesi yok (sahte özellik göstermemek için); DNA ↔ prompt yansıması yalnızca eski metin promptta aynen geçiyorsa; DNA'yı kaynaktan bağımsız "Düzenle" butonu eklenmedi; Studio çalışması hesaba kaydedilmez (yalnızca yeni içerik olarak dışa aktarılır); Paylaş yalnızca kaynakları açan bağlantıyı kopyalar, taslağı değil.
 - **Güncelleme (DNA sadeleştirmesi):** Prompt DNA artık ayrı bir Studio kaynağı değil. Bir prompt eklenince DNA'sı da onunla yüklenir ve Prompt editöründe "Metin | DNA" sekmesinde düzenlenir (yansıtma kuralı aynı). Kaynak türleri dört: Prompt / Generator / Hazır Ayar / Workflow. Eski `?dna=<id>` bağlantıları prompt olarak açılır; `studioHref` artık `dna` parametresi üretmez. Migration yok.
+
+### 9.110 Premium görünüm — "Editorial" tasarım katmanı (Faz 1–4)
+
+Kullanıcının "mevcut özellikleri bozmadan premium bir görünüm" isteği üzerine önerilen "Editorial Premium" yönü uygulandı. Yalnızca görünüm değişti; veri, Supabase, iş mantığı ve bileşen sözleşmeleri (prop'lar) aynı. Migration yok, yeni metin yok (i18n değişmedi).
+- **Tipografi:** yeni editorial serif **Newsreader** (`next/font`, değişken, `opsz` ekseni; `--font-serif` / `font-serif`). `globals.css`'teki `@layer components` kuralı `text-display` / `text-h1` / `text-h2` taşıyan her başlığı serif yapar ve tek ağırlığa (`font-variation-settings: "wght" 530`) sabitler; açık `font-sans`/`font-display` utility'si olan öğeler (istatistik sayıları, küçük UI başlıkları) sans kalır. Kart başlıkları ve arayüz Inter / Instrument Sans'ta kaldı. Bu üç boyut artık `clamp()` ile ekrana göre büyür. `h1–h3` `text-wrap: balance`, `p` `text-wrap: pretty`. "Promptly" yazı markası (sidebar, header, auth) serif.
+- **Token'lar:** Kum (varsayılan) paleti hafif rafine edildi (biraz daha derin kâğıt zemin, sıcak beyaz yüzey, daha koyu mürekkep metin; açık/koyu modda tüm metin/zemin çiftleri ≥ 4.5:1 yeniden doğrulandı). Gölgeler katmanlı (hairline + yumuşak ortam); yeni `--p-sa` (gölge gücü; koyu modda 4×) ve `--p-highlight` (koyu modda yükseltilmiş yüzeylerin üst kenarında 1px ışık) değişkenleri tüm paletlerde geçerli. Sayfa kaydırma çubuğu ince/temaya uygun.
+- **Ortak bileşenler:** `Button` (birincilde iç ışık + ince gölge, outline'da gölge), `Chip`, `Tabs` segmented (kenarlıklı kap, seçili sekme halkalı yüzey), Kart/Odak anahtarı artık dolu renkli değil segmented görünümde, `Badge` hap biçimli, `PageHeader` (daha geniş kart `rounded-xl`, serif başlık, dekoratif çizim telefonda gizli — başlığın üstüne biniyordu), ana sayfa tanıtım kartı aynı dilde.
+- **Kartlar:** `ContentTypeLabel` artık editorial eyebrow (BÜYÜK HARF, aralıklı, ikon karosuz; ayraç "/"), `ContentCardTitle` daha sıkı tipografi, kart hover geçişi yumuşadı. Liste sayfalarının "Adım 1-2-3" kartları telefonda üç sıkışık sütun yerine kaydırılabilir satır (her adım tam okunur).
+- **Kabuk:** sidebar'da aktif öğe için iç kenarda vurgu çubuğu, grup başlıkları ince aralıklı; header arama kutusu hap biçimli, header/alt navigasyon daha güçlü bulanık cam; mobil alt navigasyonda aktif sekmenin üstünde vurgu çizgisi ve yuvarlak "Oluştur" düğmesi.
+- **Yan düzeltme:** `/dev/share-modal-test` sayfası fixture sabitlerini `export` ediyordu; Next'in sayfa tip kontrolü bu yüzden `next build`'i düşürüyordu (main'de de). `export` kaldırıldı, başka yerden kullanılmıyordu.
+- **Doğrulama:** `tsc`, `lint` (yalnızca önceden var olan 5 uyarı), `npm test` 46/46, `next build --webpack` temiz. Ağ taklitli Playwright: önce/sonra ekran görüntüleri (Ana Sayfa, Promptlar, Keşfet, Prompt detay, Generatorlar, İstekler, Giriş; açık/koyu; 320–1920px) — yatay taşma yok, sayfa hatası yok; Focus View bağlantı testi 47/47 ve mobil test yeniden geçti. Gerçek Supabase'e ve fiziksel cihaza karşı denenmedi.
+- **Sıradaki fazlar (yapılmadı):** detay sayfaları (prompt/generator/workflow/hazır ayar) ve oluşturma formları, profil, Studio, mesajlaşma için aynı dilde ince ayar; hareket/geçiş cilası. Diğer üç palet (Lavanta/Okyanus/Orman) yeni gölge/tipografiyi otomatik alır ama renkleri ayrıca rafine edilmedi.
 
 ---
 
