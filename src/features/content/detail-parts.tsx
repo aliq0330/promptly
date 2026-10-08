@@ -17,7 +17,7 @@ import type { Tag, UserProfile } from "@/types";
 /** Page frame: centered column + the main/side grid. */
 export function DetailShell({ children, aside }: { children: ReactNode; aside?: ReactNode }) {
   return (
-    <div className="mx-auto w-full max-w-6xl animate-fade-in px-3 py-5 sm:px-5 sm:py-7 lg:px-8 lg:py-10">
+    <div className="mx-auto w-full max-w-6xl animate-rise-in px-3 py-5 sm:px-5 sm:py-7 lg:px-8 lg:py-10">
       <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-10">
         {children}
         {aside}

@@ -162,7 +162,7 @@ export default function SettingsPage() {
   if (loading || !user) return null;
 
   return (
-    <div className="mx-auto w-full max-w-xl animate-fade-in px-3 py-5 sm:px-5 sm:py-7 lg:px-8 lg:py-10">
+    <div className="mx-auto w-full max-w-xl animate-rise-in px-3 py-5 sm:px-5 sm:py-7 lg:px-8 lg:py-10">
       <header className="mb-8 space-y-2">
         <h1 className="text-h1 text-text">{t("settings.pageTitle")}</h1>
         <p className="text-small text-text-secondary">

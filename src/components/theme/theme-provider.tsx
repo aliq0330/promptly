@@ -78,6 +78,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   const setTheme = useCallback((next: Theme) => {
     setThemeState(next);
+    withThemeTransition();
     document.documentElement.classList.toggle("dark", next === "dark");
     try {
       localStorage.setItem(STORAGE_KEY, next);
@@ -93,6 +94,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const setPalette = useCallback((next: Palette) => {
     setPaletteState(next);
     const root = document.documentElement;
+    withThemeTransition();
     root.setAttribute("data-palette", next);
     try {
       localStorage.setItem(PALETTE_STORAGE_KEY, next);
@@ -113,4 +115,18 @@ export function useTheme() {
   const ctx = useContext(ThemeContext);
   if (!ctx) throw new Error("useTheme must be used within a ThemeProvider");
   return ctx;
+}
+
+/**
+ * A user-initiated mode/palette switch cross-fades colors instead of snapping
+ * (Bölüm 9.113): `.theme-transition` on <html> gives every element a short
+ * color transition for one beat, then is removed so it never slows ordinary
+ * hover/focus feedback. Reduced motion skips it (globals.css).
+ */
+let themeTransitionTimer: number | undefined;
+function withThemeTransition() {
+  const root = document.documentElement;
+  root.classList.add("theme-transition");
+  window.clearTimeout(themeTransitionTimer);
+  themeTransitionTimer = window.setTimeout(() => root.classList.remove("theme-transition"), 360);
 }

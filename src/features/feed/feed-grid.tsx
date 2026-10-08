@@ -9,6 +9,7 @@ import { WorkflowCard } from "@/features/workflows/workflow-card";
 import { PresetCard } from "@/features/presets/preset-card";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { feedItemKey, type FeedItem } from "./types";
+import { staggerStyle } from "@/components/ui/entrance";
 
 /**
  * Same CSS-columns masonry as PromptGrid (see prompt-grid.tsx), but for a
@@ -43,8 +44,8 @@ export function FeedGrid({
 
   return (
     <div className="columns-1 gap-3 sm:columns-2 sm:gap-4 xl:columns-3">
-      {items.map((item) => (
-        <div key={feedItemKey(item)} className="mb-3 break-inside-avoid sm:mb-4">
+      {items.map((item, index) => (
+        <div key={feedItemKey(item)} className="mb-3 animate-rise-in break-inside-avoid sm:mb-4" style={staggerStyle(index)}>
           {item.kind === "prompt" ? (
             <PromptCard prompt={item.data} />
           ) : item.kind === "request" ? (

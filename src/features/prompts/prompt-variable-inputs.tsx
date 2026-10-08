@@ -50,7 +50,7 @@ export function PromptVariableInputs({
               value={values[variable.name] ?? ""}
               onChange={(event) => onChange(variable.name, event.target.value)}
               placeholder={variable.defaultValue || t("prompt.enterValue")}
-              className="h-10 w-full rounded-md border border-border bg-background px-3 text-body text-text placeholder:text-text-muted focus:border-primary"
+              className="h-10 w-full rounded-lg border border-border bg-background px-3 text-body text-text placeholder:text-text-muted focus:border-primary/60 shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong"
             />
           </div>
         ))}

@@ -86,7 +86,7 @@ export function GeneratorPane({ draft, edit }: { draft: StudioSnapshot; edit: Up
           id="studio-generator-title"
           value={generator.title}
           onChange={(event) => edit((d) => (d.generator ? { ...d, generator: { ...d.generator, title: event.target.value } } : d), "generator-title")}
-          className="h-11 w-full min-w-0 rounded-md border border-border bg-background px-3 text-body text-text focus:border-primary"
+          className="h-11 w-full min-w-0 rounded-lg border border-border bg-background px-3 text-body text-text focus:border-primary/60 shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong"
         />
       </div>
       <Tabs

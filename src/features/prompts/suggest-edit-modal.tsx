@@ -133,7 +133,7 @@ export function SuggestEditModal({
                 onChange={(event) => setSuggestionText(event.target.value)}
                 maxLength={2000}
                 placeholder={t("prompt.suggestEditPlaceholder")}
-                className="w-full resize-none rounded-md border border-border bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted"
+                className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
                 autoFocus
               />
             </div>
@@ -149,7 +149,7 @@ export function SuggestEditModal({
                   value={proposedPromptText}
                   onChange={(event) => setProposedPromptText(event.target.value)}
                   placeholder={t("prompt.proposedNewTextPlaceholder")}
-                  className="w-full resize-none rounded-md border border-border bg-background px-3 py-2 font-mono text-xs text-text placeholder:text-text-muted"
+                  className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 font-mono text-xs text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
                 />
               </div>
             ) : (

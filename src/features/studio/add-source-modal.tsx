@@ -129,7 +129,7 @@ export function AddSourceModal({
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder={t("studio.searchLibrary")}
-              className="h-11 w-full rounded-md border border-border bg-background pl-9 pr-3 text-body text-text placeholder:text-text-muted focus:border-primary"
+              className="h-11 w-full rounded-lg border border-border bg-background pl-9 pr-3 text-body text-text placeholder:text-text-muted focus:border-primary/60 shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong"
             />
           </label>
         </div>

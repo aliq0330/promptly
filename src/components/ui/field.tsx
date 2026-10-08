@@ -7,9 +7,12 @@ import { cn } from "@/lib/utils";
  * "Editorial Premium" language (Bölüm 9.110–9.112). Purely presentational.
  */
 
+/** The shared control surface, without a height — inputs, textareas, selects. */
+export const fieldControlClassName =
+  "w-full rounded-lg border border-border bg-background px-3.5 text-sm text-text shadow-xs transition-colors duration-200 ease-soft placeholder:text-text-muted hover:border-border-strong focus:border-primary/60";
+
 /** A single-line text input. */
-export const fieldInputClassName =
-  "h-11 w-full rounded-lg border border-border bg-background px-3.5 text-sm text-text shadow-xs transition-colors duration-200 ease-soft placeholder:text-text-muted hover:border-border-strong focus:border-primary/60";
+export const fieldInputClassName = `h-11 ${fieldControlClassName}`;
 
 /** A field's label line. */
 export const fieldLabelClassName = "mb-1.5 block text-label font-medium text-text";

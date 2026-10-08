@@ -118,7 +118,7 @@ export function SaveNewModal({
                 id="studio-new-title"
                 value={title}
                 onChange={(event) => setTitles((prev) => ({ ...prev, [target]: event.target.value }))}
-                className="h-11 w-full rounded-md border border-border bg-background px-3 text-body text-text focus:border-primary"
+                className="h-11 w-full rounded-lg border border-border bg-background px-3 text-body text-text focus:border-primary/60 shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong"
               />
             </div>
             {error && (

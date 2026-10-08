@@ -317,6 +317,10 @@
   --ease-soft: cubic-bezier(0.2, 0.7, 0.2, 1);
   --animate-fade-in: fade-in 200ms var(--ease-soft) both;
   --animate-pop-in: pop-in 220ms var(--ease-soft) both;
+  /* Content entrance (cards, page bodies). `backwards` — NOT `both` — so no
+   * transform remains once it finishes: a lingering transform would create a
+   * stacking context and trap a card's open menu under the next card. */
+  --animate-rise-in: rise-in 380ms var(--ease-soft) backwards;
   --animate-sheet-up: sheet-up 260ms var(--ease-soft) both;
   --animate-shimmer: shimmer 1.6s linear infinite;
   --animate-heart-pop: heart-pop 420ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
@@ -331,6 +335,16 @@
     }
     to {
       opacity: 1;
+    }
+  }
+  @keyframes rise-in {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
     }
   }
   @keyframes pop-in {
@@ -551,6 +565,18 @@
   &::-webkit-scrollbar-thumb {
     background-color: var(--color-border-strong);
     border-radius: 9999px;
+  }
+}
+
+/* Mode/palette switch cross-fade — see withThemeTransition() in theme-provider. */
+@media (prefers-reduced-motion: no-preference) {
+  .theme-transition,
+  .theme-transition *,
+  .theme-transition *::before,
+  .theme-transition *::after {
+    transition-property: background-color, border-color, color, fill, stroke, box-shadow !important;
+    transition-duration: 300ms !important;
+    transition-timing-function: var(--ease-soft) !important;
   }
 }
 

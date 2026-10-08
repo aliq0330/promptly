@@ -54,7 +54,7 @@ export function WorkflowPane({
           id="studio-workflow-title"
           value={workflow.title}
           onChange={(event) => edit((d) => (d.workflow ? { ...d, workflow: { ...d.workflow, title: event.target.value } } : d), "workflow-title")}
-          className="h-11 w-full min-w-0 rounded-md border border-border bg-background px-3 text-body text-text focus:border-primary"
+          className="h-11 w-full min-w-0 rounded-lg border border-border bg-background px-3 text-body text-text focus:border-primary/60 shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong"
         />
       </div>
 
@@ -101,7 +101,7 @@ export function WorkflowPane({
                       id="studio-step-title"
                       value={selected.title}
                       onChange={(event) => patchStep(selected.id, { title: event.target.value }, `step-title-${selected.id}`)}
-                      className="h-11 w-full min-w-0 rounded-md border border-border bg-background px-3 text-body text-text focus:border-primary"
+                      className="h-11 w-full min-w-0 rounded-lg border border-border bg-background px-3 text-body text-text focus:border-primary/60 shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong"
                     />
                   </div>
                   <div>
@@ -113,7 +113,7 @@ export function WorkflowPane({
                       value={selected.instructions}
                       onChange={(event) => patchStep(selected.id, { instructions: event.target.value }, `step-instr-${selected.id}`)}
                       rows={3}
-                      className="w-full min-w-0 resize-y rounded-md border border-border bg-background p-3 text-small text-text focus:border-primary"
+                      className="w-full min-w-0 resize-y rounded-lg border border-border bg-background p-3 text-small text-text focus:border-primary/60 shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong"
                     />
                   </div>
 
@@ -168,7 +168,7 @@ export function WorkflowPane({
                         onChange={(event) =>
                           patchStep(selected.id, { outputs: selected.outputs.map((o) => (o.id === output.id ? { ...o, label: event.target.value } : o)) }, `out-${output.id}`)
                         }
-                        className="h-11 w-full min-w-0 rounded-md border border-border bg-background px-3 text-small text-text focus:border-primary"
+                        className="h-11 w-full min-w-0 rounded-lg border border-border bg-background px-3 text-small text-text focus:border-primary/60 shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong"
                       />
                     ))}
                     <Button

@@ -158,7 +158,7 @@ export function TagPicker({ picker, disabled }: TagPickerProps) {
               setCreateError(null);
             }}
             placeholder={t("tagPicker.searchOrCreatePlaceholder")}
-            className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted"
+            className="h-9 w-full rounded-lg border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
           />
           {normalizedQuery && (
             <div className="absolute z-20 mt-1 max-h-64 w-full overflow-y-auto rounded-md border border-border bg-surface shadow-lg">

@@ -46,7 +46,7 @@ export default function AuthGroupLayout({ children }: { children: ReactNode }) {
           <BrandMark size={30} />
           <span className="font-serif text-[1.3rem] font-semibold tracking-[-0.02em] text-text">Promptly</span>
         </Link>
-        <div className="w-full max-w-sm animate-fade-in rounded-xl border border-border-soft bg-surface p-6 shadow-card sm:p-8">{children}</div>
+        <div className="w-full max-w-sm animate-rise-in rounded-xl border border-border-soft bg-surface p-6 shadow-card sm:p-8">{children}</div>
       </div>
     </div>
   );

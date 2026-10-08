@@ -185,7 +185,7 @@ export function FieldCatalogPicker({
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder={t("fieldCatalog.searchPlaceholder")}
-              className="h-10 w-full rounded-md border border-border bg-background pl-9 pr-3 text-sm text-text placeholder:text-text-muted"
+              className="h-10 w-full rounded-lg border border-border bg-background pl-9 pr-3 text-sm text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
             />
           </div>
         </div>
