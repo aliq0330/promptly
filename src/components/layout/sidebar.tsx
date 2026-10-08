@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { Plus, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BrandMark } from "@/components/layout/brand-mark";
+import { buttonClassName } from "@/components/ui/button";
 import { filterNavItems, guestLoginNavItem, isNavItemActive, navGroups, PROFILE_NAV_PLACEHOLDER, settingsNavItem, type NavItem } from "@/components/layout/nav-items";
 import { useProfileNavHref } from "@/features/auth/use-profile-nav-href";
 import { useAuthStatus } from "@/features/auth/use-auth-status";
@@ -47,11 +48,13 @@ export function Sidebar() {
           aria-current={active ? "page" : undefined}
           title={label}
           className={cn(
-            "group flex h-10 items-center gap-3 rounded-md text-label font-medium transition-colors duration-200",
+            "group relative flex h-10 items-center gap-3 rounded-md text-label font-medium transition-colors duration-200",
             "justify-center lg:justify-start lg:px-3",
             active ? "bg-surface-soft text-text" : "text-text-muted hover:bg-surface-soft/70 hover:text-text",
           )}
         >
+          {/* Active indicator: a short accent bar on the rail's inner edge. */}
+          {active && <span aria-hidden className="absolute -left-3 top-2 bottom-2 w-[3px] rounded-r-full bg-primary lg:-left-4" />}
           <Icon size={19} strokeWidth={active ? 2.2 : 1.8} className={active ? "text-primary" : undefined} />
           <span className="sr-only lg:not-sr-only">{label}</span>
         </Link>
@@ -65,7 +68,7 @@ export function Sidebar() {
         <Link href="/" className="flex items-center gap-2.5 rounded-md" aria-label="Promptly">
           <BrandMark size={30} />
           <span className="hidden leading-none lg:block">
-            <span className="block font-display text-[1.15rem] font-semibold tracking-tight text-text">Promptly</span>
+            <span className="block font-serif text-[1.3rem] font-semibold tracking-[-0.02em] text-text">Promptly</span>
             <span className="mt-0.5 block text-caption text-text-muted">{t("nav.tagline")}</span>
           </span>
         </Link>
@@ -78,7 +81,7 @@ export function Sidebar() {
             onClick={() => requireAuth("create")}
             aria-haspopup="dialog"
             title={t("nav.createShort")}
-            className="flex h-10 w-full items-center justify-center gap-2 rounded-md bg-primary text-label font-semibold text-primary-foreground shadow-xs transition-colors duration-200 hover:bg-primary-hover"
+            className={buttonClassName({ className: "w-full font-semibold" })}
           >
             <Plus size={18} strokeWidth={2.4} />
             <span className="sr-only lg:not-sr-only">{t("nav.createShort")}</span>
@@ -87,7 +90,7 @@ export function Sidebar() {
           <Link
             href="/create"
             title={t("nav.createShort")}
-            className="flex h-10 items-center justify-center gap-2 rounded-md bg-primary text-label font-semibold text-primary-foreground shadow-xs transition-colors duration-200 hover:bg-primary-hover"
+            className={buttonClassName({ className: "w-full font-semibold" })}
           >
             <Plus size={18} strokeWidth={2.4} />
             <span className="sr-only lg:not-sr-only">{t("nav.createShort")}</span>
@@ -98,7 +101,7 @@ export function Sidebar() {
       <nav aria-label={t("nav.primaryLabel")} className="flex flex-1 flex-col gap-4 overflow-y-auto px-3 py-3 lg:px-4">
         {visibleGroups.map((group) => (
           <div key={group.labelKey}>
-            <p className="mb-1 hidden px-3 text-caption font-semibold uppercase tracking-[0.08em] text-text-muted lg:block">
+            <p className="mb-1.5 hidden px-3 text-[0.6875rem] font-semibold uppercase tracking-[0.1em] text-text-muted lg:block">
               {t(group.labelKey)}
             </p>
             <div aria-hidden className="mx-auto mb-2 h-px w-8 bg-border-soft lg:hidden" />

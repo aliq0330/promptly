@@ -32,7 +32,7 @@ const AUTHOR: UserProfile = {
   createdAt: "2026-01-01T00:00:00Z",
 };
 
-export const FIXTURE_PROMPT: Prompt = {
+const FIXTURE_PROMPT: Prompt = {
   id: "5eed0000-0000-4000-8000-0000000000a1",
   author: AUTHOR,
   title: "Neon şehir portresi",
@@ -67,7 +67,7 @@ export const FIXTURE_PROMPT: Prompt = {
   generatedFrom: null,
 };
 
-export const FIXTURE_GENERATOR: Generator = {
+const FIXTURE_GENERATOR: Generator = {
   id: "5eed0000-0000-4000-8000-0000000000b1",
   creator: AUTHOR,
   title: "Ürün Fotoğrafı Oluşturucu",
@@ -95,7 +95,7 @@ export const FIXTURE_GENERATOR: Generator = {
   updatedAt: "2026-01-02T00:00:00Z",
 };
 
-export const FIXTURE_REQUEST: PromptRequest = {
+const FIXTURE_REQUEST: PromptRequest = {
   id: "5eed0000-0000-4000-8000-0000000000c1",
   author: AUTHOR,
   title: "Retro bilim kurgu poster tarzı bir prompt arıyorum",
@@ -134,7 +134,7 @@ const NOOP_MESSAGE_ACTIONS: MessageBubbleActions = {
 // Built through the REAL `composeGeneratorShareBody` (the exact function
 // `local-conversation-view.tsx` calls at send time) so this fixture proves
 // the actual compose→parse round trip, not a hand-typed guess at the format.
-export const FIXTURE_GENERATOR_SHARE_MESSAGE: Message = {
+const FIXTURE_GENERATOR_SHARE_MESSAGE: Message = {
   id: "5eed0000-0000-4000-8000-0000000000d1",
   conversationId: "5eed0000-0000-4000-8000-0000000000e1",
   senderId: AUTHOR.id,

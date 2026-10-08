@@ -28,7 +28,7 @@ export function MobileNav() {
   return (
     <nav
       aria-label={t("nav.primaryLabel")}
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-border-soft bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-border-soft bg-surface/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl backdrop-saturate-150 md:hidden"
     >
       <ul className="flex h-16 items-stretch">
         {items.map((item, index) => {
@@ -39,7 +39,7 @@ export function MobileNav() {
           const label = t(item.labelKey);
           const isCreate = item.href === CREATE_HREF;
           const itemClassName = cn(
-            "flex flex-1 flex-col items-center justify-center gap-1 text-[11px] font-medium transition-colors",
+            "relative flex flex-1 flex-col items-center justify-center gap-1 text-[11px] font-medium transition-colors",
             active ? "text-text" : "text-text-muted",
           );
           const inner = (
@@ -47,14 +47,17 @@ export function MobileNav() {
             {isCreate ? (
               <span
                 className={cn(
-                  "flex h-9 w-12 items-center justify-center rounded-md bg-primary text-primary-foreground shadow-sm transition-transform active:scale-95",
+                  "flex h-10 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[inset_0_1px_0_rgb(255_255_255/0.18),0_6px_14px_-6px_rgb(var(--p-shadow)/calc(0.5*var(--p-sa)))] transition-transform active:scale-95",
                   active && "ring-2 ring-primary/30 ring-offset-2 ring-offset-surface",
                 )}
               >
                 <Icon size={20} strokeWidth={2.4} />
               </span>
             ) : (
-              <Icon size={22} strokeWidth={active ? 2.2 : 1.8} className={active ? "text-primary" : undefined} />
+              <>
+                {active && <span aria-hidden className="absolute top-0 h-[3px] w-6 rounded-b-full bg-primary" />}
+                <Icon size={22} strokeWidth={active ? 2.2 : 1.8} className={active ? "text-primary" : undefined} />
+              </>
             )}
             <span className={isCreate ? "sr-only" : undefined}>{label}</span>
             </>

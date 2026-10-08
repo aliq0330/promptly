@@ -28,20 +28,20 @@ export function Header() {
   const hasUnreadMessages = realConversations.some((c) => c.unreadCount > 0);
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border-soft bg-background/85 px-3 backdrop-blur-md sm:px-5 lg:px-8">
+    <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border-soft bg-background/80 px-3 backdrop-blur-xl backdrop-saturate-150 sm:px-5 lg:px-8">
       <Link
         href="/"
         aria-label={t("header.homeAriaLabel")}
         className="flex shrink-0 items-center gap-2 rounded-md md:hidden"
       >
         <BrandMark size={30} />
-        <span className="font-display text-[1.05rem] font-semibold tracking-tight text-text max-[359px]:hidden">Promptly</span>
+        <span className="font-serif text-[1.2rem] font-semibold tracking-[-0.02em] text-text max-[359px]:hidden">Promptly</span>
       </Link>
 
       <div className="hidden min-w-0 flex-1 items-center md:flex">
         <Link
           href="/discover"
-          className="group flex h-10 w-full max-w-lg items-center gap-2.5 rounded-md border border-border-soft bg-surface px-3 text-small text-text-muted shadow-xs transition-colors duration-200 hover:border-border"
+          className="group flex h-10 w-full max-w-lg items-center gap-2.5 rounded-full border border-border-soft bg-surface px-4 text-small text-text-muted shadow-xs transition-[border-color,box-shadow,color] duration-200 hover:border-border hover:text-text-secondary hover:shadow-sm"
         >
           <Search size={17} className="shrink-0" />
           <span className="truncate">{t("header.searchPlaceholder")}</span>

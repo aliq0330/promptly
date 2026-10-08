@@ -161,21 +161,26 @@ export function ContentListPage<T extends { id: string; createdAt: string; likeC
         }
       />
 
-      <ol className="grid grid-cols-3 gap-2" aria-label={t("generator.howItWorks")}>
+      {/* Phones: a swipeable row of full-width-ish steps (each readable in
+          full) instead of three cramped columns; sm+: the three-up grid. */}
+      <ol
+        className="scrollbar-none -mx-3 flex touch-pan-x snap-x snap-mandatory gap-2 overflow-x-auto overscroll-x-contain px-3 sm:mx-0 sm:grid sm:grid-cols-3 sm:gap-3 sm:overflow-visible sm:px-0"
+        aria-label={t("generator.howItWorks")}
+      >
         {steps.map((step, index) => (
           <li
             key={step.titleKey}
-            className="flex flex-col items-start gap-2 rounded-lg border border-border-soft bg-surface p-2.5 sm:flex-row sm:gap-3 sm:p-3.5"
+            className="flex w-[78%] shrink-0 snap-start items-start gap-3 rounded-lg border border-border-soft bg-surface p-3.5 shadow-card sm:w-auto"
           >
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary-soft text-primary">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary-soft text-primary">
               <step.icon size={16} strokeWidth={2} />
             </span>
             <span className="min-w-0 leading-tight">
-              <span className="block text-caption font-semibold text-text-muted">
+              <span className="block text-[0.6875rem] font-semibold uppercase tracking-[0.07em] text-text-muted">
                 {t("generator.step")} {index + 1}
               </span>
-              <span className="block text-caption font-semibold text-text sm:text-label">{t(step.titleKey)}</span>
-              <span className="mt-0.5 hidden text-caption text-text-muted sm:block">{t(step.bodyKey)}</span>
+              <span className="mt-1 block text-label font-semibold text-text">{t(step.titleKey)}</span>
+              <span className="mt-1 block text-caption leading-snug text-text-muted">{t(step.bodyKey)}</span>
             </span>
           </li>
         ))}

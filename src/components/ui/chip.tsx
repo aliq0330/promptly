@@ -15,8 +15,8 @@ export const Chip = forwardRef<
       "inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-3 text-label font-medium whitespace-nowrap",
       "transition-[background-color,border-color,color] duration-200 ease-soft",
       selected
-        ? "border-text bg-text text-background"
-        : "border-border bg-surface text-text-secondary hover:border-border-strong hover:text-text",
+        ? "border-text bg-text text-background shadow-xs"
+        : "border-border bg-surface text-text-secondary hover:border-border-strong hover:bg-surface-soft/60 hover:text-text",
       className,
     )}
     {...props}

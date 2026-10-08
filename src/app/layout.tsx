@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
-import { Inter, Instrument_Sans, JetBrains_Mono } from "next/font/google";
+import { Inter, Instrument_Sans, JetBrains_Mono, Newsreader } from "next/font/google";
 import { ThemeProvider, themeInitScript } from "@/components/theme/theme-provider";
 import { LanguageProvider, languageInitScript } from "@/lib/i18n/language-provider";
 import { AuthProvider } from "@/features/auth/auth-provider";
@@ -20,6 +20,15 @@ const display = Instrument_Sans({
   variable: "--font-display-face",
   subsets: ["latin", "latin-ext"],
   weight: ["500", "600", "700"],
+});
+
+// Editorial serif for page-level titles (globals.css `--font-serif`,
+// applied to text-display / text-h1 / text-h2). Variable font with the
+// optical-size axis, so it stays crisp from section titles to the hero.
+const serif = Newsreader({
+  variable: "--font-serif-face",
+  subsets: ["latin", "latin-ext"],
+  axes: ["opsz"],
 });
 
 // The literal prompt text (`prompt-text` utility) — the thing users copy.
@@ -45,7 +54,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="tr" className={`${inter.variable} ${display.variable} ${mono.variable} h-full antialiased`} suppressHydrationWarning>
+    <html lang="tr" className={`${inter.variable} ${display.variable} ${mono.variable} ${serif.variable} h-full antialiased`} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         <script dangerouslySetInnerHTML={{ __html: languageInitScript }} />
