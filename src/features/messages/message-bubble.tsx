@@ -2,8 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import { MoreHorizontal, SmilePlus } from "lucide-react";
+import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { Button } from "@/components/ui/button";
 import { EmojiPicker } from "./emoji-picker";
+import { MessageImageGrid, useMessageImageUrls } from "./message-image-grid";
 import { MessageActionMenu } from "./message-action-menu";
 import { usePopoverAlign } from "./use-popover-align";
 import { canEditOrDeleteMessage } from "./message-time-limit";
@@ -13,8 +15,34 @@ import { parseWorkflowShareBody } from "./workflow-share-format";
 import { parsePresetShareBody } from "./preset-share-format";
 import { cn, formatRelativeTime } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import type { Message } from "@/types";
+import type { Message, MessageAttachment } from "@/types";
 import type { MessageBubbleActions, MessageReactionEntry } from "./message-bubble-types";
+
+/** A message's stored photos (signed URLs resolved lazily) + the fullscreen viewer they open. */
+function BubbleImages({ attachments, isMe }: { attachments: MessageAttachment[]; isMe: boolean }) {
+  const urls = useMessageImageUrls(attachments);
+  const [open, setOpen] = useState<number | null>(null);
+  const images = attachments.map((a) => ({ key: a.path, url: urls.get(a.path) ?? null, width: a.width, height: a.height }));
+  const viewable = images.filter((image): image is typeof image & { url: string } => Boolean(image.url));
+
+  return (
+    <>
+      <MessageImageGrid
+        images={images}
+        className={isMe ? "self-end" : "self-start"}
+        // The viewer only shows photos that have resolved; map the grid index to its slot among them.
+        onOpen={(index) => {
+          const target = images[index];
+          const slot = viewable.findIndex((image) => image.key === target.key);
+          if (slot >= 0) setOpen(slot);
+        }}
+      />
+      {open !== null && (
+        <ImageLightbox images={viewable.map((image) => ({ url: image.url }))} initialIndex={open} onClose={() => setOpen(null)} />
+      )}
+    </>
+  );
+}
 
 export type { DeleteMode, MessageBubbleActions, MessageReactionEntry } from "./message-bubble-types";
 
@@ -306,10 +334,12 @@ export function MessageBubble({
             {generatorShare && <SharedGeneratorCard slug={generatorShare.slug} />}
             {workflowShare && <SharedWorkflowCard workflowId={workflowShare.id} />}
             {presetShare && <SharedPresetCard presetId={presetShare.id} />}
+            {message.attachments.length > 0 && <BubbleImages attachments={message.attachments} isMe={isMe} />}
             {displayBody && (
               <div
                 className={cn(
-                  "rounded-2xl px-3.5 py-2 text-sm leading-relaxed shadow-xs",
+                  "w-fit rounded-2xl px-3.5 py-2 text-sm leading-relaxed shadow-xs",
+                  isMe ? "self-end" : "self-start",
                   isMe ? "rounded-br-md bg-primary text-primary-foreground" : "rounded-bl-md border border-border-soft bg-surface text-text",
                 )}
               >

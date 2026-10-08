@@ -45,6 +45,7 @@ const PREVIEW_MATCHERS = PREVIEW_TEMPLATES.map(([prefix, key, hasNone]) => ({
 function localizePreviewText(preview: string, t: TFunction): string {
   if (preview === "bir prompt paylaştı") return t("notifMsg.previewPrompt");
   if (preview === "bir prompt isteği paylaştı") return t("notifMsg.previewRequest");
+  if (preview === "bir fotoğraf gönderdi") return t("notifMsg.previewPhoto");
   if (preview === "bir mesaj gönderdi") return t("notifMsg.previewGeneric");
   return preview;
 }
