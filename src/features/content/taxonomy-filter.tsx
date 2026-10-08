@@ -9,31 +9,12 @@ import {
   taxonomyLabel,
   type TaxonomyFilterValue,
 } from "@/lib/content-taxonomy";
-import { ChipSortRow } from "@/features/content/sort-select";
 import { useTranslation } from "@/lib/i18n/language-provider";
 
-/**
- * Filter chips for the shared taxonomy, used wherever a list can be
- * narrowed by content type (Explore, search results, generators, requests,
- * tag pages). Levels appear progressively: types always; categories only
- * once a type is chosen; subcategories only once a category is chosen — so
- * a type's dozens of subcategories are never in the DOM until asked for.
- */
-export function TaxonomyFilter({
-  value,
-  onChange,
-  sort,
-}: {
-  value: TaxonomyFilterValue;
-  onChange: (next: TaxonomyFilterValue) => void;
-  /** Optional sort select, pinned to the right of the type chips on the same line. */
-  sort?: React.ReactNode;
-}) {
-  const { t, language } = useTranslation();
-  const categories = value.contentType ? getCategories(value.contentType) : [];
-  const subcategories = value.contentType ? getSubcategories(value.contentType, value.category) : [];
-
-  const typeChips = (
+/** The "Tümü / Görsel / Metin / Ses / Video" chips — shared by `TaxonomyFilter` and the mobile toolbar (tab row + filter sheet). */
+export function TaxonomyTypeChips({ value, onChange }: { value: TaxonomyFilterValue; onChange: (next: TaxonomyFilterValue) => void }) {
+  const { t } = useTranslation();
+  return (
     <>
       <Chip selected={!value.contentType} onClick={() => onChange({ contentType: null, category: null, subcategory: null })}>
         {t("common.all")}
@@ -50,12 +31,22 @@ export function TaxonomyFilter({
       ))}
     </>
   );
+}
 
+/**
+ * The category and subcategory chip rows (each appears only once the level
+ * above it is chosen). `wrap` lays them out as plain wrapping rows (the
+ * mobile filter sheet) instead of the horizontally scrolling `ChipRow`.
+ */
+export function TaxonomyDeepRows({ value, onChange, wrap }: { value: TaxonomyFilterValue; onChange: (next: TaxonomyFilterValue) => void; wrap?: boolean }) {
+  const { t, language } = useTranslation();
+  const categories = value.contentType ? getCategories(value.contentType) : [];
+  const subcategories = value.contentType ? getSubcategories(value.contentType, value.category) : [];
+  const Row = wrap ? WrapRow : ChipRow;
   return (
-    <div className="space-y-2">
-      {sort ? <ChipSortRow sort={sort}>{typeChips}</ChipSortRow> : <ChipRow>{typeChips}</ChipRow>}
+    <>
       {value.contentType && (
-        <ChipRow>
+        <Row>
           <Chip selected={!value.category} onClick={() => onChange({ ...value, category: null, subcategory: null })}>
             {t("taxonomy.allCategories")}
           </Chip>
@@ -68,10 +59,10 @@ export function TaxonomyFilter({
               {taxonomyLabel(category.labelKey, language)}
             </Chip>
           ))}
-        </ChipRow>
+        </Row>
       )}
       {value.category && subcategories.length > 0 && (
-        <ChipRow>
+        <Row>
           <Chip selected={!value.subcategory} onClick={() => onChange({ ...value, subcategory: null })}>
             {t("taxonomy.allSubcategories")}
           </Chip>
@@ -80,8 +71,36 @@ export function TaxonomyFilter({
               {taxonomyLabel(sub.labelKey, language)}
             </Chip>
           ))}
-        </ChipRow>
+        </Row>
       )}
+    </>
+  );
+}
+
+function WrapRow({ children }: { children: React.ReactNode }) {
+  return <div className="flex flex-wrap gap-2">{children}</div>;
+}
+
+/**
+ * Filter chips for the shared taxonomy, used wherever a list can be
+ * narrowed by content type (Explore, search results, generators, requests,
+ * tag pages). Levels appear progressively: types always; categories only
+ * once a type is chosen; subcategories only once a category is chosen — so
+ * a type's dozens of subcategories are never in the DOM until asked for.
+ */
+export function TaxonomyFilter({
+  value,
+  onChange,
+}: {
+  value: TaxonomyFilterValue;
+  onChange: (next: TaxonomyFilterValue) => void;
+}) {
+  return (
+    <div className="space-y-2">
+      <ChipRow>
+        <TaxonomyTypeChips value={value} onChange={onChange} />
+      </ChipRow>
+      <TaxonomyDeepRows value={value} onChange={onChange} />
     </div>
   );
 }

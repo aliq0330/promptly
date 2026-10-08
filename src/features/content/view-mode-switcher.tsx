@@ -53,3 +53,31 @@ export function ViewModeSwitcher({ className }: { className?: string }) {
     </div>
   );
 }
+
+/**
+ * Phone-width Kart / Odak control: one icon button in the toolbar's action
+ * bar that shows the CURRENT view (▦ card, ▤ focus) and flips to the other on
+ * tap — same `useViewMode` state as the segmented switcher.
+ */
+export function MobileViewToggle({ className }: { className?: string }) {
+  const { t } = useTranslation();
+  const [mode, setMode] = useViewMode();
+  const next: ViewMode = mode === "card" ? "focus" : "card";
+  const Icon = mode === "card" ? LayoutGrid : Rows3;
+  return (
+    <button
+      type="button"
+      onClick={() => setMode(next)}
+      aria-label={t(mode === "card" ? "view.switchToFocus" : "view.switchToCard")}
+      title={t(mode === "card" ? "view.focusTitle" : "view.cardTitle")}
+      className={cn(
+        "inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-border bg-surface text-text-secondary",
+        "transition-colors hover:bg-surface-soft hover:text-text",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1",
+        className,
+      )}
+    >
+      <Icon size={18} strokeWidth={1.9} aria-hidden />
+    </button>
+  );
+}

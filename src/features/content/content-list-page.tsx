@@ -5,20 +5,18 @@ import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
 import { Plus } from "lucide-react";
 import { Button, buttonClassName } from "@/components/ui/button";
-import { Chip } from "@/components/ui/chip";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageContainer, PageHeader } from "@/components/ui/page-header";
 import { PromptCardSkeletonGrid } from "@/components/ui/prompt-card-skeleton";
-import { ChipSortRow, type ContentSortKey } from "@/features/content/sort-select";
-import { MobileViewSwitcherRow, SortAndViewControls } from "@/features/content/list-controls";
+import { type ContentSortKey } from "@/features/content/sort-select";
+import { ListToolbar, TaxonomySheetSections, taxonomyActiveCount } from "@/features/content/list-toolbar";
 import { useViewMode } from "@/features/content/view-mode-store";
 import { FocusGrid } from "@/features/focus/focus-grid";
 import type { FeedItem } from "@/features/feed/types";
-import { TaxonomyFilter } from "@/features/content/taxonomy-filter";
+import { TaxonomyDeepRows, TaxonomyTypeChips } from "@/features/content/taxonomy-filter";
 import { AdvancedSearchBox } from "@/features/search/advanced-search-box";
 import { tokensToQuery, type SearchToken } from "@/features/search/search-tokens";
-import { CONTENT_TYPE_IDS, EMPTY_TAXONOMY_FILTER, matchesTaxonomy, type TaxonomyFilterValue } from "@/lib/content-taxonomy";
-import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
+import { EMPTY_TAXONOMY_FILTER, matchesTaxonomy, type TaxonomyFilterValue } from "@/lib/content-taxonomy";
 import type { HeaderArtVariant } from "@/components/ui/header-art";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
@@ -57,6 +55,8 @@ export function ContentListPage<T extends { id: string; createdAt: string; likeC
   showCategories = true,
   postFilter,
   extra,
+  mobileTabs,
+  searchPlaceholder,
   renderItems,
   focusKind,
   emptyTitle,
@@ -80,7 +80,11 @@ export function ContentListPage<T extends { id: string; createdAt: string; likeC
   matches?: (item: T, value: TaxonomyFilterValue) => boolean;
   showCategories?: boolean;
   postFilter?: (items: T[]) => T[];
+  /** Extra chip row under the type chips (md+). */
   extra?: ReactNode;
+  /** Phones: these chips become the tab row (e.g. request status) and the content-type chips move into the filter sheet. */
+  mobileTabs?: ReactNode;
+  searchPlaceholder?: string;
   renderItems: (items: T[]) => ReactNode;
   /** What the items are, so the Focus View ("Odak") can render them; `renderItems` stays the Card view. */
   focusKind?: FeedItem["kind"];
@@ -97,7 +101,6 @@ export function ContentListPage<T extends { id: string; createdAt: string; likeC
   const [sort, setSort] = useState<ContentSortKey>("newest");
   const [taxonomy, setTaxonomy] = useState<TaxonomyFilterValue>(EMPTY_TAXONOMY_FILTER);
   const [viewMode] = useViewMode();
-  const sortSelect = <SortAndViewControls sort={sort} onSortChange={setSort} />;
   const [results, setResults] = useState<T[] | null>(null);
   const [searching, setSearching] = useState(false);
   const normalized = text.trim();
@@ -187,28 +190,26 @@ export function ContentListPage<T extends { id: string; createdAt: string; likeC
       </ol>
 
       <div className="space-y-3">
-        <AdvancedSearchBox tokens={tokens} onTokensChange={setTokens} text={text} onTextChange={setText} hideKindSuggestions />
-        <MobileViewSwitcherRow />
-        {showCategories ? (
-          <TaxonomyFilter value={taxonomy} onChange={setTaxonomy} sort={sortSelect} />
-        ) : (
-          <ChipSortRow sort={sortSelect}>
-            <Chip selected={!taxonomy.contentType} onClick={() => setTaxonomy(EMPTY_TAXONOMY_FILTER)}>
-              {t("common.all")}
-            </Chip>
-            {CONTENT_TYPE_IDS.map((type) => (
-              <Chip
-                key={type}
-                icon={CONTENT_TYPE_META[type].icon}
-                selected={taxonomy.contentType === type}
-                onClick={() => setTaxonomy({ contentType: type, category: null, subcategory: null })}
-              >
-                {t(CONTENT_TYPE_META[type].labelKey)}
-              </Chip>
-            ))}
-          </ChipSortRow>
-        )}
-        {extra}
+        <AdvancedSearchBox
+          tokens={tokens}
+          onTokensChange={setTokens}
+          text={text}
+          onTextChange={setText}
+          hideKindSuggestions
+          placeholder={searchPlaceholder}
+        />
+        <ListToolbar
+          tabs={<TaxonomyTypeChips value={taxonomy} onChange={setTaxonomy} />}
+          tabsLabel={t("toolbar.contentTypeAria")}
+          mobileTabs={mobileTabs}
+          sort={sort}
+          onSortChange={setSort}
+          desktopExtra={showCategories ? <TaxonomyDeepRows value={taxonomy} onChange={setTaxonomy} /> : undefined}
+          sheetSections={<TaxonomySheetSections value={taxonomy} onChange={setTaxonomy} showCategories={showCategories} />}
+          activeCount={taxonomyActiveCount(taxonomy, mobileTabs !== undefined)}
+          onClear={() => setTaxonomy(EMPTY_TAXONOMY_FILTER)}
+        />
+        {extra && <div className="max-md:hidden">{extra}</div>}
       </div>
 
       {(loading && baseItems.length === 0 && !active) || searching ? (

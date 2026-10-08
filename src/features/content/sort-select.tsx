@@ -2,15 +2,16 @@
 
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
-import { cn } from "@/lib/utils";
 
 export type ContentSortKey = "newest" | "oldest" | "most-liked";
 
-const SORT_LABELS: Record<ContentSortKey, TranslationKey> = {
+export const SORT_LABELS: Record<ContentSortKey, TranslationKey> = {
   newest: "profile.sortNewest",
   oldest: "profile.sortOldest",
   "most-liked": "profile.sortMostLiked",
 };
+
+export const SORT_KEYS = Object.keys(SORT_LABELS) as ContentSortKey[];
 
 /** The En yeni / En eski / En çok beğenilen select — same look as the profile toolbar. */
 export function SortSelect({ value, onChange }: { value: ContentSortKey; onChange: (sort: ContentSortKey) => void }) {
@@ -20,27 +21,13 @@ export function SortSelect({ value, onChange }: { value: ContentSortKey; onChang
       value={value}
       onChange={(event) => onChange(event.target.value as ContentSortKey)}
       aria-label={t("profile.sortAriaLabel")}
-      className="h-8 shrink-0 rounded-md border border-border bg-surface px-2 text-label font-medium text-text"
+      className="h-8 shrink-0 rounded-md border border-border bg-surface px-2 text-label font-medium text-text max-md:h-11 max-md:min-w-0 max-md:max-w-40 max-md:shrink max-md:flex-1 max-md:rounded-lg max-md:px-3"
     >
-      {(Object.keys(SORT_LABELS) as ContentSortKey[]).map((key) => (
+      {SORT_KEYS.map((key) => (
         <option key={key} value={key}>
           {t(SORT_LABELS[key])}
         </option>
       ))}
     </select>
-  );
-}
-
-/**
- * One line: the type chips scroll horizontally on the left, the sort select
- * stays pinned on the right (never wraps to a second line on mobile — same
- * layout as the profile toolbar).
- */
-export function ChipSortRow({ sort, className, children }: { sort: React.ReactNode; className?: string; children: React.ReactNode }) {
-  return (
-    <div className={cn("flex min-w-0 items-center gap-2", className)}>
-      <div className="scrollbar-none flex min-w-0 flex-1 touch-pan-x gap-2 overflow-x-auto overscroll-x-contain">{children}</div>
-      {sort}
-    </div>
   );
 }

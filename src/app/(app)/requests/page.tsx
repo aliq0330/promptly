@@ -22,6 +22,22 @@ export default function RequestsPage() {
     [status],
   );
 
+  const statusChips = (
+    <>
+      {(
+        [
+          ["all", t("common.all")],
+          ["open", t("request.statusOpen")],
+          ["closed", t("request.statusClosed")],
+        ] as const
+      ).map(([key, label]) => (
+        <Chip key={key} selected={status === key} onClick={() => setStatus(key)}>
+          {label}
+        </Chip>
+      ))}
+    </>
+  );
+
   return (
     <ContentListPage
       icon={Sparkles}
@@ -39,21 +55,9 @@ export default function RequestsPage() {
       baseItems={realRequests}
       search={searchRequests}
       postFilter={postFilter}
-      extra={
-        <ChipRow>
-          {(
-            [
-              ["all", t("common.all")],
-              ["open", t("request.statusOpen")],
-              ["closed", t("request.statusClosed")],
-            ] as const
-          ).map(([key, label]) => (
-            <Chip key={key} selected={status === key} onClick={() => setStatus(key)}>
-              {label}
-            </Chip>
-          ))}
-        </ChipRow>
-      }
+      extra={<ChipRow>{statusChips}</ChipRow>}
+      mobileTabs={statusChips}
+      searchPlaceholder={t("search.placeholderRequests")}
       renderItems={(items) => <RequestList requests={items} />}
       focusKind="request"
       emptyTitle={t("request.emptyListTitle")}
