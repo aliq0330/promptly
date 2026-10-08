@@ -11420,7 +11420,20 @@ Bölüm 9.110'un dili beş detay sayfasına (Prompt, Prompt İsteği, Generator,
 - **Telefonda aksiyon çubuğu:** İstatistik ve Paylaş görünür metni `< sm`'de gizlenir (yalnız ikon; `aria-label` zaten var) — çubuk tek satırda kalır.
 - **Formlar/profil:** `FormSection`, generator builder ve workflow editörü kartları `rounded-xl border-border-soft shadow-card sm:p-6`; profil başlığı ve katkı haritası kartı aynı yarıçapta, profil adı serif tek ağırlık, biyografi ferah. `DetailSkeleton` yeni çerçeveyle aynı ölçülerde (yükleme→içerik kayması yok).
 - **Doğrulama:** `tsc`, `lint` (yalnız önceden var olan 5 uyarı), `npm test` 46/46, `next build --webpack` temiz. Ağ taklitli Playwright: prompt detay ve profil, 1440/390, açık/koyu — yatay taşma yok. Ara sıra görülen React #418 hydration uyarısı `main`'de de aynı sıklıkta çıkıyor (bu değişiklikle ilgisiz, ayrıca incelenmedi). İstek/generator/workflow/hazır ayar detayları yalnızca derleme/tip düzeyinde doğrulandı; gerçek Supabase'e ve fiziksel cihaza karşı denenmedi.
-- **Kalan (Faz 3 adayı):** Studio, mesajlaşma, auth/ayarlar sayfaları; "Kullanıcı sonuçları" ve yorum başlıklarının aynı Eyebrow diline alınması; diğer üç paletin renk rafinesi.
+- **Kalan (Faz 3 adayı):** Studio, mesajlaşma, auth/ayarlar sayfaları; "Kullanıcı sonuçları" ve yorum başlıklarının aynı Eyebrow diline alınması; diğer üç paletin renk rafinesi. → Bölüm 9.112'de yapıldı.
+
+### 9.112 Premium görünüm — Faz 3: auth, ayarlar, mesajlaşma, Studio, başlıklar, paletler
+
+Yalnızca görünüm; veri/iş mantığı/prop sözleşmeleri aynı. Migration yok.
+- **Ortak form parçaları — `src/components/ui/field.tsx`:** `fieldInputClassName` (h-11, `rounded-lg`, `shadow-xs`, hover/odak kenarlığı), `fieldLabelClassName`, `ChoiceCard` (radio/checkbox seçimini kart olarak çizer; seçili durum `has-checked:` ile içteki input'tan gelir), `FormIconBadge`. Giriş/kayıt/şifre sıfırlama ve Ayarlar bunları kullanıyor.
+- **Auth:** form kartı `rounded-xl` + `shadow-card`, ikon rozeti yuvarlatılmış kare, başlıklar serif.
+- **Ayarlar:** üç grup — **Hesap** (kullanıcı adı, e-posta, şifre) / **Gizlilik** (mesaj gizliliği, Engellenenler) / **Tercihler** (Görünüm, Dil); grup başlıkları Eyebrow, her biri `rounded-xl` kart. Mesaj gizliliği ve dil seçenekleri `ChoiceCard`. Başarı mesajları `text-success`. Görünüm seçicisindeki mod anahtarı segmented `Tabs` görünümünde. Engellenenler sayfası aynı dilde. TR+EN `settings.groupAccount`/`settings.groupPreferences` eklendi.
+- **Mesajlaşma:** konuşma listesi `border-soft` satırları, aktif konuşmada sol vurgu çizgisi, okunmamışta önizleme koyu; başlıklar (Mesaj İstekleri/Sohbetler) Eyebrow; konuşma başlığında @kullanıcı adı; balonlar `rounded-2xl` (gönderen köşesi kesik), karşı tarafın balonu kenarlıklı yüzey; composer yuvarlak hap input. Konuşma panelinin konum/yükseklik sınıflarına (klavye inset mantığı) dokunulmadı.
+- **Studio:** kartlar `rounded-xl` + `shadow-card`, Studio Home başlığı serif `text-h1`, modallar `shadow-pop`.
+- **Başlıklar:** yorum bölümü başlığı ve arama sonuç grupları (Etiketler, Kullanıcılar, Generatorlar…) Eyebrow + sayı rozeti (`ResultsHeading`); kullanıcı sonuç listesi kart.
+- **Paletler:** Lavanta/Okyanus/Orman açık modda Kum ile aynı rafine: biraz daha derin zemin, hafif tonlu yüzey, daha koyu mürekkep/ikincil/soluk metin; koyu modda zemin bir ton koyulaştı (kartlar ayrışsın). 4 metin rengi × 4 zemin + birincil-ön/birincil — 8 kombinasyonun hepsi ≥ 4.5:1 (hesaplandı).
+- **Doğrulama:** `tsc`, `lint` (yalnız önceden var olan 5 uyarı), `npm test` 46/46, `next build --webpack` temiz. Ağ taklitli Playwright: giriş/kayıt, Ayarlar (oturum enjekte, 4 palet, açık/koyu), Mesajlar, Studio, arama; 390/1100/1440 yatay taşma yok. Ara sıra görülen React #418 uyarısı önceden de var. Bir konuşmanın içi (balonlar) gerçek veriyle ekran görüntüsünde denetlenmedi; Supabase'e/fiziksel cihaza karşı denenmedi.
+- **Kalan:** hareket/geçiş cilası; oluşturma formlarının iç alanlarının `fieldInputClassName`'e taşınması.
 
 ---
 

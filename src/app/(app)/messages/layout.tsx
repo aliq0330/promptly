@@ -23,8 +23,8 @@ export default function MessagesLayout({ children }: { children: ReactNode }) {
 function MessagesFrame({ children }: { children: ReactNode }) {
   return (
     <div className="md:fixed md:bottom-0 md:left-[72px] md:right-0 md:top-16 md:z-10 md:bg-background lg:left-64">
-      <div className="mx-auto flex h-full max-w-[1500px] md:border-x md:border-border">
-        <aside className="hidden w-[clamp(280px,35%,340px)] shrink-0 flex-col border-r border-border bg-surface md:flex lg:w-[clamp(320px,30%,420px)]">
+      <div className="mx-auto flex h-full max-w-[1500px] md:border-x md:border-border-soft">
+        <aside className="hidden w-[clamp(280px,35%,340px)] shrink-0 flex-col border-r border-border-soft bg-surface md:flex lg:w-[clamp(320px,30%,420px)]">
           <Suspense fallback={null}>
             <ConversationsPane embedded />
           </Suspense>

@@ -93,7 +93,7 @@ export function SourcePanel({
           const href = sourceHref(kind, sources);
           return (
             <li key={kind} className="animate-fade-in">
-              <div className={cn("overflow-hidden rounded-lg border transition-colors", isActive ? "border-primary bg-primary-soft" : "border-border-soft bg-surface hover:bg-surface-soft")}>
+              <div className={cn("overflow-hidden rounded-xl border shadow-xs transition-colors duration-200 ease-soft", isActive ? "border-primary bg-primary-soft" : "border-border-soft bg-surface hover:bg-surface-soft")}>
                 <button
                   type="button"
                   aria-current={isActive}

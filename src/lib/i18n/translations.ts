@@ -252,6 +252,8 @@ export const translations = {
   "nav.followers": { tr: "Takipçilerim", en: "Followers" },
   "followers.loginRequiredBody": { tr: "Takipçilerini görmek için giriş yapmalısın.", en: "Sign in to see your followers." },
   "settings.privacyTitle": { tr: "Gizlilik", en: "Privacy" },
+  "settings.groupAccount": { tr: "Hesap", en: "Account" },
+  "settings.groupPreferences": { tr: "Tercihler", en: "Preferences" },
   "settings.blockedUsers": { tr: "Engellenenler", en: "Blocked users" },
   "settings.blockedUsersHint": { tr: "Engellediğin kullanıcıları gör ve engeli kaldır.", en: "See the users you blocked and unblock them." },
   "settings.blockedEmpty": { tr: "Kimseyi engellemedin.", en: "You haven't blocked anyone." },

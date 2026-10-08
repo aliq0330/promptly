@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, KeyRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { FormIconBadge, fieldInputClassName, fieldLabelClassName } from "@/components/ui/field";
 import { useAuth } from "@/features/auth/auth-provider";
 import { supabase } from "@/lib/supabase/client";
 import { translateAuthError } from "@/features/auth/auth-errors";
@@ -96,10 +97,10 @@ export default function ResetPasswordPage() {
   if (passwordUpdated) {
     return (
       <div className="flex flex-col items-center gap-3 py-4 text-center">
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent-surface text-primary">
+        <FormIconBadge>
           <CheckCircle2 size={22} />
-        </div>
-        <h1 className="text-h2 font-semibold text-text">{t("auth.passwordUpdatedTitle")}</h1>
+        </FormIconBadge>
+        <h1 className="text-h2 text-text">{t("auth.passwordUpdatedTitle")}</h1>
         <Button className="w-full" onClick={() => router.push("/")}>
           {t("auth.goToHome")}
         </Button>
@@ -110,14 +111,14 @@ export default function ResetPasswordPage() {
   if (isPasswordRecovery) {
     return (
       <form onSubmit={handleUpdatePassword} className="flex flex-col items-center gap-4 py-4 text-center">
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent-surface text-primary">
+        <FormIconBadge>
           <KeyRound size={22} />
-        </div>
-        <h1 className="text-h2 font-semibold text-text">{t("auth.setNewPasswordTitle")}</h1>
+        </FormIconBadge>
+        <h1 className="text-h2 text-text">{t("auth.setNewPasswordTitle")}</h1>
 
         <div className="w-full space-y-3 text-left">
           <div>
-            <label htmlFor="new-password" className="mb-1.5 block text-sm font-medium text-text">
+            <label htmlFor="new-password" className={fieldLabelClassName}>
               {t("auth.newPasswordLabel")}
             </label>
             <input
@@ -127,11 +128,11 @@ export default function ResetPasswordPage() {
               autoComplete="new-password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted"
+              className={fieldInputClassName}
             />
           </div>
           <div>
-            <label htmlFor="confirm-password" className="mb-1.5 block text-sm font-medium text-text">
+            <label htmlFor="confirm-password" className={fieldLabelClassName}>
               {t("auth.confirmNewPasswordLabel")}
             </label>
             <input
@@ -141,7 +142,7 @@ export default function ResetPasswordPage() {
               autoComplete="new-password"
               value={confirmPassword}
               onChange={(event) => setConfirmPassword(event.target.value)}
-              className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted"
+              className={fieldInputClassName}
             />
           </div>
         </div>
@@ -158,10 +159,10 @@ export default function ResetPasswordPage() {
   if (linkSent) {
     return (
       <div className="flex flex-col items-center gap-3 py-4 text-center">
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent-surface text-primary">
+        <FormIconBadge>
           <CheckCircle2 size={22} />
-        </div>
-        <h1 className="text-h2 font-semibold text-text">{t("auth.linkSentTitle")}</h1>
+        </FormIconBadge>
+        <h1 className="text-h2 text-text">{t("auth.linkSentTitle")}</h1>
         <p className="text-sm text-text-muted">
           <strong className="text-text">{email}</strong> {t("auth.resetLinkSentBodySuffix")}
         </p>
@@ -174,16 +175,16 @@ export default function ResetPasswordPage() {
 
   return (
     <form onSubmit={handleRequestLink} className="flex flex-col items-center gap-4 py-4 text-center">
-      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent-surface text-primary">
+      <FormIconBadge>
         <KeyRound size={22} />
-      </div>
-      <h1 className="text-h2 font-semibold text-text">{t("auth.resetPasswordTitle")}</h1>
+      </FormIconBadge>
+      <h1 className="text-h2 text-text">{t("auth.resetPasswordTitle")}</h1>
       <p className="text-sm text-text-muted">
         {t("auth.resetInstructions")}
       </p>
 
       <div className="w-full text-left">
-        <label htmlFor="reset-email" className="mb-1.5 block text-sm font-medium text-text">
+        <label htmlFor="reset-email" className={fieldLabelClassName}>
           {t("settings.email")}
         </label>
         <input
@@ -193,7 +194,7 @@ export default function ResetPasswordPage() {
           autoComplete="email"
           value={email}
           onChange={(event) => setEmail(event.target.value)}
-          className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted"
+          className={fieldInputClassName}
         />
       </div>
 

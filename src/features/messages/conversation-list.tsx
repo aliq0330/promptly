@@ -20,12 +20,12 @@ export function ConversationList({
   const { t } = useTranslation();
   if (conversations.length === 0) {
     return (
-      <p className="py-10 text-center text-sm text-text-muted">{t("messages.noConversationsYet")}</p>
+      <p className="px-4 py-10 text-center text-sm text-text-muted">{t("messages.noConversationsYet")}</p>
     );
   }
 
   return (
-    <div className={flush ? "bg-surface" : "overflow-hidden rounded-lg border border-border bg-surface"}>
+    <div className={flush ? "bg-surface" : "overflow-hidden rounded-xl border border-border-soft bg-surface shadow-card"}>
       {conversations.map((conversation) => (
         <ConversationRow
           key={conversation.id}

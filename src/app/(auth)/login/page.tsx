@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { FormIconBadge, fieldInputClassName, fieldLabelClassName } from "@/components/ui/field";
 import { useAuth } from "@/features/auth/auth-provider";
 import { supabase } from "@/lib/supabase/client";
 import { translateAuthError } from "@/features/auth/auth-errors";
@@ -81,14 +82,14 @@ export default function LoginPage() {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col items-center gap-4 py-4 text-center">
-      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent-surface text-primary">
+      <FormIconBadge>
         <LogIn size={22} />
-      </div>
-      <h1 className="text-h2 font-semibold text-text">{t("common.login")}</h1>
+      </FormIconBadge>
+      <h1 className="text-h2 text-text">{t("common.login")}</h1>
 
       <div className="w-full space-y-3 text-left">
         <div>
-          <label htmlFor="login-email" className="mb-1.5 block text-sm font-medium text-text">
+          <label htmlFor="login-email" className={fieldLabelClassName}>
             {t("auth.emailOrUsername")}
           </label>
           <input
@@ -100,12 +101,12 @@ export default function LoginPage() {
             autoCorrect="off"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
-            className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted"
+            className={fieldInputClassName}
           />
         </div>
         <div>
           <div className="mb-1.5 flex items-center justify-between">
-            <label htmlFor="login-password" className="block text-sm font-medium text-text">
+            <label htmlFor="login-password" className="block text-label font-medium text-text">
               {t("auth.passwordLabel")}
             </label>
             <Link href="/reset-password" className="text-xs text-primary hover:underline">
@@ -119,7 +120,7 @@ export default function LoginPage() {
             autoComplete="current-password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
-            className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted"
+            className={fieldInputClassName}
           />
         </div>
       </div>

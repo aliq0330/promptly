@@ -48,7 +48,7 @@ export function CompositionView({
   const finalFlat = finalText.replace(/\s+/g, " ").trim();
 
   return (
-    <section aria-label={t("studio.composition")} className="min-w-0 rounded-lg border border-border-soft bg-surface p-3 sm:p-4">
+    <section aria-label={t("studio.composition")} className="min-w-0 rounded-xl border border-border-soft bg-surface p-3 shadow-card sm:p-4">
       <h2>
         <button
           type="button"

@@ -620,13 +620,13 @@ export function LocalConversationView() {
   if (!user) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
-        <h1 className="mb-2 text-h2 font-semibold text-text">{t("auth.loginRequiredTitle")}</h1>
+        <h1 className="mb-2 text-h2 text-text">{t("auth.loginRequiredTitle")}</h1>
         <p className="mb-4 text-sm text-text-muted">
           {t("messages.loginRequiredToViewBody")}
         </p>
         <Link
           href="/login"
-          className="inline-flex h-9 items-center rounded-md border border-border px-4 text-sm font-medium text-text hover:bg-accent-surface"
+          className="inline-flex h-9 items-center rounded-lg border border-border bg-surface px-4 text-sm font-medium text-text shadow-xs transition-colors hover:border-border-strong"
         >
           {t("common.login")}
         </Link>
@@ -643,13 +643,13 @@ export function LocalConversationView() {
   if (!conversation) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
-        <h1 className="mb-2 text-h2 font-semibold text-text">{t("messages.conversationNotFoundTitle")}</h1>
+        <h1 className="mb-2 text-h2 text-text">{t("messages.conversationNotFoundTitle")}</h1>
         <p className="mb-4 text-sm text-text-muted">
           {t("messages.conversationNotFoundBody")}
         </p>
         <Link
           href="/messages"
-          className="inline-flex h-9 items-center rounded-md border border-border px-4 text-sm font-medium text-text hover:bg-accent-surface"
+          className="inline-flex h-9 items-center rounded-lg border border-border bg-surface px-4 text-sm font-medium text-text shadow-xs transition-colors hover:border-border-strong"
         >
           {t("messages.backToMessages")}
         </Link>
@@ -664,26 +664,29 @@ export function LocalConversationView() {
       ref={panelRef}
       className="fixed inset-x-0 top-16 z-10 flex flex-col bg-background bottom-[calc(4rem+env(safe-area-inset-bottom))] md:static md:inset-auto md:z-auto md:h-full md:min-h-0 md:flex-1"
     >
-      <div className="flex items-center gap-1 border-b border-border px-2 py-2 lg:px-4">
+      <div className="flex items-center gap-1 border-b border-border-soft bg-surface px-2 py-2 lg:px-4">
         <button
           type="button"
           onClick={handleBack}
           aria-label={t("messages.backToListAriaLabel")}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-accent-surface hover:text-text md:hidden"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-surface-soft hover:text-text md:hidden"
         >
           <ArrowLeft size={20} />
         </button>
         <Link
           href={profileHref(participant)}
-          className="flex min-w-0 flex-1 items-center gap-3 rounded-md px-1 hover:bg-accent-surface/40"
+          className="group flex min-w-0 flex-1 items-center gap-3 rounded-lg px-1.5 py-1 transition-colors duration-200 ease-soft hover:bg-surface-soft"
         >
           <Avatar src={participant.avatarUrl} alt={participant.displayName} size={36} />
-          <span className="truncate text-sm font-semibold text-text">{participant.displayName}</span>
+          <span className="min-w-0 leading-tight">
+            <span className="block truncate text-sm font-semibold tracking-[-0.01em] text-text transition-colors group-hover:text-primary">{participant.displayName}</span>
+            <span className="block truncate text-caption text-text-muted">@{participant.username}</span>
+          </span>
         </Link>
         <ProfileMoreMenu user={participant} blockState={blockState} />
       </div>
       {conversation.myStatus === "pending" && (
-        <div className="flex items-center justify-between gap-3 border-b border-border bg-accent-surface/60 px-4 py-2.5 lg:px-6">
+        <div className="flex items-center justify-between gap-3 border-b border-primary/15 bg-primary-soft/50 px-4 py-2.5 lg:px-6">
           <p className="text-xs text-text">
             {t("messages.pendingRequestNotice", { name: participant?.displayName ?? "" })}
           </p>
@@ -715,7 +718,7 @@ export function LocalConversationView() {
         }}
       >
         {messageHighlightNotFound && (
-          <p className="rounded-md bg-accent-surface/60 px-3 py-2 text-center text-xs text-text-muted">
+          <p className="mx-auto w-fit max-w-full rounded-full border border-border-soft bg-surface px-3.5 py-1.5 text-center text-xs text-text-muted shadow-xs">
             {t("messages.messageNotViewable")}
           </p>
         )}
@@ -756,9 +759,9 @@ export function LocalConversationView() {
         )}
         <div ref={bottomRef} />
       </div>
-      <form onSubmit={handleSubmit} className="border-t border-border p-4 lg:px-6">
+      <form onSubmit={handleSubmit} className="border-t border-border-soft bg-surface p-3 sm:p-4 lg:px-6">
         {blockState.isBlocked && (
-          <div className="mb-2 flex items-center justify-between gap-2 rounded-md bg-danger/10 px-3 py-1.5 text-xs text-danger">
+          <div className="mb-2 flex items-center justify-between gap-2 rounded-lg bg-danger/10 px-3 py-1.5 text-xs text-danger">
             <span>{t("messages.youBlockedCantSend")}</span>
             <button type="button" onClick={() => blockState.toggle()} className="font-medium hover:underline">
               {t("profile.unblock")}
@@ -766,7 +769,7 @@ export function LocalConversationView() {
           </div>
         )}
         {replyingTo && (
-          <div className="mb-2 flex items-center justify-between gap-2 rounded-md bg-accent-surface/60 px-3 py-1.5 text-xs text-text-muted">
+          <div className="mb-2 flex items-center justify-between gap-2 rounded-lg border border-border-soft bg-surface-soft px-3 py-1.5 text-xs text-text-muted">
             <span className="truncate">
               {t("messages.replyingToPrefix")} {replyingTo.body ?? (replyingTo.sharedPromptId ? t("messages.aPrompt") : t("request.aRequest"))}
             </span>
@@ -776,7 +779,7 @@ export function LocalConversationView() {
           </div>
         )}
         {pendingShare && (
-          <div className="mb-2 flex items-center justify-between gap-2 rounded-md bg-accent-surface/60 px-3 py-1.5 text-xs text-text-muted">
+          <div className="mb-2 flex items-center justify-between gap-2 rounded-lg border border-border-soft bg-surface-soft px-3 py-1.5 text-xs text-text-muted">
             <span className="truncate">
               {t("messages.sharingPrefix")} {pendingShare.title} — {t("messages.sharingSuffix")}
             </span>
@@ -799,7 +802,7 @@ export function LocalConversationView() {
             onChange={(event) => setDraft(event.target.value)}
             placeholder={pendingShare ? t("messages.addNotePlaceholder") : t("messages.writeMessagePlaceholder")}
             disabled={blockState.isBlocked}
-            className="h-10 min-w-0 flex-1 rounded-md border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
+            className="h-10 min-w-0 flex-1 rounded-full border border-border-soft bg-background px-4 text-sm text-text shadow-xs transition-colors duration-200 ease-soft placeholder:text-text-muted hover:border-border-strong focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15 disabled:opacity-50"
           />
           <Button
             type="submit"

@@ -34,7 +34,7 @@ export function AppearancePicker() {
 
       <fieldset>
         <legend className="mb-2 text-label font-medium text-text-secondary">{t("settings.modeLabel")}</legend>
-        <div className="inline-flex rounded-md border border-border bg-surface-soft p-1" role="radiogroup">
+        <div className="inline-flex gap-0.5 rounded-lg border border-border-soft bg-surface-soft p-0.5" role="radiogroup">
           {(
             [
               { value: "light", label: t("settings.modeLight"), Icon: Sun },
@@ -48,9 +48,9 @@ export function AppearancePicker() {
               aria-checked={theme === value}
               onClick={() => setTheme(value)}
               className={cn(
-                "inline-flex h-8 items-center gap-1.5 rounded-sm px-3 text-label font-medium transition-colors duration-200",
+                "inline-flex h-8 items-center gap-1.5 rounded-md px-3 text-label font-medium transition-[color,background-color,box-shadow] duration-200 ease-soft",
                 theme === value
-                  ? "bg-surface text-text shadow-xs"
+                  ? "bg-surface text-text shadow-sm ring-1 ring-border-soft"
                   : "text-text-muted hover:text-text",
               )}
             >
@@ -83,11 +83,11 @@ function PaletteSwatch({
       onClick={onSelect}
       data-palette={palette}
       className={cn(
-        "group flex flex-col gap-2 rounded-md border bg-background p-2 text-left transition-colors duration-200",
-        selected ? "border-primary" : "border-border hover:border-border-strong",
+        "group flex flex-col gap-2 rounded-lg border bg-background p-2 text-left shadow-xs transition-colors duration-200 ease-soft",
+        selected ? "border-primary ring-1 ring-primary/30" : "border-border-soft hover:border-border-strong",
       )}
     >
-      <span className="flex h-12 w-full overflow-hidden rounded-sm border border-border-soft bg-surface">
+      <span className="flex h-12 w-full overflow-hidden rounded-md border border-border-soft bg-surface">
         <span className="w-1/2 bg-surface-soft" />
         <span className="flex w-1/2 flex-col justify-center gap-1 px-1.5">
           <span className="h-1.5 w-full rounded-full bg-primary" />

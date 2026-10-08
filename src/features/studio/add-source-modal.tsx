@@ -98,7 +98,7 @@ export function AddSourceModal({
 
   return (
     <Modal onClose={onClose} labelledBy="studio-add-source-title">
-      <div className="flex h-[min(80dvh,620px)] w-full max-w-lg flex-col rounded-lg border border-border bg-surface shadow-lg" onClick={(event) => event.stopPropagation()}>
+      <div className="flex h-[min(80dvh,620px)] w-full max-w-lg flex-col rounded-xl border border-border-soft bg-surface shadow-pop" onClick={(event) => event.stopPropagation()}>
         <div className="flex items-center justify-between gap-3 border-b border-border-soft px-4 py-3">
           <h2 id="studio-add-source-title" className="text-h3 font-semibold text-text">
             {title}
