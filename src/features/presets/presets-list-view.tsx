@@ -36,6 +36,7 @@ export function PresetsListView() {
           ))}
         </div>
       )}
+      searchPlaceholder={t("search.placeholderPresets")}
       focusKind="preset"
       emptyTitle={t("preset.noneYetTitle")}
       emptyBody={t("preset.noneYetBody")}

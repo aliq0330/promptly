@@ -45,6 +45,7 @@ export function AdvancedSearchBox({
   onTextChange,
   autoFocus,
   hideKindSuggestions,
+  placeholder,
 }: {
   tokens: SearchToken[];
   onTokensChange: (next: SearchToken[]) => void;
@@ -53,6 +54,8 @@ export function AdvancedSearchBox({
   autoFocus?: boolean;
   /** Single-type list pages: the content-type (prompt/request/…) chips are pointless there. */
   hideKindSuggestions?: boolean;
+  /** Page-specific placeholder ("Generator ara"…); defaults to the site-wide one. */
+  placeholder?: string;
 }) {
   const { t } = useTranslation();
   const id = useId();
@@ -183,9 +186,9 @@ export function AdvancedSearchBox({
       <div
         role="search"
         onClick={() => inputRef.current?.focus()}
-        className="flex min-h-12 w-full flex-wrap items-center gap-1.5 rounded-lg border border-border-soft bg-surface py-1.5 pl-11 pr-3 shadow-card focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20"
+        className="flex min-h-12 w-full flex-wrap items-center gap-1.5 rounded-lg border border-border-soft bg-surface py-1.5 pl-11 pr-3 shadow-card focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 max-md:min-h-[3.25rem] max-md:rounded-2xl"
       >
-        <Search size={18} className="pointer-events-none absolute left-3.5 top-3.5 text-text-muted" />
+        <Search size={18} className="pointer-events-none absolute left-3.5 top-3.5 text-text-muted max-md:top-4" />
         {tokens.map((token, index) => {
           const { icon, label } = chipLabel(token);
           const isPending = pendingRemove && index === tokens.length - 1;
@@ -221,7 +224,7 @@ export function AdvancedSearchBox({
           aria-expanded={showList}
           aria-controls={listId}
           aria-autocomplete="list"
-          aria-label={t("search.placeholder")}
+          aria-label={placeholder ?? t("search.placeholder")}
           aria-activedescendant={showList && active >= 0 ? `${listId}-${active}` : undefined}
           autoComplete="off"
           autoFocus={autoFocus}
@@ -234,7 +237,7 @@ export function AdvancedSearchBox({
           }}
           onFocus={() => setOpen(true)}
           onKeyDown={handleKeyDown}
-          placeholder={tokens.length ? t("search.chipPlaceholder") : t("search.placeholder")}
+          placeholder={tokens.length ? t("search.chipPlaceholder") : (placeholder ?? t("search.placeholder"))}
           className="h-8 min-w-[9rem] flex-1 bg-transparent text-small text-text placeholder:text-text-muted focus:outline-none"
         />
         {(tokens.length > 0 || text) && (

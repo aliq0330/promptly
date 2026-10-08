@@ -41,6 +41,7 @@ export function WorkflowsListView() {
           ))}
         </div>
       )}
+      searchPlaceholder={t("search.placeholderWorkflows")}
       focusKind="workflow"
       emptyTitle={t("workflow.noneYetTitle")}
       emptyBody={t("workflow.noneYetBody")}

@@ -28,6 +28,7 @@ export function GeneratorsDiscoverView() {
       baseItems={realGenerators}
       search={searchGenerators}
       renderItems={(items) => <PromptGrid generators={items} />}
+      searchPlaceholder={t("search.placeholderGenerators")}
       focusKind="generator"
       emptyTitle={t("generator.noGeneratorsPublishedYet")}
       emptyBody={t("generator.createFirstOneHint")}

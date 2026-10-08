@@ -10,8 +10,8 @@ import { PromptCardSkeletonGrid } from "@/components/ui/prompt-card-skeleton";
 import { FeedItemsView } from "./feed-items-view";
 import { feedItemCreatedAt, feedItemPopularity, type FeedItem } from "./types";
 import { type ContentSortKey } from "@/features/content/sort-select";
-import { MobileViewSwitcherRow, SortAndViewControls } from "@/features/content/list-controls";
-import { TaxonomyFilter } from "@/features/content/taxonomy-filter";
+import { ListToolbar, SheetChips, SheetSection, TaxonomySheetSections, taxonomyActiveCount } from "@/features/content/list-toolbar";
+import { TaxonomyDeepRows, TaxonomyTypeChips } from "@/features/content/taxonomy-filter";
 import { SearchView } from "@/features/search/search-view";
 import { EMPTY_TAXONOMY_FILTER, matchesTaxonomy, type TaxonomyFilterValue } from "@/lib/content-taxonomy";
 import { CreatorCard } from "@/features/profile/creator-card";
@@ -102,8 +102,19 @@ export function DiscoverFeed() {
     );
   }, [realPrompts, realGenerators, realWorkflows, realPresets, realRequests, taxonomy, openOnly, section, sort]);
 
+  const openOnlyChips = (
+    <>
+      <Chip selected={!openOnly} onClick={() => setOpenOnly(false)}>
+        {t("discover.allRequests")}
+      </Chip>
+      <Chip selected={openOnly} onClick={() => setOpenOnly(true)}>
+        {t("request.openOnly")}
+      </Chip>
+    </>
+  );
+
   const idleContent = (
-    <div className="space-y-6">
+    <div className="space-y-6 max-md:space-y-4">
       {tags.length > 0 && (
         <div className="flex items-center gap-3">
           <span className="hidden shrink-0 items-center gap-1.5 text-caption font-semibold uppercase tracking-[0.08em] text-text-muted sm:flex">
@@ -115,7 +126,7 @@ export function DiscoverFeed() {
               <Link
                 key={tag.slug}
                 href={tagHref(tag)}
-                className="inline-flex h-8 shrink-0 items-center gap-1 rounded-full border border-border-soft bg-surface px-3 text-label font-medium text-text-secondary transition-colors duration-200 hover:border-primary/40 hover:text-primary"
+                className="inline-flex h-8 shrink-0 items-center gap-1 rounded-full border border-border-soft bg-surface px-3 text-label font-medium text-text-secondary transition-colors duration-200 hover:border-primary/40 hover:text-primary max-md:h-[34px] max-md:border-border max-md:bg-transparent max-md:text-body max-md:text-text-muted"
               >
                 <Hash size={13} className="text-text-muted" />
                 {tag.label}
@@ -134,21 +145,31 @@ export function DiscoverFeed() {
         />
 
         {section !== "creators" && (
-          <>
-            <MobileViewSwitcherRow />
-            <TaxonomyFilter value={taxonomy} onChange={setTaxonomy} sort={<SortAndViewControls sort={sort} onSortChange={setSort} />} />
-          </>
+          <ListToolbar
+            tabs={<TaxonomyTypeChips value={taxonomy} onChange={setTaxonomy} />}
+            tabsLabel={t("toolbar.contentTypeAria")}
+            hideTabsOnMobile
+            sort={sort}
+            onSortChange={setSort}
+            desktopExtra={<TaxonomyDeepRows value={taxonomy} onChange={setTaxonomy} />}
+            sheetSections={
+              <>
+                <TaxonomySheetSections value={taxonomy} onChange={setTaxonomy} />
+                {section === "requests" && (
+                  <SheetSection title={t("toolbar.status")}>
+                    <SheetChips>{openOnlyChips}</SheetChips>
+                  </SheetSection>
+                )}
+              </>
+            }
+            activeCount={taxonomyActiveCount(taxonomy, true) + (section === "requests" && openOnly ? 1 : 0)}
+            onClear={() => {
+              setTaxonomy(EMPTY_TAXONOMY_FILTER);
+              setOpenOnly(false);
+            }}
+          />
         )}
-        {section === "requests" && (
-          <ChipRow>
-            <Chip selected={!openOnly} onClick={() => setOpenOnly(false)}>
-              {t("discover.allRequests")}
-            </Chip>
-            <Chip selected={openOnly} onClick={() => setOpenOnly(true)}>
-              {t("request.openOnly")}
-            </Chip>
-          </ChipRow>
-        )}
+        {section === "requests" && <ChipRow className="max-md:hidden">{openOnlyChips}</ChipRow>}
       </div>
 
       {section === "creators" ? (

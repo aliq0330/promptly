@@ -4,8 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import { Blocks, Flame, LayoutGrid, SquareTerminal, SlidersHorizontal, Sparkles, Stars, UserCheck, Workflow as WorkflowIcon } from "lucide-react";
 import { Tabs } from "@/components/ui/tabs";
 import { Chip } from "@/components/ui/chip";
-import { ChipSortRow, type ContentSortKey } from "@/features/content/sort-select";
-import { MobileViewSwitcherRow, SortAndViewControls } from "@/features/content/list-controls";
+import { type ContentSortKey } from "@/features/content/sort-select";
+import { ListToolbar, SheetChips, SheetSection } from "@/features/content/list-toolbar";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PromptCardSkeletonGrid } from "@/components/ui/prompt-card-skeleton";
 import { FeedItemsView } from "./feed-items-view";
@@ -83,6 +83,16 @@ export function FeedTabs() {
     );
   }, [allItems, active, followedIds, kind, sort]);
 
+  const kindChips = (
+    <>
+      {KIND_FILTERS.map((filter) => (
+        <Chip key={filter.key} icon={filter.icon} selected={kind === filter.key} onClick={() => setKind(filter.key)}>
+          {t(filter.labelKey)}
+        </Chip>
+      ))}
+    </>
+  );
+
   return (
     <section className="space-y-4" aria-label={t("feed.ariaLabel")}>
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
@@ -96,14 +106,20 @@ export function FeedTabs() {
           ariaLabel={t("feed.viewAriaLabel")}
           variant="segmented"
         />
-        <MobileViewSwitcherRow />
-        <ChipSortRow sort={<SortAndViewControls sort={sort} onSortChange={setSort} />} className="lg:max-w-[60%]">
-          {KIND_FILTERS.map((filter) => (
-            <Chip key={filter.key} icon={filter.icon} selected={kind === filter.key} onClick={() => setKind(filter.key)}>
-              {t(filter.labelKey)}
-            </Chip>
-          ))}
-        </ChipSortRow>
+        <ListToolbar
+          className="lg:max-w-[60%]"
+          tabs={kindChips}
+          tabsLabel={t("toolbar.contentTypeAria")}
+          sort={sort}
+          onSortChange={setSort}
+          sheetSections={
+            <SheetSection title={t("toolbar.contentType")}>
+              <SheetChips>{kindChips}</SheetChips>
+            </SheetSection>
+          }
+          activeCount={kind === "all" ? 0 : 1}
+          onClear={() => setKind("all")}
+        />
       </div>
 
       {active === "following" && !user ? (
