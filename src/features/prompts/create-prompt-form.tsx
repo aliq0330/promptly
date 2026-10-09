@@ -33,6 +33,12 @@ import { multiImageItemFromMedia, toDeferredMediaInputs, type MultiImageItem } f
 import { OutputFilePicker } from "@/features/prompts/output-file-picker";
 import { attachPromptOutput, type OutputKind } from "@/lib/supabase/prompt-output";
 import { copyTextToClipboard, generatorHref, promptHref, requestHref } from "@/lib/utils";
+import {
+  ReferenceRequirementsField,
+  NO_REFERENCES,
+  clampReferences,
+  type ReferenceRequirements,
+} from "@/features/content/reference-requirements";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { KindDraftsButton } from "@/features/drafts/kind-drafts-button";
 import { CreateFormActions } from "@/features/content/create-form-actions";
@@ -262,7 +268,7 @@ export function CreatePromptForm() {
   // Editing: don't overwrite the saved DNA before it has loaded.
   const [dnaLoaded, setDnaLoaded] = useState(!isEditMode);
   const [showOnProfile, setShowOnProfile] = useState(true);
-  const [requiresReference, setRequiresReference] = useState(false);
+  const [references, setReferences] = useState<ReferenceRequirements>(NO_REFERENCES);
   const [visibility, setVisibility] = useState<ContentVisibility>("public");
 
   // "Prompt olarak yayınla" from the Üret page: the result was parked in
@@ -308,7 +314,11 @@ export function CreatePromptForm() {
       setTool(editingPrompt.tool ?? "");
       setTools(editingPrompt.tools ?? []);
       setImages(multiImageItemFromMedia(editingPrompt.media));
-      setRequiresReference(editingPrompt.requiresReferenceImage);
+      setReferences({
+        image: editingPrompt.requiresReferenceImage,
+        video: editingPrompt.requiresReferenceVideo,
+        audio: editingPrompt.requiresReferenceAudio,
+      });
       if (editingPrompt.origin.type === "request-response") {
         setShowOnProfile(editingPrompt.showOnProfile);
         setVisibility(editingPrompt.visibility);
@@ -452,7 +462,7 @@ export function CreatePromptForm() {
       : [];
 
   // Referans görsel seçeneği yalnızca görsel/video/ses promptlarında anlamlı.
-  const referenceApplies = contentType === "image" || contentType === "video" || contentType === "audio";
+  const effectiveReferences = clampReferences(contentType, references);
   const outputKind: OutputKind | null = contentType === "video" || contentType === "audio" ? contentType : null;
   const outputFile = outputKind && pickedOutput?.kind === outputKind ? pickedOutput.file : null;
 
@@ -514,7 +524,9 @@ export function CreatePromptForm() {
           subcategory,
           ...tagsInput,
           images: contentType === "image" ? toDeferredMediaInputs(images) : undefined,
-          requiresReferenceImage: referenceApplies ? requiresReference : false,
+          requiresReferenceImage: effectiveReferences.image,
+          requiresReferenceVideo: effectiveReferences.video,
+          requiresReferenceAudio: effectiveReferences.audio,
           visibility: showsVisibilityChoice ? undefined : visibility,
         });
         try {
@@ -539,7 +551,9 @@ export function CreatePromptForm() {
           subcategory,
           ...tagsInput,
           images: contentType === "image" ? toDeferredMediaInputs(images) : [],
-          requiresReferenceImage: referenceApplies ? requiresReference : false,
+          requiresReferenceImage: effectiveReferences.image,
+          requiresReferenceVideo: effectiveReferences.video,
+          requiresReferenceAudio: effectiveReferences.audio,
           visibility: showsVisibilityChoice ? undefined : visibility,
           isDraft: true,
         },
@@ -583,7 +597,9 @@ export function CreatePromptForm() {
           tagSources: Object.fromEntries(tagPicker.accepted.map((entry) => [entry.tag.slug, entry.source])),
           images: contentType === "image" ? toDeferredMediaInputs(images) : undefined,
           showOnProfile: isEditingResponse ? showOnProfile : undefined,
-          requiresReferenceImage: referenceApplies ? requiresReference : false,
+          requiresReferenceImage: effectiveReferences.image,
+          requiresReferenceVideo: effectiveReferences.video,
+          requiresReferenceAudio: effectiveReferences.audio,
           // An answer to a request stays public — the request's owner has to be able to see it.
           visibility: showsVisibilityChoice ? undefined : visibility,
           publish: isEditingDraft,
@@ -620,7 +636,9 @@ export function CreatePromptForm() {
           images: contentType === "image" ? toDeferredMediaInputs(images) : [],
           requestId: answeredRequest?.id,
           showOnProfile: isAnswerMode ? showOnProfile : true,
-          requiresReferenceImage: referenceApplies ? requiresReference : false,
+          requiresReferenceImage: effectiveReferences.image,
+          requiresReferenceVideo: effectiveReferences.video,
+          requiresReferenceAudio: effectiveReferences.audio,
           visibility: showsVisibilityChoice ? undefined : visibility,
           generatedFrom: generatedFrom ?? undefined,
         },
@@ -675,7 +693,9 @@ export function CreatePromptForm() {
     isSaved: false,
     status: "draft",
     showOnProfile: showsVisibilityChoice ? showOnProfile : true,
-    requiresReferenceImage: referenceApplies ? requiresReference : false,
+    requiresReferenceImage: effectiveReferences.image,
+          requiresReferenceVideo: effectiveReferences.video,
+          requiresReferenceAudio: effectiveReferences.audio,
     visibility: showsVisibilityChoice ? "public" : visibility,
     deletedAt: null,
     generatedFrom,
@@ -963,20 +983,12 @@ export function CreatePromptForm() {
                 tools={tools}
               />
 
-              {referenceApplies && (
-                <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-border bg-surface-soft p-3">
-                  <input
-                    type="checkbox"
-                    checked={requiresReference}
-                    onChange={(event) => setRequiresReference(event.target.checked)}
-                    className="mt-0.5 size-4 shrink-0"
-                  />
-                  <span className="min-w-0">
-                    <span className="block text-sm font-medium text-text">{t("prompt.requiresReferenceLabel")}</span>
-                    <span className="block text-caption text-text-muted">{t("prompt.requiresReferenceHint")}</span>
-                  </span>
-                </label>
-              )}
+              <ReferenceRequirementsField
+                subject="prompt"
+                contentType={contentType}
+                value={references}
+                onChange={setReferences}
+              />
 
               {generatorRun?.generatedNegativePrompt && (
                 <NegativePromptReference text={generatorRun.generatedNegativePrompt} />
