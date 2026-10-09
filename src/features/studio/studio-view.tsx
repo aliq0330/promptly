@@ -13,6 +13,7 @@ import { GeneratorRuntimeForm } from "@/features/generators/generator-runtime-fo
 import { StudioSourcePicker } from "./studio-source-picker";
 import { StudioPresetPicker } from "./studio-preset-picker";
 import { StudioHistory } from "./studio-history";
+import { StudioSourceCard } from "./studio-source-card";
 import { useAuthPrompt } from "@/features/auth/auth-prompt-provider";
 import { useAuth } from "@/features/auth/auth-provider";
 import { clearKey, loadKey, saveKey } from "@/lib/ai-generate/key-store";
@@ -29,7 +30,7 @@ import { buildGeneratorOutput } from "@/lib/generator-output";
 import { defaultValuesFromSchema } from "@/lib/generator-template";
 import { resolvePresetFields } from "@/lib/preset-utils";
 import { composePrompt, sanitizeSelection, type PresetSelection } from "@/lib/preset-fields";
-import { contentTypeLabelKey } from "@/lib/content-taxonomy";
+import { contentTypeLabelKey, taxonomyLabel } from "@/lib/content-taxonomy";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import { copyTextToClipboard } from "@/lib/utils";
@@ -134,6 +135,9 @@ export function StudioView() {
   const [formError, setFormError] = useState<string | null>(null);
   const [publishError, setPublishError] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
+  const resultsRef = useRef<HTMLDivElement | null>(null);
+  /** The results column follows the page while it fits on screen; once it is taller than the viewport it scrolls normally. */
+  const [stick, setStick] = useState(true);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
 
   // The key follows the provider: load what this browser knows for it.
@@ -260,6 +264,20 @@ export function StudioView() {
   }, [provider, kind, apiKey]);
 
   useEffect(() => () => abortRef.current?.abort(), []);
+
+  useEffect(() => {
+    const el = resultsRef.current;
+    if (!el) return;
+    const measure = () => setStick(el.offsetHeight <= window.innerHeight - 112);
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    window.addEventListener("resize", measure);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -463,13 +481,13 @@ export function StudioView() {
 
   const presetTypeNote =
     preset && ((preset.contentType === "text") !== (kind === "text") || (preset.contentType !== "text" && preset.contentType !== "image"))
-      ? t("generate.presetKindNote", { type: t(contentTypeLabelKey(preset.contentType) as TranslationKey) })
+      ? t("generate.presetKindNote", { type: taxonomyLabel(contentTypeLabelKey(preset.contentType), language) })
       : null;
 
   return (
     <PageContainer>
       <PageHeader title={t("generate.title")} description={t("generate.subtitle")} />
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)]">
+      <div className="mt-6 grid gap-6 sm:mt-8 lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)]">
         <div className="min-w-0 space-y-4">
           {/* Provider · key · model */}
           <section className="space-y-4 rounded-xl border border-border-soft bg-surface p-4 shadow-card sm:p-5">
@@ -628,17 +646,16 @@ export function StudioView() {
             {source === "blank" && <p className="text-small text-text-muted">{t("studio.sourceBlankHint")}</p>}
 
             {source !== "blank" && (
-              <div className="flex items-center justify-between gap-3">
-                <p className="min-w-0 truncate text-small font-medium text-text">{sourceTitle ?? t("studio.loading")}</p>
-                <div className="flex shrink-0 items-center gap-3">
-                  <button type="button" onClick={() => setSourcePicker(source)} className="text-small font-medium text-primary hover:underline">
-                    {t("studio.change")}
-                  </button>
+              (source === "prompt" && promptSource && <StudioSourceCard source={{ kind: "prompt", item: promptSource }} onChange={() => setSourcePicker("prompt")} onRemove={clearSource} />) ||
+              (source === "generator" && generatorSource && <StudioSourceCard source={{ kind: "generator", item: generatorSource }} onChange={() => setSourcePicker("generator")} onRemove={clearSource} />) ||
+              (source === "preset" && preset && <StudioSourceCard source={{ kind: "preset", item: preset }} onChange={() => setSourcePicker("preset")} onRemove={clearSource} />) || (
+                <div className="flex items-center justify-between gap-3">
+                  <p className="min-w-0 truncate text-small font-medium text-text-muted">{t("studio.loading")}</p>
                   <button type="button" onClick={clearSource} className="inline-flex items-center gap-1 text-small font-medium text-text-secondary hover:text-text">
                     <X size={14} aria-hidden /> {t("studio.remove")}
                   </button>
                 </div>
-              </div>
+              )
             )}
 
             {source === "prompt" && promptSource && promptVars.length > 0 && (
@@ -717,7 +734,7 @@ export function StudioView() {
         </div>
 
         {/* Results */}
-        <div className="min-w-0 space-y-6">
+        <div ref={resultsRef} className={`min-w-0 space-y-6 ${stick ? "lg:sticky lg:top-20 lg:self-start" : ""}`}>
         <section aria-label={t("generate.results")} className="space-y-3">
           <h2 className="text-label font-semibold text-text">{t("generate.results")}</h2>
           {publishError && (

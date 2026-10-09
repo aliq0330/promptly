@@ -8,9 +8,8 @@ import { useRealPrompts } from "@/features/prompts/real-prompts-provider";
 import { useRealGenerators } from "@/features/generators/real-generators-provider";
 import { searchGenerators } from "@/lib/supabase/generators";
 import { searchPrompts } from "@/lib/supabase/prompts";
-import { contentTypeLabelKey } from "@/lib/content-taxonomy";
+import { contentTypeLabelKey, taxonomyLabel } from "@/lib/content-taxonomy";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import type { TranslationKey } from "@/lib/i18n/translations";
 import type { Generator, Prompt } from "@/types";
 
 export type SourcePickerKind = "prompt" | "generator";
@@ -20,16 +19,16 @@ interface Row {
   key: string;
   title: string;
   author: string;
-  typeLabel: TranslationKey;
+  typeLabel: string;
   image: string | null;
 }
 
 function fromPrompt(p: Prompt): Row {
-  return { key: p.id, title: p.title, author: p.author.displayName, typeLabel: contentTypeLabelKey(p.contentType) as TranslationKey, image: p.media[0]?.url ?? null };
+  return { key: p.id, title: p.title, author: p.author.displayName, typeLabel: contentTypeLabelKey(p.contentType), image: p.media[0]?.url ?? null };
 }
 
 function fromGenerator(g: Generator): Row {
-  return { key: g.slug, title: g.title, author: g.creator.displayName, typeLabel: contentTypeLabelKey(g.contentType) as TranslationKey, image: g.coverUrl };
+  return { key: g.slug, title: g.title, author: g.creator.displayName, typeLabel: contentTypeLabelKey(g.contentType), image: g.coverUrl };
 }
 
 /**
@@ -38,7 +37,7 @@ function fromGenerator(g: Generator): Row {
  * key; the page loads the source itself (same path as a `?prompt=` link).
  */
 export function StudioSourcePicker({ kind, onPick, onClose }: { kind: SourcePickerKind; onPick: (key: string) => void; onClose: () => void }) {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const { realPrompts } = useRealPrompts();
   const { realGenerators } = useRealGenerators();
   const [query, setQuery] = useState("");
@@ -120,7 +119,7 @@ export function StudioSourcePicker({ kind, onPick, onClose }: { kind: SourcePick
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-small font-medium text-text">{row.title}</span>
                     <span className="block truncate text-caption text-text-muted">
-                      {row.author} · {t(row.typeLabel)}
+                      {row.author} · {taxonomyLabel(row.typeLabel, language)}
                     </span>
                   </span>
                 </button>
