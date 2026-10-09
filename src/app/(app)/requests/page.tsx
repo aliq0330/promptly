@@ -2,8 +2,9 @@
 
 import { useMemo, useState } from "react";
 import { MessageSquareText, Sparkles, Wand2 } from "lucide-react";
-import { Chip, ChipRow } from "@/components/ui/chip";
+import { Chip } from "@/components/ui/chip";
 import { ContentListPage } from "@/features/content/content-list-page";
+import { SheetChips } from "@/features/content/list-toolbar";
 import { RequestList } from "@/features/requests/request-list";
 import { useRealRequests } from "@/features/requests/real-requests-provider";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -55,7 +56,9 @@ export default function RequestsPage() {
       baseItems={realRequests}
       search={searchRequests}
       postFilter={postFilter}
-      extra={<ChipRow>{statusChips}</ChipRow>}
+      extra={<SheetChips>{statusChips}</SheetChips>}
+      desktopActiveExtra={status === "all" ? 0 : 1}
+      onClearExtra={() => setStatus("all")}
       mobileTabs={statusChips}
       searchPlaceholder={t("search.placeholderRequests")}
       renderItems={(items) => <RequestList requests={items} />}
