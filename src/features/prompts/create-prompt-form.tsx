@@ -30,6 +30,8 @@ import { takeHandoff } from "@/lib/generate-handoff";
 import { placeholderArt } from "@/lib/placeholder-image";
 import { MultiImagePicker } from "@/features/content/multi-image-picker";
 import { multiImageItemFromMedia, toDeferredMediaInputs, type MultiImageItem } from "@/lib/supabase/media-input";
+import { OutputFilePicker } from "@/features/prompts/output-file-picker";
+import { attachPromptOutput, type OutputKind } from "@/lib/supabase/prompt-output";
 import { copyTextToClipboard, generatorHref, promptHref, requestHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { KindDraftsButton } from "@/features/drafts/kind-drafts-button";
@@ -250,6 +252,9 @@ export function CreatePromptForm() {
     contextTags: isAnswerMode ? answeredRequest?.tags : undefined,
   });
   const [images, setImages] = useState<MultiImageItem[]>([]);
+  // Video/ses promptunun çıktı dosyası. Seçildiği türle birlikte tutulur ki
+  // içerik türü değişince başka türün dosyası yanlışlıkla yüklenmesin.
+  const [pickedOutput, setPickedOutput] = useState<{ kind: OutputKind; file: File } | null>(null);
   const [fieldsSeeded, setFieldsSeeded] = useState(false);
   const [variables, setVariables] = useState<DraftVariable[]>([]);
   // Prompt DNA: only sections the user accepted/added (suggestions live inside the editor).
@@ -378,6 +383,7 @@ export function CreatePromptForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [draftNotice, setDraftNotice] = useState(false);
   const isEditingDraft = isEditMode && editingPrompt?.status === "draft";
+  const outputFailedParam = isEditMode ? searchParams.get("outputFailed") : null;
   const canSaveDraft = !isAnswerMode && !isGeneratorRunMode && (!isEditMode || isEditingDraft);
 
   const notFound =
@@ -442,6 +448,27 @@ export function CreatePromptForm() {
             },
           ]
       : [];
+
+  const outputKind: OutputKind | null = contentType === "video" || contentType === "audio" ? contentType : null;
+  const outputFile = outputKind && pickedOutput?.kind === outputKind ? pickedOutput.file : null;
+
+  /**
+   * Seçilen video/ses çıktısını yayınlanmış promptun altına yükler. Prompt bu
+   * noktada zaten yayında olduğundan başarısızlık "yayın başarısız" sayılmaz:
+   * kullanıcı düzenleme ekranına, dosyayı yeniden seçebileceği bir mesajla
+   * alınır. `true` = devam et (başarılı ya da dosya yok), `false` = durdu.
+   */
+  async function uploadOutputIfAny(promptId: string): Promise<boolean> {
+    if (!outputFile || !outputKind || !user) return true;
+    try {
+      await attachPromptOutput({ promptId, creatorId: user.id, file: outputFile, title, kind: outputKind });
+      return true;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "";
+      router.push(`/create?edit=${promptId}&outputFailed=${encodeURIComponent(message || "1")}`);
+      return false;
+    }
+  }
 
   /** Soft-fail like variables/tags: the prompt itself is already saved. */
   async function saveDna(promptId: string) {
@@ -563,6 +590,10 @@ export function CreatePromptForm() {
           console.error("replaceVariablesForPrompt", variableErr);
         }
         await saveDna(updated.id);
+        if (!(await uploadOutputIfAny(updated.id))) {
+          setIsSubmitting(false);
+          return;
+        }
         router.push(promptHref(updated));
         return;
       }
@@ -593,6 +624,10 @@ export function CreatePromptForm() {
         console.error("replaceVariablesForPrompt", variableErr);
       }
       await saveDna(published.id);
+      if (!(await uploadOutputIfAny(published.id))) {
+        setIsSubmitting(false);
+        return;
+      }
       router.push(promptHref(published));
     } catch (err) {
       setPublishError(err instanceof Error ? err.message : t("prompt.publishFailed"));
@@ -875,6 +910,17 @@ export function CreatePromptForm() {
             </FormSection>
           )}
 
+          {outputKind && (
+            <FormSection title={outputKind === "video" ? t("formSection.outputVideo") : t("formSection.outputAudio")}>
+              <OutputFilePicker
+                kind={outputKind}
+                file={outputFile}
+                onChange={(file) => setPickedOutput(file ? { kind: outputKind, file } : null)}
+                disabled={isSubmitting}
+              />
+            </FormSection>
+          )}
+
           <FormSection title={t("formSection.tool")}>
             <ToolPicker value={tools} onChange={setTools} contentType={contentType} category={category} />
           </FormSection>
@@ -954,6 +1000,11 @@ export function CreatePromptForm() {
             }
           >
             {draftNotice && <p className="text-sm text-success">{t("draft.saved")}</p>}
+            {outputFailedParam && (
+              <div role="alert" className="rounded-md border border-danger/30 bg-danger/5 p-3 text-sm text-danger">
+                {t("output.uploadFailed", { message: outputFailedParam === "1" ? "" : outputFailedParam })}
+              </div>
+            )}
             {publishError && (
               <div role="alert" className="rounded-md border border-danger/30 bg-danger/5 p-3 text-sm text-danger">
                 {publishError}
