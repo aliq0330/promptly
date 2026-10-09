@@ -10,7 +10,7 @@ import type { HistoryEntry } from "@/lib/ai-generate/history-store";
  * Past results of this browser (IndexedDB). Opening one puts it back among the
  * results; "Prompt'u yükle" copies the prompt that produced it into the prompt box.
  */
-export function GenerateHistory({
+export function StudioHistory({
   entries,
   onOpen,
   onUsePrompt,

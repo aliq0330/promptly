@@ -8,8 +8,11 @@ import { Chip, ChipRow } from "@/components/ui/chip";
 import { PageContainer, PageHeader } from "@/components/ui/page-header";
 import { fieldControlClassName, fieldInputClassName, fieldLabelClassName } from "@/components/ui/field";
 import { PresetFieldList } from "@/features/presets/preset-field-list";
-import { GeneratePresetPicker } from "./generate-preset-picker";
-import { GenerateHistory } from "./generate-history";
+import { PromptVariableInputs } from "@/features/prompts/prompt-variable-inputs";
+import { GeneratorRuntimeForm } from "@/features/generators/generator-runtime-form";
+import { StudioSourcePicker } from "./studio-source-picker";
+import { StudioPresetPicker } from "./studio-preset-picker";
+import { StudioHistory } from "./studio-history";
 import { useAuthPrompt } from "@/features/auth/auth-prompt-provider";
 import { useAuth } from "@/features/auth/auth-provider";
 import { clearKey, loadKey, saveKey } from "@/lib/ai-generate/key-store";
@@ -18,13 +21,19 @@ import { AI_PROVIDERS, AiError, toolIdFor, type AiKind, type AiModel, type AiOut
 import { addHistory, clearHistory, deleteHistory, listHistory, type HistoryEntry } from "@/lib/ai-generate/history-store";
 import { stashHandoff } from "@/lib/generate-handoff";
 import { fetchPresetById } from "@/lib/supabase/presets";
+import { fetchPromptById } from "@/lib/supabase/prompts";
+import { fetchVariablesForPrompt } from "@/lib/supabase/prompt-variables";
+import { fetchGeneratorBySlug, fetchGeneratorVersion } from "@/lib/supabase/generators";
+import { resolvePromptText } from "@/lib/prompt-variables";
+import { buildGeneratorOutput } from "@/lib/generator-output";
+import { defaultValuesFromSchema } from "@/lib/generator-template";
 import { resolvePresetFields } from "@/lib/preset-utils";
 import { composePrompt, sanitizeSelection, type PresetSelection } from "@/lib/preset-fields";
 import { contentTypeLabelKey } from "@/lib/content-taxonomy";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import { copyTextToClipboard } from "@/lib/utils";
-import type { Preset } from "@/types";
+import type { Generator, GeneratorSchema, GeneratorValues, Preset, Prompt, PromptContentType, PromptVariable } from "@/types";
 
 const MAX_COUNT = 4;
 
@@ -50,20 +59,33 @@ const ERROR_KEY: Record<AiError["kind"], TranslationKey> = {
   unknown: "generate.errUnknown",
 };
 
+type SourceKind = "blank" | "prompt" | "generator" | "preset";
+
+/** Studio only generates images and text; other media keep the current choice. */
+function kindFor(contentType: PromptContentType, current: AiKind): AiKind {
+  if (contentType === "text") return "text";
+  if (contentType === "image") return "image";
+  return current;
+}
+
 /**
- * `/generate` — a small workspace to generate an image or text with the
- * user's OWN Gemini / OpenAI key, optionally starting from a preset
- * (`?preset=<id>`). Everything runs in the browser: the key is never sent to
- * Promptly, results are kept in memory only, and "Prompt olarak yayınla" hands
- * a result to the ordinary Prompt create form.
+ * `/studio` — a small workspace to try a prompt and see the result, with the
+ * user's OWN Gemini / OpenAI key. The starting point ("source") is blank, a
+ * Prompt (`?prompt=<id>`), a Generator (`?generator=<slug>`) or a preset
+ * (`?preset=<id>`); the URL is the single source of truth. Everything runs in
+ * the browser: the key is never sent to Promptly, and "Prompt olarak yayınla"
+ * hands a result to the ordinary Prompt create form.
  */
-export function GenerateView() {
+export function StudioView() {
   const { t, language } = useTranslation();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useAuth();
   const { requireAuth } = useAuthPrompt();
   const presetId = searchParams.get("preset");
+  const promptId = searchParams.get("prompt");
+  const generatorSlug = searchParams.get("generator");
+  const source: SourceKind = promptId ? "prompt" : generatorSlug ? "generator" : presetId ? "preset" : "blank";
 
   const [kind, setKind] = useState<AiKind>("image");
   const [provider, setProvider] = useState<AiProvider>("gemini");
@@ -78,6 +100,14 @@ export function GenerateView() {
 
   const [preset, setPreset] = useState<Preset | null>(null);
   const [presetError, setPresetError] = useState(false);
+  const [promptSource, setPromptSource] = useState<Prompt | null>(null);
+  const [promptVars, setPromptVars] = useState<PromptVariable[]>([]);
+  const [varOverrides, setVarOverrides] = useState<Record<string, string>>({});
+  const [generatorSource, setGeneratorSource] = useState<Generator | null>(null);
+  const [generatorSchema, setGeneratorSchema] = useState<GeneratorSchema | null>(null);
+  const [generatorValues, setGeneratorValues] = useState<GeneratorValues>({});
+  const [sourceError, setSourceError] = useState(false);
+  const [sourcePicker, setSourcePicker] = useState<"prompt" | "generator" | "preset" | null>(null);
   const [selection, setSelection] = useState<PresetSelection>({});
   const [promptText, setPromptText] = useState("");
   const [count, setCount] = useState(1);
@@ -87,7 +117,6 @@ export function GenerateView() {
   const [formError, setFormError] = useState<string | null>(null);
   const [publishError, setPublishError] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
-  const [pickerOpen, setPickerOpen] = useState(false);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
 
   // The key follows the provider: load what this browser knows for it.
@@ -122,6 +151,66 @@ export function GenerateView() {
       cancelled = true;
     };
   }, [presetId]);
+
+  // Prompt from the URL: its text becomes the editable working text, its variables become fields.
+  useEffect(() => {
+    if (!promptId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- reset when the query param goes away
+      setPromptSource(null);
+      setPromptVars([]);
+      setVarOverrides({});
+      return;
+    }
+    let cancelled = false;
+    setSourceError(false);
+    Promise.all([fetchPromptById(promptId), fetchVariablesForPrompt(promptId)]).then(([found, vars]) => {
+      if (cancelled) return;
+      if (!found || found.deletedAt) {
+        setPromptSource(null);
+        setSourceError(true);
+        return;
+      }
+      setPromptSource(found);
+      setPromptVars(vars);
+      setVarOverrides({});
+      setPromptText(found.promptText);
+      setKind((current) => kindFor(found.contentType, current));
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [promptId]);
+
+  // Generator from the URL: its form drives the prompt; the text box adds the user's own words.
+  useEffect(() => {
+    if (!generatorSlug) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- reset when the query param goes away
+      setGeneratorSource(null);
+      setGeneratorSchema(null);
+      setGeneratorValues({});
+      return;
+    }
+    let cancelled = false;
+    setSourceError(false);
+    (async () => {
+      const found = await fetchGeneratorBySlug(generatorSlug);
+      const version = found?.currentVersionId ? await fetchGeneratorVersion(found.currentVersionId) : null;
+      if (cancelled) return;
+      if (!found || !version) {
+        setGeneratorSource(null);
+        setSourceError(true);
+        return;
+      }
+      setGeneratorSource(found);
+      setGeneratorSchema(version.schema);
+      setGeneratorValues(defaultValuesFromSchema(version.schema));
+      setPromptText("");
+      setKind((current) => kindFor(found.contentType, current));
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [generatorSlug]);
 
   // Model list: defaults at once, replaced by the provider's own list once a key is present.
   useEffect(() => {
@@ -164,10 +253,14 @@ export function GenerateView() {
   }, []);
 
   const fields = useMemo(() => (preset ? resolvePresetFields({ fields: preset.fields, selection }) : []), [preset, selection]);
-  const finalPrompt = useMemo(
-    () => (preset ? composePrompt(promptText, sanitizeSelection(selection, fields), fields, language) : promptText).trim(),
-    [preset, promptText, selection, fields, language],
-  );
+  const variableValues = useMemo(() => Object.fromEntries(promptVars.map((v) => [v.name, varOverrides[v.name] ?? v.defaultValue])), [promptVars, varOverrides]);
+  const finalPrompt = useMemo(() => {
+    if (promptSource) return resolvePromptText(promptText, variableValues).trim();
+    if (generatorSource && generatorSchema) return String(buildGeneratorOutput(generatorSchema, generatorValues, promptText, "", false).prompt ?? "").trim();
+    if (preset) return composePrompt(promptText, sanitizeSelection(selection, fields), fields, language).trim();
+    return promptText.trim();
+  }, [promptSource, generatorSource, generatorSchema, generatorValues, preset, promptText, variableValues, selection, fields, language]);
+  const sourceTitle = promptSource?.title ?? generatorSource?.title ?? preset?.title;
 
   const persistKey = useCallback(
     (key: string, keep: boolean) => {
@@ -197,7 +290,7 @@ export function GenerateView() {
     try {
       const output = await generateOne(provider, kind, model, prompt, key, signal);
       setSlots((current) => current.map((slot) => (slot.id === id ? { id, status: "done", output, meta } : slot)));
-      const entry: HistoryEntry = { id: `${id}-${Math.random().toString(36).slice(2, 8)}`, createdAt: Date.now(), kind, presetTitle: preset?.title, output, ...meta };
+      const entry: HistoryEntry = { id: `${id}-${Math.random().toString(36).slice(2, 8)}`, createdAt: Date.now(), kind, presetTitle: sourceTitle, output, ...meta };
       await addHistory(entry);
       setHistory(await listHistory());
     } catch (error) {
@@ -256,6 +349,7 @@ export function GenerateView() {
     setSelection({});
     setKind(entry.kind);
     setProvider(entry.provider);
+    if (source !== "blank") router.replace("/studio");
   }
 
   async function removeHistory(entry: HistoryEntry) {
@@ -272,7 +366,25 @@ export function GenerateView() {
     setPreset(picked);
     setPresetError(false);
     setSelection(picked.selection);
-    setPickerOpen(false);
+    setSourcePicker(null);
+    router.replace(`/studio?preset=${picked.id}`);
+  }
+
+  function pickSource(kindPicked: "prompt" | "generator", key: string) {
+    setSourcePicker(null);
+    router.replace(`/studio?${kindPicked}=${encodeURIComponent(key)}`);
+  }
+
+  function clearSource() {
+    setPromptText("");
+    setSelection({});
+    setSourceError(false);
+    router.replace("/studio");
+  }
+
+  function onSourceChip(next: SourceKind) {
+    if (next === "blank") return clearSource();
+    setSourcePicker(next);
   }
 
   // Layout follows what the results ARE (a restored history item may differ from the current form).
@@ -366,51 +478,66 @@ export function GenerateView() {
             </div>
           </section>
 
-          {/* Preset */}
+          {/* Source */}
           <section className="space-y-3 rounded-xl border border-border-soft bg-surface p-4 shadow-card sm:p-5">
-            <div className="flex items-center justify-between gap-2">
-              <h2 className="flex items-center gap-2 text-label font-semibold text-text">
-                <SlidersHorizontal size={16} aria-hidden /> {t("generate.preset")}
-              </h2>
-              {preset ? (
-                <div className="flex items-center gap-3">
-                  <button type="button" onClick={() => setPickerOpen(true)} className="text-small font-medium text-primary hover:underline">
-                    {t("generate.presetChange")}
+            <h2 className="flex items-center gap-2 text-label font-semibold text-text">
+              <SlidersHorizontal size={16} aria-hidden /> {t("studio.source")}
+            </h2>
+            <ChipRow>
+              {(["blank", "prompt", "generator", "preset"] as const).map((k) => (
+                <Chip key={k} selected={source === k} onClick={() => onSourceChip(k)}>
+                  {t(`studio.source.${k}` as TranslationKey)}
+                </Chip>
+              ))}
+            </ChipRow>
+            {(sourceError || presetError) && <p role="alert" className="text-small text-danger">{t(presetError ? "generate.presetLoadFailed" : "studio.sourceLoadFailed")}</p>}
+
+            {source === "blank" && <p className="text-small text-text-muted">{t("studio.sourceBlankHint")}</p>}
+
+            {source !== "blank" && (
+              <div className="flex items-center justify-between gap-3">
+                <p className="min-w-0 truncate text-small font-medium text-text">{sourceTitle ?? t("studio.loading")}</p>
+                <div className="flex shrink-0 items-center gap-3">
+                  <button type="button" onClick={() => setSourcePicker(source)} className="text-small font-medium text-primary hover:underline">
+                    {t("studio.change")}
                   </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setPreset(null);
-                    setSelection({});
-                    if (presetId) router.replace("/generate");
-                  }}
-                  className="inline-flex items-center gap-1 text-small font-medium text-text-secondary hover:text-text"
-                >
-                  <X size={14} aria-hidden /> {t("generate.presetRemove")}
-                </button>
+                  <button type="button" onClick={clearSource} className="inline-flex items-center gap-1 text-small font-medium text-text-secondary hover:text-text">
+                    <X size={14} aria-hidden /> {t("studio.remove")}
+                  </button>
                 </div>
-              ) : (
-                <button type="button" onClick={() => setPickerOpen(true)} className="text-small font-medium text-primary hover:underline">
-                  {t("generate.presetBrowse")}
-                </button>
-              )}
-            </div>
-            {presetError && <p className="text-small text-danger">{t("generate.presetLoadFailed")}</p>}
-            {preset ? (
+              </div>
+            )}
+
+            {source === "prompt" && promptSource && promptVars.length > 0 && (
+              <PromptVariableInputs
+                variables={promptVars}
+                values={variableValues}
+                isCustomized={Object.keys(varOverrides).length > 0}
+                onChange={(name, value) => setVarOverrides((current) => ({ ...current, [name]: value }))}
+                onReset={() => setVarOverrides({})}
+              />
+            )}
+
+            {source === "generator" && generatorSchema && (
+              <GeneratorRuntimeForm
+                schema={generatorSchema}
+                values={generatorValues}
+                onChange={(key, value) => setGeneratorValues((current) => ({ ...current, [key]: value }))}
+              />
+            )}
+
+            {source === "preset" && preset && (
               <>
-                <p className="text-small font-medium text-text">{preset.title}</p>
                 {presetTypeNote && <p className="text-caption text-text-muted">{presetTypeNote}</p>}
                 {fields.length > 0 && <PresetFieldList fields={fields} selection={selection} onChange={setSelection} fragmentLanguage={language} defaultOpenFirst={false} />}
               </>
-            ) : (
-              !presetError && <p className="text-small text-text-muted">{t("generate.presetNone")}</p>
             )}
           </section>
 
           {/* Prompt */}
           <section className="space-y-3 rounded-xl border border-border-soft bg-surface p-4 shadow-card sm:p-5">
             <label htmlFor="gen-prompt" className={fieldLabelClassName}>
-              {t("generate.prompt")}
+              {t(source === "generator" ? "studio.promptExtra" : "generate.prompt")}
             </label>
             <textarea
               id="gen-prompt"
@@ -420,7 +547,7 @@ export function GenerateView() {
               rows={5}
               className={`${fieldControlClassName} min-h-28 resize-y py-2.5`}
             />
-            {preset && finalPrompt && (
+            {source !== "blank" && finalPrompt && (
               <div>
                 <p className="mb-1 text-caption font-medium text-text-muted">{t("generate.finalPrompt")}</p>
                 <p className="prompt-text break-words rounded-lg border border-border-soft bg-surface-soft p-3 text-small text-text-secondary">{finalPrompt}</p>
@@ -496,10 +623,13 @@ export function GenerateView() {
             </ul>
           )}
         </section>
-        <GenerateHistory entries={history} onOpen={openHistory} onUsePrompt={usePromptFromHistory} onDelete={removeHistory} onClear={wipeHistory} />
+        <StudioHistory entries={history} onOpen={openHistory} onUsePrompt={usePromptFromHistory} onDelete={removeHistory} onClear={wipeHistory} />
         </div>
       </div>
-      {pickerOpen && <GeneratePresetPicker contentType={kind} onPick={pickPreset} onClose={() => setPickerOpen(false)} />}
+      {sourcePicker === "preset" && <StudioPresetPicker contentType={kind} onPick={pickPreset} onClose={() => setSourcePicker(null)} />}
+      {(sourcePicker === "prompt" || sourcePicker === "generator") && (
+        <StudioSourcePicker kind={sourcePicker} onPick={(key) => pickSource(sourcePicker, key)} onClose={() => setSourcePicker(null)} />
+      )}
     </PageContainer>
   );
 }

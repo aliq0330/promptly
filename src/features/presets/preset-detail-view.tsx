@@ -186,8 +186,8 @@ export function PresetDetailView() {
           </div>
           <div className="flex w-full flex-col gap-2 sm:w-auto sm:items-stretch">
             {!isOwn && <PresetSaveCta presetId={preset.id} saveCount={preset.saveCount} />}
-            <Link href={`/generate?preset=${preset.id}`} className={buttonClassName({ variant: isOwn ? "primary" : "outline", size: "lg" })}>
-              <WandSparkles size={18} aria-hidden /> {t("preset.use")}
+            <Link href={`/studio?preset=${preset.id}`} className={buttonClassName({ variant: isOwn ? "primary" : "outline", size: "lg" })}>
+              <WandSparkles size={18} aria-hidden /> {t("studio.openInStudio")}
             </Link>
           </div>
         </div>
