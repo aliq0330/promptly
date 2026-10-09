@@ -1,0 +1,506 @@
+{
+ "71": {
+  "by": "terry623",
+  "src": null,
+  "prompt": "A highly detailed miniature [Cyberpunk] landscape viewed from above, using a tilt-shift lens effect. The scene is filled with toy-like elements, all rendered in high-resolution CG. Dramatic lighting creates a cinematic atmosphere, with vivid colors and strong contrast, emphasizing depth of field and a realistic micro-perspective, making the viewer feel as if overlooking a toy world. The image contains many visual jokes and details worth repeated viewing.",
+  "w": 853,
+  "h": 1280
+ },
+ "67": {
+  "by": "@ZHO_ZHO_ZHO",
+  "src": "https://x.com/ZHO_ZHO_ZHO/status/1913648013144137840",
+  "prompt": "Ultra-realistic 3D rendered image that replicates the character design of Natasha from Command & Conquer: Red Alert 3 in 2008, following the original model exactly. The scene is set in a dim and cluttered bedroom from the year 2008. The character is sitting on the carpet, facing an old-fashioned television that is playing Command & Conquer: Red Alert 3 and a game console controller.\nThe entire room is filled with a nostalgic atmosphere of the year 2008: snack packaging bags, soda cans, posters, and tangled wires are everywhere. Natasha Volkova is captured in the moment of turning her head, looking back at the camera over her shoulder. There is an innocent smile on her iconic ethereally beautiful face. Her upper body is slightly twisted, with a natural dynamic, as if she is reacting to being startled by the flash.\nThe flash slightly overexposes her face and clothes, making her silhouette stand out more prominently in the dimly lit room. The whole photo appears raw and natural. The strong contrast between light and dark casts deep shadows behind her. The image is full of tactile feel, with a simulated texture that resembles an authentic film snapshot from 2008.",
+  "w": 1024,
+  "h": 1024
+ },
+ "68": {
+  "by": "@hewarsaber",
+  "src": "https://x.com/hewarsaber/status/1912933875166171515",
+  "prompt": "{\n    \"prompt\": \"A futuristic trading card with a dark, moody neon aesthetic and soft sci-fi lighting. The card features a semi-transparent, rounded rectangle with slightly muted glowing edges, appearing as if made of holographic glass. At the center is a large glowing logo of {{logo}}, with no additional text or label, illuminated with a smooth gradient of {{colors}}, but not overly bright. The reflections on the card surface should be subtle, with a slight glossy finish catching ambient light. The background is a dark carbon fiber texture or deep gradient with soft ambient glows bleeding into the edges. Add subtle light rays streaming down diagonally from the top, giving the scene a soft cinematic glow. Apply light motion blur to the edges and reflections to give the scene a sense of depth and energy, as if it's part of a high-end tech animation still. Below the card, include realistic floor reflections that mirror the neon edges and logo—slightly diffused for a grounded, futuristic look. Text elements are minimal and softly lit: top-left shows '{{ticker}}', top-right has a stylized signature, and the bottom displays '{{company_name}}' with a serial number '{{card_number}}', a revenue badge reading '{{revenue}}', and the year '{{year}}'. Typography should have a faint glow with slight blurring, and all elements should feel premium, elegant, and softly illuminated—like a high-end cyberpunk collectible card.\",\n    \"style\": {\n        \"lighting\": \"Neon glow, soft reflections\",\n        \"font\": \"Modern sans-serif, clean and minimal\",\n        \"layout\": \"Centered, structured like a digital collectible card\",\n        \"materials\": \"Glass, holographic plastic, glowing metal edges\"\n    },\n    \"parameters\": {\n        \"logo\": \"Tesla logo\",\n        \"ticker\": \"TSLA\",\n        \"company_name\": \"Tesla Inc.\",\n        \"card_number\": \"#0006\",\n        \"revenue\": \"$96.8B\",\n        \"year\": \"2025\",\n        \"colors\": [\n            \"red\",\n            \"white\",\n            \"dark gray\"\n        ]\n    },\n    \"medium\": \"3D render, high-resolution digital art\",\n    \"size\": \"1080px by 1080px\"\n}",
+  "w": 1024,
+  "h": 1024
+ },
+ "9": {
+  "by": "@ZHO_ZHO_ZHO",
+  "src": "https://x.com/ZHO_ZHO_ZHO/status/1921906728763105394",
+  "prompt": "A vertical (3:4) 4K-resolution minimalist futurist exhibition poster with an ultra-light cool gray background (#f4f4f4).\n\nAt the center of the poster is a fluid 3D metaball shaped like a classic Coca-Cola bottle in full form, rendered in frosted glass with delicate grainy noise.\nThe fluid gradient transitions from Coca-Cola Red (#E41C23) to Pearl White (#FFFFFF), giving it a silky glass-like appearance.\n\nHigh-position softbox lighting casts long, soft colored shadows and a subtle halo.\n\nThe fluid overlaps with the text: letters obscured by the frosted glass appear with a gentle Gaussian blur.\n•The main title, the classic red “Coca-Cola” logo, is centered and partially obscured by the fluid. The covered letters are slightly blurred through the frosted glass.\n•The subtitle, in bold all-caps modern sans-serif pure black font, reads: “TASTE THE FEELING”, placed below the main title. It is also partially overlapped by the fluid and blurred in those areas, while the rest remains sharp.\n\nThe overall layout is clean with generous whitespace, balanced composition, sharp focus, and HDR high dynamic range.",
+  "w": 853,
+  "h": 1280
+ },
+ "80": {
+  "by": "@umesh_ai",
+  "src": "https://x.com/umesh_ai/status/1915696926596415492",
+  "prompt": "A close-up shot of a hand holding a business card designed to look like a JSON file opened in VS Code. The card shows code formatted in realistic syntax-highlighted JSON code. The window includes typical toolbar icons and a title bar labeled Business Card.json, styled exactly like the interface of VS Code. Background is slightly blurred, keeping the focus on the card.\nThe card displays the following code formatted in JSON:\n{\n  \"name\": \"Jamez Bondos\",\n  \"title\": \"Your Title\",\n  \"email\": \"your@email.com\",\n  \"link\": \"yourwebsite\"\n}",
+  "w": 1024,
+  "h": 1024
+ },
+ "74": {
+  "by": "@umesh_ai",
+  "src": "https://x.com/umesh_ai/status/1916517976414495161",
+  "prompt": "Create a photograph of a modern bookshelf inspired by the shape of [LOGO]. The bookshelf features flowing, interconnected curves forming multiple sections of varying sizes. It is made of sleek matte black metal with wooden shelves inside the loops. Soft, warm LED lighting outlines the inner curves. The bookshelf is mounted on a neutral-toned wall and holds a mix of colorful books, small plants, and minimalistic art pieces. The overall vibe is creative, elegant, and slightly futuristic",
+  "w": 1024,
+  "h": 1024
+ },
+ "83": {
+  "by": "@umesh_ai",
+  "src": "https://x.com/umesh_ai/status/1914644426334314545",
+  "prompt": "A digital illustration of a [SUBJECT], portrayed with a network of glowing clean pristine blue lines outlining its anatomy. The image is set against a dark background, highlighting the [SUBJECT] form and features. A specific area such as [PART] is emphasized with a red glow to indicate a point of interest or significance. The style is both educational and visually captivating, designed to resemble an advanced imaging technique",
+  "w": 1024,
+  "h": 1024
+ },
+ "27": {
+  "by": "@dotey",
+  "src": "https://x.com/dotey/status/1909800530739679488",
+  "prompt": "Create a brand-new set of chibi-style stickers featuring the user as the main character, with six unique poses:\n  1.\tMaking a playful peace sign with both hands and winking.\n  2.\tTearful eyes and slightly trembling lips, showing a cute crying expression.\n  3.\tArms wide open in a warm, enthusiastic hug pose.\n  4.\tLying on their side asleep, resting on a tiny pillow with a sweet smile.\n  5.\tPointing forward with confidence, surrounded by shining visual effects.\n  6.\tBlowing a kiss, with heart symbols floating around.\nMaintain the chibi aesthetic:\n– Exaggerated, expressive big eyes\n– Soft facial lines\n– Playful, short black hairstyle\n– A white outfit with a bold neckline design\nBackground: Vibrant red with star or colorful confetti elements for decoration. Leave some clean white space around each sticker.\nAspect ratio: 9:16",
+  "w": 853,
+  "h": 1280
+ },
+ "99": {
+  "by": "@ZHO_ZHO_ZHO",
+  "src": "https://x.com/ZHO_ZHO_ZHO/status/1922150692145283299",
+  "prompt": "A high-resolution black and white portrait artwork, in an editorial and fine art photography style. The background features a soft gradient, transitioning from mid-gray to almost pure white, creating a sense of depth and tranquility. Fine film grain adds a tactile, analog-like softness to the image, reminiscent of classic black and white photography.\n\nOn the right side of the frame, a blurred yet striking face of Harry Potter subtly emerges from the shadows, not in a traditional pose, but as if caught in a moment of thought or breath. Only a part of his face is visible: perhaps an eye, a cheekbone, the contour of his lips, evoking a sense of mystery, intimacy, and elegance. His features are delicate yet profound, exuding a melancholic and poetic beauty without being overly dramatic.\n\nA gentle, directional light, softly diffused, caresses the curve of his cheek or glints in his eye—this is the emotional core of the image. The rest of the composition is dominated by ample negative space, intentionally kept simple, allowing the image to breathe. There are no texts, no logos in the image—only an interplay of light, shadow, and emotion.\n\nThe overall atmosphere is abstract yet deeply human, like a fleeting glance or a half-remembered dream: intimate, timeless, and poignantly beautiful.",
+  "w": 853,
+  "h": 1280
+ },
+ "98": {
+  "by": "@umesh_ai",
+  "src": "https://x.com/umesh_ai/status/1921487841634156999",
+  "prompt": "A black and white photograph shows the blurred silhouette of a [SUBJECT] behind a frosted or translucent surface. The [PART] is sharply defined and pressed against the surface, creating a stark contrast with the rest of the hazy, indistinct figure. The background is a soft gradient of gray tones, enhancing the mysterious and artistic atmosphere.",
+  "w": 853,
+  "h": 1280
+ },
+ "33": {
+  "by": "@balconychy",
+  "src": "https://x.com/balconychy/status/1909426314643222595",
+  "prompt": "Transform the people in the photo into chibi-style 3D characters. The parents are dressed in Western wedding attire — the father in a formal suit, the mother in a wedding gown. The child is a beautiful flower girl holding a bouquet.\n\nThe background features a colorful floral arch.\nThe characters are in 3D chibi style, while the environment is photorealistic.\nThe entire scene is placed inside a photo frame.",
+  "w": 853,
+  "h": 1280
+ },
+ "86": {
+  "by": "rezzycheck (Sora)",
+  "src": "https://sora.com/g/gen_01jtc9btfzef080z31v8w9rtbw",
+  "prompt": "Double exposure, Midjourney style, merging, blending, overlay double exposure image, Double Exposure style, An exceptional masterpiece by Yukisakura revealing a fantastic double exposure composition of Aragorn son of Arathorn's silhouette harmoniously intertwined with the visually striking, rugged landscapes of Middle Earth during a lively spring season. Sun-bathed pine forests, mountain peaks, and a lone horse cutting through the trail echo outward through the fabric of his figure, adding layers of narrative and solitude. Beautiful tension builds as the stark monochrome background maintains razor-sharp contrast, drawing all focus to the richly layered double exposure. Characterized by its vibrant full-color scheme within Aragorn's silhouette and crisp, deliberate lines that trace every contour with emotional precision. (Detailed:1.45). (Detailed background:1.4).",
+  "w": 853,
+  "h": 1280
+ },
+ "76": {
+  "by": "photis (Sora)",
+  "src": "https://sora.com/g/gen_01jsfxrdpjfpebnyed8yaz42nf",
+  "prompt": "{The Lord of the Rings} anime film poster, the anime is in the style of High School DXD. Visible even folds are seen across the poster as it’s been folded over time, and due to some creases over damaging the poster has caused some physical damage scuffing along the creases and the color has partially faded. Indiscriminate flaps and folds and scratches all around simply from moving back and forth causing subtle yet incremental damage with the ever expanding of entropy we cannot escape, but the loving memories in our hearts will forever be whole. Making the objects we collect along the way priceless is the essence you feel when looking at this nostalgic poster.",
+  "w": 853,
+  "h": 1280
+ },
+ "59": {
+  "by": "@michaelrabone",
+  "src": "https://x.com/michaelrabone/status/1913865394139316291",
+  "prompt": "Barcelona Spain colourful summer vector art poster with big \"BARCELONA\" title at the top and smaller \"SPAIN\" title under",
+  "w": 853,
+  "h": 1280
+ },
+ "3": {
+  "by": "@dotey",
+  "src": "https://x.com/dotey/status/1905251524248248650",
+  "prompt": "A retro-style promotional poster emphasizing bold Chinese text. The background features a red-and-yellow radial burst pattern. In the center of the composition is a beautiful young woman illustrated in a refined vintage art style—she smiles warmly with a graceful, approachable presence. The poster advertises GPT’s latest AI image generation service with key slogans in Chinese, such as: “Shocking price: 9.9 per image”, “Supports all scenes, image blending, partial redrawing”, “3 revisions per image”, and “Direct AI output with no need for manual edits”. At the bottom, prominently display the call-to-action: “If you’re interested, click ‘I want this’ in the bottom-right corner”. Illustrate a hand pressing a button in the bottom-right, and place the OpenAI logo in the bottom-left.",
+  "w": 853,
+  "h": 1280
+ },
+ "66": {
+  "by": "@ZHO_ZHO_ZHO",
+  "src": "https://x.com/ZHO_ZHO_ZHO/status/1914864217867608175",
+  "prompt": "Transform the {❄️} into a soft 3D object with a silk texture. The entire surface of the object is wrapped in smooth and flowing silk fabric, featuring surreal wrinkle details, soft highlights, and shadows. The object gently floats in the center of a clean light gray background, creating a light and elegant atmosphere. The overall style is surreal, tactile, and modern, conveying a sense of comfort and refined playfulness. Studio lighting, high-resolution rendering.",
+  "w": 1024,
+  "h": 1024
+ },
+ "38": {
+  "by": "@dotey",
+  "src": "https://x.com/dotey/status/1907870919852179850",
+  "prompt": "Create a hand-drawn style infographic card in a 9:16 vertical format. The card should have a clear theme, with a beige or off-white paper-textured background. The overall design should reflect a simple, warm, and handmade aesthetic.\n\nAt the top of the card, use large, eye-catching brush-style Chinese cursive calligraphy in red and black for the title, creating strong visual contrast. All text should be in Chinese cursive script. The layout should be divided into 2 to 4 clear sections, each conveying a core idea through concise and refined Chinese phrases. The calligraphy should maintain a fluid, rhythmic style that is both legible and artistically expressive. Leave appropriate blank space around the text.\n\nThe card should be accented with simple and fun hand-drawn illustrations or icons — such as figures or symbolic elements — to enhance visual appeal and spark thought or emotional resonance. The overall layout should emphasize visual balance and include ample whitespace, ensuring the design is clean, clear, and easy to read.\n\n“Building a personal brand (IP) is long-term compounding.\nKeep updating daily, and results will come — because 99% of people can’t keep it up!”",
+  "w": 853,
+  "h": 1280
+ },
+ "34": {
+  "by": "@dotey",
+  "src": "https://x.com/dotey/status/1907903480678985784",
+  "prompt": "Create a hand-drawn style infographic card in vertical 9:16 ratio. The card should have a clear theme, with a beige or off-white paper-textured background. The overall design should convey a rustic, friendly, and handmade aesthetic.\n\nAt the top of the card, feature a bold, eye-catching title in large Chinese cursive brush calligraphy using contrasting red and black colors. All text content should be in Chinese cursive script, and the layout should be divided into 2 to 4 clear sections. Each section expresses a core idea with brief and concise Chinese phrases. The cursive font should retain a smooth, rhythmic flow, remaining legible while carrying artistic appeal.\n\nThe card should include simple, playful hand-drawn illustrations or icons, such as figures or symbolic elements, to enhance visual interest and spark reader reflection or emotional resonance.\n\nThe overall layout should maintain visual balance, with ample white space reserved to ensure clarity, simplicity, and ease of reading and understanding.\n<h1><span style=\"color:red\">“Cognition”</span> defines your ceiling  \n<span style=\"color:red\">“Circle”</span> defines your opportunities</h1>  \n– You can’t earn money beyond your level of cognition,  \n– Nor encounter opportunities beyond your social circle.",
+  "w": 853,
+  "h": 1280
+ },
+ "87": {
+  "by": "@dotey",
+  "src": "https://x.com/dotey/status/1918529055340576812",
+  "prompt": "Integrate the meaning of the word into the letters, cleverly blending graphics and letters.\nWord: {beautify}\nAdd a brief explanation of the word below.",
+  "w": 1024,
+  "h": 1024
+ },
+ "88": {
+  "by": "@dotey",
+  "src": "https://x.com/dotey/status/1919522110395080838",
+  "prompt": "A black and white line drawing coloring illustration, suitable for direct printing on standard size (8.5x11 inch) paper, without paper borders. The overall illustration style is fresh and simple, using clear and smooth black outline lines, without shadows, grayscale, or color filling, with a pure white background for easy coloring.\n[At the same time, for the convenience of users who are not good at coloring, please generate a complete colored version in the lower right corner as a small image for reference]\nSuitable for: [6-9 year old children]\nScene description:\n[A unicorn is walking on the grass in the forest, with bright sunshine, blue sky and white clouds]",
+  "w": 853,
+  "h": 1280
+ },
+ "30": {
+  "by": "@dotey",
+  "src": "https://x.com/dotey/status/1905020833451348283",
+  "prompt": "35 mm photo of Moscow floating in the sky on a flying islands.",
+  "w": 1280,
+  "h": 853
+ },
+ "6": {
+  "by": "@dotey",
+  "src": "https://x.com/dotey/status/1908910838636765204",
+  "prompt": "A 3D chibi-style version of the person in the photo is stepping through a glowing portal, reaching out and holding the viewer’s hand. As the character pulls the viewer forward, they turn back with a dynamic glance, inviting the viewer into their world.\nBehind the portal is the viewer’s real-life environment: a typical programmer’s study with a desk, monitor, and laptop, rendered in realistic detail. Inside the portal lies the character’s 3D chibi world, inspired by the photo, with a cool blue color scheme that sharply contrasts with the real-world surroundings.\nThe portal itself is a perfectly elliptical frame glowing with mysterious blue and purple light, positioned at the center of the image as a gateway between the two worlds.\nThe scene is captured from a third-person perspective, clearly showing the viewer’s hand being pulled into the character’s world. Use a 2:3 aspect ratio.",
+  "w": 853,
+  "h": 1280
+ },
+ "50": {
+  "by": "@op7418",
+  "src": "https://x.com/op7418/status/1912782048160542886",
+  "prompt": "An ultra-photorealistic, cinematic-style illustration depicting Lara Croft dynamically bursting through the frame of an “Archaeological Adventure” trading card. She is caught mid-jump or swinging on a rope, wearing her iconic adventurer outfit and possibly firing dual pistols. The muzzle flashes help shatter the card’s ancient stone-carved border, creating a visible dimensional rupture with energy cracks and spatial distortions, scattering dust and debris outward.\n\nHer body lunges forward with powerful momentum, breaking through the card’s flat plane, emphasizing strong motion depth. Inside the card (the background) is a depiction of dense jungle ruins or a trap-filled ancient tomb. The shattered card fragments mix with crumbling stone, flying vines, broken ancient coins, and spent shell casings.\n\nThe title “Archaeological Adventure” and the name “Lara Croft” (accompanied by a stylized artifact icon) remain visible on the remaining cracked and weathered parts of the card. The scene is lit with adventurous, dynamic lighting that emphasizes her agility and the perilous environment.",
+  "w": 853,
+  "h": 1280
+ },
+ "77": {
+  "by": "@dotey",
+  "src": "https://x.com/dotey/status/1916530529324699858",
+  "prompt": "A delicate crystal ball rests quietly on a warm, softly lit tabletop by the window. The background is blurred and hazy, with warm-toned sunlight gently passing through the crystal ball, refracting specks of golden light that softly illuminate the dim surroundings.\nInside the crystal ball, a miniature three-dimensional world themed around {Chang’e Flying to the Moon} is naturally displayed — a finely detailed, dreamlike 3D scene. All characters and objects are rendered in adorable chibi style, exquisitely crafted and visually charming, with vivid emotional interactions between them.\nThe overall atmosphere is rich with East Asian fantasy elements, full of intricate details and a surreal magical realism texture. The entire scene feels poetic and dreamy, luxurious yet elegant, radiating a gentle, comforting glow — as if imbued with life through the warm play of light and shadow.",
+  "w": 1024,
+  "h": 1024
+ },
+ "96": {
+  "by": "@dotey",
+  "src": "https://x.com/dotey/status/1920851135516082246",
+  "prompt": "Generate an anime-style figure photo placed on a desktop, presented from a casual, everyday snapshot perspective as if taken with a mobile phone. The figure model is based on the attached character photo, accurately reproducing the full body posture, facial expression, and clothing style of the person in the photo, ensuring the entire figure is fully rendered. The overall design is exquisite and detailed, with hair and clothing featuring natural, soft gradient colors and fine textures. The style leans towards Japanese anime, rich in detail, with realistic textures and a beautiful appearance.",
+  "w": 853,
+  "h": 1280
+ },
+ "40": {
+  "by": "@hellokaton",
+  "src": "https://x.com/hellokaton/status/1910900979194646959",
+  "prompt": "Create a two-panel vertical manga in a cute Japanese anime style, theme: “The Daily Work Life of a Girl President.”\n\nCharacter Design:\nTransform the person in the uploaded image into a cute, moe-style anime girl while preserving all key details from the photo — including the outfit (a suit), hairstyle (bright golden-yellow), and facial features.\n\nPanel 1:\n- Expression: Pouting, disappointed, resting her cheek on one hand\n- Text box: “What do I dooo?! He won’t take my call! (；´д｀)”\n- Scene: Warm-toned office, with the U.S. flag in the background. On the desk: a pile of hamburgers and a vintage red rotary phone. The character is on the left side of the frame, the phone on the right.\n\nPanel 2:\n- Expression: Furious, face red with anger, gritting teeth\n- Action: Slams the desk hard, making the hamburgers jump\n- Speech bubble: “Hmph! Double the tariffs! Ignoring me is their loss! ( `д´ )”\n- Scene: Same office, now a complete mess\n\nAdditional Notes:\n- Use a cute, casual handwritten font for all text\n- Keep the composition full and expressive, with adequate space for dialogue and intentional white space\n- Aspect ratio: 2:3\n- The overall visual tone should be colorful and energetic, with a distinctly cartoony style",
+  "w": 853,
+  "h": 1280
+ },
+ "16": {
+  "by": "@Alittlefatwhale",
+  "src": "https://x.com/Alittlefatwhale/status/1922512847030124905",
+  "prompt": "Based on the person in the attachment, generate a photo of an anime-style badge. Requirements:\nMaterial: Tassel\nShape: Circular\nMain subject: A hand holding the badge",
+  "w": 1024,
+  "h": 1024
+ },
+ "28": {
+  "by": "@ZHO_ZHO_ZHO",
+  "src": "https://x.com/ZHO_ZHO_ZHO/status/1908044836953108490",
+  "prompt": "Turn this photo into a chibi-style sticker illustration in a minimalist flat design.\n– Keep the character’s recognizable features\n– Use a cute, simplified aesthetic\n– The sticker should have a thick white border\n– The character should break out of the circular frame, adding a playful touch\n– The circular base should be a solid flat color (no 3D or gradients)\n– Background should be transparent\nThe overall style should be clean, modern, and visually appealing for use as a fun Q-version sticker.",
+  "w": 1024,
+  "h": 1024
+ },
+ "56": {
+  "by": "@dotey",
+  "src": "https://x.com/dotey/status/1913759515700285569",
+  "prompt": "3D chibi-style miniature design of a whimsical Starbucks café, shaped like an oversized takeaway coffee cup complete with a lid and straw. The building has two floors, with large glass windows that clearly reveal a cozy and refined interior: wooden furniture, warm lighting, and busy baristas at work. On the street, cute little figurines are strolling or sitting, surrounded by benches, street lamps, and potted plants, creating a charming corner of the city. The overall aesthetic follows a detailed and realistic miniature cityscape style, with soft lighting that evokes a relaxing afternoon atmosphere.",
+  "w": 853,
+  "h": 1280
+ },
+ "7": {
+  "by": "@ZHO_ZHO_ZHO",
+  "src": "https://x.com/ZHO_ZHO_ZHO/status/1910698005193515370",
+  "prompt": "Design a cozy bedroom in a cute 3D style with C4D-quality rendering, presented in an isometric view. The room includes a bed, bookshelf, sofa, green plants, a computer desk, and a computer setup. A framed painting hangs on the wall. Outside the window, a nighttime cityscape is visible with glowing buildings and a dark sky. All furniture and objects should have a soft, rounded, stylized design to match the cute 3D aesthetic. Lighting should be warm and inviting, creating a comfortable nighttime indoor atmosphere.",
+  "w": 1024,
+  "h": 1024
+ },
+ "41": {
+  "by": "@dotey",
+  "src": "https://x.com/dotey/status/1911609122547449886",
+  "prompt": "Miniature three-dimensional scene presentation using tilt-shift photography techniques, depicting a chibi-style version of the scene {Sun Wukong’s Three Battles with the White Bone Demon}",
+  "w": 1280,
+  "h": 853
+ },
+ "79": {
+  "by": "@dotey",
+  "src": "https://x.com/dotey/status/1917713810346872902",
+  "prompt": "Create a highly detailed and vividly colored LEGO-style scene of the Shanghai Bund. The foreground features the iconic historical buildings of the Bund, meticulously recreated with LEGO bricks in Western and neoclassical architectural styles — including clock towers, domes, and colonnades. LEGO minifigures are seen strolling along the riverfront, taking photos, and sightseeing, with classic LEGO-style cars parked along the street.\nIn the background lies the spectacular Huangpu River, assembled with translucent blue LEGO bricks. On the water, LEGO ferries and tour boats sail along. Across the river stands the skyline of Lujiazui in Pudong, including the Oriental Pearl Tower, Shanghai Tower, Jin Mao Tower, and Shanghai World Financial Center — all rendered as vibrant, lifelike LEGO skyscrapers.\nThe sky is LEGO’s signature bright blue, adorned with a few white LEGO brick clouds, creating a visual full of energy and modernity.",
+  "w": 1280,
+  "h": 853
+ },
+ "49": {
+  "by": "@dotey",
+  "src": "https://x.com/dotey/status/1912536019905233194",
+  "prompt": "A beautiful woman wearing a pink qipao, adorned with delicate floral accessories on her head and colorful blossoms woven into her hair. Around her neck is an elegant white lace collar. One of her hands gently holds several large butterflies. The overall photography style features high-definition detail and texture, resembling a fashion magazine cover. The word “FASHION DESIGN” is placed at the top center of the image. The background is a minimalist light gray, designed to highlight the subject.",
+  "w": 853,
+  "h": 1280
+ },
+ "29": {
+  "by": "@ZHO_ZHO_ZHO",
+  "src": "https://x.com/ZHO_ZHO_ZHO/status/1909892294217781714",
+  "prompt": "Generate a Q-style 3D C4D-rendered character based on the person in the photo, dressed in a fashion-forward “outfit of the day” (OOTD) inspired by a specific profession.\nProfession: Fashion Designer\n– Keep the original facial features and character pose\n– Stylize the character with a cute, long-legged chibi proportion\n– Outfit and accessories should reflect the profession, including trendy designer wear, glasses, sketchbook or tablet, and stylish shoes\n– Match the outfit with fashion accessories to complete the look\n– Use a solid background color that complements the character’s overall color palette (no gradients or textures)\n\nComposition: Aspect ratio: 9:16\nTop text: “OOTD”\nLeft side: the full-body chibi character wearing the complete outfit\nRight side: individual clothing items and accessories laid out separately, as if in a style breakdown",
+  "w": 853,
+  "h": 1280
+ },
+ "72": {
+  "by": "@azed_ai",
+  "src": "https://x.com/azed_ai/status/1915770501705925106",
+  "prompt": "A photorealistic close-up of a gold pendant necklace held by female hand. The pendant features a bas-relief engraving of [image /emoji]. The pendant hangs from a polished gold chain. The background is softly blurred with neutral beige tones, and natural lighting, realistic skin tones, Product photography, 16:9 aspect ratio.",
+  "w": 1024,
+  "h": 1024
+ },
+ "12": {
+  "by": "@dotey",
+  "src": "https://x.com/dotey/status/1909332895115714835",
+  "prompt": "Create a finely crafted, adorably charming 3D-rendered collectible figure based on the subjects in the photo, displayed inside a pastel-toned, warm and romantic presentation box. The box is designed in a soft cream color with gentle gold accents, resembling an elegant portable jewelry case.\n\nWhen opened, the box reveals a heartwarming romantic scene: two chibi-style characters gazing sweetly at each other. The lid is engraved with the words “FOREVER TOGETHER,” surrounded by delicate star and heart motifs.\n\nInside the box stands the female from the photo, holding a small bouquet of white flowers. Beside her is her partner, the male from the photo. Both characters have large, expressive, sparkling eyes and soft, warm smiles that radiate affection and charm.\n\nBehind them is a round window, through which a sunny skyline of a traditional Chinese town can be seen, along with gently drifting clouds. The interior is softly lit with warm ambient lighting, and petals float in the background to enhance the atmosphere.\n\nThe overall color scheme of both the display box and the characters is elegant and harmonious, creating a luxurious and dreamlike miniature keepsake.\n\nAspect ratio: 9:16",
+  "w": 853,
+  "h": 1280
+ },
+ "44": {
+  "by": "@berryxia_ai",
+  "src": "https://x.com/berryxia_ai/status/1911334046724165905",
+  "prompt": "Create a digital character card in RPG collectible style.\nThe subject is a {Programmer}, standing confidently with tools or symbols relevant to their job.\nRender it in 3D cartoon style, soft lighting, vivid personality.\nInclude skill bars or stats like [Skill1 +x], [Skill2 +x, e.g., Creativity +10, UI/UX +8].\nAdd a title banner on top and a nameplate on the bottom.\nFrame the card with clean edges like a real figure box.\nMake the background fit the profession's theme.\nColors: warm highlights, profession-matching hues.",
+  "w": 853,
+  "h": 1280
+ },
+ "70": {
+  "by": "@Anima_Labs",
+  "src": "https://x.com/Anima_Labs/status/1915044265895379166",
+  "prompt": "Create an original creature inspired by this object (photo provided). The creature should look like it belongs in a fantasy monster-catching universe, with a cute or cool design influenced by retro Japanese RPG monster art. The image must include:\n– A full-body view of the creature, inspired by the shape, materials or purpose of the object.\n– A small orb or capsule (similar an a pokeball) at its feet, designed with patterns and colors matching the object’s look — not a standard Pokéball, but a custom design.\n– An invented name for the creature, displayed next to or below it. – Its elemental type (e.g., Fire, Water, Metal, Nature, Electric…), based on the object’s core properties. The illustration should look like it comes from a fantasy creature encyclopedia, with clean lines, soft shadows, and an expressive, character-driven design.",
+  "w": 1024,
+  "h": 1024
+ },
+ "39": {
+  "by": "@dotey",
+  "src": "https://x.com/dotey/status/1905103477879267823",
+  "prompt": "A cartoon-style character with a smiling computer monitor as its head, wearing gloves and boots, happily jumping through a glowing, blue, circular portal in a lush, fantasy forest landscape. The forest is detailed with large trees, mushrooms, flowers, a serene river, floating islands, and an atmospheric starry night sky with multiple moons. Bright, vibrant colors with soft lighting, fantasy illustration style.",
+  "w": 1280,
+  "h": 853
+ },
+ "64": {
+  "by": "@f-is-h",
+  "src": "https://github.com/f-is-h/f-is-h/blob/main/images/streampank-fish-4.png",
+  "prompt": "A steampunk-style mechanical fish with a brass body and clearly visible gear mechanisms when in motion.\nIts mechanical teeth can be slightly seen, neatly arranged and closed, with both upper and lower teeth visible. Each tooth is triangular in shape and made of diamond material.\nThe tail fin has a metal wire mesh structure, while other fins are made of semi-transparent amber-colored glass with some subtle bubbles inside.\nThe eyes are multi-faceted rubies, with clearly visible reflective shine.\nThe fish has \"f-is-h\" text clearly visible on its body, with all lowercase letters and careful attention to the hyphen placement.\nThe image is square, showing the entire fish in the center of the frame, with its head pointing to the right. There is adequate white space around the fish, with more space on the left and right sides. The background has subtle steampunk-style gear patterns.\nThe entire fish looks very cool. This is a high-definition image with extremely rich details and unique texture and aesthetics. The image should not be too dark.",
+  "w": 1024,
+  "h": 1024
+ },
+ "58": {
+  "by": "@umesh_ai",
+  "src": "https://x.com/umesh_ai/status/1913628737872027805",
+  "prompt": "Generate image: A photograph captures a daytime scene with a [SUBJECT/OBJECT] formed by scattered clouds in the sky, positioned above a [LOCATION]",
+  "w": 853,
+  "h": 1280
+ },
+ "91": {
+  "by": "@umesh_ai",
+  "src": "https://x.com/umesh_ai/status/1919701229363466328",
+  "prompt": "Transform the image to an ancient treasure map drawn on aged parchment. The map includes detailed elements like sailing ships on the ocean, old ports or castles on the coastline, a dotted path leading to a large 'X' marking the treasure spot, mountains, palm trees, and a decorative compass rose. The overall style is reminiscent of old pirate adventure films.",
+  "w": 853,
+  "h": 1280
+ },
+ "94": {
+  "by": "@berryxia_ai",
+  "src": "https://x.com/berryxia_ai/status/1920795648946782583",
+  "prompt": "A close-up selfie of three [animal type] with different expressions in front of the iconic [landmark], taken at golden hour with cinematic lighting. The animals are positioned close to the camera with their heads touching, mimicking a selfie pose, showing joyful, surprised, and calm expressions. The background features the full architectural detail of [landmark], softly illuminated, with a warm ambient atmosphere. Shot in a photographic, realistic cartoon style, high detail, 1:1 aspect ratio.",
+  "w": 1024,
+  "h": 1024
+ },
+ "82": {
+  "by": "@dotey",
+  "src": "https://x.com/dotey/status/1917988595228438771",
+  "prompt": "Show a clear 45-degree bird’s-eye view of an isometric miniature city scene featuring Shanghai’s iconic buildings, such as the Oriental Pearl Tower and the Bund. The weather effect—cloudy—blends softly into the city, interacting gently with the architecture. Use physically based rendering (PBR) and realistic lighting. Solid color background, crisp and clean. Centered composition to highlight the precision and detail of the 3D model. Display “Shanghai Cloudy 20°C” and a cloudy weather icon at the top of the image.",
+  "w": 603,
+  "h": 905
+ },
+ "100": {
+  "by": "@azed_ai",
+  "src": "https://x.com/azed_ai/status/1923016036120658122",
+  "prompt": "A minimalist and creative advertisement set on a clean white background.\nA real [Real Object] is integrated into a hand-drawn black ink doodle, using loose, playful lines. The [Doodle Concept] interacts with the object in a clever, imaginative way. Include bold black [Ad Copy] text at the top or center. Place the [Brand Logo] clearly at the bottom. The visual should be clean, fun, high-contrast, and conceptually smart.",
+  "w": 853,
+  "h": 1280
+ },
+ "37": {
+  "by": "@aziz4ai",
+  "src": "https://x.com/aziz4ai/status/1925301120252924356",
+  "prompt": "a soft 3D cartoon-style sculpture of [brand product], made of smooth clay-like textures and vibrant pastel colors, placed in a minimalist isometric scene that complements the product’s nature, clean composition, gentle lighting, subtle shadows, with the product’s logo and a 3-word slogan displayed clearly below",
+  "w": 1024,
+  "h": 1024
+ },
+ "26": {
+  "by": "@ZHO_ZHO_ZHO",
+  "src": "https://x.com/ZHO_ZHO_ZHO/status/1909542765857587310",
+  "prompt": "“Master Oats”: Based on the visual features of the person in the uploaded photo, generate a custom oatmeal mix that reflects their personality traits — for example, using vegetables, fruits, yogurt, whole grains, etc.\n\nDesign a unique cereal box and package aesthetic that aligns with this tailored mix.\n\nThen, create an advertising cover featuring the person as the mascot on the cereal box. The character should retain their recognizable features but be transformed into a cute chibi-style 3D figure with a C4D-quality rendering.\n\nThe oatmeal and packaging should be presented in a setting that matches the mood — such as a minimalist kitchen, a sleek supermarket display, or a clean design counter.\n\nThe process includes:\n– Character analysis and oat mix pairing\n– Cereal box concept and design\n– Display environment selection\n– Final image with mascot figure, packaging, and styled scene composition\n\nAll visuals should be balanced, modern, and appealing, reflecting a premium and fun oat brand identity.",
+  "w": 1024,
+  "h": 1024
+ },
+ "22": {
+  "by": "@balconychy",
+  "src": "https://x.com/balconychy/status/1905507936526627078",
+  "prompt": "Draw an image: Create a cover for a Xiaohongshu (RED) post.\n\nRequirements:\n– It must be visually compelling enough to attract user clicks.\n– Use bold, characterful fonts.\n– Vary font sizes to reflect the hierarchy of information; emphasize the structure of the copy.\n– The main title should be at least twice the size of regular text.\n– Leave white space between text sections.\n– Only use bright accent colors to highlight key words and draw attention.\n– The background should feature an eye-catching pattern (such as paper texture, notebook, or a WeChat chat window—choose one).\n– Add appropriate icons or illustrations to enhance visual layers, but avoid visual clutter.\n\nCopy text:\nBREAKING: ChatGPT just got even better!\n– Superior multitasking ✨\n– Stronger coding ability 💪\n– Creativity off the charts 🎨\nTry it now!\n\nImage aspect ratio: 9:16",
+  "w": 853,
+  "h": 1280
+ },
+ "25": {
+  "by": "@0xdlk",
+  "src": "https://x.com/0xdlk/status/1906843247432929642",
+  "prompt": "Generate a toilet with the following JSON profile:\n{\n  \"art_style_profile\": {\n    \"style_name\": \"Minimalist 3D Illustration\",\n    \"visual_elements\": {\n      \"shape_language\": \"Rounded edges, smooth and soft forms with simplified geometry\",\n      \"colors\": {\n        \"primary_palette\": [\"Soft beige, light gray, warm orange\"],\n        \"accent_colors\": [\"Warm orange for focal elements\"],\n        \"shading\": \"Soft gradients with smooth transitions, avoiding harsh shadows or highlights\"\n      },\n      \"lighting\": {\n        \"type\": \"Soft, diffused lighting\",\n        \"source_direction\": \"Above and slightly to the right\",\n        \"shadow_style\": \"Subtle and diffused, no sharp or high-contrast shadows\"\n      },\n      \"materials\": {\n        \"surface_texture\": \"Matte, smooth surfaces with subtle shading\",\n        \"reflectivity\": \"Low to none, avoiding glossiness\"\n      },\n      \"composition\": {\n        \"object_presentation\": \"Single, central object displayed in isolation with ample negative space\",\n        \"perspective\": \"Slightly angled, giving a three-dimensional feel without extreme depth\",\n        \"background\": \"Solid, muted color that complements the object without distraction\"\n      },\n      \"typography\": {\n        \"font_style\": \"Minimalistic, sans-serif\",\n        \"text_placement\": \"Bottom-left corner with small, subtle text\",\n        \"color\": \"Gray, low-contrast against the background\"\n      },\n      \"rendering_style\": {\n        \"technique\": \"3D render with simplified, low-poly aesthetics\",\n        \"detail_level\": \"Medium detail, focusing on form and color over texture or intricacy\"\n      }\n    },\n    \"purpose\": \"To create clean, aesthetically pleasing visuals that emphasize simplicity, approachability, and modernity.\"\n  }\n}",
+  "w": 1024,
+  "h": 1024
+ },
+ "36": {
+  "by": "@dotey",
+  "src": "https://x.com/dotey/status/1907131027253772399",
+  "prompt": "Draw a Toilet\n\n## 🎨 Art Style: Minimalist 3D Illustration\n\n### 🟢 Shape Language\n- Rounded edges and smooth, soft forms using simplified geometric shapes.\n\n### 🎨 Colors\n- **Primary palette:** soft beige, light gray, warm orange.  \n- **Accent color:** warm orange for focal elements.  \n- **Shading:** gentle gradients and smooth transitions, avoiding harsh shadows and highlights.\n\n### 💡 Lighting\n- **Type:** soft, diffuse lighting.  \n- **Light source direction:** from above, slightly to the right.  \n- **Shadow style:** subtle and diffused, without sharp or high-contrast shadows.\n\n### 🧱 Materials\n- **Surface texture:** matte and smooth with subtle light variation.  \n- **Reflectivity:** low to none, avoiding noticeable gloss.\n\n### 🖼️ Composition\n- **Object presentation:** a single, centered object with generous negative space around it.  \n- **Perspective:** slight tilt to suggest depth, but no strong depth-of-field effects.  \n- **Background:** flat color, low saturation, harmonious with the subject and non-distracting.\n\n### ✒️ Typography\n- **Font style:** minimalist sans-serif.  \n- **Text placement:** bottom left corner, small and unobtrusive.  \n- **Font color:** gray, low contrast with the background.\n\n### 🖥️ Rendering Style\n- **Technique:** 3D rendering in a simplified low-poly style.  \n- **Detail level:** medium — focus on shape and color, avoiding complex textures or fine details.\n\n## 🎯 Style Goal\n> Create a clean and aesthetically pleasing visual that emphasizes simplicity, approachability, and modernity.",
+  "w": 1280,
+  "h": 853
+ },
+ "57": {
+  "by": "@egeberkina",
+  "src": "https://x.com/egeberkina/status/1913654508330058064",
+  "prompt": "Create a minimalist 8-bit pixel logo of [🍔], centered on a pure white background. Use a limited retro color palette with pixelated detailing, sharp edges, and clean blocky forms. The logo should be simple, iconic, and clearly recognizable in pixel art style — inspired by classic arcade game aesthetics.",
+  "w": 1024,
+  "h": 1024
+ },
+ "52": {
+  "by": "@egeberkina",
+  "src": "https://x.com/egeberkina/status/1912521263085482464",
+  "prompt": "A paper craft-style \"🔥\" floating on a pure white background. The emoji is handcrafted from colorful cut paper with visible textures, creases, and layered shapes. It casts a soft drop shadow beneath, giving a sense of lightness and depth. The design is minimal, playful, and clean — centered in the frame with lots of negative space. Use soft studio lighting to highlight the paper texture and edges.",
+  "w": 1024,
+  "h": 1024
+ },
+ "63": {
+  "by": "@ZHO_ZHO_ZHO",
+  "src": "https://x.com/ZHO_ZHO_ZHO/status/1914574278911000967",
+  "prompt": "Generate an image: Transform the [🍓] into a creamy ice cream bar, with cream flowing in curved swirls on top, making it look delicious and tempting. The ice cream is floating at a 45-degree angle in mid-air, rendered in a cute chibi-style 3D aesthetic, set against a solid color background with a unified color palette.",
+  "w": 853,
+  "h": 1280
+ },
+ "65": {
+  "by": "@madpencil_",
+  "src": "https://x.com/madpencil_/status/1920037538372128998",
+  "prompt": "Tilt POV shot of a hand holding a surreal popsicle with a transparent blue exterior, revealing an underwater scene inside: a tiny scuba diver with tiny fish floating with bubbles, ocean waves crashing, and a green popsicle stick running through the center. The popsicle is melting slightly, with a wooden stick at the bottom, hand is holding it by the wooden stick, soft focus new york street background, premium product photography",
+  "w": 853,
+  "h": 1280
+ },
+ "35": {
+  "by": "gizakdag",
+  "src": "https://x.com/gizakdag/status/1911075302941622512",
+  "prompt": "Transform a simple flat vector icon of [🎃] into a soft, 3D fluffy object. The shape is fully covered in fur, with hyperrealistic hair texture and soft shadows. The object is centered on a clean, light gray background and floats gently in space. The style is surreal, tactile, and modern, evoking a sense of comfort and playfulness. Studio lighting, high-resolution render.",
+  "w": 1024,
+  "h": 1024
+ },
+ "55": {
+  "by": "@azed_ai",
+  "src": "https://x.com/azed_ai/status/1923739813414568075",
+  "prompt": "A high-quality photo of a cute ceramic [object/animal]-shaped planter with a glossy finish, filled with a variety of vibrant succulents and greenery including a spiky Haworthia, a rosette-shaped Echeveria, and delicate white flowers. The planter has a friendly face and sits on a soft, neutral background with diffused natural lighting, showcasing fine textures and color contrast in a clean, minimalistic composition",
+  "w": 1024,
+  "h": 1024
+ },
+ "81": {
+  "by": "@azed_ai",
+  "src": "https://x.com/azed_ai/status/1917948899098243407",
+  "prompt": "A soft, 3D translucent glass of the attached image with a frosty matte finish and detailed texture, original colors, centered on a light gray background, floats gently in space, soft shadows, natural lighting",
+  "w": 1024,
+  "h": 1024
+ },
+ "2": {
+  "by": "@dotey",
+  "src": "https://x.com/dotey/status/1908238003169903060",
+  "prompt": "Convert the character in the scene into a 3D chibi-style figure, placed inside a Polaroid photo. The photo paper is being held by a human hand. The character is stepping out of the Polaroid frame, creating a visual effect of breaking through the two-dimensional photo border and entering the real-world 3D space.",
+  "w": 1024,
+  "h": 1024
+ },
+ "13": {
+  "by": "@dotey",
+  "src": "https://x.com/dotey/status/1908194518345678865",
+  "prompt": "Transform the characters in the scene into 3D chibi-style figures, while keeping the original scene layout and their clothing exactly the same.",
+  "w": 1024,
+  "h": 1024
+ },
+ "45": {
+  "by": "@dotey",
+  "src": "https://x.com/dotey/status/1911988003729203648",
+  "prompt": "Create a personified 3D chibi-style anime girl character representing {Northwestern Polytechnical University}, embodying the school’s distinctive strengths in {aeronautics, astronautics, and marine engineering}.",
+  "w": 1280,
+  "h": 853
+ },
+ "97": {
+  "by": "@ZHO_ZHO_ZHO",
+  "src": "https://x.com/ZHO_ZHO_ZHO/status/1921148024861938077",
+  "prompt": "A close-up, professionally composed photograph showcasing a hand-crocheted yarn doll gently cradled by two hands. The doll has a rounded shape, featuring the cute chibi image of the [upload image] character, with vivid contrasting colors and rich details. The hands holding the doll are natural and gentle, with clearly visible finger postures, and natural skin texture and light/shadow transitions, conveying a warm and realistic touch. The background is slightly blurred, depicting an indoor environment with a warm wooden tabletop and natural light streaming in from a window, creating a comfortable and intimate atmosphere. The overall image conveys a sense of exquisite craftsmanship and cherished warmth.",
+  "w": 853,
+  "h": 1280
+ },
+ "32": {
+  "by": "@dotey",
+  "src": "https://x.com/dotey/status/1923264349050675329",
+  "prompt": "Multi-layered foldable paper sculpture pop-up book, placed on a desk, with a clean background highlighting the main subject. The book presents a 3D flip-book style, with a 2:3 vertical aspect ratio. The open pages display the scene of [Nezha Demon Child version battling Ao Bing]. All elements are finely foldable and assembled, showcasing a realistic and delicate texture of folded paper. The composition uniformly adopts a frontal perspective, with an overall dreamy and beautiful visual style, vibrant and gorgeous colors, full of a fantastical and lively story atmosphere.",
+  "w": 1280,
+  "h": 853
+ },
+ "73": {
+  "by": "@azed_ai",
+  "src": "https://x.com/azed_ai/status/1916521742052503804",
+  "prompt": "A close-up photo of a cute, colorful keychain held by person's hand. The keychain features a chibi-style of the [attached image ]. The keychain is made of soft rubber with bold black outlines and attached to a small silver keyring, neutral background",
+  "w": 1024,
+  "h": 1024
+ },
+ "43": {
+  "by": "@ZHO_ZHO_ZHO",
+  "src": "https://x.com/ZHO_ZHO_ZHO/status/1911669883315818497",
+  "prompt": "Transform the person in the image into a set of cute chibi-style Russian nesting dolls (🪆), with a total of five dolls arranged from largest to smallest. Place them on an elegant wooden table. Horizontal aspect ratio: 3:2.",
+  "w": 1280,
+  "h": 853
+ },
+ "85": {
+  "by": "@umesh_ai",
+  "src": "https://x.com/umesh_ai/status/1917444534239191544",
+  "prompt": "A pencil sketch of [Subject 1] interacting with [Subject 2], where [Subject 2] is rendered as a realistic, full-color object, creating a surreal contrast against the hand-drawn style of [Subject 1] and the background",
+  "w": 1024,
+  "h": 1024
+ },
+ "19": {
+  "by": "@TheRelianceAI",
+  "src": "https://x.com/TheRelianceAI/status/1925223613055017251",
+  "prompt": "An ultra-realistic top-down photograph of a 3D-printed diorama inside a beige cardboard box, with the lid being held open by two human hands. The interior of the box reveals a miniature landscape of [COUNTRY NAME], featuring iconic landmarks, terrain, buildings, rivers, vegetation, and crowds of tiny, detailed human figures. The diorama is filled with vibrant, geographically appropriate elements, all crafted in a tactile, toy-like style using matte 3D-printed textures with visible layer lines. At the top, the inside of the box lid displays the phrase “[COUNTRY NAME]” in large, colorful, raised plastic letters—each letter in a different bright color. The lighting is warm and cinematic, highlighting the textures and shadows to evoke a sense of realism and charm, as if the viewer is opening a magical miniature version of the nation",
+  "w": 1024,
+  "h": 1024
+ },
+ "8": {
+  "by": "@ZHO_ZHO_ZHO",
+  "src": "https://x.com/ZHO_ZHO_ZHO/status/1910644499354968091",
+  "prompt": "Generate a vertically-oriented image based on my uploaded photo, using the following prompt:\nClassic LEGO minifigure style in a miniature scene — an animal stands beside me. The color palette of the animal should match mine.\nPlease design the animal based on your understanding of me. You may choose any creature — real, surreal, or fantastical — that you feel best reflects my personality.\nThe entire scene is set within a transparent glass cube, with a minimalist interior design.\nThe base of the miniature is matte black with silver accents, following a clean and modern aesthetic.\nOn the base, there is an elegantly engraved nameplate in a refined serif font, displaying the name of the animal.\nThe lower part of the base subtly incorporates finely etched biological classification details, similar to a natural history museum display.\nThe overall composition should resemble a high-end collectible artwork: meticulously crafted, curated in style, and lit with refined lighting.\nBalance is key to the layout. The background should feature a smooth gradient transition from dark to light tones, selected to match the dominant color theme.",
+  "w": 853,
+  "h": 1280
+ },
+ "47": {
+  "by": "@egeberkina",
+  "src": "https://x.com/egeberkina/status/1911368319212408926",
+  "prompt": "A hyper-realistic isometric 3D render of a miniature computer setup inside a translucent mechanical keyboard keycap, specifically placed on the ESC key of a real matte-finished mechanical keyboard. Inside the keycap, a tiny figure sits in a modern ergonomic chair, wearing a cozy textured hoodie, working at a glowing ultra-realistic computer screen. The environment is packed with lifelike miniature tech accessories: real-material desk lamps, monitors with reflections, tiny speaker grills, tangled cables, and ceramic mugs. The base of the scene is made of soil, rocks, and moss, with photorealistic textures and imperfections. The lighting inside the cap mimics natural morning sun, casting soft shadows and warm tones, while the outside has cold ambient reflections from the surrounding keyboard. The word “ESC” is subtly etched onto the top of the translucent keycap with a faint frosted glass effect — just barely visible depending on the angle. The surrounding keyboard keys like F1, Q, Shift, and CTRL are crisp, textured, and photorealistically lit. Shot as if taken with a high-end mobile phone camera, with shallow depth of field, perfect white balance, and cinematic detail.",
+  "w": 1024,
+  "h": 1024
+ },
+ "90": {
+  "by": "@egeberkina",
+  "src": "https://x.com/egeberkina/status/1918291652210311278",
+  "prompt": "ultra-realistic 3D render of four mechanical keyboard keycaps in a tight 2x2 grid, all keys touching. View from an isometric angle. One key is transparent with the word “{just}” printed in {white}. The other three colors are: {black, purple, and white}. One key features the {Github} logo. The other two say \"{fork}\" and \"{it}\". Realistic plastic texture, rounded sculpted keycaps, soft shadows, clean light-gray background.",
+  "w": 1024,
+  "h": 1024
+ },
+ "89": {
+  "by": "@egeberkina",
+  "src": "https://x.com/egeberkina/status/1919398870867440124",
+  "prompt": "highly detailed 3D render of a single metallic {👍} emoji pin attached to a vertical product card, ultra-glossy chrome finish, smooth rounded 3D icon, stylized futuristic design, soft reflections, clean shadows, paper card has a die-cut euro hole at the top center, bold title “{Awesome}” above the pin, fun tagline “{Smash that ⭐ if you like it!}” below, soft gray background, soft studio lighting, minimal aesthetic",
+  "w": 853,
+  "h": 1280
+ },
+ "62": {
+  "by": "@gnrlyxyz",
+  "src": "https://x.com/gnrlyxyz/status/1914303110853583302",
+  "prompt": "Turn the subject in the attached image into a kawaii enamel pin. Use glossy metal outlines and vibrant enamel fill. No extra added features. Square mockup format. White background.",
+  "w": 1024,
+  "h": 1024
+ },
+ "42": {
+  "by": "@balconychy",
+  "src": "https://x.com/balconychy/status/1909908568129655248",
+  "prompt": "Transform the person in the attached image into a snow globe scene.\nOverall environment: The snow globe is placed on a tabletop by the window, with a blurred, warm-toned background. Sunlight passes through the globe, casting golden sparkles that gently illuminate the surrounding darkness.\nInside the globe: The characters are in a cute chibi-style 3D design, gazing at each other with eyes full of love.",
+  "w": 1024,
+  "h": 1024
+ }
+}
