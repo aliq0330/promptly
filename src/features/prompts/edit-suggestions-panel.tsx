@@ -149,7 +149,7 @@ export function EditSuggestionsPanel({
                 <Badge variant={STATUS_VARIANT[suggestion.status]}>{t(STATUS_LABEL_KEYS[suggestion.status])}</Badge>
               </div>
 
-              <p className="mt-2 whitespace-pre-wrap text-sm text-text">{suggestion.suggestionText}</p>
+              <p className="mt-2 whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-sm text-text">{suggestion.suggestionText}</p>
 
               <button
                 type="button"

@@ -11528,6 +11528,12 @@ Bir prompt/istek/sonuç silindiğinde ya da görselleri değiştirildiğinde DB 
 - **Süpürücü:** migration `20260919660000_orphan_storage_objects.sql` (canlıya uygulandı) `orphan_storage_objects(p_min_age default '1 hour')` — hiçbir tabloda (prompt/istek/generator/workflow medyası, sonuçlar, avatar, mesaj ekleri) geçmeyen nesneleri listeler, yalnızca service_role çağırır; konum eşleşmesi `position(name in url)` (avatar URL'indeki `?v=` yüzünden `like '%name'` YANLIŞ olurdu). Edge Function `cleanup-orphan-storage` (**canlıya deploy edildi**, `verify_jwt` açık): çağıran `is_moderator` olmalı, varsayılan kuru çalışma, `{apply:true}` ile Storage API'siyle siler (SQL'le `storage.objects` silmek dosyayı diskten kaldırmaz). Arayüz: `/moderation` sayfasının altında "Depolama temizliği" kartı (tara → sayıyı gör → sil), TR+EN `moderation.storage*` eklendi.
 - **Bilinçli sınırlar:** son 1 saatteki yüklemelere dokunulmaz; süpürücü otomatik/zamanlı çalışmaz (moderatör elle tetikler); generator/workflow kapakları data URL olduğundan Storage'a girmiyor; viral seed görselleri `public/viral-seed/` altında (Storage dışı). Taranan 21 dosya henüz SİLİNMEDİ — moderatör `/moderation`'dan çalıştırmalı. Tarayıcıda ve gerçek moderatör oturumuyla Edge Function çağrısı denenmedi (sandbox erişimi yok); tsc/lint/build temiz.
 
+### 9.133 Referans görsel notu + uzun bağlantı taşması
+
+- Prompt oluştur/düzenle ekranında (yalnızca görsel/video/ses) prompt bölümünde "Bu prompt'ta görsel referans kullanılması gerekiyor mu?" onay kutusu; işaretliyse `prompts.requires_reference_image` (migration `20260919670000_prompt_requires_reference.sql`, canlıya uygulandı) true olur ve detay sayfasında açıklamanın altında "Not: Bu prompt bir referans fotoğraf/görsel ile birlikte kullanılır." gösterilir (TR+EN `prompt.requiresReference*`). Taslak/yayın/düzenleme yollarının hepsi alanı yazar.
+- Taşma: detay açıklaması (`DetailLede`), profil biyografisi, düzenleme önerisi metni ve sonuç prompt'u `break-words`/`overflow-wrap:anywhere` aldı; uzun URL'ler artık yatay taşmaz. Not: viral seed açıklamalarındaki uzun tweet bağlantısı bu yüzden taşıyordu.
+- Doğrulama: tsc/lint/build temiz; tarayıcıda denenmedi.
+
 ---
 
 **Sonraki adım:** Bilinen iki üretim hatası (Bölüm 9.40 — mesajlarda

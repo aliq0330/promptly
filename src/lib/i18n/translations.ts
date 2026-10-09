@@ -720,6 +720,9 @@ export const translations = {
   "prompt.answeringThisRequest": { tr: "Bu isteğe yanıt veriyorsun", en: "You're replying to this request" },
   "prompt.exitAnswerMode": { tr: "Yanıt modundan çık", en: "Exit reply mode" },
   "prompt.requestColon": { tr: "isteği:", en: "request:" },
+  "prompt.requiresReferenceLabel": { tr: "Bu prompt'ta görsel referans kullanılması gerekiyor mu?", en: "Does this prompt need a reference image?" },
+  "prompt.requiresReferenceHint": { tr: "İşaretlersen gönderi sayfasında bir referans fotoğraf/görsel ile kullanılması gerektiği belirtilir.", en: "If checked, the post page notes that it should be used together with a reference photo/image." },
+  "prompt.requiresReferenceNote": { tr: "Not: Bu prompt bir referans fotoğraf/görsel ile birlikte kullanılır.", en: "Note: This prompt is used together with a reference photo/image." },
   "prompt.showOnProfileQuestion": { tr: "Bu yanıt profilimde görünsün mü?", en: "Should this reply show on your profile?" },
   "prompt.shareOnProfile": { tr: "Profilimde paylaş", en: "Share on my profile" },
   "prompt.shareOnProfileHint": {

@@ -174,7 +174,7 @@ export function ResultDetailView() {
                       </div>
                       <div>
                         <p className="mb-1 text-caption font-semibold uppercase tracking-wide text-text-muted">{t("result.userModification")}</p>
-                        <p className="max-h-40 overflow-y-auto whitespace-pre-wrap rounded-md border border-border-soft bg-surface-soft p-2.5 font-mono text-xs text-text">
+                        <p className="max-h-40 overflow-y-auto whitespace-pre-wrap break-words rounded-md border border-border-soft bg-surface-soft p-2.5 font-mono text-xs text-text">
                           {result.modifiedPromptText}
                         </p>
                       </div>

@@ -70,7 +70,7 @@ export function DetailTitle({ children, className }: { children: ReactNode; clas
 /** The standfirst under the title — a touch larger and looser than body copy. */
 export function DetailLede({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <p className={cn("max-w-2xl whitespace-pre-line text-body leading-relaxed text-text-secondary sm:text-[1.0625rem]", className)}>
+    <p className={cn("max-w-2xl whitespace-pre-line break-words [overflow-wrap:anywhere] text-body leading-relaxed text-text-secondary sm:text-[1.0625rem]", className)}>
       {children}
     </p>
   );

@@ -24,7 +24,7 @@ export function ProfileAbout({ user }: { user: UserProfile }) {
 
   return (
     <div className="space-y-5 px-4 py-5 lg:px-6">
-      {user.bio && <p className="whitespace-pre-wrap text-sm text-text">{user.bio}</p>}
+      {user.bio && <p className="whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-sm text-text">{user.bio}</p>}
 
       <div className="space-y-2 text-sm text-text-muted">
         {user.website && (
