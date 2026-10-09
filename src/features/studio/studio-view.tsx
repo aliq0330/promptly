@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Download, Eye, EyeOff, Loader2, SlidersHorizontal, Sparkles, Square, Upload, X } from "lucide-react";
+import { Download, Eye, EyeOff, Loader2, Pencil, Plus, SlidersHorizontal, Sparkles, Square, Upload, X } from "lucide-react";
 import { Button, buttonClassName } from "@/components/ui/button";
 import { Chip, ChipRow } from "@/components/ui/chip";
 import { PageContainer, PageHeader } from "@/components/ui/page-header";
@@ -45,9 +45,24 @@ interface SlotMeta {
 }
 
 type Slot =
-  | { id: number; status: "loading" }
+  | { id: number; status: "loading"; label: string }
   | { id: number; status: "done"; output: AiOutput; meta: SlotMeta }
-  | { id: number; status: "error"; error: AiError };
+  | { id: number; status: "error"; error: AiError; label: string };
+
+/** One provider/model a run is sent to. The first is the main form; up to MAX_EXTRA more can be compared side by side. */
+interface Target {
+  provider: AiProvider;
+  model: string;
+}
+interface ExtraTarget extends Target {
+  uid: number;
+}
+
+const MAX_EXTRA = 2;
+
+function targetLabel(target: Target): string {
+  return `${target.provider === "gemini" ? "Gemini" : "OpenAI"} · ${target.model}`;
+}
 
 const ERROR_KEY: Record<AiError["kind"], TranslationKey> = {
   invalid_key: "generate.errInvalidKey",
@@ -111,6 +126,8 @@ export function StudioView() {
   const [selection, setSelection] = useState<PresetSelection>({});
   const [promptText, setPromptText] = useState("");
   const [count, setCount] = useState(1);
+  const [extra, setExtra] = useState<ExtraTarget[]>([]);
+  const [extraKeys, setExtraKeys] = useState<Partial<Record<AiProvider, string>>>({});
 
   const [slots, setSlots] = useState<Slot[]>([]);
   const [running, setRunning] = useState(false);
@@ -285,10 +302,10 @@ export function StudioView() {
     setRemember(false);
   }
 
-  async function runSlot(id: number, key: string, prompt: string, signal: AbortSignal) {
-    const meta: SlotMeta = { provider, model, prompt };
+  async function runSlot(id: number, target: Target, key: string, prompt: string, signal: AbortSignal) {
+    const meta: SlotMeta = { provider: target.provider, model: target.model, prompt };
     try {
-      const output = await generateOne(provider, kind, model, prompt, key, signal);
+      const output = await generateOne(target.provider, kind, target.model, prompt, key, signal);
       setSlots((current) => current.map((slot) => (slot.id === id ? { id, status: "done", output, meta } : slot)));
       const entry: HistoryEntry = { id: `${id}-${Math.random().toString(36).slice(2, 8)}`, createdAt: Date.now(), kind, presetTitle: sourceTitle, output, ...meta };
       await addHistory(entry);
@@ -299,8 +316,41 @@ export function StudioView() {
         return;
       }
       const aiError = error instanceof AiError ? error : new AiError("unknown");
-      setSlots((current) => current.map((slot) => (slot.id === id ? { id, status: "error", error: aiError } : slot)));
+      setSlots((current) => current.map((slot) => (slot.id === id ? { id, status: "error", error: aiError, label: targetLabel(target) } : slot)));
     }
+  }
+
+  /** The model a compare row really uses: its own pick if it exists for this kind, else the provider's first. */
+  function extraModel(target: ExtraTarget): string {
+    const list = fallbackModels(target.provider, kind);
+    return list.some((m) => m.id === target.model) ? target.model : (list[0]?.id ?? target.model);
+  }
+
+  function extraKey(target: ExtraTarget): string {
+    if (target.provider === provider) return apiKey.trim();
+    return (extraKeys[target.provider] ?? loadKey(target.provider).key).trim();
+  }
+
+  function addExtra() {
+    const other = AI_PROVIDERS.find((p) => p !== provider) ?? provider;
+    const first = fallbackModels(other, kind)[0]?.id ?? "";
+    setExtra((current) => (current.length >= MAX_EXTRA ? current : [...current, { uid: Date.now() + current.length, provider: other, model: first }]));
+  }
+
+  function updateExtra(uid: number, patch: Partial<Target>) {
+    setExtra((current) =>
+      current.map((row) => {
+        if (row.uid !== uid) return row;
+        const next = { ...row, ...patch };
+        if (patch.provider && patch.provider !== row.provider) next.model = fallbackModels(patch.provider, kind)[0]?.id ?? "";
+        return next;
+      }),
+    );
+  }
+
+  function onExtraKeyChange(target: ExtraTarget, value: string) {
+    setExtraKeys((current) => ({ ...current, [target.provider]: value }));
+    saveKey(target.provider, value, loadKey(target.provider).remembered);
   }
 
   async function onGenerate() {
@@ -309,13 +359,20 @@ export function StudioView() {
     const key = apiKey.trim();
     if (!key) return setFormError(t("generate.needKey"));
     if (!finalPrompt) return setFormError(t("generate.needPrompt"));
+    const jobs: { target: Target; key: string }[] = [{ target: { provider, model }, key }];
+    for (const row of extra) {
+      const rowKey = extraKey(row);
+      if (!rowKey) return setFormError(t("studio.compareNeedKey", { provider: row.provider === "gemini" ? "Gemini" : "OpenAI" }));
+      jobs.push({ target: { provider: row.provider, model: extraModel(row) }, key: rowKey });
+    }
     abortRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
     const base = Date.now();
-    setSlots(Array.from({ length: count }, (_, i) => ({ id: base + i, status: "loading" as const })));
+    const planned = jobs.flatMap((job, ji) => Array.from({ length: count }, (_, i) => ({ id: base + ji * 100 + i, job })));
+    setSlots(planned.map(({ id, job }) => ({ id, status: "loading" as const, label: targetLabel(job.target) })));
     setRunning(true);
-    await Promise.all(Array.from({ length: count }, (_, i) => runSlot(base + i, key, finalPrompt, controller.signal)));
+    await Promise.all(planned.map(({ id, job }) => runSlot(id, job.target, job.key, finalPrompt, controller.signal)));
     if (abortRef.current === controller) setRunning(false);
   }
 
@@ -340,6 +397,19 @@ export function StudioView() {
     setPublishError(false);
     setSlots([{ id: Date.now(), status: "done", output: entry.output, meta: { provider: entry.provider, model: entry.model, prompt: entry.prompt } }]);
     window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  /** "Edit and try again" from a result: its exact prompt becomes the working text, focus moves to the box. */
+  function editFromResult(meta: SlotMeta) {
+    setPromptText(meta.prompt);
+    setPreset(null);
+    setSelection({});
+    if (source !== "blank") router.replace("/studio");
+    window.setTimeout(() => {
+      const box = document.getElementById("gen-prompt") as HTMLTextAreaElement | null;
+      box?.scrollIntoView({ behavior: "smooth", block: "center" });
+      box?.focus();
+    }, 50);
   }
 
   function usePromptFromHistory(entry: HistoryEntry) {
@@ -388,6 +458,7 @@ export function StudioView() {
   }
 
   // Layout follows what the results ARE (a restored history item may differ from the current form).
+  const showLabels = new Set(slots.map((slot) => (slot.status === "done" ? targetLabel(slot.meta) : slot.label))).size > 1;
   const slotsAreImages = slots.every((slot) => (slot.status === "done" ? slot.output.kind === "image" : kind === "image"));
 
   const presetTypeNote =
@@ -476,6 +547,68 @@ export function StudioView() {
               {modelsLoading && <p className="mt-1.5 text-caption text-text-muted">{t("generate.modelsLoading")}</p>}
               {modelsFailed && !modelsLoading && <p className="mt-1.5 text-caption text-text-muted">{t("generate.modelsFallback")}</p>}
             </div>
+
+            {/* Compare: the same prompt on more models */}
+            {extra.length > 0 && (
+              <div className="space-y-3 border-t border-border-soft pt-4">
+                <p className={fieldLabelClassName}>{t("studio.compareTitle")}</p>
+                {extra.map((row) => {
+                  const rowModel = extraModel(row);
+                  const needsKey = row.provider !== provider && !(extraKeys[row.provider] ?? loadKey(row.provider).key);
+                  return (
+                    <div key={row.uid} className="space-y-2 rounded-lg border border-border-soft bg-surface-soft p-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <ChipRow>
+                          {AI_PROVIDERS.map((p) => (
+                            <Chip key={p} selected={row.provider === p} onClick={() => updateExtra(row.uid, { provider: p })}>
+                              {t(`generate.provider.${p}`)}
+                            </Chip>
+                          ))}
+                        </ChipRow>
+                        <button
+                          type="button"
+                          onClick={() => setExtra((current) => current.filter((r) => r.uid !== row.uid))}
+                          aria-label={t("studio.compareRemove")}
+                          className="shrink-0 rounded-md p-1.5 text-text-muted hover:bg-surface hover:text-text"
+                        >
+                          <X size={14} aria-hidden />
+                        </button>
+                      </div>
+                      <select
+                        value={rowModel}
+                        onChange={(event) => updateExtra(row.uid, { model: event.target.value })}
+                        aria-label={t("generate.model")}
+                        className={fieldInputClassName}
+                      >
+                        {fallbackModels(row.provider, kind).map((m) => (
+                          <option key={m.id} value={m.id}>
+                            {m.label}
+                          </option>
+                        ))}
+                      </select>
+                      {row.provider !== provider && (
+                        <input
+                          type="password"
+                          value={extraKeys[row.provider] ?? loadKey(row.provider).key}
+                          onChange={(event) => onExtraKeyChange(row, event.target.value)}
+                          placeholder={t("generate.apiKeyPlaceholder")}
+                          aria-label={t("generate.apiKey")}
+                          autoComplete="off"
+                          spellCheck={false}
+                          className={`${fieldInputClassName} font-mono`}
+                        />
+                      )}
+                      {needsKey && <p className="text-caption text-text-muted">{t("studio.compareKeyHint")}</p>}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+            {extra.length < MAX_EXTRA && (
+              <button type="button" onClick={addExtra} className="inline-flex min-h-9 items-center gap-1.5 text-small font-medium text-primary hover:underline">
+                <Plus size={14} aria-hidden /> {t("studio.compareAdd")}
+              </button>
+            )}
           </section>
 
           {/* Source */}
@@ -598,6 +731,11 @@ export function StudioView() {
             <ul className={slotsAreImages ? "grid gap-3 sm:grid-cols-2" : "space-y-3"}>
               {slots.map((slot, index) => (
                 <li key={slot.id} className="min-w-0 overflow-hidden rounded-xl border border-border-soft bg-surface shadow-card">
+                  {showLabels && (
+                    <p className="truncate border-b border-border-soft bg-surface-soft px-3 py-1.5 text-caption font-medium text-text-secondary">
+                      {slot.status === "done" ? targetLabel(slot.meta) : slot.label}
+                    </p>
+                  )}
                   {slot.status === "loading" && (
                     <div className={`${slotsAreImages ? "aspect-square" : "h-32"} skeleton-shimmer`} aria-busy="true">
                       <span className="sr-only">{t("generate.running")}</span>
@@ -616,6 +754,7 @@ export function StudioView() {
                       output={slot.output}
                       index={index}
                       onPublish={() => onPublish(slot.output, slot.meta)}
+                      onEdit={() => editFromResult(slot.meta)}
                     />
                   )}
                 </li>
@@ -634,7 +773,7 @@ export function StudioView() {
   );
 }
 
-function ResultBody({ output, index, onPublish }: { output: AiOutput; index: number; onPublish: () => void }) {
+function ResultBody({ output, index, onPublish, onEdit }: { output: AiOutput; index: number; onPublish: () => void; onEdit: () => void }) {
   const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
 
@@ -656,6 +795,9 @@ function ResultBody({ output, index, onPublish }: { output: AiOutput; index: num
       <div className="flex flex-wrap items-center gap-2 border-t border-border-soft p-3">
         <Button type="button" size="sm" onClick={onPublish}>
           <Upload size={14} aria-hidden /> {t("generate.publish")}
+        </Button>
+        <Button type="button" size="sm" variant="outline" onClick={onEdit}>
+          <Pencil size={14} aria-hidden /> {t("studio.editRetry")}
         </Button>
         {output.text && (
           <Button type="button" size="sm" variant="outline" onClick={copy}>

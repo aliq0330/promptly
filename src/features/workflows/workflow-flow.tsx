@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import Link from "next/link";
-import { ArrowDown, ArrowLeft, Check, ExternalLink, X } from "lucide-react";
+import { ArrowDown, ArrowLeft, Check, ExternalLink, WandSparkles, X } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
 import { Portal } from "@/components/ui/portal";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -96,6 +96,18 @@ function FloatingPreview({
   );
 }
 
+/** Studio link for a published Prompt / Generator step (a request step has nothing to try). */
+function studioHrefForStep(step: WorkflowStep): string | null {
+  const c = step.content;
+  if (!c || !c.published) return null;
+  if (c.type === "prompt") return `/studio?prompt=${encodeURIComponent(c.id)}`;
+  if (c.type === "generator") {
+    const slug = new URLSearchParams(c.href.split("?")[1] ?? "").get("slug");
+    return slug ? `/studio?generator=${encodeURIComponent(slug)}` : null;
+  }
+  return null;
+}
+
 function StepCard({ step, steps, index }: { step: WorkflowStep; steps: WorkflowStep[]; index: number }) {
   const { t, language } = useTranslation();
   const meta = STEP_TYPE_META[step.stepType];
@@ -104,6 +116,7 @@ function StepCard({ step, steps, index }: { step: WorkflowStep; steps: WorkflowS
   const MediaIcon = c?.contentType ? MEDIA_ICON[c.contentType] : null;
   const links = incomingLinks(steps, step.id);
   const openable = Boolean(c?.published);
+  const studioHref = studioHrefForStep(step);
 
   const [cardEl, setCardEl] = useState<HTMLDivElement | null>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
@@ -153,7 +166,7 @@ function StepCard({ step, steps, index }: { step: WorkflowStep; steps: WorkflowS
     <>
       <span className="flex items-start gap-3">
         <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-label font-semibold text-primary-foreground">{index + 1}</span>
-        <span className="min-w-0 flex-1 pr-7">
+        <span className="min-w-0 flex-1 pr-16">
           <span className="block text-caption font-semibold uppercase tracking-[0.08em] text-primary">{t("workflow.stepN", { n: String(index + 1) })}</span>
           <span className="block break-words text-sm font-semibold text-text">{step.title || t("workflow.untitledStep")}</span>
           <span className="mt-1 inline-flex max-w-full items-center gap-1 rounded-full bg-primary-soft px-2 py-0.5 text-caption font-medium text-text-secondary">
@@ -240,14 +253,26 @@ function StepCard({ step, steps, index }: { step: WorkflowStep; steps: WorkflowS
         <div className="p-3.5 sm:p-4">{body}</div>
       )}
       {openable && c && (
-        <Link
-          href={c.href}
-          aria-label={t("workflow.flowOpen")}
-          title={t("workflow.flowOpen")}
-          className="absolute right-2.5 top-2.5 flex h-8 w-8 items-center justify-center rounded-md text-text-muted transition-colors hover:bg-surface-soft hover:text-primary"
-        >
-          <ExternalLink size={15} />
-        </Link>
+        <div className="absolute right-2.5 top-2.5 flex items-center gap-0.5">
+          {studioHref && (
+            <Link
+              href={studioHref}
+              aria-label={t("studio.openInStudio")}
+              title={t("studio.openInStudio")}
+              className="flex h-8 w-8 items-center justify-center rounded-md text-text-muted transition-colors hover:bg-surface-soft hover:text-primary"
+            >
+              <WandSparkles size={15} />
+            </Link>
+          )}
+          <Link
+            href={c.href}
+            aria-label={t("workflow.flowOpen")}
+            title={t("workflow.flowOpen")}
+            className="flex h-8 w-8 items-center justify-center rounded-md text-text-muted transition-colors hover:bg-surface-soft hover:text-primary"
+          >
+            <ExternalLink size={15} />
+          </Link>
+        </div>
       )}
 
       {open && !isPhone && cardEl && (
