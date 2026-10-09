@@ -27,6 +27,7 @@ import type { CatalogField } from "@/lib/generator-field-catalog";
 import { cn, generatorHref } from "@/lib/utils";
 import { multiImageItemFromMedia } from "@/lib/supabase/media-input";
 import { KindDraftsButton } from "@/features/drafts/kind-drafts-button";
+import { CreatePageHeader } from "@/features/content/create-page-header";
 import { CreateFormActions } from "@/features/content/create-form-actions";
 import { FormSection, FormSections } from "@/features/content/form-section";
 import {
@@ -508,34 +509,34 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
-      <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-surface px-4 py-3 sm:px-5">
-        <h1 className="text-h1 font-semibold text-text">
-          {generator ? t(generator.status === "published" ? "generator.editHeading" : "generator.draftHeading") : t("generator.newHeading")}
-        </h1>
-        {generator && generator.status === "draft" && (
-          <p className="flex items-center gap-1.5 text-xs text-text-muted">
-            {saveStatus === "saving" && (
-              <>
-                <Loader2 size={12} className="animate-spin" /> {t("generator.savingEllipsis")}
-              </>
-            )}
-            {saveStatus === "saved" && (
-              <>
-                <CheckCircle2 size={12} className="text-success" /> {t("generator.draftSaved")}
-              </>
-            )}
-            {saveStatus === "error" && (
-              <>
-                <AlertTriangle size={12} className="text-danger" /> {t("generator.saveFailed")}
-              </>
-            )}
-          </p>
-        )}
-        {generator && generator.status === "published" && (
-          <p className="text-xs text-text-muted">{t("generator.publishedEditsHint")}</p>
-        )}
-        <KindDraftsButton kind="generator" />
-      </div>
+      <CreatePageHeader
+        title={generator ? t(generator.status === "published" ? "generator.editHeading" : "generator.draftHeading") : t("generator.newHeading")}
+        hint={t("generator.createHint")}
+        drafts={<KindDraftsButton kind="generator" />}
+        status={
+          generator && generator.status === "draft" ? (
+            <p className="flex items-center gap-1.5">
+              {saveStatus === "saving" && (
+                <>
+                  <Loader2 size={12} className="animate-spin" /> {t("generator.savingEllipsis")}
+                </>
+              )}
+              {saveStatus === "saved" && (
+                <>
+                  <CheckCircle2 size={12} className="text-success" /> {t("generator.draftSaved")}
+                </>
+              )}
+              {saveStatus === "error" && (
+                <>
+                  <AlertTriangle size={12} className="text-danger" /> {t("generator.saveFailed")}
+                </>
+              )}
+            </p>
+          ) : generator && generator.status === "published" ? (
+            <p>{t("generator.publishedEditsHint")}</p>
+          ) : undefined
+        }
+      />
 
       <div
         role="tablist"
@@ -583,7 +584,6 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
               <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-text-muted">{t("generator.livePreview")}</p>
               <GeneratorPlayground
                 schema={schema}
-                enableNegativePrompt={meta.enableNegativePrompt}
                 templateText={templateText}
               />
             </div>
@@ -630,7 +630,6 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
               <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-text-muted">{t("generator.livePreview")}</p>
               <GeneratorPlayground
                 schema={schema}
-                enableNegativePrompt={meta.enableNegativePrompt}
                 templateText={templateText}
               />
             </div>
@@ -725,7 +724,7 @@ function metaToGeneratorPatch(meta: GeneratorMetaInput) {
     visibility: meta.visibility,
     allowPromptEditing: meta.allowPromptEditing,
     allowSavingGeneratedPrompts: meta.allowSavingGeneratedPrompts,
-    enableNegativePrompt: meta.enableNegativePrompt,
+    enableNegativePrompt: false,
     requiresReferenceImage: meta.requiresReferenceImage,
     requiresReferenceVideo: meta.requiresReferenceVideo,
     requiresReferenceAudio: meta.requiresReferenceAudio,

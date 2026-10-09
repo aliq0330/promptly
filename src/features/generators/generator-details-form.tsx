@@ -110,12 +110,6 @@ export function GeneratorDetailsForm({
             checked={meta.allowSavingGeneratedPrompts}
             onChange={(checked) => onChange({ allowSavingGeneratedPrompts: checked })}
           />
-          <ToggleRow
-            label={t("generator.negativePromptSupportLabel")}
-            description={t("generator.negativePromptSupportDescription")}
-            checked={meta.enableNegativePrompt}
-            onChange={(checked) => onChange({ enableNegativePrompt: checked })}
-          />
         </div>
       </FormSection>
     </FormSections>

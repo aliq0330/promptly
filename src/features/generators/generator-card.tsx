@@ -64,7 +64,6 @@ export function GeneratorCard({
             <span className="block text-caption text-text-muted">{t("generator.structuredPromptBuilder")}</span>
             <span className="block truncate text-label font-medium text-text">
               {topic}
-              {generator.enableNegativePrompt ? ` · ${t("generator.negativePromptSuffix")}` : ""}
             </span>
           </span>
           <span className="flex shrink-0 items-center gap-1 rounded-sm bg-surface px-2 py-1 text-caption font-semibold text-primary shadow-xs transition-colors duration-200 group-hover:bg-primary group-hover:text-primary-foreground">

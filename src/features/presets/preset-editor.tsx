@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useOwnProfile } from "@/features/auth/own-profile-provider";
 import { KindDraftsButton } from "@/features/drafts/kind-drafts-button";
+import { CreatePageHeader } from "@/features/content/create-page-header";
 import { CreateFormActions } from "@/features/content/create-form-actions";
 import { FormSection } from "@/features/content/form-section";
 import { MultiImagePicker, type MultiImageItem } from "@/features/content/multi-image-picker";
@@ -203,11 +204,11 @@ export function PresetEditor({ editId }: { editId: string | null }) {
 
   return (
     <div className="mx-auto max-w-5xl px-3 py-5 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
-      <div className="mb-1 flex items-start justify-between gap-3">
-        <h1 className="text-h1 font-semibold text-text">{editId ? t("preset.editTitle") : t("preset.createTitle")}</h1>
-        <KindDraftsButton kind="preset" />
-      </div>
-      <p className="mb-6 text-sm text-text-muted">{t("preset.createHint")}</p>
+      <CreatePageHeader
+        title={editId ? t("preset.editTitle") : t("preset.createTitle")}
+        hint={t("preset.createHint")}
+        drafts={<KindDraftsButton kind="preset" />}
+      />
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_360px]">
         <form onSubmit={handleSubmit} className="min-w-0 space-y-4">
