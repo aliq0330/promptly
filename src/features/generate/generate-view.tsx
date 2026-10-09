@@ -125,7 +125,7 @@ export function GenerateView() {
         .then((list) => {
           if (list.length === 0) return setModelsFailed(true);
           setModels(list);
-          setModel((current) => (list.some((m) => m.id === current) ? current : list[0].id));
+          setModel((current) => (list.some((m) => m.id === current) ? current : (list.find((m) => defaults.some((d) => d.id === m.id))?.id ?? list[0].id)));
         })
         .catch((error) => {
           if ((error as { name?: string }).name !== "AbortError") setModelsFailed(true);
