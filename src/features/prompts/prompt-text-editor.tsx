@@ -191,7 +191,7 @@ export function PromptTextEditor({
 
       {activeTab === "preview" && (
         <div className="space-y-3 rounded-md border border-border bg-background p-3">
-          <div className="whitespace-pre-wrap font-mono text-sm text-text">{previewText}</div>
+          <div className="whitespace-pre-wrap break-words font-mono text-sm text-text">{previewText}</div>
           <div className="space-y-2 border-t border-border pt-3">
             {variables.map((variable) => (
               <div key={variable.tempId} className="flex items-center gap-2">
@@ -207,7 +207,7 @@ export function PromptTextEditor({
                   type="text"
                   value={previewValues[variable.name] ?? variable.defaultValue}
                   onChange={(event) => setPreviewValues((prev) => ({ ...prev, [variable.name]: event.target.value }))}
-                  className="h-8 flex-1 rounded-md border border-border bg-surface px-2 text-xs text-text"
+                  className="h-8 min-w-0 flex-1 rounded-md border border-border bg-surface px-2 text-xs text-text"
                 />
               </div>
             ))}
