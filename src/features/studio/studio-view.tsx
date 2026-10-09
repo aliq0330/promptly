@@ -14,6 +14,7 @@ import { StudioSourcePicker } from "./studio-source-picker";
 import { StudioPresetPicker } from "./studio-preset-picker";
 import { StudioHistory } from "./studio-history";
 import { StudioSourceCard } from "./studio-source-card";
+import { ClampedText } from "./clamped-text";
 import { useAuthPrompt } from "@/features/auth/auth-prompt-provider";
 import { useAuth } from "@/features/auth/auth-provider";
 import { clearKey, loadKey, saveKey } from "@/lib/ai-generate/key-store";
@@ -808,7 +809,7 @@ function ResultBody({ output, index, onPublish, onEdit }: { output: AiOutput; in
         // eslint-disable-next-line @next/next/no-img-element -- generated base64 image, kept in memory only
         <img src={output.imageUrl} alt={t("generate.resultAlt", { n: String(index + 1) })} className="w-full bg-surface-soft object-contain" />
       )}
-      {output.text && <p className="prompt-text max-h-80 overflow-y-auto whitespace-pre-wrap break-words p-4 text-small text-text">{output.text}</p>}
+      {output.text && <ClampedText text={output.text} lines={8} />}
       <div className="flex flex-wrap items-center gap-2 border-t border-border-soft p-3">
         <Button type="button" size="sm" onClick={onPublish}>
           <Upload size={14} aria-hidden /> {t("generate.publish")}

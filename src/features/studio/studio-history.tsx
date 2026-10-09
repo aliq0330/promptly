@@ -4,6 +4,7 @@ import { History, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { formatRelativeTime } from "@/lib/utils";
+import { ClampedText } from "./clamped-text";
 import type { HistoryEntry } from "@/lib/ai-generate/history-store";
 
 /**
@@ -42,14 +43,16 @@ export function StudioHistory({
       <ul className="grid gap-3 sm:grid-cols-2" data-generate-history>
         {entries.map((entry) => (
           <li key={entry.id} data-history-entry={entry.id} className="flex min-w-0 flex-col overflow-hidden rounded-xl border border-border-soft bg-surface shadow-card">
-            <button type="button" onClick={() => onOpen(entry)} aria-label={t("generate.historyOpen")} className="block w-full bg-surface-soft text-left">
-              {entry.output.imageUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element -- local base64 thumbnail
+            {entry.output.imageUrl ? (
+              <button type="button" onClick={() => onOpen(entry)} aria-label={t("generate.historyOpen")} className="block w-full bg-surface-soft text-left">
+                {/* eslint-disable-next-line @next/next/no-img-element -- local base64 thumbnail */}
                 <img src={entry.output.imageUrl} alt="" className="aspect-[4/3] w-full object-cover" />
-              ) : (
-                <span className="prompt-text line-clamp-5 block min-h-24 whitespace-pre-wrap break-words p-3 text-small text-text-secondary">{entry.output.text}</span>
-              )}
-            </button>
+              </button>
+            ) : (
+              <div className="min-h-24 bg-surface-soft">
+                <ClampedText text={entry.output.text ?? ""} lines={5} inset="p-3" />
+              </div>
+            )}
             <div className="flex min-w-0 flex-1 flex-col gap-2 p-3">
               <p className="line-clamp-2 break-words text-small text-text">{entry.prompt}</p>
               <p className="truncate text-caption text-text-muted">
