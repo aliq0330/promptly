@@ -12762,6 +12762,10 @@ Listelere **▤ Kart | ▦ Odak** segmentli anahtarı eklendi. **Kart = mevcut s
 - **Doğrulama:** `tsc`/`lint` (0 hata)/`npm test` 46/46 temiz. Ağ taklitli Playwright: geçici fixture sayfasıyla 320/375/390/430/768/820/1024/1280/1440/1920 × Kart/Odak yatay taşma yok + doğru sütun sayısı (40/40); gerçek `/prompts`, `/`, `/discover` sayfalarında anahtar, `?view=focus`, yenileme + localStorage kalıcılığı, Space ile klavye, hedef boyutu, EN etiket + koyu tema (47/47); 7 liste sayfası × 4 genişlikte tek anahtar/taşma/JS hatası yok (28/28). Dev sunucu konsolunda yakalanan `<li>`-içinde-`<li>` hatası düzeltildi. Gerçek Supabase'e/fiziksel cihaza karşı denenmedi. Not: bu sandbox'ta varsayılan `next build` (Turbopack) Google Fonts nedeniyle çalışmıyor; `--webpack` derlemesi geçiyor ancak `share-modal-test` sayfasının `FIXTURE_PROMPT` export'u yüzünden `main`'de de aynı tip hatasıyla düşüyor (bu görevle ilgisiz).
 - **i18n:** `view.*` TR+EN eklendi (kart/odak, tooltip'ler); yeni kart metinleri mevcut anahtarları kullanır. İngilizce karşılıkları eklendi.
 
+### 9.125 Studio: uzun sonuç metinleri kısaltılır
+
+Studio'da metin sonuçları (Sonuçlar kartı 8 satır, Geçmiş kartı 5 satır) kısaltılır; metne ya da "Daha fazla göster"e tıklayınca tamamı açılır, tekrar tıklayınca kapanır (`features/studio/clamped-text.tsx`, yalnızca gerçekten taşan metinde bağlantı çıkar). Geçmişteki kısaltma bir CSS çakışması yüzünden (`line-clamp` + `block`) hiç çalışmıyordu; düzeltildi. Yeni metin yok, migration yok. Playwright 7/7.
+
 ### 9.118 Masonry'de ilk kartların üstten hizası
 
 Kart/Odak ızgaralarında (`PromptGrid`, `FeedGrid`, `RequestList`, `FocusGrid`) öğeler `animate-rise-in` (8px aşağıdan kayma) kullanıyordu; mobil Safari'de CSS sütunlarındaki ilk kartlar animasyon sırasında farklı ofsetlerde kalıp üstten hizasız görünüyordu. Izgara öğeleri artık yalnızca opaklık geçişi olan yeni `animate-grid-in` kullanıyor (kayma yok, `backwards` dolum → transform/stacking context kalmaz, menü sorunu geri gelmez). Diğer sayfa girişleri `rise-in` olarak kaldı. Migration yok. tsc/lint temiz; gerçek iOS Safari'de denenmedi.
