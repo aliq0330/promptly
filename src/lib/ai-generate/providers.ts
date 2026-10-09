@@ -44,8 +44,14 @@ async function request(url: string, init: RequestInit, key: string): Promise<unk
 
 // ---------------------------------------------------------------- models ----
 
+/**
+ * Cheap/free-tier-friendly models first (newest first within a group): "pro",
+ * "preview" and "exp" models often have no free quota, so they go last and the
+ * list never opens on one by default.
+ */
 function sortModels(models: AiModel[]): AiModel[] {
-  return models.sort((a, b) => b.id.localeCompare(a.id));
+  const rank = (id: string) => (/pro|preview|exp/.test(id) ? 1 : 0);
+  return models.sort((a, b) => rank(a.id) - rank(b.id) || b.id.localeCompare(a.id));
 }
 
 export async function listModels(provider: AiProvider, kind: AiKind, key: string, signal?: AbortSignal): Promise<AiModel[]> {
