@@ -15,6 +15,8 @@ import { PresetSaveCta } from "./preset-save-cta";
 export interface PresetBundle {
   fields: PresetField[];
   selection: PresetSelection;
+  /** The preset it came from (the Üret page shows its title). */
+  preset?: Preset;
 }
 
 export type PresetListTab = "saved" | "community";
@@ -90,7 +92,7 @@ export function PresetLists({
   }, [need, lists, user]);
 
   function bundleOf(preset: Preset): PresetBundle {
-    return { fields: resolvePresetFields(preset), selection: preset.selection };
+    return { fields: resolvePresetFields(preset), selection: preset.selection, preset };
   }
 
   const renderRow = (preset: Preset, withSave: boolean) => {

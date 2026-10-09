@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Download, Eye, EyeOff, Loader2, SlidersHorizontal, Sparkles, Square, Upload, X } from "lucide-react";
 import { Button, buttonClassName } from "@/components/ui/button";
@@ -9,11 +8,14 @@ import { Chip, ChipRow } from "@/components/ui/chip";
 import { PageContainer, PageHeader } from "@/components/ui/page-header";
 import { fieldControlClassName, fieldInputClassName, fieldLabelClassName } from "@/components/ui/field";
 import { PresetFieldList } from "@/features/presets/preset-field-list";
+import { GeneratePresetPicker } from "./generate-preset-picker";
+import { GenerateHistory } from "./generate-history";
 import { useAuthPrompt } from "@/features/auth/auth-prompt-provider";
 import { useAuth } from "@/features/auth/auth-provider";
 import { clearKey, loadKey, saveKey } from "@/lib/ai-generate/key-store";
 import { fallbackModels, generateOne, listModels } from "@/lib/ai-generate/providers";
 import { AI_PROVIDERS, AiError, toolIdFor, type AiKind, type AiModel, type AiOutput, type AiProvider } from "@/lib/ai-generate/types";
+import { addHistory, clearHistory, deleteHistory, listHistory, type HistoryEntry } from "@/lib/ai-generate/history-store";
 import { stashHandoff } from "@/lib/generate-handoff";
 import { fetchPresetById } from "@/lib/supabase/presets";
 import { resolvePresetFields } from "@/lib/preset-utils";
@@ -26,7 +28,17 @@ import type { Preset } from "@/types";
 
 const MAX_COUNT = 4;
 
-type Slot = { id: number; status: "loading" } | { id: number; status: "done"; output: AiOutput } | { id: number; status: "error"; error: AiError };
+/** What a finished result was made with — kept per result so history items and publishing never depend on the current form. */
+interface SlotMeta {
+  provider: AiProvider;
+  model: string;
+  prompt: string;
+}
+
+type Slot =
+  | { id: number; status: "loading" }
+  | { id: number; status: "done"; output: AiOutput; meta: SlotMeta }
+  | { id: number; status: "error"; error: AiError };
 
 const ERROR_KEY: Record<AiError["kind"], TranslationKey> = {
   invalid_key: "generate.errInvalidKey",
@@ -75,6 +87,8 @@ export function GenerateView() {
   const [formError, setFormError] = useState<string | null>(null);
   const [publishError, setPublishError] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [history, setHistory] = useState<HistoryEntry[]>([]);
 
   // The key follows the provider: load what this browser knows for it.
   useEffect(() => {
@@ -141,6 +155,14 @@ export function GenerateView() {
 
   useEffect(() => () => abortRef.current?.abort(), []);
 
+  useEffect(() => {
+    let cancelled = false;
+    listHistory().then((entries) => !cancelled && setHistory(entries));
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const fields = useMemo(() => (preset ? resolvePresetFields({ fields: preset.fields, selection }) : []), [preset, selection]);
   const finalPrompt = useMemo(
     () => (preset ? composePrompt(promptText, sanitizeSelection(selection, fields), fields, language) : promptText).trim(),
@@ -171,9 +193,13 @@ export function GenerateView() {
   }
 
   async function runSlot(id: number, key: string, prompt: string, signal: AbortSignal) {
+    const meta: SlotMeta = { provider, model, prompt };
     try {
       const output = await generateOne(provider, kind, model, prompt, key, signal);
-      setSlots((current) => current.map((slot) => (slot.id === id ? { id, status: "done", output } : slot)));
+      setSlots((current) => current.map((slot) => (slot.id === id ? { id, status: "done", output, meta } : slot)));
+      const entry: HistoryEntry = { id: `${id}-${Math.random().toString(36).slice(2, 8)}`, createdAt: Date.now(), kind, presetTitle: preset?.title, output, ...meta };
+      await addHistory(entry);
+      setHistory(await listHistory());
     } catch (error) {
       if ((error as { name?: string }).name === "AbortError") {
         setSlots((current) => current.filter((slot) => slot.id !== id));
@@ -205,17 +231,52 @@ export function GenerateView() {
     setRunning(false);
   }
 
-  function onPublish(output: AiOutput) {
+  function onPublish(output: AiOutput, meta: SlotMeta) {
     if (!user) return requireAuth("create");
     setPublishError(false);
     const ok = stashHandoff(
-      kind === "image"
-        ? { contentType: "image", promptText: finalPrompt, toolId: toolIdFor(provider, kind), imageUrl: output.imageUrl, width: output.width, height: output.height }
-        : { contentType: "text", promptText: output.text ?? "", toolId: toolIdFor(provider, kind) },
+      output.kind === "image"
+        ? { contentType: "image", promptText: meta.prompt, toolId: toolIdFor(meta.provider, "image"), imageUrl: output.imageUrl, width: output.width, height: output.height }
+        : { contentType: "text", promptText: output.text ?? "", toolId: toolIdFor(meta.provider, "text") },
     );
     if (!ok) return setPublishError(true);
     router.push("/create?mode=prompt&fromGenerate=1");
   }
+
+  function openHistory(entry: HistoryEntry) {
+    setPublishError(false);
+    setSlots([{ id: Date.now(), status: "done", output: entry.output, meta: { provider: entry.provider, model: entry.model, prompt: entry.prompt } }]);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function usePromptFromHistory(entry: HistoryEntry) {
+    // The stored prompt already contains the preset's phrases, so it goes back as plain text.
+    setPromptText(entry.prompt);
+    setPreset(null);
+    setSelection({});
+    setKind(entry.kind);
+    setProvider(entry.provider);
+  }
+
+  async function removeHistory(entry: HistoryEntry) {
+    await deleteHistory(entry.id);
+    setHistory((current) => current.filter((e) => e.id !== entry.id));
+  }
+
+  async function wipeHistory() {
+    await clearHistory();
+    setHistory([]);
+  }
+
+  function pickPreset(picked: Preset) {
+    setPreset(picked);
+    setPresetError(false);
+    setSelection(picked.selection);
+    setPickerOpen(false);
+  }
+
+  // Layout follows what the results ARE (a restored history item may differ from the current form).
+  const slotsAreImages = slots.every((slot) => (slot.status === "done" ? slot.output.kind === "image" : kind === "image"));
 
   const presetTypeNote =
     preset && ((preset.contentType === "text") !== (kind === "text") || (preset.contentType !== "text" && preset.contentType !== "image"))
@@ -312,17 +373,26 @@ export function GenerateView() {
                 <SlidersHorizontal size={16} aria-hidden /> {t("generate.preset")}
               </h2>
               {preset ? (
+                <div className="flex items-center gap-3">
+                  <button type="button" onClick={() => setPickerOpen(true)} className="text-small font-medium text-primary hover:underline">
+                    {t("generate.presetChange")}
+                  </button>
                 <button
                   type="button"
-                  onClick={() => router.replace("/generate")}
+                  onClick={() => {
+                    setPreset(null);
+                    setSelection({});
+                    if (presetId) router.replace("/generate");
+                  }}
                   className="inline-flex items-center gap-1 text-small font-medium text-text-secondary hover:text-text"
                 >
                   <X size={14} aria-hidden /> {t("generate.presetRemove")}
                 </button>
+                </div>
               ) : (
-                <Link href="/presets" className="text-small font-medium text-primary hover:underline">
+                <button type="button" onClick={() => setPickerOpen(true)} className="text-small font-medium text-primary hover:underline">
                   {t("generate.presetBrowse")}
-                </Link>
+                </button>
               )}
             </div>
             {presetError && <p className="text-small text-danger">{t("generate.presetLoadFailed")}</p>}
@@ -387,7 +457,8 @@ export function GenerateView() {
         </div>
 
         {/* Results */}
-        <section aria-label={t("generate.results")} className="min-w-0 space-y-3">
+        <div className="min-w-0 space-y-6">
+        <section aria-label={t("generate.results")} className="space-y-3">
           <h2 className="text-label font-semibold text-text">{t("generate.results")}</h2>
           {publishError && (
             <p role="alert" className="text-small text-danger">
@@ -397,11 +468,11 @@ export function GenerateView() {
           {slots.length === 0 ? (
             <p className="rounded-xl border border-dashed border-border bg-surface-soft p-6 text-small text-text-muted">{t("generate.resultsEmpty")}</p>
           ) : (
-            <ul className={kind === "image" ? "grid gap-3 sm:grid-cols-2" : "space-y-3"}>
+            <ul className={slotsAreImages ? "grid gap-3 sm:grid-cols-2" : "space-y-3"}>
               {slots.map((slot, index) => (
                 <li key={slot.id} className="min-w-0 overflow-hidden rounded-xl border border-border-soft bg-surface shadow-card">
                   {slot.status === "loading" && (
-                    <div className={`${kind === "image" ? "aspect-square" : "h-32"} skeleton-shimmer`} aria-busy="true">
+                    <div className={`${slotsAreImages ? "aspect-square" : "h-32"} skeleton-shimmer`} aria-busy="true">
                       <span className="sr-only">{t("generate.running")}</span>
                     </div>
                   )}
@@ -417,7 +488,7 @@ export function GenerateView() {
                     <ResultBody
                       output={slot.output}
                       index={index}
-                      onPublish={() => onPublish(slot.output)}
+                      onPublish={() => onPublish(slot.output, slot.meta)}
                     />
                   )}
                 </li>
@@ -425,7 +496,10 @@ export function GenerateView() {
             </ul>
           )}
         </section>
+        <GenerateHistory entries={history} onOpen={openHistory} onUsePrompt={usePromptFromHistory} onDelete={removeHistory} onClear={wipeHistory} />
+        </div>
       </div>
+      {pickerOpen && <GeneratePresetPicker contentType={kind} onPick={pickPreset} onClose={() => setPickerOpen(false)} />}
     </PageContainer>
   );
 }
