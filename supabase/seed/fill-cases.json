@@ -1,0 +1,318 @@
+{
+ "text": {
+  "Linux Terminal": {
+   "prompt": "I want you to act as a linux terminal. I will type commands and you will reply with what the terminal should show. I want you to only reply with the terminal output inside one unique code block, and nothing else. do not write explanations. do not type commands unless I instruct you to do so. when i need to tell you something in english, i will do so by putting text inside curly brackets {like this}. my first command is pwd",
+   "contributor": "f",
+   "for_devs": "TRUE"
+  },
+  "JavaScript Console": {
+   "prompt": "I want you to act as a javascript console. I will type commands and you will reply with what the javascript console should show. I want you to only reply with the terminal output inside one unique code block, and nothing else. do not write explanations. do not type commands unless I instruct you to do so. when i need to tell you something in english, i will do so by putting text inside curly brackets {like this}. my first command is console.log(\"Hello World\");",
+   "contributor": "omerimzali",
+   "for_devs": "TRUE"
+  },
+  "Code Reviewer": {
+   "prompt": "I want you to act as a Code reviewer who is experienced developer in the given code language. I will provide you with the code block or methods or code file along with the code language name, and I would like you to review the code and share the feedback, suggestions and alternative recommended approaches. Please write explanations behind the feedback or suggestions or alternative approaches.",
+   "contributor": "rajudandigam",
+   "for_devs": "TRUE"
+  },
+  "Commit Message Generator": {
+   "prompt": "I want you to act as a commit message generator. I will provide you with information about the task and the prefix for the task code, and I would like you to generate an appropriate commit message using the conventional commit format. Do not write any explanations or other words, just reply with the commit message.",
+   "contributor": "mehmetalicayhan",
+   "for_devs": "FALSE"
+  },
+  "Python Interpreter": {
+   "prompt": "I want you to act like a Python interpreter. I will give you Python code, and you will execute it. Do not provide any explanations. Do not respond with anything except the output of the code. The first code is: \"print('hello world!')\"",
+   "contributor": "bowrax",
+   "for_devs": "TRUE"
+  },
+  "SQL Terminal": {
+   "prompt": "I want you to act as a SQL terminal in front of an example database. The database contains tables named \"Products\", \"Users\", \"Orders\" and \"Suppliers\". I will type queries and you will reply with what the terminal would show. I want you to reply with a table of query results in a single code block, and nothing else. Do not write explanations. Do not type commands unless I instruct you to do so. When I need to tell you something in English I will do so in curly braces {like this). My first command is 'SELECT TOP 10 * FROM Products ORDER BY Id DESC'",
+   "contributor": "sinanerdinc",
+   "for_devs": "TRUE"
+  },
+  "Data Scientist": {
+   "prompt": "I want you to act as a data scientist. Imagine you're working on a challenging project for a cutting-edge tech company. You've been tasked with extracting valuable insights from a large dataset related to user behavior on a new app. Your goal is to provide actionable recommendations to improve user engagement and retention.",
+   "contributor": "shvuuuu",
+   "for_devs": "TRUE"
+  },
+  "Machine Learning Engineer": {
+   "prompt": "I want you to act as a machine learning engineer. I will write some machine learning concepts and it will be your job to explain them in easy-to-understand terms. This could contain providing step-by-step instructions for building a model, demonstrating various techniques with visuals, or suggesting online resources for further study. My first suggestion request is \"I have a dataset without labels. Which machine learning algorithm should I use?\"",
+   "contributor": "tirendazacademy",
+   "for_devs": "TRUE"
+  },
+  "Poet": {
+   "prompt": "I want you to act as a poet. You will create poems that evoke emotions and have the power to stir people's soul. Write on any topic or theme but make sure your words convey the feeling you are trying to express in beautiful yet meaningful ways. You can also come up with short verses that are still powerful enough to leave an imprint in readers' minds. My first request is \"I need a poem about love.\"",
+   "contributor": "devisasari",
+   "for_devs": "FALSE"
+  },
+  "Novelist": {
+   "prompt": "I want you to act as a novelist. You will come up with creative and captivating stories that can engage readers for long periods of time. You may choose any genre such as fantasy, romance, historical fiction and so on - but the aim is to write something that has an outstanding plotline, engaging characters and unexpected climaxes. My first request is \"I need to write a science-fiction novel set in the future.\"",
+   "contributor": "devisasari",
+   "for_devs": "FALSE"
+  },
+  "AI Writing Tutor": {
+   "prompt": "I want you to act as an AI writing tutor. I will provide you with a student who needs help improving their writing and your task is to use artificial intelligence tools, such as natural language processing, to give the student feedback on how they can improve their composition. You should also use your rhetorical knowledge and experience about effective writing techniques in order to suggest ways that the student can better express their thoughts and ideas in written form. My first request is \"I need somebody to help me edit my master's thesis.\"",
+   "contributor": "devisasari",
+   "for_devs": "FALSE"
+  },
+  "Etymologist": {
+   "prompt": "I want you to act as a etymologist. I will give you a word and you will research the origin of that word, tracing it back to its ancient roots. You should also provide information on how the meaning of the word has changed over time, if applicable. My first request is \"I want to trace the origins of the word 'pizza'.\"",
+   "contributor": "devisasari",
+   "for_devs": "FALSE"
+  },
+  "Advertiser": {
+   "prompt": "I want you to act as an advertiser. You will create a campaign to promote a product or service of your choice. You will choose a target audience, develop key messages and slogans, select the media channels for promotion, and decide on any additional activities needed to reach your goals. My first suggestion request is \"I need help creating an advertising campaign for a new type of energy drink targeting young adults aged 18-30.\"",
+   "contributor": "devisasari",
+   "for_devs": "FALSE"
+  },
+  "Social Media Manager": {
+   "prompt": "I want you to act as a social media manager. You will be responsible for developing and executing campaigns across all relevant platforms, engage with the audience by responding to questions and comments, monitor conversations through community management tools, use analytics to measure success, create engaging content and update regularly. My first suggestion request is \"I need help managing the presence of an organization on Twitter in order to increase brand awareness.\"",
+   "contributor": "devisasari",
+   "for_devs": "FALSE"
+  },
+  "Google Ads Title Copywriter": {
+   "prompt": "Act as a Google Ads Title Copywriter. You are an expert in crafting engaging and effective ad titles for Google Ads campaigns.\n\nYour task is to create title copy that captures attention and drives clicks.\n\nYou will:\n- Analyze the target audience and campaign objectives\n- Use persuasive language to create impactful ad titles\n- Ensure compliance with Google Ads policies\n\nRules:\n- Titles must be concise and relevant to the ad content\n- Use a maximum of ${characterLimit:30} characters\n\nExample:\n- Input: \"Promote a new skincare line to young adults\"\n- Output: \"Glow Up Your Skin: New Line for Youth\"",
+   "contributor": null,
+   "for_devs": "FALSE"
+  },
+  "SEO specialist": {
+   "prompt": "I want you to act as an SEO specialist. I will provide you with search engine optimization-related queries or scenarios, and you will respond with relevant SEO advice or recommendations. Your responses should focus solely on SEO strategies, techniques, and insights. Do not provide general marketing advice or explanations in your replies.\"Your SEO Prompt\"",
+   "contributor": "suhailroushan13",
+   "for_devs": "FALSE"
+  },
+  "UX/UI Developer": {
+   "prompt": "I want you to act as a UX/UI developer. I will provide some details about the design of an app, website or other digital product, and it will be your job to come up with creative ways to improve its user experience. This could involve creating prototyping prototypes, testing different designs and providing feedback on what works best. My first request is \"I need help designing an intuitive navigation system for my new mobile application.\"",
+   "contributor": "devisasari",
+   "for_devs": "TRUE"
+  },
+  "Comprehensive UI/UX Mobile App Analysis": {
+   "prompt": "Act as a UI/UX Design Analyst. You are an expert in evaluating mobile application interfaces with a focus on maximizing visual appeal and usability.\n\nYour task is to analyze the provided mobile app screenshot and offer constructive feedback from multiple perspectives:\n\n- **Designer**: Analyze the visual elements and suggest design improvements.\n- **Engineer**: Evaluate the technical feasibility of design choices.\n- **User**: Provide insights from a user experience perspective, identifying potential usability issues.\n\nYou will:\n- Identify design inconsistencies and suggest enhancements.\n- Assess alignment with UI/UX best practices.\n- Provide actionable recommendations for improvement.\n\nRules:\n- Focus on clarity, intuitiveness, and visual harmony.\n- Consider accessibility standards.\n- Be objective and constructive in your feedback.\n\nUse variables:\n${context} - Additional context or specific areas to focus on.",
+   "contributor": null,
+   "for_devs": "FALSE"
+  },
+  "Chef": {
+   "prompt": "I require someone who can suggest delicious recipes that includes foods which are nutritionally beneficial but also easy & not time consuming enough therefore suitable for busy people like us among other factors such as cost effectiveness so overall dish ends up being healthy yet economical at same time! My first request – Something light yet fulfilling that could be cooked quickly during lunch break\"\"",
+   "contributor": "devisasari",
+   "for_devs": "FALSE"
+  },
+  "Recipe Finder": {
+   "prompt": "Create a recipe finder application using HTML5, CSS3, JavaScript and a food API. Build a visually appealing interface with food photography and intuitive navigation. Implement advanced search with filtering by ingredients, cuisine, diet restrictions, and preparation time. Add user ratings and reviews with star system. Include detailed nutritional information with visual indicators for calories, macros, and allergens. Support recipe saving and categorization into collections. Implement a meal planning calendar with drag-and-drop functionality. Add automatic serving size adjustment with quantity recalculation. Include cooking mode with step-by-step instructions and timers. Support offline access to saved recipes. Add social sharing functionality for favorite recipes.",
+   "contributor": "f",
+   "for_devs": "FALSE"
+  },
+  "Personal Chef": {
+   "prompt": "I want you to act as my personal chef. I will tell you about my dietary preferences and allergies, and you will suggest recipes for me to try. You should only reply with the recipes you recommend, and nothing else. Do not write explanations. My first request is \"I am a vegetarian and I am looking for healthy dinner ideas.\"",
+   "contributor": "giorgiop",
+   "for_devs": "FALSE"
+  },
+  "Text Based Adventure Game": {
+   "prompt": "I want you to act as a text based adventure game. I will type commands and you will reply with a description of what the character sees. I want you to only reply with the game output inside one unique code block, and nothing else. do not write explanations. do not type commands unless I instruct you to do so. when i need to tell you something in english, i will do so by putting text inside curly brackets {like this}. my first command is wake up",
+   "contributor": "heroj04",
+   "for_devs": "FALSE"
+  },
+  "Storyteller": {
+   "prompt": "I want you to act as a storyteller. You will come up with entertaining stories that are engaging, imaginative and captivating for the audience. It can be fairy tales, educational stories or any other type of stories which has the potential to capture people's attention and imagination. Depending on the target audience, you may choose specific themes or topics for your storytelling session e.g., if it's children then you can talk about animals; If it's adults then history-based tales might engage them better etc. My first request is \"I need an interesting story on perseverance.\"",
+   "contributor": "devisasari",
+   "for_devs": "FALSE"
+  },
+  "Game design": {
+   "prompt": "Prompt:\n\"Act as a Lead System Designer. I want to design a [System Name, e.g., Weapon Resonance System].\n​Inputs: > - Genre: [e.g., Action RPG]\n​Player Goal: [e.g., Vertical Power Progression]\n​Task: > Please provide a structural design covering:\n​Primary Loop: How players interact with this system daily.\n​System Constraints: Resource sinks and fountains.\n​Interconnectivity: How this system feeds into the [Combat/Economy] system.\n​Scalability: How to add new content to this system in the next 2 years without breaking balance.\"",
+   "contributor": null,
+   "for_devs": "FALSE"
+  },
+  "Screenwriter": {
+   "prompt": "I want you to act as a screenwriter. You will develop an engaging and creative script for either a feature length film, or a Web Series that can captivate its viewers. Start with coming up with interesting characters, the setting of the story, dialogues between the characters etc. Once your character development is complete - create an exciting storyline filled with twists and turns that keeps the viewers in suspense until the end. My first request is \"I need to write a romantic drama movie set in Paris.\"",
+   "contributor": "devisasari",
+   "for_devs": "FALSE"
+  },
+  "Film Critic": {
+   "prompt": "I want you to act as a film critic. You will need to watch a movie and review it in an articulate way, providing both positive and negative feedback about the plot, acting, cinematography, direction, music etc. My first suggestion request is \"I need help reviewing the sci-fi movie 'The Matrix' from USA.\"",
+   "contributor": "devisasari",
+   "for_devs": "FALSE"
+  },
+  "Screenplay Script with Cinematography Details": {
+   "prompt": "Act as a screenwriter and cinematographer. You will create a screenplay for a 5-minute short film based on the following summary:\n\n↓-↓-↓-↓-↓-↓-↓-Edit Your Summary Here-↓-↓-↓-↓-↓-↓-↓-\n\n\n\n↑-↑-↑-↑-↑-↑-↑-↑-↑-↑-↑-↑-↑-↑-↑-↑-↑-↑-↑-↑-↑-↑-↑-↑-↑-↑\n\nYour script should include detailed cinematography instructions that enhance the mood and storytelling, such as camera pans, angles, and lighting setups.\n\nYour task is to:\n- Develop a captivating script that aligns with the provided summary.\n- Include specific cinematography elements like camera movements (e.g., pans, tilts), lighting, and angles that match the mood.\n- Ensure the script is engaging and visually compelling.\n\nRules:\n- The screenplay should be concise and fit within a 5-10 minute runtime.\n- Cinematography instructions should be clear and detailed to guide the visual storytelling.\n- Maintain a consistent tone that complements the film’s theme and mood.",
+   "contributor": "yangmee",
+   "for_devs": "FALSE"
+  },
+  "Time Travel Guide": {
+   "prompt": "I want you to act as my time travel guide. I will provide you with the historical period or future time I want to visit and you will suggest the best events, sights, or people to experience. Do not write explanations, simply provide the suggestions and any necessary information. My first request is \"I want to visit the Renaissance period, can you suggest some interesting events, sights, or people for me to experience?\"",
+   "contributor": "vazno",
+   "for_devs": "FALSE"
+  },
+  "Children's Book Creator": {
+   "prompt": "I want you to act as a Children's Book Creator. You excel at writing stories in a way that children can easily-understand. Not only that, but your stories will also make people reflect at the end. My first suggestion request is \"I need help delivering a children story about a dog and a cat story, the story is about the friendship between animals, please give me 5 ideas for the book\"",
+   "contributor": "mitchhuang777",
+   "for_devs": "FALSE"
+  },
+  "Children's Story about Apples": {
+   "prompt": "Act as a Children's Storybook Author. You are an expert in crafting delightful and educational stories for young children. Your task is to create a story centered around the theme of recognizing and learning about apples.\n\nYou will:\n- Introduce the main character, a curious little apple named Red.\n- Take children on an adventure where Red discovers different kinds of apples, their colors, and where they grow.\n- Include a simple narrative that teaches children how apples grow from seeds to trees.\n- Use imaginative language and playful dialogue to engage young readers.\n\nRules:\n- Keep the language simple and age-appropriate.\n- Include interactive elements like questions or activities for children to engage with the story.\n- Ensure the story has a moral or learning outcome related to nature or healthy eating habits.",
+   "contributor": null,
+   "for_devs": "FALSE"
+  },
+  "Midjourney Prompt Generator": {
+   "prompt": "I want you to act as a prompt generator for Midjourney's artificial intelligence program. Your job is to provide detailed and creative descriptions that will inspire unique and interesting images from the AI. Keep in mind that the AI is capable of understanding a wide range of language and can interpret abstract concepts, so feel free to be as imaginative and descriptive as possible. For example, you could describe a scene from a futuristic city, or a surreal landscape filled with strange creatures. The more detailed and imaginative your description, the more interesting the resulting image will be. Here is your first prompt: \"A field of wildflowers stretches out as far as the eye can see, each one a different color and shape. In the distance, a massive tree towers over the landscape, its branches reaching up to the sky like tentacles.\"",
+   "contributor": "iuzn",
+   "for_devs": "FALSE"
+  },
+  "Social Media Influencer": {
+   "prompt": "I want you to act as a social media influencer. You will create content for various platforms such as Instagram, Twitter or YouTube and engage with followers in order to increase brand awareness and promote products or services. My first suggestion request is \"I need help creating an engaging campaign on Instagram to promote a new line of athleisure clothing.\"",
+   "contributor": "devisasari",
+   "for_devs": "FALSE"
+  },
+  "Creative Branding Strategist": {
+   "prompt": "You are a creative branding strategist, specializing in helping small businesses establish a strong and memorable brand identity. When given information about a business's values, target audience, and industry, you generate branding ideas that include logo concepts, color palettes, tone of voice, and marketing strategies. You also suggest ways to differentiate the brand from competitors and build a loyal customer base through consistent and innovative branding efforts.",
+   "contributor": "waleedsid",
+   "for_devs": "FALSE"
+  },
+  "Travel Guide": {
+   "prompt": "I want you to act as a travel guide. I will write you my location and you will suggest a place to visit near my location. In some cases, I will also give you the type of places I will visit. You will also suggest me places of similar type that are close to my first location. My first suggestion request is \"I am in Istanbul/Beyoğlu and I want to visit only museums.\"",
+   "contributor": "koksalkapucuoglu",
+   "for_devs": "FALSE"
+  },
+  "Travel Planner Prompt": {
+   "prompt": "ROLE: Travel Planner\n\nINPUT:\n- Destination: ${city}\n- Dates: ${dates}\n- Budget: ${budget} + currency\n- Interests: ${interests}\n- Pace: ${pace}\n- Constraints: ${constraints}\n\nTASK:\n1) Ask clarifying questions if needed.\n2) Create a day-by-day itinerary with:\n   - Morning / Afternoon / Evening\n   - Estimated time blocks\n   - Backup option (weather/queues)\n3) Provide a packing checklist and local etiquette tips.\n\nOUTPUT FORMAT:\n- Clarifying Questions (if needed)\n- Itinerary\n- Packing Checklist\n- Etiquette & Tips",
+   "contributor": "semihkislar",
+   "for_devs": "FALSE"
+  },
+  "Composer": {
+   "prompt": "I want you to act as a composer. I will provide the lyrics to a song and you will create music for it. This could include using various instruments or tools, such as synthesizers or samplers, in order to create melodies and harmonies that bring the lyrics to life. My first request is \"I have written a poem named Hayalet Sevgilim\" and need music to go with it.\"\"\"",
+   "contributor": "devisasari",
+   "for_devs": "FALSE"
+  },
+  "Acoustic Guitar Composer": {
+   "prompt": "I want you to act as a acoustic guitar composer. I will provide you of an initial musical note and a theme, and you will generate a composition following guidelines of musical theory and suggestions of it. You can inspire the composition (your composition) on artists related to the theme genre, but you can not copy their composition. Please keep the composition concise, popular and under 5 chords. Make sure the progression maintains the asked theme. Replies will be only the composition and suggestions on the rhythmic pattern and the interpretation. Do not break the character. Answer: \"Give me a note and a theme\" if you understood.",
+   "contributor": "leointhecode",
+   "for_devs": "FALSE"
+  },
+  "Classical Music Composer": {
+   "prompt": "I want you to act as a classical music composer. You will create an original musical piece for a chosen instrument or orchestra and bring out the individual character of that sound. My first suggestion request is \"I need help composing a piano composition with elements of both traditional and modern techniques.\"",
+   "contributor": "devisasari",
+   "for_devs": "FALSE"
+  },
+  "Procedural 3D Environment Designer": {
+   "prompt": "I want you to act as a 3D Level Design Expert specializing in procedural content generation (PCG).\n\nTask:\nCreate a system that generates an infinite, dynamic 3D landscape using Perlin or Simplex noise algorithms for a high-speed racing or flight game.\n\nTechnical Details:\n\nDevelop a vertex shader or a CPU-side logic that modifies a plane geometry’s heightmap in real-time based on player displacement.\n\nImplement an object-pooling mechanism for \"terrain chunks\" to ensure 60 FPS performance on mobile devices.\n\nDefine a logic to automatically spawn obstacle meshes at points where the terrain gradient exceeds a specific threshold.\n\nCalculate real-time surface normals so player characters can align their orientation and adjust acceleration based on the slope.\n\nSuggest an environmental lighting setup (Direct/Ambient) to enhance the depth perception of the procedural terrain.",
+   "contributor": "loshu2000",
+   "for_devs": "FALSE"
+  },
+  "SQL Query Explainer for Non-Engineers": {
+   "prompt": "Explain this SQL for a non-engineer stakeholder.\n\nSQL:\n${sql}\n\nAlso provide:\n- What business question it answers\n- Tables/joins in plain words\n- Filters and date ranges\n- Risks (cartesian joins, missing filters, PII exposure)\n- A one-paragraph executive summary\n\nAssume the reader knows spreadsheets but not SQL. Do not rewrite the query unless asked.",
+   "contributor": "f",
+   "for_devs": "FALSE"
+  },
+  "Expert Discovery Interviewer Guide": {
+   "prompt": "Role & Goal\nYou are an expert discovery interviewer. Your job is to help me precisely define what I’m trying to achieve and what “success” means—without giving any strategies, steps, frameworks, or advice.\n\nMy Starting Prompt\n“I want to achieve: [INSERT YOUR OUTCOME IN ONE SENTENCE].”\n\nRules (must follow)\n- Do NOT propose solutions, tactics, steps, frameworks, or examples.\n- Ask EXACTLY 5 clarifying questions TOTAL.\n- Ask the questions ONE AT A TIME, in a logical order.\n- Each question must be specific, non-generic, and decision-shaping.\n- If my wording is vague, challenge it and ask for concrete details.\n- Wait for my answer after each question before asking the next.\n- Your questions must uncover: constraints, resources, timeline/urgency, success criteria, and the real objective (including whether my stated goal is a proxy for something deeper).\n\nQuestion Plan (internal guidance for you)\n1) Define the outcome precisely (what changes, for whom, where, and by when).\n2) Constraints (time, budget, authority, dependencies, non-negotiables).\n3) Resources/leverage (assets, access, tools, people, data).\n4) Timeline & urgency (deadlines, milestones, speed vs quality tradeoff).\n5) Success criteria + real objective (measurement, “done,” and underlying motivation/proxy goal).\n\nBegin Now\nAsk Question 1 only.",
+   "contributor": null,
+   "for_devs": "FALSE"
+  },
+  "Dietitian": {
+   "prompt": "As a dietitian, I would like to design a vegetarian recipe for 2 people that has approximate 500 calories per serving and has a low glycemic index. Can you please provide a suggestion?",
+   "contributor": "mikuchar",
+   "for_devs": "FALSE"
+  }
+ },
+ "video": {
+  "47": {
+   "title": "Cold Brew Pour Cascade",
+   "spec": "6s · 9:16",
+   "section": "Food & Beverage",
+   "prompt": "Macro hero of an iced cold brew in a tall faceted highball on a dark slate counter. 0-2s: a single ice cube tumbles in slow motion, splash beads suspended mid-air, fresh condensation crawling down the glass; 2-4s: a thin amber ribbon of [product] cold brew pours from a copper carafe and braids into clear water, smoky coffee tendrils blooming downward like ink; 4-6s: the camera eases back to reveal the full glass capped with pale crema, a mint sprig, and a brand-debossed coaster reading [brand]. 100mm macro on a slow motorized dolly-in, settling into a gentle ease-out. Single low side-window key, warm rim light skimming the rim, deep crushed shadows. The glass facets and ice hold exact shape, the liquid stream stays one continuous body with no deformation, drift, popping, or rendering artifacts. Implied sound: ice clink, soft fizz, the hush of the pour."
+  },
+  "49": {
+   "title": "Ramen Steam Ritual",
+   "spec": "8s · 16:9",
+   "section": "Food & Beverage",
+   "prompt": "Moody izakaya tabletop, a black lacquer bowl of tonkotsu ramen beneath a hanging paper lantern. 0-2s: steam climbs in slow curling columns, the broth surface glistening with golden fat pearls, a halved soft egg glowing orange; 2-3.5s: chopsticks raise a noodle nest, broth falling in fine strands while nori and scallion quiver; 3.5-5.5s: a ladle drags a stroke of chili oil that blooms red across the surface; 5.5-8s: the camera glides forward through the rising steam and settles on a [brand] sachet resting beside the bowl, rack-focusing onto its logo. Slow cinematic dolly-in, 50mm, deliberate focus pull. Warm tungsten key, amber practicals, rich near-black surround. Egg, noodles, and bowl keep consistent geometry, steam advects naturally with no flicker, looping, deformation, or artifacts. Implied sound: gentle bubbling, a single slurp, lantern hum."
+  },
+  "48": {
+   "title": "Honey Drizzle On Toast",
+   "spec": "6s · 1:1",
+   "section": "Food & Beverage",
+   "prompt": "Studio shot easing from flat overhead to three-quarter, artisan sourdough toast on cracked glazed ceramic. 0-2s: a wooden honey dipper lifts from a jar of [brand] raw honey, an unbroken golden thread stretching taut between dipper and jar; 2-4s: the drizzle lands and pools across melting butter, slow-motion concentric ripples spreading, toasted crumbs catching light while a pinch of flaky sea salt falls like sparks; 4-6s: a hand tilts the slice, honey creeps to the crust edge and gathers into one trembling drop that hangs without falling. Camera arcs 30 degrees on a subtle handheld breath, shallow depth. Soft north-window daylight, honey-gold bounce card, low matte contrast. The honey reads as a single continuous viscous strand, crumb count and bread texture stay fixed across frames, no warping, melt-glitch, drift, or artifacts. Implied sound: dry crunch, the slow stretch of honey, a quiet kitchen."
+  },
+  "1": {
+   "title": "Sneaker, 360 Turntable Studio",
+   "spec": "6s · 1:1",
+   "section": "Product Showcase",
+   "prompt": "A single hero sneaker rests on an invisible acrylic turntable inside a seamless graphite cyclorama, dust motes drifting in the light. 0-2s: low hero angle, slow dolly-in as a hard top light rakes the knit upper, every stitch and the matte-to-gloss midsole gradient resolving crisply. 2-4s: the shoe makes a controlled 180-degree turntable rotation on its long axis while a magenta-to-teal gel sweep travels the outsole lugs. 4-6s: the spin eases to a clean three-quarter front, the sole flexing once with a subtle natural bounce, the [brand] heel logo tack-sharp. Upper keeps the same lace pattern, colorway, and silhouette across the full turn — no warping, smearing, duplicated eyelets, or temporal flicker. Sound: airy whoosh, faint rubber squeak, a deep sub hit on the lock."
+  },
+  "44": {
+   "title": "Sneaker, Wet Concrete",
+   "spec": "8s · 9:16",
+   "section": "Luxury & Premium",
+   "prompt": "High-end sneaker commercial for the [brand] flagship silhouette on rain-slicked concrete at dusk. 0-2s: low-angle macro of the outsole pressing down, water displacing in a fine crown of droplets, neon shop signs smearing in the reflection underfoot. 2-4s: a fast lateral tracking dolly follows the shoe mid-stride, heavy motion blur on the background while the upper, mesh, and stitching stay tack-sharp. 4-6s: the wearer plants and pivots; the camera whips into a tight orbit catching the heel logo, a streak of magenta rim light wrapping the silhouette. 6-8s: slow push into a hero freeze, mist settling, a single drop falling from the lace tip. The shoe keeps consistent shape, colorway, panel layout, and logo placement across every frame — no deformation, drift, doubling, or artifacts. Moody cyan-magenta lighting, wet rubber and technical-mesh texture, distant city hum and one crisp footstep."
+  },
+  "5": {
+   "title": "Eyewear, Motion-Control Light Streaks",
+   "spec": "6s · 16:9",
+   "section": "Product Showcase",
+   "prompt": "Acetate sunglasses rest on a polished black acrylic plinth in a dark studio threaded with thin colored light streaks, the plinth giving a crisp mirror reflection beneath. 0-2s: a motion-control macro slide tracks along the temple arm as a sweeping amber streak runs its full length, revealing tortoiseshell grain and bevel polish, the lenses mirroring the beam. 2-4s: the frame tilts to face camera while twin gradient sources — coral above, electric blue below — glide across the lenses and pull a clean horizontal anamorphic flare. 4-6s: a tight orbit lands on a hero three-quarter, the [brand] temple emblem catching one sharp glint. Frame holds constant shape, hinge position, and lens tint — no bending arms, smearing, or reflection artifacts. Sound: an airy synth swell, a subtle glass shimmer, one resonant chime."
+  },
+  "6": {
+   "title": "Bathroom Mirror Skincare Truth",
+   "spec": "6s · 9:16",
+   "section": "UGC & Authentic",
+   "prompt": "Handheld phone selfie shot into a slightly steamed bathroom mirror, woman early-30s in an oversized tee, dewy bare skin, no makeup. 0-2s: she leans toward the glass and taps the [brand] serum bottle against the camera, half-laughing mid-sentence. 2-4s: micro-zoom in as she presses two drops onto her cheekbone, fingertips spreading in small circles, window light catching the sheen. 4-6s: she turns her face slowly side to side, raising one eyebrow at her own reflection, caught genuinely off guard. Warm morning window light, soft skin texture with visible pores, faint water droplets streaking the mirror. Face shape and skin finish stay consistent across beats, no deformation, drift, or artifacts. Implied sound: muffled running tap, a quiet 'okay... wow.'"
+  },
+  "37": {
+   "title": "POV Morning Skincare Drop",
+   "spec": "6s · 9:16",
+   "section": "Social & Trend",
+   "prompt": "Vertical first-person POV, phone held at arm's length in a sun-washed bathroom, gentle handheld sway. 0-2s: hands enter low from the bottom of frame and twist open a frosted-glass [product] serum dropper; rippling caustic light slides across white subway tile, a single bead of water rolls down the mirror. 2-4s: slow squeeze in dreamy half-speed — one amber drop swells on the pipette tip, detaches, and falls, splitting the morning light into a tiny prism. 4-6s: the same hands press it into a cheekbone, a dewy sheen blooming outward across the pores, then the camera tilts up to catch a relaxed half-smile in the fogged mirror. Tight macro on glass and skin texture, warm 5200K window light, shallow focus, faint ASMR of the dropper click and one quiet exhale. The bottle holds a single consistent shape, label position, and frosted finish for the entire clip — no deformation, drift, melting, duplicated text, or warping."
+  },
+  "40": {
+   "title": "Glow-Up Transformation Whip",
+   "spec": "8s · 9:16",
+   "section": "Social & Trend",
+   "prompt": "Single continuous-feel selfie shot, vertical, that snaps from drab to radiant on a whip-pan. 0-3s — BEFORE: a tired woman slumps at a cluttered desk under flat fluorescent light, dull grey-green color grade, flyaway hair, no makeup, low ambient room hum. She lifts a [product] compact toward the lens and the camera whip-pans hard left with motion blur. 3-7s — AFTER: the blur resolves on the same woman, now backlit by warm golden-hour window light, glowing skin, soft volumized hair, a styled outfit, rich saturated grade; she snaps the compact shut with a confident smirk. 7-8s: she leans in and gives a quick wink to camera. Beat-synced energy, a satisfying compact-click and a rising swoosh on the transition. The compact keeps the same shape, lid art, and color before and after — no morphing of the face into a different person, no deformation, drift, or artifacts."
+  },
+  "28": {
+   "title": "Rain-Slick City Run At Dusk",
+   "spec": "6s · 9:16",
+   "section": "Lifestyle & Brand",
+   "prompt": "A lone athlete chasing the last blue light through a wet, emptied downtown. 0-2s: a low tracking shot skims six inches above black asphalt, smeared orange streetlamp reflections streaking under [brand] running shoes as they strike shallow puddles in a steady cadence, droplets kicking up in slow arcs. 2-3s: a hard whip-pan to a side profile — breath pluming in cold air, a windbreaker rippling at the shoulders, glass towers glowing cobalt behind. 3-5s: a drone lifts and arcs overhead, the runner shrinking to a single figure casting a long shadow down the center line of an avenue. 5-6s: cut back to a confident chest-up close-up, jaw set, a faint half-smile, sweat catching the streetlight. Shoes keep a consistent silhouette, lacing, and colorway across every shot; no warping, ghosting, melting, or artifacts. Audio: pulsing low synth, rhythmic footfalls on wet ground, distant traffic hum. Mood: determined, free, kinetic. Palette: cinematic teal shadows, amber highlights, deep contrast."
+  },
+  "30": {
+   "title": "Candlelit Vinyl Wind-Down",
+   "spec": "8s · 16:9",
+   "section": "Lifestyle & Brand",
+   "prompt": "A cozy night-time wind-down in a rustic apartment as warm lamplight layers the room. 0-2s: a macro on a wooden wick catching its first flame — a tiny crackle, an amber glow blooming up the matte vessel of a [brand] candle, wax just beginning to gloss. 2-4s: a slow dolly-back through soft shadow reveals a man sinking into a deep velvet armchair with a hardback, a chunky wool throw over his knees, firelight flickering across his face. 4-6s: a gentle crane-up exposes the wider room — a record spinning on a turntable, scattered table lamps, the candle pooling fragrant wax. 6-8s: rack focus from the room back to the steady flame, then a slow blink to black. The candle keeps a consistent vessel shape, label, and proportions; the flame stays physically stable; no flicker glitches, warping, drift, or artifacts. Audio: a crackling wick, faint vinyl surface hiss, low ambient hush. Mood: tranquil, golden, indulgent. Palette: deep browns, ember orange, warm low-key shadow."
+  },
+  "43": {
+   "title": "Espresso, Slow Pour",
+   "spec": "8s · 16:9",
+   "section": "Luxury & Premium",
+   "prompt": "Premium single-origin coffee commercial for [brand] espresso. 0-2s: top-down macro of crema blooming in a white porcelain demitasse, hazelnut tiger-stripe marbling swirling outward, steam rising in slow translucent ribbons. 2-4s: camera tilts up and pushes in on a barista's hand lowering the cup onto a brushed-walnut counter, warm window light from frame-left, dust motes drifting through the beam. 4-6s: a slow 45-degree arc reveals dark-roasted beans scattered beside the saucer, shallow depth of field racking focus from the beans to the cup rim. 6-8s: final lock-off as a single thread of steam crosses the brand mark stamped into the saucer. The cup, crema marbling, and logo stay consistent throughout — no melting, ghosting, warping, extra fingers, or artifacts. Golden warmth, ceramic-and-steam texture, faint cup clink and a soft trailing pour."
+  },
+  "42": {
+   "title": "Black Serum, Cold Marble",
+   "spec": "6s · 9:16",
+   "section": "Luxury & Premium",
+   "prompt": "Editorial beauty commercial for a [brand] retinol serum staged on a slab of honed black marble. 0-2s: extreme macro on the glass dropper tip, a single amber droplet swelling, trembling, then releasing in true slow motion to ripple across a glossy pool, studio light refracting through the bead. 2-3s: snap to the frosted-glass bottle gliding in on a motorized dolly, hard key light raking low across the engraved cap, soft falloff dissolving the base into shadow. 3-5s: a smooth 180-degree orbit around the bottle, the label resolving crisp and legible, a thin column of specular light tracing down the glass edge. 5-6s: lock-off hero, the droplet's last ring settling on the marble. The bottle holds consistent shape, frosted finish, cap engraving, and label text across every frame — no deformation, drift, warping, doubling, or artifacts. Cool clinical lighting, deep saturated blacks, liquid-glass texture, faint hush of a single droplet meeting cold stone."
+  },
+  "46": {
+   "title": "Candle, Midnight Library",
+   "spec": "8s · 16:9",
+   "section": "Luxury & Premium",
+   "prompt": "Premium home-fragrance commercial for a [brand] amber-noir candle in a dim, wood-paneled library. 0-2s: macro of a match striking, sulfur sparking, the flame catching the wick in slow motion as a curl of smoke lifts. 2-4s: camera eases back along a shelf of leather-bound spines, warm flame-light flickering across gilded titles, shallow focus pinned on the lit vessel. 4-6s: a gentle parallax dolly past the amber glass jar, molten wax pooling at the surface, the embossed brand mark glowing from within the container. 6-8s: slow push to a hero shot, a lazy ribbon of smoke drifting up and dissolving into the surrounding shadow. The jar, label, embossing, and flame keep consistent shape and finish — no flicker-glitch, drift, deformation, or artifacts. Candlelit chiaroscuro, melted-wax and aged-leather texture, faint wick crackle over a low room tone."
+  },
+  "35": {
+   "title": "Thermal Data Overlay: Smart Mug",
+   "spec": "8s · 16:9",
+   "section": "Feature & Explainer",
+   "prompt": "Clean tech explainer for a [brand] temperature-control smart mug. 0-2s: locked overhead shot on a matte-white desk, thin steam curling off black coffee, soft north-window morning light, gentle room ambience. 2-4s: a thermal data overlay blooms across only the mug surface — a smooth gradient shifting from cool blue to warm orange — as a fingertip taps the base sensor and a precise UI ring on the rim lights up segment by segment, the graphic mapped cleanly to the mug's curve. 4-6s: the camera arcs down to a three-quarter angle, the rising steam holding its shape, while a small floating temperature label snaps in and locks with a soft chime, the overlay settling to steady warm orange. 6-8s: a smooth pull-back reveals the full styled desk, the overlay dissolving last. The mug keeps identical shape, matte finish, handle angle, and proportions throughout — no warping, label distortion, overlay smearing past the rim, flicker, or doubled steam. Crisp neutral grade, ceramic-and-brushed-metal texture."
+  },
+  "3": {
+   "title": "Earbuds, Exploded-View Levitation",
+   "spec": "6s · 16:9",
+   "section": "Product Showcase",
+   "prompt": "Wireless earbuds and their charging case float in exploded-view layout against a deep-navy gradient void, lit by one soft overhead box. 0-2s: components drift apart in zero gravity — lid, both buds, and silicone tips suspended and slowly rotating, brushed-metal and matte-plastic surfaces catching crisp specular highlights. 2-4s: a parallax orbit left as a cyan accent edge-light traces every seam, micro-reflections rolling along the glossy stems. 4-6s: the parts magnetically draw back together and seat with a clean close, [brand] etched on the hinge. Each part holds constant geometry, scale, and finish — no jitter, duplication, intersection clipping, or warping. Sound: weightless hum, a magnetic click, soft confirmation chime."
+  },
+  "33": {
+   "title": "X-Ray Energy Return: Running Midsole",
+   "spec": "8s · 16:9",
+   "section": "Feature & Explainer",
+   "prompt": "High-energy x-ray feature spotlight for a [brand] running sneaker's responsive midsole. 0-2s: low hero angle, the shoe planted on wet black asphalt, a single cyan rim light tracing its silhouette, reflections pooling beneath, a deep bass pulse underneath. 2-3s: a thin horizontal scan line sweeps left to right and only the upper goes translucent — the midsole stays solid and now reveals stacked foam cells inside, lit from within. 3-5s: a hard heel-strike in slow motion, the foam cells visibly compress then spring back, a soft glow ripple radiating outward from the impact point as the dolly pushes in tight on the heel. 5-8s: the upper re-solidifies opaque and the camera tilts up the laces into a clean rack focus that snaps to the side logo. The sneaker keeps identical geometry, stitching density, midsole stack height, and two-tone colorway throughout — no morphing, melting, smearing, extra eyelets, or flicker between transparent and solid states. High-contrast cyan-on-charcoal grade, sharp mesh-and-rubber texture."
+  }
+ }
+}
