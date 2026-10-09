@@ -1,0 +1,1 @@
+(globalThis.TURBOPACK||(globalThis.TURBOPACK=[])).push(["object"==typeof document?document.currentScript:void 0,8304,e=>{"use strict";var t=e.i(71645),r=e.i(18566);e.s(["LegacyGenerateRedirect",0,function(){let e=(0,r.useRouter)(),u=(0,r.useSearchParams)();return(0,t.useEffect)(()=>{let t=u.toString();e.replace(t?`/studio?${t}`:"/studio")},[e,u]),null}])}]);
