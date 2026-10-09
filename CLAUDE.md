@@ -12773,6 +12773,10 @@ Bölüm 9.117'deki `ListToolbar` artık yalnızca telefonda değil **tablet ve m
 
 Ana Sayfa'da (`FeedTabs`) gönderi türü çipleri (Tümü / Promptlar / Generatorlar…) sıkışmasın diye `ListToolbar`'a `leading` + `tabsBelow` eklendi: `md`+ üst satır = Sana Özel / Popüler / Takip sekmeleri + Filtre · Sıralama · Kart/Odak, ikinci satır = gönderi türü çipleri (telefonda önceki sıra aynı). Filtre penceresine içerik türü (Görsel/Metin/Ses/Video) → kategori → alt kategori eklendi; Ana Sayfa akışı bunu `matchesFeedTaxonomy` (`feed/types.ts`, workflow kuralı Keşfet'tekiyle aynı) ile süzer. Pencerede kategori/alt kategori artık duvar gibi çip yerine kaydırılabilir dikey liste + seçilen kategorinin altında alt kategori çipleri (`TaxonomyDrillList`); bu liste `TaxonomySheetSections`'ı kullanan tüm sayfalarda (Keşfet, Promptlar, İstekler, Generatorlar, Workflow'lar, Hazır Ayarlar) geçerli. TR+EN `toolbar.postKind*`. Migration yok. Playwright 31/31 (1440/1024/820/390).
 
+### 9.127 Filtre penceresinde sade kategori seçimi
+
+`TaxonomyDrillList` (Bölüm 9.126) kutu/arka plan/iç kaydırmayı bıraktı: kategoriler Sıralama satırlarıyla aynı görünümde (radio satırı, seçilince açık renk zemin + ✓), pencerenin kendi kaydırmasını kullanır; seçilen kategorinin altında alt kategori çipleri. Yalnızca görünüm; migration/metin yok. Playwright 31/31.
+
 ### 9.118 Masonry'de ilk kartların üstten hizası
 
 Kart/Odak ızgaralarında (`PromptGrid`, `FeedGrid`, `RequestList`, `FocusGrid`) öğeler `animate-rise-in` (8px aşağıdan kayma) kullanıyordu; mobil Safari'de CSS sütunlarındaki ilk kartlar animasyon sırasında farklı ofsetlerde kalıp üstten hizasız görünüyordu. Izgara öğeleri artık yalnızca opaklık geçişi olan yeni `animate-grid-in` kullanıyor (kayma yok, `backwards` dolum → transform/stacking context kalmaz, menü sorunu geri gelmez). Diğer sayfa girişleri `rise-in` olarak kaldı. Migration yok. tsc/lint temiz; gerçek iOS Safari'de denenmedi.
