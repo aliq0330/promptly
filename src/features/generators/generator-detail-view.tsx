@@ -267,7 +267,6 @@ export function GeneratorDetailView() {
             <div className="p-4 sm:p-5">
               <GeneratorPlayground
                 schema={version.schema}
-                enableNegativePrompt={generator.enableNegativePrompt}
                 templateText={getTemplateText(version.template)}
                 renderActions={(state) => (
                   <div className="flex flex-wrap items-center gap-2">

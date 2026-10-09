@@ -19,6 +19,7 @@ import { multiImageItemFromMedia, toDeferredMediaInputs, type MultiImageItem } f
 import { requestHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { KindDraftsButton } from "@/features/drafts/kind-drafts-button";
+import { CreatePageHeader } from "@/features/content/create-page-header";
 import { CreateFormActions } from "@/features/content/create-form-actions";
 import { FormSection } from "@/features/content/form-section";
 import type { ContentVisibility, PromptContentType, PromptRequest } from "@/types";
@@ -339,13 +340,11 @@ export function CreateRequestForm() {
 
   return (
     <div className="mx-auto max-w-5xl px-3 py-5 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
-      <div className="mb-1 flex items-start justify-between gap-3">
-        <h1 className="text-h1 font-semibold text-text">{isEditMode ? t("request.editRequestTitle") : t("request.createRequestTitle")}</h1>
-        <KindDraftsButton kind="request" />
-      </div>
-      <p className="mb-6 text-sm text-text-muted">
-        {isEditMode ? t("prompt.editPromptHint") : t("request.createRequestHint")}
-      </p>
+      <CreatePageHeader
+        title={isEditMode ? t("request.editRequestTitle") : t("request.createRequestTitle")}
+        hint={isEditMode ? t("prompt.editPromptHint") : t("request.createRequestHint")}
+        drafts={<KindDraftsButton kind="request" />}
+      />
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_360px]">
         <form onSubmit={handleSubmit} className="min-w-0 space-y-4">

@@ -41,6 +41,7 @@ import {
 } from "@/features/content/reference-requirements";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { KindDraftsButton } from "@/features/drafts/kind-drafts-button";
+import { CreatePageHeader } from "@/features/content/create-page-header";
 import { CreateFormActions } from "@/features/content/create-form-actions";
 import { FormSection } from "@/features/content/form-section";
 import { SwitchRow } from "@/features/content/visibility-switch";
@@ -788,29 +789,29 @@ export function CreatePromptForm() {
 
   return (
     <div className="mx-auto max-w-5xl px-3 py-5 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
-      <div className="mb-1 flex items-start justify-between gap-3">
-      <h1 className="text-h1 font-semibold text-text">
-        {isEditMode
-          ? t("prompt.editPromptTitle")
-          : isAnswerMode
-            ? t("prompt.answerRequestTitle")
-            : isDuplicateMode
-              ? t("prompt.duplicateTitle")
+      <CreatePageHeader
+        title={
+          isEditMode
+            ? t("prompt.editPromptTitle")
+            : isAnswerMode
+              ? t("prompt.answerRequestTitle")
+              : isDuplicateMode
+                ? t("prompt.duplicateTitle")
+                : isGeneratorRunMode
+                  ? t("prompt.openAsPromptTitle")
+                  : t("prompt.createPromptTitle")
+        }
+        hint={
+          isEditMode
+            ? t("prompt.editPromptHint")
+            : isAnswerMode
+              ? t("prompt.answerRequestHint")
               : isGeneratorRunMode
-                ? t("prompt.openAsPromptTitle")
-                : t("prompt.createPromptTitle")}
-      </h1>
-      <KindDraftsButton kind="prompt" />
-      </div>
-      <p className="mb-6 text-sm text-text-muted">
-        {isEditMode
-          ? t("prompt.editPromptHint")
-          : isAnswerMode
-            ? t("prompt.answerRequestHint")
-            : isGeneratorRunMode
-              ? t("prompt.generatorRunHint")
-              : t("prompt.createPromptHint")}
-      </p>
+                ? t("prompt.generatorRunHint")
+                : t("prompt.createPromptHint")
+        }
+        drafts={<KindDraftsButton kind="prompt" />}
+      />
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_360px]">
         <form onSubmit={handleSubmit} className="min-w-0 space-y-4">

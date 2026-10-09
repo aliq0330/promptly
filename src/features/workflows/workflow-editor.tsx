@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { AlertTriangle, ArrowLeft, X } from "lucide-react";
+import { AlertTriangle, X } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
 import { Tabs } from "@/components/ui/tabs";
 import { useAuth } from "@/features/auth/auth-provider";
@@ -22,6 +22,7 @@ import { useLayoutMode } from "./use-layout-mode";
 import { EMPTY_META, WorkflowMetaForm, type WorkflowMeta } from "./workflow-meta-form";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import { KindDraftsButton } from "@/features/drafts/kind-drafts-button";
+import { CreatePageHeader } from "@/features/content/create-page-header";
 import { CreateFormActions } from "@/features/content/create-form-actions";
 
 type SaveState = "idle" | "saving" | "saved" | "error";
@@ -306,21 +307,16 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
   return (
     <div ref={rootRef} className="w-full min-w-0">
     <div className="mx-auto w-full max-w-6xl space-y-4 px-3 py-5 sm:px-5 sm:py-6 lg:px-8">
-      {/* Top bar */}
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-        <Link href="/workflows" className="inline-flex h-9 items-center gap-1.5 rounded-md px-2 text-label font-medium text-text-secondary hover:bg-surface-soft hover:text-text">
-          <ArrowLeft size={16} />
-          {t("workflow.back")}
-        </Link>
-        <h1 className="min-w-0 flex-1 truncate text-h3 font-semibold text-text">{editId ? t("workflow.editTitle") : t("workflow.createTitle")}</h1>
-        <span
-          aria-live="polite"
-          className={cn("text-caption font-medium", dirty ? "text-warning" : saveState === "saved" ? "text-success" : "text-text-muted")}
-        >
-          {stateLabel}
-        </span>
-        <KindDraftsButton kind="workflow" />
-      </div>
+      <CreatePageHeader
+        title={editId ? t("workflow.editTitle") : t("workflow.createTitle")}
+        hint={t("workflow.createHint")}
+        drafts={<KindDraftsButton kind="workflow" />}
+        status={
+          <span aria-live="polite" className={cn("font-medium", dirty ? "text-warning" : saveState === "saved" ? "text-success" : "text-text-muted")}>
+            {stateLabel}
+          </span>
+        }
+      />
 
       {notice && (
         <p className="flex items-start justify-between gap-2 rounded-md bg-primary-soft p-2.5 text-caption text-primary">

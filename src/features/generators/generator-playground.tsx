@@ -53,12 +53,10 @@ import type { GeneratorSchema, GeneratorValues } from "@/types";
  */
 export function GeneratorPlayground({
   schema,
-  enableNegativePrompt,
   templateText = "",
   renderActions,
 }: {
   schema: GeneratorSchema;
-  enableNegativePrompt: boolean;
   /** Yazarın isteğe bağlı prompt şablonu (kanonik `{{anahtar}}`); boşsa davranış öncekiyle aynı. */
   templateText?: string;
   /** Only the real runtime page passes this — the "Prompt olarak aç"/"Kaydet" buttons, given the exact live-computed state to act on. The builder's own preview passes nothing. */
@@ -67,8 +65,6 @@ export function GeneratorPlayground({
   const { t } = useTranslation();
   const [tab, setTab] = useState<"form" | "json" | "prompt">("form");
   const [values, setValues] = useState<GeneratorValues>(() => defaultValuesFromSchema(schema));
-  const [promptText, setPromptText] = useState("");
-  const [negativePromptText, setNegativePromptText] = useState("");
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- merges newly-added field defaults into live preview values whenever the schema changes, without ever discarding what the author has already typed
@@ -92,8 +88,6 @@ export function GeneratorPlayground({
 
   function handleReset() {
     setValues(defaultValuesFromSchema(schema));
-    setPromptText("");
-    setNegativePromptText("");
   }
 
   // The single, shared source of truth both the JSON tab and the Prompt tab
@@ -101,9 +95,9 @@ export function GeneratorPlayground({
   // (§18/§20's "central output engine" requirement). `promptText`/
   // `negativePromptText` are the runtime user's own direct input, written
   // into the output verbatim — this is the only place that happens.
-  const output = buildGeneratorOutput(schema, values, promptText, negativePromptText, enableNegativePrompt, templateText);
+  const output = buildGeneratorOutput(schema, values, "", "", false, templateText);
   const prompt = typeof output.prompt === "string" ? output.prompt : "";
-  const negativePrompt = enableNegativePrompt ? (typeof output.negative_prompt === "string" ? output.negative_prompt : "") : null;
+  const negativePrompt: string | null = null;
 
   return (
     <div className="space-y-4">
@@ -121,43 +115,12 @@ export function GeneratorPlayground({
 
       {tab === "form" ? (
         <div className="space-y-5">
-          <div className="space-y-3 rounded-md border border-border-soft bg-surface-soft p-3.5">
-            <p className="text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">{t("generator.yourOwnPrompt")}</p>
-            <div>
-              <label htmlFor="gen-run-prompt" className="mb-1.5 block text-sm font-medium text-text">
-                Prompt
-              </label>
-              <textarea
-                id="gen-run-prompt"
-                rows={3}
-                value={promptText}
-                onChange={(event) => setPromptText(event.target.value)}
-                placeholder={t("generator.promptFieldPlaceholder")}
-                className="w-full resize-none rounded-lg border border-border bg-surface px-3 py-2 text-small text-text placeholder:text-text-muted focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/20 shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong"
-              />
-            </div>
-            {enableNegativePrompt && (
-              <div>
-                <label htmlFor="gen-run-negative-prompt" className="mb-1.5 block text-sm font-medium text-text">
-                  {t("generator.negativePrompt")}
-                </label>
-                <textarea
-                  id="gen-run-negative-prompt"
-                  rows={2}
-                  value={negativePromptText}
-                  onChange={(event) => setNegativePromptText(event.target.value)}
-                  placeholder={t("generator.negativePromptFieldPlaceholder")}
-                  className="w-full resize-none rounded-lg border border-border bg-surface px-3 py-2 text-small text-text placeholder:text-text-muted focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/20 shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong"
-                />
-              </div>
-            )}
-          </div>
           <GeneratorRuntimeForm schema={schema} values={values} onChange={handleChange} />
         </div>
       ) : tab === "json" ? (
         <GeneratorJsonPanel output={output} onReset={handleReset} />
       ) : (
-        <GeneratedPromptPanel prompt={prompt} negativePrompt={enableNegativePrompt ? negativePrompt : undefined} onReset={handleReset} />
+        <GeneratedPromptPanel prompt={prompt} onReset={handleReset} />
       )}
 
       {renderActions?.({ values, prompt, negativePrompt })}
