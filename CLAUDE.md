@@ -11542,6 +11542,15 @@ Bölüm 9.133'teki tek "görsel referans" kutusu üç bağımsız bayrağa geni�
 - **Notlar (TR+EN):** "Not: Bu prompt/generator bir referans fotoğraf/görsel | video | ses ile birlikte kullanılır." Eski `prompt.requiresReferenceLabel/Hint` anahtarları `prompt.requiresReference{Title,Hint,Image/Video/AudioLabel}` ile değişti.
 - Doğrulama: tsc/lint/build temiz; saf mantık tsx ile test edildi (tür→seçenek eşlemesi, clamp). Tarayıcıda ve gerçek Supabase'e karşı denenmedi. Generator kartlarında/listesinde not gösterilmez (yalnız detay).
 
+### 9.135 Avatar hesap menüsü + İçeriklerim
+
+Header'ın sağındaki avatar artık hesap menüsü (`components/layout/account-menu.tsx`). Migration yok.
+- **Üye (`AccountMenu`):** avatar tıklanınca açılır (dışarı tık/Escape kapatır, Escape odağı avatara döndürür; mobilde `min(18.5rem, 100vw-1.5rem)`). Üst blok: avatar, görünen ad, `@kullanıcıadı`, "Profilim" bağlantısı. **Hesabım:** Profilim, İçeriklerim, Kaydedilenler, Takip ettiklerim. **Tercihler:** Gece modu (switch — `useTheme().toggleTheme`, menü açık kalır), Ayarlar, Moderasyon (yalnız `useIsModerator()`). En altta kırmızı **Çıkış yap** (`signOut` → `/`). Bildirimler ve Mesajlar header'da kalır, menüye taşınmadı. Header'daki ayrı tema düğmesi artık yalnız misafirde (üyede gece modu menüde; Ayarlar → Görünüm hâlâ mod+palet).
+- **Misafir (`GuestAuthMenu`):** hesap menüsü yok; `sm`+ yan yana "Giriş Yap" + "Kayıt ol" düğmeleri, telefonda tek kullanıcı ikonu → ikisini içeren küçük menü. Dil anahtarı + tema düğmesi misafirde header'da kalır.
+- **`/my-content` (İçeriklerim, `RequireAuth` layout'lu, `features/my-content/my-content-view.tsx`):** kendi yayınlanmış Prompt / Prompt İsteği / Generator / Workflow / Hazır Ayar içerikleri (mevcut per-author fetch'leri + kart bileşenleri; yayınlanmamış olanlar süzülür) + 6. sekme **Taslaklar** (`ProfileDraftsPanel`). Filtreler: Tümü / Herkese açık / Sadece ben, arama, sıralama (En yeni/En eski/En çok beğenilen); tür başına boş durum + "oluştur" eylemi. Prompt/Generator kartından silince listeden düşer.
+- i18n: `account.*`, `myContent.*` TR+EN eklendi.
+- **Doğrulama:** tsc/lint/`next build --webpack` temiz; ağ taklitli Playwright 116/116 (1280/820/390/320, üye+misafir: menü içeriği, taşma yok, gece modu, Escape, İçeriklerim sekmeleri/boş durum, çıkış sonrası menü kayboluyor, misafir düğmeleri/menüsü, sayfa hatası yok). Gerçek Supabase'e ve gerçek içerikle (dolu listeler) denenmedi.
+
 ---
 
 **Sonraki adım:** Bilinen iki üretim hatası (Bölüm 9.40 — mesajlarda

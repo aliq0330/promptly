@@ -1,27 +1,24 @@
 "use client";
 
 import Link from "next/link";
-import { Bell, Languages, LogIn, MessageCircle, Search } from "lucide-react";
+import { Bell, Languages, MessageCircle, Search } from "lucide-react";
 import { iconButtonClassName } from "@/components/ui/icon-button";
-import { Avatar } from "@/components/ui/avatar";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { useAuthStatus } from "@/features/auth/use-auth-status";
-import { useOwnProfile } from "@/features/auth/own-profile-provider";
 import { useRealMessages } from "@/features/messages/real-messages-provider";
 import { useNotifications } from "@/features/notifications/notifications-provider";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { IconButton } from "@/components/ui/icon-button";
-import { profileHref } from "@/lib/utils";
 import { BrandMark } from "@/components/layout/brand-mark";
+import { AccountMenu, GuestAuthMenu } from "@/components/layout/account-menu";
 
 /**
- * The "Giriş Yap" link is the real auth entry point: it only shows when
- * there's genuinely no Supabase session. Signed in, the avatar links to the
- * real signed-in user's own real profile.
+ * Guests get "Giriş Yap" / "Kayıt Ol" (`GuestAuthMenu`); a signed-in member
+ * gets the avatar dropdown (`AccountMenu`). Notifications and Messages stay
+ * here in the top bar, never in the account menu.
  */
 export function Header() {
   const status = useAuthStatus();
-  const { profile: ownProfile } = useOwnProfile();
   const { conversations: realConversations } = useRealMessages();
   const { unreadCount } = useNotifications();
   const { t, language, setLanguage } = useTranslation();
@@ -83,7 +80,8 @@ export function Header() {
             </Link>
           </>
         )}
-        <ThemeToggle />
+        {/* Members change the theme from the account menu; guests (no menu) keep the quick toggle here. */}
+        {status === "unauthenticated" && <ThemeToggle />}
         {status === "unauthenticated" && (
           <>
             {/* Guests can't reach /settings, so the language switch lives here for them. */}
@@ -94,25 +92,12 @@ export function Header() {
             >
               <Languages size={20} />
             </IconButton>
-            <Link
-              href="/login"
-              className="ml-1.5 flex h-9 shrink-0 items-center gap-1.5 rounded-md bg-text px-3 text-label font-semibold text-background transition-opacity duration-200 hover:opacity-90"
-            >
-              <LogIn size={16} />
-              <span className="hidden sm:inline">{t("header.login")}</span>
-            </Link>
+            <GuestAuthMenu />
           </>
         )}
-        {/* While the session (or own profile) is still resolving, hold the avatar's space so nothing shifts. */}
+        {/* While the session is still resolving, hold the avatar's space so nothing shifts. */}
         {status === "loading" && <span aria-hidden className="ml-1.5 h-9 w-9 shrink-0" />}
-        {status === "authenticated" &&
-          (ownProfile ? (
-            <Link href={profileHref(ownProfile)} className="ml-1.5 shrink-0 rounded-full" aria-label={ownProfile.displayName}>
-              <Avatar src={ownProfile.avatarUrl} alt={ownProfile.displayName} size={36} />
-            </Link>
-          ) : (
-            <span aria-hidden className="ml-1.5 h-9 w-9 shrink-0 rounded-full bg-surface-soft" />
-          ))}
+        {status === "authenticated" && <AccountMenu />}
       </div>
     </header>
   );
