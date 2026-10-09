@@ -11534,6 +11534,14 @@ Bir prompt/istek/sonuç silindiğinde ya da görselleri değiştirildiğinde DB 
 - Taşma: detay açıklaması (`DetailLede`), profil biyografisi, düzenleme önerisi metni ve sonuç prompt'u `break-words`/`overflow-wrap:anywhere` aldı; uzun URL'ler artık yatay taşmaz. Not: viral seed açıklamalarındaki uzun tweet bağlantısı bu yüzden taşıyordu.
 - Doğrulama: tsc/lint/build temiz; tarayıcıda denenmedi.
 
+### 9.134 Referans gereksinimi: görsel / video / ses (Prompt + Generator)
+
+Bölüm 9.133'teki tek "görsel referans" kutusu üç bağımsız bayrağa genişletildi ve Generator'a da eklendi. Tür başına sorulanlar: **görsel → görsel**, **ses → ses**, **video → video VE görsel (ikisi de seçilebilir, biri de)**; metin türünde hiçbir şey sorulmaz.
+- **DB:** migration `20260919680000_reference_requirements.sql` (canlıya uygulandı): `prompts.requires_reference_video/audio`, `generators.requires_reference_image/video/audio` (hepsi `boolean not null default false`; `prompts.requires_reference_image` zaten vardı).
+- **Tek paylaşılan modül:** `features/content/reference-requirements.tsx` — `applicableReferenceKinds`, `clampReferences` (tür değişince uygulanmayan bayrakları sıfırlar; kayıt anında uygulanır), `ReferenceRequirementsField` (form), `ReferenceRequirementNotes` (detay notları; videoda iki not görünebilir). Prompt formu (`create-prompt-form.tsx`), Generator Detaylar adımı (`generator-details-form.tsx`, yalnız uygulanabilir tür varken "Referans gerekiyor mu?" kartı) ve iki detay sayfası bunu kullanır.
+- **Notlar (TR+EN):** "Not: Bu prompt/generator bir referans fotoğraf/görsel | video | ses ile birlikte kullanılır." Eski `prompt.requiresReferenceLabel/Hint` anahtarları `prompt.requiresReference{Title,Hint,Image/Video/AudioLabel}` ile değişti.
+- Doğrulama: tsc/lint/build temiz; saf mantık tsx ile test edildi (tür→seçenek eşlemesi, clamp). Tarayıcıda ve gerçek Supabase'e karşı denenmedi. Generator kartlarında/listesinde not gösterilmez (yalnız detay).
+
 ---
 
 **Sonraki adım:** Bilinen iki üretim hatası (Bölüm 9.40 — mesajlarda

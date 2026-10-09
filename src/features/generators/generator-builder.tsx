@@ -1,5 +1,6 @@
 "use client";
 
+import { clampReferences } from "@/features/content/reference-requirements";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -64,6 +65,9 @@ function defaultMeta(): GeneratorMetaInput {
     allowPromptEditing: true,
     allowSavingGeneratedPrompts: true,
     enableNegativePrompt: false,
+    requiresReferenceImage: false,
+    requiresReferenceVideo: false,
+    requiresReferenceAudio: false,
   };
 }
 
@@ -205,6 +209,9 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
         allowPromptEditing: gen.allowPromptEditing,
         allowSavingGeneratedPrompts: gen.allowSavingGeneratedPrompts,
         enableNegativePrompt: gen.enableNegativePrompt,
+        requiresReferenceImage: gen.requiresReferenceImage,
+        requiresReferenceVideo: gen.requiresReferenceVideo,
+        requiresReferenceAudio: gen.requiresReferenceAudio,
       });
       const seedSchema = ver && ver.schema.fields.length > 0 ? ver.schema : defaultSchema();
       const seedTemplate = ver && ver.template.sections.length > 0 ? ver.template : defaultTemplate();
@@ -280,7 +287,18 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
   // moment it's actually needed rather than keeping a second, easily
   // stale copy in `meta` itself.
   function metaForSubmit(): GeneratorMetaInput {
-    return { ...meta, tags: tagPicker.accepted.map((entry) => entry.tag) };
+    const refs = clampReferences(meta.contentType, {
+      image: meta.requiresReferenceImage,
+      video: meta.requiresReferenceVideo,
+      audio: meta.requiresReferenceAudio,
+    });
+    return {
+      ...meta,
+      requiresReferenceImage: refs.image,
+      requiresReferenceVideo: refs.video,
+      requiresReferenceAudio: refs.audio,
+      tags: tagPicker.accepted.map((entry) => entry.tag),
+    };
   }
 
   async function ensureDraftExists(): Promise<{ generator: Generator; version: GeneratorVersionResult } | null> {
@@ -675,5 +693,8 @@ function metaToGeneratorPatch(meta: GeneratorMetaInput) {
     allowPromptEditing: meta.allowPromptEditing,
     allowSavingGeneratedPrompts: meta.allowSavingGeneratedPrompts,
     enableNegativePrompt: meta.enableNegativePrompt,
+    requiresReferenceImage: meta.requiresReferenceImage,
+    requiresReferenceVideo: meta.requiresReferenceVideo,
+    requiresReferenceAudio: meta.requiresReferenceAudio,
   };
 }

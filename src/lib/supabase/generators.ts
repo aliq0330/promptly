@@ -49,6 +49,9 @@ export interface GeneratorRow {
   allow_prompt_editing: boolean;
   allow_saving_generated_prompts: boolean;
   enable_negative_prompt: boolean;
+  requires_reference_image: boolean;
+  requires_reference_video: boolean;
+  requires_reference_audio: boolean;
   current_version_id: string | null;
   use_count: number;
   save_count: number;
@@ -64,7 +67,7 @@ export interface GeneratorRow {
 export const GENERATOR_SELECT = `
   id, creator_id, title, slug, description, cover_url, tools, content_type, category, subcategory,
   visibility, status, allow_prompt_editing, allow_saving_generated_prompts,
-  enable_negative_prompt,
+  enable_negative_prompt, requires_reference_image, requires_reference_video, requires_reference_audio,
   current_version_id, use_count, save_count, like_count, comment_count, created_at, updated_at,
   profiles:creator_id ( id, username, display_name, avatar_url, cover_url, bio, website, follower_count, following_count, created_at, interests ),
   generator_tags ( tags ( slug, label ) ),
@@ -99,6 +102,9 @@ export function mapGeneratorRow(row: GeneratorRow): Generator {
     allowPromptEditing: row.allow_prompt_editing,
     allowSavingGeneratedPrompts: row.allow_saving_generated_prompts,
     enableNegativePrompt: row.enable_negative_prompt,
+    requiresReferenceImage: row.requires_reference_image ?? false,
+    requiresReferenceVideo: row.requires_reference_video ?? false,
+    requiresReferenceAudio: row.requires_reference_audio ?? false,
     currentVersionId: row.current_version_id,
     useCount: row.use_count,
     saveCount: row.save_count,
@@ -343,6 +349,9 @@ export interface GeneratorMetaInput {
   allowPromptEditing: boolean;
   allowSavingGeneratedPrompts: boolean;
   enableNegativePrompt: boolean;
+  requiresReferenceImage: boolean;
+  requiresReferenceVideo: boolean;
+  requiresReferenceAudio: boolean;
 }
 
 /**
@@ -374,6 +383,9 @@ export async function createDraftGenerator(
       allow_prompt_editing: meta.allowPromptEditing,
       allow_saving_generated_prompts: meta.allowSavingGeneratedPrompts,
       enable_negative_prompt: meta.enableNegativePrompt,
+      requires_reference_image: meta.requiresReferenceImage,
+      requires_reference_video: meta.requiresReferenceVideo,
+      requires_reference_audio: meta.requiresReferenceAudio,
     })
     .select("id, created_at, updated_at")
     .single();
@@ -426,6 +438,9 @@ export async function createDraftGenerator(
     allowPromptEditing: meta.allowPromptEditing,
     allowSavingGeneratedPrompts: meta.allowSavingGeneratedPrompts,
     enableNegativePrompt: meta.enableNegativePrompt,
+    requiresReferenceImage: meta.requiresReferenceImage,
+    requiresReferenceVideo: meta.requiresReferenceVideo,
+    requiresReferenceAudio: meta.requiresReferenceAudio,
     currentVersionId: versionRow.id as string,
     useCount: 0,
     saveCount: 0,
@@ -461,6 +476,9 @@ export async function updateGeneratorMeta(generatorId: string, meta: GeneratorMe
       allow_prompt_editing: meta.allowPromptEditing,
       allow_saving_generated_prompts: meta.allowSavingGeneratedPrompts,
       enable_negative_prompt: meta.enableNegativePrompt,
+      requires_reference_image: meta.requiresReferenceImage,
+      requires_reference_video: meta.requiresReferenceVideo,
+      requires_reference_audio: meta.requiresReferenceAudio,
     })
     .eq("id", generatorId)
     .select("id")

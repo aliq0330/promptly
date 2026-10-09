@@ -15,6 +15,7 @@ import { ShareTriggerButton } from "@/features/prompts/share-modal";
 import { PostMenu } from "@/features/prompts/post-menu";
 import { CreatorSummary } from "@/features/profile/creator-summary";
 import { useAuth } from "@/features/auth/auth-provider";
+import { ReferenceRequirementNotes } from "@/features/content/reference-requirements";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { GeneratorPlayground } from "./generator-playground";
 import { taxonomyPathLabel } from "@/lib/content-taxonomy";
@@ -198,6 +199,15 @@ export function GeneratorDetailView() {
               <div className="min-w-0 space-y-2">
                 <DetailTitle>{generator.title}</DetailTitle>
                 <DetailLede>{generator.description}</DetailLede>
+                <ReferenceRequirementNotes
+                  subject="generator"
+                  contentType={generator.contentType}
+                  value={{
+                    image: generator.requiresReferenceImage,
+                    video: generator.requiresReferenceVideo,
+                    audio: generator.requiresReferenceAudio,
+                  }}
+                />
               </div>
             </div>
             {generator.media.length > 1 && (

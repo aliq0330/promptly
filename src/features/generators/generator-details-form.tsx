@@ -8,6 +8,7 @@ import type { UseTagPickerResult } from "@/features/prompts/use-tag-picker";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { TaxonomyPicker } from "@/features/content/taxonomy-picker";
 import { MultiImagePicker } from "@/features/content/multi-image-picker";
+import { ReferenceRequirementsField, applicableReferenceKinds } from "@/features/content/reference-requirements";
 import type { GeneratorMetaInput } from "@/lib/supabase/generators";
 
 /**
@@ -77,6 +78,19 @@ export function GeneratorDetailsForm({
       <FormSection title={t("formSection.tool")}>
         <ToolPicker value={meta.tools} onChange={(next) => onChange({ tools: next })} contentType={meta.contentType} category={meta.category} />
       </FormSection>
+
+      {applicableReferenceKinds(meta.contentType).length > 0 && (
+        <FormSection title={t("prompt.requiresReferenceTitle")}>
+          <ReferenceRequirementsField
+            subject="generator"
+            contentType={meta.contentType}
+            value={{ image: meta.requiresReferenceImage, video: meta.requiresReferenceVideo, audio: meta.requiresReferenceAudio }}
+            onChange={(next) =>
+              onChange({ requiresReferenceImage: next.image, requiresReferenceVideo: next.video, requiresReferenceAudio: next.audio })
+            }
+          />
+        </FormSection>
+      )}
 
       <FormSection title={t("generator.tagsLabel")}>
         <TagPicker picker={tagPicker} />

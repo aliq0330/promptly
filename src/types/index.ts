@@ -93,6 +93,10 @@ export interface Prompt {
   showOnProfile: boolean;
   /** Prompt bir referans fotoğraf/görselle birlikte kullanılır — `prompts.requires_reference_image`. */
   requiresReferenceImage: boolean;
+  /** Prompt bir referans videoyla birlikte kullanılır — `prompts.requires_reference_video`. */
+  requiresReferenceVideo: boolean;
+  /** Prompt bir referans sesle birlikte kullanılır — `prompts.requires_reference_audio`. */
+  requiresReferenceAudio: boolean;
   /** "Herkese açık" / "Sadece ben" — `prompts.visibility`. */
   visibility: ContentVisibility;
   createdAt: string;
@@ -568,6 +572,10 @@ export interface Generator {
   allowPromptEditing: boolean;
   allowSavingGeneratedPrompts: boolean;
   enableNegativePrompt: boolean;
+  /** Generator bir referans görsel / video / ses ile birlikte kullanılır — `generators.requires_reference_*`. */
+  requiresReferenceImage: boolean;
+  requiresReferenceVideo: boolean;
+  requiresReferenceAudio: boolean;
   currentVersionId: string | null;
   useCount: number;
   saveCount: number;

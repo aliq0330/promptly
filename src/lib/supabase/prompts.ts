@@ -37,6 +37,8 @@ export interface PromptRow {
   created_at: string;
   show_on_profile: boolean;
   requires_reference_image: boolean;
+  requires_reference_video: boolean;
+  requires_reference_audio: boolean;
   visibility: "public" | "private";
   deleted_at: string | null;
   generator_id: string | null;
@@ -52,7 +54,7 @@ export interface PromptRow {
 export const PROMPT_SELECT = `
   id, title, description, prompt_text, tool, tools, content_type, category, subcategory, status,
   origin_type, request_id,
-  like_count, save_count, comment_count, created_at, show_on_profile, requires_reference_image, visibility,
+  like_count, save_count, comment_count, created_at, show_on_profile, requires_reference_image, requires_reference_video, requires_reference_audio, visibility,
   deleted_at, generator_id, generator_version_id, generator_run_id,
   profiles:author_id ( id, username, display_name, avatar_url, cover_url, bio, website, follower_count, following_count, created_at, interests ),
   prompt_media ( id, url, width, height, alt, position ),
@@ -124,6 +126,8 @@ export function mapPromptRow(row: PromptRow): Prompt {
     commentCount: row.comment_count,
     showOnProfile: row.show_on_profile,
     requiresReferenceImage: row.requires_reference_image ?? false,
+    requiresReferenceVideo: row.requires_reference_video ?? false,
+    requiresReferenceAudio: row.requires_reference_audio ?? false,
     visibility: row.visibility ?? "public",
     deletedAt: row.deleted_at,
     generatedFrom:
@@ -378,6 +382,8 @@ export interface CreateRealPromptInput {
   showOnProfile?: boolean;
   /** Prompt'un bir referans fotoğraf/görselle birlikte kullanılması gerekiyor mu (`prompts.requires_reference_image`). */
   requiresReferenceImage?: boolean;
+  requiresReferenceVideo?: boolean;
+  requiresReferenceAudio?: boolean;
   /** Set only when this prompt is "Open in Prompt" from a real generator run (Generator Builder module) — purely informational provenance, orthogonal to origin/requestId (a generator output is normally `origin: "original"`). `generatorTitle`/`generatorSlug` are only needed to build the immediate return value (the caller already has them from the generator it just ran) — never trusted for anything written to the database. */
   generatedFrom?: { generatorId: string; generatorVersionId: string; generatorRunId: string; generatorTitle: string; generatorSlug: string };
   /** "Herkese açık" (default) or "Sadece ben" (`prompts.visibility`); a request answer is always public so the request's owner can see it. */
@@ -414,6 +420,8 @@ export async function createRealPrompt(
       request_id: input.requestId ?? null,
       show_on_profile: input.showOnProfile ?? true,
       requires_reference_image: input.requiresReferenceImage ?? false,
+      requires_reference_video: input.requiresReferenceVideo ?? false,
+      requires_reference_audio: input.requiresReferenceAudio ?? false,
       visibility: input.visibility ?? "public",
       generator_id: input.generatedFrom?.generatorId ?? null,
       generator_version_id: input.generatedFrom?.generatorVersionId ?? null,
@@ -512,6 +520,8 @@ export async function createRealPrompt(
     status: input.isDraft ? "draft" : "published",
     showOnProfile: input.showOnProfile ?? true,
     requiresReferenceImage: input.requiresReferenceImage ?? false,
+    requiresReferenceVideo: input.requiresReferenceVideo ?? false,
+    requiresReferenceAudio: input.requiresReferenceAudio ?? false,
     visibility: input.visibility ?? "public",
     deletedAt: null,
     generatedFrom: input.generatedFrom
@@ -550,6 +560,8 @@ export interface UpdateRealPromptInput {
   showOnProfile?: boolean;
   /** `undefined` leaves the column untouched. */
   requiresReferenceImage?: boolean;
+  requiresReferenceVideo?: boolean;
+  requiresReferenceAudio?: boolean;
   /** `undefined` leaves the column untouched. */
   visibility?: ContentVisibility;
   /** Publishes a draft (`status` draft → published) once everything else is saved; the database then restarts `created_at` and counts its tags. */
@@ -584,6 +596,8 @@ export async function updateRealPrompt(promptId: string, authorId: string, input
       ...(input.category === undefined ? {} : { category: input.category, subcategory: input.subcategory ?? null }),
       ...(input.showOnProfile === undefined ? {} : { show_on_profile: input.showOnProfile }),
       ...(input.requiresReferenceImage === undefined ? {} : { requires_reference_image: input.requiresReferenceImage }),
+      ...(input.requiresReferenceVideo === undefined ? {} : { requires_reference_video: input.requiresReferenceVideo }),
+      ...(input.requiresReferenceAudio === undefined ? {} : { requires_reference_audio: input.requiresReferenceAudio }),
       ...(input.visibility === undefined ? {} : { visibility: input.visibility }),
     })
     .eq("id", promptId)

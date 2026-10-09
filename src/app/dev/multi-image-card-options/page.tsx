@@ -79,6 +79,8 @@ function promptWithMedia(count: number): Prompt {
     status: "published",
     showOnProfile: true,
     requiresReferenceImage: false,
+    requiresReferenceVideo: false,
+    requiresReferenceAudio: false,
     visibility: "public",
     createdAt: "2026-02-10T12:00:00Z",
     deletedAt: null,
