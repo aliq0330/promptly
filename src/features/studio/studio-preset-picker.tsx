@@ -16,7 +16,7 @@ import type { Preset } from "@/types";
  * being generated. Picking one only sets the starting parameters — the page
  * keeps them editable.
  */
-export function GeneratePresetPicker({ contentType, onPick, onClose }: { contentType: ContentTypeId; onPick: (preset: Preset) => void; onClose: () => void }) {
+export function StudioPresetPicker({ contentType, onPick, onClose }: { contentType: ContentTypeId; onPick: (preset: Preset) => void; onClose: () => void }) {
   const { t } = useTranslation();
   const [tab, setTab] = useState<PresetListTab>("community");
   const [previewing, setPreviewing] = useState<Preset | null>(null);

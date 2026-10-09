@@ -6,6 +6,7 @@ import { DetailSkeleton, NotFoundBlock } from "@/components/ui/detail-skeleton";
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { OpenInStudioButton } from "@/features/studio/open-in-studio-button";
 import { ArrowRight, Blocks, SlidersHorizontal, SquareTerminal } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -263,6 +264,7 @@ export function GeneratorDetailView() {
                       recommendedRefs={generator.tools}
                       preview
                     />
+                    <OpenInStudioButton kind="generator" id={generator.slug} />
                     {canOpenInPrompt &&
                       (user ? (
                         <Button type="button" onClick={() => handleOpenInPrompt(state)} disabled={isOpeningPrompt || !state.prompt.trim()}>

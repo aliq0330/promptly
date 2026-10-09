@@ -1,10 +1,11 @@
 import { Suspense } from "react";
-import { GenerateView } from "@/features/generate/generate-view";
+import { LegacyGenerateRedirect } from "@/features/studio/legacy-generate-redirect";
 
+/** `/generate` was renamed `/studio`; old links keep working. */
 export default function GeneratePage() {
   return (
     <Suspense fallback={null}>
-      <GenerateView />
+      <LegacyGenerateRedirect />
     </Suspense>
   );
 }

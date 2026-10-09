@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { PenLine, SquareTerminal } from "lucide-react";
+import { OpenInStudioButton } from "@/features/studio/open-in-studio-button";
 import { ContentTypeLabel } from "@/features/content/content-type-label";
 import { ShareTriggerButton } from "@/features/prompts/share-modal";
 import { RelatedPrompts } from "@/features/prompts/related-prompts";
@@ -239,6 +240,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
                 )}
                 <CopyPromptButton text={displayText} size="md" />
                 <RunButton text={displayText} recommendedRefs={prompt.tools} />
+                <OpenInStudioButton kind="prompt" id={prompt.id} />
               </div>
             </div>
             <ScrollablePrompt className="px-4 py-4 text-[0.875rem] text-text">

@@ -38,7 +38,7 @@ export const navGroups: NavGroup[] = [
       { href: "/generators", labelKey: "nav.generators", icon: Blocks },
       { href: "/workflows", labelKey: "nav.workflows", icon: Workflow },
       { href: "/presets", labelKey: "nav.presets", icon: SlidersHorizontal },
-      { href: "/generate", labelKey: "nav.generate", icon: WandSparkles },
+      { href: "/studio", labelKey: "nav.studio", icon: WandSparkles },
       { href: "/requests", labelKey: "nav.requests", icon: Sparkles },
       { href: "/tags", labelKey: "nav.tags", icon: Hash },
     ],
