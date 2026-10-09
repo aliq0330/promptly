@@ -2,7 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { SlidersHorizontal } from "lucide-react";
+import Link from "next/link";
+import { SlidersHorizontal, WandSparkles } from "lucide-react";
+import { buttonClassName } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DetailSkeleton, NotFoundBlock } from "@/components/ui/detail-skeleton";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
@@ -172,15 +174,23 @@ export function PresetDetailView() {
           />
         </DetailActionBar>
 
-        {!isOwn && (
-          <div className="flex flex-wrap items-start gap-3 rounded-xl border border-primary/20 bg-primary-soft/50 p-4 sm:p-5">
-            <div className="min-w-0 flex-1 space-y-1">
-              <p className="text-label font-semibold text-text">{t("preset.saveTitle")}</p>
-              <p className="text-small text-text-secondary">{t("preset.saveHint")}</p>
-            </div>
-            <PresetSaveCta presetId={preset.id} saveCount={preset.saveCount} />
+        <div className="flex flex-wrap items-start gap-3 rounded-xl border border-primary/20 bg-primary-soft/50 p-4 sm:p-5">
+          <div className="min-w-0 flex-1 space-y-3">
+            {!isOwn && (
+              <div className="space-y-1">
+                <p className="text-label font-semibold text-text">{t("preset.saveTitle")}</p>
+                <p className="text-small text-text-secondary">{t("preset.saveHint")}</p>
+              </div>
+            )}
+            <p className="text-small text-text-secondary">{isOwn ? t("preset.useOwnHint") : t("preset.useHint")}</p>
           </div>
-        )}
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:items-stretch">
+            {!isOwn && <PresetSaveCta presetId={preset.id} saveCount={preset.saveCount} />}
+            <Link href={`/generate?preset=${preset.id}`} className={buttonClassName({ variant: isOwn ? "primary" : "outline", size: "lg" })}>
+              <WandSparkles size={18} aria-hidden /> {t("preset.use")}
+            </Link>
+          </div>
+        </div>
 
         {preset.coverUrl && (
           <button

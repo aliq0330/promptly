@@ -1,7 +1,7 @@
 "use client";
 import { ToolPicker } from "@/features/content/tool-picker";
 
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Blocks, Copy, Eye, EyeOff, X } from "lucide-react";
@@ -26,6 +26,7 @@ import type { DnaSection } from "@/lib/prompt-dna/types";
 import { PromptVisionAssist } from "@/features/prompts/prompt-vision-assist";
 import { fetchVariablesForPrompt, replaceVariablesForPrompt } from "@/lib/supabase/prompt-variables";
 import { fetchGeneratorById, fetchGeneratorRun } from "@/lib/supabase/generators";
+import { takeHandoff } from "@/lib/generate-handoff";
 import { placeholderArt } from "@/lib/placeholder-image";
 import { MultiImagePicker } from "@/features/content/multi-image-picker";
 import { multiImageItemFromMedia, toDeferredMediaInputs, type MultiImageItem } from "@/lib/supabase/media-input";
@@ -130,6 +131,7 @@ export function CreatePromptForm() {
   const duplicateId = !isEditMode ? searchParams.get("duplicate") : null;
   const answerRequestId = !isEditMode ? searchParams.get("answerRequest") : null;
   const generatorRunId = !isEditMode ? searchParams.get("generatorRun") : null;
+  const fromGenerate = !isEditMode && searchParams.get("fromGenerate") === "1";
   const isAnswerMode = Boolean(answerRequestId);
   const isDuplicateMode = Boolean(duplicateId);
   const isGeneratorRunMode = Boolean(generatorRunId);
@@ -256,6 +258,32 @@ export function CreatePromptForm() {
   const [dnaLoaded, setDnaLoaded] = useState(!isEditMode);
   const [showOnProfile, setShowOnProfile] = useState(true);
   const [visibility, setVisibility] = useState<ContentVisibility>("public");
+
+  // "Prompt olarak yayınla" from the Üret page: the result was parked in
+  // sessionStorage for this one navigation (an image can't travel in a URL).
+  // Read once, then the user is free to edit everything.
+  const handoffRead = useRef(false);
+  useEffect(() => {
+    if (!fromGenerate || handoffRead.current) return;
+    handoffRead.current = true;
+    const handoff = takeHandoff();
+    if (!handoff) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time seed from the hand-off
+    setContentType(handoff.contentType);
+    setPromptText(handoff.promptText);
+    setTools([handoff.toolId]);
+    if (handoff.imageUrl) {
+      const { imageUrl, width, height } = handoff;
+      fetch(imageUrl)
+        .then((response) => response.blob())
+        .then((blob) => {
+          const ext = blob.type === "image/jpeg" ? "jpg" : "png";
+          const file = new File([blob], `generated.${ext}`, { type: blob.type || "image/png" });
+          setImages([{ key: `gen-${Date.now()}`, url: imageUrl, width: width ?? 1024, height: height ?? 1024, file }]);
+        })
+        .catch(() => undefined);
+    }
+  }, [fromGenerate]);
 
   // The real source's fields arrive asynchronously — backfill the form the
   // first time one becomes available (same pattern as /profile/edit's
