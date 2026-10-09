@@ -43,18 +43,18 @@ export function VariableList({
           return (
             <li
               key={variable.tempId}
-              className="flex items-center justify-between gap-2 rounded-md border border-border bg-background px-3 py-2 text-sm"
+              className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border bg-background px-3 py-2 text-sm"
             >
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1 basis-40 break-words">
                 <span className="font-mono text-primary">{`{${variable.name}}`}</span>
                 {variable.defaultValue && (
-                  <span className="ml-2 truncate text-xs text-text-muted">→ {variable.defaultValue}</span>
+                  <span className="ml-2 break-words text-xs text-text-muted">→ {variable.defaultValue}</span>
                 )}
                 <span className="ml-2 text-xs text-text-muted">
                   {usageCount === 0 ? t("variable.unusedInText") : t("variable.usedInCount", { count: usageCount })}
                 </span>
               </div>
-              <div className="flex shrink-0 items-center gap-1">
+              <div className="flex max-w-full shrink-0 items-center gap-1">
                 <button
                   type="button"
                   onClick={() => {
@@ -70,7 +70,7 @@ export function VariableList({
                   <button
                     type="button"
                     onClick={() => onDelete(variable)}
-                    className="whitespace-nowrap rounded-md bg-danger/10 px-2 py-1 text-xs font-medium text-danger hover:bg-danger/20"
+                    className="max-w-full whitespace-normal rounded-md bg-danger/10 px-2 py-1 text-left text-xs font-medium text-danger hover:bg-danger/20"
                   >
                     {usageCount > 0
                       ? t("variable.deleteWithUsagesConfirm", { count: usageCount })

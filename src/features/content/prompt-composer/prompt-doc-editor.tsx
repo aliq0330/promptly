@@ -305,7 +305,7 @@ export const PromptDocEditor = forwardRef<
       <div
         ref={mirrorRef}
         aria-hidden
-        className="pointer-events-none absolute inset-0 overflow-hidden whitespace-pre-wrap break-words px-3 py-2 font-mono text-sm leading-6 text-text"
+        className="pointer-events-none absolute inset-0 overflow-hidden whitespace-pre-wrap break-words px-3 py-2 font-mono text-sm leading-6 text-text max-lg:text-[16px]"
       >
         {segments.map((segment) =>
           segment.type === "token" ? (
