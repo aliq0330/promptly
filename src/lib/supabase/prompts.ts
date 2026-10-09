@@ -1,3 +1,4 @@
+import { removeStorageObjectsByUrl } from "./storage-cleanup";
 import { normalizeToolRefs } from "@/lib/ai-tool-catalog";
 import { supabase } from "./client";
 import { withoutBlocked } from "./blocked-users";
@@ -303,8 +304,22 @@ export async function searchPrompts(query: string, filters: ContentSearchFilters
  * now.)
  */
 export async function deleteRealPrompt(promptId: string): Promise<void> {
+  // DB satırları cascade ile gider ama Storage dosyaları gitmez — silmeden
+  // ÖNCE yolları topla, silme başarılı olursa dosyaları kaldır.
+  const [{ data: media }, { data: results }] = await Promise.all([
+    supabase.from("prompt_media").select("url").eq("prompt_id", promptId),
+    supabase.from("prompt_results").select("media_url, thumbnail_url").eq("prompt_id", promptId),
+  ]);
   const { error } = await supabase.from("prompts").delete().eq("id", promptId);
   if (error) throw new Error(error.message);
+  await removeStorageObjectsByUrl(
+    "prompt-media",
+    ((media ?? []) as Array<{ url: string }>).map((m) => m.url),
+  );
+  await removeStorageObjectsByUrl(
+    "result-media",
+    ((results ?? []) as Array<{ media_url: string | null; thumbnail_url: string | null }>).flatMap((r) => [r.media_url, r.thumbnail_url]),
+  );
 }
 
 /** Every real prompt this user has liked, newest-first — for a real own-profile's "Beğeniler" tab. Likes are public (Bölüm 19), but this is always called for "my own" liked list. */
@@ -571,6 +586,7 @@ export async function updateRealPrompt(promptId: string, authorId: string, input
 
   if (input.images) {
     try {
+      const { data: oldMedia } = await supabase.from("prompt_media").select("url").eq("prompt_id", promptId);
       // A fresh timestamp prefix (rather than `-{index}`) avoids colliding
       // with any surviving `.existing` upload at the same index — this is a
       // replace-all, so the old rows (and their storage objects, orphaned
@@ -603,6 +619,12 @@ export async function updateRealPrompt(promptId: string, authorId: string, input
         );
         if (mediaError) throw new Error(mediaError.message);
       }
+      // Yeni satırlar yazıldı: artık hiçbir satırın göstermediği eski dosyaları kaldır.
+      const kept = new Set(resolved.map((d) => d.url));
+      await removeStorageObjectsByUrl(
+        "prompt-media",
+        ((oldMedia ?? []) as Array<{ url: string }>).map((m) => m.url).filter((u) => !kept.has(u)),
+      );
     } catch (err) {
       throw err instanceof Error ? err : new Error(translateForRuntime("prompt.imageUpdateFailed"));
     }

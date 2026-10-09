@@ -1,3 +1,4 @@
+import { removeStorageObjectsByUrl } from "./storage-cleanup";
 import { normalizeToolRefs } from "@/lib/ai-tool-catalog";
 import { supabase } from "./client";
 import { withoutBlocked } from "./blocked-users";
@@ -386,6 +387,7 @@ export async function updateRealRequest(requestId: string, authorId: string, inp
   if (!updated) throw new Error(translateForRuntime("request.noEditPermission"));
 
   if (input.images) {
+    const { data: oldMedia } = await supabase.from("prompt_request_media").select("url").eq("request_id", requestId);
     const stamp = Date.now();
     const resolved = await resolveMediaInputs(input.images, input.title, async (file, index) => {
       const resized = await resizeImageToBlob(file, 1000);
@@ -419,6 +421,11 @@ export async function updateRealRequest(requestId: string, authorId: string, inp
         reference_image_height: resolved[0]?.height ?? null,
       })
       .eq("id", requestId);
+    const kept = new Set(resolved.map((d) => d.url));
+    await removeStorageObjectsByUrl(
+      "request-references",
+      ((oldMedia ?? []) as Array<{ url: string }>).map((m) => m.url).filter((u) => !kept.has(u)),
+    );
   }
 
   await supabase.from("prompt_request_tags").delete().eq("request_id", requestId);
@@ -473,9 +480,20 @@ export async function updateRealRequestStatus(
 
 /** Genuinely, permanently deletes a real request the caller owns. */
 export async function deleteRealRequest(requestId: string): Promise<void> {
+  const [{ data: media }, { data: reqRow }] = await Promise.all([
+    supabase.from("prompt_request_media").select("url").eq("request_id", requestId),
+    supabase.from("prompt_requests").select("reference_image_url").eq("id", requestId).maybeSingle(),
+  ]);
+  const refUrls = [
+    ...((media ?? []) as Array<{ url: string }>).map((m) => m.url),
+    (reqRow as { reference_image_url: string | null } | null)?.reference_image_url,
+  ];
   const { data, error } = await supabase.from("prompt_requests").delete().eq("id", requestId).select("id");
   if (error) throw new Error(error.message);
-  if (data && data.length > 0) return;
+  if (data && data.length > 0) {
+    await removeStorageObjectsByUrl("request-references", refUrls);
+    return;
+  }
   // A request with real answers is soft-deleted by a BEFORE DELETE trigger
   // (the DELETE itself reports 0 rows) — that's a success. Anything else
   // with 0 rows means RLS silently refused.
@@ -487,6 +505,8 @@ export async function deleteRealRequest(requestId: string): Promise<void> {
   if (remaining && !(remaining as { deleted_at: string | null }).deleted_at) {
     throw new Error(translateForRuntime("request.noEditPermission"));
   }
+  // Soft-delete: referans görseller artık gösterilmiyor, dosyaları kaldır.
+  await removeStorageObjectsByUrl("request-references", refUrls);
 }
 
 /**

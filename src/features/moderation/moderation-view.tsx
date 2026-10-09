@@ -12,6 +12,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import { formatRelativeTime } from "@/lib/utils";
+import { StorageCleanupCard } from "@/features/moderation/storage-cleanup-card";
 import { fetchReportQueue, moderateReport, type ModerationAction, type ModerationReport, type ReportStatus } from "@/lib/supabase/moderation";
 
 type Filter = ReportStatus | "all";
@@ -96,6 +97,7 @@ export function ModerationView() {
           <ReportCard key={report.id} report={report} onDone={load} />
         ))}
       </ul>
+      <StorageCleanupCard />
     </div>
   );
 }
