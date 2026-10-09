@@ -1,3 +1,4 @@
+import { removeStorageObjectsByUrl } from "./storage-cleanup";
 import { supabase } from "./client";
 import { translateForRuntime } from "@/lib/i18n/translations";
 import { mapProfileRow, type ProfileRow } from "./mappers";
@@ -343,6 +344,9 @@ export async function updatePromptResult(resultId: string, input: UpdatePromptRe
 
 /** Deletes a real result the caller owns — RLS (the migration) enforces `auth.uid() = creator_id`. */
 export async function deletePromptResult(resultId: string): Promise<void> {
+  const { data: row } = await supabase.from("prompt_results").select("media_url, thumbnail_url").eq("id", resultId).maybeSingle();
   const { error } = await supabase.from("prompt_results").delete().eq("id", resultId);
   if (error) throw new Error(error.message);
+  const r = row as { media_url: string | null; thumbnail_url: string | null } | null;
+  if (r) await removeStorageObjectsByUrl("result-media", [r.media_url, r.thumbnail_url]);
 }
