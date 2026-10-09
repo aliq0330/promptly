@@ -37,9 +37,18 @@
  * creator-authored template text here, only a fixed, generic
  * "{label}: {value}" join rule applied to whatever fields the creator
  * happened to define.
+ *
+ * UPDATE (Bölüm 9.136) — an OPTIONAL creator-authored prompt template is back,
+ * in a new form: plain text with field tokens (`generator-template-doc.ts`),
+ * stored canonically as `{{key}}` in the template's first section. When
+ * `templateText` is non-empty it is rendered with the runtime values and
+ * placed between the user's typed sentence and the generic "{label}: {value}"
+ * join, which then only covers fields the template does NOT reference. With
+ * an empty template everything behaves exactly as before (backward compatible).
  */
 
 import { isFieldVisible, type GeneratorValidationIssue } from "./generator-template";
+import { renderTemplateDoc, templateKeys } from "./generator-template-doc";
 import { translateForRuntime } from "@/lib/i18n/translations";
 import type { GeneratorField, GeneratorOutput, GeneratorSchema, GeneratorValues } from "@/types";
 
@@ -167,16 +176,29 @@ function describeFieldValue(field: GeneratorField, values: GeneratorValues): str
  * the main subject, with the selections as trailing descriptors) and is
  * never discarded or rewritten, only extended.
  */
-export function composeFinalPromptText(schema: GeneratorSchema, values: GeneratorValues, promptText: string): string {
+export function composeFinalPromptText(
+  schema: GeneratorSchema,
+  values: GeneratorValues,
+  promptText: string,
+  templateText = "",
+): string {
   const typed = promptText.trim();
+  const template = templateText.trim();
+  // Yazarın (varsa) prompt şablonu: alanlar tam yerlerine çözülür, boş bir
+  // alan sessizce silinmez ("[Etiket]" kalır). Şablonda geçen alanlar
+  // aşağıdaki "Etiket: Değer" eklerinde tekrar edilmez.
+  const rendered = template ? renderTemplateDoc(template, schema.fields, values, isFieldVisible).text.trim() : "";
+  const usedKeys = new Set(template ? templateKeys(template) : []);
   const fieldFragments = [...schema.fields]
     .sort((a, b) => a.order - b.order)
+    .filter((field) => !usedKeys.has(field.key))
     .map((field) => describeFieldValue(field, values))
     .filter((fragment): fragment is string => fragment !== null);
 
-  if (fieldFragments.length === 0) return typed;
-  if (!typed) return fieldFragments.join(", ");
-  return `${typed}, ${fieldFragments.join(", ")}`;
+  const body = [typed, rendered].filter((part) => part.length > 0).join(" ");
+  if (fieldFragments.length === 0) return body;
+  if (!body) return fieldFragments.join(", ");
+  return `${body}, ${fieldFragments.join(", ")}`;
 }
 
 /**
@@ -197,6 +219,8 @@ export function buildGeneratorOutput(
   promptText: string,
   negativePromptText: string,
   enableNegativePrompt: boolean,
+  /** Yazarın isteğe bağlı prompt şablonu (kanonik `{{anahtar}}` biçimi). Boşsa davranış öncekiyle aynı. */
+  templateText = "",
 ): GeneratorOutput {
   const output: GeneratorOutput = {};
 
@@ -209,7 +233,7 @@ export function buildGeneratorOutput(
     assignAtPath(output, parseJsonPath(path), coerced);
   }
 
-  output.prompt = composeFinalPromptText(schema, values, promptText);
+  output.prompt = composeFinalPromptText(schema, values, promptText, templateText);
 
   if (enableNegativePrompt) {
     output.negative_prompt = negativePromptText.trim();

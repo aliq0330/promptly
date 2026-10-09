@@ -12,9 +12,11 @@ import { useTagCatalog } from "@/features/tags/use-tag-catalog";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import { useTagPicker } from "@/features/prompts/use-tag-picker";
+import { getTemplateText, removeFieldFromTemplate, templateUsageCount, withTemplateText } from "@/lib/generator-template-doc";
 import { FieldList } from "./field-list";
 import { FieldEditorModal } from "./field-editor-modal";
 import { FieldCatalogPicker } from "./field-catalog-picker";
+import { GeneratorTemplateEditor } from "./generator-template-editor";
 import { GeneratorDetailsForm } from "./generator-details-form";
 import { GeneratorPlayground } from "./generator-playground";
 import { GeneratorVisionAssist } from "./generator-vision-assist";
@@ -26,7 +28,7 @@ import { cn, generatorHref } from "@/lib/utils";
 import { multiImageItemFromMedia } from "@/lib/supabase/media-input";
 import { KindDraftsButton } from "@/features/drafts/kind-drafts-button";
 import { CreateFormActions } from "@/features/content/create-form-actions";
-import { FormSection } from "@/features/content/form-section";
+import { FormSection, FormSections } from "@/features/content/form-section";
 import {
   createDraftGenerator,
   fetchGeneratorById,
@@ -75,12 +77,11 @@ function defaultSchema(): GeneratorSchema {
   return { fields: [] };
 }
 
-// The generator's `template` field on the DB row is no longer authored by
-// the builder UI (see this file's own doc comment below) — kept only so
-// `saveDraftVersionContent`/`publishGenerator`'s existing signatures (and a
-// previously-authored generator's stored template, if any) round-trip
-// unchanged. A brand-new generator's template is always this single,
-// empty, never-rendered placeholder section.
+// The generator's `template` JSONB holds the creator's OPTIONAL prompt
+// template (Bölüm 9.136): the first section's `content` is the template text
+// in canonical `{{fieldKey}}` form (`generator-template-doc.ts`). A brand-new
+// generator starts with one empty section — empty means "no template", and
+// the runtime then behaves exactly as before.
 function defaultTemplate(): GeneratorTemplate {
   return { sections: [{ id: newId("section"), title: "Prompt", content: "", order: 0, enabled: true }] };
 }
@@ -156,6 +157,9 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
   const [version, setVersion] = useState<GeneratorVersionResult | null>(null);
   const [editingField, setEditingField] = useState<{ field: GeneratorField | null; isNew: boolean } | null>(null);
   const [catalogPickerOpen, setCatalogPickerOpen] = useState(false);
+  // "Yeni alan oluştur" prompt şablonundan açıldıysa, kaydedilen alan şablona eklenir.
+  const awaitingTemplateInsertRef = useRef(false);
+  const [templateInsert, setTemplateInsert] = useState<{ key: string; nonce: number } | null>(null);
 
   const [loadingExisting, setLoadingExisting] = useState(Boolean(editId));
   const [notFound, setNotFound] = useState(false);
@@ -342,6 +346,10 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
   }
 
   function handleSaveField(field: GeneratorField) {
+    if (awaitingTemplateInsertRef.current && !schema.fields.some((f) => f.id === field.id)) {
+      setTemplateInsert({ key: field.key, nonce: Date.now() });
+    }
+    awaitingTemplateInsertRef.current = false;
     setSchema((prev) => {
       const exists = prev.fields.some((f) => f.id === field.id);
       if (exists) return { ...prev, fields: prev.fields.map((f) => (f.id === field.id ? field : f)) };
@@ -352,6 +360,9 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
   }
 
   function handleDeleteField(fieldId: string) {
+    const removed = schema.fields.find((f) => f.id === fieldId);
+    // Silinen alanın prompt şablonundaki kullanımları kontrollü olarak kaldırılır.
+    if (removed) setTemplate((prev) => withTemplateText(prev, removeFieldFromTemplate(getTemplateText(prev), removed.key)));
     setSchema((prev) => ({ ...prev, fields: prev.fields.filter((f) => f.id !== fieldId) }));
     setEditingField(null);
   }
@@ -445,6 +456,7 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
   const visibleFields = [...schema.fields].sort((a, b) => a.order - b.order);
 
   const issues = [...validateGeneratorForPublish(meta.title, meta.description, schema), ...validateGeneratorOutputMapping(schema)];
+  const templateText = getTemplateText(template);
   const errors = issues.filter((i) => i.level === "error");
   const warnings = issues.filter((i) => i.level === "warning");
 
@@ -572,6 +584,7 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
               <GeneratorPlayground
                 schema={schema}
                 enableNegativePrompt={meta.enableNegativePrompt}
+                templateText={templateText}
               />
             </div>
           </div>
@@ -580,28 +593,45 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
 
       {step === "fields" && (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
-          <FormSection>
-            <GeneratorVisionAssist
-              meta={meta}
-              fields={schema.fields}
-              onApplyValues={handleApplyVisionValues}
-              onAddFields={handleAddSuggestedFields}
-            />
-            <FieldList
-              fields={visibleFields}
-              onAddField={() => setCatalogPickerOpen(true)}
-              onEditField={(field) => setEditingField({ field, isNew: false })}
-              onDuplicateField={handleDuplicateField}
-              onDeleteField={handleDeleteField}
-              onReorderFields={handleReorderFields}
-            />
-          </FormSection>
+          <FormSections>
+            <FormSection>
+              <GeneratorVisionAssist
+                meta={meta}
+                fields={schema.fields}
+                onApplyValues={handleApplyVisionValues}
+                onAddFields={handleAddSuggestedFields}
+              />
+              <FieldList
+                fields={visibleFields}
+                onAddField={() => setCatalogPickerOpen(true)}
+                onEditField={(field) => setEditingField({ field, isNew: false })}
+                onDuplicateField={handleDuplicateField}
+                onDeleteField={handleDeleteField}
+                onReorderFields={handleReorderFields}
+                templateUsage={Object.fromEntries(schema.fields.map((f) => [f.key, templateUsageCount(templateText, f.key)]))}
+              />
+            </FormSection>
+            <FormSection title={t("generator.templateTitle")} description={t("generator.templateHint")} data-testid="template-section">
+              <GeneratorTemplateEditor
+                fields={schema.fields}
+                value={templateText}
+                onChange={(next) => setTemplate((prev) => withTemplateText(prev, next))}
+                onCreateField={() => {
+                  awaitingTemplateInsertRef.current = true;
+                  setEditingField({ field: null, isNew: true });
+                }}
+                onOpenCatalog={() => setCatalogPickerOpen(true)}
+                insertRequest={templateInsert}
+              />
+            </FormSection>
+          </FormSections>
           <div className="min-w-0">
             <div className="rounded-xl border border-border-soft bg-surface p-4 shadow-card sm:p-6 lg:sticky lg:top-4">
               <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-text-muted">{t("generator.livePreview")}</p>
               <GeneratorPlayground
                 schema={schema}
                 enableNegativePrompt={meta.enableNegativePrompt}
+                templateText={templateText}
               />
             </div>
           </div>
@@ -663,7 +693,10 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
           initial={editingField.field}
           isNew={editingField.isNew}
           allFields={schema.fields}
-          onClose={() => setEditingField(null)}
+          onClose={() => {
+            awaitingTemplateInsertRef.current = false;
+            setEditingField(null);
+          }}
           onSave={handleSaveField}
           onDelete={editingField.field ? () => handleDeleteField(editingField.field!.id) : undefined}
         />

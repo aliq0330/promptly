@@ -52,10 +52,18 @@ export function Modal({
   onClose,
   labelledBy,
   children,
+  variant = "dialog",
 }: {
   onClose: () => void;
   labelledBy: string;
   children: React.ReactNode;
+  /**
+   * `dialog` (varsayılan): mobilde alt sayfa, `sm`+ ortalanmış pencere.
+   * `sheet`: HER genişlikte alta yapışık alt sayfa (Bottom Sheet) — çocuk
+   *   kendi `max-h`/kaydırmasını verir.
+   * `side`: sağa yapışık, tam yükseklikte panel (masaüstü/yatay tablet).
+   */
+  variant?: "dialog" | "sheet" | "side";
 }) {
   // Registered once per mount (not per `onClose` identity) so a parent
   // re-rendering never re-orders the stack and steals Escape from its child.
@@ -88,6 +96,31 @@ export function Modal({
   // Every panel in the app is `w-full max-w-* rounded-lg border ... shadow-lg`,
   // so the sheet treatment is applied with direct-child (`*:`) variants here
   // instead of editing each modal.
+  if (variant !== "dialog") {
+    const isSide = variant === "side";
+    return (
+      <Portal>
+        <div
+          className={
+            "fixed inset-0 z-50 flex animate-fade-in bg-[rgb(10_8_20/0.45)] backdrop-blur-[2px] " +
+            (isSide ? "justify-end" : "flex-col justify-end")
+          }
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={labelledBy}
+          onClick={onClose}
+        >
+          <div
+            className={isSide ? "flex h-full animate-panel-in" : "flex w-full justify-center animate-sheet-up"}
+            onClick={(event) => event.stopPropagation()}
+          >
+            {children}
+          </div>
+        </div>
+      </Portal>
+    );
+  }
+
   return (
     <Portal>
       <div
