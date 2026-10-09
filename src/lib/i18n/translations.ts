@@ -1760,6 +1760,8 @@ export const translations = {
   "toolbar.filterTitle": { tr: "Filtrele", en: "Filter" },
   "toolbar.apply": { tr: "Filtreleri Uygula", en: "Apply filters" },
   "toolbar.clear": { tr: "Temizle", en: "Clear" },
+  "toolbar.postKind": { tr: "Gönderi türü", en: "Post type" },
+  "toolbar.postKindAria": { tr: "Gönderi türü", en: "Post type" },
   "toolbar.contentType": { tr: "İçerik türü", en: "Content type" },
   "toolbar.contentTypeAria": { tr: "İçerik türüne göre filtrele", en: "Filter by content type" },
   "toolbar.category": { tr: "Kategori", en: "Category" },

@@ -4,7 +4,7 @@ import { useId, useState, type ReactNode } from "react";
 import { Check, SlidersHorizontal, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
-import { TaxonomyDeepRows, TaxonomyTypeChips } from "@/features/content/taxonomy-filter";
+import { TaxonomyDrillList, TaxonomyTypeChips } from "@/features/content/taxonomy-filter";
 import { SortSelect, SORT_KEYS, SORT_LABELS, type ContentSortKey } from "@/features/content/sort-select";
 import { MobileViewToggle, ViewModeSwitcher } from "@/features/content/view-mode-switcher";
 import type { TaxonomyFilterValue } from "@/lib/content-taxonomy";
@@ -60,9 +60,7 @@ export function TaxonomySheetSections({
       </SheetSection>
       {showCategories && value.contentType && (
         <SheetSection title={t("toolbar.category")}>
-          <div className="space-y-2">
-            <TaxonomyDeepRows value={value} onChange={onChange} wrap />
-          </div>
+          <TaxonomyDrillList value={value} onChange={onChange} />
         </SheetSection>
       )}
     </>
@@ -85,6 +83,8 @@ export function taxonomyActiveCount(value: TaxonomyFilterValue, includeType: boo
  * primary chips become editorial tabs below `md` only.
  */
 export function ListToolbar({
+  leading,
+  tabsBelow,
   tabs,
   tabsLabel,
   mobileTabs,
@@ -98,6 +98,10 @@ export function ListToolbar({
   onClear,
   className,
 }: {
+  /** Something that sits on the left of the control strip (e.g. Home's feed tabs). */
+  leading?: ReactNode;
+  /** From `md` up put the chip row on its own line UNDER the controls instead of beside them (Home: it was cramped). */
+  tabsBelow?: boolean;
   /** The primary chip row (desktop) — and the mobile tabs unless `mobileTabs` / `hideTabsOnMobile` say otherwise. */
   tabs?: ReactNode;
   tabsLabel: string;
@@ -126,12 +130,13 @@ export function ListToolbar({
 
   return (
     <div className={cn("min-w-0 space-y-2", className)}>
-      <div className="flex min-w-0 flex-col gap-2 md:flex-row md:items-center">
+      <div className={cn("flex min-w-0 flex-col gap-2 md:flex-row md:items-center", tabsBelow && "md:grid md:grid-cols-[minmax(0,1fr)_auto]")}>
+        {leading && <div className={cn("min-w-0", tabsBelow ? "md:col-start-1 md:row-start-1" : "md:flex-1")}>{leading}</div>}
         {tabs && (
           <div
             role="group"
             aria-label={tabsLabel}
-            className={cn(scroller, "md:flex-1", MOBILE_TABS, (hasMobileTabs || hideTabsOnMobile) && "max-md:hidden")}
+            className={cn(scroller, tabsBelow ? "md:col-span-2 md:row-start-2" : "md:flex-1", MOBILE_TABS, (hasMobileTabs || hideTabsOnMobile) && "max-md:hidden")}
           >
             {tabs}
           </div>
@@ -142,7 +147,7 @@ export function ListToolbar({
           </div>
         )}
 
-        <div className="flex min-w-0 items-center gap-2 md:shrink-0">
+        <div className={cn("flex min-w-0 items-center gap-2 md:shrink-0", tabsBelow && "md:col-start-2 md:row-start-1")}>
           <Button
             variant="outline"
             size="sm"

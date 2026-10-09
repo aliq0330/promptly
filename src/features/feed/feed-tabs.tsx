@@ -5,11 +5,12 @@ import { Blocks, Flame, LayoutGrid, SquareTerminal, SlidersHorizontal, Sparkles,
 import { Tabs } from "@/components/ui/tabs";
 import { Chip } from "@/components/ui/chip";
 import { type ContentSortKey } from "@/features/content/sort-select";
-import { ListToolbar, SheetChips, SheetSection } from "@/features/content/list-toolbar";
+import { ListToolbar, SheetChips, SheetSection, TaxonomySheetSections, taxonomyActiveCount } from "@/features/content/list-toolbar";
+import { EMPTY_TAXONOMY_FILTER, type TaxonomyFilterValue } from "@/lib/content-taxonomy";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PromptCardSkeletonGrid } from "@/components/ui/prompt-card-skeleton";
 import { FeedItemsView } from "./feed-items-view";
-import { feedItemAuthorId, feedItemCreatedAt, feedItemPopularity, type FeedItem } from "./types";
+import { feedItemAuthorId, feedItemCreatedAt, feedItemPopularity, matchesFeedTaxonomy, type FeedItem } from "./types";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useRealPrompts } from "@/features/prompts/real-prompts-provider";
 import { useRealRequests } from "@/features/requests/real-requests-provider";
@@ -43,6 +44,7 @@ export function FeedTabs() {
   const [active, setActive] = useState<TabKey>("for-you");
   const [kind, setKind] = useState<KindFilter>("all");
   const [sort, setSort] = useState<ContentSortKey>("newest");
+  const [taxonomy, setTaxonomy] = useState<TaxonomyFilterValue>(EMPTY_TAXONOMY_FILTER);
   const { user } = useAuth();
   const { realPrompts, loading } = useRealPrompts();
   const { realRequests } = useRealRequests();
@@ -78,10 +80,11 @@ export function FeedTabs() {
   const visible = useMemo(() => {
     const byTab = active === "following" ? allItems.filter((item) => followedIds.has(feedItemAuthorId(item))) : allItems;
     const byKind = kind === "all" ? byTab : byTab.filter((item) => item.kind === kind);
-    return [...byKind].sort((a, b) =>
+    const byTaxonomy = byKind.filter((item) => matchesFeedTaxonomy(item, taxonomy));
+    return [...byTaxonomy].sort((a, b) =>
       sort === "most-liked" ? feedItemPopularity(b) - feedItemPopularity(a) || feedItemCreatedAt(b) - feedItemCreatedAt(a) : sort === "oldest" ? feedItemCreatedAt(a) - feedItemCreatedAt(b) : feedItemCreatedAt(b) - feedItemCreatedAt(a),
     );
-  }, [allItems, active, followedIds, kind, sort]);
+  }, [allItems, active, followedIds, kind, taxonomy, sort]);
 
   const kindChips = (
     <>
@@ -95,32 +98,38 @@ export function FeedTabs() {
 
   return (
     <section className="space-y-4" aria-label={t("feed.ariaLabel")}>
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <Tabs
-          items={TABS.map((tab) => ({ key: tab.key, label: t(tab.labelKey), icon: tab.icon }))}
-          active={active}
-          onChange={(tab) => {
-            setActive(tab);
-            setSort(tab === "popular" ? "most-liked" : "newest");
-          }}
-          ariaLabel={t("feed.viewAriaLabel")}
-          variant="segmented"
-        />
-        <ListToolbar
-          className="lg:max-w-[60%]"
-          tabs={kindChips}
-          tabsLabel={t("toolbar.contentTypeAria")}
-          sort={sort}
-          onSortChange={setSort}
-          sheetSections={
-            <SheetSection title={t("toolbar.contentType")}>
+      <ListToolbar
+        tabsBelow
+        leading={
+          <Tabs
+            items={TABS.map((tab) => ({ key: tab.key, label: t(tab.labelKey), icon: tab.icon }))}
+            active={active}
+            onChange={(tab) => {
+              setActive(tab);
+              setSort(tab === "popular" ? "most-liked" : "newest");
+            }}
+            ariaLabel={t("feed.viewAriaLabel")}
+            variant="segmented"
+          />
+        }
+        tabs={kindChips}
+        tabsLabel={t("toolbar.postKindAria")}
+        sort={sort}
+        onSortChange={setSort}
+        sheetSections={
+          <>
+            <SheetSection title={t("toolbar.postKind")}>
               <SheetChips>{kindChips}</SheetChips>
             </SheetSection>
-          }
-          activeCount={kind === "all" ? 0 : 1}
-          onClear={() => setKind("all")}
-        />
-      </div>
+            <TaxonomySheetSections value={taxonomy} onChange={setTaxonomy} />
+          </>
+        }
+        activeCount={(kind === "all" ? 0 : 1) + taxonomyActiveCount(taxonomy, true)}
+        onClear={() => {
+          setKind("all");
+          setTaxonomy(EMPTY_TAXONOMY_FILTER);
+        }}
+      />
 
       {active === "following" && !user ? (
         <EmptyState

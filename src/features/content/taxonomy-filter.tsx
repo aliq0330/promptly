@@ -1,6 +1,8 @@
 "use client";
 
+import { Check, ChevronDown } from "lucide-react";
 import { Chip, ChipRow } from "@/components/ui/chip";
+import { cn } from "@/lib/utils";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
 import {
   CONTENT_TYPE_IDS,
@@ -74,6 +76,54 @@ export function TaxonomyDeepRows({ value, onChange, wrap }: { value: TaxonomyFil
         </Row>
       )}
     </>
+  );
+}
+
+/**
+ * Category → subcategory picker for the filter sheet: a vertical, scrollable
+ * list of categories; the chosen one opens right under itself with its
+ * subcategory chips. Far easier to scan than a wall of wrapping chips when a
+ * type has a dozen categories and dozens of subcategories.
+ */
+export function TaxonomyDrillList({ value, onChange }: { value: TaxonomyFilterValue; onChange: (next: TaxonomyFilterValue) => void }) {
+  const { t, language } = useTranslation();
+  if (!value.contentType) return null;
+  const categories = getCategories(value.contentType);
+  const subcategories = getSubcategories(value.contentType, value.category);
+  return (
+    <div className="max-h-72 space-y-0.5 overflow-y-auto overscroll-contain rounded-lg border border-border-soft bg-surface-soft p-1" data-taxonomy-drill>
+      {categories.map((category) => {
+        const selected = value.category === category.id;
+        return (
+          <div key={category.id}>
+            <button
+              type="button"
+              aria-expanded={selected}
+              onClick={() => onChange(selected ? { ...value, category: null, subcategory: null } : { ...value, category: category.id, subcategory: null })}
+              className={cn(
+                "flex min-h-11 w-full items-center justify-between gap-2 rounded-md px-3 text-left text-label transition-colors",
+                selected ? "bg-primary-soft font-semibold text-text" : "text-text-secondary hover:bg-surface",
+              )}
+            >
+              <span className="min-w-0 truncate">{taxonomyLabel(category.labelKey, language)}</span>
+              {selected && !value.subcategory ? <Check size={16} className="shrink-0 text-primary" aria-hidden /> : <ChevronDown size={16} className={cn("shrink-0 text-text-muted transition-transform", selected && "rotate-180")} aria-hidden />}
+            </button>
+            {selected && subcategories.length > 0 && (
+              <div className="ml-4 flex flex-wrap gap-2 border-l border-border-soft py-2 pl-3">
+                <Chip selected={!value.subcategory} onClick={() => onChange({ ...value, subcategory: null })}>
+                  {t("taxonomy.allSubcategories")}
+                </Chip>
+                {subcategories.map((sub) => (
+                  <Chip key={sub.id} selected={value.subcategory === sub.id} onClick={() => onChange({ ...value, subcategory: sub.id })}>
+                    {taxonomyLabel(sub.labelKey, language)}
+                  </Chip>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
   );
 }
 
