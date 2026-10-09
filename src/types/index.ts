@@ -91,6 +91,8 @@ export interface Prompt {
    * page. Always `true` for an original prompt.
    */
   showOnProfile: boolean;
+  /** Prompt bir referans fotoğraf/görselle birlikte kullanılır — `prompts.requires_reference_image`. */
+  requiresReferenceImage: boolean;
   /** "Herkese açık" / "Sadece ben" — `prompts.visibility`. */
   visibility: ContentVisibility;
   createdAt: string;

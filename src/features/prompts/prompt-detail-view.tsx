@@ -5,7 +5,7 @@ import { ToolLine } from "@/features/content/tool-chips";
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
-import { PenLine, SquareTerminal } from "lucide-react";
+import { Image as ImageIcon, PenLine, SquareTerminal } from "lucide-react";
 import { OpenInStudioButton } from "@/features/studio/open-in-studio-button";
 import { ContentTypeLabel } from "@/features/content/content-type-label";
 import { ShareTriggerButton } from "@/features/prompts/share-modal";
@@ -150,6 +150,12 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
             <div className="space-y-3">
               <DetailTitle>{prompt.title}</DetailTitle>
               {prompt.description && <DetailLede>{prompt.description}</DetailLede>}
+              {prompt.requiresReferenceImage && (
+                <p className="flex max-w-2xl items-start gap-2 rounded-lg border border-border-soft bg-surface-soft px-3 py-2 text-small text-text-secondary">
+                  <ImageIcon size={16} strokeWidth={1.75} className="mt-0.5 shrink-0 text-primary" />
+                  <span className="min-w-0 break-words">{t("prompt.requiresReferenceNote")}</span>
+                </p>
+              )}
             </div>
             <DetailByline person={prompt.author} createdAt={prompt.createdAt} language={language} />
           </header>
