@@ -18,6 +18,7 @@ import { useAuth } from "@/features/auth/auth-provider";
 import { ReferenceRequirementNotes } from "@/features/content/reference-requirements";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { GeneratorPlayground } from "./generator-playground";
+import { getTemplateText } from "@/lib/generator-template-doc";
 import { taxonomyPathLabel } from "@/lib/content-taxonomy";
 import { LikeButton } from "@/features/prompts/like-button";
 import { SaveButton } from "@/features/prompts/save-button";
@@ -267,6 +268,7 @@ export function GeneratorDetailView() {
               <GeneratorPlayground
                 schema={version.schema}
                 enableNegativePrompt={generator.enableNegativePrompt}
+                templateText={getTemplateText(version.template)}
                 renderActions={(state) => (
                   <div className="flex flex-wrap items-center gap-2">
                     <RunButton

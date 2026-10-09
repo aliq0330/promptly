@@ -54,10 +54,13 @@ import type { GeneratorSchema, GeneratorValues } from "@/types";
 export function GeneratorPlayground({
   schema,
   enableNegativePrompt,
+  templateText = "",
   renderActions,
 }: {
   schema: GeneratorSchema;
   enableNegativePrompt: boolean;
+  /** Yazarın isteğe bağlı prompt şablonu (kanonik `{{anahtar}}`); boşsa davranış öncekiyle aynı. */
+  templateText?: string;
   /** Only the real runtime page passes this — the "Prompt olarak aç"/"Kaydet" buttons, given the exact live-computed state to act on. The builder's own preview passes nothing. */
   renderActions?: (state: { values: GeneratorValues; prompt: string; negativePrompt: string | null }) => React.ReactNode;
 }) {
@@ -98,7 +101,7 @@ export function GeneratorPlayground({
   // (§18/§20's "central output engine" requirement). `promptText`/
   // `negativePromptText` are the runtime user's own direct input, written
   // into the output verbatim — this is the only place that happens.
-  const output = buildGeneratorOutput(schema, values, promptText, negativePromptText, enableNegativePrompt);
+  const output = buildGeneratorOutput(schema, values, promptText, negativePromptText, enableNegativePrompt, templateText);
   const prompt = typeof output.prompt === "string" ? output.prompt : "";
   const negativePrompt = enableNegativePrompt ? (typeof output.negative_prompt === "string" ? output.negative_prompt : "") : null;
 

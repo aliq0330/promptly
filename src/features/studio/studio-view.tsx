@@ -28,6 +28,7 @@ import { fetchVariablesForPrompt } from "@/lib/supabase/prompt-variables";
 import { fetchGeneratorBySlug, fetchGeneratorVersion } from "@/lib/supabase/generators";
 import { resolvePromptText } from "@/lib/prompt-variables";
 import { buildGeneratorOutput } from "@/lib/generator-output";
+import { getTemplateText } from "@/lib/generator-template-doc";
 import { defaultValuesFromSchema } from "@/lib/generator-template";
 import { resolvePresetFields } from "@/lib/preset-utils";
 import { composePrompt, sanitizeSelection, type PresetSelection } from "@/lib/preset-fields";
@@ -122,6 +123,7 @@ export function StudioView() {
   const [varOverrides, setVarOverrides] = useState<Record<string, string>>({});
   const [generatorSource, setGeneratorSource] = useState<Generator | null>(null);
   const [generatorSchema, setGeneratorSchema] = useState<GeneratorSchema | null>(null);
+  const [generatorTemplateText, setGeneratorTemplateText] = useState("");
   const [generatorValues, setGeneratorValues] = useState<GeneratorValues>({});
   const [sourceError, setSourceError] = useState(false);
   const [sourcePicker, setSourcePicker] = useState<"prompt" | "generator" | "preset" | null>(null);
@@ -209,6 +211,7 @@ export function StudioView() {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- reset when the query param goes away
       setGeneratorSource(null);
       setGeneratorSchema(null);
+      setGeneratorTemplateText("");
       setGeneratorValues({});
       return;
     }
@@ -225,6 +228,7 @@ export function StudioView() {
       }
       setGeneratorSource(found);
       setGeneratorSchema(version.schema);
+      setGeneratorTemplateText(getTemplateText(version.template));
       setGeneratorValues(defaultValuesFromSchema(version.schema));
       setPromptText("");
       setKind((current) => kindFor(found.contentType, current));
@@ -292,10 +296,10 @@ export function StudioView() {
   const variableValues = useMemo(() => Object.fromEntries(promptVars.map((v) => [v.name, varOverrides[v.name] ?? v.defaultValue])), [promptVars, varOverrides]);
   const finalPrompt = useMemo(() => {
     if (promptSource) return resolvePromptText(promptText, variableValues).trim();
-    if (generatorSource && generatorSchema) return String(buildGeneratorOutput(generatorSchema, generatorValues, promptText, "", false).prompt ?? "").trim();
+    if (generatorSource && generatorSchema) return String(buildGeneratorOutput(generatorSchema, generatorValues, promptText, "", false, generatorTemplateText).prompt ?? "").trim();
     if (preset) return composePrompt(promptText, sanitizeSelection(selection, fields), fields, language).trim();
     return promptText.trim();
-  }, [promptSource, generatorSource, generatorSchema, generatorValues, preset, promptText, variableValues, selection, fields, language]);
+  }, [promptSource, generatorSource, generatorSchema, generatorTemplateText, generatorValues, preset, promptText, variableValues, selection, fields, language]);
   const sourceTitle = promptSource?.title ?? generatorSource?.title ?? preset?.title;
 
   const persistKey = useCallback(

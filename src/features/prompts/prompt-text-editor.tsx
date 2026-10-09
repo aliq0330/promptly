@@ -1,21 +1,20 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { Eye, FileText, Plus } from "lucide-react";
+import { useMemo, useRef, useState } from "react";
+import { Eye, FileText } from "lucide-react";
 import {
   countRawOccurrences,
   extractVariableTokenNames,
-  insertTextAtRange,
-  isValidVariableName,
-  normalizeVariableName,
-  removeVariableTokenFromText,
-  renameVariableTokenInText,
   replaceAllOccurrencesWithToken,
   resolvePromptText,
 } from "@/lib/prompt-variables";
+import { removeToken, renameToken, tokenUsageMap } from "@/lib/prompt-doc";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import { AddVariableFromSelectionModal } from "./add-variable-from-selection-modal";
+import { PromptComposer, type ComposerHandle } from "@/features/content/prompt-composer/prompt-composer";
+import type { PickerFilter, PickerItem } from "@/features/content/prompt-composer/insert-picker";
+import type { EditorSelection } from "@/features/content/prompt-composer/prompt-doc-editor";
+import { VariableCreateModal } from "./variable-create-modal";
 import { VariableEditorModal } from "./variable-editor-modal";
 import { VariableList } from "./variable-list";
 
@@ -32,12 +31,19 @@ function makeTempId(): string {
 }
 
 /**
- * CLAUDE.md "Prompt Değişken Sistemi" §1-3 — wraps the prompt-text
- * `<textarea>` with a "Değişken Ekle" button that inserts a new `{token}`
- * at the caller's actual last-known cursor/selection (never appended to the
- * end), a "Değişkenler" management list (rename/delete, `variable-list.tsx`),
- * and a Şablon/Önizleme tab pair (§3) that previews with default/custom
- * values without ever mutating the real template in `value`.
+ * Normal prompt değişken düzenleyicisi (Bölüm 9.136).
+ *
+ * Kullanıcı prompt metnini doğrudan yazar; `{ad}` jetonları düzenleyicide
+ * pastel etiketlere dönüşür. İki yol:
+ *  - metinden kelime seç → bağlamsal çubuktan "Değişkene dönüştür"
+ *    (ad + varsayılan değer + açıklama);
+ *  - imleci bir yere koy → "Değişken ekle" (mobilde alt sayfa, masaüstünde
+ *    imleç yanı pencere, gerekirse sağ panel) → var olanı seç ya da yenisini
+ *    oluştur.
+ * Altta kalan şey ham düz metindir (`{ad}` jetonlu, `prompts.prompt_text`
+ * ile aynı biçim) ve değişken satırları `prompt_variables`'a yazılır — yani
+ * kaydet/yeniden aç sonrası yapı birebir korunur. Generator şablonlarıyla
+ * hiçbir veri modeli paylaşılmaz; yalnızca `PromptComposer` altyapısı ortaktır.
  */
 export function PromptTextEditor({
   id = "prompt-text",
@@ -59,98 +65,49 @@ export function PromptTextEditor({
   className?: string;
 }) {
   const { t } = useTranslation();
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const selectionRef = useRef({ start: value.length, end: value.length });
-  const warningTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const composerRef = useRef<ComposerHandle>(null);
   const [tab, setTab] = useState<"template" | "preview">("template");
   const activeTab = variables.length === 0 ? "template" : tab;
-  const [selectionWarning, setSelectionWarning] = useState<string | null>(null);
-  const [pendingSelection, setPendingSelection] = useState<{ start: number; end: number; rawText: string } | null>(
-    null,
-  );
+  const [creating, setCreating] = useState<{ range: EditorSelection; selectedText: string } | null>(null);
   const [editingVariable, setEditingVariable] = useState<DraftVariable | null>(null);
   const [previewValues, setPreviewValues] = useState<Record<string, string>>({});
 
-  function trackSelection() {
-    const el = textareaRef.current;
-    if (!el) return;
-    selectionRef.current = { start: el.selectionStart, end: el.selectionEnd };
-  }
+  const usage = useMemo(() => tokenUsageMap(value), [value]);
+  const items: PickerItem[] = variables.map((variable) => ({
+    id: variable.tempId,
+    name: variable.name,
+    label: variable.name,
+    description: variable.description || variable.defaultValue || undefined,
+    group: "all",
+    usage: usage.get(variable.name) ?? 0,
+  }));
+  const filters: PickerFilter[] = [
+    { id: "all", label: t("composer.filterAll") },
+    { id: "unused", label: t("composer.filterUnused") },
+    { id: "used", label: t("composer.filterUsed") },
+  ];
+  const definedNames = new Set(variables.map((variable) => variable.name));
 
-  function showSelectionWarning(message: string) {
-    if (warningTimer.current) clearTimeout(warningTimer.current);
-    setSelectionWarning(message);
-    warningTimer.current = setTimeout(() => setSelectionWarning(null), 4500);
-  }
-
-  // "Değişken Ekle" never opens a modal on its own — a variable's name is
-  // always the word/phrase the author actually highlighted in the prompt
-  // text, never freely typed, since the same word can genuinely appear
-  // more than once and typing an unrelated name here would silently
-  // disconnect the variable from the text it was meant to replace.
-  function handleAddVariableClick() {
-    const { start, end } = selectionRef.current;
-    const rawSelection = value.slice(start, end);
-    const leadingTrim = rawSelection.length - rawSelection.trimStart().length;
-    const trailingTrim = rawSelection.length - rawSelection.trimEnd().length;
-    const trimmed = rawSelection.trim();
-    if (!trimmed) {
-      showSelectionWarning(t("variable.selectFirstWarning"));
-      return;
-    }
-    if (!isValidVariableName(normalizeVariableName(trimmed))) {
-      showSelectionWarning(t("variable.invalidSelectionWarning"));
-      return;
-    }
-    setSelectionWarning(null);
-    setPendingSelection({ start: start + leadingTrim, end: end - trailingTrim, rawText: trimmed });
-  }
-
-  const pendingNormalizedName = pendingSelection ? normalizeVariableName(pendingSelection.rawText) : "";
-  const pendingOccurrenceCount = pendingSelection ? countRawOccurrences(value, pendingSelection.rawText) : 0;
-  const pendingExistingVariable = pendingSelection
-    ? (variables.find((variable) => variable.name.toLowerCase() === pendingNormalizedName.toLowerCase()) ?? null)
-    : null;
-
-  function handleConfirmAddFromSelection(values: { defaultValue: string; description: string; replaceAll: boolean }) {
-    if (!pendingSelection) return;
-    const { start, end, rawText } = pendingSelection;
-    let nextText: string;
-    let cursor: number | null;
-    if (values.replaceAll) {
-      nextText = replaceAllOccurrencesWithToken(value, rawText, pendingNormalizedName);
-      cursor = null;
+  function handleSubmitCreate(values: { name: string; defaultValue: string; description: string; replaceAll: boolean; existing: boolean }) {
+    if (!creating) return;
+    const { range, selectedText } = creating;
+    if (values.replaceAll && selectedText) {
+      onChange(replaceAllOccurrencesWithToken(value, selectedText, values.name));
     } else {
-      const result = insertTextAtRange(value, start, end, `{${pendingNormalizedName}}`);
-      nextText = result.text;
-      cursor = result.cursor;
+      composerRef.current?.insertToken(values.name, range);
     }
-    onChange(nextText);
-    if (!pendingExistingVariable) {
+    if (!values.existing) {
       onVariablesChange([
         ...variables,
-        { tempId: makeTempId(), name: pendingNormalizedName, defaultValue: values.defaultValue, description: values.description },
+        { tempId: makeTempId(), name: values.name, defaultValue: values.defaultValue, description: values.description },
       ]);
     }
-    setPendingSelection(null);
-    if (cursor !== null) {
-      requestAnimationFrame(() => {
-        const el = textareaRef.current;
-        if (el) {
-          el.focus();
-          el.setSelectionRange(cursor, cursor);
-          selectionRef.current = { start: cursor, end: cursor };
-        }
-      });
-    }
+    setCreating(null);
   }
 
   function handleEditVariable(values: { name: string; defaultValue: string; description: string }) {
     if (!editingVariable) return;
-    const nextText =
-      values.name !== editingVariable.name
-        ? renameVariableTokenInText(value, editingVariable.name, values.name)
-        : value;
+    const nextText = values.name !== editingVariable.name ? renameToken(value, editingVariable.name, values.name) : value;
     if (nextText !== value) onChange(nextText);
     onVariablesChange(
       variables.map((variable) => (variable.tempId === editingVariable.tempId ? { ...variable, ...values } : variable)),
@@ -159,7 +116,7 @@ export function PromptTextEditor({
   }
 
   function handleDeleteVariable(variable: DraftVariable) {
-    onChange(removeVariableTokenFromText(value, variable.name));
+    onChange(removeToken(value, variable.name));
     onVariablesChange(variables.filter((item) => item.tempId !== variable.tempId));
   }
 
@@ -169,70 +126,70 @@ export function PromptTextEditor({
 
   const previewText = resolvePromptText(
     value,
-    Object.fromEntries(
-      variables.map((variable) => [variable.name, previewValues[variable.name] ?? variable.defaultValue]),
-    ),
+    Object.fromEntries(variables.map((variable) => [variable.name, previewValues[variable.name] ?? variable.defaultValue])),
   );
 
-  const orphanTokens = extractVariableTokenNames(value).filter(
-    (name) => !variables.some((variable) => variable.name === name),
+  const orphanTokens = extractVariableTokenNames(value).filter((name) => !definedNames.has(name));
+
+  const tabSwitcher = (
+    <div className="flex rounded-md border border-border p-0.5 text-xs">
+      <button
+        type="button"
+        onClick={() => setTab("template")}
+        className={cn(
+          "flex items-center gap-1 rounded px-2.5 py-1 font-medium transition-colors",
+          activeTab === "template" ? "bg-accent-surface text-text" : "text-text-muted hover:text-text",
+        )}
+      >
+        <FileText size={12} /> {t("variable.templateTab")}
+      </button>
+      <button
+        type="button"
+        onClick={() => setTab("preview")}
+        disabled={variables.length === 0}
+        title={variables.length === 0 ? t("variable.previewDisabledHint") : undefined}
+        className={cn(
+          "flex items-center gap-1 rounded px-2.5 py-1 font-medium transition-colors disabled:opacity-40",
+          activeTab === "preview" ? "bg-accent-surface text-text" : "text-text-muted hover:text-text",
+        )}
+      >
+        <Eye size={12} /> {t("variable.previewTab")}
+      </button>
+    </div>
+  );
+
+  const list = (
+    <VariableList
+      variables={variables}
+      promptText={value}
+      onEdit={(variable) => setEditingVariable(variable)}
+      onDelete={handleDeleteVariable}
+    />
   );
 
   return (
     <div className={cn("space-y-3", className)}>
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex rounded-md border border-border p-0.5 text-xs">
-          <button
-            type="button"
-            onClick={() => setTab("template")}
-            className={cn(
-              "flex items-center gap-1 rounded px-2.5 py-1 font-medium transition-colors",
-              activeTab === "template" ? "bg-accent-surface text-text" : "text-text-muted hover:text-text",
-            )}
-          >
-            <FileText size={12} /> {t("variable.templateTab")}
-          </button>
-          <button
-            type="button"
-            onClick={() => setTab("preview")}
-            disabled={variables.length === 0}
-            title={variables.length === 0 ? t("variable.previewDisabledHint") : undefined}
-            className={cn(
-              "flex items-center gap-1 rounded px-2.5 py-1 font-medium transition-colors disabled:opacity-40",
-              activeTab === "preview" ? "bg-accent-surface text-text" : "text-text-muted hover:text-text",
-            )}
-          >
-            <Eye size={12} /> {t("variable.previewTab")}
-          </button>
-        </div>
-        <button
-          type="button"
-          onClick={handleAddVariableClick}
-          className="flex items-center gap-1 rounded-md border border-border px-2.5 py-1 text-xs font-medium text-text-muted transition-colors hover:border-primary/40 hover:text-primary"
-        >
-          <Plus size={12} /> {t("variable.addVariableAction")}
-        </button>
-      </div>
+      <PromptComposer
+        ref={composerRef}
+        mode="variable"
+        id={id}
+        value={value}
+        onChange={onChange}
+        items={items}
+        filters={filters}
+        tokenTone={(name) => (definedNames.has(name) ? "variable" : "unknown")}
+        placeholder={placeholder}
+        minRows={rows}
+        ariaLabel={t("prompt.promptTextHeading")}
+        required
+        leading={tabSwitcher}
+        hideEditor={activeTab === "preview"}
+        onCreateNew={({ range, selectedText }) => setCreating({ range, selectedText })}
+        onConvertSelection={({ range, selectedText }) => setCreating({ range, selectedText })}
+        panelExtra={variables.length > 0 ? list : undefined}
+      />
 
-      {selectionWarning && <p className="text-xs text-warning">{selectionWarning}</p>}
-
-      {activeTab === "template" ? (
-        <textarea
-          id={id}
-          aria-label={t("prompt.promptTextHeading")}
-          ref={textareaRef}
-          required
-          value={value}
-          onChange={(event) => onChange(event.target.value)}
-          onSelect={trackSelection}
-          onKeyUp={trackSelection}
-          onClick={trackSelection}
-          onBlur={trackSelection}
-          rows={rows}
-          placeholder={placeholder}
-          className="w-full resize-y rounded-lg border border-border bg-background px-3 py-2 font-mono text-sm text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
-        />
-      ) : (
+      {activeTab === "preview" && (
         <div className="space-y-3 rounded-md border border-border bg-background p-3">
           <div className="whitespace-pre-wrap font-mono text-sm text-text">{previewText}</div>
           <div className="space-y-2 border-t border-border pt-3">
@@ -249,20 +206,14 @@ export function PromptTextEditor({
                   id={`preview-${variable.tempId}`}
                   type="text"
                   value={previewValues[variable.name] ?? variable.defaultValue}
-                  onChange={(event) =>
-                    setPreviewValues((prev) => ({ ...prev, [variable.name]: event.target.value }))
-                  }
+                  onChange={(event) => setPreviewValues((prev) => ({ ...prev, [variable.name]: event.target.value }))}
                   className="h-8 flex-1 rounded-md border border-border bg-surface px-2 text-xs text-text"
                 />
               </div>
             ))}
           </div>
           {Object.keys(previewValues).length > 0 && (
-            <button
-              type="button"
-              onClick={() => setPreviewValues({})}
-              className="text-xs font-medium text-primary hover:underline"
-            >
+            <button type="button" onClick={() => setPreviewValues({})} className="text-xs font-medium text-primary hover:underline">
               {t("variable.resetToDefaults")}
             </button>
           )}
@@ -275,21 +226,15 @@ export function PromptTextEditor({
         </p>
       )}
 
-      <VariableList
-        variables={variables}
-        promptText={value}
-        onEdit={(variable) => setEditingVariable(variable)}
-        onDelete={handleDeleteVariable}
-      />
+      {list}
 
-      {pendingSelection && (
-        <AddVariableFromSelectionModal
-          rawText={pendingSelection.rawText}
-          normalizedName={pendingNormalizedName}
-          occurrenceCount={pendingOccurrenceCount}
-          existingVariable={pendingExistingVariable}
-          onClose={() => setPendingSelection(null)}
-          onSubmit={handleConfirmAddFromSelection}
+      {creating && (
+        <VariableCreateModal
+          selectedText={creating.selectedText}
+          occurrenceCount={creating.selectedText ? countRawOccurrences(value, creating.selectedText) : 0}
+          variables={variables}
+          onClose={() => setCreating(null)}
+          onSubmit={handleSubmitCreate}
         />
       )}
       {editingVariable && (

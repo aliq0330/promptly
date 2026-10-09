@@ -21,6 +21,7 @@ export function FieldList({
   onDuplicateField,
   onDeleteField,
   onReorderFields,
+  templateUsage,
 }: {
   fields: GeneratorField[];
   onAddField: () => void;
@@ -28,6 +29,8 @@ export function FieldList({
   onDuplicateField: (field: GeneratorField) => void;
   onDeleteField: (fieldId: string) => void;
   onReorderFields: (orderedIds: string[]) => void;
+  /** Alan anahtarı → prompt şablonunda kaç yerde kullanıldığı (yoksa 0/undefined). */
+  templateUsage?: Record<string, number>;
 }) {
   const { t } = useTranslation();
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
@@ -107,7 +110,13 @@ export function FieldList({
                 )}
                 {field.required && <span className="text-[10px] font-medium text-danger">{t("field.required")}</span>}
               </div>
-              <p className="mt-0.5 truncate font-mono text-xs text-primary">{`{{${field.key}}}`}</p>
+              {(templateUsage?.[field.key] ?? 0) > 0 && (
+                <p className="mt-0.5 text-xs text-secondary">
+                  {isConfirming
+                    ? t("generator.templateFieldUsage", { count: templateUsage?.[field.key] ?? 0 })
+                    : t("field.usedInTemplate", { count: templateUsage?.[field.key] ?? 0 })}
+                </p>
+              )}
               <p className="mt-0.5 truncate font-mono text-xs text-text-muted">→ {field.jsonPath?.trim() || field.key}</p>
               {field.condition && <p className="mt-0.5 text-xs text-text-muted">{t("field.conditionalVisibilityDefined")}</p>}
             </div>
