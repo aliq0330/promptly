@@ -576,6 +576,33 @@ export const translations = {
   "formSection.cover": { tr: "Kapak görseli", en: "Cover image" },
   "formSection.prompt": { tr: "Prompt", en: "Prompt" },
   "formSection.tool": { tr: "Araç / Model", en: "Tool / Model" },
+  "formSection.outputVideo": { tr: "Video çıktısı", en: "Video output" },
+  "formSection.outputAudio": { tr: "Ses çıktısı", en: "Audio output" },
+  "output.hintVideo": {
+    tr: "Bu promptla ürettiğin videoyu yükle. Prompt sayfasında oynatıcıyla gösterilir.",
+    en: "Upload the video you made with this prompt. It's shown with a player on the prompt page.",
+  },
+  "output.hintAudio": {
+    tr: "Bu promptla ürettiğin sesi veya müziği yükle. Prompt sayfasında oynatıcıyla gösterilir.",
+    en: "Upload the audio or music you made with this prompt. It's shown with a player on the prompt page.",
+  },
+  "output.choose": { tr: "Dosya seç", en: "Choose a file" },
+  "output.change": { tr: "Dosyayı değiştir", en: "Change file" },
+  "output.remove": { tr: "Dosyayı kaldır", en: "Remove file" },
+  "output.maxSize": { tr: "en fazla 50 MB", en: "up to 50 MB" },
+  "output.unsupported": {
+    tr: "Bu dosya türü desteklenmiyor. {{formats}} dosyası seç.",
+    en: "This file type isn't supported. Choose a {{formats}} file.",
+  },
+  "output.tooLarge": { tr: "Dosya çok büyük (en fazla 50 MB).", en: "The file is too large (50 MB max)." },
+  "output.uploadNote": {
+    tr: "Dosya prompt yayınlanırken yüklenir; taslağa kaydedilmez. Düzenlerken yeni bir dosya seçersen çıktı olarak o gösterilir.",
+    en: "The file is uploaded when the prompt is published and isn't saved with drafts. If you pick a new file while editing, it becomes the shown output.",
+  },
+  "output.uploadFailed": {
+    tr: "Prompt yayınlandı ama çıktı dosyası yüklenemedi: {{message}} Dosyayı yeniden seçip Kaydet'e basarak tekrar deneyebilirsin.",
+    en: "The prompt was published but the output file couldn't be uploaded: {{message}} You can pick the file again and press Save to retry.",
+  },
   "extra.title": { tr: "Hazır Ayarlar ve Ek Alan Önerileri", en: "Presets & Extra Field Suggestions" },
   "extra.hint": { tr: "Promptunu daha detaylı hale getirmek için isteğe bağlı ayarlar ekle.", en: "Add optional settings to make your prompt more detailed." },
   "extra.count": { tr: "{{count}} ayar", en: "{{count}} settings" },

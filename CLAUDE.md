@@ -11512,6 +11512,15 @@ Video ve ses promptları artık yalnızca metin değil: detay sayfasında gerçe
 - **Doğrulama:** `tsc`/`lint`/`next build --webpack` temiz; 31 medya dosyası ffmpeg ile hatasız decode edildi; ağ taklitli Playwright 11/11: ses detayında gerçek mp3 oynuyor (süre 16 sn, currentTime ilerliyor), video detayında `<video src controls>` doğru, kart/odak kapaklarında oynat işareti, 390px taşma yok. **Video oynatması test ortamında doğrulanamadı** (Playwright'ın Chromium'unda H.264 yok); normal tarayıcılarda H.264 desteklenir. Gerçek Supabase'e/cihaza karşı denenmedi.
 - **Bilinçli sınırlar:** videolar sessiz ve soyut (6 sn); kullanıcı kendi video/ses promptunu oluştururken çıktı yüklemesi hâlâ "Sonuç ekle" akışıyla (promptun kendi formunda ayrı medya yükleme yok); detayda yazarın sonucu hem hero'da hem "Kullanıcı sonuçları"nda görünür.
 
+### 9.131 Video/ses promptu oluştururken çıktı dosyası yükleme
+
+Yeni gönderi formunda (`/create`) içerik türü **Video** ya da **Ses** seçilince "Video çıktısı"/"Ses çıktısı" bölümü çıkar (`output-file-picker.tsx`): dosya seç, yerel oynatıcıyla önizle, kaldır/değiştir. Migration/yeni tablo yok — dosya, Bölüm 9.130'daki oynatma mimarisiyle aynı şekilde yazarın kendi `prompt_results` sonucu olarak (`result-media` bucket'ı) yüklenir; ayrıca sonucun küçük resmi `prompt_media`'ya kart kapağı olarak yazılır (`lib/supabase/prompt-output.ts` → `attachPromptOutput`, mevcut `createPromptResult` yeniden kullanıldı).
+- İzin verilen türler/boyut bucket'la aynı: video MP4/WebM/MOV, ses MP3/WAV/OGG/M4A, en fazla 50 MB; yanlış tür/boyut yüklemeden önce anlaşılır mesajla reddedilir. Seçilen dosya yalnızca seçildiği içerik türüne bağlıdır (tür değişince başka türün dosyası yüklenmez, aynı türe dönülünce korunur).
+- Yükleme **yayın anında** yapılır; taslak kaydında yapılmaz (sonuç RLS'i yalnızca yayınlanmış prompta izin verir; formda not var). Düzenlerken yeni dosya seçilirse yeni sonuç oluşur ve detayda çıktı olarak o gösterilir (eski sonuçlar silinmez, "Kullanıcı sonuçları"nda kalır).
+- Prompt yayınlandıktan sonra çıktı yüklenemezse prompt yayında kalır; kullanıcı `?edit=<id>&outputFailed=…` ile düzenleme ekranına alınıp hata + yeniden deneme yönergesi görür (çift prompt oluşmaz).
+- i18n: `formSection.output*`, `output.*` TR+EN eklendi. Doğrulama: tsc/lint/build temiz; ağ taklitli Playwright 3×13/13 (video, ses, yükleme hatası; 390px'te taşma yok). Gerçek Supabase'e karşı denenmedi.
+- Bilinçli sınırlar: kart kapağı yalnızca yayınla birlikte oluşur ve o oturumdaki önbellekte yenilenene kadar görünmeyebilir; video kapak karesi tarayıcı codec'ine bağlıdır (alınamazsa yer tutucu); ses için gerçek dalga biçimi yoktur.
+
 ---
 
 **Sonraki adım:** Bilinen iki üretim hatası (Bölüm 9.40 — mesajlarda
