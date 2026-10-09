@@ -1,6 +1,6 @@
 "use client";
 
-import type { LucideIcon } from "lucide-react";
+import { Play, type LucideIcon } from "lucide-react";
 import { ContentCard } from "@/features/content/content-card";
 import type { FeedItem } from "@/features/feed/types";
 import type { PromptMedia, UserProfile } from "@/types";
@@ -25,6 +25,7 @@ export function FocusVisualCard({
   badgeLabel,
   badgeDetail,
   moreImages = 0,
+  playable = false,
 }: {
   item: FeedItem;
   href: string;
@@ -37,12 +38,22 @@ export function FocusVisualCard({
   badgeDetail?: string;
   /** Number of further images the post has (shown as a quiet "+N"). */
   moreImages?: number;
+  /** Video/ses promptu: kapağın ortasında oynat işareti (oynatma detay sayfasında). */
+  playable?: boolean;
 }) {
   return (
     <ContentCard href={href} className="overflow-hidden">
       <div className="relative bg-surface-soft" style={{ aspectRatio: clampAspectRatio(image.width, image.height) }}>
         {/* eslint-disable-next-line @next/next/no-img-element -- user media (Storage URL / local data URL), same as every other card */}
         <img src={image.url} alt={image.alt || title} loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover" />
+
+        {playable && (
+          <span className="pointer-events-none absolute inset-0 flex items-center justify-center">
+            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-sm">
+              <Play size={20} fill="currentColor" />
+            </span>
+          </span>
+        )}
 
         <div className="pointer-events-none absolute inset-x-0 top-0 bg-gradient-to-b from-black/55 to-transparent p-2 pb-8">
           <div className="pointer-events-auto flex max-w-full">

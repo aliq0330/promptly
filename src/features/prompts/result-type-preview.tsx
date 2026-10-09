@@ -48,6 +48,8 @@ export function ResultTypePreview({ result, size }: { result: PreviewableResult;
       return (
         <video
           controls
+          playsInline
+          preload="metadata"
           poster={result.thumbnailUrl ?? undefined}
           src={result.mediaUrl}
           className="mx-auto max-h-[70vh] w-full rounded-lg bg-black"
@@ -75,7 +77,7 @@ export function ResultTypePreview({ result, size }: { result: PreviewableResult;
           <div className="relative aspect-square w-full overflow-hidden rounded-lg bg-surface-soft">
             {result.thumbnailUrl && <Image src={result.thumbnailUrl} alt="" fill sizes="320px" className="object-cover" />}
           </div>
-          <audio controls src={result.mediaUrl} className="w-full" />
+          <audio controls preload="metadata" src={result.mediaUrl} className="w-full" />
         </div>
       );
     }

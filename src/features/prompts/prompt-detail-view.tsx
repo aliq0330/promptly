@@ -29,6 +29,7 @@ import { EditSuggestionsPanel } from "@/features/prompts/edit-suggestions-panel"
 import { PromptHistoryPanel } from "@/features/prompts/prompt-history-panel";
 import { ContributorsPanel } from "@/features/prompts/contributors-panel";
 import { PromptResultsSection } from "@/features/prompts/prompt-results-section";
+import { PromptPlayableOutput } from "@/features/prompts/prompt-playable-output";
 import { useAuth } from "@/features/auth/auth-provider";
 import { fetchVariablesForPrompt } from "@/lib/supabase/prompt-variables";
 import { resolvePromptText, segmentPromptText } from "@/lib/prompt-variables";
@@ -153,7 +154,9 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
             <DetailByline person={prompt.author} createdAt={prompt.createdAt} language={language} />
           </header>
 
-          {media && (
+          {(prompt.contentType === "video" || prompt.contentType === "audio") ? (
+            <PromptPlayableOutput prompt={prompt} />
+          ) : media && (
             <figure className="space-y-2">
               <button
                 type="button"

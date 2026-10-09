@@ -26,6 +26,7 @@ function FocusPromptCard({ item }: { item: Extract<FeedItem, { kind: "prompt" }>
         badgeIcon={meta.icon}
         badgeLabel={t(meta.labelKey)}
         moreImages={Math.max(0, prompt.media.length - 1)}
+        playable={prompt.contentType === "video" || prompt.contentType === "audio"}
       />
     );
   }

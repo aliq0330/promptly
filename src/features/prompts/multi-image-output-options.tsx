@@ -4,6 +4,7 @@ import Image from "next/image";
 import { clampedAspectRatio } from "@/lib/placeholder-image";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
+import { Play } from "lucide-react";
 import type { PromptMedia } from "@/types";
 
 /**
@@ -168,6 +169,25 @@ export function OutputDotIndicator({ media }: { media: PromptMedia[] }) {
           ))}
         </div>
       )}
+    </figure>
+  );
+}
+
+/**
+ * Video/ses promptlarının kart önizlemesi: kapak (poster/waveform) + ortada
+ * oynat işareti. Kart bir "stretched link" olduğundan burada oynatma yok —
+ * tıklama detay sayfasına gider, gerçek oynatıcı orada (PromptPlayableOutput).
+ */
+export function OutputPosterPreview({ media }: { media: PromptMedia }) {
+  return (
+    <figure className={FRAME_CLASS} style={{ aspectRatio: clampedAspectRatio(media.width, media.height) }}>
+      <Image src={media.url} alt={media.alt} fill sizes={SIZES} className="object-cover" />
+      <span className="pointer-events-none absolute inset-0 flex items-center justify-center">
+        <span className="flex h-11 w-11 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-sm">
+          <Play size={18} fill="currentColor" />
+        </span>
+      </span>
+      <OutputCaption />
     </figure>
   );
 }
