@@ -12765,6 +12765,9 @@ Listelere **▤ Kart | ▦ Odak** segmentli anahtarı eklendi. **Kart = mevcut s
 ### 9.125 Studio: uzun sonuç metinleri kısaltılır
 
 Studio'da metin sonuçları (Sonuçlar kartı 8 satır, Geçmiş kartı 5 satır) kısaltılır; metne ya da "Daha fazla göster"e tıklayınca tamamı açılır, tekrar tıklayınca kapanır (`features/studio/clamped-text.tsx`, yalnızca gerçekten taşan metinde bağlantı çıkar). Geçmişteki kısaltma bir CSS çakışması yüzünden (`line-clamp` + `block`) hiç çalışmıyordu; düzeltildi. Yeni metin yok, migration yok. Playwright 7/7.
+### 9.124 Liste araç çubuğu: Filtre sistemi tüm genişliklerde
+
+Bölüm 9.117'deki `ListToolbar` artık yalnızca telefonda değil **tablet ve masaüstünde de** aynı: `[chip'ler]  [⚙ Filtre] [En yeni ▾] [Kart|Odak]`. Kategori/alt kategori satırları ve Prompt İstekleri durum çipleri sayfada açık durmak yerine "Filtrele" penceresine taşındı (telefonda alt sayfa, `sm`+ ortalı pencere). `desktopExtra` prop'u kaldırıldı; `desktopSheetSections`/`desktopActiveExtra` (yalnızca `md`+ gereken bölüm ve Filtre rozeti ek sayacı — örn. istek durumu, telefonda zaten sekme) eklendi; `ContentListPage`'e `desktopActiveExtra`/`onClearExtra`. Keşfet'teki "Yalnızca açık" satırı da sheet'e. Elle sıralama/Kart-Odak masaüstünde çubukta kalır, sheet'te de var. Yeni metin yok, migration yok. Doğrulama: tsc/lint/build; ağ taklitli Playwright 86/86 (7 sayfa × 1440/1024/820/390: Filtre görünür, taşma yok, istek durumu sheet'te ve rozette).
 
 ### 9.118 Masonry'de ilk kartların üstten hizası
 

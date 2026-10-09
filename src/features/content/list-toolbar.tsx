@@ -78,14 +78,11 @@ export function taxonomyActiveCount(value: TaxonomyFilterValue, includeType: boo
  * The control strip above a content list — ONE component for Home, Explore,
  * Prompts, Generators, Workflows, Requests (and Presets).
  *
- * - `md` and up: exactly the previous desktop layout — the chips scroll on the
- *   left, sort select + Kart/Odak switcher stay pinned on the right, and
- *   `desktopExtra` (category rows, status chips…) sits underneath.
- * - Below `md`: the chips become editorial tabs, and a single compact action
- *   bar follows — `[⚙ Filtre]  [En yeni ↓] [▦]`. Everything that used to need
- *   extra rows (categories, request status, the view switcher) moves into the
- *   "Filtrele" bottom sheet; state and data fetching are untouched, the
- *   sheet only drives the same setters live.
+ * Same compact strip at EVERY width: `[chips / tabs …]  [⚙ Filtre] [En yeni ↓] [▦]`.
+ * Categories, request status, sort and view live in the "Filtrele" sheet
+ * (bottom sheet on phones, centred dialog from `sm` up); state and data
+ * fetching are untouched, the sheet only drives the same setters live. The
+ * primary chips become editorial tabs below `md` only.
  */
 export function ListToolbar({
   tabs,
@@ -94,8 +91,9 @@ export function ListToolbar({
   hideTabsOnMobile,
   sort,
   onSortChange,
-  desktopExtra,
   sheetSections,
+  desktopSheetSections,
+  desktopActiveExtra = 0,
   activeCount = 0,
   onClear,
   className,
@@ -109,10 +107,12 @@ export function ListToolbar({
   hideTabsOnMobile?: boolean;
   sort: ContentSortKey;
   onSortChange: (sort: ContentSortKey) => void;
-  /** Rows shown under the chip row from `md` up only (they live in the sheet on phones). */
-  desktopExtra?: ReactNode;
   /** Page-specific sections of the filter sheet (placed above Sıralama / Görünüm). */
   sheetSections?: ReactNode;
+  /** Sections only needed from `md` up — on phones the same filter is already a tab (e.g. request status). */
+  desktopSheetSections?: ReactNode;
+  /** Extra active filters that only exist from `md` up (added to the Filtre badge there). */
+  desktopActiveExtra?: number;
   /** How many filters are narrowing the list right now — shown on the Filtre button. */
   activeCount?: number;
   onClear?: () => void;
@@ -149,13 +149,18 @@ export function ListToolbar({
             onClick={() => setOpen(true)}
             aria-haspopup="dialog"
             aria-label={activeCount > 0 ? t("toolbar.filterWithCount", { count: activeCount }) : t("toolbar.filter")}
-            className="h-11 gap-2 rounded-lg px-3.5 md:hidden"
+            className="h-11 gap-2 rounded-lg px-3.5 md:h-10"
           >
             <SlidersHorizontal size={16} aria-hidden />
             {t("toolbar.filter")}
             {activeCount > 0 && (
-              <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-caption font-semibold tabular-nums text-primary-foreground">
+              <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-caption font-semibold tabular-nums text-primary-foreground md:hidden">
                 {activeCount}
+              </span>
+            )}
+            {activeCount + desktopActiveExtra > 0 && (
+              <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-caption font-semibold tabular-nums text-primary-foreground max-md:hidden">
+                {activeCount + desktopActiveExtra}
               </span>
             )}
           </Button>
@@ -166,8 +171,6 @@ export function ListToolbar({
           </div>
         </div>
       </div>
-
-      {desktopExtra && <div className="space-y-2 max-md:hidden">{desktopExtra}</div>}
 
       {open && (
         <Modal onClose={() => setOpen(false)} labelledBy={titleId}>
@@ -188,6 +191,7 @@ export function ListToolbar({
 
             <div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-4 py-4">
               {sheetSections}
+              {desktopSheetSections && <div className="space-y-5 max-md:hidden">{desktopSheetSections}</div>}
               <SheetSection title={t("toolbar.sort")}>
                 <div role="radiogroup" aria-label={t("profile.sortAriaLabel")} className="space-y-1">
                   {SORT_KEYS.map((key) => (
@@ -215,7 +219,7 @@ export function ListToolbar({
 
             <div className="flex gap-2 border-t border-border-soft px-4 py-3">
               {onClear && (
-                <Button variant="outline" className="h-11 flex-1" onClick={onClear} disabled={activeCount === 0}>
+                <Button variant="outline" className="h-11 flex-1" onClick={onClear} disabled={activeCount + desktopActiveExtra === 0}>
                   {t("toolbar.clear")}
                 </Button>
               )}

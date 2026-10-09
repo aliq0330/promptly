@@ -9,11 +9,11 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { PageContainer, PageHeader } from "@/components/ui/page-header";
 import { PromptCardSkeletonGrid } from "@/components/ui/prompt-card-skeleton";
 import { type ContentSortKey } from "@/features/content/sort-select";
-import { ListToolbar, TaxonomySheetSections, taxonomyActiveCount } from "@/features/content/list-toolbar";
+import { ListToolbar, SheetSection, TaxonomySheetSections, taxonomyActiveCount } from "@/features/content/list-toolbar";
 import { useViewMode } from "@/features/content/view-mode-store";
 import { FocusGrid } from "@/features/focus/focus-grid";
 import type { FeedItem } from "@/features/feed/types";
-import { TaxonomyDeepRows, TaxonomyTypeChips } from "@/features/content/taxonomy-filter";
+import { TaxonomyTypeChips } from "@/features/content/taxonomy-filter";
 import { AdvancedSearchBox } from "@/features/search/advanced-search-box";
 import { tokensToQuery, type SearchToken } from "@/features/search/search-tokens";
 import { EMPTY_TAXONOMY_FILTER, matchesTaxonomy, type TaxonomyFilterValue } from "@/lib/content-taxonomy";
@@ -55,6 +55,8 @@ export function ContentListPage<T extends { id: string; createdAt: string; likeC
   showCategories = true,
   postFilter,
   extra,
+  desktopActiveExtra = 0,
+  onClearExtra,
   mobileTabs,
   searchPlaceholder,
   renderItems,
@@ -81,7 +83,10 @@ export function ContentListPage<T extends { id: string; createdAt: string; likeC
   showCategories?: boolean;
   postFilter?: (items: T[]) => T[];
   /** Extra chip row under the type chips (md+). */
+  /** Page-specific filter (e.g. request status chips) — lives in the Filtre sheet from `md` up; on phones the page passes it as `mobileTabs`. */
   extra?: ReactNode;
+  desktopActiveExtra?: number;
+  onClearExtra?: () => void;
   /** Phones: these chips become the tab row (e.g. request status) and the content-type chips move into the filter sheet. */
   mobileTabs?: ReactNode;
   searchPlaceholder?: string;
@@ -204,12 +209,15 @@ export function ContentListPage<T extends { id: string; createdAt: string; likeC
           mobileTabs={mobileTabs}
           sort={sort}
           onSortChange={setSort}
-          desktopExtra={showCategories ? <TaxonomyDeepRows value={taxonomy} onChange={setTaxonomy} /> : undefined}
           sheetSections={<TaxonomySheetSections value={taxonomy} onChange={setTaxonomy} showCategories={showCategories} />}
           activeCount={taxonomyActiveCount(taxonomy, mobileTabs !== undefined)}
-          onClear={() => setTaxonomy(EMPTY_TAXONOMY_FILTER)}
+          desktopSheetSections={extra ? <SheetSection title={t("toolbar.status")}>{extra}</SheetSection> : undefined}
+          desktopActiveExtra={desktopActiveExtra}
+          onClear={() => {
+            setTaxonomy(EMPTY_TAXONOMY_FILTER);
+            onClearExtra?.();
+          }}
         />
-        {extra && <div className="max-md:hidden">{extra}</div>}
       </div>
 
       {(loading && baseItems.length === 0 && !active) || searching ? (

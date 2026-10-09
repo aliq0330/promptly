@@ -4,14 +4,14 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Blocks, Hash, LayoutGrid, Sparkles, SquareTerminal, SlidersHorizontal, TrendingUp, Users, Workflow as WorkflowIcon } from "lucide-react";
 import { Tabs } from "@/components/ui/tabs";
-import { Chip, ChipRow } from "@/components/ui/chip";
+import { Chip } from "@/components/ui/chip";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PromptCardSkeletonGrid } from "@/components/ui/prompt-card-skeleton";
 import { FeedItemsView } from "./feed-items-view";
 import { feedItemCreatedAt, feedItemPopularity, type FeedItem } from "./types";
 import { type ContentSortKey } from "@/features/content/sort-select";
 import { ListToolbar, SheetChips, SheetSection, TaxonomySheetSections, taxonomyActiveCount } from "@/features/content/list-toolbar";
-import { TaxonomyDeepRows, TaxonomyTypeChips } from "@/features/content/taxonomy-filter";
+import { TaxonomyTypeChips } from "@/features/content/taxonomy-filter";
 import { SearchView } from "@/features/search/search-view";
 import { EMPTY_TAXONOMY_FILTER, matchesTaxonomy, type TaxonomyFilterValue } from "@/lib/content-taxonomy";
 import { CreatorCard } from "@/features/profile/creator-card";
@@ -151,7 +151,6 @@ export function DiscoverFeed() {
             hideTabsOnMobile
             sort={sort}
             onSortChange={setSort}
-            desktopExtra={<TaxonomyDeepRows value={taxonomy} onChange={setTaxonomy} />}
             sheetSections={
               <>
                 <TaxonomySheetSections value={taxonomy} onChange={setTaxonomy} />
@@ -169,7 +168,6 @@ export function DiscoverFeed() {
             }}
           />
         )}
-        {section === "requests" && <ChipRow className="max-md:hidden">{openOnlyChips}</ChipRow>}
       </div>
 
       {section === "creators" ? (
