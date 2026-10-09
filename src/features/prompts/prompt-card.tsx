@@ -10,7 +10,7 @@ import { CONTENT_TYPE_META } from "./content-type-meta";
 import { PostHeader } from "./post-header";
 import { GeneratorSourceContext, RequestResponseContext } from "./post-context";
 import { PromptCardFooter } from "./prompt-card-footer";
-import { OutputThumbnailStrip } from "./multi-image-output-options";
+import { OutputPosterPreview, OutputThumbnailStrip } from "./multi-image-output-options";
 import type { Prompt } from "@/types";
 
 type CollectionRemoval = { isDefault: boolean; onRemove: () => Promise<void> };
@@ -45,6 +45,8 @@ export function PromptCard({
   const meta = CONTENT_TYPE_META[prompt.contentType];
   const href = promptHref(prompt);
   const media = prompt.contentType === "image" ? prompt.media : [];
+  const isPlayable = prompt.contentType === "video" || prompt.contentType === "audio";
+  const poster = isPlayable ? prompt.media[0] : undefined;
   const isResponse = prompt.origin.type === "request-response";
 
   return (
@@ -68,6 +70,7 @@ export function PromptCard({
         </div>
 
         {media.length > 0 && <OutputThumbnailStrip media={media} />}
+        {poster && <OutputPosterPreview media={poster} />}
 
         <ToolChips refs={prompt.tools} />
         <ContentTags tags={prompt.tags} />
