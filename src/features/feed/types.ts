@@ -30,3 +30,18 @@ export function feedItemPopularity(item: FeedItem): number {
 export function feedItemAuthorId(item: FeedItem): string {
   return item.kind === "generator" || item.kind === "workflow" || item.kind === "preset" ? item.data.creator.id : item.data.author.id;
 }
+
+/**
+ * Does a feed item pass the shared taxonomy filter (type / category / subcategory)?
+ * A workflow spans several content types: it matches a type filter when it chains
+ * that type; category / subcategory are its own.
+ */
+export function matchesFeedTaxonomy(item: FeedItem, filter: { contentType: string | null; category: string | null; subcategory: string | null }): boolean {
+  if (!filter.contentType && !filter.category && !filter.subcategory) return true;
+  if (item.kind === "workflow") {
+    const w = item.data;
+    return (!filter.contentType || w.contentTypes.includes(filter.contentType as never)) && (!filter.category || w.category === filter.category) && (!filter.subcategory || w.subcategory === filter.subcategory);
+  }
+  const d = item.data;
+  return (!filter.contentType || d.contentType === filter.contentType) && (!filter.category || d.category === filter.category) && (!filter.subcategory || d.subcategory === filter.subcategory);
+}
