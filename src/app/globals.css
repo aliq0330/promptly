@@ -624,16 +624,12 @@
   }
 }
 
-/* Mode/palette switch cross-fade — see withThemeTransition() in theme-provider. */
-@media (prefers-reduced-motion: no-preference) {
-  .theme-transition,
-  .theme-transition *,
-  .theme-transition *::before,
-  .theme-transition *::after {
-    transition-property: background-color, border-color, color, fill, stroke, box-shadow !important;
-    transition-duration: 300ms !important;
-    transition-timing-function: var(--ease-soft) !important;
-  }
+/* Mode/palette switch is instant — see withInstantSwitch() in theme-provider. */
+.theme-instant,
+.theme-instant *,
+.theme-instant *::before,
+.theme-instant *::after {
+  transition: none !important;
 }
 
 @media (prefers-reduced-motion: reduce) {

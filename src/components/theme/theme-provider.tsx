@@ -78,8 +78,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   const setTheme = useCallback((next: Theme) => {
     setThemeState(next);
-    withThemeTransition();
-    document.documentElement.classList.toggle("dark", next === "dark");
+    withInstantSwitch(() => document.documentElement.classList.toggle("dark", next === "dark"));
     try {
       localStorage.setItem(STORAGE_KEY, next);
     } catch {
@@ -94,8 +93,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const setPalette = useCallback((next: Palette) => {
     setPaletteState(next);
     const root = document.documentElement;
-    withThemeTransition();
-    root.setAttribute("data-palette", next);
+    withInstantSwitch(() => root.setAttribute("data-palette", next));
     try {
       localStorage.setItem(PALETTE_STORAGE_KEY, next);
     } catch {
@@ -118,15 +116,16 @@ export function useTheme() {
 }
 
 /**
- * A user-initiated mode/palette switch cross-fades colors instead of snapping
- * (Bölüm 9.113): `.theme-transition` on <html> gives every element a short
- * color transition for one beat, then is removed so it never slows ordinary
- * hover/focus feedback. Reduced motion skips it (globals.css).
+ * A mode/palette switch must be instant. Many elements carry their own
+ * `transition-colors`, so flipping the theme normally makes each one fade on
+ * its own clock and the page looks like it stutters. `.theme-instant` turns
+ * all transitions off, the switch is applied and flushed (forced reflow), and
+ * the class is dropped on the next frame so hover/focus feedback is untouched.
  */
-let themeTransitionTimer: number | undefined;
-function withThemeTransition() {
+function withInstantSwitch(apply: () => void) {
   const root = document.documentElement;
-  root.classList.add("theme-transition");
-  window.clearTimeout(themeTransitionTimer);
-  themeTransitionTimer = window.setTimeout(() => root.classList.remove("theme-transition"), 360);
+  root.classList.add("theme-instant");
+  apply();
+  void root.offsetHeight;
+  requestAnimationFrame(() => requestAnimationFrame(() => root.classList.remove("theme-instant")));
 }
