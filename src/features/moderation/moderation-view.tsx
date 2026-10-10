@@ -13,6 +13,9 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import { formatRelativeTime } from "@/lib/utils";
 import { StorageCleanupCard } from "@/features/moderation/storage-cleanup-card";
+import { SiteStatsPanel } from "@/features/moderation/admin/site-stats-panel";
+import { UsersPanel } from "@/features/moderation/admin/users-panel";
+import { Tabs } from "@/components/ui/tabs";
 import { fetchReportQueue, moderateReport, type ModerationAction, type ModerationReport, type ReportStatus } from "@/lib/supabase/moderation";
 
 type Filter = ReportStatus | "all";
@@ -38,9 +41,78 @@ const TYPE_KEY: Record<string, TranslationKey> = {
   preset: "moderation.type.preset",
 };
 
+type AdminTab = "reports" | "stats" | "users";
+const TAB_IDS: AdminTab[] = ["reports", "stats", "users"];
+
+function readParam(name: string): string | null {
+  return typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get(name);
+}
+
+function writeParams(updates: Record<string, string | null>) {
+  const params = new URLSearchParams(window.location.search);
+  for (const [key, value] of Object.entries(updates)) {
+    if (value === null) params.delete(key);
+    else params.set(key, value);
+  }
+  const query = params.toString();
+  window.history.replaceState(null, "", `${window.location.pathname}${query ? `?${query}` : ""}`);
+}
+
 export function ModerationView() {
   const { t } = useTranslation();
   const { user, loading: authLoading } = useAuth();
+  const isModerator = useIsModerator();
+  const [tab, setTabState] = useState<AdminTab>(() => {
+    const value = readParam("tab");
+    return TAB_IDS.includes(value as AdminTab) ? (value as AdminTab) : "reports";
+  });
+  const [userId, setUserIdState] = useState<string | null>(() => readParam("user"));
+
+  function setTab(next: AdminTab) {
+    setTabState(next);
+    setUserIdState(null);
+    writeParams({ tab: next === "reports" ? null : next, user: null });
+  }
+  function setUserId(next: string | null) {
+    setUserIdState(next);
+    writeParams({ user: next });
+  }
+
+  if (authLoading) return null;
+  if (!user || !isModerator) {
+    return (
+      <div className="mx-auto w-full max-w-3xl px-3 py-8 sm:px-5">
+        <EmptyState icon={ShieldCheck} title={t("moderation.forbidden")} />
+      </div>
+    );
+  }
+
+  return (
+    <div className="mx-auto w-full max-w-4xl space-y-4 px-3 py-5 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
+      <div>
+        <h1 className="text-h1 font-semibold text-text">{t("moderation.title")}</h1>
+        <p className="text-small text-text-secondary">{t("moderation.subtitle")}</p>
+      </div>
+      <Tabs
+        items={[
+          { key: "reports" as const, label: t("admin.tabReports") },
+          { key: "stats" as const, label: t("admin.tabStats") },
+          { key: "users" as const, label: t("admin.tabUsers") },
+        ]}
+        active={tab}
+        onChange={setTab}
+        ariaLabel={t("admin.tabsAria")}
+        variant="segmented"
+      />
+      {tab === "reports" && <ReportsPanel />}
+      {tab === "stats" && <SiteStatsPanel />}
+      {tab === "users" && <UsersPanel userId={userId} onSelectUser={setUserId} />}
+    </div>
+  );
+}
+
+function ReportsPanel() {
+  const { t } = useTranslation();
   const isModerator = useIsModerator();
   const [filter, setFilter] = useState<Filter>("open");
   const [reports, setReports] = useState<ModerationReport[] | null>(null);
@@ -68,21 +140,8 @@ export function ModerationView() {
     };
   }, [isModerator, filter, t, reloadKey]);
 
-  if (authLoading) return null;
-  if (!user || !isModerator) {
-    return (
-      <div className="mx-auto w-full max-w-3xl px-3 py-8 sm:px-5">
-        <EmptyState icon={ShieldCheck} title={t("moderation.forbidden")} />
-      </div>
-    );
-  }
-
   return (
-    <div className="mx-auto w-full max-w-3xl space-y-4 px-3 py-5 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
-      <div>
-        <h1 className="text-h1 font-semibold text-text">{t("moderation.title")}</h1>
-        <p className="text-small text-text-secondary">{t("moderation.subtitle")}</p>
-      </div>
+    <div className="space-y-4">
       <ChipRow>
         {FILTERS.map((f) => (
           <Chip key={f.id} selected={filter === f.id} onClick={() => setFilter(f.id)}>

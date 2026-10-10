@@ -18,6 +18,7 @@ export function translateAuthError(message: string): string {
     "New password should be different from the old password.": { tr: "Yeni şifre eskisinden farklı olmalı.", en: "The new password must be different from the old one." },
     "A user with this email address has already been registered": { tr: "Bu e-posta adresiyle zaten bir hesap var.", en: "An account with this email address already exists." },
     "Email rate limit exceeded": { tr: "Çok fazla e-posta isteği yapıldı, biraz sonra tekrar dene.", en: "Too many email requests — please try again shortly." },
+    "User is banned": { tr: "Hesabın geçici olarak askıya alındı.", en: "Your account is temporarily suspended." },
     "Auth session missing!": { tr: "Oturum bulunamadı, lütfen tekrar giriş yap.", en: "No session found — please log in again." },
   };
   return known[message]?.[getRuntimeLanguage()] ?? message;
