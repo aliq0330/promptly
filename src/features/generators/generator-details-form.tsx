@@ -19,8 +19,9 @@ import type { GeneratorMetaInput } from "@/lib/supabase/generators";
  * removed, see CLAUDE.md), an optional free-typed subcategory, tags
  * (the shared, already-generic `TagPicker` — reused as-is, no
  * generator-specific fork), zero or more cover images (`MultiImagePicker`),
- and the generator-level toggles (visibility lives in the shared footer of the last step), (prompt-editing/saving/
- * negative-prompt). There is no dedicated `generator-covers` Storage
+ (visibility lives in the shared footer of the Fields step; the old
+ * "Ayarlar" toggles were removed — the owner can always edit, and saving
+ * a generated prompt is always allowed). There is no dedicated `generator-covers` Storage
  * bucket (this feature's migration deliberately didn't add one — see
  * CLAUDE.md), so each cover is stored the same way this app already stores
  * every localStorage-era image (avatar edit, request reference image): a
@@ -96,44 +97,6 @@ export function GeneratorDetailsForm({
         <TagPicker picker={tagPicker} />
       </FormSection>
 
-      <FormSection title={t("generator.settingsHeading")}>
-        <div className="space-y-2">
-          <ToggleRow
-            label={t("generator.allowPromptEditingLabel")}
-            description={t("generator.allowPromptEditingDescription")}
-            checked={meta.allowPromptEditing}
-            onChange={(checked) => onChange({ allowPromptEditing: checked })}
-          />
-          <ToggleRow
-            label={t("generator.allowSavingLabel")}
-            description={t("generator.allowSavingDescription")}
-            checked={meta.allowSavingGeneratedPrompts}
-            onChange={(checked) => onChange({ allowSavingGeneratedPrompts: checked })}
-          />
-        </div>
-      </FormSection>
     </FormSections>
-  );
-}
-
-function ToggleRow({
-  label,
-  description,
-  checked,
-  onChange,
-}: {
-  label: string;
-  description: string;
-  checked: boolean;
-  onChange: (checked: boolean) => void;
-}) {
-  return (
-    <label className="flex cursor-pointer items-start gap-2.5 py-1">
-      <input type="checkbox" checked={checked} onChange={(event) => onChange(event.target.checked)} className="mt-0.5" />
-      <span>
-        <span className="block text-sm text-text">{label}</span>
-        <span className="block text-xs text-text-muted">{description}</span>
-      </span>
-    </label>
   );
 }

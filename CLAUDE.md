@@ -11551,6 +11551,12 @@ Header'ın sağındaki avatar artık hesap menüsü (`components/layout/account-
 - i18n: `account.*`, `myContent.*` TR+EN eklendi.
 - **Doğrulama:** tsc/lint/`next build --webpack` temiz; ağ taklitli Playwright 116/116 (1280/820/390/320, üye+misafir: menü içeriği, taşma yok, gece modu, Escape, İçeriklerim sekmeleri/boş durum, çıkış sonrası menü kayboluyor, misafir düğmeleri/menüsü, sayfa hatası yok). Gerçek Supabase'e ve gerçek içerikle (dolu listeler) denenmedi.
 
+### 9.138 Generator: yayın bölümü 2. adımda, "Ayarlar" ve "Prompt Olarak Aç" kalktı, oluşturanın promptu local sayfada görünür
+
+- **Builder:** adımlar artık yalnızca Detaylar → Alanlar. Eski "Yayınla" adımı kalktı; hazır-olma/hata özeti, Görünürlük switch'i ve [Taslağa kaydet][Paylaş] Alanlar adımında "Prompt şablonu" bölümünün altında. Detaylar adımındaki "Ayarlar" kutusu (izin toggle'ları) silindi; düzenleme sahibine hep açık, `allow_prompt_editing`/`allow_saving_generated_prompts` kayıtta hep `true` yazılır (DB kolonları duruyor).
+- **Local sayfa (`/generators/local`):** "Prompt Olarak Aç" butonu ve giriş uyarısı kaldırıldı (`recordGeneratorRun` çağrısı bu sayfadan çıktı; `/create?generatorRun=` modu `CreatePromptForm`'da kodda duruyor ama artık bir girişi yok). Oluşturanın hazırladığı şablon, Form sekmesinin üstünde salt-okunur "Hazırlanan prompt" bloğunda (alanlar `{Etiket}` olarak) görünür (`GeneratorPlayground showCreatorPrompt`, yalnız çalışma sayfasında; builder önizlemesinde yok). Çıktı sekmeleri aynı.
+- TR+EN: `generator.creatorPromptTitle` eklendi; kullanılmayan 9 `generator.*` ve `stepPublish` anahtarı silindi. Migration yok. tsc/lint/test/build temiz; tarayıcıda denenmedi.
+
 ---
 
 **Sonraki adım:** Bilinen iki üretim hatası (Bölüm 9.40 — mesajlarda
