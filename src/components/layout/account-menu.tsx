@@ -46,15 +46,15 @@ function useDropdown() {
 }
 
 const PANEL_CLASS =
-  "absolute right-0 top-11 z-40 w-[min(18.5rem,calc(100vw-1.5rem))] origin-top-right overflow-hidden rounded-xl border border-border-soft bg-surface-elevated shadow-pop animate-pop-in";
+  "absolute right-0 top-11 z-40 w-[min(15rem,calc(100vw-1.5rem))] md:w-[min(18.5rem,calc(100vw-1.5rem))] origin-top-right overflow-hidden rounded-xl border border-border-soft bg-surface-elevated shadow-pop animate-pop-in";
 
 const ITEM_CLASS =
-  "flex min-h-11 w-full items-center gap-3 rounded-lg px-3 text-left text-small font-medium text-text transition-colors duration-200 hover:bg-surface-soft focus-visible:bg-surface-soft";
+  "flex min-h-9 w-full items-center gap-2.5 rounded-lg px-2.5 text-left md:min-h-11 md:gap-3 md:px-3 text-small font-medium text-text transition-colors duration-200 hover:bg-surface-soft focus-visible:bg-surface-soft";
 
 function MenuGroup({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div role="group" aria-label={label} className="px-1.5 py-1.5">
-      <p className="px-3 pb-1 pt-1.5 text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">{label}</p>
+    <div role="group" aria-label={label} className="px-1 py-1 md:px-1.5 md:py-1.5">
+      <p className="hidden px-3 pb-1 pt-1.5 text-caption md:block font-semibold uppercase tracking-[0.08em] text-text-muted">{label}</p>
       {children}
     </div>
   );
@@ -63,7 +63,7 @@ function MenuGroup({ label, children }: { label: string; children: ReactNode }) 
 function MenuLink({ href, icon: Icon, label, onNavigate }: { href: string; icon: LucideIcon; label: string; onNavigate: () => void }) {
   return (
     <Link href={href} role="menuitem" onClick={onNavigate} className={ITEM_CLASS}>
-      <Icon size={17} className="shrink-0 text-text-secondary" />
+      <Icon size={16} className="shrink-0 text-text-secondary" />
       <span className="truncate">{label}</span>
     </Link>
   );
@@ -119,23 +119,20 @@ export function AccountMenu() {
 
       {open && (
         <div role="menu" aria-label={t("account.menuAriaLabel")} className={PANEL_CLASS}>
-          <div className="flex items-center gap-3 border-b border-border-soft p-4">
-            <Avatar src={profile.avatarUrl} alt="" size={44} />
+          <Link
+            href={ownProfileHref}
+            onClick={close}
+            aria-label={t("account.myProfile")}
+            className="flex items-center gap-2.5 border-b border-border-soft px-3 py-2.5 transition-colors duration-200 hover:bg-surface-soft md:gap-3 md:p-4"
+          >
+            <Avatar src={profile.avatarUrl} alt="" size={36} />
             <div className="min-w-0 flex-1">
               <p className="truncate text-small font-semibold text-text">{profile.displayName}</p>
               <p className="truncate text-caption text-text-muted">@{profile.username}</p>
             </div>
-            <Link
-              href={ownProfileHref}
-              onClick={close}
-              className="shrink-0 rounded-full border border-border px-3 py-1.5 text-caption font-semibold text-text transition-colors duration-200 hover:bg-surface-soft"
-            >
-              {t("account.myProfile")}
-            </Link>
-          </div>
+          </Link>
 
           <MenuGroup label={t("account.groupAccount")}>
-            <MenuLink href={ownProfileHref} icon={User} label={t("account.myProfile")} onNavigate={close} />
             <MenuLink href="/my-content" icon={LayoutGrid} label={t("account.myContent")} onNavigate={close} />
             <MenuLink href="/saved" icon={Bookmark} label={t("nav.saved")} onNavigate={close} />
             <MenuLink href="/following" icon={Users} label={t("nav.following")} onNavigate={close} />
@@ -173,7 +170,7 @@ export function AccountMenu() {
             {isModerator && <MenuLink href="/moderation" icon={ShieldCheck} label={t("nav.moderation")} onNavigate={close} />}
           </MenuGroup>
 
-          <div className="border-t border-border-soft p-1.5">
+          <div className="border-t border-border-soft p-1 md:p-1.5">
             <button
               type="button"
               role="menuitem"

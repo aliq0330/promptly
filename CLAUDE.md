@@ -11587,6 +11587,12 @@ Canlıda `prompt_dna_sections`=0 ve `content_relations`=0 olduğundan prompt har
 
 `< lg`'de detay paneli haritanın/listenin içine `absolute` bindirilmiş bir katmandı: `max-h-full` yüzdesi belirsiz üst yüksekliğe göre çözülmediğinden panel kırpılıyor (alt "Detaya git / Merkez yap" butonları kayboluyordu), liste görünümünde ise "Detay" düğmesi satır başlıklarının üstüne biniyordu. Artık panel ortak `Modal variant="sheet"` ile (portal) gerçek bir alt sayfa (`max-h-[85dvh]`, panel içi kaydırma, ESC/arka plan ile kapanır, `useMediaQuery(min-width:1024px)` ile yalnızca `< lg`); "Detaylar" düğmesi stage'in DIŞINDA, altında tam genişlikte. `lg+` yan sütun değişmedi. Ayrıca merkez düğüm başlığı 3→2 satır (üst/alt kırpılma), merkezde ilişki hapı yok, "Haritanın merkezi" rozeti tek satır. Migration yok, yeni metin yok. Ağ taklitli Playwright 17/17 (390/820/1440: taşma yok, sheet açılır, alt butonlar viewport içinde, ESC, sayfa hatası yok). Gerçek iOS Safari'de denenmedi.
 
+### 9.144 Anlık tema geçişi + kompakt mobil avatar menüsü
+
+- **Tema:** Bölüm 9.113'ün `.theme-transition` (300 ms renk geçişi) kaldırıldı; birçok öğenin kendi `transition-colors`'ı yüzünden her biri ayrı saatte soluyor, sayfa takılıyor gibi görünüyordu. Artık mod/palet değişiminde `withInstantSwitch()` (`theme-provider.tsx`) `<html>`'e kısa süre `.theme-instant` (`transition: none !important`) ekler, değişikliği uygular, reflow zorlar ve iki karede sınıfı kaldırır → geçiş anlık, hover/odak geri bildirimi etkilenmez.
+- **Avatar menüsü (`account-menu.tsx`):** mobilde panel 15rem (`md`+ 18.5rem), satırlar `min-h-9` (`md`+ 11), grup başlıkları yalnız `md`+; kimlik bloğu artık tek bir profil bağlantısı (ayrı "Profilim" hapı ve grup içindeki yinelenen "Profilim" satırı kalktı), avatar 36px. Menü içeriği/davranışı aynı.
+- Migration yok, yeni metin yok. tsc/lint temiz; tarayıcıda denenmedi.
+
 ---
 
 **Sonraki adım:** Bilinen iki üretim hatası (Bölüm 9.40 — mesajlarda
