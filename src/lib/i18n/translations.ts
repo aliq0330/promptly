@@ -59,6 +59,16 @@ export const translations = {
   "moderation.filterReviewed": { tr: "İncelendi", en: "Reviewed" },
   "moderation.filterDismissed": { tr: "Reddedildi", en: "Dismissed" },
   "moderation.filterAll": { tr: "Tümü", en: "All" },
+  "moderation.dnaTitle": { tr: "Eksik Prompt DNA'larını oluştur", en: "Generate missing Prompt DNA" },
+  "moderation.dnaHint": {
+    tr: "DNA'sı olmayan yayınlanmış promptlar için DNA'yı otomatik çıkarır; ilişki haritasındaki benzerlik önerileri bunu kullanır. Yalnızca eksik olanlara yazar.",
+    en: "Extracts DNA for published prompts that have none; relationship-map similarity suggestions use it. Only prompts without DNA are written.",
+  },
+  "moderation.dnaRun": { tr: "DNA'yı oluştur", en: "Generate DNA" },
+  "moderation.dnaRunning": { tr: "Oluşturuluyor…", en: "Generating…" },
+  "moderation.dnaProgress": { tr: "{{prompts}} prompt işlendi…", en: "{{prompts}} prompts processed…" },
+  "moderation.dnaDone": { tr: "{{prompts}} prompt için {{sections}} DNA bölümü kaydedildi.", en: "Saved {{sections}} DNA sections for {{prompts}} prompts." },
+  "moderation.dnaFailed": { tr: "DNA oluşturulamadı. Tekrar dene.", en: "Could not generate DNA. Try again." },
   "moderation.storageTitle": { tr: "Depolama temizliği", en: "Storage cleanup" },
   "moderation.storageHint": {
     tr: "Silinmiş içeriklerden ya da değiştirilmiş görsellerden kalan, hiçbir kayıtta kullanılmayan dosyaları bulur. Önce tarar, silmeden önce onay ister.",
