@@ -15,6 +15,7 @@ import { LikeButton } from "@/features/prompts/like-button";
 import { SaveButton } from "@/features/prompts/save-button";
 import { CommentCountLink } from "@/features/prompts/comment-count-link";
 import { StatisticsButton } from "@/features/statistics/statistics-button";
+import { RelationMapLink } from "@/features/relations/relation-map-link";
 import { CommentSection } from "@/features/prompts/comment-section";
 import { ShareTriggerButton } from "@/features/prompts/share-modal";
 import { useRealWorkflows } from "./real-workflows-provider";
@@ -185,6 +186,7 @@ export function WorkflowDetailView() {
           <CommentCountLink workflowId={workflow.id} baseCount={workflow.commentCount} size={18} />
           <SaveButton workflowId={workflow.id} saveCount={workflow.saveCount} size={18} />
           <StatisticsButton target={{ contentType: "workflow", contentId: workflow.id, likeCount: workflow.likeCount, commentCount: workflow.commentCount, saveCount: workflow.saveCount }} size={18} label={t("statistics.title")} />
+          <RelationMapLink kind="workflow" id={workflow.id} />
         </DetailActionBar>
 
         {workflow.coverUrl && (

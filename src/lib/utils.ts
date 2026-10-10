@@ -295,6 +295,15 @@ export function presetHref(preset: { id: string }): string {
   return `/presets/local?id=${preset.id}`;
 }
 
+/**
+ * İlişki Haritası for one piece of content — a parameterless static route +
+ * `?type=&id=`, same idea as `promptHref`. `kind` is prompt | generator |
+ * workflow | request.
+ */
+export function relationMapHref(target: { kind: "prompt" | "generator" | "workflow" | "request"; id: string }): string {
+  return `/relations?type=${target.kind}&id=${target.id}`;
+}
+
 /** Same idea as `promptHref`, for a Kullanıcı Sonucu — every result is a real Supabase row (`public.prompt_results`). */
 export function resultHref(result: Pick<PromptResultSummary, "id">): string {
   return `/results/local?id=${result.id}`;

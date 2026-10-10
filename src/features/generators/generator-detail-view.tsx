@@ -23,6 +23,7 @@ import { LikeButton } from "@/features/prompts/like-button";
 import { SaveButton } from "@/features/prompts/save-button";
 import { CommentCountLink } from "@/features/prompts/comment-count-link";
 import { StatisticsButton } from "@/features/statistics/statistics-button";
+import { RelationMapLink } from "@/features/relations/relation-map-link";
 import { CommentSection } from "@/features/prompts/comment-section";
 import { EditHistoryPanel } from "@/features/prompts/edit-history-panel";
 import { PromptResultsSection } from "@/features/prompts/prompt-results-section";
@@ -232,6 +233,7 @@ export function GeneratorDetailView() {
             <CommentCountLink generatorSlug={generator.slug} generatorId={generator.id} baseCount={generator.commentCount} size={18} />
             <SaveButton generatorId={generator.id} saveCount={generator.saveCount} size={18} />
             <StatisticsButton target={{ contentType: "generator", contentId: generator.id, likeCount: generator.likeCount, commentCount: generator.commentCount, saveCount: generator.saveCount }} size={18} label={t("statistics.title")} />
+            <RelationMapLink kind="generator" id={generator.id} />
           </DetailActionBar>
 
           <section aria-labelledby="generator-use-title" className="overflow-hidden rounded-xl border border-border-soft bg-surface shadow-card">

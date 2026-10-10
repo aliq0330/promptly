@@ -20,6 +20,7 @@ import { LikeButton } from "@/features/prompts/like-button";
 import { SaveButton } from "@/features/prompts/save-button";
 import { CommentCountLink } from "@/features/prompts/comment-count-link";
 import { StatisticsButton } from "@/features/statistics/statistics-button";
+import { RelationMapLink } from "@/features/relations/relation-map-link";
 import { CopyPromptButton } from "@/features/prompts/copy-prompt-button";
 import { PromptDnaDisplay } from "@/features/prompts/prompt-dna-display";
 import { PromptVariableInputs } from "@/features/prompts/prompt-variable-inputs";
@@ -214,6 +215,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
             <CommentCountLink promptId={prompt.id} baseCount={prompt.commentCount} size={18} />
             <SaveButton promptId={prompt.id} saveCount={prompt.saveCount} size={18} />
             <StatisticsButton target={{ contentType: "prompt", contentId: prompt.id, likeCount: prompt.likeCount, commentCount: prompt.commentCount, saveCount: prompt.saveCount }} size={18} label={t("statistics.title")} />
+            <RelationMapLink kind="prompt" id={prompt.id} />
           </DetailActionBar>
 
           {tabItems.length > 1 && (

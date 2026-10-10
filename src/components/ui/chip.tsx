@@ -38,9 +38,22 @@ Chip.displayName = "Chip";
  * for a row sitting next to other controls where wrapping to a second
  * line would push that layout down instead of just taking more height.
  */
-export function ChipRow({ className, scroll, children }: { className?: string; scroll?: boolean; children: React.ReactNode }) {
+export function ChipRow({
+  className,
+  scroll,
+  children,
+  "aria-label": ariaLabel,
+}: {
+  className?: string;
+  scroll?: boolean;
+  children: React.ReactNode;
+  /** Names the group for assistive tech ("Filtreler"); the row is then exposed as `role="group"`. */
+  "aria-label"?: string;
+}) {
   return (
     <div
+      role={ariaLabel ? "group" : undefined}
+      aria-label={ariaLabel}
       className={cn(
         "scrollbar-none -mx-3 flex touch-pan-x gap-2 overflow-x-auto overscroll-x-contain px-3",
         scroll ? "sm:mx-0 sm:px-0" : "sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0",

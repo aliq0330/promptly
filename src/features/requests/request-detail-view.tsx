@@ -17,6 +17,7 @@ import { PromptCard } from "@/features/prompts/prompt-card";
 import { CommentSection } from "@/features/prompts/comment-section";
 import { CommentCountLink } from "@/features/prompts/comment-count-link";
 import { StatisticsButton } from "@/features/statistics/statistics-button";
+import { RelationMapLink } from "@/features/relations/relation-map-link";
 import { EditHistoryPanel } from "@/features/prompts/edit-history-panel";
 import { LikeButton } from "@/features/prompts/like-button";
 import { PostMenu } from "@/features/prompts/post-menu";
@@ -216,6 +217,7 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
             <span aria-hidden>{formatCount(live.responseCount)}</span>
           </a>
           <StatisticsButton target={{ contentType: "request", contentId: live.id, likeCount: live.likeCount, commentCount: live.commentCount }} size={18} label={t("statistics.title")} />
+          <RelationMapLink kind="request" id={live.id} />
         </DetailActionBar>
 
         <section aria-labelledby="request-brief-title" className="overflow-hidden rounded-xl border border-border-soft bg-surface-soft shadow-card">
