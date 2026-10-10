@@ -23,6 +23,7 @@ export function RelationDetailPanel({
   onRemove,
   onClose,
   className,
+  titleId,
 }: {
   node: RelationNode | null;
   center: RelationNode;
@@ -34,6 +35,7 @@ export function RelationDetailPanel({
   /** Mobile drawer only. */
   onClose?: () => void;
   className?: string;
+  titleId?: string;
 }) {
   const { t, kindLabel, typeLabel, originLabel, reasonText, directionText, levelLabel } = useRelationText();
   const [confirmId, setConfirmId] = useState<string | null>(null);
@@ -82,12 +84,12 @@ export function RelationDetailPanel({
           </span>
         )}
         <div className="min-w-0 flex-1">
-          <p className="flex items-center gap-1.5 text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">
+          <p className="flex flex-wrap items-center gap-1.5 text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">
             <Icon size={12} aria-hidden />
             {kindLabel(node.kind)}
-            {isCenter && <Badge variant="accent">{t("relations.panel.isCenter")}</Badge>}
+            {isCenter && <Badge variant="accent" className="whitespace-nowrap">{t("relations.panel.isCenter")}</Badge>}
           </p>
-          <h2 className="mt-0.5 break-words text-h3 font-semibold text-text">{node.title}</h2>
+          <h2 id={titleId} className="mt-0.5 break-words text-h3 font-semibold text-text">{node.title}</h2>
           {node.ownerName && (
             <p className="text-caption text-text-muted">
               {t("relations.panel.owner")}: {node.ownerName}

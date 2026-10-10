@@ -11583,6 +11583,10 @@ Bir içeriği (Prompt / Generator / Workflow / Prompt İsteği) merkez alıp ona
 
 Canlıda `prompt_dna_sections`=0 ve `content_relations`=0 olduğundan prompt haritaları boştu (§9.141 sınırı). İki düzeltme: (1) `lib/supabase/relations.ts` — kayıtlı DNA'dan aday çıkmazsa aynı kategori/ortak etiketli ≤40 yayınlı prompt (`structuralCandidateIds`) aday olur; DNA'sı kayıtlı olmayan adaylar yerelde `analyzePromptDna` ile çıkarılıp mevcut puanlamaya girer (hâlâ yalnızca kesikli "Öneri", saklanmaz). (2) `/moderation` → "Eksik Prompt DNA'larını oluştur" (`dna-backfill-card.tsx`): DNA'sı olmayan yayınlı promptları 50'şerlik gruplarla çeker, tarayıcıda analiz eder, `admin_backfill_prompt_dna` RPC'siyle `source='auto'` yazar (yalnızca DNA'sı olmayanlara; moderatör kontrollü). Migration `20260919720000_admin_dna_backfill.sql` canlıya `execute_sql` ile uygulandı. **Aracı bir moderatör bir kez çalıştırmalı** — henüz çalıştırılmadı. Generator haritası (üretilmiş prompt yok) ve çok kısa promptlar boş kalabilir.
 
+### 9.143 İlişki haritası mobil/tablet düzeltmesi: detay paneli gerçek alt sayfa
+
+`< lg`'de detay paneli haritanın/listenin içine `absolute` bindirilmiş bir katmandı: `max-h-full` yüzdesi belirsiz üst yüksekliğe göre çözülmediğinden panel kırpılıyor (alt "Detaya git / Merkez yap" butonları kayboluyordu), liste görünümünde ise "Detay" düğmesi satır başlıklarının üstüne biniyordu. Artık panel ortak `Modal variant="sheet"` ile (portal) gerçek bir alt sayfa (`max-h-[85dvh]`, panel içi kaydırma, ESC/arka plan ile kapanır, `useMediaQuery(min-width:1024px)` ile yalnızca `< lg`); "Detaylar" düğmesi stage'in DIŞINDA, altında tam genişlikte. `lg+` yan sütun değişmedi. Ayrıca merkez düğüm başlığı 3→2 satır (üst/alt kırpılma), merkezde ilişki hapı yok, "Haritanın merkezi" rozeti tek satır. Migration yok, yeni metin yok. Ağ taklitli Playwright 17/17 (390/820/1440: taşma yok, sheet açılır, alt butonlar viewport içinde, ESC, sayfa hatası yok). Gerçek iOS Safari'de denenmedi.
+
 ---
 
 **Sonraki adım:** Bilinen iki üretim hatası (Bölüm 9.40 — mesajlarda
