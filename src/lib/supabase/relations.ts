@@ -511,6 +511,30 @@ function featureSet(prompt: Prompt, sections: DnaFeatureSection[]): DnaFeatureSe
   return { sections, tags: prompt.tags.map((t) => t.slug), category: prompt.category, subcategory: prompt.subcategory };
 }
 
+/** Bounded, RLS-filtered candidates that share a category or a tag with the prompt (used when no DNA is stored yet). */
+async function structuralCandidateIds(prompt: Prompt): Promise<string[]> {
+  const ids = new Set<string>();
+  if (prompt.category) {
+    const { data } = await supabase
+      .from("prompts")
+      .select("id")
+      .eq("status", "published")
+      .eq("content_type", prompt.contentType)
+      .eq("category", prompt.category)
+      .neq("id", prompt.id)
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false })
+      .limit(GRAPH_CAPS.dnaCandidates);
+    for (const row of (data ?? []) as { id: string }[]) ids.add(row.id);
+  }
+  const slugs = prompt.tags.map((t) => t.slug);
+  if (slugs.length > 0) {
+    const { data } = await supabase.from("prompt_tags").select("prompt_id").in("tag_slug", slugs).neq("prompt_id", prompt.id).limit(GRAPH_CAPS.dnaCandidates);
+    for (const row of (data ?? []) as { prompt_id: string }[]) ids.add(row.prompt_id);
+  }
+  return [...ids].slice(0, GRAPH_CAPS.dnaCandidates);
+}
+
 async function dnaSuggestions(center: RelationNode, prompt: Prompt): Promise<Partial_ & { status: DnaStatus }> {
   // 1. The center's DNA: stored first (never re-analyze what is already stored); otherwise a local, free, on-the-fly analysis.
   let status: DnaStatus = "stored";
@@ -531,7 +555,10 @@ async function dnaSuggestions(center: RelationNode, prompt: Prompt): Promise<Par
     console.error("dnaSuggestions candidates", error);
     return { ...EMPTY, status: "unavailable" };
   }
-  const candidateIds = ((candidateRows ?? []) as { prompt_id: string }[]).map((r) => r.prompt_id);
+  let candidateIds = ((candidateRows ?? []) as { prompt_id: string }[]).map((r) => r.prompt_id);
+  // Fallback: no stored DNA exists yet (older posts), so the indexed lookup is empty. Look at a small, bounded set of
+  // same-type posts that share a category or a tag; their DNA is analyzed locally below.
+  if (candidateIds.length === 0) candidateIds = await structuralCandidateIds(prompt);
   if (candidateIds.length === 0) return { ...EMPTY, status };
 
   // 3. Only now load what scoring needs for that small set: their DNA and their (RLS-visible) prompt rows.
@@ -551,8 +578,13 @@ async function dnaSuggestions(center: RelationNode, prompt: Prompt): Promise<Par
 
   // 4. Score, keep the best few.
   const mine = featureSet(prompt, sections);
+  const sectionsFor = (candidate: Prompt): DnaFeatureSection[] => {
+    const stored = sectionsByPrompt.get(candidate.id);
+    if (stored && stored.length > 0) return stored;
+    return analyzePromptDna(candidate.promptText).sections.map((sec) => ({ type: sec.type, content: itemsToContent(sec) }));
+  };
   const scored = candidates
-    .map((candidate) => ({ candidate, result: compareDna(mine, featureSet(candidate, sectionsByPrompt.get(candidate.id) ?? [])) }))
+    .map((candidate) => ({ candidate, result: compareDna(mine, featureSet(candidate, sectionsFor(candidate))) }))
     .filter((entry): entry is { candidate: Prompt; result: NonNullable<ReturnType<typeof compareDna>> } => entry.result !== null)
     .sort((a, b) => b.result.score - a.result.score);
   const shown = scored.slice(0, GRAPH_CAPS.dnaShown);
