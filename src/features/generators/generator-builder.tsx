@@ -42,12 +42,11 @@ import {
 } from "@/lib/supabase/generators";
 import type { Generator, GeneratorField, GeneratorSchema, GeneratorTemplate } from "@/types";
 
-const STEPS = ["details", "fields", "publish"] as const;
+const STEPS = ["details", "fields"] as const;
 type Step = (typeof STEPS)[number];
 const STEP_LABEL_KEYS: Record<Step, TranslationKey> = {
   details: "generator.stepDetails",
   fields: "generator.stepFields",
-  publish: "generator.stepPublish",
 };
 
 function newId(prefix: string): string {
@@ -299,6 +298,9 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
     });
     return {
       ...meta,
+      // The "Ayarlar" toggles are gone: owners can always edit, saving is always allowed.
+      allowPromptEditing: true,
+      allowSavingGeneratedPrompts: true,
       requiresReferenceImage: refs.image,
       requiresReferenceVideo: refs.video,
       requiresReferenceAudio: refs.audio,
@@ -624,36 +626,21 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
                 insertRequest={templateInsert}
               />
             </FormSection>
-          </FormSections>
-          <div className="min-w-0">
-            <div className="rounded-xl border border-border-soft bg-surface p-4 shadow-card sm:p-6 lg:sticky lg:top-4">
-              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-text-muted">{t("generator.livePreview")}</p>
-              <GeneratorPlayground
-                schema={schema}
-                templateText={templateText}
-              />
+            <div className="rounded-xl border border-border-soft bg-surface p-4 shadow-card sm:p-6">
+              <p className="mb-2 text-sm font-medium text-text">{t("generator.fieldCount", { count: schema.fields.length })}</p>
+              {errors.length === 0 && warnings.length === 0 && <p className="text-sm text-success">{t("generator.readyToPublish")}</p>}
+              {errors.map((issue, i) => (
+                <p key={`e-${i}`} className="mt-1 flex items-start gap-1.5 text-sm text-danger">
+                  <AlertTriangle size={14} className="mt-0.5 shrink-0" /> {issue.message}
+                </p>
+              ))}
+              {warnings.map((issue, i) => (
+                <p key={`w-${i}`} className="mt-1 flex items-start gap-1.5 text-sm text-warning">
+                  <AlertTriangle size={14} className="mt-0.5 shrink-0" /> {issue.message}
+                </p>
+              ))}
             </div>
-          </div>
-        </div>
-      )}
-
-      {step === "publish" && (
-        <div className="max-w-2xl space-y-4">
-          <div className="rounded-xl border border-border-soft bg-surface p-4 shadow-card sm:p-6">
-            <p className="mb-2 text-sm font-medium text-text">{t("generator.fieldCount", { count: schema.fields.length })}</p>
-            {errors.length === 0 && warnings.length === 0 && <p className="text-sm text-success">{t("generator.readyToPublish")}</p>}
-            {errors.map((issue, i) => (
-              <p key={`e-${i}`} className="mt-1 flex items-start gap-1.5 text-sm text-danger">
-                <AlertTriangle size={14} className="mt-0.5 shrink-0" /> {issue.message}
-              </p>
-            ))}
-            {warnings.map((issue, i) => (
-              <p key={`w-${i}`} className="mt-1 flex items-start gap-1.5 text-sm text-warning">
-                <AlertTriangle size={14} className="mt-0.5 shrink-0" /> {issue.message}
-              </p>
-            ))}
-          </div>
-          <CreateFormActions
+            <CreateFormActions
               visibility={meta.visibility === "private" ? "private" : "public"}
               onVisibilityChange={(next) =>
                 // "Yalnızca bağlantıyla" (unlisted) isn't a switch state — an existing unlisted generator stays unlisted until the owner flips the switch.
@@ -672,6 +659,16 @@ export function GeneratorBuilder({ editId }: { editId: string | null }) {
                 </p>
               )}
             </CreateFormActions>
+          </FormSections>
+          <div className="min-w-0">
+            <div className="rounded-xl border border-border-soft bg-surface p-4 shadow-card sm:p-6 lg:sticky lg:top-4">
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-text-muted">{t("generator.livePreview")}</p>
+              <GeneratorPlayground
+                schema={schema}
+                templateText={templateText}
+              />
+            </div>
+          </div>
         </div>
       )}
 

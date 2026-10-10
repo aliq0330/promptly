@@ -9,7 +9,6 @@ import Link from "next/link";
 import { OpenInStudioButton } from "@/features/studio/open-in-studio-button";
 import { ArrowRight, Blocks, SlidersHorizontal, SquareTerminal } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { ContentTypeLabel } from "@/features/content/content-type-label";
 import { ShareTriggerButton } from "@/features/prompts/share-modal";
 import { PostMenu } from "@/features/prompts/post-menu";
@@ -30,14 +29,13 @@ import { PromptResultsSection } from "@/features/prompts/prompt-results-section"
 import {
   fetchGeneratorBySlug,
   fetchGeneratorVersion,
-  recordGeneratorRun,
   type GeneratorVersionResult,
 } from "@/lib/supabase/generators";
 import { useRealGenerators } from "./real-generators-provider";
 import { AsideSection, DetailActionBar, DetailAside, DetailByline, DetailComments, DetailLede, DetailShell, DetailTags, DetailTitle } from "@/features/content/detail-parts";
 import { composeRunText } from "@/lib/run-with-ai";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
-import type { Generator, GeneratorValues } from "@/types";
+import type { Generator } from "@/types";
 
 /**
  * The real public generator detail + runtime page (`/generators/local?
@@ -67,8 +65,6 @@ export function GeneratorDetailView() {
   const [generator, setGenerator] = useState<Generator | null>(null);
   const [version, setVersion] = useState<GeneratorVersionResult | null>(null);
   const [loaded, setLoaded] = useState(false);
-  const [isOpeningPrompt, setIsOpeningPrompt] = useState(false);
-  const [actionError, setActionError] = useState<string | null>(null);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   useEffect(() => {
@@ -116,21 +112,6 @@ export function GeneratorDetailView() {
     removeFromCache(generator!.id);
     router.push("/generators");
   }
-
-  async function handleOpenInPrompt(state: { values: GeneratorValues; prompt: string; negativePrompt: string | null }) {
-    if (!user || !generator || !version) return;
-    setIsOpeningPrompt(true);
-    setActionError(null);
-    try {
-      const run = await recordGeneratorRun(generator.id, version.id, user.id, state.values, state.prompt, state.negativePrompt);
-      router.push(`/create?generatorRun=${run.id}`);
-    } catch (err) {
-      setActionError(err instanceof Error ? err.message : t("generator.recordFailed"));
-      setIsOpeningPrompt(false);
-    }
-  }
-
-  const canOpenInPrompt = generator.allowPromptEditing || generator.allowSavingGeneratedPrompts;
 
   const topic = taxonomyPathLabel(generator, language);
   const fields = [...version.schema.fields].sort((a, b) => a.order - b.order);
@@ -268,6 +249,7 @@ export function GeneratorDetailView() {
               <GeneratorPlayground
                 schema={version.schema}
                 templateText={getTemplateText(version.template)}
+                showCreatorPrompt
                 renderActions={(state) => (
                   <div className="flex flex-wrap items-center gap-2">
                     <RunButton
@@ -276,20 +258,6 @@ export function GeneratorDetailView() {
                       preview
                     />
                     <OpenInStudioButton kind="generator" id={generator.slug} />
-                    {canOpenInPrompt &&
-                      (user ? (
-                        <Button type="button" onClick={() => handleOpenInPrompt(state)} disabled={isOpeningPrompt || !state.prompt.trim()}>
-                          {isOpeningPrompt ? t("generator.opening") : t("generator.openAsPrompt")}
-                        </Button>
-                      ) : (
-                        <p className="text-caption text-text-muted">
-                          {t("generator.loginToOpenAsPromptPrefix")}{" "}
-                          <Link href="/login" className="font-medium text-primary hover:underline">
-                            {t("common.login")}
-                          </Link>
-                          .
-                        </p>
-                      ))}
                   </div>
                 )}
               />
@@ -303,7 +271,6 @@ export function GeneratorDetailView() {
           <DetailTags tags={generator.tags} />
 
           {isOwner && <EditHistoryPanel contentType="generator" contentId={generator.id} />}
-          {actionError && <p className="text-small text-danger">{actionError}</p>}
           {!user && (
             <p className="text-caption text-text-muted">
               {t("generator.loginToSaveOrCreatePrefix")}{" "}

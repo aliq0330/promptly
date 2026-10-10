@@ -10,6 +10,8 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import { GeneratorRuntimeForm } from "./generator-runtime-form";
 import { GeneratedPromptPanel } from "./generated-prompt-panel";
 import { GeneratorJsonPanel } from "./generator-json-panel";
+import { ScrollablePrompt } from "@/features/content/scrollable-prompt";
+import { toDisplayText } from "@/lib/generator-template-doc";
 import type { GeneratorSchema, GeneratorValues } from "@/types";
 
 /**
@@ -54,11 +56,14 @@ import type { GeneratorSchema, GeneratorValues } from "@/types";
 export function GeneratorPlayground({
   schema,
   templateText = "",
+  showCreatorPrompt = false,
   renderActions,
 }: {
   schema: GeneratorSchema;
   /** Yazarın isteğe bağlı prompt şablonu (kanonik `{{anahtar}}`); boşsa davranış öncekiyle aynı. */
   templateText?: string;
+  /** Real runtime page only: shows the creator's prepared prompt (read-only) above the fields. */
+  showCreatorPrompt?: boolean;
   /** Only the real runtime page passes this — the "Prompt olarak aç"/"Kaydet" buttons, given the exact live-computed state to act on. The builder's own preview passes nothing. */
   renderActions?: (state: { values: GeneratorValues; prompt: string; negativePrompt: string | null }) => React.ReactNode;
 }) {
@@ -115,6 +120,16 @@ export function GeneratorPlayground({
 
       {tab === "form" ? (
         <div className="space-y-5">
+          {showCreatorPrompt && templateText.trim() && (
+            <section aria-labelledby="creator-prompt-title" className="space-y-1.5">
+              <h3 id="creator-prompt-title" className="text-label font-medium text-text-secondary">
+                {t("generator.creatorPromptTitle")}
+              </h3>
+              <ScrollablePrompt className="rounded-lg border border-border-soft bg-surface-soft p-3 text-small text-text">
+                {toDisplayText(templateText, schema.fields)}
+              </ScrollablePrompt>
+            </section>
+          )}
           <GeneratorRuntimeForm schema={schema} values={values} onChange={handleChange} />
         </div>
       ) : tab === "json" ? (
