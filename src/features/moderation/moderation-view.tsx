@@ -13,6 +13,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import { formatRelativeTime } from "@/lib/utils";
 import { StorageCleanupCard } from "@/features/moderation/storage-cleanup-card";
+import { DnaBackfillCard } from "@/features/moderation/dna-backfill-card";
 import { SiteStatsPanel } from "@/features/moderation/admin/site-stats-panel";
 import { UsersPanel } from "@/features/moderation/admin/users-panel";
 import { Tabs } from "@/components/ui/tabs";
@@ -157,6 +158,7 @@ function ReportsPanel() {
         ))}
       </ul>
       <StorageCleanupCard />
+      <DnaBackfillCard />
     </div>
   );
 }

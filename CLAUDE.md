@@ -11579,6 +11579,10 @@ Bir içeriği (Prompt / Generator / Workflow / Prompt İsteği) merkez alıp ona
 - **Testler:** `npm test` 131/131 (yeni: DNA puanlama 11, yerleşim çakışmasızlık); yerel PostgreSQL 16'da RLS/tetikleyici/benzersizlik/aday RPC senaryoları; ağ taklitli Playwright 71/71 (1440/820/390 genişlikte harita, süzgeç, seçim, merkezleme, ekleme/silme, sürükleme, klavye). `tsc`, `lint` (yalnız önceden var olan 5 uyarı), `next build --webpack` temiz. i18n: `relations.*` ~114 anahtar TR+EN eklendi (İngilizce karşılıkları eklendi).
 - **Sınırlar (dürüst):** canlıda henüz DNA kaydı olmadığından gerçek DNA önerisi görünmez; gerçek Supabase'e ve fiziksel cihaza karşı denenmedi; migration geçmişinde kayıtlı değil (yukarıda); yerel DNA fallback'i yalnız merkezin kayıtlı DNA'sı yoksa çalışır ve kaydedilmez; ilişkiler Studio'ya, Ana Sayfa kartlarına veya aramaya bağlanmadı.
 
+### 9.142 İlişki haritası boşluğu: DNA yedek önerisi + moderatör DNA doldurma aracı
+
+Canlıda `prompt_dna_sections`=0 ve `content_relations`=0 olduğundan prompt haritaları boştu (§9.141 sınırı). İki düzeltme: (1) `lib/supabase/relations.ts` — kayıtlı DNA'dan aday çıkmazsa aynı kategori/ortak etiketli ≤40 yayınlı prompt (`structuralCandidateIds`) aday olur; DNA'sı kayıtlı olmayan adaylar yerelde `analyzePromptDna` ile çıkarılıp mevcut puanlamaya girer (hâlâ yalnızca kesikli "Öneri", saklanmaz). (2) `/moderation` → "Eksik Prompt DNA'larını oluştur" (`dna-backfill-card.tsx`): DNA'sı olmayan yayınlı promptları 50'şerlik gruplarla çeker, tarayıcıda analiz eder, `admin_backfill_prompt_dna` RPC'siyle `source='auto'` yazar (yalnızca DNA'sı olmayanlara; moderatör kontrollü). Migration `20260919720000_admin_dna_backfill.sql` canlıya `execute_sql` ile uygulandı. **Aracı bir moderatör bir kez çalıştırmalı** — henüz çalıştırılmadı. Generator haritası (üretilmiş prompt yok) ve çok kısa promptlar boş kalabilir.
+
 ---
 
 **Sonraki adım:** Bilinen iki üretim hatası (Bölüm 9.40 — mesajlarda
