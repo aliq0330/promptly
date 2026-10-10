@@ -335,7 +335,7 @@ export function RelationGraph({
             const Icon = KIND_ICON[node.kind];
             // What links this node to the center, in words (so type never rests on line style or color alone).
             const types = [...new Set(edges.filter((e) => otherEnd(e, center.key) === node.key).map((e) => e.type))];
-            const relationText = types.length === 0 ? null : types.length === 1 ? typeLabel(types[0]) : `${typeLabel(types[0])} +${types.length - 1}`;
+            const relationText = isCenter || types.length === 0 ? null : types.length === 1 ? typeLabel(types[0]) : `${typeLabel(types[0])} +${types.length - 1}`;
             return (
               <button
                 key={node.key}
@@ -365,7 +365,7 @@ export function RelationGraph({
                     <Icon size={11} aria-hidden />
                     <span className="truncate">{isCenter ? t("relations.centerLabel") : kindLabel(node.kind)}</span>
                   </span>
-                  <span className={cn("block font-semibold leading-snug text-text", isCenter ? "line-clamp-3 text-small" : "line-clamp-2 text-label")}>{node.title}</span>
+                  <span className={cn("block font-semibold leading-snug text-text", isCenter ? "line-clamp-2 text-small" : "line-clamp-2 text-label")}>{node.title}</span>
                   {relationText && (
                     <span data-node-relation title={relationText} className="mt-0.5 inline-block max-w-full truncate rounded-full bg-primary-soft px-1.5 text-caption font-medium text-primary">
                       {relationText}

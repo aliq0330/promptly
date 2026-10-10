@@ -8,11 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Chip, ChipRow } from "@/components/ui/chip";
 import { EmptyState } from "@/components/ui/empty-state";
 import { NotFoundBlock } from "@/components/ui/detail-skeleton";
+import { Modal } from "@/components/ui/modal";
 import { Tabs } from "@/components/ui/tabs";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useAuthPrompt } from "@/features/auth/auth-prompt-provider";
 import { Eyebrow } from "@/features/content/detail-parts";
 import { useTranslation } from "@/lib/i18n/language-provider";
+import { useMediaQuery } from "@/lib/use-media-query";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import { deleteManualRelation, fetchRelationGraph, type RelationGraph } from "@/lib/supabase/relations";
 import {
@@ -55,6 +57,7 @@ export function RelationMapView() {
   const [filter, setFilter] = useState<RelationFilter>("all");
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const isDesktop = useMediaQuery("(min-width: 1024px)");
   const [viewMode, setViewMode] = useState<ViewMode>("map");
   const [fitSignal, setFitSignal] = useState(0);
   const [showAdd, setShowAdd] = useState(false);
@@ -140,7 +143,7 @@ export function RelationMapView() {
     setReloadKey((n) => n + 1);
   };
 
-  const panel = (extra?: { onClose?: () => void; className?: string }) => (
+  const panel = (extra?: { onClose?: () => void; className?: string; titleId?: string }) => (
     <RelationDetailPanel
       node={panelNode}
       center={center}
@@ -150,6 +153,7 @@ export function RelationMapView() {
       onRemove={onRemove}
       onClose={extra?.onClose}
       className={extra?.className}
+      titleId={extra?.titleId}
     />
   );
 
@@ -262,23 +266,25 @@ export function RelationMapView() {
                 </div>
               )}
 
-              {/* Small screens: the detail panel is a bottom drawer over the map; closing keeps the selection. */}
-              {drawerOpen && panelNode && (
-                <div className="absolute inset-x-0 bottom-0 z-10 max-h-[62%] p-2 lg:hidden" data-relation-drawer>
-                  {panel({ onClose: () => setDrawerOpen(false), className: "max-h-full shadow-pop" })}
-                </div>
-              )}
-              {!drawerOpen && panelNode && (
-                <button
-                  type="button"
-                  onClick={() => setDrawerOpen(true)}
-                  className="absolute bottom-3 left-3 z-10 inline-flex h-11 items-center gap-2 rounded-full border border-border bg-surface px-4 text-label font-medium text-text shadow-card lg:hidden"
-                >
-                  <PanelBottomOpen size={16} aria-hidden />
-                  {t("relations.openDetails")}
-                </button>
-              )}
             </div>
+            {/* Below lg the detail panel is a real bottom sheet (portal) — never a layer inside the stage, where it was clipped and covered list rows. */}
+            {!isDesktop && panelNode && !drawerOpen && (
+              <button
+                type="button"
+                onClick={() => setDrawerOpen(true)}
+                className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg border border-border bg-surface px-4 text-label font-medium text-text shadow-card"
+              >
+                <PanelBottomOpen size={16} aria-hidden />
+                {t("relations.openDetails")}
+              </button>
+            )}
+            {!isDesktop && panelNode && drawerOpen && (
+              <Modal variant="sheet" labelledBy="relation-sheet-title" onClose={() => setDrawerOpen(false)}>
+                <div className="flex max-h-[85dvh] w-full max-w-2xl flex-col px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]" data-relation-drawer>
+                  {panel({ onClose: () => setDrawerOpen(false), className: "max-h-[85dvh] shadow-pop", titleId: "relation-sheet-title" })}
+                </div>
+              </Modal>
+            )}
             <ul className="flex flex-wrap gap-x-4 gap-y-1 text-caption text-text-muted" aria-label={t("relations.legend.title")}>
               <li>{t("relations.legend.solid")}</li>
               <li>{t("relations.legend.dashed")}</li>
