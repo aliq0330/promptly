@@ -42,7 +42,7 @@ function CreateOptionControl({ fieldName: name, onCreate }: { fieldName: string;
         onClick={() => setOpen(true)}
         aria-label={t("presetField.createOptionAria", { name })}
         data-create-option
-        className="inline-flex min-h-9 items-center gap-1 rounded-full border border-dashed border-border-strong px-3 text-small font-medium text-text-secondary transition-colors hover:border-primary hover:bg-primary-soft hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        className="inline-flex h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-dashed border-border-strong px-3 text-label font-medium text-text-secondary transition-colors hover:border-primary hover:bg-primary-soft hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
       >
         <Plus size={14} aria-hidden />
         {t("presetField.createOption")}
