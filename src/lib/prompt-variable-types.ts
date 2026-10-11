@@ -15,6 +15,10 @@ export const MULTI_SEPARATOR = ", ";
 
 export const MAX_OPTIONS = 50;
 export const MAX_OPTION_LENGTH = 80;
+/** Option thumbnails are stored inline (data URL) in `options` JSON, so each is capped. */
+export const MAX_OPTION_IMAGE_LENGTH = 60_000;
+/** Longest edge, in px, an uploaded option image is shrunk to. */
+export const OPTION_IMAGE_MAX_DIMENSION = 200;
 
 const DEFAULT_RANGE = { min: 0, max: 100, step: 1 } as const;
 
@@ -59,7 +63,32 @@ export function clampToRange(n: number, config: PromptVariableConfig): number {
   return rounded;
 }
 
-/** Drops blank options, trims, fills a blank `value` from `label`, removes duplicate values and caps the list. */
+export function isValidOptionColor(color: unknown): color is string {
+  return typeof color === "string" && /^#[0-9a-fA-F]{6}$/.test(color);
+}
+
+export function isValidOptionImage(image: unknown): image is string {
+  return typeof image === "string" && image.startsWith("data:image/") && image.length <= MAX_OPTION_IMAGE_LENGTH;
+}
+
+/** Keeps a valid `image` (which wins) or a valid `color`, never both and never invalid data. */
+function visualOf(option: { image?: unknown; color?: unknown }): { image?: string; color?: string } {
+  if (isValidOptionImage(option.image)) return { image: option.image };
+  if (isValidOptionColor(option.color)) return { color: option.color };
+  return {};
+}
+
+/** True when the list is non-empty and EVERY option has a thumbnail — only then is it shown as image cards. */
+export function allOptionsHaveImage(options: PromptVariableOption[]): boolean {
+  return options.length > 0 && options.every((option) => Boolean(option.image));
+}
+
+/** True when the list is non-empty and EVERY option has a color — only then is it shown as color swatches. */
+export function allOptionsHaveColor(options: PromptVariableOption[]): boolean {
+  return options.length > 0 && options.every((option) => Boolean(option.color));
+}
+
+/** Drops blank options, trims, fills a blank `value` from `label`, removes duplicate values, validates image/color and caps the list. */
 export function sanitizeOptions(options: PromptVariableOption[]): PromptVariableOption[] {
   const seen = new Set<string>();
   const out: PromptVariableOption[] = [];
@@ -69,7 +98,7 @@ export function sanitizeOptions(options: PromptVariableOption[]): PromptVariable
     const value = (option.value.trim() || label).slice(0, MAX_OPTION_LENGTH).replace(/,/g, "");
     if (!value || seen.has(value)) continue;
     seen.add(value);
-    out.push({ label, value });
+    out.push({ label, value, ...visualOf(option) });
     if (out.length >= MAX_OPTIONS) break;
   }
   return out;
@@ -180,8 +209,8 @@ export function parseStoredOptions(raw: unknown): PromptVariableOption[] {
   const out: PromptVariableOption[] = [];
   for (const item of raw) {
     if (item && typeof item === "object") {
-      const { label, value } = item as { label?: unknown; value?: unknown };
-      if (typeof label === "string" && typeof value === "string") out.push({ label, value });
+      const { label, value, image, color } = item as { label?: unknown; value?: unknown; image?: unknown; color?: unknown };
+      if (typeof label === "string" && typeof value === "string") out.push({ label, value, ...visualOf({ image, color }) });
     }
   }
   return out;

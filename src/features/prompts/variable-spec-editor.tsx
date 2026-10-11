@@ -1,13 +1,18 @@
 "use client";
 
-import { Plus, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ImagePlus, Palette, Plus, X } from "lucide-react";
 import { Chip } from "@/components/ui/chip";
 import { fieldControlClassName, fieldInputClassName, fieldLabelClassName } from "@/components/ui/field";
-import { cn } from "@/lib/utils";
+import { cn, resizeImageToDataUrlFit } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import {
   MAX_OPTIONS,
+  MAX_OPTION_IMAGE_LENGTH,
+  OPTION_IMAGE_MAX_DIMENSION,
+  allOptionsHaveColor,
+  allOptionsHaveImage,
   convertSpec,
   isChoiceType,
   isNumericType,
@@ -68,6 +73,51 @@ export function VariableSpecEditor({
 }) {
   const { t } = useTranslation();
   const { spec, defaultValue } = value;
+  // The image resize is async; read the LATEST editor state when it resolves, not the render it started in.
+  const latest = useRef(value);
+  useEffect(() => {
+    latest.current = value;
+  }, [value]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadIndex, setUploadIndex] = useState<number | null>(null);
+  const [uploadBusy, setUploadBusy] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  function pickImage(index: number) {
+    setUploadError(null);
+    setUploadIndex(index);
+    fileInputRef.current?.click();
+  }
+
+  async function handleImageChosen(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    const index = uploadIndex;
+    if (!file || index === null) return;
+    setUploadBusy(true);
+    setUploadError(null);
+    try {
+      const { url } = await resizeImageToDataUrlFit(file, OPTION_IMAGE_MAX_DIMENSION);
+      if (url.length > MAX_OPTION_IMAGE_LENGTH) {
+        setUploadError(t("variable.optionImageTooBig"));
+        return;
+      }
+      const current = latest.current;
+      if (!current.spec.options[index]) return;
+      onChange({
+        ...current,
+        spec: {
+          ...current.spec,
+          options: current.spec.options.map((option, i) => (i === index ? { ...option, image: url, color: undefined } : option)),
+        },
+      });
+    } catch {
+      setUploadError(t("variable.optionImageFailed"));
+    } finally {
+      setUploadBusy(false);
+      setUploadIndex(null);
+    }
+  }
 
   function setType(type: PromptVariableType) {
     onChange(convertSpec(value, type, seedText));
@@ -152,6 +202,10 @@ export function VariableSpecEditor({
   );
 
   const selectedDefaults = new Set(parseMultiValue(defaultValue));
+  const someImage = spec.options.some((option) => option.image);
+  const someColor = spec.options.some((option) => option.color);
+  const partialVisual =
+    (someImage && !allOptionsHaveImage(spec.options)) || (someColor && !allOptionsHaveColor(spec.options));
 
   return (
     <div className="space-y-4">
@@ -207,7 +261,7 @@ export function VariableSpecEditor({
                     aria-label={t("variable.optionDefaultAria", { n: index + 1 })}
                     className="mt-3 shrink-0"
                   />
-                  <div className="grid min-w-0 flex-1 gap-2 sm:grid-cols-2">
+                  <div className="grid min-w-0 flex-1 gap-2 sm:grid-cols-2 sm:[&>*:last-child]:col-span-2">
                     <input
                       type="text"
                       value={option.label}
@@ -224,6 +278,14 @@ export function VariableSpecEditor({
                       aria-label={t("variable.optionValueAria", { n: index + 1 })}
                       className={cn(fieldControlClassName, "h-10 font-mono")}
                     />
+                    <OptionMedia
+                      option={option}
+                      n={index + 1}
+                      busy={uploadBusy && uploadIndex === index}
+                      onPickImage={() => pickImage(index)}
+                      onColor={(color) => updateOption(index, { color, image: undefined })}
+                      onClear={() => updateOption(index, { image: undefined, color: undefined })}
+                    />
                   </div>
                   <button
                     type="button"
@@ -237,6 +299,13 @@ export function VariableSpecEditor({
               );
             })}
           </ul>
+          <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageChosen} />
+          {partialVisual && <p className="text-caption text-text-muted">{t("variable.optionVisualPartialHint")}</p>}
+          {uploadError && (
+            <p role="alert" className="text-xs text-danger">
+              {uploadError}
+            </p>
+          )}
           <button
             type="button"
             disabled={spec.options.length >= MAX_OPTIONS}
@@ -332,6 +401,74 @@ export function VariableSpecEditor({
           {t(ERROR_KEYS[error])}
         </p>
       )}
+    </div>
+  );
+}
+
+/**
+ * Per-option "add your own image / color" controls. Nothing is pre-filled:
+ * an option starts plain, and an option holds at most one of image / color
+ * (adding one replaces the other).
+ */
+function OptionMedia({
+  option,
+  n,
+  busy,
+  onPickImage,
+  onColor,
+  onClear,
+}: {
+  option: PromptVariableOption;
+  n: number;
+  busy: boolean;
+  onPickImage: () => void;
+  onColor: (color: string) => void;
+  onClear: () => void;
+}) {
+  const { t } = useTranslation();
+  const linkButton = "inline-flex items-center gap-1 text-label font-medium text-primary hover:underline disabled:opacity-50";
+
+  if (option.image) {
+    return (
+      <div className="flex flex-wrap items-center gap-3">
+        {/* eslint-disable-next-line @next/next/no-img-element -- a small user-supplied data URL */}
+        <img src={option.image} alt="" className="h-10 w-10 rounded-md border border-border object-cover" />
+        <button type="button" onClick={onPickImage} disabled={busy} className={linkButton}>
+          <ImagePlus size={14} /> {t("variable.optionChangeImage")}
+        </button>
+        <button type="button" onClick={onClear} className="text-label font-medium text-text-muted hover:text-danger hover:underline">
+          {t("variable.optionRemoveImage")}
+        </button>
+      </div>
+    );
+  }
+
+  if (option.color) {
+    return (
+      <div className="flex flex-wrap items-center gap-3">
+        <input
+          type="color"
+          value={option.color}
+          onChange={(event) => onColor(event.target.value)}
+          aria-label={t("variable.optionColorAria", { n })}
+          className="h-10 w-12 cursor-pointer rounded-md border border-border bg-background p-1"
+        />
+        <span className="font-mono text-xs text-text-muted">{option.color}</span>
+        <button type="button" onClick={onClear} className="text-label font-medium text-text-muted hover:text-danger hover:underline">
+          {t("variable.optionRemoveColor")}
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-4">
+      <button type="button" onClick={onPickImage} disabled={busy} className={linkButton}>
+        <ImagePlus size={14} /> {t("variable.optionAddImage")}
+      </button>
+      <button type="button" onClick={() => onColor("#888888")} className={linkButton}>
+        <Palette size={14} /> {t("variable.optionAddColor")}
+      </button>
     </div>
   );
 }

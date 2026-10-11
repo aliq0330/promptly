@@ -350,10 +350,19 @@ export interface Collection {
  */
 export type PromptVariableType = "text" | "select" | "multi_select" | "number" | "slider" | "toggle";
 
-/** One choice of a `select`/`multi_select` variable: `label` is what the viewer sees, `value` is what is written into the prompt. */
+/**
+ * One choice of a `select`/`multi_select` variable: `label` is what the viewer
+ * sees, `value` is what is written into the prompt. `image` (a small data URL)
+ * and `color` (`#rrggbb`) are optional, UI-only and always added by the
+ * prompt's author — never pre-filled; an option has at most one of them, and
+ * the picker only switches to cards/swatches when EVERY option has it. They
+ * never reach the prompt text.
+ */
 export interface PromptVariableOption {
   label: string;
   value: string;
+  image?: string;
+  color?: string;
 }
 
 /** Kind-specific settings (only the keys relevant to the variable's `type` are ever set). */

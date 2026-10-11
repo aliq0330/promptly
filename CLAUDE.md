@@ -12930,7 +12930,7 @@ Kullanıcı isteğiyle sitedeki TÜM içerik kalıcı olarak silinip 18 demo kul
 
 **Aşama 1 — Özellikleri prompt değişkenlerine taşı (Generator'a dokunmadan).** Küçük, ayrı commit'li adımlar:
 - [x] **1a. Tip + seçenek (TAMAMLANDI):** `prompt_variables.type` (`text|select|multi_select|number|slider|toggle`) ve `options jsonb` (ekleyici migration, varsayılan `text`/`[]`, eski satırlar değişmez). Oluşturan tarafı (`variable-create-modal`/`variable-editor-modal`/`variable-list`), kullanan tarafı (`prompt-variable-inputs`: chip/açılır liste/kaydırıcı/anahtar), veri katmanı, i18n TR+EN, testler.
-- [ ] **1b. Görselli/renkli seçenekler** (seçenek kartları, renk swatch).
+- [x] **1b. Görselli/renkli seçenekler (TAMAMLANDI):** her seçeneğe kişi KENDİ görselini ya da rengini ekler; hazır/önceden doldurulmuş görsel veya renk YOK (kullanıcı kararı).
 - [ ] **1c. Koşullu alan** ("şu değişken şuysa bunu göster").
 - [ ] **1d. Hazır alan kütüphanesi** (196 alan; değişken eklerken seçilebilir).
 - [ ] **1e. Görselden alan çıkarma (vision assist)** — en düşük değer/zahmet; istenmezse hiç taşınmaz.
@@ -12950,3 +12950,10 @@ Kullanıcı isteğiyle sitedeki TÜM içerik kalıcı olarak silinip 18 demo kul
 - i18n: `variable.type.*`, `variable.error.*`, seçenek/aralık/toggle metinleri TR+EN eklendi.
 - Doğrulama: `tsc`, `lint` (yalnız önceden var olan 5 uyarı), `next build --webpack` temiz; ağ taklitsiz geçici harness sayfasıyla (sonra silindi) Playwright 34/34 (kullanan taraf) + 46/46 (oluşturan taraf), 1280 ve 390 px, yatay taşma yok. Gerçek Supabase'e ve gerçek `/create` formuna karşı denenmedi.
 - **Bekleyen adım:** migration SQL Editor'de (ya da MCP ile) uygulanmalı; sonra 1b'ye geçilir.
+
+**1b durumu (yapıldı, migration YOK):**
+- `PromptVariableOption`'a opsiyonel `image` (küçük data URL, en uzun kenar 200 px JPEG, ≤60 KB) ve `color` (`#rrggbb`); `options` zaten JSONB olduğundan yeni kolon gerekmedi. Bir seçenekte en çok biri olur (görsel eklemek rengi, renk eklemek görseli siler). Görsel/renk prompt metnine ASLA girmez; yalnızca `value` yazılır.
+- Kullanan taraf (`variable-field.tsx`): TÜM seçeneklerde görsel varsa kart ızgarası (tek seçim radio, çoklu seçim aria-pressed), TÜMÜNDE renk varsa renk noktalı chip'ler; kısmi ise düz chip/liste (generatordaki "asla yarım gösterme" kuralı). Editör önizlemesi ve Studio aynı bileşeni kullanır.
+- Oluşturan taraf (`variable-spec-editor.tsx`, `OptionMedia`): seçenek satırında "Görsel ekle/değiştir/kaldır" ve "Renk ekle/kaldır"; karışık durumda uyarı satırı. Doğrulama `sanitizeOptions`/`parseStoredOptions`'ta (yalnızca `data:image/*` ve geçerli hex kabul edilir).
+- Test: `npm test` 157/157 (+6); ağ taklitsiz geçici harness'le Playwright 46/46 (1280 + 390 px: kart/örnek görünümü, kısmi düşüş, gerçek PNG yükleme, değer-prompt ayrımı, hex'in prompta sızmaması, taşma yok). Harness silindi. Gerçek `/create` formuna ve Supabase'e karşı denenmedi.
+- **Bilinen sınır:** görseller satırda inline durduğu için seçenek başına ~10-25 KB; 50 seçenekli bir değişkende satır birkaç yüz KB olabilir (istemci tarafı üst sınırlar var, sunucu tarafı boyut CHECK'i yok).

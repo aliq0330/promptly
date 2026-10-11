@@ -1,6 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
+  allOptionsHaveColor,
+  allOptionsHaveImage,
+  MAX_OPTION_IMAGE_LENGTH,
   clampToRange,
   convertSpec,
   defaultConfigFor,
@@ -190,4 +193,62 @@ test("convertSpec: sayısal ve aç/kapa dönüşümleri", () => {
 test("convertSpec: aynı tip değişmeden döner", () => {
   const same = { spec: emptySpec("text"), defaultValue: "x" };
   assert.equal(convertSpec(same, "text"), same);
+});
+
+const IMG = "data:image/jpeg;base64,AAAA";
+
+test("sanitizeOptions: kullanıcının eklediği görsel/renk korunur, geçersizi atılır", () => {
+  const out = sanitizeOptions([
+    { label: "A", value: "a", image: IMG },
+    { label: "B", value: "b", color: "#ff0000" },
+    { label: "C", value: "c", color: "red" },
+    { label: "D", value: "d", image: "https://evil.example/x.png" },
+    { label: "E", value: "e", image: "x".repeat(MAX_OPTION_IMAGE_LENGTH + 1) },
+  ]);
+  assert.deepEqual(out, [
+    { label: "A", value: "a", image: IMG },
+    { label: "B", value: "b", color: "#ff0000" },
+    { label: "C", value: "c" },
+    { label: "D", value: "d" },
+    { label: "E", value: "e" },
+  ]);
+});
+
+test("sanitizeOptions: görsel ve renk birlikte gelirse görsel kazanır", () => {
+  const [o] = sanitizeOptions([{ label: "A", value: "a", image: IMG, color: "#00ff00" }]);
+  assert.deepEqual(o, { label: "A", value: "a", image: IMG });
+});
+
+test("allOptionsHaveImage/Color: yalnızca HEPSİNDE varsa true", () => {
+  assert.equal(allOptionsHaveImage([]), false);
+  assert.equal(allOptionsHaveImage([{ label: "a", value: "a", image: IMG }, { label: "b", value: "b" }]), false);
+  assert.equal(allOptionsHaveImage([{ label: "a", value: "a", image: IMG }, { label: "b", value: "b", image: IMG }]), true);
+  assert.equal(allOptionsHaveColor([{ label: "a", value: "a", color: "#111111" }, { label: "b", value: "b", color: "#222222" }]), true);
+  assert.equal(allOptionsHaveColor([{ label: "a", value: "a", color: "#111111" }, { label: "b", value: "b", image: IMG }]), false);
+});
+
+test("parseStoredOptions: saklanan görsel/renk de doğrulanarak okunur", () => {
+  const out = parseStoredOptions([
+    { label: "a", value: "a", image: IMG },
+    { label: "b", value: "b", color: "#abcdef" },
+    { label: "c", value: "c", image: "javascript:alert(1)", color: "nope" },
+  ]);
+  assert.deepEqual(out, [
+    { label: "a", value: "a", image: IMG },
+    { label: "b", value: "b", color: "#abcdef" },
+    { label: "c", value: "c" },
+  ]);
+});
+
+test("normalizeVariable: seçenek görselleri kaydedilen spec'te korunur", () => {
+  const { spec } = normalizeVariable(
+    { type: "select", options: [{ label: "A", value: "a", image: IMG }, { label: "B", value: "b", image: IMG }], config: {} },
+    "a",
+  );
+  assert.equal(spec.options[0].image, IMG);
+});
+
+test("convertSpec: seçenekli → metin görsel/renkleri de temizler", () => {
+  const r = convertSpec({ spec: { type: "select", options: [{ label: "A", value: "a", image: IMG }, { label: "B", value: "b", image: IMG }], config: {} }, defaultValue: "a" }, "text");
+  assert.deepEqual(r.spec.options, []);
 });
