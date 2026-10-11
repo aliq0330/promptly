@@ -1342,6 +1342,14 @@ export const translations = {
   "vision.fieldsValuesUpdatedCount": { tr: "{{count}} alanın değeri güncellendi", en: "{{count}} field value(s) updated" },
   "vision.newFieldsAddedCount": { tr: "{{count}} yeni alan eklendi", en: "{{count}} new field(s) added" },
   "vision.nothingSelected": { tr: "Hiçbir şey seçilmedi.", en: "Nothing was selected." },
+  "vision.variableTitle": { tr: "Görselden alan öner", en: "Suggest fields from an image" },
+  "vision.variableIntro": { tr: "Bir referans görsel yükle — yapay zekâ görseli analiz edip mevcut değişkenlerinin varsayılanlarını doldurmana ve eksik olabilecek yeni değişkenler önermesine yardımcı olsun. Hiçbir şey senin onayın olmadan uygulanmaz.", en: "Upload a reference image — AI will analyze it to help fill in your existing variables' defaults and suggest new variables that may be missing. Nothing is applied without your approval." },
+  "vision.variableNoResult": { tr: "Analiz tamamlandı — görselden bu promptla eşleşen bir değer veya yeni değişken önerisi çıkarılamadı.", en: "Analysis complete — no matching value or new variable suggestion could be extracted from the image for this prompt." },
+  "vision.variableMatched": { tr: "Varsayılanı güncellenecek değişkenler", en: "Variables whose default will be updated" },
+  "vision.variableSuggested": { tr: "Önerilen yeni değişkenler", en: "Suggested new variables" },
+  "vision.variableDefaultsUpdated": { tr: "{{count}} değişkenin varsayılanı güncellendi", en: "{{count}} variable default(s) updated" },
+  "vision.variablesAdded": { tr: "{{count}} yeni değişken eklendi", en: "{{count}} new variable(s) added" },
+  "variable.addFromCatalog": { tr: "Hazır alanlardan ekle", en: "Add from ready-made fields" },
   "vision.closeThisInfo": { tr: "Bu bilgiyi kapat", en: "Close this message" },
 
   // ---- Generators discover page ----
