@@ -342,7 +342,8 @@ export const PromptComposer = forwardRef<
 
   return (
     <div className={cn("space-y-2", className)}>
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      {/* Mobilde uzun metinde bile "Değişken ekle" ekranda kalsın: üst bar'ın altına yapışır. */}
+      <div className="flex flex-wrap items-center justify-between gap-2 max-lg:sticky max-lg:top-16 max-lg:z-20 max-lg:-mx-1 max-lg:bg-surface max-lg:px-1 max-lg:py-1.5">
         <div className="min-w-0">{leading}</div>
         <Button
           ref={triggerRef}

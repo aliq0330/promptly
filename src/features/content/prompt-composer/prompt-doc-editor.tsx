@@ -302,6 +302,9 @@ export const PromptDocEditor = forwardRef<
         className,
       )}
     >
+      {/* Mobilde uzun metin sayfayı uzatmasın: ayna + textarea birlikte kayan tek kutuda. */}
+      <div className="rounded-lg max-lg:max-h-[min(46dvh,22rem)] max-lg:overflow-y-auto max-lg:overscroll-contain" data-testid="editor-scroll">
+      <div className="relative">
       <div
         ref={mirrorRef}
         aria-hidden
@@ -367,6 +370,8 @@ export const PromptDocEditor = forwardRef<
         }}
         className="relative block w-full resize-none overflow-hidden whitespace-pre-wrap break-words bg-transparent px-3 py-2 font-mono text-sm leading-6 text-transparent caret-text outline-none placeholder:text-text-muted selection:bg-primary/25 selection:text-transparent"
       />
+      </div>
+      </div>
     </div>
   );
 });

@@ -12931,6 +12931,10 @@ Kullanıcı isteğiyle sitedeki TÜM içerik kalıcı olarak silinip 18 demo kul
 - i18n: `fieldCatalog.subtitle/packagePreview/addPackage/packageAllAdded/hidePreview/selectedTitle/clearSelection/removeField/freeText` TR+EN; kullanılmayan `variable.addFromCatalog` silindi. Migration yok.
 - Doğrulama: tsc/lint temiz, `next build --webpack` temiz; ağ taklitsiz geçici harness ile Playwright (1280 ve 390 px): giriş noktası, eski düğmenin yokluğu, paket önizlemesi, paket ekleme, tepsiden × ile kaldırma, ekle → değişkenler + jetonlar metne girdi; harness silindi. Gerçek `/create` formunda denenmedi.
 
+### 9.147 Mobil prompt düzenleyici: "Değişken ekle" sabit, yazma alanı sınırlı
+
+Mobilde (<`lg`) uzun prompt metni düzenleyiciyi sonsuza uzatıp "Değişken ekle" düğmesini ekran dışında bırakıyordu. Artık: (1) `PromptComposer` eylem satırı (Şablon/Önizleme sekmeleri + Değişken ekle) `max-lg:sticky top-16` ile uygulama üst çubuğunun altına yapışır ve düzenleyici görünürken ekranda kalır; (2) `PromptDocEditor`'da ayna + textarea tek bir iç kaydırma kutusunda (`max-h-[min(46dvh,22rem)]`, `overscroll-contain`) — metin kutu içinde kayar, imleç yazarken görünür kalır, ayna hizası bozulmaz. Masaüstü davranışı değişmedi. Migration/yeni metin yok. Doğrulama: tsc/lint temiz; geçici harness ile Playwright (390/320/1280): düğme kaydırmada y=70'te sabit, yazı kutusu 352/294px'te kaydırılıyor, imleç sonda görünür, yatay taşma yok (harness silindi). Gerçek iOS klavyesinde denenmedi.
+
 ### 9.145 PLAN (devam ediyor): Generator'ın prompt değişkenlerine birleştirilmesi
 
 **Karar (kullanıcıyla sohbette):** Değişken ve Generator aynı çekirdeğe sahip ("şablonda adlandırılmış boşluklar"). Generator ayrı bir içerik türü olmaktan çıkarılacak; tipli alanlar, seçenekler vb. normal Prompt'un "değişken" sistemine (gelişmiş özellikler olarak) taşınacak. **JSON çıktı motoru (jsonPath, Çıktı Eşleme, JSON sekmesi) GEREKSİZ** — taşınmayacak; çıktı yalnızca prompt metni. Sıra bağlayıcı: önce özellikleri taşı, Generator'ı EN SON kaldır. Her aşama bitince kullanıcıya sonuç gösterilir, "devam" denmeden sonraki aşamaya geçilmez.
