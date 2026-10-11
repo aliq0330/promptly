@@ -176,7 +176,6 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
       stepNoTitle: "workflow.issueStepTitle",
       stepNoContent: "workflow.issueStepContent",
       stepContentMissing: "workflow.issueStepMissing",
-      unpublishedGenerator: "workflow.warnUnpublished",
       stepRequestNotAllowed: "workflow.issueStepRequest",
     };
     return t(keys[issue.code], { n });
@@ -443,7 +442,6 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
 
       {addTarget && (
         <AddContentModal
-          initialType={addTarget.stepId ? (steps.find((s) => s.id === addTarget.stepId)?.stepType ?? "prompt") : "prompt"}
           initialMode={addTarget.initialMode}
           onSelect={handleContent}
           onClose={() => setAddTarget(null)}

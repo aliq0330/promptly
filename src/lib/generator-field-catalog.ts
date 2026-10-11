@@ -52,7 +52,6 @@
  * renders exactly as it always did.
  */
 
-import { slugifyGeneratorTitle } from "./generator-template";
 import { conceptIcon } from "./generator-option-art";
 import { catalogTextMatches } from "./generator-field-catalog-en";
 import type { GeneratorFieldType } from "@/types";
@@ -101,7 +100,15 @@ export interface CatalogPackage {
 
 /** Turkish-transliterating slug, underscored — same rule this app already uses for field keys/jsonPath segments (`field-editor-modal.tsx`'s `sanitizeSegment`), duplicated here (3 lines) rather than importing a UI component's internal helper from a data/lib file. */
 function slugValue(label: string): string {
-  return slugifyGeneratorTitle(label).replace(/-/g, "_");
+  const map: Record<string, string> = { ç: "c", ğ: "g", ı: "i", ö: "o", ş: "s", ü: "u", İ: "i" };
+  const slug = label
+    .trim()
+    .toLowerCase()
+    .replace(/[çğıöşüİ]/g, (ch) => map[ch] ?? ch)
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .slice(0, 80);
+  return slug || "generator";
 }
 
 function opts(labels: string[]): CatalogOption[] {

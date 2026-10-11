@@ -17,7 +17,7 @@ import { ResultTypePreview } from "@/features/prompts/result-type-preview";
 import { ShareTriggerButton } from "@/features/prompts/share-modal";
 import { RESULT_MEDIA_TYPE_LABELS } from "@/lib/prompt-result-media";
 import { fetchResultById } from "@/lib/supabase/prompt-results";
-import { formatRelativeTime, generatorHref, profileHref, promptHref } from "@/lib/utils";
+import { formatRelativeTime, profileHref, promptHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { PromptResult } from "@/types";
 
@@ -65,10 +65,10 @@ export function ResultDetailView() {
   }
 
   // After deleting your own result there's nothing left on this page to
-  // show — head back to the real origin (prompt or generator) instead of
+  // show — head back to the real origin (the prompt) instead of
   // leaving the viewer stranded on a now-empty page.
   function handleDeleted() {
-    router.push(result!.originalPrompt ? promptHref(result!.originalPrompt) : generatorHref(result!.originalGenerator!));
+    router.push(result!.originalPrompt ? promptHref(result!.originalPrompt) : "/prompts");
   }
 
   // Refetches rather than fabricating an updated object client-side —
@@ -124,27 +124,7 @@ export function ResultDetailView() {
                 <p className="mt-1.5 text-caption font-medium text-primary">{t("result.viewPrompt")}</p>
               </Link>
             </section>
-          ) : (
-            result.originalGenerator && (
-              // Generator-origin result (Generator Local entegrasyonu §13) — same back-link
-              // idea as the prompt card above, minus any prompt-modification comparison
-              // (§5/§23 — that feature doesn't exist for a generator-sourced result at all).
-              <section aria-labelledby="result-origin-title" className="space-y-2 rounded-lg border border-border-soft bg-surface-soft p-4">
-                <h2 id="result-origin-title" className="flex items-center gap-1.5 font-sans text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">
-                  <SquareTerminal size={14} />
-                  {t("result.madeWithWhichGenerator")}
-                </h2>
-                <Link
-                  href={generatorHref(result.originalGenerator)}
-                  className="block rounded-md border border-border-soft bg-surface p-3 transition-colors hover:border-primary/40"
-                >
-                  <p className="truncate text-label font-semibold text-text">{result.originalGenerator.title}</p>
-                  <p className="mt-0.5 text-caption text-text-muted">{t("result.madeWithThisGenerator")}</p>
-                  <p className="mt-1.5 text-caption font-medium text-primary">{t("result.viewGenerator")}</p>
-                </Link>
-              </section>
-            )
-          )}
+          ) : null}
 
           {result.hasModification && result.originalPrompt && (
             <section className="rounded-lg border border-border-soft bg-surface">

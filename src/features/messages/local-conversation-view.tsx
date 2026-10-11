@@ -31,20 +31,17 @@ import { computeKeyboardInset } from "./viewport-helpers";
 import { supabase } from "@/lib/supabase/client";
 import { useRealPrompts } from "@/features/prompts/real-prompts-provider";
 import { useRealRequests } from "@/features/requests/real-requests-provider";
-import { useRealGenerators } from "@/features/generators/real-generators-provider";
-import { fetchGeneratorById } from "@/lib/supabase/generators";
 import { parseHighlightValue } from "@/lib/notification-utils";
 import { profileHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { translateForRuntime } from "@/lib/i18n/translations";
-import { composeGeneratorShareBody } from "./generator-share-format";
 import { composeWorkflowShareBody } from "./workflow-share-format";
 import { composePresetShareBody } from "./preset-share-format";
 import { fetchPresetById } from "@/lib/supabase/presets";
 import { useRealPresets } from "@/features/presets/real-presets-provider";
 import { fetchWorkflowById } from "@/lib/supabase/workflows";
 import { useRealWorkflows } from "@/features/workflows/real-workflows-provider";
-import type { Conversation, Generator, Message, MessageAttachment, UserProfile } from "@/types";
+import type { Conversation, Message, MessageAttachment, UserProfile } from "@/types";
 
 /** Used only to give `useBlockState` a stable, always-defined target before the real conversation/participant has loaded — hooks must run unconditionally, and `canBlock` inside it is false until a real user session exists anyway, so this placeholder never actually reaches a query with a meaningful id. */
 const EMPTY_PARTICIPANT: UserProfile = {
@@ -81,10 +78,7 @@ function translateSendError(message: string): string {
  * `?sharePromptId=`/`?shareRequestId=` (set by `ShareModal`'s "Promptly'de
  * mesaj olarak gönder" option, Bölüm 9.52) attach that content to the next
  * message sent in this conversation as a real, database-backed embed.
- * `?shareGeneratorId=` (same option, for a generator) has no embed column
- * to attach to (Bölüm 9.52's own "no new messaging schema" rule) — it's
- * resolved into a plain-text title+link line instead, composed at send
- * time in `handleSubmit` below.
+ *
  */
 export function LocalConversationView() {
   const { t } = useTranslation();
@@ -93,14 +87,12 @@ export function LocalConversationView() {
   const id = searchParams.get("id");
   const shareParamPromptId = searchParams.get("sharePromptId");
   const shareParamRequestId = searchParams.get("shareRequestId");
-  const shareParamGeneratorId = searchParams.get("shareGeneratorId");
   const shareParamWorkflowId = searchParams.get("shareWorkflowId");
   const shareParamPresetId = searchParams.get("sharePresetId");
   const { user } = useAuth();
   const { getCached, acceptRequest, declineRequest } = useRealMessages();
   const { getCached: getCachedPrompt, fetchById: fetchPromptById } = useRealPrompts();
   const { getCached: getCachedRequest, fetchById: fetchRequestById } = useRealRequests();
-  const { getCached: getCachedGenerator } = useRealGenerators();
   const { getCached: getCachedWorkflow } = useRealWorkflows();
   const { getCached: getCachedPreset } = useRealPresets();
 
@@ -116,10 +108,6 @@ export function LocalConversationView() {
   const pendingRef = useRef<PendingSend[]>([]);
 
   const [fetchedShareTitle, setFetchedShareTitle] = useState<string | null>(null);
-  // Only needed for a shared generator — its plain-text share line needs a
-  // real `slug` (for `generatorHref`), not just a title, and a cache miss
-  // here means fetching the whole object rather than just a title string.
-  const [fetchedShareGenerator, setFetchedShareGenerator] = useState<Generator | null>(null);
   const [fetchedShareWorkflowTitle, setFetchedShareWorkflowTitle] = useState<string | null>(null);
   const [fetchedSharePresetTitle, setFetchedSharePresetTitle] = useState<string | null>(null);
   const [dismissedShare, setDismissedShare] = useState(false);
@@ -333,11 +321,10 @@ export function LocalConversationView() {
     };
   }, [id, user]);
 
-  // Resolves a `?sharePromptId=`/`?shareRequestId=`/`?shareGeneratorId=` deep link into a real title (and, for a generator, the real object) for the composer banner — cache hit resolves synchronously via the derivation below; a miss falls back to a real fetch here.
+  // Resolves a `?sharePromptId=`/`?shareRequestId=`deep link into a real title for the composer banner — cache hit resolves synchronously via the derivation below; a miss falls back to a real fetch here.
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- resetting state for a new share deep link, not reacting to an external system
     setFetchedShareTitle(null);
-    setFetchedShareGenerator(null);
     setFetchedShareWorkflowTitle(null);
     setFetchedSharePresetTitle(null);
     setDismissedShare(false);
@@ -357,15 +344,9 @@ export function LocalConversationView() {
       fetchPresetById(shareParamPresetId).then((result) => {
         if (result) setFetchedSharePresetTitle(result.title);
       });
-    } else if (shareParamGeneratorId && !getCachedGenerator(shareParamGeneratorId)) {
-      fetchGeneratorById(shareParamGeneratorId).then((result) => {
-        if (result) setFetchedShareGenerator(result);
-      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [shareParamPromptId, shareParamRequestId, shareParamGeneratorId, shareParamWorkflowId, shareParamPresetId]);
-
-  const shareGenerator = shareParamGeneratorId ? (getCachedGenerator(shareParamGeneratorId) ?? fetchedShareGenerator) : null;
+  }, [shareParamPromptId, shareParamRequestId, shareParamWorkflowId, shareParamPresetId]);
 
   const pendingShare = dismissedShare
     ? null
@@ -373,14 +354,7 @@ export function LocalConversationView() {
       ? { type: "prompt" as const, id: shareParamPromptId, title: getCachedPrompt(shareParamPromptId)?.title ?? fetchedShareTitle ?? t("common.loading") }
       : shareParamRequestId
         ? { type: "request" as const, id: shareParamRequestId, title: getCachedRequest(shareParamRequestId)?.title ?? fetchedShareTitle ?? t("common.loading") }
-        : shareParamGeneratorId
-          ? {
-              type: "generator" as const,
-              id: shareParamGeneratorId,
-              title: shareGenerator?.title ?? t("common.loading"),
-              slug: shareGenerator?.slug ?? null,
-            }
-          : shareParamWorkflowId
+        : shareParamWorkflowId
             ? {
                 type: "workflow" as const,
                 id: shareParamWorkflowId,
@@ -497,32 +471,17 @@ export function LocalConversationView() {
     router.replace(`/messages/local?id=${id}`);
   }
 
-  // A generator's share line can't be sent until its real slug (for a
-  // working link) has resolved — never send a message with a missing/
-  // broken link just because the fetch above hasn't finished yet.
-  const isGeneratorShareUnresolved =
-    (pendingShare?.type === "generator" && !pendingShare.slug) || (pendingShare?.type === "workflow" && !pendingShare.resolved) ||
-    (pendingShare?.type === "preset" && !pendingShare.resolved);
+  // A workflow/preset share line can't be sent until the item it links to has resolved.
+  const isShareUnresolved =
+    (pendingShare?.type === "workflow" && !pendingShare.resolved) || (pendingShare?.type === "preset" && !pendingShare.resolved);
 
-  /** The finished `body` for an outgoing message — generator/workflow/preset shares have no embed column (Bölüm 9.52), so they're composed into the text itself. */
+  /** The finished `body` for an outgoing message — workflow/preset shares have no embed column (Bölüm 9.52), so they're composed into the text itself. */
   function composeOutgoingBody(trimmed: string): string | undefined {
-    // A generator has no rich embed column in `messages` (only
-    // shared_prompt_id/shared_request_id exist, Bölüm 9.8) — deliberately
-    // not extended with a new column for the Unified Share System task
-    // (its own hard rule: no new messaging table/column/architecture).
-    // So sharing a generator reuses the exact same plain-text `body`
-    // send path every other message already goes through, composed via
-    // `composeGeneratorShareBody` (shared with `message-bubble.tsx`'s
-    // matching parser, so a shared generator still renders as a real
-    // card, Bölüm 9.52's follow-up fix) instead of a database-backed
-    // shared-content card.
-    return pendingShare?.type === "generator" && pendingShare.slug
-      ? composeGeneratorShareBody(trimmed, pendingShare.title, pendingShare.slug)
-      : pendingShare?.type === "workflow"
-        ? composeWorkflowShareBody(trimmed, pendingShare.title, pendingShare.id)
-        : pendingShare?.type === "preset"
-          ? composePresetShareBody(trimmed, pendingShare.title, pendingShare.id)
-          : trimmed || undefined;
+    return pendingShare?.type === "workflow"
+      ? composeWorkflowShareBody(trimmed, pendingShare.title, pendingShare.id)
+      : pendingShare?.type === "preset"
+        ? composePresetShareBody(trimmed, pendingShare.title, pendingShare.id)
+        : trimmed || undefined;
   }
 
   function afterSuccessfulSend() {
@@ -604,7 +563,7 @@ export function LocalConversationView() {
     const trimmed = draft.trim();
     const stagedImages = composerImages.images.filter((image) => image.status === "ready");
     const hasPhotos = stagedImages.length > 0;
-    if ((!trimmed && !pendingShare && !hasPhotos) || !id || !user || isSending || isGeneratorShareUnresolved || composerImages.isPreparing) return;
+    if ((!trimmed && !pendingShare && !hasPhotos) || !id || !user || isSending || isShareUnresolved || composerImages.isPreparing) return;
 
     if (hasPhotos) {
       // Optimistic: the composer empties and the message appears right away with its local previews; upload + insert run in the background.
@@ -900,7 +859,7 @@ export function LocalConversationView() {
           (Boolean(draft.trim()) || Boolean(pendingShare) || composerImages.images.length > 0) &&
           !isSending &&
           !composerImages.isPreparing &&
-          !isGeneratorShareUnresolved
+          !isShareUnresolved
         }
         isSending={isSending}
         onSubmit={handleSubmit}

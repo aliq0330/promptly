@@ -105,7 +105,6 @@ export function ContentPane({
               {MediaIcon && <MediaIcon size={12} className="shrink-0" />}
               <span className="truncate">{[stepSubtitle(step, language), `@${c.authorUsername}`].filter(Boolean).join(" · ")}</span>
             </p>
-            {!c.published && <p className="mt-1 text-caption text-warning">{t("workflow.unpublishedGenerator")}</p>}
           </div>
         </div>
       ) : (

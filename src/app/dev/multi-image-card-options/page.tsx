@@ -84,7 +84,6 @@ function promptWithMedia(count: number): Prompt {
     visibility: "public",
     createdAt: "2026-02-10T12:00:00Z",
     deletedAt: null,
-    generatedFrom: null,
   };
 }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { Blocks, PenLine, Sparkles, SquareTerminal, Workflow, type LucideIcon } from "lucide-react";
+import { PenLine, Sparkles, SquareTerminal, Workflow, type LucideIcon } from "lucide-react";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import { isContentTypeId, taxonomyLabel, taxonomyPathLabel } from "@/lib/content-taxonomy";
@@ -8,7 +8,6 @@ import { RELATION_TYPES, type RelationEdge, type RelationNodeKind, type Relation
 
 export const KIND_ICON: Record<RelationNodeKind, LucideIcon> = {
   prompt: SquareTerminal,
-  generator: Blocks,
   workflow: Workflow,
   request: Sparkles,
   suggestion: PenLine,

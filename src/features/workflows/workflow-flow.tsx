@@ -96,15 +96,11 @@ function FloatingPreview({
   );
 }
 
-/** Studio link for a published Prompt / Generator step (a request step has nothing to try). */
+/** Studio link for a published Prompt step (a request step has nothing to try). */
 function studioHrefForStep(step: WorkflowStep): string | null {
   const c = step.content;
   if (!c || !c.published) return null;
   if (c.type === "prompt") return `/studio?prompt=${encodeURIComponent(c.id)}`;
-  if (c.type === "generator") {
-    const slug = new URLSearchParams(c.href.split("?")[1] ?? "").get("slug");
-    return slug ? `/studio?generator=${encodeURIComponent(slug)}` : null;
-  }
   return null;
 }
 
@@ -183,7 +179,6 @@ function StepCard({ step, steps, index }: { step: WorkflowStep; steps: WorkflowS
           ) : (
             <span className="mt-1.5 block text-caption text-text-muted">{step.contentMissing ? t("workflow.contentMissing") : t("workflow.stepNoContentPublic")}</span>
           )}
-          {c && !c.published && <span className="mt-1 block text-caption text-warning">{t("workflow.unpublishedGenerator")}</span>}
         </span>
       </span>
 

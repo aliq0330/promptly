@@ -22,7 +22,7 @@ const COMMENT_SELECT = `
 
 function mapCommentRow(
   row: CommentRow,
-  target: { promptId: string } | { requestId: string } | { generatorId: string } | { resultId: string } | { workflowId: string } | { presetId: string },
+  target: { promptId: string } | { requestId: string } | { resultId: string } | { workflowId: string } | { presetId: string },
 ): PromptComment {
   return {
     id: row.id,
@@ -73,41 +73,6 @@ export async function fetchCommentsForRequest(requestId: string): Promise<Prompt
     console.error("fetchCommentsForRequest", err);
     return [];
   }
-}
-
-/** Every real comment on a real generator, oldest first — publicly readable wherever the generator itself is (Bölüm 9.34's shared social layer, mirrors fetchCommentsForPrompt). */
-export async function fetchCommentsForGenerator(generatorId: string): Promise<PromptComment[]> {
-  try {
-    const { data, error } = await supabase
-      .from("prompt_comments")
-      .select(COMMENT_SELECT)
-      .eq("generator_id", generatorId)
-      .order("created_at", { ascending: true });
-    if (error) {
-      console.error("fetchCommentsForGenerator", error);
-      return [];
-    }
-    return withoutBlocked(((data ?? []) as unknown as CommentRow[]).map((row) => mapCommentRow(row, { generatorId })), (c) => c.author.id);
-  } catch (err) {
-    console.error("fetchCommentsForGenerator", err);
-    return [];
-  }
-}
-
-/** Genuinely, permanently posts a comment on a real generator. `handle_prompt_comment_change` (Bölüm 9.34) keeps `generators.comment_count` in sync, even across users. */
-export async function postCommentOnGenerator(
-  generatorId: string,
-  authorId: string,
-  body: string,
-  parentId: string | null,
-): Promise<PromptComment> {
-  const { data, error } = await supabase
-    .from("prompt_comments")
-    .insert({ generator_id: generatorId, author_id: authorId, body, parent_id: parentId })
-    .select(COMMENT_SELECT)
-    .single();
-  if (error || !data) throw new Error(error?.message ?? "Yorum eklenemedi.");
-  return mapCommentRow(data as unknown as CommentRow, { generatorId });
 }
 
 /** Genuinely, permanently posts a comment on a real request. */

@@ -7,7 +7,7 @@
  * merge their data models. Every edge says where it came from (`origin`):
  *  - `dna`      → computed on the fly from stored Prompt DNA, never persisted
  *  - `manual`   → a row in `content_relations` (the only new table)
- *  - `derived`  → read straight from workflow steps / prompts.generator_id /
+ *  - `derived`  → read straight from workflow steps / 
  *                 prompts.request_id / accepted edit suggestions, never copied
  */
 
@@ -15,12 +15,12 @@ import type { TranslationKey } from "../i18n/translations.ts";
 import type { DnaSectionType } from "../prompt-dna/types.ts";
 
 /** What a node can be. `suggestion` only ever appears as an accepted edit suggestion. */
-export type RelationNodeKind = "prompt" | "generator" | "workflow" | "request" | "suggestion";
+export type RelationNodeKind = "prompt" | "workflow" | "request" | "suggestion";
 
 /** Node kinds that can be the CENTER of a map (and the ends of a manual relation). */
-export type RelatableKind = "prompt" | "generator" | "workflow" | "request";
+export type RelatableKind = "prompt" | "workflow" | "request";
 
-export const RELATABLE_KINDS: readonly RelatableKind[] = ["prompt", "generator", "workflow", "request"];
+export const RELATABLE_KINDS: readonly RelatableKind[] = ["prompt", "workflow", "request"];
 
 export type RelationType =
   | "dna_similar"
@@ -28,7 +28,6 @@ export type RelationType =
   | "alternative"
   | "inspired_by"
   | "workflow_step"
-  | "uses_generator"
   | "request_result"
   | "accepted_suggestion";
 
@@ -40,7 +39,7 @@ export const MANUAL_RELATION_TYPES: readonly ManualRelationType[] = ["similar", 
 export type RelationOrigin = "dna" | "manual" | "derived";
 
 /** The filter chips on the map. `all` is always offered; the rest only when the data has them. */
-export type RelationFilter = "all" | "dna" | "manual" | "workflow" | "generator" | "request";
+export type RelationFilter = "all" | "dna" | "manual" | "workflow" | "request";
 
 export interface RelationTypeDef {
   /** Directed: the arrow runs from `from` to `to`. Undirected relations draw no arrowhead. */
@@ -58,12 +57,11 @@ export const RELATION_TYPES: Record<RelationType, RelationTypeDef> = {
   alternative: { directed: false, origin: "manual", filter: "manual", labelKey: "relations.type.alternative", meaningKey: "relations.meaning.alternative" },
   inspired_by: { directed: true, origin: "manual", filter: "manual", labelKey: "relations.type.inspired_by", meaningKey: "relations.meaning.inspired_by" },
   workflow_step: { directed: true, origin: "derived", filter: "workflow", labelKey: "relations.type.workflow_step", meaningKey: "relations.meaning.workflow_step" },
-  uses_generator: { directed: true, origin: "derived", filter: "generator", labelKey: "relations.type.uses_generator", meaningKey: "relations.meaning.uses_generator" },
   request_result: { directed: true, origin: "derived", filter: "request", labelKey: "relations.type.request_result", meaningKey: "relations.meaning.request_result" },
   accepted_suggestion: { directed: true, origin: "derived", filter: "request", labelKey: "relations.type.accepted_suggestion", meaningKey: "relations.meaning.accepted_suggestion" },
 };
 
-export const FILTER_ORDER: readonly Exclude<RelationFilter, "all">[] = ["dna", "manual", "workflow", "generator", "request"];
+export const FILTER_ORDER: readonly Exclude<RelationFilter, "all">[] = ["dna", "manual", "workflow", "request"];
 
 export function isManualRelationType(value: string): value is ManualRelationType {
   return (MANUAL_RELATION_TYPES as readonly string[]).includes(value);

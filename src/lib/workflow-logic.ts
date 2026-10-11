@@ -26,7 +26,7 @@ export function newStep(stepType: WorkflowStepType): WorkflowStep {
 }
 
 /** Step types a user may ADD. "request" stays in `WorkflowStepType` only so old workflows still load/render; it can no longer be chosen or saved. */
-export const PICKABLE_STEP_TYPES: WorkflowStepType[] = ["prompt", "generator"];
+export const PICKABLE_STEP_TYPES: WorkflowStepType[] = ["prompt"];
 
 export function isPickableStepType(type: WorkflowStepType): boolean {
   return PICKABLE_STEP_TYPES.includes(type);
@@ -139,7 +139,7 @@ export function outgoingCount(steps: WorkflowStep[], stepId: string): number {
   return steps.reduce((sum, s) => sum + s.inputs.filter((i) => i.source?.stepId === stepId).length, 0);
 }
 
-export type WorkflowIssueCode = "titleRequired" | "noSteps" | "stepNoTitle" | "stepNoContent" | "stepContentMissing" | "unpublishedGenerator" | "stepRequestNotAllowed";
+export type WorkflowIssueCode = "titleRequired" | "noSteps" | "stepNoTitle" | "stepNoContent" | "stepContentMissing" | "stepRequestNotAllowed";
 export interface WorkflowIssue {
   level: "error" | "warning";
   code: WorkflowIssueCode;
@@ -164,9 +164,6 @@ export function validateWorkflow(meta: { title: string }, steps: WorkflowStep[],
     if (!step.title.trim()) issues.push({ level: "error", code: "stepNoTitle", stepId: step.id, stepIndex });
     if (step.contentMissing) issues.push({ level: "error", code: "stepContentMissing", stepId: step.id, stepIndex });
     else if (!step.content) issues.push({ level: "error", code: "stepNoContent", stepId: step.id, stepIndex });
-    else if (step.content.type === "generator" && !step.content.published) {
-      issues.push({ level: "warning", code: "unpublishedGenerator", stepId: step.id, stepIndex });
-    }
   });
   return issues;
 }

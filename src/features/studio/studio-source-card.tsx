@@ -1,20 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { Blocks, ExternalLink, SlidersHorizontal, SquareTerminal, X, type LucideIcon } from "lucide-react";
+import { ExternalLink, SlidersHorizontal, SquareTerminal, X, type LucideIcon } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { ContentTypeLabel } from "@/features/content/content-type-label";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import { contentTypeLabelKey, taxonomyLabel } from "@/lib/content-taxonomy";
-import { formatRelativeTime, generatorHref, presetHref, profileHref, promptHref } from "@/lib/utils";
-import type { Generator, Preset, Prompt } from "@/types";
+import { formatRelativeTime, presetHref, profileHref, promptHref } from "@/lib/utils";
+import type { Preset, Prompt } from "@/types";
 
-type Source = { kind: "prompt"; item: Prompt } | { kind: "generator"; item: Generator } | { kind: "preset"; item: Preset };
+type Source = { kind: "prompt"; item: Prompt } | { kind: "preset"; item: Preset };
 
 const KIND: Record<Source["kind"], { icon: LucideIcon; label: TranslationKey }> = {
   prompt: { icon: SquareTerminal, label: "studio.source.prompt" },
-  generator: { icon: Blocks, label: "studio.source.generator" },
   preset: { icon: SlidersHorizontal, label: "studio.source.preset" },
 };
 
@@ -28,8 +27,8 @@ export function StudioSourceCard({ source, onChange, onRemove }: { source: Sourc
   const { icon: Icon, label } = KIND[source.kind];
   const item = source.item;
   const creator = source.kind === "prompt" ? source.item.author : source.item.creator;
-  const imageUrl = source.kind === "prompt" ? (source.item.media[0]?.url ?? null) : source.kind === "generator" ? (source.item.media[0]?.url ?? source.item.coverUrl) : source.item.coverUrl;
-  const href = source.kind === "prompt" ? promptHref(source.item) : source.kind === "generator" ? generatorHref(source.item) : presetHref(source.item);
+  const imageUrl = source.kind === "prompt" ? (source.item.media[0]?.url ?? null) : source.item.coverUrl;
+  const href = source.kind === "prompt" ? promptHref(source.item) : presetHref(source.item);
   const createdAt = source.item.createdAt;
   const typeText = taxonomyLabel(contentTypeLabelKey(source.item.contentType), language);
 

@@ -1,6 +1,5 @@
 "use client";
 
-import { GENERATORS_ENABLED } from "@/lib/feature-flags";
 import { DetailSkeleton } from "@/components/ui/detail-skeleton";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
@@ -9,16 +8,16 @@ import { FeedItemsView } from "@/features/feed/feed-items-view";
 import { ViewModeSwitcher } from "@/features/content/view-mode-switcher";
 import type { FeedItem } from "@/features/feed/types";
 import { Tabs } from "@/components/ui/tabs";
-import { fetchGeneratorsByTagSlug, fetchPromptsByTag, fetchRequestsByTagSlug, fetchTagBySlug, fetchWorkflowsByTagSlug } from "@/lib/supabase/tags";
+import { fetchPromptsByTag, fetchRequestsByTagSlug, fetchTagBySlug, fetchWorkflowsByTagSlug } from "@/lib/supabase/tags";
 import { fetchPresetsByTagSlug } from "@/lib/supabase/presets";
 import { formatCount, cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { TaxonomyFilter } from "@/features/content/taxonomy-filter";
 import { EMPTY_TAXONOMY_FILTER, matchesTaxonomy, type TaxonomyFilterValue } from "@/lib/content-taxonomy";
-import type { Generator, Preset, Prompt, PromptRequest, Tag, Workflow } from "@/types";
+import type { Preset, Prompt, PromptRequest, Tag, Workflow } from "@/types";
 
 type SortMode = "newest" | "popular";
-type KindFilter = "all" | "prompt" | "generator" | "workflow" | "preset" | "request";
+type KindFilter = "all" | "prompt" | "workflow" | "preset" | "request";
 
 /**
  * Client-rendered counterpart to the old static `/tags/[tag]` — tags are
@@ -37,7 +36,6 @@ export function TagView() {
   const [tag, setTag] = useState<Tag | null>(null);
   const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [requests, setRequests] = useState<PromptRequest[]>([]);
-  const [generators, setGenerators] = useState<Generator[]>([]);
   const [workflows, setWorkflows] = useState<Workflow[]>([]);
   const [presets, setPresets] = useState<Preset[]>([]);
   const [kind, setKind] = useState<KindFilter>("all");
@@ -57,16 +55,14 @@ export function TagView() {
       fetchTagBySlug(slug),
       fetchPromptsByTag(slug),
       fetchRequestsByTagSlug(slug),
-      GENERATORS_ENABLED ? fetchGeneratorsByTagSlug(slug) : Promise.resolve([] as Generator[]),
       fetchWorkflowsByTagSlug(slug),
       fetchPresetsByTagSlug(slug),
     ]).then(
-      ([foundTag, foundPrompts, foundRequests, foundGenerators, foundWorkflows, foundPresets]) => {
+      ([foundTag, foundPrompts, foundRequests, foundWorkflows, foundPresets]) => {
         if (cancelled) return;
         setTag(foundTag);
         setPrompts(foundPrompts);
         setRequests(foundRequests);
-        setGenerators(foundGenerators);
         setWorkflows(foundWorkflows);
         setPresets(foundPresets);
         setLoaded(true);
@@ -81,14 +77,13 @@ export function TagView() {
     const promptItems: FeedItem[] = kind === "all" || kind === "prompt" ? prompts.filter((p) => matchesTaxonomy(p, taxonomy)).map((data) => ({ kind: "prompt", data })) : [];
     const otherItems: FeedItem[] = [
       ...(kind === "all" || kind === "request" ? requests.map((data): FeedItem => ({ kind: "request", data })) : []),
-      ...(kind === "all" || kind === "generator" ? generators.map((data): FeedItem => ({ kind: "generator", data })) : []),
       ...(kind === "all" || kind === "workflow" ? workflows.map((data): FeedItem => ({ kind: "workflow", data })) : []),
       ...(kind === "all" || kind === "preset" ? presets.map((data): FeedItem => ({ kind: "preset", data })) : []),
     ];
     const created = (i: FeedItem) => new Date(i.data.createdAt).getTime();
     const likes = (i: FeedItem) => (i.kind === "request" ? i.data.responseCount : i.data.likeCount);
     return [...promptItems, ...otherItems].sort((a, b) => (sortMode === "popular" ? likes(b) - likes(a) : created(b) - created(a)));
-  }, [prompts, requests, generators, workflows, presets, kind, taxonomy, sortMode]);
+  }, [prompts, requests, workflows, presets, kind, taxonomy, sortMode]);
 
   if (!slug) {
     return <div className="mx-auto max-w-lg px-4 py-16 text-center text-sm text-text-muted">{t("tag.notFound")}.</div>;
@@ -107,7 +102,7 @@ export function TagView() {
     );
   }
 
-  const totalCount = tag.usageCount ?? prompts.length + requests.length + generators.length + workflows.length + presets.length;
+  const totalCount = tag.usageCount ?? prompts.length + requests.length + workflows.length + presets.length;
 
   return (
     <div className="mx-auto max-w-6xl space-y-5 px-3 py-5 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
@@ -127,7 +122,6 @@ export function TagView() {
         items={[
           { key: "all", label: t("common.all") },
           { key: "prompt", label: t("tag.filterPrompts") },
-          ...(GENERATORS_ENABLED ? [{ key: "generator" as const, label: t("tag.filterGenerators") }] : []),
           { key: "workflow", label: t("tag.filterWorkflows") },
           { key: "preset", label: t("tag.filterPresets") },
           { key: "request", label: t("tag.filterRequests") },

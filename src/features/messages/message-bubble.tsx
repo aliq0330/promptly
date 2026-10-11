@@ -9,8 +9,7 @@ import { MessageImageGrid, useMessageImageUrls } from "./message-image-grid";
 import { MessageActionMenu } from "./message-action-menu";
 import { usePopoverAlign } from "./use-popover-align";
 import { canEditOrDeleteMessage } from "./message-time-limit";
-import { SharedGeneratorCard, SharedPromptCard, SharedPresetCard, SharedRequestCard, SharedWorkflowCard } from "./shared-content-card";
-import { parseGeneratorShareBody } from "./generator-share-format";
+import { SharedPromptCard, SharedPresetCard, SharedRequestCard, SharedWorkflowCard } from "./shared-content-card";
 import { parseWorkflowShareBody } from "./workflow-share-format";
 import { parsePresetShareBody } from "./preset-share-format";
 import { cn, formatRelativeTime } from "@/lib/utils";
@@ -91,41 +90,28 @@ export function MessageBubble({
   const { t, language } = useTranslation();
   const isDeleted = Boolean(message.deletedAt);
 
-  // A generator share has no database column to key off of (Bölüm 9.52) —
-  // recognized instead from its own plain-text pattern inside `body`.
-  // Never set when this message actually shares a prompt/request (those
-  // always take priority; a message only ever shares one thing).
-  const generatorShare =
-    !message.sharedPromptId && !message.sharedRequestId ? parseGeneratorShareBody(message.body) : null;
-  const workflowShare =
-    !message.sharedPromptId && !message.sharedRequestId && !generatorShare ? parseWorkflowShareBody(message.body) : null;
+  // Workflow/preset shares have no database column (Bölüm 9.52) — recognized
+  // from their own plain-text pattern inside `body`. A message only ever shares one thing.
+  const workflowShare = !message.sharedPromptId && !message.sharedRequestId ? parseWorkflowShareBody(message.body) : null;
   const presetShare =
-    !message.sharedPromptId && !message.sharedRequestId && !generatorShare && !workflowShare ? parsePresetShareBody(message.body) : null;
-  const displayBody = generatorShare ? generatorShare.note : workflowShare ? workflowShare.note : presetShare ? presetShare.note : message.body;
+    !message.sharedPromptId && !message.sharedRequestId && !workflowShare ? parsePresetShareBody(message.body) : null;
+  const displayBody = workflowShare ? workflowShare.note : presetShare ? presetShare.note : message.body;
 
-  const replyGeneratorShare =
-    replyPreview && !replyPreview.sharedPromptId && !replyPreview.sharedRequestId
-      ? parseGeneratorShareBody(replyPreview.body)
-      : null;
   const replyWorkflowShare =
-    replyPreview && !replyPreview.sharedPromptId && !replyPreview.sharedRequestId && !replyGeneratorShare
-      ? parseWorkflowShareBody(replyPreview.body)
-      : null;
+    replyPreview && !replyPreview.sharedPromptId && !replyPreview.sharedRequestId ? parseWorkflowShareBody(replyPreview.body) : null;
   const replyPresetShare =
-    replyPreview && !replyPreview.sharedPromptId && !replyPreview.sharedRequestId && !replyGeneratorShare && !replyWorkflowShare
+    replyPreview && !replyPreview.sharedPromptId && !replyPreview.sharedRequestId && !replyWorkflowShare
       ? parsePresetShareBody(replyPreview.body)
       : null;
   const replyPreviewText = !replyPreview
     ? null
     : replyPreview.deletedAt
       ? t("messages.deletedMessage")
-      : replyGeneratorShare
-        ? (replyGeneratorShare.note ?? t("messages.aGenerator"))
-        : replyWorkflowShare
-          ? (replyWorkflowShare.note ?? t("messages.aWorkflow"))
-          : replyPresetShare
-            ? (replyPresetShare.note ?? t("messages.aPreset"))
-            : replyPreview.body ?? (replyPreview.sharedPromptId ? t("messages.aPrompt") : t("request.aRequest"));
+      : replyWorkflowShare
+        ? (replyWorkflowShare.note ?? t("messages.aWorkflow"))
+        : replyPresetShare
+          ? (replyPresetShare.note ?? t("messages.aPreset"))
+          : replyPreview.body ?? (replyPreview.sharedPromptId ? t("messages.aPrompt") : t("request.aRequest"));
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [emojiOpen, setEmojiOpen] = useState(false);
@@ -331,7 +317,6 @@ export function MessageBubble({
           <div className="relative flex max-w-[75%] flex-col gap-1.5">
             {message.sharedPromptId && <SharedPromptCard promptId={message.sharedPromptId} />}
             {message.sharedRequestId && <SharedRequestCard requestId={message.sharedRequestId} />}
-            {generatorShare && <SharedGeneratorCard slug={generatorShare.slug} />}
             {workflowShare && <SharedWorkflowCard workflowId={workflowShare.id} />}
             {presetShare && <SharedPresetCard presetId={presetShare.id} />}
             {message.attachments.length > 0 && <BubbleImages attachments={message.attachments} isMe={isMe} />}

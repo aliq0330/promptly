@@ -14,8 +14,6 @@ import { tokensToQuery, type SearchToken } from "./search-tokens";
 import { searchPrompts } from "@/lib/supabase/prompts";
 import { searchProfiles } from "@/lib/supabase/profiles";
 import { searchRequests } from "@/lib/supabase/requests";
-import { GENERATORS_ENABLED } from "@/lib/feature-flags";
-import { searchGenerators } from "@/lib/supabase/generators";
 import { searchWorkflows } from "@/lib/supabase/workflows";
 import { WorkflowCard } from "@/features/workflows/workflow-card";
 import { searchPresets } from "@/lib/supabase/presets";
@@ -26,7 +24,7 @@ import { findCategory, findSubcategory, isContentTypeId, type TaxonomyFilterValu
 import type { ContentSearchFilters } from "@/lib/supabase/taxonomy-query";
 import { formatCount, profileHref, tagHref } from "@/lib/utils";
 import { Eyebrow } from "@/features/content/detail-parts";
-import type { Generator, Prompt, PromptRequest, Preset, Tag, UserProfile, Workflow } from "@/types";
+import type { Prompt, PromptRequest, Preset, Tag, UserProfile, Workflow } from "@/types";
 
 const DEBOUNCE_MS = 300;
 type Sort = NonNullable<ContentSearchFilters["sort"]>;
@@ -46,7 +44,6 @@ export function SearchView({ idle }: { idle?: ReactNode } = {}) {
   const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
-  const [generators, setGenerators] = useState<Generator[]>([]);
   const [requests, setRequests] = useState<PromptRequest[]>([]);
   const [workflows, setWorkflows] = useState<Workflow[]>([]);
   const [presets, setPresets] = useState<Preset[]>([]);
@@ -87,7 +84,6 @@ export function SearchView({ idle }: { idle?: ReactNode } = {}) {
       setPrompts([]);
       setUsers([]);
       setTags([]);
-      setGenerators([]);
       setRequests([]);
       setWorkflows([]);
       setPresets([]);
@@ -104,9 +100,8 @@ export function SearchView({ idle }: { idle?: ReactNode } = {}) {
       };
       // Plain text only (no chips): people and tags are results too.
       const textOnly = !hasTokens;
-      const [foundPrompts, foundGenerators, foundWorkflows, foundPresets, foundRequests, foundUsers, foundTags] = await Promise.all([
+      const [foundPrompts, foundWorkflows, foundPresets, foundRequests, foundUsers, foundTags] = await Promise.all([
         kinds.includes("prompt") ? searchPrompts(normalized, filters) : [],
-        GENERATORS_ENABLED && kinds.includes("generator") ? searchGenerators(normalized, filters) : [],
         kinds.includes("workflow") ? searchWorkflows(normalized, filters) : [],
         kinds.includes("preset") ? searchPresets(normalized, filters) : [],
         kinds.includes("request") ? searchRequests(normalized, filters) : [],
@@ -115,7 +110,6 @@ export function SearchView({ idle }: { idle?: ReactNode } = {}) {
       ]);
       if (cancelled) return;
       setPrompts(foundPrompts);
-      setGenerators(foundGenerators);
       setWorkflows(foundWorkflows);
       setPresets(foundPresets);
       setRequests(foundRequests);
@@ -131,7 +125,7 @@ export function SearchView({ idle }: { idle?: ReactNode } = {}) {
   }, [normalized, filterKey, active]);
 
   const nothingFound =
-    prompts.length === 0 && users.length === 0 && tags.length === 0 && generators.length === 0 && workflows.length === 0 && presets.length === 0 && requests.length === 0;
+    prompts.length === 0 && users.length === 0 && tags.length === 0 && workflows.length === 0 && presets.length === 0 && requests.length === 0;
   const taxonomy: TaxonomyFilterValue = { contentType: singleMedia, category, subcategory };
 
   return (
@@ -208,13 +202,6 @@ export function SearchView({ idle }: { idle?: ReactNode } = {}) {
                   </Link>
                 ))}
               </div>
-            </section>
-          )}
-
-          {generators.length > 0 && (
-            <section className="space-y-3">
-              <ResultsHeading count={generators.length}>{t("nav.generators")}</ResultsHeading>
-              <PromptGrid generators={generators} />
             </section>
           )}
 

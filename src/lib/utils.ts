@@ -1,7 +1,7 @@
 import { clsx, type ClassValue } from "clsx";
 import { extendTailwindMerge } from "tailwind-merge";
 import { translateForRuntime, type Language } from "@/lib/i18n/translations";
-import type { Collection, Conversation, Generator, Prompt, PromptRequest, PromptResultSummary, Tag, UserProfile } from "@/types";
+import type { Collection, Conversation, Prompt, PromptRequest, PromptResultSummary, Tag, UserProfile } from "@/types";
 
 /**
  * tailwind-merge taught the design system's custom tokens (globals.css).
@@ -274,17 +274,6 @@ export function collectionHref(collection: Pick<Collection, "id">): string {
   return `/collections/local?id=${collection.id}`;
 }
 
-/**
- * Same idea as `tagHref` — a generator's real public URL is `/generators/
- * {slug}` per spec (§41), but every generator is a real, runtime-created
- * Supabase row (not known at build time), so the static export looks it up
- * client-side via `/generators/local?slug=…` instead of a dynamic path
- * segment GitHub Pages can't pre-render.
- */
-export function generatorHref(generator: Pick<Generator, "slug">): string {
-  return `/generators/local?slug=${generator.slug}`;
-}
-
 /** Same idea as `promptHref`, for a Workflow — a real Supabase row (`public.workflows`), always the parameterless static route + `?id=`. */
 export function workflowHref(workflow: { id: string }): string {
   return `/workflows/local?id=${workflow.id}`;
@@ -297,10 +286,10 @@ export function presetHref(preset: { id: string }): string {
 
 /**
  * İlişki Haritası for one piece of content — a parameterless static route +
- * `?type=&id=`, same idea as `promptHref`. `kind` is prompt | generator |
+ * `?type=&id=`, same idea as `promptHref`. `kind` is prompt |
  * workflow | request.
  */
-export function relationMapHref(target: { kind: "prompt" | "generator" | "workflow" | "request"; id: string }): string {
+export function relationMapHref(target: { kind: "prompt" | "workflow" | "request"; id: string }): string {
   return `/relations?type=${target.kind}&id=${target.id}`;
 }
 

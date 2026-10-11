@@ -81,12 +81,6 @@ export function FocusActions({ item }: { item: FeedItem }) {
           <CommentCountLink promptId={item.data.id} baseCount={item.data.commentCount} />
           <SaveButton promptId={item.data.id} saveCount={item.data.saveCount} />
         </>
-      ) : item.kind === "generator" ? (
-        <>
-          <LikeButton id={item.data.id} likeCount={item.data.likeCount} contentType="generator" />
-          <CommentCountLink generatorSlug={item.data.slug} generatorId={item.data.id} baseCount={item.data.commentCount} />
-          <SaveButton generatorId={item.data.id} saveCount={item.data.saveCount} />
-        </>
       ) : item.kind === "workflow" ? (
         <>
           <LikeButton id={item.data.id} likeCount={item.data.likeCount} contentType="workflow" />

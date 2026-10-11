@@ -16,7 +16,7 @@ import {
 } from "@/lib/generator-field-catalog";
 import { useTranslation, useLanguage } from "@/lib/i18n/language-provider";
 import { catalogText, localizeCatalogField } from "@/lib/generator-field-catalog-en";
-import { GENERATOR_FIELD_TYPE_LABELS } from "./generator-category-meta";
+import { GENERATOR_FIELD_TYPE_LABELS } from "./field-type-labels";
 
 /**
  * "Alan Ekle" modal, catalog step (the user's "HAZIR KATEGORİ / ALT

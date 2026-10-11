@@ -1,10 +1,9 @@
 "use client";
 
-import { GENERATORS_ENABLED } from "@/lib/feature-flags";
 import { PageContainer } from "@/components/ui/page-header";
 
 import { useEffect, useMemo, useState } from "react";
-import { Blocks, Heart, SearchX, SlidersHorizontal, Sparkles, Workflow as WorkflowIcon } from "lucide-react";
+import { Heart, SearchX, SlidersHorizontal, Sparkles, Workflow as WorkflowIcon } from "lucide-react";
 import { ProfileHeader } from "./profile-header";
 import { ProfileTabs, type ProfileTabKey } from "./profile-tabs";
 import { Tabs } from "@/components/ui/tabs";
@@ -16,7 +15,6 @@ import { ProfileAbout } from "./profile-about";
 import { ProfileDraftsPanel } from "./profile-drafts-panel";
 import { RequestList } from "@/features/requests/request-list";
 import { CollectionsPanel } from "@/features/collections/collections-panel";
-import { GeneratorCard } from "@/features/generators/generator-card";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { fetchLikedPrompts } from "@/lib/supabase/prompts";
@@ -25,9 +23,9 @@ import { WorkflowCard } from "@/features/workflows/workflow-card";
 import { fetchPresetsByCreator } from "@/lib/supabase/presets";
 import { PresetCard } from "@/features/presets/preset-card";
 import { ProfilePresetsPanel } from "@/features/presets/profile-presets-panel";
-import type { Generator, Preset, Prompt, PromptContentType, PromptRequest, UserProfile, Workflow } from "@/types";
+import type { Preset, Prompt, PromptContentType, PromptRequest, UserProfile, Workflow } from "@/types";
 
-type PostKind = "prompts" | "requests" | "generators" | "workflows" | "presets";
+type PostKind = "prompts" | "requests" | "workflows" | "presets";
 
 function sortPrompts(prompts: Prompt[], sort: ProfileSortKey): Prompt[] {
   const sorted = [...prompts];
@@ -47,15 +45,12 @@ export function ProfileView({
   isOwnProfile,
   authorPrompts: initialAuthorPrompts,
   authorRequests,
-  authorGenerators: initialAuthorGenerators,
 }: {
   user: UserProfile;
   isOwnProfile: boolean;
   authorPrompts: Prompt[];
   /** This profile's own real prompt requests (Prompt İstekleri) — always public, shown on every profile, not just the owner's (CLAUDE.md prompt-request module). */
   authorRequests: PromptRequest[];
-  /** This profile's own real generators — RLS already limits a visitor to the owner's published+public/unlisted ones, drafts only ever coming back for the owner's own profile, so no extra client-side filter is needed. */
-  authorGenerators: Generator[];
 }) {
   const { t } = useTranslation();
   const { user: authUser } = useAuth();
@@ -68,16 +63,6 @@ export function ProfileView({
 
   function handleDeleted(promptId: string) {
     setAuthorPrompts((prev) => prev.filter((prompt) => prompt.id !== promptId));
-  }
-
-  const [authorGenerators, setAuthorGenerators] = useState(initialAuthorGenerators);
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- resyncs when a freshly-fetched generator list (a new array) replaces the previous one, e.g. navigating to a different profile
-    setAuthorGenerators(initialAuthorGenerators);
-  }, [initialAuthorGenerators]);
-
-  function handleGeneratorDeleted(generatorId: string) {
-    setAuthorGenerators((prev) => prev.filter((generator) => generator.id !== generatorId));
   }
 
   // Real likes — only ever fetched for one's own profile, and only for the
@@ -136,18 +121,16 @@ export function ProfileView({
     () => ({
       prompts: authorPrompts.length,
       requests: authorRequests.length,
-      generators: authorGenerators.filter((g) => g.status === "published").length,
       workflows: workflows.filter((w) => w.status === "published").length,
       presets: presets.filter((p) => p.status === "published").length,
     }),
-    [authorPrompts.length, authorRequests.length, authorGenerators, workflows, presets],
+    [authorPrompts.length, authorRequests.length, workflows, presets],
   );
 
   const postKindTabs = useMemo(
     () => [
       { key: "prompts" as const, label: t("feed.filterPrompts"), count: postCounts.prompts },
       { key: "requests" as const, label: t("nav.requests"), count: postCounts.requests },
-      ...(GENERATORS_ENABLED ? [{ key: "generators" as const, label: t("nav.generators"), count: postCounts.generators }] : []),
       { key: "workflows" as const, label: t("nav.workflows"), count: postCounts.workflows },
       { key: "presets" as const, label: t("nav.presets"), count: postCounts.presets },
     ],
@@ -156,7 +139,7 @@ export function ProfileView({
 
   const tabs = useMemo(() => {
     const base: { key: ProfileTabKey; label: string; count?: number }[] = [
-      { key: "posts", label: t("profile.tabPosts"), count: postCounts.prompts + postCounts.requests + postCounts.generators + postCounts.workflows + postCounts.presets },
+      { key: "posts", label: t("profile.tabPosts"), count: postCounts.prompts + postCounts.requests + postCounts.workflows + postCounts.presets },
       { key: "presets", label: t("nav.presets"), count: postCounts.presets },
     ];
     if (isOwnProfile) {
@@ -245,27 +228,6 @@ export function ProfileView({
             />
           ) : (
             <RequestList requests={authorRequests} />
-          )
-        ) : activeTab === "posts" && postKind === "generators" ? (
-          authorGenerators.length === 0 ? (
-            <ProfileEmptyState
-              icon={Blocks}
-              title={t("profile.noGeneratorsYetTitle")}
-              description={
-                isOwnProfile
-                  ? t("profile.noGeneratorsYetOwnBody")
-                  : t("profile.noGeneratorsYetOtherBody")
-              }
-              action={isOwnProfile ? { label: t("create.generatorTitle"), href: "/generators/create" } : undefined}
-            />
-          ) : (
-            <div className="columns-1 gap-3 sm:columns-2 sm:gap-4 xl:columns-3">
-              {authorGenerators.map((generator) => (
-                <div key={generator.id} className="pb-3 break-inside-avoid sm:pb-4">
-                  <GeneratorCard generator={generator} onDeleted={() => handleGeneratorDeleted(generator.id)} />
-                </div>
-              ))}
-            </div>
           )
         ) : activeTab === "posts" && postKind === "workflows" ? (
           workflows.length === 0 ? (

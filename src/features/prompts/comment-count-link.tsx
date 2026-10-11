@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { MessageCircle } from "lucide-react";
-import { formatCount, generatorHref, presetHref, promptHref, requestHref, resultHref, workflowHref } from "@/lib/utils";
+import { formatCount, presetHref, promptHref, requestHref, resultHref, workflowHref } from "@/lib/utils";
 import { contentActionClassName } from "@/features/content/action-styles";
 import { useCommentCountDelta } from "./comment-count-store";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -12,11 +12,9 @@ import { useTranslation } from "@/lib/i18n/language-provider";
  * `comment_count` column at load time, plus a live delta
  * (`comment-count-store`) fed by `CommentSection`, so a comment posted or
  * deleted on the same page updates it immediately.
- * `generatorSlug` (Bölüm 9.34) and `requestId` (Prompt İsteği aksiyon
- * satırı görevi) let the same component work for a real generator's/
- * request's own social footer — pass exactly one of `promptId`/
- * `generatorSlug`/`requestId`, matching `LikeButton`'s `contentType`
- * pattern.
+ * `requestId` (Prompt İsteği aksiyon satırı görevi) lets the same component
+ * work for a request's own social footer — pass exactly one target id,
+ * matching `LikeButton`'s `contentType` pattern.
  *
  * The href always ends in `#comments` — every detail page's own comment
  * section carries that same id (`scroll-mt-20`, matching the request
@@ -29,8 +27,6 @@ import { useTranslation } from "@/lib/i18n/language-provider";
  */
 export function CommentCountLink({
   promptId,
-  generatorSlug,
-  generatorId,
   requestId,
   resultId,
   workflowId,
@@ -40,9 +36,6 @@ export function CommentCountLink({
   className,
 }: {
   promptId?: string;
-  generatorSlug?: string;
-  /** Only needed so the live count can follow comments posted on the same page (generators are linked by slug). */
-  generatorId?: string;
   requestId?: string;
   resultId?: string;
   workflowId?: string;
@@ -52,14 +45,12 @@ export function CommentCountLink({
   className?: string;
 }) {
   const { t } = useTranslation();
-  const delta = useCommentCountDelta(promptId ?? generatorId ?? requestId ?? resultId ?? workflowId ?? presetId);
+  const delta = useCommentCountDelta(promptId ?? requestId ?? resultId ?? workflowId ?? presetId);
   const count = Math.max(0, baseCount + delta);
   const baseHref = presetId
     ? presetHref({ id: presetId })
     : workflowId
     ? workflowHref({ id: workflowId })
-    : generatorSlug
-    ? generatorHref({ slug: generatorSlug })
     : requestId
       ? requestHref({ id: requestId })
       : resultId

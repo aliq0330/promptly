@@ -3,30 +3,27 @@ import { batcherRegistry } from "./batched-lookup";
 import { translateForRuntime } from "@/lib/i18n/translations";
 import { mapProfileRow, type ProfileRow } from "./mappers";
 import { PROMPT_SELECT, mapPromptRow, type PromptRow } from "./prompts";
-import { GENERATOR_SELECT, mapGeneratorRow, type GeneratorRow } from "./generators";
 import { WORKFLOW_SELECT, mapWorkflowRow, type WorkflowRow } from "./workflows";
 import { PRESET_SELECT, mapPresetRow, type PresetRow } from "./presets";
 import type { LikeableContentType } from "./likes";
 
 /** See `use-save-state.ts`'s identical note — saving never targets a request. */
-type SaveableContentType = Extract<LikeableContentType, "prompt" | "generator" | "workflow" | "preset">;
-import type { Collection, Generator, Preset, Prompt, Workflow } from "@/types";
+type SaveableContentType = Extract<LikeableContentType, "prompt" | "workflow" | "preset">;
+import type { Collection, Preset, Prompt, Workflow } from "@/types";
 
 /**
- * A single row in a collection's contents — a collection can hold prompts
- * AND generators side by side (Bölüm 9.36 widened `collection_items` to a
- * nullable `prompt_id`/`generator_id` pair, same shape as `prompt_likes`),
- * so a flat `Prompt[]` can no longer represent it. Mirrors the `FeedItem`
+ * A single row in a collection's contents — a collection can hold prompts,
+ * workflows and presets side by side, so a flat `Prompt[]` can't represent it. Mirrors the `FeedItem`
  * discriminated-union pattern already used for the mixed home/discover feed
  * (`src/features/feed/types.ts`) rather than inventing a new shape.
  */
-export type CollectionEntry = { type: "prompt"; data: Prompt } | { type: "generator"; data: Generator } | { type: "workflow"; data: Workflow } | { type: "preset"; data: Preset };
+export type CollectionEntry = { type: "prompt"; data: Prompt } | { type: "workflow"; data: Workflow } | { type: "preset"; data: Preset };
 
-/** Which real column a save target lives in — mirrors likes.ts's `targetColumn` exactly (Bölüm 9.36's Prompt/Generator parity pass, same "collection_items now holds a nullable prompt_id OR generator_id" shape as prompt_likes/prompt_comments). */
-function saveTargetColumn(contentType: SaveableContentType): "prompt_id" | "generator_id" | "workflow_id" | "preset_id" {
+/** Which real column a save target lives in — mirrors likes.ts's `targetColumn`. */
+function saveTargetColumn(contentType: SaveableContentType): "prompt_id" | "workflow_id" | "preset_id" {
   if (contentType === "preset") return "preset_id";
   if (contentType === "workflow") return "workflow_id";
-  return contentType === "generator" ? "generator_id" : "prompt_id";
+  return "prompt_id";
 }
 
 export interface CollectionRow {
@@ -70,10 +67,7 @@ function sortWithDefaultFirst(collections: Collection[]): Collection[] {
 /**
  * Fetches the most recently-added item's first media for each collection id
  * in one query, for use as a cheap "cover image" — never a separately
- * uploaded cover. A generator has no `prompt_media` (its "cover" is just its
- * own `cover_url` data URL, Bölüm 9.27), so its row is checked as a second,
- * separate fallback rather than trying to force it through the same
- * `prompt_media` shape. Returns a Map keyed by collection_id; a collection
+ * uploaded cover. Returns a Map keyed by collection_id; a collection
  * with no image items (or no items at all) is simply absent from the map.
  */
 async function fetchCovers(collectionIds: string[]): Promise<Map<string, Collection["coverImage"]>> {
@@ -83,7 +77,7 @@ async function fetchCovers(collectionIds: string[]): Promise<Map<string, Collect
     const { data, error } = await supabase
       .from("collection_items")
       .select(
-        "collection_id, created_at, prompts ( prompt_media ( id, url, width, height, alt ) ), generators ( cover_url ), workflows ( cover_url ), presets ( cover_url )",
+        "collection_id, created_at, prompts ( prompt_media ( id, url, width, height, alt ) ), workflows ( cover_url ), presets ( cover_url )",
       )
       .in("collection_id", collectionIds)
       .order("created_at", { ascending: false });
@@ -91,7 +85,6 @@ async function fetchCovers(collectionIds: string[]): Promise<Map<string, Collect
     for (const row of data as unknown as {
       collection_id: string;
       prompts: { prompt_media: { id: string; url: string; width: number; height: number; alt: string | null }[] } | null;
-      generators: { cover_url: string | null } | null;
       workflows: { cover_url: string | null } | null;
       presets: { cover_url: string | null } | null;
     }[]) {
@@ -99,8 +92,6 @@ async function fetchCovers(collectionIds: string[]): Promise<Map<string, Collect
       const media = row.prompts?.prompt_media?.[0];
       if (media) {
         covers.set(row.collection_id, { id: media.id, url: media.url, width: media.width, height: media.height, alt: media.alt ?? "" });
-      } else if (row.generators?.cover_url) {
-        covers.set(row.collection_id, { id: row.collection_id, url: row.generators.cover_url, width: 320, height: 320, alt: "" });
       } else if (row.workflows?.cover_url) {
         covers.set(row.collection_id, { id: row.collection_id, url: row.workflows.cover_url, width: 320, height: 320, alt: "" });
       } else if (row.presets?.cover_url) {
@@ -211,7 +202,7 @@ export async function fetchCollectionItems(collectionId: string): Promise<Collec
   try {
     const { data, error } = await supabase
       .from("collection_items")
-      .select(`created_at, prompts ( ${PROMPT_SELECT} ), generators ( ${GENERATOR_SELECT} ), workflows ( ${WORKFLOW_SELECT} ), presets ( ${PRESET_SELECT} )`)
+      .select(`created_at, prompts ( ${PROMPT_SELECT} ), workflows ( ${WORKFLOW_SELECT} ), presets ( ${PRESET_SELECT} )`)
       .eq("collection_id", collectionId)
       .order("created_at", { ascending: false });
     if (error || !data) {
@@ -219,11 +210,9 @@ export async function fetchCollectionItems(collectionId: string): Promise<Collec
       return [];
     }
     const entries: CollectionEntry[] = [];
-    for (const row of data as unknown as { prompts: PromptRow | null; generators: GeneratorRow | null; workflows: WorkflowRow | null; presets: PresetRow | null }[]) {
+    for (const row of data as unknown as { prompts: PromptRow | null; workflows: WorkflowRow | null; presets: PresetRow | null }[]) {
       if (row.prompts && !row.prompts.deleted_at) {
         entries.push({ type: "prompt", data: mapPromptRow(row.prompts) });
-      } else if (row.generators) {
-        entries.push({ type: "generator", data: mapGeneratorRow(row.generators) });
       } else if (row.workflows) {
         entries.push({ type: "workflow", data: mapWorkflowRow(row.workflows) });
       } else if (row.presets) {
@@ -382,17 +371,13 @@ export async function removeFromSavedEverywhere(id: string, contentType: Saveabl
       ? "remove_preset_from_saved_everywhere"
       : contentType === "workflow"
       ? "remove_workflow_from_saved_everywhere"
-      : contentType === "generator"
-        ? "remove_generator_from_saved_everywhere"
-        : "remove_prompt_from_saved_everywhere";
+      : "remove_prompt_from_saved_everywhere";
   const rpcParam =
     contentType === "preset"
       ? { p_preset_id: id }
       : contentType === "workflow"
         ? { p_workflow_id: id }
-        : contentType === "generator"
-          ? { p_generator_id: id }
-          : { p_prompt_id: id };
+        : { p_prompt_id: id };
   const { error } = await supabase.rpc(rpcName, rpcParam);
   if (error) throw new Error(error.message);
 }

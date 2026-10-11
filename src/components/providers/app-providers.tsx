@@ -4,7 +4,6 @@ import { RealPromptsProvider } from "@/features/prompts/real-prompts-provider";
 import { RealRequestsProvider } from "@/features/requests/real-requests-provider";
 import { RealWorkflowsProvider } from "@/features/workflows/real-workflows-provider";
 import { RealPresetsProvider } from "@/features/presets/real-presets-provider";
-import { RealGeneratorsProvider } from "@/features/generators/real-generators-provider";
 import { RealMessagesProvider } from "@/features/messages/real-messages-provider";
 import { NotificationsProvider } from "@/features/notifications/notifications-provider";
 import { EngagementRealtimeProvider } from "@/features/content/engagement-realtime-provider";
@@ -23,7 +22,6 @@ export function AppProviders({ children }: { children: ReactNode }) {
     <OwnProfileProvider>
       <RealPromptsProvider>
         <RealRequestsProvider>
-          <RealGeneratorsProvider>
             <RealWorkflowsProvider>
               <RealPresetsProvider>
                 <RealMessagesProvider>
@@ -34,7 +32,6 @@ export function AppProviders({ children }: { children: ReactNode }) {
                 </RealMessagesProvider>
               </RealPresetsProvider>
             </RealWorkflowsProvider>
-          </RealGeneratorsProvider>
         </RealRequestsProvider>
       </RealPromptsProvider>
     </OwnProfileProvider>

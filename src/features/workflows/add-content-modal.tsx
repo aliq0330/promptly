@@ -1,52 +1,40 @@
 "use client";
 
-import { GENERATORS_ENABLED } from "@/lib/feature-flags";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Check, Plus, Search, X } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
-import { Tabs } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { TaxonomyPicker } from "@/features/content/taxonomy-picker";
 import { ToolPicker } from "@/features/content/tool-picker";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useOwnProfile } from "@/features/auth/own-profile-provider";
 import { useRealPrompts } from "@/features/prompts/real-prompts-provider";
-import { useRealGenerators } from "@/features/generators/real-generators-provider";
 import { createRealPrompt, searchPrompts } from "@/lib/supabase/prompts";
-import { createDraftGenerator, searchGenerators } from "@/lib/supabase/generators";
-import { generatorRef, promptRef } from "@/lib/supabase/workflows";
-import { PICKABLE_STEP_TYPES } from "@/lib/workflow-logic";
+import { promptRef } from "@/lib/supabase/workflows";
 import { taxonomyPathLabel, type TaxonomySelection } from "@/lib/content-taxonomy";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
-import type { WorkflowContentRef, WorkflowStepType } from "@/types";
+import type { WorkflowContentRef } from "@/types";
 import { MEDIA_ICON, STEP_TYPE_META } from "./step-meta";
 
-/** Prompt requests are not workflow steps — only these can be added. */
-// Generator gizli (§9.145 Aşama 2): yeni adımlar yalnızca Prompt olabilir; var olan Generator adımları görünmeye/çalışmaya devam eder.
-const TYPES: WorkflowStepType[] = PICKABLE_STEP_TYPES.filter((type) => type !== "generator" || GENERATORS_ENABLED);
 const inputClass = "h-10 w-full rounded-lg border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60";
 
 /**
- * Add / replace a step's content: pick an existing prompt or generator,
+ * Add / replace a step's content: pick an existing prompt,
  * or create a new one right here. Creation only writes the
  * content record (through the normal create functions) — nothing is run.
  * Bottom sheet on mobile, dialog on larger screens (via `Modal`).
  */
 export function AddContentModal({
-  initialType = "prompt",
   initialMode = "existing",
   onSelect,
   onClose,
 }: {
-  initialType?: WorkflowStepType;
   initialMode?: "existing" | "scratch";
   onSelect: (ref: WorkflowContentRef) => void;
   onClose: () => void;
 }) {
   const { t } = useTranslation();
-  // A legacy "request" step opens on Prompt: it can only be swapped for a prompt or a generator.
-  const [type, setType] = useState<WorkflowStepType>(TYPES.includes(initialType) ? initialType : "prompt");
   const [mode, setMode] = useState<"existing" | "scratch">(initialMode);
 
   return (
@@ -63,16 +51,6 @@ export function AddContentModal({
             <X size={18} />
           </button>
         </div>
-        {TYPES.length > 1 && (
-        <Tabs
-          items={TYPES.map((key) => ({ key, label: t(STEP_TYPE_META[key].labelKey), icon: STEP_TYPE_META[key].icon }))}
-          active={type}
-          onChange={setType}
-          ariaLabel={t("workflow.pickerTitle")}
-          variant="segmented"
-          className="mb-3"
-        />
-        )}
         <div className="mb-3 flex gap-2">
           {(["existing", "scratch"] as const).map((value) => (
             <button
@@ -90,17 +68,16 @@ export function AddContentModal({
           ))}
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto">
-          {mode === "existing" ? <ExistingList type={type} onSelect={onSelect} /> : <ScratchForm key={type} type={type} onSelect={onSelect} />}
+          {mode === "existing" ? <ExistingList onSelect={onSelect} /> : <ScratchForm onSelect={onSelect} />}
         </div>
       </div>
     </Modal>
   );
 }
 
-function ExistingList({ type, onSelect }: { type: WorkflowStepType; onSelect: (ref: WorkflowContentRef) => void }) {
+function ExistingList({ onSelect }: { onSelect: (ref: WorkflowContentRef) => void }) {
   const { t, language } = useTranslation();
   const { realPrompts } = useRealPrompts();
-  const { realGenerators } = useRealGenerators();
   const [query, setQuery] = useState("");
   const [found, setFound] = useState<WorkflowContentRef[] | null>(null);
   const [added, setAdded] = useState<string | null>(null);
@@ -108,9 +85,8 @@ function ExistingList({ type, onSelect }: { type: WorkflowStepType; onSelect: (r
 
   // Empty query: the already-loaded recent content; typing: a debounced server search.
   const recent = useMemo<WorkflowContentRef[]>(() => {
-    if (type === "prompt") return realPrompts.slice(0, 30).map(promptRef);
-    return realGenerators.slice(0, 30).map(generatorRef);
-  }, [type, realPrompts, realGenerators]);
+    return realPrompts.slice(0, 30).map(promptRef);
+  }, [realPrompts]);
 
   useEffect(() => {
     if (!text) {
@@ -120,17 +96,14 @@ function ExistingList({ type, onSelect }: { type: WorkflowStepType; onSelect: (r
     }
     let cancelled = false;
     const timeout = setTimeout(async () => {
-      const refs =
-        type === "prompt"
-          ? (await searchPrompts(text, {}, 20)).map(promptRef)
-          : (await searchGenerators(text, {}, 20)).map(generatorRef);
+      const refs = (await searchPrompts(text, {}, 20)).map(promptRef);
       if (!cancelled) setFound(refs);
     }, 300);
     return () => {
       cancelled = true;
       clearTimeout(timeout);
     };
-  }, [text, type]);
+  }, [text]);
 
   const list = text ? found : recent;
 
@@ -199,20 +172,20 @@ function ExistingList({ type, onSelect }: { type: WorkflowStepType; onSelect: (r
   );
 }
 
-function ScratchForm({ type, onSelect }: { type: WorkflowStepType; onSelect: (ref: WorkflowContentRef) => void }) {
+function ScratchForm({ onSelect }: { onSelect: (ref: WorkflowContentRef) => void }) {
   const { t } = useTranslation();
   const { user } = useAuth();
   const { profile } = useOwnProfile();
   const [name, setName] = useState("");
   const [body, setBody] = useState("");
-  const [taxonomy, setTaxonomy] = useState<TaxonomySelection>({ contentType: type === "prompt" ? "text" : "image", category: null, subcategory: null });
+  const [taxonomy, setTaxonomy] = useState<TaxonomySelection>({ contentType: "text", category: null, subcategory: null });
   const [tools, setTools] = useState<string[]>([]);
   const [errors, setErrors] = useState<{ name?: boolean; body?: boolean }>({});
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const bodyLabel = type === "prompt" ? t("workflow.newPromptText") : t("workflow.newGeneratorDescription");
-  const nameLabel = type === "prompt" ? t("workflow.newPromptName") : t("workflow.newGeneratorName");
+  const bodyLabel = t("workflow.newPromptText");
+  const nameLabel = t("workflow.newPromptName");
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -224,44 +197,19 @@ function ScratchForm({ type, onSelect }: { type: WorkflowStepType; onSelect: (re
     setError(null);
     try {
       const common = { contentType: taxonomy.contentType, category: taxonomy.category, subcategory: taxonomy.subcategory, tools, tags: [] };
-      if (type === "prompt") {
-        const prompt = await createRealPrompt(
-          {
-            ...common,
-            title: name,
-            description: "",
-            promptText: body,
-            tool: null,
-            images: [],
-          },
-          user.id,
-          profile,
-        );
-        onSelect(promptRef(prompt));
-      } else {
-        const { generator } = await createDraftGenerator(
-          {
-            title: name,
-            description: body,
-            media: [],
-            tools,
-            contentType: taxonomy.contentType,
-            category: taxonomy.category,
-            subcategory: taxonomy.subcategory,
-            tags: [],
-            visibility: "public",
-            allowPromptEditing: true,
-            allowSavingGeneratedPrompts: true,
-            enableNegativePrompt: false,
-            requiresReferenceImage: false,
-            requiresReferenceVideo: false,
-            requiresReferenceAudio: false,
-          },
-          user.id,
-          profile,
-        );
-        onSelect(generatorRef(generator));
-      }
+      const prompt = await createRealPrompt(
+        {
+          ...common,
+          title: name,
+          description: "",
+          promptText: body,
+          tool: null,
+          images: [],
+        },
+        user.id,
+        profile,
+      );
+      onSelect(promptRef(prompt));
     } catch {
       setError(t("workflow.createContentError"));
       setBusy(false);
@@ -283,11 +231,11 @@ function ScratchForm({ type, onSelect }: { type: WorkflowStepType; onSelect: (re
         </label>
         <textarea
           id="wf-new-body"
-          rows={type === "prompt" ? 5 : 3}
+          rows={5}
           value={body}
           onChange={(event) => setBody(event.target.value)}
           aria-invalid={errors.body}
-          className={cn("w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-text", type === "prompt" && "prompt-text")}
+          className={cn("w-full rounded-md border border-border bg-background px-3 py-2 text-sm text-text prompt-text")}
         />
         {errors.body && <p className="mt-1 text-caption text-danger">{t("workflow.fieldRequired")}</p>}
       </div>
@@ -299,7 +247,6 @@ function ScratchForm({ type, onSelect }: { type: WorkflowStepType; onSelect: (re
         contentType={taxonomy.contentType}
         category={taxonomy.category}
       />
-      {type === "generator" && <p className="rounded-md bg-surface-soft p-2.5 text-caption text-text-muted">{t("workflow.generatorDraftNote")}</p>}
       {error && <p className="text-sm text-danger">{error}</p>}
       <Button type="submit" size="lg" className="w-full" disabled={busy}>
         {busy ? t("workflow.creating") : t("workflow.createAndAdd")}

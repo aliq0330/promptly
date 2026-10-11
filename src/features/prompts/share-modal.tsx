@@ -12,16 +12,15 @@ import type { Language } from "@/lib/i18n/translations";
 import { contentActionClassName } from "@/features/content/action-styles";
 import { placeholderArt } from "@/lib/placeholder-image";
 import { RESULT_MEDIA_TYPE_LABELS } from "@/lib/prompt-result-media";
-import { generatorHref, presetHref, promptHref, requestHref, resultHref, workflowHref } from "@/lib/utils";
+import { presetHref, promptHref, requestHref, resultHref, workflowHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import { CONTENT_TYPE_META } from "./content-type-meta";
 import { shareOrCopyLink } from "./share-button";
-import type { Generator, Preset, Prompt, PromptRequest, PromptResult, Workflow } from "@/types";
+import type { Preset, Prompt, PromptRequest, PromptResult, Workflow } from "@/types";
 
 export type ShareModalTarget =
   | { contentType: "prompt"; prompt: Prompt }
-  | { contentType: "generator"; generator: Generator }
   | { contentType: "request"; request: PromptRequest }
   | { contentType: "workflow"; workflow: Workflow }
   | { contentType: "preset"; preset: Preset }
@@ -61,19 +60,6 @@ function getSharePreview(target: ShareModalTarget, t: (key: TranslationKey) => s
       badgeVariant: "neutral",
       href: promptHref(prompt),
       messageParam: `sharePromptId=${prompt.id}`,
-    };
-  }
-  if (target.contentType === "generator") {
-    const generator = target.generator;
-    return {
-      id: generator.id,
-      title: generator.title,
-      description: generator.description,
-      thumbnailUrl: generator.coverUrl,
-      badgeLabel: `${t("generator.singular")} · ${taxonomyPathLabel(generator, language, true)}`,
-      badgeVariant: "neutral",
-      href: generatorHref(generator),
-      messageParam: `shareGeneratorId=${generator.id}`,
     };
   }
   if (target.contentType === "workflow") {
@@ -116,7 +102,7 @@ function getSharePreview(target: ShareModalTarget, t: (key: TranslationKey) => s
     };
   }
   const result = target.result;
-  const originTitle = result.originalPrompt?.title ?? result.originalGenerator?.title ?? "";
+  const originTitle = result.originalPrompt?.title ?? "";
   return {
     id: result.id,
     title: originTitle ? `${result.creator.displayName} — ${originTitle}` : result.creator.displayName,

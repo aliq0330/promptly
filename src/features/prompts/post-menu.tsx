@@ -1,13 +1,11 @@
 "use client";
 
-import { GENERATORS_ENABLED } from "@/lib/feature-flags";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Copy, FolderMinus, Link2, Loader2, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { useAuth } from "@/features/auth/auth-provider";
-import { absoluteUrl, cn, generatorHref, presetHref, promptHref, requestHref, resultHref, workflowHref } from "@/lib/utils";
+import { absoluteUrl, cn, presetHref, promptHref, requestHref, resultHref, workflowHref } from "@/lib/utils";
 import { deleteRealPrompt } from "@/lib/supabase/prompts";
-import { deleteGenerator } from "@/lib/supabase/generators";
 import { deleteWorkflow } from "@/lib/supabase/workflows";
 import { deletePreset } from "@/lib/supabase/presets";
 import { deleteRealRequest } from "@/lib/supabase/requests";
@@ -27,9 +25,8 @@ import { useTranslation } from "@/lib/i18n/language-provider";
  * third target (a Prompt İsteği) by the "Prompt İsteği Etkileşim ve Menü
  * Sistemi Eşitleme" görevi, and to a fourth (a Kullanıcı Sonucu) by the
  * "Kullanıcı Sonuçları / Prompt Çıktıları" görevi — pass exactly one of
- * `promptId`, `generatorId` (also needs `generatorSlug` for its real link),
- * `requestId`, or `resultId`. A generator's or request's menu never shows
- * "Kopyasını oluştur" (no duplicate flow exists for either) — deliberately
+ * `promptId`, `requestId`, `resultId`, `workflowId` or `presetId`. A request's menu never shows
+ * "Kopyasını oluştur" (no duplicate flow exists) — deliberately
  * left out rather than wired to something that doesn't actually work.
  *
  * A result has no dedicated full-page edit route the way a prompt/
@@ -45,8 +42,6 @@ import { useTranslation } from "@/lib/i18n/language-provider";
  */
 export function PostMenu({
   promptId,
-  generatorId,
-  generatorSlug,
   requestId,
   resultId,
   workflowId,
@@ -57,8 +52,6 @@ export function PostMenu({
   collectionRemoval,
 }: {
   promptId?: string;
-  generatorId?: string;
-  generatorSlug?: string;
   requestId?: string;
   resultId?: string;
   workflowId?: string;
@@ -88,7 +81,6 @@ export function PostMenu({
   const { t } = useTranslation();
   const { user } = useAuth();
   const isOwn = user?.id === authorId;
-  const isGenerator = Boolean(generatorId);
   const isRequest = Boolean(requestId);
   const isResult = Boolean(resultId);
   const isWorkflow = Boolean(workflowId);
@@ -97,8 +89,6 @@ export function PostMenu({
     ? presetHref({ id: presetId! })
     : isWorkflow
     ? workflowHref({ id: workflowId! })
-    : isGenerator
-    ? generatorHref({ slug: generatorSlug ?? "" })
     : isRequest
       ? requestHref({ id: requestId! })
       : isResult
@@ -108,8 +98,6 @@ export function PostMenu({
     ? `/presets/create?edit=${presetId}`
     : isWorkflow
     ? `/workflows/create?edit=${workflowId}`
-    : isGenerator
-    ? `/generators/create?edit=${generatorId}`
     : isRequest
       ? `/requests/new?edit=${requestId}`
       : `/create?edit=${promptId}`;
@@ -172,7 +160,6 @@ export function PostMenu({
     try {
       if (isPreset) await deletePreset(presetId!);
       else if (isWorkflow) await deleteWorkflow(workflowId!);
-      else if (isGenerator) await deleteGenerator(generatorId!);
       else if (isRequest) await deleteRealRequest(requestId!);
       else if (isResult) await deletePromptResult(resultId!);
       else await deleteRealPrompt(promptId!);
@@ -276,7 +263,7 @@ export function PostMenu({
                     {t("common.edit")}
                   </button>
                 )
-              ) : isGenerator && !GENERATORS_ENABLED ? null : (
+              ) : (
                 <Link
                   href={editHref}
                   role="menuitem"
@@ -287,7 +274,7 @@ export function PostMenu({
                   {t("common.edit")}
                 </Link>
               )}
-              {!isGenerator && !isRequest && !isResult && !isWorkflow && !isPreset && (
+              {!isRequest && !isResult && !isWorkflow && !isPreset && (
                 <Link
                   href={`/create?duplicate=${promptId}`}
                   role="menuitem"
@@ -313,8 +300,8 @@ export function PostMenu({
           {!isOwn && user && !isResult && (
             <div className="px-3 py-2" onClick={(event) => event.stopPropagation()}>
               <ReportButton
-                targetType={isPreset ? "preset" : isWorkflow ? "workflow" : isGenerator ? "generator" : isRequest ? "request" : "prompt"}
-                targetId={(presetId ?? workflowId ?? generatorId ?? requestId ?? promptId)!}
+                targetType={isPreset ? "preset" : isWorkflow ? "workflow" : isRequest ? "request" : "prompt"}
+                targetId={(presetId ?? workflowId ?? requestId ?? promptId)!}
               />
             </div>
           )}

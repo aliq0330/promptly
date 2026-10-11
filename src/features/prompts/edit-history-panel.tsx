@@ -30,7 +30,7 @@ const FIELD_LABEL_KEYS: Record<string, TranslationKey> = {
  * empty query, not the real security boundary). Shows only WHICH fields
  * changed and WHEN — never the previous text itself, which stays DB-only.
  */
-export function EditHistoryPanel({ contentType, contentId }: { contentType: "prompt" | "prompt_request" | "generator"; contentId: string }) {
+export function EditHistoryPanel({ contentType, contentId }: { contentType: "prompt" | "prompt_request"; contentId: string }) {
   const { t, language } = useTranslation();
   const [events, setEvents] = useState<ContentEditEvent[] | null>(null);
   const [expanded, setExpanded] = useState(false);

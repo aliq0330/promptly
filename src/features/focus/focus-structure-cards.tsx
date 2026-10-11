@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { ArrowDown, Blocks, SlidersHorizontal, Sparkles, Workflow as WorkflowIcon, type LucideIcon } from "lucide-react";
+import { ArrowDown, SlidersHorizontal, Sparkles, Workflow as WorkflowIcon, type LucideIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ContentCard } from "@/features/content/content-card";
@@ -12,15 +12,15 @@ import type { FeedItem } from "@/features/feed/types";
 import { taxonomyPathLabel } from "@/lib/content-taxonomy";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { presetParameterEntries } from "@/lib/preset-utils";
-import { generatorHref, presetHref, requestHref, workflowHref } from "@/lib/utils";
-import type { Generator, Preset, PromptRequest, UserProfile, Workflow } from "@/types";
+import { presetHref, requestHref, workflowHref } from "@/lib/utils";
+import type { Preset, PromptRequest, UserProfile, Workflow } from "@/types";
 import { FocusVisualCard } from "./focus-visual-card";
 import { FocusActions, FocusCreator, FocusTitle } from "./focus-parts";
-import { useGeneratorFocusFields, useInViewOnce, useWorkflowFocusSteps } from "./use-focus-data";
+import { useInViewOnce, useWorkflowFocusSteps } from "./use-focus-data";
 
 /**
  * The cards for content whose value is its STRUCTURE rather than a picture:
- * a generator's parameters, a workflow's step chain, a preset's settings, a
+ * a workflow's step chain, a preset's settings, a
  * request's brief. All four share one shell — creator, type icon + tag, title,
  * then the structure itself — so a mixed feed still reads as one system.
  */
@@ -87,51 +87,6 @@ const MAX_LISTED = 4;
 
 function Row({ children, as: Tag = "li" }: { children: ReactNode; as?: "li" | "div" }) {
   return <Tag className="flex min-w-0 items-center gap-2 rounded-sm bg-surface-soft px-2 py-1.5 text-caption text-text-secondary">{children}</Tag>;
-}
-
-/* ---------------------------------------------------------------- Generator */
-
-export function FocusGeneratorCard({ generator }: { generator: Generator }) {
-  const { t, language } = useTranslation();
-  const [ref, seen] = useInViewOnce<HTMLDivElement>();
-  const { data, loading } = useGeneratorFocusFields(generator.currentVersionId, seen);
-  const topic = taxonomyPathLabel(generator, language);
-  const labels = data?.labels ?? [];
-
-  return (
-    <StructureShell
-      item={{ kind: "generator", data: generator }}
-      href={generatorHref(generator)}
-      creator={generator.creator}
-      icon={Blocks}
-      badge={t("generator.singular")}
-      detail={topic}
-      title={generator.title}
-      observeRef={ref}
-    >
-      {loading ? (
-        <div className="space-y-1" aria-hidden>
-          <Skeleton className="h-6 w-full" />
-          <Skeleton className="h-6 w-4/5" />
-          <Skeleton className="h-6 w-3/5" />
-        </div>
-      ) : labels.length > 0 ? (
-        <>
-          <ul className="space-y-1" aria-label={t("generator.parameterCount", { count: String(data?.count ?? labels.length) })}>
-            {labels.slice(0, MAX_LISTED).map((label, index) => (
-              <Row key={`${label}-${index}`}>
-                <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary/60" />
-                <span className="truncate">{label}</span>
-              </Row>
-            ))}
-          </ul>
-          <p className="text-caption font-medium text-text-muted">{t("generator.parameterCount", { count: String(data?.count ?? labels.length) })}</p>
-        </>
-      ) : (
-        generator.description && <p className="line-clamp-3 text-caption text-text-muted">{generator.description}</p>
-      )}
-    </StructureShell>
-  );
 }
 
 /* ----------------------------------------------------------------- Workflow */
