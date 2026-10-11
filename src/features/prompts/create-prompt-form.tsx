@@ -337,6 +337,9 @@ export function CreatePromptForm() {
             name: variable.name,
             defaultValue: variable.defaultValue,
             description: variable.description ?? "",
+            type: variable.type,
+            options: variable.options,
+            config: variable.config,
           })),
         );
       });
@@ -508,6 +511,9 @@ export function CreatePromptForm() {
       name: variable.name,
       defaultValue: variable.defaultValue,
       description: variable.description || null,
+      type: variable.type,
+      options: variable.options,
+      config: variable.config,
     }));
     const tagsInput = {
       tags: tagPicker.accepted.map((entry) => entry.tag),
@@ -583,6 +589,9 @@ export function CreatePromptForm() {
       name: variable.name,
       defaultValue: variable.defaultValue,
       description: variable.description || null,
+      type: variable.type,
+      options: variable.options,
+      config: variable.config,
     }));
     try {
       if (isEditMode && editingPrompt) {

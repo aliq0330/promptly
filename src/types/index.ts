@@ -338,7 +338,41 @@ export interface Collection {
  * "prompt metni" field to attach variables to, a deliberate scope
  * decision.
  */
-export interface PromptVariable {
+/**
+ * A prompt variable's input kind (CLAUDE.md §9.145). Whatever the kind, the
+ * value substituted into the prompt text is always a plain string, so the
+ * `{name}` token engine (`lib/prompt-variables.ts`) is kind-agnostic:
+ *  - `text`: free text.
+ *  - `select`: exactly one option; the option's `value` goes into the prompt.
+ *  - `multi_select`: several options; their `value`s joined with ", ".
+ *  - `number` / `slider`: a number within `config.min`..`config.max`.
+ *  - `toggle`: `config.onText` when on, `config.offText` (may be empty) when off.
+ */
+export type PromptVariableType = "text" | "select" | "multi_select" | "number" | "slider" | "toggle";
+
+/** One choice of a `select`/`multi_select` variable: `label` is what the viewer sees, `value` is what is written into the prompt. */
+export interface PromptVariableOption {
+  label: string;
+  value: string;
+}
+
+/** Kind-specific settings (only the keys relevant to the variable's `type` are ever set). */
+export interface PromptVariableConfig {
+  min?: number;
+  max?: number;
+  step?: number;
+  onText?: string;
+  offText?: string;
+}
+
+/** The kind-specific part of a variable, shared by the stored row and the editor's draft. */
+export interface PromptVariableSpec {
+  type: PromptVariableType;
+  options: PromptVariableOption[];
+  config: PromptVariableConfig;
+}
+
+export interface PromptVariable extends PromptVariableSpec {
   id: string;
   promptId: string;
   name: string;

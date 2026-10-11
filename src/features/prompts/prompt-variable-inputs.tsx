@@ -2,12 +2,14 @@
 
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { PromptVariable } from "@/types";
+import { VariableField } from "./variable-field";
 
 /**
  * Inline variable fields shown directly above a prompt's text on the detail
  * page. The parent owns the values and renders the resolved prompt below, so
  * typing here updates the prompt text live — purely local, throwaway state
- * (the stored template is never touched).
+ * (the stored template is never touched). Each variable renders the control
+ * for its own kind (text / choice / number / slider / toggle).
  */
 export function PromptVariableInputs({
   variables,
@@ -39,20 +41,12 @@ export function PromptVariableInputs({
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
         {variables.map((variable) => (
-          <div key={variable.id} className="min-w-0">
-            <label htmlFor={`pv-${variable.id}`} className="mb-1 block truncate text-caption font-medium text-text-secondary">
-              {variable.name}
-              {variable.description && <span className="ml-1.5 font-normal text-text-muted">— {variable.description}</span>}
-            </label>
-            <input
-              id={`pv-${variable.id}`}
-              type="text"
-              value={values[variable.name] ?? ""}
-              onChange={(event) => onChange(variable.name, event.target.value)}
-              placeholder={variable.defaultValue || t("prompt.enterValue")}
-              className="h-10 w-full rounded-lg border border-border bg-background px-3 text-body text-text placeholder:text-text-muted focus:border-primary/60 shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong"
-            />
-          </div>
+          <VariableField
+            key={variable.id}
+            variable={variable}
+            value={values[variable.name] ?? ""}
+            onChange={(value) => onChange(variable.name, value)}
+          />
         ))}
       </div>
     </section>
