@@ -87,7 +87,9 @@ export async function replaceVariablesForPrompt(promptId: string, drafts: Variab
     );
     return { draft, spec, defaultValue };
   });
-  const anyTyped = normalized.some((item) => item.spec.type !== "text");
+  // "Plain" = a text variable with nothing in `config` (no condition either).
+  const isPlain = (spec: PromptVariableSpec) => spec.type === "text" && Object.keys(spec.config).length === 0;
+  const anyTyped = normalized.some((item) => !isPlain(item.spec));
 
   const { data, error: insertError } = await supabase
     .from("prompt_variables")
@@ -98,9 +100,9 @@ export async function replaceVariablesForPrompt(promptId: string, drafts: Variab
         default_value: defaultValue,
         description: draft.description,
         sort_order: index,
-        // Plain-text variables omit the typed columns so saving keeps working
+        // Plain text variables omit the typed columns so saving keeps working
         // on a project that hasn't applied the typed-variables migration yet.
-        ...(spec.type === "text" ? {} : { type: spec.type, options: spec.options, config: spec.config }),
+        ...(isPlain(spec) ? {} : { type: spec.type, options: spec.options, config: spec.config }),
       })),
     )
     .select(anyTyped ? VARIABLE_SELECT : LEGACY_VARIABLE_SELECT);

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Pencil, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { countVariableUsages } from "@/lib/prompt-variables";
-import { describeOptions, isChoiceType } from "@/lib/prompt-variable-types";
+import { conditionStatus, describeOptions, isChoiceType } from "@/lib/prompt-variable-types";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import type { PromptVariableType } from "@/types";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -75,6 +75,13 @@ export function VariableList({
                 <span className="ml-2 text-xs text-text-muted">
                   {usageCount === 0 ? t("variable.unusedInText") : t("variable.usedInCount", { count: usageCount })}
                 </span>
+                {variable.config.condition && (
+                  <p className={conditionStatus(variable, variables) === "ok" ? "mt-0.5 text-xs text-text-muted" : "mt-0.5 text-xs text-warning"}>
+                    {conditionStatus(variable, variables) === "ok"
+                      ? t("variable.conditionBadge", { variable: variable.config.condition.variable, value: variable.config.condition.equals || "—" })
+                      : t("variable.conditionIgnored")}
+                  </p>
+                )}
               </div>
               <div className="flex max-w-full shrink-0 items-center gap-1">
                 <button

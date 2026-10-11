@@ -14,6 +14,7 @@ import { VariableField } from "./variable-field";
 export function PromptVariableInputs({
   variables,
   values,
+  visible,
   isCustomized,
   onChange,
   onReset,
@@ -21,6 +22,8 @@ export function PromptVariableInputs({
   variables: PromptVariable[];
   /** Effective value per variable name (defaults already merged in). */
   values: Record<string, string>;
+  /** Which variables currently pass their visibility condition (`effectiveVariableValues`); a missing entry means visible. */
+  visible?: Record<string, boolean>;
   isCustomized: boolean;
   onChange: (name: string, value: string) => void;
   onReset: () => void;
@@ -40,7 +43,7 @@ export function PromptVariableInputs({
         )}
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
-        {variables.map((variable) => (
+        {variables.filter((variable) => visible?.[variable.name] !== false).map((variable) => (
           <VariableField
             key={variable.id}
             variable={variable}

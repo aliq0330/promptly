@@ -10,7 +10,13 @@ import {
 } from "@/lib/prompt-variables";
 import { removeToken, renameToken, tokenUsageMap } from "@/lib/prompt-doc";
 import { cn } from "@/lib/utils";
-import { describeOptions, isChoiceType } from "@/lib/prompt-variable-types";
+import {
+  clearConditionsOn,
+  describeOptions,
+  effectiveVariableValues,
+  isChoiceType,
+  renameConditionTarget,
+} from "@/lib/prompt-variable-types";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { PromptVariableSpec } from "@/types";
 import { PromptComposer, type ComposerHandle } from "@/features/content/prompt-composer/prompt-composer";
@@ -124,9 +130,9 @@ export function PromptTextEditor({
     if (!editingVariable) return;
     const nextText = values.name !== editingVariable.name ? renameToken(value, editingVariable.name, values.name) : value;
     if (nextText !== value) onChange(nextText);
-    onVariablesChange(
-      variables.map((variable) => (variable.tempId === editingVariable.tempId ? { ...variable, ...values } : variable)),
-    );
+    const edited = variables.map((variable) => (variable.tempId === editingVariable.tempId ? { ...variable, ...values } : variable));
+    // Variables that were watching the old name keep watching it under the new one.
+    onVariablesChange(values.name !== editingVariable.name ? renameConditionTarget(edited, editingVariable.name, values.name) : edited);
     // A preview value typed for the old kind/name may no longer be valid.
     setPreviewValues((prev) => {
       const next = { ...prev };
@@ -139,17 +145,17 @@ export function PromptTextEditor({
 
   function handleDeleteVariable(variable: DraftVariable) {
     onChange(removeToken(value, variable.name));
-    onVariablesChange(variables.filter((item) => item.tempId !== variable.tempId));
+    // A deleted variable can no longer control anything: drop the conditions that watched it.
+    onVariablesChange(clearConditionsOn(variables.filter((item) => item.tempId !== variable.tempId), variable.name));
   }
 
   const existingNames = variables
     .filter((variable) => variable.tempId !== editingVariable?.tempId)
     .map((variable) => variable.name.toLowerCase());
 
-  const previewText = resolvePromptText(
-    value,
-    Object.fromEntries(variables.map((variable) => [variable.name, previewValues[variable.name] ?? variable.defaultValue])),
-  );
+  // Preview values go through the same condition logic as the live prompt: hidden variables add nothing.
+  const { values: previewEffective, visible: previewVisible } = effectiveVariableValues(variables, previewValues);
+  const previewText = resolvePromptText(value, previewEffective);
 
   const orphanTokens = extractVariableTokenNames(value).filter((name) => !definedNames.has(name));
 
@@ -215,7 +221,7 @@ export function PromptTextEditor({
         <div className="space-y-3 rounded-md border border-border bg-background p-3">
           <div className="whitespace-pre-wrap break-words font-mono text-sm text-text">{previewText}</div>
           <div className="grid gap-3 border-t border-border pt-3 sm:grid-cols-2">
-            {variables.map((variable) => (
+            {variables.filter((variable) => previewVisible[variable.name] !== false).map((variable) => (
               <VariableField
                 key={variable.tempId}
                 variable={{ ...variable, id: variable.tempId }}
@@ -252,6 +258,7 @@ export function PromptTextEditor({
       {editingVariable && (
         <VariableEditorModal
           editing={editingVariable}
+          controllers={variables.slice(0, Math.max(0, variables.findIndex((item) => item.tempId === editingVariable.tempId)))}
           existingNames={existingNames}
           onClose={() => setEditingVariable(null)}
           onSubmit={handleEditVariable}

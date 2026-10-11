@@ -12931,7 +12931,7 @@ Kullanıcı isteğiyle sitedeki TÜM içerik kalıcı olarak silinip 18 demo kul
 **Aşama 1 — Özellikleri prompt değişkenlerine taşı (Generator'a dokunmadan).** Küçük, ayrı commit'li adımlar:
 - [x] **1a. Tip + seçenek (TAMAMLANDI):** `prompt_variables.type` (`text|select|multi_select|number|slider|toggle`) ve `options jsonb` (ekleyici migration, varsayılan `text`/`[]`, eski satırlar değişmez). Oluşturan tarafı (`variable-create-modal`/`variable-editor-modal`/`variable-list`), kullanan tarafı (`prompt-variable-inputs`: chip/açılır liste/kaydırıcı/anahtar), veri katmanı, i18n TR+EN, testler.
 - [x] **1b. Görselli/renkli seçenekler (TAMAMLANDI):** her seçeneğe kişi KENDİ görselini ya da rengini ekler; hazır/önceden doldurulmuş görsel veya renk YOK (kullanıcı kararı).
-- [ ] **1c. Koşullu alan** ("şu değişken şuysa bunu göster").
+- [x] **1c. Koşullu alan (TAMAMLANDI):** "şu değişken şuysa bunu göster".
 - [ ] **1d. Hazır alan kütüphanesi** (196 alan; değişken eklerken seçilebilir).
 - [ ] **1e. Görselden alan çıkarma (vision assist)** — en düşük değer/zahmet; istenmezse hiç taşınmaz.
 
@@ -12957,3 +12957,12 @@ Kullanıcı isteğiyle sitedeki TÜM içerik kalıcı olarak silinip 18 demo kul
 - Oluşturan taraf (`variable-spec-editor.tsx`, `OptionMedia`): seçenek satırında "Görsel ekle/değiştir/kaldır" ve "Renk ekle/kaldır"; karışık durumda uyarı satırı. Doğrulama `sanitizeOptions`/`parseStoredOptions`'ta (yalnızca `data:image/*` ve geçerli hex kabul edilir).
 - Test: `npm test` 157/157 (+6); ağ taklitsiz geçici harness'le Playwright 46/46 (1280 + 390 px: kart/örnek görünümü, kısmi düşüş, gerçek PNG yükleme, değer-prompt ayrımı, hex'in prompta sızmaması, taşma yok). Harness silindi. Gerçek `/create` formuna ve Supabase'e karşı denenmedi.
 - **Bilinen sınır:** görseller satırda inline durduğu için seçenek başına ~10-25 KB; 50 seçenekli bir değişkende satır birkaç yüz KB olabilir (istemci tarafı üst sınırlar var, sunucu tarafı boyut CHECK'i yok).
+
+**1c durumu (yapıldı, migration YOK):**
+- Koşul `PromptVariableConfig.condition = { variable, equals }` olarak mevcut `config` JSONB'sinde saklanır (yeni kolon yok), her tipte geçerlidir. Generator'daki tek-koşul modelinin aynısı: yalnızca `equals`, çoklu seçimde "içeriyor".
+- Kontrolcü değişken listede **önce** gelmek zorunda (döngü imkânsız). Gizliyken değişken prompt'a `""` yazar; kontrolcü de gizliyse bağımlı da gizlenir (zincir). Geçersiz koşul (kontrolcü silinmiş/önde değil/seçenek artık yok) YOKSAYILIR: değişken görünür kalır, listede uyarı çıkar — içerik kalıcı olarak kaybolmaz. Gizliyken kullanıcının yazdığı değer korunur, tekrar görününce geri gelir.
+- Saf mantık `lib/prompt-variable-types.ts`: `effectiveVariableValues` (değer + görünürlük), `conditionStatus`, `conditionMatches`, `validateCondition`, `renameConditionTarget`, `clearConditionsOn`; `normalizeVariable`/`convertSpec`/`parseStoredConfig` koşulu korur. `npm test` 167/167 (+10).
+- UI: `variable-condition-editor.tsx` (oluştur/düzenle modalında onay kutusu + kontrolcü + değer; önde değişken yoksa kapalı ve nedenini yazar). Değişken yeniden adlandırılınca bağımlıların koşulu takip eder, silinince koşulları temizlenir. Liste koşulu ya da uyarıyı gösterir.
+- Kullanan taraf: `PromptVariableInputs` yeni `visible` prop'u alır; detay sayfası, Studio ve editör önizlemesi `effectiveVariableValues` kullanır (Kopyala/Çalıştır dahil aynı çözülmüş metin).
+- Veri katmanı: koşul taşıyan metin değişkeni de tipli kolonları (`type`, `options`, `config`) gönderir (düz metin değişken göndermeye devam etmez).
+- Doğrulama: `tsc`, `lint`, `next build --webpack` temiz; geçici harness ile Playwright 66/66 (1280 + 390 px: seç→göster/gizle, değer hatırlama, toggle/çoklu seçim/zincir, geçersiz koşul açık kalır, oluştur/düzenle/yeniden adlandır/sil akışları, taşma yok); harness silindi. Gerçek `/create` formuna ve Supabase'e karşı denenmedi.

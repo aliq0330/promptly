@@ -34,6 +34,7 @@ import { PromptPlayableOutput } from "@/features/prompts/prompt-playable-output"
 import { useAuth } from "@/features/auth/auth-provider";
 import { fetchVariablesForPrompt } from "@/lib/supabase/prompt-variables";
 import { resolvePromptText, segmentPromptText } from "@/lib/prompt-variables";
+import { effectiveVariableValues } from "@/lib/prompt-variable-types";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
 import { PostMenu } from "@/features/prompts/post-menu";
 import { parseHighlightValue } from "@/lib/notification-utils";
@@ -79,8 +80,9 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
   // shows up immediately, without a page reload.
   const [contributorsRefreshKey, setContributorsRefreshKey] = useState(0);
 
-  const variableValues = useMemo(
-    () => Object.fromEntries(variables.map((variable) => [variable.name, variableOverrides[variable.name] ?? variable.defaultValue])),
+  // Defaults + the viewer's own choices, with conditional variables that are currently hidden resolved to "".
+  const { values: variableValues, visible: variableVisible } = useMemo(
+    () => effectiveVariableValues(variables, variableOverrides),
     [variables, variableOverrides],
   );
   const isCustomized = variables.some((variable) => variable.name in variableOverrides && variableOverrides[variable.name] !== variable.defaultValue);
@@ -226,6 +228,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
             <PromptVariableInputs
               variables={variables}
               values={variableValues}
+              visible={variableVisible}
               isCustomized={isCustomized}
               onChange={(name, value) => setVariableOverrides((prev) => ({ ...prev, [name]: value }))}
               onReset={() => setVariableOverrides({})}
