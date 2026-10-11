@@ -27,6 +27,7 @@ import { fetchPromptById } from "@/lib/supabase/prompts";
 import { fetchVariablesForPrompt } from "@/lib/supabase/prompt-variables";
 import { fetchGeneratorBySlug, fetchGeneratorVersion } from "@/lib/supabase/generators";
 import { resolvePromptText } from "@/lib/prompt-variables";
+import { effectiveVariableValues } from "@/lib/prompt-variable-types";
 import { buildGeneratorOutput } from "@/lib/generator-output";
 import { getTemplateText } from "@/lib/generator-template-doc";
 import { defaultValuesFromSchema } from "@/lib/generator-template";
@@ -293,7 +294,7 @@ export function StudioView() {
   }, []);
 
   const fields = useMemo(() => (preset ? resolvePresetFields({ fields: preset.fields, selection }) : []), [preset, selection]);
-  const variableValues = useMemo(() => Object.fromEntries(promptVars.map((v) => [v.name, varOverrides[v.name] ?? v.defaultValue])), [promptVars, varOverrides]);
+  const { values: variableValues, visible: variableVisible } = useMemo(() => effectiveVariableValues(promptVars, varOverrides), [promptVars, varOverrides]);
   const finalPrompt = useMemo(() => {
     if (promptSource) return resolvePromptText(promptText, variableValues).trim();
     if (generatorSource && generatorSchema) return String(buildGeneratorOutput(generatorSchema, generatorValues, promptText, "", false, generatorTemplateText).prompt ?? "").trim();
@@ -667,6 +668,7 @@ export function StudioView() {
               <PromptVariableInputs
                 variables={promptVars}
                 values={variableValues}
+                visible={variableVisible}
                 isCustomized={Object.keys(varOverrides).length > 0}
                 onChange={(name, value) => setVarOverrides((current) => ({ ...current, [name]: value }))}
                 onReset={() => setVarOverrides({})}

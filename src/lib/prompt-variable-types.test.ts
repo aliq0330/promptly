@@ -1,6 +1,13 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
+  clearConditionsOn,
+  conditionMatches,
+  conditionStatus,
+  defaultConditionEquals,
+  effectiveVariableValues,
+  renameConditionTarget,
+  validateCondition,
   allOptionsHaveColor,
   allOptionsHaveImage,
   MAX_OPTION_IMAGE_LENGTH,
@@ -21,6 +28,7 @@ import {
   validateSpec,
 } from "./prompt-variable-types.ts";
 import { resolvePromptText } from "./prompt-variables.ts";
+import type { PromptVariableConfig } from "@/types";
 
 const WEATHER = [
   { label: "Güneşli", value: "sunny" },
@@ -251,4 +259,116 @@ test("normalizeVariable: seçenek görselleri kaydedilen spec'te korunur", () =>
 test("convertSpec: seçenekli → metin görsel/renkleri de temizler", () => {
   const r = convertSpec({ spec: { type: "select", options: [{ label: "A", value: "a", image: IMG }, { label: "B", value: "b", image: IMG }], config: {} }, defaultValue: "a" }, "text");
   assert.deepEqual(r.spec.options, []);
+});
+
+// ---- 1c: koşullu değişkenler ----------------------------------------------
+
+const v = (name: string, extra: Partial<{ type: "text" | "select" | "multi_select" | "toggle"; options: typeof WEATHER; config: PromptVariableConfig; defaultValue: string }> = {}) => ({
+  name,
+  type: extra.type ?? "text",
+  options: extra.options ?? [],
+  config: extra.config ?? {},
+  defaultValue: extra.defaultValue ?? "",
+});
+
+const HAVA = v("hava", { type: "select", options: WEATHER, defaultValue: "sunny" });
+const SEMSIYE = v("semsiye", { defaultValue: "kırmızı şemsiye", config: { condition: { variable: "hava", equals: "rainy" } } });
+
+test("effectiveVariableValues: koşul sağlanmazsa değişken gizlenir ve '' olur", () => {
+  const sunny = effectiveVariableValues([HAVA, SEMSIYE], {});
+  assert.equal(sunny.visible.semsiye, false);
+  assert.equal(sunny.values.semsiye, "");
+  assert.equal(sunny.values.hava, "sunny");
+  const rainy = effectiveVariableValues([HAVA, SEMSIYE], { hava: "rainy" });
+  assert.equal(rainy.visible.semsiye, true);
+  assert.equal(rainy.values.semsiye, "kırmızı şemsiye");
+});
+
+test("effectiveVariableValues: gizliyken yazılan override korunur, görününce geri gelir", () => {
+  const overrides = { semsiye: "mavi şemsiye" };
+  assert.equal(effectiveVariableValues([HAVA, SEMSIYE], overrides).values.semsiye, "");
+  assert.equal(effectiveVariableValues([HAVA, SEMSIYE], { ...overrides, hava: "rainy" }).values.semsiye, "mavi şemsiye");
+});
+
+test("effectiveVariableValues: gizli kontrolcü bağımlısını da gizler (zincir)", () => {
+  const detay = v("detay", { defaultValue: "x", config: { condition: { variable: "semsiye", equals: "kırmızı şemsiye" } } });
+  const sunny = effectiveVariableValues([HAVA, SEMSIYE, detay], {});
+  assert.equal(sunny.visible.detay, false);
+  const rainy = effectiveVariableValues([HAVA, SEMSIYE, detay], { hava: "rainy" });
+  assert.equal(rainy.visible.detay, true);
+});
+
+test("conditionMatches: çoklu seçimde 'içeriyor' anlamına gelir", () => {
+  const c = { variable: "tonlar", equals: "neon" };
+  assert.equal(conditionMatches(c, "multi_select", "noir, neon"), true);
+  assert.equal(conditionMatches(c, "multi_select", "noir"), false);
+  assert.equal(conditionMatches(c, "select", "neon"), true);
+  assert.equal(conditionMatches(c, "select", "neon2"), false);
+});
+
+test("conditionStatus: geçersiz koşullar yoksayılır (değişken görünür kalır)", () => {
+  const missing = v("a", { config: { condition: { variable: "yok", equals: "x" } } });
+  assert.equal(conditionStatus(missing, [HAVA, missing]), "missing");
+  assert.equal(effectiveVariableValues([HAVA, missing], {}).visible.a, true);
+
+  const notEarlier = v("b", { config: { condition: { variable: "hava", equals: "rainy" } } });
+  assert.equal(conditionStatus(notEarlier, [notEarlier, HAVA]), "notEarlier");
+  assert.equal(effectiveVariableValues([notEarlier, HAVA], {}).visible.b, true);
+
+  const stale = v("c", { config: { condition: { variable: "hava", equals: "hail" } } });
+  assert.equal(conditionStatus(stale, [HAVA, stale]), "stale");
+  assert.equal(effectiveVariableValues([HAVA, stale], {}).visible.c, true);
+
+  assert.equal(conditionStatus(SEMSIYE, [HAVA, SEMSIYE]), "ok");
+  assert.equal(conditionStatus(HAVA, [HAVA, SEMSIYE]), "none");
+});
+
+test("toggle kontrolcü: açık/kapalı metniyle koşul", () => {
+  const sine = v("sine", { type: "toggle", config: { onText: "sinematik", offText: "" }, defaultValue: "" });
+  const dep = v("dep", { defaultValue: "ışık", config: { condition: { variable: "sine", equals: "sinematik" } } });
+  assert.equal(effectiveVariableValues([sine, dep], {}).visible.dep, false);
+  assert.equal(effectiveVariableValues([sine, dep], { sine: "sinematik" }).visible.dep, true);
+  const off = v("off", { defaultValue: "düz", config: { condition: { variable: "sine", equals: "" } } });
+  assert.equal(effectiveVariableValues([sine, off], {}).visible.off, true);
+  assert.equal(conditionStatus(off, [sine, off]), "ok");
+  assert.equal(defaultConditionEquals(sine), "sinematik");
+  assert.equal(defaultConditionEquals(HAVA), "sunny");
+  assert.equal(defaultConditionEquals(v("t")), "");
+});
+
+test("normalizeVariable/convertSpec: koşul tip değişiminde ve normalize'da korunur", () => {
+  const condition = { variable: "hava", equals: "rainy" };
+  const n = normalizeVariable({ type: "text", options: [], config: { condition } }, "x");
+  assert.deepEqual(n.spec.config, { condition });
+  const num = normalizeVariable({ type: "number", options: [], config: { min: 0, max: 5, step: 1, condition } }, "2");
+  assert.deepEqual(num.spec.config, { min: 0, max: 5, step: 1, condition });
+  const converted = convertSpec({ spec: { type: "text", options: [], config: { condition } }, defaultValue: "a" }, "select");
+  assert.deepEqual(converted.spec.config, { condition });
+  const back = convertSpec(converted, "toggle");
+  assert.equal(back.spec.config.condition?.variable, "hava");
+});
+
+test("parseStoredConfig: koşul okunur, bozuk koşul atılır", () => {
+  assert.deepEqual(parseStoredConfig({ condition: { variable: "a", equals: "b" } }), { condition: { variable: "a", equals: "b" } });
+  assert.deepEqual(parseStoredConfig({ condition: { variable: "", equals: "b" } }), {});
+  assert.deepEqual(parseStoredConfig({ condition: "x" }), {});
+});
+
+test("renameConditionTarget / clearConditionsOn", () => {
+  const list = [HAVA, SEMSIYE, v("baska")];
+  const renamed = renameConditionTarget(list, "hava", "gokyuzu");
+  assert.equal(renamed[1].config.condition?.variable, "gokyuzu");
+  assert.equal(renamed[0], list[0]);
+  assert.equal(renamed[2], list[2]);
+  const cleared = clearConditionsOn(list, "hava");
+  assert.equal(cleared[1].config.condition, undefined);
+  assert.equal(clearConditionsOn(list, "yok")[1], list[1]);
+});
+
+test("validateCondition", () => {
+  assert.equal(validateCondition(undefined, [HAVA]), null);
+  assert.equal(validateCondition({ variable: "hava", equals: "rainy" }, [HAVA]), null);
+  assert.equal(validateCondition({ variable: "yok", equals: "x" }, [HAVA]), "conditionMissing");
+  assert.equal(validateCondition({ variable: "isim", equals: " " }, [v("isim")]), "conditionValueEmpty");
+  assert.equal(validateCondition({ variable: "isim", equals: "Ali" }, [v("isim")]), null);
 });

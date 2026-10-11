@@ -6,7 +6,13 @@
  * its spec, (b) a way to keep its default valid and (c) a way to turn the
  * viewer's interaction (chip tap, switch, slider…) into that string.
  */
-import type { PromptVariableConfig, PromptVariableOption, PromptVariableSpec, PromptVariableType } from "@/types";
+import type {
+  PromptVariableCondition,
+  PromptVariableConfig,
+  PromptVariableOption,
+  PromptVariableSpec,
+  PromptVariableType,
+} from "@/types";
 
 export const VARIABLE_TYPES: PromptVariableType[] = ["text", "select", "multi_select", "number", "slider", "toggle"];
 
@@ -144,6 +150,15 @@ export function normalizeVariable(
   spec: PromptVariableSpec,
   defaultValue: string,
 ): { spec: PromptVariableSpec; defaultValue: string } {
+  const result = normalizeCore(spec, defaultValue);
+  const condition = parseStoredCondition(spec.config.condition);
+  return condition ? { ...result, spec: { ...result.spec, config: { ...result.spec.config, condition } } } : result;
+}
+
+function normalizeCore(
+  spec: PromptVariableSpec,
+  defaultValue: string,
+): { spec: PromptVariableSpec; defaultValue: string } {
   const { type } = spec;
   if (isChoiceType(type)) {
     const options = sanitizeOptions(spec.options);
@@ -229,7 +244,17 @@ export function parseStoredConfig(raw: unknown): PromptVariableConfig {
     const value = source[key];
     if (typeof value === "string") config[key] = value;
   }
+  const condition = parseStoredCondition(source.condition);
+  if (condition) config.condition = condition;
   return config;
+}
+
+/** Safely reads a stored visibility condition (anything unexpected → none). */
+export function parseStoredCondition(raw: unknown): PromptVariableCondition | undefined {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return undefined;
+  const { variable, equals } = raw as { variable?: unknown; equals?: unknown };
+  if (typeof variable !== "string" || variable === "" || typeof equals !== "string") return undefined;
+  return { variable, equals };
 }
 
 export function parseStoredType(raw: unknown): PromptVariableType {
@@ -260,6 +285,17 @@ export function convertSpec(
   seedText = "",
 ): { spec: PromptVariableSpec; defaultValue: string } {
   if (from.spec.type === to) return from;
+  const result = convertCore(from, to, seedText);
+  // The visibility condition is independent of the kind, so it survives a kind change.
+  const condition = from.spec.config.condition;
+  return condition ? { ...result, spec: { ...result.spec, config: { ...result.spec.config, condition } } } : result;
+}
+
+function convertCore(
+  from: { spec: PromptVariableSpec; defaultValue: string },
+  to: PromptVariableType,
+  seedText: string,
+): { spec: PromptVariableSpec; defaultValue: string } {
   const seed = (seedText || from.defaultValue).trim();
 
   if (isChoiceType(to)) {
@@ -286,4 +322,123 @@ export function convertSpec(
   }
 
   return { spec: { type: "text", options: [], config: {} }, defaultValue: from.defaultValue };
+}
+
+// ---------------------------------------------------------------------------
+// Visibility conditions (§9.145, 1c)
+// ---------------------------------------------------------------------------
+
+/** The slice of a variable the condition logic needs — satisfied by both stored and draft variables. */
+export interface ConditionalVariable extends PromptVariableSpec {
+  name: string;
+  defaultValue: string;
+}
+
+/** True when `condition` holds for the controlling variable's current value. */
+export function conditionMatches(
+  condition: PromptVariableCondition,
+  controllerType: PromptVariableType,
+  controllerValue: string,
+): boolean {
+  if (controllerType === "multi_select") return parseMultiValue(controllerValue).includes(condition.equals);
+  return controllerValue === condition.equals;
+}
+
+/** The values a condition on `controller` can meaningfully compare against, or `null` for free-form controllers. */
+export function conditionChoices(controller: ConditionalVariable): string[] | null {
+  if (isChoiceType(controller.type)) return controller.options.map((option) => option.value);
+  if (controller.type === "toggle") return [controller.config.onText ?? "", controller.config.offText ?? ""];
+  return null;
+}
+
+/** The `equals` a freshly chosen controller starts with. */
+export function defaultConditionEquals(controller: ConditionalVariable): string {
+  const choices = conditionChoices(controller);
+  return choices ? (choices[0] ?? "") : "";
+}
+
+export type ConditionStatus = "none" | "ok" | "missing" | "notEarlier" | "stale";
+
+/**
+ * Whether `variable`'s condition still points at something real. `missing` =
+ * the controlling variable no longer exists, `notEarlier` = it isn't before
+ * this variable in the list, `stale` = the compared value is no longer one of
+ * the controller's choices. A condition that isn't `ok` is IGNORED (the
+ * variable stays visible) so content can never vanish for good.
+ */
+export function conditionStatus(variable: ConditionalVariable, variables: ConditionalVariable[]): ConditionStatus {
+  const condition = variable.config.condition;
+  if (!condition) return "none";
+  const index = variables.findIndex((item) => item.name === variable.name);
+  const controllerIndex = variables.findIndex((item) => item.name === condition.variable);
+  if (controllerIndex === -1) return "missing";
+  if (index !== -1 && controllerIndex >= index) return "notEarlier";
+  const choices = conditionChoices(variables[controllerIndex]);
+  if (choices && !choices.includes(condition.equals)) return "stale";
+  return "ok";
+}
+
+/**
+ * Resolves what each variable contributes to the prompt: its (override or
+ * default) value, or an empty string while its condition hides it. Evaluated
+ * in list order against the controllers' EFFECTIVE values, so a hidden
+ * controller hides its dependents too.
+ */
+export function effectiveVariableValues(
+  variables: ConditionalVariable[],
+  overrides: Record<string, string>,
+): { values: Record<string, string>; visible: Record<string, boolean> } {
+  const values: Record<string, string> = {};
+  const visible: Record<string, boolean> = {};
+  for (const variable of variables) {
+    const condition = variable.config.condition;
+    const controller = condition ? variables.find((item) => item.name === condition.variable) : undefined;
+    const isVisible =
+      !condition || !controller || conditionStatus(variable, variables) !== "ok"
+        ? true
+        : conditionMatches(condition, controller.type, values[controller.name] ?? "");
+    visible[variable.name] = isVisible;
+    values[variable.name] = isVisible ? (overrides[variable.name] ?? variable.defaultValue) : "";
+  }
+  return { values, visible };
+}
+
+export type ConditionError = "conditionMissing" | "conditionValueEmpty" | null;
+
+/** Validation of a condition being saved against the variables allowed to control it. */
+export function validateCondition(
+  condition: PromptVariableCondition | undefined,
+  controllers: ConditionalVariable[],
+): ConditionError {
+  if (!condition) return null;
+  const controller = controllers.find((item) => item.name === condition.variable);
+  if (!controller) return "conditionMissing";
+  if (conditionChoices(controller) === null && condition.equals.trim() === "") return "conditionValueEmpty";
+  return null;
+}
+
+/** Applies `fn` to a variable's condition; returns the same variable when nothing changed. */
+function mapCondition<T extends { config: PromptVariableConfig }>(
+  variable: T,
+  fn: (condition: PromptVariableCondition) => PromptVariableCondition | undefined,
+): T {
+  const condition = variable.config.condition;
+  if (!condition) return variable;
+  const next = fn(condition);
+  if (next === condition) return variable;
+  const { condition: _removed, ...rest } = variable.config;
+  void _removed;
+  return { ...variable, config: next ? { ...rest, condition: next } : rest };
+}
+
+/** Points every condition that watched `from` at `to` (a variable rename). */
+export function renameConditionTarget<T extends { config: PromptVariableConfig }>(variables: T[], from: string, to: string): T[] {
+  return variables.map((variable) =>
+    mapCondition(variable, (condition) => (condition.variable === from ? { ...condition, variable: to } : condition)),
+  );
+}
+
+/** Drops every condition that watched `name` (the controlling variable was deleted). */
+export function clearConditionsOn<T extends { config: PromptVariableConfig }>(variables: T[], name: string): T[] {
+  return variables.map((variable) => mapCondition(variable, (condition) => (condition.variable === name ? undefined : condition)));
 }

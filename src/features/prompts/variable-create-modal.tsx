@@ -5,9 +5,17 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { isValidVariableName, normalizeVariableName } from "@/lib/prompt-variables";
-import { emptySpec, normalizeVariable, validateSpec, type VariableSpecError } from "@/lib/prompt-variable-types";
+import {
+  emptySpec,
+  normalizeVariable,
+  validateCondition,
+  validateSpec,
+  type ConditionError,
+  type VariableSpecError,
+} from "@/lib/prompt-variable-types";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { DraftVariable } from "./prompt-text-editor";
+import { VariableConditionEditor } from "./variable-condition-editor";
 import { VariableSpecEditor, type SpecEditorValue, type VariableFormValues } from "./variable-spec-editor";
 
 /**
@@ -42,6 +50,7 @@ export function VariableCreateModal({
   const [name, setName] = useState("");
   const [editor, setEditor] = useState<SpecEditorValue>({ spec: emptySpec("text"), defaultValue: selectedText });
   const [specError, setSpecError] = useState<VariableSpecError>(null);
+  const [conditionError, setConditionError] = useState<ConditionError>(null);
   const [description, setDescription] = useState("");
   const [replaceAll, setReplaceAll] = useState(false);
   const [touched, setTouched] = useState(false);
@@ -65,8 +74,10 @@ export function VariableCreateModal({
     if (normalizedName.length === 0 || !isValidVariableName(normalizedName)) return;
     // Linking to an existing variable never creates one, so its spec isn't used.
     const problem = existing ? null : validateSpec(editor.spec);
+    const conditionProblem = existing ? null : validateCondition(editor.spec.config.condition, variables);
     setSpecError(problem);
-    if (problem) return;
+    setConditionError(conditionProblem);
+    if (problem || conditionProblem) return;
     const { spec, defaultValue } = normalizeVariable(editor.spec, editor.defaultValue);
     onSubmit({
       ...spec,
@@ -165,6 +176,19 @@ export function VariableCreateModal({
                 />
               </div>
             </>
+          )}
+
+          {!existing && (
+            <VariableConditionEditor
+              idPrefix="variable-create"
+              condition={editor.spec.config.condition}
+              controllers={variables}
+              onChange={(condition) => {
+                setEditor((prev) => ({ ...prev, spec: { ...prev.spec, config: { ...prev.spec.config, condition } } }));
+                setConditionError(null);
+              }}
+              error={conditionError}
+            />
           )}
 
           {selectedText && occurrenceCount > 1 && (

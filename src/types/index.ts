@@ -365,13 +365,27 @@ export interface PromptVariableOption {
   color?: string;
 }
 
-/** Kind-specific settings (only the keys relevant to the variable's `type` are ever set). */
+/**
+ * "Show this variable only when another variable has this value" (§9.145, 1c).
+ * `variable` is the controlling variable's NAME (it must come EARLIER in the
+ * list, so dependencies can never loop); `equals` is that variable's
+ * prompt-facing value (an option's `value`, a toggle's on/off text, or free
+ * text). For a multiple-choice controller it matches when the value is among
+ * the selected ones. While hidden, the variable resolves to an empty string.
+ */
+export interface PromptVariableCondition {
+  variable: string;
+  equals: string;
+}
+
+/** Kind-specific settings (only the keys relevant to the variable's `type` are ever set) plus the optional visibility `condition`, which applies to every kind. */
 export interface PromptVariableConfig {
   min?: number;
   max?: number;
   step?: number;
   onText?: string;
   offText?: string;
+  condition?: PromptVariableCondition;
 }
 
 /** The kind-specific part of a variable, shared by the stored row and the editor's draft. */

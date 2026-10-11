@@ -5,9 +5,16 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { isValidVariableName, normalizeVariableName } from "@/lib/prompt-variables";
-import { normalizeVariable, validateSpec, type VariableSpecError } from "@/lib/prompt-variable-types";
+import {
+  normalizeVariable,
+  validateCondition,
+  validateSpec,
+  type ConditionError,
+  type VariableSpecError,
+} from "@/lib/prompt-variable-types";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { DraftVariable } from "./prompt-text-editor";
+import { VariableConditionEditor } from "./variable-condition-editor";
 import { VariableSpecEditor, type SpecEditorValue, type VariableFormValues } from "./variable-spec-editor";
 
 /**
@@ -22,11 +29,14 @@ import { VariableSpecEditor, type SpecEditorValue, type VariableFormValues } fro
  */
 export function VariableEditorModal({
   editing,
+  controllers,
   existingNames,
   onClose,
   onSubmit,
 }: {
   editing: DraftVariable;
+  /** Variables that come BEFORE `editing` in the list — the only ones that may control its visibility. */
+  controllers: DraftVariable[];
   /** Every OTHER variable's normalized name already in use on this prompt — for the duplicate-name check (excludes `editing`'s own current name). */
   existingNames: string[];
   onClose: () => void;
@@ -39,6 +49,7 @@ export function VariableEditorModal({
     defaultValue: editing.defaultValue,
   });
   const [specError, setSpecError] = useState<VariableSpecError>(null);
+  const [conditionError, setConditionError] = useState<ConditionError>(null);
   const [description, setDescription] = useState(editing.description);
   const [touched, setTouched] = useState(false);
 
@@ -72,8 +83,10 @@ export function VariableEditorModal({
       return;
     }
     const problem = validateSpec(editor.spec);
+    const conditionProblem = validateCondition(editor.spec.config.condition, controllers);
     setSpecError(problem);
-    if (problem) return;
+    setConditionError(conditionProblem);
+    if (problem || conditionProblem) return;
     const { spec, defaultValue } = normalizeVariable(editor.spec, editor.defaultValue);
     onSubmit({ ...spec, name: normalizedName, defaultValue, description });
   }
@@ -142,6 +155,17 @@ export function VariableEditorModal({
               className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
             />
           </div>
+
+          <VariableConditionEditor
+            idPrefix="variable-edit"
+            condition={editor.spec.config.condition}
+            controllers={controllers}
+            onChange={(condition) => {
+              setEditor((prev) => ({ ...prev, spec: { ...prev.spec, config: { ...prev.spec.config, condition } } }));
+              setConditionError(null);
+            }}
+            error={conditionError}
+          />
 
           <div className="flex justify-end gap-2 pt-1">
             <Button type="button" variant="ghost" onClick={onClose}>
