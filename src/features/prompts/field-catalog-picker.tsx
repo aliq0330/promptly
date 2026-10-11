@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { Blocks, Check, ChevronDown, ChevronRight, Plus, Search, X } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Blocks, Check, ChevronDown, ChevronRight, Eye, Plus, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { normalizeTagLabel } from "@/lib/tag-normalize";
@@ -63,6 +63,9 @@ export function FieldCatalogPicker({
   const [expandedCategoryId, setExpandedCategoryId] = useState<string | null>(null);
   const [expandedSubgroupId, setExpandedSubgroupId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [previewPackageId, setPreviewPackageId] = useState<string | null>(null);
+  const [trayOpen, setTrayOpen] = useState(true);
+  const previewRef = useRef<HTMLDivElement>(null);
 
   const alreadyUsedLabels = useMemo(() => new Set(existingFields.map((f) => normalizeTagLabel(f.label))), [existingFields]);
 
@@ -117,11 +120,61 @@ export function FieldCatalogPicker({
   const searchResults = useMemo(() => (query.trim() ? searchCatalogFields(query, normalizeTagLabel) : []), [query]);
   const selectedCount = selectedIds.size;
 
+  const allCatalogFields = useMemo(
+    () => CATALOG_CATEGORIES.flatMap((category) => category.subgroups.flatMap((sub) => fieldsInSubgroup(category.id, sub.id))),
+    [],
+  );
+  const fieldById = useMemo(() => new Map(allCatalogFields.map((field) => [field.id, field])), [allCatalogFields]);
+  /** Seçilenler, seçilme sırasıyla. */
+  const selectedFields = useMemo(
+    () => Array.from(selectedIds).map((id) => fieldById.get(id)).filter((field): field is CatalogField => Boolean(field)),
+    [selectedIds, fieldById],
+  );
+  const previewPackage = previewPackageId ? CATALOG_PACKAGES.find((pkg) => pkg.id === previewPackageId) ?? null : null;
+  const previewPackageFields = previewPackage ? packageFields(previewPackage) : [];
+  const previewAddable = previewPackageFields.filter((field) => !isAlreadyInSchema(field));
+
+  // Çipler çok olduğundan önizleme ekran dışında kalabilir: açılınca görünür alana getir.
+  useEffect(() => {
+    if (previewPackageId) previewRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, [previewPackageId]);
+
+  function removeSelected(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+  }
+
   function handleInsert() {
-    const allCatalogFields = CATALOG_CATEGORIES.flatMap((category) => category.subgroups.flatMap((sub) => fieldsInSubgroup(category.id, sub.id)));
     const chosen = allCatalogFields.filter((field) => selectedIds.has(field.id));
     if (chosen.length === 0) return;
     onInsert(chosen.map((field) => localizeCatalogField(field, language)));
+  }
+
+  /** Alanın ne olduğunu tek bakışta gösteren küçük önizleme: tip + ilk seçenekler (ya da aralık). */
+  function renderFieldPreview(field: CatalogField) {
+    const optionLabels = field.options.map((option) => catalogText(option.label, language));
+    const shown = optionLabels.slice(0, 4);
+    const extra = optionLabels.length - shown.length;
+    return (
+      <span className="mt-1 flex flex-wrap items-center gap-1">
+        <span className="rounded-full bg-surface px-2 py-0.5 text-[10px] font-medium text-text-secondary">{t(GENERATOR_FIELD_TYPE_LABELS[field.type])}</span>
+        {shown.map((label, index) => (
+          <span key={`${label}-${index}`} className="max-w-[9rem] truncate rounded-full bg-surface px-2 py-0.5 text-[10px] text-text-muted">
+            {label}
+          </span>
+        ))}
+        {extra > 0 && <span className="text-[10px] text-text-muted">+{extra}</span>}
+        {optionLabels.length === 0 && field.min !== undefined && field.max !== undefined && (
+          <span className="rounded-full bg-surface px-2 py-0.5 text-[10px] text-text-muted">{field.min}–{field.max}</span>
+        )}
+        {optionLabels.length === 0 && field.min === undefined && (
+          <span className="text-[10px] text-text-muted">{t("fieldCatalog.freeText")}</span>
+        )}
+      </span>
+    );
   }
 
   function renderFieldRow(field: CatalogField, breadcrumb?: string) {
@@ -131,17 +184,18 @@ export function FieldCatalogPicker({
       <label
         key={field.id}
         className={cn(
-          "flex cursor-pointer items-start gap-2 rounded-md border p-2 text-sm",
-          used ? "cursor-not-allowed border-border/60 opacity-60" : selected ? "border-primary bg-accent-surface" : "border-border hover:bg-accent-surface",
+          "flex items-start gap-2.5 rounded-xl px-3 py-2.5 text-sm transition-colors duration-200 ease-soft",
+          used ? "cursor-not-allowed opacity-55" : "cursor-pointer",
+          selected ? "bg-primary-soft ring-1 ring-primary/25" : used ? "bg-surface-soft" : "bg-surface-soft hover:bg-primary-soft/60",
         )}
       >
         <span
           className={cn(
-            "mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border",
-            used ? "border-border bg-accent-surface" : selected ? "border-primary bg-primary text-primary-foreground" : "border-border",
+            "mt-0.5 flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full border transition-colors",
+            used ? "border-border bg-surface" : selected ? "border-primary bg-primary text-primary-foreground" : "border-border-strong bg-surface",
           )}
         >
-          {(selected || used) && <Check size={11} />}
+          {(selected || used) && <Check size={11} strokeWidth={3} />}
         </span>
         <span className="min-w-0 flex-1">
           <input type="checkbox" className="sr-only" checked={selected || used} disabled={used} onChange={() => toggleField(field)} />
@@ -160,10 +214,10 @@ export function FieldCatalogPicker({
               )
             )}
             <span className="truncate font-medium text-text">{catalogText(field.label, language)}</span>
-            <span className="rounded-sm bg-accent-surface px-1.5 py-0.5 text-[10px] font-medium text-text-muted">{t(GENERATOR_FIELD_TYPE_LABELS[field.type])}</span>
+            {used && <span className="text-xs font-medium text-primary">{t("fieldCatalog.alreadyAdded")}</span>}
           </span>
           {breadcrumb && <span className="mt-0.5 block truncate text-xs text-text-muted">{breadcrumb}</span>}
-          {used && <span className="mt-0.5 block text-xs text-primary">{t("fieldCatalog.alreadyAdded")}</span>}
+          {renderFieldPreview(field)}
         </span>
       </label>
     );
@@ -171,34 +225,45 @@ export function FieldCatalogPicker({
 
   return (
     <Modal onClose={onClose} labelledBy="field-catalog-title">
-      <div className="flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-lg" onClick={(event) => event.stopPropagation()}>
-        <div className="flex items-center justify-between border-b border-border p-4">
-          <h2 id="field-catalog-title" className="text-base font-semibold text-text">
-            {t("fieldCatalog.title")}
-          </h2>
-          <button type="button" onClick={onClose} aria-label={t("common.close")} className="rounded-md p-1 text-text-muted hover:bg-accent-surface hover:text-text">
+      <div
+        className="flex max-h-[88dvh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-border-soft bg-surface-elevated shadow-pop"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="flex items-start justify-between gap-3 px-5 pb-3 pt-5">
+          <div className="min-w-0">
+            <h2 id="field-catalog-title" className="font-display text-lg font-semibold text-text">
+              {t("fieldCatalog.title")}
+            </h2>
+            <p className="mt-0.5 text-sm text-text-secondary">{t("fieldCatalog.subtitle")}</p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label={t("common.close")}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-surface-soft hover:text-text"
+          >
             <X size={18} />
           </button>
         </div>
 
-        <div className="border-b border-border p-4">
+        <div className="px-5 pb-3">
           <div className="relative">
-            <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+            <Search size={15} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" />
             <input
               type="text"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder={t("fieldCatalog.searchPlaceholder")}
-              className="h-10 w-full rounded-lg border border-border bg-background pl-9 pr-3 text-sm text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
+              className="h-11 w-full rounded-full border border-transparent bg-surface-soft pl-10 pr-4 text-sm text-text placeholder:text-text-muted transition-colors duration-200 ease-soft hover:bg-primary-soft/50 focus:border-primary/40 focus:bg-surface"
             />
           </div>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto p-4">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-4">
           {query.trim() ? (
             <div className="space-y-1.5">
               <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-text-muted">{t("fieldCatalog.resultsCount", { count: searchResults.length })}</p>
-              {searchResults.length === 0 && <p className="rounded-md border border-dashed border-border p-4 text-center text-sm text-text-muted">{t("fieldCatalog.noFieldMatch")}</p>}
+              {searchResults.length === 0 && <p className="rounded-xl bg-surface-soft p-5 text-center text-sm text-text-muted">{t("fieldCatalog.noFieldMatch")}</p>}
               {searchResults.map((field) => {
                 const category = CATALOG_CATEGORIES.find((c) => c.id === field.categoryId);
                 const subgroup = category?.subgroups.find((s) => s.id === field.subgroupId);
@@ -206,24 +271,63 @@ export function FieldCatalogPicker({
               })}
             </div>
           ) : (
-            <div className="space-y-5">
+            <div className="space-y-6">
               <div>
                 <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-muted">{t("fieldCatalog.readyPackages")}</p>
                 <div className="flex flex-wrap gap-1.5">
                   {CATALOG_PACKAGES.map((pkg) => {
                     const fields = packageFields(pkg);
+                    const active = previewPackageId === pkg.id;
                     return (
                       <button
                         key={pkg.id}
                         type="button"
-                        onClick={() => addPackage(fields)}
-                        className="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-text hover:bg-accent-surface"
+                        aria-pressed={active}
+                        onClick={() => setPreviewPackageId(active ? null : pkg.id)}
+                        className={cn(
+                          "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors duration-200 ease-soft",
+                          active ? "bg-primary text-primary-foreground" : "bg-surface-soft text-text hover:bg-primary-soft",
+                        )}
                       >
-                        <Blocks size={12} /> {catalogText(pkg.label, language)} <span className="text-text-muted">({fields.length})</span>
+                        <Blocks size={12} /> {catalogText(pkg.label, language)}{" "}
+                        <span className={active ? "text-primary-foreground/80" : "text-text-muted"}>({fields.length})</span>
                       </button>
                     );
                   })}
                 </div>
+
+                {previewPackage && (
+                  <div ref={previewRef} className="mt-3 animate-fade-in scroll-mb-4 rounded-2xl bg-primary-soft/50 p-3 ring-1 ring-primary/15">
+                    <div className="flex flex-wrap items-center justify-between gap-2 px-1 pb-2">
+                      <p className="flex items-center gap-1.5 text-sm font-semibold text-text">
+                        <Eye size={14} className="text-primary" aria-hidden /> {catalogText(previewPackage.label, language)}
+                        <span className="text-xs font-normal text-text-secondary">· {t("fieldCatalog.packagePreview")}</span>
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setPreviewPackageId(null)}
+                        aria-label={t("fieldCatalog.hidePreview")}
+                        className="flex h-7 w-7 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-surface hover:text-text"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                    <div className="space-y-1.5">{previewPackageFields.map((field) => renderFieldRow(field))}</div>
+                    <div className="mt-3 flex justify-end">
+                      <Button
+                        type="button"
+                        size="sm"
+                        disabled={previewAddable.length === 0}
+                        onClick={() => {
+                          addPackage(previewPackageFields);
+                          setPreviewPackageId(null);
+                        }}
+                      >
+                        {previewAddable.length === 0 ? t("fieldCatalog.packageAllAdded") : t("fieldCatalog.addPackage", { count: previewAddable.length })}
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-1.5">
@@ -231,20 +335,20 @@ export function FieldCatalogPicker({
                 {CATALOG_CATEGORIES.map((category) => {
                   const isCategoryOpen = expandedCategoryId === category.id;
                   return (
-                    <div key={category.id} className="rounded-md border border-border">
+                    <div key={category.id} className="overflow-hidden rounded-2xl bg-surface-soft">
                       <button
                         type="button"
                         onClick={() => {
                           setExpandedCategoryId(isCategoryOpen ? null : category.id);
                           setExpandedSubgroupId(null);
                         }}
-                        className="flex w-full items-center justify-between gap-2 p-2.5 text-left text-sm font-medium text-text hover:bg-accent-surface"
+                        className="flex w-full items-center justify-between gap-2 px-4 py-3 text-left text-sm font-medium text-text transition-colors hover:bg-primary-soft/60"
                       >
                         <span className="truncate">{catalogText(category.label, language)}</span>
                         {isCategoryOpen ? <ChevronDown size={15} className="shrink-0 text-text-muted" /> : <ChevronRight size={15} className="shrink-0 text-text-muted" />}
                       </button>
                       {isCategoryOpen && (
-                        <div className="space-y-1 border-t border-border p-2">
+                        <div className="space-y-1 border-t border-border-soft p-2">
                           {category.subgroups.map((subgroup) => {
                             const isSubOpen = expandedSubgroupId === subgroup.id;
                             const fields = fieldsInSubgroup(category.id, subgroup.id);
@@ -253,11 +357,11 @@ export function FieldCatalogPicker({
                             const allSubgroupSelected = selectableFields.length > 0 && selectableFields.every((f) => selectedIds.has(f.id));
                             return (
                               <div key={subgroup.id}>
-                                <div className="flex items-center justify-between gap-2 rounded-md px-1 hover:bg-accent-surface">
+                                <div className="flex items-center justify-between gap-2 rounded-xl px-1 transition-colors hover:bg-surface">
                                   <button
                                     type="button"
                                     onClick={() => setExpandedSubgroupId(isSubOpen ? null : subgroup.id)}
-                                    className="flex flex-1 items-center gap-1 py-1.5 pl-1 text-left text-xs font-medium text-text-muted hover:text-text"
+                                    className="flex flex-1 items-center gap-1 py-2 pl-2 text-left text-xs font-medium text-text-secondary hover:text-text"
                                   >
                                     {isSubOpen ? <ChevronDown size={13} className="shrink-0" /> : <ChevronRight size={13} className="shrink-0" />}
                                     <span>
@@ -266,7 +370,7 @@ export function FieldCatalogPicker({
                                   </button>
                                   <label
                                     className={cn(
-                                      "flex shrink-0 items-center gap-1 pr-1 text-[11px] font-medium",
+                                      "flex shrink-0 items-center gap-1 pr-2 text-[11px] font-medium",
                                       selectableFields.length === 0 ? "cursor-not-allowed text-text-muted/50" : "cursor-pointer text-text-muted hover:text-primary",
                                     )}
                                   >
@@ -280,7 +384,7 @@ export function FieldCatalogPicker({
                                     {t("fieldCatalog.selectAll")}
                                   </label>
                                 </div>
-                                {isSubOpen && <div className="mt-1 space-y-1 pl-2">{fields.map((field) => renderFieldRow(field))}</div>}
+                                {isSubOpen && <div className="mt-1 space-y-1.5 px-1 pb-1">{fields.map((field) => renderFieldRow(field))}</div>}
                               </div>
                             );
                           })}
@@ -294,20 +398,56 @@ export function FieldCatalogPicker({
           )}
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border p-4">
+        {selectedCount > 0 && (
+          <div className="border-t border-border-soft bg-surface-soft/60">
+            <div className="flex items-center justify-between gap-2 px-5 py-2">
+              <button
+                type="button"
+                onClick={() => setTrayOpen((open) => !open)}
+                aria-expanded={trayOpen}
+                className="flex items-center gap-1.5 text-sm font-semibold text-text"
+              >
+                {trayOpen ? <ChevronDown size={15} /> : <ChevronRight size={15} />}
+                {t("fieldCatalog.selectedTitle", { count: selectedCount })}
+              </button>
+              <button type="button" onClick={() => setSelectedIds(new Set())} className="text-xs font-medium text-text-muted hover:text-danger">
+                {t("fieldCatalog.clearSelection")}
+              </button>
+            </div>
+            {trayOpen && (
+              <ul className="max-h-44 space-y-1.5 overflow-y-auto overscroll-contain px-5 pb-3">
+                {selectedFields.map((field) => (
+                  <li key={field.id} className="flex items-start gap-2 rounded-xl bg-surface px-3 py-2 shadow-xs">
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-medium text-text">{catalogText(field.label, language)}</span>
+                      {renderFieldPreview(field)}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => removeSelected(field.id)}
+                      aria-label={t("fieldCatalog.removeField", { name: catalogText(field.label, language) })}
+                      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-danger/10 hover:text-danger"
+                    >
+                      <X size={14} />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
+
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border-soft px-5 py-3.5">
           {onCreateCustom ? (
             <button type="button" onClick={onCreateCustom} className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline">
               <Plus size={14} /> {t("fieldCatalog.createCustomField")}
             </button>
           ) : (
-            <span />
+            <span className="text-xs text-text-muted">{selectedCount > 0 ? t("fieldCatalog.fieldsSelectedCount", { count: selectedCount }) : t("fieldCatalog.noFieldsSelected")}</span>
           )}
-          <div className="flex items-center gap-2">
-            <p className="text-xs text-text-muted">{selectedCount > 0 ? t("fieldCatalog.fieldsSelectedCount", { count: selectedCount }) : t("fieldCatalog.noFieldsSelected")}</p>
-            <Button type="button" onClick={handleInsert} disabled={selectedCount === 0}>
-              {t("variable.add")} {selectedCount > 0 ? `(${selectedCount})` : ""}
-            </Button>
-          </div>
+          <Button type="button" onClick={handleInsert} disabled={selectedCount === 0}>
+            {t("variable.add")} {selectedCount > 0 ? `(${selectedCount})` : ""}
+          </Button>
         </div>
       </div>
     </Modal>

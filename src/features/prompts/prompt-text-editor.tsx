@@ -2,7 +2,7 @@
 
 import { useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import { Blocks, Eye, FileText } from "lucide-react";
+import { Eye, FileText } from "lucide-react";
 import {
   countRawOccurrences,
   extractVariableTokenNames,
@@ -273,18 +273,12 @@ export function PromptTextEditor({
         hideEditor={activeTab === "preview"}
         onCreateNew={({ range, selectedText }) => setCreating({ range, selectedText })}
         onConvertSelection={({ range, selectedText }) => setCreating({ range, selectedText })}
+        onOpenCatalog={() => setCatalogRange(composerRef.current?.getPendingRange() ?? cursorRange())}
         panelExtra={variables.length > 0 ? list : undefined}
       />
 
       {activeTab === "template" && (
         <div className="space-y-2">
-          <button
-            type="button"
-            onClick={() => setCatalogRange(cursorRange())}
-            className="inline-flex min-h-9 items-center gap-1.5 rounded-md border border-border px-3 text-sm font-medium text-text transition-colors hover:bg-accent-surface"
-          >
-            <Blocks size={14} className="text-primary" aria-hidden="true" /> {t("variable.addFromCatalog")}
-          </button>
           <VariableVisionAssist
             promptText={value}
             variables={variables}
