@@ -21,7 +21,6 @@ export const CONTENT_TYPE_KEY: Record<AdminContentType, TranslationKey> = {
 const KIND_KEYS: Record<string, TranslationKey> = {
   prompt: "admin.kind.prompt",
   request: "admin.kind.request",
-  generator: "admin.kind.generator",
   workflow: "admin.kind.workflow",
   preset: "admin.kind.preset",
   comment: "admin.kind.comment",

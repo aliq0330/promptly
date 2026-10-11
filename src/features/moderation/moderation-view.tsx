@@ -37,7 +37,6 @@ const TYPE_KEY: Record<string, TranslationKey> = {
   request: "moderation.type.request",
   user: "moderation.type.user",
   message: "moderation.type.message",
-  generator: "moderation.type.generator",
   workflow: "moderation.type.workflow",
   preset: "moderation.type.preset",
 };

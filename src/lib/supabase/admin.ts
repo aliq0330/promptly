@@ -20,7 +20,6 @@ interface CountBlock {
 interface TypeRow {
   prompts: number;
   requests: number;
-  generators: number;
   workflows: number;
   presets: number;
 }
@@ -28,7 +27,7 @@ interface TypeRow {
 export interface AdminSiteStats {
   users: { total: number; new_7d: number; new_30d: number; suspended: number; posting_blocked: number; moderators: number };
   active_7d: number;
-  content: { prompts: CountBlock; requests: CountBlock; generators: CountBlock; workflows: CountBlock; presets: CountBlock };
+  content: { prompts: CountBlock; requests: CountBlock; workflows: CountBlock; presets: CountBlock };
   by_type: Record<AdminContentType, TypeRow>;
   engagement: { comments: number; likes: number; saves: number; follows: number; conversations: number; messages: number; results: number; reports_open: number };
   storage: {
@@ -62,7 +61,6 @@ export interface AdminUser {
   postingBlockReason: string | null;
   prompts: number;
   requests: number;
-  generators: number;
   workflows: number;
   presets: number;
   postsTotal: number;
@@ -99,7 +97,6 @@ interface UserRow {
   posting_block_reason: string | null;
   prompts_n: number;
   requests_n: number;
-  generators_n: number;
   workflows_n: number;
   presets_n: number;
   posts_total: number;
@@ -138,7 +135,6 @@ function mapUser(row: UserRow): AdminUser {
     postingBlockReason: row.posting_block_reason,
     prompts: row.prompts_n,
     requests: row.requests_n,
-    generators: row.generators_n,
     workflows: row.workflows_n,
     presets: row.presets_n,
     postsTotal: row.posts_total,

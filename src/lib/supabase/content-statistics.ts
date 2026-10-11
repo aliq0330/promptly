@@ -3,7 +3,7 @@ import { getBlockedIds } from "./blocked-users";
 import type { UserProfile } from "@/types";
 
 /** The five first-class content types (CLAUDE.md Bölüm 1/9.59/9.60/9.83). */
-export type StatisticsContentType = "prompt" | "request" | "generator" | "workflow" | "preset";
+export type StatisticsContentType = "prompt" | "request" | "workflow" | "preset";
 export type StatisticsKind = "likes" | "comments" | "saves";
 
 export interface ContentEngager {

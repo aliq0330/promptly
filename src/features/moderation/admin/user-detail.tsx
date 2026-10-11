@@ -136,7 +136,7 @@ export function UserDetail({ userId, onBack }: { userId: string; onBack: () => v
         <Stat label={t("admin.user.stat.reportsFiled")} value={user.reportsFiled} />
         <Stat label={t("admin.user.stat.reportsAgainst")} value={user.reportsAgainst} />
       </div>
-      <p className="text-caption text-text-muted">{t("admin.user.postsBreakdown", { prompts: user.prompts, requests: user.requests, generators: user.generators, workflows: user.workflows, presets: user.presets })}</p>
+      <p className="text-caption text-text-muted">{t("admin.user.postsBreakdown", { prompts: user.prompts, requests: user.requests, workflows: user.workflows, presets: user.presets })}</p>
 
       <section className={CARD}>
         <h3 className="mb-3 text-small font-semibold text-text">{t("admin.user.storageTitle")}</h3>
