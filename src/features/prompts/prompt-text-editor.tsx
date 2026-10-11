@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import { Eye, FileText } from "lucide-react";
+import dynamic from "next/dynamic";
+import { Blocks, Eye, FileText } from "lucide-react";
 import {
   countRawOccurrences,
   extractVariableTokenNames,
@@ -18,6 +19,9 @@ import {
   renameConditionTarget,
 } from "@/lib/prompt-variable-types";
 import { useTranslation } from "@/lib/i18n/language-provider";
+import { catalogFieldToVariable, type CatalogFieldLike } from "@/lib/prompt-variable-catalog";
+import { suggestionToVariable, type MatchedVariableValue } from "@/lib/prompt-variable-vision";
+import type { CleanSuggestedField } from "@/lib/generator-vision-mapping";
 import type { PromptVariableSpec } from "@/types";
 import { PromptComposer, type ComposerHandle } from "@/features/content/prompt-composer/prompt-composer";
 import type { PickerFilter, PickerItem } from "@/features/content/prompt-composer/insert-picker";
@@ -27,6 +31,10 @@ import { VariableEditorModal } from "./variable-editor-modal";
 import { VariableList } from "./variable-list";
 import { VariableField } from "./variable-field";
 import type { VariableFormValues } from "./variable-spec-editor";
+import { VariableVisionAssist } from "./variable-vision-assist";
+
+// 196 alanlık katalog yalnızca seçici açılınca yüklenir (ana pakete girmez).
+const FieldCatalogPicker = dynamic(() => import("@/features/generators/field-catalog-picker").then((m) => m.FieldCatalogPicker), { ssr: false });
 
 /** A not-yet-persisted variable living only in this form's own state — gets a real DB row (with a real `id`) only once the prompt itself is created/updated (see `replaceVariablesForPrompt`, `src/lib/supabase/prompt-variables.ts`). */
 export interface DraftVariable extends PromptVariableSpec {
@@ -81,6 +89,7 @@ export function PromptTextEditor({
   const [creating, setCreating] = useState<{ range: EditorSelection; selectedText: string } | null>(null);
   const [editingVariable, setEditingVariable] = useState<DraftVariable | null>(null);
   const [previewValues, setPreviewValues] = useState<Record<string, string>>({});
+  const [catalogRange, setCatalogRange] = useState<EditorSelection | null>(null);
 
   const usage = useMemo(() => tokenUsageMap(value), [value]);
   const items: PickerItem[] = variables.map((variable) => ({
@@ -124,6 +133,56 @@ export function PromptTextEditor({
       ]);
     }
     setCreating(null);
+  }
+
+  /** Bir tıklama anındaki imleç: seçili metin silinmesin diye seçimin SONUNA ekler. */
+  function cursorRange(): EditorSelection {
+    const sel = composerRef.current?.getSelection() ?? { start: value.length, end: value.length };
+    return { start: sel.end, end: sel.end };
+  }
+
+  /** Yeni değişken taslaklarını ekler ve adlarını tek adımda imlece jeton olarak yerleştirir. */
+  function addDrafts(drafts: Omit<DraftVariable, "tempId">[], range: EditorSelection) {
+    if (drafts.length === 0) return;
+    onVariablesChange([...variables, ...drafts.map((draft) => ({ ...draft, tempId: makeTempId() }))]);
+    composerRef.current?.insertTokens(drafts.map((draft) => draft.name), range);
+  }
+
+  function takenNames(): Set<string> {
+    return new Set(variables.map((variable) => variable.name.toLowerCase()));
+  }
+
+  function handleInsertCatalog(fields: CatalogFieldLike[]) {
+    const range = catalogRange ?? cursorRange();
+    const taken = takenNames();
+    const drafts = fields.map((field) => {
+      const draft = catalogFieldToVariable(field, taken);
+      taken.add(draft.name.toLowerCase());
+      return draft;
+    });
+    setCatalogRange(null);
+    addDrafts(drafts, range);
+  }
+
+  function handleVisionApply({ values, suggestions }: { values: MatchedVariableValue[]; suggestions: CleanSuggestedField[] }) {
+    const byName = new Map(values.map((row) => [row.name, row.value]));
+    const updated = variables.map((variable) => (byName.has(variable.name) ? { ...variable, defaultValue: byName.get(variable.name)! } : variable));
+    // Önizlemede eski elle girilmiş değer yeni varsayılanı gölgelemesin.
+    setPreviewValues((prev) => {
+      const next = { ...prev };
+      for (const name of byName.keys()) delete next[name];
+      return next;
+    });
+    const range = cursorRange();
+    const taken = takenNames();
+    const drafts = suggestions.map((suggestion) => {
+      const draft = suggestionToVariable(suggestion, taken);
+      taken.add(draft.name.toLowerCase());
+      return draft;
+    });
+    // Tek `onVariablesChange` çağrısı: varsayılan güncellemeleri + yeni değişkenler birlikte.
+    onVariablesChange([...updated, ...drafts.map((draft) => ({ ...draft, tempId: makeTempId() }))]);
+    if (drafts.length > 0) composerRef.current?.insertTokens(drafts.map((draft) => draft.name), range);
   }
 
   function handleEditVariable(values: VariableFormValues) {
@@ -217,6 +276,23 @@ export function PromptTextEditor({
         panelExtra={variables.length > 0 ? list : undefined}
       />
 
+      {activeTab === "template" && (
+        <div className="space-y-2">
+          <button
+            type="button"
+            onClick={() => setCatalogRange(cursorRange())}
+            className="inline-flex min-h-9 items-center gap-1.5 rounded-md border border-border px-3 text-sm font-medium text-text transition-colors hover:bg-accent-surface"
+          >
+            <Blocks size={14} className="text-primary" aria-hidden="true" /> {t("variable.addFromCatalog")}
+          </button>
+          <VariableVisionAssist
+            promptText={value}
+            variables={variables}
+            onApply={handleVisionApply}
+          />
+        </div>
+      )}
+
       {activeTab === "preview" && (
         <div className="space-y-3 rounded-md border border-border bg-background p-3">
           <div className="whitespace-pre-wrap break-words font-mono text-sm text-text">{previewText}</div>
@@ -246,6 +322,14 @@ export function PromptTextEditor({
 
       {list}
 
+      {catalogRange && (
+        <FieldCatalogPicker
+          existingFields={variables.map((variable) => ({ label: variable.name.replace(/_/g, " ") }))}
+          hideOptionPreview
+          onClose={() => setCatalogRange(null)}
+          onInsert={handleInsertCatalog}
+        />
+      )}
       {creating && (
         <VariableCreateModal
           selectedText={creating.selectedText}

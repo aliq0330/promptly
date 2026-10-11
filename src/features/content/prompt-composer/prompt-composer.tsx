@@ -17,6 +17,8 @@ export interface ComposerHandle {
   focus(): void;
   /** `{name}` jetonunu verilen aralığa (yoksa son kaydedilen seçime) ekler. */
   insertToken(name: string, range?: EditorSelection): void;
+  /** Birden çok jetonu tek adımda (geri alınabilir tek işlem) ", " ile ayırarak ekler. */
+  insertTokens(names: string[], range?: EditorSelection): void;
   /** Ekleme yüzeyi / oluşturma akışı açıldığı andaki seçim. */
   getPendingRange(): EditorSelection | null;
   getSelection(): EditorSelection;
@@ -106,13 +108,13 @@ export const PromptComposer = forwardRef<
   const hasSelection = selection.end > selection.start;
   const selectedText = hasSelection ? value.slice(selection.start, selection.end) : "";
 
-  const insertToken = useCallback(
-    (name: string, range?: EditorSelection) => {
+  const insertTokens = useCallback(
+    (names: string[], range?: EditorSelection) => {
       const editor = editorRef.current;
-      if (!editor) return;
+      if (!editor || names.length === 0) return;
       const target = range ?? pendingRangeRef.current ?? editor.getSelection();
       // Daralmış imleçte jeton kelimeye yapışmasın: komşu harf/rakam/jeton varsa boşluk bırak.
-      let text = `{${name}}`;
+      let text = names.map((name) => `{${name}}`).join(", ");
       if (target.start === target.end) {
         const before = value[target.start - 1];
         const after = value[target.end];
@@ -124,16 +126,18 @@ export const PromptComposer = forwardRef<
     },
     [value],
   );
+  const insertToken = useCallback((name: string, range?: EditorSelection) => insertTokens([name], range), [insertTokens]);
 
   useImperativeHandle(
     ref,
     () => ({
       focus: () => editorRef.current?.focus(),
       insertToken,
+      insertTokens,
       getPendingRange: () => pendingRangeRef.current,
       getSelection: () => editorRef.current?.getSelection() ?? { start: 0, end: 0 },
     }),
-    [insertToken],
+    [insertToken, insertTokens],
   );
 
   function openPicker(options: { replace?: boolean } = {}) {

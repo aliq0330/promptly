@@ -17,7 +17,6 @@ import {
 import { useTranslation, useLanguage } from "@/lib/i18n/language-provider";
 import { catalogText, localizeCatalogField } from "@/lib/generator-field-catalog-en";
 import { GENERATOR_FIELD_TYPE_LABELS } from "./generator-category-meta";
-import type { GeneratorField } from "@/types";
 
 /**
  * "Alan Ekle" modal, catalog step (the user's "HAZIR KATEGORİ / ALT
@@ -47,11 +46,16 @@ export function FieldCatalogPicker({
   onClose,
   onInsert,
   onCreateCustom,
+  hideOptionPreview = false,
 }: {
-  existingFields: GeneratorField[];
+  /** Yalnızca `label` okunur — Generator alanları ve prompt değişkenleri (adı) aynı seçiciyi kullanır. */
+  existingFields: { label: string }[];
   onClose: () => void;
   onInsert: (fields: CatalogField[]) => void;
-  onCreateCustom: () => void;
+  /** Verilmezse "Özel alan oluştur" bağlantısı gösterilmez (örn. prompt değişkeni seçimi). */
+  onCreateCustom?: () => void;
+  /** Seçeneklerdeki hazır görsel/renk önizlemesini gizler (değişkenlerde hazır görsel/renk kullanılmaz). */
+  hideOptionPreview?: boolean;
 }) {
   const { t } = useTranslation();
   const { language } = useLanguage();
@@ -142,7 +146,7 @@ export function FieldCatalogPicker({
         <span className="min-w-0 flex-1">
           <input type="checkbox" className="sr-only" checked={selected || used} disabled={used} onChange={() => toggleField(field)} />
           <span className="flex flex-wrap items-center gap-1.5">
-            {field.options[0]?.image ? (
+            {hideOptionPreview ? null : field.options[0]?.image ? (
               // eslint-disable-next-line @next/next/no-img-element -- tiny data-URL preview thumbnail, never a remote asset
               <img src={field.options[0].image} alt="" className="h-4 w-4 shrink-0 rounded object-cover" title={t("fieldCatalog.imageHint")} />
             ) : (
@@ -291,9 +295,13 @@ export function FieldCatalogPicker({
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border p-4">
-          <button type="button" onClick={onCreateCustom} className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline">
-            <Plus size={14} /> {t("fieldCatalog.createCustomField")}
-          </button>
+          {onCreateCustom ? (
+            <button type="button" onClick={onCreateCustom} className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline">
+              <Plus size={14} /> {t("fieldCatalog.createCustomField")}
+            </button>
+          ) : (
+            <span />
+          )}
           <div className="flex items-center gap-2">
             <p className="text-xs text-text-muted">{selectedCount > 0 ? t("fieldCatalog.fieldsSelectedCount", { count: selectedCount }) : t("fieldCatalog.noFieldsSelected")}</p>
             <Button type="button" onClick={handleInsert} disabled={selectedCount === 0}>
