@@ -754,6 +754,7 @@ export const translations = {
   "composer.noResults": { tr: "Eşleşen sonuç yok.", en: "No matching results." },
   "composer.createVariable": { tr: "Yeni değişken oluştur", en: "Create new variable" },
   "composer.createField": { tr: "Yeni alan oluştur", en: "Create new field" },
+  "composer.fieldLibrary": { tr: "Hazır alan kütüphanesi", en: "Ready-made field library" },
   "composer.fromCatalog": { tr: "Hazır alanlardan ekle", en: "Add from ready-made fields" },
   "composer.allVariables": { tr: "Tüm değişkenler", en: "All variables" },
   "composer.allFields": { tr: "Tüm alanlar", en: "All fields" },
@@ -1238,6 +1239,15 @@ export const translations = {
 
   // ---- Field catalog picker ----
   "fieldCatalog.title": { tr: "Hazır Alan Kütüphanesinden Ekle", en: "Add from the Ready-made Field Library" },
+  "fieldCatalog.subtitle": { tr: "Hazır alanları seç, prompt'unda değişken olarak kullan.", en: "Pick ready-made fields and use them as variables in your prompt." },
+  "fieldCatalog.packagePreview": { tr: "paketteki alanlar", en: "fields in this package" },
+  "fieldCatalog.addPackage": { tr: "Paketi ekle ({{count}})", en: "Add package ({{count}})" },
+  "fieldCatalog.packageAllAdded": { tr: "Paketin tüm alanları zaten eklendi", en: "All fields in this package are already added" },
+  "fieldCatalog.hidePreview": { tr: "Önizlemeyi kapat", en: "Close preview" },
+  "fieldCatalog.selectedTitle": { tr: "Seçtiklerin ({{count}})", en: "Your selection ({{count}})" },
+  "fieldCatalog.clearSelection": { tr: "Temizle", en: "Clear" },
+  "fieldCatalog.removeField": { tr: "{{name}} alanını kaldır", en: "Remove {{name}}" },
+  "fieldCatalog.freeText": { tr: "Serbest metin", en: "Free text" },
   "fieldCatalog.imageHint": { tr: "Bu alan varsayılan görsellerle geliyor", en: "This field comes with default images" },
   "fieldCatalog.colorHint": { tr: "Bu alan varsayılan renklerle geliyor", en: "This field comes with default colors" },
   "fieldCatalog.alreadyAdded": { tr: "Zaten eklendi", en: "Already added" },
@@ -1347,7 +1357,6 @@ export const translations = {
   "vision.variableSuggested": { tr: "Önerilen yeni değişkenler", en: "Suggested new variables" },
   "vision.variableDefaultsUpdated": { tr: "{{count}} değişkenin varsayılanı güncellendi", en: "{{count}} variable default(s) updated" },
   "vision.variablesAdded": { tr: "{{count}} yeni değişken eklendi", en: "{{count}} new variable(s) added" },
-  "variable.addFromCatalog": { tr: "Hazır alanlardan ekle", en: "Add from ready-made fields" },
   "vision.closeThisInfo": { tr: "Bu bilgiyi kapat", en: "Close this message" },
 
   // ---- Generators discover page ----

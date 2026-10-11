@@ -52,7 +52,7 @@ export const PromptComposer = forwardRef<
     onCreateNew: (context: { range: EditorSelection; selectedText: string }) => void;
     /** Yalnızca `variable` modunda: seçili metni değişkene dönüştürme akışı. */
     onConvertSelection?: (context: { range: EditorSelection; selectedText: string }) => void;
-    /** Yalnızca `field` modunda: hazır alan kütüphanesini aç. */
+    /** Hazır alan kütüphanesini aç; verilirse "yeni oluştur"un hemen altında görünür. */
     onOpenCatalog?: () => void;
     /** Sağ panelde listenin altında gösterilecek ek içerik (ör. değişken yönetimi). */
     panelExtra?: React.ReactNode;
@@ -314,7 +314,7 @@ export const PromptComposer = forwardRef<
       autoFocusSearch={surface !== "sheet"}
       footer={
         <>
-          {!isVariable && onOpenCatalog && (
+          {onOpenCatalog && (
             <button
               type="button"
               onClick={() => {
@@ -323,7 +323,7 @@ export const PromptComposer = forwardRef<
               }}
               className="flex min-h-[44px] w-full items-center gap-2 rounded-lg px-2.5 py-2 text-sm font-medium text-text-secondary transition-colors hover:bg-surface-soft hover:text-text"
             >
-              <Library size={16} /> {t("composer.fromCatalog")}
+              <Library size={16} /> {isVariable ? t("composer.fieldLibrary") : t("composer.fromCatalog")}
             </button>
           )}
           {surface === "popover" && (
