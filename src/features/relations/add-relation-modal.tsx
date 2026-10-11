@@ -1,5 +1,6 @@
 "use client";
 
+import { GENERATORS_ENABLED } from "@/lib/feature-flags";
 import { useEffect, useState } from "react";
 import { ArrowLeftRight, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,9 @@ import { KIND_ICON, useRelationText } from "./relation-text";
  * relate what — here we only guide: at least one end must be the viewer's
  * own content, the other end must be visible content.
  */
+// Generator gizli (§9.145 Aşama 2): yeni ilişki kurarken seçilemez; var olan ilişkiler/haritalar etkilenmez.
+const PICKER_KINDS = RELATABLE_KINDS.filter((kind) => kind !== "generator" || GENERATORS_ENABLED);
+
 export function AddRelationModal({
   center,
   viewerId,
@@ -36,7 +40,7 @@ export function AddRelationModal({
 }) {
   const { t, kindLabel, typeLabel } = useRelationText();
   const [type, setType] = useState<ManualRelationType>("similar");
-  const [kinds, setKinds] = useState<RelatableKind[]>([...RELATABLE_KINDS]);
+  const [kinds, setKinds] = useState<RelatableKind[]>([...PICKER_KINDS]);
   const [query, setQuery] = useState("");
   const [found, setFound] = useState<{ key: string; items: RelationNode[] } | null>(null);
   const [target, setTarget] = useState<RelationNode | null>(null);
@@ -126,7 +130,7 @@ export function AddRelationModal({
           <div className="space-y-2">
             <p className="text-label font-semibold text-text">{t("relations.add.contentStep")}</p>
             <ChipRow scroll aria-label={t("relations.add.kindsAria")}>
-              {RELATABLE_KINDS.map((kind) => (
+              {PICKER_KINDS.map((kind) => (
                 <Chip key={kind} icon={KIND_ICON[kind]} selected={kinds.includes(kind)} onClick={() => toggleKind(kind)}>
                   {kindLabel(kind)}
                 </Chip>

@@ -1,5 +1,6 @@
 "use client";
 
+import { GENERATORS_ENABLED } from "@/lib/feature-flags";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Copy, FolderMinus, Link2, Loader2, MoreVertical, Pencil, Trash2 } from "lucide-react";
@@ -275,7 +276,7 @@ export function PostMenu({
                     {t("common.edit")}
                   </button>
                 )
-              ) : (
+              ) : isGenerator && !GENERATORS_ENABLED ? null : (
                 <Link
                   href={editHref}
                   role="menuitem"

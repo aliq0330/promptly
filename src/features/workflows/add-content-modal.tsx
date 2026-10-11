@@ -1,5 +1,6 @@
 "use client";
 
+import { GENERATORS_ENABLED } from "@/lib/feature-flags";
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Check, Plus, Search, X } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
@@ -22,7 +23,8 @@ import type { WorkflowContentRef, WorkflowStepType } from "@/types";
 import { MEDIA_ICON, STEP_TYPE_META } from "./step-meta";
 
 /** Prompt requests are not workflow steps — only these can be added. */
-const TYPES = PICKABLE_STEP_TYPES;
+// Generator gizli (§9.145 Aşama 2): yeni adımlar yalnızca Prompt olabilir; var olan Generator adımları görünmeye/çalışmaya devam eder.
+const TYPES: WorkflowStepType[] = PICKABLE_STEP_TYPES.filter((type) => type !== "generator" || GENERATORS_ENABLED);
 const inputClass = "h-10 w-full rounded-lg border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60";
 
 /**
@@ -61,6 +63,7 @@ export function AddContentModal({
             <X size={18} />
           </button>
         </div>
+        {TYPES.length > 1 && (
         <Tabs
           items={TYPES.map((key) => ({ key, label: t(STEP_TYPE_META[key].labelKey), icon: STEP_TYPE_META[key].icon }))}
           active={type}
@@ -69,6 +72,7 @@ export function AddContentModal({
           variant="segmented"
           className="mb-3"
         />
+        )}
         <div className="mb-3 flex gap-2">
           {(["existing", "scratch"] as const).map((value) => (
             <button

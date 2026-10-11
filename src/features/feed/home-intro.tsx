@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Blocks, PenLine, Sparkles } from "lucide-react";
+import { PenLine, Sparkles } from "lucide-react";
 import { buttonClassName } from "@/components/ui/button";
 import { HeaderArt } from "@/components/ui/header-art";
 import { useAuth } from "@/features/auth/auth-provider";
@@ -60,10 +60,6 @@ function QuickActions() {
       <Link href="/create?mode=prompt" className={buttonClassName({ size: "sm" })}>
         <PenLine size={15} />
         {t("home.sharePrompt")}
-      </Link>
-      <Link href="/generators" className={buttonClassName({ size: "sm", variant: "outline" })}>
-        <Blocks size={15} />
-        {t("home.useGenerator")}
       </Link>
       <Link href="/requests/new" className={buttonClassName({ size: "sm", variant: "ghost" })}>
         <Sparkles size={15} />

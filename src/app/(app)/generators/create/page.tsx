@@ -1,10 +1,6 @@
-import { Suspense } from "react";
-import { GeneratorCreateGate } from "@/features/generators/generator-create-gate";
+import { GeneratorsHiddenRedirect } from "@/features/generators/generators-hidden-redirect";
 
+/** Generator oluşturma gizlendi (CLAUDE.md §9.145); eski adres Oluştur ekranına yönlenir. */
 export default function GeneratorCreatePage() {
-  return (
-    <Suspense fallback={null}>
-      <GeneratorCreateGate />
-    </Suspense>
-  );
+  return <GeneratorsHiddenRedirect to="/create" />;
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { GENERATORS_ENABLED } from "@/lib/feature-flags";
 import { fetchRecentPublishedGenerators, fetchTopGenerators } from "@/lib/supabase/generators";
 import type { KeysetCursor } from "@/lib/supabase/pagination";
 import type { Generator } from "@/types";
@@ -33,9 +34,12 @@ export function RealGeneratorsProvider({ children }: { children: React.ReactNode
   const [loadingMore, setLoadingMore] = useState(false);
   const loadingRef = useRef(false);
   const cursorRef = useRef<KeysetCursor | null>(null);
-  const [hasMore, setHasMore] = useState(true);
+  const [hasMore, setHasMore] = useState(GENERATORS_ENABLED);
 
   useEffect(() => {
+    // Generator gizli (§9.145 Aşama 2): akış/keşif/Studio/Workflow listeleri boş kalır, gereksiz sorgu atılmaz.
+    // Tek tek açılan Generator'lar (mesaj kartı, /generators/local) kendi sorgularıyla çalışmaya devam eder.
+    if (!GENERATORS_ENABLED) return;
     let cancelled = false;
     Promise.all([fetchTopGenerators(60), fetchRecentPublishedGenerators(PAGE_SIZE)]).then(([top, recentPage]) => {
       if (cancelled) return;

@@ -1,5 +1,6 @@
 "use client";
 
+import { GENERATORS_ENABLED } from "@/lib/feature-flags";
 import { PageContainer } from "@/components/ui/page-header";
 
 import { useEffect, useMemo, useState } from "react";
@@ -146,7 +147,7 @@ export function ProfileView({
     () => [
       { key: "prompts" as const, label: t("feed.filterPrompts"), count: postCounts.prompts },
       { key: "requests" as const, label: t("nav.requests"), count: postCounts.requests },
-      { key: "generators" as const, label: t("nav.generators"), count: postCounts.generators },
+      ...(GENERATORS_ENABLED ? [{ key: "generators" as const, label: t("nav.generators"), count: postCounts.generators }] : []),
       { key: "workflows" as const, label: t("nav.workflows"), count: postCounts.workflows },
       { key: "presets" as const, label: t("nav.presets"), count: postCounts.presets },
     ],

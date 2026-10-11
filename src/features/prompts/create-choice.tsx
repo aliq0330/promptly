@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Blocks, SlidersHorizontal, Sparkles, SquareTerminal, Workflow } from "lucide-react";
+import { ArrowRight, SlidersHorizontal, Sparkles, SquareTerminal, Workflow } from "lucide-react";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
 
@@ -21,13 +21,6 @@ const OPTIONS = [
     titleKey: "create.promptTitle" as TranslationKey,
     bodyKey: "create.promptBody" as TranslationKey,
     hintKey: "create.promptHint" as TranslationKey,
-  },
-  {
-    href: "/generators/create",
-    icon: Blocks,
-    titleKey: "create.generatorTitle" as TranslationKey,
-    bodyKey: "create.generatorBody" as TranslationKey,
-    hintKey: "create.generatorHint" as TranslationKey,
   },
   {
     href: "/requests/new",
@@ -62,7 +55,7 @@ export function CreateChoice() {
         <p className="mx-auto max-w-lg text-small text-text-muted">{t("create.subtitle")}</p>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2 sm:gap-4">
         {OPTIONS.map((option) => (
           <Link
             key={option.href}

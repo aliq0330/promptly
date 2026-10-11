@@ -1,5 +1,6 @@
 "use client";
 
+import { GENERATORS_ENABLED } from "@/lib/feature-flags";
 import Link from "next/link";
 import { formatCount, cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -98,7 +99,7 @@ export function ProfileStats({
       {[
         `${postCounts.prompts} Prompt`,
         `${postCounts.requests} ${t("profile.postKindRequest")}`,
-        `${postCounts.generators} Generator`,
+        ...(GENERATORS_ENABLED ? [`${postCounts.generators} Generator`] : []),
         `${postCounts.workflows} Workflow`,
         `${postCounts.presets} ${t("preset.singular")}`,
       ].join(" · ")}

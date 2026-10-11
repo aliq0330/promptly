@@ -1,5 +1,6 @@
 "use client";
 
+import { GENERATORS_ENABLED } from "@/lib/feature-flags";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
 import {
@@ -93,7 +94,7 @@ export function MyContentView() {
     Promise.all([
       fetchPromptsByAuthor(userId),
       fetchRequestsByAuthor(userId),
-      fetchGeneratorsByAuthor(userId),
+      GENERATORS_ENABLED ? fetchGeneratorsByAuthor(userId) : Promise.resolve([] as Generator[]),
       fetchWorkflowsByCreator(userId),
       fetchPresetsByCreator(userId),
     ]).then(([p, r, g, w, pr]) => {
@@ -189,12 +190,16 @@ export function MyContentView() {
         count: requests.length,
         icon: Sparkles,
       },
-      {
-        key: "generators" as const,
-        label: t("nav.generators"),
-        count: generators.length,
-        icon: Blocks,
-      },
+      ...(GENERATORS_ENABLED
+        ? [
+            {
+              key: "generators" as const,
+              label: t("nav.generators"),
+              count: generators.length,
+              icon: Blocks,
+            },
+          ]
+        : []),
       {
         key: "workflows" as const,
         label: t("nav.workflows"),
