@@ -1,0 +1,1 @@
+(globalThis.TURBOPACK||(globalThis.TURBOPACK=[])).push(["object"==typeof document?document.currentScript:void 0,86956,e=>{"use strict";var t=e.i(71645),r=e.i(18566);e.s(["GeneratorsHiddenRedirect",0,function({to:e}){let u=(0,r.useRouter)();return(0,t.useEffect)(()=>{u.replace(e)},[u,e]),null}])}]);
