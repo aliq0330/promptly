@@ -58,7 +58,17 @@ where i -> 'source' ->> 'stepId' is not null
 -- 2) Generator'a bağlı verileri temizle ---------------------------------------------------
 delete from public.notifications
   where type = 'generator_edited' or target_href like '/generators/%';
-delete from public.prompt_comments where generator_id is not null;
+-- Yanıtı olan yorumun DELETE'i soft-delete'e çevrilir (Bölüm 9.5 tetikleyicisi); satır kalıp
+-- generator_id düşünce hedefsiz (CHECK ihlali) olurdu. Bu yüzden yapraklardan başlayarak sil.
+do $$
+begin
+  loop
+    delete from public.prompt_comments c
+      where c.generator_id is not null
+        and not exists (select 1 from public.prompt_comments x where x.parent_id = c.id);
+    exit when not found;
+  end loop;
+end $$;
 delete from public.prompt_likes where generator_id is not null;
 delete from public.collection_items where generator_id is not null;
 delete from public.content_relations where source_type = 'generator' or target_type = 'generator';
