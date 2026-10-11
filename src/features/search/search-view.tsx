@@ -14,6 +14,7 @@ import { tokensToQuery, type SearchToken } from "./search-tokens";
 import { searchPrompts } from "@/lib/supabase/prompts";
 import { searchProfiles } from "@/lib/supabase/profiles";
 import { searchRequests } from "@/lib/supabase/requests";
+import { GENERATORS_ENABLED } from "@/lib/feature-flags";
 import { searchGenerators } from "@/lib/supabase/generators";
 import { searchWorkflows } from "@/lib/supabase/workflows";
 import { WorkflowCard } from "@/features/workflows/workflow-card";
@@ -105,7 +106,7 @@ export function SearchView({ idle }: { idle?: ReactNode } = {}) {
       const textOnly = !hasTokens;
       const [foundPrompts, foundGenerators, foundWorkflows, foundPresets, foundRequests, foundUsers, foundTags] = await Promise.all([
         kinds.includes("prompt") ? searchPrompts(normalized, filters) : [],
-        kinds.includes("generator") ? searchGenerators(normalized, filters) : [],
+        GENERATORS_ENABLED && kinds.includes("generator") ? searchGenerators(normalized, filters) : [],
         kinds.includes("workflow") ? searchWorkflows(normalized, filters) : [],
         kinds.includes("preset") ? searchPresets(normalized, filters) : [],
         kinds.includes("request") ? searchRequests(normalized, filters) : [],

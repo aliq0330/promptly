@@ -1,5 +1,6 @@
 "use client";
 
+import { GENERATORS_ENABLED } from "@/lib/feature-flags";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Blocks, Hash, LayoutGrid, Sparkles, SquareTerminal, SlidersHorizontal, TrendingUp, Users, Workflow as WorkflowIcon } from "lucide-react";
@@ -33,7 +34,7 @@ type Section = "all" | "prompts" | "generators" | "workflows" | "presets" | "req
 const SECTIONS: { key: Section; labelKey: TranslationKey; icon: typeof LayoutGrid }[] = [
   { key: "all", labelKey: "common.all", icon: LayoutGrid },
   { key: "prompts", labelKey: "feed.filterPrompts", icon: SquareTerminal },
-  { key: "generators", labelKey: "nav.generators", icon: Blocks },
+  ...(GENERATORS_ENABLED ? [{ key: "generators" as const, labelKey: "nav.generators" as const, icon: Blocks }] : []),
   { key: "workflows", labelKey: "nav.workflows", icon: WorkflowIcon },
   { key: "presets", labelKey: "nav.presets", icon: SlidersHorizontal },
   { key: "requests", labelKey: "nav.requestsShort", icon: Sparkles },

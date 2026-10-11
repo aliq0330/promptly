@@ -1,5 +1,6 @@
 import type { ContentTypeId } from "@/lib/content-taxonomy";
 import type { ContentSearchFilters } from "@/lib/supabase/taxonomy-query";
+import { GENERATORS_ENABLED } from "@/lib/feature-flags";
 import { findTool } from "@/lib/ai-tool-catalog";
 import type { Tag, UserProfile } from "@/types";
 
@@ -13,7 +14,9 @@ export type SearchToken =
   | { kind: "content"; type: ContentKind }
   | { kind: "tool"; toolId: string };
 
-export const ALL_KINDS: ContentKind[] = ["prompt", "request", "generator", "workflow", "preset"];
+export const ALL_KINDS: ContentKind[] = (["prompt", "request", "generator", "workflow", "preset"] as ContentKind[]).filter(
+  (kind) => kind !== "generator" || GENERATORS_ENABLED,
+);
 
 export function tokenKey(token: SearchToken): string {
   switch (token.kind) {

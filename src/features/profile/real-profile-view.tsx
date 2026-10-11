@@ -1,5 +1,6 @@
 "use client";
 
+import { GENERATORS_ENABLED } from "@/lib/feature-flags";
 import { DetailSkeleton } from "@/components/ui/detail-skeleton";
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -53,7 +54,7 @@ export function RealProfileView() {
       const [authorPrompts, authorRequests, authorGenerators] = await Promise.all([
         fetchPromptsByAuthor(result.id),
         fetchRequestsByAuthor(result.id),
-        fetchGeneratorsByAuthor(result.id),
+        GENERATORS_ENABLED ? fetchGeneratorsByAuthor(result.id) : Promise.resolve([] as Generator[]),
       ]);
       if (cancelled) return;
       setProfile(result);

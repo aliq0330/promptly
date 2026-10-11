@@ -1,5 +1,6 @@
 "use client";
 
+import { GENERATORS_ENABLED } from "@/lib/feature-flags";
 import { DetailSkeleton } from "@/components/ui/detail-skeleton";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
@@ -56,7 +57,7 @@ export function TagView() {
       fetchTagBySlug(slug),
       fetchPromptsByTag(slug),
       fetchRequestsByTagSlug(slug),
-      fetchGeneratorsByTagSlug(slug),
+      GENERATORS_ENABLED ? fetchGeneratorsByTagSlug(slug) : Promise.resolve([] as Generator[]),
       fetchWorkflowsByTagSlug(slug),
       fetchPresetsByTagSlug(slug),
     ]).then(
@@ -126,7 +127,7 @@ export function TagView() {
         items={[
           { key: "all", label: t("common.all") },
           { key: "prompt", label: t("tag.filterPrompts") },
-          { key: "generator", label: t("tag.filterGenerators") },
+          ...(GENERATORS_ENABLED ? [{ key: "generator" as const, label: t("tag.filterGenerators") }] : []),
           { key: "workflow", label: t("tag.filterWorkflows") },
           { key: "preset", label: t("tag.filterPresets") },
           { key: "request", label: t("tag.filterRequests") },

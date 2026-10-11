@@ -1,5 +1,6 @@
 "use client";
 
+import { GENERATORS_ENABLED } from "@/lib/feature-flags";
 import { useEffect, useMemo, useState } from "react";
 import { Blocks, Flame, LayoutGrid, SquareTerminal, SlidersHorizontal, Sparkles, Stars, UserCheck, Workflow as WorkflowIcon } from "lucide-react";
 import { Tabs } from "@/components/ui/tabs";
@@ -33,7 +34,7 @@ const TABS: { key: TabKey; labelKey: TranslationKey; icon: typeof Stars }[] = [
 const KIND_FILTERS: { key: KindFilter; labelKey: TranslationKey; icon: typeof LayoutGrid }[] = [
   { key: "all", labelKey: "common.all", icon: LayoutGrid },
   { key: "prompt", labelKey: "feed.filterPrompts", icon: SquareTerminal },
-  { key: "generator", labelKey: "nav.generators", icon: Blocks },
+  ...(GENERATORS_ENABLED ? [{ key: "generator" as const, labelKey: "nav.generators" as const, icon: Blocks }] : []),
   { key: "request", labelKey: "nav.requestsShort", icon: Sparkles },
   { key: "workflow", labelKey: "nav.workflows", icon: WorkflowIcon },
   { key: "preset", labelKey: "nav.presets", icon: SlidersHorizontal },

@@ -1,5 +1,6 @@
 "use client";
 
+import { GENERATORS_ENABLED } from "@/lib/feature-flags";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Download, Eye, EyeOff, Loader2, Pencil, Plus, SlidersHorizontal, Sparkles, Square, Upload, X } from "lucide-react";
@@ -641,7 +642,7 @@ export function StudioView() {
               <SlidersHorizontal size={16} aria-hidden /> {t("studio.source")}
             </h2>
             <ChipRow>
-              {(["blank", "prompt", "generator", "preset"] as const).map((k) => (
+              {(["blank", "prompt", "generator", "preset"] as const).filter((k) => k !== "generator" || GENERATORS_ENABLED || source === "generator").map((k) => (
                 <Chip key={k} selected={source === k} onClick={() => onSourceChip(k)}>
                   {t(`studio.source.${k}` as TranslationKey)}
                 </Chip>

@@ -1,5 +1,6 @@
 "use client";
 
+import { GENERATORS_ENABLED } from "@/lib/feature-flags";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Blocks, FileText, SlidersHorizontal, Sparkles, SquareTerminal, Trash2, Workflow as WorkflowIcon } from "lucide-react";
@@ -16,7 +17,7 @@ import type { TranslationKey } from "@/lib/i18n/translations";
 type DraftFilter = "all" | DraftKind;
 type DraftRow = DraftItem & { kind: DraftKind };
 
-const KIND_ORDER: DraftKind[] = ["prompt", "request", "generator", "workflow", "preset"];
+const KIND_ORDER: DraftKind[] = (["prompt", "request", "generator", "workflow", "preset"] as DraftKind[]).filter((kind) => kind !== "generator" || GENERATORS_ENABLED);
 const KIND_META: Record<DraftKind, { labelKey: TranslationKey; icon: LucideIcon }> = {
   prompt: { labelKey: "draft.kindPrompt", icon: SquareTerminal },
   request: { labelKey: "draft.kindRequest", icon: Sparkles },
