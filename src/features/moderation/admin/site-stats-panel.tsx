@@ -9,8 +9,8 @@ import { ADMIN_CONTENT_TYPES, CONTENT_TYPE_KEY, formatBytes, kindKey } from "./f
 import { TypeFilter } from "./type-filter";
 
 const CARD = "rounded-xl border border-border-soft bg-surface p-4 shadow-card sm:p-5";
-const CONTENT_KINDS = ["prompts", "requests", "generators", "workflows", "presets"] as const;
-const KIND_OF: Record<(typeof CONTENT_KINDS)[number], string> = { prompts: "prompt", requests: "request", generators: "generator", workflows: "workflow", presets: "preset" };
+const CONTENT_KINDS = ["prompts", "requests", "workflows", "presets"] as const;
+const KIND_OF: Record<(typeof CONTENT_KINDS)[number], string> = { prompts: "prompt", requests: "request", workflows: "workflow", presets: "preset" };
 
 function Tile({ label, value, tone }: { label: string; value: string | number; tone?: "warning" | "danger" }) {
   return (
