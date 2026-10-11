@@ -4,7 +4,7 @@ import { ToolPicker } from "@/features/content/tool-picker";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Blocks, Copy, Eye, EyeOff, X } from "lucide-react";
+import { Copy, Eye, EyeOff, X } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { PromptCard } from "@/features/prompts/prompt-card";
 import { TaxonomyPicker } from "@/features/content/taxonomy-picker";
@@ -25,14 +25,13 @@ import { fetchDnaSections, replaceDnaSections } from "@/lib/supabase/prompt-dna"
 import type { DnaSection } from "@/lib/prompt-dna/types";
 import { PromptVisionAssist } from "@/features/prompts/prompt-vision-assist";
 import { fetchVariablesForPrompt, replaceVariablesForPrompt } from "@/lib/supabase/prompt-variables";
-import { fetchGeneratorById, fetchGeneratorRun } from "@/lib/supabase/generators";
 import { takeHandoff } from "@/lib/generate-handoff";
 import { placeholderArt } from "@/lib/placeholder-image";
 import { MultiImagePicker } from "@/features/content/multi-image-picker";
 import { multiImageItemFromMedia, toDeferredMediaInputs, type MultiImageItem } from "@/lib/supabase/media-input";
 import { OutputFilePicker } from "@/features/prompts/output-file-picker";
 import { attachPromptOutput, type OutputKind } from "@/lib/supabase/prompt-output";
-import { copyTextToClipboard, generatorHref, promptHref, requestHref } from "@/lib/utils";
+import { promptHref, requestHref } from "@/lib/utils";
 import {
   ReferenceRequirementsField,
   NO_REFERENCES,
@@ -45,7 +44,7 @@ import { CreatePageHeader } from "@/features/content/create-page-header";
 import { CreateFormActions } from "@/features/content/create-form-actions";
 import { FormSection } from "@/features/content/form-section";
 import { SwitchRow } from "@/features/content/visibility-switch";
-import type { ContentVisibility, Generator, GeneratorRun, Prompt, PromptContentType, PromptRequest } from "@/types";
+import type { ContentVisibility, Prompt, PromptContentType, PromptRequest } from "@/types";
 
 
 function LoginGate({ message }: { message: string }) {
@@ -68,39 +67,6 @@ function LoginGate({ message }: { message: string }) {
           {t("auth.createAccount")}
         </Link>
       </div>
-    </div>
-  );
-}
-
-/**
- * `prompts` has no `negative_prompt` column (Bölüm 9's schema wasn't
- * extended for it — a generator's negative-prompt output has nowhere real
- * to live on a published Prompt), so a generator run's negative prompt is
- * never silently dropped OR force-appended into `promptText` with invented
- * formatting — it's shown as an honest, read-only reference the author can
- * manually fold into the prompt text (or a tool's own negative-prompt
- * field) however makes sense for their own use case.
- */
-function NegativePromptReference({ text }: { text: string }) {
-  const { t } = useTranslation();
-  const [copied, setCopied] = useState(false);
-  return (
-    <div className="space-y-1.5 rounded-md border border-border bg-accent-surface/30 p-3 text-sm">
-      <p className="text-xs font-semibold uppercase tracking-wide text-text-muted">{t("prompt.negativePromptOutput")}</p>
-      <p className="whitespace-pre-wrap font-mono text-xs text-text-muted">{text}</p>
-      <button
-        type="button"
-        onClick={async () => {
-          if (await copyTextToClipboard(text)) {
-            setCopied(true);
-            setTimeout(() => setCopied(false), 1500);
-          }
-        }}
-        className="text-xs font-medium text-primary hover:underline"
-      >
-        {copied ? t("common.copied") : t("common.copy")}
-      </button>
-      <p className="text-xs text-text-muted">{t("prompt.negativePromptHint")}</p>
     </div>
   );
 }
@@ -139,20 +105,16 @@ export function CreatePromptForm() {
   const isEditMode = Boolean(editId);
   const duplicateId = !isEditMode ? searchParams.get("duplicate") : null;
   const answerRequestId = !isEditMode ? searchParams.get("answerRequest") : null;
-  const generatorRunId = !isEditMode ? searchParams.get("generatorRun") : null;
   const fromGenerate = !isEditMode && searchParams.get("fromGenerate") === "1";
   const isAnswerMode = Boolean(answerRequestId);
   const isDuplicateMode = Boolean(duplicateId);
-  const isGeneratorRunMode = Boolean(generatorRunId);
 
   const [duplicateSource, setDuplicateSource] = useState<Prompt | null>(null);
   const [answeredRequest, setAnsweredRequest] = useState<PromptRequest | null>(null);
-  const [generatorRun, setGeneratorRun] = useState<GeneratorRun | null>(null);
-  const [sourceGenerator, setSourceGenerator] = useState<Generator | null>(null);
   const [editingPrompt, setEditingPrompt] = useState<Prompt | null>(null);
   const [editForbidden, setEditForbidden] = useState(false);
   const [sourceChecked, setSourceChecked] = useState(
-    !isDuplicateMode && !isAnswerMode && !isEditMode && !isGeneratorRunMode,
+    !isDuplicateMode && !isAnswerMode && !isEditMode,
   );
   const { catalog: tagCatalog } = useTagCatalog();
 
@@ -183,18 +145,6 @@ export function CreatePromptForm() {
         const cached = getCachedRequest(answerRequestId);
         const found = cached ?? (await fetchRequestById(answerRequestId));
         if (!cancelled) setAnsweredRequest(found);
-      } else if (isGeneratorRunMode && generatorRunId) {
-        // RLS already restricts `generator_runs` SELECT to the run's own
-        // `user_id` (see the migration) — a run that isn't this signed-in
-        // user's own simply comes back `null` here, which falls through to
-        // the same honest "not found" screen every other mode already has,
-        // no separate ownership check needed.
-        const run = await fetchGeneratorRun(generatorRunId);
-        if (!cancelled) setGeneratorRun(run);
-        if (run) {
-          const gen = await fetchGeneratorById(run.generatorId);
-          if (!cancelled) setSourceGenerator(gen);
-        }
       }
       if (!cancelled) setSourceChecked(true);
     }
@@ -210,8 +160,6 @@ export function CreatePromptForm() {
     duplicateId,
     isAnswerMode,
     answerRequestId,
-    isGeneratorRunMode,
-    generatorRunId,
     user,
   ]);
 
@@ -373,40 +321,20 @@ export function CreatePromptForm() {
       setFieldsSeeded(true);
       return;
     }
-    if (generatorRun && sourceChecked) {
-      // Gated on `sourceChecked` (only set once the OTHER effect's load()
-      // has awaited BOTH the run and its generator) rather than on
-      // `generatorRun` alone — `setGeneratorRun`/`setSourceGenerator` are
-      // two separate `setState` calls straddling an `await` in that other
-      // effect, so `generatorRun` alone can already be truthy for a render
-      // where `sourceGenerator` hasn't arrived yet; seeding (and marking
-      // `fieldsSeeded`) on that earlier render would permanently skip the
-      // title/content-type fill once the generator DOES arrive a moment
-      // later, since this effect only ever runs once per `fieldsSeeded`.
-      if (sourceGenerator) {
-        setContentType(sourceGenerator.contentType);
-        setCategory(sourceGenerator.category);
-        setSubcategory(sourceGenerator.subcategory);
-        setTitle(sourceGenerator.title);
-      }
-      setPromptText(generatorRun.generatedPrompt);
-      setFieldsSeeded(true);
-    }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- tagPicker.addManual is stable (useCallback), not a reactive dependency worth re-running this one-time seed for
-  }, [editingPrompt, duplicateSource, answeredRequest, generatorRun, sourceGenerator, sourceChecked, fieldsSeeded]);
+  }, [editingPrompt, duplicateSource, answeredRequest, sourceChecked, fieldsSeeded]);
 
   const [publishError, setPublishError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [draftNotice, setDraftNotice] = useState(false);
   const isEditingDraft = isEditMode && editingPrompt?.status === "draft";
   const outputFailedParam = isEditMode ? searchParams.get("outputFailed") : null;
-  const canSaveDraft = !isAnswerMode && !isGeneratorRunMode && (!isEditMode || isEditingDraft);
+  const canSaveDraft = !isAnswerMode && (!isEditMode || isEditingDraft);
 
   const notFound =
     sourceChecked &&
     ((isDuplicateMode && !duplicateSource) ||
       (isAnswerMode && !answeredRequest) ||
-      (isGeneratorRunMode && !generatorRun) ||
       (isEditMode && !editingPrompt && !editForbidden));
   const isRequestClosed = isAnswerMode && Boolean(answeredRequest) && answeredRequest?.status !== "open";
   /**
@@ -432,17 +360,6 @@ export function CreatePromptForm() {
     : answeredRequest
       ? { type: "request-response", requestId: answeredRequest.id, responseId: "pending" }
       : { type: "original" };
-
-  const generatedFrom =
-    !isEditMode && generatorRun && sourceGenerator
-      ? {
-          generatorId: sourceGenerator.id,
-          generatorVersionId: generatorRun.generatorVersionId,
-          generatorRunId: generatorRun.id,
-          generatorTitle: sourceGenerator.title,
-          generatorSlug: sourceGenerator.slug,
-        }
-      : null;
 
   const media =
     contentType === "image"
@@ -650,7 +567,6 @@ export function CreatePromptForm() {
           requiresReferenceVideo: effectiveReferences.video,
           requiresReferenceAudio: effectiveReferences.audio,
           visibility: showsVisibilityChoice ? undefined : visibility,
-          generatedFrom: generatedFrom ?? undefined,
         },
         ownProfile,
       );
@@ -708,7 +624,6 @@ export function CreatePromptForm() {
           requiresReferenceAudio: effectiveReferences.audio,
     visibility: showsVisibilityChoice ? "public" : visibility,
     deletedAt: null,
-    generatedFrom,
     createdAt: new Date().toISOString(),
   };
 
@@ -743,24 +658,20 @@ export function CreatePromptForm() {
             ? t("prompt.promptNotFound")
             : isAnswerMode
               ? t("request.requestNotFound")
-              : isGeneratorRunMode
-                ? t("generator.runNotFound")
-                : t("prompt.promptNotFound")}
+              : t("prompt.promptNotFound")}
         </h1>
         <p className="mb-4 text-sm text-text-muted">
           {isEditMode
             ? t("prompt.editSourceGoneBody")
             : isAnswerMode
               ? t("request.answerSourceGoneBody")
-              : isGeneratorRunMode
-                ? t("generator.runNotFoundBody")
-                : t("prompt.duplicateSourceGoneBody")}
+              : t("prompt.duplicateSourceGoneBody")}
         </p>
         <Link
-          href={isAnswerMode ? "/requests" : isGeneratorRunMode ? "/generators" : "/discover"}
+          href={isAnswerMode ? "/requests" : "/discover"}
           className="inline-flex h-9 items-center rounded-md border border-border px-4 text-sm font-medium text-text hover:bg-accent-surface"
         >
-          {isAnswerMode ? t("common.backToRequests") : isGeneratorRunMode ? t("common.backToGenerators") : t("common.backToDiscover")}
+          {isAnswerMode ? t("common.backToRequests") : t("common.backToDiscover")}
         </Link>
       </div>
     );
@@ -806,18 +717,14 @@ export function CreatePromptForm() {
               ? t("prompt.answerRequestTitle")
               : isDuplicateMode
                 ? t("prompt.duplicateTitle")
-                : isGeneratorRunMode
-                  ? t("prompt.openAsPromptTitle")
-                  : t("prompt.createPromptTitle")
+                : t("prompt.createPromptTitle")
         }
         hint={
           isEditMode
             ? t("prompt.editPromptHint")
             : isAnswerMode
               ? t("prompt.answerRequestHint")
-              : isGeneratorRunMode
-                ? t("prompt.generatorRunHint")
-                : t("prompt.createPromptHint")
+              : t("prompt.createPromptHint")
         }
         drafts={<KindDraftsButton kind="prompt" />}
       />
@@ -864,25 +771,6 @@ export function CreatePromptForm() {
                   &ldquo;{duplicateSource.title}&rdquo;
                 </Link>{" "}
                 {t("prompt.duplicatePrefillHint")}
-              </p>
-            </div>
-          )}
-
-          {generatorRun && (
-            <div className="flex items-start gap-2 rounded-md border border-primary/30 bg-primary/5 p-3 text-sm text-primary">
-              <Blocks size={16} className="mt-0.5 shrink-0" />
-              <p>
-                {sourceGenerator ? (
-                  <>
-                    <Link href={generatorHref(sourceGenerator)} className="font-medium underline">
-                      &ldquo;{sourceGenerator.title}&rdquo;
-                    </Link>{" "}
-                    {t("prompt.generatorRunPrefillWithSource")}
-                  </>
-                ) : (
-                  t("prompt.generatorRunPrefillNoSource")
-                )}{" "}
-                {t("prompt.generatorRunPrefillHint")}
               </p>
             </div>
           )}
@@ -999,10 +887,6 @@ export function CreatePromptForm() {
                 value={references}
                 onChange={setReferences}
               />
-
-              {generatorRun?.generatedNegativePrompt && (
-                <NegativePromptReference text={generatorRun.generatedNegativePrompt} />
-              )}
             </div>
           </FormSection>
 

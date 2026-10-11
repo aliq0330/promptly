@@ -1,15 +1,13 @@
-import type { Generator, Preset, Prompt, PromptRequest, Workflow } from "@/types";
+import type { Preset, Prompt, PromptRequest, Workflow } from "@/types";
 
 /**
- * A feed slot can be a prompt of any content type, a prompt request, or —
- * since Bölüm 9.36's Prompt/Generator parity pass — a generator too;
- * requests and generators are first-class feed content, not confined to
- * their own `/requests`/`/generators` pages (see CLAUDE.md section 1 & 5).
+ * A feed slot can be a prompt of any content type, a prompt request, a
+ * workflow or a preset — all first-class feed content, not confined to
+ * their own pages (see CLAUDE.md section 1 & 5).
  */
 export type FeedItem =
   | { kind: "prompt"; data: Prompt }
   | { kind: "request"; data: PromptRequest }
-  | { kind: "generator"; data: Generator }
   | { kind: "workflow"; data: Workflow }
   | { kind: "preset"; data: Preset };
 
@@ -28,7 +26,7 @@ export function feedItemPopularity(item: FeedItem): number {
 }
 
 export function feedItemAuthorId(item: FeedItem): string {
-  return item.kind === "generator" || item.kind === "workflow" || item.kind === "preset" ? item.data.creator.id : item.data.author.id;
+  return item.kind === "workflow" || item.kind === "preset" ? item.data.creator.id : item.data.author.id;
 }
 
 /**

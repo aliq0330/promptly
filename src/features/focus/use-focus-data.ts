@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { fetchGeneratorVersion } from "@/lib/supabase/generators";
 import { fetchWorkflowById } from "@/lib/supabase/workflows";
-import type { GeneratorField, WorkflowStep } from "@/types";
+import type { WorkflowStep } from "@/types";
 
 /**
  * Focus View shows a generator's real parameters and a workflow's real step
@@ -81,21 +80,6 @@ function useLazy<T>(key: string | null, enabled: boolean, load: () => Promise<T 
   if (!key) return { data: null, loading: false };
   if (resolved.has(key)) return { data: (resolved.get(key) as T | null) ?? null, loading: false };
   return { data: null, loading: enabled };
-}
-
-export interface GeneratorFocusFields {
-  /** Field labels in the creator's own order. */
-  labels: string[];
-  count: number;
-}
-
-export function useGeneratorFocusFields(versionId: string | null, enabled: boolean) {
-  return useLazy<GeneratorFocusFields>(versionId ? `gen:${versionId}` : null, enabled, async () => {
-    const version = await fetchGeneratorVersion(versionId!);
-    if (!version) return null;
-    const fields: GeneratorField[] = [...version.schema.fields].sort((a, b) => a.order - b.order);
-    return { labels: fields.map((field) => field.label).filter(Boolean), count: fields.length };
-  });
 }
 
 export function useWorkflowFocusSteps(workflowId: string, enabled: boolean) {

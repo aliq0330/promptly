@@ -1,4 +1,4 @@
-import { FileText, ImageIcon, Music, Video, Blocks, SquareTerminal, Sparkles, type LucideIcon } from "lucide-react";
+import { FileText, ImageIcon, Music, Video, SquareTerminal, Sparkles, type LucideIcon } from "lucide-react";
 import { taxonomyPathLabel, taxonomyLabel, type ContentTypeId } from "@/lib/content-taxonomy";
 import type { Language } from "@/lib/i18n/translations";
 import type { TranslationKey } from "@/lib/i18n/translations";
@@ -6,7 +6,6 @@ import type { WorkflowStep, WorkflowStepType } from "@/types";
 
 export const STEP_TYPE_META: Record<WorkflowStepType, { icon: LucideIcon; labelKey: TranslationKey }> = {
   prompt: { icon: SquareTerminal, labelKey: "search.kindPrompt" },
-  generator: { icon: Blocks, labelKey: "generator.singular" },
   request: { icon: Sparkles, labelKey: "request.title" },
 };
 

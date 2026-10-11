@@ -12,7 +12,6 @@ import { useAuth } from "@/features/auth/auth-provider";
 import { useOwnProfile } from "@/features/auth/own-profile-provider";
 import {
   deleteComment,
-  fetchCommentsForGenerator,
   fetchCommentsForPrompt,
   fetchCommentsForRequest,
   fetchCommentsForResult,
@@ -20,7 +19,6 @@ import {
   fetchCommentsForPreset,
   postCommentOnPreset,
   postCommentOnWorkflow,
-  postCommentOnGenerator,
   postCommentOnPrompt,
   postCommentOnRequest,
   postCommentOnResult,
@@ -32,7 +30,7 @@ import { CommentNode, type CommentTree } from "./comment-node";
 import { Eyebrow } from "@/features/content/detail-parts";
 import type { PromptComment } from "@/types";
 
-export type CommentTarget = { promptId: string } | { requestId: string } | { generatorId: string } | { resultId: string } | { workflowId: string } | { presetId: string };
+export type CommentTarget = { promptId: string } | { requestId: string } | { resultId: string } | { workflowId: string } | { presetId: string };
 
 /**
  * Real, unlimited-depth comment thread — every prompt/request is a real
@@ -101,37 +99,32 @@ export function CommentSection({
   const highlightTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const processedHighlightId = useRef<string | null>(null);
 
-  const targetKind: "prompt" | "request" | "generator" | "result" | "workflow" | "preset" =
+  const targetKind: "prompt" | "request" | "result" | "workflow" | "preset" =
     "promptId" in target
       ? "prompt"
       : "requestId" in target
         ? "request"
-        : "generatorId" in target
-          ? "generator"
-          : "workflowId" in target
-            ? "workflow"
-            : "presetId" in target
-              ? "preset"
-              : "result";
+        : "workflowId" in target
+          ? "workflow"
+          : "presetId" in target
+            ? "preset"
+            : "result";
   const targetId =
     "promptId" in target
       ? target.promptId
       : "requestId" in target
         ? target.requestId
-        : "generatorId" in target
-          ? target.generatorId
-          : "workflowId" in target
-            ? target.workflowId
-            : "presetId" in target
-              ? target.presetId
-              : target.resultId;
+        : "workflowId" in target
+          ? target.workflowId
+          : "presetId" in target
+            ? target.presetId
+            : target.resultId;
 
   // Small dispatch helpers instead of repeating a four-way ternary at each
   // of the three call sites below (initial fetch, top-level post, reply).
   function fetchCommentsForTarget(kind: typeof targetKind, id: string) {
     if (kind === "prompt") return fetchCommentsForPrompt(id);
     if (kind === "request") return fetchCommentsForRequest(id);
-    if (kind === "generator") return fetchCommentsForGenerator(id);
     if (kind === "workflow") return fetchCommentsForWorkflow(id);
     if (kind === "preset") return fetchCommentsForPreset(id);
     return fetchCommentsForResult(id);
@@ -139,7 +132,6 @@ export function CommentSection({
   function postCommentForTarget(kind: typeof targetKind, id: string, userId: string, body: string, parentId: string | null) {
     if (kind === "prompt") return postCommentOnPrompt(id, userId, body, parentId);
     if (kind === "request") return postCommentOnRequest(id, userId, body, parentId);
-    if (kind === "generator") return postCommentOnGenerator(id, userId, body, parentId);
     if (kind === "workflow") return postCommentOnWorkflow(id, userId, body, parentId);
     if (kind === "preset") return postCommentOnPreset(id, userId, body, parentId);
     return postCommentOnResult(id, userId, body, parentId);
@@ -147,7 +139,7 @@ export function CommentSection({
 
   useEffect(() => {
     let cancelled = false;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- resets when the target (a new prompt/request/generator) changes
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- resets when the target (a new prompt/request) changes
     setLoaded(false);
     fetchCommentsForTarget(targetKind, targetId).then(async (result) => {
       if (cancelled) return;

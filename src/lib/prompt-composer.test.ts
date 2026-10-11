@@ -1,7 +1,6 @@
 /**
  * Ortak prompt düzenleyicinin saf belge modeli — `npm test` (Node'un yerleşik
- * test koşucusu). `prompt-doc.ts` (normal değişkenler) ve
- * `generator-template-doc.ts` (Generator şablon alanları) test edilir.
+ * test koşucusu). `prompt-doc.ts` (normal değişkenler) test edilir.
  */
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -21,17 +20,6 @@ import {
   tokenRanges,
   tokenUsageMap,
 } from "./prompt-doc.ts";
-import {
-  fieldDisplayNames,
-  fieldValueText,
-  fromDisplayText,
-  orphanTemplateKeys,
-  removeFieldFromTemplate,
-  renderTemplateDoc,
-  templateKeys,
-  templateUsageCount,
-  toDisplayText,
-} from "./generator-template-doc.ts";
 
 const SAMPLE = "Profesyonel bir {Stil} tarzında, {Konu} konulu bir görsel oluştur.";
 
@@ -166,119 +154,4 @@ test("removeToken: jetonu ve fazla boşluğu toparlar, geri kalana dokunmaz", ()
   assert.equal(removeToken("bir iki {X}", "X"), "bir iki");
   assert.equal(removeToken("a  b {X} c   d", "X"), "a  b c   d"); // yazarın çift boşluğuna dokunmaz
   assert.equal(removeToken("{X} {Y} {X}", "X"), "{Y}");
-});
-
-// --- Generator şablon alanları ----------------------------------------------------
-
-const field = (key: string, label: string, order: number, extra: Record<string, unknown> = {}) =>
-  ({ id: key, key, label, order, type: "text", options: [], defaultValue: "", ...extra }) as never;
-
-const FIELDS = [
-  field("stil", "Stil", 0, {
-    type: "select",
-    options: [
-      { label: "Sinematik", value: "cinematic" },
-      { label: "Minimal", value: "minimal" },
-    ],
-  }),
-  field("konu", "Konu", 1),
-  field("isik", "Işık", 2, { type: "select", options: [{ label: "Altın saat", value: "golden" }] }),
-  field("hdr", "HDR", 3, { type: "toggle" }),
-];
-
-test("görünen adlar benzersizdir; çakışanlar ayrıştırılır", () => {
-  const names = fieldDisplayNames([field("a", "Stil", 0), field("b", "Stil", 1), field("c", "  ", 2)]);
-  assert.equal(names.get("a"), "Stil");
-  assert.equal(names.get("b"), "Stil (2)");
-  assert.equal(names.get("c"), "c");
-});
-
-test("kanonik ↔ görünen dönüşüm gidiş-dönüşte kararlı (imleç kaymaz)", () => {
-  const canonical = "Profesyonel bir {{stil}} tarzında, {{konu}} konulu görsel. {{stil}} tekrar.";
-  const display = toDisplayText(canonical, FIELDS);
-  assert.equal(display, "Profesyonel bir {Stil} tarzında, {Konu} konulu görsel. {Stil} tekrar.");
-  assert.equal(fromDisplayText(display, FIELDS), canonical);
-  assert.equal(toDisplayText(fromDisplayText(display, FIELDS), FIELDS), display);
-});
-
-test("alanın etiketi değişince bağlı kullanımlar kendiliğinden güncel kalır", () => {
-  const canonical = "{{stil}} ve {{konu}}";
-  const renamed = FIELDS.map((f: { key: string }) => (f.key === "stil" ? { ...(f as object), label: "Tarz" } : f)) as never;
-  assert.equal(toDisplayText(canonical, renamed), "{Tarz} ve {Konu}");
-});
-
-test("yinelenen etiketlerde de dönüşüm kararlı", () => {
-  const fields = [field("a", "Stil", 0), field("b", "Stil", 1)];
-  const display = "{Stil} {Stil (2)} {Stil}";
-  const canonical = fromDisplayText(display, fields);
-  assert.equal(canonical, "{{a}} {{b}} {{a}}");
-  assert.equal(toDisplayText(canonical, fields), display);
-});
-
-test("bilinmeyen jeton değişmeden kalır; yetim anahtarlar bulunur", () => {
-  const display = "{Bilinmeyen} metin";
-  assert.equal(fromDisplayText(display, FIELDS), display);
-  assert.deepEqual(orphanTemplateKeys("{{stil}} {{silinmis}}", FIELDS), ["silinmis"]);
-});
-
-test("şablon anahtarları ve kullanım sayıları", () => {
-  const canonical = "{{stil}} x {{konu}} y {{stil}}";
-  assert.deepEqual(templateKeys(canonical), ["stil", "konu"]);
-  assert.equal(templateUsageCount(canonical, "stil"), 2);
-  assert.equal(templateUsageCount(canonical, "yok"), 0);
-});
-
-test("alan silinince şablondaki kullanımları kontrollü kalkar", () => {
-  assert.equal(removeFieldFromTemplate("bir {{stil}} iki", "stil"), "bir iki");
-  assert.equal(removeFieldFromTemplate("{{stil}} ve {{konu}}", "konu"), "{{stil}} ve");
-});
-
-const visible = () => true;
-
-test("render: dolu alan değerine, boş alan [Etiket] yer tutucusuna çözülür (sessizce silinmez)", () => {
-  const rendered = renderTemplateDoc("Bir {{stil}} görsel: {{konu}}.", FIELDS, { stil: "cinematic", konu: "" }, visible);
-  assert.equal(rendered.text, "Bir Sinematik görsel: [Konu].");
-  assert.deepEqual(
-    rendered.segments.map((segment) => segment.kind),
-    ["text", "value", "text", "placeholder", "text"],
-  );
-});
-
-test("render: aynı alan iki yerde, çoklu seçim, açık toggle", () => {
-  const fields = [
-    ...FIELDS,
-    field("tags", "Etiketler", 4, {
-      type: "multi_select",
-      options: [
-        { label: "Sıcak", value: "warm" },
-        { label: "Soğuk", value: "cool" },
-      ],
-    }),
-  ];
-  const rendered = renderTemplateDoc(
-    "{{stil}} / {{stil}} / {{tags}} / {{hdr}}",
-    fields,
-    { stil: "minimal", tags: ["warm", "cool"], hdr: "true" },
-    visible,
-  );
-  assert.equal(rendered.text, "Minimal / Minimal / Sıcak, Soğuk / HDR");
-});
-
-test("render: kapalı toggle ve gizli alan kasıtlı olarak kaldırılır, çevre boşluğu toparlanır", () => {
-  const closed = renderTemplateDoc("Bir görsel {{hdr}} üret.", FIELDS, { hdr: "false" }, visible);
-  assert.equal(closed.text, "Bir görsel üret.");
-  const hidden = renderTemplateDoc("Bir {{konu}} görsel{{isik}}.", FIELDS, { konu: "dağ" }, (f) => (f as { key: string }).key !== "isik");
-  assert.equal(hidden.text, "Bir dağ görsel.");
-  const comma = renderTemplateDoc("Merhaba {{isik}}, dünya", FIELDS, {}, () => false);
-  assert.equal(comma.text, "Merhaba, dünya");
-});
-
-test("render: şemada olmayan anahtar aynen kalır", () => {
-  assert.equal(renderTemplateDoc("x {{yok}} y", FIELDS, {}, visible).text, "x {{yok}} y");
-});
-
-test("fieldValueText seçeneğin görünen adını kullanır, ham değeri değil", () => {
-  assert.equal(fieldValueText(FIELDS[0], { stil: "cinematic" }), "Sinematik");
-  assert.equal(fieldValueText(FIELDS[0], { stil: "" }), null);
-  assert.equal(fieldValueText(FIELDS[1], { konu: "  deniz " }), "deniz");
 });

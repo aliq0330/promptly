@@ -3,8 +3,7 @@ import { supabase } from "./client";
 import { translateForRuntime } from "@/lib/i18n/translations";
 import { PROMPT_SELECT, mapPromptRow, type PromptRow } from "./prompts";
 import { normalizeTagLabel } from "@/lib/tag-normalize";
-import type { Generator, Prompt, PromptRequest, Tag, Workflow } from "@/types";
-import { GENERATOR_SELECT, mapGeneratorRow, type GeneratorRow } from "./generators";
+import type { Prompt, PromptRequest, Tag, Workflow } from "@/types";
 import { WORKFLOW_SELECT, mapWorkflowRow, type WorkflowRow } from "./workflows";
 import { REQUEST_SELECT, mapRequestRow, type RequestRow } from "./requests";
 
@@ -218,29 +217,6 @@ export async function fetchRequestsByTagSlug(slug: string, limit = 60): Promise<
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   } catch (err) {
     console.error("fetchRequestsByTagSlug", err);
-    return [];
-  }
-}
-
-/** Published public generators carrying `slug`, newest first (RLS already hides drafts/private ones). */
-export async function fetchGeneratorsByTagSlug(slug: string, limit = 60): Promise<Generator[]> {
-  try {
-    const { data, error } = await supabase
-      .from("generator_tags")
-      .select(`generators:generator_id ( ${GENERATOR_SELECT} )`)
-      .eq("tag_slug", slug)
-      .limit(limit);
-    if (error) {
-      console.error("fetchGeneratorsByTagSlug", error);
-      return [];
-    }
-    return ((data ?? []) as unknown as { generators: (GeneratorRow & { status: string; visibility: string }) | null }[])
-      .map((row) => row.generators)
-      .filter((row): row is GeneratorRow & { status: string; visibility: string } => Boolean(row) && row!.status === "published" && row!.visibility === "public")
-      .map((row) => mapGeneratorRow(row))
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  } catch (err) {
-    console.error("fetchGeneratorsByTagSlug", err);
     return [];
   }
 }

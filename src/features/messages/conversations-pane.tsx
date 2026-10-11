@@ -24,26 +24,19 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
 
   const sharePromptId = searchParams.get("sharePromptId");
   const shareRequestId = searchParams.get("shareRequestId");
-  // A generator has no rich embed in the messages schema (Bölüm 9.52's own
-  // "no new messaging table/column" rule) — it rides this exact same
-  // conversation-picker screen anyway, purely via a client-side query
-  // param, and turns into a plain-text message (title + link) once a
-  // conversation is picked (see `LocalConversationView`).
-  const shareGeneratorId = searchParams.get("shareGeneratorId");
+  // Workflow / preset ride the same conversation-picker via a client-side query param (no embed column), as plain text.
   const shareWorkflowId = searchParams.get("shareWorkflowId");
   const sharePresetId = searchParams.get("sharePresetId");
-  const isSharing = Boolean(sharePromptId || shareRequestId || shareGeneratorId || shareWorkflowId || sharePresetId);
+  const isSharing = Boolean(sharePromptId || shareRequestId || shareWorkflowId || sharePresetId);
   const shareQuery = sharePromptId
     ? `sharePromptId=${sharePromptId}`
     : shareRequestId
       ? `shareRequestId=${shareRequestId}`
-      : shareGeneratorId
-        ? `shareGeneratorId=${shareGeneratorId}`
-        : shareWorkflowId
-          ? `shareWorkflowId=${shareWorkflowId}`
-          : sharePresetId
-            ? `sharePresetId=${sharePresetId}`
-            : undefined;
+      : shareWorkflowId
+        ? `shareWorkflowId=${shareWorkflowId}`
+        : sharePresetId
+          ? `sharePresetId=${sharePresetId}`
+          : undefined;
 
   const activeId = pathname.startsWith("/messages/local") ? searchParams.get("id") : null;
 

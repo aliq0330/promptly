@@ -4,7 +4,6 @@ import { Inbox, type LucideIcon } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PromptCard } from "@/features/prompts/prompt-card";
 import { RequestCard } from "@/features/requests/request-card";
-import { GeneratorCard } from "@/features/generators/generator-card";
 import { WorkflowCard } from "@/features/workflows/workflow-card";
 import { PresetCard } from "@/features/presets/preset-card";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -50,8 +49,6 @@ export function FeedGrid({
             <PromptCard prompt={item.data} />
           ) : item.kind === "request" ? (
             <RequestCard request={item.data} />
-          ) : item.kind === "generator" ? (
-            <GeneratorCard generator={item.data} />
           ) : item.kind === "preset" ? (
             <PresetCard preset={item.data} />
           ) : (

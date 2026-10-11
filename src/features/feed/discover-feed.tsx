@@ -1,9 +1,8 @@
 "use client";
 
-import { GENERATORS_ENABLED } from "@/lib/feature-flags";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Blocks, Hash, LayoutGrid, Sparkles, SquareTerminal, SlidersHorizontal, TrendingUp, Users, Workflow as WorkflowIcon } from "lucide-react";
+import { Hash, LayoutGrid, Sparkles, SquareTerminal, SlidersHorizontal, TrendingUp, Users, Workflow as WorkflowIcon } from "lucide-react";
 import { Tabs } from "@/components/ui/tabs";
 import { Chip } from "@/components/ui/chip";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -18,7 +17,6 @@ import { EMPTY_TAXONOMY_FILTER, matchesTaxonomy, type TaxonomyFilterValue } from
 import { CreatorCard } from "@/features/profile/creator-card";
 import { useRealPrompts } from "@/features/prompts/real-prompts-provider";
 import { useRealRequests } from "@/features/requests/real-requests-provider";
-import { useRealGenerators } from "@/features/generators/real-generators-provider";
 import { useRealWorkflows } from "@/features/workflows/real-workflows-provider";
 import { useRealPresets } from "@/features/presets/real-presets-provider";
 import { fetchTopCreators } from "@/lib/supabase/profiles";
@@ -28,13 +26,12 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import type { Tag, UserProfile } from "@/types";
 
-type Section = "all" | "prompts" | "generators" | "workflows" | "presets" | "requests" | "creators";
+type Section = "all" | "prompts" | "workflows" | "presets" | "requests" | "creators";
 
 
 const SECTIONS: { key: Section; labelKey: TranslationKey; icon: typeof LayoutGrid }[] = [
   { key: "all", labelKey: "common.all", icon: LayoutGrid },
   { key: "prompts", labelKey: "feed.filterPrompts", icon: SquareTerminal },
-  ...(GENERATORS_ENABLED ? [{ key: "generators" as const, labelKey: "nav.generators" as const, icon: Blocks }] : []),
   { key: "workflows", labelKey: "nav.workflows", icon: WorkflowIcon },
   { key: "presets", labelKey: "nav.presets", icon: SlidersHorizontal },
   { key: "requests", labelKey: "nav.requestsShort", icon: Sparkles },
@@ -43,9 +40,9 @@ const SECTIONS: { key: Section; labelKey: TranslationKey; icon: typeof LayoutGri
 
 /**
  * Explore — search, trending tags, and one place to browse every kind of
- * content: all, prompts (by content type), generators (by topic), requests
+ * content: all, prompts (by content type), requests
  * (open / all) and creators. All filtering happens on the already-loaded
- * shared caches (RealPrompts/Requests/Generators providers), no new API.
+ * shared caches (RealPrompts/Requests providers), no new API.
  */
 export function DiscoverFeed() {
   const { t } = useTranslation();
@@ -57,7 +54,6 @@ export function DiscoverFeed() {
   const [tags, setTags] = useState<Tag[]>([]);
   const { realPrompts, loading } = useRealPrompts();
   const { realRequests } = useRealRequests();
-  const { realGenerators } = useRealGenerators();
   const { realWorkflows } = useRealWorkflows();
   const { realPresets } = useRealPresets();
 
@@ -71,14 +67,11 @@ export function DiscoverFeed() {
     const prompts: FeedItem[] = realPrompts
       .filter((prompt) => matchesTaxonomy(prompt, taxonomy))
       .map((prompt) => ({ kind: "prompt", data: prompt }));
-    const generators: FeedItem[] = realGenerators
-      .filter((generator) => matchesTaxonomy(generator, taxonomy))
-      .map((generator) => ({ kind: "generator", data: generator }));
     // A workflow spans several content types — it matches a content-type filter when it chains that type; category/subcategory are its own (shared taxonomy).
     const workflows: FeedItem[] = realWorkflows
       .filter((workflow) => (!taxonomy.contentType || workflow.contentTypes.includes(taxonomy.contentType)) && (!taxonomy.category || workflow.category === taxonomy.category) && (!taxonomy.subcategory || workflow.subcategory === taxonomy.subcategory))
       .map((workflow) => ({ kind: "workflow", data: workflow }));
-    // A preset carries the shared taxonomy (type/category/subcategory) like a prompt/generator, so the same filter applies.
+    // A preset carries the shared taxonomy (type/category/subcategory) like a prompt, so the same filter applies.
     const presets: FeedItem[] = realPresets
       .filter((preset) => matchesTaxonomy(preset, taxonomy))
       .map((preset) => ({ kind: "preset", data: preset }));
@@ -89,19 +82,17 @@ export function DiscoverFeed() {
     const pick =
       section === "prompts"
         ? prompts
-        : section === "generators"
-          ? generators
-          : section === "workflows"
+        : section === "workflows"
             ? workflows
             : section === "presets"
               ? presets
               : section === "requests"
                 ? requests
-                : [...prompts, ...generators, ...workflows, ...presets, ...requests];
+                : [...prompts, ...workflows, ...presets, ...requests];
     return pick.sort((a, b) =>
       sort === "most-liked" ? feedItemPopularity(b) - feedItemPopularity(a) || feedItemCreatedAt(b) - feedItemCreatedAt(a) : sort === "oldest" ? feedItemCreatedAt(a) - feedItemCreatedAt(b) : feedItemCreatedAt(b) - feedItemCreatedAt(a),
     );
-  }, [realPrompts, realGenerators, realWorkflows, realPresets, realRequests, taxonomy, openOnly, section, sort]);
+  }, [realPrompts, realWorkflows, realPresets, realRequests, taxonomy, openOnly, section, sort]);
 
   const openOnlyChips = (
     <>

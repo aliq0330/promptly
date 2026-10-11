@@ -5,7 +5,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import { promptHref } from "@/lib/utils";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
 import type { FeedItem } from "@/features/feed/types";
-import { FocusGeneratorCard, FocusPresetCard, FocusRequestCard, FocusWorkflowCard } from "./focus-structure-cards";
+import { FocusPresetCard, FocusRequestCard, FocusWorkflowCard } from "./focus-structure-cards";
 import { FocusTextCard } from "./focus-text-card";
 import { FocusVisualCard } from "./focus-visual-card";
 
@@ -44,8 +44,6 @@ export const FocusCard = memo(function FocusCard({ item }: { item: FeedItem }) {
   switch (item.kind) {
     case "prompt":
       return <FocusPromptCard item={item} />;
-    case "generator":
-      return <FocusGeneratorCard generator={item.data} />;
     case "workflow":
       return <FocusWorkflowCard workflow={item.data} />;
     case "preset":

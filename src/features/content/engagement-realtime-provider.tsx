@@ -14,7 +14,7 @@ import type { LikeableContentType } from "@/lib/supabase/likes";
  * Deliberately does NOT subscribe to the raw junction tables (`prompt_
  * likes`/`collection_items`/`follows`) — it listens to UPDATE events on the
  * "summary" tables that already carry the trigger-maintained
- * `like_count`/`save_count`/`follower_count` columns (prompts/generators/
+ * `like_count`/`save_count`/`follower_count` columns (prompts/
  * workflows/prompt_requests/prompt_results/profiles — added to
  * `supabase_realtime` by `20260919540000_engagement_counts_and_realtime.
  * sql`), and reads the new value straight off the Postgres Changes payload.
@@ -47,11 +47,6 @@ export function EngagementRealtimeProvider() {
         "postgres_changes",
         { event: "UPDATE", schema: "public", table: "prompts" },
         (payload) => applyLikeSave("prompt", payload.new as { id: string; like_count?: number; save_count?: number }),
-      )
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "generators" },
-        (payload) => applyLikeSave("generator", payload.new as { id: string; like_count?: number; save_count?: number }),
       )
       .on(
         "postgres_changes",

@@ -1,9 +1,8 @@
 "use client";
 
-import { GENERATORS_ENABLED } from "@/lib/feature-flags";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Blocks, FileText, SlidersHorizontal, Sparkles, SquareTerminal, Trash2, Workflow as WorkflowIcon } from "lucide-react";
+import { FileText, SlidersHorizontal, Sparkles, SquareTerminal, Trash2, Workflow as WorkflowIcon } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs } from "@/components/ui/tabs";
@@ -17,18 +16,17 @@ import type { TranslationKey } from "@/lib/i18n/translations";
 type DraftFilter = "all" | DraftKind;
 type DraftRow = DraftItem & { kind: DraftKind };
 
-const KIND_ORDER: DraftKind[] = (["prompt", "request", "generator", "workflow", "preset"] as DraftKind[]).filter((kind) => kind !== "generator" || GENERATORS_ENABLED);
+const KIND_ORDER: DraftKind[] = ["prompt", "request", "workflow", "preset"];
 const KIND_META: Record<DraftKind, { labelKey: TranslationKey; icon: LucideIcon }> = {
   prompt: { labelKey: "draft.kindPrompt", icon: SquareTerminal },
   request: { labelKey: "draft.kindRequest", icon: Sparkles },
-  generator: { labelKey: "draft.kindGenerator", icon: Blocks },
   workflow: { labelKey: "draft.kindWorkflow", icon: WorkflowIcon },
   preset: { labelKey: "draft.kindPreset", icon: SlidersHorizontal },
 };
 
 /**
  * The owner-only "Taslaklar" profile tab — all four content types' drafts
- * (prompt/request/generator/workflow) in one place, filterable by a
+ * (prompt/request/workflow/preset) in one place, filterable by a
  * Tümü/Promptlar/.../Workflowlar sub-tab row. Reuses the exact same data
  * layer (`fetchOwnDrafts`/`deleteDraft`, `lib/supabase/drafts.ts`) and
  * continue/delete behavior as the per-page `DraftsButton` (CLAUDE.md Bölüm
@@ -59,7 +57,7 @@ export function ProfileDraftsPanel({ userId }: { userId: string }) {
   }, [refresh]);
 
   const counts = useMemo(() => {
-    const base: Record<DraftKind, number> = { prompt: 0, request: 0, generator: 0, workflow: 0, preset: 0 };
+    const base: Record<DraftKind, number> = { prompt: 0, request: 0, workflow: 0, preset: 0 };
     rows?.forEach((row) => {
       base[row.kind] += 1;
     });

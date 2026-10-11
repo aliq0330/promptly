@@ -34,7 +34,7 @@ import type { VariableFormValues } from "./variable-spec-editor";
 import { VariableVisionAssist } from "./variable-vision-assist";
 
 // 196 alanlık katalog yalnızca seçici açılınca yüklenir (ana pakete girmez).
-const FieldCatalogPicker = dynamic(() => import("@/features/generators/field-catalog-picker").then((m) => m.FieldCatalogPicker), { ssr: false });
+const FieldCatalogPicker = dynamic(() => import("@/features/prompts/field-catalog-picker").then((m) => m.FieldCatalogPicker), { ssr: false });
 
 /** A not-yet-persisted variable living only in this form's own state — gets a real DB row (with a real `id`) only once the prompt itself is created/updated (see `replaceVariablesForPrompt`, `src/lib/supabase/prompt-variables.ts`). */
 export interface DraftVariable extends PromptVariableSpec {

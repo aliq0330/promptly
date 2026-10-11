@@ -1,10 +1,8 @@
 "use client";
 
-import { GENERATORS_ENABLED } from "@/lib/feature-flags";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
 import {
-  Blocks,
   FileText,
   Search,
   SlidersHorizontal,
@@ -26,18 +24,15 @@ import {
 } from "@/features/content/sort-select";
 import { PromptCard } from "@/features/prompts/prompt-card";
 import { RequestCard } from "@/features/requests/request-card";
-import { GeneratorCard } from "@/features/generators/generator-card";
 import { WorkflowCard } from "@/features/workflows/workflow-card";
 import { PresetCard } from "@/features/presets/preset-card";
 import { ProfileDraftsPanel } from "@/features/profile/profile-drafts-panel";
 import { fetchPromptsByAuthor } from "@/lib/supabase/prompts";
 import { fetchRequestsByAuthor } from "@/lib/supabase/requests";
-import { fetchGeneratorsByAuthor } from "@/lib/supabase/generators";
 import { fetchWorkflowsByCreator } from "@/lib/supabase/workflows";
 import { fetchPresetsByCreator } from "@/lib/supabase/presets";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type {
-  Generator,
   Preset,
   Prompt,
   PromptRequest,
@@ -47,7 +42,6 @@ import type {
 type Kind =
   | "prompts"
   | "requests"
-  | "generators"
   | "workflows"
   | "presets"
   | "drafts";
@@ -59,14 +53,13 @@ interface Entry {
   description: string;
   createdAt: string;
   likeCount: number;
-  /** "unlisted" generators are not private, so they count as public here. */
   isPrivate: boolean;
   node: ReactNode;
 }
 
 /**
  * "İçeriklerim" — the signed-in member's own published prompts, requests,
- * generators, workflows and presets in one place, with a visibility filter,
+ * workflows and presets in one place, with a visibility filter,
  * search and sort. Drafts reuse the profile's drafts panel. Data comes from
  * the same per-author fetchers the profile uses; RLS returns a member their
  * own private rows too.
@@ -77,7 +70,6 @@ export function MyContentView() {
 
   const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [requests, setRequests] = useState<PromptRequest[]>([]);
-  const [generators, setGenerators] = useState<Generator[]>([]);
   const [workflows, setWorkflows] = useState<Workflow[]>([]);
   const [presets, setPresets] = useState<Preset[]>([]);
   const [loading, setLoading] = useState(true);
@@ -94,14 +86,12 @@ export function MyContentView() {
     Promise.all([
       fetchPromptsByAuthor(userId),
       fetchRequestsByAuthor(userId),
-      GENERATORS_ENABLED ? fetchGeneratorsByAuthor(userId) : Promise.resolve([] as Generator[]),
       fetchWorkflowsByCreator(userId),
       fetchPresetsByCreator(userId),
-    ]).then(([p, r, g, w, pr]) => {
+    ]).then(([p, r, w, pr]) => {
       if (cancelled) return;
       setPrompts(p.filter((x) => x.status === "published"));
       setRequests(r);
-      setGenerators(g.filter((x) => x.status === "published"));
       setWorkflows(w.filter((x) => x.status === "published"));
       setPresets(pr.filter((x) => x.status === "published"));
       setLoading(false);
@@ -138,22 +128,6 @@ export function MyContentView() {
         isPrivate: r.visibility === "private",
         node: <RequestCard request={r} />,
       })),
-      generators: generators.map((g) => ({
-        id: g.id,
-        title: g.title,
-        description: g.description,
-        createdAt: g.createdAt,
-        likeCount: g.likeCount,
-        isPrivate: g.visibility === "private",
-        node: (
-          <GeneratorCard
-            generator={g}
-            onDeleted={() =>
-              setGenerators((prev) => prev.filter((x) => x.id !== g.id))
-            }
-          />
-        ),
-      })),
       workflows: workflows.map((w) => ({
         id: w.id,
         title: w.title,
@@ -173,7 +147,7 @@ export function MyContentView() {
         node: <PresetCard preset={p} />,
       })),
     }),
-    [prompts, requests, generators, workflows, presets],
+    [prompts, requests, workflows, presets],
   );
 
   const kindTabs = useMemo(
@@ -190,16 +164,6 @@ export function MyContentView() {
         count: requests.length,
         icon: Sparkles,
       },
-      ...(GENERATORS_ENABLED
-        ? [
-            {
-              key: "generators" as const,
-              label: t("nav.generators"),
-              count: generators.length,
-              icon: Blocks,
-            },
-          ]
-        : []),
       {
         key: "workflows" as const,
         label: t("nav.workflows"),
@@ -218,7 +182,6 @@ export function MyContentView() {
       t,
       prompts.length,
       requests.length,
-      generators.length,
       workflows.length,
       presets.length,
     ],
@@ -230,10 +193,6 @@ export function MyContentView() {
   > = {
     prompts: { href: "/create?mode=prompt", label: t("create.promptTitle") },
     requests: { href: "/requests/new", label: t("create.requestTitle") },
-    generators: {
-      href: "/generators/create",
-      label: t("create.generatorTitle"),
-    },
     workflows: { href: "/workflows/create", label: t("workflow.create") },
     presets: { href: "/presets/create", label: t("preset.create") },
   };

@@ -10,7 +10,7 @@ export function dayKey(date: Date): string {
 
 /**
  * How many posts (published prompts, non-draft requests, published
- * generators, workflows and presets) the user created per day since `since`. Five
+ * workflows and presets) the user created per day since `since`. Four
  * light `created_at`-only queries; a failed one simply contributes nothing.
  */
 export async function fetchContributionCounts(userId: string, since: Date): Promise<Record<string, number>> {
@@ -18,7 +18,6 @@ export async function fetchContributionCounts(userId: string, since: Date): Prom
   const sources: { table: string; ownerColumn: string; filter: [string, string | boolean] }[] = [
     { table: "prompts", ownerColumn: "author_id", filter: ["status", "published"] },
     { table: "prompt_requests", ownerColumn: "author_id", filter: ["is_draft", false] },
-    { table: "generators", ownerColumn: "creator_id", filter: ["status", "published"] },
     { table: "workflows", ownerColumn: "creator_id", filter: ["status", "published"] },
     { table: "presets", ownerColumn: "creator_id", filter: ["status", "published"] },
   ];

@@ -5,7 +5,10 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { useAuth } from "@/features/auth/auth-provider";
-import { RESULT_MEDIA_TYPE_LABELS, detectMediaTypeFromFile } from "@/lib/prompt-result-media";
+import {
+  RESULT_MEDIA_TYPE_LABELS,
+  detectMediaTypeFromFile,
+} from "@/lib/prompt-result-media";
 import { createPromptResult } from "@/lib/supabase/prompt-results";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { PromptResultMediaType } from "@/types";
@@ -21,7 +24,11 @@ type Mode = "file" | "text";
  * its read-only "Orijinal prompt metni" preview, which the create-call
  * itself doesn't.
  */
-export type AddResultModalTarget = { type: "prompt"; promptId: string; promptText: string } | { type: "generator"; generatorId: string };
+export type AddResultModalTarget = {
+  type: "prompt";
+  promptId: string;
+  promptText: string;
+};
 
 /** Free-text suggestions for the result's own "Araç / Model" field — the same "free text + datalist" pattern `CreatePromptForm`'s own `tool` field already uses (CLAUDE.md §3: "mevcut bir araç/model sistemi varsa onu kullan... yeni paralel taxonomy oluşturma" — there is no separate tool/model table anywhere in this project to reuse, so this *is* the existing system). */
 const TOOL_SUGGESTIONS = [
@@ -63,10 +70,12 @@ export function AddResultModal({
 }) {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const isPromptTarget = target.type === "prompt";
   const [mode, setMode] = useState<Mode>("file");
   const [file, setFile] = useState<File | null>(null);
-  const [detectedType, setDetectedType] = useState<Extract<PromptResultMediaType, "image" | "video" | "audio"> | null>(null);
+  const [detectedType, setDetectedType] = useState<Extract<
+    PromptResultMediaType,
+    "image" | "video" | "audio"
+  > | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
   const [textContent, setTextContent] = useState("");
   const [tool, setTool] = useState("");
@@ -97,7 +106,10 @@ export function AddResultModal({
     setFileError(null);
   }
 
-  const canSubmit = mode === "file" ? Boolean(file && !fileError) : textContent.trim().length > 0;
+  const canSubmit =
+    mode === "file"
+      ? Boolean(file && !fileError)
+      : textContent.trim().length > 0;
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -108,9 +120,13 @@ export function AddResultModal({
     try {
       await createPromptResult(
         {
-          source: isPromptTarget
-            ? { type: "prompt", promptId: target.promptId, hasModification, modificationSummary, modifiedPromptText }
-            : { type: "generator", generatorId: target.generatorId },
+          source: {
+            type: "prompt",
+            promptId: target.promptId,
+            hasModification,
+            modificationSummary,
+            modifiedPromptText,
+          },
           file: mode === "file" ? file : null,
           textContent: mode === "text" ? textContent : "",
           tool,
@@ -132,7 +148,10 @@ export function AddResultModal({
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-2">
-          <h2 id="add-result-modal-title" className="text-base font-semibold text-text">
+          <h2
+            id="add-result-modal-title"
+            className="text-base font-semibold text-text"
+          >
             {t("result.modalAddTitle")}
           </h2>
           <button
@@ -144,9 +163,7 @@ export function AddResultModal({
             <X size={18} />
           </button>
         </div>
-        <p className="text-sm text-text-muted">
-          {isPromptTarget ? t("result.sharePromptHint") : t("result.shareGeneratorHint")}
-        </p>
+        <p className="text-sm text-text-muted">{t("result.sharePromptHint")}</p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="flex gap-1 rounded-md border border-border-soft bg-surface-soft p-1">
@@ -156,17 +173,24 @@ export function AddResultModal({
                 type="button"
                 onClick={() => setMode(option)}
                 className={`flex-1 rounded-sm px-2 py-1.5 text-sm font-medium transition-colors ${
-                  mode === option ? "bg-surface text-text shadow-card" : "text-text-muted hover:text-text"
+                  mode === option
+                    ? "bg-surface text-text shadow-card"
+                    : "text-text-muted hover:text-text"
                 }`}
               >
-                {option === "file" ? t("result.modeFile") : t("result.modeText")}
+                {option === "file"
+                  ? t("result.modeFile")
+                  : t("result.modeText")}
               </button>
             ))}
           </div>
 
           {mode === "file" ? (
             <div>
-              <label htmlFor="result-file" className="mb-1.5 block text-sm font-medium text-text">
+              <label
+                htmlFor="result-file"
+                className="mb-1.5 block text-sm font-medium text-text"
+              >
                 {t("result.fileFieldLabel")}
               </label>
               <input
@@ -178,14 +202,22 @@ export function AddResultModal({
               />
               {detectedType && (
                 <p className="mt-1.5 text-xs text-text-muted">
-                  {t("result.detectedType")} <span className="font-medium text-text">{t(RESULT_MEDIA_TYPE_LABELS[detectedType])}</span>
+                  {t("result.detectedType")}{" "}
+                  <span className="font-medium text-text">
+                    {t(RESULT_MEDIA_TYPE_LABELS[detectedType])}
+                  </span>
                 </p>
               )}
-              {fileError && <p className="mt-1.5 text-xs text-danger">{fileError}</p>}
+              {fileError && (
+                <p className="mt-1.5 text-xs text-danger">{fileError}</p>
+              )}
             </div>
           ) : (
             <div>
-              <label htmlFor="result-text" className="mb-1.5 block text-sm font-medium text-text">
+              <label
+                htmlFor="result-text"
+                className="mb-1.5 block text-sm font-medium text-text"
+              >
                 {t("result.textFieldLabel")}
               </label>
               <textarea
@@ -200,8 +232,12 @@ export function AddResultModal({
           )}
 
           <div>
-            <label htmlFor="result-tool" className="mb-1.5 block text-sm font-medium text-text">
-              {t("result.toolFieldLabel")} <span className="text-text-muted">({t("common.optional")})</span>
+            <label
+              htmlFor="result-tool"
+              className="mb-1.5 block text-sm font-medium text-text"
+            >
+              {t("result.toolFieldLabel")}{" "}
+              <span className="text-text-muted">({t("common.optional")})</span>
             </label>
             <input
               id="result-tool"
@@ -220,14 +256,14 @@ export function AddResultModal({
           </div>
 
           {/*
-            §5/§23: this whole "Promptu değiştirdin mi?" feature (question +
-            modification-detail fields) only exists for a prompt target — a
-            generator target renders none of it, not even the question.
+            "Promptu değiştirdin mi?" feature (question + modification-detail fields).
           */}
-          {isPromptTarget && (
+          {
             <>
               <div>
-                <p className="mb-1.5 text-sm font-medium text-text">{t("result.didYouModifyPrompt")}</p>
+                <p className="mb-1.5 text-sm font-medium text-text">
+                  {t("result.didYouModifyPrompt")}
+                </p>
                 <div className="flex gap-1 rounded-md border border-border-soft bg-surface-soft p-1">
                   {([false, true] as const).map((value) => (
                     <button
@@ -235,7 +271,9 @@ export function AddResultModal({
                       type="button"
                       onClick={() => setHasModification(value)}
                       className={`flex-1 rounded-sm px-2 py-1.5 text-sm font-medium transition-colors ${
-                        hasModification === value ? "bg-surface text-text shadow-card" : "text-text-muted hover:text-text"
+                        hasModification === value
+                          ? "bg-surface text-text shadow-card"
+                          : "text-text-muted hover:text-text"
                       }`}
                     >
                       {value ? t("common.yes") : t("common.no")}
@@ -247,33 +285,51 @@ export function AddResultModal({
               {hasModification && (
                 <div className="space-y-3 rounded-md border border-border-soft bg-surface-soft p-3">
                   <div>
-                    <label htmlFor="result-mod-summary" className="mb-1.5 block text-sm font-medium text-text">
-                      {t("result.modificationSummaryLabel")} <span className="text-text-muted">({t("result.modificationSummaryShort")})</span>
+                    <label
+                      htmlFor="result-mod-summary"
+                      className="mb-1.5 block text-sm font-medium text-text"
+                    >
+                      {t("result.modificationSummaryLabel")}{" "}
+                      <span className="text-text-muted">
+                        ({t("result.modificationSummaryShort")})
+                      </span>
                     </label>
                     <input
                       id="result-mod-summary"
                       type="text"
                       value={modificationSummary}
-                      onChange={(event) => setModificationSummary(event.target.value)}
+                      onChange={(event) =>
+                        setModificationSummary(event.target.value)
+                      }
                       placeholder={t("result.modificationSummaryPlaceholder")}
                       className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
                     />
                   </div>
                   <div>
-                    <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-text-muted">{t("result.originalPromptText")}</p>
+                    <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-text-muted">
+                      {t("result.originalPromptText")}
+                    </p>
                     <p className="max-h-24 overflow-y-auto whitespace-pre-wrap rounded-md border border-border-soft bg-background px-3 py-2 font-mono text-xs text-text-muted">
                       {target.promptText}
                     </p>
                   </div>
                   <div>
-                    <label htmlFor="result-mod-text" className="mb-1.5 block text-sm font-medium text-text">
-                      {t("result.fullModifiedTextLabel")} <span className="text-text-muted">({t("common.optional")})</span>
+                    <label
+                      htmlFor="result-mod-text"
+                      className="mb-1.5 block text-sm font-medium text-text"
+                    >
+                      {t("result.fullModifiedTextLabel")}{" "}
+                      <span className="text-text-muted">
+                        ({t("common.optional")})
+                      </span>
                     </label>
                     <textarea
                       id="result-mod-text"
                       rows={4}
                       value={modifiedPromptText}
-                      onChange={(event) => setModifiedPromptText(event.target.value)}
+                      onChange={(event) =>
+                        setModifiedPromptText(event.target.value)
+                      }
                       placeholder={t("result.fullModifiedTextPlaceholder")}
                       className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 font-mono text-xs text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
                     />
@@ -281,7 +337,7 @@ export function AddResultModal({
                 </div>
               )}
             </>
-          )}
+          }
 
           {error && <p className="text-sm text-danger">{error}</p>}
 

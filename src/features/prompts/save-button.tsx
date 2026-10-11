@@ -20,14 +20,13 @@ import { SaveToCollectionModal } from "@/features/collections/save-to-collection
  *   state already means "kayıtlı", so bringing up "kaydetmek için bir
  *   koleksiyon seç" again was backwards).
  *
- * Pass exactly one of `promptId`/`generatorId` (mirrors `PostMenu`'s/
+ * Pass exactly one of `promptId` (mirrors `PostMenu`'s/
  * `CommentCountLink`'s established pattern) — a generator uses this SAME
  * button/modal a prompt does (Bölüm 9.36's Prompt/Generator parity pass),
  * not a separate, simpler, modal-less save toggle.
  */
 export function SaveButton({
   promptId,
-  generatorId,
   workflowId,
   presetId,
   saveCount = 0,
@@ -35,7 +34,6 @@ export function SaveButton({
   className,
 }: {
   promptId?: string;
-  generatorId?: string;
   workflowId?: string;
   presetId?: string;
   /** Real, trigger-maintained `save_count` column — the count seed for this id's engagement-store entry. */
@@ -45,8 +43,8 @@ export function SaveButton({
 }) {
   const { t } = useTranslation();
   const { requireAuth } = useAuthPrompt();
-  const id = (presetId ?? workflowId ?? generatorId ?? promptId)!;
-  const contentType = presetId ? "preset" : workflowId ? "workflow" : generatorId ? "generator" : "prompt";
+  const id = (presetId ?? workflowId ?? promptId)!;
+  const contentType = presetId ? "preset" : workflowId ? "workflow" : "prompt";
   const { isSaved, saveCount: count, removeEverywhere, markSaved, markUnsaved, isToggling, canSave } = useSaveState(
     id,
     contentType,
@@ -120,7 +118,7 @@ export function SaveButton({
 
       {modalOpen && (
         <SaveToCollectionModal
-          {...(contentType === "preset" ? { presetId: id } : contentType === "workflow" ? { workflowId: id } : contentType === "generator" ? { generatorId: id } : { promptId: id })}
+          {...(contentType === "preset" ? { presetId: id } : contentType === "workflow" ? { workflowId: id } : { promptId: id })}
           onClose={() => setModalOpen(false)}
           onAdded={markSaved}
           onRemoved={markUnsaved}

@@ -4,15 +4,14 @@ import { applyKeysetCursor, nextCursorFrom, type KeysetCursor } from "./paginati
 import { PROFILE_SELECT } from "./profiles";
 import { mapProfileRow, type ProfileRow } from "./mappers";
 import { PROMPT_SELECT, mapPromptRow, type PromptRow } from "./prompts";
-import { GENERATOR_SELECT, mapGeneratorRow, type GeneratorRow } from "./generators";
 import { REQUEST_SELECT, mapRequestRow, type RequestRow } from "./requests";
 import { connectionsFromSteps } from "@/lib/workflow-logic";
 import { normalizeToolRefs } from "@/lib/ai-tool-catalog";
 import { applyAdvancedFilters, hasSearchFilter, sanitizeSearchText, tagJoinSelect, type ContentSearchFilters } from "./taxonomy-query";
-import { generatorHref, promptHref, requestHref } from "@/lib/utils";
+import { promptHref, requestHref } from "@/lib/utils";
 import { translateForRuntime } from "@/lib/i18n/translations";
 import type { MultiImageItem } from "./media-input";
-import type { ContentVisibility, Generator, Prompt, PromptContentType, PromptMedia, Tag, PromptRequest, Workflow, WorkflowContentRef, WorkflowInput, WorkflowIO, WorkflowStep, WorkflowStepType } from "@/types";
+import type { ContentVisibility, Prompt, PromptContentType, PromptMedia, Tag, PromptRequest, Workflow, WorkflowContentRef, WorkflowInput, WorkflowIO, WorkflowStep, WorkflowStepType } from "@/types";
 
 export interface WorkflowRow {
   id: string;
@@ -86,7 +85,6 @@ interface StepRow {
   instructions: string;
   step_type: WorkflowStepType;
   prompt_id: string | null;
-  generator_id: string | null;
   request_id: string | null;
   inputs: WorkflowInput[] | null;
   outputs: WorkflowIO[] | null;
@@ -195,21 +193,6 @@ export function promptRef(p: Prompt): WorkflowContentRef {
   };
 }
 
-export function generatorRef(g: Generator): WorkflowContentRef {
-  return {
-    type: "generator",
-    id: g.id,
-    title: g.title,
-    contentType: g.contentType,
-    category: g.category,
-    authorName: g.creator.displayName,
-    authorUsername: g.creator.username,
-    thumbnailUrl: g.coverUrl,
-    published: g.status === "published",
-    href: generatorHref(g),
-  };
-}
-
 export function requestRef(r: PromptRequest): WorkflowContentRef {
   return {
     type: "request",
@@ -229,20 +212,14 @@ export function requestRef(r: PromptRequest): WorkflowContentRef {
 async function resolveContent(rows: StepRow[]): Promise<Map<string, WorkflowContentRef>> {
   const map = new Map<string, WorkflowContentRef>();
   const promptIds = rows.map((r) => r.prompt_id).filter((id): id is string => Boolean(id));
-  const generatorIds = rows.map((r) => r.generator_id).filter((id): id is string => Boolean(id));
   const requestIds = rows.map((r) => r.request_id).filter((id): id is string => Boolean(id));
-  const [prompts, generators, requests] = await Promise.all([
+  const [prompts, requests] = await Promise.all([
     promptIds.length ? supabase.from("prompts").select(PROMPT_SELECT).in("id", promptIds) : Promise.resolve({ data: [] }),
-    generatorIds.length ? supabase.from("generators").select(GENERATOR_SELECT).in("id", generatorIds) : Promise.resolve({ data: [] }),
     requestIds.length ? supabase.from("prompt_requests").select(REQUEST_SELECT).in("id", requestIds) : Promise.resolve({ data: [] }),
   ]);
   for (const raw of prompts.data ?? []) {
     const p = mapPromptRow(raw as unknown as PromptRow);
     if (!p.deletedAt) map.set(`prompt:${p.id}`, promptRef(p));
-  }
-  for (const raw of generators.data ?? []) {
-    const g = mapGeneratorRow(raw as unknown as GeneratorRow);
-    map.set(`generator:${g.id}`, generatorRef(g));
   }
   for (const raw of requests.data ?? []) {
     const r = mapRequestRow(raw as unknown as RequestRow);
@@ -261,7 +238,7 @@ export async function fetchWorkflowById(id: string): Promise<{ workflow: Workflo
     }
     const { data: stepRows, error: stepsError } = await supabase
       .from("workflow_steps")
-      .select("id, position, title, description, instructions, step_type, prompt_id, generator_id, request_id, inputs, outputs")
+      .select("id, position, title, description, instructions, step_type, prompt_id, request_id, inputs, outputs")
       .eq("workflow_id", id)
       .order("position", { ascending: true });
     if (stepsError) {
@@ -271,7 +248,7 @@ export async function fetchWorkflowById(id: string): Promise<{ workflow: Workflo
     const rows = (stepRows ?? []) as unknown as StepRow[];
     const content = await resolveContent(rows);
     const steps: WorkflowStep[] = rows.map((row) => {
-      const refId = row.prompt_id ?? row.generator_id ?? row.request_id;
+      const refId = row.prompt_id ?? row.request_id;
       const ref = refId ? (content.get(`${row.step_type}:${refId}`) ?? null) : null;
       return {
         id: row.id,
@@ -350,7 +327,6 @@ export async function saveWorkflow(input: SaveWorkflowInput, creatorId: string):
     instructions: step.instructions.trim(),
     step_type: step.stepType,
     prompt_id: step.stepType === "prompt" ? (step.content?.id ?? null) : null,
-    generator_id: step.stepType === "generator" ? (step.content?.id ?? null) : null,
     request_id: step.stepType === "request" ? (step.content?.id ?? null) : null,
     inputs: step.inputs,
     outputs: step.outputs,

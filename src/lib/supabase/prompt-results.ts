@@ -8,7 +8,6 @@ import type { PromptResult, PromptResultMediaType, PromptResultSummary } from "@
 interface ResultSummaryRow {
   id: string;
   prompt_id: string | null;
-  generator_id: string | null;
   media_type: PromptResultMediaType;
   thumbnail_url: string | null;
   text_content: string | null;
@@ -27,7 +26,7 @@ interface ResultSummaryRow {
  * that fetches the rest, and only for one result at a time.
  */
 const RESULT_LIST_SELECT = `
-  id, prompt_id, generator_id, media_type, thumbnail_url, text_content, tool, has_modification, like_count, created_at,
+  id, prompt_id, media_type, thumbnail_url, text_content, tool, has_modification, like_count, created_at,
   profiles:creator_id ( id, username, display_name, avatar_url, cover_url, bio, website, follower_count, following_count, created_at, interests )
 `;
 
@@ -35,7 +34,6 @@ function mapResultSummaryRow(row: ResultSummaryRow): PromptResultSummary {
   return {
     id: row.id,
     promptId: row.prompt_id ?? undefined,
-    generatorId: row.generator_id ?? undefined,
     creator: mapProfileRow(row.profiles),
     mediaType: row.media_type,
     thumbnailUrl: row.thumbnail_url,
@@ -75,34 +73,6 @@ export async function fetchResultsForPrompt(
   }
 }
 
-/**
- * The Generator Local page's own equivalent of `fetchResultsForPrompt` —
- * same narrow summary shape, same one-page-at-a-time contract, just a
- * different `.eq()` column. Not a second results system: same table, same
- * row shape, same `ResultCard`/`PromptResultsSection` consume both.
- */
-export async function fetchResultsForGenerator(
-  generatorId: string,
-  { limit = 6, offset = 0 }: { limit?: number; offset?: number } = {},
-): Promise<{ results: PromptResultSummary[]; total: number }> {
-  try {
-    const { data, error, count } = await supabase
-      .from("prompt_results")
-      .select(RESULT_LIST_SELECT, { count: "exact" })
-      .eq("generator_id", generatorId)
-      .order("created_at", { ascending: false })
-      .range(offset, offset + limit - 1);
-    if (error) {
-      console.error("fetchResultsForGenerator", error);
-      return { results: [], total: 0 };
-    }
-    return { results: ((data ?? []) as unknown as ResultSummaryRow[]).map(mapResultSummaryRow), total: count ?? 0 };
-  } catch (err) {
-    console.error("fetchResultsForGenerator", err);
-    return { results: [], total: 0 };
-  }
-}
-
 interface ResultDetailRow extends ResultSummaryRow {
   media_url: string | null;
   width: number | null;
@@ -111,15 +81,13 @@ interface ResultDetailRow extends ResultSummaryRow {
   modified_prompt_text: string | null;
   comment_count: number;
   prompts: { id: string; title: string; description: string; prompt_text: string } | null;
-  generators: { id: string; title: string; slug: string } | null;
 }
 
 const RESULT_DETAIL_SELECT = `
-  id, prompt_id, generator_id, media_type, media_url, thumbnail_url, width, height, text_content, tool, has_modification,
+  id, prompt_id, media_type, media_url, thumbnail_url, width, height, text_content, tool, has_modification,
   modification_summary, modified_prompt_text, like_count, comment_count, created_at,
   profiles:creator_id ( id, username, display_name, avatar_url, cover_url, bio, website, follower_count, following_count, created_at, interests ),
-  prompts:prompt_id ( id, title, description, prompt_text ),
-  generators:generator_id ( id, title, slug )
+  prompts:prompt_id ( id, title, description, prompt_text )
 `;
 
 function mapResultDetailRow(row: ResultDetailRow): PromptResult {
@@ -134,7 +102,6 @@ function mapResultDetailRow(row: ResultDetailRow): PromptResult {
     originalPrompt: row.prompts
       ? { id: row.prompts.id, title: row.prompts.title, description: row.prompts.description, promptText: row.prompts.prompt_text }
       : undefined,
-    originalGenerator: row.generators ? { id: row.generators.id, title: row.generators.title, slug: row.generators.slug } : undefined,
   };
 }
 
@@ -182,9 +149,7 @@ function extensionForRawFile(file: File): string {
  * §23 says that whole feature simply doesn't exist there, so it's not just
  * hidden in the UI, it's absent from the type.
  */
-export type CreatePromptResultSource =
-  | { type: "prompt"; promptId: string; hasModification: boolean; modificationSummary: string; modifiedPromptText: string }
-  | { type: "generator"; generatorId: string };
+export type CreatePromptResultSource = { type: "prompt"; promptId: string; hasModification: boolean; modificationSummary: string; modifiedPromptText: string };
 
 export interface CreatePromptResultInput {
   source: CreatePromptResultSource;
@@ -287,13 +252,11 @@ export async function createPromptResult(input: CreatePromptResultInput, creator
   // boolean (the object property isn't `readonly`), but a direct local
   // binding to the union itself does.
   const { source } = input;
-  const isPromptSource = source.type === "prompt";
-  const hasModification = isPromptSource && source.hasModification;
+  const hasModification = source.hasModification;
 
   const { error } = await supabase.from("prompt_results").insert({
     id: resultId,
-    prompt_id: isPromptSource ? source.promptId : null,
-    generator_id: isPromptSource ? null : source.generatorId,
+    prompt_id: source.promptId,
     creator_id: creatorId,
     media_type: mediaType,
     media_url: mediaUrl,
@@ -303,8 +266,8 @@ export async function createPromptResult(input: CreatePromptResultInput, creator
     text_content: textContent,
     tool: input.tool.trim() || null,
     has_modification: hasModification,
-    modification_summary: isPromptSource && hasModification && source.modificationSummary.trim() ? source.modificationSummary.trim() : null,
-    modified_prompt_text: isPromptSource && hasModification && source.modifiedPromptText.trim() ? source.modifiedPromptText.trim() : null,
+    modification_summary: hasModification && source.modificationSummary.trim() ? source.modificationSummary.trim() : null,
+    modified_prompt_text: hasModification && source.modifiedPromptText.trim() ? source.modifiedPromptText.trim() : null,
   });
   if (error) throw new Error(error.message);
 

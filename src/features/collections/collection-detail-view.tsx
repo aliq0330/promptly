@@ -13,7 +13,6 @@ import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Portal } from "@/components/ui/portal";
 import { PromptCard } from "@/features/prompts/prompt-card";
-import { GeneratorCard } from "@/features/generators/generator-card";
 import { WorkflowCard } from "@/features/workflows/workflow-card";
 import { PresetCard } from "@/features/presets/preset-card";
 import { CollectionFormModal } from "./collection-form-modal";
@@ -102,10 +101,9 @@ export function CollectionDetailView() {
    * Genel's own detail screen is the general cascade, not a scoped
    * single-collection removal) — two distinct, clearly separate backend
    * calls (§19), never the same one reused for both. Works identically for
-   * a prompt or a generator entry (both share the same `collection_items`
-   * shape since Bölüm 9.36).
+   * every entry type (they all share the same `collection_items` shape).
    */
-  async function handleRemoveItem(id: string, contentType: "prompt" | "generator" | "workflow" | "preset") {
+  async function handleRemoveItem(id: string, contentType: "prompt" | "workflow" | "preset") {
     if (!collection) return;
     if (collection.isDefault) {
       await removeFromSavedEverywhere(id, contentType);
@@ -171,8 +169,6 @@ export function CollectionDetailView() {
               <div key={entry.data.id} className="pb-3 break-inside-avoid sm:pb-4">
                 {entry.type === "prompt" ? (
                   <PromptCard prompt={entry.data} collectionRemoval={removal} />
-                ) : entry.type === "generator" ? (
-                  <GeneratorCard generator={entry.data} collectionRemoval={removal} />
                 ) : entry.type === "preset" ? (
                   <PresetCard preset={entry.data} collectionRemoval={removal} />
                 ) : (

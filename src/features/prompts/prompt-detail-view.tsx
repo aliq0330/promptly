@@ -14,7 +14,7 @@ import { TaxonomyLinks } from "@/features/content/taxonomy-links";
 import { CreatorSummary } from "@/features/profile/creator-summary";
 import { clampedAspectRatio } from "@/lib/placeholder-image";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
-import { GeneratorSourceContext, RequestResponseContext } from "@/features/prompts/post-context";
+import { RequestResponseContext } from "@/features/prompts/post-context";
 import { CommentSection } from "@/features/prompts/comment-section";
 import { LikeButton } from "@/features/prompts/like-button";
 import { SaveButton } from "@/features/prompts/save-button";
@@ -210,7 +210,6 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
           {prompt.origin.type === "request-response" && (
             <RequestResponseContext requestId={prompt.origin.requestId} currentPromptId={prompt.id} />
           )}
-          {prompt.generatedFrom && <GeneratorSourceContext generatedFrom={prompt.generatedFrom} />}
 
           <DetailActionBar trailing={<ShareTriggerButton target={{ contentType: "prompt", prompt }} label={t("common.share")} />}>
             <LikeButton id={prompt.id} likeCount={prompt.likeCount} size={18} />

@@ -17,7 +17,7 @@ import {
 import type { LikeableContentType } from "@/lib/supabase/likes";
 
 /** See `use-save-state.ts`'s identical note — saving never targets a request. */
-type SaveableContentType = Extract<LikeableContentType, "prompt" | "generator" | "workflow" | "preset">;
+type SaveableContentType = Extract<LikeableContentType, "prompt" | "workflow" | "preset">;
 import { placeholderArt } from "@/lib/placeholder-image";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -42,14 +42,10 @@ import type { Collection } from "@/types";
  * modal — see `view` state below), and a collection created from here
  * auto-adds the current work so the user never has to repeat the toggle.
  *
- * Pass exactly one of `promptId`/`generatorId` — a generator saves through
- * this SAME multi-collection modal a prompt does (Bölüm 9.36's Prompt/
- * Generator parity pass), so the same "Film fikirleri" collection can hold
- * both.
+ * Pass exactly one of `promptId`/`workflowId`/`presetId`.
  */
 export function SaveToCollectionModal({
   promptId,
-  generatorId,
   workflowId,
   presetId,
   onClose,
@@ -57,7 +53,6 @@ export function SaveToCollectionModal({
   onRemoved,
 }: {
   promptId?: string;
-  generatorId?: string;
   workflowId?: string;
   presetId?: string;
   onClose: () => void;
@@ -70,8 +65,8 @@ export function SaveToCollectionModal({
   const { user } = useAuth();
   const { profile } = useOwnProfile();
 
-  const contentId = (presetId ?? workflowId ?? generatorId ?? promptId)!;
-  const contentType: SaveableContentType = presetId ? "preset" : workflowId ? "workflow" : generatorId ? "generator" : "prompt";
+  const contentId = (presetId ?? workflowId ?? promptId)!;
+  const contentType: SaveableContentType = presetId ? "preset" : workflowId ? "workflow" : "prompt";
 
   const [view, setView] = useState<"list" | "create">("list");
   const [collections, setCollections] = useState<Collection[]>([]);

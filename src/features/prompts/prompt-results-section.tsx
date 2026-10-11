@@ -5,7 +5,7 @@ import { Loader2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/features/auth/auth-provider";
-import { fetchResultsForGenerator, fetchResultsForPrompt } from "@/lib/supabase/prompt-results";
+import { fetchResultsForPrompt } from "@/lib/supabase/prompt-results";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { AddResultModal, type AddResultModalTarget } from "./add-result-modal";
 import { ResultCard } from "./result-card";
@@ -22,7 +22,7 @@ const PAGE_SIZE = 6;
  * threaded through both) is what actually lets each call site stay a
  * one-line dispatch instead of a wider, leakier shared prop.
  */
-export type PromptResultsSectionTarget = { type: "prompt"; promptId: string; promptText: string } | { type: "generator"; generatorId: string };
+export type PromptResultsSectionTarget = { type: "prompt"; promptId: string; promptText: string };
 
 /**
  * "Kullanıcı sonuçları" section (CLAUDE.md §1/§15/§16/§17, ve Generator
@@ -41,8 +41,7 @@ export type PromptResultsSectionTarget = { type: "prompt"; promptId: string; pro
 export function PromptResultsSection({ target }: { target: PromptResultsSectionTarget }) {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const isPromptTarget = target.type === "prompt";
-  const targetId = isPromptTarget ? target.promptId : target.generatorId;
+  const targetId = target.promptId;
   const [results, setResults] = useState<PromptResultSummary[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -51,9 +50,7 @@ export function PromptResultsSection({ target }: { target: PromptResultsSectionT
   const [reloadKey, setReloadKey] = useState(0);
 
   function fetchPage(offset: number) {
-    return isPromptTarget
-      ? fetchResultsForPrompt(targetId, { limit: PAGE_SIZE, offset })
-      : fetchResultsForGenerator(targetId, { limit: PAGE_SIZE, offset });
+    return fetchResultsForPrompt(targetId, { limit: PAGE_SIZE, offset });
   }
 
   useEffect(() => {
@@ -70,7 +67,7 @@ export function PromptResultsSection({ target }: { target: PromptResultsSectionT
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- fetchPage is a fresh closure every render but only ever depends on targetId/isPromptTarget, both already in this deps array
-  }, [targetId, isPromptTarget, reloadKey]);
+  }, [targetId, reloadKey]);
 
   async function handleLoadMore() {
     setLoadingMore(true);
@@ -79,9 +76,7 @@ export function PromptResultsSection({ target }: { target: PromptResultsSectionT
     setLoadingMore(false);
   }
 
-  const modalTarget: AddResultModalTarget = isPromptTarget
-    ? { type: "prompt", promptId: target.promptId, promptText: target.promptText }
-    : { type: "generator", generatorId: target.generatorId };
+  const modalTarget: AddResultModalTarget = { type: "prompt", promptId: target.promptId, promptText: target.promptText };
 
   function handleAdded() {
     setIsAddOpen(false);
@@ -103,7 +98,7 @@ export function PromptResultsSection({ target }: { target: PromptResultsSectionT
       </div>
       {user && (
         <p className="text-caption text-text-muted">
-          {isPromptTarget ? t("result.sharePromptHint") : t("result.shareGeneratorHint")}
+          {t("result.sharePromptHint")}
         </p>
       )}
 
@@ -115,7 +110,7 @@ export function PromptResultsSection({ target }: { target: PromptResultsSectionT
         </div>
       ) : results.length === 0 ? (
         <p className="rounded-lg border border-dashed border-border-soft bg-surface-soft px-4 py-6 text-center text-caption text-text-muted">
-          {isPromptTarget ? t("result.emptyPromptHint") : t("result.emptyGeneratorHint")}
+          {t("result.emptyPromptHint")}
         </p>
       ) : (
         <>

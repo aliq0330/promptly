@@ -3,7 +3,6 @@
  * piece of content by READING the systems that already own the data:
  *
  *  - workflow steps / connections        → `workflow_step`
- *  - prompts.generator_id                → `uses_generator`
  *  - prompts.request_id                  → `request_result`
  *  - accepted prompt_edit_suggestions    → `accepted_suggestion`
  *  - stored Prompt DNA (staged lookup)   → `dna_similar`   (never persisted)
@@ -21,7 +20,6 @@ import { fetchDnaSections } from "./prompt-dna";
 import { fetchSuggestionsForPrompt } from "./prompt-edit-suggestions";
 import { fetchVersionsForPrompt } from "./prompt-versions";
 import { fetchPromptById, fetchPromptsByAuthor, mapPromptRow, searchPrompts, PROMPT_SELECT, type PromptRow } from "./prompts";
-import { fetchGeneratorById, fetchGeneratorsByAuthor, mapGeneratorRow, searchGenerators, GENERATOR_SELECT, type GeneratorRow } from "./generators";
 import { fetchWorkflowById, fetchWorkflowsByCreator, mapWorkflowRow, searchWorkflows, WORKFLOW_SELECT, type WorkflowRow } from "./workflows";
 import { fetchRequestById, fetchRequestsByAuthor, mapRequestRow, searchRequests, REQUEST_SELECT, type RequestRow } from "./requests";
 import { translateForRuntime } from "@/lib/i18n/translations";
@@ -40,8 +38,8 @@ import {
   type RelationReason,
   type RelationType,
 } from "@/lib/relations/types";
-import { generatorHref, promptHref, requestHref, workflowHref } from "@/lib/utils";
-import type { Generator, Prompt, PromptEditSuggestion, PromptRequest, Workflow } from "@/types";
+import { promptHref, requestHref, workflowHref } from "@/lib/utils";
+import type { Prompt, PromptEditSuggestion, PromptRequest, Workflow } from "@/types";
 
 /* ---------------------------------------------------------------------- */
 /* Caps — "limit or paginate large graphs". The UI shows when one was hit. */
@@ -51,7 +49,6 @@ export const GRAPH_CAPS = {
   manual: 30,
   workflows: 6,
   workflowNeighbors: 8,
-  generatorPrompts: 12,
   requestResults: 12,
   suggestions: 8,
   dnaCandidates: 40,
@@ -102,22 +99,6 @@ export function promptToNode(p: Prompt): RelationNode {
     imageUrl: p.media[0]?.url ?? null,
     contentType: p.contentType,
     href: promptHref(p),
-  };
-}
-
-export function generatorToNode(g: Generator): RelationNode {
-  return {
-    key: nodeKey("generator", g.id),
-    kind: "generator",
-    id: g.id,
-    title: g.title,
-    description: clip(g.description),
-    ownerId: g.creator.id,
-    ownerName: g.creator.displayName,
-    ownerUsername: g.creator.username,
-    imageUrl: g.coverUrl,
-    contentType: g.contentType,
-    href: generatorHref(g),
   };
 }
 
@@ -184,18 +165,16 @@ async function fetchNodesByRefs(refs: Ref[]): Promise<Map<string, RelationNode>>
   const out = new Map<string, RelationNode>();
   const ids = (kind: RelatableKind) => [...new Set(refs.filter((r) => r.kind === kind).map((r) => r.id))];
   const promptIds = ids("prompt");
-  const generatorIds = ids("generator");
   const workflowIds = ids("workflow");
   const requestIds = ids("request");
 
-  const [prompts, generators, workflows, requests] = await Promise.all([
+  const [prompts, workflows, requests] = await Promise.all([
     promptIds.length ? supabase.from("prompts").select(PROMPT_SELECT).in("id", promptIds) : Promise.resolve({ data: [] }),
-    generatorIds.length ? supabase.from("generators").select(GENERATOR_SELECT).in("id", generatorIds) : Promise.resolve({ data: [] }),
     workflowIds.length ? supabase.from("workflows").select(WORKFLOW_SELECT).in("id", workflowIds) : Promise.resolve({ data: [] }),
     requestIds.length ? supabase.from("prompt_requests").select(REQUEST_SELECT).in("id", requestIds) : Promise.resolve({ data: [] }),
   ]).catch((err) => {
     console.error("fetchNodesByRefs", err);
-    return [{ data: [] }, { data: [] }, { data: [] }, { data: [] }];
+    return [{ data: [] }, { data: [] }, { data: [] }];
   });
 
   const blockedFiltered = async <T,>(items: T[], authorId: (item: T) => string) => withoutBlocked(items, authorId);
@@ -205,12 +184,6 @@ async function fetchNodesByRefs(refs: Ref[]): Promise<Map<string, RelationNode>>
     (p) => p.author.id,
   )) {
     out.set(nodeKey("prompt", p.id), promptToNode(p));
-  }
-  for (const g of await blockedFiltered(
-    (generators.data ?? []).map((row) => mapGeneratorRow(row as unknown as GeneratorRow)).filter((g) => g.status === "published"),
-    (g) => g.creator.id,
-  )) {
-    out.set(nodeKey("generator", g.id), generatorToNode(g));
   }
   for (const w of await blockedFiltered(
     (workflows.data ?? []).map((row) => mapWorkflowRow(row as unknown as WorkflowRow)).filter((w) => w.status === "published"),
@@ -242,10 +215,6 @@ async function loadCenter(kind: RelatableKind, id: string): Promise<CenterLoaded
   if (kind === "prompt") {
     const prompt = await fetchPromptById(id);
     return prompt && !prompt.deletedAt ? { node: promptToNode(prompt), prompt } : null;
-  }
-  if (kind === "generator") {
-    const generator = await fetchGeneratorById(id);
-    return generator ? { node: generatorToNode(generator) } : null;
   }
   if (kind === "workflow") {
     const workflow = await fetchWorkflowById(id);
@@ -283,7 +252,7 @@ interface StepLink {
  * `workflow_connections`, never copied.
  */
 async function workflowRelations(center: RelationNode): Promise<Partial_> {
-  const column = center.kind === "prompt" ? "prompt_id" : center.kind === "generator" ? "generator_id" : center.kind === "request" ? "request_id" : null;
+  const column = center.kind === "prompt" ? "prompt_id" : center.kind === "request" ? "request_id" : null;
   if (!column) return EMPTY;
 
   const { data: stepRows, error } = await supabase
@@ -331,12 +300,12 @@ async function workflowRelations(center: RelationNode): Promise<Partial_> {
 
   const { data: neighborRows } = await supabase
     .from("workflow_steps")
-    .select("id, position, step_type, prompt_id, generator_id, request_id")
+    .select("id, position, step_type, prompt_id, request_id")
     .in("id", neighborStepIds);
-  type NeighborRow = { id: string; position: number; step_type: string; prompt_id: string | null; generator_id: string | null; request_id: string | null };
+  type NeighborRow = { id: string; position: number; step_type: string; prompt_id: string | null; request_id: string | null };
   const neighborSteps = (neighborRows ?? []) as NeighborRow[];
   const neighborRefs: Ref[] = neighborSteps.flatMap((s): Ref[] =>
-    s.prompt_id ? [{ kind: "prompt", id: s.prompt_id }] : s.generator_id ? [{ kind: "generator", id: s.generator_id }] : s.request_id ? [{ kind: "request", id: s.request_id }] : [],
+    s.prompt_id ? [{ kind: "prompt", id: s.prompt_id }] : s.request_id ? [{ kind: "request", id: s.request_id }] : [],
   );
   const neighborNodes = await fetchNodesByRefs(neighborRefs);
   const ownByStepId = new Map(visibleSteps.map((s) => [s.id, s]));
@@ -348,8 +317,8 @@ async function workflowRelations(center: RelationNode): Promise<Partial_> {
     const own = ownByStepId.get(fromIsOwn ? conn.from_step_id : conn.to_step_id);
     const otherStep = neighborSteps.find((s) => s.id === otherStepId);
     if (!own || !otherStep) continue;
-    const refId = otherStep.prompt_id ?? otherStep.generator_id ?? otherStep.request_id;
-    const refKind: RelatableKind = otherStep.prompt_id ? "prompt" : otherStep.generator_id ? "generator" : "request";
+    const refId = otherStep.prompt_id ?? otherStep.request_id;
+    const refKind: RelatableKind = otherStep.prompt_id ? "prompt" : "request";
     const neighbor = refId ? neighborNodes.get(nodeKey(refKind, refId)) : undefined;
     if (!neighbor || neighbor.key === center.key) continue;
     const workflow = workflowNodes.get(nodeKey("workflow", conn.workflow_id));
@@ -400,22 +369,14 @@ function workflowCenterRelations(center: RelationNode, loaded: NonNullable<Cente
   return { nodes, edges };
 }
 
-/** Prompt center: the generator it was made with and the request it answers. */
+/** Prompt center: the request it answers. */
 async function promptProvenance(center: RelationNode, prompt: Prompt): Promise<Partial_> {
   const refs: Ref[] = [];
-  if (prompt.generatedFrom) refs.push({ kind: "generator", id: prompt.generatedFrom.generatorId });
   if (prompt.origin.type === "request-response") refs.push({ kind: "request", id: prompt.origin.requestId });
   if (refs.length === 0) return EMPTY;
   const resolved = await fetchNodesByRefs(refs);
   const nodes: RelationNode[] = [];
   const edges: RelationEdge[] = [];
-  if (prompt.generatedFrom) {
-    const generator = resolved.get(nodeKey("generator", prompt.generatedFrom.generatorId));
-    if (generator) {
-      nodes.push(generator);
-      edges.push(edge("uses_generator", center.key, generator.key, { reasons: [{ kind: "info", key: "relations.reason.madeWithGenerator" }] }));
-    }
-  }
   if (prompt.origin.type === "request-response") {
     const request = await fetchRequestById(prompt.origin.requestId);
     if (request && !request.deletedAt) {
@@ -429,31 +390,6 @@ async function promptProvenance(center: RelationNode, prompt: Prompt): Promise<P
     }
   }
   return { nodes, edges };
-}
-
-/** Generator center: prompts that were made with it (published + visible only). */
-async function generatorPrompts(center: RelationNode): Promise<Partial_> {
-  const { data, error } = await supabase
-    .from("prompts")
-    .select(PROMPT_SELECT)
-    .eq("generator_id", center.id)
-    .eq("status", "published")
-    .order("created_at", { ascending: false })
-    .limit(GRAPH_CAPS.generatorPrompts + 1);
-  if (error) {
-    console.error("generatorPrompts", error);
-    return EMPTY;
-  }
-  const prompts = await withoutBlocked(
-    (data ?? []).map((row) => mapPromptRow(row as unknown as PromptRow)).filter((p) => !p.deletedAt),
-    (p) => p.author.id,
-  );
-  const shown = prompts.slice(0, GRAPH_CAPS.generatorPrompts);
-  return {
-    nodes: shown.map(promptToNode),
-    edges: shown.map((p) => edge("uses_generator", nodeKey("prompt", p.id), center.key, { reasons: [{ kind: "info", key: "relations.reason.madeWithGenerator" }] })),
-    capped: prompts.length > shown.length ? "generatorPrompts" : undefined,
-  };
 }
 
 /** Request center: the answers (results) given to it. */
@@ -680,7 +616,7 @@ export async function fetchRelationGraph(kind: RelatableKind, id: string, viewer
     safe(manualRelations(center, viewerId), EMPTY),
     kind === "workflow" ? Promise.resolve(loaded.workflow ? workflowCenterRelations(center, loaded.workflow) : EMPTY) : safe(workflowRelations(center), EMPTY),
     loaded.prompt ? safe(promptProvenance(center, loaded.prompt), EMPTY) : Promise.resolve(EMPTY),
-    kind === "generator" ? safe(generatorPrompts(center), EMPTY) : loaded.request ? safe(requestResults(center, loaded.request), EMPTY) : Promise.resolve(EMPTY),
+    loaded.request ? safe(requestResults(center, loaded.request), EMPTY) : Promise.resolve(EMPTY),
     loaded.prompt ? safe(acceptedSuggestions(center, loaded.prompt), EMPTY) : Promise.resolve(EMPTY),
     loaded.prompt ? safe(dnaSuggestions(center, loaded.prompt), dnaFallback) : Promise.resolve({ ...EMPTY, status: "not_applicable" as DnaStatus }),
   ]);
@@ -767,10 +703,6 @@ export async function searchRelatableContent(query: string, kinds: RelatableKind
       if (kind === "prompt") {
         const list = q ? await searchPrompts(q, {}, limit) : viewerId ? (await fetchPromptsByAuthor(viewerId)).slice(0, limit) : [];
         return list.filter((p) => p.status === "published").map(promptToNode);
-      }
-      if (kind === "generator") {
-        const list = q ? await searchGenerators(q, {}, limit) : viewerId ? (await fetchGeneratorsByAuthor(viewerId)).slice(0, limit) : [];
-        return list.filter((g) => g.status === "published").map(generatorToNode);
       }
       if (kind === "workflow") {
         const list = q ? await searchWorkflows(q, {}, limit) : viewerId ? (await fetchWorkflowsByCreator(viewerId)).slice(0, limit) : [];

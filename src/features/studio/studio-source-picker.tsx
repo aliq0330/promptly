@@ -5,14 +5,12 @@ import { Search, X } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
 import { fieldInputClassName } from "@/components/ui/field";
 import { useRealPrompts } from "@/features/prompts/real-prompts-provider";
-import { useRealGenerators } from "@/features/generators/real-generators-provider";
-import { searchGenerators } from "@/lib/supabase/generators";
 import { searchPrompts } from "@/lib/supabase/prompts";
 import { contentTypeLabelKey, taxonomyLabel } from "@/lib/content-taxonomy";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import type { Generator, Prompt } from "@/types";
+import type { Prompt } from "@/types";
 
-export type SourcePickerKind = "prompt" | "generator";
+export type SourcePickerKind = "prompt";
 
 interface Row {
   /** Prompt id or generator slug — what goes into the Studio URL. */
@@ -27,19 +25,14 @@ function fromPrompt(p: Prompt): Row {
   return { key: p.id, title: p.title, author: p.author.displayName, typeLabel: contentTypeLabelKey(p.contentType), image: p.media[0]?.url ?? null };
 }
 
-function fromGenerator(g: Generator): Row {
-  return { key: g.slug, title: g.title, author: g.creator.displayName, typeLabel: contentTypeLabelKey(g.contentType), image: g.coverUrl };
-}
-
 /**
- * "Prompt seç" / "Generator seç" in Studio: the recent items Promptly already
+ * "Prompt seç" in Studio: the recent items Promptly already
  * has in memory, or a title/description search. Picking only returns the
  * key; the page loads the source itself (same path as a `?prompt=` link).
  */
 export function StudioSourcePicker({ kind, onPick, onClose }: { kind: SourcePickerKind; onPick: (key: string) => void; onClose: () => void }) {
   const { t, language } = useTranslation();
   const { realPrompts } = useRealPrompts();
-  const { realGenerators } = useRealGenerators();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Row[] | null>(null);
   const [searching, setSearching] = useState(false);
@@ -55,7 +48,7 @@ export function StudioSourcePicker({ kind, onPick, onClose }: { kind: SourcePick
     let cancelled = false;
     setSearching(true);
     const timer = window.setTimeout(async () => {
-      const rows = kind === "prompt" ? (await searchPrompts(text, {}, 30)).map(fromPrompt) : (await searchGenerators(text, {}, 30)).map(fromGenerator);
+      const rows = (await searchPrompts(text, {}, 30)).map(fromPrompt);
       if (cancelled) return;
       setResults(rows);
       setSearching(false);
@@ -67,11 +60,11 @@ export function StudioSourcePicker({ kind, onPick, onClose }: { kind: SourcePick
   }, [query, kind]);
 
   const recent = useMemo(
-    () => (kind === "prompt" ? realPrompts.filter((p) => !p.deletedAt).slice(0, 30).map(fromPrompt) : realGenerators.slice(0, 30).map(fromGenerator)),
-    [kind, realPrompts, realGenerators],
+    () => (realPrompts.filter((p) => !p.deletedAt).slice(0, 30).map(fromPrompt)),
+    [realPrompts],
   );
   const rows = results ?? recent;
-  const titleKey = kind === "prompt" ? "studio.pickPrompt" : "studio.pickGenerator";
+  const titleKey = "studio.pickPrompt";
 
   return (
     <Modal onClose={onClose} labelledBy="studio-source-picker-title">
@@ -95,7 +88,7 @@ export function StudioSourcePicker({ kind, onPick, onClose }: { kind: SourcePick
               type="search"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder={t(kind === "prompt" ? "studio.searchPrompt" : "studio.searchGenerator")}
+              placeholder={t("studio.searchPrompt")}
               autoFocus
               className={`${fieldInputClassName} pl-9`}
             />

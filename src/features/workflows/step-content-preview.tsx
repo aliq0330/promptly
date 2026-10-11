@@ -6,14 +6,12 @@ import { ExternalLink } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { fetchPromptById } from "@/lib/supabase/prompts";
-import { fetchGeneratorById, fetchGeneratorVersion } from "@/lib/supabase/generators";
 import type { WorkflowContentRef, WorkflowStep } from "@/types";
 import { MEDIA_ICON, STEP_TYPE_META, stepSubtitle } from "./step-meta";
 
 /** What a step's hover/tap preview shows beyond the light `WorkflowContentRef`. */
 type PreviewData =
   | { kind: "prompt"; description: string; promptText: string; imageUrl: string | null }
-  | { kind: "generator"; description: string; imageUrl: string | null; fields: string[] }
   | { kind: "basic" };
 
 // One fetch per piece of content for the whole session (hovering back and forth is free).
@@ -28,17 +26,6 @@ function loadPreview(ref: WorkflowContentRef): Promise<PreviewData | null> {
         const prompt = await fetchPromptById(ref.id);
         if (!prompt) return null;
         return { kind: "prompt", description: prompt.description, promptText: prompt.promptText, imageUrl: prompt.media[0]?.url ?? null };
-      }
-      if (ref.type === "generator") {
-        const generator = await fetchGeneratorById(ref.id);
-        if (!generator) return null;
-        const version = generator.currentVersionId ? await fetchGeneratorVersion(generator.currentVersionId) : null;
-        return {
-          kind: "generator",
-          description: generator.description,
-          imageUrl: generator.coverUrl,
-          fields: (version?.schema.fields ?? []).map((field) => field.label).filter(Boolean),
-        };
       }
       return { kind: "basic" };
     })().catch(() => null);
@@ -66,7 +53,6 @@ function usePreviewData(ref: WorkflowContentRef | null) {
   return { loading: false, data: state.data };
 }
 
-const MAX_FIELDS = 6;
 
 /** The step's linked prompt / generator at a glance: title, blurb, type, a small image and a short body. */
 export function StepPreviewBody({ step }: { step: WorkflowStep }) {
@@ -117,23 +103,6 @@ export function StepPreviewBody({ step }: { step: WorkflowStep }) {
           {description && <p className="line-clamp-3 break-words text-small text-text-secondary">{description}</p>}
           {data.kind === "prompt" && data.promptText && (
             <p className="prompt-text line-clamp-4 break-words rounded-md border border-border-soft bg-surface-soft p-2.5 text-caption text-text">{data.promptText}</p>
-          )}
-          {data.kind === "generator" && data.fields.length > 0 && (
-            <div>
-              <p className="mb-1 text-caption font-semibold uppercase tracking-[0.06em] text-text-muted">
-                {t("workflow.flowParams")} · {data.fields.length}
-              </p>
-              <ul className="flex flex-wrap gap-1">
-                {data.fields.slice(0, MAX_FIELDS).map((label, i) => (
-                  <li key={`${label}-${i}`} className="max-w-full truncate rounded-full bg-surface-soft px-2 py-0.5 text-caption text-text-secondary">
-                    {label}
-                  </li>
-                ))}
-                {data.fields.length > MAX_FIELDS && (
-                  <li className="rounded-full bg-surface-soft px-2 py-0.5 text-caption text-text-muted">+{data.fields.length - MAX_FIELDS}</li>
-                )}
-              </ul>
-            </div>
           )}
         </>
       )}

@@ -1,6 +1,5 @@
 "use client";
 
-import { GENERATORS_ENABLED } from "@/lib/feature-flags";
 import { useEffect, useState } from "react";
 import { ArrowLeftRight, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -24,8 +23,7 @@ import { KIND_ICON, useRelationText } from "./relation-text";
  * relate what — here we only guide: at least one end must be the viewer's
  * own content, the other end must be visible content.
  */
-// Generator gizli (§9.145 Aşama 2): yeni ilişki kurarken seçilemez; var olan ilişkiler/haritalar etkilenmez.
-const PICKER_KINDS = RELATABLE_KINDS.filter((kind) => kind !== "generator" || GENERATORS_ENABLED);
+const PICKER_KINDS = RELATABLE_KINDS;
 
 export function AddRelationModal({
   center,

@@ -3,20 +3,18 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowUpRight, Blocks, SlidersHorizontal, Sparkles, Terminal, Workflow as WorkflowIcon } from "lucide-react";
+import { ArrowUpRight, SlidersHorizontal, Sparkles, Terminal, Workflow as WorkflowIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useRealPrompts } from "@/features/prompts/real-prompts-provider";
 import { useRealRequests } from "@/features/requests/real-requests-provider";
-import { useRealGenerators } from "@/features/generators/real-generators-provider";
-import { fetchGeneratorBySlug } from "@/lib/supabase/generators";
 import { fetchWorkflowById } from "@/lib/supabase/workflows";
 import { useRealWorkflows } from "@/features/workflows/real-workflows-provider";
 import { fetchPresetById } from "@/lib/supabase/presets";
 import { useRealPresets } from "@/features/presets/real-presets-provider";
 import { STATUS_LABELS, STATUS_VARIANTS } from "@/features/requests/request-card";
-import { generatorHref, presetHref, promptHref, requestHref, workflowHref } from "@/lib/utils";
+import { presetHref, promptHref, requestHref, workflowHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import type { Generator, Preset, Prompt, PromptRequest, Workflow } from "@/types";
+import type { Preset, Prompt, PromptRequest, Workflow } from "@/types";
 
 const CARD_CLASS =
   "block w-56 space-y-1.5 rounded-xl border border-border-soft bg-surface p-2.5 text-left shadow-card transition-colors duration-200 ease-soft hover:border-border-strong";
@@ -72,51 +70,7 @@ export function SharedPromptCard({ promptId }: { promptId: string }) {
   );
 }
 
-/**
- * A message's shared-generator content card — same shape/behavior as
- * `SharedPromptCard`, except it's found by SLUG (a generator's real
- * route, `generatorHref`) rather than an id, and looked up client-side
- * from `parseGeneratorShareBody`'s recognized plain-text pattern instead
- * of a database column (Bölüm 9.52 — a generator has no `shared_
- * generator_id` in `messages`). `useRealGenerators()`'s own cache is
- * searched by slug first (no new provider), falling back to a real fetch.
- */
-export function SharedGeneratorCard({ slug }: { slug: string }) {
-  const { t } = useTranslation();
-  const { realGenerators } = useRealGenerators();
-  const cached = realGenerators.find((generator) => generator.slug === slug);
-  const [fetched, setFetched] = useState<Generator | null>(null);
-
-  useEffect(() => {
-    if (cached) return;
-    let cancelled = false;
-    fetchGeneratorBySlug(slug).then((result) => {
-      if (!cancelled && result) setFetched(result);
-    });
-    return () => {
-      cancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slug, Boolean(cached)]);
-
-  const generator = cached ?? fetched;
-
-  return (
-    <Link href={generatorHref({ slug })} className={CARD_CLASS}>
-      <span className="flex items-center gap-1.5 text-xs font-medium text-primary">
-        <Blocks size={13} />
-        {t("messages.sharedGenerator")}
-      </span>
-      <span className="block truncate text-sm font-semibold text-text">{generator?.title ?? t("common.loading")}</span>
-      <span className="flex items-center gap-1 text-xs text-primary">
-        {t("messages.openGenerator")}
-        <ArrowUpRight size={11} />
-      </span>
-    </Link>
-  );
-}
-
-/** A message's shared-workflow content card — same shape as `SharedGeneratorCard`, found by id (parsed from the plain-text share block, see `workflow-share-format.ts`). */
+/** A message's shared-workflow content card — same shape as `SharedPromptCard`, found by id (parsed from the plain-text share block, see `workflow-share-format.ts`). */
 export function SharedWorkflowCard({ workflowId }: { workflowId: string }) {
   const { t } = useTranslation();
   const { getCached } = useRealWorkflows();

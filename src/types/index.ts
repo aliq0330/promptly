@@ -112,17 +112,10 @@ export interface Prompt {
    * blank content. `null` for a normal prompt.
    */
   deletedAt: string | null;
-  /**
-   * Set only when this prompt was produced via "Prompt olarak aç" from a
-   * real generator run (`prompts.generator_id`/`generator_version_id`/
-   * `generator_run_id` — Generator Builder + Runtime module) — purely
-   * informational provenance metadata, orthogonal to `origin`.
-   */
-  generatedFrom: { generatorId: string; generatorVersionId: string; generatorRunId: string; generatorTitle: string; generatorSlug: string } | null;
 }
 
 /**
- * A comment belongs to exactly one of a prompt, a request, a generator, or a
+ * A comment belongs to exactly one of a prompt, a request, a
  * Kullanıcı Sonucu — never more than one (enforced by `prompt_comments_
  * exactly_one_target`, see CommentSection).
  */
@@ -130,7 +123,6 @@ export interface PromptComment {
   id: string;
   promptId?: string;
   requestId?: string;
-  generatorId?: string;
   resultId?: string;
   workflowId?: string;
   presetId?: string;
@@ -172,9 +164,7 @@ export type PromptResultMediaType = "image" | "video" | "audio" | "text" | "othe
  */
 export interface PromptResultSummary {
   id: string;
-  /** Exactly one of `promptId`/`generatorId` is ever set (DB-level CHECK) — a result hangs off a real prompt OR a real generator, never both, never neither. */
   promptId?: string;
-  generatorId?: string;
   creator: UserProfile;
   mediaType: PromptResultMediaType;
   /** A genuinely small preview — a resized image thumbnail, a captured video poster frame, or (for audio, which has no real extractable thumbnail) a deterministic offline placeholder cover. Never set for text/other. */
@@ -200,8 +190,6 @@ export interface PromptResult extends PromptResultSummary {
   commentCount: number;
   /** Set only for a prompt-origin result — just enough to render the "Bu sonuç hangi promptla oluşturuldu?" back-link card (+ a prompt-comparison diff when modified) without a second round-trip. */
   originalPrompt?: { id: string; title: string; description: string; promptText: string };
-  /** Set only for a generator-origin result — just enough to render the "Bu sonuç şu generator kullanılarak oluşturuldu" back-link card. Never carries a modification comparison (§5/§23 — a generator result never has one). */
-  originalGenerator?: { id: string; title: string; slug: string };
 }
 
 export type PromptRequestStatus = "open" | "answered" | "closed";
@@ -416,7 +404,7 @@ export interface PromptVariable extends PromptVariableSpec {
  */
 export interface ContentEditEvent {
   id: string;
-  contentType: "prompt" | "prompt_request" | "generator";
+  contentType: "prompt" | "prompt_request";
   contentId: string;
   ownerId: string;
   editorId: string;
@@ -478,15 +466,12 @@ export interface PromptEditSuggestion {
   acceptedVersionId: string | null;
 }
 
-// === Generator (Generator Builder + Generator Runtime) =====================
+// === Katalog alan tipleri (Generator kaldırıldı — CLAUDE.md §9.145) =========
 //
-// A generator's whole builder schema (categories + fields + template
-// sections) is stored as real, versioned JSONB on `generator_versions`
-// (`public.generator_versions.schema`/`template` —
-// supabase/migrations/20260919300000_generators.sql) rather than as
-// separate normalized tables — see that migration's own header comment for
-// the reasoning. These types mirror that JSON shape exactly; nothing here
-// is hard-coded per generator, every category/field is fully user-defined.
+// Generator içerik türü kaldırıldı; geriye yalnızca hazır alan kütüphanesinin
+// (`generator-field-catalog.ts`) ve görselden alan çıkarmanın (`generator-vision-
+// mapping.ts`) kullandığı alan şekli kaldı. Bunlar artık prompt değişkenlerinin
+// "hazır alan" kaynağıdır; veritabanında karşılıkları yoktur.
 
 export type GeneratorFieldType =
   | "text"
@@ -578,94 +563,6 @@ export interface GeneratorField {
   jsonPath: string;
 }
 
-export interface GeneratorSchema {
-  fields: GeneratorField[];
-}
-
-export interface GeneratorTemplateSection {
-  id: string;
-  title: string;
-  content: string;
-  order: number;
-  enabled: boolean;
-}
-
-export interface GeneratorTemplate {
-  sections: GeneratorTemplateSection[];
-}
-
-/** Real key/value input a generator was run with — GeneratorFieldType-shaped values, keyed by field `key`. */
-export type GeneratorValues = Record<string, string | string[]>;
-
-/**
- * A generator's real, primary output — a fully creator-defined, arbitrarily
- * nested JSON object built by `buildGeneratorOutput()`
- * (`src/lib/generator-output.ts`) from the schema's per-field `jsonPath`s.
- * `prompt` (and, when the generator enables it, `negative_prompt`) are the
- * only two reserved/always-present keys — everything else is whatever the
- * creator's own fields define (`subject`/`environment`/`style_preset` in
- * the spec's own examples are illustrative only, never hard-coded here).
- */
-export type GeneratorOutput = Record<string, unknown>;
-
-export interface Generator {
-  id: string;
-  creator: UserProfile;
-  title: string;
-  slug: string;
-  description: string;
-  /** Real, ordered cover images (`generator_media`) — zero or more. `coverUrl` below is kept, unchanged, as a derived convenience (`media[0]?.url`) so every pre-existing single-cover call site keeps working untouched. */
-  media: PromptMedia[];
-  /** Derived convenience — `media[0]?.url`. Prefer `media` for new code. */
-  coverUrl: string | null;
-  tools: string[];
-  contentType: PromptContentType;
-  /** Taxonomy category/subcategory slug (see lib/content-taxonomy.ts) — optional. */
-  category: string | null;
-  subcategory: string | null;
-  tags: Tag[];
-  visibility: "public" | "unlisted" | "private";
-  status: "draft" | "published" | "archived";
-  allowPromptEditing: boolean;
-  allowSavingGeneratedPrompts: boolean;
-  enableNegativePrompt: boolean;
-  /** Generator bir referans görsel / video / ses ile birlikte kullanılır — `generators.requires_reference_*`. */
-  requiresReferenceImage: boolean;
-  requiresReferenceVideo: boolean;
-  requiresReferenceAudio: boolean;
-  currentVersionId: string | null;
-  useCount: number;
-  saveCount: number;
-  likeCount: number;
-  commentCount: number;
-  isSaved: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
-
-/** One real, immutable (once published) version of a generator's schema+template — `public.generator_versions`. */
-export interface GeneratorVersion {
-  id: string;
-  generatorId: string;
-  versionNumber: number;
-  schema: GeneratorSchema;
-  template: GeneratorTemplate;
-  createdBy: string;
-  createdAt: string;
-}
-
-/** One real, logged use of a generator (`public.generator_runs`) — private to whoever ran it; only the denormalized `Generator.useCount` is ever public. */
-export interface GeneratorRun {
-  id: string;
-  generatorId: string;
-  generatorVersionId: string;
-  userId: string;
-  inputValues: GeneratorValues;
-  generatedPrompt: string;
-  generatedNegativePrompt: string | null;
-  createdAt: string;
-}
-
 /** A photo attached to a message — `path` is the object key inside the private `message-images` bucket (read through short-lived signed URLs, never stored as a URL). */
 export interface MessageAttachment {
   path: string;
@@ -698,7 +595,7 @@ export interface Message {
 /* Workflows — see supabase/migrations/20260919470000_workflows.sql        */
 /* ---------------------------------------------------------------------- */
 
-export type WorkflowStepType = "prompt" | "generator" | "request";
+export type WorkflowStepType = "prompt" | "request";
 
 /** One named input or output of a step. */
 export interface WorkflowIO {

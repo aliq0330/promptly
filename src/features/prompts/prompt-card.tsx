@@ -8,7 +8,7 @@ import { ContentTags } from "@/features/content/content-tags";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { CONTENT_TYPE_META } from "./content-type-meta";
 import { PostHeader } from "./post-header";
-import { GeneratorSourceContext, RequestResponseContext } from "./post-context";
+import { RequestResponseContext } from "./post-context";
 import { PromptCardFooter } from "./prompt-card-footer";
 import { OutputPosterPreview, OutputThumbnailStrip } from "./multi-image-output-options";
 import type { Prompt } from "@/types";
@@ -62,7 +62,6 @@ export function PromptCard({
         {prompt.origin.type === "request-response" && (
           <RequestResponseContext requestId={prompt.origin.requestId} currentPromptId={prompt.id} />
         )}
-        {prompt.generatedFrom && <GeneratorSourceContext generatedFrom={prompt.generatedFrom} />}
 
         <div className="space-y-2">
           <ContentTypeLabel icon={meta.icon} label={`${t(meta.labelKey)} Prompt`} detail={prompt.tools.length ? null : prompt.tool} />

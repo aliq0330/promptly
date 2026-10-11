@@ -2,13 +2,13 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowUpRight, Blocks, CheckCircle2, CornerUpRight } from "lucide-react";
+import { ArrowUpRight, CheckCircle2, CornerUpRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useRealRequests } from "@/features/requests/real-requests-provider";
 import { STATUS_LABELS, STATUS_VARIANTS } from "@/features/requests/request-card";
-import { generatorHref, requestHref } from "@/lib/utils";
+import { requestHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import type { Prompt, PromptRequest } from "@/types";
+import type { PromptRequest } from "@/types";
 
 /**
  * Compact, quiet "this post is derived from something else" box shown
@@ -95,31 +95,6 @@ export function RequestResponseContext({
           {t("request.thisReplyWasSelected")}
         </span>
       )}
-    </ContextBox>
-  );
-}
-
-/**
- * "Generated with [Generator]" (Generator Builder module's own §21-24
- * bridge) — only rendered by a card whose `prompt.generatedFrom` is set.
- * Unlike `RequestResponseContext`, no cache-then-fetch is needed:
- * `generatedFrom` already carries the generator's real title/slug directly
- * on the prompt row (`createRealPrompt`'s own denormalized columns), so
- * this never needs a second network round trip just to show which
- * generator produced this prompt.
- */
-export function GeneratorSourceContext({ generatedFrom }: { generatedFrom: NonNullable<Prompt["generatedFrom"]> }) {
-  const { t } = useTranslation();
-  return (
-    <ContextBox href={generatorHref({ slug: generatedFrom.generatorSlug })}>
-      <span className="flex items-center gap-1.5 text-caption font-medium text-text-muted">
-        <Blocks size={13} className="shrink-0 text-primary" />
-        {t("prompt.madeWithGenerator")}
-      </span>
-      <span className="flex items-center gap-1 text-label font-semibold text-text">
-        <span className="truncate">{generatedFrom.generatorTitle}</span>
-        <ArrowUpRight size={13} className="shrink-0 text-text-muted transition-colors group-hover/ctx:text-primary" />
-      </span>
     </ContextBox>
   );
 }

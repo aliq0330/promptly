@@ -14,13 +14,11 @@ import { cn } from "@/lib/utils";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import type { Tag, UserProfile } from "@/types";
 import { tokenKey, type ContentKind, type SearchToken } from "./search-tokens";
-import { GENERATORS_ENABLED } from "@/lib/feature-flags";
 
 const DEBOUNCE_MS = 250;
 const KIND_LABEL: Record<ContentKind, TranslationKey> = {
   prompt: "search.kindPrompt",
   request: "request.title",
-  generator: "generator.singular",
   workflow: "workflow.singular",
   preset: "preset.singular",
 };
@@ -35,7 +33,7 @@ const GROUP_ORDER: SearchToken["kind"][] = ["user", "tag", "media", "content", "
 
 /**
  * Chip/token search box: users, tags (only real ones), media type, content
- * type (prompt / request / generator / workflow) and tools are picked from live
+ * type (prompt / request / workflow / preset) and tools are picked from live
  * suggestions and become removable chips; free text keeps working next to
  * them. The box never closes on a pick — the query keeps growing.
  */
@@ -55,7 +53,7 @@ export function AdvancedSearchBox({
   autoFocus?: boolean;
   /** Single-type list pages: the content-type (prompt/request/…) chips are pointless there. */
   hideKindSuggestions?: boolean;
-  /** Page-specific placeholder ("Generator ara"…); defaults to the site-wide one. */
+  /** Page-specific placeholder ("Workflow ara"…); defaults to the site-wide one. */
   placeholder?: string;
 }) {
   const { t } = useTranslation();
@@ -101,7 +99,7 @@ export function AdvancedSearchBox({
     if (!word.startsWith("@")) tags.forEach((tag) => out.push({ kind: "tag", tag }));
     if (!word.startsWith("@") && !word.startsWith("#")) {
       CONTENT_TYPE_IDS.filter((type) => matches(t(CONTENT_TYPE_META[type].labelKey))).forEach((type) => out.push({ kind: "media", type }));
-      (hideKindSuggestions ? [] : (["prompt", "request", "generator", "workflow", "preset"] as ContentKind[]).filter((kind) => kind !== "generator" || GENERATORS_ENABLED))
+      (hideKindSuggestions ? [] : (["prompt", "request", "workflow", "preset"] as ContentKind[]))
         .filter((kind) => matches(t(KIND_LABEL[kind])))
         .forEach((kind) => out.push({ kind: "content", type: kind }));
       if (word) searchTools(AI_TOOLS.filter((tool) => tool.isActive), word).slice(0, 4).forEach((tool) => out.push({ kind: "tool", toolId: tool.id }));
