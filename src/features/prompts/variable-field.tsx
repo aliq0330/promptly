@@ -1,9 +1,12 @@
 "use client";
 
+import { Check } from "lucide-react";
 import { Chip, ChipRow } from "@/components/ui/chip";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import {
+  allOptionsHaveColor,
+  allOptionsHaveImage,
   clampToRange,
   isToggleOn,
   numericRange,
@@ -11,7 +14,7 @@ import {
   toggleMultiValue,
   toggleValue,
 } from "@/lib/prompt-variable-types";
-import type { PromptVariableSpec } from "@/types";
+import type { PromptVariableOption, PromptVariableSpec } from "@/types";
 
 const INPUT_CLASS =
   "h-10 w-full rounded-lg border border-border bg-background px-3 text-body text-text placeholder:text-text-muted focus:border-primary/60 shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong";
@@ -45,7 +48,12 @@ export function VariableField({
   const { t } = useTranslation();
   const labelId = `pv-label-${variable.id}`;
   const controlId = `pv-${variable.id}`;
-  const wide = variable.type === "multi_select" || variable.type === "slider" || (variable.type === "select" && variable.options.length <= CHIP_LIMIT);
+  const visual = isChoice(variable) && (allOptionsHaveImage(variable.options) || allOptionsHaveColor(variable.options));
+  const wide =
+    visual ||
+    variable.type === "multi_select" ||
+    variable.type === "slider" ||
+    (variable.type === "select" && variable.options.length <= CHIP_LIMIT);
 
   return (
     <div className={cn("min-w-0", wide && "sm:col-span-2")}>
@@ -55,6 +63,72 @@ export function VariableField({
       </label>
       <Control id={controlId} labelId={labelId} variable={variable} value={value} onChange={onChange} placeholder={variable.defaultValue || t("prompt.enterValue")} />
     </div>
+  );
+}
+
+function isChoice(variable: PromptVariableSpec): boolean {
+  return variable.type === "select" || variable.type === "multi_select";
+}
+
+/**
+ * Options that carry the author's own image: shown as cards (thumbnail on
+ * top, name below). Single choice behaves like radios, multiple choice like
+ * checkboxes. Only used when EVERY option has an image.
+ */
+function OptionCards({
+  id,
+  labelId,
+  options,
+  multiple,
+  isSelected,
+  onToggle,
+}: {
+  id: string;
+  labelId: string;
+  options: PromptVariableOption[];
+  multiple: boolean;
+  isSelected: (option: PromptVariableOption) => boolean;
+  onToggle: (option: PromptVariableOption) => void;
+}) {
+  return (
+    <div id={id} role={multiple ? "group" : "radiogroup"} aria-labelledby={labelId} className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5">
+      {options.map((option) => {
+        const selected = isSelected(option);
+        return (
+          <button
+            key={option.value}
+            type="button"
+            role={multiple ? undefined : "radio"}
+            aria-checked={multiple ? undefined : selected}
+            aria-pressed={multiple ? selected : undefined}
+            onClick={() => onToggle(option)}
+            className={cn(
+              "group relative flex min-w-0 flex-col gap-1 rounded-lg border p-1.5 text-left transition-[border-color,box-shadow] duration-200 ease-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+              selected ? "border-primary ring-2 ring-primary/40" : "border-border hover:border-border-strong",
+            )}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element -- a small user-supplied data URL */}
+            <img src={option.image} alt="" className="aspect-square w-full rounded-md object-cover" />
+            <span className="truncate px-0.5 text-caption font-medium text-text">{option.label}</span>
+            {selected && (
+              <span aria-hidden className="absolute right-2.5 top-2.5 grid h-5 w-5 place-items-center rounded-full bg-primary text-primary-foreground shadow-xs">
+                <Check size={12} />
+              </span>
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/** Chip with the option's own color dot — used when every option has a color. */
+function SwatchChip({ option, ...props }: { option: PromptVariableOption } & React.ComponentProps<typeof Chip>) {
+  return (
+    <Chip {...props}>
+      <span aria-hidden className="h-3.5 w-3.5 shrink-0 rounded-full border border-border-strong" style={{ backgroundColor: option.color }} />
+      {option.label}
+    </Chip>
   );
 }
 
@@ -74,6 +148,46 @@ function Control({
   placeholder: string;
 }) {
   const { t } = useTranslation();
+
+  if (isChoice(variable) && allOptionsHaveImage(variable.options)) {
+    const multiple = variable.type === "multi_select";
+    const selected = new Set(parseMultiValue(value));
+    return (
+      <OptionCards
+        id={id}
+        labelId={labelId}
+        options={variable.options}
+        multiple={multiple}
+        isSelected={(option) => (multiple ? selected.has(option.value) : value === option.value)}
+        onToggle={(option) => onChange(multiple ? toggleMultiValue(value, option.value, variable.options) : option.value)}
+      />
+    );
+  }
+
+  if (isChoice(variable) && allOptionsHaveColor(variable.options)) {
+    const multiple = variable.type === "multi_select";
+    const selected = new Set(parseMultiValue(value));
+    return (
+      <div id={id} role={multiple ? "group" : "radiogroup"} aria-labelledby={labelId}>
+        <ChipRow>
+          {variable.options.map((option) => {
+            const isOn = multiple ? selected.has(option.value) : value === option.value;
+            return (
+              <SwatchChip
+                key={option.value}
+                option={option}
+                role={multiple ? undefined : "radio"}
+                aria-checked={multiple ? undefined : isOn}
+                aria-pressed={multiple ? isOn : undefined}
+                selected={isOn}
+                onClick={() => onChange(multiple ? toggleMultiValue(value, option.value, variable.options) : option.value)}
+              />
+            );
+          })}
+        </ChipRow>
+      </div>
+    );
+  }
 
   if (variable.type === "select") {
     if (variable.options.length > CHIP_LIMIT) {
