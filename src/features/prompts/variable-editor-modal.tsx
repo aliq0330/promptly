@@ -5,8 +5,10 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { isValidVariableName, normalizeVariableName } from "@/lib/prompt-variables";
+import { normalizeVariable, validateSpec, type VariableSpecError } from "@/lib/prompt-variable-types";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { DraftVariable } from "./prompt-text-editor";
+import { VariableSpecEditor, type SpecEditorValue, type VariableFormValues } from "./variable-spec-editor";
 
 /**
  * "Değişkeni düzenle" modal (CLAUDE.md §4) — renaming an existing variable
@@ -28,11 +30,15 @@ export function VariableEditorModal({
   /** Every OTHER variable's normalized name already in use on this prompt — for the duplicate-name check (excludes `editing`'s own current name). */
   existingNames: string[];
   onClose: () => void;
-  onSubmit: (values: { name: string; defaultValue: string; description: string }) => void;
+  onSubmit: (values: VariableFormValues) => void;
 }) {
   const { t } = useTranslation();
   const [name, setName] = useState(editing.name);
-  const [defaultValue, setDefaultValue] = useState(editing.defaultValue);
+  const [editor, setEditor] = useState<SpecEditorValue>({
+    spec: { type: editing.type, options: editing.options, config: editing.config },
+    defaultValue: editing.defaultValue,
+  });
+  const [specError, setSpecError] = useState<VariableSpecError>(null);
   const [description, setDescription] = useState(editing.description);
   const [touched, setTouched] = useState(false);
 
@@ -65,13 +71,17 @@ export function VariableEditorModal({
     ) {
       return;
     }
-    onSubmit({ name: normalizedName, defaultValue, description });
+    const problem = validateSpec(editor.spec);
+    setSpecError(problem);
+    if (problem) return;
+    const { spec, defaultValue } = normalizeVariable(editor.spec, editor.defaultValue);
+    onSubmit({ ...spec, name: normalizedName, defaultValue, description });
   }
 
   return (
     <Modal onClose={onClose} labelledBy="variable-editor-modal-title">
       <div
-        className="w-full max-w-md space-y-4 rounded-lg border border-border bg-surface p-5 shadow-lg"
+        className="w-full max-w-lg space-y-4 rounded-lg border border-border bg-surface p-5 shadow-lg"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-2">
@@ -109,19 +119,15 @@ export function VariableEditorModal({
             {error && <p className="mt-1 text-xs text-danger">{error}</p>}
           </div>
 
-          <div>
-            <label htmlFor="variable-default" className="mb-1.5 block text-sm font-medium text-text">
-              {t("variable.defaultValueLabel")} <span className="text-text-muted">({t("common.optional")})</span>
-            </label>
-            <input
-              id="variable-default"
-              type="text"
-              value={defaultValue}
-              onChange={(event) => setDefaultValue(event.target.value)}
-              placeholder={t("variable.defaultValuePlaceholder")}
-              className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
-            />
-          </div>
+          <VariableSpecEditor
+            idPrefix="variable-edit"
+            value={editor}
+            onChange={(next) => {
+              setEditor(next);
+              setSpecError(null);
+            }}
+            error={specError}
+          />
 
           <div>
             <label htmlFor="variable-description" className="mb-1.5 block text-sm font-medium text-text">

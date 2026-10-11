@@ -12923,3 +12923,30 @@ Kullanıcı isteğiyle sitedeki TÜM içerik kalıcı olarak silinip 18 demo kul
 
 - Ortak `features/content/create-page-header.tsx` (`CreatePageHeader`: solda serif başlık + açıklama, sağda "Taslaklar", isteğe bağlı kayıt durumu satırı) Prompt, İstek, Hazır Ayar, Generator ve Workflow oluşturma sayfalarında kullanılıyor. Generator'ın başlık kartı ve Workflow'un geri düğmeli üst çubuğu kalktı (kayıt durumu açıklamanın altında). `generator.createHint`/`workflow.createHint` TR+EN eklendi.
 - Generator çalıştırma/önizleme (`GeneratorPlayground`): "Kendi promptun" + Negatif Prompt kutuları kaldırıldı; çıktıdaki `prompt` artık yalnızca oluşturanın şablonundan (+ şablonda geçmeyen alanların "Etiket: Değer" ekleri) türer. Negatif prompt desteği (builder'daki anahtar, kart son eki, playground) kaldırıldı; `enableNegativePrompt` her kayıtta `false` yazılır, DB kolonu duruyor. `GeneratorPlayground` artık `enableNegativePrompt` prop'u almaz. Migration yok. tsc/lint/test/build temiz; tarayıcıda denenmedi.
+
+### 9.145 PLAN (devam ediyor): Generator'ın prompt değişkenlerine birleştirilmesi
+
+**Karar (kullanıcıyla sohbette):** Değişken ve Generator aynı çekirdeğe sahip ("şablonda adlandırılmış boşluklar"). Generator ayrı bir içerik türü olmaktan çıkarılacak; tipli alanlar, seçenekler vb. normal Prompt'un "değişken" sistemine (gelişmiş özellikler olarak) taşınacak. **JSON çıktı motoru (jsonPath, Çıktı Eşleme, JSON sekmesi) GEREKSİZ** — taşınmayacak; çıktı yalnızca prompt metni. Sıra bağlayıcı: önce özellikleri taşı, Generator'ı EN SON kaldır. Her aşama bitince kullanıcıya sonuç gösterilir, "devam" denmeden sonraki aşamaya geçilmez.
+
+**Aşama 1 — Özellikleri prompt değişkenlerine taşı (Generator'a dokunmadan).** Küçük, ayrı commit'li adımlar:
+- [x] **1a. Tip + seçenek (TAMAMLANDI):** `prompt_variables.type` (`text|select|multi_select|number|slider|toggle`) ve `options jsonb` (ekleyici migration, varsayılan `text`/`[]`, eski satırlar değişmez). Oluşturan tarafı (`variable-create-modal`/`variable-editor-modal`/`variable-list`), kullanan tarafı (`prompt-variable-inputs`: chip/açılır liste/kaydırıcı/anahtar), veri katmanı, i18n TR+EN, testler.
+- [ ] **1b. Görselli/renkli seçenekler** (seçenek kartları, renk swatch).
+- [ ] **1c. Koşullu alan** ("şu değişken şuysa bunu göster").
+- [ ] **1d. Hazır alan kütüphanesi** (196 alan; değişken eklerken seçilebilir).
+- [ ] **1e. Görselden alan çıkarma (vision assist)** — en düşük değer/zahmet; istenmezse hiç taşınmaz.
+
+**Aşama 2 — Generator'ı gizle.** Menü, Oluştur, arama, keşif, profil sekmesinden kaldır; mevcut Generator'lar salt-okunur çalışır, linkler kırılmaz.
+
+**Aşama 3 — Verileri dönüştür + Generator'ı sil (geri dönüşsüz; ayrıca onay ister).** Gerçek kullanıcı Generator'ı var mı sorgula; varsa şablonu alanlardan üretip prompt'a çevir. Workflow adımları (`generator_id`), beğeni/yorum/koleksiyon/bildirim/şikâyet/istatistik bağlantılarını yeniden bağla. Seed'leri sil. Sonra tablo + kodu kaldır (`generator-output.ts`, jsonPath, builder, kart vb.).
+
+**Açık not:** `prompt_variables` migration'ı canlıya uygulanmadan, `type`/`options` seçen kod canlıya çıkarsa değişken okuma sessizce boş döner. Migration önce uygulanmalı.
+
+**1a durumu (yapıldı, canlıya UYGULANMADI):**
+- Tipler: `text`, `select`, `multi_select`, `number`, `slider`, `toggle`. Prompt metnine yazılan değer her zaman düz string olduğundan `{ad}` jeton motoru (`lib/prompt-variables.ts`) DEĞİŞMEDİ. Çoklu seçim değerleri ", " ile birleşir (sıra = seçenek listesi sırası); seçenek `value`'sundan virgül temizlenir; toggle `onText`/`offText` yazar.
+- Saf mantık: `lib/prompt-variable-types.ts` (+ `prompt-variable-types.test.ts`, 20 test, `npm test` 151/151): `normalizeVariable`, `validateSpec`, `convertSpec` (tip değişince varsayılan/seçili metin taşınır), `toggleMultiValue`, `clampToRange`, JSON okuma yardımcıları.
+- Veri: migration `20260919730000_prompt_variable_types.sql` (`type`, `options jsonb`, `config jsonb`; ekleyici, eski satırlar `text`; seçenekli tipte ≥2 seçenek CHECK). Veri katmanı migration uygulanmamışsa da çalışır: okumada 42703'te eski kolonlara düşer, yazmada metin değişkenleri yeni kolonları göndermez. **Tipli (metin dışı) değişken kaydetmek migration'dan önce hata verir — bu bilinçli.**
+- Oluşturan: `variable-spec-editor.tsx` (tip çipleri, seçenek listesi [görünen ad | prompt'a yazılan], aralık, aç/kapa metinleri, varsayılan), `variable-create-modal`/`variable-editor-modal` buna bağlandı; `variable-list` tip rozeti gösterir; yeni `DraftVariable`/`VariableDraft` tipli.
+- Kullanan: `variable-field.tsx` (`VariableField`): ≤6 seçenek chip, >6 açılır liste, çoklu chip, sayı, kaydırıcı, switch. `PromptVariableInputs` (detay + Studio) ve editör önizlemesi bunu kullanır.
+- i18n: `variable.type.*`, `variable.error.*`, seçenek/aralık/toggle metinleri TR+EN eklendi.
+- Doğrulama: `tsc`, `lint` (yalnız önceden var olan 5 uyarı), `next build --webpack` temiz; ağ taklitsiz geçici harness sayfasıyla (sonra silindi) Playwright 34/34 (kullanan taraf) + 46/46 (oluşturan taraf), 1280 ve 390 px, yatay taşma yok. Gerçek Supabase'e ve gerçek `/create` formuna karşı denenmedi.
+- **Bekleyen adım:** migration SQL Editor'de (ya da MCP ile) uygulanmalı; sonra 1b'ye geçilir.

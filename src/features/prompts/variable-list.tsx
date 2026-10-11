@@ -2,9 +2,22 @@
 
 import { useState } from "react";
 import { Pencil, Trash2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { countVariableUsages } from "@/lib/prompt-variables";
+import { describeOptions, isChoiceType } from "@/lib/prompt-variable-types";
+import type { TranslationKey } from "@/lib/i18n/translations";
+import type { PromptVariableType } from "@/types";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { DraftVariable } from "./prompt-text-editor";
+
+const TYPE_LABEL_KEYS: Record<PromptVariableType, TranslationKey> = {
+  text: "variable.type.text",
+  select: "variable.type.select",
+  multi_select: "variable.type.multiSelect",
+  number: "variable.type.number",
+  slider: "variable.type.slider",
+  toggle: "variable.type.toggle",
+};
 
 /**
  * "Değişkenler" management panel (CLAUDE.md §4) — lists every draft
@@ -47,8 +60,17 @@ export function VariableList({
             >
               <div className="min-w-0 flex-1 basis-40 break-words">
                 <span className="font-mono text-primary">{`{${variable.name}}`}</span>
-                {variable.defaultValue && (
-                  <span className="ml-2 break-words text-xs text-text-muted">→ {variable.defaultValue}</span>
+                {variable.type !== "text" && (
+                  <Badge variant="neutral" className="ml-2 align-middle">
+                    {t(TYPE_LABEL_KEYS[variable.type])}
+                  </Badge>
+                )}
+                {isChoiceType(variable.type) ? (
+                  <span className="ml-2 break-words text-xs text-text-muted">→ {describeOptions(variable.options)}</span>
+                ) : (
+                  variable.defaultValue && (
+                    <span className="ml-2 break-words text-xs text-text-muted">→ {variable.defaultValue}</span>
+                  )
                 )}
                 <span className="ml-2 text-xs text-text-muted">
                   {usageCount === 0 ? t("variable.unusedInText") : t("variable.usedInCount", { count: usageCount })}

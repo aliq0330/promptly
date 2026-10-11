@@ -5,8 +5,10 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { isValidVariableName, normalizeVariableName } from "@/lib/prompt-variables";
+import { emptySpec, normalizeVariable, validateSpec, type VariableSpecError } from "@/lib/prompt-variable-types";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { DraftVariable } from "./prompt-text-editor";
+import { VariableSpecEditor, type SpecEditorValue, type VariableFormValues } from "./variable-spec-editor";
 
 /**
  * Yeni değişken oluşturma / metne bağlama penceresi (Bölüm 9.136).
@@ -34,11 +36,12 @@ export function VariableCreateModal({
   occurrenceCount: number;
   variables: DraftVariable[];
   onClose: () => void;
-  onSubmit: (values: { name: string; defaultValue: string; description: string; replaceAll: boolean; existing: boolean }) => void;
+  onSubmit: (values: VariableFormValues & { replaceAll: boolean; existing: boolean }) => void;
 }) {
   const { t } = useTranslation();
   const [name, setName] = useState("");
-  const [defaultValue, setDefaultValue] = useState(selectedText);
+  const [editor, setEditor] = useState<SpecEditorValue>({ spec: emptySpec("text"), defaultValue: selectedText });
+  const [specError, setSpecError] = useState<VariableSpecError>(null);
   const [description, setDescription] = useState("");
   const [replaceAll, setReplaceAll] = useState(false);
   const [touched, setTouched] = useState(false);
@@ -60,7 +63,13 @@ export function VariableCreateModal({
     event.stopPropagation();
     setTouched(true);
     if (normalizedName.length === 0 || !isValidVariableName(normalizedName)) return;
+    // Linking to an existing variable never creates one, so its spec isn't used.
+    const problem = existing ? null : validateSpec(editor.spec);
+    setSpecError(problem);
+    if (problem) return;
+    const { spec, defaultValue } = normalizeVariable(editor.spec, editor.defaultValue);
     onSubmit({
+      ...spec,
       name: existing ? existing.name : normalizedName,
       defaultValue,
       description,
@@ -72,7 +81,7 @@ export function VariableCreateModal({
   return (
     <Modal onClose={onClose} labelledBy="variable-create-title">
       <div
-        className="w-full max-w-md space-y-4 rounded-lg border border-border bg-surface p-5 shadow-lg"
+        className="w-full max-w-lg space-y-4 rounded-lg border border-border bg-surface p-5 shadow-lg"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-2">
@@ -132,18 +141,16 @@ export function VariableCreateModal({
             </div>
           ) : (
             <>
-              <div>
-                <label htmlFor="variable-create-default" className="mb-1.5 block text-sm font-medium text-text">
-                  {t("variable.defaultValueLabel")} <span className="text-text-muted">({t("common.optional")})</span>
-                </label>
-                <input
-                  id="variable-create-default"
-                  type="text"
-                  value={defaultValue}
-                  onChange={(event) => setDefaultValue(event.target.value)}
-                  className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
-                />
-              </div>
+              <VariableSpecEditor
+                idPrefix="variable-create"
+                value={editor}
+                onChange={(next) => {
+                  setEditor(next);
+                  setSpecError(null);
+                }}
+                seedText={selectedText}
+                error={specError}
+              />
               <div>
                 <label htmlFor="variable-create-description" className="mb-1.5 block text-sm font-medium text-text">
                   {t("variable.descriptionLabel")} <span className="text-text-muted">({t("common.optional")})</span>

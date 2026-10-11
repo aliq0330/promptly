@@ -10,16 +10,20 @@ import {
 } from "@/lib/prompt-variables";
 import { removeToken, renameToken, tokenUsageMap } from "@/lib/prompt-doc";
 import { cn } from "@/lib/utils";
+import { describeOptions, isChoiceType } from "@/lib/prompt-variable-types";
 import { useTranslation } from "@/lib/i18n/language-provider";
+import type { PromptVariableSpec } from "@/types";
 import { PromptComposer, type ComposerHandle } from "@/features/content/prompt-composer/prompt-composer";
 import type { PickerFilter, PickerItem } from "@/features/content/prompt-composer/insert-picker";
 import type { EditorSelection } from "@/features/content/prompt-composer/prompt-doc-editor";
 import { VariableCreateModal } from "./variable-create-modal";
 import { VariableEditorModal } from "./variable-editor-modal";
 import { VariableList } from "./variable-list";
+import { VariableField } from "./variable-field";
+import type { VariableFormValues } from "./variable-spec-editor";
 
 /** A not-yet-persisted variable living only in this form's own state — gets a real DB row (with a real `id`) only once the prompt itself is created/updated (see `replaceVariablesForPrompt`, `src/lib/supabase/prompt-variables.ts`). */
-export interface DraftVariable {
+export interface DraftVariable extends PromptVariableSpec {
   tempId: string;
   name: string;
   defaultValue: string;
@@ -77,7 +81,10 @@ export function PromptTextEditor({
     id: variable.tempId,
     name: variable.name,
     label: variable.name,
-    description: variable.description || variable.defaultValue || undefined,
+    description:
+      variable.description ||
+      (isChoiceType(variable.type) ? describeOptions(variable.options) : variable.defaultValue) ||
+      undefined,
     group: "all",
     usage: usage.get(variable.name) ?? 0,
   }));
@@ -88,7 +95,7 @@ export function PromptTextEditor({
   ];
   const definedNames = new Set(variables.map((variable) => variable.name));
 
-  function handleSubmitCreate(values: { name: string; defaultValue: string; description: string; replaceAll: boolean; existing: boolean }) {
+  function handleSubmitCreate(values: VariableFormValues & { replaceAll: boolean; existing: boolean }) {
     if (!creating) return;
     const { range, selectedText } = creating;
     if (values.replaceAll && selectedText) {
@@ -99,19 +106,34 @@ export function PromptTextEditor({
     if (!values.existing) {
       onVariablesChange([
         ...variables,
-        { tempId: makeTempId(), name: values.name, defaultValue: values.defaultValue, description: values.description },
+        {
+          tempId: makeTempId(),
+          name: values.name,
+          defaultValue: values.defaultValue,
+          description: values.description,
+          type: values.type,
+          options: values.options,
+          config: values.config,
+        },
       ]);
     }
     setCreating(null);
   }
 
-  function handleEditVariable(values: { name: string; defaultValue: string; description: string }) {
+  function handleEditVariable(values: VariableFormValues) {
     if (!editingVariable) return;
     const nextText = values.name !== editingVariable.name ? renameToken(value, editingVariable.name, values.name) : value;
     if (nextText !== value) onChange(nextText);
     onVariablesChange(
       variables.map((variable) => (variable.tempId === editingVariable.tempId ? { ...variable, ...values } : variable)),
     );
+    // A preview value typed for the old kind/name may no longer be valid.
+    setPreviewValues((prev) => {
+      const next = { ...prev };
+      delete next[editingVariable.name];
+      delete next[values.name];
+      return next;
+    });
     setEditingVariable(null);
   }
 
@@ -192,24 +214,14 @@ export function PromptTextEditor({
       {activeTab === "preview" && (
         <div className="space-y-3 rounded-md border border-border bg-background p-3">
           <div className="whitespace-pre-wrap break-words font-mono text-sm text-text">{previewText}</div>
-          <div className="space-y-2 border-t border-border pt-3">
+          <div className="grid gap-3 border-t border-border pt-3 sm:grid-cols-2">
             {variables.map((variable) => (
-              <div key={variable.tempId} className="flex items-center gap-2">
-                <label
-                  htmlFor={`preview-${variable.tempId}`}
-                  className="w-28 shrink-0 truncate font-mono text-xs text-text-muted"
-                  title={`{${variable.name}}`}
-                >
-                  {`{${variable.name}}`}
-                </label>
-                <input
-                  id={`preview-${variable.tempId}`}
-                  type="text"
-                  value={previewValues[variable.name] ?? variable.defaultValue}
-                  onChange={(event) => setPreviewValues((prev) => ({ ...prev, [variable.name]: event.target.value }))}
-                  className="h-8 min-w-0 flex-1 rounded-md border border-border bg-surface px-2 text-xs text-text"
-                />
-              </div>
+              <VariableField
+                key={variable.tempId}
+                variable={{ ...variable, id: variable.tempId }}
+                value={previewValues[variable.name] ?? variable.defaultValue}
+                onChange={(next) => setPreviewValues((prev) => ({ ...prev, [variable.name]: next }))}
+              />
             ))}
           </div>
           {Object.keys(previewValues).length > 0 && (

@@ -1,6 +1,7 @@
 import { supabase } from "./client";
 import { translateForRuntime } from "@/lib/i18n/translations";
-import type { PromptVariable } from "@/types";
+import { normalizeVariable, parseStoredConfig, parseStoredOptions, parseStoredType } from "@/lib/prompt-variable-types";
+import type { PromptVariable, PromptVariableSpec } from "@/types";
 
 interface PromptVariableRow {
   id: string;
@@ -11,9 +12,15 @@ interface PromptVariableRow {
   sort_order: number;
   created_at: string;
   updated_at: string;
+  // Added by 20260919730000_prompt_variable_types.sql — absent on a project
+  // that hasn't applied it yet, in which case every variable reads as text.
+  type?: string | null;
+  options?: unknown;
+  config?: unknown;
 }
 
-const VARIABLE_SELECT = "id, prompt_id, name, default_value, description, sort_order, created_at, updated_at";
+const LEGACY_VARIABLE_SELECT = "id, prompt_id, name, default_value, description, sort_order, created_at, updated_at";
+const VARIABLE_SELECT = `${LEGACY_VARIABLE_SELECT}, type, options, config`;
 
 function mapVariableRow(row: PromptVariableRow): PromptVariable {
   return {
@@ -25,29 +32,33 @@ function mapVariableRow(row: PromptVariableRow): PromptVariable {
     sortOrder: row.sort_order,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    type: parseStoredType(row.type),
+    options: parseStoredOptions(row.options),
+    config: parseStoredConfig(row.config),
   };
 }
 
 /** Every real variable definition for one real prompt, in author-defined order — public wherever the prompt itself is (RLS, see migration). */
 export async function fetchVariablesForPrompt(promptId: string): Promise<PromptVariable[]> {
   try {
-    const { data, error } = await supabase
-      .from("prompt_variables")
-      .select(VARIABLE_SELECT)
-      .eq("prompt_id", promptId)
-      .order("sort_order", { ascending: true });
-    if (error) {
-      console.error("fetchVariablesForPrompt", error);
+    const read = (columns: string) =>
+      supabase.from("prompt_variables").select(columns).eq("prompt_id", promptId).order("sort_order", { ascending: true });
+    let result = await read(VARIABLE_SELECT);
+    // 42703 = undefined_column: the typed-variables migration isn't applied
+    // yet. Read the legacy columns instead of losing every variable.
+    if (result.error?.code === "42703") result = await read(LEGACY_VARIABLE_SELECT);
+    if (result.error) {
+      console.error("fetchVariablesForPrompt", result.error);
       return [];
     }
-    return ((data ?? []) as PromptVariableRow[]).map(mapVariableRow);
+    return ((result.data ?? []) as unknown as PromptVariableRow[]).map(mapVariableRow);
   } catch (err) {
     console.error("fetchVariablesForPrompt", err);
     return [];
   }
 }
 
-export interface VariableDraft {
+export interface VariableDraft extends Partial<PromptVariableSpec> {
   name: string;
   defaultValue: string;
   description: string | null;
@@ -67,18 +78,32 @@ export async function replaceVariablesForPrompt(promptId: string, drafts: Variab
   if (deleteError) throw new Error(deleteError.message);
   if (drafts.length === 0) return [];
 
+  // Normalize each draft against its own kind so a stored row can never
+  // contradict its type (e.g. a select whose default isn't one of its options).
+  const normalized = drafts.map((draft) => {
+    const { spec, defaultValue } = normalizeVariable(
+      { type: draft.type ?? "text", options: draft.options ?? [], config: draft.config ?? {} },
+      draft.defaultValue,
+    );
+    return { draft, spec, defaultValue };
+  });
+  const anyTyped = normalized.some((item) => item.spec.type !== "text");
+
   const { data, error: insertError } = await supabase
     .from("prompt_variables")
     .insert(
-      drafts.map((draft, index) => ({
+      normalized.map(({ draft, spec, defaultValue }, index) => ({
         prompt_id: promptId,
         name: draft.name,
-        default_value: draft.defaultValue,
+        default_value: defaultValue,
         description: draft.description,
         sort_order: index,
+        // Plain-text variables omit the typed columns so saving keeps working
+        // on a project that hasn't applied the typed-variables migration yet.
+        ...(spec.type === "text" ? {} : { type: spec.type, options: spec.options, config: spec.config }),
       })),
     )
-    .select(VARIABLE_SELECT);
+    .select(anyTyped ? VARIABLE_SELECT : LEGACY_VARIABLE_SELECT);
   if (insertError || !data) throw new Error(insertError?.message ?? translateForRuntime("variable.saveFailed"));
-  return (data as PromptVariableRow[]).map(mapVariableRow);
+  return (data as unknown as PromptVariableRow[]).map(mapVariableRow);
 }
