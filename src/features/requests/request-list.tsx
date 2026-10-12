@@ -5,7 +5,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { RequestCard } from "./request-card";
 import type { PromptRequest } from "@/types";
-import { staggerStyle } from "@/components/ui/entrance";
+import { Reveal } from "@/components/ui/reveal";
 
 export function RequestList({ requests }: { requests: PromptRequest[] }) {
   const { t } = useTranslation();
@@ -23,9 +23,9 @@ export function RequestList({ requests }: { requests: PromptRequest[] }) {
   return (
     <div className="columns-1 gap-4 md:columns-2 2xl:columns-3">
       {requests.map((request, index) => (
-        <div key={request.id} className="pb-4 animate-grid-in break-inside-avoid" style={staggerStyle(index)}>
+        <Reveal key={request.id} index={index} className="pb-4 break-inside-avoid">
           <RequestCard request={request} />
-        </div>
+        </Reveal>
       ))}
     </div>
   );

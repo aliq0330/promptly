@@ -4,6 +4,7 @@ import { Dna } from "lucide-react";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { DnaSection } from "@/lib/prompt-dna/types";
 import { DNA_ICONS, dnaSectionLabel } from "./dna-section-meta";
+import { DnaConstellation } from "./dna-constellation";
 
 /**
  * The prompt's DNA (the "Prompt DNA" tab of its detail page): only the
@@ -11,7 +12,7 @@ import { DNA_ICONS, dnaSectionLabel } from "./dna-section-meta";
  * fetches them (it needs the count to decide whether the tab exists) and
  * only renders this for a prompt that has DNA.
  */
-export function PromptDnaDisplay({ sections }: { sections: DnaSection[] }) {
+export function PromptDnaDisplay({ sections, promptTitle, mapHref }: { sections: DnaSection[]; promptTitle?: string; mapHref?: string }) {
   const { t } = useTranslation();
 
   if (sections.length === 0) return null;
@@ -25,6 +26,7 @@ export function PromptDnaDisplay({ sections }: { sections: DnaSection[] }) {
         </h2>
         <span className="text-caption text-text-muted">{t("dna.sectionsCount", { count: sections.length })}</span>
       </div>
+      {promptTitle && <DnaConstellation sections={sections} centerTitle={promptTitle} mapHref={mapHref} />}
       <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
         {sections.map((section) => {
           const Icon = DNA_ICONS[section.type];

@@ -22,6 +22,12 @@ const LABEL_MIN_ZOOM = 0.5;
 /** Edges shorter than this (world units) are too short for their label — it would sit on the nodes; selecting the edge shows it anyway. */
 const LABEL_MIN_LENGTH = 150;
 const DRAG_THRESHOLD = 5;
+/** On a phone-width stage the map shows only the strongest neighbors until the viewer asks for the rest. */
+const COMPACT_WIDTH = 560;
+const COMPACT_NEIGHBORS = 10;
+/** Cascade timing of the arrival animation (ms). */
+const NODE_STAGGER_MS = 34;
+const NODE_STAGGER_CAP = 14;
 
 function clampZoom(zoom: number): number {
   return Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, zoom));
@@ -77,9 +83,12 @@ export function RelationGraph({
   // `manual` is the viewer's own pan/zoom; it only applies to the layout it was made on — a new
   // center / filter / "Sıfırla" falls back to the fitted view (no effect, no extra render).
   const [manual, setManual] = useState<{ key: string; view: View } | null>(null);
+  const [hoverKey, setHoverKey] = useState<string | null>(null);
+  // "Show all" for the compact (phone) map, remembered per center.
+  const [expandedFor, setExpandedFor] = useState<string | null>(null);
 
   // Neighbors grouped by the relation that brought them in, strongest first.
-  const neighbors = useMemo(() => {
+  const allNeighbors = useMemo(() => {
     const rank = (node: RelationNode) => {
       const related = edges.filter((e) => otherEnd(e, center.key) === node.key);
       const group = Math.min(...related.map((e) => FILTER_ORDER.indexOf(RELATION_TYPES[e.type].filter)));
@@ -92,6 +101,12 @@ export function RelationGraph({
       .sort((a, b) => a.r.group - b.r.group || b.r.score - a.r.score || a.n.title.localeCompare(b.n.title))
       .map((entry) => entry.n);
   }, [nodes, edges, center.key]);
+
+  const compact = size !== null && size.width < COMPACT_WIDTH;
+  const hiddenCount = compact && expandedFor !== center.key ? Math.max(0, allNeighbors.length - COMPACT_NEIGHBORS) : 0;
+  const neighbors = useMemo(() => (hiddenCount > 0 ? allNeighbors.slice(0, COMPACT_NEIGHBORS) : allNeighbors), [allNeighbors, hiddenCount]);
+  const shownKeys = useMemo(() => new Set([center.key, ...neighbors.map((n) => n.key)]), [center.key, neighbors]);
+  const shownEdges = useMemo(() => (hiddenCount > 0 ? edges.filter((e) => shownKeys.has(e.from) && shownKeys.has(e.to)) : edges), [edges, shownKeys, hiddenCount]);
 
   // Ring shape follows the stage's aspect (quantized so a resize by a few pixels doesn't re-layout).
   const ratio = size ? Math.round((size.width / Math.max(1, size.height)) * 10) / 10 : 1.6;
@@ -222,7 +237,7 @@ export function RelationGraph({
     const sizeOf = (key: string) => (key === center.key ? { w: CENTER_W, h: CENTER_H } : { w: NODE_W, h: NODE_H });
     const seen = new Map<string, number>();
     const out: Geometry[] = [];
-    for (const e of edges) {
+    for (const e of shownEdges) {
       const a = layout.positions[e.from];
       const b = layout.positions[e.to];
       if (!a || !b) continue;
@@ -246,7 +261,19 @@ export function RelationGraph({
       });
     }
     return out;
-  }, [edges, layout.positions, center.key]);
+  }, [shownEdges, layout.positions, center.key]);
+
+  // Hover/focus lights up one node's links; a selection keeps them lit.
+  const focusKey = hoverKey ?? selectedKey;
+  const connected = useMemo(() => {
+    if (!focusKey) return null;
+    const keys = new Set<string>([focusKey]);
+    for (const e of shownEdges) {
+      if (e.from === focusKey) keys.add(e.to);
+      if (e.to === focusKey) keys.add(e.from);
+    }
+    return keys;
+  }, [focusKey, shownEdges]);
 
   const showLabels = view.zoom >= LABEL_MIN_ZOOM;
 
@@ -284,20 +311,29 @@ export function RelationGraph({
                 </marker>
               ))}
             </defs>
-            {geometry.map(({ edge, d, directed }) => {
+            {geometry.map(({ edge, d, directed }, i) => {
               const origin = RELATION_TYPES[edge.type].origin;
-              const active = selectedKey !== null && (edge.from === selectedKey || edge.to === selectedKey);
+              const active = focusKey !== null && (edge.from === focusKey || edge.to === focusKey);
+              const derived = origin === "dna";
+              // Solid links draw themselves in (pathLength 1 → dash/offset 0..1); the dashed
+              // DNA suggestions would lose their rhythm under a dash trick, so they fade in.
               return (
                 <path
                   key={edge.id}
                   d={d}
                   fill="none"
                   strokeLinecap="round"
-                  strokeDasharray={origin === "dna" ? "7 6" : undefined}
+                  pathLength={derived ? undefined : 1}
+                  strokeDasharray={derived ? "7 6" : 1}
                   strokeWidth={active ? 2.75 : 1.75}
-                  opacity={selectedKey === null || active ? 1 : 0.45}
+                  opacity={focusKey === null || active ? 1 : 0.28}
                   markerEnd={directed ? `url(#rel-arrow-${origin})` : undefined}
-                  className={cn("stroke-current", EDGE_COLOR[origin])}
+                  className={cn(
+                    "stroke-current transition-[opacity,stroke-width] duration-200 ease-soft",
+                    derived ? "animate-fade-in" : "animate-edge-draw",
+                    EDGE_COLOR[origin],
+                  )}
+                  style={{ animationDelay: `${120 + Math.min(i, NODE_STAGGER_CAP) * NODE_STAGGER_MS}ms` }}
                   data-edge-type={edge.type}
                 />
               );
@@ -317,21 +353,22 @@ export function RelationGraph({
                   tabIndex={-1}
                   onClick={() => onSelect(neighborKey)}
                   data-edge-label={edge.type}
-                  className="absolute -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-full border border-border-soft bg-surface px-2 py-0.5 text-caption font-medium text-text-secondary shadow-xs hover:border-border-strong hover:text-text"
-                  style={{ left: mid.x, top: mid.y }}
+                  className="absolute -translate-x-1/2 -translate-y-1/2 animate-fade-in whitespace-nowrap rounded-full border border-border-soft bg-surface px-2 py-0.5 text-caption font-medium text-text-secondary shadow-xs hover:border-border-strong hover:text-text"
+                  style={{ left: mid.x, top: mid.y, animationDelay: "420ms" }}
                 >
                   {text}
                 </button>
               );
             })}
 
-          {[center, ...neighbors].map((node) => {
+          {[center, ...neighbors].map((node, nodeIndex) => {
             const pos = layout.positions[node.key];
             if (!pos) return null;
             const isCenter = node.key === center.key;
             const w = isCenter ? CENTER_W : NODE_W;
             const h = isCenter ? CENTER_H : NODE_H;
             const selected = selectedKey === node.key;
+            const dimmed = connected !== null && !connected.has(node.key);
             const Icon = KIND_ICON[node.kind];
             // What links this node to the center, in words (so type never rests on line style or color alone).
             const types = [...new Set(edges.filter((e) => otherEnd(e, center.key) === node.key).map((e) => e.type))];
@@ -341,16 +378,34 @@ export function RelationGraph({
                 key={node.key}
                 type="button"
                 onClick={() => onSelect(node.key)}
+                onPointerEnter={(event) => event.pointerType === "mouse" && setHoverKey(node.key)}
+                onPointerLeave={() => setHoverKey(null)}
+                onFocus={() => setHoverKey(node.key)}
+                onBlur={() => setHoverKey(null)}
                 aria-pressed={selected}
                 aria-label={t("relations.nodeAria", { kind: kindLabel(node.kind), title: node.title })}
                 data-node-key={node.key}
                 data-node-center={isCenter || undefined}
                 className={cn(
-                  "absolute flex items-center gap-2.5 overflow-hidden rounded-lg border bg-surface px-3 text-left shadow-card transition-[border-color,box-shadow,background-color] duration-200 ease-soft",
-                  isCenter ? "border-primary bg-primary-soft" : "border-border-soft hover:border-border-strong",
+                  "absolute flex items-center gap-2.5 overflow-hidden rounded-lg border bg-surface px-3 text-left shadow-card transition-[border-color,box-shadow,background-color,opacity] duration-200 ease-soft",
+                  isCenter ? "animate-pop-in border-primary bg-primary-soft" : "animate-node-emerge border-border-soft hover:border-border-strong",
                   selected && "border-primary ring-2 ring-primary",
+                  dimmed && "opacity-60",
                 )}
-                style={{ left: pos.x - w / 2, top: pos.y - h / 2, width: w, height: h }}
+                style={{
+                  left: pos.x - w / 2,
+                  top: pos.y - h / 2,
+                  width: w,
+                  height: h,
+                  // New nodes emerge from the center; the cascade follows the strongest-first order.
+                  ...(isCenter
+                    ? null
+                    : {
+                        ["--ex" as string]: `${-pos.x}px`,
+                        ["--ey" as string]: `${-pos.y}px`,
+                        animationDelay: `${Math.min(nodeIndex, NODE_STAGGER_CAP) * NODE_STAGGER_MS}ms`,
+                      }),
+                }}
               >
                 {node.imageUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element -- tiny node thumbnails; next/image's sizing overhead isn't worth it on a pan/zoom layer
@@ -377,6 +432,18 @@ export function RelationGraph({
           })}
         </div>
       </div>
+
+      {hiddenCount > 0 && (
+        <button
+          type="button"
+          onClick={() => setExpandedFor(center.key)}
+          data-relation-show-all
+          className="absolute bottom-3 left-3 z-10 inline-flex h-11 items-center gap-1.5 rounded-full border border-border bg-surface px-4 text-label font-medium text-text shadow-card transition-colors hover:border-border-strong"
+        >
+          <Plus size={14} aria-hidden />
+          {t("relations.showMoreNodes", { count: hiddenCount })}
+        </button>
+      )}
 
       <div className="absolute right-3 top-3 flex flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-card">
         <ToolButton label={t("relations.zoomIn")} onClick={() => zoomCenter(1.25)}>

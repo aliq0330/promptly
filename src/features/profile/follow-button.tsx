@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -33,6 +34,9 @@ interface FollowButtonViewProps {
 export function FollowButtonView({ isFollowing, toggle, canFollow, loading, size = "sm", className }: FollowButtonViewProps) {
   const { t } = useTranslation();
   const { requireAuth } = useAuthPrompt();
+  // The viewer's own follow/unfollow settles with one small pop (a remount restarts it). Counted on the
+  // click, not on the state flip, so the async "am I following?" answer arriving never animates.
+  const [pressSeq, setPressSeq] = useState(0);
   if (!canFollow) {
     return (
       <button
@@ -57,12 +61,16 @@ export function FollowButtonView({ isFollowing, toggle, canFollow, loading, size
 
   return (
     <Button
+      key={pressSeq}
       type="button"
       variant={isFollowing ? "outline" : "primary"}
       size={size}
-      onClick={toggle}
+      onClick={() => {
+        setPressSeq((n) => n + 1);
+        toggle();
+      }}
       disabled={loading}
-      className={className}
+      className={cn(pressSeq > 0 && "animate-state-pop", className)}
     >
       {isFollowing ? t("common.unfollow") : t("common.follow")}
     </Button>

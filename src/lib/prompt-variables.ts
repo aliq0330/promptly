@@ -148,3 +148,55 @@ export function replaceAllOccurrencesWithToken(text: string, needle: string, nam
   if (!needle) return text;
   return text.split(needle).join(`{${name}}`);
 }
+
+export type AssembleSegment =
+  | { kind: "text"; text: string }
+  /** A variable that has a value right now (the viewer's pick or the default). */
+  | { kind: "value"; text: string; name: string }
+  /** A visible variable with no value yet — shown as a placeholder so the viewer sees where it will land. */
+  | { kind: "empty"; text: string; name: string };
+
+/**
+ * The prompt as "assembled" from its template: literal text and, in place of
+ * every defined `{name}`, either its value or — when a *visible* variable is
+ * still empty — a placeholder. Hidden (condition not met) variables vanish
+ * exactly as they do in `resolvePromptText`, so the segments always read the
+ * same as the text that gets copied, apart from the placeholders. Tokens with
+ * no matching variable stay literal text (an orphan reference is never hidden).
+ */
+export function segmentPromptAssembly(
+  text: string,
+  values: Record<string, string>,
+  visible: Record<string, boolean> = {},
+): AssembleSegment[] {
+  const segments: AssembleSegment[] = [];
+  let last = 0;
+  const push = (segment: AssembleSegment) => {
+    const previous = segments[segments.length - 1];
+    if (segment.kind === "text" && previous?.kind === "text") previous.text += segment.text;
+    else segments.push(segment);
+  };
+  for (const match of text.matchAll(TOKEN_PATTERN)) {
+    const index = match.index ?? 0;
+    const name = match[1];
+    if (!Object.prototype.hasOwnProperty.call(values, name)) continue;
+    if (index > last) push({ kind: "text", text: text.slice(last, index) });
+    const value = values[name];
+    if (value) push({ kind: "value", text: value, name });
+    else if (visible[name] !== false) push({ kind: "empty", text: name, name });
+    last = index + match[0].length;
+  }
+  if (last < text.length) push({ kind: "text", text: text.slice(last) });
+  return segments;
+}
+
+/** How many of the visible variables have a value — the "N/M alan dolu" progress. */
+export function assemblyProgress(
+  variables: { name: string }[],
+  values: Record<string, string>,
+  visible: Record<string, boolean>,
+): { filled: number; total: number; complete: boolean } {
+  const shown = variables.filter((variable) => visible[variable.name] !== false);
+  const filled = shown.filter((variable) => (values[variable.name] ?? "").trim() !== "").length;
+  return { filled, total: shown.length, complete: shown.length > 0 && filled === shown.length };
+}

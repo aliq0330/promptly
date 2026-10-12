@@ -80,7 +80,7 @@ export function CopyPromptButton({
         className,
       )}
     >
-      <Icon size={size === "sm" ? 12 : 14} />
+      <Icon key={state} size={size === "sm" ? 12 : 14} className={state === "copied" ? "animate-check-pop" : undefined} />
       {displayLabel}
     </button>
   );

@@ -929,14 +929,14 @@ export function CreatePromptForm() {
                   : t("common.share")
             }
           >
-            {draftNotice && <p className="text-sm text-success">{t("draft.saved")}</p>}
+            {draftNotice && <p className="animate-pop-in text-sm text-success">{t("draft.saved")}</p>}
             {outputFailedParam && (
-              <div role="alert" className="rounded-md border border-danger/30 bg-danger/5 p-3 text-sm text-danger">
+              <div role="alert" className="animate-pop-in rounded-md border border-danger/30 bg-danger/5 p-3 text-sm text-danger">
                 {t("output.uploadFailed", { message: outputFailedParam === "1" ? "" : outputFailedParam })}
               </div>
             )}
             {publishError && (
-              <div role="alert" className="rounded-md border border-danger/30 bg-danger/5 p-3 text-sm text-danger">
+              <div role="alert" className="animate-pop-in rounded-md border border-danger/30 bg-danger/5 p-3 text-sm text-danger">
                 {publishError}
               </div>
             )}

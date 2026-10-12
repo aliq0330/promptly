@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 export function contentActionClassName(active?: boolean, className?: string) {
   return cn(
     "relative z-10 inline-flex h-9 min-w-9 items-center justify-center gap-1.5 rounded-md px-2.5 text-label font-medium tabular-nums",
-    "transition-[background-color,color] duration-200 ease-soft",
+    "transition-[background-color,color,transform] duration-200 ease-soft active:scale-[0.94]",
     "hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
     active ? "text-primary" : "text-text-muted hover:text-text",
     className,

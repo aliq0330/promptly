@@ -444,7 +444,7 @@ export function CreateRequestForm() {
           >
             {draftNotice && <p className="text-sm text-success">{t("draft.saved")}</p>}
             {publishError && (
-              <p role="alert" className="text-sm text-danger">
+              <p role="alert" className="animate-pop-in text-sm text-danger">
                 {publishError}
               </p>
             )}

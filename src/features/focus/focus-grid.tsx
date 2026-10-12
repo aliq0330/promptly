@@ -3,7 +3,7 @@
 import type { FeedItem } from "@/features/feed/types";
 import { feedItemKey } from "@/features/feed/types";
 import { FocusCard } from "./focus-card";
-import { staggerStyle } from "@/components/ui/entrance";
+import { Reveal } from "@/components/ui/reveal";
 
 /**
  * Focus View's grid — the same CSS-columns masonry the card view already uses
@@ -17,9 +17,9 @@ export function FocusGrid({ items }: { items: FeedItem[] }) {
   return (
     <div className="columns-2 gap-2.5 sm:gap-3 md:columns-3 xl:columns-4">
       {items.map((item, index) => (
-        <div key={feedItemKey(item)} className="pb-2.5 animate-grid-in break-inside-avoid sm:pb-3" style={staggerStyle(index)}>
+        <Reveal key={feedItemKey(item)} index={index} className="pb-2.5 break-inside-avoid sm:pb-3">
           <FocusCard item={item} />
-        </div>
+        </Reveal>
       ))}
     </div>
   );

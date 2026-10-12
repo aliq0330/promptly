@@ -13,7 +13,7 @@ export const Chip = forwardRef<
     aria-pressed={selected}
     className={cn(
       "inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-3 text-label font-medium whitespace-nowrap",
-      "transition-[background-color,border-color,color] duration-200 ease-soft",
+      "transition-[background-color,border-color,color,transform] duration-200 ease-soft active:scale-[0.96]",
       selected
         ? "border-text bg-text text-background shadow-xs"
         : "border-border bg-surface text-text-secondary hover:border-border-strong hover:bg-surface-soft/60 hover:text-text",

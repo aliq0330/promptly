@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState, type MouseEvent } from "react";
 import { Heart } from "lucide-react";
 import { cn, formatCount } from "@/lib/utils";
+import { MOTION_MS, usePrefersReducedMotion } from "@/lib/motion";
 
 /**
  * What a like mutation reports back. `liked` is the only result that plays
@@ -12,9 +13,9 @@ import { cn, formatCount } from "@/lib/utils";
  */
 export type LikeToggleResult = "liked" | "unliked" | "failed" | "ignored";
 
-/** Deterministic burst geometry (no randomness in render): 10 particles on a ring. */
-const PARTICLES = Array.from({ length: 10 }, (_, i) => {
-  const angle = (i / 10) * Math.PI * 2 + 0.55;
+/** Deterministic burst geometry (no randomness in render): 8 particles on a ring. */
+const PARTICLES = Array.from({ length: 8 }, (_, i) => {
+  const angle = (i / 8) * Math.PI * 2 + 0.4;
   const dist = 22 + ((i * 7) % 5);
   return {
     px: Math.round(Math.cos(angle) * dist),
@@ -31,6 +32,11 @@ function LikeBurstEffect({ size }: { size: number }) {
       <span
         className="absolute left-0 top-0 animate-like-ring rounded-full border-danger"
         style={{ width: size * 1.9, height: size * 1.9, borderStyle: "solid" }}
+      />
+      {/* A second, wider and fainter ring a beat later — the "echo". */}
+      <span
+        className="absolute left-0 top-0 animate-like-ring rounded-full border-primary/60"
+        style={{ width: size * 2.6, height: size * 2.6, borderStyle: "solid", animationDelay: "90ms" }}
       />
       {PARTICLES.map((p, i) => (
         <span
@@ -97,7 +103,9 @@ export function LikeToggle({
   title?: string;
   disabled?: boolean;
 }) {
+  const reducedMotion = usePrefersReducedMotion();
   const [burstSeq, setBurstSeq] = useState(0);
+  const heartRef = useRef<HTMLSpanElement>(null);
   const [bursting, setBursting] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -113,13 +121,21 @@ export function LikeToggle({
       event.preventDefault();
       event.stopPropagation();
       const result = await onToggle();
+      // Unlike: a quiet "release" (no particles) — clearly lighter than a like.
+      // (Web Animations, not a remount, so the fill/colour transition keeps running.)
+      if (result === "unliked" && !reducedMotion) {
+        heartRef.current?.animate(
+          [{ transform: "scale(1)" }, { transform: "scale(0.82)", offset: 0.45 }, { transform: "scale(1)" }],
+          { duration: MOTION_MS.normal, easing: "cubic-bezier(0.2, 0.7, 0.2, 1)" },
+        );
+      }
       if (result !== "liked") return;
       setBurstSeq((n) => n + 1);
       setBursting(true);
       if (timer.current) clearTimeout(timer.current);
       timer.current = setTimeout(() => setBursting(false), 700);
     },
-    [onToggle],
+    [onToggle, reducedMotion],
   );
 
   return (
@@ -133,14 +149,19 @@ export function LikeToggle({
       className={className}
     >
       <span className="relative inline-flex items-center justify-center" style={{ width: size, height: size }}>
-        <span key={burstSeq} className={cn("inline-flex", burstSeq > 0 && liked && "animate-heart-pop motion-reduce:animate-none")}>
+        <span
+          ref={heartRef}
+          // Keys must differ from the burst layer's below: two siblings sharing a key made React keep every old heart.
+          key={`heart-${burstSeq}`}
+          className={cn("inline-flex", burstSeq > 0 && liked && "animate-heart-pop motion-reduce:animate-none")}
+        >
           <Heart
             size={size}
             strokeWidth={1.75}
             className={cn("transition-[fill,color] duration-200 ease-soft", liked ? "fill-current text-danger" : "fill-transparent")}
           />
         </span>
-        {bursting && <LikeBurstEffect key={burstSeq} size={size} />}
+        {bursting && !reducedMotion && <LikeBurstEffect key={`burst-${burstSeq}`} size={size} />}
       </span>
       {showCount && !(hideZero && count <= 0) && <RollingCount value={count} />}
     </button>
