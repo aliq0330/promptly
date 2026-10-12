@@ -5,7 +5,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { PromptCard } from "./prompt-card";
 import type { Prompt } from "@/types";
-import { staggerStyle } from "@/components/ui/entrance";
+import { Reveal } from "@/components/ui/reveal";
 
 type PromptGridProps = { prompts: Prompt[] };
 
@@ -33,9 +33,9 @@ export function PromptGrid(props: PromptGridProps) {
   return (
     <div className="columns-1 gap-3 sm:columns-2 sm:gap-4 xl:columns-3">
       {items.map((item, index) => (
-        <div key={item.key} className="pb-3 animate-grid-in break-inside-avoid sm:pb-4" style={staggerStyle(index)}>
+        <Reveal key={item.key} index={index} className="pb-3 break-inside-avoid sm:pb-4">
           {item.node}
-        </div>
+        </Reveal>
       ))}
     </div>
   );

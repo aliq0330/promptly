@@ -67,7 +67,7 @@ export function OutputThumbnailStrip({ media }: { media: PromptMedia[] }) {
   const overflow = rest.length - visible.length;
   return (
     <div className="space-y-1.5">
-      <figure className={FRAME_CLASS} style={{ aspectRatio: Math.max(1, clampedAspectRatio(cover.width, cover.height)) }}>
+      <figure data-card-media className={FRAME_CLASS} style={{ aspectRatio: Math.max(1, clampedAspectRatio(cover.width, cover.height)) }}>
         <Image src={cover.url} alt={cover.alt} fill sizes={SIZES} className="object-cover" />
         <OutputCaption />
       </figure>

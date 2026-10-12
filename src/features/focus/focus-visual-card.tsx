@@ -43,7 +43,7 @@ export function FocusVisualCard({
 }) {
   return (
     <ContentCard href={href} className="overflow-hidden">
-      <div className="relative bg-surface-soft" style={{ aspectRatio: clampAspectRatio(image.width, image.height) }}>
+      <div data-card-media className="relative bg-surface-soft" style={{ aspectRatio: clampAspectRatio(image.width, image.height) }}>
         {/* eslint-disable-next-line @next/next/no-img-element -- user media (Storage URL / local data URL), same as every other card */}
         <img src={image.url} alt={image.alt || title} loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover" />
 

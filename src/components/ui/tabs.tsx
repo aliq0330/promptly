@@ -1,5 +1,6 @@
 "use client";
 
+import { useLayoutEffect, useRef, useState } from "react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -37,16 +38,52 @@ export function Tabs<K extends string>({
   variant?: "underline" | "segmented";
   className?: string;
 }) {
+  const listRef = useRef<HTMLDivElement>(null);
+  const [indicator, setIndicator] = useState<{ left: number; width: number } | null>(null);
+  const activeIndex = items.findIndex((item) => item.key === active);
+  const labelsKey = items.map((item) => `${item.key}:${item.count ?? ""}`).join("|");
+
+  // The active tab's box inside the (scrollable) list. The list is the
+  // offset parent, so the indicator scrolls with the tabs; a ResizeObserver
+  // keeps it right through font loading, count changes and rotation.
+  useLayoutEffect(() => {
+    const list = listRef.current;
+    if (!list) return;
+    const measure = () => {
+      const tab = list.querySelectorAll<HTMLElement>('[role="tab"]')[activeIndex];
+      setIndicator(tab ? { left: tab.offsetLeft, width: tab.offsetWidth } : null);
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(list);
+    list.querySelectorAll('[role="tab"]').forEach((tab) => observer.observe(tab));
+    return () => observer.disconnect();
+  }, [activeIndex, labelsKey, variant]);
+
   return (
     <div
+      ref={listRef}
       role="tablist"
       aria-label={ariaLabel}
       className={cn(
-        "scrollbar-none flex touch-pan-x overflow-x-auto overscroll-x-contain",
+        "scrollbar-none relative flex touch-pan-x overflow-x-auto overscroll-x-contain",
         variant === "underline" ? "gap-1 border-b border-border-soft" : "w-fit max-w-full gap-0.5 rounded-lg border border-border-soft bg-surface-soft p-0.5",
         className,
       )}
     >
+      {indicator && (
+        <span
+          aria-hidden
+          data-tab-indicator
+          className={cn(
+            "pointer-events-none absolute transition-[transform,width] duration-[var(--motion-normal)] ease-soft",
+            variant === "underline"
+              ? "bottom-0 left-0 h-0.5 rounded-full bg-primary"
+              : "bottom-0.5 left-0 top-0.5 rounded-md bg-surface shadow-sm ring-1 ring-border-soft",
+          )}
+          style={{ width: indicator.width, transform: `translateX(${indicator.left}px)` }}
+        />
+      )}
       {items.map((item) => {
         const selected = item.key === active;
         const Icon = item.icon;
@@ -58,15 +95,18 @@ export function Tabs<K extends string>({
             aria-selected={selected}
             onClick={() => onChange(item.key)}
             className={cn(
-              "inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap text-label font-medium transition-[color,background-color,border-color,box-shadow] duration-200 ease-soft",
+              "relative inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap text-label font-medium transition-[color,background-color,border-color,box-shadow] duration-200 ease-soft",
               variant === "underline"
                 ? cn(
                     "-mb-px border-b-2 px-3 py-3",
-                    selected ? "border-primary text-text" : "border-transparent text-text-muted hover:text-text",
+                    // Until the indicator is measured (first paint) the tab draws its own mark.
+                    selected ? cn("text-text", indicator ? "border-transparent" : "border-primary") : "border-transparent text-text-muted hover:text-text",
                   )
                 : cn(
                     "h-8 rounded-md px-3",
-                    selected ? "bg-surface text-text shadow-sm ring-1 ring-border-soft" : "text-text-muted hover:text-text",
+                    selected
+                      ? cn("text-text", !indicator && "bg-surface shadow-sm ring-1 ring-border-soft")
+                      : "text-text-muted hover:text-text",
                   ),
             )}
           >

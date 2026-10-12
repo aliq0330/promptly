@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node --test \"src/lib/prompt-dna/*.test.ts\" \"src/lib/prompt-composer.test.ts\" \"src/lib/prompt-variable-types.test.ts\" \"src/lib/prompt-variable-catalog.test.ts\" \"src/lib/relations/*.test.ts\""
+    "test": "node --test \"src/lib/prompt-dna/*.test.ts\" \"src/lib/prompt-composer.test.ts\" \"src/lib/prompt-variable-types.test.ts\" \"src/lib/prompt-variable-catalog.test.ts\" \"src/lib/prompt-assemble.test.ts\" \"src/lib/relations/*.test.ts\""
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.116.0",

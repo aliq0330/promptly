@@ -58,6 +58,7 @@ export function FocusTitle({ href, title, onImage = false, className }: { href: 
     <h3 className={cn("font-semibold leading-snug", onImage ? "text-label text-white sm:text-small" : "text-small text-text sm:text-body", className)}>
       <Link
         href={href}
+        data-card-link
         className="relative z-10 line-clamp-2 rounded-xs outline-none decoration-primary/40 underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-primary"
       >
         {title}

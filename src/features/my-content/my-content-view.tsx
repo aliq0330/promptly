@@ -16,7 +16,7 @@ import { Chip, ChipRow } from "@/components/ui/chip";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { buttonClassName } from "@/components/ui/button";
-import { staggerStyle } from "@/components/ui/entrance";
+import { Reveal } from "@/components/ui/reveal";
 import { useAuth } from "@/features/auth/auth-provider";
 import {
   SortSelect,
@@ -312,13 +312,9 @@ export function MyContentView() {
           ) : (
             <div className="columns-1 gap-3 sm:columns-2 sm:gap-4 xl:columns-3">
               {visible.map((entry, index) => (
-                <div
-                  key={entry.id}
-                  className="pb-3 animate-grid-in break-inside-avoid sm:pb-4"
-                  style={staggerStyle(index)}
-                >
+                <Reveal key={entry.id} index={index} className="pb-3 break-inside-avoid sm:pb-4">
                   {entry.node}
-                </div>
+                </Reveal>
               ))}
             </div>
           )}

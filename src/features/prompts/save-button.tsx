@@ -51,6 +51,8 @@ export function SaveButton({
     saveCount,
   );
   const [modalOpen, setModalOpen] = useState(false);
+  // Counted on the viewer's own save/unsave, never on the async "is it saved?" answer arriving.
+  const [popSeq, setPopSeq] = useState(0);
   const [showRemovedToast, setShowRemovedToast] = useState(false);
   const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -112,7 +114,13 @@ export function SaveButton({
         aria-label={isSaved ? t("prompt.removeFromSaved") : t("prompt.saveAria", { count })}
         className={cn(sharedClassName, isToggling && "opacity-60")}
       >
-        <Bookmark size={size} fill={isSaved ? "currentColor" : "none"} strokeWidth={1.75} />
+        <Bookmark
+          key={popSeq}
+          size={size}
+          fill={isSaved ? "currentColor" : "none"}
+          strokeWidth={1.75}
+          className={cn("transition-[fill] duration-200", popSeq > 0 && isSaved && "animate-state-pop")}
+        />
         <span aria-hidden>{formatCount(count)}</span>
       </button>
 
@@ -120,7 +128,10 @@ export function SaveButton({
         <SaveToCollectionModal
           {...(contentType === "preset" ? { presetId: id } : contentType === "workflow" ? { workflowId: id } : { promptId: id })}
           onClose={() => setModalOpen(false)}
-          onAdded={markSaved}
+          onAdded={() => {
+            setPopSeq((n) => n + 1);
+            markSaved();
+          }}
           onRemoved={markUnsaved}
         />
       )}

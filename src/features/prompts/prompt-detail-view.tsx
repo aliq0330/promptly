@@ -33,12 +33,14 @@ import { PromptResultsSection } from "@/features/prompts/prompt-results-section"
 import { PromptPlayableOutput } from "@/features/prompts/prompt-playable-output";
 import { useAuth } from "@/features/auth/auth-provider";
 import { fetchVariablesForPrompt } from "@/lib/supabase/prompt-variables";
-import { resolvePromptText, segmentPromptText } from "@/lib/prompt-variables";
+import { resolvePromptText } from "@/lib/prompt-variables";
+import { AssembleStatus, AssembleSweep, AssembledPromptText, useAssembleProgress } from "@/features/prompts/prompt-assemble";
+import { hasPendingCardTransition, useCardMediaTransition } from "@/lib/card-transition";
 import { effectiveVariableValues } from "@/lib/prompt-variable-types";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
 import { PostMenu } from "@/features/prompts/post-menu";
 import { parseHighlightValue } from "@/lib/notification-utils";
-import { cn } from "@/lib/utils";
+import { cn, promptHref, relationMapHref } from "@/lib/utils";
 import { DetailActionBar, DetailAside, DetailByline, DetailComments, DetailLede, DetailShell, DetailTags, DetailTitle, Eyebrow } from "@/features/content/detail-parts";
 import { ReferenceRequirementNotes } from "@/features/content/reference-requirements";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -60,6 +62,10 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
   const media = prompt.media[0];
   const typeMeta = CONTENT_TYPE_META[prompt.contentType];
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  // Arrived from a card with a cover → that cover morphs into this hero (src/lib/card-transition.ts).
+  const selfHref = promptHref(prompt);
+  const [morphingCover] = useState(() => hasPendingCardTransition(selfHref));
+  const heroRef = useCardMediaTransition<HTMLButtonElement>(selfHref);
 
   const { user } = useAuth();
   const isOwn = user?.id === prompt.author.id;
@@ -88,6 +94,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
   const isCustomized = variables.some((variable) => variable.name in variableOverrides && variableOverrides[variable.name] !== variable.defaultValue);
   // What the viewer sees, copies and runs: the template with their values substituted.
   const displayText = variables.length > 0 ? resolvePromptText(livePromptText, variableValues) : livePromptText;
+  const assemble = useAssembleProgress(variables, variableValues, variableVisible);
 
   const searchParams = useSearchParams();
   const highlight = parseHighlightValue(searchParams.get("hl"));
@@ -132,6 +139,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
 
   return (
     <DetailShell
+      entrance={morphingCover ? "fade" : "rise"}
       aside={
         <DetailAside>
           <CreatorSummary creator={prompt.author} isOwn={isOwn} />
@@ -168,6 +176,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
           ) : media && (
             <figure className="space-y-2">
               <button
+                ref={heroRef}
                 type="button"
                 onClick={() => setLightboxIndex(0)}
                 aria-label={t("media.viewFullscreen")}
@@ -235,7 +244,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
           )}
 
           {activeTab === "prompt" && (
-          <section aria-labelledby="prompt-text-title" className="overflow-hidden rounded-xl border border-border-soft bg-surface-soft shadow-card">
+          <section aria-labelledby="prompt-text-title" className="relative overflow-hidden rounded-xl border border-border-soft bg-surface-soft shadow-card">
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border-soft px-4 py-2.5">
               <Eyebrow as="h2" id="prompt-text-title" icon={SquareTerminal}>
                 {t("prompt.promptTextHeading")}
@@ -256,19 +265,15 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
                 <OpenInStudioButton kind="prompt" id={prompt.id} />
               </div>
             </div>
+            {variables.length > 0 && <AssembleStatus filled={assemble.filled} total={assemble.total} complete={assemble.complete} />}
             <ScrollablePrompt className="px-4 py-4 text-[0.875rem] text-text">
-              {variables.length > 0
-                ? segmentPromptText(livePromptText, variableValues).map((segment, index) =>
-                    segment.isVariable ? (
-                      <mark key={index} className="rounded-sm bg-primary-soft px-1 font-semibold text-primary">
-                        {segment.text}
-                      </mark>
-                    ) : (
-                      segment.text
-                    ),
-                  )
-                : displayText}
+              {variables.length > 0 ? (
+                <AssembledPromptText template={livePromptText} values={variableValues} visible={variableVisible} settled={assemble.complete} />
+              ) : (
+                displayText
+              )}
             </ScrollablePrompt>
+            <AssembleSweep seq={assemble.sweepSeq} />
           </section>
           )}
 
@@ -280,7 +285,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
             </div>
           )}
 
-          {activeTab === "dna" && <PromptDnaDisplay sections={dnaSections} />}
+          {activeTab === "dna" && <PromptDnaDisplay sections={dnaSections} promptTitle={prompt.title} mapHref={relationMapHref({ kind: "prompt", id: prompt.id })} />}
 
           <ToolLine label={t("tool.recommendedLabel")} refs={prompt.tools} legacy={prompt.tool} />
 
