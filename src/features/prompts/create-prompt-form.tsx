@@ -23,7 +23,6 @@ import { PromptTextEditor, type DraftVariable } from "@/features/prompts/prompt-
 import { PromptDnaEditor } from "@/features/prompts/prompt-dna-editor";
 import { fetchDnaSections, replaceDnaSections } from "@/lib/supabase/prompt-dna";
 import type { DnaSection } from "@/lib/prompt-dna/types";
-import { PromptVisionAssist } from "@/features/prompts/prompt-vision-assist";
 import { fetchVariablesForPrompt, replaceVariablesForPrompt } from "@/lib/supabase/prompt-variables";
 import { takeHandoff } from "@/lib/generate-handoff";
 import { placeholderArt } from "@/lib/placeholder-image";
@@ -822,18 +821,11 @@ export function CreatePromptForm() {
 
           {contentType === "image" && (
             <FormSection title={t("formSection.images")}>
-              <div className="space-y-4">
-                <MultiImagePicker
-                  items={images}
-                  onChange={setImages}
-                  hint={isEditMode ? t("prompt.imageEditHint") : t("prompt.imageUploadHint")}
-                />
-                <PromptVisionAssist
-                  onApplyPrompt={(text, mode) =>
-                    setPromptText((prev) => (mode === "replace" || !prev.trim() ? text : `${prev}\n\n${text}`))
-                  }
-                />
-              </div>
+              <MultiImagePicker
+                items={images}
+                onChange={setImages}
+                hint={isEditMode ? t("prompt.imageEditHint") : t("prompt.imageUploadHint")}
+              />
             </FormSection>
           )}
 
@@ -848,10 +840,6 @@ export function CreatePromptForm() {
             </FormSection>
           )}
 
-          <FormSection title={t("formSection.tool")}>
-            <ToolPicker value={tools} onChange={setTools} contentType={contentType} category={category} />
-          </FormSection>
-
           <FormSection title={t("formSection.prompt")}>
             <div className="space-y-4">
               <PromptTextEditor
@@ -862,6 +850,8 @@ export function CreatePromptForm() {
                 onVariablesChange={setVariables}
                 rows={5}
                 placeholder={t("prompt.promptTextPlaceholder")}
+                // "Görselden yardım" works on the image already picked above — no second upload.
+                visionFile={contentType === "image" ? (images.find((item) => item.file)?.file ?? null) : null}
               />
 
               <ExtraSettingsSection
@@ -887,6 +877,10 @@ export function CreatePromptForm() {
                 onChange={setReferences}
               />
             </div>
+          </FormSection>
+
+          <FormSection title={t("formSection.tool")}>
+            <ToolPicker value={tools} onChange={setTools} contentType={contentType} category={category} />
           </FormSection>
 
           <FormSection title={t("dna.title")} description={t("dna.description")}>
