@@ -312,9 +312,11 @@ bağlayıcıdır; ayrıntılı gerekçe için `docs/history/README.md` tablosuna
   URL ile açıldığı elle doğrulanmadı; CDN'in eski genel yanıtları ne kadar
   servis ettiği bilinmiyor. Signed URL 10 dk geçerli kalır (bilinen sınır).
   Migration Supabase geçmişinde `private_media_buckets` olarak kayıtlı.
-- `supabase/migrations/20260919640000_remove_studio.sql` canlıya uygulanmadı:
-  `studio_sessions` / `studio_session_versions` tabloları atıl duruyor (şu an
-  0 satır). Yıkıcı olduğu için onayla uygulanmalı.
+- `supabase/migrations/20260919640000_remove_studio.sql` canlıya uygulanmadı —
+  **onay bekliyor** (yıkıcı, geri dönüşü yok): yalnızca `drop table if exists
+  public.studio_session_versions; drop table if exists public.studio_sessions;`
+  çalıştırır. Tablolar atıl; son kontrolde (bu oturum) ikisi de 0 satır, başka
+  nesne bağlı değil. Açıkça "uygula" denmeden çalıştırılmaz (`supabase/README.md`).
 - Supabase Dashboard → Authentication → Providers → Email: **"Leaked password
   protection"** açılmalı (MCP ile yapılamaz).
 - `supabase/migrations/20260919800000_delete_account_data.sql` canlıya UYGULANMADI
@@ -329,7 +331,9 @@ bağlayıcıdır; ayrıntılı gerekçe için `docs/history/README.md` tablosuna
 - Moderatörün `/moderation`'dan bir kez **Depolama temizliği** (yetim
   Storage dosyaları, Bölüm 9.132) çalıştırması bekleniyor.
 - `content_relations` migration'ı (`20260919710000`) MCP `execute_sql` ile
-  uygulandı, Supabase migration geçmişinde kayıtlı değil.
+  uygulandı, Supabase migration geçmişinde kayıtlı değil (tablo canlıda var, 0
+  satır). Şemaya dokunmadan geçmişi tamamlama adımı `supabase/README.md`
+  "Migration geçmişi" bölümünde; komut kullanıcıya bırakıldı, çalıştırılmadı.
 - Hiçbir akış gerçek Supabase oturumuyla tarayıcıda uçtan uca, gerçek iOS/Android
   cihazda, ekran okuyucuyla veya yalnızca klavyeyle elle denenmedi.
 - Bilinen sınırlamalar: Keşfet karma akışı hâlâ son ~60'lık havuzdur (Ana Sayfa
