@@ -153,8 +153,8 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
           <div className="hidden lg:block">
             <CreatorSummary creator={prompt.author} isOwn={isOwn} />
           </div>
-          <ContributorsPanel key={contributorsRefreshKey} promptId={prompt.id} />
           <RelatedPrompts prompt={prompt} />
+          <ContributorsPanel key={contributorsRefreshKey} promptId={prompt.id} />
         </DetailAside>
       }
     >

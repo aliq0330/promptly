@@ -159,3 +159,4 @@ Her dosya adı `NNN-konu.md` biçimindedir; `NNN` eski bölüm numarasıdır (ö
 | 9.150 | Gönderi medyası private bucket'a taşındı (görünürlük = dosya erişimi) | uygulandı (kod); migration canlıya UYGULANMADI | [150-gonderi-medyasi-private-bucket-gorunurluk-dosya-erisimi.md](150-gonderi-medyasi-private-bucket-gorunurluk-dosya-erisimi.md) | 15 |
 | 9.151 | Ana sayfa akışı sunucudan: Takip / Popüler / En yeni (keyset) | uygulandı | [151-ana-sayfa-akisi-sunucudan-keyset-takip-populer-en-yeni.md](151-ana-sayfa-akisi-sunucudan-keyset-takip-populer-en-yeni.md) | 14 |
 | 9.152 | Arama: prompt metni dahil + keyset sayfalama (`search_content`) | uygulandı | [152-arama-prompt-metni-dahil-keyset-sayfalama.md](152-arama-prompt-metni-dahil-keyset-sayfalama.md) | 14 |
+| 9.153 | Detayda "Benzer" blokları sunucudan, görsel öncelikli | uygulandı | [153-detayda-benzerler-sunucudan-gorsel-oncelikli.md](153-detayda-benzerler-sunucudan-gorsel-oncelikli.md) | 13 |

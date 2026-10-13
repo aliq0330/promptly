@@ -269,6 +269,21 @@ export async function fetchPromptsByIds(ids: string[]): Promise<Prompt[]> {
 }
 
 /**
+ * Prompts related to `promptId`, chosen by the database (`public.related_prompts`,
+ * migration 20260919790000): shared DNA first, then shared tags, then same
+ * category, with same author / content type as secondary tie-breakers. Only
+ * visible (published + public) prompts, never the source itself, at most `limit`.
+ * Independent of any client-side cache, so it works on a directly opened
+ * `/prompts/local?id=` page. Throws on failure — the caller hides the block.
+ */
+export async function fetchRelatedPrompts(promptId: string, limit = 4): Promise<Prompt[]> {
+  const { data, error } = await supabase.rpc("related_prompts", { p_prompt_id: promptId, p_limit: limit });
+  if (error) throw new Error(error.message);
+  const ids = ((data ?? []) as { id: string }[]).map((row) => row.id);
+  return orderByIds(await fetchPromptsByIds(ids), ids);
+}
+
+/**
  * Search over published prompts — title, description AND the prompt text itself —
  * one keyset page at a time (`public.search_content`). Backs the real `/search`
  * page and `/prompts`'s search; "load more" passes the previous page's `nextCursor`.

@@ -157,6 +157,14 @@ export async function fetchRequestsByIds(ids: string[]): Promise<PromptRequest[]
   return withoutBlocked(filterNotDeleted(((data ?? []) as unknown as RequestRow[]).map(mapRequestRow)), (r) => r.author.id);
 }
 
+/** Requests related to `requestId` (`public.related_requests`): shared tags first, then same category; visible requests only. Throws on failure — the caller hides the block. */
+export async function fetchRelatedRequests(requestId: string, limit = 4): Promise<PromptRequest[]> {
+  const { data, error } = await supabase.rpc("related_requests", { p_request_id: requestId, p_limit: limit });
+  if (error) throw new Error(error.message);
+  const ids = ((data ?? []) as { id: string }[]).map((row) => row.id);
+  return orderByIds(await fetchRequestsByIds(ids), ids);
+}
+
 /** Search over real requests — title, description and the creative direction — one keyset page at a time (`public.search_content`). */
 export async function searchRequestsPage(query: string, filters: ContentSearchFilters = {}, limit = 40, cursor?: SearchCursor | null): Promise<SearchPage<PromptRequest>> {
   try {
