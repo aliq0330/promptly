@@ -316,18 +316,19 @@ bağlayıcıdır; ayrıntılı gerekçe için `docs/history/README.md` tablosuna
   **onay bekliyor** (yıkıcı, geri dönüşü yok): yalnızca `drop table if exists
   public.studio_session_versions; drop table if exists public.studio_sessions;`
   çalıştırır. Tablolar atıl; son kontrolde (bu oturum) ikisi de 0 satır, başka
-  nesne bağlı değil. Açıkça "uygula" denmeden çalıştırılmaz (`supabase/README.md`).
+  nesne bağlı değil. Kullanıcı silinmesini istedi, ama MCP `apply_migration` yıkıcı-SQL onayında zaman aşımına uğradı ve tablolar hâlâ duruyor; SQL Editor'den çalıştırılmalı (`supabase/README.md`).
 - Supabase Dashboard → Authentication → Providers → Email: **"Leaked password
   protection"** açılmalı (MCP ile yapılamaz).
-- `supabase/migrations/20260919800000_delete_account_data.sql` canlıya UYGULANMADI
-  (MCP `apply_migration` yıkıcı-SQL onayında iki kez zaman aşımı; canlıda fonksiyon yok)
-  ve `delete-account` Edge Function DEPLOY EDİLMEDİ (`supabase functions deploy
-  delete-account`, JWT doğrulaması AÇIK; önce migration, sonra fonksiyon). Bunlar
-  yapılana dek Ayarlar → "Hesabımı sil" hata verir ve hesaba dokunmaz
-  (`docs/history/154-*`).
-- Edge Function'lar elle deploy edilir: `analyze-image` (kod değişince),
-  `username-login` (`--no-verify-jwt`), `cleanup-orphan-storage`. Canlıdaki
-  sürümlerin güncel olduğu doğrulanmadı.
+- `delete_account_data` (migration `20260919800000`) kullanıcı tarafından canlıya
+  uygulandı ve `delete-account` Edge Function deploy edildi (canlıda v1,
+  `verify_jwt` açık, kodu repodakiyle aynı — `docs/history/154-*`). Hâlâ yapılmadı:
+  gerçek bir test hesabıyla uçtan uca (kullanıcı adı yaz → sil → çıkış) denenmedi.
+- Edge Function'lar elle deploy edilir. Canlıdaki dört fonksiyon bu oturumda repoyla
+  karşılaştırıldı: `analyze-image` (v5, `verify_jwt` açık; model/MIME/boyut/mod
+  sabitleri repoyla aynı), `username-login` (v1, `verify_jwt` KAPALI — doğru),
+  `cleanup-orphan-storage` (v1, açık), `delete-account` (v1, açık) — mantık
+  repodakiyle aynı (canlı kopyalarda yorum satırları yok; satır satır bayt
+  karşılaştırması yapılmadı).
 - Moderatörün `/moderation`'dan bir kez **Depolama temizliği** (yetim
   Storage dosyaları, Bölüm 9.132) çalıştırması bekleniyor.
 - `content_relations` migration'ı (`20260919710000`) MCP `execute_sql` ile
