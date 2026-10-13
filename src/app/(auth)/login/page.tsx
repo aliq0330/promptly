@@ -132,7 +132,7 @@ export default function LoginPage() {
       </Button>
       <p className="text-xs text-text-muted">
         {t("auth.noAccountYet")}{" "}
-        <Link href="/signup" className="text-primary hover:underline">
+        <Link href="/signup" className="text-primary underline underline-offset-2 hover:no-underline">
           {t("auth.signUp")}
         </Link>
       </p>

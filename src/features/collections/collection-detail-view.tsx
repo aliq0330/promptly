@@ -1,12 +1,12 @@
 "use client";
 
-import { FolderOpen } from "lucide-react";
+import { FolderOpen, Search, SearchX, X } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageContainer } from "@/components/ui/page-header";
 import { DetailSkeleton, NotFoundBlock } from "@/components/ui/detail-skeleton";
 import { CollectionCover } from "./collection-card";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Globe, Lock } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
@@ -27,6 +27,7 @@ import {
   type CollectionEntry,
 } from "@/lib/supabase/collections";
 import { profileHref } from "@/lib/utils";
+import { normalizeTagLabel } from "@/lib/tag-normalize";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import Link from "next/link";
 import type { Collection } from "@/types";
@@ -58,6 +59,7 @@ export function CollectionDetailView() {
   const [loaded, setLoaded] = useState(false);
   const [editing, setEditing] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
   const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -115,6 +117,21 @@ export function CollectionDetailView() {
     showToast(collection.isDefault ? t("collection.removedFromSavedToast") : t("collection.removedFromCollectionToast"));
   }
 
+  // Search runs over what's already loaded (title, description, creator,
+  // tags) — a collection is a small personal list, no extra request needed.
+  const normalizedQuery = normalizeTagLabel(query);
+  const visibleItems = useMemo(() => {
+    if (!normalizedQuery) return items;
+    return items.filter((entry) => {
+      const data = entry.data;
+      const creator = "author" in data ? data.author : data.creator;
+      const haystack = normalizeTagLabel(
+        [data.title, data.description, creator.displayName, creator.username, ...data.tags.map((tag) => tag.label)].join(" "),
+      );
+      return haystack.includes(normalizedQuery);
+    });
+  }, [items, normalizedQuery]);
+
   if (!id || (loaded && !collection)) {
     return <NotFoundBlock title={t("collection.notFoundTitle")} description={t("collection.notFoundDescription")} />;
   }
@@ -157,11 +174,42 @@ export function CollectionDetailView() {
         </div>
       </header>
 
-      {items.length === 0 ? (
+      {items.length > 0 && (
+        <div className="relative">
+          <Search size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" aria-hidden />
+          <input
+            type="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder={t("collection.searchPlaceholder")}
+            aria-label={t("collection.searchPlaceholder")}
+            className="h-11 w-full rounded-full border border-border-soft bg-surface pl-10 pr-10 text-body text-text shadow-xs outline-none transition-colors placeholder:text-text-muted hover:border-border focus:border-primary focus-visible:ring-2 focus-visible:ring-primary/30 [&::-webkit-search-cancel-button]:hidden"
+          />
+          {query && (
+            <button
+              type="button"
+              onClick={() => setQuery("")}
+              aria-label={t("common.clear")}
+              className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-text-muted hover:bg-surface-soft hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            >
+              <X size={15} aria-hidden />
+            </button>
+          )}
+        </div>
+      )}
+
+      {items.length > 0 && visibleItems.length === 0 ? (
+        <EmptyState
+          icon={SearchX}
+          title={t("collection.searchNoResultsTitle")}
+          description={t("collection.searchNoResultsDescription", { query: query.trim() })}
+          action={{ label: t("common.clear"), onClick: () => setQuery("") }}
+        />
+      ) : items.length === 0 ? (
         <EmptyState icon={FolderOpen} title={t("collection.emptyItemsTitle")} description={t("collection.emptyItemsDescription")} action={{ label: t("feed.goToDiscover"), href: "/discover" }} />
       ) : (
         <div className="columns-1 gap-3 sm:columns-2 sm:gap-4 xl:columns-3">
-          {items.map((entry) => {
+          {visibleItems.map((entry) => {
             const removal = isOwner
               ? { isDefault: collection.isDefault, onRemove: () => handleRemoveItem(entry.data.id, entry.type) }
               : undefined;

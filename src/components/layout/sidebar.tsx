@@ -63,7 +63,7 @@ export function Sidebar() {
   }
 
   return (
-    <aside className="sticky top-0 hidden h-dvh shrink-0 flex-col border-r border-border-soft bg-surface md:flex md:w-[72px] lg:w-64">
+    <aside aria-label={t("nav.sidebarLabel")} className="sticky top-0 hidden h-dvh shrink-0 flex-col border-r border-border-soft bg-surface md:flex md:w-[72px] lg:w-64">
       <div className="flex h-16 items-center justify-center px-3 lg:justify-start lg:px-5">
         <Link href="/" className="flex items-center gap-2.5 rounded-md" aria-label="Promptly">
           <BrandMark size={30} />

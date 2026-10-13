@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { MobileNav } from "@/components/layout/mobile-nav";
+import { WelcomeTour } from "@/features/onboarding/welcome-tour";
 import { useTranslation } from "@/lib/i18n/language-provider";
 
 interface AppShellProps {
@@ -41,6 +42,7 @@ export function AppShell({ children, aside }: AppShellProps) {
         </div>
       </div>
       <MobileNav />
+      <WelcomeTour />
     </div>
   );
 }
