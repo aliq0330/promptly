@@ -303,40 +303,29 @@ Canlı projede (kontrol: bu oturum) 19 profil (18 demo hesap), 148 prompt,
 bağlayıcıdır; ayrıntılı gerekçe için `docs/history/README.md` tablosuna bak.
 
 **Açık işler (kullanıcı/yönetici adımı veya bilinen boşluk):**
-- `supabase/migrations/20260919760000_private_media_buckets.sql` canlıya MCP ile
-  uygulandı (frontend yayınlandıktan sonra; `docs/history/150-*`). Eski
-  `… publicly readable` policy'leri `supabase_storage_admin` sahipliğinde
-  olduğundan değiştirilemedi; üstlerine restrictive bir SELECT policy
-  eklendi (eskiler etkisiz ama yerinde). Hâlâ yapılmadı: tarayıcıdan bir
-  private gönderinin eski genel URL'sinin hata verdiği ve görsellerin signed
-  URL ile açıldığı elle doğrulanmadı; CDN'in eski genel yanıtları ne kadar
-  servis ettiği bilinmiyor. Signed URL 10 dk geçerli kalır (bilinen sınır).
-  Migration Supabase geçmişinde `private_media_buckets` olarak kayıtlı.
-- `supabase/migrations/20260919640000_remove_studio.sql` canlıya uygulanmadı —
-  **onay bekliyor** (yıkıcı, geri dönüşü yok): yalnızca `drop table if exists
-  public.studio_session_versions; drop table if exists public.studio_sessions;`
-  çalıştırır. Tablolar atıl; son kontrolde (bu oturum) ikisi de 0 satır, başka
-  nesne bağlı değil. Kullanıcı silinmesini istedi, ama MCP `apply_migration` yıkıcı-SQL onayında zaman aşımına uğradı ve tablolar hâlâ duruyor; SQL Editor'den çalıştırılmalı (`supabase/README.md`).
 - Supabase Dashboard → Authentication → Providers → Email: **"Leaked password
-  protection"** açılmalı (MCP ile yapılamaz).
-- `delete_account_data` (migration `20260919800000`) kullanıcı tarafından canlıya
-  uygulandı ve `delete-account` Edge Function deploy edildi (canlıda v1,
-  `verify_jwt` açık, kodu repodakiyle aynı — `docs/history/154-*`). Hâlâ yapılmadı:
-  gerçek bir test hesabıyla uçtan uca (kullanıcı adı yaz → sil → çıkış) denenmedi.
-- Edge Function'lar elle deploy edilir. Canlıdaki dört fonksiyon bu oturumda repoyla
-  karşılaştırıldı: `analyze-image` (v5, `verify_jwt` açık; model/MIME/boyut/mod
-  sabitleri repoyla aynı), `username-login` (v1, `verify_jwt` KAPALI — doğru),
-  `cleanup-orphan-storage` (v1, açık), `delete-account` (v1, açık) — mantık
-  repodakiyle aynı (canlı kopyalarda yorum satırları yok; satır satır bayt
-  karşılaştırması yapılmadı).
-- Moderatörün `/moderation`'dan bir kez **Depolama temizliği** (yetim
-  Storage dosyaları, Bölüm 9.132) çalıştırması bekleniyor.
+  protection"** ücretli planda; şimdilik gerekmiyor, bilinçli olarak ertelendi.
 - `content_relations` migration'ı (`20260919710000`) MCP `execute_sql` ile
-  uygulandı, Supabase migration geçmişinde kayıtlı değil (tablo canlıda var, 0
-  satır). Şemaya dokunmadan geçmişi tamamlama adımı `supabase/README.md`
-  "Migration geçmişi" bölümünde; komut kullanıcıya bırakıldı, çalıştırılmadı.
-- Hiçbir akış gerçek Supabase oturumuyla tarayıcıda uçtan uca, gerçek iOS/Android
-  cihazda, ekran okuyucuyla veya yalnızca klavyeyle elle denenmedi.
+  uygulandı, `supabase_migrations` geçmişinde kaydı yok (son kontrol: 0 satır; tablo
+  canlıda var). Yalnızca kayıt boşluğu, canlıda hiçbir etkisi yok. İstenirse geçmişe
+  satır eklemek için adım `supabase/README.md` "Migration geçmişi" bölümünde.
+- Bilinçli sınırlar: Signed URL 10 dk geçerli kalır (private'a çevrilmeden önce
+  alınmış bir imza süresi dolana kadar çalışır); Supabase CDN'in eski genel medya
+  yanıtlarını ne kadar süre servis ettiği bilinmiyor.
+
+**Tamamlananlar (bu turda kapatıldı):**
+- Gönderi medyası private bucket + signed URL (`docs/history/150-*`): migration
+  canlıda, `private_media_buckets` olarak kayıtlı.
+- `delete_account_data` canlıda, `delete-account` Edge Function deploy edildi
+  (v1, `verify_jwt` açık — `docs/history/154-*`). Edge Function'ların dördü de canlıda
+  ve repoyla uyumlu (`analyze-image` v5, `username-login` v1 `verify_jwt` KAPALI —
+  doğru, `cleanup-orphan-storage` v1, `delete-account` v1).
+- `20260919640000_remove_studio.sql` uygulandı: `studio_sessions` /
+  `studio_session_versions` canlıda artık yok (kontrol edildi).
+- Yetim Storage dosyaları: son kontrolde (`orphan_storage_objects`) 0 yetim dosya.
+- Hesap silmenin test hesabıyla uçtan uca denemesi ve tarayıcıdaki elle kontroller
+  (private medyada eski genel URL'nin hata vermesi, Takip/arama/Benzer akışları)
+  kullanıcı tarafından yapıldığı bildirildi; bu oturumda ayrıca doğrulanmadı.
 - Bilinen sınırlamalar: Keşfet karma akışı hâlâ son ~60'lık havuzdur (Ana Sayfa
   akışı ve liste sayfaları gerçek keyset sayfalama kullanır; Ana Sayfa'da kişiselleştirme
   yoktur, sekme dürüstçe "En yeni"dir); arama prompt metnini (`prompt_text`) ve
