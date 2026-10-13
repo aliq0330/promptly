@@ -374,7 +374,6 @@ async function promptProvenance(center: RelationNode, prompt: Prompt): Promise<P
   const refs: Ref[] = [];
   if (prompt.origin.type === "request-response") refs.push({ kind: "request", id: prompt.origin.requestId });
   if (refs.length === 0) return EMPTY;
-  const resolved = await fetchNodesByRefs(refs);
   const nodes: RelationNode[] = [];
   const edges: RelationEdge[] = [];
   if (prompt.origin.type === "request-response") {

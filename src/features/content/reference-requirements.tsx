@@ -43,42 +43,24 @@ export function clampReferences(contentType: PromptContentType, value: Reference
 
 const ICONS = { image: ImageIcon, video: Video, audio: Music } as const;
 
-type Subject = "prompt" | "generator";
-
-const LABEL_KEYS: Record<Subject, Record<ReferenceKind, TranslationKey>> = {
-  prompt: {
-    image: "prompt.requiresReferenceImageLabel",
-    video: "prompt.requiresReferenceVideoLabel",
-    audio: "prompt.requiresReferenceAudioLabel",
-  },
-  generator: {
-    image: "generator.requiresReferenceImageLabel",
-    video: "generator.requiresReferenceVideoLabel",
-    audio: "generator.requiresReferenceAudioLabel",
-  },
+const LABEL_KEYS: Record<ReferenceKind, TranslationKey> = {
+  image: "prompt.requiresReferenceImageLabel",
+  video: "prompt.requiresReferenceVideoLabel",
+  audio: "prompt.requiresReferenceAudioLabel",
 };
 
-const NOTE_KEYS: Record<Subject, Record<ReferenceKind, TranslationKey>> = {
-  prompt: {
-    image: "prompt.requiresReferenceNote",
-    video: "prompt.requiresReferenceVideoNote",
-    audio: "prompt.requiresReferenceAudioNote",
-  },
-  generator: {
-    image: "generator.requiresReferenceImageNote",
-    video: "generator.requiresReferenceVideoNote",
-    audio: "generator.requiresReferenceAudioNote",
-  },
+const NOTE_KEYS: Record<ReferenceKind, TranslationKey> = {
+  image: "prompt.requiresReferenceNote",
+  video: "prompt.requiresReferenceVideoNote",
+  audio: "prompt.requiresReferenceAudioNote",
 };
 
 /** Form control: one checkbox per applicable reference kind. Renders nothing for text. */
 export function ReferenceRequirementsField({
-  subject,
   contentType,
   value,
   onChange,
 }: {
-  subject: Subject;
   contentType: PromptContentType;
   value: ReferenceRequirements;
   onChange: (next: ReferenceRequirements) => void;
@@ -101,7 +83,7 @@ export function ReferenceRequirementsField({
               className="size-4 shrink-0"
             />
             <Icon size={15} strokeWidth={1.75} aria-hidden className="shrink-0 text-text-muted" />
-            <span className="min-w-0 text-sm font-medium text-text">{t(LABEL_KEYS[subject][kind])}</span>
+            <span className="min-w-0 text-sm font-medium text-text">{t(LABEL_KEYS[kind])}</span>
           </label>
         );
       })}
@@ -111,11 +93,9 @@ export function ReferenceRequirementsField({
 
 /** Detail-page notes for every reference the author ticked (video can show two). */
 export function ReferenceRequirementNotes({
-  subject,
   contentType,
   value,
 }: {
-  subject: Subject;
   contentType: PromptContentType;
   value: ReferenceRequirements;
 }) {
@@ -132,7 +112,7 @@ export function ReferenceRequirementNotes({
             className="flex items-start gap-2 rounded-lg border border-border-soft bg-surface-soft px-3 py-2 text-small text-text-secondary"
           >
             <Icon size={16} strokeWidth={1.75} className="mt-0.5 shrink-0 text-primary" />
-            <span className="min-w-0 break-words">{t(NOTE_KEYS[subject][kind])}</span>
+            <span className="min-w-0 break-words">{t(NOTE_KEYS[kind])}</span>
           </p>
         );
       })}

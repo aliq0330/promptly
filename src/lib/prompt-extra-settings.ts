@@ -20,7 +20,7 @@
  */
 import type { ContentTypeId } from "@/lib/content-taxonomy";
 import { parseToolRef } from "@/lib/ai-tool-catalog";
-import type { Bilingual, PresetField, PresetFieldConfig, PresetFieldType, PresetSelection } from "@/lib/preset-fields";
+import type { Bilingual, PresetField, PresetFieldConfig, PresetFieldType } from "@/lib/preset-fields";
 
 /** `[value, en, tr, English phrase, Turkish phrase?]` — the Turkish phrase falls back to `TR_FRAGMENTS`, then to the English one. */
 type Row = readonly [value: string, en: string, tr: string, fragment: string, fragmentTr?: string];
