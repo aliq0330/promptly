@@ -6,15 +6,13 @@
  * here, since these are live, constantly-growing feeds); keyset pagination
  * anchors each page to the last row actually seen, so it never does.
  *
- * Deliberately NOT used for the free-text search functions
- * (`searchPrompts`/`searchRequests`/`searchGenerators`/`searchWorkflows`):
- * those already use a single `.or()` call for the title/description ILIKE
- * match, and PostgREST's combination behavior for TWO independent `.or()`
- * calls on the same query has no documented, verifiable semantics (see
- * CLAUDE.md Bölüm 9.2's own note on this exact landmine) — not worth
- * risking on a query this sandbox can't test end-to-end against the live
- * REST API. Search's own "load more" instead just re-runs with a larger
- * `limit`, which is simple and unambiguously correct.
+ * Deliberately NOT used for the free-text search: a text match plus this
+ * cursor would be TWO independent `.or()` calls on one query, and PostgREST's
+ * combination behavior for that has no documented, verifiable semantics (see
+ * CLAUDE.md Bölüm 9.2's note on this exact landmine). Search is paged by the SQL
+ * function `public.search_content` instead (migration 20260919780000), where the
+ * text match and the cursor are plain parameters — see `search.ts`
+ * (`searchContentIds`, `SearchCursor`) — so the trap is avoided by construction.
  */
 
 export interface KeysetCursor {

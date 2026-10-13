@@ -4,7 +4,7 @@ import { ListPlus, SlidersHorizontal, Wand2, Share2 } from "lucide-react";
 import { ContentListPage } from "@/features/content/content-list-page";
 import { useRealPresets } from "./real-presets-provider";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import { searchPresets } from "@/lib/supabase/presets";
+import { searchPresetsPage } from "@/lib/supabase/presets";
 import { PresetCard } from "./preset-card";
 
 export function PresetsListView() {
@@ -26,7 +26,7 @@ export function PresetsListView() {
       ]}
       baseItems={presets}
       loading={loading}
-      search={searchPresets}
+      search={searchPresetsPage}
       renderItems={(items) => (
         <div className="columns-1 gap-3 sm:columns-2 sm:gap-4 xl:columns-3">
           {items.map((preset) => (

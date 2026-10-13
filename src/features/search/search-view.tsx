@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
 import { Chip, ChipRow } from "@/components/ui/chip";
 import { PromptGrid } from "@/features/prompts/prompt-grid";
@@ -11,22 +12,24 @@ import { TaxonomyFilter } from "@/features/content/taxonomy-filter";
 import { AdvancedSearchBox } from "./advanced-search-box";
 import { findTool } from "@/lib/ai-tool-catalog";
 import { tokensToQuery, type SearchToken } from "./search-tokens";
-import { searchPrompts } from "@/lib/supabase/prompts";
+import { searchPromptsPage } from "@/lib/supabase/prompts";
 import { searchProfiles } from "@/lib/supabase/profiles";
-import { searchRequests } from "@/lib/supabase/requests";
-import { searchWorkflows } from "@/lib/supabase/workflows";
+import { searchRequestsPage } from "@/lib/supabase/requests";
+import { searchWorkflowsPage } from "@/lib/supabase/workflows";
 import { WorkflowCard } from "@/features/workflows/workflow-card";
-import { searchPresets } from "@/lib/supabase/presets";
+import { searchPresetsPage } from "@/lib/supabase/presets";
 import { PresetCard } from "@/features/presets/preset-card";
 import { searchTags } from "@/lib/supabase/tags";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { findCategory, findSubcategory, isContentTypeId, type TaxonomyFilterValue } from "@/lib/content-taxonomy";
 import type { ContentSearchFilters } from "@/lib/supabase/taxonomy-query";
+import type { SearchCursor, SearchKind } from "@/lib/supabase/search";
 import { formatCount, profileHref, tagHref } from "@/lib/utils";
 import { Eyebrow } from "@/features/content/detail-parts";
 import type { Prompt, PromptRequest, Preset, Tag, UserProfile, Workflow } from "@/types";
 
 const DEBOUNCE_MS = 300;
+const NO_RESULTS = Promise.resolve({ items: [], nextCursor: null });
 type Sort = NonNullable<ContentSearchFilters["sort"]>;
 
 /**
@@ -48,6 +51,11 @@ export function SearchView({ idle }: { idle?: ReactNode } = {}) {
   const [workflows, setWorkflows] = useState<Workflow[]>([]);
   const [presets, setPresets] = useState<Preset[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  // Per-kind keyset cursor of the NEXT page (null = that group has no more results).
+  const [cursors, setCursors] = useState<Record<SearchKind, SearchCursor | null>>({ prompt: null, request: null, workflow: null, preset: null });
+  const [loadingMoreKind, setLoadingMoreKind] = useState<SearchKind | null>(null);
+  // The query + filters the CURRENT results were fetched with, so "load more" continues that exact search.
+  const searchedWith = useRef<{ query: string; filters: ContentSearchFilters } | null>(null);
   const normalized = text.trim();
   const hasTokens = tokens.length > 0;
   const active = hasTokens || Boolean(normalized);
@@ -87,6 +95,7 @@ export function SearchView({ idle }: { idle?: ReactNode } = {}) {
       setRequests([]);
       setWorkflows([]);
       setPresets([]);
+      setCursors({ prompt: null, request: null, workflow: null, preset: null });
       setIsSearching(false);
       return;
     }
@@ -101,18 +110,20 @@ export function SearchView({ idle }: { idle?: ReactNode } = {}) {
       // Plain text only (no chips): people and tags are results too.
       const textOnly = !hasTokens;
       const [foundPrompts, foundWorkflows, foundPresets, foundRequests, foundUsers, foundTags] = await Promise.all([
-        kinds.includes("prompt") ? searchPrompts(normalized, filters) : [],
-        kinds.includes("workflow") ? searchWorkflows(normalized, filters) : [],
-        kinds.includes("preset") ? searchPresets(normalized, filters) : [],
-        kinds.includes("request") ? searchRequests(normalized, filters) : [],
+        kinds.includes("prompt") ? searchPromptsPage(normalized, filters) : NO_RESULTS,
+        kinds.includes("workflow") ? searchWorkflowsPage(normalized, filters) : NO_RESULTS,
+        kinds.includes("preset") ? searchPresetsPage(normalized, filters) : NO_RESULTS,
+        kinds.includes("request") ? searchRequestsPage(normalized, filters) : NO_RESULTS,
         textOnly ? searchProfiles(normalized) : [],
         textOnly ? searchTags(normalized, 6) : [],
       ]);
       if (cancelled) return;
-      setPrompts(foundPrompts);
-      setWorkflows(foundWorkflows);
-      setPresets(foundPresets);
-      setRequests(foundRequests);
+      searchedWith.current = { query: normalized, filters };
+      setPrompts(foundPrompts.items);
+      setWorkflows(foundWorkflows.items);
+      setPresets(foundPresets.items);
+      setRequests(foundRequests.items);
+      setCursors({ prompt: foundPrompts.nextCursor, workflow: foundWorkflows.nextCursor, preset: foundPresets.nextCursor, request: foundRequests.nextCursor });
       setUsers(foundUsers);
       setTags(foundTags);
       setIsSearching(false);
@@ -123,6 +134,48 @@ export function SearchView({ idle }: { idle?: ReactNode } = {}) {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- filterKey captures every filter input
   }, [normalized, filterKey, active]);
+
+  /** Appends the next keyset page of ONE result group, continuing the exact search that produced it. */
+  async function loadMore(kind: SearchKind) {
+    const last = searchedWith.current;
+    const cursor = cursors[kind];
+    if (!last || !cursor || loadingMoreKind) return;
+    setLoadingMoreKind(kind);
+    try {
+      const append = <T extends { id: string }>(prev: T[], items: T[]) => {
+        const seen = new Set(prev.map((item) => item.id));
+        return [...prev, ...items.filter((item) => !seen.has(item.id))];
+      };
+      if (kind === "prompt") {
+        const page = await searchPromptsPage(last.query, last.filters, undefined, cursor);
+        setPrompts((prev) => append(prev, page.items));
+        setCursors((prev) => ({ ...prev, prompt: page.nextCursor }));
+      } else if (kind === "workflow") {
+        const page = await searchWorkflowsPage(last.query, last.filters, undefined, cursor);
+        setWorkflows((prev) => append(prev, page.items));
+        setCursors((prev) => ({ ...prev, workflow: page.nextCursor }));
+      } else if (kind === "preset") {
+        const page = await searchPresetsPage(last.query, last.filters, undefined, cursor);
+        setPresets((prev) => append(prev, page.items));
+        setCursors((prev) => ({ ...prev, preset: page.nextCursor }));
+      } else {
+        const page = await searchRequestsPage(last.query, last.filters, undefined, cursor);
+        setRequests((prev) => append(prev, page.items));
+        setCursors((prev) => ({ ...prev, request: page.nextCursor }));
+      }
+    } finally {
+      setLoadingMoreKind(null);
+    }
+  }
+
+  const loadMoreButton = (kind: SearchKind) =>
+    cursors[kind] && (
+      <div className="flex justify-center pt-1">
+        <Button variant="outline" onClick={() => void loadMore(kind)} disabled={loadingMoreKind !== null}>
+          {loadingMoreKind === kind ? t("common.loadingMore") : t("common.loadMore")}
+        </Button>
+      </div>
+    );
 
   const nothingFound =
     prompts.length === 0 && users.length === 0 && tags.length === 0 && workflows.length === 0 && presets.length === 0 && requests.length === 0;
@@ -215,6 +268,7 @@ export function SearchView({ idle }: { idle?: ReactNode } = {}) {
                   </div>
                 ))}
               </div>
+              {loadMoreButton("workflow")}
             </section>
           )}
 
@@ -228,6 +282,7 @@ export function SearchView({ idle }: { idle?: ReactNode } = {}) {
                   </div>
                 ))}
               </div>
+              {loadMoreButton("preset")}
             </section>
           )}
 
@@ -235,6 +290,7 @@ export function SearchView({ idle }: { idle?: ReactNode } = {}) {
             <section className="space-y-3">
               <ResultsHeading count={requests.length}>{t("search.requestsHeading")}</ResultsHeading>
               <RequestList requests={requests} />
+              {loadMoreButton("request")}
             </section>
           )}
 
@@ -242,6 +298,7 @@ export function SearchView({ idle }: { idle?: ReactNode } = {}) {
             <section className="space-y-3">
               <ResultsHeading count={prompts.length}>{t("feed.filterPrompts")}</ResultsHeading>
               <PromptGrid prompts={prompts} />
+              {loadMoreButton("prompt")}
             </section>
           )}
           {nothingFound && (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
 import { ChevronDown, Info, Plus } from "lucide-react";
@@ -23,6 +23,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import type { ContentSearchFilters } from "@/lib/supabase/taxonomy-query";
+import type { SearchCursor, SearchPage } from "@/lib/supabase/search";
 
 export interface ListPageStep {
   icon: LucideIcon;
@@ -80,7 +81,8 @@ export function ContentListPage<T extends { id: string; createdAt: string; likeC
   steps: ListPageStep[];
   baseItems: T[];
   loading?: boolean;
-  search: (query: string, filters: ContentSearchFilters) => Promise<T[]>;
+  /** One keyset page of search results; pass the previous page's `nextCursor` for "load more". */
+  search: (query: string, filters: ContentSearchFilters, limit?: number, cursor?: SearchCursor | null) => Promise<SearchPage<T>>;
   matches?: (item: T, value: TaxonomyFilterValue) => boolean;
   showCategories?: boolean;
   postFilter?: (items: T[]) => T[];
@@ -110,6 +112,10 @@ export function ContentListPage<T extends { id: string; createdAt: string; likeC
   const [taxonomy, setTaxonomy] = useState<TaxonomyFilterValue>(EMPTY_TAXONOMY_FILTER);
   const [viewMode] = useViewMode();
   const [results, setResults] = useState<T[] | null>(null);
+  const [searchCursor, setSearchCursor] = useState<SearchCursor | null>(null);
+  const [searchLoadingMore, setSearchLoadingMore] = useState(false);
+  // The query + filters the CURRENT results were fetched with, so "load more" continues that exact search.
+  const searchedWith = useRef<{ query: string; filters: ContentSearchFilters } | null>(null);
   const [searching, setSearching] = useState(false);
   const normalized = text.trim();
   const active = tokens.length > 0 || Boolean(normalized);
@@ -120,6 +126,7 @@ export function ContentListPage<T extends { id: string; createdAt: string; likeC
     if (!active) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- clears results when the query is emptied
       setResults(null);
+      setSearchCursor(null);
       setSearching(false);
       return;
     }
@@ -129,12 +136,14 @@ export function ContentListPage<T extends { id: string; createdAt: string; likeC
       const filters: ContentSearchFilters = {
         ...tokenFilters,
         taxonomy: taxonomy.contentType ? taxonomy : undefined,
-        // The server only picks which top-N rows come back; the exact order is applied client-side below.
-        sort: sort === "most-liked" ? "popular" : "new",
+        // The server orders AND pages the results, so the sort is sent as-is.
+        sort: sort === "most-liked" ? "popular" : sort === "oldest" ? "oldest" : "new",
       };
       const found = await search(normalized, filters);
       if (cancelled) return;
-      setResults(found);
+      searchedWith.current = { query: normalized, filters };
+      setResults(found.items);
+      setSearchCursor(found.nextCursor);
       setSearching(false);
     }, DEBOUNCE_MS);
     return () => {
@@ -144,9 +153,27 @@ export function ContentListPage<T extends { id: string; createdAt: string; likeC
     // eslint-disable-next-line react-hooks/exhaustive-deps -- filterKey captures every filter input
   }, [normalized, filterKey, active]);
 
+  async function loadMoreSearch() {
+    const last = searchedWith.current;
+    if (!last || !searchCursor || searchLoadingMore) return;
+    setSearchLoadingMore(true);
+    try {
+      const page = await search(last.query, last.filters, undefined, searchCursor);
+      setResults((prev) => {
+        const seen = new Set((prev ?? []).map((item) => item.id));
+        return [...(prev ?? []), ...page.items.filter((item) => !seen.has(item.id))];
+      });
+      setSearchCursor(page.nextCursor);
+    } finally {
+      setSearchLoadingMore(false);
+    }
+  }
+
   const visible = useMemo(() => {
     const list = results ?? baseItems.filter((item) => (matches ? matches(item, taxonomy) : matchesTaxonomy(item, taxonomy)));
     const filtered = postFilter ? postFilter(list) : list;
+    // Search results keep the server's order (it is what the cursor continues from); only the browse list is sorted here.
+    if (results) return filtered;
     return [...filtered].sort((a, b) =>
       sort === "most-liked"
         ? b.likeCount - a.likeCount || b.createdAt.localeCompare(a.createdAt)
@@ -272,6 +299,13 @@ export function ContentListPage<T extends { id: string; createdAt: string; likeC
             <div className="flex justify-center pt-2">
               <Button variant="outline" onClick={onLoadMore} disabled={loadingMore}>
                 {loadingMore ? t("common.loadingMore") : t("common.loadMore")}
+              </Button>
+            </div>
+          )}
+          {active && searchCursor && (
+            <div className="flex justify-center pt-2">
+              <Button variant="outline" onClick={() => void loadMoreSearch()} disabled={searchLoadingMore}>
+                {searchLoadingMore ? t("common.loadingMore") : t("common.loadMore")}
               </Button>
             </div>
           )}

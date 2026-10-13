@@ -9,7 +9,8 @@ import { translateForRuntime } from "@/lib/i18n/translations";
 import { mapProfileRow, type ProfileRow } from "./mappers";
 import { resolveMediaInputs, type MediaInput } from "./media-input";
 import { normalizeLegacyContentType, sanitizeTaxonomy } from "@/lib/content-taxonomy";
-import { applyTaxonomyFilter, taxonomyColumns, type ContentSearchFilters, applyAdvancedFilters, hasSearchFilter, sanitizeSearchText, tagJoinSelect } from "./taxonomy-query";
+import { taxonomyColumns, type ContentSearchFilters } from "./taxonomy-query";
+import { orderByIds, searchContentIds, type SearchCursor, type SearchPage } from "./search";
 import type { ContentVisibility, Prompt, PromptContentType, PromptMedia, PromptOrigin, Tag, UserProfile } from "@/types";
 
 /**
@@ -267,30 +268,24 @@ export async function fetchPromptsByIds(ids: string[]): Promise<Prompt[]> {
   return withoutBlocked(filterNotDeleted(filterProfileVisible((data ?? []).map((row) => mapPromptRow(row as unknown as PromptRow)))), (p) => p.author.id);
 }
 
-/** Title/description substring search over published prompts — backs the real `/search` page. */
-export async function searchPrompts(query: string, filters: ContentSearchFilters = {}, limit = 40): Promise<Prompt[]> {
-  const escaped = sanitizeSearchText(query);
-  if (!escaped && !hasSearchFilter(filters)) return [];
+/**
+ * Search over published prompts — title, description AND the prompt text itself —
+ * one keyset page at a time (`public.search_content`). Backs the real `/search`
+ * page and `/prompts`'s search; "load more" passes the previous page's `nextCursor`.
+ */
+export async function searchPromptsPage(query: string, filters: ContentSearchFilters = {}, limit = 40, cursor?: SearchCursor | null): Promise<SearchPage<Prompt>> {
   try {
-    let request = supabase
-      .from("prompts")
-      .select(PROMPT_SELECT + tagJoinSelect("prompt_tags", filters.tagSlugs))
-      .eq("status", "published");
-    if (escaped) request = request.or(`title.ilike.%${escaped}%,description.ilike.%${escaped}%`);
-    if (filters.authorId) request = request.eq("author_id", filters.authorId);
-    request = applyAdvancedFilters(applyTaxonomyFilter(request, filters.taxonomy), filters, "author_id");
-    const { data, error } = await request
-      .order(filters.sort === "popular" ? "like_count" : "created_at", { ascending: false })
-      .limit(limit);
-    if (error) {
-      console.error("searchPrompts", error);
-      return [];
-    }
-    return withoutBlocked(filterNotDeleted(filterProfileVisible((data ?? []).map((row) => mapPromptRow(row as unknown as PromptRow)))), (p) => p.author.id);
+    const page = await searchContentIds("prompt", query, filters, limit, cursor);
+    return { items: orderByIds(await fetchPromptsByIds(page.ids), page.ids), nextCursor: page.nextCursor };
   } catch (err) {
-    console.error("searchPrompts", err);
-    return [];
+    console.error("searchPromptsPage", err);
+    return { items: [], nextCursor: null };
   }
+}
+
+/** First page only — for pickers that never page (workflow editor, Studio, relations). */
+export async function searchPrompts(query: string, filters: ContentSearchFilters = {}, limit = 40): Promise<Prompt[]> {
+  return (await searchPromptsPage(query, filters, limit)).items;
 }
 
 /**

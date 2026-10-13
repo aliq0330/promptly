@@ -8,7 +8,7 @@ import { SheetChips } from "@/features/content/list-toolbar";
 import { RequestList } from "@/features/requests/request-list";
 import { useRealRequests } from "@/features/requests/real-requests-provider";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import { searchRequests } from "@/lib/supabase/requests";
+import { searchRequestsPage } from "@/lib/supabase/requests";
 import type { PromptRequest } from "@/types";
 
 type StatusFilter = "all" | "open" | "closed";
@@ -54,7 +54,7 @@ export default function RequestsPage() {
         { icon: Sparkles, titleKey: "request.step3Title", bodyKey: "request.step3Body" },
       ]}
       baseItems={realRequests}
-      search={searchRequests}
+      search={searchRequestsPage}
       postFilter={postFilter}
       extra={<SheetChips>{statusChips}</SheetChips>}
       desktopActiveExtra={status === "all" ? 0 : 1}
