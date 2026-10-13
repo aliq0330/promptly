@@ -259,6 +259,14 @@ export async function fetchPromptsByAuthors(authorIds: string[], limit = 60): Pr
   }
 }
 
+/** Prompts by id (any order), for the home feed's server-chosen page. Same blocked/deleted/profile filters as every other stream; RLS still decides what the viewer may see. */
+export async function fetchPromptsByIds(ids: string[]): Promise<Prompt[]> {
+  if (ids.length === 0) return [];
+  const { data, error } = await supabase.from("prompts").select(PROMPT_SELECT).in("id", ids);
+  if (error) throw new Error(error.message);
+  return withoutBlocked(filterNotDeleted(filterProfileVisible((data ?? []).map((row) => mapPromptRow(row as unknown as PromptRow)))), (p) => p.author.id);
+}
+
 /** Title/description substring search over published prompts — backs the real `/search` page. */
 export async function searchPrompts(query: string, filters: ContentSearchFilters = {}, limit = 40): Promise<Prompt[]> {
   const escaped = sanitizeSearchText(query);

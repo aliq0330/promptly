@@ -127,6 +127,14 @@ export async function fetchRecentWorkflows(limit = 24, cursor?: KeysetCursor): P
   }
 }
 
+/** Workflows by id (any order), for the home feed's server-chosen page. */
+export async function fetchWorkflowsByIds(ids: string[]): Promise<Workflow[]> {
+  if (ids.length === 0) return [];
+  const { data, error } = await supabase.from("workflows").select(WORKFLOW_SELECT).in("id", ids);
+  if (error) throw new Error(error.message);
+  return withoutBlocked((data ?? []).map((row) => mapWorkflowRow(row as unknown as WorkflowRow)), (w) => w.creator.id);
+}
+
 /**
  * Workflow search — same shared advanced-search filters as prompts/
  * generators/requests. A workflow chains several content types instead of

@@ -481,7 +481,7 @@ export const translations = {
   "home.heroDescription": { tr: "Görsel, metin, ses ve video için promptlar. Değişkenler, hazır ayarlar ve workflow'larla yeniden kullanılabilir hale getir, topluluktan prompt iste.", en: "Prompts for images, text, audio, and video. Make them reusable with variables, presets, and workflows, or ask the community for one." },
   "home.sharePrompt": { tr: "Prompt paylaş", en: "Share a Prompt" },
   "home.openRequest": { tr: "İstek aç", en: "Open a Request" },
-  "home.tabForYou": { tr: "Sana Özel", en: "For You" },
+  "home.tabNewest": { tr: "En yeni", en: "Newest" },
   "home.tabPopular": { tr: "Popüler", en: "Popular" },
 
   // ---- Feed (shared between Home and Discover) ----
@@ -493,6 +493,7 @@ export const translations = {
   "feed.emptyFollowingNoPosts": { tr: "Takip ettiklerinden henüz paylaşım yok", en: "Nothing shared yet by people you follow" },
   "feed.emptyDefault": { tr: "Henüz gösterilecek içerik yok.", en: "There's nothing to show yet." },
   "feed.emptyFollowingHint": { tr: "Keşfet'ten yeni yaratıcılar bulup takip edebilirsin.", en: "Find and follow new creators on Discover." },
+  "feed.loadFailed": { tr: "Akış şu anda yüklenemedi — lütfen tekrar dene.", en: "Couldn't load the feed right now — please try again." },
   "feed.goToDiscover": { tr: "Keşfet'e git", en: "Go to Discover" },
 
   // ---- Content type labels (Prompt.contentType — app-provided, not user content) ----
