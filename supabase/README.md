@@ -108,9 +108,11 @@ tamamen kapalı kalır — güvenli tarafta kalan bilinçli bir ara durum.
   gerçek bağlanma Bölüm 21'in işi.
 - `20260919760000_private_media_buckets.sql` — `prompt-media`,
   `request-references` ve `result-media` bucket'larını **private** yapar;
-  SELECT policy'leri dosyayı gösteren satırın görünürlüğüne bağlanır
-  (kendi klasörü ya da çağıranın RLS'iyle okuyabildiği bir satır dosyaya
-  işaret ediyorsa; moderatör hepsini okur). İstemci dosyaları kısa ömürlü
+  dosyayı gösteren satırın görünürlüğüne bağlı tek bir RESTRICTIVE SELECT
+  policy eklenir (eski permissive policy'ler `supabase_storage_admin`
+  sahipliğinde olduğundan değiştirilemez, AND'lenerek etkisiz kalır; kendi
+  klasörü ya da çağıranın RLS'iyle okuyabildiği bir satır dosyaya işaret
+  ediyorsa okunur; moderatör hepsini okur). İstemci dosyaları kısa ömürlü
   signed URL ile gösterir. `avatars` herkese açık kalır. **Yeni frontend
   yayına alındıktan SONRA uygulanmalı** (eski frontend genel URL'leri
   doğrudan çizer). Ayrıntı: `docs/history/150-*`.
