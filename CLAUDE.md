@@ -41,10 +41,6 @@ kaydet/koleksiyon, paylaş, istatistik, bildirim, moderasyon) paylaşırlar:
 - **Workflow** — Prompt'ları sıralı adımlara bağlar; model çalıştırmaz.
 - **Hazır Ayar (Preset)** — bir Prompt için alan başına tek değerli parametre seti.
 
-**Kaldırılmış özellikler (geri getirme, kodu yok):** Remix + Merge (Bölüm 9.39),
-Generator (Bölüm 9.145), ilk Studio (9.115 — şimdiki `/studio` yeni ve sadedir),
-mock/localStorage katmanı (9.1). Arşivde geçen bu terimler eskidir.
-
 ---
 
 ## 2. Teknoloji Yığını
@@ -58,8 +54,7 @@ mock/localStorage katmanı (9.1). Arşivde geçen bu terimler eskidir.
 Uygulama tamamen statik export'tur (GitHub Pages, `basePath /promptly`): sunucu
 çalışma zamanı yok, Supabase'e yalnızca tarayıcıdan erişilir. Bu yüzden her
 "id'ye göre detay" sayfası `/x/local?id=` biçimindedir (`promptHref()` vb. —
-`src/lib/utils.ts`). Mock veri yoktur; hiçbir buton gerçek olmayan bir işlemi
-yapılmış gibi göstermez.
+`src/lib/utils.ts`). Hiçbir buton gerçek olmayan bir işlemi yapılmış gibi göstermez.
 
 **Dağıtım:** `.github/workflows/deploy.yml` yalnızca statik siteyi GitHub
 Pages'e yayınlar. **Edge Function'lar (`supabase/functions/*`) ve
@@ -183,7 +178,7 @@ tamamlanmış sayılmaz. Ayrıntı ve mimari: `docs/history/049-*`, `056-*`, `05
   kullanıcının yazdığı etiket), marka/teknik adlar (Promptly, Supabase,
   JSON, GPT, Midjourney...), "Prompt" kelimesi, kod yorumları.
 - Statik veri dosyalarına (katalog, aday etiketler vb.) yeni Türkçe metin
-  eklenirse İngilizce karşılığı da eklenir (bkz. `generator-field-catalog-en.ts` — hazır alan kütüphanesi, prompt değişkenleri kullanır).
+  eklenirse İngilizce karşılığı da eklenir (bkz. `generator-field-catalog-en.ts`, prompt değişkenlerinin hazır alan kütüphanesi).
 - SQL trigger'ların ürettiği bildirim metni Türkçe kalır; yeni bir bildirim
   cümlesi eklenirse `src/lib/notification-message.ts`'e kalıbı ve
   `translations.ts`'e `notifMsg.*` karşılığı da eklenir.
@@ -291,7 +286,7 @@ Kalıplar (yeni migration yazarken uy):
 
 ## 9. Güncel Durum ve Açık İşler
 
-**Durum:** Uygulama uçtan uca gerçek Supabase verisiyle çalışır (mock yok).
+**Durum:** Uygulama uçtan uca gerçek Supabase verisiyle çalışır.
 Canlı projede (kontrol: bu oturum) 19 profil (18 demo hesap), 148 prompt,
 39 istek, 12 workflow, 35 hazır ayar, 802 DNA bölümü bulunur; içerik
 `supabase/seed/` altındaki viral/topluluk seed'lerinden gelir. Bölüm 1–8

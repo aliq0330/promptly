@@ -2,7 +2,7 @@
 
 `CLAUDE.md`'nin eski "9. Şu Anki Durum" bölümü, modül başına bir dosya olacak şekilde buraya taşındı (içerik değiştirilmedi, kelimesi kelimesine aynı). Bu dosyalar **otomatik yüklenmez**; bir özelliğin neden/nasıl yapıldığını anlamak için gerektiğinde okunur.
 
-> **Dikkat:** Buradaki metinler yazıldıkları andaki durumu anlatır. "Kaldırıldı" işaretli olanlar güncel kodu temsil etmez. Güncel durum için kök dizindeki `CLAUDE.md`'ye ve gerçek koda bakın. Bu arşivde "mock", "localStorage", "Remix", "Generator", "Studio (ilk)" gibi terimler geçen yerler çoğunlukla eskidir.
+> **Dikkat:** Buradaki metinler yazıldıkları andaki durumu anlatır. "Kaldırıldı" işaretli olanlar güncel kodu temsil etmez. Güncel durum için kök dizindeki `CLAUDE.md`'ye ve gerçek koda bakın. Bu arşivdeki terimler (kaldırılmış özellikler dahil) çoğunlukla eskidir.
 
 Her dosya adı `NNN-konu.md` biçimindedir; `NNN` eski bölüm numarasıdır (ör. `023-…` = eski Bölüm 9.23). Numaralar kronolojik değil, eklenme sırasına göredir.
 
