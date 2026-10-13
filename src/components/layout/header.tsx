@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Bell, Languages, MessageCircle, Search } from "lucide-react";
 import { iconButtonClassName } from "@/components/ui/icon-button";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
@@ -23,6 +24,8 @@ export function Header() {
   const { unreadCount } = useNotifications();
   const { t, language, setLanguage } = useTranslation();
   const hasUnreadMessages = realConversations.some((c) => c.unreadCount > 0);
+  // Discover and Search carry their own (richer) search box — a second one in the header would just be a link back to the same page.
+  const hasOwnSearch = /^\/(discover|search)(\/|$)/.test(usePathname() ?? "");
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border-soft bg-background/80 px-3 backdrop-blur-xl backdrop-saturate-150 sm:px-5 lg:px-8">
@@ -36,6 +39,7 @@ export function Header() {
       </Link>
 
       <div className="hidden min-w-0 flex-1 items-center md:flex">
+        {!hasOwnSearch && (
         <Link
           href="/discover"
           className="group flex h-10 w-full max-w-lg items-center gap-2.5 rounded-full border border-border-soft bg-surface px-4 text-small text-text-muted shadow-xs transition-[border-color,box-shadow,color] duration-200 hover:border-border hover:text-text-secondary hover:shadow-sm"
@@ -43,9 +47,11 @@ export function Header() {
           <Search size={17} className="shrink-0" />
           <span className="truncate">{t("header.searchPlaceholder")}</span>
         </Link>
+        )}
       </div>
 
       <div className="flex flex-1 items-center justify-end gap-0.5 md:flex-none">
+        {!hasOwnSearch && (
         <Link
           href="/discover"
           aria-label={t("header.searchAriaLabel")}
@@ -54,6 +60,7 @@ export function Header() {
         >
           <Search size={20} />
         </Link>
+        )}
         {status === "authenticated" && (
           <>
             <Link

@@ -3,8 +3,9 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
-import { Plus } from "lucide-react";
+import { ChevronDown, Info, Plus } from "lucide-react";
 import { Button, buttonClassName } from "@/components/ui/button";
+import { Collapsible } from "@/components/ui/collapsible";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageContainer, PageHeader } from "@/components/ui/page-header";
 import { PromptCardSkeletonGrid } from "@/components/ui/prompt-card-skeleton";
@@ -19,6 +20,7 @@ import { tokensToQuery, type SearchToken } from "@/features/search/search-tokens
 import { EMPTY_TAXONOMY_FILTER, matchesTaxonomy, type TaxonomyFilterValue } from "@/lib/content-taxonomy";
 import type { HeaderArtVariant } from "@/components/ui/header-art";
 import { useTranslation } from "@/lib/i18n/language-provider";
+import { cn } from "@/lib/utils";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import type { ContentSearchFilters } from "@/lib/supabase/taxonomy-query";
 
@@ -104,6 +106,7 @@ export function ContentListPage<T extends { id: string; createdAt: string; likeC
   const [tokens, setTokens] = useState<SearchToken[]>([]);
   const [text, setText] = useState("");
   const [sort, setSort] = useState<ContentSortKey>("newest");
+  const [stepsOpen, setStepsOpen] = useState(false);
   const [taxonomy, setTaxonomy] = useState<TaxonomyFilterValue>(EMPTY_TAXONOMY_FILTER);
   const [viewMode] = useViewMode();
   const [results, setResults] = useState<T[] | null>(null);
@@ -169,30 +172,46 @@ export function ContentListPage<T extends { id: string; createdAt: string; likeC
         }
       />
 
-      {/* Phones: a swipeable row of full-width-ish steps (each readable in
-          full) instead of three cramped columns; sm+: the three-up grid. */}
-      <ol
-        className="scrollbar-none -mx-3 flex touch-pan-x snap-x snap-mandatory gap-2 overflow-x-auto overscroll-x-contain px-3 sm:mx-0 sm:grid sm:grid-cols-3 sm:gap-3 sm:overflow-visible sm:px-0"
-        aria-label={t("list.howItWorks")}
-      >
-        {steps.map((step, index) => (
-          <li
-            key={step.titleKey}
-            className="flex w-[78%] shrink-0 snap-start items-start gap-3 rounded-lg border border-border-soft bg-surface p-3.5 shadow-card sm:w-auto"
+      {/* "How it works" is onboarding, not content: one slim toggle instead of
+          three always-open cards pushing the list below the fold. */}
+      <div className="-mt-2">
+        <button
+          type="button"
+          onClick={() => setStepsOpen((open) => !open)}
+          aria-expanded={stepsOpen}
+          aria-controls="list-how-it-works"
+          className="inline-flex min-h-9 items-center gap-1.5 rounded-md px-1 text-label font-medium text-text-secondary transition-colors hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        >
+          <Info size={15} aria-hidden />
+          {t("list.howItWorks")}
+          <ChevronDown size={15} className={cn("transition-transform duration-200", stepsOpen && "rotate-180")} aria-hidden />
+        </button>
+        <Collapsible open={stepsOpen} id="list-how-it-works">
+          {/* Phones: a swipeable row of full-width-ish steps; sm+: the three-up grid. */}
+          <ol
+            className="scrollbar-none -mx-3 flex touch-pan-x snap-x snap-mandatory gap-2 overflow-x-auto overscroll-x-contain px-3 pb-1 pt-2 sm:mx-0 sm:grid sm:grid-cols-3 sm:gap-3 sm:overflow-visible sm:px-0"
+            aria-label={t("list.howItWorks")}
           >
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary-soft text-primary">
-              <step.icon size={16} strokeWidth={2} />
-            </span>
-            <span className="min-w-0 leading-tight">
-              <span className="block text-[0.6875rem] font-semibold uppercase tracking-[0.07em] text-text-muted">
-                {t("list.step")} {index + 1}
-              </span>
-              <span className="mt-1 block text-label font-semibold text-text">{t(step.titleKey)}</span>
-              <span className="mt-1 block text-caption leading-snug text-text-muted">{t(step.bodyKey)}</span>
-            </span>
-          </li>
-        ))}
-      </ol>
+            {steps.map((step, index) => (
+              <li
+                key={step.titleKey}
+                className="flex w-[78%] shrink-0 snap-start items-start gap-3 rounded-lg border border-border-soft bg-surface p-3.5 shadow-card sm:w-auto"
+              >
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary-soft text-primary">
+                  <step.icon size={16} strokeWidth={2} />
+                </span>
+                <span className="min-w-0 leading-tight">
+                  <span className="block text-[0.6875rem] font-semibold uppercase tracking-[0.07em] text-text-muted">
+                    {t("list.step")} {index + 1}
+                  </span>
+                  <span className="mt-1 block text-label font-semibold text-text">{t(step.titleKey)}</span>
+                  <span className="mt-1 block text-caption leading-snug text-text-muted">{t(step.bodyKey)}</span>
+                </span>
+              </li>
+            ))}
+          </ol>
+        </Collapsible>
+      </div>
 
       <div className="space-y-3">
         <AdvancedSearchBox
