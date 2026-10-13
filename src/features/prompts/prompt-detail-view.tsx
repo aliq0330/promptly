@@ -4,7 +4,6 @@ import { usePageTitle } from "@/components/layout/page-title";
 import { RunButton } from "@/features/content/run-with-ai";
 import { ToolLine } from "@/features/content/tool-chips";
 import { useEffect, useMemo, useState } from "react";
-import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { PenLine, SquareTerminal } from "lucide-react";
 import { OpenInStudioButton } from "@/features/studio/open-in-studio-button";
@@ -54,6 +53,7 @@ import { fetchDnaSections } from "@/lib/supabase/prompt-dna";
 import { fetchVersionsForPrompt } from "@/lib/supabase/prompt-versions";
 import { Tabs, type TabItem } from "@/components/ui/tabs";
 import { ScrollablePrompt } from "@/features/content/scrollable-prompt";
+import { StorageImage, StorageImg } from "@/components/ui/storage-media";
 
 type PromptTab = "prompt" | "history" | "dna";
 
@@ -204,7 +204,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
                   maxWidth: `calc(var(--hero-h) * ${clampedAspectRatio(media.width, media.height)})`,
                 }}
               >
-                <Image src={media.url} alt={media.alt} fill sizes="(min-width: 1024px) 720px, 100vw" className="object-cover" />
+                <StorageImage src={media.url} alt={media.alt} fill sizes="(min-width: 1024px) 720px, 100vw" className="object-cover" />
               </button>
               <figcaption className="text-caption text-text-muted">{t("prompt.outputCaption")}</figcaption>
               {prompt.media.length > 1 && (
@@ -217,8 +217,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
                       aria-label={t("media.viewFullscreen")}
                       className="h-16 w-16 overflow-hidden rounded-md border border-border-soft"
                     >
-                      {/* eslint-disable-next-line @next/next/no-img-element -- a small thumbnail strip, next/image's sizing overhead isn't worth it here */}
-                      <img src={extra.url} alt={extra.alt} className="h-full w-full object-cover" />
+                      <StorageImg src={extra.url} alt={extra.alt} className="h-full w-full object-cover" />
                     </button>
                   ))}
                 </div>

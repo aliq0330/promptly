@@ -257,6 +257,12 @@ Kalıplar (yeni migration yazarken uy):
   çağırmayacağı fonksiyonlardan `EXECUTE` kaldırılır (Bölüm 9.149 Faz 2).
 - Kullanıcı girdileri doğrulanır; kullanıcı içeriği React ile kaçışlanır
   (`dangerouslySetInnerHTML` kullanılmaz).
+- Gönderi medyası (`prompt-media`, `request-references`, `result-media`) PRIVATE
+  bucket'tadır; dosya erişimi onu gösteren satırın görünürlüğüne bağlıdır
+  (Storage policy, `docs/history/150-*`). Bu medya `getPublicUrl` adresiyle
+  değil, `StorageImg`/`StorageImage`/`StorageVideo`/`StorageAudio`/
+  `StorageBackground` (`components/ui/storage-media.tsx`, signed URL) ile
+  gösterilir; DB'deki URL yalnızca kimliktir. `avatars` herkese açıktır.
 - Kullanıcının AI API anahtarı (Studio) sunucuya/Supabase'e ASLA yazılmaz;
   yalnızca bellekte ya da (açık onayla) tarayıcıda tutulur.
 
@@ -293,6 +299,13 @@ Canlı projede (kontrol: bu oturum) 19 profil (18 demo hesap), 148 prompt,
 bağlayıcıdır; ayrıntılı gerekçe için `docs/history/README.md` tablosuna bak.
 
 **Açık işler (kullanıcı/yönetici adımı veya bilinen boşluk):**
+- `supabase/migrations/20260919760000_private_media_buckets.sql` canlıya
+  UYGULANMADI (Bölüm 7, `docs/history/150-*`): gönderi medyası bucket'ları hâlâ
+  public, yani private/taslak gönderilerin dosyaları şu an dünyaya açık.
+  Kod (signed URL çözümü) hazır; sıra: önce frontend'i yayına al, SONRA
+  migration'ı uygula (tersi görselleri kırar). Uygulandıktan sonra bir
+  private gönderinin eski genel URL'sinin 400/404 verdiği tarayıcıdan
+  doğrulanmalı. Signed URL 10 dk geçerli kalır (bilinen sınır).
 - `supabase/migrations/20260919640000_remove_studio.sql` canlıya uygulanmadı:
   `studio_sessions` / `studio_session_versions` tabloları atıl duruyor (şu an
   0 satır). Yıkıcı olduğu için onayla uygulanmalı.

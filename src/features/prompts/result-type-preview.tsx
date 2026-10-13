@@ -1,9 +1,9 @@
 "use client";
 
-import Image from "next/image";
 import { FileText, Play } from "lucide-react";
 import { clampedAspectRatio } from "@/lib/placeholder-image";
 import { cn } from "@/lib/utils";
+import { StorageAudio, StorageImage, StorageVideo } from "@/components/ui/storage-media";
 import type { PromptResult, PromptResultSummary } from "@/types";
 
 type PreviewableResult = PromptResultSummary & Partial<Pick<PromptResult, "mediaUrl" | "width" | "height">>;
@@ -30,14 +30,14 @@ export function ResultTypePreview({ result, size }: { result: PreviewableResult;
           className="relative mx-auto w-full overflow-hidden rounded-lg bg-surface-soft"
           style={{ aspectRatio: ratio, maxWidth: `${Math.round(560 * ratio)}px` }}
         >
-          <Image src={result.mediaUrl} alt="" fill sizes="(min-width: 1024px) 640px, 100vw" className="object-contain" />
+          <StorageImage src={result.mediaUrl} alt="" fill sizes="(min-width: 1024px) 640px, 100vw" className="object-contain" />
         </div>
       );
     }
     return (
       <div className="relative aspect-square w-full overflow-hidden bg-surface-soft">
         {result.thumbnailUrl && (
-          <Image src={result.thumbnailUrl} alt="" fill sizes="(min-width: 1024px) 220px, 45vw" className="object-cover" />
+          <StorageImage src={result.thumbnailUrl} alt="" fill sizes="(min-width: 1024px) 220px, 45vw" className="object-cover" />
         )}
       </div>
     );
@@ -46,7 +46,7 @@ export function ResultTypePreview({ result, size }: { result: PreviewableResult;
   if (result.mediaType === "video") {
     if (size === "detail" && result.mediaUrl) {
       return (
-        <video
+        <StorageVideo
           controls
           playsInline
           preload="metadata"
@@ -59,7 +59,7 @@ export function ResultTypePreview({ result, size }: { result: PreviewableResult;
     return (
       <div className="relative aspect-square w-full overflow-hidden bg-surface-soft">
         {result.thumbnailUrl && (
-          <Image src={result.thumbnailUrl} alt="" fill sizes="(min-width: 1024px) 220px, 45vw" className="object-cover" />
+          <StorageImage src={result.thumbnailUrl} alt="" fill sizes="(min-width: 1024px) 220px, 45vw" className="object-cover" />
         )}
         <span className="absolute inset-0 flex items-center justify-center">
           <span className="flex h-9 w-9 items-center justify-center rounded-full bg-black/55 text-white">
@@ -75,16 +75,16 @@ export function ResultTypePreview({ result, size }: { result: PreviewableResult;
       return (
         <div className="mx-auto w-full max-w-xs space-y-3">
           <div className="relative aspect-square w-full overflow-hidden rounded-lg bg-surface-soft">
-            {result.thumbnailUrl && <Image src={result.thumbnailUrl} alt="" fill sizes="320px" className="object-cover" />}
+            {result.thumbnailUrl && <StorageImage src={result.thumbnailUrl} alt="" fill sizes="320px" className="object-cover" />}
           </div>
-          <audio controls preload="metadata" src={result.mediaUrl} className="w-full" />
+          <StorageAudio controls preload="metadata" src={result.mediaUrl} className="w-full" />
         </div>
       );
     }
     return (
       <div className="relative aspect-square w-full overflow-hidden bg-surface-soft">
         {result.thumbnailUrl && (
-          <Image src={result.thumbnailUrl} alt="" fill sizes="(min-width: 1024px) 220px, 45vw" className="object-cover" />
+          <StorageImage src={result.thumbnailUrl} alt="" fill sizes="(min-width: 1024px) 220px, 45vw" className="object-cover" />
         )}
         <span className="absolute inset-0 flex items-center justify-center">
           <span className="flex h-9 w-9 items-center justify-center rounded-full bg-black/55 text-white">

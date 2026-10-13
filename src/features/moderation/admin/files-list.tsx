@@ -6,6 +6,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import { adminFilePublicUrl, fetchAdminUserFiles, type AdminFile } from "@/lib/supabase/admin";
 import { formatDateTime, formatBytes } from "./format";
+import { StorageImg } from "@/components/ui/storage-media";
 
 export function FilesList({ userId }: { userId: string }) {
   const { t, language } = useTranslation();
@@ -35,8 +36,7 @@ export function FilesList({ userId }: { userId: string }) {
         return (
           <li key={`${file.bucket}/${file.name}`} className="flex items-center gap-3 rounded-lg border border-border-soft p-2.5">
             {url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={url} alt="" className="h-12 w-12 shrink-0 rounded-md object-cover" loading="lazy" />
+              <StorageImg src={url} alt="" className="h-12 w-12 shrink-0 rounded-md object-cover" loading="lazy" />
             ) : (
               <span className="grid h-12 w-12 shrink-0 place-items-center rounded-md bg-surface-soft text-caption font-medium uppercase text-text-muted">{file.kind === "other" ? "…" : file.kind.slice(0, 3)}</span>
             )}

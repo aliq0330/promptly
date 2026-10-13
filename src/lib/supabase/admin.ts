@@ -215,7 +215,10 @@ export async function fetchAdminUserFiles(userId: string): Promise<AdminFile[]> 
   }));
 }
 
-/** Public URL for a stored object, or null for private buckets (message photos). */
+/**
+ * Identity URL of a stored object (`…/object/public/<bucket>/<name>`), or null for message photos.
+ * The post-media buckets are private: render it through `StorageImg`, which signs it (moderators may read them).
+ */
 export function adminFilePublicUrl(file: AdminFile): string | null {
   if (file.bucket === "message-images") return null;
   return supabase.storage.from(file.bucket).getPublicUrl(file.name).data.publicUrl;

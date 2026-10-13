@@ -7,6 +7,7 @@ import { CollectionMoreMenu } from "./collection-more-menu";
 import { cn, collectionHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Collection } from "@/types";
+import { StorageBackground } from "@/components/ui/storage-media";
 
 /** One collection in the profile "Koleksiyonlar" grid — cover, name, item count, visibility, and (owner-only) manage menu. */
 export function CollectionCard({
@@ -60,7 +61,7 @@ export function CollectionCard({
  */
 export function CollectionCover({ collection, className }: { collection: Collection; className?: string }) {
   if (collection.coverImage?.url) {
-    return <div className={cn("bg-surface-soft bg-cover bg-center", className)} style={{ backgroundImage: `url("${collection.coverImage.url}")` }} />;
+    return <StorageBackground url={collection.coverImage.url} className={cn("bg-surface-soft bg-cover bg-center", className)} />;
   }
   return (
     <div className={cn("flex items-center justify-center bg-surface-soft text-primary", className)}>

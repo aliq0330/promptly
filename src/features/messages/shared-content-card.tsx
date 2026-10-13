@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRight, SlidersHorizontal, Sparkles, Terminal, Workflow as WorkflowIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +14,7 @@ import { STATUS_LABELS, STATUS_VARIANTS } from "@/features/requests/request-card
 import { presetHref, promptHref, requestHref, workflowHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Preset, Prompt, PromptRequest, Workflow } from "@/types";
+import { StorageImage } from "@/components/ui/storage-media";
 
 const CARD_CLASS =
   "block w-56 space-y-1.5 rounded-xl border border-border-soft bg-surface p-2.5 text-left shadow-card transition-colors duration-200 ease-soft hover:border-border-strong";
@@ -58,7 +58,7 @@ export function SharedPromptCard({ promptId }: { promptId: string }) {
       </span>
       {thumbnail && (
         <span className="relative block h-24 w-full overflow-hidden rounded-sm bg-background">
-          <Image src={thumbnail.url} alt={thumbnail.alt} fill sizes="220px" className="object-cover" />
+          <StorageImage src={thumbnail.url} alt={thumbnail.alt} fill sizes="220px" className="object-cover" />
         </span>
       )}
       <span className="block truncate text-sm font-semibold text-text">{prompt?.title ?? t("common.loading")}</span>

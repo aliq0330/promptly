@@ -8,6 +8,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import { fetchPromptById } from "@/lib/supabase/prompts";
 import type { WorkflowContentRef, WorkflowStep } from "@/types";
 import { MEDIA_ICON, STEP_TYPE_META, stepSubtitle } from "./step-meta";
+import { StorageImg } from "@/components/ui/storage-media";
 
 /** What a step's hover/tap preview shows beyond the light `WorkflowContentRef`. */
 type PreviewData =
@@ -71,8 +72,7 @@ export function StepPreviewBody({ step }: { step: WorkflowStep }) {
     <div className="space-y-3">
       <div className="flex items-start gap-3">
         {image ? (
-          // eslint-disable-next-line @next/next/no-img-element -- real (possibly data-URL) thumbnail
-          <img src={image} alt="" className="h-16 w-16 shrink-0 rounded-md border border-border-soft object-cover" />
+          <StorageImg src={image} alt="" className="h-16 w-16 shrink-0 rounded-md border border-border-soft object-cover" />
         ) : (
           <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-md bg-primary-soft text-primary">
             <Icon size={24} />
