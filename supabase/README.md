@@ -8,8 +8,7 @@ hangi özelliğin neden eklendiği için `docs/history/` arşivine bakın.
 
 **Güncel durum için tek doğruluk kaynağı canlı veritabanıdır**, bu dosya
 değil. Canlıya uygulanmamış bilinen migration'lar kök `CLAUDE.md`'deki
-"Güncel Durum ve Açık İşler" bölümünde tutulur (ör. yıkıcı
-`20260919640000_remove_studio.sql`). Bu ortamın (Claude Code sandbox'ı)
+"Güncel Durum ve Açık İşler" bölümünde tutulur (şu an böyle bir dosya yok). Bu ortamın (Claude Code sandbox'ı)
 `*.supabase.co`'ya doğrudan erişimi yoktur: migration'lar yerel bir
 PostgreSQL 16 örneğinde test edilir, Supabase MCP bağlıysa onunla uygulanır.
 "Migration çalıştı" ile "akış gerçek hesaplarla uçtan uca denendi" ayrı
@@ -75,8 +74,7 @@ Kaynak kök `CLAUDE.md` Bölüm 6'dır; bu liste onunla aynıdır. Canlı verita
 - **Storage:** `avatars` herkese açık; `message-images`, `prompt-media`,
   `request-references`, `result-media` private (dosyaya erişim, onu gösteren
   satırın görünürlüğüne bağlıdır — `docs/history/150-*`).
-- **Atıl (kodda kullanılmayan) tablolar:** `prompt_saves`, `studio_sessions`,
-  `studio_session_versions`.
+- **Atıl (kodda kullanılmayan) tablo:** `prompt_saves`.
 
 ## Migration geçmişi ve bekleyen dosyalar
 
@@ -86,20 +84,11 @@ Kaynak kök `CLAUDE.md` Bölüm 6'dır; bu liste onunla aynıdır. Canlı verita
   `2026100…`, `2026101…`) kaydolur. İkisi birebir eşleşmediği için
   `supabase db push` bu depoda güvenilir bir "neyin uygulandığı" ölçüsü değildir;
   uygulanıp uygulanmadığını canlı şemadan kontrol edin.
-- **Canlıya uygulanmamış, bilinen tek YIKICI dosya:**
-  `20260919640000_remove_studio.sql`. İçeriği yalnızca şu iki ifadedir:
-
-  ```sql
-  drop table if exists public.studio_session_versions;
-  drop table if exists public.studio_sessions;
-  ```
-
-  Eski Studio'nun tabloları atıl duruyor. Son kontrolde (bu oturum) ikisi de
-  **0 satır**; yabancı anahtarları yalnızca kendi aralarında
-  (`versions.session_id → sessions`, `versions.parent_id → versions`) ve
-  `sessions.user_id → profiles` (kendi tarafından); başka hiçbir tablo/görünüm
-  bunlara bağlı değil, uygulama kodu da kullanmıyor. **Geri dönüşü yoktur.**
-  Durum: silinmesi istendi, ama MCP `apply_migration` yıkıcı-SQL onayında zaman aşımına uğradı; tablolar hâlâ duruyor. SQL Editor'den yukarıdaki iki ifade çalıştırılmalı.
+- **Yıkıcı dosya uygulandı:** `20260919640000_remove_studio.sql` (yalnızca
+  `drop table if exists public.studio_session_versions;` ve
+  `drop table if exists public.studio_sessions;`) kullanıcı tarafından SQL Editor'den
+  çalıştırıldı; iki tablo da canlıda artık yok (kontrol edildi). Silinmeden önce ikisi
+  de 0 satırdı. Şu an canlıya uygulanmamış bilinen migration dosyası yoktur.
 - **Hesap silme:** `20260919800000_delete_account_data.sql` (yalnız
   `service_role`'ün çağırabildiği fonksiyon) kullanıcı tarafından canlıya uygulandı
   ve `delete-account` Edge Function deploy edildi (`docs/history/154-*`).
