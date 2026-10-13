@@ -42,6 +42,9 @@ import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
 import { PostMenu } from "@/features/prompts/post-menu";
 import { parseHighlightValue } from "@/lib/notification-utils";
 import { cn, promptHref, relationMapHref } from "@/lib/utils";
+import { splitSourceNotes } from "@/lib/source-notes";
+import { SourceNotes } from "@/features/content/source-notes";
+import { FollowButton } from "@/features/profile/follow-button";
 import { DetailActionBar, DetailAside, DetailByline, DetailComments, DetailLede, DetailShell, DetailTags, DetailTitle, Eyebrow } from "@/features/content/detail-parts";
 import { ReferenceRequirementNotes } from "@/features/content/reference-requirements";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -62,6 +65,8 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
   const { t, language } = useTranslation();
   usePageTitle(prompt.title);
   const media = prompt.media[0];
+  // Credit lines ("Kaynak: …") are shown as a muted note, not as description.
+  const { body: descriptionBody, notes: sourceNotes } = useMemo(() => splitSourceNotes(prompt.description), [prompt.description]);
   const typeMeta = CONTENT_TYPE_META[prompt.contentType];
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   // Arrived from a card with a cover → that cover morphs into this hero (src/lib/card-transition.ts).
@@ -144,7 +149,10 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
       entrance={morphingCover ? "fade" : "rise"}
       aside={
         <DetailAside>
-          <CreatorSummary creator={prompt.author} isOwn={isOwn} />
+          {/* Phones/tablets already show the creator (+ Follow) in the byline above. */}
+          <div className="hidden lg:block">
+            <CreatorSummary creator={prompt.author} isOwn={isOwn} />
+          </div>
           <ContributorsPanel key={contributorsRefreshKey} promptId={prompt.id} />
           <RelatedPrompts prompt={prompt} />
         </DetailAside>
@@ -163,13 +171,21 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
             </div>
             <div className="space-y-3">
               <DetailTitle>{prompt.title}</DetailTitle>
-              {prompt.description && <DetailLede>{prompt.description}</DetailLede>}
+              {descriptionBody && <DetailLede>{descriptionBody}</DetailLede>}
+              <SourceNotes notes={sourceNotes} />
               <ReferenceRequirementNotes
                                 contentType={prompt.contentType}
                 value={{ image: prompt.requiresReferenceImage, video: prompt.requiresReferenceVideo, audio: prompt.requiresReferenceAudio }}
               />
             </div>
-            <DetailByline person={prompt.author} createdAt={prompt.createdAt} language={language} />
+            <DetailByline
+              person={prompt.author}
+              createdAt={prompt.createdAt}
+              language={language}
+              // The creator card lives in the side column, which on phones/tablets stacks far below —
+              // so there the byline carries the Follow button instead of repeating the whole card.
+              trailing={!isOwn ? <FollowButton user={prompt.author} className="lg:hidden" /> : undefined}
+            />
           </header>
 
           {(prompt.contentType === "video" || prompt.contentType === "audio") ? (
@@ -181,11 +197,11 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
                 type="button"
                 onClick={() => setLightboxIndex(0)}
                 aria-label={t("media.viewFullscreen")}
-                className="relative block w-full overflow-hidden rounded-xl border border-border-soft bg-surface-soft shadow-card"
-                // Supporting output preview, not a hero image: capped at ~480px tall.
+                className="relative block w-full overflow-hidden rounded-xl border border-border-soft bg-surface-soft shadow-card [--hero-h:260px] sm:[--hero-h:340px]"
+                // Supporting output preview, not a hero image: capped short enough that the prompt block below stays near the first screen.
                 style={{
                   aspectRatio: clampedAspectRatio(media.width, media.height),
-                  maxWidth: `${Math.round(480 * clampedAspectRatio(media.width, media.height))}px`,
+                  maxWidth: `calc(var(--hero-h) * ${clampedAspectRatio(media.width, media.height)})`,
                 }}
               >
                 <Image src={media.url} alt={media.alt} fill sizes="(min-width: 1024px) 720px, 100vw" className="object-cover" />
@@ -251,19 +267,20 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
                 {t("prompt.promptTextHeading")}
               </Eyebrow>
               <div className="flex flex-wrap items-center gap-2">
+                <CopyPromptButton text={displayText} size="md" variant="primary" />
+                <RunButton text={displayText} recommendedRefs={prompt.tools} />
+                <span className="hidden h-5 w-px bg-border-soft sm:block" aria-hidden />
+                <OpenInStudioButton kind="prompt" id={prompt.id} quiet />
                 {user && !isOwn && (
                   <button
                     type="button"
                     onClick={() => setIsSuggestModalOpen(true)}
-                    className="relative z-10 inline-flex h-9 items-center gap-1.5 rounded-sm border border-primary/30 bg-primary-soft px-3 text-label font-medium text-primary transition-colors hover:border-primary/60"
+                    className="relative z-10 inline-flex h-8 items-center gap-1.5 rounded-md px-3 text-label font-medium text-text-secondary transition-colors hover:bg-surface hover:text-text"
                   >
                     <PenLine size={14} />
                     {t("prompt.suggestEdit")}
                   </button>
                 )}
-                <CopyPromptButton text={displayText} size="md" />
-                <RunButton text={displayText} recommendedRefs={prompt.tools} />
-                <OpenInStudioButton kind="prompt" id={prompt.id} />
               </div>
             </div>
             {variables.length > 0 && <AssembleStatus filled={assemble.filled} total={assemble.total} complete={assemble.complete} />}

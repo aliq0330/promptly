@@ -25,12 +25,15 @@ export function CopyPromptButton({
   label,
   className,
   size = "sm",
+  variant = "outline",
 }: {
   /** The exact prompt/instruction text to copy — never a title, author, tag or other metadata (§10.1/§10.3). */
   text: string;
   label?: string;
   className?: string;
   size?: "sm" | "md";
+  /** "primary" = the one filled action of a prompt block (detail page). */
+  variant?: "outline" | "primary";
 }) {
   const { t } = useTranslation();
   const [state, setState] = useState<"idle" | "copied" | "failed">("idle");
@@ -76,7 +79,9 @@ export function CopyPromptButton({
           ? "border-primary/30 bg-primary-soft text-primary"
           : state === "failed"
             ? "border-danger/40 bg-danger/5 text-danger"
-            : "border-border-soft bg-surface text-text-secondary hover:border-border hover:text-text",
+            : variant === "primary"
+              ? "border-primary bg-primary text-primary-foreground hover:bg-primary-hover"
+              : "border-border-soft bg-surface text-text-secondary hover:border-border hover:text-text",
         className,
       )}
     >
