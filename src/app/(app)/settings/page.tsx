@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ChevronRight, LogOut, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ChoiceCard, fieldInputClassName } from "@/components/ui/field";
@@ -16,6 +17,7 @@ import {
   type MessagePrivacy,
 } from "@/lib/supabase/profiles";
 import { useOwnProfile } from "@/features/auth/own-profile-provider";
+import { deleteOwnAccount } from "@/lib/supabase/account";
 import { absoluteUrl } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Language, TranslationKey } from "@/lib/i18n/translations";
@@ -51,6 +53,10 @@ export default function SettingsPage() {
   const [success, setSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const router = useRouter();
+  const [deleteConfirm, setDeleteConfirm] = useState("");
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [messagePrivacy, setMessagePrivacy] = useState<MessagePrivacy | null>(null);
   const [isSavingPrivacy, setIsSavingPrivacy] = useState(false);
 
@@ -157,6 +163,24 @@ export default function SettingsPage() {
   async function handleSignOut() {
     setIsSigningOut(true);
     await supabase.auth.signOut();
+  }
+
+  async function handleDeleteAccount(event: FormEvent) {
+    event.preventDefault();
+    if (isDeleting || !profile || deleteConfirm.trim().toLowerCase() !== profile.username) return;
+    setDeleteError(null);
+    setIsDeleting(true);
+    try {
+      await deleteOwnAccount(deleteConfirm.trim().toLowerCase());
+    } catch (err) {
+      // Not (fully) deleted: stay signed in with the account untouched and say why.
+      setDeleteError(err instanceof Error ? err.message : t("settings.deleteAccountFailed"));
+      setIsDeleting(false);
+      return;
+    }
+    // The account is gone; its session is dead, so only the local one is cleared.
+    await supabase.auth.signOut({ scope: "local" });
+    router.replace("/");
   }
 
   // The route is wrapped in <RequireAuth>, so a guest never gets here.
@@ -322,6 +346,44 @@ export default function SettingsPage() {
             <Button type="button" variant="outline" onClick={openWelcomeTour}>
               {t("tour.replay")}
             </Button>
+          </SettingsCard>
+        </SettingsGroup>
+
+        <SettingsGroup id="settings-danger" title={t("settings.groupDanger")}>
+          <SettingsCard
+            as={isModerator ? "div" : "form"}
+            onSubmit={handleDeleteAccount}
+            title={t("settings.deleteAccountTitle")}
+            hint={isModerator ? t("settings.deleteAccountModerator") : t("settings.deleteAccountHint")}
+          >
+            {!isModerator && profile && (
+              <>
+                <div>
+                  <label htmlFor="settings-delete-confirm" className={settingsLabelClassName}>
+                    {t("settings.deleteAccountConfirmLabel", { username: profile.username })}
+                  </label>
+                  <input
+                    id="settings-delete-confirm"
+                    type="text"
+                    value={deleteConfirm}
+                    onChange={(event) => setDeleteConfirm(event.target.value)}
+                    autoComplete="off"
+                    autoCapitalize="none"
+                    spellCheck={false}
+                    disabled={isDeleting}
+                    className={fieldInputClassName}
+                  />
+                </div>
+                {deleteError && (
+                  <p role="alert" className="text-sm text-danger">
+                    {deleteError}
+                  </p>
+                )}
+                <Button type="submit" variant="danger" disabled={isDeleting || deleteConfirm.trim().toLowerCase() !== profile.username}>
+                  {isDeleting ? t("settings.deleteAccountDeleting") : t("settings.deleteAccountButton")}
+                </Button>
+              </>
+            )}
           </SettingsCard>
         </SettingsGroup>
 

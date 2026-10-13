@@ -205,7 +205,7 @@ tamamlanmış sayılmaz. Ayrıntı ve mimari: `docs/history/049-*`, `056-*`, `05
 | `/profile/real?username=`, `/profile/edit`, `/followers`, `/following`, `/my-content` | Profil ve kütüphane |
 | `/messages`, `/messages/local?id=` | Mesajlaşma (Realtime, mesaj istekleri, fotoğraf, emoji) |
 | `/notifications` | Bildirim merkezi |
-| `/settings`, `/settings/blocked` | Hesap / Gizlilik / Tercihler (görünüm, dil) |
+| `/settings`, `/settings/blocked` | Hesap / Gizlilik / Tercihler (görünüm, dil) / Tehlikeli bölge ("Hesabımı sil" — `delete-account` Edge Function) |
 | `/moderation` | Yalnızca moderatör: şikâyetler, site istatistikleri, kullanıcı yönetimi, depolama temizliği, DNA doldurma |
 | `/login`, `/signup`, `/reset-password` | Auth |
 
@@ -263,6 +263,10 @@ Kalıplar (yeni migration yazarken uy):
   değil, `StorageImg`/`StorageImage`/`StorageVideo`/`StorageAudio`/
   `StorageBackground` (`components/ui/storage-media.tsx`, signed URL) ile
   gösterilir; DB'deki URL yalnızca kimliktir. `avatars` herkese açıktır.
+- Hesap silme yalnızca `delete-account` Edge Function'ıyla olur: hedef daima doğrulanmış
+  JWT'nin sahibidir (istemci kullanıcı kimliği veremez), kullanıcı adı sunucuda da
+  doğrulanır, `delete_account_data` yalnız `service_role`'e açıktır; service role
+  yalnızca o fonksiyonda bulunur.
 - Kullanıcının AI API anahtarı (Studio) sunucuya/Supabase'e ASLA yazılmaz;
   yalnızca bellekte ya da (açık onayla) tarayıcıda tutulur.
 
@@ -313,6 +317,12 @@ bağlayıcıdır; ayrıntılı gerekçe için `docs/history/README.md` tablosuna
   0 satır). Yıkıcı olduğu için onayla uygulanmalı.
 - Supabase Dashboard → Authentication → Providers → Email: **"Leaked password
   protection"** açılmalı (MCP ile yapılamaz).
+- `supabase/migrations/20260919800000_delete_account_data.sql` canlıya UYGULANMADI
+  (MCP `apply_migration` yıkıcı-SQL onayında iki kez zaman aşımı; canlıda fonksiyon yok)
+  ve `delete-account` Edge Function DEPLOY EDİLMEDİ (`supabase functions deploy
+  delete-account`, JWT doğrulaması AÇIK; önce migration, sonra fonksiyon). Bunlar
+  yapılana dek Ayarlar → "Hesabımı sil" hata verir ve hesaba dokunmaz
+  (`docs/history/154-*`).
 - Edge Function'lar elle deploy edilir: `analyze-image` (kod değişince),
   `username-login` (`--no-verify-jwt`), `cleanup-orphan-storage`. Canlıdaki
   sürümlerin güncel olduğu doğrulanmadı.
