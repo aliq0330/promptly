@@ -1,5 +1,6 @@
 "use client";
 
+import { usePageTitle } from "@/components/layout/page-title";
 import { RunButton } from "@/features/content/run-with-ai";
 import { ToolLine } from "@/features/content/tool-chips";
 import { useEffect, useMemo, useState } from "react";
@@ -59,6 +60,7 @@ const HIGHLIGHT_DURATION_MS = 2500;
 /** The real prompt detail rendering, used by `/prompts/local?id=…`. */
 export function PromptDetailView({ prompt }: { prompt: Prompt }) {
   const { t, language } = useTranslation();
+  usePageTitle(prompt.title);
   const media = prompt.media[0];
   const typeMeta = CONTENT_TYPE_META[prompt.contentType];
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);

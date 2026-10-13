@@ -59,15 +59,34 @@ export const languageInitScript = `
 })();
 `;
 
+/**
+ * Same decision as `languageInitScript`, but callable from React. The
+ * provider must NOT trust `<html lang>` alone: when React recovers from a
+ * hydration mismatch it re-creates the root, and `<html lang="tr">` from the
+ * JSX then overwrites whatever the init script wrote — so reading it back
+ * would silently flip an English visitor to Turkish.
+ */
+function detectLanguage(): Language {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored === "en" || stored === "tr") return stored;
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    return tz === "Europe/Istanbul" || tz === "Asia/Istanbul" ? "tr" : "en";
+  } catch {
+    return document.documentElement.lang === "en" ? "en" : "tr";
+  }
+}
+
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [language, setLanguageState] = useState<Language>("tr");
 
-  // Real value is applied to <html lang> synchronously by languageInitScript
-  // before hydration; this effect only re-reads that into React state once,
-  // so components (e.g. the settings toggle) render the right selection
-  // after mount — the same pattern ThemeProvider uses for `theme`.
+  // The real value is applied to <html lang> synchronously by
+  // languageInitScript before hydration; this effect re-derives it into React
+  // state once (and re-asserts <html lang>, in case a hydration recovery reset
+  // it), the same pattern ThemeProvider uses for `theme`.
   useEffect(() => {
-    const lang = document.documentElement.lang === "en" ? "en" : "tr";
+    const lang = detectLanguage();
+    document.documentElement.lang = lang;
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setLanguageState(lang);
   }, []);

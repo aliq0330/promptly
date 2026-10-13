@@ -6,6 +6,7 @@ import { LanguageProvider, languageInitScript } from "@/lib/i18n/language-provid
 import { AuthProvider } from "@/features/auth/auth-provider";
 import { AuthPromptProvider } from "@/features/auth/auth-prompt-provider";
 import { PreferencesSync } from "@/features/auth/preferences-sync";
+import { PageTitle } from "@/components/layout/page-title";
 import { TaxonomyHydrator } from "@/features/content/taxonomy-hydrator";
 import "./globals.css";
 
@@ -38,10 +39,30 @@ const mono = JetBrains_Mono({
   weight: ["400", "500"],
 });
 
+const SITE_URL = "https://aliq0330.github.io/promptly";
+const SITE_DESCRIPTION =
+  "AI promptlarını paylaşan, keşfeden ve yapılandırılmış olarak oluşturan topluluk platformu.";
+
+// Static export: one site-wide card. Individual prompts share this card too —
+// per-page OG tags would need server rendering, which this deployment lacks.
 export const metadata: Metadata = {
+  metadataBase: new URL(`${SITE_URL}/`),
   title: "Promptly",
-  description:
-    "AI promptlarını paylaşan, keşfeden ve yapılandırılmış olarak oluşturan topluluk platformu.",
+  description: SITE_DESCRIPTION,
+  openGraph: {
+    type: "website",
+    siteName: "Promptly",
+    title: "Promptly",
+    description: SITE_DESCRIPTION,
+    url: `${SITE_URL}/`,
+    images: [{ url: `${SITE_URL}/og.png`, width: 1200, height: 630, alt: "Promptly" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Promptly",
+    description: SITE_DESCRIPTION,
+    images: [`${SITE_URL}/og.png`],
+  },
 };
 
 // viewport-fit=cover is required for env(safe-area-inset-*) to resolve to
@@ -65,6 +86,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <AuthProvider>
               <PreferencesSync />
               <TaxonomyHydrator />
+              <PageTitle />
               <AuthPromptProvider>{children}</AuthPromptProvider>
             </AuthProvider>
           </LanguageProvider>

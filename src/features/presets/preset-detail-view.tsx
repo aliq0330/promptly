@@ -1,5 +1,6 @@
 "use client";
 
+import { usePageTitle } from "@/components/layout/page-title";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -59,6 +60,7 @@ export function PresetDetailView() {
   const id = searchParams.get("id");
   const [preset, setPreset] = useState<Preset | null | undefined>(undefined);
   const [lightbox, setLightbox] = useState(false);
+  usePageTitle(preset?.title);
 
   useEffect(() => {
     if (!id) return;
