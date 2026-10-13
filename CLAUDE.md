@@ -299,13 +299,15 @@ Canlı projede (kontrol: bu oturum) 19 profil (18 demo hesap), 148 prompt,
 bağlayıcıdır; ayrıntılı gerekçe için `docs/history/README.md` tablosuna bak.
 
 **Açık işler (kullanıcı/yönetici adımı veya bilinen boşluk):**
-- `supabase/migrations/20260919760000_private_media_buckets.sql` canlıya
-  UYGULANMADI (Bölüm 7, `docs/history/150-*`): gönderi medyası bucket'ları hâlâ
-  public, yani private/taslak gönderilerin dosyaları şu an dünyaya açık.
-  Kod (signed URL çözümü) hazır; sıra: önce frontend'i yayına al, SONRA
-  migration'ı uygula (tersi görselleri kırar). Uygulandıktan sonra bir
-  private gönderinin eski genel URL'sinin 400/404 verdiği tarayıcıdan
-  doğrulanmalı. Signed URL 10 dk geçerli kalır (bilinen sınır).
+- `supabase/migrations/20260919760000_private_media_buckets.sql` canlıya MCP ile
+  uygulandı (frontend yayınlandıktan sonra; `docs/history/150-*`). Eski
+  `… publicly readable` policy'leri `supabase_storage_admin` sahipliğinde
+  olduğundan değiştirilemedi; üstlerine restrictive bir SELECT policy
+  eklendi (eskiler etkisiz ama yerinde). Hâlâ yapılmadı: tarayıcıdan bir
+  private gönderinin eski genel URL'sinin hata verdiği ve görsellerin signed
+  URL ile açıldığı elle doğrulanmadı; CDN'in eski genel yanıtları ne kadar
+  servis ettiği bilinmiyor. Signed URL 10 dk geçerli kalır (bilinen sınır).
+  Migration Supabase geçmişinde `private_media_buckets` olarak kayıtlı.
 - `supabase/migrations/20260919640000_remove_studio.sql` canlıya uygulanmadı:
   `studio_sessions` / `studio_session_versions` tabloları atıl duruyor (şu an
   0 satır). Yıkıcı olduğu için onayla uygulanmalı.
