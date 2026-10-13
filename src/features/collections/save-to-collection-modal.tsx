@@ -22,6 +22,7 @@ import { placeholderArt } from "@/lib/placeholder-image";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Collection } from "@/types";
+import { StorageBackground } from "@/components/ui/storage-media";
 
 /**
  * "Kaydet" — opened only from an outline (not-yet-saved) bookmark; a filled
@@ -211,11 +212,11 @@ export function SaveToCollectionModal({
                       disabled={isPending}
                       className="flex w-full items-center gap-3 rounded-md border border-border p-2 text-left transition-colors hover:bg-accent-surface/50 disabled:opacity-70"
                     >
-                      <span
+                      <StorageBackground
+                        as="span"
+                        url={collection.coverImage?.url}
+                        fallback={placeholderArt(collection.id, 88, 88)}
                         className="h-11 w-11 shrink-0 rounded-md bg-cover bg-center"
-                        style={{
-                          backgroundImage: `url("${collection.coverImage?.url ?? placeholderArt(collection.id, 88, 88)}")`,
-                        }}
                       />
                       <span className="min-w-0 flex-1">
                         <span className="flex min-w-0 items-center gap-1.5">

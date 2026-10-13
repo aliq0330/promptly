@@ -9,6 +9,7 @@ import type { TranslationKey } from "@/lib/i18n/translations";
 import { contentTypeLabelKey, taxonomyLabel } from "@/lib/content-taxonomy";
 import { formatRelativeTime, presetHref, profileHref, promptHref } from "@/lib/utils";
 import type { Preset, Prompt } from "@/types";
+import { StorageImg } from "@/components/ui/storage-media";
 
 type Source = { kind: "prompt"; item: Prompt } | { kind: "preset"; item: Preset };
 
@@ -37,8 +38,7 @@ export function StudioSourceCard({ source, onChange, onRemove }: { source: Sourc
       <div className="flex gap-3 rounded-lg border border-border-soft bg-surface-soft p-3">
         <div className="relative grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-md border border-border-soft bg-surface sm:h-24 sm:w-24">
           {imageUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element -- user media of any origin, small thumbnail
-            <img src={imageUrl} alt="" className="h-full w-full object-cover" />
+            <StorageImg src={imageUrl} alt="" className="h-full w-full object-cover" />
           ) : (
             <Icon size={26} className="text-text-muted" aria-hidden />
           )}

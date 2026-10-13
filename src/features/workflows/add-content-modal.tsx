@@ -16,6 +16,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
 import type { WorkflowContentRef } from "@/types";
 import { MEDIA_ICON, STEP_TYPE_META } from "./step-meta";
+import { StorageImg } from "@/components/ui/storage-media";
 
 const inputClass = "h-10 w-full rounded-lg border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60";
 
@@ -141,8 +142,7 @@ function ExistingList({ onSelect }: { onSelect: (ref: WorkflowContentRef) => voi
                   className="flex min-h-14 w-full items-center gap-3 rounded-lg border border-border-soft p-2.5 text-left transition-colors hover:border-border-strong hover:bg-surface-soft"
                 >
                   {ref.thumbnailUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element -- real (possibly data-URL) thumbnail
-                    <img src={ref.thumbnailUrl} alt="" className="h-10 w-10 shrink-0 rounded-md object-cover" />
+                    <StorageImg src={ref.thumbnailUrl} alt="" className="h-10 w-10 shrink-0 rounded-md object-cover" />
                   ) : (
                     <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary-soft text-primary">
                       <Icon size={18} />

@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight, ImagePlus, X } from "lucide-react";
 import { resizeImageToDataUrlFit } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { MultiImageItem } from "@/lib/supabase/media-input";
+import { StorageImg } from "@/components/ui/storage-media";
 
 export type { MultiImageItem };
 
@@ -78,8 +79,7 @@ export function MultiImagePicker({
       <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5">
         {items.map((item, index) => (
           <figure key={item.key} className="relative aspect-square overflow-hidden rounded-md border border-border bg-surface-soft">
-            {/* eslint-disable-next-line @next/next/no-img-element -- a local preview data URL or an already-stored real URL, never a next/image-optimizable remote asset list */}
-            <img src={item.url} alt="" className="h-full w-full object-cover" draggable={false} />
+            <StorageImg src={item.url} alt="" className="h-full w-full object-cover" draggable={false} />
             <button
               type="button"
               onClick={() => remove(item.key)}

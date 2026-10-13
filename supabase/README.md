@@ -106,6 +106,14 @@ tamamen kapalı kalır — güvenli tarafta kalan bilinçli bir ara durum.
   bucket'lara henüz hiç yüklemiyor — hâlâ localStorage'daki base64 data
   URL'leri kullanıyor (`resizeImageToDataUrl`/`resizeImageToDataUrlFit`);
   gerçek bağlanma Bölüm 21'in işi.
+- `20260919760000_private_media_buckets.sql` — `prompt-media`,
+  `request-references` ve `result-media` bucket'larını **private** yapar;
+  SELECT policy'leri dosyayı gösteren satırın görünürlüğüne bağlanır
+  (kendi klasörü ya da çağıranın RLS'iyle okuyabildiği bir satır dosyaya
+  işaret ediyorsa; moderatör hepsini okur). İstemci dosyaları kısa ömürlü
+  signed URL ile gösterir. `avatars` herkese açık kalır. **Yeni frontend
+  yayına alındıktan SONRA uygulanmalı** (eski frontend genel URL'leri
+  doğrudan çizer). Ayrıntı: `docs/history/150-*`.
 
 - `20260919150000_request_response_workflow.sql` — prompt istekleri/yanıt
   sistemini sağlamlaştırıyor (Bölüm 9/10/21 Faz 5'in üzerine):

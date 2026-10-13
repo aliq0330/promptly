@@ -6,6 +6,7 @@ import { Portal } from "./portal";
 import { lockBodyScroll, unlockBodyScroll } from "./modal";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
+import { StorageImg } from "@/components/ui/storage-media";
 
 export interface LightboxImage {
   url: string;
@@ -109,8 +110,7 @@ export function ImageLightbox({
               <ChevronLeft size={24} />
             </button>
           )}
-          {/* eslint-disable-next-line @next/next/no-img-element -- fullscreen viewer, source may be a local data URL or a real stored URL */}
-          <img src={current.url} alt={current.alt ?? ""} className="max-h-full max-w-full select-none object-contain" draggable={false} />
+          <StorageImg src={current.url} alt={current.alt ?? ""} className="max-h-full max-w-full select-none object-contain" draggable={false} />
           {hasMultiple && (
             <button
               type="button"
@@ -138,8 +138,7 @@ export function ImageLightbox({
                   i === index ? "border-white" : "border-transparent opacity-60 hover:opacity-100",
                 )}
               >
-                {/* eslint-disable-next-line @next/next/no-img-element -- small thumbnail strip, same source list as the main viewer */}
-                <img src={image.url} alt="" className="h-full w-full object-cover" />
+                <StorageImg src={image.url} alt="" className="h-full w-full object-cover" />
               </button>
             ))}
           </div>

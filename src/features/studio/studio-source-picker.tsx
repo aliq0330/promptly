@@ -9,6 +9,7 @@ import { searchPrompts } from "@/lib/supabase/prompts";
 import { contentTypeLabelKey, taxonomyLabel } from "@/lib/content-taxonomy";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Prompt } from "@/types";
+import { StorageImg } from "@/components/ui/storage-media";
 
 export type SourcePickerKind = "prompt";
 
@@ -104,8 +105,7 @@ export function StudioSourcePicker({ kind, onPick, onClose }: { kind: SourcePick
                   className="flex min-h-14 w-full items-center gap-3 rounded-lg border border-border-soft bg-background p-2 text-left hover:border-border-strong hover:bg-surface-soft"
                 >
                   {row.image ? (
-                    // eslint-disable-next-line @next/next/no-img-element -- small list thumbnail
-                    <img src={row.image} alt="" className="h-10 w-10 shrink-0 rounded-md bg-surface-soft object-cover" />
+                    <StorageImg src={row.image} alt="" className="h-10 w-10 shrink-0 rounded-md bg-surface-soft object-cover" />
                   ) : (
                     <span aria-hidden className="h-10 w-10 shrink-0 rounded-md bg-surface-soft" />
                   )}

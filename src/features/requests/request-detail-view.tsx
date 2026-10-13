@@ -3,7 +3,6 @@
 import { usePageTitle } from "@/components/layout/page-title";
 import { ToolLine } from "@/features/content/tool-chips";
 import { useEffect, useRef, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { MessageSquareOff, PenLine, Reply, Sparkles, SquareTerminal } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -37,6 +36,7 @@ import { AsideSection, DetailActionBar, DetailAside, DetailByline, DetailComment
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Prompt, PromptRequest } from "@/types";
 import { ScrollablePrompt } from "@/features/content/scrollable-prompt";
+import { StorageImage, StorageImg } from "@/components/ui/storage-media";
 
 /** Same fade timing as the comment-thread flash — one shared feel across the app for "you just jumped here from a notification". */
 const HIGHLIGHT_DURATION_MS = 2500;
@@ -244,7 +244,7 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
                 maxWidth: `${Math.round(480 * referenceRatio)}px`,
               }}
             >
-              <Image src={live.referenceImage.url} alt={live.referenceImage.alt} fill sizes="(min-width: 1024px) 720px, 100vw" className="object-cover" />
+              <StorageImage src={live.referenceImage.url} alt={live.referenceImage.alt} fill sizes="(min-width: 1024px) 720px, 100vw" className="object-cover" />
             </button>
             <figcaption className="text-caption text-text-muted">{t("request.referenceImage")}</figcaption>
             {live.media.length > 1 && (
@@ -257,8 +257,7 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
                     aria-label={t("media.viewFullscreen")}
                     className="h-16 w-16 overflow-hidden rounded-md border border-border-soft"
                   >
-                    {/* eslint-disable-next-line @next/next/no-img-element -- a small thumbnail strip */}
-                    <img src={extra.url} alt={extra.alt} className="h-full w-full object-cover" />
+                    <StorageImg src={extra.url} alt={extra.alt} className="h-full w-full object-cover" />
                   </button>
                 ))}
               </div>

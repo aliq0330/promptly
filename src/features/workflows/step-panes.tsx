@@ -9,6 +9,7 @@ import { availableSources, newId } from "@/lib/workflow-logic";
 import { cn } from "@/lib/utils";
 import type { WorkflowStep } from "@/types";
 import { MEDIA_ICON, STEP_TYPE_META, stepSubtitle } from "./step-meta";
+import { StorageImg } from "@/components/ui/storage-media";
 
 const inputClass =
   "h-10 w-full rounded-lg border border-border bg-background px-3 text-sm text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60";
@@ -88,8 +89,7 @@ export function ContentPane({
       {c ? (
         <div className="flex items-start gap-3 rounded-lg border border-border-soft bg-surface-soft p-3">
           {c.thumbnailUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element -- real (possibly data-URL) thumbnail
-            <img src={c.thumbnailUrl} alt="" className="h-12 w-12 shrink-0 rounded-md object-cover" />
+            <StorageImg src={c.thumbnailUrl} alt="" className="h-12 w-12 shrink-0 rounded-md object-cover" />
           ) : (
             <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-primary-soft text-primary">
               <Icon size={20} />

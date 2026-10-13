@@ -1,10 +1,10 @@
 "use client";
 
-import Image from "next/image";
 import { clampedAspectRatio } from "@/lib/placeholder-image";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { Play } from "lucide-react";
 import type { PromptMedia } from "@/types";
+import { StorageImage } from "@/components/ui/storage-media";
 
 /**
  * How PromptCard's OUTPUT FIGURE (the "Çıktı" preview — never the whole card,
@@ -41,14 +41,14 @@ export function OutputThumbnailStrip({ media }: { media: PromptMedia[] }) {
   return (
     <div className="space-y-1.5">
       <figure data-card-media className={FRAME_CLASS} style={{ aspectRatio: Math.max(1, clampedAspectRatio(cover.width, cover.height)) }}>
-        <Image src={cover.url} alt={cover.alt} fill sizes={SIZES} className="object-cover" />
+        <StorageImage src={cover.url} alt={cover.alt} fill sizes={SIZES} className="object-cover" />
         <OutputCaption />
       </figure>
       {rest.length > 0 && (
         <div className="flex gap-1.5">
           {visible.map((item, index) => (
             <div key={item.id} className="relative h-11 w-11 shrink-0 overflow-hidden rounded-sm border border-border-soft bg-surface-soft">
-              <Image src={item.url} alt={item.alt} fill sizes="44px" className="object-cover" />
+              <StorageImage src={item.url} alt={item.alt} fill sizes="44px" className="object-cover" />
               {index === visible.length - 1 && overflow > 0 && (
                 <span className="absolute inset-0 flex items-center justify-center bg-black/55 text-caption font-semibold text-white">
                   +{overflow}
@@ -70,7 +70,7 @@ export function OutputThumbnailStrip({ media }: { media: PromptMedia[] }) {
 export function OutputPosterPreview({ media }: { media: PromptMedia }) {
   return (
     <figure className={FRAME_CLASS} style={{ aspectRatio: clampedAspectRatio(media.width, media.height) }}>
-      <Image src={media.url} alt={media.alt} fill sizes={SIZES} className="object-cover" />
+      <StorageImage src={media.url} alt={media.alt} fill sizes={SIZES} className="object-cover" />
       <span className="pointer-events-none absolute inset-0 flex items-center justify-center">
         <span className="flex h-11 w-11 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-sm">
           <Play size={18} fill="currentColor" />

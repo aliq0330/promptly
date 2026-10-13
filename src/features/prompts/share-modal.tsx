@@ -18,6 +18,7 @@ import type { TranslationKey } from "@/lib/i18n/translations";
 import { CONTENT_TYPE_META } from "./content-type-meta";
 import { shareOrCopyLink } from "./share-button";
 import type { Preset, Prompt, PromptRequest, PromptResult, Workflow } from "@/types";
+import { StorageBackground } from "@/components/ui/storage-media";
 
 export type ShareModalTarget =
   | { contentType: "prompt"; prompt: Prompt }
@@ -179,9 +180,11 @@ export function ShareModal({ target, onClose }: { target: ShareModalTarget; onCl
         </div>
 
         <div className="mt-4 flex items-center gap-3 rounded-md border border-border-soft bg-surface-soft p-3">
-          <span
+          <StorageBackground
+            as="span"
+            url={preview.thumbnailUrl}
+            fallback={placeholderArt(preview.id, 96, 96)}
             className="h-12 w-12 shrink-0 rounded-md bg-cover bg-center"
-            style={{ backgroundImage: `url("${preview.thumbnailUrl ?? placeholderArt(preview.id, 96, 96)}")` }}
           />
           <span className="min-w-0 flex-1 space-y-0.5">
             <Badge variant={preview.badgeVariant}>{preview.badgeLabel}</Badge>

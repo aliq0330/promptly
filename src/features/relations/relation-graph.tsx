@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { CENTER_H, CENTER_W, NODE_H, NODE_W, fitTransform, layoutRadial, type Point } from "@/lib/relations/graph-layout";
 import { FILTER_ORDER, RELATION_TYPES, otherEnd, type RelationEdge, type RelationNode } from "@/lib/relations/types";
 import { KIND_ICON, useRelationText } from "./relation-text";
+import { StorageImg } from "@/components/ui/storage-media";
 
 interface View {
   x: number;
@@ -408,8 +409,7 @@ export function RelationGraph({
                 }}
               >
                 {node.imageUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element -- tiny node thumbnails; next/image's sizing overhead isn't worth it on a pan/zoom layer
-                  <img src={node.imageUrl} alt="" draggable={false} className={cn("shrink-0 rounded-md object-cover", isCenter ? "h-14 w-14" : "h-9 w-9")} />
+                  <StorageImg src={node.imageUrl} alt="" draggable={false} className={cn("shrink-0 rounded-md object-cover", isCenter ? "h-14 w-14" : "h-9 w-9")} />
                 ) : (
                   <span className={cn("grid shrink-0 place-items-center rounded-md bg-surface-soft text-text-muted", isCenter ? "h-14 w-14" : "h-9 w-9")}>
                     <Icon size={isCenter ? 22 : 18} strokeWidth={1.75} aria-hidden />
