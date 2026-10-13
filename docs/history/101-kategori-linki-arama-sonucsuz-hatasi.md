@@ -1,0 +1,3 @@
+### 9.101 Kategori linki → arama sonuçsuz hatası
+
+Gönderideki kategori/alt kategori çipleri (`TaxonomyLinks`) `/search?q=Görsel İnsan Karakter` açıyordu; ama arama sayfası chip tabanlı olduktan sonra `?q=` yalnızca serbest metin oluyor ve taksonomi ayrıştırılmıyordu → başlık/açıklamada o metin aranıp sonuç çıkmıyordu. Artık çipler `/search?type=&category=&subcategory=` açar (slug'lar, dilden bağımsız); `SearchView` bunu mount'ta medya chip'i + `TaxonomyFilter` seçimine çevirir (sunucu tarafı `content_type/category/subcategory` filtresi). `?q=` aynen çalışır. Migration, yeni metin yok. tsc/lint/build temiz; gerçek veriyle denenmedi.

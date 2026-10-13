@@ -1,0 +1,10 @@
+### 9.65 Taslaklar (prompt, prompt isteği, generator, workflow)
+
+Dört oluşturma sayfasının (`/create`, `/requests/new`, `/generators/create`, `/workflows/create`) header'ının en sağında ortak **"Taslaklar (N)"** butonu var (`features/drafts/`: `DraftsButton` + `KindDraftsButton`, `lib/supabase/drafts.ts`). Tıklayınca yalnızca o içerik türünün taslaklarını (başlık, son düzenleme, Devam et / Sil — iki tıklamalı onay) `Modal` ile listeler; "Devam et" sayfanın kendi `?edit=<id>` moduna gider.
+- **Prompt:** `prompts.status='draft'` (zaten vardı). Formda "Taslak olarak kaydet" (yalnızca düz oluşturma/kopya modlarında; isteğe yanıt ve generator-run modlarında yok) ve taslağı düzenlerken "Taslağı kaydet" + "Yayınla". Yayın, etiketler yazıldıktan sonra ayrı bir `status: published` UPDATE'iyle yapılır.
+- **Prompt isteği:** yeni `prompt_requests.is_draft` kolonu; SELECT RLS'i `not is_draft or author` olarak değişti. Akış promptla aynı (`publish` seçeneği).
+- **Generator/Workflow:** zaten draft/published vardı; yalnızca liste UI'ı eklendi. Editörler `?edit=` değişince `key` ile yeniden mount olur.
+- **Migration `20260919520000_drafts.sql` (canlıya uygulandı):** yayınlanınca `created_at` yayın anına çekilir; etiket sayaçları (`handle_*_tag_change`, `count_tags_on_publish`) taslağı saymaz, yayınlanınca sayar; `trending_tags` taslak istekleri hariç tutar; taslak düzenlemeleri düzenleme/sürüm geçmişine yazılmaz (`record_prompt_edit/version`, `record_request_edit`). Canlı DB'de geri alınan bir transaction'la doğrulandı (etiket sayacı 0→0→1, `created_at` sıfırlandı, istek için aynı).
+- Listeler taslakları gizler: `filterNotDeleted` (prompt/istek) ve etiket sayfası taslakları eler; taslaklar yalnızca "Taslaklar"da görünür.
+- Bilinçli sınırlar: otomatik kayıt yok (generator hariç); isteğe-yanıt ve generator-run promptları taslak olamaz; taslak başka içerikle (yorum/kaydet) etkileşime girmez.
+- Doğrulama: tsc/lint/build temiz; tarayıcıda uçtan uca denenmedi (sandbox Supabase'e erişemiyor). EN karşılıkları eklendi (`draft.*`).

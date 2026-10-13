@@ -1,0 +1,9 @@
+### 9.107 "Hazır Ayarlar ve Ek Alan Önerileri" paneli: tek topluluk listesi, "Ben" düğmesi, önizleme
+
+Prompt oluştur ekranındaki ek ayar paneli (`extra-settings-panel.tsx`, §9.62/9.86) yeniden adlandırıldı ve topluluk sekmesi sadeleşti. Migration yok.
+- **Ad:** "Hazır Ayarlar ve Ek Alan Önerileri" / "Presets & Extra Field Suggestions" (`extra.title`).
+- **Sekme sırası:** Topluluk → Kaydettiklerim → Alanlar; açılışta **Topluluk** seçili. Seçilenlerin özeti ("Seçtiklerin") ve birleşik prompt önizlemesi aynen paneldedir.
+- **Topluluk:** "Paylaştıklarım"/"Diğerleri" alt sekmeleri kalktı; tek liste (herkesin herkese açık, yayınlanmış hazır ayarları, kendiminkiler karışık). Üstteki **"Ben"** düğmesi (`Chip`, `aria-pressed`, varsayılan kapalı) açıkken yalnızca benim yayınlanmış hazır ayarlarım (herkese açık + sadece ben). Her satırda **Uygula** ve (başkasının ayarında) **Kaydet**; kendi ayarımda Kaydet yok. Kaydettiklerim satırlarında yalnızca Uygula.
+- **Önizleme:** satırın gövdesine dokununca `PresetPreviewModal` (`features/presets/preset-preview-modal.tsx`) açılır — ad, yaratıcı, açıklama, parametre/değer listesi, tavsiye edilen araç, "Sayfayı aç", Kaydet, Uygula. Ortak `Modal` olduğundan mobilde bottom sheet, masaüstünde ortalı pencere; panelin kendi `Modal`'ına SİBLING render edilir (Escape yalnızca önizlemeyi kapatır). Uygula alanları forma yazar ve Alanlar sekmesine geçer. Kaydet/kaldır "Kaydettiklerim" listesini yeniler (`savedVersion` panelde tutulur).
+- i18n: `extra.communityMe`, `extra.communityTapHint`, `preset.previewAria`, `preset.openPage` TR+EN eklendi; kullanılmayan `extra.communityMine/Others` silindi.
+- Doğrulama: tsc/lint/build temiz; ağ taklitli Playwright 40/40 (390 ve 1280px: sekme sırası, alt sekmelerin yokluğu, Ben açık/kapalı, Kaydet/Uygula görünürlüğü, önizleme içeriği ve yerleşimi, Escape, önizlemeden/satırdan Uygula, taşma yok). Gerçek Supabase'e ve fiziksel cihaza karşı denenmedi.
