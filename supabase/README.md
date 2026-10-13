@@ -99,10 +99,10 @@ Kaynak kök `CLAUDE.md` Bölüm 6'dır; bu liste onunla aynıdır. Canlı verita
   (`versions.session_id → sessions`, `versions.parent_id → versions`) ve
   `sessions.user_id → profiles` (kendi tarafından); başka hiçbir tablo/görünüm
   bunlara bağlı değil, uygulama kodu da kullanmıyor. **Geri dönüşü yoktur.**
-  Durum: **onay bekliyor** — açıkça "uygula" denmeden çalıştırılmaz.
-- **Uygulanmamış, yıkıcı olmayan:** `20260919800000_delete_account_data.sql`
-  (hesap silme için yalnız `service_role`'ün çağırabildiği fonksiyon; ayrıca
-  `delete-account` Edge Function henüz deploy edilmedi — `docs/history/154-*`).
+  Durum: silinmesi istendi, ama MCP `apply_migration` yıkıcı-SQL onayında zaman aşımına uğradı; tablolar hâlâ duruyor. SQL Editor'den yukarıdaki iki ifade çalıştırılmalı.
+- **Hesap silme:** `20260919800000_delete_account_data.sql` (yalnız
+  `service_role`'ün çağırabildiği fonksiyon) kullanıcı tarafından canlıya uygulandı
+  ve `delete-account` Edge Function deploy edildi (`docs/history/154-*`).
 - **`content_relations` (`20260919710000`) geçmişte kayıtlı değil.** Tablo ve
   fonksiyonlar canlıda var (MCP `execute_sql` ile iki parça hâlinde uygulandı),
   ama `schema_migrations`'ta satırı yok. Şemayı DEĞİŞTİRMEDEN düzeltmek için
@@ -795,7 +795,7 @@ Dört fonksiyon vardır; hiçbiri CI ile deploy edilmez, elle deploy edilir
 | `analyze-image` | Görsel + MIME alıp Gemini Vision'a gönderen, yapılandırılmış JSON döndüren fonksiyon | `supabase functions deploy analyze-image` (kod değişince) |
 | `username-login` | Kullanıcı adı + şifreyle giriş; e-postayı yalnızca sunucuda çözer | `supabase functions deploy username-login --no-verify-jwt` |
 | `cleanup-orphan-storage` | Hiçbir satırın göstermediği Storage dosyalarını bulur/siler (yalnız moderatör) | `supabase functions deploy cleanup-orphan-storage` |
-| `delete-account` | Kullanıcının KENDİ hesabını siler (JWT'den; `docs/history/154-*`) | `supabase functions deploy delete-account` — JWT doğrulaması AÇIK. **Henüz deploy edilmedi.** |
+| `delete-account` | Kullanıcının KENDİ hesabını siler (JWT'den; `docs/history/154-*`) | `supabase functions deploy delete-account` — JWT doğrulaması AÇIK. Canlıda (v1). |
 
 Aşağıdaki not `analyze-image` içindir (tarihsel):
 

@@ -13,7 +13,4 @@
 
 **Doğrulama (yerel PostgreSQL, canlı trigger davranışını taklit eden minimal şema):** düz silme reddediliyor; `delete_account_data` A'yı siliyor ve B'nin A'nın yorumuna yanıtını (üst seviyeye), A'nın isteğine B'nin yanıtını (normal paylaşıma), B'nin isteği için seçili A yanıtını (istek kapalı) ve B'nin varsayılan koleksiyonunu koruyor; trigger'lar işlemden sonra yeniden etkin; moderatör ve bilinmeyen kimlik reddediliyor; `anon`/`authenticated` `permission denied` alıyor. `tsc`, `lint`, `npm test`, `build` temiz.
 
-**CANLIYA UYGULANMADI / DEPLOY EDİLMEDİ (bu oturum):**
-- Migration `20260919800000_delete_account_data.sql`: MCP `apply_migration` iki kez 60 sn'de zaman aşımına uğradı (gövdesinde `delete from auth.users` / `alter table … disable trigger` geçtiği için aracın yıkıcı-SQL onayına takıldığı varsayıldı); canlıda fonksiyon YOK, hiçbir şey yarım kalmadı. Onayla uygulanmalı (SQL Editor ya da MCP onayı).
-- Edge Function: bu sandbox Supabase'e dağıtım yapmadı. Dağıtım: `supabase functions deploy delete-account` (JWT doğrulaması AÇIK — `--no-verify-jwt` ekleme). Önce migration, sonra fonksiyon. Bunlar yapılana dek Ayarlar'daki buton "Hesap silinemedi…" hatası verir ve hesaba dokunmaz.
-- Gerçek Supabase oturumuyla uçtan uca (kullanıcı adı yaz → sil → çıkış) denenmedi.
+**Canlı durum:** `delete_account_data` kullanıcı tarafından canlıya uygulandı (MCP `apply_migration` yıkıcı-SQL onayında üç kez zaman aşımına uğramıştı) ve `delete-account` Edge Function deploy edildi (canlıda v1, `verify_jwt` açık, kodu repodakiyle aynı). Gerçek bir test hesabıyla uçtan uca (kullanıcı adı yaz → sil → çıkış) hâlâ denenmedi.
