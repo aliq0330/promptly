@@ -79,7 +79,7 @@ export function ContentCardTitle({
   const cardBody = splitSourceNotes(description).body;
   return (
     <div className="space-y-1">
-      <h3 className="text-[1.0625rem] font-semibold leading-snug tracking-[-0.012em] text-text">
+      <h2 className="text-[1.0625rem] font-semibold leading-snug tracking-[-0.012em] text-text">
         <Link
           href={href}
           data-card-link
@@ -87,7 +87,7 @@ export function ContentCardTitle({
         >
           {title}
         </Link>
-      </h3>
+      </h2>
       {cardBody && <p className="line-clamp-2 text-small leading-relaxed text-text-muted">{cardBody}</p>}
     </div>
   );

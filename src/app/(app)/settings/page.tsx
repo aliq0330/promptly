@@ -20,6 +20,7 @@ import { absoluteUrl } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Language, TranslationKey } from "@/lib/i18n/translations";
 import { useIsModerator } from "@/features/moderation/use-is-moderator";
+import { openWelcomeTour } from "@/features/onboarding/welcome-tour";
 import { AppearancePicker } from "@/components/theme/appearance-picker";
 import { Eyebrow } from "@/features/content/detail-parts";
 
@@ -317,6 +318,11 @@ export default function SettingsPage() {
             <AppearancePicker />
           </SettingsCard>
           <LanguageSection t={t} language={language} setLanguage={setLanguage} />
+          <SettingsCard title={t("tour.replayTitle")} hint={t("tour.replayHint")}>
+            <Button type="button" variant="outline" onClick={openWelcomeTour}>
+              {t("tour.replay")}
+            </Button>
+          </SettingsCard>
         </SettingsGroup>
 
         <div className="border-t border-border-soft pt-6">

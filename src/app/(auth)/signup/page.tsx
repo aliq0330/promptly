@@ -87,7 +87,7 @@ export default function SignupPage() {
         <p className="text-sm text-text-muted">
           <strong className="text-text">{email}</strong> {t("auth.checkEmailBodySuffix")}
         </p>
-        <Link href="/login" className="text-sm font-medium text-primary hover:underline">
+        <Link href="/login" className="text-sm font-medium text-primary underline underline-offset-2 hover:no-underline">
           {t("auth.backToLogin")}
         </Link>
       </div>
@@ -154,7 +154,7 @@ export default function SignupPage() {
       </Button>
       <p className="text-xs text-text-muted">
         {t("auth.alreadyHaveAccount")}{" "}
-        <Link href="/login" className="text-primary hover:underline">
+        <Link href="/login" className="text-primary underline underline-offset-2 hover:no-underline">
           {t("common.login")}
         </Link>
       </p>

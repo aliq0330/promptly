@@ -41,13 +41,13 @@ export default function AuthGroupLayout({ children }: { children: ReactNode }) {
         <p className="text-caption text-text-muted">{t("nav.tagline")}</p>
       </aside>
 
-      <div className="flex flex-1 flex-col items-center justify-center px-4 py-12">
+      <main id="main-content" className="flex flex-1 flex-col items-center justify-center px-4 py-12">
         <Link href="/" className="mb-8 flex items-center gap-2.5 lg:hidden">
           <BrandMark size={30} />
           <span className="font-serif text-[1.3rem] font-semibold tracking-[-0.02em] text-text">Promptly</span>
         </Link>
         <div className="w-full max-w-sm animate-rise-in rounded-xl border border-border-soft bg-surface p-6 shadow-card sm:p-8">{children}</div>
-      </div>
+      </main>
     </div>
   );
 }
