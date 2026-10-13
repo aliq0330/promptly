@@ -37,27 +37,103 @@ supabase link --project-ref xqxybhjcyrvaroknucdq
 supabase db push
 ```
 
-## Bu migration'lar ne oluşturuyor
+> `db push`, dosya adı ile canlı sürüm kaydı eşleşmediği için bu depoda güvenilir
+> değildir (aşağıda "Migration geçmişi ve bekleyen dosyalar"); yeni bir
+> migration'ı MCP `apply_migration` ya da SQL Editor ile uygulayıp canlı şemadan
+> doğrulayın.
 
-- `profiles` — her `auth.users` satırına 1:1 eşlenen genel profil bilgisi.
-  Yeni bir kullanıcı kayıt olduğunda (`supabase.auth.signUp`, CLAUDE.md
-  Bölüm 17) bir trigger otomatik olarak bir `profiles` satırı oluşturur;
-  kullanıcı adı e-postanın `@` öncesindeki kısmından türetilir, çakışırsa
-  rastgele bir sayı eklenir.
-- `tags`, `prompt_requests`, `prompts`, `prompt_media`, `prompt_tags`,
-  `prompt_request_tags` — içerik modeli. **Not:** ayrı bir
-  `prompt_request_responses` tablosu YOK — CLAUDE.md'nin prompt-istek
-  modülü (Bölüm 9/10) zaten bir isteğe verilen yanıtın gerçekte
-  `origin_type = 'request_response'` olan bir `prompts` satırı olduğuna
-  karar verdi; bu şema o kararı izliyor.
-- `prompt_likes`, `prompt_saves`, `prompt_comments`, `follows` — sosyal
-  etkileşimler, artı `profiles`/`prompts`/`prompt_requests` üzerindeki
-  sayaçları (`like_count`, `follower_count`, `remix_count`,
-  `response_count` vb.) güncel tutan trigger'lar.
-- `conversations`, `conversation_members`, `messages`, `notifications` —
-  mesajlaşma ve bildirimler.
-- `reports`, `blocks` — CLAUDE.md §6'nın planladığı moderasyon tabloları
-  (Bölüm 22'nin uygulama mantığı henüz yok, yalnızca şema hazır).
+## Güncel şema (özet)
+
+Kaynak kök `CLAUDE.md` Bölüm 6'dır; bu liste onunla aynıdır. Canlı veritabanı
+(`supabase_migrations` + gerçek şema) her zaman son söz sahibidir.
+
+- **Kimlik:** `profiles` — `auth.users` ile 1:1; kayıtta trigger oluşturur.
+- **İçerik:** `prompts` (+ `prompt_media`, `prompt_tags`, `prompt_variables`,
+  `prompt_dna_sections`, `prompt_results`), `prompt_requests` (+ medya/etiket;
+  isteğe verilen yanıt AYRI tablo değildir, `origin_type = 'request_response'`
+  olan bir `prompts` satırıdır), `workflows` (+ `workflow_steps`,
+  `workflow_connections`, `workflow_media`, `workflow_tags`), `presets`
+  (+ `preset_fields`, `preset_options`, `preset_tags`), `tags`,
+  `taxonomy_categories` / `taxonomy_subcategories`.
+- **Etkileşim:** `prompt_likes` / `prompt_comments` / `comment_likes` (hedef
+  sütunlu polimorfik: `prompt_id` / `request_id` / `workflow_id` / `preset_id` —
+  tam biri dolu), `collections` / `collection_items` ("Genel" = `is_default`),
+  `follows`. Sayaçlar (`like_count`, `save_count`, `comment_count`, takipçi…)
+  `SECURITY DEFINER` trigger'larla tutulur.
+- **Mesajlaşma ve bildirim:** `conversations`, `conversation_members`,
+  `messages`, `message_reactions`, `notifications` (yalnızca sunucu trigger'ları
+  üretir).
+- **Moderasyon ve yönetim:** `reports`, `blocks`, `content_edits`,
+  `admin_audit_log`; yönetici işlemleri `admin_*` RPC'leridir (`is_moderator()` +
+  iç `_admin_guard()`).
+- **İlişkiler:** `content_relations` (yalnızca elle kurulan ilişkiler; diğerleri
+  mevcut tablolardan türetilir).
+- **RPC'ler (okuma):** `feed_page` (ana sayfa), `search_content` (arama),
+  `related_prompts` / `related_requests` (detaydaki benzerler),
+  `dna_similar_candidates`. **Yalnız service role:** `delete_account_data`,
+  `orphan_storage_objects`.
+- **Storage:** `avatars` herkese açık; `message-images`, `prompt-media`,
+  `request-references`, `result-media` private (dosyaya erişim, onu gösteren
+  satırın görünürlüğüne bağlıdır — `docs/history/150-*`).
+- **Atıl (kodda kullanılmayan) tablolar:** `prompt_saves`, `studio_sessions`,
+  `studio_session_versions`.
+
+## Migration geçmişi ve bekleyen dosyalar
+
+- **Dosya adı ≠ canlı sürüm.** `migrations/` dosyaları `2026091…` sürümleriyle
+  adlandırılmıştır; canlıya Supabase MCP ile uygulananlar ise
+  `supabase_migrations.schema_migrations`'a kendi zaman damgalarıyla (`2026093…`,
+  `2026100…`, `2026101…`) kaydolur. İkisi birebir eşleşmediği için
+  `supabase db push` bu depoda güvenilir bir "neyin uygulandığı" ölçüsü değildir;
+  uygulanıp uygulanmadığını canlı şemadan kontrol edin.
+- **Canlıya uygulanmamış, bilinen tek YIKICI dosya:**
+  `20260919640000_remove_studio.sql`. İçeriği yalnızca şu iki ifadedir:
+
+  ```sql
+  drop table if exists public.studio_session_versions;
+  drop table if exists public.studio_sessions;
+  ```
+
+  Eski Studio'nun tabloları atıl duruyor. Son kontrolde (bu oturum) ikisi de
+  **0 satır**; yabancı anahtarları yalnızca kendi aralarında
+  (`versions.session_id → sessions`, `versions.parent_id → versions`) ve
+  `sessions.user_id → profiles` (kendi tarafından); başka hiçbir tablo/görünüm
+  bunlara bağlı değil, uygulama kodu da kullanmıyor. **Geri dönüşü yoktur.**
+  Durum: **onay bekliyor** — açıkça "uygula" denmeden çalıştırılmaz.
+- **Uygulanmamış, yıkıcı olmayan:** `20260919800000_delete_account_data.sql`
+  (hesap silme için yalnız `service_role`'ün çağırabildiği fonksiyon; ayrıca
+  `delete-account` Edge Function henüz deploy edilmedi — `docs/history/154-*`).
+- **`content_relations` (`20260919710000`) geçmişte kayıtlı değil.** Tablo ve
+  fonksiyonlar canlıda var (MCP `execute_sql` ile iki parça hâlinde uygulandı),
+  ama `schema_migrations`'ta satırı yok. Şemayı DEĞİŞTİRMEDEN düzeltmek için
+  yalnızca geçmiş satırı eklenir. Önce durumu doğrulayın:
+
+  ```sql
+  select version, name from supabase_migrations.schema_migrations
+   where version = '20260919710000' or name ilike '%content_relations%';   -- 0 satır beklenir
+  select to_regclass('public.content_relations') is not null;               -- true beklenir
+  ```
+
+  Sonra (SQL Editor, tek satır ekler, hiçbir tabloya dokunmaz):
+
+  ```sql
+  insert into supabase_migrations.schema_migrations (version, name)
+  select '20260919710000', 'content_relations'
+  where not exists (select 1 from supabase_migrations.schema_migrations where version = '20260919710000');
+  ```
+
+  CLI ile aynı sonuç: `supabase migration repair --status applied 20260919710000`
+  (projeye `supabase link` ile bağlıyken). İkisi de yalnızca geçmişe satır yazar;
+  ikisini birden çalıştırmayın. Not: yukarıdaki sürüm/dosya adı uyuşmazlığı
+  nedeniyle bu tek satır `db push` sorununu çözmez; amaç yalnızca geçmişteki
+  eksik kaydı tamamlamaktır.
+
+## Tarihsel kayıt (yazıldıkları andaki açıklamalar)
+
+Aşağıdaki bölümler her migration'ın **yazıldığı andaki** açıklamasıdır; sonradan
+kaldırılan şeylere (remix sistemi ve `remix_count`, Generator, "moderasyon
+mantığı henüz yok" gibi) atıf içerebilir ve **güncel durumu temsil etmez**.
+Güncel şema için yukarıdaki özete ve kök `CLAUDE.md` Bölüm 6'ya bakın.
 
 - `20260919130000_rls_policies.sql` (Bölüm 19) — her tabloya gerçek
   erişim politikaları ekliyor:
@@ -696,7 +772,7 @@ Dashboard'da uygulayıp bizzat denemesi gerekiyor.
 `supabase/seed/demo-users.sql` — siteyi 18 gerçek kullanıcı kullanıyormuş gibi
 dolduran, tekrar çalıştırılabilir bir seed (migration DEĞİL, şemayı değiştirmez).
 18 hesap (`ali@msn.com`, `veli@msn.com`, … şifre `ac8d5c55`), 99 prompt (18'i
-isteklere yanıt), 39 prompt isteği, 60 generator, beğeniler, iç içe yorumlar,
+isteklere yanıt), 39 prompt isteği, 60 generator (Generator sistemi sonradan kaldırıldı; seed'in bu kısmı tarihsel), beğeniler, iç içe yorumlar,
 takipler ve koleksiyonlar oluşturur. Görseller picsum.photos (gerçek fotoğraflar,
 seed ile sabit), avatarlar randomuser.me. Seed'i ilk (loremflickr'lı) sürümüyle
 çalıştırdıysan yalnızca `demo-images-fix.sql`'i çalıştırman görselleri düzeltir.
@@ -710,6 +786,18 @@ açılmış bir hesap varsa o hesap ve içerikleri de silinir; başka hesaplara 
 `demo-content.mjs`'i düzenleyip `node supabase/seed/build-demo-seed.mjs` çalıştır.
 
 ## Edge Functions
+
+Dört fonksiyon vardır; hiçbiri CI ile deploy edilmez, elle deploy edilir
+(`supabase functions deploy <ad> --project-ref xqxybhjcyrvaroknucdq`):
+
+| Fonksiyon | Ne yapar | Deploy |
+|---|---|---|
+| `analyze-image` | Görsel + MIME alıp Gemini Vision'a gönderen, yapılandırılmış JSON döndüren fonksiyon | `supabase functions deploy analyze-image` (kod değişince) |
+| `username-login` | Kullanıcı adı + şifreyle giriş; e-postayı yalnızca sunucuda çözer | `supabase functions deploy username-login --no-verify-jwt` |
+| `cleanup-orphan-storage` | Hiçbir satırın göstermediği Storage dosyalarını bulur/siler (yalnız moderatör) | `supabase functions deploy cleanup-orphan-storage` |
+| `delete-account` | Kullanıcının KENDİ hesabını siler (JWT'den; `docs/history/154-*`) | `supabase functions deploy delete-account` — JWT doğrulaması AÇIK. **Henüz deploy edilmedi.** |
+
+Aşağıdaki not `analyze-image` içindir (tarihsel):
 
 `supabase/functions/analyze-image/index.ts` — AI Vision Generator sisteminin
 kullandığı, görsel + MIME type alıp Gemini Vision'a gönderen, yapılandırılmış
