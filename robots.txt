@@ -1,0 +1,8 @@
+User-Agent: *
+Allow: /
+Disallow: /promptly/settings/
+Disallow: /promptly/messages/
+Disallow: /promptly/notifications/
+Disallow: /promptly/moderation/
+
+Sitemap: https://aliq0330.github.io/promptly/sitemap.xml
