@@ -1,5 +1,6 @@
 "use client";
 
+import { usePageTitle } from "@/components/layout/page-title";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Workflow as WorkflowIcon } from "lucide-react";
@@ -52,6 +53,7 @@ export function WorkflowDetailView() {
     { workflow: Workflow; steps: WorkflowStep[] } | null | undefined
   >(undefined);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  usePageTitle(data?.workflow.title);
 
   useEffect(() => {
     if (!id) return;

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { rememberCardMedia } from "@/lib/card-transition";
 import { cn } from "@/lib/utils";
+import { splitSourceNotes } from "@/lib/source-notes";
 
 /**
  * Shared shell of every content card on the platform —
@@ -74,6 +75,8 @@ export function ContentCardTitle({
   title: string;
   description?: string;
 }) {
+  // Credit lines ("Kaynak: …") belong on the detail page, not in the preview.
+  const cardBody = splitSourceNotes(description).body;
   return (
     <div className="space-y-1">
       <h3 className="text-[1.0625rem] font-semibold leading-snug tracking-[-0.012em] text-text">
@@ -85,7 +88,7 @@ export function ContentCardTitle({
           {title}
         </Link>
       </h3>
-      {description && <p className="line-clamp-2 text-small leading-relaxed text-text-muted">{description}</p>}
+      {cardBody && <p className="line-clamp-2 text-small leading-relaxed text-text-muted">{cardBody}</p>}
     </div>
   );
 }

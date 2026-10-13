@@ -1,5 +1,6 @@
 "use client";
 
+import { usePageTitle } from "@/components/layout/page-title";
 import { ToolLine } from "@/features/content/tool-chips";
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
@@ -43,6 +44,7 @@ const HIGHLIGHT_DURATION_MS = 2500;
 /** Real request detail rendering, used by `/requests/local?id=…`. */
 export function RequestDetailView({ request }: { request: PromptRequest }) {
   const { t, language } = useTranslation();
+  usePageTitle(request.title);
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user: authUser } = useAuth();

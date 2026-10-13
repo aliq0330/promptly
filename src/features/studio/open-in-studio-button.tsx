@@ -6,10 +6,10 @@ import { buttonClassName } from "@/components/ui/button";
 import { useTranslation } from "@/lib/i18n/language-provider";
 
 /** "Studio'da aç" — opens a Prompt in Studio as the starting source. */
-export function OpenInStudioButton({ kind, id }: { kind: "prompt"; id: string }) {
+export function OpenInStudioButton({ kind, id, quiet = false }: { kind: "prompt"; id: string; quiet?: boolean }) {
   const { t } = useTranslation();
   return (
-    <Link href={`/studio?${kind}=${encodeURIComponent(id)}`} className={buttonClassName({ variant: "outline", size: "sm" })}>
+    <Link href={`/studio?${kind}=${encodeURIComponent(id)}`} className={buttonClassName({ variant: quiet ? "ghost" : "outline", size: "sm" })}>
       <WandSparkles size={14} aria-hidden /> {t("studio.openInStudio")}
     </Link>
   );
