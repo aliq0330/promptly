@@ -182,7 +182,9 @@ export default function EditProfilePage() {
             className="h-10 w-full rounded-md border border-border bg-accent-surface/40 px-3 text-sm text-text-muted"
           />
           <p className="mt-1 text-xs text-text-muted">
-            {t("profile.usernameNotEditable")}
+            <Link href="/settings" className="underline decoration-border-strong underline-offset-2 hover:text-text">
+              {t("profile.usernameInSettings")}
+            </Link>
           </p>
         </div>
 

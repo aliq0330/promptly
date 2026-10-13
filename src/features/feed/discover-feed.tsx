@@ -49,7 +49,8 @@ export function DiscoverFeed() {
   const [section, setSection] = useState<Section>("all");
   const [taxonomy, setTaxonomy] = useState<TaxonomyFilterValue>(EMPTY_TAXONOMY_FILTER);
   const [openOnly, setOpenOnly] = useState(false);
-  const [sort, setSort] = useState<ContentSortKey>("newest");
+  // Home is "what's new / for you"; Discover opens on what the community likes most, so the two never show the same order.
+  const [sort, setSort] = useState<ContentSortKey>("most-liked");
   const [creators, setCreators] = useState<UserProfile[] | null>(null);
   const [tags, setTags] = useState<Tag[]>([]);
   const { realPrompts, loading } = useRealPrompts();
