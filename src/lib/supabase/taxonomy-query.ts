@@ -11,7 +11,7 @@ export interface ContentSearchFilters {
   tagSlugs?: string[];
   /** Catalog tool refs ("toolId" / "toolId:modelId") — matches when any is in the row's `tools`. */
   toolRefs?: string[];
-  sort?: "relevant" | "new" | "popular";
+  sort?: "relevant" | "new" | "popular" | "oldest";
 }
 
 /** True when any filter narrows the search (so an empty text query is still a real search). */

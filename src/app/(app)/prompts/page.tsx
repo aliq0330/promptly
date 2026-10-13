@@ -5,7 +5,7 @@ import { ContentListPage } from "@/features/content/content-list-page";
 import { PromptGrid } from "@/features/prompts/prompt-grid";
 import { useRealPrompts } from "@/features/prompts/real-prompts-provider";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import { searchPrompts } from "@/lib/supabase/prompts";
+import { searchPromptsPage } from "@/lib/supabase/prompts";
 
 export default function PromptsPage() {
   const { t } = useTranslation();
@@ -26,7 +26,7 @@ export default function PromptsPage() {
       ]}
       baseItems={realPrompts}
       loading={loading}
-      search={searchPrompts}
+      search={searchPromptsPage}
       renderItems={(items) => <PromptGrid prompts={items} />}
       searchPlaceholder={t("search.placeholder")}
       focusKind="prompt"

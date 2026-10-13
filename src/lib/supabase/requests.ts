@@ -6,7 +6,8 @@ import { applyKeysetCursor, nextCursorFrom, type KeysetCursor } from "./paginati
 import { resizeImageToBlob } from "@/lib/utils";
 import { translateForRuntime } from "@/lib/i18n/translations";
 import { normalizeLegacyContentType, sanitizeTaxonomy } from "@/lib/content-taxonomy";
-import { applyAdvancedFilters, applyTaxonomyFilter, hasSearchFilter, sanitizeSearchText, tagJoinSelect, taxonomyColumns, type ContentSearchFilters } from "./taxonomy-query";
+import { taxonomyColumns, type ContentSearchFilters } from "./taxonomy-query";
+import { orderByIds, searchContentIds, type SearchCursor, type SearchPage } from "./search";
 import { mapProfileRow, type ProfileRow } from "./mappers";
 import { resolveMediaInputs, type MediaInput } from "./media-input";
 import type { ContentVisibility, PromptContentType, PromptMedia, PromptRequest, PromptRequestStatus, Tag } from "@/types";
@@ -156,27 +157,20 @@ export async function fetchRequestsByIds(ids: string[]): Promise<PromptRequest[]
   return withoutBlocked(filterNotDeleted(((data ?? []) as unknown as RequestRow[]).map(mapRequestRow)), (r) => r.author.id);
 }
 
-/** Text and/or taxonomy/author search over real requests (same filter shape as prompts/generators). */
-export async function searchRequests(query: string, filters: ContentSearchFilters = {}, limit = 40): Promise<PromptRequest[]> {
-  const escaped = sanitizeSearchText(query);
-  if (!escaped && !hasSearchFilter(filters)) return [];
+/** Search over real requests — title, description and the creative direction — one keyset page at a time (`public.search_content`). */
+export async function searchRequestsPage(query: string, filters: ContentSearchFilters = {}, limit = 40, cursor?: SearchCursor | null): Promise<SearchPage<PromptRequest>> {
   try {
-    let request = supabase.from("prompt_requests").select(REQUEST_SELECT + tagJoinSelect("prompt_request_tags", filters.tagSlugs));
-    if (escaped) request = request.or(`title.ilike.%${escaped}%,description.ilike.%${escaped}%`);
-    if (filters.authorId) request = request.eq("author_id", filters.authorId);
-    request = applyAdvancedFilters(applyTaxonomyFilter(request, filters.taxonomy), filters, "author_id");
-    const { data, error } = await request
-      .order(filters.sort === "popular" ? "response_count" : "created_at", { ascending: false })
-      .limit(limit);
-    if (error) {
-      console.error("searchRequests", error);
-      return [];
-    }
-    return withoutBlocked(filterNotDeleted(((data ?? []) as unknown as RequestRow[]).map(mapRequestRow)), (r) => r.author.id);
+    const page = await searchContentIds("request", query, filters, limit, cursor);
+    return { items: orderByIds(await fetchRequestsByIds(page.ids), page.ids), nextCursor: page.nextCursor };
   } catch (err) {
-    console.error("searchRequests", err);
-    return [];
+    console.error("searchRequestsPage", err);
+    return { items: [], nextCursor: null };
   }
+}
+
+/** First page only — for pickers that never page. */
+export async function searchRequests(query: string, filters: ContentSearchFilters = {}, limit = 40): Promise<PromptRequest[]> {
+  return (await searchRequestsPage(query, filters, limit)).items;
 }
 
 /** A single request by id — for a direct link that fell outside the recent-requests batch above. */

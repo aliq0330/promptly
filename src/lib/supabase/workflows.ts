@@ -7,7 +7,8 @@ import { PROMPT_SELECT, mapPromptRow, type PromptRow } from "./prompts";
 import { REQUEST_SELECT, mapRequestRow, type RequestRow } from "./requests";
 import { connectionsFromSteps } from "@/lib/workflow-logic";
 import { normalizeToolRefs } from "@/lib/ai-tool-catalog";
-import { applyAdvancedFilters, hasSearchFilter, sanitizeSearchText, tagJoinSelect, type ContentSearchFilters } from "./taxonomy-query";
+import type { ContentSearchFilters } from "./taxonomy-query";
+import { orderByIds, searchContentIds, type SearchCursor, type SearchPage } from "./search";
 import { promptHref, requestHref } from "@/lib/utils";
 import { translateForRuntime } from "@/lib/i18n/translations";
 import type { MultiImageItem } from "./media-input";
@@ -136,35 +137,26 @@ export async function fetchWorkflowsByIds(ids: string[]): Promise<Workflow[]> {
 }
 
 /**
- * Workflow search — same shared advanced-search filters as prompts/
- * generators/requests. A workflow chains several content types instead of
- * having one, so a media-type chip matches when the workflow chains that
- * type (the main type or any type its steps link to); category/subcategory
- * match the workflow's own shared-taxonomy category/subcategory; tag chips match its own tags.
+ * Workflow search — same shared advanced-search filters as prompts/requests,
+ * one keyset page at a time (`public.search_content`). A workflow chains several
+ * content types instead of having one, so a media-type chip matches when the
+ * workflow chains that type; category/subcategory match the workflow's own
+ * shared-taxonomy category/subcategory; tag chips match its own tags. Text
+ * matches title + description (a workflow row has no other body column).
  */
-export async function searchWorkflows(query: string, filters: ContentSearchFilters = {}, limit = 20): Promise<Workflow[]> {
-  const escaped = sanitizeSearchText(query);
-  if (!escaped && !hasSearchFilter(filters)) return [];
+export async function searchWorkflowsPage(query: string, filters: ContentSearchFilters = {}, limit = 20, cursor?: SearchCursor | null): Promise<SearchPage<Workflow>> {
   try {
-    let request = supabase.from("workflows").select(WORKFLOW_SELECT + tagJoinSelect("workflow_tags", filters.tagSlugs)).eq("status", "published");
-    if (escaped) request = request.or(`title.ilike.%${escaped}%,description.ilike.%${escaped}%`);
-    if (filters.authorId) request = request.eq("creator_id", filters.authorId);
-    const mediaTypes = [...(filters.contentTypes ?? []), ...(filters.taxonomy?.contentType ? [filters.taxonomy.contentType] : [])];
-    if (mediaTypes.length) request = request.overlaps("content_types", mediaTypes);
-    if (filters.taxonomy?.category) request = request.eq("category", filters.taxonomy.category);
-    if (filters.taxonomy?.subcategory) request = request.eq("subcategory", filters.taxonomy.subcategory);
-    request = applyAdvancedFilters(request, { authorIds: filters.authorIds, toolRefs: filters.toolRefs, tagSlugs: filters.tagSlugs }, "creator_id");
-    const order = filters.sort === "popular" ? "like_count" : "created_at";
-    const { data, error } = await request.order(order, { ascending: false }).limit(limit);
-    if (error) {
-      console.error("searchWorkflows", error);
-      return [];
-    }
-    return withoutBlocked((data ?? []).map((row) => mapWorkflowRow(row as unknown as WorkflowRow)), (w) => w.creator.id);
+    const page = await searchContentIds("workflow", query, filters, limit, cursor);
+    return { items: orderByIds(await fetchWorkflowsByIds(page.ids), page.ids), nextCursor: page.nextCursor };
   } catch (err) {
-    console.error("searchWorkflows", err);
-    return [];
+    console.error("searchWorkflowsPage", err);
+    return { items: [], nextCursor: null };
   }
+}
+
+/** First page only — for pickers that never page. */
+export async function searchWorkflows(query: string, filters: ContentSearchFilters = {}, limit = 20): Promise<Workflow[]> {
+  return (await searchWorkflowsPage(query, filters, limit)).items;
 }
 
 /** A creator's workflows — RLS gives a visitor only published ones, the owner their drafts too. */

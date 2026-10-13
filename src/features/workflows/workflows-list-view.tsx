@@ -4,7 +4,7 @@ import { GitBranch, Link2, ListPlus, Workflow as WorkflowIcon } from "lucide-rea
 import { ContentListPage } from "@/features/content/content-list-page";
 import { useRealWorkflows } from "./real-workflows-provider";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import { searchWorkflows } from "@/lib/supabase/workflows";
+import { searchWorkflowsPage } from "@/lib/supabase/workflows";
 import { WorkflowCard } from "./workflow-card";
 
 export function WorkflowsListView() {
@@ -26,7 +26,7 @@ export function WorkflowsListView() {
       ]}
       baseItems={workflows.map((w) => ({ ...w, contentType: null }))}
       loading={loading}
-      search={searchWorkflows}
+      search={searchWorkflowsPage}
       matches={(item, value) =>
         (!value.contentType || item.contentTypes.includes(value.contentType)) &&
         (!value.category || item.category === value.category) &&

@@ -324,8 +324,8 @@ bağlayıcıdır; ayrıntılı gerekçe için `docs/history/README.md` tablosuna
   cihazda, ekran okuyucuyla veya yalnızca klavyeyle elle denenmedi.
 - Bilinen sınırlamalar: Keşfet karma akışı hâlâ son ~60'lık havuzdur (Ana Sayfa
   akışı ve liste sayfaları gerçek keyset sayfalama kullanır; Ana Sayfa'da kişiselleştirme
-  yoktur, sekme dürüstçe "En yeni"dir); arama sonuçları
-  sayfalanmaz; `prompt_saves` gibi atıl eski tablolar duruyor; kod içi
+  yoktur, sekme dürüstçe "En yeni"dir); arama prompt metnini (`prompt_text`) ve
+  isteğin `creative_direction`'ını da kapsar ve keyset sayfalanır (`search_content`); `prompt_saves` gibi atıl eski tablolar duruyor; kod içi
   yorumlarda eski "Bölüm 9.x" atıfları arşiv numaralarına (`docs/history/NNN-*`) karşılık gelir.
 
 **Arşiv:** [`docs/history/README.md`](docs/history/README.md) — 148 bölüm, her

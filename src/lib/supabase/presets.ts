@@ -4,15 +4,8 @@ import { applyKeysetCursor, nextCursorFrom, type KeysetCursor } from "./paginati
 import { PROFILE_SELECT } from "./profiles";
 import { mapProfileRow, type ProfileRow } from "./mappers";
 import { normalizeToolRefs } from "@/lib/ai-tool-catalog";
-import {
-  applyAdvancedFilters,
-  applyTaxonomyFilter,
-  hasSearchFilter,
-  sanitizeSearchText,
-  tagJoinSelect,
-  taxonomyColumns,
-  type ContentSearchFilters,
-} from "./taxonomy-query";
+import { taxonomyColumns, type ContentSearchFilters } from "./taxonomy-query";
+import { orderByIds, searchContentIds, type SearchCursor, type SearchPage } from "./search";
 import { translateForRuntime } from "@/lib/i18n/translations";
 import { type PresetField, type PresetFieldConfig, type PresetFieldType, type PresetOption, type PresetSelection } from "@/lib/preset-fields";
 import type { Preset, PromptContentType, Tag } from "@/types";
@@ -196,30 +189,20 @@ export async function fetchPresetsByIds(ids: string[]): Promise<Preset[]> {
   return withFields(await withoutBlocked((data ?? []).map((row) => mapPresetRow(row as unknown as PresetRow)), (p) => p.creator.id));
 }
 
-/** Preset search — same shared taxonomy / advanced-search filters as prompts/generators/requests (content type, category, tool, tags, author). */
-export async function searchPresets(query: string, filters: ContentSearchFilters = {}, limit = 20): Promise<Preset[]> {
-  const escaped = sanitizeSearchText(query);
-  if (!escaped && !hasSearchFilter(filters)) return [];
+/** Preset search — same shared taxonomy / advanced-search filters as prompts/requests, one keyset page at a time (`public.search_content`). Text matches title + description (a preset row has no other body column). */
+export async function searchPresetsPage(query: string, filters: ContentSearchFilters = {}, limit = 20, cursor?: SearchCursor | null): Promise<SearchPage<Preset>> {
   try {
-    let request = supabase
-      .from("presets")
-      .select(PRESET_SELECT + tagJoinSelect("preset_tags", filters.tagSlugs))
-      .eq("status", "published")
-      .eq("visibility", "public");
-    if (escaped) request = request.or(`title.ilike.%${escaped}%,description.ilike.%${escaped}%`);
-    if (filters.authorId) request = request.eq("creator_id", filters.authorId);
-    request = applyAdvancedFilters(applyTaxonomyFilter(request, filters.taxonomy), filters, "creator_id");
-    const order = filters.sort === "new" ? "created_at" : "like_count";
-    const { data, error } = await request.order(order, { ascending: false }).limit(limit);
-    if (error) {
-      console.error("searchPresets", error);
-      return [];
-    }
-    return withFields(await withoutBlocked((data ?? []).map((row) => mapPresetRow(row as unknown as PresetRow)), (p) => p.creator.id));
+    const page = await searchContentIds("preset", query, filters, limit, cursor);
+    return { items: orderByIds(await fetchPresetsByIds(page.ids), page.ids), nextCursor: page.nextCursor };
   } catch (err) {
-    console.error("searchPresets", err);
-    return [];
+    console.error("searchPresetsPage", err);
+    return { items: [], nextCursor: null };
   }
+}
+
+/** First page only — for pickers that never page. */
+export async function searchPresets(query: string, filters: ContentSearchFilters = {}, limit = 20): Promise<Preset[]> {
+  return (await searchPresetsPage(query, filters, limit)).items;
 }
 
 /** One preset, `null` when missing / not visible to the viewer (RLS). */
