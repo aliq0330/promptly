@@ -1,0 +1,7 @@
+### 9.89 Beş oluşturma formunda ortak alan sırası
+
+Prompt, Prompt İsteği, Generator, Workflow ve Hazır Ayar formları artık aynı sırada: **Kategori** (TaxonomyPicker) → **Başlık** → **Açıklama** → **Kapak/Görseller** → **Araç** → türe özgü içerik (Prompt metni + Ek Ayarlar / İstek yaratıcı yönü / Generator ayarları / Workflow adımları / Hazır ayar parametreleri) → **Etiketler** → Görünürlük → [Taslağa kaydet][Paylaş].
+- Başlık/Açıklama tek ortak bileşende: `features/content/core-fields.tsx` (`TitleField`, `DescriptionField` — aynı etiket satırı, "*"/"(isteğe bağlı)", sayaç, yükseklik, hata satırı). Zorunluluk/limit/doğrulama formlara özgü kaldı. Etiketlerin hepsi "(isteğe bağlı)".
+- **Workflow:** kategori artık diğerleriyle aynı `TaxonomyPicker` (tür → kategori → alt kategori); eski çoklu tür çipleri kalktı. Kayıtta `content_types` = ana tür + adımların bağladığı içeriklerin türleri (zincirlenen türler korunur). Migration `20260919590000_workflow_subcategory.sql` (`workflows.subcategory`; canlıya uygulandı). Workflow arama/Keşfet/liste artık kategori ve alt kategori filtresini de uyguluyor; etiket seçici Workflow'da editör yerine `WorkflowMetaForm` içinde.
+- Prompt formunda görsel yükleme ve "Görselden prompt çıkar" başlık/açıklamadan sonraya, İstek'te yaratıcı yön araçtan sonraya taşındı.
+- Doğrulama: tsc/lint/build temiz; ağ taklitli Playwright ile Prompt/İstek/Hazır Ayar/Workflow/Generator'da başlık, açıklama ve görsel alanlarının aynı dikey konumda olduğu ölçüldü. Kayıt akışları gerçek Supabase'e karşı denenmedi.

@@ -1,0 +1,3 @@
+### 9.119 Masonry sütun hizası: boşluk `margin` yerine `padding`
+
+Odak/Kart ızgaralarında ikinci sütunun ilk kartı ~10px aşağıda başlıyordu (mobil Safari). Kök neden: WebKit, CSS sütunlarında önceki sütunun son öğesinin `margin-bottom`'ını bir sonraki sütunun tepesine taşıyor (Bölüm 9.118'deki animasyon değişikliği bunu çözmemişti). Tüm `break-inside-avoid` sarmalayıcılarında (feed, prompt, istek, odak, profil, koleksiyon, hazır ayar, workflow, arama, skeleton) boşluk `mb-*` yerine `pb-*` ile veriliyor. Görsel boşluk aynı; yalnızca sınıf değişikliği. Yeni kolonlu ızgara eklenirken `mb-*` değil `pb-*` kullanılmalı. Migration, yeni metin yok. Gerçek iOS Safari'de denenmedi.

@@ -1,38 +1,22 @@
-# Promptly — Supabase migrations
+# Promptly — Supabase (migration'lar, Edge Function'lar, seed)
 
-Bu klasördeki `migrations/*.sql` dosyaları, `src/types/index.ts`'teki mock
-veri modelini birebir yansıtan gerçek Postgres şemasını (CLAUDE.md Bölüm
-18), her tablonun gerçek erişim kurallarını (RLS politikaları, Bölüm 19)
-ve görsel yükleme için Supabase Storage bucket'larını (Bölüm 20) oluşturur.
-Dosyalar sırayla (dosya adındaki zaman damgasına göre) uygulanmalıdır.
+`migrations/*.sql` dosyaları Promptly'nin Postgres şemasını, RLS
+politikalarını, trigger/RPC'lerini ve Storage bucket'larını oluşturur.
+Dosyalar **dosya adındaki zaman damgası sırasıyla** uygulanmalıdır. Aşağıdaki
+bölümler her migration'ın yazıldığı andaki açıklamasıdır (tarihsel kayıt);
+hangi özelliğin neden eklendiği için `docs/history/` arşivine bakın.
 
-**Durum:** Bölüm 18 şema + Bölüm 19 RLS + Bölüm 20 Storage'dan başlayıp,
-mesajlaşma genişletmesi Faz A/B/C (`20260919200000`–`20260919220000`,
-Bölüm 9.8/9.9/9.10), bildirim hedefleme/önizleme (`20260919230000`, Bölüm
-9.12), mesaj işlem menüsü + emoji tepkileri (`20260919240000`, Bölüm 9.13),
-Remix Dallanma Haritası + Merge sistemi (`20260919250000`, Bölüm 9.14) ve
-koleksiyon sistemi (`20260919260000`–`20260919270000`, Bölüm 9.19/9.22)
-dahil, ve gelişmiş/canlı etiket sistemi (`20260919280000`, Bölüm 9.23) —
-kullanıcı tarafından Dashboard → SQL Editor ile gerçek Supabase projesine
-sırayla uygulandı ve hepsi hatasız çalıştı. **En son eklenen
-`20260919290000_prompt_variables_and_edit_tracking.sql`
-(prompt değişken sistemi + kopyalama + düzenleme geçmişi/bildirimi, Bölüm
-9.25) henüz kullanıcı tarafından uygulanmadı** — yalnızca yerel bir
-Postgres 16 örneğinde gerçekten test edildi (bkz. aşağıdaki "Nasıl
-doğrulandı" bölümü ve CLAUDE.md Bölüm 9.25); kullanıcının Dashboard → SQL
-Editor ile bu son dosyayı da sıraya eklemesi gerekiyor. Bu ortamın (Claude Code'un çalıştığı
-sandbox) ağ politikası gerçek Supabase projesine doğrudan erişimi
-engellediğinden, her migration önce yerel/geçici bir Postgres 16
-örneğinde test edilip (bkz. aşağıdaki "Nasıl doğrulandı" bölümü) ancak
-öyle teslim edildi — gerçek projeye fiilen uygulanması ve orada hatasız
-çalışması kullanıcının kendi ortamında gerçekleşti. **Not:** "migration
-hatasız çalıştı" ile "her yeni özellik gerçek kullanıcı hesaplarıyla
-uçtan uca canlı denendi" ayrı şeyler — bu depodaki Playwright
-testlerinin hiçbiri gerçek Supabase projesine karşı koşulmadı (yine aynı
-ağ kısıtı yüzünden), yalnızca ağ seviyesinde taklit edilmiş yanıtlarla.
-Şemanın/RPC'lerin gerçek projede var olduğu artık kesin; her akışın
-(Realtime, merge, emoji tepkileri vb.) gerçek iki hesapla beklendiği gibi
-davrandığı ancak kullanıcının kendi canlı denemesiyle doğrulanabilir.
+**Güncel durum için tek doğruluk kaynağı canlı veritabanıdır**, bu dosya
+değil. Canlıya uygulanmamış bilinen migration'lar kök `CLAUDE.md`'deki
+"Güncel Durum ve Açık İşler" bölümünde tutulur (ör. yıkıcı
+`20260919640000_remove_studio.sql`). Bu ortamın (Claude Code sandbox'ı)
+`*.supabase.co`'ya doğrudan erişimi yoktur: migration'lar yerel bir
+PostgreSQL 16 örneğinde test edilir, Supabase MCP bağlıysa onunla uygulanır.
+"Migration çalıştı" ile "akış gerçek hesaplarla uçtan uca denendi" ayrı
+şeylerdir.
+
+**Migration'lar ve Edge Function'lar GitHub Actions ile deploy edilmez**
+(`.github/workflows/deploy.yml` yalnızca statik siteyi yayınlar).
 
 ## Nasıl uygularsınız
 
@@ -41,11 +25,7 @@ davrandığı ancak kullanıcının kendi canlı denemesiyle doğrulanabilir.
 1. [Supabase Dashboard](https://supabase.com/dashboard) → projeniz → sol
    menüden **SQL Editor**'ü açın.
 2. `migrations/` klasöründeki her dosyayı **dosya adındaki sıraya göre**
-   (20260919120000, 20260919120100, ... 20260919120600, 20260919130000,
-   20260919140000, 20260919150000, 20260919160000, 20260919170000,
-   20260919180000, 20260919190000, 20260919200000, 20260919210000,
-   20260919220000, 20260919230000, 20260919240000, 20260919250000,
-   20260919260000, 20260919270000, 20260919280000, 20260919290000) tek
+   (en eskiden en yeniye) tek
    tek açıp içeriğini SQL Editor'e yapıştırıp **Run**'a basın.
 3. Her dosya başarıyla çalıştıktan sonra bir sonrakine geçin. Bir hata
    alırsanız durdurun ve hatayı paylaşın.
