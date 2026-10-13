@@ -109,8 +109,9 @@ export function ListToolbar({
   mobileTabs?: ReactNode;
   /** The page already shows its own tab bar above (Explore's section tabs). */
   hideTabsOnMobile?: boolean;
-  sort: ContentSortKey;
-  onSortChange: (sort: ContentSortKey) => void;
+  /** Omit both when the order is not user-selectable here (Home: the tab decides it) — the sort select and sheet section are then hidden. */
+  sort?: ContentSortKey;
+  onSortChange?: (sort: ContentSortKey) => void;
   /** Page-specific sections of the filter sheet (placed above Sıralama / Görünüm). */
   sheetSections?: ReactNode;
   /** Sections only needed from `md` up — on phones the same filter is already a tab (e.g. request status). */
@@ -170,7 +171,7 @@ export function ListToolbar({
             )}
           </Button>
           <div className="flex min-w-0 flex-1 items-center justify-end gap-2 md:flex-none">
-            <SortSelect value={sort} onChange={onSortChange} />
+            {sort && onSortChange && <SortSelect value={sort} onChange={onSortChange} />}
             <MobileViewToggle className="md:hidden" />
             <ViewModeSwitcher className="max-md:hidden" />
           </div>
@@ -197,26 +198,28 @@ export function ListToolbar({
             <div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-4 py-4">
               {sheetSections}
               {desktopSheetSections && <div className="space-y-5 max-md:hidden">{desktopSheetSections}</div>}
-              <SheetSection title={t("toolbar.sort")}>
-                <div role="radiogroup" aria-label={t("profile.sortAriaLabel")} className="space-y-1">
-                  {SORT_KEYS.map((key) => (
-                    <button
-                      key={key}
-                      type="button"
-                      role="radio"
-                      aria-checked={sort === key}
-                      onClick={() => onSortChange(key)}
-                      className={cn(
-                        "flex min-h-11 w-full items-center justify-between rounded-md px-3 text-left text-label transition-colors",
-                        sort === key ? "bg-primary-soft font-semibold text-text" : "text-text-secondary hover:bg-surface-soft",
-                      )}
-                    >
-                      {t(SORT_LABELS[key])}
-                      {sort === key && <Check size={16} className="text-primary" aria-hidden />}
-                    </button>
-                  ))}
-                </div>
-              </SheetSection>
+              {sort && onSortChange && (
+                <SheetSection title={t("toolbar.sort")}>
+                  <div role="radiogroup" aria-label={t("profile.sortAriaLabel")} className="space-y-1">
+                    {SORT_KEYS.map((key) => (
+                      <button
+                        key={key}
+                        type="button"
+                        role="radio"
+                        aria-checked={sort === key}
+                        onClick={() => onSortChange(key)}
+                        className={cn(
+                          "flex min-h-11 w-full items-center justify-between rounded-md px-3 text-left text-label transition-colors",
+                          sort === key ? "bg-primary-soft font-semibold text-text" : "text-text-secondary hover:bg-surface-soft",
+                        )}
+                      >
+                        {t(SORT_LABELS[key])}
+                        {sort === key && <Check size={16} className="text-primary" aria-hidden />}
+                      </button>
+                    ))}
+                  </div>
+                </SheetSection>
+              )}
               <SheetSection title={t("toolbar.view")}>
                 <ViewModeSwitcher />
               </SheetSection>

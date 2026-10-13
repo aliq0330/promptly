@@ -188,6 +188,14 @@ export async function fetchRecentPresets(limit = 24, cursor?: KeysetCursor): Pro
   }
 }
 
+/** Presets by id (any order), for the home feed's server-chosen page. */
+export async function fetchPresetsByIds(ids: string[]): Promise<Preset[]> {
+  if (ids.length === 0) return [];
+  const { data, error } = await supabase.from("presets").select(PRESET_SELECT).in("id", ids);
+  if (error) throw new Error(error.message);
+  return withFields(await withoutBlocked((data ?? []).map((row) => mapPresetRow(row as unknown as PresetRow)), (p) => p.creator.id));
+}
+
 /** Preset search — same shared taxonomy / advanced-search filters as prompts/generators/requests (content type, category, tool, tags, author). */
 export async function searchPresets(query: string, filters: ContentSearchFilters = {}, limit = 20): Promise<Preset[]> {
   const escaped = sanitizeSearchText(query);

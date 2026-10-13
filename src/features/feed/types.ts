@@ -1,15 +1,11 @@
-import type { Preset, Prompt, PromptRequest, Workflow } from "@/types";
+import type { FeedEntry } from "@/lib/supabase/feed";
 
 /**
  * A feed slot can be a prompt of any content type, a prompt request, a
  * workflow or a preset — all first-class feed content, not confined to
  * their own pages (see CLAUDE.md section 1 & 5).
  */
-export type FeedItem =
-  | { kind: "prompt"; data: Prompt }
-  | { kind: "request"; data: PromptRequest }
-  | { kind: "workflow"; data: Workflow }
-  | { kind: "preset"; data: Preset };
+export type FeedItem = FeedEntry;
 
 export function feedItemKey(item: FeedItem): string {
   return `${item.kind}-${item.data.id}`;
@@ -23,23 +19,4 @@ export function feedItemCreatedAt(item: FeedItem): number {
 export function feedItemPopularity(item: FeedItem): number {
   if (item.kind === "request") return item.data.responseCount * 15;
   return item.data.likeCount;
-}
-
-export function feedItemAuthorId(item: FeedItem): string {
-  return item.kind === "workflow" || item.kind === "preset" ? item.data.creator.id : item.data.author.id;
-}
-
-/**
- * Does a feed item pass the shared taxonomy filter (type / category / subcategory)?
- * A workflow spans several content types: it matches a type filter when it chains
- * that type; category / subcategory are its own.
- */
-export function matchesFeedTaxonomy(item: FeedItem, filter: { contentType: string | null; category: string | null; subcategory: string | null }): boolean {
-  if (!filter.contentType && !filter.category && !filter.subcategory) return true;
-  if (item.kind === "workflow") {
-    const w = item.data;
-    return (!filter.contentType || w.contentTypes.includes(filter.contentType as never)) && (!filter.category || w.category === filter.category) && (!filter.subcategory || w.subcategory === filter.subcategory);
-  }
-  const d = item.data;
-  return (!filter.contentType || d.contentType === filter.contentType) && (!filter.category || d.category === filter.category) && (!filter.subcategory || d.subcategory === filter.subcategory);
 }

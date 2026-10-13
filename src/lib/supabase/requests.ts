@@ -148,6 +148,14 @@ export async function fetchRecentRequests(limit = 24, cursor?: KeysetCursor): Pr
   }
 }
 
+/** Requests by id (any order), for the home feed's server-chosen page. */
+export async function fetchRequestsByIds(ids: string[]): Promise<PromptRequest[]> {
+  if (ids.length === 0) return [];
+  const { data, error } = await supabase.from("prompt_requests").select(REQUEST_SELECT).in("id", ids);
+  if (error) throw new Error(error.message);
+  return withoutBlocked(filterNotDeleted(((data ?? []) as unknown as RequestRow[]).map(mapRequestRow)), (r) => r.author.id);
+}
+
 /** Text and/or taxonomy/author search over real requests (same filter shape as prompts/generators). */
 export async function searchRequests(query: string, filters: ContentSearchFilters = {}, limit = 40): Promise<PromptRequest[]> {
   const escaped = sanitizeSearchText(query);

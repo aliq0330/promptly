@@ -193,7 +193,7 @@ tamamlanmış sayılmaz. Ayrıntı ve mimari: `docs/history/049-*`, `056-*`, `05
 
 | Route | Açıklama |
 |---|---|
-| `/` | Ana Sayfa: karma akış (Sana Özel / Popüler / Takip), tür çipleri; misafire tanıtım |
+| `/` | Ana Sayfa: karma akış (En yeni / Popüler / Takip; sunucudan `feed_page`, keyset), tür çipleri; misafire tanıtım |
 | `/discover` | Keşfet: bölümler (Tümü / Promptlar / Workflow / İstekler / Yaratıcılar), filtreler |
 | `/prompts`, `/requests`, `/workflows`, `/presets` | Tür listeleri (ortak `ContentListPage`: arama, Filtre, sıralama, Kart/Odak) |
 | `/prompts/local?id=` · `/requests/local?id=` · `/workflows/local?id=` · `/presets/local?id=` · `/results/local?id=` | Detay sayfaları |
@@ -322,8 +322,9 @@ bağlayıcıdır; ayrıntılı gerekçe için `docs/history/README.md` tablosuna
   uygulandı, Supabase migration geçmişinde kayıtlı değil.
 - Hiçbir akış gerçek Supabase oturumuyla tarayıcıda uçtan uca, gerçek iOS/Android
   cihazda, ekran okuyucuyla veya yalnızca klavyeyle elle denenmedi.
-- Bilinen sınırlamalar: Ana Sayfa/Keşfet karma akışı son ~60'lık havuzdur
-  (liste sayfaları gerçek keyset sayfalama kullanır); arama sonuçları
+- Bilinen sınırlamalar: Keşfet karma akışı hâlâ son ~60'lık havuzdur (Ana Sayfa
+  akışı ve liste sayfaları gerçek keyset sayfalama kullanır; Ana Sayfa'da kişiselleştirme
+  yoktur, sekme dürüstçe "En yeni"dir); arama sonuçları
   sayfalanmaz; `prompt_saves` gibi atıl eski tablolar duruyor; kod içi
   yorumlarda eski "Bölüm 9.x" atıfları arşiv numaralarına (`docs/history/NNN-*`) karşılık gelir.
 
