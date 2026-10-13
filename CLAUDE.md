@@ -207,7 +207,7 @@ tamamlanmış sayılmaz. Ayrıntı ve mimari: `docs/history/049-*`, `056-*`, `05
 | `/notifications` | Bildirim merkezi |
 | `/settings`, `/settings/blocked` | Hesap / Gizlilik / Tercihler (görünüm, dil) / Tehlikeli bölge ("Hesabımı sil" — `delete-account` Edge Function) |
 | `/moderation` | Yalnızca moderatör: şikâyetler, site istatistikleri, kullanıcı yönetimi, depolama temizliği, DNA doldurma |
-| `/login`, `/signup`, `/reset-password` | Auth |
+| `/login`, `/signup`, `/reset-password` | Auth (e-posta/kullanıcı adı + şifre, Google ile devam et) |
 
 Giriş gerektirenler (`RequireAuth`): `/messages`, `/notifications`, `/saved`,
 `/following`, `/followers`, `/settings`, `/profile/edit`, `/my-content`.
@@ -303,6 +303,11 @@ Canlı projede (kontrol: bu oturum) 19 profil (18 demo hesap), 148 prompt,
 bağlayıcıdır; ayrıntılı gerekçe için `docs/history/README.md` tablosuna bak.
 
 **Açık işler (kullanıcı/yönetici adımı veya bilinen boşluk):**
+- **Google ile giriş:** kod ve `handle_new_user` migration'ı hazır/canlıda
+  (`docs/history/155-*`), ama Google sağlayıcısı Supabase'de etkinleştirilene kadar
+  buton hata verir: Google Cloud'da OAuth istemcisi + Supabase Dashboard → Authentication
+  → Providers → Google (adımlar `supabase/README.md` → "Google ile giriş kurulumu").
+  OAuth yönlendirmesi Google/Supabase'e karşı denenmedi.
 - Supabase Dashboard → Authentication → Providers → Email: **"Leaked password
   protection"** ücretli planda; şimdilik gerekmiyor, bilinçli olarak ertelendi.
 - `content_relations` migration'ı (`20260919710000`) MCP `execute_sql` ile

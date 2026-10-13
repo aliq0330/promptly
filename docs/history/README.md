@@ -161,3 +161,4 @@ Her dosya adı `NNN-konu.md` biçimindedir; `NNN` eski bölüm numarasıdır (ö
 | 9.152 | Arama: prompt metni dahil + keyset sayfalama (`search_content`) | uygulandı | [152-arama-prompt-metni-dahil-keyset-sayfalama.md](152-arama-prompt-metni-dahil-keyset-sayfalama.md) | 14 |
 | 9.153 | Detayda "Benzer" blokları sunucudan, görsel öncelikli | uygulandı | [153-detayda-benzerler-sunucudan-gorsel-oncelikli.md](153-detayda-benzerler-sunucudan-gorsel-oncelikli.md) | 13 |
 | 9.154 | Ayarlar'da "Hesabımı sil" (`delete-account` Edge Function) | uygulandı (migration + fonksiyon canlıda; uçtan uca denenmedi) | [154-ayarlarda-hesabimi-sil-delete-account-edge-function.md](154-ayarlarda-hesabimi-sil-delete-account-edge-function.md) | 19 |
+| 9.155 | Google ile giriş (Supabase Auth OAuth) | uygulandı (kod + migration); Google sağlayıcısı Dashboard'da etkinleştirilmeli | [155-google-ile-giris.md](155-google-ile-giris.md) | 15 |

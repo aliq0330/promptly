@@ -11,6 +11,7 @@ import { supabase } from "@/lib/supabase/client";
 import { translateAuthError } from "@/features/auth/auth-errors";
 import { absoluteUrl } from "@/lib/utils";
 import { readNextParam } from "@/lib/auth-redirect";
+import { AuthDivider, GoogleSignInButton } from "@/features/auth/google-sign-in-button";
 import { useTranslation } from "@/lib/i18n/language-provider";
 
 const PASSWORD_MIN_LENGTH = 6;
@@ -152,6 +153,8 @@ export default function SignupPage() {
       <Button type="submit" className="w-full" disabled={isSubmitting}>
         {isSubmitting ? t("auth.creatingAccount") : t("auth.createAccountButton")}
       </Button>
+      <AuthDivider />
+      <GoogleSignInButton next={readNextParam()} />
       <p className="text-xs text-text-muted">
         {t("auth.alreadyHaveAccount")}{" "}
         <Link href="/login" className="text-primary underline underline-offset-2 hover:no-underline">
