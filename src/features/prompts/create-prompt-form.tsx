@@ -882,8 +882,7 @@ export function CreatePromptForm() {
               />
 
               <ReferenceRequirementsField
-                subject="prompt"
-                contentType={contentType}
+                                contentType={contentType}
                 value={references}
                 onChange={setReferences}
               />

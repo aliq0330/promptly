@@ -48,7 +48,6 @@ export function HomeIntro() {
         </div>
       </div>
       <PromptMotif />
-      <HeaderArt variant="home" className="absolute -right-3 -top-1 hidden h-full opacity-90 sm:block lg:hidden" />
     </section>
   );
 }
@@ -77,7 +76,7 @@ function PromptMotif() {
     "lo-fi hip hop, 80 bpm, vinyl crackle",
   ];
   return (
-    <div aria-hidden className="pointer-events-none absolute right-6 top-1/2 hidden w-[320px] -translate-y-1/2 space-y-2 lg:block">
+    <div aria-hidden className="pointer-events-none absolute right-6 top-1/2 hidden w-[320px] -translate-y-1/2 space-y-2 xl:block">
       {lines.map((line, index) => (
         <div
           key={line}

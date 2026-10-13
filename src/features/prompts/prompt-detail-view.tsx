@@ -163,8 +163,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
               <DetailTitle>{prompt.title}</DetailTitle>
               {prompt.description && <DetailLede>{prompt.description}</DetailLede>}
               <ReferenceRequirementNotes
-                subject="prompt"
-                contentType={prompt.contentType}
+                                contentType={prompt.contentType}
                 value={{ image: prompt.requiresReferenceImage, video: prompt.requiresReferenceVideo, audio: prompt.requiresReferenceAudio }}
               />
             </div>
