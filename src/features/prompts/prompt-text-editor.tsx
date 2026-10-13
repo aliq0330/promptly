@@ -31,7 +31,7 @@ import { VariableEditorModal } from "./variable-editor-modal";
 import { VariableList } from "./variable-list";
 import { VariableField } from "./variable-field";
 import type { VariableFormValues } from "./variable-spec-editor";
-import { VariableVisionAssist } from "./variable-vision-assist";
+import { ImageHelpPanel } from "./image-help-panel";
 
 // 196 alanlık katalog yalnızca seçici açılınca yüklenir (ana pakete girmez).
 const FieldCatalogPicker = dynamic(() => import("@/features/prompts/field-catalog-picker").then((m) => m.FieldCatalogPicker), { ssr: false });
@@ -72,6 +72,7 @@ export function PromptTextEditor({
   rows = 5,
   placeholder,
   className,
+  visionFile,
 }: {
   id?: string;
   value: string;
@@ -81,6 +82,8 @@ export function PromptTextEditor({
   rows?: number;
   placeholder?: string;
   className?: string;
+  /** The image the author already picked in the form (feeds "Görselden yardım" without a second upload). */
+  visionFile?: File | null;
 }) {
   const { t } = useTranslation();
   const composerRef = useRef<ComposerHandle>(null);
@@ -279,10 +282,12 @@ export function PromptTextEditor({
 
       {activeTab === "template" && (
         <div className="space-y-2">
-          <VariableVisionAssist
+          <ImageHelpPanel
             promptText={value}
             variables={variables}
-            onApply={handleVisionApply}
+            sourceFile={visionFile}
+            onApplyPrompt={(text, mode) => onChange(mode === "replace" || !value.trim() ? text : `${value}\n\n${text}`)}
+            onApplyVariables={handleVisionApply}
           />
         </div>
       )}

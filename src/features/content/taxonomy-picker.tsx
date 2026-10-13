@@ -13,7 +13,6 @@ import {
   getCategories,
   getSubcategories,
   taxonomyLabel,
-  type ContentTypeId,
   type TaxonomyCategory,
   type TaxonomySelection,
 } from "@/lib/content-taxonomy";
@@ -24,15 +23,16 @@ type Lang = "tr" | "en";
 
 /**
  * Create/edit form field for the shared content taxonomy — used by prompt,
- * prompt request, generator and preset forms alike. One nested tree in place
- * of the old dropdown / master-detail:
+ * prompt request and preset forms alike.
  *
- *   content type (required)  ->  category (optional)  ->  subcategory (optional)
+ *   content type (required, always visible chips)
+ *   category › subcategory (optional, ONE summary row that opens the tree)
  *
- * Every level is an accordion (one branch open per level), the leaf level is a
- * radio group, and the chosen path is echoed as a breadcrumb above the tree.
- * Selecting a different content type resets the category (same contract as
- * before). Categories come from the live `taxonomy_categories` table (bundled
+ * The type decides which sections the form shows, so it stays a one-tap chip
+ * row. The category tree is long (dozens of branches), so it stays closed
+ * behind a summary row until the author asks for it — and closes again once a
+ * subcategory is picked. Selecting a different content type resets the
+ * category. Categories come from the live `taxonomy_categories` table (bundled
  * seed as fallback); only the open branches are ever mounted in the DOM.
  */
 export function TaxonomyPicker({
@@ -52,20 +52,16 @@ export function TaxonomyPicker({
 }) {
   const { t, language } = useTranslation();
   useTaxonomyVersion();
+  const [treeOpen, setTreeOpen] = useState(false);
   // `undefined` = follow the selection; an explicit value (incl. `null` = all closed) = the user's own toggling.
-  const [openType, setOpenType] = useState<ContentTypeId | null | undefined>(undefined);
   const [openCategory, setOpenCategory] = useState<string | null | undefined>(undefined);
-  const activeType = openType === undefined ? value.contentType : openType;
   const activeCategory = openCategory === undefined ? value.category : openCategory;
 
-  function toggleType(type: ContentTypeId) {
-    if (type !== value.contentType) {
-      onChange({ contentType: type, category: null, subcategory: null });
-      setOpenType(type);
-      setOpenCategory(undefined);
-      return;
-    }
-    setOpenType(activeType === type ? null : type);
+  function chooseType(type: TaxonomySelection["contentType"]) {
+    if (type === value.contentType) return;
+    onChange({ contentType: type, category: null, subcategory: null });
+    setOpenCategory(undefined);
+    setTreeOpen(false);
   }
 
   function chooseLeaf(category: TaxonomyCategory, subcategoryId: string | null) {
@@ -77,135 +73,109 @@ export function TaxonomyPicker({
     }
     const alreadyThis = value.category === category.id && value.subcategory === subcategoryId;
     onChange({ ...value, category: category.id, subcategory: alreadyThis ? null : subcategoryId });
+    // A subcategory is the end of the path — fold the tree away.
+    if (!alreadyThis) setTreeOpen(false);
   }
 
   const types = lockContentType ? [value.contentType] : CONTENT_TYPE_IDS;
+  const category = findCategory(value.contentType, value.category);
+  const sub = findSubcategory(value.contentType, category?.id, value.subcategory);
+  const pathParts = [
+    ...(category ? [taxonomyLabel(category.labelKey, language)] : []),
+    ...(sub ? [taxonomyLabel(sub.labelKey, language)] : []),
+  ];
 
   return (
-    <div>
-      <div className="mb-2 flex items-start justify-between gap-3">
-        <div className="min-w-0">
+    <div className="space-y-4" data-taxonomy-tree>
+      <div>
+        <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-3">
           {!bare && (
             <p className="text-sm font-medium text-text">
               {t("taxonomy.categoryLabel")} <span className="font-normal text-text-muted">({t("common.optional")})</span>
             </p>
           )}
-          <p className="text-caption text-text-secondary">{t("taxonomy.categoryHint")}</p>
+          <p className="text-caption text-text-secondary">{lockContentType ? lockedHint : t("taxonomy.categoryHint")}</p>
         </div>
-        {value.category && (
+        <div role="radiogroup" aria-label={t("taxonomy.contentTypeFilter")} className={cn("grid gap-2", lockContentType ? "grid-cols-1 sm:max-w-[14rem]" : "grid-cols-2 sm:grid-cols-4")}>
+          {types.map((type) => {
+            const meta = CONTENT_TYPE_META[type];
+            const Icon = meta.icon;
+            const selected = value.contentType === type;
+            return (
+              <button
+                key={type}
+                type="button"
+                role="radio"
+                aria-checked={selected}
+                disabled={lockContentType}
+                data-taxonomy-type={type}
+                onClick={() => chooseType(type)}
+                className={cn(
+                  "flex min-h-11 items-center justify-center gap-2 rounded-lg border px-3 text-label font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                  selected ? "border-primary bg-primary-soft text-primary" : "border-border bg-surface text-text-secondary hover:border-border-strong hover:text-text",
+                  lockContentType && "cursor-default",
+                )}
+              >
+                <Icon size={16} strokeWidth={1.75} aria-hidden />
+                {t(meta.labelKey)}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="rounded-lg border border-border bg-surface" data-taxonomy-path>
+        <div className="flex items-center gap-2 pr-2">
           <button
             type="button"
-            onClick={() => {
-              onChange({ ...value, category: null, subcategory: null });
-              setOpenCategory(undefined);
-            }}
-            className="shrink-0 rounded-md px-2 py-1 text-caption font-medium text-text-muted underline hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            onClick={() => setTreeOpen((open) => !open)}
+            aria-expanded={treeOpen}
+            aria-controls="taxonomy-category-tree"
+            className="flex min-h-12 min-w-0 flex-1 items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
-            {t("taxonomy.clearSelection")}
+            <span className="min-w-0 flex-1">
+              <span className="block text-caption text-text-muted">{t("taxonomy.categoryLabel")} ({t("common.optional")})</span>
+              {pathParts.length > 0 ? (
+                <ol className="flex min-w-0 flex-wrap items-center gap-x-1 text-small font-medium text-text">
+                  {pathParts.map((part, index) => (
+                    <li key={`${index}-${part}`} className="flex min-w-0 items-center gap-1">
+                      {index > 0 && <ChevronRight size={12} className="shrink-0 text-text-muted" aria-hidden />}
+                      <span className={cn("break-words", index === pathParts.length - 1 && "text-primary")}>{part}</span>
+                    </li>
+                  ))}
+                </ol>
+              ) : (
+                <span className="block text-small text-text-secondary">{t("taxonomy.pickCategory", { count: getCategories(value.contentType).length })}</span>
+              )}
+            </span>
+            <span className="shrink-0 text-caption font-medium text-primary">{treeOpen ? t("vision.hide") : pathParts.length > 0 ? t("taxonomy.change") : t("vision.show")}</span>
+            <ChevronRight size={18} className={cn("shrink-0 text-text-muted transition-transform duration-200", treeOpen && "rotate-90")} aria-hidden />
           </button>
-        )}
+          {value.category && (
+            <button
+              type="button"
+              onClick={() => {
+                onChange({ ...value, category: null, subcategory: null });
+                setOpenCategory(undefined);
+              }}
+              className="shrink-0 rounded-md px-2 py-1 text-caption font-medium text-text-muted underline hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            >
+              {t("taxonomy.clearSelection")}
+            </button>
+          )}
+        </div>
+        <Collapsible open={treeOpen} id="taxonomy-category-tree">
+          <div className="@container border-t border-border-soft px-2 pb-3 pt-2 @md:px-3">
+            <CategoryList
+              value={value}
+              language={language}
+              activeCategory={activeCategory}
+              onToggleCategory={(id) => setOpenCategory(activeCategory === id ? null : id)}
+              onChooseLeaf={chooseLeaf}
+            />
+          </div>
+        </Collapsible>
       </div>
-
-      <SelectedPath value={value} language={language} />
-
-      <div className="@container divide-y divide-border-soft overflow-hidden rounded-lg border border-border bg-surface" data-taxonomy-tree>
-        {types.map((type) => (
-          <TypeNode
-            key={type}
-            type={type}
-            open={activeType === type}
-            selected={value.contentType === type}
-            hint={lockContentType ? lockedHint : undefined}
-            onToggle={() => toggleType(type)}
-          >
-            {type === value.contentType && (
-              <CategoryList
-                value={value}
-                language={language}
-                activeCategory={activeCategory}
-                onToggleCategory={(id) => setOpenCategory(activeCategory === id ? null : id)}
-                onChooseLeaf={chooseLeaf}
-              />
-            )}
-          </TypeNode>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-/** Breadcrumb of the chosen path: Görsel › Fotoğrafçılık › Portre Fotoğrafçılığı. */
-function SelectedPath({ value, language }: { value: TaxonomySelection; language: Lang }) {
-  const { t } = useTranslation();
-  const category = findCategory(value.contentType, value.category);
-  const sub = findSubcategory(value.contentType, category?.id, value.subcategory);
-  const parts = [
-    t(CONTENT_TYPE_META[value.contentType].labelKey),
-    ...(category ? [taxonomyLabel(category.labelKey, language)] : []),
-    ...(sub ? [taxonomyLabel(sub.labelKey, language)] : []),
-  ];
-  return (
-    <div className="mb-3 flex flex-col gap-0.5 rounded-lg border border-border-soft bg-primary-soft px-3 py-2 sm:flex-row sm:items-center sm:gap-3" data-taxonomy-path>
-      <span className="shrink-0 text-caption text-text-secondary">{t("taxonomy.selectedPath")}</span>
-      <ol className="flex min-w-0 flex-wrap items-center gap-x-1 gap-y-0.5 text-small font-medium text-text">
-        {parts.map((part, index) => (
-          <li key={`${index}-${part}`} className="flex min-w-0 items-center gap-1">
-            {index > 0 && <ChevronRight size={12} className="shrink-0 text-text-muted" aria-hidden />}
-            <span className={cn("break-words", index === parts.length - 1 && "text-primary")}>{part}</span>
-          </li>
-        ))}
-      </ol>
-    </div>
-  );
-}
-
-function TypeNode({
-  type,
-  open,
-  selected,
-  hint,
-  onToggle,
-  children,
-}: {
-  type: ContentTypeId;
-  open: boolean;
-  selected: boolean;
-  hint?: string;
-  onToggle: () => void;
-  children: React.ReactNode;
-}) {
-  const { t } = useTranslation();
-  const meta = CONTENT_TYPE_META[type];
-  const Icon = meta.icon;
-  const count = getCategories(type).length;
-  const panelId = `taxonomy-type-${type}`;
-  return (
-    <div>
-      <button
-        type="button"
-        onClick={onToggle}
-        aria-expanded={open}
-        aria-controls={panelId}
-        data-taxonomy-type={type}
-        className="flex min-h-14 w-full items-center gap-3 px-3 py-2.5 text-left transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary @md:px-4"
-      >
-        <span className={cn("grid h-9 w-9 shrink-0 place-items-center rounded-md", selected ? "bg-primary text-primary-foreground" : "bg-primary-soft text-primary")}>
-          <Icon size={18} strokeWidth={1.75} aria-hidden />
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="block truncate text-body font-semibold text-text">{t(meta.labelKey)}</span>
-          <span className="block truncate text-caption text-text-muted">{hint ?? t("taxonomy.categoryCount", { count })}</span>
-        </span>
-        {selected && (
-          <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground" aria-label={t("taxonomy.typeSelectedAria")}>
-            <Check size={12} strokeWidth={3} aria-hidden />
-          </span>
-        )}
-        <ChevronRight size={18} className={cn("shrink-0 text-text-muted transition-transform duration-200", open && "rotate-90")} aria-hidden />
-      </button>
-      <Collapsible open={open} id={panelId}>
-        <div className="px-2 pb-3 pt-0.5 @md:px-3">{children}</div>
-      </Collapsible>
     </div>
   );
 }
