@@ -37,6 +37,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Prompt, PromptRequest } from "@/types";
 import { ScrollablePrompt } from "@/features/content/scrollable-prompt";
 import { StorageImage, StorageImg } from "@/components/ui/storage-media";
+import { MentionText } from "@/features/mentions/mention-text";
 
 /** Same fade timing as the comment-thread flash — one shared feel across the app for "you just jumped here from a notification". */
 const HIGHLIGHT_DURATION_MS = 2500;
@@ -277,7 +278,9 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
             <Eyebrow tone="primary" className="mb-2">
               {t("request.creativeDirection")}
             </Eyebrow>
-            <p className="font-serif text-[1.0625rem] leading-relaxed text-text">{live.creativeDirection}</p>
+            <p className="font-serif text-[1.0625rem] leading-relaxed text-text">
+              <MentionText text={live.creativeDirection} />
+            </p>
           </div>
         )}
 

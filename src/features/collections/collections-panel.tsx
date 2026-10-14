@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { FolderPlus, Plus } from "lucide-react";
 import { CollectionCard } from "./collection-card";
 import { CollectionFormModal } from "./collection-form-modal";
-import { createCollection, fetchOwnCollections, updateCollection } from "@/lib/supabase/collections";
+import { createCollection, fetchFollowedCollections, fetchOwnCollections, updateCollection } from "@/lib/supabase/collections";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Collection, UserProfile } from "@/types";
 
@@ -21,6 +21,15 @@ export function CollectionsPanel({ ownerId, ownerProfile }: { ownerId: string; o
   const [collections, setCollections] = useState<Collection[]>([]);
   const [loading, setLoading] = useState(true);
   const [formMode, setFormMode] = useState<"none" | "create" | { edit: Collection }>("none");
+  const [followed, setFollowed] = useState<Collection[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchFollowedCollections(ownerId).then((list) => !cancelled && setFollowed(list));
+    return () => {
+      cancelled = true;
+    };
+  }, [ownerId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -70,6 +79,19 @@ export function CollectionsPanel({ ownerId, ownerProfile }: { ownerId: string; o
             />
           ))}
         </div>
+      )}
+
+      {followed.length > 0 && (
+        <section aria-labelledby="followed-collections-heading" className="space-y-3 pt-4">
+          <h3 id="followed-collections-heading" className="text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">
+            {t("collection.followedHeading")}
+          </h3>
+          <div className="grid grid-cols-2 gap-x-3 gap-y-5 pt-2 sm:grid-cols-3 sm:gap-x-4 lg:grid-cols-4">
+            {followed.map((collection) => (
+              <CollectionCard key={collection.id} collection={collection} readOnly />
+            ))}
+          </div>
+        </section>
       )}
 
       {formMode === "create" && (

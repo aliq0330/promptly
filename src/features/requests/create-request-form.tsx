@@ -24,6 +24,7 @@ import { CreatePageHeader } from "@/features/content/create-page-header";
 import { CreateFormActions } from "@/features/content/create-form-actions";
 import { FormSection } from "@/features/content/form-section";
 import type { ContentVisibility, PromptContentType, PromptRequest } from "@/types";
+import { MentionTextarea } from "@/features/mentions/mention-field";
 
 
 const TITLE_MIN = 10;
@@ -414,12 +415,12 @@ export function CreateRequestForm() {
           </FormSection>
 
           <FormSection title={t("request.creativeDirection")}>
-            <textarea
+            <MentionTextarea
               id="request-direction"
               aria-label={t("request.creativeDirection")}
               rows={3}
               value={creativeDirection}
-              onChange={(event) => setCreativeDirection(event.target.value)}
+              onChange={setCreativeDirection}
               placeholder={t("request.creativeDirectionPlaceholder")}
               className="w-full resize-none rounded-lg border border-border bg-background px-3 py-2 text-sm text-text placeholder:text-text-muted shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
             />

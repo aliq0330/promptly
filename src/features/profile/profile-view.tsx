@@ -15,6 +15,8 @@ import { ProfileAbout } from "./profile-about";
 import { ProfileDraftsPanel } from "./profile-drafts-panel";
 import { RequestList } from "@/features/requests/request-list";
 import { CollectionsPanel } from "@/features/collections/collections-panel";
+import { CollectionCard } from "@/features/collections/collection-card";
+import { fetchPublicCollectionsByOwner } from "@/lib/supabase/collections";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { fetchLikedPrompts } from "@/lib/supabase/prompts";
@@ -23,7 +25,7 @@ import { WorkflowCard } from "@/features/workflows/workflow-card";
 import { fetchPresetsByCreator } from "@/lib/supabase/presets";
 import { PresetCard } from "@/features/presets/preset-card";
 import { ProfilePresetsPanel } from "@/features/presets/profile-presets-panel";
-import type { Preset, Prompt, PromptContentType, PromptRequest, UserProfile, Workflow } from "@/types";
+import type { Collection, Preset, Prompt, PromptContentType, PromptRequest, UserProfile, Workflow } from "@/types";
 
 type PostKind = "prompts" | "requests" | "workflows" | "presets";
 
@@ -110,6 +112,21 @@ export function ProfileView({
     };
   }, [user.id]);
 
+  // Someone else's public collections (the owner sees all of theirs under "Kaydedilenler" instead).
+  const [publicCollections, setPublicCollections] = useState<Collection[]>([]);
+  useEffect(() => {
+    let cancelled = false;
+    if (isOwnProfile) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- the owner's own collections live in the Kaydedilenler tab, nothing to fetch here
+      setPublicCollections([]);
+      return;
+    }
+    fetchPublicCollectionsByOwner(user.id).then((list) => !cancelled && setPublicCollections(list));
+    return () => {
+      cancelled = true;
+    };
+  }, [isOwnProfile, user.id]);
+
   const [activeTab, setActiveTab] = useState<ProfileTabKey>("posts");
   const [postKind, setPostKind] = useState<PostKind>("prompts");
   const [activeType, setActiveType] = useState<PromptContentType | "all">("all");
@@ -151,9 +168,12 @@ export function ProfileView({
       // collections now, not a list of prompts (Bölüm 9.22 §1).
       base.push({ key: "saved", label: t("profile.tabSaved") }, { key: "liked", label: t("profile.tabLiked"), count: likedPrompts.length });
     }
+    if (!isOwnProfile && publicCollections.length > 0) {
+      base.push({ key: "collections", label: t("profile.tabCollections"), count: publicCollections.length });
+    }
     base.push({ key: "about", label: t("profile.tabAbout") });
     return base;
-  }, [postCounts, isOwnProfile, likedPrompts.length, t]);
+  }, [postCounts, isOwnProfile, likedPrompts.length, publicCollections.length, t]);
 
   const activeSource = useMemo(() => {
     switch (activeTab) {
@@ -272,6 +292,12 @@ export function ProfileView({
           // structurally, not hidden: no sub-tab state, no filter/sort
           // toolbar, no second data source for this tab anymore.
           <CollectionsPanel ownerId={user.id} ownerProfile={user} />
+        ) : activeTab === "collections" ? (
+          <div className="grid grid-cols-2 gap-x-3 gap-y-5 pt-2 sm:grid-cols-3 sm:gap-x-4 lg:grid-cols-4">
+            {publicCollections.map((collection) => (
+              <CollectionCard key={collection.id} collection={collection} readOnly />
+            ))}
+          </div>
         ) : activeTab === "drafts" ? (
           // Owner-only (the tab itself is only ever offered when
           // isOwnProfile, see `tabs` above) — all four content types'

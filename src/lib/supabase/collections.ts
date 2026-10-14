@@ -31,6 +31,7 @@ export interface CollectionRow {
   name: string;
   visibility: "public" | "private";
   item_count: number;
+  follower_count: number;
   is_default: boolean;
   created_at: string;
   updated_at: string;
@@ -38,7 +39,7 @@ export interface CollectionRow {
 }
 
 const COLLECTION_SELECT = `
-  id, name, visibility, item_count, is_default, created_at, updated_at,
+  id, name, visibility, item_count, follower_count, is_default, created_at, updated_at,
   profiles:owner_id ( id, username, display_name, avatar_url, cover_url, bio, website, follower_count, following_count, created_at, interests )
 `;
 
@@ -49,6 +50,7 @@ function mapCollectionRow(row: CollectionRow, coverImage: Collection["coverImage
     name: row.name,
     visibility: row.visibility,
     itemCount: row.item_count,
+    followerCount: row.follower_count ?? 0,
     coverImage,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -159,6 +161,106 @@ export async function fetchCollectionById(id: string): Promise<Collection | null
   } catch (err) {
     console.error("fetchCollectionById", err);
     return null;
+  }
+}
+
+/** Newest-first non-empty public collections of one person — what a visitor sees on their profile (RLS would also show the owner their private ones, which is why `visibility` is filtered explicitly). */
+export async function fetchPublicCollectionsByOwner(ownerId: string): Promise<Collection[]> {
+  try {
+    const { data, error } = await supabase
+      .from("collections")
+      .select(COLLECTION_SELECT)
+      .eq("owner_id", ownerId)
+      .eq("visibility", "public")
+      .gt("item_count", 0)
+      .order("created_at", { ascending: false });
+    if (error || !data) {
+      if (error) console.error("fetchPublicCollectionsByOwner", error);
+      return [];
+    }
+    const rows = data as unknown as CollectionRow[];
+    const covers = await fetchCovers(rows.map((row) => row.id));
+    return rows.map((row) => mapCollectionRow(row, covers.get(row.id) ?? null));
+  } catch (err) {
+    console.error("fetchPublicCollectionsByOwner", err);
+    return [];
+  }
+}
+
+/** Thrown by `followCollection` at the 200-collection limit, so the UI can say so instead of a generic failure. */
+export class CollectionFollowLimitError extends Error {
+  constructor() {
+    super("collection_follow_limit");
+    this.name = "CollectionFollowLimitError";
+  }
+}
+
+/** Whether this viewer follows the collection (RLS: they only ever see their own follow rows). */
+export async function isFollowingCollection(userId: string, collectionId: string): Promise<boolean> {
+  try {
+    const { data, error } = await supabase
+      .from("collection_follows")
+      .select("collection_id")
+      .eq("user_id", userId)
+      .eq("collection_id", collectionId)
+      .maybeSingle();
+    if (error) {
+      console.error("isFollowingCollection", error);
+      return false;
+    }
+    return Boolean(data);
+  } catch (err) {
+    console.error("isFollowingCollection", err);
+    return false;
+  }
+}
+
+/** Follows a public collection of someone else. Following twice is not an error (the unique key already says so). */
+export async function followCollection(userId: string, collectionId: string): Promise<void> {
+  const { error } = await supabase.from("collection_follows").insert({ user_id: userId, collection_id: collectionId });
+  if (!error || error.code === "23505") return;
+  if (error.message.includes("collection_follow_limit")) throw new CollectionFollowLimitError();
+  throw new Error(error.message || translateForRuntime("collection.followFailed"));
+}
+
+/** Unfollows a collection. Unfollowing one that is not followed is not an error either. */
+export async function unfollowCollection(userId: string, collectionId: string): Promise<void> {
+  const { error } = await supabase.from("collection_follows").delete().eq("user_id", userId).eq("collection_id", collectionId);
+  if (error) throw new Error(error.message || translateForRuntime("collection.followFailed"));
+}
+
+/**
+ * The public collections this viewer follows, most recently followed first. The follow rows
+ * are read first and the collections second, so one the owner has since made private (or
+ * deleted) simply isn't returned (RLS hides it) instead of showing up as a broken card.
+ */
+export async function fetchFollowedCollections(userId: string): Promise<Collection[]> {
+  try {
+    const { data: follows, error } = await supabase
+      .from("collection_follows")
+      .select("collection_id")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
+    if (error || !follows || follows.length === 0) {
+      if (error) console.error("fetchFollowedCollections", error);
+      return [];
+    }
+    const ids = follows.map((row) => row.collection_id as string);
+    const { data, error: collectionsError } = await supabase.from("collections").select(COLLECTION_SELECT).in("id", ids);
+    if (collectionsError || !data) {
+      if (collectionsError) console.error("fetchFollowedCollections", collectionsError);
+      return [];
+    }
+    const rows = data as unknown as CollectionRow[];
+    const covers = await fetchCovers(rows.map((row) => row.id));
+    const byId = new Map(rows.map((row) => [row.id, mapCollectionRow(row, covers.get(row.id) ?? null)]));
+    return ids.flatMap((id) => {
+      const collection = byId.get(id);
+      return collection && collection.visibility === "public" ? [collection] : [];
+    });
+  } catch (err) {
+    console.error("fetchFollowedCollections", err);
+    return [];
   }
 }
 
@@ -294,6 +396,7 @@ export async function createCollection(
     name: input.name.trim(),
     visibility: input.visibility,
     itemCount: 0,
+    followerCount: 0,
     coverImage: null,
     createdAt: data.created_at,
     updatedAt: data.updated_at,

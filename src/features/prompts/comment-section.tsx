@@ -29,6 +29,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import { CommentNode, type CommentTree } from "./comment-node";
 import { Eyebrow } from "@/features/content/detail-parts";
 import type { PromptComment } from "@/types";
+import { MentionInput } from "@/features/mentions/mention-field";
 
 export type CommentTarget = { promptId: string } | { requestId: string } | { resultId: string } | { workflowId: string } | { presetId: string };
 
@@ -456,9 +457,9 @@ export function CommentSection({
         <form onSubmit={handleSubmit} className="flex items-start gap-2.5">
           <Avatar src={ownProfile?.avatarUrl ?? null} alt={ownProfile?.displayName ?? t("prompt.previewAuthorName")} size={32} />
           <div className="flex min-w-0 flex-1 gap-2">
-            <input
+            <MentionInput
               value={draft}
-              onChange={(event) => setDraft(event.target.value)}
+              onChange={setDraft}
               placeholder={t("comments.writeAComment")}
               className="h-9 min-w-0 flex-1 rounded-md border border-border bg-surface px-3 text-small text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
             />

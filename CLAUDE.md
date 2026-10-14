@@ -204,7 +204,7 @@ tamamlanmış sayılmaz. Ayrıntı ve mimari: `docs/history/049-*`, `056-*`, `05
 | `/studio` | Prompt / Hazır Ayar kaynaklı deneme alanı, kullanıcının kendi API anahtarıyla görsel/metin üretimi (`/generate` buraya yönlenir) |
 | `/search`, `/tags`, `/tags/local?tag=` | Arama (chip tabanlı), etiket keşfi/detayı |
 | `/relations?type=&id=` | Birleşik İlişki Haritası |
-| `/collections/local?id=`, `/saved` | Koleksiyon detayı; `/saved` kullanıcının "Genel" koleksiyonuna yönlenir |
+| `/collections/local?id=`, `/saved` | Koleksiyon detayı (başkasının herkese açık koleksiyonunda Takip Et + takipçi sayısı); `/saved` kullanıcının "Genel" koleksiyonuna yönlenir |
 | `/profile/real?username=`, `/profile/edit`, `/followers`, `/following`, `/my-content` | Profil ve kütüphane |
 | `/messages`, `/messages/local?id=` | Mesajlaşma (Realtime, mesaj istekleri, fotoğraf, emoji) |
 | `/notifications` | Bildirim merkezi |
@@ -228,7 +228,7 @@ kaynağı); `supabase/README.md` uygulama talimatını içerir. Çekirdek tablol
 `prompt_dna_sections`, `prompt_results`), `prompt_requests` (+medya/etiket),
 `workflows` (+`workflow_steps/connections/media/tags`), `presets`
 (+`preset_fields/options/tags`), `tags`, `taxonomy_categories/subcategories`,
-`prompt_copy_events` (kopyalama sayacının günlük dedupe'u; yalnız RPC yazar), `tag_follows` (kullanıcı başına ≤100 etiket; `feed_page` kapsamı `tags`), `weekly_challenges` (moderatör yönetimli haftalık tema; yazma yalnız `admin_save_challenge`/`admin_archive_challenge`), `prompt_likes` / `prompt_comments` / `comment_likes` (hedef sütunlu
+`prompt_copy_events` (kopyalama sayacının günlük dedupe'u; yalnız RPC yazar), `tag_follows` (kullanıcı başına ≤100 etiket; `feed_page` kapsamı `tags`), `collection_follows` (herkese açık koleksiyon takibi, ≤200; `collections.follower_count` korumalı sayaç), `weekly_challenges` (moderatör yönetimli haftalık tema; yazma yalnız `admin_save_challenge`/`admin_archive_challenge`), `prompt_likes` / `prompt_comments` / `comment_likes` (hedef sütunlu
 polimorfik: `prompt_id`/`request_id`/`workflow_id`/`preset_id` — tam biri dolu),
 `collections` / `collection_items` ("Genel" = `is_default`, isimden bağımsız),
 `follows`, `conversations` / `conversation_members` / `messages` /
@@ -325,6 +325,7 @@ bağlayıcıdır; ayrıntılı gerekçe için `docs/history/README.md` tablosuna
   argümanlı imzası, `drop function` onayı olmadığı için ince sarmalayıcı olarak
   kaldı. `deploy-functions.yml` hiç çalıştırılmadı (secret'lar
   `SUPABASE_ACCESS_TOKEN` / `SUPABASE_PROJECT_REF` tanımlı değilse fail eder).
+- @bahsetme (`docs/history/165-*`) ve koleksiyon takibi (`docs/history/166-*`): migration'lar canlıda (yalnızca ekleyici, `drop` yok); anma bildirimi mevcut `comment` türünü kullanır (kısıt genişletilmedi). Gerçek oturumla uçtan uca denenmedi.
 - PWA (`docs/history/163-*`) ve Workflow adım adım modu (`docs/history/164-*`): yalnız istemci kodu, veritabanı değişikliği yok. Gerçek cihazda "ana ekrana ekle" ve kurulu uygulamada Google girişi denenmedi.
 - Haftalık tema (`docs/history/162-*`): `weekly_challenges` + moderatör RPC'leri canlıda (yalnızca ekleyici); canlıda henüz tema yok — moderatör `/moderation → Temalar`'dan oluşturur. Gerçek oturumla uçtan uca denenmedi.
 - Etiket takibi (`docs/history/161-*`): `tag_follows` + `feed_page` `tags` kapsamı canlıda; yalnızca ekleyici, aynı imza. Gerçek oturumla uçtan uca denenmedi.
@@ -358,5 +359,5 @@ bağlayıcıdır; ayrıntılı gerekçe için `docs/history/README.md` tablosuna
   isteğin `creative_direction`'ını da kapsar ve keyset sayfalanır (`search_content`); `prompt_saves` canlıdan kaldırıldı; kod içi
   yorumlarda eski "Bölüm 9.x" atıfları arşiv numaralarına (`docs/history/NNN-*`) karşılık gelir.
 
-**Arşiv:** [`docs/history/README.md`](docs/history/README.md) — 164 bölüm, her
+**Arşiv:** [`docs/history/README.md`](docs/history/README.md) — 166 bölüm, her
 biri için durum etiketi (uygulandı / kısmen geçerli / kaldırıldı).

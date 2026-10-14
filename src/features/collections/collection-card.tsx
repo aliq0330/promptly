@@ -14,10 +14,13 @@ export function CollectionCard({
   collection,
   onEdit,
   onDeleted,
+  readOnly = false,
 }: {
   collection: Collection;
-  onEdit: () => void;
-  onDeleted: () => void;
+  onEdit?: () => void;
+  onDeleted?: () => void;
+  /** Someone else's collection (a followed one, or on another profile): no manage menu, the owner is named instead of the visibility. */
+  readOnly?: boolean;
 }) {
   const { t } = useTranslation();
   return (
@@ -39,16 +42,22 @@ export function CollectionCard({
             </div>
             <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-caption text-text-muted">
               <span className="shrink-0 tabular-nums">{t("collection.itemCount", { count: collection.itemCount })}</span>
-              <span className="flex shrink-0 items-center gap-1">
-                {collection.visibility === "public" ? <Globe size={12} /> : <Lock size={12} />}
-                {collection.visibility === "public" ? t("collection.visibilityPublicShort") : t("collection.visibilityPrivateShort")}
-              </span>
+              {readOnly ? (
+                <span className="min-w-0 truncate">{t("collection.byOwner", { name: collection.owner.displayName })}</span>
+              ) : (
+                <span className="flex shrink-0 items-center gap-1">
+                  {collection.visibility === "public" ? <Globe size={12} /> : <Lock size={12} />}
+                  {collection.visibility === "public" ? t("collection.visibilityPublicShort") : t("collection.visibilityPrivateShort")}
+                </span>
+              )}
             </div>
           </div>
         </Link>
-        <div className="absolute right-2 top-2 z-10 rounded-md bg-surface/90 backdrop-blur-sm">
-          <CollectionMoreMenu collection={collection} onEdit={onEdit} onDeleted={onDeleted} />
-        </div>
+        {!readOnly && onEdit && onDeleted && (
+          <div className="absolute right-2 top-2 z-10 rounded-md bg-surface/90 backdrop-blur-sm">
+            <CollectionMoreMenu collection={collection} onEdit={onEdit} onDeleted={onDeleted} />
+          </div>
+        )}
       </div>
     </article>
   );
