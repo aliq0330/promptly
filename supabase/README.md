@@ -14,8 +14,10 @@ PostgreSQL 16 örneğinde test edilir, Supabase MCP bağlıysa onunla uygulanır
 "Migration çalıştı" ile "akış gerçek hesaplarla uçtan uca denendi" ayrı
 şeylerdir.
 
-**Migration'lar ve Edge Function'lar GitHub Actions ile deploy edilmez**
-(`.github/workflows/deploy.yml` yalnızca statik siteyi yayınlar).
+**Migration'lar GitHub Actions ile deploy edilmez**
+(`.github/workflows/deploy.yml` yalnızca statik siteyi yayınlar). Edge Function'lar
+yalnızca elle tetiklenen ayrı bir workflow ile deploy edilebilir (aşağıda
+"Edge Functions → GitHub Actions ile deploy").
 
 ## Nasıl uygularsınız
 
@@ -67,14 +69,15 @@ Kaynak kök `CLAUDE.md` Bölüm 6'dır; bu liste onunla aynıdır. Canlı verita
   iç `_admin_guard()`).
 - **İlişkiler:** `content_relations` (yalnızca elle kurulan ilişkiler; diğerleri
   mevcut tablolardan türetilir).
-- **RPC'ler (okuma):** `feed_page` (ana sayfa), `search_content` (arama),
+- **RPC'ler (okuma):** `feed_page` (ana sayfa + Keşfet; `p_order` newest/popular/oldest, isteğe bağlı `p_open_only` — `20260919820000`, canlıda uygulandı), `search_content` (arama),
   `related_prompts` / `related_requests` (detaydaki benzerler),
   `dna_similar_candidates`. **Yalnız service role:** `delete_account_data`,
   `orphan_storage_objects`.
 - **Storage:** `avatars` herkese açık; `message-images`, `prompt-media`,
   `request-references`, `result-media` private (dosyaya erişim, onu gösteren
   satırın görünürlüğüne bağlıdır — `docs/history/150-*`).
-- **Atıl (kodda kullanılmayan) tablo:** `prompt_saves`.
+- **Kaldırılan tablo:** `prompt_saves` (kaydedilenler `collections` üzerindendir). Atılması `20260919840000_drop_prompt_saves.sql` ile yazıldı — **canlıda henüz uygulanmadı** (MCP uygulaması zaman aşımına uğradı; tablo canlıda boş).
+- **Giriş hız sınırı:** `auth_login_attempts` (RLS açık, policy yok) + `auth_login_attempt(p_ip)` — yalnız `service_role`; `20260919830000` — canlıda uygulandı.
 
 ## Google ile giriş kurulumu
 
@@ -126,10 +129,12 @@ avatar yapılmaz.
 - **Hesap silme:** `20260919800000_delete_account_data.sql` (yalnız
   `service_role`'ün çağırabildiği fonksiyon) kullanıcı tarafından canlıya uygulandı
   ve `delete-account` Edge Function deploy edildi (`docs/history/154-*`).
-- **`content_relations` (`20260919710000`) geçmişte kayıtlı değil.** Tablo ve
-  fonksiyonlar canlıda var (MCP `execute_sql` ile iki parça hâlinde uygulandı),
-  ama `schema_migrations`'ta satırı yok. Şemayı DEĞİŞTİRMEDEN düzeltmek için
-  yalnızca geçmiş satırı eklenir. Önce durumu doğrulayın:
+- **`content_relations` (`20260919710000`) geçmiş kaydı tamamlandı.** Tablo ve
+  fonksiyonlar canlıda vardı (MCP `execute_sql` ile iki parça hâlinde uygulanmıştı)
+  ama `schema_migrations`'ta satırı yoktu. Bu oturumda aşağıdaki iki SELECT
+  beklenen sonucu verdi (0 satır / `true`) ve yalnızca aşağıdaki tek satırlık
+  INSERT çalıştırıldı (şema değişmedi); sonuç: `20260919710000 | content_relations`
+  satırı artık var. Aynı durumla karşılaşırsanız yöntem (tekrar çalıştırmayın):
 
   ```sql
   select version, name from supabase_migrations.schema_migrations
@@ -810,15 +815,35 @@ açılmış bir hesap varsa o hesap ve içerikleri de silinir; başka hesaplara 
 
 ## Edge Functions
 
-Dört fonksiyon vardır; hiçbiri CI ile deploy edilmez, elle deploy edilir
-(`supabase functions deploy <ad> --project-ref xqxybhjcyrvaroknucdq`):
+Dört fonksiyon vardır; hiçbiri site deploy'u (`deploy.yml`) ile deploy edilmez.
+Elle (`supabase functions deploy <ad> --project-ref xqxybhjcyrvaroknucdq`) ya da
+aşağıdaki "GitHub Actions ile deploy" workflow'u ile deploy edilir:
 
 | Fonksiyon | Ne yapar | Deploy |
 |---|---|---|
 | `analyze-image` | Görsel + MIME alıp Gemini Vision'a gönderen, yapılandırılmış JSON döndüren fonksiyon | `supabase functions deploy analyze-image` (kod değişince) |
-| `username-login` | Kullanıcı adı + şifreyle giriş; e-postayı yalnızca sunucuda çözer | `supabase functions deploy username-login --no-verify-jwt` |
+| `username-login` | Kullanıcı adı + şifreyle giriş; e-postayı yalnızca sunucuda çözer. Hız sınırı kalıcı (`auth_login_attempt` RPC), CORS `*` değil (site + localhost + `chrome-extension://`) — **bu kod değişikliği canlıya deploy edilmedi** (`20260919830000` artık canlıda) | `supabase functions deploy username-login --no-verify-jwt` |
 | `cleanup-orphan-storage` | Hiçbir satırın göstermediği Storage dosyalarını bulur/siler (yalnız moderatör) | `supabase functions deploy cleanup-orphan-storage` |
 | `delete-account` | Kullanıcının KENDİ hesabını siler (JWT'den; `docs/history/154-*`) | `supabase functions deploy delete-account` — JWT doğrulaması AÇIK. Canlıda (v1). |
+
+### GitHub Actions ile deploy (yalnızca elle)
+
+`.github/workflows/deploy-functions.yml` ("Deploy Edge Functions") **yalnızca
+`workflow_dispatch`** ile çalışır; Pages deploy'undan (`deploy.yml`) bağımsızdır,
+oradaki işi beklemez ve başarısızlığı siteyi etkilemez. Repo secret'ları:
+
+- `SUPABASE_ACCESS_TOKEN` — Supabase kişisel erişim token'ı
+- `SUPABASE_PROJECT_REF` — hedef proje referansı (repoya yazılmaz; yukarıdaki
+  `xqxybhjcyrvaroknucdq` yalnızca örnektir)
+
+İkisinden biri yoksa "Require secrets" adımı hata verir ve hiçbir şey deploy
+edilmez. İş `scripts/deploy-functions.sh`'ı çalıştırır: `analyze-image`,
+`cleanup-orphan-storage`, `delete-account` (JWT doğrulaması açık) ve
+`username-login --no-verify-jwt` (yalnızca bu, çünkü giriş yapmamış kullanıcı
+çağırır). `supabase/config.toml` yalnızca bu dört fonksiyonun `verify_jwt`
+değerini sabitler. Migration'lar bu workflow ile uygulanmaz; `username-login`'in
+yeni sürümünden önce `20260919830000` uygulanmış olmalıdır (canlıda uygulandı). Bu workflow henüz
+hiç çalıştırılmadı.
 
 Aşağıdaki not `analyze-image` içindir (tarihsel):
 

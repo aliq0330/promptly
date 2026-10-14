@@ -57,23 +57,40 @@ export async function fetchProfileByUsername(username: string): Promise<UserProf
   }
 }
 
-/** Most-followed real profiles, for Keşfet's "Öne Çıkan Yaratıcılar". */
-export async function fetchTopCreators(limit = 5): Promise<UserProfile[]> {
-  try {
-    const { data, error } = await supabase
-      .from("profiles")
-      .select(PROFILE_SELECT)
-      .order("follower_count", { ascending: false })
-      .limit(limit);
-    if (error) {
-      console.error("fetchTopCreators", error);
-      return [];
-    }
-    return (data ?? []).map((row) => mapProfileRow(row as ProfileRow));
-  } catch (err) {
-    console.error("fetchTopCreators", err);
-    return [];
+/** Keyset position of the last creator of a page: `(follower_count, id)`, both descending. */
+export interface CreatorCursor {
+  followerCount: number;
+  id: string;
+}
+
+export interface CreatorsPage {
+  creators: UserProfile[];
+  nextCursor: CreatorCursor | null;
+}
+
+const CREATORS_PAGE_SIZE = 24;
+
+/**
+ * One page of Keşfet's creators, most-followed first, keyset-paginated by
+ * `(follower_count desc, id desc)` — `id` breaks follower-count ties so no
+ * profile is skipped or repeated between pages. There is no silent cap: the
+ * caller keeps asking for the next cursor until it is `null`. Throws on a
+ * failed request so the UI can offer a retry instead of a false "no creators".
+ */
+export async function fetchCreatorsPage(cursor: CreatorCursor | null = null, limit = CREATORS_PAGE_SIZE): Promise<CreatorsPage> {
+  let query = supabase.from("profiles").select(PROFILE_SELECT).order("follower_count", { ascending: false }).order("id", { ascending: false }).limit(limit);
+  if (cursor) {
+    query = query.or(`follower_count.lt.${cursor.followerCount},and(follower_count.eq.${cursor.followerCount},id.lt.${cursor.id})`);
   }
+  const { data, error } = await query;
+  if (error) throw new Error(error.message);
+  const rows = (data ?? []) as ProfileRow[];
+  const last = rows[rows.length - 1];
+  return {
+    creators: rows.map((row) => mapProfileRow(row)),
+    // The cursor comes from the last raw row; a short page means the list is exhausted.
+    nextCursor: last && rows.length >= limit ? { followerCount: last.follower_count, id: last.id } : null,
+  };
 }
 
 /** Display name/username substring search — backs the real `/search` page. */

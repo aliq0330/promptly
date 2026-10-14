@@ -320,10 +320,10 @@ export async function deleteCollection(collectionId: string): Promise<void> {
 }
 
 /**
- * Adds a real prompt OR generator to a real collection the caller owns.
- * This is the ONLY way a prompt/generator joins a collection now — no more
- * silent dual-write into a separate `prompt_saves` table (CLAUDE.md Bölüm
- * 9.22 §4). Adding it to ANY collection (default "Genel" or a custom one)
+ * Adds a real item to a real collection the caller owns. This is the ONLY
+ * way an item joins a collection (and so becomes "saved") — there is no
+ * separate saves table; `prompt_saves` was dropped by migration
+ * 20260919840000 (CLAUDE.md Bölüm 9.22 §4). Adding it to ANY collection (default "Genel" or a custom one)
  * makes `isPromptSaved` true and fills the bookmark (Bölüm 9.38) — adding
  * it to a second collection while already saved is still just membership
  * in that additional collection, it doesn't create a second "save".

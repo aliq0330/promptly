@@ -54,7 +54,7 @@ $studio$;
 delete from public.comment_likes;
 delete from public.prompt_comments;
 delete from public.prompt_likes;
-delete from public.prompt_saves;
+do $saves$ begin if to_regclass('public.prompt_saves') is not null then execute 'delete from public.prompt_saves'; end if; end $saves$;   -- tablo 20260919840000 ile kaldırıldı
 delete from public.generator_saves;
 delete from public.collection_items;
 delete from public.collections where not is_default;   -- "Genel" koleksiyonlar kalır
