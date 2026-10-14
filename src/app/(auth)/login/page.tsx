@@ -11,6 +11,7 @@ import { supabase } from "@/lib/supabase/client";
 import { translateAuthError } from "@/features/auth/auth-errors";
 import { readNextParam } from "@/lib/auth-redirect";
 import { AuthDivider, GoogleSignInButton } from "@/features/auth/google-sign-in-button";
+import { LegalNotice } from "@/features/auth/legal-notice";
 import { useTranslation } from "@/lib/i18n/language-provider";
 
 /**
@@ -144,6 +145,7 @@ export default function LoginPage() {
       </Button>
       <AuthDivider />
       <GoogleSignInButton next={readNextParam()} />
+      <LegalNotice />
       <p className="text-xs text-text-muted">
         {t("auth.noAccountYet")}{" "}
         <Link href="/signup" className="text-primary underline underline-offset-2 hover:no-underline">

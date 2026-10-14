@@ -98,7 +98,12 @@ enabled" hatasına götürür.
    **Redirect URLs** listesinde `https://aliq0330.github.io/promptly/**` (yerel için
    `http://localhost:3000/promptly/**`) bulunmalı (e-posta doğrulama/şifre sıfırlama
    için zaten gerekiyordu).
-5. Dene: `/login` → "Google ile devam et" → hesabı seç → ana sayfaya (ya da `?next=`
+5. Google'da yayına almak için **Branding → App domain** alanlarını doldur (Audience
+   sayfası "Branding'i tamamla" diyorsa): ana sayfa `https://aliq0330.github.io/promptly/`,
+   gizlilik `https://aliq0330.github.io/promptly/privacy/`, koşullar
+   `https://aliq0330.github.io/promptly/terms/`; Authorized domains'te `supabase.co`
+   ve `aliq0330.github.io` olmalı. Sonra Audience → **Publish app**.
+6. Dene: `/login` → "Google ile devam et" → hesabı seç → ana sayfaya (ya da `?next=`
    adresine) dönmeli, `profiles` satırı Google adıyla açılmalı.
 
 Notlar: aynı doğrulanmış e-postayla önceden e-posta+şifre hesabı varsa Supabase

@@ -206,6 +206,7 @@ tamamlanmış sayılmaz. Ayrıntı ve mimari: `docs/history/049-*`, `056-*`, `05
 | `/messages`, `/messages/local?id=` | Mesajlaşma (Realtime, mesaj istekleri, fotoğraf, emoji) |
 | `/notifications` | Bildirim merkezi |
 | `/settings`, `/settings/blocked` | Hesap / Gizlilik / Tercihler (görünüm, dil) / Tehlikeli bölge ("Hesabımı sil" — `delete-account` Edge Function) |
+| `/privacy`, `/terms` | Gizlilik Politikası, Kullanım Koşulları (herkese açık, TR+EN; metin `features/legal/legal-content.ts`) |
 | `/moderation` | Yalnızca moderatör: şikâyetler, site istatistikleri, kullanıcı yönetimi, depolama temizliği, DNA doldurma |
 | `/login`, `/signup`, `/reset-password` | Auth (e-posta/kullanıcı adı + şifre, Google ile devam et) |
 
