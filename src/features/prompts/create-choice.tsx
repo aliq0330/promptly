@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { ArrowRight, SlidersHorizontal, Sparkles, SquareTerminal, Workflow } from "lucide-react";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
@@ -45,8 +46,15 @@ const OPTIONS = [
   },
 ] as const;
 
+/** A weekly theme's `?tag=` is carried into whichever type is picked (each form attaches it, see `usePrefillTag`). */
+function withTag(href: string, tag: string | null): string {
+  if (!tag) return href;
+  return `${href}${href.includes("?") ? "&" : "?"}tag=${encodeURIComponent(tag)}`;
+}
+
 export function CreateChoice() {
   const { t } = useTranslation();
+  const tag = useSearchParams().get("tag");
   return (
     <div className="mx-auto w-full max-w-5xl px-3 py-8 sm:px-5 sm:py-12 lg:px-8">
       <div className="mb-8 space-y-2 text-center">
@@ -59,7 +67,7 @@ export function CreateChoice() {
         {OPTIONS.map((option) => (
           <Link
             key={option.href}
-            href={option.href}
+            href={withTag(option.href, tag)}
             className="group flex flex-col items-start gap-3 rounded-lg border border-border-soft bg-surface p-5 text-left shadow-card transition-[border-color,box-shadow] duration-200 hover:border-primary/40 hover:shadow-card-hover"
           >
             <span className="flex h-11 w-11 items-center justify-center rounded-md bg-primary-soft text-primary transition-colors duration-200 group-hover:bg-primary group-hover:text-primary-foreground">

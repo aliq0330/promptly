@@ -18,6 +18,7 @@ import { TaxonomyTypeChips } from "@/features/content/taxonomy-filter";
 import { SearchView } from "@/features/search/search-view";
 import { EMPTY_TAXONOMY_FILTER, type TaxonomyFilterValue } from "@/lib/content-taxonomy";
 import { CreatorCard } from "@/features/profile/creator-card";
+import { WeeklyChallengeBanner } from "@/features/challenges/weekly-challenge-banner";
 import { useCreatorPages } from "@/features/profile/use-creator-pages";
 import { fetchPopularTags } from "@/lib/supabase/tags";
 import { tagHref } from "@/lib/utils";
@@ -98,6 +99,7 @@ export function DiscoverFeed() {
 
   const idleContent = (
     <div className="space-y-6 max-md:space-y-4">
+      <WeeklyChallengeBanner />
       {tags.length > 0 && (
         <div className="flex items-center gap-3">
           <span className="hidden shrink-0 items-center gap-1.5 text-caption font-semibold uppercase tracking-[0.08em] text-text-muted sm:flex">

@@ -14,6 +14,7 @@ import { TaxonomyPicker } from "@/features/content/taxonomy-picker";
 import { ToolPicker } from "@/features/content/tool-picker";
 import { TagPicker } from "@/features/prompts/tag-picker";
 import { useTagPicker } from "@/features/prompts/use-tag-picker";
+import { usePrefillTag } from "@/features/challenges/use-prefill-tag";
 import { useTagCatalog } from "@/features/tags/use-tag-catalog";
 import { fetchPresetById, savePreset } from "@/lib/supabase/presets";
 import { sanitizeSelection, type PresetField, type PresetSelection } from "@/lib/preset-fields";
@@ -51,6 +52,7 @@ export function PresetEditor({ editId }: { editId: string | null }) {
   const [cover, setCover] = useState<MultiImageItem[]>([]);
   const [visibility, setVisibility] = useState<ContentVisibility>("public");
   const tagPicker = useTagPicker({ title, content: description, catalog });
+  usePrefillTag(tagPicker.addManual, !editId);
   const tagsSeededRef = useRef(false);
 
   const [loadState, setLoadState] = useState<"loading" | "ready" | "notfound" | "forbidden">(editId ? "loading" : "ready");

@@ -16,6 +16,7 @@ import { StorageCleanupCard } from "@/features/moderation/storage-cleanup-card";
 import { DnaBackfillCard } from "@/features/moderation/dna-backfill-card";
 import { SiteStatsPanel } from "@/features/moderation/admin/site-stats-panel";
 import { UsersPanel } from "@/features/moderation/admin/users-panel";
+import { ChallengesPanel } from "@/features/moderation/admin/challenges-panel";
 import { Tabs } from "@/components/ui/tabs";
 import { fetchReportQueue, moderateReport, type ModerationAction, type ModerationReport, type ReportStatus } from "@/lib/supabase/moderation";
 
@@ -41,8 +42,8 @@ const TYPE_KEY: Record<string, TranslationKey> = {
   preset: "moderation.type.preset",
 };
 
-type AdminTab = "reports" | "stats" | "users";
-const TAB_IDS: AdminTab[] = ["reports", "stats", "users"];
+type AdminTab = "reports" | "stats" | "users" | "challenges";
+const TAB_IDS: AdminTab[] = ["reports", "stats", "users", "challenges"];
 
 function readParam(name: string): string | null {
   return typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get(name);
@@ -98,6 +99,7 @@ export function ModerationView() {
           { key: "reports" as const, label: t("admin.tabReports") },
           { key: "stats" as const, label: t("admin.tabStats") },
           { key: "users" as const, label: t("admin.tabUsers") },
+          { key: "challenges" as const, label: t("admin.tabChallenges") },
         ]}
         active={tab}
         onChange={setTab}
@@ -107,6 +109,7 @@ export function ModerationView() {
       {tab === "reports" && <ReportsPanel />}
       {tab === "stats" && <SiteStatsPanel />}
       {tab === "users" && <UsersPanel userId={userId} onSelectUser={setUserId} />}
+      {tab === "challenges" && <ChallengesPanel />}
     </div>
   );
 }

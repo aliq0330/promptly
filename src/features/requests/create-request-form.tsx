@@ -11,6 +11,7 @@ import { useOwnProfile } from "@/features/auth/own-profile-provider";
 import { TaxonomyPicker } from "@/features/content/taxonomy-picker";
 import { useTagCatalog } from "@/features/tags/use-tag-catalog";
 import { useTagPicker } from "@/features/prompts/use-tag-picker";
+import { usePrefillTag } from "@/features/challenges/use-prefill-tag";
 import { TagPicker } from "@/features/prompts/tag-picker";
 import { TitleField, DescriptionField } from "@/features/content/core-fields";
 import { RequestVisionAssist } from "./request-vision-assist";
@@ -63,6 +64,7 @@ export function CreateRequestForm() {
   // isteğin kendi etiketleri, bir yanıtın etiketleriyle asla karıştırılmıyor
   // (bkz. create-prompt-form.tsx'in answerRequest modu).
   const tagPicker = useTagPicker({ title, content: description, catalog: tagCatalog });
+  usePrefillTag(tagPicker.addManual, !isEditMode);
   const [images, setImages] = useState<MultiImageItem[]>([]);
   const [visibility, setVisibility] = useState<ContentVisibility>("public");
   const [titleTouched, setTitleTouched] = useState(false);

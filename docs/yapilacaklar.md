@@ -32,7 +32,7 @@ dış servis/karar gerektirenler en sona.
 | 1 | Paylaşılan linklerde önizleme (OG) | O | **yapıldı** (statik paylaşım sayfaları; `docs/history/159-*`) |
 | 2 | "Kullanım" sinyali: kopyalama sayacı + görünürlük + sıralama | K–O | **yapıldı** (`docs/history/160-*`; "En çok kullanılan" yalnız Keşfet → Promptlar, `Popüler` değişmedi) |
 | 3 | Etiket takibi + ana sayfada "Etiketlerim" | O | **yapıldı** (`docs/history/161-*`) |
-| 4 | Haftalık tema / "Haftanın isteği" | O | bekliyor |
+| 4 | Haftalık tema / "Haftanın isteği" | O | **yapıldı** (`docs/history/162-*`) |
 | 5 | PWA (ana ekrana ekleme) | K | bekliyor |
 | 6 | Workflow adım adım çalıştırma modu | O–B | bekliyor |
 | 7 | @bahsetme (yorum + istek) | K–O | bekliyor |
@@ -67,7 +67,7 @@ dış servis/karar gerektirenler en sona.
 
 ### 4. Haftalık tema
 - Plan: moderatör yönetimli `weekly_challenges` (etiket tabanlı; katılım = o etiketli içerik); ana sayfa/Keşfet bandı.
-- Etki alanı: moderasyon sayfası, ana sayfa, Keşfet, etiket sayfası, bildirim (isteğe bağlı).
+- Etki alanı (tarandı): moderasyon sekmesi ✔, Ana sayfa ✔, Keşfet ✔, "Katıl" dört oluşturma formunda (prompt/istek/workflow/hazır ayar) ✔; etiket sayfası değişmedi; tema bildirimi bilerek yok.
 
 ### 5. PWA
 - Plan: `manifest.webmanifest`, ikonlar, meta etiketleri. Service worker YOK (eski sürümde takılma riski).

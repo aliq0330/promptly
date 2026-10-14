@@ -17,6 +17,7 @@ import { AddContentModal } from "./add-content-modal";
 import { ContentPane, GeneralPane, IOPane, SettingsPane, StepPreview } from "./step-panes";
 import { StepList } from "./step-list";
 import { useTagPicker } from "@/features/prompts/use-tag-picker";
+import { usePrefillTag } from "@/features/challenges/use-prefill-tag";
 import { useTagCatalog } from "@/features/tags/use-tag-catalog";
 import { useLayoutMode } from "./use-layout-mode";
 import { EMPTY_META, WorkflowMetaForm, type WorkflowMeta } from "./workflow-meta-form";
@@ -49,6 +50,7 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
   const [meta, setMeta] = useState<WorkflowMeta>(EMPTY_META);
   const { catalog } = useTagCatalog();
   const tagPicker = useTagPicker({ title: meta.title, content: meta.description, catalog });
+  usePrefillTag(tagPicker.addManual, !editId);
   const tagsSeededRef = useRef(false);
   const [steps, setSteps] = useState<WorkflowStep[]>([]);
   const [status, setStatus] = useState<"draft" | "published">("draft");
