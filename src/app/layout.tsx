@@ -59,6 +59,11 @@ export const metadata: Metadata = {
     url: `${SITE_URL}/`,
     images: [{ url: `${SITE_URL}/og.png`, width: 1200, height: 630, alt: "Promptly" }],
   },
+  // Installable web app (src/app/manifest.ts). No service worker: nothing is cached offline.
+  applicationName: "Promptly",
+  appleWebApp: { capable: true, title: "Promptly", statusBarStyle: "default" },
+  // basePath is not applied to metadata icon URLs.
+  icons: { apple: [{ url: "/promptly/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" }] },
   twitter: {
     card: "summary_large_image",
     title: "Promptly",
