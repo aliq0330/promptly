@@ -207,7 +207,7 @@ tamamlanmış sayılmaz. Ayrıntı ve mimari: `docs/history/049-*`, `056-*`, `05
 | `/notifications` | Bildirim merkezi |
 | `/settings`, `/settings/blocked` | Hesap / Gizlilik / Tercihler (görünüm, dil) / Tehlikeli bölge ("Hesabımı sil" — `delete-account` Edge Function) |
 | `/privacy`, `/terms` | Gizlilik Politikası, Kullanım Koşulları (herkese açık, TR+EN; metin `features/legal/legal-content.ts`) |
-| `/moderation` | Yalnızca moderatör: şikâyetler, site istatistikleri, kullanıcı yönetimi, depolama temizliği, DNA doldurma |
+| `/moderation` | Yalnızca moderatör: şikâyetler, site istatistikleri, kullanıcı yönetimi, depolama temizliği, DNA doldurma, haftalık temalar |
 | `/login`, `/signup`, `/reset-password` | Auth (e-posta/kullanıcı adı + şifre, Google ile devam et) |
 | `/share/<tür>/<anahtar>/` | Derleme zamanı üretilen statik paylaşım sayfası (herkese açık içerik; kendi `og:*` meta'sı, sonra detaya yönlenir). Paylaş/linki kopyala eylemleri bu adresi verir; sayfası olmayan yeni içerik `404.html` → `NotFoundForwarder` ile detaya gider. `deploy.yml` her 6 saatte yeniden derler |
 
@@ -225,7 +225,7 @@ kaynağı); `supabase/README.md` uygulama talimatını içerir. Çekirdek tablol
 `prompt_dna_sections`, `prompt_results`), `prompt_requests` (+medya/etiket),
 `workflows` (+`workflow_steps/connections/media/tags`), `presets`
 (+`preset_fields/options/tags`), `tags`, `taxonomy_categories/subcategories`,
-`prompt_copy_events` (kopyalama sayacının günlük dedupe'u; yalnız RPC yazar), `tag_follows` (kullanıcı başına ≤100 etiket; `feed_page` kapsamı `tags`), `prompt_likes` / `prompt_comments` / `comment_likes` (hedef sütunlu
+`prompt_copy_events` (kopyalama sayacının günlük dedupe'u; yalnız RPC yazar), `tag_follows` (kullanıcı başına ≤100 etiket; `feed_page` kapsamı `tags`), `weekly_challenges` (moderatör yönetimli haftalık tema; yazma yalnız `admin_save_challenge`/`admin_archive_challenge`), `prompt_likes` / `prompt_comments` / `comment_likes` (hedef sütunlu
 polimorfik: `prompt_id`/`request_id`/`workflow_id`/`preset_id` — tam biri dolu),
 `collections` / `collection_items` ("Genel" = `is_default`, isimden bağımsız),
 `follows`, `conversations` / `conversation_members` / `messages` /
@@ -322,6 +322,7 @@ bağlayıcıdır; ayrıntılı gerekçe için `docs/history/README.md` tablosuna
   argümanlı imzası, `drop function` onayı olmadığı için ince sarmalayıcı olarak
   kaldı. `deploy-functions.yml` hiç çalıştırılmadı (secret'lar
   `SUPABASE_ACCESS_TOKEN` / `SUPABASE_PROJECT_REF` tanımlı değilse fail eder).
+- Haftalık tema (`docs/history/162-*`): `weekly_challenges` + moderatör RPC'leri canlıda (yalnızca ekleyici); canlıda henüz tema yok — moderatör `/moderation → Temalar`'dan oluşturur. Gerçek oturumla uçtan uca denenmedi.
 - Etiket takibi (`docs/history/161-*`): `tag_follows` + `feed_page` `tags` kapsamı canlıda; yalnızca ekleyici, aynı imza. Gerçek oturumla uçtan uca denenmedi.
 - Kopyalama sayacı (`docs/history/160-*`): `prompts.copy_count` + `record_prompt_copy` canlıda; yalnızca oturumlu kullanıcı, günde bir, yazarın kendisi sayılmaz. Keşfet → Promptlar'da ayrı "En çok kullanılan" sıralaması var (`feed_page` `p_order='used'`); `Popüler` hâlâ yalnızca beğeni. Sayaç sütunlarını istemciden koruma yalnızca `copy_count` için var (aşağıdaki "sayaç koruması" açık işi).
 - Paylaşım önizlemesi (`docs/history/159-*`): `og:image` her zaman site kartı (gönderi medyası private); yeni içeriğin önizlemesi en geç 6 saat sonra. Gerçek sosyal ağ tarayıcılarıyla denenmedi.
@@ -353,5 +354,5 @@ bağlayıcıdır; ayrıntılı gerekçe için `docs/history/README.md` tablosuna
   isteğin `creative_direction`'ını da kapsar ve keyset sayfalanır (`search_content`); `prompt_saves` canlıdan kaldırıldı; kod içi
   yorumlarda eski "Bölüm 9.x" atıfları arşiv numaralarına (`docs/history/NNN-*`) karşılık gelir.
 
-**Arşiv:** [`docs/history/README.md`](docs/history/README.md) — 161 bölüm, her
+**Arşiv:** [`docs/history/README.md`](docs/history/README.md) — 162 bölüm, her
 biri için durum etiketi (uygulandı / kısmen geçerli / kaldırıldı).

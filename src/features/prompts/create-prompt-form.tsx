@@ -14,6 +14,7 @@ import { useOwnProfile } from "@/features/auth/own-profile-provider";
 import { useRealRequests } from "@/features/requests/real-requests-provider";
 import { useTagCatalog } from "@/features/tags/use-tag-catalog";
 import { useTagPicker } from "@/features/prompts/use-tag-picker";
+import { usePrefillTag } from "@/features/challenges/use-prefill-tag";
 import { TagPicker } from "@/features/prompts/tag-picker";
 import { TitleField, DescriptionField } from "@/features/content/core-fields";
 import { ExtraSettingsSection } from "@/features/prompts/extra-settings-panel";
@@ -205,6 +206,7 @@ export function CreatePromptForm() {
     catalog: tagCatalog,
     contextTags: isAnswerMode ? answeredRequest?.tags : undefined,
   });
+  usePrefillTag(tagPicker.addManual, !isEditMode && !duplicateId);
   const [images, setImages] = useState<MultiImageItem[]>([]);
   // Video/ses promptunun çıktı dosyası. Seçildiği türle birlikte tutulur ki
   // içerik türü değişince başka türün dosyası yanlışlıkla yüklenmesin.
