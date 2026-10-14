@@ -17,6 +17,7 @@ import { WorkflowCard } from "@/features/workflows/workflow-card";
 import { PresetCard } from "@/features/presets/preset-card";
 import { CollectionFormModal } from "./collection-form-modal";
 import { CollectionMoreMenu } from "./collection-more-menu";
+import { CollectionFollowButton } from "./collection-follow-button";
 import { useAuth } from "@/features/auth/auth-provider";
 import {
   fetchCollectionById,
@@ -162,6 +163,9 @@ export function CollectionDetailView() {
           </div>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-small text-text-muted">
             <span>{t("collection.itemCount", { count: collection.itemCount })}</span>
+            {collection.visibility === "public" && (
+              <span>{collection.followerCount === 1 ? t("collection.followerCountOne") : t("collection.followerCount", { count: collection.followerCount })}</span>
+            )}
             <span className="flex items-center gap-1">
               {collection.visibility === "public" ? <Globe size={14} /> : <Lock size={14} />}
               {collection.visibility === "public" ? t("collection.visibilityPublicShort") : t("collection.visibilityPrivateShort")}
@@ -171,6 +175,12 @@ export function CollectionDetailView() {
             <Avatar src={collection.owner.avatarUrl} alt={collection.owner.displayName} size={20} />
             {collection.owner.displayName}
           </Link>
+          {!isOwner && collection.visibility === "public" && (
+            <CollectionFollowButton
+              collectionId={collection.id}
+              onCountChange={(delta) => setCollection((prev) => (prev ? { ...prev, followerCount: Math.max(0, prev.followerCount + delta) } : prev))}
+            />
+          )}
         </div>
       </header>
 

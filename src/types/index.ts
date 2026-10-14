@@ -301,6 +301,8 @@ export interface Collection {
   name: string;
   visibility: "public" | "private";
   itemCount: number;
+  /** Real, trigger-maintained `collections.follower_count` — people following this (public) collection. */
+  followerCount: number;
   /** The most recently added item's first media, or null for an empty/text-only collection — never a separate uploaded cover. */
   coverImage: PromptMedia | null;
   createdAt: string;

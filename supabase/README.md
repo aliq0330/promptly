@@ -77,6 +77,8 @@ Kaynak kök `CLAUDE.md` Bölüm 6'dır; bu liste onunla aynıdır. Canlı verita
   `request-references`, `result-media` private (dosyaya erişim, onu gösteren
   satırın görünürlüğüne bağlıdır — `docs/history/150-*`).
 - **Kaldırılan tablo:** `prompt_saves` (kaydedilenler `collections` üzerindendir). Atılması `20260919840000_drop_prompt_saves.sql` ile yazıldı — canlıda uygulandı (tablo artık yok).
+- **@bahsetme:** `extract_mentioned_usernames` + `notify_comment_mentions` / `notify_request_mentions` (bildirim türü `comment`, `dedupe_key`); `20260919890000` — canlıda uygulandı.
+- **Koleksiyon takibi:** `collection_follows` (RLS: yalnız sahibi; ≤200) + `collections.follower_count` (korumalı sayaç) + sahibe bildirim; `20260919900000` — canlıda uygulandı.
 - **Haftalık tema:** `weekly_challenges` (RLS: herkes arşivlenmemişi okur, yazma politikası yok) + `admin_save_challenge` / `admin_archive_challenge` (moderatör); `20260919870000` — canlıda uygulandı.
 - **Etiket takibi:** `tag_follows` (RLS: yalnız sahibi; ≤100 trigger'ı) + `feed_page` kapsamı `tags`; `20260919860000` — canlıda uygulandı.
 - **Kullanım sayacı:** `prompts.copy_count` + `prompt_copy_events` (RLS açık, politika yok) + `record_prompt_copy(uuid)` (yalnız `authenticated`) + `prompts_protect_copy_count` trigger'ı; `20260919850000` — canlıda uygulandı.

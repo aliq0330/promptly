@@ -35,8 +35,8 @@ dış servis/karar gerektirenler en sona.
 | 4 | Haftalık tema / "Haftanın isteği" | O | **yapıldı** (`docs/history/162-*`) |
 | 5 | PWA (ana ekrana ekleme) | K | **yapıldı** (`docs/history/163-*`; service worker yok) |
 | 6 | Workflow adım adım çalıştırma modu | O–B | **yapıldı** (`docs/history/164-*`) |
-| 7 | @bahsetme (yorum + istek) | K–O | bekliyor |
-| 8 | Herkese açık koleksiyonları takip etme | O | bekliyor |
+| 7 | @bahsetme (yorum + istek) | K–O | **yapıldı** (`docs/history/165-*`; yorum + isteğin yaratıcı yönü) |
+| 8 | Herkese açık koleksiyonları takip etme | O | **yapıldı** (`docs/history/166-*`) |
 | 9 | Prompt sürüm geçmişi + fark görünümü (önce var mı kontrol) | O | bekliyor |
 | 10 | Yan yana model karşılaştırma (Studio) | B | bekliyor |
 | 11 | Haftalık özet bildirimi (e-posta / web push) | B | **engelli**: dış servis + gizli anahtar kararı gerekir |
@@ -79,7 +79,13 @@ Manifest + simgeler + apple meta + `theme-color` senkronu. Service worker yok. G
 ### 6. Workflow adım adım çalıştırma — yapıldı
 Model çalıştırmaz: sonucu yapıştır → sonraki adımın girdisi. Yalnız detay sayfası; kartlardan doğrudan düğme yok (`?run=1` hazır).
 
-### 7–10
+### 7. @bahsetme — yapıldı
+Yorum + isteğin yaratıcı yönü; anma kuralı SQL ve istemcide aynı; bildirim türü 'comment' (kısıtı genişletmek yıkıcı SQL gerektirirdi). Kartlarda/açıklamada/biyografide/DM'de anma yok (bilinçli).
+
+### 8. Koleksiyon takibi — yapıldı
+Takip + sayaç (korumalı) + bildirim + profil sekmeleri. Takip edilen koleksiyona yeni içerik bildirimi yapılmadı.
+
+### 9–10
 Ayrıntılar madde sırası geldiğinde bu dosyaya eklenir. Madde 9 için not: `prompt-history-panel.tsx`, `edit-history-panel.tsx`, `diff-text.tsx` zaten var — önce neyin eksik olduğu belirlenmeli.
 
 ### 11. Haftalık özet (engelli)

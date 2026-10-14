@@ -116,6 +116,41 @@ export async function searchProfiles(query: string, limit = 20): Promise<UserPro
   }
 }
 
+/** A person offered while typing `@name` (see `features/mentions`). */
+export interface MentionCandidate {
+  username: string;
+  displayName: string;
+  avatarUrl: string | null;
+}
+
+/** People whose username starts with `prefix`, most followed first. Errors read as "no suggestions". */
+export async function searchMentionCandidates(prefix: string, limit = 6): Promise<MentionCandidate[]> {
+  const safe = prefix.toLowerCase().replace(/[^a-z0-9_.]/g, "").slice(0, 30);
+  if (!safe) return [];
+  try {
+    // `_` is a LIKE wildcard, and usernames may contain it.
+    const pattern = `${safe.replace(/_/g, "\\_")}%`;
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("username, display_name, avatar_url")
+      .ilike("username", pattern)
+      .order("follower_count", { ascending: false })
+      .limit(limit);
+    if (error) {
+      console.error("searchMentionCandidates", error);
+      return [];
+    }
+    return ((data ?? []) as { username: string; display_name: string; avatar_url: string | null }[]).map((row) => ({
+      username: row.username,
+      displayName: row.display_name,
+      avatarUrl: row.avatar_url,
+    }));
+  } catch (err) {
+    console.error("searchMentionCandidates", err);
+    return [];
+  }
+}
+
 /** Every real profile this user follows — for `/following`, via the real `follows` table (public read, Bölüm 19). */
 export async function fetchFollowedProfiles(userId: string): Promise<UserProfile[]> {
   try {

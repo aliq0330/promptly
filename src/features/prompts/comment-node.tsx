@@ -9,6 +9,8 @@ import { cn, formatRelativeTime, profileHref } from "@/lib/utils";
 import { ReportButton } from "@/features/moderation/report-button";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { PromptComment } from "@/types";
+import { MentionText } from "@/features/mentions/mention-text";
+import { MentionTextarea } from "@/features/mentions/mention-field";
 
 /** Beyond this nesting level, indentation stops growing (mobile/readability) — the "@kime yanıt verdiği" hint below takes over showing the relationship instead. */
 const MAX_INDENT_DEPTH = 6;
@@ -108,9 +110,9 @@ export function CommentNode({
             </p>
           ) : isEditingHere ? (
             <div className="space-y-1.5">
-              <textarea
+              <MentionTextarea
                 value={tree.editDraft}
-                onChange={(event) => tree.onEditDraftChange(event.target.value)}
+                onChange={tree.onEditDraftChange}
                 rows={2}
                 autoFocus
                 className="w-full resize-none rounded-lg border border-border bg-surface px-3 py-1.5 text-sm text-text focus:outline-none focus:ring-2 focus:ring-primary/15 shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus:border-primary/60"
@@ -140,7 +142,9 @@ export function CommentNode({
                   <CornerDownRight size={11} />@{parent.author.username}
                 </span>
               )}
-              <span className="text-text-muted">{comment.body}</span>
+              <span className="text-text-muted">
+                <MentionText text={comment.body} />
+              </span>
             </p>
           )}
 
@@ -206,9 +210,9 @@ export function CommentNode({
               <p className="text-xs text-text-muted">
                 <span className="font-medium text-primary">@{comment.author.username}</span> {t("comments.replyingToSuffix")}
               </p>
-              <textarea
+              <MentionTextarea
                 value={tree.replyDraft}
-                onChange={(event) => tree.onReplyDraftChange(event.target.value)}
+                onChange={tree.onReplyDraftChange}
                 rows={2}
                 autoFocus
                 placeholder={t("comments.writeAReply")}
