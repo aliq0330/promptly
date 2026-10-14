@@ -311,15 +311,17 @@ bağlayıcıdır; ayrıntılı gerekçe için `docs/history/README.md` tablosuna
   OAuth yönlendirmesi Google/Supabase'e karşı denenmedi.
 - Supabase Dashboard → Authentication → Providers → Email: **"Leaked password
   protection"** ücretli planda; şimdilik gerekmiyor, bilinçli olarak ertelendi.
-- **Canlıda UYGULANMAMIŞ migration'lar / deploy'lar** (`docs/history/157-*`):
-  `20260919820000_feed_page_oldest_open_only.sql` (Keşfet `oldest` / `p_open_only`
-  için gerekli — uygulanana kadar Keşfet'te bu seçenekler hata gösterir; Ana Sayfa
-  etkilenmez), `20260919830000_auth_login_attempts.sql` (+ ardından `username-login`
-  Edge Function deploy'u, `--no-verify-jwt`), `20260919840000_drop_prompt_saves.sql`
-  (yıkıcı; yalnız `prompt_saves`). `feed_page`'in eski 10 argümanlı imzası, `drop
-  function` onayı olmadığı için ince sarmalayıcı olarak kaldı. Deploy workflow'u
-  (`deploy-functions.yml`) henüz çalıştırılmadı; repo secret'ları
-  `SUPABASE_ACCESS_TOKEN` / `SUPABASE_PROJECT_REF` tanımlanmalı.
+- **Canlıdaki durum** (`docs/history/157-*`): `20260919820000` (`feed_page`
+  `oldest` / `p_open_only`) ve `20260919830000` (`auth_login_attempt`) MCP ile
+  canlıya uygulandı ve doğrulandı. **Hâlâ bekleyenler:** (1)
+  `20260919840000_drop_prompt_saves.sql` — iki denemede MCP `apply_migration`
+  zaman aşımına uğradı (kilit yok, hiçbir şey uygulanmadı; muhtemelen yıkıcı
+  ifade için onay bekliyor): onaylayıp yeniden çalıştırın ya da SQL Editor'den
+  çalıştırın; (2) `username-login` Edge Function'ının yeni sürümü deploy edilmedi
+  (`--no-verify-jwt`; RPC artık canlıda); `deploy-functions.yml` hiç çalıştırılmadı,
+  secret'lar `SUPABASE_ACCESS_TOKEN` / `SUPABASE_PROJECT_REF` tanımlanmalı.
+  `feed_page`'in eski 10 argümanlı imzası, `drop function` onayı olmadığı için ince
+  sarmalayıcı olarak kaldı.
 - Bilinçli sınırlar: Signed URL 10 dk geçerli kalır (private'a çevrilmeden önce
   alınmış bir imza süresi dolana kadar çalışır); Supabase CDN'in eski genel medya
   yanıtlarını ne kadar süre servis ettiği bilinmiyor.
@@ -340,7 +342,7 @@ bağlayıcıdır; ayrıntılı gerekçe için `docs/history/README.md` tablosuna
 - Bilinen sınırlamalar: Keşfet içerik bölümleri, Ana Sayfa ve liste sayfaları
   gerçek keyset sayfalama kullanır (Keşfet'te "En çok beğenilen" tüm türlerde `like_count`; Ana Sayfa'da kişiselleştirme
   yoktur, sekme dürüstçe "En yeni"dir); arama prompt metnini (`prompt_text`) ve
-  isteğin `creative_direction`'ını da kapsar ve keyset sayfalanır (`search_content`); `prompt_saves` canlıda hâlâ duruyor (atma migration'ı yukarıda bekliyor); kod içi
+  isteğin `creative_direction`'ını da kapsar ve keyset sayfalanır (`search_content`); `prompt_saves` canlıda hâlâ duruyor (boş; atma migration'ı yukarıda bekliyor); kod içi
   yorumlarda eski "Bölüm 9.x" atıfları arşiv numaralarına (`docs/history/NNN-*`) karşılık gelir.
 
 **Arşiv:** [`docs/history/README.md`](docs/history/README.md) — 157 bölüm, her
