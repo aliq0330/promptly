@@ -73,7 +73,7 @@ src/
   features/<alan>/            # auth, collections, content, drafts, feed, focus,
                               # messages, moderation, my-content, notifications,
                               # onboarding, presets, profile, prompts, relations,
-                              # requests, search, statistics, studio, tags, workflows
+                              # requests, search, share, statistics, studio, tags, workflows
   lib/                        # utils, i18n, taksonomi, prompt-dna, relations, …
   lib/supabase/               # veri erişim katmanı (tablo başına dosya)
   types/index.ts              # paylaşılan tipler
@@ -209,6 +209,7 @@ tamamlanmış sayılmaz. Ayrıntı ve mimari: `docs/history/049-*`, `056-*`, `05
 | `/privacy`, `/terms` | Gizlilik Politikası, Kullanım Koşulları (herkese açık, TR+EN; metin `features/legal/legal-content.ts`) |
 | `/moderation` | Yalnızca moderatör: şikâyetler, site istatistikleri, kullanıcı yönetimi, depolama temizliği, DNA doldurma |
 | `/login`, `/signup`, `/reset-password` | Auth (e-posta/kullanıcı adı + şifre, Google ile devam et) |
+| `/share/<tür>/<anahtar>/` | Derleme zamanı üretilen statik paylaşım sayfası (herkese açık içerik; kendi `og:*` meta'sı, sonra detaya yönlenir). Paylaş/linki kopyala eylemleri bu adresi verir; sayfası olmayan yeni içerik `404.html` → `NotFoundForwarder` ile detaya gider. `deploy.yml` her 6 saatte yeniden derler |
 
 Giriş gerektirenler (`RequireAuth`): `/messages`, `/notifications`, `/saved`,
 `/following`, `/followers`, `/settings`, `/profile/edit`, `/my-content`.
@@ -321,6 +322,7 @@ bağlayıcıdır; ayrıntılı gerekçe için `docs/history/README.md` tablosuna
   argümanlı imzası, `drop function` onayı olmadığı için ince sarmalayıcı olarak
   kaldı. `deploy-functions.yml` hiç çalıştırılmadı (secret'lar
   `SUPABASE_ACCESS_TOKEN` / `SUPABASE_PROJECT_REF` tanımlı değilse fail eder).
+- Paylaşım önizlemesi (`docs/history/159-*`): `og:image` her zaman site kartı (gönderi medyası private); yeni içeriğin önizlemesi en geç 6 saat sonra. Gerçek sosyal ağ tarayıcılarıyla denenmedi.
 - Migration geçmişi uzlaştırıldı (`docs/history/158-*`): repo temiz DB'de baştan
   oynatılınca canlı şemayla birebir eşit; `schema_migrations`'a 79 repo-sürümlü kayıt
   eklendi. Canlıda ayrıca 48 MCP-sürümlü satır duruyor, `supabase db push` hâlâ
@@ -349,5 +351,5 @@ bağlayıcıdır; ayrıntılı gerekçe için `docs/history/README.md` tablosuna
   isteğin `creative_direction`'ını da kapsar ve keyset sayfalanır (`search_content`); `prompt_saves` canlıdan kaldırıldı; kod içi
   yorumlarda eski "Bölüm 9.x" atıfları arşiv numaralarına (`docs/history/NNN-*`) karşılık gelir.
 
-**Arşiv:** [`docs/history/README.md`](docs/history/README.md) — 158 bölüm, her
+**Arşiv:** [`docs/history/README.md`](docs/history/README.md) — 159 bölüm, her
 biri için durum etiketi (uygulandı / kısmen geçerli / kaldırıldı).

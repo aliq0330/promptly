@@ -3,6 +3,10 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [main]
+  # Static share pages (/share/…) are generated at build time from the public
+  # content in Supabase, so a periodic rebuild keeps them in step with new posts.
+  schedule:
+    - cron: "17 */6 * * *"
   workflow_dispatch:
 
 concurrency:

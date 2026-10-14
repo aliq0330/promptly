@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Share2 } from "lucide-react";
 import { absoluteUrl } from "@/lib/utils";
+import { shareLinkForHref } from "@/lib/share-link";
 import { contentActionClassName } from "@/features/content/action-styles";
 import { useTranslation } from "@/lib/i18n/language-provider";
 
@@ -18,7 +19,8 @@ export async function shareOrCopyLink(
   url: string,
   title: string,
 ): Promise<"shared" | "cancelled" | "copied" | "unavailable"> {
-  const fullUrl = absoluteUrl(url);
+  // Public prompts/requests/workflows/presets/profiles are shared through their static share page so the link unfurls with a real title/description; any other href is used as-is.
+  const fullUrl = absoluteUrl(shareLinkForHref(url));
 
   if (typeof navigator !== "undefined" && navigator.share) {
     try {

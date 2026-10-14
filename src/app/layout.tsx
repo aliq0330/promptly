@@ -43,8 +43,10 @@ const SITE_URL = "https://aliq0330.github.io/promptly";
 const SITE_DESCRIPTION =
   "AI promptlarını paylaşan, keşfeden ve yapılandırılmış olarak oluşturan topluluk platformu.";
 
-// Static export: one site-wide card. Individual prompts share this card too —
-// per-page OG tags would need server rendering, which this deployment lacks.
+// Static export: one site-wide card. Detail pages are client-rendered `?id=`
+// routes and share this card; public content instead gets its own build-time
+// static share page (`/share/<kind>/<key>/`, see src/app/share) with its own
+// title/description — that is the link the "Paylaş" actions hand out.
 export const metadata: Metadata = {
   metadataBase: new URL(`${SITE_URL}/`),
   title: "Promptly",

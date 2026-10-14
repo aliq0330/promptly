@@ -489,6 +489,9 @@ export const translations = {
   "common.showLess": { tr: "Daha az göster", en: "Show less" },
   "common.readMore": { tr: "devamını gör", en: "read more" },
   "common.notFound": { tr: "Bulunamadı", en: "Not found" },
+  "notFound.description": { tr: "Aradığın sayfa taşınmış ya da hiç var olmamış olabilir.", en: "The page you're looking for may have moved or never existed." },
+  "share.pageOpening": { tr: "Promptly'de açılıyor…", en: "Opening in Promptly…" },
+  "share.pageOpen": { tr: "Promptly'de aç", en: "Open in Promptly" },
   "common.viewProfile": { tr: "Profili görüntüle", en: "View profile" },
   "common.somethingWentWrong": { tr: "Bir şeyler ters gitti", en: "Something went wrong" },
 
