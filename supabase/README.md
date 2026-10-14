@@ -76,7 +76,7 @@ Kaynak kök `CLAUDE.md` Bölüm 6'dır; bu liste onunla aynıdır. Canlı verita
 - **Storage:** `avatars` herkese açık; `message-images`, `prompt-media`,
   `request-references`, `result-media` private (dosyaya erişim, onu gösteren
   satırın görünürlüğüne bağlıdır — `docs/history/150-*`).
-- **Kaldırılan tablo:** `prompt_saves` (kaydedilenler `collections` üzerindendir). Atılması `20260919840000_drop_prompt_saves.sql` ile yazıldı — **canlıda henüz uygulanmadı** (MCP uygulaması zaman aşımına uğradı; tablo canlıda boş).
+- **Kaldırılan tablo:** `prompt_saves` (kaydedilenler `collections` üzerindendir). Atılması `20260919840000_drop_prompt_saves.sql` ile yazıldı — canlıda uygulandı (tablo artık yok).
 - **Giriş hız sınırı:** `auth_login_attempts` (RLS açık, policy yok) + `auth_login_attempt(p_ip)` — yalnız `service_role`; `20260919830000` — canlıda uygulandı.
 
 ## Google ile giriş kurulumu
@@ -822,7 +822,7 @@ aşağıdaki "GitHub Actions ile deploy" workflow'u ile deploy edilir:
 | Fonksiyon | Ne yapar | Deploy |
 |---|---|---|
 | `analyze-image` | Görsel + MIME alıp Gemini Vision'a gönderen, yapılandırılmış JSON döndüren fonksiyon | `supabase functions deploy analyze-image` (kod değişince) |
-| `username-login` | Kullanıcı adı + şifreyle giriş; e-postayı yalnızca sunucuda çözer. Hız sınırı kalıcı (`auth_login_attempt` RPC), CORS `*` değil (site + localhost + `chrome-extension://`) — **bu kod değişikliği canlıya deploy edilmedi** (`20260919830000` artık canlıda) | `supabase functions deploy username-login --no-verify-jwt` |
+| `username-login` | Kullanıcı adı + şifreyle giriş; e-postayı yalnızca sunucuda çözer. Hız sınırı kalıcı (`auth_login_attempt` RPC), CORS `*` değil (site + localhost + `chrome-extension://`) — canlıda v2 (MCP ile deploy edildi; canlı istekle denenmedi) | `supabase functions deploy username-login --no-verify-jwt` |
 | `cleanup-orphan-storage` | Hiçbir satırın göstermediği Storage dosyalarını bulur/siler (yalnız moderatör) | `supabase functions deploy cleanup-orphan-storage` |
 | `delete-account` | Kullanıcının KENDİ hesabını siler (JWT'den; `docs/history/154-*`) | `supabase functions deploy delete-account` — JWT doğrulaması AÇIK. Canlıda (v1). |
 
