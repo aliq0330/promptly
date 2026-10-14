@@ -1051,6 +1051,7 @@ export const translations = {
   "profile.sortNewest": { tr: "En yeni", en: "Newest" },
   "profile.sortOldest": { tr: "En eski", en: "Oldest" },
   "profile.sortMostLiked": { tr: "En çok beğenilen", en: "Most liked" },
+  "profile.sortMostUsed": { tr: "En çok kullanılan", en: "Most used" },
   "profile.sortAriaLabel": { tr: "Sırala", en: "Sort" },
   "profile.searchPlaceholder": { tr: "Bu profildeki promptlarda ara", en: "Search this profile's prompts" },
   "profile.clearFilters": { tr: "Temizle", en: "Clear" },

@@ -48,7 +48,7 @@ test("oldest: the cursor predicate is ascending (>), not the descending <", () =
 
 test("a row equal to the cursor is never 'after' it (no repeat across pages)", () => {
   const cursor = row(3, "2026-09-19T10:00:00.000000+00:00", "x");
-  for (const order of ["newest", "popular", "oldest"] as const) assert.equal(isAfterCursor(order, { ...cursor }, cursor), false);
+  for (const order of ["newest", "popular", "oldest", "used"] as const) assert.equal(isAfterCursor(order, { ...cursor }, cursor), false);
 });
 
 test("oldest: equal timestamps are separated by id ascending", () => {
@@ -67,7 +67,7 @@ test("popular: like_count descending first, then created_at and id descending", 
   assert.equal(isAfterCursor("popular", row(5, at, "z"), cursor), false);
 });
 
-for (const order of ["newest", "popular", "oldest"] as const) {
+for (const order of ["newest", "popular", "oldest", "used"] as const) {
   for (const limit of [1, 7, 10, 50]) {
     test(`${order}: walking pages of ${limit} returns every row once, in order`, () => {
       const seen = walk(dataset, order, limit);
@@ -103,14 +103,26 @@ test("nextFeedCursor comes from the last RAW row and stops on a short page", () 
   assert.ok(nextFeedCursor(fifty, 80));
 });
 
+test("used: copy_count descending first (like popular), then created_at and id descending", () => {
+  const at = "2026-09-19T10:00:00.000000+00:00";
+  const cursor = row(5, at, "m");
+  assert.equal(isAfterCursor("used", row(4, "2026-09-19T11:00:00.000000+00:00", "z"), cursor), true, "fewer uses is after, even if newer");
+  assert.equal(isAfterCursor("used", row(6, "2026-09-19T09:00:00.000000+00:00", "a"), cursor), false, "more uses is before");
+  assert.equal(isAfterCursor("used", row(5, "2026-09-19T09:59:59.000000+00:00", "z"), cursor), true);
+  assert.equal(isAfterCursor("used", row(0, at, "a"), row(0, at, "b")), true, "rank 0 rows (every non-prompt kind) fall back to newest-first");
+});
+
 test("Keşfet sort keys map to feed orders", () => {
+  assert.equal(feedOrderForSort("most-used"), "used");
   assert.equal(feedOrderForSort("most-liked"), "popular");
   assert.equal(feedOrderForSort("newest"), "newest");
   assert.equal(feedOrderForSort("oldest"), "oldest");
 });
 
-test("only popular carries like_count as the rank", () => {
-  assert.equal(feedSortRank("popular", 9), 9);
-  assert.equal(feedSortRank("newest", 9), 0);
-  assert.equal(feedSortRank("oldest", 9), 0);
+test("popular ranks by like_count, used by copy_count (prompts only), the rest by nothing", () => {
+  assert.equal(feedSortRank("popular", { likeCount: 9, copyCount: 4 }), 9);
+  assert.equal(feedSortRank("used", { likeCount: 9, copyCount: 4 }), 4);
+  assert.equal(feedSortRank("used", { likeCount: 9 }), 0, "non-prompt kinds have no use counter");
+  assert.equal(feedSortRank("newest", { likeCount: 9, copyCount: 4 }), 0);
+  assert.equal(feedSortRank("oldest", { likeCount: 9, copyCount: 4 }), 0);
 });

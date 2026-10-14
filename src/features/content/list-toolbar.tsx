@@ -91,6 +91,7 @@ export function ListToolbar({
   hideTabsOnMobile,
   sort,
   onSortChange,
+  sortKeys = SORT_KEYS,
   sheetSections,
   desktopSheetSections,
   desktopActiveExtra = 0,
@@ -112,6 +113,8 @@ export function ListToolbar({
   /** Omit both when the order is not user-selectable here (Home: the tab decides it) — the sort select and sheet section are then hidden. */
   sort?: ContentSortKey;
   onSortChange?: (sort: ContentSortKey) => void;
+  /** Which sorts to offer (default: the shared three). */
+  sortKeys?: ContentSortKey[];
   /** Page-specific sections of the filter sheet (placed above Sıralama / Görünüm). */
   sheetSections?: ReactNode;
   /** Sections only needed from `md` up — on phones the same filter is already a tab (e.g. request status). */
@@ -171,7 +174,7 @@ export function ListToolbar({
             )}
           </Button>
           <div className="flex min-w-0 flex-1 items-center justify-end gap-2 md:flex-none">
-            {sort && onSortChange && <SortSelect value={sort} onChange={onSortChange} />}
+            {sort && onSortChange && <SortSelect value={sort} onChange={onSortChange} keys={sortKeys} />}
             <MobileViewToggle className="md:hidden" />
             <ViewModeSwitcher className="max-md:hidden" />
           </div>
@@ -201,7 +204,7 @@ export function ListToolbar({
               {sort && onSortChange && (
                 <SheetSection title={t("toolbar.sort")}>
                   <div role="radiogroup" aria-label={t("profile.sortAriaLabel")} className="space-y-1">
-                    {SORT_KEYS.map((key) => (
+                    {sortKeys.map((key) => (
                       <button
                         key={key}
                         type="button"

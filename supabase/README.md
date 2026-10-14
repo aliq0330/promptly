@@ -69,7 +69,7 @@ Kaynak kök `CLAUDE.md` Bölüm 6'dır; bu liste onunla aynıdır. Canlı verita
   iç `_admin_guard()`).
 - **İlişkiler:** `content_relations` (yalnızca elle kurulan ilişkiler; diğerleri
   mevcut tablolardan türetilir).
-- **RPC'ler (okuma):** `feed_page` (ana sayfa + Keşfet; `p_scope` all/following/tags, `p_order` newest/popular/oldest, isteğe bağlı `p_open_only` — `20260919820000`, canlıda uygulandı), `search_content` (arama),
+- **RPC'ler (okuma):** `feed_page` (ana sayfa + Keşfet; `p_scope` all/following/tags, `p_order` newest/popular/oldest/used, isteğe bağlı `p_open_only` — `20260919820000`, canlıda uygulandı), `search_content` (arama),
   `related_prompts` / `related_requests` (detaydaki benzerler),
   `dna_similar_candidates`. **Yalnız service role:** `delete_account_data`,
   `orphan_storage_objects`.

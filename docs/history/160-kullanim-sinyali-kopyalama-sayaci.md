@@ -1,6 +1,6 @@
 # 9.160 — "Kullanım" sinyali: kopyalama sayacı
 
-Durum: uygulandı. Migration `20260919850000_prompt_copy_count.sql` **canlıda uygulandı** (kayıt dosya sürümüyle düşüldü); arayüz kodu `main`'e birleşince yayınlanır. Önce migration, sonra kod sırası korundu (kod `copy_count` sütununu seçtiği için sütun yokken prompt listeleri hata verirdi).
+Durum: uygulandı (sayaç + görünürlük + "En çok kullanılan" sıralaması). Migration'lar `20260919850000_prompt_copy_count.sql` ve `20260919880000_feed_page_used_order.sql` **canlıda uygulandı** (kayıt dosya sürümüyle düşüldü); arayüz kodu `main`'e birleşince yayınlanır. Önce migration, sonra kod sırası korundu (kod `copy_count` sütununu seçtiği için sütun yokken prompt listeleri hata verirdi).
 
 ## Ne
 
@@ -22,11 +22,14 @@ Platformun imzası kopyalanan prompt; beğeni vitrindir, kopyalama gerçek kulla
 - `Prompt.copyCount` (`mapPromptRow` tek noktası; sütun yoksa 0). Detay: `prompt.usedOnce/usedCount`. İstatistik: `statistics.tileCopies` (4 kutucuk, mobilde 2×2).
 - Etki alanı taraması: kopyalama noktaları yalnızca prompt detayı (kopyala + çalıştır). `PromptPreviewBox` hiçbir yerde kullanılmıyor (ölü bileşen; bağlandı ama etkisiz). İstek/workflow/hazır ayarda kopyala düğmesi yok, sayaç yalnızca prompt için.
 
-## Bilinçli olarak YAPILMAYAN
+## "En çok kullanılan" sıralaması
 
-- **Sıralama değişmedi.** Sayaç sıfırdan başlıyor; `Popüler` sıralamasını sessizce `like_count + copy_count` yapmak Ana sayfa / Keşfet / Arama arasında tutarsızlık yaratırdı. Veri biriktikten sonra bilinçli karar verilmeli (`feed_page` ve `search_content` birlikte değişmeli).
+- `feed_page` `p_order = 'used'` (`20260919880000`): AYNI 11 argümanlı imzayla `create or replace` (drop yok, sarmalayıcı/grant değişmedi); önceki sürüme göre fark yalnızca 1 parametre satırı + prompt kolundaki 3 sıralama ifadesi (diff ile doğrulandı). Sıralama anahtarı prompt'ta `copy_count`, diğer türlerde 0 → "Tümü"nde kullanılanlar önce, gerisi en yeniden eskiye; anlamlı kullanım için yalnızca **Keşfet → Promptlar** bölümünde sunulur.
+- `ContentSortKey` + `"most-used"`; `SORT_KEYS` hâlâ ortak üç anahtar (liste sayfaları, profil, İçeriklerim DEĞİŞMEDİ); `SortSelect`/`ListToolbar` isteğe bağlı `keys`/`sortKeys` alır. Keşfet başka bölüme geçince seçim "En çok beğenilen"e düşer (anlamsız sıralama gösterilmez), Promptlar'a dönünce geri gelir.
+- `feed-cursor.ts`: `FeedOrder` + `"used"`, `feedSortRank(order, {likeCount, copyCount})`; imleç testleri `used` için de sayfa sayfa gezmeyi doğrular.
+- **Bilerek DEĞİŞMEYEN:** `Popüler` hâlâ yalnızca beğeni (sayaç sıfırdan başlıyor; sessizce karıştırmak Ana sayfa / Keşfet / Arama arasında tutarsızlık yaratırdı), `search_content` (aramada "kullanım" sıralaması yok), liste sayfalarının istemci tarafı sıralaması.
 - Misafir kopyaları sayılmıyor.
 
 ## Doğrulama
 
-Yerel PostgreSQL 16: bütün migration'lar baştan oynatıldı; RPC senaryoları (ilk sayım, aynı gün tekrar, taslak/özel/olmayan/yazarın kendisi/oturumsuz), elle `UPDATE`/`INSERT` ile sayaç yazma denemesi (yok sayıldı), yetkiler (anon yürütemez/okuyamaz), sürüm geçmişinin etkilenmemesi, hesap silme. Canlıda: yapı/yetki/RLS/kayıt doğrulandı. Tarayıcı (Playwright, sahte Supabase): oturumlu kopyalama → tam 1 RPC; misafir → 0; başarısız kopyalama → 0; "N kez kullanıldı" görünür; İstatistikler penceresinde TR/EN "Kopyalama/Copies" kutucuğu. Gerçek Supabase'e karşı uçtan uca (gerçek oturumla sayacın artması) DENENMEDİ.
+Yerel PostgreSQL 16: bütün migration'lar baştan oynatıldı; RPC senaryoları (ilk sayım, aynı gün tekrar, taslak/özel/olmayan/yazarın kendisi/oturumsuz), elle `UPDATE`/`INSERT` ile sayaç yazma denemesi (yok sayıldı), yetkiler (anon yürütemez/okuyamaz), sürüm geçmişinin etkilenmemesi, hesap silme. Canlıda: yapı/yetki/RLS/kayıt doğrulandı. Tarayıcı (Playwright, sahte Supabase): oturumlu kopyalama → tam 1 RPC; misafir → 0; başarısız kopyalama → 0; "N kez kullanıldı" görünür; İstatistikler penceresinde TR/EN "Kopyalama/Copies" kutucuğu. Sıralama: yerel PostgreSQL'de `used` sırası, imleçle 4'erli gezme (12/12, tekrarsız, sıralı), diğer sıralar ve sarmalayıcı aynı; canlıda Ana sayfa 50, açık istek 30, `popular` hâlâ beğeni. Tarayıcıda 7 senaryo: seçenek yalnız Promptlar'da, doğru `p_order`/`p_kinds`, bölüm değişince geri düşme, `/prompts` listesi etkilenmedi. Gerçek Supabase'e karşı uçtan uca (gerçek oturumla sayacın artması) DENENMEDİ.

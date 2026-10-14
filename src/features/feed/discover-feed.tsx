@@ -12,7 +12,7 @@ import { FeedItemsView } from "./feed-items-view";
 import { useFeedPages } from "./use-feed-pages";
 import type { FeedKind } from "@/lib/supabase/feed";
 import { feedOrderForSort } from "@/lib/feed-cursor";
-import { type ContentSortKey } from "@/features/content/sort-select";
+import { SORT_KEYS, type ContentSortKey } from "@/features/content/sort-select";
 import { ListToolbar, SheetChips, SheetSection, TaxonomySheetSections, taxonomyActiveCount } from "@/features/content/list-toolbar";
 import { TaxonomyTypeChips } from "@/features/content/taxonomy-filter";
 import { SearchView } from "@/features/search/search-view";
@@ -68,10 +68,14 @@ export function DiscoverFeed() {
   }, []);
 
   const isCreators = section === "creators";
+  // "Most used" ranks prompts by their use counter, so it only exists while Promptlar is shown;
+  // switching to another section falls back to the liked order instead of an order that means nothing there.
+  const effectiveSort: ContentSortKey = sort === "most-used" && section !== "prompts" ? "most-liked" : sort;
+  const sortKeys: ContentSortKey[] = section === "prompts" ? [...SORT_KEYS, "most-used"] : SORT_KEYS;
   const feed = useFeedPages(
     {
       scope: "all",
-      order: feedOrderForSort(sort),
+      order: feedOrderForSort(effectiveSort),
       kind: SECTION_KIND[isCreators ? "all" : section],
       taxonomy,
       // The open-only chip only exists in the requests section; other kinds are unaffected by it anyway.
@@ -128,8 +132,9 @@ export function DiscoverFeed() {
             tabs={<TaxonomyTypeChips value={taxonomy} onChange={setTaxonomy} />}
             tabsLabel={t("toolbar.contentTypeAria")}
             hideTabsOnMobile
-            sort={sort}
+            sort={effectiveSort}
             onSortChange={setSort}
+            sortKeys={sortKeys}
             sheetSections={
               <>
                 <TaxonomySheetSections value={taxonomy} onChange={setTaxonomy} />

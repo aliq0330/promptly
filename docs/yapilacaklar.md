@@ -30,7 +30,7 @@ dış servis/karar gerektirenler en sona.
 | # | Madde | Boyut | Durum |
 |---|---|---|---|
 | 1 | Paylaşılan linklerde önizleme (OG) | O | **yapıldı** (statik paylaşım sayfaları; `docs/history/159-*`) |
-| 2 | "Kullanım" sinyali: kopyalama sayacı + görünürlük | K–O | **yapıldı** (sıralama bilerek yok; `docs/history/160-*`) |
+| 2 | "Kullanım" sinyali: kopyalama sayacı + görünürlük + sıralama | K–O | **yapıldı** (`docs/history/160-*`; "En çok kullanılan" yalnız Keşfet → Promptlar, `Popüler` değişmedi) |
 | 3 | Etiket takibi + ana sayfada "Etiketlerim" | O | **yapıldı** (`docs/history/161-*`) |
 | 4 | Haftalık tema / "Haftanın isteği" | O | bekliyor |
 | 5 | PWA (ana ekrana ekleme) | K | bekliyor |
@@ -57,8 +57,8 @@ dış servis/karar gerektirenler en sona.
 - Plan: `copy_count` sayacı (SECURITY DEFINER RPC, kullanıcı başına gün başına tek sayım),
   kopyalama eylemi RPC'yi çağırır; kartta/detayda/istatistikte gösterilir; isteğe bağlı sıralama.
 - Etki alanı (tarandı): kopyalama yalnızca prompt detayında var (kopyala + çalıştır); istek/workflow/hazır ayarda
-  kopyala düğmesi yok; kartlarda yok (`PromptPreviewBox` ölü bileşen); İstatistikler penceresi bağlandı; sıralama
-  bilerek değişmedi (Ana sayfa/Keşfet/Arama tutarlılığı için veri birikince birlikte karar).
+  kopyala düğmesi yok; kartlarda yok (`PromptPreviewBox` ölü bileşen); İstatistikler penceresi bağlandı; sıralama:
+  ayrı "En çok kullanılan" seçeneği (yalnız Keşfet → Promptlar); `Popüler`/arama/liste sayfaları değişmedi.
 
 ### 3. Etiket takibi
 - Plan: `tag_follows` tablosu (RLS: yalnızca sahibi), etiket sayfasında Takip et, ana sayfada "Etiketlerim"

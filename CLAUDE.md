@@ -194,7 +194,7 @@ tamamlanmış sayılmaz. Ayrıntı ve mimari: `docs/history/049-*`, `056-*`, `05
 | Route | Açıklama |
 |---|---|
 | `/` | Ana Sayfa: karma akış (En yeni / Popüler / Takip / Etiketlerim; sunucudan `feed_page`, keyset), tür çipleri; misafire tanıtım |
-| `/discover` | Keşfet: bölümler (Tümü / Promptlar / Workflow / Hazır ayar / İstekler / Yaratıcılar), filtreler; içerik bölümleri sunucudan `feed_page` (keyset), Yaratıcılar `profiles` keyset |
+| `/discover` | Keşfet: bölümler (Tümü / Promptlar / Workflow / Hazır ayar / İstekler / Yaratıcılar), filtreler (Promptlar'da ek "En çok kullanılan" sıralaması); içerik bölümleri sunucudan `feed_page` (keyset), Yaratıcılar `profiles` keyset |
 | `/prompts`, `/requests`, `/workflows`, `/presets` | Tür listeleri (ortak `ContentListPage`: arama, Filtre, sıralama, Kart/Odak) |
 | `/prompts/local?id=` · `/requests/local?id=` · `/workflows/local?id=` · `/presets/local?id=` · `/results/local?id=` | Detay sayfaları |
 | `/create` · `/requests/new` · `/workflows/create` · `/presets/create` | Oluşturma/düzenleme (`?edit=<id>`), ortak alt alan: Görünürlük + Taslağa kaydet/Paylaş |
@@ -323,7 +323,7 @@ bağlayıcıdır; ayrıntılı gerekçe için `docs/history/README.md` tablosuna
   kaldı. `deploy-functions.yml` hiç çalıştırılmadı (secret'lar
   `SUPABASE_ACCESS_TOKEN` / `SUPABASE_PROJECT_REF` tanımlı değilse fail eder).
 - Etiket takibi (`docs/history/161-*`): `tag_follows` + `feed_page` `tags` kapsamı canlıda; yalnızca ekleyici, aynı imza. Gerçek oturumla uçtan uca denenmedi.
-- Kopyalama sayacı (`docs/history/160-*`): `prompts.copy_count` + `record_prompt_copy` canlıda; yalnızca oturumlu kullanıcı, günde bir, yazarın kendisi sayılmaz; sıralamaya BİLEREK girmedi. Sayaç sütunlarını istemciden koruma yalnızca `copy_count` için var (aşağıdaki "sayaç koruması" açık işi).
+- Kopyalama sayacı (`docs/history/160-*`): `prompts.copy_count` + `record_prompt_copy` canlıda; yalnızca oturumlu kullanıcı, günde bir, yazarın kendisi sayılmaz. Keşfet → Promptlar'da ayrı "En çok kullanılan" sıralaması var (`feed_page` `p_order='used'`); `Popüler` hâlâ yalnızca beğeni. Sayaç sütunlarını istemciden koruma yalnızca `copy_count` için var (aşağıdaki "sayaç koruması" açık işi).
 - Paylaşım önizlemesi (`docs/history/159-*`): `og:image` her zaman site kartı (gönderi medyası private); yeni içeriğin önizlemesi en geç 6 saat sonra. Gerçek sosyal ağ tarayıcılarıyla denenmedi.
 - Migration geçmişi uzlaştırıldı (`docs/history/158-*`): repo temiz DB'de baştan
   oynatılınca canlı şemayla birebir eşit; `schema_migrations`'a 79 repo-sürümlü kayıt
