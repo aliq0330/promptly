@@ -56,6 +56,8 @@ Uygulama tamamen statik export'tur (GitHub Pages, `basePath /promptly`): sunucu
 "id'ye göre detay" sayfası `/x/local?id=` biçimindedir (`promptHref()` vb. —
 `src/lib/utils.ts`). Hiçbir buton gerçek olmayan bir işlemi yapılmış gibi göstermez.
 
+**PWA:** `src/app/manifest.ts` + `public/icons/` ile ana ekrana eklenebilir (`docs/history/163-*`); **service worker yok** (bilerek).
+
 **Dağıtım:** `.github/workflows/deploy.yml` yalnızca statik siteyi GitHub
 Pages'e yayınlar. **Edge Function'lar (`supabase/functions/*`) ve
 migration'lar CI ile deploy edilmez** — elle (`supabase functions deploy …`,
@@ -198,6 +200,7 @@ tamamlanmış sayılmaz. Ayrıntı ve mimari: `docs/history/049-*`, `056-*`, `05
 | `/prompts`, `/requests`, `/workflows`, `/presets` | Tür listeleri (ortak `ContentListPage`: arama, Filtre, sıralama, Kart/Odak) |
 | `/prompts/local?id=` · `/requests/local?id=` · `/workflows/local?id=` · `/presets/local?id=` · `/results/local?id=` | Detay sayfaları |
 | `/create` · `/requests/new` · `/workflows/create` · `/presets/create` | Oluşturma/düzenleme (`?edit=<id>`), ortak alt alan: Görünürlük + Taslağa kaydet/Paylaş |
+| `/workflows/local?id=` (detay) | Herkese açık workflow: "Akış" görünümü + **"Adım adım" çalıştırma modu** (`?run=1`; model çalıştırmaz, sonuç yapıştırılır → sonraki adımın girdisi, durum yalnız `sessionStorage`) |
 | `/studio` | Prompt / Hazır Ayar kaynaklı deneme alanı, kullanıcının kendi API anahtarıyla görsel/metin üretimi (`/generate` buraya yönlenir) |
 | `/search`, `/tags`, `/tags/local?tag=` | Arama (chip tabanlı), etiket keşfi/detayı |
 | `/relations?type=&id=` | Birleşik İlişki Haritası |
@@ -322,6 +325,7 @@ bağlayıcıdır; ayrıntılı gerekçe için `docs/history/README.md` tablosuna
   argümanlı imzası, `drop function` onayı olmadığı için ince sarmalayıcı olarak
   kaldı. `deploy-functions.yml` hiç çalıştırılmadı (secret'lar
   `SUPABASE_ACCESS_TOKEN` / `SUPABASE_PROJECT_REF` tanımlı değilse fail eder).
+- PWA (`docs/history/163-*`) ve Workflow adım adım modu (`docs/history/164-*`): yalnız istemci kodu, veritabanı değişikliği yok. Gerçek cihazda "ana ekrana ekle" ve kurulu uygulamada Google girişi denenmedi.
 - Haftalık tema (`docs/history/162-*`): `weekly_challenges` + moderatör RPC'leri canlıda (yalnızca ekleyici); canlıda henüz tema yok — moderatör `/moderation → Temalar`'dan oluşturur. Gerçek oturumla uçtan uca denenmedi.
 - Etiket takibi (`docs/history/161-*`): `tag_follows` + `feed_page` `tags` kapsamı canlıda; yalnızca ekleyici, aynı imza. Gerçek oturumla uçtan uca denenmedi.
 - Kopyalama sayacı (`docs/history/160-*`): `prompts.copy_count` + `record_prompt_copy` canlıda; yalnızca oturumlu kullanıcı, günde bir, yazarın kendisi sayılmaz. Keşfet → Promptlar'da ayrı "En çok kullanılan" sıralaması var (`feed_page` `p_order='used'`); `Popüler` hâlâ yalnızca beğeni. Sayaç sütunlarını istemciden koruma yalnızca `copy_count` için var (aşağıdaki "sayaç koruması" açık işi).
@@ -354,5 +358,5 @@ bağlayıcıdır; ayrıntılı gerekçe için `docs/history/README.md` tablosuna
   isteğin `creative_direction`'ını da kapsar ve keyset sayfalanır (`search_content`); `prompt_saves` canlıdan kaldırıldı; kod içi
   yorumlarda eski "Bölüm 9.x" atıfları arşiv numaralarına (`docs/history/NNN-*`) karşılık gelir.
 
-**Arşiv:** [`docs/history/README.md`](docs/history/README.md) — 162 bölüm, her
+**Arşiv:** [`docs/history/README.md`](docs/history/README.md) — 164 bölüm, her
 biri için durum etiketi (uygulandı / kısmen geçerli / kaldırıldı).

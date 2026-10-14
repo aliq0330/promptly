@@ -33,8 +33,8 @@ dış servis/karar gerektirenler en sona.
 | 2 | "Kullanım" sinyali: kopyalama sayacı + görünürlük + sıralama | K–O | **yapıldı** (`docs/history/160-*`; "En çok kullanılan" yalnız Keşfet → Promptlar, `Popüler` değişmedi) |
 | 3 | Etiket takibi + ana sayfada "Etiketlerim" | O | **yapıldı** (`docs/history/161-*`) |
 | 4 | Haftalık tema / "Haftanın isteği" | O | **yapıldı** (`docs/history/162-*`) |
-| 5 | PWA (ana ekrana ekleme) | K | bekliyor |
-| 6 | Workflow adım adım çalıştırma modu | O–B | bekliyor |
+| 5 | PWA (ana ekrana ekleme) | K | **yapıldı** (`docs/history/163-*`; service worker yok) |
+| 6 | Workflow adım adım çalıştırma modu | O–B | **yapıldı** (`docs/history/164-*`) |
 | 7 | @bahsetme (yorum + istek) | K–O | bekliyor |
 | 8 | Herkese açık koleksiyonları takip etme | O | bekliyor |
 | 9 | Prompt sürüm geçmişi + fark görünümü (önce var mı kontrol) | O | bekliyor |
@@ -73,8 +73,14 @@ dış servis/karar gerektirenler en sona.
 - Plan: `manifest.webmanifest`, ikonlar, meta etiketleri. Service worker YOK (eski sürümde takılma riski).
 - Etki alanı: `basePath /promptly`, tema rengi (palet/mod), iOS meta.
 
-### 6–10
-Ayrıntılar madde sırası geldiğinde bu dosyaya eklenir.
+### 5. PWA — yapıldı
+Manifest + simgeler + apple meta + `theme-color` senkronu. Service worker yok. Gerçek cihazda denenmedi; kurulu uygulamada Google girişi denenmedi.
+
+### 6. Workflow adım adım çalıştırma — yapıldı
+Model çalıştırmaz: sonucu yapıştır → sonraki adımın girdisi. Yalnız detay sayfası; kartlardan doğrudan düğme yok (`?run=1` hazır).
+
+### 7–10
+Ayrıntılar madde sırası geldiğinde bu dosyaya eklenir. Madde 9 için not: `prompt-history-panel.tsx`, `edit-history-panel.tsx`, `diff-text.tsx` zaten var — önce neyin eksik olduğu belirlenmeli.
 
 ### 11. Haftalık özet (engelli)
 E-posta sağlayıcısı veya web push (VAPID) anahtarı gerekir; anahtar repoya girmez. Karar bekliyor.
