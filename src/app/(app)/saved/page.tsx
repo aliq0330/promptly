@@ -11,7 +11,8 @@ import { useTranslation } from "@/lib/i18n/language-provider";
  * Bottom-nav "Kaydedilenler" shortcut — redirects straight to the viewer's
  * own default ("Genel") collection, the exact same real collection Profile
  * > Kaydedilenler shows first. This used to render its own separate,
- * `prompt_saves`-backed flat list; now there is a single source of truth
+ * flat list backed by a dedicated saves table (since dropped, migration
+ * 20260919840000); now there is a single source of truth
  * for "what's generally saved" (membership in the default collection), so
  * this route reuses the one real implementation (`CollectionDetailView`)
  * instead of maintaining a second list/removal code path that could drift

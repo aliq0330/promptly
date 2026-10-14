@@ -1,33 +1,31 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Hash, LayoutGrid, Sparkles, SquareTerminal, SlidersHorizontal, TrendingUp, Users, Workflow as WorkflowIcon } from "lucide-react";
 import { Tabs } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 import { Chip } from "@/components/ui/chip";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PromptCardSkeletonGrid } from "@/components/ui/prompt-card-skeleton";
 import { FeedItemsView } from "./feed-items-view";
-import { feedItemCreatedAt, feedItemPopularity, type FeedItem } from "./types";
+import { useFeedPages } from "./use-feed-pages";
+import type { FeedKind } from "@/lib/supabase/feed";
+import { feedOrderForSort } from "@/lib/feed-cursor";
 import { type ContentSortKey } from "@/features/content/sort-select";
 import { ListToolbar, SheetChips, SheetSection, TaxonomySheetSections, taxonomyActiveCount } from "@/features/content/list-toolbar";
 import { TaxonomyTypeChips } from "@/features/content/taxonomy-filter";
 import { SearchView } from "@/features/search/search-view";
-import { EMPTY_TAXONOMY_FILTER, matchesTaxonomy, type TaxonomyFilterValue } from "@/lib/content-taxonomy";
+import { EMPTY_TAXONOMY_FILTER, type TaxonomyFilterValue } from "@/lib/content-taxonomy";
 import { CreatorCard } from "@/features/profile/creator-card";
-import { useRealPrompts } from "@/features/prompts/real-prompts-provider";
-import { useRealRequests } from "@/features/requests/real-requests-provider";
-import { useRealWorkflows } from "@/features/workflows/real-workflows-provider";
-import { useRealPresets } from "@/features/presets/real-presets-provider";
-import { fetchTopCreators } from "@/lib/supabase/profiles";
+import { useCreatorPages } from "@/features/profile/use-creator-pages";
 import { fetchPopularTags } from "@/lib/supabase/tags";
 import { tagHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
-import type { Tag, UserProfile } from "@/types";
+import type { Tag } from "@/types";
 
 type Section = "all" | "prompts" | "workflows" | "presets" | "requests" | "creators";
-
 
 const SECTIONS: { key: Section; labelKey: TranslationKey; icon: typeof LayoutGrid }[] = [
   { key: "all", labelKey: "common.all", icon: LayoutGrid },
@@ -38,11 +36,22 @@ const SECTIONS: { key: Section; labelKey: TranslationKey; icon: typeof LayoutGri
   { key: "creators", labelKey: "discover.creators", icon: Users },
 ];
 
+/** Section → `p_kinds` of `public.feed_page` (`all` = no kind filter). "creators" is not a feed. */
+const SECTION_KIND: Record<Exclude<Section, "creators">, FeedKind | "all"> = {
+  all: "all",
+  prompts: "prompt",
+  workflows: "workflow",
+  presets: "preset",
+  requests: "request",
+};
+
 /**
  * Explore — search, trending tags, and one place to browse every kind of
- * content: all, prompts (by content type), requests
- * (open / all) and creators. All filtering happens on the already-loaded
- * shared caches (RealPrompts/Requests providers), no new API.
+ * content: all, prompts, workflows, presets, requests (open / all) and
+ * creators. The content sections are SERVER queries (`public.feed_page`, the
+ * same keyset hook as Home): filter, sort and "Load more" are decided by the
+ * database, so "Most liked" is global rather than the top of a client pool.
+ * Creators are profiles, paged separately by (follower_count, id).
  */
 export function DiscoverFeed() {
   const { t } = useTranslation();
@@ -51,49 +60,26 @@ export function DiscoverFeed() {
   const [openOnly, setOpenOnly] = useState(false);
   // Home is "what's new"; Discover opens on what the community likes most, so the two never show the same order.
   const [sort, setSort] = useState<ContentSortKey>("most-liked");
-  const [creators, setCreators] = useState<UserProfile[] | null>(null);
   const [tags, setTags] = useState<Tag[]>([]);
-  const { realPrompts, loading } = useRealPrompts();
-  const { realRequests } = useRealRequests();
-  const { realWorkflows } = useRealWorkflows();
-  const { realPresets } = useRealPresets();
 
   useEffect(() => {
-    // Genuinely usage-sorted (CLAUDE.md Bölüm 9.23).
+    // Genuinely usage-sorted (CLAUDE.md Bölüm 9.23); a fixed strip of chips, not paginated.
     fetchPopularTags(14).then(setTags);
-    fetchTopCreators(12).then(setCreators);
   }, []);
 
-  const items = useMemo<FeedItem[]>(() => {
-    const prompts: FeedItem[] = realPrompts
-      .filter((prompt) => matchesTaxonomy(prompt, taxonomy))
-      .map((prompt) => ({ kind: "prompt", data: prompt }));
-    // A workflow spans several content types — it matches a content-type filter when it chains that type; category/subcategory are its own (shared taxonomy).
-    const workflows: FeedItem[] = realWorkflows
-      .filter((workflow) => (!taxonomy.contentType || workflow.contentTypes.includes(taxonomy.contentType)) && (!taxonomy.category || workflow.category === taxonomy.category) && (!taxonomy.subcategory || workflow.subcategory === taxonomy.subcategory))
-      .map((workflow) => ({ kind: "workflow", data: workflow }));
-    // A preset carries the shared taxonomy (type/category/subcategory) like a prompt, so the same filter applies.
-    const presets: FeedItem[] = realPresets
-      .filter((preset) => matchesTaxonomy(preset, taxonomy))
-      .map((preset) => ({ kind: "preset", data: preset }));
-    const requests: FeedItem[] = realRequests
-      .filter((request) => matchesTaxonomy(request, taxonomy))
-      .filter((request) => !openOnly || request.status === "open")
-      .map((request) => ({ kind: "request", data: request }));
-    const pick =
-      section === "prompts"
-        ? prompts
-        : section === "workflows"
-            ? workflows
-            : section === "presets"
-              ? presets
-              : section === "requests"
-                ? requests
-                : [...prompts, ...workflows, ...presets, ...requests];
-    return pick.sort((a, b) =>
-      sort === "most-liked" ? feedItemPopularity(b) - feedItemPopularity(a) || feedItemCreatedAt(b) - feedItemCreatedAt(a) : sort === "oldest" ? feedItemCreatedAt(a) - feedItemCreatedAt(b) : feedItemCreatedAt(b) - feedItemCreatedAt(a),
-    );
-  }, [realPrompts, realWorkflows, realPresets, realRequests, taxonomy, openOnly, section, sort]);
+  const isCreators = section === "creators";
+  const feed = useFeedPages(
+    {
+      scope: "all",
+      order: feedOrderForSort(sort),
+      kind: SECTION_KIND[isCreators ? "all" : section],
+      taxonomy,
+      // The open-only chip only exists in the requests section; other kinds are unaffected by it anyway.
+      openOnly: section === "requests" && openOnly,
+    },
+    !isCreators,
+  );
+  const creatorPages = useCreatorPages(isCreators);
 
   const openOnlyChips = (
     <>
@@ -163,25 +149,52 @@ export function DiscoverFeed() {
         )}
       </div>
 
-      {section === "creators" ? (
-        creators === null ? (
+      {isCreators ? (
+        creatorPages.loading ? (
           <PromptCardSkeletonGrid count={3} />
-        ) : creators.length === 0 ? (
+        ) : creatorPages.failed && creatorPages.creators.length === 0 ? (
+          <EmptyState icon={Users} title={t("feed.loadFailed")} action={{ label: t("common.retry"), onClick: creatorPages.retry }} />
+        ) : creatorPages.creators.length === 0 ? (
           <EmptyState icon={Users} title={t("discover.noCreatorsYet")} />
         ) : (
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3">
-            {creators.map((creator) => (
-              <CreatorCard key={creator.id} creator={creator} />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3">
+              {creatorPages.creators.map((creator) => (
+                <CreatorCard key={creator.id} creator={creator} />
+              ))}
+            </div>
+            <LoadMore failed={creatorPages.failed} hasMore={creatorPages.hasMore} loadingMore={creatorPages.loadingMore} onLoadMore={() => void creatorPages.loadMore()} />
+          </>
         )
-      ) : loading && items.length === 0 ? (
+      ) : feed.loading ? (
         <PromptCardSkeletonGrid count={6} />
+      ) : feed.failed && feed.items.length === 0 ? (
+        <EmptyState icon={Sparkles} title={t("feed.loadFailed")} action={{ label: t("common.retry"), onClick: feed.retry }} />
       ) : (
-        <FeedItemsView items={items} emptyTitle={t("discover.noMatchTitle")} emptyDescription={t("discover.noMatchDescription")} />
+        <>
+          <FeedItemsView items={feed.items} emptyTitle={t("discover.noMatchTitle")} emptyDescription={t("discover.noMatchDescription")} />
+          <LoadMore failed={feed.failed} hasMore={feed.hasMore} loadingMore={feed.loadingMore} onLoadMore={() => void feed.loadMore()} />
+        </>
       )}
     </div>
   );
 
   return <SearchView idle={idleContent} />;
+}
+
+/** Failure line + "Load more" under a paged list (shared by the feed and the creators list). */
+function LoadMore({ failed, hasMore, loadingMore, onLoadMore }: { failed: boolean; hasMore: boolean; loadingMore: boolean; onLoadMore: () => void }) {
+  const { t } = useTranslation();
+  return (
+    <>
+      {failed && <p className="text-center text-small text-danger">{t("feed.loadFailed")}</p>}
+      {hasMore && (
+        <div className="flex justify-center pt-2">
+          <Button variant="outline" onClick={onLoadMore} disabled={loadingMore}>
+            {loadingMore ? t("common.loadingMore") : t("common.loadMore")}
+          </Button>
+        </div>
+      )}
+    </>
+  );
 }

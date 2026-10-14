@@ -1,0 +1,17 @@
+# Supabase CLI ayarları — yalnızca `supabase functions deploy` için.
+# Bu dosya veritabanı/Auth/Storage ayarı TAŞIMAZ (şema supabase/migrations/,
+# canlı ayarlar Dashboard'dadır). Dört Edge Function'ın JWT doğrulaması burada
+# sabitlenir; fonksiyon kodu supabase/functions/ altındadır.
+
+[functions.analyze-image]
+verify_jwt = true
+
+[functions.cleanup-orphan-storage]
+verify_jwt = true
+
+[functions.delete-account]
+verify_jwt = true
+
+# Giriş yapmamış kullanıcı çağırdığı için JWT doğrulaması KAPALI olmalı.
+[functions.username-login]
+verify_jwt = false

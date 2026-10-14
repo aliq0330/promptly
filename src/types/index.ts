@@ -288,9 +288,10 @@ export interface Conversation {
 /**
  * A real, permanent collection a user organizes saved prompts into
  * (`collections` — supabase/migrations/20260919260000_collections.sql).
- * Independent from the general "Kaydedilenler" bookmark (`prompt_saves`,
- * see saves.ts) by design — a prompt can belong to zero, one or several
- * collections regardless of whether it's also generally saved.
+ * The general "Kaydedilenler" bookmark is itself membership in the user's
+ * default ("Genel", `is_default`) collection — there is no separate saves
+ * table any more (`prompt_saves` was dropped by migration 20260919840000).
+ * A prompt can belong to zero, one or several collections.
  */
 export interface Collection {
   id: string;

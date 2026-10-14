@@ -3,6 +3,7 @@ import { fetchPromptsByIds } from "./prompts";
 import { fetchRequestsByIds } from "./requests";
 import { fetchWorkflowsByIds } from "./workflows";
 import { fetchPresetsByIds } from "./presets";
+import { nextFeedCursor, type FeedCursor, type FeedOrder } from "@/lib/feed-cursor";
 import type { TaxonomyFilterValue } from "@/lib/content-taxonomy";
 import type { Preset, Prompt, PromptRequest, Workflow } from "@/types";
 
@@ -15,14 +16,7 @@ export type FeedEntry =
 
 export type FeedKind = FeedEntry["kind"];
 export type FeedScope = "all" | "following";
-export type FeedOrder = "newest" | "popular";
-
-/** Keyset position of the last row of a page: `(sort_rank, created_at, id)` of `public.feed_page`. */
-export interface FeedCursor {
-  rank: number;
-  createdAt: string;
-  id: string;
-}
+export type { FeedCursor, FeedOrder };
 
 export interface FeedPage {
   items: FeedEntry[];
@@ -35,6 +29,8 @@ export interface FeedPageParams {
   /** `all` = every kind. */
   kind: FeedKind | "all";
   taxonomy: TaxonomyFilterValue;
+  /** Only requests with `status = 'open'` (other kinds are unaffected). Omitted = false; Home never sets it. */
+  openOnly?: boolean;
   limit?: number;
   cursor?: FeedCursor | null;
 }
@@ -59,6 +55,7 @@ interface FeedRow {
  *                       rows, read server-side with `auth.uid()`)
  *   order "newest"    → created_at ↓
  *   order "popular"   → like_count ↓ (every public kind), then created_at ↓
+ *   order "oldest"    → created_at ↑ (cursor comparison flips to `>`, see `feed-cursor.ts`)
  *
  * The RPC returns only ids + sort keys; the full rows are then fetched with the
  * same selects/mappers the list pages use (RLS applies there as well). A row
@@ -68,7 +65,9 @@ interface FeedRow {
  */
 export async function fetchFeedPage(params: FeedPageParams): Promise<FeedPage> {
   const limit = params.limit ?? DEFAULT_LIMIT;
+  // `p_open_only` is only sent when asked for: Home keeps calling the 10-argument form.
   const { data, error } = await supabase.rpc("feed_page", {
+    ...(params.openOnly ? { p_open_only: true } : {}),
     p_scope: params.scope,
     p_order: params.order,
     p_kinds: params.kind === "all" ? null : [params.kind],
@@ -97,8 +96,6 @@ export async function fetchFeedPage(params: FeedPageParams): Promise<FeedPage> {
   for (const data of presets) byKey.set(`preset-${data.id}`, { kind: "preset", data });
 
   const items = rows.flatMap((row) => byKey.get(`${row.kind}-${row.id}`) ?? []);
-  const last = rows[rows.length - 1];
   // The cursor comes from the RAW rows, never from `items`: filtering can drop rows, but the next page must still continue after the last row the database returned.
-  const nextCursor = rows.length >= Math.min(limit, 50) && last ? { rank: Number(last.sort_rank), createdAt: last.created_at, id: last.id } : null;
-  return { items, nextCursor };
+  return { items, nextCursor: nextFeedCursor(rows, limit) };
 }

@@ -13,9 +13,7 @@ import type { TranslationKey } from "@/lib/i18n/translations";
 const PREVIEW_TEMPLATES: [prefix: string, key: string, hasNoPreviewForm: boolean][] = [
   ["Paylaşımını beğendi", "notifMsg.likedPost", true],
   ["Yorumunu beğendi", "notifMsg.likedComment", true],
-  ["Generatorunu beğendi", "notifMsg.likedGenerator", false],
   ["Paylaşımına yorum yaptı", "notifMsg.commentedPost", true],
-  ["Generatoruna yorum yaptı", "notifMsg.commentedGenerator", false],
   ["Workflow'unu beğendi", "notifMsg.likedWorkflow", false],
   ["Workflow'una yorum yaptı", "notifMsg.commentedWorkflow", false],
   ["Hazır ayarını beğendi", "notifMsg.likedPreset", false],
@@ -24,14 +22,12 @@ const PREVIEW_TEMPLATES: [prefix: string, key: string, hasNoPreviewForm: boolean
   ["İsteğine yorum yaptı", "notifMsg.commentedRequest", true],
   ["Yorumuna yanıt verdi", "notifMsg.repliedComment", true],
   ["İsteğine yanıt verdi", "notifMsg.answeredRequest", false],
-  ["Generatorunu düzenledi", "notifMsg.editedGenerator", false],
   ["Promptunu düzenledi", "notifMsg.editedPrompt", false],
   ["Prompt isteğini düzenledi", "notifMsg.editedRequest", false],
   ["Promptun için bir düzenleme önerdi", "notifMsg.suggestedEdit", false],
   ["Düzenleme önerini kabul etti", "notifMsg.acceptedSuggestion", false],
   ["Düzenleme önerini reddetti", "notifMsg.rejectedSuggestion", false],
   ["Promptun için bir sonuç paylaştı", "notifMsg.resultOnPrompt", false],
-  ["Generatorun için bir sonuç paylaştı", "notifMsg.resultOnGenerator", false],
 ];
 
 const escapeRe = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");

@@ -15,7 +15,7 @@ interface FeedState {
 }
 
 /**
- * Server-driven, keyset-paginated home feed (`fetchFeedPage`): the first page
+ * Server-driven, keyset-paginated feed (`fetchFeedPage`) behind Home AND Keşfet: the first page
  * loads whenever the query changes, `loadMore` appends the next page after the
  * cursor of the last RAW row. Nothing is filtered on the client, so there is no
  * pool that a followed author could fall out of.
@@ -27,13 +27,13 @@ interface FeedState {
 export function useFeedPages(query: FeedQuery, enabled: boolean) {
   const [retry, setRetry] = useState(0);
   const [state, setState] = useState<FeedState | null>(null);
-  const key = `${retry}|${query.scope}|${query.order}|${query.kind}|${query.taxonomy.contentType}|${query.taxonomy.category}|${query.taxonomy.subcategory}`;
+  const key = `${retry}|${query.scope}|${query.order}|${query.kind}|${query.taxonomy.contentType}|${query.taxonomy.category}|${query.taxonomy.subcategory}|${query.openOnly ? 1 : 0}`;
 
-  const { scope, order, kind, taxonomy } = query;
+  const { scope, order, kind, taxonomy, openOnly } = query;
   useEffect(() => {
     if (!enabled) return;
     let cancelled = false;
-    fetchFeedPage({ scope, order, kind, taxonomy })
+    fetchFeedPage({ scope, order, kind, taxonomy, openOnly })
       .then((page) => {
         if (!cancelled) setState({ key, items: page.items, cursor: page.nextCursor, failed: false, loadingMore: false });
       })
@@ -44,7 +44,7 @@ export function useFeedPages(query: FeedQuery, enabled: boolean) {
     return () => {
       cancelled = true;
     };
-  }, [enabled, key, scope, order, kind, taxonomy]);
+  }, [enabled, key, scope, order, kind, taxonomy, openOnly]);
 
   const current = enabled && state && state.key === key ? state : null;
 
@@ -53,7 +53,7 @@ export function useFeedPages(query: FeedQuery, enabled: boolean) {
     const cursor = current.cursor;
     setState((prev) => (prev && prev.key === key ? { ...prev, loadingMore: true, failed: false } : prev));
     try {
-      const page = await fetchFeedPage({ scope, order, kind, taxonomy, cursor });
+      const page = await fetchFeedPage({ scope, order, kind, taxonomy, openOnly, cursor });
       setState((prev) => {
         if (!prev || prev.key !== key) return prev;
         const seen = new Set(prev.items.map((item) => `${item.kind}-${item.data.id}`));
@@ -64,7 +64,7 @@ export function useFeedPages(query: FeedQuery, enabled: boolean) {
       console.error("fetchFeedPage (load more)", err);
       setState((prev) => (prev && prev.key === key ? { ...prev, loadingMore: false, failed: true } : prev));
     }
-  }, [current, key, scope, order, kind, taxonomy]);
+  }, [current, key, scope, order, kind, taxonomy, openOnly]);
 
   return {
     items: current?.items ?? [],

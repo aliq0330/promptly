@@ -194,7 +194,7 @@ tamamlanmış sayılmaz. Ayrıntı ve mimari: `docs/history/049-*`, `056-*`, `05
 | Route | Açıklama |
 |---|---|
 | `/` | Ana Sayfa: karma akış (En yeni / Popüler / Takip; sunucudan `feed_page`, keyset), tür çipleri; misafire tanıtım |
-| `/discover` | Keşfet: bölümler (Tümü / Promptlar / Workflow / İstekler / Yaratıcılar), filtreler |
+| `/discover` | Keşfet: bölümler (Tümü / Promptlar / Workflow / Hazır ayar / İstekler / Yaratıcılar), filtreler; içerik bölümleri sunucudan `feed_page` (keyset), Yaratıcılar `profiles` keyset |
 | `/prompts`, `/requests`, `/workflows`, `/presets` | Tür listeleri (ortak `ContentListPage`: arama, Filtre, sıralama, Kart/Odak) |
 | `/prompts/local?id=` · `/requests/local?id=` · `/workflows/local?id=` · `/presets/local?id=` · `/results/local?id=` | Detay sayfaları |
 | `/create` · `/requests/new` · `/workflows/create` · `/presets/create` | Oluşturma/düzenleme (`?edit=<id>`), ortak alt alan: Görünürlük + Taslağa kaydet/Paylaş |
@@ -311,10 +311,15 @@ bağlayıcıdır; ayrıntılı gerekçe için `docs/history/README.md` tablosuna
   OAuth yönlendirmesi Google/Supabase'e karşı denenmedi.
 - Supabase Dashboard → Authentication → Providers → Email: **"Leaked password
   protection"** ücretli planda; şimdilik gerekmiyor, bilinçli olarak ertelendi.
-- `content_relations` migration'ı (`20260919710000`) MCP `execute_sql` ile
-  uygulandı, `supabase_migrations` geçmişinde kaydı yok (son kontrol: 0 satır; tablo
-  canlıda var). Yalnızca kayıt boşluğu, canlıda hiçbir etkisi yok. İstenirse geçmişe
-  satır eklemek için adım `supabase/README.md` "Migration geçmişi" bölümünde.
+- **Canlıda UYGULANMAMIŞ migration'lar / deploy'lar** (`docs/history/157-*`):
+  `20260919820000_feed_page_oldest_open_only.sql` (Keşfet `oldest` / `p_open_only`
+  için gerekli — uygulanana kadar Keşfet'te bu seçenekler hata gösterir; Ana Sayfa
+  etkilenmez), `20260919830000_auth_login_attempts.sql` (+ ardından `username-login`
+  Edge Function deploy'u, `--no-verify-jwt`), `20260919840000_drop_prompt_saves.sql`
+  (yıkıcı; yalnız `prompt_saves`). `feed_page`'in eski 10 argümanlı imzası, `drop
+  function` onayı olmadığı için ince sarmalayıcı olarak kaldı. Deploy workflow'u
+  (`deploy-functions.yml`) henüz çalıştırılmadı; repo secret'ları
+  `SUPABASE_ACCESS_TOKEN` / `SUPABASE_PROJECT_REF` tanımlanmalı.
 - Bilinçli sınırlar: Signed URL 10 dk geçerli kalır (private'a çevrilmeden önce
   alınmış bir imza süresi dolana kadar çalışır); Supabase CDN'in eski genel medya
   yanıtlarını ne kadar süre servis ettiği bilinmiyor.
@@ -332,11 +337,11 @@ bağlayıcıdır; ayrıntılı gerekçe için `docs/history/README.md` tablosuna
 - Hesap silmenin test hesabıyla uçtan uca denemesi ve tarayıcıdaki elle kontroller
   (private medyada eski genel URL'nin hata vermesi, Takip/arama/Benzer akışları)
   kullanıcı tarafından yapıldığı bildirildi; bu oturumda ayrıca doğrulanmadı.
-- Bilinen sınırlamalar: Keşfet karma akışı hâlâ son ~60'lık havuzdur (Ana Sayfa
-  akışı ve liste sayfaları gerçek keyset sayfalama kullanır; Ana Sayfa'da kişiselleştirme
+- Bilinen sınırlamalar: Keşfet içerik bölümleri, Ana Sayfa ve liste sayfaları
+  gerçek keyset sayfalama kullanır (Keşfet'te "En çok beğenilen" tüm türlerde `like_count`; Ana Sayfa'da kişiselleştirme
   yoktur, sekme dürüstçe "En yeni"dir); arama prompt metnini (`prompt_text`) ve
-  isteğin `creative_direction`'ını da kapsar ve keyset sayfalanır (`search_content`); `prompt_saves` gibi atıl eski tablolar duruyor; kod içi
+  isteğin `creative_direction`'ını da kapsar ve keyset sayfalanır (`search_content`); `prompt_saves` canlıda hâlâ duruyor (atma migration'ı yukarıda bekliyor); kod içi
   yorumlarda eski "Bölüm 9.x" atıfları arşiv numaralarına (`docs/history/NNN-*`) karşılık gelir.
 
-**Arşiv:** [`docs/history/README.md`](docs/history/README.md) — 148 bölüm, her
+**Arşiv:** [`docs/history/README.md`](docs/history/README.md) — 157 bölüm, her
 biri için durum etiketi (uygulandı / kısmen geçerli / kaldırıldı).
