@@ -30,7 +30,7 @@ dış servis/karar gerektirenler en sona.
 | # | Madde | Boyut | Durum |
 |---|---|---|---|
 | 1 | Paylaşılan linklerde önizleme (OG) | O | **yapıldı** (statik paylaşım sayfaları; `docs/history/159-*`) |
-| 2 | "Kullanım" sinyali: kopyalama sayacı + görünürlük | K–O | bekliyor |
+| 2 | "Kullanım" sinyali: kopyalama sayacı + görünürlük | K–O | **yapıldı** (sıralama bilerek yok; `docs/history/160-*`) |
 | 3 | Etiket takibi + ana sayfada "Etiketlerim" | O | bekliyor |
 | 4 | Haftalık tema / "Haftanın isteği" | O | bekliyor |
 | 5 | PWA (ana ekrana ekleme) | K | bekliyor |
@@ -40,6 +40,7 @@ dış servis/karar gerektirenler en sona.
 | 9 | Prompt sürüm geçmişi + fark görünümü (önce var mı kontrol) | O | bekliyor |
 | 10 | Yan yana model karşılaştırma (Studio) | B | bekliyor |
 | 11 | Haftalık özet bildirimi (e-posta / web push) | B | **engelli**: dış servis + gizli anahtar kararı gerekir |
+| 12 | Sayaç sütunlarını istemciden koruma (`like_count`, `save_count`, `comment_count`, `response_count`) | K–O | **bulgu**, bekliyor (aşağıda) |
 
 ## Madde ayrıntıları
 
@@ -55,8 +56,9 @@ dış servis/karar gerektirenler en sona.
 ### 2. Kullanım sinyali
 - Plan: `copy_count` sayacı (SECURITY DEFINER RPC, kullanıcı başına gün başına tek sayım),
   kopyalama eylemi RPC'yi çağırır; kartta/detayda/istatistikte gösterilir; isteğe bağlı sıralama.
-- Etki alanı: prompt kartı, detay, Odak görünümü, workflow/preset kopyalama, istatistik sayfası,
-  Keşfet/Liste sıralaması, uzantıdaki kopyalama.
+- Etki alanı (tarandı): kopyalama yalnızca prompt detayında var (kopyala + çalıştır); istek/workflow/hazır ayarda
+  kopyala düğmesi yok; kartlarda yok (`PromptPreviewBox` ölü bileşen); İstatistikler penceresi bağlandı; sıralama
+  bilerek değişmedi (Ana sayfa/Keşfet/Arama tutarlılığı için veri birikince birlikte karar).
 
 ### 3. Etiket takibi
 - Plan: `tag_follows` tablosu (RLS: yalnızca sahibi), etiket sayfasında Takip et, ana sayfada "Etiketlerim"
@@ -76,3 +78,11 @@ Ayrıntılar madde sırası geldiğinde bu dosyaya eklenir.
 
 ### 11. Haftalık özet (engelli)
 E-posta sağlayıcısı veya web push (VAPID) anahtarı gerekir; anahtar repoya girmez. Karar bekliyor.
+
+### 12. Sayaç sütunlarını istemciden koruma (bulgu — madde 2 sırasında bulundu)
+- Bulgu: yazarlar kendi içeriklerini güncelleyebildiği için (RLS yalnızca "yazar" der, `anon`/`authenticated`
+  için tablo düzeyinde `UPDATE` yetkisi var) bir istemci kendi prompt'unun `like_count` / `save_count` /
+  `comment_count` değerini doğrudan yazabilir; "Popüler" sıralaması bu değere dayanır. Aynı durum istek,
+  workflow ve hazır ayar tabloları için de geçerli olabilir (doğrulanmadı).
+- Plan: `copy_count`'taki `current_user in ('anon','authenticated')` koruma trigger'ı deseni; sayaçları
+  SECURITY DEFINER trigger'lar güncellediği için etkilenmez. Önce canlıda gerçekten yazılabildiği doğrulanır.

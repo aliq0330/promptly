@@ -44,7 +44,7 @@ export function PromptCardFooter(target: FooterTarget) {
           <LikeButton id={target.prompt.id} likeCount={target.prompt.likeCount} contentType="prompt" />
           <CommentCountLink promptId={target.prompt.id} baseCount={target.prompt.commentCount} />
           <SaveButton promptId={target.prompt.id} saveCount={target.prompt.saveCount} />
-          <StatisticsButton target={{ contentType: "prompt", contentId: target.prompt.id, likeCount: target.prompt.likeCount, commentCount: target.prompt.commentCount, saveCount: target.prompt.saveCount }} />
+          <StatisticsButton target={{ contentType: "prompt", contentId: target.prompt.id, likeCount: target.prompt.likeCount, commentCount: target.prompt.commentCount, saveCount: target.prompt.saveCount, copyCount: target.prompt.copyCount }} />
         </>
       )}
       <span className="ml-auto" />

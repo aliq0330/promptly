@@ -1158,6 +1158,8 @@ export const translations = {
   "comments.showReplySingular": { tr: "1 yanıtı göster", en: "Show 1 reply" },
   "comments.showRepliesPlural": { tr: "{{count}} yanıtı göster", en: "Show {{count}} replies" },
   "prompt.copyFailed": { tr: "Kopyalanamadı", en: "Couldn't copy" },
+  "prompt.usedOnce": { tr: "1 kez kullanıldı", en: "Used once" },
+  "prompt.usedCount": { tr: "{{count}} kez kullanıldı", en: "Used {{count}} times" },
   "prompt.copyFailedRetry": { tr: "Kopyalanamadı, lütfen tekrar dene.", en: "Couldn't copy — please try again." },
   // ---- Field types (shared by the variable editor and the field catalog) ----
   "fieldType.text": { tr: "Kısa Metin", en: "Short Text" },
@@ -1778,6 +1780,7 @@ export const translations = {
   "statistics.tileLikes": { tr: "Beğeni", en: "Likes" },
   "statistics.tileComments": { tr: "Yorum", en: "Comments" },
   "statistics.tileSaves": { tr: "Kaydetme", en: "Saves" },
+  "statistics.tileCopies": { tr: "Kopyalama", en: "Copies" },
   "statistics.tabLikes": { tr: "Beğenenler", en: "Liked by" },
   "statistics.tabComments": { tr: "Yorum Yapanlar", en: "Commenters" },
   "statistics.tabSaves": { tr: "Kaydedenler", en: "Saved by" },

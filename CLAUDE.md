@@ -225,7 +225,7 @@ kaynağı); `supabase/README.md` uygulama talimatını içerir. Çekirdek tablol
 `prompt_dna_sections`, `prompt_results`), `prompt_requests` (+medya/etiket),
 `workflows` (+`workflow_steps/connections/media/tags`), `presets`
 (+`preset_fields/options/tags`), `tags`, `taxonomy_categories/subcategories`,
-`prompt_likes` / `prompt_comments` / `comment_likes` (hedef sütunlu
+`prompt_copy_events` (kopyalama sayacının günlük dedupe'u; yalnız RPC yazar), `prompt_likes` / `prompt_comments` / `comment_likes` (hedef sütunlu
 polimorfik: `prompt_id`/`request_id`/`workflow_id`/`preset_id` — tam biri dolu),
 `collections` / `collection_items` ("Genel" = `is_default`, isimden bağımsız),
 `follows`, `conversations` / `conversation_members` / `messages` /
@@ -322,6 +322,7 @@ bağlayıcıdır; ayrıntılı gerekçe için `docs/history/README.md` tablosuna
   argümanlı imzası, `drop function` onayı olmadığı için ince sarmalayıcı olarak
   kaldı. `deploy-functions.yml` hiç çalıştırılmadı (secret'lar
   `SUPABASE_ACCESS_TOKEN` / `SUPABASE_PROJECT_REF` tanımlı değilse fail eder).
+- Kopyalama sayacı (`docs/history/160-*`): `prompts.copy_count` + `record_prompt_copy` canlıda; yalnızca oturumlu kullanıcı, günde bir, yazarın kendisi sayılmaz; sıralamaya BİLEREK girmedi. Sayaç sütunlarını istemciden koruma yalnızca `copy_count` için var (aşağıdaki "sayaç koruması" açık işi).
 - Paylaşım önizlemesi (`docs/history/159-*`): `og:image` her zaman site kartı (gönderi medyası private); yeni içeriğin önizlemesi en geç 6 saat sonra. Gerçek sosyal ağ tarayıcılarıyla denenmedi.
 - Migration geçmişi uzlaştırıldı (`docs/history/158-*`): repo temiz DB'de baştan
   oynatılınca canlı şemayla birebir eşit; `schema_migrations`'a 79 repo-sürümlü kayıt
@@ -351,5 +352,5 @@ bağlayıcıdır; ayrıntılı gerekçe için `docs/history/README.md` tablosuna
   isteğin `creative_direction`'ını da kapsar ve keyset sayfalanır (`search_content`); `prompt_saves` canlıdan kaldırıldı; kod içi
   yorumlarda eski "Bölüm 9.x" atıfları arşiv numaralarına (`docs/history/NNN-*`) karşılık gelir.
 
-**Arşiv:** [`docs/history/README.md`](docs/history/README.md) — 159 bölüm, her
+**Arşiv:** [`docs/history/README.md`](docs/history/README.md) — 160 bölüm, her
 biri için durum etiketi (uygulandı / kısmen geçerli / kaldırıldı).

@@ -77,6 +77,7 @@ Kaynak kök `CLAUDE.md` Bölüm 6'dır; bu liste onunla aynıdır. Canlı verita
   `request-references`, `result-media` private (dosyaya erişim, onu gösteren
   satırın görünürlüğüne bağlıdır — `docs/history/150-*`).
 - **Kaldırılan tablo:** `prompt_saves` (kaydedilenler `collections` üzerindendir). Atılması `20260919840000_drop_prompt_saves.sql` ile yazıldı — canlıda uygulandı (tablo artık yok).
+- **Kullanım sayacı:** `prompts.copy_count` + `prompt_copy_events` (RLS açık, politika yok) + `record_prompt_copy(uuid)` (yalnız `authenticated`) + `prompts_protect_copy_count` trigger'ı; `20260919850000` — canlıda uygulandı.
 - **Giriş hız sınırı:** `auth_login_attempts` (RLS açık, policy yok) + `auth_login_attempt(p_ip)` — yalnız `service_role`; `20260919830000` — canlıda uygulandı.
 
 ## Google ile giriş kurulumu

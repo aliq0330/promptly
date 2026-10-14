@@ -40,7 +40,7 @@ import { effectiveVariableValues } from "@/lib/prompt-variable-types";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
 import { PostMenu } from "@/features/prompts/post-menu";
 import { parseHighlightValue } from "@/lib/notification-utils";
-import { cn, promptHref, relationMapHref } from "@/lib/utils";
+import { cn, formatCount, promptHref, relationMapHref } from "@/lib/utils";
 import { splitSourceNotes } from "@/lib/source-notes";
 import { SourceNotes } from "@/features/content/source-notes";
 import { FollowButton } from "@/features/profile/follow-button";
@@ -240,7 +240,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
             <LikeButton id={prompt.id} likeCount={prompt.likeCount} size={18} />
             <CommentCountLink promptId={prompt.id} baseCount={prompt.commentCount} size={18} />
             <SaveButton promptId={prompt.id} saveCount={prompt.saveCount} size={18} />
-            <StatisticsButton target={{ contentType: "prompt", contentId: prompt.id, likeCount: prompt.likeCount, commentCount: prompt.commentCount, saveCount: prompt.saveCount }} size={18} label={t("statistics.title")} />
+            <StatisticsButton target={{ contentType: "prompt", contentId: prompt.id, likeCount: prompt.likeCount, commentCount: prompt.commentCount, saveCount: prompt.saveCount, copyCount: prompt.copyCount }} size={18} label={t("statistics.title")} />
             <RelationMapLink kind="prompt" id={prompt.id} />
           </DetailActionBar>
 
@@ -262,12 +262,19 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
           {activeTab === "prompt" && (
           <section aria-labelledby="prompt-text-title" className="relative overflow-hidden rounded-xl border border-border-soft bg-surface-soft shadow-card">
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border-soft px-4 py-2.5">
-              <Eyebrow as="h2" id="prompt-text-title" icon={SquareTerminal}>
-                {t("prompt.promptTextHeading")}
-              </Eyebrow>
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                <Eyebrow as="h2" id="prompt-text-title" icon={SquareTerminal}>
+                  {t("prompt.promptTextHeading")}
+                </Eyebrow>
+                {prompt.copyCount > 0 && (
+                  <span className="text-caption text-text-muted">
+                    {prompt.copyCount === 1 ? t("prompt.usedOnce") : t("prompt.usedCount", { count: formatCount(prompt.copyCount) })}
+                  </span>
+                )}
+              </div>
               <div className="flex flex-wrap items-center gap-2">
-                <CopyPromptButton text={displayText} size="md" variant="primary" />
-                <RunButton text={displayText} recommendedRefs={prompt.tools} />
+                <CopyPromptButton text={displayText} promptId={prompt.id} size="md" variant="primary" />
+                <RunButton text={displayText} recommendedRefs={prompt.tools} promptId={prompt.id} />
                 <span className="hidden h-5 w-px bg-border-soft sm:block" aria-hidden />
                 <OpenInStudioButton kind="prompt" id={prompt.id} quiet />
                 {user && !isOwn && (

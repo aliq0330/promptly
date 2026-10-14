@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { buildRunToolList, getPreferredRunTool, runWithAI, type RunToolOption, type RunWithAIResult } from "@/lib/run-with-ai";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/features/auth/auth-provider";
+import { recordPromptCopy } from "@/lib/supabase/prompt-usage";
 import { useTranslation } from "@/lib/i18n/language-provider";
 
 /**
@@ -23,6 +25,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 export function RunButton({
   text,
   recommendedRefs,
+  promptId,
   preview = false,
   size = "md",
   className,
@@ -32,6 +35,8 @@ export function RunButton({
   text: string;
   /** The content's "recommended tools" (`tools` refs) — runnable ones are surfaced first. */
   recommendedRefs?: string[] | null;
+  /** The prompt being run — counts one "use" for it (signed-in viewers only, see `recordPromptCopy`). */
+  promptId?: string;
   preview?: boolean;
   size?: "sm" | "md";
   className?: string;
@@ -59,7 +64,7 @@ export function RunButton({
         <Play size={size === "sm" ? 12 : 14} aria-hidden />
         {t("run.button")}
       </button>
-      {open && <RunModal text={text} recommendedRefs={recommendedRefs} preview={preview} onClose={() => setOpen(false)} />}
+      {open && <RunModal text={text} recommendedRefs={recommendedRefs} promptId={promptId} preview={preview} onClose={() => setOpen(false)} />}
     </>
   );
 }
@@ -67,15 +72,18 @@ export function RunButton({
 function RunModal({
   text,
   recommendedRefs,
+  promptId,
   preview,
   onClose,
 }: {
   text: string;
   recommendedRefs?: string[] | null;
+  promptId?: string;
   preview: boolean;
   onClose: () => void;
 }) {
   const { t } = useTranslation();
+  const { user } = useAuth();
   // Read once on open: the saved choice only decides ordering/preselection.
   const [lastUsedId] = useState(() => getPreferredRunTool());
   const list = useMemo(() => buildRunToolList(recommendedRefs, lastUsedId), [recommendedRefs, lastUsedId]);
@@ -94,6 +102,8 @@ function RunModal({
     const outcome = await runWithAI({ content: text, toolId });
     setRunning(false);
     setResult(outcome);
+    // The text actually left Promptly (opened in the tool or copied to paste): that is a use.
+    if (outcome && (outcome.opened || outcome.copied) && promptId && user) void recordPromptCopy(promptId);
   }
 
   function handleToolClick(toolId: string) {
