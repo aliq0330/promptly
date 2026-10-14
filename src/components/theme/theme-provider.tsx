@@ -101,6 +101,20 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  // Browser / installed-app chrome (address bar, status bar) follows the page background of the
+  // chosen mode + palette. The DOM class/attribute are already switched by the time this runs.
+  useEffect(() => {
+    const color = getComputedStyle(document.body).backgroundColor;
+    if (!color) return;
+    let meta = document.head.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
+    if (!meta) {
+      meta = document.createElement("meta");
+      meta.name = "theme-color";
+      document.head.appendChild(meta);
+    }
+    meta.content = color;
+  }, [theme, palette]);
+
   const value = useMemo(
     () => ({ theme, setTheme, toggleTheme, palette, setPalette }),
     [theme, setTheme, toggleTheme, palette, setPalette],

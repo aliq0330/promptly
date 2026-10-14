@@ -1,10 +1,12 @@
 "use client";
 
 import { usePageTitle } from "@/components/layout/page-title";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Workflow as WorkflowIcon } from "lucide-react";
+import { Play, Workflow as WorkflowIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Tabs } from "@/components/ui/tabs";
 import { DetailSkeleton, NotFoundBlock } from "@/components/ui/detail-skeleton";
 import { ContentTypeLabel } from "@/features/content/content-type-label";
 import { ToolChips, ToolLine } from "@/features/content/tool-chips";
@@ -40,6 +42,7 @@ import {
 import type { Workflow, WorkflowStep } from "@/types";
 import { categoryLabel } from "./step-meta";
 import { WorkflowFlow } from "./workflow-flow";
+import { WorkflowRunner } from "./workflow-runner";
 
 /** Read-only workflow page: who made it, what it's for, and the ordered steps — each links to its prompt / generator / request. */
 export function WorkflowDetailView() {
@@ -53,6 +56,9 @@ export function WorkflowDetailView() {
     { workflow: Workflow; steps: WorkflowStep[] } | null | undefined
   >(undefined);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  // "Akış" (the read-only flow) or "Adım adım" (the guided run); `?run=1` opens the run directly.
+  const [view, setView] = useState<"flow" | "run">(searchParams.get("run") === "1" ? "run" : "flow");
+  const stepsRef = useRef<HTMLElement>(null);
   usePageTitle(data?.workflow.title);
 
   useEffect(() => {
@@ -247,14 +253,39 @@ export function WorkflowDetailView() {
           <span className="text-caption text-text-muted">{t("workflow.stepCount", { count: String(steps.length) })}</span>
         </div>
         <ToolLine label={t("tool.recommendedLabel")} refs={workflow.tools} />
+        {steps.length > 0 && (
+          <Button
+            size="sm"
+            onClick={() => {
+              setView("run");
+              stepsRef.current?.scrollIntoView({ block: "start", behavior: "smooth" });
+            }}
+          >
+            <Play size={14} aria-hidden /> {t("workflow.run.start")}
+          </Button>
+        )}
 
         <DetailTags tags={workflow.tags} />
 
-        <section aria-labelledby="workflow-steps-heading" className="space-y-3">
-          <Eyebrow as="h2" id="workflow-steps-heading">
-            {t("workflow.viewStepsHeading")}
-          </Eyebrow>
-          <WorkflowFlow steps={steps} />
+        <section ref={stepsRef} aria-labelledby="workflow-steps-heading" className="scroll-mt-20 space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <Eyebrow as="h2" id="workflow-steps-heading">
+              {t("workflow.viewStepsHeading")}
+            </Eyebrow>
+            {steps.length > 0 && (
+              <Tabs
+                variant="segmented"
+                ariaLabel={t("workflow.run.viewAria")}
+                active={view}
+                onChange={setView}
+                items={[
+                  { key: "flow", label: t("workflow.run.viewFlow") },
+                  { key: "run", label: t("workflow.run.viewRun") },
+                ]}
+              />
+            )}
+          </div>
+          {view === "run" && steps.length > 0 ? <WorkflowRunner key={workflow.id} workflowId={workflow.id} steps={steps} /> : <WorkflowFlow steps={steps} />}
         </section>
 
         <DetailComments>
