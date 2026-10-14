@@ -8,6 +8,7 @@ import { fetchAllTagsWithStats, fetchPopularTags, fetchTrendingTags, type Trendi
 import { formatCount, tagHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { normalizeTagLabel } from "@/lib/tag-normalize";
+import { useFollowedTags } from "./followed-tags-store";
 import type { Tag } from "@/types";
 
 type SortMode = "popular" | "newest" | "az";
@@ -26,6 +27,7 @@ export function TagsDiscoverView() {
   const [loaded, setLoaded] = useState(false);
   const [query, setQuery] = useState("");
   const [sortMode, setSortMode] = useState<SortMode>("popular");
+  const followed = useFollowedTags();
 
   useEffect(() => {
     Promise.all([fetchPopularTags(12), fetchTrendingTags(12), fetchAllTagsWithStats()]).then(
@@ -81,6 +83,16 @@ export function TagsDiscoverView() {
         <TagResultsSection title={t("tag.resultsFor", { query: query.trim() })} tags={filteredAll} emptyMessage={t("tag.noMatch")} />
       ) : (
         <>
+          {followed.tags.length > 0 && (
+            <section className="space-y-3">
+              <div className="flex items-center gap-1.5">
+                <Hash size={16} className="text-primary" />
+                <h2 className="text-h3 font-semibold text-text">{t("tag.followedHeading")}</h2>
+              </div>
+              <TagChipRow tags={followed.tags} emptyMessage="" />
+            </section>
+          )}
+
           <section className="space-y-3">
             <div className="flex items-center gap-1.5">
               <Flame size={16} className="text-primary" />

@@ -13,6 +13,7 @@ import { fetchPresetsByTagSlug } from "@/lib/supabase/presets";
 import { formatCount, cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { TaxonomyFilter } from "@/features/content/taxonomy-filter";
+import { TagFollowButton } from "@/features/tags/tag-follow-button";
 import { EMPTY_TAXONOMY_FILTER, matchesTaxonomy, type TaxonomyFilterValue } from "@/lib/content-taxonomy";
 import type { Preset, Prompt, PromptRequest, Tag, Workflow } from "@/types";
 
@@ -106,12 +107,15 @@ export function TagView() {
 
   return (
     <div className="mx-auto max-w-6xl space-y-5 px-3 py-5 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
-      <div>
-        <div className="mb-1 flex items-center gap-1.5">
-          <Hash size={20} className="text-primary" />
-          <h1 className="text-h1 font-semibold text-text">{tag.label}</h1>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <div className="mb-1 flex items-center gap-1.5">
+            <Hash size={20} className="text-primary" />
+            <h1 className="text-h1 font-semibold text-text">{tag.label}</h1>
+          </div>
+          <p className="text-sm text-text-muted">{t("tag.usedInCount", { count: formatCount(totalCount) })}</p>
         </div>
-        <p className="text-sm text-text-muted">{t("tag.usedInCount", { count: formatCount(totalCount) })}</p>
+        <TagFollowButton slug={tag.slug} label={tag.label} />
       </div>
 
       <Tabs

@@ -504,6 +504,7 @@ export const translations = {
   "home.openRequest": { tr: "İstek aç", en: "Open a Request" },
   "home.tabNewest": { tr: "En yeni", en: "Newest" },
   "home.tabPopular": { tr: "Popüler", en: "Popular" },
+  "home.tabTags": { tr: "Etiketlerim", en: "My tags" },
 
   // ---- Feed (shared between Home and Discover) ----
   "feed.ariaLabel": { tr: "Akış", en: "Feed" },
@@ -515,6 +516,12 @@ export const translations = {
   "feed.emptyDefault": { tr: "Henüz gösterilecek içerik yok.", en: "There's nothing to show yet." },
   "feed.emptyFollowingHint": { tr: "Keşfet'ten yeni yaratıcılar bulup takip edebilirsin.", en: "Find and follow new creators on Discover." },
   "feed.loadFailed": { tr: "Akış şu anda yüklenemedi — lütfen tekrar dene.", en: "Couldn't load the feed right now — please try again." },
+  "feed.emptyTagsLoginTitle": { tr: "Etiketlerin burada görünür", en: "Your tags show up here" },
+  "feed.emptyTagsLoginDescription": { tr: "Takip ettiğin etiketlerdeki içerikleri görmek için giriş yap.", en: "Log in to see posts from the tags you follow." },
+  "feed.emptyTagsNoneTitle": { tr: "Henüz etiket takip etmiyorsun", en: "You're not following any tags yet" },
+  "feed.emptyTagsNoneDescription": { tr: "Bir etiketin sayfasında Takip Et'e dokun; o etiketteki yeni içerikler burada toplanır.", en: "Tap Follow on a tag's page and its new posts are collected here." },
+  "feed.emptyTagsNoPosts": { tr: "Takip ettiğin etiketlerde henüz içerik yok", en: "No posts in the tags you follow yet" },
+  "feed.goToTags": { tr: "Etiketlere göz at", en: "Browse tags" },
   "feed.goToDiscover": { tr: "Keşfet'e git", en: "Go to Discover" },
 
   // ---- Content type labels (Prompt.contentType — app-provided, not user content) ----
@@ -657,6 +664,9 @@ export const translations = {
   // ---- Tag detail page ----
   "tag.notFound": { tr: "Etiket bulunamadı", en: "Tag not found" },
   "tag.notFoundBody": { tr: "Bu etiket silinmiş veya hiç var olmamış olabilir.", en: "This tag may have been removed, or never existed." },
+  "tag.followLimit": { tr: "En fazla 100 etiket takip edebilirsin.", en: "You can follow up to 100 tags." },
+  "tag.followFailed": { tr: "Takip işlemi şu anda yapılamadı.", en: "Couldn't update the follow right now." },
+  "tag.followedHeading": { tr: "Takip ettiğin etiketler", en: "Tags you follow" },
   "tag.usedInCount": { tr: "{{count}} içerikte kullanıldı", en: "Used in {{count}} posts" },
   "tag.requestsHeading": { tr: "Prompt İstekleri ({{count}})", en: "Prompt Requests ({{count}})" },
   "tag.promptsHeading": { tr: "Promptlar ({{count}})", en: "Prompts ({{count}})" },

@@ -15,7 +15,7 @@ export type FeedEntry =
   | { kind: "preset"; data: Preset };
 
 export type FeedKind = FeedEntry["kind"];
-export type FeedScope = "all" | "following";
+export type FeedScope = "all" | "following" | "tags";
 export type { FeedCursor, FeedOrder };
 
 export interface FeedPage {
@@ -53,6 +53,8 @@ interface FeedRow {
  *
  *   scope "following" → only authors the signed-in user follows (`follows`
  *                       rows, read server-side with `auth.uid()`)
+ *   scope "tags"      → only content tagged with a tag the signed-in user follows
+ *                       (`tag_follows` rows, same server-side `auth.uid()`; migration 20260919860000)
  *   order "newest"    → created_at ↓
  *   order "popular"   → like_count ↓ (every public kind), then created_at ↓
  *   order "oldest"    → created_at ↑ (cursor comparison flips to `>`, see `feed-cursor.ts`)

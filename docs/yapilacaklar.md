@@ -31,7 +31,7 @@ dış servis/karar gerektirenler en sona.
 |---|---|---|---|
 | 1 | Paylaşılan linklerde önizleme (OG) | O | **yapıldı** (statik paylaşım sayfaları; `docs/history/159-*`) |
 | 2 | "Kullanım" sinyali: kopyalama sayacı + görünürlük | K–O | **yapıldı** (sıralama bilerek yok; `docs/history/160-*`) |
-| 3 | Etiket takibi + ana sayfada "Etiketlerim" | O | bekliyor |
+| 3 | Etiket takibi + ana sayfada "Etiketlerim" | O | **yapıldı** (`docs/history/161-*`) |
 | 4 | Haftalık tema / "Haftanın isteği" | O | bekliyor |
 | 5 | PWA (ana ekrana ekleme) | K | bekliyor |
 | 6 | Workflow adım adım çalıştırma modu | O–B | bekliyor |
@@ -63,7 +63,7 @@ dış servis/karar gerektirenler en sona.
 ### 3. Etiket takibi
 - Plan: `tag_follows` tablosu (RLS: yalnızca sahibi), etiket sayfasında Takip et, ana sayfada "Etiketlerim"
   (`feed_page` aynı imzayla genişler).
-- Etki alanı: etiket detayı, etiket keşfi, ana sayfa sekmeleri, profil/ayarlar, misafir akışı (giriş istemi).
+- Etki alanı (tarandı): etiket sayfası ✔, etiket dizini ✔ ("Takip ettiğin etiketler"), ana sayfa sekmesi ✔, misafir akışı ✔ (giriş istemi, istek yok); karttaki etiket rozetinde takip düğmesi bilerek yok; Keşfet/arama etkilenmez.
 
 ### 4. Haftalık tema
 - Plan: moderatör yönetimli `weekly_challenges` (etiket tabanlı; katılım = o etiketli içerik); ana sayfa/Keşfet bandı.
