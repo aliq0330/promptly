@@ -321,6 +321,11 @@ bağlayıcıdır; ayrıntılı gerekçe için `docs/history/README.md` tablosuna
   argümanlı imzası, `drop function` onayı olmadığı için ince sarmalayıcı olarak
   kaldı. `deploy-functions.yml` hiç çalıştırılmadı (secret'lar
   `SUPABASE_ACCESS_TOKEN` / `SUPABASE_PROJECT_REF` tanımlı değilse fail eder).
+- Migration geçmişi uzlaştırıldı (`docs/history/158-*`): repo temiz DB'de baştan
+  oynatılınca canlı şemayla birebir eşit; `schema_migrations`'a 79 repo-sürümlü kayıt
+  eklendi. Canlıda ayrıca 48 MCP-sürümlü satır duruyor, `supabase db push` hâlâ
+  güvenilir değil (güvenli hatayla durur). Yeni migration'ı uygularken kaydı dosya
+  sürümüyle düş; MCP `apply_migration` ayrı zaman damgası yazar.
 - Bilinçli sınırlar: Signed URL 10 dk geçerli kalır (private'a çevrilmeden önce
   alınmış bir imza süresi dolana kadar çalışır); Supabase CDN'in eski genel medya
   yanıtlarını ne kadar süre servis ettiği bilinmiyor.
@@ -344,5 +349,5 @@ bağlayıcıdır; ayrıntılı gerekçe için `docs/history/README.md` tablosuna
   isteğin `creative_direction`'ını da kapsar ve keyset sayfalanır (`search_content`); `prompt_saves` canlıdan kaldırıldı; kod içi
   yorumlarda eski "Bölüm 9.x" atıfları arşiv numaralarına (`docs/history/NNN-*`) karşılık gelir.
 
-**Arşiv:** [`docs/history/README.md`](docs/history/README.md) — 157 bölüm, her
+**Arşiv:** [`docs/history/README.md`](docs/history/README.md) — 158 bölüm, her
 biri için durum etiketi (uygulandı / kısmen geçerli / kaldırıldı).

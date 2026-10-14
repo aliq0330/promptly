@@ -115,6 +115,13 @@ avatar yapılmaz.
 
 ## Migration geçmişi ve bekleyen dosyalar
 
+- **Uzlaştırma yapıldı (`docs/history/158-*`).** Repo, temiz yerel PostgreSQL'de
+  baştan oynatıldı ve canlı şemayla birebir eşleştiği doğrulandı; repoda eksik olan
+  `multi_image_media` dosyası canlı kayıttan geri yazıldı; `schema_migrations`'a repo
+  sürümüyle 79 eksik kayıt EKLENDİ (şema değişmedi, mevcut satırlara dokunulmadı).
+  Canlıda hâlâ 48 MCP sürümlü satır da var; bu yüzden `db push` yine "yerelde yok"
+  hatasıyla durur (kör yeniden-uygulama riski artık yok). Yeni migration'ı canlıya
+  uygularken kaydı DOSYANIN sürümüyle düşün (ayrıntı 158'de).
 - **Dosya adı ≠ canlı sürüm.** `migrations/` dosyaları `2026091…` sürümleriyle
   adlandırılmıştır; canlıya Supabase MCP ile uygulananlar ise
   `supabase_migrations.schema_migrations`'a kendi zaman damgalarıyla (`2026093…`,
