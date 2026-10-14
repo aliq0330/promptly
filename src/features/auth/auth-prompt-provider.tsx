@@ -9,6 +9,7 @@ import { buttonClassName } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { authHref } from "@/lib/auth-redirect";
+import { AuthDivider, GoogleSignInButton } from "@/features/auth/google-sign-in-button";
 import type { TranslationKey } from "@/lib/i18n/translations";
 
 /** What the visitor tried to do — picks the dialog's sentence. */
@@ -98,6 +99,10 @@ function AuthPromptDialog({ reason, onClose }: { reason: AuthPromptReason; onClo
           >
             {t("auth.signUp")}
           </Link>
+        </div>
+        <div className="mt-3 space-y-3">
+          <AuthDivider />
+          <GoogleSignInButton next={next} />
         </div>
       </div>
     </Modal>

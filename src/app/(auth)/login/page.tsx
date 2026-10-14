@@ -10,6 +10,7 @@ import { useAuth } from "@/features/auth/auth-provider";
 import { supabase } from "@/lib/supabase/client";
 import { translateAuthError } from "@/features/auth/auth-errors";
 import { readNextParam } from "@/lib/auth-redirect";
+import { AuthDivider, GoogleSignInButton } from "@/features/auth/google-sign-in-button";
 import { useTranslation } from "@/lib/i18n/language-provider";
 
 /**
@@ -24,6 +25,17 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Google (OAuth) sends a failure back as `error` / `error_description` in the URL (query or hash).
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+    if (params.get("error") || hash.get("error")) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time read of the URL on mount
+      setError(t("auth.googleFailed"));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount only
+  }, []);
 
   // Already signed in — a login form has nothing to do here.
   useEffect(() => {
@@ -130,6 +142,8 @@ export default function LoginPage() {
       <Button type="submit" className="w-full" disabled={isSubmitting}>
         {isSubmitting ? t("auth.loggingIn") : t("common.login")}
       </Button>
+      <AuthDivider />
+      <GoogleSignInButton next={readNextParam()} />
       <p className="text-xs text-text-muted">
         {t("auth.noAccountYet")}{" "}
         <Link href="/signup" className="text-primary underline underline-offset-2 hover:no-underline">

@@ -76,6 +76,35 @@ Kaynak kök `CLAUDE.md` Bölüm 6'dır; bu liste onunla aynıdır. Canlı verita
   satırın görünürlüğüne bağlıdır — `docs/history/150-*`).
 - **Atıl (kodda kullanılmayan) tablo:** `prompt_saves`.
 
+## Google ile giriş kurulumu
+
+Kod hazır (`docs/history/155-*`); Google sağlayıcısı **elle** etkinleştirilmelidir,
+etkinleşene kadar "Google ile devam et" butonu Supabase'in ham bir "provider is not
+enabled" hatasına götürür.
+
+1. **Google Cloud Console** → bir proje seç/oluştur → *APIs & Services* →
+   *OAuth consent screen*: User type **External**, uygulama adı, destek e-postası;
+   kapsamlar yalnızca `openid`, `email`, `profile` (varsayılan, doğrulama gerektirmez).
+   Yayın durumu *Testing* iken yalnız "test users" girebilir; herkese açmak için
+   **Publish app**.
+2. *Credentials* → *Create credentials* → **OAuth client ID** → *Web application*:
+   - Authorized JavaScript origins: `https://aliq0330.github.io` (yerel geliştirme için
+     `http://localhost:3000`)
+   - Authorized redirect URIs: `https://xqxybhjcyrvaroknucdq.supabase.co/auth/v1/callback`
+   - Oluşan **Client ID** ve **Client secret**'ı kopyala.
+3. **Supabase Dashboard** → *Authentication* → *Sign In / Providers* → **Google** →
+   etkinleştir, Client ID ve Client secret'ı yapıştır, kaydet.
+4. *Authentication* → *URL Configuration*: **Site URL** `https://aliq0330.github.io/promptly/`;
+   **Redirect URLs** listesinde `https://aliq0330.github.io/promptly/**` (yerel için
+   `http://localhost:3000/promptly/**`) bulunmalı (e-posta doğrulama/şifre sıfırlama
+   için zaten gerekiyordu).
+5. Dene: `/login` → "Google ile devam et" → hesabı seç → ana sayfaya (ya da `?next=`
+   adresine) dönmeli, `profiles` satırı Google adıyla açılmalı.
+
+Notlar: aynı doğrulanmış e-postayla önceden e-posta+şifre hesabı varsa Supabase
+Google kimliğini o hesaba bağlar (yeni hesap açmaz). Google fotoğrafı otomatik
+avatar yapılmaz.
+
 ## Migration geçmişi ve bekleyen dosyalar
 
 - **Dosya adı ≠ canlı sürüm.** `migrations/` dosyaları `2026091…` sürümleriyle
