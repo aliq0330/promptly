@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Clock, Flame, LayoutGrid, SquareTerminal, SlidersHorizontal, Sparkles, UserCheck, Workflow as WorkflowIcon } from "lucide-react";
+import { Clock, Flame, Hash, LayoutGrid, SquareTerminal, SlidersHorizontal, Sparkles, UserCheck, Workflow as WorkflowIcon } from "lucide-react";
 import { Tabs } from "@/components/ui/tabs";
 import { Chip } from "@/components/ui/chip";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import { FeedItemsView } from "./feed-items-view";
 import { useFeedPages } from "./use-feed-pages";
 import type { FeedItem } from "./types";
 import { useAuth } from "@/features/auth/auth-provider";
+import { useFollowedTags } from "@/features/tags/followed-tags-store";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
 
@@ -22,16 +23,18 @@ import type { TranslationKey } from "@/lib/i18n/translations";
  *   - newest    → every public post, newest first
  *   - popular   → every public post by like_count (then newest)
  *   - following → posts by the people the signed-in user follows
+ *   - tags      → posts tagged with a tag the signed-in user follows
  * There is deliberately no "For You" tab: nothing here is personalised, so the
  * first tab is honestly called "Newest".
  */
-type TabKey = "newest" | "popular" | "following";
+type TabKey = "newest" | "popular" | "following" | "tags";
 type KindFilter = "all" | FeedItem["kind"];
 
 const TABS: { key: TabKey; labelKey: TranslationKey; icon: typeof Clock }[] = [
   { key: "newest", labelKey: "home.tabNewest", icon: Clock },
   { key: "popular", labelKey: "home.tabPopular", icon: Flame },
   { key: "following", labelKey: "nav.following", icon: UserCheck },
+  { key: "tags", labelKey: "home.tabTags", icon: Hash },
 ];
 
 const KIND_FILTERS: { key: KindFilter; labelKey: TranslationKey; icon: typeof LayoutGrid }[] = [
@@ -48,15 +51,20 @@ export function FeedTabs() {
   const [kind, setKind] = useState<KindFilter>("all");
   const [taxonomy, setTaxonomy] = useState<TaxonomyFilterValue>(EMPTY_TAXONOMY_FILTER);
   const { user, loading: authLoading } = useAuth();
+  const followedTags = useFollowedTags();
 
-  // "Following" needs a signed-in user: a guest gets the login prompt below and no request is made
+  // "Following" and "My tags" need a signed-in user: a guest gets the login prompt below and no request is made
   // (while the session is still being restored we wait instead of flashing that prompt).
-  const waitingForAuth = active === "following" && authLoading;
-  const needsLogin = active === "following" && !authLoading && !user;
+  const needsAccount = active === "following" || active === "tags";
+  const waitingForAuth = needsAccount && authLoading;
+  const needsLogin = needsAccount && !authLoading && !user;
   const feed = useFeedPages(
-    { scope: active === "following" ? "following" : "all", order: active === "popular" ? "popular" : "newest", kind, taxonomy },
+    { scope: active === "following" ? "following" : active === "tags" ? "tags" : "all", order: active === "popular" ? "popular" : "newest", kind, taxonomy },
     !needsLogin && !waitingForAuth,
   );
+
+  // A signed-in viewer with no followed tags gets "start by following one" instead of a misleading "no posts".
+  const noTagsFollowed = followedTags.loaded && followedTags.tags.length === 0;
 
   const kindChips = (
     <>
@@ -100,9 +108,9 @@ export function FeedTabs() {
 
       {needsLogin ? (
         <EmptyState
-          icon={UserCheck}
-          title={t("feed.emptyFollowingTitle")}
-          description={t("feed.emptyFollowingDescription")}
+          icon={active === "tags" ? Hash : UserCheck}
+          title={active === "tags" ? t("feed.emptyTagsLoginTitle") : t("feed.emptyFollowingTitle")}
+          description={active === "tags" ? t("feed.emptyTagsLoginDescription") : t("feed.emptyFollowingDescription")}
           action={{ label: t("common.login"), href: "/login" }}
         />
       ) : feed.loading || waitingForAuth ? (
@@ -117,9 +125,23 @@ export function FeedTabs() {
         <>
           <FeedItemsView
             items={feed.items}
-            emptyTitle={active === "following" ? t("feed.emptyFollowingNoPosts") : t("feed.emptyDefault")}
-            emptyDescription={active === "following" ? t("feed.emptyFollowingHint") : undefined}
-            emptyAction={active === "following" ? { label: t("feed.goToDiscover"), href: "/discover" } : undefined}
+            emptyTitle={
+              active === "following"
+                ? t("feed.emptyFollowingNoPosts")
+                : active === "tags"
+                  ? noTagsFollowed
+                    ? t("feed.emptyTagsNoneTitle")
+                    : t("feed.emptyTagsNoPosts")
+                  : t("feed.emptyDefault")
+            }
+            emptyDescription={active === "following" ? t("feed.emptyFollowingHint") : active === "tags" && noTagsFollowed ? t("feed.emptyTagsNoneDescription") : undefined}
+            emptyAction={
+              active === "following"
+                ? { label: t("feed.goToDiscover"), href: "/discover" }
+                : active === "tags"
+                  ? { label: t("feed.goToTags"), href: "/tags" }
+                  : undefined
+            }
           />
           {feed.failed && <p className="text-center text-small text-danger">{t("feed.loadFailed")}</p>}
           {feed.hasMore && (

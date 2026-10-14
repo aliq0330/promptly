@@ -1,6 +1,6 @@
 # 9.157 — Keşfet sunucu sayfalaması ve altyapı sertleştirme
 
-Durum: kod + migration dosyaları repoda; 820000 ve 830000 canlıya uygulandı; **840000 (prompt_saves DROP) ve `username-login` deploy'u bekliyor** (aşağıda tablo).
+Durum: uygulandı. Üç migration canlıda, `username-login` v2 deploy edildi, kod `main`'de ve Pages'e yayınlandı (aşağıda tablo). Canlı kullanıcı adı girişi elle doğrulanmadı.
 
 ## Keşfet karma akışı → `public.feed_page`
 
@@ -38,8 +38,7 @@ Kodda `.from("prompt_saves")` yoktu (yalnızca yorumlar). `20260919840000_drop_p
 | `20260919710000 content_relations` geçmiş kaydı | uygulandı (tek INSERT; önce iki doğrulama SELECT'i beklenen sonucu verdi) |
 | `20260919820000_feed_page_oldest_open_only.sql` | **uygulandı** (MCP `apply_migration`, ad `feed_page_oldest_open_only`). Doğrulandı (anon rolüyle): Ana sayfanın 10 anahtarlı çağrısı çalışır (50 satır), `oldest` sayfa 2 sayfa 1'in devamıdır, `p_open_only` açık istek sayısı 30 = beklenen 30 (tüm istek 36) |
 | `20260919830000_auth_login_attempts.sql` | **uygulandı** (ad `auth_login_attempts`). Doğrulandı: RLS açık, 0 policy, EXECUTE yalnız service_role'de (anon/authenticated false). Fonksiyon canlıda ÇAĞRILMADI (canlı tabloya satır yazmamak için); davranışı yerelde denendi |
-| `20260919840000_drop_prompt_saves.sql` | **uygulanmadı**: MCP `apply_migration` iki denemede 60 sn zaman aşımı verdi; sonrasında tablo ve 3 policy yerinde, kilit yok, migration kaydı yok. Yıkıcı ifade için onay bekliyor olabilir. Tablo 0 satır |
-| `username-login` yeni sürümü | **deploy edilmedi** |
-| `deploy-functions` workflow'u | çalıştırılmadı |
-
-Kalan adımlar: 840000'ı onaylayıp çalıştırmak ve `username-login`'i deploy etmek (RPC canlıda olduğundan artık güvenli).
+| `20260919840000_drop_prompt_saves.sql` | **uygulandı** (MCP `apply_migration` iki denemede zaman aşımına uğradı; kullanıcı SQL Editor'den çalıştırdı). Kontrol: `prompt_saves` yok, `collections` / `collection_items` / `prompt_likes` var, 19 varsayılan koleksiyon yerinde |
+| `username-login` yeni sürümü | **deploy edildi** (MCP, v1 → v2, `verify_jwt` kapalı). Canlı istekle denenmedi (sandbox Supabase'e erişemez) |
+| `deploy-functions` workflow'u | çalıştırılmadı (fonksiyon bu sefer MCP ile deploy edildi) |
+| Pages deploy | #206 düştü (CI Node 20'de `npm test` `.ts` + glob çalıştıramadı; PR #195'te benim hatam), `deploy.yml` Node 22'ye alındı (PR #196), #207 başarılı |

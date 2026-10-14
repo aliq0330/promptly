@@ -7,10 +7,11 @@
  *   newest  → rank is a constant 0,        triple DESCENDING
  *   popular → rank is `like_count`,        triple DESCENDING
  *   oldest  → rank is a constant 0,        triple ASCENDING
+ *   used    → rank is `copy_count` for prompts and 0 for every other kind, triple DESCENDING
  * The next page is "every row strictly after the cursor row in that order":
  * `<` for the descending orders, `>` for oldest (see the SQL migrations).
  */
-export type FeedOrder = "newest" | "popular" | "oldest";
+export type FeedOrder = "newest" | "popular" | "oldest" | "used";
 
 /** Keyset position of the last row of a page: `(sort_rank, created_at, id)` of `public.feed_page`. */
 export interface FeedCursor {
@@ -20,18 +21,24 @@ export interface FeedCursor {
 }
 
 /** Structural twin of `ContentSortKey` (kept literal here so this file imports nothing from the UI). */
-export type DiscoverSortKey = "newest" | "oldest" | "most-liked";
+export type DiscoverSortKey = "newest" | "oldest" | "most-liked" | "most-used";
 
 /** Keşfet's sort select → the `p_order` the database understands. */
 export function feedOrderForSort(sort: DiscoverSortKey): FeedOrder {
   if (sort === "most-liked") return "popular";
+  if (sort === "most-used") return "used";
   if (sort === "oldest") return "oldest";
   return "newest";
 }
 
-/** Rank a row would carry in `order`: like_count for popular, a constant 0 otherwise (as in SQL). */
-export function feedSortRank(order: FeedOrder, likeCount: number): number {
-  return order === "popular" ? likeCount : 0;
+/**
+ * Rank a row would carry in `order` (as in SQL): like_count for popular, copy_count for used
+ * (`copyCount` is only passed for prompts — every other kind ranks 0), a constant 0 otherwise.
+ */
+export function feedSortRank(order: FeedOrder, counts: { likeCount: number; copyCount?: number }): number {
+  if (order === "popular") return counts.likeCount;
+  if (order === "used") return counts.copyCount ?? 0;
+  return 0;
 }
 
 /**

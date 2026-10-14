@@ -614,6 +614,7 @@ export function CreatePromptForm() {
     likeCount: 0,
     saveCount: 0,
     commentCount: 0,
+    copyCount: 0,
     isLiked: false,
     isSaved: false,
     status: "draft",

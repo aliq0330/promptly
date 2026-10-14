@@ -73,7 +73,7 @@ src/
   features/<alan>/            # auth, collections, content, drafts, feed, focus,
                               # messages, moderation, my-content, notifications,
                               # onboarding, presets, profile, prompts, relations,
-                              # requests, search, statistics, studio, tags, workflows
+                              # requests, search, share, statistics, studio, tags, workflows
   lib/                        # utils, i18n, taksonomi, prompt-dna, relations, …
   lib/supabase/               # veri erişim katmanı (tablo başına dosya)
   types/index.ts              # paylaşılan tipler
@@ -193,8 +193,8 @@ tamamlanmış sayılmaz. Ayrıntı ve mimari: `docs/history/049-*`, `056-*`, `05
 
 | Route | Açıklama |
 |---|---|
-| `/` | Ana Sayfa: karma akış (En yeni / Popüler / Takip; sunucudan `feed_page`, keyset), tür çipleri; misafire tanıtım |
-| `/discover` | Keşfet: bölümler (Tümü / Promptlar / Workflow / Hazır ayar / İstekler / Yaratıcılar), filtreler; içerik bölümleri sunucudan `feed_page` (keyset), Yaratıcılar `profiles` keyset |
+| `/` | Ana Sayfa: karma akış (En yeni / Popüler / Takip / Etiketlerim; sunucudan `feed_page`, keyset), tür çipleri; misafire tanıtım |
+| `/discover` | Keşfet: bölümler (Tümü / Promptlar / Workflow / Hazır ayar / İstekler / Yaratıcılar), filtreler (Promptlar'da ek "En çok kullanılan" sıralaması); içerik bölümleri sunucudan `feed_page` (keyset), Yaratıcılar `profiles` keyset |
 | `/prompts`, `/requests`, `/workflows`, `/presets` | Tür listeleri (ortak `ContentListPage`: arama, Filtre, sıralama, Kart/Odak) |
 | `/prompts/local?id=` · `/requests/local?id=` · `/workflows/local?id=` · `/presets/local?id=` · `/results/local?id=` | Detay sayfaları |
 | `/create` · `/requests/new` · `/workflows/create` · `/presets/create` | Oluşturma/düzenleme (`?edit=<id>`), ortak alt alan: Görünürlük + Taslağa kaydet/Paylaş |
@@ -209,6 +209,7 @@ tamamlanmış sayılmaz. Ayrıntı ve mimari: `docs/history/049-*`, `056-*`, `05
 | `/privacy`, `/terms` | Gizlilik Politikası, Kullanım Koşulları (herkese açık, TR+EN; metin `features/legal/legal-content.ts`) |
 | `/moderation` | Yalnızca moderatör: şikâyetler, site istatistikleri, kullanıcı yönetimi, depolama temizliği, DNA doldurma |
 | `/login`, `/signup`, `/reset-password` | Auth (e-posta/kullanıcı adı + şifre, Google ile devam et) |
+| `/share/<tür>/<anahtar>/` | Derleme zamanı üretilen statik paylaşım sayfası (herkese açık içerik; kendi `og:*` meta'sı, sonra detaya yönlenir). Paylaş/linki kopyala eylemleri bu adresi verir; sayfası olmayan yeni içerik `404.html` → `NotFoundForwarder` ile detaya gider. `deploy.yml` her 6 saatte yeniden derler |
 
 Giriş gerektirenler (`RequireAuth`): `/messages`, `/notifications`, `/saved`,
 `/following`, `/followers`, `/settings`, `/profile/edit`, `/my-content`.
@@ -224,7 +225,7 @@ kaynağı); `supabase/README.md` uygulama talimatını içerir. Çekirdek tablol
 `prompt_dna_sections`, `prompt_results`), `prompt_requests` (+medya/etiket),
 `workflows` (+`workflow_steps/connections/media/tags`), `presets`
 (+`preset_fields/options/tags`), `tags`, `taxonomy_categories/subcategories`,
-`prompt_likes` / `prompt_comments` / `comment_likes` (hedef sütunlu
+`prompt_copy_events` (kopyalama sayacının günlük dedupe'u; yalnız RPC yazar), `tag_follows` (kullanıcı başına ≤100 etiket; `feed_page` kapsamı `tags`), `prompt_likes` / `prompt_comments` / `comment_likes` (hedef sütunlu
 polimorfik: `prompt_id`/`request_id`/`workflow_id`/`preset_id` — tam biri dolu),
 `collections` / `collection_items` ("Genel" = `is_default`, isimden bağımsız),
 `follows`, `conversations` / `conversation_members` / `messages` /
@@ -311,17 +312,24 @@ bağlayıcıdır; ayrıntılı gerekçe için `docs/history/README.md` tablosuna
   OAuth yönlendirmesi Google/Supabase'e karşı denenmedi.
 - Supabase Dashboard → Authentication → Providers → Email: **"Leaked password
   protection"** ücretli planda; şimdilik gerekmiyor, bilinçli olarak ertelendi.
-- **Canlıdaki durum** (`docs/history/157-*`): `20260919820000` (`feed_page`
-  `oldest` / `p_open_only`) ve `20260919830000` (`auth_login_attempt`) MCP ile
-  canlıya uygulandı ve doğrulandı. **Hâlâ bekleyenler:** (1)
-  `20260919840000_drop_prompt_saves.sql` — iki denemede MCP `apply_migration`
-  zaman aşımına uğradı (kilit yok, hiçbir şey uygulanmadı; muhtemelen yıkıcı
-  ifade için onay bekliyor): onaylayıp yeniden çalıştırın ya da SQL Editor'den
-  çalıştırın; (2) `username-login` Edge Function'ının yeni sürümü deploy edilmedi
-  (`--no-verify-jwt`; RPC artık canlıda); `deploy-functions.yml` hiç çalıştırılmadı,
-  secret'lar `SUPABASE_ACCESS_TOKEN` / `SUPABASE_PROJECT_REF` tanımlanmalı.
-  `feed_page`'in eski 10 argümanlı imzası, `drop function` onayı olmadığı için ince
-  sarmalayıcı olarak kaldı.
+- `docs/history/157-*` işleri canlıda: `20260919820000` (`feed_page` `oldest` /
+  `p_open_only`), `20260919830000` (`auth_login_attempt`) ve `20260919840000`
+  (`prompt_saves` DROP; kullanıcı SQL Editor'den uyguladı, canlıda tablo yok,
+  `collections` / `collection_items` / `prompt_likes` yerinde) uygulandı;
+  `username-login` v2 MCP ile deploy edildi (`verify_jwt` KAPALI). Yeni
+  `username-login` canlı istekle DENENMEDİ (sandbox Supabase'e erişemez); sitedeki
+  kullanıcı adı girişi ve uzantı girişi elle doğrulanmalı. `feed_page`'in eski 10
+  argümanlı imzası, `drop function` onayı olmadığı için ince sarmalayıcı olarak
+  kaldı. `deploy-functions.yml` hiç çalıştırılmadı (secret'lar
+  `SUPABASE_ACCESS_TOKEN` / `SUPABASE_PROJECT_REF` tanımlı değilse fail eder).
+- Etiket takibi (`docs/history/161-*`): `tag_follows` + `feed_page` `tags` kapsamı canlıda; yalnızca ekleyici, aynı imza. Gerçek oturumla uçtan uca denenmedi.
+- Kopyalama sayacı (`docs/history/160-*`): `prompts.copy_count` + `record_prompt_copy` canlıda; yalnızca oturumlu kullanıcı, günde bir, yazarın kendisi sayılmaz. Keşfet → Promptlar'da ayrı "En çok kullanılan" sıralaması var (`feed_page` `p_order='used'`); `Popüler` hâlâ yalnızca beğeni. Sayaç sütunlarını istemciden koruma yalnızca `copy_count` için var (aşağıdaki "sayaç koruması" açık işi).
+- Paylaşım önizlemesi (`docs/history/159-*`): `og:image` her zaman site kartı (gönderi medyası private); yeni içeriğin önizlemesi en geç 6 saat sonra. Gerçek sosyal ağ tarayıcılarıyla denenmedi.
+- Migration geçmişi uzlaştırıldı (`docs/history/158-*`): repo temiz DB'de baştan
+  oynatılınca canlı şemayla birebir eşit; `schema_migrations`'a 79 repo-sürümlü kayıt
+  eklendi. Canlıda ayrıca 48 MCP-sürümlü satır duruyor, `supabase db push` hâlâ
+  güvenilir değil (güvenli hatayla durur). Yeni migration'ı uygularken kaydı dosya
+  sürümüyle düş; MCP `apply_migration` ayrı zaman damgası yazar.
 - Bilinçli sınırlar: Signed URL 10 dk geçerli kalır (private'a çevrilmeden önce
   alınmış bir imza süresi dolana kadar çalışır); Supabase CDN'in eski genel medya
   yanıtlarını ne kadar süre servis ettiği bilinmiyor.
@@ -342,8 +350,8 @@ bağlayıcıdır; ayrıntılı gerekçe için `docs/history/README.md` tablosuna
 - Bilinen sınırlamalar: Keşfet içerik bölümleri, Ana Sayfa ve liste sayfaları
   gerçek keyset sayfalama kullanır (Keşfet'te "En çok beğenilen" tüm türlerde `like_count`; Ana Sayfa'da kişiselleştirme
   yoktur, sekme dürüstçe "En yeni"dir); arama prompt metnini (`prompt_text`) ve
-  isteğin `creative_direction`'ını da kapsar ve keyset sayfalanır (`search_content`); `prompt_saves` canlıda hâlâ duruyor (boş; atma migration'ı yukarıda bekliyor); kod içi
+  isteğin `creative_direction`'ını da kapsar ve keyset sayfalanır (`search_content`); `prompt_saves` canlıdan kaldırıldı; kod içi
   yorumlarda eski "Bölüm 9.x" atıfları arşiv numaralarına (`docs/history/NNN-*`) karşılık gelir.
 
-**Arşiv:** [`docs/history/README.md`](docs/history/README.md) — 157 bölüm, her
+**Arşiv:** [`docs/history/README.md`](docs/history/README.md) — 161 bölüm, her
 biri için durum etiketi (uygulandı / kısmen geçerli / kaldırıldı).

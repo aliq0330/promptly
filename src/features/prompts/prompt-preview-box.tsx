@@ -20,7 +20,7 @@ export function PromptPreviewBox({ prompt, lines = 4 }: { prompt: Prompt; lines?
           <SquareTerminal size={13} strokeWidth={2} />
           Prompt
         </span>
-        <CopyPromptButton text={prompt.promptText} />
+        <CopyPromptButton text={prompt.promptText} promptId={prompt.id} />
       </div>
       {/* Padding lives on the wrapper: padding on the clamped element itself
           would reveal part of the next (clamped-away) line. */}

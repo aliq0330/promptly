@@ -79,6 +79,8 @@ export interface Prompt {
   /** Real, trigger-maintained `prompts.save_count` — one per distinct user who saved it into ANY of their own collections, not per collection. */
   saveCount: number;
   commentCount: number;
+  /** Real `prompts.copy_count`: how many signed-in people copied / ran it (one per person per day, never the author). */
+  copyCount: number;
   isLiked: boolean;
   isSaved: boolean;
   status: "draft" | "published";

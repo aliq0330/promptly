@@ -3,6 +3,8 @@
 import { useRef, useState } from "react";
 import { Check, Copy } from "lucide-react";
 import { cn, copyTextToClipboard } from "@/lib/utils";
+import { useAuth } from "@/features/auth/auth-provider";
+import { recordPromptCopy } from "@/lib/supabase/prompt-usage";
 import { useTranslation } from "@/lib/i18n/language-provider";
 
 /**
@@ -22,6 +24,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
  */
 export function CopyPromptButton({
   text,
+  promptId,
   label,
   className,
   size = "sm",
@@ -29,6 +32,8 @@ export function CopyPromptButton({
 }: {
   /** The exact prompt/instruction text to copy — never a title, author, tag or other metadata (§10.1/§10.3). */
   text: string;
+  /** When given, a successful copy counts one "use" for that prompt (signed-in viewers only; see `recordPromptCopy`). */
+  promptId?: string;
   label?: string;
   className?: string;
   size?: "sm" | "md";
@@ -36,6 +41,7 @@ export function CopyPromptButton({
   variant?: "outline" | "primary";
 }) {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const [state, setState] = useState<"idle" | "copied" | "failed">("idle");
   const resetTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isBusyRef = useRef(false);
@@ -53,6 +59,7 @@ export function CopyPromptButton({
 
     const ok = await copyTextToClipboard(text);
     setState(ok ? "copied" : "failed");
+    if (ok && promptId && user) void recordPromptCopy(promptId);
     resetTimer.current = setTimeout(
       () => {
         setState("idle");

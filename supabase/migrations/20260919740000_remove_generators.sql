@@ -74,7 +74,13 @@ delete from public.collection_items where generator_id is not null;
 delete from public.content_relations where source_type = 'generator' or target_type = 'generator';
 delete from public.content_edits where content_type = 'generator';
 delete from public.reports where target_type = 'generator';
-update public.studio_sessions set active_kind = null where active_kind = 'generator';
+-- (Uzlaştırma notu: `studio_sessions` canlıda bu migration'dan SONRA 640000 ile düşürüldü;
+-- repo sırasında ise ondan ÖNCE düşüyor. Taze kurulumda tablo yoksa bu ifade atlanır.)
+do $studio$ begin
+  if to_regclass('public.studio_sessions') is not null then
+    execute $q$update public.studio_sessions set active_kind = null where active_kind = 'generator'$q$;
+  end if;
+end $studio$;
 
 -- 3) Generator'a özgü trigger / fonksiyonlar ----------------------------------------------
 drop trigger if exists prompt_likes_after_insert_notify_generator on public.prompt_likes;
@@ -146,9 +152,13 @@ alter table public.reports drop constraint if exists reports_target_type_check;
 alter table public.reports add constraint reports_target_type_check check (
   target_type in ('prompt', 'comment', 'request', 'user', 'message', 'workflow', 'preset'));
 
-alter table public.studio_sessions drop constraint if exists studio_sessions_active_kind_check;
-alter table public.studio_sessions add constraint studio_sessions_active_kind_check check (
-  active_kind is null or active_kind in ('prompt', 'preset', 'workflow'));
+do $studio$ begin
+  if to_regclass('public.studio_sessions') is not null then
+    execute 'alter table public.studio_sessions drop constraint if exists studio_sessions_active_kind_check';
+    execute $q$alter table public.studio_sessions add constraint studio_sessions_active_kind_check check (
+      active_kind is null or active_kind in ('prompt', 'preset', 'workflow'))$q$;
+  end if;
+end $studio$;
 
 alter table public.content_relations drop constraint if exists content_relations_source_type_check;
 alter table public.content_relations add constraint content_relations_source_type_check check (source_type in ('prompt', 'workflow', 'request'));

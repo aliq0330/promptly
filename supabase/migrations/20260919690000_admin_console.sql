@@ -401,7 +401,7 @@ returns table (id uuid, sender_id uuid, sender_username text, body text, created
 language plpgsql security definer set search_path = public as $$
 begin
   perform public._admin_guard();
-  if not exists (select 1 from public.conversation_members where conversation_id = p_conversation_id and user_id = p_user_id) then
+  if not exists (select 1 from public.conversation_members cm where cm.conversation_id = p_conversation_id and cm.user_id = p_user_id) then
     raise exception 'Konuşma bulunamadı.';
   end if;
   perform public._admin_log('view_conversation', p_user_id, jsonb_build_object('conversation_id', p_conversation_id));

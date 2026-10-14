@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Copy, FolderMinus, Link2, Loader2, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { useAuth } from "@/features/auth/auth-provider";
+import { shareLinkForHref } from "@/lib/share-link";
 import { absoluteUrl, cn, presetHref, promptHref, requestHref, resultHref, workflowHref } from "@/lib/utils";
 import { deleteRealPrompt } from "@/lib/supabase/prompts";
 import { deleteWorkflow } from "@/lib/supabase/workflows";
@@ -140,7 +141,7 @@ export function PostMenu({
     event.preventDefault();
     event.stopPropagation();
     try {
-      await navigator.clipboard.writeText(absoluteUrl(href));
+      await navigator.clipboard.writeText(absoluteUrl(shareLinkForHref(href)));
       setCopied(true);
       setTimeout(() => setCopied(false), 1200);
     } catch {

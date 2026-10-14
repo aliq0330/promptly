@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Bookmark, Heart, MessageCircle, X } from "lucide-react";
+import { Bookmark, Copy, Heart, MessageCircle, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
 import { Tabs, type TabItem } from "@/components/ui/tabs";
@@ -28,6 +28,8 @@ export interface StatisticsTarget {
   commentCount: number;
   /** Ignored for prompt requests — they can't be saved. */
   saveCount?: number;
+  /** Prompts only (`prompts.copy_count`): shown as a fourth summary tile; there is no per-person list for it. */
+  copyCount?: number;
 }
 
 /**
@@ -44,6 +46,8 @@ export function StatisticsModal({ target, onClose }: { target: StatisticsTarget;
   const { contentType, contentId } = target;
   const kinds: StatisticsKind[] = contentType === "request" ? ["likes", "comments"] : ["likes", "comments", "saves"];
   const [active, setActive] = useState<StatisticsKind>("likes");
+  const copyCount = target.copyCount;
+  const tileCount = kinds.length + (copyCount === undefined ? 0 : 1);
 
   // Live totals — the same shared stores the Like/Save/Comment buttons write to.
   const likes = useEngagementEntry("like", contentType, contentId, target.likeCount).count;
@@ -91,7 +95,7 @@ export function StatisticsModal({ target, onClose }: { target: StatisticsTarget;
           </button>
         </div>
 
-        <div className={cn("grid gap-2 px-4", kinds.length === 3 ? "grid-cols-3" : "grid-cols-2")}>
+        <div className={cn("grid gap-2 px-4", tileCount === 4 ? "grid-cols-2 sm:grid-cols-4" : tileCount === 3 ? "grid-cols-3" : "grid-cols-2")}>
           {kinds.map((kind) => {
             const Icon = KIND_META[kind].icon;
             return (
@@ -102,6 +106,13 @@ export function StatisticsModal({ target, onClose }: { target: StatisticsTarget;
               </div>
             );
           })}
+          {copyCount !== undefined && (
+            <div className="flex flex-col items-center gap-0.5 rounded-md border border-border-soft bg-surface-soft px-2 py-2.5">
+              <Copy size={16} strokeWidth={1.75} className="text-primary" aria-hidden />
+              <span className="text-h3 font-semibold tabular-nums text-text">{formatCount(copyCount)}</span>
+              <span className="text-caption text-text-muted">{t("statistics.tileCopies")}</span>
+            </div>
+          )}
         </div>
 
 

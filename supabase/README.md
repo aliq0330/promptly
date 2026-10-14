@@ -69,14 +69,16 @@ Kaynak kök `CLAUDE.md` Bölüm 6'dır; bu liste onunla aynıdır. Canlı verita
   iç `_admin_guard()`).
 - **İlişkiler:** `content_relations` (yalnızca elle kurulan ilişkiler; diğerleri
   mevcut tablolardan türetilir).
-- **RPC'ler (okuma):** `feed_page` (ana sayfa + Keşfet; `p_order` newest/popular/oldest, isteğe bağlı `p_open_only` — `20260919820000`, canlıda uygulandı), `search_content` (arama),
+- **RPC'ler (okuma):** `feed_page` (ana sayfa + Keşfet; `p_scope` all/following/tags, `p_order` newest/popular/oldest/used, isteğe bağlı `p_open_only` — `20260919820000`, canlıda uygulandı), `search_content` (arama),
   `related_prompts` / `related_requests` (detaydaki benzerler),
   `dna_similar_candidates`. **Yalnız service role:** `delete_account_data`,
   `orphan_storage_objects`.
 - **Storage:** `avatars` herkese açık; `message-images`, `prompt-media`,
   `request-references`, `result-media` private (dosyaya erişim, onu gösteren
   satırın görünürlüğüne bağlıdır — `docs/history/150-*`).
-- **Kaldırılan tablo:** `prompt_saves` (kaydedilenler `collections` üzerindendir). Atılması `20260919840000_drop_prompt_saves.sql` ile yazıldı — **canlıda henüz uygulanmadı** (MCP uygulaması zaman aşımına uğradı; tablo canlıda boş).
+- **Kaldırılan tablo:** `prompt_saves` (kaydedilenler `collections` üzerindendir). Atılması `20260919840000_drop_prompt_saves.sql` ile yazıldı — canlıda uygulandı (tablo artık yok).
+- **Etiket takibi:** `tag_follows` (RLS: yalnız sahibi; ≤100 trigger'ı) + `feed_page` kapsamı `tags`; `20260919860000` — canlıda uygulandı.
+- **Kullanım sayacı:** `prompts.copy_count` + `prompt_copy_events` (RLS açık, politika yok) + `record_prompt_copy(uuid)` (yalnız `authenticated`) + `prompts_protect_copy_count` trigger'ı; `20260919850000` — canlıda uygulandı.
 - **Giriş hız sınırı:** `auth_login_attempts` (RLS açık, policy yok) + `auth_login_attempt(p_ip)` — yalnız `service_role`; `20260919830000` — canlıda uygulandı.
 
 ## Google ile giriş kurulumu
@@ -115,6 +117,13 @@ avatar yapılmaz.
 
 ## Migration geçmişi ve bekleyen dosyalar
 
+- **Uzlaştırma yapıldı (`docs/history/158-*`).** Repo, temiz yerel PostgreSQL'de
+  baştan oynatıldı ve canlı şemayla birebir eşleştiği doğrulandı; repoda eksik olan
+  `multi_image_media` dosyası canlı kayıttan geri yazıldı; `schema_migrations`'a repo
+  sürümüyle 79 eksik kayıt EKLENDİ (şema değişmedi, mevcut satırlara dokunulmadı).
+  Canlıda hâlâ 48 MCP sürümlü satır da var; bu yüzden `db push` yine "yerelde yok"
+  hatasıyla durur (kör yeniden-uygulama riski artık yok). Yeni migration'ı canlıya
+  uygularken kaydı DOSYANIN sürümüyle düşün (ayrıntı 158'de).
 - **Dosya adı ≠ canlı sürüm.** `migrations/` dosyaları `2026091…` sürümleriyle
   adlandırılmıştır; canlıya Supabase MCP ile uygulananlar ise
   `supabase_migrations.schema_migrations`'a kendi zaman damgalarıyla (`2026093…`,
@@ -822,7 +831,7 @@ aşağıdaki "GitHub Actions ile deploy" workflow'u ile deploy edilir:
 | Fonksiyon | Ne yapar | Deploy |
 |---|---|---|
 | `analyze-image` | Görsel + MIME alıp Gemini Vision'a gönderen, yapılandırılmış JSON döndüren fonksiyon | `supabase functions deploy analyze-image` (kod değişince) |
-| `username-login` | Kullanıcı adı + şifreyle giriş; e-postayı yalnızca sunucuda çözer. Hız sınırı kalıcı (`auth_login_attempt` RPC), CORS `*` değil (site + localhost + `chrome-extension://`) — **bu kod değişikliği canlıya deploy edilmedi** (`20260919830000` artık canlıda) | `supabase functions deploy username-login --no-verify-jwt` |
+| `username-login` | Kullanıcı adı + şifreyle giriş; e-postayı yalnızca sunucuda çözer. Hız sınırı kalıcı (`auth_login_attempt` RPC), CORS `*` değil (site + localhost + `chrome-extension://`) — canlıda v2 (MCP ile deploy edildi; canlı istekle denenmedi) | `supabase functions deploy username-login --no-verify-jwt` |
 | `cleanup-orphan-storage` | Hiçbir satırın göstermediği Storage dosyalarını bulur/siler (yalnız moderatör) | `supabase functions deploy cleanup-orphan-storage` |
 | `delete-account` | Kullanıcının KENDİ hesabını siler (JWT'den; `docs/history/154-*`) | `supabase functions deploy delete-account` — JWT doğrulaması AÇIK. Canlıda (v1). |
 
