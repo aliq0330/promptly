@@ -3,11 +3,15 @@ import { translateForRuntime } from "@/lib/i18n/translations";
 import { mapProfileRow, type ProfileRow } from "./mappers";
 import type { Conversation, Message, MessageAttachment, UserProfile } from "@/types";
 import { removeMessageImages } from "./message-images";
+import { isAfterClear } from "@/lib/conversation-lists";
 
 interface MembershipRow {
   conversation_id: string;
   unread_count: number;
   status: "accepted" | "pending";
+  archived_at: string | null;
+  deleted_at: string | null;
+  cleared_at: string | null;
   conversations: { id: string; last_message_at: string | null } | null;
 }
 
@@ -24,6 +28,8 @@ export interface MessageRow {
   deleted_at: string | null;
   created_at: string;
 }
+
+const MEMBERSHIP_SELECT = "conversation_id, unread_count, status, archived_at, deleted_at, cleared_at, conversations(id, last_message_at)";
 
 const MESSAGE_SELECT =
   "id, conversation_id, sender_id, body, shared_prompt_id, shared_request_id, reply_to_message_id, attachments, edited_at, deleted_at, created_at";
@@ -94,7 +100,7 @@ export async function fetchConversationsForUser(userId: string): Promise<Convers
   try {
     const { data: memberships, error } = await supabase
       .from("conversation_members")
-      .select("conversation_id, unread_count, status, conversations(id, last_message_at)")
+      .select(MEMBERSHIP_SELECT)
       .eq("user_id", userId);
     if (error || !memberships || memberships.length === 0) return [];
 
@@ -114,8 +120,13 @@ export async function fetchConversationsForUser(userId: string): Promise<Convers
       .in("conversation_id", conversationIds)
       .order("created_at", { ascending: false });
 
+    // A cleared history stays hidden in the list preview too: only messages after this viewer's own `cleared_at` count.
+    const clearedAtByConversation = new Map(
+      (memberships as unknown as MembershipRow[]).map((m) => [m.conversation_id, m.cleared_at] as const),
+    );
     const lastMessageByConversation = new Map<string, PreviewRow>();
     for (const msg of (recentMessages ?? []) as (PreviewRow & { conversation_id: string })[]) {
+      if (!isAfterClear(msg.created_at, clearedAtByConversation.get(msg.conversation_id))) continue;
       if (!lastMessageByConversation.has(msg.conversation_id)) {
         lastMessageByConversation.set(msg.conversation_id, msg);
       }
@@ -138,6 +149,9 @@ export async function fetchConversationsForUser(userId: string): Promise<Convers
           lastMessageAt: m.conversations?.last_message_at ?? last?.created_at ?? new Date(0).toISOString(),
           unreadCount: m.unread_count,
           myStatus: m.status,
+          archivedAt: m.archived_at,
+          deletedAt: m.deleted_at,
+          clearedAt: m.cleared_at,
         };
       })
       .filter((c): c is Conversation => Boolean(c))
@@ -159,7 +173,7 @@ export async function fetchConversationForUser(conversationId: string, userId: s
   try {
     const { data: membership, error } = await supabase
       .from("conversation_members")
-      .select("conversation_id, unread_count, status, conversations(id, last_message_at)")
+      .select(MEMBERSHIP_SELECT)
       .eq("conversation_id", conversationId)
       .eq("user_id", userId)
       .maybeSingle();
@@ -176,15 +190,14 @@ export async function fetchConversationForUser(conversationId: string, userId: s
     const otherProfile = (otherMember as unknown as { profiles: ProfileRow | null } | null)?.profiles;
     if (!otherProfile) return null;
 
-    const { data: last } = await supabase
+    const row = membership as unknown as MembershipRow;
+    let lastQuery = supabase
       .from("messages")
       .select("body, shared_prompt_id, shared_request_id, attachments, deleted_at, created_at")
-      .eq("conversation_id", conversationId)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+      .eq("conversation_id", conversationId);
+    if (row.cleared_at) lastQuery = lastQuery.gt("created_at", row.cleared_at);
+    const { data: last } = await lastQuery.order("created_at", { ascending: false }).limit(1).maybeSingle();
 
-    const row = membership as unknown as MembershipRow;
     return {
       id: conversationId,
       participants: [mapProfileRow(otherProfile)],
@@ -192,6 +205,9 @@ export async function fetchConversationForUser(conversationId: string, userId: s
       lastMessageAt: row.conversations?.last_message_at ?? last?.created_at ?? new Date(0).toISOString(),
       unreadCount: row.unread_count,
       myStatus: row.status,
+      archivedAt: row.archived_at,
+      deletedAt: row.deleted_at,
+      clearedAt: row.cleared_at,
     };
   } catch (err) {
     console.error("fetchConversationForUser", err);
@@ -201,17 +217,28 @@ export async function fetchConversationForUser(conversationId: string, userId: s
 
 /**
  * Every message in a real conversation, oldest-first, minus any this user
- * hid "for themselves" (`message_hidden_for` — Bölüm 21 Faz A). RLS
- * (Bölüm 19) already restricts the base query to conversation members.
+ * hid "for themselves" (`message_hidden_for` — Bölüm 21 Faz A) and minus
+ * everything at or before their own `cleared_at` ("Mesajları temizle" —
+ * the rows stay, only this viewer's view is cut). RLS (Bölüm 19) already
+ * restricts the base query to conversation members. If the viewer's own
+ * clear moment can't be read the thread is NOT shown: better empty than
+ * showing history they cleared.
  */
 export async function fetchMessages(conversationId: string, viewerId: string): Promise<Message[]> {
   try {
+    const { data: membership, error: membershipError } = await supabase
+      .from("conversation_members")
+      .select("cleared_at")
+      .eq("conversation_id", conversationId)
+      .eq("user_id", viewerId)
+      .maybeSingle();
+    if (membershipError) return [];
+    const clearedAt = (membership as { cleared_at: string | null } | null)?.cleared_at ?? null;
+
+    let query = supabase.from("messages").select(MESSAGE_SELECT).eq("conversation_id", conversationId);
+    if (clearedAt) query = query.gt("created_at", clearedAt);
     const [{ data, error }, { data: hidden }] = await Promise.all([
-      supabase
-        .from("messages")
-        .select(MESSAGE_SELECT)
-        .eq("conversation_id", conversationId)
-        .order("created_at", { ascending: true }),
+      query.order("created_at", { ascending: true }),
       supabase.from("message_hidden_for").select("message_id").eq("user_id", viewerId),
     ]);
     if (error) return [];
@@ -347,6 +374,9 @@ export async function getOrCreateDirectConversation(
     lastMessageAt: new Date().toISOString(),
     unreadCount: 0,
     myStatus: "accepted",
+    archivedAt: null,
+    deletedAt: null,
+    clearedAt: null,
   };
 }
 
@@ -368,4 +398,100 @@ export async function declineMessageRequest(conversationId: string, userId: stri
     .eq("conversation_id", conversationId)
     .eq("user_id", userId);
   if (error) throw new Error(error.message);
+}
+
+/** The per-viewer state columns a chat-menu action writes (docs/history/171-*) — always the viewer's OWN membership row, never the other side's. */
+export type MemberStatePatch = { archived_at?: string | null; deleted_at?: string | null; cleared_at?: string | null };
+
+/** Writes `patch` to the viewer's own membership row. "0 rows" is a failure, not a silent success (the row is missing or RLS refused it). */
+async function updateOwnMembership(conversationId: string, userId: string, patch: MemberStatePatch): Promise<void> {
+  const { data, error } = await supabase
+    .from("conversation_members")
+    .update(patch)
+    .eq("conversation_id", conversationId)
+    .eq("user_id", userId)
+    .select("conversation_id")
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error(translateForRuntime("messages.stateUpdateFailed"));
+}
+
+/** Server time of the newest message in the conversation, or null when it has none — used as the clear moment so a skewed device clock can neither hide new messages nor leave old ones visible. */
+async function newestMessageTime(conversationId: string): Promise<string | null> {
+  const { data, error } = await supabase
+    .from("messages")
+    .select("created_at")
+    .eq("conversation_id", conversationId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return (data as { created_at: string } | null)?.created_at ?? null;
+}
+
+/** "Arşivle" / "Arşivden çıkar" — only the viewer's own archive flag; the chat, the messages and the other side are untouched. Returns the stored value. */
+export async function setConversationArchived(conversationId: string, userId: string, archived: boolean): Promise<string | null> {
+  const archivedAt = archived ? new Date().toISOString() : null;
+  await updateOwnMembership(conversationId, userId, { archived_at: archivedAt });
+  return archivedAt;
+}
+
+/**
+ * "Mesajları temizle" — hides the history up to now from the viewer's own view
+ * (own `cleared_at`); the chat stays in their list, the message rows and the
+ * other side's view are untouched. Returns the new `cleared_at` (null when
+ * there was nothing to clear).
+ */
+export async function clearConversationHistory(conversationId: string, userId: string): Promise<string | null> {
+  const clearedAt = await newestMessageTime(conversationId);
+  if (!clearedAt) return null;
+  await updateOwnMembership(conversationId, userId, { cleared_at: clearedAt });
+  await markConversationRead(conversationId);
+  return clearedAt;
+}
+
+/**
+ * "Sohbeti sil" — takes the chat out of the viewer's OWN list (own
+ * `deleted_at`) and hides the history it held (own `cleared_at`); nothing shared
+ * is deleted and the other side keeps everything. A new message brings the
+ * chat back (server trigger), showing only what comes after this moment.
+ * Deliberately not `declineMessageRequest`, which removes the membership row.
+ */
+export async function deleteConversationFromMyList(
+  conversationId: string,
+  userId: string,
+): Promise<{ deletedAt: string; clearedAt: string | null }> {
+  const newest = await newestMessageTime(conversationId);
+  const deletedAt = new Date().toISOString();
+  await updateOwnMembership(conversationId, userId, {
+    deleted_at: deletedAt,
+    archived_at: null,
+    ...(newest ? { cleared_at: newest } : {}),
+  });
+  await markConversationRead(conversationId);
+  return { deletedAt, clearedAt: newest };
+}
+
+/**
+ * Which of these people the viewer may start a conversation with right now —
+ * the server's answer (`filter_messageable_users`, same rules as
+ * `start_direct_conversation`). Throws on failure so a caller that must not
+ * guess (picking someone) fails closed; the reason a person is missing is
+ * deliberately not returned.
+ */
+export async function filterMessageableUsers(userIds: string[]): Promise<Set<string>> {
+  if (userIds.length === 0) return new Set();
+  const { data, error } = await supabase.rpc("filter_messageable_users", { p_user_ids: userIds.slice(0, 100) });
+  if (error) throw new Error(error.message);
+  return new Set((data ?? []) as string[]);
+}
+
+/** Everyone the viewer has a conversation with (any state, deleted-from-list included) → that conversation's id — the picker opens these instead of creating another. */
+export function conversationIdByUser(conversations: readonly Conversation[]): Map<string, string> {
+  const map = new Map<string, string>();
+  for (const conversation of conversations) {
+    const other = conversation.participants[0];
+    if (other && !map.has(other.id)) map.set(other.id, conversation.id);
+  }
+  return map;
 }

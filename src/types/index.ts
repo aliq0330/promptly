@@ -285,6 +285,11 @@ export interface Conversation {
   unreadCount: number;
   /** This viewer's own membership status — "pending" means it's an unaccepted message request in their inbox (Bölüm 21 Faz B). */
   myStatus: "accepted" | "pending";
+  /** Per-viewer state on their own membership row (docs/history/171-*): never visible to, or changing anything for, the other side. */
+  archivedAt: string | null;
+  deletedAt: string | null;
+  /** Messages created before this are hidden from THIS viewer only; the message rows themselves stay. */
+  clearedAt: string | null;
 }
 
 /**

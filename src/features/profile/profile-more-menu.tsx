@@ -17,9 +17,12 @@ import type { UserProfile } from "@/types";
 export function ProfileMoreMenu({
   user,
   blockState,
+  extraItems,
 }: {
   user: UserProfile;
   blockState: ReturnType<typeof useBlockState>;
+  /** Extra leading menu items (the chat actions in a conversation header); receives `close` to dismiss the menu after a choice. */
+  extraItems?: (close: () => void) => React.ReactNode;
 }) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
@@ -77,6 +80,14 @@ export function ProfileMoreMenu({
           role="menu"
           className="absolute right-0 top-10 z-30 w-64 space-y-3 rounded-md border border-border-soft bg-surface-elevated p-3 shadow-pop animate-pop-in"
         >
+          {extraItems && (
+            <div className="space-y-0.5 border-b border-border pb-3">
+              {extraItems(() => {
+                setOpen(false);
+                setConfirmingBlock(false);
+              })}
+            </div>
+          )}
           <button
             type="button"
             role="menuitem"

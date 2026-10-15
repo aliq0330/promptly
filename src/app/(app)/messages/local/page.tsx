@@ -1,10 +1,10 @@
 import { Suspense } from "react";
-import { LocalConversationView } from "@/features/messages/local-conversation-view";
+import { ConversationRoute } from "@/features/messages/conversation-route";
 
 export default function LocalConversationPage() {
   return (
     <Suspense fallback={null}>
-      <LocalConversationView />
+      <ConversationRoute />
     </Suspense>
   );
 }

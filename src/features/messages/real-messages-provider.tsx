@@ -5,14 +5,19 @@ import { useAuth } from "@/features/auth/auth-provider";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import {
   acceptMessageRequest,
+  clearConversationHistory,
   declineMessageRequest,
+  deleteConversationFromMyList,
   fetchConversationsForUser,
   getOrCreateDirectConversation,
+  setConversationArchived,
 } from "@/lib/supabase/messages";
 import { supabase } from "@/lib/supabase/client";
+import { translateForRuntime } from "@/lib/i18n/translations";
 import type { Conversation, UserProfile } from "@/types";
 
 interface RealMessagesContextValue {
+  /** Every membership row of the viewer, including archived ones and ones deleted from their list — derive visible lists with `bucketConversations`. */
   conversations: Conversation[];
   getCached: (id: string) => Conversation | undefined;
   refresh: () => Promise<void>;
@@ -21,6 +26,15 @@ interface RealMessagesContextValue {
   acceptRequest: (conversationId: string) => Promise<void>;
   /** Declines a pending message request by leaving it — removes it from this list entirely. */
   declineRequest: (conversationId: string) => Promise<void>;
+  /**
+   * Chat-menu actions (docs/history/171-*). Each writes only the viewer's own
+   * membership row, and updates local state only AFTER the backend confirmed —
+   * a rejected promise means nothing changed, so callers show an error, never a success.
+   */
+  archiveConversation: (conversationId: string) => Promise<void>;
+  unarchiveConversation: (conversationId: string) => Promise<void>;
+  deleteConversation: (conversationId: string) => Promise<void>;
+  clearConversation: (conversationId: string) => Promise<void>;
 }
 
 const RealMessagesContext = createContext<RealMessagesContextValue | null>(null);
@@ -125,9 +139,79 @@ export function RealMessagesProvider({ children }: { children: React.ReactNode }
     [user],
   );
 
+  const patchConversation = useCallback((conversationId: string, patch: Partial<Conversation>) => {
+    setConversations((prev) => prev.map((c) => (c.id === conversationId ? { ...c, ...patch } : c)));
+  }, []);
+
+  const archiveConversation = useCallback(
+    async (conversationId: string) => {
+      if (!user) return;
+      const archivedAt = await setConversationArchived(conversationId, user.id, true);
+      patchConversation(conversationId, { archivedAt });
+    },
+    [user, patchConversation],
+  );
+
+  const unarchiveConversation = useCallback(
+    async (conversationId: string) => {
+      if (!user) return;
+      await setConversationArchived(conversationId, user.id, false);
+      patchConversation(conversationId, { archivedAt: null });
+    },
+    [user, patchConversation],
+  );
+
+  const deleteConversation = useCallback(
+    async (conversationId: string) => {
+      if (!user) return;
+      const { deletedAt, clearedAt } = await deleteConversationFromMyList(conversationId, user.id);
+      patchConversation(conversationId, {
+        deletedAt,
+        archivedAt: null,
+        unreadCount: 0,
+        lastMessage: translateForRuntime("messages.noMessagesYetShort"),
+        ...(clearedAt ? { clearedAt } : {}),
+      });
+    },
+    [user, patchConversation],
+  );
+
+  const clearConversation = useCallback(
+    async (conversationId: string) => {
+      if (!user) return;
+      const clearedAt = await clearConversationHistory(conversationId, user.id);
+      if (clearedAt) {
+        patchConversation(conversationId, { clearedAt, unreadCount: 0, lastMessage: translateForRuntime("messages.noMessagesYetShort") });
+      }
+    },
+    [user, patchConversation],
+  );
+
   const value = useMemo(
-    () => ({ conversations, getCached, refresh, startConversationWith, acceptRequest, declineRequest }),
-    [conversations, getCached, refresh, startConversationWith, acceptRequest, declineRequest],
+    () => ({
+      conversations,
+      getCached,
+      refresh,
+      startConversationWith,
+      acceptRequest,
+      declineRequest,
+      archiveConversation,
+      unarchiveConversation,
+      deleteConversation,
+      clearConversation,
+    }),
+    [
+      conversations,
+      getCached,
+      refresh,
+      startConversationWith,
+      acceptRequest,
+      declineRequest,
+      archiveConversation,
+      unarchiveConversation,
+      deleteConversation,
+      clearConversation,
+    ],
   );
 
   return <RealMessagesContext.Provider value={value}>{children}</RealMessagesContext.Provider>;
