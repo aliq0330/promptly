@@ -2,9 +2,11 @@
 
 import { useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Archive, ArrowLeft, MessageCircle, Plus, Search } from "lucide-react";
+import Link from "next/link";
+import { Archive, ArrowLeft, MessageCircle, Plus, Search, UsersRound } from "lucide-react";
 import { ConversationList } from "./conversation-list";
 import { NewChatModal } from "./new-chat-modal";
+import { CreateGroupModal } from "@/features/groups/create-group-modal";
 import { useRealMessages } from "./real-messages-provider";
 import { EmptyState } from "@/components/ui/empty-state";
 import { bucketConversations } from "@/lib/conversation-lists";
@@ -21,13 +23,14 @@ import type { Conversation } from "@/types";
  */
 export function ConversationsPane({ embedded = false }: { embedded?: boolean }) {
   const { t } = useTranslation();
-  const { conversations, startConversationWith, unarchiveConversation } = useRealMessages();
+  const { conversations, startConversationWith, unarchiveConversation, refresh } = useRealMessages();
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [view, setView] = useState<"inbox" | "archived">("inbox");
   const [newChatOpen, setNewChatOpen] = useState(false);
+  const [createGroupOpen, setCreateGroupOpen] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [actionError, setActionError] = useState(false);
 
@@ -56,6 +59,7 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
     !q
       ? list
       : list.filter((c) => {
+          if (c.group) return c.group.name.toLowerCase().includes(q) || c.lastMessage.toLowerCase().includes(q);
           const p = c.participants[0];
           return p?.displayName.toLowerCase().includes(q) || p?.username.toLowerCase().includes(q) || c.lastMessage.toLowerCase().includes(q);
         });
@@ -105,16 +109,26 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
           ) : (
             <h1 className={cn("text-text", embedded ? "text-h2" : "text-h1")}>{t("header.messagesAriaLabel")}</h1>
           )}
-          <button
-            type="button"
-            onClick={() => setNewChatOpen(true)}
-            aria-label={t("messages.newChatAria")}
-            title={t("messages.newChat")}
-            aria-haspopup="dialog"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-xs transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-          >
-            <Plus size={18} />
-          </button>
+          <div className="flex shrink-0 items-center gap-1.5">
+            <Link
+              href="/groups"
+              aria-label={t("groups.discoverAria")}
+              title={t("groups.discoverAria")}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border-soft bg-surface text-text-secondary shadow-xs transition-colors hover:border-border-strong hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            >
+              <UsersRound size={17} />
+            </Link>
+            <button
+              type="button"
+              onClick={() => setNewChatOpen(true)}
+              aria-label={t("messages.newChatAria")}
+              title={t("messages.newChat")}
+              aria-haspopup="dialog"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-xs transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            >
+              <Plus size={18} />
+            </button>
+          </div>
         </div>
         <label className="relative mb-3 block">
           <span className="sr-only">{t("messages.searchConversations")}</span>
@@ -198,6 +212,14 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
       {newChatOpen && (
         <NewChatModal
           onClose={() => setNewChatOpen(false)}
+          onCreateGroup={
+            isSharing
+              ? undefined
+              : () => {
+                  setNewChatOpen(false);
+                  setCreateGroupOpen(true);
+                }
+          }
           onOpenConversation={(conversationId) => {
             setNewChatOpen(false);
             router.push(withShare(messageHref({ id: conversationId })));
@@ -212,6 +234,16 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
             }
             setNewChatOpen(false);
             router.push(`/messages/local?to=${person.id}`);
+          }}
+        />
+      )}
+      {createGroupOpen && (
+        <CreateGroupModal
+          onClose={() => setCreateGroupOpen(false)}
+          onCreated={(groupId) => {
+            setCreateGroupOpen(false);
+            void refresh();
+            router.push(messageHref({ id: groupId }));
           }}
         />
       )}

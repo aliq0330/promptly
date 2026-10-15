@@ -25,6 +25,7 @@ export function ChatActionItems({
   onAsk,
   close,
 }: {
+  /** `conversation.kind === "group"` ise "Sohbeti sil" yerine "Listemden kaldır" yazar (grup SİLİNMEZ; yalnız kişisel liste). */
   conversation: Conversation;
   busy: boolean;
   onToggleArchive: () => void;
@@ -72,7 +73,7 @@ export function ChatActionItems({
         className={cn(itemClass, "text-danger")}
       >
         <Trash2 size={14} />
-        {t("messages.deleteChat")}
+        {conversation.kind === "group" ? t("groups.chat.hideFromList") : t("messages.deleteChat")}
       </button>
     </>
   );
@@ -81,20 +82,30 @@ export function ChatActionItems({
 /** Confirmation for the two actions that remove something from the viewer's own view. Says exactly what happens — and what does not. */
 export function ChatConfirmModal({
   kind,
+  isGroup = false,
   busy,
   error,
   onConfirm,
   onCancel,
 }: {
   kind: ChatConfirmKind;
+  /** Grup sohbeti: metinler "diğer üyeler" der ve eylem grubu değil yalnız kişisel görünümü etkiler. */
+  isGroup?: boolean;
   busy: boolean;
   error: string | null;
   onConfirm: () => void;
   onCancel: () => void;
 }) {
   const { t } = useTranslation();
-  const title = kind === "delete" ? t("messages.deleteChat") : t("messages.clearHistory");
-  const body = kind === "delete" ? t("messages.deleteChatConfirm") : t("messages.clearHistoryConfirm");
+  const title = kind === "delete" ? (isGroup ? t("groups.chat.hideFromList") : t("messages.deleteChat")) : t("messages.clearHistory");
+  const body =
+    kind === "delete"
+      ? isGroup
+        ? t("groups.chat.hideFromListConfirm")
+        : t("messages.deleteChatConfirm")
+      : isGroup
+        ? t("groups.chat.clearHistoryConfirm")
+        : t("messages.clearHistoryConfirm");
   return (
     <Modal onClose={busy ? () => undefined : onCancel} labelledBy="chat-confirm-title">
       <div className="w-full max-w-sm space-y-4 rounded-lg border border-border bg-surface p-5 shadow-lg" onClick={(event) => event.stopPropagation()}>

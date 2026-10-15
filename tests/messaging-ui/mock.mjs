@@ -23,6 +23,10 @@ export function createDb() {
     conversations: [], // { id, last_message_at }
     members: [], // { conversation_id, user_id, status, unread_count, archived_at, deleted_at, cleared_at }
     messages: [], // MessageRow
+    groups: [], // chat_groups rows (id = conversation id)
+    requests: [], // chat_group_join_requests { id, group_id, user_id, message, status, created_at }
+    invitations: [], // chat_group_invitations { id, group_id, invitee_id, inviter_id, status, created_at, expires_at }
+    rpc: {}, // optional per-test overrides: name -> (body, db) => ({ status, body })
     follows: [], // { follower_id, following_id }
     blocks: [], // { blocker_id, blocked_id }
     calls: [], // { method, table, body }
@@ -43,6 +47,16 @@ export function createDb() {
     Object.assign(mine, my); Object.assign(their, theirs); // overrides AFTER the messages (the resurface trigger would undo them)
     return id;
   };
+  /** Seeds a group conversation; `members` = [[user, role], …]; ME is added with `myRole`. */
+  db.addGroup = (id, { name = "Tasarım Atölyesi", visibility = "private", myRole = "member", members = [], posting_policy = "members", member_limit = 100, description = null, texts = [], pending = 0, muted = false } = {}) => {
+    db.conversations.push({ id, last_message_at: db.stamp(), kind: "group" });
+    const base = { status: "accepted", unread_count: 0, archived_at: null, deleted_at: null, cleared_at: null, muted_at: null };
+    db.members.push({ conversation_id: id, user_id: ME, role: myRole, ...base, muted_at: muted ? db.stamp() : null });
+    for (const [u, role] of members) db.members.push({ conversation_id: id, user_id: u.id, role, ...base });
+    db.groups.push({ id, name, description, avatar_url: null, visibility, posting_policy, member_limit, member_count: db.members.filter((m) => m.conversation_id === id).length, pending_request_count: pending, created_at: "2026-01-01T00:00:00Z" });
+    texts.forEach(([u, text]) => db.addMessage(id, u.id, text));
+    return id;
+  };
   db.addMessage = (conversation_id, sender_id, body) => {
     const created_at = db.stamp();
     const row = { id: crypto.randomUUID(), conversation_id, sender_id, body, shared_prompt_id: null, shared_request_id: null, reply_to_message_id: null, attachments: [], edited_at: null, deleted_at: null, created_at };
@@ -50,7 +64,7 @@ export function createDb() {
     const conv = db.conversations.find((c) => c.id === conversation_id);
     if (conv) conv.last_message_at = created_at;
     // resurface_conversation_on_message trigger
-    for (const m of db.members) if (m.conversation_id === conversation_id) { m.archived_at = null; m.deleted_at = null; }
+    for (const m of db.members) if (m.conversation_id === conversation_id && !m.muted_at) { m.archived_at = null; m.deleted_at = null; }
     return row;
   };
   db.member = (conversation_id, user_id) => db.members.find((m) => m.conversation_id === conversation_id && m.user_id === user_id);
@@ -71,11 +85,12 @@ function filterRows(list, q, cols) {
   return list.filter((r) => cols.every((c) => {
     const v = q.get(c);
     if (v == null) return true;
-    const e = val(v, "eq"); const n = val(v, "neq"); const l = inList(v); const g = val(v, "gt");
+    const e = val(v, "eq"); const n = val(v, "neq"); const l = inList(v); const g = val(v, "gt"); const lt = val(v, "lt");
     if (e != null) return String(r[c]) === e;
     if (n != null) return String(r[c]) !== n;
     if (l) return l.includes(String(r[c]));
     if (g != null) return String(r[c]) > g;
+    if (lt != null) return String(r[c]) < lt;
     return true;
   }));
 }
@@ -99,6 +114,168 @@ export async function installMock(context, db, { signedIn = ME } = {}) {
     const body = method === "POST" || method === "PATCH" ? JSON.parse(req.postData() || "{}") : null;
     if (method !== "GET") db.calls.push({ method, table, body, query: Object.fromEntries(q) });
 
+
+    // ---- grup sohbeti RPC'leri (docs/history/172-*) ----
+    const groupOf = (gid) => db.groups.find((g) => g.id === gid);
+    const roleOf = (gid, uid = signedIn) => db.member(gid, uid)?.role ?? null;
+    const err = (code) => json(400, { code: "P0001", message: code, details: "", hint: "" });
+    if (table.startsWith("rpc/") && db.rpc[table.slice(4)]) { const r = db.rpc[table.slice(4)](body, db); return json(r.status ?? 200, r.body ?? null); }
+    if (table === "rpc/conversation_last_messages") {
+      const out = [];
+      for (const cid of body.p_conversation_ids ?? []) {
+        const mine = db.member(cid, signedIn); if (!mine) continue;
+        const list = db.messages.filter((m) => m.conversation_id === cid && (!mine.cleared_at || m.created_at > mine.cleared_at));
+        const last = list.sort((a, b) => b.created_at.localeCompare(a.created_at))[0];
+        if (last) out.push(last);
+      }
+      return json(200, out);
+    }
+    if (table === "rpc/create_chat_group") {
+      const name = String(body.p_name ?? "").trim();
+      if (!name || name.length > 60) return err("invalid_name");
+      const id = crypto.randomUUID();
+      db.conversations.push({ id, last_message_at: db.stamp(), kind: "group" });
+      db.members.push({ conversation_id: id, user_id: signedIn, role: "owner", status: "accepted", unread_count: 0, archived_at: null, deleted_at: null, cleared_at: null, muted_at: null });
+      db.groups.push({ id, name, description: body.p_description ?? null, avatar_url: body.p_avatar_url ?? null, visibility: body.p_visibility, posting_policy: "members", member_limit: body.p_member_limit, member_count: 1, pending_request_count: 0, created_at: db.stamp() });
+      const skipped = (body.p_invite_user_ids ?? []).filter((u) => db.isBlocked(signedIn, u)).map((u) => ({ user_id: u, reason: "blocked" }));
+      return json(200, { group_id: id, invited_count: (body.p_invite_user_ids ?? []).length - skipped.length, skipped });
+    }
+    if (table === "rpc/set_chat_group_visibility") {
+      const g = groupOf(body.p_group_id);
+      if (!g || !["owner", "admin"].includes(roleOf(g.id) ?? "")) return err("forbidden");
+      if (g.visibility === body.p_visibility) return json(200, { changed: false, visibility: g.visibility, accepted_count: 0, already_member_count: 0, skipped_count: 0, skipped: [], pending_remaining: g.pending_request_count, member_count: g.member_count });
+      g.visibility = body.p_visibility;
+      let accepted = 0; const skipped = [];
+      if (body.p_visibility === "public") {
+        for (const r of db.requests.filter((x) => x.group_id === g.id && x.status === "pending")) {
+          if (g.member_count >= g.member_limit) { skipped.push({ request_id: r.id, user_id: r.user_id, reason: "member_limit" }); continue; }
+          if (db.isBlocked(signedIn, r.user_id)) { skipped.push({ request_id: r.id, user_id: r.user_id, reason: "blocked" }); continue; }
+          r.status = "accepted"; accepted += 1; g.member_count += 1;
+          db.members.push({ conversation_id: g.id, user_id: r.user_id, role: "member", status: "accepted", unread_count: 0, archived_at: null, deleted_at: null, cleared_at: null, muted_at: null });
+        }
+        g.pending_request_count = db.requests.filter((x) => x.group_id === g.id && x.status === "pending").length;
+      }
+      return json(200, { changed: true, visibility: g.visibility, accepted_count: accepted, already_member_count: 0, skipped_count: skipped.length, skipped, pending_remaining: g.pending_request_count, member_count: g.member_count });
+    }
+    if (table === "rpc/moderate_chat_group_message") {
+      const m = db.messages.find((x) => x.id === body.p_message_id);
+      if (!m) return err("message_not_found");
+      const rank = { owner: 4, admin: 3, moderator: 2, member: 1 };
+      if (rank[roleOf(m.conversation_id) ?? "member"] < 2 || rank[roleOf(m.conversation_id, m.sender_id) ?? "member"] >= rank[roleOf(m.conversation_id)]) return err("forbidden");
+      m.deleted_at = db.stamp(); m.body = null;
+      return json(200, null);
+    }
+    if (table === "rpc/remove_chat_group_member") {
+      const g = groupOf(body.p_group_id); const rank = { owner: 4, admin: 3, moderator: 2, member: 1 };
+      const actor = roleOf(g?.id); const target = roleOf(g?.id, body.p_user_id);
+      if (!actor || !target || rank[target] >= rank[actor] || (actor === "moderator" && target !== "member") || (body.p_ban && !["owner", "admin"].includes(actor))) return err("forbidden");
+      db.members = db.members.filter((m) => !(m.conversation_id === g.id && m.user_id === body.p_user_id)); g.member_count -= 1;
+      return json(200, null);
+    }
+    if (table === "rpc/set_chat_group_member_role") {
+      const m = db.member(body.p_group_id, body.p_user_id);
+      if (!m || !["owner", "admin"].includes(roleOf(body.p_group_id) ?? "")) return err("forbidden");
+      m.role = body.p_role; return json(200, null);
+    }
+    if (table === "rpc/transfer_chat_group_ownership") {
+      if (roleOf(body.p_group_id) !== "owner") return err("forbidden");
+      db.member(body.p_group_id, signedIn).role = "admin"; db.member(body.p_group_id, body.p_user_id).role = "owner";
+      return json(200, null);
+    }
+    if (table === "rpc/update_chat_group") {
+      const g = groupOf(body.p_group_id);
+      if (!["owner", "admin"].includes(roleOf(body.p_group_id) ?? "")) return err("forbidden");
+      const patch = body.p_patch ?? {};
+      for (const [k, v] of Object.entries(patch)) g[k === "description" ? "description" : k] = v === "" ? null : v;
+      return json(200, { changed: true });
+    }
+    if (table === "rpc/invite_to_chat_group") {
+      if (!["owner", "admin"].includes(roleOf(body.p_group_id) ?? "")) return err("forbidden");
+      const skipped = []; let invited = 0;
+      for (const uid of body.p_user_ids ?? []) {
+        if (db.isBlocked(signedIn, uid)) skipped.push({ user_id: uid, reason: "blocked" });
+        else if (db.member(body.p_group_id, uid)) skipped.push({ user_id: uid, reason: "already_member" });
+        else { invited += 1; db.invitations.push({ id: crypto.randomUUID(), group_id: body.p_group_id, invitee_id: uid, inviter_id: signedIn, status: "pending", created_at: db.stamp(), expires_at: "2099-01-01T00:00:00Z" }); }
+      }
+      return json(200, { invited_count: invited, skipped });
+    }
+    if (table === "rpc/create_chat_group_link") {
+      if (!["owner", "admin"].includes(roleOf(body.p_group_id) ?? "")) return err("forbidden");
+      return json(200, { link_id: crypto.randomUUID(), token: "ZyXwVuTsRqPoNmLkJiHgFeDcBa9876543210_-xyzab", expires_at: "2099-01-01T00:00:00Z", max_uses: body.p_max_uses });
+    }
+    if (table === "rpc/decide_chat_group_join_request") {
+      const r = db.requests.find((x) => x.id === body.p_request_id);
+      if (!r) return err("request_not_found");
+      if (!["owner", "admin", "moderator"].includes(roleOf(r.group_id) ?? "")) return err("forbidden");
+      if (r.status !== "pending") return err("invalid_state");
+      const g = groupOf(r.group_id);
+      r.status = body.p_accept ? "accepted" : "rejected"; g.pending_request_count -= 1;
+      if (body.p_accept) { g.member_count += 1; db.members.push({ conversation_id: g.id, user_id: r.user_id, role: "member", status: "accepted", unread_count: 0, archived_at: null, deleted_at: null, cleared_at: null, muted_at: null }); }
+      return json(200, { outcome: body.p_accept ? "accepted" : "rejected" });
+    }
+    if (table === "rpc/chat_group_members") {
+      if (!db.member(body.p_group_id, signedIn)) return json(200, []);
+      const term = (body.p_search ?? "").toLowerCase();
+      const rank = { owner: 4, admin: 3, moderator: 2, member: 1 };
+      const list = db.members.filter((m) => m.conversation_id === body.p_group_id).map((m) => ({ m, u: Object.values(U).find((x) => x.id === m.user_id) }))
+        .filter(({ u }) => !term || u.username.includes(term) || u.display_name.toLowerCase().includes(term))
+        .sort((a, b) => rank[b.m.role] - rank[a.m.role]);
+      return json(200, list.slice(body.p_offset ?? 0, (body.p_offset ?? 0) + (body.p_limit ?? 50)).map(({ m, u }) => ({ user_id: u.id, username: u.username, display_name: u.display_name, avatar_url: null, role: m.role, joined_at: "2026-01-01T00:00:00Z" })));
+    }
+    if (table === "rpc/discover_chat_groups") {
+      const term = (body.p_query ?? "").toLowerCase();
+      const list = db.groups.filter((g) => g.visibility === "public" && (!term || g.name.toLowerCase().includes(term) || (g.description ?? "").toLowerCase().includes(term)))
+        .map((g) => ({ id: g.id, name: g.name, description: g.description, avatar_url: null, member_count: g.member_count, member_limit: g.member_limit, created_at: g.created_at, last_message_at: null, my_status: db.member(g.id, signedIn) ? "member" : db.invitations.some((i) => i.group_id === g.id && i.invitee_id === signedIn && i.status === "pending") ? "invited" : "none" }));
+      return json(200, list.slice(body.p_offset ?? 0, (body.p_offset ?? 0) + (body.p_limit ?? 20)));
+    }
+    if (table === "rpc/join_chat_group") {
+      const g = groupOf(body.p_group_id);
+      if (!g || g.visibility !== "public") return err("group_not_found");
+      if (db.member(g.id, signedIn)) return json(200, { outcome: "already_member", group_id: g.id });
+      if (g.member_count >= g.member_limit) return err("member_limit_reached");
+      g.member_count += 1;
+      db.members.push({ conversation_id: g.id, user_id: signedIn, role: "member", status: "accepted", unread_count: 0, archived_at: null, deleted_at: null, cleared_at: null, muted_at: null });
+      return json(200, { outcome: "joined", group_id: g.id });
+    }
+    if (table === "rpc/preview_chat_group_link" || table === "rpc/join_chat_group_via_link") {
+      const g = db.groups.find((x) => x.link_token && x.link_token === body.p_token);
+      if (!g) return table === "rpc/preview_chat_group_link" ? json(200, { valid: false }) : err("invalid_link");
+      const member = db.member(g.id, signedIn);
+      const pending = db.requests.some((r) => r.group_id === g.id && r.user_id === signedIn && r.status === "pending");
+      if (table === "rpc/preview_chat_group_link") return json(200, { valid: true, group_id: member ? g.id : null, name: g.name, description: g.description, avatar_url: null, visibility: g.visibility, member_count: g.member_count, member_limit: g.member_limit, my_status: member ? "member" : pending ? "requested" : "none" });
+      if (member) return json(200, { outcome: "already_member", group_id: g.id });
+      if (g.visibility === "public") { g.member_count += 1; db.members.push({ conversation_id: g.id, user_id: signedIn, role: "member", status: "accepted", unread_count: 0, archived_at: null, deleted_at: null, cleared_at: null, muted_at: null }); return json(200, { outcome: "joined", group_id: g.id }); }
+      if (pending) return json(200, { outcome: "already_requested", group_id: null });
+      db.requests.push({ id: crypto.randomUUID(), group_id: g.id, user_id: signedIn, message: body.p_message ?? null, status: "pending", created_at: db.stamp() });
+      g.pending_request_count += 1;
+      return json(200, { outcome: "requested", group_id: null });
+    }
+    if (table === "rpc/leave_chat_group") {
+      const g = groupOf(body.p_group_id); const role = roleOf(body.p_group_id);
+      if (!role) return err("not_a_member");
+      if (role === "owner" && g.member_count > 1) return err("owner_must_transfer");
+      db.members = db.members.filter((m) => !(m.conversation_id === g.id && m.user_id === signedIn)); g.member_count -= 1;
+      return json(200, null);
+    }
+    if (table === "rpc/respond_chat_group_invitation") {
+      const inv = db.invitations.find((i) => i.id === body.p_invitation_id && i.invitee_id === signedIn);
+      if (!inv || inv.status !== "pending") return err("invalid_state");
+      inv.status = body.p_accept ? "accepted" : "declined";
+      if (body.p_accept) { const g = groupOf(inv.group_id); g.member_count += 1; db.members.push({ conversation_id: g.id, user_id: signedIn, role: "member", status: "accepted", unread_count: 0, archived_at: null, deleted_at: null, cleared_at: null, muted_at: null }); return json(200, { outcome: "accepted", group_id: g.id }); }
+      return json(200, { outcome: "declined" });
+    }
+    if (table === "chat_group_join_requests" && method === "GET") {
+      const gid = val(q.get("group_id") ?? "", "eq"); const uid = val(q.get("user_id") ?? "", "eq");
+      const list = db.requests.filter((r) => r.status === "pending" && (!gid || r.group_id === gid) && (!uid || r.user_id === uid));
+      return rows(list.map((r) => ({ ...r, profiles: pub(Object.values(U).find((u) => u.id === r.user_id)), chat_groups: groupOf(r.group_id) })));
+    }
+    if (table === "chat_group_invitations" && method === "GET") {
+      const invitee = val(q.get("invitee_id") ?? "", "eq"); const gid = val(q.get("group_id") ?? "", "eq");
+      const list = db.invitations.filter((i) => i.status === "pending" && (!invitee || i.invitee_id === invitee) && (!gid || i.group_id === gid));
+      return rows(list.map((i) => ({ ...i, chat_groups: groupOf(i.group_id), inviter: pub(Object.values(U).find((u) => u.id === i.inviter_id)), invitee: pub(Object.values(U).find((u) => u.id === i.invitee_id)) })));
+    }
+    if ((table === "chat_group_links" || table === "chat_group_bans") && method === "GET") return rows([]);
+    if (table === "chat_groups" && method === "GET") return rows(db.groups.filter((g) => !val(q.get("id") ?? "", "eq") || g.id === val(q.get("id"), "eq")));
     if (table === "rpc/filter_messageable_users") return json(200, (body.p_user_ids ?? []).filter((id) => db.messageable(id)));
     if (table === "rpc/mark_conversation_read") return route.fulfill({ status: 204, headers: { "access-control-allow-origin": "*" } });
     if (table === "rpc/start_direct_conversation") {
@@ -118,8 +295,10 @@ export async function installMock(context, db, { signedIn = ME } = {}) {
       if (sel.includes("email") || sel.includes("phone")) db.searchSelects.push(sel);
       db.searchSelects.push(sel);
       const id = val(q.get("id") ?? "", "eq");
+      const ids = inList(q.get("id") ?? "");
       let list = Object.values(U);
       if (id) list = list.filter((u) => u.id === id);
+      if (ids) list = list.filter((u) => ids.includes(u.id));
       const or = q.get("or");
       if (or) {
         const m = or.match(/ilike\.%(.*?)%/);
@@ -144,7 +323,10 @@ export async function installMock(context, db, { signedIn = ME } = {}) {
         let list = filterRows(db.members, q, ["conversation_id", "user_id"]);
         if (sel.includes("profiles(")) return rows(list.map((m) => ({ conversation_id: m.conversation_id, profiles: pub(Object.values(U).find((u) => u.id === m.user_id)) })));
         if (sel === "cleared_at") return rows(list.map((m) => ({ cleared_at: m.cleared_at })));
-        return rows(list.map((m) => ({ ...m, conversations: db.conversations.find((c) => c.id === m.conversation_id) })));
+        return rows(list.map((m) => {
+          const conv = db.conversations.find((c) => c.id === m.conversation_id);
+          return { ...m, conversations: conv ? { ...conv, kind: conv.kind ?? "direct", chat_groups: conv.kind === "group" ? groupOf(conv.id) ?? null : null } : conv };
+        }));
       }
       if (method === "PATCH") {
         if (db.patchDelayMs) await new Promise((r) => setTimeout(r, db.patchDelayMs));
@@ -169,8 +351,11 @@ export async function installMock(context, db, { signedIn = ME } = {}) {
       }
       if (method === "POST") {
         const member = db.member(body.conversation_id, signedIn);
-        const others = db.members.filter((m) => m.conversation_id === body.conversation_id && m.user_id !== signedIn);
-        if (!member || others.some((m) => db.isBlocked(signedIn, m.user_id))) return json(403, { code: "42501", message: 'new row violates row-level security policy for table "messages"' });
+        const isGroupConv = db.conversations.find((c) => c.id === body.conversation_id)?.kind === "group";
+        const g = isGroupConv ? db.groups.find((x) => x.id === body.conversation_id) : null;
+        const others = isGroupConv ? [] : db.members.filter((m) => m.conversation_id === body.conversation_id && m.user_id !== signedIn);
+        const cannotPostInGroup = g && g.posting_policy === "admins" && member && member.role === "member";
+        if (!member || cannotPostInGroup || others.some((m) => db.isBlocked(signedIn, m.user_id))) return json(403, { code: "42501", message: 'new row violates row-level security policy for table "messages"' });
         const row = db.addMessage(body.conversation_id, signedIn, body.body);
         return route.fulfill({ status: 201, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: JSON.stringify(wantsObject ? row : [row]) });
       }

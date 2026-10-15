@@ -3,16 +3,27 @@ import { translateForRuntime } from "@/lib/i18n/translations";
 import { mapProfileRow, type ProfileRow } from "./mappers";
 import type { Conversation, Message, MessageAttachment, UserProfile } from "@/types";
 import { removeMessageImages } from "./message-images";
-import { isAfterClear } from "@/lib/conversation-lists";
+import { mapChatGroupRow, CHAT_GROUP_SELECT, type ChatGroupRow } from "./chat-groups";
+import type { GroupRole } from "@/types";
+
+interface ConversationEmbed {
+  id: string;
+  last_message_at: string | null;
+  kind: "direct" | "group";
+  /** Grup konuşmalarında 1:1 gömülü `chat_groups` satırı (PK = FK olduğundan nesne; olası dizi biçimine de dayanıklı). */
+  chat_groups: ChatGroupRow | ChatGroupRow[] | null;
+}
 
 interface MembershipRow {
   conversation_id: string;
   unread_count: number;
   status: "accepted" | "pending";
+  role: GroupRole;
   archived_at: string | null;
   deleted_at: string | null;
   cleared_at: string | null;
-  conversations: { id: string; last_message_at: string | null } | null;
+  muted_at: string | null;
+  conversations: ConversationEmbed | null;
 }
 
 export interface MessageRow {
@@ -29,7 +40,15 @@ export interface MessageRow {
   created_at: string;
 }
 
-const MEMBERSHIP_SELECT = "conversation_id, unread_count, status, archived_at, deleted_at, cleared_at, conversations(id, last_message_at)";
+const MEMBERSHIP_SELECT = `conversation_id, unread_count, status, role, archived_at, deleted_at, cleared_at, muted_at, conversations(id, last_message_at, kind, chat_groups(${CHAT_GROUP_SELECT}))`;
+
+/** Üyelik satırının grup tarafı (grup değilse null). */
+function groupFromMembership(row: MembershipRow) {
+  const embed = row.conversations;
+  if (!embed || embed.kind !== "group") return null;
+  const group = Array.isArray(embed.chat_groups) ? embed.chat_groups[0] : embed.chat_groups;
+  return group ? mapChatGroupRow(group, row.role) : null;
+}
 
 const MESSAGE_SELECT =
   "id, conversation_id, sender_id, body, shared_prompt_id, shared_request_id, reply_to_message_id, attachments, edited_at, deleted_at, created_at";
@@ -104,55 +123,62 @@ export async function fetchConversationsForUser(userId: string): Promise<Convers
       .eq("user_id", userId);
     if (error || !memberships || memberships.length === 0) return [];
 
-    const conversationIds = (memberships as unknown as MembershipRow[]).map((m) => m.conversation_id);
+    const rows = memberships as unknown as MembershipRow[];
+    const conversationIds = rows.map((m) => m.conversation_id);
+    const directIds = rows.filter((m) => m.conversations?.kind !== "group").map((m) => m.conversation_id);
 
-    const { data: otherMembers } = await supabase
-      .from("conversation_members")
-      .select(
-        "conversation_id, profiles(id, username, display_name, avatar_url, cover_url, bio, website, follower_count, following_count, created_at, interests)",
-      )
-      .in("conversation_id", conversationIds)
-      .neq("user_id", userId);
+    // Birebir sohbetlerin karşı tarafı. Gruplarda üye listesi bu yoldan ASLA çekilmez (RLS yalnız kendi satırımı verir; liste `chat_group_members` RPC'sinde).
+    const { data: otherMembers } =
+      directIds.length > 0
+        ? await supabase
+            .from("conversation_members")
+            .select(
+              "conversation_id, profiles(id, username, display_name, avatar_url, cover_url, bio, website, follower_count, following_count, created_at, interests)",
+            )
+            .in("conversation_id", directIds)
+            .neq("user_id", userId)
+        : { data: [] };
 
-    const { data: recentMessages } = await supabase
-      .from("messages")
-      .select("conversation_id, body, shared_prompt_id, shared_request_id, attachments, deleted_at, created_at")
-      .in("conversation_id", conversationIds)
-      .order("created_at", { ascending: false });
-
-    // A cleared history stays hidden in the list preview too: only messages after this viewer's own `cleared_at` count.
-    const clearedAtByConversation = new Map(
-      (memberships as unknown as MembershipRow[]).map((m) => [m.conversation_id, m.cleared_at] as const),
-    );
-    const lastMessageByConversation = new Map<string, PreviewRow>();
-    for (const msg of (recentMessages ?? []) as (PreviewRow & { conversation_id: string })[]) {
-      if (!isAfterClear(msg.created_at, clearedAtByConversation.get(msg.conversation_id))) continue;
-      if (!lastMessageByConversation.has(msg.conversation_id)) {
-        lastMessageByConversation.set(msg.conversation_id, msg);
-      }
-    }
+    // Her konuşmanın görünür SON mesajı (sunucu: kişisel temizleme + RLS uygulanmış, konuşma başına tek satır).
+    const lastMessageByConversation = await fetchLastMessages(conversationIds);
 
     const otherByConversation = new Map<string, ProfileRow>();
     for (const row of (otherMembers ?? []) as unknown as { conversation_id: string; profiles: ProfileRow | null }[]) {
       if (row.profiles) otherByConversation.set(row.conversation_id, row.profiles);
     }
 
-    return (memberships as unknown as MembershipRow[])
+    const groupSenderNames = await fetchSenderNames(
+      rows.filter((m) => m.conversations?.kind === "group").map((m) => lastMessageByConversation.get(m.conversation_id)?.sender_id),
+      userId,
+    );
+
+    return rows
       .map((m): Conversation | null => {
-        const otherProfile = otherByConversation.get(m.conversation_id);
-        if (!otherProfile) return null; // no other member found — shouldn't happen for a real 1:1 thread
         const last = lastMessageByConversation.get(m.conversation_id);
-        return {
+        const base = {
           id: m.conversation_id,
-          participants: [mapProfileRow(otherProfile)],
-          lastMessage: previewTextFor(last),
           lastMessageAt: m.conversations?.last_message_at ?? last?.created_at ?? new Date(0).toISOString(),
           unreadCount: m.unread_count,
           myStatus: m.status,
           archivedAt: m.archived_at,
           deletedAt: m.deleted_at,
+          mutedAt: m.muted_at,
           clearedAt: m.cleared_at,
         };
+        if (m.conversations?.kind === "group") {
+          const group = groupFromMembership(m);
+          if (!group) return null; // grup satırı okunamadı — listede göstermek yerine atla
+          return {
+            ...base,
+            kind: "group",
+            group,
+            participants: [],
+            lastMessage: groupPreview(last, last?.sender_id === userId ? null : groupSenderNames.get(last?.sender_id ?? "")),
+          };
+        }
+        const otherProfile = otherByConversation.get(m.conversation_id);
+        if (!otherProfile) return null; // no other member found — shouldn't happen for a real 1:1 thread
+        return { ...base, kind: "direct", group: null, participants: [mapProfileRow(otherProfile)], lastMessage: previewTextFor(last) };
       })
       .filter((c): c is Conversation => Boolean(c))
       .sort((a, b) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime());
@@ -160,6 +186,40 @@ export async function fetchConversationsForUser(userId: string): Promise<Convers
     console.error("fetchConversationsForUser", err);
     return [];
   }
+}
+
+type LastMessageRow = PreviewRow & { conversation_id: string; sender_id: string };
+
+/** `conversation_last_messages` RPC: konuşma başına tek, görünür son mesaj. Hata → boş harita (önizleme "henüz mesaj yok" olur, liste yine açılır). */
+async function fetchLastMessages(conversationIds: string[]): Promise<Map<string, LastMessageRow>> {
+  const result = new Map<string, LastMessageRow>();
+  if (conversationIds.length === 0) return result;
+  const { data, error } = await supabase.rpc("conversation_last_messages", { p_conversation_ids: conversationIds.slice(0, 500) });
+  if (error) {
+    console.error("conversation_last_messages", error);
+    return result;
+  }
+  if (!Array.isArray(data)) return result;
+  for (const row of data as LastMessageRow[]) result.set(row.conversation_id, row);
+  return result;
+}
+
+/** Son mesajı yazan kişilerin görünen adları (grup önizlemesindeki "Ayşe: …" için); kendi mesajlarım hariç. */
+async function fetchSenderNames(senderIds: (string | undefined)[], viewerId: string): Promise<Map<string, string>> {
+  const ids = [...new Set(senderIds.filter((id): id is string => Boolean(id) && id !== viewerId))];
+  const names = new Map<string, string>();
+  if (ids.length === 0) return names;
+  const { data } = await supabase.from("profiles").select("id, display_name").in("id", ids.slice(0, 200));
+  for (const row of (data ?? []) as { id: string; display_name: string }[]) names.set(row.id, row.display_name);
+  return names;
+}
+
+/** Grup önizlemesi: "Ayşe: merhaba" / "Sen: merhaba". Mesaj yoksa ya da silinmişse düz metin. */
+function groupPreview(last: LastMessageRow | undefined, senderName: string | null | undefined): string {
+  const text = previewTextFor(last);
+  if (!last || last.deleted_at) return text;
+  if (senderName === null) return translateForRuntime("groups.previewYou", { text });
+  return senderName ? `${senderName.split(" ")[0]}: ${text}` : text;
 }
 
 /**
@@ -179,36 +239,42 @@ export async function fetchConversationForUser(conversationId: string, userId: s
       .maybeSingle();
     if (error || !membership) return null;
 
-    const { data: otherMember } = await supabase
-      .from("conversation_members")
-      .select(
-        "profiles(id, username, display_name, avatar_url, cover_url, bio, website, follower_count, following_count, created_at, interests)",
-      )
-      .eq("conversation_id", conversationId)
-      .neq("user_id", userId)
-      .maybeSingle();
-    const otherProfile = (otherMember as unknown as { profiles: ProfileRow | null } | null)?.profiles;
-    if (!otherProfile) return null;
-
     const row = membership as unknown as MembershipRow;
-    let lastQuery = supabase
-      .from("messages")
-      .select("body, shared_prompt_id, shared_request_id, attachments, deleted_at, created_at")
-      .eq("conversation_id", conversationId);
-    if (row.cleared_at) lastQuery = lastQuery.gt("created_at", row.cleared_at);
-    const { data: last } = await lastQuery.order("created_at", { ascending: false }).limit(1).maybeSingle();
+    const isGroup = row.conversations?.kind === "group";
 
-    return {
+    let otherProfile: ProfileRow | null | undefined = null;
+    if (!isGroup) {
+      const { data: otherMember } = await supabase
+        .from("conversation_members")
+        .select(
+          "profiles(id, username, display_name, avatar_url, cover_url, bio, website, follower_count, following_count, created_at, interests)",
+        )
+        .eq("conversation_id", conversationId)
+        .neq("user_id", userId)
+        .maybeSingle();
+      otherProfile = (otherMember as unknown as { profiles: ProfileRow | null } | null)?.profiles;
+      if (!otherProfile) return null;
+    }
+
+    const last = (await fetchLastMessages([conversationId])).get(conversationId);
+    const base = {
       id: conversationId,
-      participants: [mapProfileRow(otherProfile)],
-      lastMessage: previewTextFor(last ?? undefined),
       lastMessageAt: row.conversations?.last_message_at ?? last?.created_at ?? new Date(0).toISOString(),
       unreadCount: row.unread_count,
       myStatus: row.status,
       archivedAt: row.archived_at,
       deletedAt: row.deleted_at,
+      mutedAt: row.muted_at,
       clearedAt: row.cleared_at,
     };
+
+    if (isGroup) {
+      const group = groupFromMembership(row);
+      if (!group) return null;
+      const names = await fetchSenderNames([last?.sender_id], userId);
+      return { ...base, kind: "group", group, participants: [], lastMessage: groupPreview(last, last?.sender_id === userId ? null : names.get(last?.sender_id ?? "")) };
+    }
+    return { ...base, kind: "direct", group: null, participants: [mapProfileRow(otherProfile as ProfileRow)], lastMessage: previewTextFor(last) };
   } catch (err) {
     console.error("fetchConversationForUser", err);
     return null;
@@ -225,6 +291,22 @@ export async function fetchConversationForUser(conversationId: string, userId: s
  * showing history they cleared.
  */
 export async function fetchMessages(conversationId: string, viewerId: string): Promise<Message[]> {
+  return (await fetchMessagePage(conversationId, viewerId)).messages;
+}
+
+/** Bir seferde yüklenen en yeni mesaj sayısı; daha eskileri `before` ile istenir (büyük grup sohbetleri tüm geçmişi tek seferde çekmesin). */
+export const MESSAGE_PAGE_SIZE = 200;
+
+/**
+ * Konuşmanın en yeni `MESSAGE_PAGE_SIZE` mesajı (eskiden yeniye); `before` verilirse o zamandan ÖNCEKİ sayfa.
+ * `hasMore`: daha eski mesaj olabilir. Kişisel temizleme ve "benden sil" aynen uygulanır; grupta katılmadan önceki
+ * mesajlar ve engel ilişkisindeki göndericilerin mesajları zaten RLS ile gelmez.
+ */
+export async function fetchMessagePage(
+  conversationId: string,
+  viewerId: string,
+  options: { before?: string } = {},
+): Promise<{ messages: Message[]; hasMore: boolean }> {
   try {
     const { data: membership, error: membershipError } = await supabase
       .from("conversation_members")
@@ -232,23 +314,29 @@ export async function fetchMessages(conversationId: string, viewerId: string): P
       .eq("conversation_id", conversationId)
       .eq("user_id", viewerId)
       .maybeSingle();
-    if (membershipError) return [];
+    if (membershipError) return { messages: [], hasMore: false };
     const clearedAt = (membership as { cleared_at: string | null } | null)?.cleared_at ?? null;
 
     let query = supabase.from("messages").select(MESSAGE_SELECT).eq("conversation_id", conversationId);
     if (clearedAt) query = query.gt("created_at", clearedAt);
+    if (options.before) query = query.lt("created_at", options.before);
     const [{ data, error }, { data: hidden }] = await Promise.all([
-      query.order("created_at", { ascending: true }),
+      query.order("created_at", { ascending: false }).limit(MESSAGE_PAGE_SIZE),
       supabase.from("message_hidden_for").select("message_id").eq("user_id", viewerId),
     ]);
-    if (error) return [];
+    if (error) return { messages: [], hasMore: false };
     const hiddenIds = new Set((hidden ?? []).map((row) => row.message_id as string));
-    return (data ?? [])
-      .map((row) => mapMessageRow(row as MessageRow))
-      .filter((message) => !hiddenIds.has(message.id));
+    const rows = data ?? [];
+    return {
+      hasMore: rows.length >= MESSAGE_PAGE_SIZE,
+      messages: rows
+        .map((row) => mapMessageRow(row as MessageRow))
+        .filter((message) => !hiddenIds.has(message.id))
+        .reverse(),
+    };
   } catch (err) {
     console.error("fetchMessages", err);
-    return [];
+    return { messages: [], hasMore: false };
   }
 }
 
@@ -369,6 +457,9 @@ export async function getOrCreateDirectConversation(
   // there's no reason to show the caller a false "gone" state over it.
   return {
     id: conversationId as string,
+    kind: "direct",
+    group: null,
+    mutedAt: null,
     participants: [otherProfile],
     lastMessage: translateForRuntime("messages.noMessagesYetShort"),
     lastMessageAt: new Date().toISOString(),

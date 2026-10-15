@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type RefObject } from "react";
-import { CornerUpLeft, Flag, Pencil, Trash2 } from "lucide-react";
+import { CornerUpLeft, Flag, Pencil, ShieldAlert, Trash2 } from "lucide-react";
 import { useAuth } from "@/features/auth/auth-provider";
 import { fileReport } from "@/lib/supabase/reports";
 import { cn } from "@/lib/utils";
@@ -138,6 +138,7 @@ export function MessageActionMenu({
   const { t } = useTranslation();
   const isConfirmingDeleteEveryone = actions.deleteConfirm?.id === message.id && actions.deleteConfirm.mode === "everyone";
   const isConfirmingDeleteMe = actions.deleteConfirm?.id === message.id && actions.deleteConfirm.mode === "me";
+  const isConfirmingModerate = actions.deleteConfirm?.id === message.id && actions.deleteConfirm.mode === "moderator";
   const isDeletingHere = actions.isDeletingId === message.id;
 
   function requestDelete(mode: DeleteMode) {
@@ -215,6 +216,22 @@ export function MessageActionMenu({
             onBlur={actions.onCancelDeleteConfirm}
             disabled={isDeletingHere}
           />
+          {actions.canModerate?.(message) && (
+            <MenuItem
+              icon={<ShieldAlert size={14} />}
+              label={
+                isDeletingHere && actions.deleteConfirm?.mode === "moderator"
+                  ? t("messages.deletingEllipsis")
+                  : isConfirmingModerate
+                    ? t("common.confirmDelete")
+                    : t("groups.chat.deleteAsModerator")
+              }
+              onClick={() => requestDelete("moderator")}
+              onBlur={actions.onCancelDeleteConfirm}
+              disabled={isDeletingHere}
+              danger
+            />
+          )}
         </>
       )}
     </div>

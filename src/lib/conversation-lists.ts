@@ -12,6 +12,8 @@ export interface ConversationListFields {
   deletedAt: string | null;
   unreadCount: number;
   lastMessageAt: string;
+  /** Kişisel sessize alma (grup): okunmamış sayısı listede görünür ama başlıktaki noktayı yakmaz. */
+  mutedAt?: string | null;
 }
 
 export interface ConversationBuckets<T> {
@@ -41,10 +43,10 @@ export function bucketConversations<T extends ConversationListFields>(conversati
   return { requests: requests.sort(byNewest), inbox: inbox.sort(byNewest), archived: archived.sort(byNewest) };
 }
 
-/** The header's unread dot: only chats that are actually listed in the inbox or requests count — an archived or deleted chat must not light it. */
+/** The header's unread dot: only chats that are actually listed in the inbox or requests count — an archived, deleted or muted chat must not light it. */
 export function hasUnreadInInbox(conversations: readonly ConversationListFields[]): boolean {
   const { requests, inbox } = bucketConversations(conversations);
-  return [...requests, ...inbox].some((conversation) => conversation.unreadCount > 0);
+  return [...requests, ...inbox].some((conversation) => conversation.unreadCount > 0 && !conversation.mutedAt);
 }
 
 /** Oldest message time the viewer may still see in a thread, or null when nothing was cleared. */

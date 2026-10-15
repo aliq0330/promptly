@@ -15,7 +15,9 @@ import { parsePresetShareBody } from "./preset-share-format";
 import { cn, formatRelativeTime } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Message, MessageAttachment } from "@/types";
-import type { MessageBubbleActions, MessageReactionEntry } from "./message-bubble-types";
+import type { MessageBubbleActions, MessageReactionEntry, MessageSender } from "./message-bubble-types";
+import { Avatar } from "@/components/ui/avatar";
+import { RoleBadge } from "@/features/groups/role-badge";
 
 /** A message's stored photos (signed URLs resolved lazily) + the fullscreen viewer they open. */
 function BubbleImages({ attachments, isMe }: { attachments: MessageAttachment[]; isMe: boolean }) {
@@ -70,8 +72,11 @@ export function MessageBubble({
   currentUserId,
   onReact,
   actions,
+  sender,
 }: {
   message: Message;
+  /** Yalnız grup sohbetinde, başkasının mesajında: gönderenin avatarı, adı ve (varsa) rolü mesajın üstünde gösterilir. */
+  sender?: MessageSender | null;
   isMe: boolean;
   /** The message this one replies to, already looked up from the loaded thread — null if it replies to nothing, or that message fell outside the loaded page. */
   replyPreview: Message | null;
@@ -273,6 +278,13 @@ export function MessageBubble({
         isHighlighted && "-mx-1.5 bg-primary/10 px-1.5 py-1 ring-1 ring-primary/40",
       )}
     >
+      {sender && !isMe && (
+        <div className="mb-1 flex items-center gap-1.5 text-caption" data-message-sender>
+          <Avatar src={sender.avatarUrl} alt={sender.displayName} size={20} />
+          <span className="max-w-[10rem] truncate font-semibold text-text-secondary">{sender.displayName}</span>
+          {sender.role && <RoleBadge role={sender.role} />}
+        </div>
+      )}
       {replyPreview && (
         <div
           className={cn(

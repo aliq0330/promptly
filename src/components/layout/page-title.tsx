@@ -33,6 +33,8 @@ const ROUTE_TITLES: Record<string, TranslationKey> = {
   "/profile/edit": "profile.editProfileHeading",
   "/messages": "header.messagesAriaLabel",
   "/messages/local": "header.messagesAriaLabel",
+  "/groups": "nav.groups",
+  "/groups/join": "nav.groups",
   "/notifications": "header.notificationsAriaLabel",
   "/login": "header.login",
   "/signup": "auth.signUp",

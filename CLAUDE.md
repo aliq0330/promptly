@@ -74,7 +74,7 @@ src/
   components/layout/          # header, sidebar, mobil nav, shell
   features/<alan>/            # auth, collections, content, drafts, feed, focus,
                               # messages, moderation, my-content, notifications,
-                              # onboarding, presets, profile, prompts, relations,
+                              # groups, onboarding, presets, profile, prompts, relations,
                               # requests, search, share, statistics, studio, tags, workflows
   lib/                        # utils, i18n, taksonomi, prompt-dna, relations, …
   lib/supabase/               # veri erişim katmanı (tablo başına dosya)
@@ -206,7 +206,8 @@ tamamlanmış sayılmaz. Ayrıntı ve mimari: `docs/history/049-*`, `056-*`, `05
 | `/relations?type=&id=` | Birleşik İlişki Haritası |
 | `/collections/local?id=`, `/saved` | Koleksiyon detayı (başkasının herkese açık koleksiyonunda Takip Et + takipçi sayısı); `/saved` = "Kaydedilenler": kullanıcının TÜM koleksiyonlarındaki benzersiz içerikler (`docs/history/168-*`) |
 | `/profile/real?username=`, `/profile/edit`, `/followers`, `/following`, `/my-content` | Profil ve kütüphane |
-| `/messages`, `/messages/local?id=` | Mesajlaşma (Realtime, mesaj istekleri, fotoğraf, emoji) |
+| `/messages`, `/messages/local?id=` | Mesajlaşma (Realtime, mesaj istekleri, fotoğraf, emoji); `?id=` bir **birebir sohbet ya da grup sohbeti** olabilir (`conversations.kind`), grup bilgisi/yönetimi başlıktan açılan pencere (`?panel=requests` vb. ile bildirimden) |
+| `/groups`, `/groups/join#<token>` | Gruplar: Keşfet (yalnız herkese açık gruplar) + Davetlerim; davet bağlantısının açılış sayfası (token URL parçasında) |
 | `/notifications` | Bildirim merkezi |
 | `/settings`, `/settings/blocked` | Hesap / Gizlilik / Tercihler (görünüm, dil) / Tehlikeli bölge ("Hesabımı sil" — `delete-account` Edge Function) |
 | `/privacy`, `/terms` | Gizlilik Politikası, Kullanım Koşulları (herkese açık, TR+EN; metin `features/legal/legal-content.ts`) |
@@ -214,7 +215,7 @@ tamamlanmış sayılmaz. Ayrıntı ve mimari: `docs/history/049-*`, `056-*`, `05
 | `/login`, `/signup`, `/reset-password` | Auth (e-posta/kullanıcı adı + şifre, Google ile devam et) |
 | `/share/<tür>/<anahtar>/` | Derleme zamanı üretilen statik paylaşım sayfası (herkese açık içerik; kendi `og:*` meta'sı, sonra detaya yönlenir). Paylaş/linki kopyala eylemleri bu adresi verir; sayfası olmayan yeni içerik `404.html` → `NotFoundForwarder` ile detaya gider. `deploy.yml` her 6 saatte yeniden derler |
 
-Giriş gerektirenler (`RequireAuth`): `/messages`, `/notifications`, `/saved`,
+Giriş gerektirenler (`RequireAuth`): `/messages`, `/groups`, `/notifications`, `/saved`,
 `/following`, `/followers`, `/settings`, `/profile/edit`, `/my-content`.
 Okuma herkese açıktır; yazma eylemleri misafire ortak giriş diyaloğunu açar.
 
@@ -232,7 +233,7 @@ kaynağı); `supabase/README.md` uygulama talimatını içerir. Çekirdek tablol
 polimorfik: `prompt_id`/`request_id`/`workflow_id`/`preset_id` — tam biri dolu),
 `collections` / `collection_items` ("Genel" = `is_default`, isimden bağımsız),
 `prompt_versions` / `request_versions` / `workflow_versions` / `preset_versions` (sürüm geçmişi; yazma yalnız trigger/RPC, `docs/history/170-*`), `follows`, `conversations` / `conversation_members` / `messages` /
-`message_reactions`, `notifications`, `reports`, `blocks`,
+`message_reactions`, `chat_groups` (+ `chat_group_join_requests/invitations/links/bans/audit`; id = grup konuşmasının id'si), `notifications`, `reports`, `blocks`,
 `content_relations`, `content_edits`, `admin_audit_log`.
 
 Kalıplar (yeni migration yazarken uy):
@@ -249,6 +250,7 @@ Kalıplar (yeni migration yazarken uy):
 - **Sayaç sütunları istemciden yazılamaz:** yeni bir sayaç (`*_count`) eklenirse `protect_counter_columns()` trigger'ı bağlanır (`docs/history/169-*`) ve onu güncelleyen trigger `SECURITY DEFINER` olur (invoker ise korumaya takılıp sessizce sayamaz).
 - **Sürüm geçmişi** dört türde ortak: üst içeriğin okunabilirliğini devralan SELECT, istemci yazma yok; Workflow/Hazır Ayar kaydı `save_*_content` RPC'sinden geçer, geri dönme yeni bir sahip düzenlemesidir (`docs/history/170-*`).
 - **Kaydedildi = en az bir koleksiyonda** (`collection_items`; ikon, `/saved` ve kaydet penceresi aynı satırları okur). Üyelik yalnız `SaveToCollectionModal`'dan (taslak + "Kaydet") ya da bir koleksiyonun kendi "Koleksiyondan kaldır"ından değişir; bir koleksiyondan çıkarmak başka koleksiyona dokunmaz, "Genel" dahil. Toplu "her yerden kaldır" yoktur (`docs/history/168-*`).
+- **Grup sohbeti** (`docs/history/172-*`) ayrı bir mesaj altyapısı DEĞİLDİR: grup = `conversations.kind='group'`, üyelik/rol/katılma zamanı/sessize alma `conversation_members`'ta, mesajlar `messages`'ta. Kurallar: (1) grup tablolarına istemci **yazamaz**, her yazma SECURITY DEFINER RPC'dir (`auth.uid()`, rol kontrolü, grup satırı `for update` kilidi); istemci üyelik satırını eklemez/silmez/rolünü değiştirmez (tetikleyici). (2) `conversation_members` grupta yalnız KENDİ satırımı gösterir; üye listesi `chat_group_members` RPC'si. (3) Mesaj okuma/yazma `can_read_message` / `can_send_message` ile (grupta `created_at >= joined_at`, `posting_policy`, engel = karşılıklı görünmezlik, yazma kilidi yok); birebir akışlar `kind='direct'` ile sınırlanır (yeni "ortak konuşma" sorgusu yazarken türü ayır). (4) Kapalı → açık görünürlük = tek atomik RPC, bekleyen başvurular güvenlik kurallarına uyanlar için kabul edilir, uymayanlar `pending` kalır ve nedeniyle raporlanır; hiçbir yol sessizce "kabul edildi" işaretlemez. (5) Davet bağlantısında ham token saklanmaz (yalnız SHA-256 özeti), `token_hash` istemciye verilmez. (6) Grup bildirimleri mevcut `system` türünü kullanır, mesaj başına bildirim yoktur.
 - Sahiplik kontrolü `.update().select().maybeSingle()` ile yapılır; "0 satır
   etkilendi" sessiz başarı sayılmaz.
 
@@ -329,6 +331,7 @@ bağlayıcıdır; ayrıntılı gerekçe için `docs/history/README.md` tablosuna
   kaldı. `deploy-functions.yml` hiç çalıştırılmadı (secret'lar
   `SUPABASE_ACCESS_TOKEN` / `SUPABASE_PROJECT_REF` tanımlı değilse fail eder).
 - @bahsetme (`docs/history/165-*`) ve koleksiyon takibi (`docs/history/166-*`): migration'lar canlıda (yalnızca ekleyici, `drop` yok); anma bildirimi mevcut `comment` türünü kullanır (kısıt genişletilmedi). Gerçek oturumla uçtan uca denenmedi.
+- Grup sohbeti ve topluluk (`docs/history/172-*`, `docs/yapilacaklar.md` madde 13): `20260919980000` + `20260919990000` repoda, yerel PostgreSQL'de sınandı (113 kontrol), **canlıya UYGULANMADI** — önce migration, sonra istemci kodu. Gerçek Supabase'e / Realtime'a / oturuma / cihaza karşı denenmedi; paylaşılan `Modal` odak tuzağı kurmaz; "grubu kapat" (salt-okunur) yok, yalnız silme.
 - Kaydedilenler/koleksiyon akışı (`docs/history/168-*`): yalnız istemci kodu, veritabanı değişikliği yok; DB tarafı yerel PostgreSQL'de (`supabase/tests/saved-collections.sql`), arayüz ağ taklitli Playwright'ta denendi. Gerçek Supabase'e/cihaza karşı denenmedi. `remove_*_from_saved_everywhere` RPC'leri artık çağrılmıyor ama DB'de duruyor (`drop` için onay gerekir).
 - Mesajlaşma arşiv/sil/temizle + Yeni sohbet (`docs/history/171-*`): kişiye özel `conversation_members.archived_at/deleted_at/cleared_at` + `filter_messageable_users`; `20260919970000` repoda, yerelde sınandı, **canlıya UYGULANMADI** (önce migration, sonra istemci kodu). Gerçek Supabase'e/cihaza karşı denenmedi.
 - Sürüm geçmişi (`docs/history/170-*`, `docs/yapilacaklar.md` madde 9): `20260919940000`/`950000`/`960000` migration'ları repoda, yerelde sınandı, **canlıya UYGULANMADI** — önce migration, sonra istemci kodu (yeni istemci varolan workflow/hazır ayarı `save_*_content` RPC'siyle kaydeder).

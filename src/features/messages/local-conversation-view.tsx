@@ -1,15 +1,21 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type FormEvent, type UIEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type UIEvent } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, X } from "lucide-react";
+import { ArrowLeft, Bell, BellOff, Info, LogOut, Users, X } from "lucide-react";
 import { Portal } from "@/components/ui/portal";
 import { Avatar } from "@/components/ui/avatar";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useBlockState } from "@/features/moderation/use-block-state";
 import { ProfileMoreMenu } from "@/features/profile/profile-more-menu";
 import { ChatActionItems, ChatConfirmModal, type ChatConfirmKind } from "./chat-actions";
+import { ChatHeaderMenu } from "@/features/groups/chat-header-menu";
+import { GroupAvatar } from "@/features/groups/group-avatar";
+import { GroupInfoModal, type GroupInfoTab } from "@/features/groups/group-info-modal";
+import { useGroupSenders } from "@/features/groups/use-group-senders";
+import { moderateChatGroupMessage, setChatGroupMuted, toGroupError } from "@/lib/supabase/chat-groups";
+import { canModerateMessage, canPostInGroup } from "@/lib/chat-groups";
 import { useRealMessages } from "./real-messages-provider";
 import { MessageBubble, type DeleteMode, type MessageReactionEntry } from "./message-bubble";
 import { MessageComposer, useImageDrop } from "./message-composer";
@@ -20,7 +26,7 @@ import {
   deleteMessageForEveryone,
   editMessage,
   fetchConversationForUser,
-  fetchMessages,
+  fetchMessagePage,
   hideMessageForMe,
   mapMessageRow,
   markConversationRead,
@@ -36,6 +42,7 @@ import { useRealRequests } from "@/features/requests/real-requests-provider";
 import { parseHighlightValue } from "@/lib/notification-utils";
 import { profileHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
+import { memberCountText } from "@/lib/group-labels";
 import { translateForRuntime } from "@/lib/i18n/translations";
 import { composeWorkflowShareBody } from "./workflow-share-format";
 import { composePresetShareBody } from "./preset-share-format";
@@ -63,9 +70,10 @@ const EMPTY_PARTICIPANT: UserProfile = {
 const HIGHLIGHT_DURATION_MS = 2500;
 
 /** The raw Postgres RLS-denial message for a blocked-either-direction send — translated into something a user can actually act on. */
-function translateSendError(message: string): string {
+function translateSendError(message: string, isGroup = false): string {
   if (message.toLowerCase().includes("row-level security")) {
-    return translateForRuntime("messages.blockedSendError");
+    // Grupta RLS reddi "engellendin" demek değildir: üyelik bitmiş ya da "yalnızca yöneticiler yazar" ayarı olabilir.
+    return translateForRuntime(isGroup ? "groups.chat.sendDenied" : "messages.blockedSendError");
   }
   return message;
 }
@@ -101,6 +109,10 @@ export function LocalConversationView() {
     unarchiveConversation,
     deleteConversation,
     clearConversation,
+    conversations,
+    ready,
+    patchConversation,
+    removeConversation,
   } = useRealMessages();
   const { getCached: getCachedPrompt, fetchById: fetchPromptById } = useRealPrompts();
   const { getCached: getCachedRequest, fetchById: fetchRequestById } = useRealRequests();
@@ -109,6 +121,13 @@ export function LocalConversationView() {
 
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
+  // Daha eski mesajlar var mı (sayfalı yükleme) ve yükleniyor mu.
+  const [hasOlder, setHasOlder] = useState(false);
+  const [loadingOlder, setLoadingOlder] = useState(false);
+  // Grup sohbeti: bilgi penceresi (hangi sekmede açık), üyelik kaybı, devam eden eylem.
+  const [groupInfoTab, setGroupInfoTab] = useState<GroupInfoTab | null>(null);
+  const [leftGroup, setLeftGroup] = useState<"left" | "deleted" | "removed" | null>(null);
+  const panelParamHandled = useRef(false);
   const [checked, setChecked] = useState(false);
   const [draft, setDraft] = useState("");
   const [isSending, setIsSending] = useState(false);
@@ -157,9 +176,14 @@ export function LocalConversationView() {
   // yüzden gerçek katılımcı gelene kadar zararsız bir placeholder hedef
   // kullanılıyor — `useBlockState`'in `canBlock`'u zaten oturum yokken
   // false, ve id boş olduğunda sorgu hiçbir şeye eşleşmiyor.
+  const isGroup = conversation?.kind === "group";
+  const group = conversation?.group ?? null;
   const blockState = useBlockState(conversation?.participants[0] ?? EMPTY_PARTICIPANT);
+  // Grup: gönderen adları/avatarları + kadro rolleri; "kim yazabilir" ayarı.
+  const groupSenders = useGroupSenders(isGroup && id ? id : null, messages, group ? `${group.myRole}:${group.memberCount}` : "");
+  const canPost = !isGroup || (group ? canPostInGroup(group.myRole, group.postingPolicy) : false);
   // Desktop drag-and-drop of photos anywhere on the conversation panel.
-  const imageDrop = useImageDrop(composerImages.addFiles, !blockState.isBlocked);
+  const imageDrop = useImageDrop(composerImages.addFiles, !blockState.isBlocked && canPost);
 
   const highlight = parseHighlightValue(searchParams.get("hl"));
   const highlightMessageId = highlight?.kind === "message" ? highlight.id : null;
@@ -169,6 +193,7 @@ export function LocalConversationView() {
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
   const isNearBottomRef = useRef(true);
   const messagesById = new Map(messages.map((m) => [m.id, m]));
 
@@ -226,13 +251,14 @@ export function LocalConversationView() {
         setChecked(true);
         return;
       }
-      const [thread, reactions] = await Promise.all([
-        fetchMessages(id, user.id),
+      const [page, reactions] = await Promise.all([
+        fetchMessagePage(id, user.id),
         fetchReactionsForConversation(id),
         markConversationRead(id),
       ]);
       if (cancelled) return;
-      setMessages(thread);
+      setMessages(page.messages);
+      setHasOlder(page.hasMore);
       setReactionRows(reactions);
       setChecked(true);
     });
@@ -352,6 +378,67 @@ export function LocalConversationView() {
       supabase.removeChannel(channel);
     };
   }, [id, user]);
+
+  // ---- Grup sohbeti ---------------------------------------------------------------------------------------------
+  // Sunucudan taze grup satırı/rol: ayar kaydı, sayaç, rol değişimi sonrası ve Realtime olayında. Satır artık okunamıyorsa
+  // (gruptan çıkarıldım / grup silindi) sohbet "artık üye değilsin" durumuna geçer.
+  const reloadGroup = useCallback(async () => {
+    if (!id || !user) return;
+    const fresh = await fetchConversationForUser(id, user.id);
+    if (fresh) {
+      setConversation(fresh);
+      void refresh();
+    } else {
+      setLeftGroup((prev) => prev ?? "removed");
+    }
+  }, [id, user, refresh]);
+
+  useEffect(() => {
+    if (!id || !user || !isGroup) return;
+    const channel = supabase
+      .channel(`chat_group:${id}`)
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "chat_groups", filter: `id=eq.${id}` }, () => {
+        void reloadGroup();
+      })
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [id, user, isGroup, reloadGroup]);
+
+  // Sohbet listesi (kendi üyelik satırımdaki değişimlerle Realtime'dan yenilenir) bu grup için değiştiğinde açık sohbet de sunucudan
+  // taze okunur. Liste yüklendikten sonra bu grup listede YOKSA (çıkarıldım / grup silindi) yine sunucuya sorulur — liste bayat olabilir.
+  const cachedGroupSignature = (() => {
+    const cached = conversations.find((c) => c.id === id);
+    const g = cached?.group;
+    return cached && g
+      ? [g.name, g.description, g.avatarUrl, g.visibility, g.postingPolicy, g.memberLimit, g.memberCount, g.pendingRequestCount, g.myRole, cached.mutedAt, cached.archivedAt, cached.deletedAt].join("|")
+      : null;
+  })();
+  useEffect(() => {
+    if (!id || !user || !isGroup) return;
+    if (!cachedGroupSignature && !ready) return;
+    let cancelled = false;
+    fetchConversationForUser(id, user.id).then((found) => {
+      if (cancelled) return;
+      if (found) setConversation(found);
+      else setLeftGroup((prev) => prev ?? "removed");
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [cachedGroupSignature, ready, id, user, isGroup]);
+
+  // Bildirimden gelen `?panel=requests|members|invites|settings`: bilgi penceresini ilgili sekmede bir kez açar.
+  useEffect(() => {
+    if (!checked || !isGroup || panelParamHandled.current) return;
+    const panel = searchParams.get("panel");
+    if (panel === "requests" || panel === "members" || panel === "invites" || panel === "settings" || panel === "about") {
+      panelParamHandled.current = true;
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- URL'den gelen tek seferlik açılış; render sırasında türetilemez
+      setGroupInfoTab(panel);
+    }
+  }, [checked, isGroup, searchParams]);
 
   // Resolves a `?sharePromptId=`/`?shareRequestId=`deep link into a real title for the composer banner — cache hit resolves synchronously via the derivation below; a miss falls back to a real fetch here.
   useEffect(() => {
@@ -575,10 +662,10 @@ export function LocalConversationView() {
       if (raw.toLowerCase().includes("duplicate key")) {
         // An earlier attempt did land — the message exists (Realtime/refetch shows it); nothing to retry.
         dropPending(initial.id, { revoke: true });
-        if (user) fetchMessages(id, user.id).then(setMessages);
+        if (user) fetchMessagePage(id, user.id).then((page) => setMessages(page.messages));
         return;
       }
-      patchPending(initial.id, { status: "failed", error: raw ? translateSendError(raw) : t("messages.sendFailed") });
+      patchPending(initial.id, { status: "failed", error: raw ? translateSendError(raw, isGroup) : t("messages.sendFailed") });
     }
   }
 
@@ -645,7 +732,7 @@ export function LocalConversationView() {
       }
       afterSuccessfulSend();
     } catch (err) {
-      setSendError(err instanceof Error ? translateSendError(err.message) : t("messages.sendFailed"));
+      setSendError(err instanceof Error ? translateSendError(err.message, isGroup) : t("messages.sendFailed"));
     } finally {
       setIsSending(false);
     }
@@ -726,6 +813,53 @@ export function LocalConversationView() {
     }
   }
 
+  async function toggleGroupMute() {
+    if (!id || !user || !conversation || actionBusy) return;
+    const muting = !conversation.mutedAt;
+    setActionBusy(true);
+    try {
+      const mutedAt = await setChatGroupMuted(id, user.id, muting);
+      setConversation((prev) => (prev ? { ...prev, mutedAt } : prev));
+      patchConversation(id, { mutedAt });
+      showToast(muting ? t("groups.about.mutedToast") : t("groups.about.unmutedToast"));
+    } catch (err) {
+      console.error("setChatGroupMuted", err);
+      showToast(toGroupError(err instanceof Error ? err : null).message);
+    } finally {
+      setActionBusy(false);
+    }
+  }
+
+  function handleGroupGone(reason: "left" | "deleted") {
+    if (id) removeConversation(id);
+    setGroupInfoTab(null);
+    setLeftGroup(reason);
+  }
+
+  async function loadOlderMessages() {
+    if (!id || !user || loadingOlder || messages.length === 0) return;
+    setLoadingOlder(true);
+    const el = listRef.current;
+    const previousHeight = el?.scrollHeight ?? 0;
+    try {
+      const page = await fetchMessagePage(id, user.id, { before: messages[0].createdAt });
+      setMessages((prev) => {
+        const known = new Set(prev.map((m) => m.id));
+        return [...page.messages.filter((m) => !known.has(m.id)), ...prev];
+      });
+      setHasOlder(page.hasMore);
+      // Eski mesajlar üste eklenince okunan yer kaymasın.
+      requestAnimationFrame(() => {
+        if (el) el.scrollTop += el.scrollHeight - previousHeight;
+      });
+    } catch (err) {
+      console.error("loadOlderMessages", err);
+      showToast(t("common.actionFailedRetry"));
+    } finally {
+      setLoadingOlder(false);
+    }
+  }
+
   function startEdit(message: Message) {
     setEditingId(message.id);
     setEditDraft(message.body ?? "");
@@ -758,7 +892,14 @@ export function LocalConversationView() {
     }
     setDeletingId(messageId);
     try {
-      if (mode === "everyone") {
+      if (mode === "moderator") {
+        await moderateChatGroupMessage(messageId);
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === messageId ? { ...m, body: null, sharedPromptId: null, sharedRequestId: null, attachments: [], deletedAt: new Date().toISOString() } : m,
+          ),
+        );
+      } else if (mode === "everyone") {
         await deleteMessageForEveryone(messageId, user.id, messages.find((m) => m.id === messageId)?.attachments ?? []);
         setMessages((prev) =>
           prev.map((m) =>
@@ -771,6 +912,7 @@ export function LocalConversationView() {
       }
     } catch (err) {
       console.error("delete message", err);
+      if (mode === "moderator") showToast(toGroupError(err instanceof Error ? err : null).message);
     } finally {
       setDeletingId(null);
       setDeleteConfirm(null);
@@ -833,6 +975,25 @@ export function LocalConversationView() {
     );
   }
 
+  if (leftGroup) {
+    return (
+      <div className="mx-auto max-w-lg px-4 py-16 text-center">
+        <h1 className="mb-2 text-h2 text-text">
+          {leftGroup === "left" ? t("groups.chat.leftTitle") : leftGroup === "deleted" ? t("groups.chat.deletedTitle") : t("groups.chat.removedTitle")}
+        </h1>
+        <p className="mb-4 text-sm text-text-muted">
+          {leftGroup === "left" ? t("groups.chat.leftBody") : leftGroup === "deleted" ? t("groups.chat.deletedBody") : t("groups.chat.removedBody")}
+        </p>
+        <Link
+          href="/messages"
+          className="inline-flex h-9 items-center rounded-lg border border-border bg-surface px-4 text-sm font-medium text-text shadow-xs transition-colors hover:border-border-strong"
+        >
+          {t("messages.backToMessages")}
+        </Link>
+      </div>
+    );
+  }
+
   const participant = conversation.participants[0];
   // A pending bubble is hidden the instant its real message is in the thread (the INSERT response or the Realtime echo, whichever lands first) — never both at once.
   const visiblePending = pendingSends.filter((p) => !messagesById.has(p.id));
@@ -852,16 +1013,88 @@ export function LocalConversationView() {
         >
           <ArrowLeft size={20} />
         </button>
-        <Link
-          href={profileHref(participant)}
-          className="group flex min-w-0 flex-1 items-center gap-3 rounded-lg px-1.5 py-1 transition-colors duration-200 ease-soft hover:bg-surface-soft"
-        >
-          <Avatar src={participant.avatarUrl} alt={participant.displayName} size={36} />
-          <span className="min-w-0 leading-tight">
-            <span className="block truncate text-sm font-semibold tracking-[-0.01em] text-text transition-colors group-hover:text-primary">{participant.displayName}</span>
-            <span className="block truncate text-caption text-text-muted">@{participant.username}</span>
-          </span>
-        </Link>
+        {group ? (
+          <button
+            type="button"
+            onClick={() => setGroupInfoTab("about")}
+            aria-haspopup="dialog"
+            aria-label={t("groups.chat.openInfoAria", { name: group.name })}
+            className="group flex min-w-0 flex-1 items-center gap-3 rounded-lg px-1.5 py-1 text-left transition-colors duration-200 ease-soft hover:bg-surface-soft"
+          >
+            <GroupAvatar name={group.name} avatarUrl={group.avatarUrl} size={36} badge />
+            <span className="min-w-0 leading-tight">
+              <span className="block truncate text-sm font-semibold tracking-[-0.01em] text-text transition-colors group-hover:text-primary">{group.name}</span>
+              <span className="flex items-center gap-1.5 truncate text-caption text-text-muted">
+                <Users size={11} aria-hidden /> {memberCountText(t, group.memberCount)}
+                {conversation.mutedAt && <BellOff size={11} aria-label={t("groups.about.muteLabel")} />}
+              </span>
+            </span>
+          </button>
+        ) : (
+          <Link
+            href={profileHref(participant)}
+            className="group flex min-w-0 flex-1 items-center gap-3 rounded-lg px-1.5 py-1 transition-colors duration-200 ease-soft hover:bg-surface-soft"
+          >
+            <Avatar src={participant.avatarUrl} alt={participant.displayName} size={36} />
+            <span className="min-w-0 leading-tight">
+              <span className="block truncate text-sm font-semibold tracking-[-0.01em] text-text transition-colors group-hover:text-primary">{participant.displayName}</span>
+              <span className="block truncate text-caption text-text-muted">@{participant.username}</span>
+            </span>
+          </Link>
+        )}
+        {group ? (
+          <ChatHeaderMenu>
+            {(close) => (
+              <>
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    close();
+                    setGroupInfoTab("about");
+                  }}
+                  className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-text hover:bg-surface-soft"
+                >
+                  <Info size={14} /> {t("groups.chat.info")}
+                </button>
+                <button
+                  type="button"
+                  role="menuitem"
+                  disabled={actionBusy}
+                  onClick={() => {
+                    close();
+                    void toggleGroupMute();
+                  }}
+                  className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-text hover:bg-surface-soft disabled:opacity-50"
+                >
+                  {conversation.mutedAt ? <Bell size={14} /> : <BellOff size={14} />}
+                  {conversation.mutedAt ? t("groups.chat.unmute") : t("groups.chat.mute")}
+                </button>
+                <ChatActionItems
+                  conversation={conversation}
+                  busy={actionBusy}
+                  close={close}
+                  onToggleArchive={() => void runChatAction(conversation.archivedAt ? "unarchive" : "archive")}
+                  onAsk={(kind) => {
+                    setActionError(null);
+                    setConfirmKind(kind);
+                  }}
+                />
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={() => {
+                    close();
+                    setGroupInfoTab("about");
+                  }}
+                  className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-danger hover:bg-surface-soft"
+                >
+                  <LogOut size={14} /> {t("groups.about.leave")}
+                </button>
+              </>
+            )}
+          </ChatHeaderMenu>
+        ) : (
         <ProfileMoreMenu
           user={participant}
           blockState={blockState}
@@ -882,6 +1115,7 @@ export function LocalConversationView() {
               : undefined
           }
         />
+        )}
       </div>
       {conversation.myStatus === "pending" && (
         <div className="flex items-center justify-between gap-3 border-b border-primary/15 bg-primary-soft/50 px-4 py-2.5 lg:px-6">
@@ -904,6 +1138,7 @@ export function LocalConversationView() {
         </div>
       )}
       <div
+        ref={listRef}
         className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4 lg:px-6"
         onScroll={handleListScroll}
         onClick={(event) => {
@@ -915,6 +1150,18 @@ export function LocalConversationView() {
           if (event.target === event.currentTarget) setActiveMessageId(null);
         }}
       >
+        {hasOlder && (
+          <div className="flex justify-center">
+            <button
+              type="button"
+              onClick={() => void loadOlderMessages()}
+              disabled={loadingOlder}
+              className="rounded-full border border-border-soft bg-surface px-3.5 py-1.5 text-xs font-medium text-text-secondary shadow-xs transition-colors hover:border-border-strong hover:text-text disabled:opacity-60"
+            >
+              {loadingOlder ? t("common.loadingMore") : t("groups.chat.loadOlder")}
+            </button>
+          </div>
+        )}
         {messageHighlightNotFound && (
           <p className="mx-auto w-fit max-w-full rounded-full border border-border-soft bg-surface px-3.5 py-1.5 text-center text-xs text-text-muted shadow-xs">
             {t("messages.messageNotViewable")}
@@ -938,6 +1185,7 @@ export function LocalConversationView() {
               reactions={reactionsByMessage.get(message.id) ?? []}
               currentUserId={user.id}
               onReact={handleReact}
+              sender={isGroup ? groupSenders.senderFor(message.senderId) : undefined}
               actions={{
                 onStartReply: setReplyingTo,
                 onStartEdit: startEdit,
@@ -951,6 +1199,9 @@ export function LocalConversationView() {
                 onCancelDeleteConfirm: () => setDeleteConfirm(null),
                 deleteConfirm,
                 isDeletingId: deletingId,
+                canModerate: group
+                  ? (target) => target.senderId !== user.id && !target.deletedAt && canModerateMessage(group.myRole, groupSenders.roleFor(target.senderId))
+                  : undefined,
               }}
             />
           ))
@@ -963,6 +1214,7 @@ export function LocalConversationView() {
       {confirmKind && (
         <ChatConfirmModal
           kind={confirmKind}
+          isGroup={isGroup}
           busy={actionBusy}
           error={actionError}
           onConfirm={() => void runChatAction(confirmKind)}
@@ -986,7 +1238,7 @@ export function LocalConversationView() {
         draft={draft}
         onDraftChange={setDraft}
         placeholder={pendingShare ? t("messages.addNotePlaceholder") : t("messages.writeMessagePlaceholder")}
-        disabled={blockState.isBlocked}
+        disabled={blockState.isBlocked || !canPost}
         canSend={
           (Boolean(draft.trim()) || Boolean(pendingShare) || composerImages.images.length > 0) &&
           !isSending &&
@@ -1004,6 +1256,11 @@ export function LocalConversationView() {
         dragActive={imageDrop.isDragging}
         banners={
           <>
+    {isGroup && !canPost && (
+      <div role="status" className="mb-2 rounded-lg bg-surface-soft px-3 py-1.5 text-xs text-text-muted">
+        {t("groups.chat.adminsOnly")}
+      </div>
+    )}
     {blockState.isBlocked && (
       <div className="mb-2 flex items-center justify-between gap-2 rounded-lg bg-danger/10 px-3 py-1.5 text-xs text-danger">
         <span>{t("messages.youBlockedCantSend")}</span>
@@ -1042,6 +1299,19 @@ export function LocalConversationView() {
           </>
         }
       />
+      {groupInfoTab && isGroup && (
+        <GroupInfoModal
+          conversation={conversation}
+          initialTab={groupInfoTab}
+          onClose={() => setGroupInfoTab(null)}
+          onGroupChanged={reloadGroup}
+          onMutedChange={(mutedAt) => {
+            setConversation((prev) => (prev ? { ...prev, mutedAt } : prev));
+            if (id) patchConversation(id, { mutedAt });
+          }}
+          onGone={handleGroupGone}
+        />
+      )}
     </div>
   );
 }

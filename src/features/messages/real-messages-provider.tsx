@@ -19,7 +19,13 @@ import type { Conversation, UserProfile } from "@/types";
 interface RealMessagesContextValue {
   /** Every membership row of the viewer, including archived ones and ones deleted from their list — derive visible lists with `bucketConversations`. */
   conversations: Conversation[];
+  /** İlk liste yüklemesi bitti mi (yüklenmeden "bu sohbet yok" sonucu çıkarılmasın — ör. gruptan atılma tespiti). */
+  ready: boolean;
   getCached: (id: string) => Conversation | undefined;
+  /** Yerel listede bir konuşmanın kişisel/grup alanlarını günceller (sessize alma, grup ayarı, rol…); sunucu yazımından SONRA çağrılır. */
+  patchConversation: (conversationId: string, patch: Partial<Conversation>) => void;
+  /** Bir konuşmayı yerel listeden çıkarır (gruptan ayrıldı / grup silindi). */
+  removeConversation: (conversationId: string) => void;
   refresh: () => Promise<void>;
   startConversationWith: (otherProfile: UserProfile) => Promise<Conversation>;
   /** Accepts a pending message request (Bölüm 21 Faz B) — also called automatically after the recipient's first reply. */
@@ -49,16 +55,20 @@ export function RealMessagesProvider({ children }: { children: React.ReactNode }
   const { t } = useTranslation();
   const { user } = useAuth();
   const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     if (!user) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- signed out, no real conversations to fetch
       setConversations([]);
+      setReady(false);
       return;
     }
     fetchConversationsForUser(user.id).then((result) => {
-      if (!cancelled) setConversations(result);
+      if (cancelled) return;
+      setConversations(result);
+      setReady(true);
     });
     return () => {
       cancelled = true;
@@ -143,6 +153,10 @@ export function RealMessagesProvider({ children }: { children: React.ReactNode }
     setConversations((prev) => prev.map((c) => (c.id === conversationId ? { ...c, ...patch } : c)));
   }, []);
 
+  const removeConversation = useCallback((conversationId: string) => {
+    setConversations((prev) => prev.filter((c) => c.id !== conversationId));
+  }, []);
+
   const archiveConversation = useCallback(
     async (conversationId: string) => {
       if (!user) return;
@@ -190,7 +204,10 @@ export function RealMessagesProvider({ children }: { children: React.ReactNode }
   const value = useMemo(
     () => ({
       conversations,
+      ready,
       getCached,
+      patchConversation,
+      removeConversation,
       refresh,
       startConversationWith,
       acceptRequest,
@@ -202,7 +219,10 @@ export function RealMessagesProvider({ children }: { children: React.ReactNode }
     }),
     [
       conversations,
+      ready,
       getCached,
+      patchConversation,
+      removeConversation,
       refresh,
       startConversationWith,
       acceptRequest,

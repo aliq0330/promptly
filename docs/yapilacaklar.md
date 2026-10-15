@@ -41,6 +41,7 @@ dış servis/karar gerektirenler en sona.
 | 10 | Yan yana model karşılaştırma (Studio) | B | bekliyor |
 | 11 | Haftalık özet bildirimi (e-posta / web push) | B | **engelli**: dış servis + gizli anahtar kararı gerekir |
 | 12 | Sayaç sütunlarını istemciden koruma (`like_count`, `save_count`, `comment_count`, `response_count`) | K–O | **bulgu**, bekliyor (aşağıda) |
+| 13 | Grup sohbeti ve topluluk (roller, davet/başvuru, keşif, görünürlük + toplu kabul, bildirimler) | B | **yapıldı** (kod + 2 migration repoda; **canlıya uygulanmadı**, `docs/history/172-*`) |
 
 ## Madde ayrıntıları
 
@@ -109,3 +110,6 @@ E-posta sağlayıcısı veya web push (VAPID) anahtarı gerekir; anahtar repoya 
   `tags.*_usage_count` (RLS zaten yazdırmıyordu; trigger savunma derinliği). Artık korunmayan sayaç kalmadı.
 - Canlı: iki migration uygulandı; sahibi hesapla geri alınan işlemde `like_count`/`save_count`/`comment_count` yazma denemesi eski değeri bıraktı (6 → 6).
 - Test: `supabase/tests/counter-protection.sql` (düzeltme öncesi 16 FAIL → sonrası 0) + `saved-collections.sql` yeniden: 0 FAIL.
+
+### 13. Grup sohbeti ve topluluk — yapıldı (canlıya uygulanmadı)
+Mevcut `conversations`/`conversation_members`/`messages` genişletildi (`kind`, `role`, `joined_at`, `muted_at`) + `chat_groups`, istek, davet, bağlantı, yasak, denetim tabloları; yazma yolu SECURITY DEFINER RPC'ler. Kapalı → açık görünürlük geçişi bekleyen başvuruları tek atomik işlemde kabul eder (kabul edilemeyenler `pending` kalır ve nedeniyle raporlanır). Ayrıntı, rol matrisi ve bilinen boşluklar: `docs/history/172-*`. Canlıya alma sırası: önce `20260919980000` + `20260919990000` (yalnızca ekleyici / yerinde politika daraltma; `drop` yok), sonra istemci kodu. Test: `supabase/tests/run-local.sh supabase/tests/chat-groups.sql` (113 kontrol), `npm test`, `tests/messaging-ui/run-groups.mjs`.

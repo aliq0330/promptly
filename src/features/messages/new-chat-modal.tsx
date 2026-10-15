@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Loader2, Search, X } from "lucide-react";
+import Link from "next/link";
+import { Loader2, Search, UsersRound, X } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Modal } from "@/components/ui/modal";
 import { useAuth } from "@/features/auth/auth-provider";
@@ -42,8 +43,11 @@ export function NewChatModal({
   onClose,
   onOpenConversation,
   onStartDraft,
+  onCreateGroup,
 }: {
   onClose: () => void;
+  /** Verilirse listenin başında "Yeni grup" ve "Grupları keşfet" kısayolları görünür. */
+  onCreateGroup?: () => void;
   onOpenConversation: (conversationId: string) => void;
   onStartDraft: (person: UserProfile) => void | Promise<void>;
 }) {
@@ -206,6 +210,26 @@ export function NewChatModal({
             <p role="alert" className="mt-2 rounded-md bg-danger/10 px-3 py-2 text-small text-danger">
               {pickError}
             </p>
+          )}
+          {onCreateGroup && !searchingNow && (
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={onCreateGroup}
+                className="flex items-center gap-2 rounded-lg border border-border-soft bg-surface px-3 py-2.5 text-left text-small font-medium text-text transition-colors hover:border-border-strong hover:bg-surface-soft"
+              >
+                <UsersRound size={16} className="shrink-0 text-primary" aria-hidden />
+                {t("groups.newGroup")}
+              </button>
+              <Link
+                href="/groups"
+                onClick={onClose}
+                className="flex items-center gap-2 rounded-lg border border-border-soft bg-surface px-3 py-2.5 text-left text-small font-medium text-text transition-colors hover:border-border-strong hover:bg-surface-soft"
+              >
+                <Search size={16} className="shrink-0 text-primary" aria-hidden />
+                {t("groups.discoverShort")}
+              </Link>
+            </div>
           )}
         </div>
 

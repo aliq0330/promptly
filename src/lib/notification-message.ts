@@ -31,6 +31,24 @@ const PREVIEW_TEMPLATES: [prefix: string, key: string, hasNoPreviewForm: boolean
   ["Düzenleme önerini kabul etti", "notifMsg.acceptedSuggestion", false],
   ["Düzenleme önerini reddetti", "notifMsg.rejectedSuggestion", false],
   ["Promptun için bir sonuç paylaştı", "notifMsg.resultOnPrompt", false],
+  // Grup sohbeti bildirimleri (docs/history/172-*): sunucu cümlesi sabit önek + tırnaklı grup adıdır.
+  ["Katılma isteğini kabul etti", "notifMsg.groupRequestAccepted", false],
+  ["Katılma isteğini reddetti", "notifMsg.groupRequestRejected", false],
+  ["Davetini kabul etti", "notifMsg.groupInviteAccepted", false],
+];
+
+/** Grup adını `"…"` içinde taşıyan, öneksiz/sonekli cümleler → çeviri anahtarı (grup adı çevrilmez). */
+const GROUP_NAME_TEMPLATES: [re: RegExp, key: string][] = [
+  [/^Seni "([\s\S]*)" grubuna davet etti\.$/, "notifMsg.groupInvited"],
+  [/^"([\s\S]*)" grubuna katılma isteği gönderdi\.$/, "notifMsg.groupNewRequest"],
+  [/^"([\s\S]*)" grubuna katıldı\.$/, "notifMsg.groupMemberJoined"],
+  [/^Seni "([\s\S]*)" grubundan çıkardı\.$/, "notifMsg.groupRemoved"],
+  [/^"([\s\S]*)" grubunu herkese açık yaptı\.$/, "notifMsg.groupMadePublic"],
+  [/^"([\s\S]*)" grubunu herkese kapattı\.$/, "notifMsg.groupMadePrivate"],
+  [/^"([\s\S]*)" grubunda artık yalnızca yöneticiler mesaj gönderebilir\.$/, "notifMsg.groupPostingAdmins"],
+  [/^"([\s\S]*)" grubunda artık tüm üyeler mesaj gönderebilir\.$/, "notifMsg.groupPostingMembers"],
+  [/^Sana "([\s\S]*)" grubunun sahipliğini devretti\.$/, "notifMsg.groupOwnershipTransferred"],
+  [/^"([\s\S]*)" grubunun yeni sahibi oldun\.$/, "notifMsg.groupNewOwner"],
 ];
 
 const escapeRe = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -59,6 +77,11 @@ export function localizeNotificationMessage(message: string, language: "tr" | "e
     const preview = match[1];
     if (preview !== undefined) return t(key as TranslationKey, { preview });
     if (hasNone) return t(`${key}None` as TranslationKey);
+  }
+
+  for (const [re, key] of GROUP_NAME_TEMPLATES) {
+    const groupMatch = re.exec(message);
+    if (groupMatch) return t(key as TranslationKey, { name: groupMatch[1] });
   }
 
   const selected = /^Yanıtın "([\s\S]*)" isteği için seçildi!$/.exec(message);
