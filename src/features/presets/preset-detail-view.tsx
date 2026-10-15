@@ -22,6 +22,10 @@ import { CommentCountLink } from "@/features/prompts/comment-count-link";
 import { CommentSection } from "@/features/prompts/comment-section";
 import { ShareTriggerButton } from "@/features/prompts/share-modal";
 import { StatisticsButton } from "@/features/statistics/statistics-button";
+import { PresetHistoryPanel } from "@/features/versions/content-history-panels";
+import { VersionRestoreToast } from "@/features/versions/version-restore-toast";
+import { Tabs, type TabItem } from "@/components/ui/tabs";
+import { fetchVersionsForPreset } from "@/lib/supabase/content-versions";
 import { fetchPresetById } from "@/lib/supabase/presets";
 import { taxonomyPathLabel } from "@/lib/content-taxonomy";
 import { presetParameterEntries } from "@/lib/preset-utils";
@@ -40,7 +44,7 @@ import {
 } from "@/features/content/detail-parts";
 import { useRealPresets } from "./real-presets-provider";
 import { PresetSaveCta } from "./preset-save-cta";
-import type { Preset } from "@/types";
+import type { Preset, PresetVersion } from "@/types";
 
 /**
  * `/presets/local?id=…` — the Hazır Ayar detail page, same visual hierarchy as
@@ -60,12 +64,24 @@ export function PresetDetailView() {
   const id = searchParams.get("id");
   const [preset, setPreset] = useState<Preset | null | undefined>(undefined);
   const [lightbox, setLightbox] = useState(false);
+  const [versions, setVersions] = useState<PresetVersion[]>([]);
+  // Content (the default) or history — history exists only when the preset has versions, owner included.
+  const [tab, setTab] = useState<"preset" | "history">("preset");
   usePageTitle(preset?.title);
 
   useEffect(() => {
     if (!id) return;
     let cancelled = false;
     fetchPresetById(id).then((result) => !cancelled && setPreset(result));
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
+
+  useEffect(() => {
+    if (!id) return;
+    let cancelled = false;
+    fetchVersionsForPreset(id).then((result) => !cancelled && setVersions(result));
     return () => {
       cancelled = true;
     };
@@ -80,6 +96,11 @@ export function PresetDetailView() {
   const isOwn = user?.id === preset.creator.id;
   const highlight = searchParams.get("hl");
   const highlightCommentId = highlight?.startsWith("comment:") ? highlight.slice("comment:".length) : null;
+
+  const tabItems: TabItem<"preset" | "history">[] = [
+    { key: "preset", label: t("preset.singular") },
+    ...(versions.length > 0 ? [{ key: "history" as const, label: t("history.tab") }] : []),
+  ];
 
   const aside = (
     <DetailAside>
@@ -152,6 +173,11 @@ export function PresetDetailView() {
           />
         </DetailActionBar>
 
+        {tabItems.length > 1 && <Tabs items={tabItems} active={tab} onChange={setTab} ariaLabel={t("history.sectionsAria")} />}
+
+        {tab === "history" && versions.length > 0 && <PresetHistoryPanel presetId={preset.id} versions={versions} isOwner={isOwn} />}
+
+        {tab === "preset" && (<>
         <div className="flex flex-wrap items-start gap-3 rounded-xl border border-primary/20 bg-primary-soft/50 p-4 sm:p-5">
           <div className="min-w-0 flex-1 space-y-3">
             {!isOwn && (
@@ -215,10 +241,12 @@ export function PresetDetailView() {
         </div>
 
         <DetailTags tags={preset.tags} />
+        </>)}
 
         <DetailComments>
           <CommentSection target={{ presetId: preset.id }} highlightCommentId={highlightCommentId} />
         </DetailComments>
+        <VersionRestoreToast contentId={preset.id} />
       </article>
     </DetailShell>
   );

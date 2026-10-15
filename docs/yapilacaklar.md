@@ -37,7 +37,7 @@ dış servis/karar gerektirenler en sona.
 | 6 | Workflow adım adım çalıştırma modu | O–B | **yapıldı** (`docs/history/164-*`) |
 | 7 | @bahsetme (yorum + istek) | K–O | **yapıldı** (`docs/history/165-*`; yorum + isteğin yaratıcı yönü) |
 | 8 | Herkese açık koleksiyonları takip etme | O | **yapıldı** (`docs/history/166-*`) |
-| 9 | Prompt sürüm geçmişi + fark görünümü (önce var mı kontrol) | O | bekliyor |
+| 9 | Sürüm geçmişi + fark görünümü + geri dönme: Prompt, Prompt İsteği, Workflow, Hazır Ayar | O | **yapıldı** (kod + migration repoda; **canlıya uygulanmadı**, `docs/history/170-*`) |
 | 10 | Yan yana model karşılaştırma (Studio) | B | bekliyor |
 | 11 | Haftalık özet bildirimi (e-posta / web push) | B | **engelli**: dış servis + gizli anahtar kararı gerekir |
 | 12 | Sayaç sütunlarını istemciden koruma (`like_count`, `save_count`, `comment_count`, `response_count`) | K–O | **bulgu**, bekliyor (aşağıda) |
@@ -85,8 +85,11 @@ Yorum + isteğin yaratıcı yönü; anma kuralı SQL ve istemcide aynı; bildiri
 ### 8. Koleksiyon takibi — yapıldı
 Takip + sayaç (korumalı) + bildirim + profil sekmeleri. Takip edilen koleksiyona yeni içerik bildirimi yapılmadı.
 
-### 9–10
-Ayrıntılar madde sırası geldiğinde bu dosyaya eklenir. Madde 9 için not: `prompt-history-panel.tsx`, `edit-history-panel.tsx`, `diff-text.tsx` zaten var — önce neyin eksik olduğu belirlenmeli.
+### 9. Sürüm geçmişi — yapıldı (canlıya uygulanmadı)
+Prompt'ta `prompt_versions` + panel + fark zaten vardı; eksik olan: İstek/Workflow/Hazır Ayar sürümleri, kopyalama, geri dönme, ortak liste, iki sürüm seçici, `prompt_versions` erişim açığı (private prompt sürümleri). Ayrıntı: `docs/history/170-*`. Canlıya alma sırası: önce 3 migration (`20260919940000`–`960000`), sonra istemci kodu.
+
+### 10. Yan yana model karşılaştırma (Studio)
+Ayrıntılar madde sırası geldiğinde bu dosyaya eklenir.
 
 ### 11. Haftalık özet (engelli)
 E-posta sağlayıcısı veya web push (VAPID) anahtarı gerekir; anahtar repoya girmez. Karar bekliyor.
