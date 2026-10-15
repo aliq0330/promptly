@@ -13,6 +13,7 @@ import { ChatActionItems, ChatConfirmModal, type ChatConfirmKind } from "./chat-
 import { ChatHeaderMenu } from "@/features/groups/chat-header-menu";
 import { GroupAvatar } from "@/features/groups/group-avatar";
 import { GroupInfoModal, type GroupInfoTab } from "@/features/groups/group-info-modal";
+import { ReportModal } from "@/features/communities/report-modal";
 import { useGroupSenders } from "@/features/groups/use-group-senders";
 import { moderateChatGroupMessage, setChatGroupMuted, toGroupError } from "@/lib/supabase/chat-groups";
 import { canModerateMessage, canPostInGroup } from "@/lib/chat-groups";
@@ -57,6 +58,7 @@ import { parseHighlightValue } from "@/lib/notification-utils";
 import { cn, profileHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { memberCountText } from "@/lib/group-labels";
+import { communityHref } from "@/lib/communities";
 import { translateForRuntime, type TranslationKey } from "@/lib/i18n/translations";
 import { composeWorkflowShareBody } from "./workflow-share-format";
 import { composePresetShareBody } from "./preset-share-format";
@@ -188,6 +190,7 @@ export function LocalConversationView() {
   const [starredIds, setStarredIds] = useState<Set<string>>(new Set());
   const [searchOpen, setSearchOpen] = useState(false);
   const [infoMessage, setInfoMessage] = useState<Message | null>(null);
+  const [reportMessage, setReportMessage] = useState<Message | null>(null);
   const [hasNewer, setHasNewer] = useState(false);
   const hasNewerRef = useRef(false);
   const [ackVersion, setAckVersion] = useState(0);
@@ -1275,6 +1278,16 @@ export function LocalConversationView() {
             </span>
           </Link>
         )}
+        {group && (
+          <Link
+            href={communityHref(group.id)}
+            aria-label={t("communities.chat.toCommunityAria")}
+            title={t("communities.chat.toCommunityAria")}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border bg-transparent text-text-muted transition-colors hover:bg-surface-soft hover:text-text"
+          >
+            <Users size={16} />
+          </Link>
+        )}
         <button
           type="button"
           onClick={() => setSearchOpen((open) => !open)}
@@ -1458,6 +1471,7 @@ export function LocalConversationView() {
                 onTogglePin: (target) => void setPinState(target, !pinned.pinnedIds.has(target.id)),
                 onCopy: copyMessage,
                 onShowInfo: isGroup ? setInfoMessage : undefined,
+                onReportToStaff: isGroup ? setReportMessage : undefined,
                 onStartReply: setReplyingTo,
                 onStartEdit: startEdit,
                 onCancelEdit: () => setEditingId(null),
@@ -1598,6 +1612,18 @@ export function LocalConversationView() {
         }
       />
       {infoMessage && <MessageInfoModal message={infoMessage} onClose={() => setInfoMessage(null)} />}
+      {reportMessage && group && (
+        <ReportModal
+          communityId={group.id}
+          kind="message"
+          targetId={reportMessage.id}
+          onClose={() => setReportMessage(null)}
+          onReported={() => {
+            setReportMessage(null);
+            setToast(t("communities.report.sentToast"));
+          }}
+        />
+      )}
       {groupInfoTab && isGroup && (
         <GroupInfoModal
           conversation={conversation}

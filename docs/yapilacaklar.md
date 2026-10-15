@@ -42,6 +42,7 @@ dış servis/karar gerektirenler en sona.
 | 11 | Haftalık özet bildirimi (e-posta / web push) | B | **engelli**: dış servis + gizli anahtar kararı gerekir |
 | 12 | Sayaç sütunlarını istemciden koruma (`like_count`, `save_count`, `comment_count`, `response_count`) | K–O | **bulgu**, bekliyor (aşağıda) |
 | 13 | Grup sohbeti ve topluluk (roller, davet/başvuru, keşif, görünürlük + toplu kabul, bildirimler) | B | **yapıldı** (kod + 2 migration repoda; **canlıya uygulanmadı**, `docs/history/172-*`) |
+| 15 | Topluluklar: grup sohbetinin tam kapsamlı topluluk sistemine genişletilmesi (akış, duyuru, etkinlik, kurallar, bildirim tercihi, moderasyon kuyruğu, istatistik, kapatma, eski grupların korunması) | B | **yapıldı** (kod + 3 migration repoda; **canlıya uygulanmadı**, `docs/history/175-*`) |
 
 ## Madde ayrıntıları
 
@@ -119,3 +120,7 @@ Owner admin/moderatör yetkilerini rol başına açıp kapatır (varsayılanlar 
 
 ### 14. Sohbet geliştirmeleri — yapıldı (canlıya uygulanmadı)
 Okundu bilgisi (üye başına imleç; birebirde tik, grupta "Mesaj bilgisi"), "yazıyor" (Realtime Broadcast, private kanal), sabit mesajlar (birebir iki taraf; grupta `pin_messages` yeteneği / owner ayarı `members_can_pin`), sohbet içi arama + mesaja atlama, yıldızlı mesajlar (`/messages/starred`). Migration'lar: `20260920010000`, `20260920020000`, `20260920030000` (önce migration, sonra istemci kodu; Realtime Dashboard'unda "Allow public access" KAPALI olmalı). Ayrıntı ve bilinen boşluklar: `docs/history/174-*`. Test: `supabase/tests/run-local.sh supabase/tests/chat-features.sql` (67 kontrol), `npm test`, `tests/messaging-ui/run-chat.mjs` (33 senaryo).
+
+### 15. Topluluklar — yapıldı (canlıya uygulanmadı)
+Grup sohbeti (172–174) **topluluğun sohbet modülü** oldu: tek üyelik/rol/mesaj altyapısı, üzerine `community_posts` (mevcut içeriğe başvuru; özel içerik otomatik açılmaz), duyurular (sohbette bağlantılı), kurallar + kabul zorunluluğu, etkinlikler (IANA saat dilimi, RSVP, 24 saat hatırlatma), üye başına bildirim tercihi (tümü/önemli/sessiz + süreli), topluluk içi rapor kuyruğu, kapatma, toplulaştırılmış istatistik özeti, yer imi. Mesajlar'dan bağımsız grup oluşturma kalktı. Eski gruplar **kimlik eşlemesiyle** (aynı satırlar, `origin='legacy_group'`) korunur; `community_migration_report()` envanter/anomali raporu verir. Ayrıntı, rol matrisi, geçiş/geri alma planı ve bilinen boşluklar: `docs/history/175-*`. Canlıya alma sırası: `20260920040000` → `050000` → `060000` (yalnızca ekleyici), sonra istemci kodu. Test: `supabase/tests/run-local.sh supabase/tests/communities.sql` (101 kontrol), `npm test`, `tests/messaging-ui/run-communities.mjs`.
+**Kalan (bu sürümde yok):** Sohbet sekmesinin sohbeti gömmesi (şimdilik Mesajlar'a bağlar), zamanlayıcıyla/push ile etkinlik hatırlatma, kullanıcıya özel saat dilimi tercihi, site moderatörünün topluluk raporlarını görmesi, gerçek Supabase/Realtime/cihaz denemesi.

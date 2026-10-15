@@ -9,6 +9,7 @@ import {
   markNotificationRead,
 } from "@/lib/supabase/notifications";
 import { supabase } from "@/lib/supabase/client";
+import { dispatchMyEventReminders } from "@/lib/supabase/communities";
 import type { AppNotification } from "@/types";
 
 interface NotificationsContextValue {
@@ -43,6 +44,12 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     fetchNotificationsForUser(user.id).then((result) => {
       if (!cancelled) setNotifications(result);
     });
+    // Topluluk etkinlik hatırlatmaları (docs/history/175-*): zamanlayıcı yok; uygulama açılışında, kullanıcının "geliyorum/belki" dediği
+    // ve 24 saat içinde başlayan etkinlikler için sunucu bir kez bildirim üretir. Yeni bildirim oluştuysa liste yenilenir.
+    // Hata (ör. migration henüz uygulanmadı) bildirimleri etkilemez, sessizce yok sayılır.
+    dispatchMyEventReminders()
+      .then((created) => (created > 0 && !cancelled ? fetchNotificationsForUser(user.id).then((result) => !cancelled && setNotifications(result)) : undefined))
+      .catch(() => undefined);
     return () => {
       cancelled = true;
     };

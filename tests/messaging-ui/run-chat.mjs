@@ -1,5 +1,5 @@
 // Sohbet geliştirmeleri arayüz testleri (ağ + Realtime taklitli) — docs/history/174-*. Çalıştırma: README.md.
-// Okundu bilgisi, yazıyor, sabitleme, sohbet içi arama, yıldızlı mesajlar; birebir ve grup. Gerçek Supabase'e/Realtime'a karşı denenmedi.
+// Okundu bilgisi, yazıyor, sabitleme, sohbet içi arama, yıldızlı mesajlar; birebir ve topluluk. Gerçek Supabase'e/Realtime'a karşı denenmedi.
 import { chromium } from "playwright";
 import assert from "node:assert/strict";
 import { serve } from "./server.mjs";
@@ -49,7 +49,7 @@ const toast = (page, text) => page.getByRole("status").filter({ hasText: text })
 const stampOf = (db, text) => db.messages.find((m) => m.body === text).created_at;
 const dmTexts = ["selam bob", "benim mesajım", "ikinci bob mesajı", "ikinci benim"]; // 0,2 = Bob; 1,3 = ben
 const seedDm = (db, opts = {}) => db.addConv(CONV, U.bob, { texts: dmTexts, ...opts });
-const seedGroup = (db, opts = {}) => db.addGroup(G, { members: [[U.bob, "admin"], [U.carol, "moderator"], [U.dave, "member"]], texts: [[U.bob, "merhaba grup"], [U.carol, "carol yazdı"], [U.dave, "dave yazdı"]], ...opts });
+const seedGroup = (db, opts = {}) => db.addGroup(G, { members: [[U.bob, "admin"], [U.carol, "moderator"], [U.dave, "member"]], texts: [[U.bob, "merhaba topluluk"], [U.carol, "carol yazdı"], [U.dave, "dave yazdı"]], ...opts });
 const manyTexts = (specials = {}) => Array.from({ length: 230 }, (_, i) => specials[i] ?? `mesaj ${i}`);
 const flashed = (page, text) => page.locator("[data-message-id].ring-primary\\/40, [data-message-id][class*='ring-primary']", { hasText: text }).first();
 
@@ -91,7 +91,7 @@ await scenario("3. Okundu (birebir): kendi mesajımda 'Gönderildi' → karşı 
   assert.equal(await tick("ikinci benim").getAttribute("data-read-state"), "sent");
 }, { setup: (db) => seedDm(db) });
 
-await scenario("4. Okundu (grup): gruptaki mesajlarda tik yok; 'Mesaj bilgisi' yalnız KENDİ mesajımda; okuyanlar/okumayanlar listelenir, gönderen yok", async ({ page }) => {
+await scenario("4. Okundu (topluluk): topluluktaki mesajlarda tik yok; 'Mesaj bilgisi' yalnız KENDİ mesajımda; okuyanlar/okumayanlar listelenir, gönderen yok", async ({ page }) => {
   await openThread(page, G);
   assert.equal(await page.locator("[data-read-state]").count(), 0, "no per-bubble ticks in groups");
   await openMsgMenu(page, "carol yazdı");
@@ -170,14 +170,14 @@ await scenario("7. Sabit: silinmiş/erişilemeyen mesajın sabiti bozuk kayıt o
   db.pins.push({ message_id: m.id, conversation_id: CONV, pinned_by: ME, pinned_at: db.stamp() });
 } });
 
-await scenario("8. Sabit (grup): normal üye sabitleyemez; sunucu reddederse hata gösterilir ve çubuk oluşmaz", async ({ page }) => {
+await scenario("8. Sabit (topluluk): normal üye sabitleyemez; sunucu reddederse hata gösterilir ve çubuk oluşmaz", async ({ page }) => {
   await openThread(page, G);
   await openMsgMenu(page, "carol yazdı");
   assert.equal(await mItem(page, "Sabitle").count(), 0, "no pin item for a plain member");
   await page.keyboard.press("Escape");
 }, { setup: (db) => seedGroup(db, { myRole: "member" }) });
 
-await scenario("8b. Sabit (grup): moderatör varsayılanda sabitler; yetkisi alınınca menüde görünmez; sunucu reddi dürüstçe gösterilir", async ({ page, db }) => {
+await scenario("8b. Sabit (topluluk): moderatör varsayılanda sabitler; yetkisi alınınca menüde görünmez; sunucu reddi dürüstçe gösterilir", async ({ page, db }) => {
   await openThread(page, G);
   await openMsgMenu(page, "dave yazdı");
   await mItem(page, "Sabitle").click();
@@ -190,14 +190,14 @@ await scenario("8b. Sabit (grup): moderatör varsayılanda sabitler; yetkisi al�
   assert.equal(await page.locator("[data-pinned-bar]", { hasText: "carol yazdı" }).count(), 0);
 }, { setup: (db) => seedGroup(db, { myRole: "moderator" }) });
 
-await scenario("8c. Sabit (grup): moderatörden pin_messages alınınca menüde yok; owner 'üyeler de sabitlesin' açınca normal üyede çıkar", async ({ page }) => {
+await scenario("8c. Sabit (topluluk): moderatörden pin_messages alınınca menüde yok; owner 'üyeler de sabitlesin' açınca normal üyede çıkar", async ({ page }) => {
   await openThread(page, G);
   await openMsgMenu(page, "dave yazdı");
   assert.equal(await mItem(page, "Sabitle").count(), 0, "permission revoked from the moderator");
   await page.keyboard.press("Escape");
 }, { setup: (db) => seedGroup(db, { myRole: "moderator", permissions: { admin: { ...{ pin_messages: true } }, moderator: { pin_messages: false, manage_requests: true, remove_members: true, delete_messages: true } } }) });
 
-await scenario("8d. Sabit (grup): owner 'üyeler de sabitleyebilsin' açıksa normal üye menüde Sabitle görür", async ({ page }) => {
+await scenario("8d. Sabit (topluluk): owner 'üyeler de sabitleyebilsin' açıksa normal üye menüde Sabitle görür", async ({ page }) => {
   await openThread(page, G);
   await openMsgMenu(page, "dave yazdı");
   await mItem(page, "Sabitle").click();
@@ -271,7 +271,7 @@ await scenario("9c. Arama: HTML/özel karakterli girdi düz metin olarak göster
   db.hidden = [{ message_id: hidden.id, user_id: ME }];
 } });
 
-await scenario("9d. Arama (grup): sonuçta gönderen adı; sonuç mesaja götürür", async ({ page }) => {
+await scenario("9d. Arama (topluluk): sonuçta gönderen adı; sonuç mesaja götürür", async ({ page }) => {
   await openThread(page, G);
   await searchBtn(page).click();
   await searchInput(page).fill("carol");
@@ -298,7 +298,7 @@ await scenario("10. Yıldız: menüden yıldızla/kaldır (kişiye özel, mesaj 
   assert.equal(db.stars.length, 0);
 }, { setup: (db) => seedDm(db) });
 
-await scenario("11. Yıldızlı mesajlar ekranı: birebir + grup TEK listede; sohbet adı, gönderen, tür etiketi; başkasının yıldızı görünmez; silinen/erişilemeyen elenir", async ({ page, db }) => {
+await scenario("11. Yıldızlı mesajlar ekranı: birebir + topluluk TEK listede; sohbet adı, gönderen, tür etiketi; başkasının yıldızı görünmez; silinen/erişilemeyen elenir", async ({ page, db }) => {
   await page.goto(`${BASE}/messages`);
   await page.getByRole("link", { name: "Yıldızlı mesajları aç" }).first().click();
   await page.waitForURL(/messages\/starred/);
@@ -307,7 +307,7 @@ await scenario("11. Yıldızlı mesajlar ekranı: birebir + grup TEK listede; so
   assert.equal(await items.count(), 2, "one direct + one group message; the other user's star, the deleted one and the left group are not listed");
   const texts = await items.allInnerTexts();
   assert.ok(texts.some((t) => t.includes("Bob") && t.includes("selam bob")), "direct item shows partner + text");
-  assert.ok(texts.some((t) => t.includes("Tasarım Atölyesi") && t.includes("Grup") && t.includes("carol yazdı") && t.includes("Carol")), "group item shows group name, tag, sender");
+  assert.ok(texts.some((t) => t.includes("Tasarım Atölyesi") && t.includes("Topluluk") && t.includes("carol yazdı") && t.includes("Carol")), "group item shows group name, tag, sender");
   assert.equal(texts.some((t) => t.includes("dave yazdı") || t.includes("silinecek") || t.includes("ayrıldığım")), false);
   await items.filter({ hasText: "selam bob" }).getByRole("button", { name: "Yıldızı kaldır" }).click();
   await page.waitForFunction(() => document.querySelectorAll("[data-starred-item]").length === 1);
@@ -316,11 +316,11 @@ await scenario("11. Yıldızlı mesajlar ekranı: birebir + grup TEK listede; so
 }, { setup: (db) => {
   seedDm(db); seedGroup(db);
   const star = (uid, text) => db.stars.push({ user_id: uid, message_id: db.messages.find((m) => m.body === text).id, created_at: db.stamp() });
-  star(ME, "selam bob"); star(ME, "carol yazdı"); star(U.bob.id, "merhaba grup");
+  star(ME, "selam bob"); star(ME, "carol yazdı"); star(U.bob.id, "merhaba topluluk");
   const gone = db.addMessage(G, U.dave.id, "silinecek"); star(ME, "silinecek"); gone.deleted_at = db.stamp(); gone.body = null;
-  // kaldırıldığım grup: üyelik yok → erişim yok
-  db.addGroup("d0000000-0000-4000-8000-0000000000a2", { name: "Eski Grup", members: [[U.bob, "owner"]], texts: [[U.bob, "ayrıldığım grup mesajı"]] });
-  const left = db.messages.find((m) => m.body === "ayrıldığım grup mesajı"); db.stars.push({ user_id: ME, message_id: left.id, created_at: db.stamp() });
+  // kaldırıldığım topluluk: üyelik yok → erişim yok
+  db.addGroup("d0000000-0000-4000-8000-0000000000a2", { name: "Eski Topluluk", members: [[U.bob, "owner"]], texts: [[U.bob, "ayrıldığım topluluk mesajı"]] });
+  const left = db.messages.find((m) => m.body === "ayrıldığım topluluk mesajı"); db.stars.push({ user_id: ME, message_id: left.id, created_at: db.stamp() });
   db.members = db.members.filter((m) => !(m.conversation_id === "d0000000-0000-4000-8000-0000000000a2" && m.user_id === ME));
 } });
 
@@ -341,9 +341,9 @@ await scenario("12b. Yıldızlı mesajlar: boş durum; sohbet açılışında er
   await page.getByText("Bu mesaj görüntülenemiyor.").waitFor();
 }, { setup: (db) => seedDm(db) });
 
-await scenario("8e. Sabit (grup): owner ayarlarında 'üyeler de sabitleyebilsin' ve rol başına 'Mesaj sabitleme' yetkisi; yalnız değişenler kaydedilir", async ({ page, db }) => {
+await scenario("8e. Sabit (topluluk): owner ayarlarında 'üyeler de sabitleyebilsin' ve rol başına 'Mesaj sabitleme' yetkisi; yalnız değişenler kaydedilir", async ({ page, db }) => {
   await openThread(page, G);
-  await page.locator("button[aria-haspopup='dialog'][aria-label*='grup bilgisini aç']").first().click();
+  await page.locator("button[aria-haspopup='dialog'][aria-label*='topluluk bilgisini aç']").first().click();
   const d = page.getByRole("dialog").last();
   await d.getByRole("tab", { name: "Ayarlar" }).click();
   await d.getByRole("heading", { name: "Mesaj sabitleme" }).waitFor();
@@ -459,7 +459,7 @@ await scenario("13d. Yazıyor: kanal yetkisi reddedilirse (üye değil/çıkarı
   await msg(page, "yazıyorum").waitFor();
 }, { setup: (db) => seedDm(db), hubOptions: { authorize: (topic) => !topic.includes("typing:") } });
 
-await scenario("14. Yazıyor (grup): 'Bob yazıyor…' / 'Bob ve Carol yazıyor…' / 'Bob ve 2 kişi yazıyor…'; bırakanlar listeden düşer", async ({ page, hub }) => {
+await scenario("14. Yazıyor (topluluk): 'Bob yazıyor…' / 'Bob ve Carol yazıyor…' / 'Bob ve 2 kişi yazıyor…'; bırakanlar listeden düşer", async ({ page, hub }) => {
   await openThread(page, G);
   await page.waitForTimeout(400);
   const topic = `realtime:typing:${G}`;
@@ -474,7 +474,7 @@ await scenario("14. Yazıyor (grup): 'Bob yazıyor…' / 'Bob ve Carol yazıyor�
   await page.getByText("4 üye").first().waitFor();
 }, { setup: (db) => seedGroup(db) });
 
-await scenario("14b. Yazıyor (grup, İngilizce)", async ({ page, hub }) => {
+await scenario("14b. Yazıyor (topluluk, İngilizce)", async ({ page, hub }) => {
   await openThread(page, G);
   await page.waitForTimeout(400);
   const topic = `realtime:typing:${G}`;

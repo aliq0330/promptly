@@ -1,0 +1,202 @@
+"use client";
+
+import { Suspense, useMemo } from "react";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { ArrowLeft, Bookmark, BookmarkCheck, Globe, Lock, MessageSquare, RefreshCw } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button, buttonClassName } from "@/components/ui/button";
+import { DetailSkeleton, NotFoundBlock } from "@/components/ui/detail-skeleton";
+import { Tabs, type TabItem } from "@/components/ui/tabs";
+import { useAuth } from "@/features/auth/auth-provider";
+import { useRealMessages } from "@/features/messages/real-messages-provider";
+import { GroupAvatar } from "@/features/groups/group-avatar";
+import { RoleBadge } from "@/features/groups/role-badge";
+import { useAsyncAction } from "@/features/groups/use-async-action";
+import { useToast } from "@/features/groups/use-toast";
+import { CommunityGate } from "./community-gate";
+import { OverviewTab } from "./overview-tab";
+import { FeedTab } from "./feed-tab";
+import { ChatTab } from "./chat-tab";
+import { MembersTab } from "./members-tab";
+import { EventsTab } from "./events-tab";
+import { AboutTab } from "./about-tab";
+import { ManageTab } from "./manage-tab";
+import { useCommunity } from "./use-community";
+import { setCommunityBookmark } from "@/lib/supabase/communities";
+import { accessibleTabs, CATEGORY_LABEL_KEYS, communityHref, resolveTab, type CommunityTab } from "@/lib/communities";
+import { memberCountText } from "@/lib/group-labels";
+import { useTranslation } from "@/lib/i18n/language-provider";
+import type { ChatGroup, GroupRole } from "@/types";
+import type { MyCommunityMembership } from "@/lib/supabase/communities";
+
+/** Sekme bileşenlerine verilen ortak bağlam. `role` null = üye olmayan (herkese açık toplulukta salt-okunur) ziyaretçi. */
+export interface CommunityTabProps {
+  group: ChatGroup;
+  role: GroupRole | null;
+  viewerId: string;
+  membership: MyCommunityMembership | null;
+  reload: () => Promise<void>;
+  onToast: (message: string) => void;
+  goTab: (tab: CommunityTab) => void;
+}
+
+/**
+ * `/communities/local?id=…&tab=…`: topluluk ana sayfası. Sekmeler: Genel bakış · Akış · Sohbet · Üyeler · Etkinlikler · Hakkında ve kurallar ·
+ * Yönetim (yalnız yetkililere). Her sekmenin erişimi `accessibleTabs`'tan gelir ve veritabanındaki RLS ile aynıdır: üye olmayan kapalı
+ * topluluğun içeriğini göremez (yalnız davet/başvuru "geçidi" görünür), sohbet ve üye listesi üyelik gerektirir.
+ */
+export function CommunityPage() {
+  return (
+    <Suspense fallback={<DetailSkeleton />}>
+      <CommunityPageInner />
+    </Suspense>
+  );
+}
+
+function CommunityPageInner() {
+  const { t } = useTranslation();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const id = searchParams.get("id");
+  const { user } = useAuth();
+  const { conversations } = useRealMessages();
+  const { node: toastNode, show } = useToast();
+  const { state, reload } = useCommunity(id, user?.id ?? null);
+  const bookmark = useAsyncAction();
+
+  const role = state.status === "ready" ? (state.membership?.role ?? null) : null;
+  const group = state.status === "ready" ? state.group : null;
+  const allowed = useMemo(() => (group ? accessibleTabs({ role, visibility: group.visibility, perms: group.rolePermissions }) : []), [group, role]);
+  const tab = resolveTab(searchParams.get("tab"), allowed);
+  const unread = conversations.find((c) => c.id === id)?.unreadCount ?? 0;
+
+  function goTab(next: CommunityTab) {
+    if (id) router.replace(communityHref(id, next));
+  }
+
+  if (!id) return <NotFoundBlock title={t("communities.notFound.title")} description={t("communities.notFound.body")} />;
+  if (state.status === "loading" || !user) return <DetailSkeleton />;
+  if (state.status === "notfound") {
+    return (
+      <div className="mx-auto max-w-md space-y-4 px-4 py-16 text-center">
+        <NotFoundBlock title={t("communities.notFound.title")} description={t("communities.notFound.body")} />
+        <Link href="/communities" className={buttonClassName({ size: "sm", variant: "outline" })}>
+          {t("communities.join.toCommunities")}
+        </Link>
+      </div>
+    );
+  }
+  if (state.status === "error") {
+    return (
+      <div className="mx-auto max-w-md space-y-3 px-4 py-16 text-center">
+        <p role="alert" className="text-small text-danger">
+          {t("communities.page.loadError")}
+        </p>
+        <Button type="button" variant="outline" size="sm" onClick={() => void reload()}>
+          <RefreshCw size={14} /> {t("common.retry")}
+        </Button>
+      </div>
+    );
+  }
+
+  const ready = state;
+  const tabLabels: Record<CommunityTab, string> = {
+    overview: t("communities.detail.tab.overview"),
+    feed: t("communities.detail.tab.feed"),
+    chat: t("communities.detail.tab.chat"),
+    members: t("communities.detail.tab.members"),
+    events: t("communities.detail.tab.events"),
+    about: t("communities.detail.tab.about"),
+    manage: t("communities.detail.tab.manage"),
+  };
+  const tabs: TabItem<CommunityTab>[] = allowed.map((key) => ({
+    key,
+    label: tabLabels[key],
+    count: key === "chat" && unread > 0 ? unread : key === "manage" && role && ready.group.pendingRequestCount > 0 ? ready.group.pendingRequestCount : undefined,
+  }));
+
+  async function toggleBookmark() {
+    if (!id) return;
+    const next = !ready.bookmarked;
+    const ok = await bookmark.run(async () => {
+      await setCommunityBookmark(id, next);
+      return true;
+    });
+    if (!ok) return;
+    await reload();
+    show(next ? t("communities.bookmark.addedToast") : t("communities.bookmark.removedToast"));
+  }
+
+  const common: CommunityTabProps = { group: ready.group, role, viewerId: user.id, membership: ready.membership, reload, onToast: show, goTab };
+  const g = ready.group;
+
+  return (
+    <div className="mx-auto w-full max-w-4xl space-y-5 px-3 py-4 sm:px-5 sm:py-6">
+      <Link href="/communities" className="inline-flex items-center gap-1.5 text-small text-text-muted hover:text-text">
+        <ArrowLeft size={14} aria-hidden /> {t("communities.page.title")}
+      </Link>
+
+      <header className="rounded-xl border border-border-soft bg-surface p-4 shadow-card sm:p-5">
+        <div className="flex items-start gap-3 sm:gap-4">
+          <GroupAvatar name={g.name} avatarUrl={g.avatarUrl} size={64} badge />
+          <div className="min-w-0 flex-1 space-y-1.5">
+            <h1 className="break-words font-serif text-h2 font-medium leading-tight text-text">{g.name}</h1>
+            <div className="flex flex-wrap items-center gap-1.5">
+              <Badge variant="neutral">{t(CATEGORY_LABEL_KEYS[g.category])}</Badge>
+              <span className="flex items-center gap-1 text-caption text-text-muted">
+                {g.visibility === "public" ? <Globe size={12} aria-hidden /> : <Lock size={12} aria-hidden />}
+                {g.visibility === "public" ? t("groups.visibility.public") : t("groups.visibility.private")}
+              </span>
+              <span className="text-caption text-text-muted">{memberCountText(t, g.memberCount)}</span>
+              {role && <RoleBadge role={role} />}
+              {role && role === "member" && <Badge variant="outline">{t("communities.detail.youAreMember")}</Badge>}
+              {g.closedAt && <Badge variant="warning">{t("communities.closedBadge")}</Badge>}
+              {g.origin === "legacy_group" && <Badge variant="outline">{t("communities.detail.legacyBadge")}</Badge>}
+            </div>
+          </div>
+        </div>
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          {role && (
+            <Link href={`/messages/local?id=${g.id}`} className={buttonClassName({ size: "sm" })}>
+              <MessageSquare size={14} /> {t("communities.detail.openChat")}
+              {unread > 0 && <span className="ml-1 rounded-full bg-primary-foreground/20 px-1.5 text-caption">{unread}</span>}
+            </Link>
+          )}
+          {(g.visibility === "public" || role) && (
+            <Button type="button" size="sm" variant="outline" onClick={() => void toggleBookmark()} disabled={bookmark.busy} aria-pressed={ready.bookmarked}>
+              {ready.bookmarked ? <BookmarkCheck size={14} className="text-primary" /> : <Bookmark size={14} />}
+              {ready.bookmarked ? t("communities.bookmark.saved") : t("communities.bookmark.save")}
+            </Button>
+          )}
+        </div>
+        {bookmark.error && (
+          <p role="alert" className="mt-2 text-caption text-danger">
+            {bookmark.error}
+          </p>
+        )}
+      </header>
+
+      {!tab ? (
+        <CommunityGate group={g} gate={ready.gate} onChanged={reload} onToast={show} />
+      ) : (
+        <>
+          {!role && (
+            <CommunityGate group={g} gate={ready.gate} onChanged={reload} onToast={show} compact />
+          )}
+          <Tabs items={tabs} active={tab} onChange={goTab} ariaLabel={t("communities.detail.tabsAria")} />
+          <div role="tabpanel">
+            {tab === "overview" && <OverviewTab {...common} />}
+            {tab === "feed" && <FeedTab {...common} />}
+            {tab === "chat" && role && <ChatTab {...common} unread={unread} />}
+            {tab === "members" && role && <MembersTab {...common} />}
+            {tab === "events" && <EventsTab {...common} />}
+            {tab === "about" && <AboutTab {...common} />}
+            {tab === "manage" && role && <ManageTab {...common} />}
+          </div>
+        </>
+      )}
+      {toastNode}
+    </div>
+  );
+}

@@ -11,6 +11,7 @@ import {
   type InviteResult,
   type VisibilityChangeResult,
 } from "@/lib/chat-groups";
+import { normalizeCategory, normalizeFeedPolicy } from "@/lib/communities";
 import type { ChatGroup, GroupCapability, GroupPostingPolicy, GroupRole, GroupVisibility, UserProfile } from "@/types";
 
 /**
@@ -59,6 +60,40 @@ const ERROR_KEYS: Record<GroupErrorCode, TranslationKey> = {
   blocked: "groups.error.blocked",
   no_users: "groups.error.no_users",
   message_not_found: "groups.error.message_not_found",
+  // Topluluk (docs/history/175-*)
+  community_closed: "communities.error.community_closed",
+  rules_not_accepted: "communities.error.rules_not_accepted",
+  rules_missing: "communities.error.rules_missing",
+  invalid_rules: "communities.error.invalid_rules",
+  invalid_category: "communities.error.generic",
+  invalid_feed_policy: "communities.error.generic",
+  invalid_content: "communities.error.generic",
+  invalid_note: "communities.error.invalid_note",
+  content_not_found: "communities.error.content_not_found",
+  content_not_public: "communities.error.content_not_public",
+  already_shared: "communities.error.already_shared",
+  post_rate_limit: "communities.error.post_rate_limit",
+  post_not_found: "communities.error.post_not_found",
+  pin_limit_reached: "communities.error.pin_limit_reached",
+  invalid_title: "communities.error.invalid_title",
+  invalid_body: "communities.error.invalid_body",
+  announcement_not_found: "communities.error.announcement_not_found",
+  announcement_limit: "communities.error.announcement_limit",
+  event_not_found: "communities.error.event_not_found",
+  event_limit: "communities.error.event_limit",
+  event_cancelled: "communities.error.event_cancelled",
+  event_over: "communities.error.event_over",
+  invalid_event_time: "communities.error.invalid_event_time",
+  invalid_timezone: "communities.error.invalid_timezone",
+  invalid_location: "communities.error.invalid_location",
+  invalid_url: "communities.error.invalid_url",
+  invalid_rsvp: "communities.error.generic",
+  report_not_found: "communities.error.report_not_found",
+  report_target_not_found: "communities.error.report_target_not_found",
+  report_limit: "communities.error.report_limit",
+  already_reported: "communities.error.already_reported",
+  invalid_action: "communities.error.generic",
+  bookmark_limit: "communities.error.bookmark_limit",
 };
 
 export class GroupActionError extends Error {
@@ -76,7 +111,7 @@ export function toGroupError(error: { message?: string } | null | undefined): Gr
   return new GroupActionError(code, translateForRuntime(code ? ERROR_KEYS[code] : "groups.error.generic"));
 }
 
-async function callRpc<T>(fn: string, args: Record<string, unknown>): Promise<T> {
+export async function callRpc<T>(fn: string, args: Record<string, unknown>): Promise<T> {
   const { data, error } = await supabase.rpc(fn, args);
   if (error) throw toGroupError(error);
   return data as T;
@@ -100,10 +135,18 @@ export interface ChatGroupRow {
   members_can_pin: boolean;
   role_permissions: unknown;
   created_at: string;
+  category: string;
+  feed_policy: string;
+  rules: string | null;
+  rules_version: number;
+  rules_required: boolean;
+  closed_at: string | null;
+  post_count: number;
+  origin: string;
 }
 
 export const CHAT_GROUP_SELECT =
-  "id, name, description, avatar_url, visibility, posting_policy, member_limit, member_count, pending_request_count, history_visible, members_can_pin, role_permissions, created_at";
+  "id, name, description, avatar_url, visibility, posting_policy, member_limit, member_count, pending_request_count, history_visible, members_can_pin, role_permissions, created_at, category, feed_policy, rules, rules_version, rules_required, closed_at, post_count, origin";
 
 export function mapChatGroupRow(row: ChatGroupRow, myRole: GroupRole): ChatGroup {
   return {
@@ -121,6 +164,14 @@ export function mapChatGroupRow(row: ChatGroupRow, myRole: GroupRole): ChatGroup
     rolePermissions: normalizeRolePermissions(row.role_permissions),
     createdAt: row.created_at,
     myRole,
+    category: normalizeCategory(row.category),
+    feedPolicy: normalizeFeedPolicy(row.feed_policy),
+    rules: row.rules,
+    rulesVersion: row.rules_version ?? 1,
+    rulesRequired: Boolean(row.rules_required),
+    closedAt: row.closed_at,
+    postCount: row.post_count ?? 0,
+    origin: row.origin === "legacy_group" ? "legacy_group" : "native",
   };
 }
 
@@ -479,7 +530,7 @@ export async function fetchChatGroupMembers(groupId: string, params: { search: s
   };
 }
 
-const PROFILE_EMBED = "id, username, display_name, avatar_url, cover_url, bio, website, follower_count, following_count, created_at, interests";
+export const PROFILE_EMBED = "id, username, display_name, avatar_url, cover_url, bio, website, follower_count, following_count, created_at, interests";
 
 export interface GroupJoinRequest {
   id: string;
@@ -507,7 +558,7 @@ export async function fetchGroupJoinRequests(groupId: string): Promise<GroupJoin
 export interface GroupInvitation {
   id: string;
   groupId: string;
-  group: { name: string; avatarUrl: string | null; memberCount: number; description: string | null } | null;
+  group: { name: string; avatarUrl: string | null; memberCount: number; description: string | null; rules: string | null; rulesRequired: boolean } | null;
   user: UserProfile | null;
   inviter: UserProfile | null;
   createdAt: string;
@@ -541,7 +592,7 @@ export async function fetchMyInvitations(userId: string): Promise<GroupInvitatio
   const { data, error } = await supabase
     .from("chat_group_invitations")
     .select(
-      `id, group_id, created_at, expires_at, chat_groups:group_id ( name, description, avatar_url, member_count ), inviter:inviter_id ( ${PROFILE_EMBED} )`,
+      `id, group_id, created_at, expires_at, chat_groups:group_id ( name, description, avatar_url, member_count, rules, rules_required ), inviter:inviter_id ( ${PROFILE_EMBED} )`,
     )
     .eq("invitee_id", userId)
     .eq("status", "pending")
@@ -554,14 +605,21 @@ export async function fetchMyInvitations(userId: string): Promise<GroupInvitatio
     group_id: string;
     created_at: string;
     expires_at: string;
-    chat_groups: { name: string; description: string | null; avatar_url: string | null; member_count: number } | null;
+    chat_groups: { name: string; description: string | null; avatar_url: string | null; member_count: number; rules: string | null; rules_required: boolean } | null;
     inviter: ProfileRow | null;
   };
   return ((data ?? []) as unknown as Row[]).map((row) => ({
     id: row.id,
     groupId: row.group_id,
     group: row.chat_groups
-      ? { name: row.chat_groups.name, description: row.chat_groups.description, avatarUrl: row.chat_groups.avatar_url, memberCount: row.chat_groups.member_count }
+      ? {
+          name: row.chat_groups.name,
+          description: row.chat_groups.description,
+          avatarUrl: row.chat_groups.avatar_url,
+          memberCount: row.chat_groups.member_count,
+          rules: row.chat_groups.rules,
+          rulesRequired: Boolean(row.chat_groups.rules_required),
+        }
       : null,
     user: null,
     inviter: row.inviter ? mapProfileRow(row.inviter) : null,

@@ -60,7 +60,7 @@ export function createDb() {
     const base = { status: "accepted", unread_count: 0, archived_at: null, deleted_at: null, cleared_at: null, muted_at: null };
     db.members.push({ conversation_id: id, user_id: ME, role: myRole, ...base, muted_at: muted ? db.stamp() : null });
     for (const [u, role] of members) db.members.push({ conversation_id: id, user_id: u.id, role, ...base });
-    db.groups.push({ id, name, description, avatar_url: null, visibility, posting_policy, member_limit, member_count: db.members.filter((m) => m.conversation_id === id).length, pending_request_count: pending, history_visible: false, members_can_pin: false, role_permissions: structuredClone(permissions ?? DEFAULT_PERMS), created_at: "2026-01-01T00:00:00Z" });
+    db.groups.push({ id, name, description, avatar_url: null, visibility, posting_policy, member_limit, member_count: db.members.filter((m) => m.conversation_id === id).length, pending_request_count: pending, history_visible: false, members_can_pin: false, role_permissions: structuredClone(permissions ?? DEFAULT_PERMS), created_at: "2026-01-01T00:00:00Z", category: "general", feed_policy: "members", rules: null, rules_version: 1, rules_required: false, closed_at: null, post_count: 0, origin: "native" });
     texts.forEach(([u, text]) => db.addMessage(id, u.id, text));
     return id;
   };
@@ -127,6 +127,13 @@ export async function installMock(context, db, { signedIn = ME } = {}) {
     const roleOf = (gid, uid = signedIn) => db.member(gid, uid)?.role ?? null;
     const err = (code) => json(400, { code: "P0001", message: code, details: "", hint: "" });
     if (table.startsWith("rpc/") && db.rpc[table.slice(4)]) { const r = db.rpc[table.slice(4)](body, db); return json(r.status ?? 200, r.body ?? null); }
+    // Topluluk uçları (docs/history/175-*): mock-communities.mjs `db.extraRoutes`'u kurar.
+    if (db.extraRoutes) {
+      let used = false;
+      const flag = (fn) => (...a) => { used = true; return fn(...a); };
+      const result = await db.extraRoutes({ table, method, q, body, sel, signedIn, json: flag(json), rows: flag(rows), err: flag(err), route });
+      if (used || result) return;
+    }
     if (table === "rpc/conversation_last_messages") {
       const out = [];
       for (const cid of body.p_conversation_ids ?? []) {
@@ -229,11 +236,11 @@ export async function installMock(context, db, { signedIn = ME } = {}) {
       if (body.p_accept) { g.member_count += 1; db.members.push({ conversation_id: g.id, user_id: r.user_id, role: "member", status: "accepted", unread_count: 0, archived_at: null, deleted_at: null, cleared_at: null, muted_at: null }); }
       return json(200, { outcome: body.p_accept ? "accepted" : "rejected" });
     }
-    if (table === "rpc/chat_group_members") {
+    if (table === "rpc/chat_group_members" || table === "rpc/community_members") {
       if (!db.member(body.p_group_id, signedIn)) return json(200, []);
       const term = (body.p_search ?? "").toLowerCase();
       const rank = { owner: 4, admin: 3, moderator: 2, member: 1 };
-      const list = db.members.filter((m) => m.conversation_id === body.p_group_id).map((m) => ({ m, u: Object.values(U).find((x) => x.id === m.user_id) }))
+      const list = db.members.filter((m) => m.conversation_id === body.p_group_id && (!body.p_role || m.role === body.p_role)).map((m) => ({ m, u: Object.values(U).find((x) => x.id === m.user_id) }))
         .filter(({ u }) => !term || u.username.includes(term) || u.display_name.toLowerCase().includes(term))
         .sort((a, b) => rank[b.m.role] - rank[a.m.role]);
       return json(200, list.slice(body.p_offset ?? 0, (body.p_offset ?? 0) + (body.p_limit ?? 50)).map(({ m, u }) => ({ user_id: u.id, username: u.username, display_name: u.display_name, avatar_url: null, role: m.role, joined_at: "2026-01-01T00:00:00Z" })));

@@ -117,7 +117,7 @@ test("üye sınırı sınırlanır", () => {
 
 test("davet bağlantısı: tam URL, yalnız token ve kötü girdi", () => {
   const url = buildGroupJoinUrl("https://aliq0330.github.io", "/promptly", TOKEN);
-  assert.equal(url, `https://aliq0330.github.io/promptly/groups/join#${TOKEN}`);
+  assert.equal(url, `https://aliq0330.github.io/promptly/communities/join#${TOKEN}`);
   assert.equal(parseGroupJoinToken(url), TOKEN);
   assert.equal(parseGroupJoinToken(TOKEN), TOKEN);
   assert.equal(parseGroupJoinToken(`  ${url}  `), TOKEN);
@@ -211,7 +211,7 @@ test("saklı yetkiler normalize edilir: eksik/bozuk anahtar → varsayılan; mod
   assert.equal(normalizeRolePermissions({ admin: { edit_settings: false } }).admin.edit_settings, false);
   assert.equal(capabilitiesFor("moderator").includes("manage_roles"), false);
   assert.equal(capabilitiesFor("admin").includes("manage_roles"), true);
-  assert.equal(capabilitiesFor("admin").length, 9);
+  assert.equal(capabilitiesFor("admin").length, 15);
   // Eski gruplarda `pin_messages` anahtarı yoktur: varsayılan (admin + moderatör) geçerli olur.
   assert.equal(normalizeRolePermissions({ moderator: { edit_settings: true } }).moderator.pin_messages, true);
   assert.equal(normalizeRolePermissions({ moderator: { pin_messages: false } }).moderator.pin_messages, false);

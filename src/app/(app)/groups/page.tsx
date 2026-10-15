@@ -1,13 +1,11 @@
 import { Suspense } from "react";
-import { RequireAuth } from "@/features/auth/require-auth";
-import { GroupsPage } from "@/features/groups/groups-page";
+import { LegacyGroupsRedirect } from "@/features/communities/legacy-groups-redirect";
 
+/** Bağımsız grup kavramı kalktı: `/groups` artık Topluluklar'dır. Eski adres ve bildirim bağlantıları (`?tab=invites`) yönlenir. */
 export default function GroupsRoute() {
   return (
-    <RequireAuth>
-      <Suspense fallback={null}>
-        <GroupsPage />
-      </Suspense>
-    </RequireAuth>
+    <Suspense fallback={null}>
+      <LegacyGroupsRedirect />
+    </Suspense>
   );
 }
