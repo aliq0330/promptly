@@ -33,7 +33,7 @@ import { formatRelativeTime, messageHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { memberCountText } from "@/lib/group-labels";
 
-type View = "discover" | "invites";
+type View = "discover" | "mine" | "invites";
 
 interface DiscoverState {
   key: string;
@@ -56,7 +56,8 @@ export function GroupsPage() {
   const { user } = useAuth();
   const { refresh } = useRealMessages();
   const { node: toastNode, show } = useToast();
-  const view: View = searchParams.get("tab") === "invites" ? "invites" : "discover";
+  const tabParam = searchParams.get("tab");
+  const view: View = tabParam === "invites" ? "invites" : tabParam === "mine" ? "mine" : "discover";
   const [createOpen, setCreateOpen] = useState(false);
   const [linkInput, setLinkInput] = useState("");
   const [linkError, setLinkError] = useState(false);
@@ -64,6 +65,7 @@ export function GroupsPage() {
 
   const tabs: TabItem<View>[] = [
     { key: "discover", label: t("groups.page.tabDiscover") },
+    { key: "mine", label: t("groups.page.tabMine") },
     { key: "invites", label: t("groups.page.tabInvites"), count: inviteCount ? inviteCount : undefined },
   ];
 
@@ -96,7 +98,7 @@ export function GroupsPage() {
         }
       />
 
-      <Tabs items={tabs} active={view} onChange={(next) => router.replace(next === "invites" ? "/groups?tab=invites" : "/groups")} ariaLabel={t("groups.page.tabsAria")} />
+      <Tabs items={tabs} active={view} onChange={(next) => router.replace(next === "discover" ? "/groups" : `/groups?tab=${next}`)} ariaLabel={t("groups.page.tabsAria")} />
 
       {view === "discover" ? (
         <>
@@ -134,6 +136,8 @@ export function GroupsPage() {
           </form>
           <DiscoverView onToast={show} onJoined={(id) => { void refresh(); router.push(messageHref({ id })); }} />
         </>
+      ) : view === "mine" ? (
+        <MyGroupsView onToast={show} />
       ) : (
         user && (
           <InvitesView
@@ -515,6 +519,78 @@ function InvitesView({
           </ul>
         </section>
       )}
+    </div>
+  );
+}
+
+/**
+ * "Gruplarım": üyesi olduğum TÜM gruplar — "Listemden kaldır" ile mesaj listesinden çıkarılmış ya da arşivlenmiş olanlar dahil
+ * (kapalı bir grup keşifte görünmediği için başka dönüş yolu olmazdı). Gizli grup "Listeme geri ekle" ile listeye döner;
+ * grup zaten açık (üyelik değişmemişti), yalnız kişisel liste durumu temizlenir.
+ */
+function MyGroupsView({ onToast }: { onToast: (message: string) => void }) {
+  const { t } = useTranslation();
+  const { conversations, ready, restoreConversation } = useRealMessages();
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const action = useAsyncAction();
+  const groups = conversations.filter((c) => c.group).sort((a, b) => (a.group?.name ?? "").localeCompare(b.group?.name ?? ""));
+
+  async function restore(id: string) {
+    setBusyId(id);
+    const ok = await action.run(async () => {
+      await restoreConversation(id);
+      return true;
+    });
+    setBusyId(null);
+    if (ok) onToast(t("groups.mine.restoredToast"));
+  }
+
+  if (!ready) {
+    return (
+      <p role="status" className="flex items-center justify-center gap-2 py-10 text-small text-text-muted">
+        <Loader2 size={16} className="animate-spin" /> {t("common.loading")}
+      </p>
+    );
+  }
+  if (groups.length === 0) return <EmptyState icon={Users} title={t("groups.mine.empty")} description={t("groups.mine.emptyHelp")} />;
+
+  return (
+    <div className="space-y-3">
+      {action.error && (
+        <p role="alert" className="rounded-md bg-danger/10 px-3 py-2 text-small text-danger">
+          {action.error}
+        </p>
+      )}
+      <ul className="space-y-3" aria-label={t("groups.page.tabMine")}>
+        {groups.map((conversation) => {
+          const group = conversation.group;
+          if (!group) return null;
+          const hidden = Boolean(conversation.deletedAt);
+          return (
+            <li key={conversation.id} className="flex items-center gap-3 rounded-xl border border-border-soft bg-surface p-4 shadow-card">
+              <GroupAvatar name={group.name} avatarUrl={group.avatarUrl} size={44} badge />
+              <div className="min-w-0 flex-1 space-y-0.5">
+                <h2 className="break-words text-sm font-semibold text-text">{group.name}</h2>
+                <p className="text-caption text-text-muted">
+                  {memberCountText(t, group.memberCount)}
+                  {hidden ? ` · ${t("groups.mine.hidden")}` : conversation.archivedAt ? ` · ${t("groups.mine.archived")}` : ""}
+                </p>
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                {(hidden || conversation.archivedAt) && (
+                  <Button type="button" size="sm" variant="secondary" onClick={() => void restore(conversation.id)} disabled={action.busy}>
+                    {busyId === conversation.id && action.busy ? <Loader2 size={14} className="animate-spin" /> : null}
+                    {t("groups.mine.restore")}
+                  </Button>
+                )}
+                <Link href={messageHref(conversation)} className={buttonClassName({ size: "sm", variant: "outline" })}>
+                  {t("groups.page.open")}
+                </Link>
+              </div>
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 }
