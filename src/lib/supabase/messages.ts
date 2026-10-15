@@ -293,14 +293,11 @@ export async function hideMessageForMe(messageId: string, userId: string): Promi
   if (error) throw new Error(error.message);
 }
 
-/** Marks a real conversation as read for one member — best-effort, a failure here shouldn't block viewing messages. */
-export async function markConversationRead(conversationId: string, userId: string): Promise<void> {
+/** Marks a real conversation as read for the caller — best-effort, a failure here shouldn't block viewing messages. Goes through `mark_conversation_read` because `unread_count` is no longer writable from the client (trigger-maintained, like every other counter). */
+export async function markConversationRead(conversationId: string): Promise<void> {
   try {
-    await supabase
-      .from("conversation_members")
-      .update({ unread_count: 0 })
-      .eq("conversation_id", conversationId)
-      .eq("user_id", userId);
+    const { error } = await supabase.rpc("mark_conversation_read", { p_conversation_id: conversationId });
+    if (error) console.error("markConversationRead", error);
   } catch (err) {
     console.error("markConversationRead", err);
   }
