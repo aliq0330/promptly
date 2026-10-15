@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect } from "react";
 import { useAuth } from "@/features/auth/auth-provider";
-import { isPromptSaved, removeFromSavedEverywhere } from "@/lib/supabase/collections";
+import { fetchCollectionIdsContaining, isPromptSaved } from "@/lib/supabase/collections";
 import { engagementStore, useEngagementEntry } from "@/features/content/engagement-store";
 import type { LikeableContentType } from "@/lib/supabase/likes";
 
@@ -19,10 +19,10 @@ type SaveableContentType = Extract<LikeableContentType, "prompt" | "workflow" | 
 /**
  * Whether the current viewer generally saved a real prompt OR generator —
  * true iff it's a member of ANY of their own collections, default ("Genel")
- * or custom (Bölüm 9.38 — see `isPromptSaved`'s own doc comment for why this
- * changed from the original "default collection only" rule). This is the
- * single source of truth for the bookmark icon everywhere it appears (feed,
- * discover, profile, collection detail). `contentType` defaults to
+ * or custom (see `isPromptSaved`). This is the single source of truth for the
+ * bookmark icon everywhere it appears (feed, discover, profile, collection
+ * detail, "Kaydedilenler"). Changing the memberships goes through
+ * `SaveToCollectionModal` only; this hook just mirrors the result. `contentType` defaults to
  * `"prompt"` so every existing prompt call site keeps working unchanged —
  * a generator now uses this SAME hook (Bölüm 9.36's Prompt/Generator parity
  * pass), replacing the old, separate, modal-less `useGeneratorSaveState`.
@@ -40,7 +40,6 @@ export function useSaveState(id: string, contentType: SaveableContentType = "pro
   const { user } = useAuth();
   const key = engagementStore.keyOf("save", contentType, id);
   const entry = useEngagementEntry("save", contentType, id, saveCount);
-  const [isToggling, setIsToggling] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -56,40 +55,12 @@ export function useSaveState(id: string, contentType: SaveableContentType = "pro
   }, [user, id, contentType, key]);
 
   /**
-   * The general "kaydedilenlerden kaldır" action — removes this prompt/
-   * generator from the user's default collection AND every one of their
-   * other collections that also contains it (CLAUDE.md Bölüm 9.22 §7),
-   * never just from one screen's local view. Optimistic with rollback on
-   * failure; guarded against overlapping calls so a double-click can't fire
-   * two requests. Resolves `true` only on a real, confirmed success, so a
-   * caller can decide whether it's honest to show a "removed" confirmation.
-   * This is always a true zero-collections transition (only called while
-   * `isSaved` is true), so it's always a real -1 to the shared count.
-   */
-  const removeEverywhere = useCallback(async () => {
-    if (!user || isToggling) return false;
-    setIsToggling(true);
-    engagementStore.applyToggle(key, false, -1);
-    try {
-      await removeFromSavedEverywhere(id, contentType);
-      return true;
-    } catch (err) {
-      console.error("removeFromSavedEverywhere", err);
-      engagementStore.applyToggle(key, true, 1);
-      return false;
-    } finally {
-      setIsToggling(false);
-    }
-  }, [user, id, contentType, isToggling, key]);
-
-  /**
    * Reflects a save that a caller already performed for real elsewhere (the
    * collection-picker modal's own `addItemToCollection`, onto ANY
-   * collection — Bölüm 9.38) — never a fake/optimistic guess.
-   * `SaveToCollectionModal` only calls this on the real zero→one-plus
-   * transition (`!wasSavedAnywhere`), so it's always a genuine +1, matching
-   * exactly what the server's own per-owner-dedup `save_count` trigger will
-   * also compute for that same transition.
+   * collection) — never a fake/optimistic guess. `SaveToCollectionModal`
+   * only calls this on the real zero→one-plus transition, so it's always a
+   * genuine +1, matching exactly what the server's own per-owner-dedup
+   * `save_count` trigger will also compute for that same transition.
    */
   const markSaved = useCallback(() => {
     engagementStore.applyToggle(key, true, 1);
@@ -98,7 +69,7 @@ export function useSaveState(id: string, contentType: SaveableContentType = "pro
   /**
    * The mirror of `markSaved` — reflects a real removal that happened
    * elsewhere and left the item saved in NO collection at all (the modal's
-   * own membership-count bookkeeping, Bölüm 9.38), always a genuine -1.
+   * own membership-count bookkeeping), always a genuine -1.
    */
   const markUnsaved = useCallback(() => {
     engagementStore.applyToggle(key, false, -1);
@@ -107,11 +78,28 @@ export function useSaveState(id: string, contentType: SaveableContentType = "pro
   return {
     isSaved: entry.active,
     saveCount: entry.count,
-    removeEverywhere,
     markSaved,
     markUnsaved,
     loading: Boolean(user) && !entry.activeChecked,
-    isToggling,
     canSave: Boolean(user),
   };
+}
+
+/**
+ * Re-reads the viewer's real memberships for one work and brings its shared
+ * save state in line — for a removal made somewhere that isn't the save
+ * modal (a collection's own "Koleksiyondan kaldır"), where the bookmark may
+ * or may not have to empty depending on whether another collection still
+ * holds the work. A failed read changes nothing rather than guessing.
+ */
+export async function refreshSaveState(id: string, contentType: SaveableContentType, userId: string): Promise<void> {
+  try {
+    const saved = (await fetchCollectionIdsContaining(id, userId, contentType)).size > 0;
+    const key = engagementStore.keyOf("save", contentType, id);
+    const { active, activeChecked } = engagementStore.readActive(key);
+    if (!activeChecked || active === saved) engagementStore.setActive(key, saved);
+    else engagementStore.applyToggle(key, saved, saved ? 1 : -1);
+  } catch (err) {
+    console.error("refreshSaveState", err);
+  }
 }

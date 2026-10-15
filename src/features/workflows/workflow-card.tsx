@@ -29,7 +29,7 @@ export function WorkflowCard({
   workflow: Workflow;
   onDeleted?: () => void;
   /** Same "kaydedilenlerden kaldır"/"koleksiyondan kaldır" menu entry a prompt/generator card gets inside a collection the viewer owns. */
-  collectionRemoval?: { isDefault: boolean; onRemove: () => Promise<void> };
+  collectionRemoval?: { onRemove: () => Promise<void> };
 }) {
   const { t, language } = useTranslation();
   const href = workflowHref(workflow);

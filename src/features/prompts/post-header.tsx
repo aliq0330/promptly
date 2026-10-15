@@ -28,7 +28,7 @@ export function PostHeader({
 }: PostHeaderTarget & {
   subtitle?: string;
   onDeleted?: () => void;
-  collectionRemoval?: { isDefault: boolean; onRemove: () => Promise<void> };
+  collectionRemoval?: { onRemove: () => Promise<void> };
 }) {
   const { language } = useTranslation();
   const author = target.preset ? target.preset.creator : target.workflow ? target.workflow.creator : target.prompt.author;

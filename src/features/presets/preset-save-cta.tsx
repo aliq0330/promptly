@@ -11,8 +11,9 @@ import { useAuthPrompt } from "@/features/auth/auth-prompt-provider";
 /**
  * The labelled "Kaydet" ⇄ "✓ Kaydedildi" button on a preset's detail page. It
  * is the ordinary save, not a second system: not saved → the usual "Koleksiyona
- * ekle" modal (any collection, or a new one); saved → tapping removes it from
- * every collection, exactly like the filled bookmark icon. Saved presets are
+ * ekle" modal (any collection, or a new one); saved → tapping opens the same
+ * modal to see where it is saved and untick collections, exactly like the
+ * filled bookmark icon. Saved presets are
  * what the Prompt form's "Kaydettiklerim" tab lists.
  */
 export function PresetSaveCta({
@@ -32,7 +33,7 @@ export function PresetSaveCta({
 }) {
   const { t } = useTranslation();
   const { requireAuth } = useAuthPrompt();
-  const { isSaved, removeEverywhere, markSaved, markUnsaved, isToggling, canSave } = useSaveState(presetId, "preset", saveCount);
+  const { isSaved, markSaved, markUnsaved, canSave } = useSaveState(presetId, "preset", saveCount);
   const [modalOpen, setModalOpen] = useState(false);
   const iconSize = size === "sm" ? 14 : 18;
 
@@ -51,10 +52,9 @@ export function PresetSaveCta({
         type="button"
         size={size}
         variant={isSaved ? "secondary" : "primary"}
-        onClick={() => (isSaved ? void removeEverywhere().then(() => onChange?.()) : setModalOpen(true))}
-        disabled={isToggling}
+        onClick={() => setModalOpen(true)}
         aria-pressed={isSaved}
-        aria-haspopup={isSaved ? undefined : "dialog"}
+        aria-haspopup="dialog"
         aria-label={iconOnly ? (isSaved ? t("preset.saved") : t("preset.save")) : undefined}
         className={iconOnly ? "h-9 w-9 px-0" : undefined}
       >

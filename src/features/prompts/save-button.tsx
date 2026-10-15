@@ -11,19 +11,17 @@ import { useSaveState } from "./use-save-state";
 import { SaveToCollectionModal } from "@/features/collections/save-to-collection-modal";
 
 /**
- * Kaydet — a real toggle, not "always open the modal":
- * - Not saved yet → opens the "Koleksiyona ekle" modal (create/choose a
- *   collection; adding to one also saves generally, see
- *   SaveToCollectionModal/collections.ts).
- * - Already saved → tapping the filled icon removes the general save
- *   DIRECTLY (no modal — this was the reported bug: the icon's own filled
- *   state already means "kayıtlı", so bringing up "kaydetmek için bir
- *   koleksiyon seç" again was backwards).
+ * Kaydet — the bookmark always opens the same collection picker
+ * (`SaveToCollectionModal`): empty → "pick where to save it", filled → "it is
+ * in these collections, untick the ones to leave". A filled bookmark never
+ * removes anything by itself — saved means "in at least one collection", so
+ * un-saving is the user taking it out of every collection, one explicit
+ * choice at a time. The bookmark empties only when the modal reports that no
+ * collection holds the work any more.
  *
  * Pass exactly one of `promptId` (mirrors `PostMenu`'s/
- * `CommentCountLink`'s established pattern) — a generator uses this SAME
- * button/modal a prompt does (Bölüm 9.36's Prompt/Generator parity pass),
- * not a separate, simpler, modal-less save toggle.
+ * `CommentCountLink`'s established pattern) — workflows and presets use this
+ * SAME button/modal.
  */
 export function SaveButton({
   promptId,
@@ -45,11 +43,7 @@ export function SaveButton({
   const { requireAuth } = useAuthPrompt();
   const id = (presetId ?? workflowId ?? promptId)!;
   const contentType = presetId ? "preset" : workflowId ? "workflow" : "prompt";
-  const { isSaved, saveCount: count, removeEverywhere, markSaved, markUnsaved, isToggling, canSave } = useSaveState(
-    id,
-    contentType,
-    saveCount,
-  );
+  const { isSaved, saveCount: count, markSaved, markUnsaved, canSave } = useSaveState(id, contentType, saveCount);
   const [modalOpen, setModalOpen] = useState(false);
   // Counted on the viewer's own save/unsave, never on the async "is it saved?" answer arriving.
   const [popSeq, setPopSeq] = useState(0);
@@ -84,22 +78,16 @@ export function SaveButton({
     );
   }
 
-  async function handleClick(event: React.MouseEvent) {
+  function handleClick(event: React.MouseEvent) {
     event.preventDefault();
     event.stopPropagation();
-    if (isToggling) return;
-
-    if (isSaved) {
-      const removed = await removeEverywhere();
-      if (removed) {
-        setShowRemovedToast(true);
-        if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
-        toastTimeoutRef.current = setTimeout(() => setShowRemovedToast(false), 2200);
-      }
-      return;
-    }
-
     setModalOpen(true);
+  }
+
+  function showRemoved() {
+    setShowRemovedToast(true);
+    if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+    toastTimeoutRef.current = setTimeout(() => setShowRemovedToast(false), 2200);
   }
 
   return (
@@ -107,12 +95,11 @@ export function SaveButton({
       <button
         type="button"
         onClick={handleClick}
-        disabled={isToggling}
         aria-pressed={isSaved}
-        aria-haspopup={isSaved ? undefined : "dialog"}
-        title={isSaved ? t("prompt.removeFromSaved") : t("prompt.addToCollection")}
-        aria-label={isSaved ? t("prompt.removeFromSaved") : t("prompt.saveAria", { count })}
-        className={cn(sharedClassName, isToggling && "opacity-60")}
+        aria-haspopup="dialog"
+        title={isSaved ? t("prompt.manageSaved") : t("prompt.addToCollection")}
+        aria-label={isSaved ? t("prompt.manageSaved") : t("prompt.saveAria", { count })}
+        className={sharedClassName}
       >
         <Bookmark
           key={popSeq}
@@ -132,7 +119,10 @@ export function SaveButton({
             setPopSeq((n) => n + 1);
             markSaved();
           }}
-          onRemoved={markUnsaved}
+          onRemoved={() => {
+            markUnsaved();
+            showRemoved();
+          }}
         />
       )}
 

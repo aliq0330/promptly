@@ -204,7 +204,7 @@ tamamlanmış sayılmaz. Ayrıntı ve mimari: `docs/history/049-*`, `056-*`, `05
 | `/studio` | Prompt / Hazır Ayar kaynaklı deneme alanı, kullanıcının kendi API anahtarıyla görsel/metin üretimi (`/generate` buraya yönlenir) |
 | `/search`, `/tags`, `/tags/local?tag=` | Arama (chip tabanlı), etiket keşfi/detayı |
 | `/relations?type=&id=` | Birleşik İlişki Haritası |
-| `/collections/local?id=`, `/saved` | Koleksiyon detayı (başkasının herkese açık koleksiyonunda Takip Et + takipçi sayısı); `/saved` kullanıcının "Genel" koleksiyonuna yönlenir |
+| `/collections/local?id=`, `/saved` | Koleksiyon detayı (başkasının herkese açık koleksiyonunda Takip Et + takipçi sayısı); `/saved` = "Kaydedilenler": kullanıcının TÜM koleksiyonlarındaki benzersiz içerikler (`docs/history/168-*`) |
 | `/profile/real?username=`, `/profile/edit`, `/followers`, `/following`, `/my-content` | Profil ve kütüphane |
 | `/messages`, `/messages/local?id=` | Mesajlaşma (Realtime, mesaj istekleri, fotoğraf, emoji) |
 | `/notifications` | Bildirim merkezi |
@@ -246,6 +246,7 @@ Kalıplar (yeni migration yazarken uy):
   istemci insert politikası yok); hedef `hl=<tür>:<id>` ile kesin içeriğe gider.
 - **INSERT … RETURNING tuzağı:** SELECT politikası henüz var olmayan başka
   bir satıra bağlıysa id'yi istemcide üret (`crypto.randomUUID()`), `RETURNING`'e güvenme.
+- **Kaydedildi = en az bir koleksiyonda** (`collection_items`; ikon, `/saved` ve kaydet penceresi aynı satırları okur). Üyelik yalnız `SaveToCollectionModal`'dan (taslak + "Kaydet") ya da bir koleksiyonun kendi "Koleksiyondan kaldır"ından değişir; bir koleksiyondan çıkarmak başka koleksiyona dokunmaz, "Genel" dahil. Toplu "her yerden kaldır" yoktur (`docs/history/168-*`).
 - Sahiplik kontrolü `.update().select().maybeSingle()` ile yapılır; "0 satır
   etkilendi" sessiz başarı sayılmaz.
 
@@ -326,6 +327,7 @@ bağlayıcıdır; ayrıntılı gerekçe için `docs/history/README.md` tablosuna
   kaldı. `deploy-functions.yml` hiç çalıştırılmadı (secret'lar
   `SUPABASE_ACCESS_TOKEN` / `SUPABASE_PROJECT_REF` tanımlı değilse fail eder).
 - @bahsetme (`docs/history/165-*`) ve koleksiyon takibi (`docs/history/166-*`): migration'lar canlıda (yalnızca ekleyici, `drop` yok); anma bildirimi mevcut `comment` türünü kullanır (kısıt genişletilmedi). Gerçek oturumla uçtan uca denenmedi.
+- Kaydedilenler/koleksiyon akışı (`docs/history/168-*`): yalnız istemci kodu, veritabanı değişikliği yok; DB tarafı yerel PostgreSQL'de (`supabase/tests/saved-collections.sql`), arayüz ağ taklitli Playwright'ta denendi. Gerçek Supabase'e/cihaza karşı denenmedi. `remove_*_from_saved_everywhere` RPC'leri artık çağrılmıyor ama DB'de duruyor (`drop` için onay gerekir).
 - PWA (`docs/history/163-*`) ve Workflow adım adım modu (`docs/history/164-*`): yalnız istemci kodu, veritabanı değişikliği yok. Gerçek cihazda "ana ekrana ekle" ve kurulu uygulamada Google girişi denenmedi.
 - Haftalık tema (`docs/history/162-*`): `weekly_challenges` + moderatör RPC'leri canlıda (yalnızca ekleyici); canlıda henüz tema yok — moderatör `/moderation → Temalar`'dan oluşturur. Gerçek oturumla uçtan uca denenmedi.
 - Etiket takibi (`docs/history/161-*`): `tag_follows` + `feed_page` `tags` kapsamı canlıda; yalnızca ekleyici, aynı imza. Gerçek oturumla uçtan uca denenmedi.
@@ -359,5 +361,5 @@ bağlayıcıdır; ayrıntılı gerekçe için `docs/history/README.md` tablosuna
   isteğin `creative_direction`'ını da kapsar ve keyset sayfalanır (`search_content`); `prompt_saves` canlıdan kaldırıldı; kod içi
   yorumlarda eski "Bölüm 9.x" atıfları arşiv numaralarına (`docs/history/NNN-*`) karşılık gelir.
 
-**Arşiv:** [`docs/history/README.md`](docs/history/README.md) — 167 bölüm, her
+**Arşiv:** [`docs/history/README.md`](docs/history/README.md) — 168 bölüm, her
 biri için durum etiketi (uygulandı / kısmen geçerli / kaldırıldı).
