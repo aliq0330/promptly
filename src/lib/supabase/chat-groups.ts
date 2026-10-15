@@ -618,3 +618,14 @@ export async function fetchProfilesByIds(ids: string[]): Promise<UserProfile[]> 
   }
   return (data ?? []).map((row) => mapProfileRow(row as ProfileRow));
 }
+
+/** Grubun TÜM üye kimlikleri (davet listesinde "zaten üye" göstermek için); 100'lük sayfalarla, en çok 1000 (grup üst sınırı). */
+export async function fetchGroupMemberIds(groupId: string): Promise<Set<string>> {
+  const ids = new Set<string>();
+  for (let offset = 0; offset < 1000; offset += 100) {
+    const rows = await callRpc<{ user_id: string }[]>("chat_group_members", { p_group_id: groupId, p_search: null, p_limit: 100, p_offset: offset });
+    for (const row of rows ?? []) ids.add(row.user_id);
+    if ((rows ?? []).length < 100) break;
+  }
+  return ids;
+}

@@ -23,12 +23,15 @@ export function InviteePicker({
   selected,
   onChange,
   excludeIds = [],
+  memberIds,
   disabled = false,
 }: {
   selected: UserProfile[];
   onChange: (next: UserProfile[]) => void;
   /** Zaten üye / davetli olanlar gibi listelenmemesi gereken kimlikler. */
   excludeIds?: string[];
+  /** Grubun mevcut üyeleri: "takip ettiklerim" listesinde hiç görünmez; aramada "Zaten üye" yazar ve seçilemez. Henüz yüklenmediyse (null) sunucu yine atlar. */
+  memberIds?: ReadonlySet<string> | null;
   disabled?: boolean;
 }) {
   const { t } = useTranslation();
@@ -82,11 +85,12 @@ export function InviteePicker({
   const selectedIds = useMemo(() => new Set(selected.map((p) => p.id)), [selected]);
   const searching = query.trim() !== "";
   const answered = search !== null && search.query === query.trim();
-  const list = (searching ? (answered ? search.results : []) : (followed ?? [])).filter((p) => !hidden.has(p.id));
+  const isMember = (id: string) => Boolean(memberIds?.has(id));
+  const list = (searching ? (answered ? search.results : []) : (followed ?? [])).filter((p) => !hidden.has(p.id) && (searching || !isMember(p.id)));
   const atLimit = selected.length >= GROUP_INVITE_BATCH_MAX;
 
   function toggle(person: UserProfile) {
-    if (disabled) return;
+    if (disabled || isMember(person.id)) return;
     if (selectedIds.has(person.id)) onChange(selected.filter((p) => p.id !== person.id));
     else if (!atLimit) onChange([...selected, person]);
   }
@@ -162,6 +166,7 @@ export function InviteePicker({
             {!searching && <li className="px-3 pb-1 pt-2 text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">{t("messages.newChatFollowing")}</li>}
             {list.map((person) => {
               const isSelected = selectedIds.has(person.id);
+              const member = isMember(person.id);
               return (
                 <li key={person.id}>
                   <button
@@ -169,7 +174,7 @@ export function InviteePicker({
                     role="checkbox"
                     aria-checked={isSelected}
                     onClick={() => toggle(person)}
-                    disabled={disabled || (atLimit && !isSelected)}
+                    disabled={disabled || member || (atLimit && !isSelected)}
                     className={cn(
                       "flex min-h-12 w-full items-center gap-3 px-3 py-2 text-left transition-colors hover:bg-surface-soft disabled:opacity-50",
                       isSelected && "bg-primary-soft/40",
@@ -180,15 +185,19 @@ export function InviteePicker({
                       <span className="block truncate text-sm font-semibold text-text">{person.displayName}</span>
                       <span className="block truncate text-caption text-text-muted">@{person.username}</span>
                     </span>
-                    <span
-                      aria-hidden
-                      className={cn(
-                        "flex h-5 w-5 shrink-0 items-center justify-center rounded border border-border",
-                        isSelected && "border-primary bg-primary text-primary-foreground",
-                      )}
-                    >
-                      {isSelected && <Check size={13} strokeWidth={3} />}
-                    </span>
+                    {member ? (
+                      <span className="shrink-0 rounded-full bg-surface-soft px-2.5 py-0.5 text-caption font-medium text-text-secondary">{t("groups.invite.alreadyMember")}</span>
+                    ) : (
+                      <span
+                        aria-hidden
+                        className={cn(
+                          "flex h-5 w-5 shrink-0 items-center justify-center rounded border border-border",
+                          isSelected && "border-primary bg-primary text-primary-foreground",
+                        )}
+                      >
+                        {isSelected && <Check size={13} strokeWidth={3} />}
+                      </span>
+                    )}
                   </button>
                 </li>
               );
