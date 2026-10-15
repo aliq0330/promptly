@@ -438,6 +438,67 @@ await scenario("22. Listemden kaldırılan kapalı grup 'Gruplarım' sekmesinde 
   await page.locator("a[href*='id=']:visible", { hasText: "Tasarım Atölyesi" }).first().waitFor();
 }, { setup: (db) => { seed(db); db.member(G, ME).deleted_at = "2026-06-02T00:00:00Z"; } });
 
+// 23
+await scenario("23. Owner: geçmiş görünürlüğü ve rol yetkileri ayrı bölümde; yalnızca değişenler kaydedilir; varsayılana dön", async ({ page, db }) => {
+  await openThread(page); await openInfo(page);
+  await tab(page, /Ayarlar/).click();
+  await dlg(page).getByRole("heading", { name: "Yeni üyeler önceki mesajları görsün mü?" }).waitFor();
+  await dlg(page).getByRole("heading", { name: "Yönetici ve moderatör yetkileri" }).waitFor();
+  const save = dlg(page).getByRole("button", { name: "Sahip ayarlarını kaydet" });
+  assert.equal(await save.isDisabled(), true, "nothing changed yet");
+  await dlg(page).getByRole("radio", { name: /Görsün/ }).check();
+  await dlg(page).getByRole("switch", { name: "Moderatör: Grup ayarlarını düzenleme" }).click();
+  await dlg(page).getByRole("switch", { name: "Yönetici: Üye yasaklama" }).click();
+  assert.equal(await dlg(page).getByRole("switch", { name: /Moderatör: Rol atama/ }).count(), 0, "moderators can't be given role assignment");
+  await save.dblclick();
+  await page.getByText("Sahip ayarları kaydedildi.").waitFor();
+  const sent = calls(db, "rpc/update_chat_group_owner_settings");
+  assert.equal(sent.length, 1, "double click sends one request");
+  assert.deepEqual(sent[0].body.p_patch, { history_visible: true, role_permissions: { admin: { ban_members: false }, moderator: { edit_settings: true } } });
+  assert.equal(db.groups[0].history_visible, true);
+  assert.equal(db.groups[0].role_permissions.moderator.edit_settings, true);
+  assert.equal(db.groups[0].role_permissions.moderator.manage_requests, true, "untouched flags are kept");
+  await dlg(page).getByRole("button", { name: "Varsayılan yetkilere dön" }).click();
+  await save.click();
+  await page.waitForTimeout(300);
+  assert.equal(calls(db, "rpc/update_chat_group_owner_settings").length, 2);
+  assert.equal(db.groups[0].role_permissions.admin.ban_members, true);
+  assert.equal(db.groups[0].role_permissions.moderator.edit_settings, false);
+}, { setup: (db) => seed(db, { myRole: "owner" }) });
+
+await scenario("23b. Owner değilse sahip ayarları ve tehlikeli bölge görünmez (admin)", async ({ page }) => {
+  await openThread(page); await openInfo(page);
+  await tab(page, /Ayarlar/).click();
+  await dlg(page).getByLabel("Grup adı").waitFor();
+  assert.equal(await dlg(page).getByRole("heading", { name: "Yönetici ve moderatör yetkileri" }).count(), 0);
+  assert.equal(await dlg(page).getByRole("heading", { name: "Yeni üyeler önceki mesajları görsün mü?" }).count(), 0);
+  assert.equal(await dlg(page).getByRole("button", { name: "Grubu sil" }).count(), 0);
+}, { setup: (db) => seed(db, { myRole: "admin", members: [[U.bob, "owner"], [U.carol, "moderator"], [U.dave, "member"]] }) });
+
+// 24
+await scenario("24. Yetkiye göre sekmeler: moderatöre ayar yetkisi verilince Ayarlar açılır (görünürlük ve sahip bölümleri yok)", async ({ page }) => {
+  await openThread(page); await openInfo(page);
+  assert.deepEqual(await tabNames(page), ["Genel", "Üyeler", "Katılım istekleri", "Ayarlar"]);
+  await tab(page, /Ayarlar/).click();
+  await dlg(page).getByLabel("Grup adı").waitFor();
+  assert.equal(await dlg(page).getByRole("button", { name: "Herkese açık yap" }).count(), 0, "no visibility without that permission");
+  assert.equal(await dlg(page).getByRole("heading", { name: "Yönetici ve moderatör yetkileri" }).count(), 0);
+}, { setup: (db) => { seed(db, { myRole: "moderator", members: [[U.bob, "owner"], [U.dave, "member"]] }); db.groups[0].role_permissions.moderator.edit_settings = true; } });
+
+await scenario("24b. Başvuru yönetimi moderatörden alınınca İstekler sekmesi kalkar", async ({ page }) => {
+  await openThread(page); await openInfo(page);
+  assert.deepEqual(await tabNames(page), ["Genel", "Üyeler"]);
+}, { setup: (db) => { seed(db, { myRole: "moderator", members: [[U.bob, "owner"], [U.dave, "member"]] }); db.groups[0].role_permissions.moderator.manage_requests = false; } });
+
+await scenario("24c. Admin: yasak yetkisi alınınca çıkarma penceresinde 'engelle' seçeneği çıkmaz; yetki verilince çıkar", async ({ page }) => {
+  await openThread(page); await openInfo(page);
+  await tab(page, /Üyeler/).click();
+  await dlg(page).getByRole("button", { name: "Dave için işlemler" }).click();
+  await page.getByRole("menuitem", { name: "Gruptan çıkar" }).click();
+  await page.getByRole("heading", { name: "Dave gruptan çıkarılsın mı?" }).waitFor();
+  assert.equal(await page.getByRole("checkbox", { name: /Tekrar katılmasını engelle/ }).count(), 0);
+}, { setup: (db) => { seed(db, { myRole: "admin", members: [[U.bob, "owner"], [U.dave, "member"]] }); db.groups[0].role_permissions.admin.ban_members = false; } });
+
 await browser.close(); server.close();
 let failed = 0;
 for (const [s, n] of results) { if (s === "FAIL") failed++; console.log(`${s}  ${n}`); }

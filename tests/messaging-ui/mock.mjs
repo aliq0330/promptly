@@ -14,6 +14,10 @@ export const U = {
   iblocked: mk("a", "iblocked", "Iblocked"),
 };
 U.locked.message_privacy = "followers_only";
+const DEFAULT_PERMS = {
+  admin: { edit_settings: true, change_visibility: true, manage_invites: true, manage_requests: true, remove_members: true, ban_members: true, manage_roles: true, delete_messages: true },
+  moderator: { edit_settings: false, change_visibility: false, manage_invites: false, manage_requests: true, remove_members: true, ban_members: false, manage_roles: false, delete_messages: true },
+};
 const PUBLIC_COLS = ["id", "username", "display_name", "avatar_url", "cover_url", "bio", "website", "follower_count", "following_count", "created_at", "interests"];
 const pub = (p) => Object.fromEntries(PUBLIC_COLS.map((c) => [c, p[c]]));
 
@@ -48,12 +52,12 @@ export function createDb() {
     return id;
   };
   /** Seeds a group conversation; `members` = [[user, role], …]; ME is added with `myRole`. */
-  db.addGroup = (id, { name = "Tasarım Atölyesi", visibility = "private", myRole = "member", members = [], posting_policy = "members", member_limit = 100, description = null, texts = [], pending = 0, muted = false } = {}) => {
+  db.addGroup = (id, { name = "Tasarım Atölyesi", visibility = "private", myRole = "member", members = [], posting_policy = "members", member_limit = 100, description = null, texts = [], pending = 0, muted = false, permissions = null } = {}) => {
     db.conversations.push({ id, last_message_at: db.stamp(), kind: "group" });
     const base = { status: "accepted", unread_count: 0, archived_at: null, deleted_at: null, cleared_at: null, muted_at: null };
     db.members.push({ conversation_id: id, user_id: ME, role: myRole, ...base, muted_at: muted ? db.stamp() : null });
     for (const [u, role] of members) db.members.push({ conversation_id: id, user_id: u.id, role, ...base });
-    db.groups.push({ id, name, description, avatar_url: null, visibility, posting_policy, member_limit, member_count: db.members.filter((m) => m.conversation_id === id).length, pending_request_count: pending, created_at: "2026-01-01T00:00:00Z" });
+    db.groups.push({ id, name, description, avatar_url: null, visibility, posting_policy, member_limit, member_count: db.members.filter((m) => m.conversation_id === id).length, pending_request_count: pending, history_visible: false, role_permissions: structuredClone(permissions ?? DEFAULT_PERMS), created_at: "2026-01-01T00:00:00Z" });
     texts.forEach(([u, text]) => db.addMessage(id, u.id, text));
     return id;
   };
@@ -181,6 +185,14 @@ export async function installMock(context, db, { signedIn = ME } = {}) {
       if (roleOf(body.p_group_id) !== "owner") return err("forbidden");
       db.member(body.p_group_id, signedIn).role = "admin"; db.member(body.p_group_id, body.p_user_id).role = "owner";
       return json(200, null);
+    }
+    if (table === "rpc/update_chat_group_owner_settings") {
+      const g = groupOf(body.p_group_id);
+      if (roleOf(body.p_group_id) !== "owner") return err("forbidden");
+      const patch = body.p_patch ?? {};
+      if ("history_visible" in patch) g.history_visible = patch.history_visible;
+      for (const [role, caps] of Object.entries(patch.role_permissions ?? {})) Object.assign(g.role_permissions[role], caps);
+      return json(200, { changed: true });
     }
     if (table === "rpc/update_chat_group") {
       const g = groupOf(body.p_group_id);

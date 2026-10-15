@@ -1200,7 +1200,7 @@ export function LocalConversationView() {
                 deleteConfirm,
                 isDeletingId: deletingId,
                 canModerate: group
-                  ? (target) => target.senderId !== user.id && !target.deletedAt && canModerateMessage(group.myRole, groupSenders.roleFor(target.senderId))
+                  ? (target) => target.senderId !== user.id && !target.deletedAt && canModerateMessage(group.myRole, groupSenders.roleFor(target.senderId), group.rolePermissions)
                   : undefined,
               }}
             />

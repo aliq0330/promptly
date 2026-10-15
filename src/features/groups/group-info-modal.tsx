@@ -12,7 +12,7 @@ import { GroupRequestsSection } from "./group-requests-section";
 import { GroupInvitesSection } from "./group-invites-section";
 import { GroupSettingsSection } from "./group-settings-section";
 import { useToast } from "./use-toast";
-import { isGroupManager, isGroupStaff } from "@/lib/chat-groups";
+import { can, canSeeSettingsTab } from "@/lib/chat-groups";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { memberCountText } from "@/lib/group-labels";
 import type { Conversation } from "@/types";
@@ -54,11 +54,10 @@ export function GroupInfoModal({
       { key: "about", label: t("groups.tab.about") },
       { key: "members", label: t("groups.tab.members"), count: group.memberCount },
     ];
-    if (isGroupStaff(role)) items.push({ key: "requests", label: t("groups.tab.requests"), count: group.pendingRequestCount || undefined });
-    if (isGroupManager(role)) {
-      items.push({ key: "invites", label: t("groups.tab.invites") });
-      items.push({ key: "settings", label: t("groups.tab.settings") });
-    }
+    // Sekmeler YETKİYE göre (rol adına değil): owner admin/moderatöre yetki verip alabilir. Gerçek yetki sunucuda.
+    if (can(role, "manage_requests", group.rolePermissions)) items.push({ key: "requests", label: t("groups.tab.requests"), count: group.pendingRequestCount || undefined });
+    if (can(role, "manage_invites", group.rolePermissions)) items.push({ key: "invites", label: t("groups.tab.invites") });
+    if (canSeeSettingsTab(role, group.rolePermissions)) items.push({ key: "settings", label: t("groups.tab.settings") });
     return items;
   }, [group, role, t]);
 
@@ -120,7 +119,7 @@ export function GroupInfoModal({
           )}
           {tab === "requests" && <GroupRequestsSection group={group} onChanged={onGroupChanged} onToast={show} />}
           {tab === "invites" && <GroupInvitesSection group={group} onChanged={onGroupChanged} onToast={show} />}
-          {tab === "settings" && <GroupSettingsSection key={`${group.name}|${group.description}|${group.memberLimit}|${group.postingPolicy}`} group={group} onChanged={onGroupChanged} onToast={show} onDeleted={() => onGone("deleted")} />}
+          {tab === "settings" && <GroupSettingsSection key={`${group.name}|${group.description}|${group.memberLimit}|${group.postingPolicy}|${group.historyVisible}|${JSON.stringify(group.rolePermissions)}`} group={group} onChanged={onGroupChanged} onToast={show} onDeleted={() => onGone("deleted")} />}
         </div>
         {toastNode}
       </div>

@@ -4,13 +4,14 @@ import { mapProfileRow, type ProfileRow } from "./mappers";
 import { resizeImageToSquareBlob } from "@/lib/utils";
 import {
   extractGroupErrorCode,
+  normalizeRolePermissions,
   parseInviteResult,
   parseVisibilityResult,
   type GroupErrorCode,
   type InviteResult,
   type VisibilityChangeResult,
 } from "@/lib/chat-groups";
-import type { ChatGroup, GroupPostingPolicy, GroupRole, GroupVisibility, UserProfile } from "@/types";
+import type { ChatGroup, GroupCapability, GroupPostingPolicy, GroupRole, GroupVisibility, UserProfile } from "@/types";
 
 /**
  * Grup sohbeti veri erişimi (docs/history/172-*). Her yazma işlemi bir SECURITY DEFINER RPC'dir
@@ -95,11 +96,13 @@ export interface ChatGroupRow {
   member_limit: number;
   member_count: number;
   pending_request_count: number;
+  history_visible: boolean;
+  role_permissions: unknown;
   created_at: string;
 }
 
 export const CHAT_GROUP_SELECT =
-  "id, name, description, avatar_url, visibility, posting_policy, member_limit, member_count, pending_request_count, created_at";
+  "id, name, description, avatar_url, visibility, posting_policy, member_limit, member_count, pending_request_count, history_visible, role_permissions, created_at";
 
 export function mapChatGroupRow(row: ChatGroupRow, myRole: GroupRole): ChatGroup {
   return {
@@ -112,6 +115,8 @@ export function mapChatGroupRow(row: ChatGroupRow, myRole: GroupRole): ChatGroup
     memberLimit: row.member_limit,
     memberCount: row.member_count,
     pendingRequestCount: row.pending_request_count,
+    historyVisible: Boolean(row.history_visible),
+    rolePermissions: normalizeRolePermissions(row.role_permissions),
     createdAt: row.created_at,
     myRole,
   };
@@ -159,6 +164,20 @@ export async function updateChatGroup(groupId: string, patch: UpdateChatGroupPat
   if (patch.memberLimit !== undefined) body.member_limit = patch.memberLimit;
   if (patch.postingPolicy !== undefined) body.posting_policy = patch.postingPolicy;
   await callRpc("update_chat_group", { p_group_id: groupId, p_patch: body });
+}
+
+/**
+ * Yalnızca OWNER: geçmiş görünürlüğü ve admin/moderatör yetkileri. `rolePermissions` yalnızca DEĞİŞEN bayrakları taşır
+ * (`{ moderator: { edit_settings: true } }`); sunucu bilinmeyen anahtarı reddeder, kalan bayraklar korunur.
+ */
+export async function updateChatGroupOwnerSettings(
+  groupId: string,
+  patch: { historyVisible?: boolean; rolePermissions?: Partial<Record<"admin" | "moderator", Partial<Record<GroupCapability, boolean>>>> },
+): Promise<void> {
+  const body: Record<string, unknown> = {};
+  if (patch.historyVisible !== undefined) body.history_visible = patch.historyVisible;
+  if (patch.rolePermissions !== undefined) body.role_permissions = patch.rolePermissions;
+  await callRpc("update_chat_group_owner_settings", { p_group_id: groupId, p_patch: body });
 }
 
 /** Görünürlük + (kapalı → açıkta) bekleyen isteklerin toplu kabulü: sunucuda TEK atomik işlem. */

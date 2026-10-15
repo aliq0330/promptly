@@ -2,6 +2,11 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   assignableRoles,
+  can,
+  canSeeSettingsTab,
+  capabilitiesFor,
+  DEFAULT_ROLE_PERMISSIONS,
+  normalizeRolePermissions,
   buildGroupJoinUrl,
   canBanMember,
   canModerateMessage,
@@ -165,4 +170,46 @@ test("davet sonucu ayrıştırma", () => {
   assert.equal(result.invitedCount, 2);
   assert.deepEqual(result.skipped, [{ userId: "u1", reason: "already_member" }]);
   assert.deepEqual(parseInviteResult(undefined), { invitedCount: 0, skipped: [] });
+});
+
+test("yetki varsayılanları bugünkü matrisle aynı; owner her zaman, üye hiçbir zaman", () => {
+  assert.equal(can("owner", "delete_messages"), true);
+  assert.equal(can("admin", "change_visibility"), true);
+  assert.equal(can("moderator", "edit_settings"), false);
+  assert.equal(can("moderator", "manage_requests"), true);
+  assert.equal(can("moderator", "ban_members"), false);
+  assert.equal(can("member", "manage_requests"), false);
+  assert.equal(can(null, "manage_requests"), false);
+});
+
+test("owner yetkiyi verince/alınca yardımcılar buna uyar; owner kısıtlanamaz", () => {
+  const perms = normalizeRolePermissions({ admin: { ban_members: false, manage_roles: false }, moderator: { edit_settings: true, ban_members: true } });
+  assert.equal(can("admin", "ban_members", perms), false);
+  assert.equal(can("moderator", "edit_settings", perms), true);
+  assert.equal(canBanMember("admin", "member", perms), false);
+  assert.equal(canBanMember("moderator", "member", perms), true);
+  assert.equal(canBanMember("moderator", "admin", perms), false, "rütbe kuralı yetkiden bağımsız");
+  assert.deepEqual(assignableRoles("admin", "member", perms), []);
+  assert.equal(canRemoveMember("owner", "admin", perms), true);
+  const noRemove = normalizeRolePermissions({ moderator: { remove_members: false, delete_messages: false } });
+  assert.equal(canRemoveMember("moderator", "member", noRemove), false);
+  assert.equal(canModerateMessage("moderator", "member", noRemove), false);
+  assert.equal(canModerateMessage("owner", "admin", noRemove), true);
+});
+
+test("ayarlar sekmesi: owner her zaman, diğerleri ayar/görünürlük yetkisiyle", () => {
+  assert.equal(canSeeSettingsTab("owner"), true);
+  assert.equal(canSeeSettingsTab("admin"), true);
+  assert.equal(canSeeSettingsTab("moderator"), false);
+  assert.equal(canSeeSettingsTab("moderator", normalizeRolePermissions({ moderator: { change_visibility: true } })), true);
+  assert.equal(canSeeSettingsTab("member"), false);
+});
+
+test("saklı yetkiler normalize edilir: eksik/bozuk anahtar → varsayılan; moderatöre manage_roles listelenmez", () => {
+  assert.deepEqual(normalizeRolePermissions(null), DEFAULT_ROLE_PERMISSIONS);
+  assert.deepEqual(normalizeRolePermissions({ admin: "x", moderator: { edit_settings: "evet" } }), DEFAULT_ROLE_PERMISSIONS);
+  assert.equal(normalizeRolePermissions({ admin: { edit_settings: false } }).admin.edit_settings, false);
+  assert.equal(capabilitiesFor("moderator").includes("manage_roles"), false);
+  assert.equal(capabilitiesFor("admin").includes("manage_roles"), true);
+  assert.equal(capabilitiesFor("admin").length, 8);
 });

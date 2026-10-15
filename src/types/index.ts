@@ -283,6 +283,18 @@ export type GroupVisibility = "public" | "private";
 /** Kim mesaj yazabilir: tüm üyeler ya da yalnızca owner/admin/moderator. */
 export type GroupPostingPolicy = "members" | "admins";
 
+/** Owner'ın admin/moderatöre verip geri alabildiği yetenekler (docs/history/173-*). */
+export type GroupCapability =
+  | "edit_settings"
+  | "change_visibility"
+  | "manage_invites"
+  | "manage_requests"
+  | "remove_members"
+  | "ban_members"
+  | "manage_roles"
+  | "delete_messages";
+export type RolePermissions = Record<"admin" | "moderator", Record<GroupCapability, boolean>>;
+
 /** Bir grup sohbetinin grup tarafı (`chat_groups` + bu kullanıcının üyeliği). */
 export interface ChatGroup {
   id: string;
@@ -295,6 +307,10 @@ export interface ChatGroup {
   memberCount: number;
   /** Yalnızca yetkililer için anlamlı; diğerlerinde gösterilmez. */
   pendingRequestCount: number;
+  /** Yeni üye katılmadan ÖNCEKİ mesajları görebilir mi (yalnız owner değiştirir). */
+  historyVisible: boolean;
+  /** Admin ve moderatör yetkileri (yalnız owner değiştirir; owner her zaman her şeyi yapar). */
+  rolePermissions: RolePermissions;
   createdAt: string;
   /** Bu kullanıcının grup içindeki rolü. */
   myRole: GroupRole;

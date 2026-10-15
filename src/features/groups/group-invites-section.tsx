@@ -21,7 +21,7 @@ import {
   type GroupInvitation,
   type GroupLinkInfo,
 } from "@/lib/supabase/chat-groups";
-import { buildGroupJoinUrl, type InviteResult } from "@/lib/chat-groups";
+import { buildGroupJoinUrl, can, type InviteResult } from "@/lib/chat-groups";
 import { SHARE_BASE_PATH } from "@/lib/share-link";
 import { formatRelativeTime } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -75,10 +75,17 @@ export function GroupInvitesSection({
   const link = useAsyncAction();
   const rowAction = useAsyncAction();
 
+  const canSeeBans = can(group.myRole, "ban_members", group.rolePermissions) || can(group.myRole, "remove_members", group.rolePermissions);
+  const canUnban = can(group.myRole, "ban_members", group.rolePermissions);
   const key = `${group.id}|${reloadKey}`;
   useEffect(() => {
     let cancelled = false;
-    Promise.all([fetchGroupInvitations(group.id), fetchGroupLinks(group.id), fetchGroupBans(group.id)])
+    Promise.all([
+      fetchGroupInvitations(group.id),
+      fetchGroupLinks(group.id),
+      // Yasaklılar yalnız yasak/çıkarma yetkisi olana okunabilir (RLS); yetkisizde boş liste.
+      canSeeBans ? fetchGroupBans(group.id) : Promise.resolve([] as GroupBan[]),
+    ])
       .then(([invitations, links, bans]) => {
         if (!cancelled) setLoaded({ key, invitations, links, bans, error: false });
       })
@@ -89,7 +96,7 @@ export function GroupInvitesSection({
     return () => {
       cancelled = true;
     };
-  }, [group.id, key]);
+  }, [group.id, key, canSeeBans]);
 
   // Mevcut üyeler: davet listesinde "zaten üye" göstermek için (yükleme başarısız olursa sunucu yine atlar).
   useEffect(() => {
@@ -324,15 +331,17 @@ export function GroupInvitesSection({
                       <span className="block truncate text-sm font-semibold text-text">{ban.user?.displayName ?? t("common.genericUser")}</span>
                       {ban.reason && <span className="block truncate text-caption text-text-muted">{ban.reason}</span>}
                     </span>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      disabled={rowAction.busy}
-                      onClick={() => void runRow(() => unbanChatGroupMember(group.id, ban.userId), t("groups.bans.unbannedToast"))}
-                    >
-                      <UserCheck size={14} /> {t("groups.bans.unban")}
-                    </Button>
+                    {canUnban && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        disabled={rowAction.busy}
+                        onClick={() => void runRow(() => unbanChatGroupMember(group.id, ban.userId), t("groups.bans.unbannedToast"))}
+                      >
+                        <UserCheck size={14} /> {t("groups.bans.unban")}
+                      </Button>
+                    )}
                   </li>
                 ))}
               </ul>

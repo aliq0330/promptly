@@ -8,6 +8,7 @@ import { ChoiceCard, fieldControlClassName, fieldInputClassName, fieldLabelClass
 import { useAuth } from "@/features/auth/auth-provider";
 import { ConfirmDialog } from "./confirm-dialog";
 import { GroupAvatar } from "./group-avatar";
+import { GroupOwnerSettings } from "./group-owner-settings";
 import { useAsyncAction } from "./use-async-action";
 import { deleteChatGroup, setChatGroupVisibility, updateChatGroup, uploadGroupAvatar, type UpdateChatGroupPatch } from "@/lib/supabase/chat-groups";
 import {
@@ -18,6 +19,7 @@ import {
   GROUP_MEMBER_LIMIT_MIN,
   GROUP_NAME_MAX,
   validateGroupDescription,
+  can,
   validateGroupName,
   type VisibilityChangeResult,
 } from "@/lib/chat-groups";
@@ -133,8 +135,12 @@ export function GroupSettingsSection({
   const shownAvatar = removeAvatar ? null : (avatarPreview ?? group.avatarUrl);
   const otherVisibility: GroupVisibility = group.visibility === "public" ? "private" : "public";
 
+  const canEdit = can(group.myRole, "edit_settings", group.rolePermissions);
+  const canChangeVisibility = can(group.myRole, "change_visibility", group.rolePermissions);
+
   return (
     <div className="space-y-8">
+      {canEdit && (
       <section aria-labelledby="settings-basic-title" className="space-y-5">
         <h3 id="settings-basic-title" className="text-label font-semibold text-text">
           {t("groups.settings.basicTitle")}
@@ -240,6 +246,9 @@ export function GroupSettingsSection({
         </div>
       </section>
 
+      )}
+
+      {canChangeVisibility && (
       <section aria-labelledby="settings-visibility-title" className="space-y-3 border-t border-border-soft pt-6">
         <h3 id="settings-visibility-title" className="text-label font-semibold text-text">
           {t("groups.visibility.label")}
@@ -252,6 +261,10 @@ export function GroupSettingsSection({
           {otherVisibility === "public" ? t("groups.settings.makePublic") : t("groups.settings.makePrivate")}
         </Button>
       </section>
+
+      )}
+
+      {group.myRole === "owner" && <GroupOwnerSettings group={group} onChanged={onChanged} onToast={onToast} />}
 
       {group.myRole === "owner" && (
         <section aria-labelledby="settings-danger-title" className="space-y-3 rounded-lg border border-danger/30 bg-danger/5 p-4">
