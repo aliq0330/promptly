@@ -1,7 +1,7 @@
 "use client";
 
 import { usePageTitle } from "@/components/layout/page-title";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { SlidersHorizontal, WandSparkles } from "lucide-react";
@@ -13,7 +13,7 @@ import { ContentTypeLabel } from "@/features/content/content-type-label";
 import { ToolChips } from "@/features/content/tool-chips";
 import { CreatorSummary } from "@/features/profile/creator-summary";
 import { FollowButton } from "@/features/profile/follow-button";
-import { RelatedCards } from "@/features/content/related-cards";
+import { RelatedPresets } from "./related-presets";
 import { useAuth } from "@/features/auth/auth-provider";
 import { PostMenu } from "@/features/prompts/post-menu";
 import { LikeButton } from "@/features/prompts/like-button";
@@ -24,9 +24,8 @@ import { ShareTriggerButton } from "@/features/prompts/share-modal";
 import { StatisticsButton } from "@/features/statistics/statistics-button";
 import { fetchPresetById } from "@/lib/supabase/presets";
 import { taxonomyPathLabel } from "@/lib/content-taxonomy";
-import { presetParameterCount, presetParameterEntries } from "@/lib/preset-utils";
+import { presetParameterEntries } from "@/lib/preset-utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import { presetHref } from "@/lib/utils";
 import {
   AsideSection,
   DetailActionBar,
@@ -57,7 +56,7 @@ export function PresetDetailView() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useAuth();
-  const { removeFromCache, realPresets } = useRealPresets();
+  const { removeFromCache } = useRealPresets();
   const id = searchParams.get("id");
   const [preset, setPreset] = useState<Preset | null | undefined>(undefined);
   const [lightbox, setLightbox] = useState(false);
@@ -71,25 +70,6 @@ export function PresetDetailView() {
       cancelled = true;
     };
   }, [id]);
-
-  const similar = useMemo(() => {
-    if (!preset) return [];
-    const tagSet = new Set(preset.tags.map((tag) => tag.slug));
-    return realPresets
-      .filter((p) => p.id !== preset.id)
-      .map((p) => ({
-        p,
-        score:
-          p.tags.filter((tag) => tagSet.has(tag.slug)).length * 3 +
-          (p.contentType === preset.contentType ? 1 : 0) +
-          (p.category && p.category === preset.category ? 2 : 0) +
-          (p.creator.id === preset.creator.id ? 1 : 0),
-      }))
-      .filter(({ score }) => score >= 2)
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 4)
-      .map(({ p }) => p);
-  }, [preset, realPresets]);
 
   if (!id) return <NotFoundBlock title={t("preset.notFoundTitle")} description={t("common.brokenLinkHint")} />;
   if (preset === undefined) return <DetailSkeleton />;
@@ -121,20 +101,7 @@ export function PresetDetailView() {
         </dl>
       </AsideSection>
 
-      {similar.length > 0 && (
-        <AsideSection id="preset-similar-title" title={t("preset.similar")}>
-          <RelatedCards
-            items={similar.map((p) => ({
-              id: p.id,
-              href: presetHref(p),
-              title: p.title,
-              meta: `${t("preset.paramCount", { count: presetParameterCount(p) })} · ${p.creator.displayName}`,
-              icon: SlidersHorizontal,
-              image: p.coverUrl ? { url: p.coverUrl, alt: p.title } : null,
-            }))}
-          />
-        </AsideSection>
-      )}
+      <RelatedPresets preset={preset} />
     </DetailAside>
   );
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { usePageTitle } from "@/components/layout/page-title";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Play, Workflow as WorkflowIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -12,7 +12,7 @@ import { ContentTypeLabel } from "@/features/content/content-type-label";
 import { ToolChips, ToolLine } from "@/features/content/tool-chips";
 import { CreatorSummary } from "@/features/profile/creator-summary";
 import { FollowButton } from "@/features/profile/follow-button";
-import { RelatedCards } from "@/features/content/related-cards";
+import { RelatedWorkflows } from "./related-workflows";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { useAuth } from "@/features/auth/auth-provider";
 import { PostMenu } from "@/features/prompts/post-menu";
@@ -27,7 +27,6 @@ import { useRealWorkflows } from "./real-workflows-provider";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
 import { fetchWorkflowById } from "@/lib/supabase/workflows";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import { workflowHref } from "@/lib/utils";
 import {
   AsideSection,
   DetailActionBar,
@@ -50,7 +49,7 @@ export function WorkflowDetailView() {
   const { t, language } = useTranslation();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { removeFromCache, realWorkflows } = useRealWorkflows();
+  const { removeFromCache } = useRealWorkflows();
   const { user } = useAuth();
   const id = searchParams.get("id");
   const [data, setData] = useState<
@@ -70,26 +69,6 @@ export function WorkflowDetailView() {
       cancelled = true;
     };
   }, [id]);
-
-  const similar = useMemo(() => {
-    const current = data?.workflow;
-    if (!current) return [];
-    const tagSet = new Set(current.tags.map((tag) => tag.slug));
-    return realWorkflows
-      .filter((w) => w.id !== current.id)
-      .map((w) => ({
-        w,
-        score:
-          w.tags.filter((tag) => tagSet.has(tag.slug)).length * 3 +
-          (w.creator.id === current.creator.id ? 1 : 0) +
-          w.contentTypes.filter((ct) => current.contentTypes.includes(ct))
-            .length,
-      }))
-      .filter(({ score }) => score >= 2)
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 4)
-      .map(({ w }) => w);
-  }, [data, realWorkflows]);
 
   if (!id)
     return (
@@ -147,20 +126,7 @@ export function WorkflowDetailView() {
         </AsideSection>
       )}
 
-      {similar.length > 0 && (
-        <AsideSection id="workflow-similar-title" title={t("workflow.similar")}>
-          <RelatedCards
-            items={similar.map((w) => ({
-              id: w.id,
-              href: workflowHref(w),
-              title: w.title,
-              meta: `${t("workflow.stepCount", { count: String(w.stepCount) })} · ${w.creator.displayName}`,
-              icon: WorkflowIcon,
-              image: w.media[0] ? { url: w.media[0].url, alt: w.media[0].alt } : null,
-            }))}
-          />
-        </AsideSection>
-      )}
+      <RelatedWorkflows workflow={workflow} />
     </DetailAside>
   );
 
