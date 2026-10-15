@@ -1,6 +1,6 @@
 # 9.169 — Sayaç sütunlarını istemciden koruma
 
-Durum: kod ve migration repoda, yerelde sınandı; **migration canlıya uygulanmadı** (`20260919920000_protect_counter_columns.sql`). Uygulanana kadar canlıda açık sürer.
+Durum: uygulandı. İki migration canlıda (`20260919920000_protect_counter_columns.sql`, `20260919930000_protect_remaining_counters.sql`; kayıt dosya sürümüyle düşüldü). İstemci değişikliği (`markConversationRead` → RPC) `main`'e birleşince yayınlanır.
 
 ## Sorun
 
@@ -30,12 +30,16 @@ Sayaçları güncelleyen trigger'lar SECURITY DEFINER olduğundan `current_user`
 
 **Bağımlılık:** `handle_collection_item_change` (collections.item_count) SECURITY INVOKER'dı; korunan sütuna yazdığı için SECURITY DEFINER + `search_path = public` yapıldı, yoksa koleksiyon sayısı sessizce güncellenmezdi.
 
-**Kapsam dışı (bilinçli):** `conversation_members.unread_count` (istemci "okundu" için kendi satırında 0 yazar, yalnız kendini etkiler); `tags.*_count` (UPDATE politikası yok).
+## İkinci migration (`20260919930000`) — önceden "kapsam dışı" bırakılanlar
+
+- `conversation_members.unread_count`: istemci "okundu" için kendi satırına 0 yazıyordu; yalnız kendi rozetini etkilese de aynı sınıf açık. Okundu işareti artık SECURITY DEFINER `mark_conversation_read(p_conversation_id)` RPC'sinden geçer (yalnız `auth.uid()` satırı, yalnız 0'a); sütun `protect_counter_columns` ile kapatıldı. Artıran `handle_new_message` zaten DEFINER. İstemci: `markConversationRead(conversationId)` RPC'yi çağırır (iki çağıran güncellendi).
+- `tags.prompt_usage_count` / `request_usage_count` (`usage_count` bunlardan üretilen sütun): tags'te yalnız SELECT politikası var, istemci zaten yazamaz (testte doğrulandı); ileride eklenecek bir politika açmasın diye aynı trigger bağlandı (testte geçici izin veren politikayla trigger'ın tek başına koruduğu gösterildi).
+- **Geçiş penceresi:** migration canlıya, yeni istemci yayınlanmadan önce uygulandı; o aralıkta eski istemcinin "okundu" yazımı sessizce yok sayılır (rozet bir sonraki açılışta/yayından sonra temizlenir). Veri kaybı yok.
 
 ## Test
 
 `supabase/tests/counter-protection.sql`: düzeltme sonrası 0 FAIL — sahip yazma denemeleri yok sayılır ama aynı UPDATE'teki `title`/`name` değişir; INSERT'te sayaç 0; beğeni/kaydet/yorum/takip/koleksiyon öğesi (istemci tarafı insert dahil) sayaçları hâlâ doğru artırıp azaltır; postgres hâlâ yazabilir. `saved-collections.sql` yeniden: 0 FAIL. İstemci kodunda sayaç yazan yer yok (yalnız `unread_count: 0`).
 
-## Canlıya uygularken
+## Canlı
 
-Yalnızca ekleyici/değiştirici (`create or replace`, `alter function`; `drop` yok). Uygulamadan önce Dashboard → Backups kontrol edilmeli; sonra kaydı dosya sürümüyle düş. Doğrulama: sahibi bir hesapla `update prompts set like_count = 999` denemesi sessizce eski değeri bırakmalı.
+Yalnızca ekleyici/değiştirici (`create or replace`, `alter function`; `drop` yok). SQL `execute_sql` ile uygulandı, `schema_migrations`'a dosya sürümüyle (boş `statements`) kayıt düşüldü. Doğrulama: sahibi hesapla (rolü `authenticated`, geri alınan işlem) `prompts.like_count/save_count/comment_count` yazma denemesi eski değeri bıraktı (6 → 6). Backups kontrolü yapılmadı (kullanıcı onayladı, değişiklik geri alınabilir: trigger'lar `drop trigger` ile kaldırılır).

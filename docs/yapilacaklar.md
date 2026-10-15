@@ -91,7 +91,7 @@ Ayrıntılar madde sırası geldiğinde bu dosyaya eklenir. Madde 9 için not: `
 ### 11. Haftalık özet (engelli)
 E-posta sağlayıcısı veya web push (VAPID) anahtarı gerekir; anahtar repoya girmez. Karar bekliyor.
 
-### 12. Sayaç sütunlarını istemciden koruma — yapıldı (migration canlıya uygulanmadı)
+### 12. Sayaç sütunlarını istemciden koruma — yapıldı (iki migration canlıda)
 - Bulgu doğrulandı: yerelde (tüm migration'lar temiz DB'ye oynatılarak) sahibi olarak `authenticated` rolüyle
   `prompts`, `prompt_requests`, `workflows`, `presets`, `prompt_results`, `prompt_comments`, `profiles` ve
   `collections` sayaçlarına 9999 yazılabildi; INSERT sırasında da sayaç verilebildi. Canlı şema salt okunur
@@ -101,5 +101,8 @@ E-posta sağlayıcısı veya web push (VAPID) anahtarı gerekir; anahtar repoya 
   `current_user in ('anon','authenticated')` ise UPDATE'te eski değer, INSERT'te 0) 8 tabloya bağlandı.
   Sayaçları güncelleyen trigger'lar SECURITY DEFINER olduğundan etkilenmez; `handle_collection_item_change`
   invoker'dı, `collections.item_count` korunduğu için DEFINER yapıldı (aksi hâlde sessizce sayamazdı).
-  Kapsam dışı: `conversation_members.unread_count` (istemci kendi satırında 0 yazar), `tags.*_count` (UPDATE politikası yok).
+  `20260919930000_protect_remaining_counters.sql`: `conversation_members.unread_count` (okundu işareti artık
+  SECURITY DEFINER `mark_conversation_read()` RPC'sinden; istemci `markConversationRead` güncellendi) ve
+  `tags.*_usage_count` (RLS zaten yazdırmıyordu; trigger savunma derinliği). Artık korunmayan sayaç kalmadı.
+- Canlı: iki migration uygulandı; sahibi hesapla geri alınan işlemde `like_count`/`save_count`/`comment_count` yazma denemesi eski değeri bıraktı (6 → 6).
 - Test: `supabase/tests/counter-protection.sql` (düzeltme öncesi 16 FAIL → sonrası 0) + `saved-collections.sql` yeniden: 0 FAIL.

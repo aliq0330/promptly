@@ -109,6 +109,48 @@ select public._check(3, 'unsave/unlike decrement again',
   (select like_count = 0 and save_count = 0 from public.prompts where id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa')
   and (select item_count = 0 from public.collections where owner_id = '22222222-2222-4222-8222-222222222222' and is_default));
 
+-- ---------- 2b. unread_count: istemci yazamaz, RPC ile okundu işaretlenir, sunucu artırır ----------
+insert into public.conversations (id) values ('12121212-1212-4212-8212-121212121212');
+insert into public.conversation_members (conversation_id, user_id, status) values
+  ('12121212-1212-4212-8212-121212121212', '11111111-1111-4111-8111-111111111111', 'accepted'),
+  ('12121212-1212-4212-8212-121212121212', '22222222-2222-4222-8222-222222222222', 'accepted');
+set role authenticated;
+select public._as_user('22222222-2222-4222-8222-222222222222');
+insert into public.messages (conversation_id, sender_id, body) values ('12121212-1212-4212-8212-121212121212', '22222222-2222-4222-8222-222222222222', 'merhaba');
+select public._as_user('11111111-1111-4111-8111-111111111111');
+update public.conversation_members set unread_count = 9999, status = 'accepted' where conversation_id = '12121212-1212-4212-8212-121212121212' and user_id = '11111111-1111-4111-8111-111111111111';
+reset role;
+select public._check(5, 'unread_count is increased by the message trigger (alice has 1)', (select unread_count = 1 from public.conversation_members where conversation_id = '12121212-1212-4212-8212-121212121212' and user_id = '11111111-1111-4111-8111-111111111111'),
+  (select unread_count::text from public.conversation_members where conversation_id = '12121212-1212-4212-8212-121212121212' and user_id = '11111111-1111-4111-8111-111111111111'));
+set role authenticated;
+select public._as_user('11111111-1111-4111-8111-111111111111');
+select public.mark_conversation_read('12121212-1212-4212-8212-121212121212');
+reset role;
+select public._check(5, 'mark_conversation_read resets own unread_count to 0', (select unread_count = 0 from public.conversation_members where conversation_id = '12121212-1212-4212-8212-121212121212' and user_id = '11111111-1111-4111-8111-111111111111'));
+-- bob'un okundu çağrısı alice'in satırına dokunamaz (RPC yalnız auth.uid() satırı)
+set role authenticated;
+select public._as_user('22222222-2222-4222-8222-222222222222');
+insert into public.messages (conversation_id, sender_id, body) values ('12121212-1212-4212-8212-121212121212', '22222222-2222-4222-8222-222222222222', 'iki');
+select public.mark_conversation_read('12121212-1212-4212-8212-121212121212');
+reset role;
+select public._check(5, 'mark_conversation_read never touches another member''s row', (select unread_count = 1 from public.conversation_members where conversation_id = '12121212-1212-4212-8212-121212121212' and user_id = '11111111-1111-4111-8111-111111111111'));
+
+-- ---------- 2c. tags: RLS zaten yazdırmaz; trigger ayrıca (politika eklenirse) sayacı korur ----------
+insert into public.tags (slug, label) values ('test-etiket', 'Test Etiket');
+set role authenticated;
+select public._as_user('11111111-1111-4111-8111-111111111111');
+update public.tags set prompt_usage_count = 9999 where slug = 'test-etiket';
+reset role;
+select public._check(6, 'tags: client UPDATE is blocked by RLS (no policy)', (select prompt_usage_count = 0 from public.tags where slug = 'test-etiket'));
+create policy tmp_tags_update on public.tags for update to authenticated using (true) with check (true);
+set role authenticated;
+select public._as_user('11111111-1111-4111-8111-111111111111');
+update public.tags set prompt_usage_count = 9999, request_usage_count = 9999, label = 'Test 2' where slug = 'test-etiket';
+reset role;
+select public._check(6, 'tags: even with a permissive policy the trigger keeps counters (label still editable)',
+  (select prompt_usage_count = 0 and request_usage_count = 0 and usage_count = 0 and label = 'Test 2' from public.tags where slug = 'test-etiket'));
+drop policy tmp_tags_update on public.tags;
+
 -- ---------- 3. Süper kullanıcı (migration/seed/Dashboard) ve unread_count ----------
 update public.prompts set like_count = 5 where id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 select public._check(4, 'postgres/service role can still set counters (seeds, admin SQL)', (select like_count = 5 from public.prompts where id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'));

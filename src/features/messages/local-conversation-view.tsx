@@ -197,7 +197,7 @@ export function LocalConversationView() {
       const [thread, reactions] = await Promise.all([
         fetchMessages(id, user.id),
         fetchReactionsForConversation(id),
-        markConversationRead(id, user.id),
+        markConversationRead(id),
       ]);
       if (cancelled) return;
       setMessages(thread);
@@ -259,7 +259,7 @@ export function LocalConversationView() {
           const incoming = mapMessageRow(payload.new as MessageRow);
           setMessages((prev) => mergeIncomingMessage(prev, incoming));
           if (incoming.senderId !== user.id) {
-            markConversationRead(id, user.id).catch((err) => console.error("markConversationRead (realtime)", err));
+            markConversationRead(id).catch((err) => console.error("markConversationRead (realtime)", err));
           }
         },
       )
