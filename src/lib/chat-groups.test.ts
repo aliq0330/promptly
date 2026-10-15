@@ -211,5 +211,8 @@ test("saklı yetkiler normalize edilir: eksik/bozuk anahtar → varsayılan; mod
   assert.equal(normalizeRolePermissions({ admin: { edit_settings: false } }).admin.edit_settings, false);
   assert.equal(capabilitiesFor("moderator").includes("manage_roles"), false);
   assert.equal(capabilitiesFor("admin").includes("manage_roles"), true);
-  assert.equal(capabilitiesFor("admin").length, 8);
+  assert.equal(capabilitiesFor("admin").length, 9);
+  // Eski gruplarda `pin_messages` anahtarı yoktur: varsayılan (admin + moderatör) geçerli olur.
+  assert.equal(normalizeRolePermissions({ moderator: { edit_settings: true } }).moderator.pin_messages, true);
+  assert.equal(normalizeRolePermissions({ moderator: { pin_messages: false } }).moderator.pin_messages, false);
 });

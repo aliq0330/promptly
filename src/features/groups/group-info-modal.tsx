@@ -119,7 +119,7 @@ export function GroupInfoModal({
           )}
           {tab === "requests" && <GroupRequestsSection group={group} onChanged={onGroupChanged} onToast={show} />}
           {tab === "invites" && <GroupInvitesSection group={group} onChanged={onGroupChanged} onToast={show} />}
-          {tab === "settings" && <GroupSettingsSection key={`${group.name}|${group.description}|${group.memberLimit}|${group.postingPolicy}|${group.historyVisible}|${JSON.stringify(group.rolePermissions)}`} group={group} onChanged={onGroupChanged} onToast={show} onDeleted={() => onGone("deleted")} />}
+          {tab === "settings" && <GroupSettingsSection key={`${group.name}|${group.description}|${group.memberLimit}|${group.postingPolicy}|${group.historyVisible}|${group.membersCanPin}|${JSON.stringify(group.rolePermissions)}`} group={group} onChanged={onGroupChanged} onToast={show} onDeleted={() => onGone("deleted")} />}
         </div>
         {toastNode}
       </div>

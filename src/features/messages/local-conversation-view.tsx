@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type UIEvent } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, Bell, BellOff, Info, LogOut, Users, X } from "lucide-react";
+import { ArrowLeft, Bell, BellOff, ChevronsDown, Info, LogOut, Search, Users, X } from "lucide-react";
 import { Portal } from "@/components/ui/portal";
 import { Avatar } from "@/components/ui/avatar";
 import { useAuth } from "@/features/auth/auth-provider";
@@ -16,6 +16,20 @@ import { GroupInfoModal, type GroupInfoTab } from "@/features/groups/group-info-
 import { useGroupSenders } from "@/features/groups/use-group-senders";
 import { moderateChatGroupMessage, setChatGroupMuted, toGroupError } from "@/lib/supabase/chat-groups";
 import { canModerateMessage, canPostInGroup } from "@/lib/chat-groups";
+import { advanceReadAt, canPinMessages, formatTypingText, nextReadAck, readStateFor } from "@/lib/chat-features";
+import {
+  fetchPartnerReadAt,
+  fetchStarredMessageIds,
+  markConversationReadUpTo,
+  starMessage,
+  toChatFeatureError,
+  unstarMessage,
+} from "@/lib/supabase/chat-features";
+import { PinnedMessagesBar } from "./pinned-messages-bar";
+import { ConversationSearchPanel } from "./conversation-search-panel";
+import { MessageInfoModal } from "./message-info-modal";
+import { usePinnedMessages } from "./use-pinned-messages";
+import { useTyping } from "./use-typing";
 import { useRealMessages } from "./real-messages-provider";
 import { MessageBubble, type DeleteMode, type MessageReactionEntry } from "./message-bubble";
 import { MessageComposer, useImageDrop } from "./message-composer";
@@ -27,9 +41,9 @@ import {
   editMessage,
   fetchConversationForUser,
   fetchMessagePage,
+  fetchMessageWindow,
   hideMessageForMe,
   mapMessageRow,
-  markConversationRead,
   sendMessage,
   type MessageRow,
 } from "@/lib/supabase/messages";
@@ -40,10 +54,10 @@ import { supabase } from "@/lib/supabase/client";
 import { useRealPrompts } from "@/features/prompts/real-prompts-provider";
 import { useRealRequests } from "@/features/requests/real-requests-provider";
 import { parseHighlightValue } from "@/lib/notification-utils";
-import { profileHref } from "@/lib/utils";
+import { cn, profileHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { memberCountText } from "@/lib/group-labels";
-import { translateForRuntime } from "@/lib/i18n/translations";
+import { translateForRuntime, type TranslationKey } from "@/lib/i18n/translations";
 import { composeWorkflowShareBody } from "./workflow-share-format";
 import { composePresetShareBody } from "./preset-share-format";
 import { fetchPresetById } from "@/lib/supabase/presets";
@@ -168,6 +182,21 @@ export function LocalConversationView() {
   // below — one flat list, not per-message state, so a single query/
   // subscription covers the whole open conversation.
   const [reactionRows, setReactionRows] = useState<{ messageId: string; userId: string; emoji: string }[]>([]);
+  // docs/history/174-*: birebirde karşı tarafın okundu imleci, yıldızlı mesaj kimlikleri, sohbet içi arama, mesaj bilgisi penceresi ve
+  // "mesaja atla" durumu (hedef pencere yüklendiyse `hasNewer`: ötesinde daha yeni mesaj var, canlı mesajlar listeye eklenmez).
+  const [partnerReadAt, setPartnerReadAt] = useState<string | null>(null);
+  const [starredIds, setStarredIds] = useState<Set<string>>(new Set());
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [infoMessage, setInfoMessage] = useState<Message | null>(null);
+  const [hasNewer, setHasNewer] = useState(false);
+  const hasNewerRef = useRef(false);
+  const [ackVersion, setAckVersion] = useState(0);
+  const [jumpTarget, setJumpTarget] = useState<{ id: string; nonce: number } | null>(null);
+  const flashTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const messagesRef = useRef<Message[]>([]);
+  const lastAckedRef = useRef<string | null>(null);
+  const ackInFlightRef = useRef(false);
+  const skipAutoScrollRef = useRef(false);
 
   // Profil sayfasıyla BİREBİR AYNI engelleme mekanizması (Aşama 8's "profil
   // menüsüyle tutarlılık" — bu, `ProfileMoreMenu`'nün kendisini üst barda
@@ -180,8 +209,24 @@ export function LocalConversationView() {
   const group = conversation?.group ?? null;
   const blockState = useBlockState(conversation?.participants[0] ?? EMPTY_PARTICIPANT);
   // Grup: gönderen adları/avatarları + kadro rolleri; "kim yazabilir" ayarı.
-  const groupSenders = useGroupSenders(isGroup && id ? id : null, messages, group ? `${group.myRole}:${group.memberCount}` : "");
   const canPost = !isGroup || (group ? canPostInGroup(group.myRole, group.postingPolicy) : false);
+  // "Yazıyor…" (docs/history/174-*): Realtime Broadcast, kalıcı değil. Bekleyen istekte, engelliyken ya da yazamıyorsam sinyal GÖNDERMEM.
+  const { typingIds, notifyTyping, stopTyping } = useTyping({
+    conversationId: id,
+    userId: user?.id ?? null,
+    enabled: checked && Boolean(conversation) && !leftGroup && !removedFromList,
+    canSend: canPost && !blockState.isBlocked && conversation?.myStatus !== "pending",
+  });
+  // Sabitleme: birebirde iki taraf da; grupta yetkiye/ayara göre (sunucu da denetler). Sabit mesajlar yalnız gerçek (yüklenmiş) sohbet için okunur.
+  const canPin = canPinMessages(group) && conversation?.myStatus !== "pending";
+  const pinned = usePinnedMessages(id, user?.id ?? null, messages, checked && Boolean(conversation) && !leftGroup && !removedFromList);
+  // Mesajı yüklü olmayan ama adı gereken kişiler (yazıyor diyenler, arama sonucu / sabit mesaj göndericileri) için ek profil sorgusu.
+  const [searchSenderIds, setSearchSenderIds] = useState<string[]>([]);
+  const extraSenderIds = useMemo(
+    () => [...new Set([...typingIds, ...searchSenderIds, ...pinned.items.map((item) => item.message.senderId)])],
+    [typingIds, searchSenderIds, pinned.items],
+  );
+  const groupSenders = useGroupSenders(isGroup && id ? id : null, messages, group ? `${group.myRole}:${group.memberCount}` : "", extraSenderIds);
   // Desktop drag-and-drop of photos anywhere on the conversation panel.
   const imageDrop = useImageDrop(composerImages.addFiles, !blockState.isBlocked && canPost);
 
@@ -200,6 +245,21 @@ export function LocalConversationView() {
   useEffect(() => {
     isNearBottomRef.current = isNearBottom;
   }, [isNearBottom]);
+
+  useEffect(() => {
+    hasNewerRef.current = hasNewer;
+  }, [hasNewer]);
+
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
+
+  useEffect(
+    () => () => {
+      if (flashTimerRef.current) clearTimeout(flashTimerRef.current);
+    },
+    [],
+  );
 
   useEffect(() => {
     pendingRef.current = pendingSends;
@@ -243,6 +303,11 @@ export function LocalConversationView() {
 
     const cached = getCached(id);
     setChecked(false);
+    lastAckedRef.current = null;
+    setHasNewer(false);
+    setSearchOpen(false);
+    setPartnerReadAt(null);
+    setStarredIds(new Set());
 
     (cached ? Promise.resolve(cached) : fetchConversationForUser(id, user.id)).then(async (found) => {
       if (cancelled) return;
@@ -251,15 +316,18 @@ export function LocalConversationView() {
         setChecked(true);
         return;
       }
-      const [page, reactions] = await Promise.all([
+      const [page, reactions, partnerRead, starred] = await Promise.all([
         fetchMessagePage(id, user.id),
         fetchReactionsForConversation(id),
-        markConversationRead(id),
+        found.kind === "direct" ? fetchPartnerReadAt(id, user.id) : Promise.resolve(null),
+        fetchStarredMessageIds(id),
       ]);
       if (cancelled) return;
       setMessages(page.messages);
       setHasOlder(page.hasMore);
       setReactionRows(reactions);
+      setPartnerReadAt(partnerRead);
+      setStarredIds(new Set(starred));
       setChecked(true);
     });
 
@@ -278,17 +346,12 @@ export function LocalConversationView() {
     if (!highlightMessageId || !checked) return;
     if (processedMessageHighlight.current === highlightMessageId) return;
     processedMessageHighlight.current = highlightMessageId;
-    const found = messages.some((m) => m.id === highlightMessageId);
-    if (!found) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time result of a lookup that only ever runs once per highlightMessageId (guarded above), not a render-time derivation
-      setMessageHighlightNotFound(true);
-      return;
-    }
-    const el = panelRef.current?.querySelector<HTMLElement>(`[data-message-id="${highlightMessageId}"]`);
-    el?.scrollIntoView({ behavior: "smooth", block: "center" });
-    setFlashedMessageId(highlightMessageId);
-    const timer = setTimeout(() => setFlashedMessageId(null), HIGHLIGHT_DURATION_MS);
-    return () => clearTimeout(timer);
+    // Yüklü sayfadaysa doğrudan, değilse (eski mesaj, yıldız/sabit/bildirim bağlantısı) çevresindeki pencere yüklenir;
+    // görünmüyorsa (silinmiş, "benden sil", temizlenmiş, erişim yok) dürüst bir not gösterilir.
+    void goToMessage(highlightMessageId).then((ok) => {
+      if (!ok) setMessageHighlightNotFound(true);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- goToMessage okuma anındaki durumdan beslenir; yalnız hedef değişince çalışmalı
   }, [checked, messages, highlightMessageId]);
 
   // Gerçek zamanlı senkronizasyon (Bölüm 21 Faz C) — bu, karşı tarafın
@@ -315,10 +378,9 @@ export function LocalConversationView() {
         { event: "INSERT", schema: "public", table: "messages", filter: `conversation_id=eq.${id}` },
         (payload) => {
           const incoming = mapMessageRow(payload.new as MessageRow);
+          // Eski bir pencerede (mesaja atlandıktan sonra) gezilirken canlı mesaj araya eklenmez; "güncel mesajlara dön" hepsini getirir.
+          if (hasNewerRef.current) return;
           setMessages((prev) => mergeIncomingMessage(prev, incoming));
-          if (incoming.senderId !== user.id) {
-            markConversationRead(id).catch((err) => console.error("markConversationRead (realtime)", err));
-          }
         },
       )
       .on(
@@ -378,6 +440,66 @@ export function LocalConversationView() {
       supabase.removeChannel(channel);
     };
   }, [id, user]);
+
+  // Okundu imleci (docs/history/174-*): yalnız mesajlar GERÇEKTEN görüntülenirken (sekme görünür, listenin sonundayım, atlama penceresinde
+  // değilim, istek kabul edilmiş) başkalarının en yeni mesajına kadar ilerletilir. Aynı mesaj için ikinci yazma yapılmaz
+  // (`nextReadAck` son bildirilenden ileri değilse null verir); sunucu da imleç/sayaç değişmediyse yazmaz.
+  useEffect(() => {
+    if (!id || !user || !checked || !conversation || conversation.myStatus !== "accepted" || hasNewer || !isNearBottom) return;
+    if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
+    const ack = nextReadAck(messages, user.id, lastAckedRef.current);
+    if (!ack || ackInFlightRef.current) return;
+    ackInFlightRef.current = true;
+    void markConversationReadUpTo(id, ack).then((result) => {
+      ackInFlightRef.current = false;
+      if (result) {
+        lastAckedRef.current = ack;
+        setAckVersion((v) => v + 1);
+      }
+    });
+  }, [id, user, checked, conversation, messages, hasNewer, isNearBottom, ackVersion]);
+
+  useEffect(() => {
+    function onVisible() {
+      if (document.visibilityState === "visible") setAckVersion((v) => v + 1);
+    }
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, []);
+
+  // Birebir: karşı tarafın okundu imleci canlı izlenir (kendi üyelik satırı + karşı tarafın satırı yalnız bu iki kişiye görünür).
+  const conversationKind = conversation?.kind;
+  useEffect(() => {
+    if (!id || !user || !checked || conversationKind !== "direct") return;
+    const channel = supabase
+      .channel(`read:${id}`)
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "conversation_members", filter: `conversation_id=eq.${id}` }, (payload) => {
+        const row = payload.new as { user_id?: string; last_read_at?: string | null };
+        if (!row.user_id || row.user_id === user.id) return;
+        setPartnerReadAt((prev) => advanceReadAt(prev, row.last_read_at));
+      })
+      .subscribe();
+    function refetchOnFocus() {
+      if (document.visibilityState !== "visible") return;
+      void fetchPartnerReadAt(id as string, user?.id ?? "").then((value) => setPartnerReadAt((prev) => advanceReadAt(prev, value)));
+    }
+    document.addEventListener("visibilitychange", refetchOnFocus);
+    return () => {
+      document.removeEventListener("visibilitychange", refetchOnFocus);
+      void supabase.removeChannel(channel);
+    };
+  }, [id, user, checked, conversationKind]);
+
+  // Mesaja atlama: hedef (yüklü ya da yeni yüklenen pencerede) görünür olunca ortalanır ve kısa süre vurgulanır.
+  useEffect(() => {
+    if (!jumpTarget) return;
+    const el = panelRef.current?.querySelector<HTMLElement>(`[data-message-id="${jumpTarget.id}"]`);
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    setFlashedMessageId(jumpTarget.id);
+    if (flashTimerRef.current) clearTimeout(flashTimerRef.current);
+    flashTimerRef.current = setTimeout(() => setFlashedMessageId(null), HIGHLIGHT_DURATION_MS);
+  }, [jumpTarget]);
 
   // ---- Grup sohbeti ---------------------------------------------------------------------------------------------
   // Sunucudan taze grup satırı/rol: ayar kaydı, sayaç, rol değişimi sonrası ve Realtime olayında. Satır artık okunamıyorsa
@@ -493,6 +615,11 @@ export function LocalConversationView() {
   // yeni mesajı kendisi gönderdiyse) en alta kaydır — eski mesajları
   // incelerken gelen bir mesaj scroll konumunu zorla değiştirmesin.
   useEffect(() => {
+    // Bir mesaja atlama penceresi yüklendiğinde liste en alta değil hedefe kayar.
+    if (skipAutoScrollRef.current) {
+      skipAutoScrollRef.current = false;
+      return;
+    }
     const last = messages[messages.length - 1];
     const isOwnMessage = Boolean(last && user && last.senderId === user.id) || pendingRef.current.length > 0;
     if (isNearBottomRef.current || isOwnMessage) {
@@ -604,6 +731,9 @@ export function LocalConversationView() {
   }
 
   function afterSuccessfulSend() {
+    stopTyping();
+    // Atlama penceresindeyken gönderilen mesaj en yeni sayfada görünsün.
+    if (hasNewerRef.current) void returnToLatest();
     // A new message brings an archived / deleted chat back to the inbox (server trigger); mirror it here and resync the list.
     if (conversation?.archivedAt || conversation?.deletedAt) {
       setConversation((prev) => (prev ? { ...prev, archivedAt: null, deletedAt: null } : prev));
@@ -860,6 +990,85 @@ export function LocalConversationView() {
     }
   }
 
+  /** Bir mesaja git: yüklüyse doğrudan, değilse çevresindeki pencere yüklenir. Mesaj bu kullanıcı için görünmüyorsa false (içerik gösterilmez). */
+  async function goToMessage(messageId: string): Promise<boolean> {
+    if (!id || !user) return false;
+    if (messagesRef.current.some((m) => m.id === messageId)) {
+      setJumpTarget({ id: messageId, nonce: Date.now() });
+      return true;
+    }
+    const win = await fetchMessageWindow(id, user.id, messageId);
+    if (!win) return false;
+    skipAutoScrollRef.current = true;
+    setMessages(win.messages);
+    setHasOlder(win.hasOlder);
+    setHasNewer(win.hasNewer);
+    setJumpTarget({ id: messageId, nonce: Date.now() });
+    return true;
+  }
+
+  async function jumpWithFeedback(messageId: string) {
+    const ok = await goToMessage(messageId);
+    if (!ok) showToast(t("chat.jump.failed"));
+  }
+
+  /** "Güncel mesajlara dön": atlama penceresinden çıkıp en yeni sayfayı yükler. */
+  async function returnToLatest() {
+    if (!id || !user) return;
+    try {
+      const page = await fetchMessagePage(id, user.id);
+      setMessages(page.messages);
+      setHasOlder(page.hasMore);
+      setHasNewer(false);
+      requestAnimationFrame(() => bottomRef.current?.scrollIntoView({ block: "end" }));
+    } catch (err) {
+      console.error("returnToLatest", err);
+      showToast(t("common.actionFailedRetry"));
+    }
+  }
+
+  async function toggleStar(message: Message) {
+    if (!user) return;
+    const wasStarred = starredIds.has(message.id);
+    const apply = (starred: boolean) =>
+      setStarredIds((prev) => {
+        const next = new Set(prev);
+        if (starred) next.add(message.id);
+        else next.delete(message.id);
+        return next;
+      });
+    apply(!wasStarred);
+    try {
+      if (wasStarred) await unstarMessage(user.id, message.id);
+      else await starMessage(user.id, message.id);
+      showToast(wasStarred ? t("chat.star.unstarredToast") : t("chat.star.starredToast"));
+    } catch (err) {
+      console.error("toggleStar", err);
+      apply(wasStarred);
+      showToast(toChatFeatureError(err instanceof Error ? err : null).message);
+    }
+  }
+
+  async function setPinState(message: Message, pin: boolean) {
+    try {
+      await pinned.setPinned(message, pin);
+      showToast(pin ? t("chat.pin.pinnedToast") : t("chat.pin.unpinnedToast"));
+    } catch (err) {
+      console.error("setPinState", err);
+      showToast(toChatFeatureError(err instanceof Error ? err : null).message);
+    }
+  }
+
+  async function copyMessage(message: Message) {
+    try {
+      await navigator.clipboard.writeText(message.body ?? "");
+      showToast(t("common.copied"));
+    } catch (err) {
+      console.error("copyMessage", err);
+      showToast(t("common.actionFailedRetry"));
+    }
+  }
+
   function startEdit(message: Message) {
     setEditingId(message.id);
     setEditDraft(message.body ?? "");
@@ -995,6 +1204,18 @@ export function LocalConversationView() {
   }
 
   const participant = conversation.participants[0];
+  const senderLabel = (senderId: string): string =>
+    senderId === user.id
+      ? t("chat.starred.you")
+      : isGroup
+        ? (groupSenders.senderFor(senderId)?.displayName ?? t("chat.starred.unknownUser"))
+        : (participant?.displayName ?? t("chat.starred.unknownUser"));
+  // "Yazıyor…" metni: grupta adlar üyelik/profil verisinden çözülür (çözülemeyen kişi adlandırılmaz, sayılır); engellediğim kişinin göstergesi gizlenir.
+  const typingNames = isGroup ? typingIds.map((uid) => groupSenders.senderFor(uid)?.displayName).filter((name): name is string => Boolean(name)) : [];
+  const typingText =
+    blockState.isBlocked || typingIds.length === 0
+      ? ""
+      : formatTypingText(typingNames, typingIds.length - typingNames.length, isGroup, (key, params) => t(key as TranslationKey, params));
   // A pending bubble is hidden the instant its real message is in the thread (the INSERT response or the Realtime echo, whichever lands first) — never both at once.
   const visiblePending = pendingSends.filter((p) => !messagesById.has(p.id));
 
@@ -1024,10 +1245,16 @@ export function LocalConversationView() {
             <GroupAvatar name={group.name} avatarUrl={group.avatarUrl} size={36} badge />
             <span className="min-w-0 leading-tight">
               <span className="block truncate text-sm font-semibold tracking-[-0.01em] text-text transition-colors group-hover:text-primary">{group.name}</span>
-              <span className="flex items-center gap-1.5 truncate text-caption text-text-muted">
-                <Users size={11} aria-hidden /> {memberCountText(t, group.memberCount)}
-                {conversation.mutedAt && <BellOff size={11} aria-label={t("groups.about.muteLabel")} />}
-              </span>
+              {typingText ? (
+                <span data-typing-indicator role="status" className="block truncate text-caption font-medium text-primary">
+                  {typingText}
+                </span>
+              ) : (
+                <span className="flex items-center gap-1.5 truncate text-caption text-text-muted">
+                  <Users size={11} aria-hidden /> {memberCountText(t, group.memberCount)}
+                  {conversation.mutedAt && <BellOff size={11} aria-label={t("groups.about.muteLabel")} />}
+                </span>
+              )}
             </span>
           </button>
         ) : (
@@ -1038,10 +1265,30 @@ export function LocalConversationView() {
             <Avatar src={participant.avatarUrl} alt={participant.displayName} size={36} />
             <span className="min-w-0 leading-tight">
               <span className="block truncate text-sm font-semibold tracking-[-0.01em] text-text transition-colors group-hover:text-primary">{participant.displayName}</span>
-              <span className="block truncate text-caption text-text-muted">@{participant.username}</span>
+              {typingText ? (
+                <span data-typing-indicator role="status" className="block truncate text-caption font-medium text-primary">
+                  {typingText}
+                </span>
+              ) : (
+                <span className="block truncate text-caption text-text-muted">@{participant.username}</span>
+              )}
             </span>
           </Link>
         )}
+        <button
+          type="button"
+          onClick={() => setSearchOpen((open) => !open)}
+          aria-label={t("chat.search.open")}
+          title={t("chat.search.open")}
+          aria-pressed={searchOpen}
+          data-chat-search-toggle
+          className={cn(
+            "flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border bg-transparent text-text-muted transition-colors hover:bg-surface-soft hover:text-text",
+            searchOpen && "bg-primary-soft text-primary",
+          )}
+        >
+          <Search size={16} />
+        </button>
         {group ? (
           <ChatHeaderMenu>
             {(close) => (
@@ -1117,6 +1364,22 @@ export function LocalConversationView() {
         />
         )}
       </div>
+      {searchOpen && (
+        <ConversationSearchPanel
+          conversationId={conversation.id}
+          senderLabel={senderLabel}
+          onSenderIds={setSearchSenderIds}
+          onJump={(hit) => void jumpWithFeedback(hit.id)}
+          onClose={() => setSearchOpen(false)}
+        />
+      )}
+      <PinnedMessagesBar
+        items={pinned.items}
+        canPin={canPin}
+        senderLabel={senderLabel}
+        onJump={(message) => void jumpWithFeedback(message.id)}
+        onUnpin={(message) => void setPinState(message, false)}
+      />
       {conversation.myStatus === "pending" && (
         <div className="flex items-center justify-between gap-3 border-b border-primary/15 bg-primary-soft/50 px-4 py-2.5 lg:px-6">
           <p className="text-xs text-text">
@@ -1186,7 +1449,15 @@ export function LocalConversationView() {
               currentUserId={user.id}
               onReact={handleReact}
               sender={isGroup ? groupSenders.senderFor(message.senderId) : undefined}
+              readState={!isGroup && message.senderId === user.id ? readStateFor(message.createdAt, partnerReadAt) : null}
               actions={{
+                isStarred: (messageId) => starredIds.has(messageId),
+                onToggleStar: toggleStar,
+                canPin,
+                isPinned: (messageId) => pinned.pinnedIds.has(messageId),
+                onTogglePin: (target) => void setPinState(target, !pinned.pinnedIds.has(target.id)),
+                onCopy: copyMessage,
+                onShowInfo: isGroup ? setInfoMessage : undefined,
                 onStartReply: setReplyingTo,
                 onStartEdit: startEdit,
                 onCancelEdit: () => setEditingId(null),
@@ -1209,8 +1480,31 @@ export function LocalConversationView() {
         {visiblePending.map((pending) => (
           <PendingMessageBubble key={pending.id} pending={pending} onRetry={retryPending} onDiscard={discardPending} />
         ))}
+        {hasNewer && (
+          <div className="flex justify-center">
+            <button
+              type="button"
+              onClick={() => void returnToLatest()}
+              className="rounded-full border border-border-soft bg-surface px-3.5 py-1.5 text-xs font-medium text-primary shadow-xs transition-colors hover:border-border-strong"
+            >
+              {t("chat.jump.latest")}
+            </button>
+          </div>
+        )}
         <div ref={bottomRef} />
       </div>
+      {hasNewer && (
+        <button
+          type="button"
+          data-jump-latest
+          onClick={() => void returnToLatest()}
+          aria-label={t("chat.jump.latest")}
+          title={t("chat.jump.latest")}
+          className="absolute bottom-24 right-4 z-20 flex h-10 w-10 items-center justify-center rounded-full border border-border-soft bg-surface text-primary shadow-card transition-colors hover:border-border-strong"
+        >
+          <ChevronsDown size={18} />
+        </button>
+      )}
       {confirmKind && (
         <ChatConfirmModal
           kind={confirmKind}
@@ -1236,7 +1530,11 @@ export function LocalConversationView() {
       )}
       <MessageComposer
         draft={draft}
-        onDraftChange={setDraft}
+        onDraftChange={(value) => {
+          setDraft(value);
+          if (value.trim()) notifyTyping();
+          else stopTyping();
+        }}
         placeholder={pendingShare ? t("messages.addNotePlaceholder") : t("messages.writeMessagePlaceholder")}
         disabled={blockState.isBlocked || !canPost}
         canSend={
@@ -1299,6 +1597,7 @@ export function LocalConversationView() {
           </>
         }
       />
+      {infoMessage && <MessageInfoModal message={infoMessage} onClose={() => setInfoMessage(null)} />}
       {groupInfoTab && isGroup && (
         <GroupInfoModal
           conversation={conversation}

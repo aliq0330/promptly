@@ -97,12 +97,13 @@ export interface ChatGroupRow {
   member_count: number;
   pending_request_count: number;
   history_visible: boolean;
+  members_can_pin: boolean;
   role_permissions: unknown;
   created_at: string;
 }
 
 export const CHAT_GROUP_SELECT =
-  "id, name, description, avatar_url, visibility, posting_policy, member_limit, member_count, pending_request_count, history_visible, role_permissions, created_at";
+  "id, name, description, avatar_url, visibility, posting_policy, member_limit, member_count, pending_request_count, history_visible, members_can_pin, role_permissions, created_at";
 
 export function mapChatGroupRow(row: ChatGroupRow, myRole: GroupRole): ChatGroup {
   return {
@@ -116,6 +117,7 @@ export function mapChatGroupRow(row: ChatGroupRow, myRole: GroupRole): ChatGroup
     memberCount: row.member_count,
     pendingRequestCount: row.pending_request_count,
     historyVisible: Boolean(row.history_visible),
+    membersCanPin: Boolean(row.members_can_pin),
     rolePermissions: normalizeRolePermissions(row.role_permissions),
     createdAt: row.created_at,
     myRole,
@@ -172,10 +174,11 @@ export async function updateChatGroup(groupId: string, patch: UpdateChatGroupPat
  */
 export async function updateChatGroupOwnerSettings(
   groupId: string,
-  patch: { historyVisible?: boolean; rolePermissions?: Partial<Record<"admin" | "moderator", Partial<Record<GroupCapability, boolean>>>> },
+  patch: { historyVisible?: boolean; membersCanPin?: boolean; rolePermissions?: Partial<Record<"admin" | "moderator", Partial<Record<GroupCapability, boolean>>>> },
 ): Promise<void> {
   const body: Record<string, unknown> = {};
   if (patch.historyVisible !== undefined) body.history_visible = patch.historyVisible;
+  if (patch.membersCanPin !== undefined) body.members_can_pin = patch.membersCanPin;
   if (patch.rolePermissions !== undefined) body.role_permissions = patch.rolePermissions;
   await callRpc("update_chat_group_owner_settings", { p_group_id: groupId, p_patch: body });
 }

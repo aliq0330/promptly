@@ -23,6 +23,16 @@ export interface MessageBubbleActions {
   isDeletingId: string | null;
   /** Grup sohbeti: bu mesajı yönetici olarak silebilir miyim (gönderen daha düşük rütbede mi)? Birebir sohbette verilmez. */
   canModerate?: (message: Message) => boolean;
+  /** Yıldız (kişiye özel): mesaj benim için yıldızlı mı ve değiştirme. */
+  isStarred?: (id: string) => boolean;
+  onToggleStar?: (message: Message) => void;
+  /** Sabitleme: bu kullanıcı sabitleyebilir mi (arayüz ipucu; gerçek yetki sunucuda), mesaj sabit mi ve değiştirme. */
+  canPin?: boolean;
+  isPinned?: (id: string) => boolean;
+  onTogglePin?: (message: Message) => void;
+  onCopy?: (message: Message) => void;
+  /** "Mesaj bilgisi" (grup, kendi mesajım): kimler okudu. */
+  onShowInfo?: (message: Message) => void;
 }
 
 /** Grup sohbetinde mesajın üstünde gösterilen gönderen bilgisi. */

@@ -39,6 +39,7 @@ export const GROUP_CAPABILITIES: readonly GroupCapability[] = [
   "ban_members",
   "manage_roles",
   "delete_messages",
+  "pin_messages",
 ];
 
 /** Moderatöre `manage_roles` verilemez (rütbe kuralı gereği anlamsız; sunucu da reddeder). */
@@ -47,8 +48,8 @@ export function capabilitiesFor(role: "admin" | "moderator"): readonly GroupCapa
 }
 
 export const DEFAULT_ROLE_PERMISSIONS: RolePermissions = {
-  admin: { edit_settings: true, change_visibility: true, manage_invites: true, manage_requests: true, remove_members: true, ban_members: true, manage_roles: true, delete_messages: true },
-  moderator: { edit_settings: false, change_visibility: false, manage_invites: false, manage_requests: true, remove_members: true, ban_members: false, manage_roles: false, delete_messages: true },
+  admin: { edit_settings: true, change_visibility: true, manage_invites: true, manage_requests: true, remove_members: true, ban_members: true, manage_roles: true, delete_messages: true, pin_messages: true },
+  moderator: { edit_settings: false, change_visibility: false, manage_invites: false, manage_requests: true, remove_members: true, ban_members: false, manage_roles: false, delete_messages: true, pin_messages: true },
 };
 
 /** Sunucudan gelen `role_permissions` jsonb'sini tam ve güvenli bir nesneye çevirir (eksik/bozuk anahtar → varsayılan). */

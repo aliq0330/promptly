@@ -116,3 +116,6 @@ Mevcut `conversations`/`conversation_members`/`messages` genişletildi (`kind`, 
 
 ### 13a. Grup yetkileri ve geçmiş görünürlüğü — yapıldı (canlıya uygulanmadı)
 Owner admin/moderatör yetkilerini rol başına açıp kapatır (varsayılanlar 172'deki matrisle aynı) ve yeni üyelerin önceki mesajları görüp görmeyeceğini seçer; ikisi de yalnız owner. Migration `20260920000000_chat_group_permissions.sql` (önce migration, sonra istemci kodu). Ayrıntı: `docs/history/173-*`. Test: `supabase/tests/run-local.sh supabase/tests/chat-group-permissions.sql`.
+
+### 14. Sohbet geliştirmeleri — yapıldı (canlıya uygulanmadı)
+Okundu bilgisi (üye başına imleç; birebirde tik, grupta "Mesaj bilgisi"), "yazıyor" (Realtime Broadcast, private kanal), sabit mesajlar (birebir iki taraf; grupta `pin_messages` yeteneği / owner ayarı `members_can_pin`), sohbet içi arama + mesaja atlama, yıldızlı mesajlar (`/messages/starred`). Migration'lar: `20260920010000`, `20260920020000`, `20260920030000` (önce migration, sonra istemci kodu; Realtime Dashboard'unda "Allow public access" KAPALI olmalı). Ayrıntı ve bilinen boşluklar: `docs/history/174-*`. Test: `supabase/tests/run-local.sh supabase/tests/chat-features.sql` (67 kontrol), `npm test`, `tests/messaging-ui/run-chat.mjs` (33 senaryo).

@@ -292,7 +292,8 @@ export type GroupCapability =
   | "remove_members"
   | "ban_members"
   | "manage_roles"
-  | "delete_messages";
+  | "delete_messages"
+  | "pin_messages";
 export type RolePermissions = Record<"admin" | "moderator", Record<GroupCapability, boolean>>;
 
 /** Bir grup sohbetinin grup tarafı (`chat_groups` + bu kullanıcının üyeliği). */
@@ -309,6 +310,8 @@ export interface ChatGroup {
   pendingRequestCount: number;
   /** Yeni üye katılmadan ÖNCEKİ mesajları görebilir mi (yalnız owner değiştirir). */
   historyVisible: boolean;
+  /** Owner ayarı: yetkisiz (normal) üyeler de mesaj sabitleyebilir mi (docs/history/174-*). */
+  membersCanPin: boolean;
   /** Admin ve moderatör yetkileri (yalnız owner değiştirir; owner her zaman her şeyi yapar). */
   rolePermissions: RolePermissions;
   createdAt: string;
@@ -334,6 +337,49 @@ export interface Conversation {
   mutedAt: string | null;
   /** Messages created before this are hidden from THIS viewer only; the message rows themselves stay. */
   clearedAt: string | null;
+}
+
+/** Sabitlenmiş mesaj (`pinned_messages`): mesajın kendisi kopyalanmaz, yalnız başvuru + kim/ne zaman sabitledi. */
+export interface PinnedMessage {
+  messageId: string;
+  conversationId: string;
+  pinnedBy: string | null;
+  pinnedAt: string;
+}
+
+/** Bir mesajın okundu ayrıntısı satırı (`message_read_receipts`): yalnız mesajın göndericisi görür. */
+export interface MessageReceipt {
+  userId: string;
+  username: string;
+  displayName: string;
+  avatarUrl: string | null;
+  hasRead: boolean;
+  readAt: string | null;
+}
+
+/** Sohbet içi arama sonucu (`search_conversation_messages`). */
+export interface ConversationSearchHit {
+  id: string;
+  senderId: string;
+  body: string;
+  createdAt: string;
+}
+
+/** Yıldızlı mesajlar ekranındaki satır (`list_starred_messages`): birebir ve grup mesajları tek listede. */
+export interface StarredMessage {
+  messageId: string;
+  conversationId: string;
+  starredAt: string;
+  senderId: string;
+  senderName: string;
+  body: string | null;
+  hasAttachments: boolean;
+  hasShared: boolean;
+  createdAt: string;
+  kind: "direct" | "group";
+  /** Grup adı (grup) ya da karşı tarafın görünen adı (birebir). */
+  chatName: string;
+  chatAvatarUrl: string | null;
 }
 
 /**

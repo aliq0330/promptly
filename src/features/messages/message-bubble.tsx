@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { MoreHorizontal, SmilePlus } from "lucide-react";
+import { Check, CheckCheck, MoreHorizontal, Pin, SmilePlus, Star } from "lucide-react";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { Button } from "@/components/ui/button";
 import { EmojiPicker } from "./emoji-picker";
@@ -14,6 +14,7 @@ import { parseWorkflowShareBody } from "./workflow-share-format";
 import { parsePresetShareBody } from "./preset-share-format";
 import { cn, formatRelativeTime } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
+import type { ReadState } from "@/lib/chat-features";
 import type { Message, MessageAttachment } from "@/types";
 import type { MessageBubbleActions, MessageReactionEntry, MessageSender } from "./message-bubble-types";
 import { Avatar } from "@/components/ui/avatar";
@@ -73,8 +74,11 @@ export function MessageBubble({
   onReact,
   actions,
   sender,
+  readState,
 }: {
   message: Message;
+  /** Yalnız birebir sohbette, benim mesajımda: karşı tarafın okundu durumu (grupta tik yok; ayrıntı "Mesaj bilgisi"nde). */
+  readState?: ReadState | null;
   /** Yalnız grup sohbetinde, başkasının mesajında: gönderenin avatarı, adı ve (varsa) rolü mesajın üstünde gösterilir. */
   sender?: MessageSender | null;
   isMe: boolean;
@@ -367,6 +371,18 @@ export function MessageBubble({
           {formatRelativeTime(message.createdAt, language)}
           {message.editedAt && !isDeleted && ` · ${t("comments.edited")}`}
         </span>
+        {!isDeleted && actions.isPinned?.(message.id) && <Pin size={11} className="text-primary" aria-label={t("chat.pin.barLabel")} />}
+        {!isDeleted && actions.isStarred?.(message.id) && <Star size={11} className="fill-current text-warning" aria-label={t("chat.star.unstar")} data-starred-mark />}
+        {!isDeleted && isMe && readState && (
+          <span
+            data-read-state={readState}
+            title={readState === "read" ? t("chat.read.read") : t("chat.read.sent")}
+            className={cn("inline-flex items-center", readState === "read" ? "text-primary" : "text-text-muted")}
+          >
+            {readState === "read" ? <CheckCheck size={14} aria-hidden /> : <Check size={14} aria-hidden />}
+            <span className="sr-only">{readState === "read" ? t("chat.read.read") : t("chat.read.sent")}</span>
+          </span>
+        )}
       </div>
     </div>
   );
