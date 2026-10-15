@@ -2,6 +2,8 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   accessibleTabs,
+  VISIBILITY_OPTIONS,
+  visibilityTraits,
   canModeratePost,
   canRsvp,
   canSeeManageTab,
@@ -18,6 +20,7 @@ import {
   muteUntilIso,
   normalizeCategory,
   normalizeFeedPolicy,
+  normalizeVisibility,
   normalizeNotifyLevel,
   parseCommunityStats,
   resolveTab,
@@ -187,4 +190,24 @@ test("yollar: topluluk ve sohbet adresleri", () => {
   assert.equal(communityHref("abc", "feed"), "/communities/local?id=abc&tab=feed");
   assert.equal(communityHref("abc", "overview"), "/communities/local?id=abc");
   assert.equal(communityChatHref("abc"), "/messages/local?id=abc");
+});
+
+test("görünürlük: bilinmeyen değer en kapalı düzeye düşer; üç düzey sıralıdır", () => {
+  assert.equal(normalizeVisibility("public"), "public");
+  assert.equal(normalizeVisibility("restricted"), "restricted");
+  assert.equal(normalizeVisibility("private"), "private");
+  assert.equal(normalizeVisibility("secret"), "private");
+  assert.equal(normalizeVisibility(null), "private");
+  assert.deepEqual([...VISIBILITY_OPTIONS], ["public", "restricted", "private"]);
+});
+
+test("görünürlük: Keşfet/arama/içerik/katılım davranışı üç düzeyde", () => {
+  assert.deepEqual(visibilityTraits("public"), { inDiscover: true, searchable: true, publicContent: true, joinMode: "join" });
+  assert.deepEqual(visibilityTraits("restricted"), { inDiscover: false, searchable: true, publicContent: false, joinMode: "request" });
+  assert.deepEqual(visibilityTraits("private"), { inDiscover: false, searchable: false, publicContent: false, joinMode: "invite" });
+});
+
+test("sekmeler: kapalı (restricted) toplulukta üye olmayan hiçbir sekme görmez; üye tam sekme alır", () => {
+  assert.deepEqual(accessibleTabs({ role: null, visibility: "restricted" }), []);
+  assert.deepEqual(accessibleTabs({ role: "member", visibility: "restricted" }), ["overview", "feed", "chat", "members", "events", "about"]);
 });

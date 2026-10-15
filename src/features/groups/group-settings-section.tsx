@@ -1,11 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Camera, CheckCircle2, Globe, Lock, Trash2 } from "lucide-react";
+import { Camera, CheckCircle2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { ChoiceCard, fieldControlClassName, fieldInputClassName, fieldLabelClassName } from "@/components/ui/field";
 import { useAuth } from "@/features/auth/auth-provider";
+import { VisibilityLabel } from "@/features/communities/visibility-label";
+import { VISIBILITY_HELP_KEYS, VISIBILITY_OPTIONS } from "@/lib/communities";
+import type { TranslationKey } from "@/lib/i18n/translations";
 import { ConfirmDialog } from "./confirm-dialog";
 import { GroupAvatar } from "./group-avatar";
 import { GroupOwnerSettings } from "./group-owner-settings";
@@ -25,6 +28,13 @@ import {
 } from "@/lib/chat-groups";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { ChatGroup, GroupPostingPolicy, GroupVisibility } from "@/types";
+
+/** Görünürlüğe geçiş eylemlerinin düğme etiketi + onay penceresi metinleri. */
+const VISIBILITY_ACTION_KEYS: Record<GroupVisibility, { label: TranslationKey; title: TranslationKey; body: TranslationKey }> = {
+  public: { label: "groups.settings.makePublic", title: "groups.settings.makePublicTitle", body: "groups.settings.makePublicBody" },
+  restricted: { label: "groups.settings.makeRestricted", title: "groups.settings.makeRestrictedTitle", body: "groups.settings.makeRestrictedBody" },
+  private: { label: "groups.settings.makePrivate", title: "groups.settings.makePrivateTitle", body: "groups.settings.makePrivateBody" },
+};
 
 const ACCEPTED_AVATAR_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
@@ -121,7 +131,7 @@ export function GroupSettingsSection({
     setTargetVisibility(null);
     await onChanged();
     if (result.changed && result.visibility === "public") setVisibilityResult(result);
-    else onToast(result.changed ? t("groups.settings.visibilityPrivateToast") : t("groups.settings.visibilityUnchangedToast"));
+    else onToast(!result.changed ? t("groups.settings.visibilityUnchangedToast") : result.visibility === "restricted" ? t("groups.settings.visibilityRestrictedToast") : t("groups.settings.visibilityPrivateToast"));
   }
 
   async function handleDelete() {
@@ -133,7 +143,6 @@ export function GroupSettingsSection({
   }
 
   const shownAvatar = removeAvatar ? null : (avatarPreview ?? group.avatarUrl);
-  const otherVisibility: GroupVisibility = group.visibility === "public" ? "private" : "public";
 
   const canEdit = can(group.myRole, "edit_settings", group.rolePermissions);
   const canChangeVisibility = can(group.myRole, "change_visibility", group.rolePermissions);
@@ -253,13 +262,17 @@ export function GroupSettingsSection({
         <h3 id="settings-visibility-title" className="text-label font-semibold text-text">
           {t("groups.visibility.label")}
         </h3>
-        <p className="flex items-center gap-2 text-small text-text-secondary">
-          {group.visibility === "public" ? <Globe size={15} aria-hidden /> : <Lock size={15} aria-hidden />}
-          {group.visibility === "public" ? t("groups.visibility.publicHelp") : t("groups.visibility.privateHelp")}
+        <p className="flex items-start gap-2 text-small text-text-secondary">
+          <VisibilityLabel visibility={group.visibility} size={15} className="flex shrink-0 items-center gap-1.5 font-medium text-text" />
+          <span>{t(VISIBILITY_HELP_KEYS[group.visibility])}</span>
         </p>
-        <Button type="button" variant="outline" size="sm" onClick={() => { visibilityAction.setError(null); setTargetVisibility(otherVisibility); }}>
-          {otherVisibility === "public" ? t("groups.settings.makePublic") : t("groups.settings.makePrivate")}
-        </Button>
+        <div className="flex flex-wrap gap-2" role="group" aria-label={t("groups.settings.visibilityOptionsAria")}>
+          {VISIBILITY_OPTIONS.filter((option) => option !== group.visibility).map((option) => (
+            <Button key={option} type="button" variant="outline" size="sm" onClick={() => { visibilityAction.setError(null); setTargetVisibility(option); }}>
+              {t(VISIBILITY_ACTION_KEYS[option].label)}
+            </Button>
+          ))}
+        </div>
       </section>
 
       )}
@@ -281,9 +294,9 @@ export function GroupSettingsSection({
       {targetVisibility && (
         <ConfirmDialog
           id="visibility-confirm-title"
-          title={targetVisibility === "public" ? t("groups.settings.makePublicTitle") : t("groups.settings.makePrivateTitle")}
-          body={targetVisibility === "public" ? t("groups.settings.makePublicBody") : t("groups.settings.makePrivateBody")}
-          confirmLabel={targetVisibility === "public" ? t("groups.settings.makePublic") : t("groups.settings.makePrivate")}
+          title={t(VISIBILITY_ACTION_KEYS[targetVisibility].title)}
+          body={t(VISIBILITY_ACTION_KEYS[targetVisibility].body)}
+          confirmLabel={t(VISIBILITY_ACTION_KEYS[targetVisibility].label)}
           busy={visibilityAction.busy}
           error={visibilityAction.error}
           onConfirm={() => void applyVisibility()}

@@ -3,13 +3,14 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Globe, Link2Off, Loader2, Lock } from "lucide-react";
+import { Link2Off, Loader2 } from "lucide-react";
 import { Button, buttonClassName } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { fieldControlClassName, fieldLabelClassName } from "@/components/ui/field";
 import { useAuthStatus } from "@/features/auth/use-auth-status";
 import { useRealMessages } from "@/features/messages/real-messages-provider";
 import { GroupAvatar } from "@/features/groups/group-avatar";
+import { VisibilityLabel } from "./visibility-label";
 import { useAsyncAction } from "@/features/groups/use-async-action";
 import { RulesAcceptBox } from "./rules-accept";
 import { joinCommunityViaLink, previewCommunityLink, type CommunityLinkPreview } from "@/lib/supabase/communities";
@@ -162,7 +163,8 @@ export function JoinCommunityPage() {
   }
 
   const full = preview.memberCount >= preview.memberLimit;
-  const isPrivate = preview.visibility === "private";
+  // Bağlantıyla yalnız HERKESE AÇIK topluluğa doğrudan girilir; kapalı ve tamamen kapalıda bağlantı bir başvuru oluşturur.
+  const isPrivate = preview.visibility !== "public";
 
   return shell(
     <div className="space-y-5 rounded-xl border border-border-soft bg-surface p-6 shadow-card">
@@ -173,10 +175,7 @@ export function JoinCommunityPage() {
           <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-caption text-text-muted">
             <Badge variant="neutral">{t(CATEGORY_LABEL_KEYS[preview.category])}</Badge>
             <span>{memberCountText(t, preview.memberCount)}</span>
-            <span className="flex items-center gap-1">
-              {isPrivate ? <Lock size={12} aria-hidden /> : <Globe size={12} aria-hidden />}
-              {isPrivate ? t("groups.visibility.private") : t("groups.visibility.public")}
-            </span>
+            <VisibilityLabel visibility={preview.visibility} className="flex items-center gap-1" />
           </p>
         </div>
       </div>

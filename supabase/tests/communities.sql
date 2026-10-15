@@ -119,8 +119,7 @@ select public._check(7, 'kapalı topluluk: gönderi/duyuru/etkinlik/mesaj/rapor/
   and public.can_read_community(public._g('open')));
 select public._check(8, 'kapalı topluluğa doğrudan katılım yok; varlığı sızmaz',
   public._try(format('select public.join_community(%L, true)', public._g('closed'))) like '%group_not_found%'
-  and public._try(format('select public.join_chat_group(%L)', public._g('closed'))) like '%group_not_found%'
-  and public._try(format('select public.set_community_bookmark(%L, true)', public._g('closed'))) like '%group_not_found%');
+  and public._try(format('select public.join_chat_group(%L)', public._g('closed'))) like '%group_not_found%');
 
 -- ============================================================================
 -- 3. Açık topluluğa katılım
@@ -601,33 +600,9 @@ select public._check(83, 'sahiplik: başka üye varken owner ayrılamaz (önce d
 reset role;
 
 -- ============================================================================
--- 13. Listeler, yer imi, üye araması
+-- 13. Listeler, üye araması
 -- ============================================================================
 set role authenticated;
-select public._as_user(:frank);
-select public._tk('t84a', format('select public.set_community_bookmark(%L, true)', public._g('open')));
-select public._tk('t84b', format('select public.set_community_bookmark(%L, true)', public._g('open')));
-select public._check(84, 'yer imi: açık topluluk eklenir/listelenir; tekrar eklemek yinelemez',
-  public._r('t84a') = 'ok' and public._r('t84b') = 'ok'
-  and (select count(*) from public.list_my_communities('bookmarked')) = 1
-  and (select count(*) from public.community_bookmarks where user_id = :frank) = 1);
-select public._as_user(:erin);
-select public._check(85, 'yer imi: kullanıcı yalnızca kendi yer imini görür',
-  (select count(*) from public.community_bookmarks) = 0
-  and (select count(*) from public.list_my_communities('bookmarked')) = 0);
-reset role;
-update public.chat_groups set visibility = 'private' where id = public._g('open');
-set role authenticated;
-select public._as_user(:frank);
-select public._check(86, 'yer imi: topluluk sonradan kapanırsa (üye değilsem) listede görünmez',
-  (select count(*) from public.list_my_communities('bookmarked')) = 0);
-reset role;
-update public.chat_groups set visibility = 'public' where id = public._g('open');
-set role authenticated;
-select public._as_user(:frank);
-select public.set_community_bookmark(public._g('open'), false);
-select public._check(851, 'yer imi: geri alınır',
-  (select count(*) from public.community_bookmarks where user_id = :frank) = 0);
 select public._as_user(:alice);
 select public._check(87, 'listeler: üye/yönettiklerim kapsamı; sıradan üye yönettiklerimde görünmez',
   (select count(*) from public.list_my_communities('member')) = 2
@@ -709,6 +684,228 @@ select public._check(97, 'EXECUTE: anon yeni RPC''leri çağıramaz; iç yardım
   and not has_table_privilege('authenticated', 'public.community_events', 'delete'));
 
 -- ============================================================================
+-- 15b. Üç görünürlük düzeyi: herkese açık / kapalı (restricted) / tamamen kapalı (private) (docs/history/176-*)
+-- ============================================================================
+reset role;
+create or replace function public._reqid(p_group uuid, p_user uuid) returns uuid language sql stable security definer as
+  $$ select id from public.chat_group_join_requests where group_id = p_group and user_id = p_user and status = 'pending' order by created_at desc limit 1 $$;
+grant execute on function public._reqid(uuid, uuid) to public;
+
+set role authenticated;
+select public._as_user(:alice);
+create temp table _v1 as select public.create_community('Görünür Atölye', 'herkese açık', 'public', null, 50, '{}'::uuid[], 'image', 'members', 'members', null, false) as j;
+create temp table _v2 as select public.create_community('Gizli Atölye', 'kapalı ama aranır', 'restricted', null, 3, '{}'::uuid[], 'audio', 'members', 'members', 'Kural: nazik ol', true) as j;
+create temp table _v3 as select public.create_community('Hayalet Kulüp', 'tamamen kapalı', 'private', null, 50, '{}'::uuid[], 'text', 'members', 'members', null, false) as j;
+create temp table _v4 as select public.create_community('Geçiş Topluluğu', 'görünürlük geçişi', 'restricted', null, 50, '{}'::uuid[], 'learning', 'members', 'members', null, false) as j;
+select public._tk('v_bad', $q$select public.create_community('X', null, 'secret')$q$);
+select public.share_to_community((select (j->>'group_id')::uuid from _v2), 'prompt', 'a0000000-0000-4000-8000-000000000001', 'gizli gönderi');
+select public.publish_community_announcement((select (j->>'group_id')::uuid from _v2), 'Gizli duyuru', 'yalnız üyeler', false, false, false);
+select public._as_user(:dave);
+create temp table _v5 as select public.create_community('Dave Kapalı', 'dave in kapalı topluluğu', 'restricted', null, 50, '{}'::uuid[], 'general', 'members', 'members', null, false) as j;
+reset role;
+insert into public._ctx select 'v_pub', j->>'group_id' from _v1;
+insert into public._ctx select 'v_res', j->>'group_id' from _v2;
+insert into public._ctx select 'v_prv', j->>'group_id' from _v3;
+insert into public._ctx select 'v_gec', j->>'group_id' from _v4;
+insert into public._ctx select 'v_dave', j->>'group_id' from _v5;
+insert into public.messages (conversation_id, sender_id, body) values (public._g('v_res'), :alice, 'kapalı topluluk mesajı');
+
+select public._check(102, 'oluşturma: üç düzey saklanır; geçersiz düzey reddedilir; kontrol kısıtı ham değeri de reddeder',
+  (select visibility from public.chat_groups where id = public._g('v_pub')) = 'public'
+  and (select visibility from public.chat_groups where id = public._g('v_res')) = 'restricted'
+  and (select visibility from public.chat_groups where id = public._g('v_prv')) = 'private'
+  and exists (select 1 from public.conversation_members where conversation_id = public._g('v_res') and user_id = :alice and role = 'owner')
+  and public._r('v_bad') like '%invalid_visibility%'
+  and public._try(format($q$update public.chat_groups set visibility = 'secret' where id = %L$q$, public._g('v_res'))) like '%chat_groups_visibility_check%');
+
+set role authenticated;
+select public._as_user(:erin);
+select public._check(103, 'keşif: yalnız herkese açık topluluk listelenir; kapalı ve tamamen kapalı Keşfet''te görünmez',
+  (select count(*) from public.discover_communities(null, 'popular', null, 50, 0) where id = public._g('v_pub')) = 1
+  and (select count(*) from public.discover_communities(null, 'popular', null, 50, 0) where id in (public._g('v_res'), public._g('v_prv'), public._g('v_dave'), public._g('v_gec'))) = 0
+  and (select count(*) from public.discover_communities('Gizli', 'popular', null, 50, 0)) = 0);
+select public._check(104, 'arama: kapalı topluluk bulunur (kart bilgisi) ama içerik istatistiği sızmaz',
+  (select count(*) from public.search_communities('Gizli Atölye')) = 1
+  and (select visibility from public.search_communities('Gizli Atölye')) = 'restricted'
+  and (select my_status from public.search_communities('Gizli Atölye')) = 'none'
+  and (select member_count from public.search_communities('Gizli Atölye')) = 1);
+select public._check(1041, 'arama: kapalı topluluk için gönderi/etkinlik/son etkinlik sızmaz; herkese açıkta görünür',
+  (select post_count is null and upcoming_event_count is null and last_activity_at is null from public.search_communities('Gizli Atölye'))
+  and (select count(*) from public.search_communities('Görünür Atölye')) = 1
+  and (select post_count is not null from public.search_communities('Görünür Atölye')));
+select public._check(1042, 'arama: tamamen kapalı topluluk ne adıyla ne açıklamasıyla bulunur',
+  (select count(*) from public.search_communities('Hayalet')) = 0
+  and (select count(*) from public.search_communities('tamamen kapalı')) = 0);
+select public._check(1043, 'arama: boş/null sorgu ve joker karakter sonuç döndürmez; kategori süzgeci',
+  (select count(*) from public.search_communities('')) = 0
+  and (select count(*) from public.search_communities(null)) = 0
+  and (select count(*) from public.search_communities('%')) = 0
+  and (select count(*) from public.search_communities('atölye', 'audio')) = 1
+  and (select count(*) from public.search_communities('atölye', 'text')) = 0);
+select public._check(105, 'satır okuma: kapalı topluluğun kartı okunur, tamamen kapalının satırı ve varlığı sızmaz',
+  (select count(*) from public.chat_groups where id = public._g('v_res')) = 1
+  and (select count(*) from public.chat_groups where id = public._g('v_prv')) = 0
+  and (select count(*) from public.chat_groups where id = public._g('v_dave')) = 1);
+select public._check(106, 'kapalı topluluk: gönderi/duyuru/mesaj/üye listesi üyelik olmadan okunamaz',
+  (select count(*) from public.community_posts where community_id = public._g('v_res')) = 0
+  and (select count(*) from public.community_announcements where community_id = public._g('v_res')) = 0
+  and (select count(*) from public.messages where conversation_id = public._g('v_res')) = 0
+  and (select count(*) from public.community_members(public._g('v_res'), null, null)) = 0
+  and not public.can_read_community(public._g('v_res'))
+  and public.can_read_community(public._g('v_pub')));
+select public._check(107, 'katılma: kapalı topluluğa doğrudan katılım yok; tamamen kapalıya başvuru da yok (varlığı sızmaz)',
+  public._try(format('select public.join_community(%L, true)', public._g('v_res'))) like '%group_not_found%'
+  and public._try(format('select public.join_chat_group(%L)', public._g('v_res'))) like '%group_not_found%'
+  and public._try(format('select public.request_join_community(%L, null, true)', public._g('v_prv'))) like '%group_not_found%'
+  and not exists (select 1 from public.chat_group_join_requests where group_id = public._g('v_prv')));
+
+-- Başvuru akışı (erin): kural kabulü zorunlu → önce reddedilir, sonra kabulle gider
+select public._tk('v108a', format('select public.request_join_community(%L, null, false)', public._g('v_res')));
+select public._tk('v108b', format($q$select public.request_join_community(%L, %L, true)$q$, public._g('v_res'), repeat('x', 301)));
+select public._tk('v108c', format($q$select public.request_join_community(%L, 'merhaba', true)$q$, public._g('v_res')));
+select public._tk('v108d', format($q$select public.request_join_community(%L, 'tekrar', true)$q$, public._g('v_res')));
+select public._check(108, 'başvuru: kural kabulsüz reddedilir, uzun mesaj reddedilir, kabulle istek oluşur, ikincisi yinelenmez; durum "requested"',
+  public._r('v108a') like '%rules_not_accepted%'
+  and public._r('v108b') like '%invalid_message%'
+  and public._r('v108c') = 'ok'
+  and public._r('v108d') = 'ok'
+  and (select count(*) from public.chat_group_join_requests where group_id = public._g('v_res') and user_id = :erin and status = 'pending') = 1
+  and (select my_status from public.search_communities('Gizli Atölye')) = 'requested'
+  and exists (select 1 from public.community_rule_acceptances where community_id = public._g('v_res') and user_id = :erin)
+  and (select count(*) from public.community_members(public._g('v_res'), null, null)) = 0);
+select public._check(109, 'başvuru: yöneticiye bildirim gider; başvuran içerik göremez; başvurduğu topluluk önerilerden düşer',
+  public._notif(:alice, '%Gizli Atölye%katılma isteği%') = 1
+  and not public.can_read_community(public._g('v_res'))
+  and (select count(*) from public.suggest_communities(20) where id = public._g('v_res')) = 0);
+
+-- Engel: gina ↔ dave. gina, dave'in kapalı topluluğunu göremez/başvuramaz
+select public._as_user(:gina);
+select public._check(110, 'engel: sahibiyle engel ilişkisi olan kapalı topluluk aramada/önerilerde yok; başvuru reddedilir',
+  (select count(*) from public.search_communities('Dave Kapalı')) = 0
+  and (select count(*) from public.suggest_communities(20) where id = public._g('v_dave')) = 0
+  and public._try(format('select public.request_join_community(%L, null, false)', public._g('v_dave'))) like '%cannot_join%');
+
+-- Karar: alice kabul eder → erin üye, içeriği görür
+select public._as_user(:alice);
+select public._tk('v111a', format('select public.decide_chat_group_join_request(%L, true)', public._reqid(public._g('v_res'), :erin)));
+select public._as_user(:erin);
+select public._check(111, 'karar: kabul edilen başvuran üye olur, içeriği okur; tekrar başvuru "already_member"',
+  public._r('v111a') = 'ok'
+  and exists (select 1 from public.conversation_members where conversation_id = public._g('v_res') and user_id = :erin)
+  and (select count(*) from public.community_posts where community_id = public._g('v_res')) = 1
+  and (select count(*) from public.community_announcements where community_id = public._g('v_res')) = 1
+  and public.can_read_community(public._g('v_res'))
+  and public._try(format('select public.request_join_community(%L, null, true)', public._g('v_res'))) = 'ok'
+  and (select my_status from public.search_communities('Gizli Atölye')) = 'member'
+  and (select post_count from public.search_communities('Gizli Atölye')) = 1);
+
+-- Ret + 24 saat bekleme (frank)
+select public._as_user(:frank);
+select public.request_join_community(public._g('v_res'), 'ben de', true);
+select public._as_user(:alice);
+select public.decide_chat_group_join_request(public._reqid(public._g('v_res'), :frank), false);
+select public._as_user(:frank);
+select public._check(112, 'ret: reddedilen kişi 24 saat içinde yeniden başvuramaz; üye olmadığı için içerik hâlâ kapalı',
+  public._try(format('select public.request_join_community(%L, null, true)', public._g('v_res'))) like '%request_cooldown%'
+  and not public.can_read_community(public._g('v_res')));
+
+-- Herkese açıkta aynı RPC doğrudan katılım yapar (hank)
+select public._as_user(:hank);
+select public._tk('v113', format('select public.request_join_community(%L, null, false)', public._g('v_pub')));
+select public._check(113, 'herkese açık: request_join_community doğrudan katılıma döner',
+  public._r('v113') = 'ok'
+  and exists (select 1 from public.conversation_members where conversation_id = public._g('v_pub') and user_id = :hank));
+
+-- Öneriler (erin: image kategorisindeki 'Açık Topluluk'a yeniden katılır; v_res üyesi)
+select public._as_user(:erin);
+select public.join_community(public._g('open'), false);
+select public._check(114, 'öneri: tamamen kapalı asla; üyesi olduklarım yok; ortak kategori önce; kapalı topluluk içerik istatistiği sızdırmaz',
+  (select count(*) from public.suggest_communities(20) where id = public._g('v_prv')) = 0
+  and (select count(*) from public.suggest_communities(20) where id in (public._g('open'), public._g('v_res'))) = 0
+  and (select count(*) from public.suggest_communities(20) where id = public._g('v_pub')) = 1
+  and (select reason from public.suggest_communities(20) where id = public._g('v_pub')) = 'category'
+  and (select count(*) from public.suggest_communities(20) where id = public._g('v_dave')) = 1
+  and (select reason from public.suggest_communities(20) where id = public._g('v_dave')) = 'popular'
+  and (select visibility = 'restricted' and post_count is null and upcoming_event_count is null and last_activity_at is null
+         from public.suggest_communities(20) where id = public._g('v_dave'))
+  and (select id from public.suggest_communities(1)) = public._g('v_pub')
+  and (select count(*) from public.suggest_communities(0)) = 1);
+
+-- Doluluk: v_res sınırı 3 (alice + erin + carol). 4. kişi (gina) başvuramaz ve öneriden düşer; erin ayrılınca yer açılır, yeniden başvuru mümkün.
+select public._as_user(:carol);
+select public.request_join_community(public._g('v_res'), null, true);
+select public._as_user(:alice);
+select public.decide_chat_group_join_request(public._reqid(public._g('v_res'), :carol), true);
+select public._as_user(:gina);
+select public._check(115, 'doluluk: dolu kapalı topluluğa başvuru reddedilir, öneriden düşer',
+  (select member_count from public.chat_groups where id = public._g('v_res')) = 3
+  and public._try(format('select public.request_join_community(%L, null, true)', public._g('v_res'))) like '%member_limit_reached%'
+  and (select count(*) from public.suggest_communities(20) where id = public._g('v_res')) = 0);
+select public._as_user(:erin);
+select public.leave_chat_group(public._g('v_res'));
+select public._tk('v116', format('select public.request_join_community(%L, null, true)', public._g('v_res')));
+select public._check(116, 'ayrılma: üye ayrılınca içerik yeniden kapanır, kapalı topluluk yine aranır; eski kabul edilmiş başvuru yeni başvuruyu engellemez',
+  not public.can_read_community(public._g('v_res'))
+  and (select count(*) from public.community_posts where community_id = public._g('v_res')) = 0
+  and public._r('v116') = 'ok'
+  and exists (select 1 from public.chat_group_join_requests where group_id = public._g('v_res') and user_id = :erin and status = 'pending')
+  and (select count(*) from public.chat_group_join_requests where group_id = public._g('v_res') and user_id = :erin) = 2);
+
+-- Görünürlük geçişleri (v_gec): gina başvurur → herkese açığa geçişte güvenlik kurallarına uyan başvuru kabul edilir
+select public._as_user(:gina);
+select public.request_join_community(public._g('v_gec'), null, false);
+select public._as_user(:erin);
+select public._tk('v117a', format($q$select public.set_chat_group_visibility(%L, 'public')$q$, public._g('v_gec')));
+select public._as_user(:alice);
+select public._tk('v117b', format($q$select public.set_chat_group_visibility(%L, 'secret')$q$, public._g('v_gec')));
+create temp table _vc as select public.set_chat_group_visibility(public._g('v_gec'), 'public') as j;
+select public._check(117, 'görünürlük: yetkisiz değiştiremez; geçersiz değer reddedilir; herkese açığa geçişte bekleyen başvuru kabul edilir',
+  public._r('v117a') like '%forbidden%'
+  and public._r('v117b') like '%invalid_visibility%'
+  and (select (j->>'accepted_count')::int from _vc) = 1
+  and public._q(format('select count(*)::text from public.conversation_members where conversation_id = %L and user_id = %L', public._g('v_gec'), :gina::text)) = '1'
+  and (select visibility from public.chat_groups where id = public._g('v_gec')) = 'public');
+select public._tk('v118a', format($q$select public.set_chat_group_visibility(%L, 'restricted')$q$, public._g('v_gec')));
+select public._as_user(:frank);
+select public._check(118, 'görünürlük: herkese açıktan kapalıya dönünce Keşfet''ten düşer ama aramada/önerilerde kalır',
+  public._r('v118a') = 'ok'
+  and (select count(*) from public.discover_communities('Geçiş', 'popular', null, 50, 0)) = 0
+  and (select count(*) from public.search_communities('Geçiş')) = 1
+  and (select count(*) from public.suggest_communities(50) where id = public._g('v_gec')) = 1);
+select public._as_user(:alice);
+select public._tk('v118b', format($q$select public.set_chat_group_visibility(%L, 'private')$q$, public._g('v_gec')));
+select public._as_user(:frank);
+select public._check(119, 'tamamen kapalıya dönmüş topluluk: arama/öneri/satır/başvuru hiçbiri onu göstermez',
+  public._r('v118b') = 'ok'
+  and (select count(*) from public.search_communities('Geçiş')) = 0
+  and (select count(*) from public.suggest_communities(50) where id = public._g('v_gec')) = 0
+  and (select count(*) from public.chat_groups where id = public._g('v_gec')) = 0
+  and public._try(format('select public.request_join_community(%L, null, true)', public._g('v_gec'))) like '%group_not_found%');
+select public._as_user(:alice);
+select public.set_chat_group_visibility(public._g('v_gec'), 'restricted');
+select public._as_user(:frank);
+select public.request_join_community(public._g('v_gec'), null, false);
+select public._as_user(:alice);
+select public.set_chat_group_visibility(public._g('v_gec'), 'private');
+select public._check(120, 'görünürlük: kapalıdan tamamen kapalıya geçişte bekleyen başvuruya dokunulmaz (yönetici kararı verir)',
+  exists (select 1 from public.chat_group_join_requests where group_id = public._g('v_gec') and user_id = :frank and status = 'pending'));
+
+reset role;
+select public._check(121, '"Kaydet" (yer imi) kaldırıldı: tablo ve RPC yok',
+  to_regclass('public.community_bookmarks') is null
+  and to_regprocedure('public.set_community_bookmark(uuid,boolean)') is null);
+select public._check(122, 'EXECUTE: anon yeni RPC''leri çağıramaz; doğrudan görünürlük yazımı reddedilir',
+  not has_function_privilege('anon', 'public.search_communities(text,text,integer,integer)', 'execute')
+  and not has_function_privilege('anon', 'public.suggest_communities(integer)', 'execute')
+  and not has_function_privilege('anon', 'public.request_join_community(uuid,text,boolean)', 'execute')
+  and has_function_privilege('authenticated', 'public.request_join_community(uuid,text,boolean)', 'execute'));
+set role authenticated;
+select public._as_user(:alice);
+select public._check(123, 'görünürlük: istemci chat_groups.visibility''yi doğrudan yazamaz',
+  public._try(format($q$update public.chat_groups set visibility = 'public' where id = %L$q$, public._g('v_prv'))) like '%permission denied%');
+reset role;
+
+-- ============================================================================
 -- 16. Sahip çıkışı (hesap silme cascade'i): topluluk sahipsiz kalmaz
 -- ============================================================================
 -- Hesap silme cascade'i sahibin üyelik satırını siler (süper kullanıcıyla aynısını yaparız; tam hesap silme akışı 154'tedir).
@@ -723,10 +920,9 @@ select public._check(99, 'bütünlük: tüm topluluklarda gönderi sayacı gerç
 
 -- Gerçek hesap silme akışı (delete_account_data): üye/yazar/raporlayan/RSVP'li hesap ve (devir sonrası) SAHİP hesap
 select public.delete_account_data(:frank);
-select public._check(100, 'hesap silme: üyenin gönderileri, raporları, yer imleri, RSVP ve kural kabulleri temizlenir; sayaçlar tutarlı',
+select public._check(100, 'hesap silme: üyenin gönderileri, raporları, RSVP ve kural kabulleri temizlenir; sayaçlar tutarlı',
   not exists (select 1 from public.community_posts where author_id = :frank)
   and not exists (select 1 from public.community_reports where reporter_id = :frank)
-  and not exists (select 1 from public.community_bookmarks where user_id = :frank)
   and not exists (select 1 from public.community_rule_acceptances where user_id = :frank)
   and not exists (select 1 from public.chat_groups g where g.member_count <> (select count(*) from public.conversation_members m where m.conversation_id = g.id))
   and not exists (select 1 from public.chat_groups g where g.post_count <> (select count(*) from public.community_posts p where p.community_id = g.id)));

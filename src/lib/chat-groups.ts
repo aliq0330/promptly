@@ -266,7 +266,6 @@ export const GROUP_ERROR_CODES = [
   "report_limit",
   "already_reported",
   "invalid_action",
-  "bookmark_limit",
 ] as const;
 
 export type GroupErrorCode = (typeof GROUP_ERROR_CODES)[number];
@@ -303,7 +302,7 @@ function asNumber(value: unknown): number {
 export function parseVisibilityResult(raw: unknown): VisibilityChangeResult | null {
   if (!raw || typeof raw !== "object") return null;
   const row = raw as Record<string, unknown>;
-  const visibility = row.visibility === "public" || row.visibility === "private" ? row.visibility : null;
+  const visibility = row.visibility === "public" || row.visibility === "restricted" || row.visibility === "private" ? row.visibility : null;
   if (!visibility) return null;
   const skippedRaw = Array.isArray(row.skipped) ? row.skipped : [];
   const skipped = skippedRaw.flatMap((entry) => {

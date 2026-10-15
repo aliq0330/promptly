@@ -3,7 +3,7 @@
 import { Suspense, useMemo } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, Bookmark, BookmarkCheck, Globe, Lock, MessageSquare, RefreshCw } from "lucide-react";
+import { ArrowLeft, MessageSquare, RefreshCw } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonClassName } from "@/components/ui/button";
 import { DetailSkeleton, NotFoundBlock } from "@/components/ui/detail-skeleton";
@@ -12,9 +12,10 @@ import { useAuth } from "@/features/auth/auth-provider";
 import { useRealMessages } from "@/features/messages/real-messages-provider";
 import { GroupAvatar } from "@/features/groups/group-avatar";
 import { RoleBadge } from "@/features/groups/role-badge";
-import { useAsyncAction } from "@/features/groups/use-async-action";
 import { useToast } from "@/features/groups/use-toast";
 import { CommunityGate } from "./community-gate";
+import { CommunityJoinButton, type JoinState } from "./community-join-button";
+import { VisibilityLabel } from "./visibility-label";
 import { OverviewTab } from "./overview-tab";
 import { FeedTab } from "./feed-tab";
 import { ChatTab } from "./chat-tab";
@@ -23,7 +24,6 @@ import { EventsTab } from "./events-tab";
 import { AboutTab } from "./about-tab";
 import { ManageTab } from "./manage-tab";
 import { useCommunity } from "./use-community";
-import { setCommunityBookmark } from "@/lib/supabase/communities";
 import { accessibleTabs, CATEGORY_LABEL_KEYS, communityHref, resolveTab, type CommunityTab } from "@/lib/communities";
 import { memberCountText } from "@/lib/group-labels";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -60,10 +60,9 @@ function CommunityPageInner() {
   const searchParams = useSearchParams();
   const id = searchParams.get("id");
   const { user } = useAuth();
-  const { conversations } = useRealMessages();
+  const { conversations, refresh } = useRealMessages();
   const { node: toastNode, show } = useToast();
   const { state, reload } = useCommunity(id, user?.id ?? null);
-  const bookmark = useAsyncAction();
 
   const role = state.status === "ready" ? (state.membership?.role ?? null) : null;
   const group = state.status === "ready" ? state.group : null;
@@ -116,17 +115,17 @@ function CommunityPageInner() {
     count: key === "chat" && unread > 0 ? unread : key === "manage" && role && ready.group.pendingRequestCount > 0 ? ready.group.pendingRequestCount : undefined,
   }));
 
-  async function toggleBookmark() {
-    if (!id) return;
-    const next = !ready.bookmarked;
-    const ok = await bookmark.run(async () => {
-      await setCommunityBookmark(id, next);
-      return true;
-    });
-    if (!ok) return;
+  // Üyelik düğmesi sonuçlandı: sayfayı ve Mesajlar listesini yeniler. Tamamen kapalı topluluktan ayrılan kişi artık satırı okuyamaz → listeye döner.
+  async function membershipChanged(next: JoinState) {
+    void refresh();
+    if (next === "none" && ready.group.visibility === "private") {
+      router.replace("/communities");
+      return;
+    }
     await reload();
-    show(next ? t("communities.bookmark.addedToast") : t("communities.bookmark.removedToast"));
   }
+
+  const joinState: JoinState = role ? "member" : ready.gate.invitationId ? "invited" : ready.gate.requestId ? "requested" : "none";
 
   const common: CommunityTabProps = { group: ready.group, role, viewerId: user.id, membership: ready.membership, reload, onToast: show, goTab };
   const g = ready.group;
@@ -144,10 +143,7 @@ function CommunityPageInner() {
             <h1 className="break-words font-serif text-h2 font-medium leading-tight text-text">{g.name}</h1>
             <div className="flex flex-wrap items-center gap-1.5">
               <Badge variant="neutral">{t(CATEGORY_LABEL_KEYS[g.category])}</Badge>
-              <span className="flex items-center gap-1 text-caption text-text-muted">
-                {g.visibility === "public" ? <Globe size={12} aria-hidden /> : <Lock size={12} aria-hidden />}
-                {g.visibility === "public" ? t("groups.visibility.public") : t("groups.visibility.private")}
-              </span>
+              <VisibilityLabel visibility={g.visibility} />
               <span className="text-caption text-text-muted">{memberCountText(t, g.memberCount)}</span>
               {role && <RoleBadge role={role} />}
               {role && role === "member" && <Badge variant="outline">{t("communities.detail.youAreMember")}</Badge>}
@@ -163,18 +159,15 @@ function CommunityPageInner() {
               {unread > 0 && <span className="ml-1 rounded-full bg-primary-foreground/20 px-1.5 text-caption">{unread}</span>}
             </Link>
           )}
-          {(g.visibility === "public" || role) && (
-            <Button type="button" size="sm" variant="outline" onClick={() => void toggleBookmark()} disabled={bookmark.busy} aria-pressed={ready.bookmarked}>
-              {ready.bookmarked ? <BookmarkCheck size={14} className="text-primary" /> : <Bookmark size={14} />}
-              {ready.bookmarked ? t("communities.bookmark.saved") : t("communities.bookmark.save")}
-            </Button>
-          )}
+          <CommunityJoinButton
+            target={{ id: g.id, name: g.name, visibility: g.visibility, rulesRequired: g.rulesRequired, memberCount: g.memberCount, memberLimit: g.memberLimit, closed: Boolean(g.closedAt) }}
+            status={joinState}
+            role={role}
+            rules={g.rules}
+            onChange={(next) => void membershipChanged(next)}
+            onToast={show}
+          />
         </div>
-        {bookmark.error && (
-          <p role="alert" className="mt-2 text-caption text-danger">
-            {bookmark.error}
-          </p>
-        )}
       </header>
 
       {!tab ? (

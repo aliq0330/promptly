@@ -279,7 +279,11 @@ export interface AppNotification {
 
 /** Grup üyelik rolleri (docs/history/172-*): owner > admin > moderator > member. */
 export type GroupRole = "owner" | "admin" | "moderator" | "member";
-export type GroupVisibility = "public" | "private";
+/**
+ * Topluluk görünürlüğü (docs/history/176-*): `public` herkese açık (Keşfet'te görünür, içerik herkese okunur) · `restricted` kapalı (Keşfet'te
+ * yok, arama/öneride var, içerik üyelere, katılım başvuruyla) · `private` tamamen kapalı (hiçbir yerde görünmez, yalnız davet).
+ */
+export type GroupVisibility = "public" | "restricted" | "private";
 /** Kim mesaj yazabilir: tüm üyeler ya da yalnızca owner/admin/moderator. */
 export type GroupPostingPolicy = "members" | "admins";
 

@@ -41,6 +41,45 @@ export const CATEGORY_LABEL_KEYS: Record<CommunityCategory, TranslationKey> = {
   showcase: "communities.category.showcase",
 };
 
+// ---------------------------------------------------------------------------------------------
+// Görünürlük (docs/history/176-*)
+// ---------------------------------------------------------------------------------------------
+
+/** Seçicilerde gösterim sırası: en açıktan en kapalıya. */
+export const VISIBILITY_OPTIONS: readonly GroupVisibility[] = ["public", "restricted", "private"];
+
+export const VISIBILITY_LABEL_KEYS: Record<GroupVisibility, TranslationKey> = {
+  public: "groups.visibility.public",
+  restricted: "groups.visibility.restricted",
+  private: "groups.visibility.private",
+};
+
+export const VISIBILITY_HELP_KEYS: Record<GroupVisibility, TranslationKey> = {
+  public: "groups.visibility.publicHelp",
+  restricted: "groups.visibility.restrictedHelp",
+  private: "groups.visibility.privateHelp",
+};
+
+/** Sunucudan gelen değeri güvenli bir değere çevirir; bilinmeyen → en kapalı düzey (sızdırmaz). */
+export function normalizeVisibility(value: unknown): GroupVisibility {
+  return value === "public" || value === "restricted" ? value : "private";
+}
+
+/**
+ * Düzeyin davranışı (arayüzün NE GÖSTERECEĞİ; gerçek kural veritabanındadır): Keşfet'te listelenir mi, aramada/öneride bulunur mu,
+ * içerik üyelik olmadan okunur mu ve üye olmayan nasıl katılır (`join` doğrudan · `request` yönetici onaylı başvuru · `invite` yalnız davet).
+ */
+export function visibilityTraits(visibility: GroupVisibility): {
+  inDiscover: boolean;
+  searchable: boolean;
+  publicContent: boolean;
+  joinMode: "join" | "request" | "invite";
+} {
+  if (visibility === "public") return { inDiscover: true, searchable: true, publicContent: true, joinMode: "join" };
+  if (visibility === "restricted") return { inDiscover: false, searchable: true, publicContent: false, joinMode: "request" };
+  return { inDiscover: false, searchable: false, publicContent: false, joinMode: "invite" };
+}
+
 export function isCommunityCategory(value: unknown): value is CommunityCategory {
   return typeof value === "string" && (COMMUNITY_CATEGORIES as readonly string[]).includes(value);
 }

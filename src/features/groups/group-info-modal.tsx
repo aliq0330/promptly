@@ -1,11 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Globe, Lock, X } from "lucide-react";
+import { X } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
 import { Tabs, type TabItem } from "@/components/ui/tabs";
 import { useAuth } from "@/features/auth/auth-provider";
 import { GroupAvatar } from "./group-avatar";
+import { VisibilityLabel } from "@/features/communities/visibility-label";
 import { GroupAboutSection } from "./group-about-section";
 import { GroupMembersSection } from "./group-members-section";
 import { GroupRequestsSection } from "./group-requests-section";
@@ -76,10 +77,7 @@ export function GroupInfoModal({
             </h2>
             <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-caption text-text-muted">
               <span>{memberCountText(t, group.memberCount)}</span>
-              <span className="flex items-center gap-1">
-                {group.visibility === "public" ? <Globe size={12} aria-hidden /> : <Lock size={12} aria-hidden />}
-                {group.visibility === "public" ? t("groups.visibility.public") : t("groups.visibility.private")}
-              </span>
+              <VisibilityLabel visibility={group.visibility} className="flex items-center gap-1" />
             </p>
           </div>
           <button

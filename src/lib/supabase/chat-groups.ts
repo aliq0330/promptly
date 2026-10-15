@@ -11,7 +11,7 @@ import {
   type InviteResult,
   type VisibilityChangeResult,
 } from "@/lib/chat-groups";
-import { normalizeCategory, normalizeFeedPolicy } from "@/lib/communities";
+import { normalizeCategory, normalizeFeedPolicy, normalizeVisibility } from "@/lib/communities";
 import type { ChatGroup, GroupCapability, GroupPostingPolicy, GroupRole, GroupVisibility, UserProfile } from "@/types";
 
 /**
@@ -93,7 +93,6 @@ const ERROR_KEYS: Record<GroupErrorCode, TranslationKey> = {
   report_limit: "communities.error.report_limit",
   already_reported: "communities.error.already_reported",
   invalid_action: "communities.error.generic",
-  bookmark_limit: "communities.error.bookmark_limit",
 };
 
 export class GroupActionError extends Error {
@@ -295,7 +294,7 @@ export async function previewChatGroupLink(token: string): Promise<GroupLinkPrev
     name: String(data.name ?? ""),
     description: typeof data.description === "string" ? data.description : null,
     avatarUrl: typeof data.avatar_url === "string" ? data.avatar_url : null,
-    visibility: data.visibility === "public" ? "public" : "private",
+    visibility: normalizeVisibility(data.visibility),
     memberCount: Number(data.member_count ?? 0),
     memberLimit: Number(data.member_limit ?? 0),
     myStatus: data.my_status === "member" || data.my_status === "requested" ? data.my_status : "none",

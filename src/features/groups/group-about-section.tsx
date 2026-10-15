@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { BellOff, Globe, Lock, LogOut } from "lucide-react";
+import { BellOff, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "./confirm-dialog";
+import { VisibilityLabel } from "@/features/communities/visibility-label";
 import { RoleBadge } from "./role-badge";
 import { useAsyncAction } from "./use-async-action";
 import { leaveChatGroup, setChatGroupMuted } from "@/lib/supabase/chat-groups";
@@ -66,9 +67,8 @@ export function GroupAboutSection({
       <dl className="grid gap-3 text-small sm:grid-cols-2">
         <div className="rounded-lg border border-border-soft bg-surface-soft/50 px-3 py-2.5">
           <dt className="text-caption text-text-muted">{t("groups.visibility.label")}</dt>
-          <dd className="mt-0.5 flex items-center gap-1.5 font-medium text-text">
-            {group.visibility === "public" ? <Globe size={14} aria-hidden /> : <Lock size={14} aria-hidden />}
-            {group.visibility === "public" ? t("groups.visibility.public") : t("groups.visibility.private")}
+          <dd className="mt-0.5 font-medium text-text">
+            <VisibilityLabel visibility={group.visibility} size={14} className="flex items-center gap-1.5" />
           </dd>
         </div>
         <div className="rounded-lg border border-border-soft bg-surface-soft/50 px-3 py-2.5">
