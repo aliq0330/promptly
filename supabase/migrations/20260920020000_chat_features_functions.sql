@@ -285,7 +285,7 @@ $$;
 -- ============================================================================
 -- Konu adı `typing:<konuşma uuid>`; yalnız o konuşmanın ÜYELERİ dinleyebilir/yayınlayabilir (üyelik abonelik anında denetlenir; grupta
 -- çıkarılan üye bir sonraki bağlanışta kanala giremez). İstemci kanala `private: true` ile bağlanır. Dashboard'da Realtime ayarlarında
--- "Allow public access" KAPALI olmalıdır, aksi hâlde yetkisiz public kanal da açılabilir (docs/history/174-*).
+-- "Allow public access" ayarı AÇIK kalabilir: aynı adlı private ve public kanallar Realtime'da ayrı kanallardır, birbirine mesaj taşımaz (docs/history/174-*).
 create or replace function public.can_use_typing_topic(p_topic text)
 returns boolean
 language sql
