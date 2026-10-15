@@ -73,8 +73,7 @@ create trigger prompt_requests_record_version
 
 -- prompt_versions SELECT politikası yalnızca `status = 'published'` bakıyordu; "Sadece ben" (private)
 -- yayınlanmış bir prompt'un sürümleri başkalarına açıktı. Politika artık `prompts`'ın kendi SELECT
--- kuralını devralır (yayınlanmış + herkese açık, ya da yazar). Aynı adla yeniden oluşturulur; tablo, trigger ve veri değişmez.
-drop policy "Prompt versions are readable wherever their prompt is readable" on public.prompt_versions;
-create policy "Prompt versions are readable wherever their prompt is readable"
-  on public.prompt_versions for select
+-- kuralını devralır (yayınlanmış + herkese açık, ya da yazar). `alter policy` ile yerinde değiştirilir (drop yok);
+-- tablo, trigger ve veri değişmez.
+alter policy "Prompt versions are readable wherever their prompt is readable" on public.prompt_versions
   using (exists (select 1 from public.prompts p where p.id = prompt_versions.prompt_id));

@@ -1,6 +1,6 @@
 # 9.170 — Dört içerik türü için sürüm geçmişi (Prompt, Prompt İsteği, Hazır Ayar, Workflow)
 
-Durum: kod, migration'lar, testler ve belgeler repoda; **canlıya uygulanmadı** (3 migration SQL'e dokunulmadı, canlı veritabanı değiştirilmedi, üretime deploy yapılmadı). `docs/yapilacaklar.md` madde 9.
+Durum: kod, migration'lar, testler ve belgeler repoda. **Canlı: yalnızca `20260919940000` uygulandı** (`request_versions` + trigger + `prompt_versions` politikası, kayıt dosya sürümüyle düşüldü); `20260919950000` (workflow) ve `20260919960000` (hazır ayar) HENÜZ uygulanmadı — gövdelerinde `delete from` bulunduğu için Supabase MCP'nin yıkıcı-ifade onayı bekleyip 60 sn'de zaman aşımına uğradı, hiçbir yarım değişiklik kalmadı (kontrol edildi). `docs/yapilacaklar.md` madde 9.
 
 ## Neyin üzerine kuruldu
 
@@ -35,7 +35,7 @@ Geçmiş satırı asla değişmez; geri dönme **yeni bir sahip düzenlemesidir*
 
 ## Erişim ve güvenlik
 
-- Sürüm SELECT politikası **üst içeriğin kendi SELECT kuralını devralır** (`exists (select 1 from <ebeveyn> …)` alt sorgusu ebeveynin RLS'ine tabidir): herkese açık + yayınlanmış içerik herkese, taslak/özel yalnız sahibine. **`prompt_versions` politikası değiştirildi** (aynı adla drop + create): eskisi yalnız `status = 'published'` bakıyordu; "Sadece ben" bir prompt'un sürümleri başkalarına açıktı (testle doğrulandı).
+- Sürüm SELECT politikası **üst içeriğin kendi SELECT kuralını devralır** (`exists (select 1 from <ebeveyn> …)` alt sorgusu ebeveynin RLS'ine tabidir): herkese açık + yayınlanmış içerik herkese, taslak/özel yalnız sahibine. **`prompt_versions` politikası değiştirildi** (`alter policy` ile yerinde, drop yok): eskisi yalnız `status = 'published'` bakıyordu; "Sadece ben" bir prompt'un sürümleri başkalarına açıktı (testle doğrulandı).
 - Yeni sürüm tablolarında INSERT/UPDATE/DELETE politikası **yok**, ayrıca `anon`/`authenticated`'dan yazma yetkileri geri alındı. Yazan fonksiyonlar SECURITY DEFINER ve `search_path = public`; yardımcılar (`_workflow_snapshot`, `_*_apply_content`, `_*_record_version`) hiçbir istemci rolüne açık değil; RPC'ler yalnız `authenticated`.
 - `content_edits.previous_values` açılmadı; düzenleme önerisi metni genel listede yok (sahip, kabul edilmiş sürümün yanında yalnızca öneren adını görür; diğerleri yalnızca "Düzenleme önerisi kabul edildi").
 
@@ -52,7 +52,7 @@ Hepsi `translations.ts`'te TR + EN. Eklenen anahtarlar (66, `history.*`): `tab, 
 
 ## Migration'lar (yalnızca ekleyici; `drop table/column` yok, mevcut dosyalar değişmedi) — CANLIYA UYGULANMADI
 
-- `20260919940000_request_versions.sql` — `request_versions`, `record_request_version` trigger'ı; `prompt_versions` SELECT politikasının sıkılaştırılması (aynı adla yeniden oluşturma).
+- `20260919940000_request_versions.sql` — `request_versions`, `record_request_version` trigger'ı; `prompt_versions` SELECT politikasının sıkılaştırılması (`alter policy`, yerinde).
 - `20260919950000_workflow_versions.sql` — `workflow_versions`, yardımcılar, `save_workflow_content`, `restore_workflow_version`.
 - `20260919960000_preset_versions.sql` — `preset_versions`, yardımcılar, `save_preset_content`, `restore_preset_version`.
 

@@ -37,7 +37,7 @@ dış servis/karar gerektirenler en sona.
 | 6 | Workflow adım adım çalıştırma modu | O–B | **yapıldı** (`docs/history/164-*`) |
 | 7 | @bahsetme (yorum + istek) | K–O | **yapıldı** (`docs/history/165-*`; yorum + isteğin yaratıcı yönü) |
 | 8 | Herkese açık koleksiyonları takip etme | O | **yapıldı** (`docs/history/166-*`) |
-| 9 | Sürüm geçmişi + fark görünümü + geri dönme: Prompt, Prompt İsteği, Workflow, Hazır Ayar | O | **yapıldı** (kod + migration repoda; **canlıya uygulanmadı**, `docs/history/170-*`) |
+| 9 | Sürüm geçmişi + fark görünümü + geri dönme: Prompt, Prompt İsteği, Workflow, Hazır Ayar | O | **yapıldı** (kod + migration repoda; canlıda yalnız `940000` uygulandı, `950000`/`960000` bekliyor, `docs/history/170-*`) |
 | 10 | Yan yana model karşılaştırma (Studio) | B | bekliyor |
 | 11 | Haftalık özet bildirimi (e-posta / web push) | B | **engelli**: dış servis + gizli anahtar kararı gerekir |
 | 12 | Sayaç sütunlarını istemciden koruma (`like_count`, `save_count`, `comment_count`, `response_count`) | K–O | **bulgu**, bekliyor (aşağıda) |
