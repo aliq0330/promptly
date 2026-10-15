@@ -7,30 +7,22 @@ import { useAsyncAction } from "@/features/groups/use-async-action";
 import { RulesAcceptModal } from "./rules-accept";
 import type { CommunityGate as Gate } from "./use-community";
 import { cancelJoinRequest } from "@/lib/supabase/chat-groups";
-import { joinCommunity, respondToCommunityInvitation } from "@/lib/supabase/communities";
+import { respondToCommunityInvitation } from "@/lib/supabase/communities";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
 import type { ChatGroup } from "@/types";
 
 /**
- * Üye olmayan ziyaretçi için "geçit": herkese açık toplulukta Katıl (kurallar kabul zorunluysa önce kural metni), davetliye Kabul/Reddet,
- * başvurana "bekliyor" + geri çek. Kapalı bir toplulukta üye olmayan kişi yalnızca davet/başvuru durumunu görür; içerik, sohbet ve üye listesi
- * açılmaz. `compact`: içerik zaten okunabiliyorsa (açık topluluk) sayfanın üstünde ince bir şerit.
+ * Üye olmayan ziyaretçi için "geçit" (durum şeridi): davetliye Kabul/Reddet, başvurana "bekliyor" + geri çek, kapalı/tamamen kapalı
+ * toplulukta içeriğin neden görünmediği. Katılma/istek düğmesi burada DEĞİL, sayfa başlığındaki tek üyelik düğmesindedir
+ * (`CommunityJoinButton`). Kapalı topluluklarda üye olmayan kişi içerik, sohbet ve üye listesini görmez. `compact`: içerik zaten
+ * okunabiliyorsa (herkese açık topluluk) sayfanın üstünde ince bir şerit.
  */
 export function CommunityGate({ group, gate, onChanged, onToast, compact = false }: { group: ChatGroup; gate: Gate; onChanged: () => Promise<void>; onToast: (message: string) => void; compact?: boolean }) {
   const { t } = useTranslation();
   const action = useAsyncAction();
-  const [rulesOpen, setRulesOpen] = useState<"join" | "invite" | null>(null);
-  const full = group.memberCount >= group.memberLimit;
+  const [rulesOpen, setRulesOpen] = useState(false);
   const needsRules = group.rulesRequired && Boolean(group.rules);
-
-  async function join(acceptRules: boolean) {
-    const outcome = await action.run(() => joinCommunity(group.id, acceptRules));
-    if (!outcome) return false;
-    onToast(t("groups.page.joinedToast", { name: group.name }));
-    await onChanged();
-    return true;
-  }
 
   async function respond(accept: boolean, acceptRules: boolean) {
     if (!gate.invitationId) return false;
@@ -68,7 +60,7 @@ export function CommunityGate({ group, gate, onChanged, onToast, compact = false
           <Button type="button" size="sm" variant="ghost" onClick={() => void respond(false, false)} disabled={action.busy}>
             {t("groups.invites.decline")}
           </Button>
-          <Button type="button" size="sm" onClick={() => (needsRules ? setRulesOpen("invite") : void respond(true, false))} disabled={action.busy}>
+          <Button type="button" size="sm" onClick={() => (needsRules ? setRulesOpen(true) : void respond(true, false))} disabled={action.busy}>
             {action.busy ? <Loader2 size={14} className="animate-spin" /> : null}
             {t("groups.invites.accept")}
           </Button>
@@ -89,17 +81,20 @@ export function CommunityGate({ group, gate, onChanged, onToast, compact = false
       </>
     );
   } else if (group.visibility === "public") {
+    // Katılma düğmesi sayfa başlığındaki tek üyelik düğmesidir; burada yalnızca kapatılmış topluluk notu gösterilir.
+    if (!group.closedAt) return null;
     body = (
-      <>
-        <div className="min-w-0 flex-1">
-          <p className="text-small font-medium text-text">{group.closedAt ? t("communities.gate.closed") : t("communities.gate.publicJoin")}</p>
-          <p className="text-caption text-text-muted">{group.closedAt ? t("communities.gate.closedHelp") : t("communities.gate.publicJoinHelp")}</p>
-        </div>
-        <Button type="button" size="sm" onClick={() => (needsRules ? setRulesOpen("join") : void join(false))} disabled={action.busy || full || Boolean(group.closedAt)}>
-          {action.busy ? <Loader2 size={14} className="animate-spin" /> : null}
-          {full ? t("groups.page.full") : t("groups.page.join")}
-        </Button>
-      </>
+      <div className="min-w-0 flex-1">
+        <p className="text-small font-medium text-text">{t("communities.gate.closed")}</p>
+        <p className="text-caption text-text-muted">{t("communities.gate.closedHelp")}</p>
+      </div>
+    );
+  } else if (group.visibility === "restricted") {
+    body = (
+      <div className="min-w-0 flex-1">
+        <p className="text-small font-medium text-text">{group.closedAt ? t("communities.gate.closed") : t("communities.gate.restrictedTitle")}</p>
+        <p className="text-caption text-text-muted">{group.closedAt ? t("communities.gate.closedHelp") : t("communities.gate.restrictedHelp")}</p>
+      </div>
     );
   } else {
     body = (
@@ -131,8 +126,8 @@ export function CommunityGate({ group, gate, onChanged, onToast, compact = false
           confirmLabel={t("communities.rules.acceptAndJoin")}
           busy={action.busy}
           error={action.error}
-          onClose={() => setRulesOpen(null)}
-          onConfirm={() => void (rulesOpen === "join" ? join(true) : respond(true, true)).then((ok) => ok && setRulesOpen(null))}
+          onClose={() => setRulesOpen(false)}
+          onConfirm={() => void respond(true, true).then((ok) => ok && setRulesOpen(false))}
         />
       )}
     </section>

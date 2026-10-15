@@ -14,9 +14,9 @@ export function setupCommunities(db) {
   db.events = []; // { ...row, rsvps: {userId: status} }
   db.reports = [];
   db.audit = [];
-  db.bookmarks = new Set();
   db.acceptances = [];
   db.stats = null;
+  db.suggestions = false; // öneri şeridi yalnız ilgili senaryolarda açılır (kartlar listede tekrar etmesin)
   db.ownContent = { prompt: [], request: [], workflow: [], preset: [] };
 
   db.addCommunity = (id, opts = {}) => {
@@ -68,12 +68,11 @@ export function setupCommunities(db) {
       const list = db.groups.filter((x) => {
         const r = role(x.id);
         if (scope === "member") return Boolean(r);
-        if (scope === "managed") return ["owner", "admin", "moderator"].includes(r ?? "");
-        return db.bookmarks.has(x.id) && (x.visibility === "public" || r);
+        return ["owner", "admin", "moderator"].includes(r ?? "");
       }).map((x) => ({
         id: x.id, name: x.name, description: x.description, avatar_url: null, category: x.category, visibility: x.visibility, member_count: x.member_count, member_limit: x.member_limit, post_count: x.post_count,
         upcoming_event_count: 0, closed: Boolean(x.closed_at), created_at: x.created_at, last_activity_at: null, my_role: role(x.id), unread_count: db.member(x.id, signedIn)?.unread_count ?? 0,
-        pending_request_count: staff(x.id) ? x.pending_request_count : 0, bookmarked: db.bookmarks.has(x.id),
+        pending_request_count: staff(x.id) ? x.pending_request_count : 0,
       }));
       return json(200, list);
     }
@@ -86,10 +85,36 @@ export function setupCommunities(db) {
       log("community_members", body);
       return json(200, list.slice(body.p_offset ?? 0, (body.p_offset ?? 0) + (body.p_limit ?? 30)).map(({ m, u }) => ({ user_id: u.id, username: u.username, display_name: u.display_name, avatar_url: null, role: m.role, joined_at: "2026-01-01T00:00:00Z" })));
     }
-    if (table === "rpc/set_community_bookmark") {
-      log("set_community_bookmark", body);
-      if (body.p_on) db.bookmarks.add(body.p_group_id); else db.bookmarks.delete(body.p_group_id);
-      return json(200, null);
+    // Arama (herkese açık + kapalı; tamamen kapalı asla) ve öneriler. Kapalı topluluk için içerik istatistiği null döner (sunucu gibi).
+    const myStatusOf = (x) =>
+      db.member(x.id, signedIn) ? "member" : db.invitations.some((i) => i.group_id === x.id && i.invitee_id === signedIn && i.status === "pending") ? "invited" : db.requests.some((r) => r.group_id === x.id && r.user_id === signedIn && r.status === "pending") ? "requested" : "none";
+    const searchRow = (x, extra = {}) => {
+      const open = x.visibility === "public" || Boolean(db.member(x.id, signedIn));
+      return {
+        id: x.id, name: x.name, description: x.description, avatar_url: null, category: x.category, visibility: x.visibility, member_count: x.member_count, member_limit: x.member_limit,
+        post_count: open ? x.post_count : null, upcoming_event_count: open ? db.events.filter((e) => e.community_id === x.id && e.status === "scheduled").length : null,
+        rules_required: x.rules_required, created_at: x.created_at, last_activity_at: null, my_status: myStatusOf(x), ...extra,
+      };
+    };
+    if (table === "rpc/search_communities") {
+      log("search_communities", body);
+      const term = (body.p_query ?? "").trim().toLowerCase();
+      if (!term) return json(200, []);
+      const list = db.groups
+        .filter((x) => ["public", "restricted"].includes(x.visibility) && !x.closed_at && (!body.p_category || x.category === body.p_category) && (x.name.toLowerCase().includes(term) || (x.description ?? "").toLowerCase().includes(term)))
+        .map((x) => searchRow(x));
+      return json(200, list.slice(body.p_offset ?? 0, (body.p_offset ?? 0) + (body.p_limit ?? 20)));
+    }
+    if (table === "rpc/suggest_communities") {
+      log("suggest_communities", body);
+      if (!db.suggestions) return json(200, []);
+      const mine = new Set(db.groups.filter((x) => db.member(x.id, signedIn) && x.category !== "general").map((x) => x.category));
+      const list = db.groups
+        .filter((x) => ["public", "restricted"].includes(x.visibility) && !x.closed_at && x.member_count < x.member_limit && myStatusOf(x) === "none")
+        .map((x) => ({ x, overlap: mine.has(x.category) }))
+        .sort((a, b) => Number(b.overlap) - Number(a.overlap) || b.x.member_count - a.x.member_count)
+        .map(({ x, overlap }) => searchRow(x, { reason: overlap ? "category" : "popular" }));
+      return json(200, list.slice(0, body.p_limit ?? 8));
     }
 
     // ---- oluşturma / ayar / katılım ----
@@ -118,6 +143,37 @@ export function setupCommunities(db) {
       x.member_count += 1;
       db.members.push({ conversation_id: x.id, user_id: signedIn, role: "member", status: "accepted", unread_count: 0, archived_at: null, deleted_at: null, cleared_at: null, muted_at: null });
       return json(200, { outcome: "joined", group_id: x.id });
+    }
+    if (table === "rpc/request_join_community") {
+      log("request_join_community", body);
+      const x = g(body.p_group_id);
+      if (!x) return err("group_not_found");
+      if (db.member(x.id, signedIn)) return json(200, { outcome: "already_member", group_id: x.id });
+      if (x.visibility === "public") {
+        if (x.rules_required && !body.p_accept_rules) return err("rules_not_accepted");
+        x.member_count += 1;
+        db.members.push({ conversation_id: x.id, user_id: signedIn, role: "member", status: "accepted", unread_count: 0, archived_at: null, deleted_at: null, cleared_at: null, muted_at: null });
+        return json(200, { outcome: "joined", group_id: x.id });
+      }
+      if (x.visibility !== "restricted") return err("group_not_found");
+      if (x.closed_at) return err("community_closed");
+      if (db.requests.some((r) => r.group_id === x.id && r.user_id === signedIn && r.status === "pending")) return json(200, { outcome: "already_requested", group_id: null });
+      if (x.rules_required && !body.p_accept_rules) return err("rules_not_accepted");
+      if (x.member_count >= x.member_limit) return err("member_limit_reached");
+      const request = { id: crypto.randomUUID(), group_id: x.id, user_id: signedIn, message: body.p_message ?? null, status: "pending", created_at: db.stamp() };
+      db.requests.push(request);
+      x.pending_request_count += 1;
+      return json(200, { outcome: "requested", group_id: null, request_id: request.id });
+    }
+    if (table === "rpc/cancel_chat_group_join_request") {
+      log("cancel_chat_group_join_request", body);
+      const request = db.requests.find((r) => r.id === body.p_request_id && r.user_id === signedIn);
+      if (!request) return err("request_not_found");
+      if (request.status !== "pending") return err("invalid_state");
+      request.status = "cancelled";
+      const x = g(request.group_id);
+      x.pending_request_count = Math.max(0, x.pending_request_count - 1);
+      return json(200, null);
     }
     if (table === "rpc/respond_community_invitation") {
       log("respond_community_invitation", body);
@@ -173,10 +229,6 @@ export function setupCommunities(db) {
     if (table === "community_rule_acceptances" && method === "GET") {
       const cid = eq(q, "community_id");
       return rows(db.acceptances.filter((a) => a.user_id === signedIn && (!cid || a.community_id === cid)).map((a) => ({ rules_version: a.rules_version })));
-    }
-    if (table === "community_bookmarks" && method === "GET") {
-      const cid = eq(q, "community_id");
-      return rows(cid && db.bookmarks.has(cid) ? [{ community_id: cid }] : []);
     }
 
     // ---- akış ----

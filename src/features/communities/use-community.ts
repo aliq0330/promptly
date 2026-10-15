@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { fetchChatGroupRow, mapChatGroupRow } from "@/lib/supabase/chat-groups";
-import { fetchMyCommunityMembership, isCommunityBookmarked, type MyCommunityMembership } from "@/lib/supabase/communities";
+import { fetchMyCommunityMembership, type MyCommunityMembership } from "@/lib/supabase/communities";
 import { supabase } from "@/lib/supabase/client";
 import type { ChatGroup } from "@/types";
 
@@ -16,12 +16,12 @@ export type CommunityState =
   | { status: "loading" }
   | { status: "error" }
   | { status: "notfound" }
-  | { status: "ready"; group: ChatGroup; membership: MyCommunityMembership | null; gate: CommunityGate; bookmarked: boolean };
+  | { status: "ready"; group: ChatGroup; membership: MyCommunityMembership | null; gate: CommunityGate };
 
 /**
- * Topluluk sayfasının veri kaynağı: `chat_groups` satırı (RLS: herkese açık ya da üye ya da davetli/başvurucu), kendi üyelik satırım
- * (rol, bildirim tercihi, kural kabulü), bekleyen davet/başvurum ve yer imim. Okunamayan topluluk → "bulunamadı" (kapalı topluluğun
- * varlığı sızmaz). `reload()` sayaç/ayar/rol değişince sessizce yeniden okur (yükleniyor ekranına dönmeden).
+ * Topluluk sayfasının veri kaynağı: `chat_groups` satırı (RLS: herkese açık ya da kapalı ya da üye ya da davetli/başvurucu), kendi üyelik satırım
+ * (rol, bildirim tercihi, kural kabulü) ve bekleyen davet/başvurum. Okunamayan topluluk → "bulunamadı" (tamamen kapalı topluluğun
+ * varlığı sızmaz; kapalı topluluğun kartı herkese okunur ama içeriği değil). `reload()` sayaç/ayar/rol değişince sessizce yeniden okur (yükleniyor ekranına dönmeden).
  */
 export function useCommunity(id: string | null, userId: string | null): { state: CommunityState; reload: () => Promise<void> } {
   const [state, setState] = useState<CommunityState>({ status: "loading" });
@@ -48,8 +48,7 @@ export function useCommunity(id: string | null, userId: string | null): { state:
         const inv = invitation.data as { id: string; inviter: { display_name: string } | null } | null;
         gate = { invitationId: inv?.id ?? null, inviterName: inv?.inviter?.display_name ?? null, requestId: (request.data as { id: string } | null)?.id ?? null };
       }
-      const bookmarked = await isCommunityBookmarked(id, userId).catch(() => false);
-      return { status: "ready", group: mapChatGroupRow(row, membership?.role ?? "member"), membership, gate, bookmarked };
+      return { status: "ready", group: mapChatGroupRow(row, membership?.role ?? "member"), membership, gate };
     } catch (err) {
       console.error("useCommunity", err);
       return { status: "error" };

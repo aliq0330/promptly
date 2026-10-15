@@ -2,6 +2,8 @@
 
 Durum: kod, 3 migration, testler ve belgeler repoda; **canlıya UYGULANMADI** (migration'lar canlı veritabanında ÇALIŞTIRILMADI, canlı veri değiştirilmedi, deploy yapılmadı). Önce migration, sonra istemci kodu uygulanmalı. Gerçek Supabase'e / gerçek oturuma / Realtime'a / fiziksel cihaza karşı denenmedi. `docs/history/172-*` (grup sohbeti), `173-*` (yetkiler), `174-*` (sohbet geliştirmeleri) üzerine kurulur.
 
+> **Güncelleme (176):** topluluk "Kaydet"i (yer imi: `community_bookmarks`, `set_community_bookmark`, Kaydedilenler sekmesi) kaldırıldı; görünürlük üç düzeye çıktı (`public` · `restricted` · `private`) — bkz. [176](176-topluluk-gorunurluk.md). Bu belgedeki yer imi ve iki düzeyli görünürlük anlatımı tarihçedir.
+
 ## Karar: ikinci bir sistem yok — topluluk = genişletilmiş grup sohbeti
 
 | Kavram | Nerede |

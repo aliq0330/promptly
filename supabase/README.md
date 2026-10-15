@@ -900,3 +900,9 @@ güncellenmesi gereken tek satır burası.
 - `20260920060000_communities_reads.sql`: `discover_communities`, `list_my_communities`, `community_members`, `community_stats`, `community_migration_report` (yalnız site moderatörü, salt okunur), sohbette @anma bildirim tetikleyicisi.
 - Yalnızca ekleyici / aynı imzayla `create or replace`; **hiçbir şey düşürülmez.** **Canlıya uygulanmadı.** Uygulama sırası: üç dosya sırayla, ardından istemci kodu. Uygulama öncesi/sonrası `select community_migration_report()` (moderatör oturumuyla) çalıştırılır; `anomalies` listeleri boş olmalıdır.
 - Yerel doğrulama: `supabase/tests/run-local.sh supabase/tests/communities.sql` (101 kontrol, `FAILED=0`). Diğer test dosyaları (`chat-groups`, `chat-group-permissions`, `chat-features`, …) ayrı ayrı çalıştırılır (aynı veritabanında üst üste koşturulmaz).
+
+## Topluluk görünürlüğü (`docs/history/176-*`)
+
+- `20260920070000_community_visibility.sql`: üçüncü görünürlük değeri `restricted` ("Kapalı": Keşfet'te yok, arama/öneride var, başvuruyla katılım; içerik yalnız üyelere) — `chat_groups_visibility_check` + `chat_groups` SELECT politikası (yalnız KART herkese okunur), `create_community` / `set_chat_group_visibility` (aynı imza) ve yeni `request_join_community`, `search_communities`, `suggest_communities`. Topluluk "Kaydet"i kaldırılır: `community_bookmarks` + `set_community_bookmark` düşer, `list_my_communities` (dönüş tipi değiştiği için) düşürülüp `bookmarked` sütunsuz yeniden yazılır.
+- **İki `drop` içerir** (kullanıcı onayıyla); ikisi de canlıya hiç uygulanmamış 175 nesnesidir. **Canlıya uygulanmadı.** Sıra: 175'in üç dosyası → bu dosya → istemci kodu.
+- Yerel doğrulama: `supabase/tests/run-local.sh supabase/tests/communities.sql` (123 kontrol, `FAILED=0`).

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
-import { Camera, Globe, Lock, X } from "lucide-react";
+import { Camera, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ChoiceCard, fieldControlClassName, fieldInputClassName, fieldLabelClassName } from "@/components/ui/field";
 import { Modal } from "@/components/ui/modal";
@@ -11,7 +11,8 @@ import { InviteePicker } from "@/features/groups/invitee-picker";
 import { useAsyncAction } from "@/features/groups/use-async-action";
 import { uploadGroupAvatar } from "@/lib/supabase/chat-groups";
 import { createCommunity } from "@/lib/supabase/communities";
-import { CATEGORY_LABEL_KEYS, COMMUNITY_CATEGORIES, COMMUNITY_RULES_MAX } from "@/lib/communities";
+import { VISIBILITY_ICONS } from "./visibility-label";
+import { CATEGORY_LABEL_KEYS, COMMUNITY_CATEGORIES, COMMUNITY_RULES_MAX, VISIBILITY_HELP_KEYS, VISIBILITY_LABEL_KEYS, VISIBILITY_OPTIONS } from "@/lib/communities";
 import {
   clampMemberLimit,
   GROUP_DESCRIPTION_MAX,
@@ -240,24 +241,20 @@ export function CreateCommunityModal({ onClose, onCreated }: { onClose: () => vo
 
           <fieldset className="space-y-2">
             <legend className={fieldLabelClassName}>{t("groups.visibility.label")}</legend>
-            <ChoiceCard>
-              <input type="radio" name="group-visibility" checked={visibility === "private"} onChange={() => setVisibility("private")} disabled={busy} className="mt-1 accent-[var(--color-primary)]" />
-              <span className="min-w-0">
-                <span className="flex items-center gap-1.5 font-medium">
-                  <Lock size={14} aria-hidden /> {t("groups.visibility.private")}
-                </span>
-                <span className="mt-0.5 block text-caption text-text-muted">{t("communities.visibility.privateHelp")}</span>
-              </span>
-            </ChoiceCard>
-            <ChoiceCard>
-              <input type="radio" name="group-visibility" checked={visibility === "public"} onChange={() => setVisibility("public")} disabled={busy} className="mt-1 accent-[var(--color-primary)]" />
-              <span className="min-w-0">
-                <span className="flex items-center gap-1.5 font-medium">
-                  <Globe size={14} aria-hidden /> {t("groups.visibility.public")}
-                </span>
-                <span className="mt-0.5 block text-caption text-text-muted">{t("communities.visibility.publicHelp")}</span>
-              </span>
-            </ChoiceCard>
+            {VISIBILITY_OPTIONS.map((option) => {
+              const Icon = VISIBILITY_ICONS[option];
+              return (
+                <ChoiceCard key={option}>
+                  <input type="radio" name="group-visibility" checked={visibility === option} onChange={() => setVisibility(option)} disabled={busy} className="mt-1 accent-[var(--color-primary)]" />
+                  <span className="min-w-0">
+                    <span className="flex items-center gap-1.5 font-medium">
+                      <Icon size={14} aria-hidden /> {t(VISIBILITY_LABEL_KEYS[option])}
+                    </span>
+                    <span className="mt-0.5 block text-caption text-text-muted">{t(VISIBILITY_HELP_KEYS[option])}</span>
+                  </span>
+                </ChoiceCard>
+              );
+            })}
           </fieldset>
 
           <div>

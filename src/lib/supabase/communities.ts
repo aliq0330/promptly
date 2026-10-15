@@ -8,6 +8,7 @@ import { callRpc, PROFILE_EMBED, toGroupError } from "./chat-groups";
 import { parseInviteResult, parseGroupJoinToken, type InviteResult } from "@/lib/chat-groups";
 import {
   normalizeCategory,
+  normalizeVisibility,
   normalizeNotifyLevel,
   parseCommunityStats,
   type CommunityStats,
@@ -105,6 +106,38 @@ export async function joinCommunity(groupId: string, acceptRules: boolean): Prom
   return data.outcome;
 }
 
+/**
+ * Kapalı (`restricted`) topluluğa aramadan/öneriden katılma BAŞVURUSU. Sonuç: `requested` (yönetici onayı bekler) · `already_requested`
+ * · `joined` (herkese açık çıktı ya da bekleyen davet vardı) · `already_member`. Tamamen kapalı topluluk "bulunamadı" der.
+ */
+export async function requestJoinCommunity(
+  groupId: string,
+  acceptRules: boolean,
+  message?: string,
+): Promise<"requested" | "already_requested" | "joined" | "already_member"> {
+  const data = await callRpc<{ outcome: "requested" | "already_requested" | "joined" | "already_member" }>("request_join_community", {
+    p_group_id: groupId,
+    p_message: message?.trim() || null,
+    p_accept_rules: acceptRules,
+  });
+  return data.outcome;
+}
+
+/** Bu topluluğa gönderdiğim bekleyen başvuruyu geri çeker (başvuru kimliği kullanıcıya yalnız kendi satırı olarak okunur). */
+export async function cancelMyJoinRequest(groupId: string, userId: string): Promise<boolean> {
+  const { data, error } = await supabase
+    .from("chat_group_join_requests")
+    .select("id")
+    .eq("group_id", groupId)
+    .eq("user_id", userId)
+    .eq("status", "pending")
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) return false;
+  await callRpc("cancel_chat_group_join_request", { p_request_id: (data as { id: string }).id });
+  return true;
+}
+
 export async function respondToCommunityInvitation(
   invitationId: string,
   accept: boolean,
@@ -158,7 +191,7 @@ export async function previewCommunityLink(token: string): Promise<CommunityLink
     name: String(data.name ?? ""),
     description: typeof data.description === "string" ? data.description : null,
     avatarUrl: typeof data.avatar_url === "string" ? data.avatar_url : null,
-    visibility: data.visibility === "public" ? "public" : "private",
+    visibility: normalizeVisibility(data.visibility),
     memberCount: Number(data.member_count ?? 0),
     memberLimit: Number(data.member_limit ?? 0),
     myStatus: data.my_status === "member" || data.my_status === "requested" ? data.my_status : "none",
@@ -194,7 +227,8 @@ export interface CommunitySummary {
   myRole: GroupRole | null;
   unreadCount: number;
   pendingRequestCount: number;
-  bookmarked: boolean;
+  /** Yalnız arama/öneri sonuçlarında: öneri nedeni (`category` ortak kategori · `popular` yaygın). */
+  reason?: "category" | "popular";
 }
 
 export const COMMUNITY_PAGE_SIZE = 20;
@@ -241,17 +275,75 @@ export async function discoverCommunities(params: {
       myRole: null,
       unreadCount: 0,
       pendingRequestCount: 0,
-      bookmarked: false,
     })),
   };
 }
 
-export type MyCommunityScope = "member" | "managed" | "bookmarked";
+interface SearchRow extends Omit<DiscoverRow, "post_count" | "upcoming_event_count"> {
+  visibility: GroupVisibility;
+  /** Kapalı topluluğun içerik istatistiği üye olmayana verilmez (sunucu null döner). */
+  post_count: number | null;
+  upcoming_event_count: number | null;
+  reason?: "category" | "popular";
+}
+
+function mapSearchRow(row: SearchRow): CommunitySummary {
+  return {
+    id: row.id,
+    name: row.name,
+    description: row.description,
+    avatarUrl: row.avatar_url,
+    category: normalizeCategory(row.category),
+    visibility: normalizeVisibility(row.visibility),
+    memberCount: row.member_count,
+    memberLimit: row.member_limit,
+    postCount: row.post_count ?? 0,
+    upcomingEventCount: row.upcoming_event_count ?? 0,
+    rulesRequired: row.rules_required,
+    closed: false,
+    createdAt: row.created_at,
+    lastActivityAt: row.last_activity_at,
+    myStatus: row.my_status,
+    myRole: null,
+    unreadCount: 0,
+    pendingRequestCount: 0,
+    reason: row.reason,
+  };
+}
+
+/**
+ * Arama: herkese açık VE kapalı topluluklar (tamamen kapalı asla). Boş sorgu sonuç vermez (göz atmak için Keşfet var).
+ * Kapalı topluluğun kartında içerik istatistiği yoktur; içeriği üyelik olmadan okunamaz.
+ */
+export async function searchCommunities(params: {
+  query: string;
+  category: CommunityCategory | null;
+  offset: number;
+}): Promise<{ communities: CommunitySummary[]; hasMore: boolean }> {
+  const term = params.query.trim();
+  if (!term) return { communities: [], hasMore: false };
+  const rows = await callRpc<SearchRow[]>("search_communities", {
+    p_query: term,
+    p_category: params.category,
+    p_limit: COMMUNITY_PAGE_SIZE + 1,
+    p_offset: params.offset,
+  });
+  const list = rows ?? [];
+  return { hasMore: list.length > COMMUNITY_PAGE_SIZE, communities: list.slice(0, COMMUNITY_PAGE_SIZE).map(mapSearchRow) };
+}
+
+/** Sana önerilen topluluklar (herkese açık + kapalı): ortak kategori önce, sonra yaygınlık. Üye olduklarım/bekleyen başvurularım yok. */
+export async function suggestCommunities(limit = 6): Promise<CommunitySummary[]> {
+  const rows = await callRpc<SearchRow[]>("suggest_communities", { p_limit: limit });
+  return (rows ?? []).map(mapSearchRow);
+}
+
+export type MyCommunityScope = "member" | "managed";
 
 interface MineRow {
   id: string; name: string; description: string | null; avatar_url: string | null; category: string; visibility: GroupVisibility; member_count: number;
   member_limit: number; post_count: number; upcoming_event_count: number; closed: boolean; created_at: string; last_activity_at: string | null;
-  my_role: GroupRole | null; unread_count: number; pending_request_count: number; bookmarked: boolean;
+  my_role: GroupRole | null; unread_count: number; pending_request_count: number;
 }
 
 export async function listMyCommunities(scope: MyCommunityScope, offset = 0): Promise<{ communities: CommunitySummary[]; hasMore: boolean }> {
@@ -278,13 +370,8 @@ export async function listMyCommunities(scope: MyCommunityScope, offset = 0): Pr
       myRole: row.my_role,
       unreadCount: row.unread_count,
       pendingRequestCount: row.pending_request_count,
-      bookmarked: row.bookmarked,
     })),
   };
-}
-
-export async function setCommunityBookmark(groupId: string, on: boolean): Promise<void> {
-  await callRpc("set_community_bookmark", { p_group_id: groupId, p_on: on });
 }
 
 export interface CommunityMember {
@@ -359,12 +446,6 @@ export async function setCommunityNotifyPrefs(groupId: string, userId: string, l
     .maybeSingle();
   if (error) throw toGroupError(error);
   if (!data) throw toGroupError(null);
-}
-
-export async function isCommunityBookmarked(groupId: string, userId: string): Promise<boolean> {
-  const { data, error } = await supabase.from("community_bookmarks").select("community_id").eq("user_id", userId).eq("community_id", groupId).maybeSingle();
-  if (error) throw toGroupError(error);
-  return Boolean(data);
 }
 
 // ---------------------------------------------------------------------------------------------

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Bookmark, Compass, Link2, Loader2, Mail, MessageCircle, Plus, Search, Send, ShieldCheck, Users } from "lucide-react";
+import { Compass, Link2, Loader2, Mail, MessageCircle, Plus, Search, Send, ShieldCheck, Sparkles, Users } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Button, buttonClassName } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -15,15 +15,16 @@ import { GroupAvatar } from "@/features/groups/group-avatar";
 import { useAsyncAction } from "@/features/groups/use-async-action";
 import { useToast } from "@/features/groups/use-toast";
 import { CommunityCard } from "./community-card";
+import type { JoinState } from "./community-join-button";
 import { CreateCommunityModal } from "./create-community-modal";
 import { RulesAcceptModal } from "./rules-accept";
-import { cancelJoinRequest, fetchChatGroupRow, fetchMyInvitations, fetchMyJoinRequests, toGroupError, type GroupInvitation, type MyJoinRequest } from "@/lib/supabase/chat-groups";
+import { cancelJoinRequest, fetchMyInvitations, fetchMyJoinRequests, toGroupError, type GroupInvitation, type MyJoinRequest } from "@/lib/supabase/chat-groups";
 import {
   discoverCommunities,
-  joinCommunity,
   listMyCommunities,
   respondToCommunityInvitation,
-  setCommunityBookmark,
+  searchCommunities,
+  suggestCommunities,
   type CommunitySort,
   type CommunitySummary,
   type MyCommunityScope,
@@ -35,8 +36,8 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import { memberCountText } from "@/lib/group-labels";
 import type { CommunityCategory } from "@/types";
 
-type View = "discover" | "mine" | "managed" | "invites" | "requests" | "saved";
-const VIEWS: readonly View[] = ["discover", "mine", "managed", "invites", "requests", "saved"];
+type View = "discover" | "mine" | "managed" | "invites" | "requests";
+const VIEWS: readonly View[] = ["discover", "mine", "managed", "invites", "requests"];
 const SORTS: CommunitySort[] = ["popular", "newest", "active"];
 
 interface ListState {
@@ -47,9 +48,10 @@ interface ListState {
 }
 
 /**
- * `/communities`: Topluluklar ana sayfası. Sekmeler: Keşfet (yalnız herkese açık, arama + kategori + sıralama + sayfalama),
- * Üyesi olduklarım, Yönettiklerim, Davetler, Başvurularım (yalnız KENDİ bekleyen başvurularım), Kaydedilenler (yer imi).
- * Kapalı topluluklar keşifte görünmez; onlara davet ya da davet bağlantısıyla ulaşılır. Eski `/groups` adresi buraya yönlenir.
+ * `/communities`: Topluluklar ana sayfası. Sekmeler: Keşfet (yalnız herkese açık + "Senin için önerilenler"; arama herkese açık VE kapalı
+ * toplulukları bulur, kapalıya istek gönderilir), Üyesi olduklarım, Yönettiklerim, Davetler, Başvurularım (yalnız KENDİ bekleyen başvurularım).
+ * Tamamen kapalı topluluklar hiçbir listede/aramada/öneride görünmez; onlara yalnız davet ya da davet bağlantısıyla ulaşılır.
+ * Eski `/groups` adresi buraya yönlenir.
  */
 export function CommunitiesPage() {
   const { t } = useTranslation();
@@ -72,7 +74,6 @@ export function CommunitiesPage() {
     { key: "managed", label: t("communities.tab.managed") },
     { key: "invites", label: t("communities.tab.invites"), count: inviteCount ? inviteCount : undefined },
     { key: "requests", label: t("communities.tab.requests"), count: requestCount ? requestCount : undefined },
-    { key: "saved", label: t("communities.tab.saved") },
   ];
 
   const openLink = () => {
@@ -163,7 +164,6 @@ export function CommunitiesPage() {
       )}
       {view === "mine" && <MyCommunitiesView scope="member" onToast={show} />}
       {view === "managed" && <MyCommunitiesView scope="managed" onToast={show} />}
-      {view === "saved" && <MyCommunitiesView scope="bookmarked" onToast={show} />}
       {view === "invites" && user && (
         <InvitesView
           userId={user.id}
@@ -217,9 +217,15 @@ function ErrorBox({ message, onRetry }: { message: string; onRetry: () => void }
   );
 }
 
+/** Bir listedeki kartın üyelik durumu değişince satırı (ve üye sayısını) günceller. */
+function applyJoinState(community: CommunitySummary, next: JoinState): CommunitySummary {
+  const wasMember = community.myStatus === "member";
+  const memberCount = next === "member" && !wasMember ? community.memberCount + 1 : next !== "member" && wasMember ? Math.max(0, community.memberCount - 1) : community.memberCount;
+  return { ...community, myStatus: next, myRole: next === "member" ? (community.myRole ?? "member") : null, memberCount };
+}
+
 function DiscoverView({ onToast, onGoInvites }: { onToast: (message: string) => void; onGoInvites: () => void }) {
   const { t } = useTranslation();
-  const router = useRouter();
   const { refresh } = useRealMessages();
   const [query, setQuery] = useState("");
   const [debounced, setDebounced] = useState("");
@@ -228,31 +234,47 @@ function DiscoverView({ onToast, onGoInvites }: { onToast: (message: string) => 
   const [reloadKey, setReloadKey] = useState(0);
   const [state, setState] = useState<ListState | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
-  const join = useAsyncAction();
-  const [joiningId, setJoiningId] = useState<string | null>(null);
-  const [rulesFor, setRulesFor] = useState<CommunitySummary | null>(null);
-  const [rules, setRules] = useState<string>("");
+  const [suggested, setSuggested] = useState<CommunitySummary[]>([]);
+  const searching = debounced.length > 0;
 
   useEffect(() => {
     const timer = setTimeout(() => setDebounced(query.trim()), 300);
     return () => clearTimeout(timer);
   }, [query]);
 
-  const key = `${debounced}|${sort}|${category ?? ""}|${reloadKey}`;
+  // Öneriler: yalnız arama yokken ve kategori süzgeci yokken, sayfa başına bir kez (hata sessizce boş liste; sayfayı bozmaz).
   useEffect(() => {
     let cancelled = false;
-    discoverCommunities({ query: debounced, sort, category, offset: 0 })
+    suggestCommunities(6)
+      .then((list) => {
+        if (!cancelled) setSuggested(list);
+      })
+      .catch((err) => console.error("suggestCommunities", err));
+    return () => {
+      cancelled = true;
+    };
+  }, [reloadKey]);
+
+  const key = `${debounced}|${searching ? "" : sort}|${category ?? ""}|${reloadKey}`;
+  const fetchPage = useCallback(
+    (offset: number) => (searching ? searchCommunities({ query: debounced, category, offset }) : discoverCommunities({ query: "", sort, category, offset })),
+    [searching, debounced, sort, category],
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchPage(0)
       .then((page) => {
         if (!cancelled) setState({ key, items: page.communities, hasMore: page.hasMore, error: null });
       })
       .catch((err) => {
-        console.error("discoverCommunities", err);
+        console.error("communities list", err);
         if (!cancelled) setState({ key, items: [], hasMore: false, error: toGroupError(err instanceof Error ? err : null).message });
       });
     return () => {
       cancelled = true;
     };
-  }, [debounced, sort, category, key]);
+  }, [fetchPage, key]);
 
   const current = state && state.key === key ? state : null;
 
@@ -260,40 +282,23 @@ function DiscoverView({ onToast, onGoInvites }: { onToast: (message: string) => 
     if (!current || loadingMore) return;
     setLoadingMore(true);
     try {
-      const page = await discoverCommunities({ query: debounced, sort, category, offset: current.items.length });
+      const page = await fetchPage(current.items.length);
       setState({ key, items: [...current.items, ...page.communities], hasMore: page.hasMore, error: null });
     } catch (err) {
-      console.error("discoverCommunities (more)", err);
+      console.error("communities list (more)", err);
       onToast(toGroupError(err instanceof Error ? err : null).message);
     } finally {
       setLoadingMore(false);
     }
   }
 
-  async function joinNow(community: CommunitySummary, acceptRules: boolean) {
-    setJoiningId(community.id);
-    const outcome = await join.run(() => joinCommunity(community.id, acceptRules));
-    setJoiningId(null);
-    if (!outcome) return false;
-    onToast(t("groups.page.joinedToast", { name: community.name }));
-    void refresh();
-    router.push(communityHref(community.id));
-    return true;
+  function changeStatus(id: string, next: JoinState) {
+    setState((prev) => (prev ? { ...prev, items: prev.items.map((c) => (c.id === id ? applyJoinState(c, next) : c)) } : prev));
+    setSuggested((prev) => prev.map((c) => (c.id === id ? applyJoinState(c, next) : c)));
+    if (next === "member" || next === "none") void refresh();
   }
 
-  // Kuralları kabul zorunluysa kural metni önce okunur (kart listesinde yalnızca özet var; metin açılırken çekilir).
-  async function startJoin(community: CommunitySummary) {
-    if (!community.rulesRequired) {
-      await joinNow(community, false);
-      return;
-    }
-    setJoiningId(community.id);
-    const row = await join.run(() => fetchChatGroupRow(community.id));
-    setJoiningId(null);
-    if (!row) return;
-    setRules(row.rules ?? "");
-    setRulesFor(community);
-  }
+  const showSuggestions = !searching && category === null && suggested.length > 0;
 
   return (
     <div className="space-y-4">
@@ -310,13 +315,15 @@ function DiscoverView({ onToast, onGoInvites }: { onToast: (message: string) => 
             className="h-10 w-full rounded-full border border-border-soft bg-background pl-9 pr-3 text-sm text-text shadow-xs transition-colors duration-200 ease-soft placeholder:text-text-muted hover:border-border-strong focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
           />
         </label>
-        <Tabs
-          variant="segmented"
-          ariaLabel={t("groups.page.sortAria")}
-          active={sort}
-          onChange={setSort}
-          items={SORTS.map((value) => ({ key: value, label: t(`groups.page.sort.${value}`) }))}
-        />
+        {!searching && (
+          <Tabs
+            variant="segmented"
+            ariaLabel={t("groups.page.sortAria")}
+            active={sort}
+            onChange={setSort}
+            items={SORTS.map((value) => ({ key: value, label: t(`groups.page.sort.${value}`) }))}
+          />
+        )}
       </div>
 
       <div className="flex gap-1.5 overflow-x-auto pb-1" role="group" aria-label={t("communities.filter.categoryAria")}>
@@ -336,10 +343,31 @@ function DiscoverView({ onToast, onGoInvites }: { onToast: (message: string) => 
         ))}
       </div>
 
-      {join.error && (
-        <p role="alert" className="rounded-md bg-danger/10 px-3 py-2 text-small text-danger">
-          {join.error}
-        </p>
+      {showSuggestions && (
+        <section aria-labelledby="community-suggest-title" className="space-y-2.5">
+          <div>
+            <h2 id="community-suggest-title" className="flex items-center gap-1.5 text-label font-semibold text-text">
+              <Sparkles size={14} className="text-primary" aria-hidden /> {t("communities.suggest.title")}
+            </h2>
+            <p className="text-caption text-text-muted">{t("communities.suggest.help")}</p>
+          </div>
+          <ul className="space-y-3" data-testid="community-suggestions">
+            {suggested.map((community) => (
+              <CommunityCard
+                key={community.id}
+                community={community}
+                onStatusChange={(next) => changeStatus(community.id, next)}
+                onToast={onToast}
+                onInvited={onGoInvites}
+                reason={community.reason}
+              />
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {(showSuggestions || searching) && (
+        <h2 className="text-label font-semibold text-text">{searching ? t("communities.search.resultsTitle") : t("communities.tab.discover")}</h2>
       )}
 
       {!current ? (
@@ -349,8 +377,8 @@ function DiscoverView({ onToast, onGoInvites }: { onToast: (message: string) => 
       ) : current.items.length === 0 ? (
         <EmptyState
           icon={Compass}
-          title={debounced || category ? t("groups.page.noResults") : t("communities.discover.empty")}
-          description={debounced || category ? t("groups.page.noResultsHelp") : t("communities.discover.emptyHelp")}
+          title={searching || category ? t("groups.page.noResults") : t("communities.discover.empty")}
+          description={searching || category ? t("groups.page.noResultsHelp") : t("communities.discover.emptyHelp")}
         />
       ) : (
         <>
@@ -359,11 +387,9 @@ function DiscoverView({ onToast, onGoInvites }: { onToast: (message: string) => 
               <CommunityCard
                 key={community.id}
                 community={community}
-                action={
-                  community.myStatus === "invited"
-                    ? { kind: "invited", onClick: onGoInvites }
-                    : { kind: "join", busy: joiningId === community.id && join.busy, disabled: join.busy || community.memberCount >= community.memberLimit, onClick: () => void startJoin(community) }
-                }
+                onStatusChange={(next) => changeStatus(community.id, next)}
+                onToast={onToast}
+                onInvited={onGoInvites}
               />
             ))}
           </ul>
@@ -376,26 +402,14 @@ function DiscoverView({ onToast, onGoInvites }: { onToast: (message: string) => 
           )}
         </>
       )}
-
-      {rulesFor && (
-        <RulesAcceptModal
-          name={rulesFor.name}
-          rules={rules}
-          confirmLabel={t("communities.rules.acceptAndJoin")}
-          busy={join.busy}
-          error={join.error}
-          onClose={() => setRulesFor(null)}
-          onConfirm={() => void joinNow(rulesFor, true).then((ok) => ok && setRulesFor(null))}
-        />
-      )}
     </div>
   );
 }
 
-/** Üyesi olduklarım · Yönettiklerim · Kaydedilenler: `list_my_communities` (yalnız kendi üyeliğim / yer imim). */
+/** Üyesi olduklarım · Yönettiklerim: `list_my_communities` (yalnız kendi üyeliğim). */
 function MyCommunitiesView({ scope, onToast }: { scope: MyCommunityScope; onToast: (message: string) => void }) {
   const { t } = useTranslation();
-  const { conversations, restoreConversation } = useRealMessages();
+  const { conversations, restoreConversation, refresh } = useRealMessages();
   const [reloadKey, setReloadKey] = useState(0);
   const [state, setState] = useState<ListState | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -433,21 +447,10 @@ function MyCommunitiesView({ scope, onToast }: { scope: MyCommunityScope; onToas
     }
   }
 
-  async function toggleBookmark(community: CommunitySummary) {
-    setBusyId(community.id);
-    const next = !community.bookmarked;
-    const ok = await action.run(async () => {
-      await setCommunityBookmark(community.id, next);
-      return true;
-    });
-    setBusyId(null);
-    if (!ok) return;
-    setState((prev) =>
-      prev
-        ? { ...prev, items: scope === "bookmarked" && !next ? prev.items.filter((c) => c.id !== community.id) : prev.items.map((c) => (c.id === community.id ? { ...c, bookmarked: next } : c)) }
-        : prev,
-    );
-    onToast(next ? t("communities.bookmark.addedToast") : t("communities.bookmark.removedToast"));
+  // Düğmeden ayrılınca kart listeden kalkar; başka durum değişimi (ör. yeniden katılma) bu listede olmaz.
+  function changeStatus(id: string, next: JoinState) {
+    setState((prev) => (prev ? { ...prev, items: next === "member" ? prev.items : prev.items.filter((c) => c.id !== id) } : prev));
+    void refresh();
   }
 
   // Mesajlar listesinde gizlenmiş / arşivlenmiş topluluk sohbeti: üyelik sürer, yalnız kişisel liste durumu temizlenir.
@@ -461,17 +464,17 @@ function MyCommunitiesView({ scope, onToast }: { scope: MyCommunityScope; onToas
     if (ok) onToast(t("groups.mine.restoredToast"));
   }
 
-  const emptyKey = scope === "member" ? "mine" : scope === "managed" ? "managed" : "saved";
+  const emptyKey = scope === "member" ? "mine" : "managed";
 
   if (!current) return <LoadingRows />;
   if (current.error) return <ErrorBox message={t("communities.page.loadError")} onRetry={() => setReloadKey((k) => k + 1)} />;
   if (current.items.length === 0) {
     return (
       <EmptyState
-        icon={scope === "bookmarked" ? Bookmark : scope === "managed" ? ShieldCheck : Users}
+        icon={scope === "managed" ? ShieldCheck : Users}
         title={t(`communities.empty.${emptyKey}` as "communities.empty.mine")}
         description={t(`communities.empty.${emptyKey}Help` as "communities.empty.mineHelp")}
-        action={scope === "member" || scope === "bookmarked" ? { label: t("communities.tab.discover"), href: "/communities" } : undefined}
+        action={scope === "member" ? { label: t("communities.tab.discover"), href: "/communities" } : undefined}
       />
     );
   }
@@ -491,8 +494,8 @@ function MyCommunitiesView({ scope, onToast }: { scope: MyCommunityScope; onToas
             <CommunityCard
               key={community.id}
               community={community}
-              onToggleBookmark={community.visibility === "public" || community.myRole ? () => void toggleBookmark(community) : undefined}
-              bookmarkBusy={busyId === community.id && action.busy}
+              onStatusChange={(next) => changeStatus(community.id, next)}
+              onToast={onToast}
               footerNote={hiddenInInbox ? t("communities.card.hiddenInInbox") : undefined}
             />
           );
