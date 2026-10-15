@@ -277,8 +277,34 @@ export interface AppNotification {
   createdAt: string;
 }
 
+/** Grup üyelik rolleri (docs/history/172-*): owner > admin > moderator > member. */
+export type GroupRole = "owner" | "admin" | "moderator" | "member";
+export type GroupVisibility = "public" | "private";
+/** Kim mesaj yazabilir: tüm üyeler ya da yalnızca owner/admin/moderator. */
+export type GroupPostingPolicy = "members" | "admins";
+
+/** Bir grup sohbetinin grup tarafı (`chat_groups` + bu kullanıcının üyeliği). */
+export interface ChatGroup {
+  id: string;
+  name: string;
+  description: string | null;
+  avatarUrl: string | null;
+  visibility: GroupVisibility;
+  postingPolicy: GroupPostingPolicy;
+  memberLimit: number;
+  memberCount: number;
+  /** Yalnızca yetkililer için anlamlı; diğerlerinde gösterilmez. */
+  pendingRequestCount: number;
+  createdAt: string;
+  /** Bu kullanıcının grup içindeki rolü. */
+  myRole: GroupRole;
+}
+
 export interface Conversation {
   id: string;
+  /** "direct" = birebir sohbet (participants[0] karşı taraf); "group" = grup sohbeti (participants boş, `group` dolu). */
+  kind: "direct" | "group";
+  group: ChatGroup | null;
   participants: UserProfile[];
   lastMessage: string;
   lastMessageAt: string;
@@ -288,6 +314,8 @@ export interface Conversation {
   /** Per-viewer state on their own membership row (docs/history/171-*): never visible to, or changing anything for, the other side. */
   archivedAt: string | null;
   deletedAt: string | null;
+  /** Kişisel sessize alma (grup sohbetleri): listede kalır ama başlıktaki okunmamış noktasını yakmaz ve geri dönmez. */
+  mutedAt: string | null;
   /** Messages created before this are hidden from THIS viewer only; the message rows themselves stay. */
   clearedAt: string | null;
 }

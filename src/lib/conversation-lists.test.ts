@@ -63,3 +63,8 @@ test("isAfterClear: only messages strictly after the clear moment stay visible",
   assert.equal(isAfterClear("2020-01-01T00:00:00Z", null), true);
   assert.equal(isAfterClear("2020-01-01T00:00:00Z", undefined), true);
 });
+
+test("a muted group with unread messages does not light the header dot, but an unmuted one does", () => {
+  assert.equal(hasUnreadInInbox([conv("g", { unreadCount: 4, mutedAt: "2026-02-01T00:00:00Z" })]), false);
+  assert.equal(hasUnreadInInbox([conv("g", { unreadCount: 4, mutedAt: "2026-02-01T00:00:00Z" }), conv("h", { unreadCount: 1 })]), true);
+});

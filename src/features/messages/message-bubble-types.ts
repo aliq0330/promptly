@@ -1,6 +1,7 @@
 import type { Message } from "@/types";
 
-export type DeleteMode = "everyone" | "me";
+/** "moderator": grup yöneticisinin (düşük rütbeli üyenin) mesajını herkes için silmesi. */
+export type DeleteMode = "everyone" | "me" | "moderator";
 
 export interface MessageReactionEntry {
   userId: string;
@@ -20,4 +21,14 @@ export interface MessageBubbleActions {
   onCancelDeleteConfirm: () => void;
   deleteConfirm: { id: string; mode: DeleteMode } | null;
   isDeletingId: string | null;
+  /** Grup sohbeti: bu mesajı yönetici olarak silebilir miyim (gönderen daha düşük rütbede mi)? Birebir sohbette verilmez. */
+  canModerate?: (message: Message) => boolean;
+}
+
+/** Grup sohbetinde mesajın üstünde gösterilen gönderen bilgisi. */
+export interface MessageSender {
+  displayName: string;
+  username: string;
+  avatarUrl: string | null;
+  role: import("@/types").GroupRole | null;
 }

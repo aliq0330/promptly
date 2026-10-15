@@ -877,3 +877,10 @@ duruyor — bu dosyada literal bir key yok, değişmesi gerekmiyor.
 **Model adı:** `GEMINI_MODEL` sabitinde (`index.ts`'in başında) — Google
 modeli tekrar değiştirirse (bir "model artık kullanılamıyor" 404'ü gibi)
 güncellenmesi gereken tek satır burası.
+
+## Grup sohbeti ve topluluk (`docs/history/172-*`)
+
+- `20260919980000_chat_groups_schema.sql`: `conversations.kind`, `conversation_members.role/joined_at/muted_at`, `chat_groups` + istek/davet/bağlantı/yasak/denetim tabloları, RLS (mesaj okuma/gönderme ve üyelik görünürlüğü `alter policy` ile yerinde daraltıldı), koruma tetikleyicileri, birebir akış düzeltmeleri (`start_direct_conversation`, `filter_messageable_users`, `notify_new_message`, `resurface_conversation_on_message`, `admin_user_conversations`, `orphan_storage_objects` — aynı imza, `create or replace`).
+- `20260919990000_chat_groups_functions.sql`: yazma yolu RPC'leri (`create_chat_group`, `update_chat_group`, `set_chat_group_visibility`, `join_chat_group`, `join_chat_group_via_link`, `decide_chat_group_join_request`, `invite_to_chat_group`, `respond_chat_group_invitation`, `leave_chat_group`, `remove_chat_group_member`, `set_chat_group_member_role`, `transfer_chat_group_ownership`, `delete_chat_group`, `moderate_chat_group_message`, bağlantı RPC'leri) + okuma RPC'leri (`discover_chat_groups`, `chat_group_members`, `conversation_last_messages`). Yalnızca ekleyici; `drop` yok. **Canlıya uygulanmadı.**
+- Yerel doğrulama: `supabase/tests/run-local.sh supabase/tests/chat-groups.sql` (PostgreSQL 16 başlatılıp `PGHOST/PGPORT/PGUSER` verilir; script temiz bir veritabanına `_local-stubs.sql` + TÜM migration'ları sırayla oynatır, sonra testi çalıştırır; `FAILED=0` beklenir).
+
