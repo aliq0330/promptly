@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Archive, ArrowLeft, MessageCircle, Plus, Search, UsersRound } from "lucide-react";
+import { Archive, ArrowLeft, MessageCircle, Plus, Search, Star, UsersRound } from "lucide-react";
 import { ConversationList } from "./conversation-list";
 import { NewChatModal } from "./new-chat-modal";
 import { CreateGroupModal } from "@/features/groups/create-group-modal";
@@ -117,6 +117,17 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
               className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border-soft bg-surface text-text-secondary shadow-xs transition-colors hover:border-border-strong hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
               <UsersRound size={17} />
+            </Link>
+            <Link
+              href="/messages/starred"
+              aria-label={t("chat.starred.entryAria")}
+              title={t("chat.starred.title")}
+              className={cn(
+                "flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border-soft bg-surface text-text-secondary shadow-xs transition-colors hover:border-border-strong hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                pathname.startsWith("/messages/starred") && "border-primary/40 bg-primary-soft text-primary",
+              )}
+            >
+              <Star size={17} />
             </Link>
             <button
               type="button"

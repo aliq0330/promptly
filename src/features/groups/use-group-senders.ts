@@ -11,7 +11,7 @@ import type { GroupRole, Message, UserProfile } from "@/types";
  * sayfasından gelir (sunucu rol sırasıyla döner → owner/admin/moderator hep ilk sayfadadır); listede olmayan
  * gönderen "normal üye" (ya da artık üye değil) sayılır — sunucudaki mesaj silme kuralıyla aynı varsayım.
  */
-export function useGroupSenders(groupId: string | null, messages: readonly Message[], rolesKey: string) {
+export function useGroupSenders(groupId: string | null, messages: readonly Message[], rolesKey: string, extraUserIds: readonly string[] = []) {
   const [profiles, setProfiles] = useState<Record<string, UserProfile>>({});
   const [roles, setRoles] = useState<Record<string, GroupRole>>({});
   const [failed, setFailed] = useState<Set<string>>(new Set());
@@ -53,8 +53,10 @@ export function useGroupSenders(groupId: string | null, messages: readonly Messa
   const missing = useMemo(() => {
     const ids = new Set<string>();
     for (const message of messages) if (!profiles[message.senderId] && !failed.has(message.senderId)) ids.add(message.senderId);
+    // Mesajı olmayan ama "yazıyor" diyen üyelerin adları da gerekir.
+    for (const id of extraUserIds) if (!profiles[id] && !failed.has(id)) ids.add(id);
     return [...ids].sort().join(",");
-  }, [messages, profiles, failed]);
+  }, [messages, extraUserIds, profiles, failed]);
 
   useEffect(() => {
     if (!groupId || !missing) return;

@@ -15,8 +15,8 @@ export const U = {
 };
 U.locked.message_privacy = "followers_only";
 const DEFAULT_PERMS = {
-  admin: { edit_settings: true, change_visibility: true, manage_invites: true, manage_requests: true, remove_members: true, ban_members: true, manage_roles: true, delete_messages: true },
-  moderator: { edit_settings: false, change_visibility: false, manage_invites: false, manage_requests: true, remove_members: true, ban_members: false, manage_roles: false, delete_messages: true },
+  admin: { edit_settings: true, change_visibility: true, manage_invites: true, manage_requests: true, remove_members: true, ban_members: true, manage_roles: true, delete_messages: true, pin_messages: true },
+  moderator: { edit_settings: false, change_visibility: false, manage_invites: false, manage_requests: true, remove_members: true, ban_members: false, manage_roles: false, delete_messages: true, pin_messages: true },
 };
 const PUBLIC_COLS = ["id", "username", "display_name", "avatar_url", "cover_url", "bio", "website", "follower_count", "following_count", "created_at", "interests"];
 const pub = (p) => Object.fromEntries(PUBLIC_COLS.map((c) => [c, p[c]]));
@@ -37,6 +37,9 @@ export function createDb() {
     failMemberPatch: false,
     patchDelayMs: 0,
     searchSelects: [],
+    pins: [], // pinned_messages { message_id, conversation_id, pinned_by, pinned_at }
+    stars: [], // message_stars { user_id, message_id, created_at }
+    readCalls: [], // mark_conversation_read_up_to çağrıları
     clock: 0,
   };
   db.stamp = () => new Date(Date.UTC(2026, 5, 1, 0, 0, ++db.clock)).toISOString();
@@ -57,7 +60,7 @@ export function createDb() {
     const base = { status: "accepted", unread_count: 0, archived_at: null, deleted_at: null, cleared_at: null, muted_at: null };
     db.members.push({ conversation_id: id, user_id: ME, role: myRole, ...base, muted_at: muted ? db.stamp() : null });
     for (const [u, role] of members) db.members.push({ conversation_id: id, user_id: u.id, role, ...base });
-    db.groups.push({ id, name, description, avatar_url: null, visibility, posting_policy, member_limit, member_count: db.members.filter((m) => m.conversation_id === id).length, pending_request_count: pending, history_visible: false, role_permissions: structuredClone(permissions ?? DEFAULT_PERMS), created_at: "2026-01-01T00:00:00Z" });
+    db.groups.push({ id, name, description, avatar_url: null, visibility, posting_policy, member_limit, member_count: db.members.filter((m) => m.conversation_id === id).length, pending_request_count: pending, history_visible: false, members_can_pin: false, role_permissions: structuredClone(permissions ?? DEFAULT_PERMS), created_at: "2026-01-01T00:00:00Z" });
     texts.forEach(([u, text]) => db.addMessage(id, u.id, text));
     return id;
   };
@@ -191,6 +194,7 @@ export async function installMock(context, db, { signedIn = ME } = {}) {
       if (roleOf(body.p_group_id) !== "owner") return err("forbidden");
       const patch = body.p_patch ?? {};
       if ("history_visible" in patch) g.history_visible = patch.history_visible;
+      if ("members_can_pin" in patch) g.members_can_pin = patch.members_can_pin;
       for (const [role, caps] of Object.entries(patch.role_permissions ?? {})) Object.assign(g.role_permissions[role], caps);
       return json(200, { changed: true });
     }
@@ -288,6 +292,101 @@ export async function installMock(context, db, { signedIn = ME } = {}) {
     }
     if ((table === "chat_group_links" || table === "chat_group_bans") && method === "GET") return rows([]);
     if (table === "chat_groups" && method === "GET") return rows(db.groups.filter((g) => !val(q.get("id") ?? "", "eq") || g.id === val(q.get("id"), "eq")));
+
+    // ---- sohbet geliştirmeleri (docs/history/174-*): okundu imleci, mesaj bilgisi, sabitleme, arama, yıldız ----
+    const memberOf = (cid, uid = signedIn) => db.member(cid, uid);
+    if (table === "rpc/mark_conversation_read_up_to") {
+      const m = memberOf(body.p_conversation_id);
+      if (!m) return err("not_a_member");
+      db.readCalls.push({ conversation_id: body.p_conversation_id, up_to: body.p_up_to });
+      const max = db.messages.filter((x) => x.conversation_id === m.conversation_id).map((x) => x.created_at).sort().pop() ?? null;
+      const target = max && body.p_up_to > max ? max : body.p_up_to;
+      if (!m.last_read_at || target > m.last_read_at) { m.last_read_at = target; m.last_read_updated_at = db.stamp(); }
+      m.unread_count = db.messages.filter((x) => x.conversation_id === m.conversation_id && x.sender_id !== signedIn && !x.deleted_at && x.created_at > m.last_read_at).length;
+      return json(200, m.last_read_at);
+    }
+    if (table === "rpc/message_read_receipts") {
+      const msg = db.messages.find((x) => x.id === body.p_message_id);
+      if (!msg || msg.deleted_at) return err("message_not_found");
+      if (msg.sender_id !== signedIn || !memberOf(msg.conversation_id)) return err("forbidden");
+      const list = db.members.filter((m) => m.conversation_id === msg.conversation_id && m.user_id !== signedIn).map((m) => {
+        const u = Object.values(U).find((x) => x.id === m.user_id);
+        const read = Boolean(m.last_read_at && m.last_read_at >= msg.created_at);
+        return { user_id: u.id, username: u.username, display_name: u.display_name, avatar_url: null, has_read: read, read_at: read ? (m.last_read_updated_at ?? m.last_read_at) : null };
+      });
+      return json(200, list);
+    }
+    if (table === "rpc/set_message_pinned") {
+      const msg = db.messages.find((x) => x.id === body.p_message_id);
+      if (!msg || msg.deleted_at || !memberOf(msg.conversation_id)) return err("message_not_found");
+      const conv = db.conversations.find((c) => c.id === msg.conversation_id);
+      if (conv?.kind === "group") {
+        const g = groupOf(conv.id); const role = roleOf(conv.id);
+        const caps = g.role_permissions?.[role];
+        const allowed = role === "owner" || (caps ? (caps.pin_messages ?? true) : false) || (role === "member" && g.members_can_pin);
+        if (!allowed) return err("forbidden");
+      }
+      db.pinCalls = [...(db.pinCalls ?? []), { message_id: msg.id, pinned: body.p_pinned }];
+      const exists = db.pins.some((x) => x.message_id === msg.id);
+      if (body.p_pinned && !exists) {
+        if (db.pins.filter((x) => x.conversation_id === msg.conversation_id).length >= 20) return err("pin_limit_reached");
+        db.pins.push({ message_id: msg.id, conversation_id: msg.conversation_id, pinned_by: signedIn, pinned_at: db.stamp() });
+      } else if (!body.p_pinned) db.pins = db.pins.filter((x) => x.message_id !== msg.id);
+      return json(200, { pinned: body.p_pinned });
+    }
+    if (table === "pinned_messages" && method === "GET") {
+      const cid = val(q.get("conversation_id") ?? "", "eq");
+      if (!cid || !memberOf(cid)) return rows([]);
+      return rows(db.pins.filter((x) => x.conversation_id === cid).sort((a, b) => b.pinned_at.localeCompare(a.pinned_at)));
+    }
+    if (table === "rpc/search_conversation_messages") {
+      const term = String(body.p_query ?? "").trim();
+      if (term.length < 2 || term.length > 100) return err("invalid_query");
+      const mine = memberOf(body.p_conversation_id);
+      if (!mine) return json(200, []);
+      const hidden = db.hidden ?? [];
+      let list = db.messages.filter((x) => x.conversation_id === body.p_conversation_id && !x.deleted_at && x.body && x.body.toLowerCase().includes(term.toLowerCase())
+        && (!mine.cleared_at || x.created_at > mine.cleared_at) && !hidden.some((h) => h.message_id === x.id && h.user_id === signedIn));
+      list.sort((a, b) => b.created_at.localeCompare(a.created_at) || b.id.localeCompare(a.id));
+      if (body.p_before_created_at) list = list.filter((x) => x.created_at < body.p_before_created_at);
+      db.searchCalls = [...(db.searchCalls ?? []), { query: term, before: body.p_before_created_at }];
+      return json(200, list.slice(0, Math.min(body.p_limit ?? 20, 50)).map((x) => ({ id: x.id, sender_id: x.sender_id, body: x.body, created_at: x.created_at })));
+    }
+    if (table === "message_stars") {
+      if (method === "GET") {
+        const cid = val(q.get("messages.conversation_id") ?? "", "eq");
+        const list = db.stars.filter((x) => x.user_id === signedIn).map((x) => ({ x, m: db.messages.find((mm) => mm.id === x.message_id) })).filter(({ m }) => m && (!cid || m.conversation_id === cid) && memberOf(m.conversation_id));
+        return rows(list.map(({ x, m }) => ({ message_id: x.message_id, messages: { conversation_id: m.conversation_id } })));
+      }
+      if (method === "POST") {
+        const m = db.messages.find((x) => x.id === body.message_id);
+        if (body.user_id !== signedIn || !m || !memberOf(m.conversation_id)) return json(403, { code: "42501", message: 'new row violates row-level security policy for table "message_stars"' });
+        if (db.stars.some((x) => x.user_id === signedIn && x.message_id === m.id)) return json(409, { code: "23505", message: 'duplicate key value violates unique constraint "message_stars_pkey"' });
+        db.stars.push({ user_id: signedIn, message_id: m.id, created_at: db.stamp() });
+        return route.fulfill({ status: 201, headers: { "access-control-allow-origin": "*" } });
+      }
+      if (method === "DELETE") {
+        const mid = val(q.get("message_id") ?? "", "eq");
+        db.stars = db.stars.filter((x) => !(x.user_id === signedIn && (!mid || x.message_id === mid)));
+        return route.fulfill({ status: 204, headers: { "access-control-allow-origin": "*" } });
+      }
+    }
+    if (table === "rpc/list_starred_messages") {
+      const hidden = db.hidden ?? [];
+      let list = db.stars.filter((x) => x.user_id === signedIn).map((x) => ({ x, m: db.messages.find((mm) => mm.id === x.message_id) }))
+        .filter(({ m }) => m && !m.deleted_at && memberOf(m.conversation_id) && (!memberOf(m.conversation_id).cleared_at || m.created_at > memberOf(m.conversation_id).cleared_at) && !hidden.some((h) => h.message_id === m.id && h.user_id === signedIn));
+      list.sort((a, b) => b.x.created_at.localeCompare(a.x.created_at));
+      if (body.p_before_starred_at) list = list.filter(({ x }) => x.created_at < body.p_before_starred_at);
+      return json(200, list.slice(0, Math.min(body.p_limit ?? 30, 100)).map(({ x, m }) => {
+        const conv = db.conversations.find((c) => c.id === m.conversation_id); const g = conv?.kind === "group" ? groupOf(conv.id) : null;
+        const partner = g ? null : db.members.find((mm) => mm.conversation_id === m.conversation_id && mm.user_id !== signedIn)?.user_id ?? null;
+        return { starred_at: x.created_at, message_id: m.id, conversation_id: m.conversation_id, sender_id: m.sender_id, body: m.body, has_attachments: (m.attachments ?? []).length > 0, has_shared: false, created_at: m.created_at, kind: g ? "group" : "direct", group_name: g?.name ?? null, group_avatar_url: null, partner_id: partner };
+      }));
+    }
+    if (table === "message_hidden_for" && method === "GET") {
+      const mid = val(q.get("message_id") ?? "", "eq");
+      return rows((db.hidden ?? []).filter((h) => h.user_id === signedIn && (!mid || h.message_id === mid)).map((h) => ({ message_id: h.message_id })));
+    }
     if (table === "rpc/filter_messageable_users") return json(200, (body.p_user_ids ?? []).filter((id) => db.messageable(id)));
     if (table === "rpc/mark_conversation_read") return route.fulfill({ status: 204, headers: { "access-control-allow-origin": "*" } });
     if (table === "rpc/start_direct_conversation") {
@@ -335,6 +434,7 @@ export async function installMock(context, db, { signedIn = ME } = {}) {
         let list = filterRows(db.members, q, ["conversation_id", "user_id"]);
         if (sel.includes("profiles(")) return rows(list.map((m) => ({ conversation_id: m.conversation_id, profiles: pub(Object.values(U).find((u) => u.id === m.user_id)) })));
         if (sel === "cleared_at") return rows(list.map((m) => ({ cleared_at: m.cleared_at })));
+        if (sel === "last_read_at") return rows(list.map((m) => ({ last_read_at: m.last_read_at ?? null })));
         return rows(list.map((m) => {
           const conv = db.conversations.find((c) => c.id === m.conversation_id);
           return { ...m, conversations: conv ? { ...conv, kind: conv.kind ?? "direct", chat_groups: conv.kind === "group" ? groupOf(conv.id) ?? null : null } : conv };
@@ -355,7 +455,7 @@ export async function installMock(context, db, { signedIn = ME } = {}) {
     }
     if (table === "messages") {
       if (method === "GET") {
-        let list = filterRows(db.messages, q, ["conversation_id", "created_at"]);
+        let list = filterRows(db.messages, q, ["id", "conversation_id", "created_at"]);
         const order = q.get("order") ?? "";
         list = list.slice().sort((a, b) => a.created_at.localeCompare(b.created_at) * (order.includes("desc") ? -1 : 1));
         const lim = Number(q.get("limit") ?? 0); if (lim) list = list.slice(0, lim);

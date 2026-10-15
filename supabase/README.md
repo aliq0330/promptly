@@ -878,6 +878,14 @@ duruyor — bu dosyada literal bir key yok, değişmesi gerekmiyor.
 modeli tekrar değiştirirse (bir "model artık kullanılamıyor" 404'ü gibi)
 güncellenmesi gereken tek satır burası.
 
+## Sohbet geliştirmeleri (`docs/history/174-*`)
+
+- `20260920010000_chat_features_schema.sql`: `conversation_members.last_read_at/last_read_updated_at` (guard tetikleyici güncellendi: istemci imleci yazamaz), `messages (id, conversation_id)` benzersiz kısıtı, `pinned_messages` (bileşik FK, RLS, Realtime yayını), `chat_groups.members_can_pin`, `message_stars` (RLS: yalnız kendi satırların, 1000 sınırı), silme tetikleyicileri, `pin_messages` yeteneği (`_group_default_permissions`, `update_chat_group_owner_settings`).
+- `20260920020000_chat_features_functions.sql`: `mark_conversation_read_up_to`, `mark_conversation_read` (yalnız sayaç), `message_read_receipts`, `set_message_pinned`, `search_conversation_messages` / `list_starred_messages` (SECURITY INVOKER), `can_use_typing_topic` + `realtime.messages` politikaları (yoksa/oluşturulamazsa atlanır ve uyarı verir).
+- `20260920030000_messages_search_index.sql`: `pg_trgm` + kısmi GIN dizini (ayrı dosya: dizin/uzantı kısıtlıysa ötekiler etkilenmesin).
+- Yalnızca ekleyici; `drop` yok. **Canlıya uygulanmadı.** Uygulama sonrası: Dashboard → Realtime Settings → **"Allow public access" KAPALI** olmalı ve `select policyname from pg_policies where schemaname = 'realtime' and tablename = 'messages'` iki "typing broadcasts" politikasını göstermeli (yoksa "yazıyor" göstergesi çalışmaz; güvenli taraf).
+- Yerel doğrulama: `supabase/tests/run-local.sh supabase/tests/chat-features.sql` (`FAILED=0`; `_local-stubs.sql` Realtime tablosunu taklit eder).
+
 ## Grup sohbeti ve topluluk (`docs/history/172-*`)
 
 - `20260919980000_chat_groups_schema.sql`: `conversations.kind`, `conversation_members.role/joined_at/muted_at`, `chat_groups` + istek/davet/bağlantı/yasak/denetim tabloları, RLS (mesaj okuma/gönderme ve üyelik görünürlüğü `alter policy` ile yerinde daraltıldı), koruma tetikleyicileri, birebir akış düzeltmeleri (`start_direct_conversation`, `filter_messageable_users`, `notify_new_message`, `resurface_conversation_on_message`, `admin_user_conversations`, `orphan_storage_objects` — aynı imza, `create or replace`).

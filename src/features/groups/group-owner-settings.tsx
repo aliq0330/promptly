@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { History, RotateCcw, ShieldCheck } from "lucide-react";
+import { History, Pin, RotateCcw, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ChoiceCard } from "@/components/ui/field";
 import { useAsyncAction } from "./use-async-action";
@@ -30,6 +30,7 @@ export function GroupOwnerSettings({
   const { t } = useTranslation();
   const save = useAsyncAction();
   const [history, setHistory] = useState(group.historyVisible);
+  const [membersCanPin, setMembersCanPin] = useState(group.membersCanPin);
   const [perms, setPerms] = useState<RolePermissions>(group.rolePermissions);
 
   const changedPerms: Partial<Record<(typeof ROLES)[number], Partial<Record<GroupCapability, boolean>>>> = {};
@@ -39,6 +40,7 @@ export function GroupOwnerSettings({
     }
   }
   const historyChanged = history !== group.historyVisible;
+  const pinChanged = membersCanPin !== group.membersCanPin;
   const permsChanged = Object.keys(changedPerms).length > 0;
   const atDefaults = ROLES.every((role) => capabilitiesFor(role).every((cap) => perms[role][cap] === DEFAULT_ROLE_PERMISSIONS[role][cap]));
 
@@ -50,6 +52,7 @@ export function GroupOwnerSettings({
     const done = await save.run(async () => {
       await updateChatGroupOwnerSettings(group.id, {
         ...(historyChanged ? { historyVisible: history } : {}),
+        ...(pinChanged ? { membersCanPin } : {}),
         ...(permsChanged ? { rolePermissions: changedPerms } : {}),
       });
       return true;
@@ -83,6 +86,29 @@ export function GroupOwnerSettings({
             </span>
           </ChoiceCard>
         </fieldset>
+      </section>
+
+      <section aria-labelledby="owner-pin-title" className="space-y-3">
+        <h3 id="owner-pin-title" className="flex items-center gap-1.5 text-label font-semibold text-text">
+          <Pin size={14} aria-hidden /> {t("groups.owner.pinTitle")}
+        </h3>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={membersCanPin}
+          aria-label={t("groups.owner.membersCanPin")}
+          disabled={save.busy}
+          onClick={() => setMembersCanPin((prev) => !prev)}
+          className="flex w-full items-center gap-3 rounded-md px-2 py-2 text-left transition-colors hover:bg-surface-soft disabled:opacity-60"
+        >
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-medium text-text">{t("groups.owner.membersCanPin")}</span>
+            <span className="block text-caption text-text-muted">{t("groups.owner.membersCanPinHelp")}</span>
+          </span>
+          <span aria-hidden className={cn("relative h-6 w-10 shrink-0 rounded-full transition-colors", membersCanPin ? "bg-primary" : "bg-border-strong")}>
+            <span className={cn("absolute top-0.5 h-5 w-5 rounded-full bg-background shadow-xs transition-all", membersCanPin ? "left-[1.125rem]" : "left-0.5")} />
+          </span>
+        </button>
       </section>
 
       <section aria-labelledby="owner-permissions-title" className="space-y-4">
@@ -133,7 +159,7 @@ export function GroupOwnerSettings({
         </p>
       )}
       <div className="flex justify-end">
-        <Button type="button" size="sm" onClick={() => void handleSave()} disabled={save.busy || (!historyChanged && !permsChanged)}>
+        <Button type="button" size="sm" onClick={() => void handleSave()} disabled={save.busy || (!historyChanged && !permsChanged && !pinChanged)}>
           {save.busy ? t("common.saving") : t("groups.owner.save")}
         </Button>
       </div>

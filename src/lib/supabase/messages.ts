@@ -50,7 +50,7 @@ function groupFromMembership(row: MembershipRow) {
   return group ? mapChatGroupRow(group, row.role) : null;
 }
 
-const MESSAGE_SELECT =
+export const MESSAGE_SELECT =
   "id, conversation_id, sender_id, body, shared_prompt_id, shared_request_id, reply_to_message_id, attachments, edited_at, deleted_at, created_at";
 
 /** Defensive read of the `attachments` jsonb column — anything that isn't a well-formed `{path, mime}` entry is dropped rather than trusted. */
@@ -340,6 +340,56 @@ export async function fetchMessagePage(
   }
 }
 
+/** Atlama penceresinde hedefin her iki yanında yüklenen mesaj sayısı. */
+export const MESSAGE_WINDOW_SIZE = 60;
+
+/**
+ * Belirli bir mesaja atlamak için onun çevresindeki pencere (eskiden yeniye): hedefin öncesinden ve sonrasından birer sayfa.
+ * Mesaj bu kullanıcı için GÖRÜNMEZSE (RLS reddi, kişisel "temizle", "benden sil", yok) null döner — içerik asla erişimin ötesinde
+ * gösterilmez. `hasNewer`: pencerenin ötesinde daha yeni mesaj var (arayüz "güncel mesajlara dön" sunar).
+ */
+export async function fetchMessageWindow(
+  conversationId: string,
+  viewerId: string,
+  messageId: string,
+): Promise<{ messages: Message[]; hasOlder: boolean; hasNewer: boolean } | null> {
+  try {
+    const [{ data: membership }, { data: target }, { data: hiddenTarget }] = await Promise.all([
+      supabase.from("conversation_members").select("cleared_at").eq("conversation_id", conversationId).eq("user_id", viewerId).maybeSingle(),
+      supabase.from("messages").select(MESSAGE_SELECT).eq("id", messageId).eq("conversation_id", conversationId).maybeSingle(),
+      supabase.from("message_hidden_for").select("message_id").eq("user_id", viewerId).eq("message_id", messageId).maybeSingle(),
+    ]);
+    if (!membership || !target || hiddenTarget) return null;
+    const clearedAt = (membership as { cleared_at: string | null }).cleared_at;
+    const anchor = mapMessageRow(target as MessageRow);
+    if (clearedAt && anchor.createdAt <= clearedAt) return null;
+
+    let olderQuery = supabase.from("messages").select(MESSAGE_SELECT).eq("conversation_id", conversationId).lt("created_at", anchor.createdAt);
+    const newerQuery = supabase.from("messages").select(MESSAGE_SELECT).eq("conversation_id", conversationId).gt("created_at", anchor.createdAt);
+    if (clearedAt) {
+      olderQuery = olderQuery.gt("created_at", clearedAt);
+    }
+    const [{ data: older, error: olderError }, { data: newer, error: newerError }, { data: hidden }] = await Promise.all([
+      olderQuery.order("created_at", { ascending: false }).limit(MESSAGE_WINDOW_SIZE + 1),
+      newerQuery.order("created_at", { ascending: true }).limit(MESSAGE_WINDOW_SIZE + 1),
+      supabase.from("message_hidden_for").select("message_id").eq("user_id", viewerId),
+    ]);
+    if (olderError || newerError) return null;
+    const hiddenIds = new Set((hidden ?? []).map((row) => row.message_id as string));
+    const olderRows = older ?? [];
+    const newerRows = newer ?? [];
+    const rows = [...olderRows.slice(0, MESSAGE_WINDOW_SIZE).reverse(), target, ...newerRows.slice(0, MESSAGE_WINDOW_SIZE)];
+    return {
+      messages: rows.map((row) => mapMessageRow(row as MessageRow)).filter((message) => !hiddenIds.has(message.id)),
+      hasOlder: olderRows.length > MESSAGE_WINDOW_SIZE,
+      hasNewer: newerRows.length > MESSAGE_WINDOW_SIZE,
+    };
+  } catch (err) {
+    console.error("fetchMessageWindow", err);
+    return null;
+  }
+}
+
 export interface SendMessageInput {
   /** Client-generated message id — lets the optimistic bubble, a retry, and the Realtime echo of this same INSERT all be recognised as ONE message (no duplicates). */
   id?: string;
@@ -408,7 +458,7 @@ export async function hideMessageForMe(messageId: string, userId: string): Promi
   if (error) throw new Error(error.message);
 }
 
-/** Marks a real conversation as read for the caller — best-effort, a failure here shouldn't block viewing messages. Goes through `mark_conversation_read` because `unread_count` is no longer writable from the client (trigger-maintained, like every other counter). */
+/** Resets the caller's unread counter only — best-effort, a failure here shouldn't block anything. Deliberately does NOT advance the read cursor (that is `markConversationReadUpTo`, sent only while messages are actually on screen), so clearing/deleting a chat never reports "read" to the other side. `unread_count` isn't writable from the client (trigger-maintained), hence the RPC. */
 export async function markConversationRead(conversationId: string): Promise<void> {
   try {
     const { error } = await supabase.rpc("mark_conversation_read", { p_conversation_id: conversationId });

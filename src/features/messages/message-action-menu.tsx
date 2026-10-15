@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type RefObject } from "react";
-import { CornerUpLeft, Flag, Pencil, ShieldAlert, Trash2 } from "lucide-react";
+import { CheckCheck, Copy, CornerUpLeft, Flag, Pencil, Pin, PinOff, ShieldAlert, Star, Trash2 } from "lucide-react";
 import { useAuth } from "@/features/auth/auth-provider";
 import { fileReport } from "@/lib/supabase/reports";
 import { cn } from "@/lib/utils";
@@ -163,6 +163,46 @@ export function MessageActionMenu({
           onClose();
         }}
       />
+      {actions.onToggleStar && (
+        <MenuItem
+          icon={<Star size={14} className={actions.isStarred?.(message.id) ? "fill-current text-warning" : undefined} />}
+          label={actions.isStarred?.(message.id) ? t("chat.star.unstar") : t("chat.star.star")}
+          onClick={() => {
+            actions.onToggleStar?.(message);
+            onClose();
+          }}
+        />
+      )}
+      {actions.canPin && actions.onTogglePin && (
+        <MenuItem
+          icon={actions.isPinned?.(message.id) ? <PinOff size={14} /> : <Pin size={14} />}
+          label={actions.isPinned?.(message.id) ? t("chat.pin.unpin") : t("chat.pin.pin")}
+          onClick={() => {
+            actions.onTogglePin?.(message);
+            onClose();
+          }}
+        />
+      )}
+      {actions.onCopy && message.body && (
+        <MenuItem
+          icon={<Copy size={14} />}
+          label={t("common.copy")}
+          onClick={() => {
+            actions.onCopy?.(message);
+            onClose();
+          }}
+        />
+      )}
+      {isMe && actions.onShowInfo && (
+        <MenuItem
+          icon={<CheckCheck size={14} />}
+          label={t("chat.msgInfo.action")}
+          onClick={() => {
+            actions.onShowInfo?.(message);
+            onClose();
+          }}
+        />
+      )}
 
       {isMe ? (
         <>
