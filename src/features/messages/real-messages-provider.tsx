@@ -10,6 +10,7 @@ import {
   deleteConversationFromMyList,
   fetchConversationsForUser,
   getOrCreateDirectConversation,
+  restoreConversationToList,
   setConversationArchived,
 } from "@/lib/supabase/messages";
 import { supabase } from "@/lib/supabase/client";
@@ -41,6 +42,8 @@ interface RealMessagesContextValue {
   unarchiveConversation: (conversationId: string) => Promise<void>;
   deleteConversation: (conversationId: string) => Promise<void>;
   clearConversation: (conversationId: string) => Promise<void>;
+  /** Listemden kaldırılmış / arşivlenmiş sohbeti listeye geri koyar (örn. "Gruplarım"daki gizli grup). */
+  restoreConversation: (conversationId: string) => Promise<void>;
 }
 
 const RealMessagesContext = createContext<RealMessagesContextValue | null>(null);
@@ -201,6 +204,15 @@ export function RealMessagesProvider({ children }: { children: React.ReactNode }
     [user, patchConversation],
   );
 
+  const restoreConversation = useCallback(
+    async (conversationId: string) => {
+      if (!user) return;
+      await restoreConversationToList(conversationId, user.id);
+      patchConversation(conversationId, { deletedAt: null, archivedAt: null });
+    },
+    [user, patchConversation],
+  );
+
   const value = useMemo(
     () => ({
       conversations,
@@ -216,6 +228,7 @@ export function RealMessagesProvider({ children }: { children: React.ReactNode }
       unarchiveConversation,
       deleteConversation,
       clearConversation,
+      restoreConversation,
     }),
     [
       conversations,
@@ -231,6 +244,7 @@ export function RealMessagesProvider({ children }: { children: React.ReactNode }
       unarchiveConversation,
       deleteConversation,
       clearConversation,
+      restoreConversation,
     ],
   );
 

@@ -527,6 +527,11 @@ export async function setConversationArchived(conversationId: string, userId: st
   return archivedAt;
 }
 
+/** Listemden kaldırılmış / arşivlenmiş sohbeti (özellikle grubu) kişisel listeye geri koyar; yalnız kendi üyelik satırı. */
+export async function restoreConversationToList(conversationId: string, userId: string): Promise<void> {
+  await updateOwnMembership(conversationId, userId, { deleted_at: null, archived_at: null });
+}
+
 /**
  * "Mesajları temizle" — hides the history up to now from the viewer's own view
  * (own `cleared_at`); the chat stays in their list, the message rows and the

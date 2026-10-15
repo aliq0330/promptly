@@ -422,6 +422,22 @@ await scenario("21. Ayarlar: yalnızca değişen alanlar gönderilir; boş ad ka
   assert.equal(await confirmBtn.isDisabled(), false);
 }, { setup: (db) => seed(db, { myRole: "owner" }) });
 
+// 22
+await scenario("22. Listemden kaldırılan kapalı grup 'Gruplarım' sekmesinde görünür ve geri eklenebilir", async ({ page, db }) => {
+  await page.goto(`${BASE}/messages`);
+  await page.locator("button[aria-label='Yeni sohbet başlat']:visible").first().waitFor();
+  assert.equal(await page.locator("a[href*='id=']:visible", { hasText: "Tasarım Atölyesi" }).count(), 0, "hidden from the message list");
+  await page.goto(`${BASE}/groups?tab=mine`);
+  await page.getByRole("heading", { name: "Tasarım Atölyesi" }).waitFor();
+  await page.getByText("listenden kaldırılmış", { exact: false }).waitFor();
+  await page.getByRole("button", { name: "Listeme geri ekle" }).dblclick();
+  await page.getByText("Grup mesaj listene geri eklendi.").waitFor();
+  assert.equal(db.member(G, ME).deleted_at, null);
+  assert.equal(calls(db, "conversation_members", "PATCH").length, 1, "double click sends one request");
+  await page.goto(`${BASE}/messages`);
+  await page.locator("a[href*='id=']:visible", { hasText: "Tasarım Atölyesi" }).first().waitFor();
+}, { setup: (db) => { seed(db); db.member(G, ME).deleted_at = "2026-06-02T00:00:00Z"; } });
+
 await browser.close(); server.close();
 let failed = 0;
 for (const [s, n] of results) { if (s === "FAIL") failed++; console.log(`${s}  ${n}`); }
