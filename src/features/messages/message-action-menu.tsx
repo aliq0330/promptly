@@ -249,6 +249,9 @@ export function MessageActionMenu({
       ) : (
         <>
           <ReportMessageMenuItem messageId={message.id} />
+          {actions.onReportToStaff && !message.deletedAt && (
+            <MenuItem icon={<Flag size={14} />} label={t("communities.report.toStaff")} onClick={() => actions.onReportToStaff?.(message)} />
+          )}
           <MenuItem
             icon={<Trash2 size={14} />}
             label={isDeletingHere && actions.deleteConfirm?.mode === "me" ? t("messages.deletingEllipsis") : isConfirmingDeleteMe ? t("common.confirmDelete") : t("messages.deleteForMe")}

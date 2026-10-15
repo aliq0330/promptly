@@ -33,6 +33,8 @@ export interface MessageBubbleActions {
   onCopy?: (message: Message) => void;
   /** "Mesaj bilgisi" (grup, kendi mesajım): kimler okudu. */
   onShowInfo?: (message: Message) => void;
+  /** Topluluk sohbeti: başkasının mesajını topluluk yöneticilerine bildir (sitenin genel şikâyetinden AYRI moderasyon kuyruğu). */
+  onReportToStaff?: (message: Message) => void;
 }
 
 /** Grup sohbetinde mesajın üstünde gösterilen gönderen bilgisi. */

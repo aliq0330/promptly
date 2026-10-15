@@ -1,4 +1,5 @@
 "use client";
+import { useCommunityReturn } from "@/features/communities/community-return";
 import { ToolPicker } from "@/features/content/tool-picker";
 
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
@@ -100,6 +101,7 @@ export function CreatePromptForm() {
   const { profile: ownProfile } = useOwnProfile();
   const { getCached: getCachedPrompt, fetchById: fetchPromptById, addPrompt, updatePrompt } = useRealPrompts();
   const { getCached: getCachedRequest, fetchById: fetchRequestById } = useRealRequests();
+  const returnToCommunity = useCommunityReturn();
 
   const editId = searchParams.get("edit");
   const isEditMode = Boolean(editId);
@@ -581,7 +583,7 @@ export function CreatePromptForm() {
         setIsSubmitting(false);
         return;
       }
-      router.push(promptHref(published));
+      router.push((await returnToCommunity("prompt", published.id)) ?? promptHref(published));
     } catch (err) {
       setPublishError(err instanceof Error ? err.message : t("prompt.publishFailed"));
       setIsSubmitting(false);

@@ -293,10 +293,24 @@ export type GroupCapability =
   | "ban_members"
   | "manage_roles"
   | "delete_messages"
-  | "pin_messages";
+  | "pin_messages"
+  // Topluluk yetenekleri (docs/history/175-*)
+  | "moderate_posts"
+  | "pin_posts"
+  | "manage_announcements"
+  | "manage_events"
+  | "edit_rules"
+  | "view_stats";
 export type RolePermissions = Record<"admin" | "moderator", Record<GroupCapability, boolean>>;
 
-/** Bir grup sohbetinin grup tarafı (`chat_groups` + bu kullanıcının üyeliği). */
+/** Topluluk kategorisi (DB'de sabit liste; etiket/taksonomi sisteminden bağımsız). */
+export type CommunityCategory = "general" | "image" | "text" | "audio" | "video" | "workflow" | "learning" | "showcase";
+/** Kim akışta paylaşım yapabilir: tüm üyeler ya da yalnızca owner/admin/moderatör. */
+export type CommunityFeedPolicy = "members" | "admins";
+/** Topluluk bildirim tercihi: tümü · yalnız önemli (duyuru, anma, hatırlatma, karar) · sessiz. */
+export type CommunityNotifyLevel = "all" | "important" | "none";
+
+/** Bir grup sohbetinin grup tarafı (`chat_groups` + bu kullanıcının üyeliği). Aynı satır topluluktur (docs/history/175-*). */
 export interface ChatGroup {
   id: string;
   name: string;
@@ -317,6 +331,17 @@ export interface ChatGroup {
   createdAt: string;
   /** Bu kullanıcının grup içindeki rolü. */
   myRole: GroupRole;
+  /** Topluluk alanları (docs/history/175-*). */
+  category: CommunityCategory;
+  feedPolicy: CommunityFeedPolicy;
+  rules: string | null;
+  rulesVersion: number;
+  rulesRequired: boolean;
+  /** Kapatılmış (salt-okunur) topluluk: ne zaman. */
+  closedAt: string | null;
+  postCount: number;
+  /** 'legacy_group' = topluluk sistemine geçmeden önce oluşturulmuş eski grup sohbeti. */
+  origin: "native" | "legacy_group";
 }
 
 export interface Conversation {
@@ -729,6 +754,8 @@ export interface Message {
   /** Set when the sender deleted this message "for everyone" — body/sharedPromptId/sharedRequestId/attachments are cleared server-side when this happens. */
   deletedAt: string | null;
   createdAt: string;
+  /** Bir topluluk duyurusuna bağlı mesajsa duyurunun kimliği (gövde = duyuru başlığı); sohbette kart olarak çizilir. */
+  announcementId: string | null;
 }
 
 /* ---------------------------------------------------------------------- */

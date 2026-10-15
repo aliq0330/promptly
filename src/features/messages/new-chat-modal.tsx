@@ -43,11 +43,11 @@ export function NewChatModal({
   onClose,
   onOpenConversation,
   onStartDraft,
-  onCreateGroup,
+  showCommunitiesLink,
 }: {
   onClose: () => void;
-  /** Verilirse listenin başında "Yeni grup" ve "Grupları keşfet" kısayolları görünür. */
-  onCreateGroup?: () => void;
+  /** Doğruysa listenin başında "Topluluklar" kısayolu görünür (bağımsız grup oluşturma Mesajlar'dan kalktı; topluluklar ayrı bölümdür). */
+  showCommunitiesLink?: boolean;
   onOpenConversation: (conversationId: string) => void;
   onStartDraft: (person: UserProfile) => void | Promise<void>;
 }) {
@@ -211,25 +211,15 @@ export function NewChatModal({
               {pickError}
             </p>
           )}
-          {onCreateGroup && !searchingNow && (
-            <div className="mt-3 grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={onCreateGroup}
-                className="flex items-center gap-2 rounded-lg border border-border-soft bg-surface px-3 py-2.5 text-left text-small font-medium text-text transition-colors hover:border-border-strong hover:bg-surface-soft"
-              >
-                <UsersRound size={16} className="shrink-0 text-primary" aria-hidden />
-                {t("groups.newGroup")}
-              </button>
-              <Link
-                href="/groups"
-                onClick={onClose}
-                className="flex items-center gap-2 rounded-lg border border-border-soft bg-surface px-3 py-2.5 text-left text-small font-medium text-text transition-colors hover:border-border-strong hover:bg-surface-soft"
-              >
-                <Search size={16} className="shrink-0 text-primary" aria-hidden />
-                {t("groups.discoverShort")}
-              </Link>
-            </div>
+          {showCommunitiesLink && !searchingNow && (
+            <Link
+              href="/communities"
+              onClick={onClose}
+              className="mt-3 flex items-center gap-2 rounded-lg border border-border-soft bg-surface px-3 py-2.5 text-left text-small font-medium text-text transition-colors hover:border-border-strong hover:bg-surface-soft"
+            >
+              <UsersRound size={16} className="shrink-0 text-primary" aria-hidden />
+              {t("communities.messages.link")}
+            </Link>
           )}
         </div>
 

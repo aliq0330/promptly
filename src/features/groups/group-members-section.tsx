@@ -11,12 +11,11 @@ import { ConfirmDialog } from "./confirm-dialog";
 import { RoleBadge } from "./role-badge";
 import { useAsyncAction } from "./use-async-action";
 import {
-  fetchChatGroupMembers,
   removeChatGroupMember,
   setChatGroupMemberRole,
   transferChatGroupOwnership,
-  type GroupMember,
 } from "@/lib/supabase/chat-groups";
+import { fetchCommunityMembers, type CommunityMember as GroupMember } from "@/lib/supabase/communities";
 import { assignableRoles, canBanMember, canRemoveMember } from "@/lib/chat-groups";
 import { cn, profileHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -44,6 +43,7 @@ export function GroupMembersSection({
   onChanged,
   onToast,
   showTransferHint = false,
+  roleFilter = null,
 }: {
   group: ChatGroup;
   viewerId: string;
@@ -51,6 +51,8 @@ export function GroupMembersSection({
   onToast: (message: string) => void;
   /** Sahip ayrılmadan önce devretmek zorundaysa "Ayrıl" akışından bu sekmeye gelinir ve ipucu gösterilir. */
   showTransferHint?: boolean;
+  /** Topluluk "Üyeler" sekmesindeki rol süzgeci (null = hepsi); süzme sunucuda, sayfalama bozulmaz. */
+  roleFilter?: GroupRole | null;
 }) {
   const { t } = useTranslation();
   const [query, setQuery] = useState("");
@@ -68,21 +70,21 @@ export function GroupMembersSection({
     return () => clearTimeout(timer);
   }, [query]);
 
-  const key = `${group.id}|${debounced}|${reloadKey}`;
+  const key = `${group.id}|${debounced}|${roleFilter ?? ""}|${reloadKey}`;
   useEffect(() => {
     let cancelled = false;
-    fetchChatGroupMembers(group.id, { search: debounced, offset: 0 })
+    fetchCommunityMembers(group.id, { search: debounced, role: roleFilter, offset: 0 })
       .then((page) => {
         if (!cancelled) setLoaded({ key, members: page.members, hasMore: page.hasMore, error: false });
       })
       .catch((err) => {
-        console.error("fetchChatGroupMembers", err);
+        console.error("fetchCommunityMembers", err);
         if (!cancelled) setLoaded({ key, members: [], hasMore: false, error: true });
       });
     return () => {
       cancelled = true;
     };
-  }, [group.id, debounced, key]);
+  }, [group.id, debounced, roleFilter, key]);
 
   // Menü dışına tıklanınca kapanır.
   useEffect(() => {
@@ -108,10 +110,10 @@ export function GroupMembersSection({
     if (!current || loadingMore) return;
     setLoadingMore(true);
     try {
-      const page = await fetchChatGroupMembers(group.id, { search: debounced, offset: current.members.length });
+      const page = await fetchCommunityMembers(group.id, { search: debounced, role: roleFilter, offset: current.members.length });
       setLoaded({ key, members: [...current.members, ...page.members], hasMore: page.hasMore, error: false });
     } catch (err) {
-      console.error("fetchChatGroupMembers (more)", err);
+      console.error("fetchCommunityMembers (more)", err);
       onToast(t("common.actionFailedRetry"));
     } finally {
       setLoadingMore(false);

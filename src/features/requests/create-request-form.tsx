@@ -1,4 +1,5 @@
 "use client";
+import { useCommunityReturn } from "@/features/communities/community-return";
 import { ToolPicker } from "@/features/content/tool-picker";
 
 import { useEffect, useState, type FormEvent } from "react";
@@ -42,6 +43,7 @@ export function CreateRequestForm() {
   const { t } = useTranslation();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const returnToCommunity = useCommunityReturn();
   const { addRequest, updateRequest, getCached, fetchById } = useRealRequests();
   const [draftNotice, setDraftNotice] = useState(false);
   const { user } = useAuth();
@@ -242,7 +244,7 @@ export function CreateRequestForm() {
         },
         ownProfile,
       );
-      router.push(requestHref(request));
+      router.push((await returnToCommunity("request", request.id)) ?? requestHref(request));
     } catch (err) {
       setPublishError(err instanceof Error ? err.message : t("request.publishFailed"));
       setIsSubmitting(false);

@@ -9,12 +9,14 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { fieldControlClassName, fieldLabelClassName } from "@/components/ui/field";
 import { useAuthStatus } from "@/features/auth/use-auth-status";
 import { useRealMessages } from "@/features/messages/real-messages-provider";
-import { GroupAvatar } from "./group-avatar";
-import { useAsyncAction } from "./use-async-action";
-import { joinChatGroupViaLink, previewChatGroupLink, type GroupLinkPreview } from "@/lib/supabase/chat-groups";
+import { GroupAvatar } from "@/features/groups/group-avatar";
+import { useAsyncAction } from "@/features/groups/use-async-action";
+import { RulesAcceptBox } from "./rules-accept";
+import { joinCommunityViaLink, previewCommunityLink, type CommunityLinkPreview } from "@/lib/supabase/communities";
+import { CATEGORY_LABEL_KEYS, communityHref } from "@/lib/communities";
+import { Badge } from "@/components/ui/badge";
 import { GROUP_REQUEST_MESSAGE_MAX, isValidGroupToken } from "@/lib/chat-groups";
 import { authHref } from "@/lib/auth-redirect";
-import { messageHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { memberCountText } from "@/lib/group-labels";
 
@@ -47,14 +49,15 @@ function clearToken() {
   }
 }
 
-type Loaded = { token: string; preview: GroupLinkPreview | null; error: boolean };
+type Loaded = { token: string; preview: CommunityLinkPreview | null; error: boolean };
 
 /**
- * `/groups/join#<token>`: davet bağlantısının açılış sayfası. Token URL parçasındadır (sunucuya/günlüklere gitmez).
- * Bağlantı geçerliyse grubun kartını gösterir; herkese açık grupta doğrudan katılır, kapalı grupta başvuru gönderir
- * (başvuru kimseyi üye YAPMAZ, bir yönetici onaylar). Geçersiz/iptal/süresi dolmuş bağlantı hiçbir grup bilgisi vermez.
+ * `/communities/join#<token>` (eski `/groups/join#<token>` de aynı sayfa): davet bağlantısının açılış sayfası. Token URL parçasındadır
+ * (sunucuya/günlüklere gitmez). Bağlantı geçerliyse topluluğun kartını ve KURALLARINI gösterir; herkese açık toplulukta doğrudan katılır,
+ * kapalı toplulukta başvuru gönderir (başvuru kimseyi üye YAPMAZ, bir yönetici onaylar). Kuralların kabulü zorunluysa onay kutusu
+ * işaretlenmeden devam edilemez. Geçersiz/iptal/süresi dolmuş bağlantı hiçbir topluluk bilgisi vermez.
  */
-export function JoinGroupPage() {
+export function JoinCommunityPage() {
   const { t } = useTranslation();
   const router = useRouter();
   const status = useAuthStatus();
@@ -63,6 +66,7 @@ export function JoinGroupPage() {
   const [token, setToken] = useState<string | null | undefined>(undefined);
   const [loaded, setLoaded] = useState<Loaded | null>(null);
   const [message, setMessage] = useState("");
+  const [accepted, setAccepted] = useState(false);
   const [result, setResult] = useState<"requested" | "already_requested" | null>(null);
   const action = useAsyncAction();
 
@@ -74,12 +78,12 @@ export function JoinGroupPage() {
   useEffect(() => {
     if (status !== "authenticated" || !token) return;
     let cancelled = false;
-    previewChatGroupLink(token)
+    previewCommunityLink(token)
       .then((preview) => {
         if (!cancelled) setLoaded({ token, preview, error: false });
       })
       .catch((err) => {
-        console.error("previewChatGroupLink", err);
+        console.error("previewCommunityLink", err);
         if (!cancelled) setLoaded({ token, preview: null, error: true });
       });
     return () => {
@@ -89,13 +93,13 @@ export function JoinGroupPage() {
 
   async function submit() {
     if (!token) return;
-    const outcome = await action.run(() => joinChatGroupViaLink(token, message));
+    const outcome = await action.run(() => joinCommunityViaLink(token, message, accepted));
     if (!outcome) return;
     if (outcome.outcome === "joined" || outcome.outcome === "already_member") {
       clearToken();
       void refresh();
-      if (outcome.groupId) router.push(messageHref({ id: outcome.groupId }));
-      else router.push("/messages");
+      if (outcome.groupId) router.push(communityHref(outcome.groupId));
+      else router.push("/communities");
       return;
     }
     setResult(outcome.outcome === "already_requested" ? "already_requested" : "requested");
@@ -111,7 +115,7 @@ export function JoinGroupPage() {
     );
   }
   if (!token) {
-    return shell(<EmptyState icon={Link2Off} title={t("groups.join.invalidTitle")} description={t("groups.join.invalidBody")} action={{ label: t("groups.join.toGroups"), href: "/groups" }} />);
+    return shell(<EmptyState icon={Link2Off} title={t("groups.join.invalidTitle")} description={t("groups.join.invalidBody")} action={{ label: t("communities.join.toCommunities"), href: "/communities" }} />);
   }
   if (status === "loading") {
     return shell(
@@ -125,7 +129,7 @@ export function JoinGroupPage() {
       <div className="space-y-4 rounded-xl border border-border-soft bg-surface p-6 text-center shadow-card">
         <h1 className="text-h3 font-semibold text-text">{t("groups.join.loginTitle")}</h1>
         <p className="text-small text-text-muted">{t("groups.join.loginBody")}</p>
-        <Link href={authHref("/login", "/groups/join")} className={buttonClassName({ size: "md" })}>
+        <Link href={authHref("/login", "/communities/join")} className={buttonClassName({ size: "md" })}>
           {t("common.login")}
         </Link>
       </div>,
@@ -154,7 +158,7 @@ export function JoinGroupPage() {
   }
   const preview = current.preview;
   if (!preview) {
-    return shell(<EmptyState icon={Link2Off} title={t("groups.join.invalidTitle")} description={t("groups.join.invalidBody")} action={{ label: t("groups.join.toGroups"), href: "/groups" }} />);
+    return shell(<EmptyState icon={Link2Off} title={t("groups.join.invalidTitle")} description={t("groups.join.invalidBody")} action={{ label: t("communities.join.toCommunities"), href: "/communities" }} />);
   }
 
   const full = preview.memberCount >= preview.memberLimit;
@@ -166,7 +170,8 @@ export function JoinGroupPage() {
         <GroupAvatar name={preview.name} avatarUrl={preview.avatarUrl} size={56} badge />
         <div className="min-w-0 space-y-1">
           <h1 className="break-words text-h3 font-semibold text-text">{preview.name}</h1>
-          <p className="flex flex-wrap items-center gap-x-2 text-caption text-text-muted">
+          <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-caption text-text-muted">
+            <Badge variant="neutral">{t(CATEGORY_LABEL_KEYS[preview.category])}</Badge>
             <span>{memberCountText(t, preview.memberCount)}</span>
             <span className="flex items-center gap-1">
               {isPrivate ? <Lock size={12} aria-hidden /> : <Globe size={12} aria-hidden />}
@@ -176,12 +181,13 @@ export function JoinGroupPage() {
         </div>
       </div>
       {preview.description && <p className="break-words text-small text-text-secondary">{preview.description}</p>}
+      {preview.closed && <p role="status" className="rounded-md bg-warning/10 px-3 py-2 text-small text-text">{t("communities.join.closedNote")}</p>}
 
       {preview.myStatus === "member" ? (
         <div className="space-y-3">
           <p className="text-small text-text-muted">{t("groups.join.alreadyMember")}</p>
           {preview.groupId && (
-            <Link href={messageHref({ id: preview.groupId })} className={buttonClassName({ size: "md", className: "w-full" })}>
+            <Link href={communityHref(preview.groupId)} className={buttonClassName({ size: "md", className: "w-full" })}>
               {t("groups.page.open")}
             </Link>
           )}
@@ -210,6 +216,16 @@ export function JoinGroupPage() {
               <p className="mt-1 text-caption text-text-muted">{t("groups.join.requestHelp")}</p>
             </div>
           )}
+          {preview.rules && (
+            preview.rulesRequired ? (
+              <RulesAcceptBox rules={preview.rules} accepted={accepted} onChange={setAccepted} disabled={action.busy} />
+            ) : (
+              <div className="space-y-1.5">
+                <h3 className="text-label font-semibold text-text">{t("communities.rules.title")}</h3>
+                <div className="max-h-40 overflow-y-auto whitespace-pre-wrap break-words rounded-lg border border-border-soft bg-background px-3.5 py-3 text-small text-text-secondary">{preview.rules}</div>
+              </div>
+            )
+          )}
           {full && !isPrivate && (
             <p role="alert" className="text-small text-danger">
               {t("groups.error.member_limit_reached")}
@@ -220,7 +236,7 @@ export function JoinGroupPage() {
               {action.error}
             </p>
           )}
-          <Button type="button" className="w-full" onClick={() => void submit()} disabled={action.busy || (full && !isPrivate)}>
+          <Button type="button" className="w-full" onClick={() => void submit()} disabled={action.busy || preview.closed || (full && !isPrivate) || (preview.rulesRequired && !accepted)}>
             {action.busy ? t("common.loading") : isPrivate ? t("groups.join.sendRequest") : t("groups.join.joinNow")}
           </Button>
         </div>

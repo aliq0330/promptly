@@ -47,7 +47,7 @@ export const navGroups: NavGroup[] = [
     items: [
       { href: "/saved", labelKey: "nav.saved", icon: Bookmark, match: "/saved", visibility: "authenticated" },
       { href: "/following", labelKey: "nav.following", icon: Users, visibility: "authenticated" },
-      { href: "/groups", labelKey: "nav.groups", icon: UsersRound, visibility: "authenticated" },
+      { href: "/communities", labelKey: "nav.communities", icon: UsersRound, visibility: "authenticated" },
       { href: PROFILE_NAV_PLACEHOLDER, labelKey: "nav.profile", icon: User, match: "/profile", visibility: "authenticated" },
     ],
   },

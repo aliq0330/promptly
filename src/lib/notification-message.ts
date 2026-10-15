@@ -52,6 +52,24 @@ const GROUP_NAME_TEMPLATES: [re: RegExp, key: string][] = [
   [/^"([\s\S]*)" grubunda yönetim yetkilerin güncellendi\.$/, "notifMsg.groupPermissionsChanged"],
 ];
 
+/**
+ * Topluluk bildirimleri (docs/history/175-*): ad (ve bazen başlık) `"…"` içinde taşınır. Kalıplar ad → `name`, ikinci alıntı → `preview`.
+ * Sıra önemlidir: iki alıntılı kalıplar tek alıntılılardan önce denenir.
+ */
+const COMMUNITY_TEMPLATES: [re: RegExp, key: string][] = [
+  [/^"([\s\S]*)" topluluğunda yeni duyuru: "([\s\S]*)"$/, "notifMsg.communityAnnouncement"],
+  [/^"([\s\S]*)" topluluğunda yeni etkinlik: "([\s\S]*)"$/, "notifMsg.communityEvent"],
+  [/^"([\s\S]*)" topluluğundaki "([\s\S]*)" etkinliği güncellendi\.$/, "notifMsg.communityEventUpdated"],
+  [/^"([\s\S]*)" topluluğundaki "([\s\S]*)" etkinliği iptal edildi\.$/, "notifMsg.communityEventCancelled"],
+  [/^"([\s\S]*)" topluluğunda "([\s\S]*)" etkinliği 24 saat içinde başlıyor\.$/, "notifMsg.communityEventReminder"],
+  [/^Seni "([\s\S]*)" topluluğunun sohbetinde andı\.$/, "notifMsg.communityMention"],
+  [/^"([\s\S]*)" topluluğundaki paylaşımın kaldırıldı\.$/, "notifMsg.communityPostRemoved"],
+  [/^"([\s\S]*)" topluluğunda bildirdiğin içerik için karar verildi\.$/, "notifMsg.communityReportResolved"],
+  [/^"([\s\S]*)" topluluğunun kuralları güncellendi\.$/, "notifMsg.communityRulesUpdated"],
+  [/^"([\s\S]*)" topluluğu kapatıldı\.$/, "notifMsg.communityClosed"],
+  [/^"([\s\S]*)" topluluğu yeniden açıldı\.$/, "notifMsg.communityReopened"],
+];
+
 const escapeRe = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 const PREVIEW_MATCHERS = PREVIEW_TEMPLATES.map(([prefix, key, hasNone]) => ({
@@ -83,6 +101,11 @@ export function localizeNotificationMessage(message: string, language: "tr" | "e
   for (const [re, key] of GROUP_NAME_TEMPLATES) {
     const groupMatch = re.exec(message);
     if (groupMatch) return t(key as TranslationKey, { name: groupMatch[1] });
+  }
+
+  for (const [re, key] of COMMUNITY_TEMPLATES) {
+    const match = re.exec(message);
+    if (match) return t(key as TranslationKey, { name: match[1], preview: match[2] ?? "" });
   }
 
   const selected = /^Yanıtın "([\s\S]*)" isteği için seçildi!$/.exec(message);

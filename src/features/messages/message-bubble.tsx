@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Check, CheckCheck, MoreHorizontal, Pin, SmilePlus, Star } from "lucide-react";
+import Link from "next/link";
+import { Check, CheckCheck, Megaphone, MoreHorizontal, Pin, SmilePlus, Star } from "lucide-react";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { Button } from "@/components/ui/button";
 import { EmojiPicker } from "./emoji-picker";
@@ -19,6 +20,7 @@ import type { Message, MessageAttachment } from "@/types";
 import type { MessageBubbleActions, MessageReactionEntry, MessageSender } from "./message-bubble-types";
 import { Avatar } from "@/components/ui/avatar";
 import { RoleBadge } from "@/features/groups/role-badge";
+import { communityHref } from "@/lib/communities";
 
 /** A message's stored photos (signed URLs resolved lazily) + the fullscreen viewer they open. */
 function BubbleImages({ attachments, isMe }: { attachments: MessageAttachment[]; isMe: boolean }) {
@@ -336,7 +338,20 @@ export function MessageBubble({
             {workflowShare && <SharedWorkflowCard workflowId={workflowShare.id} />}
             {presetShare && <SharedPresetCard presetId={presetShare.id} />}
             {message.attachments.length > 0 && <BubbleImages attachments={message.attachments} isMe={isMe} />}
-            {displayBody && (
+            {message.announcementId && displayBody && (
+              <Link
+                href={communityHref(message.conversationId, "overview")}
+                data-announcement-card
+                className="w-fit max-w-full self-start rounded-2xl border border-primary/30 bg-primary-soft/50 px-3.5 py-2.5 text-sm text-text shadow-xs transition-colors hover:border-primary/50"
+              >
+                <span className="flex items-center gap-1.5 text-caption font-semibold uppercase tracking-[0.06em] text-primary">
+                  <Megaphone size={12} aria-hidden /> {t("communities.chat.announcement")}
+                </span>
+                <span className="mt-0.5 block break-words font-medium">{displayBody}</span>
+                <span className="mt-1 block text-caption text-primary">{t("communities.chat.announcementOpen")}</span>
+              </Link>
+            )}
+            {displayBody && !message.announcementId && (
               <div
                 className={cn(
                   "w-fit rounded-2xl px-3.5 py-2 text-sm leading-relaxed shadow-xs",

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useCommunityReturn } from "@/features/communities/community-return";
 import { AlertTriangle, X } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
 import { Tabs } from "@/components/ui/tabs";
@@ -42,6 +43,7 @@ const card = "rounded-xl border border-border-soft bg-surface p-4 shadow-card sm
 export function WorkflowEditor({ editId }: { editId: string | null }) {
   const { t } = useTranslation();
   const router = useRouter();
+  const returnToCommunity = useCommunityReturn();
   const { user, loading: authLoading } = useAuth();
   const [rootRef, mode] = useLayoutMode();
 
@@ -206,7 +208,7 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
       setDirty(false);
       setSaveState("saved");
       if (!editId) window.history.replaceState(null, "", `${window.location.pathname}?edit=${id}`);
-      if (target === "published") router.push(`/workflows/local?id=${id}`);
+      if (target === "published") router.push((await returnToCommunity("workflow", id)) ?? `/workflows/local?id=${id}`);
     } catch {
       setSaveState("error");
       setSaveError(t("workflow.errorSave"));

@@ -1,5 +1,5 @@
 /**
- * Grup sohbetinin SAF kuralları (docs/history/172-*): rol/yetki tabloları, doğrulama, davet bağlantısı,
+ * Grup sohbetinin SAF kuralları (docs/history/172-*; topluluk kuralları için bkz. `communities.ts`): rol/yetki tabloları, doğrulama, davet bağlantısı,
  * sunucu hata kodları ve görünürlük değişikliği sonucunun ayrıştırılması. Çerçeveden bağımsızdır,
  * `npm test` ile sınanır.
  *
@@ -40,6 +40,12 @@ export const GROUP_CAPABILITIES: readonly GroupCapability[] = [
   "manage_roles",
   "delete_messages",
   "pin_messages",
+  "moderate_posts",
+  "pin_posts",
+  "manage_announcements",
+  "manage_events",
+  "edit_rules",
+  "view_stats",
 ];
 
 /** Moderatöre `manage_roles` verilemez (rütbe kuralı gereği anlamsız; sunucu da reddeder). */
@@ -48,8 +54,14 @@ export function capabilitiesFor(role: "admin" | "moderator"): readonly GroupCapa
 }
 
 export const DEFAULT_ROLE_PERMISSIONS: RolePermissions = {
-  admin: { edit_settings: true, change_visibility: true, manage_invites: true, manage_requests: true, remove_members: true, ban_members: true, manage_roles: true, delete_messages: true, pin_messages: true },
-  moderator: { edit_settings: false, change_visibility: false, manage_invites: false, manage_requests: true, remove_members: true, ban_members: false, manage_roles: false, delete_messages: true, pin_messages: true },
+  admin: {
+    edit_settings: true, change_visibility: true, manage_invites: true, manage_requests: true, remove_members: true, ban_members: true, manage_roles: true, delete_messages: true, pin_messages: true,
+    moderate_posts: true, pin_posts: true, manage_announcements: true, manage_events: true, edit_rules: true, view_stats: true,
+  },
+  moderator: {
+    edit_settings: false, change_visibility: false, manage_invites: false, manage_requests: true, remove_members: true, ban_members: false, manage_roles: false, delete_messages: true, pin_messages: true,
+    moderate_posts: true, pin_posts: true, manage_announcements: false, manage_events: false, edit_rules: false, view_stats: false,
+  },
 };
 
 /** Sunucudan gelen `role_permissions` jsonb'sini tam ve güvenli bir nesneye çevirir (eksik/bozuk anahtar → varsayılan). */
@@ -174,7 +186,7 @@ export function parseGroupJoinToken(input: string): string | null {
 }
 
 export function buildGroupJoinUrl(origin: string, basePath: string, token: string): string {
-  return `${origin}${basePath}/groups/join#${token}`;
+  return `${origin}${basePath}/communities/join#${token}`;
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -221,6 +233,40 @@ export const GROUP_ERROR_CODES = [
   "blocked",
   "no_users",
   "message_not_found",
+  // Topluluk (docs/history/175-*)
+  "community_closed",
+  "rules_not_accepted",
+  "rules_missing",
+  "invalid_rules",
+  "invalid_category",
+  "invalid_feed_policy",
+  "invalid_content",
+  "invalid_note",
+  "content_not_found",
+  "content_not_public",
+  "already_shared",
+  "post_rate_limit",
+  "post_not_found",
+  "pin_limit_reached",
+  "invalid_title",
+  "invalid_body",
+  "announcement_not_found",
+  "announcement_limit",
+  "event_not_found",
+  "event_limit",
+  "event_cancelled",
+  "event_over",
+  "invalid_event_time",
+  "invalid_timezone",
+  "invalid_location",
+  "invalid_url",
+  "invalid_rsvp",
+  "report_not_found",
+  "report_target_not_found",
+  "report_limit",
+  "already_reported",
+  "invalid_action",
+  "bookmark_limit",
 ] as const;
 
 export type GroupErrorCode = (typeof GROUP_ERROR_CODES)[number];

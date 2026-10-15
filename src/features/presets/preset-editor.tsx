@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useCommunityReturn } from "@/features/communities/community-return";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useOwnProfile } from "@/features/auth/own-profile-provider";
 import { KindDraftsButton } from "@/features/drafts/kind-drafts-button";
@@ -37,6 +38,7 @@ import type { ContentVisibility, Preset, PromptContentType } from "@/types";
 export function PresetEditor({ editId }: { editId: string | null }) {
   const { t, language } = useTranslation();
   const router = useRouter();
+  const returnToCommunity = useCommunityReturn();
   const { user, loading: authLoading } = useAuth();
   const { profile: ownProfile } = useOwnProfile();
   const { catalog } = useTagCatalog();
@@ -132,7 +134,7 @@ export function PresetEditor({ editId }: { editId: string | null }) {
         },
         user.id,
       );
-      router.push(asDraft ? "/presets" : presetHref({ id }));
+      router.push(asDraft ? "/presets" : ((await returnToCommunity("preset", id)) ?? presetHref({ id })));
     } catch (err) {
       console.error("savePreset", err);
       setError(err instanceof Error && err.message ? err.message : t("preset.errorSave"));
