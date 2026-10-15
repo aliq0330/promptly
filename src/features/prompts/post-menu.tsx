@@ -65,8 +65,8 @@ export function PostMenu({
   /**
    * Present only when this card is rendered inside a collection the VIEWER
    * owns (not necessarily the post's own author — you can save/collect
-   * someone else's post too) — adds a "kaydedilenlerden kaldır"/
-   * "koleksiyondan kaldır" action, distinct from deleting the post itself
+   * someone else's post too) — adds a "koleksiyondan kaldır"
+   * action, distinct from deleting the post itself
    * and gated by collection ownership, not post authorship (CLAUDE.md
    * Bölüm 9.22 §8/§9/§19 — a deliberately separate operation from `Sil`).
    * Works identically for a prompt or a generator target (both live in the
@@ -74,8 +74,7 @@ export function PostMenu({
    * `onRemove` already knows which real removal call to make.
    */
   collectionRemoval?: {
-    /** Whether the collection being viewed is the caller's default ("Genel") — determines the label and whether removal cascades to every other collection (the caller already does the actual cascading via `onRemove`, this only decides wording). */
-    isDefault: boolean;
+    /** Removes the work from the collection being viewed only — never from another collection. */
     onRemove: () => Promise<void>;
   };
 }) {
@@ -236,11 +235,7 @@ export function PostMenu({
                 className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-danger hover:bg-danger/10"
               >
                 {isRemoving ? <Loader2 size={14} className="animate-spin" /> : <FolderMinus size={14} />}
-                {confirmingRemove
-                  ? t("common.confirmDelete")
-                  : collectionRemoval.isDefault
-                    ? t("common.removeFromSaved")
-                    : t("common.removeFromCollection")}
+                {confirmingRemove ? t("common.confirmDelete") : t("common.removeFromCollection")}
               </button>
               {removeError && <p className="px-3 py-1 text-xs text-danger">{removeError}</p>}
             </>

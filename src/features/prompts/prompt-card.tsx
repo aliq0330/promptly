@@ -13,7 +13,7 @@ import { PromptCardFooter } from "./prompt-card-footer";
 import { OutputPosterPreview, OutputThumbnailStrip } from "./multi-image-output-options";
 import type { Prompt } from "@/types";
 
-type CollectionRemoval = { isDefault: boolean; onRemove: () => Promise<void> };
+type CollectionRemoval = { onRemove: () => Promise<void> };
 
 /**
  * PromptCard — one card for every prompt content type (image / text /

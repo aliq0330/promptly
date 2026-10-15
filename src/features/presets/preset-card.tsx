@@ -30,7 +30,7 @@ export function PresetCard({
 }: {
   preset: Preset;
   onDeleted?: () => void;
-  collectionRemoval?: { isDefault: boolean; onRemove: () => Promise<void> };
+  collectionRemoval?: { onRemove: () => Promise<void> };
 }) {
   const { t, language } = useTranslation();
   const href = presetHref(preset);

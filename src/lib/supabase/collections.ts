@@ -6,6 +6,7 @@ import { PROMPT_SELECT, mapPromptRow, type PromptRow } from "./prompts";
 import { WORKFLOW_SELECT, mapWorkflowRow, type WorkflowRow } from "./workflows";
 import { PRESET_SELECT, mapPresetRow, type PresetRow } from "./presets";
 import type { LikeableContentType } from "./likes";
+import { dedupeSavedEntries } from "@/lib/saved-selection";
 
 /** See `use-save-state.ts`'s identical note — saving never targets a request. */
 type SaveableContentType = Extract<LikeableContentType, "prompt" | "workflow" | "preset">;
@@ -58,7 +59,7 @@ function mapCollectionRow(row: CollectionRow, coverImage: Collection["coverImage
   };
 }
 
-/** Default collection sorts first ("Genel" always leads Kaydedilenler, CLAUDE.md Bölüm 9.22 §1), the rest stay newest-first. */
+/** Default collection sorts first ("Genel" always leads the collection list), the rest stay newest-first. */
 function sortWithDefaultFirst(collections: Collection[]): Collection[] {
   return [...collections].sort((a, b) => {
     if (a.isDefault !== b.isDefault) return a.isDefault ? -1 : 1;
@@ -264,27 +265,20 @@ export async function fetchFollowedCollections(userId: string): Promise<Collecti
   }
 }
 
-/** This user's own default ("Genel") collection id — the single source of truth for general "kaydedildi" state (bookmark fill), never derived from a name. Self-heals the same way `fetchOwnCollections` does if it's ever missing. */
-export async function fetchDefaultCollectionId(userId: string): Promise<string | null> {
-  try {
-    const { data, error } = await supabase
-      .from("collections")
-      .select("id")
-      .eq("owner_id", userId)
-      .eq("is_default", true)
-      .maybeSingle();
-    if (error) return null;
-    if (data) return data.id;
-    const { data: healedId, error: rpcError } = await supabase.rpc("get_or_create_own_default_collection");
-    if (rpcError) {
-      console.error("fetchDefaultCollectionId: self-heal", rpcError);
-      return null;
+type CollectionItemRow = { prompts: PromptRow | null; workflows: WorkflowRow | null; presets: PresetRow | null };
+
+function mapCollectionItemRows(rows: CollectionItemRow[]): CollectionEntry[] {
+  const entries: CollectionEntry[] = [];
+  for (const row of rows) {
+    if (row.prompts && !row.prompts.deleted_at) {
+      entries.push({ type: "prompt", data: mapPromptRow(row.prompts) });
+    } else if (row.workflows) {
+      entries.push({ type: "workflow", data: mapWorkflowRow(row.workflows) });
+    } else if (row.presets) {
+      entries.push({ type: "preset", data: mapPresetRow(row.presets) });
     }
-    return healedId ?? null;
-  } catch (err) {
-    console.error("fetchDefaultCollectionId", err);
-    return null;
   }
+  return entries;
 }
 
 /**
@@ -311,39 +305,49 @@ export async function fetchCollectionItems(collectionId: string): Promise<Collec
       if (error) console.error("fetchCollectionItems", error);
       return [];
     }
-    const entries: CollectionEntry[] = [];
-    for (const row of data as unknown as { prompts: PromptRow | null; workflows: WorkflowRow | null; presets: PresetRow | null }[]) {
-      if (row.prompts && !row.prompts.deleted_at) {
-        entries.push({ type: "prompt", data: mapPromptRow(row.prompts) });
-      } else if (row.workflows) {
-        entries.push({ type: "workflow", data: mapWorkflowRow(row.workflows) });
-      } else if (row.presets) {
-        entries.push({ type: "preset", data: mapPresetRow(row.presets) });
-      }
-    }
-    return entries;
+    return mapCollectionItemRows(data as unknown as CollectionItemRow[]);
   } catch (err) {
     console.error("fetchCollectionItems", err);
     return [];
   }
 }
 
+/** Membership rows read for "Kaydedilenler" (PostgREST returns at most 1000 rows per request anyway). */
+const SAVED_ROW_LIMIT = 1000;
+
 /**
- * Whether this viewer generally saved a real prompt OR generator — true iff
- * it's a member of ANY of their own collections (the default "Genel" one OR
- * any custom one they created). Never based on a collection's name (it's
- * renameable). **Changed in Bölüm 9.38** from the original Bölüm 9.22
- * definition ("true iff it's in the default collection specifically") per
- * an explicit user request: saving something into ONLY a custom collection
- * used to leave the bookmark icon unfilled, which the user reported as a
- * bug against the new multi-collection save flow (Bölüm 9.36 let a
- * generator/prompt join any collection, but this check never widened past
- * "Genel" to match) — confirmed with the user via AskUserQuestion that this
- * reverses the old, deliberate decision rather than silently overriding it.
- * Tapping the filled bookmark still removes it from EVERY collection at
- * once (`removeFromSavedEverywhere`, unchanged) — only the fill condition
- * changed, not what "unsave" means. `contentType` defaults to `"prompt"` so
- * every existing prompt call site keeps working unchanged.
+ * "Kaydedilenler": every distinct work in at least one of this user's own
+ * collections — "Genel" and the custom ones alike — newest save first, each
+ * work once however many collections hold it. It is a read over
+ * `collection_items`, the same rows `isPromptSaved` looks at, so the list and
+ * the bookmark icon can't disagree. The owner filter is explicit because the
+ * select policy also exposes other people's public collections.
+ *
+ * Unlike the per-collection fetch this THROWS on failure: a failed load must
+ * not look like "nothing saved".
+ */
+export async function fetchSavedItems(userId: string): Promise<CollectionEntry[]> {
+  const { data, error } = await supabase
+    .from("collection_items")
+    .select(`created_at, collections!inner ( owner_id ), prompts ( ${PROMPT_SELECT} ), workflows ( ${WORKFLOW_SELECT} ), presets ( ${PRESET_SELECT} )`)
+    .eq("collections.owner_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(SAVED_ROW_LIMIT);
+  if (error) {
+    console.error("fetchSavedItems", error);
+    throw new Error(error.message);
+  }
+  return dedupeSavedEntries(mapCollectionItemRows((data ?? []) as unknown as CollectionItemRow[]));
+}
+
+/**
+ * Whether this viewer saved a work — true iff it's a member of ANY of their
+ * own collections (the default "Genel" one or a custom one), never decided by
+ * a collection's name. This is the one definition of "saved": the bookmark
+ * fill, "Kaydedilenler" (`fetchSavedItems`) and the save modal all read the
+ * same `collection_items` rows. Leaving a single collection never unsaves
+ * anything while another still holds the work. `contentType` defaults to
+ * `"prompt"`.
  */
 export async function isPromptSaved(id: string, userId: string, contentType: SaveableContentType = "prompt"): Promise<boolean> {
   return saveLookup(`${userId}|${contentType}`)(id);
@@ -363,20 +367,23 @@ const saveLookup = batcherRegistry((key) => {
   };
 });
 
-/** Which of this user's own collections already contain this prompt/generator — powers the save modal's "+/kayıtlı" state per row. `contentType` defaults to `"prompt"` so every existing prompt call site keeps working unchanged. */
+/**
+ * Which of this user's own collections already contain this work — powers the
+ * save modal's per-row state. THROWS on failure: an unknown membership must
+ * never be read as "in no collection", or the modal would offer to save over
+ * something it just failed to see.
+ */
 export async function fetchCollectionIdsContaining(id: string, userId: string, contentType: SaveableContentType = "prompt"): Promise<Set<string>> {
-  try {
-    const { data, error } = await supabase
-      .from("collection_items")
-      .select("collection_id, collections!inner ( owner_id )")
-      .eq(saveTargetColumn(contentType), id)
-      .eq("collections.owner_id", userId);
-    if (error || !data) return new Set();
-    return new Set((data as unknown as { collection_id: string }[]).map((row) => row.collection_id));
-  } catch (err) {
-    console.error("fetchCollectionIdsContaining", err);
-    return new Set();
+  const { data, error } = await supabase
+    .from("collection_items")
+    .select("collection_id, collections!inner ( owner_id )")
+    .eq(saveTargetColumn(contentType), id)
+    .eq("collections.owner_id", userId);
+  if (error) {
+    console.error("fetchCollectionIdsContaining", error);
+    throw new Error(error.message);
   }
+  return new Set(((data ?? []) as unknown as { collection_id: string }[]).map((row) => row.collection_id));
 }
 
 export async function createCollection(
@@ -426,61 +433,26 @@ export async function deleteCollection(collectionId: string): Promise<void> {
  * Adds a real item to a real collection the caller owns. This is the ONLY
  * way an item joins a collection (and so becomes "saved") — there is no
  * separate saves table; `prompt_saves` was dropped by migration
- * 20260919840000 (CLAUDE.md Bölüm 9.22 §4). Adding it to ANY collection (default "Genel" or a custom one)
- * makes `isPromptSaved` true and fills the bookmark (Bölüm 9.38) — adding
- * it to a second collection while already saved is still just membership
- * in that additional collection, it doesn't create a second "save".
- * `contentType` defaults to `"prompt"` so every existing prompt call site
- * keeps working unchanged (Bölüm 9.36 — a generator now joins the SAME
- * multi-collection system a prompt does, replacing the old
- * default-collection-only `saveGeneratorToDefault`).
+ * 20260919840000. Saved = in at least one collection, so adding to any
+ * collection fills the bookmark; adding to a second one is just membership
+ * in that additional collection. Idempotent: the unique index on
+ * (collection_id, target) makes a concurrent or repeated add a no-op
+ * (`23505`), not a failure. `contentType` defaults to `"prompt"`.
  */
 export async function addItemToCollection(collectionId: string, id: string, contentType: SaveableContentType = "prompt"): Promise<void> {
   const { error } = await supabase.from("collection_items").insert({ collection_id: collectionId, [saveTargetColumn(contentType)]: id });
-  if (error) throw new Error(error.message);
+  if (error && error.code !== "23505") throw new Error(error.message);
 }
 
 /**
- * Removes a real prompt/generator from exactly one collection. Since Bölüm
- * 9.38, this can now flip the bookmark to unfilled too — if that was the
- * item's LAST remaining collection membership, `isPromptSaved` becomes
- * false; if it's still saved in at least one other collection, the
- * bookmark stays filled. It never touches membership in any OTHER
- * collection (CLAUDE.md Bölüm 9.22 §8). This is a distinct operation from
- * `removeFromSavedEverywhere` (§9), which cascades across every collection
- * at once regardless of how many contain the item — both remain valid,
- * separate actions the UI chooses between depending on where the removal
- * was triggered from (a single collection row vs. the bookmark icon
- * itself).
+ * Removes a work from exactly one collection and nothing else — never from
+ * another collection, never from "Genel" unless that is the one named. If it
+ * was the work's last membership the bookmark empties (saved = in at least one
+ * collection); otherwise it stays filled. Deleting a row that is already gone
+ * is a no-op, so a repeated or concurrent remove is harmless. RLS only lets
+ * the collection's owner delete.
  */
 export async function removeFromCollection(collectionId: string, id: string, contentType: SaveableContentType = "prompt"): Promise<void> {
   const { error } = await supabase.from("collection_items").delete().eq("collection_id", collectionId).eq(saveTargetColumn(contentType), id);
-  if (error) throw new Error(error.message);
-}
-
-/**
- * The general "kaydedilenlerden kaldır" action — removes a real prompt or
- * generator from the caller's default collection AND every one of their
- * other collections that also contains it, in one atomic server-side
- * operation (`remove_prompt_from_saved_everywhere`/
- * `remove_generator_from_saved_everywhere` RPCs, CLAUDE.md Bölüm 9.22
- * §7/§18, widened to generators in Bölüm 9.36). Never touches the item
- * itself, another user's saves/collections, or anything beyond the
- * caller's own `collection_items` rows.
- */
-export async function removeFromSavedEverywhere(id: string, contentType: SaveableContentType = "prompt"): Promise<void> {
-  const rpcName =
-    contentType === "preset"
-      ? "remove_preset_from_saved_everywhere"
-      : contentType === "workflow"
-      ? "remove_workflow_from_saved_everywhere"
-      : "remove_prompt_from_saved_everywhere";
-  const rpcParam =
-    contentType === "preset"
-      ? { p_preset_id: id }
-      : contentType === "workflow"
-        ? { p_workflow_id: id }
-        : { p_prompt_id: id };
-  const { error } = await supabase.rpc(rpcName, rpcParam);
   if (error) throw new Error(error.message);
 }

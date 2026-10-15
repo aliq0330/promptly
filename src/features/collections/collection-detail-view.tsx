@@ -1,20 +1,17 @@
 "use client";
 
-import { FolderOpen, Search, SearchX, X } from "lucide-react";
-import { EmptyState } from "@/components/ui/empty-state";
 import { PageContainer } from "@/components/ui/page-header";
 import { DetailSkeleton, NotFoundBlock } from "@/components/ui/detail-skeleton";
 import { CollectionCover } from "./collection-card";
+import { CollectionEntryList } from "./collection-entry-list";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Globe, Lock } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Portal } from "@/components/ui/portal";
-import { PromptCard } from "@/features/prompts/prompt-card";
-import { WorkflowCard } from "@/features/workflows/workflow-card";
-import { PresetCard } from "@/features/presets/preset-card";
+import { refreshSaveState } from "@/features/prompts/use-save-state";
 import { CollectionFormModal } from "./collection-form-modal";
 import { CollectionMoreMenu } from "./collection-more-menu";
 import { CollectionFollowButton } from "./collection-follow-button";
@@ -23,12 +20,10 @@ import {
   fetchCollectionById,
   fetchCollectionItems,
   removeFromCollection,
-  removeFromSavedEverywhere,
   updateCollection,
   type CollectionEntry,
 } from "@/lib/supabase/collections";
 import { profileHref } from "@/lib/utils";
-import { normalizeTagLabel } from "@/lib/tag-normalize";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import Link from "next/link";
 import type { Collection } from "@/types";
@@ -42,11 +37,11 @@ import type { Collection } from "@/types";
  * ambiguity `fetchConversationForUser` already accepts) — this route never
  * needs its own extra access check, the query itself enforces it.
  *
- * This is also where the bottom-nav "Kaydedilenler" shortcut (`/saved`)
- * redirects to for the viewer's own default collection — so removal here
- * has to be instant and correct for BOTH entry points at once (CLAUDE.md
- * Bölüm 9.22 §13, the "most critical UI bug": a removed post must vanish
- * from the list the moment the backend confirms it, no refresh needed).
+ * A collection is one list among several: removing a work here takes it out
+ * of THIS collection only — "Genel" is no exception — and it vanishes from
+ * the list the moment the backend confirms, no refresh needed. Whether it is
+ * still "saved" (and so still in "Kaydedilenler" with a filled bookmark)
+ * depends only on whether another collection still holds it.
  */
 export function CollectionDetailView() {
   const { t } = useTranslation();
@@ -60,7 +55,6 @@ export function CollectionDetailView() {
   const [loaded, setLoaded] = useState(false);
   const [editing, setEditing] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
-  const [query, setQuery] = useState("");
   const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -95,43 +89,21 @@ export function CollectionDetailView() {
   }
 
   /**
-   * The critical fix (Bölüm 9.22 §13/§14): removal calls the real backend
-   * operation FIRST, and only on a real, confirmed success does it splice
-   * the item out of local state — never before, never optimistically. A
-   * failure leaves the list exactly as it was and shows an error instead
-   * of a false "removed" message. Which operation runs depends on whether
-   * this IS the viewer's default collection (§9: removing from inside
-   * Genel's own detail screen is the general cascade, not a scoped
-   * single-collection removal) — two distinct, clearly separate backend
-   * calls (§19), never the same one reused for both. Works identically for
-   * every entry type (they all share the same `collection_items` shape).
+   * Calls the real backend removal FIRST and only on a confirmed success
+   * splices the item out of local state — never optimistic. A failure leaves
+   * the list as it was and shows an error instead of a false "removed".
+   * Same single-collection removal for every collection, default or custom,
+   * and every entry type; afterwards the shared bookmark state is re-read so
+   * a work that is now in no collection stops showing as saved elsewhere.
    */
   async function handleRemoveItem(id: string, contentType: "prompt" | "workflow" | "preset") {
     if (!collection) return;
-    if (collection.isDefault) {
-      await removeFromSavedEverywhere(id, contentType);
-    } else {
-      await removeFromCollection(collection.id, id, contentType);
-    }
-    setItems((prev) => prev.filter((entry) => entry.data.id !== id));
+    await removeFromCollection(collection.id, id, contentType);
+    setItems((prev) => prev.filter((entry) => !(entry.type === contentType && entry.data.id === id)));
     setCollection((prev) => (prev ? { ...prev, itemCount: Math.max(0, prev.itemCount - 1) } : prev));
-    showToast(collection.isDefault ? t("collection.removedFromSavedToast") : t("collection.removedFromCollectionToast"));
+    showToast(t("collection.removedFromCollectionToast"));
+    if (user) void refreshSaveState(id, contentType, user.id);
   }
-
-  // Search runs over what's already loaded (title, description, creator,
-  // tags) — a collection is a small personal list, no extra request needed.
-  const normalizedQuery = normalizeTagLabel(query);
-  const visibleItems = useMemo(() => {
-    if (!normalizedQuery) return items;
-    return items.filter((entry) => {
-      const data = entry.data;
-      const creator = "author" in data ? data.author : data.creator;
-      const haystack = normalizeTagLabel(
-        [data.title, data.description, creator.displayName, creator.username, ...data.tags.map((tag) => tag.label)].join(" "),
-      );
-      return haystack.includes(normalizedQuery);
-    });
-  }, [items, normalizedQuery]);
 
   if (!id || (loaded && !collection)) {
     return <NotFoundBlock title={t("collection.notFoundTitle")} description={t("collection.notFoundDescription")} />;
@@ -184,59 +156,13 @@ export function CollectionDetailView() {
         </div>
       </header>
 
-      {items.length > 0 && (
-        <div className="relative">
-          <Search size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" aria-hidden />
-          <input
-            type="search"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder={t("collection.searchPlaceholder")}
-            aria-label={t("collection.searchPlaceholder")}
-            className="h-11 w-full rounded-full border border-border-soft bg-surface pl-10 pr-10 text-body text-text shadow-xs outline-none transition-colors placeholder:text-text-muted hover:border-border focus:border-primary focus-visible:ring-2 focus-visible:ring-primary/30 [&::-webkit-search-cancel-button]:hidden"
-          />
-          {query && (
-            <button
-              type="button"
-              onClick={() => setQuery("")}
-              aria-label={t("common.clear")}
-              className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-text-muted hover:bg-surface-soft hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-            >
-              <X size={15} aria-hidden />
-            </button>
-          )}
-        </div>
-      )}
-
-      {items.length > 0 && visibleItems.length === 0 ? (
-        <EmptyState
-          icon={SearchX}
-          title={t("collection.searchNoResultsTitle")}
-          description={t("collection.searchNoResultsDescription", { query: query.trim() })}
-          action={{ label: t("common.clear"), onClick: () => setQuery("") }}
-        />
-      ) : items.length === 0 ? (
-        <EmptyState icon={FolderOpen} title={t("collection.emptyItemsTitle")} description={t("collection.emptyItemsDescription")} action={{ label: t("feed.goToDiscover"), href: "/discover" }} />
-      ) : (
-        <div className="columns-1 gap-3 sm:columns-2 sm:gap-4 xl:columns-3">
-          {visibleItems.map((entry) => {
-            const removal = isOwner
-              ? { isDefault: collection.isDefault, onRemove: () => handleRemoveItem(entry.data.id, entry.type) }
-              : undefined;
-            return (
-              <div key={entry.data.id} className="pb-3 break-inside-avoid sm:pb-4">
-                {entry.type === "prompt" ? (
-                  <PromptCard prompt={entry.data} collectionRemoval={removal} />
-                ) : entry.type === "preset" ? (
-                  <PresetCard preset={entry.data} collectionRemoval={removal} />
-                ) : (
-                  <WorkflowCard workflow={entry.data} collectionRemoval={removal} />
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
+      <CollectionEntryList
+        items={items}
+        searchPlaceholderKey="collection.searchPlaceholder"
+        emptyTitleKey="collection.emptyItemsTitle"
+        emptyDescriptionKey="collection.emptyItemsDescription"
+        removalFor={isOwner ? (entry) => ({ onRemove: () => handleRemoveItem(entry.data.id, entry.type) }) : undefined}
+      />
 
       {editing && (
         <CollectionFormModal

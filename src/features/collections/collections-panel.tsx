@@ -3,7 +3,8 @@
 import { EmptyState } from "@/components/ui/empty-state";
 
 import { useEffect, useState } from "react";
-import { FolderPlus, Plus } from "lucide-react";
+import Link from "next/link";
+import { Bookmark, FolderPlus, Plus } from "lucide-react";
 import { CollectionCard } from "./collection-card";
 import { CollectionFormModal } from "./collection-form-modal";
 import { createCollection, fetchFollowedCollections, fetchOwnCollections, updateCollection } from "@/lib/supabase/collections";
@@ -11,10 +12,12 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Collection, UserProfile } from "@/types";
 
 /**
- * The profile "Kaydedilenler > Koleksiyonlar" sub-tab — only ever rendered
- * for the signed-in owner viewing their own profile (ProfileView already
- * gates the whole "Kaydedilenler" tab this way), so every collection here
- * belongs to the viewer regardless of its visibility flag.
+ * The profile "Kaydedilenler" tab — only ever rendered for the signed-in
+ * owner viewing their own profile (ProfileView already gates the whole tab
+ * this way), so every collection here belongs to the viewer regardless of its
+ * visibility flag. The first tile opens "Kaydedilenler" (`/saved`, the union
+ * of everything in any collection); the cards after it are the collections
+ * themselves, "Genel" first, each an independent list.
  */
 export function CollectionsPanel({ ownerId, ownerProfile }: { ownerId: string; ownerProfile: UserProfile }) {
   const { t } = useTranslation();
@@ -61,24 +64,25 @@ export function CollectionsPanel({ ownerId, ownerProfile }: { ownerId: string; o
         {t("collection.createButton")}
       </button>
 
-      {collections.length === 0 ? (
+      <div className="grid grid-cols-2 gap-x-3 gap-y-5 pt-2 sm:grid-cols-3 sm:gap-x-4 lg:grid-cols-4">
+        <SavedShortcutCard />
+        {collections.map((collection) => (
+          <CollectionCard
+            key={collection.id}
+            collection={collection}
+            onEdit={() => setFormMode({ edit: collection })}
+            onDeleted={() => setCollections((prev) => prev.filter((c) => c.id !== collection.id))}
+          />
+        ))}
+      </div>
+
+      {collections.length === 0 && (
         <EmptyState
           icon={FolderPlus}
           title={t("collection.emptyTitle")}
           description={t("collection.emptyDescription")}
           className="border-0"
         />
-      ) : (
-        <div className="grid grid-cols-2 gap-x-3 gap-y-5 pt-2 sm:grid-cols-3 sm:gap-x-4 lg:grid-cols-4">
-          {collections.map((collection) => (
-            <CollectionCard
-              key={collection.id}
-              collection={collection}
-              onEdit={() => setFormMode({ edit: collection })}
-              onDeleted={() => setCollections((prev) => prev.filter((c) => c.id !== collection.id))}
-            />
-          ))}
-        </div>
       )}
 
       {followed.length > 0 && (
@@ -119,5 +123,26 @@ export function CollectionsPanel({ ownerId, ownerProfile }: { ownerId: string; o
         />
       )}
     </div>
+  );
+}
+
+/** The "Kaydedilenler" tile: not a collection, a view over all of them — styled like a collection card so it reads as the first item in the shelf. */
+function SavedShortcutCard() {
+  const { t } = useTranslation();
+  return (
+    <Link
+      href="/saved"
+      className="group block min-w-0 overflow-hidden rounded-lg border border-border-soft bg-surface shadow-card transition-[border-color,box-shadow] duration-200 hover:border-border hover:shadow-card-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+    >
+      <div className="flex aspect-[4/3] w-full items-center justify-center bg-surface-soft text-primary">
+        <span className="flex h-12 w-12 items-center justify-center rounded-md bg-primary-soft">
+          <Bookmark size={22} strokeWidth={1.75} />
+        </span>
+      </div>
+      <div className="min-w-0 space-y-1 p-3">
+        <p className="truncate text-label font-semibold text-text">{t("nav.saved")}</p>
+        <p className="text-caption text-text-muted">{t("saved.tileHint")}</p>
+      </div>
+    </Link>
   );
 }
