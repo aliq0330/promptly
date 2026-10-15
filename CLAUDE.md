@@ -246,6 +246,7 @@ Kalıplar (yeni migration yazarken uy):
   istemci insert politikası yok); hedef `hl=<tür>:<id>` ile kesin içeriğe gider.
 - **INSERT … RETURNING tuzağı:** SELECT politikası henüz var olmayan başka
   bir satıra bağlıysa id'yi istemcide üret (`crypto.randomUUID()`), `RETURNING`'e güvenme.
+- **Sayaç sütunları istemciden yazılamaz:** yeni bir sayaç (`*_count`) eklenirse `protect_counter_columns()` trigger'ı bağlanır (`docs/history/169-*`) ve onu güncelleyen trigger `SECURITY DEFINER` olur (invoker ise korumaya takılıp sessizce sayamaz).
 - **Kaydedildi = en az bir koleksiyonda** (`collection_items`; ikon, `/saved` ve kaydet penceresi aynı satırları okur). Üyelik yalnız `SaveToCollectionModal`'dan (taslak + "Kaydet") ya da bir koleksiyonun kendi "Koleksiyondan kaldır"ından değişir; bir koleksiyondan çıkarmak başka koleksiyona dokunmaz, "Genel" dahil. Toplu "her yerden kaldır" yoktur (`docs/history/168-*`).
 - Sahiplik kontrolü `.update().select().maybeSingle()` ile yapılır; "0 satır
   etkilendi" sessiz başarı sayılmaz.
@@ -328,10 +329,11 @@ bağlayıcıdır; ayrıntılı gerekçe için `docs/history/README.md` tablosuna
   `SUPABASE_ACCESS_TOKEN` / `SUPABASE_PROJECT_REF` tanımlı değilse fail eder).
 - @bahsetme (`docs/history/165-*`) ve koleksiyon takibi (`docs/history/166-*`): migration'lar canlıda (yalnızca ekleyici, `drop` yok); anma bildirimi mevcut `comment` türünü kullanır (kısıt genişletilmedi). Gerçek oturumla uçtan uca denenmedi.
 - Kaydedilenler/koleksiyon akışı (`docs/history/168-*`): yalnız istemci kodu, veritabanı değişikliği yok; DB tarafı yerel PostgreSQL'de (`supabase/tests/saved-collections.sql`), arayüz ağ taklitli Playwright'ta denendi. Gerçek Supabase'e/cihaza karşı denenmedi. `remove_*_from_saved_everywhere` RPC'leri artık çağrılmıyor ama DB'de duruyor (`drop` için onay gerekir).
+- Sayaç koruması (`docs/history/169-*`, `docs/yapilacaklar.md` madde 12): `20260919920000_protect_counter_columns.sql` repoda, yerelde sınandı, **canlıya UYGULANMADI** — uygulanana kadar canlıda sayaçlar istemciden yazılabilir.
 - PWA (`docs/history/163-*`) ve Workflow adım adım modu (`docs/history/164-*`): yalnız istemci kodu, veritabanı değişikliği yok. Gerçek cihazda "ana ekrana ekle" ve kurulu uygulamada Google girişi denenmedi.
 - Haftalık tema (`docs/history/162-*`): `weekly_challenges` + moderatör RPC'leri canlıda (yalnızca ekleyici); canlıda henüz tema yok — moderatör `/moderation → Temalar`'dan oluşturur. Gerçek oturumla uçtan uca denenmedi.
 - Etiket takibi (`docs/history/161-*`): `tag_follows` + `feed_page` `tags` kapsamı canlıda; yalnızca ekleyici, aynı imza. Gerçek oturumla uçtan uca denenmedi.
-- Kopyalama sayacı (`docs/history/160-*`): `prompts.copy_count` + `record_prompt_copy` canlıda; yalnızca oturumlu kullanıcı, günde bir, yazarın kendisi sayılmaz. Keşfet → Promptlar'da ayrı "En çok kullanılan" sıralaması var (`feed_page` `p_order='used'`); `Popüler` hâlâ yalnızca beğeni. Sayaç sütunlarını istemciden koruma yalnızca `copy_count` için var (aşağıdaki "sayaç koruması" açık işi).
+- Kopyalama sayacı (`docs/history/160-*`): `prompts.copy_count` + `record_prompt_copy` canlıda; yalnızca oturumlu kullanıcı, günde bir, yazarın kendisi sayılmaz. Keşfet → Promptlar'da ayrı "En çok kullanılan" sıralaması var (`feed_page` `p_order='used'`); `Popüler` hâlâ yalnızca beğeni.
 - Paylaşım önizlemesi (`docs/history/159-*`): `og:image` her zaman site kartı (gönderi medyası private); yeni içeriğin önizlemesi en geç 6 saat sonra. Gerçek sosyal ağ tarayıcılarıyla denenmedi.
 - Migration geçmişi uzlaştırıldı (`docs/history/158-*`): repo temiz DB'de baştan
   oynatılınca canlı şemayla birebir eşit; `schema_migrations`'a 79 repo-sürümlü kayıt
@@ -361,5 +363,5 @@ bağlayıcıdır; ayrıntılı gerekçe için `docs/history/README.md` tablosuna
   isteğin `creative_direction`'ını da kapsar ve keyset sayfalanır (`search_content`); `prompt_saves` canlıdan kaldırıldı; kod içi
   yorumlarda eski "Bölüm 9.x" atıfları arşiv numaralarına (`docs/history/NNN-*`) karşılık gelir.
 
-**Arşiv:** [`docs/history/README.md`](docs/history/README.md) — 168 bölüm, her
+**Arşiv:** [`docs/history/README.md`](docs/history/README.md) — 169 bölüm, her
 biri için durum etiketi (uygulandı / kısmen geçerli / kaldırıldı).

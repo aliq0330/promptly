@@ -91,10 +91,15 @@ Ayrıntılar madde sırası geldiğinde bu dosyaya eklenir. Madde 9 için not: `
 ### 11. Haftalık özet (engelli)
 E-posta sağlayıcısı veya web push (VAPID) anahtarı gerekir; anahtar repoya girmez. Karar bekliyor.
 
-### 12. Sayaç sütunlarını istemciden koruma (bulgu — madde 2 sırasında bulundu)
-- Bulgu: yazarlar kendi içeriklerini güncelleyebildiği için (RLS yalnızca "yazar" der, `anon`/`authenticated`
-  için tablo düzeyinde `UPDATE` yetkisi var) bir istemci kendi prompt'unun `like_count` / `save_count` /
-  `comment_count` değerini doğrudan yazabilir; "Popüler" sıralaması bu değere dayanır. Aynı durum istek,
-  workflow ve hazır ayar tabloları için de geçerli olabilir (doğrulanmadı).
-- Plan: `copy_count`'taki `current_user in ('anon','authenticated')` koruma trigger'ı deseni; sayaçları
-  SECURITY DEFINER trigger'lar güncellediği için etkilenmez. Önce canlıda gerçekten yazılabildiği doğrulanır.
+### 12. Sayaç sütunlarını istemciden koruma — yapıldı (migration canlıya uygulanmadı)
+- Bulgu doğrulandı: yerelde (tüm migration'lar temiz DB'ye oynatılarak) sahibi olarak `authenticated` rolüyle
+  `prompts`, `prompt_requests`, `workflows`, `presets`, `prompt_results`, `prompt_comments`, `profiles` ve
+  `collections` sayaçlarına 9999 yazılabildi; INSERT sırasında da sayaç verilebildi. Canlı şema salt okunur
+  sorguyla karşılaştırıldı: aynı UPDATE politikaları ve `authenticated` UPDATE yetkisi var, yalnız
+  `prompts.copy_count` ve `collections.follower_count` korunuyor (yazma denemesi canlıda yapılmadı).
+- Çözüm: `20260919920000_protect_counter_columns.sql` — `protect_counter_columns()` (SECURITY INVOKER,
+  `current_user in ('anon','authenticated')` ise UPDATE'te eski değer, INSERT'te 0) 8 tabloya bağlandı.
+  Sayaçları güncelleyen trigger'lar SECURITY DEFINER olduğundan etkilenmez; `handle_collection_item_change`
+  invoker'dı, `collections.item_count` korunduğu için DEFINER yapıldı (aksi hâlde sessizce sayamazdı).
+  Kapsam dışı: `conversation_members.unread_count` (istemci kendi satırında 0 yazar), `tags.*_count` (UPDATE politikası yok).
+- Test: `supabase/tests/counter-protection.sql` (düzeltme öncesi 16 FAIL → sonrası 0) + `saved-collections.sql` yeniden: 0 FAIL.
