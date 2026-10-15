@@ -80,6 +80,10 @@ export function GroupAboutSection({
           <dd className="mt-0.5 font-medium text-text">{group.postingPolicy === "admins" ? t("groups.settings.postingAdmins") : t("groups.settings.postingMembers")}</dd>
         </div>
         <div className="rounded-lg border border-border-soft bg-surface-soft/50 px-3 py-2.5">
+          <dt className="text-caption text-text-muted">{t("groups.about.history")}</dt>
+          <dd className="mt-0.5 font-medium text-text">{group.historyVisible ? t("groups.about.historyVisibleValue") : t("groups.about.historyHiddenValue")}</dd>
+        </div>
+        <div className="rounded-lg border border-border-soft bg-surface-soft/50 px-3 py-2.5">
           <dt className="text-caption text-text-muted">{t("groups.about.yourRole")}</dt>
           <dd className="mt-0.5 flex items-center gap-1.5 font-medium text-text">
             {group.myRole === "member" ? t("groups.role.member") : <RoleBadge role={group.myRole} />}

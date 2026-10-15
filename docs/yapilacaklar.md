@@ -113,3 +113,6 @@ E-posta sağlayıcısı veya web push (VAPID) anahtarı gerekir; anahtar repoya 
 
 ### 13. Grup sohbeti ve topluluk — yapıldı (canlıya uygulanmadı)
 Mevcut `conversations`/`conversation_members`/`messages` genişletildi (`kind`, `role`, `joined_at`, `muted_at`) + `chat_groups`, istek, davet, bağlantı, yasak, denetim tabloları; yazma yolu SECURITY DEFINER RPC'ler. Kapalı → açık görünürlük geçişi bekleyen başvuruları tek atomik işlemde kabul eder (kabul edilemeyenler `pending` kalır ve nedeniyle raporlanır). Ayrıntı, rol matrisi ve bilinen boşluklar: `docs/history/172-*`. Canlıya alma sırası: önce `20260919980000` + `20260919990000` (yalnızca ekleyici / yerinde politika daraltma; `drop` yok), sonra istemci kodu. Test: `supabase/tests/run-local.sh supabase/tests/chat-groups.sql` (113 kontrol), `npm test`, `tests/messaging-ui/run-groups.mjs`.
+
+### 13a. Grup yetkileri ve geçmiş görünürlüğü — yapıldı (canlıya uygulanmadı)
+Owner admin/moderatör yetkilerini rol başına açıp kapatır (varsayılanlar 172'deki matrisle aynı) ve yeni üyelerin önceki mesajları görüp görmeyeceğini seçer; ikisi de yalnız owner. Migration `20260920000000_chat_group_permissions.sql` (önce migration, sonra istemci kodu). Ayrıntı: `docs/history/173-*`. Test: `supabase/tests/run-local.sh supabase/tests/chat-group-permissions.sql`.

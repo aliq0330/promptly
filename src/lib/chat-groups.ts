@@ -7,7 +7,7 @@
  * veritabanında (SECURITY DEFINER RPC'ler + RLS) uygulanır; aynı tablo orada da vardır
  * (`supabase/migrations/20260919990000_chat_groups_functions.sql`).
  */
-import type { GroupPostingPolicy, GroupRole, GroupVisibility } from "@/types";
+import type { GroupCapability, GroupPostingPolicy, GroupRole, GroupVisibility, RolePermissions } from "@/types";
 
 export const GROUP_NAME_MAX = 60;
 export const GROUP_DESCRIPTION_MAX = 500;
@@ -26,6 +26,58 @@ export function roleRank(role: GroupRole | null | undefined): number {
   return role ? ROLE_RANK[role] : 0;
 }
 
+// ---------------------------------------------------------------------------------------------
+// Yetenekler (owner'ın admin/moderatöre verip geri alabildiği yetkiler) — sunucudaki `_group_default_permissions` ile aynı
+// ---------------------------------------------------------------------------------------------
+
+export const GROUP_CAPABILITIES: readonly GroupCapability[] = [
+  "edit_settings",
+  "change_visibility",
+  "manage_invites",
+  "manage_requests",
+  "remove_members",
+  "ban_members",
+  "manage_roles",
+  "delete_messages",
+];
+
+/** Moderatöre `manage_roles` verilemez (rütbe kuralı gereği anlamsız; sunucu da reddeder). */
+export function capabilitiesFor(role: "admin" | "moderator"): readonly GroupCapability[] {
+  return role === "moderator" ? GROUP_CAPABILITIES.filter((cap) => cap !== "manage_roles") : GROUP_CAPABILITIES;
+}
+
+export const DEFAULT_ROLE_PERMISSIONS: RolePermissions = {
+  admin: { edit_settings: true, change_visibility: true, manage_invites: true, manage_requests: true, remove_members: true, ban_members: true, manage_roles: true, delete_messages: true },
+  moderator: { edit_settings: false, change_visibility: false, manage_invites: false, manage_requests: true, remove_members: true, ban_members: false, manage_roles: false, delete_messages: true },
+};
+
+/** Sunucudan gelen `role_permissions` jsonb'sini tam ve güvenli bir nesneye çevirir (eksik/bozuk anahtar → varsayılan). */
+export function normalizeRolePermissions(raw: unknown): RolePermissions {
+  const result: RolePermissions = { admin: { ...DEFAULT_ROLE_PERMISSIONS.admin }, moderator: { ...DEFAULT_ROLE_PERMISSIONS.moderator } };
+  if (!raw || typeof raw !== "object") return result;
+  for (const role of ["admin", "moderator"] as const) {
+    const stored = (raw as Record<string, unknown>)[role];
+    if (!stored || typeof stored !== "object") continue;
+    for (const cap of GROUP_CAPABILITIES) {
+      const value = (stored as Record<string, unknown>)[cap];
+      if (typeof value === "boolean") result[role][cap] = value;
+    }
+  }
+  return result;
+}
+
+/** Bu rol bu yeteneğe sahip mi: owner her zaman; admin/moderator saklı ayara göre; üye hiçbir zaman. `perms` verilmezse varsayılanlar. */
+export function can(role: GroupRole | null | undefined, cap: GroupCapability, perms: RolePermissions = DEFAULT_ROLE_PERMISSIONS): boolean {
+  if (role === "owner") return true;
+  if (role === "admin" || role === "moderator") return perms[role][cap];
+  return false;
+}
+
+/** Ayarlar sekmesi görünür mü: ayar düzenleme ya da görünürlük yetkisi olan, ya da owner (owner'a özel bölümler). */
+export function canSeeSettingsTab(role: GroupRole | null | undefined, perms?: RolePermissions): boolean {
+  return role === "owner" || can(role, "edit_settings", perms) || can(role, "change_visibility", perms);
+}
+
 /** owner / admin: ayarlar, görünürlük, davet, bağlantı, yasak, rol atama. */
 export function isGroupManager(role: GroupRole | null | undefined): boolean {
   return role === "owner" || role === "admin";
@@ -37,32 +89,32 @@ export function isGroupStaff(role: GroupRole | null | undefined): boolean {
 }
 
 /** Sunucudaki `remove_chat_group_member` kuralı: kendinden DÜŞÜK rütbeyi çıkarır; moderatör yalnız normal üyeyi. */
-export function canRemoveMember(actor: GroupRole | null, target: GroupRole): boolean {
-  if (!isGroupStaff(actor)) return false;
+export function canRemoveMember(actor: GroupRole | null, target: GroupRole, perms?: RolePermissions): boolean {
+  if (!isGroupStaff(actor) || !can(actor, "remove_members", perms)) return false;
   if (roleRank(target) >= roleRank(actor)) return false;
   if (actor === "moderator" && target !== "member") return false;
   return true;
 }
 
 /** Yasaklayarak çıkarma yalnız owner/admin'dedir. */
-export function canBanMember(actor: GroupRole | null, target: GroupRole): boolean {
-  return isGroupManager(actor) && canRemoveMember(actor, target);
+export function canBanMember(actor: GroupRole | null, target: GroupRole, perms?: RolePermissions): boolean {
+  return can(actor, "ban_members", perms) && canRemoveMember(actor, target, perms);
 }
 
 /**
  * Rol atama (`set_chat_group_member_role`): owner → admin/moderator/member (sahibe dokunamaz);
  * admin → yalnız moderator/member ve yalnız şu an moderatör/üye olanlara. 'owner' buradan verilmez (devir ayrı).
  */
-export function assignableRoles(actor: GroupRole | null, target: GroupRole): Exclude<GroupRole, "owner">[] {
-  if (target === "owner") return [];
+export function assignableRoles(actor: GroupRole | null, target: GroupRole, perms?: RolePermissions): Exclude<GroupRole, "owner">[] {
+  if (target === "owner" || !can(actor, "manage_roles", perms)) return [];
   if (actor === "owner") return (["admin", "moderator", "member"] as Exclude<GroupRole, "owner">[]).filter((role) => role !== target);
   if (actor === "admin" && target !== "admin") return (["moderator", "member"] as Exclude<GroupRole, "owner">[]).filter((role) => role !== target);
   return [];
 }
 
 /** Yönetici mesaj silme (`moderate_chat_group_message`): kendinden DÜŞÜK rütbedeki göndericinin mesajı. */
-export function canModerateMessage(actor: GroupRole | null, senderRole: GroupRole | null): boolean {
-  if (!isGroupStaff(actor)) return false;
+export function canModerateMessage(actor: GroupRole | null, senderRole: GroupRole | null, perms?: RolePermissions): boolean {
+  if (!isGroupStaff(actor) || !can(actor, "delete_messages", perms)) return false;
   return roleRank(senderRole ?? "member") < roleRank(actor);
 }
 

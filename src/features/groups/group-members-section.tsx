@@ -182,8 +182,8 @@ export function GroupMembersSection({
           <ul className="divide-y divide-border-soft rounded-lg border border-border-soft" aria-label={t("groups.members.listLabel")}>
             {current.members.map((member) => {
               const isMe = member.userId === viewerId;
-              const roles = isMe ? [] : assignableRoles(viewerRole, member.role);
-              const canRemove = !isMe && canRemoveMember(viewerRole, member.role);
+              const roles = isMe ? [] : assignableRoles(viewerRole, member.role, group.rolePermissions);
+              const canRemove = !isMe && canRemoveMember(viewerRole, member.role, group.rolePermissions);
               const canTransfer = !isMe && viewerRole === "owner";
               const hasMenu = roles.length > 0 || canRemove || canTransfer;
               return (
@@ -274,7 +274,7 @@ export function GroupMembersSection({
           onConfirm={() => void confirm()}
           onCancel={() => setPending(null)}
         >
-          {pending.kind === "remove" && canBanMember(viewerRole, pending.member.role) && (
+          {pending.kind === "remove" && canBanMember(viewerRole, pending.member.role, group.rolePermissions) && (
             <label className="flex cursor-pointer items-start gap-2 rounded-md border border-border-soft bg-background px-3 py-2 text-small text-text">
               <input type="checkbox" checked={ban} onChange={(event) => setBan(event.target.checked)} disabled={action.busy} className="mt-0.5 accent-[var(--color-primary)]" />
               <span>

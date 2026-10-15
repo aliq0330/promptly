@@ -49,6 +49,7 @@ const GROUP_NAME_TEMPLATES: [re: RegExp, key: string][] = [
   [/^"([\s\S]*)" grubunda artık tüm üyeler mesaj gönderebilir\.$/, "notifMsg.groupPostingMembers"],
   [/^Sana "([\s\S]*)" grubunun sahipliğini devretti\.$/, "notifMsg.groupOwnershipTransferred"],
   [/^"([\s\S]*)" grubunun yeni sahibi oldun\.$/, "notifMsg.groupNewOwner"],
+  [/^"([\s\S]*)" grubunda yönetim yetkilerin güncellendi\.$/, "notifMsg.groupPermissionsChanged"],
 ];
 
 const escapeRe = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
