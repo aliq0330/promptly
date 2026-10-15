@@ -11,6 +11,8 @@ import { DetailSkeleton, NotFoundBlock } from "@/components/ui/detail-skeleton";
 import { ContentTypeLabel } from "@/features/content/content-type-label";
 import { ToolChips, ToolLine } from "@/features/content/tool-chips";
 import { CreatorSummary } from "@/features/profile/creator-summary";
+import { FollowButton } from "@/features/profile/follow-button";
+import { RelatedCards } from "@/features/content/related-cards";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { useAuth } from "@/features/auth/auth-provider";
 import { PostMenu } from "@/features/prompts/post-menu";
@@ -27,7 +29,6 @@ import { fetchWorkflowById } from "@/lib/supabase/workflows";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { workflowHref } from "@/lib/utils";
 import {
-  AsideLinkRow,
   AsideSection,
   DetailActionBar,
   DetailAside,
@@ -107,6 +108,7 @@ export function WorkflowDetailView() {
     );
 
   const { workflow, steps } = data;
+  const isOwn = user?.id === workflow.creator.id;
   const category = categoryLabel(
     workflow.contentTypes,
     workflow.category,
@@ -119,10 +121,10 @@ export function WorkflowDetailView() {
 
   const aside = (
     <DetailAside>
-      <CreatorSummary
-        creator={workflow.creator}
-        isOwn={user?.id === workflow.creator.id}
-      />
+      {/* Phones/tablets already show the creator (+ Follow) in the byline above. */}
+      <div className="hidden lg:block">
+        <CreatorSummary creator={workflow.creator} isOwn={isOwn} />
+      </div>
 
       <AsideSection id="workflow-info-title" title={t("workflow.sidebarInfo")}>
         <dl className="divide-y divide-border-soft text-label">
@@ -147,18 +149,16 @@ export function WorkflowDetailView() {
 
       {similar.length > 0 && (
         <AsideSection id="workflow-similar-title" title={t("workflow.similar")}>
-          <ul className="divide-y divide-border-soft">
-            {similar.map((w) => (
-              <li key={w.id}>
-                <AsideLinkRow
-                  href={workflowHref(w)}
-                  icon={WorkflowIcon}
-                  title={w.title}
-                  meta={`${t("workflow.stepCount", { count: String(w.stepCount) })} · ${w.creator.displayName}`}
-                />
-              </li>
-            ))}
-          </ul>
+          <RelatedCards
+            items={similar.map((w) => ({
+              id: w.id,
+              href: workflowHref(w),
+              title: w.title,
+              meta: `${t("workflow.stepCount", { count: String(w.stepCount) })} · ${w.creator.displayName}`,
+              icon: WorkflowIcon,
+              image: w.media[0] ? { url: w.media[0].url, alt: w.media[0].alt } : null,
+            }))}
+          />
         </AsideSection>
       )}
     </DetailAside>
@@ -186,7 +186,14 @@ export function WorkflowDetailView() {
             <DetailTitle>{workflow.title}</DetailTitle>
             {workflow.description && <DetailLede>{workflow.description}</DetailLede>}
           </div>
-          <DetailByline person={workflow.creator} createdAt={workflow.createdAt} language={language} />
+          <DetailByline
+            person={workflow.creator}
+            createdAt={workflow.createdAt}
+            language={language}
+            // The creator card lives in the side column, which on phones/tablets stacks far below —
+            // so there the byline carries the Follow button instead of repeating the whole card.
+            trailing={!isOwn ? <FollowButton user={workflow.creator} className="lg:hidden" /> : undefined}
+          />
         </header>
 
         <DetailActionBar trailing={<ShareTriggerButton target={{ contentType: "workflow", workflow }} label={t("common.share")} />}>

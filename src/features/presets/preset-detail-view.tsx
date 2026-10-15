@@ -12,6 +12,8 @@ import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { ContentTypeLabel } from "@/features/content/content-type-label";
 import { ToolChips } from "@/features/content/tool-chips";
 import { CreatorSummary } from "@/features/profile/creator-summary";
+import { FollowButton } from "@/features/profile/follow-button";
+import { RelatedCards } from "@/features/content/related-cards";
 import { useAuth } from "@/features/auth/auth-provider";
 import { PostMenu } from "@/features/prompts/post-menu";
 import { LikeButton } from "@/features/prompts/like-button";
@@ -26,7 +28,6 @@ import { presetParameterCount, presetParameterEntries } from "@/lib/preset-utils
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { presetHref } from "@/lib/utils";
 import {
-  AsideLinkRow,
   AsideSection,
   DetailActionBar,
   DetailAside,
@@ -102,7 +103,10 @@ export function PresetDetailView() {
 
   const aside = (
     <DetailAside>
-      <CreatorSummary creator={preset.creator} isOwn={isOwn} />
+      {/* Phones/tablets already show the creator (+ Follow) in the byline above. */}
+      <div className="hidden lg:block">
+        <CreatorSummary creator={preset.creator} isOwn={isOwn} />
+      </div>
 
       <AsideSection id="preset-info-title" title={t("preset.sidebarInfo")}>
         <dl className="divide-y divide-border-soft text-small">
@@ -119,18 +123,16 @@ export function PresetDetailView() {
 
       {similar.length > 0 && (
         <AsideSection id="preset-similar-title" title={t("preset.similar")}>
-          <ul className="divide-y divide-border-soft">
-            {similar.map((p) => (
-              <li key={p.id}>
-                <AsideLinkRow
-                  href={presetHref(p)}
-                  icon={SlidersHorizontal}
-                  title={p.title}
-                  meta={`${t("preset.paramCount", { count: presetParameterCount(p) })} · ${p.creator.displayName}`}
-                />
-              </li>
-            ))}
-          </ul>
+          <RelatedCards
+            items={similar.map((p) => ({
+              id: p.id,
+              href: presetHref(p),
+              title: p.title,
+              meta: `${t("preset.paramCount", { count: presetParameterCount(p) })} · ${p.creator.displayName}`,
+              icon: SlidersHorizontal,
+              image: p.coverUrl ? { url: p.coverUrl, alt: p.title } : null,
+            }))}
+          />
         </AsideSection>
       )}
     </DetailAside>
@@ -162,7 +164,14 @@ export function PresetDetailView() {
             <DetailTitle>{preset.title}</DetailTitle>
             {preset.description && <DetailLede>{preset.description}</DetailLede>}
           </div>
-          <DetailByline person={preset.creator} createdAt={preset.createdAt} language={language} />
+          <DetailByline
+            person={preset.creator}
+            createdAt={preset.createdAt}
+            language={language}
+            // The creator card lives in the side column, which on phones/tablets stacks far below —
+            // so there the byline carries the Follow button instead of repeating the whole card.
+            trailing={!isOwn ? <FollowButton user={preset.creator} className="lg:hidden" /> : undefined}
+          />
         </header>
 
         <DetailActionBar trailing={<ShareTriggerButton target={{ contentType: "preset", preset }} label={t("common.share")} />}>

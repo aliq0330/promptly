@@ -23,6 +23,7 @@ import { LikeButton } from "@/features/prompts/like-button";
 import { PostMenu } from "@/features/prompts/post-menu";
 import { TaxonomyLinks } from "@/features/content/taxonomy-links";
 import { CreatorSummary } from "@/features/profile/creator-summary";
+import { FollowButton } from "@/features/profile/follow-button";
 import { clampedAspectRatio } from "@/lib/placeholder-image";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { RelatedRequests } from "./related-requests";
@@ -170,7 +171,10 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
     <DetailShell
       aside={
         <DetailAside>
-          <CreatorSummary creator={live.author} isOwn={isOwnRequest} />
+          {/* Phones/tablets already show the creator (+ Follow) in the byline above. */}
+          <div className="hidden lg:block">
+            <CreatorSummary creator={live.author} isOwn={isOwnRequest} />
+          </div>
           <ContributorsList answers={answers} />
           <RelatedRequests request={live} />
         </DetailAside>
@@ -194,7 +198,14 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
             </div>
           </div>
           <DetailTitle>{live.title}</DetailTitle>
-          <DetailByline person={live.author} createdAt={live.createdAt} language={language} />
+          <DetailByline
+            person={live.author}
+            createdAt={live.createdAt}
+            language={language}
+            // The creator card lives in the side column, which on phones/tablets stacks far below —
+            // so there the byline carries the Follow button instead of repeating the whole card.
+            trailing={!isOwnRequest ? <FollowButton user={live.author} className="lg:hidden" /> : undefined}
+          />
         </header>
 
         {/*
