@@ -374,15 +374,22 @@ await scenario("19b. Admin: başka yöneticiye ve sahibe işlem menüsü yok; mo
 }, { setup: (db) => seed(db, { myRole: "admin", members: [[U.bob, "owner"], [U.erin, "admin"], [U.carol, "moderator"], [U.dave, "member"]] }) });
 
 // 20
-await scenario("20. Davet sekmesi: takip ettiklerinden seç ve gönder; atlananlar nedenleriyle gösterilir; bağlantı oluşturulunca yalnızca bir kez gösterilir", async ({ page, db }) => {
+await scenario("20. Davet sekmesi: üyeler 'takip ettiklerim'de görünmez, aramada 'Zaten üye' yazar ve seçilemez; gönderim; bağlantı yalnızca bir kez gösterilir", async ({ page, db }) => {
   await openThread(page); await openInfo(page);
   await tab(page, /Davet/).click();
+  await dlg(page).getByRole("checkbox", { name: /Amy/ }).waitFor();
+  assert.equal(await dlg(page).getByRole("checkbox", { name: /Dave/ }).count(), 0, "members never appear in the followed list");
+  await dlg(page).getByPlaceholder("Kullanıcı adı veya isimle ara").fill("dave");
+  const dave = dlg(page).getByRole("checkbox", { name: /Dave/ });
+  await dave.waitFor();
+  await dave.getByText("Zaten üye").waitFor();
+  assert.equal(await dave.isDisabled(), true, "a member can't be selected");
+  await dlg(page).getByPlaceholder("Kullanıcı adı veya isimle ara").fill("");
   await dlg(page).getByRole("checkbox", { name: /Amy/ }).click();
-  await dlg(page).getByRole("checkbox", { name: /Dave/ }).click();
-  await dlg(page).getByRole("button", { name: "Davet gönder (2)" }).dblclick();
-  await dlg(page).getByText("1 davet gönderildi, 1 kişi atlandı.").waitFor();
-  await dlg(page).getByText("Dave: zaten üye").waitFor();
+  await dlg(page).getByRole("button", { name: "Davet gönder (1)" }).dblclick();
+  await dlg(page).getByText("1 davet gönderildi, 0 kişi atlandı.").waitFor();
   assert.equal(calls(db, "rpc/invite_to_chat_group").length, 1);
+  assert.deepEqual(calls(db, "rpc/invite_to_chat_group")[0].body.p_user_ids, [U.amy.id]);
   await dlg(page).getByText("Bekleyen davetler (1)").waitFor();
   await dlg(page).getByRole("button", { name: "Bağlantı oluştur" }).click();
   const input = dlg(page).getByRole("textbox", { name: "Davet bağlantıları" });

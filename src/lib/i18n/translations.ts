@@ -2508,6 +2508,7 @@ export const translations = {
   "groups.create.goToGroup": { tr: "Gruba git", en: "Go to group" },
   "groups.invite.title": { tr: "Üye davet et", en: "Invite members" },
   "groups.invite.help": { tr: "Davet edilen kişi kabul edene kadar üye olmaz.", en: "Invited people aren't members until they accept." },
+  "groups.invite.alreadyMember": { tr: "Zaten üye", en: "Already a member" },
   "groups.invite.selected": { tr: "Seçilenler", en: "Selected" },
   "groups.invite.removeSelected": { tr: "{{name}} seçimini kaldır", en: "Remove {{name}} from selection" },
   "groups.invite.batchLimit": { tr: "Bir seferde en fazla {{count}} kişi davet edilebilir.", en: "You can invite at most {{count}} people at a time." },

@@ -12,6 +12,7 @@ import {
   createChatGroupLink,
   fetchGroupBans,
   fetchGroupInvitations,
+  fetchGroupMemberIds,
   fetchGroupLinks,
   inviteToChatGroup,
   revokeChatGroupLink,
@@ -65,6 +66,7 @@ export function GroupInvitesSection({
   const [reloadKey, setReloadKey] = useState(0);
   const [loaded, setLoaded] = useState<Loaded | null>(null);
   const [selected, setSelected] = useState<UserProfile[]>([]);
+  const [memberIds, setMemberIds] = useState<Set<string> | null>(null);
   const [lastInvite, setLastInvite] = useState<{ result: InviteResult; names: Map<string, string> } | null>(null);
   const [expiry, setExpiry] = useState<number>(168);
   const [maxUses, setMaxUses] = useState("");
@@ -88,6 +90,19 @@ export function GroupInvitesSection({
       cancelled = true;
     };
   }, [group.id, key]);
+
+  // Mevcut üyeler: davet listesinde "zaten üye" göstermek için (yükleme başarısız olursa sunucu yine atlar).
+  useEffect(() => {
+    let cancelled = false;
+    fetchGroupMemberIds(group.id)
+      .then((ids) => {
+        if (!cancelled) setMemberIds(ids);
+      })
+      .catch((err) => console.error("fetchGroupMemberIds", err));
+    return () => {
+      cancelled = true;
+    };
+  }, [group.id, group.memberCount]);
 
   const current = loaded && loaded.key === key ? loaded : null;
   const alreadyInvited = useMemo(() => current?.invitations.flatMap((i) => (i.user ? [i.user.id] : [])) ?? [], [current]);
@@ -138,7 +153,7 @@ export function GroupInvitesSection({
         <h3 id="invite-people-title" className="text-label font-semibold text-text">
           {t("groups.invite.title")}
         </h3>
-        <InviteePicker selected={selected} onChange={setSelected} excludeIds={alreadyInvited} disabled={invite.busy} />
+        <InviteePicker selected={selected} onChange={setSelected} excludeIds={alreadyInvited} memberIds={memberIds} disabled={invite.busy} />
         <div className="flex items-center justify-between gap-3">
           <p className="text-caption text-text-muted">{t("groups.invite.help")}</p>
           <Button type="button" size="sm" onClick={() => void sendInvites()} disabled={invite.busy || selected.length === 0}>
