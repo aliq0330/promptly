@@ -136,6 +136,14 @@ export async function fetchWorkflowsByIds(ids: string[]): Promise<Workflow[]> {
   return withoutBlocked((data ?? []).map((row) => mapWorkflowRow(row as unknown as WorkflowRow)), (w) => w.creator.id);
 }
 
+/** Workflows related to `workflowId` (`public.related_workflows`): shared tags first, then same category; visible workflows only. Throws on failure — the caller hides the block. */
+export async function fetchRelatedWorkflows(workflowId: string, limit = 4): Promise<Workflow[]> {
+  const { data, error } = await supabase.rpc("related_workflows", { p_workflow_id: workflowId, p_limit: limit });
+  if (error) throw new Error(error.message);
+  const ids = ((data ?? []) as { id: string }[]).map((row) => row.id);
+  return orderByIds(await fetchWorkflowsByIds(ids), ids);
+}
+
 /**
  * Workflow search — same shared advanced-search filters as prompts/requests,
  * one keyset page at a time (`public.search_content`). A workflow chains several

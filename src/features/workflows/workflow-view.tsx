@@ -1,7 +1,7 @@
 "use client";
 
 import { usePageTitle } from "@/components/layout/page-title";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Play, Workflow as WorkflowIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +11,8 @@ import { DetailSkeleton, NotFoundBlock } from "@/components/ui/detail-skeleton";
 import { ContentTypeLabel } from "@/features/content/content-type-label";
 import { ToolChips, ToolLine } from "@/features/content/tool-chips";
 import { CreatorSummary } from "@/features/profile/creator-summary";
+import { FollowButton } from "@/features/profile/follow-button";
+import { RelatedWorkflows } from "./related-workflows";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { useAuth } from "@/features/auth/auth-provider";
 import { PostMenu } from "@/features/prompts/post-menu";
@@ -25,9 +27,7 @@ import { useRealWorkflows } from "./real-workflows-provider";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
 import { fetchWorkflowById } from "@/lib/supabase/workflows";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import { workflowHref } from "@/lib/utils";
 import {
-  AsideLinkRow,
   AsideSection,
   DetailActionBar,
   DetailAside,
@@ -49,7 +49,7 @@ export function WorkflowDetailView() {
   const { t, language } = useTranslation();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { removeFromCache, realWorkflows } = useRealWorkflows();
+  const { removeFromCache } = useRealWorkflows();
   const { user } = useAuth();
   const id = searchParams.get("id");
   const [data, setData] = useState<
@@ -70,26 +70,6 @@ export function WorkflowDetailView() {
     };
   }, [id]);
 
-  const similar = useMemo(() => {
-    const current = data?.workflow;
-    if (!current) return [];
-    const tagSet = new Set(current.tags.map((tag) => tag.slug));
-    return realWorkflows
-      .filter((w) => w.id !== current.id)
-      .map((w) => ({
-        w,
-        score:
-          w.tags.filter((tag) => tagSet.has(tag.slug)).length * 3 +
-          (w.creator.id === current.creator.id ? 1 : 0) +
-          w.contentTypes.filter((ct) => current.contentTypes.includes(ct))
-            .length,
-      }))
-      .filter(({ score }) => score >= 2)
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 4)
-      .map(({ w }) => w);
-  }, [data, realWorkflows]);
-
   if (!id)
     return (
       <NotFoundBlock
@@ -107,6 +87,7 @@ export function WorkflowDetailView() {
     );
 
   const { workflow, steps } = data;
+  const isOwn = user?.id === workflow.creator.id;
   const category = categoryLabel(
     workflow.contentTypes,
     workflow.category,
@@ -119,10 +100,10 @@ export function WorkflowDetailView() {
 
   const aside = (
     <DetailAside>
-      <CreatorSummary
-        creator={workflow.creator}
-        isOwn={user?.id === workflow.creator.id}
-      />
+      {/* Phones/tablets already show the creator (+ Follow) in the byline above. */}
+      <div className="hidden lg:block">
+        <CreatorSummary creator={workflow.creator} isOwn={isOwn} />
+      </div>
 
       <AsideSection id="workflow-info-title" title={t("workflow.sidebarInfo")}>
         <dl className="divide-y divide-border-soft text-label">
@@ -145,22 +126,7 @@ export function WorkflowDetailView() {
         </AsideSection>
       )}
 
-      {similar.length > 0 && (
-        <AsideSection id="workflow-similar-title" title={t("workflow.similar")}>
-          <ul className="divide-y divide-border-soft">
-            {similar.map((w) => (
-              <li key={w.id}>
-                <AsideLinkRow
-                  href={workflowHref(w)}
-                  icon={WorkflowIcon}
-                  title={w.title}
-                  meta={`${t("workflow.stepCount", { count: String(w.stepCount) })} · ${w.creator.displayName}`}
-                />
-              </li>
-            ))}
-          </ul>
-        </AsideSection>
-      )}
+      <RelatedWorkflows workflow={workflow} />
     </DetailAside>
   );
 
@@ -186,7 +152,14 @@ export function WorkflowDetailView() {
             <DetailTitle>{workflow.title}</DetailTitle>
             {workflow.description && <DetailLede>{workflow.description}</DetailLede>}
           </div>
-          <DetailByline person={workflow.creator} createdAt={workflow.createdAt} language={language} />
+          <DetailByline
+            person={workflow.creator}
+            createdAt={workflow.createdAt}
+            language={language}
+            // The creator card lives in the side column, which on phones/tablets stacks far below —
+            // so there the byline carries the Follow button instead of repeating the whole card.
+            trailing={!isOwn ? <FollowButton user={workflow.creator} className="lg:hidden" /> : undefined}
+          />
         </header>
 
         <DetailActionBar trailing={<ShareTriggerButton target={{ contentType: "workflow", workflow }} label={t("common.share")} />}>

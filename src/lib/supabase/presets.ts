@@ -189,6 +189,14 @@ export async function fetchPresetsByIds(ids: string[]): Promise<Preset[]> {
   return withFields(await withoutBlocked((data ?? []).map((row) => mapPresetRow(row as unknown as PresetRow)), (p) => p.creator.id));
 }
 
+/** Presets related to `presetId` (`public.related_presets`): shared tags first, then same category; visible presets only. Throws on failure — the caller hides the block. */
+export async function fetchRelatedPresets(presetId: string, limit = 4): Promise<Preset[]> {
+  const { data, error } = await supabase.rpc("related_presets", { p_preset_id: presetId, p_limit: limit });
+  if (error) throw new Error(error.message);
+  const ids = ((data ?? []) as { id: string }[]).map((row) => row.id);
+  return orderByIds(await fetchPresetsByIds(ids), ids);
+}
+
 /** Preset search — same shared taxonomy / advanced-search filters as prompts/requests, one keyset page at a time (`public.search_content`). Text matches title + description (a preset row has no other body column). */
 export async function searchPresetsPage(query: string, filters: ContentSearchFilters = {}, limit = 20, cursor?: SearchCursor | null): Promise<SearchPage<Preset>> {
   try {

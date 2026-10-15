@@ -1,7 +1,7 @@
 "use client";
 
 import { usePageTitle } from "@/components/layout/page-title";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { SlidersHorizontal, WandSparkles } from "lucide-react";
@@ -12,6 +12,8 @@ import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { ContentTypeLabel } from "@/features/content/content-type-label";
 import { ToolChips } from "@/features/content/tool-chips";
 import { CreatorSummary } from "@/features/profile/creator-summary";
+import { FollowButton } from "@/features/profile/follow-button";
+import { RelatedPresets } from "./related-presets";
 import { useAuth } from "@/features/auth/auth-provider";
 import { PostMenu } from "@/features/prompts/post-menu";
 import { LikeButton } from "@/features/prompts/like-button";
@@ -22,11 +24,9 @@ import { ShareTriggerButton } from "@/features/prompts/share-modal";
 import { StatisticsButton } from "@/features/statistics/statistics-button";
 import { fetchPresetById } from "@/lib/supabase/presets";
 import { taxonomyPathLabel } from "@/lib/content-taxonomy";
-import { presetParameterCount, presetParameterEntries } from "@/lib/preset-utils";
+import { presetParameterEntries } from "@/lib/preset-utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import { presetHref } from "@/lib/utils";
 import {
-  AsideLinkRow,
   AsideSection,
   DetailActionBar,
   DetailAside,
@@ -56,7 +56,7 @@ export function PresetDetailView() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useAuth();
-  const { removeFromCache, realPresets } = useRealPresets();
+  const { removeFromCache } = useRealPresets();
   const id = searchParams.get("id");
   const [preset, setPreset] = useState<Preset | null | undefined>(undefined);
   const [lightbox, setLightbox] = useState(false);
@@ -71,25 +71,6 @@ export function PresetDetailView() {
     };
   }, [id]);
 
-  const similar = useMemo(() => {
-    if (!preset) return [];
-    const tagSet = new Set(preset.tags.map((tag) => tag.slug));
-    return realPresets
-      .filter((p) => p.id !== preset.id)
-      .map((p) => ({
-        p,
-        score:
-          p.tags.filter((tag) => tagSet.has(tag.slug)).length * 3 +
-          (p.contentType === preset.contentType ? 1 : 0) +
-          (p.category && p.category === preset.category ? 2 : 0) +
-          (p.creator.id === preset.creator.id ? 1 : 0),
-      }))
-      .filter(({ score }) => score >= 2)
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 4)
-      .map(({ p }) => p);
-  }, [preset, realPresets]);
-
   if (!id) return <NotFoundBlock title={t("preset.notFoundTitle")} description={t("common.brokenLinkHint")} />;
   if (preset === undefined) return <DetailSkeleton />;
   if (!preset) return <NotFoundBlock title={t("preset.notFoundTitle")} description={t("preset.notFoundBody")} />;
@@ -102,7 +83,10 @@ export function PresetDetailView() {
 
   const aside = (
     <DetailAside>
-      <CreatorSummary creator={preset.creator} isOwn={isOwn} />
+      {/* Phones/tablets already show the creator (+ Follow) in the byline above. */}
+      <div className="hidden lg:block">
+        <CreatorSummary creator={preset.creator} isOwn={isOwn} />
+      </div>
 
       <AsideSection id="preset-info-title" title={t("preset.sidebarInfo")}>
         <dl className="divide-y divide-border-soft text-small">
@@ -117,22 +101,7 @@ export function PresetDetailView() {
         </dl>
       </AsideSection>
 
-      {similar.length > 0 && (
-        <AsideSection id="preset-similar-title" title={t("preset.similar")}>
-          <ul className="divide-y divide-border-soft">
-            {similar.map((p) => (
-              <li key={p.id}>
-                <AsideLinkRow
-                  href={presetHref(p)}
-                  icon={SlidersHorizontal}
-                  title={p.title}
-                  meta={`${t("preset.paramCount", { count: presetParameterCount(p) })} · ${p.creator.displayName}`}
-                />
-              </li>
-            ))}
-          </ul>
-        </AsideSection>
-      )}
+      <RelatedPresets preset={preset} />
     </DetailAside>
   );
 
@@ -162,7 +131,14 @@ export function PresetDetailView() {
             <DetailTitle>{preset.title}</DetailTitle>
             {preset.description && <DetailLede>{preset.description}</DetailLede>}
           </div>
-          <DetailByline person={preset.creator} createdAt={preset.createdAt} language={language} />
+          <DetailByline
+            person={preset.creator}
+            createdAt={preset.createdAt}
+            language={language}
+            // The creator card lives in the side column, which on phones/tablets stacks far below —
+            // so there the byline carries the Follow button instead of repeating the whole card.
+            trailing={!isOwn ? <FollowButton user={preset.creator} className="lg:hidden" /> : undefined}
+          />
         </header>
 
         <DetailActionBar trailing={<ShareTriggerButton target={{ contentType: "preset", preset }} label={t("common.share")} />}>
