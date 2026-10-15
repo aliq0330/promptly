@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Bookmark, Compass, Link2, Loader2, Mail, Plus, Search, Send, ShieldCheck, Users } from "lucide-react";
+import { Bookmark, Compass, Link2, Loader2, Mail, MessageCircle, Plus, Search, Send, ShieldCheck, Users } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Button, buttonClassName } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -116,7 +116,7 @@ export function CommunitiesPage() {
               <Plus size={15} /> {t("communities.page.create")}
             </Button>
             <Link href="/messages" className={buttonClassName({ size: "sm", variant: "outline" })}>
-              {t("groups.page.toMessages")}
+              <MessageCircle size={15} /> {t("communities.page.toMessages")}
             </Link>
           </>
         }

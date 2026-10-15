@@ -13,6 +13,7 @@ export const communityTranslations = {
   "communities.page.title": { tr: "Topluluklar", en: "Communities" },
   "communities.page.description": { tr: "Ortak ilgi alanlarında bir araya gel: her topluluğun kendi akışı, sohbeti, etkinlikleri ve kuralları var.", en: "Gather around shared interests: every community has its own feed, chat, events and rules." },
   "communities.page.create": { tr: "Topluluk oluştur", en: "Create community" },
+  "communities.page.toMessages": { tr: "Mesajlar", en: "Messages" },
   "communities.page.tabsAria": { tr: "Topluluk bölümleri", en: "Community sections" },
   "communities.page.loadError": { tr: "Topluluklar yüklenemedi.", en: "Couldn't load communities." },
   "communities.tab.discover": { tr: "Keşfet", en: "Discover" },
