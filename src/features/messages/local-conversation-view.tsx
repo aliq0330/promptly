@@ -4,10 +4,12 @@ import { useEffect, useMemo, useRef, useState, type FormEvent, type UIEvent } fr
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, X } from "lucide-react";
+import { Portal } from "@/components/ui/portal";
 import { Avatar } from "@/components/ui/avatar";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useBlockState } from "@/features/moderation/use-block-state";
 import { ProfileMoreMenu } from "@/features/profile/profile-more-menu";
+import { ChatActionItems, ChatConfirmModal, type ChatConfirmKind } from "./chat-actions";
 import { useRealMessages } from "./real-messages-provider";
 import { MessageBubble, type DeleteMode, type MessageReactionEntry } from "./message-bubble";
 import { MessageComposer, useImageDrop } from "./message-composer";
@@ -90,7 +92,16 @@ export function LocalConversationView() {
   const shareParamWorkflowId = searchParams.get("shareWorkflowId");
   const shareParamPresetId = searchParams.get("sharePresetId");
   const { user } = useAuth();
-  const { getCached, acceptRequest, declineRequest } = useRealMessages();
+  const {
+    getCached,
+    refresh,
+    acceptRequest,
+    declineRequest,
+    archiveConversation,
+    unarchiveConversation,
+    deleteConversation,
+    clearConversation,
+  } = useRealMessages();
   const { getCached: getCachedPrompt, fetchById: fetchPromptById } = useRealPrompts();
   const { getCached: getCachedRequest, fetchById: fetchRequestById } = useRealRequests();
   const { getCached: getCachedWorkflow } = useRealWorkflows();
@@ -119,6 +130,14 @@ export function LocalConversationView() {
   const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; mode: DeleteMode } | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [isDecliningRequest, setIsDecliningRequest] = useState(false);
+  // Sohbet menüsü eylemleri (docs/history/171-*): onay penceresi, devam eden işlem, hata ve geçici bildirim.
+  const [confirmKind, setConfirmKind] = useState<ChatConfirmKind | null>(null);
+  const [actionBusy, setActionBusy] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
+  const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // "Sohbeti sil" başarıyla bitince sohbet bu kullanıcının listesinde yok; bu ekran dürüst bir sonuç gösterir.
+  const [removedFromList, setRemovedFromList] = useState(false);
   const [isNearBottom, setIsNearBottom] = useState(true);
   // Aşama 1: which single message currently has its ⋮/emoji icons revealed
   // via a mobile tap — activating a new one (or a tap on blank list space,
@@ -160,6 +179,19 @@ export function LocalConversationView() {
   useEffect(() => {
     pendingRef.current = pendingSends;
   }, [pendingSends]);
+
+  useEffect(
+    () => () => {
+      if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+    },
+    [],
+  );
+
+  function showToast(message: string) {
+    setToast(message);
+    if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+    toastTimeoutRef.current = setTimeout(() => setToast(null), 2600);
+  }
 
   // Revoke any local previews still held by unsent photo messages when the thread unmounts.
   useEffect(
@@ -485,6 +517,11 @@ export function LocalConversationView() {
   }
 
   function afterSuccessfulSend() {
+    // A new message brings an archived / deleted chat back to the inbox (server trigger); mirror it here and resync the list.
+    if (conversation?.archivedAt || conversation?.deletedAt) {
+      setConversation((prev) => (prev ? { ...prev, archivedAt: null, deletedAt: null } : prev));
+      void refresh();
+    }
     // Replying to a pending message request auto-accepts it (Bölüm 21 Faz B) — matches how most real messaging apps treat a reply as implicit acceptance.
     if (id && conversation?.myStatus === "pending") {
       setConversation((prev) => (prev ? { ...prev, myStatus: "accepted" } : prev));
@@ -651,6 +688,44 @@ export function LocalConversationView() {
     }
   }
 
+  /**
+   * Chat-menu actions. The backend is asked FIRST; local state and the toast
+   * change only on a confirmed success, a failure leaves everything as it was
+   * and shows the error (in the confirm dialog when there is one).
+   */
+  async function runChatAction(action: "archive" | "unarchive" | ChatConfirmKind) {
+    if (!id || actionBusy) return;
+    setActionBusy(true);
+    setActionError(null);
+    try {
+      if (action === "archive") {
+        await archiveConversation(id);
+        setConversation((prev) => (prev ? { ...prev, archivedAt: new Date().toISOString() } : prev));
+        showToast(t("messages.archivedToast"));
+      } else if (action === "unarchive") {
+        await unarchiveConversation(id);
+        setConversation((prev) => (prev ? { ...prev, archivedAt: null } : prev));
+        showToast(t("messages.unarchivedToast"));
+      } else if (action === "clear") {
+        await clearConversation(id);
+        setMessages([]);
+        setReactionRows([]);
+        setConfirmKind(null);
+        showToast(t("messages.clearedToast"));
+      } else {
+        await deleteConversation(id);
+        setConfirmKind(null);
+        setRemovedFromList(true);
+      }
+    } catch (err) {
+      console.error("chat action", action, err);
+      setActionError(t("messages.stateUpdateFailed"));
+      if (action === "archive" || action === "unarchive") showToast(t("messages.stateUpdateFailed"));
+    } finally {
+      setActionBusy(false);
+    }
+  }
+
   function startEdit(message: Message) {
     setEditingId(message.id);
     setEditDraft(message.body ?? "");
@@ -742,6 +817,22 @@ export function LocalConversationView() {
     );
   }
 
+  if (removedFromList) {
+    return (
+      <div className="mx-auto max-w-lg px-4 py-16 text-center">
+        <p role="status" className="mb-4 text-sm text-text-secondary">
+          {t("messages.deletedChatToast")}
+        </p>
+        <Link
+          href="/messages"
+          className="inline-flex h-9 items-center rounded-lg border border-border bg-surface px-4 text-sm font-medium text-text shadow-xs transition-colors hover:border-border-strong"
+        >
+          {t("messages.backToMessages")}
+        </Link>
+      </div>
+    );
+  }
+
   const participant = conversation.participants[0];
   // A pending bubble is hidden the instant its real message is in the thread (the INSERT response or the Realtime echo, whichever lands first) — never both at once.
   const visiblePending = pendingSends.filter((p) => !messagesById.has(p.id));
@@ -771,7 +862,26 @@ export function LocalConversationView() {
             <span className="block truncate text-caption text-text-muted">@{participant.username}</span>
           </span>
         </Link>
-        <ProfileMoreMenu user={participant} blockState={blockState} />
+        <ProfileMoreMenu
+          user={participant}
+          blockState={blockState}
+          extraItems={
+            conversation.myStatus === "accepted"
+              ? (close) => (
+                  <ChatActionItems
+                    conversation={conversation}
+                    busy={actionBusy}
+                    close={close}
+                    onToggleArchive={() => void runChatAction(conversation.archivedAt ? "unarchive" : "archive")}
+                    onAsk={(kind) => {
+                      setActionError(null);
+                      setConfirmKind(kind);
+                    }}
+                  />
+                )
+              : undefined
+          }
+        />
       </div>
       {conversation.myStatus === "pending" && (
         <div className="flex items-center justify-between gap-3 border-b border-primary/15 bg-primary-soft/50 px-4 py-2.5 lg:px-6">
@@ -850,6 +960,28 @@ export function LocalConversationView() {
         ))}
         <div ref={bottomRef} />
       </div>
+      {confirmKind && (
+        <ChatConfirmModal
+          kind={confirmKind}
+          busy={actionBusy}
+          error={actionError}
+          onConfirm={() => void runChatAction(confirmKind)}
+          onCancel={() => {
+            setConfirmKind(null);
+            setActionError(null);
+          }}
+        />
+      )}
+      {toast && (
+        <Portal>
+          <div
+            role="status"
+            className="pointer-events-none fixed inset-x-0 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-[60] flex justify-center px-4 md:bottom-6"
+          >
+            <div className="animate-pop-in rounded-md bg-text px-3.5 py-2 text-small text-background shadow-pop">{toast}</div>
+          </div>
+        </Portal>
+      )}
       <MessageComposer
         draft={draft}
         onDraftChange={setDraft}

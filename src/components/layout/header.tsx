@@ -7,6 +7,7 @@ import { iconButtonClassName } from "@/components/ui/icon-button";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { useAuthStatus } from "@/features/auth/use-auth-status";
 import { useRealMessages } from "@/features/messages/real-messages-provider";
+import { hasUnreadInInbox } from "@/lib/conversation-lists";
 import { useNotifications } from "@/features/notifications/notifications-provider";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { IconButton } from "@/components/ui/icon-button";
@@ -23,7 +24,7 @@ export function Header() {
   const { conversations: realConversations } = useRealMessages();
   const { unreadCount } = useNotifications();
   const { t, language, setLanguage } = useTranslation();
-  const hasUnreadMessages = realConversations.some((c) => c.unreadCount > 0);
+  const hasUnreadMessages = hasUnreadInInbox(realConversations);
   // Discover and Search carry their own (richer) search box — a second one in the header would just be a link back to the same page.
   const hasOwnSearch = /^\/(discover|search)(\/|$)/.test(usePathname() ?? "");
 

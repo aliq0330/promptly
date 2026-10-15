@@ -116,6 +116,23 @@ export async function searchProfiles(query: string, limit = 20): Promise<UserPro
   }
 }
 
+/**
+ * Same search as `searchProfiles`, but a failure THROWS instead of reading as
+ * "no results" — the new-chat picker must tell "nobody found" from "search
+ * broke". Only the public profile columns are selected; never e-mail or phone.
+ */
+export async function searchProfilesStrict(query: string, limit = 20): Promise<UserProfile[]> {
+  const escaped = sanitizeSearchText(query.trim().replace(/^@/, ""));
+  if (!escaped) return [];
+  const { data, error } = await supabase
+    .from("profiles")
+    .select(PROFILE_SELECT)
+    .or(`display_name.ilike.%${escaped}%,username.ilike.%${escaped}%`)
+    .limit(limit);
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((row) => mapProfileRow(row as ProfileRow));
+}
+
 /** A person offered while typing `@name` (see `features/mentions`). */
 export interface MentionCandidate {
   username: string;
@@ -152,12 +169,14 @@ export async function searchMentionCandidates(prefix: string, limit = 6): Promis
 }
 
 /** Every real profile this user follows — for `/following`, via the real `follows` table (public read, Bölüm 19). */
-export async function fetchFollowedProfiles(userId: string): Promise<UserProfile[]> {
+export async function fetchFollowedProfiles(userId: string, limit?: number): Promise<UserProfile[]> {
   try {
-    const { data, error } = await supabase
+    let query = supabase
       .from("follows")
       .select(`profiles:following_id ( ${PROFILE_SELECT} )`)
       .eq("follower_id", userId);
+    if (limit) query = query.limit(limit);
+    const { data, error } = await query;
     if (error) {
       console.error("fetchFollowedProfiles", error);
       return [];
@@ -173,12 +192,14 @@ export async function fetchFollowedProfiles(userId: string): Promise<UserProfile
 }
 
 /** Every real profile that follows this user — for `/followers`, via the real `follows` table (public read, Bölüm 19). */
-export async function fetchFollowerProfiles(userId: string): Promise<UserProfile[]> {
+export async function fetchFollowerProfiles(userId: string, limit?: number): Promise<UserProfile[]> {
   try {
-    const { data, error } = await supabase
+    let query = supabase
       .from("follows")
       .select(`profiles:follower_id ( ${PROFILE_SELECT} )`)
       .eq("following_id", userId);
+    if (limit) query = query.limit(limit);
+    const { data, error } = await query;
     if (error) {
       console.error("fetchFollowerProfiles", error);
       return [];

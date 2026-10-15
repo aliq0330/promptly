@@ -18,7 +18,7 @@ export function EmptyState({
   icon: LucideIcon;
   title: string;
   description?: React.ReactNode;
-  action?: { label: string; href: string } | { label: string; onClick: () => void };
+  action?: { label: string; href: string } | { label: string; onClick: () => void; variant?: "primary" | "outline" };
   className?: string;
   compact?: boolean;
 }) {
@@ -43,7 +43,7 @@ export function EmptyState({
             {action.label}
           </Link>
         ) : (
-          <button type="button" onClick={action.onClick} className={buttonClassName({ size: "sm", variant: "outline", className: "mt-1" })}>
+          <button type="button" onClick={action.onClick} className={buttonClassName({ size: "sm", variant: action.variant ?? "outline", className: "mt-1" })}>
             {action.label}
           </button>
         ))}
