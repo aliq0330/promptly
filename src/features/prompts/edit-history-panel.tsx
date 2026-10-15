@@ -3,19 +3,14 @@
 import { useEffect, useState } from "react";
 import { History } from "lucide-react";
 import { fetchEditHistory } from "@/lib/supabase/content-edits";
+import { editHistoryExtraFields } from "@/lib/version-history";
 import { formatRelativeTime } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import type { ContentEditEvent } from "@/types";
 
-/** Raw DB column name → the translation key shown to the owner (§15's "Değiştirilen alanlar"). Never shows the actual previous text (§12/§19 — content_edits doesn't even expose it, see ContentEditEvent). */
+/** Raw DB column name → the translation key shown to the owner (§15's "Değiştirilen alanlar"). Never shows the actual previous text (§12/§19 — content_edits doesn't even expose it, see ContentEditEvent). The snapshot fields (title, description, prompt text / creative direction, tool) are NOT listed here: the version list already shows them. */
 const FIELD_LABEL_KEYS: Record<string, TranslationKey> = {
-  title: "forms.title",
-  description: "forms.shortDescription",
-  prompt_text: "prompt.promptTextHeading",
-  tool: "forms.toolModel",
-  creative_direction: "request.creativeDirection",
-  preferred_tool: "request.preferredTool",
   category: "editHistory.category",
   subcategory: "editHistory.subcategory",
   cover_url: "editHistory.coverImage",
@@ -29,6 +24,11 @@ const FIELD_LABEL_KEYS: Record<string, TranslationKey> = {
  * see `fetchEditHistory`, so this is a courtesy against a wasted always-
  * empty query, not the real security boundary). Shows only WHICH fields
  * changed and WHEN — never the previous text itself, which stays DB-only.
+ * Lives inside the "Geçmiş" tab under the version list and is limited to the
+ * fields the version snapshots do NOT cover (`editHistoryExtraFields`), so the
+ * two panels never show the same change twice; an event whose every changed
+ * field is a snapshot field is simply not listed, and with nothing left the
+ * panel renders nothing.
  */
 export function EditHistoryPanel({ contentType, contentId }: { contentType: "prompt" | "prompt_request"; contentId: string }) {
   const { t, language } = useTranslation();
@@ -50,9 +50,12 @@ export function EditHistoryPanel({ contentType, contentId }: { contentType: "pro
     };
   }, [contentType, contentId]);
 
-  if (!events || events.length === 0) return null;
+  const listed = (events ?? [])
+    .map((event) => ({ event, fields: editHistoryExtraFields(contentType, event.changedFields) }))
+    .filter((entry) => entry.fields.length > 0);
+  if (listed.length === 0) return null;
 
-  const latest = events[0];
+  const latest = listed[0].event;
 
   return (
     <div className="border-t border-border pt-3 text-xs text-text-muted">
@@ -66,9 +69,9 @@ export function EditHistoryPanel({ contentType, contentId }: { contentType: "pro
       </button>
       {expanded && (
         <ul className="mt-2 space-y-1.5 border-l border-border pl-3">
-          {events.map((event) => (
+          {listed.map(({ event, fields }) => (
             <li key={event.id}>
-              <span className="text-text">{event.changedFields.map(fieldLabel).join(", ")}</span>{" "}
+              <span className="text-text">{fields.map(fieldLabel).join(", ")}</span>{" "}
               <span>· {formatRelativeTime(event.createdAt, language)}</span>
             </li>
           ))}

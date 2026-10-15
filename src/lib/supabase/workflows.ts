@@ -295,12 +295,20 @@ export interface SaveWorkflowInput {
   steps: WorkflowStep[];
 }
 
-/** Creates or updates the workflow row, then replaces its whole step graph in one RPC transaction. Returns the id. */
+/**
+ * Creates or updates a workflow. Returns the id.
+ *
+ * Creating: the row is inserted, then its step graph written by `save_workflow_graph` (a creation is not an edit,
+ * so no version is opened). Updating: title, description, steps and connections go through ONE RPC transaction,
+ * `save_workflow_content`, which also records the version history (the old content is read before it is replaced,
+ * so v1 is the real pre-edit content). It runs FIRST — before the status/visibility update below — so publishing a
+ * draft in the same save is never mistaken for an edit; the parent update then no longer carries title/description.
+ */
 export async function saveWorkflow(input: SaveWorkflowInput, creatorId: string): Promise<string> {
   const resolvedMedia = input.media.map((item) => ({ url: item.url, width: item.width, height: item.height, alt: input.title }));
+  const title = input.title.trim();
+  const description = input.description.trim();
   const columns = {
-    title: input.title.trim(),
-    description: input.description.trim(),
     cover_url: resolvedMedia[0]?.url ?? null,
     content_types: input.contentTypes,
     category: input.category,
@@ -309,24 +317,6 @@ export async function saveWorkflow(input: SaveWorkflowInput, creatorId: string):
     status: input.status,
     ...(input.visibility === undefined ? {} : { visibility: input.visibility }),
   };
-  let id = input.id;
-  if (id) {
-    const { data, error } = await supabase.from("workflows").update(columns).eq("id", id).select("id").maybeSingle();
-    if (error) throw new Error(error.message);
-    if (!data) throw new Error(translateForRuntime("workflow.errorSave"));
-  } else {
-    const { data, error } = await supabase.from("workflows").insert({ ...columns, creator_id: creatorId }).select("id").single();
-    if (error) throw new Error(error.message);
-    id = data.id as string;
-  }
-
-  await supabase.from("workflow_media").delete().eq("workflow_id", id as string);
-  if (resolvedMedia.length > 0) {
-    await supabase.from("workflow_media").insert(
-      resolvedMedia.map((d, index) => ({ workflow_id: id as string, url: d.url, width: d.width, height: d.height, alt: d.alt, position: index })),
-    );
-  }
-
   const stepsPayload = input.steps.map((step, position) => ({
     id: step.id,
     position,
@@ -339,6 +329,34 @@ export async function saveWorkflow(input: SaveWorkflowInput, creatorId: string):
     inputs: step.inputs,
     outputs: step.outputs,
   }));
+  const connectionsPayload = connectionsFromSteps(input.steps);
+
+  let id = input.id;
+  if (id) {
+    const { error: contentError } = await supabase.rpc("save_workflow_content", {
+      p_workflow_id: id,
+      p_title: title,
+      p_description: description,
+      p_steps: stepsPayload,
+      p_connections: connectionsPayload,
+    });
+    if (contentError) throw new Error(contentError.message || translateForRuntime("workflow.errorSave"));
+    const { data, error } = await supabase.from("workflows").update(columns).eq("id", id).select("id").maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!data) throw new Error(translateForRuntime("workflow.errorSave"));
+  } else {
+    const { data, error } = await supabase.from("workflows").insert({ ...columns, title, description, creator_id: creatorId }).select("id").single();
+    if (error) throw new Error(error.message);
+    id = data.id as string;
+  }
+
+  await supabase.from("workflow_media").delete().eq("workflow_id", id as string);
+  if (resolvedMedia.length > 0) {
+    await supabase.from("workflow_media").insert(
+      resolvedMedia.map((d, index) => ({ workflow_id: id as string, url: d.url, width: d.width, height: d.height, alt: d.alt, position: index })),
+    );
+  }
+
   await supabase.from("workflow_tags").delete().eq("workflow_id", id as string);
   if (input.tags.length > 0) {
     const { error: tagError } = await supabase
@@ -346,12 +364,14 @@ export async function saveWorkflow(input: SaveWorkflowInput, creatorId: string):
       .insert(input.tags.map((tag) => ({ workflow_id: id, tag_slug: tag.slug })));
     if (tagError) throw new Error(tagError.message);
   }
-  const { error: rpcError } = await supabase.rpc("save_workflow_graph", {
-    p_workflow_id: id,
-    p_steps: stepsPayload,
-    p_connections: connectionsFromSteps(input.steps),
-  });
-  if (rpcError) throw new Error(rpcError.message);
+  if (!input.id) {
+    const { error: rpcError } = await supabase.rpc("save_workflow_graph", {
+      p_workflow_id: id,
+      p_steps: stepsPayload,
+      p_connections: connectionsPayload,
+    });
+    if (rpcError) throw new Error(rpcError.message);
+  }
   return id as string;
 }
 

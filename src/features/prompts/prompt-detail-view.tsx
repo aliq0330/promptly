@@ -28,6 +28,7 @@ import { EditHistoryPanel } from "@/features/prompts/edit-history-panel";
 import { SuggestEditModal } from "@/features/prompts/suggest-edit-modal";
 import { EditSuggestionsPanel } from "@/features/prompts/edit-suggestions-panel";
 import { PromptHistoryPanel } from "@/features/prompts/prompt-history-panel";
+import { VersionRestoreToast } from "@/features/versions/version-restore-toast";
 import { ContributorsPanel } from "@/features/prompts/contributors-panel";
 import { PromptResultsSection } from "@/features/prompts/prompt-results-section";
 import { PromptPlayableOutput } from "@/features/prompts/prompt-playable-output";
@@ -135,12 +136,11 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
     };
   }, [prompt.id]);
 
-  // Tabs under the action bar. History exists for anyone when versions
-  // exist (and always for the owner, whose edit log lives there); DNA only
-  // when the author accepted some. Prompt is always there and the default.
+  // Tabs under the action bar. History exists (for anyone, owner included) only when versions exist — a never-edited
+  // prompt has no history tab; DNA only when the author accepted some. Prompt is always there and the default.
   const tabItems: TabItem<PromptTab>[] = [
     { key: "prompt", label: t("promptTabs.prompt") },
-    ...(versions.length > 0 || isOwn ? [{ key: "history" as const, label: t("promptTabs.history") }] : []),
+    ...(versions.length > 0 ? [{ key: "history" as const, label: t("promptTabs.history") }] : []),
     ...(dnaSections.length > 0 ? [{ key: "dna" as const, label: t("promptTabs.dna") }] : []),
   ];
 
@@ -301,11 +301,10 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
           </section>
           )}
 
-          {activeTab === "history" && (
+          {activeTab === "history" && versions.length > 0 && (
             <div className="space-y-4">
-              <PromptHistoryPanel versions={versions} />
+              <PromptHistoryPanel promptId={prompt.id} versions={versions} isOwner={isOwn} />
               {isOwn && <EditHistoryPanel contentType="prompt" contentId={prompt.id} />}
-              {versions.length === 0 && !isOwn && <p className="text-small text-text-muted">{t("promptTabs.historyEmpty")}</p>}
             </div>
           )}
 
@@ -334,6 +333,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
           <DetailComments>
             <CommentSection target={{ promptId: prompt.id }} highlightCommentId={highlightCommentId} />
           </DetailComments>
+          <VersionRestoreToast contentId={prompt.id} />
         </article>
 
       {isSuggestModalOpen && user && (

@@ -444,6 +444,46 @@ export interface PromptVersion {
   createdAt: string;
 }
 
+/** A Prompt İsteği version (`public.request_versions`): the same four-field snapshot idea as `PromptVersion`, for title / description / creative direction / preferred tool. */
+export interface RequestVersion {
+  id: string;
+  requestId: string;
+  versionNumber: number;
+  title: string;
+  description: string;
+  creativeDirection: string | null;
+  preferredTool: string | null;
+  source: "initial" | "owner_edit";
+  createdBy: string;
+  createdAt: string;
+}
+
+/** A Workflow version (`public.workflow_versions`): title + description plus the whole step graph (`snapshot`). */
+export interface WorkflowVersion {
+  id: string;
+  workflowId: string;
+  versionNumber: number;
+  title: string;
+  description: string;
+  snapshot: import("@/lib/version-history").WorkflowSnapshot;
+  source: "initial" | "owner_edit";
+  createdBy: string;
+  createdAt: string;
+}
+
+/** A Hazır Ayar version (`public.preset_versions`): title + description plus the field tree and the chosen values (`snapshot`). */
+export interface PresetVersion {
+  id: string;
+  presetId: string;
+  versionNumber: number;
+  title: string;
+  description: string;
+  snapshot: import("@/lib/version-history").PresetSnapshot;
+  source: "initial" | "owner_edit";
+  createdBy: string;
+  createdAt: string;
+}
+
 export type PromptEditSuggestionStatus = "pending" | "accepted" | "rejected";
 
 /**

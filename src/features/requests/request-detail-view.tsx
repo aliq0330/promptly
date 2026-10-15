@@ -19,6 +19,10 @@ import { CommentCountLink } from "@/features/prompts/comment-count-link";
 import { StatisticsButton } from "@/features/statistics/statistics-button";
 import { RelationMapLink } from "@/features/relations/relation-map-link";
 import { EditHistoryPanel } from "@/features/prompts/edit-history-panel";
+import { RequestHistoryPanel } from "@/features/versions/content-history-panels";
+import { VersionRestoreToast } from "@/features/versions/version-restore-toast";
+import { Tabs, type TabItem } from "@/components/ui/tabs";
+import { fetchVersionsForRequest } from "@/lib/supabase/content-versions";
 import { LikeButton } from "@/features/prompts/like-button";
 import { PostMenu } from "@/features/prompts/post-menu";
 import { TaxonomyLinks } from "@/features/content/taxonomy-links";
@@ -35,7 +39,7 @@ import { parseHighlightValue } from "@/lib/notification-utils";
 import { cn, formatCount, profileHref } from "@/lib/utils";
 import { AsideSection, DetailActionBar, DetailAside, DetailByline, DetailComments, DetailShell, DetailTags, DetailTitle, Eyebrow } from "@/features/content/detail-parts";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import type { Prompt, PromptRequest } from "@/types";
+import type { Prompt, PromptRequest, RequestVersion } from "@/types";
 import { ScrollablePrompt } from "@/features/content/scrollable-prompt";
 import { StorageImage, StorageImg } from "@/components/ui/storage-media";
 import { MentionText } from "@/features/mentions/mention-text";
@@ -57,6 +61,8 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
     selectResponse: selectRealResponse,
   } = useRealRequests();
   const [answers, setAnswers] = useState<Prompt[]>([]);
+  const [versions, setVersions] = useState<RequestVersion[]>([]);
+  const [activeTab, setActiveTab] = useState<"request" | "history">("request");
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [selectionTarget, setSelectionTarget] = useState<{ id: string; confirming: boolean } | null>(null);
   const [selectionError, setSelectionError] = useState<string | null>(null);
@@ -116,7 +122,22 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
     return () => clearTimeout(timer);
   }, [answers, highlightResponseId]);
 
+  useEffect(() => {
+    let cancelled = false;
+    fetchVersionsForRequest(live.id).then((result) => {
+      if (!cancelled) setVersions(result);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [live.id]);
+
   const isOwnRequest = authUser?.id === live.author.id;
+  // "Geçmiş" exists only when the request has versions (owner included) — never an empty tab.
+  const tabItems: TabItem<"request" | "history">[] = [
+    { key: "request", label: t("request.title") },
+    ...(versions.length > 0 ? [{ key: "history" as const, label: t("history.tab") }] : []),
+  ];
   // "answered" (closed by selecting a response) and "closed" (closed
   // manually) both mean "not accepting new answers" from a visitor's
   // point of view — see request-card.tsx's STATUS_LABELS comment.
@@ -223,6 +244,7 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
           <CommentCountLink requestId={live.id} baseCount={live.commentCount} size={18} />
           <a
             href="#request-responses"
+            onClick={() => setActiveTab("request")}
             className={contentActionClassName(false)}
             title={t("request.replies")}
             aria-label={`${t("request.replies")} (${formatCount(live.responseCount)})`}
@@ -234,6 +256,15 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
           <RelationMapLink kind="request" id={live.id} />
         </DetailActionBar>
 
+        {tabItems.length > 1 && <Tabs items={tabItems} active={activeTab} onChange={setActiveTab} ariaLabel={t("history.sectionsAria")} />}
+
+        {activeTab === "history" && versions.length > 0 && (
+          <div className="space-y-4">
+            <RequestHistoryPanel requestId={live.id} versions={versions} isOwner={isOwnRequest} />
+              </div>
+        )}
+
+        {activeTab === "request" && (<>
         <section aria-labelledby="request-brief-title" className="overflow-hidden rounded-xl border border-border-soft bg-surface-soft shadow-card">
           <div className="border-b border-border-soft px-4 py-3">
             <Eyebrow as="h2" id="request-brief-title" icon={SquareTerminal}>
@@ -428,6 +459,7 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
         )}
         {selectionError && <p className="text-sm text-danger">{selectionError}</p>}
       </section>
+        </>)}
 
       <DetailComments>
         {/*
@@ -440,6 +472,7 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
         */}
         <CommentSection target={{ requestId: live.id }} highlightCommentId={highlightCommentId} />
       </DetailComments>
+      <VersionRestoreToast contentId={live.id} />
       </article>
     </DetailShell>
   );

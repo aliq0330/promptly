@@ -231,7 +231,7 @@ kaynağı); `supabase/README.md` uygulama talimatını içerir. Çekirdek tablol
 `prompt_copy_events` (kopyalama sayacının günlük dedupe'u; yalnız RPC yazar), `tag_follows` (kullanıcı başına ≤100 etiket; `feed_page` kapsamı `tags`), `collection_follows` (herkese açık koleksiyon takibi, ≤200; `collections.follower_count` korumalı sayaç), `weekly_challenges` (moderatör yönetimli haftalık tema; yazma yalnız `admin_save_challenge`/`admin_archive_challenge`), `prompt_likes` / `prompt_comments` / `comment_likes` (hedef sütunlu
 polimorfik: `prompt_id`/`request_id`/`workflow_id`/`preset_id` — tam biri dolu),
 `collections` / `collection_items` ("Genel" = `is_default`, isimden bağımsız),
-`follows`, `conversations` / `conversation_members` / `messages` /
+`prompt_versions` / `request_versions` / `workflow_versions` / `preset_versions` (sürüm geçmişi; yazma yalnız trigger/RPC, `docs/history/170-*`), `follows`, `conversations` / `conversation_members` / `messages` /
 `message_reactions`, `notifications`, `reports`, `blocks`,
 `content_relations`, `content_edits`, `admin_audit_log`.
 
@@ -247,6 +247,7 @@ Kalıplar (yeni migration yazarken uy):
 - **INSERT … RETURNING tuzağı:** SELECT politikası henüz var olmayan başka
   bir satıra bağlıysa id'yi istemcide üret (`crypto.randomUUID()`), `RETURNING`'e güvenme.
 - **Sayaç sütunları istemciden yazılamaz:** yeni bir sayaç (`*_count`) eklenirse `protect_counter_columns()` trigger'ı bağlanır (`docs/history/169-*`) ve onu güncelleyen trigger `SECURITY DEFINER` olur (invoker ise korumaya takılıp sessizce sayamaz).
+- **Sürüm geçmişi** dört türde ortak: üst içeriğin okunabilirliğini devralan SELECT, istemci yazma yok; Workflow/Hazır Ayar kaydı `save_*_content` RPC'sinden geçer, geri dönme yeni bir sahip düzenlemesidir (`docs/history/170-*`).
 - **Kaydedildi = en az bir koleksiyonda** (`collection_items`; ikon, `/saved` ve kaydet penceresi aynı satırları okur). Üyelik yalnız `SaveToCollectionModal`'dan (taslak + "Kaydet") ya da bir koleksiyonun kendi "Koleksiyondan kaldır"ından değişir; bir koleksiyondan çıkarmak başka koleksiyona dokunmaz, "Genel" dahil. Toplu "her yerden kaldır" yoktur (`docs/history/168-*`).
 - Sahiplik kontrolü `.update().select().maybeSingle()` ile yapılır; "0 satır
   etkilendi" sessiz başarı sayılmaz.
@@ -329,6 +330,7 @@ bağlayıcıdır; ayrıntılı gerekçe için `docs/history/README.md` tablosuna
   `SUPABASE_ACCESS_TOKEN` / `SUPABASE_PROJECT_REF` tanımlı değilse fail eder).
 - @bahsetme (`docs/history/165-*`) ve koleksiyon takibi (`docs/history/166-*`): migration'lar canlıda (yalnızca ekleyici, `drop` yok); anma bildirimi mevcut `comment` türünü kullanır (kısıt genişletilmedi). Gerçek oturumla uçtan uca denenmedi.
 - Kaydedilenler/koleksiyon akışı (`docs/history/168-*`): yalnız istemci kodu, veritabanı değişikliği yok; DB tarafı yerel PostgreSQL'de (`supabase/tests/saved-collections.sql`), arayüz ağ taklitli Playwright'ta denendi. Gerçek Supabase'e/cihaza karşı denenmedi. `remove_*_from_saved_everywhere` RPC'leri artık çağrılmıyor ama DB'de duruyor (`drop` için onay gerekir).
+- Sürüm geçmişi (`docs/history/170-*`, `docs/yapilacaklar.md` madde 9): `20260919940000`/`950000`/`960000` migration'ları repoda, yerelde sınandı, **canlıya UYGULANMADI** — önce migration, sonra istemci kodu (yeni istemci varolan workflow/hazır ayarı `save_*_content` RPC'siyle kaydeder).
 - Sayaç koruması (`docs/history/169-*`, `docs/yapilacaklar.md` madde 12): `20260919920000` + `20260919930000` canlıda (yalnızca ekleyici/değiştirici); korunmayan sayaç kalmadı. Gerçek istemci oturumuyla uçtan uca denenmedi (canlıda geri alınan işlemle doğrulandı).
 - PWA (`docs/history/163-*`) ve Workflow adım adım modu (`docs/history/164-*`): yalnız istemci kodu, veritabanı değişikliği yok. Gerçek cihazda "ana ekrana ekle" ve kurulu uygulamada Google girişi denenmedi.
 - Haftalık tema (`docs/history/162-*`): `weekly_challenges` + moderatör RPC'leri canlıda (yalnızca ekleyici); canlıda henüz tema yok — moderatör `/moderation → Temalar`'dan oluşturur. Gerçek oturumla uçtan uca denenmedi.
@@ -363,5 +365,5 @@ bağlayıcıdır; ayrıntılı gerekçe için `docs/history/README.md` tablosuna
   isteğin `creative_direction`'ını da kapsar ve keyset sayfalanır (`search_content`); `prompt_saves` canlıdan kaldırıldı; kod içi
   yorumlarda eski "Bölüm 9.x" atıfları arşiv numaralarına (`docs/history/NNN-*`) karşılık gelir.
 
-**Arşiv:** [`docs/history/README.md`](docs/history/README.md) — 169 bölüm, her
+**Arşiv:** [`docs/history/README.md`](docs/history/README.md) — 170 bölüm, her
 biri için durum etiketi (uygulandı / kısmen geçerli / kaldırıldı).

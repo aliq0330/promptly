@@ -322,38 +322,77 @@ export interface SavePresetInput {
   visibility: "public" | "private";
 }
 
-/** Creates or updates a preset (+ replaces its tags). Returns the id. Ownership is enforced by RLS (an update that touches 0 rows is reported, never swallowed). */
+/**
+ * Creates or updates a preset (+ replaces its tags). Returns the id.
+ *
+ * Creating: the row is inserted, then its fields written (a creation is not an edit, so no version is opened).
+ * Updating: title, description, the chosen values and the whole field tree go through ONE RPC transaction,
+ * `save_preset_content` — which also records the version history (the old content is read before it is replaced,
+ * so v1 is the real pre-edit content; before, the fields were rewritten by separate non-atomic requests). It runs
+ * FIRST, before the status/visibility update below, so publishing a draft in the same save is never mistaken for an
+ * edit. Ownership is enforced by the RPC (an update that touches nothing is reported, never swallowed).
+ */
 export async function savePreset(input: SavePresetInput, creatorId: string): Promise<string> {
   const tax = taxonomyColumns(input.contentType, input.category, input.subcategory);
+  const title = input.title.trim();
+  const description = input.description.trim();
   const columns = {
-    title: input.title.trim(),
-    description: input.description.trim(),
     cover_url: input.coverUrl,
     content_type: input.contentType,
     category: tax.category,
     subcategory: tax.subcategory,
     tools: input.tools,
-    selection: input.selection,
     status: input.status,
     visibility: input.visibility,
   };
   let id = input.id;
   if (id) {
+    const { error: contentError } = await supabase.rpc("save_preset_content", {
+      p_preset_id: id,
+      p_title: title,
+      p_description: description,
+      p_selection: input.selection,
+      p_fields: fieldsPayload(input.fields),
+    });
+    if (contentError) throw new Error(contentError.message || translateForRuntime("preset.errorSave"));
     const { data, error } = await supabase.from("presets").update(columns).eq("id", id).select("id").maybeSingle();
     if (error) throw new Error(error.message);
     if (!data) throw new Error(translateForRuntime("preset.errorSave"));
   } else {
-    const { data, error } = await supabase.from("presets").insert({ ...columns, creator_id: creatorId }).select("id").single();
+    const { data, error } = await supabase
+      .from("presets")
+      .insert({ ...columns, title, description, selection: input.selection, creator_id: creatorId })
+      .select("id")
+      .single();
     if (error) throw new Error(error.message);
     id = data.id as string;
+    await replacePresetFields(id, creatorId, input.fields);
   }
-  await replacePresetFields(id as string, creatorId, input.fields);
   await supabase.from("preset_tags").delete().eq("preset_id", id as string);
   if (input.tags.length > 0) {
     const { error } = await supabase.from("preset_tags").insert(input.tags.map((tag) => ({ preset_id: id, tag_slug: tag.slug })));
     if (error) throw new Error(error.message);
   }
   return id as string;
+}
+
+/** The `p_fields` shape of `save_preset_content`: the field tree with its options, array order = sort order. */
+function fieldsPayload(fields: PresetField[]) {
+  return fields.map((field) => ({
+    id: field.id,
+    name: field.name.trim(),
+    type: field.type,
+    kind: field.kind ?? "phrase",
+    content_types: field.contentTypes ?? [],
+    config: field.config ?? {},
+    options: optionInsertRows(field).map((option) => ({
+      id: option.id,
+      label: option.label,
+      value: option.value,
+      fragment_en: option.fragment_en,
+      fragment_tr: option.fragment_tr,
+    })),
+  }));
 }
 
 function fieldInsertRow(field: PresetField, ownerId: string, presetId: string | null, sortOrder: number) {

@@ -1,89 +1,55 @@
 "use client";
 
-import { useState } from "react";
-import { History } from "lucide-react";
+import { useEffect, useState } from "react";
 import { diffPromptFields, FIELD_DIFF_LABEL_KEYS } from "@/lib/prompt-diff";
-import { formatRelativeTime } from "@/lib/utils";
+import { fetchSuggestionsForPrompt } from "@/lib/supabase/prompt-edit-suggestions";
+import { restorePromptVersion } from "@/lib/supabase/content-versions";
+import { TextFieldsDiffView } from "@/features/versions/version-diffs";
+import { VersionHistoryPanel } from "@/features/versions/version-history-panel";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import type { TranslationKey } from "@/lib/i18n/translations";
-import { DiffText } from "./diff-text";
 import type { PromptVersion } from "@/types";
 
-const SOURCE_LABEL_KEYS: Record<PromptVersion["source"], TranslationKey> = {
-  initial: "promptHistory.sourceInitial",
-  owner_edit: "promptHistory.sourceOwnerEdit",
-  edit_suggestion_accepted: "promptHistory.sourceSuggestionAccepted",
-};
-
 /**
- * Public "Prompt Geçmişi" section (CLAUDE.md şartnamesi §7/§8/§9) — visible
- * to anyone who can view the prompt itself (same RLS as the prompt's own
- * content), not just its owner: every real `prompt_versions` snapshot, each
- * comparable against the version right before it. Renders nothing for a
- * prompt that's never had a version created (never edited, never accepted a
- * suggestion) — an honest, common case, not an error.
+ * Public "Prompt Geçmişi" (CLAUDE.md şartnamesi §7/§8/§9) — the Prompt adapter of the shared
+ * `VersionHistoryPanel`: every real `prompt_versions` snapshot, visible to anyone who can view the prompt itself
+ * (RLS), comparable against any other version, copyable (the version's prompt text), restorable by the owner.
+ * The caller only mounts it when the prompt has versions — a never-edited prompt has no history tab at all.
+ * Restore is the owner's ordinary UPDATE of the four snapshot fields; the existing trigger writes the new version.
+ * Next to an accepted suggestion the OWNER also sees who suggested it (never the suggestion text — that stays private).
  */
-export function PromptHistoryPanel({ versions }: { versions: PromptVersion[] }) {
-  const { t, language } = useTranslation();
-  const [comparingId, setComparingId] = useState<string | null>(null);
+export function PromptHistoryPanel({ promptId, versions, isOwner }: { promptId: string; versions: PromptVersion[]; isOwner: boolean }) {
+  const { t } = useTranslation();
+  const [suggesters, setSuggesters] = useState<Map<string, string>>(new Map());
 
-  if (versions.length === 0) return null;
-
-  // `fetchVersionsForPrompt` orders newest-first, so each version's
-  // immediate predecessor is simply the next item in this same array.
-  const latestNumber = versions[0]?.versionNumber;
+  useEffect(() => {
+    if (!isOwner) return;
+    let cancelled = false;
+    fetchSuggestionsForPrompt(promptId).then((suggestions) => {
+      if (cancelled) return;
+      const names = new Map<string, string>();
+      for (const suggestion of suggestions) {
+        if (suggestion.status === "accepted" && suggestion.acceptedVersionId) names.set(suggestion.acceptedVersionId, suggestion.proposer.displayName);
+      }
+      setSuggesters(names);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [promptId, isOwner]);
 
   return (
-    <section className="space-y-3 rounded-lg border border-border-soft bg-surface p-4 sm:p-5">
-      <h2 className="flex items-center gap-1.5 text-label font-semibold text-text">
-        <History size={16} />
-        {t("promptHistory.title")}
-      </h2>
-      <ul className="space-y-2">
-        {versions.map((version, index) => {
-          const previous = versions[index + 1];
-          const isComparing = comparingId === version.id;
-          const fieldDiffs = previous ? diffPromptFields(previous, version) : [];
-
-          return (
-            <li key={version.id} className="rounded-md border border-border-soft bg-surface-soft p-3">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <span className="text-sm font-medium text-text">
-                  v{version.versionNumber}
-                  {version.versionNumber === latestNumber && <span className="ml-1.5 text-primary">· {t("promptHistory.current")}</span>}
-                </span>
-                <span className="text-xs text-text-muted">{formatRelativeTime(version.createdAt, language)}</span>
-              </div>
-              <p className="mt-1 text-xs text-text-muted">{t(SOURCE_LABEL_KEYS[version.source])}</p>
-
-              {previous && (
-                <button
-                  type="button"
-                  onClick={() => setComparingId(isComparing ? null : version.id)}
-                  className="mt-2 text-xs font-medium text-primary hover:underline"
-                >
-                  {isComparing ? t("promptHistory.hideComparison") : t("promptHistory.compareWith", { version: previous.versionNumber })}
-                </button>
-              )}
-
-              {isComparing && previous && (
-                <div className="mt-2 space-y-3 rounded-md border border-border-soft bg-background p-3">
-                  {fieldDiffs.length === 0 ? (
-                    <p className="text-xs text-text-muted">{t("promptHistory.noTextDifference")}</p>
-                  ) : (
-                    fieldDiffs.map((diff) => (
-                      <div key={diff.key}>
-                        <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-text-muted">{t(FIELD_DIFF_LABEL_KEYS[diff.key])}</p>
-                        <DiffText before={diff.before} after={diff.after} />
-                      </div>
-                    ))
-                  )}
-                </div>
-              )}
-            </li>
-          );
-        })}
-      </ul>
-    </section>
+    <VersionHistoryPanel
+      title={t("promptHistory.title")}
+      contentId={promptId}
+      versions={versions}
+      isOwner={isOwner}
+      copyText={(version) => version.promptText}
+      onRestore={isOwner ? (version) => restorePromptVersion(version) : undefined}
+      restoreConfirmKey="history.restoreConfirmPrompt"
+      suggesterName={isOwner ? (version) => suggesters.get(version.id) ?? null : undefined}
+      renderComparison={(older, newer) => (
+        <TextFieldsDiffView diffs={diffPromptFields(older, newer)} labelKeyFor={(key) => FIELD_DIFF_LABEL_KEYS[key]} />
+      )}
+    />
   );
 }

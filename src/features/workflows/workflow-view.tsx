@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Play, Workflow as WorkflowIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Tabs } from "@/components/ui/tabs";
+import { Tabs, type TabItem } from "@/components/ui/tabs";
 import { DetailSkeleton, NotFoundBlock } from "@/components/ui/detail-skeleton";
 import { ContentTypeLabel } from "@/features/content/content-type-label";
 import { ToolChips, ToolLine } from "@/features/content/tool-chips";
@@ -39,10 +39,13 @@ import {
   DetailTitle,
   Eyebrow,
 } from "@/features/content/detail-parts";
-import type { Workflow, WorkflowStep } from "@/types";
+import type { Workflow, WorkflowStep, WorkflowVersion } from "@/types";
 import { categoryLabel } from "./step-meta";
 import { WorkflowFlow } from "./workflow-flow";
 import { WorkflowRunner } from "./workflow-runner";
+import { WorkflowHistoryPanel } from "@/features/versions/content-history-panels";
+import { VersionRestoreToast } from "@/features/versions/version-restore-toast";
+import { fetchVersionsForWorkflow } from "@/lib/supabase/content-versions";
 
 /** Read-only workflow page: who made it, what it's for, and the ordered steps — each links to its prompt / generator / request. */
 export function WorkflowDetailView() {
@@ -56,6 +59,9 @@ export function WorkflowDetailView() {
     { workflow: Workflow; steps: WorkflowStep[] } | null | undefined
   >(undefined);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [versions, setVersions] = useState<WorkflowVersion[]>([]);
+  // Content (the default) or history — history exists only when the workflow has versions, owner included.
+  const [tab, setTab] = useState<"workflow" | "history">("workflow");
   // "Akış" (the read-only flow) or "Adım adım" (the guided run); `?run=1` opens the run directly.
   const [view, setView] = useState<"flow" | "run">(searchParams.get("run") === "1" ? "run" : "flow");
   const stepsRef = useRef<HTMLElement>(null);
@@ -65,6 +71,15 @@ export function WorkflowDetailView() {
     if (!id) return;
     let cancelled = false;
     fetchWorkflowById(id).then((result) => !cancelled && setData(result));
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
+
+  useEffect(() => {
+    if (!id) return;
+    let cancelled = false;
+    fetchVersionsForWorkflow(id).then((result) => !cancelled && setVersions(result));
     return () => {
       cancelled = true;
     };
@@ -97,6 +112,11 @@ export function WorkflowDetailView() {
   const highlightCommentId = highlight?.startsWith("comment:")
     ? highlight.slice("comment:".length)
     : null;
+
+  const tabItems: TabItem<"workflow" | "history">[] = [
+    { key: "workflow", label: t("workflow.singular") },
+    ...(versions.length > 0 ? [{ key: "history" as const, label: t("history.tab") }] : []),
+  ];
 
   const aside = (
     <DetailAside>
@@ -170,6 +190,11 @@ export function WorkflowDetailView() {
           <RelationMapLink kind="workflow" id={workflow.id} />
         </DetailActionBar>
 
+        {tabItems.length > 1 && <Tabs items={tabItems} active={tab} onChange={setTab} ariaLabel={t("history.sectionsAria")} />}
+
+        {tab === "history" && versions.length > 0 && <WorkflowHistoryPanel workflowId={workflow.id} versions={versions} isOwner={isOwn} />}
+
+        {tab === "workflow" && (<>
         {workflow.coverUrl && (
           <button
             type="button"
@@ -260,10 +285,12 @@ export function WorkflowDetailView() {
           </div>
           {view === "run" && steps.length > 0 ? <WorkflowRunner key={workflow.id} workflowId={workflow.id} steps={steps} /> : <WorkflowFlow steps={steps} />}
         </section>
+        </>)}
 
         <DetailComments>
           <CommentSection target={{ workflowId: workflow.id }} highlightCommentId={highlightCommentId} />
         </DetailComments>
+        <VersionRestoreToast contentId={workflow.id} />
       </article>
     </DetailShell>
   );
