@@ -26,7 +26,7 @@ export interface StatisticsTarget {
   /** Counts the post was loaded with — the modal layers the live session deltas on top (same stores the action buttons use). */
   likeCount: number;
   commentCount: number;
-  /** Ignored for prompt requests — they can't be saved. */
+  /** Ignored for prompt requests and community posts — they can't be saved. */
   saveCount?: number;
   /** Prompts only (`prompts.copy_count`): shown as a fourth summary tile; there is no per-person list for it. */
   copyCount?: number;
@@ -44,7 +44,8 @@ export interface StatisticsTarget {
 export function StatisticsModal({ target, onClose }: { target: StatisticsTarget; onClose: () => void }) {
   const { t } = useTranslation();
   const { contentType, contentId } = target;
-  const kinds: StatisticsKind[] = contentType === "request" ? ["likes", "comments"] : ["likes", "comments", "saves"];
+  const canSave = contentType !== "request" && contentType !== "community_post";
+  const kinds: StatisticsKind[] = canSave ? ["likes", "comments", "saves"] : ["likes", "comments"];
   const [active, setActive] = useState<StatisticsKind>("likes");
   const copyCount = target.copyCount;
   const tileCount = kinds.length + (copyCount === undefined ? 0 : 1);
@@ -64,7 +65,7 @@ export function StatisticsModal({ target, onClose }: { target: StatisticsTarget;
   const [opened, setOpened] = useState<Set<StatisticsKind>>(() => new Set(["likes"]));
   const likesList = useEngagers(contentType, contentId, "likes", opened.has("likes"));
   const commentsList = useEngagers(contentType, contentId, "comments", opened.has("comments"));
-  const savesList = useEngagers(contentType, contentId, "saves", opened.has("saves") && contentType !== "request");
+  const savesList = useEngagers(contentType, contentId, "saves", opened.has("saves") && canSave);
   const lists = { likes: likesList, comments: commentsList, saves: savesList };
 
   function selectTab(kind: StatisticsKind) {

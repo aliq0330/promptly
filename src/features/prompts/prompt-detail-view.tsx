@@ -236,7 +236,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
             <RequestResponseContext requestId={prompt.origin.requestId} currentPromptId={prompt.id} />
           )}
 
-          <DetailActionBar trailing={prompt.communityId ? undefined : <ShareTriggerButton target={{ contentType: "prompt", prompt }} label={t("common.share")} />}>
+          <DetailActionBar trailing={<ShareTriggerButton target={{ contentType: "prompt", prompt }} label={t("common.share")} />}>
             <LikeButton id={prompt.id} likeCount={prompt.likeCount} size={18} />
             <CommentCountLink promptId={prompt.id} baseCount={prompt.commentCount} size={18} />
             {!prompt.communityId && <SaveButton promptId={prompt.id} saveCount={prompt.saveCount} size={18} />}

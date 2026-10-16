@@ -38,7 +38,7 @@ Durum: kod, 1 migration (`20260920100000_community_content.sql`), testler ve bel
 - `supabase/tests/community-content.sql` (**41 kontrol**, `FAILED=0`): dört türde oluşturma → kendiliğinden gönderi; görünürlük zorlaması; taslak/geçiş/yazma izinleri (üye olmayan, kapalı topluluk, kadro politikası, günlük sınır); okuma matrisi (üye · herkese açık toplulukta yabancı · ziyaretçi · kapalı toplulukta yabancı/üye/ziyaretçi, dört tür, alt satırlar); ayrılan yazar; aramadan dışlama; etkileşim (üye/üye olmayan/kapatılmış topluluk, yorum beğenisi, bildirim adresi); kaydetme engeli; başvuru olarak getirilememe; kaldırma = içerik silme (yazar + moderasyon + denetim + bildirim); hesap/topluluk silme cascade; yorum sızıntısı; EXECUTE yetkileri.
 - **Mutasyon denemesi:** 17 bilinçli bozulma yerel kopya veritabanında ayrı ayrı uygulandı, hepsi en az 1 kontrolü bozdu (ilk turda 1'i — kapalı toplulukta istek okuması açık — yakalanamadı; test 39–41 eklenerek kapatıldı). Mutasyonlar migration dosyasına YAZILMADI.
 - `community-post-engagement.sql` (178) yeni modele uyarlandı (yerel içerik fixture'ı artık içerik ekleyerek oluşur; `FAILED=0`). Önceki dokuz SQL dosyası yeni migration ile `FAILED=0`.
-- `tests/messaging-ui/run-community-posts.mjs` yeni modele uyarlandı (normal kart, kaydet/paylaş yok, bağlam bandı, taslak/görünürlük yok, `community_id` ile doğrudan oluşturma); diğer Playwright paketleri koşturuldu (sonuçlar raporda).
+- `tests/messaging-ui/run-community-posts.mjs` yeni modele uyarlandı (normal kart, kaydet yok [paylaş/istatistik 181'de geri geldi], bağlam bandı, taslak/görünürlük yok, `community_id` ile doğrudan oluşturma); diğer Playwright paketleri koşturuldu (sonuçlar raporda).
 
 ## Bilinen boşluklar / dürüst liste
 

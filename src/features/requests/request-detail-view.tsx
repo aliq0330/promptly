@@ -239,7 +239,7 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
           "Kopyala" yok (Prompt İsteği'ne özel olarak kaldırıldı, genel
           Prompt sistemindeki Kopyala butonuna dokunulmadı).
         */}
-        <DetailActionBar trailing={live.communityId ? undefined : <ShareTriggerButton target={{ contentType: "request", request: live }} label={t("common.share")} />}>
+        <DetailActionBar trailing={<ShareTriggerButton target={{ contentType: "request", request: live }} label={t("common.share")} />}>
           <LikeButton id={live.id} likeCount={live.likeCount} contentType="request" size={18} />
           <CommentCountLink requestId={live.id} baseCount={live.commentCount} size={18} />
           <a

@@ -18,9 +18,11 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 export async function shareOrCopyLink(
   url: string,
   title: string,
+  options?: { direct?: boolean },
 ): Promise<"shared" | "cancelled" | "copied" | "unavailable"> {
   // Public prompts/requests/workflows/presets/profiles are shared through their static share page so the link unfurls with a real title/description; any other href is used as-is.
-  const fullUrl = absoluteUrl(shareLinkForHref(url));
+  // `direct`: private (community) content has no static share page — the link goes to the real page, which only people who can read it can open.
+  const fullUrl = absoluteUrl(options?.direct ? url : shareLinkForHref(url));
 
   if (typeof navigator !== "undefined" && navigator.share) {
     try {

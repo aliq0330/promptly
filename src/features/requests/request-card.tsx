@@ -112,7 +112,7 @@ export function RequestCard({ request, onDeleted }: { request: PromptRequest; on
         </Link>
         <StatisticsButton target={{ contentType: "request", contentId: request.id, likeCount: request.likeCount, commentCount: request.commentCount }} />
         <span className="ml-auto" />
-        {!request.communityId && <ShareTriggerButton target={{ contentType: "request", request }} />}
+        <ShareTriggerButton target={{ contentType: "request", request }} />
       </div>
     </ContentCard>
   );

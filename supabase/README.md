@@ -926,3 +926,7 @@ güncellenmesi gereken tek satır burası.
 - Yalnızca ekleyici/değiştirici: hiçbir tablo/sütun/veri düşürülmez. **Canlıya uygulanmadı.** Sıra: `20260920090000` (canlıda) → bu dosya → istemci kodu.
 - Yerel doğrulama: `supabase/tests/run-local.sh supabase/tests/community-content.sql` (41 kontrol, `FAILED=0`).
 
+## Topluluk istatistikleri (`docs/history/181-*`)
+
+- `20260920110000_community_statistics.sql`: `_engager_content_visible` topluluk içeriğini (`can_read_community(community_id)`) ve yeni `community_post` hedefini görünür sayar; `content_engagers` `community_post` için `prompt_likes/prompt_comments.community_post_id` okur (kaydedenler boş). Yalnızca `create or replace` (aynı imzalar, izinler korunur), `drop` yok. **Canlıya uygulanmadı.** Sıra: `20260920100000` → `20260920110000` → istemci.
+- Yerel doğrulama: `supabase/tests/run-local.sh supabase/tests/community-statistics.sql` (10 kontrol, `FAILED=0`).
