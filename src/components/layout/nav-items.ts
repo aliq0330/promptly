@@ -47,7 +47,7 @@ export const navGroups: NavGroup[] = [
     items: [
       { href: "/saved", labelKey: "nav.saved", icon: Bookmark, match: "/saved", visibility: "authenticated" },
       { href: "/following", labelKey: "nav.following", icon: Users, visibility: "authenticated" },
-      { href: "/communities", labelKey: "nav.communities", icon: UsersRound, visibility: "authenticated" },
+      { href: "/communities", labelKey: "nav.communities", icon: UsersRound },
       { href: PROFILE_NAV_PLACEHOLDER, labelKey: "nav.profile", icon: User, match: "/profile", visibility: "authenticated" },
     ],
   },
@@ -66,7 +66,7 @@ export const mobileNavItems: NavItem[] = [
   { href: "/", labelKey: "nav.home", icon: Home },
   { href: "/discover", labelKey: "nav.discover", icon: Compass },
   { href: CREATE_HREF, labelKey: "nav.createShort", icon: Plus },
-  { href: "/requests", labelKey: "nav.requestsShort", icon: Sparkles },
+  { href: "/communities", labelKey: "nav.communities", icon: UsersRound },
   { href: PROFILE_NAV_PLACEHOLDER, labelKey: "nav.profile", icon: User, match: "/profile", visibility: "authenticated" },
 ];
 
