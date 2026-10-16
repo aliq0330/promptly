@@ -387,6 +387,14 @@ export function postHref(communityId: string, postId: string): string {
   return `${communityHref(communityId, "feed")}&post=${encodeURIComponent(postId)}`;
 }
 
+/**
+ * Başvuru gönderisinin KENDİ sayfası (`/communities/post/local?id=`): başvurulan içeriği ayrıntılı gösterir, gönderinin kendi beğeni/yorumu
+ * burada yürür, isteyen oradan orijinal içeriğe geçer. Yerel (native) gönderinin sayfası içeriğin kendi sayfasıdır.
+ */
+export function postPageHref(postId: string, highlight?: string | null): string {
+  return `/communities/post/local?id=${encodeURIComponent(postId)}${highlight ? `&hl=${highlight}` : ""}`;
+}
+
 /** Topluluğun sohbeti, Mesajlar çalışma alanındaki grup sohbetidir (ikinci bir sohbet ekranı yoktur). */
 export function communityChatHref(id: string): string {
   return `/messages/local?id=${encodeURIComponent(id)}`;

@@ -1,11 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Flag, Pencil, Pin, PinOff, Plus, ShieldAlert, SquareStack, Trash2 } from "lucide-react";
-import { Avatar } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { fieldControlClassName, fieldLabelClassName } from "@/components/ui/field";
@@ -16,12 +13,13 @@ import { DropdownMenu, MenuItem } from "./dropdown-menu";
 import { ReportModal } from "./report-modal";
 import { ShareToCommunityModal } from "./share-to-community-modal";
 import { CreatePostModal } from "./create-post-modal";
-import { LinkedContent } from "./linked-content";
+import { ApplicationCard } from "./application-card";
+import { PostMenuExtras, type PostMenuExtra } from "@/features/prompts/post-menu-extras";
 import { PromptCard } from "@/features/prompts/prompt-card";
 import { RequestCard } from "@/features/requests/request-card";
 import { WorkflowCard } from "@/features/workflows/workflow-card";
 import { PresetCard } from "@/features/presets/preset-card";
-import { PostEngagement, type EngageMode } from "./post-engagement";
+import type { EngageMode } from "./post-engagement";
 import type { CommunityTabProps } from "./community-page";
 import {
   deleteCommunityPost,
@@ -34,10 +32,8 @@ import {
   type CommunityPost,
 } from "@/lib/supabase/communities";
 import { can, isGroupStaff } from "@/lib/chat-groups";
-import { canSharePost, COMMUNITY_NOTE_MAX } from "@/lib/communities";
-import { formatRelativeTime, profileHref } from "@/lib/utils";
+import { canSharePost, COMMUNITY_NOTE_MAX, postPageHref } from "@/lib/communities";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import type { TranslationKey } from "@/lib/i18n/translations";
 
 type PostAction = { kind: "edit" | "delete" | "moderate" | "report"; post: CommunityPost };
 
@@ -52,6 +48,7 @@ type PostAction = { kind: "edit" | "delete" | "moderate" | "report"; post: Commu
  */
 export function FeedTab({ group, role, viewerId, onToast, reload }: CommunityTabProps) {
   const { t } = useTranslation();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const [pinned, setPinned] = useState<CommunityPost[] | null>(null);
   const [posts, setPosts] = useState<CommunityPost[] | null>(null);
@@ -66,7 +63,6 @@ export function FeedTab({ group, role, viewerId, onToast, reload }: CommunityTab
   // Bildirim / bağlantıyla gelen: `post=<gönderi kimliği>` ve isteğe bağlı `hl=comment:<yorum kimliği>`.
   const focusId = searchParams.get("post");
   const highlight = searchParams.get("hl");
-  const highlightCommentId = highlight?.startsWith("comment:") ? highlight.slice("comment:".length) : null;
   const engage: EngageMode = group.closedAt ? "closed" : viewerId === null || role ? "open" : "join";
 
   const canPost = canSharePost(role, group.feedPolicy, Boolean(group.closedAt));
@@ -100,7 +96,13 @@ export function FeedTab({ group, role, viewerId, onToast, reload }: CommunityTab
     let cancelled = false;
     fetchCommunityPost(focusId, group.id)
       .then((post) => {
-        if (!cancelled) setFocusPost(post);
+        if (cancelled) return;
+        // Başvurunun kendi sayfası var: bildirim/bağlantı oraya (yorum vurgusuyla) yönlenir; yerel gönderi akışta açılır.
+        if (post && post.kind !== "native") {
+          router.replace(postPageHref(post.id, highlight));
+          return;
+        }
+        setFocusPost(post);
       })
       .catch((err) => {
         console.error("community focus post", err);
@@ -109,7 +111,7 @@ export function FeedTab({ group, role, viewerId, onToast, reload }: CommunityTab
     return () => {
       cancelled = true;
     };
-  }, [focusId, group.id]);
+  }, [focusId, group.id, highlight, router]);
 
   async function loadMore() {
     if (!posts || posts.length === 0 || loadingMore) return;
@@ -169,22 +171,10 @@ export function FeedTab({ group, role, viewerId, onToast, reload }: CommunityTab
           {t("communities.post.focus.notFound")}
         </p>
       )}
-      {focusPost && (
+      {focusPost && focusPost.kind === "native" && (
         <section aria-label={t("communities.post.focus.title")} className="space-y-2">
           <ul>
-            <PostItem
-              post={focusPost}
-              viewerId={viewerId}
-              role={role}
-              canPin={canPin}
-              canModerate={canModerate}
-              mode={engage}
-              onToast={onToast}
-              onPin={togglePin}
-              onAction={setAction}
-              focused
-              highlightCommentId={highlightCommentId}
-            />
+            <PostItem post={focusPost} viewerId={viewerId} role={role} canPin={canPin} canModerate={canModerate} mode={engage} onToast={onToast} onPin={togglePin} onAction={setAction} onChanged={() => void refreshAll()} />
           </ul>
         </section>
       )}
@@ -215,13 +205,13 @@ export function FeedTab({ group, role, viewerId, onToast, reload }: CommunityTab
           {pinned.length > 0 && (
             <ul className="space-y-3" aria-label={t("communities.feed.pinnedAria")}>
               {pinned.filter((post) => post.id !== focusPost?.id).map((post) => (
-                <PostItem key={post.id} post={post} viewerId={viewerId} role={role} canPin={canPin} canModerate={canModerate} mode={engage} onToast={onToast} onPin={togglePin} onAction={setAction} />
+                <PostItem key={post.id} post={post} viewerId={viewerId} role={role} canPin={canPin} canModerate={canModerate} mode={engage} onToast={onToast} onPin={togglePin} onAction={setAction} onChanged={() => void refreshAll()} />
               ))}
             </ul>
           )}
           <ul className="space-y-3">
             {posts.filter((post) => post.id !== focusPost?.id).map((post) => (
-              <PostItem key={post.id} post={post} viewerId={viewerId} role={role} canPin={canPin} canModerate={canModerate} mode={engage} onToast={onToast} onPin={togglePin} onAction={setAction} />
+              <PostItem key={post.id} post={post} viewerId={viewerId} role={role} canPin={canPin} canModerate={canModerate} mode={engage} onToast={onToast} onPin={togglePin} onAction={setAction} onChanged={() => void refreshAll()} />
             ))}
           </ul>
           {hasMore && (
@@ -307,20 +297,6 @@ export function FeedTab({ group, role, viewerId, onToast, reload }: CommunityTab
   );
 }
 
-const SHARED_LABEL: Record<CommunityPost["contentType"], TranslationKey> = {
-  prompt: "communities.feed.shared.prompt",
-  request: "communities.feed.shared.request",
-  workflow: "communities.feed.shared.workflow",
-  preset: "communities.feed.shared.preset",
-};
-
-const NATIVE_LABEL: Record<CommunityPost["contentType"], TranslationKey> = {
-  prompt: "communities.post.verb.native.prompt",
-  request: "communities.post.verb.native.request",
-  workflow: "communities.post.verb.native.workflow",
-  preset: "communities.post.verb.native.preset",
-};
-
 function PostItem({
   post,
   viewerId,
@@ -331,8 +307,7 @@ function PostItem({
   onToast,
   onPin,
   onAction,
-  focused = false,
-  highlightCommentId = null,
+  onChanged,
 }: {
   post: CommunityPost;
   viewerId: string | null;
@@ -343,99 +318,64 @@ function PostItem({
   onToast: (message: string) => void;
   onPin: (post: CommunityPost) => void;
   onAction: (action: PostAction) => void;
-  /** Bildirim/bağlantıyla açılan gönderi: yorumlar açık gelir, istenen yorum vurgulanır. */
-  focused?: boolean;
-  highlightCommentId?: string | null;
+  /** İçerik kartının kendi menüsünden silme gibi akışı değiştiren işlemlerden sonra akışı yeniler. */
+  onChanged: () => void;
 }) {
-  const { t, language } = useTranslation();
+  const { t } = useTranslation();
   const mine = Boolean(viewerId) && post.author?.id === viewerId;
-  const hasMenu = mine || canPin || canModerate || Boolean(role);
   const native = post.kind === "native";
 
   // İçerik artık okunamıyorsa (silindi / özel yapıldı) yalnızca yazar ve yetkililer gönderi kaydını görür; diğerleri için gizlenir.
   if (!post.content && !mine && !canModerate) return null;
 
-  // Toplulukta oluşturulan içerik: NORMAL içerik kartı (kendi beğeni/yorum/menüsüyle) — üstte yalnızca topluluk çubuğu (sabit rozeti + topluluk menüsü).
+  // Toplulukta oluşturulan içerik: NORMAL içerik kartı. Topluluk işleri (sabitle / topluluk yöneticilerine bildir / yönetici kaldır) kartın KENDİ ⋮
+  // menüsüne eklenir — ikinci bir menü ya da üst çubuk yok; yazarın kendi içeriğini silmesi de kartın menüsündeki "Sil"dir.
   if (native && post.content) {
     const c = post.content;
+    const extras: PostMenuExtra[] = [];
+    if (canPin) extras.push({ key: "pin", label: post.pinnedAt ? t("communities.feed.unpin") : t("communities.feed.pin"), icon: post.pinnedAt ? <PinOff size={14} /> : <Pin size={14} />, onSelect: () => onPin(post) });
+    if (role && !mine) extras.push({ key: "report", label: t("communities.report.menu"), icon: <Flag size={14} />, onSelect: () => onAction({ kind: "report", post }) });
+    if (canModerate && !mine) extras.push({ key: "moderate", label: t("communities.feed.removeAsStaff"), icon: <ShieldAlert size={14} />, danger: true, onSelect: () => onAction({ kind: "moderate", post }) });
     return (
       <li data-community-post={post.id} data-post-kind="native" className="space-y-1.5">
-        <div className="flex items-center justify-between gap-2 px-1">
-          <p className="flex flex-wrap items-center gap-1.5 text-caption text-text-muted">
-            <Badge variant="default">{t("communities.post.native.badge")}</Badge>
-            {post.pinnedAt && (
-              <Badge variant="default">
-                <Pin size={11} aria-hidden /> {t("communities.announcements.pinned")}
-              </Badge>
-            )}
-            <span>{formatRelativeTime(post.createdAt, language)}</span>
+        {post.pinnedAt && (
+          <p className="flex items-center gap-1.5 px-1 text-caption text-text-muted">
+            <Pin size={12} aria-hidden /> {t("communities.announcements.pinned")}
           </p>
-          {hasMenu && (
-            <DropdownMenu label={t("communities.feed.postMenu")}>
-              {(close) => (
-                <>
-                  {canPin && <MenuItem icon={post.pinnedAt ? <PinOff size={15} /> : <Pin size={15} />} label={post.pinnedAt ? t("communities.feed.unpin") : t("communities.feed.pin")} onClick={() => { close(); onPin(post); }} />}
-                  {role && !mine && <MenuItem icon={<Flag size={15} />} label={t("communities.report.menu")} onClick={() => { close(); onAction({ kind: "report", post }); }} />}
-                  {canModerate && !mine && <MenuItem icon={<ShieldAlert size={15} />} label={t("communities.feed.removeAsStaff")} danger onClick={() => { close(); onAction({ kind: "moderate", post }); }} />}
-                  {mine && <MenuItem icon={<Trash2 size={15} />} label={t("communities.post.native.deleteMine")} danger onClick={() => { close(); onAction({ kind: "delete", post }); }} />}
-                </>
-              )}
-            </DropdownMenu>
-          )}
-        </div>
-        {c.type === "prompt" && <PromptCard prompt={c.data} />}
-        {c.type === "request" && <RequestCard request={c.data} />}
-        {c.type === "workflow" && <WorkflowCard workflow={c.data} />}
-        {c.type === "preset" && <PresetCard preset={c.data} />}
+        )}
+        <PostMenuExtras items={extras}>
+          {c.type === "prompt" && <PromptCard prompt={c.data} onDeleted={onChanged} />}
+          {c.type === "request" && <RequestCard request={c.data} onDeleted={onChanged} />}
+          {c.type === "workflow" && <WorkflowCard workflow={c.data} />}
+          {c.type === "preset" && <PresetCard preset={c.data} />}
+        </PostMenuExtras>
       </li>
     );
   }
 
+  // Başvuru / eski (legacy) gönderi: normal kart ailesinde başvuru kartı; karta tıklamak başvurunun kendi sayfasını açar.
+  const hasMenu = mine || canPin || canModerate || Boolean(role);
+  const menu = hasMenu ? (
+    <DropdownMenu label={t("communities.feed.postMenu")}>
+      {(close) => (
+        <>
+          {mine && <MenuItem icon={<Pencil size={15} />} label={t("communities.feed.editNote")} onClick={() => { close(); onAction({ kind: "edit", post }); }} />}
+          {canPin && <MenuItem icon={post.pinnedAt ? <PinOff size={15} /> : <Pin size={15} />} label={post.pinnedAt ? t("communities.feed.unpin") : t("communities.feed.pin")} onClick={() => { close(); onPin(post); }} />}
+          {role && !mine && <MenuItem icon={<Flag size={15} />} label={t("communities.report.menu")} onClick={() => { close(); onAction({ kind: "report", post }); }} />}
+          {canModerate && !mine && <MenuItem icon={<ShieldAlert size={15} />} label={t("communities.feed.removeAsStaff")} danger onClick={() => { close(); onAction({ kind: "moderate", post }); }} />}
+          {mine && <MenuItem icon={<Trash2 size={15} />} label={t("communities.feed.deleteMine")} danger onClick={() => { close(); onAction({ kind: "delete", post }); }} />}
+        </>
+      )}
+    </DropdownMenu>
+  ) : null;
   return (
-    <li data-community-post={post.id} data-post-kind={post.kind} className="space-y-2.5 rounded-xl border border-border-soft bg-surface p-3 shadow-card sm:p-4">
-      <div className="flex items-start gap-2.5">
-        {post.author && <Avatar src={post.author.avatarUrl} alt={post.author.displayName} size={32} />}
-        <div className="min-w-0 flex-1 leading-tight">
-          <p className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-small text-text">
-            {post.author ? (
-              <Link href={profileHref(post.author)} className="font-semibold hover:underline">
-                {post.author.displayName}
-              </Link>
-            ) : (
-              <span className="font-semibold">{t("common.genericUser")}</span>
-            )}
-            <span className="text-text-muted">{t(native ? NATIVE_LABEL[post.contentType] : SHARED_LABEL[post.contentType])}</span>
-            {post.kind !== "legacy" && <Badge variant="default">{native ? t("communities.post.badge.native") : t("communities.post.badge.application")}</Badge>}
-            {post.pinnedAt && (
-              <Badge variant="default">
-                <Pin size={11} aria-hidden /> {t("communities.announcements.pinned")}
-              </Badge>
-            )}
-          </p>
-          <p className="text-caption text-text-muted">{formatRelativeTime(post.createdAt, language)}</p>
-        </div>
-        {hasMenu && (
-          <DropdownMenu label={t("communities.feed.postMenu")}>
-            {(close) => (
-              <>
-                {mine && !native && <MenuItem icon={<Pencil size={15} />} label={t("communities.feed.editNote")} onClick={() => { close(); onAction({ kind: "edit", post }); }} />}
-                {canPin && <MenuItem icon={post.pinnedAt ? <PinOff size={15} /> : <Pin size={15} />} label={post.pinnedAt ? t("communities.feed.unpin") : t("communities.feed.pin")} onClick={() => { close(); onPin(post); }} />}
-                {role && !mine && <MenuItem icon={<Flag size={15} />} label={t("communities.report.menu")} onClick={() => { close(); onAction({ kind: "report", post }); }} />}
-                {canModerate && !mine && <MenuItem icon={<ShieldAlert size={15} />} label={t("communities.feed.removeAsStaff")} danger onClick={() => { close(); onAction({ kind: "moderate", post }); }} />}
-                {mine && <MenuItem icon={<Trash2 size={15} />} label={t("communities.feed.deleteMine")} danger onClick={() => { close(); onAction({ kind: "delete", post }); }} />}
-              </>
-            )}
-          </DropdownMenu>
-        )}
-      </div>
-      {post.note && <p data-post-note className="whitespace-pre-wrap break-words text-small text-text-secondary">{post.note}</p>}
-      <LinkedContent post={post} />
-      {!native && <PostEngagement post={post} mode={mode} onToast={onToast} defaultOpen={focused} highlightCommentId={focused ? highlightCommentId : null} />}
+    <li data-community-post={post.id} data-post-kind={post.kind}>
+      <ApplicationCard post={post} mode={mode} onToast={onToast} menu={menu} />
     </li>
   );
 }
 
-function EditNoteModal({ post, onClose, onSaved }: { post: CommunityPost; onClose: () => void; onSaved: () => void | Promise<void> }) {
+export function EditNoteModal({ post, onClose, onSaved }: { post: CommunityPost; onClose: () => void; onSaved: () => void | Promise<void> }) {
   const { t } = useTranslation();
   const { busy, error, run } = useAsyncAction();
   const [note, setNote] = useState(post.note ?? "");
@@ -477,7 +417,7 @@ function EditNoteModal({ post, onClose, onSaved }: { post: CommunityPost; onClos
 }
 
 /** Gönderiyi kaldırma onayı: yazar kendi gönderisini (içerik silinmez) ya da yetkili moderasyonla (sebep + denetim kaydı + yazara bildirim). */
-function DeletePostDialog({ post, moderation, onClose, onDone }: { post: CommunityPost; moderation: boolean; onClose: () => void; onDone: () => void | Promise<void> }) {
+export function DeletePostDialog({ post, moderation, onClose, onDone }: { post: CommunityPost; moderation: boolean; onClose: () => void; onDone: () => void | Promise<void> }) {
   const { t } = useTranslation();
   const { busy, error, run } = useAsyncAction();
   const [reason, setReason] = useState("");
