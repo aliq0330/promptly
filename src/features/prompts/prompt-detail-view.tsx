@@ -167,7 +167,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
           <header className="space-y-4">
             <div className="flex items-center justify-between gap-3">
               <ContentTypeLabel icon={typeMeta.icon} label={`${t(typeMeta.labelKey)} Prompt`} detail={null} />
-              <PostMenu promptId={prompt.id} authorId={prompt.author.id} />
+              <PostMenu promptId={prompt.id} communityId={prompt.communityId} authorId={prompt.author.id} />
             </div>
             <div className="space-y-3">
               <DetailTitle>{prompt.title}</DetailTitle>
@@ -236,10 +236,10 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
             <RequestResponseContext requestId={prompt.origin.requestId} currentPromptId={prompt.id} />
           )}
 
-          <DetailActionBar trailing={<ShareTriggerButton target={{ contentType: "prompt", prompt }} label={t("common.share")} />}>
+          <DetailActionBar trailing={prompt.communityId ? undefined : <ShareTriggerButton target={{ contentType: "prompt", prompt }} label={t("common.share")} />}>
             <LikeButton id={prompt.id} likeCount={prompt.likeCount} size={18} />
             <CommentCountLink promptId={prompt.id} baseCount={prompt.commentCount} size={18} />
-            <SaveButton promptId={prompt.id} saveCount={prompt.saveCount} size={18} />
+            {!prompt.communityId && <SaveButton promptId={prompt.id} saveCount={prompt.saveCount} size={18} />}
             <StatisticsButton target={{ contentType: "prompt", contentId: prompt.id, likeCount: prompt.likeCount, commentCount: prompt.commentCount, saveCount: prompt.saveCount, copyCount: prompt.copyCount }} size={18} label={t("statistics.title")} />
             <RelationMapLink kind="prompt" id={prompt.id} />
           </DetailActionBar>

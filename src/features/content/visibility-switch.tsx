@@ -80,7 +80,6 @@ export function VisibilitySwitch({
   disabled,
   className,
   hideLabel,
-  community,
 }: {
   value: ContentVisibility;
   onChange: (next: ContentVisibility) => void;
@@ -88,29 +87,10 @@ export function VisibilitySwitch({
   className?: string;
   /** The surrounding card already carries the "Görünürlük" heading. */
   hideLabel?: boolean;
-  /**
-   * The screen was opened from a community (`?community=`): the two states keep the existing public/private values but are
-   * worded for that context — "private" means "only that community's readers", not "only me". No new visibility value.
-   */
-  community?: { name: string | null };
 }) {
   const { t } = useTranslation();
   const isPublic = value === "public";
-  const communityName = community ? (community.name ?? t("communities.create.thisCommunity")) : null;
-  const title = community
-    ? isPublic
-      ? t("visibility.public")
-      : t("communities.create.visibilityCommunityOnly")
-    : isPublic
-      ? t("visibility.public")
-      : t("visibility.private");
-  const description = community
-    ? isPublic
-      ? t("communities.create.visibilityPublicHint")
-      : t("communities.create.visibilityCommunityHint", { name: communityName ?? "" })
-    : isPublic
-      ? t("visibility.publicHint")
-      : t("visibility.privateHint");
+  const title = isPublic ? t("visibility.public") : t("visibility.private");
   return (
     <div className={className} data-visibility-switch>
       {!hideLabel && <p className="mb-2 text-sm font-medium text-text">{t("visibility.label")}</p>}
@@ -120,7 +100,7 @@ export function VisibilitySwitch({
         disabled={disabled}
         icon={isPublic ? <Globe size={18} strokeWidth={1.75} /> : <Lock size={18} strokeWidth={1.75} />}
         title={title}
-        description={description}
+        description={isPublic ? t("visibility.publicHint") : t("visibility.privateHint")}
         ariaLabel={t("visibility.switchAria", { state: title })}
       />
     </div>

@@ -51,7 +51,10 @@ export function PostMenu({
   onDeleted,
   onEdit,
   collectionRemoval,
+  communityId,
 }: {
+  /** Topluluğa özgü içerik: bağlantı kopyalama/çoğaltma yok (içerik topluluktan dışarı çıkmaz); düzenleme topluluk bağlamıyla açılır. */
+  communityId?: string | null;
   promptId?: string;
   requestId?: string;
   resultId?: string;
@@ -94,13 +97,14 @@ export function PostMenu({
       : isResult
         ? resultHref({ id: resultId! })
         : promptHref({ id: promptId! });
-  const editHref = isPreset
+  const editBase = isPreset
     ? `/presets/create?edit=${presetId}`
     : isWorkflow
     ? `/workflows/create?edit=${workflowId}`
     : isRequest
       ? `/requests/new?edit=${requestId}`
       : `/create?edit=${promptId}`;
+  const editHref = communityId ? `${editBase}&community=${communityId}` : editBase;
 
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -216,15 +220,17 @@ export function PostMenu({
             "absolute right-0 top-8 z-30 w-52 overflow-hidden rounded-md border border-border-soft bg-surface-elevated py-1 shadow-pop animate-pop-in",
           )}
         >
-          <button
-            type="button"
-            role="menuitem"
-            onClick={handleCopyLink}
-            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-text hover:bg-surface-soft"
-          >
-            <Link2 size={14} />
-            {copied ? t("common.copied") : t("common.copyLink")}
-          </button>
+          {!communityId && (
+            <button
+              type="button"
+              role="menuitem"
+              onClick={handleCopyLink}
+              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-text hover:bg-surface-soft"
+            >
+              <Link2 size={14} />
+              {copied ? t("common.copied") : t("common.copyLink")}
+            </button>
+          )}
           {collectionRemoval && (
             <>
               <button
@@ -270,7 +276,7 @@ export function PostMenu({
                   {t("common.edit")}
                 </Link>
               )}
-              {!isRequest && !isResult && !isWorkflow && !isPreset && (
+              {!isRequest && !isResult && !isWorkflow && !isPreset && !communityId && (
                 <Link
                   href={`/create?duplicate=${promptId}`}
                   role="menuitem"

@@ -61,22 +61,12 @@ end $$;
 -- İçerik fixture'ı (süper kullanıcı).
 insert into public.prompts (id, author_id, title, description, prompt_text, content_type, status, visibility, created_at) values
   ('a0000000-0000-4000-8000-000000000001', :alice, 'Açık prompt', 'd', 'metin', 'text', 'published', 'public', now()),
-  ('a0000000-0000-4000-8000-000000000002', :alice, 'Yerel özel prompt', 'd', 'metin', 'text', 'published', 'private', now()),
   ('a0000000-0000-4000-8000-000000000003', :alice, 'Taslak prompt', 'd', 'metin', 'text', 'draft', 'private', now()),
   ('a0000000-0000-4000-8000-000000000004', :bobby, 'Bobby açık prompt', 'd', 'metin', 'text', 'published', 'public', now()),
   ('a0000000-0000-4000-8000-000000000005', :alice, 'Eski özel prompt', 'd', 'metin', 'text', 'published', 'private', now() - interval '10 days'),
-  ('a0000000-0000-4000-8000-000000000006', :alice, 'İkinci yerel özel prompt', 'd', 'metin', 'text', 'published', 'private', now()),
   ('a0000000-0000-4000-8000-000000000007', :alice, 'Üçüncü yerel prompt (açık)', 'd', 'metin', 'text', 'published', 'public', now()),
   ('a0000000-0000-4000-8000-000000000008', :bobby, 'Bobby özel prompt', 'd', 'metin', 'text', 'published', 'private', now());
-insert into public.prompt_variables (prompt_id, name) values ('a0000000-0000-4000-8000-000000000002', 'konu');
-insert into public.prompt_media (prompt_id, url, width, height) values ('a0000000-0000-4000-8000-000000000002', 'https://x.supabase.co/storage/v1/object/public/prompt-media/p.jpg', 10, 10);
-insert into public.presets (id, creator_id, title, status, visibility) values
-  ('b0000000-0000-4000-8000-000000000001', :alice, 'Yerel özel hazır ayar', 'published', 'private');
-insert into public.preset_fields (owner_id, preset_id, name, type) values (:alice, 'b0000000-0000-4000-8000-000000000001', 'alan', 'text');
-insert into public.workflows (id, creator_id, title, status, visibility) values
-  ('c0000000-0000-4000-8000-000000000001', :alice, 'Yerel özel akış', 'published', 'private');
 insert into public.prompt_requests (id, author_id, title, description, is_draft, visibility) values
-  ('d0000000-0000-4000-8000-000000000001', :alice, 'Yerel özel istek', 'd', false, 'private'),
   ('d0000000-0000-4000-8000-000000000002', :bobby, 'Açık istek', 'd', false, 'public');
 
 -- Topluluklar: A (herkese açık: alice, bobby, carol, gina), B (herkese açık: alice, bobby), R (kapalı: alice, erin)
@@ -88,106 +78,24 @@ reset role;
 insert into public.blocks (blocker_id, blocked_id) values (:alice, :gina);
 
 -- ============================================================================
--- 1. Yerel gönderi (Senaryo A)
+-- 1. Yerel gönderi fixture'ı: içerik topluluğa oluşturulurken bağlanır (docs/history/179-*; asıl erişim/yazma testleri community-content.sql'de)
 -- ============================================================================
 set role authenticated;
 select public._as_user(:alice);
-create temp table _n1 as select public.publish_native_community_post(public._g('A'), 'prompt', 'a0000000-0000-4000-8000-000000000002') as id;
+insert into public.prompts (id, author_id, title, description, prompt_text, content_type, status, visibility, community_id) values
+  ('a0000000-0000-4000-8000-000000000002', :alice, 'Yerel prompt', 'd', 'metin', 'text', 'published', 'public', public._g('A'));
+insert into public.presets (id, creator_id, title, status, visibility, community_id) values
+  ('b0000000-0000-4000-8000-000000000001', :alice, 'Yerel hazır ayar', 'published', 'public', public._g('A'));
+insert into public.workflows (id, creator_id, title, status, visibility, community_id) values
+  ('c0000000-0000-4000-8000-000000000001', :alice, 'Yerel akış', 'published', 'public', public._g('A'));
+insert into public.prompt_requests (id, author_id, title, description, is_draft, visibility, community_id) values
+  ('d0000000-0000-4000-8000-000000000001', :alice, 'Yerel istek', 'd', false, 'public', public._g('A'));
 reset role;
-insert into public._ctx select 'n1', id::text from _n1;
-select public._check(1, 'yerel gönderi: kendi içeriği için oluşur, kendi kimliği ve türü native, topluluk doğru',
-  exists (select 1 from public.community_posts p where p.id = public._g('n1') and p.kind = 'native' and p.community_id = public._g('A')
-          and p.author_id = :alice and p.prompt_id = 'a0000000-0000-4000-8000-000000000002' and p.note is null and p.like_count = 0 and p.comment_count = 0));
-select public._check(2, 'yerel gönderi: yalnız kendi topluluğunda görünür (B ve R boş)',
-  (select count(*) from public.community_posts where community_id = public._g('A') and kind = 'native') = 1
-  and (select count(*) from public.community_posts where community_id in (public._g('B'), public._g('R'))) = 0);
-
-set role authenticated;
-select public._as_user(:alice);
-select public._check(3, 'yerel gönderi: başkasının / taslak / eski / olmayan içerik ve yinelenen yerel gönderi reddedilir',
-  public._try(format($q$select public.publish_native_community_post(%L, 'prompt', 'a0000000-0000-4000-8000-000000000004')$q$, public._g('A'))) like '%content_not_found%'
-  and public._try(format($q$select public.publish_native_community_post(%L, 'prompt', 'a0000000-0000-4000-8000-000000000003')$q$, public._g('A'))) like '%content_not_published%'
-  and public._try(format($q$select public.publish_native_community_post(%L, 'prompt', 'a0000000-0000-4000-8000-000000000005')$q$, public._g('A'))) like '%content_not_new%'
-  and public._try(format($q$select public.publish_native_community_post(%L, 'prompt', gen_random_uuid())$q$, public._g('A'))) like '%content_not_found%'
-  and public._try(format($q$select public.publish_native_community_post(%L, 'prompt', 'a0000000-0000-4000-8000-000000000002')$q$, public._g('B'))) like '%already_shared%'
-  and public._try(format($q$select public.publish_native_community_post(%L, 'prompt', 'a0000000-0000-4000-8000-000000000002')$q$, public._g('A'))) like '%already_shared%'
-  and public._try(format($q$select public.publish_native_community_post(%L, 'bogus', 'a0000000-0000-4000-8000-000000000002')$q$, public._g('A'))) like '%invalid_content%');
-select public._as_user(:dave);
-select public._check(4, 'yerel gönderi: üye olmayan topluluk adına gönderi oluşturamaz',
-  public._try(format($q$select public.publish_native_community_post(%L, 'prompt', 'a0000000-0000-4000-8000-000000000002')$q$, public._g('A'))) like '%forbidden%');
-
--- Tüm içerik türleri
-select public._as_user(:alice);
-create temp table _n2 as select
-  public.publish_native_community_post(public._g('A'), 'preset', 'b0000000-0000-4000-8000-000000000001') as preset_post,
-  public.publish_native_community_post(public._g('A'), 'workflow', 'c0000000-0000-4000-8000-000000000001') as wf_post,
-  public.publish_native_community_post(public._g('A'), 'request', 'd0000000-0000-4000-8000-000000000001') as rq_post;
-reset role;
-insert into public._ctx select 'n_preset', preset_post::text from _n2;
-insert into public._ctx select 'n_wf', wf_post::text from _n2;
-insert into public._ctx select 'n_rq', rq_post::text from _n2;
-select public._check(5, 'yerel gönderi: prompt, istek, workflow ve hazır ayar dört türde de çalışır',
-  (select count(*) from public.community_posts where community_id = public._g('A') and kind = 'native') = 4);
-
--- ============================================================================
--- 2. Yerel içerik erişimi: "yalnızca topluluk" görünürlüğü
--- ============================================================================
--- A herkese açık: özel yerel içerik yalnız bu topluluğun okuyucularına (ziyaretçi dahil) açılır; sahibi dışında bobby'nin kendi özel prompt'u açılmaz.
-set role authenticated;
-select public._as_user(:bobby);
-select public._check(6, 'yerel içerik: topluluk okuyucusu (üye) özel yerel içeriği + alt satırlarını görür',
-  (select count(*) from public.prompts where id = 'a0000000-0000-4000-8000-000000000002') = 1
-  and (select count(*) from public.prompt_variables where prompt_id = 'a0000000-0000-4000-8000-000000000002') = 1
-  and (select count(*) from public.prompt_media where prompt_id = 'a0000000-0000-4000-8000-000000000002') = 1
-  and (select count(*) from public.presets where id = 'b0000000-0000-4000-8000-000000000001') = 1
-  and (select count(*) from public.preset_fields where preset_id = 'b0000000-0000-4000-8000-000000000001') = 1
-  and (select count(*) from public.workflows where id = 'c0000000-0000-4000-8000-000000000001') = 1
-  and (select count(*) from public.prompt_requests where id = 'd0000000-0000-4000-8000-000000000001') = 1);
-select public._check(7, 'yerel içerik: topluluğa bağlı OLMAYAN özel içerik hâlâ yalnız sahibine görünür; taslak yerel gönderiyle açılmaz',
-  (select count(*) from public.prompts where id in ('a0000000-0000-4000-8000-000000000003', 'a0000000-0000-4000-8000-000000000005', 'a0000000-0000-4000-8000-000000000006')) = 0);
-select public._as_user(:dave);
-select public._check(8, 'yerel içerik: herkese açık toplulukta üye olmayan da okur (topluluk açık = gönderisi açık)',
-  (select count(*) from public.prompts where id = 'a0000000-0000-4000-8000-000000000002') = 1);
-select public._as_user('');
-set role anon;
-select public._check(9, 'yerel içerik: ziyaretçi herkese açık topluluğun yerel içeriğini okur, başka özel içeriği okuyamaz',
-  (select count(*) from public.prompts where id = 'a0000000-0000-4000-8000-000000000002') = 1
-  and (select count(*) from public.prompts where id = 'a0000000-0000-4000-8000-000000000006') = 0);
-reset role;
-
--- Kapalı (restricted) topluluk: içerik yalnız üyelere
-set role authenticated;
-select public._as_user(:alice);
-create temp table _n3 as select public.publish_native_community_post(public._g('R'), 'prompt', 'a0000000-0000-4000-8000-000000000006') as id;
-reset role;
-insert into public._ctx select 'n_r', id::text from _n3;
-set role authenticated;
-select public._as_user(:erin);
-select public._check(10, 'kapalı topluluk: yerel özel içeriği yalnız üye (erin) okur',
-  (select count(*) from public.prompts where id = 'a0000000-0000-4000-8000-000000000006') = 1);
-select public._as_user(:dave);
-select public._check(11, 'kapalı topluluk: üye olmayan (dave) yerel özel içeriği, gönderisini ve medyasını okuyamaz',
-  (select count(*) from public.prompts where id = 'a0000000-0000-4000-8000-000000000006') = 0
-  and (select count(*) from public.community_posts where id = public._g('n_r')) = 0);
-select public._as_user('');
-set role anon;
-select public._check(12, 'kapalı topluluk: ziyaretçi de okuyamaz',
-  (select count(*) from public.prompts where id = 'a0000000-0000-4000-8000-000000000006') = 0);
-reset role;
-
--- Gönderi silinince erişim kapanır, içerik sahibinde kalır
-set role authenticated;
-select public._as_user(:alice);
-select public.delete_community_post(public._g('n_r'));
-reset role;
-set role authenticated;
-select public._as_user(:erin);
-select public._check(13, 'yerel gönderi silinince: içerik üyeye artık görünmez, sahibinde kalır',
-  (select count(*) from public.prompts where id = 'a0000000-0000-4000-8000-000000000006') = 0);
-select public._as_user(:alice);
-select public._check(14, 'yerel gönderi silinince: içerik silinmez',
-  (select count(*) from public.prompts where id = 'a0000000-0000-4000-8000-000000000006') = 1);
-reset role;
+insert into public._ctx select 'n1', id::text from public.community_posts where prompt_id = 'a0000000-0000-4000-8000-000000000002';
+insert into public._ctx select 'n_preset', id::text from public.community_posts where preset_id = 'b0000000-0000-4000-8000-000000000001';
+select public._check(1, 'yerel gönderi: içerik topluluğa eklenince akış gönderisi (kind=native) kendiliğinden oluşur, dört türde de',
+  (select count(*) from public.community_posts where community_id = public._g('A') and kind = 'native') = 4
+  and exists (select 1 from public.community_posts p where p.id = public._g('n1') and p.author_id = :alice and p.note is null and p.like_count = 0 and p.comment_count = 0));
 
 -- ============================================================================
 -- 3. Başvuru gönderisi (Senaryo B)
@@ -438,14 +346,14 @@ select public._as_user(:hank);
 select public._check(50, 'moderasyon: site moderatörü yetkili olmadığı topluluğun gönderisini kaldıramaz; sahip kaldırabilir',
   public._try(format($q$select public.moderate_community_post(%L, 'x')$q$, public._g('n1'))) <> 'ok');
 select public._as_user(:alice);
-select public._check(51, 'moderasyon: yetkili gönderiyi kaldırınca yerel içeriğin topluluk erişimi kapanır',
+select public._check(51, 'moderasyon: yetkili yerel gönderiyi kaldırınca içeriğin KENDİSİ silinir',
   public._try(format($q$select public.moderate_community_post(%L, 'x')$q$, public._g('n_preset'))) = 'ok');
 reset role;
 set role authenticated;
 select public._as_user(:bobby);
-select public._check(52, 'moderasyon: kaldırılan yerel gönderinin içeriği artık üyelere görünmez',
-  (select count(*) from public.presets where id = 'b0000000-0000-4000-8000-000000000001') = 0
-  and (select count(*) from public.preset_fields where preset_id = 'b0000000-0000-4000-8000-000000000001') = 0);
+select public._check(52, 'moderasyon: kaldırılan yerel gönderinin içeriği ve alt satırları silinmiştir',
+  not exists (select 1 from public.presets where id = 'b0000000-0000-4000-8000-000000000001')
+  and not exists (select 1 from public.preset_fields where preset_id = 'b0000000-0000-4000-8000-000000000001'));
 reset role;
 
 -- Başvuru gönderisi içeriği AÇMAZ: başvurulan içerik sonradan özel yapılırsa topluluk üyesine de görünmez (yalnız yerel gönderi açar).
@@ -468,9 +376,9 @@ reset role;
 -- ============================================================================
 -- 12. Çalıştırma yetkileri
 -- ============================================================================
-select public._check(53, 'yetki: yeni RPC yalnız oturumlu kullanıcıya açık; tetikleyici işlevleri istemciye kapalı',
+select public._check(53, 'yetki: kullanılmayan iki adımlı RPC kapalı; tetikleyici işlevleri istemciye kapalı',
   not has_function_privilege('anon', 'public.publish_native_community_post(uuid, text, uuid)', 'execute')
-  and has_function_privilege('authenticated', 'public.publish_native_community_post(uuid, text, uuid)', 'execute')
+  and not has_function_privilege('authenticated', 'public.publish_native_community_post(uuid, text, uuid)', 'execute')
   and not has_function_privilege('authenticated', 'public.enforce_community_post_engagement()', 'execute')
   and not has_function_privilege('anon', 'public.enforce_community_comment_like()', 'execute'));
 select public._check(54, 'sayaç tutarlılığı: gönderi sayaçları gerçek satır sayısına eşit',

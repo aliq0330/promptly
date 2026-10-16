@@ -56,10 +56,10 @@ export function CreateFormActions({
 }) {
   const { t } = useTranslation();
   const hasNotices = Children.toArray(children).length > 0;
-  const showVisibility = visibility !== undefined && onVisibilityChange !== undefined;
-  // Topluluktan açıldıysa (`?community=`): yayınlanınca içerik o toplulukta kendi gönderisiyle yer alır; görünürlük dili ona uyar.
+  // Topluluktan açıldıysa (`?community=`): içerik topluluğa ÖZGÜDÜR — görünürlük seçilmez (yalnız topluluğu okuyabilenler görür) ve taslak olmaz.
   const community = useCommunityContext();
   const inCommunity = community.communityId !== null;
+  const showVisibility = visibility !== undefined && onVisibilityChange !== undefined && !inCommunity;
   return (
     <div className={cn("min-w-0 space-y-4", className)} data-create-form-actions>
       {inCommunity && (
@@ -67,14 +67,13 @@ export function CreateFormActions({
           <Users size={16} strokeWidth={1.75} className="mt-0.5 shrink-0 text-primary" aria-hidden />
           <span className="min-w-0 break-words">
             {community.name ? t("communities.create.contextBanner", { name: community.name }) : t("communities.create.contextBannerGeneric")}
-            {onSaveDraft ? ` ${t("communities.create.draftNote")}` : ""}
           </span>
         </p>
       )}
       {(showVisibility || extra) && (
         <FormSection title={t("visibility.label")}>
           <div className="space-y-3">
-            {showVisibility && <VisibilitySwitch value={visibility} onChange={onVisibilityChange} disabled={busy} hideLabel community={inCommunity ? { name: community.name } : undefined} />}
+            {showVisibility && <VisibilitySwitch value={visibility} onChange={onVisibilityChange} disabled={busy} hideLabel />}
             {extra}
           </div>
         </FormSection>
@@ -82,7 +81,7 @@ export function CreateFormActions({
       <FormSection>
         {hasNotices && <div className="mb-4 space-y-3">{children}</div>}
         <div className="flex gap-2 sm:justify-end">
-          {onSaveDraft && (
+          {onSaveDraft && !inCommunity && (
             <Button type="button" variant="outline" size="lg" disabled={busy} onClick={onSaveDraft} className="min-w-0 flex-1 px-4 sm:flex-none sm:px-6" data-action="save-draft">
               {saveDraftLabel ?? t("createActions.saveDraft")}
             </Button>

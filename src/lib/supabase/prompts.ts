@@ -43,6 +43,7 @@ export interface PromptRow {
   requires_reference_video: boolean;
   requires_reference_audio: boolean;
   visibility: "public" | "private";
+  community_id?: string | null;
   deleted_at: string | null;
   profiles: ProfileRow;
   prompt_media: { id: string; url: string; width: number; height: number; alt: string | null; position: number }[];
@@ -53,7 +54,7 @@ export const PROMPT_SELECT = `
   id, title, description, prompt_text, tool, tools, content_type, category, subcategory, status,
   origin_type, request_id,
   like_count, save_count, comment_count, copy_count, created_at, show_on_profile, requires_reference_image, requires_reference_video, requires_reference_audio, visibility,
-  deleted_at,
+  deleted_at, community_id,
   profiles:author_id ( id, username, display_name, avatar_url, cover_url, bio, website, follower_count, following_count, created_at, interests ),
   prompt_media ( id, url, width, height, alt, position ),
   prompt_tags ( tags ( slug, label ) )
@@ -127,6 +128,7 @@ export function mapPromptRow(row: PromptRow): Prompt {
     requiresReferenceVideo: row.requires_reference_video ?? false,
     requiresReferenceAudio: row.requires_reference_audio ?? false,
     visibility: row.visibility ?? "public",
+    communityId: row.community_id ?? null,
     deletedAt: row.deleted_at,
     // Whether *this viewer* liked/saved it is still decided entirely by the
     // localStorage LikeProvider/SaveProvider (CLAUDE.md Bölüm 14) — real
@@ -161,6 +163,7 @@ export async function fetchRecentPublishedPrompts(limit = 24, cursor?: KeysetCur
         .from("prompts")
         .select(PROMPT_SELECT)
         .eq("status", "published")
+        .is("community_id", null)
         .order("created_at", { ascending: false })
         .order("id", { ascending: false })
         .limit(limit),
@@ -210,6 +213,8 @@ export async function fetchPromptsByAuthor(authorId: string): Promise<Prompt[]> 
       .from("prompts")
       .select(PROMPT_SELECT)
       .eq("author_id", authorId)
+      // Topluluğa özgü içerik yazarın sayfasında/listelerinde görünmez (docs/history/179-*).
+      .is("community_id", null)
       .order("created_at", { ascending: false });
     if (error) {
       console.error("fetchPromptsByAuthor", error);
@@ -250,6 +255,7 @@ export async function fetchPromptsByAuthors(authorIds: string[], limit = 60): Pr
       .select(PROMPT_SELECT)
       .in("author_id", authorIds)
       .eq("status", "published")
+      .is("community_id", null)
       .order("created_at", { ascending: false })
       .limit(limit);
     if (error) {
@@ -348,7 +354,7 @@ export async function fetchLikedPrompts(userId: string): Promise<Prompt[]> {
     return filterNotDeleted(
       ((data ?? []) as unknown as { prompts: PromptRow | null }[])
         .map((row) => row.prompts)
-        .filter((row): row is PromptRow => Boolean(row))
+        .filter((row): row is PromptRow => row !== null && !row.community_id)
         .map((row) => mapPromptRow(row)),
     );
   } catch (err) {
@@ -358,6 +364,8 @@ export async function fetchLikedPrompts(userId: string): Promise<Prompt[]> {
 }
 
 export interface CreateRealPromptInput {
+  /** Topluluğa özgü içerik: yalnız YENİ kayıtta gönderilir (`?community=`); sunucu görünürlüğü private'a zorlar, taslağa ve sonradan değiştirmeye izin vermez. */
+  communityId?: string | null;
   title: string;
   description: string;
   promptText: string;
@@ -426,6 +434,7 @@ export async function createRealPrompt(
       requires_reference_video: input.requiresReferenceVideo ?? false,
       requires_reference_audio: input.requiresReferenceAudio ?? false,
       visibility: input.visibility ?? "public",
+      community_id: input.communityId ?? null,
     })
     .select("id, created_at")
     .single();

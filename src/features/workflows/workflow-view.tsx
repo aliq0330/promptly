@@ -160,6 +160,7 @@ export function WorkflowDetailView() {
               {workflow.status === "draft" && <Badge variant="warning">{t("workflow.draftBadge")}</Badge>}
               <PostMenu
                 workflowId={workflow.id}
+                communityId={workflow.communityId}
                 authorId={workflow.creator.id}
                 onDeleted={() => {
                   removeFromCache(workflow.id);
@@ -182,10 +183,10 @@ export function WorkflowDetailView() {
           />
         </header>
 
-        <DetailActionBar trailing={<ShareTriggerButton target={{ contentType: "workflow", workflow }} label={t("common.share")} />}>
+        <DetailActionBar trailing={workflow.communityId ? undefined : <ShareTriggerButton target={{ contentType: "workflow", workflow }} label={t("common.share")} />}>
           <LikeButton id={workflow.id} likeCount={workflow.likeCount} contentType="workflow" size={18} />
           <CommentCountLink workflowId={workflow.id} baseCount={workflow.commentCount} size={18} />
-          <SaveButton workflowId={workflow.id} saveCount={workflow.saveCount} size={18} />
+          {!workflow.communityId && <SaveButton workflowId={workflow.id} saveCount={workflow.saveCount} size={18} />}
           <StatisticsButton target={{ contentType: "workflow", contentId: workflow.id, likeCount: workflow.likeCount, commentCount: workflow.commentCount, saveCount: workflow.saveCount }} size={18} label={t("statistics.title")} />
           <RelationMapLink kind="workflow" id={workflow.id} />
         </DetailActionBar>

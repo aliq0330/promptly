@@ -606,15 +606,6 @@ export async function shareToCommunity(groupId: string, type: CommunityPostType,
   return callRpc<string>("share_to_community", { p_group_id: groupId, p_content_type: type, p_content_id: contentId, p_note: note.trim() || null });
 }
 
-/**
- * Yerel gönderi: içerik NORMAL oluşturma ekranında (`?community=<id>`) oluşturulup yayınlandıktan sonra, aynı toplulukta
- * kendi kimliğiyle bir gönderi olarak kaydedilir. İçerik normal görünürlük seçeneğini (herkese açık / özel) korur;
- * özelse yalnızca bu topluluğu okuyabilenlere açılır.
- */
-export async function publishNativeCommunityPost(groupId: string, type: CommunityPostType, contentId: string): Promise<string> {
-  return callRpc<string>("publish_native_community_post", { p_group_id: groupId, p_content_type: type, p_content_id: contentId });
-}
-
 export async function updateCommunityPostNote(postId: string, note: string): Promise<void> {
   await callRpc("update_community_post", { p_post_id: postId, p_note: note.trim() || null });
 }

@@ -80,19 +80,19 @@ export function FocusActions({ item }: { item: FeedItem }) {
         <>
           <LikeButton id={item.data.id} likeCount={item.data.likeCount} contentType="prompt" />
           <CommentCountLink promptId={item.data.id} baseCount={item.data.commentCount} />
-          <SaveButton promptId={item.data.id} saveCount={item.data.saveCount} />
+          {!item.data.communityId && <SaveButton promptId={item.data.id} saveCount={item.data.saveCount} />}
         </>
       ) : item.kind === "workflow" ? (
         <>
           <LikeButton id={item.data.id} likeCount={item.data.likeCount} contentType="workflow" />
           <CommentCountLink workflowId={item.data.id} baseCount={item.data.commentCount} />
-          <SaveButton workflowId={item.data.id} saveCount={item.data.saveCount} />
+          {!item.data.communityId && <SaveButton workflowId={item.data.id} saveCount={item.data.saveCount} />}
         </>
       ) : item.kind === "preset" ? (
         <>
           <LikeButton id={item.data.id} likeCount={item.data.likeCount} contentType="preset" />
           <CommentCountLink presetId={item.data.id} baseCount={item.data.commentCount} />
-          <SaveButton presetId={item.data.id} saveCount={item.data.saveCount} />
+          {!item.data.communityId && <SaveButton presetId={item.data.id} saveCount={item.data.saveCount} />}
         </>
       ) : (
         <>

@@ -140,6 +140,7 @@ export function PresetDetailView() {
               ) : null}
               <PostMenu
                 presetId={preset.id}
+                communityId={preset.communityId}
                 authorId={preset.creator.id}
                 onDeleted={() => {
                   removeFromCache(preset.id);
@@ -162,10 +163,10 @@ export function PresetDetailView() {
           />
         </header>
 
-        <DetailActionBar trailing={<ShareTriggerButton target={{ contentType: "preset", preset }} label={t("common.share")} />}>
+        <DetailActionBar trailing={preset.communityId ? undefined : <ShareTriggerButton target={{ contentType: "preset", preset }} label={t("common.share")} />}>
           <LikeButton id={preset.id} likeCount={preset.likeCount} contentType="preset" size={18} />
           <CommentCountLink presetId={preset.id} baseCount={preset.commentCount} size={18} />
-          <SaveButton presetId={preset.id} saveCount={preset.saveCount} size={18} />
+          {!preset.communityId && <SaveButton presetId={preset.id} saveCount={preset.saveCount} size={18} />}
           <StatisticsButton
             target={{ contentType: "preset", contentId: preset.id, likeCount: preset.likeCount, commentCount: preset.commentCount, saveCount: preset.saveCount }}
             size={18}

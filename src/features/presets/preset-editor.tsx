@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCommunityReturn } from "@/features/communities/community-return";
+import { useCommunityContext, useCommunityReturn } from "@/features/communities/community-return";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useOwnProfile } from "@/features/auth/own-profile-provider";
 import { KindDraftsButton } from "@/features/drafts/kind-drafts-button";
@@ -39,6 +39,7 @@ export function PresetEditor({ editId }: { editId: string | null }) {
   const { t, language } = useTranslation();
   const router = useRouter();
   const returnToCommunity = useCommunityReturn();
+  const { communityId } = useCommunityContext();
   const { user, loading: authLoading } = useAuth();
   const { profile: ownProfile } = useOwnProfile();
   const { catalog } = useTagCatalog();
@@ -131,6 +132,7 @@ export function PresetEditor({ editId }: { editId: string | null }) {
           tags: tagPicker.accepted.map((entry) => entry.tag),
           status: asDraft ? "draft" : "published",
           visibility,
+          communityId,
         },
         user.id,
       );

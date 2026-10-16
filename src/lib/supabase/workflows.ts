@@ -26,6 +26,7 @@ export interface WorkflowRow {
   tools: string[] | null;
   status: "draft" | "published";
   visibility: "public" | "private" | null;
+  community_id?: string | null;
   like_count: number | null;
   save_count: number | null;
   comment_count: number | null;
@@ -38,7 +39,7 @@ export interface WorkflowRow {
 }
 
 export const WORKFLOW_SELECT = `
-  id, creator_id, title, description, cover_url, content_types, category, subcategory, tools, status, visibility, like_count, save_count, comment_count, created_at, updated_at,
+  id, creator_id, title, description, cover_url, content_types, category, subcategory, tools, status, visibility, community_id, like_count, save_count, comment_count, created_at, updated_at,
   profiles:creator_id ( ${PROFILE_SELECT} ),
   workflow_steps ( count ),
   workflow_tags ( tags ( slug, label ) ),
@@ -68,6 +69,7 @@ export function mapWorkflowRow(row: WorkflowRow): Workflow {
     tools: normalizeToolRefs(row.tools),
     status: row.status,
     visibility: row.visibility === "private" ? "private" : "public",
+    communityId: row.community_id ?? null,
     stepCount: row.workflow_steps?.[0]?.count ?? 0,
     likeCount: row.like_count ?? 0,
     saveCount: row.save_count ?? 0,
@@ -108,6 +110,7 @@ export async function fetchRecentWorkflows(limit = 24, cursor?: KeysetCursor): P
         .from("workflows")
         .select(WORKFLOW_SELECT)
         .eq("status", "published")
+        .is("community_id", null)
         .order("created_at", { ascending: false })
         .order("id", { ascending: false })
         .limit(limit),
@@ -174,6 +177,7 @@ export async function fetchWorkflowsByCreator(creatorId: string): Promise<Workfl
       .from("workflows")
       .select(WORKFLOW_SELECT)
       .eq("creator_id", creatorId)
+      .is("community_id", null)
       .order("created_at", { ascending: false });
     if (error) {
       console.error("fetchWorkflowsByCreator", error);
@@ -292,6 +296,8 @@ export interface SaveWorkflowInput {
   status: "draft" | "published";
   /** "Herkese açık" (default) / "Sadece ben" — `workflows.visibility`. */
   visibility?: ContentVisibility;
+  /** Topluluğa özgü içerik: yalnız YENİ kayıtta gönderilir (`?community=`); sunucu görünürlüğü private'a zorlar, taslağa ve sonradan değiştirmeye izin vermez. */
+  communityId?: string | null;
   steps: WorkflowStep[];
 }
 
@@ -345,7 +351,7 @@ export async function saveWorkflow(input: SaveWorkflowInput, creatorId: string):
     if (error) throw new Error(error.message);
     if (!data) throw new Error(translateForRuntime("workflow.errorSave"));
   } else {
-    const { data, error } = await supabase.from("workflows").insert({ ...columns, title, description, creator_id: creatorId }).select("id").single();
+    const { data, error } = await supabase.from("workflows").insert({ ...columns, title, description, creator_id: creatorId, community_id: input.communityId ?? null }).select("id").single();
     if (error) throw new Error(error.message);
     id = data.id as string;
   }

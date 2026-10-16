@@ -29,34 +29,36 @@ export function PromptCardFooter(target: FooterTarget) {
         <>
           <LikeButton id={target.preset.id} likeCount={target.preset.likeCount} contentType="preset" />
           <CommentCountLink presetId={target.preset.id} baseCount={target.preset.commentCount} />
-          <SaveButton presetId={target.preset.id} saveCount={target.preset.saveCount} />
+          {!target.preset.communityId && <SaveButton presetId={target.preset.id} saveCount={target.preset.saveCount} />}
           <StatisticsButton target={{ contentType: "preset", contentId: target.preset.id, likeCount: target.preset.likeCount, commentCount: target.preset.commentCount, saveCount: target.preset.saveCount }} />
         </>
       ) : target.workflow ? (
         <>
           <LikeButton id={target.workflow.id} likeCount={target.workflow.likeCount} contentType="workflow" />
           <CommentCountLink workflowId={target.workflow.id} baseCount={target.workflow.commentCount} />
-          <SaveButton workflowId={target.workflow.id} saveCount={target.workflow.saveCount} />
+          {!target.workflow.communityId && <SaveButton workflowId={target.workflow.id} saveCount={target.workflow.saveCount} />}
           <StatisticsButton target={{ contentType: "workflow", contentId: target.workflow.id, likeCount: target.workflow.likeCount, commentCount: target.workflow.commentCount, saveCount: target.workflow.saveCount }} />
         </>
       ) : (
         <>
           <LikeButton id={target.prompt.id} likeCount={target.prompt.likeCount} contentType="prompt" />
           <CommentCountLink promptId={target.prompt.id} baseCount={target.prompt.commentCount} />
-          <SaveButton promptId={target.prompt.id} saveCount={target.prompt.saveCount} />
+          {!target.prompt.communityId && <SaveButton promptId={target.prompt.id} saveCount={target.prompt.saveCount} />}
           <StatisticsButton target={{ contentType: "prompt", contentId: target.prompt.id, likeCount: target.prompt.likeCount, commentCount: target.prompt.commentCount, saveCount: target.prompt.saveCount, copyCount: target.prompt.copyCount }} />
         </>
       )}
       <span className="ml-auto" />
-      <ShareTriggerButton
-        target={
-          target.preset
-            ? { contentType: "preset", preset: target.preset }
-            : target.workflow
-            ? { contentType: "workflow", workflow: target.workflow }
-            : { contentType: "prompt", prompt: target.prompt }
-        }
-      />
+      {!(target.preset ?? target.workflow ?? target.prompt)?.communityId && (
+        <ShareTriggerButton
+          target={
+            target.preset
+              ? { contentType: "preset", preset: target.preset }
+              : target.workflow
+              ? { contentType: "workflow", workflow: target.workflow }
+              : { contentType: "prompt", prompt: target.prompt }
+          }
+        />
+      )}
     </div>
   );
 }

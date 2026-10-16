@@ -1,5 +1,5 @@
 "use client";
-import { useCommunityReturn } from "@/features/communities/community-return";
+import { useCommunityContext, useCommunityReturn } from "@/features/communities/community-return";
 import { ToolPicker } from "@/features/content/tool-picker";
 
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
@@ -102,6 +102,7 @@ export function CreatePromptForm() {
   const { getCached: getCachedPrompt, fetchById: fetchPromptById, addPrompt, updatePrompt } = useRealPrompts();
   const { getCached: getCachedRequest, fetchById: fetchRequestById } = useRealRequests();
   const returnToCommunity = useCommunityReturn();
+  const { communityId } = useCommunityContext();
 
   const editId = searchParams.get("edit");
   const isEditMode = Boolean(editId);
@@ -570,6 +571,7 @@ export function CreatePromptForm() {
           requiresReferenceVideo: effectiveReferences.video,
           requiresReferenceAudio: effectiveReferences.audio,
           visibility: showsVisibilityChoice ? undefined : visibility,
+          communityId,
         },
         ownProfile,
       );
