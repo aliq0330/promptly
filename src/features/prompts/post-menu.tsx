@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Copy, FolderMinus, Link2, Loader2, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { useAuth } from "@/features/auth/auth-provider";
+import { usePostMenuExtras } from "./post-menu-extras";
 import { shareLinkForHref } from "@/lib/share-link";
 import { absoluteUrl, cn, presetHref, promptHref, requestHref, resultHref, workflowHref } from "@/lib/utils";
 import { deleteRealPrompt } from "@/lib/supabase/prompts";
@@ -106,6 +107,7 @@ export function PostMenu({
       : `/create?edit=${promptId}`;
   const editHref = communityId ? `${editBase}&community=${communityId}` : editBase;
 
+  const extras = usePostMenuExtras();
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
@@ -231,6 +233,23 @@ export function PostMenu({
               {copied ? t("common.copied") : t("common.copyLink")}
             </button>
           )}
+          {extras.map((extra) => (
+            <button
+              key={extra.key}
+              type="button"
+              role="menuitem"
+              onClick={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                setOpen(false);
+                extra.onSelect();
+              }}
+              className={cn("flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-surface-soft", extra.danger ? "text-danger" : "text-text")}
+            >
+              {extra.icon}
+              {extra.label}
+            </button>
+          ))}
           {collectionRemoval && (
             <>
               <button

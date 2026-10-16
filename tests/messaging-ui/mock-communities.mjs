@@ -252,7 +252,7 @@ export function setupCommunities(db) {
       const pinnedOnly = q.get("pinned_at")?.startsWith("not.is");
       const unpinned = q.get("pinned_at") === "is.null";
       const pid = eq(q, "id");
-      let list = db.posts.filter((p) => p.community_id === cid && (!pid || p.id === pid) && (pinnedOnly ? p.pinned_at : unpinned ? !p.pinned_at : true));
+      let list = db.posts.filter((p) => (!cid || p.community_id === cid) && (!pid || p.id === pid) && (pinnedOnly ? p.pinned_at : unpinned ? !p.pinned_at : true));
       list = list.slice().sort((a, b) => b.created_at.localeCompare(a.created_at));
       const lim = Number(q.get("limit") ?? 0); if (lim) list = list.slice(0, lim);
       return rows(list.map((p) => ({

@@ -8,7 +8,8 @@ import { useCommentCountDelta } from "@/features/prompts/comment-count-store";
 import { contentActionClassName } from "@/features/content/action-styles";
 import { formatCount, absoluteUrl } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import { postHref } from "@/lib/communities";
+import Link from "next/link";
+import { postHref, postPageHref } from "@/lib/communities";
 import type { CommunityPost } from "@/lib/supabase/communities";
 
 /**
@@ -23,11 +24,74 @@ import type { CommunityPost } from "@/lib/supabase/communities";
  */
 export type EngageMode = "open" | "join" | "closed";
 
+/** Gönderinin beğeni düğmesi (kart altbilgisi ve sayfa ortak): üye/ziyaretçi → gerçek beğeni; üye olmayan/kapatılmış → açıklayıcı bildirim. */
+export function PostLike({ post, mode, onToast }: { post: CommunityPost; mode: EngageMode; onToast: (message: string) => void }) {
+  const { t } = useTranslation();
+  if (mode === "open") return <LikeButton id={post.id} likeCount={post.likeCount} contentType="community_post" />;
+  const blockedReason = mode === "join" ? t("communities.post.engage.joinToLike") : t("communities.post.engage.closed");
+  return (
+    <button
+      type="button"
+      onClick={() => onToast(blockedReason)}
+      title={blockedReason}
+      aria-label={t("communities.post.engage.likesAria", { count: post.likeCount })}
+      className={contentActionClassName(false, "opacity-70")}
+    >
+      <Heart size={16} strokeWidth={1.75} />
+      <span aria-hidden>{formatCount(post.likeCount)}</span>
+    </button>
+  );
+}
+
+/** Gönderi yorum sayısı + bağlantı (başvuru sayfasının yorumlarına gider); canlı sayaç `comment-count-store`'dan. */
+export function PostCommentLink({ post }: { post: CommunityPost }) {
+  const { t } = useTranslation();
+  const delta = useCommentCountDelta(post.id);
+  const count = Math.max(0, post.commentCount + delta);
+  return (
+    <Link
+      href={`${postPageHref(post.id)}#comments`}
+      title={t("communities.post.engage.comments")}
+      aria-label={t("communities.post.engage.commentsAria", { count })}
+      className={contentActionClassName(false)}
+    >
+      <MessageCircle size={16} strokeWidth={1.75} />
+      <span aria-hidden>{formatCount(count)}</span>
+    </Link>
+  );
+}
+
+/** Gönderi bağlantısı: başvuru → kendi sayfası; yerel gönderi → akışta o gönderi. */
+export function postShareUrl(post: CommunityPost): string {
+  return absoluteUrl(post.kind === "native" ? postHref(post.communityId, post.id) : postPageHref(post.id));
+}
+
+export function CopyPostLinkButton({ post, onToast }: { post: CommunityPost; onToast: (message: string) => void }) {
+  const { t } = useTranslation();
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(postShareUrl(post));
+      onToast(t("communities.post.engage.linkCopied"));
+    } catch {
+      onToast(t("prompt.copyFailed"));
+    }
+  }
+  return (
+    <button type="button" onClick={() => void copy()} title={t("communities.post.engage.copyLink")} aria-label={t("communities.post.engage.copyLink")} className={contentActionClassName()}>
+      <Link2 size={16} strokeWidth={1.75} />
+    </button>
+  );
+}
+
+/**
+ * Başvuru SAYFASINDAKİ etkileşim: beğeni + yorumlar (varsayılan AÇIK, `#comments`) + bağlantıyı kopyala. Beğeni/yorum gönderinin kendi
+ * kimliğine bağlıdır; orijinal içeriğin sayaçlarına dokunmaz.
+ */
 export function PostEngagement({
   post,
   mode,
   onToast,
-  defaultOpen = false,
+  defaultOpen = true,
   highlightCommentId = null,
 }: {
   post: CommunityPost;
@@ -41,34 +105,10 @@ export function PostEngagement({
   const delta = useCommentCountDelta(post.id);
   const commentCount = Math.max(0, post.commentCount + delta);
 
-  async function copyLink() {
-    try {
-      await navigator.clipboard.writeText(absoluteUrl(postHref(post.communityId, post.id)));
-      onToast(t("communities.post.engage.linkCopied"));
-    } catch {
-      onToast(t("prompt.copyFailed"));
-    }
-  }
-
-  const blockedReason = mode === "join" ? t("communities.post.engage.joinToLike") : t("communities.post.engage.closed");
-
   return (
     <div data-post-engagement={post.id} className="space-y-2">
       <div className="flex items-center gap-0.5 border-t border-border-soft pt-1.5" role="group" aria-label={t("communities.post.engage.sectionAria")}>
-        {mode === "open" ? (
-          <LikeButton id={post.id} likeCount={post.likeCount} contentType="community_post" />
-        ) : (
-          <button
-            type="button"
-            onClick={() => onToast(blockedReason)}
-            title={blockedReason}
-            aria-label={t("communities.post.engage.likesAria", { count: post.likeCount })}
-            className={contentActionClassName(false, "opacity-70")}
-          >
-            <Heart size={16} strokeWidth={1.75} />
-            <span aria-hidden>{formatCount(post.likeCount)}</span>
-          </button>
-        )}
+        <PostLike post={post} mode={mode} onToast={onToast} />
         <button
           type="button"
           onClick={() => setOpen((value) => !value)}
@@ -81,12 +121,10 @@ export function PostEngagement({
           <span aria-hidden>{formatCount(commentCount)}</span>
         </button>
         <span className="ml-auto" />
-        <button type="button" onClick={() => void copyLink()} title={t("communities.post.engage.copyLink")} aria-label={t("communities.post.engage.copyLink")} className={contentActionClassName()}>
-          <Link2 size={16} strokeWidth={1.75} />
-        </button>
+        <CopyPostLinkButton post={post} onToast={onToast} />
       </div>
       {open && (
-        <div id={`post-comments-${post.id}`} className="rounded-lg bg-background/60 p-1 sm:p-2">
+        <div id="comments" className="scroll-mt-20 rounded-lg bg-background/60 p-1 sm:p-2">
           <CommentSection
             target={{ communityPostId: post.id }}
             disabledReason={mode === "open" ? undefined : mode === "join" ? t("communities.post.engage.joinToComment") : t("communities.post.engage.closed")}

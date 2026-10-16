@@ -594,6 +594,13 @@ export async function fetchPinnedPosts(communityId: string): Promise<CommunityPo
   return ((data ?? []) as unknown as PostRow[]).map(mapPostRow);
 }
 
+/** Başvuru sayfası: gönderiyi yalnız kimliğiyle okur (topluluk kimliği bilinmez); okunamıyorsa null. */
+export async function fetchCommunityPostById(postId: string): Promise<CommunityPost | null> {
+  const { data, error } = await supabase.from("community_posts").select(POST_SELECT).eq("id", postId).maybeSingle();
+  if (error) throw toGroupError(error);
+  return data ? mapPostRow(data as unknown as PostRow) : null;
+}
+
 /** Tek bir gönderi (bildirimden / bağlantıdan açılış): okunamıyorsa null. */
 export async function fetchCommunityPost(postId: string, communityId: string): Promise<CommunityPost | null> {
   const { data, error } = await supabase.from("community_posts").select(POST_SELECT).eq("id", postId).eq("community_id", communityId).maybeSingle();
