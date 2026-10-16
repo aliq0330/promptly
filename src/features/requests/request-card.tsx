@@ -83,7 +83,7 @@ export function RequestCard({ request, onDeleted }: { request: PromptRequest; on
               <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-current" />
               {t(STATUS_LABELS[request.status])}
             </Badge>
-            <PostMenu requestId={request.id} authorId={request.author.id} onDeleted={onDeleted} />
+            <PostMenu requestId={request.id} communityId={request.communityId} authorId={request.author.id} onDeleted={onDeleted} />
           </div>
         </div>
 
@@ -112,7 +112,7 @@ export function RequestCard({ request, onDeleted }: { request: PromptRequest; on
         </Link>
         <StatisticsButton target={{ contentType: "request", contentId: request.id, likeCount: request.likeCount, commentCount: request.commentCount }} />
         <span className="ml-auto" />
-        <ShareTriggerButton target={{ contentType: "request", request }} />
+        {!request.communityId && <ShareTriggerButton target={{ contentType: "request", request }} />}
       </div>
     </ContentCard>
   );

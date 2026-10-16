@@ -1,5 +1,5 @@
 "use client";
-import { useCommunityReturn } from "@/features/communities/community-return";
+import { useCommunityContext, useCommunityReturn } from "@/features/communities/community-return";
 import { ToolPicker } from "@/features/content/tool-picker";
 
 import { useEffect, useState, type FormEvent } from "react";
@@ -44,6 +44,7 @@ export function CreateRequestForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const returnToCommunity = useCommunityReturn();
+  const { communityId } = useCommunityContext();
   const { addRequest, updateRequest, getCached, fetchById } = useRealRequests();
   const [draftNotice, setDraftNotice] = useState(false);
   const { user } = useAuth();
@@ -241,6 +242,7 @@ export function CreateRequestForm() {
           tagSources: Object.fromEntries(tagPicker.accepted.map((entry) => [entry.tag.slug, entry.source])),
           images: toDeferredMediaInputs(images),
           visibility,
+          communityId,
         },
         ownProfile,
       );

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCommunityReturn } from "@/features/communities/community-return";
+import { useCommunityContext, useCommunityReturn } from "@/features/communities/community-return";
 import { AlertTriangle, X } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
 import { Tabs } from "@/components/ui/tabs";
@@ -44,6 +44,7 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
   const { t } = useTranslation();
   const router = useRouter();
   const returnToCommunity = useCommunityReturn();
+  const { communityId } = useCommunityContext();
   const { user, loading: authLoading } = useAuth();
   const [rootRef, mode] = useLayoutMode();
 
@@ -202,7 +203,7 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
       const contentTypes = Array.from(new Set([meta.contentType, ...steps.map((step) => step.content?.contentType).filter((type): type is NonNullable<typeof type> => Boolean(type))]));
       const { contentType: _mainType, ...rest } = meta;
       void _mainType;
-      const id = await saveWorkflow({ id: workflowId, ...rest, contentTypes, tags: tagPicker.accepted.map((entry) => entry.tag), status: target, visibility, steps }, user.id);
+      const id = await saveWorkflow({ id: workflowId, ...rest, contentTypes, tags: tagPicker.accepted.map((entry) => entry.tag), status: target, visibility, communityId, steps }, user.id);
       setWorkflowId(id);
       setStatus(target);
       setDirty(false);

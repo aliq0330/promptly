@@ -1,8 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { fetchCommunityCard, publishNativeCommunityPost, type CommunityPostType } from "@/lib/supabase/communities";
-import { GroupActionError, toGroupError } from "@/lib/supabase/chat-groups";
+import { fetchCommunityCard, type CommunityPostType } from "@/lib/supabase/communities";
 import { communityHref } from "@/lib/communities";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -14,11 +13,10 @@ function communityIdFromUrl(): string | null {
 }
 
 /**
- * Topluluk bağlamında içerik oluşturma (`/create?community=<id>` vb.): oluşturma formlarının kullandığı küçük köprü.
- * Parametre ilk açılışta okunur (kaydederken adres `?edit=` ile değişse bile kaybolmaz). Yeni içerik YAYINLANINCA bu toplulukta
- * kendi kimliğiyle bir YEREL gönderi olarak kaydedilir (`publish_native_community_post`): içerik normal görünürlüğünü korur —
- * herkese açıksa herkese, özelse yalnızca bu topluluğu okuyabilenlere görünür. Hata olursa içerik olduğu gibi kalır ve kullanıcı
- * akışta nedenini görür. Her durumda dönüş adresi topluluğun akışıdır; `null` = topluluk bağlamı yok (form eski davranışını sürdürür).
+ * Topluluk bağlamında içerik oluşturma (`/create?mode=prompt&community=<id>` vb.): oluşturma formlarının kullandığı küçük köprü.
+ * İçerik zaten topluluğa ait oluşturulur (`community_id` kolonu — sunucu gönderiyi kendiliğinden ekler, görünürlüğü topluluğa
+ * zorlar); burada yalnızca yayından sonra nereye dönüleceği söylenir: topluluğun akışı. `null` = topluluk bağlamı yok
+ * (form eski davranışını sürdürür). Parametre ilk açılışta okunur (kaydederken adres `?edit=` ile değişse bile kaybolmaz).
  */
 export function useCommunityReturn(): (type: CommunityPostType, contentId: string) => Promise<string | null> {
   const communityRef = useRef<string | null>(null);
@@ -26,18 +24,9 @@ export function useCommunityReturn(): (type: CommunityPostType, contentId: strin
     communityRef.current = communityIdFromUrl();
   }, []);
 
-  return useCallback(async (type, contentId) => {
+  return useCallback(async () => {
     const communityId = communityRef.current;
-    if (!communityId) return null;
-    try {
-      await publishNativeCommunityPost(communityId, type, contentId);
-      return `${communityHref(communityId, "feed")}&shared=1`;
-    } catch (err) {
-      console.error("publishNativeCommunityPost", err);
-      // `callRpc` zaten çevrilmiş bir GroupActionError atar (kodu taşır); başka hata türünde kod çıkarılamaz → "generic".
-      const code = (err instanceof GroupActionError ? err : toGroupError(err instanceof Error ? err : null)).code ?? "generic";
-      return `${communityHref(communityId, "feed")}&shareFailed=${encodeURIComponent(code)}`;
-    }
+    return communityId ? `${communityHref(communityId, "feed")}&shared=1` : null;
   }, []);
 }
 

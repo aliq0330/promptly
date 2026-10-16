@@ -17,6 +17,10 @@ import { ReportModal } from "./report-modal";
 import { ShareToCommunityModal } from "./share-to-community-modal";
 import { CreatePostModal } from "./create-post-modal";
 import { LinkedContent } from "./linked-content";
+import { PromptCard } from "@/features/prompts/prompt-card";
+import { RequestCard } from "@/features/requests/request-card";
+import { WorkflowCard } from "@/features/workflows/workflow-card";
+import { PresetCard } from "@/features/presets/preset-card";
 import { PostEngagement, type EngageMode } from "./post-engagement";
 import type { CommunityTabProps } from "./community-page";
 import {
@@ -58,7 +62,6 @@ export function FeedTab({ group, role, viewerId, onToast, reload }: CommunityTab
   const [shareOpen, setShareOpen] = useState(false);
   const [focusPost, setFocusPost] = useState<CommunityPost | null | undefined>(undefined);
   const [action, setAction] = useState<PostAction | null>(null);
-  const shareFailed = searchParams.get("shareFailed");
   const justShared = searchParams.get("shared") === "1";
   // Bildirim / bağlantıyla gelen: `post=<gönderi kimliği>` ve isteğe bağlı `hl=comment:<yorum kimliği>`.
   const focusId = searchParams.get("post");
@@ -144,11 +147,6 @@ export function FeedTab({ group, role, viewerId, onToast, reload }: CommunityTab
   return (
     <div className="space-y-5">
       {justShared && <p role="status" className="rounded-md bg-success/10 px-3 py-2 text-small text-text">{t("communities.feed.sharedBanner")}</p>}
-      {shareFailed && (
-        <p role="alert" className="rounded-md bg-warning/10 px-3 py-2 text-small text-text">
-          {t("communities.feed.shareFailed")}
-        </p>
-      )}
       {pinAction.error && (
         <p role="alert" className="rounded-md bg-danger/10 px-3 py-2 text-small text-danger">
           {pinAction.error}
@@ -357,6 +355,42 @@ function PostItem({
   // İçerik artık okunamıyorsa (silindi / özel yapıldı) yalnızca yazar ve yetkililer gönderi kaydını görür; diğerleri için gizlenir.
   if (!post.content && !mine && !canModerate) return null;
 
+  // Toplulukta oluşturulan içerik: NORMAL içerik kartı (kendi beğeni/yorum/menüsüyle) — üstte yalnızca topluluk çubuğu (sabit rozeti + topluluk menüsü).
+  if (native && post.content) {
+    const c = post.content;
+    return (
+      <li data-community-post={post.id} data-post-kind="native" className="space-y-1.5">
+        <div className="flex items-center justify-between gap-2 px-1">
+          <p className="flex flex-wrap items-center gap-1.5 text-caption text-text-muted">
+            <Badge variant="default">{t("communities.post.native.badge")}</Badge>
+            {post.pinnedAt && (
+              <Badge variant="default">
+                <Pin size={11} aria-hidden /> {t("communities.announcements.pinned")}
+              </Badge>
+            )}
+            <span>{formatRelativeTime(post.createdAt, language)}</span>
+          </p>
+          {hasMenu && (
+            <DropdownMenu label={t("communities.feed.postMenu")}>
+              {(close) => (
+                <>
+                  {canPin && <MenuItem icon={post.pinnedAt ? <PinOff size={15} /> : <Pin size={15} />} label={post.pinnedAt ? t("communities.feed.unpin") : t("communities.feed.pin")} onClick={() => { close(); onPin(post); }} />}
+                  {role && !mine && <MenuItem icon={<Flag size={15} />} label={t("communities.report.menu")} onClick={() => { close(); onAction({ kind: "report", post }); }} />}
+                  {canModerate && !mine && <MenuItem icon={<ShieldAlert size={15} />} label={t("communities.feed.removeAsStaff")} danger onClick={() => { close(); onAction({ kind: "moderate", post }); }} />}
+                  {mine && <MenuItem icon={<Trash2 size={15} />} label={t("communities.post.native.deleteMine")} danger onClick={() => { close(); onAction({ kind: "delete", post }); }} />}
+                </>
+              )}
+            </DropdownMenu>
+          )}
+        </div>
+        {c.type === "prompt" && <PromptCard prompt={c.data} />}
+        {c.type === "request" && <RequestCard request={c.data} />}
+        {c.type === "workflow" && <WorkflowCard workflow={c.data} />}
+        {c.type === "preset" && <PresetCard preset={c.data} />}
+      </li>
+    );
+  }
+
   return (
     <li data-community-post={post.id} data-post-kind={post.kind} className="space-y-2.5 rounded-xl border border-border-soft bg-surface p-3 shadow-card sm:p-4">
       <div className="flex items-start gap-2.5">
@@ -396,7 +430,7 @@ function PostItem({
       </div>
       {post.note && <p data-post-note className="whitespace-pre-wrap break-words text-small text-text-secondary">{post.note}</p>}
       <LinkedContent post={post} />
-      <PostEngagement post={post} mode={mode} onToast={onToast} defaultOpen={focused} highlightCommentId={focused ? highlightCommentId : null} />
+      {!native && <PostEngagement post={post} mode={mode} onToast={onToast} defaultOpen={focused} highlightCommentId={focused ? highlightCommentId : null} />}
     </li>
   );
 }
@@ -458,8 +492,8 @@ function DeletePostDialog({ post, moderation, onClose, onDone }: { post: Communi
   return (
     <ConfirmDialog
       id="delete-post-title"
-      title={moderation ? t("communities.feed.removeTitle") : t("communities.feed.deleteTitle")}
-      body={moderation ? t("communities.feed.removeBody") : t("communities.feed.deleteBody")}
+      title={post.kind === "native" ? t("communities.post.native.deleteTitle") : moderation ? t("communities.feed.removeTitle") : t("communities.feed.deleteTitle")}
+      body={post.kind === "native" ? (moderation ? t("communities.post.native.removeBody") : t("communities.post.native.deleteBody")) : moderation ? t("communities.feed.removeBody") : t("communities.feed.deleteBody")}
       confirmLabel={moderation ? t("communities.feed.removeConfirm") : t("common.delete")}
       danger
       busy={busy}

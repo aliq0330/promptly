@@ -215,7 +215,7 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
                 <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-current" />
                 {t(STATUS_LABELS[live.status])}
               </Badge>
-              <PostMenu requestId={live.id} authorId={live.author.id} onDeleted={handleDeleted} />
+              <PostMenu requestId={live.id} communityId={live.communityId} authorId={live.author.id} onDeleted={handleDeleted} />
             </div>
           </div>
           <DetailTitle>{live.title}</DetailTitle>
@@ -239,7 +239,7 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
           "Kopyala" yok (Prompt İsteği'ne özel olarak kaldırıldı, genel
           Prompt sistemindeki Kopyala butonuna dokunulmadı).
         */}
-        <DetailActionBar trailing={<ShareTriggerButton target={{ contentType: "request", request: live }} label={t("common.share")} />}>
+        <DetailActionBar trailing={live.communityId ? undefined : <ShareTriggerButton target={{ contentType: "request", request: live }} label={t("common.share")} />}>
           <LikeButton id={live.id} likeCount={live.likeCount} contentType="request" size={18} />
           <CommentCountLink requestId={live.id} baseCount={live.commentCount} size={18} />
           <a

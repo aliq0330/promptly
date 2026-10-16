@@ -32,7 +32,7 @@ export function setupCommunities(db) {
   };
   db.addPost = (communityId, { author = U.bob, type = "prompt", title = "Gün batımı promptu", note = null, pinned = false, gone = false, kind = "application", visibility = "public", likeCount = 0, commentCount = 0 } = {}) => {
     const pid = crypto.randomUUID();
-    const row = { id: crypto.randomUUID(), community_id: communityId, author_id: author.id, kind, like_count: likeCount, comment_count: commentCount, content_type: type, note, pinned_at: pinned ? db.stamp() : null, created_at: db.stamp(), content: gone ? null : { id: pid, title, visibility } };
+    const row = { id: crypto.randomUUID(), community_id: communityId, author_id: author.id, kind, like_count: likeCount, comment_count: commentCount, content_type: type, note, pinned_at: pinned ? db.stamp() : null, created_at: db.stamp(), content: gone ? null : { id: pid, title, visibility, communityId: kind === "native" ? communityId : null } };
     db.posts.push(row);
     db.groups.find((g) => g.id === communityId).post_count += 1;
     return row;
@@ -40,7 +40,7 @@ export function setupCommunities(db) {
 
   const promptRow = (c, author) => ({
     id: c.id, title: c.title, description: "açıklama", prompt_text: "metin", tool: null, tools: [], content_type: "text", category: null, subcategory: null, status: "published", origin_type: "original", request_id: null,
-    like_count: 0, save_count: 0, comment_count: 0, copy_count: 0, created_at: "2026-02-01T00:00:00Z", show_on_profile: true, requires_reference_image: false, requires_reference_video: false, requires_reference_audio: false, visibility: c.visibility ?? "public", deleted_at: null,
+    like_count: 0, save_count: 0, comment_count: 0, copy_count: 0, created_at: "2026-02-01T00:00:00Z", show_on_profile: true, requires_reference_image: false, requires_reference_video: false, requires_reference_audio: false, visibility: c.visibility ?? "public", deleted_at: null, community_id: c.communityId ?? null,
     profiles: pub(author), prompt_media: [], prompt_tags: [],
   });
 
@@ -274,25 +274,18 @@ export function setupCommunities(db) {
       post.content = { id: own.id, title: own.title, visibility: own.visibility };
       return json(200, post.id);
     }
-    // Yerel gönderi: içerik normal ekranda oluşturulup yayınlandıktan sonra (sahibinin kendi içeriği; özel de olabilir).
-    if (table === "rpc/publish_native_community_post") {
-      log("publish_native_community_post", body);
-      const x = g(body.p_group_id);
-      if (!db.member(x.id, signedIn)) return err("forbidden");
-      if (x.closed_at) return err("community_closed");
-      const own = db.ownContent[body.p_content_type]?.find((c) => c.id === body.p_content_id);
-      if (!own) return err("content_not_found");
-      if (own.draft) return err("content_not_published");
-      if (db.posts.some((p) => p.kind === "native" && p.content?.id === own.id)) return err("already_shared");
-      const post = db.addPost(x.id, { author: userById(signedIn), type: body.p_content_type, title: own.title, kind: "native" });
-      post.content = { id: own.id, title: own.title, visibility: own.visibility };
-      return json(200, post.id);
-    }
-
     // Oluşturma formu: yeni istek kaydı (yalnızca kimlik/zaman döner); kayıt, yerel gönderi RPC'sinin "sahibinin içeriği" listesine girer.
     if (table === "prompt_requests" && method === "POST") {
-      const created = { id: body.id, title: body.title, visibility: body.visibility, draft: Boolean(body.is_draft) };
-      db.ownContent.request.push(created);
+      // Topluluğa özgü içerik (docs/history/179-*): sunucu görünürlüğü private'a zorlar, taslağı reddeder, akış gönderisini kendiliğinden ekler.
+      if (body.community_id) {
+        const x = g(body.community_id);
+        if (!x || !db.member(x.id, signedIn)) return json(403, { code: "P0001", message: "forbidden", details: "", hint: "" });
+        if (body.is_draft) return json(400, { code: "P0001", message: "community_draft_not_allowed", details: "", hint: "" });
+        if (x.closed_at) return json(400, { code: "P0001", message: "community_closed", details: "", hint: "" });
+        const post = db.addPost(x.id, { author: userById(signedIn), type: "request", title: body.title, kind: "native", visibility: "private" });
+        post.content = { id: body.id, title: body.title, visibility: "private" };
+      }
+      db.ownContent.request.push({ id: body.id, title: body.title, visibility: body.visibility, draft: Boolean(body.is_draft) });
       return json(201, { id: body.id, created_at: db.stamp() });
     }
 

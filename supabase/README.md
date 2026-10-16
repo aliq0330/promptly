@@ -920,3 +920,9 @@ güncellenmesi gereken tek satır burası.
 - **Canlıya uygulanmadı.** Sıra: `20260920080000` → bu dosya → istemci kodu (eski istemci gönderi sayaçlarını/`kind`'ı bilmez, yeni istemci bu sütunlara ve RPC'ye ihtiyaç duyar).
 - Yerel doğrulama: `supabase/tests/run-local.sh supabase/tests/community-post-engagement.sql` (57 kontrol, `FAILED=0`).
 
+## Topluluğa özgü içerik (`docs/history/179-*`)
+
+- `20260920100000_community_content.sql`: `prompts` / `prompt_requests` / `workflows` / `presets`.`community_id` (FK → `chat_groups`, `ON DELETE CASCADE`) + dizinler; dört ana tablonun SELECT politikası `can_read_community(community_id)`'ı kabul eder (yazar topluluğu okuyamıyorsa kendi topluluk içeriğini de okuyamaz); yorum SELECT/INSERT politikasında istek yorumları isteğin RLS'ini miras alır (özel/topluluk isteklerinin yorumları sızıyordu); yeni `enforce_community_content` (görünürlüğü private'a zorlar, taslak/geçiş/üyelik/kapatılmış topluluk/akış politikası/günlük sınır), `create_community_content_post` (AFTER INSERT → `community_posts` kind='native'), `enforce_community_content_engagement` + `enforce_community_comment_like` (yalnız üye beğenir/yorumlar), `block_community_content_save` (koleksiyona kaydedilemez), `_delete_native_community_content`; `delete_community_post` / `moderate_community_post` yerel gönderide içeriği siler; `publish_native_community_post` çalıştırılamaz (EXECUTE kapalı, fonksiyon yerinde); `search_content` `community_id is null` süzer. Tüm yeni fonksiyonlardan `anon`/`authenticated` EXECUTE kaldırıldı.
+- Yalnızca ekleyici/değiştirici: hiçbir tablo/sütun/veri düşürülmez. **Canlıya uygulanmadı.** Sıra: `20260920090000` (canlıda) → bu dosya → istemci kodu.
+- Yerel doğrulama: `supabase/tests/run-local.sh supabase/tests/community-content.sql` (41 kontrol, `FAILED=0`).
+

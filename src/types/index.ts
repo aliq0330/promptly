@@ -114,6 +114,8 @@ export interface Prompt {
    * blank content. `null` for a normal prompt.
    */
   deletedAt: string | null;
+  /** Topluluğa özgü içerik: doluysa içerik yalnız o topluluğun okuyucularına görünür; profilde/aramada/koleksiyonda yer almaz (`docs/history/179-*`). */
+  communityId?: string | null;
 }
 
 /**
@@ -251,6 +253,8 @@ export interface PromptRequest {
   isDraft?: boolean;
   /** "Herkese açık" / "Sadece ben" — `prompt_requests.visibility`; absent = public. */
   visibility?: ContentVisibility;
+  /** Topluluğa özgü içerik: doluysa içerik yalnız o topluluğun okuyucularına görünür; profilde/aramada/koleksiyonda yer almaz (`docs/history/179-*`). */
+  communityId?: string | null;
 }
 
 export type NotificationType =
@@ -834,6 +838,8 @@ export interface Workflow {
   tags: Tag[];
   createdAt: string;
   updatedAt: string;
+  /** Topluluğa özgü içerik: doluysa içerik yalnız o topluluğun okuyucularına görünür; profilde/aramada/koleksiyonda yer almaz (`docs/history/179-*`). */
+  communityId?: string | null;
 }
 
 /**
@@ -873,4 +879,6 @@ export interface Preset {
   tags: Tag[];
   createdAt: string;
   updatedAt: string;
+  /** Topluluğa özgü içerik: doluysa içerik yalnız o topluluğun okuyucularına görünür; profilde/aramada/koleksiyonda yer almaz (`docs/history/179-*`). */
+  communityId?: string | null;
 }

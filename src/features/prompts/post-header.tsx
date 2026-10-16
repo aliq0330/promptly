@@ -55,6 +55,7 @@ export function PostHeader({
       {target.preset ? (
         <PostMenu
           presetId={target.preset.id}
+          communityId={target.preset.communityId}
           authorId={target.preset.creator.id}
           onDeleted={onDeleted}
           collectionRemoval={collectionRemoval}
@@ -62,6 +63,7 @@ export function PostHeader({
       ) : target.workflow ? (
         <PostMenu
           workflowId={target.workflow.id}
+          communityId={target.workflow.communityId}
           authorId={target.workflow.creator.id}
           onDeleted={onDeleted}
           collectionRemoval={collectionRemoval}
@@ -69,6 +71,7 @@ export function PostHeader({
       ) : (
         <PostMenu
           promptId={target.prompt.id}
+          communityId={target.prompt.communityId}
           authorId={target.prompt.author.id}
           onDeleted={onDeleted}
           collectionRemoval={collectionRemoval}

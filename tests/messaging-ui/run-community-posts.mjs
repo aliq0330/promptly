@@ -90,24 +90,30 @@ await scenario("2b. Notsuz başvuru gönderisinde not alanı hiç bulunmaz", asy
 }, { setup: (db) => { seed(db, { myRole: "member" }); db.addPost(C1, { title: "Notsuz içerik", note: null }); } });
 
 // 3
-await scenario("3. Yerel gönderi: 'Yeni içerik' rozeti ve 'bu toplulukta … oluşturdu'; başvuru etiketi YOK; 'İçeriği aç'; özel içerikte 'Yalnızca bu topluluk'", async ({ page }) => {
+await scenario("3. Yerel (topluluğa özgü) içerik: akışta NORMAL içerik kartı (kendi beğeni/yorumuyla); ayrı gönderi etkileşimi, 'başvuru' etiketi ve kaydet/paylaş YOK; yazara 'İçeriğimi sil'", async ({ page }) => {
   await open(page, C1);
   const card = post(page, "Yerel prompt");
-  await card.getByText("Yeni içerik", { exact: true }).waitFor();
-  await card.getByText("bu toplulukta bir prompt oluşturdu").waitFor();
+  await card.getByText("Topluluk içeriği", { exact: true }).waitFor();
   assert.equal(await card.getByText("Başvurulan içerik").count(), 0);
-  await card.getByText("İçeriği aç").waitFor();
-  await card.getByText("Yalnızca bu topluluk").waitFor();
-  const other = post(page, "Genel prompt");
-  assert.equal(await other.getByText("Yalnızca bu topluluk").count(), 0, "a public native item is not labeled community-only");
-  assert.equal(await card.getByRole("button", { name: "Topluluk gönderisi seçenekleri" }).count(), 1);
-}, { setup: (db) => { seed(db, { myRole: "member" }); db.addPost(C1, { title: "Yerel prompt", kind: "native", visibility: "private" }); db.addPost(C1, { title: "Genel prompt", kind: "native", visibility: "public" }); } });
+  assert.equal(await card.getByText("Orijinal içeriği aç").count(), 0);
+  assert.equal(await card.locator("[data-post-engagement]").count(), 0, "native content uses the content's OWN like/comment, not a second engagement bar");
+  const normalCard = card.locator("article").first();
+  await normalCard.waitFor();
+  await normalCard.getByRole("button", { name: /beğen/i }).first().waitFor();
+  assert.equal(await normalCard.getByRole("button", { name: /Kaydet/i }).count(), 0, "community content can't be saved");
+  assert.equal(await normalCard.getByRole("button", { name: /Paylaş/i }).count(), 0, "community content can't be shared outside");
+  const heading = await normalCard.getByRole("link", { name: "Yerel prompt" }).getAttribute("href");
+  assert.match(heading ?? "", /prompts\/local\/?\?id=/);
+  await card.getByRole("button", { name: "Topluluk gönderisi seçenekleri" }).first().click();
+  await page.getByRole("menuitem", { name: "İçeriğimi sil" }).waitFor();
+  assert.equal(await page.getByRole("menuitem", { name: "Notu düzenle" }).count(), 0);
+}, { setup: (db) => { seed(db, { myRole: "member" }); db.addPost(C1, { author: U.alice, title: "Yerel prompt", kind: "native", visibility: "private" }); } });
 
 await scenario("3b. Eski (legacy) gönderi: tür rozeti TAHMİN EDİLMEZ, başvuru gibi gösterilir", async ({ page }) => {
   await open(page, C1);
   const card = post(page, "Eski gönderi");
   await card.waitFor();
-  assert.equal(await card.getByText("Yeni içerik", { exact: true }).count(), 0);
+  assert.equal(await card.getByText("Topluluk içeriği", { exact: true }).count(), 0);
   assert.equal(await card.getByText("Başvuru", { exact: true }).count(), 0);
   await card.getByText("bir prompt paylaştı").waitFor();
   await card.getByText("Orijinal içeriği aç").waitFor();
@@ -223,69 +229,65 @@ await scenario("11. İçeriği erişilemeyen (silinmiş/özel) başvuru: yazara 
 }, { setup: (db) => { seed(db, { myRole: "member" }); db.addPost(C1, { author: U.bob, title: "Başkasının kaybolan", gone: true }); const m = db.addPost(C1, { author: U.alice, title: "Benim kaybolan", gone: true }); m.content = null; } });
 
 // 12
-await scenario("12. Yetki: yerel gönderide 'notu düzenle' yok; başvuruda var; başkasının gönderisinde yazar menüsü yok", async ({ page }) => {
+await scenario("12. Yetki: yerel içerikte 'notu düzenle' yok, başvuruda var; üye başkasının içeriğinde yönetici kaldırması yok, 'bildir' var", async ({ page }) => {
   await open(page, C1);
   const native = post(page, "Yerel yazar");
-  await native.getByRole("button", { name: "Topluluk gönderisi seçenekleri" }).click();
+  await native.getByRole("button", { name: "Topluluk gönderisi seçenekleri" }).first().click();
   assert.equal(await page.getByRole("menuitem", { name: "Notu düzenle" }).count(), 0);
+  await page.getByRole("menuitem", { name: "İçeriğimi sil" }).waitFor();
   await page.keyboard.press("Escape");
   const app = post(page, "Başvuru yazar");
   await app.getByRole("button", { name: "Topluluk gönderisi seçenekleri" }).click();
   await page.getByRole("menuitem", { name: "Notu düzenle" }).waitFor();
+  await page.keyboard.press("Escape");
+  const theirs = post(page, "Başkasının yerel");
+  await theirs.getByRole("button", { name: "Topluluk gönderisi seçenekleri" }).first().click();
+  await page.getByRole("menuitem", { name: "Topluluk yöneticilerine bildir" }).waitFor();
   assert.equal(await page.getByRole("menuitem", { name: /Gönderiyi kaldır \(yönetici\)/ }).count(), 0, "a member never gets staff removal");
-}, { setup: (db) => { seed(db, { myRole: "member" }); db.addPost(C1, { author: U.alice, title: "Yerel yazar", kind: "native" }); db.addPost(C1, { author: U.alice, title: "Başvuru yazar", kind: "application", note: "n" }); } });
+}, { setup: (db) => { seed(db, { myRole: "member" }); db.addPost(C1, { author: U.alice, title: "Yerel yazar", kind: "native" }); db.addPost(C1, { author: U.alice, title: "Başvuru yazar", kind: "application", note: "n" }); db.addPost(C1, { author: U.bob, title: "Başkasının yerel", kind: "native" }); } });
 
 // 13 — oluşturma ekranı topluluk bağlamı
-await scenario("13. Oluşturma ekranı topluluk bağlamıyla açılınca: hangi toplulukta yayınlanacağı yazar, görünürlük dili topluluğa uyar (yeni görünürlük değeri YOK)", async ({ page }) => {
+await scenario("13. Oluşturma ekranı topluluk bağlamıyla açılınca: içeriğin topluluğa özgü olduğu yazar; görünürlük anahtarı ve 'Taslağa kaydet' YOK; bağlam yokken ikisi de var", async ({ page }) => {
   await page.goto(`${BASE}/requests/new?community=${C1}`);
   await page.locator("[data-community-context]").waitFor();
-  await page.getByText(/“Prompt Atölyesi” topluluğunun akışında kendi gönderisi/).waitFor();
-  const sw = page.locator("[data-visibility-switch] [role=switch]");
-  await sw.waitFor();
-  await page.getByText("Topluluk gönderisi olur; herkes görebilir").waitFor();
-  await sw.click();
-  await page.getByText("Yalnızca topluluk", { exact: true }).waitFor();
-  await page.getByText(/Prompt Atölyesi topluluğunu okuyabilenler görebilir/).waitFor();
-  assert.equal(await page.getByText("Sadece ben", { exact: true }).count(), 0, "community context never says 'only me'");
-  // topluluk bağlamı yokken eski dil
+  await page.getByText(/“Prompt Atölyesi” topluluğuna özgü/).waitFor();
+  await page.getByText(/profilinde, aramada ve Keşfet'te çıkmaz/).waitFor();
+  assert.equal(await page.locator("[data-visibility-switch]").count(), 0, "visibility is not a choice for community content");
+  assert.equal(await page.locator("[data-create-form-actions] [data-action=save-draft]").count(), 0, "community content can't be a draft");
+  await page.locator("[data-create-form-actions] [data-action=publish]").waitFor();
   await page.goto(`${BASE}/requests/new`);
-  await page.locator("[data-visibility-switch] [role=switch]").click();
-  await page.getByText("Sadece ben", { exact: true }).waitFor();
+  await page.locator("[data-visibility-switch] [role=switch]").waitFor();
+  await page.locator("[data-create-form-actions] [data-action=save-draft]").waitFor();
   assert.equal(await page.locator("[data-community-context]").count(), 0);
 }, { setup: (db) => seed(db, { myRole: "member" }) });
 
-await scenario("13b. Yayınlama: topluluk bağlamlı NORMAL istek formundan yayınlayınca yerel gönderi RPC'si çağrılır (içerik özel de olabilir) ve akışa dönülür; taslak topluluğa gönderilmez", async ({ page, db }) => {
+await scenario("13b. Yayınlama: topluluk bağlamlı NORMAL istek formu içeriği doğrudan `community_id` ile kaydeder (ayrı RPC YOK), akış gönderisi kendiliğinden oluşur ve akışa dönülür", async ({ page, db }) => {
   await page.goto(`${BASE}/requests/new?community=${C1}`);
   await page.locator("[data-community-context]").waitFor();
   await page.locator("#request-title").fill("Topluluğa özel istek");
   await page.locator("#request-description").fill("Bu topluluk için bir stil isteği");
-  await page.locator("[data-visibility-switch] [role=switch]").click(); // → yalnızca topluluk (private)
   await page.locator("[data-create-form-actions] [data-action=publish]").click();
   await page.waitForURL(/communities\/local\/?\?id=.*shared=1/);
   const inserted = calls(db, "prompt_requests", "POST");
   assert.equal(inserted.length, 1);
-  assert.equal(inserted[0].body.visibility, "private", "the existing visibility value is kept; no new value is invented");
-  const native = calls(db, "publish_native_community_post", "RPC");
-  assert.equal(native.length, 1);
-  assert.equal(native[0].body.p_group_id, C1);
-  assert.equal(native[0].body.p_content_type, "request");
-  assert.equal(native[0].body.p_content_id, inserted[0].body.id);
-  assert.equal(calls(db, "share_to_community", "RPC").length, 0, "native publishing never goes through the application RPC");
+  assert.equal(inserted[0].body.community_id, C1, "the content is created INSIDE the community");
+  assert.equal(inserted[0].body.is_draft, false);
+  assert.equal(calls(db, "publish_native_community_post", "RPC").length, 0, "no second step: the server creates the feed post");
+  assert.equal(calls(db, "share_to_community", "RPC").length, 0, "native content never goes through the application RPC");
   await page.getByText("İçeriğin yayınlandı ve toplulukta paylaşıldı.").waitFor();
-  const card = page.locator('li[data-community-post][data-post-kind="native"]').first();
-  await card.getByText("Yeni içerik", { exact: true }).waitFor();
+  assert.equal(db.posts.filter((p) => p.kind === "native").length, 1);
+  await page.locator('li[data-community-post][data-post-kind="native"]').first().waitFor();
 }, { setup: (db) => seed(db, { myRole: "member" }) });
 
-await scenario("13c. Yayınlama başarısız olursa (ör. içerik yeni sayılmıyor): içerik kaybolmaz, akışta nedenini anlatan uyarı gösterilir", async ({ page, db }) => {
-  db.rpc.publish_native_community_post = () => ({ status: 400, body: { code: "P0001", message: "content_not_new", details: "", hint: "" } });
-  await page.goto(`${BASE}/requests/new?community=${C1}`);
-  await page.locator("#request-title").fill("Gecikmiş istek");
-  await page.locator("#request-description").fill("Bu isteğin açıklaması yeterince uzun bir metindir");
+await scenario("13c. Normal (topluluk bağlamsız) istek formu `community_id` göndermez", async ({ page, db }) => {
+  await page.goto(`${BASE}/requests/new`);
+  await page.locator("#request-title").fill("Normal istek");
+  await page.locator("#request-description").fill("Bu normal bir isteğin yeterince uzun açıklamasıdır");
   await page.locator("[data-create-form-actions] [data-action=publish]").click();
-  await page.waitForURL(/shareFailed=content_not_new/);
-  await page.getByText(/toplulukta gönderi olarak eklenemedi/).waitFor();
-  assert.equal(calls(db, "prompt_requests", "POST").length, 1, "the content itself was saved");
-  assert.equal(db.posts.length, 0);
+  await page.waitForURL(/requests\/local/);
+  const inserted = calls(db, "prompt_requests", "POST");
+  assert.equal(inserted.length, 1);
+  assert.ok(!inserted[0].body.community_id, "ordinary content stays ordinary");
 }, { setup: (db) => seed(db, { myRole: "member" }) });
 
 await scenario("13d. Prompt: /create?mode=prompt&community= ve yalnız ?community= seçim ekranına DÜŞMEDEN doğrudan prompt formunu açar; seçim ekranından da topluluk bağlamı seçilen türe taşınır", async ({ page }) => {
@@ -297,17 +299,14 @@ await scenario("13d. Prompt: /create?mode=prompt&community= ve yalnız ?communit
 }, { setup: (db) => seed(db, { myRole: "member" }) });
 
 // 14 — i18n
-await scenario("14. İngilizce: Create post / Apply an existing item / Application / New content / post engagement metinleri", async ({ page }) => {
+await scenario("14. İngilizce: Create post / Apply an existing item / Application / Community content / post engagement metinleri", async ({ page }) => {
   await open(page, C1);
   const app = post(page, "App post");
   await app.getByText("Application", { exact: true }).waitFor();
   await app.getByText("Applied content").waitFor();
   await app.getByText("Open the original").waitFor();
   const nat = post(page, "Native post");
-  await nat.getByText("New content", { exact: true }).waitFor();
-  await nat.getByText("created a prompt in this community").waitFor();
-  await nat.getByRole("button", { name: /Post comments/ }).click();
-  await nat.getByText("Join the community to comment.").waitFor().catch(() => undefined);
+  await nat.getByText("Community content", { exact: true }).waitFor();
   await page.getByRole("button", { name: "Create post" }).click();
   await dlg(page).getByRole("button", { name: /Create new content/ }).waitFor();
   await dlg(page).getByRole("button", { name: /Apply an existing item/ }).waitFor();

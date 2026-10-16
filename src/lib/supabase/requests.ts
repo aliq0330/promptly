@@ -39,6 +39,7 @@ export interface RequestRow {
   deleted_at: string | null;
   is_draft: boolean;
   visibility: "public" | "private";
+  community_id?: string | null;
   profiles: ProfileRow;
   prompt_request_tags: { tags: { slug: string; label: string } }[];
   prompt_request_media: { id: string; url: string; width: number; height: number; alt: string | null; position: number }[];
@@ -47,7 +48,7 @@ export interface RequestRow {
 export const REQUEST_SELECT = `
   id, title, description, creative_direction, preferred_tool, tools, content_type, category, subcategory,
   reference_image_url, reference_image_width, reference_image_height,
-  status, selected_response_prompt_id, response_count, like_count, comment_count, created_at, deleted_at, is_draft, visibility,
+  status, selected_response_prompt_id, response_count, like_count, comment_count, created_at, deleted_at, is_draft, visibility, community_id,
   profiles:author_id ( id, username, display_name, avatar_url, cover_url, bio, website, follower_count, following_count, created_at, interests ),
   prompt_request_tags ( tags ( slug, label ) ),
   prompt_request_media ( id, url, width, height, alt, position )
@@ -108,6 +109,7 @@ export function mapRequestRow(row: RequestRow): PromptRequest {
     deletedAt: row.deleted_at,
     isDraft: row.is_draft ?? false,
     visibility: row.visibility ?? "public",
+    communityId: row.community_id ?? null,
   };
 }
 
@@ -129,6 +131,7 @@ export async function fetchRecentRequests(limit = 24, cursor?: KeysetCursor): Pr
       supabase
         .from("prompt_requests")
         .select(REQUEST_SELECT)
+        .is("community_id", null)
         .order("created_at", { ascending: false })
         .order("id", { ascending: false })
         .limit(limit),
@@ -206,6 +209,7 @@ export async function fetchRequestsByAuthor(authorId: string): Promise<PromptReq
       .from("prompt_requests")
       .select(REQUEST_SELECT)
       .eq("author_id", authorId)
+      .is("community_id", null)
       .order("created_at", { ascending: false });
     if (error) {
       console.error("fetchRequestsByAuthor", error);
@@ -219,6 +223,8 @@ export async function fetchRequestsByAuthor(authorId: string): Promise<PromptReq
 }
 
 export interface CreateRealRequestInput {
+  /** Topluluğa özgü içerik: yalnız YENİ kayıtta gönderilir (`?community=`); sunucu görünürlüğü private'a zorlar, taslağa ve sonradan değiştirmeye izin vermez. */
+  communityId?: string | null;
   title: string;
   description: string;
   creativeDirection: string;
@@ -282,6 +288,7 @@ export async function createRealRequest(
       reference_image_height: resolved[0]?.height ?? null,
       is_draft: input.isDraft ?? false,
       visibility: input.visibility ?? "public",
+      community_id: input.communityId ?? null,
     })
     .select("id, created_at")
     .single();

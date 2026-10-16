@@ -23,6 +23,7 @@ export interface PresetRow {
   selection: PresetSelection | null;
   status: "draft" | "published";
   visibility: "public" | "private";
+  community_id?: string | null;
   like_count: number | null;
   comment_count: number | null;
   save_count: number | null;
@@ -33,7 +34,7 @@ export interface PresetRow {
 }
 
 export const PRESET_SELECT = `
-  id, creator_id, title, description, cover_url, content_type, category, subcategory, tools, selection, status, visibility,
+  id, creator_id, title, description, cover_url, content_type, category, subcategory, tools, selection, status, visibility, community_id,
   like_count, comment_count, save_count, created_at, updated_at,
   profiles:creator_id ( ${PROFILE_SELECT} ),
   preset_tags ( tags ( slug, label ) )
@@ -54,6 +55,7 @@ export function mapPresetRow(row: PresetRow): Preset {
     selection: row.selection && typeof row.selection === "object" ? row.selection : {},
     status: row.status,
     visibility: row.visibility,
+    communityId: row.community_id ?? null,
     likeCount: row.like_count ?? 0,
     commentCount: row.comment_count ?? 0,
     saveCount: row.save_count ?? 0,
@@ -161,6 +163,7 @@ export async function fetchRecentPresets(limit = 24, cursor?: KeysetCursor): Pro
         .select(PRESET_SELECT)
         .eq("status", "published")
         .eq("visibility", "public")
+        .is("community_id", null)
         .order("created_at", { ascending: false })
         .order("id", { ascending: false })
         .limit(limit),
@@ -235,6 +238,7 @@ export async function fetchPresetsByCreator(creatorId: string): Promise<Preset[]
       .from("presets")
       .select(PRESET_SELECT)
       .eq("creator_id", creatorId)
+      .is("community_id", null)
       .order("created_at", { ascending: false });
     if (error) {
       console.error("fetchPresetsByCreator", error);
@@ -320,6 +324,8 @@ export interface SavePresetInput {
   tags: Tag[];
   status: "draft" | "published";
   visibility: "public" | "private";
+  /** Topluluğa özgü içerik: yalnız YENİ kayıtta gönderilir (`?community=`); sunucu görünürlüğü private'a zorlar, taslağa ve sonradan değiştirmeye izin vermez. */
+  communityId?: string | null;
 }
 
 /**
@@ -361,7 +367,7 @@ export async function savePreset(input: SavePresetInput, creatorId: string): Pro
   } else {
     const { data, error } = await supabase
       .from("presets")
-      .insert({ ...columns, title, description, selection: input.selection, creator_id: creatorId })
+      .insert({ ...columns, title, description, selection: input.selection, creator_id: creatorId, community_id: input.communityId ?? null })
       .select("id")
       .single();
     if (error) throw new Error(error.message);
