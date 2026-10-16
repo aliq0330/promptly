@@ -51,8 +51,8 @@ await scenario("1. 'Gönderi oluştur' iki yol sunar: yeni içerik (dört tür �
   await d.getByRole("button", { name: /Yeni içerik oluştur/ }).click();
   const hrefs = await d.locator("a[data-post-new-type]").evaluateAll((els) => els.map((a) => [a.dataset.postNewType, a.getAttribute("href")]));
   assert.deepEqual(hrefs.map(([t]) => t), ["prompt", "request", "workflow", "preset"]);
-  const expected = { prompt: "/create", request: "/requests/new", workflow: "/workflows/create", preset: "/presets/create" };
-  for (const [type, href] of hrefs) assert.ok(href.replace("/promptly", "").replace(/\/\?/, "?") === `${expected[type]}?community=${C1}`, `${type} opens the EXISTING creation screen with the community context: ${href}`);
+  const expected = { prompt: "/create?mode=prompt", request: "/requests/new", workflow: "/workflows/create", preset: "/presets/create" };
+  for (const [type, href] of hrefs) assert.ok(href.replace("/promptly", "").replace(/\/\?/, "?") === `${expected[type]}${expected[type].includes("?") ? "&" : "?"}community=${C1}`, `${type} opens the EXISTING creation screen with the community context: ${href}`);
   await d.getByRole("button", { name: "Geri" }).click();
   await d.getByRole("button", { name: /Mevcut içeriğe başvur/ }).click();
   await dlg(page).getByText("Mevcut içeriğe başvur", { exact: true }).waitFor();
@@ -286,6 +286,14 @@ await scenario("13c. Yayınlama başarısız olursa (ör. içerik yeni sayılmı
   await page.getByText(/toplulukta gönderi olarak eklenemedi/).waitFor();
   assert.equal(calls(db, "prompt_requests", "POST").length, 1, "the content itself was saved");
   assert.equal(db.posts.length, 0);
+}, { setup: (db) => seed(db, { myRole: "member" }) });
+
+await scenario("13d. Prompt: /create?mode=prompt&community= ve yalnız ?community= seçim ekranına DÜŞMEDEN doğrudan prompt formunu açar; seçim ekranından da topluluk bağlamı seçilen türe taşınır", async ({ page }) => {
+  for (const url of [`/create?mode=prompt&community=${C1}`, `/create?community=${C1}`]) {
+    await page.goto(`${BASE}${url}`);
+    await page.locator("[data-community-context]").waitFor();
+    assert.equal(await page.getByText("Ne oluşturmak istersin?").count(), 0, `${url} must not show the type picker`);
+  }
 }, { setup: (db) => seed(db, { myRole: "member" }) });
 
 // 14 — i18n
