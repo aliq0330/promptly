@@ -312,7 +312,7 @@ Kalıplar (yeni migration yazarken uy):
 ## 9. Güncel Durum ve Açık İşler
 
 **Durum:** Uygulama uçtan uca gerçek Supabase verisiyle çalışır.
-Canlı projede (kontrol: bu oturum) 19 profil (18 demo hesap), 148 prompt,
+Canlı projede (kontrol: bu oturum) 20 profil (18 demo hesap), 148 prompt (+43 topluluğa özgü), 15 topluluk (aliq sahip; `docs/history/182-*`),
 39 istek, 12 workflow, 35 hazır ayar, 802 DNA bölümü bulunur; içerik
 `supabase/seed/` altındaki viral/topluluk seed'lerinden gelir. Bölüm 1–8
 bağlayıcıdır; ayrıntılı gerekçe için `docs/history/README.md` tablosuna bak.
@@ -382,5 +382,5 @@ bağlayıcıdır; ayrıntılı gerekçe için `docs/history/README.md` tablosuna
   isteğin `creative_direction`'ını da kapsar ve keyset sayfalanır (`search_content`); `prompt_saves` canlıdan kaldırıldı; kod içi
   yorumlarda eski "Bölüm 9.x" atıfları arşiv numaralarına (`docs/history/NNN-*`) karşılık gelir.
 
-**Arşiv:** [`docs/history/README.md`](docs/history/README.md) — 181 bölüm, her
+**Arşiv:** [`docs/history/README.md`](docs/history/README.md) — 182 bölüm, her
 biri için durum etiketi (uygulandı / kısmen geçerli / kaldırıldı).
