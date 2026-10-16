@@ -13,6 +13,8 @@ export function setupCommunities(db) {
   db.announcements = [];
   db.events = []; // { ...row, rsvps: {userId: status} }
   db.reports = [];
+  db.likes = []; // { community_post_id, user_id }
+  db.comments = []; // { id, community_post_id | prompt_id, author_id, body, parent_id, created_at }
   db.audit = [];
   db.acceptances = [];
   db.stats = null;
@@ -28,9 +30,9 @@ export function setupCommunities(db) {
     g.member_count = db.members.filter((m) => m.conversation_id === id).length;
     return g;
   };
-  db.addPost = (communityId, { author = U.bob, type = "prompt", title = "Gün batımı promptu", note = null, pinned = false, gone = false } = {}) => {
+  db.addPost = (communityId, { author = U.bob, type = "prompt", title = "Gün batımı promptu", note = null, pinned = false, gone = false, kind = "application", visibility = "public", likeCount = 0, commentCount = 0 } = {}) => {
     const pid = crypto.randomUUID();
-    const row = { id: crypto.randomUUID(), community_id: communityId, author_id: author.id, content_type: type, note, pinned_at: pinned ? db.stamp() : null, created_at: db.stamp(), content: gone ? null : { id: pid, title } };
+    const row = { id: crypto.randomUUID(), community_id: communityId, author_id: author.id, kind, like_count: likeCount, comment_count: commentCount, content_type: type, note, pinned_at: pinned ? db.stamp() : null, created_at: db.stamp(), content: gone ? null : { id: pid, title, visibility } };
     db.posts.push(row);
     db.groups.find((g) => g.id === communityId).post_count += 1;
     return row;
@@ -38,7 +40,7 @@ export function setupCommunities(db) {
 
   const promptRow = (c, author) => ({
     id: c.id, title: c.title, description: "açıklama", prompt_text: "metin", tool: null, tools: [], content_type: "text", category: null, subcategory: null, status: "published", origin_type: "original", request_id: null,
-    like_count: 0, save_count: 0, comment_count: 0, copy_count: 0, created_at: "2026-02-01T00:00:00Z", show_on_profile: true, requires_reference_image: false, requires_reference_video: false, requires_reference_audio: false, visibility: "public", deleted_at: null,
+    like_count: 0, save_count: 0, comment_count: 0, copy_count: 0, created_at: "2026-02-01T00:00:00Z", show_on_profile: true, requires_reference_image: false, requires_reference_video: false, requires_reference_audio: false, visibility: c.visibility ?? "public", deleted_at: null,
     profiles: pub(author), prompt_media: [], prompt_tags: [],
   });
 
@@ -249,11 +251,12 @@ export function setupCommunities(db) {
       const cid = eq(q, "community_id");
       const pinnedOnly = q.get("pinned_at")?.startsWith("not.is");
       const unpinned = q.get("pinned_at") === "is.null";
-      let list = db.posts.filter((p) => p.community_id === cid && (pinnedOnly ? p.pinned_at : unpinned ? !p.pinned_at : true));
+      const pid = eq(q, "id");
+      let list = db.posts.filter((p) => p.community_id === cid && (!pid || p.id === pid) && (pinnedOnly ? p.pinned_at : unpinned ? !p.pinned_at : true));
       list = list.slice().sort((a, b) => b.created_at.localeCompare(a.created_at));
       const lim = Number(q.get("limit") ?? 0); if (lim) list = list.slice(0, lim);
       return rows(list.map((p) => ({
-        id: p.id, community_id: p.community_id, content_type: p.content_type, note: p.note, pinned_at: p.pinned_at, created_at: p.created_at, author: pub(userById(p.author_id)),
+        id: p.id, community_id: p.community_id, kind: p.kind, like_count: p.like_count, comment_count: p.comment_count, content_type: p.content_type, note: p.note, pinned_at: p.pinned_at, created_at: p.created_at, author: pub(userById(p.author_id)),
         prompts: p.content_type === "prompt" && p.content ? promptRow(p.content, userById(p.author_id)) : null, prompt_requests: null, workflows: null, presets: null,
       })));
     }
@@ -267,9 +270,80 @@ export function setupCommunities(db) {
       if (!own) return err("content_not_found");
       if (own.visibility === "private") return err("content_not_public");
       if (db.posts.some((p) => p.community_id === x.id && p.content?.id === own.id)) return err("already_shared");
-      const post = db.addPost(x.id, { author: userById(signedIn), type: body.p_content_type, title: own.title, note: body.p_note });
-      post.content = { id: own.id, title: own.title };
+      const post = db.addPost(x.id, { author: userById(signedIn), type: body.p_content_type, title: own.title, note: body.p_note, kind: "application" });
+      post.content = { id: own.id, title: own.title, visibility: own.visibility };
       return json(200, post.id);
+    }
+    // Yerel gönderi: içerik normal ekranda oluşturulup yayınlandıktan sonra (sahibinin kendi içeriği; özel de olabilir).
+    if (table === "rpc/publish_native_community_post") {
+      log("publish_native_community_post", body);
+      const x = g(body.p_group_id);
+      if (!db.member(x.id, signedIn)) return err("forbidden");
+      if (x.closed_at) return err("community_closed");
+      const own = db.ownContent[body.p_content_type]?.find((c) => c.id === body.p_content_id);
+      if (!own) return err("content_not_found");
+      if (own.draft) return err("content_not_published");
+      if (db.posts.some((p) => p.kind === "native" && p.content?.id === own.id)) return err("already_shared");
+      const post = db.addPost(x.id, { author: userById(signedIn), type: body.p_content_type, title: own.title, kind: "native" });
+      post.content = { id: own.id, title: own.title, visibility: own.visibility };
+      return json(200, post.id);
+    }
+
+    // Oluşturma formu: yeni istek kaydı (yalnızca kimlik/zaman döner); kayıt, yerel gönderi RPC'sinin "sahibinin içeriği" listesine girer.
+    if (table === "prompt_requests" && method === "POST") {
+      const created = { id: body.id, title: body.title, visibility: body.visibility, draft: Boolean(body.is_draft) };
+      db.ownContent.request.push(created);
+      return json(201, { id: body.id, created_at: db.stamp() });
+    }
+
+    // ---- gönderinin KENDİ beğenisi / yorumları (docs/history/178-*) ----
+    const engageGuard = (postId) => {
+      const post = db.posts.find((p) => p.id === postId);
+      if (!post) return "post_not_found";
+      if (!db.member(post.community_id, signedIn)) return "forbidden";
+      if (g(post.community_id).closed_at) return "community_closed";
+      return null;
+    };
+    if (table === "prompt_likes") {
+      if (method === "GET") {
+        const listed = (q.get("community_post_id") ?? "").match(/^in\.\((.*)\)$/);
+        const ids = listed ? listed[1].split(",").map((x) => x.replace(/"/g, "")) : null;
+        const uid = eq(q, "user_id");
+        return rows(db.likes.filter((l) => (!uid || l.user_id === uid) && (!ids || ids.includes(l.community_post_id))).map((l) => ({ community_post_id: l.community_post_id })));
+      }
+      if (method === "POST") {
+        const failure = body.community_post_id ? engageGuard(body.community_post_id) : null;
+        if (failure) return json(400, { code: "P0001", message: failure, details: "", hint: "" });
+        if (db.likes.some((l) => l.community_post_id === body.community_post_id && l.user_id === body.user_id)) return json(409, { code: "23505", message: "duplicate key value violates unique constraint", details: "", hint: "" });
+        db.likes.push({ community_post_id: body.community_post_id, user_id: body.user_id });
+        db.posts.find((p) => p.id === body.community_post_id).like_count += 1;
+        return json(201, {});
+      }
+      if (method === "DELETE") {
+        const post = db.posts.find((p) => p.id === eq(q, "community_post_id"));
+        const before = db.likes.length;
+        db.likes = db.likes.filter((l) => !(l.community_post_id === eq(q, "community_post_id") && l.user_id === eq(q, "user_id")));
+        if (post && db.likes.length < before) post.like_count = Math.max(0, post.like_count - 1);
+        return json(200, []);
+      }
+    }
+    if (table === "prompt_comments") {
+      const COMMENT_COLS = (c) => ({ id: c.id, body: c.body, parent_id: c.parent_id ?? null, like_count: 0, created_at: c.created_at, edited_at: null, deleted_at: null, profiles: pub(userById(c.author_id)) });
+      if (method === "GET") {
+        const cp = eq(q, "community_post_id"); const pr = eq(q, "prompt_id");
+        return rows(db.comments.filter((c) => (cp ? c.community_post_id === cp : pr ? c.prompt_id === pr : false)).sort((a, b) => a.created_at.localeCompare(b.created_at)).map(COMMENT_COLS));
+      }
+      if (method === "POST") {
+        if (body.community_post_id) {
+          const failure = engageGuard(body.community_post_id);
+          if (failure) return json(400, { code: "P0001", message: failure, details: "", hint: "" });
+          if (body.parent_id && db.comments.find((c) => c.id === body.parent_id)?.community_post_id !== body.community_post_id) return json(400, { code: "P0001", message: "invalid_parent", details: "", hint: "" });
+          db.posts.find((p) => p.id === body.community_post_id).comment_count += 1;
+        }
+        const row = { id: crypto.randomUUID(), created_at: db.stamp(), ...body };
+        db.comments.push(row);
+        return json(201, COMMENT_COLS(row));
+      }
     }
     if (table === "rpc/delete_community_post" || table === "rpc/moderate_community_post" || table === "rpc/set_community_post_pinned" || table === "rpc/update_community_post") {
       log(table.slice(4), body);

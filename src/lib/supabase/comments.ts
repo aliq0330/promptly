@@ -22,7 +22,7 @@ const COMMENT_SELECT = `
 
 function mapCommentRow(
   row: CommentRow,
-  target: { promptId: string } | { requestId: string } | { resultId: string } | { workflowId: string } | { presetId: string },
+  target: { promptId: string } | { requestId: string } | { resultId: string } | { workflowId: string } | { presetId: string } | { communityPostId: string },
 ): PromptComment {
   return {
     id: row.id,
@@ -210,6 +210,41 @@ export async function postCommentOnWorkflow(
     .single();
   if (error || !data) throw new Error(error?.message ?? translateForRuntime("comments.postFailed"));
   return mapCommentRow(data as unknown as CommentRow, { workflowId });
+}
+
+/** Bir topluluk gönderisinin yorumları (eskiden yeniye): gönderinin KENDİ iş parçacığı — işaret ettiği içeriğin yorumlarıyla karışmaz. Okuma, gönderiyi okuyabilene açıktır (RLS). */
+export async function fetchCommentsForCommunityPost(communityPostId: string): Promise<PromptComment[]> {
+  try {
+    const { data, error } = await supabase
+      .from("prompt_comments")
+      .select(COMMENT_SELECT)
+      .eq("community_post_id", communityPostId)
+      .order("created_at", { ascending: true });
+    if (error) {
+      console.error("fetchCommentsForCommunityPost", error);
+      return [];
+    }
+    return withoutBlocked(((data ?? []) as unknown as CommentRow[]).map((row) => mapCommentRow(row, { communityPostId })), (c) => c.author.id);
+  } catch (err) {
+    console.error("fetchCommentsForCommunityPost", err);
+    return [];
+  }
+}
+
+/** Topluluk gönderisine yorum: yalnız topluluk üyesi (sunucu tetikleyicisi doğrular). `handle_prompt_comment_change` `community_posts.comment_count`'u tutar. */
+export async function postCommentOnCommunityPost(
+  communityPostId: string,
+  authorId: string,
+  body: string,
+  parentId: string | null,
+): Promise<PromptComment> {
+  const { data, error } = await supabase
+    .from("prompt_comments")
+    .insert({ community_post_id: communityPostId, author_id: authorId, body, parent_id: parentId })
+    .select(COMMENT_SELECT)
+    .single();
+  if (error || !data) throw new Error(error?.message ?? translateForRuntime("comments.postFailed"));
+  return mapCommentRow(data as unknown as CommentRow, { communityPostId });
 }
 
 /**

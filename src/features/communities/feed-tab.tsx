@@ -3,25 +3,25 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { EyeOff, Flag, Pencil, Pin, PinOff, Plus, ShieldAlert, SquareStack, Trash2 } from "lucide-react";
+import { Flag, Pencil, Pin, PinOff, Plus, ShieldAlert, SquareStack, Trash2 } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { fieldControlClassName, fieldLabelClassName } from "@/components/ui/field";
 import { Modal } from "@/components/ui/modal";
-import { PromptCard } from "@/features/prompts/prompt-card";
-import { RequestCard } from "@/features/requests/request-card";
-import { WorkflowCard } from "@/features/workflows/workflow-card";
-import { PresetCard } from "@/features/presets/preset-card";
 import { ConfirmDialog } from "@/features/groups/confirm-dialog";
 import { useAsyncAction } from "@/features/groups/use-async-action";
 import { DropdownMenu, MenuItem } from "./dropdown-menu";
 import { ReportModal } from "./report-modal";
 import { ShareToCommunityModal } from "./share-to-community-modal";
+import { CreatePostModal } from "./create-post-modal";
+import { LinkedContent } from "./linked-content";
+import { PostEngagement, type EngageMode } from "./post-engagement";
 import type { CommunityTabProps } from "./community-page";
 import {
   deleteCommunityPost,
+  fetchCommunityPost,
   fetchCommunityPosts,
   fetchPinnedPosts,
   moderateCommunityPost,
@@ -38,8 +38,12 @@ import type { TranslationKey } from "@/lib/i18n/translations";
 type PostAction = { kind: "edit" | "delete" | "moderate" | "report"; post: CommunityPost };
 
 /**
- * Topluluk akışı: üyelerin paylaştığı Prompt / İstek / Workflow / Hazır Ayar'lar. Gönderi içeriğin KOPYASI değil başvurusudur; kart,
- * beğeni, yorum ve kaydetme içeriğin kendi altyapısıdır. Üye olmayan ziyaretçi (herkese açık topluluk) akışı okur, paylaşamaz/raporlayamaz.
+ * Topluluk akışı. İki tür gönderi vardır ve ikisinin de kendi kimliği, beğenisi ve yorumları bulunur (docs/history/178-*):
+ *   - yerel (native): içerik bu toplulukta normal oluşturma ekranıyla yaratıldı;
+ *   - başvuru (application, ve türü bilinmeyen eski `legacy` satırlar): var olan, yayınlanmış içerikle yapılan başvuru; isteğe bağlı not
+ *     ve işaret edilen içeriğe açık bağlantı taşır.
+ * Gönderi içeriğin KOPYASI değil başvurusudur; gönderinin beğeni/yorumu işaret ettiği içeriğinkine karışmaz. Üye olmayan ziyaretçi
+ * (herkese açık topluluk) akışı okur; beğenmek/yorum yazmak/paylaşmak/raporlamak için üye olmak gerekir.
  * Düzenleme/silme: yazar kendi gönderisini; kaldırma/sabitleme: ilgili yetenekle (denetim kaydı düşer, yazara bildirim gider).
  */
 export function FeedTab({ group, role, viewerId, onToast, reload }: CommunityTabProps) {
@@ -50,10 +54,17 @@ export function FeedTab({ group, role, viewerId, onToast, reload }: CommunityTab
   const [hasMore, setHasMore] = useState(false);
   const [loadError, setLoadError] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
+  const [focusPost, setFocusPost] = useState<CommunityPost | null | undefined>(undefined);
   const [action, setAction] = useState<PostAction | null>(null);
   const shareFailed = searchParams.get("shareFailed");
   const justShared = searchParams.get("shared") === "1";
+  // Bildirim / bağlantıyla gelen: `post=<gönderi kimliği>` ve isteğe bağlı `hl=comment:<yorum kimliği>`.
+  const focusId = searchParams.get("post");
+  const highlight = searchParams.get("hl");
+  const highlightCommentId = highlight?.startsWith("comment:") ? highlight.slice("comment:".length) : null;
+  const engage: EngageMode = group.closedAt ? "closed" : viewerId === null || role ? "open" : "join";
 
   const canPost = canSharePost(role, group.feedPolicy, Boolean(group.closedAt));
   const canPin = can(role, "pin_posts", group.rolePermissions) && !group.closedAt;
@@ -76,6 +87,26 @@ export function FeedTab({ group, role, viewerId, onToast, reload }: CommunityTab
     // eslint-disable-next-line react-hooks/set-state-in-effect -- ilk yükleme
     void load();
   }, [load]);
+
+  useEffect(() => {
+    if (!focusId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- adres parametresi kalkınca odak gönderisi temizlenir
+      setFocusPost(undefined);
+      return;
+    }
+    let cancelled = false;
+    fetchCommunityPost(focusId, group.id)
+      .then((post) => {
+        if (!cancelled) setFocusPost(post);
+      })
+      .catch((err) => {
+        console.error("community focus post", err);
+        if (!cancelled) setFocusPost(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [focusId, group.id]);
 
   async function loadMore() {
     if (!posts || posts.length === 0 || loadingMore) return;
@@ -115,7 +146,7 @@ export function FeedTab({ group, role, viewerId, onToast, reload }: CommunityTab
       {justShared && <p role="status" className="rounded-md bg-success/10 px-3 py-2 text-small text-text">{t("communities.feed.sharedBanner")}</p>}
       {shareFailed && (
         <p role="alert" className="rounded-md bg-warning/10 px-3 py-2 text-small text-text">
-          {shareFailed === "content_not_public" || shareFailed === "content_not_found" ? t("communities.feed.shareFailedPrivate") : t("communities.feed.shareFailed")}
+          {t("communities.feed.shareFailed")}
         </p>
       )}
       {pinAction.error && (
@@ -127,13 +158,38 @@ export function FeedTab({ group, role, viewerId, onToast, reload }: CommunityTab
       <div className="flex items-center justify-between gap-3">
         <p className="text-small text-text-muted">{group.feedPolicy === "admins" ? t("communities.feed.policyStaff") : t("communities.feed.policyMembers")}</p>
         {canPost ? (
-          <Button type="button" size="sm" onClick={() => setShareOpen(true)}>
+          <Button type="button" size="sm" onClick={() => setCreateOpen(true)} data-create-post>
             <Plus size={14} /> {t("communities.feed.share")}
           </Button>
         ) : (
           role && group.closedAt === null && <span className="text-caption text-text-muted">{t("communities.feed.cannotShare")}</span>
         )}
       </div>
+
+      {focusId && focusPost === null && (
+        <p role="status" className="rounded-md bg-surface-soft px-3 py-2.5 text-small text-text-muted">
+          {t("communities.post.focus.notFound")}
+        </p>
+      )}
+      {focusPost && (
+        <section aria-label={t("communities.post.focus.title")} className="space-y-2">
+          <ul>
+            <PostItem
+              post={focusPost}
+              viewerId={viewerId}
+              role={role}
+              canPin={canPin}
+              canModerate={canModerate}
+              mode={engage}
+              onToast={onToast}
+              onPin={togglePin}
+              onAction={setAction}
+              focused
+              highlightCommentId={highlightCommentId}
+            />
+          </ul>
+        </section>
+      )}
 
       {loadError ? (
         <div className="space-y-3 rounded-xl border border-border-soft bg-surface px-6 py-10 text-center">
@@ -160,14 +216,14 @@ export function FeedTab({ group, role, viewerId, onToast, reload }: CommunityTab
         <>
           {pinned.length > 0 && (
             <ul className="space-y-3" aria-label={t("communities.feed.pinnedAria")}>
-              {pinned.map((post) => (
-                <PostItem key={post.id} post={post} viewerId={viewerId} role={role} canPin={canPin} canModerate={canModerate} onPin={togglePin} onAction={setAction} />
+              {pinned.filter((post) => post.id !== focusPost?.id).map((post) => (
+                <PostItem key={post.id} post={post} viewerId={viewerId} role={role} canPin={canPin} canModerate={canModerate} mode={engage} onToast={onToast} onPin={togglePin} onAction={setAction} />
               ))}
             </ul>
           )}
           <ul className="space-y-3">
-            {posts.map((post) => (
-              <PostItem key={post.id} post={post} viewerId={viewerId} role={role} canPin={canPin} canModerate={canModerate} onPin={togglePin} onAction={setAction} />
+            {posts.filter((post) => post.id !== focusPost?.id).map((post) => (
+              <PostItem key={post.id} post={post} viewerId={viewerId} role={role} canPin={canPin} canModerate={canModerate} mode={engage} onToast={onToast} onPin={togglePin} onAction={setAction} />
             ))}
           </ul>
           {hasMore && (
@@ -180,6 +236,16 @@ export function FeedTab({ group, role, viewerId, onToast, reload }: CommunityTab
         </>
       )}
 
+      {createOpen && viewerId && (
+        <CreatePostModal
+          communityId={group.id}
+          onClose={() => setCreateOpen(false)}
+          onApply={() => {
+            setCreateOpen(false);
+            setShareOpen(true);
+          }}
+        />
+      )}
       {shareOpen && viewerId && (
         <ShareToCommunityModal
           communityId={group.id}
@@ -250,37 +316,53 @@ const SHARED_LABEL: Record<CommunityPost["contentType"], TranslationKey> = {
   preset: "communities.feed.shared.preset",
 };
 
+const NATIVE_LABEL: Record<CommunityPost["contentType"], TranslationKey> = {
+  prompt: "communities.post.verb.native.prompt",
+  request: "communities.post.verb.native.request",
+  workflow: "communities.post.verb.native.workflow",
+  preset: "communities.post.verb.native.preset",
+};
+
 function PostItem({
   post,
   viewerId,
   role,
   canPin,
   canModerate,
+  mode,
+  onToast,
   onPin,
   onAction,
+  focused = false,
+  highlightCommentId = null,
 }: {
   post: CommunityPost;
   viewerId: string | null;
   role: CommunityTabProps["role"];
   canPin: boolean;
   canModerate: boolean;
+  mode: EngageMode;
+  onToast: (message: string) => void;
   onPin: (post: CommunityPost) => void;
   onAction: (action: PostAction) => void;
+  /** Bildirim/bağlantıyla açılan gönderi: yorumlar açık gelir, istenen yorum vurgulanır. */
+  focused?: boolean;
+  highlightCommentId?: string | null;
 }) {
   const { t, language } = useTranslation();
   const mine = Boolean(viewerId) && post.author?.id === viewerId;
   const hasMenu = mine || canPin || canModerate || Boolean(role);
-  const content = post.content;
+  const native = post.kind === "native";
 
   // İçerik artık okunamıyorsa (silindi / özel yapıldı) yalnızca yazar ve yetkililer gönderi kaydını görür; diğerleri için gizlenir.
-  if (!content && !mine && !canModerate) return null;
+  if (!post.content && !mine && !canModerate) return null;
 
   return (
-    <li className="space-y-2 rounded-xl border border-border-soft bg-surface p-3 shadow-card sm:p-4">
+    <li data-community-post={post.id} data-post-kind={post.kind} className="space-y-2.5 rounded-xl border border-border-soft bg-surface p-3 shadow-card sm:p-4">
       <div className="flex items-start gap-2.5">
         {post.author && <Avatar src={post.author.avatarUrl} alt={post.author.displayName} size={32} />}
         <div className="min-w-0 flex-1 leading-tight">
-          <p className="flex flex-wrap items-center gap-x-1.5 text-small text-text">
+          <p className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-small text-text">
             {post.author ? (
               <Link href={profileHref(post.author)} className="font-semibold hover:underline">
                 {post.author.displayName}
@@ -288,7 +370,8 @@ function PostItem({
             ) : (
               <span className="font-semibold">{t("common.genericUser")}</span>
             )}
-            <span className="text-text-muted">{t(SHARED_LABEL[post.contentType])}</span>
+            <span className="text-text-muted">{t(native ? NATIVE_LABEL[post.contentType] : SHARED_LABEL[post.contentType])}</span>
+            {post.kind !== "legacy" && <Badge variant="default">{native ? t("communities.post.badge.native") : t("communities.post.badge.application")}</Badge>}
             {post.pinnedAt && (
               <Badge variant="default">
                 <Pin size={11} aria-hidden /> {t("communities.announcements.pinned")}
@@ -301,7 +384,7 @@ function PostItem({
           <DropdownMenu label={t("communities.feed.postMenu")}>
             {(close) => (
               <>
-                {mine && <MenuItem icon={<Pencil size={15} />} label={t("communities.feed.editNote")} onClick={() => { close(); onAction({ kind: "edit", post }); }} />}
+                {mine && !native && <MenuItem icon={<Pencil size={15} />} label={t("communities.feed.editNote")} onClick={() => { close(); onAction({ kind: "edit", post }); }} />}
                 {canPin && <MenuItem icon={post.pinnedAt ? <PinOff size={15} /> : <Pin size={15} />} label={post.pinnedAt ? t("communities.feed.unpin") : t("communities.feed.pin")} onClick={() => { close(); onPin(post); }} />}
                 {role && !mine && <MenuItem icon={<Flag size={15} />} label={t("communities.report.menu")} onClick={() => { close(); onAction({ kind: "report", post }); }} />}
                 {canModerate && !mine && <MenuItem icon={<ShieldAlert size={15} />} label={t("communities.feed.removeAsStaff")} danger onClick={() => { close(); onAction({ kind: "moderate", post }); }} />}
@@ -311,19 +394,9 @@ function PostItem({
           </DropdownMenu>
         )}
       </div>
-      {post.note && <p className="whitespace-pre-wrap break-words text-small text-text-secondary">{post.note}</p>}
-      {content ? (
-        <div>
-          {content.type === "prompt" && <PromptCard prompt={content.data} />}
-          {content.type === "request" && <RequestCard request={content.data} />}
-          {content.type === "workflow" && <WorkflowCard workflow={content.data} />}
-          {content.type === "preset" && <PresetCard preset={content.data} />}
-        </div>
-      ) : (
-        <p className="flex items-center gap-2 rounded-lg border border-dashed border-border px-3 py-4 text-small text-text-muted">
-          <EyeOff size={15} aria-hidden /> {t("communities.feed.contentGone")}
-        </p>
-      )}
+      {post.note && <p data-post-note className="whitespace-pre-wrap break-words text-small text-text-secondary">{post.note}</p>}
+      <LinkedContent post={post} />
+      <PostEngagement post={post} mode={mode} onToast={onToast} defaultOpen={focused} highlightCommentId={focused ? highlightCommentId : null} />
     </li>
   );
 }

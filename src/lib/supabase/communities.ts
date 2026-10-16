@@ -490,6 +490,13 @@ export async function setCommunityNotifyPrefs(groupId: string, userId: string, l
 
 export type CommunityPostType = "prompt" | "request" | "workflow" | "preset";
 
+/**
+ * Gönderi türü: `native` = içerik bu toplulukta oluşturuldu; `application` = var olan içerikle başvuru;
+ * `legacy` = bu ayrımdan ÖNCEKİ gönderi (türü güvenilir biçimde bilinmez, tahmin edilmez — başvuru gibi gösterilir).
+ * Üçünün de kendi kimliği, beğenisi ve yorumları vardır; işaret ettikleri içeriğin sayaçlarından bağımsızdır.
+ */
+export type CommunityPostKind = "native" | "application" | "legacy";
+
 export type CommunityPostContent =
   | { type: "prompt"; data: Prompt }
   | { type: "request"; data: PromptRequest }
@@ -500,17 +507,24 @@ export interface CommunityPost {
   id: string;
   communityId: string;
   author: UserProfile | null;
+  kind: CommunityPostKind;
   contentType: CommunityPostType;
   /** İçerik artık okunamıyorsa (silindi / özel yapıldı) null — gönderi kaydı yetkililere "kaldır" için yine listelenir. */
   content: CommunityPostContent | null;
   note: string | null;
   pinnedAt: string | null;
   createdAt: string;
+  /** Gönderinin KENDİ sayaçları (`community_posts.like_count` / `comment_count`). */
+  likeCount: number;
+  commentCount: number;
 }
 
 interface PostRow {
   id: string;
   community_id: string;
+  kind: CommunityPostKind;
+  like_count: number;
+  comment_count: number;
   content_type: CommunityPostType;
   note: string | null;
   pinned_at: string | null;
@@ -522,7 +536,7 @@ interface PostRow {
   presets: PresetRow | null;
 }
 
-const POST_SELECT = `id, community_id, content_type, note, pinned_at, created_at, author:author_id ( ${PROFILE_EMBED} ),
+const POST_SELECT = `id, community_id, kind, like_count, comment_count, content_type, note, pinned_at, created_at, author:author_id ( ${PROFILE_EMBED} ),
   prompts ( ${PROMPT_SELECT} ), prompt_requests ( ${REQUEST_SELECT} ), workflows ( ${WORKFLOW_SELECT} ), presets ( ${PRESET_SELECT} )`;
 
 function mapPostRow(row: PostRow): CommunityPost {
@@ -535,11 +549,14 @@ function mapPostRow(row: PostRow): CommunityPost {
     id: row.id,
     communityId: row.community_id,
     author: row.author ? mapProfileRow(row.author) : null,
+    kind: row.kind ?? "legacy",
     contentType: row.content_type,
     content,
     note: row.note,
     pinnedAt: row.pinned_at,
     createdAt: row.created_at,
+    likeCount: row.like_count ?? 0,
+    commentCount: row.comment_count ?? 0,
   };
 }
 
@@ -577,8 +594,25 @@ export async function fetchPinnedPosts(communityId: string): Promise<CommunityPo
   return ((data ?? []) as unknown as PostRow[]).map(mapPostRow);
 }
 
+/** Tek bir gönderi (bildirimden / bağlantıdan açılış): okunamıyorsa null. */
+export async function fetchCommunityPost(postId: string, communityId: string): Promise<CommunityPost | null> {
+  const { data, error } = await supabase.from("community_posts").select(POST_SELECT).eq("id", postId).eq("community_id", communityId).maybeSingle();
+  if (error) throw toGroupError(error);
+  return data ? mapPostRow(data as unknown as PostRow) : null;
+}
+
+/** Başvuru: var olan, yayında ve herkese açık içerik için bağımsız bir gönderi (isteğe bağlı not). */
 export async function shareToCommunity(groupId: string, type: CommunityPostType, contentId: string, note: string): Promise<string> {
   return callRpc<string>("share_to_community", { p_group_id: groupId, p_content_type: type, p_content_id: contentId, p_note: note.trim() || null });
+}
+
+/**
+ * Yerel gönderi: içerik NORMAL oluşturma ekranında (`?community=<id>`) oluşturulup yayınlandıktan sonra, aynı toplulukta
+ * kendi kimliğiyle bir gönderi olarak kaydedilir. İçerik normal görünürlük seçeneğini (herkese açık / özel) korur;
+ * özelse yalnızca bu topluluğu okuyabilenlere açılır.
+ */
+export async function publishNativeCommunityPost(groupId: string, type: CommunityPostType, contentId: string): Promise<string> {
+  return callRpc<string>("publish_native_community_post", { p_group_id: groupId, p_content_type: type, p_content_id: contentId });
 }
 
 export async function updateCommunityPostNote(postId: string, note: string): Promise<void> {

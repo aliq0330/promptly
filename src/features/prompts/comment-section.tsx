@@ -17,6 +17,8 @@ import {
   fetchCommentsForResult,
   fetchCommentsForWorkflow,
   fetchCommentsForPreset,
+  fetchCommentsForCommunityPost,
+  postCommentOnCommunityPost,
   postCommentOnPreset,
   postCommentOnWorkflow,
   postCommentOnPrompt,
@@ -31,7 +33,7 @@ import { Eyebrow } from "@/features/content/detail-parts";
 import type { PromptComment } from "@/types";
 import { MentionInput } from "@/features/mentions/mention-field";
 
-export type CommentTarget = { promptId: string } | { requestId: string } | { resultId: string } | { workflowId: string } | { presetId: string };
+export type CommentTarget = { promptId: string } | { requestId: string } | { resultId: string } | { workflowId: string } | { presetId: string } | { communityPostId: string };
 
 /**
  * Real, unlimited-depth comment thread — every prompt/request is a real
@@ -100,7 +102,7 @@ export function CommentSection({
   const highlightTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const processedHighlightId = useRef<string | null>(null);
 
-  const targetKind: "prompt" | "request" | "result" | "workflow" | "preset" =
+  const targetKind: "prompt" | "request" | "result" | "workflow" | "preset" | "community_post" =
     "promptId" in target
       ? "prompt"
       : "requestId" in target
@@ -109,7 +111,9 @@ export function CommentSection({
           ? "workflow"
           : "presetId" in target
             ? "preset"
-            : "result";
+            : "communityPostId" in target
+              ? "community_post"
+              : "result";
   const targetId =
     "promptId" in target
       ? target.promptId
@@ -119,7 +123,9 @@ export function CommentSection({
           ? target.workflowId
           : "presetId" in target
             ? target.presetId
-            : target.resultId;
+            : "communityPostId" in target
+              ? target.communityPostId
+              : target.resultId;
 
   // Small dispatch helpers instead of repeating a four-way ternary at each
   // of the three call sites below (initial fetch, top-level post, reply).
@@ -128,6 +134,7 @@ export function CommentSection({
     if (kind === "request") return fetchCommentsForRequest(id);
     if (kind === "workflow") return fetchCommentsForWorkflow(id);
     if (kind === "preset") return fetchCommentsForPreset(id);
+    if (kind === "community_post") return fetchCommentsForCommunityPost(id);
     return fetchCommentsForResult(id);
   }
   function postCommentForTarget(kind: typeof targetKind, id: string, userId: string, body: string, parentId: string | null) {
@@ -135,6 +142,7 @@ export function CommentSection({
     if (kind === "request") return postCommentOnRequest(id, userId, body, parentId);
     if (kind === "workflow") return postCommentOnWorkflow(id, userId, body, parentId);
     if (kind === "preset") return postCommentOnPreset(id, userId, body, parentId);
+    if (kind === "community_post") return postCommentOnCommunityPost(id, userId, body, parentId);
     return postCommentOnResult(id, userId, body, parentId);
   }
 

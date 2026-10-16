@@ -128,6 +128,8 @@ export interface PromptComment {
   resultId?: string;
   workflowId?: string;
   presetId?: string;
+  /** Topluluk gönderisi yorumu: yorum gönderinin kendi kimliğine bağlıdır, gönderinin işaret ettiği içeriğin yorumlarına karışmaz (`prompt_comments.community_post_id`). */
+  communityPostId?: string;
   author: UserProfile;
   body: string;
   /** Points at another `PromptComment.id` — a reply can target a top-level comment OR another reply, to any depth (self-referencing `prompt_comments.parent_id`). */

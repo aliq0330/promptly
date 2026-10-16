@@ -1,6 +1,8 @@
 "use client";
 
 import { Children, type ReactNode } from "react";
+import { Users } from "lucide-react";
+import { useCommunityContext } from "@/features/communities/community-return";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
@@ -55,12 +57,24 @@ export function CreateFormActions({
   const { t } = useTranslation();
   const hasNotices = Children.toArray(children).length > 0;
   const showVisibility = visibility !== undefined && onVisibilityChange !== undefined;
+  // Topluluktan açıldıysa (`?community=`): yayınlanınca içerik o toplulukta kendi gönderisiyle yer alır; görünürlük dili ona uyar.
+  const community = useCommunityContext();
+  const inCommunity = community.communityId !== null;
   return (
     <div className={cn("min-w-0 space-y-4", className)} data-create-form-actions>
+      {inCommunity && (
+        <p role="status" data-community-context className="flex items-start gap-2 rounded-lg bg-primary-soft px-3.5 py-3 text-small text-text">
+          <Users size={16} strokeWidth={1.75} className="mt-0.5 shrink-0 text-primary" aria-hidden />
+          <span className="min-w-0 break-words">
+            {community.name ? t("communities.create.contextBanner", { name: community.name }) : t("communities.create.contextBannerGeneric")}
+            {onSaveDraft ? ` ${t("communities.create.draftNote")}` : ""}
+          </span>
+        </p>
+      )}
       {(showVisibility || extra) && (
         <FormSection title={t("visibility.label")}>
           <div className="space-y-3">
-            {showVisibility && <VisibilitySwitch value={visibility} onChange={onVisibilityChange} disabled={busy} hideLabel />}
+            {showVisibility && <VisibilitySwitch value={visibility} onChange={onVisibilityChange} disabled={busy} hideLabel community={inCommunity ? { name: community.name } : undefined} />}
             {extra}
           </div>
         </FormSection>
