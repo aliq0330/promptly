@@ -70,6 +70,11 @@ export function EngagementRealtimeProvider() {
       )
       .on(
         "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "community_posts" },
+        (payload) => applyLikeSave("community_post", payload.new as { id: string; like_count?: number }),
+      )
+      .on(
+        "postgres_changes",
         { event: "UPDATE", schema: "public", table: "profiles" },
         (payload) => {
           const row = payload.new as { id: string; follower_count?: number };

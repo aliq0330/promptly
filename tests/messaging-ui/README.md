@@ -40,3 +40,12 @@ NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co NEXT_PUBLIC_SUPABASE_ANON_K
 CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/messaging-ui/run-communities.mjs
 ONLY="9" node tests/messaging-ui/run-communities.mjs   # yalnız adı "9" ile başlayan senaryolar
 ```
+
+## Topluluk gönderisi etkileşimi (`docs/history/178-*`)
+
+`run-community-posts.mjs` (22 senaryo): "Gönderi oluştur" iki seçenekli menüsü (yeni içerik → mevcut oluşturma ekranı `?community=`, mevcut içeriğe başvur), başvuru gönderisi (not var/yok, "Başvurulan içerik", orijinal bağlantısı), yerel/legacy kart, beğeni → `community_post_id` (içeriğe değil), yorum → gönderi kimliği + karışmama, aynı içerik iki toplulukta bağımsız, üye olmayan/kapatılmış topluluk/ziyaretçi, bildirimden açılış (`&post=&hl=comment:`), erişilemeyen içerik, yazar menüsü yetkileri, oluşturma ekranı topluluk bağlamı + görünürlük dili, NORMAL istek formundan yayınlama → `publish_native_community_post`, hata uyarısı, İngilizce, mobil/tablet/koyu tema. Ağ taklidi `mock-communities.mjs` (`prompt_likes` / `prompt_comments` / `publish_native_community_post`). Gerçek Supabase'e KARŞI DENENMEDİ — RLS/RPC doğrulaması `supabase/tests/community-post-engagement.sql`'dedir.
+
+```bash
+CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/messaging-ui/run-community-posts.mjs   # 22/22 beklenir
+```
+

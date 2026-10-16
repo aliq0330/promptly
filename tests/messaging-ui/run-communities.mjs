@@ -259,7 +259,7 @@ await scenario("12. Kapatılmış topluluk: salt-okunur uyarısı; akışta payl
   await page.getByText(/Bu topluluk kapatılmış: salt-okunur/).waitFor();
   await page.locator("header").getByText("Kapatıldı", { exact: true }).waitFor();
   await page.getByRole("tab", { name: "Akış", exact: true }).click();
-  assert.equal(await page.getByRole("button", { name: "İçerik paylaş" }).count(), 0);
+  assert.equal(await page.getByRole("button", { name: "Gönderi oluştur" }).count(), 0);
   await page.goto(`${BASE}/communities/local?id=${C1}&tab=manage&section=settings`);
   await page.getByRole("button", { name: "Yeniden aç" }).click();
   await dlg(page).getByRole("button", { name: "Yeniden aç" }).click();
@@ -279,7 +279,8 @@ await scenario("13. Akış: sabit + normal gönderi; içerik kartı ve not gör�
 
 await scenario("13b. Paylaş: yalnız KENDİ herkese açık içerikler listelenir (özel olan yok); seçip paylaşınca tek istek; aynı içerik tekrar paylaşılamaz", async ({ page, db }) => {
   await open(page, C1, "feed");
-  await page.getByRole("button", { name: "İçerik paylaş" }).click();
+  await page.getByRole("button", { name: "Gönderi oluştur" }).click();
+  await dlg(page).getByRole("button", { name: /Mevcut içeriğe başvur/ }).click();
   const d = dlg(page);
   await d.getByText("Açık Prompt").waitFor();
   assert.equal(await d.getByText("Özel Prompt").count(), 0, "private content is never offered");
@@ -291,7 +292,8 @@ await scenario("13b. Paylaş: yalnız KENDİ herkese açık içerikler listeleni
   assert.equal(shared.length, 1);
   assert.equal(shared[0].body.p_content_type, "prompt");
   assert.equal(shared[0].body.p_note, "Denemeni bekliyorum");
-  await page.getByRole("button", { name: "İçerik paylaş" }).click();
+  await page.getByRole("button", { name: "Gönderi oluştur" }).click();
+  await dlg(page).getByRole("button", { name: /Mevcut içeriğe başvur/ }).click();
   await dlg(page).getByRole("radio").first().check();
   await dlg(page).getByRole("button", { name: "Paylaş", exact: true }).click();
   await dlg(page).getByText("Bu içerik bu toplulukta zaten paylaşılmış.").waitFor();
@@ -300,7 +302,7 @@ await scenario("13b. Paylaş: yalnız KENDİ herkese açık içerikler listeleni
 await scenario("13c. Paylaşma politikası 'yalnız kadro': üyede düğme yok + açıklama; kadroda var", async ({ page }) => {
   await open(page, C1, "feed");
   await page.getByText("Bu akışta yalnızca yönetim kadrosu paylaşım yapabilir.").waitFor();
-  assert.equal(await page.getByRole("button", { name: "İçerik paylaş" }).count(), 0);
+  assert.equal(await page.getByRole("button", { name: "Gönderi oluştur" }).count(), 0);
 }, { setup: (db) => seed(db, { myRole: "member", feedPolicy: "admins" }) });
 
 await scenario("13d. Gönderi menüsü: yazar kendi gönderisini kaldırır (içerik silinmez); başkasında 'bildir' var, 'kaldır' yok (üye)", async ({ page, db }) => {

@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
-import { Loader2, Plus } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { fieldControlClassName, fieldLabelClassName } from "@/components/ui/field";
 import { Modal } from "@/components/ui/modal";
@@ -14,12 +13,12 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
 
 const TYPES: CommunityPostType[] = ["prompt", "request", "workflow", "preset"];
-const CREATE_HREF: Record<CommunityPostType, string> = { prompt: "/create", request: "/requests/new", workflow: "/workflows/create", preset: "/presets/create" };
 
 /**
- * Topluluğa içerik paylaş: kullanıcının KENDİ yayında ve herkese açık içeriklerinden biri seçilir (içerik kopyalanmaz, akışa başvuru
- * eklenir; beğeni/yorum/kaydetme içeriğin kendi altyapısında yürür). Özel ya da taslak içerik burada listelenmez — topluluk paylaşımı
- * içeriği otomatik herkese açmaz. Yeni içerik oluşturmak için ilgili oluşturma sayfası topluluk bağlamıyla (`?community=`) açılır.
+ * "Mevcut içeriğe başvur": kullanıcının KENDİ yayında ve herkese açık içeriklerinden biri seçilir; isteğe bağlı not eklenir. İçerik
+ * kopyalanmaz — akışa kendi kimliği, beğenisi ve yorumları olan bağımsız bir BAŞVURU gönderisi eklenir (işaret edilen içeriğin
+ * sayaçlarına dokunmaz). Özel ya da taslak içerik burada listelenmez — başvuru içeriği otomatik herkese açmaz. Yeni içerik için
+ * `CreatePostModal` normal oluşturma ekranını topluluk bağlamıyla (`?community=`) açar.
  */
 export function ShareToCommunityModal({ communityId, userId, onClose, onShared }: { communityId: string; userId: string; onClose: () => void; onShared: () => void | Promise<void> }) {
   const { t } = useTranslation();
@@ -96,10 +95,6 @@ export function ShareToCommunityModal({ communityId, userId, onClose, onShared }
               ))}
             </ul>
           )}
-
-          <Link href={`${CREATE_HREF[type]}?community=${communityId}`} className="inline-flex items-center gap-1.5 text-label font-medium text-primary hover:underline">
-            <Plus size={14} aria-hidden /> {t("communities.feed.createNew")}
-          </Link>
 
           <div>
             <label htmlFor="share-note" className={fieldLabelClassName}>

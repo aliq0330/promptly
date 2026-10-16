@@ -382,6 +382,11 @@ export function communityHref(id: string, tab?: CommunityTab): string {
   return `/communities/local?id=${encodeURIComponent(id)}${tab && tab !== "overview" ? `&tab=${tab}` : ""}`;
 }
 
+/** Bir topluluk gönderisinin bağlantısı (akış sekmesi + gönderi kimliği): bildirimler ve "bağlantıyı kopyala" aynı adresi kullanır. */
+export function postHref(communityId: string, postId: string): string {
+  return `${communityHref(communityId, "feed")}&post=${encodeURIComponent(postId)}`;
+}
+
 /** Topluluğun sohbeti, Mesajlar çalışma alanındaki grup sohbetidir (ikinci bir sohbet ekranı yoktur). */
 export function communityChatHref(id: string): string {
   return `/messages/local?id=${encodeURIComponent(id)}`;
