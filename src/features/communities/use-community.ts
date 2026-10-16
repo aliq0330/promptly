@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { fetchChatGroupRow, mapChatGroupRow } from "@/lib/supabase/chat-groups";
-import { fetchMyCommunityMembership, type MyCommunityMembership } from "@/lib/supabase/communities";
+import { cardToChatGroup, fetchCommunityCard, fetchMyCommunityMembership, type MyCommunityMembership } from "@/lib/supabase/communities";
 import { supabase } from "@/lib/supabase/client";
 import type { ChatGroup } from "@/types";
 
@@ -16,24 +16,35 @@ export type CommunityState =
   | { status: "loading" }
   | { status: "error" }
   | { status: "notfound" }
-  | { status: "ready"; group: ChatGroup; membership: MyCommunityMembership | null; gate: CommunityGate };
+  | { status: "ready"; group: ChatGroup; membership: MyCommunityMembership | null; gate: CommunityGate; limited: boolean };
+
+/** Sekme tekrar görünür olunca, son okumadan bu kadar süre geçtiyse sessizce yeniden okunur (üyelik/görünürlük değişimi anında yansısın). */
+const REFRESH_AFTER_HIDDEN_MS = 20 * 1000;
 
 /**
- * Topluluk sayfasının veri kaynağı: `chat_groups` satırı (RLS: herkese açık ya da kapalı ya da üye ya da davetli/başvurucu), kendi üyelik satırım
- * (rol, bildirim tercihi, kural kabulü) ve bekleyen davet/başvurum. Okunamayan topluluk → "bulunamadı" (tamamen kapalı topluluğun
- * varlığı sızmaz; kapalı topluluğun kartı herkese okunur ama içeriği değil). `reload()` sayaç/ayar/rol değişince sessizce yeniden okur (yükleniyor ekranına dönmeden).
+ * Topluluk sayfasının veri kaynağı (docs/history/177-*):
+ *   • ÜYE → `chat_groups` TAM satırı (yalnız üye okuyabilir) + kendi üyelik satırı (rol, bildirim tercihi, kural kabulü);
+ *   • ÜYE DEĞİL (ziyaretçi, yabancı, davetli, başvuran) → `community_cards` KARTI (yönetim alanları yok) + bekleyen davet/başvurum.
+ * Kart yoksa (tamamen kapalı / olmayan / yasaklı) → "bulunamadı": varlık sızmaz. `userId` boşsa ziyaretçi modudur: yalnız kart.
+ * `reload()` sayaç/ayar/rol değişince sessizce yeniden okur (yükleniyor ekranına dönmeden); sekme yeniden görünür olunca da kendiliğinden
+ * yenilenir — çıkarılan/yasaklanan kişi ya da görünürlüğü değişen topluluk bayat bir ekranda kalmaz.
  */
 export function useCommunity(id: string | null, userId: string | null): { state: CommunityState; reload: () => Promise<void> } {
   const [state, setState] = useState<CommunityState>({ status: "loading" });
+  const lastLoadedAt = useRef(0);
 
   const load = useCallback(async (): Promise<CommunityState> => {
-    if (!id || !userId) return { status: "notfound" };
+    if (!id) return { status: "notfound" };
     try {
-      const row = await fetchChatGroupRow(id);
-      if (!row) return { status: "notfound" };
-      const membership = await fetchMyCommunityMembership(id, userId);
+      const row = userId ? await fetchChatGroupRow(id) : null;
+      const membership = row && userId ? await fetchMyCommunityMembership(id, userId) : null;
+      if (row && membership) {
+        return { status: "ready", group: mapChatGroupRow(row, membership.role), membership, gate: { invitationId: null, inviterName: null, requestId: null }, limited: false };
+      }
+      const card = await fetchCommunityCard(id);
+      if (!card) return { status: "notfound" };
       let gate: CommunityGate = { invitationId: null, inviterName: null, requestId: null };
-      if (!membership) {
+      if (userId) {
         const [invitation, request] = await Promise.all([
           supabase
             .from("chat_group_invitations")
@@ -48,7 +59,7 @@ export function useCommunity(id: string | null, userId: string | null): { state:
         const inv = invitation.data as { id: string; inviter: { display_name: string } | null } | null;
         gate = { invitationId: inv?.id ?? null, inviterName: inv?.inviter?.display_name ?? null, requestId: (request.data as { id: string } | null)?.id ?? null };
       }
-      return { status: "ready", group: mapChatGroupRow(row, membership?.role ?? "member"), membership, gate };
+      return { status: "ready", group: cardToChatGroup(card), membership: null, gate, limited: true };
     } catch (err) {
       console.error("useCommunity", err);
       return { status: "error" };
@@ -60,7 +71,10 @@ export function useCommunity(id: string | null, userId: string | null): { state:
     // eslint-disable-next-line react-hooks/set-state-in-effect -- kimlik değişince yükleniyor durumuna dönmek gerekir
     setState({ status: "loading" });
     load().then((next) => {
-      if (!cancelled) setState(next);
+      if (!cancelled) {
+        lastLoadedAt.current = Date.now();
+        setState(next);
+      }
     });
     return () => {
       cancelled = true;
@@ -69,8 +83,17 @@ export function useCommunity(id: string | null, userId: string | null): { state:
 
   const reload = useCallback(async () => {
     const next = await load();
+    lastLoadedAt.current = Date.now();
     setState(next);
   }, [load]);
+
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === "visible" && Date.now() - lastLoadedAt.current > REFRESH_AFTER_HIDDEN_MS) void reload();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, [reload]);
 
   return { state, reload };
 }

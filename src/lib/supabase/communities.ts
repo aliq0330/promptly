@@ -4,7 +4,8 @@ import { PROMPT_SELECT, mapPromptRow, type PromptRow } from "./prompts";
 import { REQUEST_SELECT, mapRequestRow, type RequestRow } from "./requests";
 import { WORKFLOW_SELECT, mapWorkflowRow, type WorkflowRow } from "./workflows";
 import { PRESET_SELECT, mapPresetRow, type PresetRow } from "./presets";
-import { callRpc, PROFILE_EMBED, toGroupError } from "./chat-groups";
+import { callRpc, fetchCommunityCards, PROFILE_EMBED, toGroupError, type CommunityCard } from "./chat-groups";
+import { DEFAULT_ROLE_PERMISSIONS } from "@/lib/chat-groups";
 import { parseInviteResult, parseGroupJoinToken, type InviteResult } from "@/lib/chat-groups";
 import {
   normalizeCategory,
@@ -15,6 +16,7 @@ import {
   type RsvpStatus,
 } from "@/lib/communities";
 import type {
+  ChatGroup,
   CommunityCategory,
   CommunityFeedPolicy,
   CommunityNotifyLevel,
@@ -162,6 +164,40 @@ export async function joinCommunityViaLink(
     p_accept_rules: acceptRules,
   });
   return { outcome: data.outcome, groupId: data.group_id ?? null };
+}
+
+/** Tek kart; görülemeyen / tamamen kapalı / olmayan topluluk için null. */
+export { type CommunityCard };
+export async function fetchCommunityCard(id: string): Promise<CommunityCard | null> {
+  return (await fetchCommunityCards([id]))[0] ?? null;
+}
+
+/** Kartı sayfanın kullandığı `ChatGroup` biçimine çevirir: yönetim alanları güvenli varsayılanlardır (üye olmayanın hiçbir yetkisi yoktur). */
+export function cardToChatGroup(card: CommunityCard): ChatGroup {
+  return {
+    id: card.id,
+    name: card.name,
+    description: card.description,
+    avatarUrl: card.avatarUrl,
+    visibility: card.visibility,
+    postingPolicy: "members",
+    memberLimit: card.memberLimit,
+    memberCount: card.memberCount,
+    pendingRequestCount: 0,
+    historyVisible: false,
+    membersCanPin: false,
+    rolePermissions: DEFAULT_ROLE_PERMISSIONS,
+    createdAt: card.createdAt,
+    myRole: "member",
+    category: card.category,
+    feedPolicy: "members",
+    rules: card.rules,
+    rulesVersion: card.rulesVersion,
+    rulesRequired: card.rulesRequired,
+    closedAt: card.closedAt,
+    postCount: card.postCount ?? 0,
+    origin: card.origin,
+  };
 }
 
 export interface CommunityLinkPreview {

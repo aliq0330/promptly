@@ -50,13 +50,26 @@ export function setupCommunities(db) {
     const log = (name, b) => db.calls.push({ method: "RPC", table: name, body: b });
 
     // ---- keşif / listeler ----
+    // Topluluk KARTI (üye olmayanın gördüğü tek şey; docs/history/177-*): açık/kapalı herkese, tamamen kapalı yalnız üye/davetli/başvurana.
+    if (table === "rpc/community_cards") {
+      log("community_cards", body);
+      const invited = (x) => db.invitations.some((i) => i.group_id === x.id && i.invitee_id === signedIn && i.status === "pending");
+      const requested = (x) => db.requests.some((r) => r.group_id === x.id && r.user_id === signedIn && r.status === "pending");
+      const list = (body.p_ids ?? []).map((id) => g(id)).filter((x) => x && (x.visibility !== "private" || db.member(x.id, signedIn) || invited(x) || requested(x)))
+        .map((x) => ({
+          id: x.id, name: x.name, description: x.description, avatar_url: x.avatar_url ?? null, category: x.category, visibility: x.visibility, member_count: x.member_count, member_limit: x.member_limit,
+          rules: x.rules, rules_required: x.rules_required, rules_version: x.rules_version ?? 1, closed_at: x.closed_at, origin: x.origin ?? "native",
+          post_count: x.visibility === "public" || db.member(x.id, signedIn) ? x.post_count : null, created_at: x.created_at,
+        }));
+      return json(200, list);
+    }
     if (table === "rpc/discover_communities") {
       log("discover_communities", body);
       const term = (body.p_query ?? "").toLowerCase();
       const list = db.groups
         .filter((x) => x.visibility === "public" && !x.closed_at && (!body.p_category || x.category === body.p_category) && (!term || x.name.toLowerCase().includes(term) || (x.description ?? "").toLowerCase().includes(term)))
         .map((x) => ({
-          id: x.id, name: x.name, description: x.description, avatar_url: null, category: x.category, member_count: x.member_count, member_limit: x.member_limit, post_count: x.post_count,
+          id: x.id, name: x.name, description: x.description, avatar_url: x.avatar_url ?? null, category: x.category, member_count: x.member_count, member_limit: x.member_limit, post_count: x.post_count,
           upcoming_event_count: db.events.filter((e) => e.community_id === x.id && e.status === "scheduled").length, rules_required: x.rules_required, created_at: x.created_at, last_activity_at: null,
           my_status: db.member(x.id, signedIn) ? "member" : db.invitations.some((i) => i.group_id === x.id && i.invitee_id === signedIn && i.status === "pending") ? "invited" : db.requests.some((r) => r.group_id === x.id && r.user_id === signedIn && r.status === "pending") ? "requested" : "none",
         }));
@@ -70,7 +83,7 @@ export function setupCommunities(db) {
         if (scope === "member") return Boolean(r);
         return ["owner", "admin", "moderator"].includes(r ?? "");
       }).map((x) => ({
-        id: x.id, name: x.name, description: x.description, avatar_url: null, category: x.category, visibility: x.visibility, member_count: x.member_count, member_limit: x.member_limit, post_count: x.post_count,
+        id: x.id, name: x.name, description: x.description, avatar_url: x.avatar_url ?? null, category: x.category, visibility: x.visibility, member_count: x.member_count, member_limit: x.member_limit, post_count: x.post_count,
         upcoming_event_count: 0, closed: Boolean(x.closed_at), created_at: x.created_at, last_activity_at: null, my_role: role(x.id), unread_count: db.member(x.id, signedIn)?.unread_count ?? 0,
         pending_request_count: staff(x.id) ? x.pending_request_count : 0,
       }));
@@ -91,7 +104,7 @@ export function setupCommunities(db) {
     const searchRow = (x, extra = {}) => {
       const open = x.visibility === "public" || Boolean(db.member(x.id, signedIn));
       return {
-        id: x.id, name: x.name, description: x.description, avatar_url: null, category: x.category, visibility: x.visibility, member_count: x.member_count, member_limit: x.member_limit,
+        id: x.id, name: x.name, description: x.description, avatar_url: x.avatar_url ?? null, category: x.category, visibility: x.visibility, member_count: x.member_count, member_limit: x.member_limit,
         post_count: open ? x.post_count : null, upcoming_event_count: open ? db.events.filter((e) => e.community_id === x.id && e.status === "scheduled").length : null,
         rules_required: x.rules_required, created_at: x.created_at, last_activity_at: null, my_status: myStatusOf(x), ...extra,
       };

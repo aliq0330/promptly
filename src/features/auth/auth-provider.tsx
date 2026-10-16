@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase/client";
+import { clearMediaUrlCache } from "@/lib/supabase/media-url";
 import { useRouter, usePathname } from "next/navigation";
 
 interface AuthContextValue {
@@ -32,6 +33,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   // Ref so the one-time auth listener always sees the current path.
   const pathnameRef = useRef(pathname);
+  const lastUserIdRef = useRef<string | null>(null);
   useEffect(() => {
     pathnameRef.current = pathname;
   }, [pathname]);
@@ -61,6 +63,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           router.replace("/reset-password");
         }
       }
+      // Oturum kapanınca ya da kullanıcı değişince önceki kullanıcının aldığı medya imzaları bellekte kalmasın (özel topluluk görselleri vb.).
+      const nextUserId = nextSession?.user?.id ?? null;
+      if (event === "SIGNED_OUT" || (lastUserIdRef.current !== null && nextUserId !== lastUserIdRef.current)) clearMediaUrlCache();
+      lastUserIdRef.current = nextUserId;
       setSession(nextSession);
       setLoading(false);
     });

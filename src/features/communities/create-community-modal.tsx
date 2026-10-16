@@ -11,8 +11,8 @@ import { InviteePicker } from "@/features/groups/invitee-picker";
 import { useAsyncAction } from "@/features/groups/use-async-action";
 import { uploadGroupAvatar } from "@/lib/supabase/chat-groups";
 import { createCommunity } from "@/lib/supabase/communities";
-import { VISIBILITY_ICONS } from "./visibility-label";
-import { CATEGORY_LABEL_KEYS, COMMUNITY_CATEGORIES, COMMUNITY_RULES_MAX, VISIBILITY_HELP_KEYS, VISIBILITY_LABEL_KEYS, VISIBILITY_OPTIONS } from "@/lib/communities";
+import { VisibilityPicker } from "./visibility-picker";
+import { CATEGORY_LABEL_KEYS, COMMUNITY_CATEGORIES, COMMUNITY_RULES_MAX } from "@/lib/communities";
 import {
   clampMemberLimit,
   GROUP_DESCRIPTION_MAX,
@@ -239,23 +239,7 @@ export function CreateCommunityModal({ onClose, onCreated }: { onClose: () => vo
             </p>
           </div>
 
-          <fieldset className="space-y-2">
-            <legend className={fieldLabelClassName}>{t("groups.visibility.label")}</legend>
-            {VISIBILITY_OPTIONS.map((option) => {
-              const Icon = VISIBILITY_ICONS[option];
-              return (
-                <ChoiceCard key={option}>
-                  <input type="radio" name="group-visibility" checked={visibility === option} onChange={() => setVisibility(option)} disabled={busy} className="mt-1 accent-[var(--color-primary)]" />
-                  <span className="min-w-0">
-                    <span className="flex items-center gap-1.5 font-medium">
-                      <Icon size={14} aria-hidden /> {t(VISIBILITY_LABEL_KEYS[option])}
-                    </span>
-                    <span className="mt-0.5 block text-caption text-text-muted">{t(VISIBILITY_HELP_KEYS[option])}</span>
-                  </span>
-                </ChoiceCard>
-              );
-            })}
-          </fieldset>
+          <VisibilityPicker value={visibility} onChange={setVisibility} disabled={busy} />
 
           <div>
             <label htmlFor="group-limit" className={fieldLabelClassName}>

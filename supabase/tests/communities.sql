@@ -180,7 +180,8 @@ select public._check(16, 'başvuru: kabulle başvuru oluşur ama ÜYE yapmaz; yi
   public._r('t16a') = 'ok' and public._r('t16b') = 'ok'
   and (select count(*) from public.chat_group_join_requests where user_id = :frank and status = 'pending') = 1
   and not exists (select 1 from public.conversation_members where conversation_id = public._g('closed') and user_id = :frank)
-  and (select count(*) from public.chat_groups where id = public._g('closed')) = 1
+  and (select count(*) from public.community_cards(array[public._g('closed')])) = 1
+  and (select count(*) from public.chat_groups where id = public._g('closed')) = 0
   and (select count(*) from public.community_posts where community_id = public._g('closed')) = 0);
 select public._as_user(:carol);
 select public._tk('t17', format('select public.decide_chat_group_join_request(%L, true)', (select id from public.chat_group_join_requests where user_id = :frank and status = 'pending')));
@@ -669,16 +670,21 @@ select public._check(96, 'birebir: sohbet başlatma/mesaj/okuma topluluk eklenti
   and (select count(*) from public.messages where conversation_id = (select id from _dm)) = 1
   and public._try(format($q$insert into public.messages (conversation_id, sender_id, body) values (%L, %L, 'cevap')$q$, (select id from _dm), :frank)) = 'ok');
 reset role;
-select public._check(97, 'EXECUTE: anon yeni RPC''leri çağıramaz; iç yardımcılar kimseye açık değil; yeni tablolar anon''a kapalı',
+select public._check(97, 'EXECUTE: anon yalnız keşif/okuma yardımcılarını çağırır (yazma/üye/istatistik/öneri yok); iç yardımcılar kimseye açık değil; raporlar, kural kabulleri ve chat_groups anon''a kapalı',
   not has_function_privilege('anon', 'public.create_community(text,text,text,text,integer,uuid[],text,text,text,text,boolean)', 'execute')
   and not has_function_privilege('anon', 'public.share_to_community(uuid,text,uuid,text)', 'execute')
   and not has_function_privilege('anon', 'public.community_stats(uuid,integer)', 'execute')
-  and not has_function_privilege('anon', 'public.discover_communities(text,text,text,integer,integer)', 'execute')
-  and not has_function_privilege('anon', 'public.can_read_community(uuid)', 'execute')
+  and has_function_privilege('anon', 'public.discover_communities(text,text,text,integer,integer)', 'execute')
+  and has_function_privilege('anon', 'public.can_read_community(uuid)', 'execute')
+  and not has_function_privilege('anon', 'public.suggest_communities(integer)', 'execute')
+  and not has_function_privilege('anon', 'public.community_members(uuid,text,text,integer,integer)', 'execute')
   and not has_function_privilege('authenticated', 'public._community_notify(uuid,uuid,uuid,text,text,text,text)', 'execute')
   and not has_function_privilege('authenticated', 'public._community_content_info(text,uuid)', 'execute')
   and not has_function_privilege('authenticated', 'public.notify_community_chat_mentions()', 'execute')
-  and not has_table_privilege('anon', 'public.community_posts', 'select')
+  and has_table_privilege('anon', 'public.community_posts', 'select')
+  and not has_table_privilege('anon', 'public.community_reports', 'select')
+  and not has_table_privilege('anon', 'public.community_rule_acceptances', 'select')
+  and not has_table_privilege('anon', 'public.chat_groups', 'select')
   and not has_table_privilege('authenticated', 'public.community_posts', 'insert')
   and not has_table_privilege('authenticated', 'public.community_reports', 'update')
   and not has_table_privilege('authenticated', 'public.community_events', 'delete'));
@@ -742,10 +748,10 @@ select public._check(1043, 'arama: boş/null sorgu ve joker karakter sonuç dön
   and (select count(*) from public.search_communities('%')) = 0
   and (select count(*) from public.search_communities('atölye', 'audio')) = 1
   and (select count(*) from public.search_communities('atölye', 'text')) = 0);
-select public._check(105, 'satır okuma: kapalı topluluğun kartı okunur, tamamen kapalının satırı ve varlığı sızmaz',
-  (select count(*) from public.chat_groups where id = public._g('v_res')) = 1
-  and (select count(*) from public.chat_groups where id = public._g('v_prv')) = 0
-  and (select count(*) from public.chat_groups where id = public._g('v_dave')) = 1);
+select public._check(105, 'satır okuma: üye olmayan chat_groups tablosunu HİÇ okuyamaz; kapalı topluluğun kartı yalnız community_cards ile gelir, tamamen kapalınınki gelmez',
+  (select count(*) from public.chat_groups where id in (public._g('v_res'), public._g('v_prv'), public._g('v_dave'), public._g('v_pub'))) = 0
+  and (select count(*) from public.community_cards(array[public._g('v_res'), public._g('v_dave'), public._g('v_pub')])) = 3
+  and (select count(*) from public.community_cards(array[public._g('v_prv')])) = 0);
 select public._check(106, 'kapalı topluluk: gönderi/duyuru/mesaj/üye listesi üyelik olmadan okunamaz',
   (select count(*) from public.community_posts where community_id = public._g('v_res')) = 0
   and (select count(*) from public.community_announcements where community_id = public._g('v_res')) = 0
@@ -838,7 +844,7 @@ select public._as_user(:alice);
 select public.decide_chat_group_join_request(public._reqid(public._g('v_res'), :carol), true);
 select public._as_user(:gina);
 select public._check(115, 'doluluk: dolu kapalı topluluğa başvuru reddedilir, öneriden düşer',
-  (select member_count from public.chat_groups where id = public._g('v_res')) = 3
+  (select member_count from public.community_cards(array[public._g('v_res')])) = 3
   and public._try(format('select public.request_join_community(%L, null, true)', public._g('v_res'))) like '%member_limit_reached%'
   and (select count(*) from public.suggest_communities(20) where id = public._g('v_res')) = 0);
 select public._as_user(:erin);
@@ -879,7 +885,7 @@ select public._check(119, 'tamamen kapalıya dönmüş topluluk: arama/öneri/sa
   public._r('v118b') = 'ok'
   and (select count(*) from public.search_communities('Geçiş')) = 0
   and (select count(*) from public.suggest_communities(50) where id = public._g('v_gec')) = 0
-  and (select count(*) from public.chat_groups where id = public._g('v_gec')) = 0
+  and (select count(*) from public.community_cards(array[public._g('v_gec')])) = 0
   and public._try(format('select public.request_join_community(%L, null, true)', public._g('v_gec'))) like '%group_not_found%');
 select public._as_user(:alice);
 select public.set_chat_group_visibility(public._g('v_gec'), 'restricted');
@@ -895,7 +901,7 @@ select public._check(121, '"Kaydet" (yer imi) kaldırıldı: tablo ve RPC yok',
   to_regclass('public.community_bookmarks') is null
   and to_regprocedure('public.set_community_bookmark(uuid,boolean)') is null);
 select public._check(122, 'EXECUTE: anon yeni RPC''leri çağıramaz; doğrudan görünürlük yazımı reddedilir',
-  not has_function_privilege('anon', 'public.search_communities(text,text,integer,integer)', 'execute')
+  has_function_privilege('anon', 'public.search_communities(text,text,integer,integer)', 'execute')
   and not has_function_privilege('anon', 'public.suggest_communities(integer)', 'execute')
   and not has_function_privilege('anon', 'public.request_join_community(uuid,text,boolean)', 'execute')
   and has_function_privilege('authenticated', 'public.request_join_community(uuid,text,boolean)', 'execute'));
