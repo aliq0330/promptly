@@ -10,7 +10,7 @@ import type { TranslationKey } from "@/lib/i18n/translations";
 import { cn } from "@/lib/utils";
 
 /** Mevcut oluşturma ekranları — ikinci bir form YOK: topluluk bağlamı yalnızca `?community=` ile taşınır. */
-const CREATE_HREF: Record<CommunityPostType, string> = { prompt: "/create", request: "/requests/new", workflow: "/workflows/create", preset: "/presets/create" };
+const CREATE_HREF: Record<CommunityPostType, string> = { prompt: "/create?mode=prompt", request: "/requests/new", workflow: "/workflows/create", preset: "/presets/create" };
 const TYPES: { type: CommunityPostType; icon: LucideIcon; label: TranslationKey }[] = [
   { type: "prompt", icon: SquareTerminal, label: "communities.feed.type.prompt" },
   { type: "request", icon: Sparkles, label: "communities.feed.type.request" },
@@ -78,7 +78,7 @@ export function CreatePostModal({ communityId, onClose, onApply }: { communityId
             <ul className="grid grid-cols-2 gap-2.5">
               {TYPES.map(({ type, icon: Icon, label }) => (
                 <li key={type}>
-                  <Link href={`${CREATE_HREF[type]}?community=${communityId}`} className={cn(optionClass, "items-center")} data-post-new-type={type}>
+                  <Link href={`${CREATE_HREF[type]}${CREATE_HREF[type].includes("?") ? "&" : "?"}community=${communityId}`} className={cn(optionClass, "items-center")} data-post-new-type={type}>
                     <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary-soft text-primary">
                       <Icon size={17} strokeWidth={1.75} aria-hidden />
                     </span>

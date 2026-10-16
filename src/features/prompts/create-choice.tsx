@@ -47,14 +47,17 @@ const OPTIONS = [
 ] as const;
 
 /** A weekly theme's `?tag=` is carried into whichever type is picked (each form attaches it, see `usePrefillTag`). */
-function withTag(href: string, tag: string | null): string {
-  if (!tag) return href;
-  return `${href}${href.includes("?") ? "&" : "?"}tag=${encodeURIComponent(tag)}`;
+function withParam(href: string, name: string, value: string | null): string {
+  if (!value) return href;
+  return `${href}${href.includes("?") ? "&" : "?"}${name}=${encodeURIComponent(value)}`;
 }
 
 export function CreateChoice() {
   const { t } = useTranslation();
-  const tag = useSearchParams().get("tag");
+  const params = useSearchParams();
+  const tag = params.get("tag");
+  // Topluluk bağlamı seçilen türe de taşınır: içerik o toplulukta yerel gönderi olarak yayınlanır.
+  const community = params.get("community");
   return (
     <div className="mx-auto w-full max-w-5xl px-3 py-8 sm:px-5 sm:py-12 lg:px-8">
       <div className="mb-8 space-y-2 text-center">
@@ -67,7 +70,7 @@ export function CreateChoice() {
         {OPTIONS.map((option) => (
           <Link
             key={option.href}
-            href={withTag(option.href, tag)}
+            href={withParam(withParam(option.href, "tag", tag), "community", community)}
             className="group flex flex-col items-start gap-3 rounded-lg border border-border-soft bg-surface p-5 text-left shadow-card transition-[border-color,box-shadow] duration-200 hover:border-primary/40 hover:shadow-card-hover"
           >
             <span className="flex h-11 w-11 items-center justify-center rounded-md bg-primary-soft text-primary transition-colors duration-200 group-hover:bg-primary group-hover:text-primary-foreground">

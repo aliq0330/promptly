@@ -19,13 +19,15 @@ export function CreateGate() {
     searchParams.get("edit") ||
     searchParams.get("generatorRun") ||
     searchParams.get("fromGenerate") ||
+    // Topluluktan gelen yeni içerik (`?community=`): tür zaten seçildi, seçim ekranına dönüp bağlamı kaybetme.
+    searchParams.get("community") ||
     searchParams.get("mode") === "prompt";
 
   // The form seeds its fields once, on mount. Keying it by the deep-link
   // params remounts it (fresh prefill) when a client-side navigation moves
   // from one intent to another (e.g. duplicate=A → duplicate=B) without a
   // full page reload.
-  const formKey = ["duplicate", "answerRequest", "edit", "generatorRun", "fromGenerate", "mode"]
+  const formKey = ["duplicate", "answerRequest", "edit", "generatorRun", "fromGenerate", "community", "mode"]
     .map((name) => searchParams.get(name) ?? "")
     .join("|");
 
