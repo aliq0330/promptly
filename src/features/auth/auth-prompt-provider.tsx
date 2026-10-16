@@ -13,7 +13,7 @@ import { AuthDivider, GoogleSignInButton } from "@/features/auth/google-sign-in-
 import type { TranslationKey } from "@/lib/i18n/translations";
 
 /** What the visitor tried to do — picks the dialog's sentence. */
-export type AuthPromptReason = "like" | "save" | "follow" | "comment" | "create" | "message" | "generic";
+export type AuthPromptReason = "like" | "save" | "follow" | "comment" | "create" | "message" | "join" | "generic";
 
 const REASON_KEYS: Record<AuthPromptReason, TranslationKey> = {
   like: "prompt.loginToLike",
@@ -22,6 +22,7 @@ const REASON_KEYS: Record<AuthPromptReason, TranslationKey> = {
   comment: "auth.gateComment",
   create: "auth.gateCreate",
   message: "messages.loginToSendTitle",
+  join: "communities.loginToJoin",
   generic: "auth.gateGeneric",
 };
 

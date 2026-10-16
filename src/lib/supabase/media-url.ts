@@ -7,9 +7,13 @@ import { storagePathFromUrl } from "./storage-cleanup";
  * olarak) ama bu adres artık kimseye dosya vermez: gösterirken kısa ömürlü bir
  * signed URL'ye çevrilir. Okuma yetkisini Storage policy'si verir — dosyayı
  * gösteren satır çağıran için okunabilirse (herkese açık gönderi ya da kendi
- * gönderisi) imza alınır, aksi hâlde `null` döner.
+ * gönderisi) imza alınır, aksi hâlde `null` döner. `community-avatars`
+ * (`20260920080000_community_privacy_hardening.sql`): topluluk görseli; dosya
+ * yalnız topluluğun KARTI çağıran için görülebildiği sürece (herkese açık/kapalı
+ * topluluk, ya da üye/davetli/başvuran) okunur — tamamen kapalı topluluğun görseli
+ * yabancıya imza vermez.
  */
-export const PROTECTED_MEDIA_BUCKETS = ["prompt-media", "request-references", "result-media"] as const;
+export const PROTECTED_MEDIA_BUCKETS = ["prompt-media", "request-references", "result-media", "community-avatars"] as const;
 export type ProtectedMediaBucket = (typeof PROTECTED_MEDIA_BUCKETS)[number];
 
 /** Kısa ömür: gönderi private yapıldıktan sonra önceden alınmış bir imzanın geçerli kalabileceği azami süre. */
@@ -39,6 +43,14 @@ export function isProtectedMediaUrl(url: string | null | undefined): boolean {
 }
 
 const cache = new Map<string, { signedUrl: string; expiresAt: number }>();
+
+/**
+ * Bellekteki imzaları unutur. Oturum kapanınca / kullanıcı değişince çağrılır: önceki kullanıcının (örn. özel topluluğun üyesi) aldığı
+ * imza, sonraki ziyaretçiye ya da kullanıcıya önbellekten servis edilmesin.
+ */
+export function clearMediaUrlCache(): void {
+  cache.clear();
+}
 
 /** Önbellekte hâlâ taze bir imza varsa onu döner (ilk boyamada anında göstermek için); korumasız URL'yi olduğu gibi döner. */
 export function getCachedMediaUrl(url: string | null | undefined): string | null {

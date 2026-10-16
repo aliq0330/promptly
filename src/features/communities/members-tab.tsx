@@ -10,8 +10,10 @@ const FILTERS: (GroupRole | null)[] = [null, "owner", "admin", "moderator", "mem
 
 /** Üyeler: arama + rol süzgeci + (yetkiye göre) rol atama / çıkarma / yasaklama / sahiplik devri. Süzme ve sayfalama sunucuda; gerçek yetki RPC'lerde. */
 export function MembersTab({ group, viewerId, reload, onToast }: CommunityTabProps) {
+  // Üye listesi yalnız üyelere açıktır (sayfa bu sekmeyi zaten yalnız üyeye gösterir); ziyaretçide hiçbir şey çizilmez.
   const { t } = useTranslation();
   const [filter, setFilter] = useState<GroupRole | null>(null);
+  if (!viewerId) return null;
   return (
     <div className="space-y-4">
       <div className="flex gap-1.5 overflow-x-auto pb-1" role="group" aria-label={t("communities.members.filterAria")}>

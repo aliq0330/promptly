@@ -93,9 +93,9 @@ await scenario("5. Admin: tüm sekmeler; kapalı→açık onay metni birebir; so
   await openThread(page); await openInfo(page);
   assert.deepEqual(await tabNames(page), ["Genel", "Üyeler", "Katılım istekleri", "Davet", "Ayarlar"]);
   await tab(page, /Ayarlar/).click();
-  await dlg(page).getByRole("button", { name: "Herkese açık yap" }).click();
+  await dlg(page).getByRole("radio", { name: /^Herkese açık/ }).click();
   const confirm = dlg(page);
-  await confirm.getByText("Topluluğu herkese açık yaptığında, güvenlik kurallarına uygun tüm bekleyen katılım istekleri otomatik olarak kabul edilecek ve uygun kullanıcılar topluluğa katılacak.").waitFor();
+  await confirm.getByText("Topluluğu herkese açık yaptığında, güvenlik kurallarına uygun tüm bekleyen katılım istekleri otomatik olarak kabul edilecek ve uygun kullanıcılar topluluğa katılacak").waitFor();
   await confirm.getByRole("button", { name: "Herkese açık yap" }).dblclick();
   const result = dlg(page);
   await result.getByRole("heading", { name: "Topluluk herkese açık yapıldı" }).waitFor();
@@ -118,7 +118,7 @@ await scenario("5. Admin: tüm sekmeler; kapalı→açık onay metni birebir; so
 await scenario("6. Görünürlük değişikliği başarısızsa başarı gösterilmez, topluluk eski durumda kalır", async ({ page, db }) => {
   await openThread(page); await openInfo(page);
   await tab(page, /Ayarlar/).click();
-  await dlg(page).getByRole("button", { name: "Herkese açık yap" }).click();
+  await dlg(page).getByRole("radio", { name: /^Herkese açık/ }).click();
   await dlg(page).getByRole("heading", { name: "Topluluk herkese açık yapılsın mı?" }).waitFor();
   await dlg(page).getByRole("button", { name: "Herkese açık yap" }).click();
   await dlg(page).getByRole("alert").getByText("Bu işlem için yetkin yok.").waitFor();
@@ -190,8 +190,8 @@ await scenario("15. İngilizce: bilgi penceresi sekmeleri ve onay metni çevrilm
   await openThread(page, G); await openInfo(page);
   assert.deepEqual(await tabNames(page), ["About", "Members", "Join requests", "Invite", "Settings"]);
   await tab(page, /Settings/).click();
-  await dlg(page).getByRole("button", { name: "Make public" }).click();
-  await dlg(page).getByText("When you make the community public, all pending join requests that meet the safety rules will be accepted automatically and eligible users will join the community.").waitFor();
+  await dlg(page).getByRole("radio", { name: /^Public/ }).click();
+  await dlg(page).getByText("When you make the community public, all pending join requests that meet the safety rules will be accepted automatically and eligible users will join the community").waitFor();
 }, { lang: "en", setup: (db) => seed(db, { myRole: "admin" }) });
 
 // 16
@@ -365,7 +365,7 @@ await scenario("24. Yetkiye göre sekmeler: moderatöre ayar yetkisi verilince A
   assert.deepEqual(await tabNames(page), ["Genel", "Üyeler", "Katılım istekleri", "Ayarlar"]);
   await tab(page, /Ayarlar/).click();
   await dlg(page).getByLabel("Topluluk adı").waitFor();
-  assert.equal(await dlg(page).getByRole("button", { name: "Herkese açık yap" }).count(), 0, "no visibility without that permission");
+  assert.equal(await dlg(page).getByRole("radio", { name: /^Herkese açık/ }).count(), 0, "no visibility without that permission");
   assert.equal(await dlg(page).getByRole("heading", { name: "Yönetici ve moderatör yetkileri" }).count(), 0);
 }, { setup: (db) => { seed(db, { myRole: "moderator", members: [[U.bob, "owner"], [U.dave, "member"]] }); db.groups[0].role_permissions.moderator.edit_settings = true; } });
 

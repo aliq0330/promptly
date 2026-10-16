@@ -6,8 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { ChoiceCard, fieldControlClassName, fieldInputClassName, fieldLabelClassName } from "@/components/ui/field";
 import { useAuth } from "@/features/auth/auth-provider";
-import { VisibilityLabel } from "@/features/communities/visibility-label";
-import { VISIBILITY_HELP_KEYS, VISIBILITY_OPTIONS } from "@/lib/communities";
+import { VisibilityPicker } from "@/features/communities/visibility-picker";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import { ConfirmDialog } from "./confirm-dialog";
 import { GroupAvatar } from "./group-avatar";
@@ -30,10 +29,20 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import type { ChatGroup, GroupPostingPolicy, GroupVisibility } from "@/types";
 
 /** Görünürlüğe geçiş eylemlerinin düğme etiketi + onay penceresi metinleri. */
-const VISIBILITY_ACTION_KEYS: Record<GroupVisibility, { label: TranslationKey; title: TranslationKey; body: TranslationKey }> = {
-  public: { label: "groups.settings.makePublic", title: "groups.settings.makePublicTitle", body: "groups.settings.makePublicBody" },
-  restricted: { label: "groups.settings.makeRestricted", title: "groups.settings.makeRestrictedTitle", body: "groups.settings.makeRestrictedBody" },
-  private: { label: "groups.settings.makePrivate", title: "groups.settings.makePrivateTitle", body: "groups.settings.makePrivateBody" },
+const VISIBILITY_ACTION_KEYS: Record<GroupVisibility, { label: TranslationKey; title: TranslationKey }> = {
+  public: { label: "groups.settings.makePublic", title: "groups.settings.makePublicTitle" },
+  restricted: { label: "groups.settings.makeRestricted", title: "groups.settings.makeRestrictedTitle" },
+  private: { label: "groups.settings.makePrivate", title: "groups.settings.makePrivateTitle" },
+};
+
+/** Geçişin ETKİSİ: hangi düzeyden hangisine geçildiğine göre açıklanır (onay penceresi, değişiklikten ÖNCE). */
+const VISIBILITY_CHANGE_KEYS: Record<string, TranslationKey> = {
+  public_restricted: "communities.visibility.change.public_restricted",
+  public_private: "communities.visibility.change.public_private",
+  restricted_public: "communities.visibility.change.restricted_public",
+  restricted_private: "communities.visibility.change.restricted_private",
+  private_public: "communities.visibility.change.private_public",
+  private_restricted: "communities.visibility.change.private_restricted",
 };
 
 const ACCEPTED_AVATAR_TYPES = ["image/jpeg", "image/png", "image/webp"];
@@ -262,17 +271,17 @@ export function GroupSettingsSection({
         <h3 id="settings-visibility-title" className="text-label font-semibold text-text">
           {t("groups.visibility.label")}
         </h3>
-        <p className="flex items-start gap-2 text-small text-text-secondary">
-          <VisibilityLabel visibility={group.visibility} size={15} className="flex shrink-0 items-center gap-1.5 font-medium text-text" />
-          <span>{t(VISIBILITY_HELP_KEYS[group.visibility])}</span>
-        </p>
-        <div className="flex flex-wrap gap-2" role="group" aria-label={t("groups.settings.visibilityOptionsAria")}>
-          {VISIBILITY_OPTIONS.filter((option) => option !== group.visibility).map((option) => (
-            <Button key={option} type="button" variant="outline" size="sm" onClick={() => { visibilityAction.setError(null); setTargetVisibility(option); }}>
-              {t(VISIBILITY_ACTION_KEYS[option].label)}
-            </Button>
-          ))}
-        </div>
+        <VisibilityPicker
+          value={group.visibility}
+          currentLabel={t("groups.settings.visibilityCurrent")}
+          disabled={visibilityAction.busy}
+          name="settings-visibility"
+          onChange={(next) => {
+            if (next === group.visibility) return;
+            visibilityAction.setError(null);
+            setTargetVisibility(next);
+          }}
+        />
       </section>
 
       )}
@@ -295,7 +304,7 @@ export function GroupSettingsSection({
         <ConfirmDialog
           id="visibility-confirm-title"
           title={t(VISIBILITY_ACTION_KEYS[targetVisibility].title)}
-          body={t(VISIBILITY_ACTION_KEYS[targetVisibility].body)}
+          body={t(VISIBILITY_CHANGE_KEYS[`${group.visibility}_${targetVisibility}`])}
           confirmLabel={t(VISIBILITY_ACTION_KEYS[targetVisibility].label)}
           busy={visibilityAction.busy}
           error={visibilityAction.error}

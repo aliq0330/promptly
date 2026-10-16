@@ -180,7 +180,7 @@ export function FeedTab({ group, role, viewerId, onToast, reload }: CommunityTab
         </>
       )}
 
-      {shareOpen && (
+      {shareOpen && viewerId && (
         <ShareToCommunityModal
           communityId={group.id}
           userId={viewerId}
@@ -260,7 +260,7 @@ function PostItem({
   onAction,
 }: {
   post: CommunityPost;
-  viewerId: string;
+  viewerId: string | null;
   role: CommunityTabProps["role"];
   canPin: boolean;
   canModerate: boolean;
@@ -268,7 +268,7 @@ function PostItem({
   onAction: (action: PostAction) => void;
 }) {
   const { t, language } = useTranslation();
-  const mine = post.author?.id === viewerId;
+  const mine = Boolean(viewerId) && post.author?.id === viewerId;
   const hasMenu = mine || canPin || canModerate || Boolean(role);
   const content = post.content;
 

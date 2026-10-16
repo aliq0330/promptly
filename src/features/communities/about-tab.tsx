@@ -46,6 +46,7 @@ export function AboutTab({ group, role, viewerId, membership, reload, onToast, g
   }
 
   async function savePrefs(nextLevel: CommunityNotifyLevel, until: string | null) {
+    if (!viewerId) return;
     setPendingLevel(nextLevel);
     const ok = await prefs.run(async () => {
       await setCommunityNotifyPrefs(group.id, viewerId, nextLevel, until);

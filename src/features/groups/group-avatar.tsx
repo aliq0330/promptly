@@ -1,8 +1,11 @@
+"use client";
+
 import { Users } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
+import { useStorageSrc } from "@/components/ui/storage-media";
 import { cn } from "@/lib/utils";
 
-/** Grup görseli; görsel yoksa ya da yüklenemezse adın baş harfleri. `badge`: köşede küçük "grup" işareti (listelerde birebir sohbetten ayırt etmek için). */
+/** Grup görseli (özel bucket → signed URL); görsel yoksa ya da yüklenemezse adın baş harfleri. `badge`: köşede küçük "grup" işareti (listelerde birebir sohbetten ayırt etmek için). */
 export function GroupAvatar({
   name,
   avatarUrl,
@@ -16,9 +19,12 @@ export function GroupAvatar({
   badge?: boolean;
   className?: string;
 }) {
+  // Topluluk görseli özel bucket'tadır (docs/history/177-*): DB'deki URL kimliktir, gösterirken kısa ömürlü signed URL'ye çevrilir.
+  // Eski ortak `avatars` bucket'ındaki görseller olduğu gibi geçer. İmza alınamazsa (kart görülemiyor) baş harfler gösterilir.
+  const { src } = useStorageSrc(avatarUrl);
   return (
     <span className={cn("relative inline-flex shrink-0", className)}>
-      <Avatar src={avatarUrl} alt={name} size={size} />
+      <Avatar src={src ?? null} alt={name} size={size} />
       {badge && (
         <span
           aria-hidden

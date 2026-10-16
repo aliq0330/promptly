@@ -92,7 +92,8 @@ select public._check(5, 'davet: başkasının davetini kabul edemez; davetleri o
 select public._as_user(:bobby);
 select public._check(6, 'davet: davetli kendi davetini görür; kapalı grubun kartı (chat_groups) davetli için okunur',
   (select count(*) from public.chat_group_invitations where invitee_id = :bobby) = 1
-  and (select count(*) from public.chat_groups where id = public._g('g1')) = 1);
+  and (select count(*) from public.community_cards(array[public._g('g1')])) = 1
+  and (select count(*) from public.chat_groups where id = public._g('g1')) = 0);
 create temp table _r_b as select public.respond_chat_group_invitation(public._g('inv_bobby'), true) as j;
 select public._as_user(:carol);
 create temp table _r_c as select public.respond_chat_group_invitation(public._g('inv_carol'), true) as j;
@@ -771,8 +772,9 @@ select public._as_user(:ivy);
 select public._check(102, 'RLS: normal üye ve dışarıdaki denetim kaydını okuyamaz',
   (select count(*) from public.chat_group_audit where group_id = public._g('g2')) = 0);
 select public._as_user(:gina);
-select public._check(103, 'RLS: dışarıdaki herkese açık grubun kartını okur ama üyelerini/mesajlarını okuyamaz',
-  (select count(*) from public.chat_groups where id = public._g('g2')) = 1
+select public._check(103, 'RLS: dışarıdaki herkese açık grubun kartını (community_cards) okur ama satırını, üyelerini ve mesajlarını okuyamaz',
+  (select count(*) from public.community_cards(array[public._g('g2')])) = 1
+  and (select count(*) from public.chat_groups where id = public._g('g2')) = 0
   and (select count(*) from public.messages where conversation_id = public._g('g2')) = 0
   and (select count(*) from public.conversation_members where conversation_id = public._g('g2')) = 0
   and (select count(*) from public.chat_group_members(public._g('g2'))) = 0);

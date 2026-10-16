@@ -10,6 +10,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
 import { Tabs, type TabItem } from "@/components/ui/tabs";
 import { useAuth } from "@/features/auth/auth-provider";
+import { useAuthPrompt } from "@/features/auth/auth-prompt-provider";
 import { useRealMessages } from "@/features/messages/real-messages-provider";
 import { GroupAvatar } from "@/features/groups/group-avatar";
 import { useAsyncAction } from "@/features/groups/use-async-action";
@@ -51,30 +52,35 @@ interface ListState {
  * `/communities`: Topluluklar ana sayfası. Sekmeler: Keşfet (yalnız herkese açık + "Senin için önerilenler"; arama herkese açık VE kapalı
  * toplulukları bulur, kapalıya istek gönderilir), Üyesi olduklarım, Yönettiklerim, Davetler, Başvurularım (yalnız KENDİ bekleyen başvurularım).
  * Tamamen kapalı topluluklar hiçbir listede/aramada/öneride görünmez; onlara yalnız davet ya da davet bağlantısıyla ulaşılır.
+ * Oturum açmamış ziyaretçi yalnız Keşfet'i (herkese açık topluluklar + arama) görür; katıl/istek/oluştur giriş diyaloğu açar.
  * Eski `/groups` adresi buraya yönlenir.
  */
 export function CommunitiesPage() {
   const { t } = useTranslation();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+  const { requireAuth } = useAuthPrompt();
   const { refresh } = useRealMessages();
   const { node: toastNode, show } = useToast();
   const tabParam = searchParams.get("tab");
-  const view: View = VIEWS.includes(tabParam as View) ? (tabParam as View) : "discover";
+  // Kişisel sekmeler (üye olduklarım, davetler…) oturum ister: ziyaretçi her zaman Keşfet'te kalır.
+  const view: View = user && VIEWS.includes(tabParam as View) ? (tabParam as View) : "discover";
   const [createOpen, setCreateOpen] = useState(false);
   const [linkInput, setLinkInput] = useState("");
   const [linkError, setLinkError] = useState(false);
   const [inviteCount, setInviteCount] = useState<number | null>(null);
   const [requestCount, setRequestCount] = useState<number | null>(null);
 
-  const tabs: TabItem<View>[] = [
-    { key: "discover", label: t("communities.tab.discover") },
-    { key: "mine", label: t("communities.tab.mine") },
-    { key: "managed", label: t("communities.tab.managed") },
-    { key: "invites", label: t("communities.tab.invites"), count: inviteCount ? inviteCount : undefined },
-    { key: "requests", label: t("communities.tab.requests"), count: requestCount ? requestCount : undefined },
-  ];
+  const tabs: TabItem<View>[] = user
+    ? [
+        { key: "discover", label: t("communities.tab.discover") },
+        { key: "mine", label: t("communities.tab.mine") },
+        { key: "managed", label: t("communities.tab.managed") },
+        { key: "invites", label: t("communities.tab.invites"), count: inviteCount ? inviteCount : undefined },
+        { key: "requests", label: t("communities.tab.requests"), count: requestCount ? requestCount : undefined },
+      ]
+    : [{ key: "discover", label: t("communities.tab.discover") }];
 
   const openLink = () => {
     const token = parseGroupJoinToken(linkInput);
@@ -113,7 +119,7 @@ export function CommunitiesPage() {
         description={t("communities.page.description")}
         actions={
           <>
-            <Button type="button" size="sm" onClick={() => setCreateOpen(true)}>
+            <Button type="button" size="sm" onClick={() => requireAuth("create") && setCreateOpen(true)}>
               <Plus size={15} /> {t("communities.page.create")}
             </Button>
             <Link href="/messages" className={buttonClassName({ size: "sm", variant: "outline" })}>
@@ -125,9 +131,11 @@ export function CommunitiesPage() {
 
       <Tabs items={tabs} active={view} onChange={goTab} ariaLabel={t("communities.page.tabsAria")} />
 
-      {view === "discover" && (
+      {authLoading ? (
+        <LoadingRows />
+      ) : view === "discover" ? (
         <>
-          <form
+          {user && <form
             onSubmit={(event) => {
               event.preventDefault();
               openLink();
@@ -158,10 +166,10 @@ export function CommunitiesPage() {
                 {t("groups.page.linkInvalid")}
               </p>
             )}
-          </form>
-          <DiscoverView onToast={show} onGoInvites={() => goTab("invites")} />
+          </form>}
+          <DiscoverView onToast={show} onGoInvites={() => goTab("invites")} signedIn={Boolean(user)} />
         </>
-      )}
+      ) : null}
       {view === "mine" && <MyCommunitiesView scope="member" onToast={show} />}
       {view === "managed" && <MyCommunitiesView scope="managed" onToast={show} />}
       {view === "invites" && user && (
@@ -224,7 +232,7 @@ function applyJoinState(community: CommunitySummary, next: JoinState): Community
   return { ...community, myStatus: next, myRole: next === "member" ? (community.myRole ?? "member") : null, memberCount };
 }
 
-function DiscoverView({ onToast, onGoInvites }: { onToast: (message: string) => void; onGoInvites: () => void }) {
+function DiscoverView({ onToast, onGoInvites, signedIn }: { onToast: (message: string) => void; onGoInvites: () => void; signedIn: boolean }) {
   const { t } = useTranslation();
   const { refresh } = useRealMessages();
   const [query, setQuery] = useState("");
@@ -244,6 +252,7 @@ function DiscoverView({ onToast, onGoInvites }: { onToast: (message: string) => 
 
   // Öneriler: yalnız arama yokken ve kategori süzgeci yokken, sayfa başına bir kez (hata sessizce boş liste; sayfayı bozmaz).
   useEffect(() => {
+    if (!signedIn) return; // öneriler kişiseldir: ziyaretçiye verilmez
     let cancelled = false;
     suggestCommunities(6)
       .then((list) => {
@@ -253,7 +262,7 @@ function DiscoverView({ onToast, onGoInvites }: { onToast: (message: string) => 
     return () => {
       cancelled = true;
     };
-  }, [reloadKey]);
+  }, [reloadKey, signedIn]);
 
   const key = `${debounced}|${searching ? "" : sort}|${category ?? ""}|${reloadKey}`;
   const fetchPage = useCallback(
@@ -295,10 +304,10 @@ function DiscoverView({ onToast, onGoInvites }: { onToast: (message: string) => 
   function changeStatus(id: string, next: JoinState) {
     setState((prev) => (prev ? { ...prev, items: prev.items.map((c) => (c.id === id ? applyJoinState(c, next) : c)) } : prev));
     setSuggested((prev) => prev.map((c) => (c.id === id ? applyJoinState(c, next) : c)));
-    if (next === "member" || next === "none") void refresh();
+    if (signedIn && (next === "member" || next === "none")) void refresh();
   }
 
-  const showSuggestions = !searching && category === null && suggested.length > 0;
+  const showSuggestions = signedIn && !searching && category === null && suggested.length > 0;
 
   return (
     <div className="space-y-4">

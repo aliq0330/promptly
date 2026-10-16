@@ -34,7 +34,8 @@ import type { MyCommunityMembership } from "@/lib/supabase/communities";
 export interface CommunityTabProps {
   group: ChatGroup;
   role: GroupRole | null;
-  viewerId: string;
+  /** Oturum açmamış ziyaretçide null (yalnız herkese açık topluluğun salt-okunur içeriği). */
+  viewerId: string | null;
   membership: MyCommunityMembership | null;
   reload: () => Promise<void>;
   onToast: (message: string) => void;
@@ -42,7 +43,8 @@ export interface CommunityTabProps {
 }
 
 /**
- * `/communities/local?id=…&tab=…`: topluluk ana sayfası. Sekmeler: Genel bakış · Akış · Sohbet · Üyeler · Etkinlikler · Hakkında ve kurallar ·
+ * `/communities/local?id=…&tab=…`: topluluk ana sayfası. Oturum açmamış ziyaretçi herkese açık toplulukta salt-okunur görür (katıl → giriş
+ * diyaloğu); kapalı/tamamen kapalı topluluğun içeriği ziyaretçiye de kapalıdır (docs/history/177-*). Sekmeler: Genel bakış · Akış · Sohbet · Üyeler · Etkinlikler · Hakkında ve kurallar ·
  * Yönetim (yalnız yetkililere). Her sekmenin erişimi `accessibleTabs`'tan gelir ve veritabanındaki RLS ile aynıdır: üye olmayan kapalı
  * topluluğun içeriğini göremez (yalnız davet/başvuru "geçidi" görünür), sohbet ve üye listesi üyelik gerektirir.
  */
@@ -59,10 +61,10 @@ function CommunityPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const id = searchParams.get("id");
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { conversations, refresh } = useRealMessages();
   const { node: toastNode, show } = useToast();
-  const { state, reload } = useCommunity(id, user?.id ?? null);
+  const { state, reload } = useCommunity(authLoading ? null : id, user?.id ?? null);
 
   const role = state.status === "ready" ? (state.membership?.role ?? null) : null;
   const group = state.status === "ready" ? state.group : null;
@@ -75,7 +77,7 @@ function CommunityPageInner() {
   }
 
   if (!id) return <NotFoundBlock title={t("communities.notFound.title")} description={t("communities.notFound.body")} />;
-  if (state.status === "loading" || !user) return <DetailSkeleton />;
+  if (authLoading || state.status === "loading") return <DetailSkeleton />;
   if (state.status === "notfound") {
     return (
       <div className="mx-auto max-w-md space-y-4 px-4 py-16 text-center">
@@ -127,7 +129,7 @@ function CommunityPageInner() {
 
   const joinState: JoinState = role ? "member" : ready.gate.invitationId ? "invited" : ready.gate.requestId ? "requested" : "none";
 
-  const common: CommunityTabProps = { group: ready.group, role, viewerId: user.id, membership: ready.membership, reload, onToast: show, goTab };
+  const common: CommunityTabProps = { group: ready.group, role, viewerId: user?.id ?? null, membership: ready.membership, reload, onToast: show, goTab };
   const g = ready.group;
 
   return (

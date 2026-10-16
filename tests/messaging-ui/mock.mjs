@@ -102,7 +102,10 @@ function filterRows(list, q, cols) {
   }));
 }
 
-export async function installMock(context, db, { signedIn = ME } = {}) {
+export async function installMock(context, db, opts = {}) {
+  // `guest: true` → oturum açmamış ziyaretçi (localStorage'da oturum yok, `signedIn` boş; auth uçları 401 döner).
+  const guest = Boolean(opts.guest);
+  const signedIn = guest ? null : (opts.signedIn ?? ME);
   await context.route("https://example.supabase.co/**", async (route) => {
     const req = route.request();
     const url = new URL(req.url());
@@ -114,7 +117,17 @@ export async function installMock(context, db, { signedIn = ME } = {}) {
     const json = (status, body) => route.fulfill({ status, contentType: "application/json", headers: { "access-control-allow-origin": "*", "access-control-expose-headers": "*" }, body: JSON.stringify(body) });
     const rows = (list) => (wantsObject ? (list.length === 1 ? json(200, list[0]) : json(406, { code: "PGRST116", message: "no rows", details: "", hint: "" })) : json(200, list));
     if (method === "OPTIONS") return route.fulfill({ status: 204, headers: { "access-control-allow-origin": "*", "access-control-allow-headers": "*", "access-control-allow-methods": "*" } });
+    if (p.startsWith("/auth/v1/user") && guest) return json(401, { message: "not authenticated" });
     if (p.startsWith("/auth/v1/user")) return json(200, { id: signedIn, aud: "authenticated", role: "authenticated", email: "alice@test.dev", app_metadata: {}, user_metadata: {}, created_at: "2026-01-01T00:00:00Z" });
+    // Storage: özel bucket'lar için signed URL (docs/history/177-*). Ortak /object/public/… adresi İSTEKLE çekilirse kaydedilir (sızıntı testi).
+    if (p.startsWith("/storage/v1/object/sign/") && method === "POST") {
+      const bucket = p.split("/")[5];
+      const sbody = JSON.parse(req.postData() || "{}");
+      db.calls.push({ method: "SIGN", table: bucket, body: sbody });
+      return json(200, (sbody.paths ?? []).map((path) => ({ error: null, path, signedURL: `/object/sign/${bucket}/${path}?token=t` })));
+    }
+    if (p.startsWith("/storage/v1/object/sign/")) return route.fulfill({ status: 200, contentType: "image/png", headers: { "access-control-allow-origin": "*" }, body: Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==", "base64") });
+    if (p.startsWith("/storage/v1/object/public/")) { db.calls.push({ method: "PUBLICGET", table: p, body: null }); return route.fulfill({ status: 400, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: JSON.stringify({ message: "Bucket not found" }) }); }
     if (!p.startsWith("/rest/v1/")) return json(200, {});
     const table = p.replace("/rest/v1/", "");
     const sel = q.get("select") ?? "";
@@ -298,7 +311,8 @@ export async function installMock(context, db, { signedIn = ME } = {}) {
       return rows(list.map((i) => ({ ...i, chat_groups: groupOf(i.group_id), inviter: pub(Object.values(U).find((u) => u.id === i.inviter_id)), invitee: pub(Object.values(U).find((u) => u.id === i.invitee_id)) })));
     }
     if ((table === "chat_group_links" || table === "chat_group_bans") && method === "GET") return rows([]);
-    if (table === "chat_groups" && method === "GET") return rows(db.groups.filter((g) => !val(q.get("id") ?? "", "eq") || g.id === val(q.get("id"), "eq")));
+    // `chat_groups` satırını yalnız ÜYE okur (docs/history/177-*): üye olmayan kartı `rpc/community_cards` ile alır.
+    if (table === "chat_groups" && method === "GET") return rows(db.groups.filter((g) => (!val(q.get("id") ?? "", "eq") || g.id === val(q.get("id"), "eq")) && db.member(g.id, signedIn)));
 
     // ---- sohbet geliştirmeleri (docs/history/174-*): okundu imleci, mesaj bilgisi, sabitleme, arama, yıldız ----
     const memberOf = (cid, uid = signedIn) => db.member(cid, uid);
@@ -483,5 +497,5 @@ export async function installMock(context, db, { signedIn = ME } = {}) {
     return json(200, {});
   });
   const session = { access_token: "x.y.z", token_type: "bearer", expires_in: 3600, expires_at: Math.floor(Date.now() / 1000) + 36000, refresh_token: "r", user: { id: signedIn, aud: "authenticated", role: "authenticated", email: "alice@test.dev", app_metadata: {}, user_metadata: {}, created_at: "2026-01-01T00:00:00Z" } };
-  await context.addInitScript((s) => { try { localStorage.setItem("sb-example-auth-token", JSON.stringify(s)); localStorage.setItem("promptly-language", "tr"); } catch {} }, session);
+  await context.addInitScript(([s, isGuest]) => { try { if (!isGuest) localStorage.setItem("sb-example-auth-token", JSON.stringify(s)); localStorage.setItem("promptly-language", "tr"); } catch {} }, [session, guest]);
 }

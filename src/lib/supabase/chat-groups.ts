@@ -12,7 +12,7 @@ import {
   type VisibilityChangeResult,
 } from "@/lib/chat-groups";
 import { normalizeCategory, normalizeFeedPolicy, normalizeVisibility } from "@/lib/communities";
-import type { ChatGroup, GroupCapability, GroupPostingPolicy, GroupRole, GroupVisibility, UserProfile } from "@/types";
+import type { ChatGroup, CommunityCategory, GroupCapability, GroupPostingPolicy, GroupRole, GroupVisibility, UserProfile } from "@/types";
 
 /**
  * Grup sohbeti veri erişimi (docs/history/172-*). Her yazma işlemi bir SECURITY DEFINER RPC'dir
@@ -249,9 +249,11 @@ export async function setChatGroupVisibility(groupId: string, visibility: GroupV
 export async function uploadGroupAvatar(userId: string, file: File): Promise<string> {
   const { blob, contentType } = await resizeImageToSquareBlob(file, 320);
   const path = `${userId}/group-${crypto.randomUUID()}.jpg`;
-  const { error } = await supabase.storage.from("avatars").upload(path, blob, { contentType, upsert: false });
+  // ÖZEL bucket (docs/history/177-*): dosya yalnız topluluğun kartı görülebildiği sürece okunur; satırda saklanan URL kimliktir,
+  // gösterirken signed URL'ye çevrilir (`PROTECTED_MEDIA_BUCKETS`). Ortak `avatars` bucket'ı listelenebilir olduğundan kullanılmaz.
+  const { error } = await supabase.storage.from("community-avatars").upload(path, blob, { contentType, upsert: false });
   if (error) throw new Error(error.message);
-  return supabase.storage.from("avatars").getPublicUrl(path).data.publicUrl;
+  return supabase.storage.from("community-avatars").getPublicUrl(path).data.publicUrl;
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -586,12 +588,68 @@ export async function fetchGroupInvitations(groupId: string): Promise<GroupInvit
   }));
 }
 
-/** Bana gelen bekleyen davetler (kapalı grubun kartı da davetli için okunabilir — RLS). */
+// ---------------------------------------------------------------------------------------------
+// Topluluk KARTI (üye olmayanın gördüğü tek şey)
+// ---------------------------------------------------------------------------------------------
+
+/**
+ * Üye olmayanın (ziyaretçi, yabancı, davetli, başvuran) bir topluluktan görebildiği alanlar. `chat_groups` satırı yalnız üyelere okunur;
+ * kart `community_cards` RPC'sinden gelir ve yönetim alanlarını (oluşturan, bekleyen başvuru sayısı, yetki matrisi…) HİÇ içermez.
+ * Görülemeyen / tamamen kapalı / olmayan topluluk için kart yoktur (`null`): ayırt edilemez.
+ */
+export interface CommunityCard {
+  id: string;
+  name: string;
+  description: string | null;
+  avatarUrl: string | null;
+  category: CommunityCategory;
+  visibility: GroupVisibility;
+  memberCount: number;
+  memberLimit: number;
+  rules: string | null;
+  rulesRequired: boolean;
+  rulesVersion: number;
+  closedAt: string | null;
+  origin: "native" | "legacy_group";
+  /** Yalnız herkese açık topluluk ya da üye için; kapalı topluluğun içerik sayacı üye olmayana verilmez. */
+  postCount: number | null;
+  createdAt: string;
+}
+
+interface CardRow {
+  id: string; name: string; description: string | null; avatar_url: string | null; category: string; visibility: string; member_count: number; member_limit: number;
+  rules: string | null; rules_required: boolean; rules_version: number; closed_at: string | null; origin: string; post_count: number | null; created_at: string;
+}
+
+export async function fetchCommunityCards(ids: string[]): Promise<CommunityCard[]> {
+  const unique = [...new Set(ids)].slice(0, 50);
+  if (unique.length === 0) return [];
+  const rows = await callRpc<CardRow[]>("community_cards", { p_ids: unique });
+  return (rows ?? []).map((row) => ({
+    id: row.id,
+    name: row.name,
+    description: row.description,
+    avatarUrl: row.avatar_url,
+    category: normalizeCategory(row.category),
+    visibility: normalizeVisibility(row.visibility),
+    memberCount: row.member_count,
+    memberLimit: row.member_limit,
+    rules: row.rules,
+    rulesRequired: Boolean(row.rules_required),
+    rulesVersion: row.rules_version ?? 1,
+    closedAt: row.closed_at,
+    origin: row.origin === "legacy_group" ? "legacy_group" : "native",
+    postCount: row.post_count,
+    createdAt: row.created_at,
+  }));
+}
+
+/** Bana gelen bekleyen davetler. Topluluk kartı `community_cards` RPC'sinden gelir (`chat_groups` satırı üye olmayana okunmaz). */
 export async function fetchMyInvitations(userId: string): Promise<GroupInvitation[]> {
   const { data, error } = await supabase
     .from("chat_group_invitations")
     .select(
-      `id, group_id, created_at, expires_at, chat_groups:group_id ( name, description, avatar_url, member_count, rules, rules_required ), inviter:inviter_id ( ${PROFILE_EMBED} )`,
+      `id, group_id, created_at, expires_at, inviter:inviter_id ( ${PROFILE_EMBED} )`,
     )
     .eq("invitee_id", userId)
     .eq("status", "pending")
@@ -604,27 +662,31 @@ export async function fetchMyInvitations(userId: string): Promise<GroupInvitatio
     group_id: string;
     created_at: string;
     expires_at: string;
-    chat_groups: { name: string; description: string | null; avatar_url: string | null; member_count: number; rules: string | null; rules_required: boolean } | null;
     inviter: ProfileRow | null;
   };
-  return ((data ?? []) as unknown as Row[]).map((row) => ({
+  const rows = (data ?? []) as unknown as Row[];
+  const cards = new Map((await fetchCommunityCards(rows.map((row) => row.group_id))).map((card) => [card.id, card]));
+  return rows.map((row) => {
+    const card = cards.get(row.group_id);
+    return {
     id: row.id,
     groupId: row.group_id,
-    group: row.chat_groups
+    group: card
       ? {
-          name: row.chat_groups.name,
-          description: row.chat_groups.description,
-          avatarUrl: row.chat_groups.avatar_url,
-          memberCount: row.chat_groups.member_count,
-          rules: row.chat_groups.rules,
-          rulesRequired: Boolean(row.chat_groups.rules_required),
+          name: card.name,
+          description: card.description,
+          avatarUrl: card.avatarUrl,
+          memberCount: card.memberCount,
+          rules: card.rules,
+          rulesRequired: card.rulesRequired,
         }
       : null,
     user: null,
     inviter: row.inviter ? mapProfileRow(row.inviter) : null,
     createdAt: row.created_at,
     expiresAt: row.expires_at,
-  }));
+    };
+  });
 }
 
 export interface MyJoinRequest {
@@ -639,19 +701,21 @@ export interface MyJoinRequest {
 export async function fetchMyJoinRequests(userId: string): Promise<MyJoinRequest[]> {
   const { data, error } = await supabase
     .from("chat_group_join_requests")
-    .select("id, group_id, created_at, chat_groups:group_id ( name, avatar_url )")
+    .select("id, group_id, created_at")
     .eq("user_id", userId)
     .eq("status", "pending")
     .order("created_at", { ascending: false })
     .limit(50);
   if (error) throw toGroupError(error);
-  return ((data ?? []) as unknown as { id: string; group_id: string; created_at: string; chat_groups: { name: string; avatar_url: string | null } | null }[])
-    .filter((row) => row.chat_groups)
+  const rows = (data ?? []) as unknown as { id: string; group_id: string; created_at: string }[];
+  const cards = new Map((await fetchCommunityCards(rows.map((row) => row.group_id))).map((card) => [card.id, card]));
+  return rows
+    .filter((row) => cards.has(row.group_id))
     .map((row) => ({
       id: row.id,
       groupId: row.group_id,
-      groupName: row.chat_groups?.name ?? "",
-      groupAvatarUrl: row.chat_groups?.avatar_url ?? null,
+      groupName: cards.get(row.group_id)?.name ?? "",
+      groupAvatarUrl: cards.get(row.group_id)?.avatarUrl ?? null,
       createdAt: row.created_at,
     }));
 }
@@ -679,7 +743,7 @@ export async function fetchGroupBans(groupId: string): Promise<GroupBan[]> {
   }));
 }
 
-/** Tek grubun güncel satırı (ayar/sayaç yenileme). Okunamıyorsa (üye değil ve herkese açık değil) null. */
+/** Tek grubun güncel TAM satırı (ayar/sayaç yenileme) — yalnız ÜYE okuyabilir; üye değilse null (kart için `fetchCommunityCard`). */
 export async function fetchChatGroupRow(groupId: string): Promise<ChatGroupRow | null> {
   const { data, error } = await supabase.from("chat_groups").select(CHAT_GROUP_SELECT).eq("id", groupId).maybeSingle();
   if (error || !data) return null;

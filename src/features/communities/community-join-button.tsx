@@ -4,12 +4,13 @@ import { useState } from "react";
 import { ChevronDown, Loader2, LogOut, Send, Undo2 } from "lucide-react";
 import { Button, buttonClassName } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/auth-provider";
+import { useAuthPrompt } from "@/features/auth/auth-prompt-provider";
 import { ConfirmDialog } from "@/features/groups/confirm-dialog";
 import { useAsyncAction } from "@/features/groups/use-async-action";
 import { DropdownMenu, MenuItem } from "./dropdown-menu";
 import { RulesAcceptModal } from "./rules-accept";
-import { fetchChatGroupRow, leaveChatGroup } from "@/lib/supabase/chat-groups";
-import { cancelMyJoinRequest, joinCommunity, requestJoinCommunity } from "@/lib/supabase/communities";
+import { leaveChatGroup } from "@/lib/supabase/chat-groups";
+import { cancelMyJoinRequest, fetchCommunityCard, joinCommunity, requestJoinCommunity } from "@/lib/supabase/communities";
 import { leaveOutcome } from "@/lib/chat-groups";
 import { visibilityTraits } from "@/lib/communities";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -60,6 +61,7 @@ export function CommunityJoinButton({
 }) {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const { requireAuth } = useAuthPrompt();
   const action = useAsyncAction();
   const [rulesFor, setRulesFor] = useState<"join" | "request" | null>(null);
   const [rulesText, setRulesText] = useState("");
@@ -91,15 +93,18 @@ export function CommunityJoinButton({
 
   // Kuralları kabul zorunluysa kural metni önce okunur; kart listesinde metin yoktur, açılırken çekilir.
   async function start(kind: "join" | "request") {
+    // Ziyaretçi: katılma/istek oturum ister → ortak giriş diyaloğu açılır, hiçbir istek gitmez.
+    if (!requireAuth("join")) return;
     if (!target.rulesRequired) {
       await (kind === "join" ? join(false) : request(false));
       return;
     }
     let text = rules;
     if (text === undefined) {
-      const row = await action.run(() => fetchChatGroupRow(target.id));
-      if (!row) return;
-      text = row.rules;
+      // Kural metni kartta bulunur (`community_cards`): üye olmayan `chat_groups` satırını okuyamaz.
+      const card = await action.run(() => fetchCommunityCard(target.id));
+      if (!card) return;
+      text = card.rules;
     }
     setRulesText(text ?? "");
     setRulesFor(kind);

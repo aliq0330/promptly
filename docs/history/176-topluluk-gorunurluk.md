@@ -2,6 +2,8 @@
 
 Durum: kod, 1 migration (`20260920070000_community_visibility.sql`), testler ve belgeler repoda; **canlıya UYGULANMADI** (canlı veritabanında SQL ÇALIŞTIRILMADI, deploy yapılmadı). Önce migration (175'in üç dosyasından SONRA), sonra istemci kodu. Gerçek Supabase'e / oturuma / cihaza karşı denenmedi; testler yerel PostgreSQL ve ağ taklitli Playwright'tadır.
 
+> **Güncelleme (177):** buradaki "kapalı topluluğun kartı `chat_groups` SELECT politikasıyla herkese okunur" kararı 177'de DEĞİŞTİ — satır yalnız üyeye okunur, kart `community_cards` RPC'siyle gelir; ziyaretçi herkese açık topluluğu okuyabilir; görsel özel bucket'ta. Ayrıntı: [177](177-topluluk-gizlilik.md).
+
 ## İstenenler (kullanıcı kararı)
 
 1. "Kaydet" (yer imi) kalkar. Katıl seçeneği zaten var: Kaydet'in olduğu yere **Katıl**; üyeyse **Katıldın ▼** → "Bu topluluktan ayrıl".
