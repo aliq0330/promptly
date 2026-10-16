@@ -94,7 +94,7 @@ await scenario("2b. Notsuz başvuru gönderisinde not alanı hiç bulunmaz", asy
 }, { setup: (db) => { seed(db, { myRole: "member" }); db.addPost(C1, { title: "Notsuz içerik", note: null }); } });
 
 // 3
-await scenario("3. Yerel (topluluğa özgü) içerik: akışta NORMAL içerik kartı, TEK ⋮ menüsü (üst çubuk yok); ayrı gönderi etkileşimi, 'başvuru' etiketi ve kaydet/paylaş YOK", async ({ page }) => {
+await scenario("3. Yerel (topluluğa özgü) içerik: akışta NORMAL içerik kartı, TEK ⋮ menüsü (üst çubuk yok); ayrı gönderi etkileşimi ve 'başvuru' etiketi YOK; kaydet YOK, istatistik + paylaş VAR", async ({ page }) => {
   await open(page, C1);
   const card = post(page, "Yerel prompt");
   const normalCard = card.locator("article").first();
@@ -105,11 +105,46 @@ await scenario("3. Yerel (topluluğa özgü) içerik: akışta NORMAL içerik ka
   assert.equal(await card.locator("[data-post-engagement]").count(), 0, "native content uses the content's OWN like/comment, not a second engagement bar");
   await normalCard.getByRole("button", { name: /beğen/i }).first().waitFor();
   assert.equal(await normalCard.getByRole("button", { name: /Kaydet/i }).count(), 0, "community content can't be saved");
-  assert.equal(await normalCard.getByRole("button", { name: /Paylaş/i }).count(), 0, "community content can't be shared outside");
+  await normalCard.getByRole("button", { name: /İstatistik/i }).first().waitFor();
+  await normalCard.getByRole("button", { name: "Paylaş" }).waitFor();
   assert.match((await normalCard.getByRole("link", { name: "Yerel prompt" }).getAttribute("href")) ?? "", /prompts\/local\/?\?id=/);
   await card.getByRole("button", { name: /seçenekleri/ }).click();
   await page.getByRole("menuitem", { name: /Sil|Düzenle/ }).first().waitFor();
 }, { setup: (db) => { seed(db, { myRole: "member" }); db.addPost(C1, { author: U.alice, title: "Yerel prompt", kind: "native", visibility: "private" }); } });
+
+await scenario("3c. Yerel kartın paylaşımı özel içerik için paylaşım sayfasına ÇEVRİLMEZ: bağlantı içeriğin kendi sayfasıdır", async ({ page, context }) => {
+  await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+  await open(page, C1);
+  await page.evaluate(() => Object.defineProperty(navigator, "share", { value: undefined, configurable: true }));
+  await post(page, "Yerel prompt").locator("article").first().getByRole("button", { name: "Paylaş" }).click();
+  await dlg(page).getByRole("button", { name: /Diğer uygulamalarla paylaş/ }).click();
+  const copied = await page.evaluate(() => navigator.clipboard.readText());
+  assert.match(copied, /prompts\/local\/?\?id=/);
+  assert.doesNotMatch(copied, /\/share\//, "private community content has no public share page");
+}, { setup: (db) => { seed(db, { myRole: "member" }); db.addPost(C1, { author: U.alice, title: "Yerel prompt", kind: "native", visibility: "private" }); } });
+
+await scenario("3d. Başvuru kartı da normal kart gibi İstatistik + Paylaş sunar; istatistik gönderinin KENDİ beğeni/yorumunu sorar (kaydedenler sekmesi yok); paylaşım gönderinin sayfasına gider", async ({ page, db, context }) => {
+  await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+  db.rpc.content_engagers = (body) => { db.calls.push({ method: "RPC", table: "content_engagers", body }); return { body: [] }; };
+  await open(page, C1);
+  const card = post(page, "Başvuru prompt");
+  await card.waitFor();
+  await card.getByRole("button", { name: /İstatistik/i }).click();
+  const d = dlg(page);
+  await d.getByRole("tab", { name: /Beğenenler/ }).waitFor();
+  assert.equal(await d.getByRole("tab", { name: /Kaydedenler/ }).count(), 0, "a post can't be saved");
+  await page.waitForTimeout(300);
+  const stat = calls(db, "content_engagers", "RPC").at(-1);
+  assert.equal(stat?.body.p_content_type, "community_post");
+  assert.ok(stat?.body.p_content_id, "targets the post, not the applied content");
+  await d.getByRole("button", { name: /Kapat/ }).click();
+  await page.evaluate(() => Object.defineProperty(navigator, "share", { value: undefined, configurable: true }));
+  await card.getByRole("button", { name: "Paylaş" }).click();
+  assert.equal(await dlg(page).getByText(/mesaj olarak/i).count(), 0, "a post can't be attached to a message");
+  await dlg(page).getByRole("button", { name: /Diğer uygulamalarla paylaş/ }).click();
+  const copied = await page.evaluate(() => navigator.clipboard.readText());
+  assert.match(copied, /communities\/post\/local\/?\?id=/);
+}, { setup: (db) => { seed(db, { myRole: "member" }); db.addPost(C1, { title: "Başvuru prompt", kind: "application" }); } });
 
 await scenario("3b. Eski (legacy) gönderi: tür rozeti TAHMİN EDİLMEZ, başvuru gibi gösterilir", async ({ page }) => {
   await open(page, C1);

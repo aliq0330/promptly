@@ -48,17 +48,15 @@ export function PromptCardFooter(target: FooterTarget) {
         </>
       )}
       <span className="ml-auto" />
-      {!(target.preset ?? target.workflow ?? target.prompt)?.communityId && (
-        <ShareTriggerButton
-          target={
-            target.preset
-              ? { contentType: "preset", preset: target.preset }
-              : target.workflow
-              ? { contentType: "workflow", workflow: target.workflow }
-              : { contentType: "prompt", prompt: target.prompt }
-          }
-        />
-      )}
+      <ShareTriggerButton
+        target={
+          target.preset
+            ? { contentType: "preset", preset: target.preset }
+            : target.workflow
+            ? { contentType: "workflow", workflow: target.workflow }
+            : { contentType: "prompt", prompt: target.prompt }
+        }
+      />
     </div>
   );
 }

@@ -183,7 +183,7 @@ export function WorkflowDetailView() {
           />
         </header>
 
-        <DetailActionBar trailing={workflow.communityId ? undefined : <ShareTriggerButton target={{ contentType: "workflow", workflow }} label={t("common.share")} />}>
+        <DetailActionBar trailing={<ShareTriggerButton target={{ contentType: "workflow", workflow }} label={t("common.share")} />}>
           <LikeButton id={workflow.id} likeCount={workflow.likeCount} contentType="workflow" size={18} />
           <CommentCountLink workflowId={workflow.id} baseCount={workflow.commentCount} size={18} />
           {!workflow.communityId && <SaveButton workflowId={workflow.id} saveCount={workflow.saveCount} size={18} />}

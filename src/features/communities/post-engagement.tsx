@@ -1,15 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { Heart, Link2, MessageCircle } from "lucide-react";
+import { Heart, MessageCircle } from "lucide-react";
 import { LikeButton } from "@/features/prompts/like-button";
 import { CommentSection } from "@/features/prompts/comment-section";
 import { useCommentCountDelta } from "@/features/prompts/comment-count-store";
 import { contentActionClassName } from "@/features/content/action-styles";
-import { formatCount, absoluteUrl } from "@/lib/utils";
+import { formatCount } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import Link from "next/link";
-import { postHref, postPageHref } from "@/lib/communities";
+import { postPageHref } from "@/lib/communities";
+import { ShareTriggerButton } from "@/features/prompts/share-modal";
+import { StatisticsButton } from "@/features/statistics/statistics-button";
+import { summarizeContent } from "./content-summary";
 import type { CommunityPost } from "@/lib/supabase/communities";
 
 /**
@@ -61,30 +64,42 @@ export function PostCommentLink({ post }: { post: CommunityPost }) {
   );
 }
 
-/** Gönderi bağlantısı: başvuru → kendi sayfası; yerel gönderi → akışta o gönderi. */
-export function postShareUrl(post: CommunityPost): string {
-  return absoluteUrl(post.kind === "native" ? postHref(post.communityId, post.id) : postPageHref(post.id));
-}
-
-export function CopyPostLinkButton({ post, onToast }: { post: CommunityPost; onToast: (message: string) => void }) {
-  const { t } = useTranslation();
-  async function copy() {
-    try {
-      await navigator.clipboard.writeText(postShareUrl(post));
-      onToast(t("communities.post.engage.linkCopied"));
-    } catch {
-      onToast(t("prompt.copyFailed"));
-    }
-  }
+/** Gönderinin istatistik düğmesi: normal kartlardaki `StatisticsButton` — burada sayaçlar GÖNDERİNİN kendisine aittir. */
+export function PostStatisticsButton({ post, size, label }: { post: CommunityPost; size?: number; label?: string }) {
   return (
-    <button type="button" onClick={() => void copy()} title={t("communities.post.engage.copyLink")} aria-label={t("communities.post.engage.copyLink")} className={contentActionClassName()}>
-      <Link2 size={16} strokeWidth={1.75} />
-    </button>
+    <StatisticsButton
+      target={{ contentType: "community_post", contentId: post.id, likeCount: post.likeCount, commentCount: post.commentCount }}
+      size={size}
+      label={label}
+    />
   );
 }
 
 /**
- * Başvuru SAYFASINDAKİ etkileşim: beğeni + yorumlar (varsayılan AÇIK, `#comments`) + bağlantıyı kopyala. Beğeni/yorum gönderinin kendi
+ * Gönderinin paylaş düğmesi: normal kartlardaki `ShareModal`. Bağlantı gönderinin kendi sayfasıdır ve olduğu gibi paylaşılır
+ * (topluluk içeriği özeldir → herkese açık paylaşım sayfası yok; bağlantıyı yalnız topluluğu okuyabilenler açabilir).
+ */
+export function PostShareButton({ post, label }: { post: CommunityPost; label?: string }) {
+  const { t } = useTranslation();
+  const summary = post.content ? summarizeContent(post.content) : null;
+  return (
+    <ShareTriggerButton
+      label={label}
+      target={{
+        contentType: "community_post",
+        postId: post.id,
+        title: summary?.title ?? t("communities.post.badge.application"),
+        description: post.note ?? summary?.description ?? "",
+        thumbnailUrl: summary?.media[0]?.url ?? null,
+        badgeLabel: summary ? t(summary.typeLabelKey) : t("communities.post.badge.application"),
+        href: postPageHref(post.id),
+      }}
+    />
+  );
+}
+
+/**
+ * Başvuru SAYFASINDAKİ etkileşim: beğeni + yorumlar (varsayılan AÇIK, `#comments`) + istatistik + paylaş. Beğeni/yorum gönderinin kendi
  * kimliğine bağlıdır; orijinal içeriğin sayaçlarına dokunmaz.
  */
 export function PostEngagement({
@@ -120,8 +135,9 @@ export function PostEngagement({
           <MessageCircle size={16} strokeWidth={1.75} />
           <span aria-hidden>{formatCount(commentCount)}</span>
         </button>
+        <PostStatisticsButton post={post} />
         <span className="ml-auto" />
-        <CopyPostLinkButton post={post} onToast={onToast} />
+        <PostShareButton post={post} />
       </div>
       {open && (
         <div id="comments" className="scroll-mt-20 rounded-lg bg-background/60 p-1 sm:p-2">

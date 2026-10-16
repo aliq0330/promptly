@@ -25,7 +25,9 @@ export type ShareModalTarget =
   | { contentType: "request"; request: PromptRequest }
   | { contentType: "workflow"; workflow: Workflow }
   | { contentType: "preset"; preset: Preset }
-  | { contentType: "prompt_result"; result: PromptResult };
+  | { contentType: "prompt_result"; result: PromptResult }
+  /** Bir topluluk gönderisi (başvuru): önizleme çağıran tarafından hazırlanır; bağlantı gönderinin kendi sayfasıdır. */
+  | { contentType: "community_post"; postId: string; title: string; description: string; thumbnailUrl: string | null; badgeLabel: string; href: string };
 
 interface SharePreview {
   id: string;
@@ -47,6 +49,11 @@ interface SharePreview {
    * doesn't work.
    */
   messageParam: string | null;
+  /**
+   * `true` = bağlantı olduğu gibi paylaşılır (herkese açık içeriğin statik paylaşım sayfasına çevrilmez). Topluluğa özgü içerik ve
+   * topluluk gönderisi özel saklanır: paylaşım sayfası yoktur ve bağlantıyı yalnız topluluğu okuyabilenler açabilir.
+   */
+  directLink: boolean;
 }
 
 function getSharePreview(target: ShareModalTarget, t: (key: TranslationKey) => string, language: Language): SharePreview {
@@ -61,6 +68,7 @@ function getSharePreview(target: ShareModalTarget, t: (key: TranslationKey) => s
       badgeVariant: "neutral",
       href: promptHref(prompt),
       messageParam: `sharePromptId=${prompt.id}`,
+      directLink: !!prompt.communityId,
     };
   }
   if (target.contentType === "workflow") {
@@ -74,6 +82,7 @@ function getSharePreview(target: ShareModalTarget, t: (key: TranslationKey) => s
       badgeVariant: "neutral",
       href: workflowHref(workflow),
       messageParam: `shareWorkflowId=${workflow.id}`,
+      directLink: !!workflow.communityId,
     };
   }
   if (target.contentType === "preset") {
@@ -87,6 +96,7 @@ function getSharePreview(target: ShareModalTarget, t: (key: TranslationKey) => s
       badgeVariant: "neutral",
       href: presetHref(preset),
       messageParam: `sharePresetId=${preset.id}`,
+      directLink: !!preset.communityId,
     };
   }
   if (target.contentType === "request") {
@@ -100,6 +110,20 @@ function getSharePreview(target: ShareModalTarget, t: (key: TranslationKey) => s
       badgeVariant: STATUS_VARIANTS[request.status],
       href: requestHref(request),
       messageParam: `shareRequestId=${request.id}`,
+      directLink: !!request.communityId,
+    };
+  }
+  if (target.contentType === "community_post") {
+    return {
+      id: target.postId,
+      title: target.title,
+      description: target.description,
+      thumbnailUrl: target.thumbnailUrl,
+      badgeLabel: target.badgeLabel,
+      badgeVariant: "neutral",
+      href: target.href,
+      messageParam: null,
+      directLink: true,
     };
   }
   const result = target.result;
@@ -113,6 +137,7 @@ function getSharePreview(target: ShareModalTarget, t: (key: TranslationKey) => s
     badgeVariant: "neutral",
     href: resultHref(result),
     messageParam: null,
+    directLink: false,
   };
 }
 
@@ -150,7 +175,7 @@ export function ShareModal({ target, onClose }: { target: ShareModalTarget; onCl
   const preview = getSharePreview(target, t, language);
 
   async function handleNativeShare() {
-    const result = await shareOrCopyLink(preview.href, preview.title);
+    const result = await shareOrCopyLink(preview.href, preview.title, { direct: preview.directLink });
     if (result === "copied") {
       setCopied(true);
       setTimeout(onClose, 1200);

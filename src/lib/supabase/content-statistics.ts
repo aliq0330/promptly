@@ -2,8 +2,8 @@ import { supabase } from "./client";
 import { getBlockedIds } from "./blocked-users";
 import type { UserProfile } from "@/types";
 
-/** The five first-class content types (CLAUDE.md Bölüm 1/9.59/9.60/9.83). */
-export type StatisticsContentType = "prompt" | "request" | "workflow" | "preset";
+/** The first-class content types (CLAUDE.md Bölüm 1/9.59/9.60/9.83) + a community post (its OWN likes/comments, `community_post_id`). */
+export type StatisticsContentType = "prompt" | "request" | "workflow" | "preset" | "community_post";
 export type StatisticsKind = "likes" | "comments" | "saves";
 
 export interface ContentEngager {

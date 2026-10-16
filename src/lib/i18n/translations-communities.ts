@@ -280,8 +280,6 @@ export const communityTranslations = {
   "communities.post.engage.comments": { tr: "Gönderi yorumları", en: "Post comments" },
   "communities.post.engage.commentsAria": { tr: "Gönderi yorumları ({{count}})", en: "Post comments ({{count}})" },
   "communities.post.engage.likesAria": { tr: "Gönderi beğenisi: {{count}}", en: "Post likes: {{count}}" },
-  "communities.post.engage.copyLink": { tr: "Gönderi bağlantısını kopyala", en: "Copy post link" },
-  "communities.post.engage.linkCopied": { tr: "Gönderi bağlantısı kopyalandı.", en: "Post link copied." },
   "communities.post.engage.sectionAria": { tr: "Gönderi etkileşimi", en: "Post engagement" },
   "communities.post.focus.title": { tr: "Açılan gönderi", en: "Opened post" },
   "communities.post.focus.notFound": { tr: "Bu gönderi artık yok ya da görüntüleme iznin yok.", en: "This post no longer exists or you can't view it." },
