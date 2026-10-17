@@ -46,7 +46,11 @@ Sunucu çalışma zamanı yoktur (statik export); Supabase'e yalnızca tarayıc�
 
 ### Topluluklara erişim
 
-- Sol menü / alt gezinme → **Topluluklar** (`/communities`): Keşfet · Üyesi olduklarım · Yönettiklerim · Davetler · Başvurularım. Keşfet yalnız herkese açık toplulukları listeler; arama kapalıları da bulur.
+- Sol menü / alt gezinme → **Topluluklar** (`/communities`, `docs/history/185-*`): **Gönderiler** (varsayılan) · **Keşfet** · **Yönettiklerim** (yalnız yönettiği topluluğu olana) · **Davet ve başvurular** (Davetler · Başvurularım · yöneticiye Gelen başvurular). "Üyesi olduklarım" artık sekme değil, Gönderiler'deki **Topluluklarım** bağlantısının listesidir (`?tab=mine`). Tüm topluluklar: `/communities/all`.
+- **Gönderiler**: üyesi olduğun *herkese açık ve kapalı* toplulukların gönderileri, yeniden eskiye keyset (`member_feed_page`). Tamamen kapalı topluluğun gönderisi genel akışa HİÇ girmez (onlar topluluk sayfasındadır); üyelik kalkınca gönderi akıştan ve RLS'ten düşer.
+- **Keşfet**: üstte **Sana uygun topluluklar** şeridi (en çok 10; mobilde yatay kaydırma, sonraki kart kenardan görünür), şeridin hemen altında **Tüm topluluklar** düğmesi, altında **Keşfet akışı** (`discover_feed_page`). Kurallar ve sıralama: aşağıdaki "Ana sayfa sıralama kuralları".
+- **Tüm topluluklar** (`/communities/all`): üstte arama (ad · açıklama · etiket), kategori süzgeci, sıralama (varsayılan *Sana uygun*), sonsuz kaydırma + "Daha fazla" (`browse_communities`). Herkese açık + kapalı; tamamen kapalı asla.
+- Oturumsuz ziyaretçi yalnız Keşfet'in herkese açık topluluk listesini + aramayı görür (öneri/akış/gözat kişisel RPC'lerdir, anon EXECUTE kapalı).
 - Davet bağlantısı: `/communities/join#<token>`.
 - Eski `/groups` ve `/groups/join#…` buraya yönlenir.
 
@@ -59,6 +63,20 @@ Sunucu çalışma zamanı yoktur (statik export); Supabase'e yalnızca tarayıc�
 3. **İçerik**: **Akış ilk açılış ekranıdır**.
 
 Sohbet bir sekme **değildir** (eski "Sohbet" sekmesi yalnızca tanıtım kartıydı; başlıktaki "Sohbeti aç" zaten vardı). "Genel bakış" sekmesi kaldırıldı; içeriği şuraya dağıtıldı: açıklama → başlık, sayılar → başlık meta, duyurular + en yakın etkinlik + kural-kabul uyarısı → akışın üstündeki **özet şeridi** (`FeedHighlights`; boşsa hiç çizilmez).
+
+### Ana sayfa sıralama kuralları (docs/history/185-*)
+
+Sıralama ve erişim kararları **sunucudadır** (SECURITY DEFINER RPC; kimlik `auth.uid()`; anon/public EXECUTE kapalı). İstemci yalnız tekrar azaltma ve görüntüleme yapar.
+
+**Görünürlük (hepsinde aynı):** `public` ve `restricted` (Kapalı) listelenir/önerilir; `private` (Tamamen kapalı) hiçbir listede, öneride, aramada ya da genel akışta yoktur. Kapalı topluluğun *gönderisi* yalnız üyesine akışa girer (`can_read_community`); kapalının içerik kaynaklı sinyali (etkinlik, etiket, takip edilen üyeler) üye olmayana hesaplanmaz/sızmaz. Üye olunan, yasaklı, sahibi tarafından engellenmiş, davet/başvurusu bekleyen, dolu ve kapatılmış topluluk önerilmez.
+
+**İlgi puanı (`_community_relevance`, her terim üst sınırlı, yalnız gerçek veri):** ortak kategori (üyesi olduğun topluluklarla, genel hariç) 3×≤3 · profil ilgi alanının ad/açıklamada geçmesi 2×≤2 · son 60 gündeki içeriklerin takip ettiğin etiketi ya da ilgi alanı adını taşıması 1.5×≤3 *(yalnız herkese açık)* · takip ettiğin kişilerden üye sayısı 1.5×≤3 *(yalnız herkese açık)* · son 14 gün gönderi 0.5×≤5 *(yalnız herkese açık)* · son 30 gün etkileşim 0.5·ln(1+beğeni+2·yorum) ≤1.5 · ln(1+üye). Neden etiketi: `followed` > `interest` > `category` > `popular`. Sinyal yoksa puan yaygınlığa (üye sayısı) iner. Prompt DNA ve içerik türü sinyali bilerek kullanılmadı (anlamlı bir kullanıcı sinyali yok).
+
+**Öneri şeridi:** `recommend_communities` en çok 30 aday döner; istemci son 7 günde gösterilenleri sona alır (`reduceRepeatedSuggestions`, tarayıcıda `localStorage`; sunucuda kişisel iz yok) ve 10'a indirir.
+
+**Keşfet akışı (`discover_feed_page`)** — aday: okuyabildiğin, tamamen kapalı olmayan, kendi olmayan, yazarı engelli olmayan, `p_as_of` anından önce *görmediğin*, son 45 günün gönderileri (en çok 400). Kaynak (bir gönderi tek satır, öncelik `member` > `followed` > `public`): üyesi olduğun topluluk · takip ettiğin kişi · herkese açık topluluk. Puan: üyelik 1 + takip edilen yazar 2 + takip edilen etiket 1.5×≤2 + ilgi alanı etiketi 1×≤2 + ortak kategori 1.5 + yenilik 2·e^(−yaş/3 gün) + etkileşim ≤2. **Çeşitlilik:** aynı topluluğun n'inci gönderisinden 0.75·(n−1) düşülür. Toplulukların kendi "takibi" yoktur; "takip" = kişi takibidir.
+
+**Görüldü:** `community_post_views(user_id, post_id, seen_at)` — yalnız kendi satırların okunur, yazma yalnız `mark_community_posts_seen` (okuyabildiğin gönderiler, ≤50, ilk zaman korunur). İstemci bir gönderi ≥%60 görünür ve 1.2 sn kaldığında toplu bildirir (`seen-tracker.ts`). `p_as_of` sayfa yükleme anıdır: aynı oturumda küme/sıra sabittir (sayfalar arası kayma ve tekrar yok), yenilenince görülenler düşer. Gönderiler akışında görünenler de işaretlenir.
 
 ### İçerik akışı
 

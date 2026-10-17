@@ -6,6 +6,7 @@ import { WORKFLOW_SELECT, mapWorkflowRow, type WorkflowRow } from "./workflows";
 import { PRESET_SELECT, mapPresetRow, type PresetRow } from "./presets";
 import { callRpc, fetchCommunityCards, PROFILE_EMBED, toGroupError, type CommunityCard } from "./chat-groups";
 import { DEFAULT_ROLE_PERMISSIONS } from "@/lib/chat-groups";
+import { isDiscoverFeedSource, orderByIds, type DiscoverFeedSource } from "@/lib/community-home";
 import { parseInviteResult, parseGroupJoinToken, type InviteResult } from "@/lib/chat-groups";
 import {
   normalizeCategory,
@@ -263,8 +264,14 @@ export interface CommunitySummary {
   myRole: GroupRole | null;
   unreadCount: number;
   pendingRequestCount: number;
-  /** Yalnız arama/öneri sonuçlarında: öneri nedeni (`category` ortak kategori · `popular` yaygın). */
-  reason?: "category" | "popular";
+  /** Yalnız arama/öneri/gözat sonuçlarında: ilgi nedeni (`followed` takip ettiğin kişiler üye · `interest` ilgi alanı/etiket · `category` ortak kategori · `popular` yaygın). */
+  reason?: CommunityReason;
+}
+
+export type CommunityReason = "followed" | "interest" | "category" | "popular";
+
+function normalizeReason(value: unknown): CommunityReason {
+  return value === "followed" || value === "interest" || value === "category" ? value : "popular";
 }
 
 export const COMMUNITY_PAGE_SIZE = 20;
@@ -320,7 +327,7 @@ interface SearchRow extends Omit<DiscoverRow, "post_count" | "upcoming_event_cou
   /** Kapalı topluluğun içerik istatistiği üye olmayana verilmez (sunucu null döner). */
   post_count: number | null;
   upcoming_event_count: number | null;
-  reason?: "category" | "popular";
+  reason?: string;
 }
 
 function mapSearchRow(row: SearchRow): CommunitySummary {
@@ -343,7 +350,7 @@ function mapSearchRow(row: SearchRow): CommunitySummary {
     myRole: null,
     unreadCount: 0,
     pendingRequestCount: 0,
-    reason: row.reason,
+    reason: row.reason ? normalizeReason(row.reason) : undefined,
   };
 }
 
@@ -372,6 +379,33 @@ export async function searchCommunities(params: {
 export async function suggestCommunities(limit = 6): Promise<CommunitySummary[]> {
   const rows = await callRpc<SearchRow[]>("suggest_communities", { p_limit: limit });
   return (rows ?? []).map(mapSearchRow);
+}
+
+/** "Sana uygun topluluklar" adayları (ilgi puanı sırasıyla; tamamen kapalı asla). Şerit boyuna indirme/tekrar azaltma istemcidedir (`reduceRepeatedSuggestions`). */
+export async function recommendCommunities(limit = 30): Promise<CommunitySummary[]> {
+  const rows = await callRpc<SearchRow[]>("recommend_communities", { p_limit: limit });
+  return (rows ?? []).map(mapSearchRow);
+}
+
+/** "Tüm topluluklar" sıralaması: `relevant` = ilgi puanı (sinyal yoksa yaygınlık). */
+export type BrowseSort = "relevant" | "popular" | "newest" | "active";
+
+/** Tüm topluluklar: herkese açık + kapalı (tamamen kapalı asla), üye olduklarım dahil; ad/açıklama/etiket araması, kategori süzgeci. */
+export async function browseCommunities(params: {
+  query: string;
+  category: CommunityCategory | null;
+  sort: BrowseSort;
+  offset: number;
+}): Promise<{ communities: CommunitySummary[]; hasMore: boolean }> {
+  const rows = await callRpc<SearchRow[]>("browse_communities", {
+    p_query: params.query.trim() || null,
+    p_category: params.category,
+    p_sort: params.sort,
+    p_limit: COMMUNITY_PAGE_SIZE + 1,
+    p_offset: params.offset,
+  });
+  const list = rows ?? [];
+  return { hasMore: list.length > COMMUNITY_PAGE_SIZE, communities: list.slice(0, COMMUNITY_PAGE_SIZE).map(mapSearchRow) };
 }
 
 export type MyCommunityScope = "member" | "managed";
@@ -583,6 +617,70 @@ export async function fetchCommunityPosts(
   if (error) throw toGroupError(error);
   const rows = (data ?? []) as unknown as PostRow[];
   return { hasMore: rows.length > POST_PAGE_SIZE, posts: rows.slice(0, POST_PAGE_SIZE).map(mapPostRow) };
+}
+
+export interface HomeFeedCursor {
+  createdAt: string;
+  id: string;
+}
+
+/**
+ * Gönderiler akışı: üyesi olduğum (herkese açık + kapalı; tamamen kapalı hariç) toplulukların gönderileri, yeniden eskiye keyset.
+ * Seçim/sıra sunucuda (`member_feed_page`), içerik RLS'li sorguyla yüklenir. Sunucu satırı olup içeriği gösterilemeyen gönderi
+ * (silinmiş içerik) listeden düşer ama imleç ilerler — sayfalama takılmaz.
+ */
+export async function fetchMemberFeed(cursor: HomeFeedCursor | null): Promise<{ posts: CommunityPost[]; hasMore: boolean; next: HomeFeedCursor | null }> {
+  const rows = await callRpc<{ post_id: string; community_id: string; created_at: string }[]>("member_feed_page", {
+    p_before_at: cursor?.createdAt ?? null,
+    p_before_id: cursor?.id ?? null,
+    p_limit: POST_PAGE_SIZE + 1,
+  });
+  const list = rows ?? [];
+  const page = list.slice(0, POST_PAGE_SIZE);
+  const byId = await fetchCommunityPostsByIds(page.map((row) => row.post_id));
+  const last = page[page.length - 1];
+  return {
+    posts: orderByIds(page.map((row) => row.post_id), byId).filter(isFeedPost),
+    hasMore: list.length > POST_PAGE_SIZE,
+    next: last ? { createdAt: last.created_at, id: last.post_id } : cursor,
+  };
+}
+
+export interface DiscoverFeedEntry {
+  post: CommunityPost;
+  source: DiscoverFeedSource;
+}
+
+/**
+ * Keşfet akışı: görmediğim gönderiler, ilgi ve çeşitlilik sıralı (`discover_feed_page`). `asOf` sayfa yükleme anıdır; aynı oturumda
+ * küme ve sıra sabit kalır (sayfalar arası kayma/tekrar yok), yenilenince yeni an alınır.
+ */
+export async function fetchDiscoverFeed(asOf: string, offset: number): Promise<{ entries: DiscoverFeedEntry[]; hasMore: boolean; nextOffset: number }> {
+  const rows = await callRpc<{ post_id: string; community_id: string; source: string; score: number }[]>("discover_feed_page", {
+    p_as_of: asOf,
+    p_limit: POST_PAGE_SIZE + 1,
+    p_offset: offset,
+  });
+  const list = rows ?? [];
+  const page = list.slice(0, POST_PAGE_SIZE);
+  const byId = await fetchCommunityPostsByIds(page.map((row) => row.post_id));
+  const entries: DiscoverFeedEntry[] = [];
+  for (const row of page) {
+    const post = byId.get(row.post_id);
+    if (post && isFeedPost(post)) entries.push({ post, source: isDiscoverFeedSource(row.source) ? row.source : "public" });
+  }
+  return { entries, hasMore: list.length > POST_PAGE_SIZE, nextOffset: offset + page.length };
+}
+
+/** Genel akışlarda içeriği gösterilemeyen (silinmiş / okunamayan) gönderi çizilmez; yönetim kaydı yalnız topluluğun kendi akışındadır. */
+function isFeedPost(post: CommunityPost | undefined): post is CommunityPost {
+  return Boolean(post && post.content);
+}
+
+/** Ekranda yeterince kalan gönderileri "görüldü" işaretler (en çok 50; okuyamadıklarım sunucuda yazılmaz). */
+export async function markPostsSeen(postIds: string[]): Promise<void> {
+  if (postIds.length === 0) return;
+  await callRpc("mark_community_posts_seen", { p_post_ids: postIds.slice(0, 50) });
 }
 
 export async function fetchPinnedPosts(communityId: string): Promise<CommunityPost[]> {
