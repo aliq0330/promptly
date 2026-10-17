@@ -1,0 +1,8 @@
+### 9.188 Alttan açılan kartlar: aşağı sürükleyerek kapatma (mobil)
+
+- **Ne:** Paylaşılan `Modal` (`components/ui/modal.tsx`) üzerinden açılan TÜM alttan kartlar (mobilde `dialog` varyantı, her genişlikte `sheet` varyantı) parmakla aşağı çekilince kapanır. Ayrı bir modal yazılmadığı için uygulamadaki her sheet otomatik kazandı (topluluk oluştur, üyelik/rapor/silme pencereleri, kaydet, paylaş vb.). Yan panel (`side`) ve masaüstünde ortalanmış pencere etkilenmez.
+- **Davranış (`useSheetDismiss`):** kart parmağı izler, arka plan solar; eşik = yüksekliğin %30'u (en çok 140px) ya da hızlı fırlatma → kart aşağı kayarak kapanır (220ms) ve `onClose` çağrılır; aksi hâlde yaylanıp yerine döner. Kaydırılabilir bir ata (kart içi liste ya da tam boy kartta pencerenin kendisi) en üstte değilken kaydırma kazanır; textarea/select/aralık kaydırıcısı ve `data-no-sheet-drag` üzerinden başlayan hareket sürükleme sayılmaz. Üst bileşen kapatmayı reddederse (ör. "değişiklikler silinsin mi?") kart yerine döner. Kapatma düğmesi, Escape ve arka plana dokunma aynen çalışır.
+- **Görsel ipucu:** kartın üstünde küçük tutamaç çubuğu (`SheetGrabber`; `dialog` varyantında yalnız `< sm`).
+- **Teknik not:** `Portal` içeriği ilk işlemeden sonra bağlandığı için öğeler `ref` değil `useState` geri çağrımıyla yakalanır (ilk denemede dinleyiciler hiç bağlanmıyordu).
+- **Test:** `run-community-home.mjs` 27 (CDP dokunma olayları: kısa sürükleme geri yaylanır, uzun sürükleme animasyonlu kapatır) ve 27b (≥640px'te sürükleme kapatmaz).
+- Migration yok, yeni metin yok (i18n gerekmedi). Gerçek iOS Safari/cihazda denenmedi (Chromium dokunma taklidi); iOS'ta adres çubuğu/geri-kaydırma hareketiyle etkileşimi elle doğrulanmalı.
