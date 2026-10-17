@@ -97,8 +97,15 @@ export function ListToolbar({
   desktopActiveExtra = 0,
   activeCount = 0,
   onClear,
+  stream,
   className,
 }: {
+  /**
+   * Home's social column (Meydan, docs/history/190-*): `leading` on its own row, then
+   * the chips (plain chips at every width) with a compact Filtre button — no view
+   * switcher, the stream is always cards.
+   */
+  stream?: boolean;
   /** Something that sits on the left of the control strip (e.g. Home's feed tabs). */
   leading?: ReactNode;
   /** From `md` up put the chip row on its own line UNDER the controls instead of beside them (Home: it was cramped). */
@@ -132,56 +139,24 @@ export function ListToolbar({
   const hasMobileTabs = mobileTabs !== undefined;
   const scroller = "scrollbar-none flex min-w-0 touch-pan-x gap-2 overflow-x-auto overscroll-x-contain";
 
-  return (
-    <div className={cn("min-w-0 space-y-2", className)}>
-      <div className={cn("flex min-w-0 flex-col gap-2 md:flex-row md:items-center", tabsBelow && "md:grid md:grid-cols-[minmax(0,1fr)_auto]")}>
-        {leading && <div className={cn("min-w-0", tabsBelow ? "md:col-start-1 md:row-start-1" : "md:flex-1")}>{leading}</div>}
-        {tabs && (
-          <div
-            role="group"
-            aria-label={tabsLabel}
-            className={cn(scroller, tabsBelow ? "md:col-span-2 md:row-start-2" : "md:flex-1", MOBILE_TABS, (hasMobileTabs || hideTabsOnMobile) && "max-md:hidden")}
-          >
-            {tabs}
-          </div>
-        )}
-        {hasMobileTabs && (
-          <div role="group" aria-label={tabsLabel} className={cn(scroller, MOBILE_TABS, "md:hidden")}>
-            {mobileTabs}
-          </div>
-        )}
+  const filterCountBadge = (
+    <>
+      {activeCount > 0 && (
+        <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-caption font-semibold tabular-nums text-primary-foreground md:hidden">
+          {activeCount}
+        </span>
+      )}
+      {activeCount + desktopActiveExtra > 0 && (
+        <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-caption font-semibold tabular-nums text-primary-foreground max-md:hidden">
+          {activeCount + desktopActiveExtra}
+        </span>
+      )}
+    </>
+  );
+  const filterLabel = activeCount > 0 ? t("toolbar.filterWithCount", { count: activeCount }) : t("toolbar.filter");
 
-        <div className={cn("flex min-w-0 items-center gap-2 md:shrink-0", tabsBelow && "md:col-start-2 md:row-start-1")}>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setOpen(true)}
-            aria-haspopup="dialog"
-            aria-label={activeCount > 0 ? t("toolbar.filterWithCount", { count: activeCount }) : t("toolbar.filter")}
-            className="h-11 gap-2 rounded-lg px-3.5 md:h-10"
-          >
-            <SlidersHorizontal size={16} aria-hidden />
-            {t("toolbar.filter")}
-            {activeCount > 0 && (
-              <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-caption font-semibold tabular-nums text-primary-foreground md:hidden">
-                {activeCount}
-              </span>
-            )}
-            {activeCount + desktopActiveExtra > 0 && (
-              <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-caption font-semibold tabular-nums text-primary-foreground max-md:hidden">
-                {activeCount + desktopActiveExtra}
-              </span>
-            )}
-          </Button>
-          <div className="flex min-w-0 flex-1 items-center justify-end gap-2 md:flex-none">
-            {sort && onSortChange && <SortSelect value={sort} onChange={onSortChange} keys={sortKeys} />}
-            <MobileViewToggle className="md:hidden" />
-            <ViewModeSwitcher className="max-md:hidden" />
-          </div>
-        </div>
-      </div>
-
-      {open && (
+  const sheet = (
+    open && (
         <Modal onClose={() => setOpen(false)} labelledBy={titleId}>
           <div className="flex max-h-[85dvh] w-full max-w-md flex-col rounded-lg border border-border bg-surface shadow-lg" onClick={(event) => event.stopPropagation()}>
             <div className="flex items-center justify-between border-b border-border-soft px-4 py-3">
@@ -223,9 +198,11 @@ export function ListToolbar({
                   </div>
                 </SheetSection>
               )}
-              <SheetSection title={t("toolbar.view")}>
-                <ViewModeSwitcher />
-              </SheetSection>
+              {!stream && (
+                <SheetSection title={t("toolbar.view")}>
+                  <ViewModeSwitcher />
+                </SheetSection>
+              )}
             </div>
 
             <div className="flex gap-2 border-t border-border-soft px-4 py-3">
@@ -240,7 +217,78 @@ export function ListToolbar({
             </div>
           </div>
         </Modal>
-      )}
+    )
+  );
+
+  if (stream) {
+    return (
+      <div className={cn("min-w-0 space-y-3", className)}>
+        {leading}
+        <div className="flex min-w-0 items-center gap-2">
+          {tabs && (
+            <div role="group" aria-label={tabsLabel} className={cn(scroller, "-ml-3 flex-1 pl-3 sm:ml-0 sm:pl-0")}>
+              {tabs}
+            </div>
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setOpen(true)}
+            aria-haspopup="dialog"
+            aria-label={filterLabel}
+            className="shrink-0 gap-1.5"
+          >
+            <SlidersHorizontal size={15} aria-hidden />
+            <span className="max-sm:sr-only">{t("toolbar.filter")}</span>
+            {filterCountBadge}
+          </Button>
+        </div>
+        {sheet}
+      </div>
+    );
+  }
+
+  return (
+    <div className={cn("min-w-0 space-y-2", className)}>
+      <div className={cn("flex min-w-0 flex-col gap-2 md:flex-row md:items-center", tabsBelow && "md:grid md:grid-cols-[minmax(0,1fr)_auto]")}>
+        {leading && <div className={cn("min-w-0", tabsBelow ? "md:col-start-1 md:row-start-1" : "md:flex-1")}>{leading}</div>}
+        {tabs && (
+          <div
+            role="group"
+            aria-label={tabsLabel}
+            className={cn(scroller, tabsBelow ? "md:col-span-2 md:row-start-2" : "md:flex-1", MOBILE_TABS, (hasMobileTabs || hideTabsOnMobile) && "max-md:hidden")}
+          >
+            {tabs}
+          </div>
+        )}
+        {hasMobileTabs && (
+          <div role="group" aria-label={tabsLabel} className={cn(scroller, MOBILE_TABS, "md:hidden")}>
+            {mobileTabs}
+          </div>
+        )}
+
+        <div className={cn("flex min-w-0 items-center gap-2 md:shrink-0", tabsBelow && "md:col-start-2 md:row-start-1")}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setOpen(true)}
+            aria-haspopup="dialog"
+            aria-label={filterLabel}
+            className="h-11 gap-2 rounded-lg px-3.5 md:h-10"
+          >
+            <SlidersHorizontal size={16} aria-hidden />
+            {t("toolbar.filter")}
+            {filterCountBadge}
+          </Button>
+          <div className="flex min-w-0 flex-1 items-center justify-end gap-2 md:flex-none">
+            {sort && onSortChange && <SortSelect value={sort} onChange={onSortChange} keys={sortKeys} />}
+            <MobileViewToggle className="md:hidden" />
+            <ViewModeSwitcher className="max-md:hidden" />
+          </div>
+        </div>
+      </div>
+
+      {sheet}
     </div>
   );
 }

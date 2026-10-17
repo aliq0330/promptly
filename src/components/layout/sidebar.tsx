@@ -48,14 +48,13 @@ export function Sidebar() {
           aria-current={active ? "page" : undefined}
           title={label}
           className={cn(
-            "group relative flex h-10 items-center gap-3 rounded-md text-label font-medium transition-colors duration-200",
+            "group relative flex h-11 items-center gap-3.5 rounded-xl text-[0.9375rem] transition-colors duration-200",
             "justify-center lg:justify-start lg:px-3",
-            active ? "bg-surface-soft text-text" : "text-text-muted hover:bg-surface-soft/70 hover:text-text",
+            // Meydan: the active entry is a soft brand pill — no edge bar.
+            active ? "bg-primary-soft font-semibold text-primary" : "font-medium text-text-secondary hover:bg-surface-soft hover:text-text",
           )}
         >
-          {/* Active indicator: a short accent bar on the rail's inner edge. */}
-          {active && <span aria-hidden className="absolute -left-3 top-2 bottom-2 w-[3px] rounded-r-full bg-primary lg:-left-4" />}
-          <Icon size={19} strokeWidth={active ? 2.2 : 1.8} className={active ? "text-primary" : undefined} />
+          <Icon size={21} strokeWidth={active ? 2.2 : 1.8} />
           <span className="sr-only lg:not-sr-only">{label}</span>
         </Link>
       </li>
@@ -68,7 +67,7 @@ export function Sidebar() {
         <Link href="/" className="flex items-center gap-2.5 rounded-md" aria-label="Promptly">
           <BrandMark size={30} />
           <span className="hidden leading-none lg:block">
-            <span className="block font-serif text-[1.3rem] font-semibold tracking-[-0.02em] text-text">Promptly</span>
+            <span className="block font-display text-[1.45rem] font-bold tracking-[-0.035em] text-text">Promptly</span>
             <span className="mt-0.5 block text-caption text-text-muted">{t("nav.tagline")}</span>
           </span>
         </Link>
@@ -81,7 +80,7 @@ export function Sidebar() {
             onClick={() => requireAuth("create")}
             aria-haspopup="dialog"
             title={t("nav.createShort")}
-            className={buttonClassName({ className: "w-full font-semibold" })}
+            className={buttonClassName({ className: "h-11 w-full text-[0.9375rem] font-bold" })}
           >
             <Plus size={18} strokeWidth={2.4} />
             <span className="sr-only lg:not-sr-only">{t("nav.createShort")}</span>
@@ -90,7 +89,7 @@ export function Sidebar() {
           <Link
             href="/create"
             title={t("nav.createShort")}
-            className={buttonClassName({ className: "w-full font-semibold" })}
+            className={buttonClassName({ className: "h-11 w-full text-[0.9375rem] font-bold" })}
           >
             <Plus size={18} strokeWidth={2.4} />
             <span className="sr-only lg:not-sr-only">{t("nav.createShort")}</span>

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { PenLine, Sparkles } from "lucide-react";
 import { buttonClassName } from "@/components/ui/button";
-import { HeaderArt } from "@/components/ui/header-art";
+import { Avatar } from "@/components/ui/avatar";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useOwnProfile } from "@/features/auth/own-profile-provider";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -11,26 +11,28 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 /**
  * Top of the home page. Signed out: a compact explanation of what Promptly
  * is — deliberately short so the feed starts above the fold. Signed in: a
- * one-line greeting with the three creation paths. Never a large hero.
+ * composer row (avatar + "share" field + the creation paths). Never a large hero.
  */
 export function HomeIntro() {
   const { user, loading } = useAuth();
   const { profile } = useOwnProfile();
   const { t } = useTranslation();
 
-  if (loading) return <div className="h-[92px]" aria-hidden />;
+  if (loading) return <div className="h-[74px]" aria-hidden />;
 
   if (user) {
+    // Meydan (docs/history/190-*): a composer row instead of a greeting card — the
+    // whole row opens the create form, the two buttons pick the kind directly.
     return (
-      <section className="relative flex flex-col gap-3 overflow-hidden rounded-xl border border-border-soft bg-surface px-5 py-6 shadow-card sm:flex-row sm:items-center sm:justify-between sm:px-8">
-        <HeaderArt variant="home" className="absolute right-0 top-0 hidden h-full opacity-80 lg:block" />
-        <div className="relative z-10">
-          <h1 className="text-h2 font-semibold text-text">
-            {t("home.greeting")}{profile ? `, ${profile.displayName.split(" ")[0]}` : ""}
-          </h1>
-          <p className="text-small text-text-muted">{t("home.greetingSubtitle")}</p>
-        </div>
-        <div className="relative z-10 lg:mr-56">
+      <section aria-label={t("home.sharePrompt")} className="flex items-center gap-3 rounded-xl border border-border-soft bg-surface p-3 sm:p-4">
+        <Avatar src={profile?.avatarUrl ?? null} alt={profile?.displayName ?? ""} size={42} />
+        <Link
+          href="/create?mode=prompt"
+          className="min-w-0 flex-1 truncate rounded-full bg-surface-soft px-4 py-2.5 text-small text-text-muted transition-colors hover:bg-border-soft hover:text-text-secondary"
+        >
+          {t("home.composerPlaceholder")}
+        </Link>
+        <div className="hidden sm:block">
           <QuickActions />
         </div>
       </section>
@@ -47,7 +49,6 @@ export function HomeIntro() {
           <QuickActions />
         </div>
       </div>
-      <PromptMotif />
     </section>
   );
 }
@@ -64,30 +65,6 @@ function QuickActions() {
         <Sparkles size={15} />
         {t("home.openRequest")}
       </Link>
-    </div>
-  );
-}
-
-/** Decorative only: a stack of prompt lines — the platform's subject, not a picture. */
-function PromptMotif() {
-  const lines = [
-    "cinematic portrait, neon rain, 85mm",
-    "system: you are a senior reviewer…",
-    "lo-fi hip hop, 80 bpm, vinyl crackle",
-  ];
-  return (
-    <div aria-hidden className="pointer-events-none absolute right-6 top-1/2 hidden w-[320px] -translate-y-1/2 space-y-2 xl:block">
-      {lines.map((line, index) => (
-        <div
-          key={line}
-          className="prompt-text flex items-center gap-2 rounded-md border border-border-soft bg-surface-soft px-3 py-2 text-text-muted"
-          style={{ marginLeft: index * 18, opacity: 1 - index * 0.22 }}
-        >
-          <span className="text-primary">›</span>
-          <span className="truncate">{line}</span>
-          {index === 0 && <span className="ml-auto h-3.5 w-1.5 animate-pulse rounded-[1px] bg-primary" />}
-        </div>
-      ))}
     </div>
   );
 }

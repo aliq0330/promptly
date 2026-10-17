@@ -22,8 +22,11 @@ export function FeedGrid({
   emptyTitle,
   emptyDescription,
   emptyAction,
+  layout = "grid",
 }: {
   items: FeedItem[];
+  /** "stream" = Home's single social column (Meydan, docs/history/190-*); "grid" = the masonry everywhere else. */
+  layout?: "grid" | "stream";
   emptyIcon?: LucideIcon;
   emptyTitle?: string;
   emptyDescription?: string;
@@ -42,7 +45,7 @@ export function FeedGrid({
   }
 
   return (
-    <div className="columns-1 gap-3 sm:columns-2 sm:gap-4 xl:columns-3">
+    <div className={layout === "stream" ? "columns-1" : "columns-1 gap-3 sm:columns-2 sm:gap-4 xl:columns-3"}>
       {items.map((item, index) => (
         <Reveal key={feedItemKey(item)} index={index} className="pb-3 break-inside-avoid sm:pb-4">
           {item.kind === "prompt" ? (
