@@ -1,6 +1,6 @@
 # 190 — Meydan yeniden tasarımı (Faz 1: tema + kabuk + Ana Sayfa · Faz 2: Keşfet, Profil, Topluluk)
 
-**Durum:** istemci kodu repoda; `20260920140000_meydan_palette.sql` repoda, **canlıya UYGULANMADI**. Ağ taklitli Playwright ekran görüntüleriyle (açık/koyu, 1440/390) bakıldı; gerçek Supabase'e, oturuma ve cihaza karşı denenmedi.
+**Durum:** istemci kodu repoda; `20260920140000_meydan_palette.sql` **canlıya UYGULANDI** (kullanıcı onayıyla, MCP `execute_sql` ile tek işlemde; `schema_migrations`'a `20260920140000` / `meydan_palette` kaydı; öncesinde canlıda `mono` 2, `sand` 2, boş 16 satır vardı, hepsi yeni listede). Ağ taklitli Playwright ekran görüntüleriyle (açık/koyu, 1440/390) bakıldı; gerçek Supabase'e, oturuma ve cihaza karşı denenmedi.
 
 ## Karar
 
@@ -27,7 +27,7 @@ Kullanıcı, mevcut ekranların ekran görüntüleri ve üç tasarım yönü (A 
 - `PromptCard` artık prompt metnini ortak mono blokta gösterir (`PromptPreviewBox`, 3 satır, "Kopyala" → `record_prompt_copy`). Önceki "prompt metni kartta yok" kararı Meydan ile değişti. Bu, prompt kartı kullanılan her listeyi etkiler.
 
 **Veritabanı**
-- `20260920140000_meydan_palette.sql`: `profiles_theme_palette_check` kısıtına `'meydan'` eklenir (yalnız kısıt genişletme; satırlara dokunmaz, `mono` migration'ıyla aynı kalıp). **Uygulanana kadar**: başka paletten Meydan'a dönen oturumlu kullanıcının tercihi hesaba yazılamaz (yerelde/tarayıcıda yine uygulanır). Palet hiç seçmemiş hesaplar etkilenmez (varsayılan zaten Meydan).
+- `20260920140000_meydan_palette.sql`: `profiles_theme_palette_check` kısıtına `'meydan'` eklenir (yalnız kısıt genişletme; satırlara dokunmaz, `mono` migration'ıyla aynı kalıp). Palet hiç seçmemiş hesaplar etkilenmez (varsayılan zaten Meydan).
 
 ## Faz 2 — Keşfet, Profil, Topluluk sayfası
 
@@ -53,6 +53,5 @@ Kullanıcı, mevcut ekranların ekran görüntüleri ve üç tasarım yönü (A 
 Yeni metinlerin hepsi `translations.ts`'te TR+EN: `home.composerPlaceholder`, `home.rings*`, `home.rail*`, `settings.palette.meydan`.
 
 ## Denenmedi / açık
-- Migration canlıya uygulanmadı.
 - Gerçek Supabase/oturum/cihaz; `list_my_communities` ve `trending_tags` canlı yanıtları (taklitle bakıldı).
 - Sonraki adaylar: Topluluklar ana sayfası (`/communities`), içerik detay sayfaları, oluşturma ekranları, Ayarlar; profilde koleksiyon halkaları; aralıklı #418 hidrasyon hatasının kökeni.

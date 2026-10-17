@@ -326,7 +326,7 @@ Canlı projede (kontrol: bu oturum) 20 profil (18 demo hesap), 148 prompt (+43 t
 bağlayıcıdır; ayrıntılı gerekçe için `docs/history/README.md` tablosuna bak.
 
 **Açık işler (kullanıcı/yönetici adımı veya bilinen boşluk):**
-- Meydan yeniden tasarımı (`docs/history/190-*`): Faz 1 (tema, yan menü, Ana Sayfa, prompt kartında prompt metni) ve Faz 2 (Keşfet, Profil — tek sekme satırı, Topluluk sayfası başlığı) repoda; `20260920140000_meydan_palette.sql` (yalnız palet kısıtı genişletme) **canlıya UYGULANMADI** — uygulanana kadar başka paletten Meydan'a dönen kullanıcının tercihi hesaba yazılamaz. Ağ taklitli ekran görüntüleriyle bakıldı; gerçek Supabase/oturum/cihazla denenmedi. Sıradaki adaylar: Topluluklar ana sayfası, detay ve oluşturma ekranları. UI testlerinde aralıklı React #418 hidrasyon hatası (Meydan öncesinde de var) kökeni araştırılmadı.
+- Meydan yeniden tasarımı (`docs/history/190-*`): Faz 1 (tema, yan menü, Ana Sayfa, prompt kartında prompt metni) ve Faz 2 (Keşfet, Profil — tek sekme satırı, Topluluk sayfası başlığı) repoda; `20260920140000_meydan_palette.sql` (yalnız palet kısıtı genişletme) **canlıya UYGULANDI** (kullanıcı onayıyla, MCP `execute_sql`, tek işlem; `schema_migrations`'a dosya sürümüyle kayıt düşüldü; mevcut 20 satır korundu). Ağ taklitli ekran görüntüleriyle bakıldı; gerçek Supabase/oturum/cihazla denenmedi. Sıradaki adaylar: Topluluklar ana sayfası, detay ve oluşturma ekranları. UI testlerinde aralıklı React #418 hidrasyon hatası (Meydan öncesinde de var) kökeni araştırılmadı.
 - **Google ile giriş:** kod ve `handle_new_user` migration'ı hazır/canlıda
   (`docs/history/155-*`), ama Google sağlayıcısı Supabase'de etkinleştirilene kadar
   buton hata verir: Google Cloud'da OAuth istemcisi + Supabase Dashboard → Authentication
