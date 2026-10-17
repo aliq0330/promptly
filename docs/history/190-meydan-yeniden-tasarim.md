@@ -1,4 +1,4 @@
-# 190 — Meydan yeniden tasarımı (Faz 1: tema + kabuk + Ana Sayfa · Faz 2: Keşfet, Profil, Topluluk · Faz 3: başlıklar, Topluluklar, detay)
+# 190 — Meydan yeniden tasarımı (Faz 1: tema + kabuk + Ana Sayfa · Faz 2: Keşfet, Profil, Topluluk · Faz 3: başlıklar, Topluluklar, detay · Faz 4: Ayarlar, Bildirimler)
 
 **Durum:** istemci kodu repoda; `20260920140000_meydan_palette.sql` **canlıya UYGULANDI** (kullanıcı onayıyla, MCP `execute_sql` ile tek işlemde; `schema_migrations`'a `20260920140000` / `meydan_palette` kaydı; öncesinde canlıda `mono` 2, `sand` 2, boş 16 satır vardı, hepsi yeni listede). Ağ taklitli Playwright ekran görüntüleriyle (açık/koyu, 1440/390) bakıldı; gerçek Supabase'e, oturuma ve cihaza karşı denenmedi.
 
@@ -62,6 +62,14 @@ Kullanıcı, mevcut ekranların ekran görüntüleri ve üç tasarım yönü (A 
 - Statik HTML'de `meta` `<head>`'de, gövdede Next'in akışlı metadata sınırı (`<div hidden><!--$--><!--/$--></div>`) var. `next dev`'de hiç görülmedi; yalnız derlenmiş statik çıktıda, hızlı art arda tam sayfa yüklemelerinde sık.
 - Denenen: `htmlLimitedBots: /.*/` (akışlı metadata'yı kapatma) — gövdedeki sınır kalktı-kalkmadı fark etmedi, hata sürdü; değişiklik geri alındı.
 - Hidrasyon denetimi dışarıda tutulunca (geçici kopyayla) `run-community-home` 38/38, `run-communities` 61/61, `run-detail-pages` 44/44, `run-groups` 36/36, `run-community-posts` 36/36 — yani başka hiçbir işlevsel kontrol düşmüyor. Testler değiştirilmedi (denetim olduğu gibi duruyor).
+
+## Faz 4 — Ayarlar, Bildirimler
+
+- **Ayarlar (`/settings`)**: `lg`'den itibaren solda yapışkan bölüm menüsü (Hesap · Gizlilik · Tercihler · Tehlikeli bölge; kaydırmayla geçerli bölüm işaretlenir, `aria-current`), mobilde başlığın altında hap bağlantılar; tek okuma sütunu (≤ 2xl). Bölüm başlıkları küçük harf "eyebrow" yerine display başlık (`scroll-mt-24` ile çapaya kaydırma başlığın altına düşmez). Form/iş mantığına dokunulmadı.
+- **Bildirimler (`/notifications`)**: liste yerel takvim gününe göre **Bugün · Dün · Bu hafta · Daha eski** gruplanır (`lib/notification-groups.ts`, saf fonksiyon + `notification-groups.test.ts`; sıra değişmez, boş grup çizilmez); her grup ayrı kart. "Tümünü okundu işaretle" hap düğme.
+- **Mesajlar**: yeni token/yazı tipleriyle zaten Meydan'a uyuyor; yapısal değişiklik yapılmadı.
+- Not: örnek veride adın iki kez görünmesi (ör. "Bora Kaya Bora Kaya …") yalnızca taklit metinden kaynaklanıyordu — gerçek tetikleyici cümleleri adı içermez ("Paylaşımını beğendi: …"); uygulamada hata yok.
+- Yeni metinler TR+EN: `notifications.group*`, `settings.sectionsNav`. Migration yok. Bu sayfalara dokunan UI testi yok; gerçek oturumla denenmedi.
 
 ## Çeviri
 Yeni metinlerin hepsi `translations.ts`'te TR+EN: `home.composerPlaceholder`, `home.rings*`, `home.rail*`, `settings.palette.meydan`.

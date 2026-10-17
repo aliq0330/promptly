@@ -1486,6 +1486,11 @@ export const translations = {
 
   // ---- Notifications ----
   "notifications.markAllRead": { tr: "Tümünü okundu işaretle", en: "Mark all as read" },
+  "notifications.groupToday": { tr: "Bugün", en: "Today" },
+  "notifications.groupYesterday": { tr: "Dün", en: "Yesterday" },
+  "notifications.groupThisWeek": { tr: "Bu hafta", en: "This week" },
+  "notifications.groupOlder": { tr: "Daha eski", en: "Earlier" },
+  "settings.sectionsNav": { tr: "Ayar bölümleri", en: "Settings sections" },
   "notifications.noneYet": { tr: "Henüz bildirimin yok.", en: "You don't have any notifications yet." },
   "notifications.noneInCategory": { tr: "Bu kategoride henüz bir bildirim yok.", en: "There are no notifications in this category yet." },
   "notifications.unreadSr": { tr: "Okunmadı", en: "Unread" },
