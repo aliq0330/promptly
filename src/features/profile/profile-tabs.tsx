@@ -3,7 +3,8 @@
 import { Tabs } from "@/components/ui/tabs";
 import { useTranslation } from "@/lib/i18n/language-provider";
 
-export type ProfileTabKey = "posts" | "presets" | "drafts" | "saved" | "collections" | "liked" | "about";
+/** One flat row since Meydan (docs/history/190-*): the four kinds are top-level tabs, no nested "Gönderiler" row. */
+export type ProfileTabKey = "prompts" | "requests" | "workflows" | "presets" | "drafts" | "saved" | "collections" | "liked" | "about";
 
 export function ProfileTabs({
   tabs,

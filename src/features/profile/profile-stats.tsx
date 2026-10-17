@@ -4,8 +4,9 @@ import Link from "next/link";
 import { formatCount, cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 
-const STAT_CLASS = "flex flex-col items-start text-caption text-text-muted";
-const STAT_VALUE_CLASS = "font-display text-h2 font-semibold tabular-nums leading-tight text-text";
+// Meydan: one inline line — "148 gönderi · 1.284 takipçi · 312 takip".
+const STAT_CLASS = "inline-flex items-baseline gap-1.5 text-body text-text-secondary";
+const STAT_VALUE_CLASS = "font-semibold tabular-nums text-text";
 
 function Stat({
   label,
@@ -74,8 +75,7 @@ export function ProfileStats({
   const { t } = useTranslation();
   const total = postCounts.prompts + postCounts.requests + postCounts.workflows + postCounts.presets;
   return (
-    <div className="space-y-3 border-t border-border-soft pt-4">
-    <div className="flex flex-wrap items-stretch divide-x divide-border-soft *:px-5 *:first:pl-0">
+    <div className="flex flex-wrap items-baseline justify-center gap-x-6 gap-y-1 sm:justify-start">
       <StatButton label={t("profile.postsSuffix")} value={total} onClick={onSelectPosts} />
       {isOwnProfile ? (
         <Link href="/followers" className={cn(STAT_CLASS, "rounded-sm transition-colors hover:text-text")}>
@@ -93,15 +93,6 @@ export function ProfileStats({
       ) : (
         <Stat label={t("profile.followingSuffix")} value={followingCount} />
       )}
-    </div>
-    <p className="text-caption text-text-muted">
-      {[
-        `${postCounts.prompts} Prompt`,
-        `${postCounts.requests} ${t("profile.postKindRequest")}`,
-        `${postCounts.workflows} Workflow`,
-        `${postCounts.presets} ${t("preset.singular")}`,
-      ].join(" · ")}
-    </p>
     </div>
   );
 }

@@ -22,7 +22,7 @@ import type { UserProfile } from "@/types";
 export function OwnProfileActions({ user }: { user: UserProfile }) {
   const { t } = useTranslation();
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-start">
       <Link href="/profile/edit" className={buttonClassName({ size: "sm", variant: "outline", className: "h-9" })}>
         {t("profile.editProfileHeading")}
       </Link>
@@ -36,7 +36,7 @@ export function OwnProfileActions({ user }: { user: UserProfile }) {
         href="/settings"
         title={t("settings.pageTitle")}
         aria-label={t("settings.pageTitle")}
-        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border bg-surface text-text-muted transition-colors hover:bg-surface-soft hover:text-text"
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border bg-surface text-text-muted transition-colors hover:bg-surface-soft hover:text-text"
       >
         <Settings size={16} />
       </Link>
@@ -55,7 +55,7 @@ export function OtherProfileActions({
   const blockState = useBlockState(user);
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-start">
       <FollowButtonView {...followState} size="md" />
       {blockState.isBlocked ? (
         <span className="inline-flex h-9 items-center rounded-md border border-border px-4 text-sm text-text-muted">

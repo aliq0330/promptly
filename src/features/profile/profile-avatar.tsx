@@ -9,21 +9,23 @@ export function ProfileAvatar({
   src,
   alt,
   isOwnProfile,
+  size = 88,
 }: {
   src: string | null;
   alt: string;
   isOwnProfile: boolean;
+  size?: number;
 }) {
   const { t } = useTranslation();
   return (
     <div className="relative inline-flex">
-      <Avatar src={src} alt={alt} size={88} className="text-2xl" />
+      <Avatar src={src} alt={alt} size={size} className="text-2xl" />
       {isOwnProfile && (
         <Link
           href="/profile/edit"
           aria-label={t("profile.changeProfilePhoto")}
           title={t("profile.changeProfilePhoto")}
-          className="absolute bottom-0 right-0 flex h-7 w-7 items-center justify-center rounded-full border-2 border-surface bg-primary text-primary-foreground transition-colors hover:bg-primary-dark"
+          className="absolute bottom-1 right-1 flex h-8 w-8 items-center justify-center rounded-full border-2 border-surface bg-primary text-primary-foreground transition-colors hover:bg-primary-dark"
         >
           <Pencil size={13} />
         </Link>
