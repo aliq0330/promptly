@@ -95,6 +95,13 @@ C taslağıyla yan yana karşılaştırmada kalan dört fark kapatıldı (kullan
 
 **Sınama:** `tsc`, `lint` (yalnız eski 4 uzantı uyarısı), `npm test` (344), `next build` temiz. Playwright (hidrasyon #418 denetimi dışarıda tutulan geçici kopyayla): `run-community-home` 38/38, `run-community-posts` 36/36, `run-communities` 61/61, `run-detail-pages` 44/44, `run-groups` 36/36. Ağ taklitli ekran görüntüleri (1440/390, açık/koyu). Gerçek Supabase/oturum/cihazla denenmedi; canlı veride "Bu hafta popüler" seed içeriği eskiyse görünmeyebilir (tasarım gereği).
 
+### Faz 6 eki — telefonda tek görünüm (`ContentGrid`)
+
+Kullanıcı bazı gönderilerin düz çizgili, bazılarının yuvarlak kart olduğunu fark etti: akışlar (Ana Sayfa, Topluluklar) kutusuzdu, ızgaralar (Keşfet, listeler, profil, arama, kaydedilenler/koleksiyon, İçeriklerim) kutulu — telefonda ızgara da tek sütuna düştüğü için fark en çok orada görünüyordu. Kullanıcının seçtiği çözüm: **telefonda her gönderi listesi düz akış, masaüstünde ızgaralar kutulu kalır.**
+
+- `ContentGrid` + `CONTENT_GRID_ITEM_CLASS` (`features/content/content-card.tsx`): `sm` altında `ContentStream` ile aynı yüzey (kenardan kenara, çizgiyle ayrılmış satırlar), `sm`+ CSS sütunlarında kutulu kartlar. Kart yüzeyi bağlamdan gelir (`SurfaceContext`: `card` | `flat` | `responsive`). Elle yazılmış bütün `columns-1 … sm:columns-2` ızgaraları buna geçti (FeedGrid, PromptGrid, RequestList — kendi `md:`/`2xl:` sütunlarıyla —, ProfileContentGrid, profil workflow'ları, hazır ayar listeleri, arama, İçeriklerim, koleksiyon/kaydedilenler); iskelet ızgarası da aynı davranışta. Yaratıcı kartları ve koleksiyon kapakları gönderi olmadığı için dokunulmadı.
+- Sınama: `npm test` 344, `lint` (eski 4 uyarı), `build` temiz; 390px'te Ana Sayfa/Keşfet/Profil/Promptlar yatay taşmasız, aynı satır görünümünde; 1440px'te ızgaralar kutulu. Playwright (hidrasyon denetimi dışarıda tutulan geçici kopyayla): `run-community-home` 38/38, `run-community-posts` 36/36, `run-communities` 61/61, `run-detail-pages` 44/44, `run-groups` 36/36. Gerçek cihazda denenmedi.
+
 ## Çeviri
 Yeni metinlerin hepsi `translations.ts`'te TR+EN: `home.composerPlaceholder`, `home.rings*`, `home.rail*`, `settings.palette.meydan`.
 

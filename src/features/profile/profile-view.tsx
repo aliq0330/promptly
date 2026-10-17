@@ -25,6 +25,7 @@ import { WorkflowCard } from "@/features/workflows/workflow-card";
 import { fetchPresetsByCreator } from "@/lib/supabase/presets";
 import { ProfilePresetsPanel } from "@/features/presets/profile-presets-panel";
 import type { Collection, Preset, Prompt, PromptContentType, PromptRequest, UserProfile, Workflow } from "@/types";
+import { CONTENT_GRID_ITEM_CLASS, ContentGrid } from "@/features/content/content-card";
 
 function sortPrompts(prompts: Prompt[], sort: ProfileSortKey): Prompt[] {
   const sorted = [...prompts];
@@ -251,13 +252,13 @@ export function ProfileView({
               action={isOwnProfile ? { label: t("workflow.create"), href: "/workflows/create" } : undefined}
             />
           ) : (
-            <div className="columns-1 gap-3 sm:columns-2 sm:gap-4 xl:columns-3">
+            <ContentGrid>
               {workflows.map((workflow) => (
-                <div key={workflow.id} className="pb-3 break-inside-avoid sm:pb-4">
+                <div key={workflow.id} className={CONTENT_GRID_ITEM_CLASS}>
                   <WorkflowCard workflow={workflow} />
                 </div>
               ))}
-            </div>
+            </ContentGrid>
           )
         ) : activeTab === "presets" ? (
           <ProfilePresetsPanel ownerId={user.id} isOwn={isOwnProfile} created={presets} />

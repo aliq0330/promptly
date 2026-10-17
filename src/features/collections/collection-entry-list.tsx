@@ -13,6 +13,7 @@ import { normalizeTagLabel } from "@/lib/tag-normalize";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { CollectionEntry } from "@/lib/supabase/collections";
 import type { TranslationKey } from "@/lib/i18n/translations";
+import { CONTENT_GRID_ITEM_CLASS, ContentGrid } from "@/features/content/content-card";
 
 export type EntryRemoval = { onRemove: () => Promise<void> };
 
@@ -93,11 +94,11 @@ export function CollectionEntryList({
       ) : items.length === 0 ? (
         <EmptyState icon={FolderOpen} title={t(emptyTitleKey)} description={t(emptyDescriptionKey)} action={{ label: t("feed.goToDiscover"), href: "/discover" }} />
       ) : (
-        <div className="columns-1 gap-3 sm:columns-2 sm:gap-4 xl:columns-3">
+        <ContentGrid>
           {visibleItems.map((entry) => (
             <EntryCell key={`${entry.type}:${entry.data.id}`} entry={entry} removal={removalFor?.(entry)} dropWhenUnsaved={dropWhenUnsaved} />
           ))}
-        </div>
+        </ContentGrid>
       )}
     </>
   );
@@ -123,7 +124,7 @@ function EntryCell({ entry, removal, dropWhenUnsaved }: { entry: CollectionEntry
   const save = useEngagementEntry("save", entry.type, entry.data.id, entry.data.saveCount);
   if (dropWhenUnsaved && save.activeChecked && !save.active) return null;
   return (
-    <div className="pb-3 break-inside-avoid sm:pb-4">
+    <div className={CONTENT_GRID_ITEM_CLASS}>
       {entry.type === "community_post" ? (
         <SavedPostCard post={entry.data} collectionRemoval={removal} />
       ) : entry.type === "prompt" ? (

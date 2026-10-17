@@ -8,18 +8,19 @@ import { fetchSavedPresets } from "@/lib/supabase/presets";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { PresetCard } from "./preset-card";
 import type { Preset } from "@/types";
+import { CONTENT_GRID_ITEM_CLASS, ContentGrid } from "@/features/content/content-card";
 
 type Scope = "created" | "saved";
 
 function PresetGrid({ presets }: { presets: Preset[] }) {
   return (
-    <div className="columns-1 gap-3 sm:columns-2 sm:gap-4 xl:columns-3">
+    <ContentGrid>
       {presets.map((preset) => (
-        <div key={preset.id} className="pb-3 break-inside-avoid sm:pb-4">
+        <div key={preset.id} className={CONTENT_GRID_ITEM_CLASS}>
           <PresetCard preset={preset} />
         </div>
       ))}
-    </div>
+    </ContentGrid>
   );
 }
 
