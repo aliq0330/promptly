@@ -18,13 +18,12 @@ import {
 } from "@/lib/supabase/profiles";
 import { useOwnProfile } from "@/features/auth/own-profile-provider";
 import { deleteOwnAccount } from "@/lib/supabase/account";
-import { absoluteUrl } from "@/lib/utils";
+import { absoluteUrl, cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Language, TranslationKey } from "@/lib/i18n/translations";
 import { useIsModerator } from "@/features/moderation/use-is-moderator";
 import { openWelcomeTour } from "@/features/onboarding/welcome-tour";
 import { AppearancePicker } from "@/components/theme/appearance-picker";
-import { Eyebrow } from "@/features/content/detail-parts";
 
 const PASSWORD_MIN_LENGTH = 6;
 
@@ -39,6 +38,7 @@ export default function SettingsPage() {
   const { t, language, setLanguage } = useTranslation();
   const isModerator = useIsModerator();
   const { profile, refresh: refreshProfile } = useOwnProfile();
+  const activeSection = useActiveSection(["settings-account", "settings-privacy", "settings-preferences", "settings-danger"]);
   const [newEmail, setNewEmail] = useState("");
   const [emailError, setEmailError] = useState<string | null>(null);
   const [emailSent, setEmailSent] = useState(false);
@@ -186,9 +186,36 @@ export default function SettingsPage() {
   // The route is wrapped in <RequireAuth>, so a guest never gets here.
   if (loading || !user) return null;
 
+  // Meydan (docs/history/190-*): a section menu (sticky on the left from `lg`, a pill row on phones) beside one reading column.
+  const sections: { id: string; label: string }[] = [
+    { id: "settings-account", label: t("settings.groupAccount") },
+    { id: "settings-privacy", label: t("settings.privacyTitle") },
+    { id: "settings-preferences", label: t("settings.groupPreferences") },
+    { id: "settings-danger", label: t("settings.groupDanger") },
+  ];
+
   return (
-    <div className="mx-auto w-full max-w-xl animate-rise-in px-3 py-5 sm:px-5 sm:py-7 lg:px-8 lg:py-10">
-      <header className="mb-8 space-y-2">
+    <div className="mx-auto flex w-full max-w-5xl animate-rise-in gap-10 px-3 py-5 sm:px-5 sm:py-7 lg:px-8 lg:py-10">
+      <nav aria-label={t("settings.sectionsNav")} className="sticky top-24 hidden h-fit w-52 shrink-0 lg:block">
+        <ul className="space-y-1">
+          {sections.map((section) => (
+            <li key={section.id}>
+              <a
+                href={`#${section.id}`}
+                aria-current={activeSection === section.id ? "true" : undefined}
+                className={cn(
+                  "flex h-10 items-center rounded-xl px-3 text-[0.9375rem] transition-colors",
+                  activeSection === section.id ? "bg-primary-soft font-semibold text-primary" : "font-medium text-text-secondary hover:bg-surface-soft hover:text-text",
+                )}
+              >
+                {section.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </nav>
+      <div className="mx-auto w-full min-w-0 max-w-2xl lg:mx-0">
+      <header className="mb-6 space-y-2">
         <h1 className="text-h1 text-text">{t("settings.pageTitle")}</h1>
         <p className="text-small text-text-secondary">
           {t("settings.profileHintBefore")}{" "}
@@ -198,6 +225,14 @@ export default function SettingsPage() {
           {t("settings.profileHintAfter")}
         </p>
       </header>
+
+      <nav aria-label={t("settings.sectionsNav")} className="scrollbar-none -mx-3 mb-6 flex gap-2 overflow-x-auto px-3 lg:hidden">
+        {sections.map((section) => (
+          <a key={section.id} href={`#${section.id}`} className="inline-flex h-9 shrink-0 items-center rounded-full bg-surface-soft px-4 text-label font-semibold text-text-secondary">
+            {section.label}
+          </a>
+        ))}
+      </nav>
 
       <div className="space-y-9">
         {isModerator && (
@@ -394,6 +429,7 @@ export default function SettingsPage() {
           </Button>
         </div>
       </div>
+      </div>
     </div>
   );
 }
@@ -403,10 +439,10 @@ const settingsLabelClassName = "mb-1.5 block text-small text-text-secondary";
 /** A titled group of setting cards — the editorial eyebrow over a stack. */
 function SettingsGroup({ id, title, children }: { id: string; title: string; children: ReactNode }) {
   return (
-    <section aria-labelledby={id} className="space-y-3">
-      <Eyebrow as="h2" id={id} className="px-1">
+    <section aria-labelledby={id} className="scroll-mt-24 space-y-3">
+      <h2 id={id} className="px-1 font-display text-h3 font-bold tracking-[-0.02em] text-text">
         {title}
-      </Eyebrow>
+      </h2>
       <div className="space-y-3">{children}</div>
     </section>
   );
@@ -498,4 +534,24 @@ function LanguageSection({
       </div>
     </SettingsCard>
   );
+}
+
+/** The section heading nearest the top of the viewport (for the side menu's current mark); the first one until headings mount. */
+function useActiveSection(ids: string[]): string {
+  const [active, setActive] = useState(ids[0]);
+  const key = ids.join("|");
+  // No dependency list on purpose: the headings mount only after the account has loaded, so this re-binds until they exist.
+  useEffect(() => {
+    const headings = key.split("|").map((id) => document.getElementById(id)).filter((el): el is HTMLElement => Boolean(el));
+    if (headings.length === 0) return;
+    const update = () => {
+      let current = headings[0].id;
+      for (const heading of headings) if (heading.getBoundingClientRect().top <= 140) current = heading.id;
+      setActive(current);
+    };
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    return () => window.removeEventListener("scroll", update);
+  });
+  return active;
 }
