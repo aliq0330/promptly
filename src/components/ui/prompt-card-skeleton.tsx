@@ -36,10 +36,10 @@ export function PromptCardSkeleton() {
   );
 }
 
-export function PromptCardSkeletonGrid({ count = 6 }: { count?: number }) {
+export function PromptCardSkeletonGrid({ count = 6, layout = "grid" }: { count?: number; layout?: "grid" | "stream" }) {
   const { t } = useTranslation();
   return (
-    <div className="columns-1 gap-3 sm:columns-2 sm:gap-4 xl:columns-3" role="status" aria-label={t("common.loadingAriaLabel")}>
+    <div className={layout === "stream" ? "columns-1" : "columns-1 gap-3 sm:columns-2 sm:gap-4 xl:columns-3"} role="status" aria-label={t("common.loadingAriaLabel")}>
       {Array.from({ length: count }).map((_, i) => (
         <div key={i} className="pb-3 break-inside-avoid sm:pb-4">
           <PromptCardSkeleton />

@@ -16,11 +16,11 @@ export type Theme = "light" | "dark";
  * defines the full semantic token set for BOTH modes, so palette and mode
  * are two independent choices.
  */
-export const PALETTES = ["mono", "lavender", "ocean", "forest", "sand"] as const;
+export const PALETTES = ["meydan", "mono", "lavender", "ocean", "forest", "sand"] as const;
 export type Palette = (typeof PALETTES)[number];
 
 /** Site default until the visitor (or their account) picks another one. */
-export const DEFAULT_PALETTE: Palette = "sand";
+export const DEFAULT_PALETTE: Palette = "meydan";
 
 interface ThemeContextValue {
   theme: Theme;

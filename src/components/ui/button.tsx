@@ -20,7 +20,7 @@ export function buttonClassName({
   className,
 }: { variant?: ButtonVariant; size?: ButtonSize; className?: string } = {}) {
   return cn(
-    "inline-flex select-none items-center justify-center rounded-md font-medium tracking-[-0.005em] whitespace-nowrap",
+    "inline-flex select-none items-center justify-center rounded-full font-semibold tracking-[-0.005em] whitespace-nowrap",
     "transition-[background-color,border-color,color,box-shadow,transform] duration-200 ease-soft active:scale-[0.98]",
     "disabled:pointer-events-none disabled:opacity-50",
     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",

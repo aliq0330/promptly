@@ -88,23 +88,26 @@ Sayfalar feature bileşenlerini birleştiren ince katmandır.
 
 ---
 
-## 4. Tasarım Sistemi — Promptly 2.0
+## 4. Tasarım Sistemi — Promptly 2.0 · Meydan
 
-> `docs/history/050-*` (arşiv) ile "Lavender Studio" tek-paletli sistemin yerini aldı. Tam
-> ayrıntı ve gerekçeler: `docs/history/050-*`. Buradaki özet bağlayıcıdır — yeni bir
-> bileşen yazılırken önce bu bölüm okunmalı.
+> `docs/history/050-*` token sistemini kurdu; `docs/history/190-*` ile görsel dil
+> **Meydan** oldu (kullanıcı üç yön arasından seçti). Buradaki özet bağlayıcıdır —
+> yeni bir bileşen yazılırken önce bu bölüm okunmalı.
 
-Tasarım dili: **prompt topluluğu**, görsel üretim sitesi değil. Sakin,
-editorial, soft; gereksiz gradient / glassmorphism / neon / ağır gölge yok.
-İnce (`border-soft`) kenarlıklar, çok hafif gölgeler (`shadow-card`),
-orta seviye radius (kart `rounded-lg` = 14px), 200ms `ease-soft` geçişler.
+Tasarım dili: **Meydan** — parlak, sosyal, topluluk öncelikli bir prompt topluluğu
+(görsel üretim sitesi değil). Beyaza yakın zemin, kobalt birincil, sıcak turuncu
+ikincil vurgu; gereksiz gradient / glassmorphism / neon / ağır gölge yok. İnce
+(`border-soft`) kenarlıklar, çok hafif gölgeler (`shadow-card`), yumuşak köşeler
+(kart `rounded-lg` = 16px, `rounded-xl` = 22px), **düğmeler hap biçimli**
+(`Button` = `rounded-full`), 200ms `ease-soft` geçişler. Ana Sayfa tek sosyal sütun
+(≤640px) + `xl`'de sağ yardımcı sütundur; diğer sayfalar Faz 2+'da bu dile taşınır.
 
-**Fontlar** (`src/app/layout.tsx`, `next/font`): gövde **Inter**, başlıklar
-**Instrument Sans** (`font-display`, h1–h3 otomatik), sayfa düzeyi başlıklar
-(`text-display`/`text-h1`/`text-h2`) editorial serif **Newsreader**
-(`font-serif`, `docs/history/110-*`), prompt metni
-**JetBrains Mono** (`prompt-text` utility — platformun imza öğesi: kopyalanan
-şey her yerde aynı mono blokta görünür). İkon: **lucide-react**, kartlarda
+**Fontlar** (`src/app/layout.tsx`, `next/font`): gövde **DM Sans**, başlıklar ve
+sayfa düzeyi başlıklar (`text-display`/`text-h1`/`text-h2`, h1–h3 otomatik) ve
+wordmark **Bricolage Grotesque** (`font-display`; `font-serif` artık onun takma
+adı — serif yok), prompt metni **JetBrains Mono** (`prompt-text` utility —
+platformun imza öğesi: kopyalanan şey her yerde, prompt kartları dahil, aynı mono
+blokta görünür; `PromptPreviewBox`). İkon: **lucide-react**, kartlarda
 `strokeWidth` 1.75; aynı işlev her yerde aynı ikon (Beğeni `Heart`, Yorum
 `MessageCircle`, Kaydet `Bookmark` (içerik ve topluluk başvuru gönderisi; topluluğun kendisi kaydedilmez), Paylaş `Share2`, Menü `MoreVertical`,
 Prompt `SquareTerminal`, Workflow `Workflow`, Hazır Ayar `SlidersHorizontal`, İstek `Sparkles`).
@@ -127,11 +130,12 @@ tokenları tanıyacak şekilde genişletildi — aksi hâlde `text-caption` ile
 boyamadan önce `<html>`'e uygulanır, localStorage'da (`promptly-theme`,
 `promptly-palette`) tutulur, `/settings → Görünüm`'den seçilir:
 - mod: `.dark` sınıfı (açık/koyu)
-- palet: `data-palette` = `mono` (Beyaz — nötr siyah-beyaz, profesyonel) /
-  `lavender` / `ocean` (lacivert + elektrik mavisi) / `forest` (orman + nane) /
-  `sand` (kum + mercan, varsayılan — `docs/history/057-*`)
+- palet: `data-palette` = `meydan` (beyaz + kobalt + turuncu, **varsayılan** —
+  `docs/history/190-*`) / `mono` (Beyaz — nötr siyah-beyaz) / `lavender` /
+  `ocean` (lacivert + elektrik mavisi) / `forest` (orman + nane) / `sand` (kum + mercan,
+  `docs/history/057-*`). Yeni palet eklenirse `profiles_theme_palette_check` de genişletilir.
 
-Her palet her iki modda aynı tam token setini tanımlar (10 kombinasyonun
+Her palet her iki modda aynı tam token setini tanımlar (12 kombinasyonun
 hepsinde metin/zemin çiftleri WCAG AA ≥ 4.5:1 — `docs/history/050-*`, `114-*`). Palet
 seçicileri her elemente uyar, bu yüzden bir alt ağaç başka paletin gerçek
 tokenlarıyla önizlenebilir (Ayarlar'daki renk örnekleri böyle çalışır).
@@ -321,6 +325,7 @@ Canlı projede (kontrol: bu oturum) 20 profil (18 demo hesap), 148 prompt (+43 t
 bağlayıcıdır; ayrıntılı gerekçe için `docs/history/README.md` tablosuna bak.
 
 **Açık işler (kullanıcı/yönetici adımı veya bilinen boşluk):**
+- Meydan yeniden tasarımı (`docs/history/190-*`): Faz 1 (tema, yan menü, Ana Sayfa, prompt kartında prompt metni) repoda; `20260920140000_meydan_palette.sql` (yalnız palet kısıtı genişletme) **canlıya UYGULANMADI** — uygulanana kadar başka paletten Meydan'a dönen kullanıcının tercihi hesaba yazılamaz. Ağ taklitli ekran görüntüleriyle bakıldı; gerçek Supabase/oturum/cihazla denenmedi. Sıradaki fazlar: Keşfet, Profil, Topluluk sayfaları.
 - **Google ile giriş:** kod ve `handle_new_user` migration'ı hazır/canlıda
   (`docs/history/155-*`), ama Google sağlayıcısı Supabase'de etkinleştirilene kadar
   buton hata verir: Google Cloud'da OAuth istemcisi + Supabase Dashboard → Authentication
@@ -388,5 +393,5 @@ bağlayıcıdır; ayrıntılı gerekçe için `docs/history/README.md` tablosuna
   isteğin `creative_direction`'ını da kapsar ve keyset sayfalanır (`search_content`); `prompt_saves` canlıdan kaldırıldı; kod içi
   yorumlarda eski "Bölüm 9.x" atıfları arşiv numaralarına (`docs/history/NNN-*`) karşılık gelir.
 
-**Arşiv:** [`docs/history/README.md`](docs/history/README.md) — 185 bölüm, her
+**Arşiv:** [`docs/history/README.md`](docs/history/README.md) — 190 bölüm, her
 biri için durum etiketi (uygulandı / kısmen geçerli / kaldırıldı).

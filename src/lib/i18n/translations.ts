@@ -346,6 +346,7 @@ export const translations = {
   "settings.modeLight": { tr: "Açık", en: "Light" },
   "settings.modeDark": { tr: "Koyu", en: "Dark" },
   "settings.paletteLabel": { tr: "Renk teması", en: "Color theme" },
+  "settings.palette.meydan": { tr: "Meydan", en: "Plaza" },
   "settings.palette.mono": { tr: "Beyaz", en: "White" },
   "settings.palette.lavender": { tr: "Lavanta", en: "Lavender" },
   "settings.palette.ocean": { tr: "Okyanus", en: "Ocean" },
@@ -509,6 +510,13 @@ export const translations = {
   "home.tabNewest": { tr: "En yeni", en: "Newest" },
   "home.tabPopular": { tr: "Popüler", en: "Popular" },
   "home.tabTags": { tr: "Etiketlerim", en: "My tags" },
+  "home.composerPlaceholder": { tr: "Bugün ne ürettin? Promptunu paylaş…", en: "What did you make today? Share your prompt…" },
+  "home.ringsLabel": { tr: "Toplulukların", en: "Your communities" },
+  "home.ringsUnread": { tr: "yeni etkinlik var", en: "has new activity" },
+  "home.ringsFind": { tr: "Topluluk bul", en: "Find more" },
+  "home.railTrending": { tr: "Gündemde", en: "Trending" },
+  "home.railTrendCount": { tr: "Bu hafta {{count}} paylaşım", en: "{{count}} posts this week" },
+  "home.railSuggested": { tr: "Takip etmeyi dene", en: "Who to follow" },
 
   // ---- Feed (shared between Home and Discover) ----
   "feed.ariaLabel": { tr: "Akış", en: "Feed" },

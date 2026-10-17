@@ -10,6 +10,7 @@ import { CONTENT_TYPE_META } from "./content-type-meta";
 import { PostHeader } from "./post-header";
 import { RequestResponseContext } from "./post-context";
 import { PromptCardFooter } from "./prompt-card-footer";
+import { PromptPreviewBox } from "./prompt-preview-box";
 import { OutputPosterPreview, OutputThumbnailStrip } from "./multi-image-output-options";
 import type { Prompt } from "@/types";
 
@@ -23,8 +24,10 @@ type CollectionRemoval = { onRemove: () => Promise<void> };
  *   →  title + description  →  output preview (image only)
  *   →  tags  →  actions
  *
- * The prompt text itself is deliberately NOT on the card — it is revealed on
- * the detail page. An image prompt's generated result is a supporting
+ * Since Meydan (docs/history/190-*) the card also shows the prompt itself in
+ * the shared mono block (`PromptPreviewBox`, clamped, with "Kopyala") — the
+ * thing people come for is visible without opening the post. A row with no
+ * text (hidden/empty) shows no block. An image prompt's generated result is a supporting
  * "çıktı" preview (never taller than square), never the whole card —
  * Promptly is a prompt community, not an image gallery. More
  * than one output image adds a small, non-interactive preview strip below
@@ -70,6 +73,7 @@ export function PromptCard({
 
         {media.length > 0 && <OutputThumbnailStrip media={media} />}
         {poster && <OutputPosterPreview media={poster} />}
+        {prompt.promptText.trim() && <PromptPreviewBox prompt={prompt} lines={3} />}
 
         <ToolChips refs={prompt.tools} />
         <ContentTags tags={prompt.tags} />

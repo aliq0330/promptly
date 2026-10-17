@@ -45,7 +45,7 @@ const KIND_FILTERS: { key: KindFilter; labelKey: TranslationKey; icon: typeof La
   { key: "preset", labelKey: "nav.presets", icon: SlidersHorizontal },
 ];
 
-export function FeedTabs() {
+export function FeedTabs({ layout = "grid" }: { layout?: "grid" | "stream" } = {}) {
   const { t } = useTranslation();
   const [active, setActive] = useState<TabKey>("newest");
   const [kind, setKind] = useState<KindFilter>("all");
@@ -80,14 +80,26 @@ export function FeedTabs() {
     <section className="space-y-4" aria-label={t("feed.ariaLabel")}>
       <ListToolbar
         tabsBelow
+        stream={layout === "stream"}
         leading={
-          <Tabs
-            items={TABS.map((tab) => ({ key: tab.key, label: t(tab.labelKey), icon: tab.icon }))}
-            active={active}
-            onChange={setActive}
-            ariaLabel={t("feed.viewAriaLabel")}
-            variant="segmented"
-          />
+          layout === "stream" ? (
+            // Meydan: equal-width underline tabs across the column (they scroll on a phone).
+            <Tabs
+              items={TABS.map((tab) => ({ key: tab.key, label: t(tab.labelKey) }))}
+              active={active}
+              onChange={setActive}
+              ariaLabel={t("feed.viewAriaLabel")}
+              className="sm:[&>button]:flex-1 sm:[&>button]:justify-center [&>button]:text-small [&>button]:font-semibold"
+            />
+          ) : (
+            <Tabs
+              items={TABS.map((tab) => ({ key: tab.key, label: t(tab.labelKey), icon: tab.icon }))}
+              active={active}
+              onChange={setActive}
+              ariaLabel={t("feed.viewAriaLabel")}
+              variant="segmented"
+            />
+          )
         }
         tabs={kindChips}
         tabsLabel={t("toolbar.postKindAria")}
@@ -114,7 +126,7 @@ export function FeedTabs() {
           action={{ label: t("common.login"), href: "/login" }}
         />
       ) : feed.loading || waitingForAuth ? (
-        <PromptCardSkeletonGrid count={6} />
+        <PromptCardSkeletonGrid count={layout === "stream" ? 3 : 6} layout={layout} />
       ) : feed.failed && feed.items.length === 0 ? (
         <EmptyState
           icon={Clock}
@@ -125,6 +137,7 @@ export function FeedTabs() {
         <>
           <FeedItemsView
             items={feed.items}
+            layout={layout}
             emptyTitle={
               active === "following"
                 ? t("feed.emptyFollowingNoPosts")
