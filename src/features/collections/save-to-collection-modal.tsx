@@ -19,7 +19,7 @@ import type { LikeableContentType } from "@/lib/supabase/likes";
 import { applyMembershipResult, diffMembership, savedTransition } from "@/lib/saved-selection";
 
 /** See `use-save-state.ts`'s identical note — saving never targets a request. */
-type SaveableContentType = Extract<LikeableContentType, "prompt" | "workflow" | "preset">;
+type SaveableContentType = Extract<LikeableContentType, "prompt" | "workflow" | "preset" | "community_post">;
 import { placeholderArt } from "@/lib/placeholder-image";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -43,12 +43,13 @@ import { StorageBackground } from "@/components/ui/storage-media";
  * "+ Yeni koleksiyon oluştur" swaps this SAME modal's content to the create
  * form; the new collection (a real, explicit create) is ticked in the draft.
  *
- * Pass exactly one of `promptId`/`workflowId`/`presetId`.
+ * Pass exactly one of `promptId`/`workflowId`/`presetId`/`communityPostId`.
  */
 export function SaveToCollectionModal({
   promptId,
   workflowId,
   presetId,
+  communityPostId,
   onClose,
   onAdded,
   onRemoved,
@@ -56,6 +57,7 @@ export function SaveToCollectionModal({
   promptId?: string;
   workflowId?: string;
   presetId?: string;
+  communityPostId?: string;
   onClose: () => void;
   /** Called when a save leaves the work in 1+ collections after it was in none — lets the caller (SaveButton) fill the bookmark without waiting for a refetch. */
   onAdded?: () => void;
@@ -66,8 +68,8 @@ export function SaveToCollectionModal({
   const { user } = useAuth();
   const { profile } = useOwnProfile();
 
-  const contentId = (presetId ?? workflowId ?? promptId)!;
-  const contentType: SaveableContentType = presetId ? "preset" : workflowId ? "workflow" : "prompt";
+  const contentId = (communityPostId ?? presetId ?? workflowId ?? promptId)!;
+  const contentType: SaveableContentType = communityPostId ? "community_post" : presetId ? "preset" : workflowId ? "workflow" : "prompt";
 
   const [view, setView] = useState<"list" | "create">("list");
   const [collections, setCollections] = useState<Collection[]>([]);

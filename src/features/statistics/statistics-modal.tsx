@@ -26,8 +26,10 @@ export interface StatisticsTarget {
   /** Counts the post was loaded with — the modal layers the live session deltas on top (same stores the action buttons use). */
   likeCount: number;
   commentCount: number;
-  /** Ignored for prompt requests and community posts — they can't be saved. */
+  /** Ignored for prompt requests (not savable) and for community posts unless `savable`. */
   saveCount?: number;
+  /** Community posts only: an application post of a savable type (prompt/workflow/preset) can be saved (docs/history/184-*). */
+  savable?: boolean;
   /** Prompts only (`prompts.copy_count`): shown as a fourth summary tile; there is no per-person list for it. */
   copyCount?: number;
 }
@@ -44,7 +46,7 @@ export interface StatisticsTarget {
 export function StatisticsModal({ target, onClose }: { target: StatisticsTarget; onClose: () => void }) {
   const { t } = useTranslation();
   const { contentType, contentId } = target;
-  const canSave = contentType !== "request" && contentType !== "community_post";
+  const canSave = contentType === "request" ? false : contentType === "community_post" ? target.savable === true : true;
   const kinds: StatisticsKind[] = canSave ? ["likes", "comments", "saves"] : ["likes", "comments"];
   const [active, setActive] = useState<StatisticsKind>("likes");
   const copyCount = target.copyCount;

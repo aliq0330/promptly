@@ -96,7 +96,7 @@ export function CollectionDetailView() {
    * and every entry type; afterwards the shared bookmark state is re-read so
    * a work that is now in no collection stops showing as saved elsewhere.
    */
-  async function handleRemoveItem(id: string, contentType: "prompt" | "workflow" | "preset") {
+  async function handleRemoveItem(id: string, contentType: "prompt" | "workflow" | "preset" | "community_post") {
     if (!collection) return;
     await removeFromCollection(collection.id, id, contentType);
     setItems((prev) => prev.filter((entry) => !(entry.type === contentType && entry.data.id === id)));

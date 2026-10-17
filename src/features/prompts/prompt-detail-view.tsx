@@ -1,5 +1,6 @@
 "use client";
 
+import { EngageCommentCount, EngageComments, EngageLike, EngageSave, EngageShare, EngageStatistics } from "@/features/content/scoped-engagement";
 import { usePageTitle } from "@/components/layout/page-title";
 import { RunButton } from "@/features/content/run-with-ai";
 import { ToolLine } from "@/features/content/tool-chips";
@@ -8,18 +9,12 @@ import { useSearchParams } from "next/navigation";
 import { PenLine, SquareTerminal } from "lucide-react";
 import { OpenInStudioButton } from "@/features/studio/open-in-studio-button";
 import { ContentTypeLabel } from "@/features/content/content-type-label";
-import { ShareTriggerButton } from "@/features/prompts/share-modal";
 import { RelatedPrompts } from "@/features/prompts/related-prompts";
 import { TaxonomyLinks } from "@/features/content/taxonomy-links";
 import { CreatorSummary } from "@/features/profile/creator-summary";
 import { clampedAspectRatio } from "@/lib/placeholder-image";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { RequestResponseContext } from "@/features/prompts/post-context";
-import { CommentSection } from "@/features/prompts/comment-section";
-import { LikeButton } from "@/features/prompts/like-button";
-import { SaveButton } from "@/features/prompts/save-button";
-import { CommentCountLink } from "@/features/prompts/comment-count-link";
-import { StatisticsButton } from "@/features/statistics/statistics-button";
 import { RelationMapLink } from "@/features/relations/relation-map-link";
 import { CopyPromptButton } from "@/features/prompts/copy-prompt-button";
 import { PromptDnaDisplay } from "@/features/prompts/prompt-dna-display";
@@ -236,11 +231,11 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
             <RequestResponseContext requestId={prompt.origin.requestId} currentPromptId={prompt.id} />
           )}
 
-          <DetailActionBar trailing={<ShareTriggerButton target={{ contentType: "prompt", prompt }} label={t("common.share")} />}>
-            <LikeButton id={prompt.id} likeCount={prompt.likeCount} size={18} />
-            <CommentCountLink promptId={prompt.id} baseCount={prompt.commentCount} size={18} />
-            {!prompt.communityId && <SaveButton promptId={prompt.id} saveCount={prompt.saveCount} size={18} />}
-            <StatisticsButton target={{ contentType: "prompt", contentId: prompt.id, likeCount: prompt.likeCount, commentCount: prompt.commentCount, saveCount: prompt.saveCount, copyCount: prompt.copyCount }} size={18} label={t("statistics.title")} />
+          <DetailActionBar trailing={<EngageShare target={{ contentType: "prompt", prompt }} label={t("common.share")} />}>
+            <EngageLike id={prompt.id} likeCount={prompt.likeCount} size={18} />
+            <EngageCommentCount promptId={prompt.id} baseCount={prompt.commentCount} size={18} />
+            <EngageSave promptId={prompt.id} saveCount={prompt.saveCount} size={18} />
+            <EngageStatistics target={{ contentType: "prompt", contentId: prompt.id, likeCount: prompt.likeCount, commentCount: prompt.commentCount, saveCount: prompt.saveCount, copyCount: prompt.copyCount }} size={18} label={t("statistics.title")} />
             <RelationMapLink kind="prompt" id={prompt.id} />
           </DetailActionBar>
 
@@ -331,7 +326,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
           )}
 
           <DetailComments>
-            <CommentSection target={{ promptId: prompt.id }} highlightCommentId={highlightCommentId} />
+            <EngageComments target={{ promptId: prompt.id }} highlightCommentId={highlightCommentId} />
           </DetailComments>
           <VersionRestoreToast contentId={prompt.id} />
         </article>

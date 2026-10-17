@@ -29,21 +29,21 @@ export function PromptCardFooter(target: FooterTarget) {
         <>
           <LikeButton id={target.preset.id} likeCount={target.preset.likeCount} contentType="preset" />
           <CommentCountLink presetId={target.preset.id} baseCount={target.preset.commentCount} />
-          {!target.preset.communityId && <SaveButton presetId={target.preset.id} saveCount={target.preset.saveCount} />}
+          <SaveButton presetId={target.preset.id} saveCount={target.preset.saveCount} />
           <StatisticsButton target={{ contentType: "preset", contentId: target.preset.id, likeCount: target.preset.likeCount, commentCount: target.preset.commentCount, saveCount: target.preset.saveCount }} />
         </>
       ) : target.workflow ? (
         <>
           <LikeButton id={target.workflow.id} likeCount={target.workflow.likeCount} contentType="workflow" />
           <CommentCountLink workflowId={target.workflow.id} baseCount={target.workflow.commentCount} />
-          {!target.workflow.communityId && <SaveButton workflowId={target.workflow.id} saveCount={target.workflow.saveCount} />}
+          <SaveButton workflowId={target.workflow.id} saveCount={target.workflow.saveCount} />
           <StatisticsButton target={{ contentType: "workflow", contentId: target.workflow.id, likeCount: target.workflow.likeCount, commentCount: target.workflow.commentCount, saveCount: target.workflow.saveCount }} />
         </>
       ) : (
         <>
           <LikeButton id={target.prompt.id} likeCount={target.prompt.likeCount} contentType="prompt" />
           <CommentCountLink promptId={target.prompt.id} baseCount={target.prompt.commentCount} />
-          {!target.prompt.communityId && <SaveButton promptId={target.prompt.id} saveCount={target.prompt.saveCount} />}
+          <SaveButton promptId={target.prompt.id} saveCount={target.prompt.saveCount} />
           <StatisticsButton target={{ contentType: "prompt", contentId: target.prompt.id, likeCount: target.prompt.likeCount, commentCount: target.prompt.commentCount, saveCount: target.prompt.saveCount, copyCount: target.prompt.copyCount }} />
         </>
       )}

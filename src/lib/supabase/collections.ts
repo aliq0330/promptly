@@ -7,9 +7,10 @@ import { WORKFLOW_SELECT, mapWorkflowRow, type WorkflowRow } from "./workflows";
 import { PRESET_SELECT, mapPresetRow, type PresetRow } from "./presets";
 import type { LikeableContentType } from "./likes";
 import { dedupeSavedEntries } from "@/lib/saved-selection";
+import { fetchCommunityPostsByIds, type CommunityPost } from "./communities";
 
-/** See `use-save-state.ts`'s identical note — saving never targets a request. */
-type SaveableContentType = Extract<LikeableContentType, "prompt" | "workflow" | "preset">;
+/** See `use-save-state.ts`'s identical note — saving never targets a request. A community application post is saved as the POST itself (docs/history/184-*). */
+type SaveableContentType = Extract<LikeableContentType, "prompt" | "workflow" | "preset" | "community_post">;
 import type { Collection, Preset, Prompt, Workflow } from "@/types";
 
 /**
@@ -18,10 +19,16 @@ import type { Collection, Preset, Prompt, Workflow } from "@/types";
  * discriminated-union pattern already used for the mixed home/discover feed
  * (`src/features/feed/types.ts`) rather than inventing a new shape.
  */
-export type CollectionEntry = { type: "prompt"; data: Prompt } | { type: "workflow"; data: Workflow } | { type: "preset"; data: Preset };
+export type CollectionEntry =
+  | { type: "prompt"; data: Prompt }
+  | { type: "workflow"; data: Workflow }
+  | { type: "preset"; data: Preset }
+  /** A community APPLICATION post saved as the post itself (its own like/comment/save counts, docs/history/184-*). */
+  | { type: "community_post"; data: CommunityPost };
 
 /** Which real column a save target lives in — mirrors likes.ts's `targetColumn`. */
-function saveTargetColumn(contentType: SaveableContentType): "prompt_id" | "workflow_id" | "preset_id" {
+function saveTargetColumn(contentType: SaveableContentType): "prompt_id" | "workflow_id" | "preset_id" | "community_post_id" {
+  if (contentType === "community_post") return "community_post_id";
   if (contentType === "preset") return "preset_id";
   if (contentType === "workflow") return "workflow_id";
   return "prompt_id";
@@ -265,12 +272,19 @@ export async function fetchFollowedCollections(userId: string): Promise<Collecti
   }
 }
 
-type CollectionItemRow = { prompts: PromptRow | null; workflows: WorkflowRow | null; presets: PresetRow | null };
+type CollectionItemRow = { community_post_id?: string | null; prompts: PromptRow | null; workflows: WorkflowRow | null; presets: PresetRow | null };
 
-function mapCollectionItemRows(rows: CollectionItemRow[]): CollectionEntry[] {
+/**
+ * Rows that point at a community post are resolved in ONE extra read afterwards (`resolvePostEntries`): a post the viewer can no
+ * longer read (left the community, post removed) simply isn't returned and is skipped, so the list never shows a broken card.
+ */
+function mapCollectionItemRows(rows: CollectionItemRow[], posts: Map<string, CommunityPost> = new Map()): CollectionEntry[] {
   const entries: CollectionEntry[] = [];
   for (const row of rows) {
-    if (row.prompts && !row.prompts.deleted_at) {
+    if (row.community_post_id) {
+      const post = posts.get(row.community_post_id);
+      if (post) entries.push({ type: "community_post", data: post });
+    } else if (row.prompts && !row.prompts.deleted_at) {
       entries.push({ type: "prompt", data: mapPromptRow(row.prompts) });
     } else if (row.workflows) {
       entries.push({ type: "workflow", data: mapWorkflowRow(row.workflows) });
@@ -279,6 +293,16 @@ function mapCollectionItemRows(rows: CollectionItemRow[]): CollectionEntry[] {
     }
   }
   return entries;
+}
+
+async function resolvePostEntries(rows: CollectionItemRow[]): Promise<Map<string, CommunityPost>> {
+  const ids = [...new Set(rows.flatMap((row) => (row.community_post_id ? [row.community_post_id] : [])))];
+  try {
+    return await fetchCommunityPostsByIds(ids);
+  } catch (err) {
+    console.error("resolvePostEntries", err);
+    return new Map();
+  }
 }
 
 /**
@@ -298,14 +322,15 @@ export async function fetchCollectionItems(collectionId: string): Promise<Collec
   try {
     const { data, error } = await supabase
       .from("collection_items")
-      .select(`created_at, prompts ( ${PROMPT_SELECT} ), workflows ( ${WORKFLOW_SELECT} ), presets ( ${PRESET_SELECT} )`)
+      .select(`created_at, community_post_id, prompts ( ${PROMPT_SELECT} ), workflows ( ${WORKFLOW_SELECT} ), presets ( ${PRESET_SELECT} )`)
       .eq("collection_id", collectionId)
       .order("created_at", { ascending: false });
     if (error || !data) {
       if (error) console.error("fetchCollectionItems", error);
       return [];
     }
-    return mapCollectionItemRows(data as unknown as CollectionItemRow[]);
+    const rows = data as unknown as CollectionItemRow[];
+    return mapCollectionItemRows(rows, await resolvePostEntries(rows));
   } catch (err) {
     console.error("fetchCollectionItems", err);
     return [];
@@ -329,7 +354,7 @@ const SAVED_ROW_LIMIT = 1000;
 export async function fetchSavedItems(userId: string): Promise<CollectionEntry[]> {
   const { data, error } = await supabase
     .from("collection_items")
-    .select(`created_at, collections!inner ( owner_id ), prompts ( ${PROMPT_SELECT} ), workflows ( ${WORKFLOW_SELECT} ), presets ( ${PRESET_SELECT} )`)
+    .select(`created_at, community_post_id, collections!inner ( owner_id ), prompts ( ${PROMPT_SELECT} ), workflows ( ${WORKFLOW_SELECT} ), presets ( ${PRESET_SELECT} )`)
     .eq("collections.owner_id", userId)
     .order("created_at", { ascending: false })
     .limit(SAVED_ROW_LIMIT);
@@ -337,7 +362,8 @@ export async function fetchSavedItems(userId: string): Promise<CollectionEntry[]
     console.error("fetchSavedItems", error);
     throw new Error(error.message);
   }
-  return dedupeSavedEntries(mapCollectionItemRows((data ?? []) as unknown as CollectionItemRow[]));
+  const rows = (data ?? []) as unknown as CollectionItemRow[];
+  return dedupeSavedEntries(mapCollectionItemRows(rows, await resolvePostEntries(rows)));
 }
 
 /**

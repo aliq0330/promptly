@@ -1,5 +1,6 @@
 "use client";
 
+import { EngageCommentCount, EngageComments, EngageLike, EngageSave, EngageShare, EngageStatistics } from "@/features/content/scoped-engagement";
 import { usePageTitle } from "@/components/layout/page-title";
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -16,12 +17,6 @@ import { FollowButton } from "@/features/profile/follow-button";
 import { RelatedPresets } from "./related-presets";
 import { useAuth } from "@/features/auth/auth-provider";
 import { PostMenu } from "@/features/prompts/post-menu";
-import { LikeButton } from "@/features/prompts/like-button";
-import { SaveButton } from "@/features/prompts/save-button";
-import { CommentCountLink } from "@/features/prompts/comment-count-link";
-import { CommentSection } from "@/features/prompts/comment-section";
-import { ShareTriggerButton } from "@/features/prompts/share-modal";
-import { StatisticsButton } from "@/features/statistics/statistics-button";
 import { PresetHistoryPanel } from "@/features/versions/content-history-panels";
 import { VersionRestoreToast } from "@/features/versions/version-restore-toast";
 import { Tabs, type TabItem } from "@/components/ui/tabs";
@@ -55,13 +50,14 @@ import type { Preset, PresetVersion } from "@/types";
  * the Prompt create form pre-filled with the preset (a starting
  * configuration, the user can change everything).
  */
-export function PresetDetailView() {
+export function PresetDetailView({ presetId }: { presetId?: string } = {}) {
   const { t, language } = useTranslation();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useAuth();
   const { removeFromCache } = useRealPresets();
-  const id = searchParams.get("id");
+  // `presetId`: başvuru gönderisi sayfası aynı sayfayı gönderinin başvurduğu hazır ayar ile çizer (adresteki `id` gönderinindir).
+  const id = presetId ?? searchParams.get("id");
   const [preset, setPreset] = useState<Preset | null | undefined>(undefined);
   const [lightbox, setLightbox] = useState(false);
   const [versions, setVersions] = useState<PresetVersion[]>([]);
@@ -163,11 +159,11 @@ export function PresetDetailView() {
           />
         </header>
 
-        <DetailActionBar trailing={<ShareTriggerButton target={{ contentType: "preset", preset }} label={t("common.share")} />}>
-          <LikeButton id={preset.id} likeCount={preset.likeCount} contentType="preset" size={18} />
-          <CommentCountLink presetId={preset.id} baseCount={preset.commentCount} size={18} />
-          {!preset.communityId && <SaveButton presetId={preset.id} saveCount={preset.saveCount} size={18} />}
-          <StatisticsButton
+        <DetailActionBar trailing={<EngageShare target={{ contentType: "preset", preset }} label={t("common.share")} />}>
+          <EngageLike id={preset.id} likeCount={preset.likeCount} contentType="preset" size={18} />
+          <EngageCommentCount presetId={preset.id} baseCount={preset.commentCount} size={18} />
+          <EngageSave presetId={preset.id} saveCount={preset.saveCount} size={18} />
+          <EngageStatistics
             target={{ contentType: "preset", contentId: preset.id, likeCount: preset.likeCount, commentCount: preset.commentCount, saveCount: preset.saveCount }}
             size={18}
             label={t("statistics.title")}
@@ -245,7 +241,7 @@ export function PresetDetailView() {
         </>)}
 
         <DetailComments>
-          <CommentSection target={{ presetId: preset.id }} highlightCommentId={highlightCommentId} />
+          <EngageComments target={{ presetId: preset.id }} highlightCommentId={highlightCommentId} />
         </DetailComments>
         <VersionRestoreToast contentId={preset.id} />
       </article>

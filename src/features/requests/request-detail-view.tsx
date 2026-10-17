@@ -1,5 +1,6 @@
 "use client";
 
+import { EngageCommentCount, EngageComments, EngageLike, EngageShare, EngageStatistics } from "@/features/content/scoped-engagement";
 import { usePageTitle } from "@/components/layout/page-title";
 import { ToolLine } from "@/features/content/tool-chips";
 import { useEffect, useRef, useState } from "react";
@@ -12,18 +13,13 @@ import { Button, buttonClassName } from "@/components/ui/button";
 import { ContentTypeLabel } from "@/features/content/content-type-label";
 import { contentActionClassName } from "@/features/content/action-styles";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
-import { ShareTriggerButton } from "@/features/prompts/share-modal";
 import { PromptCard } from "@/features/prompts/prompt-card";
-import { CommentSection } from "@/features/prompts/comment-section";
-import { CommentCountLink } from "@/features/prompts/comment-count-link";
-import { StatisticsButton } from "@/features/statistics/statistics-button";
 import { RelationMapLink } from "@/features/relations/relation-map-link";
 import { EditHistoryPanel } from "@/features/prompts/edit-history-panel";
 import { RequestHistoryPanel } from "@/features/versions/content-history-panels";
 import { VersionRestoreToast } from "@/features/versions/version-restore-toast";
 import { Tabs, type TabItem } from "@/components/ui/tabs";
 import { fetchVersionsForRequest } from "@/lib/supabase/content-versions";
-import { LikeButton } from "@/features/prompts/like-button";
 import { PostMenu } from "@/features/prompts/post-menu";
 import { TaxonomyLinks } from "@/features/content/taxonomy-links";
 import { CreatorSummary } from "@/features/profile/creator-summary";
@@ -239,9 +235,9 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
           "Kopyala" yok (Prompt İsteği'ne özel olarak kaldırıldı, genel
           Prompt sistemindeki Kopyala butonuna dokunulmadı).
         */}
-        <DetailActionBar trailing={<ShareTriggerButton target={{ contentType: "request", request: live }} label={t("common.share")} />}>
-          <LikeButton id={live.id} likeCount={live.likeCount} contentType="request" size={18} />
-          <CommentCountLink requestId={live.id} baseCount={live.commentCount} size={18} />
+        <DetailActionBar trailing={<EngageShare target={{ contentType: "request", request: live }} label={t("common.share")} />}>
+          <EngageLike id={live.id} likeCount={live.likeCount} contentType="request" size={18} />
+          <EngageCommentCount requestId={live.id} baseCount={live.commentCount} size={18} />
           <a
             href="#request-responses"
             onClick={() => setActiveTab("request")}
@@ -252,7 +248,7 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
             <Reply size={18} strokeWidth={1.75} />
             <span aria-hidden>{formatCount(live.responseCount)}</span>
           </a>
-          <StatisticsButton target={{ contentType: "request", contentId: live.id, likeCount: live.likeCount, commentCount: live.commentCount }} size={18} label={t("statistics.title")} />
+          <EngageStatistics target={{ contentType: "request", contentId: live.id, likeCount: live.likeCount, commentCount: live.commentCount }} size={18} label={t("statistics.title")} />
           <RelationMapLink kind="request" id={live.id} />
         </DetailActionBar>
 
@@ -470,7 +466,7 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
           `PromptDetailView` de zaten hiç `disabledReason` geçirmiyor —
           burası da artık aynı, koşulsuz davranışı kullanıyor.
         */}
-        <CommentSection target={{ requestId: live.id }} highlightCommentId={highlightCommentId} />
+        <EngageComments target={{ requestId: live.id }} highlightCommentId={highlightCommentId} />
       </DetailComments>
       <VersionRestoreToast contentId={live.id} />
       </article>

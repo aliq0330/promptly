@@ -6,6 +6,8 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { PromptCard } from "@/features/prompts/prompt-card";
 import { WorkflowCard } from "@/features/workflows/workflow-card";
 import { PresetCard } from "@/features/presets/preset-card";
+import { SavedPostCard } from "@/features/communities/saved-post-card";
+import { summarizeContent } from "@/features/communities/content-summary";
 import { useEngagementEntry } from "@/features/content/engagement-store";
 import { normalizeTagLabel } from "@/lib/tag-normalize";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -49,11 +51,8 @@ export function CollectionEntryList({
   const visibleItems = useMemo(() => {
     if (!normalizedQuery) return items;
     return items.filter((entry) => {
-      const data = entry.data;
-      const creator = "author" in data ? data.author : data.creator;
-      const haystack = normalizeTagLabel(
-        [data.title, data.description, creator.displayName, creator.username, ...data.tags.map((tag) => tag.label)].join(" "),
-      );
+      const fields = searchFields(entry);
+      const haystack = normalizeTagLabel([fields.title, fields.description, fields.creator?.displayName ?? "", fields.creator?.username ?? "", ...fields.tags].join(" "));
       return haystack.includes(normalizedQuery);
     });
   }, [items, normalizedQuery]);
@@ -104,13 +103,30 @@ export function CollectionEntryList({
   );
 }
 
+/** The searchable text of one entry. A community post is searched by the content it applies with, its note and its applicant. */
+function searchFields(entry: CollectionEntry) {
+  if (entry.type === "community_post") {
+    const summary = entry.data.content ? summarizeContent(entry.data.content) : null;
+    return {
+      title: summary?.title ?? "",
+      description: [summary?.description ?? "", entry.data.note ?? ""].join(" "),
+      creator: entry.data.author,
+      tags: summary?.tags.map((tag) => tag.label) ?? [],
+    };
+  }
+  const data = entry.data;
+  return { title: data.title, description: data.description, creator: "author" in data ? data.author : data.creator, tags: data.tags.map((tag) => tag.label) };
+}
+
 function EntryCell({ entry, removal, dropWhenUnsaved }: { entry: CollectionEntry; removal?: EntryRemoval; dropWhenUnsaved: boolean }) {
   // Seeded with the real count so reading the shared entry first can't pin it at 0 for the card's own bookmark.
   const save = useEngagementEntry("save", entry.type, entry.data.id, entry.data.saveCount);
   if (dropWhenUnsaved && save.activeChecked && !save.active) return null;
   return (
     <div className="pb-3 break-inside-avoid sm:pb-4">
-      {entry.type === "prompt" ? (
+      {entry.type === "community_post" ? (
+        <SavedPostCard post={entry.data} collectionRemoval={removal} />
+      ) : entry.type === "prompt" ? (
         <PromptCard prompt={entry.data} collectionRemoval={removal} />
       ) : entry.type === "preset" ? (
         <PresetCard preset={entry.data} collectionRemoval={removal} />

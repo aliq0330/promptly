@@ -10,9 +10,15 @@ import { Button, buttonClassName } from "@/components/ui/button";
 import { DetailSkeleton, NotFoundBlock } from "@/components/ui/detail-skeleton";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useToast } from "@/features/groups/use-toast";
-import { DropdownMenu, MenuItem } from "./dropdown-menu";
 import { ReportModal } from "./report-modal";
-import { ApplicationContentDetail } from "./application-detail";
+import { DropdownMenu, MenuItem } from "./dropdown-menu";
+import { PostScopeProvider } from "./post-scope";
+import { summarizeContent } from "./content-summary";
+import { PostMenuExtras, type PostMenuExtra } from "@/features/prompts/post-menu-extras";
+import { PromptDetailView } from "@/features/prompts/prompt-detail-view";
+import { RequestDetailView } from "@/features/requests/request-detail-view";
+import { WorkflowDetailView } from "@/features/workflows/workflow-view";
+import { PresetDetailView } from "@/features/presets/preset-detail-view";
 import { PostEngagement, type EngageMode } from "./post-engagement";
 import { DeletePostDialog, EditNoteModal } from "./feed-tab";
 import { useCommunity } from "./use-community";
@@ -34,8 +40,9 @@ const SHARED_LABEL: Record<CommunityPost["contentType"], TranslationKey> = {
 type Dialog = "edit" | "delete" | "moderate" | "report" | null;
 
 /**
- * `/communities/post/local?id=<gönderi>`: BAŞVURU gönderisinin kendi sayfası. Başvurulan içerik ayrıntılı (salt okunur) gösterilir, "Orijinal içeriği aç"
- * ile içeriğin kendi sayfasına geçilir; gönderinin KENDİ beğenisi/yorumları burada yürür (orijinale karışmaz). Yerel (native) gönderinin sayfası içeriğin
+ * `/communities/post/local?id=<gönderi>`: BAŞVURU gönderisinin kendi sayfası. Başvurulan içeriğin NORMAL detay sayfası (Prompt/İstek/Workflow/Hazır Ayar —
+ * mobil, tablet ve masaüstü yerleşimi dahil) olduğu gibi çizilir; yalnızca üstte başvuru bandı vardır ve beğeni/yorum/kaydet/istatistik/paylaş GÖNDERİNİN
+ * KENDİSİNE bağlanır (`PostScope`, orijinale karışmaz; docs/history/184-*). "Orijinal içeriği aç" içeriğin kendi sayfasına geçer. Yerel (native) gönderinin sayfası içeriğin
  * kendisidir → o içeriğe yönlenir. Erişim topluluğun okuma kuralıdır (gönderiyi okuyamayan "bulunamadı" görür).
  */
 export function CommunityPostPage() {
@@ -111,60 +118,85 @@ export function CommunityPostPage() {
   const mine = Boolean(user) && post.author?.id === user?.id;
   const canModerate = Boolean(group) && isGroupStaff(role) && can(role, "moderate_posts", group?.rolePermissions);
   const feedHref = communityHref(post.communityId, "feed");
-  const hasMenu = mine || canModerate || Boolean(role);
+
+  // Gönderi işleri, içeriğin NORMAL ⋮ menüsüne eklenir (ikinci menü yok); içeriğin kendi yönetimi (düzenle/sil) orijinalin sayfasında kalır.
+  const extras: PostMenuExtra[] = [];
+  if (mine) extras.push({ key: "edit-note", label: t("communities.feed.editNote"), icon: <Pencil size={14} />, onSelect: () => setDialog("edit") });
+  if (role && !mine) extras.push({ key: "report", label: t("communities.report.menu"), icon: <Flag size={14} />, onSelect: () => setDialog("report") });
+  if (canModerate && !mine) extras.push({ key: "moderate", label: t("communities.feed.removeAsStaff"), icon: <ShieldAlert size={14} />, danger: true, onSelect: () => setDialog("moderate") });
+  if (mine) extras.push({ key: "delete", label: t("communities.feed.deleteMine"), icon: <Trash2 size={14} />, danger: true, onSelect: () => setDialog("delete") });
+
+  const content = post.content;
+  const originalHref = content ? summarizeContent(content).href : null;
 
   return (
-    <div className="mx-auto w-full max-w-3xl space-y-4 px-3 py-4 sm:px-5 sm:py-6">
-      <Link href={feedHref} className="inline-flex items-center gap-1.5 text-small text-text-muted hover:text-text">
-        <ArrowLeft size={14} aria-hidden /> {group ? t("communities.post.page.back", { name: group.name }) : t("communities.post.page.backGeneric")}
-      </Link>
+    <div data-community-post-page={post.id}>
+      <div className="mx-auto w-full max-w-6xl px-3 pt-4 sm:px-5 sm:pt-6 lg:px-8">
+        <Link href={feedHref} className="inline-flex items-center gap-1.5 text-small text-text-muted hover:text-text">
+          <ArrowLeft size={14} aria-hidden /> {group ? t("communities.post.page.back", { name: group.name }) : t("communities.post.page.backGeneric")}
+        </Link>
 
-      <article data-community-post-page={post.id} className="space-y-4">
-        <header className="flex items-start gap-2.5">
-          {post.author && <Avatar src={post.author.avatarUrl} alt={post.author.displayName} size={36} />}
-          <div className="min-w-0 flex-1 leading-tight">
-            <p className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-small text-text">
-              {post.author ? (
-                <Link href={profileHref(post.author)} className="font-semibold hover:underline">
-                  {post.author.displayName}
-                </Link>
-              ) : (
-                <span className="font-semibold">{t("common.genericUser")}</span>
-              )}
-              <span className="text-text-muted">{t(SHARED_LABEL[post.contentType])}</span>
-              {post.kind !== "legacy" && <Badge variant="default">{t("communities.post.badge.application")}</Badge>}
-            </p>
-            <p className="text-caption text-text-muted">{formatRelativeTime(post.createdAt, language)}</p>
+        <section aria-label={t("communities.post.linked.appliedLabel")} className="mt-3 space-y-2.5 rounded-xl border border-border-soft bg-surface px-3.5 py-3 shadow-card">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+            <div className="flex min-w-0 flex-1 items-center gap-2.5">
+              {post.author && <Avatar src={post.author.avatarUrl} alt={post.author.displayName} size={32} />}
+              <p className="min-w-0 text-small leading-tight text-text">
+                <span className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
+                  {post.author ? (
+                    <Link href={profileHref(post.author)} className="font-semibold hover:underline">
+                      {post.author.displayName}
+                    </Link>
+                  ) : (
+                    <span className="font-semibold">{t("common.genericUser")}</span>
+                  )}
+                  <span className="text-text-muted">{t(SHARED_LABEL[post.contentType])}</span>
+                  {post.kind !== "legacy" && <Badge variant="default">{t("communities.post.badge.application")}</Badge>}
+                </span>
+                <span className="block text-caption text-text-muted">{formatRelativeTime(post.createdAt, language)}</span>
+              </p>
+            </div>
+            {!content && extras.length > 0 && (
+              <DropdownMenu label={t("communities.feed.postMenu")}>
+                {(close) => (
+                  <>
+                    {extras.map((extra) => (
+                      <MenuItem key={extra.key} icon={extra.icon} label={extra.label} danger={extra.danger} onClick={() => { close(); extra.onSelect(); }} />
+                    ))}
+                  </>
+                )}
+              </DropdownMenu>
+            )}
+            {originalHref && (
+              <Link href={originalHref} data-open-original className={buttonClassName({ size: "sm", variant: "outline" })}>
+                {t("communities.post.linked.openOriginal")}
+              </Link>
+            )}
           </div>
-          {hasMenu && (
-            <DropdownMenu label={t("communities.feed.postMenu")}>
-              {(close) => (
-                <>
-                  {mine && <MenuItem icon={<Pencil size={15} />} label={t("communities.feed.editNote")} onClick={() => { close(); setDialog("edit"); }} />}
-                  {role && !mine && <MenuItem icon={<Flag size={15} />} label={t("communities.report.menu")} onClick={() => { close(); setDialog("report"); }} />}
-                  {canModerate && !mine && <MenuItem icon={<ShieldAlert size={15} />} label={t("communities.feed.removeAsStaff")} danger onClick={() => { close(); setDialog("moderate"); }} />}
-                  {mine && <MenuItem icon={<Trash2 size={15} />} label={t("communities.feed.deleteMine")} danger onClick={() => { close(); setDialog("delete"); }} />}
-                </>
-              )}
-            </DropdownMenu>
-          )}
-        </header>
+          {post.note && <p data-post-note className="whitespace-pre-wrap break-words rounded-lg bg-surface-soft px-3.5 py-3 text-small text-text-secondary">{post.note}</p>}
+          <p className="text-caption text-text-muted">{t("communities.post.page.scopeHelp")}</p>
+        </section>
+      </div>
 
-        {post.note && <p data-post-note className="whitespace-pre-wrap break-words rounded-lg bg-surface-soft px-3.5 py-3 text-small text-text-secondary">{post.note}</p>}
+      <PostScopeProvider value={{ post, mode, onToast: show }}>
+        <PostMenuExtras items={extras}>
+          {content?.type === "prompt" && <PromptDetailView prompt={content.data} />}
+          {content?.type === "request" && <RequestDetailView request={content.data} />}
+          {content?.type === "workflow" && <WorkflowDetailView workflowId={content.data.id} />}
+          {content?.type === "preset" && <PresetDetailView presetId={content.data.id} />}
+        </PostMenuExtras>
+      </PostScopeProvider>
 
-        {post.content ? (
-          <ApplicationContentDetail content={post.content} />
-        ) : (
+      {!content && (
+        <div className="mx-auto w-full max-w-3xl space-y-4 px-3 py-4 sm:px-5">
           <p className="flex items-center gap-2 rounded-lg border border-dashed border-border px-3 py-4 text-small text-text-muted">
             <EyeOff size={15} aria-hidden /> {t("communities.feed.contentGone")}
           </p>
-        )}
-
-        <section className="space-y-2" aria-label={t("communities.post.page.commentsTitle")}>
-          <p className="text-caption text-text-muted">{t("communities.post.page.commentsHelp")}</p>
-          <PostEngagement post={post} mode={mode} onToast={show} highlightCommentId={highlightCommentId} />
-        </section>
-      </article>
+          <section className="space-y-2" aria-label={t("communities.post.page.commentsTitle")}>
+            <p className="text-caption text-text-muted">{t("communities.post.page.commentsHelp")}</p>
+            <PostEngagement post={post} mode={mode} onToast={show} highlightCommentId={highlightCommentId} />
+          </section>
+        </div>
+      )}
 
       {dialog === "edit" && (
         <EditNoteModal

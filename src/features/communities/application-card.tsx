@@ -9,7 +9,7 @@ import { ContentTypeLabel } from "@/features/content/content-type-label";
 import { ContentTags } from "@/features/content/content-tags";
 import { ToolChips } from "@/features/content/tool-chips";
 import { OutputPosterPreview, OutputThumbnailStrip } from "@/features/prompts/multi-image-output-options";
-import { PostCommentLink, PostLike, PostShareButton, PostStatisticsButton, type EngageMode } from "./post-engagement";
+import { PostCommentLink, PostLike, PostSave, PostShareButton, PostStatisticsButton, type EngageMode } from "./post-engagement";
 import { summarizeContent } from "./content-summary";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { postPageHref } from "@/lib/communities";
@@ -95,6 +95,7 @@ export function ApplicationCard({
       <div className="relative z-10 flex items-center gap-0.5 border-t border-border-soft px-2 py-1.5" data-post-engagement={post.id}>
         <PostLike post={post} mode={mode} onToast={onToast} />
         <PostCommentLink post={post} />
+        <PostSave post={post} />
         <PostStatisticsButton post={post} />
         <span className="ml-auto" />
         <PostShareButton post={post} />

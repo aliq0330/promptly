@@ -122,7 +122,7 @@ function getSharePreview(target: ShareModalTarget, t: (key: TranslationKey) => s
       badgeLabel: target.badgeLabel,
       badgeVariant: "neutral",
       href: target.href,
-      messageParam: null,
+      messageParam: `sharePostId=${target.postId}`,
       directLink: true,
     };
   }

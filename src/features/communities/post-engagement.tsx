@@ -1,8 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Heart, MessageCircle } from "lucide-react";
 import { LikeButton } from "@/features/prompts/like-button";
+import { SaveButton } from "@/features/prompts/save-button";
+import { useAuth } from "@/features/auth/auth-provider";
+import { supabase } from "@/lib/supabase/client";
 import { CommentSection } from "@/features/prompts/comment-section";
 import { useCommentCountDelta } from "@/features/prompts/comment-count-store";
 import { contentActionClassName } from "@/features/content/action-styles";
@@ -28,9 +31,9 @@ import type { CommunityPost } from "@/lib/supabase/communities";
 export type EngageMode = "open" | "join" | "closed";
 
 /** Gönderinin beğeni düğmesi (kart altbilgisi ve sayfa ortak): üye/ziyaretçi → gerçek beğeni; üye olmayan/kapatılmış → açıklayıcı bildirim. */
-export function PostLike({ post, mode, onToast }: { post: CommunityPost; mode: EngageMode; onToast: (message: string) => void }) {
+export function PostLike({ post, mode, onToast, size = 16 }: { post: CommunityPost; mode: EngageMode; onToast: (message: string) => void; size?: number }) {
   const { t } = useTranslation();
-  if (mode === "open") return <LikeButton id={post.id} likeCount={post.likeCount} contentType="community_post" />;
+  if (mode === "open") return <LikeButton id={post.id} likeCount={post.likeCount} contentType="community_post" size={size} />;
   const blockedReason = mode === "join" ? t("communities.post.engage.joinToLike") : t("communities.post.engage.closed");
   return (
     <button
@@ -40,14 +43,14 @@ export function PostLike({ post, mode, onToast }: { post: CommunityPost; mode: E
       aria-label={t("communities.post.engage.likesAria", { count: post.likeCount })}
       className={contentActionClassName(false, "opacity-70")}
     >
-      <Heart size={16} strokeWidth={1.75} />
+      <Heart size={size} strokeWidth={1.75} />
       <span aria-hidden>{formatCount(post.likeCount)}</span>
     </button>
   );
 }
 
 /** Gönderi yorum sayısı + bağlantı (başvuru sayfasının yorumlarına gider); canlı sayaç `comment-count-store`'dan. */
-export function PostCommentLink({ post }: { post: CommunityPost }) {
+export function PostCommentLink({ post, size = 16 }: { post: CommunityPost; size?: number }) {
   const { t } = useTranslation();
   const delta = useCommentCountDelta(post.id);
   const count = Math.max(0, post.commentCount + delta);
@@ -58,17 +61,58 @@ export function PostCommentLink({ post }: { post: CommunityPost }) {
       aria-label={t("communities.post.engage.commentsAria", { count })}
       className={contentActionClassName(false)}
     >
-      <MessageCircle size={16} strokeWidth={1.75} />
+      <MessageCircle size={size} strokeWidth={1.75} />
       <span aria-hidden>{formatCount(count)}</span>
     </Link>
   );
+}
+
+/**
+ * Gönderinin KAYDET düğmesi: normal kartlardaki `SaveButton` (aynı koleksiyon penceresi) — kaydedilen şey GÖNDERİNİN kendisidir
+ * (`collection_items.community_post_id`, kendi `save_count`'u). Yerel gönderide kaydedilen şey içeriktir (kartın kendi düğmesi), isteklerde
+ * kaydetme normal sitede de yoktur → düğme çizilmez.
+ */
+export function PostSave({ post, size }: { post: CommunityPost; size?: number }) {
+  if (post.kind === "native" || post.contentType === "request") return null;
+  return <SaveButton communityPostId={post.id} saveCount={post.saveCount} size={size} />;
+}
+
+/**
+ * Görüntüleyenin bu gönderide etkileşim durumu: ziyaretçi/üye → `open` (ziyaretçide düğme giriş diyaloğunu açar), oturumlu ama üye olmayan
+ * → `join`. Liste görünümlerinde (Kaydedilenler/koleksiyon) topluluk bilgisi elde yoktur; üyelik kimliğe göre bir kez okunup önbelleğe alınır.
+ * (Kapatılmış topluluk bu ipucunda yoktur; yazma yine sunucuda reddedilir.)
+ */
+const membershipCache = new Map<string, Promise<boolean>>();
+export function useViewerEngageMode(communityId: string): EngageMode {
+  const { user } = useAuth();
+  const [member, setMember] = useState<boolean | null>(null);
+  useEffect(() => {
+    if (!user) return;
+    const key = `${communityId}|${user.id}`;
+    let promise = membershipCache.get(key);
+    if (!promise) {
+      promise = Promise.resolve(
+        supabase.from("conversation_members").select("role").eq("conversation_id", communityId).eq("user_id", user.id).maybeSingle(),
+      ).then(({ data }) => Boolean(data));
+      membershipCache.set(key, promise);
+    }
+    let cancelled = false;
+    promise.then((value) => {
+      if (!cancelled) setMember(value);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [communityId, user]);
+  if (!user) return "open";
+  return member === false ? "join" : "open";
 }
 
 /** Gönderinin istatistik düğmesi: normal kartlardaki `StatisticsButton` — burada sayaçlar GÖNDERİNİN kendisine aittir. */
 export function PostStatisticsButton({ post, size, label }: { post: CommunityPost; size?: number; label?: string }) {
   return (
     <StatisticsButton
-      target={{ contentType: "community_post", contentId: post.id, likeCount: post.likeCount, commentCount: post.commentCount }}
+      target={{ contentType: "community_post", contentId: post.id, likeCount: post.likeCount, commentCount: post.commentCount, saveCount: post.saveCount, savable: post.contentType !== "request" && post.kind !== "native" }}
       size={size}
       label={label}
     />

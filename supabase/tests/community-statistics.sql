@@ -110,7 +110,7 @@ select public._check(7, 'gönderi: beğenenler ve yorum yapanlar gönderinin KEN
   and (select count(*) from public.content_engagers('community_post', public._g('P'), 'likes')) = 1
   and (select count(*) from public.content_engagers('community_post', public._g('P'), 'comments')) = 1
   and (select count(*) from public.content_engagers('prompt', 'a0000000-0000-4000-8000-0000000000a1', 'likes')) = 0);
-select public._check(8, 'gönderi: kaydedilemez → "saves" boş',
+select public._check(8, 'gönderi: henüz kimse kaydetmedi → "saves" boş (kaydedenler 184 testinde)',
   (select count(*) from public.content_engagers('community_post', public._g('P'), 'saves')) = 0);
 select public._as_user(:erin);
 select public._check(9, 'gönderi: topluluğa üye olmayan ama okuyabilen (herkese açık topluluk) gönderinin listesini görür',

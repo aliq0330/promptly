@@ -21,12 +21,14 @@ import { SaveToCollectionModal } from "@/features/collections/save-to-collection
  *
  * Pass exactly one of `promptId` (mirrors `PostMenu`'s/
  * `CommentCountLink`'s established pattern) — workflows and presets use this
- * SAME button/modal.
+ * SAME button/modal. `communityPostId`: a community APPLICATION post is saved as
+ * the post itself (docs/history/184-*); same button, same modal, same collections.
  */
 export function SaveButton({
   promptId,
   workflowId,
   presetId,
+  communityPostId,
   saveCount = 0,
   size = 16,
   className,
@@ -34,6 +36,7 @@ export function SaveButton({
   promptId?: string;
   workflowId?: string;
   presetId?: string;
+  communityPostId?: string;
   /** Real, trigger-maintained `save_count` column — the count seed for this id's engagement-store entry. */
   saveCount?: number;
   size?: number;
@@ -41,8 +44,8 @@ export function SaveButton({
 }) {
   const { t } = useTranslation();
   const { requireAuth } = useAuthPrompt();
-  const id = (presetId ?? workflowId ?? promptId)!;
-  const contentType = presetId ? "preset" : workflowId ? "workflow" : "prompt";
+  const id = (communityPostId ?? presetId ?? workflowId ?? promptId)!;
+  const contentType = communityPostId ? "community_post" : presetId ? "preset" : workflowId ? "workflow" : "prompt";
   const { isSaved, saveCount: count, markSaved, markUnsaved, canSave } = useSaveState(id, contentType, saveCount);
   const [modalOpen, setModalOpen] = useState(false);
   // Counted on the viewer's own save/unsave, never on the async "is it saved?" answer arriving.
@@ -113,7 +116,7 @@ export function SaveButton({
 
       {modalOpen && (
         <SaveToCollectionModal
-          {...(contentType === "preset" ? { presetId: id } : contentType === "workflow" ? { workflowId: id } : { promptId: id })}
+          {...(contentType === "community_post" ? { communityPostId: id } : contentType === "preset" ? { presetId: id } : contentType === "workflow" ? { workflowId: id } : { promptId: id })}
           onClose={() => setModalOpen(false)}
           onAdded={() => {
             setPopSeq((n) => n + 1);

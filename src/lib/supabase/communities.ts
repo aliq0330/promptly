@@ -514,9 +514,10 @@ export interface CommunityPost {
   note: string | null;
   pinnedAt: string | null;
   createdAt: string;
-  /** Gönderinin KENDİ sayaçları (`community_posts.like_count` / `comment_count`). */
+  /** Gönderinin KENDİ sayaçları (`community_posts.like_count` / `comment_count` / `save_count`). */
   likeCount: number;
   commentCount: number;
+  saveCount: number;
 }
 
 interface PostRow {
@@ -525,6 +526,7 @@ interface PostRow {
   kind: CommunityPostKind;
   like_count: number;
   comment_count: number;
+  save_count: number;
   content_type: CommunityPostType;
   note: string | null;
   pinned_at: string | null;
@@ -536,7 +538,7 @@ interface PostRow {
   presets: PresetRow | null;
 }
 
-const POST_SELECT = `id, community_id, kind, like_count, comment_count, content_type, note, pinned_at, created_at, author:author_id ( ${PROFILE_EMBED} ),
+const POST_SELECT = `id, community_id, kind, like_count, comment_count, save_count, content_type, note, pinned_at, created_at, author:author_id ( ${PROFILE_EMBED} ),
   prompts ( ${PROMPT_SELECT} ), prompt_requests ( ${REQUEST_SELECT} ), workflows ( ${WORKFLOW_SELECT} ), presets ( ${PRESET_SELECT} )`;
 
 function mapPostRow(row: PostRow): CommunityPost {
@@ -557,6 +559,7 @@ function mapPostRow(row: PostRow): CommunityPost {
     createdAt: row.created_at,
     likeCount: row.like_count ?? 0,
     commentCount: row.comment_count ?? 0,
+    saveCount: row.save_count ?? 0,
   };
 }
 
@@ -599,6 +602,16 @@ export async function fetchCommunityPostById(postId: string): Promise<CommunityP
   const { data, error } = await supabase.from("community_posts").select(POST_SELECT).eq("id", postId).maybeSingle();
   if (error) throw toGroupError(error);
   return data ? mapPostRow(data as unknown as PostRow) : null;
+}
+
+/** Kaydedilenler/koleksiyon: kimlik listesinden gönderiler (okunamayanlar — topluluktan çıkıldı/silindi — kendiliğinden dışarıda kalır). */
+export async function fetchCommunityPostsByIds(ids: string[]): Promise<Map<string, CommunityPost>> {
+  const posts = new Map<string, CommunityPost>();
+  if (ids.length === 0) return posts;
+  const { data, error } = await supabase.from("community_posts").select(POST_SELECT).in("id", ids);
+  if (error) throw toGroupError(error);
+  for (const row of (data ?? []) as unknown as PostRow[]) posts.set(row.id, mapPostRow(row));
+  return posts;
 }
 
 /** Tek bir gönderi (bildirimden / bağlantıdan açılış): okunamıyorsa null. */
