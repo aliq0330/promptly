@@ -3,7 +3,7 @@
 import { EngageCommentCount, EngageComments, EngageLike, EngageSave, EngageShare, EngageStatistics } from "@/features/content/scoped-engagement";
 import { usePageTitle } from "@/components/layout/page-title";
 import { RunButton } from "@/features/content/run-with-ai";
-import { ToolLine } from "@/features/content/tool-chips";
+import { DetailMetaCard } from "@/features/content/detail-meta-card";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { PenLine, SquareTerminal } from "lucide-react";
@@ -145,7 +145,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
       aside={
         <DetailAside>
           {/* Phones/tablets already show the creator (+ Follow) in the byline above. */}
-          <div className="hidden lg:block">
+          <div className="hidden xl:block">
             <CreatorSummary creator={prompt.author} isOwn={isOwn} />
           </div>
           <RelatedPrompts prompt={prompt} />
@@ -179,7 +179,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
               language={language}
               // The creator card lives in the side column, which on phones/tablets stacks far below —
               // so there the byline carries the Follow button instead of repeating the whole card.
-              trailing={!isOwn ? <FollowButton user={prompt.author} className="lg:hidden" /> : undefined}
+              trailing={!isOwn ? <FollowButton user={prompt.author} className="xl:hidden" /> : undefined}
             />
           </header>
 
@@ -192,8 +192,8 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
                 type="button"
                 onClick={() => setLightboxIndex(0)}
                 aria-label={t("media.viewFullscreen")}
-                className="relative block w-full overflow-hidden rounded-xl border border-border-soft bg-surface-soft shadow-card [--hero-h:260px] sm:[--hero-h:340px]"
-                // Supporting output preview, not a hero image: capped short enough that the prompt block below stays near the first screen.
+                className="relative block w-full overflow-hidden rounded-xl border border-border-soft bg-surface-soft shadow-card [--hero-h:440px] sm:[--hero-h:540px]"
+                // The output leads the page (full column width, rounded card); only very tall pictures are capped so the prompt block stays within reach.
                 style={{
                   aspectRatio: clampedAspectRatio(media.width, media.height),
                   maxWidth: `calc(var(--hero-h) * ${clampedAspectRatio(media.width, media.height)})`,
@@ -270,18 +270,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
               <div className="flex flex-wrap items-center gap-2">
                 <CopyPromptButton text={displayText} promptId={prompt.id} size="md" variant="primary" />
                 <RunButton text={displayText} recommendedRefs={prompt.tools} promptId={prompt.id} />
-                <span className="hidden h-5 w-px bg-border-soft sm:block" aria-hidden />
                 <OpenInStudioButton kind="prompt" id={prompt.id} quiet />
-                {user && !isOwn && (
-                  <button
-                    type="button"
-                    onClick={() => setIsSuggestModalOpen(true)}
-                    className="relative z-10 inline-flex h-8 items-center gap-1.5 rounded-md px-3 text-label font-medium text-text-secondary transition-colors hover:bg-surface hover:text-text"
-                  >
-                    <PenLine size={14} />
-                    {t("prompt.suggestEdit")}
-                  </button>
-                )}
               </div>
             </div>
             {variables.length > 0 && <AssembleStatus filled={assemble.filled} total={assemble.total} complete={assemble.complete} />}
@@ -293,6 +282,18 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
               )}
             </ScrollablePrompt>
             <AssembleSweep seq={assemble.sweepSeq} />
+            {user && !isOwn && (
+              <div className="border-t border-border-soft px-2 py-1">
+                <button
+                  type="button"
+                  onClick={() => setIsSuggestModalOpen(true)}
+                  className="relative z-10 inline-flex h-9 items-center gap-2 rounded-md px-2.5 text-label font-medium text-text-secondary transition-colors hover:bg-surface hover:text-text"
+                >
+                  <PenLine size={14} aria-hidden />
+                  {t("prompt.suggestEdit")}
+                </button>
+              </div>
+            )}
           </section>
           )}
 
@@ -305,11 +306,15 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
 
           {activeTab === "dna" && <PromptDnaDisplay sections={dnaSections} promptTitle={prompt.title} mapHref={relationMapHref({ kind: "prompt", id: prompt.id })} />}
 
-          <ToolLine label={t("tool.recommendedLabel")} refs={prompt.tools} legacy={prompt.tool} />
-
-          <TaxonomyLinks contentType={prompt.contentType} category={prompt.category} subcategory={prompt.subcategory} />
-
-          <DetailTags tags={prompt.tags} />
+          <DetailMetaCard
+            toolLabel={t("tool.recommendedLabel")}
+            toolRefs={prompt.tools}
+            legacyTool={prompt.tool}
+            hasChips={Boolean(prompt.category) || prompt.tags.length > 0}
+          >
+            <TaxonomyLinks className="contents" contentType={prompt.contentType} category={prompt.category} subcategory={prompt.subcategory} />
+            <DetailTags className="contents" tags={prompt.tags} />
+          </DetailMetaCard>
 
           <PromptResultsSection target={{ type: "prompt", promptId: prompt.id, promptText: livePromptText }} />
 

@@ -29,7 +29,7 @@ import {
 import { fetchLikedCommentIds, likeComment, unlikeComment } from "@/lib/supabase/comment-likes";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { CommentNode, type CommentTree } from "./comment-node";
-import { Eyebrow } from "@/features/content/detail-parts";
+import { ArrowRight } from "lucide-react";
 import type { PromptComment } from "@/types";
 import { MentionInput } from "@/features/mentions/mention-field";
 
@@ -45,6 +45,9 @@ export type CommentTarget = { promptId: string } | { requestId: string } | { res
  */
 /** How long a jumped-to comment/reply stays visually flashed before fading back to normal — long enough to notice, short enough not to nag (Aşama 5: "göz yoran yanıp sönme veya aşırı hareket kullanma"). */
 const HIGHLIGHT_DURATION_MS = 2500;
+
+/** How many top-level comments show before "Tümünü gör". */
+const COLLAPSED_COMMENTS = 3;
 
 export function CommentSection({
   target,
@@ -70,6 +73,8 @@ export function CommentSection({
   const { requireAuth } = useAuthPrompt();
   const { profile: ownProfile } = useOwnProfile();
   const [draft, setDraft] = useState("");
+  // The thread opens short (first few comments) so a long discussion never pushes related content out of reach; a jumped-to comment or the viewer's own new comment opens it all.
+  const [showAll, setShowAll] = useState(Boolean(highlightCommentId));
   const [postError, setPostError] = useState<string | null>(null);
   const [isPosting, setIsPosting] = useState(false);
   const [comments, setComments] = useState<PromptComment[]>([]);
@@ -326,6 +331,7 @@ export function CommentSection({
       setComments((prev) => [...prev, posted]);
       setLikeCounts((prev) => ({ ...prev, [posted.id]: 0 }));
       setDraft("");
+      setShowAll(true);
     } catch (err) {
       setPostError(err instanceof Error ? err.message : t("comments.postFailed"));
     } finally {
@@ -433,10 +439,23 @@ export function CommentSection({
 
   return (
     <section className="space-y-4">
-      <Eyebrow as="h2">
-        {t("comments.title")}
-        <span className="rounded-xs bg-surface-soft px-1.5 py-0.5 tabular-nums tracking-normal text-text-muted">{comments.length}</span>
-      </Eyebrow>
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-label font-semibold text-text">
+          {t("comments.title")}
+          <span className="font-normal tabular-nums text-text-muted"> · {comments.length}</span>
+        </h2>
+        {topLevel.length > COLLAPSED_COMMENTS && (
+          <button
+            type="button"
+            onClick={() => setShowAll((prev) => !prev)}
+            aria-expanded={showAll}
+            className="inline-flex items-center gap-1 text-caption font-medium text-primary transition-opacity hover:opacity-80"
+          >
+            {showAll ? t("common.showLess") : t("comments.viewAllThread")}
+            {!showAll && <ArrowRight size={13} aria-hidden />}
+          </button>
+        )}
+      </div>
 
       {highlightNotFound && (
         <p className="rounded-md bg-surface-soft px-3 py-2.5 text-small text-text-muted">
@@ -469,7 +488,7 @@ export function CommentSection({
               value={draft}
               onChange={setDraft}
               placeholder={t("comments.writeAComment")}
-              className="h-9 min-w-0 flex-1 rounded-md border border-border bg-surface px-3 text-small text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              className="h-9 w-full min-w-0 flex-1 rounded-md border border-border bg-surface px-3 text-small text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
             <Button type="submit" size="sm" disabled={!draft.trim() || isPosting}>
               {isPosting ? t("common.sending") : t("common.send")}
@@ -497,7 +516,7 @@ export function CommentSection({
         <p className="rounded-md border border-dashed border-border py-6 text-center text-small text-text-muted">{t("comments.noCommentsYet")}</p>
       ) : (
         <div className="space-y-4">
-          {topLevel.map((comment) => (
+          {(showAll ? topLevel : topLevel.slice(0, COLLAPSED_COMMENTS)).map((comment) => (
             <CommentNode key={comment.id} comment={comment} depth={0} tree={tree} />
           ))}
         </div>

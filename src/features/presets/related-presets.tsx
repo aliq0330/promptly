@@ -23,7 +23,7 @@ export function RelatedPresets({ preset, limit = 4 }: { preset: Preset; limit?: 
   if (failed || (!loading && items.length === 0)) return null;
 
   return (
-    <AsideSection id="preset-similar-title" title={t("preset.similar")}>
+    <AsideSection id="preset-similar-title" title={t("preset.similar")} href="/presets">
       {loading ? (
         <RelatedCardsSkeleton count={limit} />
       ) : (

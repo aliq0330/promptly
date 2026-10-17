@@ -2,7 +2,7 @@
 
 import { EngageCommentCount, EngageComments, EngageLike, EngageShare, EngageStatistics } from "@/features/content/scoped-engagement";
 import { usePageTitle } from "@/components/layout/page-title";
-import { ToolLine } from "@/features/content/tool-chips";
+import { DetailMetaCard } from "@/features/content/detail-meta-card";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { MessageSquareOff, PenLine, Reply, Sparkles, SquareTerminal } from "lucide-react";
@@ -189,7 +189,7 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
       aside={
         <DetailAside>
           {/* Phones/tablets already show the creator (+ Follow) in the byline above. */}
-          <div className="hidden lg:block">
+          <div className="hidden xl:block">
             <CreatorSummary creator={live.author} isOwn={isOwnRequest} />
           </div>
           <ContributorsList answers={answers} />
@@ -221,7 +221,7 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
             language={language}
             // The creator card lives in the side column, which on phones/tablets stacks far below —
             // so there the byline carries the Follow button instead of repeating the whole card.
-            trailing={!isOwnRequest ? <FollowButton user={live.author} className="lg:hidden" /> : undefined}
+            trailing={!isOwnRequest ? <FollowButton user={live.author} className="xl:hidden" /> : undefined}
           />
         </header>
 
@@ -322,11 +322,15 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
           </div>
         )}
 
-        {live.contentType && <TaxonomyLinks contentType={live.contentType} category={live.category} subcategory={live.subcategory} />}
-
-        <ToolLine label={t("tool.preferredLabel")} refs={live.tools} legacy={live.preferredTool} />
-
-        <DetailTags tags={live.tags} />
+        <DetailMetaCard
+          toolLabel={t("tool.preferredLabel")}
+          toolRefs={live.tools}
+          legacyTool={live.preferredTool}
+          hasChips={Boolean(live.contentType && live.category) || live.tags.length > 0}
+        >
+          {live.contentType && <TaxonomyLinks className="contents" contentType={live.contentType} category={live.category} subcategory={live.subcategory} />}
+          <DetailTags className="contents" tags={live.tags} />
+        </DetailMetaCard>
 
         {showManagementAction && (
           <div className="flex flex-wrap items-center gap-2 border-t border-border-soft pt-4">

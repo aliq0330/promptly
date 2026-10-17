@@ -23,7 +23,7 @@ export function RelatedPrompts({ prompt, limit = 4 }: { prompt: Prompt; limit?: 
   if (failed || (!loading && items.length === 0)) return null;
 
   return (
-    <AsideSection id="related-prompts-title" title={t("prompt.relatedPrompts")}>
+    <AsideSection id="related-prompts-title" title={t("prompt.relatedPrompts")} href={prompt.category ? `/search?${new URLSearchParams({ type: prompt.contentType, category: prompt.category }).toString()}` : "/prompts"}>
       {loading ? (
         <RelatedCardsSkeleton count={limit} />
       ) : (
