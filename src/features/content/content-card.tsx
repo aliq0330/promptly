@@ -1,17 +1,20 @@
 "use client";
 
 import Link from "next/link";
+import { Avatar } from "@/components/ui/avatar";
 import { rememberCardMedia } from "@/lib/card-transition";
-import { cn } from "@/lib/utils";
+import { cn, profileHref } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n/language-provider";
+import type { UserProfile } from "@/types";
 import { splitSourceNotes } from "@/lib/source-notes";
 
 /**
  * Shared shell of every content card on the platform —
  *
- *   ContentCard
- *   ├── PromptCard     (image / text / video / code / music prompts)
- *   ├── GeneratorCard
- *   └── RequestCard
+ *   ContentCard  (+ ContentCardPost — the Meydan post layout inside)
+ *   ├── PromptCard     (image / text / video / audio prompts)
+ *   ├── WorkflowCard · PresetCard · RequestCard
+ *   └── ApplicationCard (community application post)
  *
  * Same surface, border, radius, padding, hover and "stretched link" for all
  * of them, so the feed reads as one system and only the content block in
@@ -57,9 +60,71 @@ export function ContentCard({
   );
 }
 
-/** Padded content column inside a ContentCard. */
-export function ContentCardBody({ className, children }: { className?: string; children: React.ReactNode }) {
-  return <div className={cn("flex flex-col gap-3 p-4", className)}>{children}</div>;
+/**
+ * Meydan post layout (docs/history/190-*) — the one inner structure of every content card:
+ *
+ *   [avatar]  Name  @user · 3s  [type pill]            ⋮
+ *             title / description / media / prompt …
+ *             ♥ 12   💬 3                    🔖  📊  ↗
+ *
+ * A 40px avatar column on the left; the identity line, body and action row all
+ * share the column to its right (the action row is indented to line up with it).
+ * The identity row sits above the stretched card link (`z-20`, and above its
+ * siblings while a menu inside it is open) so the profile links and the ⋮ menu
+ * stay clickable.
+ */
+export function ContentCardPost({
+  author,
+  meta,
+  badges,
+  menu,
+  footer,
+  children,
+}: {
+  /** `null` = unknown/removed author (shown as a generic user, no profile link). */
+  author: Pick<UserProfile, "username" | "displayName" | "avatarUrl"> | null;
+  /** Muted text after the name — e.g. "@carol · 3 gün önce" or "bir prompt paylaştı · dün". */
+  meta: string;
+  /** Pills shown inline on the identity line (content type, status, "Başvuru"…). */
+  badges?: React.ReactNode;
+  menu?: React.ReactNode;
+  footer?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  const { t } = useTranslation();
+  const name = author?.displayName ?? t("common.genericUser");
+  return (
+    <>
+      <div className="flex gap-3 px-4 pt-4">
+        {author ? (
+          // The name next to it is the accessible profile link; the avatar is a mouse/touch shortcut to the same page.
+          <Link href={profileHref(author)} aria-hidden tabIndex={-1} className="relative z-10 shrink-0 self-start rounded-full">
+            <Avatar src={author.avatarUrl} alt={name} size={40} />
+          </Link>
+        ) : (
+          <Avatar src={null} alt={name} size={40} className="shrink-0" />
+        )}
+        <div className="min-w-0 flex-1 space-y-2.5 pb-1">
+          <div className="relative z-20 flex items-start gap-1 focus-within:z-30">
+            <p className="flex min-w-0 flex-1 flex-wrap items-center gap-x-1.5 gap-y-1 pt-0.5 text-small leading-snug">
+              {author ? (
+                <Link href={profileHref(author)} className="max-w-full truncate rounded-xs font-bold text-text hover:text-primary">
+                  {name}
+                </Link>
+              ) : (
+                <span className="font-bold text-text">{name}</span>
+              )}
+              <span className="min-w-0 truncate text-text-muted">{meta}</span>
+              {badges}
+            </p>
+            {menu}
+          </div>
+          {children}
+        </div>
+      </div>
+      {footer && <div className="relative z-10 flex items-center gap-0.5 pb-2 pl-[3.5rem] pr-2">{footer}</div>}
+    </>
+  );
 }
 
 /**

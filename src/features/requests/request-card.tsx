@@ -3,10 +3,9 @@
 import { ToolChips } from "@/features/content/tool-chips";
 import Link from "next/link";
 import { Reply, Sparkles } from "lucide-react";
-import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { ContentCard, ContentCardBody, ContentCardTitle } from "@/features/content/content-card";
-import { ContentTypeLabel } from "@/features/content/content-type-label";
+import { ContentCard, ContentCardPost, ContentCardTitle } from "@/features/content/content-card";
+import { ContentTypePill } from "@/features/content/content-type-label";
 import { ContentTags } from "@/features/content/content-tags";
 import { contentActionClassName } from "@/features/content/action-styles";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
@@ -15,7 +14,8 @@ import { LikeButton } from "@/features/prompts/like-button";
 import { CommentCountLink } from "@/features/prompts/comment-count-link";
 import { StatisticsButton } from "@/features/statistics/statistics-button";
 import { PostMenu } from "@/features/prompts/post-menu";
-import { formatCount, formatRelativeTime, profileHref, requestHref } from "@/lib/utils";
+import { postMeta } from "@/features/prompts/post-header";
+import { formatCount, requestHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import type { PromptRequest } from "@/types";
@@ -39,17 +39,16 @@ export const STATUS_VARIANTS: Record<PromptRequest["status"], "success" | "dange
 };
 
 /**
- * RequestCard — a community prompt request on the shared ContentCard shell.
- * Same header rhythm, type line, title/description as the other cards, and
+ * RequestCard — a community prompt request on the shared ContentCard shell and
+ * Meydan post layout (`ContentCardPost`): same identity line (type pill +
+ * Açık/Kapandı status), title/description as the other cards, and
  * — since the "Prompt İsteği Etkileşim ve Menü Sistemi Eşitleme" görevi —
  * the same real like button and the same `PostMenu` three-dot menu
- * (Bağlantıyı kopyala/Düzenle/Sil) every other card has, in the same
- * top-right spot next to the status badge.
+ * (Bağlantıyı kopyala/Düzenle/Sil) every other card has.
  *
- * The footer ("aksiyon satırı") is deliberately exactly four items, per the
- * "Prompt İsteği Aksiyon Satırı Son Düzenleme" görevi — Beğeni · Yorum ·
- * Yanıt (real response count, existing link/behavior, just restyled), then
- * Paylaş always last. No "Kopyala" (removed — Prompt İsteği-specific, the
+ * The action row: Beğeni · Yorum · Yanıt (real response count, existing
+ * link/behavior) on the left, İstatistik · Paylaş on the right — a request
+ * has no Kaydet (not savable anywhere). No "Kopyala" (removed — Prompt İsteği-specific, the
  * general Prompt system's own copy button is untouched), and no "Yanıtla"
  * CTA crammed in here either — that stays a detail-page-only action; the
  * "Yanıt" count here is the entry point into the request (same href it
@@ -62,58 +61,48 @@ export function RequestCard({ request, onDeleted }: { request: PromptRequest; on
 
   return (
     <ContentCard href={href}>
-      <ContentCardBody>
-        <div className="flex items-center justify-between gap-2">
-          <Link
-            href={profileHref(request.author)}
-            className="group/author relative z-10 flex min-w-0 items-center gap-2.5 rounded-md"
-          >
-            <Avatar src={request.author.avatarUrl} alt={request.author.displayName} size={32} />
-            <span className="min-w-0 leading-tight">
-              <span className="block truncate text-label font-semibold text-text group-hover/author:text-primary">
-                {request.author.displayName}
-              </span>
-              <span className="block truncate text-caption text-text-muted">
-                @{request.author.username} · {formatRelativeTime(request.createdAt, language)}
-              </span>
-            </span>
-          </Link>
-          <div className="flex shrink-0 items-center gap-1">
+      <ContentCardPost
+        author={request.author}
+        meta={postMeta(request.author.username, request.createdAt, language)}
+        badges={
+          <>
+            <ContentTypePill icon={Sparkles} label={typeMeta ? `${t("request.title")} · ${t(typeMeta.labelKey)}` : t("request.title")} />
             <Badge variant={STATUS_VARIANTS[request.status]}>
               <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-current" />
               {t(STATUS_LABELS[request.status])}
             </Badge>
-            <PostMenu requestId={request.id} communityId={request.communityId} authorId={request.author.id} onDeleted={onDeleted} />
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <ContentTypeLabel icon={Sparkles} label={t("request.title")} detail={typeMeta ? t(typeMeta.labelKey) : request.tools.length ? null : request.preferredTool} />
-          <ContentCardTitle href={href} title={request.title} description={request.description} />
-        </div>
+          </>
+        }
+        menu={<PostMenu requestId={request.id} communityId={request.communityId} authorId={request.author.id} onDeleted={onDeleted} />}
+        footer={
+          <>
+            <LikeButton id={request.id} likeCount={request.likeCount} contentType="request" />
+            <CommentCountLink requestId={request.id} baseCount={request.commentCount} />
+            <Link href={href} className={contentActionClassName(false)} title={t("request.replies")} aria-label={`${t("request.replies")} (${formatCount(request.responseCount)})`}>
+              <Reply size={16} strokeWidth={1.75} />
+              <span aria-hidden>{formatCount(request.responseCount)}</span>
+            </Link>
+            <span className="ml-auto" />
+            <StatisticsButton target={{ contentType: "request", contentId: request.id, likeCount: request.likeCount, commentCount: request.commentCount }} />
+            <ShareTriggerButton target={{ contentType: "request", request }} />
+          </>
+        }
+      >
+        <ContentCardTitle href={href} title={request.title} description={request.description} />
 
         {request.creativeDirection && (
-          <p className="rounded-md border border-border-soft bg-surface-soft px-3 py-2 text-caption text-text-secondary">
+          <p className="rounded-xl bg-surface-soft px-3 py-2.5 text-caption text-text-secondary">
             <span className="font-semibold text-text">{t("request.creativeDirection")} · </span>
             <span className="line-clamp-2 inline">{request.creativeDirection}</span>
           </p>
         )}
 
         <ToolChips refs={request.tools} />
+        {request.tools.length === 0 && !typeMeta && request.preferredTool && (
+          <span className="inline-flex h-6 w-fit items-center rounded-full bg-surface-soft px-2.5 text-caption font-medium text-text-muted">{request.preferredTool}</span>
+        )}
         <ContentTags tags={request.tags} />
-      </ContentCardBody>
-
-      <div className="relative z-10 flex items-center gap-0.5 border-t border-border-soft px-2 py-1.5">
-        <LikeButton id={request.id} likeCount={request.likeCount} contentType="request" />
-        <CommentCountLink requestId={request.id} baseCount={request.commentCount} />
-        <Link href={href} className={contentActionClassName(false)} title={t("request.replies")} aria-label={`${t("request.replies")} (${formatCount(request.responseCount)})`}>
-          <Reply size={16} strokeWidth={1.75} />
-          <span aria-hidden>{formatCount(request.responseCount)}</span>
-        </Link>
-        <StatisticsButton target={{ contentType: "request", contentId: request.id, likeCount: request.likeCount, commentCount: request.commentCount }} />
-        <span className="ml-auto" />
-        <ShareTriggerButton target={{ contentType: "request", request }} />
-      </div>
+      </ContentCardPost>
     </ContentCard>
   );
 }

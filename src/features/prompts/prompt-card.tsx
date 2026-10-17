@@ -2,12 +2,12 @@
 
 import { ToolChips } from "@/features/content/tool-chips";
 import { promptHref } from "@/lib/utils";
-import { ContentCard, ContentCardBody, ContentCardTitle } from "@/features/content/content-card";
-import { ContentTypeLabel } from "@/features/content/content-type-label";
+import { ContentCard, ContentCardPost, ContentCardTitle } from "@/features/content/content-card";
+import { ContentTypePill } from "@/features/content/content-type-label";
 import { ContentTags } from "@/features/content/content-tags";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { CONTENT_TYPE_META } from "./content-type-meta";
-import { PostHeader } from "./post-header";
+import { PostTargetMenu, postMeta } from "./post-header";
 import { RequestResponseContext } from "./post-context";
 import { PromptCardFooter } from "./prompt-card-footer";
 import { PromptPreviewBox } from "./prompt-preview-box";
@@ -20,9 +20,9 @@ type CollectionRemoval = { onRemove: () => Promise<void> };
  * PromptCard — one card for every prompt content type (image / text /
  * video / code / music) and for a request response (same `prompts` row).
  *
- *   Creator  →  provenance (request / generator)  →  type · tool
- *   →  title + description  →  output preview (image only)
- *   →  tags  →  actions
+ *   [avatar] Creator · time · [type pill]  →  provenance (request response)
+ *   →  title + description  →  output preview  →  prompt box (PROMPT · tool)
+ *   →  tags  →  actions (Meydan post layout, `ContentCardPost`)
  *
  * Since Meydan (docs/history/190-*) the card also shows the prompt itself in
  * the shared mono block (`PromptPreviewBox`, clamped, with "Kopyala") — the
@@ -44,42 +44,35 @@ export function PromptCard({
   /** Only passed by a collection's own detail page — see PostMenu. */
   collectionRemoval?: CollectionRemoval;
 }) {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const meta = CONTENT_TYPE_META[prompt.contentType];
   const href = promptHref(prompt);
   const media = prompt.contentType === "image" ? prompt.media : [];
   const isPlayable = prompt.contentType === "video" || prompt.contentType === "audio";
   const poster = isPlayable ? prompt.media[0] : undefined;
   const isResponse = prompt.origin.type === "request-response";
+  const hasPromptText = prompt.promptText.trim().length > 0;
 
   return (
     <ContentCard href={href}>
-      <ContentCardBody>
-        <PostHeader
-          prompt={prompt}
-          subtitle={isResponse ? t("prompt.sharedAReply") : undefined}
-          onDeleted={onDeleted}
-          collectionRemoval={collectionRemoval}
-        />
-
+      <ContentCardPost
+        author={prompt.author}
+        meta={postMeta(prompt.author.username, prompt.createdAt, language, isResponse ? t("prompt.sharedAReply") : undefined)}
+        badges={<ContentTypePill icon={meta.icon} label={`${t(meta.labelKey)} Prompt`} />}
+        menu={<PostTargetMenu prompt={prompt} onDeleted={onDeleted} collectionRemoval={collectionRemoval} />}
+        footer={<PromptCardFooter prompt={prompt} />}
+      >
         {prompt.origin.type === "request-response" && (
           <RequestResponseContext requestId={prompt.origin.requestId} currentPromptId={prompt.id} />
         )}
 
-        <div className="space-y-2">
-          <ContentTypeLabel icon={meta.icon} label={`${t(meta.labelKey)} Prompt`} detail={prompt.tools.length ? null : prompt.tool} />
-          <ContentCardTitle href={href} title={prompt.title} description={prompt.description} />
-        </div>
+        <ContentCardTitle href={href} title={prompt.title} description={prompt.description} />
 
         {media.length > 0 && <OutputThumbnailStrip media={media} />}
         {poster && <OutputPosterPreview media={poster} />}
-        {prompt.promptText.trim() && <PromptPreviewBox prompt={prompt} lines={3} />}
-
-        <ToolChips refs={prompt.tools} />
+        {hasPromptText ? <PromptPreviewBox prompt={prompt} lines={3} /> : <ToolChips refs={prompt.tools} />}
         <ContentTags tags={prompt.tags} />
-      </ContentCardBody>
-
-      <PromptCardFooter prompt={prompt} />
+      </ContentCardPost>
     </ContentCard>
   );
 }

@@ -37,8 +37,8 @@ export function CopyPromptButton({
   label?: string;
   className?: string;
   size?: "sm" | "md";
-  /** "primary" = the one filled action of a prompt block (detail page). */
-  variant?: "outline" | "primary";
+  /** "primary" = the one filled action of a prompt block (detail page); "link" = bare text action (Meydan card prompt box). */
+  variant?: "outline" | "primary" | "link";
 }) {
   const { t } = useTranslation();
   const { user } = useAuth();
@@ -88,7 +88,9 @@ export function CopyPromptButton({
             ? "border-danger/40 bg-danger/5 text-danger"
             : variant === "primary"
               ? "border-primary bg-primary text-primary-foreground hover:bg-primary-hover"
-              : "border-border-soft bg-surface text-text-secondary hover:border-border hover:text-text",
+              : variant === "link"
+                ? "border-transparent bg-transparent font-bold text-primary hover:text-primary-hover"
+                : "border-border-soft bg-surface text-text-secondary hover:border-border hover:text-text",
         className,
       )}
     >

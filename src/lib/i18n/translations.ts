@@ -1215,6 +1215,7 @@ export const translations = {
   "prompt.copyFailed": { tr: "Kopyalanamadı", en: "Couldn't copy" },
   "prompt.usedOnce": { tr: "1 kez kullanıldı", en: "Used once" },
   "prompt.usedCount": { tr: "{{count}} kez kullanıldı", en: "Used {{count}} times" },
+  "prompt.usesShort": { tr: "{{count}} kullanım", en: "{{count}} uses" },
   "prompt.copyFailedRetry": { tr: "Kopyalanamadı, lütfen tekrar dene.", en: "Couldn't copy — please try again." },
   // ---- Field types (shared by the variable editor and the field catalog) ----
   "fieldType.text": { tr: "Kısa Metin", en: "Short Text" },

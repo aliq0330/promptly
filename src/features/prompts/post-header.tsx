@@ -1,9 +1,6 @@
 "use client";
 
-import Link from "next/link";
-import { Avatar } from "@/components/ui/avatar";
-import { formatRelativeTime, profileHref } from "@/lib/utils";
-import { useTranslation } from "@/lib/i18n/language-provider";
+import { formatRelativeTime } from "@/lib/utils";
 import { PostMenu } from "./post-menu";
 import type { Preset, Prompt, Workflow } from "@/types";
 
@@ -13,70 +10,28 @@ type PostHeaderTarget =
   | { preset: Preset; prompt?: never; workflow?: never };
 
 /**
- * Shared top-of-card identity row for every post type (prompt/request response, workflow, preset) — avatar, display
- * name, relative time (with an optional " · Yanıt paylaştı" suffix),
- * three-dot menu. There is no "verified" concept anywhere in the real
- * schema (`profiles` has no such column) — deliberately not shown here
- * rather than faked (CLAUDE.md's "don't show a feature the backend
- * doesn't have" rule).
+ * The ⋮ menu of a prompt / workflow / preset card (Bağlantıyı kopyala, Düzenle, Sil, koleksiyondan kaldır…).
+ * Since Meydan (docs/history/190-*) the identity row itself is drawn by `ContentCardPost`; this only picks the
+ * right `PostMenu` for the target.
  */
-export function PostHeader({
-  subtitle,
+export function PostTargetMenu({
   onDeleted,
   collectionRemoval,
   ...target
 }: PostHeaderTarget & {
-  subtitle?: string;
   onDeleted?: () => void;
   collectionRemoval?: { onRemove: () => Promise<void> };
 }) {
-  const { language } = useTranslation();
-  const author = target.preset ? target.preset.creator : target.workflow ? target.workflow.creator : target.prompt.author;
-  const createdAt = target.preset ? target.preset.createdAt : target.workflow ? target.workflow.createdAt : target.prompt.createdAt;
+  if (target.preset) {
+    return <PostMenu presetId={target.preset.id} communityId={target.preset.communityId} authorId={target.preset.creator.id} onDeleted={onDeleted} collectionRemoval={collectionRemoval} />;
+  }
+  if (target.workflow) {
+    return <PostMenu workflowId={target.workflow.id} communityId={target.workflow.communityId} authorId={target.workflow.creator.id} onDeleted={onDeleted} collectionRemoval={collectionRemoval} />;
+  }
+  return <PostMenu promptId={target.prompt.id} communityId={target.prompt.communityId} authorId={target.prompt.author.id} onDeleted={onDeleted} collectionRemoval={collectionRemoval} />;
+}
 
-  return (
-    <div className="flex items-center justify-between gap-2">
-      <Link
-        href={profileHref(author)}
-        className="group/author relative z-10 flex min-w-0 items-center gap-2.5 rounded-md"
-      >
-        <Avatar src={author.avatarUrl} alt={author.displayName} size={32} />
-        <span className="min-w-0 leading-tight">
-          <span className="block truncate text-label font-semibold text-text group-hover/author:text-primary">
-            {author.displayName}
-          </span>
-          <span className="block truncate text-caption text-text-muted">
-            @{author.username} · {formatRelativeTime(createdAt, language)}
-            {subtitle ? ` · ${subtitle}` : ""}
-          </span>
-        </span>
-      </Link>
-
-      {target.preset ? (
-        <PostMenu
-          presetId={target.preset.id}
-          communityId={target.preset.communityId}
-          authorId={target.preset.creator.id}
-          onDeleted={onDeleted}
-          collectionRemoval={collectionRemoval}
-        />
-      ) : target.workflow ? (
-        <PostMenu
-          workflowId={target.workflow.id}
-          communityId={target.workflow.communityId}
-          authorId={target.workflow.creator.id}
-          onDeleted={onDeleted}
-          collectionRemoval={collectionRemoval}
-        />
-      ) : (
-        <PostMenu
-          promptId={target.prompt.id}
-          communityId={target.prompt.communityId}
-          authorId={target.prompt.author.id}
-          onDeleted={onDeleted}
-          collectionRemoval={collectionRemoval}
-        />
-      )}
-    </div>
-  );
+/** "@carol · 3 gün önce" (+ " · Yanıt paylaştı") — the muted part of a card's identity line. */
+export function postMeta(username: string, createdAt: string, language: Parameters<typeof formatRelativeTime>[1], subtitle?: string): string {
+  return `@${username} · ${formatRelativeTime(createdAt, language)}${subtitle ? ` · ${subtitle}` : ""}`;
 }

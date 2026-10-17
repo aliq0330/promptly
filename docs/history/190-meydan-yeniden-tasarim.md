@@ -1,4 +1,4 @@
-# 190 — Meydan yeniden tasarımı (Faz 1: tema + kabuk + Ana Sayfa · Faz 2: Keşfet, Profil, Topluluk · Faz 3: başlıklar, Topluluklar, detay · Faz 4: Ayarlar, Bildirimler)
+# 190 — Meydan yeniden tasarımı (Faz 1: tema + kabuk + Ana Sayfa · Faz 2: Keşfet, Profil, Topluluk · Faz 3: başlıklar, Topluluklar, detay · Faz 4: Ayarlar, Bildirimler · Faz 5: gönderi kartları)
 
 **Durum:** istemci kodu repoda; `20260920140000_meydan_palette.sql` **canlıya UYGULANDI** (kullanıcı onayıyla, MCP `execute_sql` ile tek işlemde; `schema_migrations`'a `20260920140000` / `meydan_palette` kaydı; öncesinde canlıda `mono` 2, `sand` 2, boş 16 satır vardı, hepsi yeni listede). Ağ taklitli Playwright ekran görüntüleriyle (açık/koyu, 1440/390) bakıldı; gerçek Supabase'e, oturuma ve cihaza karşı denenmedi.
 
@@ -70,6 +70,17 @@ Kullanıcı, mevcut ekranların ekran görüntüleri ve üç tasarım yönü (A 
 - **Mesajlar**: yeni token/yazı tipleriyle zaten Meydan'a uyuyor; yapısal değişiklik yapılmadı.
 - Not: örnek veride adın iki kez görünmesi (ör. "Bora Kaya Bora Kaya …") yalnızca taklit metinden kaynaklanıyordu — gerçek tetikleyici cümleleri adı içermez ("Paylaşımını beğendi: …"); uygulamada hata yok.
 - Yeni metinler TR+EN: `notifications.group*`, `settings.sectionsNav`. Migration yok. Bu sayfalara dokunan UI testi yok; gerçek oturumla denenmedi.
+
+## Faz 5 — gönderi kartları (C tasarımındaki gönderi düzeni)
+
+- **Tek iç yerleşim `ContentCardPost`** (`features/content/content-card.tsx`): solda 40px avatar sütunu; sağında kimlik satırı **Ad · @kullanıcı · zaman · [tür hapı] [durum rozetleri]** + ⋮ menü, gövde (başlık, açıklama, çıktı önizlemesi, prompt bloğu, etiketler) ve eylem satırı aynı sütunda hizalı. Kimlik satırı kartın uzatılmış bağlantısının üstünde (`z-20`, menü açıkken `focus-within:z-30`). `ContentCardBody` ve `PostHeader` kalktı; kart başına ⋮ menü seçimi `PostTargetMenu`, soluk kimlik metni `postMeta()` (`prompts/post-header.tsx`).
+- **Tür hapı** `ContentTypePill` (`bg-primary-soft text-primary`); detay sayfaları satır biçimli `ContentTypeLabel`'i korur.
+- **Prompt bloğu** (`PromptPreviewBox`): `rounded-xl bg-surface-soft`, başlık **PROMPT · araç**, gerçek kopyalama sayısı ("83 kullanım", `prompt.usesShort`) ve metin biçimli **Kopyala** (`CopyPromptButton variant="link"`).
+- **Eylem satırı sırası her kartta aynı**: solda Beğeni · Yorum (İstek'te + Yanıt sayısı), sağda Kaydet · İstatistik · Paylaş. Kenarlık çizgisi yok. İstek kaydedilemez (Kaydet yok). Başvuru kartında düğmeler gönderinin kendisine ait kalır (`data-post-engagement`, `display: contents` sarmalayıcı).
+- Dönüştürülen kartlar: `PromptCard`, `WorkflowCard`, `PresetCard`, `RequestCard`, `ApplicationCard`. Workflow/Hazır ayar kategorisi kimlik satırından adım/parametre paneline taşındı ("3 adım · Karakter"); paneller `rounded-xl bg-surface-soft`.
+- Yeni metin: `prompt.usesShort` (TR+EN). Migration yok.
+
+**Sınama:** `tsc`, `lint` (yalnız eski 4 uzantı uyarısı), `npm test`, `next build` temiz. Ağ taklitli ekran görüntüleri (1440/390, açık/koyu). Playwright (hidrasyon denetimi dışarıda tutulan geçici kopyayla): `run-community-posts` 36/36, `run-communities` 61/61, `run-community-home` 38/38, `run-detail-pages` 44/44. Gerçek oturumla/cihazla denenmedi.
 
 ## Çeviri
 Yeni metinlerin hepsi `translations.ts`'te TR+EN: `home.composerPlaceholder`, `home.rings*`, `home.rail*`, `settings.palette.meydan`.
