@@ -13,6 +13,7 @@ import {
   communityChatHref,
   communityHref,
   effectiveNotifyLevel,
+  eventDateParts,
   eventPhase,
   isShareableContent,
   isoToZonedLocal,
@@ -254,4 +255,10 @@ test("görünürlük: Keşfet/arama/içerik/katılım davranışı üç düzeyde
 test("sekmeler: kapalı (restricted) toplulukta üye olmayan hiçbir sekme görmez; üye tam sekme alır", () => {
   assert.deepEqual(accessibleTabs({ role: null, visibility: "restricted" }), []);
   assert.deepEqual(accessibleTabs({ role: "member", visibility: "restricted" }), ["feed", "events", "members", "about"]);
+});
+
+test("eventDateParts: month + day in the event's own time zone", () => {
+  // 23:30 UTC on Oct 23 is already Oct 24 in Istanbul.
+  assert.deepEqual(eventDateParts("2026-10-23T23:30:00Z", "Europe/Istanbul", "tr"), { month: "EKİ", day: "24" });
+  assert.deepEqual(eventDateParts("2026-10-23T23:30:00Z", "America/New_York", "en"), { month: "OCT", day: "23" });
 });

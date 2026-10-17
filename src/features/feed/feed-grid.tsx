@@ -9,6 +9,7 @@ import { PresetCard } from "@/features/presets/preset-card";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { feedItemKey, type FeedItem } from "./types";
 import { Reveal } from "@/components/ui/reveal";
+import { ContentStream } from "@/features/content/content-card";
 
 /**
  * Same CSS-columns masonry as PromptGrid (see prompt-grid.tsx), but for a
@@ -44,19 +45,35 @@ export function FeedGrid({
     );
   }
 
+  const card = (item: FeedItem) =>
+    item.kind === "prompt" ? (
+      <PromptCard prompt={item.data} />
+    ) : item.kind === "request" ? (
+      <RequestCard request={item.data} />
+    ) : item.kind === "preset" ? (
+      <PresetCard preset={item.data} />
+    ) : (
+      <WorkflowCard workflow={item.data} />
+    );
+
+  // Home: one hairline-separated stream (Meydan Faz 6) — no box per post.
+  if (layout === "stream") {
+    return (
+      <ContentStream>
+        {items.map((item, index) => (
+          <Reveal key={feedItemKey(item)} index={index}>
+            {card(item)}
+          </Reveal>
+        ))}
+      </ContentStream>
+    );
+  }
+
   return (
-    <div className={layout === "stream" ? "columns-1" : "columns-1 gap-3 sm:columns-2 sm:gap-4 xl:columns-3"}>
+    <div className="columns-1 gap-3 sm:columns-2 sm:gap-4 xl:columns-3">
       {items.map((item, index) => (
         <Reveal key={feedItemKey(item)} index={index} className="pb-3 break-inside-avoid sm:pb-4">
-          {item.kind === "prompt" ? (
-            <PromptCard prompt={item.data} />
-          ) : item.kind === "request" ? (
-            <RequestCard request={item.data} />
-          ) : item.kind === "preset" ? (
-            <PresetCard preset={item.data} />
-          ) : (
-            <WorkflowCard workflow={item.data} />
-          )}
+          {card(item)}
         </Reveal>
       ))}
     </div>

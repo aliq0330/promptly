@@ -2,7 +2,9 @@
 
 import { useEffect, useRef, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
-import { FEED_GRID_CLASS } from "./community-layout";
+import { PromptCardSkeleton } from "@/components/ui/prompt-card-skeleton";
+import { ContentStream } from "@/features/content/content-card";
+import { FEED_STREAM_CLASS } from "./community-layout";
 import { ErrorBox } from "./home-shared";
 import { HomeFeedItem, useSeenTracker } from "./home-feed";
 import type { useHomeFeed } from "./use-home-feed";
@@ -32,11 +34,13 @@ export function HomeFeedList({ feed, empty, onToast, viewerIsMember }: { feed: F
 
   if (feed.status === "loading") {
     return (
-      <ul className={FEED_GRID_CLASS} aria-busy="true" aria-label={t("common.loadingAriaLabel")} data-testid="home-feed-loading">
+      <ContentStream as="ul" className={FEED_STREAM_CLASS} aria-busy="true" aria-label={t("common.loadingAriaLabel")} data-testid="home-feed-loading">
         {[0, 1].map((i) => (
-          <li key={i} className="mb-4 h-48 break-inside-avoid animate-pulse rounded-xl border border-border-soft bg-surface-soft" />
+          <li key={i}>
+            <PromptCardSkeleton flat />
+          </li>
         ))}
-      </ul>
+      </ContentStream>
     );
   }
   if (feed.status === "error") return <ErrorBox message={t("communities.home.feedError")} onRetry={feed.reload} />;
@@ -44,13 +48,13 @@ export function HomeFeedList({ feed, empty, onToast, viewerIsMember }: { feed: F
 
   return (
     <div className="space-y-4">
-      <ul className={FEED_GRID_CLASS} data-testid="home-feed">
+      <ContentStream as="ul" className={FEED_STREAM_CLASS} data-testid="home-feed">
         {feed.entries.map((entry) => {
           const card = feed.cards.get(entry.post.communityId);
           const mode: EngageMode = card?.closedAt ? "closed" : viewerIsMember(entry.source) ? "open" : "join";
           return <HomeFeedItem key={entry.id} post={entry.post} community={card} mode={mode} source={entry.source} tracker={tracker} onToast={onToast} />;
         })}
-      </ul>
+      </ContentStream>
       {hasMore && (
         <div ref={sentinel} className="flex flex-col items-center gap-2">
           {moreError && (

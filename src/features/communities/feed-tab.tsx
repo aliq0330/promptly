@@ -34,7 +34,9 @@ import {
 } from "@/lib/supabase/communities";
 import { can, isGroupStaff } from "@/lib/chat-groups";
 import { canSharePost, COMMUNITY_NOTE_MAX, postPageHref } from "@/lib/communities";
-import { FEED_GRID_WIDE_CLASS, FEED_ITEM_CLASS } from "./community-layout";
+import { PromptCardSkeleton } from "@/components/ui/prompt-card-skeleton";
+import { ContentStream } from "@/features/content/content-card";
+import { FEED_ITEM_CONTEXT_CLASS } from "./community-layout";
 import { useTranslation } from "@/lib/i18n/language-provider";
 
 type PostAction = { kind: "edit" | "delete" | "moderate" | "report"; post: CommunityPost };
@@ -150,7 +152,8 @@ export function FeedTab(props: CommunityTabProps) {
   }
 
   return (
-    <div className="space-y-5">
+    // One reading column for the summary, the share row and the stream (Meydan Faz 6).
+    <div className="max-w-3xl space-y-5">
       <FeedHighlights {...props} />
       {justShared && <p role="status" className="rounded-md bg-success/10 px-3 py-2 text-small text-text">{t("communities.feed.sharedBanner")}</p>}
       {pinAction.error && (
@@ -177,9 +180,9 @@ export function FeedTab(props: CommunityTabProps) {
       )}
       {focusPost && focusPost.kind === "native" && (
         <section aria-label={t("communities.post.focus.title")} className="space-y-2">
-          <ul>
+          <ContentStream as="ul">
             <PostItem post={focusPost} viewerId={viewerId} role={role} canPin={canPin} canModerate={canModerate} mode={engage} onToast={onToast} onPin={togglePin} onAction={setAction} onChanged={() => void refreshAll()} />
-          </ul>
+          </ContentStream>
         </section>
       )}
 
@@ -193,11 +196,13 @@ export function FeedTab(props: CommunityTabProps) {
           </Button>
         </div>
       ) : posts === null || pinned === null ? (
-        <ul className={FEED_GRID_WIDE_CLASS} aria-busy="true" aria-label={t("common.loadingAriaLabel")}>
+        <ContentStream as="ul" aria-busy="true" aria-label={t("common.loadingAriaLabel")}>
           {[0, 1].map((i) => (
-            <li key={i} className="mb-4 h-48 break-inside-avoid animate-pulse rounded-xl border border-border-soft bg-surface-soft" />
+            <li key={i}>
+              <PromptCardSkeleton flat />
+            </li>
           ))}
-        </ul>
+        </ContentStream>
       ) : pinned.length === 0 && posts.length === 0 ? (
         <EmptyState
           icon={SquareStack}
@@ -207,17 +212,17 @@ export function FeedTab(props: CommunityTabProps) {
       ) : (
         <>
           {pinned.length > 0 && (
-            <ul className={FEED_GRID_WIDE_CLASS} aria-label={t("communities.feed.pinnedAria")}>
+            <ContentStream as="ul" aria-label={t("communities.feed.pinnedAria")}>
               {pinned.filter((post) => post.id !== focusPost?.id).map((post) => (
                 <PostItem key={post.id} post={post} viewerId={viewerId} role={role} canPin={canPin} canModerate={canModerate} mode={engage} onToast={onToast} onPin={togglePin} onAction={setAction} onChanged={() => void refreshAll()} />
               ))}
-            </ul>
+            </ContentStream>
           )}
-          <ul className={FEED_GRID_WIDE_CLASS}>
+          <ContentStream as="ul">
             {posts.filter((post) => post.id !== focusPost?.id).map((post) => (
               <PostItem key={post.id} post={post} viewerId={viewerId} role={role} canPin={canPin} canModerate={canModerate} mode={engage} onToast={onToast} onPin={togglePin} onAction={setAction} onChanged={() => void refreshAll()} />
             ))}
-          </ul>
+          </ContentStream>
           {hasMore && (
             <div className="flex justify-center">
               <Button type="button" variant="outline" size="sm" onClick={() => void loadMore()} disabled={loadingMore}>
@@ -341,9 +346,9 @@ function PostItem({
     if (role && !mine) extras.push({ key: "report", label: t("communities.report.menu"), icon: <Flag size={14} />, onSelect: () => onAction({ kind: "report", post }) });
     if (canModerate && !mine) extras.push({ key: "moderate", label: t("communities.feed.removeAsStaff"), icon: <ShieldAlert size={14} />, danger: true, onSelect: () => onAction({ kind: "moderate", post }) });
     return (
-      <li data-community-post={post.id} data-post-kind="native" className={FEED_ITEM_CLASS}>
+      <li data-community-post={post.id} data-post-kind="native">
         {post.pinnedAt && (
-          <p className="flex items-center gap-1.5 px-1 text-caption text-text-muted">
+          <p className={FEED_ITEM_CONTEXT_CLASS}>
             <Pin size={12} aria-hidden /> {t("communities.announcements.pinned")}
           </p>
         )}
@@ -373,7 +378,7 @@ function PostItem({
     </DropdownMenu>
   ) : null;
   return (
-    <li data-community-post={post.id} data-post-kind={post.kind} className={FEED_ITEM_CLASS}>
+    <li data-community-post={post.id} data-post-kind={post.kind}>
       <ApplicationCard post={post} mode={mode} onToast={onToast} menu={menu} />
     </li>
   );

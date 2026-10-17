@@ -25,6 +25,7 @@ import { EventsTab } from "./events-tab";
 import { AboutTab } from "./about-tab";
 import { ManageTab } from "./manage-tab";
 import { useCommunity } from "./use-community";
+import { CommunityAside, MemberStack, useCommunityPeople } from "./community-aside";
 import { accessibleTabs, CATEGORY_LABEL_KEYS, communityChatHref, communityHref, resolveCommunityView, type CommunityTab } from "@/lib/communities";
 import { can } from "@/lib/chat-groups";
 import { memberCountText } from "@/lib/group-labels";
@@ -77,6 +78,7 @@ function CommunityPageInner() {
   const { view, toChat } = resolveCommunityView(searchParams.get("tab"), searchParams.get("section"), allowed);
   const tab = view?.tab ?? null;
   const unread = conversations.find((c) => c.id === id)?.unreadCount ?? 0;
+  const people = useCommunityPeople(id ?? "", Boolean(id && role));
 
   function goTab(next: CommunityTab, section?: string) {
     if (id) router.replace(communityHref(id, next, section));
@@ -144,7 +146,10 @@ function CommunityPageInner() {
   const g = ready.group;
 
   return (
-    <CommunityLayout>
+    <CommunityLayout
+      aside={tab === "feed" ? <CommunityAside group={g} people={people} onReadRules={() => goTab("about")} /> : undefined}
+      asideLabel={t("communities.aside.pageLabel")}
+    >
       <Link href="/communities" className="inline-flex items-center gap-1.5 text-small text-text-muted hover:text-text">
         <ArrowLeft size={14} aria-hidden /> {t("communities.page.title")}
       </Link>
@@ -161,6 +166,7 @@ function CommunityPageInner() {
             <div className="flex flex-wrap items-center gap-1.5">
               <Badge variant="neutral">{t(CATEGORY_LABEL_KEYS[g.category])}</Badge>
               <VisibilityLabel visibility={g.visibility} />
+              <MemberStack people={people} />
               <span className="text-caption text-text-muted">{memberCountText(t, g.memberCount)}</span>
               {role && <RoleBadge role={role} />}
               {g.closedAt && <Badge variant="warning">{t("communities.closedBadge")}</Badge>}
