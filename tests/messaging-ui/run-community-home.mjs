@@ -14,12 +14,12 @@ const results = [];
 const ONLY = process.env.ONLY ?? "";
 const id = (n) => `e0000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
 
-async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, setup, lang = "tr", theme, guest = false } = {}) {
+async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, setup, lang = "tr", theme, guest = false, hasTouch = false } = {}) {
   if (ONLY && !name.startsWith(ONLY)) return;
   const db = createDb();
   setupCommunities(db);
   setup?.(db);
-  const context = await browser.newContext({ viewport });
+  const context = await browser.newContext({ viewport, hasTouch });
   await installMock(context, db, { guest });
   await context.addInitScript(([l, th]) => { try { localStorage.setItem("promptly-language", l); if (th) localStorage.setItem("promptly-theme", th); } catch {} }, [lang, theme]);
   const page = await context.newPage(); page.setDefaultTimeout(8000);
@@ -450,6 +450,53 @@ await scenario("26b. Topluluk sayfası: başlık kompakt, akış ızgarası, Yö
   assert.ok(cards >= 2, "settings are grouped into separate cards");
   assert.equal(await overflowFree(page), true);
 }, { setup: (db) => { db.addCommunity(id(1), { name: "Sahibi Olduğum", myRole: "owner", members: [[U.bob, "owner"]] }); for (let i = 1; i <= 5; i += 1) db.addPost(id(1), { title: `Düzen gönderisi ${i}` }); } });
+
+// 27 — alttan açılan kart aşağı sürüklenince kapanır (mobil, dokunmatik; docs/history/188-*)
+const touchDrag = async (context, page, { x = 200, from, to, steps = 8 }) => {
+  const cdp = await context.newCDPSession(page);
+  const send = (type, y) => cdp.send("Input.dispatchTouchEvent", { type, touchPoints: type === "touchEnd" ? [] : [{ x, y }] });
+  await send("touchStart", from);
+  for (let i = 1; i <= steps; i += 1) { await send("touchMove", from + ((to - from) * i) / steps); await page.waitForTimeout(16); }
+  return { release: () => send("touchEnd", to) };
+};
+await scenario("27. Mobil bottom sheet: kısa sürükleme geri yaylanır, uzun sürükleme animasyonla kapatır", async ({ page, context }) => {
+  await page.goto(`${BASE}/communities`);
+  await page.getByRole("button", { name: "Topluluk oluştur" }).first().click();
+  const dialog = page.getByRole("dialog");
+  await dialog.waitFor();
+  await page.waitForTimeout(400);
+  const sheet = dialog.locator("div.relative").first();
+  const top = async () => (await dialog.getByRole("heading", { name: "Topluluk oluştur" }).boundingBox()).y;
+  const y0 = await top();
+  // kısa: 60px sürükle → sırasında kart iner, bırakınca yerine döner, pencere açık kalır
+  const short = await touchDrag(context, page, { from: 300, to: 360 });
+  assert.ok((await top()) > y0 + 30, "sheet follows the finger");
+  await short.release();
+  await page.waitForTimeout(500);
+  assert.ok(Math.abs((await top()) - y0) < 2, "sheet springs back");
+  assert.equal(await dialog.count(), 1, "short drag keeps the sheet open");
+  // uzun: 320px sürükle → kapanır
+  const long = await touchDrag(context, page, { from: 300, to: 620, steps: 12 });
+  const mid = await top();
+  assert.ok(mid > y0 + 200, "sheet moved with the long drag");
+  await long.release();
+  await page.waitForTimeout(150);
+  assert.equal(await dialog.count(), 1, "closing is animated, not instant");
+  await page.waitForTimeout(500);
+  assert.equal(await dialog.count(), 0, "long drag closes the sheet");
+  void sheet;
+}, { viewport: { width: 390, height: 800 }, hasTouch: true, setup: world });
+await scenario("27b. Masaüstünde (≥640px) ortalanmış pencere sürüklenince kapanmaz; tutamaç yok", async ({ page, context }) => {
+  await page.goto(`${BASE}/communities`);
+  await page.getByRole("button", { name: "Topluluk oluştur" }).first().click();
+  const dialog = page.getByRole("dialog");
+  await dialog.waitFor();
+  await page.waitForTimeout(400);
+  const drag = await touchDrag(context, page, { from: 300, to: 700, steps: 10 });
+  await drag.release();
+  await page.waitForTimeout(500);
+  assert.equal(await dialog.count(), 1, "centered dialog is not swipe-dismissed");
+}, { viewport: { width: 1000, height: 800 }, hasTouch: true, setup: world });
 
 await browser.close(); server.close();
 let failed = 0;
