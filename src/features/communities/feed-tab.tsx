@@ -34,6 +34,7 @@ import {
 } from "@/lib/supabase/communities";
 import { can, isGroupStaff } from "@/lib/chat-groups";
 import { canSharePost, COMMUNITY_NOTE_MAX, postPageHref } from "@/lib/communities";
+import { FEED_GRID_WIDE_CLASS, FEED_ITEM_CLASS } from "./community-layout";
 import { useTranslation } from "@/lib/i18n/language-provider";
 
 type PostAction = { kind: "edit" | "delete" | "moderate" | "report"; post: CommunityPost };
@@ -192,9 +193,9 @@ export function FeedTab(props: CommunityTabProps) {
           </Button>
         </div>
       ) : posts === null || pinned === null ? (
-        <ul className="space-y-3" aria-busy="true" aria-label={t("common.loadingAriaLabel")}>
+        <ul className={FEED_GRID_WIDE_CLASS} aria-busy="true" aria-label={t("common.loadingAriaLabel")}>
           {[0, 1].map((i) => (
-            <li key={i} className="h-48 animate-pulse rounded-xl border border-border-soft bg-surface-soft" />
+            <li key={i} className="mb-4 h-48 break-inside-avoid animate-pulse rounded-xl border border-border-soft bg-surface-soft" />
           ))}
         </ul>
       ) : pinned.length === 0 && posts.length === 0 ? (
@@ -206,13 +207,13 @@ export function FeedTab(props: CommunityTabProps) {
       ) : (
         <>
           {pinned.length > 0 && (
-            <ul className="space-y-3" aria-label={t("communities.feed.pinnedAria")}>
+            <ul className={FEED_GRID_WIDE_CLASS} aria-label={t("communities.feed.pinnedAria")}>
               {pinned.filter((post) => post.id !== focusPost?.id).map((post) => (
                 <PostItem key={post.id} post={post} viewerId={viewerId} role={role} canPin={canPin} canModerate={canModerate} mode={engage} onToast={onToast} onPin={togglePin} onAction={setAction} onChanged={() => void refreshAll()} />
               ))}
             </ul>
           )}
-          <ul className="space-y-3">
+          <ul className={FEED_GRID_WIDE_CLASS}>
             {posts.filter((post) => post.id !== focusPost?.id).map((post) => (
               <PostItem key={post.id} post={post} viewerId={viewerId} role={role} canPin={canPin} canModerate={canModerate} mode={engage} onToast={onToast} onPin={togglePin} onAction={setAction} onChanged={() => void refreshAll()} />
             ))}
@@ -340,7 +341,7 @@ function PostItem({
     if (role && !mine) extras.push({ key: "report", label: t("communities.report.menu"), icon: <Flag size={14} />, onSelect: () => onAction({ kind: "report", post }) });
     if (canModerate && !mine) extras.push({ key: "moderate", label: t("communities.feed.removeAsStaff"), icon: <ShieldAlert size={14} />, danger: true, onSelect: () => onAction({ kind: "moderate", post }) });
     return (
-      <li data-community-post={post.id} data-post-kind="native" className="space-y-1.5">
+      <li data-community-post={post.id} data-post-kind="native" className={FEED_ITEM_CLASS}>
         {post.pinnedAt && (
           <p className="flex items-center gap-1.5 px-1 text-caption text-text-muted">
             <Pin size={12} aria-hidden /> {t("communities.announcements.pinned")}
@@ -372,7 +373,7 @@ function PostItem({
     </DropdownMenu>
   ) : null;
   return (
-    <li data-community-post={post.id} data-post-kind={post.kind}>
+    <li data-community-post={post.id} data-post-kind={post.kind} className={FEED_ITEM_CLASS}>
       <ApplicationCard post={post} mode={mode} onToast={onToast} menu={menu} />
     </li>
   );

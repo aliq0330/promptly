@@ -129,6 +129,7 @@ export function GroupOwnerSettings({
           </h3>
           <p className="text-caption text-text-muted">{t("groups.owner.permissionsHelp")}</p>
         </div>
+        <div className="grid items-start gap-3 md:grid-cols-2">
         {ROLES.map((role) => (
           <fieldset key={role} className="space-y-1 rounded-lg border border-border-soft p-3" disabled={save.busy}>
             <legend className="px-1 text-small font-semibold text-text">{t(`groups.role.${role}`)}</legend>
@@ -156,6 +157,7 @@ export function GroupOwnerSettings({
             })}
           </fieldset>
         ))}
+        </div>
         <p className="text-caption text-text-muted">{t("groups.owner.fixedHelp")}</p>
         <div>
           <Button type="button" variant="ghost" size="sm" disabled={save.busy || atDefaults} onClick={() => setPerms(DEFAULT_ROLE_PERMISSIONS)}>

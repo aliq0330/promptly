@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
+import { FEED_GRID_CLASS } from "./community-layout";
 import { ErrorBox } from "./home-shared";
 import { HomeFeedItem, useSeenTracker } from "./home-feed";
 import type { useHomeFeed } from "./use-home-feed";
@@ -31,9 +32,9 @@ export function HomeFeedList({ feed, empty, onToast, viewerIsMember }: { feed: F
 
   if (feed.status === "loading") {
     return (
-      <ul className="space-y-3" aria-busy="true" aria-label={t("common.loadingAriaLabel")} data-testid="home-feed-loading">
+      <ul className={FEED_GRID_CLASS} aria-busy="true" aria-label={t("common.loadingAriaLabel")} data-testid="home-feed-loading">
         {[0, 1].map((i) => (
-          <li key={i} className="h-48 animate-pulse rounded-xl border border-border-soft bg-surface-soft" />
+          <li key={i} className="mb-4 h-48 break-inside-avoid animate-pulse rounded-xl border border-border-soft bg-surface-soft" />
         ))}
       </ul>
     );
@@ -43,7 +44,7 @@ export function HomeFeedList({ feed, empty, onToast, viewerIsMember }: { feed: F
 
   return (
     <div className="space-y-4">
-      <ul className="space-y-4" data-testid="home-feed">
+      <ul className={FEED_GRID_CLASS} data-testid="home-feed">
         {feed.entries.map((entry) => {
           const card = feed.cards.get(entry.post.communityId);
           const mode: EngageMode = card?.closedAt ? "closed" : viewerIsMember(entry.source) ? "open" : "join";

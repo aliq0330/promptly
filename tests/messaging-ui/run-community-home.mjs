@@ -411,6 +411,46 @@ for (const [label, viewport, theme] of [["mobil", { width: 390, height: 800 }, u
   }, { viewport, theme, setup: (db) => { world(db); for (let i = 0; i < 6; i += 1) db.addCommunity(id(20 + i), { name: `Öneri ${i}`, myRole: "none", members: [[U.bob, "owner"]] }); } });
 }
 
+// 26 — ortak yerleşim (docs/history/186-*): gönderi kartı genişliği sınırlı, sağ sütun yalnız xl+, tabletten itibaren 2 sütun, taşma yok
+const cardBox = (page) => page.locator("[data-home-post]").evaluateAll((els) => els.map((e) => { const r = e.getBoundingClientRect(); return { left: Math.round(r.left), width: Math.round(r.width) }; }));
+const layoutWorld = (db) => { world(db); for (let i = 1; i <= 6; i += 1) db.addPost(id(1), { title: `Düzen gönderisi ${i}` }); };
+for (const [label, width, aside, columns] of [["1440", 1440, true, 2], ["1280", 1280, true, 2], ["1024", 1024, false, 2], ["820", 820, false, 2], ["768", 768, false, 2], ["390", 390, false, 1]]) {
+  await scenario(`26. Yerleşim (${label}px): kart ≤ 460px, ${columns} sütun, sağ sütun ${aside ? "görünür" : "yok"}, yatay taşma yok`, async ({ page }) => {
+    await page.goto(`${BASE}/communities`);
+    await page.locator("[data-home-post]").first().waitFor();
+    await page.waitForTimeout(300);
+    const boxes = await cardBox(page);
+    assert.ok(boxes.every((b) => b.width <= 460), `card too wide: ${JSON.stringify(boxes.map((b) => b.width))}`);
+    assert.equal(new Set(boxes.map((b) => b.left)).size, columns, `expected ${columns} column(s)`);
+    assert.equal(await page.getByTestId("community-aside").isVisible(), aside, "aside visibility");
+    assert.equal(await overflowFree(page), true, "no horizontal overflow");
+    if (aside) {
+      const stats = await page.locator("[data-aside-stat]").evaluateAll((els) => els.map((e) => e.getAttribute("data-aside-stat")));
+      assert.deepEqual(stats, ["joined", "managed", "pending"]);
+    }
+  }, { viewport: { width, height: 900 }, setup: layoutWorld });
+}
+await scenario("26b. Topluluk sayfası: başlık kompakt, akış ızgarası, Yönetim ayarları kartlara bölünür; taşma yok", async ({ page }) => {
+  for (const [w, cols] of [[1440, 3], [820, 2], [390, 1]]) {
+    await page.setViewportSize({ width: w, height: 900 });
+    await page.goto(`${BASE}/communities/local?id=${id(1)}`);
+    await page.locator("[data-community-post]").first().waitFor();
+    await page.waitForTimeout(300);
+    const posts = await page.locator("[data-community-post]").evaluateAll((els) => els.map((e) => { const r = e.getBoundingClientRect(); return { left: Math.round(r.left), width: Math.round(r.width) }; }));
+    assert.ok(posts.every((b) => b.width <= 460), `${w}: card too wide ${JSON.stringify(posts)}`);
+    assert.equal(new Set(posts.map((b) => b.left)).size, Math.min(cols, posts.length), `${w}: columns`);
+    const header = await page.getByTestId("community-header").evaluate((el) => el.getBoundingClientRect().height);
+    assert.ok(header <= (w < 500 ? 260 : 150), `${w}: header too tall (${header})`);
+    assert.equal(await overflowFree(page), true, `${w}: overflow`);
+  }
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto(`${BASE}/communities/local?id=${id(1)}&tab=manage&section=settings`);
+  await page.getByRole("heading", { name: "Topluluk ayarları" }).waitFor();
+  const cards = await page.getByRole("tabpanel").locator("div.rounded-xl.shadow-card").count();
+  assert.ok(cards >= 2, "settings are grouped into separate cards");
+  assert.equal(await overflowFree(page), true);
+}, { setup: (db) => { db.addCommunity(id(1), { name: "Sahibi Olduğum", myRole: "owner", members: [[U.bob, "owner"]] }); for (let i = 1; i <= 5; i += 1) db.addPost(id(1), { title: `Düzen gönderisi ${i}` }); } });
+
 await browser.close(); server.close();
 let failed = 0;
 for (const [status, name] of results) { console.log(`${status === "PASS" ? "✓" : "✗"} ${name}`); if (status === "FAIL") failed += 1; }

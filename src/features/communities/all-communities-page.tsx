@@ -10,6 +10,7 @@ import { useAuth } from "@/features/auth/auth-provider";
 import { useRealMessages } from "@/features/messages/real-messages-provider";
 import { useToast } from "@/features/groups/use-toast";
 import { CommunityCard } from "./community-card";
+import { CommunityLayout } from "./community-layout";
 import type { JoinState } from "./community-join-button";
 import { DiscoverView } from "./communities-page";
 import { applyJoinState, ErrorBox, LoadingRows, type ListState } from "./home-shared";
@@ -40,7 +41,7 @@ export function AllCommunitiesPage() {
   const { node: toastNode, show } = useToast();
 
   return (
-    <div className="mx-auto w-full max-w-3xl space-y-4 px-3 py-5 sm:px-5 sm:py-8">
+    <CommunityLayout>
       <div className="space-y-2">
         <Link href="/communities" className="inline-flex items-center gap-1.5 text-small text-text-secondary hover:underline" data-testid="all-back">
           <ArrowLeft size={14} aria-hidden /> {t("communities.page.title")}
@@ -49,7 +50,7 @@ export function AllCommunitiesPage() {
       </div>
       {authLoading ? <LoadingRows /> : user ? <BrowseView onToast={show} /> : <DiscoverView onToast={show} onGoInvites={() => undefined} />}
       {toastNode}
-    </div>
+    </CommunityLayout>
   );
 }
 
@@ -174,7 +175,7 @@ function BrowseView({ onToast }: { onToast: (message: string) => void }) {
         />
       ) : (
         <>
-          <ul className="space-y-3" data-testid="all-communities-list">
+          <ul className="grid gap-3 md:grid-cols-2" data-testid="all-communities-list">
             {current.items.map((community) => (
               <CommunityCard
                 key={community.id}
