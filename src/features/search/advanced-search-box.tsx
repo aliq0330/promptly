@@ -185,9 +185,9 @@ export function AdvancedSearchBox({
       <div
         role="search"
         onClick={() => inputRef.current?.focus()}
-        className="flex min-h-12 w-full flex-wrap items-center gap-1.5 rounded-lg border border-border-soft bg-surface py-1.5 pl-11 pr-3 shadow-card focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 max-md:min-h-[3.25rem] max-md:rounded-2xl"
+        className="flex min-h-[3.25rem] w-full flex-wrap items-center gap-1.5 rounded-[1.625rem] border border-transparent bg-surface-soft py-1.5 pl-12 pr-4 transition-colors focus-within:border-primary focus-within:bg-surface focus-within:ring-2 focus-within:ring-primary/20"
       >
-        <Search size={18} className="pointer-events-none absolute left-3.5 top-3.5 text-text-muted max-md:top-4" />
+        <Search size={19} className="pointer-events-none absolute left-4 top-4 text-text-muted" />
         {tokens.map((token, index) => {
           const { icon, label } = chipLabel(token);
           const isPending = pendingRemove && index === tokens.length - 1;

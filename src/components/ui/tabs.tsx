@@ -12,10 +12,12 @@ export interface TabItem<K extends string> {
 }
 
 /**
- * The two tab styles of the design system, both real `role="tab"` buttons
+ * The tab styles of the design system, all real `role="tab"` buttons
  * inside a `role="tablist"`:
  *   - `underline` — section navigation inside a page (profile sections).
  *   - `segmented` — switching the view of one list (feed: Takip/Popüler/Sana Özel).
+ *   - `pill` — Meydan's separate pills (community sections, docs/history/190-*);
+ *     the selected pill is filled, so it needs no sliding indicator.
  * Both scroll horizontally on narrow screens instead of wrapping. `touch-
  * pan-x` locks the touch gesture to horizontal panning (so a swipe that
  * isn't perfectly horizontal doesn't also drag the whole page vertically)
@@ -35,7 +37,7 @@ export function Tabs<K extends string>({
   active: K;
   onChange: (key: K) => void;
   ariaLabel: string;
-  variant?: "underline" | "segmented";
+  variant?: "underline" | "segmented" | "pill";
   className?: string;
 }) {
   const listRef = useRef<HTMLDivElement>(null);
@@ -67,11 +69,15 @@ export function Tabs<K extends string>({
       aria-label={ariaLabel}
       className={cn(
         "scrollbar-none relative flex touch-pan-x overflow-x-auto overscroll-x-contain",
-        variant === "underline" ? "gap-1 border-b border-border-soft" : "w-fit max-w-full gap-0.5 rounded-lg border border-border-soft bg-surface-soft p-0.5",
+        variant === "underline"
+          ? "gap-1 border-b border-border-soft"
+          : variant === "pill"
+            ? "gap-2 py-0.5"
+            : "w-fit max-w-full gap-0.5 rounded-lg border border-border-soft bg-surface-soft p-0.5",
         className,
       )}
     >
-      {indicator && (
+      {indicator && variant !== "pill" && (
         <span
           aria-hidden
           data-tab-indicator
@@ -102,7 +108,12 @@ export function Tabs<K extends string>({
                     // Until the indicator is measured (first paint) the tab draws its own mark.
                     selected ? cn("text-text", indicator ? "border-transparent" : "border-primary") : "border-transparent text-text-muted hover:text-text",
                   )
-                : cn(
+                : variant === "pill"
+                  ? cn(
+                      "h-9 rounded-full px-4 font-semibold",
+                      selected ? "bg-text text-background" : "bg-surface-soft text-text-secondary hover:bg-border-soft hover:text-text",
+                    )
+                  : cn(
                     "h-8 rounded-md px-3",
                     selected
                       ? cn("text-text", !indicator && "bg-surface shadow-sm ring-1 ring-border-soft")
@@ -116,7 +127,13 @@ export function Tabs<K extends string>({
               <span
                 className={cn(
                   "rounded-xs px-1.5 text-caption tabular-nums",
-                  selected ? "bg-primary-soft text-primary" : "bg-surface-soft text-text-muted",
+                  variant === "pill"
+                    ? selected
+                      ? "bg-background/20 text-background"
+                      : "bg-surface text-text-muted"
+                    : selected
+                      ? "bg-primary-soft text-primary"
+                      : "bg-surface-soft text-text-muted",
                 )}
               >
                 {item.count}

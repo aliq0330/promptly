@@ -1,4 +1,4 @@
-# 190 — Meydan yeniden tasarımı, Faz 1 (tema + kabuk + Ana Sayfa)
+# 190 — Meydan yeniden tasarımı (Faz 1: tema + kabuk + Ana Sayfa · Faz 2: Keşfet, Profil, Topluluk)
 
 **Durum:** istemci kodu repoda; `20260920140000_meydan_palette.sql` repoda, **canlıya UYGULANMADI**. Ağ taklitli Playwright ekran görüntüleriyle (açık/koyu, 1440/390) bakıldı; gerçek Supabase'e, oturuma ve cihaza karşı denenmedi.
 
@@ -29,10 +29,30 @@ Kullanıcı, mevcut ekranların ekran görüntüleri ve üç tasarım yönü (A 
 **Veritabanı**
 - `20260920140000_meydan_palette.sql`: `profiles_theme_palette_check` kısıtına `'meydan'` eklenir (yalnız kısıt genişletme; satırlara dokunmaz, `mono` migration'ıyla aynı kalıp). **Uygulanana kadar**: başka paletten Meydan'a dönen oturumlu kullanıcının tercihi hesaba yazılamaz (yerelde/tarayıcıda yine uygulanır). Palet hiç seçmemiş hesaplar etkilenmez (varsayılan zaten Meydan).
 
+## Faz 2 — Keşfet, Profil, Topluluk sayfası
+
+**Keşfet (`/discover`)**
+- Resimli başlık kartı kaldırıldı; düz, büyük başlık + açıklama.
+- Arama kutusu (`AdvancedSearchBox`, `/search` ile ortak) hap biçimli, `surface-soft` zeminli.
+- **İçerik türü kutuları** (Görsel / Metin / Ses / Video): aşağıdaki taksonomi filtresini (`contentType`) açıp kapatan büyük düğmeler (`aria-pressed`); ayrı bir filtre durumu yok, çiplerle aynı değer.
+- "Trend" etiketleri başlıklı bir bölüm ve dolgulu haplar.
+- Oturumlu kullanıcıya **Sana uygun topluluklar** şeridi (Topluluklar → Keşfet'teki `SuggestionStrip` aynen; `recommend_communities` yoksa/boşsa şerit çizilmez). Tekrar azaltma kaydı iki sayfada ortaktır.
+
+**Profil**
+- Kart yok: halkalı büyük avatar (`border-secondary`), ad + eylemler yan yana, istatistikler tek satır ("4 gönderi · 1,3B takipçi · 312 takip"), sonra biyografi ve ilgi alanları; mobilde ortalanmış.
+- **Tek sekme satırı**: Promptlar · Prompt İstekleri · Workflow'lar · Hazır Ayarlar (+ sahibine Taslaklar · Kaydedilenler · Beğeniler, ziyaretçiye herkese açık Koleksiyonlar) · Hakkında. İç içe "Gönderiler" satırı ve iki kez görünen "Hazır Ayarlar" kalktı; Hazır Ayarlar sekmesi `ProfilePresetsPanel` (oluşturulan + sahibine kaydedilen). `ProfileTabKey` buna göre değişti.
+- Katkı haritası başlığın altındaki tam genişlik karttan **Hakkında** sekmesine taşındı.
+
+**Topluluk sayfası**
+- Başlık: üstte kapak bandı (toplulukların ayrı kapak görseli yok — topluluk görseli büyütülüp bulanıklaştırılır, signed URL; görsel yoksa `primary-soft` bant), banda taşan 88px yuvarlak-kare avatar, `text-h2` başlık, rozetler, eylemler; açıklama altta.
+- Sekmeler yeni `Tabs variant="pill"` ile ayrı haplar (seçili dolgulu). `data-testid="community-header"` ve diğer test öznitelikleri korundu.
+
+**Sınama:** ağ taklitli ekran görüntüleri (1440/390). Playwright: `run-communities` 55/61, `run-groups` 34/36, `run-community-posts` 30/36, `run-community-home` 32/38 — başarısızların **tamamı** "no uncaught page errors" denetiminde yakalanan aralıklı React #418 (hidrasyon) hatası; aynı paket Faz 2 olmadan da rastgele senaryolarda düşüyor (`run-communities` 52/61), yani bu fazın gerilemesi değil. Kökeni (yalnız bu sandbox'taki webpack derlemesi mi, gerçek bir hidrasyon uyumsuzluğu mu) araştırılmadı.
+
 ## Çeviri
 Yeni metinlerin hepsi `translations.ts`'te TR+EN: `home.composerPlaceholder`, `home.rings*`, `home.rail*`, `settings.palette.meydan`.
 
 ## Denenmedi / açık
 - Migration canlıya uygulanmadı.
 - Gerçek Supabase/oturum/cihaz; `list_my_communities` ve `trending_tags` canlı yanıtları (taklitle bakıldı).
-- Faz 2+: Keşfet (arama + tür kutuları + önerilen topluluklar), Profil (ortalanmış başlık, koleksiyon halkaları, kare ızgara), Topluluk (banner, hap sekmeler, sağ sütun), mobil Ana Sayfa'da kompakt halkalar.
+- Sonraki adaylar: Topluluklar ana sayfası (`/communities`), içerik detay sayfaları, oluşturma ekranları, Ayarlar; profilde koleksiyon halkaları; aralıklı #418 hidrasyon hatasının kökeni.

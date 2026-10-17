@@ -3,10 +3,9 @@
 import { PageContainer } from "@/components/ui/page-header";
 
 import { useEffect, useMemo, useState } from "react";
-import { Heart, SearchX, SlidersHorizontal, Sparkles, Workflow as WorkflowIcon } from "lucide-react";
+import { Heart, SearchX, Sparkles, Workflow as WorkflowIcon } from "lucide-react";
 import { ProfileHeader } from "./profile-header";
 import { ProfileTabs, type ProfileTabKey } from "./profile-tabs";
-import { Tabs } from "@/components/ui/tabs";
 import { ContributionMap } from "./contribution-map";
 import { ProfileToolbar, type ProfileSortKey } from "./profile-toolbar";
 import { ProfileContentGrid } from "./profile-content-grid";
@@ -23,11 +22,8 @@ import { fetchLikedPrompts } from "@/lib/supabase/prompts";
 import { fetchWorkflowsByCreator } from "@/lib/supabase/workflows";
 import { WorkflowCard } from "@/features/workflows/workflow-card";
 import { fetchPresetsByCreator } from "@/lib/supabase/presets";
-import { PresetCard } from "@/features/presets/preset-card";
 import { ProfilePresetsPanel } from "@/features/presets/profile-presets-panel";
 import type { Collection, Preset, Prompt, PromptContentType, PromptRequest, UserProfile, Workflow } from "@/types";
-
-type PostKind = "prompts" | "requests" | "workflows" | "presets";
 
 function sortPrompts(prompts: Prompt[], sort: ProfileSortKey): Prompt[] {
   const sorted = [...prompts];
@@ -127,8 +123,7 @@ export function ProfileView({
     };
   }, [isOwnProfile, user.id]);
 
-  const [activeTab, setActiveTab] = useState<ProfileTabKey>("posts");
-  const [postKind, setPostKind] = useState<PostKind>("prompts");
+  const [activeTab, setActiveTab] = useState<ProfileTabKey>("prompts");
   const [activeType, setActiveType] = useState<PromptContentType | "all">("all");
   const [sort, setSort] = useState<ProfileSortKey>("newest");
   const [search, setSearch] = useState("");
@@ -144,19 +139,12 @@ export function ProfileView({
     [authorPrompts.length, authorRequests.length, workflows, presets],
   );
 
-  const postKindTabs = useMemo(
-    () => [
-      { key: "prompts" as const, label: t("feed.filterPrompts"), count: postCounts.prompts },
-      { key: "requests" as const, label: t("nav.requests"), count: postCounts.requests },
-      { key: "workflows" as const, label: t("nav.workflows"), count: postCounts.workflows },
-      { key: "presets" as const, label: t("nav.presets"), count: postCounts.presets },
-    ],
-    [postCounts, t],
-  );
-
   const tabs = useMemo(() => {
+    // Meydan (docs/history/190-*): the four kinds are top-level tabs (no nested "Gönderiler" row, no second "Hazır Ayarlar").
     const base: { key: ProfileTabKey; label: string; count?: number }[] = [
-      { key: "posts", label: t("profile.tabPosts"), count: postCounts.prompts + postCounts.requests + postCounts.workflows + postCounts.presets },
+      { key: "prompts", label: t("feed.filterPrompts"), count: postCounts.prompts },
+      { key: "requests", label: t("nav.requests"), count: postCounts.requests },
+      { key: "workflows", label: t("nav.workflows"), count: postCounts.workflows },
       { key: "presets", label: t("nav.presets"), count: postCounts.presets },
     ];
     if (isOwnProfile) {
@@ -221,20 +209,19 @@ export function ProfileView({
         user={user}
         isOwnProfile={isOwnProfile}
         postCounts={postCounts}
-        onSelectPosts={() => setActiveTab("posts")}
+        onSelectPosts={() => setActiveTab("prompts")}
       />
-
-      <ContributionMap userId={user.id} />
 
       <ProfileTabs tabs={tabs} active={activeTab} onChange={setActiveTab} />
 
       <div className="space-y-4">
-        {activeTab === "posts" && (
-          <Tabs items={postKindTabs} active={postKind} onChange={setPostKind} ariaLabel={t("profile.postKindsAriaLabel")} variant="segmented" />
-        )}
         {activeTab === "about" ? (
-          <ProfileAbout user={user} />
-        ) : activeTab === "posts" && postKind === "requests" ? (
+          // The contribution map moved here from under the header (it took a full-width card before every visit).
+          <div className="space-y-5">
+            <ProfileAbout user={user} />
+            <ContributionMap userId={user.id} />
+          </div>
+        ) : activeTab === "requests" ? (
           authorRequests.length === 0 ? (
             <ProfileEmptyState
               icon={Sparkles}
@@ -249,7 +236,7 @@ export function ProfileView({
           ) : (
             <RequestList requests={authorRequests} />
           )
-        ) : activeTab === "posts" && postKind === "workflows" ? (
+        ) : activeTab === "workflows" ? (
           workflows.length === 0 ? (
             <ProfileEmptyState
               icon={WorkflowIcon}
@@ -268,23 +255,6 @@ export function ProfileView({
           )
         ) : activeTab === "presets" ? (
           <ProfilePresetsPanel ownerId={user.id} isOwn={isOwnProfile} created={presets} />
-        ) : activeTab === "posts" && postKind === "presets" ? (
-          presets.length === 0 ? (
-            <ProfileEmptyState
-              icon={SlidersHorizontal}
-              title={t("preset.noneYetTitle")}
-              description={isOwnProfile ? t("preset.noneYetBody") : t("preset.noneYetOtherBody")}
-              action={isOwnProfile ? { label: t("preset.create"), href: "/presets/create" } : undefined}
-            />
-          ) : (
-            <div className="columns-1 gap-3 sm:columns-2 sm:gap-4 xl:columns-3">
-              {presets.map((preset) => (
-                <div key={preset.id} className="pb-3 break-inside-avoid sm:pb-4">
-                  <PresetCard preset={preset} />
-                </div>
-              ))}
-            </div>
-          )
         ) : activeTab === "saved" ? (
           // No more separate flat "Tümü" list here — Kaydedilenler IS the
           // collections view now, "Genel" (the default, general-save
@@ -323,7 +293,7 @@ export function ProfileView({
 
             <ProfileContentGrid
               prompts={filtered}
-              isOwnProfile={isOwnProfile && activeTab === "posts"}
+              isOwnProfile={isOwnProfile && activeTab === "prompts"}
               onDeleted={handleDeleted}
               emptyState={
                 hasActiveFilters ? (

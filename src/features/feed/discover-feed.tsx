@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Hash, LayoutGrid, Sparkles, SquareTerminal, SlidersHorizontal, TrendingUp, Users, Workflow as WorkflowIcon } from "lucide-react";
 import { Tabs } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -21,7 +22,12 @@ import { CreatorCard } from "@/features/profile/creator-card";
 import { WeeklyChallengeBanner } from "@/features/challenges/weekly-challenge-banner";
 import { useCreatorPages } from "@/features/profile/use-creator-pages";
 import { fetchPopularTags } from "@/lib/supabase/tags";
-import { tagHref } from "@/lib/utils";
+import { cn, tagHref } from "@/lib/utils";
+import { CONTENT_TYPE_IDS } from "@/lib/content-taxonomy";
+import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
+import { SuggestionStrip } from "@/features/communities/suggestion-strip";
+import { useToast } from "@/features/groups/use-toast";
+import { useAuth } from "@/features/auth/auth-provider";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import type { Tag } from "@/types";
@@ -56,6 +62,9 @@ const SECTION_KIND: Record<Exclude<Section, "creators">, FeedKind | "all"> = {
  */
 export function DiscoverFeed() {
   const { t } = useTranslation();
+  const router = useRouter();
+  const { user } = useAuth();
+  const { node: toastNode, show: showToast } = useToast();
   const [section, setSection] = useState<Section>("all");
   const [taxonomy, setTaxonomy] = useState<TaxonomyFilterValue>(EMPTY_TAXONOMY_FILTER);
   const [openOnly, setOpenOnly] = useState(false);
@@ -98,28 +107,31 @@ export function DiscoverFeed() {
   );
 
   const idleContent = (
-    <div className="space-y-6 max-md:space-y-4">
-      <WeeklyChallengeBanner />
+    <div className="space-y-6 max-md:space-y-5">
+      {/* Meydan (docs/history/190-*): the four content types as large tiles — the same taxonomy filter as the chips below. */}
+      <ContentTypeTiles value={taxonomy} onChange={setTaxonomy} />
       {tags.length > 0 && (
-        <div className="flex items-center gap-3">
-          <span className="hidden shrink-0 items-center gap-1.5 text-caption font-semibold uppercase tracking-[0.08em] text-text-muted sm:flex">
-            <TrendingUp size={13} />
+        <section aria-labelledby="discover-trending" className="space-y-2.5">
+          <h2 id="discover-trending" className="flex items-center gap-1.5 text-label font-semibold text-text">
+            <TrendingUp size={14} className="text-secondary" aria-hidden />
             {t("discover.trending")}
-          </span>
-          <div className="scrollbar-none -mx-3 flex touch-pan-x gap-2 overflow-x-auto overscroll-x-contain px-3 sm:mx-0 sm:px-0">
+          </h2>
+          <div className="scrollbar-none -mx-3 flex touch-pan-x gap-2 overflow-x-auto overscroll-x-contain px-3 sm:mx-0 sm:flex-wrap sm:px-0">
             {tags.map((tag) => (
               <Link
                 key={tag.slug}
                 href={tagHref(tag)}
-                className="inline-flex h-8 shrink-0 items-center gap-1 rounded-full border border-border-soft bg-surface px-3 text-label font-medium text-text-secondary transition-colors duration-200 hover:border-primary/40 hover:text-primary max-md:h-[34px] max-md:border-border max-md:bg-transparent max-md:text-body max-md:text-text-muted"
+                className="inline-flex h-9 shrink-0 items-center gap-0.5 rounded-full bg-surface-soft px-3.5 text-label font-semibold text-text-secondary transition-colors duration-200 hover:bg-primary-soft hover:text-primary"
               >
-                <Hash size={13} className="text-text-muted" />
+                <Hash size={13} className="text-text-muted" aria-hidden />
                 {tag.label}
               </Link>
             ))}
           </div>
-        </div>
+        </section>
       )}
+      {user && <SuggestionStrip onToast={showToast} onGoInvites={() => router.push("/communities?tab=invites")} />}
+      <WeeklyChallengeBanner />
 
       <div className="space-y-3">
         <Tabs
@@ -186,7 +198,43 @@ export function DiscoverFeed() {
     </div>
   );
 
-  return <SearchView idle={idleContent} />;
+  return (
+    <>
+      <SearchView idle={idleContent} />
+      {toastNode}
+    </>
+  );
+}
+
+/** Image / Text / Audio / Video as large toggle tiles; picking the selected one again clears the type filter. */
+function ContentTypeTiles({ value, onChange }: { value: TaxonomyFilterValue; onChange: (next: TaxonomyFilterValue) => void }) {
+  const { t } = useTranslation();
+  return (
+    <div role="group" aria-label={t("toolbar.contentTypeAria")} className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      {CONTENT_TYPE_IDS.map((type) => {
+        const meta = CONTENT_TYPE_META[type];
+        const Icon = meta.icon;
+        const selected = value.contentType === type;
+        return (
+          <button
+            key={type}
+            type="button"
+            aria-pressed={selected}
+            onClick={() => onChange({ contentType: selected ? null : type, category: null, subcategory: null })}
+            className={cn(
+              "flex h-24 flex-col justify-between rounded-xl p-4 text-left transition-[background-color,box-shadow,transform] duration-200 ease-soft active:scale-[0.98] sm:h-28",
+              selected ? "bg-primary-soft ring-2 ring-primary" : "bg-surface-soft hover:bg-border-soft",
+            )}
+          >
+            <span className={cn("flex h-9 w-9 items-center justify-center rounded-full", selected ? "bg-primary text-primary-foreground" : "bg-surface text-primary")}>
+              <Icon size={18} strokeWidth={1.9} aria-hidden />
+            </span>
+            <span className="font-display text-[1.125rem] font-bold tracking-[-0.02em] text-text">{t(meta.labelKey)}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
 }
 
 /** Failure line + "Load more" under a paged list (shared by the feed and the creators list). */

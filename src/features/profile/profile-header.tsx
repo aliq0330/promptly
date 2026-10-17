@@ -39,57 +39,58 @@ export function ProfileHeader({
   const followState = useFollowState(user);
 
   return (
-    <header className="rounded-xl border border-border-soft bg-surface p-5 shadow-card sm:p-8">
-      <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:gap-6">
-        <ProfileAvatar src={user.avatarUrl} alt={user.displayName} isOwnProfile={isOwnProfile} />
+    // Meydan (docs/history/190-*): no card — a ringed avatar, the name with its actions beside it, stats inline, then the bio.
+    <header className="flex flex-col items-center gap-5 px-1 pt-2 text-center sm:flex-row sm:items-start sm:gap-10 sm:text-left">
+      <span className="inline-flex shrink-0 rounded-full border-[3px] border-secondary p-1">
+        <ProfileAvatar src={user.avatarUrl} alt={user.displayName} isOwnProfile={isOwnProfile} size={128} />
+      </span>
 
-        <div className="min-w-0 flex-1 space-y-4">
-          <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-            <div className="min-w-0">
-              <h1 className="truncate text-h1 text-text">{user.displayName}</h1>
-              <p className="truncate text-small text-text-muted">@{user.username}</p>
-            </div>
-            {isOwnProfile ? (
-              <OwnProfileActions user={user} />
-            ) : (
-              <OtherProfileActions user={user} followState={followState} />
-            )}
+      <div className="flex w-full min-w-0 flex-1 flex-col items-center gap-4 sm:items-start">
+        <div className="flex w-full flex-col items-center gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-4">
+          <div className="min-w-0">
+            <h1 className="break-words text-h1 text-text">{user.displayName}</h1>
+            <p className="truncate text-small text-text-muted">@{user.username}</p>
           </div>
-
-          {bio && (
-            <p className="max-w-2xl text-body leading-relaxed text-text-secondary sm:text-[1.0625rem]">
-              {visibleBio}{" "}
-              {bioIsLong && (
-                <button
-                  type="button"
-                  onClick={() => setBioExpanded((prev) => !prev)}
-                  className="font-medium text-primary hover:underline"
-                >
-                  {t(bioExpanded ? "common.showLess" : "common.readMore")}
-                </button>
-              )}
-            </p>
+          {isOwnProfile ? (
+            <OwnProfileActions user={user} />
+          ) : (
+            <OtherProfileActions user={user} followState={followState} />
           )}
-
-          {((user.interests && user.interests.length > 0) || postCounts.prompts > 0) && (
-            <div className="flex flex-wrap items-center gap-1.5">
-              {user.interests?.slice(0, 4).map((interest) => (
-                <Badge key={interest} variant="neutral">
-                  {interest in INTEREST_OPTION_LABELS ? t(INTEREST_OPTION_LABELS[interest as InterestOption]) : interest}
-                </Badge>
-              ))}
-              <ProfileBadges publishedPromptCount={postCounts.prompts} />
-            </div>
-          )}
-
-          <ProfileStats
-            postCounts={postCounts}
-            followerCount={followState.followerCount}
-            followingCount={user.followingCount}
-            isOwnProfile={isOwnProfile}
-            onSelectPosts={onSelectPosts}
-          />
         </div>
+
+        <ProfileStats
+          postCounts={postCounts}
+          followerCount={followState.followerCount}
+          followingCount={user.followingCount}
+          isOwnProfile={isOwnProfile}
+          onSelectPosts={onSelectPosts}
+        />
+
+        {bio && (
+          <p className="max-w-2xl text-body leading-relaxed text-text-secondary">
+            {visibleBio}{" "}
+            {bioIsLong && (
+              <button
+                type="button"
+                onClick={() => setBioExpanded((prev) => !prev)}
+                className="font-medium text-primary hover:underline"
+              >
+                {t(bioExpanded ? "common.showLess" : "common.readMore")}
+              </button>
+            )}
+          </p>
+        )}
+
+        {((user.interests && user.interests.length > 0) || postCounts.prompts > 0) && (
+          <div className="flex flex-wrap items-center justify-center gap-1.5 sm:justify-start">
+            {user.interests?.slice(0, 4).map((interest) => (
+              <Badge key={interest} variant="neutral">
+                {interest in INTEREST_OPTION_LABELS ? t(INTEREST_OPTION_LABELS[interest as InterestOption]) : interest}
+              </Badge>
+            ))}
+            <ProfileBadges publishedPromptCount={postCounts.prompts} />
+          </div>
+        )}
       </div>
     </header>
   );
