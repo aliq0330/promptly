@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CalendarDays, ScrollText } from "lucide-react";
+import { ScrollText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAsyncAction } from "@/features/groups/use-async-action";
 import { AnnouncementsSection } from "./announcements-section";
 import type { CommunityTabProps } from "./community-page";
 import { acceptCommunityRules, fetchCommunityEvents, type CommunityEvent } from "@/lib/supabase/communities";
-import { formatEventRange } from "@/lib/communities";
+import { eventDateParts, formatEventRange } from "@/lib/communities";
 import { useTranslation } from "@/lib/i18n/language-provider";
 
 /**
@@ -15,7 +15,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
  * Bunların hiçbiri yoksa HİÇBİR ŞEY çizilmez — akış ilk açılış ekranıdır, özet onu itmez. Yönetim (duyuru yayınlama vb.) "Yönet" sekmesindedir.
  */
 export function FeedHighlights({ group, role, viewerId, membership, reload, onToast, goTab }: CommunityTabProps) {
-  const { t, language } = useTranslation();
+  const { t } = useTranslation();
   const [next, setNext] = useState<CommunityEvent | null>(null);
   const accept = useAsyncAction();
   const needsRulesAck = Boolean(role) && group.rulesRequired && Boolean(group.rules) && (membership?.acceptedRulesVersion ?? 0) < group.rulesVersion;
@@ -78,22 +78,32 @@ export function FeedHighlights({ group, role, viewerId, membership, reload, onTo
 
       <AnnouncementsSection group={group} role={role} limit={3} onToast={onToast} highlight />
 
-      {next && (
-        <button
-          type="button"
-          data-feed-next-event
-          onClick={() => goTab("events")}
-          className="flex w-full items-center gap-3 rounded-lg border border-border-soft bg-surface px-4 py-3 text-left transition-colors hover:border-border-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-        >
-          <CalendarDays size={16} className="shrink-0 text-primary" aria-hidden />
-          <span className="min-w-0 flex-1">
-            <span className="block text-caption text-text-muted">{t("communities.feed.nextEvent")}</span>
-            <span className="block break-words text-sm font-semibold text-text">{next.title}</span>
-            <span className="block text-caption text-text-muted">{formatEventRange(next.startsAt, next.endsAt, next.timezone, language)}</span>
-          </span>
-          <span className="shrink-0 text-label font-medium text-primary">{t("communities.overview.allEvents")}</span>
-        </button>
-      )}
+      {next && <NextEventCard event={next} onOpen={() => goTab("events")} />}
     </div>
+  );
+}
+
+/** The nearest event as a date-tile card (Meydan, docs/history/190-* Faz 6); opens the Events tab. */
+function NextEventCard({ event, onOpen }: { event: CommunityEvent; onOpen: () => void }) {
+  const { t, language } = useTranslation();
+  const date = eventDateParts(event.startsAt, event.timezone, language);
+  return (
+    <button
+      type="button"
+      data-feed-next-event
+      onClick={onOpen}
+      className="flex w-full items-center gap-3.5 rounded-lg border border-border-soft bg-surface px-4 py-3 text-left shadow-xs transition-colors hover:border-border-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+    >
+      <span aria-hidden className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-md bg-primary-soft leading-none text-primary">
+        <span className="text-[0.625rem] font-bold tracking-[0.06em]">{date.month}</span>
+        <span className="mt-0.5 font-display text-[1.25rem] font-bold">{date.day}</span>
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-caption text-text-muted">{t("communities.feed.nextEvent")}</span>
+        <span className="block break-words text-sm font-semibold text-text">{event.title}</span>
+        <span className="block text-caption text-text-muted">{formatEventRange(event.startsAt, event.endsAt, event.timezone, language)}</span>
+      </span>
+      <span className="shrink-0 rounded-full bg-text px-3 py-1.5 text-caption font-semibold text-background">{t("communities.overview.allEvents")}</span>
+    </button>
   );
 }

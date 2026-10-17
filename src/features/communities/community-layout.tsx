@@ -5,8 +5,7 @@ import { cn } from "@/lib/utils";
 
 /**
  * Topluluk sayfalarının ORTAK yerleşimi (docs/history/186-*). Tek kaynak burasıdır: sayfa genişliği, ana sütun + sağ yardımcı sütun,
- * gönderi ızgarası ve kompakt başlık. Ana sayfanın (`FeedGrid`) kart yoğunluğuyla aynı kural: mobilde 1, `sm`+ 2 sütun (CSS columns),
- * böylece bir gönderi kartı hiçbir ekranda ~420px'den fazla genişlemez.
+ * gönderi akışı ve kompakt başlık. Akış Ana Sayfa'nınkiyle aynıdır (Meydan Faz 6): tek sütun, kutusuz, okunur genişlikte.
  *
  * Genişlik kuralı: sayfa ≤ 1120px (uygulamanın `PageContainer` 1400px'inden bilerek dar — içerik akışı okunur kalsın). `xl`+ (≥1280px)
  * ekranda yardımcı sütun (16.5rem) ana sütunun yanına gelir; daha dar ekranda hiç çizilmez (ana içerik genişliğini bozmaz).
@@ -45,8 +44,11 @@ export function CommunityPageHeader({ title, description, actions }: { title: st
   );
 }
 
-/** Gönderi akışı: ana sayfadaki masonry ile aynı sütun kuralı (mobil 1, `sm`+ 2; `wide` ise geniş ekranda 3). */
-export const FEED_GRID_CLASS = "columns-1 gap-4 sm:columns-2";
-export const FEED_GRID_WIDE_CLASS = "columns-1 gap-4 sm:columns-2 xl:columns-3";
-/** Izgaradaki tek gönderi öğesi: sütun içinde bölünmez, öğeler arası dikey boşluk. */
-export const FEED_ITEM_CLASS = "mb-4 break-inside-avoid space-y-1.5";
+/**
+ * Gönderi akışı (Meydan, docs/history/190-* Faz 6): tek sütun, kutusuz akış — liste `ContentStream` (çizgilerle ayrılmış tek yüzey) ile
+ * çizilir, kartlar kendi kutularını bırakır. Akış okunur genişlikte kalır (≤ 3xl; topluluk sayfasında özet ve paylaş satırı da aynı sütunda);
+ * geniş ekranda yanında yardımcı sütun durur.
+ */
+export const FEED_STREAM_CLASS = "max-w-3xl";
+/** Akıştaki gönderinin üstündeki bağlam satırı (topluluk adı, "Sabit"): kartın kimlik satırıyla aynı iç boşluk. */
+export const FEED_ITEM_CONTEXT_CLASS = "-mb-2 flex items-center gap-2 px-4 pt-3 text-caption text-text-muted";

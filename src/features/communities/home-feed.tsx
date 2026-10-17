@@ -9,7 +9,7 @@ import { RequestCard } from "@/features/requests/request-card";
 import { WorkflowCard } from "@/features/workflows/workflow-card";
 import { PresetCard } from "@/features/presets/preset-card";
 import { ApplicationCard } from "./application-card";
-import { FEED_ITEM_CLASS } from "./community-layout";
+import { FEED_ITEM_CONTEXT_CLASS } from "./community-layout";
 import { createSeenTracker, type SeenTracker } from "./seen-tracker";
 import { VisibilityLabel } from "./visibility-label";
 import { communityHref } from "@/lib/communities";
@@ -73,8 +73,8 @@ export function HomeFeedItem({
 
   const content = post.content;
   return (
-    <li ref={itemRef} data-home-post={post.id} data-post-kind={post.kind} data-post-source={source ?? "member"} data-post-community={post.communityId} className={FEED_ITEM_CLASS}>
-      <div className="flex items-center gap-2 px-1 text-caption text-text-muted">
+    <li ref={itemRef} data-home-post={post.id} data-post-kind={post.kind} data-post-source={source ?? "member"} data-post-community={post.communityId}>
+      <div className={FEED_ITEM_CONTEXT_CLASS}>
         {community ? (
           <>
             <GroupAvatar name={community.name} avatarUrl={community.avatarUrl} size={20} />

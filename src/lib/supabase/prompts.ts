@@ -269,6 +269,54 @@ export async function fetchPromptsByAuthors(authorIds: string[], limit = 60): Pr
   }
 }
 
+/**
+ * Discover's highlights (Meydan, docs/history/190-* Faz 6): public, published, non-community prompts ranked by real likes —
+ * optionally only those created since `since` ("Bu hafta popüler"). Same deleted/profile/blocked filters as every stream.
+ */
+export async function fetchTopPrompts({ since, limit = 12 }: { since?: string; limit?: number } = {}): Promise<Prompt[]> {
+  try {
+    let query = supabase
+      .from("prompts")
+      .select(PROMPT_SELECT)
+      .eq("status", "published")
+      .eq("visibility", "public")
+      .is("community_id", null)
+      .is("deleted_at", null);
+    if (since) query = query.gte("created_at", since);
+    const { data, error } = await query.order("like_count", { ascending: false }).order("id").limit(limit);
+    if (error) {
+      console.error("fetchTopPrompts", error);
+      return [];
+    }
+    return withoutBlocked(filterNotDeleted(filterProfileVisible((data ?? []).map((row) => mapPromptRow(row as unknown as PromptRow)))), (p) => p.author.id);
+  } catch (err) {
+    console.error("fetchTopPrompts", err);
+    return [];
+  }
+}
+
+/** How many public, published, non-community prompts each content type has (Discover's type tiles). `null` for a type whose count failed. */
+export async function fetchPublicPromptCounts(types: readonly PromptContentType[]): Promise<Partial<Record<PromptContentType, number | null>>> {
+  const entries = await Promise.all(
+    types.map(async (type) => {
+      try {
+        const { count, error } = await supabase
+          .from("prompts")
+          .select("id", { count: "exact", head: true })
+          .eq("content_type", type)
+          .eq("status", "published")
+          .eq("visibility", "public")
+          .is("community_id", null)
+          .is("deleted_at", null);
+        return [type, error ? null : count] as const;
+      } catch {
+        return [type, null] as const;
+      }
+    }),
+  );
+  return Object.fromEntries(entries);
+}
+
 /** Prompts by id (any order), for the home feed's server-chosen page. Same blocked/deleted/profile filters as every other stream; RLS still decides what the viewer may see. */
 export async function fetchPromptsByIds(ids: string[]): Promise<Prompt[]> {
   if (ids.length === 0) return [];

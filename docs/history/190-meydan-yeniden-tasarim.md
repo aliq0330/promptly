@@ -1,4 +1,4 @@
-# 190 — Meydan yeniden tasarımı (Faz 1: tema + kabuk + Ana Sayfa · Faz 2: Keşfet, Profil, Topluluk · Faz 3: başlıklar, Topluluklar, detay · Faz 4: Ayarlar, Bildirimler · Faz 5: gönderi kartları)
+# 190 — Meydan yeniden tasarımı (Faz 1: tema + kabuk + Ana Sayfa · Faz 2: Keşfet, Profil, Topluluk · Faz 3: başlıklar, Topluluklar, detay · Faz 4: Ayarlar, Bildirimler · Faz 5: gönderi kartları · Faz 6: kutusuz akış, topluluk sayfası, profil, Keşfet)
 
 **Durum:** istemci kodu repoda; `20260920140000_meydan_palette.sql` **canlıya UYGULANDI** (kullanıcı onayıyla, MCP `execute_sql` ile tek işlemde; `schema_migrations`'a `20260920140000` / `meydan_palette` kaydı; öncesinde canlıda `mono` 2, `sand` 2, boş 16 satır vardı, hepsi yeni listede). Ağ taklitli Playwright ekran görüntüleriyle (açık/koyu, 1440/390) bakıldı; gerçek Supabase'e, oturuma ve cihaza karşı denenmedi.
 
@@ -81,6 +81,19 @@ Kullanıcı, mevcut ekranların ekran görüntüleri ve üç tasarım yönü (A 
 - Yeni metin: `prompt.usesShort` (TR+EN). Migration yok.
 
 **Sınama:** `tsc`, `lint` (yalnız eski 4 uzantı uyarısı), `npm test`, `next build` temiz. Ağ taklitli ekran görüntüleri (1440/390, açık/koyu). Playwright (hidrasyon denetimi dışarıda tutulan geçici kopyayla): `run-community-posts` 36/36, `run-communities` 61/61, `run-community-home` 38/38, `run-detail-pages` 44/44. Gerçek oturumla/cihazla denenmedi.
+
+## Faz 6 — C ile kalan farklar: kutusuz akış, topluluk sayfası, profil, Keşfet
+
+C taslağıyla yan yana karşılaştırmada kalan dört fark kapatıldı (kullanıcı "hepsini yap" dedi).
+
+- **Kutusuz akış — `ContentStream`** (`features/content/content-card.tsx`): gönderiler tek bir yüzeyde, aralarında ince çizgi; mobilde kenardan kenara (sayfanın 12px kenar boşluğunu iptal eder), `sm`+ tek yuvarlak panel. İçindeki `ContentCard`'lar bağlamdan (`StreamContext`) kendi kenarlık/gölge/köşesini bırakır — aynı kartlar ızgaralarda kutulu kalır. `overflow-hidden` bilerek yok (⋮ menü panelin dışına açılabilsin). Kullanan yerler: Ana Sayfa akışı (`FeedGrid layout="stream"`), Topluluklar ana sayfası akışları (`HomeFeedList`), topluluk sayfası akışı (`FeedTab`; sabitlenenler, odak gönderisi dahil). İskelet de aynı düzende (`PromptCardSkeleton flat`). Gönderinin üstündeki bağlam satırı (topluluk adı, "Sabit") `FEED_ITEM_CONTEXT_CLASS` ile kartın iç boşluğuna hizalı.
+- **Topluluk akışı tek sütun** (eski 2–3 sütunlu ızgara yerine; ≤ `max-w-3xl`). `run-community-home` 26/26b'deki "2–3 sütun, kart ≤ 460px" beklentisi bu karar yüzünden bilinçli değişti: her ekranda 1 sütun, gönderi ≤ 768px, xl'de yan sütun bölümleri.
+- **Topluluk sayfası** (`community-aside.tsx`): Akış sekmesinde `xl`+ sağ sütun — **Hakkında** (açıklama, üye ve gönderi sayısı), **Kurallar** (ilk 4 satır, "Kuralların tamamı" → Hakkında ve kurallar sekmesi), **Yöneticiler** (yalnız üyeye). Başlıkta üye avatar yığını (yalnız üyeye). İkisi de mevcut `community_members` RPC'sinin ilk sayfasından (rütbe sıralı); RPC üye olmayana kapalı olduğundan ziyaretçide hiç çağrılmaz (`run-communities` 29b'deki "çağrılmadı" denetimi geçiyor). Sabit duyuru akış özetinde sıcak (secondary) kart + "SABİT DUYURU" üst yazısı; yaklaşan etkinlik tarih kutulu kart (`eventDateParts`, etkinliğin kendi saat diliminde; birim testli).
+- **Profil**: "Promptları toplam N kez kullanıldı" satırı — profilin listelediği promptların gerçek `copy_count` toplamı (yeni sorgu yok; 0'da gizli). Kendi profilinde topluluk halkaları (`CommunityRings`); başkasının profilinde yok (üyelikler herkese açık değil).
+- **Keşfet** (`discover-highlights.tsx`): tür kutularında gerçek sayı ("190 prompt", 4 `HEAD count` sorgusu) ve önizleme (en çok beğenilen görsel promptun çıktısı / metin promptun metni; ses/video ikonla kalır — medyaları dosyanın kendisi olabilir). **"Bu hafta popüler"** şeridi: son 7 günün en çok beğenilen herkese açık promptları; 7 günde 3'ten azsa "Bu ay popüler" (30 gün), o da azsa şerit çizilmez — eski içerik "bu hafta" başlığıyla gösterilmez. Kaynak: `fetchTopPrompts` / `fetchPublicPromptCounts` (`lib/supabase/prompts.ts`; `community_id is null`, yayında + herkese açık, silinmemiş, engellenen yazar süzülür).
+- Yeni metinler TR+EN: `communities.aside.{pageLabel,about,rules,readRules,staff,postCount}`, `communities.detail.membersPreview`, `communities.announcements.pinnedEyebrow`, `profile.reuseLine`, `discover.{popularWeek,popularMonth,typeCount}`. Migration yok.
+
+**Sınama:** `tsc`, `lint` (yalnız eski 4 uzantı uyarısı), `npm test` (344), `next build` temiz. Playwright (hidrasyon #418 denetimi dışarıda tutulan geçici kopyayla): `run-community-home` 38/38, `run-community-posts` 36/36, `run-communities` 61/61, `run-detail-pages` 44/44, `run-groups` 36/36. Ağ taklitli ekran görüntüleri (1440/390, açık/koyu). Gerçek Supabase/oturum/cihazla denenmedi; canlı veride "Bu hafta popüler" seed içeriği eskiyse görünmeyebilir (tasarım gereği).
 
 ## Çeviri
 Yeni metinlerin hepsi `translations.ts`'te TR+EN: `home.composerPlaceholder`, `home.rings*`, `home.rail*`, `settings.palette.meydan`.

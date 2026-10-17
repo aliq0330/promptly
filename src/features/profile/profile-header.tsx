@@ -8,6 +8,7 @@ import { OwnProfileActions, OtherProfileActions } from "./profile-actions";
 import { useFollowState } from "./use-follow-state";
 import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "@/lib/i18n/language-provider";
+import { formatCount } from "@/lib/utils";
 import { INTEREST_OPTION_LABELS, type InterestOption } from "./interest-options";
 import type { UserProfile } from "@/types";
 
@@ -17,11 +18,14 @@ export function ProfileHeader({
   user,
   isOwnProfile,
   postCounts,
+  reuseCount = 0,
   onSelectPosts,
 }: {
   user: UserProfile;
   isOwnProfile: boolean;
   postCounts: { prompts: number; requests: number; workflows: number; presets: number };
+  /** Sum of the listed prompts' real use counters; the line is hidden at 0. */
+  reuseCount?: number;
   onSelectPosts: () => void;
 }) {
   const { t } = useTranslation();
@@ -78,6 +82,12 @@ export function ProfileHeader({
                 {t(bioExpanded ? "common.showLess" : "common.readMore")}
               </button>
             )}
+          </p>
+        )}
+
+        {reuseCount > 0 && (
+          <p className="-mt-2 text-small text-text-muted" data-profile-reuse>
+            {t("profile.reuseLine", { count: formatCount(reuseCount) })}
           </p>
         )}
 

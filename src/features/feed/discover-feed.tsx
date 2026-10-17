@@ -10,6 +10,7 @@ import { Chip } from "@/components/ui/chip";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PromptCardSkeletonGrid } from "@/components/ui/prompt-card-skeleton";
 import { FeedItemsView } from "./feed-items-view";
+import { ContentTypeTiles, PopularStrip, useDiscoverHighlights } from "./discover-highlights";
 import { useFeedPages } from "./use-feed-pages";
 import type { FeedKind } from "@/lib/supabase/feed";
 import { feedOrderForSort } from "@/lib/feed-cursor";
@@ -22,9 +23,7 @@ import { CreatorCard } from "@/features/profile/creator-card";
 import { WeeklyChallengeBanner } from "@/features/challenges/weekly-challenge-banner";
 import { useCreatorPages } from "@/features/profile/use-creator-pages";
 import { fetchPopularTags } from "@/lib/supabase/tags";
-import { cn, tagHref } from "@/lib/utils";
-import { CONTENT_TYPE_IDS } from "@/lib/content-taxonomy";
-import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
+import { tagHref } from "@/lib/utils";
 import { SuggestionStrip } from "@/features/communities/suggestion-strip";
 import { useToast } from "@/features/groups/use-toast";
 import { useAuth } from "@/features/auth/auth-provider";
@@ -94,6 +93,7 @@ export function DiscoverFeed() {
     !isCreators,
   );
   const creatorPages = useCreatorPages(isCreators);
+  const highlights = useDiscoverHighlights();
 
   const openOnlyChips = (
     <>
@@ -109,7 +109,7 @@ export function DiscoverFeed() {
   const idleContent = (
     <div className="space-y-6 max-md:space-y-5">
       {/* Meydan (docs/history/190-*): the four content types as large tiles — the same taxonomy filter as the chips below. */}
-      <ContentTypeTiles value={taxonomy} onChange={setTaxonomy} />
+      <ContentTypeTiles value={taxonomy} onChange={setTaxonomy} counts={highlights.counts} previews={highlights.previews} />
       {tags.length > 0 && (
         <section aria-labelledby="discover-trending" className="space-y-2.5">
           <h2 id="discover-trending" className="flex items-center gap-1.5 text-label font-semibold text-text">
@@ -132,6 +132,7 @@ export function DiscoverFeed() {
       )}
       {user && <SuggestionStrip onToast={showToast} onGoInvites={() => router.push("/communities?tab=invites")} />}
       <WeeklyChallengeBanner />
+      <PopularStrip popular={highlights.popular} />
 
       <div className="space-y-3">
         <Tabs
@@ -203,37 +204,6 @@ export function DiscoverFeed() {
       <SearchView idle={idleContent} />
       {toastNode}
     </>
-  );
-}
-
-/** Image / Text / Audio / Video as large toggle tiles; picking the selected one again clears the type filter. */
-function ContentTypeTiles({ value, onChange }: { value: TaxonomyFilterValue; onChange: (next: TaxonomyFilterValue) => void }) {
-  const { t } = useTranslation();
-  return (
-    <div role="group" aria-label={t("toolbar.contentTypeAria")} className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-      {CONTENT_TYPE_IDS.map((type) => {
-        const meta = CONTENT_TYPE_META[type];
-        const Icon = meta.icon;
-        const selected = value.contentType === type;
-        return (
-          <button
-            key={type}
-            type="button"
-            aria-pressed={selected}
-            onClick={() => onChange({ contentType: selected ? null : type, category: null, subcategory: null })}
-            className={cn(
-              "flex h-24 flex-col justify-between rounded-xl p-4 text-left transition-[background-color,box-shadow,transform] duration-200 ease-soft active:scale-[0.98] sm:h-28",
-              selected ? "bg-primary-soft ring-2 ring-primary" : "bg-surface-soft hover:bg-border-soft",
-            )}
-          >
-            <span className={cn("flex h-9 w-9 items-center justify-center rounded-full", selected ? "bg-primary text-primary-foreground" : "bg-surface text-primary")}>
-              <Icon size={18} strokeWidth={1.9} aria-hidden />
-            </span>
-            <span className="font-display text-[1.125rem] font-bold tracking-[-0.02em] text-text">{t(meta.labelKey)}</span>
-          </button>
-        );
-      })}
-    </div>
   );
 }
 

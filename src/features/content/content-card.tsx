@@ -1,5 +1,6 @@
 "use client";
 
+import { createContext, useContext } from "react";
 import Link from "next/link";
 import { Avatar } from "@/components/ui/avatar";
 import { rememberCardMedia } from "@/lib/card-transition";
@@ -35,6 +36,7 @@ export function ContentCard({
   className?: string;
   children: React.ReactNode;
 }) {
+  const flat = useContext(StreamContext);
   return (
     <article
       // A click that will navigate to this card's own page remembers where the cover is, so the detail
@@ -45,8 +47,10 @@ export function ContentCard({
         }
       }}
       className={cn(
-        "group relative flex flex-col rounded-lg border border-border-soft bg-surface shadow-card",
-        "transition-[border-color,box-shadow] duration-300 ease-soft hover:border-border hover:shadow-card-hover",
+        "group relative flex flex-col",
+        flat
+          ? "bg-transparent"
+          : "rounded-lg border border-border-soft bg-surface shadow-card transition-[border-color,box-shadow] duration-300 ease-soft hover:border-border hover:shadow-card-hover",
         // Hover-capable pointers only (Tailwind's hover: variant): a hairline of the brand colour opens along the top edge.
         "before:pointer-events-none before:absolute before:inset-x-5 before:top-0 before:z-[1] before:h-px before:origin-center before:scale-x-0 before:rounded-full before:bg-primary/55 before:transition-transform before:duration-[var(--motion-emphasis)] before:ease-soft hover:before:scale-x-100",
         className,
@@ -55,8 +59,37 @@ export function ContentCard({
       {children}
       {/* Mouse/touch convenience only: hidden from assistive tech and the tab
           order — the card title (ContentCardTitle) is the accessible link. */}
-      <Link href={href} data-card-link className="absolute inset-0 z-0 rounded-lg" aria-hidden tabIndex={-1} />
+      <Link href={href} data-card-link className={cn("absolute inset-0 z-0", !flat && "rounded-lg")} aria-hidden tabIndex={-1} />
     </article>
+  );
+}
+
+const StreamContext = createContext(false);
+
+/**
+ * Meydan's post stream (docs/history/190-* Faz 6): one surface holding the posts, separated by hairlines — no box per post.
+ * Every `ContentCard` inside drops its own border/shadow/radius (context), so the same cards serve both the stream and the
+ * masonry grids. On phones the stream runs edge to edge (it cancels the page's 12px gutter); from `sm` it is one rounded panel.
+ * No `overflow-hidden`: a card's ⋮ menu must be able to open past the panel's edge.
+ */
+export function ContentStream({
+  as: Tag = "div",
+  className,
+  children,
+  ...rest
+}: React.HTMLAttributes<HTMLElement> & { as?: "div" | "ul"; [data: `data-${string}`]: string | undefined }) {
+  return (
+    <StreamContext.Provider value={true}>
+      <Tag
+        {...rest}
+        className={cn(
+          "-mx-3 divide-y divide-border-soft border-y border-border-soft bg-surface sm:mx-0 sm:rounded-lg sm:border sm:shadow-card",
+          className,
+        )}
+      >
+        {children}
+      </Tag>
+    </StreamContext.Provider>
   );
 }
 

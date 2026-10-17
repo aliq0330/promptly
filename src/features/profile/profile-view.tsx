@@ -5,6 +5,7 @@ import { PageContainer } from "@/components/ui/page-header";
 import { useEffect, useMemo, useState } from "react";
 import { Heart, SearchX, Sparkles, Workflow as WorkflowIcon } from "lucide-react";
 import { ProfileHeader } from "./profile-header";
+import { CommunityRings } from "@/features/feed/community-rings";
 import { ProfileTabs, type ProfileTabKey } from "./profile-tabs";
 import { ContributionMap } from "./contribution-map";
 import { ProfileToolbar, type ProfileSortKey } from "./profile-toolbar";
@@ -138,6 +139,8 @@ export function ProfileView({
     }),
     [authorPrompts.length, authorRequests.length, workflows, presets],
   );
+  // Real `copy_count` (one per signed-in person per day, never the author — docs/history/160-*), summed over the prompts this profile lists.
+  const reuseCount = useMemo(() => authorPrompts.reduce((sum, prompt) => sum + prompt.copyCount, 0), [authorPrompts]);
 
   const tabs = useMemo(() => {
     // Meydan (docs/history/190-*): the four kinds are top-level tabs (no nested "Gönderiler" row, no second "Hazır Ayarlar").
@@ -209,8 +212,11 @@ export function ProfileView({
         user={user}
         isOwnProfile={isOwnProfile}
         postCounts={postCounts}
+        reuseCount={reuseCount}
         onSelectPosts={() => setActiveTab("prompts")}
       />
+      {/* Meydan (docs/history/190-* Faz 6): your own communities as rings — only on your own profile (memberships are not public). */}
+      {isOwnProfile && <CommunityRings />}
 
       <ProfileTabs tabs={tabs} active={activeTab} onChange={setActiveTab} />
 

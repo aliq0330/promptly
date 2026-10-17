@@ -335,6 +335,19 @@ export function formatEventRange(startIso: string, endIso: string | null, tz: st
   }
 }
 
+/** The date tile of an event card ("EKİ" / "24"), in the event's own time zone. */
+export function eventDateParts(iso: string, tz: string, language: "tr" | "en"): { month: string; day: string } {
+  const locale = language === "tr" ? "tr-TR" : "en-US";
+  const date = new Date(iso);
+  try {
+    const month = new Intl.DateTimeFormat(locale, { timeZone: tz, month: "short" }).format(date).replace(".", "");
+    const day = new Intl.DateTimeFormat(locale, { timeZone: tz, day: "numeric" }).format(date);
+    return { month: month.toLocaleUpperCase(locale), day };
+  } catch {
+    return { month: "", day: String(date.getUTCDate()) };
+  }
+}
+
 export type RsvpStatus = "going" | "maybe" | "not_going";
 export type EventPhase = "upcoming" | "live" | "past" | "cancelled";
 

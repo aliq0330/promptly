@@ -80,8 +80,9 @@ export function AnnouncementsSection({
 
   return (
     <section aria-labelledby="community-announcements-title" className="space-y-3">
-      <div className="flex items-center justify-between gap-3">
-        <h2 id="community-announcements-title" className="flex items-center gap-1.5 text-label font-semibold text-text">
+      <div className={highlight ? "contents" : "flex items-center justify-between gap-3"}>
+        {/* In the feed's summary the warm card speaks for itself; the heading stays for screen readers. */}
+        <h2 id="community-announcements-title" className={highlight ? "sr-only" : "flex items-center gap-1.5 text-label font-semibold text-text"}>
           <Megaphone size={15} aria-hidden /> {t("communities.announcements.title")}
         </h2>
         {canManage && (
@@ -105,10 +106,19 @@ export function AnnouncementsSection({
       ) : (
         <ul className="space-y-3">
           {items.map((item) => (
-            <li key={item.id} className="space-y-2 rounded-lg border border-border-soft bg-surface p-4">
+            <li
+              key={item.id}
+              className={
+                // Meydan (docs/history/190-* Faz 6): in the feed's summary a pinned announcement is the warm card at the top.
+                highlight && item.pinned ? "space-y-2 rounded-lg border border-secondary/25 bg-secondary/10 p-4" : "space-y-2 rounded-lg border border-border-soft bg-surface p-4"
+              }
+            >
+              {highlight && item.pinned && (
+                <p className="text-[0.6875rem] font-bold uppercase tracking-[0.08em] text-secondary">{t("communities.announcements.pinnedEyebrow")}</p>
+              )}
               <div className="flex items-start justify-between gap-3">
                 <h3 className="flex min-w-0 items-center gap-1.5 break-words text-sm font-semibold text-text">
-                  {item.pinned && <Pin size={13} className="shrink-0 text-primary" aria-label={t("communities.announcements.pinned")} />}
+                  {item.pinned && !highlight && <Pin size={13} className="shrink-0 text-primary" aria-label={t("communities.announcements.pinned")} />}
                   <span className="min-w-0">{item.title}</span>
                 </h3>
                 {canManage && (
