@@ -1,6 +1,9 @@
-import { SquareTerminal } from "lucide-react";
+"use client";
+
 import { CopyPromptButton } from "./copy-prompt-button";
-import { cn } from "@/lib/utils";
+import { resolveToolRefs } from "@/lib/ai-tool-catalog";
+import { cn, formatCount } from "@/lib/utils";
+import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Prompt } from "@/types";
 
 /**
@@ -11,20 +14,27 @@ import type { Prompt } from "@/types";
  * (and a request response, which is the same `prompts` row shape).
  * `CopyPromptButton` always copies the real, full `promptText`, never this
  * block's clamped display text.
+ *
+ * Meydan (docs/history/190-*): a borderless soft panel headed "PROMPT · <tool>",
+ * with the real use count (`copy_count`) and a bare "Kopyala" on the right.
  */
 export function PromptPreviewBox({ prompt, lines = 4 }: { prompt: Prompt; lines?: 3 | 4 | 6 }) {
+  const { t } = useTranslation();
+  const tool = resolveToolRefs(prompt.tools)[0]?.label ?? prompt.tool;
   return (
-    <div className="relative overflow-hidden rounded-md border border-border-soft bg-surface-soft">
-      <div className="flex items-center justify-between gap-2 px-3 pt-2">
-        <span className="flex items-center gap-1.5 text-caption font-semibold tracking-wide text-text-muted">
-          <SquareTerminal size={13} strokeWidth={2} />
-          Prompt
+    <div className="relative overflow-hidden rounded-xl bg-surface-soft">
+      <div className="flex items-center gap-2 pl-3.5 pr-1.5 pt-2">
+        <span className="min-w-0 flex-1 truncate text-caption font-semibold uppercase tracking-[0.06em] text-text-secondary">
+          Prompt{tool ? <span className="normal-case tracking-normal text-text-muted"> · {tool}</span> : null}
         </span>
-        <CopyPromptButton text={prompt.promptText} promptId={prompt.id} />
+        {prompt.copyCount > 0 && (
+          <span className="shrink-0 text-caption tabular-nums text-text-muted">{t("prompt.usesShort", { count: formatCount(prompt.copyCount) })}</span>
+        )}
+        <CopyPromptButton text={prompt.promptText} promptId={prompt.id} variant="link" />
       </div>
       {/* Padding lives on the wrapper: padding on the clamped element itself
           would reveal part of the next (clamped-away) line. */}
-      <div className="px-3 pb-3 pt-1.5">
+      <div className="px-3.5 pb-3 pt-1">
         <p
           className={cn(
             "prompt-text break-words whitespace-pre-line text-text-secondary",

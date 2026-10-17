@@ -38,3 +38,13 @@ export function ContentTypeLabel({
     </p>
   );
 }
+
+/** Meydan's content-type pill on a card's identity line (`[icon] Görsel Prompt`); the detail pages keep the line form above. */
+export function ContentTypePill({ icon: Icon, label, className }: { icon: LucideIcon; label: string; className?: string }) {
+  return (
+    <span className={cn("inline-flex h-6 shrink-0 items-center gap-1 rounded-full bg-primary-soft px-2 text-caption font-semibold text-primary", className)}>
+      <Icon size={12} strokeWidth={2.1} aria-hidden />
+      {label}
+    </span>
+  );
+}

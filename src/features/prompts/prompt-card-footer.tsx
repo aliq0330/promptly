@@ -12,23 +12,21 @@ type FooterTarget =
 
 /**
  * ContentActions — the one action row every content card uses (every prompt
- * content type, a workflow AND a preset): Beğeni · Yorum · Kaydet grouped
- * together on the left, Paylaş always alone on the far right (Promptly
- * Etkileşim Butonları Düzeni görevi — Paylaş never joins the left group).
- * Plus the İstatistikler action (Bölüm 9.82) right after Kaydet. Same icons, order, spacing and touch targets everywhere. Like/save/comment
- * are the real, database-persisted actions (CLAUDE.md Bölüm 21/9.35/9.36 —
- * Save opens the shared collection modal for prompts, generators and
- * workflows), share opens the shared `ShareModal` (never a direct
- * native-share call). No new action system — this only arranges the
- * existing components.
+ * content type, a workflow AND a preset), in Meydan's order (docs/history/190-*):
+ * Beğeni · Yorum on the left; Kaydet · İstatistikler · Paylaş on the right.
+ * Same icons, spacing and touch targets everywhere. Like/save/comment are the
+ * real, database-persisted actions, Save opens the shared collection modal,
+ * Share opens the shared `ShareModal` (never a direct native-share call).
+ * Rendered inside `ContentCardPost`'s footer slot, which provides the row.
  */
 export function PromptCardFooter(target: FooterTarget) {
   return (
-    <div className="relative z-10 flex items-center gap-0.5 border-t border-border-soft px-2 py-1.5">
+    <>
       {target.preset ? (
         <>
           <LikeButton id={target.preset.id} likeCount={target.preset.likeCount} contentType="preset" />
           <CommentCountLink presetId={target.preset.id} baseCount={target.preset.commentCount} />
+          <span className="ml-auto" />
           <SaveButton presetId={target.preset.id} saveCount={target.preset.saveCount} />
           <StatisticsButton target={{ contentType: "preset", contentId: target.preset.id, likeCount: target.preset.likeCount, commentCount: target.preset.commentCount, saveCount: target.preset.saveCount }} />
         </>
@@ -36,6 +34,7 @@ export function PromptCardFooter(target: FooterTarget) {
         <>
           <LikeButton id={target.workflow.id} likeCount={target.workflow.likeCount} contentType="workflow" />
           <CommentCountLink workflowId={target.workflow.id} baseCount={target.workflow.commentCount} />
+          <span className="ml-auto" />
           <SaveButton workflowId={target.workflow.id} saveCount={target.workflow.saveCount} />
           <StatisticsButton target={{ contentType: "workflow", contentId: target.workflow.id, likeCount: target.workflow.likeCount, commentCount: target.workflow.commentCount, saveCount: target.workflow.saveCount }} />
         </>
@@ -43,11 +42,11 @@ export function PromptCardFooter(target: FooterTarget) {
         <>
           <LikeButton id={target.prompt.id} likeCount={target.prompt.likeCount} contentType="prompt" />
           <CommentCountLink promptId={target.prompt.id} baseCount={target.prompt.commentCount} />
+          <span className="ml-auto" />
           <SaveButton promptId={target.prompt.id} saveCount={target.prompt.saveCount} />
           <StatisticsButton target={{ contentType: "prompt", contentId: target.prompt.id, likeCount: target.prompt.likeCount, commentCount: target.prompt.commentCount, saveCount: target.prompt.saveCount, copyCount: target.prompt.copyCount }} />
         </>
       )}
-      <span className="ml-auto" />
       <ShareTriggerButton
         target={
           target.preset
@@ -57,6 +56,6 @@ export function PromptCardFooter(target: FooterTarget) {
             : { contentType: "prompt", prompt: target.prompt }
         }
       />
-    </div>
+    </>
   );
 }

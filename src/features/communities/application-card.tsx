@@ -1,11 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { EyeOff, Pin } from "lucide-react";
-import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { ContentCard, ContentCardBody, ContentCardTitle } from "@/features/content/content-card";
-import { ContentTypeLabel } from "@/features/content/content-type-label";
+import { ContentCard, ContentCardPost, ContentCardTitle } from "@/features/content/content-card";
+import { ContentTypePill } from "@/features/content/content-type-label";
 import { ContentTags } from "@/features/content/content-tags";
 import { ToolChips } from "@/features/content/tool-chips";
 import { OutputPosterPreview, OutputThumbnailStrip } from "@/features/prompts/multi-image-output-options";
@@ -13,7 +11,7 @@ import { PostCommentLink, PostLike, PostSave, PostShareButton, PostStatisticsBut
 import { summarizeContent } from "./content-summary";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { postPageHref } from "@/lib/communities";
-import { formatRelativeTime, profileHref } from "@/lib/utils";
+import { formatRelativeTime } from "@/lib/utils";
 import type { CommunityPost } from "@/lib/supabase/communities";
 import type { TranslationKey } from "@/lib/i18n/translations";
 
@@ -25,8 +23,8 @@ const SHARED_LABEL: Record<CommunityPost["contentType"], TranslationKey> = {
 };
 
 /**
- * Başvuru (ve türü bilinmeyen eski) gönderinin akıştaki kartı: normal içerik kartıyla AYNI aile (aynı kabuk, tür satırı, başlık, çıktı önizlemesi,
- * etiketler, altbilgi) — farkı üstteki başvuran satırı + not ve altbilgideki sayaçların GÖNDERİNİN kendisine ait olmasıdır. Karta tıklamak başvurunun
+ * Başvuru (ve türü bilinmeyen eski) gönderinin akıştaki kartı: normal içerik kartıyla AYNI aile (aynı kabuk ve Meydan gönderi yerleşimi
+ * `ContentCardPost`, tür hapı, başlık, çıktı önizlemesi, etiketler, eylem satırı) — farkı kimlik satırının başvuranı göstermesi + not ve altbilgideki sayaçların GÖNDERİNİN kendisine ait olmasıdır. Karta tıklamak başvurunun
  * kendi sayfasını açar (`/communities/post/local?id=`); orijinal içeriğe oradan gidilir. `menu` topluluk menüsü (sabitle/düzenle/kaldır/bildir).
  */
 export function ApplicationCard({
@@ -48,58 +46,52 @@ export function ApplicationCard({
 
   return (
     <ContentCard href={href}>
-      <ContentCardBody>
-        <div className="relative z-20 flex items-start gap-2.5 focus-within:z-30">
-          {post.author && <Avatar src={post.author.avatarUrl} alt={post.author.displayName} size={32} />}
-          <div className="min-w-0 flex-1 leading-tight">
-            <p className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-small text-text">
-              {post.author ? (
-                <Link href={profileHref(post.author)} className="font-semibold hover:underline">
-                  {post.author.displayName}
-                </Link>
-              ) : (
-                <span className="font-semibold">{t("common.genericUser")}</span>
-              )}
-              <span className="text-text-muted">{t(SHARED_LABEL[post.contentType])}</span>
-              {post.kind !== "legacy" && <Badge variant="default">{t("communities.post.badge.application")}</Badge>}
-              {post.pinnedAt && (
-                <Badge variant="default">
-                  <Pin size={11} aria-hidden /> {t("communities.announcements.pinned")}
-                </Badge>
-              )}
-            </p>
-            <p className="text-caption text-text-muted">{formatRelativeTime(post.createdAt, language)}</p>
+      <ContentCardPost
+        author={post.author}
+        meta={`${t(SHARED_LABEL[post.contentType])} · ${formatRelativeTime(post.createdAt, language)}`}
+        badges={
+          <>
+            {summary && <ContentTypePill icon={summary.typeIcon} label={t(summary.typeLabelKey)} />}
+            {post.kind !== "legacy" && <Badge variant="default">{t("communities.post.badge.application")}</Badge>}
+            {post.pinnedAt && (
+              <Badge variant="default">
+                <Pin size={11} aria-hidden /> {t("communities.announcements.pinned")}
+              </Badge>
+            )}
+          </>
+        }
+        menu={menu}
+        footer={
+          // `contents`: the buttons stay direct items of the shared action row; the wrapper only marks them as the POST's own counters.
+          <div className="contents" data-post-engagement={post.id}>
+            <PostLike post={post} mode={mode} onToast={onToast} />
+            <PostCommentLink post={post} />
+            <span className="ml-auto" />
+            <PostSave post={post} />
+            <PostStatisticsButton post={post} />
+            <PostShareButton post={post} />
           </div>
-          {menu}
-        </div>
-
+        }
+      >
         {post.note && <p data-post-note className="whitespace-pre-wrap break-words text-small text-text-secondary">{post.note}</p>}
 
         {summary ? (
           <>
-            <div className="space-y-2">
-              <ContentTypeLabel icon={summary.typeIcon} label={t(summary.typeLabelKey)} detail={summary.detail} />
-              <ContentCardTitle href={href} title={summary.title} description={summary.description} />
-            </div>
+            <ContentCardTitle href={href} title={summary.title} description={summary.description} />
             {summary.playable && poster ? <OutputPosterPreview media={poster} /> : summary.media.length > 0 ? <OutputThumbnailStrip media={summary.media} /> : null}
-            <ToolChips refs={summary.tools} />
+            {summary.tools.length > 0 ? (
+              <ToolChips refs={summary.tools} />
+            ) : (
+              summary.detail && <span className="inline-flex h-6 w-fit items-center rounded-full bg-surface-soft px-2.5 text-caption font-medium text-text-muted">{summary.detail}</span>
+            )}
             <ContentTags tags={summary.tags} />
           </>
         ) : (
-          <p className="flex items-center gap-2 rounded-lg border border-dashed border-border px-3 py-4 text-small text-text-muted">
+          <p className="flex items-center gap-2 rounded-xl border border-dashed border-border px-3 py-4 text-small text-text-muted">
             <EyeOff size={15} aria-hidden /> {t("communities.feed.contentGone")}
           </p>
         )}
-      </ContentCardBody>
-
-      <div className="relative z-10 flex items-center gap-0.5 border-t border-border-soft px-2 py-1.5" data-post-engagement={post.id}>
-        <PostLike post={post} mode={mode} onToast={onToast} />
-        <PostCommentLink post={post} />
-        <PostSave post={post} />
-        <PostStatisticsButton post={post} />
-        <span className="ml-auto" />
-        <PostShareButton post={post} />
-      </div>
+      </ContentCardPost>
     </ContentCard>
   );
 }

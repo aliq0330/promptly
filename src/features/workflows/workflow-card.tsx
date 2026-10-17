@@ -2,12 +2,12 @@
 
 import { ArrowRight, Workflow as WorkflowIcon } from "lucide-react";
 import { workflowHref } from "@/lib/utils";
-import { ContentCard, ContentCardBody, ContentCardTitle } from "@/features/content/content-card";
-import { ContentTypeLabel } from "@/features/content/content-type-label";
+import { ContentCard, ContentCardPost, ContentCardTitle } from "@/features/content/content-card";
+import { ContentTypePill } from "@/features/content/content-type-label";
 import { ToolChips } from "@/features/content/tool-chips";
 import { ContentTags } from "@/features/content/content-tags";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
-import { PostHeader } from "@/features/prompts/post-header";
+import { PostTargetMenu, postMeta } from "@/features/prompts/post-header";
 import { PromptCardFooter } from "@/features/prompts/prompt-card-footer";
 import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -15,11 +15,11 @@ import { categoryLabel } from "./step-meta";
 import type { Workflow } from "@/types";
 
 /**
- * WorkflowCard — the same ContentCard shell, PostHeader (author, time,
- * three-dot menu), type line and Beğeni · Yorum · Kaydet · Paylaş footer as
- * PromptCard/GeneratorCard; only the middle block differs: a compact "steps"
+ * WorkflowCard — the same ContentCard shell and Meydan post layout
+ * (`ContentCardPost`: avatar, identity line with the type pill, ⋮ menu, action
+ * row) as PromptCard; only the middle block differs: a compact "steps"
  * panel (same surface as the prompt block) summarizing how many steps the
- * workflow has and which content types it chains, plus the tool chips.
+ * workflow has, its category and which content types it chains, plus the tool chips.
  */
 export function WorkflowCard({
   workflow,
@@ -37,18 +37,21 @@ export function WorkflowCard({
 
   return (
     <ContentCard href={href}>
-      <ContentCardBody>
-        <PostHeader workflow={workflow} onDeleted={onDeleted} collectionRemoval={collectionRemoval} />
-
-        <div className="space-y-2">
-          <div className="flex items-center justify-between gap-2">
-            <ContentTypeLabel icon={WorkflowIcon} label={t("workflow.singular")} detail={category} />
+      <ContentCardPost
+        author={workflow.creator}
+        meta={postMeta(workflow.creator.username, workflow.createdAt, language)}
+        badges={
+          <>
+            <ContentTypePill icon={WorkflowIcon} label={t("workflow.singular")} />
             {workflow.status === "draft" && <Badge variant="warning">{t("workflow.draftBadge")}</Badge>}
-          </div>
-          <ContentCardTitle href={href} title={workflow.title} description={workflow.description} />
-        </div>
+          </>
+        }
+        menu={<PostTargetMenu workflow={workflow} onDeleted={onDeleted} collectionRemoval={collectionRemoval} />}
+        footer={<PromptCardFooter workflow={workflow} />}
+      >
+        <ContentCardTitle href={href} title={workflow.title} description={workflow.description} />
 
-        <div className="flex items-center gap-3 rounded-md border border-border-soft bg-surface-soft p-2.5">
+        <div className="flex items-center gap-3 rounded-xl bg-surface-soft p-3">
           {workflow.coverUrl ? (
             <span className="relative block h-12 w-12 shrink-0 overflow-hidden rounded-sm">
               {/* eslint-disable-next-line @next/next/no-img-element -- real, potentially locally-produced data URL cover */}
@@ -67,6 +70,7 @@ export function WorkflowCard({
           <span className="min-w-0 flex-1 leading-tight">
             <span className="block text-label font-medium text-text">
               {t("workflow.stepCount", { count: String(workflow.stepCount) })}
+              {category && <span className="font-normal text-text-muted"> · {category}</span>}
             </span>
             <span className="mt-1 flex flex-wrap items-center gap-1">
               {workflow.contentTypes.map((type) => {
@@ -88,9 +92,7 @@ export function WorkflowCard({
 
         <ToolChips refs={workflow.tools} />
         <ContentTags tags={workflow.tags} />
-      </ContentCardBody>
-
-      <PromptCardFooter workflow={workflow} />
+      </ContentCardPost>
     </ContentCard>
   );
 }
