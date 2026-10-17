@@ -152,8 +152,10 @@ Topluluk arşivi **yoktur**. Karşılığı: **kapatma** (`closed_at`, topluluk 
 | Ekran | **Normal oluşturma ekranı** `?community=<id>` (ikinci form yok) | `ShareToCommunityModal`: kendi yayınlanmış içeriğin |
 | Kayıt | `prompts/prompt_requests/workflows/presets.community_id` dolu | `community_posts` satırı (+ isteğe bağlı not) |
 | Görünürlük | Sunucu `private` zorlar; yalnız topluluğu okuyabilen görür; yazarın profilinde/Keşfet/aramada/etikette yok | İçerik kendi görünürlüğünde kalır; **yalnız yayında + herkese açık** içerik başvurabilir |
-| Etkileşim | İçeriğin **kendi** beğeni/yorumu | **Gönderinin** kendi beğeni/yorumu (`community_post_id`); içeriğinkine karışmaz |
-| Kaydet | Yok (sunucuda engelli) | Normal içerik kuralları |
+| Etkileşim | İçeriğin **kendi** beğeni/yorumu | **Gönderinin** kendi beğeni/yorum/kaydı (`community_post_id`); içeriğinkine karışmaz |
+| Sayfa | İçeriğin kendi detay sayfası | `/communities/post/local`: başvurulan içeriğin **normal detay sayfası** (mobil/tablet/masaüstü dahil) + üstte başvuru bandı |
+| Paylaşım | Normal `ShareModal` (bağlantı + site içi mesaj) | Aynı `ShareModal`: bağlantı gönderinin sayfası, site içi mesajla paylaşım var (düz metin bloğu, kart olarak çizilir) |
+| Kaydet | İçerik normal kaydedilir (`collection_items.prompt_id/…`; yalnız topluluğu okuyabilen) | **Gönderinin kendisi** kaydedilir (`collection_items.community_post_id`, kendi `save_count`); istek başvurusu ve yerel gönderi kaydedilmez |
 | Kaldırma | Gönderiyi kaldırmak içeriği siler | Gönderi kaldırılır, içerik silinmez |
 
 `community_posts.kind`: `native` · `application` · `legacy` (178 öncesi, tür tahmin edilmez). Aynı içerik bir toplulukta bir kez başvurabilir (benzersiz dizinler). Mükerrer kayıt oluşmaz: yerel içerik genel akışta *hiç* görünmez; başvuru kopya değil başvurudur.
@@ -164,6 +166,16 @@ Topluluk arşivi **yoktur**. Karşılığı: **kapatma** (`closed_at`, topluluk 
 - **Yazar ayrılırsa**: içerik toplulukta kalır; yazar artık okuyamaz/düzenleyemez. Hesap silinirse içerik silinir.
 - **Çıkarılan/yasaklanan**: topluluğu okuma yetkisi biter → eski içeriğine de erişemez (RLS `can_read_community`).
 - **Yeni liste sorgusu kuralı**: tablo okuyan her yeni içerik listesi `community_id is null` süzmelidir (CLAUDE.md).
+
+### Gönderi eşitliği (docs/history/184-*)
+
+Topluluktaki iki gönderi tipi de sitedeki normal içerikle **birebir aynı** etkileşimleri sunar: beğeni · yorum · kaydet · istatistik (beğenenler/yorum yapanlar/kaydedenler) · paylaş (bağlantı, diğer uygulamalar, **site içi mesaj**). Mekanizma:
+
+- `features/communities/post-scope.tsx` — başvuru sayfasında detay bileşenlerine "şu an bir gönderi olarak gösteriliyorsun" diyen bağlam.
+- `features/content/scoped-engagement.tsx` — `EngageLike/CommentCount/Save/Statistics/Share/Comments`: dört detay sayfası (Prompt, İstek, Workflow, Hazır Ayar) etkileşimlerini buradan çizer; bağlam varsa gönderinin bileşenleri (`post-engagement.tsx`), yoksa içeriğin kendileri çalışır.
+- `PostMenu` bağlamda içeriğin kendi yönetimini (düzenle/çoğalt/sil/bağlantı kopyala/bildir) gizler; menü yalnız gönderi işlerini taşır (notu düzenle, gönderimi kaldır, bildir, yönetici kaldır). Orijinal içeriği düzenleme/silme orijinalin sayfasındadır.
+- Kaydedilenler/koleksiyonlar kaydedilen gönderiyi akıştaki kartın aynısıyla (`SavedPostCard` → `ApplicationCard`) gösterir; topluluğu okuyamayan kullanıcıda gönderi listede yer almaz.
+- Kaydedilemeyenler: yerel gönderi (kaydedilen şey içeriktir) ve istek başvurusu (istek normal sitede de kaydedilemez) — sunucu `community_post_not_savable` ile de reddeder.
 
 ---
 
@@ -318,6 +330,8 @@ Kişiye özel tercih asla topluluk genelinde uygulanmaz: RPC/RLS yalnız `auth.u
 | `community_announcements`, `community_events`, `community_event_rsvps`, `community_rule_acceptances`, `community_reports` | topluluk modülü tabloları |
 | `prompts/prompt_requests/workflows/presets.community_id` | FK → `chat_groups` **ON DELETE CASCADE** |
 | `prompt_likes/prompt_comments.community_post_id` | altıncı etkileşim hedefi, FK cascade |
+| `collection_items.community_post_id` | başvuru gönderisini kaydetme (FK cascade); "tam bir hedef" CHECK'i dört hedefli; (koleksiyon, gönderi) benzersiz |
+| `community_posts.save_count` | gönderinin kendi kaydetme sayacı (kaydeden TEK kullanıcı; istemciden yazılamaz) |
 | `pinned_messages`, `message_stars` | sohbet özellikleri |
 
 İlişki türleri: topluluk 1—1 sohbet; topluluk 1—N üyelik / istek / davet / gönderi / duyuru / etkinlik; gönderi N—1 içerik.

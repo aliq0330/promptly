@@ -60,9 +60,12 @@ import { cn, profileHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { memberCountText } from "@/lib/group-labels";
 import { communityHref } from "@/lib/communities";
+import { fetchCommunityPostById } from "@/lib/supabase/communities";
+import { summarizeContent } from "@/features/communities/content-summary";
 import { translateForRuntime, type TranslationKey } from "@/lib/i18n/translations";
 import { composeWorkflowShareBody } from "./workflow-share-format";
 import { composePresetShareBody } from "./preset-share-format";
+import { composeCommunityPostShareBody } from "./community-post-share-format";
 import { fetchPresetById } from "@/lib/supabase/presets";
 import { useRealPresets } from "@/features/presets/real-presets-provider";
 import { fetchWorkflowById } from "@/lib/supabase/workflows";
@@ -116,6 +119,7 @@ export function LocalConversationView() {
   const shareParamRequestId = searchParams.get("shareRequestId");
   const shareParamWorkflowId = searchParams.get("shareWorkflowId");
   const shareParamPresetId = searchParams.get("sharePresetId");
+  const shareParamPostId = searchParams.get("sharePostId");
   const { user } = useAuth();
   const {
     getCached,
@@ -158,6 +162,7 @@ export function LocalConversationView() {
   const [fetchedShareTitle, setFetchedShareTitle] = useState<string | null>(null);
   const [fetchedShareWorkflowTitle, setFetchedShareWorkflowTitle] = useState<string | null>(null);
   const [fetchedSharePresetTitle, setFetchedSharePresetTitle] = useState<string | null>(null);
+  const [fetchedSharePostTitle, setFetchedSharePostTitle] = useState<string | null>(null);
   const [dismissedShare, setDismissedShare] = useState(false);
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -580,6 +585,7 @@ export function LocalConversationView() {
     setFetchedShareTitle(null);
     setFetchedShareWorkflowTitle(null);
     setFetchedSharePresetTitle(null);
+    setFetchedSharePostTitle(null);
     setDismissedShare(false);
     if (shareParamPromptId && !getCachedPrompt(shareParamPromptId)) {
       fetchPromptById(shareParamPromptId).then((result) => {
@@ -597,9 +603,17 @@ export function LocalConversationView() {
       fetchPresetById(shareParamPresetId).then((result) => {
         if (result) setFetchedSharePresetTitle(result.title);
       });
+    } else if (shareParamPostId) {
+      // Topluluk başvuru gönderisi: başlık gönderinin başvurduğu içeriktendir; okunamıyorsa (topluluğa erişim yok) başlık gelmez ve gönderilemez.
+      fetchCommunityPostById(shareParamPostId)
+        .then((result) => {
+          const title = result?.content ? summarizeContent(result.content).title : null;
+          if (title) setFetchedSharePostTitle(title);
+        })
+        .catch(() => undefined);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [shareParamPromptId, shareParamRequestId, shareParamWorkflowId, shareParamPresetId]);
+  }, [shareParamPromptId, shareParamRequestId, shareParamWorkflowId, shareParamPresetId, shareParamPostId]);
 
   const pendingShare = dismissedShare
     ? null
@@ -621,7 +635,14 @@ export function LocalConversationView() {
                   title: getCachedPreset(shareParamPresetId)?.title ?? fetchedSharePresetTitle ?? t("common.loading"),
                   resolved: Boolean(getCachedPreset(shareParamPresetId) ?? fetchedSharePresetTitle),
                 }
-              : null;
+              : shareParamPostId
+                ? {
+                    type: "community_post" as const,
+                    id: shareParamPostId,
+                    title: fetchedSharePostTitle ?? t("common.loading"),
+                    resolved: Boolean(fetchedSharePostTitle),
+                  }
+                : null;
 
   // Yeni bir mesaj geldiğinde yalnızca kullanıcı zaten en alttaysa (ya da
   // yeni mesajı kendisi gönderdiyse) en alta kaydır — eski mesajları
@@ -731,7 +752,9 @@ export function LocalConversationView() {
 
   // A workflow/preset share line can't be sent until the item it links to has resolved.
   const isShareUnresolved =
-    (pendingShare?.type === "workflow" && !pendingShare.resolved) || (pendingShare?.type === "preset" && !pendingShare.resolved);
+    (pendingShare?.type === "workflow" && !pendingShare.resolved) ||
+    (pendingShare?.type === "preset" && !pendingShare.resolved) ||
+    (pendingShare?.type === "community_post" && !pendingShare.resolved);
 
   /** The finished `body` for an outgoing message — workflow/preset shares have no embed column (Bölüm 9.52), so they're composed into the text itself. */
   function composeOutgoingBody(trimmed: string): string | undefined {
@@ -739,7 +762,9 @@ export function LocalConversationView() {
       ? composeWorkflowShareBody(trimmed, pendingShare.title, pendingShare.id)
       : pendingShare?.type === "preset"
         ? composePresetShareBody(trimmed, pendingShare.title, pendingShare.id)
-        : trimmed || undefined;
+        : pendingShare?.type === "community_post"
+          ? composeCommunityPostShareBody(trimmed, pendingShare.title, pendingShare.id)
+          : trimmed || undefined;
   }
 
   function afterSuccessfulSend() {

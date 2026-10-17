@@ -264,10 +264,10 @@ select public._check(26, 'etkileşim: üye olmayan topluluk içeriğinin yorumun
 select public._as_user(:carol);
 select public._check(27, 'etkileşim: üye yorumu beğenebilir',
   public._try(format($q$insert into public.comment_likes (comment_id, user_id) select id, %L from public.prompt_comments where prompt_id = 'a0000000-0000-4000-8000-000000000001' limit 1$q$, :carol)) = 'ok');
-select public._check(28, 'kaydetme: topluluk içeriği (prompt/workflow/hazır ayar) koleksiyona kaydedilemez; normal içerik kaydedilir',
-  public._try($q$insert into public.collection_items (collection_id, prompt_id) values ('c1000000-0000-4000-8000-000000000001', 'a0000000-0000-4000-8000-000000000001')$q$) like '%community_content_not_savable%'
-  and public._try($q$insert into public.collection_items (collection_id, workflow_id) values ('c1000000-0000-4000-8000-000000000001', 'c0000000-0000-4000-8000-000000000001')$q$) like '%community_content_not_savable%'
-  and public._try($q$insert into public.collection_items (collection_id, preset_id) values ('c1000000-0000-4000-8000-000000000001', 'b0000000-0000-4000-8000-000000000001')$q$) like '%community_content_not_savable%'
+select public._check(28, 'kaydetme: topluluk içeriği (prompt/workflow/hazır ayar) topluluğu OKUYABİLEN üye tarafından normal kaydedilir (docs/history/184-*); normal içerik de',
+  public._try($q$insert into public.collection_items (collection_id, prompt_id) values ('c1000000-0000-4000-8000-000000000001', 'a0000000-0000-4000-8000-000000000001')$q$) = 'ok'
+  and public._try($q$insert into public.collection_items (collection_id, workflow_id) values ('c1000000-0000-4000-8000-000000000001', 'c0000000-0000-4000-8000-000000000001')$q$) = 'ok'
+  and public._try($q$insert into public.collection_items (collection_id, preset_id) values ('c1000000-0000-4000-8000-000000000001', 'b0000000-0000-4000-8000-000000000001')$q$) = 'ok'
   and public._try($q$insert into public.collection_items (collection_id, prompt_id) values ('c1000000-0000-4000-8000-000000000001', 'a0000000-0000-4000-8000-0000000000a1')$q$) = 'ok');
 reset role;
 update public.chat_groups set closed_at = now() where id = public._g('A');

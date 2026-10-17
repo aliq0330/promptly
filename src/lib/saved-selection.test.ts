@@ -73,3 +73,8 @@ test("dedupeSavedEntries: the same id under different content types is not a dup
   assert.equal(dedupeSavedEntries(rows).length, 3);
   assert.deepEqual(dedupeSavedEntries([]), []);
 });
+
+test("dedupeSavedEntries: topluluk gönderisi kendi türüyle ayrı bir iş sayılır (aynı kimlikli prompt ile karışmaz)", () => {
+  const out = dedupeSavedEntries([entry("community_post", "p1"), entry("prompt", "p1"), entry("community_post", "p1")]);
+  assert.deepEqual(out.map((e) => `${e.type}:${e.data.id}`), ["community_post:p1", "prompt:p1"]);
+});

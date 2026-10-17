@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Copy, FolderMinus, Link2, Loader2, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { useAuth } from "@/features/auth/auth-provider";
 import { usePostMenuExtras } from "./post-menu-extras";
+import { usePostScope } from "@/features/communities/post-scope";
 import { shareLinkForHref } from "@/lib/share-link";
 import { absoluteUrl, cn, presetHref, promptHref, requestHref, resultHref, workflowHref } from "@/lib/utils";
 import { deleteRealPrompt } from "@/lib/supabase/prompts";
@@ -108,6 +109,8 @@ export function PostMenu({
   const editHref = communityId ? `${editBase}&community=${communityId}` : editBase;
 
   const extras = usePostMenuExtras();
+  // Başvuru gönderisi sayfasında içeriğin KENDİ yönetimi (düzenle/çoğalt/sil/bağlantı/bildir) orijinalin sayfasında kalır; menü yalnız gönderi işlerini (ekstralar) taşır.
+  const postScope = usePostScope();
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
@@ -198,6 +201,8 @@ export function PostMenu({
     }
   }
 
+  if (postScope && extras.length === 0) return null;
+
   return (
     <div ref={ref} className="relative z-20 shrink-0">
       <button
@@ -222,7 +227,7 @@ export function PostMenu({
             "absolute right-0 top-8 z-30 w-52 overflow-hidden rounded-md border border-border-soft bg-surface-elevated py-1 shadow-pop animate-pop-in",
           )}
         >
-          {!communityId && (
+          {!communityId && !postScope && (
             <button
               type="button"
               role="menuitem"
@@ -265,7 +270,7 @@ export function PostMenu({
               {removeError && <p className="px-3 py-1 text-xs text-danger">{removeError}</p>}
             </>
           )}
-          {isOwn && (
+          {isOwn && !postScope && (
             <>
               {isResult ? (
                 onEdit && (
@@ -318,7 +323,7 @@ export function PostMenu({
               </button>
             </>
           )}
-          {!isOwn && user && !isResult && (
+          {!isOwn && user && !isResult && !postScope && (
             <div className="px-3 py-2" onClick={(event) => event.stopPropagation()}>
               <ReportButton
                 targetType={isPreset ? "preset" : isWorkflow ? "workflow" : isRequest ? "request" : "prompt"}

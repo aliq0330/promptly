@@ -94,7 +94,7 @@ await scenario("2b. Notsuz başvuru gönderisinde not alanı hiç bulunmaz", asy
 }, { setup: (db) => { seed(db, { myRole: "member" }); db.addPost(C1, { title: "Notsuz içerik", note: null }); } });
 
 // 3
-await scenario("3. Yerel (topluluğa özgü) içerik: akışta NORMAL içerik kartı, TEK ⋮ menüsü (üst çubuk yok); ayrı gönderi etkileşimi ve 'başvuru' etiketi YOK; kaydet YOK, istatistik + paylaş VAR", async ({ page }) => {
+await scenario("3. Yerel (topluluğa özgü) içerik: akışta NORMAL içerik kartı, TEK ⋮ menüsü (üst çubuk yok); ayrı gönderi etkileşimi ve 'başvuru' etiketi YOK; kaydet + istatistik + paylaş normal kart gibi VAR", async ({ page }) => {
   await open(page, C1);
   const card = post(page, "Yerel prompt");
   const normalCard = card.locator("article").first();
@@ -104,7 +104,7 @@ await scenario("3. Yerel (topluluğa özgü) içerik: akışta NORMAL içerik ka
   assert.equal(await card.getByText("Başvuru", { exact: true }).count(), 0);
   assert.equal(await card.locator("[data-post-engagement]").count(), 0, "native content uses the content's OWN like/comment, not a second engagement bar");
   await normalCard.getByRole("button", { name: /beğen/i }).first().waitFor();
-  assert.equal(await normalCard.getByRole("button", { name: /Kaydet/i }).count(), 0, "community content can't be saved");
+  await normalCard.getByRole("button", { name: /Kaydet|koleksiyon/i }).first().waitFor();
   await normalCard.getByRole("button", { name: /İstatistik/i }).first().waitFor();
   await normalCard.getByRole("button", { name: "Paylaş" }).waitFor();
   assert.match((await normalCard.getByRole("link", { name: "Yerel prompt" }).getAttribute("href")) ?? "", /prompts\/local\/?\?id=/);
@@ -123,7 +123,7 @@ await scenario("3c. Yerel kartın paylaşımı özel içerik için paylaşım sa
   assert.doesNotMatch(copied, /\/share\//, "private community content has no public share page");
 }, { setup: (db) => { seed(db, { myRole: "member" }); db.addPost(C1, { author: U.alice, title: "Yerel prompt", kind: "native", visibility: "private" }); } });
 
-await scenario("3d. Başvuru kartı da normal kart gibi İstatistik + Paylaş sunar; istatistik gönderinin KENDİ beğeni/yorumunu sorar (kaydedenler sekmesi yok); paylaşım gönderinin sayfasına gider", async ({ page, db, context }) => {
+await scenario("3d. Başvuru kartı da normal kart gibi Kaydet + İstatistik + Paylaş sunar; istatistik gönderinin KENDİ etkileşimini sorar (kaydedenler sekmesi dahil); paylaşım bağlantısı gönderinin sayfasına gider, mesajla paylaşım da var", async ({ page, db, context }) => {
   await context.grantPermissions(["clipboard-read", "clipboard-write"]);
   db.rpc.content_engagers = (body) => { db.calls.push({ method: "RPC", table: "content_engagers", body }); return { body: [] }; };
   await open(page, C1);
@@ -132,7 +132,7 @@ await scenario("3d. Başvuru kartı da normal kart gibi İstatistik + Paylaş su
   await card.getByRole("button", { name: /İstatistik/i }).click();
   const d = dlg(page);
   await d.getByRole("tab", { name: /Beğenenler/ }).waitFor();
-  assert.equal(await d.getByRole("tab", { name: /Kaydedenler/ }).count(), 0, "a post can't be saved");
+  await d.getByRole("tab", { name: /Kaydedenler/ }).waitFor();
   await page.waitForTimeout(300);
   const stat = calls(db, "content_engagers", "RPC").at(-1);
   assert.equal(stat?.body.p_content_type, "community_post");
@@ -140,7 +140,7 @@ await scenario("3d. Başvuru kartı da normal kart gibi İstatistik + Paylaş su
   await d.getByRole("button", { name: /Kapat/ }).click();
   await page.evaluate(() => Object.defineProperty(navigator, "share", { value: undefined, configurable: true }));
   await card.getByRole("button", { name: "Paylaş" }).click();
-  assert.equal(await dlg(page).getByText(/mesaj olarak/i).count(), 0, "a post can't be attached to a message");
+  await dlg(page).getByText(/mesaj olarak/i).first().waitFor();
   await dlg(page).getByRole("button", { name: /Diğer uygulamalarla paylaş/ }).click();
   const copied = await page.evaluate(() => navigator.clipboard.readText());
   assert.match(copied, /communities\/post\/local\/?\?id=/);
@@ -190,10 +190,10 @@ await scenario("5. Yorum başvuru sayfasında yazılır, gönderi kimliğine ba�
   assert.equal(posts[0].body.community_post_id, db.posts[0].id);
   assert.equal(posts[0].body.prompt_id, undefined);
   assert.equal(db.posts[0].comment_count, 2);
-  await page.getByRole("button", { name: /Gönderi yorumları \(2\)/ }).waitFor();
+  await page.getByRole("link", { name: /Gönderi yorumları \(2\)/ }).first().waitFor();
   await page.goto(postPage(db.posts[1].id));
   await page.locator("[data-community-post-page]").waitFor();
-  await page.getByRole("button", { name: /Gönderi yorumları \(0\)/ }).waitFor();
+  await page.getByRole("link", { name: /Gönderi yorumları \(0\)/ }).first().waitFor();
   assert.equal(await page.getByText("Harika bir fikir").count(), 0, "comments never leak across posts");
   assert.equal(await page.getByText("Eski yorum").count(), 0);
 }, { setup: (db) => { seed(db, { myRole: "member" }); const first = db.addPost(C1, { title: "Birinci gönderi", commentCount: 1 }); db.addPost(C1, { title: "İkinci gönderi" }); first.created_at = "2026-03-02T00:00:00Z"; db.posts[1].created_at = "2026-03-01T00:00:00Z"; db.comments.push({ id: crypto.randomUUID(), community_post_id: first.id, author_id: U.bob.id, body: "Eski yorum", parent_id: null, created_at: "2026-03-02T01:00:00Z" }); } });
@@ -344,25 +344,72 @@ await scenario("13d. Prompt: /create?mode=prompt&community= ve yalnız ?communit
 }, { setup: (db) => seed(db, { myRole: "member" }) });
 
 // 16 — başvuru sayfası
-await scenario("16. Başvuru sayfası: başvurulan içerik AYRINTILI (açıklama, prompt metni, etiketler), not, 'Orijinal içeriği aç' bağlantısı; geri bağlantısı topluluk akışına; gönderinin kendi beğenisi/yorumu", async ({ page, db }) => {
+await scenario("16. Başvuru sayfası = başvurulan içeriğin NORMAL detay sayfası (başlık, açıklama, prompt metni) + üstte başvuru bandı (not, 'Orijinal içeriği aç'); eylem satırı gönderinin kendisine bağlı: beğeni, kaydet, istatistik, paylaş, yorum", async ({ page, db }) => {
   const p = db.posts[0];
   await page.goto(postPage(p.id));
   await page.locator("[data-community-post-page]").waitFor();
-  await page.getByText("Başvurulan içerik").waitFor();
-  await page.getByRole("heading", { name: "Ayrıntılı prompt" }).waitFor();
-  await page.getByText("açıklama", { exact: true }).waitFor();
-  await page.getByText("Prompt metni").waitFor();
-  await page.getByText("metin", { exact: true }).waitFor();
+  await page.getByRole("heading", { name: "Ayrıntılı prompt", level: 1 }).waitFor();
+  await page.getByText("açıklama", { exact: true }).first().waitFor();
+  await page.getByText("metin", { exact: true }).first().waitFor();
   await page.locator("[data-post-note]").getByText("Denemek isteyen olur").waitFor();
   assert.match((await page.locator("[data-open-original]").getAttribute("href")) ?? "", /prompts\/local\/?\?id=/);
   const back = page.getByRole("link", { name: /akışına dön/ });
   assert.match((await back.getAttribute("href")) ?? "", new RegExp(`communities/local/?\\?id=${C1}&tab=feed`));
-  assert.equal(await page.locator("article").getByRole("button", { name: /Kaydet/ }).count(), 0, "the page carries the post's own actions, not the content's");
-  await page.locator("[data-post-engagement]").getByRole("button", { name: /beğen/i }).first().click();
+  // Normal detay sayfasındaki eylem satırının aynısı: Beğeni · Yorum · Kaydet · İstatistik … Paylaş (hepsi gönderiye bağlı)
+  const bar = page.locator("div.rounded-xl", { has: page.getByRole("button", { name: "Paylaş" }) }).first();
+  await bar.getByRole("button", { name: /Kaydet|koleksiyon/i }).first().waitFor();
+  await bar.getByRole("button", { name: /İstatistik/i }).first().waitFor();
+  await page.getByRole("button", { name: /beğen/i }).first().click();
   await page.waitForTimeout(300);
   assert.equal(calls(db, "prompt_likes", "POST")[0].body.community_post_id, p.id);
   assert.equal(calls(db, "prompt_likes", "POST")[0].body.prompt_id, undefined);
 }, { setup: (db) => { seed(db, { myRole: "member" }); db.addPost(C1, { title: "Ayrıntılı prompt", note: "Denemek isteyen olur" }); } });
+
+await scenario("16a. Başvuru sayfasında KAYDET: normal koleksiyon penceresi, kaydedilen şey gönderinin kendisi (community_post_id), içerik değil; yerel içerik değil", async ({ page, db }) => {
+  const p = db.posts[0];
+  await page.goto(postPage(p.id));
+  await page.locator("[data-community-post-page]").waitFor();
+  const bar = page.locator("div.rounded-xl", { has: page.getByRole("button", { name: "Paylaş" }) }).first();
+  await bar.getByRole("button", { name: /Kaydet|koleksiyon/i }).first().click();
+  await dlg(page).getByRole("button", { name: "Kaydet", exact: true }).waitFor();
+  await dlg(page).getByRole("checkbox").first().check();
+  await dlg(page).getByRole("button", { name: "Kaydet", exact: true }).click();
+  await page.waitForTimeout(400);
+  const added = calls(db, "collection_items", "POST");
+  assert.equal(added.length, 1);
+  assert.equal(added[0].body.community_post_id, p.id, "the POST is saved");
+  assert.equal(added[0].body.prompt_id, undefined, "never the original content");
+  assert.equal(db.posts[0].save_count, 1, "the post's OWN save counter");
+  await page.waitForTimeout(300);
+  await bar.getByRole("button", { name: /koleksiyon|Kaydedildi|Kaydet/i }).first().getByText("1", { exact: true }).waitFor();
+}, { setup: (db) => { seed(db, { myRole: "member" }); db.addPost(C1, { title: "Kaydedilecek", note: "n" }); } });
+
+await scenario("16g. Kaydedilenler: kaydedilen başvuru gönderisi, akıştaki karta AYNI kart (kaydet/istatistik/paylaş) olarak listelenir; topluluğu okuyamayınca listede görünmez", async ({ page, db }) => {
+  const p = db.posts[0];
+  db.collectionItems.push({ id: "f0000000-0000-4000-8000-000000000001", collection_id: db.collections[0].id, community_post_id: p.id, created_at: db.stamp() });
+  await page.goto(`${BASE}/saved`);
+  const card = page.locator("article", { hasText: "Kaydedilmiş başvuru" }).first();
+  await card.waitFor();
+  await card.getByText("Başvuru", { exact: true }).waitFor();
+  await card.getByRole("button", { name: /İstatistik/i }).first().waitFor();
+  await card.getByRole("button", { name: "Paylaş" }).waitFor();
+  assert.match((await card.getByRole("link", { name: /Kaydedilmiş başvuru/ }).first().getAttribute("href")) ?? "", /communities\/post\/local/);
+  // topluluğa erişim kalktı → gönderi okunamaz → kart listede yer almaz (kırık kart yok)
+  db.posts.length = 0;
+  await page.reload();
+  await page.getByText("Kaydedilmiş başvuru").waitFor({ state: "detached" });
+}, { setup: (db) => { seed(db, { myRole: "member" }); db.addPost(C1, { title: "Kaydedilmiş başvuru", note: "n" }); } });
+
+await scenario("16e. Başvuru sayfasında ⋮ menüsü yalnız GÖNDERİ işlerini taşır (not düzenle / gönderimi kaldır); içeriğin düzenle/sil/bağlantı kopyala öğeleri orijinalin sayfasında kalır", async ({ page, db }) => {
+  await page.goto(postPage(db.posts[0].id));
+  await page.locator("[data-community-post-page]").waitFor();
+  await page.getByRole("button", { name: /seçenekleri/ }).first().click();
+  await page.getByRole("menuitem", { name: "Notu düzenle" }).waitFor();
+  await page.getByRole("menuitem", { name: "Gönderimi kaldır" }).waitFor();
+  assert.equal(await page.getByRole("menuitem", { name: "Düzenle", exact: true }).count(), 0, "content editing stays on the original page");
+  assert.equal(await page.getByRole("menuitem", { name: "Sil", exact: true }).count(), 0);
+  assert.equal(await page.getByRole("menuitem", { name: /Bağlantıyı kopyala/ }).count(), 0, "sharing goes through the post's Paylaş");
+}, { setup: (db) => { seed(db, { myRole: "member" }); db.addPost(C1, { author: U.alice, title: "Kendi başvurum", note: "n" }); } });
 
 await scenario("16b. Başvuru sayfası: içerik erişilemezse açıklayıcı yer tutucu, not ve yorumlar yine görünür; yazar notu düzenler, kaldırınca akışa döner", async ({ page, db }) => {
   const p = db.posts[0];
@@ -389,14 +436,58 @@ await scenario("16c. Yerel gönderinin KENDİ başvuru sayfası yoktur: adresi i
   await page.getByText("Bu gönderi artık yok ya da görüntüleme iznin yok.").waitFor();
 }, { setup: (db) => { seed(db, { myRole: "member" }); db.addPost(C1, { author: U.alice, title: "Yerel", kind: "native", visibility: "private" }); } });
 
-await scenario("16d. Başvuru sayfası İngilizce + mobil: metinler çevrilir, yatay taşma yok", async ({ page, db }) => {
+await scenario("16d. Başvuru sayfası İngilizce + mobil: normal detay sayfası çevrilir, başvuru bandı çevrilir, yatay taşma yok", async ({ page, db }) => {
   await page.goto(postPage(db.posts[0].id));
   await page.locator("[data-community-post-page]").waitFor();
-  await page.getByText("Applied content").waitFor();
-  await page.getByText("Prompt text").waitFor();
+  await page.getByRole("heading", { name: "Detailed prompt", level: 1 }).waitFor();
   await page.getByText("Open the original").waitFor();
+  await page.getByText(/belong to this post/).waitFor();
   assert.ok(await overflowFree(page));
 }, { lang: "en", viewport: { width: 390, height: 844 }, setup: (db) => { seed(db, { myRole: "member" }); db.addPost(C1, { title: "Detailed prompt", note: "n" }); } });
+
+await scenario("16f. Başvuru sayfası tablet (820) ve koyu masaüstü: yatay taşma yok, eylem satırı ve yorumlar görünür", async ({ page, db }) => {
+  await page.goto(postPage(db.posts[0].id));
+  await page.locator("[data-community-post-page]").waitFor();
+  await page.locator("#comments").waitFor();
+  assert.ok(await overflowFree(page));
+  await page.setViewportSize({ width: 820, height: 1100 });
+  await page.waitForTimeout(300);
+  assert.ok(await overflowFree(page), "tablet");
+}, { theme: "dark", setup: (db) => { seed(db, { myRole: "member" }); db.addPost(C1, { title: "Koyu tema", note: "n" }); } });
+
+// 17 — başvuru gönderisini site içi mesajla paylaşma (docs/history/184-*)
+const DM = "c0000000-0000-4000-8000-0000000000c9";
+await scenario("17. Başvuru gönderisi site içi mesajla paylaşılır: Paylaş → 'mesaj olarak gönder' → sohbet seç → başlık şeridi → gönder; mesaj metni gönderi başlığı + gönderi bağlantısıdır, balon gerçek kart çizer", async ({ page, db }) => {
+  const p = db.posts[0];
+  await page.goto(postPage(p.id));
+  await page.locator("[data-community-post-page]").waitFor();
+  await page.getByRole("button", { name: "Paylaş" }).first().click();
+  await dlg(page).getByRole("link", { name: /mesaj olarak gönder/ }).click();
+  await page.waitForURL(/messages\/?\?sharePostId=/);
+  assert.match(page.url(), new RegExp(`sharePostId=${p.id}`));
+  await page.locator("a[href*='/messages/local'][href*='sharePostId=']", { hasText: "Carol" }).first().click();
+  await page.waitForURL(/messages\/local/);
+  await page.getByText(/Paylaşılıyor/).getByText(/Mesajlaşılacak başvuru/).waitFor();
+  await page.getByPlaceholder(/not ekle/i).fill("bak bunu");
+  await page.getByRole("button", { name: "Mesaj gönder" }).click();
+  await page.locator("[data-shared-post-card='ready']").waitFor();
+  const sent = calls(db, "messages", "POST");
+  assert.equal(sent.length, 1);
+  const body = sent[0].body.body;
+  assert.match(body, /^bak bunu\n\nMesajlaşılacak başvuru\n.*\/communities\/post\/local\?id=/);
+  assert.ok(body.includes(p.id), "the link carries the POST id");
+  assert.equal(sent[0].body.shared_prompt_id ?? null, null, "no embed column is used (the post is not a message type)");
+  await page.locator("[data-shared-post-card='ready']").getByText("Mesajlaşılacak başvuru").waitFor();
+}, { setup: (db) => { seed(db, { myRole: "member" }); db.addPost(C1, { title: "Mesajlaşılacak başvuru", note: "n" }); db.addConv(DM, U.carol, { texts: ["selam"] }); } });
+
+await scenario("17b. Alıcı gönderiyi okuyamıyorsa (topluluğa erişimi yok) kart içeriği değil 'erişimin olmalı' gösterir; içerik sızmaz", async ({ page, db }) => {
+  const id = "99999999-0000-4000-8000-000000000099";
+  db.addMessage(DM, U.carol.id, `Kapalı başvuru\nhttps://example.dev/promptly/communities/post/local?id=${id}`);
+  await page.goto(`${BASE}/messages/local?id=${DM}`);
+  await page.locator("[data-shared-post-card='none']").waitFor();
+  await page.getByText(/topluluğa erişimin olmalı/).waitFor();
+  assert.equal(await page.getByText("Kapalı başvuru").count(), 1, "only the sender's own title line is in the plain text; the card itself reveals nothing");
+}, { setup: (db) => { seed(db, { myRole: "member" }); db.addConv(DM, U.carol, { texts: ["selam"] }); } });
 
 // 14 — i18n
 await scenario("14. İngilizce: Create post / Apply an existing item / Application / Community content / post engagement metinleri", async ({ page }) => {

@@ -1,5 +1,6 @@
 "use client";
 
+import { EngageCommentCount, EngageComments, EngageLike, EngageSave, EngageShare, EngageStatistics } from "@/features/content/scoped-engagement";
 import { usePageTitle } from "@/components/layout/page-title";
 import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -16,13 +17,7 @@ import { RelatedWorkflows } from "./related-workflows";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { useAuth } from "@/features/auth/auth-provider";
 import { PostMenu } from "@/features/prompts/post-menu";
-import { LikeButton } from "@/features/prompts/like-button";
-import { SaveButton } from "@/features/prompts/save-button";
-import { CommentCountLink } from "@/features/prompts/comment-count-link";
-import { StatisticsButton } from "@/features/statistics/statistics-button";
 import { RelationMapLink } from "@/features/relations/relation-map-link";
-import { CommentSection } from "@/features/prompts/comment-section";
-import { ShareTriggerButton } from "@/features/prompts/share-modal";
 import { useRealWorkflows } from "./real-workflows-provider";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
 import { fetchWorkflowById } from "@/lib/supabase/workflows";
@@ -48,13 +43,14 @@ import { VersionRestoreToast } from "@/features/versions/version-restore-toast";
 import { fetchVersionsForWorkflow } from "@/lib/supabase/content-versions";
 
 /** Read-only workflow page: who made it, what it's for, and the ordered steps — each links to its prompt / generator / request. */
-export function WorkflowDetailView() {
+export function WorkflowDetailView({ workflowId }: { workflowId?: string } = {}) {
   const { t, language } = useTranslation();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { removeFromCache } = useRealWorkflows();
   const { user } = useAuth();
-  const id = searchParams.get("id");
+  // `workflowId`: başvuru gönderisi sayfası aynı sayfayı gönderinin başvurduğu workflow ile çizer (adresteki `id` gönderinindir).
+  const id = workflowId ?? searchParams.get("id");
   const [data, setData] = useState<
     { workflow: Workflow; steps: WorkflowStep[] } | null | undefined
   >(undefined);
@@ -183,11 +179,11 @@ export function WorkflowDetailView() {
           />
         </header>
 
-        <DetailActionBar trailing={<ShareTriggerButton target={{ contentType: "workflow", workflow }} label={t("common.share")} />}>
-          <LikeButton id={workflow.id} likeCount={workflow.likeCount} contentType="workflow" size={18} />
-          <CommentCountLink workflowId={workflow.id} baseCount={workflow.commentCount} size={18} />
-          {!workflow.communityId && <SaveButton workflowId={workflow.id} saveCount={workflow.saveCount} size={18} />}
-          <StatisticsButton target={{ contentType: "workflow", contentId: workflow.id, likeCount: workflow.likeCount, commentCount: workflow.commentCount, saveCount: workflow.saveCount }} size={18} label={t("statistics.title")} />
+        <DetailActionBar trailing={<EngageShare target={{ contentType: "workflow", workflow }} label={t("common.share")} />}>
+          <EngageLike id={workflow.id} likeCount={workflow.likeCount} contentType="workflow" size={18} />
+          <EngageCommentCount workflowId={workflow.id} baseCount={workflow.commentCount} size={18} />
+          <EngageSave workflowId={workflow.id} saveCount={workflow.saveCount} size={18} />
+          <EngageStatistics target={{ contentType: "workflow", contentId: workflow.id, likeCount: workflow.likeCount, commentCount: workflow.commentCount, saveCount: workflow.saveCount }} size={18} label={t("statistics.title")} />
           <RelationMapLink kind="workflow" id={workflow.id} />
         </DetailActionBar>
 
@@ -289,7 +285,7 @@ export function WorkflowDetailView() {
         </>)}
 
         <DetailComments>
-          <CommentSection target={{ workflowId: workflow.id }} highlightCommentId={highlightCommentId} />
+          <EngageComments target={{ workflowId: workflow.id }} highlightCommentId={highlightCommentId} />
         </DetailComments>
         <VersionRestoreToast contentId={workflow.id} />
       </article>

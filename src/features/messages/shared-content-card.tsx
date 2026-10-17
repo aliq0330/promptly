@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowUpRight, SlidersHorizontal, Sparkles, Terminal, Workflow as WorkflowIcon } from "lucide-react";
+import { ArrowUpRight, Lock, SlidersHorizontal, Sparkles, Terminal, Users, Workflow as WorkflowIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useRealPrompts } from "@/features/prompts/real-prompts-provider";
 import { useRealRequests } from "@/features/requests/real-requests-provider";
@@ -12,6 +12,9 @@ import { fetchPresetById } from "@/lib/supabase/presets";
 import { useRealPresets } from "@/features/presets/real-presets-provider";
 import { STATUS_LABELS, STATUS_VARIANTS } from "@/features/requests/request-card";
 import { presetHref, promptHref, requestHref, workflowHref } from "@/lib/utils";
+import { fetchCommunityPostById, type CommunityPost } from "@/lib/supabase/communities";
+import { summarizeContent } from "@/features/communities/content-summary";
+import { postPageHref } from "@/lib/communities";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Preset, Prompt, PromptRequest, Workflow } from "@/types";
 import { StorageImage } from "@/components/ui/storage-media";
@@ -177,6 +180,63 @@ export function SharedRequestCard({ requestId }: { requestId: string }) {
       </span>
       <span className="flex items-center gap-1 text-xs text-primary">
         {t("messages.viewRequest")}
+        <ArrowUpRight size={11} />
+      </span>
+    </Link>
+  );
+}
+
+/**
+ * A message's shared community-post card (an APPLICATION post, found by id from the plain-text share block, see `community-post-share-format.ts`).
+ * The post is readable only by people who can read its community: a recipient who can't gets "no access" — never the content (RLS returns no row).
+ */
+export function SharedCommunityPostCard({ postId }: { postId: string }) {
+  const { t } = useTranslation();
+  const [state, setState] = useState<{ status: "loading" } | { status: "none" } | { status: "ready"; post: CommunityPost }>({ status: "loading" });
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchCommunityPostById(postId)
+      .then((post) => {
+        if (!cancelled) setState(post ? { status: "ready", post } : { status: "none" });
+      })
+      .catch(() => {
+        if (!cancelled) setState({ status: "none" });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [postId]);
+
+  if (state.status === "none") {
+    return (
+      <div className={CARD_CLASS} data-shared-post-card="none">
+        <span className="flex items-center gap-1.5 text-xs font-medium text-text-muted">
+          <Lock size={13} />
+          {t("messages.sharedCommunityPost")}
+        </span>
+        <span className="text-xs text-text-muted">{t("messages.communityPostNoAccess")}</span>
+      </div>
+    );
+  }
+
+  const post = state.status === "ready" ? state.post : null;
+  const summary = post?.content ? summarizeContent(post.content) : null;
+  const thumbnail = summary?.media[0];
+  return (
+    <Link href={postPageHref(postId)} className={CARD_CLASS} data-shared-post-card="ready">
+      <span className="flex items-center gap-1.5 text-xs font-medium text-primary">
+        <Users size={13} />
+        {t("messages.sharedCommunityPost")}
+      </span>
+      {thumbnail && (
+        <span className="relative block h-24 w-full overflow-hidden rounded-sm bg-background">
+          <StorageImage src={thumbnail.url} alt={thumbnail.alt} fill sizes="220px" className="object-cover" />
+        </span>
+      )}
+      <span className="block truncate text-sm font-semibold text-text">{summary?.title ?? (post ? t("communities.feed.contentGone") : t("common.loading"))}</span>
+      <span className="flex items-center gap-1 text-xs text-primary">
+        {t("messages.openContent")}
         <ArrowUpRight size={11} />
       </span>
     </Link>

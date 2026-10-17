@@ -59,3 +59,11 @@ Başvuru sayfası (`docs/history/180-*`): aynı dosyada senaryo 16–16d (sayfa 
 ```bash
 CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/messaging-ui/run-groups.mjs   # 36/36 beklenir
 ```
+
+## Topluluk gönderisi eşitliği (`docs/history/184-*`)
+
+`run-community-posts.mjs` (artık 36 senaryo): başvuru sayfası = başvurulan içeriğin normal detay sayfası (16–16f: eylem satırı, gönderiye bağlı beğeni/kaydet/yorum, gönderi menüsü, İngilizce/mobil/tablet/koyu), Kaydedilenler'de gönderi kartı (16g), gönderiyi site içi mesajla paylaşma ve erişimsiz alıcı kartı (17, 17b). Ağ taklidi `mock-communities.mjs` artık koleksiyonları (`collections`, `collection_items`, gönderi `save_count`) da taklit eder. DB/RLS: `supabase/tests/community-post-save.sql`.
+
+```bash
+CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/messaging-ui/run-community-posts.mjs   # 36/36 beklenir
+```

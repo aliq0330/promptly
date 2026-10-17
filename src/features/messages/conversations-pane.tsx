@@ -37,7 +37,9 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
   // Workflow / preset ride the same conversation-picker via a client-side query param (no embed column), as plain text.
   const shareWorkflowId = searchParams.get("shareWorkflowId");
   const sharePresetId = searchParams.get("sharePresetId");
-  const isSharing = Boolean(sharePromptId || shareRequestId || shareWorkflowId || sharePresetId);
+  // Topluluk başvuru gönderisi de aynı yolla (düz metin bloğu) taşınır.
+  const sharePostId = searchParams.get("sharePostId");
+  const isSharing = Boolean(sharePromptId || shareRequestId || shareWorkflowId || sharePresetId || sharePostId);
   const shareQuery = sharePromptId
     ? `sharePromptId=${sharePromptId}`
     : shareRequestId
@@ -46,7 +48,9 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
         ? `shareWorkflowId=${shareWorkflowId}`
         : sharePresetId
           ? `sharePresetId=${sharePresetId}`
-          : undefined;
+          : sharePostId
+            ? `sharePostId=${sharePostId}`
+            : undefined;
 
   const activeId = pathname.startsWith("/messages/local") ? searchParams.get("id") : null;
 
