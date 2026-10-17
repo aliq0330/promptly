@@ -14,6 +14,7 @@ import { GroupAvatar } from "@/features/groups/group-avatar";
 import { RoleBadge } from "@/features/groups/role-badge";
 import { useToast } from "@/features/groups/use-toast";
 import { CommunityGate } from "./community-gate";
+import { CommunityLayout, CommunityReadingColumn } from "./community-layout";
 import { CommunityJoinButton, type JoinState } from "./community-join-button";
 import { VisibilityLabel } from "./visibility-label";
 import { FeedTab } from "./feed-tab";
@@ -141,47 +142,47 @@ function CommunityPageInner() {
   const g = ready.group;
 
   return (
-    <div className="mx-auto w-full max-w-4xl space-y-5 px-3 py-4 sm:px-5 sm:py-6">
+    <CommunityLayout>
       <Link href="/communities" className="inline-flex items-center gap-1.5 text-small text-text-muted hover:text-text">
         <ArrowLeft size={14} aria-hidden /> {t("communities.page.title")}
       </Link>
 
-      <header className="rounded-xl border border-border-soft bg-surface p-4 shadow-card sm:p-5">
-        <div className="flex items-start gap-3 sm:gap-4">
-          <GroupAvatar name={g.name} avatarUrl={g.avatarUrl} size={64} badge />
-          <div className="min-w-0 flex-1 space-y-1.5">
-            <h1 className="break-words font-serif text-h2 font-medium leading-tight text-text">{g.name}</h1>
-            <div className="flex flex-wrap items-center gap-1.5">
-              <Badge variant="neutral">{t(CATEGORY_LABEL_KEYS[g.category])}</Badge>
-              <VisibilityLabel visibility={g.visibility} />
-              <span className="text-caption text-text-muted">{memberCountText(t, g.memberCount)}</span>
-              {role && <RoleBadge role={role} />}
-              {g.closedAt && <Badge variant="warning">{t("communities.closedBadge")}</Badge>}
-              {g.origin === "legacy_group" && <Badge variant="outline">{t("communities.detail.legacyBadge")}</Badge>}
+      <header className="rounded-xl border border-border-soft bg-surface p-3.5 shadow-card sm:p-4" data-testid="community-header">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
+          <div className="flex min-w-0 flex-1 basis-72 items-start gap-3">
+            <GroupAvatar name={g.name} avatarUrl={g.avatarUrl} size={52} badge />
+            <div className="min-w-0 flex-1 space-y-1">
+              <h1 className="break-words font-serif text-h3 font-medium leading-tight text-text">{g.name}</h1>
+              <div className="flex flex-wrap items-center gap-1.5">
+                <Badge variant="neutral">{t(CATEGORY_LABEL_KEYS[g.category])}</Badge>
+                <VisibilityLabel visibility={g.visibility} />
+                <span className="text-caption text-text-muted">{memberCountText(t, g.memberCount)}</span>
+                {role && <RoleBadge role={role} />}
+                {g.closedAt && <Badge variant="warning">{t("communities.closedBadge")}</Badge>}
+                {g.origin === "legacy_group" && <Badge variant="outline">{t("communities.detail.legacyBadge")}</Badge>}
+              </div>
+              {g.description && <p data-community-description className="line-clamp-2 max-w-2xl whitespace-pre-line break-words text-small text-text-secondary">{g.description}</p>}
             </div>
-            {g.description && <p data-community-description className="line-clamp-2 whitespace-pre-line break-words text-small text-text-secondary">{g.description}</p>}
           </div>
-        </div>
-        <div className="mt-4 flex flex-wrap items-center gap-2">
-          {role && (
-            <Link href={communityChatHref(g.id)} data-open-chat className={buttonClassName({ size: "sm" })}>
-              <MessageSquare size={14} /> {t("communities.detail.openChat")}
-              {unread > 0 && <span className="ml-1 rounded-full bg-primary-foreground/20 px-1.5 text-caption">{unread}</span>}
-            </Link>
-          )}
-          {pendingForMe > 0 && (
-            <Link
-              href={communityHref(g.id, "members", "requests")}
-              data-pending-requests
-              aria-label={t("communities.detail.pendingRequests", { count: pendingForMe })}
-              className={buttonClassName({ size: "sm", variant: "secondary" })}
-            >
-              <UserCog size={14} aria-hidden />
-              <span className="sm:hidden" aria-hidden>{t("communities.detail.pendingShort", { count: pendingForMe })}</span>
-              <span className="hidden sm:inline" aria-hidden>{t("communities.detail.pendingRequests", { count: pendingForMe })}</span>
-            </Link>
-          )}
-          <div className="ml-auto">
+          <div className="flex shrink-0 flex-wrap items-center gap-2">
+            {role && (
+              <Link href={communityChatHref(g.id)} data-open-chat className={buttonClassName({ size: "sm" })}>
+                <MessageSquare size={14} /> {t("communities.detail.openChat")}
+                {unread > 0 && <span className="ml-1 rounded-full bg-primary-foreground/20 px-1.5 text-caption">{unread}</span>}
+              </Link>
+            )}
+            {pendingForMe > 0 && (
+              <Link
+                href={communityHref(g.id, "members", "requests")}
+                data-pending-requests
+                aria-label={t("communities.detail.pendingRequests", { count: pendingForMe })}
+                className={buttonClassName({ size: "sm", variant: "secondary" })}
+              >
+                <UserCog size={14} aria-hidden />
+                <span className="sm:hidden" aria-hidden>{t("communities.detail.pendingShort", { count: pendingForMe })}</span>
+                <span className="hidden sm:inline" aria-hidden>{t("communities.detail.pendingRequests", { count: pendingForMe })}</span>
+              </Link>
+            )}
             <CommunityJoinButton
               target={{ id: g.id, name: g.name, visibility: g.visibility, rulesRequired: g.rulesRequired, memberCount: g.memberCount, memberLimit: g.memberLimit, closed: Boolean(g.closedAt) }}
               status={joinState}
@@ -204,14 +205,18 @@ function CommunityPageInner() {
           <Tabs items={tabs} active={tab} onChange={goTab} ariaLabel={t("communities.detail.tabsAria")} />
           <div role="tabpanel">
             {tab === "feed" && <FeedTab {...common} />}
-            {tab === "members" && role && <MembersTab {...common} />}
-            {tab === "events" && <EventsTab {...common} />}
-            {tab === "about" && <AboutTab {...common} />}
-            {tab === "manage" && role && <ManageTab {...common} />}
+            {tab !== "feed" && (
+              <CommunityReadingColumn className={tab === "manage" ? "max-w-4xl" : undefined}>
+                {tab === "members" && role && <MembersTab {...common} />}
+                {tab === "events" && <EventsTab {...common} />}
+                {tab === "about" && <AboutTab {...common} />}
+                {tab === "manage" && role && <ManageTab {...common} />}
+              </CommunityReadingColumn>
+            )}
           </div>
         </>
       )}
       {toastNode}
-    </div>
+    </CommunityLayout>
   );
 }

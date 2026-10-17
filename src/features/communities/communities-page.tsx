@@ -6,7 +6,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Compass, Loader2, MessageCircle, Plus, Search, ShieldCheck, Users } from "lucide-react";
 import { Button, buttonClassName } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
-import { PageHeader } from "@/components/ui/page-header";
 import { Tabs, type TabItem } from "@/components/ui/tabs";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useAuthPrompt } from "@/features/auth/auth-prompt-provider";
@@ -14,6 +13,8 @@ import { useRealMessages } from "@/features/messages/real-messages-provider";
 import { useAsyncAction } from "@/features/groups/use-async-action";
 import { useToast } from "@/features/groups/use-toast";
 import { CommunityCard } from "./community-card";
+import { CommunityLayout, CommunityPageHeader } from "./community-layout";
+import { HomeAside } from "./home-aside";
 import type { JoinState } from "./community-join-button";
 import { CreateCommunityModal } from "./create-community-modal";
 import { HomeDiscoverTab } from "./home-discover-tab";
@@ -93,9 +94,11 @@ export function CommunitiesPage() {
   }, [user]);
 
   return (
-    <div className="mx-auto w-full max-w-3xl space-y-6 px-3 py-5 sm:px-5 sm:py-8">
-      <PageHeader
-        eyebrow={t("communities.page.eyebrow")}
+    <CommunityLayout
+      aside={user ? <HomeAside managedCount={managed.length} actionCount={actionCount} /> : undefined}
+      asideLabel={t("communities.aside.label")}
+    >
+      <CommunityPageHeader
         icon={Users}
         title={t("communities.page.title")}
         description={t("communities.page.description")}
@@ -155,7 +158,7 @@ export function CommunitiesPage() {
         />
       )}
       {toastNode}
-    </div>
+    </CommunityLayout>
   );
 }
 

@@ -21,6 +21,9 @@ import { useTranslation } from "@/lib/i18n/language-provider";
  * YETENEĞE göre görünür (rol adına değil; `manageSections`), owner admin/moderatöre yetki verip alabilir. Gizlemek güvenlik değildir:
  * her işlem sunucuda yeniden yetkilendirilir (RPC + RLS).
  */
+/** Ayar grubu kartı: topluluk ayarları ile temel bilgi/görünürlük/yetki ayrı kartlarda; içerik yoksa (yetki yok) kart gizlenir. */
+const SETTINGS_CARD = "rounded-xl border border-border-soft bg-surface p-4 shadow-card empty:hidden sm:p-5";
+
 export function ManageTab({ group, role, onToast, reload, section }: CommunityTabProps) {
   const { t } = useTranslation();
   const router = useRouter();
@@ -54,9 +57,12 @@ export function ManageTab({ group, role, onToast, reload, section }: CommunityTa
       <div>
         {active === "stats" && <StatsSection groupId={group.id} />}
         {active === "settings" && (
-          <div className="space-y-8">
+          <div className="space-y-4">
+            <div className={SETTINGS_CARD}>
             <CommunitySettingsSection key={`${group.category}|${group.feedPolicy}|${group.rulesVersion}|${group.rulesRequired}|${group.closedAt ?? ""}`} group={group} onChanged={reload} onToast={onToast} />
+            </div>
             {canSeeSettingsTab(role, perms) && (
+              <div className={SETTINGS_CARD}>
               <GroupSettingsSection
                 key={`${group.name}|${group.description}|${group.memberLimit}|${JSON.stringify(group.rolePermissions)}`}
                 group={group}
@@ -68,6 +74,7 @@ export function ManageTab({ group, role, onToast, reload, section }: CommunityTa
                   router.push("/communities");
                 }}
               />
+              </div>
             )}
           </div>
         )}
