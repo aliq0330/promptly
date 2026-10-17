@@ -5,11 +5,10 @@ import { ChevronDown, Loader2, LogOut, Send, Undo2 } from "lucide-react";
 import { Button, buttonClassName } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useAuthPrompt } from "@/features/auth/auth-prompt-provider";
-import { ConfirmDialog } from "@/features/groups/confirm-dialog";
+import { LeaveCommunityDialog } from "@/features/groups/leave-community-dialog";
 import { useAsyncAction } from "@/features/groups/use-async-action";
 import { DropdownMenu, MenuItem } from "./dropdown-menu";
 import { RulesAcceptModal } from "./rules-accept";
-import { leaveChatGroup } from "@/lib/supabase/chat-groups";
 import { cancelMyJoinRequest, fetchCommunityCard, joinCommunity, requestJoinCommunity } from "@/lib/supabase/communities";
 import { leaveOutcome } from "@/lib/chat-groups";
 import { visibilityTraits } from "@/lib/communities";
@@ -118,12 +117,7 @@ export function CommunityJoinButton({
     onChange("none");
   }
 
-  async function leave() {
-    const done = await action.run(async () => {
-      await leaveChatGroup(target.id);
-      return true;
-    });
-    if (!done) return;
+  function left() {
     setConfirmLeave(false);
     onToast(t("communities.join.leftToast", { name: target.name }));
     onChange("none");
@@ -212,7 +206,7 @@ export function CommunityJoinButton({
   return (
     <div className="flex flex-col items-end gap-1">
       {control}
-      {action.error && !rulesFor && !confirmLeave && (
+      {action.error && !rulesFor && (
         <p role="alert" className="max-w-64 text-right text-caption text-danger">
           {action.error}
         </p>
@@ -228,18 +222,8 @@ export function CommunityJoinButton({
           onConfirm={() => void (rulesFor === "join" ? join(true) : request(true)).then((ok) => ok && setRulesFor(null))}
         />
       )}
-      {confirmLeave && (
-        <ConfirmDialog
-          id="leave-community-title"
-          title={outcomeIfLeave === "closes_group" ? t("groups.about.leaveClosesTitle") : t("groups.about.leaveConfirmTitle", { name: target.name })}
-          body={outcomeIfLeave === "closes_group" ? t("groups.about.leaveClosesGroup") : t("groups.about.leaveConfirmBody")}
-          confirmLabel={t("groups.about.leave")}
-          danger
-          busy={action.busy}
-          error={action.error}
-          onConfirm={() => void leave()}
-          onCancel={() => setConfirmLeave(false)}
-        />
+      {confirmLeave && role && (
+        <LeaveCommunityDialog groupId={target.id} name={target.name} role={role} memberCount={target.memberCount} onLeft={left} onClose={() => setConfirmLeave(false)} />
       )}
     </div>
   );

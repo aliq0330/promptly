@@ -44,6 +44,7 @@ export function GroupMembersSection({
   onToast,
   showTransferHint = false,
   roleFilter = null,
+  manage = true,
 }: {
   group: ChatGroup;
   viewerId: string;
@@ -53,6 +54,8 @@ export function GroupMembersSection({
   showTransferHint?: boolean;
   /** Topluluk "Üyeler" sekmesindeki rol süzgeci (null = hepsi); süzme sunucuda, sayfalama bozulmaz. */
   roleFilter?: GroupRole | null;
+  /** false = yalnız okuma (sohbet bilgi penceresi): rol/çıkarma/devir menüsü çizilmez; kişi yönetimi topluluk sayfasındaki "Üyeler"dedir. */
+  manage?: boolean;
 }) {
   const { t } = useTranslation();
   const [query, setQuery] = useState("");
@@ -184,9 +187,9 @@ export function GroupMembersSection({
           <ul className="divide-y divide-border-soft rounded-lg border border-border-soft" aria-label={t("groups.members.listLabel")}>
             {current.members.map((member) => {
               const isMe = member.userId === viewerId;
-              const roles = isMe ? [] : assignableRoles(viewerRole, member.role, group.rolePermissions);
-              const canRemove = !isMe && canRemoveMember(viewerRole, member.role, group.rolePermissions);
-              const canTransfer = !isMe && viewerRole === "owner";
+              const roles = !manage || isMe ? [] : assignableRoles(viewerRole, member.role, group.rolePermissions);
+              const canRemove = manage && !isMe && canRemoveMember(viewerRole, member.role, group.rolePermissions);
+              const canTransfer = manage && !isMe && viewerRole === "owner";
               const hasMenu = roles.length > 0 || canRemove || canTransfer;
               return (
                 <li key={member.userId} className="flex items-center gap-3 px-3 py-2.5">

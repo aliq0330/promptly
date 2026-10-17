@@ -14,6 +14,7 @@ import { ReportModal } from "./report-modal";
 import { ShareToCommunityModal } from "./share-to-community-modal";
 import { CreatePostModal } from "./create-post-modal";
 import { ApplicationCard } from "./application-card";
+import { FeedHighlights } from "./feed-highlights";
 import { PostMenuExtras, type PostMenuExtra } from "@/features/prompts/post-menu-extras";
 import { PromptCard } from "@/features/prompts/prompt-card";
 import { RequestCard } from "@/features/requests/request-card";
@@ -46,7 +47,8 @@ type PostAction = { kind: "edit" | "delete" | "moderate" | "report"; post: Commu
  * (herkese açık topluluk) akışı okur; beğenmek/yorum yazmak/paylaşmak/raporlamak için üye olmak gerekir.
  * Düzenleme/silme: yazar kendi gönderisini; kaldırma/sabitleme: ilgili yetenekle (denetim kaydı düşer, yazara bildirim gider).
  */
-export function FeedTab({ group, role, viewerId, onToast, reload }: CommunityTabProps) {
+export function FeedTab(props: CommunityTabProps) {
+  const { group, role, viewerId, onToast, reload } = props;
   const { t } = useTranslation();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -148,6 +150,7 @@ export function FeedTab({ group, role, viewerId, onToast, reload }: CommunityTab
 
   return (
     <div className="space-y-5">
+      <FeedHighlights {...props} />
       {justShared && <p role="status" className="rounded-md bg-success/10 px-3 py-2 text-small text-text">{t("communities.feed.sharedBanner")}</p>}
       {pinAction.error && (
         <p role="alert" className="rounded-md bg-danger/10 px-3 py-2 text-small text-danger">

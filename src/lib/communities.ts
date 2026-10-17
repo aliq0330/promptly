@@ -6,7 +6,7 @@
  * (SECURITY DEFINER RPC'ler + RLS: `supabase/migrations/20260920040000…60000_communities_*.sql`); aynı tablo orada da vardır.
  * Grup sohbetinin rol/yetenek kuralları `chat-groups.ts`'te kalır; topluluk onları yeniden kullanır, ikinci bir tablo kurmaz.
  */
-import { can, isGroupStaff, roleRank } from "./chat-groups.ts";
+import { can, canSeeSettingsTab, isGroupManager, isGroupStaff, roleRank } from "./chat-groups.ts";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import type { CommunityCategory, CommunityFeedPolicy, CommunityNotifyLevel, GroupRole, GroupVisibility, RolePermissions } from "@/types";
 
@@ -94,46 +94,92 @@ export function normalizeFeedPolicy(value: unknown): CommunityFeedPolicy {
 }
 
 // ---------------------------------------------------------------------------------------------
-// Sekmeler ve erişim
+// Sekmeler ve erişim (docs/community-system.md)
 // ---------------------------------------------------------------------------------------------
 
-export type CommunityTab = "overview" | "feed" | "chat" | "members" | "events" | "about" | "manage";
+/**
+ * Topluluk sayfasının sekmeleri. Akış ilk açılış ekranıdır; sohbet bir sekme DEĞİL, başlıktaki "Sohbeti aç" eylemidir. Eski adresler
+ * (`tab=overview` → Akış, `tab=chat` → sohbet, `tab=manage&section=requests|invites` → Üyeler) `resolveCommunityView` ile yönlenir.
+ */
+export type CommunityTab = "feed" | "events" | "members" | "about" | "manage";
 
-export const COMMUNITY_TABS: readonly CommunityTab[] = ["overview", "feed", "chat", "members", "events", "about", "manage"];
+export const COMMUNITY_TABS: readonly CommunityTab[] = ["feed", "events", "members", "about", "manage"];
 
 export function isCommunityTab(value: unknown): value is CommunityTab {
   return typeof value === "string" && (COMMUNITY_TABS as readonly string[]).includes(value);
 }
 
-/** Yönetim sekmesini açan herhangi bir yetenek (owner her zaman). Gerçek yetki her işlemde sunucudadır. */
-const MANAGE_CAPABILITIES = [
-  "manage_requests", "manage_invites", "edit_settings", "change_visibility", "remove_members", "ban_members", "manage_roles",
-  "delete_messages", "moderate_posts", "pin_posts", "manage_announcements", "manage_events", "edit_rules", "view_stats",
-] as const;
+/** "Üyeler" sekmesinin alt bölümleri: kişi yönetimi tek yerde — liste · bekleyen istekler · davet/bağlantı/yasaklar. */
+export type MembersSection = "list" | "requests" | "invites";
 
+export const MEMBERS_SECTIONS: readonly MembersSection[] = ["list", "requests", "invites"];
+
+/** Rol bu bölümleri görür (rol adına değil YETENEĞE göre; owner her zaman). Gerçek yetki her işlemde sunucudadır. */
+export function membersSections(role: GroupRole | null | undefined, perms?: RolePermissions): MembersSection[] {
+  const sections: MembersSection[] = ["list"];
+  if (can(role, "manage_requests", perms)) sections.push("requests");
+  if (can(role, "manage_invites", perms)) sections.push("invites");
+  return sections;
+}
+
+/** "Yönet" sekmesinin bölümleri: topluluğun yapılandırması ve moderasyonu (kişi yönetimi "Üyeler"dedir). */
+export type ManageSection = "stats" | "settings" | "announcements" | "moderation" | "history";
+
+export const MANAGE_SECTIONS: readonly ManageSection[] = ["stats", "settings", "announcements", "moderation", "history"];
+
+export function manageSections(role: GroupRole | null | undefined, perms?: RolePermissions): ManageSection[] {
+  const sections: ManageSection[] = [];
+  if (can(role, "view_stats", perms)) sections.push("stats");
+  if (canSeeSettingsTab(role, perms) || can(role, "edit_rules", perms)) sections.push("settings");
+  if (can(role, "manage_announcements", perms)) sections.push("announcements");
+  if (can(role, "moderate_posts", perms) || can(role, "delete_messages", perms)) sections.push("moderation");
+  if (isGroupManager(role)) sections.push("history");
+  return sections;
+}
+
+/** "Yönet" sekmesi yalnızca en az bir bölümü açılabiliyorsa görünür (boş sekme yok). */
 export function canSeeManageTab(role: GroupRole | null | undefined, perms?: RolePermissions): boolean {
-  if (role === "owner") return true;
-  if (role !== "admin" && role !== "moderator") return false;
-  return MANAGE_CAPABILITIES.some((cap) => can(role, cap, perms));
+  return manageSections(role, perms).length > 0;
 }
 
 /**
  * Topluluk sayfasında kullanıcıya hangi sekmeler gösterilir:
- *   üye            → Genel bakış · Akış · Sohbet · Üyeler · Etkinlikler · Hakkında (+ yetkiliyse Yönetim)
- *   üye değil      → herkese açık toplulukta Genel bakış · Akış · Etkinlikler · Hakkında (okuma); kapalı toplulukta yalnızca "geçit" (sekme yok)
- * Sohbet ve üye listesi üyelik gerektirir; kapalı topluluğun içeriği üyelik olmadan okunamaz (RLS de böyle).
+ *   üye            → Akış · Etkinlikler · Üyeler · Hakkında (+ yönetim bölümü açılabiliyorsa Yönet)
+ *   üye değil      → herkese açık toplulukta Akış · Etkinlikler · Hakkında (okuma); kapalı toplulukta yalnızca "geçit" (sekme yok)
+ * Üye listesi üyelik gerektirir; kapalı topluluğun içeriği üyelik olmadan okunamaz (RLS de böyle).
  */
 export function accessibleTabs(args: { role: GroupRole | null; visibility: GroupVisibility; perms?: RolePermissions }): CommunityTab[] {
   const { role, visibility, perms } = args;
-  if (!role) return visibility === "public" ? ["overview", "feed", "events", "about"] : [];
-  const tabs: CommunityTab[] = ["overview", "feed", "chat", "members", "events", "about"];
+  if (!role) return visibility === "public" ? ["feed", "events", "about"] : [];
+  const tabs: CommunityTab[] = ["feed", "events", "members", "about"];
   if (canSeeManageTab(role, perms)) tabs.push("manage");
   return tabs;
 }
 
-export function resolveTab(requested: string | null | undefined, allowed: readonly CommunityTab[]): CommunityTab | null {
-  if (allowed.length === 0) return null;
-  return isCommunityTab(requested) && allowed.includes(requested) ? requested : allowed[0];
+export interface CommunityView {
+  tab: CommunityTab;
+  /** `members` için MembersSection, `manage` için ManageSection; geçersizse null (sekme ilk bölümünü açar). */
+  section: string | null;
+}
+
+/**
+ * Adres parametrelerini (`tab`, `section`) gösterilecek görünüme çevirir. Eski adresler (bildirimler, yer imleri) çalışmaya devam eder:
+ *   overview → Akış · chat → `toChat` (sohbet ayrı çalışma alanıdır) · manage&section=requests|invites → Üyeler'in ilgili bölümü.
+ * İzin verilmeyen sekme ilk izinli sekmeye düşer; hiç izinli sekme yoksa (kapalı topluluk, üye değil) `view` null olur.
+ */
+export function resolveCommunityView(
+  rawTab: string | null | undefined,
+  rawSection: string | null | undefined,
+  allowed: readonly CommunityTab[],
+): { view: CommunityView | null; toChat: boolean } {
+  if (allowed.length === 0) return { view: null, toChat: false };
+  const toChat = rawTab === "chat" && allowed.includes("members");
+  let tab: string | null | undefined = rawTab === "overview" || rawTab === "chat" ? "feed" : rawTab;
+  let section: string | null = rawSection ?? null;
+  if (tab === "manage" && (section === "requests" || section === "invites")) tab = "members";
+  const resolved: CommunityTab = isCommunityTab(tab) && allowed.includes(tab) ? tab : allowed[0];
+  if (resolved !== tab) section = null;
+  return { view: { tab: resolved, section }, toChat };
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -378,8 +424,8 @@ export function parseCommunityStats(raw: unknown): CommunityStats | null {
 // ---------------------------------------------------------------------------------------------
 
 /** Topluluk detay adresi (statik export: kimlik sorgu parametresindedir). */
-export function communityHref(id: string, tab?: CommunityTab): string {
-  return `/communities/local?id=${encodeURIComponent(id)}${tab && tab !== "overview" ? `&tab=${tab}` : ""}`;
+export function communityHref(id: string, tab?: CommunityTab, section?: string): string {
+  return `/communities/local?id=${encodeURIComponent(id)}${tab ? `&tab=${tab}` : ""}${tab && section ? `&section=${section}` : ""}`;
 }
 
 /** Bir topluluk gönderisinin bağlantısı (akış sekmesi + gönderi kimliği): bildirimler ve "bağlantıyı kopyala" aynı adresi kullanır. */

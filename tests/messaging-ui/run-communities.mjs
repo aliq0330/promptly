@@ -202,36 +202,51 @@ await scenario("8b. Kurallar kabul zorunluyken kural metni boşsa oluşturulamaz
 });
 
 // 9
-await scenario("9. Owner: yedi bölüm (Genel bakış … Yönetim); başlıkta kategori, görünürlük, rol; sohbet düğmesi", async ({ page }) => {
+await scenario("9. Owner: beş sekme (Akış ilk, Sohbet sekme DEĞİL); başlıkta kategori, görünürlük, rol, açıklama; sohbet düğmesi", async ({ page }) => {
   await open(page, C1);
-  assert.deepEqual(await tabNames(page), ["Genel bakış", "Akış", "Sohbet", "Üyeler", "Etkinlikler", "Hakkında ve kurallar", "Yönetim"]);
+  assert.deepEqual(await tabNames(page), ["Akış", "Etkinlikler", "Üyeler", "Hakkında ve kurallar", "Yönetim"]);
+  assert.equal(await page.getByRole("tab", { name: "Akış" }).getAttribute("aria-selected"), "true", "the feed is the landing tab");
+  assert.equal(await page.getByRole("tab", { name: "Sohbet" }).count(), 0, "chat is an action in the header, not a tab");
+  assert.equal(await page.getByRole("tab", { name: "Genel bakış" }).count(), 0, "the overview tab is gone");
   await page.locator("header").getByText("Görsel", { exact: true }).waitFor();
   await page.locator("header").getByText("Sahip", { exact: true }).waitFor();
+  await page.locator("header [data-community-description]").waitFor();
   await page.locator("header a", { hasText: "Sohbeti aç" }).waitFor();
 }, { setup: (db) => seed(db, { myRole: "owner" }) });
 
 await scenario("10. Üye: Yönetim sekmesi yok; durum 'Üyesin' görünür", async ({ page }) => {
   await open(page, C1);
-  assert.deepEqual(await tabNames(page), ["Genel bakış", "Akış", "Sohbet", "Üyeler", "Etkinlikler", "Hakkında ve kurallar"]);
-  await page.getByText("Üyesin", { exact: true }).waitFor();
+  assert.deepEqual(await tabNames(page), ["Akış", "Etkinlikler", "Üyeler", "Hakkında ve kurallar"]);
+  await page.locator("header").getByRole("button", { name: /Katıldın/ }).waitFor();
   await page.goto(`${BASE}/communities/local?id=${C1}&tab=manage`);
-  await page.getByRole("tab", { name: "Genel bakış" }).waitFor();
+  await page.getByRole("tab", { name: "Akış" }).waitFor();
   assert.equal(await page.getByRole("tab", { name: "Yönetim" }).count(), 0, "forged ?tab=manage falls back for a plain member");
+  // Sıradan üye kişi yönetimini görmez: Üyeler yalnız liste (istek/davet bölümü yok), zorlanan ?section=requests de sızdırmaz.
+  await page.goto(`${BASE}/communities/local?id=${C1}&tab=members&section=requests`);
+  await page.locator("ul[aria-label='Topluluk üyeleri'] li").first().waitFor();
+  assert.equal(await page.getByRole("tab", { name: /Katılım istekleri/ }).count(), 0);
+  assert.equal(await page.locator("ul[aria-label='Bekleyen katılım istekleri']").count(), 0);
 }, { setup: (db) => seed(db, { myRole: "member" }) });
 
-await scenario("10b. Moderatör: Yönetim var ama yalnız yetkisi olan bölümler (başvurular, moderasyon); özet/geçmiş/ayarlar yok", async ({ page }) => {
+await scenario("10b. Moderatör: Yönet yalnız yetkisi olan bölüm (moderasyon); katılım istekleri Üyeler sekmesinde (sayaçlı)", async ({ page }) => {
   await open(page, C1, "manage");
+  await page.getByRole("tab", { name: "Moderasyon" }).waitFor();
   const sections = await page.getByRole("tablist").nth(1).getByRole("tab").allInnerTexts();
-  assert.deepEqual(sections.map((t) => t.split("\n")[0].replace(/\d+$/, "").trim()), ["Katılım istekleri", "Moderasyon"]);
+  assert.deepEqual(sections.map((t) => t.split("\n")[0].replace(/\d+$/, "").trim()), ["Moderasyon"]);
+  assert.equal(await page.getByRole("tab", { name: /Katılım istekleri/ }).count(), 0, "requests are not under Manage any more");
+  await page.getByRole("tab", { name: /Üyeler/ }).click();
+  await page.getByRole("tab", { name: /Katılım istekleri/ }).waitFor();
+  const sub = await page.getByRole("tablist").nth(1).getByRole("tab").allInnerTexts();
+  assert.deepEqual(sub.map((t) => t.split("\n")[0].replace(/\d+$/, "").trim()), ["Üyeler", "Katılım istekleri"]);
 }, { setup: (db) => seed(db, { myRole: "moderator" }) });
 
 // 11
-await scenario("11. Üye olmayan, açık topluluk: salt-okunur sekmeler (Sohbet/Üyeler yok) + başlıkta Katıl düğmesi", async ({ page, db }) => {
+await scenario("11. Üye olmayan, açık topluluk: salt-okunur sekmeler (Üyeler yok) + başlıkta Katıl düğmesi", async ({ page, db }) => {
   await open(page, C1);
-  assert.deepEqual(await tabNames(page), ["Genel bakış", "Akış", "Etkinlikler", "Hakkında ve kurallar"]);
+  assert.deepEqual(await tabNames(page), ["Akış", "Etkinlikler", "Hakkında ve kurallar"]);
   assert.equal(await page.getByRole("region", { name: "Üyelik durumu" }).count(), 0, "no duplicate join strip: the single join button lives in the header");
   await page.locator("header").getByRole("button", { name: /topluluğuna katıl$/ }).click();
-  await page.getByRole("tab", { name: "Sohbet" }).waitFor();
+  await page.getByRole("tab", { name: "Üyeler" }).waitFor();
   await page.locator("header").getByRole("button", { name: /Katıldın/ }).waitFor();
   assert.equal(calls(db, "join_community", "RPC")[0].body.p_accept_rules, false);
 }, { setup: (db) => seed(db, { myRole: "none" }) });
@@ -241,7 +256,7 @@ await scenario("11b. Kapalı topluluk, yalnız davetli: içerik/sohbet/üye list
   assert.equal(await page.getByRole("tab").count(), 0, "no content tabs for a non-member of a private community");
   await page.getByText("Bob seni bu topluluğa davet etti").waitFor();
   await page.getByRole("button", { name: "Kabul et" }).click();
-  await page.getByRole("tab", { name: "Genel bakış" }).waitFor();
+  await page.getByRole("tab", { name: "Akış" }).waitFor();
   assert.ok(db.member(C1, ME));
 }, { setup: (db) => { seed(db, { myRole: "none", visibility: "private" }); db.invitations.push({ id: "f0000000-0000-4000-8000-000000000003", group_id: C1, invitee_id: ME, inviter_id: U.bob.id, status: "pending", created_at: db.stamp(), expires_at: "2099-01-01T00:00:00Z" }); } });
 
@@ -340,8 +355,8 @@ await scenario("13e. Moderatör: başkasının gönderisini sebeple kaldırır; 
 }, { setup: (db) => { seed(db, { myRole: "moderator" }); db.addPost(C1, { author: U.dave, title: "Kaldırılacak" }); db.addPost(C1, { author: U.dave, title: "Sabitlenecek" }); for (let i = 0; i < 3; i++) db.addPost(C1, { author: U.dave, title: `Zaten sabit ${i}`, pinned: true }); } });
 
 // 14 — duyurular
-await scenario("14. Duyuru: yayınla (sohbette de), listede görünür; düzenle; sil. Üyede yönetim düğmeleri yok", async ({ page, db }) => {
-  await open(page, C1);
+await scenario("14. Duyuru: Yönet → Duyurular'dan yayınla (sohbette de), listede görünür; düzenle; sil. Akış özetinde yönetim düğmesi yok", async ({ page, db }) => {
+  await open(page, C1, "manage&section=announcements");
   await page.getByRole("button", { name: "Duyuru yayınla" }).click();
   const d = dlg(page);
   await d.getByLabel("Başlık").fill("Haftalık buluşma");
@@ -363,7 +378,7 @@ await scenario("14. Duyuru: yayınla (sohbette de), listede görünür; düzenle
   await page.getByText("Henüz duyuru yok.").waitFor();
 }, { setup: (db) => seed(db, { myRole: "owner" }) });
 
-await scenario("14b. Üye duyuruyu okur ama yayınlama/düzenleme/silme kontrolleri görünmez", async ({ page }) => {
+await scenario("14b. Üye duyuruyu akışın üstündeki özette okur ama yayınlama/düzenleme/silme kontrolleri görünmez; duyuru yoksa özet hiç çizilmez", async ({ page }) => {
   await open(page, C1);
   await page.getByRole("heading", { name: "Mevcut duyuru" }).waitFor();
   assert.equal(await page.getByRole("button", { name: "Duyuru yayınla" }).count(), 0);
@@ -534,10 +549,13 @@ await scenario("17d. Yönetim · Kurallar: owner kural metnini ve kabul zorunlul
 }, { setup: (db) => seed(db, { myRole: "owner" }) });
 
 // 18 — sohbet entegrasyonu
-await scenario("18. Sohbet sekmesi: son mesaj + okunmamış sayısı; 'Sohbeti aç' Mesajlar çalışma alanına gider; sohbet başlığında topluluğa bağlantı var", async ({ page }) => {
+await scenario("18. Sohbet: başlıktaki 'Sohbeti aç' Mesajlar çalışma alanına gider; sohbet başlığında topluluğa bağlantı var; eski ?tab=chat bağlantısı sohbete yönlenir", async ({ page }) => {
   await open(page, C1, "chat");
-  await page.getByText("Merhaba topluluk").first().waitFor();
-  await page.getByRole("link", { name: "Sohbeti aç" }).last().click();
+  await page.waitForURL(/messages\/local\/?\?id=/);
+  await page.goBack();
+  await page.waitForTimeout(300);
+  await open(page, C1);
+  await page.locator("header").getByRole("link", { name: "Sohbeti aç" }).click();
   await page.waitForURL(/messages\/local\/?\?id=/);
   await page.getByRole("link", { name: "Topluluk sayfasına git" }).click();
   await page.waitForURL(/communities\/local\/?\?id=/);
@@ -614,7 +632,9 @@ await scenario("22. İngilizce: Topluluklar sayfası, detay sekmeleri, rapor/duy
   await page.getByPlaceholder("Search communities (private ones too)…").waitFor();
   assert.deepEqual((await tabNames(page)).slice(0, 5), ["Discover", "Joined", "Managed", "Invitations", "My requests"]);
   await open(page, C1);
-  assert.deepEqual(await tabNames(page), ["Overview", "Feed", "Chat", "Members", "Events", "About & rules", "Manage"]);
+  assert.deepEqual(await tabNames(page), ["Feed", "Events", "Members", "About & rules", "Manage"]);
+  await page.locator("header").getByRole("link", { name: "Open chat" }).waitFor();
+  await open(page, C1, "manage&section=announcements");
   await page.getByRole("button", { name: "Publish announcement" }).waitFor();
   await page.getByRole("tab", { name: "Events" }).click();
   await page.getByRole("button", { name: "Create event" }).first().click();
@@ -653,14 +673,14 @@ await scenario("24. Başlıktaki tek üyelik düğmesi: Katıl → Katıldın �
   await joinBtn(head).click();
   const joined = head.getByRole("button", { name: /Katıldın/ });
   await joined.waitFor();
-  await page.getByRole("tab", { name: "Sohbet" }).waitFor();
+  await page.getByRole("tab", { name: "Üyeler" }).waitFor();
   await joined.click();
   await page.getByRole("menuitem", { name: "Topluluktan ayrıl" }).click();
   await dlg(page).getByRole("button", { name: "Topluluktan ayrıl" }).dblclick();
   await joinBtn(head).waitFor();
   assert.equal(calls(db, "rpc/leave_chat_group").length, 1, "double click sends one leave request");
   assert.equal(db.member(C1, ME), undefined);
-  await page.getByRole("tab", { name: "Sohbet" }).waitFor({ state: "detached" });
+  await page.getByRole("tab", { name: "Üyeler" }).waitFor({ state: "detached" });
 }, { setup: (db) => seed(db, { myRole: "none" }) });
 
 await scenario("24b. Sahip 'Katıldın ▼' menüsünde ayrılamaz: öğe devre dışı ve neden yazar", async ({ page, db }) => {
@@ -868,10 +888,9 @@ await scenario("29. Ziyaretçi (oturumsuz) · Topluluklar: yalnız Keşfet (herk
   for (const rpc of ["join_community", "request_join_community", "create_community"]) assert.equal(calls(db, rpc, "RPC").length, 0, `${rpc} was not called`);
 }, { guest: true, setup: guestSetup });
 
-await scenario("29b. Ziyaretçi · topluluk sayfası: herkese açıkta salt-okunur içerik (Sohbet/Üyeler yok); kapalıda içerik ve sekme YOK; tamamen kapalıda 'bulunamadı'; hiçbirinde üye/istatistik çağrısı yok", async ({ page, db }) => {
+await scenario("29b. Ziyaretçi · topluluk sayfası: herkese açıkta salt-okunur içerik (Üyeler yok); kapalıda içerik ve sekme YOK; tamamen kapalıda 'bulunamadı'; hiçbirinde üye/istatistik çağrısı yok", async ({ page, db }) => {
   await open(page, C1);
-  assert.deepEqual(await tabNames(page), ["Genel bakış", "Akış", "Etkinlikler", "Hakkında ve kurallar"]);
-  await page.getByRole("tab", { name: "Akış", exact: true }).click();
+  assert.deepEqual(await tabNames(page), ["Akış", "Etkinlikler", "Hakkında ve kurallar"]);
   await page.getByText("Herkese açık gönderi").waitFor();
   assert.equal(await page.locator("header a", { hasText: "Sohbeti aç" }).count(), 0);
   await joinBtn(page.locator("header")).click();
@@ -948,15 +967,15 @@ for (const [label, viewport] of [["mobil 390x800", { width: 390, height: 800 }],
   }, { viewport });
 }
 
-await scenario("32. Sekme yeniden görünür olunca topluluk sessizce yenilenir: üyelikten çıkarılan kişi bayat ekranda kalmaz (Sohbet sekmesi kalkar, 'Katıl' döner)", async ({ page, db }) => {
+await scenario("32. Sekme yeniden görünür olunca topluluk sessizce yenilenir: üyelikten çıkarılan kişi bayat ekranda kalmaz (Üyeler sekmesi kalkar, 'Katıl' döner)", async ({ page, db }) => {
   await page.clock.install();
   await open(page, C1);
-  await page.getByRole("tab", { name: "Sohbet" }).waitFor();
+  await page.getByRole("tab", { name: "Üyeler" }).waitFor();
   db.members = db.members.filter((m) => !(m.conversation_id === C1 && m.user_id === ME));
   db.groups.find((g) => g.id === C1).member_count -= 1;
   await page.clock.fastForward(60 * 1000);
   await page.evaluate(() => document.dispatchEvent(new Event("visibilitychange")));
-  await page.getByRole("tab", { name: "Sohbet" }).waitFor({ state: "detached" });
+  await page.getByRole("tab", { name: "Üyeler" }).waitFor({ state: "detached" });
   await joinBtn(page.locator("header")).waitFor();
 }, { setup: (db) => seed(db, { myRole: "member", visibility: "public" }) });
 

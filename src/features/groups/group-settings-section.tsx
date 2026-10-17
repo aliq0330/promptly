@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { Camera, CheckCircle2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
-import { ChoiceCard, fieldControlClassName, fieldInputClassName, fieldLabelClassName } from "@/components/ui/field";
+import { fieldControlClassName, fieldInputClassName, fieldLabelClassName } from "@/components/ui/field";
 import { useAuth } from "@/features/auth/auth-provider";
 import { VisibilityPicker } from "@/features/communities/visibility-picker";
 import type { TranslationKey } from "@/lib/i18n/translations";
@@ -25,8 +26,9 @@ import {
   validateGroupName,
   type VisibilityChangeResult,
 } from "@/lib/chat-groups";
+import { communityChatHref } from "@/lib/communities";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import type { ChatGroup, GroupPostingPolicy, GroupVisibility } from "@/types";
+import type { ChatGroup, GroupVisibility } from "@/types";
 
 /** Görünürlüğe geçiş eylemlerinin düğme etiketi + onay penceresi metinleri. */
 const VISIBILITY_ACTION_KEYS: Record<GroupVisibility, { label: TranslationKey; title: TranslationKey }> = {
@@ -48,8 +50,8 @@ const VISIBILITY_CHANGE_KEYS: Record<string, TranslationKey> = {
 const ACCEPTED_AVATAR_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 /**
- * Grup ayarları (owner/admin): ad, açıklama, görsel, üye sınırı, kim yazabilir; görünürlük (onaylı, atomik, sonuç özetli);
- * ve (yalnız owner) grubu silme. Her değişiklik sunucuda doğrulanır ve denetim kaydına yazılır.
+ * TOPLULUK ayarları (owner/admin): ad, açıklama, görsel, üye sınırı; görünürlük (onaylı, atomik, sonuç özetli); (yalnız owner) yetkiler ve
+ * topluluğu silme. Sohbet ayarları (kim yazabilir, geçmiş, sabitleme) burada DEĞİL, sohbet bilgi penceresindedir (`ChatSettingsSection`). Her değişiklik sunucuda doğrulanır ve denetim kaydına yazılır.
  */
 export function GroupSettingsSection({
   group,
@@ -72,7 +74,6 @@ export function GroupSettingsSection({
   const [name, setName] = useState(group.name);
   const [description, setDescription] = useState(group.description ?? "");
   const [memberLimit, setMemberLimit] = useState(String(group.memberLimit));
-  const [posting, setPosting] = useState<GroupPostingPolicy>(group.postingPolicy);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [removeAvatar, setRemoveAvatar] = useState(false);
   const [avatarError, setAvatarError] = useState<string | null>(null);
@@ -94,7 +95,6 @@ export function GroupSettingsSection({
   if (name.trim() !== group.name) patch.name = name;
   if (description.trim() !== (group.description ?? "")) patch.description = description;
   if (limitValid && limitNumber !== group.memberLimit) patch.memberLimit = clampMemberLimit(limitNumber);
-  if (posting !== group.postingPolicy) patch.postingPolicy = posting;
   const dirty = Object.keys(patch).length > 0 || avatarFile !== null || removeAvatar;
   const valid = !nameProblem && !descriptionProblem && limitValid;
 
@@ -234,23 +234,12 @@ export function GroupSettingsSection({
           </p>
         </div>
 
-        <fieldset className="space-y-2">
-          <legend className={fieldLabelClassName}>{t("groups.settings.postingLabel")}</legend>
-          <ChoiceCard>
-            <input type="radio" name="posting-policy" checked={posting === "members"} onChange={() => setPosting("members")} disabled={save.busy} className="mt-1 accent-[var(--color-primary)]" />
-            <span>
-              <span className="block font-medium">{t("groups.settings.postingMembers")}</span>
-              <span className="block text-caption text-text-muted">{t("groups.settings.postingMembersHelp")}</span>
-            </span>
-          </ChoiceCard>
-          <ChoiceCard>
-            <input type="radio" name="posting-policy" checked={posting === "admins"} onChange={() => setPosting("admins")} disabled={save.busy} className="mt-1 accent-[var(--color-primary)]" />
-            <span>
-              <span className="block font-medium">{t("groups.settings.postingAdmins")}</span>
-              <span className="block text-caption text-text-muted">{t("groups.settings.postingAdminsHelp")}</span>
-            </span>
-          </ChoiceCard>
-        </fieldset>
+        <p className="rounded-md bg-surface-soft px-3 py-2.5 text-caption text-text-muted">
+          {t("groups.settings.chatSettingsMoved")}{" "}
+          <Link href={`${communityChatHref(group.id)}&panel=settings`} className="font-medium text-primary hover:underline">
+            {t("groups.settings.chatSettingsLink")}
+          </Link>
+        </p>
 
         {save.error && (
           <p role="alert" className="rounded-md bg-danger/10 px-3 py-2 text-small text-danger">
@@ -286,7 +275,7 @@ export function GroupSettingsSection({
 
       )}
 
-      {group.myRole === "owner" && <GroupOwnerSettings group={group} onChanged={onChanged} onToast={onToast} />}
+      {group.myRole === "owner" && <GroupOwnerSettings group={group} scope="community" onChanged={onChanged} onToast={onToast} />}
 
       {group.myRole === "owner" && (
         <section aria-labelledby="settings-danger-title" className="space-y-3 rounded-lg border border-danger/30 bg-danger/5 p-4">

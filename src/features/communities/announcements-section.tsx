@@ -21,14 +21,29 @@ import Link from "next/link";
  * (owner her zaman) yapılır — gerçek yetki sunucudadır. Yayınlarken "sohbette de göster" seçilirse sohbette bağlantılı bir duyuru mesajı
  * oluşur; "üyelere bildir" seçimi her üyenin bildirim tercihine göre uygulanır (sessiz tercihli üyeye gitmez).
  */
-export function AnnouncementsSection({ group, role, limit = 20, onToast, onChanged }: { group: ChatGroup; role: GroupRole | null; limit?: number; onToast: (message: string) => void; onChanged?: () => void }) {
+export function AnnouncementsSection({
+  group,
+  role,
+  limit = 20,
+  onToast,
+  onChanged,
+  highlight = false,
+}: {
+  group: ChatGroup;
+  role: GroupRole | null;
+  limit?: number;
+  onToast: (message: string) => void;
+  onChanged?: () => void;
+  /** Akışın üstündeki özet şeridi: yalnızca okuma, boş/yüklenirken/hatada hiçbir şey çizilmez. Yönetim "Yönet → Duyurular"dadır. */
+  highlight?: boolean;
+}) {
   const { t, language } = useTranslation();
   const [items, setItems] = useState<CommunityAnnouncement[] | null>(null);
   const [loadError, setLoadError] = useState(false);
   const [editing, setEditing] = useState<CommunityAnnouncement | "new" | null>(null);
   const [deleting, setDeleting] = useState<CommunityAnnouncement | null>(null);
   const del = useAsyncAction();
-  const canManage = can(role, "manage_announcements", group.rolePermissions) && !group.closedAt;
+  const canManage = !highlight && can(role, "manage_announcements", group.rolePermissions) && !group.closedAt;
 
   const load = useCallback(async () => {
     try {
@@ -60,6 +75,8 @@ export function AnnouncementsSection({ group, role, limit = 20, onToast, onChang
   }
 
   const pinnedCount = items?.filter((item) => item.pinned).length ?? 0;
+
+  if (highlight && (items === null || loadError || items.length === 0)) return null;
 
   return (
     <section aria-labelledby="community-announcements-title" className="space-y-3">
@@ -105,7 +122,7 @@ export function AnnouncementsSection({ group, role, limit = 20, onToast, onChang
                   </div>
                 )}
               </div>
-              <p className="whitespace-pre-wrap break-words text-small text-text-secondary">{item.body}</p>
+              <p className={`whitespace-pre-wrap break-words text-small text-text-secondary${highlight ? " line-clamp-3" : ""}`}>{item.body}</p>
               <p className="flex flex-wrap items-center gap-1.5 text-caption text-text-muted">
                 {item.author && (
                   <>

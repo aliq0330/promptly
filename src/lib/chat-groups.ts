@@ -91,6 +91,14 @@ export function canSeeSettingsTab(role: GroupRole | null | undefined, perms?: Ro
   return role === "owner" || can(role, "edit_settings", perms) || can(role, "change_visibility", perms);
 }
 
+/**
+ * SOHBET ayarları (kim yazabilir · yeni üye geçmişi görür mü · üyeler sabitleyebilir mi) sohbet bilgi penceresindedir; topluluğun kendi
+ * ayarlarından (ad, görsel, görünürlük, yetkiler) ayrıdır. Kim yazabilir `edit_settings` ister; geçmiş ve sabitleme yalnız owner'dadır.
+ */
+export function canSeeChatSettings(role: GroupRole | null | undefined, perms?: RolePermissions): boolean {
+  return role === "owner" || can(role, "edit_settings", perms);
+}
+
 /** owner / admin: ayarlar, görünürlük, davet, bağlantı, yasak, rol atama. */
 export function isGroupManager(role: GroupRole | null | undefined): boolean {
   return role === "owner" || role === "admin";

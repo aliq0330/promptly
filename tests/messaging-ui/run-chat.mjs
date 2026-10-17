@@ -341,20 +341,27 @@ await scenario("12b. Yıldızlı mesajlar: boş durum; sohbet açılışında er
   await page.getByText("Bu mesaj görüntülenemiyor.").waitFor();
 }, { setup: (db) => seedDm(db) });
 
-await scenario("8e. Sabit (topluluk): owner ayarlarında 'üyeler de sabitleyebilsin' ve rol başına 'Mesaj sabitleme' yetkisi; yalnız değişenler kaydedilir", async ({ page, db }) => {
+await scenario("8e. Sabit (topluluk): 'üyeler de sabitleyebilsin' sohbet bilgi penceresinde; rol başına 'Mesaj sabitleme' yetkisi topluluk sayfasında (Yönet → Ayarlar); yalnız değişenler kaydedilir", async ({ page, db }) => {
   await openThread(page, G);
   await page.locator("button[aria-haspopup='dialog'][aria-label*='topluluk bilgisini aç']").first().click();
   const d = page.getByRole("dialog").last();
-  await d.getByRole("tab", { name: "Ayarlar" }).click();
+  await d.getByRole("button", { name: "Sohbet ayarları" }).click();
   await d.getByRole("heading", { name: "Mesaj sabitleme" }).waitFor();
+  assert.equal(await d.getByRole("switch", { name: "Moderatör: Mesaj sabitleme" }).count(), 0, "role permissions are a community setting");
   const save = d.getByRole("button", { name: "Sahip ayarlarını kaydet" });
   assert.equal(await save.isDisabled(), true, "nothing changed yet");
-  assert.equal(await d.getByRole("switch", { name: "Moderatör: Mesaj sabitleme" }).getAttribute("aria-checked"), "true", "default: moderator can pin");
   await d.getByRole("switch", { name: "Üyeler de mesaj sabitleyebilsin" }).click();
-  await d.getByRole("switch", { name: "Moderatör: Mesaj sabitleme" }).click();
   await save.click();
   await page.getByText("Sahip ayarları kaydedildi.").waitFor();
   assert.equal(db.groups[0].members_can_pin, true);
+  assert.deepEqual(db.calls.filter((c) => c.table === "rpc/update_chat_group_owner_settings")[0].body.p_patch, { members_can_pin: true });
+  await page.goto(`${BASE}/communities/local?id=${G}&tab=manage&section=settings`);
+  const perm = page.getByRole("switch", { name: "Moderatör: Mesaj sabitleme" });
+  await perm.waitFor();
+  assert.equal(await perm.getAttribute("aria-checked"), "true", "default: moderator can pin");
+  await perm.click();
+  await page.getByRole("button", { name: "Sahip ayarlarını kaydet" }).click();
+  await page.getByText("Sahip ayarları kaydedildi.").waitFor();
   assert.equal(db.groups[0].role_permissions.moderator.pin_messages, false);
   assert.equal(db.groups[0].role_permissions.admin.pin_messages, true, "untouched flag preserved");
 }, { setup: (db) => seedGroup(db, { myRole: "owner" }) });
@@ -513,6 +520,41 @@ await scenario("16. İngilizce: menü, sabit çubuğu, arama, yıldız ekranı �
   await page.getByRole("heading", { name: "Starred messages" }).waitFor();
   await page.getByText("You have no starred messages yet.").waitFor();
 }, { lang: "en", setup: (db) => seedDm(db) });
+
+// ====================================================================== TOPLULUK SAYFASI ↔ SOHBET (docs/community-system.md)
+const seedCommunity = (db, opts = {}) => {
+  seedGroup(db, opts);
+  Object.assign(db.groups.find((g) => g.id === G), { category: "general", feed_policy: "members", rules: null, rules_required: false, closed_at: null, origin: "native", post_count: 0 });
+};
+
+await scenario("18. Canlı eşitleme: topluluk sayfası açıkken yeni katılım isteği gelince başlıktaki 'N bekleyen istek' + Üyeler sayacı kendiliğinden görünür, işlenince kaybolur; sohbet başlığındaki rozet aynı sayıyı gösterir", async ({ page, db, hub }) => {
+  await page.goto(`${BASE}/communities/local?id=${G}`);
+  await page.locator("h1").first().waitFor();
+  await page.waitForTimeout(500);
+  assert.equal(await page.locator("[data-pending-requests]").count(), 0, "no requests yet → no shortcut");
+  const row = db.groups.find((g) => g.id === G);
+  row.pending_request_count = 1; // başka bir kullanıcı istek gönderdi (sunucu sayacı artırdı)
+  hub.emitPostgresChange("chat_groups", "UPDATE", row);
+  await page.locator("header [data-pending-requests]").getByText("1 bekleyen istek").waitFor();
+  await page.getByRole("tab", { name: /Üyeler/ }).getByText("1").waitFor();
+  row.pending_request_count = 0; // başka bir yönetici işledi
+  hub.emitPostgresChange("chat_groups", "UPDATE", row);
+  await page.locator("header [data-pending-requests]").waitFor({ state: "detached" });
+  row.pending_request_count = 3;
+  hub.emitPostgresChange("chat_groups", "UPDATE", row);
+  await page.locator("header [data-pending-requests]").waitFor();
+  await page.goto(`${BASE}/messages/local?id=${G}`);
+  await page.locator("[data-community-link-badge]").filter({ hasText: "3" }).waitFor();
+}, { setup: (db) => seedCommunity(db, { myRole: "admin", pending: 0 }) });
+
+await scenario("18b. Canlı eşitleme: başka bir yönetici benim rolümü değiştirir → topluluk sayfası yeniden okunur; Yönet sekmesi kalkar", async ({ page, db, hub }) => {
+  await page.goto(`${BASE}/communities/local?id=${G}`);
+  await page.getByRole("tab", { name: "Yönetim" }).waitFor();
+  const mine = db.member(G, ME);
+  mine.role = "member"; // owner/admin rolümü aldı
+  hub.emitPostgresChange("conversation_members", "UPDATE", mine);
+  await page.getByRole("tab", { name: "Yönetim" }).waitFor({ state: "detached" });
+}, { setup: (db) => seedCommunity(db, { myRole: "admin" }) });
 
 await browser.close(); server.close();
 let failed = 0;
