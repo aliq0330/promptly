@@ -192,8 +192,8 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
                 type="button"
                 onClick={() => setLightboxIndex(0)}
                 aria-label={t("media.viewFullscreen")}
-                className="relative block w-full overflow-hidden rounded-xl border border-border-soft bg-surface-soft shadow-card [--hero-h:440px] sm:[--hero-h:540px]"
-                // The output leads the page (full column width, rounded card); only very tall pictures are capped so the prompt block stays within reach.
+                className="relative block w-full overflow-hidden rounded-xl border border-border-soft bg-surface-soft shadow-card [--hero-h:360px] sm:[--hero-h:460px]"
+                // The output leads the page (full column width, rounded card); tall pictures are capped (lower since Meydan, docs/history/190-*) so the prompt block stays within reach.
                 style={{
                   aspectRatio: clampedAspectRatio(media.width, media.height),
                   maxWidth: `calc(var(--hero-h) * ${clampedAspectRatio(media.width, media.height)})`,

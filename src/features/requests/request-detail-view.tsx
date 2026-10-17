@@ -316,7 +316,7 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
             <Eyebrow tone="primary" className="mb-2">
               {t("request.creativeDirection")}
             </Eyebrow>
-            <p className="font-serif text-[1.0625rem] leading-relaxed text-text">
+            <p className="text-[1.0625rem] leading-relaxed text-text">
               <MentionText text={live.creativeDirection} />
             </p>
           </div>

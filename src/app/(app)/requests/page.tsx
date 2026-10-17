@@ -42,7 +42,6 @@ export default function RequestsPage() {
   return (
     <ContentListPage
       icon={Sparkles}
-      art="requests"
       eyebrow={t("request.communityEyebrow")}
       title={t("nav.requests")}
       description={t("request.pageDescription")}

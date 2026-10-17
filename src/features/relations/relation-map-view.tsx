@@ -167,7 +167,7 @@ export function RelationMapView() {
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div className="min-w-0 space-y-1">
             <Eyebrow icon={Network}>{t("relations.title")}</Eyebrow>
-            <h1 className="break-words font-serif text-h1 text-text">{t("relations.title")}</h1>
+            <h1 className="break-words font-display text-h1 text-text">{t("relations.title")}</h1>
             <p className="flex min-w-0 items-center gap-1.5 text-small text-text-secondary">
               <CenterIcon size={14} className="shrink-0 text-text-muted" aria-hidden />
               <span className="shrink-0 text-text-muted">{kindLabel(center.kind)}:</span>

@@ -232,7 +232,7 @@ function CommunityPageInner() {
 function CommunityBanner({ avatarUrl }: { avatarUrl: string | null }) {
   const { src } = useStorageSrc(avatarUrl);
   return (
-    <div aria-hidden className="relative h-24 overflow-hidden bg-primary-soft sm:h-32">
+    <div aria-hidden className="relative h-20 overflow-hidden bg-primary-soft sm:h-24">
       {src && <Image src={src} alt="" fill sizes="100vw" className="scale-125 object-cover opacity-80 blur-2xl" />}
     </div>
   );

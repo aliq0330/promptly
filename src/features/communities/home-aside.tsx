@@ -42,13 +42,13 @@ export function HomeAside({ managedCount, actionCount }: { managedCount: number;
 
   return (
     <>
-      <section className="rounded-xl border border-border-soft bg-surface p-3.5 shadow-card" aria-labelledby="community-aside-summary">
-        <h2 id="community-aside-summary" className="text-label font-semibold text-text">
+      <section className="rounded-xl bg-surface-soft p-4" aria-labelledby="community-aside-summary">
+        <h2 id="community-aside-summary" className="font-display text-[1.0625rem] font-bold tracking-[-0.02em] text-text">
           {t("communities.aside.summary")}
         </h2>
         <dl className="mt-2.5 grid grid-cols-3 gap-2 text-center">
           {stats.map((stat) => (
-            <div key={stat.key} className="rounded-lg bg-surface-soft px-1 py-2" data-aside-stat={stat.key}>
+            <div key={stat.key} className="rounded-lg bg-surface px-1 py-2" data-aside-stat={stat.key}>
               <dd className="text-h3 font-semibold tabular-nums text-text">{stat.value}</dd>
               <dt className="truncate text-caption text-text-muted">{stat.label}</dt>
             </div>
@@ -62,9 +62,9 @@ export function HomeAside({ managedCount, actionCount }: { managedCount: number;
       </section>
 
       {(items === null || items.length > 0) && (
-      <section className="rounded-xl border border-border-soft bg-surface p-3.5 shadow-card" aria-labelledby="community-aside-mine">
+      <section className="rounded-xl bg-surface-soft p-4" aria-labelledby="community-aside-mine">
         <div className="flex items-center justify-between gap-2">
-          <h2 id="community-aside-mine" className="text-label font-semibold text-text">
+          <h2 id="community-aside-mine" className="font-display text-[1.0625rem] font-bold tracking-[-0.02em] text-text">
             {t("communities.home.myCommunities")}
           </h2>
           {hasMore && (
@@ -95,7 +95,7 @@ export function HomeAside({ managedCount, actionCount }: { managedCount: number;
       </section>
       )}
 
-      <Link href="/communities/all" className="flex items-center justify-between rounded-xl border border-border-soft bg-surface px-3.5 py-2.5 text-small font-medium text-text shadow-card hover:border-border-strong">
+      <Link href="/communities/all" className="flex items-center justify-between rounded-full bg-surface-soft px-4 py-2.5 text-small font-semibold text-text transition-colors hover:bg-border-soft">
         <span className="flex items-center gap-2">
           <Compass size={15} className="text-primary" aria-hidden /> {t("communities.all.button")}
         </span>

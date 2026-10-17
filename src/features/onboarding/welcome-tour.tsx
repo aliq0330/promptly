@@ -110,7 +110,7 @@ export function WelcomeTour() {
           <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary-soft text-primary">
             <Icon size={22} aria-hidden />
           </span>
-          <h2 id="tour-title" className="font-serif text-h2 text-text">
+          <h2 id="tour-title" className="font-display text-h2 text-text">
             {t(current.title)}
           </h2>
           <p className="text-body leading-relaxed text-text-secondary">{t(current.body)}</p>
