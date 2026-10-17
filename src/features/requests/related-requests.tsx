@@ -22,7 +22,7 @@ export function RelatedRequests({ request, limit = 4 }: { request: PromptRequest
   if (failed || (!loading && items.length === 0)) return null;
 
   return (
-    <AsideSection id="related-requests-title" title={t("request.relatedRequests")}>
+    <AsideSection id="related-requests-title" title={t("request.relatedRequests")} href="/requests">
       {loading ? (
         <RelatedCardsSkeleton count={limit} />
       ) : (

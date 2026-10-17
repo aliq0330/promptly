@@ -10,7 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Tabs, type TabItem } from "@/components/ui/tabs";
 import { DetailSkeleton, NotFoundBlock } from "@/components/ui/detail-skeleton";
 import { ContentTypeLabel } from "@/features/content/content-type-label";
-import { ToolChips, ToolLine } from "@/features/content/tool-chips";
+import { ToolChips } from "@/features/content/tool-chips";
+import { DetailMetaCard } from "@/features/content/detail-meta-card";
 import { CreatorSummary } from "@/features/profile/creator-summary";
 import { FollowButton } from "@/features/profile/follow-button";
 import { RelatedWorkflows } from "./related-workflows";
@@ -117,7 +118,7 @@ export function WorkflowDetailView({ workflowId }: { workflowId?: string } = {})
   const aside = (
     <DetailAside>
       {/* Phones/tablets already show the creator (+ Follow) in the byline above. */}
-      <div className="hidden lg:block">
+      <div className="hidden xl:block">
         <CreatorSummary creator={workflow.creator} isOwn={isOwn} />
       </div>
 
@@ -175,7 +176,7 @@ export function WorkflowDetailView({ workflowId }: { workflowId?: string } = {})
             language={language}
             // The creator card lives in the side column, which on phones/tablets stacks far below —
             // so there the byline carries the Follow button instead of repeating the whole card.
-            trailing={!isOwn ? <FollowButton user={workflow.creator} className="lg:hidden" /> : undefined}
+            trailing={!isOwn ? <FollowButton user={workflow.creator} className="xl:hidden" /> : undefined}
           />
         </header>
 
@@ -247,7 +248,6 @@ export function WorkflowDetailView({ workflowId }: { workflowId?: string } = {})
           })}
           <span className="text-caption text-text-muted">{t("workflow.stepCount", { count: String(steps.length) })}</span>
         </div>
-        <ToolLine label={t("tool.recommendedLabel")} refs={workflow.tools} />
         {steps.length > 0 && (
           <Button
             size="sm"
@@ -260,7 +260,9 @@ export function WorkflowDetailView({ workflowId }: { workflowId?: string } = {})
           </Button>
         )}
 
-        <DetailTags tags={workflow.tags} />
+        <DetailMetaCard toolLabel={t("tool.recommendedLabel")} toolRefs={workflow.tools} hasChips={workflow.tags.length > 0}>
+          <DetailTags className="contents" tags={workflow.tags} />
+        </DetailMetaCard>
 
         <section ref={stepsRef} aria-labelledby="workflow-steps-heading" className="scroll-mt-20 space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-2">

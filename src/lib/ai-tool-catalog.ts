@@ -125,7 +125,7 @@ export function resolveToolRefs(refs: string[] | null | undefined): ResolvedTool
     const tool = findTool(toolId);
     if (!tool) continue;
     const model = modelId ? (tool.models.find((mm) => mm.id === modelId) ?? null) : null;
-    out.push({ ref, tool, model, label: model ? `${tool.name} ${model.name}` : tool.name });
+    out.push({ ref, tool, model, label: !model ? tool.name : model.name.toLowerCase().startsWith(tool.name.toLowerCase()) ? model.name : `${tool.name} ${model.name}` });
   }
   return out;
 }

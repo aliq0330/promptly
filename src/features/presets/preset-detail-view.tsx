@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { DetailSkeleton, NotFoundBlock } from "@/components/ui/detail-skeleton";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { ContentTypeLabel } from "@/features/content/content-type-label";
-import { ToolChips } from "@/features/content/tool-chips";
+import { DetailMetaCard } from "@/features/content/detail-meta-card";
 import { CreatorSummary } from "@/features/profile/creator-summary";
 import { FollowButton } from "@/features/profile/follow-button";
 import { RelatedPresets } from "./related-presets";
@@ -101,7 +101,7 @@ export function PresetDetailView({ presetId }: { presetId?: string } = {}) {
   const aside = (
     <DetailAside>
       {/* Phones/tablets already show the creator (+ Follow) in the byline above. */}
-      <div className="hidden lg:block">
+      <div className="hidden xl:block">
         <CreatorSummary creator={preset.creator} isOwn={isOwn} />
       </div>
 
@@ -155,7 +155,7 @@ export function PresetDetailView({ presetId }: { presetId?: string } = {}) {
             language={language}
             // The creator card lives in the side column, which on phones/tablets stacks far below —
             // so there the byline carries the Follow button instead of repeating the whole card.
-            trailing={!isOwn ? <FollowButton user={preset.creator} className="lg:hidden" /> : undefined}
+            trailing={!isOwn ? <FollowButton user={preset.creator} className="xl:hidden" /> : undefined}
           />
         </header>
 
@@ -228,16 +228,9 @@ export function PresetDetailView({ presetId }: { presetId?: string } = {}) {
           )}
         </section>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-caption font-medium text-text-muted">{t("tool.recommendedLabel")}</span>
-          {preset.tools.length > 0 ? (
-            <ToolChips refs={preset.tools} />
-          ) : (
-            <span className="inline-flex h-6 items-center rounded-full bg-surface-soft px-2.5 text-caption font-medium text-text-secondary">{t("preset.generalTool")}</span>
-          )}
-        </div>
-
-        <DetailTags tags={preset.tags} />
+        <DetailMetaCard toolLabel={t("tool.recommendedLabel")} toolRefs={preset.tools} fallbackTool={t("preset.generalTool")} hasChips={preset.tags.length > 0}>
+          <DetailTags className="contents" tags={preset.tags} />
+        </DetailMetaCard>
         </>)}
 
         <DetailComments>

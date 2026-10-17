@@ -84,10 +84,10 @@ export function PromptResultsSection({ target }: { target: PromptResultsSectionT
   }
 
   return (
-    <section className="space-y-3">
+    <section className="space-y-3 rounded-xl border border-border-soft bg-surface p-4 shadow-card sm:p-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-label font-semibold text-text">
-          {t("result.sectionTitle")}{total > 0 && <span className="ml-1.5 text-text-muted">{total}</span>}
+          {t("result.sectionTitle")}<span className="font-normal tabular-nums text-text-muted"> · {total}</span>
         </h2>
         {user && (
           <Button type="button" size="sm" variant="outline" onClick={() => setIsAddOpen(true)}>

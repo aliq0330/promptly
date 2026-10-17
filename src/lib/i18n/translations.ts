@@ -637,12 +637,14 @@ export const translations = {
   "prompt.saveAria": { tr: "Kaydet ({{count}} kayıt)", en: "Save ({{count}} saves)" },
   "prompt.removedFromSavedToast": { tr: "Kaydedilenlerden kaldırıldı.", en: "Removed from saved." },
   "comments.title": { tr: "Yorumlar", en: "Comments" },
+  "comments.viewAllThread": { tr: "Tümünü gör", en: "View all" },
 
   // ---- Prompt detail page ----
   "prompt.promptTextHeading": { tr: "Prompt Metni", en: "Prompt Text" },
   "prompt.suggestEdit": { tr: "Düzenleme öner", en: "Suggest an Edit" },
   "prompt.customizePrompt": { tr: "Promptu kişiselleştir", en: "Customize Prompt" },
-  "prompt.outputCaption": { tr: "Çıktı — bu promptla üretilen sonuç", en: "Output — the result generated with this prompt" },
+  "prompt.outputCaption": { tr: "Prompt sonucu", en: "Prompt result" },
+  "source.heading": { tr: "Kaynak ve lisans", en: "Source and license" },
   "prompt.relatedPrompts": { tr: "Benzer promptlar", en: "Related Prompts" },
   "prompt.notFoundTitle": { tr: "Prompt bulunamadı", en: "Prompt not found" },
   "prompt.notFoundBody": { tr: "Bu prompt kaldırılmış olabilir, ya da hiç var olmamış olabilir.", en: "This prompt may have been removed, or never existed." },

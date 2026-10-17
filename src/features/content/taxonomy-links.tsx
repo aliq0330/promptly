@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { findCategory, findSubcategory, taxonomyLabel, type ContentTypeId } from "@/lib/content-taxonomy";
+import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 
 /**
@@ -14,10 +15,12 @@ export function TaxonomyLinks({
   contentType,
   category,
   subcategory,
+  className,
 }: {
   contentType: ContentTypeId;
   category?: string | null;
   subcategory?: string | null;
+  className?: string;
 }) {
   const { language } = useTranslation();
   const cat = findCategory(contentType, category);
@@ -31,7 +34,7 @@ export function TaxonomyLinks({
   const chip =
     "inline-flex h-7 items-center rounded-full border border-primary/25 bg-primary-soft px-2.5 text-caption font-medium text-primary transition-colors hover:border-primary/50";
   return (
-    <div className="flex flex-wrap gap-1.5">
+    <div className={cn("flex flex-wrap gap-1.5", className)}>
       <Link href={hrefFor()} className={chip}>
         {taxonomyLabel(cat.labelKey, language)}
       </Link>

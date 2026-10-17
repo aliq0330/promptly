@@ -29,7 +29,7 @@ export function ScrollablePrompt({
       tabIndex={0}
       className={cn(
         "prompt-text scrollbar-thin-soft overscroll-contain whitespace-pre-wrap [overflow-wrap:anywhere] overflow-y-auto overflow-x-hidden",
-        "max-h-72 sm:max-h-80 md:max-h-[26rem] lg:max-h-[30rem]",
+        "max-h-60 sm:max-h-72 md:max-h-80 lg:max-h-[26rem]",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
         className,
       )}

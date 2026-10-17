@@ -22,7 +22,7 @@ export function RelatedWorkflows({ workflow, limit = 4 }: { workflow: Workflow; 
   if (failed || (!loading && items.length === 0)) return null;
 
   return (
-    <AsideSection id="workflow-similar-title" title={t("workflow.similar")}>
+    <AsideSection id="workflow-similar-title" title={t("workflow.similar")} href="/workflows">
       {loading ? (
         <RelatedCardsSkeleton count={limit} />
       ) : (
