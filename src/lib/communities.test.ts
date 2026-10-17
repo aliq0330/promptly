@@ -23,7 +23,9 @@ import {
   normalizeVisibility,
   normalizeNotifyLevel,
   parseCommunityStats,
-  resolveTab,
+  resolveCommunityView,
+  membersSections,
+  manageSections,
   timezoneOptions,
   validateEventInput,
   zonedLocalToIso,
@@ -41,17 +43,17 @@ test("kategori: bilinmeyen değer 'general'e düşer, her kategorinin etiket ana
   assert.equal(normalizeFeedPolicy("x"), "members");
 });
 
-test("sekmeler: üye olmayan kapalı toplulukta sekme yok; açıkta yalnız okuma sekmeleri; üyede sohbet+üyeler", () => {
+test("sekmeler: üye olmayan kapalı toplulukta sekme yok; açıkta yalnız okuma sekmeleri; üye Akış ilk olmak üzere beş sekme alır", () => {
   assert.deepEqual(accessibleTabs({ role: null, visibility: "private" }), []);
-  assert.deepEqual(accessibleTabs({ role: null, visibility: "public" }), ["overview", "feed", "events", "about"]);
+  assert.deepEqual(accessibleTabs({ role: null, visibility: "public" }), ["feed", "events", "about"]);
   const member = accessibleTabs({ role: "member", visibility: "private" });
-  assert.deepEqual(member, ["overview", "feed", "chat", "members", "events", "about"]);
+  assert.deepEqual(member, ["feed", "events", "members", "about"]);
   assert.ok(!member.includes("manage"));
   assert.ok(accessibleTabs({ role: "owner", visibility: "private" }).includes("manage"));
   assert.ok(accessibleTabs({ role: "moderator", visibility: "private" }).includes("manage"));
 });
 
-test("sekmeler: yetkisi tamamen alınan moderatör Yönetim sekmesini görmez", () => {
+test("sekmeler: yetkisi tamamen alınan moderatör Yönet sekmesini görmez", () => {
   const none = structuredClone(DEFAULT_ROLE_PERMISSIONS);
   for (const key of Object.keys(none.moderator) as (keyof typeof none.moderator)[]) none.moderator[key] = false;
   assert.equal(canSeeManageTab("moderator", none), false);
@@ -60,13 +62,54 @@ test("sekmeler: yetkisi tamamen alınan moderatör Yönetim sekmesini görmez", 
   assert.equal(canSeeManageTab(null, DEFAULT_ROLE_PERMISSIONS), false);
 });
 
-test("sekmeler: geçersiz/izinsiz istenen sekme ilk izinli sekmeye düşer", () => {
-  const allowed = accessibleTabs({ role: "member", visibility: "public" });
-  assert.equal(resolveTab("chat", allowed), "chat");
-  assert.equal(resolveTab("manage", allowed), "overview");
-  assert.equal(resolveTab("nonsense", allowed), "overview");
-  assert.equal(resolveTab("chat", accessibleTabs({ role: null, visibility: "public" })), "overview");
-  assert.equal(resolveTab("overview", []), null);
+test("sekmeler: yalnız kişi yönetimi yetkisi olan moderatör boş bir Yönet sekmesi görmez (istekler Üyeler'dedir)", () => {
+  const onlyPeople = structuredClone(DEFAULT_ROLE_PERMISSIONS);
+  for (const key of Object.keys(onlyPeople.moderator) as (keyof typeof onlyPeople.moderator)[]) onlyPeople.moderator[key] = false;
+  onlyPeople.moderator.manage_requests = true;
+  onlyPeople.moderator.manage_invites = true;
+  assert.equal(canSeeManageTab("moderator", onlyPeople), false);
+  assert.deepEqual(membersSections("moderator", onlyPeople), ["list", "requests", "invites"]);
+});
+
+test("Üyeler bölümleri yeteneğe göre: üye yalnız liste; varsayılan moderatör liste+istekler; owner hepsi", () => {
+  assert.deepEqual(membersSections("member", DEFAULT_ROLE_PERMISSIONS), ["list"]);
+  assert.deepEqual(membersSections(null, DEFAULT_ROLE_PERMISSIONS), ["list"]);
+  assert.deepEqual(membersSections("moderator", DEFAULT_ROLE_PERMISSIONS), ["list", "requests"]);
+  assert.deepEqual(membersSections("admin", DEFAULT_ROLE_PERMISSIONS), ["list", "requests", "invites"]);
+  assert.deepEqual(membersSections("owner", DEFAULT_ROLE_PERMISSIONS), ["list", "requests", "invites"]);
+  const revoked = structuredClone(DEFAULT_ROLE_PERMISSIONS);
+  revoked.moderator.manage_requests = false;
+  assert.deepEqual(membersSections("moderator", revoked), ["list"]);
+});
+
+test("Yönet bölümleri yeteneğe göre: istek/davet artık burada değil; geçmiş yalnız owner/admin", () => {
+  assert.deepEqual(manageSections("owner", DEFAULT_ROLE_PERMISSIONS), ["stats", "settings", "announcements", "moderation", "history"]);
+  assert.deepEqual(manageSections("moderator", DEFAULT_ROLE_PERMISSIONS), ["moderation"]);
+  assert.deepEqual(manageSections("member", DEFAULT_ROLE_PERMISSIONS), []);
+  for (const role of ["owner", "admin", "moderator"] as const) assert.ok(!(manageSections(role, DEFAULT_ROLE_PERMISSIONS) as string[]).includes("requests"));
+});
+
+test("görünüm çözümü: geçersiz/izinsiz sekme ilk izinli sekmeye (Akış) düşer", () => {
+  const member = accessibleTabs({ role: "member", visibility: "public" });
+  assert.equal(resolveCommunityView("members", null, member).view?.tab, "members");
+  assert.equal(resolveCommunityView("manage", null, member).view?.tab, "feed");
+  assert.equal(resolveCommunityView("nonsense", null, member).view?.tab, "feed");
+  assert.equal(resolveCommunityView(null, null, member).view?.tab, "feed");
+  assert.equal(resolveCommunityView("members", null, accessibleTabs({ role: null, visibility: "public" })).view?.tab, "feed");
+  assert.equal(resolveCommunityView("feed", null, []).view, null);
+});
+
+test("görünüm çözümü: eski adresler çalışır — overview→Akış, chat→sohbete yönlen, manage&section=requests|invites→Üyeler", () => {
+  const owner = accessibleTabs({ role: "owner", visibility: "public" });
+  assert.deepEqual(resolveCommunityView("overview", null, owner), { view: { tab: "feed", section: null }, toChat: false });
+  assert.equal(resolveCommunityView("chat", null, owner).toChat, true);
+  assert.deepEqual(resolveCommunityView("manage", "requests", owner).view, { tab: "members", section: "requests" });
+  assert.deepEqual(resolveCommunityView("manage", "invites", owner).view, { tab: "members", section: "invites" });
+  assert.deepEqual(resolveCommunityView("manage", "settings", owner).view, { tab: "manage", section: "settings" });
+  // Üye olmayan ziyaretçi sohbete yönlendirilmez; eski istek bağlantısı yetkisiz kişiyi Akış'a düşürür, bölüm taşınmaz.
+  assert.equal(resolveCommunityView("chat", null, accessibleTabs({ role: null, visibility: "public" })).toChat, false);
+  const plainMember = accessibleTabs({ role: "member", visibility: "public" });
+  assert.deepEqual(resolveCommunityView("manage", "requests", plainMember).view, { tab: "members", section: "requests" });
 });
 
 test("gönderi yetkisi: üye paylaşır; feed_policy=admins ise yalnız kadro; kapalı toplulukta kimse", () => {
@@ -188,7 +231,8 @@ test("istatistik ayrıştırma: eksik/bozuk alan 0'a düşer, seri korunur", () 
 test("yollar: topluluk ve sohbet adresleri", () => {
   assert.equal(communityHref("abc"), "/communities/local?id=abc");
   assert.equal(communityHref("abc", "feed"), "/communities/local?id=abc&tab=feed");
-  assert.equal(communityHref("abc", "overview"), "/communities/local?id=abc");
+  assert.equal(communityHref("abc", "members", "requests"), "/communities/local?id=abc&tab=members&section=requests");
+  assert.equal(communityHref("abc", undefined, "requests"), "/communities/local?id=abc");
   assert.equal(communityChatHref("abc"), "/messages/local?id=abc");
 });
 
@@ -209,5 +253,5 @@ test("görünürlük: Keşfet/arama/içerik/katılım davranışı üç düzeyde
 
 test("sekmeler: kapalı (restricted) toplulukta üye olmayan hiçbir sekme görmez; üye tam sekme alır", () => {
   assert.deepEqual(accessibleTabs({ role: null, visibility: "restricted" }), []);
-  assert.deepEqual(accessibleTabs({ role: "member", visibility: "restricted" }), ["overview", "feed", "chat", "members", "events", "about"]);
+  assert.deepEqual(accessibleTabs({ role: "member", visibility: "restricted" }), ["feed", "events", "members", "about"]);
 });

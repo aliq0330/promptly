@@ -36,7 +36,8 @@ export function GroupRequestsSection({
   const [busyId, setBusyId] = useState<string | null>(null);
   const [rowError, setRowError] = useState<{ id: string; message: string } | null>(null);
 
-  const key = `${group.id}|${reloadKey}`;
+  // Sayaç başka bir yönetici/ekran tarafından değiştiyse (Realtime ile gelen taze satır) liste de yeniden okunur.
+  const key = `${group.id}|${group.pendingRequestCount}|${reloadKey}`;
   useEffect(() => {
     let cancelled = false;
     fetchGroupJoinRequests(group.id)

@@ -26,8 +26,8 @@ const REFRESH_AFTER_HIDDEN_MS = 20 * 1000;
  *   • ÜYE → `chat_groups` TAM satırı (yalnız üye okuyabilir) + kendi üyelik satırı (rol, bildirim tercihi, kural kabulü);
  *   • ÜYE DEĞİL (ziyaretçi, yabancı, davetli, başvuran) → `community_cards` KARTI (yönetim alanları yok) + bekleyen davet/başvurum.
  * Kart yoksa (tamamen kapalı / olmayan / yasaklı) → "bulunamadı": varlık sızmaz. `userId` boşsa ziyaretçi modudur: yalnız kart.
- * `reload()` sayaç/ayar/rol değişince sessizce yeniden okur (yükleniyor ekranına dönmeden); sekme yeniden görünür olunca da kendiliğinden
- * yenilenir — çıkarılan/yasaklanan kişi ya da görünürlüğü değişen topluluk bayat bir ekranda kalmaz.
+ * `reload()` sayaç/ayar/rol değişince sessizce yeniden okur (yükleniyor ekranına dönmeden); Realtime olayında ve sekme yeniden görünür
+ * olunca da kendiliğinden yenilenir — çıkarılan/yasaklanan kişi ya da görünürlüğü değişen topluluk bayat bir ekranda kalmaz.
  */
 export function useCommunity(id: string | null, userId: string | null): { state: CommunityState; reload: () => Promise<void> } {
   const [state, setState] = useState<CommunityState>({ status: "loading" });
@@ -86,6 +86,27 @@ export function useCommunity(id: string | null, userId: string | null): { state:
     lastLoadedAt.current = Date.now();
     setState(next);
   }, [load]);
+
+  // Canlı eşitleme: topluluk satırı (bekleyen istek / üye sayısı / ayarlar) ya da kendi üyelik satırım (rol, çıkarılma) değişince sessizce yenilenir.
+  // Böylece başka bir yönetici isteği işleyince ya da rolüm değişince sayfa bayat kalmaz. Üye olmayan satırı okuyamadığından olay almaz (zararsız).
+  // Olay yağmuru tek yeniden okumaya indirgenir.
+  useEffect(() => {
+    if (!id || !userId) return;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const schedule = () => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => void reload(), 400);
+    };
+    const channel = supabase
+      .channel(`community:${id}`)
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "chat_groups", filter: `id=eq.${id}` }, schedule)
+      .on("postgres_changes", { event: "*", schema: "public", table: "conversation_members", filter: `conversation_id=eq.${id}` }, schedule)
+      .subscribe();
+    return () => {
+      if (timer) clearTimeout(timer);
+      supabase.removeChannel(channel);
+    };
+  }, [id, userId, reload]);
 
   useEffect(() => {
     const onVisible = () => {

@@ -4,6 +4,7 @@ import {
   assignableRoles,
   can,
   canSeeSettingsTab,
+  canSeeChatSettings,
   capabilitiesFor,
   DEFAULT_ROLE_PERMISSIONS,
   normalizeRolePermissions,
@@ -215,4 +216,14 @@ test("saklı yetkiler normalize edilir: eksik/bozuk anahtar → varsayılan; mod
   // Eski gruplarda `pin_messages` anahtarı yoktur: varsayılan (admin + moderatör) geçerli olur.
   assert.equal(normalizeRolePermissions({ moderator: { edit_settings: true } }).moderator.pin_messages, true);
   assert.equal(normalizeRolePermissions({ moderator: { pin_messages: false } }).moderator.pin_messages, false);
+});
+
+test("sohbet ayarları: owner her zaman, diğerleri yalnız edit_settings ile (görünürlük yetkisi sohbet ayarı vermez)", () => {
+  assert.equal(canSeeChatSettings("owner"), true);
+  assert.equal(canSeeChatSettings("admin"), true);
+  assert.equal(canSeeChatSettings("moderator"), false);
+  assert.equal(canSeeChatSettings("moderator", normalizeRolePermissions({ moderator: { change_visibility: true } })), false);
+  assert.equal(canSeeChatSettings("moderator", normalizeRolePermissions({ moderator: { edit_settings: true } })), true);
+  assert.equal(canSeeChatSettings("member"), false);
+  assert.equal(canSeeChatSettings(null), false);
 });

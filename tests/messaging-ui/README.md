@@ -17,7 +17,7 @@ Son satır `24/24 passed` beklenir (`CHROMIUM_PATH` verilmezse Playwright'ın ke
 `run-groups.mjs`: aynı ağ taklidiyle (`mock.mjs`: `db.addGroup`, grup RPC'leri) grup listesi/sohbeti/bilgi penceresi (rol bazlı sekmeler), istek kabul/ret, görünürlük onayı + sonuç özeti, davet/bağlantı, ayarlar, keşif, katılma bağlantısı sayfası, İngilizce, mobil/tablet/koyu tema düzeni. DB/RLS doğrulaması `supabase/tests/chat-groups.sql`'dedir.
 
 ```bash
-CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/messaging-ui/run-groups.mjs   # 26/26 beklenir
+CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/messaging-ui/run-groups.mjs   # 36/36 beklenir
 ```
 
 ## Sohbet geliştirmeleri (`docs/history/174-*`)
@@ -26,7 +26,7 @@ CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/mess
 
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co NEXT_PUBLIC_SUPABASE_ANON_KEY=dummy npm run build
-CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/messaging-ui/run-chat.mjs   # 33/33 beklenir
+CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/messaging-ui/run-chat.mjs   # 35/35 beklenir
 ONLY="9" node tests/messaging-ui/run-chat.mjs   # yalnız adı "9" ile başlayan senaryolar
 ```
 
@@ -51,3 +51,11 @@ CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/mess
 
 Başvuru sayfası (`docs/history/180-*`): aynı dosyada senaryo 16–16d (sayfa içeriği/not/orijinal bağlantısı/kendi beğeni ve yorumu, içerik erişilemezken sayfa, yerel gönderi yönlenmesi, İngilizce + mobil) ve 10b/10c (bildirim bağlantısı yönlenmesi).
 
+
+## Topluluk sayfası ↔ sohbet yeniden düzeni (`docs/history/183-*`, `docs/community-system.md`)
+
+`run-groups.mjs` artık hem sohbeti hem topluluk sayfasını sınar (`setupCommunities` ile topluluk uçları da taklitlidir): **sekmesiz kompakt bilgi paneli** (topluluk bağlantısı, kişisel sessize alma, salt-okunur üyeler, sohbet ayarları, tek ayrılma onayı), katılım istekleri/davetler/rol-çıkarma/ayarlar/yetki matrisinin **topluluk sayfasına** taşınması (Üyeler ve Yönetim bölümleri), `?panel=requests` → topluluk yönlendirmesi, bekleyen istek kısayolları (başlık, Üyeler sayacı, sohbet rozeti), sohbet↔topluluk geçişi, Hakkında kişisel tercihleri ve üç genişlikte taşma denetimi. Canlı eşitleme senaryoları (`18`, `18b`) `run-chat.mjs`'tedir (Realtime taklidi: `chat_groups` / `conversation_members` olayı). Gerçek Supabase'e/Realtime'a KARŞI DENENMEDİ.
+
+```bash
+CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/messaging-ui/run-groups.mjs   # 36/36 beklenir
+```

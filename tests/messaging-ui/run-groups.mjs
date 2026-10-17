@@ -3,6 +3,7 @@ import { chromium } from "playwright";
 import assert from "node:assert/strict";
 import { serve } from "./server.mjs";
 import { createDb, installMock, ME, U } from "./mock.mjs";
+import { setupCommunities } from "./mock-communities.mjs";
 
 const BASE = "http://localhost:4174/promptly";
 const server = await serve(4174);
@@ -12,6 +13,7 @@ const G = "d0000000-0000-4000-8000-0000000000a1";
 
 async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, setup, lang = "tr", theme } = {}) {
   const db = createDb();
+  setupCommunities(db); // topluluk sayfası uçları (üye listesi, istatistik…): yönetim işleri artık topluluk sayfasındadır
   setup?.(db);
   const context = await browser.newContext({ viewport });
   await installMock(context, db);
@@ -27,10 +29,15 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, set
 const dlg = (page) => page.getByRole("dialog").last();
 const calls = (db, table, method) => db.calls.filter((c) => c.table === table && (!method || c.method === method));
 const openThread = async (page, id = G) => { await page.goto(`${BASE}/messages/local?id=${id}`); await page.locator("button[aria-label^='Topluluk seçenekleri'], button[aria-label^='Community options']").first().waitFor(); await page.waitForTimeout(300); };
-const openInfo = async (page) => { await page.locator("button[aria-haspopup='dialog'][aria-label*='topluluk bilgisini aç'], button[aria-haspopup='dialog'][aria-label*='Open info']").first().click(); await dlg(page).getByRole("tablist").waitFor(); };
-const tabNames = async (page) => dlg(page).getByRole("tab").allInnerTexts().then((list) => list.map((t) => t.split("\n")[0].replace(/\d+$/, "").trim()));
-const tab = (page, name) => dlg(page).getByRole("tab", { name });
-const seed = (db, opts = {}) => db.addGroup(G, { members: [[U.bob, "admin"], [U.carol, "moderator"], [U.dave, "member"]], texts: [[U.bob, "merhaba topluluk"], [U.dave, "selam"]], ...opts });
+// Sohbet bilgi penceresi artık sekmesiz, kompakt bir panel (docs/community-system.md): başlığı beklenir.
+const openInfo = async (page) => { await page.locator("button[aria-haspopup='dialog'][aria-label*='topluluk bilgisini aç'], button[aria-haspopup='dialog'][aria-label*='Open info']").first().click(); await dlg(page).locator("#group-info-title").waitFor(); };
+// Kişi/ayar yönetimi topluluk sayfasındadır: `tab` ve `section` adres parametreleri.
+const openCommunity = async (page, tab, section) => { await page.goto(`${BASE}/communities/local?id=${G}${tab ? `&tab=${tab}` : ""}${section ? `&section=${section}` : ""}`); await page.locator("h1").first().waitFor(); await page.waitForTimeout(300); };
+const tabNames = async (page, index = 0) => page.getByRole("tablist").nth(index).getByRole("tab").allInnerTexts().then((list) => list.map((t) => t.split("\n")[0].replace(/\d+$/, "").trim()));
+const seed = (db, opts = {}) => {
+  db.addGroup(G, { members: [[U.bob, "admin"], [U.carol, "moderator"], [U.dave, "member"]], texts: [[U.bob, "merhaba topluluk"], [U.dave, "selam"]], ...opts });
+  Object.assign(db.groups.find((g) => g.id === G), { category: "general", feed_policy: "members", rules: null, rules_required: false, closed_at: null, origin: "native", post_count: 0 });
+};
 
 // 1
 await scenario("1. Liste: topluluk satırı ad + rozet + 'Gönderen: metin' önizlemesiyle görünür; birebir ile karışmaz", async ({ page }) => {
@@ -57,29 +64,41 @@ await scenario("2. Topluluk sohbeti: üye sayısı, gönderen adı üstte, toplu
 }, { setup: (db) => seed(db) });
 
 // 3
-await scenario("3. Üye: yalnızca Genel + Üyeler sekmeleri; yönetim kontrolü yok", async ({ page }) => {
+await scenario("3. Üye: bilgi penceresi kompakt (sekme yok): topluluk bağlantısı, bildirim, sohbet, üyeler (salt okunur), ayrılma; yönetim yok", async ({ page }) => {
   await openThread(page); await openInfo(page);
-  assert.deepEqual(await tabNames(page), ["Genel", "Üyeler"]);
-  await tab(page, /Üyeler/).click();
+  assert.equal(await dlg(page).getByRole("tab").count(), 0, "no tab strip: the panel is not a second community page");
+  await dlg(page).locator("[data-info-community-link]").waitFor();
+  await dlg(page).getByRole("switch", { name: /Topluluğu sessize al/ }).waitFor();
+  await dlg(page).getByRole("button", { name: "Sohbette ara" }).waitFor();
+  await dlg(page).getByRole("button", { name: "Topluluktan ayrıl" }).waitFor();
+  for (const hidden of ["Sohbet ayarları", "Davet", "Katılım istekleri", "Topluluk ayarlarını aç"]) assert.equal(await dlg(page).getByText(hidden, { exact: false }).count(), 0, `a plain member never sees "${hidden}" here`);
+  assert.equal(await dlg(page).locator("[data-info-requests-link]").count(), 0);
+  await dlg(page).locator("button[aria-controls='info-members-panel']").click();
   await dlg(page).locator("ul[aria-label='Topluluk üyeleri'] li").first().waitFor();
   assert.equal(await dlg(page).locator("button[aria-label^='Bob için işlemler']").count(), 0, "a plain member has no row actions");
   assert.equal(await dlg(page).getByText("Yönetici", { exact: true }).count() >= 1, true, "role badges are shown");
 }, { setup: (db) => seed(db) });
 
 // 4
-await scenario("4. Moderatör: İstekler sekmesi var, Davet/Ayarlar yok; istek kabul/ret RPC'si çağrılır ve liste güncellenir", async ({ page, db }) => {
-  await openThread(page); await openInfo(page);
-  assert.deepEqual(await tabNames(page), ["Genel", "Üyeler", "Katılım istekleri"]);
-  await tab(page, /Katılım istekleri/).click();
-  const items = dlg(page).locator("ul[aria-label='Bekleyen katılım istekleri'] li");
+await scenario("4. Moderatör: katılım istekleri topluluk sayfasında (Üyeler → sayaçlı bölüm); kabul/ret RPC'si çağrılır ve liste güncellenir; sohbet penceresinde yalnız kısa yol", async ({ page, db }) => {
+  await openThread(page);
+  await page.locator("[data-community-link-badge]").filter({ hasText: "2" }).waitFor();
+  await openInfo(page);
+  await dlg(page).locator("[data-info-requests-link]").getByText("2 bekleyen katılım isteği").waitFor();
+  assert.equal(await dlg(page).getByRole("tab").count(), 0, "no request list inside the chat panel");
+  assert.equal(await dlg(page).locator("ul[aria-label='Bekleyen katılım istekleri']").count(), 0);
+  await dlg(page).locator("[data-info-requests-link]").click();
+  await page.waitForURL(/communities\/local\/?\?id=.*tab=members.*section=requests/);
+  const items = page.locator("ul[aria-label='Bekleyen katılım istekleri'] li");
   await items.first().waitFor();
+  assert.deepEqual(await tabNames(page, 1), ["Üyeler", "Katılım istekleri"]);
   assert.equal(await items.count(), 2);
-  await dlg(page).getByText("Topluluğa girmek istiyorum").waitFor();
-  await dlg(page).getByRole("button", { name: "Erin isteğini kabul et" }).dblclick();
+  await page.getByText("Topluluğa girmek istiyorum").waitFor();
+  await page.getByRole("button", { name: "Erin isteğini kabul et" }).dblclick();
   await page.getByText("Erin topluluğa kabul edildi.").waitFor();
   assert.equal(calls(db, "rpc/decide_chat_group_join_request").length, 1, "double click sends one request");
-  await dlg(page).getByRole("button", { name: "Zed isteğini reddet" }).click();
-  await dlg(page).getByText("Bekleyen istek yok").waitFor();
+  await page.getByRole("button", { name: "Zed isteğini reddet" }).click();
+  await page.getByText("Bekleyen istek yok").waitFor();
   assert.deepEqual(db.requests.map((r) => r.status).sort(), ["accepted", "rejected"]);
 }, {
   setup: (db) => {
@@ -89,11 +108,9 @@ await scenario("4. Moderatör: İstekler sekmesi var, Davet/Ayarlar yok; istek k
 });
 
 // 5
-await scenario("5. Admin: tüm sekmeler; kapalı→açık onay metni birebir; sonuç özeti ve güncel üye sayısı", async ({ page, db }) => {
-  await openThread(page); await openInfo(page);
-  assert.deepEqual(await tabNames(page), ["Genel", "Üyeler", "Katılım istekleri", "Davet", "Ayarlar"]);
-  await tab(page, /Ayarlar/).click();
-  await dlg(page).getByRole("radio", { name: /^Herkese açık/ }).click();
+await scenario("5. Admin (topluluk Yönet → Ayarlar): kapalı→açık onay metni birebir; sonuç özeti ve güncel üye sayısı", async ({ page, db }) => {
+  await openCommunity(page, "manage", "settings");
+  await page.getByRole("radio", { name: /^Herkese açık/ }).click();
   const confirm = dlg(page);
   await confirm.getByText("Topluluğu herkese açık yaptığında, güvenlik kurallarına uygun tüm bekleyen katılım istekleri otomatik olarak kabul edilecek ve uygun kullanıcılar topluluğa katılacak").waitFor();
   await confirm.getByRole("button", { name: "Herkese açık yap" }).dblclick();
@@ -116,9 +133,8 @@ await scenario("5. Admin: tüm sekmeler; kapalı→açık onay metni birebir; so
 
 // 6
 await scenario("6. Görünürlük değişikliği başarısızsa başarı gösterilmez, topluluk eski durumda kalır", async ({ page, db }) => {
-  await openThread(page); await openInfo(page);
-  await tab(page, /Ayarlar/).click();
-  await dlg(page).getByRole("radio", { name: /^Herkese açık/ }).click();
+  await openCommunity(page, "manage", "settings");
+  await page.getByRole("radio", { name: /^Herkese açık/ }).click();
   await dlg(page).getByRole("heading", { name: "Topluluk herkese açık yapılsın mı?" }).waitFor();
   await dlg(page).getByRole("button", { name: "Herkese açık yap" }).click();
   await dlg(page).getByRole("alert").getByText("Bu işlem için yetkin yok.").waitFor();
@@ -162,8 +178,9 @@ await scenario("8. Yönetici mesaj silme: moderatör üyenin mesajında görür,
 }, { setup: (db) => seed(db, { myRole: "moderator" }) });
 
 // 9
-await scenario("9. Üye topluluktan ayrılır: onay ister, çift tık tek istek, sohbet kapanır ve listeden gider", async ({ page, db }) => {
+await scenario("9. Üye topluluktan ayrılır (bilgi penceresi): sohbetten de çıkacağı yazar, onay ister, çift tık tek istek, sohbet kapanır ve listeden gider", async ({ page, db }) => {
   await openThread(page); await openInfo(page);
+  await dlg(page).getByText(/sohbetten de çıkarırsın/).waitFor();
   await dlg(page).getByRole("button", { name: "Topluluktan ayrıl" }).click();
   await dlg(page).getByRole("heading", { name: /topluluğundan ayrılsın mı/ }).waitFor();
   await dlg(page).getByRole("button", { name: "Topluluktan ayrıl" }).dblclick();
@@ -175,23 +192,38 @@ await scenario("9. Üye topluluktan ayrılır: onay ister, çift tık tek istek,
   assert.equal(await page.locator("a[href*='id=']:visible", { hasText: "Tasarım Atölyesi" }).count(), 0);
 }, { setup: (db) => seed(db) });
 
+await scenario("9b. Başlık menüsündeki 'Topluluktan ayrıl' bilgi penceresini açmadan doğrudan onay ister; 'Listemden kaldır' ayrı bir işlemdir (topluluktan ayrılmaz)", async ({ page, db }) => {
+  await openThread(page);
+  await page.locator("button[aria-label='Topluluk seçenekleri']").click();
+  await page.getByRole("menuitem", { name: "Topluluktan ayrıl" }).click();
+  await dlg(page).getByRole("heading", { name: /topluluğundan ayrılsın mı/ }).waitFor();
+  assert.equal(await page.locator("#group-info-title").count(), 0, "no info panel in between");
+  await dlg(page).getByRole("button", { name: "Vazgeç" }).click();
+  assert.equal(calls(db, "rpc/leave_chat_group").length, 0);
+  assert.ok(db.member(G, ME), "cancelling keeps the membership");
+  await page.locator("button[aria-label='Topluluk seçenekleri']").click();
+  await page.getByRole("menuitem", { name: "Listemden kaldır" }).waitFor();
+}, { setup: (db) => seed(db) });
+
 // 10
-await scenario("10. Sahip, başka üye varken ayrılamaz: devretmeye yönlendirilir (ayrıl düğmesi yok)", async ({ page, db }) => {
+await scenario("10. Sahip, başka üye varken ayrılamaz: devretmeye yönlendirilir (ayrıl düğmesi yok) → topluluk sayfasındaki Üyeler", async ({ page, db }) => {
   await openThread(page); await openInfo(page);
   await dlg(page).getByText("Topluluğun sahibisin. Ayrılmadan önce sahipliği başka bir üyeye devretmelisin.").waitFor();
   assert.equal(await dlg(page).getByRole("button", { name: "Topluluktan ayrıl" }).count(), 0);
   await dlg(page).getByRole("button", { name: "Üyelere git ve devret" }).click();
-  await dlg(page).getByText("Sahipliği devretmek istediğin üyenin yanındaki ⋮ menüsünü kullan.").waitFor();
+  await page.waitForURL(/communities\/local\/?\?id=.*tab=members/);
+  await page.locator("ul[aria-label='Topluluk üyeleri'] li").first().waitFor();
   assert.equal(calls(db, "rpc/leave_chat_group").length, 0);
 }, { setup: (db) => seed(db, { myRole: "owner" }) });
 
 // 15
-await scenario("15. İngilizce: bilgi penceresi sekmeleri ve onay metni çevrilmiş", async ({ page }) => {
+await scenario("15. İngilizce: bilgi penceresi çevrilmiş (topluluk bağlantısı, sohbet ayarları bölümü)", async ({ page }) => {
   await openThread(page, G); await openInfo(page);
-  assert.deepEqual(await tabNames(page), ["About", "Members", "Join requests", "Invite", "Settings"]);
-  await tab(page, /Settings/).click();
-  await dlg(page).getByRole("radio", { name: /^Public/ }).click();
-  await dlg(page).getByText("When you make the community public, all pending join requests that meet the safety rules will be accepted automatically and eligible users will join the community").waitFor();
+  await dlg(page).getByText("Open the community page").waitFor();
+  await dlg(page).getByRole("button", { name: "Search in chat" }).waitFor();
+  await dlg(page).getByRole("button", { name: "Chat settings" }).click();
+  await dlg(page).locator("#chat-posting-title").waitFor();
+  await dlg(page).getByRole("button", { name: "Leave community" }).waitFor();
 }, { lang: "en", setup: (db) => seed(db, { myRole: "admin" }) });
 
 // 16
@@ -206,11 +238,15 @@ for (const [label, viewport, theme] of [["mobil 390x800", { width: 390, height: 
     assert.ok(panel.x >= 0 && panel.x + panel.width <= viewport.width + 1 && panel.y >= 0 && panel.y + panel.height <= viewport.height + 1, `panel inside viewport ${JSON.stringify(panel)}`);
     const close = await dlg(page).getByRole("button", { name: "Kapat" }).first().boundingBox();
     assert.ok(close.width >= 36 && close.height >= 36, "close button is touch-sized");
-    for (const name of [/Üyeler/, /Katılım istekleri/, /Davet/, /Ayarlar/]) { await tab(page, name).click(); await page.waitForTimeout(150); }
+    for (const panelId of ["info-members-panel", "info-settings-panel"]) { await dlg(page).locator(`button[aria-controls='${panelId}']`).click(); await page.waitForTimeout(250); }
     const over2 = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
     assert.ok(over2 <= 1, `no horizontal page scroll with the modal open (${over2}px)`);
     if (theme === "dark") assert.equal(await page.evaluate(() => document.documentElement.classList.contains("dark")), true);
-  }, { viewport, theme, setup: (db) => seed(db, { myRole: "admin" }) });
+    // Topluluk sayfası da aynı üç genişlikte taşmaz.
+    await openCommunity(page);
+    const over3 = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+    assert.ok(over3 <= 1, `community page overflows horizontally (${over3}px)`);
+  }, { viewport, theme, setup: (db) => seed(db, { myRole: "admin", pending: 3 }) });
 }
 
 // 17
@@ -229,13 +265,12 @@ await scenario("18. Birebir sohbet etkilenmez: profil menüsü ve engelle/şikay
 }, { setup: (db) => db.addConv("c0000000-0000-4000-8000-0000000000c9", U.carol, { texts: ["hey"] }) });
 
 // 19
-await scenario("19. Üyeler: owner rol değiştirir (onaylı), çıkarır + yasaklar (onaylı), sahipliği devreder; satır işlemleri yetkiye göre", async ({ page, db }) => {
-  await openThread(page); await openInfo(page);
-  await tab(page, /Üyeler/).click();
-  await dlg(page).locator("ul[aria-label='Topluluk üyeleri'] li").first().waitFor();
-  assert.equal(await dlg(page).locator("button[aria-label^='Alice için işlemler'], button[aria-label^='Sen için işlemler']").count(), 0, "no actions on yourself");
+await scenario("19. Üyeler (topluluk sayfası): owner rol değiştirir (onaylı), çıkarır + yasaklar (onaylı), sahipliği devreder; satır işlemleri yetkiye göre", async ({ page, db }) => {
+  await openCommunity(page, "members");
+  await page.locator("ul[aria-label='Topluluk üyeleri'] li").first().waitFor();
+  assert.equal(await page.locator("button[aria-label^='Alice için işlemler'], button[aria-label^='Sen için işlemler']").count(), 0, "no actions on yourself");
   // rol: Dave (üye) → moderatör
-  await dlg(page).getByRole("button", { name: "Dave için işlemler" }).click();
+  await page.getByRole("button", { name: "Dave için işlemler" }).click();
   assert.equal(await page.getByRole("menuitem", { name: "Normal üye yap" }).count(), 0, "already a regular member");
   await page.getByRole("menuitem", { name: "Moderatör yap" }).click();
   await page.getByRole("heading", { name: "Dave için rol değiştirilsin mi?" }).waitFor();
@@ -244,7 +279,7 @@ await scenario("19. Üyeler: owner rol değiştirir (onaylı), çıkarır + yasa
   assert.equal(db.member(G, U.dave.id).role, "moderator");
   assert.equal(calls(db, "rpc/set_chat_group_member_role").length, 1);
   // çıkar + yasakla
-  await dlg(page).getByRole("button", { name: "Carol için işlemler" }).click();
+  await page.getByRole("button", { name: "Carol için işlemler" }).click();
   await page.getByRole("menuitem", { name: "Topluluktan çıkar" }).click();
   await page.getByRole("heading", { name: "Carol topluluktan çıkarılsın mı?" }).waitFor();
   await page.getByRole("checkbox", { name: /Tekrar katılmasını engelle/ }).check();
@@ -253,7 +288,7 @@ await scenario("19. Üyeler: owner rol değiştirir (onaylı), çıkarır + yasa
   assert.equal(calls(db, "rpc/remove_chat_group_member")[0].body.p_ban, true);
   assert.equal(db.member(G, U.carol.id), undefined);
   // sahiplik devri
-  await dlg(page).getByRole("button", { name: "Bob için işlemler" }).click();
+  await page.getByRole("button", { name: "Bob için işlemler" }).click();
   await page.getByRole("menuitem", { name: "Sahipliği devret" }).click();
   await page.getByRole("button", { name: "Devret" }).click();
   await page.getByText("Sahiplik Bob kişisine devredildi.").waitFor();
@@ -262,59 +297,69 @@ await scenario("19. Üyeler: owner rol değiştirir (onaylı), çıkarır + yasa
 }, { setup: (db) => seed(db, { myRole: "owner" }) });
 
 await scenario("19b. Admin: başka yöneticiye ve sahibe işlem menüsü yok; moderatöre yalnızca üye yap", async ({ page }) => {
-  await openThread(page); await openInfo(page);
-  await tab(page, /Üyeler/).click();
-  await dlg(page).locator("ul[aria-label='Topluluk üyeleri'] li").first().waitFor();
-  assert.equal(await dlg(page).locator("button[aria-label='Bob için işlemler']").count(), 0, "owner: no menu");
-  assert.equal(await dlg(page).locator("button[aria-label='Erin için işlemler']").count(), 0, "other admin: no menu");
-  await dlg(page).getByRole("button", { name: "Carol için işlemler" }).click();
+  await openCommunity(page, "members");
+  await page.locator("ul[aria-label='Topluluk üyeleri'] li").first().waitFor();
+  assert.equal(await page.locator("button[aria-label='Bob için işlemler']").count(), 0, "owner: no menu");
+  assert.equal(await page.locator("button[aria-label='Erin için işlemler']").count(), 0, "other admin: no menu");
+  await page.getByRole("button", { name: "Carol için işlemler" }).click();
   await page.getByRole("menuitem", { name: "Normal üye yap" }).waitFor();
   assert.equal(await page.getByRole("menuitem", { name: "Yönetici yap" }).count(), 0, "an admin can't create admins");
   assert.equal(await page.getByRole("menuitem", { name: "Sahipliği devret" }).count(), 0, "only the owner transfers");
 }, { setup: (db) => seed(db, { myRole: "admin", members: [[U.bob, "owner"], [U.erin, "admin"], [U.carol, "moderator"], [U.dave, "member"]] }) });
 
-// 20
-await scenario("20. Davet sekmesi: üyeler 'takip ettiklerim'de görünmez, aramada 'Zaten üye' yazar ve seçilemez; gönderim; bağlantı yalnızca bir kez gösterilir", async ({ page, db }) => {
+await scenario("19c. Sohbet bilgi penceresindeki üye listesi salt okunur: owner için bile rol/çıkarma menüsü yok; 'topluluk sayfasında yönet' bağlantısı var", async ({ page }) => {
   await openThread(page); await openInfo(page);
-  await tab(page, /Davet/).click();
-  await dlg(page).getByRole("checkbox", { name: /Amy/ }).waitFor();
-  assert.equal(await dlg(page).getByRole("checkbox", { name: /Dave/ }).count(), 0, "members never appear in the followed list");
-  await dlg(page).getByPlaceholder("Kullanıcı adı veya isimle ara").fill("dave");
-  const dave = dlg(page).getByRole("checkbox", { name: /Dave/ });
+  await dlg(page).locator("button[aria-controls='info-members-panel']").click();
+  await dlg(page).locator("ul[aria-label='Topluluk üyeleri'] li").first().waitFor();
+  assert.equal(await dlg(page).locator("button[aria-label*='için işlemler']").count(), 0, "no member management inside the chat panel");
+  await dlg(page).getByRole("link", { name: /Üyeleri topluluk sayfasında yönet/ }).click();
+  await page.waitForURL(/communities\/local\/?\?id=.*tab=members/);
+}, { setup: (db) => seed(db, { myRole: "owner" }) });
+
+// 20
+await scenario("20. Davetler (Üyeler → Davet): takip ettiklerim'de üyeler görünmez, aramada 'Zaten üye' yazar ve seçilemez; gönderim; bağlantı yalnızca bir kez gösterilir", async ({ page, db }) => {
+  await openCommunity(page, "members", "invites");
+  assert.deepEqual(await tabNames(page, 1), ["Üyeler", "Katılım istekleri", "Davet"]);
+  await page.getByRole("checkbox", { name: /Amy/ }).waitFor();
+  assert.equal(await page.getByRole("checkbox", { name: /Dave/ }).count(), 0, "members never appear in the followed list");
+  await page.getByPlaceholder("Kullanıcı adı veya isimle ara").fill("dave");
+  const dave = page.getByRole("checkbox", { name: /Dave/ });
   await dave.waitFor();
   await dave.getByText("Zaten üye").waitFor();
   assert.equal(await dave.isDisabled(), true, "a member can't be selected");
-  await dlg(page).getByPlaceholder("Kullanıcı adı veya isimle ara").fill("");
-  await dlg(page).getByRole("checkbox", { name: /Amy/ }).click();
-  await dlg(page).getByRole("button", { name: "Davet gönder (1)" }).dblclick();
-  await dlg(page).getByText("1 davet gönderildi, 0 kişi atlandı.").waitFor();
+  await page.getByPlaceholder("Kullanıcı adı veya isimle ara").fill("");
+  await page.getByRole("checkbox", { name: /Amy/ }).click();
+  await page.getByRole("button", { name: "Davet gönder (1)" }).dblclick();
+  await page.getByText("1 davet gönderildi, 0 kişi atlandı.").waitFor();
   assert.equal(calls(db, "rpc/invite_to_chat_group").length, 1);
   assert.deepEqual(calls(db, "rpc/invite_to_chat_group")[0].body.p_user_ids, [U.amy.id]);
-  await dlg(page).getByText("Bekleyen davetler (1)").waitFor();
-  await dlg(page).getByRole("button", { name: "Bağlantı oluştur" }).click();
-  const input = dlg(page).getByRole("textbox", { name: "Davet bağlantıları" });
+  await page.getByText("Bekleyen davetler (1)").waitFor();
+  await page.getByRole("button", { name: "Bağlantı oluştur" }).click();
+  const input = page.getByRole("textbox", { name: "Davet bağlantıları" });
   await input.waitFor();
   assert.match(await input.inputValue(), /\/communities\/join#ZyXwVuTsRqPoNmLkJiHgFeDcBa9876543210_-xyzab$/);
-  await dlg(page).getByText("Bu bağlantı yalnızca şimdi gösterilir").waitFor();
+  await page.getByText("Bu bağlantı yalnızca şimdi gösterilir").waitFor();
 }, { setup: (db) => { seed(db, { myRole: "admin" }); db.follow(U.alice, U.amy); db.follow(U.alice, U.dave); } });
 
 // 21
-await scenario("21. Ayarlar: yalnızca değişen alanlar gönderilir; boş ad kaydedilemez; sahip silme için topluluk adını yazmalı", async ({ page, db }) => {
-  await openThread(page); await openInfo(page);
-  await tab(page, /Ayarlar/).click();
-  const save = dlg(page).getByRole("button", { name: "Kaydet", exact: true });
+await scenario("21. Topluluk ayarları (Yönet → Ayarlar): yalnızca değişen alanlar gönderilir; boş ad kaydedilemez; sohbet ayarları burada DEĞİL; sahip silme için topluluk adını yazmalı", async ({ page, db }) => {
+  await openCommunity(page, "manage", "settings");
+  const basic = page.locator("section[aria-labelledby='settings-basic-title']");
+  const save = basic.getByRole("button", { name: "Kaydet", exact: true });
   assert.equal(await save.isDisabled(), true, "nothing changed yet");
-  await dlg(page).getByLabel("Topluluk adı").fill("   ");
-  await dlg(page).getByText("Topluluk adı boş olamaz.").waitFor();
+  assert.equal(await basic.getByText("Kim mesaj yazabilir", { exact: true }).count(), 0, "who-can-post is a CHAT setting, not a community setting");
+  await basic.getByText(/Sohbetle ilgili ayarlar/).waitFor();
+  await basic.getByRole("link", { name: "Sohbet ayarlarını aç" }).waitFor();
+  await page.getByLabel("Topluluk adı").fill("   ");
+  await page.getByText("Topluluk adı boş olamaz.").waitFor();
   await save.click({ force: true });
   assert.equal(calls(db, "rpc/update_chat_group").length, 0, "invalid name never reaches the server");
-  await dlg(page).getByLabel("Topluluk adı").fill("Yeni Ad");
-  await dlg(page).getByRole("radio", { name: /Yalnızca yöneticiler/ }).check();
+  await page.getByLabel("Topluluk adı").fill("Yeni Ad");
   await save.click();
   await page.getByText("Topluluk ayarları kaydedildi.").waitFor();
   const patch = calls(db, "rpc/update_chat_group")[0].body.p_patch;
-  assert.deepEqual(Object.keys(patch).sort(), ["name", "posting_policy"]);
-  await dlg(page).getByRole("button", { name: "Topluluğu sil" }).click();
+  assert.deepEqual(Object.keys(patch).sort(), ["name"]);
+  await page.getByRole("button", { name: "Topluluğu sil" }).click();
   await dlg(page).getByRole("heading", { name: "Topluluk silinsin mi?" }).waitFor();
   const confirmBtn = dlg(page).getByRole("button", { name: "Topluluğu sil" });
   assert.equal(await confirmBtn.isDisabled(), true, "needs the group name typed");
@@ -322,27 +367,53 @@ await scenario("21. Ayarlar: yalnızca değişen alanlar gönderilir; boş ad ka
   assert.equal(await confirmBtn.isDisabled(), false);
 }, { setup: (db) => seed(db, { myRole: "owner" }) });
 
-// 23
-await scenario("23. Owner: geçmiş görünürlüğü ve rol yetkileri ayrı bölümde; yalnızca değişenler kaydedilir; varsayılana dön", async ({ page, db }) => {
+await scenario("21b. Sohbet ayarları (bilgi penceresi): kim yazabilir kaydedilir ve yalnızca posting_policy gider", async ({ page, db }) => {
   await openThread(page); await openInfo(page);
-  await tab(page, /Ayarlar/).click();
+  await dlg(page).getByRole("button", { name: "Sohbet ayarları" }).click();
+  const save = dlg(page).getByRole("button", { name: "Kaydet", exact: true });
+  assert.equal(await save.isDisabled(), true, "nothing changed yet");
+  await dlg(page).getByRole("radio", { name: /Yalnızca yöneticiler/ }).check();
+  await save.click();
+  await page.getByText("Topluluk ayarları kaydedildi.").waitFor();
+  const patch = calls(db, "rpc/update_chat_group")[0].body.p_patch;
+  assert.deepEqual(patch, { posting_policy: "admins" });
+  assert.equal(db.groups[0].posting_policy, "admins");
+}, { setup: (db) => seed(db, { myRole: "admin" }) });
+
+// 23
+await scenario("23. Owner · sohbet ayarları: geçmiş görünürlüğü + üye sabitleme bilgi penceresinde; yalnızca değişenler kaydedilir; rol yetkileri burada YOK", async ({ page, db }) => {
+  await openThread(page); await openInfo(page);
+  await dlg(page).getByRole("button", { name: "Sohbet ayarları" }).click();
   await dlg(page).getByRole("heading", { name: "Yeni üyeler önceki mesajları görsün mü?" }).waitFor();
-  await dlg(page).getByRole("heading", { name: "Yönetici ve moderatör yetkileri" }).waitFor();
+  assert.equal(await dlg(page).getByRole("heading", { name: "Yönetici ve moderatör yetkileri" }).count(), 0, "role permissions are a COMMUNITY setting");
   const save = dlg(page).getByRole("button", { name: "Sahip ayarlarını kaydet" });
   assert.equal(await save.isDisabled(), true, "nothing changed yet");
   await dlg(page).getByRole("radio", { name: /Görsün/ }).check();
-  await dlg(page).getByRole("switch", { name: "Moderatör: Topluluk ayarlarını düzenleme" }).click();
-  await dlg(page).getByRole("switch", { name: "Yönetici: Üye yasaklama" }).click();
-  assert.equal(await dlg(page).getByRole("switch", { name: /Moderatör: Rol atama/ }).count(), 0, "moderators can't be given role assignment");
   await save.dblclick();
   await page.getByText("Sahip ayarları kaydedildi.").waitFor();
   const sent = calls(db, "rpc/update_chat_group_owner_settings");
   assert.equal(sent.length, 1, "double click sends one request");
-  assert.deepEqual(sent[0].body.p_patch, { history_visible: true, role_permissions: { admin: { ban_members: false }, moderator: { edit_settings: true } } });
+  assert.deepEqual(sent[0].body.p_patch, { history_visible: true });
   assert.equal(db.groups[0].history_visible, true);
+}, { setup: (db) => seed(db, { myRole: "owner" }) });
+
+await scenario("23c. Owner · topluluk yetkileri (Yönet → Ayarlar): rol yetkileri burada; yalnızca değişenler kaydedilir; varsayılana dön", async ({ page, db }) => {
+  await openCommunity(page, "manage", "settings");
+  await page.getByRole("heading", { name: "Yönetici ve moderatör yetkileri" }).waitFor();
+  assert.equal(await page.getByRole("heading", { name: "Yeni üyeler önceki mesajları görsün mü?" }).count(), 0, "history visibility is a CHAT setting");
+  const save = page.getByRole("button", { name: "Sahip ayarlarını kaydet" });
+  assert.equal(await save.isDisabled(), true, "nothing changed yet");
+  await page.getByRole("switch", { name: "Moderatör: Topluluk ayarlarını düzenleme" }).click();
+  await page.getByRole("switch", { name: "Yönetici: Üye yasaklama" }).click();
+  assert.equal(await page.getByRole("switch", { name: /Moderatör: Rol atama/ }).count(), 0, "moderators can't be given role assignment");
+  await save.dblclick();
+  await page.getByText("Sahip ayarları kaydedildi.").waitFor();
+  const sent = calls(db, "rpc/update_chat_group_owner_settings");
+  assert.equal(sent.length, 1, "double click sends one request");
+  assert.deepEqual(sent[0].body.p_patch, { role_permissions: { admin: { ban_members: false }, moderator: { edit_settings: true } } });
   assert.equal(db.groups[0].role_permissions.moderator.edit_settings, true);
   assert.equal(db.groups[0].role_permissions.moderator.manage_requests, true, "untouched flags are kept");
-  await dlg(page).getByRole("button", { name: "Varsayılan yetkilere dön" }).click();
+  await page.getByRole("button", { name: "Varsayılan yetkilere dön" }).click();
   await save.click();
   await page.waitForTimeout(300);
   assert.equal(calls(db, "rpc/update_chat_group_owner_settings").length, 2);
@@ -350,38 +421,106 @@ await scenario("23. Owner: geçmiş görünürlüğü ve rol yetkileri ayrı bö
   assert.equal(db.groups[0].role_permissions.moderator.edit_settings, false);
 }, { setup: (db) => seed(db, { myRole: "owner" }) });
 
-await scenario("23b. Owner değilse sahip ayarları ve tehlikeli bölge görünmez (admin)", async ({ page }) => {
+await scenario("23b. Owner değilse sahip ayarları ve tehlikeli bölge görünmez (admin): ne topluluk sayfasında ne sohbet penceresinde", async ({ page }) => {
+  await openCommunity(page, "manage", "settings");
+  await page.getByLabel("Topluluk adı").waitFor();
+  assert.equal(await page.getByRole("heading", { name: "Yönetici ve moderatör yetkileri" }).count(), 0);
+  assert.equal(await page.getByRole("button", { name: "Topluluğu sil" }).count(), 0);
   await openThread(page); await openInfo(page);
-  await tab(page, /Ayarlar/).click();
-  await dlg(page).getByLabel("Topluluk adı").waitFor();
-  assert.equal(await dlg(page).getByRole("heading", { name: "Yönetici ve moderatör yetkileri" }).count(), 0);
+  await dlg(page).getByRole("button", { name: "Sohbet ayarları" }).click();
+  await dlg(page).locator("#chat-posting-title").waitFor();
   assert.equal(await dlg(page).getByRole("heading", { name: "Yeni üyeler önceki mesajları görsün mü?" }).count(), 0);
-  assert.equal(await dlg(page).getByRole("button", { name: "Topluluğu sil" }).count(), 0);
 }, { setup: (db) => seed(db, { myRole: "admin", members: [[U.bob, "owner"], [U.carol, "moderator"], [U.dave, "member"]] }) });
 
 // 24
-await scenario("24. Yetkiye göre sekmeler: moderatöre ayar yetkisi verilince Ayarlar açılır (görünürlük ve sahip bölümleri yok)", async ({ page }) => {
+await scenario("24. Yetkiye göre: moderatöre ayar yetkisi verilince topluluk Ayarlar'ı (görünürlük ve sahip bölümleri yok) ve sohbet penceresinde 'Sohbet ayarları' (yalnız kim yazabilir) açılır", async ({ page }) => {
+  await openCommunity(page, "manage");
+  assert.deepEqual(await tabNames(page, 1), ["Ayarlar", "Moderasyon"]);
+  await page.getByRole("tab", { name: "Ayarlar" }).click();
+  await page.getByLabel("Topluluk adı").waitFor();
+  assert.equal(await page.getByRole("radio", { name: /^Herkese açık/ }).count(), 0, "no visibility without that permission");
+  assert.equal(await page.getByRole("heading", { name: "Yönetici ve moderatör yetkileri" }).count(), 0);
   await openThread(page); await openInfo(page);
-  assert.deepEqual(await tabNames(page), ["Genel", "Üyeler", "Katılım istekleri", "Ayarlar"]);
-  await tab(page, /Ayarlar/).click();
-  await dlg(page).getByLabel("Topluluk adı").waitFor();
-  assert.equal(await dlg(page).getByRole("radio", { name: /^Herkese açık/ }).count(), 0, "no visibility without that permission");
-  assert.equal(await dlg(page).getByRole("heading", { name: "Yönetici ve moderatör yetkileri" }).count(), 0);
+  await dlg(page).getByRole("button", { name: "Sohbet ayarları" }).click();
+  await dlg(page).locator("#chat-posting-title").waitFor();
+  assert.equal(await dlg(page).getByRole("heading", { name: "Yeni üyeler önceki mesajları görsün mü?" }).count(), 0, "history is owner-only");
 }, { setup: (db) => { seed(db, { myRole: "moderator", members: [[U.bob, "owner"], [U.dave, "member"]] }); db.groups[0].role_permissions.moderator.edit_settings = true; } });
 
-await scenario("24b. Başvuru yönetimi moderatörden alınınca İstekler sekmesi kalkar", async ({ page }) => {
-  await openThread(page); await openInfo(page);
-  assert.deepEqual(await tabNames(page), ["Genel", "Üyeler"]);
-}, { setup: (db) => { seed(db, { myRole: "moderator", members: [[U.bob, "owner"], [U.dave, "member"]] }); db.groups[0].role_permissions.moderator.manage_requests = false; } });
+await scenario("24b. Başvuru yönetimi moderatörden alınınca Üyeler'de istek bölümü, başlık rozeti ve pencere kısa yolu kalkar", async ({ page }) => {
+  await openCommunity(page, "members", "requests");
+  await page.locator("ul[aria-label='Topluluk üyeleri'] li").first().waitFor();
+  assert.equal(await page.getByRole("tab", { name: /Katılım istekleri/ }).count(), 0);
+  assert.equal(await page.locator("[data-pending-requests]").count(), 0);
+  await openThread(page);
+  assert.equal(await page.locator("[data-community-link-badge]").count(), 0, "no count badge without the capability");
+  await openInfo(page);
+  assert.equal(await dlg(page).locator("[data-info-requests-link]").count(), 0);
+}, { setup: (db) => { seed(db, { myRole: "moderator", members: [[U.bob, "owner"], [U.dave, "member"]], pending: 2 }); db.groups[0].role_permissions.moderator.manage_requests = false; } });
 
-await scenario("24c. Admin: yasak yetkisi alınınca çıkarma penceresinde 'engelle' seçeneği çıkmaz; yetki verilince çıkar", async ({ page }) => {
-  await openThread(page); await openInfo(page);
-  await tab(page, /Üyeler/).click();
-  await dlg(page).getByRole("button", { name: "Dave için işlemler" }).click();
+await scenario("24c. Admin: yasak yetkisi alınınca çıkarma penceresinde 'engelle' seçeneği çıkmaz", async ({ page }) => {
+  await openCommunity(page, "members");
+  await page.getByRole("button", { name: "Dave için işlemler" }).click();
   await page.getByRole("menuitem", { name: "Topluluktan çıkar" }).click();
   await page.getByRole("heading", { name: "Dave topluluktan çıkarılsın mı?" }).waitFor();
   assert.equal(await page.getByRole("checkbox", { name: /Tekrar katılmasını engelle/ }).count(), 0);
 }, { setup: (db) => { seed(db, { myRole: "admin", members: [[U.bob, "owner"], [U.dave, "member"]] }); db.groups[0].role_permissions.admin.ban_members = false; } });
+
+// 25 — topluluk sayfası ↔ sohbet bütünleşmesi
+await scenario("25. Eski/bildirim bağlantısı ?panel=requests topluluk sayfasındaki istek listesine yönlenir (sohbet penceresi açılmaz)", async ({ page }) => {
+  await page.goto(`${BASE}/messages/local?id=${G}&panel=requests`);
+  await page.waitForURL(/communities\/local\/?\?id=.*tab=members.*section=requests/);
+  await page.locator("ul[aria-label='Bekleyen katılım istekleri'] li").first().waitFor();
+  assert.equal(await page.locator("#group-info-title").count(), 0);
+}, { setup: (db) => { seed(db, { myRole: "moderator", members: [[U.bob, "admin"], [U.dave, "member"]], pending: 1 }); db.requests.push({ id: "e0000000-0000-4000-8000-000000000001", group_id: G, user_id: U.erin.id, message: null, status: "pending", created_at: db.stamp() }); } });
+
+await scenario("25b. ?panel=settings sohbet ayarlarını bilgi penceresinde açar; ?panel=members üyeleri açık başlatır", async ({ page }) => {
+  await page.goto(`${BASE}/messages/local?id=${G}&panel=settings`);
+  await dlg(page).locator("#group-info-title").waitFor();
+  await dlg(page).locator("#chat-posting-title").waitFor();
+}, { setup: (db) => seed(db, { myRole: "admin" }) });
+
+await scenario("26. Topluluk sayfası: yetkiliye başlıkta 'N bekleyen istek' kısayolu + Üyeler sekmesinde sayaç; üyeye ve 0 istekte hiçbiri yok", async ({ page, db }) => {
+  await openCommunity(page);
+  const chip = page.locator("header [data-pending-requests]");
+  await chip.getByText("2 bekleyen istek").waitFor();
+  await page.getByRole("tab", { name: /Üyeler/ }).getByText("2").waitFor();
+  assert.equal(await page.getByRole("tab", { name: "Akış" }).getAttribute("aria-selected"), "true", "the feed stays the landing tab");
+  await chip.click();
+  await page.waitForURL(/tab=members.*section=requests/);
+  await page.locator("ul[aria-label='Bekleyen katılım istekleri'] li").first().waitFor();
+  await page.getByRole("button", { name: "Erin isteğini kabul et" }).click();
+  await page.getByText("Erin topluluğa kabul edildi.").waitFor();
+  assert.equal(calls(db, "rpc/decide_chat_group_join_request").length, 1);
+}, { setup: (db) => { seed(db, { myRole: "admin", members: [[U.dave, "member"]], pending: 2 }); db.requests.push({ id: "e0000000-0000-4000-8000-000000000001", group_id: G, user_id: U.erin.id, message: null, status: "pending", created_at: db.stamp() }, { id: "e0000000-0000-4000-8000-000000000002", group_id: G, user_id: U.zed.id, message: null, status: "pending", created_at: db.stamp() }); } });
+
+await scenario("26b. Sıradan üye ve istek yokken: başlıkta kısayol, sayaç ve sohbet rozeti çizilmez", async ({ page }) => {
+  await openCommunity(page);
+  assert.equal(await page.locator("[data-pending-requests]").count(), 0);
+  await openThread(page);
+  assert.equal(await page.locator("[data-community-link-badge]").count(), 0);
+}, { setup: (db) => seed(db, { myRole: "member", pending: 3 }) });
+
+await scenario("27. Topluluk ↔ sohbet geçişi: başlıktaki 'Sohbeti aç' sohbeti, sohbet başlığındaki simge ve bilgi penceresi topluluk sayfasını açar", async ({ page }) => {
+  await openCommunity(page);
+  await page.locator("header a[data-open-chat]").click();
+  await page.waitForURL(/messages\/local\/?\?id=/);
+  await page.getByRole("link", { name: "Topluluk sayfasına git" }).click();
+  await page.waitForURL(/communities\/local\/?\?id=/);
+  await openThread(page); await openInfo(page);
+  await dlg(page).locator("[data-info-community-link]").click();
+  await page.waitForURL(/communities\/local\/?\?id=/);
+  assert.equal(await page.getByRole("tab", { name: "Akış" }).getAttribute("aria-selected"), "true");
+}, { setup: (db) => seed(db, { myRole: "member" }) });
+
+await scenario("28. Hakkında: kişiye özel tercihler (topluluk bildirim düzeyi + sohbeti sessize al + ayrıl) topluluk sayfasında; sessize alma bilgi penceresiyle AYNI durumu değiştirir", async ({ page, db }) => {
+  await openCommunity(page, "about");
+  await page.getByRole("radiogroup", { name: "Topluluk bildirimleri" }).waitFor();
+  await page.getByRole("switch", { name: /Topluluğu sessize al/ }).click();
+  await page.getByText("Topluluk sessize alındı.").waitFor();
+  assert.ok(db.member(G, ME).muted_at, "mute is stored on MY membership row");
+  await openThread(page); await openInfo(page);
+  assert.equal(await dlg(page).getByRole("switch", { name: /Topluluğu sessize al/ }).getAttribute("aria-checked"), "true", "the chat panel reflects the same mute");
+}, { setup: (db) => seed(db, { myRole: "member" }) });
 
 await browser.close(); server.close();
 let failed = 0;

@@ -12,11 +12,12 @@ import { ProfileMoreMenu } from "@/features/profile/profile-more-menu";
 import { ChatActionItems, ChatConfirmModal, type ChatConfirmKind } from "./chat-actions";
 import { ChatHeaderMenu } from "@/features/groups/chat-header-menu";
 import { GroupAvatar } from "@/features/groups/group-avatar";
-import { GroupInfoModal, type GroupInfoTab } from "@/features/groups/group-info-modal";
+import { GroupInfoModal, type GroupInfoFocus } from "@/features/groups/group-info-modal";
+import { LeaveCommunityDialog } from "@/features/groups/leave-community-dialog";
 import { ReportModal } from "@/features/communities/report-modal";
 import { useGroupSenders } from "@/features/groups/use-group-senders";
 import { moderateChatGroupMessage, setChatGroupMuted, toGroupError } from "@/lib/supabase/chat-groups";
-import { canModerateMessage, canPostInGroup } from "@/lib/chat-groups";
+import { can, canModerateMessage, canPostInGroup, leaveOutcome } from "@/lib/chat-groups";
 import { advanceReadAt, canPinMessages, formatTypingText, nextReadAck, readStateFor } from "@/lib/chat-features";
 import {
   fetchPartnerReadAt,
@@ -141,7 +142,8 @@ export function LocalConversationView() {
   const [hasOlder, setHasOlder] = useState(false);
   const [loadingOlder, setLoadingOlder] = useState(false);
   // Grup sohbeti: bilgi penceresi (hangi sekmede açık), üyelik kaybı, devam eden eylem.
-  const [groupInfoTab, setGroupInfoTab] = useState<GroupInfoTab | null>(null);
+  const [groupInfoFocus, setGroupInfoFocus] = useState<GroupInfoFocus | null>(null);
+  const [leaveOpen, setLeaveOpen] = useState(false);
   const [leftGroup, setLeftGroup] = useState<"left" | "deleted" | "removed" | null>(null);
   const panelParamHandled = useRef(false);
   const [checked, setChecked] = useState(false);
@@ -221,6 +223,8 @@ export function LocalConversationView() {
     canSend: canPost && !blockState.isBlocked && conversation?.myStatus !== "pending",
   });
   // Sabitleme: birebirde iki taraf da; grupta yetkiye/ayara göre (sunucu da denetler). Sabit mesajlar yalnız gerçek (yüklenmiş) sohbet için okunur.
+  // Bekleyen katılım istekleri topluluk sayfasına aittir; sohbette yalnız yetkiliye sayı rozeti ve oraya kısa yol gösterilir.
+  const pendingRequestsForMe = group && can(group.myRole, "manage_requests", group.rolePermissions) ? group.pendingRequestCount : 0;
   const canPin = canPinMessages(group) && conversation?.myStatus !== "pending";
   const pinned = usePinnedMessages(id, user?.id ?? null, messages, checked && Boolean(conversation) && !leftGroup && !removedFromList);
   // Mesajı yüklü olmayan ama adı gereken kişiler (yazıyor diyenler, arama sonucu / sabit mesaj göndericileri) için ek profil sorgusu.
@@ -554,16 +558,21 @@ export function LocalConversationView() {
     };
   }, [cachedGroupSignature, ready, id, user, isGroup]);
 
-  // Bildirimden gelen `?panel=requests|members|invites|settings`: bilgi penceresini ilgili sekmede bir kez açar.
+  // Eski/bildirim bağlantısı `?panel=…`: katılım istekleri ve davetler topluluğa aittir → topluluk sayfasındaki "Üyeler" sekmesine yönlenir
+  // (adres değişmeden eski bildirimler de doğru yere gider); üyeler / sohbet ayarları bu sohbetin bilgi penceresinde bir kez açılır.
   useEffect(() => {
-    if (!checked || !isGroup || panelParamHandled.current) return;
+    if (!checked || !isGroup || !id || panelParamHandled.current) return;
     const panel = searchParams.get("panel");
-    if (panel === "requests" || panel === "members" || panel === "invites" || panel === "settings" || panel === "about") {
-      panelParamHandled.current = true;
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- URL'den gelen tek seferlik açılış; render sırasında türetilemez
-      setGroupInfoTab(panel);
+    if (!panel) return;
+    panelParamHandled.current = true;
+    if (panel === "requests" || panel === "invites") {
+      router.replace(communityHref(id, "members", panel));
+      return;
     }
-  }, [checked, isGroup, searchParams]);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- URL'den gelen tek seferlik açılış; render sırasında türetilemez
+    if (panel === "members" || panel === "settings") setGroupInfoFocus(panel);
+    else if (panel === "about") setGroupInfoFocus("overview");
+  }, [checked, isGroup, id, searchParams, router]);
 
   // Resolves a `?sharePromptId=`/`?shareRequestId=`deep link into a real title for the composer banner — cache hit resolves synchronously via the derivation below; a miss falls back to a real fetch here.
   useEffect(() => {
@@ -965,7 +974,8 @@ export function LocalConversationView() {
 
   function handleGroupGone(reason: "left" | "deleted") {
     if (id) removeConversation(id);
-    setGroupInfoTab(null);
+    setGroupInfoFocus(null);
+    setLeaveOpen(false);
     setLeftGroup(reason);
   }
 
@@ -1240,7 +1250,7 @@ export function LocalConversationView() {
         {group ? (
           <button
             type="button"
-            onClick={() => setGroupInfoTab("about")}
+            onClick={() => setGroupInfoFocus("overview")}
             aria-haspopup="dialog"
             aria-label={t("groups.chat.openInfoAria", { name: group.name })}
             className="group flex min-w-0 flex-1 items-center gap-3 rounded-lg px-1.5 py-1 text-left transition-colors duration-200 ease-soft hover:bg-surface-soft"
@@ -1283,9 +1293,14 @@ export function LocalConversationView() {
             href={communityHref(group.id)}
             aria-label={t("communities.chat.toCommunityAria")}
             title={t("communities.chat.toCommunityAria")}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border bg-transparent text-text-muted transition-colors hover:bg-surface-soft hover:text-text"
+            className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border bg-transparent text-text-muted transition-colors hover:bg-surface-soft hover:text-text"
           >
             <Users size={16} />
+            {pendingRequestsForMe > 0 && (
+              <span data-community-link-badge className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold leading-none text-primary-foreground">
+                {pendingRequestsForMe > 9 ? "9+" : pendingRequestsForMe}
+              </span>
+            )}
           </Link>
         )}
         <button
@@ -1311,7 +1326,7 @@ export function LocalConversationView() {
                   role="menuitem"
                   onClick={() => {
                     close();
-                    setGroupInfoTab("about");
+                    setGroupInfoFocus("overview");
                   }}
                   className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-text hover:bg-surface-soft"
                 >
@@ -1345,7 +1360,9 @@ export function LocalConversationView() {
                   role="menuitem"
                   onClick={() => {
                     close();
-                    setGroupInfoTab("about");
+                    // Sahip başka üye varken ayrılamaz: açıklama ve devir yolu bilgi penceresindedir.
+                    if (group && leaveOutcome(group.myRole, group.memberCount) === "must_transfer") setGroupInfoFocus("overview");
+                    else setLeaveOpen(true);
                   }}
                   className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-danger hover:bg-surface-soft"
                 >
@@ -1624,17 +1641,31 @@ export function LocalConversationView() {
           }}
         />
       )}
-      {groupInfoTab && isGroup && (
+      {groupInfoFocus && isGroup && (
         <GroupInfoModal
           conversation={conversation}
-          initialTab={groupInfoTab}
-          onClose={() => setGroupInfoTab(null)}
+          focus={groupInfoFocus}
+          onClose={() => setGroupInfoFocus(null)}
           onGroupChanged={reloadGroup}
           onMutedChange={(mutedAt) => {
             setConversation((prev) => (prev ? { ...prev, mutedAt } : prev));
             if (id) patchConversation(id, { mutedAt });
           }}
           onGone={handleGroupGone}
+          onSearch={() => {
+            setGroupInfoFocus(null);
+            setSearchOpen(true);
+          }}
+        />
+      )}
+      {leaveOpen && group && (
+        <LeaveCommunityDialog
+          groupId={group.id}
+          name={group.name}
+          role={group.myRole}
+          memberCount={group.memberCount}
+          onLeft={() => handleGroupGone("left")}
+          onClose={() => setLeaveOpen(false)}
         />
       )}
     </div>

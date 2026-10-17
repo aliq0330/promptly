@@ -340,7 +340,7 @@ export function MessageBubble({
             {message.attachments.length > 0 && <BubbleImages attachments={message.attachments} isMe={isMe} />}
             {message.announcementId && displayBody && (
               <Link
-                href={communityHref(message.conversationId, "overview")}
+                href={communityHref(message.conversationId)}
                 data-announcement-card
                 className="w-fit max-w-full self-start rounded-2xl border border-primary/30 bg-primary-soft/50 px-3.5 py-2.5 text-sm text-text shadow-xs transition-colors hover:border-primary/50"
               >

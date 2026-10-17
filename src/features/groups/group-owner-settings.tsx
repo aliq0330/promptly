@@ -14,16 +14,21 @@ import type { ChatGroup, GroupCapability, RolePermissions } from "@/types";
 const ROLES = ["admin", "moderator"] as const;
 
 /**
- * YALNIZCA OWNER: (1) yeni üyenin katılmadan önceki mesajları görüp görmeyeceği, (2) admin ve moderatörün hangi yetkilere
- * sahip olduğu (rol başına açma/kapama; varsayılanlar bugünkü matrisle aynı). Owner her zaman her şeyi yapar; sahipliği devretme
- * ve grubu silme owner'da kalır. Sunucu (`update_chat_group_owner_settings`) owner dışını reddeder; burası yalnızca gösterir.
+ * YALNIZCA OWNER. İki kapsamdan birini gösterir (aynı sunucu işlemi `update_chat_group_owner_settings`, yalnız DEĞİŞEN alanlar gider):
+ *   • `chat`      → SOHBET ayarları: yeni üyenin katılmadan önceki mesajları görüp görmeyeceği + üyeler mesaj sabitleyebilir mi
+ *                   (sohbet bilgi penceresinde);
+ *   • `community` → TOPLULUK yetkileri: admin ve moderatörün hangi yetkilere sahip olduğu (rol başına açma/kapama; varsayılanlar
+ *                   bugünkü matrisle aynı) — topluluk "Yönet → Ayarlar"ında.
+ * Owner her zaman her şeyi yapar; sahipliği devretme ve topluluğu silme owner'da kalır. Sunucu owner dışını reddeder; burası yalnızca gösterir.
  */
 export function GroupOwnerSettings({
   group,
+  scope,
   onChanged,
   onToast,
 }: {
   group: ChatGroup;
+  scope: "chat" | "community";
   onChanged: () => void | Promise<void>;
   onToast: (message: string) => void;
 }) {
@@ -39,9 +44,10 @@ export function GroupOwnerSettings({
       if (perms[role][cap] !== group.rolePermissions[role][cap]) changedPerms[role] = { ...changedPerms[role], [cap]: perms[role][cap] };
     }
   }
-  const historyChanged = history !== group.historyVisible;
-  const pinChanged = membersCanPin !== group.membersCanPin;
-  const permsChanged = Object.keys(changedPerms).length > 0;
+  const chatScope = scope === "chat";
+  const historyChanged = chatScope && history !== group.historyVisible;
+  const pinChanged = chatScope && membersCanPin !== group.membersCanPin;
+  const permsChanged = !chatScope && Object.keys(changedPerms).length > 0;
   const atDefaults = ROLES.every((role) => capabilitiesFor(role).every((cap) => perms[role][cap] === DEFAULT_ROLE_PERMISSIONS[role][cap]));
 
   function toggle(role: (typeof ROLES)[number], cap: GroupCapability) {
@@ -63,7 +69,8 @@ export function GroupOwnerSettings({
   }
 
   return (
-    <div className="space-y-8 border-t border-border-soft pt-6">
+    <div className={cn("space-y-8", !chatScope && "border-t border-border-soft pt-6")}>
+      {chatScope && (
       <section aria-labelledby="owner-history-title" className="space-y-3">
         <h3 id="owner-history-title" className="flex items-center gap-1.5 text-label font-semibold text-text">
           <History size={14} aria-hidden /> {t("groups.owner.historyTitle")}
@@ -87,7 +94,9 @@ export function GroupOwnerSettings({
           </ChoiceCard>
         </fieldset>
       </section>
+      )}
 
+      {chatScope && (
       <section aria-labelledby="owner-pin-title" className="space-y-3">
         <h3 id="owner-pin-title" className="flex items-center gap-1.5 text-label font-semibold text-text">
           <Pin size={14} aria-hidden /> {t("groups.owner.pinTitle")}
@@ -110,7 +119,9 @@ export function GroupOwnerSettings({
           </span>
         </button>
       </section>
+      )}
 
+      {!chatScope && (
       <section aria-labelledby="owner-permissions-title" className="space-y-4">
         <div className="space-y-1">
           <h3 id="owner-permissions-title" className="flex items-center gap-1.5 text-label font-semibold text-text">
@@ -152,6 +163,7 @@ export function GroupOwnerSettings({
           </Button>
         </div>
       </section>
+      )}
 
       {save.error && (
         <p role="alert" className="rounded-md bg-danger/10 px-3 py-2 text-small text-danger">

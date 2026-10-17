@@ -5,7 +5,9 @@ import { useRouter } from "next/navigation";
 import { Bell, BellOff, Check, ScrollText } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { GroupAboutSection } from "@/features/groups/group-about-section";
+import { ChatMuteToggle, LeaveCommunitySection } from "@/features/groups/personal-prefs";
+import { RoleBadge } from "@/features/groups/role-badge";
+import { VisibilityLabel } from "./visibility-label";
 import { useAsyncAction } from "@/features/groups/use-async-action";
 import { useRealMessages } from "@/features/messages/real-messages-provider";
 import type { CommunityTabProps } from "./community-page";
@@ -16,8 +18,9 @@ import { cn } from "@/lib/utils";
 import type { CommunityNotifyLevel } from "@/types";
 
 /**
- * Hakkında ve kurallar: açıklama, kategori, topluluk kuralları (kabul zorunluysa üyelik akışına etkisi açıkça yazılır) ve — üye için —
- * topluluk bildirim tercihi (Tümü · Yalnız önemli · Sessiz, isteğe bağlı süreli sessize alma), sohbeti sessize alma ve ayrılma.
+ * Hakkında ve kurallar: açıklama + temel bilgiler, topluluk kuralları (kabul zorunluysa üyelik akışına etkisi açıkça yazılır) ve — üye için —
+ * KİŞİYE ÖZEL tercihler: topluluk bildirim düzeyi (Tümü · Yalnız önemli · Sessiz, isteğe bağlı süreli sessize alma), sohbeti sessize alma ve
+ * topluluktan ayrılma. Sessize alma ve ayrılma sohbet bilgi penceresiyle AYNI bileşenlerdir (`ChatMuteToggle`, `LeaveCommunitySection`).
  */
 export function AboutTab({ group, role, viewerId, membership, reload, onToast, goTab }: CommunityTabProps) {
   const { t } = useTranslation();
@@ -64,6 +67,31 @@ export function AboutTab({ group, role, viewerId, membership, reload, onToast, g
 
   return (
     <div className="space-y-8">
+      <section aria-labelledby="about-info-title" className="space-y-3">
+        <h2 id="about-info-title" className="text-label font-semibold text-text">
+          {t("groups.about.description")}
+        </h2>
+        <p className={`whitespace-pre-wrap break-words text-small ${group.description ? "text-text-secondary" : "text-text-muted"}`}>{group.description || t("groups.about.noDescription")}</p>
+        <dl className="grid gap-2 text-small sm:grid-cols-3">
+          <div className="rounded-lg border border-border-soft bg-surface-soft/50 px-3 py-2">
+            <dt className="text-caption text-text-muted">{t("groups.visibility.label")}</dt>
+            <dd className="mt-0.5 font-medium text-text">
+              <VisibilityLabel visibility={group.visibility} size={14} className="flex items-center gap-1.5" />
+            </dd>
+          </div>
+          <div className="rounded-lg border border-border-soft bg-surface-soft/50 px-3 py-2">
+            <dt className="text-caption text-text-muted">{t("groups.about.members")}</dt>
+            <dd className="mt-0.5 font-medium text-text">{t("groups.about.membersValue", { count: group.memberCount, max: group.memberLimit })}</dd>
+          </div>
+          {role && (
+            <div className="rounded-lg border border-border-soft bg-surface-soft/50 px-3 py-2">
+              <dt className="text-caption text-text-muted">{t("groups.about.yourRole")}</dt>
+              <dd className="mt-0.5 flex items-center gap-1.5 font-medium text-text">{role === "member" ? t("groups.role.member") : <RoleBadge role={role} />}</dd>
+            </div>
+          )}
+        </dl>
+      </section>
+
       <section aria-labelledby="about-rules-title" className="space-y-3">
         <div className="flex flex-wrap items-center gap-2">
           <h2 id="about-rules-title" className="flex items-center gap-1.5 text-label font-semibold text-text">
@@ -155,30 +183,32 @@ export function AboutTab({ group, role, viewerId, membership, reload, onToast, g
             )}
           </section>
 
-          <GroupAboutSection
+          <section className="space-y-2" aria-labelledby="about-chat-mute-title">
+            <h2 id="about-chat-mute-title" className="text-label font-semibold text-text">
+              {t("communities.about.chatMuteTitle")}
+            </h2>
+            <ChatMuteToggle
+              groupId={group.id}
+              mutedAt={membership?.mutedAt ?? null}
+              onMutedChange={(mutedAt) => {
+                patchConversation(group.id, { mutedAt });
+                void reload();
+              }}
+              onToast={onToast}
+            />
+          </section>
+
+          <LeaveCommunitySection
             group={group}
-            mutedAt={membership?.mutedAt ?? null}
-            onMutedChange={(mutedAt) => {
-              patchConversation(group.id, { mutedAt });
-              void reload();
-            }}
             onLeft={() => {
               void refresh();
               onToast(t("communities.about.leftToast"));
               router.push("/communities");
             }}
             onGoToMembers={() => goTab("members")}
-            onToast={onToast}
           />
         </>
-      ) : (
-        group.description && (
-          <section className="space-y-2">
-            <h2 className="text-label font-semibold text-text">{t("groups.about.description")}</h2>
-            <p className="whitespace-pre-wrap break-words text-small text-text-secondary">{group.description}</p>
-          </section>
-        )
-      )}
+      ) : null}
     </div>
   );
 }

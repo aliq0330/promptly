@@ -1,9 +1,9 @@
 "use client";
 
-import { Suspense, useMemo } from "react";
+import { Suspense, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, MessageSquare, RefreshCw } from "lucide-react";
+import { ArrowLeft, MessageSquare, RefreshCw, UserCog } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonClassName } from "@/components/ui/button";
 import { DetailSkeleton, NotFoundBlock } from "@/components/ui/detail-skeleton";
@@ -16,15 +16,14 @@ import { useToast } from "@/features/groups/use-toast";
 import { CommunityGate } from "./community-gate";
 import { CommunityJoinButton, type JoinState } from "./community-join-button";
 import { VisibilityLabel } from "./visibility-label";
-import { OverviewTab } from "./overview-tab";
 import { FeedTab } from "./feed-tab";
-import { ChatTab } from "./chat-tab";
 import { MembersTab } from "./members-tab";
 import { EventsTab } from "./events-tab";
 import { AboutTab } from "./about-tab";
 import { ManageTab } from "./manage-tab";
 import { useCommunity } from "./use-community";
-import { accessibleTabs, CATEGORY_LABEL_KEYS, communityHref, resolveTab, type CommunityTab } from "@/lib/communities";
+import { accessibleTabs, CATEGORY_LABEL_KEYS, communityChatHref, communityHref, resolveCommunityView, type CommunityTab } from "@/lib/communities";
+import { can } from "@/lib/chat-groups";
 import { memberCountText } from "@/lib/group-labels";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { ChatGroup, GroupRole } from "@/types";
@@ -39,13 +38,16 @@ export interface CommunityTabProps {
   membership: MyCommunityMembership | null;
   reload: () => Promise<void>;
   onToast: (message: string) => void;
-  goTab: (tab: CommunityTab) => void;
+  goTab: (tab: CommunityTab, section?: string) => void;
+  /** Adresteki `section` (Üyeler: list|requests|invites · Yönet: stats|settings|…); geçersizse sekme ilk bölümünü açar. */
+  section: string | null;
 }
 
 /**
- * `/communities/local?id=…&tab=…`: topluluk ana sayfası. Oturum açmamış ziyaretçi herkese açık toplulukta salt-okunur görür (katıl → giriş
- * diyaloğu); kapalı/tamamen kapalı topluluğun içeriği ziyaretçiye de kapalıdır (docs/history/177-*). Sekmeler: Genel bakış · Akış · Sohbet · Üyeler · Etkinlikler · Hakkında ve kurallar ·
- * Yönetim (yalnız yetkililere). Her sekmenin erişimi `accessibleTabs`'tan gelir ve veritabanındaki RLS ile aynıdır: üye olmayan kapalı
+ * `/communities/local?id=…&tab=…`: topluluk ana sayfası (topluluğun MERKEZİ; sohbet ayrı çalışma alanıdır ve başlıktaki "Sohbeti aç" ile açılır).
+ * Oturum açmamış ziyaretçi herkese açık toplulukta salt-okunur görür (katıl → giriş diyaloğu); kapalı/tamamen kapalı topluluğun içeriği
+ * ziyaretçiye de kapalıdır (docs/history/177-*). Sekmeler: Akış (ilk açılış) · Etkinlikler · Üyeler (liste + yetkiliye istekler/davetler) ·
+ * Hakkında ve kurallar · Yönet (yalnız yetkililere). Her sekmenin erişimi `accessibleTabs`'tan gelir ve veritabanındaki RLS ile aynıdır: üye olmayan kapalı
  * topluluğun içeriğini göremez (yalnız davet/başvuru "geçidi" görünür), sohbet ve üye listesi üyelik gerektirir.
  */
 export function CommunityPage() {
@@ -69,12 +71,18 @@ function CommunityPageInner() {
   const role = state.status === "ready" ? (state.membership?.role ?? null) : null;
   const group = state.status === "ready" ? state.group : null;
   const allowed = useMemo(() => (group ? accessibleTabs({ role, visibility: group.visibility, perms: group.rolePermissions }) : []), [group, role]);
-  const tab = resolveTab(searchParams.get("tab"), allowed);
+  const { view, toChat } = resolveCommunityView(searchParams.get("tab"), searchParams.get("section"), allowed);
+  const tab = view?.tab ?? null;
   const unread = conversations.find((c) => c.id === id)?.unreadCount ?? 0;
 
-  function goTab(next: CommunityTab) {
-    if (id) router.replace(communityHref(id, next));
+  function goTab(next: CommunityTab, section?: string) {
+    if (id) router.replace(communityHref(id, next, section));
   }
+
+  // Eski `tab=chat` bağlantısı: sohbet ayrı çalışma alanıdır, sekme yoktur.
+  useEffect(() => {
+    if (toChat && id) router.replace(communityChatHref(id));
+  }, [toChat, id, router]);
 
   if (!id) return <NotFoundBlock title={t("communities.notFound.title")} description={t("communities.notFound.body")} />;
   if (authLoading || state.status === "loading") return <DetailSkeleton />;
@@ -103,18 +111,18 @@ function CommunityPageInner() {
 
   const ready = state;
   const tabLabels: Record<CommunityTab, string> = {
-    overview: t("communities.detail.tab.overview"),
     feed: t("communities.detail.tab.feed"),
-    chat: t("communities.detail.tab.chat"),
-    members: t("communities.detail.tab.members"),
     events: t("communities.detail.tab.events"),
+    members: t("communities.detail.tab.members"),
     about: t("communities.detail.tab.about"),
     manage: t("communities.detail.tab.manage"),
   };
+  // Bekleyen istek sayısı, istekleri yönetebilenin "Üyeler" sekmesinde görünür (isteklerin bulunduğu yer burasıdır).
+  const pendingForMe = role && can(role, "manage_requests", ready.group.rolePermissions) ? ready.group.pendingRequestCount : 0;
   const tabs: TabItem<CommunityTab>[] = allowed.map((key) => ({
     key,
     label: tabLabels[key],
-    count: key === "chat" && unread > 0 ? unread : key === "manage" && role && ready.group.pendingRequestCount > 0 ? ready.group.pendingRequestCount : undefined,
+    count: key === "members" && pendingForMe > 0 ? pendingForMe : undefined,
   }));
 
   // Üyelik düğmesi sonuçlandı: sayfayı ve Mesajlar listesini yeniler. Tamamen kapalı topluluktan ayrılan kişi artık satırı okuyamaz → listeye döner.
@@ -129,7 +137,7 @@ function CommunityPageInner() {
 
   const joinState: JoinState = role ? "member" : ready.gate.invitationId ? "invited" : ready.gate.requestId ? "requested" : "none";
 
-  const common: CommunityTabProps = { group: ready.group, role, viewerId: user?.id ?? null, membership: ready.membership, reload, onToast: show, goTab };
+  const common: CommunityTabProps = { group: ready.group, role, viewerId: user?.id ?? null, membership: ready.membership, reload, onToast: show, goTab, section: view?.section ?? null };
   const g = ready.group;
 
   return (
@@ -148,27 +156,41 @@ function CommunityPageInner() {
               <VisibilityLabel visibility={g.visibility} />
               <span className="text-caption text-text-muted">{memberCountText(t, g.memberCount)}</span>
               {role && <RoleBadge role={role} />}
-              {role && role === "member" && <Badge variant="outline">{t("communities.detail.youAreMember")}</Badge>}
               {g.closedAt && <Badge variant="warning">{t("communities.closedBadge")}</Badge>}
               {g.origin === "legacy_group" && <Badge variant="outline">{t("communities.detail.legacyBadge")}</Badge>}
             </div>
+            {g.description && <p data-community-description className="line-clamp-2 whitespace-pre-line break-words text-small text-text-secondary">{g.description}</p>}
           </div>
         </div>
         <div className="mt-4 flex flex-wrap items-center gap-2">
           {role && (
-            <Link href={`/messages/local?id=${g.id}`} className={buttonClassName({ size: "sm" })}>
+            <Link href={communityChatHref(g.id)} data-open-chat className={buttonClassName({ size: "sm" })}>
               <MessageSquare size={14} /> {t("communities.detail.openChat")}
               {unread > 0 && <span className="ml-1 rounded-full bg-primary-foreground/20 px-1.5 text-caption">{unread}</span>}
             </Link>
           )}
-          <CommunityJoinButton
-            target={{ id: g.id, name: g.name, visibility: g.visibility, rulesRequired: g.rulesRequired, memberCount: g.memberCount, memberLimit: g.memberLimit, closed: Boolean(g.closedAt) }}
-            status={joinState}
-            role={role}
-            rules={g.rules}
-            onChange={(next) => void membershipChanged(next)}
-            onToast={show}
-          />
+          {pendingForMe > 0 && (
+            <Link
+              href={communityHref(g.id, "members", "requests")}
+              data-pending-requests
+              aria-label={t("communities.detail.pendingRequests", { count: pendingForMe })}
+              className={buttonClassName({ size: "sm", variant: "secondary" })}
+            >
+              <UserCog size={14} aria-hidden />
+              <span className="sm:hidden" aria-hidden>{t("communities.detail.pendingShort", { count: pendingForMe })}</span>
+              <span className="hidden sm:inline" aria-hidden>{t("communities.detail.pendingRequests", { count: pendingForMe })}</span>
+            </Link>
+          )}
+          <div className="ml-auto">
+            <CommunityJoinButton
+              target={{ id: g.id, name: g.name, visibility: g.visibility, rulesRequired: g.rulesRequired, memberCount: g.memberCount, memberLimit: g.memberLimit, closed: Boolean(g.closedAt) }}
+              status={joinState}
+              role={role}
+              rules={g.rules}
+              onChange={(next) => void membershipChanged(next)}
+              onToast={show}
+            />
+          </div>
         </div>
       </header>
 
@@ -181,9 +203,7 @@ function CommunityPageInner() {
           )}
           <Tabs items={tabs} active={tab} onChange={goTab} ariaLabel={t("communities.detail.tabsAria")} />
           <div role="tabpanel">
-            {tab === "overview" && <OverviewTab {...common} />}
             {tab === "feed" && <FeedTab {...common} />}
-            {tab === "chat" && role && <ChatTab {...common} unread={unread} />}
             {tab === "members" && role && <MembersTab {...common} />}
             {tab === "events" && <EventsTab {...common} />}
             {tab === "about" && <AboutTab {...common} />}
