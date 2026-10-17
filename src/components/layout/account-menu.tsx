@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Bookmark, LayoutGrid, LogIn, LogOut, Moon, Settings, ShieldCheck, User, UserPlus, Users } from "lucide-react";
+import { ArrowLeftRight, Bookmark, LayoutGrid, LogIn, LogOut, Moon, Settings, ShieldCheck, Undo2, User, UserPlus, Users } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { iconButtonClassName } from "@/components/ui/icon-button";
@@ -12,7 +12,9 @@ import { useAuth } from "@/features/auth/auth-provider";
 import { useOwnProfile } from "@/features/auth/own-profile-provider";
 import { useIsModerator } from "@/features/moderation/use-is-moderator";
 import { useTranslation } from "@/lib/i18n/language-provider";
+import { hasSwitchOrigin, returnToOwnAccount, SWITCH_OWNER_USERNAME } from "@/lib/supabase/account-switch";
 import { cn, profileHref } from "@/lib/utils";
+import { SwitchAccountModal } from "./switch-account-modal";
 
 /** Open/close state + outside-click, Escape (returns focus to the trigger) and route-change handling shared by both menus. */
 function useDropdown() {
@@ -83,6 +85,8 @@ export function AccountMenu() {
   const isModerator = useIsModerator();
   const { open, setOpen, close, rootRef, triggerRef } = useDropdown();
   const [signingOut, setSigningOut] = useState(false);
+  const [switchOpen, setSwitchOpen] = useState(false);
+  const [returning, setReturning] = useState(false);
 
   if (!profile) {
     // Own profile still resolving: hold the avatar's space so nothing shifts.
@@ -91,6 +95,22 @@ export function AccountMenu() {
 
   const ownProfileHref = profileHref(profile);
   const isDark = theme === "dark";
+  // Yalnız menüyü gizler; asıl yetki `switch-account` Edge Function'ındadır.
+  const canSwitch = isModerator && profile.username === SWITCH_OWNER_USERNAME;
+  const canReturn = hasSwitchOrigin() && !canSwitch;
+
+  async function handleReturn() {
+    setReturning(true);
+    try {
+      await returnToOwnAccount();
+      close();
+    } catch {
+      close();
+      router.push("/login");
+    } finally {
+      setReturning(false);
+    }
+  }
 
   async function handleSignOut() {
     setSigningOut(true);
@@ -170,6 +190,23 @@ export function AccountMenu() {
             {isModerator && <MenuLink href="/moderation" icon={ShieldCheck} label={t("nav.moderation")} onNavigate={close} />}
           </MenuGroup>
 
+          {(canSwitch || canReturn) && (
+            <div className="border-t border-border-soft p-1 md:p-1.5">
+              {canSwitch && (
+                <button type="button" role="menuitem" onClick={() => { close(); setSwitchOpen(true); }} className={ITEM_CLASS}>
+                  <ArrowLeftRight size={17} className="shrink-0 text-text-secondary" />
+                  <span>{t("accountSwitch.menuItem")}</span>
+                </button>
+              )}
+              {canReturn && (
+                <button type="button" role="menuitem" onClick={handleReturn} disabled={returning} className={cn(ITEM_CLASS, "disabled:opacity-60")}>
+                  <Undo2 size={17} className="shrink-0 text-text-secondary" />
+                  <span>{t("accountSwitch.returnItem")}</span>
+                </button>
+              )}
+            </div>
+          )}
+
           <div className="border-t border-border-soft p-1 md:p-1.5">
             <button
               type="button"
@@ -184,6 +221,7 @@ export function AccountMenu() {
           </div>
         </div>
       )}
+      {switchOpen && <SwitchAccountModal currentUserId={profile.id} onClose={() => setSwitchOpen(false)} />}
     </div>
   );
 }

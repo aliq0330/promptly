@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useMemo, useRef, useState } from 
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase/client";
 import { clearMediaUrlCache } from "@/lib/supabase/media-url";
+import { clearSwitchOrigin } from "@/lib/supabase/account-switch";
 import { useRouter, usePathname } from "next/navigation";
 
 interface AuthContextValue {
@@ -76,6 +77,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   async function signOut() {
     await supabase.auth.signOut();
+    clearSwitchOrigin();
     setIsPasswordRecovery(false);
   }
 
