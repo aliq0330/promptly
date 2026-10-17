@@ -5,7 +5,7 @@ import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /**
- * Topluluk sayfalarının ORTAK yerleşimi (docs/history/190-*). Tek kaynak burasıdır: sayfa genişliği, ana sütun + sağ yardımcı sütun,
+ * Topluluk sayfalarının ORTAK yerleşimi (docs/history/186-*). Tek kaynak burasıdır: sayfa genişliği, ana sütun + sağ yardımcı sütun,
  * gönderi ızgarası ve kompakt başlık. Ana sayfanın (`FeedGrid`) kart yoğunluğuyla aynı kural: mobilde 1, `sm`+ 2 sütun (CSS columns),
  * böylece bir gönderi kartı hiçbir ekranda ~420px'den fazla genişlemez.
  *
