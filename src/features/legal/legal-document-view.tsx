@@ -14,7 +14,7 @@ export function LegalDocumentView({ document }: { document: LegalDocument }) {
   return (
     <PageContainer className="mx-auto max-w-3xl space-y-8">
       <header className="space-y-3">
-        <h1 className="font-serif text-h1 text-text">{document.title[language]}</h1>
+        <h1 className="font-display text-h1 text-text">{document.title[language]}</h1>
         <p className="text-caption text-text-muted">{document.updated[language]}</p>
         <p className="text-body text-text-secondary">{document.intro[language]}</p>
       </header>

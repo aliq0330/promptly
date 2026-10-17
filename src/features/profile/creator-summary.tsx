@@ -18,7 +18,7 @@ export function CreatorSummary({ creator, isOwn, label }: { creator: UserProfile
       <Link href={profileHref(creator)} className="group flex items-center gap-3 rounded-md">
         <Avatar src={creator.avatarUrl} alt={creator.displayName} size={48} />
         <span className="min-w-0 leading-tight">
-          <span className="block truncate font-serif text-[1.0625rem] text-text transition-colors group-hover:text-primary">{creator.displayName}</span>
+          <span className="block truncate font-display text-[1.0625rem] font-bold tracking-[-0.015em] text-text transition-colors group-hover:text-primary">{creator.displayName}</span>
           <span className="block truncate text-caption text-text-muted">@{creator.username}</span>
         </span>
       </Link>

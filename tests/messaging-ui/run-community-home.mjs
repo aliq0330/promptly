@@ -440,7 +440,8 @@ await scenario("26b. Topluluk sayfası: başlık kompakt, akış ızgarası, Yö
     assert.ok(posts.every((b) => b.width <= 460), `${w}: card too wide ${JSON.stringify(posts)}`);
     assert.equal(new Set(posts.map((b) => b.left)).size, Math.min(cols, posts.length), `${w}: columns`);
     const header = await page.getByTestId("community-header").evaluate((el) => el.getBoundingClientRect().height);
-    assert.ok(header <= (w < 500 ? 260 : 150), `${w}: header too tall (${header})`);
+    // Meydan (docs/history/190-*) adds a cover band above the title on purpose; the header must still leave the feed in the first screen.
+    assert.ok(header <= (w < 500 ? 360 : 230), `${w}: header too tall (${header})`);
     assert.equal(await overflowFree(page), true, `${w}: overflow`);
   }
   await page.setViewportSize({ width: 1280, height: 900 });

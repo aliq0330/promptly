@@ -1,4 +1,4 @@
-# 190 — Meydan yeniden tasarımı (Faz 1: tema + kabuk + Ana Sayfa · Faz 2: Keşfet, Profil, Topluluk)
+# 190 — Meydan yeniden tasarımı (Faz 1: tema + kabuk + Ana Sayfa · Faz 2: Keşfet, Profil, Topluluk · Faz 3: başlıklar, Topluluklar, detay)
 
 **Durum:** istemci kodu repoda; `20260920140000_meydan_palette.sql` **canlıya UYGULANDI** (kullanıcı onayıyla, MCP `execute_sql` ile tek işlemde; `schema_migrations`'a `20260920140000` / `meydan_palette` kaydı; öncesinde canlıda `mono` 2, `sand` 2, boş 16 satır vardı, hepsi yeni listede). Ağ taklitli Playwright ekran görüntüleriyle (açık/koyu, 1440/390) bakıldı; gerçek Supabase'e, oturuma ve cihaza karşı denenmedi.
 
@@ -49,9 +49,23 @@ Kullanıcı, mevcut ekranların ekran görüntüleri ve üç tasarım yönü (A 
 
 **Sınama:** ağ taklitli ekran görüntüleri (1440/390). Playwright: `run-communities` 55/61, `run-groups` 34/36, `run-community-posts` 30/36, `run-community-home` 32/38 — başarısızların **tamamı** "no uncaught page errors" denetiminde yakalanan aralıklı React #418 (hidrasyon) hatası; aynı paket Faz 2 olmadan da rastgele senaryolarda düşüyor (`run-communities` 52/61), yani bu fazın gerilemesi değil. Kökeni (yalnız bu sandbox'taki webpack derlemesi mi, gerçek bir hidrasyon uyumsuzluğu mu) araştırılmadı.
 
+## Faz 3 — sayfa başlıkları, Topluluklar ana sayfası, detay
+
+- **`PageHeader`**: resimli başlık kartı tamamen kalktı (Promptlar, İstekler, Workflow'lar, Hazır Ayarlar listeleri); her yerde sade, büyük, kalın başlık. `art` prop'u ve kullanılmayan `components/ui/header-art.tsx` silindi.
+- **Topluluklar ana sayfası (`/communities`)**: `CommunityPageHeader` büyük kalın başlık (ikon yok), sekmeler `Tabs variant="pill"`, sağ sütun kartları ana sayfanın sağ sütunu gibi (`bg-surface-soft`, kenarlıksız, display başlıklar), "Tüm topluluklar" hap bağlantı.
+- **Topluluk sayfası**: kapak bandı inceltildi (`h-20 sm:h-24`) — başlık akışı ilk ekrandan itmesin. `run-community-home` 26b'deki başlık yüksekliği eşiği bilinçli olarak yükseltildi (1440: ≤230px, mobil: ≤360px; önceki "kompakt başlık" eşiği bant öncesine göreydi).
+- **Detay sayfaları**: çıktı görselinin azami yüksekliği 540 → 460px (mobil 440 → 360) — prompt bloğu daha yukarıda. Yaratıcı kartındaki ad display yüzünde.
+- Kalan `font-serif` kullanımları (giriş ekranı wordmark'ı, İlişki Haritası / yasal sayfa başlıkları, tanıtım turu) display yüzüne geçti; `--font-serif` yalnız geriye uyum takma adı.
+
+### Aralıklı React #418 (hidrasyon) — teşhis, çözülmedi
+- Belirti: UI testlerinde rastgele senaryolarda "Minified React error #418". `next build --debug-prerender` (küçültmesiz) ile tam metin alındı: istemci, gövdede `AppShell` kök `<div className="flex min-h-screen">`'i beklerken DOM'da o konumda `<meta charset="utf-8">` buluyor ("server rendered HTML didn't match"). React ağacı istemcide yeniden kurar (kurtarılabilir; sayfa çalışır, yalnız gereksiz yeniden çizim — `language-provider.tsx`'teki yorum bu kurtarmayı zaten anıyor).
+- Statik HTML'de `meta` `<head>`'de, gövdede Next'in akışlı metadata sınırı (`<div hidden><!--$--><!--/$--></div>`) var. `next dev`'de hiç görülmedi; yalnız derlenmiş statik çıktıda, hızlı art arda tam sayfa yüklemelerinde sık.
+- Denenen: `htmlLimitedBots: /.*/` (akışlı metadata'yı kapatma) — gövdedeki sınır kalktı-kalkmadı fark etmedi, hata sürdü; değişiklik geri alındı.
+- Hidrasyon denetimi dışarıda tutulunca (geçici kopyayla) `run-community-home` 38/38, `run-communities` 61/61, `run-detail-pages` 44/44, `run-groups` 36/36, `run-community-posts` 36/36 — yani başka hiçbir işlevsel kontrol düşmüyor. Testler değiştirilmedi (denetim olduğu gibi duruyor).
+
 ## Çeviri
 Yeni metinlerin hepsi `translations.ts`'te TR+EN: `home.composerPlaceholder`, `home.rings*`, `home.rail*`, `settings.palette.meydan`.
 
 ## Denenmedi / açık
 - Gerçek Supabase/oturum/cihaz; `list_my_communities` ve `trending_tags` canlı yanıtları (taklitle bakıldı).
-- Sonraki adaylar: Topluluklar ana sayfası (`/communities`), içerik detay sayfaları, oluşturma ekranları, Ayarlar; profilde koleksiyon halkaları; aralıklı #418 hidrasyon hatasının kökeni.
+- Sonraki adaylar: Ayarlar, Bildirimler, Mesajlar; profilde koleksiyon halkaları; #418 hidrasyon hatasının kökü (Next/React metadata sınırı ile `<head>` hidrasyonu).

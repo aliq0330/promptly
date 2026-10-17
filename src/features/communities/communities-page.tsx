@@ -99,7 +99,6 @@ export function CommunitiesPage() {
       asideLabel={t("communities.aside.label")}
     >
       <CommunityPageHeader
-        icon={Users}
         title={t("communities.page.title")}
         description={t("communities.page.description")}
         actions={
@@ -114,13 +113,13 @@ export function CommunitiesPage() {
         }
       />
 
-      {user && <Tabs items={tabs} active={activeTab} onChange={goTab} ariaLabel={t("communities.page.tabsAria")} />}
+      {user && <Tabs items={tabs} active={activeTab} onChange={goTab} ariaLabel={t("communities.page.tabsAria")} variant="pill" />}
 
       {authLoading ? (
         <LoadingRows />
       ) : !user ? (
         <>
-          <Tabs items={tabs} active="discover" onChange={goTab} ariaLabel={t("communities.page.tabsAria")} />
+          <Tabs items={tabs} active="discover" onChange={goTab} ariaLabel={t("communities.page.tabsAria")} variant="pill" />
           <DiscoverView onToast={show} onGoInvites={() => goTab("invites")} />
         </>
       ) : view === "posts" ? (

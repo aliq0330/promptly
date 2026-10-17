@@ -4,7 +4,6 @@ import Link from "next/link";
 import { ArrowRight, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import { HeaderArt, type HeaderArtVariant } from "@/components/ui/header-art";
 
 /** Top-of-page title block: optional eyebrow, title, one-line description, actions. */
 export function PageHeader({
@@ -13,7 +12,6 @@ export function PageHeader({
   description,
   icon: Icon,
   actions,
-  art,
   className,
 }: {
   eyebrow?: string;
@@ -21,31 +19,9 @@ export function PageHeader({
   description?: React.ReactNode;
   icon?: LucideIcon;
   actions?: React.ReactNode;
-  /** Optional decorative illustration shown on the right of the header card. */
-  art?: HeaderArtVariant;
   className?: string;
 }) {
-  if (art) {
-    return (
-      <header className={cn("relative animate-rise-in overflow-hidden rounded-xl border border-border-soft bg-surface px-5 py-6 shadow-card sm:px-8 sm:py-8", className)}>
-        <div className="relative z-10 flex flex-col gap-4">
-          <div className="min-w-0 space-y-2 sm:max-w-[60%]">
-            {eyebrow && (
-              <p className="flex items-center gap-1.5 text-caption font-semibold uppercase tracking-[0.08em] text-primary">
-                {Icon && <Icon size={13} strokeWidth={2.25} />}
-                {eyebrow}
-              </p>
-            )}
-            <h1 className="text-h1 font-medium text-text">{title}</h1>
-            {description && <p className="max-w-2xl text-small text-text-muted sm:text-body">{description}</p>}
-          </div>
-          {actions && <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>}
-        </div>
-        {/* Decorative; hidden on phones where it would sit on top of the title/description. */}
-        <HeaderArt variant={art} className="absolute right-4 top-1/2 hidden h-36 -translate-y-1/2 opacity-90 sm:block lg:right-8 lg:h-40" />
-      </header>
-    );
-  }
+  // Meydan (docs/history/190-*): one plain, large title block everywhere — the illustrated header card is gone.
   return (
     <header className={cn("flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between", className)}>
       <div className="min-w-0 space-y-1.5">
@@ -55,7 +31,7 @@ export function PageHeader({
             {eyebrow}
           </p>
         )}
-        <h1 className="text-h1 font-medium text-text">{title}</h1>
+        <h1 className="text-h1 font-bold text-text">{title}</h1>
         {description && <p className="max-w-2xl text-small text-text-muted sm:text-body">{description}</p>}
       </div>
       {actions && <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>}

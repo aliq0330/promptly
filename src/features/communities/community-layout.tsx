@@ -1,7 +1,6 @@
 "use client";
 
 import type { ReactNode } from "react";
-import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /**
@@ -33,14 +32,12 @@ export function CommunityReadingColumn({ children, className }: { children: Reac
 }
 
 /** Kompakt sayfa başlığı: tek satırda başlık + eylemler; açıklama en çok iki satır. */
-export function CommunityPageHeader({ title, description, icon: Icon, actions }: { title: string; description?: string; icon?: LucideIcon; actions?: ReactNode }) {
+export function CommunityPageHeader({ title, description, actions }: { title: string; description?: string; actions?: ReactNode }) {
   return (
-    <header className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2" data-testid="community-page-header">
-      <div className="min-w-0 flex-1 basis-60 space-y-0.5">
-        <h1 className="flex items-center gap-2 font-serif text-h2 font-medium leading-tight text-text">
-          {Icon && <Icon size={20} className="shrink-0 text-primary" strokeWidth={1.75} aria-hidden />}
-          <span className="min-w-0 break-words">{title}</span>
-        </h1>
+    // Meydan (docs/history/190-*): a large bold title like every other page header; no icon.
+    <header className="flex flex-wrap items-end justify-between gap-x-4 gap-y-3" data-testid="community-page-header">
+      <div className="min-w-0 flex-1 basis-60 space-y-1">
+        <h1 className="break-words text-h1 font-bold leading-tight text-text">{title}</h1>
         {description && <p className="line-clamp-2 max-w-2xl text-small text-text-muted">{description}</p>}
       </div>
       {actions && <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>}
