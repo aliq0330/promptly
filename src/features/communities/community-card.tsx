@@ -7,10 +7,10 @@ import { GroupAvatar } from "@/features/groups/group-avatar";
 import { RoleBadge } from "@/features/groups/role-badge";
 import { CommunityJoinButton, type JoinState } from "./community-join-button";
 import { VisibilityLabel } from "./visibility-label";
-import { CATEGORY_LABEL_KEYS, communityHref } from "@/lib/communities";
+import { CATEGORY_LABEL_KEYS, communityHref, REASON_LABEL_KEYS } from "@/lib/communities";
 import { memberCountText } from "@/lib/group-labels";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import type { CommunitySummary } from "@/lib/supabase/communities";
+import type { CommunityReason, CommunitySummary } from "@/lib/supabase/communities";
 
 /**
  * Topluluk kartı: görsel, ad, açıklama, üye sayısı, görünürlük ve içerik/etkinlik özeti. Sağ üstte TEK üyelik düğmesi
@@ -31,7 +31,7 @@ export function CommunityCard({
   onInvited?: () => void;
   footerNote?: string;
   /** Öneri listesinde: bu topluluk neden önerildi. */
-  reason?: "category" | "popular";
+  reason?: CommunityReason;
 }) {
   const { t } = useTranslation();
   const full = community.memberCount >= community.memberLimit;
@@ -99,7 +99,7 @@ export function CommunityCard({
         </p>
         {(footerNote || reason || (community.visibility === "restricted" && !isMember)) && (
           <span className="text-caption text-text-muted">
-            {footerNote ?? (reason ? t(reason === "category" ? "communities.suggest.reasonCategory" : "communities.suggest.reasonPopular") : t("communities.search.restrictedNote"))}
+            {footerNote ?? (reason ? t(REASON_LABEL_KEYS[reason]) : t("communities.search.restrictedNote"))}
           </span>
         )}
       </div>

@@ -67,3 +67,14 @@ CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/mess
 ```bash
 CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/messaging-ui/run-community-posts.mjs   # 36/36 beklenir
 ```
+
+## Topluluklar ana sayfası (`docs/history/185-*`)
+
+`run-community-home.mjs` (29 senaryo): sekmeler (Gönderiler varsayılan; Yönettiklerim yalnız yöneticiye), Gönderiler akışı kapsamı (açık+kapalı üye; tamamen kapalı ve üye olunmayan yok) + keyset sayfalama + boş/hata durumları, "Sana uygun topluluklar" şeridi (≤10, tamamen kapalı/üye olunan yok, mobilde yatay kaydırma + sonraki kart görünür, tekrar azaltma, neden etiketleri, eylemler), "Tüm topluluklar" düğmesinin şeridin hemen altında olması, Keşfet akışı (kaynaklar, kopyasızlık, çeşitlilik, görüldü bildirimi ve yenilemede düşmesi), `/communities/all` (arama en üstte, kategori/sıralama/sayfalama, hata), davet ve başvurular (gelen başvurular), eski adresler, üyelik kalkınca akıştan düşme, ziyaretçi, İngilizce, mobil/tablet/koyu düzen. `run-communities.mjs` yeni sekme düzenine uyarlandı (61/61). **Sunucu kuralları `mock-communities.mjs`'te TAKLİT edilir**; gerçek kuralların doğrulaması `supabase/tests/community-home.sql`'dedir (39 kontrol). Gerçek Supabase'e KARŞI DENENMEDİ.
+
+```bash
+CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/messaging-ui/run-community-home.mjs   # 29/29 beklenir
+```
+
+Not: `run-community-home.mjs` ve `run-community-posts.mjs` aynı portu (4176) kullanır, `run-communities.mjs` ve `run-chat.mjs` da 4175'i; bunları paralel değil sırayla çalıştır.
+

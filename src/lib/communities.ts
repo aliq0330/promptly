@@ -30,6 +30,14 @@ export const EVENT_REMINDER_WINDOW_HOURS = 24;
 
 export const COMMUNITY_CATEGORIES: readonly CommunityCategory[] = ["general", "image", "text", "audio", "video", "workflow", "learning", "showcase"];
 
+/** Öneri/gözat nedeninin etiketi (`recommend_communities` / `browse_communities` `reason`). */
+export const REASON_LABEL_KEYS: Record<"followed" | "interest" | "category" | "popular", TranslationKey> = {
+  followed: "communities.suggest.reasonFollowed",
+  interest: "communities.suggest.reasonInterest",
+  category: "communities.suggest.reasonCategory",
+  popular: "communities.suggest.reasonPopular",
+};
+
 export const CATEGORY_LABEL_KEYS: Record<CommunityCategory, TranslationKey> = {
   general: "communities.category.general",
   image: "communities.category.image",

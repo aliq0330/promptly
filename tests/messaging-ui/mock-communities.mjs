@@ -247,6 +247,60 @@ export function setupCommunities(db) {
       g(body.p_group_id).closed_at = table === "rpc/close_community" ? "2026-03-01T00:00:00Z" : null;
       return json(200, null);
     }
+    // ---- Topluluklar ana sayfası (docs/history/185-*): sunucu kurallarının TAKLİDİ — asıl doğrulama supabase/tests/community-home.sql ----
+    db.seen ??= new Map(); // gönderi kimliği → görülme zamanı
+    const feedGroup = (post) => g(post.community_id);
+    const feedVisible = (post) => { const x = feedGroup(post); return x && ["public", "restricted"].includes(x.visibility) && (x.visibility === "public" || Boolean(db.member(x.id, signedIn))); };
+    if (table === "rpc/member_feed_page") {
+      log("member_feed_page", body);
+      let list = db.posts.filter((p) => feedGroup(p) && ["public", "restricted"].includes(feedGroup(p).visibility) && Boolean(db.member(p.community_id, signedIn)))
+        .sort((a, b) => b.created_at.localeCompare(a.created_at) || b.id.localeCompare(a.id));
+      if (body.p_before_at) list = list.filter((p) => p.created_at < body.p_before_at || (p.created_at === body.p_before_at && p.id < body.p_before_id));
+      return json(200, list.slice(0, body.p_limit ?? 12).map((p) => ({ post_id: p.id, community_id: p.community_id, created_at: p.created_at })));
+    }
+    if (table === "rpc/discover_feed_page") {
+      log("discover_feed_page", body);
+      const asOf = body.p_as_of ?? new Date().toISOString();
+      const scored = db.posts
+        .filter((p) => feedVisible(p) && p.author_id !== signedIn && p.created_at <= asOf && !(db.seen.has(p.id) && db.seen.get(p.id) < asOf))
+        .map((p) => {
+          const member = Boolean(db.member(p.community_id, signedIn));
+          const followed = db.follows.some((f) => f.follower_id === signedIn && f.following_id === p.author_id);
+          return { p, source: member ? "member" : followed ? "followed" : "public", base: (member ? 1 : 0) + (followed ? 2 : 0) + p.created_at.length * 0 + (Date.parse(p.created_at) % 1e6) / 1e12 };
+        });
+      const perCommunity = new Map();
+      for (const e of scored.sort((a, b) => b.base - a.base || b.p.id.localeCompare(a.p.id))) { const n = perCommunity.get(e.p.community_id) ?? 0; perCommunity.set(e.p.community_id, n + 1); e.score = e.base - 0.75 * n; }
+      const ordered = scored.sort((a, b) => b.score - a.score || b.p.id.localeCompare(a.p.id));
+      return json(200, ordered.slice(body.p_offset ?? 0, (body.p_offset ?? 0) + (body.p_limit ?? 12)).map((e) => ({ post_id: e.p.id, community_id: e.p.community_id, source: e.source, score: e.score })));
+    }
+    if (table === "rpc/mark_community_posts_seen") {
+      log("mark_community_posts_seen", body);
+      let n = 0;
+      for (const id of body.p_post_ids ?? []) { const p = db.posts.find((x) => x.id === id); if (p && feedVisible(p) && !db.seen.has(id)) { db.seen.set(id, new Date().toISOString()); n += 1; } }
+      return json(200, n);
+    }
+    const relevanceOf = (x) => {
+      const mine = new Set(db.groups.filter((m) => db.member(m.id, signedIn) && m.category !== "general").map((m) => m.category));
+      return (mine.has(x.category) ? 3 : 0) + (db.reasons?.[x.id] ? 2 : 0) + Math.log(1 + x.member_count);
+    };
+    const reasonOf = (x) => db.reasons?.[x.id] ?? (new Set(db.groups.filter((m) => db.member(m.id, signedIn) && m.category !== "general").map((m) => m.category)).has(x.category) ? "category" : "popular");
+    if (table === "rpc/recommend_communities") {
+      log("recommend_communities", body);
+      const list = db.groups
+        .filter((x) => ["public", "restricted"].includes(x.visibility) && !x.closed_at && x.member_count < x.member_limit && myStatusOf(x) === "none")
+        .sort((a, b) => relevanceOf(b) - relevanceOf(a))
+        .map((x) => searchRow(x, { reason: reasonOf(x) }));
+      return json(200, list.slice(0, body.p_limit ?? 10));
+    }
+    if (table === "rpc/browse_communities") {
+      log("browse_communities", body);
+      const term = (body.p_query ?? "").trim().toLowerCase();
+      let list = db.groups.filter((x) => ["public", "restricted"].includes(x.visibility) && !x.closed_at && (!body.p_category || x.category === body.p_category) && (!term || x.name.toLowerCase().includes(term) || (x.description ?? "").toLowerCase().includes(term)));
+      const sort = body.p_sort ?? "relevant";
+      list = list.sort((a, b) => sort === "newest" ? b.created_at.localeCompare(a.created_at) : sort === "popular" || sort === "active" ? b.member_count - a.member_count : relevanceOf(b) - relevanceOf(a) || b.member_count - a.member_count);
+      return json(200, list.slice(body.p_offset ?? 0, (body.p_offset ?? 0) + (body.p_limit ?? 20)).map((x) => searchRow(x, { reason: reasonOf(x) })));
+    }
+
     if (table === "community_rule_acceptances" && method === "GET") {
       const cid = eq(q, "community_id");
       return rows(db.acceptances.filter((a) => a.user_id === signedIn && (!cid || a.community_id === cid)).map((a) => ({ rules_version: a.rules_version })));

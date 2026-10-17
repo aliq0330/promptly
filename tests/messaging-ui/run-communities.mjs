@@ -41,34 +41,36 @@ const seed = (db, opts = {}) => db.addCommunity(C1, { members: [[U.bob, "admin"]
 const overflowFree = (page) => page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1);
 
 // 1
-await scenario("1. Keşfet: yalnız herkese açık topluluklar; kapalı olan listelenmez; kartta üye sayısı, kategori ve görünürlük", async ({ page }) => {
-  await page.goto(`${BASE}/communities`);
-  await page.getByRole("heading", { name: "Topluluklar", level: 1 }).waitFor();
+await scenario("1. Tüm topluluklar: tamamen kapalı topluluk listelenmez; kartta üye sayısı, kategori ve görünürlük; ana sayfa sekmeleri yenidir", async ({ page }) => {
+  await page.goto(`${BASE}/communities/all`);
+  await page.getByRole("heading", { name: "Tüm topluluklar", level: 1 }).waitFor();
   await page.getByRole("heading", { name: "Prompt Atölyesi" }).waitFor();
   assert.equal(await page.getByRole("heading", { name: "Gizli Kulüp" }).count(), 0, "private communities are never listed");
   const card = page.locator("li", { hasText: "Prompt Atölyesi" }).first();
   await card.getByText("Görsel", { exact: true }).waitFor();
   await card.getByText("Herkese açık").waitFor();
   await card.getByText("4 üye").waitFor();
-  assert.deepEqual((await tabNames(page)).slice(0, 5), ["Keşfet", "Üyesi olduklarım", "Yönettiklerim", "Davetler", "Başvurularım"]);
+  await page.goto(`${BASE}/communities`);
+  await page.getByRole("heading", { name: "Topluluklar", level: 1 }).waitFor();
+  assert.deepEqual(await tabNames(page), ["Gönderiler", "Keşfet", "Davet ve başvurular"]);
   assert.equal(await page.getByRole("tab", { name: "Kaydedilenler" }).count(), 0, "the save feature is gone");
 }, { setup: (db) => { db.addCommunity(C2, { name: "Prompt Atölyesi", myRole: "none", members: [[U.bob, "owner"], [U.carol, "member"], [U.dave, "member"], [U.amy, "member"]] }); db.addCommunity(C3, { name: "Gizli Kulüp", visibility: "private", myRole: "none", members: [[U.bob, "owner"]] }); } });
 
 // 2
-await scenario("2. Keşfet: arama ve kategori süzgeci sunucuya iletilir; boş sonuç ve hata/yeniden dene durumları", async ({ page, db }) => {
-  await page.goto(`${BASE}/communities`);
+await scenario("2. Tüm topluluklar: arama ve kategori süzgeci sunucuya iletilir; boş sonuç ve hata/yeniden dene durumları", async ({ page, db }) => {
+  await page.goto(`${BASE}/communities/all`);
   await page.getByRole("heading", { name: "Görsel Topluluk" }).waitFor();
   await page.getByRole("heading", { name: "Ses Topluluğu" }).waitFor();
   await page.getByRole("button", { name: "Ses", exact: true }).click();
   await page.getByRole("heading", { name: "Görsel Topluluk" }).waitFor({ state: "detached" });
-  assert.ok(calls(db, "discover_communities", "RPC").some((c) => c.body.p_category === "audio"));
+  assert.ok(calls(db, "browse_communities", "RPC").some((c) => c.body.p_category === "audio"));
   await page.getByRole("button", { name: "Tümü", exact: true }).click();
-  await page.getByPlaceholder("Topluluk ara (kapalı olanlar da çıkar)…").fill("zzzz");
+  await page.getByPlaceholder("Topluluk, konu veya etiket ara…").fill("zzzz");
   await page.getByText("Eşleşen topluluk bulunamadı").waitFor();
-  assert.ok(calls(db, "search_communities", "RPC").some((c) => c.body.p_query === "zzzz"), "typing a query uses the search RPC (public + private communities)");
+  assert.ok(calls(db, "browse_communities", "RPC").some((c) => c.body.p_query === "zzzz"), "typing a query uses the browse RPC (public + restricted communities)");
   let fail = true;
-  db.rpc.search_communities = () => (fail ? { status: 500, body: { message: "boom" } } : { body: [] });
-  await page.getByPlaceholder("Topluluk ara (kapalı olanlar da çıkar)…").fill("yeni");
+  db.rpc.browse_communities = () => (fail ? { status: 500, body: { message: "boom" } } : { body: [] });
+  await page.getByPlaceholder("Topluluk, konu veya etiket ara…").fill("yeni");
   await page.getByText("Topluluklar yüklenemedi.").waitFor();
   fail = false;
   await page.getByRole("button", { name: "Tekrar dene" }).click();
@@ -77,19 +79,19 @@ await scenario("2. Keşfet: arama ve kategori süzgeci sunucuya iletilir; boş s
 
 // 3
 await scenario("3. Katıl (kural yok): tek istek, kabul bayrağı yok; topluluk sayfasına gider ve üye olur", async ({ page, db }) => {
-  await page.goto(`${BASE}/communities`);
+  await page.goto(`${BASE}/communities/all`);
   await page.getByRole("button", { name: "Açık Topluluk topluluğuna katıl" }).dblclick();
   await page.locator("li", { hasText: "Açık Topluluk" }).getByRole("button", { name: /Katıldın/ }).waitFor();
   const made = calls(db, "join_community", "RPC");
   assert.equal(made.length, 1, "double click sends one request");
   assert.equal(made[0].body.p_accept_rules, false);
   assert.ok(db.member(C2, ME));
-  assert.match(page.url(), /\/communities\/?$/, "joining from a card keeps you on the list");
+  assert.match(page.url(), /\/communities\/all\/?$/, "joining from a card keeps you on the list");
 }, { setup: (db) => db.addCommunity(C2, { name: "Açık Topluluk", myRole: "none", members: [[U.bob, "owner"]] }) });
 
 // 4
 await scenario("4. Katıl (kurallar zorunlu): kural metni gösterilir, onay kutusu işaretlenmeden katılınamaz; kabulle p_accept_rules=true", async ({ page, db }) => {
-  await page.goto(`${BASE}/communities`);
+  await page.goto(`${BASE}/communities/all`);
   await page.getByRole("button", { name: "Kurallı Topluluk topluluğuna katıl" }).click();
   const d = dlg(page);
   await d.getByText("Kural 1: nazik ol").waitFor();
@@ -629,8 +631,9 @@ await scenario("21. Birebir sohbet etkilenmez: profil menüsü, engelle/şikayet
 await scenario("22. İngilizce: Topluluklar sayfası, detay sekmeleri, rapor/duyuru/etkinlik metinleri çevrilmiş", async ({ page }) => {
   await page.goto(`${BASE}/communities`);
   await page.getByRole("heading", { name: "Communities", level: 1 }).waitFor();
-  await page.getByPlaceholder("Search communities (private ones too)…").waitFor();
-  assert.deepEqual((await tabNames(page)).slice(0, 5), ["Discover", "Joined", "Managed", "Invitations", "My requests"]);
+  assert.deepEqual(await tabNames(page), ["Posts", "Discover", "Managed", "Invitations & requests"]); // seed: owner → Managed tab visible
+  await page.goto(`${BASE}/communities/all`);
+  await page.getByPlaceholder("Search communities, topics or tags…").waitFor();
   await open(page, C1);
   assert.deepEqual(await tabNames(page), ["Feed", "Events", "Members", "About & rules", "Manage"]);
   await page.locator("header").getByRole("link", { name: "Open chat" }).waitFor();
@@ -648,8 +651,8 @@ await scenario("22. İngilizce: Topluluklar sayfası, detay sekmeleri, rapor/duy
 for (const [label, viewport, theme] of [["mobil 390x800", { width: 390, height: 800 }, undefined], ["mobil koyu tema", { width: 390, height: 800 }, "dark"], ["tablet 820x1100", { width: 820, height: 1100 }, undefined]]) {
   await scenario(`23. Düzen (${label}): liste, detay ve akış yatay taşmaz; sekme çubuğu kaydırılabilir; temel düğmeler ≥ 36px`, async ({ page }) => {
     await page.goto(`${BASE}/communities`);
-    await page.getByRole("heading", { name: "Prompt Atölyesi" }).waitFor();
-    assert.ok(await overflowFree(page), "communities list overflows horizontally");
+    await page.getByText("Normal içerik").first().waitFor();
+    assert.ok(await overflowFree(page), "communities home overflows horizontally");
     await open(page, C1);
     assert.ok(await overflowFree(page), "detail overflows horizontally");
     await page.getByRole("tab", { name: "Akış", exact: true }).click();
@@ -664,7 +667,8 @@ for (const [label, viewport, theme] of [["mobil 390x800", { width: 390, height: 
 // 24 — üç görünürlük düzeyi, tek üyelik düğmesi, arama ve öneriler (docs/history/176-*)
 const joinBtn = (scope) => scope.getByRole("button", { name: /topluluğuna katıl$/ });
 const requestBtn = (scope) => scope.getByRole("button", { name: /topluluğuna katılma isteği gönder$/ });
-const SEARCH = "Topluluk ara (kapalı olanlar da çıkar)…";
+const SEARCH = "Topluluk, konu veya etiket ara…"; // Tüm topluluklar (oturumlu)
+const GUEST_SEARCH = "Topluluk ara (kapalı olanlar da çıkar)…"; // ziyaretçinin herkese açık listesi
 
 await scenario("24. Başlıktaki tek üyelik düğmesi: Katıl → Katıldın ▼ → 'Topluluktan ayrıl' (onaylı, tek istek) → yeniden Katıl; 'Kaydet' düğmesi yok", async ({ page, db }) => {
   await open(page, C1);
@@ -697,26 +701,29 @@ const visibilitySetup = (db) => {
   db.addCommunity(C3, { name: "Hayalet Kulüp", visibility: "private", myRole: "none", members: [[U.bob, "owner"]] });
 };
 
-await scenario("25. Arama: kapalı topluluk bulunur (Kapalı rozeti, içerik notu, 'istek gönder'); Keşfet'te kapalı ve tamamen kapalı yok; tamamen kapalı aramada da yok", async ({ page, db }) => {
-  await page.goto(`${BASE}/communities`);
+await scenario("25. Tüm topluluklar: kapalı topluluk listelenir (Kapalı rozeti, içerik notu, 'istek gönder'), tamamen kapalı hiçbir yerde yok; aramada da yok", async ({ page, db }) => {
+  await page.goto(`${BASE}/communities/all`);
   await page.getByRole("heading", { name: "Açık Atölye" }).waitFor();
-  for (const hidden of ["Kapalı Atölye", "Hayalet Kulüp"]) assert.equal(await page.getByRole("heading", { name: hidden }).count(), 0, `${hidden} is not in Discover`);
+  await page.getByRole("heading", { name: "Kapalı Atölye" }).waitFor();
+  assert.equal(await page.getByRole("heading", { name: "Hayalet Kulüp" }).count(), 0, "fully closed communities are not listed");
   await page.getByPlaceholder(SEARCH).fill("atölye");
+  await page.waitForTimeout(700); // arama gecikmesi (300 ms) + sonuç
   const card = page.locator("li", { hasText: "Kapalı Atölye" });
   await card.waitFor();
   await card.getByText("Kapalı", { exact: true }).waitFor();
   await card.getByText("Kapalı topluluk: içerik yalnızca üyelere açık.").waitFor();
   await requestBtn(card).waitFor();
   await joinBtn(page.locator("li", { hasText: "Açık Atölye" })).waitFor();
-  assert.ok(calls(db, "search_communities", "RPC").some((c) => c.body.p_query === "atölye"));
+  assert.ok(calls(db, "browse_communities", "RPC").some((c) => c.body.p_query === "atölye"));
   await page.getByPlaceholder(SEARCH).fill("hayalet");
   await page.getByText("Eşleşen topluluk bulunamadı").waitFor();
   assert.equal(await page.getByRole("heading", { name: "Hayalet Kulüp" }).count(), 0, "fully closed communities never show up in search");
 }, { setup: visibilitySetup });
 
 await scenario("25b. Kapalı topluluğa aramadan istek: tek istek, 'İstek gönderildi ▼', menüden geri çekilince yeniden 'İstek gönder'", async ({ page, db }) => {
-  await page.goto(`${BASE}/communities`);
+  await page.goto(`${BASE}/communities/all`);
   await page.getByPlaceholder(SEARCH).fill("kapalı");
+  await page.waitForTimeout(700);
   const card = page.locator("li", { hasText: "Kapalı Atölye" });
   await requestBtn(card).dblclick();
   const sent = card.getByRole("button", { name: /İstek gönderildi/ });
@@ -735,8 +742,9 @@ await scenario("25b. Kapalı topluluğa aramadan istek: tek istek, 'İstek gönd
 }, { setup: visibilitySetup });
 
 await scenario("25c. Kapalı + kurallı topluluk: kural metni okunur, onay kutusu işaretlenmeden istek gitmez; kabulle p_accept_rules=true", async ({ page, db }) => {
-  await page.goto(`${BASE}/communities`);
+  await page.goto(`${BASE}/communities/all`);
   await page.getByPlaceholder(SEARCH).fill("kapalı");
+  await page.waitForTimeout(700); // arama sonucu gelmeden pencere açılırsa liste yenilenirken kapanır
   await requestBtn(page.locator("li", { hasText: "Kapalı Atölye" })).click();
   const d = dlg(page);
   await d.getByText("Kural: nazik ol").waitFor();
@@ -768,25 +776,22 @@ await scenario("25e. Tamamen kapalı topluluk: davetsiz kişi için sayfa 'bulun
   assert.equal((await requestBtn(page).count()) + (await joinBtn(page).count()), 0, "no way to join or request a fully closed community from its page");
 }, { setup: visibilitySetup });
 
-await scenario("26. Öneriler: ortak kategori önce, kapalı topluluk önerilir (tamamen kapalı asla); arama başlayınca şerit kalkar; önerilenden istek/katılma", async ({ page, db }) => {
-  await page.goto(`${BASE}/communities`);
-  await page.getByRole("heading", { name: "Senin için önerilenler" }).waitFor();
-  const sug = page.getByTestId("community-suggestions");
-  const items = sug.locator("li");
-  assert.equal(await items.count(), 2, "public + private(searchable) suggested; fully closed and joined ones are not");
+await scenario("26. Öneriler (Keşfet şeridi): ortak kategori önce, kapalı topluluk önerilir (tamamen kapalı asla); önerilenden istek/katılma", async ({ page, db }) => {
+  await page.goto(`${BASE}/communities?tab=discover`);
+  await page.getByRole("heading", { name: "Sana uygun topluluklar" }).waitFor();
+  const items = page.getByTestId("suggestion-card");
+  assert.equal(await items.count(), 2, "public + restricted suggested; fully closed and joined ones are not");
   assert.ok((await items.first().innerText()).includes("Resim Odası"), "same category as my community comes first");
   await items.first().getByText("Üye olduğun topluluklarla aynı konu").waitFor();
-  await items.nth(1).getByText("Popüler", { exact: true }).waitFor();
-  assert.equal(await sug.getByText("Hayalet Kulüp").count(), 0);
-  assert.equal(await sug.getByText("Üyesi Olduğum").count(), 0);
-  assert.ok(calls(db, "suggest_communities", "RPC").length >= 1);
+  await items.nth(1).getByText(/· Popüler$/).waitFor();
+  const strip = page.getByTestId("suggestion-strip");
+  assert.equal(await strip.getByText("Hayalet Kulüp").count(), 0);
+  assert.equal(await strip.getByText("Üyesi Olduğum").count(), 0);
+  assert.ok(calls(db, "recommend_communities", "RPC").length >= 1);
   await requestBtn(items.nth(1)).click();
   await items.nth(1).getByRole("button", { name: /İstek gönderildi/ }).waitFor();
   await joinBtn(items.first()).click();
   await items.first().getByRole("button", { name: /Katıldın/ }).waitFor();
-  await page.getByPlaceholder(SEARCH).fill("resim");
-  await page.getByRole("heading", { name: "Arama sonuçları" }).waitFor();
-  assert.equal(await page.getByTestId("community-suggestions").count(), 0, "suggestions hide while searching");
 }, {
   setup: (db) => {
     db.suggestions = true;
@@ -831,9 +836,9 @@ await scenario("27b. Yönetim · Ayarlar: görünürlük seçicisi mevcut düzey
 }, { setup: (db) => seed(db, { myRole: "owner" }) });
 
 await scenario("28. İngilizce: Katıl / İstek gönder / Katıldın menüsü, görünürlük adları, öneriler", async ({ page }) => {
-  await page.goto(`${BASE}/communities`);
-  await page.getByRole("heading", { name: "Suggested for you" }).waitFor();
-  const sug = page.getByTestId("community-suggestions");
+  await page.goto(`${BASE}/communities?tab=discover`);
+  await page.getByRole("heading", { name: "Communities for you" }).waitFor();
+  const sug = page.getByTestId("suggestion-strip");
   await sug.getByRole("button", { name: "Send a request to join Closed Atelier" }).waitFor();
   await sug.getByRole("button", { name: "Join the community Open Atelier" }).waitFor();
   await sug.getByText("Private", { exact: true }).waitFor();
@@ -875,7 +880,7 @@ await scenario("29. Ziyaretçi (oturumsuz) · Topluluklar: yalnız Keşfet (herk
   await joinBtn(page.locator("li", { hasText: "Açık Atölye" })).click();
   await page.getByText(LOGIN_TEXT).waitFor();
   await page.keyboard.press("Escape");
-  await page.getByPlaceholder(SEARCH).fill("atölye");
+  await page.getByPlaceholder(GUEST_SEARCH).fill("atölye");
   const card = page.locator("li", { hasText: "Kapalı Atölye" });
   await card.waitFor();
   await card.getByText("Kapalı topluluk: içerik yalnızca üyelere açık.").waitFor();
