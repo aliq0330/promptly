@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
+import { ArrowRight, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { GroupAvatar } from "@/features/groups/group-avatar";
 import { CommunityJoinButton, type JoinState } from "./community-join-button";
@@ -101,16 +101,16 @@ export function SuggestionStrip({ onToast, onGoInvites }: { onToast: (message: s
           </button>
         </div>
       </div>
-      <ul ref={scroller} className="-mx-3 flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth px-3 pb-2 sm:-mx-0 sm:px-0" data-testid="suggestion-list">
+      <ul ref={scroller} className="-mx-3 flex snap-x snap-mandatory scroll-px-3 gap-2.5 overflow-x-auto scroll-smooth px-3 pb-2 sm:mx-0 sm:scroll-px-0 sm:px-0" data-testid="suggestion-list">
         {items.map((community) => (
           <li
             key={community.id}
             data-testid="suggestion-card"
             data-community-id={community.id}
-            className="relative flex w-[78%] shrink-0 snap-start flex-col gap-2.5 rounded-xl border border-border-soft bg-surface p-3.5 shadow-card transition-colors duration-200 ease-soft hover:border-border-strong sm:w-72"
+            className="relative flex w-[72%] shrink-0 snap-start flex-col gap-2 rounded-xl border border-border-soft bg-surface p-3 shadow-card transition-colors duration-200 ease-soft hover:border-border-strong sm:w-64"
           >
             <div className="flex items-start gap-3">
-              <GroupAvatar name={community.name} avatarUrl={community.avatarUrl} size={44} badge />
+              <GroupAvatar name={community.name} avatarUrl={community.avatarUrl} size={36} badge />
               <div className="min-w-0 flex-1 space-y-1">
                 <h3 className="break-words text-sm font-semibold leading-snug text-text">
                   <Link href={communityHref(community.id)} className="after:absolute after:inset-0 after:rounded-xl focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-primary">
@@ -123,13 +123,12 @@ export function SuggestionStrip({ onToast, onGoInvites }: { onToast: (message: s
                 </div>
               </div>
             </div>
-            <p className="line-clamp-2 min-h-[2.5rem] break-words text-small text-text-secondary">{community.description ?? ""}</p>
-            <p className="text-caption text-text-muted">
-              {memberCountText(t, community.memberCount)}
-              {community.reason && <> · {t(REASON_LABEL_KEYS[community.reason])}</>}
-            </p>
+            <p className="line-clamp-2 break-words text-caption text-text-secondary">{community.description ?? ""}</p>
             <div className="relative z-10 flex items-center justify-between gap-2">
-              <span className="text-caption text-text-muted">{community.visibility === "restricted" ? t("communities.strip.restrictedNote") : ""}</span>
+              <p className="min-w-0 truncate text-caption text-text-muted">
+                {memberCountText(t, community.memberCount)}
+                {community.reason && <> · {t(REASON_LABEL_KEYS[community.reason])}</>}
+              </p>
               <CommunityJoinButton
                 target={{
                   id: community.id,
@@ -149,6 +148,17 @@ export function SuggestionStrip({ onToast, onGoInvites }: { onToast: (message: s
             </div>
           </li>
         ))}
+        <li className="flex shrink-0 snap-start items-stretch" data-testid="suggestion-view-all">
+          <Link
+            href="/communities/all"
+            className="flex w-28 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border-strong bg-surface-soft p-3 text-center text-small font-medium text-text transition-colors duration-200 ease-soft hover:border-primary hover:text-primary"
+          >
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-soft text-primary">
+              <ArrowRight size={16} aria-hidden />
+            </span>
+            {t("common.viewAll")}
+          </Link>
+        </li>
       </ul>
     </section>
   );
