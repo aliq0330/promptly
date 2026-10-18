@@ -1116,6 +1116,7 @@ export const translations = {
   "profile.reportThisUser": { tr: "Bu kullanıcıyı şikayet et", en: "Report this user" },
   "profile.followingSuffix": { tr: "takip", en: "following" },
   "profile.sectionsAriaLabel": { tr: "Profil bölümleri", en: "Profile sections" },
+  "profile.collectionRingsLabel": { tr: "Herkese açık koleksiyonlar", en: "Public collections" },
   "profile.tabCollections": { tr: "Koleksiyonlar", en: "Collections" },
   "profile.tabSaved": { tr: "Kaydedilenler", en: "Saved" },
   "profile.tabLiked": { tr: "Beğeniler", en: "Liked" },

@@ -34,7 +34,7 @@ export function ConversationList({
   }
 
   return (
-    <div className={flush ? "bg-surface" : "overflow-hidden rounded-xl border border-border-soft bg-surface shadow-card"}>
+    <div className={flush ? "bg-surface py-1" : "rounded-xl border border-border-soft bg-surface py-1 shadow-card"}>
       {conversations.map((conversation) => (
         <ConversationRow
           key={conversation.id}
