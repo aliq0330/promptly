@@ -497,6 +497,10 @@ export async function installMock(context, db, opts = {}) {
         const cannotPostInGroup = g && g.posting_policy === "admins" && member && member.role === "member";
         if (!member || cannotPostInGroup || others.some((m) => db.isBlocked(signedIn, m.user_id))) return json(403, { code: "42501", message: 'new row violates row-level security policy for table "messages"' });
         const row = db.addMessage(body.conversation_id, signedIn, body.body);
+        if (body.reply_to_message_id) row.reply_to_message_id = body.reply_to_message_id;
+        if (body.shared_prompt_id) row.shared_prompt_id = body.shared_prompt_id;
+        if (body.shared_request_id) row.shared_request_id = body.shared_request_id;
+        if (Array.isArray(body.attachments) && body.attachments.length > 0) row.attachments = body.attachments;
         return route.fulfill({ status: 201, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: JSON.stringify(wantsObject ? row : [row]) });
       }
     }

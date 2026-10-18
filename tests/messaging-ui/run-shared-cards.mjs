@@ -30,7 +30,7 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lan
   finally { await context.close(); }
 }
 
-const shareBody = (kind, title, id) => `${title}\nhttps://aliq0330.github.io/promptly/${kind}/local/?id=${id}`;
+const shareBody = (kind, title, id) => `${title}\nhttps://aliq0330.github.io/promptly/${kind}/local?id=${id}`;
 /** Bob'dan gelen paylaşım mesajları: her tür için okunabilir + (prompt/istek/workflow için) erişilemeyen. */
 function seed(db) {
   db.addConv(CONV, U.bob, { texts: [] });
@@ -152,6 +152,42 @@ await scenario("6. Mobil (390px): kartlar ve yanıt çubuğu taşmaz", async ({ 
   await open(page);
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1), true);
 }, { setup: seed, viewport: { width: 390, height: 800 } });
+
+// Kimlik değişimi (docs/history/195-*): hesap değişince / çıkış yapınca önceki kullanıcının bellekteki her kopyası atılır (sayfa baştan yüklenir).
+// supabase-js, sekmeler arası oturum olaylarını BroadcastChannel(storageKey) ile alır; test aynı kanala olay yollar.
+const broadcast = (page, event, userId) =>
+  page.evaluate(([ev, uid]) => {
+    const ch = new BroadcastChannel("sb-example-auth-token");
+    const session = uid ? { access_token: "x.y.z", token_type: "bearer", expires_in: 3600, expires_at: Math.floor(Date.now() / 1000) + 3600, refresh_token: "r", user: { id: uid, aud: "authenticated", role: "authenticated", email: "x@test.dev", app_metadata: {}, user_metadata: {}, created_at: "2026-01-01T00:00:00Z" } } : null;
+    ch.postMessage({ event: ev, session });
+    ch.close();
+  }, [event, userId]);
+const alive = (page) => page.evaluate(() => window.__alive === 1);
+
+await scenario("7. Hesap değişince: sayfa baştan yüklenir (önceki hesabın içerik önbelleği kalmaz)", async ({ page }) => {
+  await open(page);
+  await page.evaluate(() => { window.__alive = 1; });
+  assert.equal(await alive(page), true);
+  await broadcast(page, "SIGNED_IN", U.bob.id);
+  await page.waitForFunction(() => window.__alive === undefined, null, { timeout: 8000 });
+}, { setup: seed });
+
+await scenario("8. Çıkış yapınca: önceki kullanıcının verisi atılır ve ana sayfaya dönülür", async ({ page }) => {
+  await open(page);
+  await page.evaluate(() => { window.__alive = 1; });
+  await broadcast(page, "SIGNED_OUT", null);
+  await page.waitForURL(/\/promptly\/?$/, { timeout: 8000 });
+  assert.equal(await alive(page), false, "page was reloaded");
+}, { setup: seed });
+
+await scenario("9. Aynı kullanıcının belirteç yenilemesi sayfayı yenilemez", async ({ page }) => {
+  await open(page);
+  await page.evaluate(() => { window.__alive = 1; });
+  await broadcast(page, "TOKEN_REFRESHED", ME);
+  await page.waitForTimeout(1500);
+  assert.equal(await alive(page), true, "no reload for the same person");
+  assert.ok(await cards(page).count() > 0);
+}, { setup: seed });
 
 await browser.close(); server.close();
 for (const [s, n] of results) console.log(`${s === "PASS" ? "✓" : "✗"} ${n}`);

@@ -21,6 +21,12 @@ test("every content source filters out private, draft and deleted rows explicitl
   }
 });
 
+test("community-only content never gets a public share page (community_id is null is explicit, not left to visibility alone)", () => {
+  for (const kind of ["prompt", "request", "workflow", "preset"]) {
+    assert.ok(buildCatalogUrl("https://x.supabase.co", source(kind), 0).includes("community_id=is.null"), `${kind} excludes community content`);
+  }
+});
+
 test("urls are paged deterministically and never leak extra columns", () => {
   const url = buildCatalogUrl("https://x.supabase.co/", source("prompt"), 2000, 1000);
   assert.ok(url.startsWith("https://x.supabase.co/rest/v1/prompts?"));
