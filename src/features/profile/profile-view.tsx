@@ -17,6 +17,7 @@ import { ProfileEmptyState } from "./profile-empty-state";
 import { ProfileAbout } from "./profile-about";
 import { ProfileDraftsPanel } from "./profile-drafts-panel";
 import { RequestList } from "@/features/requests/request-list";
+import { CollectionRings } from "@/features/profile/collection-rings";
 import { CollectionsPanel } from "@/features/collections/collections-panel";
 import { CollectionCard } from "@/features/collections/collection-card";
 import { fetchPublicCollectionsByOwner } from "@/lib/supabase/collections";
@@ -113,20 +114,16 @@ export function ProfileView({
     };
   }, [user.id]);
 
-  // Someone else's public collections (the owner sees all of theirs under "Kaydedilenler" instead).
+  // The creator's public collections: the ring strip under the header on every profile, and (for a visitor) the "Koleksiyonlar" tab.
+  // The owner manages all of theirs, private ones too, under "Kaydedilenler" instead.
   const [publicCollections, setPublicCollections] = useState<Collection[]>([]);
   useEffect(() => {
     let cancelled = false;
-    if (isOwnProfile) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- the owner's own collections live in the Kaydedilenler tab, nothing to fetch here
-      setPublicCollections([]);
-      return;
-    }
     fetchPublicCollectionsByOwner(user.id).then((list) => !cancelled && setPublicCollections(list));
     return () => {
       cancelled = true;
     };
-  }, [isOwnProfile, user.id]);
+  }, [user.id]);
 
   const [activeTab, setActiveTab] = useState<ProfileTabKey>("prompts");
   const [activeType, setActiveType] = useState<PromptContentType | "all">("all");
@@ -222,6 +219,7 @@ export function ProfileView({
       />
       {/* Meydan (docs/history/190-* Faz 6): your own communities as rings — only on your own profile (memberships are not public). */}
       {isOwnProfile && <CommunityRings />}
+      <CollectionRings collections={publicCollections} />
 
       <ProfileTabs tabs={tabs} active={activeTab} onChange={setActiveTab} />
 

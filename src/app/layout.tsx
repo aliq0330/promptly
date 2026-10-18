@@ -76,11 +76,12 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="tr" className={`${body.variable} ${display.variable} ${mono.variable} h-full antialiased`} suppressHydrationWarning>
-      <head>
+      <body className="min-h-full flex flex-col bg-background text-text">
+        {/* Run at parse time, before first paint (no light/dark, palette or language flash). They sit in <body>, not in a
+            hand-written <head>: inline scripts in <head> made React #418-recover the whole document on repeat
+            visits (docs/history/192-*). */}
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         <script dangerouslySetInnerHTML={{ __html: languageInitScript }} />
-      </head>
-      <body className="min-h-full flex flex-col bg-background text-text">
         <ThemeProvider>
           <LanguageProvider>
             <AuthProvider>

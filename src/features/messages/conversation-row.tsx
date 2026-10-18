@@ -33,14 +33,15 @@ export function ConversationRow({
   return (
     <div
       className={cn(
-        "flex items-center border-b border-border-soft transition-colors duration-200 ease-soft last:border-0 hover:bg-surface-soft",
-        isActive && "bg-primary-soft/60 shadow-[inset_3px_0_0_var(--color-primary)] hover:bg-primary-soft/60",
+        // Meydan (docs/history/192-*): every row is a soft pill-shaped cell; the open chat is a filled one (no side bar).
+        "mx-1.5 my-0.5 flex items-center rounded-xl transition-colors duration-200 ease-soft hover:bg-surface-soft",
+        isActive && "bg-primary-soft hover:bg-primary-soft",
       )}
     >
       <Link
         href={shareQuery ? `${messageHref(conversation)}&${shareQuery}` : messageHref(conversation)}
         aria-current={isActive ? "page" : undefined}
-        className="flex min-w-0 flex-1 items-center gap-3 px-4 py-3"
+        className="flex min-w-0 flex-1 items-center gap-3 rounded-xl px-3 py-2.5"
       >
         {group ? (
           <GroupAvatar name={group.name} avatarUrl={group.avatarUrl} size={44} badge />
@@ -54,14 +55,14 @@ export function ConversationRow({
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-2">
             <span className="flex min-w-0 items-center gap-1.5">
-              <span className="truncate text-sm font-semibold tracking-[-0.01em] text-text">{title}</span>
+              <span className={cn("truncate text-sm tracking-[-0.01em] text-text", conversation.unreadCount > 0 ? "font-bold" : "font-semibold")}>{title}</span>
               {muted && <BellOff size={12} className="shrink-0 text-text-muted" aria-label={t("groups.about.muteLabel")} />}
             </span>
             <span className="shrink-0 text-caption tabular-nums text-text-muted">
               {formatRelativeTime(conversation.lastMessageAt, language)}
             </span>
           </div>
-          <p className={cn("truncate text-xs", conversation.unreadCount > 0 ? "font-medium text-text-secondary" : "text-text-muted")}>{conversation.lastMessage}</p>
+          <p className={cn("truncate text-xs", conversation.unreadCount > 0 ? "font-medium text-text" : "text-text-muted")}>{conversation.lastMessage}</p>
         </div>
         {conversation.unreadCount > 0 && (
           <span
