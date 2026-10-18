@@ -103,7 +103,7 @@ test("typingTopic: yalnız konuşma kimliği", () => {
 // ---- sabitleme ----
 function group(role: GroupRole, over: Partial<ChatGroup> = {}): ChatGroup {
   return {
-    id: "g", name: "G", description: null, avatarUrl: null, visibility: "private", postingPolicy: "members", memberLimit: 10, memberCount: 3,
+    id: "g", name: "G", description: null, avatarUrl: null, coverUrl: null, coverColor: null, visibility: "private", postingPolicy: "members", memberLimit: 10, memberCount: 3,
     pendingRequestCount: 0, historyVisible: true, membersCanPin: false, rolePermissions: DEFAULT_ROLE_PERMISSIONS, createdAt: T0, myRole: role,
     category: "general", feedPolicy: "members", rules: null, rulesVersion: 1, rulesRequired: false, closedAt: null, postCount: 0, origin: "native", ...over,
   };

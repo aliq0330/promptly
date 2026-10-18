@@ -736,11 +736,11 @@ create temp table _cards_m as select (select post_count from public.community_ca
 reset role;
 select public._check(422, 'kart: kapalı topluluğun içerik sayacı (post_count) üye olmayana (ayrılmış üye dahil) verilmez (null), herkese açıkta ve üyede verilir',
   (select res_pc is null from _cards) and (select pub_pc is not null from _cards) and (select res_pc is not null from _cards_m));
-select public._check(423, 'anon: ziyaretçinin çalıştırabildiği topluluk/sohbet fonksiyonları KAPALI BEYAZ LİSTEDEDİR (okuma yardımcıları + keşif + arama + kart); yazma/üye/istatistik/öneri/katılma yok',
+select public._check(423, 'anon: ziyaretçinin çalıştırabildiği topluluk/sohbet fonksiyonları KAPALI BEYAZ LİSTEDEDİR (okuma yardımcıları + keşif + arama + kart + kart kapağı); yazma/üye/istatistik/öneri/katılma yok',
   (select coalesce(array_agg(p.proname::text order by p.proname), '{}'::text[]) from pg_proc p join pg_namespace n on n.oid = p.pronamespace
     where n.nspname = 'public' and has_function_privilege('anon', p.oid, 'execute')
       and (p.proname ~ '(group|communit|conversation|message)' and p.proname !~ '^(_|handle_|notify_)'))
-   = array['can_read_community', 'can_read_community_avatar', 'can_read_message', 'can_see_community_card', 'community_cards', 'discover_communities',
+   = array['can_read_community', 'can_read_community_avatar', 'can_read_message', 'can_see_community_card', 'community_card_covers', 'community_cards', 'discover_communities',
            'is_conversation_member', 'is_group_conversation', 'search_communities', 'start_direct_conversation']);
 select public._check(424, 'anon: topluluk tablolarından yalnız gönderi/duyuru/etkinlik okunabilir (RLS ile yalnız herkese açık); chat_groups, üyelik, mesaj, davet, başvuru, bağlantı, rapor, kural kabulü anon''a kapalı',
   has_table_privilege('anon', 'public.community_posts', 'select') and has_table_privilege('anon', 'public.community_announcements', 'select') and has_table_privilege('anon', 'public.community_events', 'select')

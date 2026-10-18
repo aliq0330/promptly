@@ -11,6 +11,7 @@ import { useAuth } from "@/features/auth/auth-provider";
 import { useOwnProfile } from "@/features/auth/own-profile-provider";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { updateOwnProfile, uploadAvatar } from "@/lib/supabase/profiles";
+import { imageSourceProblem } from "@/lib/image-processing";
 import { cn, profileHref } from "@/lib/utils";
 
 const BIO_MAX_LENGTH = 200;
@@ -59,6 +60,13 @@ export default function EditProfilePage() {
   async function handleAvatarChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file) return;
+    // A heavy photo is fine (shrunk automatically on upload); only an absurdly large file is turned away.
+    const heavy = imageSourceProblem(file);
+    if (heavy) {
+      setAvatarError(heavy);
+      event.target.value = "";
+      return;
+    }
     setAvatarUrl(URL.createObjectURL(file));
     setAvatarFile(file);
     setAvatarError(null);

@@ -12,6 +12,8 @@ import {
   COMMUNITY_CATEGORIES,
   communityChatHref,
   communityHref,
+  coverModeOf,
+  normalizeCoverColor,
   effectiveNotifyLevel,
   eventDateParts,
   eventPhase,
@@ -261,4 +263,19 @@ test("eventDateParts: month + day in the event's own time zone", () => {
   // 23:30 UTC on Oct 23 is already Oct 24 in Istanbul.
   assert.deepEqual(eventDateParts("2026-10-23T23:30:00Z", "Europe/Istanbul", "tr"), { month: "EKİ", day: "24" });
   assert.deepEqual(eventDateParts("2026-10-23T23:30:00Z", "America/New_York", "en"), { month: "OCT", day: "23" });
+});
+
+test("normalizeCoverColor: #rgb / #rrggbb küçük harfli #rrggbb olur; geçersiz null", () => {
+  assert.equal(normalizeCoverColor("#A1B2C3"), "#a1b2c3");
+  assert.equal(normalizeCoverColor(" #fa0 "), "#ffaa00");
+  assert.equal(normalizeCoverColor("red"), null);
+  assert.equal(normalizeCoverColor("#12345"), null);
+  assert.equal(normalizeCoverColor(null), null);
+});
+
+test("coverModeOf: fotoğraf > renk > otomatik", () => {
+  assert.equal(coverModeOf({ coverUrl: "https://x/cover.jpg", coverColor: "#112233" }), "photo");
+  assert.equal(coverModeOf({ coverUrl: null, coverColor: "#112233" }), "color");
+  assert.equal(coverModeOf({ coverUrl: null, coverColor: "mavi" }), "auto");
+  assert.equal(coverModeOf({ coverUrl: null, coverColor: null }), "auto");
 });

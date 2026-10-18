@@ -71,6 +71,14 @@ export function setupCommunities(db) {
         }));
       return json(200, list);
     }
+    // Üye olmayanın kapağı (docs/history/191-*): kart RPC'siyle AYNI görünürlük kuralı.
+    if (table === "rpc/community_card_covers") {
+      log("community_card_covers", body);
+      const invited = (x) => db.invitations.some((i) => i.group_id === x.id && i.invitee_id === signedIn && i.status === "pending");
+      const requested = (x) => db.requests.some((r) => r.group_id === x.id && r.user_id === signedIn && r.status === "pending");
+      return json(200, (body.p_ids ?? []).map((id) => g(id)).filter((x) => x && (x.visibility !== "private" || db.member(x.id, signedIn) || invited(x) || requested(x)))
+        .map((x) => ({ id: x.id, cover_url: x.cover_url ?? null, cover_color: x.cover_color ?? null })));
+    }
     if (table === "rpc/discover_communities") {
       log("discover_communities", body);
       const term = (body.p_query ?? "").toLowerCase();

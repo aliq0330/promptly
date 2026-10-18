@@ -170,7 +170,17 @@ export async function joinCommunityViaLink(
 /** Tek kart; görülemeyen / tamamen kapalı / olmayan topluluk için null. */
 export { type CommunityCard };
 export async function fetchCommunityCard(id: string): Promise<CommunityCard | null> {
-  return (await fetchCommunityCards([id]))[0] ?? null;
+  const card = (await fetchCommunityCards([id]))[0] ?? null;
+  if (!card) return null;
+  // Üye olmayanın kapağı: kart RPC'sinin dönüş tipi değişmesin diye ayrı, ekleyici RPC. Kapak dekoratiftir — okunamazsa sayfa yine açılır.
+  try {
+    const rows = await callRpc<{ id: string; cover_url: string | null; cover_color: string | null }[]>("community_card_covers", { p_ids: [id] });
+    const cover = (rows ?? []).find((row) => row.id === id);
+    return { ...card, coverUrl: cover?.cover_url ?? null, coverColor: cover?.cover_color ?? null };
+  } catch (err) {
+    console.error("community_card_covers", err);
+    return card;
+  }
 }
 
 /** Kartı sayfanın kullandığı `ChatGroup` biçimine çevirir: yönetim alanları güvenli varsayılanlardır (üye olmayanın hiçbir yetkisi yoktur). */
@@ -180,6 +190,8 @@ export function cardToChatGroup(card: CommunityCard): ChatGroup {
     name: card.name,
     description: card.description,
     avatarUrl: card.avatarUrl,
+    coverUrl: card.coverUrl,
+    coverColor: card.coverColor,
     visibility: card.visibility,
     postingPolicy: "members",
     memberLimit: card.memberLimit,

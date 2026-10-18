@@ -484,3 +484,30 @@ export const AUDIT_ACTIONS = [
 export function auditActionKey(action: string): TranslationKey {
   return ((AUDIT_ACTIONS as readonly string[]).includes(action) ? `communities.audit.action.${action}` : "communities.audit.action.other") as TranslationKey;
 }
+
+// ---------------------------------------------------------------------------------------------
+// Kapak (docs/history/191-*)
+// ---------------------------------------------------------------------------------------------
+
+/**
+ * Hazır kapak renkleri. Seçilen renk veritabanında `#rrggbb` olarak (içerik rengi — tema belirteci değil) saklanır; ayrıca serbest renk de
+ * seçilebilir. Kapakta üstüne metin yazılmaz (avatar ve başlık kapağın ALTINDADIR), bu yüzden her renk okunaklıdır.
+ */
+export const COMMUNITY_COVER_COLORS = ["#2f5bea", "#0b7285", "#2b8a3e", "#f08c00", "#e4572e", "#d6336c", "#7048e8", "#495057"] as const;
+
+/** `#rgb` / `#rrggbb` → küçük harfli `#rrggbb`; geçersizse null. */
+export function normalizeCoverColor(value: string | null | undefined): string | null {
+  const raw = (value ?? "").trim().toLowerCase();
+  if (/^#[0-9a-f]{6}$/.test(raw)) return raw;
+  const short = /^#([0-9a-f])([0-9a-f])([0-9a-f])$/.exec(raw);
+  return short ? `#${short[1]}${short[1]}${short[2]}${short[2]}${short[3]}${short[3]}` : null;
+}
+
+export type CoverMode = "auto" | "color" | "photo";
+
+/** Kapağın hangi kipte olduğu: fotoğraf > renk > otomatik (ikisi de boşsa kapak topluluk görselinden türetilir). */
+export function coverModeOf(cover: { coverUrl: string | null; coverColor: string | null }): CoverMode {
+  if (cover.coverUrl) return "photo";
+  if (normalizeCoverColor(cover.coverColor)) return "color";
+  return "auto";
+}

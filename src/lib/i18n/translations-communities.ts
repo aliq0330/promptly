@@ -155,7 +155,6 @@ export const communityTranslations = {
   "communities.create.avatarPick": { tr: "Görsel seç", en: "Choose picture" },
   "communities.create.avatarChange": { tr: "Görseli değiştir", en: "Change picture" },
   "communities.create.avatarType": { tr: "Yalnızca JPEG, PNG veya WebP görseller yüklenebilir.", en: "Only JPEG, PNG or WebP images can be uploaded." },
-  "communities.create.avatarTooLarge": { tr: "Görsel çok büyük (en fazla 8 MB).", en: "The image is too large (8 MB max)." },
   "communities.create.avatarUploadFailed": { tr: "Topluluk görseli yüklenemedi. Görseli çıkarıp tekrar deneyebilirsin.", en: "Couldn't upload the picture. You can remove it and try again." },
   "communities.create.nameLabel": { tr: "Topluluk adı", en: "Community name" },
   "communities.create.namePlaceholder": { tr: "Örn. Sinematik Prompt Atölyesi", en: "e.g. Cinematic Prompt Lab" },

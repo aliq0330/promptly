@@ -10,6 +10,7 @@ import { GroupAvatar } from "@/features/groups/group-avatar";
 import { InviteePicker } from "@/features/groups/invitee-picker";
 import { useAsyncAction } from "@/features/groups/use-async-action";
 import { uploadGroupAvatar } from "@/lib/supabase/chat-groups";
+import { imageSourceProblem } from "@/lib/image-processing";
 import { createCommunity } from "@/lib/supabase/communities";
 import { VisibilityPicker } from "./visibility-picker";
 import { CATEGORY_LABEL_KEYS, COMMUNITY_CATEGORIES, COMMUNITY_RULES_MAX } from "@/lib/communities";
@@ -73,8 +74,10 @@ export function CreateCommunityModal({ onClose, onCreated }: { onClose: () => vo
       setAvatarError(t("communities.create.avatarType"));
       return;
     }
-    if (file.size > 8 * 1024 * 1024) {
-      setAvatarError(t("communities.create.avatarTooLarge"));
+    // No weight limit: a heavy photo is shrunk automatically on upload; only an absurdly large file is turned away.
+    const heavy = imageSourceProblem(file);
+    if (heavy) {
+      setAvatarError(heavy);
       return;
     }
     setAvatarFile(file);

@@ -13,7 +13,9 @@ import { ConfirmDialog } from "./confirm-dialog";
 import { GroupAvatar } from "./group-avatar";
 import { GroupOwnerSettings } from "./group-owner-settings";
 import { useAsyncAction } from "./use-async-action";
-import { deleteChatGroup, setChatGroupVisibility, updateChatGroup, uploadGroupAvatar, type UpdateChatGroupPatch } from "@/lib/supabase/chat-groups";
+import { deleteChatGroup, setChatGroupVisibility, updateChatGroup, uploadGroupAvatar, uploadGroupCover, type UpdateChatGroupPatch } from "@/lib/supabase/chat-groups";
+import { imageSourceProblem } from "@/lib/image-processing";
+import { ACCEPTED_COVER_TYPES, CommunityCoverPicker } from "./community-cover-picker";
 import {
   clampMemberLimit,
   countSkippedByReason,
@@ -26,7 +28,7 @@ import {
   validateGroupName,
   type VisibilityChangeResult,
 } from "@/lib/chat-groups";
-import { communityChatHref } from "@/lib/communities";
+import { communityChatHref, COMMUNITY_COVER_COLORS, coverModeOf, normalizeCoverColor, type CoverMode } from "@/lib/communities";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { ChatGroup, GroupVisibility } from "@/types";
 
@@ -77,6 +79,11 @@ export function GroupSettingsSection({
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [removeAvatar, setRemoveAvatar] = useState(false);
   const [avatarError, setAvatarError] = useState<string | null>(null);
+  const savedCoverMode = coverModeOf(group);
+  const [coverMode, setCoverMode] = useState<CoverMode>(savedCoverMode);
+  const [coverColor, setCoverColor] = useState<string>(normalizeCoverColor(group.coverColor) ?? COMMUNITY_COVER_COLORS[0]);
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [coverError, setCoverError] = useState<string | null>(null);
   const [touched, setTouched] = useState(false);
   const [targetVisibility, setTargetVisibility] = useState<GroupVisibility | null>(null);
   const [visibilityResult, setVisibilityResult] = useState<VisibilityChangeResult | null>(null);
@@ -85,6 +92,8 @@ export function GroupSettingsSection({
 
   const avatarPreview = useMemo(() => (avatarFile ? URL.createObjectURL(avatarFile) : null), [avatarFile]);
   useEffect(() => () => (avatarPreview ? URL.revokeObjectURL(avatarPreview) : undefined), [avatarPreview]);
+  const coverPreview = useMemo(() => (coverFile ? URL.createObjectURL(coverFile) : null), [coverFile]);
+  useEffect(() => () => (coverPreview ? URL.revokeObjectURL(coverPreview) : undefined), [coverPreview]);
 
   const nameProblem = validateGroupName(name);
   const descriptionProblem = validateGroupDescription(description);
@@ -95,16 +104,34 @@ export function GroupSettingsSection({
   if (name.trim() !== group.name) patch.name = name;
   if (description.trim() !== (group.description ?? "")) patch.description = description;
   if (limitValid && limitNumber !== group.memberLimit) patch.memberLimit = clampMemberLimit(limitNumber);
-  const dirty = Object.keys(patch).length > 0 || avatarFile !== null || removeAvatar;
-  const valid = !nameProblem && !descriptionProblem && limitValid;
+  // Cover: photo › colour › automatic. A photo mode needs a photo (a newly picked one, or the one already saved).
+  const coverChosenColor = normalizeCoverColor(coverColor) ?? COMMUNITY_COVER_COLORS[0];
+  const coverDirty =
+    coverMode !== savedCoverMode ||
+    (coverMode === "color" && coverChosenColor !== normalizeCoverColor(group.coverColor)) ||
+    (coverMode === "photo" && coverFile !== null);
+  const coverValid = coverMode !== "photo" || coverFile !== null || Boolean(group.coverUrl);
+  const dirty = Object.keys(patch).length > 0 || avatarFile !== null || removeAvatar || coverDirty;
+  const valid = !nameProblem && !descriptionProblem && limitValid && coverValid;
 
   function pickAvatar(file: File | undefined) {
     setAvatarError(null);
     if (!file) return;
     if (!ACCEPTED_AVATAR_TYPES.includes(file.type)) return setAvatarError(t("groups.create.avatarType"));
-    if (file.size > 8 * 1024 * 1024) return setAvatarError(t("groups.create.avatarTooLarge"));
+    // No weight limit here: a heavy photo is shrunk automatically on upload (src/lib/image-processing.ts); only an absurdly large file is turned away.
+    const heavy = imageSourceProblem(file);
+    if (heavy) return setAvatarError(heavy);
     setAvatarFile(file);
     setRemoveAvatar(false);
+  }
+
+  function pickCover(file: File | undefined) {
+    setCoverError(null);
+    if (!file) return;
+    if (!ACCEPTED_COVER_TYPES.includes(file.type)) return setCoverError(t("groups.create.avatarType"));
+    const heavy = imageSourceProblem(file);
+    if (heavy) return setCoverError(heavy);
+    setCoverFile(file);
   }
 
   async function handleSave() {
@@ -122,11 +149,29 @@ export function GroupSettingsSection({
       } else if (removeAvatar) {
         next.avatarUrl = null;
       }
+      if (coverDirty) {
+        if (coverMode === "auto") {
+          next.coverUrl = null;
+          next.coverColor = null;
+        } else if (coverMode === "color") {
+          next.coverColor = coverChosenColor;
+          next.coverUrl = null;
+        } else if (coverFile) {
+          try {
+            next.coverUrl = await uploadGroupCover(user.id, coverFile);
+          } catch (err) {
+            console.error("uploadGroupCover", err);
+            throw new Error(t("groups.cover.uploadFailed"));
+          }
+          next.coverColor = null;
+        }
+      }
       await updateChatGroup(group.id, next);
       return true;
     });
     if (!done) return;
     setAvatarFile(null);
+    setCoverFile(null);
     setRemoveAvatar(false);
     setTouched(false);
     onToast(t("groups.settings.savedToast"));
@@ -203,6 +248,22 @@ export function GroupSettingsSection({
             )}
           </div>
         </div>
+
+        <CommunityCoverPicker
+          mode={coverMode}
+          onModeChange={(mode) => {
+            setCoverMode(mode);
+            setCoverError(null);
+          }}
+          color={coverColor}
+          onColorChange={setCoverColor}
+          photoPreviewUrl={coverPreview}
+          savedPhotoUrl={group.coverUrl}
+          avatarUrl={shownAvatar}
+          onPickPhoto={pickCover}
+          error={coverError ?? (touched && !coverValid ? t("groups.cover.photoRequired") : null)}
+          disabled={save.busy}
+        />
 
         <div>
           <label htmlFor="settings-name" className={fieldLabelClassName}>
