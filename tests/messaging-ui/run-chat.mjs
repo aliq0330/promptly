@@ -556,6 +556,40 @@ await scenario("18b. Canlı eşitleme: başka bir yönetici benim rolümü deği
   await page.getByRole("tab", { name: "Yönetim" }).waitFor({ state: "detached" });
 }, { setup: (db) => seedCommunity(db, { myRole: "admin" }) });
 
+// 19 — mobil: açık sohbette alt menü yok (docs/history/193-*); composer ekranın altında; liste sayfasında menü var
+const bottomNav = (page) => page.locator("nav").filter({ hasText: "Topluluklar" }).filter({ has: page.getByRole("link", { name: "Keşfet" }) });
+await scenario("19. Mobil: sohbet açılınca alt menü gizlenir, composer ekranın altına oturur; liste sayfasında menü geri gelir", async ({ page }) => {
+  await page.goto(`${BASE}/messages`);
+  await page.getByText("ikinci benim").first().waitFor();
+  await bottomNav(page).waitFor();
+  await page.getByText("ikinci benim").first().click();
+  await page.locator("[data-message-id]").first().waitFor();
+  await page.waitForTimeout(300);
+  assert.equal(await bottomNav(page).count(), 0, "bottom nav is not rendered inside a chat");
+  const composer = await page.locator("form").filter({ has: page.getByPlaceholder("Bir mesaj yaz...") }).evaluate((el) => { const r = el.getBoundingClientRect(); return { bottom: Math.round(r.bottom), vh: innerHeight }; });
+  assert.ok(composer.vh - composer.bottom <= 1, `composer reaches the screen bottom (${composer.bottom} vs ${composer.vh})`);
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1), true, "no horizontal overflow");
+  await page.goBack();
+  await page.getByText("ikinci benim").first().waitFor();
+  await bottomNav(page).waitFor();
+}, { viewport: { width: 390, height: 800 }, setup: (db) => seedDm(db) });
+
+await scenario("19b. Mobil: yeni sohbet taslağında da alt menü yok; masaüstünde menü zaten yok ve düzen değişmez", async ({ page }) => {
+  await page.goto(`${BASE}/messages/local?to=${U.bob.id}`);
+  await page.getByPlaceholder("Bir mesaj yaz...").waitFor();
+  assert.equal(await bottomNav(page).count(), 0, "no bottom nav in a new-chat draft");
+  const bottom = await page.locator("form").filter({ has: page.getByPlaceholder("Bir mesaj yaz...") }).evaluate((el) => Math.round(el.getBoundingClientRect().bottom) === innerHeight);
+  assert.equal(bottom, true, "composer sits at the screen bottom");
+}, { viewport: { width: 390, height: 800 } });
+
+await scenario("19c. Masaüstü: iki bölmeli düzen aynı (alt menü hiç yok, sohbet paneli sağda, composer altta)", async ({ page }) => {
+  await openThread(page);
+  assert.equal(await bottomNav(page).count(), 0);
+  const composer = await page.locator("form").filter({ has: page.getByPlaceholder("Bir mesaj yaz...") }).evaluate((el) => { const r = el.getBoundingClientRect(); return { bottom: Math.round(r.bottom), vh: innerHeight, left: Math.round(r.left) }; });
+  assert.ok(composer.vh - composer.bottom <= 1, "composer at the bottom");
+  assert.ok(composer.left > 300, "chat pane is the right-hand pane");
+}, { setup: (db) => seedDm(db) });
+
 await browser.close(); server.close();
 let failed = 0;
 for (const [s, n] of results) { if (s === "FAIL") failed++; console.log(`${s}  ${n}`); }

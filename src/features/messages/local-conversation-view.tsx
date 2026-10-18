@@ -662,8 +662,8 @@ export function LocalConversationView() {
   }, [messages.length, pendingSends.length]);
 
   // Mobil klavye desteği (iPhone) — `panelRef`'in taban (bottom) boşluğu
-  // varsayılan olarak Tailwind sınıflarından geliyor (mobil bottom
-  // navigation + safe-area, masaüstünde 0). VisualViewport API klavye
+  // varsayılan olarak Tailwind sınıflarından geliyor (sohbet açıkken alt
+  // menü gizli, taban 0; composer safe-area boşluğunu kendi taşır). VisualViewport API klavye
   // açıldığında küçülüyor; aradaki fark klavyenin kapladığı alan
   // (`computeKeyboardInset`, ayrı bir saf fonksiyona çıkarıldı ki gerçek
   // bir klavye olmadan da doğrulanabilsin — bu sandbox'ta gerçek bir iOS
@@ -1261,7 +1261,7 @@ export function LocalConversationView() {
     <div
       ref={panelRef}
       {...imageDrop.handlers}
-      className="fixed inset-x-0 top-16 z-10 flex flex-col bg-background bottom-[calc(4rem+env(safe-area-inset-bottom))] md:static md:inset-auto md:z-auto md:h-full md:min-h-0 md:flex-1"
+      className="fixed inset-x-0 top-16 z-10 flex flex-col bg-background bottom-0 md:static md:inset-auto md:z-auto md:h-full md:min-h-0 md:flex-1"
     >
       <div className="flex items-center gap-1 border-b border-border-soft bg-surface px-2 py-2 lg:px-4">
         <button
