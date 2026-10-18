@@ -2,121 +2,98 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Check, ChevronDown, Globe, Lock, PenLine, Users } from "lucide-react";
-import { Avatar } from "@/components/ui/avatar";
+import { Check, ChevronDown, Globe, Lock, Users } from "lucide-react";
 import { Button, buttonClassName } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { GroupAvatar } from "@/features/groups/group-avatar";
 import { useAuth } from "@/features/auth/auth-provider";
-import { useOwnProfile } from "@/features/auth/own-profile-provider";
 import { useCommunity } from "@/features/communities/use-community";
+import { pickCreateDestination, resetCreateDestination, useCommunityContext, type CreateDestination } from "@/features/communities/community-return";
 import { listMyCommunities, type CommunitySummary } from "@/lib/supabase/communities";
 import { canSharePost } from "@/lib/communities";
 import { useTranslation } from "@/lib/i18n/language-provider";
+import type { TranslationKey } from "@/lib/i18n/translations";
 import { cn } from "@/lib/utils";
-
-/** Where the next post goes: the main feed, or one of the viewer's communities. */
-export type ShareDestination = { kind: "feed" } | { kind: "community"; community: CommunitySummary };
-
-/** Create-screen address for a destination: the normal type picker, carrying the community context (`?community=`) — no second create form. */
-export function shareHref(destination: ShareDestination): string {
-  return destination.kind === "community" ? `/create?community=${destination.community.id}` : "/create";
-}
+import { FormSection } from "./form-section";
 
 const PAGE_LIMIT = 4;
 
 /**
- * The signed-in composer on Home (docs/history/197-*): the field that opens the create screen, a "Nerede paylaşmak istiyorsun?" target
- * picker (default "Genel akış"; tapping it lists the communities the viewer belongs to, a chosen one shows its name and logo) and the
- * "Paylaşım oluştur" button, which opens the normal create screen prepared for the chosen target (`/create` or `/create?community=<id>`).
+ * Seçilen hedefin gerçek gönderi kuralı (yalnız yöneticiler mi paylaşır, topluluk kapatılmış mı): üye olarak okunur ki "Paylaş"
+ * düğmesi reddedilecek bir isteğe götürmesin. Yetki yine sunucuda (RPC/RLS) uygulanır. `null` = engel yok (ya da henüz bilinmiyor).
  */
-export function ShareComposer() {
+export function useDestinationBlock(communityId: string | null): TranslationKey | null {
   const { user } = useAuth();
-  const { profile } = useOwnProfile();
+  const { state } = useCommunity(communityId, user?.id ?? null);
+  if (!communityId || state.status !== "ready") return null;
+  if (state.group.closedAt) return "communities.detail.closedNotice";
+  return canSharePost(state.group.myRole, state.group.feedPolicy, false) ? null : "communities.feed.policyStaff";
+}
+
+/**
+ * Oluşturma ekranlarının paylaşım alanındaki "Nerede paylaşmak istiyorsun?" seçicisi (docs/history/197-*): varsayılan "Genel akış";
+ * dokununca üye olunan topluluklar listelenir, seçilen topluluğun adı ve logosu görünür. Seçim formun içeriğini DEĞİŞTİRMEZ — yalnızca
+ * hedefi belirler (topluluk seçilince içerik topluluğa özgü oluşur, görünürlük/taslak yoktur; Genel akış'ta eski davranış).
+ */
+export function ShareDestinationField({ blockedReason, disabled = false }: { blockedReason: TranslationKey | null; disabled?: boolean }) {
   const { t } = useTranslation();
-  const [destination, setDestination] = useState<ShareDestination>({ kind: "feed" });
+  const community = useCommunityContext();
   const [pickerOpen, setPickerOpen] = useState(false);
   const pickerButton = useRef<HTMLButtonElement>(null);
 
-  // The chosen community's real posting rule (members vs staff only, closed): read as a member, so the button never leads to a refusal.
-  const communityId = destination.kind === "community" ? destination.community.id : null;
-  const { state } = useCommunity(communityId, user?.id ?? null);
-  const blocked = communityId !== null && state.status === "ready" && !canSharePost(state.group.myRole, state.group.feedPolicy, Boolean(state.group.closedAt));
-  const href = shareHref(destination);
+  // Ekrandan çıkınca seçim atılır; sonraki oluşturma ekranı adres parametresinden başlar.
+  useEffect(() => () => resetCreateDestination(), []);
 
-  function choose(next: ShareDestination) {
-    setDestination(next);
+  const destination: CreateDestination | null = community.communityId
+    ? { id: community.communityId, name: community.name ?? "", avatarUrl: community.avatarUrl, visibility: community.visibility ?? "public" }
+    : null;
+
+  function choose(next: CreateDestination | null) {
+    pickCreateDestination(next);
     setPickerOpen(false);
     pickerButton.current?.focus();
   }
 
   return (
-    <section aria-label={t("home.createShare")} className="space-y-3 rounded-xl border border-border-soft bg-surface p-3 sm:p-4">
-      <div className="flex items-center gap-3">
-        <Avatar src={profile?.avatarUrl ?? null} alt={profile?.displayName ?? ""} size={42} />
-        <Link
-          href={href}
-          className="min-w-0 flex-1 truncate rounded-full bg-surface-soft px-4 py-2.5 text-small text-text-muted transition-colors hover:bg-border-soft hover:text-text-secondary"
+    <FormSection>
+      <div data-share-destination-field>
+        <p id="share-destination-label" className="mb-1.5 text-label font-semibold text-text">
+          {t("home.destination.label")}
+        </p>
+        <button
+          ref={pickerButton}
+          type="button"
+          disabled={disabled}
+          onClick={() => setPickerOpen(true)}
+          aria-haspopup="dialog"
+          aria-labelledby="share-destination-label share-destination-value"
+          data-share-destination={destination?.id ?? "feed"}
+          className="flex min-h-12 w-full items-center gap-3 rounded-xl border border-border-soft bg-background px-3 py-2 text-left transition-colors hover:border-border-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-60"
         >
-          {t("home.composerPlaceholder")}
-        </Link>
-      </div>
-
-      <div className="flex flex-col gap-3 border-t border-border-soft pt-3 sm:flex-row sm:items-end">
-        <div className="min-w-0 flex-1">
-          <p id="share-destination-label" className="mb-1.5 text-caption font-semibold text-text-secondary">
-            {t("home.destination.label")}
+          <DestinationIcon destination={destination} size={32} />
+          <span id="share-destination-value" className="min-w-0 flex-1">
+            <span className="block truncate text-label font-semibold text-text">{destination ? destination.name || t("common.loading") : t("home.destination.feed")}</span>
+            <span className="block truncate text-caption text-text-muted">{destination ? communityHint(destination, t) : t("home.destination.feedHint")}</span>
+          </span>
+          <ChevronDown size={18} aria-hidden className="shrink-0 text-text-muted" />
+        </button>
+        {blockedReason && (
+          <p role="status" data-share-blocked className="mt-2 text-caption text-text-muted">
+            {t(blockedReason)}
           </p>
-          <button
-            ref={pickerButton}
-            type="button"
-            onClick={() => setPickerOpen(true)}
-            aria-haspopup="dialog"
-            aria-labelledby="share-destination-label share-destination-value"
-            data-share-destination={destination.kind === "community" ? destination.community.id : "feed"}
-            className="flex min-h-12 w-full items-center gap-3 rounded-xl border border-border-soft bg-background px-3 py-2 text-left transition-colors hover:border-border-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-          >
-            <DestinationIcon destination={destination} size={32} />
-            <span id="share-destination-value" className="min-w-0 flex-1">
-              <span className="block truncate text-label font-semibold text-text">
-                {destination.kind === "community" ? destination.community.name : t("home.destination.feed")}
-              </span>
-              <span className="block truncate text-caption text-text-muted">
-                {destination.kind === "community" ? communityHint(destination.community, t) : t("home.destination.feedHint")}
-              </span>
-            </span>
-            <ChevronDown size={18} aria-hidden className="shrink-0 text-text-muted" />
-          </button>
-        </div>
-        {blocked ? (
-          <Button type="button" disabled className="w-full sm:w-auto" data-create-share="blocked">
-            <PenLine size={16} aria-hidden />
-            {t("home.createShare")}
-          </Button>
-        ) : (
-          <Link href={href} data-create-share="ready" className={buttonClassName({ className: "w-full sm:w-auto" })}>
-            <PenLine size={16} aria-hidden />
-            {t("home.createShare")}
-          </Link>
         )}
       </div>
-      {blocked && (
-        <p role="status" data-share-blocked className="text-caption text-text-muted">
-          {state.status === "ready" && state.group.closedAt ? t("communities.detail.closedNotice") : t("communities.feed.policyStaff")}
-        </p>
-      )}
-
-      {pickerOpen && <DestinationPicker destination={destination} onChoose={choose} onClose={() => setPickerOpen(false)} />}
-    </section>
+      {pickerOpen && <DestinationPicker selectedId={destination?.id ?? null} onChoose={choose} onClose={() => setPickerOpen(false)} />}
+    </FormSection>
   );
 }
 
-function communityHint(community: CommunitySummary, t: ReturnType<typeof useTranslation>["t"]): string {
+function communityHint(community: { visibility: CommunitySummary["visibility"] }, t: ReturnType<typeof useTranslation>["t"]): string {
   return community.visibility === "public" ? t("home.destination.communityPublic") : t("home.destination.communityMembers");
 }
 
-function DestinationIcon({ destination, size }: { destination: ShareDestination; size: number }) {
-  if (destination.kind === "community") return <GroupAvatar name={destination.community.name} avatarUrl={destination.community.avatarUrl} size={size} />;
+function DestinationIcon({ destination, size }: { destination: CreateDestination | null; size: number }) {
+  if (destination) return <GroupAvatar name={destination.name} avatarUrl={destination.avatarUrl} size={size} />;
   return (
     <span aria-hidden className="grid shrink-0 place-items-center rounded-full bg-primary-soft text-primary" style={{ width: size, height: size }}>
       <Globe size={Math.round(size * 0.55)} strokeWidth={1.9} />
@@ -125,7 +102,7 @@ function DestinationIcon({ destination, size }: { destination: ShareDestination;
 }
 
 /** The target list: "Genel akış" first, then the viewer's communities (a bottom sheet on phones, a centred card on larger screens — the shared `Modal`). */
-function DestinationPicker({ destination, onChoose, onClose }: { destination: ShareDestination; onChoose: (next: ShareDestination) => void; onClose: () => void }) {
+function DestinationPicker({ selectedId, onChoose, onClose }: { selectedId: string | null; onChoose: (next: CreateDestination | null) => void; onClose: () => void }) {
   const { t } = useTranslation();
   const [communities, setCommunities] = useState<CommunitySummary[] | null>(null);
   const [failed, setFailed] = useState(false);
@@ -154,7 +131,6 @@ function DestinationPicker({ destination, onChoose, onClose }: { destination: Sh
     void load();
   }, [load]);
 
-  const selectedId = destination.kind === "community" ? destination.community.id : null;
   const rowClass = (selected: boolean) =>
     cn(
       "flex min-h-14 w-full items-center gap-3 rounded-xl border px-3 py-2 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
@@ -170,8 +146,8 @@ function DestinationPicker({ destination, onChoose, onClose }: { destination: Sh
           </h2>
         </div>
         <div className="space-y-2 overflow-y-auto p-3" role="listbox" aria-labelledby="share-destination-title">
-          <button type="button" role="option" aria-selected={selectedId === null} onClick={() => onChoose({ kind: "feed" })} className={rowClass(selectedId === null)} data-destination-option="feed">
-            <DestinationIcon destination={{ kind: "feed" }} size={36} />
+          <button type="button" role="option" aria-selected={selectedId === null} onClick={() => onChoose(null)} className={rowClass(selectedId === null)} data-destination-option="feed">
+            <DestinationIcon destination={null} size={36} />
             <span className="min-w-0 flex-1">
               <span className="block truncate text-label font-semibold text-text">{t("home.destination.feed")}</span>
               <span className="block truncate text-caption text-text-muted">{t("home.destination.feedHint")}</span>
@@ -207,7 +183,7 @@ function DestinationPicker({ destination, onChoose, onClose }: { destination: Sh
               type="button"
               role="option"
               aria-selected={selectedId === community.id}
-              onClick={() => onChoose({ kind: "community", community })}
+              onClick={() => onChoose({ id: community.id, name: community.name, avatarUrl: community.avatarUrl, visibility: community.visibility })}
               className={rowClass(selectedId === community.id)}
               data-destination-option={community.id}
             >

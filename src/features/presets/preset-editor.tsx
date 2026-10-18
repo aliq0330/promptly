@@ -286,6 +286,7 @@ export function PresetEditor({ editId }: { editId: string | null }) {
           </FormSection>
 
           <CreateFormActions
+            hideDestination={Boolean(editId)}
             visibility={visibility}
             onVisibilityChange={setVisibility}
             onSaveDraft={() => void save(true)}
