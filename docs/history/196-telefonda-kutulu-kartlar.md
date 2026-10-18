@@ -13,4 +13,4 @@
 - Kartın iç yerleşimi (`ContentCardPost`) değişmedi: tablet/masaüstünde olduğu gibi.
 
 ## Sınama
-`tsc`, `lint`, `npm test`, `next build`; `run-community-home`, `run-communities`, `run-community-posts`, `run-detail-pages`, `run-groups`, `run-chat`, `run`, `run-profile-collections`, `run-shared-cards` (aşağıdaki sonuçlar raporda). Çeviri: yeni metin yok.
+`tsc`, `lint`, `npm test`, `next build`; `run-community-home`, `run-communities`, `run-community-posts`, `run-detail-pages`, `run-groups`, `run-chat`, `run`, `run-profile-collections`, `run-shared-cards` — `run-community-home` 38/38, `run-communities` 64/65 (27. senaryo tam paket koşusunda bir kez düştü, tek başına iki kez geçti: yüke bağlı dalgalanma, bu değişikliğle ilgisi yok), `run-community-posts` 36, `run-detail-pages` 44, `run-groups` 36, `run-chat` 38, `run` 24, `run-profile-collections` 4, `run-shared-cards` 11. 390px ekran görüntüsüyle bakıldı. Çeviri: yeni metin yok.
