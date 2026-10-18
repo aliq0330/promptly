@@ -43,7 +43,7 @@ export function HomeFeedList({ feed, empty, onToast, viewerIsMember }: { feed: F
       <ContentGrid as="ul" columns={FEED_GRID_COLUMNS} aria-busy="true" aria-label={t("common.loadingAriaLabel")} data-testid="home-feed-loading">
         {[0, 1].map((i) => (
           <li key={i} className={CONTENT_GRID_ITEM_CLASS}>
-            <PromptCardSkeleton responsive />
+            <PromptCardSkeleton />
           </li>
         ))}
       </ContentGrid>

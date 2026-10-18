@@ -53,4 +53,4 @@ export const FEED_GRID_COLUMNS = "sm:columns-2";
  * Gönderinin üstündeki bağlam satırı (topluluk adı, "Sabit"): telefonda satırın içinde kartın iç boşluğuna hizalı, `sm`+ kutunun hemen
  * üstünde. Öğe (`li`) `CONTENT_GRID_ITEM_CLASS` taşır, böylece satır ve kart aynı sütunda birlikte kalır.
  */
-export const FEED_ITEM_CONTEXT_CLASS = "-mb-2 flex items-center gap-2 px-4 pt-3 text-caption text-text-muted sm:mb-1.5 sm:px-1 sm:pt-0";
+export const FEED_ITEM_CONTEXT_CLASS = "mb-1.5 flex items-center gap-2 px-1 text-caption text-text-muted";
