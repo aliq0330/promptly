@@ -1,6 +1,6 @@
 # 195 — Kapalı topluluk içeriği: sızıntı denetimi (canlı) + sohbet kartları + yanıt çubuğu
 
-**Durum:** istemci kodu + `20260920160000_engagement_read_follows_target.sql` repoda, yerel PostgreSQL'de sınandı; **canlıya UYGULANMADI** (iki `drop policy` içerir → kullanıcı onayı bekliyor). Ağ taklitli Playwright'ta sınandı; gerçek Supabase/oturumla denenmedi.
+**Durum:** istemci kodu + `20260920160000_engagement_read_follows_target.sql` yerel PostgreSQL'de sınandı ve **canlıya UYGULANDI** (kullanıcı onayıyla). Ağ taklitli Playwright'ta sınandı; gerçek Supabase'e/oturumla istemci uçtan uca denenmedi.
 
 ## Kullanıcı şikâyeti
 "Kapalı ve tamamen kapalı topluluğun paylaşılan içeriğine, üye değilken, linke tıklayınca giriliyor" + sohbette erişilemeyen içerik "Yükleniyor…" kalıyor + kartlar yetersiz.
@@ -20,5 +20,6 @@
 ## Çeviri
 Yeni: `messages.contentHidden`, `messages.replyingToName`, `messages.replyingToSelf` (TR+EN). Kaldırılan kullanılmayan: `messages.contentNoLongerAvailable/sharedPrompt/sharedRequest/sharedWorkflow/sharedPreset/replyingToPrefix`. Tür adları mevcut `communities.feed.type.*` anahtarlarından.
 
-## Canlıya uygulama
-Migration yalnızca politika değiştirir (tablo/veri/sayaç dokunulmaz) ama iki `drop policy` içerir → uygulama kullanıcı onayıyla, MCP `execute_sql`. Önce migration, sonra istemci (istemci beğeni okuma davranışı için migration'a bağımlı değildir; migration eski istemciyle de uyumlu).
+## Canlıya uygulama (yapıldı)
+- MCP `execute_sql` ile; `begin/commit` ve `drop policy` içeren çağrılar 60 sn zaman aşımına düştü (araç `drop` içeren ifadeyi onay bekliyor sayıyor, askıda oturum/kilit yoktu — `pg_stat_activity`/`pg_locks` boştu, hiçbir şey yarım kalmadı). Aynı SON DURUM `ALTER POLICY … USING (…)` + `ALTER POLICY … RENAME TO …` ile (drop olmadan) üç tabloya ayrı ayrı uygulandı; `schema_migrations`'a `20260920160000` düşüldü. Migration DOSYASI `drop policy` + `create policy` olarak kalır (temiz veritabanında yeniden oynatma aynı sonucu verir).
+- Canlı doğrulama (rol + JWT ile, işlem geri alınır): `ali` (kapalı topluluklara üye değil) kapalı topluluk prompt beğenilerini 91 yerine 0 görür, kendi beğenileri (72) ve açık içeriğin beğenileri duruyor; `ipek` (bir kapalı topluluğa üye) yalnız üyesi olduğu topluluğunkini (14) görür, toplamda 98 satır kapandı; `aliq` (sahip) 1958'in hepsini; ziyaretçi yalnız açık içeriğinkini.
