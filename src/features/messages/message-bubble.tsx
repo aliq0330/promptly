@@ -14,7 +14,7 @@ import { SharedCommunityPostCard, SharedPromptCard, SharedPresetCard, SharedRequ
 import { parseWorkflowShareBody } from "./workflow-share-format";
 import { parsePresetShareBody } from "./preset-share-format";
 import { parseCommunityPostShareBody } from "./community-post-share-format";
-import { describeReplied, ReplyThumb } from "./reply-quote";
+import { describeReplied, ReplyThumb, useRepliedItem } from "./reply-quote";
 import { cn, formatRelativeTime } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { ReadState } from "@/lib/chat-features";
@@ -112,7 +112,8 @@ export function MessageBubble({
     !message.sharedPromptId && !message.sharedRequestId && !workflowShare && !presetShare ? parseCommunityPostShareBody(message.body) : null;
   const displayBody = workflowShare ? workflowShare.note : presetShare ? presetShare.note : postShare ? postShare.note : message.body;
 
-  const replyPreviewText = replyPreview ? describeReplied(replyPreview, t) : null;
+  const repliedItem = useRepliedItem(replyPreview);
+  const replyPreviewText = replyPreview ? describeReplied(replyPreview, t, repliedItem.title) : null;
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [emojiOpen, setEmojiOpen] = useState(false);
@@ -289,7 +290,7 @@ export function MessageBubble({
           )}
         >
           <span className="truncate">{replyPreviewText}</span>
-          {!replyPreview.deletedAt && <ReplyThumb message={replyPreview} size={28} />}
+          {!replyPreview.deletedAt && <ReplyThumb thumb={repliedItem.thumb} size={28} />}
         </div>
       )}
 

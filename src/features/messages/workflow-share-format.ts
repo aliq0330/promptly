@@ -18,6 +18,8 @@ export function composeWorkflowShareBody(note: string, title: string, id: string
 export interface ParsedWorkflowShare {
   note: string | null;
   id: string;
+  /** The shared item's title as written into the share block. */
+  title: string;
 }
 
 export function parseWorkflowShareBody(body: string | null | undefined): ParsedWorkflowShare | null {
@@ -29,5 +31,5 @@ export function parseWorkflowShareBody(body: string | null | undefined): ParsedW
   const titleLine = lines[urlLineIndex - 1]?.trim();
   if (!match || !titleLine) return null;
   const note = lines.slice(0, urlLineIndex - 1).join("\n").trim();
-  return { note: note || null, id: match[1] };
+  return { note: note || null, id: match[1], title: titleLine };
 }

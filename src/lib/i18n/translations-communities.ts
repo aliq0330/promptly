@@ -334,7 +334,6 @@ export const communityTranslations = {
   "communities.post.page.commentsHelp": { tr: "Bu yorumlar yalnızca bu başvuruya aittir; orijinal içeriğin yorumlarıyla karışmaz.", en: "These comments belong to this post only; they aren't mixed with the original content's comments." },
   "messages.sharedCommunityPost": { tr: "Topluluk gönderisi", en: "Community post" },
   "messages.communityPostNoAccess": { tr: "Bu gönderiyi görmek için topluluğa erişimin olmalı.", en: "You need access to this community to see this post." },
-  "messages.aCommunityPost": { tr: "Bir topluluk gönderisi", en: "A community post" },
   "communities.post.page.scopeHelp": { tr: "Beğeni, yorum ve kaydetme bu başvuruya aittir; orijinal içeriğinkilerle karışmaz.", en: "Likes, comments and saves belong to this post; they aren't mixed with the original content's." },
   "communities.post.page.loadError": { tr: "Gönderi yüklenemedi.", en: "Couldn't load the post." },
   "communities.post.native.deleteTitle": { tr: "İçerik silinsin mi?", en: "Delete this content?" },

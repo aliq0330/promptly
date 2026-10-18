@@ -8,11 +8,11 @@ const URL = `https://example.dev/promptly/communities/post/local?id=${ID}`;
 test("gönderi paylaşımı: not + başlık + bağlantı yazılır ve aynen ayrıştırılır", () => {
   const body = composeCommunityPostShareText("bak buna", "Gün batımı promptu", URL);
   assert.equal(body, `bak buna\n\nGün batımı promptu\n${URL}`);
-  assert.deepEqual(parseCommunityPostShareBody(body), { note: "bak buna", id: ID });
+  assert.deepEqual(parseCommunityPostShareBody(body), { note: "bak buna", id: ID, title: "Gün batımı promptu" });
 });
 
 test("gönderi paylaşımı: notsuz paylaşımda not null; çok satırlı not korunur", () => {
-  assert.deepEqual(parseCommunityPostShareBody(composeCommunityPostShareText("", "Başlık", URL)), { note: null, id: ID });
+  assert.deepEqual(parseCommunityPostShareBody(composeCommunityPostShareText("", "Başlık", URL)), { note: null, id: ID, title: "Başlık" });
   assert.equal(parseCommunityPostShareBody(composeCommunityPostShareText("satır 1\nsatır 2", "Başlık", URL))?.note, "satır 1\nsatır 2");
 });
 

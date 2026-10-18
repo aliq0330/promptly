@@ -1451,8 +1451,6 @@ export const translations = {
   "messages.deletedMessage": { tr: "Silinmiş mesaj", en: "Deleted message" },
   "messages.openWorkflow": { tr: "Workflow'u aç", en: "Open workflow" },
   "messages.openPreset": { tr: "Hazır ayarı aç", en: "Open preset" },
-  "messages.aPreset": { tr: "Bir hazır ayar", en: "A preset" },
-  "messages.aWorkflow": { tr: "Bir workflow", en: "A workflow" },
   "messages.aPrompt": { tr: "Bir prompt", en: "A prompt" },
   "messages.thisMessageWasDeleted": { tr: "Bu mesaj silindi.", en: "This message was deleted." },
   "messages.blockedSendError": { tr: "Bu mesaj gönderilemedi. Kullanıcı seni engellemiş olabilir.", en: "This message couldn't be sent. The user may have blocked you." },

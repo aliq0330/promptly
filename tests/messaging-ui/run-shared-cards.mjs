@@ -124,9 +124,32 @@ await scenario("4b. Yanıt çubuğu: fotoğraflı mesaj ve paylaşılan prompt g
   await second.hover();
   await second.getByRole("button", { name: "Mesaj seçenekleri" }).click();
   await page.getByRole("menuitem", { name: "Yanıtla", exact: true }).click();
-  assert.match(await bar.textContent(), /Bir prompt/);
+  await bar.getByText("Markalı mekanik klavye tuşları").waitFor();
+  assert.doesNotMatch(await bar.textContent(), /Bir prompt/, "title instead of the generic label");
   await bar.locator("[data-reply-thumb]").waitFor();
 }, { setup: REPLY_SEED });
+
+await scenario("4c. Yanıt çubuğu 'Bir prompt / Bir istek / Bir workflow' yerine İÇERİK BAŞLIĞINI yazar; başlık bilinmiyorsa (okunamayan içerik) genel etiket", async ({ page }) => {
+  await page.goto(`${BASE}/messages/local?id=${CONV}`);
+  await page.locator("[data-message-id]").first().waitFor();
+  await page.waitForTimeout(900);
+  const titleOf = async (index) => {
+    const m = page.locator("[data-message-id]").nth(index);
+    await m.hover();
+    await m.getByRole("button", { name: "Mesaj seçenekleri" }).click();
+    await page.getByRole("menuitem", { name: "Yanıtla", exact: true }).click();
+    return page.locator("[data-reply-bar]");
+  };
+  let bar = await titleOf(0); // paylaşılan prompt
+  await bar.getByText("Markalı mekanik klavye tuşları").waitFor();
+  bar = await titleOf(1); // erişilemeyen prompt → genel etiket
+  await bar.getByText("Bir prompt").waitFor();
+  bar = await titleOf(2); // paylaşılan istek
+  await bar.getByText("Retro-fütüristik sokak posteri").waitFor();
+  bar = await titleOf(4); // workflow paylaşım bloğu: ham blok değil başlık
+  await bar.getByText("Ürün fotoğrafından kampanya görseli").waitFor();
+  assert.doesNotMatch(await bar.textContent(), /https?:/, "the raw share block is never shown");
+}, { setup: seed });
 
 await scenario("5. Gönderilen yanıtın alıntısı (balon üstü) görsel varsa küçük görselle gelir; yoksa yalnız metin", async ({ page }) => {
   await openThread(page);
