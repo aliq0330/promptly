@@ -6,6 +6,7 @@ import { useRealPresets } from "./real-presets-provider";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { searchPresetsPage } from "@/lib/supabase/presets";
 import { PresetCard } from "./preset-card";
+import { CONTENT_GRID_ITEM_CLASS, ContentGrid } from "@/features/content/content-card";
 
 export function PresetsListView() {
   const { t } = useTranslation();
@@ -27,13 +28,13 @@ export function PresetsListView() {
       loading={loading}
       search={searchPresetsPage}
       renderItems={(items) => (
-        <div className="columns-1 gap-3 sm:columns-2 sm:gap-4 xl:columns-3">
+        <ContentGrid>
           {items.map((preset) => (
-            <div key={preset.id} className="pb-3 break-inside-avoid sm:pb-4">
+            <div key={preset.id} className={CONTENT_GRID_ITEM_CLASS}>
               <PresetCard preset={preset} />
             </div>
           ))}
-        </div>
+        </ContentGrid>
       )}
       searchPlaceholder={t("search.placeholderPresets")}
       focusKind="preset"

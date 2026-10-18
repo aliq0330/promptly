@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { PromptCard } from "@/features/prompts/prompt-card";
 import type { Prompt } from "@/types";
+import { CONTENT_GRID_ITEM_CLASS, ContentGrid } from "@/features/content/content-card";
 
 /**
  * Same CSS multi-column masonry as the shared PromptGrid (CSS Grid
@@ -23,15 +24,15 @@ export function ProfileContentGrid({
   if (prompts.length === 0) return <>{emptyState}</>;
 
   return (
-    <div className="columns-1 gap-4 sm:columns-2 xl:columns-3">
+    <ContentGrid>
       {prompts.map((prompt) => (
-        <div key={prompt.id} className="pb-4 break-inside-avoid">
+        <div key={prompt.id} className={CONTENT_GRID_ITEM_CLASS}>
           <PromptCard
             prompt={prompt}
             onDeleted={isOwnProfile ? () => onDeleted(prompt.id) : undefined}
           />
         </div>
       ))}
-    </div>
+    </ContentGrid>
   );
 }

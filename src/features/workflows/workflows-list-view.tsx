@@ -6,6 +6,7 @@ import { useRealWorkflows } from "./real-workflows-provider";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { searchWorkflowsPage } from "@/lib/supabase/workflows";
 import { WorkflowCard } from "./workflow-card";
+import { CONTENT_GRID_ITEM_CLASS, ContentGrid } from "@/features/content/content-card";
 
 export function WorkflowsListView() {
   const { t } = useTranslation();
@@ -32,13 +33,13 @@ export function WorkflowsListView() {
         (!value.subcategory || item.subcategory === value.subcategory)
       }
       renderItems={(items) => (
-        <div className="columns-1 gap-3 sm:columns-2 sm:gap-4 xl:columns-3">
+        <ContentGrid>
           {items.map((workflow) => (
-            <div key={workflow.id} className="pb-3 break-inside-avoid sm:pb-4">
+            <div key={workflow.id} className={CONTENT_GRID_ITEM_CLASS}>
               <WorkflowCard workflow={workflow} />
             </div>
           ))}
-        </div>
+        </ContentGrid>
       )}
       searchPlaceholder={t("search.placeholderWorkflows")}
       focusKind="workflow"

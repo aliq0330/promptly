@@ -27,6 +27,7 @@ import type { SearchCursor, SearchKind } from "@/lib/supabase/search";
 import { formatCount, profileHref, tagHref } from "@/lib/utils";
 import { Eyebrow } from "@/features/content/detail-parts";
 import type { Prompt, PromptRequest, Preset, Tag, UserProfile, Workflow } from "@/types";
+import { CONTENT_GRID_ITEM_CLASS, ContentGrid } from "@/features/content/content-card";
 
 const DEBOUNCE_MS = 300;
 const NO_RESULTS = Promise.resolve({ items: [], nextCursor: null });
@@ -261,13 +262,13 @@ export function SearchView({ idle }: { idle?: ReactNode } = {}) {
           {workflows.length > 0 && (
             <section className="space-y-3">
               <ResultsHeading count={workflows.length}>{t("nav.workflows")}</ResultsHeading>
-              <div className="columns-1 gap-3 sm:columns-2 sm:gap-4 xl:columns-3">
+              <ContentGrid>
                 {workflows.map((workflow) => (
-                  <div key={workflow.id} className="pb-3 break-inside-avoid sm:pb-4">
+                  <div key={workflow.id} className={CONTENT_GRID_ITEM_CLASS}>
                     <WorkflowCard workflow={workflow} />
                   </div>
                 ))}
-              </div>
+              </ContentGrid>
               {loadMoreButton("workflow")}
             </section>
           )}
@@ -275,13 +276,13 @@ export function SearchView({ idle }: { idle?: ReactNode } = {}) {
           {presets.length > 0 && (
             <section className="space-y-3">
               <ResultsHeading count={presets.length}>{t("nav.presets")}</ResultsHeading>
-              <div className="columns-1 gap-3 sm:columns-2 sm:gap-4 xl:columns-3">
+              <ContentGrid>
                 {presets.map((preset) => (
-                  <div key={preset.id} className="pb-3 break-inside-avoid sm:pb-4">
+                  <div key={preset.id} className={CONTENT_GRID_ITEM_CLASS}>
                     <PresetCard preset={preset} />
                   </div>
                 ))}
-              </div>
+              </ContentGrid>
               {loadMoreButton("preset")}
             </section>
           )}

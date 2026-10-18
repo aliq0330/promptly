@@ -9,7 +9,7 @@ import { PresetCard } from "@/features/presets/preset-card";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { feedItemKey, type FeedItem } from "./types";
 import { Reveal } from "@/components/ui/reveal";
-import { ContentStream } from "@/features/content/content-card";
+import { CONTENT_GRID_ITEM_CLASS, ContentGrid, ContentStream } from "@/features/content/content-card";
 
 /**
  * Same CSS-columns masonry as PromptGrid (see prompt-grid.tsx), but for a
@@ -70,12 +70,12 @@ export function FeedGrid({
   }
 
   return (
-    <div className="columns-1 gap-3 sm:columns-2 sm:gap-4 xl:columns-3">
+    <ContentGrid>
       {items.map((item, index) => (
-        <Reveal key={feedItemKey(item)} index={index} className="pb-3 break-inside-avoid sm:pb-4">
+        <Reveal key={feedItemKey(item)} index={index} className={CONTENT_GRID_ITEM_CLASS}>
           {card(item)}
         </Reveal>
       ))}
-    </div>
+    </ContentGrid>
   );
 }

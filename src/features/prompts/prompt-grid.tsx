@@ -6,6 +6,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import { PromptCard } from "./prompt-card";
 import type { Prompt } from "@/types";
 import { Reveal } from "@/components/ui/reveal";
+import { CONTENT_GRID_ITEM_CLASS, ContentGrid } from "@/features/content/content-card";
 
 type PromptGridProps = { prompts: Prompt[] };
 
@@ -31,12 +32,12 @@ export function PromptGrid(props: PromptGridProps) {
   }
 
   return (
-    <div className="columns-1 gap-3 sm:columns-2 sm:gap-4 xl:columns-3">
+    <ContentGrid>
       {items.map((item, index) => (
-        <Reveal key={item.key} index={index} className="pb-3 break-inside-avoid sm:pb-4">
+        <Reveal key={item.key} index={index} className={CONTENT_GRID_ITEM_CLASS}>
           {item.node}
         </Reveal>
       ))}
-    </div>
+    </ContentGrid>
   );
 }

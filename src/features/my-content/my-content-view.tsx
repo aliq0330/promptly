@@ -38,6 +38,7 @@ import type {
   PromptRequest,
   Workflow,
 } from "@/types";
+import { CONTENT_GRID_ITEM_CLASS, ContentGrid } from "@/features/content/content-card";
 
 type Kind =
   | "prompts"
@@ -310,13 +311,13 @@ export function MyContentView() {
               />
             )
           ) : (
-            <div className="columns-1 gap-3 sm:columns-2 sm:gap-4 xl:columns-3">
+            <ContentGrid>
               {visible.map((entry, index) => (
-                <Reveal key={entry.id} index={index} className="pb-3 break-inside-avoid sm:pb-4">
+                <Reveal key={entry.id} index={index} className={CONTENT_GRID_ITEM_CLASS}>
                   {entry.node}
                 </Reveal>
               ))}
-            </div>
+            </ContentGrid>
           )}
 
           {!loading && total > 0 && !isFiltered && (
