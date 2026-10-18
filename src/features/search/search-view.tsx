@@ -28,6 +28,9 @@ import { formatCount, profileHref, tagHref } from "@/lib/utils";
 import { Eyebrow } from "@/features/content/detail-parts";
 import type { Prompt, PromptRequest, Preset, Tag, UserProfile, Workflow } from "@/types";
 import { CONTENT_GRID_ITEM_CLASS, ContentGrid } from "@/features/content/content-card";
+import { useViewMode } from "@/features/content/view-mode-store";
+import { ViewModeControls } from "@/features/content/view-mode-switcher";
+import { FocusGrid } from "@/features/focus/focus-grid";
 
 const DEBOUNCE_MS = 300;
 const NO_RESULTS = Promise.resolve({ items: [], nextCursor: null });
@@ -40,6 +43,7 @@ type Sort = NonNullable<ContentSearchFilters["sort"]>;
  */
 export function SearchView({ idle }: { idle?: ReactNode } = {}) {
   const { t } = useTranslation();
+  const [viewMode] = useViewMode();
   const [tokens, setTokens] = useState<SearchToken[]>([]);
   const [text, setText] = useState("");
   const [sort, setSort] = useState<Sort>("relevant");
@@ -203,13 +207,16 @@ export function SearchView({ idle }: { idle?: ReactNode } = {}) {
           />
         )}
         {active && (
-          <ChipRow>
-            {(["relevant", "new", "popular"] as Sort[]).map((value) => (
-              <Chip key={value} selected={sort === value} onClick={() => setSort(value)}>
-                {t(value === "relevant" ? "search.sortRelevant" : value === "new" ? "search.sortNew" : "search.sortPopular")}
-              </Chip>
-            ))}
-          </ChipRow>
+          <div className="flex items-center gap-2">
+            <ChipRow className="min-w-0 flex-1">
+              {(["relevant", "new", "popular"] as Sort[]).map((value) => (
+                <Chip key={value} selected={sort === value} onClick={() => setSort(value)}>
+                  {t(value === "relevant" ? "search.sortRelevant" : value === "new" ? "search.sortNew" : "search.sortPopular")}
+                </Chip>
+              ))}
+            </ChipRow>
+            <ViewModeControls />
+          </div>
         )}
       </div>
 
@@ -262,13 +269,17 @@ export function SearchView({ idle }: { idle?: ReactNode } = {}) {
           {workflows.length > 0 && (
             <section className="space-y-3">
               <ResultsHeading count={workflows.length}>{t("nav.workflows")}</ResultsHeading>
-              <ContentGrid>
-                {workflows.map((workflow) => (
-                  <div key={workflow.id} className={CONTENT_GRID_ITEM_CLASS}>
-                    <WorkflowCard workflow={workflow} />
-                  </div>
-                ))}
-              </ContentGrid>
+              {viewMode === "focus" ? (
+                <FocusGrid items={workflows.map((data) => ({ kind: "workflow" as const, data }))} />
+              ) : (
+                <ContentGrid>
+                  {workflows.map((workflow) => (
+                    <div key={workflow.id} className={CONTENT_GRID_ITEM_CLASS}>
+                      <WorkflowCard workflow={workflow} />
+                    </div>
+                  ))}
+                </ContentGrid>
+              )}
               {loadMoreButton("workflow")}
             </section>
           )}
@@ -276,13 +287,17 @@ export function SearchView({ idle }: { idle?: ReactNode } = {}) {
           {presets.length > 0 && (
             <section className="space-y-3">
               <ResultsHeading count={presets.length}>{t("nav.presets")}</ResultsHeading>
-              <ContentGrid>
-                {presets.map((preset) => (
-                  <div key={preset.id} className={CONTENT_GRID_ITEM_CLASS}>
-                    <PresetCard preset={preset} />
-                  </div>
-                ))}
-              </ContentGrid>
+              {viewMode === "focus" ? (
+                <FocusGrid items={presets.map((data) => ({ kind: "preset" as const, data }))} />
+              ) : (
+                <ContentGrid>
+                  {presets.map((preset) => (
+                    <div key={preset.id} className={CONTENT_GRID_ITEM_CLASS}>
+                      <PresetCard preset={preset} />
+                    </div>
+                  ))}
+                </ContentGrid>
+              )}
               {loadMoreButton("preset")}
             </section>
           )}

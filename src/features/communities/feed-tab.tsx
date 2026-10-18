@@ -37,6 +37,11 @@ import { canSharePost, COMMUNITY_NOTE_MAX, postPageHref } from "@/lib/communitie
 import { PromptCardSkeleton } from "@/components/ui/prompt-card-skeleton";
 import { CONTENT_GRID_ITEM_CLASS, ContentGrid } from "@/features/content/content-card";
 import { FEED_GRID_COLUMNS, FEED_ITEM_CONTEXT_CLASS } from "./community-layout";
+import { postFeedItem } from "./content-summary";
+import { useViewMode } from "@/features/content/view-mode-store";
+import { ViewModeControls } from "@/features/content/view-mode-switcher";
+import { FOCUS_GRID_NARROW_COLUMNS, FocusGrid } from "@/features/focus/focus-grid";
+import type { FeedItem } from "@/features/feed/types";
 import { useTranslation } from "@/lib/i18n/language-provider";
 
 type PostAction = { kind: "edit" | "delete" | "moderate" | "report"; post: CommunityPost };
@@ -53,6 +58,7 @@ type PostAction = { kind: "edit" | "delete" | "moderate" | "report"; post: Commu
 export function FeedTab(props: CommunityTabProps) {
   const { group, role, viewerId, onToast, reload } = props;
   const { t } = useTranslation();
+  const [viewMode] = useViewMode();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [pinned, setPinned] = useState<CommunityPost[] | null>(null);
@@ -163,13 +169,17 @@ export function FeedTab(props: CommunityTabProps) {
 
       <div className="flex items-center justify-between gap-3">
         <p className="text-small text-text-muted">{group.feedPolicy === "admins" ? t("communities.feed.policyStaff") : t("communities.feed.policyMembers")}</p>
-        {canPost ? (
-          <Button type="button" size="sm" onClick={() => setCreateOpen(true)} data-create-post>
-            <Plus size={14} /> {t("communities.feed.share")}
-          </Button>
-        ) : (
-          role && group.closedAt === null && <span className="text-caption text-text-muted">{t("communities.feed.cannotShare")}</span>
-        )}
+        <div className="flex shrink-0 items-center gap-2">
+          {canPost ? (
+            <Button type="button" size="sm" onClick={() => setCreateOpen(true)} data-create-post>
+              <Plus size={14} /> {t("communities.feed.share")}
+            </Button>
+          ) : (
+            role && group.closedAt === null && <span className="text-caption text-text-muted">{t("communities.feed.cannotShare")}</span>
+          )}
+          {/* Keşfet's Kart | Odak switcher. */}
+          <ViewModeControls />
+        </div>
       </div>
 
       {focusId && focusPost === null && (
@@ -208,6 +218,20 @@ export function FeedTab(props: CommunityTabProps) {
           title={t("communities.feed.empty")}
           description={canPost ? t("communities.feed.emptyHelpMember") : t("communities.feed.emptyHelp")}
         />
+      ) : viewMode === "focus" ? (
+        <>
+          <FocusGrid
+            items={[...pinned, ...posts].map((post) => postFeedItem(post.content)).filter((item): item is FeedItem => item !== null)}
+            columns={FOCUS_GRID_NARROW_COLUMNS}
+          />
+          {hasMore && (
+            <div className="flex justify-center">
+              <Button type="button" variant="outline" size="sm" onClick={() => void loadMore()} disabled={loadingMore}>
+                {loadingMore ? t("common.loadingMore") : t("common.loadMore")}
+              </Button>
+            </div>
+          )}
+        </>
       ) : (
         <>
           {pinned.length > 0 && (

@@ -4,6 +4,7 @@ import type { FeedItem } from "@/features/feed/types";
 import { feedItemKey } from "@/features/feed/types";
 import { FocusCard } from "./focus-card";
 import { Reveal } from "@/components/ui/reveal";
+import { cn } from "@/lib/utils";
 
 /**
  * Focus View's grid — the same CSS-columns masonry the card view already uses
@@ -11,11 +12,12 @@ import { Reveal } from "@/components/ui/reveal";
  * naturally with no JS measuring), just denser: 2 columns on phones, 3 on
  * tablet / small desktop, 4 on wide screens. Each column is `minmax(0, 1fr)`-like
  * (CSS columns never exceed the container), so nothing can overflow sideways.
- * Empty / loading states stay the caller's job (it renders the card view's).
+ * Empty / loading states stay the caller's job (it renders the card view's). A page with a right rail
+ * passes `FOCUS_GRID_NARROW_COLUMNS` (its main column is too narrow for four).
  */
-export function FocusGrid({ items }: { items: FeedItem[] }) {
+export function FocusGrid({ items, columns = "md:columns-3 xl:columns-4" }: { items: FeedItem[]; columns?: string }) {
   return (
-    <div className="columns-2 gap-2.5 sm:gap-3 md:columns-3 xl:columns-4">
+    <div className={cn("columns-2 gap-2.5 sm:gap-3", columns)}>
       {items.map((item, index) => (
         <Reveal key={feedItemKey(item)} index={index} className="pb-2.5 break-inside-avoid sm:pb-3">
           <FocusCard item={item} />
@@ -24,3 +26,6 @@ export function FocusGrid({ items }: { items: FeedItem[] }) {
     </div>
   );
 }
+
+/** Columns for a main column that has a right rail next to it (Ana Sayfa, Topluluklar): never four. */
+export const FOCUS_GRID_NARROW_COLUMNS = "md:columns-3";

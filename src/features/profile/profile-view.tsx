@@ -6,6 +6,9 @@ import { useEffect, useMemo, useState } from "react";
 import { Heart, SearchX, Sparkles, Workflow as WorkflowIcon } from "lucide-react";
 import { ProfileHeader } from "./profile-header";
 import { CommunityRings } from "@/features/feed/community-rings";
+import { useViewMode } from "@/features/content/view-mode-store";
+import { ViewModeControls } from "@/features/content/view-mode-switcher";
+import { FocusGrid } from "@/features/focus/focus-grid";
 import { ProfileTabs, type ProfileTabKey } from "./profile-tabs";
 import { ContributionMap } from "./contribution-map";
 import { ProfileToolbar, type ProfileSortKey } from "./profile-toolbar";
@@ -129,6 +132,7 @@ export function ProfileView({
   const [activeType, setActiveType] = useState<PromptContentType | "all">("all");
   const [sort, setSort] = useState<ProfileSortKey>("newest");
   const [search, setSearch] = useState("");
+  const [viewMode] = useViewMode();
 
   // Published posts only — an owner's drafts (visible to them via RLS) aren't "posts" yet.
   const postCounts = useMemo(
@@ -241,7 +245,12 @@ export function ProfileView({
               action={isOwnProfile ? { label: t("create.requestTitle"), href: "/requests/new" } : undefined}
             />
           ) : (
-            <RequestList requests={authorRequests} />
+            <>
+              <div className="flex justify-end">
+                <ViewModeControls />
+              </div>
+              <RequestList requests={authorRequests} />
+            </>
           )
         ) : activeTab === "workflows" ? (
           workflows.length === 0 ? (
@@ -252,13 +261,22 @@ export function ProfileView({
               action={isOwnProfile ? { label: t("workflow.create"), href: "/workflows/create" } : undefined}
             />
           ) : (
-            <ContentGrid>
-              {workflows.map((workflow) => (
-                <div key={workflow.id} className={CONTENT_GRID_ITEM_CLASS}>
-                  <WorkflowCard workflow={workflow} />
-                </div>
-              ))}
-            </ContentGrid>
+            <>
+              <div className="flex justify-end">
+                <ViewModeControls />
+              </div>
+              {viewMode === "focus" ? (
+                <FocusGrid items={workflows.map((data) => ({ kind: "workflow" as const, data }))} />
+              ) : (
+                <ContentGrid>
+                  {workflows.map((workflow) => (
+                    <div key={workflow.id} className={CONTENT_GRID_ITEM_CLASS}>
+                      <WorkflowCard workflow={workflow} />
+                    </div>
+                  ))}
+                </ContentGrid>
+              )}
+            </>
           )
         ) : activeTab === "presets" ? (
           <ProfilePresetsPanel ownerId={user.id} isOwn={isOwnProfile} created={presets} />

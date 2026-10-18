@@ -39,6 +39,10 @@ import type {
   Workflow,
 } from "@/types";
 import { CONTENT_GRID_ITEM_CLASS, ContentGrid } from "@/features/content/content-card";
+import { useViewMode } from "@/features/content/view-mode-store";
+import { ViewModeControls } from "@/features/content/view-mode-switcher";
+import { FocusGrid } from "@/features/focus/focus-grid";
+import type { FeedItem } from "@/features/feed/types";
 
 type Kind =
   | "prompts"
@@ -56,6 +60,8 @@ interface Entry {
   likeCount: number;
   isPrivate: boolean;
   node: ReactNode;
+  /** The same row for the Odak view (`FocusGrid`). */
+  item: FeedItem;
 }
 
 /**
@@ -68,6 +74,7 @@ interface Entry {
 export function MyContentView() {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const [viewMode] = useViewMode();
 
   const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [requests, setRequests] = useState<PromptRequest[]>([]);
@@ -111,6 +118,7 @@ export function MyContentView() {
         createdAt: p.createdAt,
         likeCount: p.likeCount,
         isPrivate: p.visibility === "private",
+        item: { kind: "prompt" as const, data: p },
         node: (
           <PromptCard
             prompt={p}
@@ -128,6 +136,7 @@ export function MyContentView() {
         likeCount: r.likeCount,
         isPrivate: r.visibility === "private",
         node: <RequestCard request={r} />,
+        item: { kind: "request" as const, data: r },
       })),
       workflows: workflows.map((w) => ({
         id: w.id,
@@ -137,6 +146,7 @@ export function MyContentView() {
         likeCount: w.likeCount,
         isPrivate: w.visibility === "private",
         node: <WorkflowCard workflow={w} />,
+        item: { kind: "workflow" as const, data: w },
       })),
       presets: presets.map((p) => ({
         id: p.id,
@@ -146,6 +156,7 @@ export function MyContentView() {
         likeCount: p.likeCount,
         isPrivate: p.visibility === "private",
         node: <PresetCard preset={p} />,
+        item: { kind: "preset" as const, data: p },
       })),
     }),
     [prompts, requests, workflows, presets],
@@ -282,6 +293,7 @@ export function MyContentView() {
                 />
               </label>
               <SortSelect value={sort} onChange={setSort} />
+              <ViewModeControls />
             </div>
           </div>
 
@@ -310,6 +322,8 @@ export function MyContentView() {
                 compact
               />
             )
+          ) : viewMode === "focus" ? (
+            <FocusGrid items={visible.map((entry) => entry.item)} />
           ) : (
             <ContentGrid>
               {visible.map((entry, index) => (
