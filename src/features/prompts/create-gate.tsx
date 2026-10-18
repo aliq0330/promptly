@@ -19,6 +19,8 @@ export function CreateGate() {
     searchParams.get("edit") ||
     searchParams.get("generatorRun") ||
     searchParams.get("fromGenerate") ||
+    // Topluluktan gelen yeni içerik (`?community=`): tür zaten seçildi, seçim ekranına dönüp bağlamı kaybetme.
+    searchParams.get("community") ||
     searchParams.get("mode") === "prompt";
 
   // The form seeds its fields once, on mount. Keying it by the deep-link
