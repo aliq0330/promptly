@@ -21,3 +21,4 @@ Kullanıcı kutulu yüzeyin yanında örnek görseldeki iç düzeni de istedi ("
 - `ContentTypePill`: hap yerine renkli simge karosu (24px, `primary-soft`) + etiket (`Metin Prompt`). Durum/Başvuru/Sabit rozetleri aynı satırda yanında.
 - Eylem sırası: Beğeni · Yorum · Kaydet · İstatistik solda, Paylaş tek başına sağda (`PromptCardFooter`, `RequestCard` [Beğeni · Yorum · Yanıtlar · İstatistik · Paylaş], `ApplicationCard`).
 - Kart başlığı biraz büyüdü (1.1875rem, kalın); iskelet yeni yapıyı yansıtır.
+- Sınama: `run-community-home` 38, `run-communities` 65, `run-community-posts` 36, `run-detail-pages` 44, `run-groups` 36, `run-chat` 38, `run` 24, `run-profile-collections` 4, `run-shared-cards` 11 — hepsi geçti; `tsc`/`lint` temiz; 390px ve 1280px ekran görüntüsüyle örnek görsele karşı bakıldı. Çeviri: yeni metin yok. Gerçek telefonda denenmedi.
