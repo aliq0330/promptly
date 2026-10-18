@@ -3,8 +3,8 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { PromptCardSkeleton } from "@/components/ui/prompt-card-skeleton";
-import { ContentStream } from "@/features/content/content-card";
-import { FEED_STREAM_CLASS } from "./community-layout";
+import { CONTENT_GRID_ITEM_CLASS, ContentGrid } from "@/features/content/content-card";
+import { FEED_GRID_COLUMNS } from "./community-layout";
 import { ErrorBox } from "./home-shared";
 import { HomeFeedItem, useSeenTracker } from "./home-feed";
 import type { useHomeFeed } from "./use-home-feed";
@@ -34,13 +34,13 @@ export function HomeFeedList({ feed, empty, onToast, viewerIsMember }: { feed: F
 
   if (feed.status === "loading") {
     return (
-      <ContentStream as="ul" className={FEED_STREAM_CLASS} aria-busy="true" aria-label={t("common.loadingAriaLabel")} data-testid="home-feed-loading">
+      <ContentGrid as="ul" columns={FEED_GRID_COLUMNS} aria-busy="true" aria-label={t("common.loadingAriaLabel")} data-testid="home-feed-loading">
         {[0, 1].map((i) => (
-          <li key={i}>
-            <PromptCardSkeleton flat />
+          <li key={i} className={CONTENT_GRID_ITEM_CLASS}>
+            <PromptCardSkeleton responsive />
           </li>
         ))}
-      </ContentStream>
+      </ContentGrid>
     );
   }
   if (feed.status === "error") return <ErrorBox message={t("communities.home.feedError")} onRetry={feed.reload} />;
@@ -48,13 +48,13 @@ export function HomeFeedList({ feed, empty, onToast, viewerIsMember }: { feed: F
 
   return (
     <div className="space-y-4">
-      <ContentStream as="ul" className={FEED_STREAM_CLASS} data-testid="home-feed">
+      <ContentGrid as="ul" columns={FEED_GRID_COLUMNS} data-testid="home-feed">
         {feed.entries.map((entry) => {
           const card = feed.cards.get(entry.post.communityId);
           const mode: EngageMode = card?.closedAt ? "closed" : viewerIsMember(entry.source) ? "open" : "join";
           return <HomeFeedItem key={entry.id} post={entry.post} community={card} mode={mode} source={entry.source} tracker={tracker} onToast={onToast} />;
         })}
-      </ContentStream>
+      </ContentGrid>
       {hasMore && (
         <div ref={sentinel} className="flex flex-col items-center gap-2">
           {moreError && (

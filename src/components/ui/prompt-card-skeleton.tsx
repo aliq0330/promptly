@@ -6,14 +6,14 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 
 /**
  * Mirrors ContentCardPost's anatomy: avatar column → identity line → title → prompt block → actions.
- * `flat` = a row of a stream; `responsive` = a row on phones, a box from `sm` (like a card in `ContentGrid`).
+ * `responsive` = a row on phones, a box from `sm` (like a card in `ContentGrid`).
  */
-export function PromptCardSkeleton({ flat = false, responsive = false }: { flat?: boolean; responsive?: boolean }) {
+export function PromptCardSkeleton({ responsive = false }: { responsive?: boolean }) {
   return (
     <div
       className={cn(
         "flex gap-3 px-4 pb-3 pt-4",
-        !flat && (responsive ? "sm:rounded-lg sm:border sm:border-border-soft sm:bg-surface sm:shadow-card" : "rounded-lg border border-border-soft bg-surface shadow-card"),
+        responsive ? "sm:rounded-lg sm:border sm:border-border-soft sm:bg-surface sm:shadow-card" : "rounded-lg border border-border-soft bg-surface shadow-card",
       )}
       aria-hidden
     >
@@ -40,26 +40,12 @@ export function PromptCardSkeleton({ flat = false, responsive = false }: { flat?
   );
 }
 
-export function PromptCardSkeletonGrid({ count = 6, layout = "grid" }: { count?: number; layout?: "grid" | "stream" }) {
+export function PromptCardSkeletonGrid({ count = 6, columns = "sm:columns-2 xl:columns-3" }: { count?: number; columns?: string }) {
   const { t } = useTranslation();
-  if (layout === "stream") {
-    // Same surface as ContentStream (Meydan Faz 6).
-    return (
-      <div
-        className="-mx-3 divide-y divide-border-soft border-y border-border-soft bg-surface sm:mx-0 sm:rounded-lg sm:border sm:shadow-card"
-        role="status"
-        aria-label={t("common.loadingAriaLabel")}
-      >
-        {Array.from({ length: count }).map((_, i) => (
-          <PromptCardSkeleton key={i} flat />
-        ))}
-      </div>
-    );
-  }
   return (
     // Same surface as ContentGrid: stream rows on phones, boxes in columns from `sm`.
     <div
-      className="-mx-3 divide-y divide-border-soft border-y border-border-soft bg-surface sm:mx-0 sm:columns-2 sm:gap-4 sm:divide-y-0 sm:border-0 sm:bg-transparent xl:columns-3"
+      className={cn("-mx-3 divide-y divide-border-soft border-y border-border-soft bg-surface sm:mx-0 sm:gap-4 sm:divide-y-0 sm:border-0 sm:bg-transparent", columns)}
       role="status"
       aria-label={t("common.loadingAriaLabel")}
     >

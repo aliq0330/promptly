@@ -9,7 +9,7 @@ import { PresetCard } from "@/features/presets/preset-card";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { feedItemKey, type FeedItem } from "./types";
 import { Reveal } from "@/components/ui/reveal";
-import { CONTENT_GRID_ITEM_CLASS, ContentGrid, ContentStream } from "@/features/content/content-card";
+import { CONTENT_GRID_ITEM_CLASS, ContentGrid } from "@/features/content/content-card";
 
 /**
  * Same CSS-columns masonry as PromptGrid (see prompt-grid.tsx), but for a
@@ -26,8 +26,8 @@ export function FeedGrid({
   layout = "grid",
 }: {
   items: FeedItem[];
-  /** "stream" = Home's single social column (Meydan, docs/history/190-*); "grid" = the masonry everywhere else. */
-  layout?: "grid" | "stream";
+  /** "home" = Ana Sayfa's column next to its right rail (two columns at most); "grid" = the full-width lists (up to three). */
+  layout?: "grid" | "home";
   emptyIcon?: LucideIcon;
   emptyTitle?: string;
   emptyDescription?: string;
@@ -56,21 +56,8 @@ export function FeedGrid({
       <WorkflowCard workflow={item.data} />
     );
 
-  // Home: one hairline-separated stream (Meydan Faz 6) — no box per post.
-  if (layout === "stream") {
-    return (
-      <ContentStream>
-        {items.map((item, index) => (
-          <Reveal key={feedItemKey(item)} index={index}>
-            {card(item)}
-          </Reveal>
-        ))}
-      </ContentStream>
-    );
-  }
-
   return (
-    <ContentGrid>
+    <ContentGrid columns={layout === "home" ? "sm:columns-2" : undefined}>
       {items.map((item, index) => (
         <Reveal key={feedItemKey(item)} index={index} className={CONTENT_GRID_ITEM_CLASS}>
           {card(item)}
