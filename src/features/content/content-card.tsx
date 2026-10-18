@@ -1,6 +1,5 @@
 "use client";
 
-import { createContext, useContext } from "react";
 import Link from "next/link";
 import { Avatar } from "@/components/ui/avatar";
 import { rememberCardMedia } from "@/lib/card-transition";
@@ -36,7 +35,6 @@ export function ContentCard({
   className?: string;
   children: React.ReactNode;
 }) {
-  const surface = useContext(SurfaceContext);
   return (
     <article
       // A click that will navigate to this card's own page remembers where the cover is, so the detail
@@ -47,10 +45,7 @@ export function ContentCard({
         }
       }}
       className={cn(
-        "group relative flex flex-col",
-        surface === "responsive"
-          ? "bg-transparent sm:rounded-lg sm:border sm:border-border-soft sm:bg-surface sm:shadow-card sm:transition-[border-color,box-shadow] sm:duration-300 sm:ease-soft sm:hover:border-border sm:hover:shadow-card-hover"
-          : "rounded-lg border border-border-soft bg-surface shadow-card transition-[border-color,box-shadow] duration-300 ease-soft hover:border-border hover:shadow-card-hover",
+        "group relative flex flex-col rounded-lg border border-border-soft bg-surface shadow-card transition-[border-color,box-shadow] duration-300 ease-soft hover:border-border hover:shadow-card-hover",
         // Hover-capable pointers only (Tailwind's hover: variant): a hairline of the brand colour opens along the top edge.
         "before:pointer-events-none before:absolute before:inset-x-5 before:top-0 before:z-[1] before:h-px before:origin-center before:scale-x-0 before:rounded-full before:bg-primary/55 before:transition-transform before:duration-[var(--motion-emphasis)] before:ease-soft hover:before:scale-x-100",
         className,
@@ -59,20 +54,17 @@ export function ContentCard({
       {children}
       {/* Mouse/touch convenience only: hidden from assistive tech and the tab
           order — the card title (ContentCardTitle) is the accessible link. */}
-      <Link href={href} data-card-link className={cn("absolute inset-0 z-0", surface === "card" ? "rounded-lg" : surface === "responsive" && "sm:rounded-lg")} aria-hidden tabIndex={-1} />
+      <Link href={href} data-card-link className="absolute inset-0 z-0 rounded-lg" aria-hidden tabIndex={-1} />
     </article>
   );
 }
 
-/** How the cards inside draw their own surface: "card" = a box (default), "responsive" = a row on phones and a box from `sm` (a `ContentGrid`). */
-const SurfaceContext = createContext<"card" | "responsive">("card");
-
 /**
  * Every list of posts (Ana Sayfa, Topluluklar and a community's feed, Keşfet, type lists, profile, search,
- * saved/collections, my content — Meydan, docs/history/190-*). On phones the list is one column, drawn as edge-to-edge
- * rows split by hairlines (it cancels the page's 12px gutter); from `sm` the cards are boxes in CSS columns, so every
- * post list looks the same on a given screen. Wrap each card in an element with `CONTENT_GRID_ITEM_CLASS`.
- * No `overflow-hidden`: a card's ⋮ menu must be able to open past the list's edge.
+ * saved/collections, my content — Meydan, docs/history/190-*): the same boxed cards on EVERY screen (a phone is one column with the
+ * page's 12px gutter; from `sm` the boxes flow into CSS columns), so a post list looks the same everywhere
+ * (docs/history/196-*; the brief flat-rows-on-phones experiment of Faz 6 eki was reverted). Wrap each card in an element with
+ * `CONTENT_GRID_ITEM_CLASS`. No `overflow-hidden`: a card's ⋮ menu must be able to open past the list's edge.
  */
 export function ContentGrid({
   as: Tag = "div",
@@ -82,24 +74,14 @@ export function ContentGrid({
   ...rest
 }: React.HTMLAttributes<HTMLElement> & { as?: "div" | "ul"; columns?: string; [data: `data-${string}`]: string | undefined }) {
   return (
-    <SurfaceContext.Provider value="responsive">
-      <Tag
-        {...rest}
-        className={cn(
-          "-mx-3 divide-y divide-border-soft border-y border-border-soft bg-surface",
-          "sm:mx-0 sm:gap-4 sm:divide-y-0 sm:border-0 sm:bg-transparent",
-          columns,
-          className,
-        )}
-      >
-        {children}
-      </Tag>
-    </SurfaceContext.Provider>
+    <Tag {...rest} className={cn("sm:gap-4", columns, className)}>
+      {children}
+    </Tag>
   );
 }
 
-/** One cell of a `ContentGrid`: never split across columns; the gap between boxes exists only from `sm`. */
-export const CONTENT_GRID_ITEM_CLASS = "break-inside-avoid sm:pb-4";
+/** One cell of a `ContentGrid`: never split across columns; the gap between boxes (12px on a phone, 16px from `sm`). */
+export const CONTENT_GRID_ITEM_CLASS = "break-inside-avoid pb-3 sm:pb-4";
 
 /**
  * Meydan post layout (docs/history/190-*) — the one inner structure of every content card:

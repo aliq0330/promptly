@@ -153,7 +153,7 @@ RequestCard ortak), `ContentTypeLabel`, `ContentTags`,
 "Ad · @kullanıcı · zaman · [tür hapı `ContentTypePill`]" + ⋮, eylem satırı **solda Beğeni · Yorum, sağda
 Kaydet · İstatistik · Paylaş** — yeni kart yazarken bu kabuğu kullan, ikinci başlık/altbilgi çizme.
 Sitedeki HER gönderi listesi (Ana Sayfa, Topluluklar, topluluk sayfası, Keşfet, listeler, profil, arama, koleksiyon) `ContentGrid`
-ile çizilir: telefonda kenardan kenara çizgiyle ayrılmış satırlar, `sm`+ kutulu sütunlar (yanında sağ sütun olan sayfada en çok 2) —
+ile çizilir: HER ekranda kutulu kartlar (telefonda tek sütun, 12px sayfa kenar boşluğu; `sm`+ kutulu sütunlar, yanında sağ sütun olan sayfada en çok 2; `docs/history/196-*`) —
 yeni bir gönderi listesi elle `columns-*` yazmaz, ikinci bir liste görünümü kurulmaz. Her gönderi listesinde Keşfet'teki Kart | Odak
 seçicisi vardır (`ViewModeControls` + `useViewMode`; Odak = `FocusGrid`) — yeni liste yazarken ikisini de bağla, yeni seçici yazma.
 
@@ -415,5 +415,5 @@ bağlayıcıdır; ayrıntılı gerekçe için `docs/history/README.md` tablosuna
   isteğin `creative_direction`'ını da kapsar ve keyset sayfalanır (`search_content`); `prompt_saves` canlıdan kaldırıldı; kod içi
   yorumlarda eski "Bölüm 9.x" atıfları arşiv numaralarına (`docs/history/NNN-*`) karşılık gelir.
 
-**Arşiv:** [`docs/history/README.md`](docs/history/README.md) — 195 bölüm, her
+**Arşiv:** [`docs/history/README.md`](docs/history/README.md) — 196 bölüm, her
 biri için durum etiketi (uygulandı / kısmen geçerli / kaldırıldı).

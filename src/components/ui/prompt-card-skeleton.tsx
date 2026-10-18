@@ -6,14 +6,14 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 
 /**
  * Mirrors ContentCardPost's anatomy: avatar column → identity line → title → prompt block → actions.
- * `responsive` = a row on phones, a box from `sm` (like a card in `ContentGrid`).
+ * Always a box, like a card in `ContentGrid` (the same on every screen).
  */
-export function PromptCardSkeleton({ responsive = false }: { responsive?: boolean }) {
+export function PromptCardSkeleton() {
   return (
     <div
       className={cn(
         "flex gap-3 px-4 pb-3 pt-4",
-        responsive ? "sm:rounded-lg sm:border sm:border-border-soft sm:bg-surface sm:shadow-card" : "rounded-lg border border-border-soft bg-surface shadow-card",
+        "rounded-lg border border-border-soft bg-surface shadow-card",
       )}
       aria-hidden
     >
@@ -43,15 +43,15 @@ export function PromptCardSkeleton({ responsive = false }: { responsive?: boolea
 export function PromptCardSkeletonGrid({ count = 6, columns = "sm:columns-2 xl:columns-3" }: { count?: number; columns?: string }) {
   const { t } = useTranslation();
   return (
-    // Same surface as ContentGrid: stream rows on phones, boxes in columns from `sm`.
+    // Same layout as ContentGrid: boxes, one column on a phone and CSS columns from `sm`.
     <div
-      className={cn("-mx-3 divide-y divide-border-soft border-y border-border-soft bg-surface sm:mx-0 sm:gap-4 sm:divide-y-0 sm:border-0 sm:bg-transparent", columns)}
+      className={cn("sm:gap-4", columns)}
       role="status"
       aria-label={t("common.loadingAriaLabel")}
     >
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="break-inside-avoid sm:pb-4">
-          <PromptCardSkeleton responsive />
+        <div key={i} className="break-inside-avoid pb-3 sm:pb-4">
+          <PromptCardSkeleton />
         </div>
       ))}
     </div>
