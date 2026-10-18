@@ -12,8 +12,8 @@ type FooterTarget =
 
 /**
  * ContentActions — the one action row every content card uses (every prompt
- * content type, a workflow AND a preset), in Meydan's order (docs/history/190-*):
- * Beğeni · Yorum on the left; Kaydet · İstatistikler · Paylaş on the right.
+ * content type, a workflow AND a preset), in the order of docs/history/196-*:
+ * Beğeni · Yorum · Kaydet · İstatistikler on the left; Paylaş alone on the right.
  * Same icons, spacing and touch targets everywhere. Like/save/comment are the
  * real, database-persisted actions, Save opens the shared collection modal,
  * Share opens the shared `ShareModal` (never a direct native-share call).
@@ -26,7 +26,6 @@ export function PromptCardFooter(target: FooterTarget) {
         <>
           <LikeButton id={target.preset.id} likeCount={target.preset.likeCount} contentType="preset" />
           <CommentCountLink presetId={target.preset.id} baseCount={target.preset.commentCount} />
-          <span className="ml-auto" />
           <SaveButton presetId={target.preset.id} saveCount={target.preset.saveCount} />
           <StatisticsButton target={{ contentType: "preset", contentId: target.preset.id, likeCount: target.preset.likeCount, commentCount: target.preset.commentCount, saveCount: target.preset.saveCount }} />
         </>
@@ -34,7 +33,6 @@ export function PromptCardFooter(target: FooterTarget) {
         <>
           <LikeButton id={target.workflow.id} likeCount={target.workflow.likeCount} contentType="workflow" />
           <CommentCountLink workflowId={target.workflow.id} baseCount={target.workflow.commentCount} />
-          <span className="ml-auto" />
           <SaveButton workflowId={target.workflow.id} saveCount={target.workflow.saveCount} />
           <StatisticsButton target={{ contentType: "workflow", contentId: target.workflow.id, likeCount: target.workflow.likeCount, commentCount: target.workflow.commentCount, saveCount: target.workflow.saveCount }} />
         </>
@@ -42,11 +40,11 @@ export function PromptCardFooter(target: FooterTarget) {
         <>
           <LikeButton id={target.prompt.id} likeCount={target.prompt.likeCount} contentType="prompt" />
           <CommentCountLink promptId={target.prompt.id} baseCount={target.prompt.commentCount} />
-          <span className="ml-auto" />
           <SaveButton promptId={target.prompt.id} saveCount={target.prompt.saveCount} />
           <StatisticsButton target={{ contentType: "prompt", contentId: target.prompt.id, likeCount: target.prompt.likeCount, commentCount: target.prompt.commentCount, saveCount: target.prompt.saveCount, copyCount: target.prompt.copyCount }} />
         </>
       )}
+      <span className="ml-auto" />
       <ShareTriggerButton
         target={
           target.preset

@@ -66,9 +66,9 @@ export function ApplicationCard({
           <div className="contents" data-post-engagement={post.id}>
             <PostLike post={post} mode={mode} onToast={onToast} />
             <PostCommentLink post={post} />
-            <span className="ml-auto" />
             <PostSave post={post} />
             <PostStatisticsButton post={post} />
+            <span className="ml-auto" />
             <PostShareButton post={post} />
           </div>
         }
