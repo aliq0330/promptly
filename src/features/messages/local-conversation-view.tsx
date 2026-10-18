@@ -52,6 +52,7 @@ import {
 import { fetchReactionsForConversation, removeMessageReaction, setMessageReaction } from "@/lib/supabase/message-reactions";
 import { mergeIncomingMessage, applyMessageUpdate, removeReactionRow, upsertReaction } from "./realtime-helpers";
 import { computeKeyboardInset } from "./viewport-helpers";
+import { ComposerReplyBar } from "./reply-quote";
 import { supabase } from "@/lib/supabase/client";
 import { useRealPrompts } from "@/features/prompts/real-prompts-provider";
 import { useRealRequests } from "@/features/requests/real-requests-provider";
@@ -1624,14 +1625,12 @@ export function LocalConversationView() {
       </div>
     )}
     {replyingTo && (
-      <div className="mb-2 flex items-center justify-between gap-2 rounded-lg border border-border-soft bg-surface-soft px-3 py-1.5 text-xs text-text-muted">
-        <span className="truncate">
-          {t("messages.replyingToPrefix")} {replyingTo.body ?? (replyingTo.sharedPromptId ? t("messages.aPrompt") : replyingTo.attachments.length > 0 ? t("messages.aPhoto") : t("request.aRequest"))}
-        </span>
-        <button type="button" onClick={() => setReplyingTo(null)} aria-label={t("messages.cancelReplyAriaLabel")}>
-          <X size={14} />
-        </button>
-      </div>
+      <ComposerReplyBar
+        message={replyingTo}
+        isMine={replyingTo.senderId === user.id}
+        senderName={senderLabel(replyingTo.senderId)}
+        onCancel={() => setReplyingTo(null)}
+      />
     )}
     {pendingShare && (
       <div className="mb-2 flex items-center justify-between gap-2 rounded-lg border border-border-soft bg-surface-soft px-3 py-1.5 text-xs text-text-muted">
