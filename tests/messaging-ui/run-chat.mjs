@@ -557,12 +557,13 @@ await scenario("18b. Canlı eşitleme: başka bir yönetici benim rolümü deği
 }, { setup: (db) => seedCommunity(db, { myRole: "admin" }) });
 
 // 19 — mobil: açık sohbette alt menü yok (docs/history/193-*); composer ekranın altında; liste sayfasında menü var
-const bottomNav = (page) => page.locator("nav").filter({ hasText: "Topluluklar" }).filter({ has: page.getByRole("link", { name: "Keşfet" }) });
+const bottomNav = (page) => page.locator("nav.fixed.bottom-0:visible");
+const visibleRow = (page, text) => page.locator("a:visible", { hasText: text }).first();
 await scenario("19. Mobil: sohbet açılınca alt menü gizlenir, composer ekranın altına oturur; liste sayfasında menü geri gelir", async ({ page }) => {
   await page.goto(`${BASE}/messages`);
-  await page.getByText("ikinci benim").first().waitFor();
+  await visibleRow(page, "ikinci benim").waitFor();
   await bottomNav(page).waitFor();
-  await page.getByText("ikinci benim").first().click();
+  await visibleRow(page, "ikinci benim").click();
   await page.locator("[data-message-id]").first().waitFor();
   await page.waitForTimeout(300);
   assert.equal(await bottomNav(page).count(), 0, "bottom nav is not rendered inside a chat");
@@ -570,7 +571,7 @@ await scenario("19. Mobil: sohbet açılınca alt menü gizlenir, composer ekran
   assert.ok(composer.vh - composer.bottom <= 1, `composer reaches the screen bottom (${composer.bottom} vs ${composer.vh})`);
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1), true, "no horizontal overflow");
   await page.goBack();
-  await page.getByText("ikinci benim").first().waitFor();
+  await visibleRow(page, "ikinci benim").waitFor();
   await bottomNav(page).waitFor();
 }, { viewport: { width: 390, height: 800 }, setup: (db) => seedDm(db) });
 
