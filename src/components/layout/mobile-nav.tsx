@@ -9,13 +9,18 @@ import { useAuthPrompt } from "@/features/auth/auth-prompt-provider";
 import { useProfileNavHref } from "@/features/auth/use-profile-nav-href";
 import { useTranslation } from "@/lib/i18n/language-provider";
 
-/** Mobile-only bottom navigation; the middle "Oluştur" action is visually emphasized. */
+/**
+ * Mobile-only bottom navigation; the middle "Oluştur" action is visually emphasized.
+ * Hidden inside an open chat (`/messages/local`, a conversation or a new-chat draft): the chat panel then runs to the
+ * screen's bottom edge and the composer sits there, like other messengers (docs/history/193-*).
+ */
 export function MobileNav() {
   const pathname = usePathname();
   const profileNavHref = useProfileNavHref();
   const { t } = useTranslation();
   const status = useAuthStatus();
   const { requireAuth } = useAuthPrompt();
+  const inChat = pathname.startsWith("/messages/local");
 
   // Always five slots, so nothing reflows between states: members get their
   // profile, guests get "Giriş Yap" in that slot, and while the session is
@@ -24,6 +29,8 @@ export function MobileNav() {
     if ((item.visibility ?? "public") === "public" || status === "authenticated") return item;
     return status === "unauthenticated" ? guestLoginNavItem : null;
   });
+
+  if (inChat) return null;
 
   return (
     <nav

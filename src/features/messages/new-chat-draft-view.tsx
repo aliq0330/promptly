@@ -164,7 +164,7 @@ export function NewChatDraftView({ userId }: { userId: string }) {
     <div
       ref={panelRef}
       {...imageDrop.handlers}
-      className="fixed inset-x-0 top-16 z-10 flex flex-col bg-background bottom-[calc(4rem+env(safe-area-inset-bottom))] md:static md:inset-auto md:z-auto md:h-full md:min-h-0 md:flex-1"
+      className="fixed inset-x-0 top-16 z-10 flex flex-col bg-background bottom-0 md:static md:inset-auto md:z-auto md:h-full md:min-h-0 md:flex-1"
     >
       <div className="flex items-center gap-1 border-b border-border-soft bg-surface px-2 py-2 lg:px-4">
         <button
