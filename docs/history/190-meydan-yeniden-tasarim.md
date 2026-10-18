@@ -102,6 +102,15 @@ Kullanıcı bazı gönderilerin düz çizgili, bazılarının yuvarlak kart oldu
 - `ContentGrid` + `CONTENT_GRID_ITEM_CLASS` (`features/content/content-card.tsx`): `sm` altında `ContentStream` ile aynı yüzey (kenardan kenara, çizgiyle ayrılmış satırlar), `sm`+ CSS sütunlarında kutulu kartlar. Kart yüzeyi bağlamdan gelir (`SurfaceContext`: `card` | `flat` | `responsive`). Elle yazılmış bütün `columns-1 … sm:columns-2` ızgaraları buna geçti (FeedGrid, PromptGrid, RequestList — kendi `md:`/`2xl:` sütunlarıyla —, ProfileContentGrid, profil workflow'ları, hazır ayar listeleri, arama, İçeriklerim, koleksiyon/kaydedilenler); iskelet ızgarası da aynı davranışta. Yaratıcı kartları ve koleksiyon kapakları gönderi olmadığı için dokunulmadı.
 - Sınama: `npm test` 344, `lint` (eski 4 uyarı), `build` temiz; 390px'te Ana Sayfa/Keşfet/Profil/Promptlar yatay taşmasız, aynı satır görünümünde; 1440px'te ızgaralar kutulu. Playwright (hidrasyon denetimi dışarıda tutulan geçici kopyayla): `run-community-home` 38/38, `run-community-posts` 36/36, `run-communities` 61/61, `run-detail-pages` 44/44, `run-groups` 36/36. Gerçek cihazda denenmedi.
 
+### Faz 6 eki 2 — Ana Sayfa ve Topluluklar da Keşfet gibi
+
+Kullanıcı tablet ve masaüstünde Ana Sayfa ile Toplulukların (kutusuz tek sütun akış) Keşfet'ten (kutulu ızgara) farklı görünmesini istemedi: "o sayfalar da Keşfet gibi olsun". Sonuç: **sitedeki bütün gönderi listeleri tek bileşen, `ContentGrid`** — telefonda kenardan kenara çizgili satırlar, `sm`+ kutulu sütunlar.
+
+- Ana Sayfa (`FeedGrid layout="home"`, eski adı `stream`), Topluluklar ana sayfası (`HomeFeedList`) ve topluluk sayfası akışı (`FeedTab`, sabitlenenler ve odak gönderisi dahil) `ContentGrid`'e geçti; xl'de sağ sütun durduğu için en çok iki sütun (`sm:columns-2`, `FEED_GRID_COLUMNS`). Ana Sayfa'nın ana sütunundaki 640px sınırı kalktı (sayfa ≤ 1200px), topluluk akışının `max-w-3xl` sınırı kalktı.
+- `ContentStream` ve kart yüzeyinin `flat` hâli kaldırıldı (artık kullanan yok); `ContentGrid` `as="ul"` ve `data-*` alır. Bağlam satırı (`FEED_ITEM_CONTEXT_CLASS`) telefonda satırın içinde, `sm`+ kutunun üstünde. İskelet: `PromptCardSkeletonGrid columns=…`.
+- `run-community-home` 26/26b yeniden çok sütun bekler (sm+ 2 sütun, kart ≤ 460px, xl'de yan sütun bölümleri).
+- Sınama: `npm test` 344, `lint` (eski 4 uyarı), `build` temiz; 1440/820/390px'te Ana Sayfa, Topluluklar, topluluk sayfası ve Keşfet taşmasız. Playwright (hidrasyon denetimi dışarıda tutulan geçici kopyayla): `run-community-home` 38/38, `run-community-posts` 36/36, `run-communities` 61/61, `run-detail-pages` 44/44, `run-groups` 36/36. Gerçek cihazda denenmedi.
+
 ## Çeviri
 Yeni metinlerin hepsi `translations.ts`'te TR+EN: `home.composerPlaceholder`, `home.rings*`, `home.rail*`, `settings.palette.meydan`.
 

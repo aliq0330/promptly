@@ -48,11 +48,9 @@ export function ContentCard({
       }}
       className={cn(
         "group relative flex flex-col",
-        surface === "flat"
-          ? "bg-transparent"
-          : surface === "responsive"
-            ? "bg-transparent sm:rounded-lg sm:border sm:border-border-soft sm:bg-surface sm:shadow-card sm:transition-[border-color,box-shadow] sm:duration-300 sm:ease-soft sm:hover:border-border sm:hover:shadow-card-hover"
-            : "rounded-lg border border-border-soft bg-surface shadow-card transition-[border-color,box-shadow] duration-300 ease-soft hover:border-border hover:shadow-card-hover",
+        surface === "responsive"
+          ? "bg-transparent sm:rounded-lg sm:border sm:border-border-soft sm:bg-surface sm:shadow-card sm:transition-[border-color,box-shadow] sm:duration-300 sm:ease-soft sm:hover:border-border sm:hover:shadow-card-hover"
+          : "rounded-lg border border-border-soft bg-surface shadow-card transition-[border-color,box-shadow] duration-300 ease-soft hover:border-border hover:shadow-card-hover",
         // Hover-capable pointers only (Tailwind's hover: variant): a hairline of the brand colour opens along the top edge.
         "before:pointer-events-none before:absolute before:inset-x-5 before:top-0 before:z-[1] before:h-px before:origin-center before:scale-x-0 before:rounded-full before:bg-primary/55 before:transition-transform before:duration-[var(--motion-emphasis)] before:ease-soft hover:before:scale-x-100",
         className,
@@ -66,49 +64,27 @@ export function ContentCard({
   );
 }
 
-/**
- * How the cards inside draw their own surface: "card" = a box (default), "flat" = a row of a `ContentStream`,
- * "responsive" = a row on phones and a box from `sm` (a `ContentGrid`).
- */
-const SurfaceContext = createContext<"card" | "flat" | "responsive">("card");
+/** How the cards inside draw their own surface: "card" = a box (default), "responsive" = a row on phones and a box from `sm` (a `ContentGrid`). */
+const SurfaceContext = createContext<"card" | "responsive">("card");
 
 /**
- * Meydan's post stream (docs/history/190-* Faz 6): one surface holding the posts, separated by hairlines — no box per post.
- * Every `ContentCard` inside drops its own border/shadow/radius (context), so the same cards serve both the stream and the
- * masonry grids. On phones the stream runs edge to edge (it cancels the page's 12px gutter); from `sm` it is one rounded panel.
- * No `overflow-hidden`: a card's ⋮ menu must be able to open past the panel's edge.
+ * Every list of posts (Ana Sayfa, Topluluklar and a community's feed, Keşfet, type lists, profile, search,
+ * saved/collections, my content — Meydan, docs/history/190-*). On phones the list is one column, drawn as edge-to-edge
+ * rows split by hairlines (it cancels the page's 12px gutter); from `sm` the cards are boxes in CSS columns, so every
+ * post list looks the same on a given screen. Wrap each card in an element with `CONTENT_GRID_ITEM_CLASS`.
+ * No `overflow-hidden`: a card's ⋮ menu must be able to open past the list's edge.
  */
-export function ContentStream({
+export function ContentGrid({
   as: Tag = "div",
+  columns = "sm:columns-2 xl:columns-3",
   className,
   children,
   ...rest
-}: React.HTMLAttributes<HTMLElement> & { as?: "div" | "ul"; [data: `data-${string}`]: string | undefined }) {
-  return (
-    <SurfaceContext.Provider value="flat">
-      <Tag
-        {...rest}
-        className={cn(
-          "-mx-3 divide-y divide-border-soft border-y border-border-soft bg-surface sm:mx-0 sm:rounded-lg sm:border sm:shadow-card",
-          className,
-        )}
-      >
-        {children}
-      </Tag>
-    </SurfaceContext.Provider>
-  );
-}
-
-/**
- * The masonry of content cards (Keşfet, type lists, profile, search, saved/collections, my content). On phones the
- * list is one column anyway, so it reads exactly like `ContentStream` — edge-to-edge rows split by hairlines — and
- * every post list on a phone looks the same; from `sm` the cards are boxes in CSS columns (a box keeps side-by-side
- * posts apart). Wrap each card in an element with `CONTENT_GRID_ITEM_CLASS`.
- */
-export function ContentGrid({ columns = "sm:columns-2 xl:columns-3", className, children }: { columns?: string; className?: string; children: React.ReactNode }) {
+}: React.HTMLAttributes<HTMLElement> & { as?: "div" | "ul"; columns?: string; [data: `data-${string}`]: string | undefined }) {
   return (
     <SurfaceContext.Provider value="responsive">
-      <div
+      <Tag
+        {...rest}
         className={cn(
           "-mx-3 divide-y divide-border-soft border-y border-border-soft bg-surface",
           "sm:mx-0 sm:gap-4 sm:divide-y-0 sm:border-0 sm:bg-transparent",
@@ -117,7 +93,7 @@ export function ContentGrid({ columns = "sm:columns-2 xl:columns-3", className, 
         )}
       >
         {children}
-      </div>
+      </Tag>
     </SurfaceContext.Provider>
   );
 }

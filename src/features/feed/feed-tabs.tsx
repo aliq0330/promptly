@@ -45,7 +45,7 @@ const KIND_FILTERS: { key: KindFilter; labelKey: TranslationKey; icon: typeof La
   { key: "preset", labelKey: "nav.presets", icon: SlidersHorizontal },
 ];
 
-export function FeedTabs({ layout = "grid" }: { layout?: "grid" | "stream" } = {}) {
+export function FeedTabs({ layout = "grid" }: { layout?: "grid" | "home" } = {}) {
   const { t } = useTranslation();
   const [active, setActive] = useState<TabKey>("newest");
   const [kind, setKind] = useState<KindFilter>("all");
@@ -80,9 +80,9 @@ export function FeedTabs({ layout = "grid" }: { layout?: "grid" | "stream" } = {
     <section className="space-y-4" aria-label={t("feed.ariaLabel")}>
       <ListToolbar
         tabsBelow
-        stream={layout === "stream"}
+        stream={layout === "home"}
         leading={
-          layout === "stream" ? (
+          layout === "home" ? (
             // Meydan: equal-width underline tabs across the column (they scroll on a phone).
             <Tabs
               items={TABS.map((tab) => ({ key: tab.key, label: t(tab.labelKey) }))}
@@ -126,7 +126,7 @@ export function FeedTabs({ layout = "grid" }: { layout?: "grid" | "stream" } = {
           action={{ label: t("common.login"), href: "/login" }}
         />
       ) : feed.loading || waitingForAuth ? (
-        <PromptCardSkeletonGrid count={layout === "stream" ? 3 : 6} layout={layout} />
+        <PromptCardSkeletonGrid count={layout === "home" ? 4 : 6} columns={layout === "home" ? "sm:columns-2" : undefined} />
       ) : feed.failed && feed.items.length === 0 ? (
         <EmptyState
           icon={Clock}

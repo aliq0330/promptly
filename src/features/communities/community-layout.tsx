@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 
 /**
  * Topluluk sayfalarının ORTAK yerleşimi (docs/history/186-*). Tek kaynak burasıdır: sayfa genişliği, ana sütun + sağ yardımcı sütun,
- * gönderi akışı ve kompakt başlık. Akış Ana Sayfa'nınkiyle aynıdır (Meydan Faz 6): tek sütun, kutusuz, okunur genişlikte.
+ * gönderi akışı ve kompakt başlık. Akış Ana Sayfa ve Keşfet'inkiyle aynı listedir (`ContentGrid`).
  *
  * Genişlik kuralı: sayfa ≤ 1120px (uygulamanın `PageContainer` 1400px'inden bilerek dar — içerik akışı okunur kalsın). `xl`+ (≥1280px)
  * ekranda yardımcı sütun (16.5rem) ana sütunun yanına gelir; daha dar ekranda hiç çizilmez (ana içerik genişliğini bozmaz).
@@ -45,10 +45,12 @@ export function CommunityPageHeader({ title, description, actions }: { title: st
 }
 
 /**
- * Gönderi akışı (Meydan, docs/history/190-* Faz 6): tek sütun, kutusuz akış — liste `ContentStream` (çizgilerle ayrılmış tek yüzey) ile
- * çizilir, kartlar kendi kutularını bırakır. Akış okunur genişlikte kalır (≤ 3xl; topluluk sayfasında özet ve paylaş satırı da aynı sütunda);
- * geniş ekranda yanında yardımcı sütun durur.
+ * Gönderi akışı (Meydan, docs/history/190-*): Keşfet ile AYNI liste — `ContentGrid` (telefonda kenardan kenara çizgili satırlar, `sm`+ kutulu
+ * kartlar); yanında xl'de yardımcı sütun durduğu için en çok iki sütun.
  */
-export const FEED_STREAM_CLASS = "max-w-3xl";
-/** Akıştaki gönderinin üstündeki bağlam satırı (topluluk adı, "Sabit"): kartın kimlik satırıyla aynı iç boşluk. */
-export const FEED_ITEM_CONTEXT_CLASS = "-mb-2 flex items-center gap-2 px-4 pt-3 text-caption text-text-muted";
+export const FEED_GRID_COLUMNS = "sm:columns-2";
+/**
+ * Gönderinin üstündeki bağlam satırı (topluluk adı, "Sabit"): telefonda satırın içinde kartın iç boşluğuna hizalı, `sm`+ kutunun hemen
+ * üstünde. Öğe (`li`) `CONTENT_GRID_ITEM_CLASS` taşır, böylece satır ve kart aynı sütunda birlikte kalır.
+ */
+export const FEED_ITEM_CONTEXT_CLASS = "-mb-2 flex items-center gap-2 px-4 pt-3 text-caption text-text-muted sm:mb-1.5 sm:px-1 sm:pt-0";

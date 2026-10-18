@@ -14,7 +14,7 @@ import type { FeedItem } from "./types";
 export function FeedItemsView(props: React.ComponentProps<typeof FeedGrid>) {
   const [mode] = useViewMode();
   const items: FeedItem[] = props.items;
-  // Home's stream (docs/history/190-*) is always cards; the Kart/Odak choice belongs to the grid lists.
-  if (mode === "focus" && items.length > 0 && props.layout !== "stream") return <FocusGrid items={items} />;
+  // Home (docs/history/190-*) is always cards; the Kart/Odak choice belongs to the other lists.
+  if (mode === "focus" && items.length > 0 && props.layout !== "home") return <FocusGrid items={items} />;
   return <FeedGrid {...props} />;
 }

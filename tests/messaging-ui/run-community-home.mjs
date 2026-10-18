@@ -411,18 +411,18 @@ for (const [label, viewport, theme] of [["mobil", { width: 390, height: 800 }, u
   }, { viewport, theme, setup: (db) => { world(db); for (let i = 0; i < 6; i += 1) db.addCommunity(id(20 + i), { name: `Öneri ${i}`, myRole: "none", members: [[U.bob, "owner"]] }); } });
 }
 
-// 26 — ortak yerleşim (docs/history/186-*; Meydan Faz 6 = docs/history/190-*: tek sütun kutusuz akış): gönderi genişliği okunur sütunla sınırlı
-// (≤ 3xl), her ekranda tek sütun, sağ sütun yalnız xl+, taşma yok
-const STREAM_MAX = 768; // max-w-3xl
+// 26 — ortak yerleşim (docs/history/186-*; Meydan = docs/history/190-*: Keşfet ile aynı `ContentGrid`): gönderi kartı genişliği sınırlı,
+// telefonda tek sütun, sm+ iki sütun, sağ sütun yalnız xl+, taşma yok
+const CARD_MAX = 460;
 const cardBox = (page) => page.locator("[data-home-post]").evaluateAll((els) => els.map((e) => { const r = e.getBoundingClientRect(); return { left: Math.round(r.left), width: Math.round(r.width) }; }));
 const layoutWorld = (db) => { world(db); for (let i = 1; i <= 6; i += 1) db.addPost(id(1), { title: `Düzen gönderisi ${i}` }); };
-for (const [label, width, aside, columns] of [["1440", 1440, true, 1], ["1280", 1280, true, 1], ["1024", 1024, false, 1], ["820", 820, false, 1], ["768", 768, false, 1], ["390", 390, false, 1]]) {
-  await scenario(`26. Yerleşim (${label}px): gönderi ≤ ${STREAM_MAX}px, ${columns} sütun, sağ sütun ${aside ? "görünür" : "yok"}, yatay taşma yok`, async ({ page }) => {
+for (const [label, width, aside, columns] of [["1440", 1440, true, 2], ["1280", 1280, true, 2], ["1024", 1024, false, 2], ["820", 820, false, 2], ["768", 768, false, 2], ["390", 390, false, 1]]) {
+  await scenario(`26. Yerleşim (${label}px): kart ≤ ${CARD_MAX}px, ${columns} sütun, sağ sütun ${aside ? "görünür" : "yok"}, yatay taşma yok`, async ({ page }) => {
     await page.goto(`${BASE}/communities`);
     await page.locator("[data-home-post]").first().waitFor();
     await page.waitForTimeout(300);
     const boxes = await cardBox(page);
-    assert.ok(boxes.every((b) => b.width <= STREAM_MAX), `card too wide: ${JSON.stringify(boxes.map((b) => b.width))}`);
+    assert.ok(boxes.every((b) => b.width <= CARD_MAX), `card too wide: ${JSON.stringify(boxes.map((b) => b.width))}`);
     assert.equal(new Set(boxes.map((b) => b.left)).size, columns, `expected ${columns} column(s)`);
     assert.equal(await page.getByTestId("community-aside").isVisible(), aside, "aside visibility");
     assert.equal(await overflowFree(page), true, "no horizontal overflow");
@@ -432,14 +432,14 @@ for (const [label, width, aside, columns] of [["1440", 1440, true, 1], ["1280", 
     }
   }, { viewport: { width, height: 900 }, setup: layoutWorld });
 }
-await scenario("26b. Topluluk sayfası: başlık kompakt, tek sütun akış (+ xl'de Hakkında/Kurallar/Yöneticiler sütunu), Yönetim ayarları kartlara bölünür; taşma yok", async ({ page }) => {
-  for (const [w, cols] of [[1440, 1], [820, 1], [390, 1]]) {
+await scenario("26b. Topluluk sayfası: başlık kompakt, akış ızgarası (+ xl'de Hakkında/Kurallar/Yöneticiler sütunu), Yönetim ayarları kartlara bölünür; taşma yok", async ({ page }) => {
+  for (const [w, cols] of [[1440, 2], [820, 2], [390, 1]]) {
     await page.setViewportSize({ width: w, height: 900 });
     await page.goto(`${BASE}/communities/local?id=${id(1)}`);
     await page.locator("[data-community-post]").first().waitFor();
     await page.waitForTimeout(300);
     const posts = await page.locator("[data-community-post]").evaluateAll((els) => els.map((e) => { const r = e.getBoundingClientRect(); return { left: Math.round(r.left), width: Math.round(r.width) }; }));
-    assert.ok(posts.every((b) => b.width <= STREAM_MAX), `${w}: card too wide ${JSON.stringify(posts)}`);
+    assert.ok(posts.every((b) => b.width <= CARD_MAX), `${w}: card too wide ${JSON.stringify(posts)}`);
     if (w >= 1280) {
       const asides = await page.locator("[data-community-aside]").evaluateAll((els) => els.map((e) => e.getAttribute("data-community-aside")));
       assert.deepEqual(asides, ["about", "rules", "staff"], `${w}: community aside sections`);
