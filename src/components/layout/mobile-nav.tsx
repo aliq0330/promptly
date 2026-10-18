@@ -28,7 +28,9 @@ export function MobileNav() {
   return (
     <nav
       aria-label={t("nav.primaryLabel")}
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-border-soft bg-surface/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl backdrop-saturate-150 md:hidden"
+      // Opaque, and its colour continues below the screen edge (`after:`): the strip the browser's own toolbar floats over
+      // (iOS Safari) shows this colour instead of the page background, like Instagram's — docs/history/193-*.
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-border-soft bg-surface pb-[env(safe-area-inset-bottom)] after:pointer-events-none after:absolute after:inset-x-0 after:top-full after:h-[50vh] after:bg-surface md:hidden"
     >
       <ul className="flex h-16 items-stretch">
         {items.map((item, index) => {

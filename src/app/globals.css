@@ -637,6 +637,12 @@
   html {
     scrollbar-color: var(--color-border-strong) transparent;
   }
+  /* Phones: whatever the page does not paint (overscroll, the strip behind the browser toolbar) has the bottom nav's colour. */
+  @media (max-width: 767.98px) {
+    html {
+      background-color: var(--color-surface);
+    }
+  }
 
   body {
     background: var(--color-background);
