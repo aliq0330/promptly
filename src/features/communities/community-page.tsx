@@ -1,7 +1,6 @@
 "use client";
 
 import { Suspense, useEffect, useMemo } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, MessageSquare, RefreshCw, UserCog } from "lucide-react";
@@ -11,7 +10,6 @@ import { DetailSkeleton, NotFoundBlock } from "@/components/ui/detail-skeleton";
 import { Tabs, type TabItem } from "@/components/ui/tabs";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useRealMessages } from "@/features/messages/real-messages-provider";
-import { useStorageSrc } from "@/components/ui/storage-media";
 import { GroupAvatar } from "@/features/groups/group-avatar";
 import { RoleBadge } from "@/features/groups/role-badge";
 import { useToast } from "@/features/groups/use-toast";
@@ -26,6 +24,7 @@ import { AboutTab } from "./about-tab";
 import { ManageTab } from "./manage-tab";
 import { useCommunity } from "./use-community";
 import { CommunityAside, MemberStack, useCommunityPeople } from "./community-aside";
+import { CommunityCover } from "./community-cover";
 import { accessibleTabs, CATEGORY_LABEL_KEYS, communityChatHref, communityHref, resolveCommunityView, type CommunityTab } from "@/lib/communities";
 import { can } from "@/lib/chat-groups";
 import { memberCountText } from "@/lib/group-labels";
@@ -155,7 +154,7 @@ function CommunityPageInner() {
       </Link>
 
       <header className="overflow-hidden rounded-xl border border-border-soft bg-surface shadow-card" data-testid="community-header">
-        <CommunityBanner avatarUrl={g.avatarUrl} />
+        <CommunityCover coverUrl={g.coverUrl} coverColor={g.coverColor} avatarUrl={g.avatarUrl} />
         <div className="flex flex-wrap items-end gap-x-5 gap-y-3 px-4 pb-4 sm:px-6 sm:pb-5">
           {/* Meydan (docs/history/190-*): a large avatar rising over the banner, a big title, then actions. */}
           <span className="-mt-10 inline-flex shrink-0 rounded-[1.75rem] border-4 border-surface bg-surface sm:-mt-12">
@@ -228,18 +227,5 @@ function CommunityPageInner() {
       )}
       {toastNode}
     </CommunityLayout>
-  );
-}
-
-/**
- * The header band. Communities have no separate cover image, so the band is the community's own avatar, enlarged and
- * blurred (signed URL, same as `GroupAvatar`); without an avatar it is a quiet brand tint. Decorative only.
- */
-function CommunityBanner({ avatarUrl }: { avatarUrl: string | null }) {
-  const { src } = useStorageSrc(avatarUrl);
-  return (
-    <div aria-hidden className="relative h-20 overflow-hidden bg-primary-soft sm:h-24">
-      {src && <Image src={src} alt="" fill sizes="100vw" className="scale-125 object-cover opacity-80 blur-2xl" />}
-    </div>
   );
 }

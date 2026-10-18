@@ -1,6 +1,7 @@
 import { clsx, type ClassValue } from "clsx";
 import { extendTailwindMerge } from "tailwind-merge";
 import { translateForRuntime, type Language } from "@/lib/i18n/translations";
+import { assertImageSourceSize, IMAGE_BYTE_BUDGETS, shrinkImage } from "@/lib/image-processing";
 import type { Collection, Conversation, Prompt, PromptRequest, PromptResultSummary, Tag, UserProfile } from "@/types";
 
 /**
@@ -103,6 +104,12 @@ export function resizeImageToDataUrlFit(file: File, maxDimension = 480): Promise
   height: number;
 }> {
   return new Promise((resolve, reject) => {
+    try {
+      assertImageSourceSize(file);
+    } catch (err) {
+      reject(err);
+      return;
+    }
     const objectUrl = URL.createObjectURL(file);
     const img = new Image();
     img.onload = () => {
@@ -118,6 +125,8 @@ export function resizeImageToDataUrlFit(file: File, maxDimension = 480): Promise
         reject(new Error("2D canvas context unavailable"));
         return;
       }
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, width, height);
       ctx.drawImage(img, 0, 0, width, height);
       URL.revokeObjectURL(objectUrl);
       resolve({ url: canvas.toDataURL("image/jpeg", 0.85), width, height });
@@ -140,47 +149,14 @@ export function resizeImageToDataUrlFit(file: File, maxDimension = 480): Promise
  * reference image, duplicate previews), which have nothing to do with
  * Storage.
  */
-export function resizeImageToBlob(
+export async function resizeImageToBlob(
   file: File,
   maxDimension = 1600,
+  maxBytes: number = IMAGE_BYTE_BUDGETS.media,
 ): Promise<{ blob: Blob; width: number; height: number; contentType: string }> {
-  return new Promise((resolve, reject) => {
-    const objectUrl = URL.createObjectURL(file);
-    const img = new Image();
-    img.onload = () => {
-      const scale = Math.min(1, maxDimension / Math.max(img.naturalWidth, img.naturalHeight));
-      const width = Math.round(img.naturalWidth * scale);
-      const height = Math.round(img.naturalHeight * scale);
-      const canvas = document.createElement("canvas");
-      canvas.width = width;
-      canvas.height = height;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) {
-        URL.revokeObjectURL(objectUrl);
-        reject(new Error("2D canvas context unavailable"));
-        return;
-      }
-      ctx.drawImage(img, 0, 0, width, height);
-      const contentType = "image/jpeg";
-      canvas.toBlob(
-        (blob) => {
-          URL.revokeObjectURL(objectUrl);
-          if (!blob) {
-            reject(new Error(translateForRuntime("image.processFailed")));
-            return;
-          }
-          resolve({ blob, width, height, contentType });
-        },
-        contentType,
-        0.9,
-      );
-    };
-    img.onerror = () => {
-      URL.revokeObjectURL(objectUrl);
-      reject(new Error(translateForRuntime("image.loadFailed")));
-    };
-    img.src = objectUrl;
-  });
+  // The shared shrinker (src/lib/image-processing.ts): longest side capped, then quality/dimensions stepped down until
+  // the result fits `maxBytes` — any photo is accepted up to the one source ceiling, never refused for being heavy.
+  return shrinkImage(file, { maxDimension, maxBytes });
 }
 
 /**
@@ -188,47 +164,25 @@ export function resizeImageToBlob(
  * `Blob` — for uploading a profile avatar to the Supabase Storage
  * `avatars` bucket (CLAUDE.md Bölüm 20/21).
  */
-export function resizeImageToSquareBlob(
+export async function resizeImageToSquareBlob(
   file: File,
   size = 320,
+  maxBytes: number = IMAGE_BYTE_BUDGETS.avatar,
 ): Promise<{ blob: Blob; contentType: string }> {
-  return new Promise((resolve, reject) => {
-    const objectUrl = URL.createObjectURL(file);
-    const img = new Image();
-    img.onload = () => {
-      const canvas = document.createElement("canvas");
-      canvas.width = size;
-      canvas.height = size;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) {
-        URL.revokeObjectURL(objectUrl);
-        reject(new Error("2D canvas context unavailable"));
-        return;
-      }
-      const cropSize = Math.min(img.naturalWidth, img.naturalHeight);
-      const sx = (img.naturalWidth - cropSize) / 2;
-      const sy = (img.naturalHeight - cropSize) / 2;
-      ctx.drawImage(img, sx, sy, cropSize, cropSize, 0, 0, size, size);
-      const contentType = "image/jpeg";
-      canvas.toBlob(
-        (blob) => {
-          URL.revokeObjectURL(objectUrl);
-          if (!blob) {
-            reject(new Error(translateForRuntime("image.processFailed")));
-            return;
-          }
-          resolve({ blob, contentType });
-        },
-        contentType,
-        0.9,
-      );
-    };
-    img.onerror = () => {
-      URL.revokeObjectURL(objectUrl);
-      reject(new Error(translateForRuntime("image.loadFailed")));
-    };
-    img.src = objectUrl;
-  });
+  const { blob, contentType } = await shrinkImage(file, { maxDimension: size, maxBytes, square: true });
+  return { blob, contentType };
+}
+
+/**
+ * Center-crops an uploaded image to a wide strip (`aspect` = width / height) and fits it to `maxBytes` — a community cover.
+ */
+export async function resizeImageToCoverBlob(
+  file: File,
+  width = 1600,
+  aspect = 10 / 3,
+  maxBytes: number = IMAGE_BYTE_BUDGETS.cover,
+): Promise<{ blob: Blob; width: number; height: number; contentType: string }> {
+  return shrinkImage(file, { maxDimension: width, maxBytes, aspect });
 }
 
 /**

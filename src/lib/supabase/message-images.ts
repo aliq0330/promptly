@@ -1,5 +1,6 @@
 import { supabase } from "./client";
 import { translateForRuntime } from "@/lib/i18n/translations";
+import { IMAGE_BYTE_BUDGETS, IMAGE_SOURCE_MAX_BYTES, shrinkImage } from "@/lib/image-processing";
 import type { MessageAttachment } from "@/types";
 
 /** Private bucket created by `20260919650000_message_attachments.sql` — members of the conversation read it through signed URLs only. */
@@ -7,8 +8,8 @@ export const MESSAGE_IMAGES_BUCKET = "message-images";
 
 /** Photos per message (the database CHECK allows up to 10; the composer is stricter on purpose). */
 export const MAX_MESSAGE_IMAGES = 6;
-/** Largest source file we are willing to even decode — keeps a 60 MB camera RAW from freezing a phone. */
-export const MAX_SOURCE_BYTES = 20 * 1024 * 1024;
+/** Largest source file we are willing to even decode — the one ceiling every photo field shares (src/lib/image-processing.ts). */
+export const MAX_SOURCE_BYTES = IMAGE_SOURCE_MAX_BYTES;
 /** Mirrors the bucket's own `file_size_limit` (5 MB); anything above is re-encoded smaller first. */
 const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
 const MAX_DIMENSION = 1600;
@@ -78,7 +79,9 @@ function loadImage(blob: Blob): Promise<{ img: HTMLImageElement; revoke: () => v
  * canvas and saved as JPEG.
  */
 export async function prepareMessageImage(file: File): Promise<PreparedMessageImage> {
-  if (file.size > MAX_SOURCE_BYTES) throw new MessageImageError("tooLarge", translateForRuntime("messages.imageTooLarge"));
+  if (file.size > MAX_SOURCE_BYTES) {
+    throw new MessageImageError("tooLarge", translateForRuntime("image.sourceTooLarge", { max: String(Math.round(MAX_SOURCE_BYTES / (1024 * 1024))) }));
+  }
   const mime = await sniffImageMime(file);
   if (!mime) throw new MessageImageError("type", translateForRuntime("messages.imageTypeNotAllowed"));
 
@@ -92,21 +95,9 @@ export async function prepareMessageImage(file: File): Promise<PreparedMessageIm
       return { blob: file.slice(0, file.size, mime), mime, width, height };
     }
 
-    const scale = Math.min(1, MAX_DIMENSION / Math.max(width, height));
-    const outW = Math.max(1, Math.round(width * scale));
-    const outH = Math.max(1, Math.round(height * scale));
-    const canvas = document.createElement("canvas");
-    canvas.width = outW;
-    canvas.height = outH;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) throw new MessageImageError("decode", translateForRuntime("image.processFailed"));
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, outW, outH);
-    ctx.drawImage(img, 0, 0, outW, outH);
-    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.85));
-    if (!blob) throw new MessageImageError("decode", translateForRuntime("image.processFailed"));
-    if (blob.size > MAX_UPLOAD_BYTES) throw new MessageImageError("tooLarge", translateForRuntime("messages.imageTooLarge"));
-    return { blob, mime: "image/jpeg", width: outW, height: outH };
+    // Heavy or large: redrawn smaller and re-encoded until it fits the upload budget (never refused for its weight).
+    const shrunk = await shrinkImage(file, { maxDimension: MAX_DIMENSION, maxBytes: Math.min(MAX_UPLOAD_BYTES, IMAGE_BYTE_BUDGETS.media) });
+    return { blob: shrunk.blob, mime: "image/jpeg", width: shrunk.width, height: shrunk.height };
   } finally {
     revoke();
   }

@@ -1,7 +1,7 @@
 import { supabase } from "./client";
 import { translateForRuntime, type TranslationKey } from "@/lib/i18n/translations";
 import { mapProfileRow, type ProfileRow } from "./mappers";
-import { resizeImageToSquareBlob } from "@/lib/utils";
+import { resizeImageToCoverBlob, resizeImageToSquareBlob } from "@/lib/utils";
 import {
   extractGroupErrorCode,
   normalizeRolePermissions,
@@ -31,6 +31,7 @@ const ERROR_KEYS: Record<GroupErrorCode, TranslationKey> = {
   invalid_visibility: "groups.error.generic",
   invalid_member_limit: "groups.error.invalid_member_limit",
   invalid_avatar: "groups.error.invalid_avatar",
+  invalid_cover: "groups.error.invalid_cover",
   invalid_patch: "groups.error.generic",
   invalid_posting_policy: "groups.error.generic",
   invalid_role: "groups.error.generic",
@@ -131,6 +132,9 @@ export interface ChatGroupRow {
   name: string;
   description: string | null;
   avatar_url: string | null;
+  /** 20260920150000: yoksa (eski sunucu ya da test taklidi) kapak yok sayılır. */
+  cover_url?: string | null;
+  cover_color?: string | null;
   visibility: GroupVisibility;
   posting_policy: GroupPostingPolicy;
   member_limit: number;
@@ -151,7 +155,7 @@ export interface ChatGroupRow {
 }
 
 export const CHAT_GROUP_SELECT =
-  "id, name, description, avatar_url, visibility, posting_policy, member_limit, member_count, pending_request_count, history_visible, members_can_pin, role_permissions, created_at, category, feed_policy, rules, rules_version, rules_required, closed_at, post_count, origin";
+  "id, name, description, avatar_url, cover_url, cover_color, visibility, posting_policy, member_limit, member_count, pending_request_count, history_visible, members_can_pin, role_permissions, created_at, category, feed_policy, rules, rules_version, rules_required, closed_at, post_count, origin";
 
 export function mapChatGroupRow(row: ChatGroupRow, myRole: GroupRole): ChatGroup {
   return {
@@ -159,6 +163,8 @@ export function mapChatGroupRow(row: ChatGroupRow, myRole: GroupRole): ChatGroup
     name: row.name,
     description: row.description,
     avatarUrl: row.avatar_url,
+    coverUrl: row.cover_url ?? null,
+    coverColor: row.cover_color ?? null,
     visibility: row.visibility,
     postingPolicy: row.posting_policy,
     memberLimit: row.member_limit,
@@ -209,6 +215,9 @@ export interface UpdateChatGroupPatch {
   name?: string;
   description?: string;
   avatarUrl?: string | null;
+  /** Kapak: fotoğraf VEYA renk (ikisi birden verilirse fotoğraf önce gelir); ikisi de null = otomatik (topluluk görselinden türetilir). */
+  coverUrl?: string | null;
+  coverColor?: string | null;
   memberLimit?: number;
   postingPolicy?: GroupPostingPolicy;
 }
@@ -219,6 +228,8 @@ export async function updateChatGroup(groupId: string, patch: UpdateChatGroupPat
   if (patch.name !== undefined) body.name = patch.name.trim();
   if (patch.description !== undefined) body.description = patch.description.trim();
   if (patch.avatarUrl !== undefined) body.avatar_url = patch.avatarUrl;
+  if (patch.coverUrl !== undefined) body.cover_url = patch.coverUrl;
+  if (patch.coverColor !== undefined) body.cover_color = patch.coverColor;
   if (patch.memberLimit !== undefined) body.member_limit = patch.memberLimit;
   if (patch.postingPolicy !== undefined) body.posting_policy = patch.postingPolicy;
   await callRpc("update_chat_group", { p_group_id: groupId, p_patch: body });
@@ -257,6 +268,18 @@ export async function uploadGroupAvatar(userId: string, file: File): Promise<str
   const path = `${userId}/group-${crypto.randomUUID()}.jpg`;
   // ÖZEL bucket (docs/history/177-*): dosya yalnız topluluğun kartı görülebildiği sürece okunur; satırda saklanan URL kimliktir,
   // gösterirken signed URL'ye çevrilir (`PROTECTED_MEDIA_BUCKETS`). Ortak `avatars` bucket'ı listelenebilir olduğundan kullanılmaz.
+  const { error } = await supabase.storage.from("community-avatars").upload(path, blob, { contentType, upsert: false });
+  if (error) throw new Error(error.message);
+  return supabase.storage.from("community-avatars").getPublicUrl(path).data.publicUrl;
+}
+
+/**
+ * Topluluk KAPAK fotoğrafını (geniş şerit: ortadan 10:3 kırpılır, en çok 1600px, ≤ ~900 KB) görsel ile AYNI özel `community-avatars`
+ * bucket'ına yükler; satırda saklanan adres kimliktir, gösterirken signed URL'ye çevrilir. Ağır fotoğraf reddedilmez, otomatik küçülür.
+ */
+export async function uploadGroupCover(userId: string, file: File): Promise<string> {
+  const { blob, contentType } = await resizeImageToCoverBlob(file);
+  const path = `${userId}/cover-${crypto.randomUUID()}.jpg`;
   const { error } = await supabase.storage.from("community-avatars").upload(path, blob, { contentType, upsert: false });
   if (error) throw new Error(error.message);
   return supabase.storage.from("community-avatars").getPublicUrl(path).data.publicUrl;
@@ -617,6 +640,9 @@ export interface CommunityCard {
   rulesVersion: number;
   closedAt: string | null;
   origin: "native" | "legacy_group";
+  /** Yalnız tek kart okumasında (`fetchCommunityCard`) doldurulur — listelerde kapak gösterilmez. */
+  coverUrl: string | null;
+  coverColor: string | null;
   /** Yalnız herkese açık topluluk ya da üye için; kapalı topluluğun içerik sayacı üye olmayana verilmez. */
   postCount: number | null;
   createdAt: string;
@@ -645,6 +671,8 @@ export async function fetchCommunityCards(ids: string[]): Promise<CommunityCard[
     rulesVersion: row.rules_version ?? 1,
     closedAt: row.closed_at,
     origin: row.origin === "legacy_group" ? "legacy_group" : "native",
+    coverUrl: null,
+    coverColor: null,
     postCount: row.post_count,
     createdAt: row.created_at,
   }));

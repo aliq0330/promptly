@@ -1,8 +1,9 @@
 "use client";
 
-import { useId } from "react";
+import { useId, useState } from "react";
 import { ChevronLeft, ChevronRight, ImagePlus, X } from "lucide-react";
 import { resizeImageToDataUrlFit } from "@/lib/utils";
+import { ImageProcessingError } from "@/lib/image-processing";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { MultiImageItem } from "@/lib/supabase/media-input";
 import { StorageImg } from "@/components/ui/storage-media";
@@ -37,9 +38,11 @@ export function MultiImagePicker({
 }) {
   const { t } = useTranslation();
   const inputId = useId();
+  const [problem, setProblem] = useState<string | null>(null);
 
   async function handleFiles(fileList: FileList | null) {
     if (!fileList || fileList.length === 0) return;
+    setProblem(null);
     const room = Math.max(0, max - items.length);
     const files = Array.from(fileList).slice(0, room);
     const added: MultiImageItem[] = [];
@@ -47,8 +50,10 @@ export function MultiImagePicker({
       try {
         const resized = await resizeImageToDataUrlFit(file, previewMaxDimension);
         added.push({ key: `${Date.now()}-${added.length}-${file.name}`, url: resized.url, width: resized.width, height: resized.height, file });
-      } catch {
-        // A single bad file (corrupt/unsupported) is skipped rather than failing the whole batch.
+      } catch (err) {
+        // A single bad file (corrupt/unsupported, or above the one shared source ceiling) is skipped rather than failing the whole batch;
+        // heavy photos are NOT refused — they are shrunk automatically when saved.
+        if (err instanceof ImageProcessingError && err.code === "tooLarge") setProblem(err.message);
       }
     }
     if (added.length > 0) onChange([...items, ...added]);
@@ -141,6 +146,11 @@ export function MultiImagePicker({
         )}
       </div>
       <p className="mt-1.5 text-caption text-text-muted">{hint ?? t("media.multiImageHint", { max })}</p>
+      {problem && (
+        <p role="alert" className="mt-1 text-caption text-danger">
+          {problem}
+        </p>
+      )}
     </div>
   );
 }

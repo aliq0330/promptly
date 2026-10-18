@@ -1,5 +1,6 @@
 "use client";
 
+import { imageSourceProblem } from "@/lib/image-processing";
 import { useState } from "react";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -98,6 +99,15 @@ export function AddResultModal({
       setFile(null);
       setDetectedType(null);
       setFileError(t("result.fileUnsupported"));
+      event.target.value = "";
+      return;
+    }
+    // A heavy photo is fine (it is shrunk automatically on upload); only an absurdly large one is turned away.
+    const heavy = detected === "image" ? imageSourceProblem(picked) : null;
+    if (heavy) {
+      setFile(null);
+      setDetectedType(null);
+      setFileError(heavy);
       event.target.value = "";
       return;
     }

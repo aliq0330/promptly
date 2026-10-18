@@ -101,7 +101,7 @@ ikincil vurgu; gereksiz gradient / glassmorphism / neon / ağır gölge yok. İn
 (kart `rounded-lg` = 16px, `rounded-xl` = 22px), **düğmeler hap biçimli**
 (`Button` = `rounded-full`), 200ms `ease-soft` geçişler. Ana Sayfa ana sütun (gönderiler
 iki sütunlu ızgara) + `xl`'de sağ yardımcı sütundur; profil kartsız başlık + tek sekme satırı,
-topluluk sayfası kapak bandı + hap sekmeler (`Tabs variant="pill"`).
+topluluk sayfası kapak bandı (fotoğraf › renk › topluluk görselinden türetilmiş otomatik; `CommunityCover`) + hap sekmeler (`Tabs variant="pill"`).
 
 **Fontlar** (`src/app/layout.tsx`, `next/font`): gövde **DM Sans**, başlıklar ve
 sayfa düzeyi başlıklar (`text-display`/`text-h1`/`text-h2`, h1–h3 otomatik) ve
@@ -321,6 +321,15 @@ Kalıplar (yeni migration yazarken uy):
    değişince ve "Açık işler" listesini güncellemek için düzenle.
 6. Yeni kod mevcut stilini izler: token'lar (hex yok), ortak bileşenler, i18n
    anahtarları, kod yorumu yoğunluğu.
+7. **Fotoğraf yükleyen her alan** `src/lib/image-processing.ts`'ten geçer (`resizeImageToBlob` /
+   `resizeImageToSquareBlob` / `resizeImageToCoverBlob` / `prepareMessageImage`): ağır fotoğraf
+   REDDEDİLMEZ, bayt bütçesine kadar otomatik küçülür; tek sınır kaynak tavanıdır
+   (`IMAGE_SOURCE_MAX_BYTES`, 40 MB). Alan başına ayrı MB sınırı/mesajı yazılmaz; seçicide
+   `imageSourceProblem(file)` kullan (`docs/history/191-*`).
+8. **Depolamadaki bir adresi doğrulayan SQL** (`_group_valid_avatar`, `_group_valid_cover`…) bucket
+   değişince birlikte güncellenir; istemci yeni bucket'a yazıp sunucu eskisini bekliyorsa kayıt
+   sessizce reddedilir (177'den sonra topluluk görseli böyle bozuldu). Yeni bir görsel sütunu
+   eklenirse `orphan_storage_objects` listesine de eklenir (yoksa yetim süpürücü dosyayı siler).
 
 ---
 
@@ -333,7 +342,9 @@ Canlı projede (kontrol: bu oturum) 20 profil (18 demo hesap), 148 prompt (+43 t
 bağlayıcıdır; ayrıntılı gerekçe için `docs/history/README.md` tablosuna bak.
 
 **Açık işler (kullanıcı/yönetici adımı veya bilinen boşluk):**
-- Meydan yeniden tasarımı (`docs/history/190-*`): Faz 1 (tema, yan menü, Ana Sayfa, prompt kartında prompt metni) ve Faz 2 (Keşfet, Profil — tek sekme satırı, Topluluk sayfası başlığı) ana dalda; Faz 3 (sade `PageHeader`, Topluluklar ana sayfası, detay görseli sınırı) ana dalda; Faz 4 (Ayarlar bölüm menüsü, Bildirimler gün grupları) ana dalda; Faz 5 (gönderi kartları C düzeninde, `ContentCardPost`) ana dalda; Faz 6 (kutusuz akış, tek sütun topluluk akışı + yan sütun, profil kullanım toplamı, Keşfet "Bu hafta popüler") ana dalda; Faz 6 eki (telefonda tüm gönderi listeleri düz akış, `ContentGrid`) ana dalda; Faz 6 eki 2 (Ana Sayfa ve Topluluklar da tablet/masaüstünde Keşfet gibi kutulu ızgara) ana dalda; Faz 6 eki 3 (Kart | Odak seçicisi bütün kart sayfalarında) repoda — yalnız istemci; `20260920140000_meydan_palette.sql` (yalnız palet kısıtı genişletme) **canlıya UYGULANDI** (kullanıcı onayıyla, MCP `execute_sql`, tek işlem; `schema_migrations`'a dosya sürümüyle kayıt düşüldü; mevcut 20 satır korundu). Ağ taklitli ekran görüntüleriyle bakıldı; gerçek Supabase/oturum/cihazla denenmedi. UI testlerinde aralıklı React #418 hidrasyon hatası (Meydan öncesinde de var): teşhis `docs/history/190-*` → Faz 3 (istemci gövdede `<meta charset>` buluyor; kurtarılabilir), kök neden çözülmedi; o denetim dışında UI paketleri tam geçiyor.
+- Meydan yeniden tasarımı (`docs/history/190-*`): Faz 1 (tema, yan menü, Ana Sayfa, prompt kartında prompt metni) ve Faz 2 (Keşfet, Profil — tek sekme satırı, Topluluk sayfası başlığı) ana dalda; Faz 3 (sade `PageHeader`, Topluluklar ana sayfası, detay görseli sınırı) ana dalda; Faz 4 (Ayarlar bölüm menüsü, Bildirimler gün grupları) ana dalda; Faz 5 (gönderi kartları C düzeninde, `ContentCardPost`) ana dalda; Faz 6 (kutusuz akış, tek sütun topluluk akışı + yan sütun, profil kullanım toplamı, Keşfet "Bu hafta popüler") ana dalda; Faz 6 eki (telefonda tüm gönderi listeleri düz akış, `ContentGrid`) ana dalda; Faz 6 eki 2 (Ana Sayfa ve Topluluklar da tablet/masaüstünde Keşfet gibi kutulu ızgara) ana dalda; Faz 6 eki 3 (Kart | Odak seçicisi bütün kart sayfalarında) ana dalda; `20260920140000_meydan_palette.sql` (yalnız palet kısıtı genişletme) **canlıya UYGULANDI** (kullanıcı onayıyla, MCP `execute_sql`, tek işlem; `schema_migrations`'a dosya sürümüyle kayıt düşüldü; mevcut 20 satır korundu). Ağ taklitli ekran görüntüleriyle bakıldı; gerçek Supabase/oturum/cihazla denenmedi. UI testlerinde aralıklı React #418 hidrasyon hatası (Meydan öncesinde de var): teşhis `docs/history/190-*` → Faz 3 (istemci gövdede `<meta charset>` buluyor; kurtarılabilir), kök neden çözülmedi; o denetim dışında UI paketleri tam geçiyor.
+- Topluluk kapağı + görsel yükleme düzeltmesi + otomatik küçültme (`docs/history/191-*`): `20260920150000_community_cover_and_avatar_url.sql` repoda, yerel PostgreSQL'de sınandı (`community-cover.sql` 15 kontrol), **canlıya UYGULANMADI** — önce migration (yalnızca ekleyici/değiştirici, `drop` yok), sonra istemci (yeni istemci `chat_groups.cover_url/cover_color` okur). Bu migration uygulanana kadar topluluk görseli yüklemesi `invalid_avatar` ile kaydedilemez. Gerçek Storage'a / telefondaki gerçek fotoğrafa karşı denenmedi.
+- **Not (durum satırları):** aşağıdaki topluluk migration'ları (174–185) için "canlıya UYGULANMADI" notları ESKİ olabilir — canlı şemada topluluk RPC'leri, `community-avatars` bucket'ı ve politikaları mevcut (bu oturumda `execute_sql` ile görüldü) ama `schema_migrations`'a kayıtları yok. Bir şeyin canlıda olup olmadığına bu notlara değil canlı şemaya bak.
 - **Google ile giriş:** kod ve `handle_new_user` migration'ı hazır/canlıda
   (`docs/history/155-*`), ama Google sağlayıcısı Supabase'de etkinleştirilene kadar
   buton hata verir: Google Cloud'da OAuth istemcisi + Supabase Dashboard → Authentication

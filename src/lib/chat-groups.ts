@@ -212,6 +212,7 @@ export const GROUP_ERROR_CODES = [
   "invalid_visibility",
   "invalid_member_limit",
   "invalid_avatar",
+  "invalid_cover",
   "invalid_patch",
   "invalid_posting_policy",
   "invalid_role",

@@ -5,6 +5,7 @@ import { ImagePlus, Palette, Plus, X } from "lucide-react";
 import { Chip } from "@/components/ui/chip";
 import { fieldControlClassName, fieldInputClassName, fieldLabelClassName } from "@/components/ui/field";
 import { cn, resizeImageToDataUrlFit } from "@/lib/utils";
+import { ImageProcessingError } from "@/lib/image-processing";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import {
@@ -111,8 +112,8 @@ export function VariableSpecEditor({
           options: current.spec.options.map((option, i) => (i === index ? { ...option, image: url, color: undefined } : option)),
         },
       });
-    } catch {
-      setUploadError(t("variable.optionImageFailed"));
+    } catch (err) {
+      setUploadError(err instanceof ImageProcessingError ? err.message : t("variable.optionImageFailed"));
     } finally {
       setUploadBusy(false);
       setUploadIndex(null);

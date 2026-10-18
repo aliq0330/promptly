@@ -15,6 +15,7 @@
 import { FunctionsFetchError, FunctionsHttpError, FunctionsRelayError } from "@supabase/supabase-js";
 import { supabase } from "./client";
 import { readBlobAsBase64, resizeImageToBlob } from "@/lib/utils";
+import { IMAGE_SOURCE_MAX_BYTES } from "@/lib/image-processing";
 import { translateForRuntime } from "@/lib/i18n/translations";
 import type {
   GeneratorBuilderContext,
@@ -63,9 +64,6 @@ function friendlyMessages(): Record<ImageAnalysisErrorKind, string> {
 
 /** Bu sistemin desteklediği görsel formatları (HEIC vb. dahil edilmedi, tarayıcı desteği garanti değil). */
 const SUPPORTED_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
-
-/** Kaynak dosya için üst sınır — bunun üstü zaten mantıksız derecede büyük bir dosya demektir, optimize etmeye bile değmez. */
-const MAX_SOURCE_BYTES = 20 * 1024 * 1024;
 
 const REQUEST_TIMEOUT_MS = 30_000;
 
@@ -135,10 +133,10 @@ async function analyzeImage<TData>(
   if (!SUPPORTED_MIME_TYPES.has(file.type)) {
     return { ok: false, error: { kind: "invalid_image", message: friendly.invalid_image } };
   }
-  if (file.size > MAX_SOURCE_BYTES) {
+  if (file.size > IMAGE_SOURCE_MAX_BYTES) {
     return {
       ok: false,
-      error: { kind: "invalid_image", message: translateForRuntime("vision.errorFileTooLarge") },
+      error: { kind: "invalid_image", message: translateForRuntime("image.sourceTooLarge", { max: String(Math.round(IMAGE_SOURCE_MAX_BYTES / (1024 * 1024))) }) },
     };
   }
 

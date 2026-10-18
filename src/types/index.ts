@@ -347,6 +347,9 @@ export interface ChatGroup {
   rules: string | null;
   rulesVersion: number;
   rulesRequired: boolean;
+  /** Kapak fotoğrafı (özel `community-avatars` bucket'ı, signed URL ile gösterilir) ve kapak rengi (#rrggbb). Öncelik: fotoğraf > renk > otomatik. */
+  coverUrl: string | null;
+  coverColor: string | null;
   /** Kapatılmış (salt-okunur) topluluk: ne zaman. */
   closedAt: string | null;
   postCount: number;

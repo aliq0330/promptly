@@ -985,6 +985,109 @@ await scenario("32. Sekme yeniden görünür olunca topluluk sessizce yenilenir:
 }, { setup: (db) => seed(db, { myRole: "member", visibility: "public" }) });
 
 console.log("");
+// 33 — kapak (docs/history/191-*): Otomatik · Renk · Fotoğraf; fotoğraf ağır olsa da reddedilmez, otomatik küçülür
+const cover = (page) => page.locator("[data-community-cover]").first();
+/** "Temel ayarlar" bölümünün kendi Kaydet düğmesi (Ayarlar sekmesinde bir de topluluk ayarlarının Kaydet'i var). */
+const saveBasic = (page) => page.locator('section[aria-labelledby="settings-basic-title"]').getByRole("button", { name: "Kaydet", exact: true });
+/** Sayfada gürültülü (sıkıştırılması zor) AĞIR bir JPEG üretip dosya seçiciye verir. 4000×3000 gürültü ≈ 12 MB (eski 8 MB sınırının çok üstü). */
+async function pickHeavyPhoto(page, selector, { fakeBytes } = {}) {
+  return page.evaluate(async ({ selector, fakeBytes }) => {
+    let file;
+    if (fakeBytes) {
+      file = new File([new Uint8Array(fakeBytes)], "dev.jpg", { type: "image/jpeg" });
+    } else {
+      const canvas = document.createElement("canvas");
+      canvas.width = 4000; canvas.height = 3000;
+      const ctx = canvas.getContext("2d");
+      const image = ctx.createImageData(4000, 3000);
+      for (let i = 0; i < image.data.length; i += 65536) crypto.getRandomValues(image.data.subarray(i, Math.min(i + 65536, image.data.length)));
+      for (let i = 3; i < image.data.length; i += 4) image.data[i] = 255;
+      ctx.putImageData(image, 0, 0);
+      const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.95));
+      file = new File([blob], "ağır.jpg", { type: "image/jpeg" });
+    }
+    const input = document.querySelector(selector);
+    const transfer = new DataTransfer();
+    transfer.items.add(file);
+    input.files = transfer.files;
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+    return file.size;
+  }, { selector, fakeBytes });
+}
+
+await scenario("33. Kapak · Renk: varsayılan Otomatik; renk seçilip kaydedilince şerit o renk olur (kapak fotoğrafı temizlenir); Otomatik'e dönünce renk kalkar", async ({ page, db }) => {
+  await open(page, C1, "manage");
+  assert.equal(await cover(page).getAttribute("data-community-cover"), "auto", "nothing chosen → automatic (follows the community picture)");
+  await page.getByRole("tab", { name: "Ayarlar" }).click();
+  const group = page.getByRole("radiogroup", { name: "Kapak türü" });
+  assert.equal(await group.getByRole("radio", { name: "Otomatik" }).getAttribute("aria-checked"), "true");
+  await group.getByRole("radio", { name: "Renk" }).click();
+  await page.locator('[data-cover-swatch="#e4572e"]').click();
+  await saveBasic(page).click();
+  await page.getByText("Topluluk ayarları kaydedildi.", { exact: false }).waitFor();
+  const patch = calls(db, "rpc/update_chat_group").at(-1).body.p_patch;
+  assert.equal(patch.cover_color, "#e4572e");
+  assert.equal(patch.cover_url, null, "choosing a colour clears the photo");
+  await page.waitForFunction(() => document.querySelector("[data-community-cover]")?.getAttribute("data-community-cover") === "color");
+  assert.equal(await cover(page).evaluate((el) => getComputedStyle(el).backgroundColor), "rgb(228, 87, 46)");
+  await page.getByRole("radiogroup", { name: "Kapak türü" }).getByRole("radio", { name: "Otomatik" }).click();
+  await saveBasic(page).click();
+  await page.waitForFunction(() => document.querySelector("[data-community-cover]")?.getAttribute("data-community-cover") === "auto");
+  const back = calls(db, "rpc/update_chat_group").at(-1).body.p_patch;
+  assert.deepEqual([back.cover_color, back.cover_url], [null, null]);
+}, { setup: (db) => seed(db, { myRole: "owner" }) });
+
+await scenario("33b. Kapak · Fotoğraf: ağır (8 MB üstü) fotoğraf reddedilmez; ≤ ~1 MB'a küçülüp özel bucket'a yüklenir, adresi kaydedilir ve şerit fotoğraf olur", async ({ page, db }) => {
+  await open(page, C1, "manage");
+  await page.getByRole("tab", { name: "Ayarlar" }).click();
+  await page.getByRole("radiogroup", { name: "Kapak türü" }).getByRole("radio", { name: "Fotoğraf" }).click();
+  await saveBasic(page).click();
+  await page.getByText("Bir fotoğraf seç ya da başka bir kapak türü kullan.").waitFor();
+  assert.equal(calls(db, "rpc/update_chat_group").length, 0, "photo mode without a photo cannot be saved");
+  const source = await pickHeavyPhoto(page, "[data-cover-picker] input[type=file]");
+  assert.ok(source > 8 * 1024 * 1024, `the test photo is heavy (${source} bytes)`);
+  assert.equal(await page.getByText("çok büyük", { exact: false }).count(), 0, "a heavy photo is not turned away");
+  await saveBasic(page).click();
+  await page.getByText("Topluluk ayarları kaydedildi.", { exact: false }).waitFor();
+  const up = db.calls.filter((c) => c.method === "UPLOAD" && c.table.startsWith("community-avatars/"));
+  assert.equal(up.length, 1, "one cover upload");
+  assert.match(up[0].table, /\/cover-[0-9a-f-]+\.jpg$/);
+  assert.ok(up[0].body.size < 1.2 * 1024 * 1024, `the upload was shrunk automatically (${up[0].body.size} bytes from ${source})`);
+  const patch = calls(db, "rpc/update_chat_group").at(-1).body.p_patch;
+  assert.match(patch.cover_url, /\/storage\/v1\/object\/public\/community-avatars\/.+\/cover-[0-9a-f-]+\.jpg$/);
+  assert.equal(patch.cover_color, null);
+  await page.waitForFunction(() => document.querySelector("[data-community-cover]")?.getAttribute("data-community-cover") === "photo");
+  assert.ok(db.calls.some((c) => c.method === "SIGN" && c.table === "community-avatars"), "the cover is shown through a signed URL");
+  assert.equal(db.calls.filter((c) => c.method === "PUBLICGET").length, 0, "the shared public address is never requested");
+}, { setup: (db) => seed(db, { myRole: "owner" }) });
+
+await scenario("33c. Topluluk görseli: ağır fotoğraf artık '8 MB' diye reddedilmez, ≤ ~200 KB kareye küçülüp yüklenir ve kaydedilir; 40 MB üstü dosya anlaşılır bir mesajla reddedilir", async ({ page, db }) => {
+  await open(page, C1, "manage");
+  await page.getByRole("tab", { name: "Ayarlar" }).click();
+  const AVATAR_INPUT = 'section[aria-labelledby="settings-basic-title"] input[type=file]';
+  await page.locator(AVATAR_INPUT).waitFor({ state: "attached" });
+  const tooBig = await pickHeavyPhoto(page, AVATAR_INPUT, { fakeBytes: 41 * 1024 * 1024 });
+  assert.ok(tooBig > 40 * 1024 * 1024);
+  await page.getByText("en fazla 40 MB", { exact: false }).waitFor();
+  assert.equal(calls(db, "rpc/update_chat_group").length, 0);
+  const source = await pickHeavyPhoto(page, AVATAR_INPUT);
+  assert.ok(source > 8 * 1024 * 1024);
+  await saveBasic(page).click();
+  await page.getByText("Topluluk ayarları kaydedildi.", { exact: false }).waitFor();
+  const up = db.calls.filter((c) => c.method === "UPLOAD" && c.table.startsWith("community-avatars/"));
+  assert.equal(up.length, 1);
+  assert.match(up[0].table, /\/group-[0-9a-f-]+\.jpg$/);
+  assert.ok(up[0].body.size < 300 * 1024, `avatar shrunk to a small square (${up[0].body.size} bytes from ${source})`);
+  assert.match(calls(db, "rpc/update_chat_group").at(-1).body.p_patch.avatar_url, /community-avatars\/.+group-/);
+}, { setup: (db) => seed(db, { myRole: "owner" }) });
+
+await scenario("33d. Kapak · üye olmayan / ziyaretçi: kapak, kart kapağı RPC'sinden gelir", async ({ page, db }) => {
+  await open(page, C1);
+  assert.equal(await cover(page).getAttribute("data-community-cover"), "color");
+  assert.equal(await cover(page).evaluate((el) => getComputedStyle(el).backgroundColor), "rgb(112, 72, 232)");
+  assert.ok(calls(db, "rpc/community_card_covers").length >= 1);
+}, { guest: true, setup: (db) => { seed(db, { myRole: "none" }); db.groups.find((x) => x.id === C1).cover_color = "#7048e8"; } });
+
 let failed = 0;
 for (const [s, n] of results) { if (s === "FAIL") failed++; console.log(`${s}  ${n}`); }
 console.log(`\n${results.length - failed}/${results.length} passed`);

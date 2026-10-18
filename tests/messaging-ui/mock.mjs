@@ -128,6 +128,13 @@ export async function installMock(context, db, opts = {}) {
     }
     if (p.startsWith("/storage/v1/object/sign/")) return route.fulfill({ status: 200, contentType: "image/png", headers: { "access-control-allow-origin": "*" }, body: Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==", "base64") });
     if (p.startsWith("/storage/v1/object/public/")) { db.calls.push({ method: "PUBLICGET", table: p, body: null }); return route.fulfill({ status: 400, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: JSON.stringify({ message: "Bucket not found" }) }); }
+    // Storage yüklemesi (docs/history/191-*): bucket/yol + gönderilen bayt sayısı kaydedilir (otomatik küçültme testleri boyutu denetler).
+    if (p.startsWith("/storage/v1/object/") && method === "POST") {
+      const buf = req.postDataBuffer();
+      const key = p.replace("/storage/v1/object/", "");
+      db.calls.push({ method: "UPLOAD", table: key, body: { size: buf?.length ?? 0, contentType: req.headers()["content-type"] ?? "" } });
+      return json(200, { Key: key });
+    }
     if (!p.startsWith("/rest/v1/")) return json(200, {});
     const table = p.replace("/rest/v1/", "");
     const sel = q.get("select") ?? "";
