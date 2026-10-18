@@ -1,6 +1,6 @@
 # 191 — Topluluk kapağı (fotoğraf / renk / otomatik), görsel yükleme hatası, tüm fotoğraf alanlarında otomatik küçültme
 
-**Durum:** istemci + `20260920150000_community_cover_and_avatar_url.sql` repoda, yerel PostgreSQL'de sınandı; **canlıya UYGULANMADI** — kullanıcı onayı bekliyor. Sıra: ÖNCE migration, SONRA istemci (yeni istemci `chat_groups.cover_url/cover_color` sütunlarını okur; sütunlar yoksa topluluk sayfası üye için açılmaz).
+**Durum:** istemci + `20260920150000_community_cover_and_avatar_url.sql` yerel PostgreSQL'de sınandı; **canlıya UYGULANDI** (kullanıcı onayıyla, MCP `execute_sql` ile 5 parça; `schema_migrations`'a kayıt düşüldü; canlıda sütunlar/doğrulayıcılar/yetkiler doğrulandı). Sıra: ÖNCE migration, SONRA istemci (yeni istemci `chat_groups.cover_url/cover_color` sütunlarını okur; sütunlar yoksa topluluk sayfası üye için açılmaz).
 
 ## İstek
 1. Topluluk sayfasındaki kapak bölümüne fotoğraf konabilsin; isteyen renk seçebilsin; hiçbir şey seçilmediyse kapak topluluk profil görseline uygun olsun.
