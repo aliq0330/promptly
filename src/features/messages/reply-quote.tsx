@@ -17,35 +17,39 @@ type T = (key: TranslationKey, params?: Record<string, string | number>) => stri
 
 /**
  * What a replied-to message "is", in one short line — its text, else the shared item (prompt / request / workflow /
- * preset / community post: the plain-text share blocks are recognised, their raw block never shown), else "a photo".
+ * preset / community post: the plain-text share blocks are recognised, their raw block never shown) by its TITLE (the
+ * generic "a prompt" only while the title is not known — e.g. still loading, or the viewer cannot read it), else "a photo".
  */
-export function describeReplied(message: Message, t: T): string {
+export function describeReplied(message: Message, t: T, itemTitle?: string | null): string {
   if (message.deletedAt) return t("messages.deletedMessage");
   const shared = !message.sharedPromptId && !message.sharedRequestId;
   const workflow = shared ? parseWorkflowShareBody(message.body) : null;
-  if (workflow) return workflow.note ?? t("messages.aWorkflow");
+  if (workflow) return workflow.note ?? workflow.title;
   const preset = shared && !workflow ? parsePresetShareBody(message.body) : null;
-  if (preset) return preset.note ?? t("messages.aPreset");
+  if (preset) return preset.note ?? preset.title;
   const post = shared && !workflow && !preset ? parseCommunityPostShareBody(message.body) : null;
-  if (post) return post.note ?? t("messages.aCommunityPost");
+  if (post) return post.note ?? post.title;
   if (message.body) return message.body;
-  if (message.sharedPromptId) return t("messages.aPrompt");
-  if (message.sharedRequestId) return t("request.aRequest");
+  if (message.sharedPromptId) return itemTitle ?? t("messages.aPrompt");
+  if (message.sharedRequestId) return itemTitle ?? t("request.aRequest");
   if (message.attachments.length > 0) return t("messages.aPhoto");
   return "";
 }
 
 type Thumb = { kind: "photo"; url: string } | { kind: "media"; media: PromptMedia };
 
-/** A small picture for a replied-to message when it has one: its first photo, or the first image of the prompt / request it shares. */
-function useReplyThumb(message: Message | null): Thumb | null {
+/**
+ * What a replied-to message points at, beyond its own text: the TITLE of the prompt / request it shares, and a small
+ * picture when it has one (its first photo, or the first image of that prompt / request). Cache-first, one fetch.
+ */
+export function useRepliedItem(message: Message | null): { title: string | null; thumb: Thumb | null } {
   const attachments = message && !message.deletedAt ? message.attachments.slice(0, 1) : [];
   const photoUrls = useMessageImageUrls(attachments);
   const { getCached: getPrompt, fetchById: fetchPrompt } = useRealPrompts();
   const { getCached: getRequest, fetchById: fetchRequest } = useRealRequests();
   const promptId = message && !message.deletedAt ? message.sharedPromptId : null;
   const requestId = message && !message.deletedAt ? message.sharedRequestId : null;
-  const [fetched, setFetched] = useState<{ id: string; media: PromptMedia | null } | null>(null);
+  const [fetched, setFetched] = useState<{ id: string; media: PromptMedia | null; title: string | null } | null>(null);
 
   useEffect(() => {
     const id = promptId ?? requestId;
@@ -54,10 +58,10 @@ function useReplyThumb(message: Message | null): Thumb | null {
     let cancelled = false;
     (promptId ? fetchPrompt(promptId) : fetchRequest(id))
       .then((item) => {
-        if (!cancelled) setFetched({ id, media: item?.media[0] ?? null });
+        if (!cancelled) setFetched({ id, media: item?.media[0] ?? null, title: item?.title ?? null });
       })
       .catch(() => {
-        if (!cancelled) setFetched({ id, media: null });
+        if (!cancelled) setFetched({ id, media: null, title: null });
       });
     return () => {
       cancelled = true;
@@ -65,19 +69,20 @@ function useReplyThumb(message: Message | null): Thumb | null {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- only the shared item's identity matters
   }, [promptId, requestId]);
 
+  const id = promptId ?? requestId;
+  const cachedItem = promptId ? getPrompt(promptId) : requestId ? getRequest(requestId) : null;
+  const title = id ? (cachedItem?.title ?? (fetched?.id === id ? fetched.title : null)) : null;
   if (attachments[0]) {
     const url = photoUrls.get(attachments[0].path);
-    return url ? { kind: "photo", url } : null;
+    return { title, thumb: url ? { kind: "photo", url } : null };
   }
-  const id = promptId ?? requestId;
-  if (!id) return null;
-  const media = (promptId ? getPrompt(promptId)?.media[0] : getRequest(requestId as string)?.media[0]) ?? (fetched?.id === id ? fetched.media : null);
-  return media ? { kind: "media", media } : null;
+  if (!id) return { title: null, thumb: null };
+  const media = cachedItem?.media[0] ?? (fetched?.id === id ? fetched.media : null);
+  return { title, thumb: media ? { kind: "media", media } : null };
 }
 
 /** The small square picture of a replied-to message (nothing when it has none). */
-export function ReplyThumb({ message, size }: { message: Message; size: number }) {
-  const thumb = useReplyThumb(message);
+export function ReplyThumb({ thumb, size }: { thumb: Thumb | null; size: number }) {
   if (!thumb) return null;
   return (
     <span
@@ -111,15 +116,16 @@ export function ComposerReplyBar({
   onCancel: () => void;
 }) {
   const { t } = useTranslation();
+  const replied = useRepliedItem(message);
   return (
     <div data-reply-bar className="mb-2 flex items-center gap-3 rounded-xl border border-border-soft bg-surface-soft px-3 py-2">
       <div className="min-w-0 flex-1">
         <p className="truncate text-small font-semibold text-text">
           {isMine ? t("messages.replyingToSelf") : t("messages.replyingToName", { name: senderName })}
         </p>
-        <p className="truncate text-caption text-text-muted">{describeReplied(message, t)}</p>
+        <p className="truncate text-caption text-text-muted">{describeReplied(message, t, replied.title)}</p>
       </div>
-      <ReplyThumb message={message} size={40} />
+      <ReplyThumb thumb={replied.thumb} size={40} />
       <button
         type="button"
         onClick={onCancel}

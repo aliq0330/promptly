@@ -15,7 +15,7 @@
 
 ## Sohbet kartları ve yanıt çubuğu
 - `shared-content-card.tsx` tek `SharedCard` + `useSharedItem`: sahip adı + tür (`Ali · Prompt`), başlık, 2 satır açıklama, küçük görsel (istek: durum rozeti). Okunamayan / silinmiş / gizli içerik **bağlantısız** "Sayfa gizli veya kaldırılmış." (topluluk gönderisinde mevcut "erişimin olmalı" metni korunur). Yükleniyor ile "yok" ayrılır (`settled`).
-- `reply-quote.tsx`: yanıt çubuğu "X kullanıcısına yanıt veriyorsun" / "Kendi mesajına yanıt veriyorsun" + tek satır özet + sağda küçük görsel (fotoğraf ya da paylaşılan prompt/isteğin görseli); gönderilen yanıtın balon üstü alıntısında da küçük görsel. Paylaşım blokları (workflow/hazır ayar/gönderi) artık ham metin değil etiketle özetlenir.
+- `reply-quote.tsx`: yanıt çubuğu "X kullanıcısına yanıt veriyorsun" / "Kendi mesajına yanıt veriyorsun" + tek satır özet + sağda küçük görsel (fotoğraf ya da paylaşılan prompt/isteğin görseli); gönderilen yanıtın balon üstü alıntısında da küçük görsel. Paylaşım blokları (workflow/hazır ayar/gönderi) artık ham metin değil özetlenir. Not yoksa genel "Bir prompt" yerine İÇERİK BAŞLIĞI yazılır (prompt/istek: `useRepliedItem` önbellekten/getirerek; workflow/hazır ayar/gönderi: paylaşım bloğundaki başlık satırı — ayrıştırıcılar artık `title` döndürür); başlık bilinmiyorsa (yükleniyor ya da okunamayan içerik) genel etiket kalır.
 
 ## Çeviri
 Yeni: `messages.contentHidden`, `messages.replyingToName`, `messages.replyingToSelf` (TR+EN). Kaldırılan kullanılmayan: `messages.contentNoLongerAvailable/sharedPrompt/sharedRequest/sharedWorkflow/sharedPreset/replyingToPrefix`. Tür adları mevcut `communities.feed.type.*` anahtarlarından.

@@ -14,6 +14,8 @@ export function composeCommunityPostShareText(note: string, title: string, url: 
 export interface ParsedCommunityPostShare {
   note: string | null;
   id: string;
+  /** The shared item's title as written into the share block. */
+  title: string;
 }
 
 export function parseCommunityPostShareBody(body: string | null | undefined): ParsedCommunityPostShare | null {
@@ -25,5 +27,5 @@ export function parseCommunityPostShareBody(body: string | null | undefined): Pa
   const titleLine = lines[urlLineIndex - 1]?.trim();
   if (!match || !titleLine) return null;
   const note = lines.slice(0, urlLineIndex - 1).join("\n").trim();
-  return { note: note || null, id: match[1] };
+  return { note: note || null, id: match[1], title: titleLine };
 }
