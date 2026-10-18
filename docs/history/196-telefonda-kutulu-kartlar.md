@@ -14,3 +14,10 @@
 
 ## Sınama
 `tsc`, `lint`, `npm test`, `next build`; `run-community-home`, `run-communities`, `run-community-posts`, `run-detail-pages`, `run-groups`, `run-chat`, `run`, `run-profile-collections`, `run-shared-cards` (aşağıdaki sonuçlar raporda). Çeviri: yeni metin yok.
+
+## Ek — kartın iç yerleşimi (kullanıcının örnek görseli, her ekranda)
+Kullanıcı kutulu yüzeyin yanında örnek görseldeki iç düzeni de istedi ("hem telefona hem diğer ekranlara"):
+- `ContentCardPost` (`features/content/content-card.tsx`) yeniden düzenlendi: kimlik bloğu (avatar · kalın ad · altında "@kullanıcı · zaman" · ⋮) → TAM GENİŞLİKTE içerik türü satırı → başlık/gövde → ince ayırıcı çizgi → eylem satırı. Eski düzende gövde avatar sütununa girintiliydi, ad ve "@kullanıcı · zaman · tür hapı" tek satırdı, eylem satırı girintiliydi.
+- `ContentTypePill`: hap yerine renkli simge karosu (24px, `primary-soft`) + etiket (`Metin Prompt`). Durum/Başvuru/Sabit rozetleri aynı satırda yanında.
+- Eylem sırası: Beğeni · Yorum · Kaydet · İstatistik solda, Paylaş tek başına sağda (`PromptCardFooter`, `RequestCard` [Beğeni · Yorum · Yanıtlar · İstatistik · Paylaş], `ApplicationCard`).
+- Kart başlığı biraz büyüdü (1.1875rem, kalın); iskelet yeni yapıyı yansıtır.

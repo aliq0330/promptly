@@ -82,8 +82,8 @@ export function RequestCard({ request, onDeleted }: { request: PromptRequest; on
               <Reply size={16} strokeWidth={1.75} />
               <span aria-hidden>{formatCount(request.responseCount)}</span>
             </Link>
-            <span className="ml-auto" />
             <StatisticsButton target={{ contentType: "request", contentId: request.id, likeCount: request.likeCount, commentCount: request.commentCount }} />
+            <span className="ml-auto" />
             <ShareTriggerButton target={{ contentType: "request", request }} />
           </>
         }

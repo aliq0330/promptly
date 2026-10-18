@@ -84,17 +84,18 @@ export function ContentGrid({
 export const CONTENT_GRID_ITEM_CLASS = "break-inside-avoid pb-3 sm:pb-4";
 
 /**
- * Meydan post layout (docs/history/190-*) — the one inner structure of every content card:
+ * The one inner structure of every content card (docs/history/196-*):
  *
- *   [avatar]  Name  @user · 3s  [type pill]            ⋮
- *             title / description / media / prompt …
- *             ♥ 12   💬 3                    🔖  📊  ↗
+ *   [avatar]  Name                                     ⋮
+ *             @user · 3 gün önce
+ *   [▣] Metin Prompt                       (content-type row: tinted icon tile + label, other badges beside it)
+ *   Title / description / media / prompt …
+ *   ───────────────────────────────────────────────
+ *   ♥ 12   💬 3   🔖 1   📊                          ↗
  *
- * A 40px avatar column on the left; the identity line, body and action row all
- * share the column to its right (the action row is indented to line up with it).
- * The identity row sits above the stretched card link (`z-20`, and above its
- * siblings while a menu inside it is open) so the profile links and the ⋮ menu
- * stay clickable.
+ * Everything below the identity block is full width (not indented under the avatar); a hairline separates the action row, which
+ * keeps the counters on the left and Paylaş alone on the right. The identity row sits above the stretched card link (`z-20`, and above
+ * its siblings while a menu inside it is open) so the profile links and the ⋮ menu stay clickable.
  */
 export function ContentCardPost({
   author,
@@ -106,9 +107,9 @@ export function ContentCardPost({
 }: {
   /** `null` = unknown/removed author (shown as a generic user, no profile link). */
   author: Pick<UserProfile, "username" | "displayName" | "avatarUrl"> | null;
-  /** Muted text after the name — e.g. "@carol · 3 gün önce" or "bir prompt paylaştı · dün". */
+  /** Muted second line under the name — e.g. "@carol · 3 gün önce" or "bir prompt paylaştı · dün". */
   meta: string;
-  /** Pills shown inline on the identity line (content type, status, "Başvuru"…). */
+  /** The content-type row under the identity block (`ContentTypePill`, status, "Başvuru"…). */
   badges?: React.ReactNode;
   menu?: React.ReactNode;
   footer?: React.ReactNode;
@@ -118,34 +119,32 @@ export function ContentCardPost({
   const name = author?.displayName ?? t("common.genericUser");
   return (
     <>
-      <div className="flex gap-3 px-4 pt-4">
-        {author ? (
-          // The name next to it is the accessible profile link; the avatar is a mouse/touch shortcut to the same page.
-          <Link href={profileHref(author)} aria-hidden tabIndex={-1} className="relative z-10 shrink-0 self-start rounded-full">
-            <Avatar src={author.avatarUrl} alt={name} size={40} />
-          </Link>
-        ) : (
-          <Avatar src={null} alt={name} size={40} className="shrink-0" />
-        )}
-        <div className="min-w-0 flex-1 space-y-2.5 pb-1">
-          <div className="relative z-20 flex items-start gap-1 focus-within:z-30">
-            <p className="flex min-w-0 flex-1 flex-wrap items-center gap-x-1.5 gap-y-1 pt-0.5 text-small leading-snug">
-              {author ? (
-                <Link href={profileHref(author)} className="max-w-full truncate rounded-xs font-bold text-text hover:text-primary">
-                  {name}
-                </Link>
-              ) : (
-                <span className="font-bold text-text">{name}</span>
-              )}
-              <span className="min-w-0 truncate text-text-muted">{meta}</span>
-              {badges}
-            </p>
-            {menu}
+      <div className="space-y-3 px-4 pb-3 pt-4">
+        <div className="relative z-20 flex items-start gap-3 focus-within:z-30">
+          {author ? (
+            // The name next to it is the accessible profile link; the avatar is a mouse/touch shortcut to the same page.
+            <Link href={profileHref(author)} aria-hidden tabIndex={-1} className="shrink-0 rounded-full">
+              <Avatar src={author.avatarUrl} alt={name} size={40} />
+            </Link>
+          ) : (
+            <Avatar src={null} alt={name} size={40} className="shrink-0" />
+          )}
+          <div className="min-w-0 flex-1 pt-px">
+            {author ? (
+              <Link href={profileHref(author)} className="block max-w-full truncate rounded-xs text-[0.9375rem] font-bold leading-tight text-text hover:text-primary">
+                {name}
+              </Link>
+            ) : (
+              <span className="block truncate text-[0.9375rem] font-bold leading-tight text-text">{name}</span>
+            )}
+            <p className="mt-0.5 truncate text-small leading-tight text-text-muted">{meta}</p>
           </div>
-          {children}
+          {menu}
         </div>
+        {badges && <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">{badges}</div>}
+        <div className="space-y-3">{children}</div>
       </div>
-      {footer && <div className="relative z-10 flex items-center gap-0.5 pb-2 pl-[3.5rem] pr-2">{footer}</div>}
+      {footer && <div className="relative z-10 flex items-center gap-0.5 border-t border-border-soft px-2 py-1">{footer}</div>}
     </>
   );
 }
@@ -167,7 +166,7 @@ export function ContentCardTitle({
   const cardBody = splitSourceNotes(description).body;
   return (
     <div className="space-y-1">
-      <h2 className="text-[1.0625rem] font-semibold leading-snug tracking-[-0.012em] text-text">
+      <h2 className="text-[1.1875rem] font-bold leading-snug tracking-[-0.014em] text-text">
         <Link
           href={href}
           data-card-link

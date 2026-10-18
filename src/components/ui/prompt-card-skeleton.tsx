@@ -5,36 +5,35 @@ import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 
 /**
- * Mirrors ContentCardPost's anatomy: avatar column → identity line → title → prompt block → actions.
+ * Mirrors ContentCardPost's anatomy: identity block → type row → title → prompt block → hairline → actions.
  * Always a box, like a card in `ContentGrid` (the same on every screen).
  */
 export function PromptCardSkeleton() {
   return (
-    <div
-      className={cn(
-        "flex gap-3 px-4 pb-3 pt-4",
-        "rounded-lg border border-border-soft bg-surface shadow-card",
-      )}
-      aria-hidden
-    >
-      <Skeleton className="h-10 w-10 shrink-0 rounded-full" />
-      <div className="min-w-0 flex-1 space-y-3">
-        <div className="flex items-center gap-2 pt-1">
+    <div className="rounded-lg border border-border-soft bg-surface shadow-card" aria-hidden>
+      <div className="space-y-3 px-4 pb-3 pt-4">
+        <div className="flex items-start gap-3">
+          <Skeleton className="h-10 w-10 shrink-0 rounded-full" />
+          <div className="min-w-0 flex-1 space-y-2 pt-1">
+            <Skeleton className="h-3.5 w-28" />
+            <Skeleton className="h-3 w-24" />
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-6 w-6 rounded-md" />
           <Skeleton className="h-3 w-24" />
-          <Skeleton className="h-3 w-16" />
-          <Skeleton className="h-5 w-20 rounded-full" />
         </div>
         <div className="space-y-2">
-          <Skeleton className="h-4 w-4/5" />
+          <Skeleton className="h-5 w-4/5" />
           <Skeleton className="h-3 w-full" />
         </div>
         <Skeleton className="h-20 w-full rounded-xl" />
-        <div className="flex items-center gap-3 pt-1">
-          <Skeleton className="h-4 w-10" />
-          <Skeleton className="h-4 w-10" />
-          <Skeleton className="ml-auto h-4 w-6" />
-          <Skeleton className="h-4 w-6" />
-        </div>
+      </div>
+      <div className="flex items-center gap-3 border-t border-border-soft px-4 py-3">
+        <Skeleton className="h-4 w-10" />
+        <Skeleton className="h-4 w-10" />
+        <Skeleton className="h-4 w-10" />
+        <Skeleton className="ml-auto h-4 w-6" />
       </div>
     </div>
   );

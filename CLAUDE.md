@@ -149,9 +149,7 @@ için), `Badge`, `Card`, `Chip`/`ChipRow`, `Tabs` (underline / segmented / pill)
 `features/content/` — `ContentCard` kabuğu (PromptCard / WorkflowCard / PresetCard /
 RequestCard ortak), `ContentTypeLabel`, `ContentTags`,
 `contentActionClassName` (Beğeni/Yorum/Kaydet/Paylaş ortak görünümü). Her kartın iç yerleşimi
-`ContentCardPost` (Meydan gönderi düzeni, `docs/history/190-*` Faz 5): solda avatar, kimlik satırı
-"Ad · @kullanıcı · zaman · [tür hapı `ContentTypePill`]" + ⋮, eylem satırı **solda Beğeni · Yorum, sağda
-Kaydet · İstatistik · Paylaş** — yeni kart yazarken bu kabuğu kullan, ikinci başlık/altbilgi çizme.
+`ContentCardPost` (`docs/history/196-*`): üstte kimlik bloğu (solda avatar; yanında kalın ad, altında "@kullanıcı · zaman"; sağda ⋮), altında tam genişlikte içerik türü satırı (`ContentTypePill` = renkli simge karosu + etiket; durum/Başvuru rozetleri yanında), başlık/açıklama/medya/prompt bloğu/araç çipi, ince çizgi, eylem satırı **solda Beğeni · Yorum · Kaydet · İstatistik, sağda yalnız Paylaş** — yeni kart yazarken bu kabuğu kullan, ikinci başlık/altbilgi çizme.
 Sitedeki HER gönderi listesi (Ana Sayfa, Topluluklar, topluluk sayfası, Keşfet, listeler, profil, arama, koleksiyon) `ContentGrid`
 ile çizilir: HER ekranda kutulu kartlar (telefonda tek sütun, 12px sayfa kenar boşluğu; `sm`+ kutulu sütunlar, yanında sağ sütun olan sayfada en çok 2; `docs/history/196-*`) —
 yeni bir gönderi listesi elle `columns-*` yazmaz, ikinci bir liste görünümü kurulmaz. Her gönderi listesinde Keşfet'teki Kart | Odak

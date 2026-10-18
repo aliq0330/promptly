@@ -39,12 +39,14 @@ export function ContentTypeLabel({
   );
 }
 
-/** Meydan's content-type pill on a card's identity line (`[icon] Görsel Prompt`); the detail pages keep the line form above. */
+/** A card's content-type row (docs/history/196-*): a small tinted icon tile + the label (`[▣] Görsel Prompt`); the detail pages keep the line form above. */
 export function ContentTypePill({ icon: Icon, label, className }: { icon: LucideIcon; label: string; className?: string }) {
   return (
-    <span className={cn("inline-flex h-6 shrink-0 items-center gap-1 rounded-full bg-primary-soft px-2 text-caption font-semibold text-primary", className)}>
-      <Icon size={12} strokeWidth={2.1} aria-hidden />
-      {label}
+    <span className={cn("inline-flex min-w-0 items-center gap-2 text-small font-medium text-text-secondary", className)}>
+      <span aria-hidden className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-primary-soft text-primary">
+        <Icon size={14} strokeWidth={2} />
+      </span>
+      <span className="truncate">{label}</span>
     </span>
   );
 }
