@@ -1,0 +1,114 @@
+// Profildeki koleksiyon halkaları ve Mesajlar liste satırları (Meydan, docs/history/192-*) — ağ taklitli. Gerçek Supabase'e KARŞI DENENMEDİ.
+import { chromium } from "playwright";
+import assert from "node:assert/strict";
+import { serve } from "./server.mjs";
+import { createDb, installMock, U } from "./mock.mjs";
+
+const BASE = "http://localhost:4176/promptly";
+const server = await serve(4176);
+const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH ?? undefined, args: ["--no-sandbox"] });
+const results = [];
+const ONLY = process.env.ONLY ?? "";
+
+const COLLECTIONS = [
+  { id: "c1000000-0000-4000-8000-000000000001", name: "Işık denemeleri", visibility: "public", item_count: 4, follower_count: 2, is_default: false },
+  { id: "c1000000-0000-4000-8000-000000000002", name: "Genel", visibility: "public", item_count: 9, follower_count: 0, is_default: true },
+  { id: "c1000000-0000-4000-8000-000000000003", name: "Gizli klasör", visibility: "private", item_count: 3, follower_count: 0, is_default: false },
+  { id: "c1000000-0000-4000-8000-000000000004", name: "Boş koleksiyon", visibility: "public", item_count: 0, follower_count: 0, is_default: false },
+];
+
+const PUBLIC_COLS = ["id", "username", "display_name", "avatar_url", "cover_url", "bio", "website", "follower_count", "following_count", "created_at", "interests"];
+const pubOf = (u) => Object.fromEntries(PUBLIC_COLS.map((c) => [c, u[c]]));
+/** `mock.mjs` profil sorgusunda `username=eq.` süzgecini bilmez; profil sayfası kullanıcıyı ada göre okur. */
+const byUsername = ({ table, q, rows }) => {
+  const name = q.get("username")?.replace(/^eq\./, "");
+  if (table === "profiles" && name) return rows(Object.values(U).filter((u) => u.username === name).map(pubOf));
+  return null;
+};
+
+/** Koleksiyon uçlarını taklit eder (yalnızca bu pakete özel): sahibi `owner`, herkese açık ve boş olmayanları süzmeyi İSTEMCİ ister. */
+function withCollections(db, owner) {
+  db.extraRoutes = async (ctx) => {
+    const { table, q, rows } = ctx;
+    const profile = byUsername(ctx);
+    if (profile) return profile;
+    if (table === "collections") {
+      db.calls.push({ method: "GET", table: "collections", body: Object.fromEntries(q.entries()) });
+      let list = COLLECTIONS;
+      if (q.get("visibility") === "eq.public") list = list.filter((c) => c.visibility === "public");
+      if (q.get("item_count") === "gt.0") list = list.filter((c) => c.item_count > 0);
+      return rows(list.map((c) => ({ ...c, created_at: "2026-02-01T00:00:00Z", updated_at: "2026-02-01T00:00:00Z", profiles: pubOf(owner) })));
+    }
+    if (table === "collection_items") {
+      const ids = (q.get("collection_id") ?? "").replace(/^in\.\(|\)$/g, "").split(",");
+      // yalnızca ilk koleksiyonun kapağı var (görsel), diğeri simge karosu olarak çizilmeli
+      return rows(ids.includes(COLLECTIONS[0].id) ? [{ collection_id: COLLECTIONS[0].id, created_at: "2026-02-02T00:00:00Z", prompts: { prompt_media: [{ id: "m1", url: "https://example.supabase.co/storage/v1/object/public/prompt-media/x/cover.png", width: 800, height: 800, alt: "" }] }, workflows: null, presets: null }] : []);
+    }
+    return null;
+  };
+}
+
+async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lang = "tr", theme } = {}) {
+  if (ONLY && !name.startsWith(ONLY)) return;
+  const db = createDb();
+  const context = await browser.newContext({ viewport });
+  await installMock(context, db, {});
+  await context.addInitScript(([l, th]) => { try { localStorage.setItem("promptly-language", l); if (th) localStorage.setItem("promptly-theme", th); } catch {} }, [lang, theme]);
+  const page = await context.newPage(); page.setDefaultTimeout(8000);
+  const errors = [];
+  page.on("pageerror", (e) => errors.push(String(e)));
+  try { await fn({ page, db }); assert.deepEqual(errors, [], "no uncaught page errors"); results.push(["PASS", name]); }
+  catch (e) { results.push(["FAIL", name + "\n      " + String(e.message).split("\n").slice(0, 8).join("\n      ")]); try { await page.screenshot({ path: `${process.env.TMPDIR ?? "/tmp"}/pcfail-${results.length}.png` }); } catch {} }
+  finally { await context.close(); }
+}
+
+const rings = (page) => page.locator("[data-collection-rings] a");
+const overflowFree = (page) => page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1);
+
+// 1 — başkasının profili: yalnız herkese açık ve boş olmayan koleksiyonlar halka olur; her halka koleksiyonu açar; kapak varsa görsel, yoksa simge
+await scenario("1. Başkasının profili: halkalar yalnız herkese açık + boş olmayan koleksiyonlar; bağlantı koleksiyona gider", async ({ page, db }) => {
+  withCollections(db, U.bob);
+  await page.goto(`${BASE}/profile/real?username=${U.bob.username}`);
+  await rings(page).first().waitFor();
+  const names = await rings(page).locator("span.truncate").allTextContents();
+  assert.deepEqual(names, ["Işık denemeleri", "Genel"], "private + empty collections are not shown");
+  assert.match((await rings(page).first().getAttribute("href")) ?? "", /\/collections\/local\/?\?id=c1000000-0000-4000-8000-000000000001$/);
+  assert.equal(await rings(page).first().locator("div[style*='background-image']").count(), 1, "cover photo on the first ring");
+  assert.equal(await rings(page).nth(1).locator("svg").count(), 1, "icon tile when there is no cover");
+  assert.equal(await page.getByRole("navigation", { name: "Herkese açık koleksiyonlar" }).count(), 1);
+  assert.equal(await overflowFree(page), true);
+  if (process.env.SHOT_DIR) await page.screenshot({ path: `${process.env.SHOT_DIR}/f7-profile.png` });
+});
+
+// 2 — kendi profilim: halkalar da görünür (özel koleksiyon sızmaz); sorgu herkese açık süzgeciyle yapılır
+await scenario("2. Kendi profilim: halkalar görünür, özel koleksiyon yok, sorgu visibility=public ister", async ({ page, db }) => {
+  withCollections(db, U.alice);
+  await page.goto(`${BASE}/profile/real?username=${(U.alice).username}`);
+  await rings(page).first().waitFor();
+  assert.equal(await rings(page).count(), 2);
+  const asked = db.calls.filter((c) => c.table === "collections").map((c) => c.body);
+  assert.ok(asked.some((b) => b.visibility === "eq.public"), "client filters to public collections");
+});
+
+// 3 — koleksiyonu olmayan profil: şerit hiç çizilmez
+await scenario("3. Halka yok: koleksiyon yoksa şerit çizilmez", async ({ page, db }) => {
+  db.extraRoutes = async (ctx) => byUsername(ctx) ?? (ctx.table === "collections" || ctx.table === "collection_items" ? ctx.rows([]) : null);
+  await page.goto(`${BASE}/profile/real?username=${U.bob.username}`);
+  await page.getByRole("heading", { level: 1 }).first().waitFor();
+  await page.waitForTimeout(500);
+  assert.equal(await page.locator("[data-collection-rings]").count(), 0);
+});
+
+// 4 — İngilizce ad + telefon düzeni taşmaz
+await scenario("4. İngilizce etiket ve 390px'te yatay taşma yok", async ({ page, db }) => {
+  withCollections(db, U.bob);
+  await page.goto(`${BASE}/profile/real?username=${U.bob.username}`);
+  await rings(page).first().waitFor();
+  assert.equal(await page.getByRole("navigation", { name: "Public collections" }).count(), 1);
+  assert.equal(await overflowFree(page), true);
+}, { viewport: { width: 390, height: 800 }, lang: "en" });
+
+await browser.close(); server.close();
+for (const [s, n] of results) console.log(`${s === "PASS" ? "✓" : "✗"} ${n}`);
+console.log(`${results.filter((r) => r[0] === "PASS").length}/${results.length} passed`);
+process.exit(results.some((r) => r[0] === "FAIL") ? 1 : 0);
