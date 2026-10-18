@@ -3,41 +3,23 @@
 import Link from "next/link";
 import { PenLine, Sparkles } from "lucide-react";
 import { buttonClassName } from "@/components/ui/button";
-import { Avatar } from "@/components/ui/avatar";
 import { useAuth } from "@/features/auth/auth-provider";
-import { useOwnProfile } from "@/features/auth/own-profile-provider";
+import { ShareComposer } from "./share-composer";
 import { useTranslation } from "@/lib/i18n/language-provider";
 
 /**
  * Top of the home page. Signed out: a compact explanation of what Promptly
- * is — deliberately short so the feed starts above the fold. Signed in: a
- * composer row (avatar + "share" field + the creation paths). Never a large hero.
+ * is — deliberately short so the feed starts above the fold. Signed in: the
+ * share composer (field + target picker + create button). Never a large hero.
  */
 export function HomeIntro() {
   const { user, loading } = useAuth();
-  const { profile } = useOwnProfile();
   const { t } = useTranslation();
 
   if (loading) return <div className="h-[74px]" aria-hidden />;
 
-  if (user) {
-    // Meydan (docs/history/190-*): a composer row instead of a greeting card — the
-    // whole row opens the create form, the two buttons pick the kind directly.
-    return (
-      <section aria-label={t("home.sharePrompt")} className="flex items-center gap-3 rounded-xl border border-border-soft bg-surface p-3 sm:p-4">
-        <Avatar src={profile?.avatarUrl ?? null} alt={profile?.displayName ?? ""} size={42} />
-        <Link
-          href="/create?mode=prompt"
-          className="min-w-0 flex-1 truncate rounded-full bg-surface-soft px-4 py-2.5 text-small text-text-muted transition-colors hover:bg-border-soft hover:text-text-secondary"
-        >
-          {t("home.composerPlaceholder")}
-        </Link>
-        <div className="hidden sm:block">
-          <QuickActions />
-        </div>
-      </section>
-    );
-  }
+  // Signed in: the composer with the share-target picker (`ShareComposer`, docs/history/197-*).
+  if (user) return <ShareComposer />;
 
   return (
     <section className="relative overflow-hidden rounded-xl border border-border-soft bg-surface px-5 py-7 shadow-card sm:px-8 sm:py-9">
