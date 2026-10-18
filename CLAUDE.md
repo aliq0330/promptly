@@ -150,6 +150,7 @@ için), `Badge`, `Card`, `Chip`/`ChipRow`, `Tabs` (underline / segmented / pill)
 RequestCard ortak), `ContentTypeLabel`, `ContentTags`,
 `contentActionClassName` (Beğeni/Yorum/Kaydet/Paylaş ortak görünümü). Her kartın iç yerleşimi
 `ContentCardPost` (`docs/history/196-*`): üstte kimlik bloğu (solda avatar; yanında kalın ad, altında "@kullanıcı · zaman"; sağda ⋮), altında tam genişlikte içerik türü satırı (`ContentTypePill` = renkli simge karosu + etiket; durum/Başvuru rozetleri yanında), başlık/açıklama/medya/prompt bloğu/araç çipi, ince çizgi, eylem satırı **solda Beğeni · Yorum · Kaydet · İstatistik, sağda yalnız Paylaş** — yeni kart yazarken bu kabuğu kullan, ikinci başlık/altbilgi çizme.
+Oluşturma ekranlarının ortak alt alanı `CreateFormActions` paylaşım hedefi seçicisini (`ShareDestinationField`, `docs/history/197-*`: "Nerede paylaşmak istiyorsun?" Genel akış / üye olunan topluluklar) taşır; seçim `?community=` bağlamının (`community-return.ts`) üstüne biner — yeni bir oluşturma formu yazarsan `CreateFormActions`'ı kullan, ayrı hedef seçici yazma.
 Sitedeki HER gönderi listesi (Ana Sayfa, Topluluklar, topluluk sayfası, Keşfet, listeler, profil, arama, koleksiyon) `ContentGrid`
 ile çizilir: HER ekranda kutulu kartlar (telefonda tek sütun, 12px sayfa kenar boşluğu; `sm`+ kutulu sütunlar, yanında sağ sütun olan sayfada en çok 2; `docs/history/196-*`) —
 yeni bir gönderi listesi elle `columns-*` yazmaz, ikinci bir liste görünümü kurulmaz. Her gönderi listesinde Keşfet'teki Kart | Odak
@@ -413,5 +414,5 @@ bağlayıcıdır; ayrıntılı gerekçe için `docs/history/README.md` tablosuna
   isteğin `creative_direction`'ını da kapsar ve keyset sayfalanır (`search_content`); `prompt_saves` canlıdan kaldırıldı; kod içi
   yorumlarda eski "Bölüm 9.x" atıfları arşiv numaralarına (`docs/history/NNN-*`) karşılık gelir.
 
-**Arşiv:** [`docs/history/README.md`](docs/history/README.md) — 196 bölüm, her
+**Arşiv:** [`docs/history/README.md`](docs/history/README.md) — 197 bölüm, her
 biri için durum etiketi (uygulandı / kısmen geçerli / kaldırıldı).

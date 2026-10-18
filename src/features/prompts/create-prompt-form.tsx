@@ -899,6 +899,7 @@ export function CreatePromptForm() {
           </FormSection>
 
           <CreateFormActions
+            hideDestination={isEditMode}
             visibility={showsVisibilityChoice ? undefined : visibility}
             onVisibilityChange={showsVisibilityChoice ? undefined : setVisibility}
             extra={

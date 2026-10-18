@@ -8,6 +8,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
 import type { ContentVisibility } from "@/types";
 import { FormSection } from "./form-section";
+import { ShareDestinationField, useDestinationBlock } from "./share-destination-field";
 import { VisibilitySwitch } from "./visibility-switch";
 
 /**
@@ -18,6 +19,9 @@ import { VisibilitySwitch } from "./visibility-switch";
  *   └──────────────────────┘
  *   ┌ actions card ────────┐   [Taslağa kaydet] [Paylaş]
  *   └──────────────────────┘
+ *
+ * Above them sits the "Nerede paylaşmak istiyorsun?" destination picker (`ShareDestinationField`, docs/history/197-*): "Genel akış"
+ * (default) or one of the viewer's communities. A community makes the content community-only (no visibility card, no draft).
  *
  * "Paylaş" is the primary action; with no `onPublish` it is the form's submit
  * button, so the form's own `onSubmit` (and its validation) stays the single
@@ -34,6 +38,7 @@ export function CreateFormActions({
   saveDraftLabel,
   busy = false,
   publishDisabled = false,
+  hideDestination = false,
   children,
   className,
 }: {
@@ -50,6 +55,8 @@ export function CreateFormActions({
   busy?: boolean;
   /** Disables only the primary button (e.g. blocking validation errors), not the draft button. */
   publishDisabled?: boolean;
+  /** Editing something already published: it cannot move, so there is no destination picker. */
+  hideDestination?: boolean;
   /** Notices/errors rendered between the switch and the buttons. */
   children?: ReactNode;
   className?: string;
@@ -59,9 +66,11 @@ export function CreateFormActions({
   // Topluluktan açıldıysa (`?community=`): içerik topluluğa ÖZGÜDÜR — görünürlük seçilmez (yalnız topluluğu okuyabilenler görür) ve taslak olmaz.
   const community = useCommunityContext();
   const inCommunity = community.communityId !== null;
+  const blockedReason = useDestinationBlock(hideDestination ? null : community.communityId);
   const showVisibility = visibility !== undefined && onVisibilityChange !== undefined && !inCommunity;
   return (
     <div className={cn("min-w-0 space-y-4", className)} data-create-form-actions>
+      {!hideDestination && <ShareDestinationField blockedReason={blockedReason} disabled={busy} />}
       {inCommunity && (
         <p role="status" data-community-context className="flex items-start gap-2 rounded-lg bg-primary-soft px-3.5 py-3 text-small text-text">
           <Users size={16} strokeWidth={1.75} className="mt-0.5 shrink-0 text-primary" aria-hidden />
@@ -89,7 +98,7 @@ export function CreateFormActions({
           <Button
             type={onPublish ? "button" : "submit"}
             size="lg"
-            disabled={busy || publishDisabled}
+            disabled={busy || publishDisabled || blockedReason !== null}
             onClick={onPublish}
             className={cn("min-w-0 px-4 sm:px-8", onSaveDraft ? "flex-1 sm:flex-none" : "w-full sm:w-auto")}
             data-action="publish"

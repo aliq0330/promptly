@@ -417,6 +417,7 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
       )}
 
       <CreateFormActions
+          hideDestination={Boolean(editId)}
           visibility={visibility}
           onVisibilityChange={(next) => {
             setVisibility(next);

@@ -435,6 +435,7 @@ export function CreateRequestForm() {
           </FormSection>
 
           <CreateFormActions
+            hideDestination={isEditMode}
             visibility={visibility}
             onVisibilityChange={setVisibility}
             onSaveDraft={!isEditMode || isEditingDraft ? () => void handleSaveDraft() : undefined}
