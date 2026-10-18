@@ -78,3 +78,10 @@ CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/mess
 
 Not: `run-community-home.mjs` ve `run-community-posts.mjs` aynı portu (4176) kullanır, `run-communities.mjs` ve `run-chat.mjs` da 4175'i; bunları paralel değil sırayla çalıştır.
 
+## Profil koleksiyon halkaları (`docs/history/192-*`)
+
+`run-profile-collections.mjs` (4 senaryo): başkasının/kendi profilinde herkese açık + boş olmayan koleksiyonların halka şeridi (özel koleksiyon sızmaz, bağlantı, kapak/simge karosu), koleksiyon yoksa şerit çizilmez, İngilizce etiket + 390px'te taşma yok. Ağ taklidi `mock.mjs` + dosya içi `db.extraRoutes` (`collections`, `collection_items`, `profiles?username=`). Gerçek Supabase'e KARŞI DENENMEDİ.
+
+```bash
+CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/messaging-ui/run-profile-collections.mjs   # 4/4 beklenir
+```
