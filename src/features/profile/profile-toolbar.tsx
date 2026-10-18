@@ -4,6 +4,7 @@ import { Chip } from "@/components/ui/chip";
 
 import { Search, X } from "lucide-react";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
+import { ViewModeControls } from "@/features/content/view-mode-switcher";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import type { PromptContentType } from "@/types";
@@ -71,6 +72,7 @@ export function ProfileToolbar({
             </option>
           ))}
         </select>
+        <ViewModeControls />
       </div>
 
       {showSearch && (

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { TaxonomyDrillList, TaxonomyTypeChips } from "@/features/content/taxonomy-filter";
 import { SortSelect, SORT_KEYS, SORT_LABELS, type ContentSortKey } from "@/features/content/sort-select";
-import { MobileViewToggle, ViewModeSwitcher } from "@/features/content/view-mode-switcher";
+import { MobileViewToggle, ViewModeControls, ViewModeSwitcher } from "@/features/content/view-mode-switcher";
 import type { TaxonomyFilterValue } from "@/lib/content-taxonomy";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
@@ -101,9 +101,8 @@ export function ListToolbar({
   className,
 }: {
   /**
-   * Home's social column (Meydan, docs/history/190-*): `leading` on its own row, then
-   * the chips (plain chips at every width) with a compact Filtre button — no view
-   * switcher, the stream is always cards.
+   * Home's column (Meydan, docs/history/190-*): `leading` on its own row, then
+   * the chips (plain chips at every width) with a compact Filtre button and the Kart | Odak control.
    */
   stream?: boolean;
   /** Something that sits on the left of the control strip (e.g. Home's feed tabs). */
@@ -198,11 +197,9 @@ export function ListToolbar({
                   </div>
                 </SheetSection>
               )}
-              {!stream && (
-                <SheetSection title={t("toolbar.view")}>
-                  <ViewModeSwitcher />
-                </SheetSection>
-              )}
+              <SheetSection title={t("toolbar.view")}>
+                <ViewModeSwitcher />
+              </SheetSection>
             </div>
 
             <div className="flex gap-2 border-t border-border-soft px-4 py-3">
@@ -242,6 +239,8 @@ export function ListToolbar({
             <span className="max-sm:sr-only">{t("toolbar.filter")}</span>
             {filterCountBadge}
           </Button>
+          <MobileViewToggle className="h-9 w-9 md:hidden" />
+          <ViewModeSwitcher className="max-md:hidden" />
         </div>
         {sheet}
       </div>
@@ -282,8 +281,7 @@ export function ListToolbar({
           </Button>
           <div className="flex min-w-0 flex-1 items-center justify-end gap-2 md:flex-none">
             {sort && onSortChange && <SortSelect value={sort} onChange={onSortChange} keys={sortKeys} />}
-            <MobileViewToggle className="md:hidden" />
-            <ViewModeSwitcher className="max-md:hidden" />
+            <ViewModeControls />
           </div>
         </div>
       </div>

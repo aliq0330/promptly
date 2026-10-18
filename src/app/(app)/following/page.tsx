@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { CreatorList } from "@/features/profile/creator-list";
 import { PromptGrid } from "@/features/prompts/prompt-grid";
+import { ViewModeControls } from "@/features/content/view-mode-switcher";
 import { useAuth } from "@/features/auth/auth-provider";
 import { fetchFollowedProfiles } from "@/lib/supabase/profiles";
 import { fetchPromptsByAuthors } from "@/lib/supabase/prompts";
@@ -41,7 +42,14 @@ export default function FollowingPage() {
         <CreatorList users={followed} />
       </section>
       <section className="space-y-3">
-        <h2 className="text-h3 font-semibold text-text">{t("following.recentPosts")}</h2>
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="text-h3 font-semibold text-text">{t("following.recentPosts")}</h2>
+          {feed.length > 0 && (
+            <div className="flex items-center gap-2">
+              <ViewModeControls />
+            </div>
+          )}
+        </div>
         <PromptGrid prompts={feed} />
       </section>
     </div>

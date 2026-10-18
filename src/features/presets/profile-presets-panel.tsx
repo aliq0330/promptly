@@ -7,12 +7,17 @@ import { Tabs } from "@/components/ui/tabs";
 import { fetchSavedPresets } from "@/lib/supabase/presets";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { PresetCard } from "./preset-card";
+import { useViewMode } from "@/features/content/view-mode-store";
+import { ViewModeControls } from "@/features/content/view-mode-switcher";
+import { FocusGrid } from "@/features/focus/focus-grid";
 import type { Preset } from "@/types";
 import { CONTENT_GRID_ITEM_CLASS, ContentGrid } from "@/features/content/content-card";
 
 type Scope = "created" | "saved";
 
 function PresetGrid({ presets }: { presets: Preset[] }) {
+  const [mode] = useViewMode();
+  if (mode === "focus") return <FocusGrid items={presets.map((data) => ({ kind: "preset" as const, data }))} />;
   return (
     <ContentGrid>
       {presets.map((preset) => (
@@ -47,18 +52,23 @@ export function ProfilePresetsPanel({ ownerId, isOwn, created }: { ownerId: stri
 
   return (
     <div className="space-y-4">
-      {isOwn && (
-        <Tabs
-          items={[
-            { key: "created" as const, label: t("preset.scopeCreated"), count: created.length },
-            { key: "saved" as const, label: t("preset.scopeSaved"), icon: Bookmark },
-          ]}
-          active={scope}
-          onChange={setScope}
-          ariaLabel={t("preset.scopeAria")}
-          variant="segmented"
-        />
-      )}
+      <div className="flex items-center gap-2">
+        <div className="min-w-0 flex-1">
+          {isOwn && (
+            <Tabs
+              items={[
+                { key: "created" as const, label: t("preset.scopeCreated"), count: created.length },
+                { key: "saved" as const, label: t("preset.scopeSaved"), icon: Bookmark },
+              ]}
+              active={scope}
+              onChange={setScope}
+              ariaLabel={t("preset.scopeAria")}
+              variant="segmented"
+            />
+          )}
+        </div>
+        <ViewModeControls />
+      </div>
       {scope === "created" || !isOwn ? (
         created.length === 0 ? (
           <EmptyState

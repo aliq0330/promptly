@@ -111,6 +111,15 @@ Kullanıcı tablet ve masaüstünde Ana Sayfa ile Toplulukların (kutusuz tek s�
 - `run-community-home` 26/26b yeniden çok sütun bekler (sm+ 2 sütun, kart ≤ 460px, xl'de yan sütun bölümleri).
 - Sınama: `npm test` 344, `lint` (eski 4 uyarı), `build` temiz; 1440/820/390px'te Ana Sayfa, Topluluklar, topluluk sayfası ve Keşfet taşmasız. Playwright (hidrasyon denetimi dışarıda tutulan geçici kopyayla): `run-community-home` 38/38, `run-community-posts` 36/36, `run-communities` 61/61, `run-detail-pages` 44/44, `run-groups` 36/36. Gerçek cihazda denenmedi.
 
+### Faz 6 eki 3 — Kart | Odak seçicisi bütün kart sayfalarında
+
+Kullanıcı Keşfet'teki Kart | Odak seçicisinin kart gösteren bütün sayfalarda olmasını istedi ("yeni bir şey yazma, Keşfet'tekini kullan"). Yeni seçici yazılmadı: mevcut `ViewModeSwitcher` / `MobileViewToggle` (`ViewModeControls` = ikisinin `ListToolbar`'daki ikilisi) ve mevcut Odak ızgarası `FocusGrid` kullanıldı; tercih zaten site geneli tek durumdur (`useViewMode`, `?view=` + localStorage).
+
+- Eklendiği yerler: Ana Sayfa (akış araç çubuğu + filtre penceresindeki Görünüm bölümü; `FeedItemsView`'daki "Ana Sayfa hep kart" istisnası kalktı), Takip Ettiklerim, arama sonuçları (sıralama satırı), profil (Promptlar/Beğenilenler araç çubuğu, İstekler, Workflow'lar, Hazır Ayarlar), İçeriklerim, Kaydedilenler ve koleksiyonlar (arama kutusunun yanı), Topluluklar ana sayfası akışları ve topluluk sayfası akışı. Önceden vardı: Keşfet, tür listeleri (`ContentListPage`), etiket sayfası.
+- Liste bileşenleri Odak'ı kendileri çizer (`PromptGrid`, `RequestList`, `ProfileContentGrid`, profil hazır ayar ızgarası); satır içi ızgaralarda `viewMode === "focus"` dalı. Sağ sütunu olan sayfalarda Odak en çok 3 sütun (`FOCUS_GRID_NARROW_COLUMNS`).
+- Topluluk gönderisi Odak'ta işaret ettiği içerikle çizilir (`postFeedItem`); okunamayan içerik Odak'ta çizilmez; Odak kartı içeriğin kendi sayfasına gider (başvurunun kendi sayfasına değil — Kart görünümü öyle kalır). Odak kartlarında ⋮ menü olmadığından "Koleksiyondan kaldır" yalnız Kart görünümünde.
+- Sınama: `npm test` 344, `lint` (eski 4 uyarı), `build` temiz; Odak kipinde 1440/820/390px'te Ana Sayfa, Topluluklar, topluluk sayfası, profil taşmasız. Playwright (Kart kipinde, hidrasyon denetimi dışarıda tutulan geçici kopyayla): `run-community-home` 38/38, `run-community-posts` 36/36, `run-communities` 61/61, `run-detail-pages` 44/44, `run-groups` 36/36. Yeni metin yok (mevcut `view.*` anahtarları). Gerçek cihazda denenmedi.
+
 ## Çeviri
 Yeni metinlerin hepsi `translations.ts`'te TR+EN: `home.composerPlaceholder`, `home.rings*`, `home.rail*`, `settings.palette.meydan`.
 

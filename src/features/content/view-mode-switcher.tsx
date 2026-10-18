@@ -81,3 +81,16 @@ export function MobileViewToggle({ className }: { className?: string }) {
     </button>
   );
 }
+
+/**
+ * The pair every list page shows (the same one Keşfet's toolbar has): the one-tap toggle on phones, the
+ * segmented Kart | Odak control from `md`. Drop it next to a list's own sort/search controls.
+ */
+export function ViewModeControls() {
+  return (
+    <>
+      <MobileViewToggle className="md:hidden" />
+      <ViewModeSwitcher className="max-md:hidden" />
+    </>
+  );
+}

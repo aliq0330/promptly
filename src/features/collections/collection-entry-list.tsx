@@ -7,13 +7,17 @@ import { PromptCard } from "@/features/prompts/prompt-card";
 import { WorkflowCard } from "@/features/workflows/workflow-card";
 import { PresetCard } from "@/features/presets/preset-card";
 import { SavedPostCard } from "@/features/communities/saved-post-card";
-import { summarizeContent } from "@/features/communities/content-summary";
+import { postFeedItem, summarizeContent } from "@/features/communities/content-summary";
 import { useEngagementEntry } from "@/features/content/engagement-store";
 import { normalizeTagLabel } from "@/lib/tag-normalize";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { CollectionEntry } from "@/lib/supabase/collections";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import { CONTENT_GRID_ITEM_CLASS, ContentGrid } from "@/features/content/content-card";
+import { useViewMode } from "@/features/content/view-mode-store";
+import { ViewModeControls } from "@/features/content/view-mode-switcher";
+import { FocusGrid } from "@/features/focus/focus-grid";
+import type { FeedItem } from "@/features/feed/types";
 
 export type EntryRemoval = { onRemove: () => Promise<void> };
 
@@ -47,6 +51,7 @@ export function CollectionEntryList({
 }) {
   const { t } = useTranslation();
   const [query, setQuery] = useState("");
+  const [viewMode] = useViewMode();
 
   const normalizedQuery = normalizeTagLabel(query);
   const visibleItems = useMemo(() => {
@@ -61,26 +66,29 @@ export function CollectionEntryList({
   return (
     <>
       {items.length > 0 && (
-        <div className="relative">
-          <Search size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" aria-hidden />
-          <input
-            type="search"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder={t(searchPlaceholderKey)}
-            aria-label={t(searchPlaceholderKey)}
-            className="h-11 w-full rounded-full border border-border-soft bg-surface pl-10 pr-10 text-body text-text shadow-xs outline-none transition-colors placeholder:text-text-muted hover:border-border focus:border-primary focus-visible:ring-2 focus-visible:ring-primary/30 [&::-webkit-search-cancel-button]:hidden"
-          />
-          {query && (
-            <button
-              type="button"
-              onClick={() => setQuery("")}
-              aria-label={t("common.clear")}
-              className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-text-muted hover:bg-surface-soft hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-            >
-              <X size={15} aria-hidden />
-            </button>
-          )}
+        <div className="flex items-center gap-2">
+          <div className="relative min-w-0 flex-1">
+            <Search size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" aria-hidden />
+            <input
+              type="search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder={t(searchPlaceholderKey)}
+              aria-label={t(searchPlaceholderKey)}
+              className="h-11 w-full rounded-full border border-border-soft bg-surface pl-10 pr-10 text-body text-text shadow-xs outline-none transition-colors placeholder:text-text-muted hover:border-border focus:border-primary focus-visible:ring-2 focus-visible:ring-primary/30 [&::-webkit-search-cancel-button]:hidden"
+            />
+            {query && (
+              <button
+                type="button"
+                onClick={() => setQuery("")}
+                aria-label={t("common.clear")}
+                className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-text-muted hover:bg-surface-soft hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              >
+                <X size={15} aria-hidden />
+              </button>
+            )}
+          </div>
+          <ViewModeControls />
         </div>
       )}
 
@@ -93,6 +101,8 @@ export function CollectionEntryList({
         />
       ) : items.length === 0 ? (
         <EmptyState icon={FolderOpen} title={t(emptyTitleKey)} description={t(emptyDescriptionKey)} action={{ label: t("feed.goToDiscover"), href: "/discover" }} />
+      ) : viewMode === "focus" ? (
+        <FocusGrid items={visibleItems.map(entryFeedItem).filter((item): item is FeedItem => item !== null)} />
       ) : (
         <ContentGrid>
           {visibleItems.map((entry) => (
@@ -102,6 +112,12 @@ export function CollectionEntryList({
       )}
     </>
   );
+}
+
+/** One entry in the Odak view: the content itself; a saved community post shows the content it applies with. */
+function entryFeedItem(entry: CollectionEntry): FeedItem | null {
+  if (entry.type === "community_post") return postFeedItem(entry.data.content);
+  return { kind: entry.type, data: entry.data } as FeedItem;
 }
 
 /** The searchable text of one entry. A community post is searched by the content it applies with, its note and its applicant. */

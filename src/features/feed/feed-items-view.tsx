@@ -1,6 +1,6 @@
 "use client";
 
-import { FocusGrid } from "@/features/focus/focus-grid";
+import { FOCUS_GRID_NARROW_COLUMNS, FocusGrid } from "@/features/focus/focus-grid";
 import { useViewMode } from "@/features/content/view-mode-store";
 import { FeedGrid } from "./feed-grid";
 import type { FeedItem } from "./types";
@@ -14,7 +14,6 @@ import type { FeedItem } from "./types";
 export function FeedItemsView(props: React.ComponentProps<typeof FeedGrid>) {
   const [mode] = useViewMode();
   const items: FeedItem[] = props.items;
-  // Home (docs/history/190-*) is always cards; the Kart/Odak choice belongs to the other lists.
-  if (mode === "focus" && items.length > 0 && props.layout !== "home") return <FocusGrid items={items} />;
+  if (mode === "focus" && items.length > 0) return <FocusGrid items={items} columns={props.layout === "home" ? FOCUS_GRID_NARROW_COLUMNS : undefined} />;
   return <FeedGrid {...props} />;
 }

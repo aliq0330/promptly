@@ -1,4 +1,8 @@
+"use client";
+
 import type { ReactNode } from "react";
+import { useViewMode } from "@/features/content/view-mode-store";
+import { FocusGrid } from "@/features/focus/focus-grid";
 import { PromptCard } from "@/features/prompts/prompt-card";
 import type { Prompt } from "@/types";
 import { CONTENT_GRID_ITEM_CLASS, ContentGrid } from "@/features/content/content-card";
@@ -21,7 +25,9 @@ export function ProfileContentGrid({
   onDeleted: (promptId: string) => void;
   emptyState: ReactNode;
 }) {
+  const [mode] = useViewMode();
   if (prompts.length === 0) return <>{emptyState}</>;
+  if (mode === "focus") return <FocusGrid items={prompts.map((data) => ({ kind: "prompt" as const, data }))} />;
 
   return (
     <ContentGrid>
