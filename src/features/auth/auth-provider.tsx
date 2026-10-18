@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase/client";
 import { clearMediaUrlCache } from "@/lib/supabase/media-url";
 import { clearSwitchOrigin } from "@/lib/supabase/account-switch";
 import { useRouter, usePathname } from "next/navigation";
+import { absoluteUrl } from "@/lib/utils";
 
 interface AuthContextValue {
   user: User | null;
@@ -43,6 +44,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     supabase.auth
       .getSession()
       .then(({ data }) => {
+        if (lastUserIdRef.current === null) lastUserIdRef.current = data.session?.user?.id ?? null;
         setSession(data.session);
         setLoading(false);
       })
@@ -64,10 +66,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           router.replace("/reset-password");
         }
       }
-      // Oturum kapanınca ya da kullanıcı değişince önceki kullanıcının aldığı medya imzaları bellekte kalmasın (özel topluluk görselleri vb.).
+      // Oturum kapanınca ya da kullanıcı değişince (hesap değiştirme / çıkış-giriş) önceki kullanıcının BELLEKTEKİ her kopyası atılır:
+      // medya imzaları, sağlayıcıların içerik önbellekleri (prompt/istek/workflow/hazır ayar), modül düzeyindeki depolar. Bunların tek tek
+      // temizlenmesi unutulabilir ve sızar — yeni hesap önceki hesabın görebildiği özel topluluk içeriğini önbellekten görürdü — bu yüzden sayfa baştan
+      // yüklenir (docs/history/195-*). Yalnız GERÇEK bir kimlik değişiminde: ilk yükleme, aynı kullanıcının belirteç yenilemesi ve giriş yapma (misafir → kullanıcı) etkilenmez.
       const nextUserId = nextSession?.user?.id ?? null;
-      if (event === "SIGNED_OUT" || (lastUserIdRef.current !== null && nextUserId !== lastUserIdRef.current)) clearMediaUrlCache();
+      const previousUserId = lastUserIdRef.current;
+      const identityChanged = previousUserId !== null && nextUserId !== previousUserId;
       lastUserIdRef.current = nextUserId;
+      if (identityChanged) {
+        clearMediaUrlCache();
+        if (typeof window !== "undefined") {
+          if (nextUserId === null) window.location.replace(absoluteUrl("/"));
+          else window.location.reload();
+        }
+        return;
+      }
       setSession(nextSession);
       setLoading(false);
     });
