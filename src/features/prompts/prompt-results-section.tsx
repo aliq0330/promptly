@@ -1,5 +1,6 @@
 "use client";
 
+import { DetailSection } from "@/features/content/detail-parts";
 import { useEffect, useState } from "react";
 import { Loader2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -84,18 +85,23 @@ export function PromptResultsSection({ target }: { target: PromptResultsSectionT
   }
 
   return (
-    <section className="space-y-3 rounded-xl border border-border-soft bg-surface p-4 shadow-card sm:p-5">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-label font-semibold text-text">
-          {t("result.sectionTitle")}<span className="font-normal tabular-nums text-text-muted"> · {total}</span>
-        </h2>
-        {user && (
+    // A numbered section of the editorial detail page (docs/history/201-*).
+    <DetailSection
+      title={
+        <>
+          {t("result.sectionTitle")}
+          <span className="font-sans text-label font-normal tabular-nums text-text-muted"> · {total}</span>
+        </>
+      }
+      action={
+        user && (
           <Button type="button" size="sm" variant="outline" onClick={() => setIsAddOpen(true)}>
             <Plus size={14} />
             {t("result.addResult")}
           </Button>
-        )}
-      </div>
+        )
+      }
+    >
       {user && (
         <p className="text-caption text-text-muted">
           {t("result.sharePromptHint")}
@@ -109,7 +115,7 @@ export function PromptResultsSection({ target }: { target: PromptResultsSectionT
           ))}
         </div>
       ) : results.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-border-soft bg-surface-soft px-4 py-6 text-center text-caption text-text-muted">
+        <p className="rounded-[22px] border border-dashed border-border px-4 py-8 text-center text-small text-text-muted">
           {t("result.emptyPromptHint")}
         </p>
       ) : (
@@ -131,6 +137,6 @@ export function PromptResultsSection({ target }: { target: PromptResultsSectionT
       )}
 
       {isAddOpen && <AddResultModal target={modalTarget} onClose={() => setIsAddOpen(false)} onAdded={handleAdded} />}
-    </section>
+    </DetailSection>
   );
 }

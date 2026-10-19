@@ -5,7 +5,7 @@ import { usePageTitle } from "@/components/layout/page-title";
 import { DetailMetaCard } from "@/features/content/detail-meta-card";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { MessageSquareOff, PenLine, Reply, Sparkles, SquareTerminal } from "lucide-react";
+import { MessageSquareOff, PenLine, Reply, Sparkles } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -33,7 +33,7 @@ import { useRealRequests } from "./real-requests-provider";
 import { STATUS_LABELS, STATUS_VARIANTS } from "./request-card";
 import { parseHighlightValue } from "@/lib/notification-utils";
 import { cn, formatCount, profileHref } from "@/lib/utils";
-import { AsideSection, DetailActionBar, DetailAside, DetailByline, DetailComments, DetailShell, DetailTags, DetailTitle, Eyebrow } from "@/features/content/detail-parts";
+import { AsideSection, DetailActionBar, DetailAside, DetailByline, DetailComments, DetailSection, DetailShell, DetailTags, DetailTitle, Eyebrow } from "@/features/content/detail-parts";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Prompt, PromptRequest, RequestVersion } from "@/types";
 import { ScrollablePrompt } from "@/features/content/scrollable-prompt";
@@ -186,6 +186,25 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
 
   return (
     <DetailShell
+      actions={
+          // Beğeni · Yorum · Yanıt (scrolls to the replies) · İstatistik · İlişki haritası … Paylaş — no Kopyala for a request.
+          <DetailActionBar trailing={<EngageShare target={{ contentType: "request", request: live }} />}>
+            <EngageLike id={live.id} likeCount={live.likeCount} contentType="request" size={18} />
+            <EngageCommentCount requestId={live.id} baseCount={live.commentCount} size={18} />
+            <a
+              href="#request-responses"
+              onClick={() => setActiveTab("request")}
+              className={contentActionClassName(false)}
+              title={t("request.replies")}
+              aria-label={`${t("request.replies")} (${formatCount(live.responseCount)})`}
+            >
+              <Reply size={18} strokeWidth={1.75} />
+              <span aria-hidden>{formatCount(live.responseCount)}</span>
+            </a>
+            <EngageStatistics target={{ contentType: "request", contentId: live.id, likeCount: live.likeCount, commentCount: live.commentCount }} size={18} />
+            <RelationMapLink kind="request" id={live.id} />
+          </DetailActionBar>
+      }
       aside={
         <DetailAside>
           {/* Phones/tablets already show the creator (+ Follow) in the byline above. */}
@@ -199,11 +218,11 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
     >
       <article
         className={cn(
-          "min-w-0 space-y-6 rounded-lg transition-colors duration-700",
+          "min-w-0 space-y-10 rounded-lg transition-colors duration-700",
           isRequestFlashed && "bg-primary/10 ring-1 ring-primary/40",
         )}
       >
-        <header className="space-y-4">
+        <header className="space-y-5">
           <div className="flex items-center justify-between gap-3">
             <ContentTypeLabel icon={Sparkles} label={t("request.title")} detail={typeMeta ? t(typeMeta.labelKey) : null} />
             <div className="flex shrink-0 items-center gap-1.5">
@@ -225,32 +244,6 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
           />
         </header>
 
-        {/*
-          "Aksiyon satırı" (Prompt İsteği Aksiyon Satırı Son Düzenleme
-          görevi) — SADECE 4 gerçek aksiyon, Prompt'un kendi action row'uyla
-          aynı bileşenler/mantık: Beğeni · Yorum · Yanıt (gerçek yanıt
-          sayısı — bu sayfada zaten aşağıda görünen "Yaratıcı Yanıtlar"
-          bölümüne kaydırıyor, yeni bir davranış icat edilmedi), sonra HER
-          ZAMAN en sağda Paylaş. Kart ile birebir aynı 4 öğe/sıra — hiçbir
-          "Kopyala" yok (Prompt İsteği'ne özel olarak kaldırıldı, genel
-          Prompt sistemindeki Kopyala butonuna dokunulmadı).
-        */}
-        <DetailActionBar trailing={<EngageShare target={{ contentType: "request", request: live }} label={t("common.share")} />}>
-          <EngageLike id={live.id} likeCount={live.likeCount} contentType="request" size={18} />
-          <EngageCommentCount requestId={live.id} baseCount={live.commentCount} size={18} />
-          <a
-            href="#request-responses"
-            onClick={() => setActiveTab("request")}
-            className={contentActionClassName(false)}
-            title={t("request.replies")}
-            aria-label={`${t("request.replies")} (${formatCount(live.responseCount)})`}
-          >
-            <Reply size={18} strokeWidth={1.75} />
-            <span aria-hidden>{formatCount(live.responseCount)}</span>
-          </a>
-          <EngageStatistics target={{ contentType: "request", contentId: live.id, likeCount: live.likeCount, commentCount: live.commentCount }} size={18} label={t("statistics.title")} />
-          <RelationMapLink kind="request" id={live.id} />
-        </DetailActionBar>
 
         {tabItems.length > 1 && <Tabs items={tabItems} active={activeTab} onChange={setActiveTab} ariaLabel={t("history.sectionsAria")} />}
 
@@ -261,14 +254,21 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
         )}
 
         {activeTab === "request" && (<>
-        <section aria-labelledby="request-brief-title" className="overflow-hidden rounded-xl border border-border-soft bg-surface-soft shadow-card">
-          <div className="border-b border-border-soft px-4 py-3">
-            <Eyebrow as="h2" id="request-brief-title" icon={SquareTerminal}>
-              {t("request.title")}
-            </Eyebrow>
+        <DetailSection title={t("detail.requestBrief")}>
+          <div className="overflow-hidden rounded-[22px] bg-surface-soft">
+            <ScrollablePrompt className="px-5 py-5 text-[0.875rem] text-text">{live.description}</ScrollablePrompt>
           </div>
-          <ScrollablePrompt className="px-4 py-4 text-[0.875rem] text-text">{live.description}</ScrollablePrompt>
-        </section>
+          {live.creativeDirection && (
+            <blockquote className="m-0 border-l-[3px] border-primary pl-4">
+              <Eyebrow tone="primary" className="mb-2">
+                {t("request.creativeDirection")}
+              </Eyebrow>
+              <p className="text-[1.0625rem] leading-relaxed text-text sm:text-lg">
+                <MentionText text={live.creativeDirection} />
+              </p>
+            </blockquote>
+          )}
+        </DetailSection>
 
         {live.referenceImage && (
           <figure className="space-y-2">
@@ -276,7 +276,7 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
               type="button"
               onClick={() => setLightboxIndex(0)}
               aria-label={t("media.viewFullscreen")}
-              className="relative block w-full overflow-hidden rounded-xl border border-border-soft bg-surface-soft shadow-card"
+              className="relative block w-full overflow-hidden rounded-[22px] bg-surface-soft"
               // Supporting preview, not a hero image: capped at ~480px tall (same as the prompt page).
               style={{
                 aspectRatio: referenceRatio,
@@ -311,17 +311,6 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
           />
         )}
 
-        {live.creativeDirection && (
-          <div className="rounded-r-lg border-l-2 border-primary bg-primary-soft/50 px-4 py-3.5">
-            <Eyebrow tone="primary" className="mb-2">
-              {t("request.creativeDirection")}
-            </Eyebrow>
-            <p className="text-[1.0625rem] leading-relaxed text-text">
-              <MentionText text={live.creativeDirection} />
-            </p>
-          </div>
-        )}
-
         <DetailMetaCard
           toolLabel={t("tool.preferredLabel")}
           toolRefs={live.tools}
@@ -351,11 +340,15 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
           <p className="text-caption text-text-muted">{t("request.requestClosedNoNewReplies")}</p>
         )}
         {isOwnRequest && <EditHistoryPanel contentType="prompt_request" contentId={live.id} />}
-      <section id="request-responses" className="scroll-mt-20 space-y-3">
-        <h2 className="flex items-center gap-2 text-h2 text-text">
-          {t("request.creativeReplies")}
-          <span className="rounded-xs bg-surface-soft px-1.5 font-sans text-caption font-semibold tabular-nums text-text-muted">{answers.length}</span>
-        </h2>
+      <DetailSection
+        id="request-responses"
+        title={
+          <>
+            {t("request.creativeReplies")}
+            <span className="font-sans text-label font-normal tabular-nums text-text-muted"> · {answers.length}</span>
+          </>
+        }
+      >
         {responseHighlightNotFound && (
           <p className="rounded-md bg-surface-soft px-3 py-2.5 text-small text-text-muted">
             {t("request.replyNoLongerAvailable")}
@@ -458,7 +451,7 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
           </div>
         )}
         {selectionError && <p className="text-sm text-danger">{selectionError}</p>}
-      </section>
+      </DetailSection>
         </>)}
 
       <DetailComments>
@@ -470,7 +463,7 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
           `PromptDetailView` de zaten hiç `disabledReason` geçirmiyor —
           burası da artık aynı, koşulsuz davranışı kullanıyor.
         */}
-        <EngageComments target={{ requestId: live.id }} highlightCommentId={highlightCommentId} />
+        <EngageComments target={{ requestId: live.id }} highlightCommentId={highlightCommentId} headless />
       </DetailComments>
       <VersionRestoreToast contentId={live.id} />
       </article>

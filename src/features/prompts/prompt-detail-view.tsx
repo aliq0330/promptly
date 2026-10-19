@@ -6,7 +6,7 @@ import { RunButton } from "@/features/content/run-with-ai";
 import { DetailMetaCard } from "@/features/content/detail-meta-card";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { PenLine, SquareTerminal } from "lucide-react";
+import { PenLine } from "lucide-react";
 import { OpenInStudioButton } from "@/features/studio/open-in-studio-button";
 import { ContentTypeLabel } from "@/features/content/content-type-label";
 import { RelatedPrompts } from "@/features/prompts/related-prompts";
@@ -40,7 +40,7 @@ import { cn, formatCount, promptHref, relationMapHref } from "@/lib/utils";
 import { splitSourceNotes } from "@/lib/source-notes";
 import { SourceNotes } from "@/features/content/source-notes";
 import { FollowButton } from "@/features/profile/follow-button";
-import { DetailActionBar, DetailAside, DetailByline, DetailComments, DetailLede, DetailShell, DetailTags, DetailTitle, Eyebrow } from "@/features/content/detail-parts";
+import { DetailActionBar, DetailAside, DetailByline, DetailComments, DetailLede, DetailSection, DetailShell, DetailTags, DetailTitle } from "@/features/content/detail-parts";
 import { ReferenceRequirementNotes } from "@/features/content/reference-requirements";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Prompt, PromptVariable, PromptVersion } from "@/types";
@@ -142,6 +142,15 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
   return (
     <DetailShell
       entrance={morphingCover ? "fade" : "rise"}
+      actions={
+          <DetailActionBar trailing={<EngageShare target={{ contentType: "prompt", prompt }} />}>
+            <EngageLike id={prompt.id} likeCount={prompt.likeCount} size={18} />
+            <EngageCommentCount promptId={prompt.id} baseCount={prompt.commentCount} size={18} />
+            <EngageSave promptId={prompt.id} saveCount={prompt.saveCount} size={18} />
+            <EngageStatistics target={{ contentType: "prompt", contentId: prompt.id, likeCount: prompt.likeCount, commentCount: prompt.commentCount, saveCount: prompt.saveCount, copyCount: prompt.copyCount }} size={18} />
+            <RelationMapLink kind="prompt" id={prompt.id} />
+          </DetailActionBar>
+      }
       aside={
         <DetailAside>
           {/* Phones/tablets already show the creator (+ Follow) in the byline above. */}
@@ -155,11 +164,11 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
     >
         <article
           className={cn(
-            "min-w-0 space-y-6 rounded-lg transition-colors duration-700",
+            "min-w-0 space-y-10 rounded-lg transition-colors duration-700",
             isPostFlashed && "bg-primary/10 ring-1 ring-primary/40",
           )}
         >
-          <header className="space-y-4">
+          <header className="space-y-5">
             <div className="flex items-center justify-between gap-3">
               <ContentTypeLabel icon={typeMeta.icon} label={`${t(typeMeta.labelKey)} Prompt`} detail={null} />
               <PostMenu promptId={prompt.id} communityId={prompt.communityId} authorId={prompt.author.id} />
@@ -177,6 +186,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
               person={prompt.author}
               createdAt={prompt.createdAt}
               language={language}
+              meta={prompt.copyCount > 0 ? (prompt.copyCount === 1 ? t("prompt.usedOnce") : t("prompt.usedCount", { count: formatCount(prompt.copyCount) })) : undefined}
               // The creator card lives in the side column, which on phones/tablets stacks far below —
               // so there the byline carries the Follow button instead of repeating the whole card.
               trailing={!isOwn ? <FollowButton user={prompt.author} className="xl:hidden" /> : undefined}
@@ -192,7 +202,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
                 type="button"
                 onClick={() => setLightboxIndex(0)}
                 aria-label={t("media.viewFullscreen")}
-                className="relative block w-full overflow-hidden rounded-xl border border-border-soft bg-surface-soft shadow-card [--hero-h:360px] sm:[--hero-h:460px]"
+                className="relative block w-full overflow-hidden rounded-[22px] bg-surface-soft [--hero-h:360px] sm:[--hero-h:480px]"
                 // The output leads the page (full column width, rounded card); tall pictures are capped (lower since Meydan, docs/history/190-*) so the prompt block stays within reach.
                 style={{
                   aspectRatio: clampedAspectRatio(media.width, media.height),
@@ -231,70 +241,58 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
             <RequestResponseContext requestId={prompt.origin.requestId} currentPromptId={prompt.id} />
           )}
 
-          <DetailActionBar trailing={<EngageShare target={{ contentType: "prompt", prompt }} label={t("common.share")} />}>
-            <EngageLike id={prompt.id} likeCount={prompt.likeCount} size={18} />
-            <EngageCommentCount promptId={prompt.id} baseCount={prompt.commentCount} size={18} />
-            <EngageSave promptId={prompt.id} saveCount={prompt.saveCount} size={18} />
-            <EngageStatistics target={{ contentType: "prompt", contentId: prompt.id, likeCount: prompt.likeCount, commentCount: prompt.commentCount, saveCount: prompt.saveCount, copyCount: prompt.copyCount }} size={18} label={t("statistics.title")} />
-            <RelationMapLink kind="prompt" id={prompt.id} />
-          </DetailActionBar>
 
           {tabItems.length > 1 && (
             <Tabs items={tabItems} active={activeTab} onChange={setActiveTab} ariaLabel={t("promptTabs.ariaLabel")} />
           )}
 
-          {activeTab === "prompt" && variables.length > 0 && (
-            <PromptVariableInputs
-              variables={variables}
-              values={variableValues}
-              visible={variableVisible}
-              isCustomized={isCustomized}
-              onChange={(name, value) => setVariableOverrides((prev) => ({ ...prev, [name]: value }))}
-              onReset={() => setVariableOverrides({})}
-            />
-          )}
-
           {activeTab === "prompt" && (
-          <section aria-labelledby="prompt-text-title" className="relative overflow-hidden rounded-xl border border-border-soft bg-surface-soft shadow-card">
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border-soft px-4 py-2.5">
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                <Eyebrow as="h2" id="prompt-text-title" icon={SquareTerminal}>
-                  {t("prompt.promptTextHeading")}
-                </Eyebrow>
-                {prompt.copyCount > 0 && (
-                  <span className="text-caption text-text-muted">
-                    {prompt.copyCount === 1 ? t("prompt.usedOnce") : t("prompt.usedCount", { count: formatCount(prompt.copyCount) })}
-                  </span>
-                )}
+            <DetailSection
+              id="prompt-text"
+              title={t("prompt.promptTextHeading")}
+              action={
+                <>
+                  <CopyPromptButton text={displayText} promptId={prompt.id} size="md" variant="primary" />
+                  <RunButton text={displayText} recommendedRefs={prompt.tools} promptId={prompt.id} />
+                  <OpenInStudioButton kind="prompt" id={prompt.id} quiet />
+                </>
+              }
+            >
+              <div className="relative overflow-hidden rounded-[22px] bg-surface-soft">
+                {variables.length > 0 && <AssembleStatus filled={assemble.filled} total={assemble.total} complete={assemble.complete} />}
+                <ScrollablePrompt className="px-5 py-5 text-[0.875rem] text-text">
+                  {variables.length > 0 ? (
+                    <AssembledPromptText template={livePromptText} values={variableValues} visible={variableVisible} settled={assemble.complete} />
+                  ) : (
+                    displayText
+                  )}
+                </ScrollablePrompt>
+                <AssembleSweep seq={assemble.sweepSeq} />
               </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <CopyPromptButton text={displayText} promptId={prompt.id} size="md" variant="primary" />
-                <RunButton text={displayText} recommendedRefs={prompt.tools} promptId={prompt.id} />
-                <OpenInStudioButton kind="prompt" id={prompt.id} quiet />
-              </div>
-            </div>
-            {variables.length > 0 && <AssembleStatus filled={assemble.filled} total={assemble.total} complete={assemble.complete} />}
-            <ScrollablePrompt className="px-4 py-4 text-[0.875rem] text-text">
-              {variables.length > 0 ? (
-                <AssembledPromptText template={livePromptText} values={variableValues} visible={variableVisible} settled={assemble.complete} />
-              ) : (
-                displayText
-              )}
-            </ScrollablePrompt>
-            <AssembleSweep seq={assemble.sweepSeq} />
-            {user && !isOwn && (
-              <div className="border-t border-border-soft px-2 py-1">
+              {user && !isOwn && (
                 <button
                   type="button"
                   onClick={() => setIsSuggestModalOpen(true)}
-                  className="relative z-10 inline-flex h-9 items-center gap-2 rounded-md px-2.5 text-label font-medium text-text-secondary transition-colors hover:bg-surface hover:text-text"
+                  className="inline-flex h-9 items-center gap-2 rounded-full px-1 text-label font-medium text-text-secondary transition-colors hover:text-primary"
                 >
                   <PenLine size={14} aria-hidden />
                   {t("prompt.suggestEdit")}
                 </button>
-              </div>
-            )}
-          </section>
+              )}
+            </DetailSection>
+          )}
+
+          {activeTab === "prompt" && variables.length > 0 && (
+            <DetailSection title={t("detail.adaptTitle")}>
+              <PromptVariableInputs
+                variables={variables}
+                values={variableValues}
+                visible={variableVisible}
+                isCustomized={isCustomized}
+                onChange={(name, value) => setVariableOverrides((prev) => ({ ...prev, [name]: value }))}
+                onReset={() => setVariableOverrides({})}
+              />
+            </DetailSection>
           )}
 
           {activeTab === "history" && versions.length > 0 && (
@@ -331,7 +329,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
           )}
 
           <DetailComments>
-            <EngageComments target={{ promptId: prompt.id }} highlightCommentId={highlightCommentId} />
+            <EngageComments target={{ promptId: prompt.id }} highlightCommentId={highlightCommentId} headless />
           </DetailComments>
           <VersionRestoreToast contentId={prompt.id} />
         </article>

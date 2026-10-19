@@ -33,7 +33,7 @@ import {
   DetailShell,
   DetailTags,
   DetailTitle,
-  Eyebrow,
+  DetailSection,
 } from "@/features/content/detail-parts";
 import type { Workflow, WorkflowStep, WorkflowVersion } from "@/types";
 import { categoryLabel } from "./step-meta";
@@ -148,9 +148,20 @@ export function WorkflowDetailView({ workflowId }: { workflowId?: string } = {})
   );
 
   return (
-    <DetailShell aside={aside}>
-      <article className="min-w-0 space-y-6">
-        <header className="space-y-4">
+    <DetailShell
+      aside={aside}
+      actions={
+          <DetailActionBar trailing={<EngageShare target={{ contentType: "workflow", workflow }} />}>
+            <EngageLike id={workflow.id} likeCount={workflow.likeCount} contentType="workflow" size={18} />
+            <EngageCommentCount workflowId={workflow.id} baseCount={workflow.commentCount} size={18} />
+            <EngageSave workflowId={workflow.id} saveCount={workflow.saveCount} size={18} />
+            <EngageStatistics target={{ contentType: "workflow", contentId: workflow.id, likeCount: workflow.likeCount, commentCount: workflow.commentCount, saveCount: workflow.saveCount }} size={18} />
+            <RelationMapLink kind="workflow" id={workflow.id} />
+          </DetailActionBar>
+      }
+    >
+      <article className="min-w-0 space-y-10">
+        <header className="space-y-5">
           <div className="flex items-center justify-between gap-3">
             <ContentTypeLabel icon={WorkflowIcon} label={t("workflow.singular")} detail={category} />
             <div className="flex items-center gap-2">
@@ -180,14 +191,6 @@ export function WorkflowDetailView({ workflowId }: { workflowId?: string } = {})
           />
         </header>
 
-        <DetailActionBar trailing={<EngageShare target={{ contentType: "workflow", workflow }} label={t("common.share")} />}>
-          <EngageLike id={workflow.id} likeCount={workflow.likeCount} contentType="workflow" size={18} />
-          <EngageCommentCount workflowId={workflow.id} baseCount={workflow.commentCount} size={18} />
-          <EngageSave workflowId={workflow.id} saveCount={workflow.saveCount} size={18} />
-          <EngageStatistics target={{ contentType: "workflow", contentId: workflow.id, likeCount: workflow.likeCount, commentCount: workflow.commentCount, saveCount: workflow.saveCount }} size={18} label={t("statistics.title")} />
-          <RelationMapLink kind="workflow" id={workflow.id} />
-        </DetailActionBar>
-
         {tabItems.length > 1 && <Tabs items={tabItems} active={tab} onChange={setTab} ariaLabel={t("history.sectionsAria")} />}
 
         {tab === "history" && versions.length > 0 && <WorkflowHistoryPanel workflowId={workflow.id} versions={versions} isOwner={isOwn} />}
@@ -198,7 +201,7 @@ export function WorkflowDetailView({ workflowId }: { workflowId?: string } = {})
             type="button"
             onClick={() => setLightboxIndex(0)}
             aria-label={t("media.viewFullscreen")}
-            className="relative block w-full overflow-hidden rounded-xl border border-border-soft shadow-card"
+            className="relative block w-full overflow-hidden rounded-[22px] bg-surface-soft"
           >
             {/* eslint-disable-next-line @next/next/no-img-element -- real local data-URL cover */}
             <img src={workflow.coverUrl} alt="" className="aspect-video w-full object-cover" />
@@ -264,12 +267,12 @@ export function WorkflowDetailView({ workflowId }: { workflowId?: string } = {})
           <DetailTags className="contents" tags={workflow.tags} />
         </DetailMetaCard>
 
-        <section ref={stepsRef} aria-labelledby="workflow-steps-heading" className="scroll-mt-20 space-y-3">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <Eyebrow as="h2" id="workflow-steps-heading">
-              {t("workflow.viewStepsHeading")}
-            </Eyebrow>
-            {steps.length > 0 && (
+        <DetailSection
+          ref={stepsRef}
+          id="workflow-steps"
+          title={t("workflow.viewStepsHeading")}
+          action={
+            steps.length > 0 && (
               <Tabs
                 variant="segmented"
                 ariaLabel={t("workflow.run.viewAria")}
@@ -280,14 +283,15 @@ export function WorkflowDetailView({ workflowId }: { workflowId?: string } = {})
                   { key: "run", label: t("workflow.run.viewRun") },
                 ]}
               />
-            )}
-          </div>
+            )
+          }
+        >
           {view === "run" && steps.length > 0 ? <WorkflowRunner key={workflow.id} workflowId={workflow.id} steps={steps} /> : <WorkflowFlow steps={steps} />}
-        </section>
+        </DetailSection>
         </>)}
 
         <DetailComments>
-          <EngageComments target={{ workflowId: workflow.id }} highlightCommentId={highlightCommentId} />
+          <EngageComments target={{ workflowId: workflow.id }} highlightCommentId={highlightCommentId} headless />
         </DetailComments>
         <VersionRestoreToast contentId={workflow.id} />
       </article>

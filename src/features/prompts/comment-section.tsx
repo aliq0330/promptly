@@ -21,8 +21,11 @@ export function CommentSection({
   target,
   disabledReason,
   highlightCommentId,
+  headless = false,
 }: {
   target: CommentTarget;
+  /** The page already titles the thread (the detail pages' numbered "Yorumlar" section): drop the own heading, keep the count + "Tümünü gör". */
+  headless?: boolean;
   /** When set, hides the composer and shows this text instead (e.g. a closed request). */
   disabledReason?: string;
   /**
@@ -48,10 +51,14 @@ export function CommentSection({
   return (
     <section className="space-y-4">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="text-label font-semibold text-text">
-          {t("comments.title")}
-          <span className="font-normal tabular-nums text-text-muted"> · {comments.length}</span>
-        </h2>
+        {headless ? (
+          <p className="text-caption tabular-nums text-text-muted">{t("comments.countLabel", { count: comments.length })}</p>
+        ) : (
+          <h2 className="text-label font-semibold text-text">
+            {t("comments.title")}
+            <span className="font-normal tabular-nums text-text-muted"> · {comments.length}</span>
+          </h2>
+        )}
         {topLevel.length > COLLAPSED_COMMENTS && (
           <button
             type="button"

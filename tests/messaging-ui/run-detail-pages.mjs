@@ -46,7 +46,7 @@ for (const kind of ["prompt", "request", "workflow", "preset"]) {
     await page.getByRole("button", { name: "Takip Et" }).first().waitFor();
     const byline = await page.locator("article a[href*='/profile/']").first().textContent();
     assert.match(byline ?? "", /Carol/);
-    const bar = page.locator("div.rounded-xl").filter({ has: page.getByRole("button", { name: "Paylaş" }) }).first();
+    const bar = page.locator("[data-detail-actions]").filter({ has: page.getByRole("button", { name: "Paylaş" }) }).first();
     await bar.waitFor();
     const meta = page.getByTestId("detail-meta");
     await meta.waitFor();
@@ -72,7 +72,7 @@ await scenario("2. prompt: 'Kaynak ve lisans' kapalı satır + CC BY 4.0 rozeti;
   assert.equal(await notes.getByRole("button", { name: /Kaynak ve lisans/ }).getAttribute("aria-expanded"), "true");
 });
 await scenario("2b. prompt: Kopyala · Çalıştır · Studio'da aç kart başlığında; 'Düzenleme öner' kartın altbilgisinde; araç adı çift yazılmaz", "prompt", async ({ page }) => {
-  const card = page.locator("section[aria-labelledby='prompt-text-title']");
+  const card = page.locator("section#prompt-text");
   await card.waitFor();
   for (const name of [/Kopyala/, /Çalıştır/, /Studio/]) await card.getByRole("button", { name }).or(card.getByRole("link", { name })).first().waitFor();
   const head = await box(card.getByRole("button", { name: /Kopyala/ }));

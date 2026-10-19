@@ -33,10 +33,11 @@ export function DetailMetaCard({
 
   const linkClass = "transition-colors hover:text-primary";
   return (
-    <section data-testid="detail-meta" className="flex flex-wrap items-center gap-x-4 gap-y-2.5 rounded-xl border border-border-soft bg-surface-soft px-3.5 py-3">
+    // Editorial colophon (docs/history/201-*): an unboxed band between hairlines.
+    <section data-testid="detail-meta" className="flex flex-wrap items-center gap-x-4 gap-y-2.5 border-y border-border-soft py-4">
       {hasTool && (
         <div className="flex min-w-0 items-center gap-2.5">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-surface text-text-secondary ring-1 ring-border-soft">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface-soft text-text-secondary">
             <Wrench size={16} aria-hidden />
           </span>
           <span className="min-w-0 leading-tight">

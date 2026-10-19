@@ -35,7 +35,7 @@ import {
   DetailShell,
   DetailTags,
   DetailTitle,
-  Eyebrow,
+  DetailSection,
 } from "@/features/content/detail-parts";
 import { useRealPresets } from "./real-presets-provider";
 import { PresetSaveCta } from "./preset-save-cta";
@@ -123,9 +123,23 @@ export function PresetDetailView({ presetId }: { presetId?: string } = {}) {
   );
 
   return (
-    <DetailShell aside={aside}>
-      <article className="min-w-0 space-y-6">
-        <header className="space-y-4">
+    <DetailShell
+      aside={aside}
+      actions={
+          <DetailActionBar trailing={<EngageShare target={{ contentType: "preset", preset }} />}>
+            <EngageLike id={preset.id} likeCount={preset.likeCount} contentType="preset" size={18} />
+            <EngageCommentCount presetId={preset.id} baseCount={preset.commentCount} size={18} />
+            <EngageSave presetId={preset.id} saveCount={preset.saveCount} size={18} />
+            <EngageStatistics
+              target={{ contentType: "preset", contentId: preset.id, likeCount: preset.likeCount, commentCount: preset.commentCount, saveCount: preset.saveCount }}
+              size={18}
+             
+            />
+          </DetailActionBar>
+      }
+    >
+      <article className="min-w-0 space-y-10">
+        <header className="space-y-5">
           <div className="flex items-center justify-between gap-3">
             <ContentTypeLabel icon={SlidersHorizontal} label={t("preset.singular")} detail={category} />
             <div className="flex items-center gap-2">
@@ -159,23 +173,12 @@ export function PresetDetailView({ presetId }: { presetId?: string } = {}) {
           />
         </header>
 
-        <DetailActionBar trailing={<EngageShare target={{ contentType: "preset", preset }} label={t("common.share")} />}>
-          <EngageLike id={preset.id} likeCount={preset.likeCount} contentType="preset" size={18} />
-          <EngageCommentCount presetId={preset.id} baseCount={preset.commentCount} size={18} />
-          <EngageSave presetId={preset.id} saveCount={preset.saveCount} size={18} />
-          <EngageStatistics
-            target={{ contentType: "preset", contentId: preset.id, likeCount: preset.likeCount, commentCount: preset.commentCount, saveCount: preset.saveCount }}
-            size={18}
-            label={t("statistics.title")}
-          />
-        </DetailActionBar>
-
         {tabItems.length > 1 && <Tabs items={tabItems} active={tab} onChange={setTab} ariaLabel={t("history.sectionsAria")} />}
 
         {tab === "history" && versions.length > 0 && <PresetHistoryPanel presetId={preset.id} versions={versions} isOwner={isOwn} />}
 
         {tab === "preset" && (<>
-        <div className="flex flex-wrap items-start gap-3 rounded-xl border border-primary/20 bg-primary-soft/50 p-4 sm:p-5">
+        <div className="flex flex-wrap items-start gap-3 rounded-[22px] border border-primary/20 bg-primary-soft/50 p-5 sm:p-6">
           <div className="min-w-0 flex-1 space-y-3">
             {!isOwn && (
               <div className="space-y-1">
@@ -198,7 +201,7 @@ export function PresetDetailView({ presetId }: { presetId?: string } = {}) {
             type="button"
             onClick={() => setLightbox(true)}
             aria-label={t("media.viewFullscreen")}
-            className="block w-full overflow-hidden rounded-xl border border-border-soft shadow-card"
+            className="block w-full overflow-hidden rounded-[22px] bg-surface-soft"
           >
             {/* eslint-disable-next-line @next/next/no-img-element -- real local data-URL cover */}
             <img src={preset.coverUrl} alt="" className="aspect-video w-full object-cover" />
@@ -208,25 +211,20 @@ export function PresetDetailView({ presetId }: { presetId?: string } = {}) {
           <ImageLightbox images={[{ url: preset.coverUrl, alt: preset.title }]} initialIndex={0} onClose={() => setLightbox(false)} />
         )}
 
-        <section aria-labelledby="preset-contents-title" className="overflow-hidden rounded-xl border border-border-soft bg-surface-soft shadow-card">
-          <div className="border-b border-border-soft px-4 py-3">
-            <Eyebrow as="h2" id="preset-contents-title" icon={SlidersHorizontal}>
-              {t("preset.contentsTitle")}
-            </Eyebrow>
-          </div>
+        <DetailSection title={t("preset.contentsTitle")}>
           {entries.length === 0 ? (
-            <p className="px-4 py-4 text-small text-text-muted">{t("preset.noParameters")}</p>
+            <p className="rounded-[22px] border border-dashed border-border px-4 py-6 text-center text-small text-text-muted">{t("preset.noParameters")}</p>
           ) : (
-            <dl className="grid gap-px bg-border-soft sm:grid-cols-2">
+            <dl className="grid overflow-hidden rounded-[22px] border border-border-soft bg-border-soft [gap:1px] sm:grid-cols-2">
               {entries.map((entry) => (
-                <div key={entry.fieldId} className="flex items-baseline justify-between gap-3 bg-surface px-4 py-2.5">
+                <div key={entry.fieldId} className="flex items-baseline justify-between gap-3 bg-surface px-5 py-3.5">
                   <dt className="shrink-0 text-small text-text-muted">{entry.fieldLabel}</dt>
                   <dd className="min-w-0 truncate text-right text-small font-semibold text-text">{entry.valueLabel}</dd>
                 </div>
               ))}
             </dl>
           )}
-        </section>
+        </DetailSection>
 
         <DetailMetaCard toolLabel={t("tool.recommendedLabel")} toolRefs={preset.tools} fallbackTool={t("preset.generalTool")} hasChips={preset.tags.length > 0}>
           <DetailTags className="contents" tags={preset.tags} />
@@ -234,7 +232,7 @@ export function PresetDetailView({ presetId }: { presetId?: string } = {}) {
         </>)}
 
         <DetailComments>
-          <EngageComments target={{ presetId: preset.id }} highlightCommentId={highlightCommentId} />
+          <EngageComments target={{ presetId: preset.id }} highlightCommentId={highlightCommentId} headless />
         </DetailComments>
         <VersionRestoreToast contentId={preset.id} />
       </article>
