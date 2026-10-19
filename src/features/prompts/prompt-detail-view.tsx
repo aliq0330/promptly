@@ -229,6 +229,20 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
             <Tabs items={tabItems} active={activeTab} onChange={setActiveTab} ariaLabel={t("promptTabs.ariaLabel")} />
           )}
 
+          {/* Fill in the variables first, then copy the assembled prompt below. */}
+          {activeTab === "prompt" && variables.length > 0 && (
+            <DetailSection title={t("detail.adaptTitle")}>
+              <PromptVariableInputs
+                variables={variables}
+                values={variableValues}
+                visible={variableVisible}
+                isCustomized={isCustomized}
+                onChange={(name, value) => setVariableOverrides((prev) => ({ ...prev, [name]: value }))}
+                onReset={() => setVariableOverrides({})}
+              />
+            </DetailSection>
+          )}
+
           {activeTab === "prompt" && (
             <DetailSection
               id="prompt-text"
@@ -260,19 +274,6 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
                   {t("prompt.suggestEdit")}
                 </button>
               )}
-            </DetailSection>
-          )}
-
-          {activeTab === "prompt" && variables.length > 0 && (
-            <DetailSection title={t("detail.adaptTitle")}>
-              <PromptVariableInputs
-                variables={variables}
-                values={variableValues}
-                visible={variableVisible}
-                isCustomized={isCustomized}
-                onChange={(name, value) => setVariableOverrides((prev) => ({ ...prev, [name]: value }))}
-                onReset={() => setVariableOverrides({})}
-              />
             </DetailSection>
           )}
 
