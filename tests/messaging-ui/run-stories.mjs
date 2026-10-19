@@ -454,6 +454,28 @@ await scenario("18. İngilizce, 390px, koyu tema: şerit ve görüntüleyici çe
   if (process.env.SHOT_DIR) await page.screenshot({ path: `${process.env.SHOT_DIR}/stories-viewer-mobile-en-dark.png` });
 }, { viewport: { width: 390, height: 844 }, lang: "en", theme: "dark" });
 
+// 18b — Telefonda görüntüleyici gerçekten tam ekran: tuval görünür alanı tamamen kaplar, yanıt çubuğu tuvalin ÜSTÜNDE (altında ayrı şerit yok), tarayıcı rengi siyaha döner ve kapanınca geri gelir
+await scenario("18b. Telefonda tam ekran: tuval ekranı doldurur, yanıt çubuğu üstüne biner, theme-color siyah olur ve geri döner", async ({ page, db }) => {
+  seedTray(db);
+  await page.goto(`${BASE}/`);
+  await page.locator("[data-story-ring]").first().waitFor();
+  const before = await page.evaluate(() => document.querySelector('meta[name="theme-color"]')?.content);
+  await page.locator("[data-story-ring]").first().click();
+  await viewer(page).getByRole("textbox", { name: "Hikâyeye özel yanıt" }).waitFor();
+  const vp = page.viewportSize();
+  const canvas = await viewer(page).locator("[data-story-layer]").first().evaluate((el) => { const r = el.closest(".\\@container").getBoundingClientRect(); return { x: r.x, y: r.y, w: r.width, h: r.height }; });
+  assert.ok(canvas.w >= vp.width - 1 && canvas.h >= vp.height - 1, `canvas ${canvas.w}x${canvas.h} fills ${vp.width}x${vp.height}`);
+  const bar = await viewer(page).getByRole("textbox", { name: "Hikâyeye özel yanıt" }).boundingBox();
+  assert.ok(bar.y + bar.height > canvas.y && bar.y + bar.height <= canvas.y + canvas.h, "reply bar sits over the canvas");
+  const during = await page.evaluate(() => document.querySelector('meta[name="theme-color"]')?.content);
+  assert.notEqual(during, before, "browser chrome colour changes while the viewer is open");
+  assert.match(during, /^rgb\(10, 10, 13\)$/);
+  await page.keyboard.press("Escape");
+  await viewer(page).waitFor({ state: "detached" });
+  assert.equal(await page.evaluate(() => document.querySelector('meta[name="theme-color"]')?.content), before, "theme-color restored");
+  if (process.env.SHOT_DIR) { await page.locator("[data-story-ring]").first().click(); await viewer(page).waitFor(); await page.waitForTimeout(300); await page.screenshot({ path: `${process.env.SHOT_DIR}/stories-fullscreen-mobile.png` }); }
+}, { viewport: { width: 390, height: 844 } });
+
 // 19 — Misafir: şerit yok; herkese açık hikâye bağlantısı açılır, yanıt için giriş istenir
 await scenario("19. Misafir: Ana Sayfa'da şerit yok; herkese açık hikâye açılır, yanıt yerine giriş düğmesi", async ({ page, db }) => {
   const s = db.addStory(U.bob, { text: "Herkese" });
@@ -476,7 +498,7 @@ await scenario("20. Masaüstü: kenar okları, tuval 9:16 ortada; oluşturucu ik
   await viewer(page).waitFor();
   await viewer(page).getByRole("button", { name: "Sonraki hikâye" }).click();
   await page.waitForFunction(() => document.querySelector("[data-story-layer]")?.textContent === "Bob 2");
-  const canvas = await viewer(page).locator(".aspect-\\[9\\/16\\]").first().boundingBox();
+  const canvas = await viewer(page).locator("[data-story-layer]").first().evaluate((el) => { const r = el.closest(".\\@container").getBoundingClientRect(); return { width: r.width, height: r.height }; });
   assert.ok(Math.abs(canvas.width / canvas.height - 9 / 16) < 0.02, "9:16 canvas");
   if (process.env.SHOT_DIR) await page.screenshot({ path: `${process.env.SHOT_DIR}/stories-viewer-desktop.png` });
   await page.keyboard.press("Escape");
