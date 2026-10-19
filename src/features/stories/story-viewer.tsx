@@ -317,6 +317,18 @@ export function StoryViewer({ groups, startGroupIndex, startStoryId, onClose }: 
     };
   }, []);
 
+  // Tarayıcı durum çubuğu/adres çubuğu da hikâye zeminine boyansın (krem şerit görünmesin); kapanınca eski renk geri gelir.
+  useEffect(() => {
+    const root = rootRef.current;
+    const meta = document.head.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
+    if (!root || !meta) return;
+    const previous = meta.content;
+    meta.content = getComputedStyle(root).backgroundColor;
+    return () => {
+      meta.content = previous;
+    };
+  }, []);
+
   useEffect(() => {
     if (!user) return;
     let alive = true;
@@ -490,7 +502,7 @@ export function StoryViewer({ groups, startGroupIndex, startStoryId, onClose }: 
       aria-label={t("stories.viewer.label")}
       tabIndex={-1}
       data-story-viewer
-      className="fixed inset-x-0 top-0 z-[60] flex h-dvh flex-col bg-story-stage text-story-white focus:outline-none"
+      className="fixed inset-x-0 top-0 z-[60] flex h-dvh flex-col overflow-hidden bg-story-stage text-story-white focus:outline-none"
     >
       <p className="sr-only" aria-live="polite">
         {positionLabel}
@@ -515,9 +527,9 @@ export function StoryViewer({ groups, startGroupIndex, startStoryId, onClose }: 
           <ChevronRight size={22} aria-hidden />
         </button>
 
-        <div ref={stageRef} className="relative sm:overflow-hidden sm:rounded-xl" style={{ width: "min(100cqw, calc(100cqh * 9 / 16))" }}>
+        <div ref={stageRef} className="relative h-full w-full sm:h-auto sm:w-[min(100cqw,calc(100cqh*9/16))] sm:overflow-hidden sm:rounded-xl">
           <div
-            className="relative touch-none"
+            className="relative h-full touch-none sm:h-auto"
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}
@@ -528,6 +540,7 @@ export function StoryViewer({ groups, startGroupIndex, startStoryId, onClose }: 
               <StoryCanvas
                 key={`${story.id}:${mediaAttempt}`}
                 story={story}
+                className="aspect-auto h-full sm:aspect-[9/16] sm:h-auto"
                 videoRef={videoRef}
                 muted={muted}
                 onMediaReady={() => setMediaReady(true)}
@@ -549,7 +562,7 @@ export function StoryViewer({ groups, startGroupIndex, startStoryId, onClose }: 
                 }
               />
             ) : (
-              <div className="flex aspect-[9/16] w-full items-center justify-center bg-story-stage">
+              <div className="flex aspect-auto h-full w-full items-center justify-center bg-story-stage sm:aspect-[9/16] sm:h-auto">
                 {entry?.status === "error" ? (
                   <div className="space-y-3 px-6 text-center">
                     <p role="alert" className="text-small">{t("stories.error.load")}</p>
@@ -762,7 +775,10 @@ export function StoryViewer({ groups, startGroupIndex, startStoryId, onClose }: 
 
       {/* Alt: yanıt + tepki (izleyen) ya da etkinlik (sahip) */}
       {story && (
-        <div key={story.id} className="shrink-0 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2">
+        <div
+          key={story.id}
+          className="absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-story-black/75 via-story-black/40 to-transparent px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-10 sm:static sm:shrink-0 sm:bg-none sm:pt-2"
+        >
           {isOwner ? (
             <div className="mx-auto flex max-w-md items-center justify-between gap-2">
               <button
