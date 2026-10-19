@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ChevronRight, Send, Share2, X } from "lucide-react";
+import { ChevronRight, CircleFadingPlus, Send, Share2, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Modal } from "@/components/ui/modal";
 import { useAuth } from "@/features/auth/auth-provider";
@@ -17,7 +17,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import { CONTENT_TYPE_META } from "./content-type-meta";
 import { shareOrCopyLink } from "./share-button";
-import type { Preset, Prompt, PromptRequest, PromptResult, Workflow } from "@/types";
+import type { Preset, Prompt, PromptRequest, PromptResult, StoryLinkedType, Workflow } from "@/types";
 import { StorageBackground } from "@/components/ui/storage-media";
 
 export type ShareModalTarget =
@@ -54,6 +54,11 @@ interface SharePreview {
    * topluluk gönderisi özel saklanır: paylaşım sayfası yoktur ve bağlantıyı yalnız topluluğu okuyabilenler açabilir.
    */
   directLink: boolean;
+  /**
+   * Hikâyede paylaş (docs/history/198-*): yalnız yayında + herkese açık + topluluğa ait olmayan içerik (sunucu yeniden denetler);
+   * değer `/stories/create?link=` biçimidir. `null` = bu içerik hikâyeye bağlanamaz.
+   */
+  storyLink: string | null;
 }
 
 function getSharePreview(target: ShareModalTarget, t: (key: TranslationKey) => string, language: Language): SharePreview {
@@ -69,6 +74,7 @@ function getSharePreview(target: ShareModalTarget, t: (key: TranslationKey) => s
       href: promptHref(prompt),
       messageParam: `sharePromptId=${prompt.id}`,
       directLink: !!prompt.communityId,
+      storyLink: storyLinkFor("prompt", prompt.id, prompt.status === "published" && prompt.visibility === "public" && !prompt.communityId),
     };
   }
   if (target.contentType === "workflow") {
@@ -83,6 +89,7 @@ function getSharePreview(target: ShareModalTarget, t: (key: TranslationKey) => s
       href: workflowHref(workflow),
       messageParam: `shareWorkflowId=${workflow.id}`,
       directLink: !!workflow.communityId,
+      storyLink: storyLinkFor("workflow", workflow.id, workflow.status === "published" && workflow.visibility === "public" && !workflow.communityId),
     };
   }
   if (target.contentType === "preset") {
@@ -97,6 +104,7 @@ function getSharePreview(target: ShareModalTarget, t: (key: TranslationKey) => s
       href: presetHref(preset),
       messageParam: `sharePresetId=${preset.id}`,
       directLink: !!preset.communityId,
+      storyLink: storyLinkFor("preset", preset.id, preset.status === "published" && preset.visibility === "public" && !preset.communityId),
     };
   }
   if (target.contentType === "request") {
@@ -111,6 +119,7 @@ function getSharePreview(target: ShareModalTarget, t: (key: TranslationKey) => s
       href: requestHref(request),
       messageParam: `shareRequestId=${request.id}`,
       directLink: !!request.communityId,
+      storyLink: storyLinkFor("request", request.id, !request.isDraft && (request.visibility ?? "public") === "public" && !request.communityId),
     };
   }
   if (target.contentType === "community_post") {
@@ -124,6 +133,7 @@ function getSharePreview(target: ShareModalTarget, t: (key: TranslationKey) => s
       href: target.href,
       messageParam: `sharePostId=${target.postId}`,
       directLink: true,
+      storyLink: null,
     };
   }
   const result = target.result;
@@ -138,7 +148,12 @@ function getSharePreview(target: ShareModalTarget, t: (key: TranslationKey) => s
     href: resultHref(result),
     messageParam: null,
     directLink: false,
+    storyLink: null,
   };
+}
+
+function storyLinkFor(type: StoryLinkedType, id: string, eligible: boolean): string | null {
+  return eligible ? `/stories/create?link=${type}:${id}` : null;
 }
 
 /**
@@ -233,6 +248,23 @@ export function ShareModal({ target, onClose }: { target: ShareModalTarget; onCl
               <span className="min-w-0 flex-1">
                 <span className="block text-sm font-semibold text-text">{t("share.sendAsMessage")}</span>
                 <span className="block text-xs text-text-muted">{t("share.sendAsMessageHint")}</span>
+              </span>
+              <ChevronRight size={16} className="shrink-0 text-text-muted" />
+            </Link>
+          )}
+          {user && preview.storyLink && (
+            <Link
+              href={preview.storyLink}
+              onClick={onClose}
+              data-share-to-story
+              className="flex items-center gap-3 rounded-md border border-border p-3 text-left transition-colors hover:bg-accent-surface/50"
+            >
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary">
+                <CircleFadingPlus size={18} />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-semibold text-text">{t("share.toStory")}</span>
+                <span className="block text-xs text-text-muted">{t("share.toStoryHint")}</span>
               </span>
               <ChevronRight size={16} className="shrink-0 text-text-muted" />
             </Link>

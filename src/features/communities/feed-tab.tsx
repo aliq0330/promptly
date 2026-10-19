@@ -12,6 +12,7 @@ import { useAsyncAction } from "@/features/groups/use-async-action";
 import { DropdownMenu, MenuItem } from "./dropdown-menu";
 import { ReportModal } from "./report-modal";
 import { ShareToCommunityModal } from "./share-to-community-modal";
+import { StoryTray } from "@/features/stories/story-tray";
 import { CreatePostModal } from "./create-post-modal";
 import { ApplicationCard } from "./application-card";
 import { FeedHighlights } from "./feed-highlights";
@@ -159,6 +160,8 @@ export function FeedTab(props: CommunityTabProps) {
 
   return (
     <div className="space-y-5">
+      {/* Topluluk hikâyeleri (docs/history/198-*): yalnız üyelere; paylaşma hakkı akışla aynı kurala bağlı. */}
+      {role && <StoryTray communityId={group.id} canAdd={canPost} />}
       <FeedHighlights {...props} />
       {justShared && <p role="status" className="rounded-md bg-success/10 px-3 py-2 text-small text-text">{t("communities.feed.sharedBanner")}</p>}
       {pinAction.error && (

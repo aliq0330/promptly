@@ -8,7 +8,8 @@ import { OwnProfileActions, OtherProfileActions } from "./profile-actions";
 import { useFollowState } from "./use-follow-state";
 import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import { formatCount } from "@/lib/utils";
+import { cn, formatCount } from "@/lib/utils";
+import { useProfileStories } from "@/features/stories/story-highlights";
 import { INTEREST_OPTION_LABELS, type InterestOption } from "./interest-options";
 import type { UserProfile } from "@/types";
 
@@ -30,6 +31,7 @@ export function ProfileHeader({
 }) {
   const { t } = useTranslation();
   const [bioExpanded, setBioExpanded] = useState(false);
+  const stories = useProfileStories(user.id);
   const bio = user.bio ?? "";
   const bioIsLong = bio.length > BIO_CLAMP_LENGTH;
   const visibleBio = bioIsLong && !bioExpanded ? `${bio.slice(0, BIO_CLAMP_LENGTH).trimEnd()}…` : bio;
@@ -45,8 +47,23 @@ export function ProfileHeader({
   return (
     // Meydan (docs/history/190-*): no card — a ringed avatar, the name with its actions beside it, stats inline, then the bio.
     <header className="flex flex-col items-center gap-5 px-1 pt-2 text-center sm:flex-row sm:items-start sm:gap-10 sm:text-left">
-      <span className="inline-flex shrink-0 rounded-full border-[3px] border-secondary p-1">
+      {/* Hikâye halkası (docs/history/198-*): etkin hikâye varsa avatar onu açar; görülmemişse sıcak vurgu, görülmüşse sakin. */}
+      <span
+        data-profile-story-ring={stories ? (stories.unseen ? "unseen" : "seen") : "none"}
+        className={cn(
+          "relative inline-flex shrink-0 rounded-full p-1",
+          stories?.unseen ? "border-[3px] border-secondary" : stories ? "border-[3px] border-border-strong" : "border-2 border-border-soft",
+        )}
+      >
         <ProfileAvatar src={user.avatarUrl} alt={user.displayName} isOwnProfile={isOwnProfile} size={128} />
+        {stories && (
+          <button
+            type="button"
+            onClick={stories.open}
+            aria-label={t("stories.profile.open", { name: user.displayName })}
+            className="absolute inset-1 rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          />
+        )}
       </span>
 
       <div className="flex w-full min-w-0 flex-1 flex-col items-center gap-4 sm:items-start">

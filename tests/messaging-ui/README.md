@@ -85,3 +85,12 @@ Not: `run-community-home.mjs` ve `run-community-posts.mjs` aynı portu (4176) ku
 ```bash
 CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/messaging-ui/run-profile-collections.mjs   # 4/4 beklenir
 ```
+
+## Hikâyeler (`docs/history/198-*`)
+
+`run-stories.mjs` (ağ taklidi `mock-stories.mjs`, `db.extraRoutes`): Ana Sayfa şeridi (topluluk halkaları yok, görülmemiş önce, takip edilmeyen yok), görüntüleyici (dokun/klavye gezinmesi, kişi geçişi, ilk görülmemişten başlama, kaydırma konumu, görüntüleme kaydı bir kez), sahte saatle otomatik ilerleme + Boşluk/basılı tutma duraklatması, yatay kaydırma + aşağı çekip kapatma, tepki ver/değiştir/kaldır, özel yanıt → mesajlaşma + sohbet kartı, anket (oy/değiştir/yüzde) ve soru, sahip paneli (görüntüleyenler + tepki, yanıtlar, silme), oluşturucu (metin; çift tıklama tek hikâye; doğrulama; fotoğraf yükleme hatası → aynı yola tekrar; içerik türü baytlardan; taslak; `?link=`), `/stories?id=` gizliliği, profil avatar halkası + öne çıkan (öğeler kendi kitlesine göre), yeni öne çıkan, arşiv + saklama anahtarı, İngilizce/390px/koyu tema, misafir, masaüstü. Gerçek Supabase'e KARŞI DENENMEDİ — RLS/RPC doğrulaması `supabase/tests/stories.sql`'dedir.
+
+```bash
+CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/messaging-ui/run-stories.mjs   # 21/21 beklenir
+SHOT_DIR=/tmp/shots node tests/messaging-ui/run-stories.mjs   # ekran görüntüleriyle
+```

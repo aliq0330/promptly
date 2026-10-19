@@ -1,7 +1,7 @@
 import { supabase } from "./client";
 import { translateForRuntime } from "@/lib/i18n/translations";
 
-export type ReportTargetType = "prompt" | "comment" | "request" | "user" | "message" | "workflow" | "preset";
+export type ReportTargetType = "prompt" | "comment" | "request" | "user" | "message" | "workflow" | "preset" | "story";
 
 /**
  * Files a real, permanent report (Bölüm 18's `reports` table, unused until

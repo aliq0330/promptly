@@ -271,7 +271,10 @@ export type NotificationType =
   | "edit_suggestion_received"
   | "edit_suggestion_accepted"
   | "edit_suggestion_rejected"
-  | "prompt_result_shared";
+  | "prompt_result_shared"
+  | "story_reaction"
+  | "story_poll_vote"
+  | "story_question_answer";
 
 export interface AppNotification {
   id: string;
@@ -769,6 +772,9 @@ export interface Message {
   createdAt: string;
   /** Bir topluluk duyurusuna bağlı mesajsa duyurunun kimliği (gövde = duyuru başlığı); sohbette kart olarak çizilir. */
   announcementId: string | null;
+  /** Hikâyeye özel yanıt (docs/history/198-*): yanıtlanan hikâye; hikâye silinince null olur ama `isStoryReply` kalır. */
+  storyId: string | null;
+  isStoryReply: boolean;
 }
 
 /* ---------------------------------------------------------------------- */
@@ -884,4 +890,148 @@ export interface Preset {
   updatedAt: string;
   /** Topluluğa özgü içerik: doluysa içerik yalnız o topluluğun okuyucularına görünür; profilde/aramada/koleksiyonda yer almaz (`docs/history/179-*`). */
   communityId?: string | null;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Hikâyeler — see supabase/migrations/20260920170000_stories.sql          */
+/* ---------------------------------------------------------------------- */
+
+export type StoryKind = "image" | "video" | "text";
+export type StoryAudience = "public" | "followers" | "community";
+export type StoryLinkedType = "prompt" | "request" | "workflow" | "preset";
+/** Metin hikâyesi zemini — adlandırılmış (hex saklanmaz); her izleyicide aynı görünür (`--color-story-*`). */
+export type StoryBackground = "cobalt" | "sunset" | "ink" | "paper" | "forest" | "berry";
+export type StoryTextColor = "white" | "black" | "yellow" | "cobalt" | "orange" | "mint";
+export type StoryTextSize = "s" | "m" | "l" | "xl";
+export type StoryTextAlign = "left" | "center" | "right";
+
+/** Tuval üzerindeki bir metin katmanı; `x`/`y` tuvalin 0–1 oranıdır (katmanın merkezi). */
+export interface StoryTextLayer {
+  id: string;
+  text: string;
+  x: number;
+  y: number;
+  align: StoryTextAlign;
+  size: StoryTextSize;
+  color: StoryTextColor;
+  /** Okunabilirlik için yarı saydam zemin. */
+  bg: boolean;
+}
+
+export interface StoryPoint {
+  x: number;
+  y: number;
+}
+
+/** Sürümlü düzen (sunucuda `_story_layout_ok` aynı kuralları uygular). */
+export interface StoryLayout {
+  v: 1;
+  bg?: StoryBackground;
+  fit?: "cover" | "contain";
+  layers: StoryTextLayer[];
+  link?: StoryPoint;
+  sticker?: StoryPoint;
+}
+
+export type StorySticker = { kind: "poll"; question: string; options: string[] } | { kind: "question"; question: string };
+
+export interface StoryAuthor {
+  id: string;
+  username: string;
+  displayName: string;
+  avatarUrl: string | null;
+}
+
+export interface Story {
+  id: string;
+  authorId: string;
+  author: StoryAuthor | null;
+  kind: StoryKind;
+  /** Kimlik URL'si (private `story-media`); gösterirken `Storage*` bileşenleriyle imzalanır. */
+  mediaUrl: string | null;
+  mediaMime: string | null;
+  mediaWidth: number | null;
+  mediaHeight: number | null;
+  mediaDurationMs: number | null;
+  layout: StoryLayout;
+  linkedType: StoryLinkedType | null;
+  linkedId: string | null;
+  sticker: StorySticker | null;
+  audience: StoryAudience;
+  communityId: string | null;
+  /** Topluluk adı — yalnız topluluğu okuyabilen (üye) için dolu. */
+  communityName: string | null;
+  createdAt: string;
+  expiresAt: string;
+  moderationStatus: "visible" | "removed";
+  /** Sayılar yalnız sahibine anlamlıdır (başkasına da okunur ama gösterilmez). */
+  viewerCount: number;
+  viewCount: number;
+  reactionCount: number;
+  resharedFrom: string | null;
+}
+
+/** Hikâye şeridinde kişi başına bir halka (`story_tray`). */
+export interface StoryTrayItem {
+  author: StoryAuthor;
+  storyIds: string[];
+  unseenCount: number;
+  latestAt: string;
+  communityStoryCount: number;
+}
+
+export interface StoryHighlight {
+  id: string;
+  ownerId: string;
+  title: string;
+  coverStoryId: string | null;
+  position: number;
+  /** Çağıranın görebildiği öğeler, sıralı. */
+  storyIds: string[];
+}
+
+export interface StoryViewer {
+  user: StoryAuthor;
+  firstViewedAt: string;
+  lastViewedAt: string;
+  viewCount: number;
+  reaction: string | null;
+}
+
+export interface StoryPollResults {
+  revealed: boolean;
+  myVote: number | null;
+  total: number | null;
+  counts: number[] | null;
+}
+
+export interface StoryQuestionAnswer {
+  id: string;
+  storyId: string;
+  responder: StoryAuthor | null;
+  body: string;
+  createdAt: string;
+}
+
+/** Taslağın düzenleyici durumu (sahibine özel `story_drafts.payload`; yüklenirken yeniden doğrulanır). */
+export interface StoryDraftPayload {
+  v: 1;
+  kind: StoryKind;
+  layout: StoryLayout;
+  linkedType: StoryLinkedType | null;
+  linkedId: string | null;
+  sticker: StorySticker | null;
+  audience: StoryAudience;
+  communityId: string | null;
+  mediaWidth: number | null;
+  mediaHeight: number | null;
+  mediaDurationMs: number | null;
+}
+
+export interface StoryDraft {
+  id: string;
+  payload: StoryDraftPayload;
+  mediaUrl: string | null;
+  mediaMime: string | null;
+  updatedAt: string;
 }

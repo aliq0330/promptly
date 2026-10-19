@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type ComponentProps, type SyntheticEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type ComponentProps, type RefObject, type SyntheticEvent } from "react";
 import Image from "next/image";
 import { getCachedMediaUrl, isProtectedMediaUrl, resolveMediaUrl } from "@/lib/supabase/media-url";
 
@@ -128,16 +128,25 @@ export function StorageVideo({
   poster: posterUrl,
   onError,
   onLoadedMetadata,
+  ref: externalRef,
   ...rest
-}: Omit<ComponentProps<"video">, "src" | "poster"> & { src: StorageSrc; poster?: StorageSrc }) {
+}: Omit<ComponentProps<"video">, "src" | "poster" | "ref"> & { src: StorageSrc; poster?: StorageSrc; ref?: RefObject<HTMLVideoElement | null> }) {
   const { src, refresh } = useStorageSrc(url);
   const { src: poster } = useStorageSrc(posterUrl);
   const { ref, handleError, handleLoadedMetadata } = useResumableMedia<HTMLVideoElement>(refresh);
+  // Çağıran da oynatıcıyı yönetebilsin (hikâye görüntüleyicisi duraklatır/oynatır): iç ve dış ref aynı öğeyi gösterir.
+  const setRefs = useCallback(
+    (element: HTMLVideoElement | null) => {
+      ref.current = element;
+      if (externalRef) externalRef.current = element;
+    },
+    [ref, externalRef],
+  );
   if (!src) return null;
   return (
     <video
       {...rest}
-      ref={ref}
+      ref={setRefs}
       src={src}
       poster={poster}
       onError={(event: SyntheticEvent<HTMLVideoElement>) => {

@@ -356,6 +356,23 @@
   --color-accent: var(--p-primary);
   --color-primary-dark: var(--p-primary-hover);
 
+  /* Stories (docs/history/198-*): a story is AUTHORED artwork — every viewer must see the colours its author picked, whatever
+   * their own palette or mode — so these are fixed tokens, not palette-derived. Text-story backgrounds, layer text colours and
+   * the dark stage/scrim the viewer sits on. Default pairings (white on the dark grounds, ink on paper) keep text ≥ 4.5:1. */
+  --color-story-cobalt: #2b45c9;
+  --color-story-sunset: #c4471d;
+  --color-story-ink: #17181f;
+  --color-story-paper: #f5efe4;
+  --color-story-forest: #1d5e46;
+  --color-story-berry: #93264f;
+  --color-story-white: #ffffff;
+  --color-story-black: #121216;
+  --color-story-yellow: #ffd23f;
+  --color-story-orange: #ff9a52;
+  --color-story-mint: #63e6b8;
+  --color-story-stage: #0a0a0d;
+  --color-story-scrim: rgb(0 0 0 / 0.5);
+
   /* Radius — Meydan's softer, friendlier corners (cards 16px); never pill-shaped cards */
   --radius-xs: 0.375rem;
   --radius-sm: 0.5rem;

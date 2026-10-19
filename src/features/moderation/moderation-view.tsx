@@ -40,6 +40,7 @@ const TYPE_KEY: Record<string, TranslationKey> = {
   message: "moderation.type.message",
   workflow: "moderation.type.workflow",
   preset: "moderation.type.preset",
+  story: "moderation.type.story",
 };
 
 type AdminTab = "reports" | "stats" | "users" | "challenges";

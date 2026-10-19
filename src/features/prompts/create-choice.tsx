@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { ArrowRight, SlidersHorizontal, Sparkles, SquareTerminal, Workflow } from "lucide-react";
+import { ArrowRight, CircleFadingPlus, SlidersHorizontal, Sparkles, SquareTerminal, Workflow } from "lucide-react";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
 
@@ -43,6 +43,14 @@ const OPTIONS = [
     titleKey: "create.presetTitle" as TranslationKey,
     bodyKey: "create.presetBody" as TranslationKey,
     hintKey: "create.presetHint" as TranslationKey,
+  },
+  // Hikâye (docs/history/198-*): 24 saatlik paylaşım; topluluk bağlamı kendi hedef kitlesi olarak taşınır.
+  {
+    href: "/stories/create",
+    icon: CircleFadingPlus,
+    titleKey: "create.storyTitle" as TranslationKey,
+    bodyKey: "create.storyBody" as TranslationKey,
+    hintKey: "create.storyHint" as TranslationKey,
   },
 ] as const;
 

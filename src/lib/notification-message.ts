@@ -114,6 +114,15 @@ export function localizeNotificationMessage(message: string, language: "tr" | "e
   if (unselected) return t("notifMsg.answerUnselected", { preview: unselected[1] });
   const closed = /^Yanıt verdiğin "([\s\S]*)" isteği kapandı\.$/.exec(message);
   if (closed) return t("notifMsg.requestClosed", { preview: closed[1] });
+  // Hikâyeler (docs/history/198-*)
+  const storyReaction = /^Hikâyene tepki verdi: ([\s\S]+)$/.exec(message);
+  if (storyReaction) return t("notifMsg.storyReaction", { preview: storyReaction[1] });
+  if (message === "Hikâyendeki ankete oy verdi.") return t("notifMsg.storyPollVote");
+  if (message === "Hikâyendeki soruyu yanıtladı.") return t("notifMsg.storyQuestionAnswer");
+  const storyReply = /^Hikâyene yanıt verdi: ([\s\S]*)$/.exec(message);
+  if (storyReply) return t("notifMsg.storyReply", { preview: localizePreviewText(storyReply[1], t) });
+  const storyRemoved = /^"([\s\S]*)" topluluğundaki hikâyen kaldırıldı\.$/.exec(message);
+  if (storyRemoved) return t("notifMsg.storyRemovedCommunity", { name: storyRemoved[1] });
   if (message === "Seni takip etmeye başladı.") return t("notifMsg.followed");
   if (message === "Yorumuna bir yanıt geldi.") return t("notifMsg.repliedCommentNone");
   if (message === "Sana bir mesaj gönderdi.") return t("notifMsg.messageNone");
