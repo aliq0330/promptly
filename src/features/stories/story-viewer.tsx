@@ -351,6 +351,9 @@ export function StoryViewer({ groups, startGroupIndex, startStoryId, onClose }: 
     // Kaynak renk: tuvalin kendi zemini (metin hikâyesinde `bg-story-*`, aksi hâlde `bg-story-stage`) — token'dan okunur, hex yok.
     const canvas = root.querySelector<HTMLElement>("[data-story-canvas]");
     const color = getComputedStyle(canvas ?? root).backgroundColor;
+    // Kök de aynı renge boyanır: üst/alt `before:`/`after:` uzantıları (`bg-inherit`) görünür alanın DIŞINA taşarak tarayıcı çubuklarının
+    // arkasını doldurur (alt menüdeki `after:` numarasıyla aynı, docs/history/193) — yeni iOS Safari kenardaki sabit öğenin rengini örnekler.
+    root.style.backgroundColor = color;
     document.documentElement.style.backgroundColor = color;
     document.body.style.backgroundColor = color;
     const meta = document.head.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
@@ -530,7 +533,7 @@ export function StoryViewer({ groups, startGroupIndex, startStoryId, onClose }: 
       aria-label={t("stories.viewer.label")}
       tabIndex={-1}
       data-story-viewer
-      className="fixed inset-x-0 top-0 z-[60] flex h-dvh flex-col overflow-hidden bg-story-stage text-story-white focus:outline-none"
+      className="fixed inset-x-0 top-0 z-[60] flex h-dvh flex-col bg-story-stage text-story-white transition-colors duration-300 before:pointer-events-none before:absolute before:inset-x-0 before:bottom-full before:h-[50vh] before:bg-inherit after:pointer-events-none after:absolute after:inset-x-0 after:top-full after:h-[50vh] after:bg-inherit focus:outline-none"
     >
       <p className="sr-only" aria-live="polite">
         {positionLabel}

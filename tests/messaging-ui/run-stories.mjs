@@ -493,6 +493,16 @@ await scenario("18c. html/body zemini hikâyenin rengini izler (kobalt → kâğ
   await page.waitForTimeout(400);
   const first = await canvasBg();
   assert.deepEqual(await bgOf(), [first, first, first], "html, body and theme-color follow the cobalt story");
+  // kök + taşan üst/alt uzantılar (tarayıcı çubuklarının arkası) hikâyeyle aynı renk ve gerçekten dışarı taşar
+  const edges = await viewer(page).evaluate((root) => {
+    const r = root.getBoundingClientRect();
+    const read = (pseudo) => { const cs = getComputedStyle(root, pseudo); return { bg: cs.backgroundColor, h: parseFloat(cs.height), pos: cs.position, top: cs.top, bottom: cs.bottom }; };
+    return { rootBg: getComputedStyle(root).backgroundColor, rootHeight: r.height, overflow: getComputedStyle(root).overflow, before: read("::before"), after: read("::after") };
+  });
+  assert.equal(edges.rootBg, first, "viewer root is painted in the story colour");
+  assert.equal(edges.overflow, "visible", "root must not clip the edge extensions");
+  assert.equal(edges.before.bg, first); assert.equal(edges.after.bg, first);
+  assert.ok(edges.before.h > 100 && edges.after.h > 100, "extensions are tall enough to fill the strips behind the browser bars");
   await page.keyboard.press("ArrowRight");
   await page.waitForFunction(() => document.querySelector("[data-story-layer]")?.textContent === "Kâğıt");
   await page.waitForTimeout(400);
