@@ -75,12 +75,12 @@ export function EngageShare({ target, label }: { target: ShareModalTarget; label
 }
 
 /** Yorum bölümü: başvuru sayfasında yorumlar GÖNDERİNİN kendisine aittir (üye değilse yazma kapalı + nedeni). */
-export function EngageComments({ target, highlightCommentId }: { target: CommentTarget; highlightCommentId?: string | null }) {
+export function EngageComments({ target, highlightCommentId, headless }: { target: CommentTarget; highlightCommentId?: string | null; headless?: boolean }) {
   const { t } = useTranslation();
   const scope = usePostScope();
   if (scope) {
     const disabledReason = scope.mode === "open" ? undefined : scope.mode === "join" ? t("communities.post.engage.joinToComment") : t("communities.post.engage.closed");
-    return <CommentSection target={{ communityPostId: scope.post.id }} disabledReason={disabledReason} highlightCommentId={highlightCommentId ?? null} />;
+    return <CommentSection target={{ communityPostId: scope.post.id }} disabledReason={disabledReason} highlightCommentId={highlightCommentId ?? null} headless={headless} />;
   }
-  return <CommentSection target={target} highlightCommentId={highlightCommentId ?? null} />;
+  return <CommentSection target={target} highlightCommentId={highlightCommentId ?? null} headless={headless} />;
 }

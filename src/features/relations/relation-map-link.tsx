@@ -8,9 +8,9 @@ import { relationMapHref } from "@/lib/utils";
 import type { RelatableKind } from "@/lib/relations/types";
 
 /**
- * "İlişki Haritası" entry point for a detail page's action row — same
- * icon-button shape as Like/Comment/Save/İstatistikler. Just a link: the map
- * is its own page and the detail page's layout is untouched.
+ * "İlişki Haritası" entry point for a detail page's action toolbar — same
+ * icon-button shape as Like/Comment/Save/İstatistikler (icon only; the name is its
+ * aria-label / tooltip). Just a link: the map is its own page.
  */
 export function RelationMapLink({ kind, id, size = 18 }: { kind: RelatableKind; id: string; size?: number }) {
   const { t } = useTranslation();
@@ -23,7 +23,6 @@ export function RelationMapLink({ kind, id, size = 18 }: { kind: RelatableKind; 
       className={contentActionClassName(false)}
     >
       <Network size={size} strokeWidth={1.75} />
-      <span className="hidden sm:inline">{t("relations.link")}</span>
     </Link>
   );
 }

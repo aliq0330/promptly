@@ -356,7 +356,7 @@ await scenario("16. Başvuru sayfası = başvurulan içeriğin NORMAL detay sayf
   const back = page.getByRole("link", { name: /akışına dön/ });
   assert.match((await back.getAttribute("href")) ?? "", new RegExp(`communities/local/?\\?id=${C1}&tab=feed`));
   // Normal detay sayfasındaki eylem satırının aynısı: Beğeni · Yorum · Kaydet · İstatistik … Paylaş (hepsi gönderiye bağlı)
-  const bar = page.locator("div.rounded-xl", { has: page.getByRole("button", { name: "Paylaş" }) }).first();
+  const bar = page.locator("[data-detail-actions]", { has: page.getByRole("button", { name: "Paylaş" }) }).first();
   await bar.getByRole("button", { name: /Kaydet|koleksiyon/i }).first().waitFor();
   await bar.getByRole("button", { name: /İstatistik/i }).first().waitFor();
   await page.getByRole("button", { name: /beğen/i }).first().click();
@@ -369,7 +369,7 @@ await scenario("16a. Başvuru sayfasında KAYDET: normal koleksiyon penceresi, k
   const p = db.posts[0];
   await page.goto(postPage(p.id));
   await page.locator("[data-community-post-page]").waitFor();
-  const bar = page.locator("div.rounded-xl", { has: page.getByRole("button", { name: "Paylaş" }) }).first();
+  const bar = page.locator("[data-detail-actions]", { has: page.getByRole("button", { name: "Paylaş" }) }).first();
   await bar.getByRole("button", { name: /Kaydet|koleksiyon/i }).first().click();
   await dlg(page).getByRole("button", { name: "Kaydet", exact: true }).waitFor();
   await dlg(page).getByRole("checkbox").first().check();
