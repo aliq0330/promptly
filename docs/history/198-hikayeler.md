@@ -123,3 +123,11 @@ Kullanılmayan `home.rings*` anahtarları silindi.
 - Gerçek cihazda (iOS klavye, aşağı çekme, sesli otomatik oynatma politikası) denenmedi. Sesli oynatma engellenirse sessize düşer.
 - Kırpma = "Doldur (kırp)" / "Sığdır" seçimi; serbest yakınlaştırma/kaydırma yok.
 - Hikâye susturma (bir kişinin hikâyelerini şeritten gizleme) ve "yakın arkadaşlar" listesi yok.
+
+## Demo tohumu
+`supabase/seed/stories-demo.sql` (elle çalıştırılır, tekrar çalıştırması güvenli): demo hesapların (5eed…) ve `aliq`'ın 20 hikâyesi — renkli metin
+hikâyeleri, gerçek herkese açık prompt'lara bağlı kartlar, 3 anket, 2 soru, topluluk (yazarın üyesi olduğu `aliq` topluluğu; yoksa herkese
+açığa düşer) ve 1 takipçiye özel hikâye, süresi dolmuş 2 hikâye + "Işık denemeleri" öne çıkanı; görüntüleme/tepki/oy/yanıt satırları ve
+satırlardan hesaplanan sayaçlar. `aliq` demo yazarları takip eder (şerit için). Fotoğraf/video yok (private Storage dosyası gerekir).
+Zamanlar çalıştırma anına göre ve hikâye 24 saatte dolar. Yerel PostgreSQL'de sınandı (20 hikâye, ikinci çalıştırma 0, takipçiye özel hikâye
+yabancıya görünmedi); canlıya UYGULANMADI. Ekran görüntüleri için `tests/messaging-ui/shots-stories.mjs` (`SHOT_DIR`).
