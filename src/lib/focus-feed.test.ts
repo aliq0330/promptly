@@ -1,0 +1,73 @@
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import {
+  focusFeedCover,
+  focusFeedExtraImages,
+  focusFeedIsNear,
+  focusFeedLayout,
+  focusFeedPlayable,
+  focusFeedShouldLoadMore,
+  focusFeedStartIndex,
+} from "./focus-feed.ts";
+import type { FeedEntry } from "./supabase/feed";
+
+const media = (id: string) => ({ id, url: `https://example.supabase.co/storage/v1/object/public/prompt-media/${id}.jpg`, width: 800, height: 600, alt: "" });
+
+function prompt(contentType: "image" | "text" | "audio" | "video", mediaCount: number): FeedEntry {
+  return {
+    kind: "prompt",
+    data: { id: `p-${contentType}-${mediaCount}`, title: "Başlık", contentType, media: Array.from({ length: mediaCount }, (_, i) => media(`m${i}`)) },
+  } as unknown as FeedEntry;
+}
+
+test("an image prompt with media is image-first; without media it is a text slide", () => {
+  assert.equal(focusFeedLayout(prompt("image", 2)), "visual");
+  assert.equal(focusFeedCover(prompt("image", 2))?.url.endsWith("m0.jpg"), true);
+  assert.equal(focusFeedCover(prompt("image", 1))?.alt, "Başlık");
+  assert.equal(focusFeedExtraImages(prompt("image", 3)), 2);
+  assert.equal(focusFeedLayout(prompt("image", 0)), "text");
+  assert.equal(focusFeedLayout(prompt("text", 0)), "text");
+  assert.equal(focusFeedCover(prompt("text", 0)), null);
+});
+
+test("only a video/audio prompt with a poster gets the play cue", () => {
+  assert.equal(focusFeedPlayable(prompt("video", 1)), true);
+  assert.equal(focusFeedPlayable(prompt("audio", 1)), true);
+  assert.equal(focusFeedPlayable(prompt("video", 0)), false);
+  assert.equal(focusFeedPlayable(prompt("image", 1)), false);
+});
+
+test("workflow / preset / request keep their own structure unless they have a real picture", () => {
+  const workflow = { kind: "workflow", data: { id: "w", title: "W", media: [] } } as unknown as FeedEntry;
+  const workflowWithCover = { kind: "workflow", data: { id: "w2", title: "W", media: [media("c")] } } as unknown as FeedEntry;
+  const preset = { kind: "preset", data: { id: "s", title: "S", coverUrl: null } } as unknown as FeedEntry;
+  const presetWithCover = { kind: "preset", data: { id: "s2", title: "S", coverUrl: "https://example.com/c.jpg" } } as unknown as FeedEntry;
+  const request = { kind: "request", data: { id: "r", title: "R", media: [] } } as unknown as FeedEntry;
+  assert.equal(focusFeedLayout(workflow), "workflow");
+  assert.equal(focusFeedLayout(workflowWithCover), "visual");
+  assert.equal(focusFeedLayout(preset), "preset");
+  assert.equal(focusFeedLayout(presetWithCover), "visual");
+  assert.equal(focusFeedExtraImages(presetWithCover), 0);
+  assert.equal(focusFeedLayout(request), "request");
+});
+
+test("the feed opens on the card in view, else the remembered post, else the top", () => {
+  const keys = ["prompt-a", "workflow-b", "preset-c"];
+  assert.equal(focusFeedStartIndex(keys, { visibleKey: "workflow-b", rememberedKey: "preset-c" }), 1);
+  assert.equal(focusFeedStartIndex(keys, { visibleKey: "gone", rememberedKey: "preset-c" }), 2);
+  assert.equal(focusFeedStartIndex(keys, { visibleKey: null, rememberedKey: "gone" }), 0);
+  assert.equal(focusFeedStartIndex([], { visibleKey: "prompt-a" }), 0);
+});
+
+test("only nearby slides load media; the next page is asked for near the end, once", () => {
+  assert.equal(focusFeedIsNear(5, 3), true);
+  assert.equal(focusFeedIsNear(6, 3), false);
+  assert.equal(focusFeedIsNear(1, 3), true);
+  const idle = { hasMore: true, loadingMore: false, failed: false };
+  assert.equal(focusFeedShouldLoadMore(14, 18, idle), false);
+  assert.equal(focusFeedShouldLoadMore(15, 18, idle), true);
+  assert.equal(focusFeedShouldLoadMore(17, 18, { ...idle, loadingMore: true }), false);
+  assert.equal(focusFeedShouldLoadMore(17, 18, { ...idle, failed: true }), false);
+  assert.equal(focusFeedShouldLoadMore(17, 18, { ...idle, hasMore: false }), false);
+  assert.equal(focusFeedShouldLoadMore(0, 0, idle), false);
+});

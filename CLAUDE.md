@@ -155,7 +155,7 @@ Oluşturma ekranlarının ortak alt alanı `CreateFormActions` paylaşım hedefi
 Sitedeki HER gönderi listesi (Ana Sayfa, Topluluklar, topluluk sayfası, Keşfet, listeler, profil, arama, koleksiyon) `ContentGrid`
 ile çizilir: HER ekranda kutulu kartlar (telefonda tek sütun, 12px sayfa kenar boşluğu; `sm`+ kutulu sütunlar, yanında sağ sütun olan sayfada en çok 2; `docs/history/196-*`) —
 yeni bir gönderi listesi elle `columns-*` yazmaz, ikinci bir liste görünümü kurulmaz. Her gönderi listesinde Keşfet'teki Kart | Odak
-seçicisi vardır (`ViewModeControls` + `useViewMode`; Odak = `FocusGrid`) — yeni liste yazarken ikisini de bağla, yeni seçici yazma.
+seçicisi vardır (`ViewModeControls` + `useViewMode`; Odak = `FocusGrid`) — yeni liste yazarken ikisini de bağla, yeni seçici yazma. Ana Sayfa ayrıca üçüncü görünüm **Odak Akışı**'nı sunar (aynı tercih, değer `feed`; `FocusFeed` katmanı + `ListToolbar allowFeedView`; `docs/history/199-*`): başka listeler `feed` iken kart gösterir (`displayViewMode`) — ikinci tercih/rota yazma.
 
 ### Responsive İlkeleri
 
@@ -430,5 +430,5 @@ bağlayıcıdır; ayrıntılı gerekçe için `docs/history/README.md` tablosuna
   isteğin `creative_direction`'ını da kapsar ve keyset sayfalanır (`search_content`); `prompt_saves` canlıdan kaldırıldı; kod içi
   yorumlarda eski "Bölüm 9.x" atıfları arşiv numaralarına (`docs/history/NNN-*`) karşılık gelir.
 
-**Arşiv:** [`docs/history/README.md`](docs/history/README.md) — 198 bölüm, her
+**Arşiv:** [`docs/history/README.md`](docs/history/README.md) — 199 bölüm, her
 biri için durum etiketi (uygulandı / kısmen geçerli / kaldırıldı).
