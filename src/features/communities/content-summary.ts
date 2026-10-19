@@ -114,8 +114,8 @@ export function summarizeContent(content: CommunityPostContent): ContentSummary 
 }
 
 /**
- * Bir gönderinin Odak görünümündeki satırı (`FocusGrid`, Keşfet'teki Kart | Odak seçicisi): işaret ettiği içerik. İçerik okunamıyorsa
- * (silindi / gizlendi) null — Odak'ta çizilmez. Odak kartı içeriğin kendi sayfasına gider.
+ * Bir gönderinin Izgara görünümündeki satırı (`FocusGrid`, Keşfet'teki Kart | Izgara seçicisi): işaret ettiği içerik. İçerik okunamıyorsa
+ * (silindi / gizlendi) null — Izgara'da çizilmez. Izgara kartı içeriğin kendi sayfasına gider.
  */
 export function postFeedItem(content: CommunityPostContent | null): FeedItem | null {
   return content ? ({ kind: content.type, data: content.data } as FeedItem) : null;

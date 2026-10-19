@@ -3,19 +3,17 @@
 import { useSyncExternalStore } from "react";
 
 /**
- * "Kart" (the existing information-dense cards — the default) vs "Odak"
- * (Focus View: the content itself first) vs "Odak Akışı" (`feed`: the
- * vertical, one-post-per-screen feed — only Ana Sayfa offers it; every other
- * list shows its cards while the preference is `feed`, see `displayViewMode`).
- * One session-wide preference shared by every list page that offers the switcher.
+ * "Kart" (the existing information-dense cards — the default) vs "Izgara"
+ * (Focus View: the content itself first). One session-wide preference shared
+ * by every list page that offers the switcher.
  *
  * Persistence, in priority order:
- *  1. `?view=focus|feed|card` in the URL (shareable; read once, on first use),
+ *  1. `?view=focus|card` in the URL (shareable; read once, on first use),
  *  2. `localStorage` (`promptly-view-mode`) — a UI preference only, never an
  *     auth signal,
  *  3. "card".
  * A change writes localStorage and mirrors itself into the current URL
- * (`?view=focus` / `?view=feed`; the param is dropped again for "card") WITHOUT touching any
+ * (`?view=focus`; the param is dropped again for "card") WITHOUT touching any
  * other query param (search / filters / sort stay intact).
  *
  * Module singleton + `useSyncExternalStore` (same pattern as
@@ -24,7 +22,7 @@ import { useSyncExternalStore } from "react";
  * always "card", so hydration never mismatches; a returning focus-mode user
  * gets Focus right after hydration.
  */
-export type ViewMode = "card" | "focus" | "feed";
+export type ViewMode = "card" | "focus";
 
 export const VIEW_MODE_STORAGE_KEY = "promptly-view-mode";
 
@@ -32,7 +30,7 @@ let mode: ViewMode | null = null;
 const listeners = new Set<() => void>();
 
 function parse(value: string | null | undefined): ViewMode | null {
-  return value === "focus" || value === "feed" || value === "card" ? value : null;
+  return value === "focus" || value === "card" ? value : null;
 }
 
 function resolve(): ViewMode {
@@ -69,23 +67,13 @@ export function setViewMode(next: ViewMode): void {
   }
   try {
     const url = new URL(window.location.href);
-    if (next !== "card") url.searchParams.set("view", next);
+    if (next === "focus") url.searchParams.set("view", "focus");
     else url.searchParams.delete("view");
     window.history.replaceState(window.history.state, "", url);
   } catch {
     /* ignore — URL mirroring is a convenience */
   }
   listeners.forEach((listener) => listener());
-}
-
-/** The current preference outside React (e.g. an effect cleanup deciding whether the mode was switched or the page left). */
-export function getViewMode(): ViewMode {
-  return resolve();
-}
-
-/** What a list shows for `mode`: a list that has no Odak Akışı shows its cards while the preference is `feed`. */
-export function displayViewMode(mode: ViewMode, allowFeed: boolean): ViewMode {
-  return mode === "feed" && !allowFeed ? "card" : mode;
 }
 
 /** Current view mode (+ setter). "card" on the server and during hydration. */

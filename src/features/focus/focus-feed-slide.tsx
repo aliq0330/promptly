@@ -1,12 +1,12 @@
 "use client";
 
-import { memo, useId, useState, type ReactNode } from "react";
+import { createContext, memo, useContext, useEffect, useId, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { ArrowDown, ArrowUpRight, ImageOff, Play, SlidersHorizontal, Sparkles, SquareTerminal, Workflow as WorkflowIcon, X, type LucideIcon } from "lucide-react";
+import { ArrowDown, ArrowUpRight, ImageOff, Music, Pause, Play, SlidersHorizontal, Sparkles, SquareTerminal, Workflow as WorkflowIcon, X, type LucideIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Modal } from "@/components/ui/modal";
 import { Skeleton } from "@/components/ui/skeleton";
-import { StorageImg } from "@/components/ui/storage-media";
+import { StorageAudio, StorageImg, StorageVideo } from "@/components/ui/storage-media";
 import { CopyPromptButton } from "@/features/prompts/copy-prompt-button";
 import { PromptPreviewBox } from "@/features/prompts/prompt-preview-box";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
@@ -15,7 +15,7 @@ import { STATUS_LABELS, STATUS_VARIANTS } from "@/features/requests/request-card
 import { MEDIA_ICON, STEP_TYPE_META } from "@/features/workflows/step-meta";
 import type { FeedItem } from "@/features/feed/types";
 import { resolveToolRefs } from "@/lib/ai-tool-catalog";
-import { focusFeedCover, focusFeedExtraImages, focusFeedLayout, focusFeedPlayable, type FocusFeedCover } from "@/lib/focus-feed";
+import { focusFeedCover, focusFeedExtraImages, focusFeedLayout, type FocusFeedCover } from "@/lib/focus-feed";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Language } from "@/lib/i18n/translations";
 import { presetParameterEntries } from "@/lib/preset-utils";
@@ -23,7 +23,7 @@ import { splitSourceNotes } from "@/lib/source-notes";
 import { cn, presetHref, promptHref, requestHref, workflowHref } from "@/lib/utils";
 import type { Preset, Prompt, PromptRequest, UserProfile, Workflow } from "@/types";
 import { FocusFeedRail } from "./focus-feed-rail";
-import { useWorkflowFocusSteps } from "./use-focus-data";
+import { usePromptOutput, useWorkflowFocusSteps } from "./use-focus-data";
 
 /** Everything a slide shows about an entry, read from the real feed row (nothing assumed beyond its own fields). */
 interface SlideModel {
@@ -162,12 +162,15 @@ function PromptDialog({ prompt, onClose }: { prompt: Prompt; onClose: () => void
   );
 }
 
-/** The picture of an image-first slide: shimmer while it loads, a quiet icon if it can't be read, mounted only near the active slide. */
+/**
+ * The picture of an image-first slide: shimmer while it loads, a quiet icon if it can't be read, mounted only near the active
+ * slide. On a phone the whole picture is shown (`contain`) over the page's blurred copy of it; in the desktop card it fills.
+ */
 function SlideImage({ cover, active, near }: { cover: FocusFeedCover; active: boolean; near: boolean }) {
   const [state, setState] = useState<"loading" | "loaded" | "broken">("loading");
   return (
-    <div className="absolute inset-0 overflow-hidden bg-surface-soft">
-      {state === "loading" && <div aria-hidden className="skeleton-shimmer absolute inset-0" />}
+    <div className="absolute inset-0 overflow-hidden md:bg-surface-soft">
+      {state === "loading" && <div aria-hidden className="skeleton-shimmer absolute inset-0 opacity-40 md:opacity-100" />}
       {state === "broken" && (
         <div aria-hidden className="absolute inset-0 flex items-center justify-center text-text-muted">
           <ImageOff size={36} strokeWidth={1.5} />
@@ -183,13 +186,132 @@ function SlideImage({ cover, active, near }: { cover: FocusFeedCover; active: bo
           onLoad={() => setState("loaded")}
           onError={() => setState("broken")}
           className={cn(
-            "absolute inset-0 h-full w-full object-cover transition-[transform,opacity] duration-[1200ms] ease-soft motion-reduce:transition-none",
+            "absolute inset-0 h-full w-full object-contain transition-[transform,opacity] duration-[1200ms] ease-soft motion-reduce:transition-none md:object-cover",
             state === "loaded" ? "opacity-100" : "opacity-0",
-            active && "scale-[1.03] motion-reduce:scale-100",
+            active && "md:scale-[1.03] motion-reduce:scale-100",
           )}
         />
       )}
     </div>
+  );
+}
+
+/* ---------------------------------------------------------------- playback */
+
+/**
+ * Odak's one sound switch (top bar): videos start muted (browsers only autoplay silently); turning sound on, or tapping
+ * an audio post's play button, applies to every following post until it is turned off again.
+ */
+export const FocusPlaybackContext = createContext<{ muted: boolean; setMuted: (muted: boolean) => void }>({ muted: true, setMuted: () => undefined });
+
+/** Thin progress line along the bottom of a playing video / audio. */
+function MediaProgress({ value }: { value: number }) {
+  return (
+    <div aria-hidden className="absolute inset-x-0 bottom-0 z-20 h-0.5 bg-white/20">
+      <div className="h-full bg-white/85" style={{ width: `${Math.min(100, Math.max(0, value * 100))}%` }} />
+    </div>
+  );
+}
+
+/**
+ * A video / audio prompt's output — the AUTHOR's uploaded result (`usePromptOutput`, the detail page's rule), looked up only
+ * near view. The active post plays (video: muted unless sound is on; audio: when sound is on, else on its play button), the
+ * others pause; tapping toggles. Without an output it is the poster (or nothing — the slide then shows the prompt's words).
+ */
+function PlayableMedia({ prompt, cover, active, near }: { prompt: Prompt; cover: FocusFeedCover | null; active: boolean; near: boolean }) {
+  const { t } = useTranslation();
+  const { muted, setMuted } = useContext(FocusPlaybackContext);
+  const { data: output, loading } = usePromptOutput(prompt, near);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [playing, setPlaying] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const kind = output?.mediaUrl ? output.mediaType : null;
+  const element = () => (kind === "video" ? videoRef.current : kind === "audio" ? audioRef.current : null);
+
+  // Active → play (audio only once sound is on: a silent audio post would look broken); inactive → pause.
+  useEffect(() => {
+    const media = kind === "video" ? videoRef.current : kind === "audio" ? audioRef.current : null;
+    if (!media) return;
+    media.muted = muted;
+    if (active && (kind === "video" || !muted)) {
+      media.play().catch(() => {
+        // Sound needs a gesture on this browser: fall back to a silent video (an audio post waits for its button).
+        if (kind === "video" && !media.muted) {
+          setMuted(true);
+        }
+      });
+    } else {
+      media.pause();
+    }
+  }, [active, muted, kind, output, setMuted]);
+
+  function toggle() {
+    const media = element();
+    if (!media) return;
+    if (media.paused) {
+      // A tap is a gesture: an audio post may now play with sound.
+      if (kind === "audio" && muted) setMuted(false);
+      void media.play().catch(() => undefined);
+    } else media.pause();
+  }
+
+  const events = {
+    onPlay: () => setPlaying(true),
+    onPause: () => setPlaying(false),
+    onTimeUpdate: (event: React.SyntheticEvent<HTMLMediaElement>) => {
+      const media = event.currentTarget;
+      if (media.duration) setProgress(media.currentTime / media.duration);
+    },
+  };
+
+  return (
+    <>
+      {cover ? <SlideImage cover={cover} active={active} near={near} /> : !kind && <div aria-hidden className="absolute inset-0 bg-surface-soft" />}
+      {near && kind === "video" && output?.mediaUrl && (
+        <StorageVideo
+          ref={videoRef}
+          src={output.mediaUrl}
+          poster={cover?.url}
+          muted={muted}
+          loop
+          playsInline
+          preload={active ? "auto" : "metadata"}
+          className="absolute inset-0 z-[1] h-full w-full object-contain"
+          {...events}
+        />
+      )}
+      {near && kind === "audio" && output?.mediaUrl && (
+        <>
+          {!cover && (
+            <div aria-hidden className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-primary-soft via-surface-soft to-surface">
+              <Music size={72} strokeWidth={1.25} className="text-primary/60" />
+            </div>
+          )}
+          <StorageAudio ref={audioRef} src={output.mediaUrl} loop preload={active ? "auto" : "metadata"} {...events} />
+        </>
+      )}
+      {kind && (
+        <>
+          {/* The whole picture is the play / pause target; the round button is its visible, labelled twin. */}
+          <button type="button" tabIndex={-1} aria-hidden onClick={toggle} className="absolute inset-0 z-[2] cursor-pointer" />
+          <button
+            type="button"
+            onClick={toggle}
+            aria-label={playing ? t("focusFeed.pause") : t("focusFeed.play")}
+            aria-pressed={playing}
+            className={cn(
+              "absolute left-1/2 top-1/2 z-10 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-md transition-opacity duration-200 ease-soft",
+              playing ? "opacity-0 focus-visible:opacity-100" : "opacity-100",
+            )}
+          >
+            {playing ? <Pause size={26} fill="currentColor" aria-hidden /> : <Play size={26} fill="currentColor" aria-hidden />}
+          </button>
+          <MediaProgress value={progress} />
+        </>
+      )}
+      {loading && !cover && <div aria-hidden className="skeleton-shimmer absolute inset-0 opacity-40" />}
+    </>
   );
 }
 
@@ -313,10 +435,16 @@ function StructureBlock({ item, near, onImage }: { item: FeedItem; near: boolean
 
 /* ------------------------------------------------------------------- slide */
 
+/** Bottom of a slide on a phone: above the home indicator; on the right the action rail needs its column. */
+const PHONE_BOTTOM = "pb-[calc(1.25rem+env(safe-area-inset-bottom))]";
+/** Top of a slide on a phone: below Odak's floating bar (+ the notch). */
+const PHONE_TOP = "pt-[calc(4rem+env(safe-area-inset-top))]";
+
 /**
- * One post of Odak Akışı — a full-height snap point: the post (image-first when it really has a
- * picture, otherwise its own structure on a token surface) and, beside it, the action rail.
- * `near` = within reach of the active slide: only then are pictures / workflow steps loaded.
+ * One post of Odak — a full-height snap point. On a phone it is the whole screen (media edge to edge, words over it, the
+ * action rail floating on the right); from `md` it is a card with the rail beside it. Image-first only when the post really
+ * has a picture; a video / audio prompt plays its author's output; everything else shows its own structure.
+ * `near` = within reach of the active slide: only then are pictures / video / audio / workflow steps loaded.
  */
 export const FocusFeedSlide = memo(function FocusFeedSlide({
   item,
@@ -334,40 +462,30 @@ export const FocusFeedSlide = memo(function FocusFeedSlide({
   const model = modelOf(item, t);
   const cover = focusFeedCover(item);
   const layout = focusFeedLayout(item);
-  const visual = layout === "visual" && cover;
-  const extra = focusFeedExtraImages(item);
   const prompt = item.kind === "prompt" ? item.data : null;
+  // A playable prompt whose output and poster are both missing reads as its words (once the lookup is done).
+  const { data: output, loading: outputLoading } = usePromptOutput(layout === "playable" ? prompt : null, near);
+  const playableWithoutMedia = layout === "playable" && !cover && !outputLoading && !output && near;
+  const visual = (layout === "visual" && cover) || (layout === "playable" && !playableWithoutMedia);
+  const extra = focusFeedExtraImages(item);
   const titleId = useId();
 
   return (
-    <section
-      data-slide-index={index}
-      aria-labelledby={titleId}
-      className="flex h-full snap-center snap-always items-center justify-center px-3 py-2.5 sm:px-6 sm:py-4"
-    >
-      <div className="grid h-full w-full max-w-[1000px] grid-cols-[minmax(0,1fr)_auto] items-center gap-2.5 sm:gap-5">
+    <section data-slide-index={index} aria-labelledby={titleId} className="relative h-full snap-start snap-always">
+      <div className="relative h-full md:mx-auto md:grid md:max-w-[1000px] md:grid-cols-[minmax(0,1fr)_auto] md:items-center md:gap-5 md:px-6 md:pb-5 md:pt-16">
         <article
           className={cn(
-            "relative flex h-full min-h-0 flex-col overflow-hidden rounded-xl border shadow-pop",
-            // Without a picture the post is words + structure: a calmer, shorter panel on large screens.
-            visual ? "max-h-[880px] border-white/15 bg-surface-soft" : "max-h-[720px] border-border-soft bg-surface/90 backdrop-blur-xl",
+            "absolute inset-0 flex flex-col overflow-hidden md:relative md:inset-auto md:h-full md:min-h-0 md:rounded-xl md:border md:shadow-pop",
+            visual
+              ? "md:max-h-[880px] md:border-white/15 md:bg-surface-soft"
+              : "bg-surface md:max-h-[720px] md:border-border-soft md:bg-surface/90 md:backdrop-blur-xl",
           )}
         >
           {visual ? (
             <>
-              <SlideImage cover={cover} active={active} near={near} />
-              <div aria-hidden className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/45 via-transparent via-35% to-black/85" />
-              {focusFeedPlayable(item) && (
-                <Link
-                  href={model.href}
-                  aria-label={t("focusFeed.playOnDetail")}
-                  title={t("focusFeed.playOnDetail")}
-                  className="absolute left-1/2 top-1/2 z-10 flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-md transition-transform duration-200 ease-soft hover:scale-105"
-                >
-                  <Play size={26} fill="currentColor" aria-hidden />
-                </Link>
-              )}
-              <div className="relative z-10 flex items-center justify-between gap-2 p-3 sm:p-4">
+              {layout === "playable" && prompt ? <PlayableMedia prompt={prompt} cover={cover} active={active} near={near} /> : cover && <SlideImage cover={cover} active={active} near={near} />}
+              <div aria-hidden className="pointer-events-none absolute inset-0 z-[3] bg-gradient-to-b from-black/45 via-transparent via-30% to-black/85" />
+              <div className={cn("relative z-10 flex items-center justify-between gap-2 px-3 md:p-4", PHONE_TOP, "md:pt-4")}>
                 <TypePill icon={model.icon} label={model.typeLabel} onImage />
                 <span className="flex shrink-0 items-center gap-2">
                   {item.kind === "request" && <RequestStatus request={item.data} />}
@@ -378,29 +496,31 @@ export const FocusFeedSlide = memo(function FocusFeedSlide({
                   )}
                 </span>
               </div>
-              <div className="relative z-10 mt-auto space-y-3 p-4 sm:p-7">
+              <div className={cn("pointer-events-none relative z-10 mt-auto space-y-3 pl-4 pr-20 md:p-7", PHONE_BOTTOM, "md:pb-7")}>
                 {model.tool && (
                   <p className="flex items-center gap-2 text-caption font-bold uppercase tracking-[0.12em] text-white/85">
                     <span aria-hidden className="h-px w-5 bg-white/70" />
                     {model.tool}
                   </p>
                 )}
-                <h2 id={titleId} className="line-clamp-3 break-words font-display text-[clamp(1.6rem,4.2vw,3.1rem)] font-bold leading-[1.04] tracking-[-0.03em] text-white">
+                <h2 id={titleId} className="line-clamp-3 break-words font-display text-[clamp(1.5rem,4.2vw,3.1rem)] font-bold leading-[1.04] tracking-[-0.03em] text-white">
                   {model.title}
                 </h2>
                 {model.description && <p className="line-clamp-2 max-w-2xl break-words text-small leading-relaxed text-white/85 sm:text-body">{model.description}</p>}
-                <StructureBlock item={item} near={near} onImage />
-                <AuthorLine author={model.author} createdAt={model.createdAt} language={language} onImage />
-                <SlideButtons href={model.href} prompt={prompt} onImage onOpenPrompt={() => setPromptOpen(true)} />
+                <div className="pointer-events-auto space-y-3">
+                  <StructureBlock item={item} near={near} onImage />
+                  <AuthorLine author={model.author} createdAt={model.createdAt} language={language} onImage />
+                  <SlideButtons href={model.href} prompt={prompt} onImage onOpenPrompt={() => setPromptOpen(true)} />
+                </div>
               </div>
             </>
           ) : (
             <>
-              <div className="flex items-center justify-between gap-2 p-4 sm:p-5">
+              <div className={cn("flex items-center justify-between gap-2 px-4 md:p-5", PHONE_TOP, "md:pt-5")}>
                 <TypePill icon={model.icon} label={model.typeLabel} onImage={false} />
                 {item.kind === "request" && <RequestStatus request={item.data} />}
               </div>
-              <div className="flex min-h-0 flex-1 flex-col justify-center gap-4 overflow-hidden px-4 sm:px-8">
+              <div className="flex min-h-0 flex-1 flex-col justify-center gap-4 overflow-hidden pl-4 pr-20 md:px-8">
                 {model.tool && (
                   <p className="flex items-center gap-2 text-caption font-bold uppercase tracking-[0.12em] text-text-muted">
                     <span aria-hidden className="h-px w-5 bg-primary" />
@@ -417,14 +537,16 @@ export const FocusFeedSlide = memo(function FocusFeedSlide({
                 )}
                 <StructureBlock item={item} near={near} onImage={false} />
               </div>
-              <div className="space-y-3 p-4 sm:p-6">
+              <div className={cn("space-y-3 pl-4 pr-20 pt-3 md:p-6", PHONE_BOTTOM, "md:pb-6")}>
                 <AuthorLine author={model.author} createdAt={model.createdAt} language={language} onImage={false} />
                 <SlideButtons href={model.href} prompt={prompt} onImage={false} onOpenPrompt={() => setPromptOpen(true)} />
               </div>
             </>
           )}
         </article>
-        <FocusFeedRail item={item} author={model.author} />
+        <div className={cn("absolute bottom-0 right-2 z-20 md:static", PHONE_BOTTOM, "md:pb-0")}>
+          <FocusFeedRail item={item} author={model.author} />
+        </div>
       </div>
       {promptOpen && prompt && <PromptDialog prompt={prompt} onClose={() => setPromptOpen(false)} />}
     </section>

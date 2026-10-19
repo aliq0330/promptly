@@ -114,7 +114,7 @@ export function CollectionEntryList({
   );
 }
 
-/** One entry in the Odak view: the content itself; a saved community post shows the content it applies with. */
+/** One entry in the Izgara view: the content itself; a saved community post shows the content it applies with. */
 function entryFeedItem(entry: CollectionEntry): FeedItem | null {
   if (entry.type === "community_post") return postFeedItem(entry.data.content);
   return { kind: entry.type, data: entry.data } as FeedItem;

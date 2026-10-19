@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Clock, Flame, Hash, Inbox, LayoutGrid, SquareTerminal, SlidersHorizontal, Sparkles, UserCheck, Workflow as WorkflowIcon } from "lucide-react";
+import { Clock, Flame, Hash, LayoutGrid, SquareTerminal, SlidersHorizontal, Sparkles, UserCheck, Workflow as WorkflowIcon } from "lucide-react";
 import { Tabs } from "@/components/ui/tabs";
 import { Chip } from "@/components/ui/chip";
 import { Button } from "@/components/ui/button";
@@ -10,8 +10,6 @@ import { EMPTY_TAXONOMY_FILTER, type TaxonomyFilterValue } from "@/lib/content-t
 import { EmptyState } from "@/components/ui/empty-state";
 import { PromptCardSkeletonGrid } from "@/components/ui/prompt-card-skeleton";
 import { FeedItemsView } from "./feed-items-view";
-import { FocusFeed } from "@/features/focus/focus-feed";
-import { useViewMode } from "@/features/content/view-mode-store";
 import { useFeedPages } from "./use-feed-pages";
 import type { FeedItem } from "./types";
 import { useAuth } from "@/features/auth/auth-provider";
@@ -54,9 +52,6 @@ export function FeedTabs({ layout = "grid" }: { layout?: "grid" | "home" } = {})
   const [taxonomy, setTaxonomy] = useState<TaxonomyFilterValue>(EMPTY_TAXONOMY_FILTER);
   const { user, loading: authLoading } = useAuth();
   const followedTags = useFollowedTags();
-  // Odak Akışı (docs/history/199-*) is Ana Sayfa's third view: a layer over this same feed (same pages, same cards underneath).
-  const [viewMode] = useViewMode();
-  const focusFeed = layout === "home" && viewMode === "feed";
 
   // "Following" and "My tags" need a signed-in user: a guest gets the login prompt below and no request is made
   // (while the session is still being restored we wait instead of flashing that prompt).
@@ -70,30 +65,6 @@ export function FeedTabs({ layout = "grid" }: { layout?: "grid" | "home" } = {})
 
   // A signed-in viewer with no followed tags gets "start by following one" instead of a misleading "no posts".
   const noTagsFollowed = followedTags.loaded && followedTags.tags.length === 0;
-
-  const emptyTitle =
-    active === "following"
-      ? t("feed.emptyFollowingNoPosts")
-      : active === "tags"
-        ? noTagsFollowed
-          ? t("feed.emptyTagsNoneTitle")
-          : t("feed.emptyTagsNoPosts")
-        : t("feed.emptyDefault");
-  const emptyDescription = active === "following" ? t("feed.emptyFollowingHint") : active === "tags" && noTagsFollowed ? t("feed.emptyTagsNoneDescription") : undefined;
-  const emptyAction =
-    active === "following"
-      ? { label: t("feed.goToDiscover"), href: "/discover" }
-      : active === "tags"
-        ? { label: t("feed.goToTags"), href: "/tags" }
-        : undefined;
-  const loginState = (
-    <EmptyState
-      icon={active === "tags" ? Hash : UserCheck}
-      title={active === "tags" ? t("feed.emptyTagsLoginTitle") : t("feed.emptyFollowingTitle")}
-      description={active === "tags" ? t("feed.emptyTagsLoginDescription") : t("feed.emptyFollowingDescription")}
-      action={{ label: t("common.login"), href: "/login" }}
-    />
-  );
 
   const kindChips = (
     <>
@@ -110,7 +81,6 @@ export function FeedTabs({ layout = "grid" }: { layout?: "grid" | "home" } = {})
       <ListToolbar
         tabsBelow
         stream={layout === "home"}
-        allowFeedView={layout === "home"}
         leading={
           layout === "home" ? (
             // Meydan: equal-width underline tabs across the column (they scroll on a phone).
@@ -149,7 +119,12 @@ export function FeedTabs({ layout = "grid" }: { layout?: "grid" | "home" } = {})
       />
 
       {needsLogin ? (
-        loginState
+        <EmptyState
+          icon={active === "tags" ? Hash : UserCheck}
+          title={active === "tags" ? t("feed.emptyTagsLoginTitle") : t("feed.emptyFollowingTitle")}
+          description={active === "tags" ? t("feed.emptyTagsLoginDescription") : t("feed.emptyFollowingDescription")}
+          action={{ label: t("common.login"), href: "/login" }}
+        />
       ) : feed.loading || waitingForAuth ? (
         <PromptCardSkeletonGrid count={layout === "home" ? 4 : 6} columns={layout === "home" ? "sm:columns-2" : undefined} />
       ) : feed.failed && feed.items.length === 0 ? (
@@ -160,7 +135,27 @@ export function FeedTabs({ layout = "grid" }: { layout?: "grid" | "home" } = {})
         />
       ) : (
         <>
-          <FeedItemsView items={feed.items} layout={layout} emptyTitle={emptyTitle} emptyDescription={emptyDescription} emptyAction={emptyAction} />
+          <FeedItemsView
+            items={feed.items}
+            layout={layout}
+            emptyTitle={
+              active === "following"
+                ? t("feed.emptyFollowingNoPosts")
+                : active === "tags"
+                  ? noTagsFollowed
+                    ? t("feed.emptyTagsNoneTitle")
+                    : t("feed.emptyTagsNoPosts")
+                  : t("feed.emptyDefault")
+            }
+            emptyDescription={active === "following" ? t("feed.emptyFollowingHint") : active === "tags" && noTagsFollowed ? t("feed.emptyTagsNoneDescription") : undefined}
+            emptyAction={
+              active === "following"
+                ? { label: t("feed.goToDiscover"), href: "/discover" }
+                : active === "tags"
+                  ? { label: t("feed.goToTags"), href: "/tags" }
+                  : undefined
+            }
+          />
           {feed.failed && <p className="text-center text-small text-danger">{t("feed.loadFailed")}</p>}
           {feed.hasMore && (
             <div className="flex justify-center pt-2">
@@ -170,30 +165,6 @@ export function FeedTabs({ layout = "grid" }: { layout?: "grid" | "home" } = {})
             </div>
           )}
         </>
-      )}
-
-      {focusFeed && (
-        <FocusFeed
-          items={needsLogin ? [] : feed.items}
-          loading={!needsLogin && (feed.loading || waitingForAuth)}
-          failed={!needsLogin && feed.failed}
-          hasMore={!needsLogin && feed.hasMore}
-          loadingMore={feed.loadingMore}
-          onLoadMore={() => void feed.loadMore()}
-          onRetry={feed.retry}
-          empty={needsLogin ? loginState : <EmptyState icon={Inbox} title={emptyTitle} description={emptyDescription} action={emptyAction} />}
-          controls={
-            <Tabs
-              items={TABS.map((tab) => ({ key: tab.key, label: t(tab.labelKey), icon: tab.icon }))}
-              active={active}
-              onChange={setActive}
-              ariaLabel={t("feed.viewAriaLabel")}
-              variant="segmented"
-              className="w-max bg-surface/80 backdrop-blur-md"
-            />
-          }
-          memoryKey={`home:${active}:${kind}:${taxonomy.contentType ?? ""}:${taxonomy.category ?? ""}:${taxonomy.subcategory ?? ""}`}
-        />
       )}
     </section>
   );

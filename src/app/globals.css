@@ -661,9 +661,10 @@
     }
   }
 
-  /* Story viewer open (docs/history/198-*): the header and the bottom nav are covered by it, but iOS Safari still samples fixed bars at the
-   * screen edges for the colour behind its own bars — hide them (layout stays put) so the viewer's colour is the one it finds. */
-  html[data-story-open] [data-app-chrome] {
+  /* Story viewer / Odak open (docs/history/198-*, 199-*): the header, sidebar and bottom nav are covered, but iOS Safari still samples fixed bars
+   * at the screen edges for the colour behind its own bars — hide them (layout stays put, out of the tab order) so the full-screen colour is found. */
+  html[data-story-open] [data-app-chrome],
+  html[data-focus-open] [data-app-chrome] {
     visibility: hidden;
   }
 

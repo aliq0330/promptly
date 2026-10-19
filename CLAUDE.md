@@ -154,14 +154,14 @@ RequestCard ortak), `ContentTypeLabel`, `ContentTags`,
 Oluşturma ekranlarının ortak alt alanı `CreateFormActions` paylaşım hedefi seçicisini (`ShareDestinationField`, `docs/history/197-*`: "Nerede paylaşmak istiyorsun?" Genel akış / üye olunan topluluklar) taşır; seçim `?community=` bağlamının (`community-return.ts`) üstüne biner — yeni bir oluşturma formu yazarsan `CreateFormActions`'ı kullan, ayrı hedef seçici yazma.
 Sitedeki HER gönderi listesi (Ana Sayfa, Topluluklar, topluluk sayfası, Keşfet, listeler, profil, arama, koleksiyon) `ContentGrid`
 ile çizilir: HER ekranda kutulu kartlar (telefonda tek sütun, 12px sayfa kenar boşluğu; `sm`+ kutulu sütunlar, yanında sağ sütun olan sayfada en çok 2; `docs/history/196-*`) —
-yeni bir gönderi listesi elle `columns-*` yazmaz, ikinci bir liste görünümü kurulmaz. Her gönderi listesinde Keşfet'teki Kart | Odak
-seçicisi vardır (`ViewModeControls` + `useViewMode`; Odak = `FocusGrid`) — yeni liste yazarken ikisini de bağla, yeni seçici yazma. Ana Sayfa ayrıca üçüncü görünüm **Odak Akışı**'nı sunar (aynı tercih, değer `feed`; `FocusFeed` katmanı + `ListToolbar allowFeedView`; `docs/history/199-*`): başka listeler `feed` iken kart gösterir (`displayViewMode`) — ikinci tercih/rota yazma.
+yeni bir gönderi listesi elle `columns-*` yazmaz, ikinci bir liste görünümü kurulmaz. Her gönderi listesinde Keşfet'teki Kart | Izgara
+seçicisi vardır (`ViewModeControls` + `useViewMode`; Izgara = `FocusGrid`, iç değer `focus`) — yeni liste yazarken ikisini de bağla, yeni seçici yazma. **Odak** bir görünüm DEĞİL, ayrı tam ekran sayfadır (`/focus`, `docs/history/199-*`): slayt/ray/oynatma `features/focus/focus-feed*`; tam ekran açılan yeni bir katman yazarken aynı yolu izle (`html[data-focus-open]`/`data-story-open` → `[data-app-chrome]` gizlenir, `lockBodyScroll`).
 
 ### Responsive İlkeleri
 
 Tek tasarım sistemi, üç kompozisyon (`AppShell`):
 - Mobil (< md, 768px): üst header + alt navigasyon (Ana Sayfa, Keşfet,
-  **Oluştur** — vurgulu orta buton, İstekler, Profil). Sayfa kenar boşluğu
+  **Oluştur** — vurgulu orta buton, Topluluklar, Odak; profil üstteki avatar menüsünde). Sayfa kenar boşluğu
   12px; kartlar ekran genişliğini kullanır; modallar bottom sheet.
 - Tablet (md–lg): 72px ikon rayı (etiketler erişilebilir ad/tooltip), alt
   navigasyon yok, header'da arama kutusu.
@@ -208,8 +208,9 @@ tamamlanmış sayılmaz. Ayrıntı ve mimari: `docs/history/049-*`, `056-*`, `05
 | Route | Açıklama |
 |---|---|
 | `/` | Ana Sayfa: karma akış (En yeni / Popüler / Takip / Etiketlerim; sunucudan `feed_page`, keyset), tür çipleri; misafire tanıtım |
+| `/focus` | **Odak** (`docs/history/199-*`): tam ekran, dikey, tek gönderi/ekran (Reels tarzı); herkesin herkese açık gönderileri (`feed_page` en yeni; "Takip ettiklerim"), "Medya" süzgeci, video/ses yazarın yüklediği çıktıyla oynar; açıkken üst/yan/alt menü gizli, hep koyu sahne; telefonda alt menünün 5. yuvası (Profil üstteki avatar menüsünde) |
 | `/discover` | Keşfet: bölümler (Tümü / Promptlar / Workflow / Hazır ayar / İstekler / Yaratıcılar), filtreler (Promptlar'da ek "En çok kullanılan" sıralaması); içerik bölümleri sunucudan `feed_page` (keyset), Yaratıcılar `profiles` keyset |
-| `/prompts`, `/requests`, `/workflows`, `/presets` | Tür listeleri (ortak `ContentListPage`: arama, Filtre, sıralama, Kart/Odak) |
+| `/prompts`, `/requests`, `/workflows`, `/presets` | Tür listeleri (ortak `ContentListPage`: arama, Filtre, sıralama, Kart/Izgara) |
 | `/prompts/local?id=` · `/requests/local?id=` · `/workflows/local?id=` · `/presets/local?id=` · `/results/local?id=` | Detay sayfaları |
 | `/create` · `/requests/new` · `/workflows/create` · `/presets/create` | Oluşturma/düzenleme (`?edit=<id>`), ortak alt alan: Görünürlük + Taslağa kaydet/Paylaş |
 | `/workflows/local?id=` (detay) | Herkese açık workflow: "Akış" görünümü + **"Adım adım" çalıştırma modu** (`?run=1`; model çalıştırmaz, sonuç yapıştırılır → sonraki adımın girdisi, durum yalnız `sessionStorage`) |

@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { fetchWorkflowById } from "@/lib/supabase/workflows";
-import type { WorkflowStep } from "@/types";
+import { loadAuthorOutput } from "@/features/prompts/prompt-playable-output";
+import type { Prompt, PromptResult, WorkflowStep } from "@/types";
 
 /**
  * Focus View shows a generator's real parameters and a workflow's real step
@@ -87,4 +88,11 @@ export function useWorkflowFocusSteps(workflowId: string, enabled: boolean) {
     const result = await fetchWorkflowById(workflowId);
     return result ? result.steps : null;
   });
+}
+
+/** Odak: a video / audio prompt's playable output (the author's own uploaded result — the detail page's rule), fetched once near view. */
+export function usePromptOutput(prompt: Prompt | null, enabled: boolean) {
+  return useLazy<PromptResult>(prompt ? `out:${prompt.id}` : null, enabled, () =>
+    prompt ? loadAuthorOutput(prompt.id, prompt.author.id, prompt.contentType) : Promise.resolve(null),
+  );
 }

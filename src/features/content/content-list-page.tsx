@@ -91,7 +91,7 @@ export function ContentListPage<T extends { id: string; createdAt: string; likeC
   mobileTabs?: ReactNode;
   searchPlaceholder?: string;
   renderItems: (items: T[]) => ReactNode;
-  /** What the items are, so the Focus View ("Odak") can render them; `renderItems` stays the Card view. */
+  /** What the items are, so the Focus View ("Izgara") can render them; `renderItems` stays the Card view. */
   focusKind?: FeedItem["kind"];
   emptyTitle: string;
   emptyBody: string;

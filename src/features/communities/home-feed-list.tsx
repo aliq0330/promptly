@@ -54,7 +54,7 @@ export function HomeFeedList({ feed, empty, onToast, viewerIsMember }: { feed: F
 
   return (
     <div className="space-y-4">
-      {/* Keşfet's Kart | Odak switcher; Odak shows each post's content (seen-tracking stays with the card view). */}
+      {/* Keşfet's Kart | Izgara switcher; Izgara shows each post's content (seen-tracking stays with the card view). */}
       <div className="flex justify-end gap-2">
         <ViewModeControls />
       </div>

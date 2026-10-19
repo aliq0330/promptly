@@ -180,7 +180,7 @@ export function FeedTab(props: CommunityTabProps) {
           ) : (
             role && group.closedAt === null && <span className="text-caption text-text-muted">{t("communities.feed.cannotShare")}</span>
           )}
-          {/* Keşfet's Kart | Odak switcher. */}
+          {/* Keşfet's Kart | Izgara switcher. */}
           <ViewModeControls />
         </div>
       </div>

@@ -11,6 +11,7 @@ const SITE = "Promptly";
 const ROUTE_TITLES: Record<string, TranslationKey> = {
   "/": "nav.home",
   "/discover": "nav.discover",
+  "/focus": "nav.focus",
   "/prompts": "nav.prompts",
   "/requests": "nav.requests",
   "/requests/new": "nav.createPrompt",
