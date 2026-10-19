@@ -14,6 +14,7 @@ Kullanıcı detay ("local") sayfalarının daha modern/şık olmasını istedi. 
 - **Panel:** ilk satır `DetailByline` (avatar, ad, @kullanıcı · zaman · "N kez kullanıldı", sağda Takip Et + ⋮), sonra tür etiketi (+ durum rozetleri), başlık, açıklama, bölümler (`DetailSection` sade başlık), künye bandı (araç, altında çipler), sonuçlar, yorumlar (`DetailComments` + `EngageComments headless`), en sonda ilgili içerik (`DetailAside`). Ayrı yazar kartı (`CreatorSummary`) kaldırıldı — yazar satırı onun işini görüyor.
 - **Eylemler** tek satır (`DetailActionBar`, kartlarla aynı sıra: Beğeni · Yorum · Kaydet · İstatistik … Paylaş): telefonda sahnenin hemen altında, `lg`+ ve sahnesiz sayfalarda panelin dibinde yapışkan.
 - Prompt: Kopyala · Çalıştır · Studio'da aç prompt bloğunun altında (dar panelde başlığı sıkıştırmasın diye).
+- Prompt: değişkenli promptta "Kendine uyarla" (değişken alanları) prompt metninden ÖNCE gelir — önce doldurulur, sonra birleşmiş prompt aşağıda kopyalanır (kullanıcı isteği).
 - Çeviri: `detail.actionsAria`, `detail.adaptTitle`, `detail.requestBrief`, `comments.countLabel` — TR + EN.
 
 ## Sınırlar
