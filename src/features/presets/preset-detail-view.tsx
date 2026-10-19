@@ -12,7 +12,6 @@ import { DetailSkeleton, NotFoundBlock } from "@/components/ui/detail-skeleton";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { ContentTypeLabel } from "@/features/content/content-type-label";
 import { DetailMetaCard } from "@/features/content/detail-meta-card";
-import { CreatorSummary } from "@/features/profile/creator-summary";
 import { FollowButton } from "@/features/profile/follow-button";
 import { RelatedPresets } from "./related-presets";
 import { useAuth } from "@/features/auth/auth-provider";
@@ -33,6 +32,7 @@ import {
   DetailComments,
   DetailLede,
   DetailShell,
+  DetailStageFigure,
   DetailTags,
   DetailTitle,
   DetailSection,
@@ -100,11 +100,6 @@ export function PresetDetailView({ presetId }: { presetId?: string } = {}) {
 
   const aside = (
     <DetailAside>
-      {/* Phones/tablets already show the creator (+ Follow) in the byline above. */}
-      <div className="hidden xl:block">
-        <CreatorSummary creator={preset.creator} isOwn={isOwn} />
-      </div>
-
       <AsideSection id="preset-info-title" title={t("preset.sidebarInfo")}>
         <dl className="divide-y divide-border-soft text-small">
           <div className="flex items-center justify-between gap-3 px-3.5 py-2.5">
@@ -122,8 +117,17 @@ export function PresetDetailView({ presetId }: { presetId?: string } = {}) {
     </DetailAside>
   );
 
+  // The cover on the dark stage; a preset without one has no stage.
+  const stage = preset.coverUrl ? (
+    <DetailStageFigure ratio={16 / 9} caption={preset.title} onOpen={() => setLightbox(true)}>
+      {/* eslint-disable-next-line @next/next/no-img-element -- real local data-URL cover */}
+      <img src={preset.coverUrl} alt="" className="h-full w-full object-cover" />
+    </DetailStageFigure>
+  ) : undefined;
+
   return (
     <DetailShell
+      stage={stage}
       aside={aside}
       actions={
           <DetailActionBar trailing={<EngageShare target={{ contentType: "preset", preset }} />}>
@@ -138,39 +142,39 @@ export function PresetDetailView({ presetId }: { presetId?: string } = {}) {
           </DetailActionBar>
       }
     >
-      <article className="min-w-0 space-y-10">
-        <header className="space-y-5">
-          <div className="flex items-center justify-between gap-3">
+      <article className="min-w-0 space-y-8">
+        <header className="space-y-4">
+          <DetailByline
+            person={preset.creator}
+            createdAt={preset.createdAt}
+            language={language}
+            trailing={
+              <>
+                {!isOwn && <FollowButton user={preset.creator} />}
+                <PostMenu
+                  presetId={preset.id}
+                  communityId={preset.communityId}
+                  authorId={preset.creator.id}
+                  onDeleted={() => {
+                    removeFromCache(preset.id);
+                    router.push("/presets");
+                  }}
+                />
+              </>
+            }
+          />
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <ContentTypeLabel icon={SlidersHorizontal} label={t("preset.singular")} detail={category} />
-            <div className="flex items-center gap-2">
-              {preset.status === "draft" ? (
-                <Badge variant="warning">{t("preset.draftBadge")}</Badge>
-              ) : preset.visibility === "private" ? (
-                <Badge variant="neutral">{t("preset.privateBadge")}</Badge>
-              ) : null}
-              <PostMenu
-                presetId={preset.id}
-                communityId={preset.communityId}
-                authorId={preset.creator.id}
-                onDeleted={() => {
-                  removeFromCache(preset.id);
-                  router.push("/presets");
-                }}
-              />
-            </div>
+            {preset.status === "draft" ? (
+              <Badge variant="warning">{t("preset.draftBadge")}</Badge>
+            ) : preset.visibility === "private" ? (
+              <Badge variant="neutral">{t("preset.privateBadge")}</Badge>
+            ) : null}
           </div>
           <div className="space-y-3">
             <DetailTitle>{preset.title}</DetailTitle>
             {preset.description && <DetailLede>{preset.description}</DetailLede>}
           </div>
-          <DetailByline
-            person={preset.creator}
-            createdAt={preset.createdAt}
-            language={language}
-            // The creator card lives in the side column, which on phones/tablets stacks far below —
-            // so there the byline carries the Follow button instead of repeating the whole card.
-            trailing={!isOwn ? <FollowButton user={preset.creator} className="xl:hidden" /> : undefined}
-          />
         </header>
 
         {tabItems.length > 1 && <Tabs items={tabItems} active={tab} onChange={setTab} ariaLabel={t("history.sectionsAria")} />}
@@ -196,17 +200,6 @@ export function PresetDetailView({ presetId }: { presetId?: string } = {}) {
           </div>
         </div>
 
-        {preset.coverUrl && (
-          <button
-            type="button"
-            onClick={() => setLightbox(true)}
-            aria-label={t("media.viewFullscreen")}
-            className="block w-full overflow-hidden rounded-[22px] bg-surface-soft"
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element -- real local data-URL cover */}
-            <img src={preset.coverUrl} alt="" className="aspect-video w-full object-cover" />
-          </button>
-        )}
         {lightbox && preset.coverUrl && (
           <ImageLightbox images={[{ url: preset.coverUrl, alt: preset.title }]} initialIndex={0} onClose={() => setLightbox(false)} />
         )}

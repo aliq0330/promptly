@@ -22,7 +22,6 @@ import { Tabs, type TabItem } from "@/components/ui/tabs";
 import { fetchVersionsForRequest } from "@/lib/supabase/content-versions";
 import { PostMenu } from "@/features/prompts/post-menu";
 import { TaxonomyLinks } from "@/features/content/taxonomy-links";
-import { CreatorSummary } from "@/features/profile/creator-summary";
 import { FollowButton } from "@/features/profile/follow-button";
 import { clampedAspectRatio } from "@/lib/placeholder-image";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
@@ -33,7 +32,7 @@ import { useRealRequests } from "./real-requests-provider";
 import { STATUS_LABELS, STATUS_VARIANTS } from "./request-card";
 import { parseHighlightValue } from "@/lib/notification-utils";
 import { cn, formatCount, profileHref } from "@/lib/utils";
-import { AsideSection, DetailActionBar, DetailAside, DetailByline, DetailComments, DetailSection, DetailShell, DetailTags, DetailTitle, Eyebrow } from "@/features/content/detail-parts";
+import { AsideSection, DetailActionBar, DetailAside, DetailByline, DetailComments, DetailSection, DetailShell, DetailStageFigure, DetailStageThumb, DetailTags, DetailTitle, Eyebrow } from "@/features/content/detail-parts";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Prompt, PromptRequest, RequestVersion } from "@/types";
 import { ScrollablePrompt } from "@/features/content/scrollable-prompt";
@@ -184,8 +183,29 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
 
   const typeMeta = live.contentType ? CONTENT_TYPE_META[live.contentType] : null;
 
+  // The reference picture(s) on the dark stage; a request without one has no stage.
+  const stage = live.referenceImage ? (
+    <DetailStageFigure
+      ratio={referenceRatio}
+      caption={t("request.referenceImage")}
+      onOpen={() => setLightboxIndex(0)}
+      thumbnails={
+        live.media.length > 1
+          ? live.media.slice(1).map((extra, index) => (
+              <DetailStageThumb key={extra.id} onOpen={() => setLightboxIndex(index + 1)}>
+                <StorageImg src={extra.url} alt={extra.alt} className="h-full w-full object-cover" />
+              </DetailStageThumb>
+            ))
+          : undefined
+      }
+    >
+      <StorageImage src={live.referenceImage.url} alt={live.referenceImage.alt} fill sizes="(min-width: 1024px) 60vw, 100vw" className="object-cover" />
+    </DetailStageFigure>
+  ) : undefined;
+
   return (
     <DetailShell
+      stage={stage}
       actions={
           // Beğeni · Yorum · Yanıt (scrolls to the replies) · İstatistik · İlişki haritası … Paylaş — no Kopyala for a request.
           <DetailActionBar trailing={<EngageShare target={{ contentType: "request", request: live }} />}>
@@ -207,10 +227,6 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
       }
       aside={
         <DetailAside>
-          {/* Phones/tablets already show the creator (+ Follow) in the byline above. */}
-          <div className="hidden xl:block">
-            <CreatorSummary creator={live.author} isOwn={isOwnRequest} />
-          </div>
           <ContributorsList answers={answers} />
           <RelatedRequests request={live} />
         </DetailAside>
@@ -218,30 +234,30 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
     >
       <article
         className={cn(
-          "min-w-0 space-y-10 rounded-lg transition-colors duration-700",
+          "min-w-0 space-y-8 rounded-lg transition-colors duration-700",
           isRequestFlashed && "bg-primary/10 ring-1 ring-primary/40",
         )}
       >
-        <header className="space-y-5">
-          <div className="flex items-center justify-between gap-3">
-            <ContentTypeLabel icon={Sparkles} label={t("request.title")} detail={typeMeta ? t(typeMeta.labelKey) : null} />
-            <div className="flex shrink-0 items-center gap-1.5">
-              <Badge variant={STATUS_VARIANTS[live.status]}>
-                <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-current" />
-                {t(STATUS_LABELS[live.status])}
-              </Badge>
-              <PostMenu requestId={live.id} communityId={live.communityId} authorId={live.author.id} onDeleted={handleDeleted} />
-            </div>
-          </div>
-          <DetailTitle>{live.title}</DetailTitle>
+        <header className="space-y-4">
           <DetailByline
             person={live.author}
             createdAt={live.createdAt}
             language={language}
-            // The creator card lives in the side column, which on phones/tablets stacks far below —
-            // so there the byline carries the Follow button instead of repeating the whole card.
-            trailing={!isOwnRequest ? <FollowButton user={live.author} className="xl:hidden" /> : undefined}
+            trailing={
+              <>
+                {!isOwnRequest && <FollowButton user={live.author} />}
+                <PostMenu requestId={live.id} communityId={live.communityId} authorId={live.author.id} onDeleted={handleDeleted} />
+              </>
+            }
           />
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <ContentTypeLabel icon={Sparkles} label={t("request.title")} detail={typeMeta ? t(typeMeta.labelKey) : null} />
+            <Badge variant={STATUS_VARIANTS[live.status]}>
+              <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-current" />
+              {t(STATUS_LABELS[live.status])}
+            </Badge>
+          </div>
+          <DetailTitle>{live.title}</DetailTitle>
         </header>
 
 
@@ -270,39 +286,6 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
           )}
         </DetailSection>
 
-        {live.referenceImage && (
-          <figure className="space-y-2">
-            <button
-              type="button"
-              onClick={() => setLightboxIndex(0)}
-              aria-label={t("media.viewFullscreen")}
-              className="relative block w-full overflow-hidden rounded-[22px] bg-surface-soft"
-              // Supporting preview, not a hero image: capped at ~480px tall (same as the prompt page).
-              style={{
-                aspectRatio: referenceRatio,
-                maxWidth: `${Math.round(480 * referenceRatio)}px`,
-              }}
-            >
-              <StorageImage src={live.referenceImage.url} alt={live.referenceImage.alt} fill sizes="(min-width: 1024px) 720px, 100vw" className="object-cover" />
-            </button>
-            <figcaption className="text-caption text-text-muted">{t("request.referenceImage")}</figcaption>
-            {live.media.length > 1 && (
-              <div className="flex flex-wrap gap-2">
-                {live.media.slice(1).map((extra, index) => (
-                  <button
-                    key={extra.id}
-                    type="button"
-                    onClick={() => setLightboxIndex(index + 1)}
-                    aria-label={t("media.viewFullscreen")}
-                    className="h-16 w-16 overflow-hidden rounded-md border border-border-soft"
-                  >
-                    <StorageImg src={extra.url} alt={extra.alt} className="h-full w-full object-cover" />
-                  </button>
-                ))}
-              </div>
-            )}
-          </figure>
-        )}
         {lightboxIndex !== null && (
           <ImageLightbox
             images={live.media.map((item) => ({ url: item.url, alt: item.alt }))}

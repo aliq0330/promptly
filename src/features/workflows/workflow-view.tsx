@@ -12,7 +12,6 @@ import { DetailSkeleton, NotFoundBlock } from "@/components/ui/detail-skeleton";
 import { ContentTypeLabel } from "@/features/content/content-type-label";
 import { ToolChips } from "@/features/content/tool-chips";
 import { DetailMetaCard } from "@/features/content/detail-meta-card";
-import { CreatorSummary } from "@/features/profile/creator-summary";
 import { FollowButton } from "@/features/profile/follow-button";
 import { RelatedWorkflows } from "./related-workflows";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
@@ -31,6 +30,8 @@ import {
   DetailComments,
   DetailLede,
   DetailShell,
+  DetailStageFigure,
+  DetailStageThumb,
   DetailTags,
   DetailTitle,
   DetailSection,
@@ -117,11 +118,6 @@ export function WorkflowDetailView({ workflowId }: { workflowId?: string } = {})
 
   const aside = (
     <DetailAside>
-      {/* Phones/tablets already show the creator (+ Follow) in the byline above. */}
-      <div className="hidden xl:block">
-        <CreatorSummary creator={workflow.creator} isOwn={isOwn} />
-      </div>
-
       <AsideSection id="workflow-info-title" title={t("workflow.sidebarInfo")}>
         <dl className="divide-y divide-border-soft text-label">
           <div className="flex items-center justify-between gap-3 px-3.5 py-2.5">
@@ -147,8 +143,31 @@ export function WorkflowDetailView({ workflowId }: { workflowId?: string } = {})
     </DetailAside>
   );
 
+  // The cover (+ more pictures) on the dark stage; a workflow without one has no stage.
+  const stage = workflow.coverUrl ? (
+    <DetailStageFigure
+      ratio={16 / 9}
+      caption={workflow.title}
+      onOpen={() => setLightboxIndex(0)}
+      thumbnails={
+        workflow.media.length > 1
+          ? workflow.media.slice(1).map((item, index) => (
+              <DetailStageThumb key={item.id} onOpen={() => setLightboxIndex(index + 1)}>
+                {/* eslint-disable-next-line @next/next/no-img-element -- thumbnail strip, same source list as the cover */}
+                <img src={item.url} alt="" className="h-full w-full object-cover" />
+              </DetailStageThumb>
+            ))
+          : undefined
+      }
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element -- real local data-URL cover */}
+      <img src={workflow.coverUrl} alt="" className="h-full w-full object-cover" />
+    </DetailStageFigure>
+  ) : undefined;
+
   return (
     <DetailShell
+      stage={stage}
       aside={aside}
       actions={
           <DetailActionBar trailing={<EngageShare target={{ contentType: "workflow", workflow }} />}>
@@ -160,35 +179,35 @@ export function WorkflowDetailView({ workflowId }: { workflowId?: string } = {})
           </DetailActionBar>
       }
     >
-      <article className="min-w-0 space-y-10">
-        <header className="space-y-5">
-          <div className="flex items-center justify-between gap-3">
+      <article className="min-w-0 space-y-8">
+        <header className="space-y-4">
+          <DetailByline
+            person={workflow.creator}
+            createdAt={workflow.createdAt}
+            language={language}
+            trailing={
+              <>
+                {!isOwn && <FollowButton user={workflow.creator} />}
+                <PostMenu
+                  workflowId={workflow.id}
+                  communityId={workflow.communityId}
+                  authorId={workflow.creator.id}
+                  onDeleted={() => {
+                    removeFromCache(workflow.id);
+                    router.push("/workflows");
+                  }}
+                />
+              </>
+            }
+          />
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <ContentTypeLabel icon={WorkflowIcon} label={t("workflow.singular")} detail={category} />
-            <div className="flex items-center gap-2">
-              {workflow.status === "draft" && <Badge variant="warning">{t("workflow.draftBadge")}</Badge>}
-              <PostMenu
-                workflowId={workflow.id}
-                communityId={workflow.communityId}
-                authorId={workflow.creator.id}
-                onDeleted={() => {
-                  removeFromCache(workflow.id);
-                  router.push("/workflows");
-                }}
-              />
-            </div>
+            {workflow.status === "draft" && <Badge variant="warning">{t("workflow.draftBadge")}</Badge>}
           </div>
           <div className="space-y-3">
             <DetailTitle>{workflow.title}</DetailTitle>
             {workflow.description && <DetailLede>{workflow.description}</DetailLede>}
           </div>
-          <DetailByline
-            person={workflow.creator}
-            createdAt={workflow.createdAt}
-            language={language}
-            // The creator card lives in the side column, which on phones/tablets stacks far below —
-            // so there the byline carries the Follow button instead of repeating the whole card.
-            trailing={!isOwn ? <FollowButton user={workflow.creator} className="xl:hidden" /> : undefined}
-          />
         </header>
 
         {tabItems.length > 1 && <Tabs items={tabItems} active={tab} onChange={setTab} ariaLabel={t("history.sectionsAria")} />}
@@ -196,38 +215,6 @@ export function WorkflowDetailView({ workflowId }: { workflowId?: string } = {})
         {tab === "history" && versions.length > 0 && <WorkflowHistoryPanel workflowId={workflow.id} versions={versions} isOwner={isOwn} />}
 
         {tab === "workflow" && (<>
-        {workflow.coverUrl && (
-          <button
-            type="button"
-            onClick={() => setLightboxIndex(0)}
-            aria-label={t("media.viewFullscreen")}
-            className="relative block w-full overflow-hidden rounded-[22px] bg-surface-soft"
-          >
-            {/* eslint-disable-next-line @next/next/no-img-element -- real local data-URL cover */}
-            <img src={workflow.coverUrl} alt="" className="aspect-video w-full object-cover" />
-            {workflow.media.length > 1 && (
-              <span className="absolute bottom-2 right-2 rounded bg-black/70 px-1.5 py-0.5 text-caption font-medium text-white">
-                {t("media.moreImagesBadge", { count: workflow.media.length - 1 })}
-              </span>
-            )}
-          </button>
-        )}
-        {workflow.media.length > 1 && (
-          <div className="flex gap-2 overflow-x-auto">
-            {workflow.media.slice(1).map((item, index) => (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => setLightboxIndex(index + 1)}
-                aria-label={t("media.viewFullscreen")}
-                className="h-14 w-14 shrink-0 overflow-hidden rounded-md border border-border-soft"
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element -- thumbnail strip, same source list as the cover */}
-                <img src={item.url} alt="" className="h-full w-full object-cover" />
-              </button>
-            ))}
-          </div>
-        )}
         {lightboxIndex !== null && (
           <ImageLightbox
             images={workflow.media.map((item) => ({ url: item.url, alt: item.alt }))}

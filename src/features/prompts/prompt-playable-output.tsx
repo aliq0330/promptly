@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Play } from "lucide-react";
+import { Clapperboard, Music, Play } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { fetchResultById, fetchResultsForPrompt } from "@/lib/supabase/prompt-results";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -31,7 +31,7 @@ export async function loadAuthorOutput(promptId: string, authorId: string, conte
  * yüklediği sonuç "çıktı" sayılır; başka bir kullanıcının sonucu burada
  * yanıltıcı olurdu, o `PromptResultsSection`'da zaten ayrıca listelenir.
  * Sonuç yoksa promptun kapak görseli (varsa) sessizce gösterilir, hiçbir şey
- * yoksa bileşen boş kalır.
+ * yoksa sahnede türün simgesi durur.
  */
 export function PromptPlayableOutput({ prompt }: { prompt: Prompt }) {
   const { t } = useTranslation();
@@ -53,42 +53,38 @@ export function PromptPlayableOutput({ prompt }: { prompt: Prompt }) {
     };
   }, [prompt.id, prompt.author.id, prompt.contentType]);
 
+  // Shown on the detail page's dark stage (docs/history/201-*): no card around it, as large as the stage allows.
   if (result) {
     return (
-      <figure className="space-y-2">
-        <div className="overflow-hidden rounded-xl border border-border-soft bg-surface-soft p-2 shadow-card sm:p-3">
-          <ResultTypePreview result={result} size="detail" />
-        </div>
-        <figcaption className="text-caption text-text-muted">{t("prompt.outputCaption")}</figcaption>
+      <figure className="w-full max-w-3xl space-y-2">
+        <ResultTypePreview result={result} size="detail" />
+        <figcaption className="sr-only">{t("prompt.outputCaption")}</figcaption>
       </figure>
     );
   }
 
-  if (loading && poster) {
+  if (poster) {
+    const ratio = poster.width / poster.height;
     return (
-      <figure className="space-y-2">
-        <div className="relative overflow-hidden rounded-xl border border-border-soft bg-surface-soft shadow-card" style={{ aspectRatio: poster.width / poster.height, maxWidth: 560 }}>
-          <StorageImage src={poster.url} alt={poster.alt} fill sizes="(min-width: 1024px) 560px, 100vw" className="object-cover" />
+      <figure
+        className="relative w-full overflow-hidden rounded-[18px] bg-surface-soft [--hero-h:min(60vh,520px)] lg:[--hero-h:calc(100dvh-13rem)]"
+        style={{ aspectRatio: ratio, maxWidth: `calc(var(--hero-h) * ${ratio})` }}
+      >
+        <StorageImage src={poster.url} alt={poster.alt} fill sizes="(min-width: 1024px) 60vw, 100vw" className="object-cover" />
+        {loading && (
           <span className="absolute inset-0 flex items-center justify-center">
             <span className="flex h-12 w-12 items-center justify-center rounded-full bg-black/55 text-white">
               <Play size={20} fill="currentColor" />
             </span>
           </span>
-        </div>
+        )}
+        <figcaption className="sr-only">{t("prompt.outputCaption")}</figcaption>
       </figure>
     );
   }
-  if (loading) return <Skeleton className="h-48 w-full max-w-xl rounded-xl" />;
+  if (loading) return <Skeleton className="h-48 w-full max-w-xl rounded-[18px]" />;
 
-  if (poster) {
-    return (
-      <figure className="space-y-2">
-        <div className="relative overflow-hidden rounded-xl border border-border-soft bg-surface-soft shadow-card" style={{ aspectRatio: poster.width / poster.height, maxWidth: 560 }}>
-          <StorageImage src={poster.url} alt={poster.alt} fill sizes="(min-width: 1024px) 560px, 100vw" className="object-cover" />
-        </div>
-        <figcaption className="text-caption text-text-muted">{t("prompt.outputCaption")}</figcaption>
-      </figure>
-    );
-  }
-  return null;
+  // Nothing uploaded yet: the stage still says what kind of post this is.
+  const Icon = prompt.contentType === "audio" ? Music : Clapperboard;
+  return <Icon size={56} strokeWidth={1.25} aria-hidden className="text-text-muted" />;
 }
