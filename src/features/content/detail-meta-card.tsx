@@ -33,7 +33,7 @@ export function DetailMetaCard({
 
   const linkClass = "transition-colors hover:text-primary";
   return (
-    // Editorial colophon (docs/history/201-*): an unboxed band between hairlines.
+    // An unboxed band between hairlines (docs/history/201-*): tool first, chips under it.
     <section data-testid="detail-meta" className="flex flex-wrap items-center gap-x-4 gap-y-2.5 border-y border-border-soft py-4">
       {hasTool && (
         <div className="flex min-w-0 items-center gap-2.5">
@@ -59,7 +59,7 @@ export function DetailMetaCard({
           </span>
         </div>
       )}
-      {hasChips && <div className="flex min-w-0 basis-full flex-wrap gap-1.5 sm:basis-0 sm:flex-1 sm:justify-end">{children}</div>}
+      {hasChips && <div className="flex min-w-0 basis-full flex-wrap gap-1.5">{children}</div>}
     </section>
   );
 }

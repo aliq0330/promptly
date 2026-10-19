@@ -11,7 +11,6 @@ import { OpenInStudioButton } from "@/features/studio/open-in-studio-button";
 import { ContentTypeLabel } from "@/features/content/content-type-label";
 import { RelatedPrompts } from "@/features/prompts/related-prompts";
 import { TaxonomyLinks } from "@/features/content/taxonomy-links";
-import { CreatorSummary } from "@/features/profile/creator-summary";
 import { clampedAspectRatio } from "@/lib/placeholder-image";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { RequestResponseContext } from "@/features/prompts/post-context";
@@ -40,7 +39,7 @@ import { cn, formatCount, promptHref, relationMapHref } from "@/lib/utils";
 import { splitSourceNotes } from "@/lib/source-notes";
 import { SourceNotes } from "@/features/content/source-notes";
 import { FollowButton } from "@/features/profile/follow-button";
-import { DetailActionBar, DetailAside, DetailByline, DetailComments, DetailLede, DetailSection, DetailShell, DetailTags, DetailTitle } from "@/features/content/detail-parts";
+import { DetailActionBar, DetailAside, DetailByline, DetailComments, DetailLede, DetailSection, DetailShell, DetailStageFigure, DetailStageThumb, DetailTags, DetailTitle } from "@/features/content/detail-parts";
 import { ReferenceRequirementNotes } from "@/features/content/reference-requirements";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Prompt, PromptVariable, PromptVersion } from "@/types";
@@ -139,9 +138,33 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
     ...(dnaSections.length > 0 ? [{ key: "dna" as const, label: t("promptTabs.dna") }] : []),
   ];
 
+  // The output on the dark stage: the author's own video/audio result, else the picture(s); a text-only prompt has no stage.
+  const stage = prompt.contentType === "video" || prompt.contentType === "audio" ? (
+    <PromptPlayableOutput prompt={prompt} />
+  ) : media ? (
+    <DetailStageFigure
+      ratio={clampedAspectRatio(media.width, media.height)}
+      caption={t("prompt.outputCaption")}
+      onOpen={() => setLightboxIndex(0)}
+      buttonRef={heroRef}
+      thumbnails={
+        prompt.media.length > 1
+          ? prompt.media.slice(1).map((extra, index) => (
+              <DetailStageThumb key={extra.id} onOpen={() => setLightboxIndex(index + 1)}>
+                <StorageImg src={extra.url} alt={extra.alt} className="h-full w-full object-cover" />
+              </DetailStageThumb>
+            ))
+          : undefined
+      }
+    >
+      <StorageImage src={media.url} alt={media.alt} fill sizes="(min-width: 1024px) 60vw, 100vw" className="object-cover" />
+    </DetailStageFigure>
+  ) : undefined;
+
   return (
     <DetailShell
       entrance={morphingCover ? "fade" : "rise"}
+      stage={stage}
       actions={
           <DetailActionBar trailing={<EngageShare target={{ contentType: "prompt", prompt }} />}>
             <EngageLike id={prompt.id} likeCount={prompt.likeCount} size={18} />
@@ -153,10 +176,6 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
       }
       aside={
         <DetailAside>
-          {/* Phones/tablets already show the creator (+ Follow) in the byline above. */}
-          <div className="hidden xl:block">
-            <CreatorSummary creator={prompt.author} isOwn={isOwn} />
-          </div>
           <RelatedPrompts prompt={prompt} />
           <ContributorsPanel key={contributorsRefreshKey} promptId={prompt.id} />
         </DetailAside>
@@ -164,71 +183,35 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
     >
         <article
           className={cn(
-            "min-w-0 space-y-10 rounded-lg transition-colors duration-700",
+            "min-w-0 space-y-8 rounded-lg transition-colors duration-700",
             isPostFlashed && "bg-primary/10 ring-1 ring-primary/40",
           )}
         >
-          <header className="space-y-5">
-            <div className="flex items-center justify-between gap-3">
-              <ContentTypeLabel icon={typeMeta.icon} label={`${t(typeMeta.labelKey)} Prompt`} detail={null} />
-              <PostMenu promptId={prompt.id} communityId={prompt.communityId} authorId={prompt.author.id} />
-            </div>
-            <div className="space-y-3">
-              <DetailTitle>{prompt.title}</DetailTitle>
-              {descriptionBody && <DetailLede>{descriptionBody}</DetailLede>}
-              <SourceNotes notes={sourceNotes} />
-              <ReferenceRequirementNotes
-                                contentType={prompt.contentType}
-                value={{ image: prompt.requiresReferenceImage, video: prompt.requiresReferenceVideo, audio: prompt.requiresReferenceAudio }}
-              />
-            </div>
+          <header className="space-y-4">
             <DetailByline
               person={prompt.author}
               createdAt={prompt.createdAt}
               language={language}
               meta={prompt.copyCount > 0 ? (prompt.copyCount === 1 ? t("prompt.usedOnce") : t("prompt.usedCount", { count: formatCount(prompt.copyCount) })) : undefined}
-              // The creator card lives in the side column, which on phones/tablets stacks far below —
-              // so there the byline carries the Follow button instead of repeating the whole card.
-              trailing={!isOwn ? <FollowButton user={prompt.author} className="xl:hidden" /> : undefined}
+              trailing={
+                <>
+                  {!isOwn && <FollowButton user={prompt.author} />}
+                  <PostMenu promptId={prompt.id} communityId={prompt.communityId} authorId={prompt.author.id} />
+                </>
+              }
             />
+            <ContentTypeLabel icon={typeMeta.icon} label={`${t(typeMeta.labelKey)} Prompt`} detail={null} />
+            <div className="space-y-3">
+              <DetailTitle>{prompt.title}</DetailTitle>
+              {descriptionBody && <DetailLede>{descriptionBody}</DetailLede>}
+              <SourceNotes notes={sourceNotes} />
+              <ReferenceRequirementNotes
+                contentType={prompt.contentType}
+                value={{ image: prompt.requiresReferenceImage, video: prompt.requiresReferenceVideo, audio: prompt.requiresReferenceAudio }}
+              />
+            </div>
           </header>
 
-          {(prompt.contentType === "video" || prompt.contentType === "audio") ? (
-            <PromptPlayableOutput prompt={prompt} />
-          ) : media && (
-            <figure className="space-y-2">
-              <button
-                ref={heroRef}
-                type="button"
-                onClick={() => setLightboxIndex(0)}
-                aria-label={t("media.viewFullscreen")}
-                className="relative block w-full overflow-hidden rounded-[22px] bg-surface-soft [--hero-h:360px] sm:[--hero-h:480px]"
-                // The output leads the page (full column width, rounded card); tall pictures are capped (lower since Meydan, docs/history/190-*) so the prompt block stays within reach.
-                style={{
-                  aspectRatio: clampedAspectRatio(media.width, media.height),
-                  maxWidth: `calc(var(--hero-h) * ${clampedAspectRatio(media.width, media.height)})`,
-                }}
-              >
-                <StorageImage src={media.url} alt={media.alt} fill sizes="(min-width: 1024px) 720px, 100vw" className="object-cover" />
-              </button>
-              <figcaption className="text-caption text-text-muted">{t("prompt.outputCaption")}</figcaption>
-              {prompt.media.length > 1 && (
-                <div className="flex flex-wrap gap-2">
-                  {prompt.media.slice(1).map((extra, index) => (
-                    <button
-                      key={extra.id}
-                      type="button"
-                      onClick={() => setLightboxIndex(index + 1)}
-                      aria-label={t("media.viewFullscreen")}
-                      className="h-16 w-16 overflow-hidden rounded-md border border-border-soft"
-                    >
-                      <StorageImg src={extra.url} alt={extra.alt} className="h-full w-full object-cover" />
-                    </button>
-                  ))}
-                </div>
-              )}
-            </figure>
-          )}
           {lightboxIndex !== null && (
             <ImageLightbox
               images={prompt.media.map((item) => ({ url: item.url, alt: item.alt }))}
@@ -250,15 +233,8 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
             <DetailSection
               id="prompt-text"
               title={t("prompt.promptTextHeading")}
-              action={
-                <>
-                  <CopyPromptButton text={displayText} promptId={prompt.id} size="md" variant="primary" />
-                  <RunButton text={displayText} recommendedRefs={prompt.tools} promptId={prompt.id} />
-                  <OpenInStudioButton kind="prompt" id={prompt.id} quiet />
-                </>
-              }
             >
-              <div className="relative overflow-hidden rounded-[22px] bg-surface-soft">
+              <div data-prompt-block className="relative overflow-hidden rounded-[22px] bg-surface-soft">
                 {variables.length > 0 && <AssembleStatus filled={assemble.filled} total={assemble.total} complete={assemble.complete} />}
                 <ScrollablePrompt className="px-5 py-5 text-[0.875rem] text-text">
                   {variables.length > 0 ? (
@@ -268,6 +244,11 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
                   )}
                 </ScrollablePrompt>
                 <AssembleSweep seq={assemble.sweepSeq} />
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <CopyPromptButton text={displayText} promptId={prompt.id} size="md" variant="primary" />
+                <RunButton text={displayText} recommendedRefs={prompt.tools} promptId={prompt.id} />
+                <OpenInStudioButton kind="prompt" id={prompt.id} quiet />
               </div>
               {user && !isOwn && (
                 <button

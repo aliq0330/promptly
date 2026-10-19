@@ -71,13 +71,15 @@ await scenario("2. prompt: 'Kaynak ve lisans' kapalı satır + CC BY 4.0 rozeti;
   await notes.getByRole("link", { name: /x\.com\/egeberkina/ }).waitFor();
   assert.equal(await notes.getByRole("button", { name: /Kaynak ve lisans/ }).getAttribute("aria-expanded"), "true");
 });
-await scenario("2b. prompt: Kopyala · Çalıştır · Studio'da aç kart başlığında; 'Düzenleme öner' kartın altbilgisinde; araç adı çift yazılmaz", "prompt", async ({ page }) => {
+await scenario("2b. prompt: Kopyala · Çalıştır · Studio'da aç prompt bloğunun altında; 'Düzenleme öner' en altta; araç adı çift yazılmaz", "prompt", async ({ page }) => {
   const card = page.locator("section#prompt-text");
   await card.waitFor();
   for (const name of [/Kopyala/, /Çalıştır/, /Studio/]) await card.getByRole("button", { name }).or(card.getByRole("link", { name })).first().waitFor();
-  const head = await box(card.getByRole("button", { name: /Kopyala/ }));
+  const text = await box(card.locator("[data-prompt-block]"));
+  const copy = await box(card.getByRole("button", { name: /Kopyala/ }));
   const suggest = await box(card.getByRole("button", { name: "Düzenleme öner" }));
-  assert.ok(suggest.top > head.top + 100, "'Düzenleme öner' is the card footer, below the text");
+  assert.ok(copy.top >= text.bottom - 1, "the prompt actions sit under the prompt text (Sahne, docs/history/201-*)");
+  assert.ok(suggest.top > copy.top, "'Düzenleme öner' is the last row");
   const meta = (await page.getByTestId("detail-meta").textContent()) ?? "";
   assert.match(meta, /GPT Image 1/);
   assert.ok(!/GPT Image GPT Image/.test(meta), "model name is not prefixed with the tool name twice");
@@ -112,18 +114,22 @@ await scenario("3b. yorum yazınca konu tamamen açılır ve yorum alanı satır
   await section.getByText("Mert:").waitFor();
 }, { viewport: { width: 390, height: 844 } });
 
-// 4 — yerleşim: taşma yok, içerik genişliği sınırlı, sağ sütun yalnız xl+ (≥1280px), mobil alt gezinme içeriği örtmez
+// 4 — yerleşim (Sahne, docs/history/201-*): taşma yok; medya koyu sahnede — lg+ (≥1024px) panelin solunda, altında panel ≤ 470px;
+// daha dar ekranda sahne üstte, panel altında; eylem satırı tek
 for (const [label, width, height] of [["320", 320, 700], ["375", 375, 800], ["390", 390, 844], ["430", 430, 900], ["768", 768, 1000], ["1024", 1024, 900], ["1280", 1280, 900], ["1440", 1440, 1000]]) {
   for (const kind of ["prompt", "request", "workflow", "preset"]) {
-    await scenario(`4. ${kind} @${label}px: yatay taşma yok; ana sütun ≤ 760px (aside varken) ve ≤ 1152px; sağ sütun ${width >= 1280 ? "görünür" : "yok"}`, kind, async ({ page }) => {
+    await scenario(`4. ${kind} @${label}px: yatay taşma yok; sahne ${width >= 1024 ? "panelin solunda" : "panelin üstünde"}`, kind, async ({ page }) => {
       await page.waitForTimeout(500);
       assert.equal(await overflowFree(page), true, "no horizontal overflow");
+      const stage = await box(page.locator("[data-detail-stage]"));
       const article = await box(page.locator("article").first());
-      assert.ok(article.width <= 1152, `article ≤ 1152 (${article.width})`);
-      const creatorColumn = page.locator("aside > div.hidden").first();
-      const visible = await creatorColumn.isVisible().catch(() => false);
-      assert.equal(visible, width >= 1280, "creator column only on xl+");
-      if (width >= 1280) assert.ok(article.width <= 860, `main column leaves room for the side column (${article.width})`);
+      assert.equal(await page.locator("[data-detail-actions]").count(), 1, "one actions row");
+      if (width >= 1024) {
+        assert.ok(stage.right <= article.left, "stage left of the panel");
+        assert.ok(article.width <= 470, `panel column (${article.width})`);
+      } else {
+        assert.ok(stage.bottom <= article.top + 1, "stage above the panel");
+      }
     }, { viewport: { width, height } });
   }
 }
