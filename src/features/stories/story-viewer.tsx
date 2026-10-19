@@ -330,11 +330,13 @@ export function StoryViewer({ groups, startGroupIndex, startStoryId, onClose }: 
       meta: meta?.content ?? null,
       transitions: [html.style.transition, document.body.style.transition],
     };
+    html.dataset.storyOpen = "";
     html.style.transition = "background-color 250ms ease";
     document.body.style.transition = "background-color 250ms ease";
     return () => {
       const saved = chromeRestore.current;
       if (!saved) return;
+      delete html.dataset.storyOpen;
       html.style.backgroundColor = saved.html;
       document.body.style.backgroundColor = saved.body;
       html.style.transition = saved.transitions[0];

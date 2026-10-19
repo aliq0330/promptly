@@ -661,6 +661,12 @@
     }
   }
 
+  /* Story viewer open (docs/history/198-*): the header and the bottom nav are covered by it, but iOS Safari still samples fixed bars at the
+   * screen edges for the colour behind its own bars — hide them (layout stays put) so the viewer's colour is the one it finds. */
+  html[data-story-open] [data-app-chrome] {
+    visibility: hidden;
+  }
+
   body {
     background: var(--color-background);
     color: var(--color-text);

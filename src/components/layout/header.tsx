@@ -29,7 +29,7 @@ export function Header() {
   const hasOwnSearch = /^\/(discover|search)(\/|$)/.test(usePathname() ?? "");
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border-soft bg-background/80 px-3 backdrop-blur-xl backdrop-saturate-150 sm:px-5 lg:px-8">
+    <header data-app-chrome className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border-soft bg-background/80 px-3 backdrop-blur-xl backdrop-saturate-150 sm:px-5 lg:px-8">
       <Link
         href="/"
         aria-label={t("header.homeAriaLabel")}
