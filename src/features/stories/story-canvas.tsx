@@ -112,6 +112,7 @@ export function StoryCanvas({
   return (
     <div
       ref={canvasRef}
+      data-story-canvas
       className={cn(
         "@container relative aspect-[9/16] w-full overflow-hidden bg-story-stage select-none",
         story.kind === "text" && STORY_BG_CLASS[layout.bg ?? "ink"],

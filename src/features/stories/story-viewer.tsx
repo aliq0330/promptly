@@ -317,17 +317,45 @@ export function StoryViewer({ groups, startGroupIndex, startStoryId, onClose }: 
     };
   }, []);
 
-  // Tarayıcı durum çubuğu/adres çubuğu da hikâye zeminine boyansın (krem şerit görünmesin); kapanınca eski renk geri gelir.
+  // Tarayıcı çubuklarının arkası (iOS'ta üstteki durum çubuğu ve alttaki yüzen araç çubuğu) sayfanın `html`/`body` zemin rengini
+  // gösterir. Görüntüleyici açıkken bu zemin GÖSTERİLEN HİKÂYENİN rengine çekilir (metin hikâyesi: kendi zemini; fotoğraf/video: koyu
+  // sahne) ve hikâye değişince yumuşakça geçer; kapanınca (ve `theme-color`) eski değerlerine döner.
+  const chromeRestore = useRef<{ html: string; body: string; meta: string | null; transitions: [string, string] } | null>(null);
   useEffect(() => {
-    const root = rootRef.current;
+    const html = document.documentElement;
     const meta = document.head.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
-    if (!root || !meta) return;
-    const previous = meta.content;
-    meta.content = getComputedStyle(root).backgroundColor;
+    chromeRestore.current = {
+      html: html.style.backgroundColor,
+      body: document.body.style.backgroundColor,
+      meta: meta?.content ?? null,
+      transitions: [html.style.transition, document.body.style.transition],
+    };
+    html.style.transition = "background-color 250ms ease";
+    document.body.style.transition = "background-color 250ms ease";
     return () => {
-      meta.content = previous;
+      const saved = chromeRestore.current;
+      if (!saved) return;
+      html.style.backgroundColor = saved.html;
+      document.body.style.backgroundColor = saved.body;
+      html.style.transition = saved.transitions[0];
+      document.body.style.transition = saved.transitions[1];
+      if (meta && saved.meta !== null) meta.content = saved.meta;
     };
   }, []);
+
+  const chromeKind = story?.kind ?? null;
+  const chromeBg = story?.kind === "text" ? (story.layout.bg ?? "ink") : null;
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root) return;
+    // Kaynak renk: tuvalin kendi zemini (metin hikâyesinde `bg-story-*`, aksi hâlde `bg-story-stage`) — token'dan okunur, hex yok.
+    const canvas = root.querySelector<HTMLElement>("[data-story-canvas]");
+    const color = getComputedStyle(canvas ?? root).backgroundColor;
+    document.documentElement.style.backgroundColor = color;
+    document.body.style.backgroundColor = color;
+    const meta = document.head.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
+    if (meta) meta.content = color;
+  }, [storyId, chromeKind, chromeBg]);
 
   useEffect(() => {
     if (!user) return;

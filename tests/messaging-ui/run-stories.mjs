@@ -469,11 +469,40 @@ await scenario("18b. Telefonda tam ekran: tuval ekranı doldurur, yanıt çubuğ
   assert.ok(bar.y + bar.height > canvas.y && bar.y + bar.height <= canvas.y + canvas.h, "reply bar sits over the canvas");
   const during = await page.evaluate(() => document.querySelector('meta[name="theme-color"]')?.content);
   assert.notEqual(during, before, "browser chrome colour changes while the viewer is open");
-  assert.match(during, /^rgb\(10, 10, 13\)$/);
+  const canvasBg = await viewer(page).locator("[data-story-canvas]").first().evaluate((el) => getComputedStyle(el).backgroundColor);
+  assert.equal(during, canvasBg, "chrome colour = the story's own background");
   await page.keyboard.press("Escape");
   await viewer(page).waitFor({ state: "detached" });
   assert.equal(await page.evaluate(() => document.querySelector('meta[name="theme-color"]')?.content), before, "theme-color restored");
   if (process.env.SHOT_DIR) { await page.locator("[data-story-ring]").first().click(); await viewer(page).waitFor(); await page.waitForTimeout(300); await page.screenshot({ path: `${process.env.SHOT_DIR}/stories-fullscreen-mobile.png` }); }
+}, { viewport: { width: 390, height: 844 } });
+
+// 18c — Tarayıcı çubuklarının arkası (html/body) gösterilen hikâyenin rengine uyar, hikâye değişince değişir, kapanınca eski hâline döner
+await scenario("18c. html/body zemini hikâyenin rengini izler (kobalt → kâğıt → fotoğrafta koyu sahne), kapanınca geri döner", async ({ page, db }) => {
+  db.follow(U.alice, U.bob);
+  db.addStory(U.bob, { text: "Kobalt", minutesAgo: 30, layout: { v: 1, bg: "cobalt", layers: [layer("Kobalt")] } });
+  db.addStory(U.bob, { text: "Kâğıt", minutesAgo: 20, layout: { v: 1, bg: "paper", layers: [layer("Kâğıt", { color: "black" })] } });
+  await page.goto(`${BASE}/`);
+  await page.locator("[data-story-ring]").first().waitFor();
+  const bgOf = () => page.evaluate(() => [getComputedStyle(document.documentElement).backgroundColor, getComputedStyle(document.body).backgroundColor, document.querySelector('meta[name="theme-color"]')?.content]);
+  const original = await bgOf();
+  await page.locator("[data-story-ring]").first().click();
+  await viewer(page).waitFor();
+  const canvasBg = () => viewer(page).locator("[data-story-canvas]").first().evaluate((el) => getComputedStyle(el).backgroundColor);
+  await page.waitForFunction(() => document.querySelector("[data-story-layer]")?.textContent === "Kobalt");
+  await page.waitForTimeout(400);
+  const first = await canvasBg();
+  assert.deepEqual(await bgOf(), [first, first, first], "html, body and theme-color follow the cobalt story");
+  await page.keyboard.press("ArrowRight");
+  await page.waitForFunction(() => document.querySelector("[data-story-layer]")?.textContent === "Kâğıt");
+  await page.waitForTimeout(400);
+  const second = await canvasBg();
+  assert.notEqual(second, first, "paper differs from cobalt");
+  assert.deepEqual(await bgOf(), [second, second, second], "colour follows the next story");
+  await page.keyboard.press("Escape");
+  await viewer(page).waitFor({ state: "detached" });
+  await page.waitForTimeout(400);
+  assert.deepEqual(await bgOf(), original, "page colours restored on close");
 }, { viewport: { width: 390, height: 844 } });
 
 // 19 — Misafir: şerit yok; herkese açık hikâye bağlantısı açılır, yanıt için giriş istenir
