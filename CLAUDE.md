@@ -155,7 +155,7 @@ Oluşturma ekranlarının ortak alt alanı `CreateFormActions` paylaşım hedefi
 Sitedeki HER gönderi listesi (Ana Sayfa, Topluluklar, topluluk sayfası, Keşfet, listeler, profil, arama, koleksiyon) `ContentGrid`
 ile çizilir: HER ekranda kutulu kartlar (telefonda tek sütun, 12px sayfa kenar boşluğu; `sm`+ kutulu sütunlar, yanında sağ sütun olan sayfada en çok 2; `docs/history/196-*`) —
 yeni bir gönderi listesi elle `columns-*` yazmaz, ikinci bir liste görünümü kurulmaz. Her gönderi listesinde Keşfet'teki Kart | Izgara
-seçicisi vardır (`ViewModeControls` + `useViewMode`; Izgara = `FocusGrid`, iç değer `focus`) — yeni liste yazarken ikisini de bağla, yeni seçici yazma. **Odak** bir görünüm DEĞİL, ayrı tam ekran sayfadır (`/focus`, `docs/history/199-*`): slayt/ray/oynatma `features/focus/focus-feed*`; tam ekran açılan yeni bir katman yazarken aynı yolu izle (`html[data-focus-open]`/`data-story-open` → `[data-app-chrome]` gizlenir, `lockBodyScroll`).
+seçicisi vardır (`ViewModeControls` + `useViewMode`; Izgara = `FocusGrid`, iç değer `focus`) — yeni liste yazarken ikisini de bağla, yeni seçici yazma. **Odak** bir görünüm DEĞİL, ayrı tam ekran sayfadır (`/focus`, `docs/history/199-*`): slayt/ray/oynatma `features/focus/focus-feed*`; tam ekran açılan yeni bir katman yazarken aynı yolu izle (`html[data-focus-open]`/`data-story-open` → `[data-app-chrome]` gizlenir, `lockBodyScroll`). Yorum mantığı TEK yerde: `useCommentThread` (detay `CommentSection` ve Odak'ın alttan açılan yorum sayfası `FocusCommentsSheet` aynı hook'u, `CommentNode` `layout` ile iki görünümü kullanır; `docs/history/200-*`) — yeni bir yorum yüzeyi yazarken hook'u kullan.
 
 ### Responsive İlkeleri
 
@@ -431,5 +431,5 @@ bağlayıcıdır; ayrıntılı gerekçe için `docs/history/README.md` tablosuna
   isteğin `creative_direction`'ını da kapsar ve keyset sayfalanır (`search_content`); `prompt_saves` canlıdan kaldırıldı; kod içi
   yorumlarda eski "Bölüm 9.x" atıfları arşiv numaralarına (`docs/history/NNN-*`) karşılık gelir.
 
-**Arşiv:** [`docs/history/README.md`](docs/history/README.md) — 199 bölüm, her
+**Arşiv:** [`docs/history/README.md`](docs/history/README.md) — 200 bölüm, her
 biri için durum etiketi (uygulandı / kısmen geçerli / kaldırıldı).

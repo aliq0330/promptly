@@ -49,8 +49,21 @@ function buildFeed() {
   return { prompts, workflow, preset, request, video, audio, order, outputs };
 }
 
+/** Comments on prompt 1: three top-level, the second with two replies (Instagram-like thread in the sheet). */
+function seedFocusComments(db) {
+  const c = (id, who, body, minutes, extra = {}) => ({ id, prompt_id: pid(1), author: who, body, like_count: 0, created_at: `2026-10-18T10:${String(minutes).padStart(2, "0")}:00Z`, ...extra });
+  db.focusComments = [
+    c("c0000000-0000-4000-8000-000000000001", U.bob, "Yapay zeka ile yapılmış kesin", 1, { like_count: 535 }),
+    c("c0000000-0000-4000-8000-000000000002", U.dave, "Işık harika olmuş", 2, { like_count: 44 }),
+    c("c0000000-0000-4000-8000-000000000003", U.carol, "Teşekkürler!", 3, { parent_id: "c0000000-0000-4000-8000-000000000002" }),
+    c("c0000000-0000-4000-8000-000000000004", U.bob, "Katılıyorum", 4, { parent_id: "c0000000-0000-4000-8000-000000000002" }),
+    c("c0000000-0000-4000-8000-000000000005", U.amy ?? U.bob, "Promptu denedim, çok iyi çıktı", 5),
+  ];
+}
+
 async function installFeed(context, db, feed) {
   db.feedCalls = [];
+  seedFocusComments(db);
   const tables = { prompts: feed.prompts, workflows: [feed.workflow], presets: [feed.preset], prompt_requests: [feed.request] };
   await context.route("https://example.supabase.co/rest/v1/**", async (route) => {
     const req = route.request();
@@ -76,6 +89,24 @@ async function installFeed(context, db, feed) {
       if (byPrompt) return ok(feed.outputs[byPrompt] ? [feed.outputs[byPrompt]] : []);
       const row = Object.values(feed.outputs).find((r) => r.id === byId);
       return object ? (row ? ok(row) : ok(null)) : ok(row ? [row] : []);
+    }
+    if (table === "prompt_comments") {
+      const cols = (c) => ({ id: c.id, body: c.body, parent_id: c.parent_id ?? null, like_count: c.like_count ?? 0, created_at: c.created_at, edited_at: null, deleted_at: null, profiles: author(c.author) });
+      if (req.method() === "GET") {
+        const pidEq = (url.searchParams.get("prompt_id") ?? "").replace("eq.", "");
+        return ok(db.focusComments.filter((c) => c.prompt_id === pidEq).map(cols));
+      }
+      if (req.method() === "POST") {
+        const body = JSON.parse(req.postData() || "{}");
+        db.calls.push({ method: "POST", table, body });
+        const row = { id: crypto.randomUUID(), created_at: new Date().toISOString(), author: U.alice ?? U.bob, ...body };
+        db.focusComments.push(row);
+        return ok(object ? cols(row) : [cols(row)], 201);
+      }
+    }
+    if (table === "comment_likes" && req.method() === "POST") {
+      db.calls.push({ method: "POST", table, body: JSON.parse(req.postData() || "{}") });
+      return route.fulfill({ status: 201, headers: { "access-control-allow-origin": "*" }, body: "" });
     }
     if (table === "prompt_likes" && req.method() === "POST") {
       db.calls.push({ method: "POST", table, body: JSON.parse(req.postData() || "{}") });
@@ -268,7 +299,7 @@ await scenario("9. Kaydet / Paylaş pencereleri (Esc yalnız pencereyi kapatır)
   await page.locator("[aria-modal='true']").waitFor();
   await page.keyboard.press("Escape");
   await page.waitForTimeout(300);
-  assert.match(await s0.getByRole("link", { name: /Yorumlar/ }).getAttribute("href"), new RegExp(`prompts/local/?\\?id=${pid(1)}#comments`));
+  assert.equal(await s0.getByRole("button", { name: /Yorumları aç/ }).getAttribute("aria-haspopup"), "dialog", "comments open in place (scenarios 18–23)");
   await s0.getByRole("button", { name: "Promptu incele" }).click();
   const dialog = page.locator("[aria-modal='true']");
   await dialog.getByRole("button", { name: "Kopyala" }).click();
@@ -381,6 +412,125 @@ await scenario("17. Tablet 820px: kart + yan ray, tam ekran", async ({ page }) =
   assert.deepEqual([box.x, box.width], [0, 820]);
   await shot(page, "17-focus-tablet");
 }, { viewport: { width: 820, height: 1100 } });
+
+const sheet = (page) => page.locator("[data-focus-comments]");
+const openComments = async (page, index = 0) => {
+  await slides(page).nth(index).getByRole("button", { name: /Yorumları aç|Open comments/ }).click();
+  await sheet(page).waitFor();
+  await page.waitForTimeout(500);
+};
+
+await scenario("18. Yorumlar (telefon): alttan açılır, gönderi yukarıda küçülür ve menüler çekilir; liste Instagram düzeninde", async ({ page }) => {
+  await openFocus(page);
+  assert.match(await slides(page).nth(0).getByRole("button", { name: /Yorumları aç/ }).textContent(), /1/);
+  await openComments(page);
+  const box = await sheet(page).boundingBox();
+  assert.ok(box.y > 844 * 0.3 && box.y < 844 * 0.4, `sheet starts around 35% (${box.y})`);
+  assert.equal(Math.round(box.y + box.height), 844, "sheet reaches the bottom");
+  const transform = await page.evaluate(() => getComputedStyle(document.querySelector("[data-focus-feed] [role='region']").parentElement).transform);
+  assert.match(transform, /matrix\(0\.[0-9]+/, `post is scaled down: ${transform}`);
+  assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector("[data-focus-feed] button[aria-label=\"Odak'ı kapat\"]").parentElement).opacity), "0", "top bar steps aside");
+  assert.equal(await sheet(page).getByRole("heading").textContent(), "Yorumlar · 5");
+  const text = await sheet(page).textContent();
+  assert.match(text, /bob/);
+  assert.match(text, /Yapay zeka ile yapılmış kesin/);
+  assert.match(text, /535/, "comment like count on the right");
+  assert.match(text, /2 yanıtı göster/);
+  assert.equal(await sheet(page).getByRole("group", { name: "Hızlı emoji" }).getByRole("button").count(), 8);
+  await shot(page, "18-comments-phone");
+}, { viewport: { width: 390, height: 844 } });
+
+await scenario("19. Yorum yaz: emoji ekle + gönder → gerçek istek, listeye ve sayaca düşer", async ({ page, db }) => {
+  await openFocus(page);
+  await openComments(page);
+  const input = sheet(page).getByRole("textbox", { name: "Bunun hakkında ne düşünüyorsun?" });
+  await input.fill("Harika ");
+  await sheet(page).getByRole("button", { name: "🔥 ekle" }).click();
+  assert.equal(await input.inputValue(), "Harika 🔥");
+  await sheet(page).getByRole("button", { name: "Gönder" }).click();
+  await page.waitForTimeout(700);
+  const post = db.calls.find((c) => c.table === "prompt_comments" && c.method === "POST");
+  assert.ok(post && post.body.prompt_id === pid(1) && post.body.body === "Harika 🔥" && post.body.parent_id === null, JSON.stringify(post));
+  assert.match(await sheet(page).textContent(), /Harika 🔥/);
+  assert.equal(await sheet(page).getByRole("heading").textContent(), "Yorumlar · 6");
+  assert.equal(await input.inputValue(), "");
+  await sheet(page).getByRole("button", { name: "Yorumları kapat" }).click();
+  await page.waitForTimeout(400);
+  assert.match(await slides(page).nth(0).getByRole("button", { name: /Yorumları aç/ }).textContent(), /2/, "rail count follows");
+}, { viewport: { width: 390, height: 844 } });
+
+await scenario("20. Yanıtla: tek kutu yanıta döner (@ad), gönderilen yanıt üst yoruma bağlanır; yanıtlar açılır/kapanır", async ({ page, db }) => {
+  await openFocus(page);
+  await openComments(page);
+  await sheet(page).getByRole("button", { name: "2 yanıtı göster" }).click();
+  assert.match(await sheet(page).textContent(), /Teşekkürler!/);
+  const row = sheet(page).locator("[data-comment-id='c0000000-0000-4000-8000-000000000001']");
+  await row.getByRole("button", { name: "Yanıtla" }).first().click();
+  await sheet(page).getByText("@bobby kişisine yanıt veriyorsun").waitFor();
+  const input = sheet(page).getByRole("textbox", { name: "Bunun hakkında ne düşünüyorsun?" });
+  assert.equal(await input.inputValue(), "@bobby ");
+  await input.press("End");
+  await input.type("bence de");
+  await input.press("Enter");
+  await page.waitForTimeout(700);
+  const post = db.calls.find((c) => c.table === "prompt_comments" && c.method === "POST");
+  assert.equal(post.body.parent_id, "c0000000-0000-4000-8000-000000000001");
+  assert.equal(post.body.body, "@bobby bence de");
+  assert.equal(await sheet(page).getByText(/kişisine yanıt veriyorsun/).count(), 0, "reply mode ends after sending");
+}, { viewport: { width: 390, height: 844 } });
+
+await scenario("21. Yorum beğenisi gerçek istekle; kapatma yolları: üstteki gönderiye dokun, aşağı sürükle, Esc", async ({ page, db }) => {
+  await openFocus(page);
+  await openComments(page);
+  const row = sheet(page).locator("[data-comment-id='c0000000-0000-4000-8000-000000000002']");
+  await row.getByRole("button", { name: /Beğen/ }).last().click();
+  await page.waitForTimeout(400);
+  assert.ok(db.calls.some((c) => c.table === "comment_likes" && c.body.comment_id === "c0000000-0000-4000-8000-000000000002"));
+  assert.match(await row.textContent(), /45/);
+  await page.mouse.click(195, 120);
+  await page.waitForTimeout(400);
+  assert.equal(await sheet(page).count(), 0, "tap on the post above closes");
+  const transform = await page.evaluate(() => getComputedStyle(document.querySelector("[data-focus-feed] [role='region']").parentElement).transform);
+  assert.ok(transform === "none" || /matrix\(1, 0, 0, 1, 0, 0\)/.test(transform), `post back to full size: ${transform}`);
+  await openComments(page);
+  const handle = await sheet(page).getByRole("heading").boundingBox();
+  await page.mouse.move(handle.x + 10, handle.y + 5);
+  await page.mouse.down();
+  await page.mouse.move(handle.x + 10, handle.y + 80, { steps: 4 });
+  await page.mouse.move(handle.x + 10, handle.y + 200, { steps: 4 });
+  await page.mouse.up();
+  await page.waitForTimeout(400);
+  assert.equal(await sheet(page).count(), 0, "drag down closes");
+  await openComments(page);
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(300);
+  assert.equal(await sheet(page).count(), 0, "Esc closes the sheet");
+  assert.equal(await stage(page).count(), 1, "…but not Odak");
+}, { viewport: { width: 390, height: 844 } });
+
+await scenario("22. Misafir: yorumları okur; yazma/yanıt/emoji giriş penceresini açar", async ({ page, db }) => {
+  await openFocus(page);
+  await openComments(page);
+  assert.match(await sheet(page).textContent(), /Yapay zeka ile yapılmış kesin/);
+  assert.equal(await sheet(page).getByRole("textbox").count(), 0);
+  await sheet(page).getByRole("button", { name: "Yorum yapmak için giriş yap" }).click();
+  await page.locator("[aria-modal='true'][aria-labelledby]").nth(1).waitFor();
+  assert.equal(db.calls.filter((c) => c.table === "prompt_comments" && c.method === "POST").length, 0);
+}, { viewport: { width: 390, height: 844 }, guest: true });
+
+await scenario("23. Masaüstü: yorumlar sağda panel, gönderi küçülmez yana kayar; İngilizce", async ({ page }) => {
+  await openFocus(page);
+  await slides(page).nth(0).getByRole("button", { name: /Open comments/ }).click();
+  await sheet(page).waitFor();
+  await page.waitForTimeout(500);
+  const box = await sheet(page).boundingBox();
+  assert.deepEqual([box.x, box.y, box.width, box.height], [860, 0, 420, 900]);
+  assert.equal(await sheet(page).getByRole("heading").textContent(), "Comments · 5");
+  assert.ok(await sheet(page).getByRole("textbox", { name: "What do you think about this?" }).isVisible());
+  const content = await page.evaluate(() => document.querySelector("[data-focus-feed] [role='region']").parentElement.getBoundingClientRect().width);
+  assert.equal(content, 860);
+  await shot(page, "23-comments-desktop");
+}, { lang: "en" });
 
 await browser.close();
 server.close();

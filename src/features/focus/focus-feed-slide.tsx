@@ -435,6 +435,13 @@ function StructureBlock({ item, near, onImage }: { item: FeedItem; near: boolean
 
 /* ------------------------------------------------------------------- slide */
 
+/**
+ * Faded out on a phone while the comment sheet is open (`data-comments-open` on Odak's stage, docs/history/200-*): the post
+ * then shrinks to its media above the sheet, so its words, buttons, rail and the top bar step aside.
+ */
+export const HIDE_WHILE_COMMENTS =
+  "transition-opacity duration-200 ease-soft max-md:group-data-[comments-open]/stage:pointer-events-none max-md:group-data-[comments-open]/stage:opacity-0";
+
 /** Bottom of a slide on a phone: above the home indicator; on the right the action rail needs its column. */
 const PHONE_BOTTOM = "pb-[calc(1.25rem+env(safe-area-inset-bottom))]";
 /** Top of a slide on a phone: below Odak's floating bar (+ the notch). */
@@ -484,8 +491,8 @@ export const FocusFeedSlide = memo(function FocusFeedSlide({
           {visual ? (
             <>
               {layout === "playable" && prompt ? <PlayableMedia prompt={prompt} cover={cover} active={active} near={near} /> : cover && <SlideImage cover={cover} active={active} near={near} />}
-              <div aria-hidden className="pointer-events-none absolute inset-0 z-[3] bg-gradient-to-b from-black/45 via-transparent via-30% to-black/85" />
-              <div className={cn("relative z-10 flex items-center justify-between gap-2 px-3 md:p-4", PHONE_TOP, "md:pt-4")}>
+              <div aria-hidden className={cn(HIDE_WHILE_COMMENTS, "pointer-events-none absolute inset-0 z-[3] bg-gradient-to-b from-black/45 via-transparent via-30% to-black/85")} />
+              <div className={cn(HIDE_WHILE_COMMENTS, "relative z-10 flex items-center justify-between gap-2 px-3 md:p-4", PHONE_TOP, "md:pt-4")}>
                 <TypePill icon={model.icon} label={model.typeLabel} onImage />
                 <span className="flex shrink-0 items-center gap-2">
                   {item.kind === "request" && <RequestStatus request={item.data} />}
@@ -496,7 +503,7 @@ export const FocusFeedSlide = memo(function FocusFeedSlide({
                   )}
                 </span>
               </div>
-              <div className={cn("pointer-events-none relative z-10 mt-auto space-y-3 pl-4 pr-20 md:p-7", PHONE_BOTTOM, "md:pb-7")}>
+              <div className={cn(HIDE_WHILE_COMMENTS, "pointer-events-none relative z-10 mt-auto space-y-3 pl-4 pr-20 md:p-7", PHONE_BOTTOM, "md:pb-7")}>
                 {model.tool && (
                   <p className="flex items-center gap-2 text-caption font-bold uppercase tracking-[0.12em] text-white/85">
                     <span aria-hidden className="h-px w-5 bg-white/70" />
@@ -544,7 +551,7 @@ export const FocusFeedSlide = memo(function FocusFeedSlide({
             </>
           )}
         </article>
-        <div className={cn("absolute bottom-0 right-2 z-20 md:static", PHONE_BOTTOM, "md:pb-0")}>
+        <div className={cn(HIDE_WHILE_COMMENTS, "absolute bottom-0 right-2 z-20 md:static", PHONE_BOTTOM, "md:pb-0")}>
           <FocusFeedRail item={item} author={model.author} />
         </div>
       </div>

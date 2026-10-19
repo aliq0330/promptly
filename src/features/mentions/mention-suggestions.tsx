@@ -5,7 +5,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
 import type { MentionCandidate } from "@/lib/supabase/profiles";
 
-/** The suggestion list under a field using `useMentionAutocomplete` — put it inside a `relative` wrapper. */
+/** The suggestion list under (or, for a field docked at the bottom of the screen, above) a field using `useMentionAutocomplete` — put it inside a `relative` wrapper. */
 export function MentionSuggestions({
   id,
   open,
@@ -13,7 +13,9 @@ export function MentionSuggestions({
   activeIndex,
   onPick,
   onHover,
+  placement = "below",
 }: {
+  placement?: "below" | "above";
   id: string;
   open: boolean;
   people: MentionCandidate[];
@@ -28,7 +30,10 @@ export function MentionSuggestions({
       id={id}
       role="listbox"
       aria-label={t("mentions.suggestionsAria")}
-      className="absolute left-0 right-0 top-full z-30 mt-1 max-h-60 overflow-y-auto rounded-md border border-border bg-surface-elevated py-1 shadow-pop animate-pop-in"
+      className={cn(
+        "absolute left-0 right-0 z-30 max-h-60 overflow-y-auto rounded-md border border-border bg-surface-elevated py-1 shadow-pop animate-pop-in",
+        placement === "above" ? "bottom-full mb-1" : "top-full mt-1",
+      )}
     >
       {people.map((person, index) => (
         <li
