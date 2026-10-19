@@ -493,6 +493,8 @@ await scenario("18c. html/body zemini hikâyenin rengini izler (kobalt → kâğ
   await page.waitForTimeout(400);
   const first = await canvasBg();
   assert.deepEqual(await bgOf(), [first, first, first], "html, body and theme-color follow the cobalt story");
+  const chrome = () => page.evaluate(() => [...document.querySelectorAll("[data-app-chrome]")].map((el) => getComputedStyle(el).visibility));
+  assert.ok((await chrome()).length >= 1 && (await chrome()).every((v) => v === "hidden"), "header / bottom nav are hidden while the viewer is open");
   // kök + taşan üst/alt uzantılar (tarayıcı çubuklarının arkası) hikâyeyle aynı renk ve gerçekten dışarı taşar
   const edges = await viewer(page).evaluate((root) => {
     const r = root.getBoundingClientRect();
@@ -513,6 +515,7 @@ await scenario("18c. html/body zemini hikâyenin rengini izler (kobalt → kâğ
   await viewer(page).waitFor({ state: "detached" });
   await page.waitForTimeout(400);
   assert.deepEqual(await bgOf(), original, "page colours restored on close");
+  assert.ok((await chrome()).every((v) => v === "visible"), "header / bottom nav are back after closing");
 }, { viewport: { width: 390, height: 844 } });
 
 // 19 — Misafir: şerit yok; herkese açık hikâye bağlantısı açılır, yanıt için giriş istenir
