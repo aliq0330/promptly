@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { TaxonomyDrillList, TaxonomyTypeChips } from "@/features/content/taxonomy-filter";
 import { SortSelect, SORT_KEYS, SORT_LABELS, type ContentSortKey } from "@/features/content/sort-select";
-import { MobileFeedButton, MobileViewToggle, ViewModeControls, ViewModeSwitcher } from "@/features/content/view-mode-switcher";
+import { MobileViewToggle, ViewModeControls, ViewModeSwitcher } from "@/features/content/view-mode-switcher";
 import type { TaxonomyFilterValue } from "@/lib/content-taxonomy";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
@@ -98,12 +98,11 @@ export function ListToolbar({
   activeCount = 0,
   onClear,
   stream,
-  allowFeedView = false,
   className,
 }: {
   /**
    * Home's column (Meydan, docs/history/190-*): `leading` on its own row, then
-   * the chips (plain chips at every width) with a compact Filtre button and the Kart | Odak control.
+   * the chips (plain chips at every width) with a compact Filtre button and the Kart | Izgara control.
    */
   stream?: boolean;
   /** Something that sits on the left of the control strip (e.g. Home's feed tabs). */
@@ -131,8 +130,6 @@ export function ListToolbar({
   /** How many filters are narrowing the list right now — shown on the Filtre button. */
   activeCount?: number;
   onClear?: () => void;
-  /** The list can render Odak Akışı (Ana Sayfa) — the view control then offers it as a third mode. */
-  allowFeedView?: boolean;
   className?: string;
 }) {
   const { t } = useTranslation();
@@ -201,7 +198,7 @@ export function ListToolbar({
                 </SheetSection>
               )}
               <SheetSection title={t("toolbar.view")}>
-                <ViewModeSwitcher allowFeed={allowFeedView} />
+                <ViewModeSwitcher />
               </SheetSection>
             </div>
 
@@ -242,9 +239,8 @@ export function ListToolbar({
             <span className="max-sm:sr-only">{t("toolbar.filter")}</span>
             {filterCountBadge}
           </Button>
-          <MobileViewToggle className="h-9 w-9 md:hidden" allowFeed={allowFeedView} />
-          {allowFeedView && <MobileFeedButton className="h-9 w-9 md:hidden" />}
-          <ViewModeSwitcher className="max-md:hidden" allowFeed={allowFeedView} />
+          <MobileViewToggle className="h-9 w-9 md:hidden" />
+          <ViewModeSwitcher className="max-md:hidden" />
         </div>
         {sheet}
       </div>
@@ -285,7 +281,7 @@ export function ListToolbar({
           </Button>
           <div className="flex min-w-0 flex-1 items-center justify-end gap-2 md:flex-none">
             {sort && onSortChange && <SortSelect value={sort} onChange={onSortChange} keys={sortKeys} />}
-            <ViewModeControls allowFeed={allowFeedView} />
+            <ViewModeControls />
           </div>
         </div>
       </div>

@@ -165,15 +165,24 @@ export function StorageAudio({
   src: url,
   onError,
   onLoadedMetadata,
+  ref: externalRef,
   ...rest
-}: Omit<ComponentProps<"audio">, "src"> & { src: StorageSrc }) {
+}: Omit<ComponentProps<"audio">, "src" | "ref"> & { src: StorageSrc; ref?: RefObject<HTMLAudioElement | null> }) {
   const { src, refresh } = useStorageSrc(url);
   const { ref, handleError, handleLoadedMetadata } = useResumableMedia<HTMLAudioElement>(refresh);
+  // Çağıran da oynatıcıyı yönetebilsin (Odak oynatır/duraklatır): iç ve dış ref aynı öğeyi gösterir.
+  const setRefs = useCallback(
+    (element: HTMLAudioElement | null) => {
+      ref.current = element;
+      if (externalRef) externalRef.current = element;
+    },
+    [ref, externalRef],
+  );
   if (!src) return null;
   return (
     <audio
       {...rest}
-      ref={ref}
+      ref={setRefs}
       src={src}
       onError={(event) => {
         handleError();

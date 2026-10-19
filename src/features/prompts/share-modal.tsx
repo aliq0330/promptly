@@ -305,7 +305,7 @@ export function ShareTriggerButton({
   target: ShareModalTarget;
   /** Optional visible text next to the icon (matches ShareButton's own `label` prop, used on detail-page hero rows). */
   label?: string;
-  /** Icon size (Odak Akışı's action rail uses a larger one, like its Like/Comment/Save). */
+  /** Icon size (Odak's action rail uses a larger one, like its Like/Comment/Save). */
   size?: number;
   className?: string;
 }) {

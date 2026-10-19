@@ -22,9 +22,8 @@ export function MobileNav() {
   const { requireAuth } = useAuthPrompt();
   const inChat = pathname.startsWith("/messages/local");
 
-  // Always five slots, so nothing reflows between states: members get their
-  // profile, guests get "Giriş Yap" in that slot, and while the session is
-  // still resolving the slot stays an empty placeholder (neither is shown).
+  // Always five slots, so nothing reflows between states. (Every slot is public since Odak took the profile slot —
+  // docs/history/199-*; an "authenticated" entry would get "Giriş Yap" for guests and a placeholder while the session resolves.)
   const items: (NavItem | null)[] = mobileNavItems.map((item) => {
     if ((item.visibility ?? "public") === "public" || status === "authenticated") return item;
     return status === "unauthenticated" ? guestLoginNavItem : null;

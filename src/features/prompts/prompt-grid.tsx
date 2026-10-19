@@ -34,7 +34,7 @@ export function PromptGrid(props: PromptGridProps) {
     );
   }
 
-  // The Kart | Odak choice (Keşfet's switcher) applies to every list of cards.
+  // The Kart | Izgara choice (Keşfet's switcher) applies to every list of cards.
   if (mode === "focus") return <FocusGrid items={props.prompts.map((data) => ({ kind: "prompt" as const, data }))} />;
 
   return (

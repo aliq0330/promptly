@@ -95,10 +95,10 @@ CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/mess
 SHOT_DIR=/tmp/shots node tests/messaging-ui/run-stories.mjs   # ekran görüntüleriyle
 ```
 
-## Odak Akışı (`docs/history/199-*`)
+## Odak (`docs/history/199-*`)
 
-`run-focus-feed.mjs` (16 senaryo): Ana Sayfa'da Kart | Odak | Akış seçicisi, katmanın yerleşimi (header/sidebar/alt menü arası, gövde kilidi, `inert`), klavye ve tekerlek ile scroll-snap, tür başına slayt (görsel / metin / workflow / hazır ayar / istek), gerçek `LikeButton` (+ hata geri alma), Kaydet/Paylaş pencereleri, yorum bağlantısı, "Promptu incele" + kopyalama sayacı, `feed_page` keyset sayfalama, Esc → kart konumu, kart → akış konumu, tercih saklama (diğer listeler kart gösterir), misafir, 390px/820px, İngilizce, koyu tema + hareket azaltma. `feed_page` ve içerik satırları dosyanın içinde taklit edilir. Gerçek Supabase'e/cihaza KARŞI DENENMEDİ.
+`run-focus-feed.mjs` (17 senaryo): `/focus` tam ekran sayfası — Ana Sayfa'da Akış yok (Kart | Izgara), yan menüde ve telefon alt menüsünde Odak, üst/yan/alt menünün gizlenmesi, koyu sahne (açık temada da), klavye/tekerlek scroll-snap, tür başına slayt, video (sessiz otomatik oynatma, ses düğmesi, geçince durma) ve ses (oynat düğmesi) — yazarın `prompt_results` çıktısı, Medya süzgeci, gerçek `LikeButton` (+ geri alma), Kaydet/Paylaş pencereleri, yorum bağlantısı, "Promptu incele" + kopyalama sayacı, `feed_page` keyset sayfalama, kapat/Esc → geldiği sayfa, son açık gönderiye dönüş, misafir, 390px/820px, İngilizce, hareket azaltma. `feed_page`, içerik ve `prompt_results` satırları dosyanın içinde taklit edilir; oynatma `HTMLMediaElement.play/pause` taslağıyla sınanır. Gerçek Supabase'e/cihaza/medyaya KARŞI DENENMEDİ.
 
 ```bash
-CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/messaging-ui/run-focus-feed.mjs   # 16/16 beklenir
+CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/messaging-ui/run-focus-feed.mjs   # 17/17 beklenir
 ```

@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { Bookmark, Compass, Hash, Home, LogIn, Plus, Settings, SlidersHorizontal, Sparkles, SquareTerminal, User, Users, UsersRound, WandSparkles, Workflow } from "lucide-react";
+import { Bookmark, Compass, GalleryVerticalEnd, Hash, Home, LogIn, Plus, Settings, SlidersHorizontal, Sparkles, SquareTerminal, User, Users, UsersRound, WandSparkles, Workflow } from "lucide-react";
 import type { TranslationKey } from "@/lib/i18n/translations";
 
 /** Who may see a nav entry: everyone, or only a signed-in member. */
@@ -33,6 +33,7 @@ export const navGroups: NavGroup[] = [
     labelKey: "nav.groupDiscover",
     items: [
       { href: "/", labelKey: "nav.home", icon: Home },
+      { href: "/focus", labelKey: "nav.focus", icon: GalleryVerticalEnd },
       { href: "/discover", labelKey: "nav.discover", icon: Compass },
       { href: "/prompts", labelKey: "nav.prompts", icon: SquareTerminal },
       { href: "/workflows", labelKey: "nav.workflows", icon: Workflow },
@@ -61,13 +62,14 @@ export const guestLoginNavItem: NavItem = { href: "/login", labelKey: "header.lo
 /** The Create action — for guests it opens the login dialog instead of navigating. */
 export const CREATE_HREF = "/create";
 
-/** Mobile bottom navigation — the middle item is rendered as the emphasized Create action. */
+/** Mobile bottom navigation — the middle item is rendered as the emphasized Create action. Odak opens full screen (the bars hide). */
 export const mobileNavItems: NavItem[] = [
   { href: "/", labelKey: "nav.home", icon: Home },
   { href: "/discover", labelKey: "nav.discover", icon: Compass },
   { href: CREATE_HREF, labelKey: "nav.createShort", icon: Plus },
   { href: "/communities", labelKey: "nav.communities", icon: UsersRound },
-  { href: PROFILE_NAV_PLACEHOLDER, labelKey: "nav.profile", icon: User, match: "/profile", visibility: "authenticated" },
+  // Odak (docs/history/199-*) took the profile slot: the profile stays one tap away in the header's account menu (guests: its login menu).
+  { href: "/focus", labelKey: "nav.focus", icon: GalleryVerticalEnd },
 ];
 
 export function isNavItemActive(pathname: string, item: NavItem) {

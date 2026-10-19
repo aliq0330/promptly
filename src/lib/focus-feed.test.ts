@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   focusFeedCover,
   focusFeedExtraImages,
+  focusFeedHasMedia,
   focusFeedIsNear,
   focusFeedLayout,
   focusFeedPlayable,
@@ -30,11 +31,16 @@ test("an image prompt with media is image-first; without media it is a text slid
   assert.equal(focusFeedCover(prompt("text", 0)), null);
 });
 
-test("only a video/audio prompt with a poster gets the play cue", () => {
+test("video / audio prompts are playable slides (with or without a poster) and count as media", () => {
   assert.equal(focusFeedPlayable(prompt("video", 1)), true);
-  assert.equal(focusFeedPlayable(prompt("audio", 1)), true);
-  assert.equal(focusFeedPlayable(prompt("video", 0)), false);
+  assert.equal(focusFeedPlayable(prompt("audio", 0)), true);
   assert.equal(focusFeedPlayable(prompt("image", 1)), false);
+  assert.equal(focusFeedLayout(prompt("video", 0)), "playable");
+  assert.equal(focusFeedLayout(prompt("audio", 1)), "playable");
+  assert.equal(focusFeedExtraImages(prompt("video", 3)), 0, "a video poster set is not a gallery");
+  assert.equal(focusFeedHasMedia(prompt("audio", 0)), true);
+  assert.equal(focusFeedHasMedia(prompt("image", 1)), true);
+  assert.equal(focusFeedHasMedia(prompt("text", 0)), false);
 });
 
 test("workflow / preset / request keep their own structure unless they have a real picture", () => {
@@ -49,25 +55,28 @@ test("workflow / preset / request keep their own structure unless they have a re
   assert.equal(focusFeedLayout(presetWithCover), "visual");
   assert.equal(focusFeedExtraImages(presetWithCover), 0);
   assert.equal(focusFeedLayout(request), "request");
+  assert.equal(focusFeedHasMedia(workflow), false);
+  assert.equal(focusFeedHasMedia(presetWithCover), true);
 });
 
-test("the feed opens on the card in view, else the remembered post, else the top", () => {
+test("the feed opens on the remembered post, else the top", () => {
   const keys = ["prompt-a", "workflow-b", "preset-c"];
-  assert.equal(focusFeedStartIndex(keys, { visibleKey: "workflow-b", rememberedKey: "preset-c" }), 1);
-  assert.equal(focusFeedStartIndex(keys, { visibleKey: "gone", rememberedKey: "preset-c" }), 2);
-  assert.equal(focusFeedStartIndex(keys, { visibleKey: null, rememberedKey: "gone" }), 0);
-  assert.equal(focusFeedStartIndex([], { visibleKey: "prompt-a" }), 0);
+  assert.equal(focusFeedStartIndex(keys, "preset-c"), 2);
+  assert.equal(focusFeedStartIndex(keys, "gone"), 0);
+  assert.equal(focusFeedStartIndex(keys, null), 0);
+  assert.equal(focusFeedStartIndex([], "prompt-a"), 0);
 });
 
 test("only nearby slides load media; the next page is asked for near the end, once", () => {
-  assert.equal(focusFeedIsNear(5, 3), true);
-  assert.equal(focusFeedIsNear(6, 3), false);
-  assert.equal(focusFeedIsNear(1, 3), true);
+  assert.equal(focusFeedIsNear(4, 3), true);
+  assert.equal(focusFeedIsNear(5, 3), false);
+  assert.equal(focusFeedIsNear(2, 3), true);
   const idle = { hasMore: true, loadingMore: false, failed: false };
   assert.equal(focusFeedShouldLoadMore(14, 18, idle), false);
   assert.equal(focusFeedShouldLoadMore(15, 18, idle), true);
   assert.equal(focusFeedShouldLoadMore(17, 18, { ...idle, loadingMore: true }), false);
   assert.equal(focusFeedShouldLoadMore(17, 18, { ...idle, failed: true }), false);
   assert.equal(focusFeedShouldLoadMore(17, 18, { ...idle, hasMore: false }), false);
-  assert.equal(focusFeedShouldLoadMore(0, 0, idle), false);
+  assert.equal(focusFeedShouldLoadMore(0, 0, idle), true, "an empty filtered list keeps paging while the server has more");
+  assert.equal(focusFeedShouldLoadMore(0, 0, { ...idle, hasMore: false }), false);
 });

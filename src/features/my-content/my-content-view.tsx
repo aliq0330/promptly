@@ -60,7 +60,7 @@ interface Entry {
   likeCount: number;
   isPrivate: boolean;
   node: ReactNode;
-  /** The same row for the Odak view (`FocusGrid`). */
+  /** The same row for the Izgara view (`FocusGrid`). */
   item: FeedItem;
 }
 

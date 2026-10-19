@@ -1,6 +1,8 @@
-// Odak Akışı (docs/history/199-*): Ana Sayfa'nın üçüncü görünümü — Kart ↔ Akış geçişi, konum korunması, tür başına slayt,
-// gerçek beğeni/kaydet/yorum/paylaş/kopyala bileşenleri, sayfalama, klavye, misafir, mobil/İngilizce/koyu tema (ağ taklitli).
-// Gerçek Supabase'e KARŞI DENENMEDİ: `feed_page` + içerik satırları burada taklit edilir.
+// Odak (`/focus`, docs/history/199-*): tam ekran, dikey, tek gönderi/ekran — Ana Sayfa'da Akış seçeneği YOK (Kart | Izgara),
+// yan menü + telefonda alt menüdeki Odak girişi, üst/alt/yan menünün gizlenmesi, tür başına slayt, video/ses oynatma (yazarın
+// yüklediği çıktı), Medya süzgeci, gerçek beğeni/kaydet/yorum/paylaş/kopyala, sayfalama, klavye, kapatma, misafir, mobil/İngilizce/açık tema.
+// Gerçek Supabase'e KARŞI DENENMEDİ: `feed_page`, içerik ve `prompt_results` satırları burada taklit edilir; medya oynatma
+// `HTMLMediaElement.play/pause` taslağıyla sınanır (gerçek video/ses çözülmez).
 import { chromium } from "playwright";
 import assert from "node:assert/strict";
 import { serve } from "./server.mjs";
@@ -9,7 +11,7 @@ import { svg } from "./detail-fixtures.mjs";
 
 const BASE = "http://localhost:4181/promptly";
 const server = await serve(4181);
-const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH ?? undefined, args: ["--no-sandbox"] });
+const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH ?? undefined, args: ["--no-sandbox", "--autoplay-policy=no-user-gesture-required"] });
 const results = [];
 const ONLY = process.env.ONLY ?? "";
 const SHOTS = process.env.SHOTS ?? "";
@@ -17,28 +19,34 @@ const SHOTS = process.env.SHOTS ?? "";
 const author = (u) => ({ id: u.id, username: u.username, display_name: u.display_name, avatar_url: null, cover_url: null, bio: "", website: null, follower_count: 3, following_count: 2, created_at: "2026-01-01T00:00:00Z", interests: [] });
 const pid = (n) => `f0000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
 const COLORS = [["#6d5bd0", "#f2b8e8"], ["#1b2a49", "#e86a3c"], ["#2a6f6a", "#e9d8a6"], ["#7a3e2e", "#f2d6b3"], ["#203a43", "#2c5364"]];
+const base = { tool: null, tools: ["midjourney"], category: null, subcategory: null, status: "published", origin_type: "original", request_id: null, save_count: 1, copy_count: 3, show_on_profile: true, requires_reference_image: false, requires_reference_video: false, requires_reference_audio: false, visibility: "public", deleted_at: null, community_id: null, profiles: author(U.carol), prompt_tags: [] };
 
-/** 22 posts: image prompts, a text prompt (no media), a workflow (no cover), a preset (no cover), a request (no media). */
+/** 24 posts: image prompts, a text prompt, a workflow / preset / request without pictures, a video prompt (poster + output), an audio prompt (output only). */
 function buildFeed() {
   const prompts = [];
   for (let n = 1; n <= 19; n += 1) {
     const text = n === 2;
     const [a, b] = COLORS[n % COLORS.length];
     prompts.push({
-      id: pid(n), title: text ? "Kısa öykü açılışı" : `Görsel prompt ${n}`, description: `Açıklama ${n}`,
+      ...base, id: pid(n), title: text ? "Kısa öykü açılışı" : `Görsel prompt ${n}`, description: `Açıklama ${n}`,
       prompt_text: text ? "Bir deniz fenerinde yalnız yaşayan bekçinin {mevsim} gecesi gördüğü ışığı anlatan, 200 kelimelik bir açılış paragrafı yaz." : `cinematic misty landscape number ${n}, volumetric light, {style}`,
-      tool: null, tools: ["midjourney"], content_type: text ? "text" : "image", category: null, subcategory: null, status: "published", origin_type: "original", request_id: null,
-      like_count: 10 + n, save_count: 1, comment_count: n, copy_count: 3, created_at: `2026-10-${String(30 - n).padStart(2, "0")}T10:00:00Z`, show_on_profile: true,
-      requires_reference_image: false, requires_reference_video: false, requires_reference_audio: false, visibility: "public", deleted_at: null, community_id: null, profiles: author(U.carol),
-      prompt_media: text ? [] : [{ id: `m${n}`, url: svg(a, b), width: 1200, height: 900, alt: "", position: 0 }], prompt_tags: [],
+      content_type: text ? "text" : "image", like_count: 10 + n, comment_count: n, created_at: `2026-10-${String(30 - n).padStart(2, "0")}T10:00:00Z`,
+      prompt_media: text ? [] : [{ id: `m${n}`, url: svg(a, b), width: 1200, height: 900, alt: "", position: 0 }],
     });
   }
+  const video = { ...base, id: pid(51), title: "Neon şehirde drone çekimi", description: "Gece, yağmur, neon.", prompt_text: "slow drone shot over a neon city at night, rain", content_type: "video", like_count: 4, comment_count: 1, created_at: "2026-10-02T10:00:00Z", prompt_media: [{ id: "mv", url: svg("#111827", "#7c3aed", 900, 1600), width: 900, height: 1600, alt: "", position: 0 }] };
+  const audio = { ...base, id: pid(52), title: "Lo-fi yağmur döngüsü", description: "Sakin bir döngü.", prompt_text: "lo-fi beat with rain ambience, 80 bpm", content_type: "audio", like_count: 2, comment_count: 0, created_at: "2026-10-01T10:00:00Z", prompt_media: [] };
+  prompts.push(video, audio);
   const workflow = { id: pid(101), creator_id: U.carol.id, title: "Ürün fotoğrafından kampanya görseli", description: "Üç adımlı akış.", cover_url: null, content_types: ["image", "text"], category: null, subcategory: null, tools: [], status: "published", visibility: "public", community_id: null, like_count: 9, save_count: 2, comment_count: 4, created_at: "2026-10-05T10:00:00Z", updated_at: "2026-10-05T10:00:00Z", profiles: author(U.carol), workflow_steps: [{ count: 3 }], workflow_tags: [], workflow_media: [] };
   const preset = { id: pid(201), creator_id: U.carol.id, title: "Sinematik portre ayarı", description: "Yumuşak ışık için hazır parametre seti.", cover_url: null, content_type: "image", category: null, subcategory: null, tools: [], selection: {}, status: "published", visibility: "public", community_id: null, like_count: 6, comment_count: 4, save_count: 1, created_at: "2026-10-04T10:00:00Z", updated_at: "2026-10-04T10:00:00Z", profiles: author(U.carol), preset_tags: [] };
   const request = { id: pid(301), title: "Retro-fütüristik sokak posteri", description: "Neon harfli bir şehir posteri istiyorum.", creative_direction: "Blade Runner estetiği, mor-turuncu tonlar.", preferred_tool: null, tools: [], content_type: "image", category: null, subcategory: null, reference_image_url: null, reference_image_width: null, reference_image_height: null, status: "open", selected_response_prompt_id: null, response_count: 2, like_count: 5, comment_count: 4, created_at: "2026-10-03T10:00:00Z", deleted_at: null, is_draft: false, visibility: "public", community_id: null, profiles: author(U.carol), prompt_request_tags: [], prompt_request_media: [] };
-  // Feed order: prompt 1, text prompt 2, workflow, preset, request, then prompts 3…19.
-  const order = [["prompt", prompts[0]], ["prompt", prompts[1]], ["workflow", workflow], ["preset", preset], ["request", request], ...prompts.slice(2).map((p) => ["prompt", p])];
-  return { prompts, workflow, preset, request, order };
+  // Order: prompt 1, text prompt 2, workflow, preset, request, video, audio, then prompts 3…19.
+  const order = [["prompt", prompts[0]], ["prompt", prompts[1]], ["workflow", workflow], ["preset", preset], ["request", request], ["prompt", video], ["prompt", audio], ...prompts.slice(2, 19).map((p) => ["prompt", p])];
+  const outputs = {
+    [video.id]: { id: "r-video", prompt_id: video.id, media_type: "video", media_url: "https://example.com/out/neon.mp4", thumbnail_url: null, width: null, height: null, text_content: null, tool: null, has_modification: false, modification_summary: null, modified_prompt_text: null, like_count: 0, comment_count: 0, created_at: "2026-10-02T11:00:00Z", profiles: author(U.carol), prompts: null },
+    [audio.id]: { id: "r-audio", prompt_id: audio.id, media_type: "audio", media_url: "https://example.com/out/rain.mp3", thumbnail_url: null, width: null, height: null, text_content: null, tool: null, has_modification: false, modification_summary: null, modified_prompt_text: null, like_count: 0, comment_count: 0, created_at: "2026-10-01T11:00:00Z", profiles: author(U.carol), prompts: null },
+  };
+  return { prompts, workflow, preset, request, video, audio, order, outputs };
 }
 
 async function installFeed(context, db, feed) {
@@ -48,7 +56,8 @@ async function installFeed(context, db, feed) {
     const req = route.request();
     const url = new URL(req.url());
     const table = url.pathname.replace("/rest/v1/", "");
-    const ok = (body, status = 200) => route.fulfill({ status, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: JSON.stringify(body) });
+    const object = (req.headers().accept ?? "").includes("vnd.pgrst.object");
+    const ok = (body, status = 200) => route.fulfill({ status, contentType: "application/json", headers: { "access-control-allow-origin": "*", "content-range": "0-0/1" }, body: JSON.stringify(body) });
     if (table === "rpc/feed_page") {
       const body = JSON.parse(req.postData() || "{}");
       db.feedCalls.push(body);
@@ -60,6 +69,14 @@ async function installFeed(context, db, feed) {
       const ids = url.searchParams.get("id").slice(4, -1).split(",").map((s) => s.replace(/"/g, ""));
       return ok(tables[table].filter((row) => ids.includes(row.id)));
     }
+    if (table === "prompt_results" && req.method() === "GET") {
+      const byPrompt = (url.searchParams.get("prompt_id") ?? "").replace("eq.", "");
+      const byId = (url.searchParams.get("id") ?? "").replace("eq.", "");
+      db.calls.push({ method: "GET", table, body: { byPrompt, byId } });
+      if (byPrompt) return ok(feed.outputs[byPrompt] ? [feed.outputs[byPrompt]] : []);
+      const row = Object.values(feed.outputs).find((r) => r.id === byId);
+      return object ? (row ? ok(row) : ok(null)) : ok(row ? [row] : []);
+    }
     if (table === "prompt_likes" && req.method() === "POST") {
       db.calls.push({ method: "POST", table, body: JSON.parse(req.postData() || "{}") });
       return db.failLike ? ok({ code: "XX000", message: "boom" }, 500) : route.fulfill({ status: 201, headers: { "access-control-allow-origin": "*" }, body: "" });
@@ -68,21 +85,38 @@ async function installFeed(context, db, feed) {
   });
 }
 
-async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lang = "tr", guest = false, theme, reducedMotion, viewMode } = {}) {
+/** Records play()/pause() on every media element and fires the matching events (no real decoding in the test browser). */
+const MEDIA_STUB = () => {
+  window.__media = [];
+  const proto = HTMLMediaElement.prototype;
+  proto.play = function play() {
+    window.__media.push({ op: "play", tag: this.tagName, muted: this.muted, src: this.currentSrc || this.getAttribute("src") });
+    Object.defineProperty(this, "paused", { configurable: true, get: () => false });
+    this.dispatchEvent(new Event("play"));
+    return Promise.resolve();
+  };
+  proto.pause = function pause() {
+    window.__media.push({ op: "pause", tag: this.tagName, src: this.currentSrc || this.getAttribute("src") });
+    Object.defineProperty(this, "paused", { configurable: true, get: () => true });
+    this.dispatchEvent(new Event("pause"));
+  };
+};
+
+async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lang = "tr", guest = false, theme, reducedMotion } = {}) {
   if (ONLY && !name.startsWith(ONLY)) return;
   const db = createDb();
   const feed = buildFeed();
   const context = await browser.newContext({ viewport, reducedMotion: reducedMotion ? "reduce" : "no-preference", permissions: ["clipboard-read", "clipboard-write"] });
   await installMock(context, db, { guest });
   await installFeed(context, db, feed);
-  await context.addInitScript(([l, th, vm]) => {
+  await context.addInitScript(MEDIA_STUB);
+  await context.addInitScript(([l, th]) => {
     try {
       localStorage.setItem("promptly-language", l);
       localStorage.setItem("promptly-tour-seen", "1");
       if (th) localStorage.setItem("promptly-theme", th);
-      if (vm) localStorage.setItem("promptly-view-mode", vm);
     } catch {}
-  }, [lang, theme ?? null, viewMode ?? null]);
+  }, [lang, theme ?? null]);
   const page = await context.newPage();
   page.setDefaultTimeout(8000);
   const errors = [];
@@ -99,237 +133,253 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lan
   }
 }
 
-const layer = (page) => page.locator("[data-focus-feed]");
+const stage = (page) => page.locator("[data-focus-feed]");
 const slides = (page) => page.locator("[data-focus-feed] [data-slide-index]");
-const counter = (page) => layer(page).locator("span[aria-label^='Gönderi'], span[aria-label^='Post']").first();
-const openHome = async (page) => { await page.goto(`${BASE}/`); await page.locator("[data-feed-key]").first().waitFor(); await page.waitForTimeout(400); };
-const openFeedDesktop = async (page) => { await page.getByRole("group", { name: "Görünüm modu" }).first().getByRole("button", { name: "Akış" }).click(); await slides(page).first().waitFor(); await page.waitForTimeout(500); };
+const counter = (page) => stage(page).locator("span[aria-label^='Gönderi'], span[aria-label^='Post']").first();
+const openFocus = async (page) => { await page.goto(`${BASE}/focus`); await slides(page).first().waitFor(); await page.waitForTimeout(500); };
 const activeIndex = (page) => counter(page).getAttribute("aria-label").then((s) => Number(/(\d+)/.exec(s)[1]));
+const step = async (page, key = "ArrowDown", times = 1) => { for (let i = 0; i < times; i += 1) { await page.keyboard.press(key); await page.waitForTimeout(650); } await page.waitForTimeout(300); };
+const media = (page) => page.evaluate(() => window.__media);
 const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: `${SHOTS}/${name}.png` }); };
 
-await scenario("1. Kart görünümü varsayılan ve değişmedi: katman yok, kartlar var, seçici Kart | Odak | Akış", async ({ page }) => {
-  await openHome(page);
-  assert.equal(await layer(page).count(), 0);
-  assert.ok((await page.locator("[data-feed-key]").count()) >= 18, "card grid renders the first page");
+await scenario("1. Ana Sayfa değişmedi: Akış seçeneği yok, seçici Kart | Izgara; yan menüde Odak", async ({ page }) => {
+  await page.goto(`${BASE}/`);
+  await page.locator("article").first().waitFor();
+  assert.equal(await stage(page).count(), 0);
   const group = page.getByRole("group", { name: "Görünüm modu" }).first();
-  assert.deepEqual(await group.getByRole("button").allTextContents(), ["Kart", "Odak", "Akış"]);
-  assert.equal(await group.getByRole("button", { name: "Kart" }).getAttribute("aria-pressed"), "true");
-  await shot(page, "01-cards");
+  assert.deepEqual(await group.getByRole("button").allTextContents(), ["Kart", "Izgara"]);
+  const link = page.locator("aside[aria-label] a[href*='/focus']");
+  assert.equal(await link.count(), 1, "sidebar has Odak");
+  assert.match(await link.textContent(), /Odak/);
 });
 
-await scenario("2. Akış'a geçiş: katman header ile sidebar arasında, ?view=feed, sayaç, sayfa kilitli + inert", async ({ page }) => {
-  await openHome(page);
-  await openFeedDesktop(page);
-  assert.match(page.url(), /[?&]view=feed/);
-  const box = await layer(page).boundingBox();
-  assert.equal(box.y, 64, "below the 64px header");
-  assert.equal(box.x, 256, "right of the 256px sidebar");
-  assert.equal(await counter(page).getAttribute("aria-label"), "Gönderi 1 / 18");
+await scenario("2. Yan menüden Odak: tam ekran, üst/yan menü gizli, koyu sahne, sayfa kilitli, başlık", async ({ page }) => {
+  await page.goto(`${BASE}/`);
+  await page.locator("aside[aria-label] a[href*='/focus']").click();
+  await slides(page).first().waitFor();
+  await page.waitForTimeout(500);
+  assert.match(page.url(), /\/focus/);
+  const box = await stage(page).boundingBox();
+  assert.deepEqual([box.x, box.y, box.width, box.height], [0, 0, 1280, 900]);
+  assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector("header[data-app-chrome]")).visibility), "hidden");
+  assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector("aside[data-app-chrome]")).visibility), "hidden");
   assert.equal(await page.evaluate(() => document.body.style.overflow), "hidden");
-  assert.equal(await page.evaluate(() => document.getElementById("main-content").hasAttribute("inert")), true);
-  assert.ok(await page.locator("aside[aria-label]").first().isVisible(), "sidebar still visible");
-  // Exactly one stop per post: mandatory snap.
+  assert.equal(await stage(page).evaluate((el) => el.classList.contains("dark")), true);
+  assert.equal(await counter(page).getAttribute("aria-label"), "Gönderi 1 / 18");
   assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector("[data-focus-feed] [role='region']")).scrollSnapType), "y mandatory");
-  await shot(page, "02-feed-desktop");
+  assert.match(await page.title(), /Odak/);
+  await shot(page, "02-focus-desktop");
 });
 
-await scenario("3. Klavye: ↓ ↓ ↑ ve End/Home gönderiler arasında geçer; kaydırınca etkin gönderi değişir", async ({ page }) => {
-  await openHome(page);
-  await openFeedDesktop(page);
-  await page.keyboard.press("ArrowDown");
-  await page.waitForTimeout(900);
-  await page.keyboard.press("ArrowDown");
-  await page.waitForTimeout(900);
+await scenario("3. Klavye ve tekerlek: ↓ ↓ ↑, Home; tek durak", async ({ page }) => {
+  await openFocus(page);
+  await step(page, "ArrowDown", 2);
   assert.equal(await activeIndex(page), 3);
-  await page.keyboard.press("ArrowUp");
-  await page.waitForTimeout(900);
+  await step(page, "ArrowUp");
   assert.equal(await activeIndex(page), 2);
-  await page.mouse.move(700, 500);
+  await page.mouse.move(640, 500);
   await page.mouse.wheel(0, 900);
   await page.waitForTimeout(1200);
-  assert.equal(await activeIndex(page), 3, "wheel scroll snaps to the next post");
-  await page.keyboard.press("Home");
-  await page.waitForTimeout(1200);
+  assert.equal(await activeIndex(page), 3);
+  await step(page, "Home");
   assert.equal(await activeIndex(page), 1);
 });
 
-await scenario("4. Tür başına sunum: görsel → resim; metin → mono prompt bloğu; workflow → adımlar; hazır ayar; istek → durum + yaratıcı yön", async ({ page }) => {
-  await openHome(page);
-  await openFeedDesktop(page);
+await scenario("4. Tür başına: görsel / metin (mono blok) / workflow / hazır ayar / istek; uzak slayt medya yüklemez", async ({ page }) => {
+  await openFocus(page);
   const s = (i) => slides(page).nth(i);
-  assert.ok((await s(0).locator("img").count()) === 1, "image prompt shows its picture");
-  assert.equal(await s(1).locator("img").count(), 0, "text prompt has no fake image");
+  assert.equal(await s(0).locator("img").count(), 1);
+  assert.equal(await s(1).locator("img").count(), 0);
   assert.match(await s(1).locator(".prompt-text").textContent(), /deniz fenerinde/);
-  assert.match(await s(2).textContent(), /Workflow/);
-  assert.match(await s(2).textContent(), /3 adım/, "falls back to the real step count");
+  assert.match(await s(2).textContent(), /3 adım/);
   assert.match(await s(3).textContent(), /Hazır Ayar/);
   assert.match(await s(4).textContent(), /Açık/);
-  assert.match(await s(4).textContent(), /Blade Runner estetiği/);
-  assert.equal(await s(4).getByRole("button", { name: /Kaydet|koleksiyon/i }).count(), 0, "a request has no save, as everywhere");
-  assert.match(await s(4).locator("a[href*='#request-responses']").getAttribute("href"), /requests\/local/);
-  if (SHOTS) for (const name of ["04b-text", "04c-workflow", "04d-preset", "04e-request"]) { await page.keyboard.press("ArrowDown"); await page.waitForTimeout(900); await shot(page, name); }
-  // Only the active slide and its neighbours mount pictures.
-  assert.equal(await slides(page).nth(10).locator("img").count(), 0, "far slide does not load its picture");
+  assert.match(await s(4).textContent(), /Blade Runner/);
+  assert.equal(await s(4).getByRole("button", { name: /Kaydet|koleksiyon/i }).count(), 0);
+  assert.equal(await s(10).locator("img").count(), 0, "far slide does not load its picture");
+  if (SHOTS) for (const [i, name] of [[1, "04b-text"], [4, "04e-request"]]) { await step(page, "Home"); await step(page, "ArrowDown", i); await shot(page, name); }
 });
 
-await scenario("5. Beğeni: gerçek prompt_likes isteği, sayaç artar; hata olursa geri alınır", async ({ page, db }) => {
-  await openHome(page);
-  await openFeedDesktop(page);
-  const like = slides(page).nth(0).getByRole("button", { name: /Beğen/ });
-  assert.match(await like.textContent(), /11/);
-  await like.click();
+await scenario("5. Video: yazarın çıktısı oynar (sessiz), ses açılır, geçince durur; yalnız etkin/yakın gönderi sorgulanır", async ({ page, db, feed }) => {
+  await openFocus(page);
+  assert.equal(db.calls.filter((c) => c.table === "prompt_results").length, 0, "no output lookup far from the video");
+  await step(page, "ArrowDown", 5);
+  assert.equal(await activeIndex(page), 6);
+  const video = slides(page).nth(5).locator("video");
+  await video.waitFor({ state: "attached" });
+  assert.equal(await video.getAttribute("src"), "https://example.com/out/neon.mp4");
+  const plays = (await media(page)).filter((m) => m.op === "play" && m.tag === "VIDEO");
+  assert.ok(plays.length >= 1 && plays.at(-1).muted === true, `video autoplays muted: ${JSON.stringify(plays)}`);
+  await stage(page).getByRole("button", { name: "Sesi aç" }).click();
+  await page.waitForTimeout(300);
+  assert.equal(await video.evaluate((el) => el.muted), false, "sound on");
+  await shot(page, "05-video");
+  await step(page, "ArrowDown");
+  assert.ok((await media(page)).some((m) => m.op === "pause" && m.tag === "VIDEO"), "video paused when leaving");
+  assert.ok(db.calls.some((c) => c.table === "prompt_results" && c.body.byPrompt === feed.video.id));
+});
+
+await scenario("6. Ses: sessizken kendiliğinden çalmaz; oynat düğmesi çalar ve sesi açar", async ({ page }) => {
+  await openFocus(page);
+  await step(page, "ArrowDown", 6);
+  assert.equal(await activeIndex(page), 7);
+  const slide = slides(page).nth(6);
+  await slide.locator("audio").waitFor({ state: "attached" });
+  assert.equal((await media(page)).filter((m) => m.op === "play" && m.tag === "AUDIO").length, 0, "no silent audio autoplay");
+  await slide.getByRole("button", { name: "Oynat" }).click();
+  await page.waitForTimeout(300);
+  assert.ok((await media(page)).some((m) => m.op === "play" && m.tag === "AUDIO"));
+  assert.ok(await stage(page).getByRole("button", { name: "Sesi kapat" }).isVisible(), "sound switched on by the tap");
+  await shot(page, "06-audio");
+});
+
+await scenario("7. Medya süzgeci: metin/workflow/hazır ayar/istek düşer, görsel + video + ses kalır", async ({ page }) => {
+  await openFocus(page);
+  await stage(page).getByRole("button", { name: /Medya/ }).click();
+  await page.waitForTimeout(700);
+  const texts = await slides(page).allTextContents();
+  assert.ok(!texts.some((t) => /Kısa öykü açılışı|Ürün fotoğrafından|Sinematik portre|Retro-fütüristik/.test(t)), "structure-only posts are filtered out");
+  assert.ok(texts.some((t) => /Neon şehirde drone/.test(t)) && texts.some((t) => /Lo-fi yağmur/.test(t)), "video and audio stay");
+  assert.equal(await stage(page).getByRole("button", { name: /Medya/ }).getAttribute("aria-pressed"), "true");
+});
+
+await scenario("8. Beğeni gerçek istekle, hata olursa geri alınır", async ({ page, db }) => {
+  await openFocus(page);
+  await slides(page).nth(0).getByRole("button", { name: /Beğen/ }).click();
   await page.waitForTimeout(500);
-  assert.ok(db.calls.some((c) => c.table === "prompt_likes" && c.body.prompt_id === pid(1)), "like persisted through likeContent");
+  assert.ok(db.calls.some((c) => c.table === "prompt_likes" && c.body.prompt_id === pid(1)));
   assert.match(await slides(page).nth(0).getByRole("button", { name: /Beğen/ }).textContent(), /12/);
   db.failLike = true;
-  await page.keyboard.press("ArrowDown");
-  await page.waitForTimeout(900);
+  await step(page);
   await slides(page).nth(1).getByRole("button", { name: /Beğen/ }).click();
   await page.waitForTimeout(700);
-  assert.match(await slides(page).nth(1).getByRole("button", { name: /Beğen/ }).textContent(), /12/, "rolled back to 12 after the failed request");
+  assert.match(await slides(page).nth(1).getByRole("button", { name: /Beğen/ }).textContent(), /12/, "rolled back");
 });
 
-await scenario("6. Kaydet → koleksiyon penceresi, Paylaş → paylaşım penceresi (Esc pencereyi kapatır, akışı değil), Yorum → #comments", async ({ page }) => {
-  await openHome(page);
-  await openFeedDesktop(page);
+await scenario("9. Kaydet / Paylaş pencereleri (Esc yalnız pencereyi kapatır), Yorum → #comments, Promptu incele + Kopyala", async ({ page, db }) => {
+  await openFocus(page);
   const s0 = slides(page).nth(0);
   await s0.getByRole("button", { name: /Kaydet|koleksiyon/i }).click();
   await page.locator("[aria-modal='true']").waitFor();
   await page.keyboard.press("Escape");
   await page.waitForTimeout(400);
-  assert.equal(await page.locator("[aria-modal='true']").count(), 0);
-  assert.equal(await layer(page).count(), 1, "Escape closed the dialog only");
+  assert.equal(await stage(page).count(), 1, "Escape closed the dialog, not Odak");
   await s0.getByRole("button", { name: "Paylaş" }).click();
   await page.locator("[aria-modal='true']").waitFor();
   await page.keyboard.press("Escape");
   await page.waitForTimeout(300);
   assert.match(await s0.getByRole("link", { name: /Yorumlar/ }).getAttribute("href"), new RegExp(`prompts/local/?\\?id=${pid(1)}#comments`));
-});
-
-await scenario("7. Promptu incele: tam metin + Kopyala (kullanım sayılır) + ayrıntı bağlantısı", async ({ page, db }) => {
-  await openHome(page);
-  await openFeedDesktop(page);
-  await slides(page).nth(0).getByRole("button", { name: "Promptu incele" }).click();
+  await s0.getByRole("button", { name: "Promptu incele" }).click();
   const dialog = page.locator("[aria-modal='true']");
-  await dialog.waitFor();
-  assert.match(await dialog.textContent(), /cinematic misty landscape number 1/);
   await dialog.getByRole("button", { name: "Kopyala" }).click();
   await page.waitForTimeout(400);
   assert.equal(await page.evaluate(() => navigator.clipboard.readText()), "cinematic misty landscape number 1, volumetric light, {style}");
-  assert.ok(db.calls.some((c) => c.table === "rpc/record_prompt_copy"), "copy counted via record_prompt_copy");
-  assert.match(await dialog.getByRole("link", { name: "Ayrıntıları aç" }).getAttribute("href"), /prompts\/local/);
+  assert.ok(db.calls.some((c) => c.table === "rpc/record_prompt_copy"));
 });
 
-await scenario("8. Sayfalama: sona yaklaşınca aynı feed_page imleciyle sonraki sayfa; sonda 'Hepsini gördün'", async ({ page, db }) => {
-  await openHome(page);
-  await openFeedDesktop(page);
-  assert.equal(db.feedCalls.length, 1);
-  await page.keyboard.press("End");
-  await page.waitForTimeout(1500);
-  assert.equal(db.feedCalls.length, 2, "second page requested");
-  assert.ok(db.feedCalls[1].p_after_id, "with the keyset cursor");
-  await page.waitForTimeout(600);
-  assert.equal(await slides(page).count(), 23, "22 posts + the end slide");
-  await page.keyboard.press("End");
-  await page.waitForTimeout(1500);
-  await layer(page).getByText("Hepsini gördün").waitFor();
-});
-
-await scenario("9. Esc → kartlar; ?view kalkar; açık olan gönderinin kartı görünür", async ({ page }) => {
-  await openHome(page);
-  await openFeedDesktop(page);
-  for (let i = 0; i < 7; i += 1) { await page.keyboard.press("ArrowDown"); await page.waitForTimeout(450); }
+await scenario("10. Sayfalama: keyset imleciyle ikinci sayfa, sonda 'Hepsini gördün'", async ({ page, db }) => {
+  await openFocus(page);
+  await step(page, "End");
+  await page.waitForTimeout(1200);
+  assert.equal(db.feedCalls.length, 2);
+  assert.ok(db.feedCalls[1].p_after_id);
+  assert.equal(await slides(page).count(), 25, "24 posts + end slide");
+  await step(page, "End");
   await page.waitForTimeout(800);
-  const index = await activeIndex(page);
-  await page.keyboard.press("Escape");
-  await page.waitForTimeout(500);
-  assert.equal(await layer(page).count(), 0);
-  assert.doesNotMatch(page.url(), /view=/);
+  await stage(page).getByText("Hepsini gördün").waitFor();
+});
+
+await scenario("11. Kapat (X) ve Esc: geldiği sayfaya döner, menüler ve kaydırma geri gelir", async ({ page }) => {
+  await page.goto(`${BASE}/discover`);
+  await page.waitForTimeout(800);
+  await page.locator("aside[aria-label] a[href*='/focus']").click();
+  await slides(page).first().waitFor();
+  await stage(page).getByRole("button", { name: "Odak'ı kapat" }).first().click();
+  await page.waitForURL(/\/discover/);
+  await page.waitForTimeout(400);
+  assert.equal(await stage(page).count(), 0);
+  assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector("header[data-app-chrome]")).visibility), "visible");
   assert.equal(await page.evaluate(() => document.body.style.overflow), "");
-  assert.equal(await page.evaluate(() => document.getElementById("main-content").hasAttribute("inert")), false);
-  const key = await page.evaluate((i) => document.querySelectorAll("[data-feed-key]")[i - 1].dataset.feedKey, index);
-  const top = await page.evaluate((k) => document.querySelector(`[data-feed-key="${k}"]`).getBoundingClientRect().top, key);
-  assert.ok(top > 40 && top < 200, `card of the open post is at the top (${top})`);
+  await page.locator("aside[aria-label] a[href*='/focus']").click();
+  await slides(page).first().waitFor();
+  await page.waitForTimeout(300);
+  await page.keyboard.press("Escape");
+  await page.waitForURL(/\/discover/);
 });
 
-await scenario("10. Kartlardan Akış'a: kaydırılmış listede görünen kartın gönderisinden açılır", async ({ page }) => {
-  await openHome(page);
-  await page.evaluate(() => { const el = document.querySelectorAll("[data-feed-key]")[8]; window.scrollTo(0, el.getBoundingClientRect().top + window.scrollY - 90); });
-  await page.waitForTimeout(500);
-  const firstVisible = await page.evaluate(() => [...document.querySelectorAll("[data-feed-key]")].findIndex((el) => { const r = el.getBoundingClientRect(); return r.bottom > 96 && r.top < innerHeight; }));
-  assert.ok(firstVisible >= 6, `list is scrolled (${firstVisible})`);
-  // DOM click: Playwright would scroll the toolbar back into view first (and with it the list to its top).
-  await page.evaluate(() => document.querySelector("[role='group'][aria-label='Görünüm modu'] button[aria-label='Akış']").click());
+await scenario("12. Kapatıp yeniden açınca bu oturumda son açık gönderiden devam eder", async ({ page }) => {
+  await page.goto(`${BASE}/`);
+  await page.locator("article").first().waitFor();
+  await page.locator("aside[aria-label] a[href*='/focus']").click();
+  await slides(page).first().waitFor();
+  await page.waitForTimeout(400);
+  await step(page, "ArrowDown", 3);
+  await stage(page).getByRole("button", { name: "Odak'ı kapat" }).first().click();
+  await page.waitForTimeout(800);
+  assert.doesNotMatch(page.url(), /\/focus/);
+  await page.locator("aside[aria-label] a[href*='/focus']").click();
   await slides(page).first().waitFor();
   await page.waitForTimeout(500);
-  assert.equal(await activeIndex(page), firstVisible + 1);
+  assert.equal(await activeIndex(page), 4, "back on the post last open");
 });
 
-await scenario("11. Tercih saklanır: yeniden yüklemede Akış açılır; Akış'ı olmayan liste kart gösterir ve seçicide Akış yoktur", async ({ page }) => {
-  await openHome(page);
-  await openFeedDesktop(page);
-  await page.reload();
-  await slides(page).first().waitFor();
-  await page.goto(`${BASE}/prompts`);
-  await page.waitForTimeout(1500);
-  assert.equal(await layer(page).count(), 0, "/prompts never opens the layer");
-  const group = page.getByRole("group", { name: "Görünüm modu" }).first();
-  assert.deepEqual(await group.getByRole("button").allTextContents(), ["Kart", "Odak"]);
-  assert.equal(await group.getByRole("button", { name: "Kart" }).getAttribute("aria-pressed"), "true");
-});
-
-await scenario("12. Misafir: beğeni ortak giriş penceresini açar, istek gönderilmez", async ({ page, db }) => {
-  await openHome(page);
-  await openFeedDesktop(page);
+await scenario("13. Misafir: beğeni giriş penceresi açar; Takip sekmesi giriş ister", async ({ page, db }) => {
+  await openFocus(page);
   await slides(page).nth(0).getByRole("button", { name: /Beğen/ }).click();
   await page.locator("[aria-modal='true']").waitFor();
   assert.equal(db.calls.filter((c) => c.table === "prompt_likes").length, 0);
+  await page.keyboard.press("Escape");
+  await stage(page).getByRole("tab", { name: /Takip/ }).click();
+  await stage(page).getByRole("link", { name: "Giriş Yap" }).waitFor();
 }, { guest: true });
 
-await scenario("13. Telefon 390px: katman üst bar ile alt menü arasında, Akış düğmesi, yatay taşma yok", async ({ page }) => {
-  await openHome(page);
-  await page.getByRole("button", { name: "Odak Akışı'nı aç" }).first().click();
+await scenario("14. Telefon 390px: alt menüde Profil yerine Odak; ekranı kaplar, alt/üst menü gizli, ray ekranda", async ({ page }) => {
+  await page.goto(`${BASE}/`);
+  await page.locator("article").first().waitFor();
+  const nav = page.locator("nav[data-app-chrome]");
+  const labels = (await nav.locator("li").allTextContents()).map((s) => s.trim());
+  assert.deepEqual(labels, ["Ana Sayfa", "Keşfet", "Oluştur", "Topluluklar", "Odak"]);
+  await nav.getByRole("link", { name: "Odak" }).click();
   await slides(page).first().waitFor();
-  await page.waitForTimeout(500);
-  const box = await layer(page).boundingBox();
-  const nav = await page.locator("nav[data-app-chrome], nav.fixed").last().boundingBox();
-  assert.equal(box.y, 64);
-  assert.ok(box.y + box.height <= nav.y + 1, `layer ends above the bottom nav (${box.y + box.height} ≤ ${nav.y})`);
-  assert.equal(box.width, 390);
-  assert.equal(await page.evaluate(() => document.querySelector("[data-focus-feed] [role='region']").scrollWidth <= 390), true, "no sideways overflow");
-  const rail = await slides(page).nth(0).getByRole("button", { name: /Beğen/ }).boundingBox();
-  assert.ok(rail.x + rail.width <= 390, "rail fits");
-  await shot(page, "13-feed-phone");
-  await layer(page).getByRole("button", { name: "Kart görünümüne geç" }).click();
-  await page.waitForTimeout(400);
-  assert.equal(await layer(page).count(), 0);
+  await page.waitForTimeout(600);
+  const box = await stage(page).boundingBox();
+  assert.deepEqual([box.x, box.y, box.width, box.height], [0, 0, 390, 844]);
+  assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector("nav[data-app-chrome]")).visibility), "hidden");
+  const slide = await slides(page).nth(0).boundingBox();
+  assert.deepEqual([slide.width, slide.height], [390, 844], "a post is the whole screen");
+  const like = await slides(page).nth(0).getByRole("button", { name: /Beğen/ }).boundingBox();
+  assert.ok(like.x + like.width <= 390 && like.y + like.height <= 844);
+  assert.equal(await page.evaluate(() => document.querySelector("[data-focus-feed] [role='region']").scrollWidth <= 390), true);
+  await shot(page, "14-focus-phone");
+  await step(page);
+  await shot(page, "14b-focus-phone-text");
+  await stage(page).getByRole("button", { name: "Odak'ı kapat" }).first().click();
+  await page.waitForTimeout(600);
+  assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector("nav[data-app-chrome]")).visibility), "visible");
 }, { viewport: { width: 390, height: 844 } });
 
-await scenario("14. İngilizce: etiketler çevrilmiş", async ({ page }) => {
-  await openHome(page);
-  await page.getByRole("group", { name: "View mode" }).first().getByRole("button", { name: "Feed" }).click();
-  await slides(page).first().waitFor();
+await scenario("15. İngilizce", async ({ page }) => {
+  await openFocus(page);
   assert.equal(await counter(page).getAttribute("aria-label"), "Post 1 of 18");
+  assert.ok(await stage(page).getByRole("button", { name: "Close Focus" }).isVisible());
+  assert.ok(await stage(page).getByRole("button", { name: /Media/ }).isVisible());
   assert.ok(await slides(page).nth(0).getByRole("button", { name: "View prompt" }).isVisible());
-  assert.ok(await slides(page).nth(0).getByRole("link", { name: "Open details" }).isVisible());
-  await shot(page, "14-feed-en");
 }, { lang: "en" });
 
-await scenario("15. Koyu tema + hareket azaltma: katman açılır, geçişler kapalı", async ({ page }) => {
-  await openHome(page);
-  await openFeedDesktop(page);
-  assert.equal(await page.evaluate(() => document.documentElement.classList.contains("dark")), true);
+await scenario("16. Açık temada da koyu sahne; hareket azaltmada geçiş yok", async ({ page }) => {
+  await openFocus(page);
+  assert.equal(await page.evaluate(() => document.documentElement.classList.contains("dark")), false, "site stays light");
+  const lum = await stage(page).evaluate((el) => { const [r, g, b] = getComputedStyle(el).backgroundColor.match(/\d+/g).map(Number); return (r + g + b) / 3; });
+  assert.ok(lum < 40, `stage is dark (${lum})`);
   const duration = await page.evaluate(() => getComputedStyle(document.querySelector("[data-focus-feed] [data-slide-index] img")).transitionDuration);
-  assert.ok(parseFloat(duration) < 0.01, `no transition (${duration})`);
-  await shot(page, "15-feed-dark");
-}, { theme: "dark", reducedMotion: true });
+  assert.ok(parseFloat(duration) < 0.01, duration);
+}, { theme: "light", reducedMotion: true });
 
-await scenario("16. Tablet 820px: katman ikon rayının sağında, seçici bar'da", async ({ page }) => {
-  await openHome(page);
-  await openFeedDesktop(page);
-  const box = await layer(page).boundingBox();
-  assert.equal(box.x, 72);
-  await shot(page, "16-feed-tablet");
+await scenario("17. Tablet 820px: kart + yan ray, tam ekran", async ({ page }) => {
+  await openFocus(page);
+  const box = await stage(page).boundingBox();
+  assert.deepEqual([box.x, box.width], [0, 820]);
+  await shot(page, "17-focus-tablet");
 }, { viewport: { width: 820, height: 1100 } });
 
 await browser.close();

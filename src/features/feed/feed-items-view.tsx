@@ -8,7 +8,7 @@ import type { FeedItem } from "./types";
 /**
  * Picks between the two list renderings: "Kart" = the existing, untouched
  * `FeedGrid` (all its props, empty states and cards exactly as before) and
- * "Odak" = the new Focus View. An empty list always uses `FeedGrid`'s own
+ * "Izgara" = the Focus View (grid). An empty list always uses `FeedGrid`'s own
  * empty state in both modes, so filters / empty copy never differ.
  */
 export function FeedItemsView(props: React.ComponentProps<typeof FeedGrid>) {
