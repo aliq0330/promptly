@@ -94,3 +94,11 @@ CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/mess
 CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/messaging-ui/run-stories.mjs   # 21/21 beklenir
 SHOT_DIR=/tmp/shots node tests/messaging-ui/run-stories.mjs   # ekran görüntüleriyle
 ```
+
+## Odak Akışı (`docs/history/199-*`)
+
+`run-focus-feed.mjs` (16 senaryo): Ana Sayfa'da Kart | Odak | Akış seçicisi, katmanın yerleşimi (header/sidebar/alt menü arası, gövde kilidi, `inert`), klavye ve tekerlek ile scroll-snap, tür başına slayt (görsel / metin / workflow / hazır ayar / istek), gerçek `LikeButton` (+ hata geri alma), Kaydet/Paylaş pencereleri, yorum bağlantısı, "Promptu incele" + kopyalama sayacı, `feed_page` keyset sayfalama, Esc → kart konumu, kart → akış konumu, tercih saklama (diğer listeler kart gösterir), misafir, 390px/820px, İngilizce, koyu tema + hareket azaltma. `feed_page` ve içerik satırları dosyanın içinde taklit edilir. Gerçek Supabase'e/cihaza KARŞI DENENMEDİ.
+
+```bash
+CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/messaging-ui/run-focus-feed.mjs   # 16/16 beklenir
+```

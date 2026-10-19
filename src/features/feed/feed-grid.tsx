@@ -60,7 +60,8 @@ export function FeedGrid({
     <ContentGrid columns={layout === "home" ? "sm:columns-2" : undefined}>
       {items.map((item, index) => (
         <Reveal key={feedItemKey(item)} index={index} className={CONTENT_GRID_ITEM_CLASS}>
-          {card(item)}
+          {/* Anchor of this post in the list: Odak Akışı opens on the card in view and comes back to the one it had open. */}
+          <div data-feed-key={feedItemKey(item)}>{card(item)}</div>
         </Reveal>
       ))}
     </ContentGrid>

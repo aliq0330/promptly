@@ -299,11 +299,14 @@ export function ShareModal({ target, onClose }: { target: ShareModalTarget; onCl
 export function ShareTriggerButton({
   target,
   label,
+  size = 16,
   className,
 }: {
   target: ShareModalTarget;
   /** Optional visible text next to the icon (matches ShareButton's own `label` prop, used on detail-page hero rows). */
   label?: string;
+  /** Icon size (Odak Akışı's action rail uses a larger one, like its Like/Comment/Save). */
+  size?: number;
   className?: string;
 }) {
   const { t } = useTranslation();
@@ -322,7 +325,7 @@ export function ShareTriggerButton({
         title={t("common.share")}
         className={contentActionClassName(false, className)}
       >
-        <Share2 size={16} strokeWidth={1.75} />
+        <Share2 size={size} strokeWidth={1.75} />
         {label && <span className="hidden sm:inline">{label}</span>}
       </button>
       {open && <ShareModal target={target} onClose={() => setOpen(false)} />}
