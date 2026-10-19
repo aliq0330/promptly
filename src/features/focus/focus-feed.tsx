@@ -19,7 +19,9 @@ import { focusFeedCover, focusFeedHasMedia, focusFeedIsNear, focusFeedShouldLoad
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { usePrefersReducedMotion } from "@/lib/motion";
 import { cn } from "@/lib/utils";
-import { FocusFeedSlide, FocusPlaybackContext } from "./focus-feed-slide";
+import { FocusFeedSlide, FocusPlaybackContext, HIDE_WHILE_COMMENTS } from "./focus-feed-slide";
+import { FocusCommentsContext, FocusCommentsSheet } from "./focus-comments-sheet";
+import type { FeedItem } from "@/features/feed/types";
 
 /**
  * Odak (`/focus`, docs/history/199-*) — everyone's public posts, one per screen, scrolled vertically, full screen (the
@@ -82,10 +84,15 @@ function useFullScreenChrome() {
 }
 
 /** The dark stage in the visitor's palette (`.dark` + `data-palette` re-scope every token for this subtree). */
-function Stage({ children, className }: { children: ReactNode; className?: string }) {
+function Stage({ children, className, commentsOpen = false }: { children: ReactNode; className?: string; commentsOpen?: boolean }) {
   const { palette } = useTheme();
   return (
-    <div data-focus-feed data-palette={palette} className={cn("dark fixed inset-0 z-[45] flex flex-col overflow-hidden bg-background text-text", className)}>
+    <div
+      data-focus-feed
+      data-palette={palette}
+      data-comments-open={commentsOpen ? "" : undefined}
+      className={cn("group/stage dark fixed inset-0 z-[45] flex flex-col overflow-hidden bg-background text-text", className)}
+    >
       {children}
     </div>
   );
@@ -160,6 +167,23 @@ function FocusFeedBackdrop({ url }: { url: string | null }) {
   );
 }
 
+/**
+ * The on-screen box of a slide's picture / video as actually painted (`object-contain` letterboxes it inside its element),
+ * or `null` when the slide has none (yet).
+ */
+function mediaBox(slide: HTMLElement): DOMRect | null {
+  const media = slide.querySelector<HTMLImageElement | HTMLVideoElement>("article video, article img");
+  if (!media) return null;
+  const rect = media.getBoundingClientRect();
+  const width = media instanceof HTMLVideoElement ? media.videoWidth : media.naturalWidth;
+  const height = media instanceof HTMLVideoElement ? media.videoHeight : media.naturalHeight;
+  if (!width || !height || !rect.width || !rect.height) return rect.width && rect.height ? rect : null;
+  const fit = Math.min(rect.width / width, rect.height / height);
+  const w = width * fit;
+  const h = height * fit;
+  return new DOMRect(rect.left + (rect.width - w) / 2, rect.top + (rect.height - h) / 2, w, h);
+}
+
 /* ------------------------------------------------------------------------ screen */
 
 function FocusScreen() {
@@ -170,6 +194,12 @@ function FocusScreen() {
   const [tab, setTab] = useState<FocusTab>("newest");
   const [mediaOnly, setMediaOnly] = useState(false);
   const [muted, setMuted] = useState(true);
+  // The post whose comments are open (docs/history/200-*): the sheet slides up, the post shrinks above it and keeps playing.
+  const [commentsItem, setCommentsItem] = useState<FeedItem | null>(null);
+  const openComments = useCallback((item: FeedItem) => setCommentsItem(item), []);
+  const closeComments = useCallback(() => setCommentsItem(null), []);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [shrink, setShrink] = useState<{ scale: number; x: number; y: number } | null>(null);
   const playback = useMemo(() => ({ muted, setMuted }), [muted]);
   useFullScreenChrome();
 
@@ -244,6 +274,35 @@ function FocusScreen() {
     if (focusFeedShouldLoadMore(active, total, { hasMore, loadingMore, failed })) void loadMore();
   }, [active, total, rawCount, hasMore, loadingMore, failed, loadMore, loading, needsLogin]);
 
+  // Phone: with the sheet open the post's MEDIA (its picture / video as actually shown — `object-contain`) is fitted into the
+  // space above the sheet and centred there, Instagram-style; a post without media fits as a whole. Measured on open and on
+  // resize; from `md` the sheet is a side panel and nothing is scaled.
+  useEffect(() => {
+    if (!commentsItem) return;
+    const measure = () => {
+      const content = contentRef.current;
+      const sheetBox = content?.parentElement?.querySelector<HTMLElement>("[data-focus-comments]");
+      const slide = content?.querySelector<HTMLElement>(`[data-slide-index="${active}"]`);
+      if (!content || !sheetBox || !slide || !window.matchMedia("(max-width: 767.98px)").matches) {
+        setShrink(null);
+        return;
+      }
+      const origin = content.getBoundingClientRect();
+      const box = mediaBox(slide) ?? slide.getBoundingClientRect();
+      const safeTop = parseFloat(getComputedStyle(content).getPropertyValue("--focus-safe-top")) || 0;
+      const top = safeTop + 8;
+      const bottom = sheetBox.getBoundingClientRect().top - 8;
+      const scale = Math.min(1, (bottom - top) / box.height, (origin.width - 16) / box.width);
+      // Transform origin is the content box's top-left: map the media box's centre to the centre of the free area.
+      const cx = box.left - origin.left + box.width / 2;
+      const cy = box.top - origin.top + box.height / 2;
+      setShrink({ scale, x: origin.width / 2 - cx * scale, y: (top + bottom) / 2 - origin.top - cy * scale });
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [commentsItem, active]);
+
   const go = useCallback(
     (index: number) => {
       const scroller = scrollerRef.current;
@@ -290,12 +349,13 @@ function FocusScreen() {
 
   // Rendered into <body>, over the whole app (client only — see `FocusPage`).
   return createPortal(
-    <Stage>
+    <Stage commentsOpen={Boolean(commentsItem)}>
       <FocusPlaybackContext.Provider value={playback}>
+      <FocusCommentsContext.Provider value={openComments}>
         <FocusFeedBackdrop url={backdropUrl} />
 
         {/* Floating bar: over the posts on a phone (a soft scrim keeps it legible), the same from `md`. */}
-        <div className="absolute inset-x-0 top-0 z-30 flex min-w-0 items-center gap-2 bg-gradient-to-b from-black/55 to-transparent px-3 pb-6 pt-[calc(0.5rem+env(safe-area-inset-top))] sm:px-5">
+        <div className={cn(HIDE_WHILE_COMMENTS, "md:group-data-[comments-open]/stage:right-[420px]", "absolute inset-x-0 top-0 z-30 flex min-w-0 items-center gap-2 bg-gradient-to-b from-black/55 to-transparent px-3 pb-6 pt-[calc(0.5rem+env(safe-area-inset-top))] sm:px-5")}>
           <button type="button" onClick={close} aria-label={t("focusFeed.close")} title={t("focusFeed.close")} className={cn(barButton, "w-10")}>
             <X size={20} aria-hidden />
           </button>
@@ -307,7 +367,10 @@ function FocusScreen() {
                 { key: "following" as const, label: t("nav.following"), icon: UserCheck },
               ]}
               active={tab}
-              onChange={setTab}
+              onChange={(next) => {
+                setCommentsItem(null);
+                setTab(next);
+              }}
               ariaLabel={t("feed.viewAriaLabel")}
               variant="segmented"
               className="w-max bg-black/35 backdrop-blur-md"
@@ -315,7 +378,10 @@ function FocusScreen() {
           </div>
           <button
             type="button"
-            onClick={() => setMediaOnly((value) => !value)}
+            onClick={() => {
+              setCommentsItem(null);
+              setMediaOnly((value) => !value);
+            }}
             aria-pressed={mediaOnly}
             title={t("focusFeed.mediaOnlyTitle")}
             className={cn(barButton, "w-10 sm:w-auto sm:px-3.5", mediaOnly && "border-white/60 bg-white text-black hover:bg-white/90")}
@@ -374,7 +440,14 @@ function FocusScreen() {
             />
           </CenteredState>
         ) : (
-          <div className="relative min-h-0 flex-1">
+          <div
+            ref={contentRef}
+            className={cn(
+              "relative min-h-0 flex-1 origin-top-left transition-transform duration-300 ease-soft [--focus-safe-top:env(safe-area-inset-top)] motion-reduce:transition-none",
+              commentsItem && "md:mr-[420px]",
+            )}
+            style={commentsItem && shrink ? { transform: `translate(${shrink.x}px, ${shrink.y}px) scale(${shrink.scale})` } : undefined}
+          >
             <div
               ref={scrollerRef}
               tabIndex={-1}
@@ -382,7 +455,10 @@ function FocusScreen() {
               aria-label={t("focusFeed.ariaLabel")}
               aria-describedby="focus-feed-hint"
               aria-busy={loadingMore}
-              className="scrollbar-none absolute inset-0 snap-y snap-mandatory overflow-y-auto overscroll-contain outline-none"
+              className={cn(
+                "scrollbar-none absolute inset-0 snap-y snap-mandatory overscroll-contain outline-none",
+                commentsItem ? "overflow-hidden" : "overflow-y-auto",
+              )}
             >
               {items.map((item, index) => (
                 <FocusFeedSlide key={feedItemKey(item)} item={item} index={index} active={index === active} near={focusFeedIsNear(index, active)} />
@@ -403,6 +479,14 @@ function FocusScreen() {
             </p>
           </div>
         )}
+        {commentsItem && (
+          <>
+            {/* Phone: the shrunken post above the sheet — tapping it closes the comments (the sheet has its own X / Esc). */}
+            <button type="button" tabIndex={-1} aria-hidden onClick={closeComments} className="absolute inset-x-0 top-0 z-30 h-[35dvh] md:hidden" />
+            <FocusCommentsSheet key={feedItemKey(commentsItem)} item={commentsItem} onClose={closeComments} />
+          </>
+        )}
+      </FocusCommentsContext.Provider>
       </FocusPlaybackContext.Provider>
     </Stage>,
     document.body,

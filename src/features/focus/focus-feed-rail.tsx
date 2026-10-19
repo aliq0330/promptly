@@ -5,7 +5,7 @@ import { Reply } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { LikeButton } from "@/features/prompts/like-button";
 import { SaveButton } from "@/features/prompts/save-button";
-import { CommentCountLink } from "@/features/prompts/comment-count-link";
+import { FocusCommentButton } from "./focus-comments-sheet";
 import { ShareTriggerButton, type ShareModalTarget } from "@/features/prompts/share-modal";
 import { contentActionClassName } from "@/features/content/action-styles";
 import type { FeedItem } from "@/features/feed/types";
@@ -18,8 +18,8 @@ const ICON_SIZE = 20;
 /**
  * Odak Akışı's vertical action rail: the creator's avatar on top, then the SAME
  * database-backed Beğeni / Yorum / Kaydet / Paylaş buttons every card uses
- * (`LikeButton` with its optimistic toggle + rollback, `CommentCountLink` to the
- * detail page's `#comments`, `SaveButton`'s collection picker, `ShareTriggerButton`'s
+ * (`LikeButton` with its optimistic toggle + rollback, the comment button opening Odak's
+ * comment sheet over the post (`FocusCommentButton`, the detail pages' thread), `SaveButton`'s collection picker, `ShareTriggerButton`'s
  * `ShareModal`) — only re-laid out as a column: the icon gets a round frame, the count
  * sits under it. Guests get each button's own login prompt. A request has no save
  * (as everywhere); its replies link takes that slot.
@@ -60,25 +60,25 @@ export function FocusFeedRail({ item, author }: { item: FeedItem; author: UserPr
       {item.kind === "prompt" ? (
         <>
           <LikeButton id={item.data.id} likeCount={item.data.likeCount} contentType="prompt" size={ICON_SIZE} className={RAIL_ACTION} />
-          <CommentCountLink promptId={item.data.id} baseCount={item.data.commentCount} size={ICON_SIZE} className={RAIL_ACTION} />
+          <FocusCommentButton item={item} size={ICON_SIZE} className={RAIL_ACTION} />
           <SaveButton promptId={item.data.id} saveCount={item.data.saveCount} size={ICON_SIZE} className={RAIL_ACTION} />
         </>
       ) : item.kind === "workflow" ? (
         <>
           <LikeButton id={item.data.id} likeCount={item.data.likeCount} contentType="workflow" size={ICON_SIZE} className={RAIL_ACTION} />
-          <CommentCountLink workflowId={item.data.id} baseCount={item.data.commentCount} size={ICON_SIZE} className={RAIL_ACTION} />
+          <FocusCommentButton item={item} size={ICON_SIZE} className={RAIL_ACTION} />
           <SaveButton workflowId={item.data.id} saveCount={item.data.saveCount} size={ICON_SIZE} className={RAIL_ACTION} />
         </>
       ) : item.kind === "preset" ? (
         <>
           <LikeButton id={item.data.id} likeCount={item.data.likeCount} contentType="preset" size={ICON_SIZE} className={RAIL_ACTION} />
-          <CommentCountLink presetId={item.data.id} baseCount={item.data.commentCount} size={ICON_SIZE} className={RAIL_ACTION} />
+          <FocusCommentButton item={item} size={ICON_SIZE} className={RAIL_ACTION} />
           <SaveButton presetId={item.data.id} saveCount={item.data.saveCount} size={ICON_SIZE} className={RAIL_ACTION} />
         </>
       ) : (
         <>
           <LikeButton id={item.data.id} likeCount={item.data.likeCount} contentType="request" size={ICON_SIZE} className={RAIL_ACTION} />
-          <CommentCountLink requestId={item.data.id} baseCount={item.data.commentCount} size={ICON_SIZE} className={RAIL_ACTION} />
+          <FocusCommentButton item={item} size={ICON_SIZE} className={RAIL_ACTION} />
           <Link
             href={`${requestHref(item.data)}#request-responses`}
             className={contentActionClassName(false, RAIL_ACTION)}
