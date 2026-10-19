@@ -23,6 +23,7 @@ import type { MessageBubbleActions, MessageReactionEntry, MessageSender } from "
 import { Avatar } from "@/components/ui/avatar";
 import { RoleBadge } from "@/features/groups/role-badge";
 import { communityHref } from "@/lib/communities";
+import { StoryReplyCard } from "@/features/stories/story-reply-card";
 
 /** A message's stored photos (signed URLs resolved lazily) + the fullscreen viewer they open. */
 function BubbleImages({ attachments, isMe }: { attachments: MessageAttachment[]; isMe: boolean }) {
@@ -325,6 +326,7 @@ export function MessageBubble({
           </div>
         ) : (
           <div className="relative flex max-w-[75%] flex-col gap-1.5">
+            {message.isStoryReply && <StoryReplyCard storyId={message.storyId} isMe={isMe} />}
             {message.sharedPromptId && <SharedPromptCard promptId={message.sharedPromptId} />}
             {message.sharedRequestId && <SharedRequestCard requestId={message.sharedRequestId} />}
             {workflowShare && <SharedWorkflowCard workflowId={workflowShare.id} />}

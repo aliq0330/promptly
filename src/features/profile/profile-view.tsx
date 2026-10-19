@@ -5,7 +5,7 @@ import { PageContainer } from "@/components/ui/page-header";
 import { useEffect, useMemo, useState } from "react";
 import { Heart, SearchX, Sparkles, Workflow as WorkflowIcon } from "lucide-react";
 import { ProfileHeader } from "./profile-header";
-import { CommunityRings } from "@/features/feed/community-rings";
+import { StoryHighlightsRow } from "@/features/stories/story-highlights";
 import { useViewMode } from "@/features/content/view-mode-store";
 import { ViewModeControls } from "@/features/content/view-mode-switcher";
 import { FocusGrid } from "@/features/focus/focus-grid";
@@ -217,8 +217,8 @@ export function ProfileView({
         reuseCount={reuseCount}
         onSelectPosts={() => setActiveTab("prompts")}
       />
-      {/* Meydan (docs/history/190-* Faz 6): your own communities as rings — only on your own profile (memberships are not public). */}
-      {isOwnProfile && <CommunityRings />}
+      {/* Öne çıkan hikâyeler (docs/history/198-*); topluluk halkalarının yerini aldı. */}
+      <StoryHighlightsRow ownerId={user.id} isOwnProfile={isOwnProfile} />
       <CollectionRings collections={publicCollections} />
 
       <ProfileTabs tabs={tabs} active={activeTab} onChange={setActiveTab} />

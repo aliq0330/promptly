@@ -1,5 +1,6 @@
 import {
   Bell,
+  ChartColumn,
   CheckCircle2,
   Code2,
   Edit3,
@@ -9,9 +10,11 @@ import {
   Mail,
   MessageCircle,
   MessageCircleHeart,
+  MessageCircleQuestion,
   MessageCircleReply,
   PenLine,
   RotateCcw,
+  SmilePlus,
   UserPlus,
   XCircle,
   type LucideIcon,
@@ -50,6 +53,10 @@ export const NOTIFICATION_CATEGORY: Record<NotificationType, NotificationCategor
   // Kullanıcı Sonuçları modülü — bir prompt üzerindeki bir etkileşim,
   // aynı "posts" kategorisine katılıyor.
   prompt_result_shared: "posts",
+  // Hikâyeler (docs/history/198-*): sahibine gelen tepki/anket/soru yanıtı — bir paylaşım etkileşimi, "posts" altına katılır.
+  story_reaction: "posts",
+  story_poll_vote: "posts",
+  story_question_answer: "posts",
 };
 
 export const CATEGORY_FILTERS: { key: "all" | NotificationCategory; labelKey: TranslationKey }[] = [
@@ -133,6 +140,9 @@ export const NOTIFICATION_ICONS = {
   edit_suggestion_accepted: CheckCircle2,
   edit_suggestion_rejected: XCircle,
   prompt_result_shared: ImagePlus,
+  story_reaction: SmilePlus,
+  story_poll_vote: ChartColumn,
+  story_question_answer: MessageCircleQuestion,
 } as const satisfies Record<string, LucideIcon>;
 
 /**
@@ -178,6 +188,12 @@ export function getNotificationIconKey(notification: AppNotification): keyof typ
       return "edit_suggestion_rejected";
     case "prompt_result_shared":
       return "prompt_result_shared";
+    case "story_reaction":
+      return "story_reaction";
+    case "story_poll_vote":
+      return "story_poll_vote";
+    case "story_question_answer":
+      return "story_question_answer";
     case "system":
     default:
       return "system";

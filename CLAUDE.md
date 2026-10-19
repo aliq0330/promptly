@@ -75,7 +75,7 @@ src/
   features/<alan>/            # auth, collections, communities, content, drafts, feed, focus,
                               # messages, moderation, my-content, notifications,
                               # groups, onboarding, presets, profile, prompts, relations,
-                              # requests, search, share, statistics, studio, tags, workflows
+                              # requests, search, share, statistics, stories, studio, tags, workflows
   lib/                        # utils, i18n, taksonomi, prompt-dna, relations, …
   lib/supabase/               # veri erişim katmanı (tablo başına dosya)
   types/index.ts              # paylaşılan tipler
@@ -111,7 +111,7 @@ platformun imza öğesi: kopyalanan şey her yerde, prompt kartları dahil, ayn�
 blokta görünür; `PromptPreviewBox`). İkon: **lucide-react**, kartlarda
 `strokeWidth` 1.75; aynı işlev her yerde aynı ikon (Beğeni `Heart`, Yorum
 `MessageCircle`, Kaydet `Bookmark` (içerik ve topluluk başvuru gönderisi; topluluğun kendisi kaydedilmez), Paylaş `Share2`, Menü `MoreVertical`,
-Prompt `SquareTerminal`, Workflow `Workflow`, Hazır Ayar `SlidersHorizontal`, İstek `Sparkles`).
+Prompt `SquareTerminal`, Workflow `Workflow`, Hazır Ayar `SlidersHorizontal`, İstek `Sparkles`, Hikâye `CircleFadingPlus`).
 
 **Token katmanı — tek kaynak `src/app/globals.css`.** Bileşenler asla hex
 yazmaz; yalnızca semantik utility'ler: `bg-background`, `bg-surface`,
@@ -122,7 +122,8 @@ yazmaz; yalnızca semantik utility'ler: `bg-background`, `bg-surface`,
 `text-secondary`, `text-success` / `text-warning` / `text-danger`, gölgeler
 `shadow-xs/sm/card/card-hover/pop`, tip ölçeği `text-display/h1/h2/h3/body/
 small/caption/label`, animasyon `animate-fade-in/pop-in/sheet-up`,
-`skeleton-shimmer`. Eski adlar (`accent-surface`, `primary-dark`, `accent`)
+`skeleton-shimmer`. Hikâye tuvali yazarın seçtiği renklerle HER izleyicide aynı görünmeli: sabit (palete bağlı olmayan)
+`story-*` token'ları (`bg-story-cobalt`, `text-story-white`, `bg-story-stage`…, `docs/history/198-*`) yalnız hikâye bileşenlerinde. Eski adlar (`accent-surface`, `primary-dark`, `accent`)
 yeni tokenların alias'ı olarak korunuyor. `cn()` (tailwind-merge) bu özel
 tokenları tanıyacak şekilde genişletildi — aksi hâlde `text-caption` ile
 `text-text-muted` birbirini silerdi.
@@ -220,6 +221,7 @@ tamamlanmış sayılmaz. Ayrıntı ve mimari: `docs/history/049-*`, `056-*`, `05
 | `/messages`, `/messages/local?id=`, `/messages/starred` | Mesajlaşma (Realtime, mesaj istekleri, fotoğraf, emoji); `?id=` bir **birebir sohbet ya da topluluğun sohbeti** olabilir (`conversations.kind`), başlıkta topluluk sayfasına bağlantı + bilgi penceresi (`?panel=requests` vb. ile bildirimden); sohbet içi arama, sabit mesajlar, okundu tikleri, "yazıyor"; `/messages/starred` = yıldızlı mesajlar (birebir + grup tek liste, `docs/history/174-*`) |
 | `/communities`, `/communities/all`, `/communities/local?id=&tab=`, `/communities/join#<token>` | **Topluluklar** (`docs/history/175-*`, ana sayfa `docs/history/185-*`): `/communities` sekmeleri **Gönderiler** (varsayılan: üye olunan açık+kapalı toplulukların gönderileri; tamamen kapalı girmez; "Topluluklarım" bağlantısı = eski "Üyesi olduklarım" listesi `?tab=mine`) · **Keşfet** ("Sana uygun topluluklar" şeridi ≤10 + hemen altında "Tüm topluluklar" düğmesi + görülmemiş-gönderi akışı) · **Yönettiklerim** (yalnız yönetici/sahip/moderatöre) · **Davet ve başvurular** (Davetler · Başvurularım · Gelen başvurular); `/communities/all` = Tüm topluluklar (arama + kategori + ilgi sıralı gözat; açık+kapalı, tamamen kapalı asla); ziyaretçi eski herkese açık listeyi görür; detay sekmeleri (`docs/history/183-*`, `docs/community-system.md`): **Akış** (ilk açılış; "Gönderi oluştur" = yeni içerik [mevcut oluşturma ekranı + `?community=`] ya da mevcut içeriğe başvur; `docs/history/178-*`; üstte duyuru/etkinlik özet şeridi) · Etkinlikler · **Üyeler** (kişi yönetimi: liste · Katılım istekleri [sayaçlı] · Davet) · Hakkında ve kurallar (kişisel tercihler + ayrılma) · Yönetim (yapılandırma: Özet, Ayarlar, Duyurular, Moderasyon, İşlem geçmişi). Sohbet sekme DEĞİL, başlıktaki "Sohbeti aç"; eski `tab=overview|chat`, `tab=manage&section=requests|invites` adresleri yönlenir; davet bağlantısının açılış sayfası (token URL parçasında). Oturumsuz ziyaretçi bu sayfaları görür (Keşfet + herkese açık topluluğun salt-okunur içeriği; `docs/history/177-*`). Eski `/groups` ve `/groups/join#…` buraya yönlenir/çalışır. Mesajlar'dan bağımsız grup oluşturma YOKTUR |
 | `/communities/post/local?id=` | **Başvuru gönderisi sayfası** (`docs/history/180-*`): başvurulan içerik ayrıntılı, gönderinin kendi beğeni/yorumu, orijinal içeriğe bağlantı; yerel gönderi için içeriğin kendi sayfasına yönlenir |
+| `/stories?id=`, `/stories/create`, `/stories/archive` | **Hikâyeler** (`docs/history/198-*`): `?id=` bildirim/bağlantı girişi (görülemeyen hikâye "artık mevcut değil", varlığı sızmaz); oluşturucu (`?community=`, `?link=tür:id`, `?draft=`, `?story=&answer=`); sahibine özel arşiv + saklama tercihi. Görüntüleyici sayfa DEĞİL, her sayfanın üstünde açılan katmandır (`StoryViewerProvider`, kaydırma korunur). Şerit Ana Sayfa'da ve topluluk akışında; öne çıkanlar + avatar halkası profilde |
 | `/notifications` | Bildirim merkezi |
 | `/settings`, `/settings/blocked` | Hesap / Gizlilik / Tercihler (görünüm, dil) / Tehlikeli bölge ("Hesabımı sil" — `delete-account` Edge Function) |
 | `/privacy`, `/terms` | Gizlilik Politikası, Kullanım Koşulları (herkese açık, TR+EN; metin `features/legal/legal-content.ts`) |
@@ -227,7 +229,7 @@ tamamlanmış sayılmaz. Ayrıntı ve mimari: `docs/history/049-*`, `056-*`, `05
 | `/login`, `/signup`, `/reset-password` | Auth (e-posta/kullanıcı adı + şifre, Google ile devam et) |
 | `/share/<tür>/<anahtar>/` | Derleme zamanı üretilen statik paylaşım sayfası (herkese açık içerik; kendi `og:*` meta'sı, sonra detaya yönlenir). Paylaş/linki kopyala eylemleri bu adresi verir; sayfası olmayan yeni içerik `404.html` → `NotFoundForwarder` ile detaya gider. `deploy.yml` her 6 saatte yeniden derler |
 
-Giriş gerektirenler (`RequireAuth`): `/messages`, `/groups`, `/notifications`, `/saved`,
+Giriş gerektirenler (`RequireAuth`): `/messages`, `/groups`, `/notifications`, `/saved`, `/stories/create`, `/stories/archive`,
 `/following`, `/followers`, `/settings`, `/profile/edit`, `/my-content`.
 Okuma herkese açıktır; yazma eylemleri misafire ortak giriş diyaloğunu açar.
 
@@ -246,7 +248,8 @@ polimorfik: `prompt_id`/`request_id`/`workflow_id`/`preset_id` — tam biri dolu
 `collections` / `collection_items` ("Genel" = `is_default`, isimden bağımsız),
 `prompt_versions` / `request_versions` / `workflow_versions` / `preset_versions` (sürüm geçmişi; yazma yalnız trigger/RPC, `docs/history/170-*`), `follows`, `conversations` / `conversation_members` / `messages` /
 `message_reactions`, `pinned_messages` / `message_stars` (sabit/yıldız: yalnız başvuru, mesaj kopyalanmaz), `chat_groups` (+ `chat_group_join_requests/invitations/links/bans/audit`; id = grup konuşmasının id'si = **topluluğun id'si**) ve topluluk tabloları `community_posts/announcements/events/event_rsvps/rule_acceptances/reports`, `notifications`, `reports`, `blocks`,
-`content_relations`, `content_edits`, `admin_audit_log`.
+`content_relations`, `content_edits`, `admin_audit_log`, hikâyeler: `stories` (+`story_views/reactions/poll_votes/question_answers`,
+`story_highlights`+`story_highlight_items`, `story_drafts`; `messages.story_id`/`is_story_reply`; `profiles.story_archive_enabled`).
 
 Kalıplar (yeni migration yazarken uy):
 - **Sayaçlar** (`like_count`, `save_count`, `comment_count`, takipçi…) denormalize,
@@ -270,6 +273,14 @@ Kalıplar (yeni migration yazarken uy):
 - **Topluluk gönderisi** (`docs/history/178-*`): her gönderi kendi kimliği, beğenisi ve yorumları olan bağımsız varlıktır — beğeni/yorum `prompt_likes.community_post_id` / `prompt_comments.community_post_id` (altıncı hedef; ayrı topluluk yorum tablosu YOK), sayaçlar `community_posts.like_count/comment_count`, işaret edilen içeriğin sayaçları ve yorumları etkilenmez. `kind`: `native` (içerik o toplulukta NORMAL oluşturma ekranıyla yaratıldı — `community_id` dolu içerik; gönderiyi tetikleyici ekler) · `application` (`share_to_community`, yalnız yayında+herkese açık, isteğe bağlı not) · `legacy` (178 öncesi satırlar; tür TAHMİN EDİLMEZ). Kurallar: (1) etkileşim yazımı yalnız üye + kapatılmamış topluluk (`enforce_community_post_engagement`), yanıt üst yorumla aynı hedefte; yeni bir etkileşim hedefi eklerken `handle_prompt_like_change` / `handle_prompt_comment_change` / bildirim tetikleyicilerindeki hedef zinciri AÇIK yazılır (son `else` sessizce `prompt_requests`'e düşmesin). (2) **Topluluğa özgü içerik** (`docs/history/179-*`): `prompts/prompt_requests/workflows/presets.community_id` dolu içerik topluluğa AİTTİR — sunucu görünürlüğü `private`a zorlar, taslak olmaz, `community_id` değişmez, okuma `can_read_community` ile (herkese açık toplulukta herkes, kapalıda üye), akışta NORMAL içerik kartı (kendi beğeni/yorumu; gönderi başına ayrı etkileşim YOK), yazarın profilinde/Keşfet/aramada/etiket/koleksiyonda görünmez, KAYDET + İSTATİSTİK + PAYLAŞ normal kartlardaki gibi vardır (`docs/history/184-*`: kaydedenin topluluğu okuyabilmesi şartıyla) (`docs/history/181-*`: bağlantı paylaşım sayfasına çevrilmez, içeriğin/gönderinin kendi adresidir), gönderiyi kaldırmak içeriği siler, topluluk silinince içerik de gider. **Yeni bir içerik LİSTESİ sorgusu (tablo okuyan istemci sorgusu ya da RPC) yazarken `community_id is null` süz** — `visibility='public'` süzmeyen sorgular RLS'e güvenir ve üyeye topluluk içeriğini gösterir. Başvuru içeriği AÇMAZ. (3) Oluşturma ekranında topluluk bağlamı yalnız `?community=` + ortak `CreateFormActions` ile taşınır (görünürlük anahtarı/taslak yok) — ikinci oluşturma formu yazılmaz. (4) Başvuru/legacy gönderi akışta normal kart ailesinde `ApplicationCard`'dır (altbilgi sayaçları ve İstatistik/Paylaş düğmeleri GÖNDERİNİN: `content_engagers` hedefi `community_post`); tıklayınca başvurunun kendi sayfası `/communities/post/local?id=` (`docs/history/180-*`) açılır: başvurulan içerik ayrıntılı, gönderinin kendi beğeni/yorumu (`PostEngagement`), orijinale `Orijinal içeriği aç`. Yerel içerik kartında ikinci menü/çubuk çizilmez; topluluk işleri `PostMenuExtras` ile kartın tek ⋮ menüsüne eklenir.
 - **Topluluklar ana sayfası** (`docs/history/185-*`): akış/öneri/gözat kararları SUNUCUDA (SECURITY DEFINER, anon EXECUTE kapalı): `member_feed_page` (üye olunan `public`+`restricted`; `private` genel akışa asla girmez), `discover_feed_page` (görülmemiş + `can_read_community` + ilgi/çeşitlilik puanı, `p_as_of` ile oturum boyunca sabit), `recommend_communities`/`browse_communities` (`_community_relevance` — yalnız gerçek sinyal; `restricted` için içerik kaynaklı sinyal hesaplanmaz), görüldü verisi `community_post_views` (yazma yalnız `mark_community_posts_seen`). Yeni bir genel gönderi/topluluk listesi yazarken `private`'ı dışla ve kararı UI'a değil RPC'ye koy. "Takip" = kişi takibi (topluluk takibi yok). Kurallar `docs/community-system.md` → "Ana sayfa sıralama kuralları".
 - **Sohbet geliştirmeleri** (`docs/history/174-*`): okundu = üye başına **tek imleç** (`last_read_at`, yalnız ileri, istemci yazamaz; yalnız `mark_conversation_read_up_to` ile, ekranda görünürken — eski `mark_conversation_read` yalnız sayaç sıfırlar, "okundu" sızdırmaz); "yazıyor" = Realtime Broadcast **private** kanal `typing:<konuşma>` + `realtime.messages` politikaları (kalıcı değil, Dashboard'da "Allow public access" kapalı olmalı); sabitleme yalnız `set_message_pinned` (grupta `pin_messages` yeteneği ya da owner'ın `members_can_pin` ayarı); arama/yıldız listesi SECURITY INVOKER (RLS atlanmaz); "mesaja atla" pencereli yükleme (`fetchMessageWindow`) — görünmeyen mesajın içeriği hiçbir yolla (hl/sabit/yıldız/arama) gösterilmez.
+- **Hikâyeler** (`docs/history/198-*`): (1) görünürlük TEK yerde `_story_visible` — okuma/Storage/şerit/etkileşim/öne çıkan hepsi onu
+  çağırır; yeni bir hikâye okuması yazarken kendi kuralını yazma. Topluluk hikâyesi yalnız ÜYEYE (herkese açık toplulukta da),
+  takipçi hikâyesi yalnız takipçiye, engel iki yönlü. (2) Süresi dolan hikâye yalnız sahibine ve — bir öne çıkandaysa — ASIL kitlesine
+  görünür; öne çıkan hiçbir hikâyeyi açmaz. Süre sunucu saati (`expires_at` yalnız `create_story` yazar), etkileşim yalnız etkinken.
+  (3) Yazma yalnız RPC (`create_story` idempotent: `client_token`); istemci yalnız kendi hikâyesini/öne çıkanını siler ve kendi
+  taslaklarını yazar. (4) Özel yanıt mevcut mesajlaşmadır (`reply_to_story`; istemci `story_id`'li mesaj yazamaz). (5) Medya PRIVATE
+  `story-media`, yol `{kullanıcı}/{uuid}.{jpg|mp4|webm|mov}`; yeni bir medya sütunu/bucket'ı `orphan_storage_objects`'e eklenir.
+  (6) Bağlantı içerik kopyası değil başvurudur; yalnız yayında + herkese açık + topluluğa ait olmayan içerik.
 - Sahiplik kontrolü `.update().select().maybeSingle()` ile yapılır; "0 satır
   etkilendi" sessiz başarı sayılmaz.
 
@@ -343,6 +354,11 @@ Canlı projede (kontrol: bu oturum) 20 profil (18 demo hesap), 148 prompt (+43 t
 bağlayıcıdır; ayrıntılı gerekçe için `docs/history/README.md` tablosuna bak.
 
 **Açık işler (kullanıcı/yönetici adımı veya bilinen boşluk):**
+- Hikâyeler (`docs/history/198-*`): `20260920170000_stories.sql` (+ isteğe bağlı `20260920170100_stories_cron.sql`, `pg_cron` varsa
+  saatlik saklama işi) repoda, yerel PostgreSQL'de sınandı (`stories.sql` 65 kontrol; önceki 16 dosya `FAILED=0`), **canlıya
+  UYGULANMADI** — ÖNCE migration, SONRA istemci (yeni istemci `messages.story_id`'yi seçer; migration yoksa mesajlaşma da hata
+  verir). `drop` yok. Gerçek Supabase'e / cihaza / gerçek videoya karşı denenmedi; sunucu tarafı video dönüştürme/küçük resim yok;
+  `pg_cron` yoksa temizlik işi Dashboard'dan kurulmalı; yetim dosyalar moderatörün çalıştırdığı `cleanup-orphan-storage` ile silinir.
 - Meydan yeniden tasarımı (`docs/history/190-*`): Faz 1 (tema, yan menü, Ana Sayfa, prompt kartında prompt metni) ve Faz 2 (Keşfet, Profil — tek sekme satırı, Topluluk sayfası başlığı) ana dalda; Faz 3 (sade `PageHeader`, Topluluklar ana sayfası, detay görseli sınırı) ana dalda; Faz 4 (Ayarlar bölüm menüsü, Bildirimler gün grupları) ana dalda; Faz 5 (gönderi kartları C düzeninde, `ContentCardPost`) ana dalda; Faz 6 (kutusuz akış, tek sütun topluluk akışı + yan sütun, profil kullanım toplamı, Keşfet "Bu hafta popüler") ana dalda; Faz 6 eki (telefonda tüm gönderi listeleri düz akış, `ContentGrid`) ana dalda; Faz 6 eki 2 (Ana Sayfa ve Topluluklar da tablet/masaüstünde Keşfet gibi kutulu ızgara) ana dalda; Faz 6 eki 3 (Kart | Odak seçicisi bütün kart sayfalarında) ana dalda; `20260920140000_meydan_palette.sql` (yalnız palet kısıtı genişletme) **canlıya UYGULANDI** (kullanıcı onayıyla, MCP `execute_sql`, tek işlem; `schema_migrations`'a dosya sürümüyle kayıt düşüldü; mevcut 20 satır korundu). Ağ taklitli ekran görüntüleriyle bakıldı; gerçek Supabase/oturum/cihazla denenmedi. Aralıklı React #418 hidrasyon hatasının kök nedeni bulundu ve giderildi (`docs/history/192-*`: kök layout'taki elle yazılmış `<head>` + satır içi betikler → betikler `<body>`'nin başına taşındı); hidrasyon denetimi filtresiz tüm UI paketleri geçer. Faz 7 (profilde herkese açık koleksiyon halkaları, Mesajlar liste satırları, `docs/history/192-*`) ana dalda; mobil alt menü tarayıcı çubuğu rengi (`docs/history/193-*`) ana dalda, iPhone Safari'de denenmedi; mobilde açık sohbette alt menü gizli (`docs/history/194-*`). Hepsi yalnız istemci kodu, gerçek Supabase/cihazla denenmedi.
 - Kapalı topluluk sızıntı denetimi + sohbet kartları (`docs/history/195-*`): `20260920160000_engagement_read_follows_target.sql` (beğeni/yorum beğenisi/istek etiketi okuması hedefi izler) yerel PostgreSQL'de sınandı (`engagement-privacy.sql` 12 kontrol; 16 SQL dosyası `FAILED=0`) ve **canlıya UYGULANDI** (kullanıcı onayıyla, MCP `execute_sql`; `drop policy` aracın onay beklemesine takıldığı için aynı son durum `ALTER POLICY` ile uygulandı; `schema_migrations`'a dosya sürümüyle kayıt düşüldü; canlıda `ali`/ziyaretçi/üye gözüyle doğrulandı: üye olmayana kapalı topluluk beğenileri 91→0). İstemci: hesap değişince/çıkışta sayfa yenilenir, sohbet kartları sahip adı + gizli içerik metni, yanıt çubuğunda küçük görsel. Gerçek Supabase'e karşı denenmedi.
 - Topluluk kapağı + görsel yükleme düzeltmesi + otomatik küçültme (`docs/history/191-*`): `20260920150000_community_cover_and_avatar_url.sql` yerel PostgreSQL'de sınandı (`community-cover.sql` 15 kontrol) ve **canlıya UYGULANDI** (kullanıcı onayıyla, MCP `execute_sql` ile parça parça; yalnızca ekleyici/değiştirici, `drop` yok; `schema_migrations`'a dosya sürümüyle kayıt düşüldü; sütunlar, doğrulayıcılar, yetkiler canlıda salt-okunur sorguyla doğrulandı). Gerçek Storage'a / telefondaki gerçek fotoğrafa karşı denenmedi.
@@ -414,5 +430,5 @@ bağlayıcıdır; ayrıntılı gerekçe için `docs/history/README.md` tablosuna
   isteğin `creative_direction`'ını da kapsar ve keyset sayfalanır (`search_content`); `prompt_saves` canlıdan kaldırıldı; kod içi
   yorumlarda eski "Bölüm 9.x" atıfları arşiv numaralarına (`docs/history/NNN-*`) karşılık gelir.
 
-**Arşiv:** [`docs/history/README.md`](docs/history/README.md) — 197 bölüm, her
+**Arşiv:** [`docs/history/README.md`](docs/history/README.md) — 198 bölüm, her
 biri için durum etiketi (uygulandı / kısmen geçerli / kaldırıldı).

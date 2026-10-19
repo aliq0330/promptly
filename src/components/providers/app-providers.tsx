@@ -7,6 +7,7 @@ import { RealPresetsProvider } from "@/features/presets/real-presets-provider";
 import { RealMessagesProvider } from "@/features/messages/real-messages-provider";
 import { NotificationsProvider } from "@/features/notifications/notifications-provider";
 import { EngagementRealtimeProvider } from "@/features/content/engagement-realtime-provider";
+import { StoryViewerProvider } from "@/features/stories/story-viewer-provider";
 
 /**
  * All of the app's client state providers composed in one place — every one
@@ -27,7 +28,8 @@ export function AppProviders({ children }: { children: ReactNode }) {
                 <RealMessagesProvider>
                   <NotificationsProvider>
                     <EngagementRealtimeProvider />
-                    {children}
+                    {/* Hikâye görüntüleyicisi her sayfanın üstünde açılabilir (docs/history/198-*). */}
+                    <StoryViewerProvider>{children}</StoryViewerProvider>
                   </NotificationsProvider>
                 </RealMessagesProvider>
               </RealPresetsProvider>

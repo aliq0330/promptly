@@ -40,6 +40,9 @@ export interface MessageRow {
   created_at: string;
   /** Topluluk duyurusuna bağlı mesaj (docs/history/175-*): yalnız RPC doldurur. */
   announcement_id?: string | null;
+  /** Hikâyeye özel yanıt (docs/history/198-*): yalnız `reply_to_story` doldurur. */
+  story_id?: string | null;
+  is_story_reply?: boolean | null;
 }
 
 const MEMBERSHIP_SELECT = `conversation_id, unread_count, status, role, archived_at, deleted_at, cleared_at, muted_at, conversations(id, last_message_at, kind, chat_groups(${CHAT_GROUP_SELECT}))`;
@@ -53,7 +56,7 @@ function groupFromMembership(row: MembershipRow) {
 }
 
 export const MESSAGE_SELECT =
-  "id, conversation_id, sender_id, body, shared_prompt_id, shared_request_id, reply_to_message_id, attachments, edited_at, deleted_at, created_at, announcement_id";
+  "id, conversation_id, sender_id, body, shared_prompt_id, shared_request_id, reply_to_message_id, attachments, edited_at, deleted_at, created_at, announcement_id, story_id, is_story_reply";
 
 /** Defensive read of the `attachments` jsonb column — anything that isn't a well-formed `{path, mime}` entry is dropped rather than trusted. */
 function parseAttachments(raw: unknown): MessageAttachment[] {
@@ -88,6 +91,8 @@ export function mapMessageRow(row: MessageRow): Message {
     deletedAt: row.deleted_at,
     createdAt: row.created_at,
     announcementId: row.announcement_id ?? null,
+    storyId: row.story_id ?? null,
+    isStoryReply: row.is_story_reply === true,
   };
 }
 

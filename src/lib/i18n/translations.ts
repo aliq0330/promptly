@@ -17,6 +17,7 @@
  */
 
 import { communityTranslations } from "./translations-communities";
+import { storyTranslations } from "./translations-stories";
 
 export const translations = {
   // ---- Primary navigation (desktop sidebar) ----
@@ -520,9 +521,6 @@ export const translations = {
   "home.destination.find": { tr: "Topluluk bul", en: "Find communities" },
   "home.destination.loadError": { tr: "Topluluklar yüklenemedi.", en: "Couldn't load your communities." },
   "home.composerPlaceholder": { tr: "Bugün ne ürettin? Promptunu paylaş…", en: "What did you make today? Share your prompt…" },
-  "home.ringsLabel": { tr: "Toplulukların", en: "Your communities" },
-  "home.ringsUnread": { tr: "yeni etkinlik var", en: "has new activity" },
-  "home.ringsFind": { tr: "Topluluk bul", en: "Find more" },
   "home.railTrending": { tr: "Gündemde", en: "Trending" },
   "home.railTrendCount": { tr: "Bu hafta {{count}} paylaşım", en: "{{count}} posts this week" },
   "home.railSuggested": { tr: "Takip etmeyi dene", en: "Who to follow" },
@@ -2876,6 +2874,7 @@ export const translations = {
   "groups.owner.membersCanPinHelp": { tr: "Kapalıyken yalnızca sabitleme yetkisi olan yönetim kadrosu sabitler. Açıkken her üye mesaj sabitleyebilir ve kaldırabilir.", en: "When off, only staff with the pin permission can pin. When on, every member can pin and unpin messages." },
   "groups.owner.pinTitle": { tr: "Mesaj sabitleme", en: "Pinning messages" },
   ...communityTranslations,
+  ...storyTranslations,
 } as const satisfies Record<string, { tr: string; en: string }>;
 
 export type TranslationKey = keyof typeof translations;

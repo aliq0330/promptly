@@ -11,9 +11,10 @@ import { storagePathFromUrl } from "./storage-cleanup";
  * (`20260920080000_community_privacy_hardening.sql`): topluluk görseli; dosya
  * yalnız topluluğun KARTI çağıran için görülebildiği sürece (herkese açık/kapalı
  * topluluk, ya da üye/davetli/başvuran) okunur — tamamen kapalı topluluğun görseli
- * yabancıya imza vermez.
+ * yabancıya imza vermez. `story-media` (docs/history/198-*): hikâye medyası; dosya, onu gösteren hikâye çağırana görünürken
+ * (hedef kitle, süre, öne çıkan, engel) okunur — süresi dolan hikâyenin dosyası yetkisiz kişiye imza vermez.
  */
-export const PROTECTED_MEDIA_BUCKETS = ["prompt-media", "request-references", "result-media", "community-avatars"] as const;
+export const PROTECTED_MEDIA_BUCKETS = ["prompt-media", "request-references", "result-media", "community-avatars", "story-media"] as const;
 export type ProtectedMediaBucket = (typeof PROTECTED_MEDIA_BUCKETS)[number];
 
 /** Kısa ömür: gönderi private yapıldıktan sonra önceden alınmış bir imzanın geçerli kalabileceği azami süre. */
