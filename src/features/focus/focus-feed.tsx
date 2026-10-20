@@ -3,12 +3,11 @@
 import { Component, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ErrorInfo, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
-import { ChevronDown, ChevronUp, Clock, GalleryVerticalEnd, Images, Inbox, Sparkles, UserCheck, Volume2, VolumeX, X } from "lucide-react";
+import { ChevronDown, ChevronUp, Clock, GalleryVerticalEnd, Images, Inbox, Sparkles, UserCheck, Volume2, VolumeX, X, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { lockBodyScroll, unlockBodyScroll } from "@/components/ui/modal";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs } from "@/components/ui/tabs";
 import { useStorageSrc } from "@/components/ui/storage-media";
 import { useTheme } from "@/components/theme/theme-provider";
 import { useAuth } from "@/features/auth/auth-provider";
@@ -130,6 +129,44 @@ function FocusFailed({ onRetry }: { onRetry: () => void }) {
       </Button>
     </Stage>,
     document.body,
+  );
+}
+
+/** The two feeds as one glassy capsule (Albüm, docs/history/203-*): the chosen one lifted, with its icon. */
+function FocusTabs<K extends string>({
+  items,
+  active,
+  onChange,
+  ariaLabel,
+}: {
+  items: { key: K; label: string; icon: LucideIcon }[];
+  active: K;
+  onChange: (key: K) => void;
+  ariaLabel: string;
+}) {
+  return (
+    <div role="tablist" aria-label={ariaLabel} className="inline-flex h-11 min-w-0 shrink-0 items-center gap-0.5 rounded-full border border-white/15 bg-white/10 p-1 backdrop-blur-md">
+      {items.map((item) => {
+        const selected = item.key === active;
+        const Icon = item.icon;
+        return (
+          <button
+            key={item.key}
+            type="button"
+            role="tab"
+            aria-selected={selected}
+            onClick={() => onChange(item.key)}
+            className={cn(
+              "inline-flex h-9 items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 text-label font-semibold transition-colors duration-200 ease-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+              selected ? "bg-white/20 text-white" : "text-white/70 hover:text-white",
+            )}
+          >
+            {selected && <Icon size={15} aria-hidden />}
+            {item.label}
+          </button>
+        );
+      })}
+    </div>
   );
 }
 
@@ -344,8 +381,9 @@ function FocusScreen() {
   }, [active, go, close]);
 
   const backdropUrl = activeItem && !loading ? (focusFeedCover(activeItem)?.url ?? null) : null;
+  // Albüm (docs/history/203-*): one roomy row — round 44px buttons on the ends, the two feeds as a capsule between them.
   const barButton =
-    "inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-full border border-white/15 bg-black/35 text-white backdrop-blur-md transition-colors hover:bg-black/55 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
+    "inline-flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-full border border-white/15 bg-white/10 text-white backdrop-blur-md transition-colors hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
 
   // Rendered into <body>, over the whole app (client only — see `FocusPage`).
   return createPortal(
@@ -355,13 +393,13 @@ function FocusScreen() {
         <FocusFeedBackdrop url={backdropUrl} />
 
         {/* Floating bar: over the posts on a phone (a soft scrim keeps it legible), the same from `md`. */}
-        <div className={cn(HIDE_WHILE_COMMENTS, "md:group-data-[comments-open]/stage:right-[420px]", "absolute inset-x-0 top-0 z-30 flex min-w-0 items-center gap-2 bg-gradient-to-b from-black/55 to-transparent px-3 pb-6 pt-[calc(0.5rem+env(safe-area-inset-top))] sm:px-5")}>
-          <button type="button" onClick={close} aria-label={t("focusFeed.close")} title={t("focusFeed.close")} className={cn(barButton, "w-10")}>
+        <div className={cn(HIDE_WHILE_COMMENTS, "md:group-data-[comments-open]/stage:right-[420px]", "absolute inset-x-0 top-0 z-30 flex min-w-0 items-center gap-2 bg-gradient-to-b from-black/50 to-transparent px-3 pb-7 pt-[calc(0.75rem+env(safe-area-inset-top))] sm:gap-3 sm:px-5")}>
+          <button type="button" onClick={close} aria-label={t("focusFeed.close")} title={t("focusFeed.close")} className={cn(barButton, "w-11")}>
             <X size={20} aria-hidden />
           </button>
           <span className="hidden shrink-0 font-display text-h3 font-bold tracking-[-0.03em] text-white sm:inline">{t("nav.focus")}</span>
-          <div className="scrollbar-none min-w-0 flex-1 overflow-x-auto sm:flex sm:justify-center">
-            <Tabs
+          <div className="flex min-w-0 flex-1 justify-center">
+            <FocusTabs
               items={[
                 { key: "newest" as const, label: t("home.tabNewest"), icon: Clock },
                 { key: "following" as const, label: t("nav.following"), icon: UserCheck },
@@ -372,8 +410,6 @@ function FocusScreen() {
                 setTab(next);
               }}
               ariaLabel={t("feed.viewAriaLabel")}
-              variant="segmented"
-              className="w-max bg-black/35 backdrop-blur-md"
             />
           </div>
           <button
@@ -384,7 +420,12 @@ function FocusScreen() {
             }}
             aria-pressed={mediaOnly}
             title={t("focusFeed.mediaOnlyTitle")}
-            className={cn(barButton, "w-10 sm:w-auto sm:px-3.5", mediaOnly && "border-white/60 bg-white text-black hover:bg-white/90")}
+            // On a phone the row keeps only ✕ · feeds · sound; "Medya" sits just under the sound button.
+            className={cn(
+              barButton,
+              "w-11 max-sm:absolute max-sm:right-3 max-sm:top-[calc(4.25rem+env(safe-area-inset-top))] sm:w-auto sm:px-4",
+              mediaOnly && "border-white/60 bg-white text-black hover:bg-white/90",
+            )}
           >
             <Images size={18} aria-hidden />
             <span className="max-sm:sr-only text-label font-semibold">{t("focusFeed.mediaOnly")}</span>
@@ -395,7 +436,7 @@ function FocusScreen() {
             aria-pressed={!muted}
             aria-label={muted ? t("focusFeed.soundOn") : t("focusFeed.soundOff")}
             title={muted ? t("focusFeed.soundOn") : t("focusFeed.soundOff")}
-            className={cn(barButton, "w-10")}
+            className={cn(barButton, "w-11")}
           >
             {muted ? <VolumeX size={18} aria-hidden /> : <Volume2 size={18} aria-hidden />}
           </button>
