@@ -428,7 +428,10 @@ await scenario("18. Yorumlar (telefon): alttan açılır, gönderi yukarıda kü
   assert.ok(box.y > 844 * 0.3 && box.y < 844 * 0.4, `sheet starts around 35% (${box.y})`);
   assert.equal(Math.round(box.y + box.height), 844, "sheet reaches the bottom");
   const transform = await page.evaluate(() => getComputedStyle(document.querySelector("[data-focus-feed] [role='region']").parentElement).transform);
-  assert.match(transform, /matrix\(0\.[0-9]+/, `post is scaled down: ${transform}`);
+  assert.notEqual(transform, "none", "the post moves (and shrinks only if it must) into the space above the sheet");
+  // Albüm (docs/history/203-*): the album art is fitted whole into the free area above the sheet.
+  const art = await slides(page).nth(0).locator("[data-album-art]").boundingBox();
+  assert.ok(art.y >= 0 && art.y + art.height <= box.y + 1, `art above the sheet (${JSON.stringify(art)}, sheet ${box.y})`);
   assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector("[data-focus-feed] button[aria-label=\"Odak'ı kapat\"]").parentElement).opacity), "0", "top bar steps aside");
   assert.equal(await sheet(page).getByRole("heading").textContent(), "Yorumlar · 5");
   const text = await sheet(page).textContent();

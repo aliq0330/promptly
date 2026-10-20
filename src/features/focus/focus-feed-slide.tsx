@@ -77,38 +77,30 @@ function AuthorLine({ author, createdAt, language, onImage }: { author: UserProf
   );
 }
 
-function TypePill({ icon: Icon, label, onImage }: { icon: LucideIcon; label: string; onImage: boolean }) {
+function TypePill({ icon: Icon, label }: { icon: LucideIcon; label: string }) {
   return (
-    <span
-      className={cn(
-        "inline-flex min-w-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-caption font-bold uppercase tracking-[0.07em]",
-        onImage ? "border border-white/25 bg-black/45 text-white backdrop-blur-md" : "bg-primary-soft text-primary",
-      )}
-    >
+    <span className="inline-flex min-w-0 items-center gap-1.5 rounded-full border border-white/25 bg-black/45 px-3 py-1.5 text-caption font-bold uppercase tracking-[0.07em] text-white backdrop-blur-md">
       <Icon size={13} strokeWidth={2.25} aria-hidden className="shrink-0" />
       <span className="truncate">{label}</span>
     </span>
   );
 }
 
-/** "Ayrıntıları aç" (+ "Promptu incele" for a prompt that has text) — the slide's own two actions. */
-function SlideButtons({ href, prompt, onImage, onOpenPrompt }: { href: string; prompt: Prompt | null; onImage: boolean; onOpenPrompt: () => void }) {
+/** A playing post's two actions: "Promptu incele" (for a prompt that has text) and "Ayrıntıları aç". */
+function SlideButtons({ href, prompt, onOpenPrompt }: { href: string; prompt: Prompt | null; onOpenPrompt: () => void }) {
   const { t } = useTranslation();
   const base =
-    "inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full px-4 text-label font-semibold transition-[background-color,border-color,color] duration-200 ease-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2";
-  const ghost = onImage
-    ? "border border-white/40 bg-white/10 text-white backdrop-blur-md hover:bg-white/20 focus-visible:ring-offset-black/40"
-    : "border border-border bg-surface text-text hover:bg-surface-soft focus-visible:ring-offset-surface";
+    "inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full px-4 text-label font-semibold transition-[background-color,border-color,color] duration-200 ease-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-black/40";
   const hasText = Boolean(prompt && prompt.promptText.trim());
   return (
     <div className="flex flex-wrap items-center gap-2">
       {hasText && (
-        <button type="button" onClick={onOpenPrompt} aria-haspopup="dialog" className={cn(base, onImage ? "bg-white text-black hover:bg-white/90 focus-visible:ring-offset-black/40" : "bg-primary text-primary-foreground hover:bg-primary-hover focus-visible:ring-offset-surface")}>
+        <button type="button" onClick={onOpenPrompt} aria-haspopup="dialog" className={cn(base, "bg-white text-black hover:bg-white/90")}>
           <SquareTerminal size={16} strokeWidth={1.9} aria-hidden />
           {t("focusFeed.viewPrompt")}
         </button>
       )}
-      <Link href={href} className={cn(base, ghost)}>
+      <Link href={href} className={cn(base, "border border-white/40 bg-white/10 text-white backdrop-blur-md hover:bg-white/20")}>
         {t("focusFeed.openDetail")}
         <ArrowUpRight size={16} strokeWidth={1.9} aria-hidden />
       </Link>
@@ -433,6 +425,154 @@ function StructureBlock({ item, near, onImage }: { item: FeedItem; near: boolean
   }
 }
 
+/* ------------------------------------------------------------------ album slide */
+
+/**
+ * The album art of a picture post: the whole picture in its own shape (never cropped), as large as the space allows, with
+ * rounded corners and a deep shadow; a shimmering square while it loads, a quiet icon if it can't be read.
+ */
+function AlbumArtImage({ cover, active, near }: { cover: FocusFeedCover; active: boolean; near: boolean }) {
+  const [state, setState] = useState<"loading" | "loaded" | "broken">("loading");
+  return (
+    <div className="relative flex h-full w-full items-center justify-center">
+      {state !== "loaded" && (
+        <div aria-hidden className="absolute aspect-square w-[min(100%,22rem)] max-h-full overflow-hidden rounded-[26px] bg-white/10">
+          {state === "loading" ? <div className="skeleton-shimmer absolute inset-0 opacity-40" /> : (
+            <span className="absolute inset-0 flex items-center justify-center text-white/60">
+              <ImageOff size={36} strokeWidth={1.5} />
+            </span>
+          )}
+        </div>
+      )}
+      {near && (
+        <StorageImg
+          src={cover.url}
+          alt={cover.alt}
+          loading={active ? "eager" : "lazy"}
+          decoding="async"
+          fetchPriority={active ? "high" : "auto"}
+          onLoad={() => setState("loaded")}
+          onError={() => setState("broken")}
+          data-album-art
+          className={cn(
+            "relative max-h-full max-w-full rounded-[26px] object-contain shadow-[0_30px_70px_rgb(0_0_0/0.5)] transition-opacity duration-500 ease-soft",
+            state === "loaded" ? "opacity-100" : "opacity-0",
+          )}
+        />
+      )}
+    </div>
+  );
+}
+
+/** The album art of a post without a picture: its own words (prompt) or structure (steps / settings / brief) on a raised card. */
+function AlbumArtCard({ item, model, near }: { item: FeedItem; model: SlideModel; near: boolean }) {
+  const Icon = model.icon;
+  const words = item.kind === "prompt" && item.data.promptText.trim() ? item.data.promptText : null;
+  const structure = item.kind !== "prompt" ? <StructureBlock item={item} near={near} onImage={false} /> : null;
+  return (
+    <div className="flex max-h-full w-full max-w-[26rem] flex-col overflow-hidden rounded-[26px] bg-surface p-5 shadow-[0_30px_70px_rgb(0_0_0/0.5)] sm:p-6">
+      {words ? (
+        <p className="prompt-text line-clamp-[12] whitespace-pre-line break-words text-text-secondary">{words}</p>
+      ) : structure ? (
+        <div className="min-h-0 overflow-hidden">{structure}</div>
+      ) : (
+        <span aria-hidden className="flex aspect-square items-center justify-center text-primary">
+          <Icon size={64} strokeWidth={1.3} />
+        </span>
+      )}
+    </div>
+  );
+}
+
+/** The slide's big action: "Kopyala" for a prompt with words (counts a use), else the way to its page. */
+function AlbumPrimary({ prompt, href }: { prompt: Prompt | null; href: string }) {
+  const { t } = useTranslation();
+  const bright = "h-12 rounded-full border-white bg-white px-6 text-body font-semibold text-black shadow-[0_10px_30px_rgb(0_0_0/0.35)] hover:bg-white/90";
+  if (prompt && prompt.promptText.trim()) {
+    return <CopyPromptButton text={prompt.promptText} promptId={prompt.id} size="md" variant="primary" label={t("common.copy")} className={bright} />;
+  }
+  return (
+    <Link href={href} className={cn("inline-flex shrink-0 items-center gap-2", bright)}>
+      {t("focusFeed.openDetail")}
+      <ArrowUpRight size={18} aria-hidden />
+    </Link>
+  );
+}
+
+function AlbumSlide({
+  item,
+  model,
+  cover,
+  extra,
+  active,
+  near,
+  titleId,
+  onOpenPrompt,
+}: {
+  item: FeedItem;
+  model: SlideModel;
+  cover: FocusFeedCover | null;
+  extra: number;
+  active: boolean;
+  near: boolean;
+  titleId: string;
+  onOpenPrompt: () => void;
+}) {
+  const { t, language } = useTranslation();
+  const prompt = item.kind === "prompt" ? item.data : null;
+  const Icon = model.icon;
+  const link = "inline-flex items-center gap-1 rounded-full text-label font-semibold text-white/80 underline-offset-4 hover:text-white hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
+  return (
+    <article
+      data-album-slide
+      className="absolute inset-0 flex flex-col lg:mx-auto lg:max-w-[1120px] lg:flex-row lg:items-center lg:gap-16 lg:px-10 lg:pb-8 lg:pt-20"
+    >
+      {/* Phone and tablet: the art above the words; from `lg` side by side, like the detail pages' band. */}
+      <div className={cn("flex min-h-0 flex-1 items-center justify-center px-5", PHONE_TOP, "md:px-12 md:pt-20 lg:h-full lg:max-h-[640px] lg:flex-[1.15] lg:p-0")}>
+        {cover ? <AlbumArtImage cover={cover} active={active} near={near} /> : <AlbumArtCard item={item} model={model} near={near} />}
+      </div>
+      <div className={cn(HIDE_WHILE_COMMENTS, "shrink-0 space-y-3 px-5 pt-5 md:space-y-4 md:px-12 md:pt-8 lg:flex-1 lg:p-0", PHONE_BOTTOM, "md:pb-10 lg:pb-0")}>
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="flex min-w-0 items-center gap-1.5 text-caption font-bold uppercase tracking-[0.1em] text-white/85">
+            <Icon size={13} strokeWidth={2.25} aria-hidden className="shrink-0" />
+            <span className="truncate">
+              {model.typeLabel}
+              {model.tool && <> · {model.tool}</>}
+            </span>
+          </p>
+          {item.kind === "request" && <RequestStatus request={item.data} />}
+          {extra > 0 && <span className="rounded-full border border-white/20 bg-black/30 px-2.5 py-0.5 text-caption font-semibold text-white">{t("focusFeed.moreImages", { count: extra })}</span>}
+        </div>
+        <h2 id={titleId} className="line-clamp-3 break-words font-display text-[clamp(1.75rem,4vw,3.5rem)] font-extrabold leading-[1.02] tracking-[-0.035em] text-white">
+          {model.title}
+        </h2>
+        {model.description && <p className="line-clamp-2 max-w-xl break-words text-small leading-relaxed text-white/80 sm:text-body">{model.description}</p>}
+        {/* A picture post that has its own structure (a workflow / preset / request) keeps a compact version of it here. */}
+        {cover && item.kind !== "prompt" && <StructureBlock item={item} near={near} onImage />}
+        <AuthorLine author={model.author} createdAt={model.createdAt} language={language} onImage />
+        <div className="flex items-center gap-3 sm:gap-4">
+          <AlbumPrimary prompt={prompt} href={model.href} />
+          <FocusFeedRail item={item} author={model.author} layout="row" />
+        </div>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+          {prompt && prompt.promptText.trim() && (
+            <button type="button" onClick={onOpenPrompt} aria-haspopup="dialog" className={link}>
+              <SquareTerminal size={15} aria-hidden />
+              {t("focusFeed.viewPrompt")}
+            </button>
+          )}
+          {(prompt?.promptText.trim() ?? "") !== "" && (
+            <Link href={model.href} className={link}>
+              {t("focusFeed.openDetail")}
+              <ArrowUpRight size={15} aria-hidden />
+            </Link>
+          )}
+        </div>
+      </div>
+    </article>
+  );
+}
+
 /* ------------------------------------------------------------------- slide */
 
 /**
@@ -473,83 +613,46 @@ export const FocusFeedSlide = memo(function FocusFeedSlide({
   // A playable prompt whose output and poster are both missing reads as its words (once the lookup is done).
   const { data: output, loading: outputLoading } = usePromptOutput(layout === "playable" ? prompt : null, near);
   const playableWithoutMedia = layout === "playable" && !cover && !outputLoading && !output && near;
-  const visual = (layout === "visual" && cover) || (layout === "playable" && !playableWithoutMedia);
   const extra = focusFeedExtraImages(item);
   const titleId = useId();
 
+  // Albüm (docs/history/203-*): everything but a playing video / audio is a "now playing" slide — the post's picture (or
+  // its words / steps / settings) as album art over Odak's blurred backdrop, the title and one big action under it.
+  if (layout !== "playable" || playableWithoutMedia) {
+    return (
+      <section data-slide-index={index} aria-labelledby={titleId} className="relative h-full snap-start snap-always">
+        <AlbumSlide item={item} model={model} cover={layout === "visual" ? cover : null} extra={extra} active={active} near={near} titleId={titleId} onOpenPrompt={() => setPromptOpen(true)} />
+        {promptOpen && prompt && <PromptDialog prompt={prompt} onClose={() => setPromptOpen(false)} />}
+      </section>
+    );
+  }
+
+  // A playing video / audio keeps the full-screen Reels stage (the media edge to edge, the words over it, the rail beside).
   return (
     <section data-slide-index={index} aria-labelledby={titleId} className="relative h-full snap-start snap-always">
       <div className="relative h-full md:mx-auto md:grid md:max-w-[1000px] md:grid-cols-[minmax(0,1fr)_auto] md:items-center md:gap-5 md:px-6 md:pb-5 md:pt-16">
-        <article
-          className={cn(
-            "absolute inset-0 flex flex-col overflow-hidden md:relative md:inset-auto md:h-full md:min-h-0 md:rounded-xl md:border md:shadow-pop",
-            visual
-              ? "md:max-h-[880px] md:border-white/15 md:bg-surface-soft"
-              : "bg-surface md:max-h-[720px] md:border-border-soft md:bg-surface/90 md:backdrop-blur-xl",
-          )}
-        >
-          {visual ? (
-            <>
-              {layout === "playable" && prompt ? <PlayableMedia prompt={prompt} cover={cover} active={active} near={near} /> : cover && <SlideImage cover={cover} active={active} near={near} />}
-              <div aria-hidden className={cn(HIDE_WHILE_COMMENTS, "pointer-events-none absolute inset-0 z-[3] bg-gradient-to-b from-black/45 via-transparent via-30% to-black/85")} />
-              <div className={cn(HIDE_WHILE_COMMENTS, "relative z-10 flex items-center justify-between gap-2 px-3 md:p-4", PHONE_TOP, "md:pt-4")}>
-                <TypePill icon={model.icon} label={model.typeLabel} onImage />
-                <span className="flex shrink-0 items-center gap-2">
-                  {item.kind === "request" && <RequestStatus request={item.data} />}
-                  {extra > 0 && (
-                    <span className="rounded-full border border-white/20 bg-black/40 px-2.5 py-1 text-caption font-semibold text-white backdrop-blur-md">
-                      {t("focusFeed.moreImages", { count: extra })}
-                    </span>
-                  )}
-                </span>
-              </div>
-              <div className={cn(HIDE_WHILE_COMMENTS, "pointer-events-none relative z-10 mt-auto space-y-3 pl-4 pr-20 md:p-7", PHONE_BOTTOM, "md:pb-7")}>
-                {model.tool && (
-                  <p className="flex items-center gap-2 text-caption font-bold uppercase tracking-[0.12em] text-white/85">
-                    <span aria-hidden className="h-px w-5 bg-white/70" />
-                    {model.tool}
-                  </p>
-                )}
-                <h2 id={titleId} className="line-clamp-3 break-words font-display text-[clamp(1.5rem,4.2vw,3.1rem)] font-bold leading-[1.04] tracking-[-0.03em] text-white">
-                  {model.title}
-                </h2>
-                {model.description && <p className="line-clamp-2 max-w-2xl break-words text-small leading-relaxed text-white/85 sm:text-body">{model.description}</p>}
-                <div className="pointer-events-auto space-y-3">
-                  <StructureBlock item={item} near={near} onImage />
-                  <AuthorLine author={model.author} createdAt={model.createdAt} language={language} onImage />
-                  <SlideButtons href={model.href} prompt={prompt} onImage onOpenPrompt={() => setPromptOpen(true)} />
-                </div>
-              </div>
-            </>
-          ) : (
-            <>
-              <div className={cn("flex items-center justify-between gap-2 px-4 md:p-5", PHONE_TOP, "md:pt-5")}>
-                <TypePill icon={model.icon} label={model.typeLabel} onImage={false} />
-                {item.kind === "request" && <RequestStatus request={item.data} />}
-              </div>
-              <div className="flex min-h-0 flex-1 flex-col justify-center gap-4 overflow-hidden pl-4 pr-20 md:px-8">
-                {model.tool && (
-                  <p className="flex items-center gap-2 text-caption font-bold uppercase tracking-[0.12em] text-text-muted">
-                    <span aria-hidden className="h-px w-5 bg-primary" />
-                    {model.tool}
-                  </p>
-                )}
-                <h2 id={titleId} className="line-clamp-3 break-words font-display text-[clamp(1.5rem,3.6vw,2.6rem)] font-bold leading-[1.06] tracking-[-0.025em] text-text">
-                  {model.title}
-                </h2>
-                {model.description && (
-                  <p className={cn("max-w-2xl break-words text-small leading-relaxed text-text-secondary sm:text-body", item.kind === "request" ? "line-clamp-5" : "line-clamp-3")}>
-                    {model.description}
-                  </p>
-                )}
-                <StructureBlock item={item} near={near} onImage={false} />
-              </div>
-              <div className={cn("space-y-3 pl-4 pr-20 pt-3 md:p-6", PHONE_BOTTOM, "md:pb-6")}>
-                <AuthorLine author={model.author} createdAt={model.createdAt} language={language} onImage={false} />
-                <SlideButtons href={model.href} prompt={prompt} onImage={false} onOpenPrompt={() => setPromptOpen(true)} />
-              </div>
-            </>
-          )}
+        <article className="absolute inset-0 flex flex-col overflow-hidden md:relative md:inset-auto md:h-full md:max-h-[880px] md:min-h-0 md:rounded-xl md:border md:border-white/15 md:bg-surface-soft md:shadow-pop">
+          {prompt && <PlayableMedia prompt={prompt} cover={cover} active={active} near={near} />}
+          <div aria-hidden className={cn(HIDE_WHILE_COMMENTS, "pointer-events-none absolute inset-0 z-[3] bg-gradient-to-b from-black/45 via-transparent via-30% to-black/85")} />
+          <div className={cn(HIDE_WHILE_COMMENTS, "relative z-10 flex items-center justify-between gap-2 px-3 md:p-4", PHONE_TOP, "md:pt-4")}>
+            <TypePill icon={model.icon} label={model.typeLabel} />
+          </div>
+          <div className={cn(HIDE_WHILE_COMMENTS, "pointer-events-none relative z-10 mt-auto space-y-3 pl-4 pr-20 md:p-7", PHONE_BOTTOM, "md:pb-7")}>
+            {model.tool && (
+              <p className="flex items-center gap-2 text-caption font-bold uppercase tracking-[0.12em] text-white/85">
+                <span aria-hidden className="h-px w-5 bg-white/70" />
+                {model.tool}
+              </p>
+            )}
+            <h2 id={titleId} className="line-clamp-3 break-words font-display text-[clamp(1.5rem,4.2vw,3.1rem)] font-bold leading-[1.04] tracking-[-0.03em] text-white">
+              {model.title}
+            </h2>
+            {model.description && <p className="line-clamp-2 max-w-2xl break-words text-small leading-relaxed text-white/85 sm:text-body">{model.description}</p>}
+            <div className="pointer-events-auto space-y-3">
+              <AuthorLine author={model.author} createdAt={model.createdAt} language={language} onImage />
+              <SlideButtons href={model.href} prompt={prompt} onOpenPrompt={() => setPromptOpen(true)} />
+            </div>
+          </div>
         </article>
         <div className={cn(HIDE_WHILE_COMMENTS, "absolute bottom-0 right-2 z-20 md:static", PHONE_BOTTOM, "md:pb-0")}>
           <FocusFeedRail item={item} author={model.author} />
