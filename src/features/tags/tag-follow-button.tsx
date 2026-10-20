@@ -11,18 +11,19 @@ import { useFollowedTags } from "./followed-tags-store";
  * viewer when the 100-tag limit or a failed request kept the change from
  * sticking, instead of silently snapping back.
  */
-export function TagFollowButton({ slug, label }: { slug: string; label: string }) {
+export function TagFollowButton({ slug, label, className }: { slug: string; label: string; className?: string }) {
   const { t } = useTranslation();
   const followed = useFollowedTags();
   const [problem, setProblem] = useState<"limit" | "failed" | null>(null);
 
   return (
-    <div className="flex flex-col items-start gap-1 sm:items-end">
+    <div className="flex flex-col items-start gap-1">
       <FollowButtonView
         isFollowing={followed.isFollowing(slug)}
         canFollow={followed.canFollow}
         loading={followed.canFollow && !followed.loaded}
         size="md"
+        className={className}
         toggle={() => {
           setProblem(null);
           void followed.toggle({ slug, label }).then((result) => {

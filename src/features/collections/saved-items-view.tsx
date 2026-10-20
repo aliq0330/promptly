@@ -1,13 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { PageContainer } from "@/components/ui/page-header";
+import { Bookmark } from "lucide-react";
+import { StorageImage } from "@/components/ui/storage-media";
 import { DetailSkeleton } from "@/components/ui/detail-skeleton";
 import { CollectionEntryList } from "./collection-entry-list";
+import { entryImage } from "./collection-band";
+import { CollageArt, DetailBand, DetailShell, DetailTitle, Eyebrow } from "@/features/content/detail-parts";
 import { useAuth } from "@/features/auth/auth-provider";
 import { engagementStore } from "@/features/content/engagement-store";
 import { fetchSavedItems, type CollectionEntry } from "@/lib/supabase/collections";
 import { useTranslation } from "@/lib/i18n/language-provider";
+import type { PromptMedia } from "@/types";
 
 /**
  * `/saved` — "Kaydedilenler": every distinct work in at least one of the
@@ -50,19 +54,31 @@ export function SavedItemsView() {
   }
   if (!loaded) return <DetailSkeleton />;
 
+  const images = items.map(entryImage).filter((media): media is PromptMedia => media !== null).slice(0, 4);
+
   return (
-    <PageContainer className="space-y-6">
-      <header className="space-y-1">
-        <h1 className="text-h1 font-semibold text-text">{t("nav.saved")}</h1>
-        <p className="text-small text-text-muted">{t("saved.subtitle")}</p>
-      </header>
-      <CollectionEntryList
-        items={items}
-        searchPlaceholderKey="saved.searchPlaceholder"
-        emptyTitleKey="saved.emptyTitle"
-        emptyDescriptionKey="saved.emptyDescription"
-        dropWhenUnsaved
-      />
-    </PageContainer>
+    // Albüm (docs/history/203-*): the same band as a collection — the newest saves' pictures as the collage.
+    <DetailShell
+      band={
+        <DetailBand
+          data-saved-band=""
+          backdrop={images[0] ? <StorageImage src={images[0].url} alt="" fill sizes="100vw" className="object-cover" /> : undefined}
+          art={<CollageArt images={images} icon={Bookmark} />}
+          kicker={<Eyebrow tone="primary">{t("collection.visibilityPrivateShort")} · {t("collection.itemCount", { count: items.length })}</Eyebrow>}
+          title={<DetailTitle>{t("nav.saved")}</DetailTitle>}
+          byline={<p className="text-body text-text-secondary">{t("saved.subtitle")}</p>}
+        />
+      }
+    >
+      <div className="space-y-4">
+        <CollectionEntryList
+          items={items}
+          searchPlaceholderKey="saved.searchPlaceholder"
+          emptyTitleKey="saved.emptyTitle"
+          emptyDescriptionKey="saved.emptyDescription"
+          dropWhenUnsaved
+        />
+      </div>
+    </DetailShell>
   );
 }

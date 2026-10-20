@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowRight, type LucideIcon } from "lucide-react";
 import { useId, type ReactNode, type Ref } from "react";
 import { Avatar } from "@/components/ui/avatar";
+import { StorageImage, StorageImg } from "@/components/ui/storage-media";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn, formatRelativeTime, profileHref, tagHref } from "@/lib/utils";
 import type { Language } from "@/lib/i18n/translations";
@@ -40,7 +41,7 @@ export function DetailShell({
       {band}
       <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-10">
         {actions}
-        <div className="pt-6 lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-12 lg:pt-8">
+        <div className={cn("pt-6 lg:pt-8", aside && "lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-12")}>
           <div className="min-w-0">{children}</div>
           {aside}
         </div>
@@ -112,7 +113,8 @@ export function DetailArt({
 }: {
   ratio: number;
   caption: string;
-  onOpen: () => void;
+  /** Opens the lightbox; without it the art is a plain frame (a video/result that plays in place). */
+  onOpen?: () => void;
   buttonRef?: Ref<HTMLButtonElement>;
   thumbnails?: ReactNode;
   children: ReactNode;
@@ -120,21 +122,29 @@ export function DetailArt({
   const { t } = useTranslation();
   return (
     <figure className="flex w-full flex-col items-center gap-3 lg:w-[460px] lg:max-w-full lg:items-start">
-      <button
-        ref={buttonRef}
-        type="button"
-        onClick={onOpen}
-        aria-label={t("media.viewFullscreen")}
-        className="relative block w-full overflow-hidden rounded-[22px] bg-surface-soft shadow-pop [--art-h:240px] md:[--art-h:300px]"
-        style={{ aspectRatio: ratio, maxWidth: `min(100%, calc(var(--art-h) * ${ratio}))` }}
-      >
-        {children}
-      </button>
+      {onOpen ? (
+        <button
+          ref={buttonRef}
+          type="button"
+          onClick={onOpen}
+          aria-label={t("media.viewFullscreen")}
+          className={ART_FRAME_CLASS}
+          style={{ aspectRatio: ratio, maxWidth: `min(100%, calc(var(--art-h) * ${ratio}))` }}
+        >
+          {children}
+        </button>
+      ) : (
+        <div className={ART_FRAME_CLASS} style={{ aspectRatio: ratio, maxWidth: `min(100%, calc(var(--art-h) * ${ratio}))` }}>
+          {children}
+        </div>
+      )}
       <figcaption className="sr-only">{caption}</figcaption>
       {thumbnails && <div className="flex flex-wrap justify-center gap-2 lg:justify-start">{thumbnails}</div>}
     </figure>
   );
 }
+
+const ART_FRAME_CLASS = "relative block w-full overflow-hidden rounded-[22px] bg-surface-soft shadow-pop [--art-h:240px] md:[--art-h:300px]";
 
 /** One thumbnail under the art (opens the lightbox at that image). */
 export function DetailArtThumb({ onOpen, children }: { onOpen: () => void; children: ReactNode }) {
@@ -148,6 +158,49 @@ export function DetailArtThumb({ onOpen, children }: { onOpen: () => void; child
     >
       {children}
     </button>
+  );
+}
+
+/**
+ * Album art for a set of posts (a collection, a tag, "Kaydedilenler" — docs/history/203-*): the first four pictures as a
+ * 2×2 collage (one picture fills the tile; two or three leave quiet empty quarters), else `icon` on a calm tile.
+ * Square, 200px on phones and 248px from `lg`.
+ */
+export function CollageArt({
+  images,
+  icon: Icon,
+  ...rest
+}: {
+  images: { url: string }[];
+  icon: LucideIcon;
+  [data: `data-${string}`]: string | undefined;
+}) {
+  const tile = "relative h-[200px] w-[200px] overflow-hidden rounded-[22px] bg-surface shadow-pop lg:h-[248px] lg:w-[248px]";
+  if (images.length === 0) {
+    return (
+      <span aria-hidden {...rest} className={cn(tile, "flex items-center justify-center text-primary")}>
+        <Icon size={56} strokeWidth={1.4} />
+      </span>
+    );
+  }
+  if (images.length === 1) {
+    return (
+      <span aria-hidden {...rest} className={tile}>
+        <StorageImage src={images[0].url} alt="" fill sizes="248px" className="object-cover" />
+      </span>
+    );
+  }
+  return (
+    <span aria-hidden {...rest} className={cn(tile, "grid grid-cols-2 grid-rows-2 gap-1 p-1")}>
+      {[0, 1, 2, 3].map((index) => (
+        <span
+          key={index}
+          className="relative overflow-hidden rounded-[6px] bg-surface-soft first:rounded-tl-[18px] last:rounded-br-[18px] [&:nth-child(2)]:rounded-tr-[18px] [&:nth-child(3)]:rounded-bl-[18px]"
+        >
+          {images[index] && <StorageImg src={images[index].url} alt="" className="absolute inset-0 h-full w-full object-cover" />}
+        </span>
+      ))}
+    </span>
   );
 }
 

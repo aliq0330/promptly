@@ -4,6 +4,10 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Flame, Heart } from "lucide-react";
 import { StorageImg } from "@/components/ui/storage-media";
+import { Avatar } from "@/components/ui/avatar";
+import { CardBandBackdrop } from "@/features/content/content-card";
+import { Eyebrow } from "@/features/content/detail-parts";
+import { CopyPromptButton } from "@/features/prompts/copy-prompt-button";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
 import { CONTENT_TYPE_IDS } from "@/lib/content-taxonomy";
 import { fetchPublicPromptCounts, fetchTopPrompts } from "@/lib/supabase/prompts";
@@ -126,8 +130,9 @@ export function PopularStrip({ popular }: { popular: { window: PopularWindow; pr
         <Flame size={17} className="text-secondary" aria-hidden />
         {t(popular.window === "week" ? "discover.popularWeek" : "discover.popularMonth")}
       </h2>
+      <PopularHero prompt={popular.prompts[0]} />
       <ul className="scrollbar-none -mx-3 flex touch-pan-x gap-3 overflow-x-auto overscroll-x-contain px-3 pb-1 sm:mx-0 sm:px-0">
-        {popular.prompts.map((prompt) => {
+        {popular.prompts.slice(1).map((prompt) => {
           const Icon = CONTENT_TYPE_META[prompt.contentType].icon;
           const cover = prompt.contentType === "image" ? prompt.media[0] : undefined;
           return (
@@ -161,5 +166,54 @@ export function PopularStrip({ popular }: { popular: { window: PopularWindow; pr
         })}
       </ul>
     </section>
+  );
+}
+
+/**
+ * The window's number one as an Albüm showcase (docs/history/203-*): a band tinted by its picture, the picture (or its prompt
+ * text) as the art, "1 · Bu hafta popüler", the big title, the author and likes, and one big "Kopyala".
+ */
+function PopularHero({ prompt }: { prompt: Prompt }) {
+  const { t } = useTranslation();
+  const cover = prompt.contentType === "image" ? prompt.media[0] : undefined;
+  const Icon = CONTENT_TYPE_META[prompt.contentType].icon;
+  return (
+    <article className="relative rounded-xl" data-discover-hero>
+      <CardBandBackdrop className="rounded-xl" backdrop={cover ? <StorageImg src={cover.url} alt="" className="h-full w-full object-cover" /> : undefined} />
+      <div className="relative flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:gap-6 sm:p-5">
+        <Link href={promptHref(prompt)} aria-hidden tabIndex={-1} className="block w-full shrink-0 overflow-hidden rounded-[18px] bg-surface shadow-pop sm:w-60">
+          {cover ? (
+            <StorageImg src={cover.url} alt="" className="aspect-[4/3] h-full w-full object-cover" />
+          ) : prompt.promptText.trim() ? (
+            <span className="prompt-text block aspect-[4/3] p-4 text-[0.75rem] leading-relaxed text-text-secondary">
+              <span className="line-clamp-6">{prompt.promptText}</span>
+            </span>
+          ) : (
+            <span className="flex aspect-[4/3] items-center justify-center text-primary">
+              <Icon size={40} strokeWidth={1.4} />
+            </span>
+          )}
+        </Link>
+        <div className="min-w-0 flex-1 space-y-2.5">
+          <Eyebrow tone="primary">
+            <Flame size={13} aria-hidden className="text-secondary" /> 1 · {t(CONTENT_TYPE_META[prompt.contentType].labelKey)}
+          </Eyebrow>
+          <h3 className="break-words font-display text-[1.625rem] font-extrabold leading-[1.05] tracking-[-0.03em] text-text sm:text-[2rem]">
+            <Link href={promptHref(prompt)} className="hover:text-primary">
+              {prompt.title}
+            </Link>
+          </h3>
+          <p className="flex items-center gap-2 text-small text-text-secondary">
+            <Avatar src={prompt.author.avatarUrl} alt={prompt.author.displayName} size={24} />
+            <span className="min-w-0 truncate">
+              <span className="font-semibold text-text">{prompt.author.displayName}</span> · <Heart size={12} aria-hidden className="inline" /> {formatCount(prompt.likeCount)}
+            </span>
+          </p>
+          {prompt.promptText.trim() && (
+            <CopyPromptButton text={prompt.promptText} promptId={prompt.id} size="md" variant="primary" label={t("common.copy")} className="h-11 rounded-full px-6 shadow-pop" />
+          )}
+        </div>
+      </div>
+    </article>
   );
 }

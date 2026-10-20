@@ -100,7 +100,7 @@ ikincil vurgu; gereksiz gradient / glassmorphism / neon / ağır gölge yok. İn
 (`border-soft`) kenarlıklar, çok hafif gölgeler (`shadow-card`), yumuşak köşeler
 (kart `rounded-lg` = 16px, `rounded-xl` = 22px), **düğmeler hap biçimli**
 (`Button` = `rounded-full`), 200ms `ease-soft` geçişler. Ana Sayfa ana sütun (gönderiler
-iki sütunlu ızgara) + `xl`'de sağ yardımcı sütundur; **profil, koleksiyon ve topluluk sayfaları da Albüm bandıyla açılır** (`docs/history/203-*`: `DetailBand` + `BandActionRow` — tek büyük birincil düğme: Takip et / Koleksiyonu takip et·düzenle / Sohbeti aç·Topluluğa katıl; profil bandı avatardan, koleksiyon bandı kolaj kapağından, topluluk bandı `CommunityCover`'dan [fotoğraf › renk › topluluk görseli] renk alır), profilde tek sekme satırı, toplulukta hap sekmeler (`Tabs variant="pill"`).
+iki sütunlu ızgara) + `xl`'de sağ yardımcı sütundur; **profil, koleksiyon ve topluluk sayfaları da Albüm bandıyla açılır** (`docs/history/203-*`: `DetailBand` + `BandActionRow` — tek büyük birincil düğme: Takip et / Koleksiyonu takip et·düzenle / Sohbeti aç·Topluluğa katıl; profil bandı avatardan, koleksiyon/etiket/Kaydedilenler bandı kolaj kapağından [`CollageArt`], topluluk bandı `CommunityCover`'dan [fotoğraf › renk › topluluk görseli] renk alır; sonuç sayfası da `DetailShell`; topluluk/koleksiyon/yaratıcı kartları, haftalık tema ve workflow adımları `CardBandBackdrop` ile küçük bant çizer), profilde tek sekme satırı, toplulukta hap sekmeler (`Tabs variant="pill"`).
 
 **Fontlar** (`src/app/layout.tsx`, `next/font`): gövde **DM Sans**, başlıklar ve
 sayfa düzeyi başlıklar (`text-display`/`text-h1`/`text-h2`, h1–h3 otomatik) ve

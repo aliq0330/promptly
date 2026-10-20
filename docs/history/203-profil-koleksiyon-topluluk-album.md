@@ -28,9 +28,21 @@ Detay sayfaları (`201-*`) ve gönderi kartları (`202-*`) Albüm diline geçtik
 - Eylem satırı (`data-community-actions`): üyeye büyük **Sohbeti aç** (okunmamış sayısıyla) + "Katıldın ▾" menüsü + (yetkiliye) bekleyen istekler; üye olmayana büyük **Topluluğa katıl / Katılma isteği gönder**. "← Topluluklar" bağlantısı kaldırıldı (detay sayfalarında da yok; menüde Topluluklar var).
 - Sekmeler, akış ve `xl`+ yardımcı sütun (`CommunityAside`) değişmedi.
 
-Çeviri: yeni anahtarlar TR + EN (`profile.actionsAria`, `collection.kicker`, `collection.actionsAria`, `collection.updatedAgo`, `collection.aside.*`, `collection.typeFilterAria`, `collection.typeCommunityPosts`, `communities.band.actionsAria`); "Yaratıcı" ve "Topluluk" için var olan `profile.creatorLabel` / `groups.page.eyebrow` kullanıldı.
+**İkinci tur — aynı dilin yayıldığı diğer yerler** (kullanıcı: "Önerdiğin kalan yerlere de yap"):
+- **Sonuç sayfası** (`result-detail-view.tsx`): detay sayfalarıyla aynı `DetailShell` — bant sonucun görselinden (video/seste kapak) renk alır; kapak = sonucun kendisi (görsel, oynayan video, ses kapağı + oynatıcı; metin sonucunda simge, metin içerik sütununda); büyük **Promptu aç**; Beğeni · Yorum · Paylaş · ⋮; yan sütunda "Bu sonuç hangi promptla oluşturuldu?". `DetailArt` artık `onOpen` olmadan da çizilir (ışık kutusu olmayan kapak).
+- **Etiket sayfası** (`tag-view.tsx`): kapak = etiketin en çok beğenilen 4 gönderisinin kolajı (`CollageArt`, koleksiyonla ortak — `detail-parts.tsx`'e taşındı), "ETİKET", büyük `#etiket`, kullanım sayısı; büyük **Takip Et** (etiket takibi) + Paylaş.
+- **Kaydedilenler** (`saved-items-view.tsx`): koleksiyonla aynı bant — son kaydedilenlerin kolajı, "SADECE BEN · N çalışma".
+- `DetailShell` yan sütun verilmeyince içerik tam genişlik kullanır (etiket, Kaydedilenler).
+- **Kartlar** — `CardBandBackdrop` (`content-card.tsx`, gönderi kartının bant arka planı dışarı açıldı) ile: topluluk kartı ve "Sana uygun topluluklar" şeridi (bant topluluk görselinden, köşeli görsel + kategori + büyük ad; altında üyelik düğmesi + sayılar), koleksiyon kartı (bant kapaktan, kapak çerçeveli, büyük ad), yaratıcı kartı (bant avatardan; altında büyük **Takip Et** + takipçi).
+- **Haftalık tema** (`weekly-challenge-banner.tsx`): küçük bant — kupa karosu, "HAFTALIK TEMA", büyük başlık, kalan süre, büyük **Katıl**.
+- **Keşfet vitrini** (`discover-highlights.tsx` → `PopularHero`): "Bu hafta/ay popüler"in 1 numarası şeridin başında görselinden renk alan bant (kapak, büyük başlık, yazar + beğeni, **Kopyala**); şerit 2. sıradan devam eder.
+- **Workflow "Adım adım"** (`workflow-runner.tsx`): her adım küçük bir bantla açılır (adım türü karosu, "ADIM 1 / 2", büyük başlık); Önceki/Sonraki düğmeleri büyük.
+
+Çeviri: yeni anahtarlar TR + EN (ikinci tur: `result.kicker`, `result.openPrompt`, `tag.kicker`, `tag.actionsAria`; ilk tur: `profile.actionsAria`, `collection.kicker`, `collection.actionsAria`, `collection.updatedAgo`, `collection.aside.*`, `collection.typeFilterAria`, `collection.typeCommunityPosts`, `communities.band.actionsAria`); "Yaratıcı" ve "Topluluk" için var olan `profile.creatorLabel` / `groups.page.eyebrow` kullanıldı.
 
 ## Sınırlar
 - Topluluğun kapak fotoğrafı artık bandın kendisi değil, üstündeki şerit; bant fotoğrafın bulanık tonunu alır.
 - Bant rengi görselin bulanık hâlinden gelir; çok açık/koyu görsellerde ton zayıf kalabilir.
+- Haftalık temanın bandı marka tonundadır (temanın kendi görseli yok).
+- Sonuç, etiket, Kaydedilenler ve "Adım adım" için otomatik arayüz testi yok; ağ taklitli ekran görüntüleriyle bakıldı.
 - Gerçek Supabase'e, gerçek cihaza ve gerçek fotoğraflara karşı denenmedi.
