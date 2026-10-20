@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { MobileNav } from "@/components/layout/mobile-nav";
+import { useChromeAutoHide } from "@/components/layout/use-chrome-autohide";
 import { WelcomeTour } from "@/features/onboarding/welcome-tour";
 import { useTranslation } from "@/lib/i18n/language-provider";
 
@@ -18,9 +19,11 @@ interface AppShellProps {
  *   mobile  (<md):  header + content + bottom nav
  *   tablet  (md–lg): 72px icon rail + header + content
  *   desktop (lg+):  256px grouped sidebar + header + content (+ optional aside)
+ * Below `lg` the header and the bottom nav slide away while scrolling down (`useChromeAutoHide`).
  */
 export function AppShell({ children, aside }: AppShellProps) {
   const { t } = useTranslation();
+  useChromeAutoHide();
   return (
     <div className="flex min-h-screen">
       <a

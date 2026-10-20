@@ -34,6 +34,7 @@ export function MobileNav() {
   return (
     <nav
       data-app-chrome
+      data-app-nav
       aria-label={t("nav.primaryLabel")}
       // Opaque, and its colour continues below the screen edge (`after:`): the strip the browser's own toolbar floats over
       // (iOS Safari) shows this colour instead of the page background, like Instagram's — docs/history/193-*.

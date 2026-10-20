@@ -668,6 +668,42 @@
     visibility: hidden;
   }
 
+  /* Scrolling down hides the bars, scrolling up brings them back (`useChromeAutoHide`): the header slides up, the bottom
+   * nav slides down, both fading. Below `lg` only for the header (the desktop sidebar never moves); a focused control keeps its bar. */
+  [data-app-header],
+  [data-app-nav] {
+    transition:
+      transform 320ms var(--ease-soft),
+      opacity 320ms var(--ease-soft);
+  }
+  @media (max-width: 1023.98px) {
+    html[data-chrome-hidden] [data-app-header]:not(:focus-within) {
+      transform: translateY(-100%);
+      opacity: 0;
+      pointer-events: none;
+    }
+  }
+  html[data-chrome-hidden] [data-app-nav]:not(:focus-within) {
+    transform: translateY(100%);
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  /* A detail page's actions row pinned to the screen's bottom (`DetailActionBar`): on phones it rides just above the
+   * bottom nav (its safe-area padding tucks under the nav) and drops to the very edge when the nav slides away. */
+  [data-detail-dock] {
+    padding-bottom: env(safe-area-inset-bottom);
+    transition: transform 320ms var(--ease-soft);
+  }
+  @media (max-width: 767.98px) {
+    [data-detail-dock] {
+      transform: translateY(-4rem);
+    }
+    html[data-chrome-hidden] [data-detail-dock] {
+      transform: translateY(0);
+    }
+  }
+
   body {
     background: var(--color-background);
     color: var(--color-text);
