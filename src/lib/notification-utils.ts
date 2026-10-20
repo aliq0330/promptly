@@ -21,13 +21,14 @@ import {
 } from "lucide-react";
 import type { AppNotification, NotificationType } from "@/types";
 import type { TranslationKey } from "@/lib/i18n/translations";
+import { isCommunityNotification } from "@/lib/notification-scope";
 
 /**
  * The bildirim merkezi's category filter (Aşama 1.2) groups the existing
  * `NotificationType` values — no new backend concept, just a client-side
  * grouping of what's already there.
  */
-export type NotificationCategory = "posts" | "requests" | "follow" | "messages" | "system";
+export type NotificationCategory = "posts" | "requests" | "follow" | "messages" | "community" | "system";
 
 export const NOTIFICATION_CATEGORY: Record<NotificationType, NotificationCategory> = {
   like: "posts",
@@ -59,12 +60,21 @@ export const NOTIFICATION_CATEGORY: Record<NotificationType, NotificationCategor
   story_question_answer: "posts",
 };
 
+/**
+ * A notification's tab: the type's own category, except that everything a community produced (its pages, its chat's system
+ * notices, the likes/comments of its posts — `isCommunityNotification`, docs/history/205-*) goes under "Topluluklar".
+ */
+export function notificationCategory(notification: Pick<AppNotification, "type" | "targetHref">): NotificationCategory {
+  return isCommunityNotification(notification.type, notification.targetHref) ? "community" : NOTIFICATION_CATEGORY[notification.type];
+}
+
 export const CATEGORY_FILTERS: { key: "all" | NotificationCategory; labelKey: TranslationKey }[] = [
   { key: "all", labelKey: "common.all" },
   { key: "posts", labelKey: "notifications.categoryPosts" },
   { key: "requests", labelKey: "nav.requestsShort" },
   { key: "follow", labelKey: "notifications.categoryFollow" },
   { key: "messages", labelKey: "header.messagesAriaLabel" },
+  { key: "community", labelKey: "nav.communities" },
   { key: "system", labelKey: "notifications.categorySystem" },
 ];
 

@@ -1865,6 +1865,12 @@ export const translations = {
   "search.startTyping": { tr: "Aramak için bir şeyler yazmaya başla.", en: "Start typing to search." },
   "search.searching": { tr: "Aranıyor…", en: "Searching…" },
   "search.usersHeading": { tr: "Kullanıcılar", en: "Users" },
+  "search.tabsAria": { tr: "Arama sonuçları", en: "Search results" },
+  "search.tabPeople": { tr: "Kişiler", en: "People" },
+  "search.textOnlyHint": {
+    tr: "Kişi ve topluluk aramak için bir şey yaz; seçtiğin filtreler yalnızca gönderilere uygulanır.",
+    en: "Type something to search people and communities; the filters you picked apply to posts only.",
+  },
   "report.failed": { tr: "Şikayet gönderilemedi, lütfen tekrar dene.", en: "Couldn't send the report — please try again." },
   "report.reasonPlaceholder": { tr: "Şikayet nedenini yaz...", en: "Describe why you're reporting this..." },
   "report.sending": { tr: "Gönderiliyor...", en: "Sending..." },

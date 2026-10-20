@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { NotificationList } from "@/features/notifications/notification-list";
 import { NotificationCategoryFilter } from "@/features/notifications/notification-category-filter";
 import { useNotifications } from "@/features/notifications/notifications-provider";
-import { NOTIFICATION_CATEGORY, type NotificationCategory } from "@/lib/notification-utils";
+import { notificationCategory, type NotificationCategory } from "@/lib/notification-utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { buttonClassName } from "@/components/ui/button";
 
@@ -17,7 +17,7 @@ export default function NotificationsPage() {
     () =>
       category === "all"
         ? notifications
-        : notifications.filter((n) => NOTIFICATION_CATEGORY[n.type] === category),
+        : notifications.filter((n) => notificationCategory(n) === category),
     [notifications, category],
   );
 
