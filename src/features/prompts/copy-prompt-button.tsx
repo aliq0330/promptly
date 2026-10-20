@@ -36,7 +36,8 @@ export function CopyPromptButton({
   promptId?: string;
   label?: string;
   className?: string;
-  size?: "sm" | "md";
+  /** "lg" = the detail page's big primary action (a large pill, docs/history/201-*). */
+  size?: "sm" | "md" | "lg";
   /** "primary" = the one filled action of a prompt block (detail page); "link" = bare text action (Meydan card prompt box). */
   variant?: "outline" | "primary" | "link";
 }) {
@@ -81,7 +82,7 @@ export function CopyPromptButton({
       className={cn(
         "relative z-10 inline-flex shrink-0 items-center gap-1.5 rounded-sm border font-medium transition-[background-color,border-color,color] duration-200 ease-soft",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-        size === "sm" ? "h-7 px-2 text-caption" : "h-9 px-3 text-label",
+        size === "sm" ? "h-7 px-2 text-caption" : size === "md" ? "h-9 px-3 text-label" : "h-14 gap-2 rounded-full px-7 text-body font-semibold shadow-pop",
         state === "copied"
           ? "border-primary/30 bg-primary-soft text-primary"
           : state === "failed"
@@ -94,7 +95,7 @@ export function CopyPromptButton({
         className,
       )}
     >
-      <Icon key={state} size={size === "sm" ? 12 : 14} className={state === "copied" ? "animate-check-pop" : undefined} />
+      <Icon key={state} size={size === "sm" ? 12 : size === "md" ? 14 : 20} className={state === "copied" ? "animate-check-pop" : undefined} />
       {displayLabel}
     </button>
   );

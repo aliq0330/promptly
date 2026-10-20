@@ -4,94 +4,96 @@ import Link from "next/link";
 import { ArrowRight, type LucideIcon } from "lucide-react";
 import { useId, type ReactNode, type Ref } from "react";
 import { Avatar } from "@/components/ui/avatar";
-import { useTheme } from "@/components/theme/theme-provider";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn, formatRelativeTime, profileHref, tagHref } from "@/lib/utils";
 import type { Language } from "@/lib/i18n/translations";
 import type { Tag, UserProfile } from "@/types";
 
 /*
- * Shared building blocks for the four detail pages (Prompt, Prompt İsteği, Workflow, Hazır Ayar) — the SAHNE language
- * (docs/history/201-*, chosen by the user from six directions): the post's media on a dark STAGE, the post itself on a
- * light PANEL. From `lg` the stage is a sticky column filling the viewport and the panel sits beside it (Instagram's post
- * window, but in the page); below `lg` the stage is a band at the top and the panel rises over it like a sheet. A post
- * without media has no stage — the panel alone, centred. The actions (Beğeni · Yorum · Kaydet · İstatistik … Paylaş) are
- * one row: right under the stage on phones, stuck to the bottom of the panel from `lg` (and everywhere when there is no
- * stage). Purely presentational; no data, no state.
+ * Shared building blocks for the four detail pages (Prompt, Prompt İsteği, Workflow, Hazır Ayar) — the ALBÜM language
+ * (docs/history/201-*, chosen by the user from nine directions; like a music app's album page):
+ *  - a BAND across the top, tinted by the post's own picture (enlarged + blurred, the same trick as the community
+ *    cover's automatic mode) — the "album art" (the output, never cropped), the type kicker, a big title, the author line;
+ *  - an ACTIONS row under it: the page's one big primary action (Kopyala / Yanıtla / Çalıştır / Studio'da aç), the
+ *    engagement icons (Beğeni · Yorum · Kaydet · İstatistik … Paylaş, the cards' order), Takip Et + ⋮ on the right;
+ *  - the body in two columns from `lg`: the content (description, sections, comments) and "Hakkında" (tool,
+ *    classification, related content). One column on phones. Purely presentational; no data, no state.
  */
 
-/** Page frame: [dark stage] · panel (children → aside) + the actions row. */
+/** Page frame: band · actions row · [content | Hakkında]. */
 export function DetailShell({
-  children,
-  stage,
-  aside,
+  band,
   actions,
+  aside,
+  children,
   entrance = "rise",
 }: {
-  children: ReactNode;
-  /** The post's media (`DetailStageFigure` …) — omit when there is none. */
-  stage?: ReactNode;
-  aside?: ReactNode;
-  /** The page's `DetailActionBar`. */
+  band: ReactNode;
   actions?: ReactNode;
-  /** "fade" while a card's cover is morphing into the hero (a rising page would shift the measured target). */
+  aside?: ReactNode;
+  children: ReactNode;
+  /** "fade" while a card's cover is morphing into the art (a rising page would shift the measured target). */
   entrance?: "rise" | "fade";
 }) {
-  const { palette } = useTheme();
-  const hasStage = Boolean(stage);
   return (
-    <div
-      className={cn(
-        "w-full",
-        hasStage && "lg:grid lg:grid-cols-[minmax(0,1fr)_420px] xl:grid-cols-[minmax(0,1fr)_460px]",
-        entrance === "fade" ? "animate-fade-in" : "animate-rise-in",
-      )}
-    >
-      {hasStage && (
-        // Always dark, in the visitor's palette (`.dark` + `data-palette` re-scope every token, as Odak's stage does).
-        <div
-          data-detail-stage
-          data-palette={palette}
-          className="dark flex min-h-64 items-center justify-center bg-background px-4 pb-11 pt-5 text-text lg:sticky lg:top-16 lg:h-[calc(100dvh-4rem)] lg:self-start lg:px-10 lg:py-10"
-        >
-          {stage}
-        </div>
-      )}
-      <div
-        className={cn(
-          "relative flex min-w-0 flex-col bg-surface",
-          hasStage
-            ? "-mt-6 rounded-t-[28px] lg:mt-0 lg:min-h-[calc(100dvh-4rem)] lg:rounded-none lg:border-l lg:border-border-soft"
-            : "mx-auto max-w-2xl md:mt-6 md:rounded-[28px] md:border md:border-border-soft",
-        )}
-      >
-        {hasStage && <span aria-hidden className="mx-auto mt-2.5 h-1.5 w-10 shrink-0 rounded-full bg-border lg:hidden" />}
-        <div className="order-2 min-w-0 px-4 pb-10 pt-4 sm:px-6 lg:px-7 lg:pt-6">
-          {children}
+    <div className={cn("w-full pb-16", entrance === "fade" ? "animate-fade-in" : "animate-rise-in")}>
+      {band}
+      <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-10">
+        {actions}
+        <div className="pt-6 lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-12 lg:pt-8">
+          <div className="min-w-0">{children}</div>
           {aside}
         </div>
-        {actions && (
-          <div
-            className={cn(
-              "z-20 bg-surface/95 px-2 backdrop-blur-xl sm:px-4",
-              hasStage
-                ? "order-1 pt-1 lg:sticky lg:bottom-0 lg:order-3 lg:border-t lg:border-border-soft lg:py-2"
-                : "sticky bottom-[calc(4rem+env(safe-area-inset-bottom))] order-3 border-t border-border-soft py-1.5 md:bottom-0 md:rounded-b-[28px]",
-            )}
-          >
-            {actions}
-          </div>
-        )}
       </div>
     </div>
   );
 }
 
 /**
- * The stage's picture, never cropped: a box with the media's own aspect ratio, as large as the stage allows (60% of the
- * screen height on phones, the stage's height from `lg`), opening the lightbox. `thumbnails` (more images) sit under it.
+ * The top band. `backdrop` is the post's picture (an `<img>`/`StorageImage` filling its box) — shown enlarged and blurred
+ * under a veil of the page colour so the band takes the picture's colours and the text stays readable; without one the
+ * band is the quiet brand tint. `art` sits on the left from `lg` (centred above the title below it), the kicker/title/author on the right.
  */
-export function DetailStageFigure({
+export function DetailBand({
+  art,
+  backdrop,
+  kicker,
+  title,
+  byline,
+}: {
+  art: ReactNode;
+  backdrop?: ReactNode;
+  kicker: ReactNode;
+  title: ReactNode;
+  byline: ReactNode;
+}) {
+  return (
+    <header data-detail-band className="relative isolate overflow-hidden bg-primary-soft">
+      {backdrop && (
+        <>
+          <div aria-hidden className="absolute inset-0 -z-20 scale-150 opacity-70 blur-3xl saturate-150">
+            {backdrop}
+          </div>
+          <div aria-hidden className="absolute inset-0 -z-10 bg-background/55" />
+        </>
+      )}
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 pb-7 pt-6 sm:px-6 lg:flex-row lg:items-end lg:gap-9 lg:px-10 lg:pb-10 lg:pt-10">
+        <div className="flex min-w-0 shrink-0 flex-col items-center gap-3 lg:max-w-[42%] lg:items-start">{art}</div>
+        <div className="min-w-0 flex-1 space-y-3">
+          {kicker}
+          {title}
+          {byline}
+        </div>
+      </div>
+    </header>
+  );
+}
+
+/**
+ * The album art: the post's picture in its own aspect ratio (never cropped), at most 240px tall on phones and 300px from
+ * `md` (beside the title from `lg`, at most 460px / 42% wide), opening the lightbox. `thumbnails` (more pictures) sit under it.
+ */
+export function DetailArt({
   ratio,
   caption,
   onOpen,
@@ -108,44 +110,53 @@ export function DetailStageFigure({
 }) {
   const { t } = useTranslation();
   return (
-    <figure className="flex w-full flex-col items-center gap-4">
+    <figure className="flex w-full flex-col items-center gap-3 lg:w-[460px] lg:max-w-full lg:items-start">
       <button
         ref={buttonRef}
         type="button"
         onClick={onOpen}
         aria-label={t("media.viewFullscreen")}
-        className="relative block w-full overflow-hidden rounded-[18px] bg-surface-soft [--hero-h:min(60vh,520px)] lg:[--hero-h:calc(100dvh-13rem)]"
-        style={{ aspectRatio: ratio, maxWidth: `calc(var(--hero-h) * ${ratio})` }}
+        className="relative block w-full overflow-hidden rounded-[22px] bg-surface-soft shadow-pop [--art-h:240px] md:[--art-h:300px]"
+        style={{ aspectRatio: ratio, maxWidth: `min(100%, calc(var(--art-h) * ${ratio}))` }}
       >
         {children}
       </button>
       <figcaption className="sr-only">{caption}</figcaption>
-      {thumbnails && <div className="flex flex-wrap justify-center gap-2">{thumbnails}</div>}
+      {thumbnails && <div className="flex flex-wrap justify-center gap-2 lg:justify-start">{thumbnails}</div>}
     </figure>
   );
 }
 
-/** One thumbnail under the stage picture (opens the lightbox at that image). */
-export function DetailStageThumb({ onOpen, children }: { onOpen: () => void; children: ReactNode }) {
+/** One thumbnail under the art (opens the lightbox at that image). */
+export function DetailArtThumb({ onOpen, children }: { onOpen: () => void; children: ReactNode }) {
   const { t } = useTranslation();
   return (
     <button
       type="button"
       onClick={onOpen}
       aria-label={t("media.viewFullscreen")}
-      className="h-14 w-14 overflow-hidden rounded-[12px] border border-border-soft opacity-80 transition-opacity hover:opacity-100"
+      className="h-12 w-12 overflow-hidden rounded-[12px] border border-border-soft opacity-85 transition-opacity hover:opacity-100"
     >
       {children}
     </button>
   );
 }
 
-/** Related content at the end of the panel (similar posts, contributors…), under a hairline. */
-export function DetailAside({ children, className }: { children: ReactNode; className?: string }) {
-  return <aside className={cn("mt-10 space-y-6 border-t border-border-soft pt-8", className)}>{children}</aside>;
+/** Art for a post without a picture: its type's icon on a soft tile, so every band has the same rhythm. */
+export function DetailArtPlaceholder({ icon: Icon }: { icon: LucideIcon }) {
+  return (
+    <span aria-hidden className="flex h-36 w-36 items-center justify-center rounded-[22px] bg-surface/80 text-primary shadow-pop lg:h-48 lg:w-48">
+      <Icon size={56} strokeWidth={1.4} />
+    </span>
+  );
 }
 
-/** A titled section of the panel ("Prompt Metni   [actions]"); `action` sits on the right of the heading row. */
+/** "Hakkında": the side column from `lg` (tool, classification, related content); stacked under the content below it. */
+export function DetailAside({ children, className }: { children: ReactNode; className?: string }) {
+  return <aside data-detail-aside className={cn("mt-12 space-y-8 lg:sticky lg:top-24 lg:mt-0 lg:self-start", className)}>{children}</aside>;
+}
+
+/** A titled section of the content column ("Prompt", "Yorumlar · 4" …); `action` sits on the right of the heading row. */
 export function DetailSection({
   ref,
   id,
@@ -165,7 +176,7 @@ export function DetailSection({
   return (
     <section ref={ref} id={id} aria-labelledby={headingId} className={cn("scroll-mt-24 space-y-3.5", className)}>
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-        <h2 id={headingId} className="min-w-0 flex-1 font-display text-h3 font-bold text-text">
+        <h2 id={headingId} className="min-w-0 flex-1 font-display text-[1.375rem] font-bold leading-tight text-text">
           {title}
         </h2>
         {action && <div className="flex flex-wrap items-center gap-2">{action}</div>}
@@ -206,10 +217,15 @@ export function Eyebrow({
   );
 }
 
-/** The page title (display type, sized for the panel). */
+/** The page title: the band's big display line. */
 export function DetailTitle({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <h1 className={cn("break-words font-display text-[1.75rem] font-extrabold leading-[1.1] tracking-[-0.025em] text-text sm:text-[2rem]", className)}>
+    <h1
+      className={cn(
+        "break-words font-display text-[2rem] font-extrabold leading-[1.02] tracking-[-0.035em] text-text sm:text-[2.5rem] xl:text-[3.5rem]",
+        className,
+      )}
+    >
       {children}
     </h1>
   );
@@ -218,58 +234,67 @@ export function DetailTitle({ children, className }: { children: ReactNode; clas
 /** The description under the title. */
 export function DetailLede({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <p className={cn("whitespace-pre-line break-words [overflow-wrap:anywhere] text-[0.9375rem] leading-relaxed text-text-secondary sm:text-body", className)}>
+    <p className={cn("whitespace-pre-line break-words [overflow-wrap:anywhere] text-body leading-relaxed text-text-secondary sm:text-[1.0625rem]", className)}>
       {children}
     </p>
   );
 }
 
-/**
- * The panel's first row: avatar, display name, @handle · relative time (+ `meta`, e.g. "7 kez kullanıldı") on the left;
- * `trailing` (Takip Et, ⋮) pinned to the right of the same row, a hairline under it.
- */
+/** The band's author line: small avatar, display name, @handle · relative time (+ `meta`, e.g. "7 kez kullanıldı"). */
 export function DetailByline({
   person,
   createdAt,
   language,
   meta,
-  trailing,
 }: {
   person: UserProfile;
   createdAt: string;
   language: Language;
   meta?: ReactNode;
-  trailing?: ReactNode;
 }) {
   return (
-    <div className="flex items-center gap-3 border-b border-border-soft pb-4">
-      <Link href={profileHref(person)} className="group inline-flex min-w-0 flex-1 items-center gap-2.5 rounded-md">
-        <Avatar src={person.avatarUrl} alt={person.displayName} size={40} />
-        <span className="min-w-0 leading-tight">
-          <span className="block truncate text-label font-semibold text-text transition-colors group-hover:text-primary">
-            {person.displayName}
-          </span>
-          <span className="block truncate text-caption text-text-muted">
-            @{person.username} · {formatRelativeTime(createdAt, language)}
-            {meta && <> · {meta}</>}
-          </span>
+    <Link href={profileHref(person)} className="group inline-flex max-w-full items-center gap-2.5 rounded-md">
+      <Avatar src={person.avatarUrl} alt={person.displayName} size={32} />
+      <span className="min-w-0 text-label leading-tight">
+        <span className="font-semibold text-text transition-colors group-hover:text-primary">{person.displayName}</span>{" "}
+        <span className="text-text-secondary">
+          @{person.username} · {formatRelativeTime(createdAt, language)}
+          {meta && <> · {meta}</>}
         </span>
-      </Link>
-      {trailing && <div className="flex shrink-0 items-center gap-1">{trailing}</div>}
-    </div>
+      </span>
+    </Link>
   );
 }
 
 /**
- * The page's actions as one row — Beğeni · Yorum · Kaydet · İstatistik … on the left, `trailing` (Paylaş) on the right,
- * the same order as the cards (`ContentCardPost`). Where the row sits is `DetailShell`'s job (pass it as `actions`).
+ * The actions row under the band: `primary` (the page's one big action) · the engagement icons (`children`, then
+ * `trailing` = Paylaş — the cards' order) · `extra` (Takip Et, ⋮) on the right. On phones the icons take their own line.
  */
-export function DetailActionBar({ children, trailing }: { children: ReactNode; trailing?: ReactNode }) {
+export function DetailActionBar({
+  primary,
+  extra,
+  trailing,
+  children,
+}: {
+  primary?: ReactNode;
+  extra?: ReactNode;
+  trailing?: ReactNode;
+  children: ReactNode;
+}) {
   const { t } = useTranslation();
   return (
-    <div role="toolbar" aria-label={t("detail.actionsAria")} data-detail-actions className="flex items-center gap-0.5">
-      {children}
-      {trailing && <div className="ml-auto flex items-center">{trailing}</div>}
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-3 border-b border-border-soft py-4">
+      {primary && <div className="order-1 flex items-center gap-2">{primary}</div>}
+      {extra && <div className="order-2 ml-auto flex items-center gap-1 sm:order-3">{extra}</div>}
+      <div
+        role="toolbar"
+        aria-label={t("detail.actionsAria")}
+        data-detail-actions
+        className="order-3 -ml-1.5 flex basis-full items-center gap-0.5 sm:order-2 sm:ml-0 sm:basis-auto"
+      >
+        {children}
+        {trailing}
+      </div>
     </div>
   );
 }
@@ -386,7 +411,7 @@ export function DetailTags({ tags, className }: { tags: Tag[]; className?: strin
   );
 }
 
-/** The comments: the panel's last section, jump target `#comments` (pass `EngageComments … headless`). */
+/** The comments: the content column's last section, jump target `#comments` (pass `EngageComments … headless`). */
 export function DetailComments({ children }: { children: ReactNode }) {
   const { t } = useTranslation();
   return (

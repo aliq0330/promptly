@@ -27,12 +27,14 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import {
   AsideSection,
   DetailActionBar,
+  DetailArt,
+  DetailArtPlaceholder,
   DetailAside,
+  DetailBand,
   DetailByline,
   DetailComments,
   DetailLede,
   DetailShell,
-  DetailStageFigure,
   DetailTags,
   DetailTitle,
   DetailSection,
@@ -100,6 +102,11 @@ export function PresetDetailView({ presetId }: { presetId?: string } = {}) {
 
   const aside = (
     <DetailAside>
+      <AsideSection id="detail-about-title" title={t("profile.tabAbout")} bare>
+          <DetailMetaCard toolLabel={t("tool.recommendedLabel")} toolRefs={preset.tools} fallbackTool={t("preset.generalTool")} hasChips={preset.tags.length > 0}>
+            <DetailTags className="contents" tags={preset.tags} />
+          </DetailMetaCard>
+      </AsideSection>
       <AsideSection id="preset-info-title" title={t("preset.sidebarInfo")}>
         <dl className="divide-y divide-border-soft text-small">
           <div className="flex items-center justify-between gap-3 px-3.5 py-2.5">
@@ -117,65 +124,73 @@ export function PresetDetailView({ presetId }: { presetId?: string } = {}) {
     </DetailAside>
   );
 
-  // The cover on the dark stage; a preset without one has no stage.
-  const stage = preset.coverUrl ? (
-    <DetailStageFigure ratio={16 / 9} caption={preset.title} onOpen={() => setLightbox(true)}>
+  // The album art: the cover, else the preset icon.
+  const art = preset.coverUrl ? (
+    <DetailArt ratio={16 / 9} caption={preset.title} onOpen={() => setLightbox(true)}>
       {/* eslint-disable-next-line @next/next/no-img-element -- real local data-URL cover */}
       <img src={preset.coverUrl} alt="" className="h-full w-full object-cover" />
-    </DetailStageFigure>
-  ) : undefined;
+    </DetailArt>
+  ) : (
+    <DetailArtPlaceholder icon={SlidersHorizontal} />
+  );
 
   return (
     <DetailShell
-      stage={stage}
+      band={
+        <DetailBand
+          art={art}
+          // eslint-disable-next-line @next/next/no-img-element -- decorative tint of the same cover
+          backdrop={preset.coverUrl ? <img src={preset.coverUrl} alt="" className="h-full w-full object-cover" /> : undefined}
+          kicker={
+            <div className="flex flex-wrap items-center gap-2">
+              <ContentTypeLabel icon={SlidersHorizontal} label={t("preset.singular")} detail={category} />
+              {preset.status === "draft" ? (
+                <Badge variant="warning">{t("preset.draftBadge")}</Badge>
+              ) : preset.visibility === "private" ? (
+                <Badge variant="neutral">{t("preset.privateBadge")}</Badge>
+              ) : null}
+            </div>
+          }
+          title={<DetailTitle>{preset.title}</DetailTitle>}
+          byline={<DetailByline person={preset.creator} createdAt={preset.createdAt} language={language} />}
+        />
+      }
       aside={aside}
       actions={
-          <DetailActionBar trailing={<EngageShare target={{ contentType: "preset", preset }} />}>
-            <EngageLike id={preset.id} likeCount={preset.likeCount} contentType="preset" size={18} />
-            <EngageCommentCount presetId={preset.id} baseCount={preset.commentCount} size={18} />
-            <EngageSave presetId={preset.id} saveCount={preset.saveCount} size={18} />
-            <EngageStatistics
-              target={{ contentType: "preset", contentId: preset.id, likeCount: preset.likeCount, commentCount: preset.commentCount, saveCount: preset.saveCount }}
-              size={18}
-             
-            />
-          </DetailActionBar>
+        <DetailActionBar
+          primary={
+            <Link href={`/studio?preset=${preset.id}`} className={buttonClassName({ size: "lg", className: "h-14 rounded-full px-7 shadow-pop" })}>
+              <WandSparkles size={18} aria-hidden /> {t("studio.openInStudio")}
+            </Link>
+          }
+          extra={
+            <>
+              {!isOwn && <FollowButton user={preset.creator} />}
+              <PostMenu
+                presetId={preset.id}
+                communityId={preset.communityId}
+                authorId={preset.creator.id}
+                onDeleted={() => {
+                  removeFromCache(preset.id);
+                  router.push("/presets");
+                }}
+              />
+            </>
+          }
+          trailing={<EngageShare target={{ contentType: "preset", preset }} />}
+        >
+          <EngageLike id={preset.id} likeCount={preset.likeCount} contentType="preset" size={20} />
+          <EngageCommentCount presetId={preset.id} baseCount={preset.commentCount} size={20} />
+          <EngageSave presetId={preset.id} saveCount={preset.saveCount} size={20} />
+          <EngageStatistics
+            target={{ contentType: "preset", contentId: preset.id, likeCount: preset.likeCount, commentCount: preset.commentCount, saveCount: preset.saveCount }}
+            size={20}
+          />
+        </DetailActionBar>
       }
     >
       <article className="min-w-0 space-y-8">
-        <header className="space-y-4">
-          <DetailByline
-            person={preset.creator}
-            createdAt={preset.createdAt}
-            language={language}
-            trailing={
-              <>
-                {!isOwn && <FollowButton user={preset.creator} />}
-                <PostMenu
-                  presetId={preset.id}
-                  communityId={preset.communityId}
-                  authorId={preset.creator.id}
-                  onDeleted={() => {
-                    removeFromCache(preset.id);
-                    router.push("/presets");
-                  }}
-                />
-              </>
-            }
-          />
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <ContentTypeLabel icon={SlidersHorizontal} label={t("preset.singular")} detail={category} />
-            {preset.status === "draft" ? (
-              <Badge variant="warning">{t("preset.draftBadge")}</Badge>
-            ) : preset.visibility === "private" ? (
-              <Badge variant="neutral">{t("preset.privateBadge")}</Badge>
-            ) : null}
-          </div>
-          <div className="space-y-3">
-            <DetailTitle>{preset.title}</DetailTitle>
-            {preset.description && <DetailLede>{preset.description}</DetailLede>}
-          </div>
-        </header>
+        {preset.description && <DetailLede>{preset.description}</DetailLede>}
 
         {tabItems.length > 1 && <Tabs items={tabItems} active={tab} onChange={setTab} ariaLabel={t("history.sectionsAria")} />}
 
@@ -194,9 +209,6 @@ export function PresetDetailView({ presetId }: { presetId?: string } = {}) {
           </div>
           <div className="flex w-full flex-col gap-2 sm:w-auto sm:items-stretch">
             {!isOwn && <PresetSaveCta presetId={preset.id} saveCount={preset.saveCount} />}
-            <Link href={`/studio?preset=${preset.id}`} className={buttonClassName({ variant: isOwn ? "primary" : "outline", size: "lg" })}>
-              <WandSparkles size={18} aria-hidden /> {t("studio.openInStudio")}
-            </Link>
           </div>
         </div>
 
@@ -219,9 +231,6 @@ export function PresetDetailView({ presetId }: { presetId?: string } = {}) {
           )}
         </DetailSection>
 
-        <DetailMetaCard toolLabel={t("tool.recommendedLabel")} toolRefs={preset.tools} fallbackTool={t("preset.generalTool")} hasChips={preset.tags.length > 0}>
-          <DetailTags className="contents" tags={preset.tags} />
-        </DetailMetaCard>
         </>)}
 
         <DetailComments>

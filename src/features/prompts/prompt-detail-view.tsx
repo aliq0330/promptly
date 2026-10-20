@@ -39,7 +39,7 @@ import { cn, formatCount, promptHref, relationMapHref } from "@/lib/utils";
 import { splitSourceNotes } from "@/lib/source-notes";
 import { SourceNotes } from "@/features/content/source-notes";
 import { FollowButton } from "@/features/profile/follow-button";
-import { DetailActionBar, DetailAside, DetailByline, DetailComments, DetailLede, DetailSection, DetailShell, DetailStageFigure, DetailStageThumb, DetailTags, DetailTitle } from "@/features/content/detail-parts";
+import { AsideSection, DetailActionBar, DetailArt, DetailArtPlaceholder, DetailArtThumb, DetailAside, DetailBand, DetailByline, DetailComments, DetailLede, DetailSection, DetailShell, DetailTags, DetailTitle } from "@/features/content/detail-parts";
 import { ReferenceRequirementNotes } from "@/features/content/reference-requirements";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Prompt, PromptVariable, PromptVersion } from "@/types";
@@ -138,11 +138,11 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
     ...(dnaSections.length > 0 ? [{ key: "dna" as const, label: t("promptTabs.dna") }] : []),
   ];
 
-  // The output on the dark stage: the author's own video/audio result, else the picture(s); a text-only prompt has no stage.
-  const stage = prompt.contentType === "video" || prompt.contentType === "audio" ? (
+  // The album art: the author's own video/audio result, else the picture(s), else the type's icon.
+  const art = prompt.contentType === "video" || prompt.contentType === "audio" ? (
     <PromptPlayableOutput prompt={prompt} />
   ) : media ? (
-    <DetailStageFigure
+    <DetailArt
       ratio={clampedAspectRatio(media.width, media.height)}
       caption={t("prompt.outputCaption")}
       onOpen={() => setLightboxIndex(0)}
@@ -150,32 +150,69 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
       thumbnails={
         prompt.media.length > 1
           ? prompt.media.slice(1).map((extra, index) => (
-              <DetailStageThumb key={extra.id} onOpen={() => setLightboxIndex(index + 1)}>
+              <DetailArtThumb key={extra.id} onOpen={() => setLightboxIndex(index + 1)}>
                 <StorageImg src={extra.url} alt={extra.alt} className="h-full w-full object-cover" />
-              </DetailStageThumb>
+              </DetailArtThumb>
             ))
           : undefined
       }
     >
-      <StorageImage src={media.url} alt={media.alt} fill sizes="(min-width: 1024px) 60vw, 100vw" className="object-cover" />
-    </DetailStageFigure>
-  ) : undefined;
+      <StorageImage src={media.url} alt={media.alt} fill sizes="(min-width: 768px) 520px, 100vw" className="object-cover" />
+    </DetailArt>
+  ) : (
+    <DetailArtPlaceholder icon={typeMeta.icon} />
+  );
 
   return (
     <DetailShell
       entrance={morphingCover ? "fade" : "rise"}
-      stage={stage}
+      band={
+        <DetailBand
+          art={art}
+          backdrop={media ? <StorageImage src={media.url} alt="" fill sizes="50vw" className="object-cover" /> : undefined}
+          kicker={<ContentTypeLabel icon={typeMeta.icon} label={`${t(typeMeta.labelKey)} Prompt`} detail={null} />}
+          title={<DetailTitle>{prompt.title}</DetailTitle>}
+          byline={
+            <DetailByline
+              person={prompt.author}
+              createdAt={prompt.createdAt}
+              language={language}
+              meta={prompt.copyCount > 0 ? (prompt.copyCount === 1 ? t("prompt.usedOnce") : t("prompt.usedCount", { count: formatCount(prompt.copyCount) })) : undefined}
+            />
+          }
+        />
+      }
       actions={
-          <DetailActionBar trailing={<EngageShare target={{ contentType: "prompt", prompt }} />}>
-            <EngageLike id={prompt.id} likeCount={prompt.likeCount} size={18} />
-            <EngageCommentCount promptId={prompt.id} baseCount={prompt.commentCount} size={18} />
-            <EngageSave promptId={prompt.id} saveCount={prompt.saveCount} size={18} />
-            <EngageStatistics target={{ contentType: "prompt", contentId: prompt.id, likeCount: prompt.likeCount, commentCount: prompt.commentCount, saveCount: prompt.saveCount, copyCount: prompt.copyCount }} size={18} />
-            <RelationMapLink kind="prompt" id={prompt.id} />
-          </DetailActionBar>
+        <DetailActionBar
+          primary={<CopyPromptButton text={displayText} promptId={prompt.id} size="lg" variant="primary" label={t("prompt.copyPrompt")} />}
+          extra={
+            <>
+              {!isOwn && <FollowButton user={prompt.author} />}
+              <PostMenu promptId={prompt.id} communityId={prompt.communityId} authorId={prompt.author.id} />
+            </>
+          }
+          trailing={<EngageShare target={{ contentType: "prompt", prompt }} />}
+        >
+          <EngageLike id={prompt.id} likeCount={prompt.likeCount} size={20} />
+          <EngageCommentCount promptId={prompt.id} baseCount={prompt.commentCount} size={20} />
+          <EngageSave promptId={prompt.id} saveCount={prompt.saveCount} size={20} />
+          <EngageStatistics target={{ contentType: "prompt", contentId: prompt.id, likeCount: prompt.likeCount, commentCount: prompt.commentCount, saveCount: prompt.saveCount, copyCount: prompt.copyCount }} size={20} />
+          <RelationMapLink kind="prompt" id={prompt.id} />
+        </DetailActionBar>
       }
       aside={
         <DetailAside>
+          <AsideSection id="detail-about-title" title={t("profile.tabAbout")} bare>
+            <DetailMetaCard
+              toolLabel={t("tool.recommendedLabel")}
+              toolRefs={prompt.tools}
+              legacyTool={prompt.tool}
+              hasChips={Boolean(prompt.category) || prompt.tags.length > 0}
+            >
+              <TaxonomyLinks className="contents" contentType={prompt.contentType} category={prompt.category} subcategory={prompt.subcategory} />
+              <DetailTags className="contents" tags={prompt.tags} />
+            </DetailMetaCard>
+          </AsideSection>
           <RelatedPrompts prompt={prompt} />
           <ContributorsPanel key={contributorsRefreshKey} promptId={prompt.id} />
         </DetailAside>
@@ -187,30 +224,14 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
             isPostFlashed && "bg-primary/10 ring-1 ring-primary/40",
           )}
         >
-          <header className="space-y-4">
-            <DetailByline
-              person={prompt.author}
-              createdAt={prompt.createdAt}
-              language={language}
-              meta={prompt.copyCount > 0 ? (prompt.copyCount === 1 ? t("prompt.usedOnce") : t("prompt.usedCount", { count: formatCount(prompt.copyCount) })) : undefined}
-              trailing={
-                <>
-                  {!isOwn && <FollowButton user={prompt.author} />}
-                  <PostMenu promptId={prompt.id} communityId={prompt.communityId} authorId={prompt.author.id} />
-                </>
-              }
+          <div className="space-y-3 empty:hidden">
+            {descriptionBody && <DetailLede>{descriptionBody}</DetailLede>}
+            <SourceNotes notes={sourceNotes} />
+            <ReferenceRequirementNotes
+              contentType={prompt.contentType}
+              value={{ image: prompt.requiresReferenceImage, video: prompt.requiresReferenceVideo, audio: prompt.requiresReferenceAudio }}
             />
-            <ContentTypeLabel icon={typeMeta.icon} label={`${t(typeMeta.labelKey)} Prompt`} detail={null} />
-            <div className="space-y-3">
-              <DetailTitle>{prompt.title}</DetailTitle>
-              {descriptionBody && <DetailLede>{descriptionBody}</DetailLede>}
-              <SourceNotes notes={sourceNotes} />
-              <ReferenceRequirementNotes
-                contentType={prompt.contentType}
-                value={{ image: prompt.requiresReferenceImage, video: prompt.requiresReferenceVideo, audio: prompt.requiresReferenceAudio }}
-              />
-            </div>
-          </header>
+          </div>
 
           {lightboxIndex !== null && (
             <ImageLightbox
@@ -285,16 +306,6 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
           )}
 
           {activeTab === "dna" && <PromptDnaDisplay sections={dnaSections} promptTitle={prompt.title} mapHref={relationMapHref({ kind: "prompt", id: prompt.id })} />}
-
-          <DetailMetaCard
-            toolLabel={t("tool.recommendedLabel")}
-            toolRefs={prompt.tools}
-            legacyTool={prompt.tool}
-            hasChips={Boolean(prompt.category) || prompt.tags.length > 0}
-          >
-            <TaxonomyLinks className="contents" contentType={prompt.contentType} category={prompt.category} subcategory={prompt.subcategory} />
-            <DetailTags className="contents" tags={prompt.tags} />
-          </DetailMetaCard>
 
           <PromptResultsSection target={{ type: "prompt", promptId: prompt.id, promptText: livePromptText }} />
 
