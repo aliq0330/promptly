@@ -210,16 +210,16 @@ await scenario("9. Owner: beş sekme (Akış ilk, Sohbet sekme DEĞİL); başlı
   assert.equal(await page.getByRole("tab", { name: "Akış" }).getAttribute("aria-selected"), "true", "the feed is the landing tab");
   assert.equal(await page.getByRole("tab", { name: "Sohbet" }).count(), 0, "chat is an action in the header, not a tab");
   assert.equal(await page.getByRole("tab", { name: "Genel bakış" }).count(), 0, "the overview tab is gone");
-  await page.locator("header").getByText("Görsel", { exact: true }).waitFor();
-  await page.locator("header").getByText("Sahip", { exact: true }).waitFor();
+  await page.locator("header, [data-community-actions]").getByText("Görsel", { exact: true }).waitFor();
+  await page.locator("header, [data-community-actions]").getByText("Sahip", { exact: true }).waitFor();
   await page.locator("header [data-community-description]").waitFor();
-  await page.locator("header a", { hasText: "Sohbeti aç" }).waitFor();
+  await page.locator("[data-community-actions] a", { hasText: "Sohbeti aç" }).waitFor();
 }, { setup: (db) => seed(db, { myRole: "owner" }) });
 
 await scenario("10. Üye: Yönetim sekmesi yok; durum 'Üyesin' görünür", async ({ page }) => {
   await open(page, C1);
   assert.deepEqual(await tabNames(page), ["Akış", "Etkinlikler", "Üyeler", "Hakkında ve kurallar"]);
-  await page.locator("header").getByRole("button", { name: /Katıldın/ }).waitFor();
+  await page.locator("header, [data-community-actions]").getByRole("button", { name: /Katıldın/ }).waitFor();
   await page.goto(`${BASE}/communities/local?id=${C1}&tab=manage`);
   await page.getByRole("tab", { name: "Akış" }).waitFor();
   assert.equal(await page.getByRole("tab", { name: "Yönetim" }).count(), 0, "forged ?tab=manage falls back for a plain member");
@@ -247,9 +247,9 @@ await scenario("11. Üye olmayan, açık topluluk: salt-okunur sekmeler (Üyeler
   await open(page, C1);
   assert.deepEqual(await tabNames(page), ["Akış", "Etkinlikler", "Hakkında ve kurallar"]);
   assert.equal(await page.getByRole("region", { name: "Üyelik durumu" }).count(), 0, "no duplicate join strip: the single join button lives in the header");
-  await page.locator("header").getByRole("button", { name: /topluluğuna katıl$/ }).click();
+  await page.locator("header, [data-community-actions]").getByRole("button", { name: /topluluğuna katıl$/ }).click();
   await page.getByRole("tab", { name: "Üyeler" }).waitFor();
-  await page.locator("header").getByRole("button", { name: /Katıldın/ }).waitFor();
+  await page.locator("header, [data-community-actions]").getByRole("button", { name: /Katıldın/ }).waitFor();
   assert.equal(calls(db, "join_community", "RPC")[0].body.p_accept_rules, false);
 }, { setup: (db) => seed(db, { myRole: "none" }) });
 
@@ -274,7 +274,7 @@ await scenario("11c. Erişimi olmayan kapalı topluluk: 'bulunamadı' (varlığ�
 await scenario("12. Kapatılmış topluluk: salt-okunur uyarısı; akışta paylaş düğmesi yok; owner yeniden açabilir", async ({ page, db }) => {
   await open(page, C1);
   await page.getByText(/Bu topluluk kapatılmış: salt-okunur/).waitFor();
-  await page.locator("header").getByText("Kapatıldı", { exact: true }).waitFor();
+  await page.locator("header, [data-community-actions]").getByText("Kapatıldı", { exact: true }).waitFor();
   await page.getByRole("tab", { name: "Akış", exact: true }).click();
   assert.equal(await page.getByRole("button", { name: "Gönderi oluştur" }).count(), 0);
   await page.goto(`${BASE}/communities/local?id=${C1}&tab=manage&section=settings`);
@@ -557,7 +557,7 @@ await scenario("18. Sohbet: başlıktaki 'Sohbeti aç' Mesajlar çalışma alan�
   await page.goBack();
   await page.waitForTimeout(300);
   await open(page, C1);
-  await page.locator("header").getByRole("link", { name: "Sohbeti aç" }).click();
+  await page.locator("header, [data-community-actions]").getByRole("link", { name: "Sohbeti aç" }).click();
   await page.waitForURL(/messages\/local\/?\?id=/);
   await page.getByRole("link", { name: "Topluluk sayfasına git" }).click();
   await page.waitForURL(/communities\/local\/?\?id=/);
@@ -636,7 +636,7 @@ await scenario("22. İngilizce: Topluluklar sayfası, detay sekmeleri, rapor/duy
   await page.getByPlaceholder("Search communities, topics or tags…").waitFor();
   await open(page, C1);
   assert.deepEqual(await tabNames(page), ["Feed", "Events", "Members", "About & rules", "Manage"]);
-  await page.locator("header").getByRole("link", { name: "Open chat" }).waitFor();
+  await page.locator("header, [data-community-actions]").getByRole("link", { name: "Open chat" }).waitFor();
   await open(page, C1, "manage&section=announcements");
   await page.getByRole("button", { name: "Publish announcement" }).waitFor();
   await page.getByRole("tab", { name: "Events" }).click();
@@ -672,7 +672,7 @@ const GUEST_SEARCH = "Topluluk ara (kapalı olanlar da çıkar)…"; // ziyaret�
 
 await scenario("24. Başlıktaki tek üyelik düğmesi: Katıl → Katıldın ▼ → 'Topluluktan ayrıl' (onaylı, tek istek) → yeniden Katıl; 'Kaydet' düğmesi yok", async ({ page, db }) => {
   await open(page, C1);
-  const head = page.locator("header");
+  const head = page.locator("header, [data-community-actions]");
   assert.equal(await page.getByRole("button", { name: /^Kaydet(ildi)?$/ }).count(), 0, "the save button is gone");
   await joinBtn(head).click();
   const joined = head.getByRole("button", { name: /Katıldın/ });
@@ -689,7 +689,7 @@ await scenario("24. Başlıktaki tek üyelik düğmesi: Katıl → Katıldın �
 
 await scenario("24b. Sahip 'Katıldın ▼' menüsünde ayrılamaz: öğe devre dışı ve neden yazar", async ({ page, db }) => {
   await open(page, C1);
-  await page.locator("header").getByRole("button", { name: /üyelik menüsü/ }).click();
+  await page.locator("header, [data-community-actions]").getByRole("button", { name: /üyelik menüsü/ }).click();
   assert.equal(await page.getByRole("menuitem", { name: "Topluluktan ayrıl" }).isDisabled(), true);
   await page.getByText("Sahipsin: ayrılmadan önce sahipliği başka bir üyeye devret.").waitFor();
   assert.equal(calls(db, "rpc/leave_chat_group").length, 0);
@@ -761,10 +761,10 @@ await scenario("25d. Kapalı topluluk sayfası (üye değil): sekme yok, içerik
   await open(page, C2);
   assert.equal(await page.getByRole("tab").count(), 0, "no content tabs before membership");
   await page.getByText("Bu topluluk kapalı", { exact: true }).waitFor();
-  await page.locator("header").getByText("Kapalı", { exact: true }).waitFor();
-  await requestBtn(page.locator("header")).click();
+  await page.locator("header, [data-community-actions]").getByText("Kapalı", { exact: true }).waitFor();
+  await requestBtn(page.locator("header, [data-community-actions]")).click();
   await page.getByText("Katılma isteğin değerlendiriliyor").waitFor();
-  await page.locator("header").getByRole("button", { name: /İstek gönderildi/ }).waitFor();
+  await page.locator("header, [data-community-actions]").getByRole("button", { name: /İstek gönderildi/ }).waitFor();
   assert.equal(await page.getByRole("tab").count(), 0, "a pending request still gives no content access");
 }, { setup: visibilitySetup });
 
@@ -897,15 +897,15 @@ await scenario("29b. Ziyaretçi · topluluk sayfası: herkese açıkta salt-okun
   await open(page, C1);
   assert.deepEqual(await tabNames(page), ["Akış", "Etkinlikler", "Hakkında ve kurallar"]);
   await page.getByText("Herkese açık gönderi").waitFor();
-  assert.equal(await page.locator("header a", { hasText: "Sohbeti aç" }).count(), 0);
-  await joinBtn(page.locator("header")).click();
+  assert.equal(await page.locator("[data-community-actions] a", { hasText: "Sohbeti aç" }).count(), 0);
+  await joinBtn(page.locator("header, [data-community-actions]")).click();
   await page.getByText(LOGIN_TEXT).waitFor();
   await page.keyboard.press("Escape");
   await open(page, C2);
   assert.equal(await page.getByRole("tab").count(), 0, "a visitor sees no tabs of a private (closed) community");
   await page.getByText("Bu topluluk kapalı", { exact: true }).waitFor();
   assert.equal(await page.getByText("Kapalı gönderi").count(), 0);
-  await requestBtn(page.locator("header")).click();
+  await requestBtn(page.locator("header, [data-community-actions]")).click();
   await page.getByText(LOGIN_TEXT).waitFor();
   await page.keyboard.press("Escape");
   await page.goto(`${BASE}/communities/local?id=${C3}`);
@@ -981,7 +981,7 @@ await scenario("32. Sekme yeniden görünür olunca topluluk sessizce yenilenir:
   await page.clock.fastForward(60 * 1000);
   await page.evaluate(() => document.dispatchEvent(new Event("visibilitychange")));
   await page.getByRole("tab", { name: "Üyeler" }).waitFor({ state: "detached" });
-  await joinBtn(page.locator("header")).waitFor();
+  await joinBtn(page.locator("header, [data-community-actions]")).waitFor();
 }, { setup: (db) => seed(db, { myRole: "member", visibility: "public" }) });
 
 console.log("");

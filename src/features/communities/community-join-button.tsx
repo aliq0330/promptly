@@ -56,7 +56,8 @@ export function CommunityJoinButton({
   onChange: (next: JoinState) => void;
   onToast: (message: string) => void;
   onInvited?: () => void;
-  size?: "sm" | "md";
+  /** "lg": the community page's actions row (docs/history/203-*). */
+  size?: "sm" | "md" | "lg";
 }) {
   const { t } = useTranslation();
   const { user } = useAuth();

@@ -481,7 +481,7 @@ await scenario("25b. ?panel=settings sohbet ayarlarını bilgi penceresinde aça
 
 await scenario("26. Topluluk sayfası: yetkiliye başlıkta 'N bekleyen istek' kısayolu + Üyeler sekmesinde sayaç; üyeye ve 0 istekte hiçbiri yok", async ({ page, db }) => {
   await openCommunity(page);
-  const chip = page.locator("header [data-pending-requests]");
+  const chip = page.locator("[data-community-actions] [data-pending-requests]");
   await chip.getByText("2 bekleyen istek").waitFor();
   await page.getByRole("tab", { name: /Üyeler/ }).getByText("2").waitFor();
   assert.equal(await page.getByRole("tab", { name: "Akış" }).getAttribute("aria-selected"), "true", "the feed stays the landing tab");
@@ -502,7 +502,7 @@ await scenario("26b. Sıradan üye ve istek yokken: başlıkta kısayol, sayaç 
 
 await scenario("27. Topluluk ↔ sohbet geçişi: başlıktaki 'Sohbeti aç' sohbeti, sohbet başlığındaki simge ve bilgi penceresi topluluk sayfasını açar", async ({ page }) => {
   await openCommunity(page);
-  await page.locator("header a[data-open-chat]").click();
+  await page.locator("[data-community-actions] a[data-open-chat]").click();
   await page.waitForURL(/messages\/local\/?\?id=/);
   await page.getByRole("link", { name: "Topluluk sayfasına git" }).click();
   await page.waitForURL(/communities\/local\/?\?id=/);

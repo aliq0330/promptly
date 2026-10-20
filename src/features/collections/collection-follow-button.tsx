@@ -12,7 +12,15 @@ import { useTranslation } from "@/lib/i18n/language-provider";
  * once, `onCountChange` lets the page move the follower count, and a refused change (limit,
  * network) rolls both back and says why.
  */
-export function CollectionFollowButton({ collectionId, onCountChange }: { collectionId: string; onCountChange: (delta: 1 | -1) => void }) {
+export function CollectionFollowButton({
+  collectionId,
+  onCountChange,
+  className,
+}: {
+  collectionId: string;
+  onCountChange: (delta: 1 | -1) => void;
+  className?: string;
+}) {
   const { t } = useTranslation();
   const { user } = useAuth();
   const userId = user?.id ?? null;
@@ -55,7 +63,7 @@ export function CollectionFollowButton({ collectionId, onCountChange }: { collec
 
   return (
     <div className="flex flex-col items-start gap-1">
-      <FollowButtonView isFollowing={following} canFollow={Boolean(userId)} loading={Boolean(userId) && !ready} size="md" toggle={() => void toggle()} />
+      <FollowButtonView isFollowing={following} canFollow={Boolean(userId)} loading={Boolean(userId) && !ready} size="md" className={className} toggle={() => void toggle()} />
       {problem && (
         <p className="text-caption text-danger" role="alert">
           {problem === "limit" ? t("collection.followLimit") : t("collection.followFailed")}

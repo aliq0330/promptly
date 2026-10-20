@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { createContext, useContext } from "react";
 import { Avatar } from "@/components/ui/avatar";
 import { rememberCardMedia } from "@/lib/card-transition";
 import { cn, profileHref } from "@/lib/utils";
@@ -68,17 +69,26 @@ export function ContentCard({
  */
 export function ContentGrid({
   as: Tag = "div",
-  columns = "sm:columns-2 xl:columns-3",
+  columns,
   className,
   children,
   ...rest
 }: React.HTMLAttributes<HTMLElement> & { as?: "div" | "ul"; columns?: string; [data: `data-${string}`]: string | undefined }) {
+  const pageColumns = useContext(ContentGridColumnsContext);
+  columns ??= pageColumns ?? "sm:columns-2 xl:columns-3";
   return (
     <Tag {...rest} className={cn("sm:gap-4", columns, className)}>
       {children}
     </Tag>
   );
 }
+
+/**
+ * A page whose lists sit beside a side column (profile, collection: docs/history/203-*) sets the columns once for every
+ * `ContentGrid` under it — its tabs' lists are separate components that each draw their own grid.
+ */
+const ContentGridColumnsContext = createContext<string | null>(null);
+export const ContentGridColumns = ContentGridColumnsContext.Provider;
 
 /** One cell of a `ContentGrid`: never split across columns; the gap between boxes (12px on a phone, 16px from `sm`). */
 export const CONTENT_GRID_ITEM_CLASS = "break-inside-avoid pb-3 sm:pb-4";

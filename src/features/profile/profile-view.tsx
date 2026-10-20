@@ -1,10 +1,12 @@
 "use client";
 
-import { PageContainer } from "@/components/ui/page-header";
-
 import { useEffect, useMemo, useState } from "react";
 import { Heart, SearchX, Sparkles, Workflow as WorkflowIcon } from "lucide-react";
-import { ProfileHeader } from "./profile-header";
+import { ProfileBand } from "./profile-header";
+import { OtherProfileActions, OwnProfileActions } from "./profile-actions";
+import { ProfileAside } from "./profile-aside";
+import { useFollowState } from "./use-follow-state";
+import { DetailShell } from "@/features/content/detail-parts";
 import { StoryHighlightsRow } from "@/features/stories/story-highlights";
 import { useViewMode } from "@/features/content/view-mode-store";
 import { ViewModeControls } from "@/features/content/view-mode-switcher";
@@ -29,7 +31,7 @@ import { WorkflowCard } from "@/features/workflows/workflow-card";
 import { fetchPresetsByCreator } from "@/lib/supabase/presets";
 import { ProfilePresetsPanel } from "@/features/presets/profile-presets-panel";
 import type { Collection, Preset, Prompt, PromptContentType, PromptRequest, UserProfile, Workflow } from "@/types";
-import { CONTENT_GRID_ITEM_CLASS, ContentGrid } from "@/features/content/content-card";
+import { CONTENT_GRID_ITEM_CLASS, ContentGrid, ContentGridColumns } from "@/features/content/content-card";
 
 function sortPrompts(prompts: Prompt[], sort: ProfileSortKey): Prompt[] {
   const sorted = [...prompts];
@@ -58,6 +60,8 @@ export function ProfileView({
 }) {
   const { t } = useTranslation();
   const { user: authUser } = useAuth();
+  // One follow state for the band's follower count and the actions row's button (see FollowButtonView's comment).
+  const followState = useFollowState(user);
 
   const [authorPrompts, setAuthorPrompts] = useState(initialAuthorPrompts);
   useEffect(() => {
@@ -209,131 +213,145 @@ export function ProfileView({
   }
 
   return (
-    <PageContainer className="space-y-5">
-      <ProfileHeader
-        user={user}
-        isOwnProfile={isOwnProfile}
-        postCounts={postCounts}
-        reuseCount={reuseCount}
-        onSelectPosts={() => setActiveTab("prompts")}
-      />
-      {/* Öne çıkan hikâyeler (docs/history/198-*); topluluk halkalarının yerini aldı. */}
-      <StoryHighlightsRow ownerId={user.id} isOwnProfile={isOwnProfile} />
-      <CollectionRings collections={publicCollections} />
+    // Albüm (docs/history/203-*): band (avatar-tinted) · actions row · [tabs + lists | Hakkında from `lg`].
+    <ContentGridColumns value="sm:columns-2">
+      <DetailShell
+        band={
+          <ProfileBand
+            user={user}
+            isOwnProfile={isOwnProfile}
+            postCounts={postCounts}
+            followerCount={followState.followerCount}
+            reuseCount={reuseCount}
+            onSelectPosts={() => setActiveTab("prompts")}
+          />
+        }
+        actions={isOwnProfile ? <OwnProfileActions user={user} /> : <OtherProfileActions user={user} followState={followState} />}
+        aside={<ProfileAside user={user} />}
+      >
+        <div className="space-y-5">
+          {/* Öne çıkan hikâyeler (docs/history/198-*); topluluk halkalarının yerini aldı. */}
+          <StoryHighlightsRow ownerId={user.id} isOwnProfile={isOwnProfile} />
+          <CollectionRings collections={publicCollections} />
 
-      <ProfileTabs tabs={tabs} active={activeTab} onChange={setActiveTab} />
+          <ProfileTabs tabs={tabs} active={activeTab} onChange={setActiveTab} />
 
-      <div className="space-y-4">
-        {activeTab === "about" ? (
-          // The contribution map moved here from under the header (it took a full-width card before every visit).
-          <div className="space-y-5">
-            <ProfileAbout user={user} />
-            <ContributionMap userId={user.id} />
-          </div>
-        ) : activeTab === "requests" ? (
-          authorRequests.length === 0 ? (
-            <ProfileEmptyState
-              icon={Sparkles}
-              title={t("profile.noRequestsYetTitle")}
-              description={
-                isOwnProfile
-                  ? t("profile.noRequestsYetOwnBody")
-                  : t("profile.noRequestsYetOtherBody")
-              }
-              action={isOwnProfile ? { label: t("create.requestTitle"), href: "/requests/new" } : undefined}
-            />
-          ) : (
-            <>
-              <div className="flex justify-end">
-                <ViewModeControls />
+          <div className="space-y-4">
+            {activeTab === "about" ? (
+              // The contribution map moved here from under the header (it took a full-width card before every visit).
+              // From `lg` the side column already shows the about details, so the tab keeps only the map there.
+              <div className="space-y-5">
+                <div className="lg:hidden">
+                  <ProfileAbout user={user} />
+                </div>
+                <ContributionMap userId={user.id} />
               </div>
-              <RequestList requests={authorRequests} />
-            </>
-          )
-        ) : activeTab === "workflows" ? (
-          workflows.length === 0 ? (
-            <ProfileEmptyState
-              icon={WorkflowIcon}
-              title={t("workflow.noneYetTitle")}
-              description={isOwnProfile ? t("workflow.noneYetBody") : t("workflow.noneYetOtherBody")}
-              action={isOwnProfile ? { label: t("workflow.create"), href: "/workflows/create" } : undefined}
-            />
-          ) : (
-            <>
-              <div className="flex justify-end">
-                <ViewModeControls />
-              </div>
-              {viewMode === "focus" ? (
-                <FocusGrid items={workflows.map((data) => ({ kind: "workflow" as const, data }))} />
+            ) : activeTab === "requests" ? (
+              authorRequests.length === 0 ? (
+                <ProfileEmptyState
+                  icon={Sparkles}
+                  title={t("profile.noRequestsYetTitle")}
+                  description={
+                    isOwnProfile
+                      ? t("profile.noRequestsYetOwnBody")
+                      : t("profile.noRequestsYetOtherBody")
+                  }
+                  action={isOwnProfile ? { label: t("create.requestTitle"), href: "/requests/new" } : undefined}
+                />
               ) : (
-                <ContentGrid>
-                  {workflows.map((workflow) => (
-                    <div key={workflow.id} className={CONTENT_GRID_ITEM_CLASS}>
-                      <WorkflowCard workflow={workflow} />
-                    </div>
-                  ))}
-                </ContentGrid>
-              )}
-            </>
-          )
-        ) : activeTab === "presets" ? (
-          <ProfilePresetsPanel ownerId={user.id} isOwn={isOwnProfile} created={presets} />
-        ) : activeTab === "saved" ? (
-          // No more separate flat "Tümü" list here — Kaydedilenler IS the
-          // collections view now, "Genel" (the default, general-save
-          // bucket) always shown first (CLAUDE.md Bölüm 9.22 §1). Removed
-          // structurally, not hidden: no sub-tab state, no filter/sort
-          // toolbar, no second data source for this tab anymore.
-          <CollectionsPanel ownerId={user.id} ownerProfile={user} />
-        ) : activeTab === "collections" ? (
-          <div className="grid grid-cols-2 gap-x-3 gap-y-5 pt-2 sm:grid-cols-3 sm:gap-x-4 lg:grid-cols-4">
-            {publicCollections.map((collection) => (
-              <CollectionCard key={collection.id} collection={collection} readOnly />
-            ))}
-          </div>
-        ) : activeTab === "drafts" ? (
-          // Owner-only (the tab itself is only ever offered when
-          // isOwnProfile, see `tabs` above) — all four content types'
-          // drafts, reusing the same fetch/delete/continue flow as the
-          // per-creation-page "Taslaklar (N)" button (Bölüm 9.65).
-          <ProfileDraftsPanel userId={user.id} />
-        ) : (
-          <>
-            {activeSource.length > 0 && (
-              <ProfileToolbar
-                availableTypes={availableTypes}
-                activeType={activeType}
-                onTypeChange={setActiveType}
-                sort={sort}
-                onSortChange={setSort}
-                search={search}
-                onSearchChange={setSearch}
-                showSearch={activeSource.length > 8}
-                hasActiveFilters={hasActiveFilters}
-                onClear={clearFilters}
-              />
-            )}
-
-            <ProfileContentGrid
-              prompts={filtered}
-              isOwnProfile={isOwnProfile && activeTab === "prompts"}
-              onDeleted={handleDeleted}
-              emptyState={
-                hasActiveFilters ? (
-                  <ProfileEmptyState
-                    icon={SearchX}
-                    title={t("profile.noMatchForFilterTitle")}
-                    description={t("profile.noMatchForFilterBody")}
+                <>
+                  <div className="flex justify-end">
+                    <ViewModeControls />
+                  </div>
+                  <RequestList requests={authorRequests} />
+                </>
+              )
+            ) : activeTab === "workflows" ? (
+              workflows.length === 0 ? (
+                <ProfileEmptyState
+                  icon={WorkflowIcon}
+                  title={t("workflow.noneYetTitle")}
+                  description={isOwnProfile ? t("workflow.noneYetBody") : t("workflow.noneYetOtherBody")}
+                  action={isOwnProfile ? { label: t("workflow.create"), href: "/workflows/create" } : undefined}
+                />
+              ) : (
+                <>
+                  <div className="flex justify-end">
+                    <ViewModeControls />
+                  </div>
+                  {viewMode === "focus" ? (
+                    <FocusGrid items={workflows.map((data) => ({ kind: "workflow" as const, data }))} />
+                  ) : (
+                    <ContentGrid>
+                      {workflows.map((workflow) => (
+                        <div key={workflow.id} className={CONTENT_GRID_ITEM_CLASS}>
+                          <WorkflowCard workflow={workflow} />
+                        </div>
+                      ))}
+                    </ContentGrid>
+                  )}
+                </>
+              )
+            ) : activeTab === "presets" ? (
+              <ProfilePresetsPanel ownerId={user.id} isOwn={isOwnProfile} created={presets} />
+            ) : activeTab === "saved" ? (
+              // No more separate flat "Tümü" list here — Kaydedilenler IS the
+              // collections view now, "Genel" (the default, general-save
+              // bucket) always shown first (CLAUDE.md Bölüm 9.22 §1). Removed
+              // structurally, not hidden: no sub-tab state, no filter/sort
+              // toolbar, no second data source for this tab anymore.
+              <CollectionsPanel ownerId={user.id} ownerProfile={user} />
+            ) : activeTab === "collections" ? (
+              <div className="grid grid-cols-2 gap-x-3 gap-y-5 pt-2 sm:grid-cols-3 sm:gap-x-4">
+                {publicCollections.map((collection) => (
+                  <CollectionCard key={collection.id} collection={collection} readOnly />
+                ))}
+              </div>
+            ) : activeTab === "drafts" ? (
+              // Owner-only (the tab itself is only ever offered when
+              // isOwnProfile, see `tabs` above) — all four content types'
+              // drafts, reusing the same fetch/delete/continue flow as the
+              // per-creation-page "Taslaklar (N)" button (Bölüm 9.65).
+              <ProfileDraftsPanel userId={user.id} />
+            ) : (
+              <>
+                {activeSource.length > 0 && (
+                  <ProfileToolbar
+                    availableTypes={availableTypes}
+                    activeType={activeType}
+                    onTypeChange={setActiveType}
+                    sort={sort}
+                    onSortChange={setSort}
+                    search={search}
+                    onSearchChange={setSearch}
+                    showSearch={activeSource.length > 8}
+                    hasActiveFilters={hasActiveFilters}
+                    onClear={clearFilters}
                   />
-                ) : (
-                  <TabEmptyState tab={activeTab} isOwnProfile={isOwnProfile} />
-                )
-              }
-            />
-          </>
-        )}
-      </div>
-    </PageContainer>
+                )}
+
+                <ProfileContentGrid
+                  prompts={filtered}
+                  isOwnProfile={isOwnProfile && activeTab === "prompts"}
+                  onDeleted={handleDeleted}
+                  emptyState={
+                    hasActiveFilters ? (
+                      <ProfileEmptyState
+                        icon={SearchX}
+                        title={t("profile.noMatchForFilterTitle")}
+                        description={t("profile.noMatchForFilterBody")}
+                      />
+                    ) : (
+                      <TabEmptyState tab={activeTab} isOwnProfile={isOwnProfile} />
+                    )
+                  }
+                />
+              </>
+            )}
+          </div>
+        </div>
+      </DetailShell>
+    </ContentGridColumns>
   );
 }
 

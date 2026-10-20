@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, MessageSquare, RefreshCw, UserCog } from "lucide-react";
+import { MessageSquare, RefreshCw, UserCog } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonClassName } from "@/components/ui/button";
 import { DetailSkeleton, NotFoundBlock } from "@/components/ui/detail-skeleton";
@@ -25,6 +25,7 @@ import { ManageTab } from "./manage-tab";
 import { useCommunity } from "./use-community";
 import { CommunityAside, MemberStack, useCommunityPeople } from "./community-aside";
 import { CommunityCover } from "./community-cover";
+import { BAND_PRIMARY_CLASS, BandActionRow, DetailBand, DetailTitle, Eyebrow } from "@/features/content/detail-parts";
 import { accessibleTabs, CATEGORY_LABEL_KEYS, communityChatHref, communityHref, resolveCommunityView, type CommunityTab } from "@/lib/communities";
 import { can } from "@/lib/chat-groups";
 import { memberCountText } from "@/lib/group-labels";
@@ -144,88 +145,103 @@ function CommunityPageInner() {
   const common: CommunityTabProps = { group: ready.group, role, viewerId: user?.id ?? null, membership: ready.membership, reload, onToast: show, goTab, section: view?.section ?? null };
   const g = ready.group;
 
-  return (
-    <CommunityLayout
-      aside={tab === "feed" ? <CommunityAside group={g} people={people} onReadRules={() => goTab("about")} /> : undefined}
-      asideLabel={t("communities.aside.pageLabel")}
-    >
-      <Link href="/communities" className="inline-flex items-center gap-1.5 text-small text-text-muted hover:text-text">
-        <ArrowLeft size={14} aria-hidden /> {t("communities.page.title")}
-      </Link>
+  const categoryLabel = t(CATEGORY_LABEL_KEYS[g.category]);
 
-      <header className="overflow-hidden rounded-xl border border-border-soft bg-surface shadow-card" data-testid="community-header">
-        <CommunityCover coverUrl={g.coverUrl} coverColor={g.coverColor} avatarUrl={g.avatarUrl} />
-        <div className="flex flex-wrap items-end gap-x-5 gap-y-3 px-4 pb-4 sm:px-6 sm:pb-5">
-          {/* Meydan (docs/history/190-*): a large avatar rising over the banner, a big title, then actions. */}
-          <span className="-mt-10 inline-flex shrink-0 rounded-[1.75rem] border-4 border-surface bg-surface sm:-mt-12">
-            <GroupAvatar name={g.name} avatarUrl={g.avatarUrl} size={88} className="[&>span:first-child]:rounded-[1.5rem]" />
+  return (
+    // Albüm (docs/history/203-*): band tinted by the community's cover (photo › colour › its picture) · actions row · tabs + content.
+    <div className="w-full">
+      <DetailBand
+        align="center"
+        data-testid="community-header"
+        before={g.coverUrl ? <CommunityCover coverUrl={g.coverUrl} coverColor={g.coverColor} avatarUrl={g.avatarUrl} className="h-28 sm:h-40" /> : undefined}
+        backdrop={<CommunityCover coverUrl={g.coverUrl} coverColor={g.coverColor} avatarUrl={g.avatarUrl} className="h-full sm:h-full" />}
+        art={
+          <span className="inline-flex shrink-0 rounded-[1.9rem] border-4 border-surface bg-surface shadow-pop">
+            <GroupAvatar name={g.name} avatarUrl={g.avatarUrl} size={112} className="[&>span:first-child]:rounded-[1.6rem]" />
           </span>
-          <div className="min-w-0 flex-1 basis-72 space-y-1.5 pt-3">
-            <h1 className="break-words text-h2 leading-tight text-text">{g.name}</h1>
-            <div className="flex flex-wrap items-center gap-1.5">
-              <Badge variant="neutral">{t(CATEGORY_LABEL_KEYS[g.category])}</Badge>
+        }
+        kicker={
+          <Eyebrow tone="primary">
+            {t("groups.page.eyebrow")} · <span>{categoryLabel}</span>
+          </Eyebrow>
+        }
+        title={<DetailTitle>{g.name}</DetailTitle>}
+        byline={
+          <div className="flex w-full flex-col items-center gap-3 lg:items-start">
+            <div className="flex flex-wrap items-center justify-center gap-1.5 lg:justify-start">
               <VisibilityLabel visibility={g.visibility} />
               <MemberStack people={people} />
-              <span className="text-caption text-text-muted">{memberCountText(t, g.memberCount)}</span>
+              <span className="text-small text-text-secondary">{memberCountText(t, g.memberCount)}</span>
               {role && <RoleBadge role={role} />}
               {g.closedAt && <Badge variant="warning">{t("communities.closedBadge")}</Badge>}
               {g.origin === "legacy_group" && <Badge variant="outline">{t("communities.detail.legacyBadge")}</Badge>}
             </div>
-          </div>
-          <div className="flex shrink-0 flex-wrap items-center gap-2">
-            {role && (
-              <Link href={communityChatHref(g.id)} data-open-chat className={buttonClassName({ size: "sm", variant: "outline" })}>
-                <MessageSquare size={14} /> {t("communities.detail.openChat")}
-                {unread > 0 && <span className="ml-1 rounded-full bg-primary px-1.5 text-caption text-primary-foreground">{unread}</span>}
-              </Link>
+            {g.description && (
+              <p data-community-description className="line-clamp-2 max-w-3xl whitespace-pre-line break-words text-body text-text-secondary">
+                {g.description}
+              </p>
             )}
-            {pendingForMe > 0 && (
-              <Link
-                href={communityHref(g.id, "members", "requests")}
-                data-pending-requests
-                aria-label={t("communities.detail.pendingRequests", { count: pendingForMe })}
-                className={buttonClassName({ size: "sm", variant: "secondary" })}
-              >
-                <UserCog size={14} aria-hidden />
-                <span className="sm:hidden" aria-hidden>{t("communities.detail.pendingShort", { count: pendingForMe })}</span>
-                <span className="hidden sm:inline" aria-hidden>{t("communities.detail.pendingRequests", { count: pendingForMe })}</span>
-              </Link>
-            )}
-            <CommunityJoinButton
-              target={{ id: g.id, name: g.name, visibility: g.visibility, rulesRequired: g.rulesRequired, memberCount: g.memberCount, memberLimit: g.memberLimit, closed: Boolean(g.closedAt) }}
-              status={joinState}
-              role={role}
-              rules={g.rules}
-              onChange={(next) => void membershipChanged(next)}
-              onToast={show}
-            />
           </div>
-          {g.description && <p data-community-description className="line-clamp-2 w-full max-w-3xl whitespace-pre-line break-words text-small text-text-secondary">{g.description}</p>}
-        </div>
-      </header>
-
-      {!tab ? (
-        <CommunityGate group={g} gate={ready.gate} onChanged={reload} onToast={show} />
-      ) : (
-        <>
-          {!role && (
-            <CommunityGate group={g} gate={ready.gate} onChanged={reload} onToast={show} compact />
+        }
+      />
+      <CommunityLayout
+        aside={tab === "feed" ? <CommunityAside group={g} people={people} onReadRules={() => goTab("about")} /> : undefined}
+        asideLabel={t("communities.aside.pageLabel")}
+        className="pt-0 sm:pt-0"
+      >
+        <BandActionRow label={t("communities.band.actionsAria")} data-community-actions="">
+          {role && (
+            <Link href={communityChatHref(g.id)} data-open-chat className={buttonClassName({ size: "lg", className: BAND_PRIMARY_CLASS })}>
+              <MessageSquare size={18} aria-hidden /> {t("communities.detail.openChat")}
+              {unread > 0 && <span className="ml-1 rounded-full bg-primary-foreground px-1.5 text-caption text-primary">{unread}</span>}
+            </Link>
           )}
-          <Tabs items={tabs} active={tab} onChange={goTab} ariaLabel={t("communities.detail.tabsAria")} variant="pill" />
-          <div role="tabpanel">
-            {tab === "feed" && <FeedTab {...common} />}
-            {tab !== "feed" && (
-              <CommunityReadingColumn className={tab === "manage" ? "max-w-4xl" : undefined}>
-                {tab === "members" && role && <MembersTab {...common} />}
-                {tab === "events" && <EventsTab {...common} />}
-                {tab === "about" && <AboutTab {...common} />}
-                {tab === "manage" && role && <ManageTab {...common} />}
-              </CommunityReadingColumn>
+          <CommunityJoinButton
+            target={{ id: g.id, name: g.name, visibility: g.visibility, rulesRequired: g.rulesRequired, memberCount: g.memberCount, memberLimit: g.memberLimit, closed: Boolean(g.closedAt) }}
+            status={joinState}
+            role={role}
+            rules={g.rules}
+            size="lg"
+            onChange={(next) => void membershipChanged(next)}
+            onToast={show}
+          />
+          {pendingForMe > 0 && (
+            <Link
+              href={communityHref(g.id, "members", "requests")}
+              data-pending-requests
+              aria-label={t("communities.detail.pendingRequests", { count: pendingForMe })}
+              className={buttonClassName({ size: "lg", variant: "secondary" })}
+            >
+              <UserCog size={16} aria-hidden />
+              <span className="sm:hidden" aria-hidden>{t("communities.detail.pendingShort", { count: pendingForMe })}</span>
+              <span className="hidden sm:inline" aria-hidden>{t("communities.detail.pendingRequests", { count: pendingForMe })}</span>
+            </Link>
+          )}
+        </BandActionRow>
+
+        {!tab ? (
+          <CommunityGate group={g} gate={ready.gate} onChanged={reload} onToast={show} />
+        ) : (
+          <>
+            {!role && (
+              <CommunityGate group={g} gate={ready.gate} onChanged={reload} onToast={show} compact />
             )}
-          </div>
-        </>
-      )}
-      {toastNode}
-    </CommunityLayout>
+            <Tabs items={tabs} active={tab} onChange={goTab} ariaLabel={t("communities.detail.tabsAria")} variant="pill" />
+            <div role="tabpanel">
+              {tab === "feed" && <FeedTab {...common} />}
+              {tab !== "feed" && (
+                <CommunityReadingColumn className={tab === "manage" ? "max-w-4xl" : undefined}>
+                  {tab === "members" && role && <MembersTab {...common} />}
+                  {tab === "events" && <EventsTab {...common} />}
+                  {tab === "about" && <AboutTab {...common} />}
+                  {tab === "manage" && role && <ManageTab {...common} />}
+                </CommunityReadingColumn>
+              )}
+            </div>
+          </>
+        )}
+        {toastNode}
+      </CommunityLayout>
+    </div>
   );
 }

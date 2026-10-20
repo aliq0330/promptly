@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { FolderOpen, Search, SearchX, X } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Chip, ChipRow } from "@/components/ui/chip";
 import { PromptCard } from "@/features/prompts/prompt-card";
 import { WorkflowCard } from "@/features/workflows/workflow-card";
 import { PresetCard } from "@/features/presets/preset-card";
@@ -51,17 +52,27 @@ export function CollectionEntryList({
 }) {
   const { t } = useTranslation();
   const [query, setQuery] = useState("");
+  const [type, setType] = useState<CollectionEntry["type"] | "all">("all");
   const [viewMode] = useViewMode();
+
+  // Kind chips with their counts (docs/history/203-*), only when the list holds more than one kind.
+  const typeCounts = useMemo(() => {
+    const counts = new Map<CollectionEntry["type"], number>();
+    items.forEach((entry) => counts.set(entry.type, (counts.get(entry.type) ?? 0) + 1));
+    return ENTRY_TYPES.filter((key) => counts.has(key)).map((key) => ({ key, count: counts.get(key)! }));
+  }, [items]);
+  const activeType = typeCounts.some((item) => item.key === type) ? type : "all";
 
   const normalizedQuery = normalizeTagLabel(query);
   const visibleItems = useMemo(() => {
-    if (!normalizedQuery) return items;
-    return items.filter((entry) => {
+    const ofType = activeType === "all" ? items : items.filter((entry) => entry.type === activeType);
+    if (!normalizedQuery) return ofType;
+    return ofType.filter((entry) => {
       const fields = searchFields(entry);
       const haystack = normalizeTagLabel([fields.title, fields.description, fields.creator?.displayName ?? "", fields.creator?.username ?? "", ...fields.tags].join(" "));
       return haystack.includes(normalizedQuery);
     });
-  }, [items, normalizedQuery]);
+  }, [items, activeType, normalizedQuery]);
 
   return (
     <>
@@ -92,6 +103,19 @@ export function CollectionEntryList({
         </div>
       )}
 
+      {typeCounts.length > 1 && (
+        <ChipRow scroll aria-label={t("collection.typeFilterAria")}>
+          <Chip selected={activeType === "all"} onClick={() => setType("all")}>
+            {t("common.all")} <span className="tabular-nums opacity-70">{items.length}</span>
+          </Chip>
+          {typeCounts.map((item) => (
+            <Chip key={item.key} selected={activeType === item.key} onClick={() => setType(item.key)}>
+              {t(ENTRY_TYPE_LABELS[item.key])} <span className="tabular-nums opacity-70">{item.count}</span>
+            </Chip>
+          ))}
+        </ChipRow>
+      )}
+
       {items.length > 0 && visibleItems.length === 0 ? (
         <EmptyState
           icon={SearchX}
@@ -113,6 +137,14 @@ export function CollectionEntryList({
     </>
   );
 }
+
+const ENTRY_TYPES: CollectionEntry["type"][] = ["prompt", "workflow", "preset", "community_post"];
+const ENTRY_TYPE_LABELS: Record<CollectionEntry["type"], TranslationKey> = {
+  prompt: "feed.filterPrompts",
+  workflow: "nav.workflows",
+  preset: "nav.presets",
+  community_post: "collection.typeCommunityPosts",
+};
 
 /** One entry in the Izgara view: the content itself; a saved community post shows the content it applies with. */
 function entryFeedItem(entry: CollectionEntry): FeedItem | null {

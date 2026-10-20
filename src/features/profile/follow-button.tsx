@@ -49,7 +49,7 @@ export function FollowButtonView({ isFollowing, toggle, canFollow, loading, size
         aria-haspopup="dialog"
         title={t("common.loginToFollowTitle")}
         className={cn(
-          "inline-flex items-center justify-center rounded-md bg-primary font-medium text-primary-foreground transition-colors duration-200 hover:bg-primary-hover",
+          "inline-flex items-center justify-center rounded-full bg-primary font-semibold text-primary-foreground transition-colors duration-200 hover:bg-primary-hover",
           SIZE_CLASSES[size],
           className,
         )}
