@@ -25,13 +25,15 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import {
   AsideSection,
   DetailActionBar,
+  DetailArt,
+  DetailArtPlaceholder,
+  DetailArtThumb,
   DetailAside,
+  DetailBand,
   DetailByline,
   DetailComments,
   DetailLede,
   DetailShell,
-  DetailStageFigure,
-  DetailStageThumb,
   DetailTags,
   DetailTitle,
   DetailSection,
@@ -118,6 +120,11 @@ export function WorkflowDetailView({ workflowId }: { workflowId?: string } = {})
 
   const aside = (
     <DetailAside>
+      <AsideSection id="detail-about-title" title={t("profile.tabAbout")} bare>
+        <DetailMetaCard toolLabel={t("tool.recommendedLabel")} toolRefs={workflow.tools} hasChips={workflow.tags.length > 0}>
+          <DetailTags className="contents" tags={workflow.tags} />
+        </DetailMetaCard>
+      </AsideSection>
       <AsideSection id="workflow-info-title" title={t("workflow.sidebarInfo")}>
         <dl className="divide-y divide-border-soft text-label">
           <div className="flex items-center justify-between gap-3 px-3.5 py-2.5">
@@ -143,72 +150,91 @@ export function WorkflowDetailView({ workflowId }: { workflowId?: string } = {})
     </DetailAside>
   );
 
-  // The cover (+ more pictures) on the dark stage; a workflow without one has no stage.
-  const stage = workflow.coverUrl ? (
-    <DetailStageFigure
+  // The album art: the cover (+ more pictures), else the workflow icon.
+  const art = workflow.coverUrl ? (
+    <DetailArt
       ratio={16 / 9}
       caption={workflow.title}
       onOpen={() => setLightboxIndex(0)}
       thumbnails={
         workflow.media.length > 1
           ? workflow.media.slice(1).map((item, index) => (
-              <DetailStageThumb key={item.id} onOpen={() => setLightboxIndex(index + 1)}>
+              <DetailArtThumb key={item.id} onOpen={() => setLightboxIndex(index + 1)}>
                 {/* eslint-disable-next-line @next/next/no-img-element -- thumbnail strip, same source list as the cover */}
                 <img src={item.url} alt="" className="h-full w-full object-cover" />
-              </DetailStageThumb>
+              </DetailArtThumb>
             ))
           : undefined
       }
     >
       {/* eslint-disable-next-line @next/next/no-img-element -- real local data-URL cover */}
       <img src={workflow.coverUrl} alt="" className="h-full w-full object-cover" />
-    </DetailStageFigure>
-  ) : undefined;
+    </DetailArt>
+  ) : (
+    <DetailArtPlaceholder icon={WorkflowIcon} />
+  );
 
   return (
     <DetailShell
-      stage={stage}
+      band={
+        <DetailBand
+          art={art}
+          // eslint-disable-next-line @next/next/no-img-element -- decorative tint of the same cover
+          backdrop={workflow.coverUrl ? <img src={workflow.coverUrl} alt="" className="h-full w-full object-cover" /> : undefined}
+          kicker={
+            <div className="flex flex-wrap items-center gap-2">
+              <ContentTypeLabel icon={WorkflowIcon} label={t("workflow.singular")} detail={category} />
+              {workflow.status === "draft" && <Badge variant="warning">{t("workflow.draftBadge")}</Badge>}
+            </div>
+          }
+          title={<DetailTitle>{workflow.title}</DetailTitle>}
+          byline={<DetailByline person={workflow.creator} createdAt={workflow.createdAt} language={language} />}
+        />
+      }
       aside={aside}
       actions={
-          <DetailActionBar trailing={<EngageShare target={{ contentType: "workflow", workflow }} />}>
-            <EngageLike id={workflow.id} likeCount={workflow.likeCount} contentType="workflow" size={18} />
-            <EngageCommentCount workflowId={workflow.id} baseCount={workflow.commentCount} size={18} />
-            <EngageSave workflowId={workflow.id} saveCount={workflow.saveCount} size={18} />
-            <EngageStatistics target={{ contentType: "workflow", contentId: workflow.id, likeCount: workflow.likeCount, commentCount: workflow.commentCount, saveCount: workflow.saveCount }} size={18} />
-            <RelationMapLink kind="workflow" id={workflow.id} />
-          </DetailActionBar>
+        <DetailActionBar
+          primary={
+            steps.length > 0 && (
+              <Button
+                size="lg"
+                className="h-14 rounded-full px-7 shadow-pop"
+                onClick={() => {
+                  setTab("workflow");
+                  setView("run");
+                  requestAnimationFrame(() => stepsRef.current?.scrollIntoView({ block: "start", behavior: "smooth" }));
+                }}
+              >
+                <Play size={18} aria-hidden /> {t("workflow.run.start")}
+              </Button>
+            )
+          }
+          extra={
+            <>
+              {!isOwn && <FollowButton user={workflow.creator} />}
+              <PostMenu
+                workflowId={workflow.id}
+                communityId={workflow.communityId}
+                authorId={workflow.creator.id}
+                onDeleted={() => {
+                  removeFromCache(workflow.id);
+                  router.push("/workflows");
+                }}
+              />
+            </>
+          }
+          trailing={<EngageShare target={{ contentType: "workflow", workflow }} />}
+        >
+          <EngageLike id={workflow.id} likeCount={workflow.likeCount} contentType="workflow" size={20} />
+          <EngageCommentCount workflowId={workflow.id} baseCount={workflow.commentCount} size={20} />
+          <EngageSave workflowId={workflow.id} saveCount={workflow.saveCount} size={20} />
+          <EngageStatistics target={{ contentType: "workflow", contentId: workflow.id, likeCount: workflow.likeCount, commentCount: workflow.commentCount, saveCount: workflow.saveCount }} size={20} />
+          <RelationMapLink kind="workflow" id={workflow.id} />
+        </DetailActionBar>
       }
     >
       <article className="min-w-0 space-y-8">
-        <header className="space-y-4">
-          <DetailByline
-            person={workflow.creator}
-            createdAt={workflow.createdAt}
-            language={language}
-            trailing={
-              <>
-                {!isOwn && <FollowButton user={workflow.creator} />}
-                <PostMenu
-                  workflowId={workflow.id}
-                  communityId={workflow.communityId}
-                  authorId={workflow.creator.id}
-                  onDeleted={() => {
-                    removeFromCache(workflow.id);
-                    router.push("/workflows");
-                  }}
-                />
-              </>
-            }
-          />
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <ContentTypeLabel icon={WorkflowIcon} label={t("workflow.singular")} detail={category} />
-            {workflow.status === "draft" && <Badge variant="warning">{t("workflow.draftBadge")}</Badge>}
-          </div>
-          <div className="space-y-3">
-            <DetailTitle>{workflow.title}</DetailTitle>
-            {workflow.description && <DetailLede>{workflow.description}</DetailLede>}
-          </div>
-        </header>
+        {workflow.description && <DetailLede>{workflow.description}</DetailLede>}
 
         {tabItems.length > 1 && <Tabs items={tabItems} active={tab} onChange={setTab} ariaLabel={t("history.sectionsAria")} />}
 
@@ -238,21 +264,6 @@ export function WorkflowDetailView({ workflowId }: { workflowId?: string } = {})
           })}
           <span className="text-caption text-text-muted">{t("workflow.stepCount", { count: String(steps.length) })}</span>
         </div>
-        {steps.length > 0 && (
-          <Button
-            size="sm"
-            onClick={() => {
-              setView("run");
-              stepsRef.current?.scrollIntoView({ block: "start", behavior: "smooth" });
-            }}
-          >
-            <Play size={14} aria-hidden /> {t("workflow.run.start")}
-          </Button>
-        )}
-
-        <DetailMetaCard toolLabel={t("tool.recommendedLabel")} toolRefs={workflow.tools} hasChips={workflow.tags.length > 0}>
-          <DetailTags className="contents" tags={workflow.tags} />
-        </DetailMetaCard>
 
         <DetailSection
           ref={stepsRef}

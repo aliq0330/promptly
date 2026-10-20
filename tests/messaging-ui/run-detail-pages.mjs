@@ -40,11 +40,12 @@ async function scenario(name, kind, fn, { viewport = { width: 1280, height: 900 
 const overflowFree = (page) => page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1);
 const box = (locator) => locator.evaluate((el) => { const r = el.getBoundingClientRect(); return { left: r.left, top: r.top, right: r.right, bottom: r.bottom, width: r.width }; });
 
-// 1 — her tür aynı iskeleti kullanır: tür etiketi + menü, başlık, yazar satırı (Takip Et), etkileşim çubuğu, meta kartı, yorum kartı
+// 1 — her tür aynı iskeleti kullanır (Albüm, docs/history/201-*): bantta tür etiketi + başlık + yazar satırı; altında eylem satırı
+// (Takip Et + ⋮ dahil), "Hakkında"da meta kartı, yorumlar
 for (const kind of ["prompt", "request", "workflow", "preset"]) {
   await scenario(`1. ${kind}: ortak iskelet — başlık, yazar satırı + Takip Et, etkileşim çubuğu, meta kartı (araç + etiketler), yorumlar`, kind, async ({ page }) => {
     await page.getByRole("button", { name: "Takip Et" }).first().waitFor();
-    const byline = await page.locator("article a[href*='/profile/']").first().textContent();
+    const byline = await page.locator("[data-detail-band] a[href*='/profile/']").first().textContent();
     assert.match(byline ?? "", /Carol/);
     const bar = page.locator("[data-detail-actions]").filter({ has: page.getByRole("button", { name: "Paylaş" }) }).first();
     await bar.waitFor();
@@ -54,10 +55,10 @@ for (const kind of ["prompt", "request", "workflow", "preset"]) {
     assert.ok((await meta.getByText(/Tavsiye edilen araç\/model|Tercih edilen araç\/model/).count()) === 1, "tool label inside the meta card");
     await page.locator("#comments").waitFor();
     assert.match((await page.locator("#comments h2").first().textContent()) ?? "", /Yorumlar/);
-    // Takip Et yazar satırında ağırlıkla sağda (aynı satır)
+    // Takip Et bandın altındaki eylem satırında
     const follow = await box(page.getByRole("button", { name: "Takip Et" }).first());
-    const person = await box(page.locator("article a[href*='/profile/']").first());
-    assert.ok(Math.abs(follow.top - person.top) < 40, "Takip Et sits on the byline row");
+    const band = await box(page.locator("[data-detail-band]"));
+    assert.ok(follow.top >= band.bottom, "Takip Et sits in the actions row under the band");
   }, { viewport: { width: 390, height: 844 } });
 }
 
@@ -78,17 +79,19 @@ await scenario("2b. prompt: Kopyala · Çalıştır · Studio'da aç prompt blo�
   const text = await box(card.locator("[data-prompt-block]"));
   const copy = await box(card.getByRole("button", { name: /Kopyala/ }));
   const suggest = await box(card.getByRole("button", { name: "Düzenleme öner" }));
-  assert.ok(copy.top >= text.bottom - 1, "the prompt actions sit under the prompt text (Sahne, docs/history/201-*)");
+  assert.ok(copy.top >= text.bottom - 1, "the prompt actions sit under the prompt text (docs/history/201-*)");
   assert.ok(suggest.top > copy.top, "'Düzenleme öner' is the last row");
   const meta = (await page.getByTestId("detail-meta").textContent()) ?? "";
   assert.match(meta, /GPT Image 1/);
   assert.ok(!/GPT Image GPT Image/.test(meta), "model name is not prefixed with the tool name twice");
 });
-await scenario("2c. prompt: çıktı görseli sütun genişliğini kullanır (mobilde tam genişlik)", "prompt", async ({ page }) => {
-  const figure = page.locator("figure").first();
-  await figure.waitFor();
-  const w = (await box(figure.locator("button").first())).width;
-  assert.ok(w >= 330, `hero uses the column width on phones (${w})`);
+await scenario("2c. prompt: çıktı görseli bantta kendi oranında, kırpılmadan; telefonda en çok 240px yükseklik, sayfaya sığar", "prompt", async ({ page }) => {
+  const art = page.locator("[data-detail-band] figure button").first();
+  await art.waitFor();
+  const b = await box(art);
+  const h = await art.evaluate((el) => el.getBoundingClientRect().height);
+  assert.ok(h <= 241 && h >= 150, `art height on phones (${h})`);
+  assert.ok(b.width <= 390 - 31, `art fits the page (${b.width})`);
 }, { viewport: { width: 390, height: 844 } });
 
 // 3 — yorumlar kısa açılır (3), 'Tümünü gör' hepsini açar ve 'Daha az göster' geri toplar; yeni yorum yazınca hepsi açık
@@ -114,21 +117,27 @@ await scenario("3b. yorum yazınca konu tamamen açılır ve yorum alanı satır
   await section.getByText("Mert:").waitFor();
 }, { viewport: { width: 390, height: 844 } });
 
-// 4 — yerleşim (Sahne, docs/history/201-*): taşma yok; medya koyu sahnede — lg+ (≥1024px) panelin solunda, altında panel ≤ 470px;
-// daha dar ekranda sahne üstte, panel altında; eylem satırı tek
+// 4 — yerleşim (Albüm, docs/history/201-*): taşma yok; bant içeriğin üstünde; lg+ (≥1024px) "Hakkında" içeriğin sağında,
+// daha dar ekranda altında; tek eylem satırı; birincil düğme (Kopyala/Yanıtla/Çalıştır/Studio'da aç) bandın hemen altında
 for (const [label, width, height] of [["320", 320, 700], ["375", 375, 800], ["390", 390, 844], ["430", 430, 900], ["768", 768, 1000], ["1024", 1024, 900], ["1280", 1280, 900], ["1440", 1440, 1000]]) {
   for (const kind of ["prompt", "request", "workflow", "preset"]) {
-    await scenario(`4. ${kind} @${label}px: yatay taşma yok; sahne ${width >= 1024 ? "panelin solunda" : "panelin üstünde"}`, kind, async ({ page }) => {
+    await scenario(`4. ${kind} @${label}px: yatay taşma yok; "Hakkında" ${width >= 1024 ? "sağda" : "altta"}`, kind, async ({ page }) => {
       await page.waitForTimeout(500);
       assert.equal(await overflowFree(page), true, "no horizontal overflow");
-      const stage = await box(page.locator("[data-detail-stage]"));
+      const band = await box(page.locator("[data-detail-band]"));
       const article = await box(page.locator("article").first());
+      const aside = await box(page.locator("[data-detail-aside]"));
+      assert.ok(band.bottom <= article.top, "band above the content");
       assert.equal(await page.locator("[data-detail-actions]").count(), 1, "one actions row");
-      if (width >= 1024) {
-        assert.ok(stage.right <= article.left, "stage left of the panel");
-        assert.ok(article.width <= 470, `panel column (${article.width})`);
-      } else {
-        assert.ok(stage.bottom <= article.top + 1, "stage above the panel");
+      if (width >= 1024) assert.ok(article.right <= aside.left, "Hakkında right of the content");
+      else assert.ok(aside.top >= article.bottom, "Hakkında under the content");
+      // Bandın içeriği taşmaz: kapak başlığın üstüne binmez
+      const art = page.locator("[data-detail-band] figure").first();
+      if (await art.count()) {
+        const artBox = await box(art);
+        const title = await box(page.locator("[data-detail-band] h1"));
+        const overlaps = artBox.right > title.left + 1 && artBox.left < title.right - 1 && artBox.bottom > title.top + 1 && artBox.top < title.bottom - 1;
+        assert.ok(!overlaps, "art does not overlap the title");
       }
     }, { viewport: { width, height } });
   }

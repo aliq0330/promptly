@@ -8,6 +8,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import { ResultTypePreview } from "@/features/prompts/result-type-preview";
 import type { Prompt, PromptResult } from "@/types";
 import { StorageImage } from "@/components/ui/storage-media";
+import { DetailArtPlaceholder } from "@/features/content/detail-parts";
 
 /**
  * The playable "output" of a video / audio prompt: the result its AUTHOR uploaded under it, in the prompt's own media type,
@@ -31,7 +32,7 @@ export async function loadAuthorOutput(promptId: string, authorId: string, conte
  * yüklediği sonuç "çıktı" sayılır; başka bir kullanıcının sonucu burada
  * yanıltıcı olurdu, o `PromptResultsSection`'da zaten ayrıca listelenir.
  * Sonuç yoksa promptun kapak görseli (varsa) sessizce gösterilir, hiçbir şey
- * yoksa sahnede türün simgesi durur.
+ * yoksa kapak yerinde türün simgesi durur.
  */
 export function PromptPlayableOutput({ prompt }: { prompt: Prompt }) {
   const { t } = useTranslation();
@@ -53,10 +54,10 @@ export function PromptPlayableOutput({ prompt }: { prompt: Prompt }) {
     };
   }, [prompt.id, prompt.author.id, prompt.contentType]);
 
-  // Shown on the detail page's dark stage (docs/history/201-*): no card around it, as large as the stage allows.
+  // Shown as the detail page's album art (docs/history/201-*): no card around it.
   if (result) {
     return (
-      <figure className="w-full max-w-3xl space-y-2">
+      <figure className="w-full max-w-md space-y-2 lg:w-[440px]">
         <ResultTypePreview result={result} size="detail" />
         <figcaption className="sr-only">{t("prompt.outputCaption")}</figcaption>
       </figure>
@@ -67,10 +68,10 @@ export function PromptPlayableOutput({ prompt }: { prompt: Prompt }) {
     const ratio = poster.width / poster.height;
     return (
       <figure
-        className="relative w-full overflow-hidden rounded-[18px] bg-surface-soft [--hero-h:min(60vh,520px)] lg:[--hero-h:calc(100dvh-13rem)]"
-        style={{ aspectRatio: ratio, maxWidth: `calc(var(--hero-h) * ${ratio})` }}
+        className="relative w-full overflow-hidden rounded-[22px] bg-surface-soft shadow-pop [--hero-h:240px] md:[--hero-h:300px] lg:w-[460px]"
+        style={{ aspectRatio: ratio, maxWidth: `min(100%, calc(var(--hero-h) * ${ratio}))` }}
       >
-        <StorageImage src={poster.url} alt={poster.alt} fill sizes="(min-width: 1024px) 60vw, 100vw" className="object-cover" />
+        <StorageImage src={poster.url} alt={poster.alt} fill sizes="(min-width: 768px) 520px, 100vw" className="object-cover" />
         {loading && (
           <span className="absolute inset-0 flex items-center justify-center">
             <span className="flex h-12 w-12 items-center justify-center rounded-full bg-black/55 text-white">
@@ -82,9 +83,8 @@ export function PromptPlayableOutput({ prompt }: { prompt: Prompt }) {
       </figure>
     );
   }
-  if (loading) return <Skeleton className="h-48 w-full max-w-xl rounded-[18px]" />;
+  if (loading) return <Skeleton className="h-48 w-full max-w-xl rounded-[22px]" />;
 
-  // Nothing uploaded yet: the stage still says what kind of post this is.
-  const Icon = prompt.contentType === "audio" ? Music : Clapperboard;
-  return <Icon size={56} strokeWidth={1.25} aria-hidden className="text-text-muted" />;
+  // Nothing uploaded yet: the art still says what kind of post this is.
+  return <DetailArtPlaceholder icon={prompt.contentType === "audio" ? Music : Clapperboard} />;
 }

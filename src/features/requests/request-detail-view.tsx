@@ -32,7 +32,7 @@ import { useRealRequests } from "./real-requests-provider";
 import { STATUS_LABELS, STATUS_VARIANTS } from "./request-card";
 import { parseHighlightValue } from "@/lib/notification-utils";
 import { cn, formatCount, profileHref } from "@/lib/utils";
-import { AsideSection, DetailActionBar, DetailAside, DetailByline, DetailComments, DetailSection, DetailShell, DetailStageFigure, DetailStageThumb, DetailTags, DetailTitle, Eyebrow } from "@/features/content/detail-parts";
+import { AsideSection, DetailActionBar, DetailArt, DetailArtPlaceholder, DetailArtThumb, DetailAside, DetailBand, DetailByline, DetailComments, DetailSection, DetailShell, DetailTags, DetailTitle, Eyebrow } from "@/features/content/detail-parts";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Prompt, PromptRequest, RequestVersion } from "@/types";
 import { ScrollablePrompt } from "@/features/content/scrollable-prompt";
@@ -183,50 +183,103 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
 
   const typeMeta = live.contentType ? CONTENT_TYPE_META[live.contentType] : null;
 
-  // The reference picture(s) on the dark stage; a request without one has no stage.
-  const stage = live.referenceImage ? (
-    <DetailStageFigure
+  // The album art: the reference picture(s), else the request icon.
+  const art = live.referenceImage ? (
+    <DetailArt
       ratio={referenceRatio}
       caption={t("request.referenceImage")}
       onOpen={() => setLightboxIndex(0)}
       thumbnails={
         live.media.length > 1
           ? live.media.slice(1).map((extra, index) => (
-              <DetailStageThumb key={extra.id} onOpen={() => setLightboxIndex(index + 1)}>
+              <DetailArtThumb key={extra.id} onOpen={() => setLightboxIndex(index + 1)}>
                 <StorageImg src={extra.url} alt={extra.alt} className="h-full w-full object-cover" />
-              </DetailStageThumb>
+              </DetailArtThumb>
             ))
           : undefined
       }
     >
-      <StorageImage src={live.referenceImage.url} alt={live.referenceImage.alt} fill sizes="(min-width: 1024px) 60vw, 100vw" className="object-cover" />
-    </DetailStageFigure>
+      <StorageImage src={live.referenceImage.url} alt={live.referenceImage.alt} fill sizes="(min-width: 768px) 520px, 100vw" className="object-cover" />
+    </DetailArt>
+  ) : (
+    <DetailArtPlaceholder icon={Sparkles} />
+  );
+
+  // The page's one big action: answer the request (others) or close/reopen it (owner, until a reply is chosen).
+  const primary = showManagementAction ? (
+    isOwnRequest ? (
+      <Button type="button" variant="outline" size="lg" className="h-14 rounded-full px-7" onClick={handleToggleStatus}>
+        <MessageSquareOff size={18} />
+        {isClosed ? t("request.markAsOpen") : t("request.closeRequest")}
+      </Button>
+    ) : (
+      <Link href={`/create?answerRequest=${live.id}`} className={buttonClassName({ size: "lg", className: "h-14 rounded-full px-7 shadow-pop" })}>
+        <PenLine size={18} />
+        {t("request.reply")}
+      </Link>
+    )
   ) : undefined;
 
   return (
     <DetailShell
-      stage={stage}
+      band={
+        <DetailBand
+          art={art}
+          backdrop={live.referenceImage ? <StorageImage src={live.referenceImage.url} alt="" fill sizes="50vw" className="object-cover" /> : undefined}
+          kicker={
+            <div className="flex flex-wrap items-center gap-2">
+              <ContentTypeLabel icon={Sparkles} label={t("request.title")} detail={typeMeta ? t(typeMeta.labelKey) : null} />
+              <Badge variant={STATUS_VARIANTS[live.status]}>
+                <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-current" />
+                {t(STATUS_LABELS[live.status])}
+              </Badge>
+            </div>
+          }
+          title={<DetailTitle>{live.title}</DetailTitle>}
+          byline={<DetailByline person={live.author} createdAt={live.createdAt} language={language} />}
+        />
+      }
       actions={
-          // Beğeni · Yorum · Yanıt (scrolls to the replies) · İstatistik · İlişki haritası … Paylaş — no Kopyala for a request.
-          <DetailActionBar trailing={<EngageShare target={{ contentType: "request", request: live }} />}>
-            <EngageLike id={live.id} likeCount={live.likeCount} contentType="request" size={18} />
-            <EngageCommentCount requestId={live.id} baseCount={live.commentCount} size={18} />
-            <a
-              href="#request-responses"
-              onClick={() => setActiveTab("request")}
-              className={contentActionClassName(false)}
-              title={t("request.replies")}
-              aria-label={`${t("request.replies")} (${formatCount(live.responseCount)})`}
-            >
-              <Reply size={18} strokeWidth={1.75} />
-              <span aria-hidden>{formatCount(live.responseCount)}</span>
-            </a>
-            <EngageStatistics target={{ contentType: "request", contentId: live.id, likeCount: live.likeCount, commentCount: live.commentCount }} size={18} />
-            <RelationMapLink kind="request" id={live.id} />
-          </DetailActionBar>
+        // Beğeni · Yorum · Yanıt (scrolls to the replies) · İstatistik · İlişki haritası … Paylaş — no Kopyala for a request.
+        <DetailActionBar
+          primary={primary}
+          extra={
+            <>
+              {!isOwnRequest && <FollowButton user={live.author} />}
+              <PostMenu requestId={live.id} communityId={live.communityId} authorId={live.author.id} onDeleted={handleDeleted} />
+            </>
+          }
+          trailing={<EngageShare target={{ contentType: "request", request: live }} />}
+        >
+          <EngageLike id={live.id} likeCount={live.likeCount} contentType="request" size={20} />
+          <EngageCommentCount requestId={live.id} baseCount={live.commentCount} size={20} />
+          <a
+            href="#request-responses"
+            onClick={() => setActiveTab("request")}
+            className={contentActionClassName(false)}
+            title={t("request.replies")}
+            aria-label={`${t("request.replies")} (${formatCount(live.responseCount)})`}
+          >
+            <Reply size={20} strokeWidth={1.75} />
+            <span aria-hidden>{formatCount(live.responseCount)}</span>
+          </a>
+          <EngageStatistics target={{ contentType: "request", contentId: live.id, likeCount: live.likeCount, commentCount: live.commentCount }} size={20} />
+          <RelationMapLink kind="request" id={live.id} />
+        </DetailActionBar>
       }
       aside={
         <DetailAside>
+          <AsideSection id="detail-about-title" title={t("profile.tabAbout")} bare>
+            <DetailMetaCard
+              toolLabel={t("tool.preferredLabel")}
+              toolRefs={live.tools}
+              legacyTool={live.preferredTool}
+              hasChips={Boolean(live.contentType && live.category) || live.tags.length > 0}
+            >
+              {live.contentType && <TaxonomyLinks className="contents" contentType={live.contentType} category={live.category} subcategory={live.subcategory} />}
+              <DetailTags className="contents" tags={live.tags} />
+            </DetailMetaCard>
+          </AsideSection>
           <ContributorsList answers={answers} />
           <RelatedRequests request={live} />
         </DetailAside>
@@ -238,27 +291,6 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
           isRequestFlashed && "bg-primary/10 ring-1 ring-primary/40",
         )}
       >
-        <header className="space-y-4">
-          <DetailByline
-            person={live.author}
-            createdAt={live.createdAt}
-            language={language}
-            trailing={
-              <>
-                {!isOwnRequest && <FollowButton user={live.author} />}
-                <PostMenu requestId={live.id} communityId={live.communityId} authorId={live.author.id} onDeleted={handleDeleted} />
-              </>
-            }
-          />
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <ContentTypeLabel icon={Sparkles} label={t("request.title")} detail={typeMeta ? t(typeMeta.labelKey) : null} />
-            <Badge variant={STATUS_VARIANTS[live.status]}>
-              <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-current" />
-              {t(STATUS_LABELS[live.status])}
-            </Badge>
-          </div>
-          <DetailTitle>{live.title}</DetailTitle>
-        </header>
 
 
         {tabItems.length > 1 && <Tabs items={tabItems} active={activeTab} onChange={setActiveTab} ariaLabel={t("history.sectionsAria")} />}
@@ -294,31 +326,6 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
           />
         )}
 
-        <DetailMetaCard
-          toolLabel={t("tool.preferredLabel")}
-          toolRefs={live.tools}
-          legacyTool={live.preferredTool}
-          hasChips={Boolean(live.contentType && live.category) || live.tags.length > 0}
-        >
-          {live.contentType && <TaxonomyLinks className="contents" contentType={live.contentType} category={live.category} subcategory={live.subcategory} />}
-          <DetailTags className="contents" tags={live.tags} />
-        </DetailMetaCard>
-
-        {showManagementAction && (
-          <div className="flex flex-wrap items-center gap-2 border-t border-border-soft pt-4">
-            {isOwnRequest ? (
-              <Button type="button" variant="outline" size="sm" onClick={handleToggleStatus}>
-                <MessageSquareOff size={14} />
-                {isClosed ? t("request.markAsOpen") : t("request.closeRequest")}
-              </Button>
-            ) : (
-              <Link href={`/create?answerRequest=${live.id}`} className={buttonClassName({ size: "sm", className: "h-9" })}>
-                <PenLine size={14} />
-                {t("request.reply")}
-              </Link>
-            )}
-          </div>
-        )}
         {!isOwnRequest && isClosed && (
           <p className="text-caption text-text-muted">{t("request.requestClosedNoNewReplies")}</p>
         )}
