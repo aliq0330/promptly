@@ -77,37 +77,6 @@ function AuthorLine({ author, createdAt, language, onImage }: { author: UserProf
   );
 }
 
-function TypePill({ icon: Icon, label }: { icon: LucideIcon; label: string }) {
-  return (
-    <span className="inline-flex min-w-0 items-center gap-1.5 rounded-full border border-white/25 bg-black/45 px-3 py-1.5 text-caption font-bold uppercase tracking-[0.07em] text-white backdrop-blur-md">
-      <Icon size={13} strokeWidth={2.25} aria-hidden className="shrink-0" />
-      <span className="truncate">{label}</span>
-    </span>
-  );
-}
-
-/** A playing post's two actions: "Promptu incele" (for a prompt that has text) and "Ayrıntıları aç". */
-function SlideButtons({ href, prompt, onOpenPrompt }: { href: string; prompt: Prompt | null; onOpenPrompt: () => void }) {
-  const { t } = useTranslation();
-  const base =
-    "inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full px-4 text-label font-semibold transition-[background-color,border-color,color] duration-200 ease-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-black/40";
-  const hasText = Boolean(prompt && prompt.promptText.trim());
-  return (
-    <div className="flex flex-wrap items-center gap-2">
-      {hasText && (
-        <button type="button" onClick={onOpenPrompt} aria-haspopup="dialog" className={cn(base, "bg-white text-black hover:bg-white/90")}>
-          <SquareTerminal size={16} strokeWidth={1.9} aria-hidden />
-          {t("focusFeed.viewPrompt")}
-        </button>
-      )}
-      <Link href={href} className={cn(base, "border border-white/40 bg-white/10 text-white backdrop-blur-md hover:bg-white/20")}>
-        {t("focusFeed.openDetail")}
-        <ArrowUpRight size={16} strokeWidth={1.9} aria-hidden />
-      </Link>
-    </div>
-  );
-}
-
 /**
  * "Promptu incele": the full prompt text in the signature mono block, the shared `CopyPromptButton`
  * (which also counts a use for signed-in viewers, `record_prompt_copy`) and the way on to the detail page.
@@ -464,6 +433,31 @@ function AlbumArtImage({ cover, active, near }: { cover: FocusFeedCover; active:
   );
 }
 
+/** The shape a playing post's frame takes: its poster's, else a video's usual 16:9 / an audio cover's square. */
+function playableRatio(prompt: Prompt): number {
+  const media = prompt.media[0];
+  if (media?.width && media.height) return media.width / media.height;
+  return prompt.contentType === "video" ? 16 / 9 : 1;
+}
+
+/**
+ * The album art frame of a playing video / audio: the media's own shape, as large as the space allows (sized against its
+ * box with container units), rounded with a deep shadow; the player (`PlayableMedia`) fills it.
+ */
+function AlbumArtFrame({ ratio, children }: { ratio: number; children: ReactNode }) {
+  return (
+    <div className="flex h-full w-full items-center justify-center [container-type:size]">
+      <div
+        data-album-art
+        className="relative overflow-hidden rounded-[26px] bg-black shadow-[0_30px_70px_rgb(0_0_0/0.5)]"
+        style={{ aspectRatio: ratio, width: `min(100cqw, calc(100cqh * ${ratio}))` }}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
+
 /** The album art of a post without a picture: its own words (prompt) or structure (steps / settings / brief) on a raised card. */
 function AlbumArtCard({ item, model, near }: { item: FeedItem; model: SlideModel; near: boolean }) {
   const Icon = model.icon;
@@ -503,6 +497,7 @@ function AlbumSlide({
   item,
   model,
   cover,
+  playable,
   extra,
   active,
   near,
@@ -512,6 +507,8 @@ function AlbumSlide({
   item: FeedItem;
   model: SlideModel;
   cover: FocusFeedCover | null;
+  /** A video / audio prompt whose author's output (or poster) is there: it plays inside the album art. */
+  playable: boolean;
   extra: number;
   active: boolean;
   near: boolean;
@@ -529,7 +526,15 @@ function AlbumSlide({
     >
       {/* Phone and tablet: the art above the words; from `lg` side by side, like the detail pages' band. */}
       <div className={cn("flex min-h-0 flex-1 items-center justify-center px-5", PHONE_TOP, "md:px-12 md:pt-20 lg:h-full lg:max-h-[640px] lg:flex-[1.15] lg:p-0")}>
-        {cover ? <AlbumArtImage cover={cover} active={active} near={near} /> : <AlbumArtCard item={item} model={model} near={near} />}
+        {playable && prompt ? (
+          <AlbumArtFrame ratio={playableRatio(prompt)}>
+            <PlayableMedia prompt={prompt} cover={cover} active={active} near={near} />
+          </AlbumArtFrame>
+        ) : cover ? (
+          <AlbumArtImage cover={cover} active={active} near={near} />
+        ) : (
+          <AlbumArtCard item={item} model={model} near={near} />
+        )}
       </div>
       <div className={cn(HIDE_WHILE_COMMENTS, "shrink-0 space-y-3 px-5 pt-5 md:space-y-4 md:px-12 md:pt-8 lg:flex-1 lg:p-0", PHONE_BOTTOM, "md:pb-10 lg:pb-0")}>
         <div className="flex flex-wrap items-center gap-2">
@@ -604,7 +609,7 @@ export const FocusFeedSlide = memo(function FocusFeedSlide({
   active: boolean;
   near: boolean;
 }) {
-  const { t, language } = useTranslation();
+  const { t } = useTranslation();
   const [promptOpen, setPromptOpen] = useState(false);
   const model = modelOf(item, t);
   const cover = focusFeedCover(item);
@@ -616,48 +621,21 @@ export const FocusFeedSlide = memo(function FocusFeedSlide({
   const extra = focusFeedExtraImages(item);
   const titleId = useId();
 
-  // Albüm (docs/history/203-*): everything but a playing video / audio is a "now playing" slide — the post's picture (or
-  // its words / steps / settings) as album art over Odak's blurred backdrop, the title and one big action under it.
-  if (layout !== "playable" || playableWithoutMedia) {
-    return (
-      <section data-slide-index={index} aria-labelledby={titleId} className="relative h-full snap-start snap-always">
-        <AlbumSlide item={item} model={model} cover={layout === "visual" ? cover : null} extra={extra} active={active} near={near} titleId={titleId} onOpenPrompt={() => setPromptOpen(true)} />
-        {promptOpen && prompt && <PromptDialog prompt={prompt} onClose={() => setPromptOpen(false)} />}
-      </section>
-    );
-  }
-
-  // A playing video / audio keeps the full-screen Reels stage (the media edge to edge, the words over it, the rail beside).
+  // Albüm (docs/history/203-*): every post is a "now playing" slide — its picture / playing video / audio (or its words,
+  // steps, settings) as album art over Odak's blurred backdrop, the title and one big action under it.
   return (
     <section data-slide-index={index} aria-labelledby={titleId} className="relative h-full snap-start snap-always">
-      <div className="relative h-full md:mx-auto md:grid md:max-w-[1000px] md:grid-cols-[minmax(0,1fr)_auto] md:items-center md:gap-5 md:px-6 md:pb-5 md:pt-16">
-        <article className="absolute inset-0 flex flex-col overflow-hidden md:relative md:inset-auto md:h-full md:max-h-[880px] md:min-h-0 md:rounded-xl md:border md:border-white/15 md:bg-surface-soft md:shadow-pop">
-          {prompt && <PlayableMedia prompt={prompt} cover={cover} active={active} near={near} />}
-          <div aria-hidden className={cn(HIDE_WHILE_COMMENTS, "pointer-events-none absolute inset-0 z-[3] bg-gradient-to-b from-black/45 via-transparent via-30% to-black/85")} />
-          <div className={cn(HIDE_WHILE_COMMENTS, "relative z-10 flex items-center justify-between gap-2 px-3 md:p-4", PHONE_TOP, "md:pt-4")}>
-            <TypePill icon={model.icon} label={model.typeLabel} />
-          </div>
-          <div className={cn(HIDE_WHILE_COMMENTS, "pointer-events-none relative z-10 mt-auto space-y-3 pl-4 pr-20 md:p-7", PHONE_BOTTOM, "md:pb-7")}>
-            {model.tool && (
-              <p className="flex items-center gap-2 text-caption font-bold uppercase tracking-[0.12em] text-white/85">
-                <span aria-hidden className="h-px w-5 bg-white/70" />
-                {model.tool}
-              </p>
-            )}
-            <h2 id={titleId} className="line-clamp-3 break-words font-display text-[clamp(1.5rem,4.2vw,3.1rem)] font-bold leading-[1.04] tracking-[-0.03em] text-white">
-              {model.title}
-            </h2>
-            {model.description && <p className="line-clamp-2 max-w-2xl break-words text-small leading-relaxed text-white/85 sm:text-body">{model.description}</p>}
-            <div className="pointer-events-auto space-y-3">
-              <AuthorLine author={model.author} createdAt={model.createdAt} language={language} onImage />
-              <SlideButtons href={model.href} prompt={prompt} onOpenPrompt={() => setPromptOpen(true)} />
-            </div>
-          </div>
-        </article>
-        <div className={cn(HIDE_WHILE_COMMENTS, "absolute bottom-0 right-2 z-20 md:static", PHONE_BOTTOM, "md:pb-0")}>
-          <FocusFeedRail item={item} author={model.author} />
-        </div>
-      </div>
+      <AlbumSlide
+        item={item}
+        model={model}
+        cover={layout === "visual" || layout === "playable" ? cover : null}
+        playable={layout === "playable" && !playableWithoutMedia}
+        extra={extra}
+        active={active}
+        near={near}
+        titleId={titleId}
+        onOpenPrompt={() => setPromptOpen(true)}
+      />
       {promptOpen && prompt && <PromptDialog prompt={prompt} onClose={() => setPromptOpen(false)} />}
     </section>
   );
