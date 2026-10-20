@@ -28,3 +28,4 @@ Başvuru gönderisi sayfası (`communities/post-page.tsx`): üst kart detay sayf
 ## Ek düzeltme (kullanıcı geri bildirimi)
 - Bandın sağ üstündeki ⋮ yuvarlak zemin taşımaz (köşede uyumsuz duruyordu); düz ⋮, telefon/tablette bant biraz aşağıdan başlar (`pt-11`) ki ⋮ kapağın üstüne binmesin.
 - Hazır ayar kartının büyük düğmesi "Studio'da aç" telefon genişliğinde sayaçları taşırıyordu: görünen etiket "Studio" (erişilebilir ad/ipucu hâlâ "Studio'da aç").
+- Başvuru gönderisi sayfasında paylaşan kişinin bölümü artık kart değil: kenardan kenara düz şerit (`bg-surface`, alt çizgi), üst menünün hemen altında ve bandın hemen üstünde; "← … akışına dön" şeridin içinde, yazılar sayfanın kenar boşluğunda.

@@ -131,14 +131,13 @@ export function CommunityPostPage() {
 
   return (
     <div data-community-post-page={post.id}>
-      {/* Same side padding as the detail page under it; the space below keeps the card off the band. */}
-      <div className="mx-auto w-full max-w-6xl px-4 pb-4 pt-4 sm:px-6 sm:pb-6 sm:pt-6 lg:px-10">
-        <Link href={feedHref} className="inline-flex items-center gap-1.5 text-small text-text-muted hover:text-text">
-          <ArrowLeft size={14} aria-hidden /> {group ? t("communities.post.page.back", { name: group.name }) : t("communities.post.page.backGeneric")}
-        </Link>
-
-        <section aria-label={t("communities.post.linked.appliedLabel")} className="mt-3 rounded-[22px] border border-border-soft bg-surface p-4 shadow-card">
-          <div className="flex items-start gap-3">
+      {/* A flat strip edge to edge (no card), right under the header and on top of the band — the same side padding as the detail page. */}
+      <section aria-label={t("communities.post.linked.appliedLabel")} className="border-b border-border-soft bg-surface">
+        <div className="mx-auto w-full max-w-6xl px-4 py-4 sm:px-6 lg:px-10">
+          <Link href={feedHref} className="inline-flex items-center gap-1.5 text-small text-text-muted hover:text-text">
+            <ArrowLeft size={14} aria-hidden /> {group ? t("communities.post.page.back", { name: group.name }) : t("communities.post.page.backGeneric")}
+          </Link>
+          <div className="mt-3 flex items-start gap-3">
             {post.author && <Avatar src={post.author.avatarUrl} alt={post.author.displayName} size={40} />}
             <div className="min-w-0 flex-1">
               <p className="break-words text-small leading-snug text-text">
@@ -178,8 +177,8 @@ export function CommunityPostPage() {
               </Link>
             )}
           </div>
-        </section>
-      </div>
+        </div>
+      </section>
 
       <PostScopeProvider value={{ post, mode, onToast: show }}>
         <PostMenuExtras items={extras}>
