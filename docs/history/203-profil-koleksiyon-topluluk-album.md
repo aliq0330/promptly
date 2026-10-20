@@ -37,6 +37,7 @@ Detay sayfaları (`201-*`) ve gönderi kartları (`202-*`) Albüm diline geçtik
 - **Haftalık tema** (`weekly-challenge-banner.tsx`): küçük bant — kupa karosu, "HAFTALIK TEMA", büyük başlık, kalan süre, büyük **Katıl**.
 - **Keşfet vitrini** (`discover-highlights.tsx` → `PopularHero`): "Bu hafta/ay popüler"in 1 numarası şeridin başında görselinden renk alan bant (kapak, büyük başlık, yazar + beğeni, **Kopyala**); şerit 2. sıradan devam eder.
 - **Workflow "Adım adım"** (`workflow-runner.tsx`): her adım küçük bir bantla açılır (adım türü karosu, "ADIM 1 / 2", büyük başlık); Önceki/Sonraki düğmeleri büyük.
+- **Workflow "Akış"** (`workflow-flow.tsx`, üçüncü tur): her adım kartı aynı küçük bantla açılır — bant adımın bağlı içeriğinin küçük resminden renk alır; kapak = o küçük resim (köşesinde adım numarası) ya da numara karosu; "ADIM 1 · PROMPT", büyük başlık, açıklama, bağlı içerik; altında Girdi / Çıktı kutuları ve adımlar arası "Çıktı aktarılıyor" bağlantısı değişmedi. `CardBandBackdrop` `as="span"` alır (bant bir `<button>`'un içinde).
 
 Çeviri: yeni anahtarlar TR + EN (ikinci tur: `result.kicker`, `result.openPrompt`, `tag.kicker`, `tag.actionsAria`; ilk tur: `profile.actionsAria`, `collection.kicker`, `collection.actionsAria`, `collection.updatedAgo`, `collection.aside.*`, `collection.typeFilterAria`, `collection.typeCommunityPosts`, `communities.band.actionsAria`); "Yaratıcı" ve "Topluluk" için var olan `profile.creatorLabel` / `groups.page.eyebrow` kullanıldı.
 

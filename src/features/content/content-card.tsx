@@ -118,16 +118,25 @@ export const CONTENT_GRID_ITEM_CLASS = "break-inside-avoid pb-3 sm:pb-4";
  * the page colour, else the quiet brand tint. Put it first inside a `relative rounded-t-xl` band; the band's content goes
  * after it in a `relative` box. Shared by the content cards and the community / collection / creator cards (docs/history/203-*).
  */
-export function CardBandBackdrop({ backdrop, className }: { backdrop?: React.ReactNode; className?: string }) {
+export function CardBandBackdrop({
+  backdrop,
+  className,
+  as: Tag = "div",
+}: {
+  backdrop?: React.ReactNode;
+  className?: string;
+  /** "span" inside a `<button>` band (a workflow's step card). */
+  as?: "div" | "span";
+}) {
   return (
-    <div aria-hidden className={cn("absolute inset-0 overflow-hidden rounded-t-xl bg-primary-soft", className)}>
+    <Tag aria-hidden className={cn("absolute inset-0 overflow-hidden rounded-t-xl bg-primary-soft", className)}>
       {backdrop && (
         <>
-          <div className="absolute inset-0 scale-150 opacity-70 blur-2xl saturate-150">{backdrop}</div>
-          <div className="absolute inset-0 bg-background/55" />
+          <Tag className="absolute inset-0 scale-150 opacity-70 blur-2xl saturate-150">{backdrop}</Tag>
+          <Tag className="absolute inset-0 bg-background/55" />
         </>
       )}
-    </div>
+    </Tag>
   );
 }
 

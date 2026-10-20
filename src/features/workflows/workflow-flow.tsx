@@ -8,6 +8,8 @@ import { Portal } from "@/components/ui/portal";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { incomingLinks } from "@/lib/workflow-logic";
 import { cn } from "@/lib/utils";
+import { StorageImg } from "@/components/ui/storage-media";
+import { CardBandBackdrop } from "@/features/content/content-card";
 import type { WorkflowStep } from "@/types";
 import { MEDIA_ICON, STEP_TYPE_META, stepSubtitle } from "./step-meta";
 import { StepPreviewBody } from "./step-content-preview";
@@ -158,69 +160,84 @@ function StepCard({ step, steps, index }: { step: WorkflowStep; steps: WorkflowS
     };
   }, [open, isPhone, cardEl]);
 
+  // Albüm (docs/history/203-*): each step opens with a small band tinted by its content's picture — the picture (or the
+  // step number on a tile) as the art, "ADIM 1 · Prompt", the big title, the content it points to.
   const body = (
     <>
-      <span className="flex items-start gap-3">
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-label font-semibold text-primary-foreground">{index + 1}</span>
-        <span className="min-w-0 flex-1 pr-16">
-          <span className="block text-caption font-semibold uppercase tracking-[0.08em] text-primary">{t("workflow.stepN", { n: String(index + 1) })}</span>
-          <span className="block break-words text-sm font-semibold text-text">{step.title || t("workflow.untitledStep")}</span>
-          <span className="mt-1 inline-flex max-w-full items-center gap-1 rounded-full bg-primary-soft px-2 py-0.5 text-caption font-medium text-text-secondary">
-            <Icon size={11} className="shrink-0" />
-            <span className="truncate">{[t(meta.labelKey), stepSubtitle(step, language)].filter(Boolean).join(" · ")}</span>
-          </span>
-          {step.description && <span className="mt-1.5 block break-words text-small text-text-secondary">{step.description}</span>}
-          {c ? (
-            <span className="mt-1.5 flex min-w-0 items-center gap-1.5 text-caption text-text">
-              {MediaIcon && <MediaIcon size={12} className="shrink-0 text-text-muted" />}
-              <span className="truncate font-medium">{c.title}</span>
-              <span className="shrink-0 text-text-muted">@{c.authorUsername}</span>
+      <span className="relative block rounded-t-xl px-3.5 pb-3.5 pt-3.5 sm:px-4 sm:pt-4" data-flow-step-band>
+        <CardBandBackdrop as="span" backdrop={c?.thumbnailUrl ? <StorageImg src={c.thumbnailUrl} alt="" className="h-full w-full object-cover" /> : undefined} />
+        <span className="relative flex items-start gap-3.5 pr-16">
+          {c?.thumbnailUrl ? (
+            <span className="relative h-14 w-14 shrink-0 overflow-hidden rounded-[16px] bg-surface shadow-pop">
+              <StorageImg src={c.thumbnailUrl} alt="" className="h-full w-full object-cover" />
+              <span className="absolute bottom-1 left-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[0.6875rem] font-bold text-primary-foreground">{index + 1}</span>
             </span>
           ) : (
-            <span className="mt-1.5 block text-caption text-text-muted">{step.contentMissing ? t("workflow.contentMissing") : t("workflow.stepNoContentPublic")}</span>
+            <span aria-hidden className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[16px] bg-surface font-display text-[1.5rem] font-extrabold text-primary shadow-pop">
+              {index + 1}
+            </span>
           )}
+          <span className="min-w-0 flex-1 space-y-1">
+            <span className="flex min-w-0 items-center gap-1.5 text-caption font-semibold uppercase tracking-[0.08em] text-primary">
+              <Icon size={12} className="shrink-0" aria-hidden />
+              <span className="truncate">{[t("workflow.stepN", { n: String(index + 1) }), t(meta.labelKey), stepSubtitle(step, language)].filter(Boolean).join(" · ")}</span>
+            </span>
+            <span className="block break-words font-display text-[1.25rem] font-extrabold leading-tight tracking-[-0.02em] text-text">{step.title || t("workflow.untitledStep")}</span>
+            {step.description && <span className="block break-words text-small text-text-secondary">{step.description}</span>}
+            {c ? (
+              <span className="flex min-w-0 items-center gap-1.5 text-caption text-text">
+                {MediaIcon && <MediaIcon size={12} className="shrink-0 text-text-muted" />}
+                <span className="truncate font-medium">{c.title}</span>
+                <span className="shrink-0 text-text-secondary">@{c.authorUsername}</span>
+              </span>
+            ) : (
+              <span className="block text-caption text-text-muted">{step.contentMissing ? t("workflow.contentMissing") : t("workflow.stepNoContentPublic")}</span>
+            )}
+          </span>
         </span>
       </span>
 
-      {(step.inputs.length > 0 || step.outputs.length > 0) && (
-        <span className={cn("mt-3 grid gap-2", step.inputs.length > 0 && step.outputs.length > 0 && "sm:grid-cols-2")}>
-          {step.inputs.length > 0 && (
-            <span className="block min-w-0 rounded-md border border-border-soft bg-surface-soft p-2.5">
-              <span className="mb-1.5 block text-caption font-semibold uppercase tracking-[0.06em] text-text-muted">{t("workflow.inputLabel")}</span>
-              <span className="block space-y-1">
-                {step.inputs.map((input) => {
-                  const link = links.find((l) => l.input.id === input.id);
-                  return link ? (
-                    <span key={input.id} className="flex min-w-0 items-center gap-1.5 rounded-md bg-primary-soft px-2 py-1 text-caption font-medium text-primary">
-                      <ArrowLeft size={12} className="shrink-0" aria-hidden />
-                      <span className="min-w-0 break-words">{t("workflow.flowInputFrom", { n: String(link.fromIndex + 1), label: link.output.label || t("workflow.outputLabel") })}</span>
-                    </span>
-                  ) : (
-                    <span key={input.id} className="flex min-w-0 flex-col text-caption text-text">
-                      <span className="break-words">{input.label || "…"}</span>
-                      <span className="text-text-muted">{t("workflow.flowOwnInput")}</span>
-                    </span>
-                  );
-                })}
+      <span className="block px-3.5 pb-3.5 sm:px-4">
+        {(step.inputs.length > 0 || step.outputs.length > 0) && (
+          <span className={cn("mt-3 grid gap-2", step.inputs.length > 0 && step.outputs.length > 0 && "sm:grid-cols-2")}>
+            {step.inputs.length > 0 && (
+              <span className="block min-w-0 rounded-md border border-border-soft bg-surface-soft p-2.5">
+                <span className="mb-1.5 block text-caption font-semibold uppercase tracking-[0.06em] text-text-muted">{t("workflow.inputLabel")}</span>
+                <span className="block space-y-1">
+                  {step.inputs.map((input) => {
+                    const link = links.find((l) => l.input.id === input.id);
+                    return link ? (
+                      <span key={input.id} className="flex min-w-0 items-center gap-1.5 rounded-md bg-primary-soft px-2 py-1 text-caption font-medium text-primary">
+                        <ArrowLeft size={12} className="shrink-0" aria-hidden />
+                        <span className="min-w-0 break-words">{t("workflow.flowInputFrom", { n: String(link.fromIndex + 1), label: link.output.label || t("workflow.outputLabel") })}</span>
+                      </span>
+                    ) : (
+                      <span key={input.id} className="flex min-w-0 flex-col text-caption text-text">
+                        <span className="break-words">{input.label || "…"}</span>
+                        <span className="text-text-muted">{t("workflow.flowOwnInput")}</span>
+                      </span>
+                    );
+                  })}
+                </span>
               </span>
-            </span>
-          )}
-          {step.outputs.length > 0 && (
-            <span className="block min-w-0 rounded-md border border-border-soft bg-surface-soft p-2.5">
-              <span className="mb-1.5 block text-caption font-semibold uppercase tracking-[0.06em] text-text-muted">{t("workflow.outputLabel")}</span>
-              <span className="block space-y-1">
-                {step.outputs.map((output) => (
-                  <span key={output.id} className="flex min-w-0 items-start gap-1.5 text-caption font-medium text-text">
-                    <Check size={13} className="mt-px shrink-0 text-success" aria-hidden />
-                    <span className="min-w-0 break-words">{output.label || t("workflow.outputLabel")}</span>
-                  </span>
-                ))}
+            )}
+            {step.outputs.length > 0 && (
+              <span className="block min-w-0 rounded-md border border-border-soft bg-surface-soft p-2.5">
+                <span className="mb-1.5 block text-caption font-semibold uppercase tracking-[0.06em] text-text-muted">{t("workflow.outputLabel")}</span>
+                <span className="block space-y-1">
+                  {step.outputs.map((output) => (
+                    <span key={output.id} className="flex min-w-0 items-start gap-1.5 text-caption font-medium text-text">
+                      <Check size={13} className="mt-px shrink-0 text-success" aria-hidden />
+                      <span className="min-w-0 break-words">{output.label || t("workflow.outputLabel")}</span>
+                    </span>
+                  ))}
+                </span>
               </span>
-            </span>
-          )}
-        </span>
-      )}
-      {hasPreview && <span className="mt-2.5 block text-caption text-text-muted">{t("workflow.flowPreviewHint")}</span>}
+            )}
+          </span>
+        )}
+        {hasPreview && <span className="mt-2.5 block text-caption text-text-muted">{t("workflow.flowPreviewHint")}</span>}
+      </span>
     </>
   );
 
@@ -230,7 +247,7 @@ function StepCard({ step, steps, index }: { step: WorkflowStep; steps: WorkflowS
       onMouseEnter={hoverCapable && hasPreview ? () => setHover(true) : undefined}
       onMouseLeave={hoverCapable && hasPreview ? () => setHover(false) : undefined}
       className={cn(
-        "relative rounded-lg border bg-surface shadow-card transition-[border-color,box-shadow] duration-200 ease-soft",
+        "relative rounded-xl border bg-surface shadow-card transition-[border-color,box-shadow] duration-200 ease-soft",
         open ? "border-primary/50 shadow-card-hover" : "border-border-soft hover:border-border",
       )}
     >
@@ -240,12 +257,12 @@ function StepCard({ step, steps, index }: { step: WorkflowStep; steps: WorkflowS
           onClick={() => setPinned((value) => !value)}
           aria-expanded={open}
           aria-haspopup="dialog"
-          className="block w-full rounded-lg p-3.5 text-left sm:p-4"
+          className="block w-full rounded-xl text-left"
         >
           {body}
         </button>
       ) : (
-        <div className="p-3.5 sm:p-4">{body}</div>
+        <div>{body}</div>
       )}
       {openable && c && (
         <div className="absolute right-2.5 top-2.5 flex items-center gap-0.5">
