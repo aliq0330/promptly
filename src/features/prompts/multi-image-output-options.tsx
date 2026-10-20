@@ -19,7 +19,8 @@ import { StorageImage } from "@/components/ui/storage-media";
  * `ImageLightbox`.
  */
 
-const FRAME_CLASS = "relative w-full overflow-hidden rounded-md border border-border-soft bg-surface-soft";
+// The Albüm card's art (docs/history/202-*): a lifted picture on the tinted band.
+const FRAME_CLASS = "relative w-full overflow-hidden rounded-lg bg-surface-soft shadow-pop";
 const SIZES = "(min-width: 1280px) 30vw, (min-width: 640px) 45vw, 100vw";
 
 function OutputCaption() {
@@ -47,7 +48,7 @@ export function OutputThumbnailStrip({ media }: { media: PromptMedia[] }) {
       {rest.length > 0 && (
         <div className="flex gap-1.5">
           {visible.map((item, index) => (
-            <div key={item.id} className="relative h-11 w-11 shrink-0 overflow-hidden rounded-sm border border-border-soft bg-surface-soft">
+            <div key={item.id} className="relative h-11 w-11 shrink-0 overflow-hidden rounded-sm border border-surface bg-surface-soft">
               <StorageImage src={item.url} alt={item.alt} fill sizes="44px" className="object-cover" />
               {index === visible.length - 1 && overflow > 0 && (
                 <span className="absolute inset-0 flex items-center justify-center bg-black/55 text-caption font-semibold text-white">

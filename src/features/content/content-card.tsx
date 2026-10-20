@@ -45,7 +45,7 @@ export function ContentCard({
         }
       }}
       className={cn(
-        "group relative flex flex-col rounded-lg border border-border-soft bg-surface shadow-card transition-[border-color,box-shadow] duration-300 ease-soft hover:border-border hover:shadow-card-hover",
+        "group relative flex flex-col rounded-xl border border-border-soft bg-surface shadow-card transition-[border-color,box-shadow] duration-300 ease-soft hover:border-border hover:shadow-card-hover",
         // Hover-capable pointers only (Tailwind's hover: variant): a hairline of the brand colour opens along the top edge.
         "before:pointer-events-none before:absolute before:inset-x-5 before:top-0 before:z-[1] before:h-px before:origin-center before:scale-x-0 before:rounded-full before:bg-primary/55 before:transition-transform before:duration-[var(--motion-emphasis)] before:ease-soft hover:before:scale-x-100",
         className,
@@ -54,7 +54,7 @@ export function ContentCard({
       {children}
       {/* Mouse/touch convenience only: hidden from assistive tech and the tab
           order — the card title (ContentCardTitle) is the accessible link. */}
-      <Link href={href} data-card-link className="absolute inset-0 z-0 rounded-lg" aria-hidden tabIndex={-1} />
+      <Link href={href} data-card-link className="absolute inset-0 z-0 rounded-xl" aria-hidden tabIndex={-1} />
     </article>
   );
 }
@@ -84,70 +84,120 @@ export function ContentGrid({
 export const CONTENT_GRID_ITEM_CLASS = "break-inside-avoid pb-3 sm:pb-4";
 
 /**
- * The one inner structure of every content card (docs/history/196-*):
+ * The one inner structure of every content card — the ALBÜM card (docs/history/202-*, the same language as the detail
+ * pages' band, docs/history/201-*):
  *
- *   [avatar]  Name                                     ⋮
- *             @user · 3 gün önce
- *   [▣] Metin Prompt                       (content-type row: tinted icon tile + label, other badges beside it)
- *   Title / description / media / prompt …
- *   ───────────────────────────────────────────────
- *   ♥ 12   💬 3   🔖 1   📊                          ↗
+ *   ┌──────────────────────────────────────────────┐
+ *   │ BAND (tinted by the post's picture)           │
+ *   │   [art: the output / prompt / steps …]        │
+ *   │   ▣ GÖRSEL PROMPT · tool  [status]         ⋮  │
+ *   │   Big title                                    │
+ *   │   (·) Name @user · 3 gün önce                  │
+ *   └──────────────────────────────────────────────┘
+ *   [ Kopyala ]                 ♥ 12  💬 3  🔖 1  📊  ↗
  *
- * Everything below the identity block is full width (not indented under the avatar); a hairline separates the action row, which
- * keeps the counters on the left and Paylaş alone on the right. The identity row sits above the stretched card link (`z-20`, and above
- * its siblings while a menu inside it is open) so the profile links and the ⋮ menu stay clickable.
+ * `backdrop` (the post's picture) is shown enlarged and blurred under a veil of the page colour, so the band takes the
+ * picture's colours; without one the band is the quiet brand tint. `primary` is the card's one big action (Kopyala /
+ * Çalıştır / Studio'da aç / Yanıtla); with it the engagement icons (`footer`, the same components as before: Beğeni ·
+ * Yorum · Kaydet · İstatistik … Paylaş) gather on the right, without it they keep their own row. Nothing here creates a
+ * stacking context (no `isolate`/transform), so the ⋮ menu still opens over the next card; the controls are `relative z-10`
+ * above the card's stretched link and the menu `z-20`.
  */
 export function ContentCardPost({
   author,
   meta,
   badges,
   menu,
+  art,
+  backdrop,
+  title,
+  primary,
   footer,
   children,
 }: {
   /** `null` = unknown/removed author (shown as a generic user, no profile link). */
   author: Pick<UserProfile, "username" | "displayName" | "avatarUrl"> | null;
-  /** Muted second line under the name — e.g. "@carol · 3 gün önce" or "bir prompt paylaştı · dün". */
+  /** Muted part of the author line — e.g. "@carol · 3 gün önce" or "bir prompt paylaştı · dün". */
   meta: string;
-  /** The content-type row under the identity block (`ContentTypePill`, status, "Başvuru"…). */
+  /** The kicker row (`ContentTypePill`, status, "Başvuru"…). */
   badges?: React.ReactNode;
   menu?: React.ReactNode;
+  /** The band's picture: the output, a prompt box, the steps… */
+  art?: React.ReactNode;
+  /** The post's picture again (`<img>`/`StorageImage` filling its box) — tints the band. */
+  backdrop?: React.ReactNode;
+  /** `ContentCardTitle`. */
+  title: React.ReactNode;
+  /** The card's one big action. */
+  primary?: React.ReactNode;
   footer?: React.ReactNode;
-  children: React.ReactNode;
+  /** Extra lines in the band above the kicker (a request-response's provenance, a community post's note). */
+  children?: React.ReactNode;
 }) {
   const { t } = useTranslation();
   const name = author?.displayName ?? t("common.genericUser");
   return (
     <>
-      <div className="space-y-3 px-4 pb-3 pt-4">
-        <div className="relative z-20 flex items-start gap-3 focus-within:z-30">
-          {author ? (
-            // The name next to it is the accessible profile link; the avatar is a mouse/touch shortcut to the same page.
-            <Link href={profileHref(author)} aria-hidden tabIndex={-1} className="shrink-0 rounded-full">
-              <Avatar src={author.avatarUrl} alt={name} size={40} />
-            </Link>
-          ) : (
-            <Avatar src={null} alt={name} size={40} className="shrink-0" />
+      <div className="relative rounded-t-xl px-3.5 pb-4 pt-3.5">
+        <div aria-hidden className="absolute inset-0 overflow-hidden rounded-t-xl bg-primary-soft">
+          {backdrop && (
+            <>
+              <div className="absolute inset-0 scale-150 opacity-70 blur-2xl saturate-150">{backdrop}</div>
+              <div className="absolute inset-0 bg-background/55" />
+            </>
           )}
-          <div className="min-w-0 flex-1 pt-px">
-            {author ? (
-              <Link href={profileHref(author)} className="block max-w-full truncate rounded-xs text-[0.9375rem] font-bold leading-tight text-text hover:text-primary">
-                {name}
-              </Link>
-            ) : (
-              <span className="block truncate text-[0.9375rem] font-bold leading-tight text-text">{name}</span>
-            )}
-            <p className="mt-0.5 truncate text-small leading-tight text-text-muted">{meta}</p>
-          </div>
-          {menu}
         </div>
-        {badges && <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">{badges}</div>}
-        <div className="space-y-3">{children}</div>
+        <div className="relative space-y-3.5">
+          {art}
+          {children && <div className="space-y-2">{children}</div>}
+          <div className="flex items-start gap-2">
+            <div className="min-w-0 flex-1 space-y-1.5">
+              {badges && <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5">{badges}</div>}
+              {title}
+              <p className="flex min-w-0 items-center gap-2 text-small leading-tight text-text-secondary">
+                {author ? (
+                  <Link href={profileHref(author)} aria-hidden tabIndex={-1} className="relative z-10 shrink-0 rounded-full">
+                    <Avatar src={author.avatarUrl} alt={name} size={22} />
+                  </Link>
+                ) : (
+                  <Avatar src={null} alt={name} size={22} className="shrink-0" />
+                )}
+                <span className="min-w-0 truncate">
+                  {author ? (
+                    <Link href={profileHref(author)} className="relative z-10 rounded-xs font-semibold text-text hover:text-primary">
+                      {name}
+                    </Link>
+                  ) : (
+                    <span className="font-semibold text-text">{name}</span>
+                  )}{" "}
+                  {meta}
+                </span>
+              </p>
+            </div>
+            {menu && <div className="relative z-20 -mr-1.5 -mt-1.5 shrink-0 focus-within:z-30">{menu}</div>}
+          </div>
+        </div>
       </div>
-      {footer && <div className="relative z-10 flex items-center gap-0.5 border-t border-border-soft px-2 py-1">{footer}</div>}
+      {(primary || footer) && (
+        <div data-card-actions className="relative z-10 flex items-center gap-0.5 px-2 py-2">
+          {primary ? (
+            <>
+              <div className="flex shrink-0 items-center pl-1.5">{primary}</div>
+              {/* Shrink-to-fit: the footer's own `ml-auto` spacer has no room here, so the icons gather on the right. */}
+              <div className="ml-auto flex min-w-0 items-center gap-0.5">{footer}</div>
+            </>
+          ) : (
+            footer
+          )}
+        </div>
+      )}
     </>
   );
 }
+
+/** The class of a card's big primary action (a `Link`/button beside the engagement icons). */
+export const CARD_PRIMARY_CLASS =
+  "relative z-10 inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full bg-primary px-4 text-label font-semibold text-primary-foreground transition-colors duration-200 hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background";
 
 /**
  * Card title — a real link so keyboard users reach the item from its title
@@ -162,11 +212,12 @@ export function ContentCardTitle({
   title: string;
   description?: string;
 }) {
-  // Credit lines ("Kaynak: …") belong on the detail page, not in the preview.
+  // Credit lines ("Kaynak: …") belong on the detail page, not in the preview. The Albüm card passes no description
+  // (title + author only); a caller that does gets two clamped lines.
   const cardBody = splitSourceNotes(description).body;
   return (
     <div className="space-y-1">
-      <h2 className="text-[1.1875rem] font-bold leading-snug tracking-[-0.014em] text-text">
+      <h2 className="font-display text-[1.3125rem] font-extrabold leading-[1.1] tracking-[-0.02em] text-text">
         <Link
           href={href}
           data-card-link
