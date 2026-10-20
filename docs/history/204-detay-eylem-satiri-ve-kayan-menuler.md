@@ -24,3 +24,7 @@ Başvuru gönderisi sayfası (`communities/post-page.tsx`): üst kart detay sayf
 ## Bilinen sınırlar
 - iPhone Safari'nin kendi araç çubuğuyla etkileşimi (alt menü kaybolunca altta görünen renk) gerçek cihazda denenmedi.
 - Sabit çubuk mobilde alt menü yüksekliğini (4rem) sabit kabul eder.
+
+## Ek düzeltme (kullanıcı geri bildirimi)
+- Bandın sağ üstündeki ⋮ yuvarlak zemin taşımaz (köşede uyumsuz duruyordu); düz ⋮, telefon/tablette bant biraz aşağıdan başlar (`pt-11`) ki ⋮ kapağın üstüne binmesin.
+- Hazır ayar kartının büyük düğmesi "Studio'da aç" telefon genişliğinde sayaçları taşırıyordu: görünen etiket "Studio" (erişilebilir ad/ipucu hâlâ "Studio'da aç").

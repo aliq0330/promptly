@@ -75,9 +75,10 @@ export function PresetCard({
         }
         title={<ContentCardTitle href={href} title={preset.title} />}
         primary={
-          <Link href={`/studio?preset=${preset.id}`} className={CARD_PRIMARY_CLASS}>
+          // Short visible label ("Studio'da aç" pushed the counters out of a phone-width card); the full name stays the accessible one.
+          <Link href={`/studio?preset=${preset.id}`} aria-label={t("studio.openInStudio")} title={t("studio.openInStudio")} className={CARD_PRIMARY_CLASS}>
             <WandSparkles size={14} aria-hidden />
-            {t("studio.openInStudio")}
+            Studio
           </Link>
         }
         footer={<PromptCardFooter preset={preset} />}

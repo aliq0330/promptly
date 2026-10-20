@@ -90,9 +90,15 @@ export function DetailBand({
           <div className="absolute inset-0 bg-background/55" />
         </div>
       )}
-      <div className="relative mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 pb-7 pt-6 sm:px-6 lg:flex-row lg:items-end lg:gap-9 lg:px-10 lg:pb-10 lg:pt-10">
+      {/* With a menu the band starts a little lower on phones/tablets, so the ⋮ sits above the art instead of on it. */}
+      <div
+        className={cn(
+          "relative mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 pb-7 sm:px-6 lg:flex-row lg:items-end lg:gap-9 lg:px-10 lg:pb-10 lg:pt-10",
+          menu ? "pt-11" : "pt-6",
+        )}
+      >
         {menu && (
-          <div data-detail-menu className="absolute right-2 top-2 z-20 rounded-full bg-background/60 p-0.5 backdrop-blur-md empty:hidden sm:right-4 lg:right-8 lg:top-4">
+          <div data-detail-menu className="absolute right-2 top-2 z-20 empty:hidden sm:right-4 lg:right-8 lg:top-4">
             {menu}
           </div>
         )}
