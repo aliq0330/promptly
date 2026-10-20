@@ -24,7 +24,7 @@ const ICON_SIZE = 20;
  * sits under it. Guests get each button's own login prompt. A request has no save
  * (as everywhere); its replies link takes that slot.
  */
-const RAIL_ACTION = cn(
+const RAIL_ACTION_COLUMN = cn(
   "h-auto min-w-0 flex-col gap-1 rounded-none bg-transparent px-0 py-0 text-caption font-semibold",
   "hover:bg-transparent active:scale-100",
   // The first child is the icon (or LikeToggle's icon wrapper): framed as the round button.
@@ -35,7 +35,17 @@ const RAIL_ACTION = cn(
   "max-sm:[&>:first-child]:p-2.5",
 );
 
-export function FocusFeedRail({ item, author }: { item: FeedItem; author: UserProfile }) {
+/**
+ * The same actions laid out as a row under an Albüm slide's title (docs/history/203-*): no avatar (the author line sits
+ * above), the count beside the icon — and only for screen readers on a phone, where the row must fit next to "Kopyala".
+ */
+const ROW_ACTION = cn(
+  RAIL_ACTION_COLUMN,
+  "flex-row gap-1.5 [&>:first-child]:p-2.5 max-sm:[&>:first-child]:p-2.5",
+  "max-sm:[&>:last-child:not(:first-child)]:sr-only",
+);
+
+export function FocusFeedRail({ item, author, layout = "column" }: { item: FeedItem; author: UserProfile; layout?: "column" | "row" }) {
   const { t } = useTranslation();
   const share: ShareModalTarget =
     item.kind === "prompt"
@@ -46,16 +56,18 @@ export function FocusFeedRail({ item, author }: { item: FeedItem; author: UserPr
           ? { contentType: "preset", preset: item.data }
           : { contentType: "request", request: item.data };
 
+  const row = layout === "row";
+  const RAIL_ACTION = row ? ROW_ACTION : RAIL_ACTION_COLUMN;
   return (
-    <div className="flex w-12 flex-col items-center gap-3.5 sm:w-14 sm:gap-4">
-      <Link
+    <div className={row ? "flex items-center gap-1.5 sm:gap-3" : "flex w-12 flex-col items-center gap-3.5 sm:w-14 sm:gap-4"}>
+      {!row && <Link
         href={profileHref(author)}
         aria-label={author.displayName}
         title={author.displayName}
         className="rounded-full ring-2 ring-primary ring-offset-2 ring-offset-background transition-transform duration-200 ease-soft hover:scale-105"
       >
         <Avatar src={author.avatarUrl} alt={author.displayName} size={44} />
-      </Link>
+      </Link>}
 
       {item.kind === "prompt" ? (
         <>
@@ -91,7 +103,7 @@ export function FocusFeedRail({ item, author }: { item: FeedItem; author: UserPr
         </>
       )}
 
-      <ShareTriggerButton target={share} size={ICON_SIZE} label={t("common.share")} className={cn(RAIL_ACTION, "[&>span]:inline")} />
+      <ShareTriggerButton target={share} size={ICON_SIZE} label={t("common.share")} className={cn(RAIL_ACTION, row ? "[&>span]:sr-only" : "[&>span]:inline")} />
     </div>
   );
 }
