@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { Trophy } from "lucide-react";
 import { buttonClassName } from "@/components/ui/button";
+import { CardBandBackdrop } from "@/features/content/content-card";
+import { Eyebrow } from "@/features/content/detail-parts";
 import { localizeChallenge } from "@/lib/challenge";
 import { formatRelativeTime, tagHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -21,23 +23,27 @@ export function WeeklyChallengeBanner() {
   const copy = localizeChallenge(challenge, language);
 
   return (
-    <section aria-label={t("challenge.eyebrow")} className="rounded-lg border border-border-soft bg-surface-soft p-4 sm:p-5">
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">
-        <span className="flex items-center gap-1.5 text-primary">
-          <Trophy size={14} strokeWidth={1.75} aria-hidden />
-          {t("challenge.eyebrow")}
+    // Albüm (docs/history/203-*): a small band — the trophy as its art, the theme as the big title, one big "Katıl".
+    <section aria-label={t("challenge.eyebrow")} data-challenge-band className="relative rounded-xl">
+      <CardBandBackdrop className="rounded-xl" />
+      <div className="relative flex flex-wrap items-start gap-x-4 gap-y-3 p-4 sm:p-5">
+        <span aria-hidden className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[18px] bg-surface text-primary shadow-pop">
+          <Trophy size={26} strokeWidth={1.6} />
         </span>
-        <span className="normal-case tracking-normal font-medium">{t("challenge.endsIn", { time: formatRelativeTime(challenge.endsAt, language) })}</span>
-      </div>
-      <h2 className="mt-2 text-h3 font-semibold text-text break-words">{copy.title}</h2>
-      {copy.description && <p className="mt-1 text-small text-text-secondary break-words">{copy.description}</p>}
-      <div className="mt-3 flex flex-wrap items-center gap-2">
-        <Link href={`/create?tag=${encodeURIComponent(challenge.tagSlug)}`} className={buttonClassName({ size: "sm" })}>
-          {t("challenge.join")}
-        </Link>
-        <Link href={tagHref({ slug: challenge.tagSlug })} className={buttonClassName({ size: "sm", variant: "outline" })}>
-          {t("challenge.seeEntries")} · #{challenge.tagLabel}
-        </Link>
+        <div className="min-w-0 flex-1 basis-40 space-y-1">
+          <Eyebrow tone="primary">{t("challenge.eyebrow")}</Eyebrow>
+          <h2 className="break-words font-display text-[1.375rem] font-extrabold leading-tight tracking-[-0.02em] text-text">{copy.title}</h2>
+          <p className="text-caption text-text-muted">{t("challenge.endsIn", { time: formatRelativeTime(challenge.endsAt, language) })}</p>
+        </div>
+        {copy.description && <p className="w-full break-words text-small text-text-secondary">{copy.description}</p>}
+        <div className="flex w-full flex-wrap items-center gap-2">
+          <Link href={`/create?tag=${encodeURIComponent(challenge.tagSlug)}`} className={buttonClassName({ size: "lg", className: "h-11 px-6 shadow-pop" })}>
+            {t("challenge.join")}
+          </Link>
+          <Link href={tagHref({ slug: challenge.tagSlug })} className={buttonClassName({ size: "md", variant: "ghost", className: "h-11" })}>
+            {t("challenge.seeEntries")} · #{challenge.tagLabel}
+          </Link>
+        </div>
       </div>
     </section>
   );

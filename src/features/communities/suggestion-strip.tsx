@@ -3,8 +3,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { GroupAvatar } from "@/features/groups/group-avatar";
+import { CardBandBackdrop } from "@/features/content/content-card";
+import { Eyebrow } from "@/features/content/detail-parts";
+import { CommunityCover } from "./community-cover";
 import { CommunityJoinButton, type JoinState } from "./community-join-button";
 import { VisibilityLabel } from "./visibility-label";
 import { applyJoinState } from "./home-shared";
@@ -107,24 +109,30 @@ export function SuggestionStrip({ onToast, onGoInvites }: { onToast: (message: s
             key={community.id}
             data-testid="suggestion-card"
             data-community-id={community.id}
-            className="relative flex w-[72%] shrink-0 snap-start flex-col gap-2 rounded-xl border border-border-soft bg-surface p-3 shadow-card transition-colors duration-200 ease-soft hover:border-border-strong sm:w-64"
+            className="relative flex w-[72%] shrink-0 snap-start flex-col rounded-xl border border-border-soft bg-surface shadow-card transition-colors duration-200 ease-soft hover:border-border-strong sm:w-64"
           >
-            <div className="flex items-start gap-3">
-              <GroupAvatar name={community.name} avatarUrl={community.avatarUrl} size={36} badge />
-              <div className="min-w-0 flex-1 space-y-1">
-                <h3 className="break-words text-sm font-semibold leading-snug text-text">
-                  <Link href={communityHref(community.id)} className="after:absolute after:inset-0 after:rounded-xl focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-primary">
-                    {community.name}
-                  </Link>
-                </h3>
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <Badge variant="neutral">{t(CATEGORY_LABEL_KEYS[community.category])}</Badge>
-                  <VisibilityLabel visibility={community.visibility} />
+            {/* Albüm kartı (docs/history/203-*): the band takes the community picture's colours. */}
+            <div className="relative flex-1 rounded-t-xl p-3 pb-3.5">
+              <CardBandBackdrop backdrop={<CommunityCover coverUrl={null} coverColor={null} avatarUrl={community.avatarUrl} className="h-full sm:h-full" />} />
+              <div className="relative space-y-2">
+                <div className="flex items-center gap-3">
+                  <span className="inline-flex shrink-0 rounded-[0.95rem] border-[3px] border-surface bg-surface shadow-pop">
+                    <GroupAvatar name={community.name} avatarUrl={community.avatarUrl} size={44} className="[&>span:first-child]:rounded-[0.75rem]" />
+                  </span>
+                  <div className="min-w-0 flex-1 space-y-0.5">
+                    <Eyebrow tone="primary">{t(CATEGORY_LABEL_KEYS[community.category])}</Eyebrow>
+                    <h3 className="break-words font-display text-[1.0625rem] font-extrabold leading-tight tracking-[-0.015em] text-text">
+                      <Link href={communityHref(community.id)} className="after:absolute after:inset-0 after:rounded-xl focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-primary">
+                        {community.name}
+                      </Link>
+                    </h3>
+                  </div>
                 </div>
+                <VisibilityLabel visibility={community.visibility} />
+                <p className="line-clamp-2 break-words text-caption text-text-secondary">{community.description ?? ""}</p>
               </div>
             </div>
-            <p className="line-clamp-2 break-words text-caption text-text-secondary">{community.description ?? ""}</p>
-            <div className="relative z-10 flex items-center justify-between gap-2">
+            <div className="relative z-10 flex items-center justify-between gap-2 px-3 py-2.5">
               <p className="min-w-0 truncate text-caption text-text-muted">
                 {memberCountText(t, community.memberCount)}
                 {community.reason && <> · {t(REASON_LABEL_KEYS[community.reason])}</>}

@@ -445,10 +445,10 @@ await scenario("26b. Topluluk sayfası: başlık kompakt, akış ızgarası (+ x
       assert.deepEqual(asides, ["about", "rules", "staff"], `${w}: community aside sections`);
     }
     assert.equal(new Set(posts.map((b) => b.left)).size, Math.min(cols, posts.length), `${w}: columns`);
-    const header = await page.getByTestId("community-header").evaluate((el) => el.getBoundingClientRect().height);
-    // Meydan (docs/history/190-*) adds a cover band above the title on purpose (128px since docs/history/191-*, so a cover photo reads
-    // as a cover); the header must still leave the feed in the first screen.
-    assert.ok(header <= (w < 500 ? 360 : 262), `${w}: header too tall (${header})`);
+    // Albüm (docs/history/203-*): the band + the actions row are taller on purpose (big art, big title, one big action); together
+    // they must still leave the tabs and the start of the feed in the first screen (900px tall).
+    const header = await page.locator("[data-community-actions]").evaluate((el) => el.getBoundingClientRect().bottom + window.scrollY);
+    assert.ok(header <= (w < 500 ? 560 : 520), `${w}: header too tall (${header})`);
     assert.equal(await overflowFree(page), true, `${w}: overflow`);
   }
   await page.setViewportSize({ width: 1280, height: 900 });

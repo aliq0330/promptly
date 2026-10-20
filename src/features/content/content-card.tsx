@@ -113,6 +113,24 @@ export const CONTENT_GRID_ITEM_CLASS = "break-inside-avoid pb-3 sm:pb-4";
  * stacking context (no `isolate`/transform), so the ⋮ menu still opens over the next card; the controls are `relative z-10`
  * above the card's stretched link and the menu `z-20`.
  */
+/**
+ * The tinted layer behind an Albüm card's band: `backdrop` (a picture filling its box) enlarged and blurred under a veil of
+ * the page colour, else the quiet brand tint. Put it first inside a `relative rounded-t-xl` band; the band's content goes
+ * after it in a `relative` box. Shared by the content cards and the community / collection / creator cards (docs/history/203-*).
+ */
+export function CardBandBackdrop({ backdrop, className }: { backdrop?: React.ReactNode; className?: string }) {
+  return (
+    <div aria-hidden className={cn("absolute inset-0 overflow-hidden rounded-t-xl bg-primary-soft", className)}>
+      {backdrop && (
+        <>
+          <div className="absolute inset-0 scale-150 opacity-70 blur-2xl saturate-150">{backdrop}</div>
+          <div className="absolute inset-0 bg-background/55" />
+        </>
+      )}
+    </div>
+  );
+}
+
 export function ContentCardPost({
   author,
   meta,
@@ -149,14 +167,7 @@ export function ContentCardPost({
   return (
     <>
       <div className="relative rounded-t-xl px-3.5 pb-4 pt-3.5">
-        <div aria-hidden className="absolute inset-0 overflow-hidden rounded-t-xl bg-primary-soft">
-          {backdrop && (
-            <>
-              <div className="absolute inset-0 scale-150 opacity-70 blur-2xl saturate-150">{backdrop}</div>
-              <div className="absolute inset-0 bg-background/55" />
-            </>
-          )}
-        </div>
+        <CardBandBackdrop backdrop={backdrop} />
         <div className="relative space-y-3.5">
           {art}
           {children && <div className="space-y-2">{children}</div>}

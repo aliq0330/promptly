@@ -28,6 +28,7 @@ import {
   type WorkflowRunState,
 } from "@/lib/workflow-run";
 import { cn } from "@/lib/utils";
+import { CardBandBackdrop } from "@/features/content/content-card";
 import type { Prompt, PromptVariable, WorkflowStep } from "@/types";
 import { STEP_TYPE_META } from "./step-meta";
 
@@ -161,15 +162,15 @@ export function WorkflowRunner({ workflowId, steps }: { workflowId: string; step
 
       {!showSummary && (
         <div className="flex items-center justify-between gap-2">
-          <Button variant="outline" onClick={() => go(index - 1)} disabled={index === 0}>
+          <Button variant="outline" size="lg" onClick={() => go(index - 1)} disabled={index === 0}>
             <ArrowLeft size={15} aria-hidden /> {t("workflow.run.prev")}
           </Button>
           {isLast ? (
-            <Button onClick={() => setShowSummary(true)}>
+            <Button size="lg" className="shadow-pop" onClick={() => setShowSummary(true)}>
               <ListChecks size={15} aria-hidden /> {t("workflow.run.finish")}
             </Button>
           ) : (
-            <Button onClick={() => go(index + 1)}>
+            <Button size="lg" className="shadow-pop" onClick={() => go(index + 1)}>
               {t("workflow.run.next")} <ArrowRight size={15} aria-hidden />
             </Button>
           )}
@@ -281,97 +282,107 @@ function StepPanel({
   const inputs = resolveInputs(steps, index, state);
 
   return (
-    <section aria-labelledby={`run-step-${step.id}`} className="space-y-4 rounded-lg border border-border-soft bg-surface p-4 shadow-card sm:p-5">
-      <header className="space-y-1">
-        <p className="flex items-center gap-1.5 text-caption font-semibold uppercase tracking-[0.08em] text-primary">
-          <Icon size={13} aria-hidden />
-          {t("workflow.run.stepOf", { n: String(index + 1), total: String(steps.length) })}
-        </p>
-        <h3 id={`run-step-${step.id}`} className="break-words text-h3 font-semibold text-text">
-          {step.title || t("workflow.untitledStep")}
-        </h3>
-        {step.description && <p className="break-words text-small text-text-secondary">{step.description}</p>}
+    <section aria-labelledby={`run-step-${step.id}`} className="space-y-4 rounded-xl border border-border-soft bg-surface pb-4 shadow-card sm:pb-5">
+      {/* Albüm (docs/history/203-*): the step opens with a small band — its type as the art, "Adım 2 / 3", the big title. */}
+      <header data-run-step-band className="relative rounded-t-xl px-4 pb-4 pt-4 sm:px-5 sm:pt-5">
+        <CardBandBackdrop />
+        <div className="relative flex items-start gap-3.5">
+          <span aria-hidden className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[16px] bg-surface text-primary shadow-pop">
+            <Icon size={22} strokeWidth={1.6} />
+          </span>
+          <div className="min-w-0 flex-1 space-y-1">
+            <p className="flex items-center gap-1.5 text-caption font-semibold uppercase tracking-[0.08em] text-primary">
+              {t("workflow.run.stepOf", { n: String(index + 1), total: String(steps.length) })}
+            </p>
+            <h3 id={`run-step-${step.id}`} className="break-words font-display text-[1.375rem] font-extrabold leading-tight tracking-[-0.02em] text-text">
+              {step.title || t("workflow.untitledStep")}
+            </h3>
+            {step.description && <p className="break-words text-small text-text-secondary">{step.description}</p>}
+          </div>
+        </div>
       </header>
+      <div className="space-y-4 px-4 sm:px-5">
 
-      {step.instructions && (
-        <div className="space-y-1">
-          <h4 className="text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">{t("workflow.instructionsLabel")}</h4>
-          <p className="whitespace-pre-wrap break-words text-small text-text">{step.instructions}</p>
-        </div>
-      )}
+        {step.instructions && (
+          <div className="space-y-1">
+            <h4 className="text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">{t("workflow.instructionsLabel")}</h4>
+            <p className="whitespace-pre-wrap break-words text-small text-text">{step.instructions}</p>
+          </div>
+        )}
 
-      {inputs.length > 0 && (
-        <div className="space-y-2">
-          <h4 className="text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">{t("workflow.run.inputsHeading")}</h4>
-          <ul className="space-y-3">
-            {inputs.map((resolved) => (
-              <li key={resolved.input.id} className="space-y-1.5">
-                {resolved.kind === "linked" ? (
-                  <>
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <span className="text-label font-medium text-text">
-                        {resolved.input.label || t("workflow.inputLabel")}
-                        <span className="ml-1.5 text-caption font-normal text-text-muted">
-                          {t("workflow.flowInputFrom", { n: String(resolved.fromIndex + 1), label: resolved.outputLabel || t("workflow.outputLabel") })}
+        {inputs.length > 0 && (
+          <div className="space-y-2">
+            <h4 className="text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">{t("workflow.run.inputsHeading")}</h4>
+            <ul className="space-y-3">
+              {inputs.map((resolved) => (
+                <li key={resolved.input.id} className="space-y-1.5">
+                  {resolved.kind === "linked" ? (
+                    <>
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="text-label font-medium text-text">
+                          {resolved.input.label || t("workflow.inputLabel")}
+                          <span className="ml-1.5 text-caption font-normal text-text-muted">
+                            {t("workflow.flowInputFrom", { n: String(resolved.fromIndex + 1), label: resolved.outputLabel || t("workflow.outputLabel") })}
+                          </span>
                         </span>
-                      </span>
-                      {resolved.value.trim() && <CopyPromptButton text={resolved.value} />}
-                    </div>
-                    {resolved.value.trim() ? (
-                      <pre className={BLOCK_CLASS}>{resolved.value}</pre>
-                    ) : (
-                      <p className="text-small text-text-muted">
-                        {t("workflow.run.linkedEmpty", { n: String(resolved.fromIndex + 1) })}{" "}
-                        <button type="button" onClick={() => onGo(resolved.fromIndex)} className="font-medium text-primary hover:underline">
-                          {t("workflow.stepN", { n: String(resolved.fromIndex + 1) })}
-                        </button>
-                      </p>
-                    )}
-                  </>
-                ) : (
-                  <label className="block space-y-1.5">
-                    <span className="text-label font-medium text-text">{resolved.input.label || t("workflow.inputLabel")}</span>
-                    <textarea
-                      value={resolved.value}
-                      onChange={(event) => onInput(resolved.input.id, event.target.value)}
-                      maxLength={MAX_RUN_VALUE_LENGTH}
-                      rows={2}
-                      placeholder={t("workflow.run.ownInputPlaceholder")}
-                      className={FIELD_CLASS}
-                    />
-                  </label>
-                )}
-              </li>
+                        {resolved.value.trim() && <CopyPromptButton text={resolved.value} />}
+                      </div>
+                      {resolved.value.trim() ? (
+                        <pre className={BLOCK_CLASS}>{resolved.value}</pre>
+                      ) : (
+                        <p className="text-small text-text-muted">
+                          {t("workflow.run.linkedEmpty", { n: String(resolved.fromIndex + 1) })}{" "}
+                          <button type="button" onClick={() => onGo(resolved.fromIndex)} className="font-medium text-primary hover:underline">
+                            {t("workflow.stepN", { n: String(resolved.fromIndex + 1) })}
+                          </button>
+                        </p>
+                      )}
+                    </>
+                  ) : (
+                    <label className="block space-y-1.5">
+                      <span className="text-label font-medium text-text">{resolved.input.label || t("workflow.inputLabel")}</span>
+                      <textarea
+                        value={resolved.value}
+                        onChange={(event) => onInput(resolved.input.id, event.target.value)}
+                        maxLength={MAX_RUN_VALUE_LENGTH}
+                        rows={2}
+                        placeholder={t("workflow.run.ownInputPlaceholder")}
+                        className={FIELD_CLASS}
+                      />
+                    </label>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        <StepPrompt step={step} />
+
+        {step.outputs.length > 0 && (
+          <div className="space-y-2">
+            <h4 className="text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">{t("workflow.run.outputsHeading")}</h4>
+            {step.outputs.map((output) => (
+              <label key={output.id} className="block space-y-1.5">
+                <span className="text-label font-medium text-text">{output.label || t("workflow.outputLabel")}</span>
+                <textarea
+                  value={state.outputs[output.id] ?? ""}
+                  onChange={(event) => onOutput(output.id, event.target.value)}
+                  maxLength={MAX_RUN_VALUE_LENGTH}
+                  rows={4}
+                  placeholder={t("workflow.run.outputPlaceholder")}
+                  className={FIELD_CLASS}
+                />
+              </label>
             ))}
-          </ul>
+          </div>
+        )}
+
+        <div>
+          <Button variant={done ? "secondary" : "outline"} size="sm" onClick={onToggleDone} aria-pressed={done}>
+            <Check size={14} aria-hidden /> {done ? t("workflow.run.markedDone") : t("workflow.run.markDone")}
+          </Button>
         </div>
-      )}
-
-      <StepPrompt step={step} />
-
-      {step.outputs.length > 0 && (
-        <div className="space-y-2">
-          <h4 className="text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">{t("workflow.run.outputsHeading")}</h4>
-          {step.outputs.map((output) => (
-            <label key={output.id} className="block space-y-1.5">
-              <span className="text-label font-medium text-text">{output.label || t("workflow.outputLabel")}</span>
-              <textarea
-                value={state.outputs[output.id] ?? ""}
-                onChange={(event) => onOutput(output.id, event.target.value)}
-                maxLength={MAX_RUN_VALUE_LENGTH}
-                rows={4}
-                placeholder={t("workflow.run.outputPlaceholder")}
-                className={FIELD_CLASS}
-              />
-            </label>
-          ))}
-        </div>
-      )}
-
-      <div>
-        <Button variant={done ? "secondary" : "outline"} size="sm" onClick={onToggleDone} aria-pressed={done}>
-          <Check size={14} aria-hidden /> {done ? t("workflow.run.markedDone") : t("workflow.run.markDone")}
-        </Button>
       </div>
     </section>
   );

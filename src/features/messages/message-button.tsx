@@ -11,8 +11,10 @@ import { buttonClassName } from "@/components/ui/button";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { UserProfile } from "@/types";
 
-// The profile's actions row (docs/history/203-*): an outline pill as tall as the big "Takip et" beside it.
-const CLASS_NAME = buttonClassName({ variant: "outline", size: "lg" });
+// The profile's actions row (docs/history/203-*): an outline pill as tall as the big "Takip et" beside it; icon-only on
+// phones so the row (Takip et · Mesaj · Paylaş · ⋮) stays on one line.
+const CLASS_NAME = buttonClassName({ variant: "outline", size: "lg", className: "w-12 px-0 sm:w-auto sm:px-6" });
+const LABEL_CLASS = "hidden sm:inline";
 
 /** "Mesaj Gönder" — finds or starts a real 1:1 conversation and navigates to it (CLAUDE.md Bölüm 21 Faz 6). */
 export function MessageButton({ user }: { user: UserProfile }) {
@@ -31,10 +33,11 @@ export function MessageButton({ user }: { user: UserProfile }) {
         onClick={() => requireAuth("message")}
         aria-haspopup="dialog"
         title={t("messages.loginToSendTitle")}
+        aria-label={t("messages.sendMessage")}
         className={CLASS_NAME}
       >
-        <MessageCircle size={18} />
-        {t("messages.sendMessage")}
+        <MessageCircle size={18} aria-hidden />
+        <span className={LABEL_CLASS}>{t("messages.sendMessage")}</span>
       </button>
     );
   }
@@ -54,9 +57,9 @@ export function MessageButton({ user }: { user: UserProfile }) {
 
   return (
     <div className="flex flex-col items-center gap-1">
-      <button type="button" onClick={handleClick} disabled={isStarting} className={CLASS_NAME}>
-        <MessageCircle size={18} />
-        {isStarting ? t("messages.startingEllipsis") : t("messages.sendMessage")}
+      <button type="button" onClick={handleClick} disabled={isStarting} aria-label={t("messages.sendMessage")} className={CLASS_NAME}>
+        <MessageCircle size={18} aria-hidden />
+        <span className={LABEL_CLASS}>{isStarting ? t("messages.startingEllipsis") : t("messages.sendMessage")}</span>
       </button>
       {error && <p className="text-xs text-danger">{error}</p>}
     </div>

@@ -37,6 +37,7 @@ function withCollections(db, owner) {
       let list = COLLECTIONS;
       if (q.get("visibility") === "eq.public") list = list.filter((c) => c.visibility === "public");
       if (q.get("item_count") === "gt.0") list = list.filter((c) => c.item_count > 0);
+      if (q.get("id")) list = list.filter((c) => `eq.${c.id}` === q.get("id"));
       return rows(list.map((c) => ({ ...c, created_at: "2026-02-01T00:00:00Z", updated_at: "2026-02-01T00:00:00Z", profiles: pubOf(owner) })));
     }
     if (table === "collection_items") {
@@ -107,6 +108,31 @@ await scenario("4. İngilizce etiket ve 390px'te yatay taşma yok", async ({ pag
   assert.equal(await page.getByRole("navigation", { name: "Public collections" }).count(), 1);
   assert.equal(await overflowFree(page), true);
 }, { viewport: { width: 390, height: 800 }, lang: "en" });
+
+// 5 — Albüm (docs/history/203-*): profilin bandı (ad = h1) ve altındaki tek eylem satırı; telefonda satır tek satıra sığar
+await scenario("5. Profil Albüm bandı: ad bantta, Takip Et eylem satırında; 390px'te satır tek satır, taşma yok", async ({ page, db }) => {
+  withCollections(db, U.bob);
+  await page.goto(`${BASE}/profile/real?username=${U.bob.username}`);
+  await page.locator("[data-profile-band] h1", { hasText: U.bob.display_name }).waitFor();
+  const row = page.locator("[data-profile-actions]");
+  await row.getByRole("button", { name: "Takip Et" }).waitFor();
+  await row.getByRole("button", { name: "Mesaj Gönder" }).waitFor();
+  const tops = await row.evaluate((el) => [...el.children].map((c) => Math.round(c.getBoundingClientRect().top + c.getBoundingClientRect().height / 2)));
+  assert.equal(new Set(tops).size, 1, `actions on one line ${JSON.stringify(tops)}`);
+  assert.equal(await overflowFree(page), true);
+}, { viewport: { width: 390, height: 844 } });
+
+// 6 — koleksiyon sayfası: bant (kapak + ad), büyük Takip Et, yan sütunda Hakkında + sahibinin diğer herkese açık koleksiyonları
+await scenario("6. Koleksiyon Albüm: bant + Takip Et; Hakkında ve sahibinin diğer koleksiyonları (yalnız herkese açık + boş olmayan, kendisi hariç)", async ({ page, db }) => {
+  withCollections(db, U.bob);
+  await page.goto(`${BASE}/collections/local?id=${COLLECTIONS[0].id}`);
+  await page.locator("[data-collection-band] h1", { hasText: COLLECTIONS[0].name }).waitFor();
+  await page.locator("[data-collection-actions]").getByRole("button", { name: "Takip Et" }).waitFor();
+  await page.locator('[data-collection-aside="about"]').getByText("Herkese açık").waitFor();
+  await page.locator('[data-collection-aside="more"] a').first().waitFor();
+  assert.deepEqual(await page.locator('[data-collection-aside="more"] a span.truncate').allTextContents(), ["Genel"]);
+  assert.equal(await overflowFree(page), true);
+});
 
 await browser.close(); server.close();
 for (const [s, n] of results) console.log(`${s === "PASS" ? "✓" : "✗"} ${n}`);

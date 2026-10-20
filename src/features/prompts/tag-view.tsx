@@ -10,12 +10,16 @@ import type { FeedItem } from "@/features/feed/types";
 import { Tabs } from "@/components/ui/tabs";
 import { fetchPromptsByTag, fetchRequestsByTagSlug, fetchTagBySlug, fetchWorkflowsByTagSlug } from "@/lib/supabase/tags";
 import { fetchPresetsByTagSlug } from "@/lib/supabase/presets";
-import { formatCount, cn } from "@/lib/utils";
+import { formatCount, cn, tagHref } from "@/lib/utils";
+import { StorageImage } from "@/components/ui/storage-media";
+import { BAND_PRIMARY_CLASS, BandActionRow, CollageArt, DetailBand, DetailShell, DetailTitle, Eyebrow } from "@/features/content/detail-parts";
+import { contentImage, type ImageSource } from "@/features/content/content-image";
+import { ShareButton } from "@/features/prompts/share-button";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { TaxonomyFilter } from "@/features/content/taxonomy-filter";
 import { TagFollowButton } from "@/features/tags/tag-follow-button";
 import { EMPTY_TAXONOMY_FILTER, matchesTaxonomy, type TaxonomyFilterValue } from "@/lib/content-taxonomy";
-import type { Preset, Prompt, PromptRequest, Tag, Workflow } from "@/types";
+import type { Preset, Prompt, PromptMedia, PromptRequest, Tag, Workflow } from "@/types";
 
 type SortMode = "newest" | "popular";
 type KindFilter = "all" | "prompt" | "workflow" | "preset" | "request";
@@ -105,55 +109,70 @@ export function TagView() {
 
   const totalCount = tag.usageCount ?? prompts.length + requests.length + workflows.length + presets.length;
 
+  // The tag's most popular posts' pictures make its album art and tint its band (docs/history/203-*).
+  const popularImages = [...prompts.map((data): FeedItem => ({ kind: "prompt", data })), ...workflows.map((data): FeedItem => ({ kind: "workflow", data })), ...presets.map((data): FeedItem => ({ kind: "preset", data })), ...requests.map((data): FeedItem => ({ kind: "request", data }))]
+    .sort((a, b) => (b.kind === "request" ? b.data.responseCount : b.data.likeCount) - (a.kind === "request" ? a.data.responseCount : a.data.likeCount))
+    .map((item) => contentImage(item as ImageSource))
+    .filter((media): media is PromptMedia => media !== null)
+    .slice(0, 4);
+
   return (
-    <div className="mx-auto max-w-6xl space-y-5 px-3 py-5 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <div className="mb-1 flex items-center gap-1.5">
-            <Hash size={20} className="text-primary" />
-            <h1 className="text-h1 font-semibold text-text">{tag.label}</h1>
-          </div>
-          <p className="text-sm text-text-muted">{t("tag.usedInCount", { count: formatCount(totalCount) })}</p>
+    <DetailShell
+      band={
+        <DetailBand
+          data-tag-band=""
+          backdrop={popularImages[0] ? <StorageImage src={popularImages[0].url} alt="" fill sizes="100vw" className="object-cover" /> : undefined}
+          art={<CollageArt images={popularImages} icon={Hash} />}
+          kicker={<Eyebrow tone="primary">{t("tag.kicker")}</Eyebrow>}
+          title={<DetailTitle>#{tag.label}</DetailTitle>}
+          byline={<p className="text-body text-text-secondary">{t("tag.usedInCount", { count: formatCount(totalCount) })}</p>}
+        />
+      }
+      actions={
+        <BandActionRow label={t("tag.actionsAria")} data-tag-actions="">
+          <TagFollowButton slug={tag.slug} label={tag.label} className={BAND_PRIMARY_CLASS} />
+          <ShareButton url={tagHref(tag)} title={`#${tag.label}`} className="h-11 min-w-11 rounded-full px-3" />
+        </BandActionRow>
+      }
+    >
+      <div className="space-y-5">
+        <Tabs
+          variant="segmented"
+          ariaLabel={t("tag.filtersAria")}
+          active={kind}
+          onChange={setKind}
+          items={[
+            { key: "all", label: t("common.all") },
+            { key: "prompt", label: t("tag.filterPrompts") },
+            { key: "workflow", label: t("tag.filterWorkflows") },
+            { key: "preset", label: t("tag.filterPresets") },
+            { key: "request", label: t("tag.filterRequests") },
+          ]}
+        />
+
+        <div className="flex items-center justify-between gap-2">
+         <div className="flex gap-1.5">
+          {(["newest", "popular"] as SortMode[]).map((mode) => (
+            <button
+              key={mode}
+              type="button"
+              onClick={() => setSortMode(mode)}
+              className={cn(
+                "rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
+                sortMode === mode ? "border-primary bg-primary text-primary-foreground" : "border-border bg-surface text-text-muted hover:text-text",
+              )}
+            >
+              {mode === "newest" ? t("profile.sortNewest") : t("home.tabPopular")}
+            </button>
+          ))}
+         </div>
+         <ViewModeSwitcher />
         </div>
-        <TagFollowButton slug={tag.slug} label={tag.label} />
+
+        {(kind === "all" || kind === "prompt") && <TaxonomyFilter value={taxonomy} onChange={setTaxonomy} />}
+
+        <FeedItemsView items={items} emptyTitle={taxonomy.contentType && kind === "prompt" ? t("tag.emptyForFilter") : t("tag.emptyAll")} />
       </div>
-
-      <Tabs
-        variant="segmented"
-        ariaLabel={t("tag.filtersAria")}
-        active={kind}
-        onChange={setKind}
-        items={[
-          { key: "all", label: t("common.all") },
-          { key: "prompt", label: t("tag.filterPrompts") },
-          { key: "workflow", label: t("tag.filterWorkflows") },
-          { key: "preset", label: t("tag.filterPresets") },
-          { key: "request", label: t("tag.filterRequests") },
-        ]}
-      />
-
-      <div className="flex items-center justify-between gap-2">
-       <div className="flex gap-1.5">
-        {(["newest", "popular"] as SortMode[]).map((mode) => (
-          <button
-            key={mode}
-            type="button"
-            onClick={() => setSortMode(mode)}
-            className={cn(
-              "rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
-              sortMode === mode ? "border-primary bg-primary text-primary-foreground" : "border-border bg-surface text-text-muted hover:text-text",
-            )}
-          >
-            {mode === "newest" ? t("profile.sortNewest") : t("home.tabPopular")}
-          </button>
-        ))}
-       </div>
-       <ViewModeSwitcher />
-      </div>
-
-      {(kind === "all" || kind === "prompt") && <TaxonomyFilter value={taxonomy} onChange={setTaxonomy} />}
-
-      <FeedItemsView items={items} emptyTitle={taxonomy.contentType && kind === "prompt" ? t("tag.emptyForFilter") : t("tag.emptyAll")} />
-    </div>
+    </DetailShell>
   );
 }

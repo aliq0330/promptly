@@ -187,7 +187,7 @@ function CommunityPageInner() {
       <CommunityLayout
         aside={tab === "feed" ? <CommunityAside group={g} people={people} onReadRules={() => goTab("about")} /> : undefined}
         asideLabel={t("communities.aside.pageLabel")}
-        className="pt-0 sm:pt-0"
+        className="pt-3 sm:pt-4"
       >
         <BandActionRow label={t("communities.band.actionsAria")} data-community-actions="">
           {role && (
