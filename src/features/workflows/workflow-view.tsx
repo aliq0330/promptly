@@ -188,7 +188,18 @@ export function WorkflowDetailView({ workflowId }: { workflowId?: string } = {})
             </div>
           }
           title={<DetailTitle>{workflow.title}</DetailTitle>}
-          byline={<DetailByline person={workflow.creator} createdAt={workflow.createdAt} language={language} />}
+          byline={<DetailByline person={workflow.creator} createdAt={workflow.createdAt} language={language} follow={!isOwn && <FollowButton user={workflow.creator} />} />}
+          menu={
+            <PostMenu
+              workflowId={workflow.id}
+              communityId={workflow.communityId}
+              authorId={workflow.creator.id}
+              onDeleted={() => {
+                removeFromCache(workflow.id);
+                router.push("/workflows");
+              }}
+            />
+          }
         />
       }
       aside={aside}
@@ -209,26 +220,16 @@ export function WorkflowDetailView({ workflowId }: { workflowId?: string } = {})
               </Button>
             )
           }
-          extra={
+          end={
             <>
-              {!isOwn && <FollowButton user={workflow.creator} />}
-              <PostMenu
-                workflowId={workflow.id}
-                communityId={workflow.communityId}
-                authorId={workflow.creator.id}
-                onDeleted={() => {
-                  removeFromCache(workflow.id);
-                  router.push("/workflows");
-                }}
-              />
+              <EngageStatistics target={{ contentType: "workflow", contentId: workflow.id, likeCount: workflow.likeCount, commentCount: workflow.commentCount, saveCount: workflow.saveCount }} size={20} />
+              <EngageShare target={{ contentType: "workflow", workflow }} />
             </>
           }
-          trailing={<EngageShare target={{ contentType: "workflow", workflow }} />}
         >
           <EngageLike id={workflow.id} likeCount={workflow.likeCount} contentType="workflow" size={20} />
           <EngageCommentCount workflowId={workflow.id} baseCount={workflow.commentCount} size={20} />
           <EngageSave workflowId={workflow.id} saveCount={workflow.saveCount} size={20} />
-          <EngageStatistics target={{ contentType: "workflow", contentId: workflow.id, likeCount: workflow.likeCount, commentCount: workflow.commentCount, saveCount: workflow.saveCount }} size={20} />
           <RelationMapLink kind="workflow" id={workflow.id} />
         </DetailActionBar>
       }

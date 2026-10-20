@@ -45,7 +45,7 @@ const box = (locator) => locator.evaluate((el) => { const r = el.getBoundingClie
 for (const kind of ["prompt", "request", "workflow", "preset"]) {
   await scenario(`1. ${kind}: ortak iskelet — başlık, yazar satırı + Takip Et, etkileşim çubuğu, meta kartı (araç + etiketler), yorumlar`, kind, async ({ page }) => {
     await page.getByRole("button", { name: "Takip Et" }).first().waitFor();
-    const byline = await page.locator("[data-detail-band] a[href*='/profile/']").first().textContent();
+    const byline = await page.locator("[data-detail-band] [data-detail-author]").textContent();
     assert.match(byline ?? "", /Carol/);
     const bar = page.locator("[data-detail-actions]").filter({ has: page.getByRole("button", { name: "Paylaş" }) }).first();
     await bar.waitFor();
@@ -55,10 +55,18 @@ for (const kind of ["prompt", "request", "workflow", "preset"]) {
     assert.ok((await meta.getByText(/Tavsiye edilen araç\/model|Tercih edilen araç\/model/).count()) === 1, "tool label inside the meta card");
     await page.locator("#comments").waitFor();
     assert.match((await page.locator("#comments h2").first().textContent()) ?? "", /Yorumlar/);
-    // Takip Et bandın altındaki eylem satırında
-    const follow = await box(page.getByRole("button", { name: "Takip Et" }).first());
+    // Takip Et bantta, yazar adının hemen sonunda; ⋮ bandın sağ üst köşesinde; İstatistik · Paylaş eylem satırının en sağında
+    const follow = await box(page.locator("[data-detail-band]").getByRole("button", { name: "Takip Et" }));
+    const author = await box(page.locator("[data-detail-band] [data-detail-author]"));
+    assert.ok(follow.left >= author.right - 1 && Math.abs((follow.top + follow.bottom) / 2 - (author.top + author.bottom) / 2) <= 6, "Takip Et right after the author's name, on its line");
     const band = await box(page.locator("[data-detail-band]"));
-    assert.ok(follow.top >= band.bottom, "Takip Et sits in the actions row under the band");
+    const menu = await box(page.locator("[data-detail-menu]"));
+    assert.ok(menu.top - band.top <= 24 && band.right - menu.right <= 24, "⋮ sits in the band's top-right corner");
+    const share = await box(bar.getByRole("button", { name: "Paylaş" }));
+    const stats = await box(bar.getByRole("button", { name: /İstatistik/ }).first());
+    const like = await box(bar.getByRole("button", { name: /Beğen/ }).first());
+    assert.ok(share.left >= stats.right - 1 && stats.left > like.right + 40, "İstatistik · Paylaş on the far right");
+    assert.equal(await page.locator("[data-detail-actions]").getByRole("button", { name: "Promptu Kopyala" }).count(), 0, "no big copy button in the actions row");
   }, { viewport: { width: 390, height: 844 } });
 }
 
@@ -142,13 +150,45 @@ for (const [label, width, height] of [["320", 320, 700], ["375", 375, 800], ["39
     }, { viewport: { width, height } });
   }
 }
-await scenario("4b. mobil: alt gezinme sayfa sonundaki içeriği örtmez (son kart gezinmenin üstünde bitebilir)", "prompt", async ({ page }) => {
+await scenario("4b. mobil: sabitlenen eylem satırı sayfa sonundaki içeriği örtmez (son içerik satırın üstünde bitebilir)", "prompt", async ({ page }) => {
   await page.waitForTimeout(1200);
   await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-  await page.waitForTimeout(300);
-  const nav = await box(page.locator("nav").filter({ hasText: "Ana Sayfa" }).last());
-  const lowest = await page.evaluate(() => Math.max(...[...document.querySelectorAll("main *")].filter((el) => el.getClientRects().length > 0).map((el) => el.getBoundingClientRect().bottom)));
-  assert.ok(lowest <= nav.top + 1, `content ends above the bottom nav (${lowest} vs ${nav.top})`);
+  await page.waitForTimeout(500);
+  const dock = await box(page.locator("[data-detail-dock]"));
+  const lowest = await page.evaluate(() => Math.max(...[...document.querySelectorAll("main *")].filter((el) => el.childElementCount === 0 && !el.closest("[data-detail-dock]") && el.getClientRects().length > 0).map((el) => el.getBoundingClientRect().bottom)));
+  assert.ok(lowest <= dock.top + 1, `content ends above the pinned actions row (${lowest} vs ${dock.top})`);
+}, { viewport: { width: 390, height: 844 } });
+
+// 4c — kaydırınca üst/alt menü kaybolur, yukarı kaydırınca döner; eylem satırı alta sabitlenir ve menüyle birlikte iner
+await scenario("4c. mobil: aşağı kaydırınca menüler kaybolur, eylem satırı en alta iner; yukarı kaydırınca hepsi geri gelir", "prompt", async ({ page }) => {
+  await page.waitForTimeout(1200);
+  const nav = page.locator("[data-app-nav]");
+  const header = page.locator("[data-app-header]");
+  assert.equal(await page.locator("[data-detail-dock]").count(), 0, "not pinned at the top of the page");
+  const commentsTop = await page.evaluate(() => document.querySelector("#comments").getBoundingClientRect().top + scrollY);
+  for (let i = 0; i < 10; i += 1) { await page.evaluate(() => window.scrollBy(0, 120)); await page.waitForTimeout(50); }
+  await page.waitForTimeout(600);
+  assert.equal(await page.evaluate(() => document.querySelector("#comments").getBoundingClientRect().top + scrollY), commentsTop, "pinning does not shift the page");
+  assert.equal(await page.evaluate(() => document.documentElement.hasAttribute("data-chrome-hidden")), true, "bars hidden while scrolling down");
+  const navBox = await box(nav);
+  const headerBox = await box(header);
+  assert.ok(navBox.top >= 843 && headerBox.bottom <= 1, `nav slid down (${navBox.top}), header slid up (${headerBox.bottom})`);
+  assert.equal(await nav.evaluate((el) => getComputedStyle(el).opacity), "0");
+  const dock = await box(page.locator("[data-detail-dock]"));
+  assert.ok(Math.abs(dock.bottom - 844) <= 1, `pinned row at the screen's bottom edge while the nav is hidden (${dock.bottom})`);
+
+  await page.evaluate(() => window.scrollBy(0, -60));
+  await page.waitForTimeout(600);
+  assert.equal(await page.evaluate(() => document.documentElement.hasAttribute("data-chrome-hidden")), false, "bars back on the way up");
+  const navBack = await box(nav);
+  const dockBack = await box(page.locator("[data-detail-dock]"));
+  assert.ok(Math.abs(dockBack.bottom - navBack.top) <= 1, `pinned row rides right above the nav (${dockBack.bottom} vs ${navBack.top})`);
+  assert.ok((await box(header)).top >= -1, "header back");
+
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.waitForTimeout(400);
+  assert.equal(await page.locator("[data-detail-dock]").count(), 0, "back in place at the top");
+  assert.ok((await box(page.locator("[data-detail-actions]").first())).top > (await box(page.locator("[data-detail-band]"))).bottom - 1, "actions row under the band again");
 }, { viewport: { width: 390, height: 844 } });
 
 // 5 — tema ve dil

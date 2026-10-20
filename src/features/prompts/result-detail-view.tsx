@@ -131,6 +131,7 @@ export function ResultDetailView() {
           }
           title={<DetailTitle>{result.originalPrompt?.title ?? t("result.cardAriaLabel", { name: result.creator.displayName })}</DetailTitle>}
           byline={<DetailByline person={result.creator} createdAt={result.createdAt} language={language} />}
+          menu={<PostMenu resultId={result.id} authorId={result.creator.id} onDeleted={handleDeleted} onEdit={() => setIsEditOpen(true)} />}
         />
       }
       actions={
@@ -143,8 +144,7 @@ export function ResultDetailView() {
               </Link>
             ) : undefined
           }
-          extra={<PostMenu resultId={result.id} authorId={result.creator.id} onDeleted={handleDeleted} onEdit={() => setIsEditOpen(true)} />}
-          trailing={<ShareTriggerButton target={{ contentType: "prompt_result", result }} />}
+          end={<ShareTriggerButton target={{ contentType: "prompt_result", result }} />}
         >
           <LikeButton id={result.id} likeCount={result.likeCount} contentType="prompt_result" size={20} />
           <CommentCountLink resultId={result.id} baseCount={result.commentCount} size={20} />

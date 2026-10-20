@@ -152,7 +152,18 @@ export function PresetDetailView({ presetId }: { presetId?: string } = {}) {
             </div>
           }
           title={<DetailTitle>{preset.title}</DetailTitle>}
-          byline={<DetailByline person={preset.creator} createdAt={preset.createdAt} language={language} />}
+          byline={<DetailByline person={preset.creator} createdAt={preset.createdAt} language={language} follow={!isOwn && <FollowButton user={preset.creator} />} />}
+          menu={
+            <PostMenu
+              presetId={preset.id}
+              communityId={preset.communityId}
+              authorId={preset.creator.id}
+              onDeleted={() => {
+                removeFromCache(preset.id);
+                router.push("/presets");
+              }}
+            />
+          }
         />
       }
       aside={aside}
@@ -163,29 +174,19 @@ export function PresetDetailView({ presetId }: { presetId?: string } = {}) {
               <WandSparkles size={18} aria-hidden /> {t("studio.openInStudio")}
             </Link>
           }
-          extra={
+          end={
             <>
-              {!isOwn && <FollowButton user={preset.creator} />}
-              <PostMenu
-                presetId={preset.id}
-                communityId={preset.communityId}
-                authorId={preset.creator.id}
-                onDeleted={() => {
-                  removeFromCache(preset.id);
-                  router.push("/presets");
-                }}
+              <EngageStatistics
+                target={{ contentType: "preset", contentId: preset.id, likeCount: preset.likeCount, commentCount: preset.commentCount, saveCount: preset.saveCount }}
+                size={20}
               />
+              <EngageShare target={{ contentType: "preset", preset }} />
             </>
           }
-          trailing={<EngageShare target={{ contentType: "preset", preset }} />}
         >
           <EngageLike id={preset.id} likeCount={preset.likeCount} contentType="preset" size={20} />
           <EngageCommentCount presetId={preset.id} baseCount={preset.commentCount} size={20} />
           <EngageSave presetId={preset.id} saveCount={preset.saveCount} size={20} />
-          <EngageStatistics
-            target={{ contentType: "preset", contentId: preset.id, likeCount: preset.likeCount, commentCount: preset.commentCount, saveCount: preset.saveCount }}
-            size={20}
-          />
         </DetailActionBar>
       }
     >

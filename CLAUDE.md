@@ -153,7 +153,7 @@ Sitedeki HER gönderi listesi (Ana Sayfa, Topluluklar, topluluk sayfası, Keşfe
 ile çizilir: HER ekranda kutulu kartlar (telefonda tek sütun, 12px sayfa kenar boşluğu; `sm`+ kutulu sütunlar, yanında sağ sütun olan sayfada en çok 2; `docs/history/196-*`) —
 yeni bir gönderi listesi elle `columns-*` yazmaz, ikinci bir liste görünümü kurulmaz. Her gönderi listesinde Keşfet'teki Kart | Izgara
 seçicisi vardır (`ViewModeControls` + `useViewMode`; Izgara = `FocusGrid`, iç değer `focus`) — yeni liste yazarken ikisini de bağla, yeni seçici yazma. **Odak** bir görünüm DEĞİL, ayrı tam ekran sayfadır (`/focus`, `docs/history/199-*`; `203-*` ile her gönderi "Şimdi çalıyor" Albüm slaytı — bulanık arka plan üstünde albüm kapağı [video/ses kapağın içinde oynar] + tek satır eylem, `AlbumSlide`): slayt/ray/oynatma `features/focus/focus-feed*`; tam ekran açılan yeni bir katman yazarken aynı yolu izle (`html[data-focus-open]`/`data-story-open` → `[data-app-chrome]` gizlenir, `lockBodyScroll`). Yorum mantığı TEK yerde: `useCommentThread` (detay `CommentSection` ve Odak'ın alttan açılan yorum sayfası `FocusCommentsSheet` aynı hook'u, `CommentNode` `layout` ile iki görünümü kullanır; `docs/history/200-*`) — yeni bir yorum yüzeyi yazarken hook'u kullan.
-Detay sayfaları **Albüm** düzenindedir (`docs/history/201-*`, kullanıcı dokuz yön arasından seçti; `features/content/detail-parts.tsx`): üstte gönderinin görselinden renk alan BANT (`DetailBand`: görsel büyütülüp bulanıklaştırılır, üstüne sayfa rengi örtü; görselsizde marka tonu) — solda kapak (`DetailArt`, kırpılmaz; görselsizde `DetailArtPlaceholder` tür simgesi), sağda tür etiketi + büyük başlık + `DetailByline`; altında TEK eylem satırı (`DetailActionBar`: `primary` = sayfanın büyük birincil eylemi — Kopyala/Yanıtla/Adım adım çalıştır/Studio'da aç; ikonlar kartlardaki sırayla; `extra` = Takip Et + ⋮); gövde `lg`+ iki sütun: içerik (`DetailSection`ler, son `DetailComments` + `EngageComments … headless`) ve "Hakkında" (`DetailAside`: meta kartı + ilgili içerik). İkinci eylem çubuğu ya da ayrı yazar kartı koyma.
+Detay sayfaları **Albüm** düzenindedir (`docs/history/201-*`, kullanıcı dokuz yön arasından seçti; `features/content/detail-parts.tsx`): üstte gönderinin görselinden renk alan BANT (`DetailBand`: görsel büyütülüp bulanıklaştırılır, üstüne sayfa rengi örtü; görselsizde marka tonu) — solda kapak (`DetailArt`, kırpılmaz; görselsizde `DetailArtPlaceholder` tür simgesi), sağda tür etiketi + büyük başlık + `DetailByline` (ad + `follow` = Takip Et yanında); ⋮ bandın sağ üst köşesinde (`DetailBand menu`); altında TEK eylem satırı (`DetailActionBar`, `docs/history/204-*`: `primary` = varsa büyük birincil eylem — Yanıtla/Adım adım çalıştır/Studio'da aç; promptta YOK, Kopyala prompt bloğunda; simgeler solda, `end` = İstatistik · Paylaş sağda; ekrandan çıkınca simge satırı alta sabitlenir — `data-detail-dock`, telefonda alt menünün üstünde); gövde `lg`+ iki sütun: içerik (`DetailSection`ler, son `DetailComments` + `EngageComments … headless`) ve "Hakkında" (`DetailAside`: meta kartı + ilgili içerik). İkinci eylem çubuğu ya da ayrı yazar kartı koyma.
 
 ### Responsive İlkeleri
 
@@ -166,6 +166,7 @@ Tek tasarım sistemi, üç kompozisyon (`AppShell`):
 - Masaüstü (lg+): 256px gruplu sidebar (Keşfet / Kütüphanem + ayrı birincil
   "Oluştur" butonu), detay sayfalarında sağ yardımcı sütun.
 - Dokunma hedefleri ≥ 36px, uzun prompt metinleri taşmaz (`break-words`).
+- Aşağı kaydırınca üst menü (yalnız `lg` altı) ve alt menü kayarak kaybolur, yukarı kaydırınca döner (`useChromeAutoHide` → `html[data-chrome-hidden]`, `docs/history/204-*`); ekranın üstüne/altına sabitlenen yeni bir öğe yazarken bu özniteliği hesaba kat.
 
 ## 4.5 Çok Dillilik (Türkçe / İngilizce) — Bağlayıcı Kural
 
@@ -429,5 +430,5 @@ bağlayıcıdır; ayrıntılı gerekçe için `docs/history/README.md` tablosuna
   isteğin `creative_direction`'ını da kapsar ve keyset sayfalanır (`search_content`); `prompt_saves` canlıdan kaldırıldı; kod içi
   yorumlarda eski "Bölüm 9.x" atıfları arşiv numaralarına (`docs/history/NNN-*`) karşılık gelir.
 
-**Arşiv:** [`docs/history/README.md`](docs/history/README.md) — 200 bölüm, her
+**Arşiv:** [`docs/history/README.md`](docs/history/README.md) — 204 bölüm, her
 biri için durum etiketi (uygulandı / kısmen geçerli / kaldırıldı).

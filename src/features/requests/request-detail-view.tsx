@@ -236,20 +236,20 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
             </div>
           }
           title={<DetailTitle>{live.title}</DetailTitle>}
-          byline={<DetailByline person={live.author} createdAt={live.createdAt} language={language} />}
+          byline={<DetailByline person={live.author} createdAt={live.createdAt} language={language} follow={!isOwnRequest && <FollowButton user={live.author} />} />}
+          menu={<PostMenu requestId={live.id} communityId={live.communityId} authorId={live.author.id} onDeleted={handleDeleted} />}
         />
       }
       actions={
-        // Beğeni · Yorum · Yanıt (scrolls to the replies) · İstatistik · İlişki haritası … Paylaş — no Kopyala for a request.
+        // Beğeni · Yorum · Yanıt (scrolls to the replies) · İlişki haritası … İstatistik · Paylaş — no Kopyala for a request.
         <DetailActionBar
           primary={primary}
-          extra={
+          end={
             <>
-              {!isOwnRequest && <FollowButton user={live.author} />}
-              <PostMenu requestId={live.id} communityId={live.communityId} authorId={live.author.id} onDeleted={handleDeleted} />
+              <EngageStatistics target={{ contentType: "request", contentId: live.id, likeCount: live.likeCount, commentCount: live.commentCount }} size={20} />
+              <EngageShare target={{ contentType: "request", request: live }} />
             </>
           }
-          trailing={<EngageShare target={{ contentType: "request", request: live }} />}
         >
           <EngageLike id={live.id} likeCount={live.likeCount} contentType="request" size={20} />
           <EngageCommentCount requestId={live.id} baseCount={live.commentCount} size={20} />
@@ -263,7 +263,6 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
             <Reply size={20} strokeWidth={1.75} />
             <span aria-hidden>{formatCount(live.responseCount)}</span>
           </a>
-          <EngageStatistics target={{ contentType: "request", contentId: live.id, likeCount: live.likeCount, commentCount: live.commentCount }} size={20} />
           <RelationMapLink kind="request" id={live.id} />
         </DetailActionBar>
       }

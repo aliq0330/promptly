@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, Flag, Pencil, ShieldAlert, Trash2 } from "lucide-react";
+import { ArrowLeft, ArrowUpRight, Flag, Pencil, ShieldAlert, Trash2 } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonClassName } from "@/components/ui/button";
@@ -131,28 +131,29 @@ export function CommunityPostPage() {
 
   return (
     <div data-community-post-page={post.id}>
-      <div className="mx-auto w-full max-w-6xl px-3 pt-4 sm:px-5 sm:pt-6 lg:px-8">
+      {/* Same side padding as the detail page under it; the space below keeps the card off the band. */}
+      <div className="mx-auto w-full max-w-6xl px-4 pb-4 pt-4 sm:px-6 sm:pb-6 sm:pt-6 lg:px-10">
         <Link href={feedHref} className="inline-flex items-center gap-1.5 text-small text-text-muted hover:text-text">
           <ArrowLeft size={14} aria-hidden /> {group ? t("communities.post.page.back", { name: group.name }) : t("communities.post.page.backGeneric")}
         </Link>
 
-        <section aria-label={t("communities.post.linked.appliedLabel")} className="mt-3 space-y-2.5 rounded-xl border border-border-soft bg-surface px-3.5 py-3 shadow-card">
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-            <div className="flex min-w-0 flex-1 items-center gap-2.5">
-              {post.author && <Avatar src={post.author.avatarUrl} alt={post.author.displayName} size={32} />}
-              <p className="min-w-0 text-small leading-tight text-text">
-                <span className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
-                  {post.author ? (
-                    <Link href={profileHref(post.author)} className="font-semibold hover:underline">
-                      {post.author.displayName}
-                    </Link>
-                  ) : (
-                    <span className="font-semibold">{t("common.genericUser")}</span>
-                  )}
-                  <span className="text-text-muted">{t(SHARED_LABEL[post.contentType])}</span>
-                  {post.kind !== "legacy" && <Badge variant="default">{t("communities.post.badge.application")}</Badge>}
-                </span>
-                <span className="block text-caption text-text-muted">{formatRelativeTime(post.createdAt, language)}</span>
+        <section aria-label={t("communities.post.linked.appliedLabel")} className="mt-3 rounded-[22px] border border-border-soft bg-surface p-4 shadow-card">
+          <div className="flex items-start gap-3">
+            {post.author && <Avatar src={post.author.avatarUrl} alt={post.author.displayName} size={40} />}
+            <div className="min-w-0 flex-1">
+              <p className="break-words text-small leading-snug text-text">
+                {post.author ? (
+                  <Link href={profileHref(post.author)} className="font-semibold hover:underline">
+                    {post.author.displayName}
+                  </Link>
+                ) : (
+                  <span className="font-semibold">{t("common.genericUser")}</span>
+                )}{" "}
+                <span className="text-text-muted">{t(SHARED_LABEL[post.contentType])}</span>
+              </p>
+              <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-caption text-text-muted">
+                {post.kind !== "legacy" && <Badge variant="default">{t("communities.post.badge.application")}</Badge>}
+                <span>{formatRelativeTime(post.createdAt, language)}</span>
               </p>
             </div>
             {!content && extras.length > 0 && (
@@ -166,14 +167,17 @@ export function CommunityPostPage() {
                 )}
               </DropdownMenu>
             )}
+          </div>
+          {post.note && <p data-post-note className="mt-3 whitespace-pre-wrap break-words rounded-lg bg-surface-soft px-3.5 py-3 text-small text-text-secondary">{post.note}</p>}
+          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-3 border-t border-border-soft pt-3">
+            <p className="min-w-0 flex-1 basis-56 text-caption text-text-muted">{t("communities.post.page.scopeHelp")}</p>
             {originalHref && (
-              <Link href={originalHref} data-open-original className={buttonClassName({ size: "sm", variant: "outline" })}>
+              <Link href={originalHref} data-open-original className={buttonClassName({ size: "sm", variant: "outline", className: "ml-auto shrink-0 gap-1.5" })}>
                 {t("communities.post.linked.openOriginal")}
+                <ArrowUpRight size={14} aria-hidden />
               </Link>
             )}
           </div>
-          {post.note && <p data-post-note className="whitespace-pre-wrap break-words rounded-lg bg-surface-soft px-3.5 py-3 text-small text-text-secondary">{post.note}</p>}
-          <p className="text-caption text-text-muted">{t("communities.post.page.scopeHelp")}</p>
         </section>
       </div>
 

@@ -178,25 +178,25 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
               createdAt={prompt.createdAt}
               language={language}
               meta={prompt.copyCount > 0 ? (prompt.copyCount === 1 ? t("prompt.usedOnce") : t("prompt.usedCount", { count: formatCount(prompt.copyCount) })) : undefined}
+              follow={!isOwn && <FollowButton user={prompt.author} />}
             />
           }
+          menu={<PostMenu promptId={prompt.id} communityId={prompt.communityId} authorId={prompt.author.id} />}
         />
       }
       actions={
+        // No big button here: Kopyala is on the prompt block itself (with Çalıştır / Studio'da aç).
         <DetailActionBar
-          primary={<CopyPromptButton text={displayText} promptId={prompt.id} size="lg" variant="primary" label={t("prompt.copyPrompt")} />}
-          extra={
+          end={
             <>
-              {!isOwn && <FollowButton user={prompt.author} />}
-              <PostMenu promptId={prompt.id} communityId={prompt.communityId} authorId={prompt.author.id} />
+              <EngageStatistics target={{ contentType: "prompt", contentId: prompt.id, likeCount: prompt.likeCount, commentCount: prompt.commentCount, saveCount: prompt.saveCount, copyCount: prompt.copyCount }} size={20} />
+              <EngageShare target={{ contentType: "prompt", prompt }} />
             </>
           }
-          trailing={<EngageShare target={{ contentType: "prompt", prompt }} />}
         >
           <EngageLike id={prompt.id} likeCount={prompt.likeCount} size={20} />
           <EngageCommentCount promptId={prompt.id} baseCount={prompt.commentCount} size={20} />
           <EngageSave promptId={prompt.id} saveCount={prompt.saveCount} size={20} />
-          <EngageStatistics target={{ contentType: "prompt", contentId: prompt.id, likeCount: prompt.likeCount, commentCount: prompt.commentCount, saveCount: prompt.saveCount, copyCount: prompt.copyCount }} size={20} />
           <RelationMapLink kind="prompt" id={prompt.id} />
         </DetailActionBar>
       }

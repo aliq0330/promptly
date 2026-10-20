@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ArrowRight, type LucideIcon } from "lucide-react";
-import { useId, type ReactNode, type Ref } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode, type Ref } from "react";
 import { Avatar } from "@/components/ui/avatar";
 import { StorageImage, StorageImg } from "@/components/ui/storage-media";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -15,8 +15,10 @@ import type { Tag, UserProfile } from "@/types";
  * (docs/history/201-*, chosen by the user from nine directions; like a music app's album page):
  *  - a BAND across the top, tinted by the post's own picture (enlarged + blurred, the same trick as the community
  *    cover's automatic mode) — the "album art" (the output, never cropped), the type kicker, a big title, the author line;
- *  - an ACTIONS row under it: the page's one big primary action (Kopyala / Yanıtla / Çalıştır / Studio'da aç), the
- *    engagement icons (Beğeni · Yorum · Kaydet · İstatistik … Paylaş, the cards' order), Takip Et + ⋮ on the right;
+ *    Takip Et sits right after the author's name, the ⋮ menu in the band's top-right corner;
+ *  - an ACTIONS row under it: the page's big primary action where it has one (Yanıtla / Çalıştır / Studio'da aç — a
+ *    prompt has none: Kopyala lives on the prompt block), the engagement icons (Beğeni · Yorum · Kaydet … on the left,
+ *    İstatistik · Paylaş on the right); scrolled past, the icons pin to the screen's bottom (above the phone's nav);
  *  - the body in two columns from `lg`: the content (description, sections, comments) and "Hakkında" (tool,
  *    classification, related content). One column on phones. Purely presentational; no data, no state.
  */
@@ -63,6 +65,7 @@ export function DetailBand({
   byline,
   align = "start",
   before,
+  menu,
   ...rest
 }: {
   art: ReactNode;
@@ -74,20 +77,25 @@ export function DetailBand({
   align?: "start" | "center";
   /** Drawn above the band's content, edge to edge (a community's own cover photo). */
   before?: ReactNode;
+  /** The page's ⋮ menu, in the band's top-right corner (the band itself does not clip, so its dropdown can open out of it). */
+  menu?: ReactNode;
   [data: `data-${string}`]: string | undefined;
 }) {
   return (
-    <header data-detail-band {...rest} className="relative isolate overflow-hidden bg-primary-soft">
+    <header data-detail-band {...rest} className="relative isolate bg-primary-soft">
       {before}
       {backdrop && (
-        <>
-          <div aria-hidden className="absolute inset-0 -z-20 scale-150 opacity-70 blur-3xl saturate-150">
-            {backdrop}
-          </div>
-          <div aria-hidden className="absolute inset-0 -z-10 bg-background/55" />
-        </>
+        <div aria-hidden className="absolute inset-0 -z-10 overflow-hidden">
+          <div className="absolute inset-0 scale-150 opacity-70 blur-3xl saturate-150">{backdrop}</div>
+          <div className="absolute inset-0 bg-background/55" />
+        </div>
       )}
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 pb-7 pt-6 sm:px-6 lg:flex-row lg:items-end lg:gap-9 lg:px-10 lg:pb-10 lg:pt-10">
+      <div className="relative mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 pb-7 pt-6 sm:px-6 lg:flex-row lg:items-end lg:gap-9 lg:px-10 lg:pb-10 lg:pt-10">
+        {menu && (
+          <div data-detail-menu className="absolute right-2 top-2 z-20 rounded-full bg-background/60 p-0.5 backdrop-blur-md empty:hidden sm:right-4 lg:right-8 lg:top-4">
+            {menu}
+          </div>
+        )}
         <div className="flex min-w-0 shrink-0 flex-col items-center gap-3 lg:max-w-[42%] lg:items-start">{art}</div>
         <div className={cn("min-w-0 flex-1 space-y-3", align === "center" && "flex flex-col items-center text-center lg:items-start lg:text-left")}>
           {kicker}
@@ -302,60 +310,103 @@ export function DetailLede({ children, className }: { children: ReactNode; class
   );
 }
 
-/** The band's author line: small avatar, display name, @handle · relative time (+ `meta`, e.g. "7 kez kullanıldı"). */
+/**
+ * The band's author line: avatar, the display name with `follow` (Takip Et) right after it, and under them
+ * @handle · relative time (+ `meta`, e.g. "7 kez kullanıldı").
+ */
 export function DetailByline({
   person,
   createdAt,
   language,
   meta,
+  follow,
 }: {
   person: UserProfile;
   createdAt: string;
   language: Language;
   meta?: ReactNode;
+  follow?: ReactNode;
 }) {
+  const href = profileHref(person);
   return (
-    <Link href={profileHref(person)} className="group inline-flex max-w-full items-center gap-2.5 rounded-md">
-      <Avatar src={person.avatarUrl} alt={person.displayName} size={32} />
-      <span className="min-w-0 text-label leading-tight">
-        <span className="font-semibold text-text transition-colors group-hover:text-primary">{person.displayName}</span>{" "}
-        <span className="text-text-secondary">
-          @{person.username} · {formatRelativeTime(createdAt, language)}
+    <div className="flex max-w-full items-center gap-2.5">
+      <Link href={href} tabIndex={-1} aria-hidden className="shrink-0 rounded-full">
+        <Avatar src={person.avatarUrl} alt={person.displayName} size={36} />
+      </Link>
+      <div className="min-w-0 leading-tight">
+        <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
+          <Link href={href} data-detail-author className="min-w-0 truncate text-label font-semibold text-text transition-colors hover:text-primary">
+            {person.displayName}
+          </Link>
+          {follow}
+        </div>
+        <p className="mt-0.5 text-caption text-text-secondary">
+          <Link href={href} className="transition-colors hover:text-primary">
+            @{person.username}
+          </Link>{" "}
+          · {formatRelativeTime(createdAt, language)}
           {meta && <> · {meta}</>}
-        </span>
-      </span>
-    </Link>
+        </p>
+      </div>
+    </div>
   );
 }
 
 /**
- * The actions row under the band: `primary` (the page's one big action) · the engagement icons (`children`, then
- * `trailing` = Paylaş — the cards' order) · `extra` (Takip Et, ⋮) on the right. On phones the icons take their own line.
+ * The actions row under the band: `primary` (the page's one big action, if any) · the engagement icons (`children` on the
+ * left — Beğeni · Yorum · Kaydet …, `end` on the right — İstatistik · Paylaş). Once the icons have scrolled up out of
+ * sight they pin to the screen's bottom (`data-detail-dock`: above the phone's bottom nav, down to the edge while the
+ * nav is hidden — `globals.css`) until the row scrolls back in. The same elements move (only classes change), so no
+ * button remounts or loses its state.
  */
 export function DetailActionBar({
   primary,
-  extra,
-  trailing,
+  end,
   children,
 }: {
   primary?: ReactNode;
-  extra?: ReactNode;
-  trailing?: ReactNode;
+  end?: ReactNode;
   children: ReactNode;
 }) {
   const { t } = useTranslation();
+  const slotRef = useRef<HTMLDivElement>(null);
+  const [dock, setDock] = useState<{ pinned: boolean; height?: number }>({ pinned: false });
+
+  useEffect(() => {
+    const slot = slotRef.current;
+    if (!slot || typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        // Pinned only once the row has gone ABOVE the viewport (under the header) — not while it is still further down.
+        const above = entry.boundingClientRect.bottom <= (entry.rootBounds?.top ?? 0);
+        const pinned = !entry.isIntersecting && above;
+        // Still in the slot at this moment, so its height is the row's: kept as the slot's height while pinned (no jump).
+        setDock((prev) => (prev.pinned === pinned ? prev : { pinned, height: pinned ? slot.offsetHeight : undefined }));
+      },
+      { rootMargin: "-64px 0px 0px 0px" },
+    );
+    observer.observe(slot);
+    return () => observer.disconnect();
+  }, []);
+
   return (
-    <div className="flex flex-wrap items-center gap-x-3 gap-y-3 border-b border-border-soft py-4">
-      {primary && <div className="order-1 flex items-center gap-2">{primary}</div>}
-      {extra && <div className="order-2 ml-auto flex items-center gap-1 sm:order-3">{extra}</div>}
-      <div
-        role="toolbar"
-        aria-label={t("detail.actionsAria")}
-        data-detail-actions
-        className="order-3 -ml-1.5 flex basis-full items-center gap-0.5 sm:order-2 sm:ml-0 sm:basis-auto"
-      >
-        {children}
-        {trailing}
+    <div className="flex flex-col gap-3 border-b border-border-soft py-4 sm:flex-row sm:items-center sm:gap-5">
+      {primary && <div className="flex shrink-0 items-center gap-2">{primary}</div>}
+      <div ref={slotRef} className="min-w-0 flex-1" style={dock.pinned ? { minHeight: dock.height } : undefined}>
+        <div
+          data-detail-dock={dock.pinned ? "" : undefined}
+          className={cn(
+            dock.pinned &&
+              "fixed inset-x-0 bottom-0 z-30 border-t border-border-soft bg-surface/95 backdrop-blur-xl animate-fade-in md:left-[72px] lg:left-64",
+          )}
+        >
+          <div className={cn(dock.pinned && "mx-auto w-full max-w-6xl px-4 py-1.5 sm:px-6 lg:px-10")}>
+            <div role="toolbar" aria-label={t("detail.actionsAria")} data-detail-actions className="-mx-1.5 flex items-center gap-0.5">
+              {children}
+              {end && <div className="ml-auto flex items-center gap-0.5">{end}</div>}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
