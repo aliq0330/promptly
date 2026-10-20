@@ -75,7 +75,7 @@ export function ProfileStats({
   const { t } = useTranslation();
   const total = postCounts.prompts + postCounts.requests + postCounts.workflows + postCounts.presets;
   return (
-    <div className="flex flex-wrap items-baseline justify-center gap-x-6 gap-y-1 sm:justify-start">
+    <div className="flex flex-wrap items-baseline justify-center gap-x-6 gap-y-1 lg:justify-start">
       <StatButton label={t("profile.postsSuffix")} value={total} onClick={onSelectPosts} />
       {isOwnProfile ? (
         <Link href="/followers" className={cn(STAT_CLASS, "rounded-sm transition-colors hover:text-text")}>

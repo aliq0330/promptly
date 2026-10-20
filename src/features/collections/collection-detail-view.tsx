@@ -1,15 +1,17 @@
 "use client";
 
-import { PageContainer } from "@/components/ui/page-header";
 import { DetailSkeleton, NotFoundBlock } from "@/components/ui/detail-skeleton";
-import { CollectionCover } from "./collection-card";
+import { CollectionBand } from "./collection-band";
+import { CollectionAside } from "./collection-aside";
 import { CollectionEntryList } from "./collection-entry-list";
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Globe, Lock } from "lucide-react";
-import { Avatar } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
+import { Pencil } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { BAND_PRIMARY_CLASS, BandActionRow, DetailShell } from "@/features/content/detail-parts";
+import { ContentGridColumns } from "@/features/content/content-card";
+import { ShareButton } from "@/features/prompts/share-button";
 import { Portal } from "@/components/ui/portal";
 import { refreshSaveState } from "@/features/prompts/use-save-state";
 import { CollectionFormModal } from "./collection-form-modal";
@@ -23,9 +25,8 @@ import {
   updateCollection,
   type CollectionEntry,
 } from "@/lib/supabase/collections";
-import { profileHref } from "@/lib/utils";
+import { collectionHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import Link from "next/link";
 import type { Collection } from "@/types";
 
 /**
@@ -116,76 +117,75 @@ export function CollectionDetailView() {
   const isOwner = user?.id === collection.owner.id;
 
   return (
-    <PageContainer className="space-y-6">
-      <header className="flex flex-col gap-4 rounded-lg border border-border-soft bg-surface p-4 shadow-card sm:flex-row sm:items-start sm:p-5">
-        <CollectionCover collection={collection} className="h-24 w-24 shrink-0 rounded-md sm:h-28 sm:w-28" />
-        <div className="min-w-0 flex-1 space-y-2">
-          <div className="flex items-start justify-between gap-2">
-            <div className="flex min-w-0 flex-wrap items-center gap-2">
-              <h1 className="text-h1 font-semibold text-text">{collection.name}</h1>
-              {collection.isDefault && <Badge variant="default">{t("collection.defaultBadge")}</Badge>}
-            </div>
-            {isOwner && (
-              <CollectionMoreMenu
-                collection={collection}
-                onEdit={() => setEditing(true)}
-                onDeleted={() => router.push(`/profile/real?username=${collection.owner.username}`)}
-              />
+    // Albüm (docs/history/203-*): band (collage art) · actions row · [the list | Hakkında + the owner's other collections from `lg`].
+    <ContentGridColumns value="sm:columns-2">
+      <DetailShell
+        band={<CollectionBand collection={collection} items={items} />}
+        actions={
+          <BandActionRow label={t("collection.actionsAria")} data-collection-actions="">
+            {isOwner ? (
+              <Button type="button" size="lg" className={BAND_PRIMARY_CLASS} onClick={() => setEditing(true)}>
+                <Pencil size={18} aria-hidden />
+                {t("collection.editTitle")}
+              </Button>
+            ) : (
+              collection.visibility === "public" && (
+                <CollectionFollowButton
+                  collectionId={collection.id}
+                  className={BAND_PRIMARY_CLASS}
+                  onCountChange={(delta) => setCollection((prev) => (prev ? { ...prev, followerCount: Math.max(0, prev.followerCount + delta) } : prev))}
+                />
+              )
             )}
-          </div>
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-small text-text-muted">
-            <span>{t("collection.itemCount", { count: collection.itemCount })}</span>
             {collection.visibility === "public" && (
-              <span>{collection.followerCount === 1 ? t("collection.followerCountOne") : t("collection.followerCount", { count: collection.followerCount })}</span>
+              <ShareButton url={collectionHref(collection)} title={collection.name} className="h-11 min-w-11 rounded-full px-3" />
             )}
-            <span className="flex items-center gap-1">
-              {collection.visibility === "public" ? <Globe size={14} /> : <Lock size={14} />}
-              {collection.visibility === "public" ? t("collection.visibilityPublicShort") : t("collection.visibilityPrivateShort")}
-            </span>
-          </div>
-          <Link href={profileHref(collection.owner)} className="flex w-fit items-center gap-2 text-label font-medium text-text hover:text-primary">
-            <Avatar src={collection.owner.avatarUrl} alt={collection.owner.displayName} size={20} />
-            {collection.owner.displayName}
-          </Link>
-          {!isOwner && collection.visibility === "public" && (
-            <CollectionFollowButton
-              collectionId={collection.id}
-              onCountChange={(delta) => setCollection((prev) => (prev ? { ...prev, followerCount: Math.max(0, prev.followerCount + delta) } : prev))}
-            />
-          )}
+            {isOwner && (
+              <div className="ml-auto">
+                <CollectionMoreMenu
+                  collection={collection}
+                  triggerClassName="h-10 w-10 bg-transparent text-text-secondary shadow-none"
+                  onEdit={() => setEditing(true)}
+                  onDeleted={() => router.push(`/profile/real?username=${collection.owner.username}`)}
+                />
+              </div>
+            )}
+          </BandActionRow>
+        }
+        aside={<CollectionAside collection={collection} />}
+      >
+        <div className="space-y-4">
+          <CollectionEntryList
+            items={items}
+            searchPlaceholderKey="collection.searchPlaceholder"
+            emptyTitleKey="collection.emptyItemsTitle"
+            emptyDescriptionKey="collection.emptyItemsDescription"
+            removalFor={isOwner ? (entry) => ({ onRemove: () => handleRemoveItem(entry.data.id, entry.type) }) : undefined}
+          />
         </div>
-      </header>
+        {editing && (
+          <CollectionFormModal
+            collection={collection}
+            onClose={() => setEditing(false)}
+            onSubmit={async (values) => {
+              await updateCollection(collection.id, values);
+              setCollection((prev) => (prev ? { ...prev, name: values.name, visibility: values.visibility } : prev));
+              setEditing(false);
+            }}
+          />
+        )}
 
-      <CollectionEntryList
-        items={items}
-        searchPlaceholderKey="collection.searchPlaceholder"
-        emptyTitleKey="collection.emptyItemsTitle"
-        emptyDescriptionKey="collection.emptyItemsDescription"
-        removalFor={isOwner ? (entry) => ({ onRemove: () => handleRemoveItem(entry.data.id, entry.type) }) : undefined}
-      />
-
-      {editing && (
-        <CollectionFormModal
-          collection={collection}
-          onClose={() => setEditing(false)}
-          onSubmit={async (values) => {
-            await updateCollection(collection.id, values);
-            setCollection((prev) => (prev ? { ...prev, name: values.name, visibility: values.visibility } : prev));
-            setEditing(false);
-          }}
-        />
-      )}
-
-      {toast && (
-        <Portal>
-          <div
-            role="status"
-            className="pointer-events-none fixed inset-x-0 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-[60] flex justify-center px-4 md:bottom-6"
-          >
-            <div className="animate-pop-in rounded-md bg-text px-3.5 py-2 text-small text-background shadow-pop">{toast}</div>
-          </div>
-        </Portal>
-      )}
-    </PageContainer>
+        {toast && (
+          <Portal>
+            <div
+              role="status"
+              className="pointer-events-none fixed inset-x-0 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-[60] flex justify-center px-4 md:bottom-6"
+            >
+              <div className="animate-pop-in rounded-md bg-text px-3.5 py-2 text-small text-background shadow-pop">{toast}</div>
+            </div>
+          </Portal>
+        )}
+      </DetailShell>
+    </ContentGridColumns>
   );
 }

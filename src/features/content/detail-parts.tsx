@@ -60,15 +60,24 @@ export function DetailBand({
   kicker,
   title,
   byline,
+  align = "start",
+  before,
+  ...rest
 }: {
   art: ReactNode;
   backdrop?: ReactNode;
   kicker: ReactNode;
   title: ReactNode;
   byline: ReactNode;
+  /** "center": the text is centred under the art on phones/tablets (profile, community); left beside it from `lg` either way. */
+  align?: "start" | "center";
+  /** Drawn above the band's content, edge to edge (a community's own cover photo). */
+  before?: ReactNode;
+  [data: `data-${string}`]: string | undefined;
 }) {
   return (
-    <header data-detail-band className="relative isolate overflow-hidden bg-primary-soft">
+    <header data-detail-band {...rest} className="relative isolate overflow-hidden bg-primary-soft">
+      {before}
       {backdrop && (
         <>
           <div aria-hidden className="absolute inset-0 -z-20 scale-150 opacity-70 blur-3xl saturate-150">
@@ -79,7 +88,7 @@ export function DetailBand({
       )}
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 pb-7 pt-6 sm:px-6 lg:flex-row lg:items-end lg:gap-9 lg:px-10 lg:pb-10 lg:pt-10">
         <div className="flex min-w-0 shrink-0 flex-col items-center gap-3 lg:max-w-[42%] lg:items-start">{art}</div>
-        <div className="min-w-0 flex-1 space-y-3">
+        <div className={cn("min-w-0 flex-1 space-y-3", align === "center" && "flex flex-col items-center text-center lg:items-start lg:text-left")}>
           {kicker}
           {title}
           {byline}
@@ -298,6 +307,22 @@ export function DetailActionBar({
     </div>
   );
 }
+
+/**
+ * The actions row under the band of a profile / collection / community page (docs/history/203-*): the page's one big
+ * primary action (`BAND_PRIMARY_CLASS`: Takip et / Koleksiyonu takip et / Topluluğa katıl · Sohbeti aç), then its
+ * secondary buttons, ⋮ last (`ml-auto`). Unlike `DetailActionBar` there are no engagement icons here.
+ */
+export function BandActionRow({ label, children, ...rest }: { label: string; children: ReactNode; [data: `data-${string}`]: string | undefined }) {
+  return (
+    <div role="group" aria-label={label} {...rest} className="flex flex-wrap items-center gap-2 border-b border-border-soft py-4">
+      {children}
+    </div>
+  );
+}
+
+/** The big primary pill of a `BandActionRow` (a `Button`/`Link` class, merged after `buttonClassName`). */
+export const BAND_PRIMARY_CLASS = "h-12 gap-2 rounded-full px-7 text-body font-semibold shadow-pop";
 
 /** A raised content card (comments, side-column blocks, info lists). */
 export function DetailCard({

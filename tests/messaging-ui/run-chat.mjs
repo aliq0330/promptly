@@ -535,14 +535,14 @@ await scenario("18. Canlı eşitleme: topluluk sayfası açıkken yeni katılım
   const row = db.groups.find((g) => g.id === G);
   row.pending_request_count = 1; // başka bir kullanıcı istek gönderdi (sunucu sayacı artırdı)
   hub.emitPostgresChange("chat_groups", "UPDATE", row);
-  await page.locator("header [data-pending-requests]").getByText("1 bekleyen istek").waitFor();
+  await page.locator("[data-community-actions] [data-pending-requests]").getByText("1 bekleyen istek").waitFor();
   await page.getByRole("tab", { name: /Üyeler/ }).getByText("1").waitFor();
   row.pending_request_count = 0; // başka bir yönetici işledi
   hub.emitPostgresChange("chat_groups", "UPDATE", row);
-  await page.locator("header [data-pending-requests]").waitFor({ state: "detached" });
+  await page.locator("[data-community-actions] [data-pending-requests]").waitFor({ state: "detached" });
   row.pending_request_count = 3;
   hub.emitPostgresChange("chat_groups", "UPDATE", row);
-  await page.locator("header [data-pending-requests]").waitFor();
+  await page.locator("[data-community-actions] [data-pending-requests]").waitFor();
   await page.goto(`${BASE}/messages/local?id=${G}`);
   await page.locator("[data-community-link-badge]").filter({ hasText: "3" }).waitFor();
 }, { setup: (db) => seedCommunity(db, { myRole: "admin", pending: 0 }) });

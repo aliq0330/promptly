@@ -4,6 +4,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Loader2, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { Portal } from "@/components/ui/portal";
 import { deleteCollection } from "@/lib/supabase/collections";
+import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Collection } from "@/types";
 
@@ -29,10 +30,13 @@ export function CollectionMoreMenu({
   collection,
   onEdit,
   onDeleted,
+  triggerClassName,
 }: {
   collection: Collection;
   onEdit: () => void;
   onDeleted: () => void;
+  /** The collection page's actions row draws a larger, unframed trigger (docs/history/203-*). */
+  triggerClassName?: string;
 }) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
@@ -130,9 +134,12 @@ export function CollectionMoreMenu({
         aria-label={t("collection.optionsAriaLabel")}
         aria-haspopup="menu"
         aria-expanded={open}
-        className="flex h-7 w-7 items-center justify-center rounded-full bg-surface/90 text-text-muted shadow-sm transition-colors hover:bg-surface-soft hover:text-text"
+        className={cn(
+          "flex h-7 w-7 items-center justify-center rounded-full bg-surface/90 text-text-muted shadow-sm transition-colors hover:bg-surface-soft hover:text-text",
+          triggerClassName,
+        )}
       >
-        <MoreVertical size={16} />
+        <MoreVertical size={triggerClassName ? 18 : 16} />
       </button>
 
       {open && position && (
