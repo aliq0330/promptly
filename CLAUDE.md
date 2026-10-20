@@ -107,8 +107,7 @@ topluluk sayfası kapak bandı (fotoğraf › renk › topluluk görselinden tü
 sayfa düzeyi başlıklar (`text-display`/`text-h1`/`text-h2`, h1–h3 otomatik) ve
 wordmark **Bricolage Grotesque** (`font-display`; `font-serif` artık onun takma
 adı — serif yok), prompt metni **JetBrains Mono** (`prompt-text` utility —
-platformun imza öğesi: kopyalanan şey her yerde, prompt kartları dahil, aynı mono
-blokta görünür; `PromptPreviewBox`). İkon: **lucide-react**, kartlarda
+platformun imza öğesi: kopyalanan şey aynı mono blokta görünür; `PromptPreviewBox` — görseli olmayan prompt kartında kartın görseli odur, `variant="art"`). İkon: **lucide-react**, kartlarda
 `strokeWidth` 1.75; aynı işlev her yerde aynı ikon (Beğeni `Heart`, Yorum
 `MessageCircle`, Kaydet `Bookmark` (içerik ve topluluk başvuru gönderisi; topluluğun kendisi kaydedilmez), Paylaş `Share2`, Menü `MoreVertical`,
 Prompt `SquareTerminal`, Workflow `Workflow`, Hazır Ayar `SlidersHorizontal`, İstek `Sparkles`, Hikâye `CircleFadingPlus`).
@@ -149,8 +148,7 @@ için), `Badge`, `Card`, `Chip`/`ChipRow`, `Tabs` (underline / segmented / pill)
 `DetailSkeleton`/`NotFoundBlock`, `PromptCardSkeleton`.
 `features/content/` — `ContentCard` kabuğu (PromptCard / WorkflowCard / PresetCard /
 RequestCard ortak), `ContentTypeLabel`, `ContentTags`,
-`contentActionClassName` (Beğeni/Yorum/Kaydet/Paylaş ortak görünümü). Her kartın iç yerleşimi
-`ContentCardPost` (`docs/history/196-*`): üstte kimlik bloğu (solda avatar; yanında kalın ad, altında "@kullanıcı · zaman"; sağda ⋮), altında tam genişlikte içerik türü satırı (`ContentTypePill` = renkli simge karosu + etiket; durum/Başvuru rozetleri yanında), başlık/açıklama/medya/prompt bloğu/araç çipi, ince çizgi, eylem satırı **solda Beğeni · Yorum · Kaydet · İstatistik, sağda yalnız Paylaş** — yeni kart yazarken bu kabuğu kullan, ikinci başlık/altbilgi çizme.
+`contentActionClassName` (Beğeni/Yorum/Kaydet/Paylaş ortak görünümü). Her kartın iç yerleşimi **Albüm kartı** `ContentCardPost` (`docs/history/202-*`, kullanıcı beş yön arasından seçti; detay sayfasının bandıyla aynı dil): üstte gönderinin görselinden renk alan BANT (`backdrop` büyütülüp bulanıklaştırılır, sayfa rengi örtü; görselsizde `bg-primary-soft`) — içinde `art` (çıktı görseli / video-ses kapağı / görselsiz promptta prompt metni / workflow adım karosu / hazır ayar parametre karosu / istek görseli ya da metni), tür satırı (`ContentTypePill`: simge + BÜYÜK HARF etiket + `detail` = araç/kategori; durum rozetleri yanında), büyük başlık (`ContentCardTitle`, açıklamasız), küçük avatar + ad + "@kullanıcı · zaman", sağda ⋮; altında eylem satırı: solda kartın TEK büyük eylemi (`primary`: Kopyala / Çalıştır / Studio'da aç / Yanıtla — `CARD_PRIMARY_CLASS`), sağda Beğeni · Yorum · Kaydet · İstatistik · Paylaş (büyük eylem yoksa eski sıra: sayaçlar solda, Paylaş sağda). Kart stacking context kurmaz (`isolate`/transform yok — ⋮ menüsü sonraki kartın üstüne açılır). Yeni kart yazarken bu kabuğu kullan, ikinci başlık/altbilgi çizme.
 Oluşturma ekranlarının ortak alt alanı `CreateFormActions` paylaşım hedefi seçicisini (`ShareDestinationField`, `docs/history/197-*`: "Nerede paylaşmak istiyorsun?" Genel akış / üye olunan topluluklar) taşır; seçim `?community=` bağlamının (`community-return.ts`) üstüne biner — yeni bir oluşturma formu yazarsan `CreateFormActions`'ı kullan, ayrı hedef seçici yazma.
 Sitedeki HER gönderi listesi (Ana Sayfa, Topluluklar, topluluk sayfası, Keşfet, listeler, profil, arama, koleksiyon) `ContentGrid`
 ile çizilir: HER ekranda kutulu kartlar (telefonda tek sütun, 12px sayfa kenar boşluğu; `sm`+ kutulu sütunlar, yanında sağ sütun olan sayfada en çok 2; `docs/history/196-*`) —

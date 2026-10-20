@@ -1,12 +1,13 @@
 "use client";
 
-import { ToolChips } from "@/features/content/tool-chips";
 import Link from "next/link";
-import { Reply, Sparkles } from "lucide-react";
+import { PenLine, Reply, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { ContentCard, ContentCardPost, ContentCardTitle } from "@/features/content/content-card";
+import { CARD_PRIMARY_CLASS, ContentCard, ContentCardPost, ContentCardTitle } from "@/features/content/content-card";
 import { ContentTypePill } from "@/features/content/content-type-label";
-import { ContentTags } from "@/features/content/content-tags";
+import { StorageImage } from "@/components/ui/storage-media";
+import { useAuth } from "@/features/auth/auth-provider";
+import { clampedAspectRatio } from "@/lib/placeholder-image";
 import { contentActionClassName } from "@/features/content/action-styles";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
 import { ShareTriggerButton } from "@/features/prompts/share-modal";
@@ -39,25 +40,21 @@ export const STATUS_VARIANTS: Record<PromptRequest["status"], "success" | "dange
 };
 
 /**
- * RequestCard — a community prompt request on the shared ContentCard shell and
- * Meydan post layout (`ContentCardPost`): same identity line (type pill +
- * Açık/Kapandı status), title/description as the other cards, and
- * — since the "Prompt İsteği Etkileşim ve Menü Sistemi Eşitleme" görevi —
- * the same real like button and the same `PostMenu` three-dot menu
- * (Bağlantıyı kopyala/Düzenle/Sil) every other card has.
+ * RequestCard — a community prompt request on the Albüm card (`ContentCardPost`, docs/history/202-*): kicker (type +
+ * Açık/Kapandı status), art = the reference picture or, without one, the brief itself (and the creative direction),
+ * title and author like the other cards, the same real like button and `PostMenu`.
  *
- * The action row: Beğeni · Yorum · Yanıt (real response count, existing
- * link/behavior) on the left, İstatistik · Paylaş on the right — a request
- * has no Kaydet (not savable anywhere). No "Kopyala" (removed — Prompt İsteği-specific, the
- * general Prompt system's own copy button is untouched), and no "Yanıtla"
- * CTA crammed in here either — that stays a detail-page-only action; the
- * "Yanıt" count here is the entry point into the request (same href it
- * already had).
+ * The big action is "Yanıtla" — only while the request is open and for someone other than its author (the author
+ * manages it on the detail page). The row: Beğeni · Yorum · Yanıt (real response count, the existing link) · İstatistik ·
+ * Paylaş — a request has no Kaydet (not savable anywhere) and no "Kopyala".
  */
 export function RequestCard({ request, onDeleted }: { request: PromptRequest; onDeleted?: () => void }) {
   const { t, language } = useTranslation();
+  const { user } = useAuth();
   const href = requestHref(request);
   const typeMeta = request.contentType ? CONTENT_TYPE_META[request.contentType] : null;
+  const picture = request.referenceImage ?? request.media[0];
+  const canReply = request.status === "open" && user?.id !== request.author.id;
 
   return (
     <ContentCard href={href}>
@@ -66,7 +63,7 @@ export function RequestCard({ request, onDeleted }: { request: PromptRequest; on
         meta={postMeta(request.author.username, request.createdAt, language)}
         badges={
           <>
-            <ContentTypePill icon={Sparkles} label={typeMeta ? `${t("request.title")} · ${t(typeMeta.labelKey)}` : t("request.title")} />
+            <ContentTypePill icon={Sparkles} label={t("request.title")} detail={typeMeta ? t(typeMeta.labelKey) : null} />
             <Badge variant={STATUS_VARIANTS[request.status]}>
               <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-current" />
               {t(STATUS_LABELS[request.status])}
@@ -74,6 +71,33 @@ export function RequestCard({ request, onDeleted }: { request: PromptRequest; on
           </>
         }
         menu={<PostMenu requestId={request.id} communityId={request.communityId} authorId={request.author.id} onDeleted={onDeleted} />}
+        art={
+          picture ? (
+            <figure data-card-media className="relative w-full overflow-hidden rounded-lg bg-surface-soft shadow-pop" style={{ aspectRatio: Math.max(1, clampedAspectRatio(picture.width, picture.height)) }}>
+              <StorageImage src={picture.url} alt={picture.alt} fill sizes="(min-width: 1280px) 30vw, (min-width: 640px) 45vw, 100vw" className="object-cover" />
+            </figure>
+          ) : (
+            <div className="space-y-2 rounded-lg bg-surface px-4 py-3.5 shadow-pop">
+              <p className="line-clamp-4 whitespace-pre-line break-words text-small leading-relaxed text-text">{request.description}</p>
+              {request.creativeDirection && (
+                <p className="line-clamp-2 text-caption text-text-secondary">
+                  <span className="font-semibold text-text">{t("request.creativeDirection")} · </span>
+                  {request.creativeDirection}
+                </p>
+              )}
+            </div>
+          )
+        }
+        backdrop={picture ? <StorageImage src={picture.url} alt="" fill sizes="240px" className="object-cover" /> : undefined}
+        title={<ContentCardTitle href={href} title={request.title} />}
+        primary={
+          canReply ? (
+            <Link href={`/create?answerRequest=${request.id}`} className={CARD_PRIMARY_CLASS}>
+              <PenLine size={14} aria-hidden />
+              {t("request.reply")}
+            </Link>
+          ) : undefined
+        }
         footer={
           <>
             <LikeButton id={request.id} likeCount={request.likeCount} contentType="request" />
@@ -87,22 +111,7 @@ export function RequestCard({ request, onDeleted }: { request: PromptRequest; on
             <ShareTriggerButton target={{ contentType: "request", request }} />
           </>
         }
-      >
-        <ContentCardTitle href={href} title={request.title} description={request.description} />
-
-        {request.creativeDirection && (
-          <p className="rounded-xl bg-surface-soft px-3 py-2.5 text-caption text-text-secondary">
-            <span className="font-semibold text-text">{t("request.creativeDirection")} · </span>
-            <span className="line-clamp-2 inline">{request.creativeDirection}</span>
-          </p>
-        )}
-
-        <ToolChips refs={request.tools} />
-        {request.tools.length === 0 && !typeMeta && request.preferredTool && (
-          <span className="inline-flex h-6 w-fit items-center rounded-full bg-surface-soft px-2.5 text-caption font-medium text-text-muted">{request.preferredTool}</span>
-        )}
-        <ContentTags tags={request.tags} />
-      </ContentCardPost>
+      />
     </ContentCard>
   );
 }

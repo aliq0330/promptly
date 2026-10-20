@@ -1,11 +1,10 @@
 "use client";
 
-import { ArrowRight, Workflow as WorkflowIcon } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, Play, Workflow as WorkflowIcon } from "lucide-react";
 import { workflowHref } from "@/lib/utils";
-import { ContentCard, ContentCardPost, ContentCardTitle } from "@/features/content/content-card";
+import { CARD_PRIMARY_CLASS, ContentCard, ContentCardPost, ContentCardTitle } from "@/features/content/content-card";
 import { ContentTypePill } from "@/features/content/content-type-label";
-import { ToolChips } from "@/features/content/tool-chips";
-import { ContentTags } from "@/features/content/content-tags";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
 import { PostTargetMenu, postMeta } from "@/features/prompts/post-header";
 import { PromptCardFooter } from "@/features/prompts/prompt-card-footer";
@@ -15,11 +14,9 @@ import { categoryLabel } from "./step-meta";
 import type { Workflow } from "@/types";
 
 /**
- * WorkflowCard — the same ContentCard shell and Meydan post layout
- * (`ContentCardPost`: avatar, identity line with the type pill, ⋮ menu, action
- * row) as PromptCard; only the middle block differs: a compact "steps"
- * panel (same surface as the prompt block) summarizing how many steps the
- * workflow has, its category and which content types it chains, plus the tool chips.
+ * WorkflowCard — the Albüm card (`ContentCardPost`, docs/history/202-*) like PromptCard; its art is the cover (if any) or
+ * a "steps" tile (how many steps, which content types it chains), its big action "Çalıştır" opens the detail page straight
+ * in the step-by-step run (`?run=1`).
  */
 export function WorkflowCard({
   workflow,
@@ -42,57 +39,55 @@ export function WorkflowCard({
         meta={postMeta(workflow.creator.username, workflow.createdAt, language)}
         badges={
           <>
-            <ContentTypePill icon={WorkflowIcon} label={t("workflow.singular")} />
+            <ContentTypePill icon={WorkflowIcon} label={t("workflow.singular")} detail={category} />
             {workflow.status === "draft" && <Badge variant="warning">{t("workflow.draftBadge")}</Badge>}
           </>
         }
         menu={<PostTargetMenu workflow={workflow} onDeleted={onDeleted} collectionRemoval={collectionRemoval} />}
-        footer={<PromptCardFooter workflow={workflow} />}
-      >
-        <ContentCardTitle href={href} title={workflow.title} description={workflow.description} />
-
-        <div className="flex items-center gap-3 rounded-xl bg-surface-soft p-3">
-          {workflow.coverUrl ? (
-            <span className="relative block h-12 w-12 shrink-0 overflow-hidden rounded-sm">
+        art={
+          workflow.coverUrl ? (
+            <figure data-card-media className="relative aspect-video w-full overflow-hidden rounded-lg bg-surface-soft shadow-pop">
               {/* eslint-disable-next-line @next/next/no-img-element -- real, potentially locally-produced data URL cover */}
               <img src={workflow.coverUrl} alt="" className="h-full w-full object-cover" />
               {workflow.media.length > 1 && (
-                <span className="absolute bottom-0 right-0 rounded-tl-sm bg-black/70 px-0.5 text-[0.6rem] font-medium leading-tight text-white">
+                <span className="absolute bottom-2 right-2 rounded-xs bg-black/60 px-1.5 py-0.5 text-caption font-medium text-white">
                   {t("media.moreImagesBadge", { count: workflow.media.length - 1 })}
                 </span>
               )}
-            </span>
+            </figure>
           ) : (
-            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-sm bg-primary-soft text-primary">
-              <WorkflowIcon size={20} strokeWidth={1.75} />
-            </span>
-          )}
-          <span className="min-w-0 flex-1 leading-tight">
-            <span className="block text-label font-medium text-text">
-              {t("workflow.stepCount", { count: String(workflow.stepCount) })}
-              {category && <span className="font-normal text-text-muted"> · {category}</span>}
-            </span>
-            <span className="mt-1 flex flex-wrap items-center gap-1">
-              {workflow.contentTypes.map((type) => {
-                const Icon = CONTENT_TYPE_META[type].icon;
-                return (
-                  <span key={type} className="inline-flex h-5 items-center gap-1 rounded-full bg-surface px-2 text-caption font-medium text-text-secondary">
-                    <Icon size={10} />
-                    {t(CONTENT_TYPE_META[type].labelKey)}
-                  </span>
-                );
-              })}
-            </span>
-          </span>
-          <span className="flex shrink-0 items-center gap-1 rounded-sm bg-surface px-2 py-1 text-caption font-semibold text-primary shadow-xs transition-colors duration-200 group-hover:bg-primary group-hover:text-primary-foreground">
-            {t("workflow.view")}
-            <ArrowRight size={12} />
-          </span>
-        </div>
-
-        <ToolChips refs={workflow.tools} />
-        <ContentTags tags={workflow.tags} />
-      </ContentCardPost>
+            <div className="flex flex-col items-center gap-2.5 rounded-lg bg-surface px-4 py-5 text-center shadow-pop">
+              <span className="text-label font-semibold text-text">{t("workflow.stepCount", { count: String(workflow.stepCount) })}</span>
+              <span className="flex flex-wrap items-center justify-center gap-1.5">
+                {workflow.contentTypes.map((type, index) => {
+                  const Icon = CONTENT_TYPE_META[type].icon;
+                  return (
+                    <span key={type} className="inline-flex items-center gap-1.5">
+                      {index > 0 && <ArrowRight size={13} aria-hidden className="text-text-muted" />}
+                      <span className="inline-flex h-7 items-center gap-1 rounded-full bg-primary-soft px-2.5 text-caption font-semibold text-primary">
+                        <Icon size={12} aria-hidden />
+                        {t(CONTENT_TYPE_META[type].labelKey)}
+                      </span>
+                    </span>
+                  );
+                })}
+              </span>
+            </div>
+          )
+        }
+        // eslint-disable-next-line @next/next/no-img-element -- decorative tint of the same cover
+        backdrop={workflow.coverUrl ? <img src={workflow.coverUrl} alt="" className="h-full w-full object-cover" /> : undefined}
+        title={<ContentCardTitle href={href} title={workflow.title} />}
+        primary={
+          workflow.stepCount > 0 ? (
+            <Link href={`${href}&run=1`} className={CARD_PRIMARY_CLASS}>
+              <Play size={14} aria-hidden fill="currentColor" />
+              {t("run.button")}
+            </Link>
+          ) : undefined
+        }
+        footer={<PromptCardFooter workflow={workflow} />}
+      />
     </ContentCard>
   );
 }

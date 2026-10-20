@@ -18,9 +18,27 @@ import type { Prompt } from "@/types";
  * Meydan (docs/history/190-*): a borderless soft panel headed "PROMPT · <tool>",
  * with the real use count (`copy_count`) and a bare "Kopyala" on the right.
  */
-export function PromptPreviewBox({ prompt, lines = 4 }: { prompt: Prompt; lines?: 3 | 4 | 6 }) {
+export function PromptPreviewBox({ prompt, lines = 4, variant = "panel" }: { prompt: Prompt; lines?: 3 | 4 | 6; variant?: "panel" | "art" }) {
   const { t } = useTranslation();
   const tool = resolveToolRefs(prompt.tools)[0]?.label ?? prompt.tool;
+  if (variant === "art") {
+    // The Albüm card's art for a prompt without a picture (docs/history/202-*): the prompt itself, lifted on the band. The
+    // card's own big "Kopyala" and its kicker (tool) replace this panel's header.
+    return (
+      <div className="rounded-lg bg-surface px-4 py-3.5 shadow-pop">
+        <p
+          className={cn(
+            "prompt-text break-words whitespace-pre-line text-text",
+            lines === 3 && "line-clamp-3",
+            lines === 4 && "line-clamp-4",
+            lines === 6 && "line-clamp-6",
+          )}
+        >
+          {prompt.promptText}
+        </p>
+      </div>
+    );
+  }
   return (
     <div className="relative overflow-hidden rounded-xl bg-surface-soft">
       <div className="flex items-center gap-2 pl-3.5 pr-1.5 pt-2">
