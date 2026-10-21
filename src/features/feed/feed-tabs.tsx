@@ -78,20 +78,28 @@ export function FeedTabs({ layout = "grid" }: { layout?: "grid" | "home" } = {})
 
   return (
     <section className="space-y-4" aria-label={t("feed.ariaLabel")}>
+      {layout === "home" && (
+        // Meydan: equal-width underline tabs across the column (they scroll on a phone). Pinned while the feed scrolls —
+        // under the header, and in its place once the header slides away (`[data-sticky-under-header]`, globals.css). It sits
+        // straight in the section (not inside `ListToolbar`) so its containing block is the whole feed.
+        <div
+          data-sticky-under-header
+          className="sticky z-20 -mx-3 bg-background/90 px-3 backdrop-blur-xl backdrop-saturate-150 sm:mx-0 sm:px-0"
+        >
+          <Tabs
+            items={TABS.map((tab) => ({ key: tab.key, label: t(tab.labelKey) }))}
+            active={active}
+            onChange={setActive}
+            ariaLabel={t("feed.viewAriaLabel")}
+            className="sm:[&>button]:flex-1 sm:[&>button]:justify-center [&>button]:text-small [&>button]:font-semibold"
+          />
+        </div>
+      )}
       <ListToolbar
         tabsBelow
         stream={layout === "home"}
         leading={
-          layout === "home" ? (
-            // Meydan: equal-width underline tabs across the column (they scroll on a phone).
-            <Tabs
-              items={TABS.map((tab) => ({ key: tab.key, label: t(tab.labelKey) }))}
-              active={active}
-              onChange={setActive}
-              ariaLabel={t("feed.viewAriaLabel")}
-              className="sm:[&>button]:flex-1 sm:[&>button]:justify-center [&>button]:text-small [&>button]:font-semibold"
-            />
-          ) : (
+          layout === "home" ? undefined : (
             <Tabs
               items={TABS.map((tab) => ({ key: tab.key, label: t(tab.labelKey), icon: tab.icon }))}
               active={active}
