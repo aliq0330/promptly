@@ -1,19 +1,21 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Compass, Loader2, MessageCircle, Plus, Search, ShieldCheck, Users } from "lucide-react";
-import { Button, buttonClassName } from "@/components/ui/button";
+import { Compass, Loader2, Mail, Plus, Search, ShieldCheck, SquareStack, Users, type LucideIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Tabs, type TabItem } from "@/components/ui/tabs";
+import { Tabs } from "@/components/ui/tabs";
+import { SectionNav, type SectionNavItem } from "@/features/content/section-nav";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useAuthPrompt } from "@/features/auth/auth-prompt-provider";
 import { useRealMessages } from "@/features/messages/real-messages-provider";
 import { useAsyncAction } from "@/features/groups/use-async-action";
 import { useToast } from "@/features/groups/use-toast";
 import { CommunityCard } from "./community-card";
-import { CommunityLayout, CommunityPageHeader } from "./community-layout";
+import { CommunityLayout } from "./community-layout";
+import { HomeInviteNotice, MyCommunitiesShelf } from "./home-shelf";
 import { HomeAside } from "./home-aside";
 import type { JoinState } from "./community-join-button";
 import { CreateCommunityModal } from "./create-community-modal";
@@ -22,7 +24,7 @@ import { HomeInvitesTab } from "./home-invites-tab";
 import { HomePostsTab } from "./home-posts-tab";
 import { applyJoinState, ErrorBox, LoadingRows, type ListState } from "./home-shared";
 import { useManagedCommunities } from "./use-managed-communities";
-import { fetchMyInvitations, toGroupError } from "@/lib/supabase/chat-groups";
+import { fetchMyInvitations, toGroupError, type GroupInvitation } from "@/lib/supabase/chat-groups";
 import {
   discoverCommunities,
   listMyCommunities,
@@ -31,11 +33,15 @@ import {
   type MyCommunityScope,
 } from "@/lib/supabase/communities";
 import { CATEGORY_LABEL_KEYS, COMMUNITY_CATEGORIES, communityHref } from "@/lib/communities";
+import { cn } from "@/lib/utils";
 import { homeHref, isInvitesSection, resolveHomeView, type HomeTab, type InvitesSection } from "@/lib/community-home";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { CommunityCategory } from "@/types";
 
 const SORTS: CommunitySort[] = ["popular", "newest", "active"];
+
+const TAB_ICONS: Record<HomeTab, LucideIcon> = { posts: SquareStack, discover: Compass, managed: ShieldCheck, invites: Mail };
+
 
 /**
  * `/communities`: Topluluklar ana sayfası (docs/history/185-*). Sekmeler:
@@ -47,6 +53,9 @@ const SORTS: CommunitySort[] = ["popular", "newest", "active"];
  * Tamamen kapalı topluluklar hiçbir listede/aramada/öneride/akışta görünmez; onlara yalnız davet ya da davet bağlantısıyla ulaşılır.
  * Oturum açmamış ziyaretçi yalnız Keşfet'in herkese açık topluluk listesini + aramayı görür; katıl/istek/oluştur giriş diyaloğunu açar.
  * Eski `/groups` adresi buraya yönlenir.
+ * Düzen (docs/history/212-*, Albüm A + D): görünür başlık yok (h1 ekran okuyucuda) — üstte arama + "+" tek satırda (Mesajlar üst menüde); altında
+ * "Topluluklarım" rafı (kare kapaklar, "N yeni" rozeti), Ana Sayfa/Keşfet'teki bölüm balonları (`SectionNav`, davet sayacı balonda),
+ * Gönderiler'de bekleyen davet tek satırlık bir kart.
  */
 export function CommunitiesPage() {
   const { t } = useTranslation();
@@ -58,7 +67,10 @@ export function CommunitiesPage() {
   const { node: toastNode, show } = useToast();
   const { ready: managedReady, managed } = useManagedCommunities(user?.id ?? null);
   const [createOpen, setCreateOpen] = useState(false);
-  const [inviteCount, setInviteCount] = useState<number | null>(null);
+  const [invitations, setInvitations] = useState<GroupInvitation[] | null>(null);
+  const [inviteReload, setInviteReload] = useState(0);
+  const [query, setQuery] = useState("");
+  const inviteCount = invitations?.length ?? null;
 
   const sectionParam = searchParams.get("section");
   const { view, section: defaultSection } = resolveHomeView(searchParams.get("tab"), { signedIn: Boolean(user), managesAny: managed.length > 0 });
@@ -66,64 +78,93 @@ export function CommunitiesPage() {
   const incomingTotal = managed.reduce((sum, c) => sum + c.pendingRequestCount, 0);
   const actionCount = (inviteCount ?? 0) + incomingTotal;
 
-  const tabs: TabItem<HomeTab>[] = user
-    ? [
-        { key: "posts", label: t("communities.tab.posts") },
-        { key: "discover", label: t("communities.tab.discover") },
-        ...(managedReady && managed.length > 0 ? [{ key: "managed" as const, label: t("communities.tab.managed") }] : []),
-        { key: "invites", label: t("communities.tab.invitesAndRequests"), count: actionCount > 0 ? actionCount : undefined },
-      ]
-    : [{ key: "discover", label: t("communities.tab.discover") }];
+  const tabKeys: HomeTab[] = ["posts", "discover", ...(managedReady && managed.length > 0 ? (["managed"] as const) : []), "invites"];
+  const tabLabel: Record<HomeTab, string> = {
+    posts: t("communities.tab.posts"),
+    discover: t("communities.tab.discover"),
+    managed: t("communities.tab.managed"),
+    invites: t("communities.tab.invitesAndRequests"),
+  };
+  const tabs: SectionNavItem<HomeTab>[] = tabKeys.map((key) => ({
+    key,
+    label: tabLabel[key],
+    icon: TAB_ICONS[key],
+    count: key === "invites" && actionCount > 0 ? actionCount : undefined,
+  }));
   const activeTab: HomeTab = view === "mine" ? "posts" : view;
 
   const goTab = (next: HomeTab) => router.replace(homeHref(next));
   const goSection = (next: InvitesSection) => router.replace(homeHref("invites", next));
 
-  // Sekme rozeti: bana gelen davetler (sekme açık olmasa da); bekleyen başvurularım "Başvurularım" bölümündedir.
+  // Balon sayacı + davet kartı: bana gelen davetler (sekme açık olmasa da); bekleyen başvurularım "Başvurularım" bölümündedir.
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
     fetchMyInvitations(user.id)
-      .then((invitations) => {
-        if (!cancelled) setInviteCount(invitations.length);
+      .then((list) => {
+        if (!cancelled) setInvitations(list);
       })
       .catch((err) => console.error("community badges", err));
     return () => {
       cancelled = true;
     };
-  }, [user]);
+  }, [user, inviteReload]);
+
+  // Davetler bölümünde bir davet yanıtlanınca sayı değişir: liste (kart + sayaç) yeniden okunur.
+  const inviteLength = useRef<number | null>(null);
+  useEffect(() => {
+    inviteLength.current = invitations?.length ?? null;
+  }, [invitations]);
+  const onInviteCount = useCallback((count: number) => {
+    if (inviteLength.current !== null && inviteLength.current !== count) setInviteReload((k) => k + 1);
+  }, []);
+
+  const search = (event: React.FormEvent) => {
+    event.preventDefault();
+    const q = query.trim();
+    router.push(q ? `/communities/all?q=${encodeURIComponent(q)}` : "/communities/all");
+  };
 
   return (
     <CommunityLayout
       aside={user ? <HomeAside managedCount={managed.length} actionCount={actionCount} /> : undefined}
       asideLabel={t("communities.aside.label")}
     >
-      <CommunityPageHeader
-        title={t("communities.page.title")}
-        description={t("communities.page.description")}
-        actions={
-          <>
-            <Button type="button" size="sm" onClick={() => requireAuth("create") && setCreateOpen(true)}>
-              <Plus size={15} /> {t("communities.page.create")}
-            </Button>
-            <Link href="/messages" className={buttonClassName({ size: "sm", variant: "outline" })}>
-              <MessageCircle size={15} /> {t("communities.page.toMessages")}
-            </Link>
-          </>
-        }
-      />
+      <h1 className="sr-only">{t("communities.page.title")}</h1>
+      <div className="flex items-center gap-2">
+        {user ? (
+          <form role="search" onSubmit={search} className="relative min-w-0 flex-1">
+            <Search size={17} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-text-muted" aria-hidden />
+            <input
+              type="search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder={t("communities.all.searchPlaceholder")}
+              aria-label={t("communities.all.searchPlaceholder")}
+              enterKeyHint="search"
+              className="h-11 w-full rounded-full border border-transparent bg-surface-soft pl-11 pr-4 text-body text-text placeholder:text-text-muted focus:border-border-strong focus:outline-none"
+            />
+          </form>
+        ) : (
+          <span className="flex-1" />
+        )}
+        <Button type="button" size="sm" onClick={() => requireAuth("create") && setCreateOpen(true)} className={cn(!user && "h-11")}>
+          <Plus size={16} /> {user ? <span className="sr-only sm:not-sr-only">{t("communities.page.create")}</span> : t("communities.page.create")}
+        </Button>
+      </div>
 
-      {user && <Tabs items={tabs} active={activeTab} onChange={goTab} ariaLabel={t("communities.page.tabsAria")} variant="pill" />}
+      {user && <MyCommunitiesShelf />}
+      {user && <SectionNav items={tabs} active={activeTab} onChange={goTab} ariaLabel={t("communities.page.tabsAria")} hideControls />}
 
       {authLoading ? (
         <LoadingRows />
       ) : !user ? (
-        <>
-          <Tabs items={tabs} active="discover" onChange={goTab} ariaLabel={t("communities.page.tabsAria")} variant="pill" />
-          <DiscoverView onToast={show} onGoInvites={() => goTab("invites")} />
-        </>
+        <DiscoverView onToast={show} onGoInvites={() => goTab("invites")} />
       ) : view === "posts" ? (
-        <HomePostsTab onToast={show} />
+        <>
+          {invitations && invitations.length > 0 && <HomeInviteNotice invitations={invitations} />}
+          <HomePostsTab onToast={show} />
+        </>
       ) : view === "discover" ? (
         <HomeDiscoverTab onToast={show} onGoInvites={() => goTab("invites")} />
       ) : view === "mine" ? (
@@ -141,7 +182,7 @@ export function CommunitiesPage() {
           section={section}
           onSection={goSection}
           managed={managed}
-          onInviteCount={setInviteCount}
+          onInviteCount={onInviteCount}
           onToast={show}
         />
       )}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type RefObject } from "react";
+import { useState, type CSSProperties, type RefObject } from "react";
 import { Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -25,14 +25,14 @@ const MORE_EMOJIS = ["😍", "🎉", "🔥", "👏", "🙏", "😅", "🤔", "�
 export function EmojiPicker({
   myReaction,
   onSelect,
-  align,
   panelRef,
+  style,
 }: {
   myReaction: string | null;
   onSelect: (emoji: string) => void;
-  align: "left" | "right";
-  /** Attached to the root so `usePopoverAlign` can measure it against the viewport and flip sides if it would overflow. */
+  /** Measured by `useAnchoredPopover`, which places the picker (fixed, in a portal) inside the visible chat area. */
   panelRef?: RefObject<HTMLDivElement | null>;
+  style?: CSSProperties;
 }) {
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
@@ -43,20 +43,12 @@ export function EmojiPicker({
       ref={panelRef}
       role="menu"
       aria-label={t("messages.chooseEmojiReaction")}
+      style={style}
       className={cn(
-        "absolute top-full z-30 mt-1.5 flex items-center gap-1 rounded-2xl border border-border bg-surface p-1.5 shadow-md",
-        align === "right" ? "right-0" : "left-0",
-        // Collapsed (6 emoji + "➕"): `w-max` sizes to content regardless of
-        // the containing block's width. Without this, an absolutely
-        // positioned element with `width: auto` and only one offset
-        // (`right-0`/`left-0`) gets its shrink-to-fit width clamped to its
-        // positioned ancestor's own width — here that ancestor is the tiny
-        // `<div className="relative">` wrapping just the emoji TOGGLE
-        // button (~32px), so every emoji button wrapped onto its own line,
-        // rendering as a vertical column instead of a horizontal row (a
-        // real bug a user reported from a live screenshot). Expanded (18
-        // emoji): a fixed width so it wraps into a small grid instead of
-        // one very long horizontal strip.
+        "z-50 flex items-center gap-1 rounded-2xl border border-border bg-surface p-1.5 shadow-md",
+        // Collapsed (6 emoji + "➕"): `w-max` sizes to content — a fixed-position box with `width: auto` would otherwise
+        // stretch or wrap each emoji onto its own line (a real bug once reported from a live screenshot). Expanded
+        // (18 emoji): a fixed width so it wraps into a small grid instead of one very long horizontal strip.
         expanded ? "w-[13.5rem] flex-wrap" : "w-max flex-nowrap",
       )}
     >

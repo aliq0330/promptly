@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type RefObject } from "react";
+import { useState, type CSSProperties, type RefObject } from "react";
 import { CheckCheck, Copy, CornerUpLeft, Flag, Pencil, Pin, PinOff, ShieldAlert, Star, Trash2 } from "lucide-react";
 import { useAuth } from "@/features/auth/auth-provider";
 import { fileReport } from "@/lib/supabase/reports";
@@ -118,22 +118,25 @@ function MenuItem({
 export function MessageActionMenu({
   message,
   isMe,
-  align,
   canEditOrDelete,
   actions,
   onReply,
   onClose,
   panelRef,
+  style,
+  side = "below",
 }: {
   message: Message;
   isMe: boolean;
-  align: "left" | "right";
   canEditOrDelete: boolean;
   actions: MessageBubbleActions;
   onReply: () => void;
   onClose: () => void;
-  /** Attached to the root so `usePopoverAlign` can measure it against the viewport and flip sides if it would overflow. */
+  /** Measured by `useAnchoredPopover`, which places the menu (fixed, in a portal) inside the visible chat area. */
   panelRef?: RefObject<HTMLDivElement | null>;
+  style?: CSSProperties;
+  /** Which side of the ⋮ it opened on — the pop-in grows from that edge. */
+  side?: "below" | "above";
 }) {
   const { t } = useTranslation();
   const isConfirmingDeleteEveryone = actions.deleteConfirm?.id === message.id && actions.deleteConfirm.mode === "everyone";
@@ -150,9 +153,11 @@ export function MessageActionMenu({
       ref={panelRef}
       role="menu"
       aria-label={t("messages.messageOptionsAriaLabel")}
+      data-menu-side={side}
+      style={style}
       className={cn(
-        "absolute top-full z-30 mt-1.5 w-52 overflow-hidden rounded-md border border-border-soft bg-surface-elevated py-1 shadow-pop animate-pop-in",
-        align === "right" ? "right-0" : "left-0",
+        "z-50 w-52 overflow-x-hidden rounded-md border border-border-soft bg-surface-elevated py-1 shadow-pop animate-pop-in",
+        side === "above" ? "origin-bottom" : "origin-top",
       )}
     >
       <MenuItem

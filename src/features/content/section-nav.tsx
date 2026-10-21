@@ -12,6 +12,27 @@ export interface SectionNavItem<K extends string> {
   key: K;
   label: string;
   icon: LucideIcon;
+  /** Something waiting there (Topluluklar' invitations): a small count on the tile and on the folded bar's icon. */
+  count?: number;
+}
+
+/**
+ * The count badge of a tile or of a folded-bar icon. It comes AFTER the label in the DOM (the tab is read as "Davetler 3"),
+ * placed over the icon's top-right corner: on a tile from the tile's centre (the icon is centred, at most 60px wide; the tile
+ * row leaves room above it), on the folded bar `inside` the button's corner (that row scrolls sideways and would clip it).
+ */
+function CountBadge({ count, inside }: { count: number; inside?: boolean }) {
+  return (
+    <span
+      data-section-count=""
+      className={cn(
+        "pointer-events-none absolute flex items-center justify-center rounded-full bg-primary font-bold leading-none text-primary-foreground ring-2 ring-background",
+        inside ? "right-0 top-0 h-4 min-w-4 px-0.5 text-[0.625rem]" : "-top-1.5 left-[calc(50%+1.125rem)] h-5 min-w-5 px-1 text-[0.6875rem]",
+      )}
+    >
+      {count > 99 ? "99+" : count}
+    </span>
+  );
 }
 
 /** Clears the 4rem header (`Header`, h-16): the tiles count as "scrolled away" once they are above it. */
@@ -120,6 +141,7 @@ export function SectionNav<K extends string>({
           aria-label={ariaLabel}
           className={cn(
             "scrollbar-none flex touch-pan-x overflow-x-auto overscroll-x-contain pb-1",
+            items.some((item) => item.count) && "pr-1.5 pt-1.5",
             spread ? "justify-between gap-1 sm:justify-start sm:gap-5" : "gap-2 sm:flex-wrap sm:overflow-visible",
           )}
         >
@@ -203,19 +225,20 @@ function SectionTile<K extends string>({
       aria-selected={selected}
       onClick={onSelect}
       className={cn(
-        "group flex flex-col items-center gap-1.5 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+        "group relative flex flex-col items-center gap-1.5 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         fluid ? "min-w-0 max-w-[4.75rem] flex-1 sm:w-[4.75rem] sm:flex-none" : "w-[4.75rem] shrink-0",
       )}
     >
       <span
         className={cn(
-          "grid aspect-square w-full max-w-[3.75rem] place-items-center rounded-[1.25rem] transition-[background-color,color,box-shadow,transform] duration-200 ease-soft group-active:scale-[0.95]",
+          "relative grid aspect-square w-full max-w-[3.75rem] place-items-center rounded-[1.25rem] transition-[background-color,color,box-shadow,transform] duration-200 ease-soft group-active:scale-[0.95]",
           selected ? "bg-text text-background shadow-card" : "bg-surface-soft text-text-secondary group-hover:bg-border-soft group-hover:text-text",
         )}
       >
         <Icon size={24} strokeWidth={1.75} aria-hidden />
       </span>
       <span className={cn("text-center text-caption leading-tight", selected ? "font-semibold text-text" : "font-medium text-text-muted")}>{item.label}</span>
+      {item.count ? <CountBadge count={item.count} /> : null}
     </button>
   );
 }
@@ -273,13 +296,14 @@ function FoldedBar<K extends string>({
                 title={item.label}
                 onClick={() => onChange(item.key)}
                 className={cn(
-                  "inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-full text-label font-semibold whitespace-nowrap",
+                  "relative inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-full text-label font-semibold whitespace-nowrap",
                   "transition-[background-color,color,padding] duration-200 ease-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1",
                   selected ? "bg-text pl-3 pr-4 text-background" : "w-10 bg-surface-soft text-text-secondary hover:bg-border-soft hover:text-text",
                 )}
               >
                 <Icon size={16} strokeWidth={1.9} aria-hidden />
                 {selected && item.label}
+                {item.count ? <CountBadge count={item.count} inside /> : null}
               </button>
             );
           })}

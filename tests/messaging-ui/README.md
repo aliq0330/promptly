@@ -118,3 +118,12 @@ CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/mess
 ```bash
 CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/messaging-ui/run-topic-pages.mjs   # 9/9 beklenir
 ```
+
+## Topluluklar Albüm düzeni + sohbet menüsü konumu (`docs/history/212-*`)
+
+`run-community-shelf.mjs` (7): başlıksız üst satır (arama + "+"), "Topluluklarım" rafı (kare kapak, "N yeni"/"99+ yeni", yeni olan önce, üye olunmayan yok, sayaç hatasında rozetsiz), balonda davet sayacı, tek satırlık davet kartı → Davetler, arama → `/communities/all?q=`, ziyaretçi, İngilizce + masaüstü. `run-chat-popovers.mjs` (8): uzun mesajda düğmeler görünen kısımda, en alttaki mesajın menüsü yukarı / en üsttekinin aşağı, emoji seçici büyüyünce yeniden yerleşir, görünüm daralınca menü yerleşir, mesaj kayınca menü kapanır, masaüstü. Gerçek iOS Safari klavyesi/adres çubuğu DENENMEDİ (görünüm yüksekliği küçültülerek taklit edilir).
+
+```bash
+CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/messaging-ui/run-community-shelf.mjs   # 7/7 beklenir
+CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/messaging-ui/run-chat-popovers.mjs     # 8/8 beklenir
+```

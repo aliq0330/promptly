@@ -30,20 +30,6 @@ export function CommunityReadingColumn({ children, className }: { children: Reac
   return <div className={cn("max-w-3xl", className)}>{children}</div>;
 }
 
-/** Kompakt sayfa başlığı: tek satırda başlık + eylemler; açıklama en çok iki satır. */
-export function CommunityPageHeader({ title, description, actions }: { title: string; description?: string; actions?: ReactNode }) {
-  return (
-    // Meydan (docs/history/190-*): a large bold title like every other page header; no icon.
-    <header className="flex flex-wrap items-end justify-between gap-x-4 gap-y-3" data-testid="community-page-header">
-      <div className="min-w-0 flex-1 basis-60 space-y-1">
-        <h1 className="break-words text-h1 font-bold leading-tight text-text">{title}</h1>
-        {description && <p className="line-clamp-2 max-w-2xl text-small text-text-muted">{description}</p>}
-      </div>
-      {actions && <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>}
-    </header>
-  );
-}
-
 /**
  * Gönderi akışı (Meydan, docs/history/190-*): Keşfet ile AYNI liste — `ContentGrid` (telefonda kenardan kenara çizgili satırlar, `sm`+ kutulu
  * kartlar); yanında xl'de yardımcı sütun durduğu için en çok iki sütun.

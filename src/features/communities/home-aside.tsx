@@ -3,17 +3,14 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, Compass } from "lucide-react";
-import { GroupAvatar } from "@/features/groups/group-avatar";
 import { homeHref } from "@/lib/community-home";
-import { communityHref } from "@/lib/communities";
 import { listMyCommunities, type CommunitySummary } from "@/lib/supabase/communities";
 import { useTranslation } from "@/lib/i18n/language-provider";
 
-const ASIDE_LIST_SIZE = 6;
-
 /**
  * Topluluklar ana sayfasının sağ yardımcı sütunu (yalnız `xl`+; dar ekranda `CommunityLayout` hiç çizmez): üyelik/yönetim/bekleyen sayıları ve
- * üye olunan toplulukların kısa listesi. Yeni veri kaynağı yoktur: sayılar sayfanın zaten bildiği değerler, liste `list_my_communities`'tir.
+ * "Tüm topluluklar". Üye olunan toplulukların listesi artık burada değil, sayfanın kendi "Topluluklarım" rafında (docs/history/212-*).
+ * Yeni veri kaynağı yoktur: sayılar sayfanın zaten bildiği değerler ve `list_my_communities`'tir.
  */
 export function HomeAside({ managedCount, actionCount }: { managedCount: number; actionCount: number }) {
   const { t } = useTranslation();
@@ -60,40 +57,6 @@ export function HomeAside({ managedCount, actionCount }: { managedCount: number;
           </Link>
         )}
       </section>
-
-      {(items === null || items.length > 0) && (
-      <section className="rounded-xl bg-surface-soft p-4" aria-labelledby="community-aside-mine">
-        <div className="flex items-center justify-between gap-2">
-          <h2 id="community-aside-mine" className="font-display text-[1.0625rem] font-bold tracking-[-0.02em] text-text">
-            {t("communities.home.myCommunities")}
-          </h2>
-          {hasMore && (
-            <Link href={homeHref("mine")} className="text-caption font-medium text-text-secondary hover:text-primary">
-              {t("common.viewAll")}
-            </Link>
-          )}
-        </div>
-        {items === null ? (
-          <div className="mt-2 space-y-2" aria-busy="true">
-            {[0, 1, 2].map((i) => (
-              <div key={i} className="h-8 animate-pulse rounded-md bg-surface-soft" />
-            ))}
-          </div>
-        ) : (
-          <ul className="mt-1.5">
-            {items.slice(0, ASIDE_LIST_SIZE).map((community) => (
-              <li key={community.id}>
-                <Link href={communityHref(community.id)} className="flex min-h-9 items-center gap-2.5 rounded-lg px-1.5 py-1 hover:bg-surface-soft">
-                  <GroupAvatar name={community.name} avatarUrl={community.avatarUrl} size={28} />
-                  <span className="min-w-0 flex-1 truncate text-small text-text">{community.name}</span>
-                  {community.unreadCount > 0 && <span className="rounded-full bg-primary px-1.5 text-caption text-primary-foreground">{community.unreadCount}</span>}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-      )}
 
       <Link href="/communities/all" className="flex items-center justify-between rounded-full bg-surface-soft px-4 py-2.5 text-small font-semibold text-text transition-colors hover:bg-border-soft">
         <span className="flex items-center gap-2">
