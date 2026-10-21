@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Clock, Flame, Hash, LayoutGrid, SquareTerminal, SlidersHorizontal, Sparkles, UserCheck, Workflow as WorkflowIcon } from "lucide-react";
 import { Tabs } from "@/components/ui/tabs";
 import { Chip } from "@/components/ui/chip";
+import { SectionNav } from "@/features/content/section-nav";
 import { Button } from "@/components/ui/button";
 import { ListToolbar, SheetChips, SheetSection, TaxonomySheetSections, taxonomyActiveCount } from "@/features/content/list-toolbar";
 import { EMPTY_TAXONOMY_FILTER, type TaxonomyFilterValue } from "@/lib/content-taxonomy";
@@ -76,30 +77,41 @@ export function FeedTabs({ layout = "grid" }: { layout?: "grid" | "home" } = {})
     </>
   );
 
+  const sheetSections = (
+    <>
+      <SheetSection title={t("toolbar.postKind")}>
+        <SheetChips>{kindChips}</SheetChips>
+      </SheetSection>
+      <TaxonomySheetSections value={taxonomy} onChange={setTaxonomy} />
+    </>
+  );
+  const activeCount = (kind === "all" ? 0 : 1) + taxonomyActiveCount(taxonomy, true);
+  const clearFilters = () => {
+    setKind("all");
+    setTaxonomy(EMPTY_TAXONOMY_FILTER);
+  };
+
   return (
     <section className="space-y-4" aria-label={t("feed.ariaLabel")}>
-      {layout === "home" && (
-        // Meydan: equal-width underline tabs across the column (they scroll on a phone). Pinned while the feed scrolls —
-        // under the header, and in its place once the header slides away (`[data-sticky-under-header]`, globals.css). It sits
-        // straight in the section (not inside `ListToolbar`) so its containing block is the whole feed.
-        <div
-          data-sticky-under-header
-          className="sticky z-20 -mx-3 bg-background/90 px-3 backdrop-blur-xl backdrop-saturate-150 sm:mx-0 sm:px-0"
-        >
-          <Tabs
-            items={TABS.map((tab) => ({ key: tab.key, label: t(tab.labelKey) }))}
-            active={active}
-            onChange={setActive}
-            ariaLabel={t("feed.viewAriaLabel")}
-            className="sm:[&>button]:flex-1 sm:[&>button]:justify-center [&>button]:text-small [&>button]:font-semibold"
-          />
-        </div>
-      )}
-      <ListToolbar
-        tabsBelow
-        stream={layout === "home"}
-        leading={
-          layout === "home" ? undefined : (
+      {layout === "home" ? (
+        // Meydan "Bölüm balonları" (docs/history/207-*): the four views as tiles; once they scroll away they fold into a bar pinned under the header.
+        <SectionNav
+          items={TABS.map((tab) => ({ key: tab.key, label: t(tab.labelKey), icon: tab.icon }))}
+          active={active}
+          onChange={setActive}
+          ariaLabel={t("feed.viewAriaLabel")}
+          spread
+          chips={kindChips}
+          chipsLabel={t("toolbar.postKindAria")}
+          chipsOnMobile
+          sheetSections={sheetSections}
+          activeCount={activeCount}
+          onClear={clearFilters}
+        />
+      ) : (
+        <ListToolbar
+          tabsBelow
+          leading={
             <Tabs
               items={TABS.map((tab) => ({ key: tab.key, label: t(tab.labelKey), icon: tab.icon }))}
               active={active}
@@ -107,24 +119,14 @@ export function FeedTabs({ layout = "grid" }: { layout?: "grid" | "home" } = {})
               ariaLabel={t("feed.viewAriaLabel")}
               variant="segmented"
             />
-          )
-        }
-        tabs={kindChips}
-        tabsLabel={t("toolbar.postKindAria")}
-        sheetSections={
-          <>
-            <SheetSection title={t("toolbar.postKind")}>
-              <SheetChips>{kindChips}</SheetChips>
-            </SheetSection>
-            <TaxonomySheetSections value={taxonomy} onChange={setTaxonomy} />
-          </>
-        }
-        activeCount={(kind === "all" ? 0 : 1) + taxonomyActiveCount(taxonomy, true)}
-        onClear={() => {
-          setKind("all");
-          setTaxonomy(EMPTY_TAXONOMY_FILTER);
-        }}
-      />
+          }
+          tabs={kindChips}
+          tabsLabel={t("toolbar.postKindAria")}
+          sheetSections={sheetSections}
+          activeCount={activeCount}
+          onClear={clearFilters}
+        />
+      )}
 
       {needsLogin ? (
         <EmptyState

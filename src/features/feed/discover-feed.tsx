@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Hash, LayoutGrid, Sparkles, SquareTerminal, SlidersHorizontal, TrendingUp, Users, Workflow as WorkflowIcon } from "lucide-react";
-import { Tabs } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Chip } from "@/components/ui/chip";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -15,7 +14,8 @@ import { useFeedPages } from "./use-feed-pages";
 import type { FeedKind } from "@/lib/supabase/feed";
 import { feedOrderForSort } from "@/lib/feed-cursor";
 import { SORT_KEYS, type ContentSortKey } from "@/features/content/sort-select";
-import { ListToolbar, SheetChips, SheetSection, TaxonomySheetSections, taxonomyActiveCount } from "@/features/content/list-toolbar";
+import { SectionNav } from "@/features/content/section-nav";
+import { SheetChips, SheetSection, TaxonomySheetSections, taxonomyActiveCount } from "@/features/content/list-toolbar";
 import { TaxonomyTypeChips } from "@/features/content/taxonomy-filter";
 import { SearchView } from "@/features/search/search-view";
 import { EMPTY_TAXONOMY_FILTER, type TaxonomyFilterValue } from "@/lib/content-taxonomy";
@@ -134,40 +134,33 @@ export function DiscoverFeed() {
       <WeeklyChallengeBanner />
       <PopularStrip popular={highlights.popular} />
 
-      <div className="space-y-3">
-        <Tabs
-          items={SECTIONS.map((s) => ({ key: s.key, label: t(s.labelKey), icon: s.icon }))}
-          active={section}
-          onChange={setSection}
-          ariaLabel={t("discover.sectionsAriaLabel")}
-        />
-
-        {section !== "creators" && (
-          <ListToolbar
-            tabs={<TaxonomyTypeChips value={taxonomy} onChange={setTaxonomy} />}
-            tabsLabel={t("toolbar.contentTypeAria")}
-            hideTabsOnMobile
-            sort={effectiveSort}
-            onSortChange={setSort}
-            sortKeys={sortKeys}
-            sheetSections={
-              <>
-                <TaxonomySheetSections value={taxonomy} onChange={setTaxonomy} />
-                {section === "requests" && (
-                  <SheetSection title={t("toolbar.status")}>
-                    <SheetChips>{openOnlyChips}</SheetChips>
-                  </SheetSection>
-                )}
-              </>
-            }
-            activeCount={taxonomyActiveCount(taxonomy, true) + (section === "requests" && openOnly ? 1 : 0)}
-            onClear={() => {
-              setTaxonomy(EMPTY_TAXONOMY_FILTER);
-              setOpenOnly(false);
-            }}
-          />
-        )}
-      </div>
+      <SectionNav
+        items={SECTIONS.map((s) => ({ key: s.key, label: t(s.labelKey), icon: s.icon }))}
+        active={section}
+        onChange={setSection}
+        ariaLabel={t("discover.sectionsAriaLabel")}
+        hideControls={isCreators}
+        chips={<TaxonomyTypeChips value={taxonomy} onChange={setTaxonomy} />}
+        chipsLabel={t("toolbar.contentTypeAria")}
+        sort={effectiveSort}
+        onSortChange={setSort}
+        sortKeys={sortKeys}
+        sheetSections={
+          <>
+            <TaxonomySheetSections value={taxonomy} onChange={setTaxonomy} />
+            {section === "requests" && (
+              <SheetSection title={t("toolbar.status")}>
+                <SheetChips>{openOnlyChips}</SheetChips>
+              </SheetSection>
+            )}
+          </>
+        }
+        activeCount={taxonomyActiveCount(taxonomy, true) + (section === "requests" && openOnly ? 1 : 0)}
+        onClear={() => {
+          setTaxonomy(EMPTY_TAXONOMY_FILTER);
+          setOpenOnly(false);
+        }}
+      />
 
       {isCreators ? (
         creatorPages.loading ? (
