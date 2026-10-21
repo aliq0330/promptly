@@ -68,6 +68,7 @@ export function DetailBand({
   align = "start",
   before,
   menu,
+  compact,
   ...rest
 }: {
   art: ReactNode;
@@ -83,6 +84,8 @@ export function DetailBand({
   before?: ReactNode;
   /** The page's ⋮ menu, in the band's top-right corner (the band itself does not clip, so its dropdown can open out of it). */
   menu?: ReactNode;
+  /** Topic pages (tag / category / tool, docs/history/211-*): on phones the small art sits BESIDE the title instead of above it. */
+  compact?: boolean;
   [data: `data-${string}`]: string | undefined;
 }) {
   return (
@@ -97,8 +100,9 @@ export function DetailBand({
       {/* With a menu the band starts a little lower on phones/tablets, so the ⋮ sits above the art instead of on it. */}
       <div
         className={cn(
-          "relative mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 pb-7 sm:px-6 lg:flex-row lg:items-end lg:gap-9 lg:px-10 lg:pb-10 lg:pt-10",
-          menu ? "pt-11" : "pt-6",
+          "relative mx-auto flex w-full max-w-6xl px-4 sm:px-6 lg:flex-row lg:items-end lg:gap-9 lg:px-10 lg:pb-10 lg:pt-10",
+          compact ? "flex-row items-center gap-4 pb-5" : "flex-col gap-6 pb-7",
+          menu ? "pt-11" : compact ? "pt-5" : "pt-6",
         )}
       >
         {menu && (
@@ -187,17 +191,23 @@ export function DetailArtThumb({ onOpen, children }: { onOpen: () => void; child
 export function CollageArt({
   images,
   icon: Icon,
+  compact,
   ...rest
 }: {
   images: { url: string }[];
   icon: LucideIcon;
+  /** 96px on phones (beside the title, `DetailBand compact`), the usual size from `lg`. */
+  compact?: boolean;
   [data: `data-${string}`]: string | undefined;
 }) {
-  const tile = "relative h-[200px] w-[200px] overflow-hidden rounded-[22px] bg-surface shadow-pop lg:h-[248px] lg:w-[248px]";
+  const tile = cn(
+    "relative overflow-hidden bg-surface shadow-pop lg:h-[248px] lg:w-[248px] lg:rounded-[22px]",
+    compact ? "h-24 w-24 rounded-[18px]" : "h-[200px] w-[200px] rounded-[22px]",
+  );
   if (images.length === 0) {
     return (
       <span aria-hidden {...rest} className={cn(tile, "flex items-center justify-center text-primary")}>
-        <Icon size={56} strokeWidth={1.4} />
+        <Icon size={compact ? 36 : 56} strokeWidth={1.4} className="lg:h-14 lg:w-14" />
       </span>
     );
   }

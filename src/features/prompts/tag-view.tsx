@@ -1,103 +1,44 @@
 "use client";
 
 import { DetailSkeleton } from "@/components/ui/detail-skeleton";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Hash } from "lucide-react";
-import { FeedItemsView } from "@/features/feed/feed-items-view";
-import { ViewModeSwitcher } from "@/features/content/view-mode-switcher";
-import type { FeedItem } from "@/features/feed/types";
-import { Tabs } from "@/components/ui/tabs";
-import { fetchPromptsByTag, fetchRequestsByTagSlug, fetchTagBySlug, fetchWorkflowsByTagSlug } from "@/lib/supabase/tags";
-import { fetchPresetsByTagSlug } from "@/lib/supabase/presets";
-import { formatCount, cn, tagHref } from "@/lib/utils";
-import { StorageImage } from "@/components/ui/storage-media";
-import { BAND_PRIMARY_CLASS, BandActionRow, CollageArt, DetailBand, DetailShell, DetailTitle, Eyebrow } from "@/features/content/detail-parts";
-import { contentImage, type ImageSource } from "@/features/content/content-image";
-import { ShareButton } from "@/features/prompts/share-button";
+import { fetchTagBySlug } from "@/lib/supabase/tags";
+import { tagHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import { TaxonomyFilter } from "@/features/content/taxonomy-filter";
+import { BAND_PRIMARY_CLASS } from "@/features/content/detail-parts";
+import { TopicKicker, TopicPage } from "@/features/content/topic-page";
 import { TagFollowButton } from "@/features/tags/tag-follow-button";
-import { EMPTY_TAXONOMY_FILTER, matchesTaxonomy, type TaxonomyFilterValue } from "@/lib/content-taxonomy";
-import type { Preset, Prompt, PromptMedia, PromptRequest, Tag, Workflow } from "@/types";
-
-type SortMode = "newest" | "popular";
-type KindFilter = "all" | "prompt" | "workflow" | "preset" | "request";
+import { EMPTY_TAXONOMY_FILTER } from "@/lib/content-taxonomy";
+import type { Tag } from "@/types";
 
 /**
- * Client-rendered counterpart to the old static `/tags/[tag]` — tags are
- * real, possibly user-created rows (CLAUDE.md Bölüm 9.23), not known at
- * build time, so this looks prompts/requests up client-side by a `?tag=`
- * slug (see `tagHref()` in lib/utils.ts). Shows the tag's real label +
- * usage stats (not the raw slug), a content-type filter, a real
- * newest/popular sort, and a requests section — a real gap fix over the
- * previous minimal version, which only ever showed prompts under the raw
- * slug as a heading.
+ * A tag's page (`/tags/local?tag=<slug>` — tags are real, possibly user-created rows, so they are looked up client-side):
+ * the shared topic-page template (docs/history/211-*) with the tag's real label, Takip Et and Paylaş, then
+ * the section tiles and the tagged posts — server-side `feed_page` with `p_tag`, keyset paginated.
  */
+// The count comes from `feed_count` like the list itself (`tags.usage_count` counts differently, so the two could disagree).
 export function TagView() {
   const { t } = useTranslation();
   const searchParams = useSearchParams();
   const slug = searchParams.get("tag");
-  const [tag, setTag] = useState<Tag | null>(null);
-  const [prompts, setPrompts] = useState<Prompt[]>([]);
-  const [requests, setRequests] = useState<PromptRequest[]>([]);
-  const [workflows, setWorkflows] = useState<Workflow[]>([]);
-  const [presets, setPresets] = useState<Preset[]>([]);
-  const [kind, setKind] = useState<KindFilter>("all");
-  const [loaded, setLoaded] = useState(false);
-  const [taxonomy, setTaxonomy] = useState<TaxonomyFilterValue>(EMPTY_TAXONOMY_FILTER);
-  const [sortMode, setSortMode] = useState<SortMode>("newest");
+  const [found, setFound] = useState<{ slug: string; tag: Tag | null } | null>(null);
 
   useEffect(() => {
+    if (!slug) return;
     let cancelled = false;
-    if (!slug) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- no slug to look up, nothing async to wait on
-      setLoaded(true);
-      return;
-    }
-    setLoaded(false);
-    Promise.all([
-      fetchTagBySlug(slug),
-      fetchPromptsByTag(slug),
-      fetchRequestsByTagSlug(slug),
-      fetchWorkflowsByTagSlug(slug),
-      fetchPresetsByTagSlug(slug),
-    ]).then(
-      ([foundTag, foundPrompts, foundRequests, foundWorkflows, foundPresets]) => {
-        if (cancelled) return;
-        setTag(foundTag);
-        setPrompts(foundPrompts);
-        setRequests(foundRequests);
-        setWorkflows(foundWorkflows);
-        setPresets(foundPresets);
-        setLoaded(true);
-      },
-    );
+    fetchTagBySlug(slug).then((tag) => !cancelled && setFound({ slug, tag }));
     return () => {
       cancelled = true;
     };
   }, [slug]);
 
-  const items = useMemo<FeedItem[]>(() => {
-    const promptItems: FeedItem[] = kind === "all" || kind === "prompt" ? prompts.filter((p) => matchesTaxonomy(p, taxonomy)).map((data) => ({ kind: "prompt", data })) : [];
-    const otherItems: FeedItem[] = [
-      ...(kind === "all" || kind === "request" ? requests.map((data): FeedItem => ({ kind: "request", data })) : []),
-      ...(kind === "all" || kind === "workflow" ? workflows.map((data): FeedItem => ({ kind: "workflow", data })) : []),
-      ...(kind === "all" || kind === "preset" ? presets.map((data): FeedItem => ({ kind: "preset", data })) : []),
-    ];
-    const created = (i: FeedItem) => new Date(i.data.createdAt).getTime();
-    const likes = (i: FeedItem) => (i.kind === "request" ? i.data.responseCount : i.data.likeCount);
-    return [...promptItems, ...otherItems].sort((a, b) => (sortMode === "popular" ? likes(b) - likes(a) : created(b) - created(a)));
-  }, [prompts, requests, workflows, presets, kind, taxonomy, sortMode]);
-
   if (!slug) {
     return <div className="mx-auto max-w-lg px-4 py-16 text-center text-sm text-text-muted">{t("tag.notFound")}.</div>;
   }
-
-  if (!loaded) {
-    return <DetailSkeleton />;
-  }
-
+  if (!found || found.slug !== slug) return <DetailSkeleton />;
+  const tag = found.tag;
   if (!tag) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
@@ -107,72 +48,17 @@ export function TagView() {
     );
   }
 
-  const totalCount = tag.usageCount ?? prompts.length + requests.length + workflows.length + presets.length;
-
-  // The tag's most popular posts' pictures make its album art and tint its band (docs/history/203-*).
-  const popularImages = [...prompts.map((data): FeedItem => ({ kind: "prompt", data })), ...workflows.map((data): FeedItem => ({ kind: "workflow", data })), ...presets.map((data): FeedItem => ({ kind: "preset", data })), ...requests.map((data): FeedItem => ({ kind: "request", data }))]
-    .sort((a, b) => (b.kind === "request" ? b.data.responseCount : b.data.likeCount) - (a.kind === "request" ? a.data.responseCount : a.data.likeCount))
-    .map((item) => contentImage(item as ImageSource))
-    .filter((media): media is PromptMedia => media !== null)
-    .slice(0, 4);
-
   return (
-    <DetailShell
-      band={
-        <DetailBand
-          data-tag-band=""
-          backdrop={popularImages[0] ? <StorageImage src={popularImages[0].url} alt="" fill sizes="100vw" className="object-cover" /> : undefined}
-          art={<CollageArt images={popularImages} icon={Hash} />}
-          kicker={<Eyebrow tone="primary">{t("tag.kicker")}</Eyebrow>}
-          title={<DetailTitle>#{tag.label}</DetailTitle>}
-          byline={<p className="text-body text-text-secondary">{t("tag.usedInCount", { count: formatCount(totalCount) })}</p>}
-        />
-      }
-      actions={
-        <BandActionRow label={t("tag.actionsAria")} data-tag-actions="">
-          <TagFollowButton slug={tag.slug} label={tag.label} className={BAND_PRIMARY_CLASS} />
-          <ShareButton url={tagHref(tag)} title={`#${tag.label}`} className="h-11 min-w-11 rounded-full px-3" />
-        </BandActionRow>
-      }
-    >
-      <div className="space-y-5">
-        <Tabs
-          variant="segmented"
-          ariaLabel={t("tag.filtersAria")}
-          active={kind}
-          onChange={setKind}
-          items={[
-            { key: "all", label: t("common.all") },
-            { key: "prompt", label: t("tag.filterPrompts") },
-            { key: "workflow", label: t("tag.filterWorkflows") },
-            { key: "preset", label: t("tag.filterPresets") },
-            { key: "request", label: t("tag.filterRequests") },
-          ]}
-        />
-
-        <div className="flex items-center justify-between gap-2">
-         <div className="flex gap-1.5">
-          {(["newest", "popular"] as SortMode[]).map((mode) => (
-            <button
-              key={mode}
-              type="button"
-              onClick={() => setSortMode(mode)}
-              className={cn(
-                "rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
-                sortMode === mode ? "border-primary bg-primary text-primary-foreground" : "border-border bg-surface text-text-muted hover:text-text",
-              )}
-            >
-              {mode === "newest" ? t("profile.sortNewest") : t("home.tabPopular")}
-            </button>
-          ))}
-         </div>
-         <ViewModeSwitcher />
-        </div>
-
-        {(kind === "all" || kind === "prompt") && <TaxonomyFilter value={taxonomy} onChange={setTaxonomy} />}
-
-        <FeedItemsView items={items} emptyTitle={taxonomy.contentType && kind === "prompt" ? t("tag.emptyForFilter") : t("tag.emptyAll")} />
-      </div>
-    </DetailShell>
+    <TopicPage
+      filter={{ taxonomy: EMPTY_TAXONOMY_FILTER, tag: tag.slug }}
+      kicker={<TopicKicker>{t("tag.kicker")}</TopicKicker>}
+      title={`#${tag.label}`}
+      icon={Hash}
+      countKey="tag.usedInCount"
+      primary={<TagFollowButton slug={tag.slug} label={tag.label} className={BAND_PRIMARY_CLASS} />}
+      shareUrl={tagHref(tag)}
+      shareTitle={`#${tag.label}`}
+      actionsLabel={t("tag.actionsAria")}
+    />
   );
 }

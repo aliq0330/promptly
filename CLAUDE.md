@@ -75,7 +75,7 @@ src/
   features/<alan>/            # auth, collections, communities, content, drafts, feed, focus,
                               # messages, moderation, my-content, notifications,
                               # groups, onboarding, presets, profile, prompts, relations,
-                              # requests, search, share, statistics, stories, studio, tags, workflows
+                              # requests, search, share, statistics, stories, studio, tags, tools, categories, workflows
   lib/                        # utils, i18n, taksonomi, prompt-dna, relations, …
   lib/supabase/               # veri erişim katmanı (tablo başına dosya)
   types/index.ts              # paylaşılan tipler
@@ -208,13 +208,14 @@ tamamlanmış sayılmaz. Ayrıntı ve mimari: `docs/history/049-*`, `056-*`, `05
 |---|---|
 | `/` | Ana Sayfa: karma akış (**Sana özel** — oturumlu kullanıcının varsayılanı, `for_you_page`, her kartta nedeni + ilgi alanı çipleri · En yeni / Popüler / Takip / Etiketlerim — `feed_page`; hepsi sunucudan, keyset), tür çipleri; misafire **canlı vitrin** (`GuestShowcase`: en sevilen görsel promptlar akar, dokununca prompt açılır; az görselde kompakt tanıtım) — `docs/history/209-*` |
 | `/focus` | **Odak** (`docs/history/199-*`): tam ekran, dikey, tek gönderi/ekran (Reels tarzı); herkesin herkese açık gönderileri (`feed_page` en yeni; "Takip ettiklerim"), "Medya" süzgeci, video/ses yazarın yüklediği çıktıyla oynar; açıkken üst/yan/alt menü gizli, hep koyu sahne; telefonda alt menünün 5. yuvası (Profil üstteki avatar menüsünde) |
-| `/discover` | Keşfet: başlık arama satırında, sıkı üst (`docs/history/210-*`: Kategoriler · Yükselen etiketler · Bu hafta popüler · Öne çıkan yaratıcılar — her biri tek yatay şerit, ilk gönderi telefonun ilk ekranında başlar), sonra bölümler (Tümü / Promptlar / Workflow / Hazır ayar / İstekler / Yaratıcılar), filtreler (Promptlar'da ek "En çok kullanılan" sıralaması); içerik bölümleri sunucudan `feed_page` (keyset), Yaratıcılar `profiles` keyset |
+| `/discover` | Keşfet: görünür başlık yok (arama kutusu açar, `docs/history/211-*`), sıkı üst (`docs/history/210-*`: Kategoriler · Yükselen etiketler · Bu hafta popüler · Öne çıkan yaratıcılar — her biri tek yatay şerit, ilk gönderi telefonun ilk ekranında başlar), sonra bölümler (Tümü / Promptlar / Workflow / Hazır ayar / İstekler / Yaratıcılar), filtreler (Promptlar'da ek "En çok kullanılan" sıralaması); içerik bölümleri sunucudan `feed_page` (keyset), Yaratıcılar `profiles` keyset |
 | `/prompts`, `/requests`, `/workflows`, `/presets` | Tür listeleri (ortak `ContentListPage`: arama, Filtre, sıralama, Kart/Izgara) |
 | `/prompts/local?id=` · `/requests/local?id=` · `/workflows/local?id=` · `/presets/local?id=` · `/results/local?id=` | Detay sayfaları |
 | `/create` · `/requests/new` · `/workflows/create` · `/presets/create` | Oluşturma/düzenleme (`?edit=<id>`), ortak alt alan: Görünürlük + Taslağa kaydet/Paylaş |
 | `/workflows/local?id=` (detay) | Herkese açık workflow: "Akış" görünümü + **"Adım adım" çalıştırma modu** (`?run=1`; model çalıştırmaz, sonuç yapıştırılır → sonraki adımın girdisi, durum yalnız `sessionStorage`) |
 | `/studio` | Prompt / Hazır Ayar kaynaklı deneme alanı, kullanıcının kendi API anahtarıyla görsel/metin üretimi (`/generate` buraya yönlenir) |
-| `/search`, `/tags`, `/tags/local?tag=` | Arama (chip tabanlı; `/search` Keşfet'e yönlenir; sonuç sekmeleri Tümü · Gönderiler · Kişiler · Topluluklar, `?tab=`, `docs/history/205-*` — çipler yalnız gönderilere uygulanır), etiket keşfi/detayı |
+| `/search`, `/tags` | Arama (chip tabanlı; `/search` Keşfet'e yönlenir; sonuç sekmeleri Tümü · Gönderiler · Kişiler · Topluluklar, `?tab=`, `docs/history/205-*` — çipler yalnız gönderilere uygulanır; eski `?type=&category=` / `?tool=` bağlantıları konu sayfasına yönlenir), etiket keşfi |
+| `/tags/local?tag=` · `/categories/local?type=&category=&sub=` · `/tools/local?id=` | **Konu sayfaları** (`docs/history/211-*`): üçü TEK kalıp `TopicPage` (kompakt Albüm bandı: kolaj + başlık + sayı; Takip Et [etiket `tag_follows`, araç `tool_follows`; kategori takip EDİLMEZ — ilgi alanları o sinyal] + Paylaş; `SectionNav` + sunucu akışı `feed_page` `p_tag`/`p_tool`/kategori). Gönderideki kategori/araç bağlantıları ve Keşfet kategori hapları buraya gider — yeni bir "konu" sayfası yazarken bu kalıbı kullan |
 | `/relations?type=&id=` | Birleşik İlişki Haritası |
 | `/collections/local?id=`, `/saved` | Koleksiyon detayı (başkasının herkese açık koleksiyonunda Takip Et + takipçi sayısı); `/saved` = "Kaydedilenler": kullanıcının TÜM koleksiyonlarındaki benzersiz içerikler (`docs/history/168-*`) |
 | `/profile/real?username=`, `/profile/edit`, `/followers`, `/following`, `/my-content` | Profil ve kütüphane |
@@ -243,7 +244,7 @@ kaynağı); `supabase/README.md` uygulama talimatını içerir. Çekirdek tablol
 `prompt_dna_sections`, `prompt_results`), `prompt_requests` (+medya/etiket),
 `workflows` (+`workflow_steps/connections/media/tags`), `presets`
 (+`preset_fields/options/tags`), `tags`, `taxonomy_categories/subcategories`,
-`prompt_copy_events` (kopyalama sayacının günlük dedupe'u; yalnız RPC yazar), `tag_follows` (kullanıcı başına ≤100 etiket; `feed_page` kapsamı `tags`), `collection_follows` (herkese açık koleksiyon takibi, ≤200; `collections.follower_count` korumalı sayaç), `weekly_challenges` (moderatör yönetimli haftalık tema; yazma yalnız `admin_save_challenge`/`admin_archive_challenge`), `prompt_likes` / `prompt_comments` / `comment_likes` (hedef sütunlu
+`prompt_copy_events` (kopyalama sayacının günlük dedupe'u; yalnız RPC yazar), `tag_follows` (kullanıcı başına ≤100 etiket; `feed_page` kapsamı `tags`), `tool_follows` (≤100 AI aracı, katalog kimliği; "Sana özel" sinyali — `docs/history/211-*`), `collection_follows` (herkese açık koleksiyon takibi, ≤200; `collections.follower_count` korumalı sayaç), `weekly_challenges` (moderatör yönetimli haftalık tema; yazma yalnız `admin_save_challenge`/`admin_archive_challenge`), `prompt_likes` / `prompt_comments` / `comment_likes` (hedef sütunlu
 polimorfik: `prompt_id`/`request_id`/`workflow_id`/`preset_id` — tam biri dolu),
 `collections` / `collection_items` ("Genel" = `is_default`, isimden bağımsız),
 `prompt_versions` / `request_versions` / `workflow_versions` / `preset_versions` (sürüm geçmişi; yazma yalnız trigger/RPC, `docs/history/170-*`), `follows`, `conversations` / `conversation_members` / `messages` /
@@ -354,6 +355,7 @@ Canlı projede (kontrol: bu oturum) 20 profil (18 demo hesap), 148 prompt (+43 t
 bağlayıcıdır; ayrıntılı gerekçe için `docs/history/README.md` tablosuna bak.
 
 **Açık işler (kullanıcı/yönetici adımı veya bilinen boşluk):**
+- Konu sayfaları (`docs/history/211-*`): `20260921110000_topic_pages.sql` (yalnızca ekleyici: `tool_follows`, `feed_page` 13 argümanlı biçim + 11 argümanlı sarmalayıcı, `feed_count`, `for_you_page` araç sinyali; `drop` yok) yerel PostgreSQL'de sınandı (`topic-pages.sql` 14 kontrol) ve **canlıya UYGULANDI** (kullanıcı onayıyla, MCP `execute_sql`, tek işlem; `schema_migrations`'a dosya sürümüyle kayıt; canlıda nesneler, yetkiler ve süzgeç sayıları doğrulandı). Arayüz gerçek oturumla / cihazla denenmedi; "Sana özel" araç sinyali canlıda oturumla denenmedi.
 - Canlı vitrin / kart geçişi / hız hissi / Sana özel (`docs/history/209-*`): `20260921100000_media_appearance_and_for_you.sql` **canlıya UYGULANDI** (kullanıcı onayıyla, MCP `execute_sql`, tek işlem; `schema_migrations`'a dosya sürümüyle kayıt; yalnızca ekleyici, `drop` yok; canlıda doğrulandı). **Bekleyen adım:** moderatör `/moderation → Görsel renklerini doldur`'u bir kez çalıştırmalı (107 eski görsel renksiz). Gerçek oturumla / iOS Safari'ye karşı denenmedi; sıralama sabitleri elle seçildi.
 - Hikâyeler (`docs/history/198-*`): `20260920170000_stories.sql` (+ isteğe bağlı `20260920170100_stories_cron.sql`, `pg_cron` varsa
   saatlik saklama işi) repoda, yerel PostgreSQL'de sınandı (`stories.sql` 65 kontrol; önceki 16 dosya `FAILED=0`), **canlıya
@@ -431,5 +433,5 @@ bağlayıcıdır; ayrıntılı gerekçe için `docs/history/README.md` tablosuna
   isteğin `creative_direction`'ını da kapsar ve keyset sayfalanır (`search_content`); `prompt_saves` canlıdan kaldırıldı; kod içi
   yorumlarda eski "Bölüm 9.x" atıfları arşiv numaralarına (`docs/history/NNN-*`) karşılık gelir.
 
-**Arşiv:** [`docs/history/README.md`](docs/history/README.md) — 210 bölüm, her
+**Arşiv:** [`docs/history/README.md`](docs/history/README.md) — 211 bölüm, her
 biri için durum etiketi (uygulandı / kısmen geçerli / kaldırıldı).

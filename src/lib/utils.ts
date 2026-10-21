@@ -223,6 +223,18 @@ export function tagHref(tag: Pick<Tag, "slug">): string {
   return `/tags/local?tag=${tag.slug}`;
 }
 
+/** A category (or one of its subcategories) page — the same topic-page template as a tag (docs/history/211-*). */
+export function categoryHref(type: string, category: string, subcategory?: string | null): string {
+  const params = new URLSearchParams({ type, category });
+  if (subcategory) params.set("sub", subcategory);
+  return `/categories/local?${params.toString()}`;
+}
+
+/** An AI tool's page (catalog id, `src/lib/ai-tool-catalog.ts`) — the topic-page template, with Takip Et. */
+export function toolHref(toolId: string): string {
+  return `/tools/local?id=${encodeURIComponent(toolId)}`;
+}
+
 /** Same idea as `promptHref`, for a collection — every collection is a real Supabase row. */
 export function collectionHref(collection: Pick<Collection, "id">): string {
   return `/collections/local?id=${collection.id}`;

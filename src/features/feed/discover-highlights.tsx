@@ -8,12 +8,12 @@ import { Avatar } from "@/components/ui/avatar";
 import { FollowButton } from "@/features/profile/follow-button";
 import { useTaxonomyVersion } from "@/features/content/taxonomy-hydrator";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
-import { EMPTY_TAXONOMY_FILTER, findCategory, taxonomyLabel, type TaxonomyFilterValue } from "@/lib/content-taxonomy";
+import { findCategory, taxonomyLabel } from "@/lib/content-taxonomy";
 import { fetchTopPrompts } from "@/lib/supabase/prompts";
 import { fetchPopularTags, fetchTrendingTags } from "@/lib/supabase/tags";
 import { fetchCreatorsPage } from "@/lib/supabase/profiles";
 import { useAuth } from "@/features/auth/auth-provider";
-import { cn, formatCount, profileHref, promptHref, tagHref } from "@/lib/utils";
+import { categoryHref, cn, formatCount, profileHref, promptHref, tagHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Prompt, PromptContentType, Tag, UserProfile } from "@/types";
 
@@ -94,10 +94,10 @@ interface CategoryEntry {
 }
 
 /**
- * The categories as one scrolling row of small pills (a 2×2 collage of real covers + name + type). Picking one sets the same
- * taxonomy filter the feed below uses; picking it again clears it.
+ * The categories as one scrolling row of small pills (a 2×2 collage of real covers + name + type); each opens the category's
+ * own page (`categoryHref`, docs/history/211-*).
  */
-export function CategoryStrip({ sample, value, onChange }: { sample: Prompt[]; value: TaxonomyFilterValue; onChange: (next: TaxonomyFilterValue) => void }) {
+export function CategoryStrip({ sample }: { sample: Prompt[] }) {
   const { t, language } = useTranslation();
   // The taxonomy arrives from the database after the first paint; subscribing re-renders once it does (60 rows: no memo).
   useTaxonomyVersion();
@@ -125,21 +125,15 @@ export function CategoryStrip({ sample, value, onChange }: { sample: Prompt[]; v
       </h2>
       <div className={STRIP_CLASS}>
         {entries.map((entry) => {
-          const selected = value.contentType === entry.type && value.category === entry.id;
           const Icon = CONTENT_TYPE_META[entry.type].icon;
           // Two covers make a diagonal (a b / b a); one fills all four cells.
           const cells = entry.covers.length === 0 ? [] : [0, 1, 1, 0].map((i) => entry.covers[i % entry.covers.length]);
           return (
-            <button
+            <Link
               key={`${entry.type}:${entry.id}`}
-              type="button"
-              aria-pressed={selected}
+              href={categoryHref(entry.type, entry.id)}
               data-discover-category={`${entry.type}:${entry.id}`}
-              onClick={() => onChange(selected ? EMPTY_TAXONOMY_FILTER : { contentType: entry.type, category: entry.id, subcategory: null })}
-              className={cn(
-                "flex shrink-0 items-center gap-2 rounded-[14px] border py-1.5 pl-1.5 pr-3 text-left transition-colors duration-200 ease-soft",
-                selected ? "border-primary bg-primary-soft" : "border-border-soft bg-surface hover:border-border",
-              )}
+              className="flex shrink-0 items-center gap-2 rounded-[14px] border border-border-soft bg-surface py-1.5 pl-1.5 pr-3 text-left transition-colors duration-200 ease-soft hover:border-border"
             >
               {cells.length > 0 ? (
                 <span aria-hidden className="grid h-8 w-8 shrink-0 grid-cols-2 gap-0.5 overflow-hidden rounded-lg">
@@ -156,7 +150,7 @@ export function CategoryStrip({ sample, value, onChange }: { sample: Prompt[]; v
                 <span className="block whitespace-nowrap text-small font-semibold text-text">{taxonomyLabel(entry.labelKey, language)}</span>
                 <span className="block whitespace-nowrap text-caption text-text-muted">{t(CONTENT_TYPE_META[entry.type].labelKey)}</span>
               </span>
-            </button>
+            </Link>
           );
         })}
       </div>
