@@ -9,9 +9,9 @@ const SCROLL_THRESHOLD = 8;
 const TOP_ZONE = 64;
 
 /**
- * Hides the app's bars while the page scrolls down and brings them back on the way up: sets `html[data-chrome-hidden]`,
- * the CSS (`globals.css`) slides the header up and the bottom nav down while they fade (the header only below `lg`; the
- * sidebar never moves). A pinned detail actions row follows the nav down to the screen's edge (`[data-detail-dock]`).
+ * Reacts to the page scrolling down and brings things back on the way up: sets `html[data-chrome-hidden]`, the CSS
+ * (`globals.css`) slides the header up while it fades (only below `lg`; the sidebar never moves) and turns the bottom nav —
+ * and a pinned detail actions row (`[data-detail-dock]`) — translucent: they stay in place and tappable.
  * No React state — one attribute, so scrolling re-renders nothing. Reset on every navigation; chats (`/messages`) scroll
  * inside their own panel and keep the bars.
  */

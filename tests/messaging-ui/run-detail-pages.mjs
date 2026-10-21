@@ -159,8 +159,8 @@ await scenario("4b. mobil: sabitlenen eylem satırı sayfa sonundaki içeriği �
   assert.ok(lowest <= dock.top + 1, `content ends above the pinned actions row (${lowest} vs ${dock.top})`);
 }, { viewport: { width: 390, height: 844 } });
 
-// 4c — kaydırınca üst/alt menü kaybolur, yukarı kaydırınca döner; eylem satırı alta sabitlenir ve menüyle birlikte iner
-await scenario("4c. mobil: aşağı kaydırınca menüler kaybolur, eylem satırı en alta iner; yukarı kaydırınca hepsi geri gelir", "prompt", async ({ page }) => {
+// 4c — kaydırınca üst menü kaybolur, alt menü ve eylem satırı yerinde kalıp yarı saydamlaşır; yukarı kaydırınca hepsi döner
+await scenario("4c. mobil: aşağı kaydırınca üst menü kaybolur, alt menü + eylem satırı yerinde yarı saydam kalır; yukarı kaydırınca hepsi geri gelir", "prompt", async ({ page }) => {
   await page.waitForTimeout(1200);
   const nav = page.locator("[data-app-nav]");
   const header = page.locator("[data-app-header]");
@@ -169,20 +169,26 @@ await scenario("4c. mobil: aşağı kaydırınca menüler kaybolur, eylem satır
   for (let i = 0; i < 10; i += 1) { await page.evaluate(() => window.scrollBy(0, 120)); await page.waitForTimeout(50); }
   await page.waitForTimeout(600);
   assert.equal(await page.evaluate(() => document.querySelector("#comments").getBoundingClientRect().top + scrollY), commentsTop, "pinning does not shift the page");
-  assert.equal(await page.evaluate(() => document.documentElement.hasAttribute("data-chrome-hidden")), true, "bars hidden while scrolling down");
+  assert.equal(await page.evaluate(() => document.documentElement.hasAttribute("data-chrome-hidden")), true, "bars react while scrolling down");
   const navBox = await box(nav);
   const headerBox = await box(header);
-  assert.ok(navBox.top >= 843 && headerBox.bottom <= 1, `nav slid down (${navBox.top}), header slid up (${headerBox.bottom})`);
-  assert.equal(await nav.evaluate((el) => getComputedStyle(el).opacity), "0");
-  const dock = await box(page.locator("[data-detail-dock]"));
-  assert.ok(Math.abs(dock.bottom - 844) <= 1, `pinned row at the screen's bottom edge while the nav is hidden (${dock.bottom})`);
+  assert.ok(headerBox.bottom <= 1, `header slid up (${headerBox.bottom})`);
+  assert.ok(navBox.bottom >= 843, `nav stays in place (${navBox.bottom})`);
+  assert.equal(await nav.evaluate((el) => getComputedStyle(el).opacity), "0.5", "nav translucent");
+  assert.notEqual(await nav.evaluate((el) => getComputedStyle(el).pointerEvents), "none", "nav stays tappable");
+  const dockEl = page.locator("[data-detail-dock]");
+  const dock = await box(dockEl);
+  assert.ok(Math.abs(dock.bottom - navBox.top) <= 1, `pinned row stays right above the nav (${dock.bottom} vs ${navBox.top})`);
+  assert.equal(await dockEl.evaluate((el) => getComputedStyle(el).opacity), "0.5", "pinned row translucent");
 
   await page.evaluate(() => window.scrollBy(0, -60));
   await page.waitForTimeout(600);
   assert.equal(await page.evaluate(() => document.documentElement.hasAttribute("data-chrome-hidden")), false, "bars back on the way up");
   const navBack = await box(nav);
-  const dockBack = await box(page.locator("[data-detail-dock]"));
+  const dockBack = await box(dockEl);
   assert.ok(Math.abs(dockBack.bottom - navBack.top) <= 1, `pinned row rides right above the nav (${dockBack.bottom} vs ${navBack.top})`);
+  assert.equal(await nav.evaluate((el) => getComputedStyle(el).opacity), "1", "nav opaque again");
+  assert.equal(await dockEl.evaluate((el) => getComputedStyle(el).opacity), "1", "pinned row opaque again");
   assert.ok((await box(header)).top >= -1, "header back");
 
   await page.evaluate(() => window.scrollTo(0, 0));
