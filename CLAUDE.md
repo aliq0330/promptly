@@ -166,7 +166,7 @@ Tek tasarım sistemi, üç kompozisyon (`AppShell`):
 - Masaüstü (lg+): 256px gruplu sidebar (Keşfet / Kütüphanem + ayrı birincil
   "Oluştur" butonu), detay sayfalarında sağ yardımcı sütun.
 - Dokunma hedefleri ≥ 36px, uzun prompt metinleri taşmaz (`break-words`).
-- Aşağı kaydırınca üst menü (yalnız `lg` altı) ve alt menü kayarak kaybolur, yukarı kaydırınca döner (`useChromeAutoHide` → `html[data-chrome-hidden]`, `docs/history/204-*`); ekranın üstüne/altına sabitlenen yeni bir öğe yazarken bu özniteliği hesaba kat.
+- Aşağı kaydırınca üst menü (yalnız `lg` altı) yukarı kayıp kaybolur; alt menü ve detay sayfasının sabitlenen eylem satırı (`data-detail-dock`, telefonda) KAPANMAZ, yerinde yarı saydam (%50) kalır; yukarı kaydırınca hepsi döner (`useChromeAutoHide` → `html[data-chrome-hidden]`, `docs/history/204-*`, `208-*`); ekranın üstüne/altına sabitlenen yeni bir öğe yazarken bu özniteliği hesaba kat.
 
 ## 4.5 Çok Dillilik (Türkçe / İngilizce) — Bağlayıcı Kural
 
@@ -430,5 +430,5 @@ bağlayıcıdır; ayrıntılı gerekçe için `docs/history/README.md` tablosuna
   isteğin `creative_direction`'ını da kapsar ve keyset sayfalanır (`search_content`); `prompt_saves` canlıdan kaldırıldı; kod içi
   yorumlarda eski "Bölüm 9.x" atıfları arşiv numaralarına (`docs/history/NNN-*`) karşılık gelir.
 
-**Arşiv:** [`docs/history/README.md`](docs/history/README.md) — 207 bölüm, her
+**Arşiv:** [`docs/history/README.md`](docs/history/README.md) — 208 bölüm, her
 biri için durum etiketi (uygulandı / kısmen geçerli / kaldırıldı).

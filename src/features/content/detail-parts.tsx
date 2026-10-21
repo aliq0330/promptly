@@ -361,8 +361,8 @@ export function DetailByline({
 /**
  * The actions row under the band: `primary` (the page's one big action, if any) · the engagement icons (`children` on the
  * left — Beğeni · Yorum · Kaydet …, `end` on the right — İstatistik · Paylaş). Once the icons have scrolled up out of
- * sight they pin to the screen's bottom (`data-detail-dock`: above the phone's bottom nav, down to the edge while the
- * nav is hidden — `globals.css`) until the row scrolls back in. The same elements move (only classes change), so no
+ * sight they pin to the screen's bottom (`data-detail-dock`: above the phone's bottom nav, translucent — like the nav —
+ * while the page scrolls down; `globals.css`) until the row scrolls back in. The same elements move (only classes change), so no
  * button remounts or loses its state.
  */
 export function DetailActionBar({
@@ -403,7 +403,7 @@ export function DetailActionBar({
           data-detail-dock={dock.pinned ? "" : undefined}
           className={cn(
             dock.pinned &&
-              "fixed inset-x-0 bottom-0 z-30 border-t border-border-soft bg-surface/95 backdrop-blur-xl animate-fade-in md:left-[72px] lg:left-64",
+              "fixed inset-x-0 bottom-0 z-30 border-t border-border-soft bg-surface/95 backdrop-blur-xl animate-fade-in [animation-fill-mode:backwards] md:left-[72px] lg:left-64",
           )}
         >
           <div className={cn(dock.pinned && "mx-auto w-full max-w-6xl px-4 py-1.5 sm:px-6 lg:px-10")}>
