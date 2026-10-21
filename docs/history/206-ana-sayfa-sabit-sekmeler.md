@@ -1,6 +1,6 @@
 # 206 — Ana Sayfa görünüm sekmeleri sabitlenir
 
-**Durum:** uygulandı (yalnız istemci; migration yok).
+**Durum:** kısmen geçerli — Ana Sayfa'daki sabit sekme satırının yerini 207'deki **bölüm balonları + daralan şerit** aldı; `data-sticky-under-header` kuralı hâlâ kullanılıyor (yeni şerit de aynı özniteliği kullanır).
 
 Ana Sayfa'daki "En yeni · Popüler · Takip · Etiketlerim" sekme satırı akış kaydırılırken ekranda kalır:
 

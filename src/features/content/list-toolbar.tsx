@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { TaxonomyDrillList, TaxonomyTypeChips } from "@/features/content/taxonomy-filter";
 import { SortSelect, SORT_KEYS, SORT_LABELS, type ContentSortKey } from "@/features/content/sort-select";
-import { MobileViewToggle, ViewModeControls, ViewModeSwitcher } from "@/features/content/view-mode-switcher";
+import { ViewModeControls, ViewModeSwitcher } from "@/features/content/view-mode-switcher";
 import type { TaxonomyFilterValue } from "@/lib/content-taxonomy";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
@@ -73,6 +73,95 @@ export function taxonomyActiveCount(value: TaxonomyFilterValue, includeType: boo
 }
 
 /**
+ * The "Filtrele" dialog (bottom sheet on phones, centred dialog from `sm` up): page-specific sections, then
+ * Sıralama and Görünüm. Shared by `ListToolbar` and Home/Keşfet's `SectionNav`.
+ */
+export function ListFilterSheet({
+  onClose,
+  sheetSections,
+  desktopSheetSections,
+  sort,
+  onSortChange,
+  sortKeys = SORT_KEYS,
+  activeCount = 0,
+  desktopActiveExtra = 0,
+  onClear,
+}: {
+  onClose: () => void;
+  sheetSections?: ReactNode;
+  desktopSheetSections?: ReactNode;
+  sort?: ContentSortKey;
+  onSortChange?: (sort: ContentSortKey) => void;
+  sortKeys?: ContentSortKey[];
+  activeCount?: number;
+  desktopActiveExtra?: number;
+  onClear?: () => void;
+}) {
+  const { t } = useTranslation();
+  const titleId = useId();
+  return (
+    <Modal onClose={onClose} labelledBy={titleId}>
+      <div className="flex max-h-[85dvh] w-full max-w-md flex-col rounded-lg border border-border bg-surface shadow-lg" onClick={(event) => event.stopPropagation()}>
+        <div className="flex items-center justify-between border-b border-border-soft px-4 py-3">
+          <h2 id={titleId} className="text-h3 font-semibold text-text">
+            {t("toolbar.filterTitle")}
+          </h2>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label={t("common.close")}
+            className="flex h-10 w-10 items-center justify-center rounded-full text-text-muted hover:bg-surface-soft hover:text-text"
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        <div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-4 py-4">
+          {sheetSections}
+          {desktopSheetSections && <div className="space-y-5 max-md:hidden">{desktopSheetSections}</div>}
+          {sort && onSortChange && (
+            <SheetSection title={t("toolbar.sort")}>
+              <div role="radiogroup" aria-label={t("profile.sortAriaLabel")} className="space-y-1">
+                {sortKeys.map((key) => (
+                  <button
+                    key={key}
+                    type="button"
+                    role="radio"
+                    aria-checked={sort === key}
+                    onClick={() => onSortChange(key)}
+                    className={cn(
+                      "flex min-h-11 w-full items-center justify-between rounded-md px-3 text-left text-label transition-colors",
+                      sort === key ? "bg-primary-soft font-semibold text-text" : "text-text-secondary hover:bg-surface-soft",
+                    )}
+                  >
+                    {t(SORT_LABELS[key])}
+                    {sort === key && <Check size={16} className="text-primary" aria-hidden />}
+                  </button>
+                ))}
+              </div>
+            </SheetSection>
+          )}
+          <SheetSection title={t("toolbar.view")}>
+            <ViewModeSwitcher />
+          </SheetSection>
+        </div>
+
+        <div className="flex gap-2 border-t border-border-soft px-4 py-3">
+          {onClear && (
+            <Button variant="outline" className="h-11 flex-1" onClick={onClear} disabled={activeCount + desktopActiveExtra === 0}>
+              {t("toolbar.clear")}
+            </Button>
+          )}
+          <Button className="h-11 flex-[2]" onClick={onClose}>
+            {t("toolbar.apply")}
+          </Button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
+/**
  * The control strip above a content list — ONE component for Home, Explore,
  * Prompts, Generators, Workflows, Requests (and Presets).
  *
@@ -97,14 +186,8 @@ export function ListToolbar({
   desktopActiveExtra = 0,
   activeCount = 0,
   onClear,
-  stream,
   className,
 }: {
-  /**
-   * Home's column (Meydan, docs/history/190-*): `leading` on its own row, then
-   * the chips (plain chips at every width) with a compact Filtre button and the Kart | Izgara control.
-   */
-  stream?: boolean;
   /** Something that sits on the left of the control strip (e.g. Home's feed tabs). */
   leading?: ReactNode;
   /** From `md` up put the chip row on its own line UNDER the controls instead of beside them (Home: it was cramped). */
@@ -134,7 +217,6 @@ export function ListToolbar({
 }) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
-  const titleId = useId();
   const hasMobileTabs = mobileTabs !== undefined;
   const scroller = "scrollbar-none flex min-w-0 touch-pan-x gap-2 overflow-x-auto overscroll-x-contain";
 
@@ -154,98 +236,19 @@ export function ListToolbar({
   );
   const filterLabel = activeCount > 0 ? t("toolbar.filterWithCount", { count: activeCount }) : t("toolbar.filter");
 
-  const sheet = (
-    open && (
-        <Modal onClose={() => setOpen(false)} labelledBy={titleId}>
-          <div className="flex max-h-[85dvh] w-full max-w-md flex-col rounded-lg border border-border bg-surface shadow-lg" onClick={(event) => event.stopPropagation()}>
-            <div className="flex items-center justify-between border-b border-border-soft px-4 py-3">
-              <h2 id={titleId} className="text-h3 font-semibold text-text">
-                {t("toolbar.filterTitle")}
-              </h2>
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                aria-label={t("common.close")}
-                className="flex h-10 w-10 items-center justify-center rounded-full text-text-muted hover:bg-surface-soft hover:text-text"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            <div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-4 py-4">
-              {sheetSections}
-              {desktopSheetSections && <div className="space-y-5 max-md:hidden">{desktopSheetSections}</div>}
-              {sort && onSortChange && (
-                <SheetSection title={t("toolbar.sort")}>
-                  <div role="radiogroup" aria-label={t("profile.sortAriaLabel")} className="space-y-1">
-                    {sortKeys.map((key) => (
-                      <button
-                        key={key}
-                        type="button"
-                        role="radio"
-                        aria-checked={sort === key}
-                        onClick={() => onSortChange(key)}
-                        className={cn(
-                          "flex min-h-11 w-full items-center justify-between rounded-md px-3 text-left text-label transition-colors",
-                          sort === key ? "bg-primary-soft font-semibold text-text" : "text-text-secondary hover:bg-surface-soft",
-                        )}
-                      >
-                        {t(SORT_LABELS[key])}
-                        {sort === key && <Check size={16} className="text-primary" aria-hidden />}
-                      </button>
-                    ))}
-                  </div>
-                </SheetSection>
-              )}
-              <SheetSection title={t("toolbar.view")}>
-                <ViewModeSwitcher />
-              </SheetSection>
-            </div>
-
-            <div className="flex gap-2 border-t border-border-soft px-4 py-3">
-              {onClear && (
-                <Button variant="outline" className="h-11 flex-1" onClick={onClear} disabled={activeCount + desktopActiveExtra === 0}>
-                  {t("toolbar.clear")}
-                </Button>
-              )}
-              <Button className="h-11 flex-[2]" onClick={() => setOpen(false)}>
-                {t("toolbar.apply")}
-              </Button>
-            </div>
-          </div>
-        </Modal>
-    )
+  const sheet = open && (
+    <ListFilterSheet
+      onClose={() => setOpen(false)}
+      sheetSections={sheetSections}
+      desktopSheetSections={desktopSheetSections}
+      sort={sort}
+      onSortChange={onSortChange}
+      sortKeys={sortKeys}
+      activeCount={activeCount}
+      desktopActiveExtra={desktopActiveExtra}
+      onClear={onClear}
+    />
   );
-
-  if (stream) {
-    return (
-      <div className={cn("min-w-0 space-y-3", className)}>
-        {leading}
-        <div className="flex min-w-0 items-center gap-2">
-          {tabs && (
-            <div role="group" aria-label={tabsLabel} className={cn(scroller, "-ml-3 flex-1 pl-3 sm:ml-0 sm:pl-0")}>
-              {tabs}
-            </div>
-          )}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setOpen(true)}
-            aria-haspopup="dialog"
-            aria-label={filterLabel}
-            className="shrink-0 gap-1.5"
-          >
-            <SlidersHorizontal size={15} aria-hidden />
-            <span className="max-sm:sr-only">{t("toolbar.filter")}</span>
-            {filterCountBadge}
-          </Button>
-          <MobileViewToggle className="h-9 w-9 md:hidden" />
-          <ViewModeSwitcher className="max-md:hidden" />
-        </div>
-        {sheet}
-      </div>
-    );
-  }
 
   return (
     <div className={cn("min-w-0 space-y-2", className)}>
