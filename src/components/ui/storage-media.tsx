@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState, type ComponentProps, type RefObject, type SyntheticEvent } from "react";
 import Image from "next/image";
 import { getCachedMediaUrl, isProtectedMediaUrl, resolveMediaUrl } from "@/lib/supabase/media-url";
+import { cn } from "@/lib/utils";
 
 const RETRY_COOLDOWN_MS = 15 * 1000;
 
@@ -193,5 +194,66 @@ export function StorageAudio({
         onLoadedMetadata?.(event);
       }}
     />
+  );
+}
+
+/**
+ * A post picture that never sits as an empty grey box (docs/history/209-*): its stored average colour paints the frame at
+ * once, the tiny stored preview lies over it blurred, and the real picture fades in on top when it has loaded (then the
+ * preview is dropped). Fills its `relative` parent like `StorageImage fill`. Without a stored appearance (older rows) it
+ * is a plain `StorageImage` — nothing waits on a fade that would never be needed.
+ */
+export function StorageAppearanceImage({
+  src,
+  alt,
+  color,
+  placeholder,
+  sizes,
+  className,
+}: {
+  src: StorageSrc;
+  alt: string;
+  color?: string | null;
+  placeholder?: string | null;
+  sizes: string;
+  className?: string;
+}) {
+  const hasAppearance = Boolean(color || placeholder);
+  const [state, setState] = useState<"loading" | "shown" | "settled">("loading");
+  const settleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => {
+    if (settleTimer.current) clearTimeout(settleTimer.current);
+  }, []);
+  const markLoaded = useCallback(() => {
+    setState((current) => (current === "loading" ? "shown" : current));
+    // Once the fade (500ms) is over the blurred preview has nothing left to cover.
+    if (!settleTimer.current) settleTimer.current = setTimeout(() => setState("settled"), 650);
+  }, []);
+  // An image that was already in the cache can be complete before React attaches `onLoad`.
+  const checkComplete = useCallback(
+    (img: HTMLImageElement | null) => {
+      if (img?.complete && img.naturalWidth > 0) markLoaded();
+    },
+    [markLoaded],
+  );
+
+  if (!hasAppearance) return <StorageImage src={src} alt={alt} fill sizes={sizes} className={className} />;
+  return (
+    <>
+      {color && <span aria-hidden className="absolute inset-0" style={{ backgroundColor: color }} />}
+      {placeholder && state !== "settled" && (
+        // eslint-disable-next-line @next/next/no-img-element -- a stored data URL a few hundred bytes long
+        <img aria-hidden alt="" src={placeholder} className="absolute inset-0 h-full w-full scale-110 object-cover blur-xl" />
+      )}
+      <StorageImage
+        ref={checkComplete}
+        src={src}
+        alt={alt}
+        fill
+        sizes={sizes}
+        onLoad={markLoaded}
+        className={cn("transition-opacity duration-500 ease-soft", state === "loading" ? "opacity-0" : "opacity-100", className)}
+      />
+    </>
   );
 }

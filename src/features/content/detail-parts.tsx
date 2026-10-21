@@ -5,6 +5,7 @@ import { ArrowRight, type LucideIcon } from "lucide-react";
 import { useEffect, useId, useRef, useState, type ReactNode, type Ref } from "react";
 import { Avatar } from "@/components/ui/avatar";
 import { StorageImage, StorageImg } from "@/components/ui/storage-media";
+import { bandTint } from "@/features/content/content-card";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn, formatRelativeTime, profileHref, tagHref } from "@/lib/utils";
 import type { Language } from "@/lib/i18n/translations";
@@ -60,6 +61,7 @@ export function DetailShell({
 export function DetailBand({
   art,
   backdrop,
+  tint,
   kicker,
   title,
   byline,
@@ -70,6 +72,8 @@ export function DetailBand({
 }: {
   art: ReactNode;
   backdrop?: ReactNode;
+  /** The picture's stored average colour (docs/history/209-*): the band has its colour at once, before the blurred backdrop has loaded. */
+  tint?: string | null;
   kicker: ReactNode;
   title: ReactNode;
   byline: ReactNode;
@@ -82,7 +86,7 @@ export function DetailBand({
   [data: `data-${string}`]: string | undefined;
 }) {
   return (
-    <header data-detail-band {...rest} className="relative isolate bg-primary-soft">
+    <header data-detail-band {...rest} className="relative isolate bg-primary-soft" style={tint ? { backgroundColor: bandTint(tint) } : undefined}>
       {before}
       {backdrop && (
         <div aria-hidden className="absolute inset-0 -z-10 overflow-hidden">

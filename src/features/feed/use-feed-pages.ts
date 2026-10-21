@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { fetchFeedPage, type FeedCursor, type FeedEntry, type FeedPageParams } from "@/lib/supabase/feed";
+import { cameFromHistory } from "@/lib/history-navigation";
 
 export type FeedQuery = Omit<FeedPageParams, "limit" | "cursor">;
 
@@ -12,6 +13,22 @@ interface FeedState {
   cursor: FeedCursor | null;
   failed: boolean;
   loadingMore: boolean;
+}
+
+/**
+ * The last state of each query, for the browser's Back button only (`cameFromHistory`): the list comes back exactly as it
+ * was (every loaded page), so the restored scroll position has its posts under it and a cover can shrink back into its
+ * card (docs/history/209-*). Any other arrival loads fresh. Small and in memory; a reload empties it.
+ */
+const HISTORY_MAX = 12;
+const historyMemory = new Map<string, FeedState>();
+const queryPart = (key: string) => key.slice(key.indexOf("|") + 1);
+
+function remember(state: FeedState) {
+  const part = queryPart(state.key);
+  historyMemory.delete(part);
+  historyMemory.set(part, state);
+  if (historyMemory.size > HISTORY_MAX) historyMemory.delete(historyMemory.keys().next().value as string);
 }
 
 /**
@@ -26,12 +43,27 @@ interface FeedState {
  */
 export function useFeedPages(query: FeedQuery, enabled: boolean) {
   const [retry, setRetry] = useState(0);
-  const [state, setState] = useState<FeedState | null>(null);
   const key = `${retry}|${query.scope}|${query.order}|${query.kind}|${query.taxonomy.contentType}|${query.taxonomy.category}|${query.taxonomy.subcategory}|${query.openOnly ? 1 : 0}`;
+  const [state, setState] = useState<FeedState | null>(() => {
+    if (!cameFromHistory()) return null;
+    const kept = historyMemory.get(queryPart(key));
+    return kept && !kept.failed ? { ...kept, key, loadingMore: false } : null;
+  });
+  // The first effect run must not refetch a list that was just put back.
+  const restoredKey = useRef(state?.key ?? null);
+
+  useEffect(() => {
+    if (state && !state.loadingMore && !state.failed) remember(state);
+  }, [state]);
 
   const { scope, order, kind, taxonomy, openOnly } = query;
   useEffect(() => {
     if (!enabled) return;
+    if (restoredKey.current === key) {
+      restoredKey.current = null;
+      return;
+    }
+    restoredKey.current = null;
     let cancelled = false;
     fetchFeedPage({ scope, order, kind, taxonomy, openOnly })
       .then((page) => {

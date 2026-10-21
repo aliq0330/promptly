@@ -4,7 +4,7 @@ import { clampedAspectRatio } from "@/lib/placeholder-image";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { Play } from "lucide-react";
 import type { PromptMedia } from "@/types";
-import { StorageImage } from "@/components/ui/storage-media";
+import { StorageAppearanceImage, StorageImage } from "@/components/ui/storage-media";
 
 /**
  * How PromptCard's OUTPUT FIGURE (the "Çıktı" preview — never the whole card,
@@ -42,7 +42,7 @@ export function OutputThumbnailStrip({ media }: { media: PromptMedia[] }) {
   return (
     <div className="space-y-1.5">
       <figure data-card-media className={FRAME_CLASS} style={{ aspectRatio: Math.max(1, clampedAspectRatio(cover.width, cover.height)) }}>
-        <StorageImage src={cover.url} alt={cover.alt} fill sizes={SIZES} className="object-cover" />
+        <StorageAppearanceImage src={cover.url} alt={cover.alt} color={cover.color} placeholder={cover.placeholder} sizes={SIZES} className="object-cover" />
         <OutputCaption />
       </figure>
       {rest.length > 0 && (
@@ -71,7 +71,7 @@ export function OutputThumbnailStrip({ media }: { media: PromptMedia[] }) {
 export function OutputPosterPreview({ media }: { media: PromptMedia }) {
   return (
     <figure className={FRAME_CLASS} style={{ aspectRatio: clampedAspectRatio(media.width, media.height) }}>
-      <StorageImage src={media.url} alt={media.alt} fill sizes={SIZES} className="object-cover" />
+      <StorageAppearanceImage src={media.url} alt={media.alt} color={media.color} placeholder={media.placeholder} sizes={SIZES} className="object-cover" />
       <span className="pointer-events-none absolute inset-0 flex items-center justify-center">
         <span className="flex h-11 w-11 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-sm">
           <Play size={18} fill="currentColor" />

@@ -5,7 +5,7 @@ import { ContentCard } from "@/features/content/content-card";
 import type { FeedItem } from "@/features/feed/types";
 import type { PromptMedia, UserProfile } from "@/types";
 import { clampAspectRatio, FocusActions, FocusCreator, FocusTitle, FocusTypeBadge } from "./focus-parts";
-import { StorageImg } from "@/components/ui/storage-media";
+import { StorageAppearanceImage } from "@/components/ui/storage-media";
 
 /**
  * Focus card for anything that has a picture (an image prompt, a workflow
@@ -45,7 +45,7 @@ export function FocusVisualCard({
   return (
     <ContentCard href={href} className="overflow-hidden">
       <div data-card-media className="relative bg-surface-soft" style={{ aspectRatio: clampAspectRatio(image.width, image.height) }}>
-        <StorageImg src={image.url} alt={image.alt || title} loading="lazy" decoding="async" className="absolute inset-0 h-full w-full object-cover" />
+        <StorageAppearanceImage src={image.url} alt={image.alt || title} color={image.color} placeholder={image.placeholder} sizes="(min-width: 768px) 30vw, 50vw" className="object-cover" />
 
         {playable && (
           <span className="pointer-events-none absolute inset-0 flex items-center justify-center">

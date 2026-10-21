@@ -11,6 +11,7 @@ import { resolveMediaInputs, type MediaInput } from "./media-input";
 import { normalizeLegacyContentType, sanitizeTaxonomy } from "@/lib/content-taxonomy";
 import { taxonomyColumns, type ContentSearchFilters } from "./taxonomy-query";
 import { orderByIds, searchContentIds, type SearchCursor, type SearchPage } from "./search";
+import { imageAppearanceFromBlob } from "@/lib/image-appearance";
 import type { ContentVisibility, Prompt, PromptContentType, PromptMedia, PromptOrigin, Tag, UserProfile } from "@/types";
 
 /**
@@ -46,7 +47,16 @@ export interface PromptRow {
   community_id?: string | null;
   deleted_at: string | null;
   profiles: ProfileRow;
-  prompt_media: { id: string; url: string; width: number; height: number; alt: string | null; position: number }[];
+  prompt_media: {
+    id: string;
+    url: string;
+    width: number;
+    height: number;
+    alt: string | null;
+    position: number;
+    dominant_color?: string | null;
+    placeholder?: string | null;
+  }[];
   prompt_tags: { tags: { slug: string; label: string } }[];
 }
 
@@ -56,7 +66,7 @@ export const PROMPT_SELECT = `
   like_count, save_count, comment_count, copy_count, created_at, show_on_profile, requires_reference_image, requires_reference_video, requires_reference_audio, visibility,
   deleted_at, community_id,
   profiles:author_id ( id, username, display_name, avatar_url, cover_url, bio, website, follower_count, following_count, created_at, interests ),
-  prompt_media ( id, url, width, height, alt, position ),
+  prompt_media ( id, url, width, height, alt, position, dominant_color, placeholder ),
   prompt_tags ( tags ( slug, label ) )
 `;
 
@@ -101,7 +111,15 @@ export function mapPromptRow(row: PromptRow): Prompt {
   const media: PromptMedia[] = (row.prompt_media ?? [])
     .slice()
     .sort((a, b) => a.position - b.position)
-    .map((m) => ({ id: m.id, url: m.url, width: m.width, height: m.height, alt: m.alt ?? row.title }));
+    .map((m) => ({
+      id: m.id,
+      url: m.url,
+      width: m.width,
+      height: m.height,
+      alt: m.alt ?? row.title,
+      color: m.dominant_color ?? null,
+      placeholder: m.placeholder ?? null,
+    }));
   const tags: Tag[] = (row.prompt_tags ?? []).map((pt) => ({ slug: pt.tags.slug, label: pt.tags.label }));
   // Rows written before the 4-type taxonomy may still say code/music — read them as their new type.
   const { contentType, category } = normalizeLegacyContentType(row.content_type);
@@ -505,7 +523,8 @@ export async function createRealPrompt(
           .upload(path, resized.blob, { contentType: resized.contentType, upsert: true });
         if (uploadError) throw new Error(uploadError.message);
         const { data: publicUrlData } = supabase.storage.from("prompt-media").getPublicUrl(path);
-        return { url: publicUrlData.publicUrl, width: resized.width, height: resized.height };
+        const appearance = await imageAppearanceFromBlob(resized.blob);
+        return { url: publicUrlData.publicUrl, width: resized.width, height: resized.height, color: appearance?.color ?? null, placeholder: appearance?.placeholder ?? null };
       });
 
       const descriptors =
@@ -523,9 +542,11 @@ export async function createRealPrompt(
             height: d.height,
             alt: d.alt,
             position: index,
+            dominant_color: d.color ?? null,
+            placeholder: d.placeholder ?? null,
           })),
         )
-        .select("id, url, width, height, alt");
+        .select("id, url, width, height, alt, dominant_color, placeholder");
       if (mediaError || !mediaRows) throw new Error(mediaError?.message ?? translateForRuntime("prompt.imageSaveFailed"));
 
       media = mediaRows.map((row) => ({
@@ -534,6 +555,8 @@ export async function createRealPrompt(
         width: row.width,
         height: row.height,
         alt: row.alt ?? input.title,
+        color: row.dominant_color ?? null,
+        placeholder: row.placeholder ?? null,
       }));
     } catch (err) {
       // Don't leave a half-published image prompt with no image behind.
@@ -674,7 +697,8 @@ export async function updateRealPrompt(promptId: string, authorId: string, input
           .upload(path, resized.blob, { contentType: resized.contentType, upsert: true });
         if (uploadError) throw new Error(uploadError.message);
         const { data: publicUrlData } = supabase.storage.from("prompt-media").getPublicUrl(path);
-        return { url: publicUrlData.publicUrl, width: resized.width, height: resized.height };
+        const appearance = await imageAppearanceFromBlob(resized.blob);
+        return { url: publicUrlData.publicUrl, width: resized.width, height: resized.height, color: appearance?.color ?? null, placeholder: appearance?.placeholder ?? null };
       });
 
       await supabase.from("prompt_media").delete().eq("prompt_id", promptId);
@@ -687,6 +711,8 @@ export async function updateRealPrompt(promptId: string, authorId: string, input
             height: d.height,
             alt: d.alt,
             position: index,
+            dominant_color: d.color ?? null,
+            placeholder: d.placeholder ?? null,
           })),
         );
         if (mediaError) throw new Error(mediaError.message);

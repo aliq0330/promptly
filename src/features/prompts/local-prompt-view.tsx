@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { PromptDetailView } from "./prompt-detail-view";
 import { useRealPrompts } from "./real-prompts-provider";
+import { handedOffPrompt } from "@/lib/detail-handoff";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Prompt } from "@/types";
 
@@ -21,7 +22,8 @@ export function LocalPromptView() {
   const id = searchParams.get("id");
   const { getCached, fetchById } = useRealPrompts();
 
-  const cachedPrompt = id ? getCached(id) : undefined;
+  // A card the visitor just tapped handed its post over (lib/detail-handoff.ts): draw at once, no skeleton in between.
+  const cachedPrompt = id ? (getCached(id) ?? handedOffPrompt(id)) : undefined;
 
   const [fetchedPrompt, setFetchedPrompt] = useState<Prompt | null>(null);
   const [checkedRemote, setCheckedRemote] = useState(false);

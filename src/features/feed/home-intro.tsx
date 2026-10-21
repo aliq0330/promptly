@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback, useState } from "react";
 import Link from "next/link";
 import { PenLine, Sparkles } from "lucide-react";
 import { buttonClassName } from "@/components/ui/button";
@@ -7,16 +8,19 @@ import { Avatar } from "@/components/ui/avatar";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useOwnProfile } from "@/features/auth/own-profile-provider";
 import { useTranslation } from "@/lib/i18n/language-provider";
+import { GuestShowcase } from "./guest-showcase";
 
 /**
- * Top of the home page. Signed out: a compact explanation of what Promptly
- * is — deliberately short so the feed starts above the fold. Signed in: a
- * composer row (avatar + "share" field + the creation paths). Never a large hero.
+ * Top of the home page. Signed out: the living showcase (`GuestShowcase`, docs/history/209-*) — the community's most
+ * liked pictures drifting by, each opening its prompt — or, when there are too few pictures, a compact explanation of
+ * what Promptly is. Signed in: a composer row (avatar + "share" field + the creation paths), never a large hero.
  */
 export function HomeIntro() {
   const { user, loading } = useAuth();
   const { profile } = useOwnProfile();
   const { t } = useTranslation();
+  const [showcaseUnavailable, setShowcaseUnavailable] = useState(false);
+  const fallBack = useCallback(() => setShowcaseUnavailable(true), []);
 
   if (loading) return <div className="h-[74px]" aria-hidden />;
 
@@ -38,6 +42,8 @@ export function HomeIntro() {
       </section>
     );
   }
+
+  if (!showcaseUnavailable) return <GuestShowcase onUnavailable={fallBack} />;
 
   return (
     <section className="relative overflow-hidden rounded-xl border border-border-soft bg-surface px-5 py-7 shadow-card sm:px-8 sm:py-9">

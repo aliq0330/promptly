@@ -84,6 +84,13 @@ export async function fetchFeedPage(params: FeedPageParams): Promise<FeedPage> {
   if (error) throw new Error(error.message);
 
   const rows = (data ?? []) as FeedRow[];
+  const items = await hydrateFeedRows(rows);
+  // The cursor comes from the RAW rows, never from `items`: filtering can drop rows, but the next page must still continue after the last row the database returned.
+  return { items, nextCursor: nextFeedCursor(rows, limit) };
+}
+
+/** Full rows for a page of feed ids, in the page's order; a row that vanished in between (deleted, blocked author) is skipped. */
+async function hydrateFeedRows(rows: FeedRow[]): Promise<FeedEntry[]> {
   const idsOf = (kind: FeedKind) => rows.filter((row) => row.kind === kind).map((row) => row.id);
   const [prompts, requests, workflows, presets] = await Promise.all([
     fetchPromptsByIds(idsOf("prompt")),
@@ -97,7 +104,59 @@ export async function fetchFeedPage(params: FeedPageParams): Promise<FeedPage> {
   for (const data of workflows) byKey.set(`workflow-${data.id}`, { kind: "workflow", data });
   for (const data of presets) byKey.set(`preset-${data.id}`, { kind: "preset", data });
 
-  const items = rows.flatMap((row) => byKey.get(`${row.kind}-${row.id}`) ?? []);
-  // The cursor comes from the RAW rows, never from `items`: filtering can drop rows, but the next page must still continue after the last row the database returned.
-  return { items, nextCursor: nextFeedCursor(rows, limit) };
+  return rows.flatMap((row) => byKey.get(`${row.kind}-${row.id}`) ?? []);
+}
+
+/** Why "Sana özel" shows a post (`public.for_you_page`): the strongest real signal, never a made-up one. */
+export type ForYouReasonKind = "creator" | "tag" | "interest" | "liked_tag" | "popular";
+export interface ForYouReason {
+  kind: ForYouReasonKind;
+  /** Tag slug (`tag`, `liked_tag`) or profile interest value (`interest`); null otherwise. */
+  ref: string | null;
+}
+
+export interface ForYouPage {
+  items: FeedEntry[];
+  /** `${kind}-${id}` → reason. */
+  reasons: Record<string, ForYouReason>;
+  nextCursor: FeedCursor | null;
+}
+
+interface ForYouRow extends FeedRow {
+  reason_kind: ForYouReasonKind;
+  reason_ref: string | null;
+}
+
+/**
+ * One page of "Sana özel" (`public.for_you_page`, docs/history/209-*): ranked ENTIRELY by the database from the
+ * signed-in user's own signals (followed people and tags, profile interests, the tags of what they liked, likes; age
+ * lowers the score). `asOf` keeps the ranking stable for a session, so the keyset cursor never skips or repeats a post.
+ * Rows are hydrated with the same selects the other feeds use (RLS applies). Signed-in users only (no anon EXECUTE).
+ */
+export async function fetchForYouPage(params: {
+  asOf: string;
+  kind: FeedKind | "all";
+  taxonomy: TaxonomyFilterValue;
+  limit?: number;
+  cursor?: FeedCursor | null;
+}): Promise<ForYouPage> {
+  const limit = params.limit ?? DEFAULT_LIMIT;
+  const { data, error } = await supabase.rpc("for_you_page", {
+    p_as_of: params.asOf,
+    p_kinds: params.kind === "all" ? null : [params.kind],
+    p_content_type: params.taxonomy.contentType,
+    p_category: params.taxonomy.category,
+    p_subcategory: params.taxonomy.subcategory,
+    p_limit: limit,
+    p_after_rank: params.cursor ? params.cursor.rank : null,
+    p_after_created_at: params.cursor ? params.cursor.createdAt : null,
+    p_after_id: params.cursor ? params.cursor.id : null,
+  });
+  if (error) throw new Error(error.message);
+
+  const rows = (data ?? []) as ForYouRow[];
+  const items = await hydrateFeedRows(rows);
+  const reasons: Record<string, ForYouReason> = {};
+  for (const row of rows) reasons[`${row.kind}-${row.id}`] = { kind: row.reason_kind, ref: row.reason_ref };
+  return { items, reasons, nextCursor: nextFeedCursor(rows, limit) };
 }

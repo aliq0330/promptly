@@ -43,6 +43,10 @@ export interface PromptMedia {
   width: number;
   height: number;
   alt: string;
+  /** Average colour `#rrggbb` (`prompt_media.dominant_color`) — painted before the picture arrives; absent on older rows. */
+  color?: string | null;
+  /** Tiny blurred stand-in (`prompt_media.placeholder`, a ≈24px JPEG data URL) — laid over the colour until the picture loads. */
+  placeholder?: string | null;
 }
 
 export type PromptOrigin =

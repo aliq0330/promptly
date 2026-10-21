@@ -3,6 +3,7 @@
 import { resolveToolRefs } from "@/lib/ai-tool-catalog";
 import { StorageImage } from "@/components/ui/storage-media";
 import { promptHref } from "@/lib/utils";
+import { handOffPrompt } from "@/lib/detail-handoff";
 import { ContentCard, ContentCardPost, ContentCardTitle } from "@/features/content/content-card";
 import { ContentTypePill } from "@/features/content/content-type-label";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -52,7 +53,7 @@ export function PromptCard({
   const tool = resolveToolRefs(prompt.tools)[0]?.label ?? prompt.tool ?? null;
 
   return (
-    <ContentCard href={href}>
+    <ContentCard href={href} onOpen={() => handOffPrompt(prompt)}>
       <ContentCardPost
         author={prompt.author}
         meta={postMeta(prompt.author.username, prompt.createdAt, language, isResponse ? t("prompt.sharedAReply") : undefined)}
@@ -68,6 +69,7 @@ export function PromptCard({
           ) : undefined
         }
         backdrop={picture ? <StorageImage src={picture.url} alt="" fill sizes="240px" className="object-cover" /> : undefined}
+        tint={picture?.color}
         title={<ContentCardTitle href={href} title={prompt.title} />}
         primary={hasPromptText ? <CopyPromptButton text={prompt.promptText} promptId={prompt.id} size="md" variant="primary" className="h-10 rounded-full px-4" /> : undefined}
         footer={<PromptCardFooter prompt={prompt} />}
