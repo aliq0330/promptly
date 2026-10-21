@@ -31,6 +31,10 @@ export interface FeedPageParams {
   taxonomy: TaxonomyFilterValue;
   /** Only requests with `status = 'open'` (other kinds are unaffected). Omitted = false; Home never sets it. */
   openOnly?: boolean;
+  /** Only content carrying this tag slug (a tag page). */
+  tag?: string | null;
+  /** Only content recommending this AI tool (catalog id; every model of it matches — a tool page). */
+  tool?: string | null;
   limit?: number;
   cursor?: FeedCursor | null;
 }
@@ -67,9 +71,12 @@ interface FeedRow {
  */
 export async function fetchFeedPage(params: FeedPageParams): Promise<FeedPage> {
   const limit = params.limit ?? DEFAULT_LIMIT;
-  // `p_open_only` is only sent when asked for: Home keeps calling the 10-argument form.
+  // `p_open_only` is only sent when asked for: Home keeps calling the 10-argument form. A tag/tool page calls the
+  // 13-argument form (docs/history/211-*), whose new arguments have no defaults — so it needs all three.
+  const topic = Boolean(params.tag || params.tool);
   const { data, error } = await supabase.rpc("feed_page", {
-    ...(params.openOnly ? { p_open_only: true } : {}),
+    ...(params.openOnly || topic ? { p_open_only: Boolean(params.openOnly) } : {}),
+    ...(topic ? { p_tag: params.tag ?? null, p_tool: params.tool ?? null } : {}),
     p_scope: params.scope,
     p_order: params.order,
     p_kinds: params.kind === "all" ? null : [params.kind],
@@ -87,6 +94,22 @@ export async function fetchFeedPage(params: FeedPageParams): Promise<FeedPage> {
   const items = await hydrateFeedRows(rows);
   // The cursor comes from the RAW rows, never from `items`: filtering can drop rows, but the next page must still continue after the last row the database returned.
   return { items, nextCursor: nextFeedCursor(rows, limit) };
+}
+
+/** How many posts a topic page lists (`public.feed_count`: the same visibility + filters as `feed_page`). `null` when it failed. */
+export async function fetchFeedCount(filter: { taxonomy: TaxonomyFilterValue; tag?: string | null; tool?: string | null }): Promise<number | null> {
+  const { data, error } = await supabase.rpc("feed_count", {
+    p_content_type: filter.taxonomy.contentType,
+    p_category: filter.taxonomy.category,
+    p_subcategory: filter.taxonomy.subcategory,
+    p_tag: filter.tag ?? null,
+    p_tool: filter.tool ?? null,
+  });
+  if (error) {
+    console.error("fetchFeedCount", error);
+    return null;
+  }
+  return Number(data);
 }
 
 /** Full rows for a page of feed ids, in the page's order; a row that vanished in between (deleted, blocked author) is skipped. */
@@ -108,7 +131,7 @@ async function hydrateFeedRows(rows: FeedRow[]): Promise<FeedEntry[]> {
 }
 
 /** Why "Sana özel" shows a post (`public.for_you_page`): the strongest real signal, never a made-up one. */
-export type ForYouReasonKind = "creator" | "tag" | "interest" | "liked_tag" | "popular";
+export type ForYouReasonKind = "creator" | "tag" | "tool" | "interest" | "liked_tag" | "popular";
 export interface ForYouReason {
   kind: ForYouReasonKind;
   /** Tag slug (`tag`, `liked_tag`) or profile interest value (`interest`); null otherwise. */

@@ -1,13 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { Flame, Hash, Heart, Sparkle, UserCheck, type LucideIcon } from "lucide-react";
+import { Flame, Hash, Heart, Sparkle, UserCheck, Wrench, type LucideIcon } from "lucide-react";
 import { Chip } from "@/components/ui/chip";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useOwnProfile } from "@/features/auth/own-profile-provider";
 import { INTEREST_OPTION_LABELS, INTEREST_OPTIONS, type InterestOption } from "@/features/profile/interest-options";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { updateOwnInterests } from "@/lib/supabase/profiles";
+import { findTool } from "@/lib/ai-tool-catalog";
 import type { ForYouReason } from "@/lib/supabase/feed";
 import type { FeedItem } from "./types";
 
@@ -77,6 +78,7 @@ export function ForYouInterests({ onChanged }: { onChanged: () => void }) {
 const REASON_ICON: Record<ForYouReason["kind"], LucideIcon> = {
   creator: UserCheck,
   tag: Hash,
+  tool: Wrench,
   interest: Sparkle,
   liked_tag: Heart,
   popular: Flame,
@@ -93,11 +95,13 @@ export function ForYouReasonNote({ item, reason }: { item: FeedItem; reason: For
       ? t("forYou.reasonCreator", { name: person.displayName })
       : reason.kind === "tag"
         ? t("forYou.reasonTag", { tag: tagLabel(reason.ref) })
-        : reason.kind === "interest"
-          ? t("forYou.reasonInterest", { interest: interestLabel(reason.ref ?? "", t) })
-          : reason.kind === "liked_tag"
-            ? t("forYou.reasonLikedTag", { tag: tagLabel(reason.ref) })
-            : t("forYou.reasonPopular");
+        : reason.kind === "tool"
+          ? t("forYou.reasonTool", { tool: findTool(reason.ref ?? "")?.name ?? reason.ref ?? "" })
+          : reason.kind === "interest"
+            ? t("forYou.reasonInterest", { interest: interestLabel(reason.ref ?? "", t) })
+            : reason.kind === "liked_tag"
+              ? t("forYou.reasonLikedTag", { tag: tagLabel(reason.ref) })
+              : t("forYou.reasonPopular");
   const Icon = REASON_ICON[reason.kind];
   return (
     <p className="mb-1.5 flex min-w-0 items-center gap-1.5 px-1 text-caption font-semibold text-text-secondary">

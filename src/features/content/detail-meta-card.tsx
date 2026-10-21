@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Wrench } from "lucide-react";
 import type { ReactNode } from "react";
 import { resolveToolRefs } from "@/lib/ai-tool-catalog";
+import { toolHref } from "@/lib/utils";
 
 /**
  * Detail pages' "tool + classification" card: the recommended/preferred tool (or model) on the left, category and tag chips on the right —
@@ -46,7 +47,7 @@ export function DetailMetaCard({
                 ? items.map((item, index) => (
                     <span key={item.ref}>
                       {index > 0 && ", "}
-                      <Link href={`/discover?tool=${encodeURIComponent(item.tool.id)}`} className={linkClass}>
+                      <Link href={toolHref(item.tool.id)} className={linkClass}>
                         {item.label}
                       </Link>
                     </span>

@@ -1,12 +1,12 @@
 import Link from "next/link";
 import { Wrench } from "lucide-react";
 import { resolveToolRefs } from "@/lib/ai-tool-catalog";
-import { cn } from "@/lib/utils";
+import { cn, toolHref } from "@/lib/utils";
 
 /**
  * Small tool chips for cards/detail pages. Renders nothing when no known tool is set.
  * `linked` turns each chip into a link to the search results for that tool
- * (`/discover?tool=<id>`; a model chip searches its tool and all its models).
+ * (the tool's own page, `toolHref` — docs/history/211-*; a model chip opens its tool, which lists every model).
  */
 export function ToolChips({ refs, className, linked }: { refs: string[] | null | undefined; className?: string; linked?: boolean }) {
   const items = resolveToolRefs(refs);
@@ -16,7 +16,7 @@ export function ToolChips({ refs, className, linked }: { refs: string[] | null |
       {items.map((item) => {
         const chip = "inline-flex h-6 items-center gap-1 rounded-full bg-primary-soft px-2.5 text-caption font-medium text-text-secondary";
         return linked ? (
-          <Link key={item.ref} href={`/discover?tool=${encodeURIComponent(item.tool.id)}`} className={cn(chip, "transition-colors hover:bg-primary/15 hover:text-primary")}>
+          <Link key={item.ref} href={toolHref(item.tool.id)} className={cn(chip, "transition-colors hover:bg-primary/15 hover:text-primary")}>
             <Wrench size={11} aria-hidden />
             {item.label}
           </Link>

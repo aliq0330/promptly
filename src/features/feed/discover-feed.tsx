@@ -2,11 +2,11 @@
 
 import { useState } from "react";
 import { LayoutGrid, Sparkles, SquareTerminal, SlidersHorizontal, Users, Workflow as WorkflowIcon } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Chip } from "@/components/ui/chip";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PromptCardSkeletonGrid } from "@/components/ui/prompt-card-skeleton";
 import { FeedItemsView } from "./feed-items-view";
+import { LoadMore } from "./load-more";
 import { CategoryStrip, CreatorStrip, PopularStrip, TagStrip, useDiscoverHighlights } from "./discover-highlights";
 import { useFeedPages } from "./use-feed-pages";
 import type { FeedKind } from "@/lib/supabase/feed";
@@ -91,7 +91,7 @@ export function DiscoverFeed() {
 
   const idleContent = (
     <div className="space-y-4">
-      <CategoryStrip sample={highlights.sample} value={taxonomy} onChange={setTaxonomy} />
+      <CategoryStrip sample={highlights.sample} />
       <TagStrip tags={highlights.tags} />
       <PopularStrip popular={highlights.popular} />
       <CreatorStrip creators={highlights.creators} onSeeAll={() => setSection("creators")} />
@@ -154,22 +154,5 @@ export function DiscoverFeed() {
     </div>
   );
 
-  return <SearchView idle={idleContent} heading={<h1 className="shrink-0 font-display text-h1 font-bold text-text">{t("nav.discover")}</h1>} />;
-}
-
-/** Failure line + "Load more" under a paged list (shared by the feed and the creators list). */
-function LoadMore({ failed, hasMore, loadingMore, onLoadMore }: { failed: boolean; hasMore: boolean; loadingMore: boolean; onLoadMore: () => void }) {
-  const { t } = useTranslation();
-  return (
-    <>
-      {failed && <p className="text-center text-small text-danger">{t("feed.loadFailed")}</p>}
-      {hasMore && (
-        <div className="flex justify-center pt-2">
-          <Button variant="outline" onClick={onLoadMore} disabled={loadingMore}>
-            {loadingMore ? t("common.loadingMore") : t("common.loadMore")}
-          </Button>
-        </div>
-      )}
-    </>
-  );
+  return <SearchView idle={idleContent} />;
 }

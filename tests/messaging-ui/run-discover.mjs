@@ -1,4 +1,4 @@
-// Keşfet'in sıkı üstü (docs/history/210-*): kategoriler · yükselen etiketler · popüler · öne çıkan yaratıcılar, hemen ardından
+// Keşfet'in sıkı üstü (docs/history/210-*; 211-* ile görünür başlık kalktı, kategori hapı kategori sayfasını açar): kategoriler · yükselen etiketler · popüler · öne çıkan yaratıcılar, hemen ardından
 // gönderiler. Ağ taklitli; gerçek Supabase'e KARŞI DENENMEDİ — sayılar/sıralar sunucudan gelir (trending_tags, feed_page).
 import { chromium } from "playwright";
 import assert from "node:assert/strict";
@@ -88,17 +88,18 @@ async function scenario(name, fn, { viewport = { width: 390, height: 844 }, lang
 const overflowFree = (page) => page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1);
 const shot = async (page, name, fullPage = false) => { if (SHOTS) await page.screenshot({ path: `${SHOTS}/${name}.png`, fullPage }); };
 
-await scenario("1. telefon: başlık arama satırında; dört şerit sırayla; ilk gönderi ilk ekranda başlar", async ({ page }) => {
+await scenario("1. telefon: görünür başlık yok (yalnız ekran okuyucuya); dört şerit sırayla; ilk gönderi ilk ekranda başlar", async ({ page }) => {
   await page.goto(`${BASE}/discover`);
-  await page.getByRole("heading", { level: 1, name: "Keşfet" }).waitFor();
+  await page.getByRole("heading", { level: 1, name: "Keşfet" }).waitFor({ state: "attached" });
   await page.locator("[data-discover-category]").first().waitFor();
   await page.getByRole("heading", { name: "Bu hafta popüler" }).waitFor();
   await page.getByRole("heading", { name: "Öne çıkan yaratıcılar" }).waitFor();
   await page.locator("main article:has(a[data-card-link])").first().waitFor();
-  // Başlık ile arama kutusu aynı satırda.
-  const h1 = await page.getByRole("heading", { level: 1 }).boundingBox();
-  const search = await page.getByRole("combobox").first().boundingBox().catch(() => null) ?? (await page.locator("main input").first().boundingBox());
-  assert.ok(Math.abs(h1.y + h1.height / 2 - (search.y + search.height / 2)) < 20, `başlık ve arama aynı satırda (${h1.y} / ${search.y})`);
+  // Başlık görünmez (sr-only); arama kutusu sayfanın ilk görünen öğesi ve satırın tamamını kaplar.
+  const h1Box = await page.getByRole("heading", { level: 1 }).boundingBox();
+  assert.ok(!h1Box || h1Box.width <= 1, "başlık görsel olarak gizli");
+  const search = await page.locator("main input").first().boundingBox();
+  assert.ok(search.width >= 280, `arama kutusu geniş (${Math.round(search.width)}px)`);
   // Sıra: kategoriler → etiketler → popüler → yaratıcılar → gönderiler.
   const ys = await Promise.all(
     ["[data-discover-category]", "#discover-trending", "#discover-popular", "#discover-creators"].map(async (sel) => (await page.locator(sel).first().boundingBox()).y),
@@ -117,20 +118,14 @@ await scenario("1. telefon: başlık arama satırında; dört şerit sırayla; i
   await shot(page, "1-phone-full", true);
 });
 
-await scenario("2. kategoriye dokunmak akışı o kategoriye süzer; yeniden dokunmak temizler", async ({ page, state }) => {
+await scenario("2. kategori hapı kategorinin kendi sayfasını açar (arama moduna geçmez)", async ({ page }) => {
   await page.goto(`${BASE}/discover`);
   const pill = page.locator('[data-discover-category="image:art_illustration"]');
   await pill.waitFor();
-  await page.locator("main article:has(a[data-card-link])").first().waitFor();
+  assert.match(await pill.getAttribute("href"), /\/categories\/local\/?\?type=image&category=art_illustration$/);
   await pill.click();
-  await page.waitForFunction(() => document.querySelector('[data-discover-category="image:art_illustration"]')?.getAttribute("aria-pressed") === "true");
-  await page.waitForTimeout(300);
-  const last = state.feedCalls.at(-1);
-  assert.equal(last.p_category, "art_illustration");
-  await pill.click();
-  await page.waitForTimeout(300);
-  assert.equal(state.feedCalls.at(-1).p_category, null);
-  assert.equal(await pill.getAttribute("aria-pressed"), "false");
+  await page.waitForURL(/\/categories\/local\/?\?type=image&category=art_illustration/);
+  await page.getByRole("heading", { level: 1, name: "Sanat & İllüstrasyon" }).waitFor();
 });
 
 await scenario("3. yaratıcılar 'Tümünü gör' Yaratıcılar bölümünü açar", async ({ page }) => {
@@ -151,7 +146,7 @@ await scenario("4. trend penceresi boşken en çok kullanılan etiketler sayıs�
 
 await scenario("5. İngilizce: şerit başlıkları çevrili", async ({ page }) => {
   await page.goto(`${BASE}/discover`);
-  await page.getByRole("heading", { level: 1, name: "Discover" }).waitFor();
+  await page.getByRole("heading", { level: 1, name: "Discover" }).waitFor({ state: "attached" });
   await page.getByRole("heading", { name: "Popular this week" }).waitFor();
   await page.getByRole("heading", { name: "Featured creators" }).waitFor();
   assert.match(await page.locator("#discover-trending").locator("xpath=..").textContent(), /Rising/);

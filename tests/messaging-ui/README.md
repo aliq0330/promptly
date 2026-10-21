@@ -110,3 +110,11 @@ CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/mess
 ```bash
 CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/messaging-ui/run-discover.mjs   # 6/6 beklenir
 ```
+
+## Konu sayfaları (`docs/history/211-*`)
+
+`run-topic-pages.mjs`: etiket / kategori / araç sayfası (kompakt bant, sayı, Takip Et/Paylaş, bölüm balonları, `feed_page` `p_tag`/`p_tool`/kategori), alt kategori geçişi, araç takibi + geri alma, misafirde giriş penceresi, gönderideki kategori/araç bağlantıları, eski `/search?type=&category=` ve `/discover?tool=` yönlendirmesi, bulunamayanlar, İngilizce, masaüstü. DB tarafı `supabase/tests/topic-pages.sql`. Gerçek Supabase'e KARŞI DENENMEDİ.
+
+```bash
+CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/messaging-ui/run-topic-pages.mjs   # 9/9 beklenir
+```

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
@@ -25,7 +26,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import { findCategory, findSubcategory, isContentTypeId, type TaxonomyFilterValue } from "@/lib/content-taxonomy";
 import type { ContentSearchFilters } from "@/lib/supabase/taxonomy-query";
 import type { SearchCursor, SearchKind } from "@/lib/supabase/search";
-import { formatCount, profileHref, tagHref } from "@/lib/utils";
+import { categoryHref, formatCount, profileHref, tagHref, toolHref } from "@/lib/utils";
 import { Eyebrow } from "@/features/content/detail-parts";
 import type { Prompt, PromptRequest, Preset, Tag, UserProfile, Workflow } from "@/types";
 import { CONTENT_GRID_ITEM_CLASS, ContentGrid } from "@/features/content/content-card";
@@ -61,11 +62,11 @@ const ALL_TAB_PREVIEW = 4;
 /**
  * The chip search + its results. On Explore it is embedded: `idle` is what
  * shows while there is no query (the normal Explore content); once chips or
- * text exist, results replace it. `heading` (Explore's title) sits on the
- * search box's row, so the page spends one line on both.
+ * text exist, results replace it.
  */
-export function SearchView({ idle, heading }: { idle?: ReactNode; heading?: ReactNode } = {}) {
+export function SearchView({ idle }: { idle?: ReactNode } = {}) {
   const { t } = useTranslation();
+  const router = useRouter();
   const [viewMode] = useViewMode();
   const [tokens, setTokens] = useState<SearchToken[]>([]);
   const [text, setText] = useState("");
@@ -104,22 +105,26 @@ export function SearchView({ idle, heading }: { idle?: ReactNode; heading?: Reac
     const params = new URLSearchParams(window.location.search);
     const initial = params.get("q");
     const type = params.get("type");
+    // Old category / tool links (`?type=&category=&subcategory=`, `?tool=<id>`, shared before docs/history/211-*) open the
+    // topic's own page instead of a search.
+    const legacyCategory = isContentTypeId(type) ? findCategory(type, params.get("category")) : null;
+    if (isContentTypeId(type) && legacyCategory) {
+      router.replace(categoryHref(type, legacyCategory.id, findSubcategory(type, legacyCategory.id, params.get("subcategory"))?.id));
+      return;
+    }
+    const toolId = params.get("tool");
+    if (toolId && findTool(toolId)) {
+      router.replace(toolHref(toolId));
+      return;
+    }
     /* eslint-disable react-hooks/set-state-in-effect -- one-time read of the URL on mount */
     if (initial) setText(initial);
-    // Category links from a post: `?type=&category=&subcategory=` -> media chip + taxonomy filter.
-    if (isContentTypeId(type)) {
-      const cat = findCategory(type, params.get("category"));
-      const sub = cat ? findSubcategory(type, cat.id, params.get("subcategory")) : null;
-      setTokens([{ kind: "media", type }]);
-      setSubFilter({ category: cat?.id ?? null, subcategory: sub?.id ?? null });
-    }
-    // Tool links from a post: `?tool=<id>` -> tool chip (matches the tool and its models).
-    const toolId = params.get("tool");
-    if (toolId && findTool(toolId)) setTokens((prev) => [...prev, { kind: "tool", toolId }]);
+    // A bare `?type=` (no category) still starts a search with that media chip.
+    if (isContentTypeId(type)) setTokens([{ kind: "media", type }]);
     const initialTab = params.get("tab");
     if (isSearchTab(initialTab)) setTabState(initialTab);
     /* eslint-enable react-hooks/set-state-in-effect */
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     if (!active) {
@@ -307,12 +312,7 @@ export function SearchView({ idle, heading }: { idle?: ReactNode; heading?: Reac
   return (
     <div className={idle ? "space-y-4" : "mx-auto w-full max-w-[1400px] space-y-6 px-3 py-5 sm:px-5 sm:py-6 lg:px-8 lg:py-8"}>
       <div className="space-y-3">
-        <div className="flex items-center gap-3">
-          {heading}
-          <div className="min-w-0 flex-1">
-            <AdvancedSearchBox tokens={tokens} onTokensChange={setTokens} text={text} onTextChange={setText} autoFocus={!idle} />
-          </div>
-        </div>
+        <AdvancedSearchBox tokens={tokens} onTokensChange={setTokens} text={text} onTextChange={setText} autoFocus={!idle} />
         {singleMedia && (
           <TaxonomyFilter
             value={taxonomy}
