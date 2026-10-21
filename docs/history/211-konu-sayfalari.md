@@ -1,6 +1,16 @@
 # 211 — Konu sayfaları: etiket, kategori, araç (+ araç takibi)
 
-**Durum:** istemci kodu ve migration repoda. `20260921110000_topic_pages.sql` yerel PostgreSQL'de sınandı, **canlıya UYGULANMADI**. Sıra önemli: ÖNCE migration, SONRA istemci. Yeni istemci etiket, kategori ve araç sayfalarında `feed_page`'in 13 argümanlı biçimini ve `feed_count`'u çağırır; migration yoksa bu üç sayfa hata kutusu gösterir.
+**Durum:** uygulandı. `20260921110000_topic_pages.sql` önce yerel PostgreSQL'de sınandı, sonra **canlıya UYGULANDI**: kullanıcı onayıyla, MCP `execute_sql`, tek işlemde (`begin … commit`); gönderilen metin dosyanın yorum satırları çıkarılmış hâli. `schema_migrations`'a dosya sürümüyle (`20260921110000`, `topic_pages`) kayıt düşüldü. İstemci, migration'dan SONRA ana dala alındı.
+
+Canlıda salt-okunur sorgularla doğrulananlar:
+- `tool_follows` tablosu: RLS açık, 3 politika, sınır tetikleyicisi.
+- `feed_page`'in üç biçimi; misafir 13 argümanlı biçimi ve `feed_count`'u çalıştırabiliyor, `for_you_page`'i çalıştıramıyor.
+- 10 ve 11 argümanlı çağrılar eskisi gibi çalışıyor.
+- Süzgeçler gerçek veriyle tutarlı: Midjourney 32 = tablodan doğrudan sayım 32; `#yazarlik` listesi 41 = `feed_count` 41; `image/human_character` 8 = 8.
+
+Canlıda görülen bir tutarsızlık düzeltildi: `tags.usage_count` (35) listedeki gönderi sayısından (41) farklı sayıyor. Bu yüzden etiket sayfasının sayısı da `feed_count`'tan alınıyor.
+
+"Sana özel"in araç sinyali canlıda gerçek bir oturumla denenmedi; yerel testte sınandı.
 
 Kullanıcının istekleri sırasıyla şunlardı:
 - Keşfet'te "Keşfet" başlığı görünmesin.

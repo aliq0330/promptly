@@ -127,7 +127,7 @@ await scenario("1. etiket sayfası: kompakt bant (kolaj başlığın yanında), 
   await page.goto(`${BASE}/tags/local?tag=karakter-tasarimi`);
   await page.getByRole("heading", { level: 1, name: "#Karakter Tasarımı" }).waitFor();
   await page.locator("main article:has(a[data-card-link])").first().waitFor();
-  assert.match(await page.locator("[data-topic-count]").textContent(), /23 içerikte kullanıldı/);
+  await page.waitForFunction(() => /3 içerikte kullanıldı/.test(document.querySelector("[data-topic-count]")?.textContent ?? ""));
   const actions = page.locator("[data-topic-actions]");
   await actions.getByRole("button", { name: /Takip Et/ }).waitFor();
   // Bant: kolaj başlığın SOLUNDA (telefonda üstünde değil).

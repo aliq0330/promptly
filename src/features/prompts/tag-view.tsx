@@ -15,9 +15,10 @@ import type { Tag } from "@/types";
 
 /**
  * A tag's page (`/tags/local?tag=<slug>` — tags are real, possibly user-created rows, so they are looked up client-side):
- * the shared topic-page template (docs/history/211-*) with the tag's real label and usage count, Takip Et and Paylaş, then
+ * the shared topic-page template (docs/history/211-*) with the tag's real label, Takip Et and Paylaş, then
  * the section tiles and the tagged posts — server-side `feed_page` with `p_tag`, keyset paginated.
  */
+// The count comes from `feed_count` like the list itself (`tags.usage_count` counts differently, so the two could disagree).
 export function TagView() {
   const { t } = useTranslation();
   const searchParams = useSearchParams();
@@ -53,7 +54,6 @@ export function TagView() {
       kicker={<TopicKicker>{t("tag.kicker")}</TopicKicker>}
       title={`#${tag.label}`}
       icon={Hash}
-      count={tag.usageCount}
       countKey="tag.usedInCount"
       primary={<TagFollowButton slug={tag.slug} label={tag.label} className={BAND_PRIMARY_CLASS} />}
       shareUrl={tagHref(tag)}
