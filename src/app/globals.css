@@ -689,6 +689,18 @@
     pointer-events: none;
   }
 
+  /* A sticky row that rides under the header (Home's view tabs): it pins below the 4rem header and, once the header slides
+   * away (below `lg`), moves up into its place. */
+  [data-sticky-under-header] {
+    top: 4rem;
+    transition: top 320ms var(--ease-soft);
+  }
+  @media (max-width: 1023.98px) {
+    html[data-chrome-hidden]:not(:has([data-app-header]:focus-within)) [data-sticky-under-header] {
+      top: 0;
+    }
+  }
+
   /* A detail page's actions row pinned to the screen's bottom (`DetailActionBar`): on phones it rides just above the
    * bottom nav (its safe-area padding tucks under the nav) and drops to the very edge when the nav slides away. */
   [data-detail-dock] {
