@@ -1,15 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { Hash, LayoutGrid, Sparkles, SquareTerminal, SlidersHorizontal, TrendingUp, Users, Workflow as WorkflowIcon } from "lucide-react";
+import { useState } from "react";
+import { LayoutGrid, Sparkles, SquareTerminal, SlidersHorizontal, Users, Workflow as WorkflowIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Chip } from "@/components/ui/chip";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PromptCardSkeletonGrid } from "@/components/ui/prompt-card-skeleton";
 import { FeedItemsView } from "./feed-items-view";
-import { ContentTypeTiles, PopularStrip, useDiscoverHighlights } from "./discover-highlights";
+import { CategoryStrip, CreatorStrip, PopularStrip, TagStrip, useDiscoverHighlights } from "./discover-highlights";
 import { useFeedPages } from "./use-feed-pages";
 import type { FeedKind } from "@/lib/supabase/feed";
 import { feedOrderForSort } from "@/lib/feed-cursor";
@@ -20,16 +18,9 @@ import { TaxonomyTypeChips } from "@/features/content/taxonomy-filter";
 import { SearchView } from "@/features/search/search-view";
 import { EMPTY_TAXONOMY_FILTER, type TaxonomyFilterValue } from "@/lib/content-taxonomy";
 import { CreatorCard } from "@/features/profile/creator-card";
-import { WeeklyChallengeBanner } from "@/features/challenges/weekly-challenge-banner";
 import { useCreatorPages } from "@/features/profile/use-creator-pages";
-import { fetchPopularTags } from "@/lib/supabase/tags";
-import { tagHref } from "@/lib/utils";
-import { SuggestionStrip } from "@/features/communities/suggestion-strip";
-import { useToast } from "@/features/groups/use-toast";
-import { useAuth } from "@/features/auth/auth-provider";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
-import type { Tag } from "@/types";
 
 type Section = "all" | "prompts" | "workflows" | "presets" | "requests" | "creators";
 
@@ -52,29 +43,21 @@ const SECTION_KIND: Record<Exclude<Section, "creators">, FeedKind | "all"> = {
 };
 
 /**
- * Explore — search, trending tags, and one place to browse every kind of
- * content: all, prompts, workflows, presets, requests (open / all) and
- * creators. The content sections are SERVER queries (`public.feed_page`, the
+ * Explore — search, then a compact top (docs/history/210-*: categories, rising
+ * tags, popular, creators — each one scrolling row so the first post starts on
+ * the first phone screen), then one place to browse every kind of content:
+ * all, prompts, workflows, presets, requests (open / all) and creators. The content sections are SERVER queries (`public.feed_page`, the
  * same keyset hook as Home): filter, sort and "Load more" are decided by the
  * database, so "Most liked" is global rather than the top of a client pool.
  * Creators are profiles, paged separately by (follower_count, id).
  */
 export function DiscoverFeed() {
   const { t } = useTranslation();
-  const router = useRouter();
-  const { user } = useAuth();
-  const { node: toastNode, show: showToast } = useToast();
   const [section, setSection] = useState<Section>("all");
   const [taxonomy, setTaxonomy] = useState<TaxonomyFilterValue>(EMPTY_TAXONOMY_FILTER);
   const [openOnly, setOpenOnly] = useState(false);
   // Home is "what's new"; Discover opens on what the community likes most, so the two never show the same order.
   const [sort, setSort] = useState<ContentSortKey>("most-liked");
-  const [tags, setTags] = useState<Tag[]>([]);
-
-  useEffect(() => {
-    // Genuinely usage-sorted (CLAUDE.md Bölüm 9.23); a fixed strip of chips, not paginated.
-    fetchPopularTags(14).then(setTags);
-  }, []);
 
   const isCreators = section === "creators";
   // "Most used" ranks prompts by their use counter, so it only exists while Promptlar is shown;
@@ -107,32 +90,11 @@ export function DiscoverFeed() {
   );
 
   const idleContent = (
-    <div className="space-y-6 max-md:space-y-5">
-      {/* Meydan (docs/history/190-*): the four content types as large tiles — the same taxonomy filter as the chips below. */}
-      <ContentTypeTiles value={taxonomy} onChange={setTaxonomy} counts={highlights.counts} previews={highlights.previews} />
-      {tags.length > 0 && (
-        <section aria-labelledby="discover-trending" className="space-y-2.5">
-          <h2 id="discover-trending" className="flex items-center gap-1.5 text-label font-semibold text-text">
-            <TrendingUp size={14} className="text-secondary" aria-hidden />
-            {t("discover.trending")}
-          </h2>
-          <div className="scrollbar-none -mx-3 flex touch-pan-x gap-2 overflow-x-auto overscroll-x-contain px-3 sm:mx-0 sm:flex-wrap sm:px-0">
-            {tags.map((tag) => (
-              <Link
-                key={tag.slug}
-                href={tagHref(tag)}
-                className="inline-flex h-9 shrink-0 items-center gap-0.5 rounded-full bg-surface-soft px-3.5 text-label font-semibold text-text-secondary transition-colors duration-200 hover:bg-primary-soft hover:text-primary"
-              >
-                <Hash size={13} className="text-text-muted" aria-hidden />
-                {tag.label}
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
-      {user && <SuggestionStrip onToast={showToast} onGoInvites={() => router.push("/communities?tab=invites")} />}
-      <WeeklyChallengeBanner />
+    <div className="space-y-4">
+      <CategoryStrip sample={highlights.sample} value={taxonomy} onChange={setTaxonomy} />
+      <TagStrip tags={highlights.tags} />
       <PopularStrip popular={highlights.popular} />
+      <CreatorStrip creators={highlights.creators} onSeeAll={() => setSection("creators")} />
 
       <SectionNav
         items={SECTIONS.map((s) => ({ key: s.key, label: t(s.labelKey), icon: s.icon }))}
@@ -192,12 +154,7 @@ export function DiscoverFeed() {
     </div>
   );
 
-  return (
-    <>
-      <SearchView idle={idleContent} />
-      {toastNode}
-    </>
-  );
+  return <SearchView idle={idleContent} heading={<h1 className="shrink-0 font-display text-h1 font-bold text-text">{t("nav.discover")}</h1>} />;
 }
 
 /** Failure line + "Load more" under a paged list (shared by the feed and the creators list). */

@@ -1,15 +1,12 @@
 "use client";
 
-import { PageContainer, PageHeader } from "@/components/ui/page-header";
+import { PageContainer } from "@/components/ui/page-header";
 import { DiscoverFeed } from "@/features/feed/discover-feed";
-import { useTranslation } from "@/lib/i18n/language-provider";
 
 export default function DiscoverPage() {
-  const { t } = useTranslation();
+  // docs/history/210-*: the title shares the search box's row (DiscoverFeed → SearchView `heading`), no description block.
   return (
-    <PageContainer className="space-y-6">
-      {/* Meydan (docs/history/190-*): a plain, large title — no illustrated card taking a third of the first screen. */}
-      <PageHeader title={t("discover.pageTitle")} description={t("discover.pageDescription")} />
+    <PageContainer>
       <DiscoverFeed />
     </PageContainer>
   );

@@ -208,7 +208,7 @@ tamamlanmış sayılmaz. Ayrıntı ve mimari: `docs/history/049-*`, `056-*`, `05
 |---|---|
 | `/` | Ana Sayfa: karma akış (**Sana özel** — oturumlu kullanıcının varsayılanı, `for_you_page`, her kartta nedeni + ilgi alanı çipleri · En yeni / Popüler / Takip / Etiketlerim — `feed_page`; hepsi sunucudan, keyset), tür çipleri; misafire **canlı vitrin** (`GuestShowcase`: en sevilen görsel promptlar akar, dokununca prompt açılır; az görselde kompakt tanıtım) — `docs/history/209-*` |
 | `/focus` | **Odak** (`docs/history/199-*`): tam ekran, dikey, tek gönderi/ekran (Reels tarzı); herkesin herkese açık gönderileri (`feed_page` en yeni; "Takip ettiklerim"), "Medya" süzgeci, video/ses yazarın yüklediği çıktıyla oynar; açıkken üst/yan/alt menü gizli, hep koyu sahne; telefonda alt menünün 5. yuvası (Profil üstteki avatar menüsünde) |
-| `/discover` | Keşfet: bölümler (Tümü / Promptlar / Workflow / Hazır ayar / İstekler / Yaratıcılar), filtreler (Promptlar'da ek "En çok kullanılan" sıralaması); içerik bölümleri sunucudan `feed_page` (keyset), Yaratıcılar `profiles` keyset |
+| `/discover` | Keşfet: başlık arama satırında, sıkı üst (`docs/history/210-*`: Kategoriler · Yükselen etiketler · Bu hafta popüler · Öne çıkan yaratıcılar — her biri tek yatay şerit, ilk gönderi telefonun ilk ekranında başlar), sonra bölümler (Tümü / Promptlar / Workflow / Hazır ayar / İstekler / Yaratıcılar), filtreler (Promptlar'da ek "En çok kullanılan" sıralaması); içerik bölümleri sunucudan `feed_page` (keyset), Yaratıcılar `profiles` keyset |
 | `/prompts`, `/requests`, `/workflows`, `/presets` | Tür listeleri (ortak `ContentListPage`: arama, Filtre, sıralama, Kart/Izgara) |
 | `/prompts/local?id=` · `/requests/local?id=` · `/workflows/local?id=` · `/presets/local?id=` · `/results/local?id=` | Detay sayfaları |
 | `/create` · `/requests/new` · `/workflows/create` · `/presets/create` | Oluşturma/düzenleme (`?edit=<id>`), ortak alt alan: Görünürlük + Taslağa kaydet/Paylaş |
@@ -431,5 +431,5 @@ bağlayıcıdır; ayrıntılı gerekçe için `docs/history/README.md` tablosuna
   isteğin `creative_direction`'ını da kapsar ve keyset sayfalanır (`search_content`); `prompt_saves` canlıdan kaldırıldı; kod içi
   yorumlarda eski "Bölüm 9.x" atıfları arşiv numaralarına (`docs/history/NNN-*`) karşılık gelir.
 
-**Arşiv:** [`docs/history/README.md`](docs/history/README.md) — 209 bölüm, her
+**Arşiv:** [`docs/history/README.md`](docs/history/README.md) — 210 bölüm, her
 biri için durum etiketi (uygulandı / kısmen geçerli / kaldırıldı).

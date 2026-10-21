@@ -61,9 +61,10 @@ const ALL_TAB_PREVIEW = 4;
 /**
  * The chip search + its results. On Explore it is embedded: `idle` is what
  * shows while there is no query (the normal Explore content); once chips or
- * text exist, results replace it.
+ * text exist, results replace it. `heading` (Explore's title) sits on the
+ * search box's row, so the page spends one line on both.
  */
-export function SearchView({ idle }: { idle?: ReactNode } = {}) {
+export function SearchView({ idle, heading }: { idle?: ReactNode; heading?: ReactNode } = {}) {
   const { t } = useTranslation();
   const [viewMode] = useViewMode();
   const [tokens, setTokens] = useState<SearchToken[]>([]);
@@ -304,9 +305,14 @@ export function SearchView({ idle }: { idle?: ReactNode } = {}) {
   );
 
   return (
-    <div className={idle ? "space-y-6" : "mx-auto w-full max-w-[1400px] space-y-6 px-3 py-5 sm:px-5 sm:py-6 lg:px-8 lg:py-8"}>
+    <div className={idle ? "space-y-4" : "mx-auto w-full max-w-[1400px] space-y-6 px-3 py-5 sm:px-5 sm:py-6 lg:px-8 lg:py-8"}>
       <div className="space-y-3">
-        <AdvancedSearchBox tokens={tokens} onTokensChange={setTokens} text={text} onTextChange={setText} autoFocus={!idle} />
+        <div className="flex items-center gap-3">
+          {heading}
+          <div className="min-w-0 flex-1">
+            <AdvancedSearchBox tokens={tokens} onTokensChange={setTokens} text={text} onTextChange={setText} autoFocus={!idle} />
+          </div>
+        </div>
         {singleMedia && (
           <TaxonomyFilter
             value={taxonomy}

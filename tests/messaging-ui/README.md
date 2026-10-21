@@ -102,3 +102,11 @@ SHOT_DIR=/tmp/shots node tests/messaging-ui/run-stories.mjs   # ekran görüntü
 ```bash
 CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/messaging-ui/run-focus-feed.mjs   # 23/23 beklenir
 ```
+
+## Keşfet sıkı üst (`docs/history/210-*`)
+
+`run-discover.mjs`: başlık arama satırında; Kategoriler → Yükselen etiketler → Bu hafta popüler → Öne çıkan yaratıcılar sırası; ilk gönderi kartı telefonun ilk ekranında; kategori hapı `feed_page` `p_category` süzgecini açıp kapatır; "Tümünü gör" → Yaratıcılar; trend boşken sayısız yedek; İngilizce; 1280px taşma yok. Gerçek Supabase'e KARŞI DENENMEDİ.
+
+```bash
+CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/messaging-ui/run-discover.mjs   # 6/6 beklenir
+```
