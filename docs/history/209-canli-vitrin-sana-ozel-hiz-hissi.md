@@ -1,6 +1,6 @@
 # 209 — Canlı vitrin, kart geçişi, hız hissi, "Sana özel"
 
-**Durum:** istemci kodu + migration repoda. `20260921100000_media_appearance_and_for_you.sql` **canlıya UYGULANMADI**. Sıra: ÖNCE migration, SONRA istemci. Yeni istemci `prompt_media.dominant_color/placeholder` sütunlarını seçer ve `for_you_page`'i çağırır; migration yoksa prompt okumaları hata verir. `drop` yok.
+**Durum:** uygulandı. `20260921100000_media_appearance_and_for_you.sql` **canlıya UYGULANDI** (kullanıcı onayıyla, MCP `execute_sql`, tek işlem; `schema_migrations`'a dosya sürümüyle kayıt düşüldü). Canlıda salt-okunur sorguyla doğrulandı: iki sütun + iki CHECK, dört fonksiyon, anon EXECUTE kapalı, 107 mevcut `prompt_media` satırı korundu (hepsi henüz renksiz). `for_you_page` `aliq` adına geri alınan bir işlemde çalıştırıldı: 18 satır döndü. Hepsinin nedeni `creator`, çünkü bu hesap demo yazarları takip ediyor. `drop` yok.
 
 Kullanıcı, yol haritası önizlemesindeki (etkileşimli sayfa) dört fikri seçti: canlı vitrin, kart → detay geçişi, hız hissi, "Sana özel".
 

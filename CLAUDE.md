@@ -354,7 +354,7 @@ Canlı projede (kontrol: bu oturum) 20 profil (18 demo hesap), 148 prompt (+43 t
 bağlayıcıdır; ayrıntılı gerekçe için `docs/history/README.md` tablosuna bak.
 
 **Açık işler (kullanıcı/yönetici adımı veya bilinen boşluk):**
-- Canlı vitrin / kart geçişi / hız hissi / Sana özel (`docs/history/209-*`): `20260921100000_media_appearance_and_for_you.sql` repoda (yalnızca ekleyici: `prompt_media.dominant_color/placeholder` + 2 CHECK, 3 moderatör RPC'si, `for_you_page`; `drop` yok), yerel PostgreSQL'de sınandı (`for-you.sql` 13 kontrol; 18 SQL dosyası `FAILED=0`), **canlıya UYGULANMADI** — ÖNCE migration, SONRA istemci (yeni istemci yeni sütunları seçer; migration yoksa prompt okumaları hata verir). Uyguladıktan sonra moderatör `/moderation → Görsel renklerini doldur`'u bir kez çalıştırmalı. Gerçek Supabase'e / gerçek veriyle sıralama kalitesine / iOS Safari'ye karşı denenmedi.
+- Canlı vitrin / kart geçişi / hız hissi / Sana özel (`docs/history/209-*`): `20260921100000_media_appearance_and_for_you.sql` **canlıya UYGULANDI** (kullanıcı onayıyla, MCP `execute_sql`, tek işlem; `schema_migrations`'a dosya sürümüyle kayıt; yalnızca ekleyici, `drop` yok; canlıda doğrulandı). **Bekleyen adım:** moderatör `/moderation → Görsel renklerini doldur`'u bir kez çalıştırmalı (107 eski görsel renksiz). Gerçek oturumla / iOS Safari'ye karşı denenmedi; sıralama sabitleri elle seçildi.
 - Hikâyeler (`docs/history/198-*`): `20260920170000_stories.sql` (+ isteğe bağlı `20260920170100_stories_cron.sql`, `pg_cron` varsa
   saatlik saklama işi) repoda, yerel PostgreSQL'de sınandı (`stories.sql` 65 kontrol; önceki 16 dosya `FAILED=0`), **canlıya
   UYGULANMADI** — ÖNCE migration, SONRA istemci (yeni istemci `messages.story_id`'yi seçer; migration yoksa mesajlaşma da hata
