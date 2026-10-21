@@ -76,6 +76,7 @@ export function ApplicationCard({
           )
         }
         backdrop={picture ? <StorageImage src={picture.url} alt="" fill sizes="240px" className="object-cover" /> : undefined}
+        tint={picture?.color}
         title={summary ? <ContentCardTitle href={href} title={summary.title} /> : null}
         footer={
           // `contents`: the buttons stay direct items of the shared action row; the wrapper only marks them as the POST's own counters.

@@ -124,7 +124,7 @@ export function SectionNav<K extends string>({
           )}
         >
           {items.map((item) => (
-            <SectionTile key={item.key} item={item} selected={item.key === active} onSelect={() => onChange(item.key)} />
+            <SectionTile key={item.key} item={item} selected={item.key === active} onSelect={() => onChange(item.key)} fluid={spread} />
           ))}
         </div>
 
@@ -183,7 +183,18 @@ const QUIET_CHIPS =
   "[&>button]:border-transparent [&>button]:bg-transparent [&>button]:text-text-muted [&>button]:shadow-none [&>button:hover]:bg-surface-soft " +
   "[&>button[aria-pressed=true]]:border-transparent [&>button[aria-pressed=true]]:bg-primary-soft [&>button[aria-pressed=true]]:text-primary";
 
-function SectionTile<K extends string>({ item, selected, onSelect }: { item: SectionNavItem<K>; selected: boolean; onSelect: () => void }) {
+function SectionTile<K extends string>({
+  item,
+  selected,
+  onSelect,
+  fluid,
+}: {
+  item: SectionNavItem<K>;
+  selected: boolean;
+  onSelect: () => void;
+  /** Share the row's width (a spread row of up to five tiles on a phone) instead of a fixed width. */
+  fluid?: boolean;
+}) {
   const Icon = item.icon;
   return (
     <button
@@ -191,11 +202,14 @@ function SectionTile<K extends string>({ item, selected, onSelect }: { item: Sec
       role="tab"
       aria-selected={selected}
       onClick={onSelect}
-      className="group flex w-[4.75rem] shrink-0 flex-col items-center gap-1.5 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+      className={cn(
+        "group flex flex-col items-center gap-1.5 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+        fluid ? "min-w-0 max-w-[4.75rem] flex-1 sm:w-[4.75rem] sm:flex-none" : "w-[4.75rem] shrink-0",
+      )}
     >
       <span
         className={cn(
-          "grid h-[3.75rem] w-[3.75rem] place-items-center rounded-[1.25rem] transition-[background-color,color,box-shadow,transform] duration-200 ease-soft group-active:scale-[0.95]",
+          "grid aspect-square w-full max-w-[3.75rem] place-items-center rounded-[1.25rem] transition-[background-color,color,box-shadow,transform] duration-200 ease-soft group-active:scale-[0.95]",
           selected ? "bg-text text-background shadow-card" : "bg-surface-soft text-text-secondary group-hover:bg-border-soft group-hover:text-text",
         )}
       >

@@ -295,6 +295,16 @@ export async function updateOwnProfile(userId: string, input: UpdateOwnProfileIn
   return mapProfileRow(data as ProfileRow);
 }
 
+/**
+ * Saves only the signed-in user's profile interests (the "Sana özel" chips, docs/history/209-*; same column the profile
+ * editor writes). RLS lets a user update only their own row; "0 rows" is an error, never a silent success.
+ */
+export async function updateOwnInterests(userId: string, interests: string[]): Promise<UserProfile> {
+  const { data, error } = await supabase.from("profiles").update({ interests }).eq("id", userId).select(PROFILE_SELECT).maybeSingle();
+  if (error || !data) throw new Error(error?.message ?? translateForRuntime("profile.updateFailed"));
+  return mapProfileRow(data as ProfileRow);
+}
+
 export const USERNAME_PATTERN = /^[a-z0-9_.]{3,30}$/;
 
 /**

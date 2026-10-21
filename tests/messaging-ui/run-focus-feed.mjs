@@ -78,6 +78,13 @@ async function installFeed(context, db, feed) {
       const start = body.p_after_id ? rows.findIndex((r) => r.id === body.p_after_id) + 1 : 0;
       return ok(rows.slice(start, start + body.p_limit));
     }
+    // Ana Sayfa'nın oturumlu varsayılanı "Sana özel" (docs/history/209-*): aynı içerik, nedensiz (popüler) — Odak'ın `feedCalls` sayımına girmez.
+    if (table === "rpc/for_you_page") {
+      const body = JSON.parse(req.postData() || "{}");
+      const rows = feed.order.map(([kind, row], i) => ({ kind, id: row.id, created_at: row.created_at, sort_rank: 1000 - i, reason_kind: "popular", reason_ref: null }));
+      const start = body.p_after_id ? rows.findIndex((r) => r.id === body.p_after_id) + 1 : 0;
+      return ok(rows.slice(start, start + body.p_limit));
+    }
     if (req.method() === "GET" && tables[table] && (url.searchParams.get("id") ?? "").startsWith("in.")) {
       const ids = url.searchParams.get("id").slice(4, -1).split(",").map((s) => s.replace(/"/g, ""));
       return ok(tables[table].filter((row) => ids.includes(row.id)));

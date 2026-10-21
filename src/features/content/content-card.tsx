@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { createContext, useContext } from "react";
+import { createContext, useContext, useRef } from "react";
 import { Avatar } from "@/components/ui/avatar";
-import { rememberCardMedia } from "@/lib/card-transition";
+import { rememberCardMedia, useCardMediaReturn } from "@/lib/card-transition";
 import { cn, profileHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { UserProfile } from "@/types";
@@ -29,20 +29,28 @@ import { splitSourceNotes } from "@/lib/source-notes";
  */
 export function ContentCard({
   href,
+  onOpen,
   className,
   children,
 }: {
   href: string;
+  /** Called when the card's own link is followed — a card hands its post to the detail page (`lib/detail-handoff.ts`). */
+  onOpen?: () => void;
   className?: string;
   children: React.ReactNode;
 }) {
+  const ref = useRef<HTMLElement>(null);
+  // Back from this card's own detail page: the hero shrinks back into the cover.
+  useCardMediaReturn(href, ref);
   return (
     <article
+      ref={ref}
       // A click that will navigate to this card's own page remembers where the cover is, so the detail
       // page can morph it (src/lib/card-transition.ts). Controls (like, menu…) stop their own clicks.
       onClickCapture={(event) => {
         if ((event.target as Element).closest("a[data-card-link]")) {
           rememberCardMedia(href, event.currentTarget.querySelector("[data-card-media]"));
+          onOpen?.();
         }
       }}
       className={cn(
@@ -120,14 +128,23 @@ export const CONTENT_GRID_ITEM_CLASS = "break-inside-avoid pb-3 sm:pb-4";
  */
 export function CardBandBackdrop({
   backdrop,
+  tint,
   className,
   as: Tag = "div",
 }: {
   backdrop?: React.ReactNode;
+  /**
+   * The picture's stored average colour (`PromptMedia.color`, docs/history/209-*). When known it tints the band directly —
+   * the same look without drawing an enlarged, blurred copy of the picture behind every card, and there before the picture loads.
+   */
+  tint?: string | null;
   className?: string;
   /** "span" inside a `<button>` band (a workflow's step card). */
   as?: "div" | "span";
 }) {
+  if (tint) {
+    return <Tag aria-hidden className={cn("absolute inset-0 overflow-hidden rounded-t-xl", className)} style={{ backgroundColor: bandTint(tint) }} />;
+  }
   return (
     <Tag aria-hidden className={cn("absolute inset-0 overflow-hidden rounded-t-xl bg-primary-soft", className)}>
       {backdrop && (
@@ -140,6 +157,11 @@ export function CardBandBackdrop({
   );
 }
 
+/** A band colour from a picture's average colour: about a third of it over the page colour (the blurred backdrop's strength). */
+export function bandTint(color: string): string {
+  return `color-mix(in srgb, ${color} 34%, var(--color-background))`;
+}
+
 export function ContentCardPost({
   author,
   meta,
@@ -147,6 +169,7 @@ export function ContentCardPost({
   menu,
   art,
   backdrop,
+  tint,
   title,
   primary,
   footer,
@@ -163,6 +186,8 @@ export function ContentCardPost({
   art?: React.ReactNode;
   /** The post's picture again (`<img>`/`StorageImage` filling its box) — tints the band. */
   backdrop?: React.ReactNode;
+  /** The picture's stored average colour: tints the band without the blurred copy (`CardBandBackdrop`). */
+  tint?: string | null;
   /** `ContentCardTitle`. */
   title: React.ReactNode;
   /** The card's one big action. */
@@ -176,7 +201,7 @@ export function ContentCardPost({
   return (
     <>
       <div className="relative rounded-t-xl px-3.5 pb-4 pt-3.5">
-        <CardBandBackdrop backdrop={backdrop} />
+        <CardBandBackdrop backdrop={backdrop} tint={tint} />
         <div className="relative space-y-3.5">
           {art}
           {children && <div className="space-y-2">{children}</div>}

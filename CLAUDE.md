@@ -147,7 +147,7 @@ için), `Badge`, `Card`, `Chip`/`ChipRow`, `Tabs` (underline / segmented / pill)
 `DetailSkeleton`/`NotFoundBlock`, `PromptCardSkeleton`.
 `features/content/` — `ContentCard` kabuğu (PromptCard / WorkflowCard / PresetCard /
 RequestCard ortak), `ContentTypeLabel`, `ContentTags`,
-`contentActionClassName` (Beğeni/Yorum/Kaydet/Paylaş ortak görünümü). Her kartın iç yerleşimi **Albüm kartı** `ContentCardPost` (`docs/history/202-*`, kullanıcı beş yön arasından seçti; detay sayfasının bandıyla aynı dil): üstte gönderinin görselinden renk alan BANT (`backdrop` büyütülüp bulanıklaştırılır, sayfa rengi örtü; görselsizde `bg-primary-soft`) — içinde `art` (çıktı görseli / video-ses kapağı / görselsiz promptta prompt metni / workflow adım karosu / hazır ayar parametre karosu / istek görseli ya da metni), tür satırı (`ContentTypePill`: simge + BÜYÜK HARF etiket + `detail` = araç/kategori; durum rozetleri yanında), büyük başlık (`ContentCardTitle`, açıklamasız), küçük avatar + ad + "@kullanıcı · zaman", sağda ⋮; altında eylem satırı: solda kartın TEK büyük eylemi (`primary`: Kopyala / Çalıştır / Studio'da aç / Yanıtla — `CARD_PRIMARY_CLASS`), sağda Beğeni · Yorum · Kaydet · İstatistik · Paylaş (büyük eylem yoksa eski sıra: sayaçlar solda, Paylaş sağda). Kart stacking context kurmaz (`isolate`/transform yok — ⋮ menüsü sonraki kartın üstüne açılır). Yeni kart yazarken bu kabuğu kullan, ikinci başlık/altbilgi çizme.
+`contentActionClassName` (Beğeni/Yorum/Kaydet/Paylaş ortak görünümü). Her kartın iç yerleşimi **Albüm kartı** `ContentCardPost` (`docs/history/202-*`, kullanıcı beş yön arasından seçti; detay sayfasının bandıyla aynı dil): üstte gönderinin görselinden renk alan BANT (`backdrop` büyütülüp bulanıklaştırılır, sayfa rengi örtü; görselsizde `bg-primary-soft`) — içinde `art` (çıktı görseli / video-ses kapağı / görselsiz promptta prompt metni / workflow adım karosu / hazır ayar parametre karosu / istek görseli ya da metni), tür satırı (`ContentTypePill`: simge + BÜYÜK HARF etiket + `detail` = araç/kategori; durum rozetleri yanında), büyük başlık (`ContentCardTitle`, açıklamasız), küçük avatar + ad + "@kullanıcı · zaman", sağda ⋮; altında eylem satırı: solda kartın TEK büyük eylemi (`primary`: Kopyala / Çalıştır / Studio'da aç / Yanıtla — `CARD_PRIMARY_CLASS`), sağda Beğeni · Yorum · Kaydet · İstatistik · Paylaş (büyük eylem yoksa eski sıra: sayaçlar solda, Paylaş sağda). Kart stacking context kurmaz (`isolate`/transform yok — ⋮ menüsü sonraki kartın üstüne açılır). Yeni kart yazarken bu kabuğu kullan, ikinci başlık/altbilgi çizme. **Prompt görseli kayıtlı rengiyle açılır** (`docs/history/209-*`: `prompt_media.dominant_color/placeholder`, yüklemede `lib/image-appearance.ts` hesaplar; kart bandı `tint`, kapak `StorageAppearanceImage` — renk → bulanık önizleme → görsel yumuşakça biner); yeni bir prompt görseli yükleme yolu yazarsan görünümü de yaz. Kart → detay geçişi tek yerde `lib/card-transition.ts` (FLIP; kart gönderisini `lib/detail-handoff.ts` ile devreder, geri dönüşte kapak kartına küçülür; Geri'de liste `useFeedPages` belleğinden döner) — ikinci bir geçiş sistemi (View Transitions vb.) kurma.
 Oluşturma ekranlarının ortak alt alanı `CreateFormActions` paylaşım hedefi seçicisini (`ShareDestinationField`, `docs/history/197-*`: "Nerede paylaşmak istiyorsun?" Genel akış / üye olunan topluluklar) taşır; seçim `?community=` bağlamının (`community-return.ts`) üstüne biner — yeni bir oluşturma formu yazarsan `CreateFormActions`'ı kullan, ayrı hedef seçici yazma.
 Sitedeki HER gönderi listesi (Ana Sayfa, Topluluklar, topluluk sayfası, Keşfet, listeler, profil, arama, koleksiyon) `ContentGrid`
 ile çizilir: HER ekranda kutulu kartlar (telefonda tek sütun, 12px sayfa kenar boşluğu; `sm`+ kutulu sütunlar, yanında sağ sütun olan sayfada en çok 2; `docs/history/196-*`) —
@@ -206,7 +206,7 @@ tamamlanmış sayılmaz. Ayrıntı ve mimari: `docs/history/049-*`, `056-*`, `05
 
 | Route | Açıklama |
 |---|---|
-| `/` | Ana Sayfa: karma akış (En yeni / Popüler / Takip / Etiketlerim; sunucudan `feed_page`, keyset), tür çipleri; misafire tanıtım |
+| `/` | Ana Sayfa: karma akış (**Sana özel** — oturumlu kullanıcının varsayılanı, `for_you_page`, her kartta nedeni + ilgi alanı çipleri · En yeni / Popüler / Takip / Etiketlerim — `feed_page`; hepsi sunucudan, keyset), tür çipleri; misafire **canlı vitrin** (`GuestShowcase`: en sevilen görsel promptlar akar, dokununca prompt açılır; az görselde kompakt tanıtım) — `docs/history/209-*` |
 | `/focus` | **Odak** (`docs/history/199-*`): tam ekran, dikey, tek gönderi/ekran (Reels tarzı); herkesin herkese açık gönderileri (`feed_page` en yeni; "Takip ettiklerim"), "Medya" süzgeci, video/ses yazarın yüklediği çıktıyla oynar; açıkken üst/yan/alt menü gizli, hep koyu sahne; telefonda alt menünün 5. yuvası (Profil üstteki avatar menüsünde) |
 | `/discover` | Keşfet: bölümler (Tümü / Promptlar / Workflow / Hazır ayar / İstekler / Yaratıcılar), filtreler (Promptlar'da ek "En çok kullanılan" sıralaması); içerik bölümleri sunucudan `feed_page` (keyset), Yaratıcılar `profiles` keyset |
 | `/prompts`, `/requests`, `/workflows`, `/presets` | Tür listeleri (ortak `ContentListPage`: arama, Filtre, sıralama, Kart/Izgara) |
@@ -354,6 +354,7 @@ Canlı projede (kontrol: bu oturum) 20 profil (18 demo hesap), 148 prompt (+43 t
 bağlayıcıdır; ayrıntılı gerekçe için `docs/history/README.md` tablosuna bak.
 
 **Açık işler (kullanıcı/yönetici adımı veya bilinen boşluk):**
+- Canlı vitrin / kart geçişi / hız hissi / Sana özel (`docs/history/209-*`): `20260921100000_media_appearance_and_for_you.sql` **canlıya UYGULANDI** (kullanıcı onayıyla, MCP `execute_sql`, tek işlem; `schema_migrations`'a dosya sürümüyle kayıt; yalnızca ekleyici, `drop` yok; canlıda doğrulandı). **Bekleyen adım:** moderatör `/moderation → Görsel renklerini doldur`'u bir kez çalıştırmalı (107 eski görsel renksiz). Gerçek oturumla / iOS Safari'ye karşı denenmedi; sıralama sabitleri elle seçildi.
 - Hikâyeler (`docs/history/198-*`): `20260920170000_stories.sql` (+ isteğe bağlı `20260920170100_stories_cron.sql`, `pg_cron` varsa
   saatlik saklama işi) repoda, yerel PostgreSQL'de sınandı (`stories.sql` 65 kontrol; önceki 16 dosya `FAILED=0`), **canlıya
   UYGULANMADI** — ÖNCE migration, SONRA istemci (yeni istemci `messages.story_id`'yi seçer; migration yoksa mesajlaşma da hata
@@ -425,10 +426,10 @@ bağlayıcıdır; ayrıntılı gerekçe için `docs/history/README.md` tablosuna
   (private medyada eski genel URL'nin hata vermesi, Takip/arama/Benzer akışları)
   kullanıcı tarafından yapıldığı bildirildi; bu oturumda ayrıca doğrulanmadı.
 - Bilinen sınırlamalar: Keşfet içerik bölümleri, Ana Sayfa ve liste sayfaları
-  gerçek keyset sayfalama kullanır (Keşfet'te "En çok beğenilen" tüm türlerde `like_count`; Ana Sayfa'da kişiselleştirme
-  yoktur, sekme dürüstçe "En yeni"dir); arama prompt metnini (`prompt_text`) ve
+  gerçek keyset sayfalama kullanır (Keşfet'te "En çok beğenilen" tüm türlerde `like_count`; Ana Sayfa'nın kişiselleştirmesi
+  yalnız "Sana özel"dir — `for_you_page`, gerçek sinyaller, her kartta nedeni; `docs/history/209-*`); arama prompt metnini (`prompt_text`) ve
   isteğin `creative_direction`'ını da kapsar ve keyset sayfalanır (`search_content`); `prompt_saves` canlıdan kaldırıldı; kod içi
   yorumlarda eski "Bölüm 9.x" atıfları arşiv numaralarına (`docs/history/NNN-*`) karşılık gelir.
 
-**Arşiv:** [`docs/history/README.md`](docs/history/README.md) — 208 bölüm, her
+**Arşiv:** [`docs/history/README.md`](docs/history/README.md) — 209 bölüm, her
 biri için durum etiketi (uygulandı / kısmen geçerli / kaldırıldı).

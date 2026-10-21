@@ -13,8 +13,8 @@
 export interface MediaInput {
   /** Set when this slot is a brand-new file to upload/encode. */
   file?: File;
-  /** Set when this slot is an already-stored image kept as-is — never re-uploaded. */
-  existing?: { url: string; width: number; height: number };
+  /** Set when this slot is an already-stored image kept as-is — never re-uploaded (its stored appearance travels with it). */
+  existing?: { url: string; width: number; height: number; color?: string | null; placeholder?: string | null };
   alt?: string;
 }
 
@@ -23,6 +23,9 @@ export interface ResolvedMediaEntry {
   width: number;
   height: number;
   alt: string;
+  /** The picture's appearance (`lib/image-appearance.ts`), when known — `prompt_media.dominant_color` / `placeholder`. */
+  color?: string | null;
+  placeholder?: string | null;
 }
 
 /**
@@ -40,10 +43,14 @@ export interface MultiImageItem {
   height: number;
   file?: File;
   existingId?: string;
+  color?: string | null;
+  placeholder?: string | null;
 }
 
-export function multiImageItemFromMedia(media: { id: string; url: string; width: number; height: number }[]): MultiImageItem[] {
-  return media.map((m) => ({ key: m.id, url: m.url, width: m.width, height: m.height, existingId: m.id }));
+export function multiImageItemFromMedia(
+  media: { id: string; url: string; width: number; height: number; color?: string | null; placeholder?: string | null }[],
+): MultiImageItem[] {
+  return media.map((m) => ({ key: m.id, url: m.url, width: m.width, height: m.height, existingId: m.id, color: m.color, placeholder: m.placeholder }));
 }
 
 /**
@@ -53,7 +60,11 @@ export function multiImageItemFromMedia(media: { id: string; url: string; width:
  * re-upload).
  */
 export function toDeferredMediaInputs(items: MultiImageItem[]): MediaInput[] {
-  return items.map((item) => (item.file ? { file: item.file } : { existing: { url: item.url, width: item.width, height: item.height } }));
+  return items.map((item) =>
+    item.file
+      ? { file: item.file }
+      : { existing: { url: item.url, width: item.width, height: item.height, color: item.color, placeholder: item.placeholder } },
+  );
 }
 
 /**
@@ -79,7 +90,10 @@ export function toResolvedMediaInputs(items: MultiImageItem[]): MediaInput[] {
 export async function resolveMediaInputs(
   items: MediaInput[],
   defaultAlt: string,
-  uploadFile: (file: File, index: number) => Promise<{ url: string; width: number; height: number }>,
+  uploadFile: (
+    file: File,
+    index: number,
+  ) => Promise<{ url: string; width: number; height: number; color?: string | null; placeholder?: string | null }>,
 ): Promise<ResolvedMediaEntry[]> {
   const resolved: ResolvedMediaEntry[] = [];
   for (let index = 0; index < items.length; index += 1) {

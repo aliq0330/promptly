@@ -48,7 +48,7 @@ import { fetchDnaSections } from "@/lib/supabase/prompt-dna";
 import { fetchVersionsForPrompt } from "@/lib/supabase/prompt-versions";
 import { Tabs, type TabItem } from "@/components/ui/tabs";
 import { ScrollablePrompt } from "@/features/content/scrollable-prompt";
-import { StorageImage, StorageImg } from "@/components/ui/storage-media";
+import { StorageAppearanceImage, StorageImage, StorageImg } from "@/components/ui/storage-media";
 
 type PromptTab = "prompt" | "history" | "dna";
 
@@ -157,7 +157,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
           : undefined
       }
     >
-      <StorageImage src={media.url} alt={media.alt} fill sizes="(min-width: 768px) 520px, 100vw" className="object-cover" />
+      <StorageAppearanceImage src={media.url} alt={media.alt} color={media.color} placeholder={media.placeholder} sizes="(min-width: 768px) 520px, 100vw" className="object-cover" />
     </DetailArt>
   ) : (
     <DetailArtPlaceholder icon={typeMeta.icon} />
@@ -170,6 +170,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
         <DetailBand
           art={art}
           backdrop={media ? <StorageImage src={media.url} alt="" fill sizes="50vw" className="object-cover" /> : undefined}
+          tint={media?.color}
           kicker={<ContentTypeLabel icon={typeMeta.icon} label={`${t(typeMeta.labelKey)} Prompt`} detail={null} />}
           title={<DetailTitle>{prompt.title}</DetailTitle>}
           byline={
