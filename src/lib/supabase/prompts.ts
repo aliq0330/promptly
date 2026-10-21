@@ -313,28 +313,6 @@ export async function fetchTopPrompts({ since, limit = 12 }: { since?: string; l
   }
 }
 
-/** How many public, published, non-community prompts each content type has (Discover's type tiles). `null` for a type whose count failed. */
-export async function fetchPublicPromptCounts(types: readonly PromptContentType[]): Promise<Partial<Record<PromptContentType, number | null>>> {
-  const entries = await Promise.all(
-    types.map(async (type) => {
-      try {
-        const { count, error } = await supabase
-          .from("prompts")
-          .select("id", { count: "exact", head: true })
-          .eq("content_type", type)
-          .eq("status", "published")
-          .eq("visibility", "public")
-          .is("community_id", null)
-          .is("deleted_at", null);
-        return [type, error ? null : count] as const;
-      } catch {
-        return [type, null] as const;
-      }
-    }),
-  );
-  return Object.fromEntries(entries);
-}
-
 /** Prompts by id (any order), for the home feed's server-chosen page. Same blocked/deleted/profile filters as every other stream; RLS still decides what the viewer may see. */
 export async function fetchPromptsByIds(ids: string[]): Promise<Prompt[]> {
   if (ids.length === 0) return [];
