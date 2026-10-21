@@ -57,8 +57,9 @@ export function AllCommunitiesPage() {
 function BrowseView({ onToast }: { onToast: (message: string) => void }) {
   const { t } = useTranslation();
   const { refresh } = useRealMessages();
-  const [query, setQuery] = useState("");
-  const [debounced, setDebounced] = useState("");
+  // `?q=` comes from the Topluluklar search box (docs/history/212-*); read once, the box below owns it after that.
+  const [query, setQuery] = useState(() => (typeof window === "undefined" ? "" : (new URLSearchParams(window.location.search).get("q") ?? "")));
+  const [debounced, setDebounced] = useState(() => query.trim());
   const [sort, setSort] = useState<BrowseSort>("relevant");
   const [category, setCategory] = useState<CommunityCategory | null>(null);
   const [reloadKey, setReloadKey] = useState(0);

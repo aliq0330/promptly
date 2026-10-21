@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { Check, CheckCheck, Megaphone, MoreHorizontal, Pin, SmilePlus, Star } from "lucide-react";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
@@ -8,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { EmojiPicker } from "./emoji-picker";
 import { MessageImageGrid, useMessageImageUrls } from "./message-image-grid";
 import { MessageActionMenu } from "./message-action-menu";
-import { usePopoverAlign } from "./use-popover-align";
+import { useAnchoredPopover } from "./use-anchored-popover";
 import { canEditOrDeleteMessage } from "./message-time-limit";
 import { SharedCommunityPostCard, SharedPromptCard, SharedPresetCard, SharedRequestCard, SharedWorkflowCard } from "./shared-content-card";
 import { parseWorkflowShareBody } from "./workflow-share-format";
@@ -64,7 +65,12 @@ export type { DeleteMode, MessageBubbleActions, MessageReactionEntry } from "./m
  * plain CSS `group-hover`) or a single tap (mobile — `isActive`, owned by
  * the parent conversation view so activating one message deactivates any
  * other). Neither icon nor the popovers they open change the bubble's own
- * layout position (both are `position: absolute`).
+ * layout position.
+ *
+ * Staying in view (docs/history/212-*): the icon pair is `sticky` inside a column as tall as the bubble, so on a message taller
+ * than the screen it rides along the part that is visible instead of sitting at the bubble's (off-screen) middle. The menu
+ * and the emoji picker are portalled and fixed-positioned by `useAnchoredPopover` inside the visible chat area (below the
+ * header, above the composer and the iOS keyboard), flipping above when there is no room below.
  */
 export function MessageBubble({
   message,
@@ -126,8 +132,18 @@ export function MessageBubble({
   const [nowTick, setNowTick] = useState(() => Date.now());
   const canEditOrDelete = canEditOrDeleteMessage(message.createdAt, nowTick);
 
-  const menuPopover = usePopoverAlign(isMe ? "right" : "left", menuOpen);
-  const emojiPopover = usePopoverAlign(isMe ? "right" : "left", emojiOpen);
+  // A "kendi" message's popover lines up with the right edge of its trigger, the other side's with the left; both are clamped into view.
+  const {
+    anchorRef: menuAnchorRef,
+    panelRef: menuPanelRef,
+    style: menuStyle,
+    side: menuSide,
+  } = useAnchoredPopover({ open: menuOpen, align: isMe ? "end" : "start", onAway: () => setMenuOpen(false) });
+  const {
+    anchorRef: emojiAnchorRef,
+    panelRef: emojiPanelRef,
+    style: emojiStyle,
+  } = useAnchoredPopover({ open: emojiOpen, align: isMe ? "end" : "start", onAway: () => setEmojiOpen(false) });
 
   // A different message being activated (or a blank-area tap deactivating
   // all of them, see local-conversation-view.tsx) closes whatever popover
@@ -155,8 +171,8 @@ export function MessageBubble({
     if (!menuOpen && !emojiOpen) return;
     function handleClickOutside(event: MouseEvent) {
       const target = event.target as Node;
-      if (menuPopover.ref.current?.contains(target)) return;
-      if (emojiPopover.ref.current?.contains(target)) return;
+      if (menuPanelRef.current?.contains(target)) return;
+      if (emojiPanelRef.current?.contains(target)) return;
       if (iconsRef.current?.contains(target)) return;
       setMenuOpen(false);
       setEmojiOpen(false);
@@ -201,15 +217,18 @@ export function MessageBubble({
       // would immediately deactivate this message and close the menu out
       // from under the confirm step.
       onClick={(event) => event.stopPropagation()}
+      data-message-actions
       className={cn(
-        "flex shrink-0 items-center gap-0.5 transition-opacity",
+        // As tall as the bubble; the pair inside is sticky, so it stays on the visible part of a long message.
+        "flex shrink-0 flex-col justify-center self-stretch transition-opacity",
         isRevealed ? "opacity-100" : "opacity-0 focus-within:opacity-100",
       )}
     >
-      <div className="relative">
+      <div className="sticky bottom-2 top-2 flex items-center gap-0.5">
         <button
+          ref={emojiAnchorRef}
           type="button"
-          aria-label="Emoji tepkisi ekle"
+          aria-label={t("messages.addEmojiReaction")}
           aria-haspopup="menu"
           aria-expanded={emojiOpen}
           onClick={(event) => {
@@ -222,12 +241,13 @@ export function MessageBubble({
         >
           <SmilePlus size={16} />
         </button>
-        {emojiOpen && (
-          <EmojiPicker myReaction={myReaction} onSelect={handleReactSelect} align={emojiPopover.align} panelRef={emojiPopover.ref} />
-        )}
-      </div>
-      <div className="relative">
+        {emojiOpen &&
+          createPortal(
+            <EmojiPicker myReaction={myReaction} onSelect={handleReactSelect} panelRef={emojiPanelRef} style={emojiStyle} />,
+            document.body,
+          )}
         <button
+          ref={menuAnchorRef}
           type="button"
           aria-label={t("messages.messageOptionsAriaLabel")}
           aria-haspopup="menu"
@@ -242,21 +262,25 @@ export function MessageBubble({
         >
           <MoreHorizontal size={16} />
         </button>
-        {menuOpen && (
-          <MessageActionMenu
-            message={message}
-            isMe={isMe}
-            align={menuPopover.align}
-            panelRef={menuPopover.ref}
-            canEditOrDelete={canEditOrDelete}
-            actions={actions}
-            onReply={() => actions.onStartReply(message)}
-            onClose={() => {
-              setMenuOpen(false);
-              onActivate(null);
-            }}
-          />
-        )}
+        {/* Portalled (so the scrolling list never clips it) but still a React child of this row: its clicks stop above. */}
+        {menuOpen &&
+          createPortal(
+            <MessageActionMenu
+              message={message}
+              isMe={isMe}
+              panelRef={menuPanelRef}
+              style={menuStyle}
+              side={menuSide}
+              canEditOrDelete={canEditOrDelete}
+              actions={actions}
+              onReply={() => actions.onStartReply(message)}
+              onClose={() => {
+                setMenuOpen(false);
+                onActivate(null);
+              }}
+            />,
+            document.body,
+          )}
       </div>
     </div>
   );
@@ -295,7 +319,7 @@ export function MessageBubble({
         </div>
       )}
 
-      <div className={cn("flex items-center gap-1", isMe ? "flex-row-reverse" : "flex-row")}>
+      <div className={cn("flex items-stretch gap-1", isMe ? "flex-row-reverse" : "flex-row")}>
         {isDeleted ? (
           <div className="max-w-[75%] rounded-2xl border border-dashed border-border-soft px-3.5 py-2 text-sm italic text-text-muted">
             {t("messages.thisMessageWasDeleted")}

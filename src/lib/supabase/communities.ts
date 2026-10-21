@@ -690,6 +690,20 @@ function isFeedPost(post: CommunityPost | undefined): post is CommunityPost {
 }
 
 /** Ekranda yeterince kalan gönderileri "görüldü" işaretler (en çok 50; okuyamadıklarım sunucuda yazılmaz). */
+/**
+ * "Topluluklarım" rafının "N yeni" rozetleri (`my_community_unseen_counts`, docs/history/212-*): üye olduğum herkese açık + kapalı
+ * toplulukların katıldıktan sonra, son 30 günde gelen ve görmediğim gönderi sayısı (99'da kesilir). Rozet yalnız süsleme: hata
+ * olursa boş harita döner, raf rozetsiz çizilir.
+ */
+export async function fetchMyUnseenCounts(): Promise<Map<string, number>> {
+  const { data, error } = await supabase.rpc("my_community_unseen_counts");
+  if (error) {
+    console.error("my_community_unseen_counts", error);
+    return new Map();
+  }
+  return new Map(((data ?? []) as { community_id: string; unseen: number }[]).map((row) => [row.community_id, row.unseen]));
+}
+
 export async function markPostsSeen(postIds: string[]): Promise<void> {
   if (postIds.length === 0) return;
   await callRpc("mark_community_posts_seen", { p_post_ids: postIds.slice(0, 50) });

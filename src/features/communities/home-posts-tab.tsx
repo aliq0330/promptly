@@ -1,10 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
-import { Compass, SquareStack, Users } from "lucide-react";
+import { Compass, SquareStack } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
-import { buttonClassName } from "@/components/ui/button";
 import { HomeFeedList } from "./home-feed-list";
 import { useHomeFeed } from "./use-home-feed";
 import { listMyCommunities } from "@/lib/supabase/communities";
@@ -35,15 +33,8 @@ export function HomePostsTab({ onToast }: { onToast: (message: string) => void }
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-3">
-        <h2 className="flex items-center gap-1.5 text-label font-semibold text-text">
-          <SquareStack size={14} className="text-primary" aria-hidden /> {t("communities.home.posts.title")}
-        </h2>
-        <Link href={homeHref("mine")} className={buttonClassName({ size: "sm", variant: "ghost" })} data-testid="my-communities-link">
-          <Users size={14} /> {t("communities.home.myCommunities")}
-        </Link>
-      </div>
-      <p className="text-caption text-text-muted">{t("communities.home.posts.help")}</p>
+      {/* The page's "Topluluklarım" shelf and section tiles already say where these come from (docs/history/212-*). */}
+      <h2 className="sr-only">{t("communities.home.posts.title")}</h2>
       <HomeFeedList
         feed={feed}
         onToast={onToast}

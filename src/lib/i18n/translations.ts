@@ -1483,6 +1483,7 @@ export const translations = {
   "messages.noConversationsYet": { tr: "Henüz bir konuşman yok.", en: "You don't have any conversations yet." },
   "messages.loginRequiredToSend": { tr: "Giriş yapmadan mesaj gönderilemez.", en: "You need to log in to send a message." },
   "messages.chooseEmojiReaction": { tr: "Emoji tepkisi seç", en: "Choose an emoji reaction" },
+  "messages.addEmojiReaction": { tr: "Emoji tepkisi ekle", en: "Add emoji reaction" },
   "messages.giveEmojiReaction": { tr: "{{emoji}} tepkisi ver", en: "React with {{emoji}}" },
   "messages.showMoreEmoji": { tr: "Daha fazla emoji göster", en: "Show more emoji" },
   "messages.sendMessage": { tr: "Mesaj Gönder", en: "Send Message" },

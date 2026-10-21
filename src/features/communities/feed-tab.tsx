@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Flag, Pencil, Pin, PinOff, Plus, ShieldAlert, SquareStack, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ import { StoryTray } from "@/features/stories/story-tray";
 import { CreatePostModal } from "./create-post-modal";
 import { ApplicationCard } from "./application-card";
 import { FeedHighlights } from "./feed-highlights";
+import { useSeenTracker } from "./home-feed";
 import { PostMenuExtras, type PostMenuExtra } from "@/features/prompts/post-menu-extras";
 import { PromptCard } from "@/features/prompts/prompt-card";
 import { RequestCard } from "@/features/requests/request-card";
@@ -62,6 +63,9 @@ export function FeedTab(props: CommunityTabProps) {
   const [viewMode] = useViewMode();
   const router = useRouter();
   const searchParams = useSearchParams();
+  // Posts read here count as seen too, so "N yeni" on the Topluluklar shelf goes down after a visit (docs/history/212-*).
+  const tracker = useSeenTracker(Boolean(viewerId));
+  const listRef = useRef<HTMLDivElement>(null);
   const [pinned, setPinned] = useState<CommunityPost[] | null>(null);
   const [posts, setPosts] = useState<CommunityPost[] | null>(null);
   const [hasMore, setHasMore] = useState(false);
@@ -158,8 +162,18 @@ export function FeedTab(props: CommunityTabProps) {
     }
   }
 
+  // Every rendered post (pinned, focused, the list) is watched; re-run when the lists or the layout change.
+  useEffect(() => {
+    const root = listRef.current;
+    if (!tracker || !root) return;
+    const stops = Array.from(root.querySelectorAll<HTMLElement>("[data-community-post]")).map((element) =>
+      tracker.watch(element, element.dataset.communityPost ?? ""),
+    );
+    return () => stops.forEach((stop) => stop());
+  }, [tracker, posts, pinned, focusPost, viewMode]);
+
   return (
-    <div className="space-y-5">
+    <div ref={listRef} className="space-y-5">
       {/* Topluluk hikâyeleri (docs/history/198-*): yalnız üyelere; paylaşma hakkı akışla aynı kurala bağlı. */}
       {role && <StoryTray communityId={group.id} canAdd={canPost} />}
       <FeedHighlights {...props} />

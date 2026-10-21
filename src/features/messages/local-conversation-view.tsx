@@ -1458,6 +1458,8 @@ export function LocalConversationView() {
       )}
       <div
         ref={listRef}
+        // Message popovers stay inside this list's visible area (`useAnchoredPopover`, docs/history/212-*).
+        data-chat-scroll
         className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4 lg:px-6"
         onScroll={handleListScroll}
         onClick={(event) => {

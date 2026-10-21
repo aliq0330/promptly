@@ -871,7 +871,9 @@ await scenario("29. Ziyaretçi (oturumsuz) · Topluluklar: yalnız Keşfet (herk
   await page.goto(`${BASE}/communities`);
   await page.getByRole("heading", { name: "Topluluklar", level: 1 }).waitFor();
   await page.getByRole("heading", { name: "Açık Atölye" }).waitFor();
-  assert.deepEqual(await tabNames(page), ["Keşfet"]);
+  // docs/history/212-*: a visitor gets no section row at all (the page is Keşfet) — and never the personal sections.
+  const visitorTabs = await tabNames(page);
+  for (const personal of ["Gönderiler", "Yönettiklerim", "Davet ve başvurular"]) assert.ok(!visitorTabs.includes(personal), `${personal} is personal`);
   for (const hidden of ["Kapalı Atölye", "Hayalet Kulüp"]) assert.equal(await page.getByRole("heading", { name: hidden }).count(), 0, `${hidden} is not in Discover`);
   assert.equal(await page.getByRole("heading", { name: "Senin için önerilenler" }).count(), 0, "suggestions are personal");
   assert.equal(await page.locator("#community-link-input").count(), 0, "no invite-link form for visitors");
