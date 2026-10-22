@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCommunityContext, useCommunityReturn } from "@/features/communities/community-return";
-import { AlertTriangle, X } from "lucide-react";
+import { AlertTriangle, Workflow as WorkflowIcon, X } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
 import { Tabs } from "@/components/ui/tabs";
 import { useAuth } from "@/features/auth/auth-provider";
@@ -24,8 +24,8 @@ import { useLayoutMode } from "./use-layout-mode";
 import { EMPTY_META, WorkflowMetaForm, type WorkflowMeta } from "./workflow-meta-form";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import { KindDraftsButton } from "@/features/drafts/kind-drafts-button";
-import { CreatePageHeader } from "@/features/content/create-page-header";
-import { CreateFormActions } from "@/features/content/create-form-actions";
+import { ComposeShell, PublishPreview, useComposeLeave } from "@/features/content/compose";
+import { PublishSheet, type PublishProblem } from "@/features/content/publish-sheet";
 
 type SaveState = "idle" | "saving" | "saved" | "error";
 type LoadState = "loading" | "ready" | "notfound" | "forbidden";
@@ -186,15 +186,15 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
     return t(keys[issue.code], { n });
   }
 
-  async function handleSave(target: "draft" | "published") {
-    if (!user || saveState === "saving") return;
+  async function handleSave(target: "draft" | "published"): Promise<boolean> {
+    if (!user || saveState === "saving") return false;
     const found = validateWorkflow(meta, steps, target === "published");
     setIssues(found);
     const blocking = found.filter((i) => i.level === "error");
     if (blocking.length > 0) {
       const firstStep = blocking.find((i) => i.stepId);
       if (firstStep?.stepId) setSelectedId(firstStep.stepId);
-      return;
+      return false;
     }
     setSaveState("saving");
     setSaveError(null);
@@ -210,11 +210,19 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
       setSaveState("saved");
       if (!editId) window.history.replaceState(null, "", `${window.location.pathname}?edit=${id}`);
       if (target === "published") router.push((await returnToCommunity("workflow", id)) ?? `/workflows/local?id=${id}`);
+      return true;
     } catch {
       setSaveState("error");
       setSaveError(t("workflow.errorSave"));
+      return false;
     }
   }
+
+  // Yazma ekranı kabuğu (docs/history/216-*): son kontrol penceresi + ✕'teki "kaydedilsin mi?" (yayındaki workflow taslağa dönmez).
+  const [publishOpen, setPublishOpen] = useState(false);
+  const leave = useComposeLeave({ dirty, saveDraft: status === "published" ? undefined : () => handleSave("draft") });
+  // Pencere açıkken eksikler canlı: başlık, adım ve adım içerikleri (yayın kuralı `validateWorkflow`).
+  const liveIssues = publishOpen ? validateWorkflow(meta, steps, true) : [];
 
   const gate = authLoading || loadState === "loading" || mode === null ? (
     <div className="mx-auto max-w-lg px-4 py-16 text-center text-sm text-text-muted">{t("common.loading")}</div>
@@ -308,20 +316,37 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
 
   if (gate || !user || mode === null) return <div ref={rootRef} className="w-full min-w-0">{gate}</div>;
 
-  return (
-    <div ref={rootRef} className="w-full min-w-0">
-    <div className="mx-auto w-full max-w-6xl space-y-4 px-3 py-5 sm:px-5 sm:py-6 lg:px-8">
-      <CreatePageHeader
-        title={editId ? t("workflow.editTitle") : t("workflow.createTitle")}
-        hint={t("workflow.createHint")}
-        drafts={<KindDraftsButton kind="workflow" />}
-        status={
-          <span aria-live="polite" className={cn("font-medium", dirty ? "text-warning" : saveState === "saved" ? "text-success" : "text-text-muted")}>
-            {stateLabel}
-          </span>
-        }
-      />
+  const isSaveMode = status === "published";
+  const problems: PublishProblem[] = liveIssues
+    .filter((issue) => issue.level === "error")
+    .map((issue, index) => ({
+      key: `${issue.code}-${issue.stepId ?? index}`,
+      label: issueMessage(issue),
+      onFix: issue.stepId
+        ? () => {
+            setSelectedId(issue.stepId!);
+            if (mode === "mobile") setSheetOpen(true);
+          }
+        : () => document.getElementById("wf-title")?.focus(),
+    }));
+  const warnings = liveIssues.filter((issue) => issue.level !== "error");
 
+  return (
+    <ComposeShell
+      wide
+      title={editId ? t("workflow.editTitle") : t("compose.newWorkflow")}
+      titleExtra={<KindDraftsButton kind="workflow" compact />}
+      status={
+        <span aria-live="polite" className={cn("font-medium", dirty ? "text-warning" : saveState === "saved" ? "text-success" : "text-text-muted")}>
+          {stateLabel}
+        </span>
+      }
+      onClose={leave.requestClose}
+      onPublish={() => setPublishOpen(true)}
+      publishLabel={isSaveMode ? t("common.save") : t("common.share")}
+      publishDisabled={saveState === "saving"}
+    >
+    <div ref={rootRef} className="w-full min-w-0 space-y-4">
       {notice && (
         <p className="flex items-start justify-between gap-2 rounded-md bg-primary-soft p-2.5 text-caption text-primary">
           {notice}
@@ -416,35 +441,48 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
         </Modal>
       )}
 
-      <CreateFormActions
+      {publishOpen && (
+        <PublishSheet
+          onClose={() => setPublishOpen(false)}
+          onConfirm={() => void handleSave("published")}
+          onSaveDraft={status === "published" ? undefined : () => void handleSave("draft")}
+          busy={saveState === "saving"}
+          title={isSaveMode ? t("compose.beforeSave") : undefined}
+          confirmLabel={saveState === "saving" ? t("workflow.saving") : isSaveMode ? t("common.save") : t("common.share")}
           hideDestination={Boolean(editId)}
           visibility={visibility}
           onVisibilityChange={(next) => {
             setVisibility(next);
             touch();
           }}
-          onSaveDraft={status === "published" ? undefined : () => handleSave("draft")}
-          onPublish={() => handleSave("published")}
-          busy={saveState === "saving"}
-          publishLabel={saveState === "saving" ? t("workflow.saving") : status === "published" ? t("common.save") : t("common.share")}
+          problems={problems}
+          preview={
+            <PublishPreview
+              thumbnail={meta.media[0]?.url ?? null}
+              icon={WorkflowIcon}
+              typeLabel={t("workflow.singular")}
+              title={meta.title.trim() || t("compose.untitledWorkflow")}
+              meta={t("workflow.stepCount", { count: steps.length })}
+            />
+          }
         >
-            {saveError && <p role="alert" className="rounded-md border border-danger/40 bg-danger/5 p-3 text-sm text-danger">{saveError}</p>}
-            {issues.length > 0 && (
-              <div role="alert" className="rounded-md border border-warning/40 bg-warning/5 p-3">
-                <p className="mb-1 flex items-center gap-1.5 text-sm font-semibold text-text">
-                  <AlertTriangle size={14} className="text-warning" />
-                  {t("workflow.issuesHeading")}
-                </p>
-                <ul className="list-disc space-y-0.5 pl-5 text-caption text-text-secondary">
-                  {issues.map((issue, i) => (
-                    <li key={i} className={issue.level === "error" ? "text-danger" : ""}>
-                      {issueMessage(issue)}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-        </CreateFormActions>
+          {saveState === "saved" && status === "draft" && !dirty && <p className="text-sm text-success">{t("draft.saved")}</p>}
+          {saveError && <p role="alert" className="rounded-md border border-danger/40 bg-danger/5 p-3 text-sm text-danger">{saveError}</p>}
+          {warnings.length > 0 && (
+            <div role="status" className="rounded-md border border-warning/40 bg-warning/5 p-3">
+              <p className="mb-1 flex items-center gap-1.5 text-sm font-semibold text-text">
+                <AlertTriangle size={14} className="text-warning" />
+                {t("workflow.issuesHeading")}
+              </p>
+              <ul className="list-disc space-y-0.5 pl-5 text-caption text-text-secondary">
+                {warnings.map((issue, i) => (
+                  <li key={i}>{issueMessage(issue)}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </PublishSheet>
+      )}
 
       {addTarget && (
         <AddContentModal
@@ -453,7 +491,8 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
           onClose={() => setAddTarget(null)}
         />
       )}
+      {leave.dialog}
     </div>
-    </div>
+    </ComposeShell>
   );
 }

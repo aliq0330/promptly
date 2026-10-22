@@ -190,9 +190,9 @@ await scenario("4. Sahip: Paylaş tek pencere — 'Akışta gönderi olarak payl
   await shot(page, "sp-share-modal");
 });
 
-await scenario("5. Oluştur: altıncı karo 'Space oluştur' Spaces'te oluşturma penceresini açar; 'Var olan içeriği paylaş' seçici + duyur satırı", async ({ page }) => {
+await scenario("5. Oluştur menüsü: 'Space' karosu Spaces'te oluşturma penceresini açar; 'Var olan içeriği paylaş' seçici + duyur satırı", async ({ page }) => {
   await page.goto(`${BASE}/create`);
-  await page.getByRole("link", { name: /Space oluştur/ }).click();
+  await page.locator("[data-create-option=space]").click();
   await page.waitForURL(/\/spaces\/?$/);
   await page.getByRole("dialog").waitFor();
   await page.goto(`${BASE}/create`);

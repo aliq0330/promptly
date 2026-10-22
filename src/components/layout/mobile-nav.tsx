@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
+import { CreateMenuSheet } from "@/features/prompts/create-choice";
 import { cn } from "@/lib/utils";
 import { CREATE_HREF, guestLoginNavItem, isNavItemActive, mobileNavItems, PROFILE_NAV_PLACEHOLDER, type NavItem } from "@/components/layout/nav-items";
 import { useAuthStatus } from "@/features/auth/use-auth-status";
@@ -21,6 +23,8 @@ export function MobileNav() {
   const status = useAuthStatus();
   const { requireAuth } = useAuthPrompt();
   const inChat = pathname.startsWith("/messages/local");
+  // "+" = Oluştur menüsü (docs/history/216-*): ayrı seçim sayfası yerine alttan açılan pencere.
+  const [createOpen, setCreateOpen] = useState(false);
 
   // Always five slots, so nothing reflows between states. (Every slot is public since Odak took the profile slot —
   // docs/history/199-*; an "authenticated" entry would get "Giriş Yap" for guests and a placeholder while the session resolves.)
@@ -32,6 +36,7 @@ export function MobileNav() {
   if (inChat) return null;
 
   return (
+    <>
     <nav
       data-app-chrome
       data-app-nav
@@ -74,8 +79,14 @@ export function MobileNav() {
           );
           return (
             <li key={item.labelKey} className="flex flex-1">
-              {isCreate && status === "unauthenticated" ? (
-                <button type="button" onClick={() => requireAuth("create")} aria-haspopup="dialog" className={itemClassName}>
+              {isCreate ? (
+                <button
+                  type="button"
+                  onClick={() => (status === "unauthenticated" ? requireAuth("create") : setCreateOpen(true))}
+                  aria-haspopup="dialog"
+                  data-nav-create=""
+                  className={itemClassName}
+                >
                   {inner}
                 </button>
               ) : (
@@ -88,5 +99,7 @@ export function MobileNav() {
         })}
       </ul>
     </nav>
+    {createOpen && <CreateMenuSheet onClose={() => setCreateOpen(false)} />}
+    </>
   );
 }

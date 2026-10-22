@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import { AlertCircle, Check, Loader2, Megaphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { GroupAvatar } from "@/features/groups/group-avatar";
@@ -64,7 +64,7 @@ export function useAnnounceCommunities(enabled: boolean) {
 
 /**
  * "Topluluklarda duyur" seçicisi: üye olunan topluluklar (çoklu seçim) + isteğe bağlı not. Denetimli bileşen — Paylaş penceresi
- * hemen gönderir (`AnnounceSection`), yayın adımı içerik oluşunca gönderir (`CreateFormActions`).
+ * hemen gönderir (`AnnounceSection`).
  */
 export function AnnouncePicker({
   value,
@@ -221,25 +221,61 @@ export function AnnounceSection({ type, contentId, blockedReason }: { type: Comm
 }
 
 // ---------------------------------------------------------------------------------------------
-// Yayın adımında seçilen duyuru (Oluştur → "Topluluklarda da duyur"): içerik oluşunca gönderilir
+// Yayın adımında seçilen duyuru (son kontrol → "Topluluklarda da duyur"): içerik oluşunca gönderilir
 // ---------------------------------------------------------------------------------------------
 
 const REPORT_KEY = "promptly-announce-report";
-let pending: { selection: AnnounceSelection; names: Map<string, string> } | null = null;
+const EMPTY_SELECTION: AnnounceSelection = { communityIds: [], note: "" };
 
-/** Oluşturma formunun alt alanı seçimi buraya yazar; boş seçim = duyuru yok. */
-export function setPendingAnnounce(selection: AnnounceSelection | null, names: Map<string, string>) {
-  pending = selection && selection.communityIds.length > 0 ? { selection, names } : null;
+// Yayın adımının duyuru seçimi modül deposunda: son kontrol penceresi kapanıp açılsa da seçim kalır; yazma ekranından çıkınca
+// (`ComposeShell`) sıfırlanır. Yalnız "Paylaş" anında, içerik herkese açık ve topluluğa ait değilken KURULUR (`armPendingAnnounce`).
+let store: { selection: AnnounceSelection; names: Map<string, string> } = { selection: EMPTY_SELECTION, names: new Map() };
+let armed = false;
+const storeListeners = new Set<() => void>();
+function emit() {
+  storeListeners.forEach((listener) => listener());
+}
+
+/** Yayın adımındaki seçim ve onu değiştiren işlev (adlar sonuç raporu için birlikte saklanır). */
+export function useAnnounceSelection(): [AnnounceSelection, (next: AnnounceSelection, names: Map<string, string>) => void] {
+  const selection = useSyncExternalStore(
+    (listener) => {
+      storeListeners.add(listener);
+      return () => {
+        storeListeners.delete(listener);
+      };
+    },
+    () => store.selection,
+    () => EMPTY_SELECTION,
+  );
+  const set = useCallback((next: AnnounceSelection, names: Map<string, string>) => {
+    store = { selection: next, names };
+    emit();
+  }, []);
+  return [selection, set];
+}
+
+/** "Paylaş"a basıldı: seçim bu yayında gönderilsin mi (herkese açık + topluluğa ait değil) — değilse hiç gönderilmez. */
+export function armPendingAnnounce(on: boolean) {
+  armed = on;
+}
+
+/** Yazma ekranı kapandı: seçim atılır. */
+export function resetPendingAnnounce() {
+  store = { selection: EMPTY_SELECTION, names: new Map() };
+  armed = false;
+  emit();
 }
 
 /**
- * İçerik yayınlandıktan sonra (formların `useCommunityReturn` çağrısı) bekleyen duyuruyu gönderir. Sonuç sayfa değişse de kaybolmasın
+ * İçerik yayınlandıktan sonra (formların `useCommunityReturn` çağrısı) kurulmuş duyuruyu gönderir. Sonuç sayfa değişse de kaybolmasın
  * diye `sessionStorage`'a yazılır, `AnnounceReportNotice` gösterir — kısmi başarısızlık dahil, sessiz başarı yok.
  */
 export async function runPendingAnnounce(type: CommunityPostType, contentId: string): Promise<void> {
-  if (!pending) return;
-  const { selection, names } = pending;
-  pending = null;
+  const { selection, names } = store;
+  const run = armed && selection.communityIds.length > 0;
+  resetPendingAnnounce();
+  if (!run) return;
   const results = await announceToCommunities(type, contentId, selection, names);
   try {
     sessionStorage.setItem(REPORT_KEY, JSON.stringify(results));

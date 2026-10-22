@@ -2,10 +2,10 @@
 import { useCommunityContext, useCommunityReturn } from "@/features/communities/community-return";
 import { ToolPicker } from "@/features/content/tool-picker";
 
-import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Copy, Eye, EyeOff, X } from "lucide-react";
+import { Copy, Cpu, Eye, EyeOff, Folder, Hash, Layers, X } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { PromptCard } from "@/features/prompts/prompt-card";
 import { TaxonomyPicker } from "@/features/content/taxonomy-picker";
@@ -17,7 +17,6 @@ import { useTagCatalog } from "@/features/tags/use-tag-catalog";
 import { useTagPicker } from "@/features/prompts/use-tag-picker";
 import { usePrefillTag } from "@/features/challenges/use-prefill-tag";
 import { TagPicker } from "@/features/prompts/tag-picker";
-import { TitleField, DescriptionField } from "@/features/content/core-fields";
 import { ExtraSettingsSection } from "@/features/prompts/extra-settings-panel";
 import { catalogFields, catalogFieldsForType, fieldIdsFor } from "@/lib/prompt-extra-settings";
 import { composePrompt, mergeFields, sanitizeSelection, withCustomOptions, type CustomOptions, type PresetField, type PresetSelection } from "@/lib/preset-fields";
@@ -41,12 +40,16 @@ import {
 } from "@/features/content/reference-requirements";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { KindDraftsButton } from "@/features/drafts/kind-drafts-button";
-import { CreatePageHeader } from "@/features/content/create-page-header";
-import { CreateFormActions } from "@/features/content/create-form-actions";
-import { FormSection } from "@/features/content/form-section";
+import { ComposeSheet, ComposeShell, ComposeToolbar, PublishPreview, composeBodyClassName, composeTitleClassName, useComposeLeave, useDirty } from "@/features/content/compose";
+import { ComposeAuthorLine, ComposeSummaryChips, ContentTypeChips, SuggestedTagsRow } from "@/features/content/compose-fields";
+import { PublishSheet, type PublishProblem } from "@/features/content/publish-sheet";
+import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
+import { resolveToolRefs } from "@/lib/ai-tool-catalog";
 import { SwitchRow } from "@/features/content/visibility-switch";
 import type { ContentVisibility, Prompt, PromptContentType, PromptRequest } from "@/types";
 
+
+type ComposeSheetKey = "tags" | "tool" | "category" | "advanced";
 
 function LoginGate({ message }: { message: string }) {
   const { t } = useTranslation();
@@ -102,7 +105,7 @@ export function CreatePromptForm() {
   const { getCached: getCachedPrompt, fetchById: fetchPromptById, addPrompt, updatePrompt } = useRealPrompts();
   const { getCached: getCachedRequest, fetchById: fetchRequestById } = useRealRequests();
   const returnToCommunity = useCommunityReturn();
-  const { communityId } = useCommunityContext();
+  const { communityId, name: communityName } = useCommunityContext();
 
   const editId = searchParams.get("edit");
   const isEditMode = Boolean(editId);
@@ -334,6 +337,14 @@ export function CreatePromptForm() {
   const isEditingDraft = isEditMode && editingPrompt?.status === "draft";
   const outputFailedParam = isEditMode ? searchParams.get("outputFailed") : null;
   const canSaveDraft = !isAnswerMode && (!isEditMode || isEditingDraft);
+  // Yazma ekranı (docs/history/216-*): araç çubuğunun alt sayfası, son kontrol penceresi ve ✕'teki "kaydedilsin mi?".
+  const [sheet, setSheet] = useState<ComposeSheetKey | null>(null);
+  const [publishOpen, setPublishOpen] = useState(false);
+  const dirty = useDirty(
+    JSON.stringify([contentType, category, subcategory, title, description, promptText, tools, images.map((item) => item.key), tagPicker.accepted.map((entry) => entry.tag.slug), extraSettings, variables, dnaSections.length, references, visibility, showOnProfile, pickedOutput?.file.name ?? null]),
+    sourceChecked && (fieldsSeeded || (!isEditMode && !isDuplicateMode && !isAnswerMode)),
+  );
+  const leave = useComposeLeave({ dirty, saveDraft: canSaveDraft ? () => handleSaveDraft(true) : undefined });
 
   const notFound =
     sourceChecked &&
@@ -419,11 +430,13 @@ export function CreatePromptForm() {
     }
   }
 
-  async function handleSaveDraft() {
-    if (isSubmitting || !user || !ownProfile) return;
+  /** `leaving`: ✕ → "Taslağa kaydet" — kaydedip çıkılır (yeni taslak düzenleme adresine gitmez). */
+  async function handleSaveDraft(leaving = false): Promise<boolean> {
+    if (isSubmitting || !user || !ownProfile) return false;
     if (!title.trim()) {
       setPublishError(t("draft.titleRequired"));
-      return;
+      if (leaving) document.getElementById("prompt-title")?.focus();
+      return false;
     }
     setPublishError(null);
     setDraftNotice(false);
@@ -465,7 +478,7 @@ export function CreatePromptForm() {
         await saveDna(updated.id);
         setDraftNotice(true);
         setIsSubmitting(false);
-        return;
+        return true;
       }
       const draft = await addPrompt(
         {
@@ -493,15 +506,17 @@ export function CreatePromptForm() {
         console.error("replaceVariablesForPrompt", variableErr);
       }
       await saveDna(draft.id);
-      router.push(`/create?edit=${draft.id}`);
+      if (!leaving) router.push(`/create?edit=${draft.id}`);
+      return true;
     } catch (err) {
       setPublishError(err instanceof Error ? err.message : t("draft.saveFailed"));
       setIsSubmitting(false);
+      return false;
     }
   }
 
-  async function handleSubmit(event: FormEvent) {
-    event.preventDefault();
+  /** Son kontrol penceresinin "Paylaş"ı (yazma ekranının "Paylaş"ı yalnız pencereyi açar). */
+  async function publish() {
     if (isSubmitting || !user || !ownProfile) return;
 
     setPublishError(null);
@@ -713,244 +728,268 @@ export function CreatePromptForm() {
     );
   }
 
+  const isSaveMode = isEditMode && !isEditingDraft;
+  const typeMeta = CONTENT_TYPE_META[contentType];
+  const audienceLabel = communityId
+    ? (communityName ?? t("compose.aCommunity"))
+    : !showsVisibilityChoice && visibility === "private"
+      ? t("publish.private")
+      : t("publish.public");
+  const focusField = (id: string) => () => document.getElementById(id)?.focus();
+  const problems: PublishProblem[] = [
+    ...(title.trim() ? [] : [{ key: "title", label: t("compose.problemTitle"), onFix: focusField("prompt-title") }]),
+    ...(description.trim() ? [] : [{ key: "description", label: t("compose.problemDescription"), onFix: focusField("prompt-description") }]),
+  ];
+  const toolLabel = resolveToolRefs(tools)[0]?.label;
+
+  function changeTaxonomy(next: { contentType: PromptContentType; category: string | null; subcategory: string | null }) {
+    if (next.contentType !== contentType) {
+      setExtraSettings({});
+      setExtraFields([]);
+      setCustomOptions({});
+    }
+    setContentType(next.contentType);
+    setCategory(next.category);
+    setSubcategory(next.subcategory);
+  }
+
+  const sheetTitle: Record<ComposeSheetKey, string> = {
+    tags: t("forms.tags"),
+    tool: t("formSection.tool"),
+    category: t("taxonomy.categoryLabel"),
+    advanced: t("compose.advancedTitle"),
+  };
+
   return (
-    <div className="mx-auto max-w-5xl px-3 py-5 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
-      <CreatePageHeader
-        title={
-          isEditMode
-            ? t("prompt.editPromptTitle")
-            : isAnswerMode
-              ? t("prompt.answerRequestTitle")
-              : isDuplicateMode
-                ? t("prompt.duplicateTitle")
-                : t("prompt.createPromptTitle")
-        }
-        hint={
-          isEditMode
-            ? t("prompt.editPromptHint")
-            : isAnswerMode
-              ? t("prompt.answerRequestHint")
-              : t("prompt.createPromptHint")
-        }
-        drafts={<KindDraftsButton kind="prompt" />}
-      />
-
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_360px]">
-        <form onSubmit={handleSubmit} className="min-w-0 space-y-4">
-          {isAnswerMode && answeredRequest && (
-            <div className="space-y-2 rounded-md border border-primary/30 bg-primary/5 p-3 text-sm">
-              <div className="flex items-center justify-between gap-2">
-                <span className="font-medium text-primary">{t("prompt.answeringThisRequest")}</span>
-                <Link
-                  href="/create"
-                  title={t("prompt.exitAnswerMode")}
-                  className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-text-muted hover:text-text"
-                >
-                  <X size={14} />
-                </Link>
-              </div>
-              <div className="flex items-center gap-2">
-                <Avatar
-                  src={answeredRequest.author.avatarUrl}
-                  alt={answeredRequest.author.displayName}
-                  size={24}
-                />
-                <span className="text-text-muted">
-                  <span className="font-medium text-text">{answeredRequest.author.displayName}</span>{" "}
-                  {t("prompt.requestColon")} &ldquo;{answeredRequest.title}&rdquo;
-                </span>
-              </div>
-              <Link
-                href={requestHref(answeredRequest)}
-                className="inline-block font-medium text-primary underline"
-              >
-                {t("request.viewRequest")}
-              </Link>
-            </div>
-          )}
-
-          {duplicateSource && (
-            <div className="flex items-start gap-2 rounded-md border border-primary/30 bg-primary/5 p-3 text-sm text-primary">
-              <Copy size={16} className="mt-0.5 shrink-0" />
-              <p>
-                <Link href={promptHref(duplicateSource)} className="font-medium underline">
-                  &ldquo;{duplicateSource.title}&rdquo;
-                </Link>{" "}
-                {t("prompt.duplicatePrefillHint")}
-              </p>
-            </div>
-          )}
-
-          <FormSection title={t("taxonomy.categoryLabel")}>
-            <TaxonomyPicker
-              bare
-              value={{ contentType, category, subcategory }}
-              onChange={(next) => {
-                if (next.contentType !== contentType) {
-                  setExtraSettings({});
-                  setExtraFields([]);
-                  setCustomOptions({});
-                }
-                setContentType(next.contentType);
-                setCategory(next.category);
-                setSubcategory(next.subcategory);
-              }}
-              lockContentType={isEditMode}
-              lockedHint={t("prompt.notEditableWhileEditing")}
-            />
-          </FormSection>
-
-          <FormSection title={t("formSection.basics")}>
-            <div className="space-y-4">
-              <TitleField
-                id="prompt-title"
-                label={t("forms.title")}
-                value={title}
-                onChange={setTitle}
-                placeholder={t("prompt.titlePlaceholder")}
-                maxLength={80}
-                required
-                nativeRequired
-              />
-
-              <DescriptionField
-                id="prompt-description"
-                label={t("forms.shortDescription")}
-                value={description}
-                onChange={setDescription}
-                placeholder={t("prompt.descriptionPlaceholder")}
-                maxLength={200}
-                required
-                nativeRequired
-              />
-            </div>
-          </FormSection>
-
-          {contentType === "image" && (
-            <FormSection title={t("formSection.images")}>
-              <MultiImagePicker
-                items={images}
-                onChange={setImages}
-                hint={isEditMode ? t("prompt.imageEditHint") : t("prompt.imageUploadHint")}
-              />
-            </FormSection>
-          )}
-
-          {outputKind && (
-            <FormSection title={outputKind === "video" ? t("formSection.outputVideo") : t("formSection.outputAudio")}>
-              <OutputFilePicker
-                kind={outputKind}
-                file={outputFile}
-                onChange={(file) => setPickedOutput(file ? { kind: outputKind, file } : null)}
-                disabled={isSubmitting}
-              />
-            </FormSection>
-          )}
-
-          <FormSection title={t("formSection.prompt")}>
-            <div className="space-y-4">
-              <PromptTextEditor
-                id="prompt-text"
-                value={promptText}
-                onChange={setPromptText}
-                variables={variables}
-                onVariablesChange={setVariables}
-                rows={5}
-                placeholder={t("prompt.promptTextPlaceholder")}
-                // "Görselden yardım" works on the image already picked above — no second upload.
-                visionFile={contentType === "image" ? (images.find((item) => item.file)?.file ?? null) : null}
-              />
-
-              <ExtraSettingsSection
-                contentType={contentType}
-                value={extraSettings}
-                onChange={setExtraSettings}
-                extraFields={extraFields}
-                onExtraFieldsChange={setExtraFields}
-                customOptions={customOptions}
-                onCustomOptionsChange={setCustomOptions}
-                englishFragments={englishFragments}
-                onEnglishFragmentsChange={setEnglishFragments}
-                promptText={promptText}
-                hasTool={tools.length > 0}
-                category={category}
-                subcategory={subcategory}
-                tools={tools}
-              />
-
-              <ReferenceRequirementsField
-                                contentType={contentType}
-                value={references}
-                onChange={setReferences}
-              />
-            </div>
-          </FormSection>
-
-          <FormSection title={t("formSection.tool")}>
-            <ToolPicker value={tools} onChange={setTools} contentType={contentType} category={category} />
-          </FormSection>
-
-          <FormSection title={t("dna.title")} description={t("dna.description")}>
-            <PromptDnaEditor promptText={promptText} contentType={contentType} sections={dnaSections} onChange={setDnaSections} />
-          </FormSection>
-
-          <FormSection title={t("forms.tags")}>
-            <TagPicker picker={tagPicker} />
-          </FormSection>
-
-          <CreateFormActions
-            hideDestination={isEditMode}
-            visibility={showsVisibilityChoice ? undefined : visibility}
-            onVisibilityChange={showsVisibilityChoice ? undefined : setVisibility}
-            extra={
-              showsVisibilityChoice ? (
-                <div>
-                  <p className="mb-2 text-sm font-medium text-text">{t("prompt.showOnProfileQuestion")}</p>
-                  <SwitchRow
-                    checked={showOnProfile}
-                    onChange={setShowOnProfile}
-                    icon={showOnProfile ? <Eye size={18} strokeWidth={1.75} /> : <EyeOff size={18} strokeWidth={1.75} />}
-                    title={showOnProfile ? t("prompt.shareOnProfile") : t("prompt.dontShareOnProfile")}
-                    description={showOnProfile ? t("prompt.shareOnProfileHint") : t("prompt.dontShareOnProfileHint")}
-                    ariaLabel={t("prompt.showOnProfileQuestion")}
-                    disabled={isSubmitting}
-                  />
-                </div>
-              ) : undefined
-            }
-            onSaveDraft={canSaveDraft ? () => void handleSaveDraft() : undefined}
-            busy={isSubmitting}
-            publishLabel={
-              isSubmitting
-                ? isEditMode && !isEditingDraft
-                  ? t("common.saving")
-                  : t("prompt.publishing")
-                : isEditMode && !isEditingDraft
-                  ? t("common.save")
-                  : t("common.share")
-            }
-          >
-            {draftNotice && <p className="animate-pop-in text-sm text-success">{t("draft.saved")}</p>}
-            {outputFailedParam && (
-              <div role="alert" className="animate-pop-in rounded-md border border-danger/30 bg-danger/5 p-3 text-sm text-danger">
-                {t("output.uploadFailed", { message: outputFailedParam === "1" ? "" : outputFailedParam })}
-              </div>
-            )}
-            {publishError && (
-              <div role="alert" className="animate-pop-in rounded-md border border-danger/30 bg-danger/5 p-3 text-sm text-danger">
-                {publishError}
-              </div>
-            )}
-          </CreateFormActions>
-        </form>
-
-        <div className="min-w-0 lg:sticky lg:top-20 lg:self-start">
+    <ComposeShell
+      title={
+        isEditMode
+          ? t("prompt.editPromptTitle")
+          : isAnswerMode
+            ? t("prompt.answerRequestTitle")
+            : isDuplicateMode
+              ? t("prompt.duplicateTitle")
+              : t("compose.newPrompt")
+      }
+      titleExtra={<KindDraftsButton kind="prompt" compact />}
+      onClose={leave.requestClose}
+      onPublish={() => setPublishOpen(true)}
+      publishLabel={isSaveMode ? t("common.save") : t("common.share")}
+      publishDisabled={isSubmitting}
+      toolbar={
+        <ComposeToolbar
+          tools={[
+            { key: "tags", icon: Hash, label: t("compose.toolTags"), badge: tagPicker.suggested.length || undefined, onClick: () => setSheet("tags") },
+            { key: "tool", icon: Cpu, label: t("compose.toolTool"), onClick: () => setSheet("tool") },
+            { key: "category", icon: Folder, label: t("compose.toolCategory"), onClick: () => setSheet("category") },
+            { key: "advanced", icon: Layers, label: t("compose.toolAdvanced"), badge: dnaSections.length || undefined, onClick: () => setSheet("advanced") },
+          ]}
+        />
+      }
+      aside={
+        <>
           <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-muted">{t("forms.livePreview")}</p>
           <div className="pointer-events-none select-none">
             <PromptCard prompt={previewPrompt} />
           </div>
+        </>
+      }
+    >
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          setPublishOpen(true);
+        }}
+        className="space-y-4"
+      >
+        {isAnswerMode && answeredRequest && (
+          <div className="space-y-2 rounded-xl border border-primary/30 bg-primary/5 p-3 text-sm">
+            <div className="flex items-center justify-between gap-2">
+              <span className="font-medium text-primary">{t("prompt.answeringThisRequest")}</span>
+              <Link
+                href="/create"
+                title={t("prompt.exitAnswerMode")}
+                className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-text-muted hover:text-text"
+              >
+                <X size={14} />
+              </Link>
+            </div>
+            <div className="flex items-center gap-2">
+              <Avatar src={answeredRequest.author.avatarUrl} alt={answeredRequest.author.displayName} size={24} />
+              <span className="text-text-muted">
+                <span className="font-medium text-text">{answeredRequest.author.displayName}</span> {t("prompt.requestColon")} &ldquo;{answeredRequest.title}&rdquo;
+              </span>
+            </div>
+            <Link href={requestHref(answeredRequest)} className="inline-block font-medium text-primary underline">
+              {t("request.viewRequest")}
+            </Link>
+          </div>
+        )}
+
+        {duplicateSource && (
+          <div className="flex items-start gap-2 rounded-xl border border-primary/30 bg-primary/5 p-3 text-sm text-primary">
+            <Copy size={16} className="mt-0.5 shrink-0" />
+            <p>
+              <Link href={promptHref(duplicateSource)} className="font-medium underline">
+                &ldquo;{duplicateSource.title}&rdquo;
+              </Link>{" "}
+              {t("prompt.duplicatePrefillHint")}
+            </p>
+          </div>
+        )}
+
+        {outputFailedParam && (
+          <div role="alert" className="animate-pop-in rounded-xl border border-danger/30 bg-danger/5 p-3 text-sm text-danger">
+            {t("output.uploadFailed", { message: outputFailedParam === "1" ? "" : outputFailedParam })}
+          </div>
+        )}
+
+        <ContentTypeChips value={contentType} onChange={(type) => changeTaxonomy({ contentType: type, category: null, subcategory: null })} locked={isEditMode} />
+
+        <ComposeAuthorLine profile={ownProfile} audienceLabel={audienceLabel} onAudience={() => setPublishOpen(true)} />
+
+        <div className="space-y-3">
+          <input
+            id="prompt-title"
+            value={title}
+            onChange={(event) => setTitle(event.target.value)}
+            maxLength={80}
+            placeholder={t("prompt.titlePlaceholder")}
+            aria-label={t("forms.title")}
+            className={composeTitleClassName}
+          />
+          <textarea
+            id="prompt-description"
+            value={description}
+            onChange={(event) => setDescription(event.target.value)}
+            maxLength={200}
+            rows={2}
+            placeholder={t("prompt.descriptionPlaceholder")}
+            aria-label={t("compose.descriptionLabel")}
+            className={composeBodyClassName}
+          />
         </div>
-      </div>
-    </div>
+
+        <PromptTextEditor
+          id="prompt-text"
+          value={promptText}
+          onChange={setPromptText}
+          variables={variables}
+          onVariablesChange={setVariables}
+          rows={5}
+          placeholder={t("prompt.promptTextPlaceholder")}
+          // "Görselden yardım" works on the image already picked below — no second upload.
+          visionFile={contentType === "image" ? (images.find((item) => item.file)?.file ?? null) : null}
+        />
+
+        {/* Hazır ayarlar ve ek alan önerileri yazma ekranında kalır: tek satır + uygulananların çipleri, panel kendi penceresinde. */}
+        <ExtraSettingsSection
+          contentType={contentType}
+          value={extraSettings}
+          onChange={setExtraSettings}
+          extraFields={extraFields}
+          onExtraFieldsChange={setExtraFields}
+          customOptions={customOptions}
+          onCustomOptionsChange={setCustomOptions}
+          englishFragments={englishFragments}
+          onEnglishFragmentsChange={setEnglishFragments}
+          promptText={promptText}
+          hasTool={tools.length > 0}
+          category={category}
+          subcategory={subcategory}
+          tools={tools}
+        />
+
+        {contentType === "image" && (
+          <MultiImagePicker items={images} onChange={setImages} hint={isEditMode ? t("prompt.imageEditHint") : t("prompt.imageUploadHint")} />
+        )}
+
+        {outputKind && (
+          <OutputFilePicker kind={outputKind} file={outputFile} onChange={(file) => setPickedOutput(file ? { kind: outputKind, file } : null)} disabled={isSubmitting} />
+        )}
+
+        <ComposeSummaryChips
+          tools={tools}
+          contentType={contentType}
+          category={category}
+          subcategory={subcategory}
+          tags={tagPicker.accepted.map((entry) => entry.tag)}
+          onTools={() => setSheet("tool")}
+          onCategory={() => setSheet("category")}
+          onTags={() => setSheet("tags")}
+        />
+        <SuggestedTagsRow picker={tagPicker} />
+      </form>
+
+      {sheet && (
+        <ComposeSheet id={sheet} title={sheetTitle[sheet]} onClose={() => setSheet(null)}>
+          {sheet === "tags" && <TagPicker picker={tagPicker} />}
+          {sheet === "tool" && <ToolPicker value={tools} onChange={setTools} contentType={contentType} category={category} />}
+          {sheet === "category" && (
+            <TaxonomyPicker bare value={{ contentType, category, subcategory }} onChange={changeTaxonomy} lockContentType={isEditMode} lockedHint={t("prompt.notEditableWhileEditing")} />
+          )}
+          {sheet === "advanced" && (
+            <div className="space-y-6">
+              <section className="space-y-2">
+                <h3 className="text-label font-semibold text-text">{t("dna.title")}</h3>
+                <p className="text-caption text-text-muted">{t("dna.description")}</p>
+                <PromptDnaEditor promptText={promptText} contentType={contentType} sections={dnaSections} onChange={setDnaSections} />
+              </section>
+              <ReferenceRequirementsField contentType={contentType} value={references} onChange={setReferences} />
+            </div>
+          )}
+        </ComposeSheet>
+      )}
+
+      {publishOpen && (
+        <PublishSheet
+          onClose={() => setPublishOpen(false)}
+          onConfirm={() => void publish()}
+          onSaveDraft={canSaveDraft ? () => void handleSaveDraft() : undefined}
+          busy={isSubmitting}
+          title={isSaveMode ? t("compose.beforeSave") : undefined}
+          confirmLabel={
+            isSubmitting ? (isSaveMode ? t("common.saving") : t("prompt.publishing")) : isSaveMode ? t("common.save") : t("common.share")
+          }
+          hideDestination={isEditMode}
+          visibility={showsVisibilityChoice ? undefined : visibility}
+          onVisibilityChange={showsVisibilityChoice ? undefined : setVisibility}
+          problems={problems}
+          preview={
+            <PublishPreview
+              thumbnail={contentType === "image" ? (images[0]?.url ?? null) : null}
+              icon={typeMeta.icon}
+              typeLabel={[`${t(typeMeta.labelKey)} Prompt`, toolLabel].filter(Boolean).join(" · ")}
+              title={title.trim() || t("prompt.untitledPrompt")}
+              meta={[ownProfile ? `@${ownProfile.username}` : "", ...tagPicker.accepted.slice(0, 3).map((entry) => `#${entry.tag.label}`)].filter(Boolean).join(" · ")}
+            />
+          }
+          extra={
+            showsVisibilityChoice ? (
+              <div>
+                <p className="mb-2 text-sm font-medium text-text">{t("prompt.showOnProfileQuestion")}</p>
+                <SwitchRow
+                  checked={showOnProfile}
+                  onChange={setShowOnProfile}
+                  icon={showOnProfile ? <Eye size={18} strokeWidth={1.75} /> : <EyeOff size={18} strokeWidth={1.75} />}
+                  title={showOnProfile ? t("prompt.shareOnProfile") : t("prompt.dontShareOnProfile")}
+                  description={showOnProfile ? t("prompt.shareOnProfileHint") : t("prompt.dontShareOnProfileHint")}
+                  ariaLabel={t("prompt.showOnProfileQuestion")}
+                  disabled={isSubmitting}
+                />
+              </div>
+            ) : undefined
+          }
+        >
+          {draftNotice && <p className="animate-pop-in text-sm text-success">{t("draft.saved")}</p>}
+          {publishError && (
+            <div role="alert" className="animate-pop-in rounded-xl border border-danger/30 bg-danger/5 p-3 text-sm text-danger">
+              {publishError}
+            </div>
+          )}
+        </PublishSheet>
+      )}
+      {leave.dialog}
+    </ComposeShell>
   );
 }

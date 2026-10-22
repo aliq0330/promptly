@@ -291,29 +291,36 @@ await scenario("12. Yetki: yerel içerikte not/başvuru menüsü yok; başvuruda
   assert.equal(await page.getByRole("menuitem", { name: /Gönderiyi kaldır \(yönetici\)/ }).count(), 0, "a member never gets staff removal");
 }, { setup: (db) => { seed(db, { myRole: "member" }); db.addPost(C1, { author: U.alice, title: "Yerel yazar", kind: "native" }); db.addPost(C1, { author: U.alice, title: "Başvuru yazar", kind: "application", note: "n" }); db.addPost(C1, { author: U.bob, title: "Başkasının yerel", kind: "native" }); } });
 
-// 13 — oluşturma ekranı topluluk bağlamı
-await scenario("13. Oluşturma ekranı topluluk bağlamıyla açılınca: içeriğin topluluğa özgü olduğu yazar; görünürlük anahtarı ve 'Taslağa kaydet' YOK; bağlam yokken ikisi de var", async ({ page }) => {
+// 13 — oluşturma ekranı topluluk bağlamı (docs/history/216-*: yazma ekranı + son kontrol penceresi)
+const openPublish = async (page) => {
+  await page.locator("[data-compose-publish]").click();
+  await page.locator("[data-publish-sheet]").waitFor();
+};
+await scenario("13. Oluşturma ekranı topluluk bağlamıyla açılınca: yazma ekranı topluluğu söyler; son kontrolde topluluk seçili, cümle ne olacağını yazar, 'Taslak' YOK; bağlam yokken taslak var", async ({ page }) => {
   await page.goto(`${BASE}/requests/new?community=${C1}`);
-  // "Kim görsün?" (docs/history/215-*): topluluk seçili, cümle ne olacağını söyler; taslak yok.
+  await page.locator("[data-compose-audience]").getByText("Prompt Atölyesi").waitFor();
+  await openPublish(page);
   await page.locator('[data-audience-field="community"]').waitFor();
-  await page.locator('[data-audience-option="community"]').getByText("Prompt Atölyesi").waitFor();
+  await page.locator("[data-audience-community]").getByText("Prompt Atölyesi").waitFor();
   assert.match(await page.locator('[data-publish-summary="community"]').innerText(), /Prompt Atölyesi topluluğuna ait olacak/);
-  assert.equal(await page.locator("[data-publish-announce-toggle]").count(), 0, "community content is not announced elsewhere");
-  assert.equal(await page.locator("[data-create-form-actions] [data-action=save-draft]").count(), 0, "community content can't be a draft");
-  await page.locator("[data-create-form-actions] [data-action=publish]").waitFor();
+  assert.equal(await page.locator("[data-announce-picker]").count(), 0, "community content is not announced elsewhere");
+  assert.equal(await page.locator("[data-publish-sheet] [data-action=save-draft]").count(), 0, "community content can't be a draft");
+  await page.locator("[data-publish-sheet] [data-action=publish]").waitFor();
   await page.goto(`${BASE}/requests/new`);
+  await openPublish(page);
   await page.locator('[data-audience-field="public"]').waitFor();
   await page.locator('[data-audience-option="private"]').waitFor();
-  await page.locator("[data-create-form-actions] [data-action=save-draft]").waitFor();
+  await page.locator("[data-publish-sheet] [data-action=save-draft]").waitFor();
   await page.locator('[data-publish-summary="public"]').waitFor();
 }, { setup: (db) => seed(db, { myRole: "member" }) });
 
 await scenario("13b. Yayınlama: topluluk bağlamlı NORMAL istek formu içeriği doğrudan `community_id` ile kaydeder (ayrı RPC YOK), akış gönderisi kendiliğinden oluşur ve akışa dönülür", async ({ page, db }) => {
   await page.goto(`${BASE}/requests/new?community=${C1}`);
-  await page.locator('[data-audience-field="community"]').waitFor();
+  await page.locator("[data-compose-audience]").getByText("Prompt Atölyesi").waitFor();
   await page.locator("#request-title").fill("Topluluğa özel istek");
   await page.locator("#request-description").fill("Bu topluluk için bir stil isteği");
-  await page.locator("[data-create-form-actions] [data-action=publish]").click();
+  await openPublish(page);
+  await page.locator("[data-publish-sheet] [data-action=publish]").click();
   await page.waitForURL(/communities\/local\/?\?id=.*shared=1/);
   const inserted = calls(db, "prompt_requests", "POST");
   assert.equal(inserted.length, 1);
@@ -330,18 +337,19 @@ await scenario("13c. Normal (topluluk bağlamsız) istek formu `community_id` g�
   await page.goto(`${BASE}/requests/new`);
   await page.locator("#request-title").fill("Normal istek");
   await page.locator("#request-description").fill("Bu normal bir isteğin yeterince uzun açıklamasıdır");
-  await page.locator("[data-create-form-actions] [data-action=publish]").click();
+  await openPublish(page);
+  await page.locator("[data-publish-sheet] [data-action=publish]").click();
   await page.waitForURL(/requests\/local/);
   const inserted = calls(db, "prompt_requests", "POST");
   assert.equal(inserted.length, 1);
   assert.ok(!inserted[0].body.community_id, "ordinary content stays ordinary");
 }, { setup: (db) => seed(db, { myRole: "member" }) });
 
-await scenario("13d. Prompt: /create?mode=prompt&community= ve yalnız ?community= seçim ekranına DÜŞMEDEN doğrudan prompt formunu açar; seçim ekranından da topluluk bağlamı seçilen türe taşınır", async ({ page }) => {
+await scenario("13d. Prompt: /create?mode=prompt&community= ve yalnız ?community= seçim ekranına DÜŞMEDEN doğrudan prompt yazma ekranını açar", async ({ page }) => {
   for (const url of [`/create?mode=prompt&community=${C1}`, `/create?community=${C1}`]) {
     await page.goto(`${BASE}${url}`);
-    await page.locator('[data-audience-field="community"]').waitFor();
-    assert.equal(await page.getByText("Ne oluşturmak istersin?").count(), 0, `${url} must not show the type picker`);
+    await page.locator("[data-compose-audience]").getByText("Prompt Atölyesi").waitFor();
+    assert.equal(await page.locator("[data-create-menu]").count(), 0, `${url} must not show the type picker`);
   }
 }, { setup: (db) => seed(db, { myRole: "member" }) });
 

@@ -668,6 +668,15 @@
     visibility: hidden;
   }
 
+  /* Yazma ekranı (docs/history/216-*): üst menü, kenar çubuğu ve alt menü yerini ekranın kendi üst çubuğuna ve araç çubuğuna bırakır. */
+  /* `!important`: the bars' own `flex`/`md:flex` utilities sit in a later layer than this base rule. */
+  html[data-compose-open] [data-app-chrome] {
+    display: none !important;
+  }
+  html[data-compose-open] #main-content {
+    padding-bottom: 0 !important;
+  }
+
   /* Scrolling down hides the header (below `lg`; the desktop sidebar never moves); the bottom nav stays as it is — scrolling up
    * brings the header back (`useChromeAutoHide`); a focused control keeps its bar. */
   [data-app-header],
