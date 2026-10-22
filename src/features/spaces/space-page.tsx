@@ -3,16 +3,17 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { Archive, ArchiveRestore, LayoutDashboard, LogOut, Settings, Share2, Star, Trash2 } from "lucide-react";
+import { Archive, ArchiveRestore, Check, Eye, LayoutDashboard, LogOut, Palette, Pin, PinOff, Settings, Share2, Trash2 } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Button, buttonClassName } from "@/components/ui/button";
 import { DetailSkeleton, NotFoundBlock } from "@/components/ui/detail-skeleton";
+import { StorageImg } from "@/components/ui/storage-media";
 import { Tabs } from "@/components/ui/tabs";
 import { BAND_PRIMARY_CLASS, BandActionRow, DetailBand } from "@/features/content/detail-parts";
 import { useAuth } from "@/features/auth/auth-provider";
 import { ConfirmDialog } from "@/features/groups/confirm-dialog";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import { cn, formatRelativeTime, profileHref } from "@/lib/utils";
+import { absoluteUrl, cn, formatRelativeTime, profileHref } from "@/lib/utils";
 import {
   fetchMyRole,
   fetchSpace,
@@ -31,7 +32,7 @@ import { isSpaceTab, SPACE_KIND_LABEL, SPACE_TAB_LABEL, SPACE_TABS, spaceHref, t
 import { SpaceProvider, useSpaceContext, type SpaceData } from "./space-provider";
 import { DeleteSpaceDialog, ShareSpaceModal, SpaceSettingsModal } from "./space-modals";
 import { SpaceMenu } from "./space-menu";
-import { SpaceCoverArt, SpacesIcon, VisibilityBadge } from "./space-visuals";
+import { PaletteStrip, SpaceCoverArt, SpacesIcon, VisibilityBadge } from "./space-visuals";
 import { OverviewTab } from "./tabs/overview-tab";
 import { ImagesTab } from "./tabs/images-tab";
 import { PromptsTab } from "./tabs/prompts-tab";
@@ -128,8 +129,11 @@ function SpaceView({ owner, initialFavorite }: { owner: SpacePerson | null; init
   const searchParams = useSearchParams();
   const { space, setSpace, caps, items, palettes, userId, layoutStatus, flushLayout, role } = useSpaceContext();
   const tabParam = searchParams.get("tab");
-  const visibleTabs = SPACE_TABS.filter((tab) => tab !== "members" || caps.member);
-  const tab: SpaceTab = isSpaceTab(tabParam) && visibleTabs.includes(tabParam) ? tabParam : "overview";
+  const noteCount = items.filter((item) => item.kind === "note").length;
+  // Üye çalışma alanını, üye olmayan VİTRİNİ görür (docs/history/214-*): genel bakış ve üyeler yok, not yoksa Notlar da yok.
+  const visibleTabs = SPACE_TABS.filter((tab) => (caps.member ? true : tab !== "overview" && tab !== "members" && (tab !== "notes" || noteCount > 0)));
+  const defaultTab: SpaceTab = caps.member ? "overview" : "images";
+  const tab: SpaceTab = isSpaceTab(tabParam) && visibleTabs.includes(tabParam) ? tabParam : defaultTab;
   const focusId = searchParams.get("focus");
   const [dialog, setDialog] = useState<null | "settings" | "share" | "delete" | "leave">(null);
   const [favorite, setFavorite] = useState(initialFavorite);
@@ -147,6 +151,29 @@ function SpaceView({ owner, initialFavorite }: { owner: SpacePerson | null; init
   const images = items.filter((item) => item.kind === "image");
   const coverItem = items.find((item) => item.id === space.coverItemId);
   const coverUrls = space.coverUrl ? [space.coverUrl] : coverItem?.mediaUrl ? [coverItem.mediaUrl] : images.slice(-4).map((item) => item.mediaUrl!).reverse();
+
+  const leadPalette = palettes.find((palette) => palette.colors.length > 0) ?? null;
+  const [linkCopied, setLinkCopied] = useState(false);
+
+  /** Üye olmayan / sahip olmayan için Paylaş: herkese açık Space'in adresi (telefonda sistem paylaşım sayfası, yoksa kopyala). */
+  async function sharePublicLink() {
+    const url = absoluteUrl(spaceHref(space.id));
+    try {
+      if (typeof navigator.share === "function") {
+        await navigator.share({ title: space.title, url });
+        return;
+      }
+      await navigator.clipboard.writeText(url);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 1500);
+    } catch {
+      // Paylaşım penceresi kapatıldı ya da pano izni yok: sessizce geç.
+    }
+  }
+
+  // Paylaş: sahip görünürlüğü/bağlantıyı yönetir (pencere); herkese açık Space'te herkes adresini paylaşır.
+  const canShare = caps.share || space.visibility === "public";
+  const share = () => (caps.share ? setDialog("share") : void sharePublicLink());
 
   async function toggleFavorite() {
     const next = !favorite;
@@ -170,10 +197,18 @@ function SpaceView({ owner, initialFavorite }: { owner: SpacePerson | null; init
 
   return (
     <div className="w-full pb-16 animate-rise-in" data-space-page={space.id} data-space-role={role ?? "none"}>
+      {/* Albüm (docs/history/214-*): bant kapak kolajından renk alır; başlığın altında ilk paletin şeridi (dokununca HEX kopyalanır). */}
       <DetailBand
         compact
         data-space-band=""
-        art={<SpaceCoverArt urls={coverUrls} className="h-24 w-24 overflow-hidden rounded-[18px] shadow-pop lg:h-[200px] lg:w-[200px] lg:rounded-[22px]" iconSize={40} />}
+        backdrop={coverUrls[0] ? <StorageImg src={coverUrls[0]} alt="" className="h-full w-full object-cover" /> : undefined}
+        art={
+          <SpaceCoverArt
+            urls={coverUrls}
+            className="h-24 w-24 overflow-hidden rounded-[18px] border-[3px] border-surface shadow-pop lg:h-[200px] lg:w-[200px] lg:rounded-[22px] lg:border-4"
+            iconSize={40}
+          />
+        }
         kicker={
           <p className="flex flex-wrap items-center gap-2 text-caption font-bold uppercase tracking-[0.1em] text-primary">
             <span className="inline-flex items-center gap-1.5">
@@ -198,11 +233,22 @@ function SpaceView({ owner, initialFavorite }: { owner: SpacePerson | null; init
                 <span>{t("spaces.card.edited", { time: formatRelativeTime(space.updatedAt, language) })}</span>
               </p>
             )}
+            {leadPalette && (
+              <div className="flex max-w-xl items-center gap-3 pt-1 max-lg:-ml-28 max-lg:pt-3" data-space-band-palette="">
+                <span className="inline-flex min-w-0 max-w-[40%] shrink-0 items-center gap-1.5 text-caption font-semibold text-text-secondary">
+                  <Palette size={14} aria-hidden />
+                  <span className="truncate">{leadPalette.name || t("spaces.tab.palette")}</span>
+                </span>
+                <PaletteStrip colors={leadPalette.colors} copyable className="min-w-0 flex-1" />
+              </div>
+            )}
           </div>
         }
         menu={
           <SpaceMenu
             items={[
+              { key: "pin", label: favorite ? t("spaces.card.unfavorite") : t("spaces.card.favorite"), icon: favorite ? PinOff : Pin, onSelect: () => void toggleFavorite(), hidden: !userId },
+              { key: "share", label: t("spaces.card.share"), icon: Share2, onSelect: share, hidden: !canShare },
               { key: "settings", label: t("spaces.page.settings"), icon: Settings, onSelect: () => setDialog("settings"), hidden: !caps.owner || Boolean(space.archivedAt) },
               { key: "archive", label: space.archivedAt ? t("spaces.card.unarchive") : t("spaces.card.archive"), icon: space.archivedAt ? ArchiveRestore : Archive, onSelect: () => void toggleArchive(), hidden: !caps.archive },
               { key: "leave", label: t("spaces.card.leave"), icon: LogOut, onSelect: () => setDialog("leave"), danger: true, hidden: !caps.leave },
@@ -213,28 +259,27 @@ function SpaceView({ owner, initialFavorite }: { owner: SpacePerson | null; init
       />
 
       <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-10">
-        <BandActionRow label={t("spaces.page.actions")} data-space-actions="">
-          {tab !== "board" && (
-            <Button className={BAND_PRIMARY_CLASS} onClick={() => goTo("board")}>
-              <LayoutDashboard size={18} aria-hidden />
+        {/* Panoda bu satır yok (pano kendi araç çubuğunu ve kayıt göstergesini taşır; yer panoya kalır) — Paylaş ⋮ menüsünde de var. */}
+        {tab !== "board" && (
+          <BandActionRow label={t("spaces.page.actions")} data-space-actions="">
+            <Button className={cn(BAND_PRIMARY_CLASS, "max-sm:flex-1")} onClick={() => goTo("board")}>
+              {caps.edit ? <LayoutDashboard size={18} aria-hidden /> : <Eye size={18} aria-hidden />}
               {caps.edit ? t("spaces.page.openBoard") : t("spaces.page.viewBoard")}
             </Button>
-          )}
-          {caps.share && (
-            <Button variant="outline" onClick={() => setDialog("share")}>
-              <Share2 size={16} aria-hidden />
-              {t("spaces.card.share")}
-            </Button>
-          )}
-          {userId && (
-            <Button variant="ghost" onClick={() => void toggleFavorite()} aria-pressed={favorite}>
-              <Star size={16} fill={favorite ? "currentColor" : "none"} className={cn(favorite && "text-warning")} aria-hidden />
-              {favorite ? t("spaces.card.unfavorite") : t("spaces.card.favorite")}
-            </Button>
-          )}
-          {/* Pano kendi araç çubuğunda gösterir; iki gösterge olmasın. */}
-          {tab !== "board" && <SaveIndicator status={layoutStatus} onRetry={() => void flushLayout()} />}
-        </BandActionRow>
+            <SaveIndicator status={layoutStatus} onRetry={() => void flushLayout()} />
+            {canShare && (
+              <Button
+                variant="outline"
+                className="ml-auto h-12 w-12 rounded-full p-0"
+                onClick={share}
+                aria-label={linkCopied ? t("common.copied") : t("spaces.card.share")}
+                title={linkCopied ? t("common.copied") : t("spaces.card.share")}
+              >
+                {linkCopied ? <Check size={18} aria-hidden /> : <Share2 size={18} aria-hidden />}
+              </Button>
+            )}
+          </BandActionRow>
+        )}
 
         {space.archivedAt && (
           <div role="status" className="mt-4 flex flex-col gap-2 rounded-lg border border-warning/40 bg-warning/10 p-3 text-small text-text sm:flex-row sm:items-center sm:justify-between">
@@ -262,7 +307,7 @@ function SpaceView({ owner, initialFavorite }: { owner: SpacePerson | null; init
           items={visibleTabs.map((key) => ({
             key,
             label: t(SPACE_TAB_LABEL[key]),
-            count: key === "images" ? images.length : key === "prompts" ? items.filter((i) => i.kind === "prompt").length : key === "notes" ? items.filter((i) => i.kind === "note").length : key === "palette" ? palettes.length : undefined,
+            count: key === "images" ? images.length : key === "prompts" ? items.filter((i) => i.kind === "prompt").length : key === "notes" ? noteCount : key === "palette" ? palettes.length : undefined,
           }))}
         />
 

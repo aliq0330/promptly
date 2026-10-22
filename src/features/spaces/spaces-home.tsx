@@ -3,23 +3,24 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Check, Grid2x2, ImageIcon, List, Loader2, Plus, Search, SquareTerminal, StickyNote, X } from "lucide-react";
+import { Archive, Check, Globe2, Grid2x2, ImageIcon, List, Loader2, Mail, Pin, Plus, Search, SquareTerminal, StickyNote, UserRound, Users, X } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Chip, ChipRow } from "@/components/ui/chip";
 import { EmptyState } from "@/components/ui/empty-state";
-import { PageContainer, PageHeader } from "@/components/ui/page-header";
+import { PageContainer } from "@/components/ui/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useAuthPrompt } from "@/features/auth/auth-prompt-provider";
+import { SectionNav, type SectionNavItem } from "@/features/content/section-nav";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import { cn, formatRelativeTime } from "@/lib/utils";
 import {
+  fetchLeadPalettes,
   fetchMySpaceInvitations,
   listSpaces,
   respondSpaceInvitation,
-  summaryCover,
+  summaryArt,
   type MySpaceInvitation,
   type SpaceSummary,
 } from "@/lib/supabase/spaces";
@@ -55,9 +56,10 @@ function readView(): "grid" | "list" {
 }
 
 /**
- * Spaces ana sayfası (docs/history/213-*): bekleyen davetler, arama (proje adı/açıklaması + içindeki görsel/prompt/not metinleri —
- * sunucuda), süzgeçler (Tümü · Benim · Paylaşılanlar · Favoriler · Herkese açık · Arşiv), sıralama, ızgara/liste, "Son açılanlar"
- * şeridi ve kademeli yükleme. Ziyaretçi yalnız herkese açık Space'leri görür; oluşturmak giriş ister.
+ * Spaces ana sayfası (docs/history/213-*, Albüm düzeni docs/history/214-*): görünür başlık yok — üstte arama (proje adı/açıklaması +
+ * içindeki görsel/prompt/not metinleri, sunucuda) ve "+", "Son açılanlar" rafı (kare kapaklar), bölümler `SectionNav` balonlarında
+ * (Tümü · Benim · Paylaşılan · Sabitli · Herkese açık · Arşiv; bekleyen davet varsa sayaçlı "Davetler"), sıralama + ızgara/liste,
+ * Albüm kartları ve kademeli yükleme. Ziyaretçi yalnız herkese açık Space'leri görür; oluşturmak giriş ister.
  */
 export function SpacesHome() {
   const { t, language } = useTranslation();
@@ -66,7 +68,7 @@ export function SpacesHome() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialFilter = searchParams.get("filter");
-  const [filter, setFilter] = useState<SpaceFilter>(isSpaceFilter(initialFilter) ? initialFilter : "all");
+  const [section, setSection] = useState<SpaceFilter | "invites">(isSpaceFilter(initialFilter) ? initialFilter : "all");
   const [sort, setSort] = useState<SpaceSort>("updated");
   const [query, setQuery] = useState("");
   const [debounced, setDebounced] = useState("");
@@ -78,9 +80,14 @@ export function SpacesHome() {
   const [reloadKey, setReloadKey] = useState(0);
   const [recent, setRecent] = useState<SpaceSummary[]>([]);
   const [invites, setInvites] = useState<MySpaceInvitation[]>([]);
+  const [palettes, setPalettes] = useState<Map<string, string[]>>(() => new Map());
   const [createOpen, setCreateOpen] = useState(false);
   const requestId = useRef(0);
+  const askedPalettes = useRef(new Set<string>());
 
+  // Davet bölümü yalnız bekleyen davet varken vardır; son davet yanıtlanınca Tümü'ne dönülür.
+  const filter: SpaceFilter = section === "invites" ? "all" : section;
+  const showInvites = section === "invites" && invites.length > 0;
   // Ziyaretçi yalnız herkese açık süzgeci kullanabilir.
   const effectiveFilter: SpaceFilter = user ? filter : "public";
 
@@ -124,6 +131,16 @@ export function SpacesHome() {
     };
   }, [signedIn, reloadKey]);
 
+  // Kartların palet çizgisi: yeni gelen Space'lerin ilk paleti bir kez sorulur (sorulamazsa çizgisiz kalır).
+  useEffect(() => {
+    const ids = (items ?? []).map((item) => item.id).filter((id) => !askedPalettes.current.has(id));
+    if (ids.length === 0) return;
+    ids.forEach((id) => askedPalettes.current.add(id));
+    fetchLeadPalettes(ids)
+      .then((found) => found.size > 0 && setPalettes((current) => new Map([...current, ...found])))
+      .catch(() => undefined);
+  }, [items]);
+
   const loadMore = useCallback(async () => {
     if (!items) return;
     setLoadingMore(true);
@@ -161,91 +178,118 @@ export function SpacesHome() {
     setRecent((list) => list.filter((item) => item.id !== id));
   };
 
-  const showRecent = Boolean(user) && filter === "all" && !debounced && recent.length > 0;
+  const navItems: SectionNavItem<SpaceFilter | "invites">[] = [
+    { key: "all", label: t("spaces.filter.all"), icon: SpacesIcon },
+    { key: "mine", label: t("spaces.nav.mine"), icon: UserRound },
+    { key: "shared", label: t("spaces.nav.shared"), icon: Users },
+    { key: "favorites", label: t("spaces.filter.favorites"), icon: Pin },
+    { key: "public", label: t("spaces.filter.public"), icon: Globe2 },
+    { key: "archived", label: t("spaces.filter.archived"), icon: Archive },
+    ...(invites.length > 0 ? [{ key: "invites" as const, label: t("spaces.nav.invites"), icon: Mail, count: invites.length }] : []),
+  ];
+
+  const showRecent = Boolean(user) && section === "all" && !debounced && recent.length > 0;
   const isEmptyLibrary = items !== null && items.length === 0 && !debounced && (effectiveFilter === "all" || effectiveFilter === "mine");
 
   return (
-    <PageContainer className="space-y-6 pb-16 pt-4 sm:pt-6">
-      <PageHeader
-        icon={SpacesIcon}
-        eyebrow="Promptly"
-        title={t("spaces.home.title")}
-        description={t("spaces.home.tagline")}
-        actions={
-          <Button onClick={openCreate} data-testid="create-space">
-            <Plus size={16} aria-hidden />
-            {t("spaces.home.create")}
-          </Button>
-        }
-      />
+    <PageContainer className="space-y-5 pb-16 pt-3 sm:pt-5">
+      {/* Görünür başlık yok (Topluluklar / Keşfet ile aynı): arama kutusu sayfayı açar; başlık ekran okuyucuya kalır. */}
+      <h1 className="sr-only">{t("spaces.home.title")}</h1>
 
-      {invites.length > 0 && (
-        <InvitationList
-          invites={invites}
-          onAnswered={(invite, accepted) => {
-            setInvites((list) => list.filter((item) => item.id !== invite.id));
-            if (accepted) router.push(spaceHref(invite.spaceId));
-          }}
-        />
+      <div className="flex items-center gap-2">
+        <form role="search" className="relative min-w-0 flex-1" onSubmit={(event) => event.preventDefault()}>
+          <Search size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" aria-hidden />
+          <input
+            type="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder={t("spaces.home.searchPlaceholder")}
+            aria-label={t("spaces.home.searchPlaceholder")}
+            className="h-11 w-full rounded-full border border-border bg-surface pl-10 pr-10 text-small text-text shadow-xs placeholder:text-text-muted focus:border-primary/60"
+          />
+          {query && (
+            <button type="button" onClick={() => setQuery("")} aria-label={t("common.clear")} className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1.5 text-text-muted hover:bg-surface-soft">
+              <X size={14} />
+            </button>
+          )}
+        </form>
+        <Button onClick={openCreate} data-testid="create-space" className="h-11 w-11 shrink-0 rounded-full p-0 shadow-pop sm:w-auto sm:px-5" title={t("spaces.home.create")}>
+          <Plus size={20} aria-hidden />
+          <span className="max-sm:sr-only">{t("spaces.home.create")}</span>
+        </Button>
+      </div>
+
+      {showRecent && (
+        <section aria-labelledby="spaces-recent" className="space-y-2">
+          <h2 id="spaces-recent" className="px-1 text-label font-semibold uppercase tracking-[0.08em] text-text-muted">
+            {t("spaces.home.recent")}
+          </h2>
+          <ul className="scrollbar-none -mx-3 flex touch-pan-x gap-3 overflow-x-auto px-3 pb-1 sm:mx-0 sm:px-0" data-testid="spaces-recent">
+            {recent.map((space) => (
+              <li key={space.id} className="w-24 shrink-0 sm:w-28">
+                <Link href={spaceHref(space.id)} className="group block space-y-1.5 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+                  <SpaceCoverArt
+                    urls={summaryArt(space)}
+                    className="aspect-square w-full overflow-hidden rounded-[1.1rem] shadow-card transition-transform duration-200 ease-soft group-active:scale-[0.97]"
+                    iconSize={28}
+                  />
+                  <span className="block truncate text-small font-semibold text-text">{space.title}</span>
+                  {space.lastOpenedAt && <span className="block truncate text-caption text-text-muted">{t("spaces.home.openedAgo", { time: formatRelativeTime(space.lastOpenedAt, language) })}</span>}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
 
-      <div className="space-y-3">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <form role="search" className="relative min-w-0 flex-1" onSubmit={(event) => event.preventDefault()}>
-            <Search size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" aria-hidden />
-            <input
-              type="search"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder={t("spaces.home.searchPlaceholder")}
-              aria-label={t("spaces.home.searchPlaceholder")}
-              className="h-11 w-full rounded-full border border-border bg-surface pl-10 pr-10 text-small text-text shadow-xs placeholder:text-text-muted focus:border-primary/60"
-            />
-            {query && (
-              <button type="button" onClick={() => setQuery("")} aria-label={t("common.clear")} className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1.5 text-text-muted hover:bg-surface-soft">
-                <X size={14} />
+      {user && <SectionNav items={navItems} active={showInvites ? "invites" : filter} onChange={setSection} ariaLabel={t("spaces.filter.label")} hideControls />}
+
+      {/* Bekleyen davet: tek satırlık kart (Topluluklar'daki gibi); dokununca "Davetler" bölümü açılır. */}
+      {user && invites.length > 0 && !showInvites && (
+        <button
+          type="button"
+          onClick={() => setSection("invites")}
+          data-testid="space-invites-banner"
+          className="flex w-full items-center gap-3 rounded-lg border border-primary/25 bg-primary-soft/60 px-3 py-2.5 text-left transition-colors hover:bg-primary-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        >
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface text-primary">
+            <Mail size={17} aria-hidden />
+          </span>
+          <span className="min-w-0 flex-1 truncate text-small font-semibold text-text">{t("spaces.invites.banner", { count: invites.length })}</span>
+          <span className="shrink-0 text-small font-semibold text-primary">{t("spaces.invites.open")}</span>
+        </button>
+      )}
+
+      {!showInvites && (
+        <div className="flex items-center justify-end gap-2">
+          <select
+            value={sort}
+            onChange={(event) => setSort(event.target.value as SpaceSort)}
+            aria-label={t("spaces.sort.label")}
+            className="h-10 min-w-0 rounded-full border border-border-soft bg-surface px-4 text-small font-medium text-text-secondary"
+          >
+            {SPACE_SORTS.filter((key) => key !== "opened" || user).map((key) => (
+              <option key={key} value={key}>
+                {t(SORT_LABEL[key])}
+              </option>
+            ))}
+          </select>
+          <div role="group" aria-label={t("spaces.home.viewLabel")} className="flex rounded-full border border-border-soft bg-surface p-0.5">
+            {(["grid", "list"] as const).map((key) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => changeView(key)}
+                aria-pressed={view === key}
+                aria-label={t(key === "grid" ? "spaces.home.viewGrid" : "spaces.home.viewList")}
+                className={cn("flex h-9 w-10 items-center justify-center rounded-full transition-colors", view === key ? "bg-text text-background" : "text-text-muted hover:text-text")}
+              >
+                {key === "grid" ? <Grid2x2 size={16} aria-hidden /> : <List size={16} aria-hidden />}
               </button>
-            )}
-          </form>
-          <div className="flex items-center gap-2">
-            <select
-              value={sort}
-              onChange={(event) => setSort(event.target.value as SpaceSort)}
-              aria-label={t("spaces.sort.label")}
-              className="h-11 min-w-0 flex-1 rounded-full border border-border bg-surface px-4 text-small font-medium text-text sm:flex-none"
-            >
-              {SPACE_SORTS.filter((key) => key !== "opened" || user).map((key) => (
-                <option key={key} value={key}>
-                  {t(SORT_LABEL[key])}
-                </option>
-              ))}
-            </select>
-            <div role="group" aria-label={t("spaces.home.viewLabel")} className="flex rounded-full border border-border bg-surface p-0.5">
-              {(["grid", "list"] as const).map((key) => (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => changeView(key)}
-                  aria-pressed={view === key}
-                  aria-label={t(key === "grid" ? "spaces.home.viewGrid" : "spaces.home.viewList")}
-                  className={cn("flex h-9 w-10 items-center justify-center rounded-full transition-colors", view === key ? "bg-text text-background" : "text-text-muted hover:text-text")}
-                >
-                  {key === "grid" ? <Grid2x2 size={16} aria-hidden /> : <List size={16} aria-hidden />}
-                </button>
-              ))}
-            </div>
+            ))}
           </div>
         </div>
-        {user && (
-          <ChipRow aria-label={t("spaces.filter.label")}>
-            {(["all", "mine", "shared", "favorites", "public", "archived"] as const).map((key) => (
-              <Chip key={key} selected={filter === key} onClick={() => setFilter(key)} data-space-filter={key}>
-                {t(FILTER_LABEL[key])}
-              </Chip>
-            ))}
-          </ChipRow>
-        )}
-      </div>
+      )}
 
       {!user && !authLoading && (
         <div className="flex flex-col gap-3 rounded-lg border border-border-soft bg-primary-soft/50 p-4 sm:flex-row sm:items-center sm:justify-between">
@@ -256,63 +300,56 @@ export function SpacesHome() {
         </div>
       )}
 
-      {showRecent && (
-        <section aria-labelledby="spaces-recent" className="space-y-2">
-          <h2 id="spaces-recent" className="text-label font-semibold uppercase tracking-[0.08em] text-text-muted">
-            {t("spaces.home.recent")}
-          </h2>
-          <ul className="scrollbar-none -mx-3 flex touch-pan-x gap-3 overflow-x-auto px-3 pb-1 sm:mx-0 sm:px-0" data-testid="spaces-recent">
-            {recent.map((space) => (
-              <li key={space.id} className="w-36 shrink-0">
-                <Link href={spaceHref(space.id)} className="block space-y-1.5 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
-                  <SpaceCoverArt urls={summaryCover(space) ? [summaryCover(space)!] : space.previewUrls} className="aspect-square w-full overflow-hidden rounded-md" iconSize={28} />
-                  <span className="block truncate text-small font-semibold text-text">{space.title}</span>
-                  {space.lastOpenedAt && <span className="block truncate text-caption text-text-muted">{t("spaces.home.openedAgo", { time: formatRelativeTime(space.lastOpenedAt, language) })}</span>}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      <section aria-label={t(FILTER_LABEL[effectiveFilter])} aria-busy={items === null}>
-        {error ? (
-          <EmptyState icon={SpacesIcon} title={t("spaces.home.loadError")} action={{ label: t("common.retry"), onClick: () => setReloadKey((k) => k + 1) }} compact />
-        ) : items === null ? (
-          <ul className={view === "grid" ? "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3" : "space-y-2"}>
-            {Array.from({ length: 6 }, (_, index) => (
-              <li key={index}>
-                <Skeleton className={view === "grid" ? "aspect-[4/3] w-full rounded-lg" : "h-20 w-full rounded-lg"} />
-              </li>
-            ))}
-          </ul>
-        ) : isEmptyLibrary && user ? (
-          <FirstSpaceEmpty onCreate={openCreate} />
-        ) : items.length === 0 ? (
-          <EmptyState
-            icon={debounced ? Search : SpacesIcon}
-            title={debounced ? t("spaces.home.noResults") : t(`spaces.empty.${effectiveFilter}` as TranslationKey)}
-            description={debounced ? t("spaces.home.noResultsHelp") : undefined}
-            compact
-          />
-        ) : (
-          <>
-            <ul data-testid="spaces-list" data-view={view} className={view === "grid" ? "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3" : "space-y-2"}>
-              {items.map((space) => (
-                <SpaceCard key={space.id} space={space} layout={view} userId={user?.id ?? null} onChange={updateOne} onRemove={removeOne} />
+      {showInvites ? (
+        <InvitationList
+          invites={invites}
+          onAnswered={(invite, accepted) => {
+            const rest = invites.filter((item) => item.id !== invite.id);
+            setInvites(rest);
+            if (rest.length === 0) setSection("all");
+            if (accepted) router.push(spaceHref(invite.spaceId));
+          }}
+        />
+      ) : (
+        <section aria-label={t(FILTER_LABEL[effectiveFilter])} aria-busy={items === null}>
+          {error ? (
+            <EmptyState icon={SpacesIcon} title={t("spaces.home.loadError")} action={{ label: t("common.retry"), onClick: () => setReloadKey((k) => k + 1) }} compact />
+          ) : items === null ? (
+            <ul className={view === "grid" ? "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3" : "space-y-2"}>
+              {Array.from({ length: 6 }, (_, index) => (
+                <li key={index}>
+                  <Skeleton className={view === "grid" ? "aspect-[4/5] w-full rounded-xl" : "h-20 w-full rounded-lg"} />
+                </li>
               ))}
             </ul>
-            {hasMore && (
-              <div className="mt-6 flex justify-center">
-                <Button variant="outline" onClick={() => void loadMore()} disabled={loadingMore}>
-                  {loadingMore && <Loader2 size={14} className="animate-spin" aria-hidden />}
-                  {t("spaces.home.loadMore")}
-                </Button>
-              </div>
-            )}
-          </>
-        )}
-      </section>
+          ) : isEmptyLibrary && user ? (
+            <FirstSpaceEmpty onCreate={openCreate} />
+          ) : items.length === 0 ? (
+            <EmptyState
+              icon={debounced ? Search : SpacesIcon}
+              title={debounced ? t("spaces.home.noResults") : t(`spaces.empty.${effectiveFilter}` as TranslationKey)}
+              description={debounced ? t("spaces.home.noResultsHelp") : undefined}
+              compact
+            />
+          ) : (
+            <>
+              <ul data-testid="spaces-list" data-view={view} className={view === "grid" ? "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3" : "space-y-2"}>
+                {items.map((space) => (
+                  <SpaceCard key={space.id} space={space} layout={view} userId={user?.id ?? null} palette={palettes.get(space.id)} onChange={updateOne} onRemove={removeOne} />
+                ))}
+              </ul>
+              {hasMore && (
+                <div className="mt-6 flex justify-center">
+                  <Button variant="outline" onClick={() => void loadMore()} disabled={loadingMore}>
+                    {loadingMore && <Loader2 size={14} className="animate-spin" aria-hidden />}
+                    {t("spaces.home.loadMore")}
+                  </Button>
+                </div>
+              )}
+            </>
+          )}
+        </section>
+      )}
 
       {createOpen && <CreateSpaceModal onClose={() => setCreateOpen(false)} />}
     </PageContainer>

@@ -104,20 +104,21 @@ await scenario("2. liste: kartlar, süzgeç RPC'ye gider, arama gecikmeli, liste
   await page.goto(`${BASE}/spaces`);
   await page.getByTestId("spaces-list").waitFor();
   assert.equal(await page.locator("[data-space-card]").count(), 2);
-  await page.locator('[data-space-filter="shared"]').click();
+  await page.getByRole("tab", { name: "Paylaşılan" }).click();
   await waitFor(() => calls(db, "RPC", "list_spaces").some((c) => c.body.p_filter === "shared"));
   await page.getByText("Seninle paylaşılan Space yok").waitFor();
-  await page.locator('[data-space-filter="all"]').click();
+  await page.getByRole("tab", { name: "Tümü" }).click();
   await page.getByRole("searchbox", { name: /Space, görsel/ }).fill("altın");
   await waitFor(() => calls(db, "RPC", "list_spaces").some((c) => c.body.p_query === "altın"));
   await waitFor(async () => (await page.locator("[data-space-card]").count()) === 1);
   await page.getByRole("searchbox", { name: /Space, görsel/ }).fill("");
   await page.getByRole("button", { name: "Liste" }).click();
   await page.locator('[data-view="list"]').waitFor();
-  await page.locator(`[data-space-card="${SID(1)}"]`).getByRole("button", { name: "Favorilere ekle" }).click();
+  await page.locator(`[data-space-card="${SID(1)}"]`).getByRole("button", { name: "Sabitle" }).click();
   await waitFor(() => calls(db, "RPC", "set_space_favorite").length === 1);
   assert.equal(calls(db, "RPC", "set_space_favorite")[0].body.p_favorite, true);
-  // Davet: kabul → Space'e gider.
+  // Davet: tek satırlık kart → "Davetler" bölümü → kabul → Space'e gider.
+  await page.getByTestId("space-invites-banner").click();
   await page.getByTestId("space-invitations").getByRole("button", { name: "Kabul et" }).click();
   await page.waitForURL(new RegExp(`id=${SID(3)}`));
 }, {
@@ -133,7 +134,7 @@ await scenario("3. ziyaretçi: yalnız herkese açık süzgeç; oluştur giriş 
   await page.goto(`${BASE}/spaces`);
   await page.getByTestId("spaces-list").waitFor();
   assert.ok(calls(db, "RPC", "list_spaces").every((c) => c.body.p_filter === "public"));
-  assert.equal(await page.locator("[data-space-filter]").count(), 0);
+  assert.equal(await page.getByRole("tablist", { name: "Space süzgeci" }).count(), 0);
   await page.getByTestId("create-space").click();
   await page.getByRole("dialog").getByRole("link", { name: "Giriş yap" }).first().waitFor();
   assert.equal(calls(db, "RPC", "create_space").length, 0);
@@ -430,11 +431,97 @@ await scenario("24. palet: görselden renk çıkarılamazsa (saydam) dürüst ha
   assert.equal(db.spacePalettes.length, 0);
 }, { setup: (db) => { db.addSpace(1); db.addItem(SID(1), { kind: "image", media_url: MEDIA(SID(1), 1), title: "Kare" }); } });
 
+// ---------------------------------------------------------------- Albüm düzeni + keşif (docs/history/214-*)
+
+const palette = (spaceId, colors, over = {}) => ({ id: crypto.randomUUID(), space_id: spaceId, name: over.name ?? "Gece", description: "", colors, source: "manual", source_item_id: null, position: over.position ?? 0, created_by: ME, created_at: "2026-09-20T10:00:00Z" });
+
+await scenario("25. ziyaretçi Space'i vitrin olarak görür: Görseller açılır, Genel bakış yok, 'Panoyu gez', bant paleti HEX kopyalar, Paylaş adresi verir", async ({ page, context }) => {
+  await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+  await page.goto(`${BASE}/spaces/local?id=${SID(1)}`);
+  await page.getByRole("heading", { level: 1, name: "Ejderha Dünyası" }).waitFor();
+  assert.equal(await page.getByRole("tab", { name: /Genel bakış/ }).count(), 0, "ziyaretçiye genel bakış yok");
+  assert.equal(await page.getByRole("tab", { selected: true }).first().innerText().then((x) => x.startsWith("Görseller")), true);
+  assert.equal(await page.getByRole("tab", { name: /Notlar/ }).count(), 0, "notu olmayan Space'te Notlar sekmesi yok");
+  await page.getByRole("button", { name: "Panoyu gez" }).waitFor();
+  const strip = page.locator("[data-space-band-palette]");
+  await strip.getByText("Gece").waitFor();
+  await strip.getByRole("button", { name: "#ff5fa2 kopyala" }).click();
+  assert.equal(await page.evaluate(() => navigator.clipboard.readText()), "#ff5fa2");
+  await page.locator("[data-space-actions]").getByRole("button", { name: "Paylaş" }).click();
+  await waitFor(async () => (await page.evaluate(() => navigator.clipboard.readText())).includes(`/spaces/local?id=${SID(1)}`));
+  assert.ok((await page.evaluate(() => navigator.clipboard.readText())).includes(`/spaces/local?id=${SID(1)}`));
+}, {
+  setup: (db) => {
+    db.addSpace(1, { title: "Ejderha Dünyası", owner: U.bob.id, visibility: "public" });
+    db.addItem(SID(1), { kind: "image", media_url: MEDIA(SID(1), 1), created_by: U.bob.id });
+    db.spacePalettes.push(palette(SID(1), ["#ff5fa2", "#22d3c5", "#7c5cff"]));
+  },
+});
+
+await scenario("26. sahip: bant paleti + ⋮ → Sabitle (set_space_favorite); ana sayfa kartı Albüm bandı + palet çizgisi + Sabitli", async ({ page, db }) => {
+  await page.goto(`${BASE}/spaces/local?id=${SID(1)}`);
+  await page.getByRole("heading", { level: 1, name: "Ejderha Dünyası" }).waitFor();
+  await page.getByRole("tab", { name: /Genel bakış/, selected: true }).waitFor();
+  await page.locator("[data-space-band-palette]").waitFor();
+  await page.locator("[data-detail-menu]").getByRole("button").click();
+  await page.getByRole("menuitem", { name: "Sabitle" }).click();
+  await waitFor(() => calls(db, "RPC", "set_space_favorite").length === 1);
+  assert.equal(calls(db, "RPC", "set_space_favorite")[0].body.p_favorite, true);
+  await page.goto(`${BASE}/spaces`);
+  const card = page.locator(`[data-space-card="${SID(1)}"]`);
+  await card.locator("[data-palette-strip]").waitFor();
+  await card.getByRole("button", { name: "Sabitlemeyi kaldır" }).waitFor();
+  await page.getByRole("tab", { name: "Sabitli" }).click();
+  await waitFor(() => calls(db, "RPC", "list_spaces").some((c) => c.body.p_filter === "favorites"));
+}, {
+  setup: (db) => {
+    boardWith(db, 1);
+    db.spacePalettes.push(palette(SID(1), ["#111111", "#eeeeee"]));
+  },
+});
+
+await scenario("27. prompt detayı: 'Bu prompt şu Space'lerde' yalnız herkese açık + arşivsiz Space'i listeler", async ({ page, db }) => {
+  await page.goto(`${BASE}${PAGES.prompt}`);
+  const list = page.getByTestId("prompt-in-spaces");
+  await list.waitFor();
+  assert.ok(calls(db, "RPC", "list_public_spaces").some((c) => c.body.p_prompt === ID.prompt));
+  assert.deepEqual(await list.locator("a").evaluateAll((links) => links.map((a) => a.textContent.includes("Açık vitrin"))), [true]);
+  await list.getByRole("link").first().click();
+  await page.waitForURL(new RegExp(`spaces/local/?\\?id=${SID(1)}`));
+}, {
+  setup: (db) => {
+    db.addSpace(1, { title: "Açık vitrin", owner: U.bob.id, visibility: "public" });
+    db.addSpace(2, { title: "Kendi özelim", visibility: "private" });
+    db.addSpace(3, { title: "Arşivli açık", owner: U.bob.id, visibility: "public", archived: true });
+    for (const n of [1, 2, 3]) db.addItem(SID(n), { kind: "prompt", prompt_id: ID.prompt, created_by: db.spaces[n - 1].owner_id });
+  },
+});
+
+await scenario("28. profil: herkese açık Space varsa 'Spaces' sekmesi (yalnız herkese açık olanlar); yoksa sekme yok", async ({ page, db }) => {
+  await page.goto(`${BASE}/profile/real?username=${U.bob.username}`);
+  await page.getByRole("tab", { name: /Spaces/ }).click();
+  const grid = page.getByTestId("profile-spaces");
+  await grid.waitFor();
+  assert.equal(await grid.locator("[data-space-card]").count(), 1);
+  await grid.getByText("Bob'un açık Space'i").waitFor();
+  assert.ok(calls(db, "RPC", "list_public_spaces").some((c) => c.body.p_owner === U.bob.id));
+  await page.goto(`${BASE}/profile/real?username=${U.carol.username}`);
+  await page.getByRole("heading", { level: 1 }).first().waitFor();
+  await waitFor(() => calls(db, "RPC", "list_public_spaces").some((c) => c.body.p_owner === U.carol.id));
+  await page.waitForTimeout(300);
+  assert.equal(await page.getByRole("tab", { name: /Spaces/ }).count(), 0);
+}, {
+  setup: (db) => {
+    db.addSpace(1, { title: "Bob'un açık Space'i", owner: U.bob.id, visibility: "public" });
+    db.addSpace(2, { title: "Bob'un özeli", owner: U.bob.id, visibility: "private" });
+  },
+});
+
 // ---------------------------------------------------------------- dil + telefon
 
 await scenario("21. İngilizce: ana sayfa, sekmeler ve pano araçları İngilizce", async ({ page }) => {
   await page.goto(`${BASE}/spaces`);
-  await page.getByText("Collect your ideas. Arrange your images. Grow your creative projects.").waitFor();
+  await page.getByRole("tab", { name: "Mine" }).waitFor();
   await page.getByTestId("create-space").getByText("New Space").waitFor();
   await page.goto(`${BASE}/spaces/local?id=${SID(1)}&tab=board`);
   await page.getByRole("tab", { name: /Board/ }).waitFor();

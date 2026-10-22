@@ -440,6 +440,12 @@ export function mapSpaceSummary(row: SummaryRow): SpaceSummary {
   };
 }
 
+/** Kapak sanatı: seçilen kapak (yüklenen › seçilen görsel öğe) tek başına; yoksa son dört görselin kolajı (Space sayfasıyla aynı). */
+export function summaryArt(summary: Pick<SpaceSummary, "coverUrl" | "coverItemUrl" | "previewUrls">): string[] {
+  const chosen = summary.coverUrl ?? summary.coverItemUrl;
+  return chosen ? [chosen] : summary.previewUrls;
+}
+
 /** Kapak: yüklenen kapak › seçilen görsel öğe › en yeni görsel. */
 export function summaryCover(summary: Pick<SpaceSummary, "coverUrl" | "coverItemUrl" | "previewUrls">): string | null {
   return summary.coverUrl ?? summary.coverItemUrl ?? summary.previewUrls[0] ?? null;
@@ -466,6 +472,27 @@ export async function listSpaces({
     p_offset: offset,
   });
   return (rows ?? []).map(mapSpaceSummary);
+}
+
+/**
+ * Vitrin (docs/history/214-*): yalnız herkese açık + arşivlenmemiş Space'ler, bir sahibe (profil "Spaces" sekmesi) ya da bir
+ * prompt'a (detaydaki "Bu prompt şu Space'lerde") göre. Okuma çağıranın RLS'inden geçer (engel iki yönlü).
+ */
+export async function listPublicSpaces({ ownerId, promptId, limit = SPACE_PAGE_SIZE }: { ownerId?: string; promptId?: string; limit?: number }): Promise<SpaceSummary[]> {
+  const rows = await rpc<SummaryRow[]>("list_public_spaces", { p_owner: ownerId ?? null, p_prompt: promptId ?? null, p_limit: limit, p_offset: 0 });
+  return (rows ?? []).map(mapSpaceSummary);
+}
+
+/** Her Space'in ilk paletinin renkleri (kartın palet çizgisi). Okunamayan Space'in paleti RLS ile hiç gelmez. */
+export async function fetchLeadPalettes(spaceIds: string[]): Promise<Map<string, string[]>> {
+  const result = new Map<string, string[]>();
+  if (spaceIds.length === 0) return result;
+  const { data, error } = await supabase.from("space_palettes").select("space_id, colors").in("space_id", spaceIds).order("position").order("created_at");
+  if (error) throw toSpaceError(error);
+  for (const row of (data ?? []) as { space_id: string; colors: string[] | null }[]) {
+    if (!result.has(row.space_id) && row.colors && row.colors.length > 0) result.set(row.space_id, row.colors);
+  }
+  return result;
 }
 
 export async function createSpace(input: {

@@ -7,6 +7,7 @@ const person = (id) => {
   const u = Object.values(U).find((x) => x.id === id);
   return u ? { id: u.id, username: u.username, display_name: u.display_name, avatar_url: null } : null;
 };
+const PROFILE_COLS = ["id", "username", "display_name", "avatar_url", "cover_url", "bio", "website", "follower_count", "following_count", "created_at", "interests"];
 const now = () => new Date().toISOString();
 const eqv = (v) => (v?.startsWith("eq.") ? v.slice(3) : null);
 const inv = (v) => (v?.startsWith("in.(") ? v.slice(4, -1).split(",").map((s) => s.replace(/"/g, "")) : null);
@@ -124,6 +125,11 @@ export function setupSpaces(db) {
   db.extraRoutes = async (ctx) => {
     const { table, method, q, body, signedIn, json, rows, err } = ctx;
     const uid = signedIn;
+    // Profil sayfası (docs/history/214-*, "Spaces" sekmesi): kullanıcı adına göre tek profil — `mock-stories.mjs` ile aynı biçim.
+    if (table === "profiles" && q.get("username")) {
+      const name = q.get("username").replace(/^eq\./, "");
+      return rows(Object.values(U).filter((u) => u.username === name).map((u) => Object.fromEntries(PROFILE_COLS.map((c) => [c, u[c]]))));
+    }
     const rpcCall = (name, fn) => {
       if (table !== `rpc/${name}`) return undefined;
       db.calls.push({ method: "RPC", table: name, body });
@@ -149,6 +155,16 @@ export function setupSpaces(db) {
         list.sort((a, b) => (body.p_sort === "title" ? a.title.localeCompare(b.title) : b.updated_at.localeCompare(a.updated_at)));
         const offset = body.p_offset ?? 0;
         return json(200, list.slice(offset, offset + (body.p_limit ?? 24)).map((s) => summary(s, uid)));
+      }) ??
+      // docs/history/214-*: vitrin — yalnız herkese açık + arşivsiz; sahibe ve/veya prompt'a göre, süzgeçsiz çağrı boş.
+      rpcCall("list_public_spaces", () => {
+        if (!body.p_owner && !body.p_prompt) return json(200, []);
+        const list = db.spaces
+          .filter((s) => canRead(s.id, uid) && s.visibility === "public" && !s.archived_at)
+          .filter((s) => !body.p_owner || s.owner_id === body.p_owner)
+          .filter((s) => !body.p_prompt || db.spaceItems.some((i) => i.space_id === s.id && i.prompt_id === body.p_prompt))
+          .sort((a, b) => b.updated_at.localeCompare(a.updated_at));
+        return json(200, list.slice(0, body.p_limit ?? 24).map((s) => summary(s, uid)));
       }) ??
       rpcCall("create_space", () => {
         if (!uid) return json(401, { message: "not_authenticated" });
