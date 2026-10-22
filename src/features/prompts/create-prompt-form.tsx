@@ -5,7 +5,7 @@ import { ToolPicker } from "@/features/content/tool-picker";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Copy, Cpu, Eye, EyeOff, Folder, Hash, Layers, X } from "lucide-react";
+import { Braces, ChevronRight, Copy, Cpu, Eye, EyeOff, Folder, Hash, ImagePlus, Layers, SlidersHorizontal, Sparkles, X } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { PromptCard } from "@/features/prompts/prompt-card";
 import { TaxonomyPicker } from "@/features/content/taxonomy-picker";
@@ -20,7 +20,7 @@ import { TagPicker } from "@/features/prompts/tag-picker";
 import { ExtraSettingsSection } from "@/features/prompts/extra-settings-panel";
 import { catalogFields, catalogFieldsForType, fieldIdsFor } from "@/lib/prompt-extra-settings";
 import { composePrompt, mergeFields, sanitizeSelection, withCustomOptions, type CustomOptions, type PresetField, type PresetSelection } from "@/lib/preset-fields";
-import { PromptTextEditor, type DraftVariable } from "@/features/prompts/prompt-text-editor";
+import { PromptTextEditor, type DraftVariable, type PromptTextEditorHandle } from "@/features/prompts/prompt-text-editor";
 import { PromptDnaEditor } from "@/features/prompts/prompt-dna-editor";
 import { fetchDnaSections, replaceDnaSections } from "@/lib/supabase/prompt-dna";
 import type { DnaSection } from "@/lib/prompt-dna/types";
@@ -41,7 +41,7 @@ import {
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { KindDraftsButton } from "@/features/drafts/kind-drafts-button";
 import { ComposeSheet, ComposeShell, ComposeToolbar, PublishPreview, composeBodyClassName, composeTitleClassName, useComposeLeave, useDirty } from "@/features/content/compose";
-import { ComposeAuthorLine, ComposeSummaryChips, ContentTypeChips, SuggestedTagsRow } from "@/features/content/compose-fields";
+import { ComposeBody, ComposeSummaryChips, ContentTypeChips, SuggestedTagsRow } from "@/features/content/compose-fields";
 import { PublishSheet, type PublishProblem } from "@/features/content/publish-sheet";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
 import { resolveToolRefs } from "@/lib/ai-tool-catalog";
@@ -50,6 +50,17 @@ import type { ContentVisibility, Prompt, PromptContentType, PromptRequest } from
 
 
 type ComposeSheetKey = "tags" | "tool" | "category" | "advanced";
+
+/** "Görsel" araç düğmesinin açtığı dosya seçici (görsel şeridindeki girişle aynı). */
+const IMAGE_INPUT_ID = "prompt-images";
+
+function SlidersHorizontalIcon() {
+  return (
+    <span aria-hidden className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary-soft text-primary">
+      <SlidersHorizontal size={17} />
+    </span>
+  );
+}
 
 function LoginGate({ message }: { message: string }) {
   const { t } = useTranslation();
@@ -340,6 +351,9 @@ export function CreatePromptForm() {
   // Yazma ekranı (docs/history/216-*): araç çubuğunun alt sayfası, son kontrol penceresi ve ✕'teki "kaydedilsin mi?".
   const [sheet, setSheet] = useState<ComposeSheetKey | null>(null);
   const [publishOpen, setPublishOpen] = useState(false);
+  // Araç çubuğu yazma alanlarını dışarıdan açar: "Değişken" ekleme yüzeyini, "Görsel" dosya seçiciyi, "Gelişmiş" hazır ayar panelini.
+  const editorRef = useRef<PromptTextEditorHandle>(null);
+  const [extraOpen, setExtraOpen] = useState(false);
   const dirty = useDirty(
     JSON.stringify([contentType, category, subcategory, title, description, promptText, tools, images.map((item) => item.key), tagPicker.accepted.map((entry) => entry.tag.slug), extraSettings, variables, dnaSections.length, references, visibility, showOnProfile, pickedOutput?.file.name ?? null]),
     sourceChecked && (fieldsSeeded || (!isEditMode && !isDuplicateMode && !isAnswerMode)),
@@ -779,10 +793,14 @@ export function CreatePromptForm() {
       toolbar={
         <ComposeToolbar
           tools={[
+            ...(contentType === "image"
+              ? [{ key: "image", icon: ImagePlus, label: t("compose.toolImage"), onClick: () => document.getElementById(IMAGE_INPUT_ID)?.click() }]
+              : []),
             { key: "tags", icon: Hash, label: t("compose.toolTags"), badge: tagPicker.suggested.length || undefined, onClick: () => setSheet("tags") },
             { key: "tool", icon: Cpu, label: t("compose.toolTool"), onClick: () => setSheet("tool") },
             { key: "category", icon: Folder, label: t("compose.toolCategory"), onClick: () => setSheet("category") },
-            { key: "advanced", icon: Layers, label: t("compose.toolAdvanced"), badge: dnaSections.length || undefined, onClick: () => setSheet("advanced") },
+            { key: "variable", icon: Braces, label: t("compose.toolVariable"), badge: variables.length || undefined, onClick: () => editorRef.current?.openInsert() },
+            { key: "advanced", icon: Layers, label: t("compose.toolAdvanced"), badge: Object.keys(extraSettings).length + dnaSections.length || undefined, onClick: () => setSheet("advanced") },
           ]}
         />
       }
@@ -846,9 +864,7 @@ export function CreatePromptForm() {
 
         <ContentTypeChips value={contentType} onChange={(type) => changeTaxonomy({ contentType: type, category: null, subcategory: null })} locked={isEditMode} />
 
-        <ComposeAuthorLine profile={ownProfile} audienceLabel={audienceLabel} onAudience={() => setPublishOpen(true)} />
-
-        <div className="space-y-3">
+        <ComposeBody profile={ownProfile} audienceLabel={audienceLabel} onAudience={() => setPublishOpen(true)}>
           <input
             id="prompt-title"
             value={title}
@@ -858,67 +874,77 @@ export function CreatePromptForm() {
             aria-label={t("forms.title")}
             className={composeTitleClassName}
           />
-          <textarea
+          <input
             id="prompt-description"
             value={description}
             onChange={(event) => setDescription(event.target.value)}
             maxLength={200}
-            rows={2}
             placeholder={t("prompt.descriptionPlaceholder")}
             aria-label={t("compose.descriptionLabel")}
             className={composeBodyClassName}
           />
-        </div>
 
-        <PromptTextEditor
-          id="prompt-text"
-          value={promptText}
-          onChange={setPromptText}
-          variables={variables}
-          onVariablesChange={setVariables}
-          rows={5}
-          placeholder={t("prompt.promptTextPlaceholder")}
-          // "Görselden yardım" works on the image already picked below — no second upload.
-          visionFile={contentType === "image" ? (images.find((item) => item.file)?.file ?? null) : null}
-        />
+          <PromptTextEditor
+            ref={editorRef}
+            variant="compose"
+            id="prompt-text"
+            value={promptText}
+            onChange={setPromptText}
+            variables={variables}
+            onVariablesChange={setVariables}
+            rows={4}
+            placeholder={t("prompt.promptTextPlaceholder")}
+            // "Görselden yardım" works on the image already picked below — no second upload.
+            visionFile={contentType === "image" ? (images.find((item) => item.file)?.file ?? null) : null}
+          />
 
-        {/* Hazır ayarlar ve ek alan önerileri yazma ekranında kalır: tek satır + uygulananların çipleri, panel kendi penceresinde. */}
-        <ExtraSettingsSection
-          contentType={contentType}
-          value={extraSettings}
-          onChange={setExtraSettings}
-          extraFields={extraFields}
-          onExtraFieldsChange={setExtraFields}
-          customOptions={customOptions}
-          onCustomOptionsChange={setCustomOptions}
-          englishFragments={englishFragments}
-          onEnglishFragmentsChange={setEnglishFragments}
-          promptText={promptText}
-          hasTool={tools.length > 0}
-          category={category}
-          subcategory={subcategory}
-          tools={tools}
-        />
+          {/* Hazır ayarlar ve ek alan önerileri: panel "Gelişmiş"ten açılır, uygulananlar burada çip olarak görünür. */}
+          <ExtraSettingsSection
+            compact
+            open={extraOpen}
+            onOpenChange={setExtraOpen}
+            contentType={contentType}
+            value={extraSettings}
+            onChange={setExtraSettings}
+            extraFields={extraFields}
+            onExtraFieldsChange={setExtraFields}
+            customOptions={customOptions}
+            onCustomOptionsChange={setCustomOptions}
+            englishFragments={englishFragments}
+            onEnglishFragmentsChange={setEnglishFragments}
+            promptText={promptText}
+            hasTool={tools.length > 0}
+            category={category}
+            subcategory={subcategory}
+            tools={tools}
+          />
 
-        {contentType === "image" && (
-          <MultiImagePicker items={images} onChange={setImages} hint={isEditMode ? t("prompt.imageEditHint") : t("prompt.imageUploadHint")} />
-        )}
+          {contentType === "image" && (
+            <MultiImagePicker
+              variant="strip"
+              inputId={IMAGE_INPUT_ID}
+              items={images}
+              onChange={setImages}
+              hint={isEditMode ? t("prompt.imageEditHint") : t("prompt.imageUploadHint")}
+            />
+          )}
 
-        {outputKind && (
-          <OutputFilePicker kind={outputKind} file={outputFile} onChange={(file) => setPickedOutput(file ? { kind: outputKind, file } : null)} disabled={isSubmitting} />
-        )}
+          {outputKind && (
+            <OutputFilePicker kind={outputKind} file={outputFile} onChange={(file) => setPickedOutput(file ? { kind: outputKind, file } : null)} disabled={isSubmitting} />
+          )}
 
-        <ComposeSummaryChips
-          tools={tools}
-          contentType={contentType}
-          category={category}
-          subcategory={subcategory}
-          tags={tagPicker.accepted.map((entry) => entry.tag)}
-          onTools={() => setSheet("tool")}
-          onCategory={() => setSheet("category")}
-          onTags={() => setSheet("tags")}
-        />
-        <SuggestedTagsRow picker={tagPicker} />
+          <ComposeSummaryChips
+            tools={tools}
+            contentType={contentType}
+            category={category}
+            subcategory={subcategory}
+            tags={tagPicker.accepted.map((entry) => entry.tag)}
+            onTools={() => setSheet("tool")}
+            onCategory={() => setSheet("category")}
+            onTags={() => setSheet("tags")}
+          />
+          <SuggestedTagsRow picker={tagPicker} />
+        </ComposeBody>
       </form>
 
       {sheet && (
@@ -930,6 +956,47 @@ export function CreatePromptForm() {
           )}
           {sheet === "advanced" && (
             <div className="space-y-6">
+              <div className="divide-y divide-border-soft rounded-xl border border-border-soft">
+                <button
+                  type="button"
+                  data-advanced-row="extra"
+                  onClick={() => {
+                    setSheet(null);
+                    setExtraOpen(true);
+                  }}
+                  className="flex w-full items-center gap-3 px-3 py-3 text-left"
+                >
+                  <SlidersHorizontalIcon />
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-label font-semibold text-text">{t("extra.title")}</span>
+                    <span className="block text-caption text-text-muted">{t("extra.hint")}</span>
+                  </span>
+                  {Object.keys(extraSettings).length > 0 && (
+                    <span className="rounded-full bg-primary px-2 py-0.5 text-caption font-semibold text-primary-foreground">{Object.keys(extraSettings).length}</span>
+                  )}
+                  <ChevronRight size={16} aria-hidden className="shrink-0 text-text-muted" />
+                </button>
+                {contentType === "image" && (
+                  <button
+                    type="button"
+                    data-advanced-row="vision"
+                    onClick={() => {
+                      setSheet(null);
+                      editorRef.current?.openVisionHelp();
+                    }}
+                    className="flex w-full items-center gap-3 px-3 py-3 text-left"
+                  >
+                    <span aria-hidden className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary-soft text-primary">
+                      <Sparkles size={17} />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-label font-semibold text-text">{t("vision.helpTitle")}</span>
+                      <span className="block text-caption text-text-muted">{t("vision.helpIntro")}</span>
+                    </span>
+                    <ChevronRight size={16} aria-hidden className="shrink-0 text-text-muted" />
+                  </button>
+                )}
+              </div>
               <section className="space-y-2">
                 <h3 className="text-label font-semibold text-text">{t("dna.title")}</h3>
                 <p className="text-caption text-text-muted">{t("dna.description")}</p>

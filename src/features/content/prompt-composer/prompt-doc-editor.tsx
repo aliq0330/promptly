@@ -88,6 +88,8 @@ export const PromptDocEditor = forwardRef<
     ariaDescribedBy?: string;
     required?: boolean;
     hidden?: boolean;
+    /** Yazma ekranı (docs/history/216-*): kutusuz, kenar boşluksuz; sayfayla birlikte kayar. */
+    bare?: boolean;
     className?: string;
     onSelectionChange?: (selection: EditorSelection) => void;
     onFocusChange?: (focused: boolean) => void;
@@ -106,6 +108,7 @@ export const PromptDocEditor = forwardRef<
     ariaDescribedBy,
     required,
     hidden,
+    bare = false,
     className,
     onSelectionChange,
     onFocusChange,
@@ -296,19 +299,19 @@ export const PromptDocEditor = forwardRef<
   return (
     <div
       className={cn(
-        "relative rounded-lg border border-border bg-background shadow-xs transition-colors duration-200 ease-soft",
-        "hover:border-border-strong focus-within:border-primary/60",
+        "relative",
+        !bare && "rounded-lg border border-border bg-background shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus-within:border-primary/60",
         hidden && "hidden",
         className,
       )}
     >
-      {/* Mobilde uzun metin sayfayı uzatmasın: ayna + textarea birlikte kayan tek kutuda. */}
-      <div className="rounded-lg max-lg:max-h-[min(46dvh,22rem)] max-lg:overflow-y-auto max-lg:overscroll-contain" data-testid="editor-scroll">
+      {/* Mobilde uzun metin sayfayı uzatmasın: ayna + textarea birlikte kayan tek kutuda (yazma ekranında sayfa kayar). */}
+      <div className={cn("rounded-lg", !bare && "max-lg:max-h-[min(46dvh,22rem)] max-lg:overflow-y-auto max-lg:overscroll-contain")} data-testid="editor-scroll">
       <div className="relative">
       <div
         ref={mirrorRef}
         aria-hidden
-        className="pointer-events-none absolute inset-0 overflow-hidden whitespace-pre-wrap break-words px-3 py-2 font-mono text-sm leading-6 text-text max-lg:text-[16px]"
+        className={cn("pointer-events-none absolute inset-0 overflow-hidden whitespace-pre-wrap break-words font-mono text-sm leading-6 text-text max-lg:text-[16px]", bare ? "px-0 py-0.5" : "px-3 py-2")}
       >
         {segments.map((segment) =>
           segment.type === "token" ? (
@@ -368,7 +371,10 @@ export const PromptDocEditor = forwardRef<
           composingRef.current = false;
           syncSelection();
         }}
-        className="relative block w-full resize-none overflow-hidden whitespace-pre-wrap break-words bg-transparent px-3 py-2 font-mono text-sm leading-6 text-transparent caret-text outline-none placeholder:text-text-muted selection:bg-primary/25 selection:text-transparent"
+        className={cn(
+          "relative block w-full resize-none overflow-hidden whitespace-pre-wrap break-words bg-transparent font-mono text-sm leading-6 text-transparent caret-text outline-none placeholder:text-text-muted selection:bg-primary/25 selection:text-transparent",
+          bare ? "px-0 py-0.5" : "px-3 py-2",
+        )}
       />
       </div>
       </div>

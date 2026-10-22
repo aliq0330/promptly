@@ -53,7 +53,15 @@ export function ExtraSettingsSection({
   category = null,
   subcategory = null,
   tools = [],
+  open: openProp,
+  onOpenChange,
+  compact = false,
 }: {
+  /** Dışarıdan açılır (yazma ekranının "Gelişmiş" sayfası, docs/history/216-*); verilmezse kendi satırı açar. */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  /** Yazma ekranı: açma satırı ve "kaydedilecek prompt" kutusu yok, yalnız uygulananların çipleri. */
+  compact?: boolean;
   contentType: ContentTypeId;
   value: PresetSelection;
   onChange: (next: PresetSelection) => void;
@@ -72,7 +80,9 @@ export function ExtraSettingsSection({
   tools?: string[];
 }) {
   const { t, language } = useTranslation();
-  const [open, setOpen] = useState(false);
+  const [openState, setOpenState] = useState(false);
+  const open = openProp ?? openState;
+  const setOpen = (next: boolean) => (onOpenChange ? onOpenChange(next) : setOpenState(next));
   const recommended = useMemo(() => catalogFields(fieldIdsFor(contentType, category, subcategory, tools)), [contentType, category, subcategory, tools]);
   const catalog = useMemo(() => mergeFields(recommended, catalogFieldsForType(contentType)), [recommended, contentType]);
   const allFields = useMemo(() => withCustomOptions(mergeFields(catalog, extraFields), customOptions), [catalog, extraFields, customOptions]);
@@ -82,9 +92,10 @@ export function ExtraSettingsSection({
   const composed = composePrompt(promptText, applied, allFields, fragmentLanguage);
 
   return (
-    <div className="space-y-2">
+    <div className={cn("space-y-2", compact && count === 0 && !open && "hidden")}>
       <button
         type="button"
+        hidden={compact}
         onClick={() => setOpen(true)}
         aria-haspopup="dialog"
         className="flex w-full items-center gap-3 rounded-md border border-dashed border-border-strong bg-surface-soft px-3 py-2.5 text-left transition-colors hover:border-primary hover:bg-primary-soft"
@@ -101,7 +112,7 @@ export function ExtraSettingsSection({
       {count > 0 && (
         <div className="space-y-2">
           <SelectionSummary fields={allFields} selection={applied} onChange={onChange} />
-          <div className="rounded-md border border-border-soft bg-surface-soft p-3">
+          <div className={cn("rounded-md border border-border-soft bg-surface-soft p-3", compact && "hidden")}>
             <p className="mb-1 text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">{t("extra.savedPrompt")}</p>
             <p data-extra-composed className="prompt-text whitespace-pre-wrap break-words text-small text-text">
               {composed || t("extra.emptyBase")}

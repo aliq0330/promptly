@@ -3,7 +3,7 @@ import { useCommunityContext, useCommunityReturn } from "@/features/communities/
 import { ToolPicker } from "@/features/content/tool-picker";
 
 import { useEffect, useState } from "react";
-import { Cpu, Folder, Hash, Sparkles } from "lucide-react";
+import { Cpu, Folder, Hash, ImagePlus, Sparkles, WandSparkles } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { RequestCard } from "./request-card";
@@ -22,7 +22,7 @@ import { requestHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { KindDraftsButton } from "@/features/drafts/kind-drafts-button";
 import { ComposeSheet, ComposeShell, ComposeToolbar, PublishPreview, composeBodyClassName, composeTitleClassName, useComposeLeave, useDirty } from "@/features/content/compose";
-import { ComposeAuthorLine, ComposeSummaryChips, ContentTypeChips, SuggestedTagsRow } from "@/features/content/compose-fields";
+import { ComposeBody, ComposeSummaryChips, ContentTypeChips, SuggestedTagsRow } from "@/features/content/compose-fields";
 import { PublishSheet, type PublishProblem } from "@/features/content/publish-sheet";
 import { resolveToolRefs } from "@/lib/ai-tool-catalog";
 import type { ContentVisibility, PromptContentType, PromptRequest } from "@/types";
@@ -146,7 +146,7 @@ export function CreateRequestForm() {
   const isValid = !titleError && !descriptionError;
 
   // Yazma ekranı (docs/history/216-*): araç çubuğunun alt sayfası, son kontrol penceresi ve ✕'teki "kaydedilsin mi?".
-  const [sheet, setSheet] = useState<"tags" | "tool" | "category" | null>(null);
+  const [sheet, setSheet] = useState<"tags" | "tool" | "category" | "vision" | null>(null);
   const [publishOpen, setPublishOpen] = useState(false);
   const canSaveDraft = !isEditMode || isEditingDraft;
   const dirty = useDirty(
@@ -384,9 +384,14 @@ export function CreateRequestForm() {
       toolbar={
         <ComposeToolbar
           tools={[
+            { key: "reference", icon: ImagePlus, label: t("compose.toolReference"), onClick: () => document.getElementById("request-images")?.click() },
+            { key: "direction", icon: Sparkles, label: t("compose.toolDirection"), onClick: () => document.getElementById("request-direction")?.focus() },
             { key: "tags", icon: Hash, label: t("compose.toolTags"), badge: tagPicker.suggested.length || undefined, onClick: () => setSheet("tags") },
             { key: "tool", icon: Cpu, label: t("compose.toolTool"), onClick: () => setSheet("tool") },
             { key: "category", icon: Folder, label: t("compose.toolCategory"), onClick: () => setSheet("category") },
+            ...(!isEditMode && contentType === "image"
+              ? [{ key: "vision", icon: WandSparkles, label: t("compose.toolHelp"), onClick: () => setSheet("vision") }]
+              : []),
           ]}
         />
       }
@@ -416,87 +421,85 @@ export function CreateRequestForm() {
           locked={isEditMode}
         />
 
-        <ComposeAuthorLine profile={ownProfile} audienceLabel={audienceLabel} onAudience={() => setPublishOpen(true)} />
-
-        <div className="space-y-1.5">
-          <input
-            id="request-title"
-            value={title}
-            onChange={(event) => setTitle(event.target.value)}
-            onBlur={() => setTitleTouched(true)}
-            maxLength={TITLE_MAX}
-            placeholder={t("request.titlePlaceholder")}
-            aria-label={t("request.requestTitleLabel")}
-            aria-invalid={titleTouched && Boolean(titleError)}
-            className={composeTitleClassName}
-          />
-          {titleTouched && fieldError(titleError)}
-        </div>
-        <div className="space-y-1.5">
-          <textarea
-            id="request-description"
-            value={description}
-            onChange={(event) => setDescription(event.target.value)}
-            onBlur={() => setDescriptionTouched(true)}
-            maxLength={DESCRIPTION_MAX}
-            rows={4}
-            placeholder={t("request.descriptionPlaceholder")}
-            aria-label={t("request.requestDescriptionLabel")}
-            aria-invalid={descriptionTouched && Boolean(descriptionError)}
-            className={composeBodyClassName}
-          />
-          <div className="flex items-start justify-between gap-3">
-            {descriptionTouched ? fieldError(descriptionError) : <span />}
-            <span className="shrink-0 text-caption text-text-muted">{`${description.length}/${DESCRIPTION_MAX}`}</span>
-          </div>
-        </div>
-
-        <div className="space-y-3">
-          <MultiImagePicker items={images} onChange={setImages} />
-          {!isEditMode && contentType === "image" && (
-            <RequestVisionAssist
-              onApplyDescription={(text) => setDescription((prev) => (prev.trim() ? `${prev}\n\n${text}` : text))}
-              onApplyCreativeDirection={(text) => setCreativeDirection((prev) => (prev.trim() ? `${prev} · ${text}` : text))}
+        <ComposeBody profile={ownProfile} audienceLabel={audienceLabel} onAudience={() => setPublishOpen(true)}>
+          <div className="space-y-1.5">
+            <input
+              id="request-title"
+              value={title}
+              onChange={(event) => setTitle(event.target.value)}
+              onBlur={() => setTitleTouched(true)}
+              maxLength={TITLE_MAX}
+              placeholder={t("request.titlePlaceholder")}
+              aria-label={t("request.requestTitleLabel")}
+              aria-invalid={titleTouched && Boolean(titleError)}
+              className={composeTitleClassName}
             />
-          )}
-        </div>
+            {titleTouched && fieldError(titleError)}
+          </div>
+          <div className="space-y-1.5">
+            <textarea
+              id="request-description"
+              value={description}
+              onChange={(event) => setDescription(event.target.value)}
+              onBlur={() => setDescriptionTouched(true)}
+              maxLength={DESCRIPTION_MAX}
+              rows={3}
+              placeholder={t("request.descriptionPlaceholder")}
+              aria-label={t("request.requestDescriptionLabel")}
+              aria-invalid={descriptionTouched && Boolean(descriptionError)}
+              className={composeBodyClassName}
+            />
+            <div className="flex items-start justify-between gap-3">
+              {descriptionTouched ? fieldError(descriptionError) : <span />}
+              <span className="shrink-0 text-caption text-text-muted">{`${description.length}/${DESCRIPTION_MAX}`}</span>
+            </div>
+          </div>
 
-        <label className="block space-y-1.5 border-l-2 border-secondary/60 pl-3">
-          <span className="flex items-center gap-1.5 text-label font-semibold text-text">
-            <Sparkles size={14} aria-hidden className="text-secondary" />
-            {t("request.creativeDirection")}
-          </span>
-          <MentionTextarea
-            id="request-direction"
-            aria-label={t("request.creativeDirection")}
-            rows={2}
-            value={creativeDirection}
-            onChange={setCreativeDirection}
-            placeholder={t("request.creativeDirectionPlaceholder")}
-            className={composeBodyClassName}
+          <MultiImagePicker variant="strip" inputId="request-images" items={images} onChange={setImages} />
+
+          <label className="block space-y-1 border-l-2 border-secondary/60 pl-3">
+            <span className="flex items-center gap-1.5 text-label font-semibold text-text">
+              <Sparkles size={14} aria-hidden className="text-secondary" />
+              {t("request.creativeDirection")}
+            </span>
+            <MentionTextarea
+              id="request-direction"
+              aria-label={t("request.creativeDirection")}
+              rows={2}
+              value={creativeDirection}
+              onChange={setCreativeDirection}
+              placeholder={t("request.creativeDirectionPlaceholder")}
+              className={composeBodyClassName}
+            />
+          </label>
+
+          <ComposeSummaryChips
+            tools={tools}
+            contentType={contentType}
+            category={category}
+            subcategory={subcategory}
+            tags={tagPicker.accepted.map((entry) => entry.tag)}
+            onTools={() => setSheet("tool")}
+            onCategory={() => setSheet("category")}
+            onTags={() => setSheet("tags")}
           />
-        </label>
-
-        <ComposeSummaryChips
-          tools={tools}
-          contentType={contentType}
-          category={category}
-          subcategory={subcategory}
-          tags={tagPicker.accepted.map((entry) => entry.tag)}
-          onTools={() => setSheet("tool")}
-          onCategory={() => setSheet("category")}
-          onTags={() => setSheet("tags")}
-        />
-        <SuggestedTagsRow picker={tagPicker} />
+          <SuggestedTagsRow picker={tagPicker} />
+        </ComposeBody>
       </form>
 
       {sheet && (
         <ComposeSheet
           id={sheet}
-          title={sheet === "tags" ? t("forms.tags") : sheet === "tool" ? t("formSection.tool") : t("taxonomy.categoryLabel")}
+          title={sheet === "tags" ? t("forms.tags") : sheet === "tool" ? t("formSection.tool") : sheet === "vision" ? t("vision.helpTitle") : t("taxonomy.categoryLabel")}
           onClose={() => setSheet(null)}
         >
           {sheet === "tags" && <TagPicker picker={tagPicker} />}
+          {sheet === "vision" && (
+            <RequestVisionAssist
+              onApplyDescription={(text) => setDescription((prev) => (prev.trim() ? `${prev}\n\n${text}` : text))}
+              onApplyCreativeDirection={(text) => setCreativeDirection((prev) => (prev.trim() ? `${prev} · ${text}` : text))}
+            />
+          )}
           {sheet === "tool" && <ToolPicker value={tools} onChange={setTools} contentType={contentType} category={category} />}
           {sheet === "category" && (
             <TaxonomyPicker
