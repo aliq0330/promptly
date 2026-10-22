@@ -3,7 +3,7 @@
 **Durum:**
 - İstemci kodu ve `20260921130000_spaces.sql` repoda.
 - Migration yerel PostgreSQL'de sınandı (`supabase/tests/spaces.sql` 59/59; diğer 20 SQL dosyası temiz veritabanında `FAILED=0`).
-- Migration **canlıya UYGULANMADI.** İçeriği: yalnızca ekleyici (yeni tablolar, fonksiyonlar, politikalar, `space-media` bucket'ı), ayrıca `orphan_storage_objects` gövdesine iki kaynak eklenir. `drop` yok.
+- Migration **canlıya KISMEN uygulandı**: bölüm 1–2 (10 tablo + RLS açık, tablo yetki kısıtları, okuma/yazma yardımcıları `space_role`/`can_read_space`/`can_edit_space`/`_space_*`) ve `_space_touch` canlıda; bölüm 3–8 (etkinlik/tetikleyiciler, politikalar, RPC'ler, `space-media` bucket'ı, `orphan_storage_objects`, fonksiyon yetkileri) Supabase MCP'nin "yıkıcı ifade" onayına takıldı (onay 60 sn içinde verilmediği için hiç çalışmadı) ve `schema_migrations` kaydı henüz yok. Bu ara durum güvenlidir: politikası olmayan RLS'li tablolar API'den okunamaz/yazılamaz. Kalan kısım = dosyanın `-- 3. Etkinlik` başlığından sonuna kadarı + kayıt satırı; bu bölünmüş sıra yerel PostgreSQL'de sınandı (`spaces.sql` 59/59). İçeriği: yalnızca ekleyici (yeni tablolar, fonksiyonlar, politikalar, `space-media` bucket'ı), ayrıca `orphan_storage_objects` gövdesine iki kaynak eklenir. `drop` yok.
 - **Önce migration, sonra istemci.** Migration olmadan `/spaces` "Spaces yüklenemedi" der ve "Space'e ekle" penceresi boş liste gösterir. Başka hiçbir sayfa etkilenmez.
 - Arayüz ağ taklitli Playwright'ta sınandı. Gerçek Supabase'e, gerçek oturuma, cihaza ya da iOS Safari'ye karşı **denenmedi**.
 
