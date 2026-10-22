@@ -447,7 +447,11 @@ await scenario("25. ziyaretçi Space'i vitrin olarak görür: Görseller açıl�
   await strip.getByText("Gece").waitFor();
   await strip.getByRole("button", { name: "#ff5fa2 kopyala" }).click();
   assert.equal(await page.evaluate(() => navigator.clipboard.readText()), "#ff5fa2");
+  // Paylaş tek pencereyi açar (docs/history/215-*): ziyaretçi ayar görmez, "Başka yerde paylaş" adresi verir.
   await page.locator("[data-space-actions]").getByRole("button", { name: "Paylaş" }).click();
+  await page.locator('[data-share-modal="space"]').waitFor();
+  assert.equal(await page.locator("[data-space-feed-toggle]").count(), 0);
+  await page.locator("[data-share-link]").click();
   await waitFor(async () => (await page.evaluate(() => navigator.clipboard.readText())).includes(`/spaces/local?id=${SID(1)}`));
   assert.ok((await page.evaluate(() => navigator.clipboard.readText())).includes(`/spaces/local?id=${SID(1)}`));
 }, {

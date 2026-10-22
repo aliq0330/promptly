@@ -13,7 +13,7 @@ import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
 import { postMeta } from "@/features/prompts/post-header";
 import { STATUS_LABELS, STATUS_VARIANTS } from "@/features/requests/request-card";
 import { MEDIA_ICON, STEP_TYPE_META } from "@/features/workflows/step-meta";
-import type { FeedItem } from "@/features/feed/types";
+import type { PostFeedItem } from "@/features/feed/types";
 import { resolveToolRefs } from "@/lib/ai-tool-catalog";
 import { focusFeedCover, focusFeedExtraImages, focusFeedLayout, type FocusFeedCover } from "@/lib/focus-feed";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -41,7 +41,7 @@ interface SlideModel {
   tool: string | null;
 }
 
-function modelOf(item: FeedItem, t: ReturnType<typeof useTranslation>["t"]): SlideModel {
+function modelOf(item: PostFeedItem, t: ReturnType<typeof useTranslation>["t"]): SlideModel {
   const base = (description: string, tools: string[], fallbackTool: string | null = null) => ({
     description: splitSourceNotes(description).body,
     tool: resolveToolRefs(tools)[0]?.label ?? fallbackTool,
@@ -382,7 +382,7 @@ function RequestStatus({ request }: { request: PromptRequest }) {
 }
 
 /** Per-kind structure under the title (visual slides show a compact version over the picture). */
-function StructureBlock({ item, near, onImage }: { item: FeedItem; near: boolean; onImage: boolean }): ReactNode {
+function StructureBlock({ item, near, onImage }: { item: PostFeedItem; near: boolean; onImage: boolean }): ReactNode {
   switch (item.kind) {
     case "workflow":
       return <WorkflowSteps workflow={item.data} near={near} onImage={onImage} />;
@@ -461,7 +461,7 @@ function AlbumArtFrame({ ratio, children }: { ratio: number; children: ReactNode
 }
 
 /** The album art of a post without a picture: its own words (prompt) or structure (steps / settings / brief) on a raised card. */
-function AlbumArtCard({ item, model, near }: { item: FeedItem; model: SlideModel; near: boolean }) {
+function AlbumArtCard({ item, model, near }: { item: PostFeedItem; model: SlideModel; near: boolean }) {
   const Icon = model.icon;
   const words = item.kind === "prompt" && item.data.promptText.trim() ? item.data.promptText : null;
   const structure = item.kind !== "prompt" ? <StructureBlock item={item} near={near} onImage={false} /> : null;
@@ -496,7 +496,7 @@ function AlbumPrimary({ prompt, href }: { prompt: Prompt | null; href: string })
 }
 
 /** Odak'ta "Space'e ekle" (docs/history/213-*): oturumlu kullanıcıya, topluluğa ait olmayan gönderide. */
-function FocusAddToSpace({ item, className }: { item: FeedItem; className: string }) {
+function FocusAddToSpace({ item, className }: { item: PostFeedItem; className: string }) {
   const { t } = useTranslation();
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
@@ -523,7 +523,7 @@ function AlbumSlide({
   titleId,
   onOpenPrompt,
 }: {
-  item: FeedItem;
+  item: PostFeedItem;
   model: SlideModel;
   cover: FocusFeedCover | null;
   /** A video / audio prompt whose author's output (or poster) is there: it plays inside the album art. */
@@ -624,7 +624,7 @@ export const FocusFeedSlide = memo(function FocusFeedSlide({
   active,
   near,
 }: {
-  item: FeedItem;
+  item: PostFeedItem;
   index: number;
   active: boolean;
   near: boolean;

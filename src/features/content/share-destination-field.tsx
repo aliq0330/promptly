@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Check, ChevronDown, Globe, Lock, Users } from "lucide-react";
+import { Check, Globe, Lock, Users } from "lucide-react";
 import { Button, buttonClassName } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { GroupAvatar } from "@/features/groups/group-avatar";
@@ -30,60 +30,115 @@ export function useDestinationBlock(communityId: string | null): TranslationKey 
   return canSharePost(state.group.myRole, state.group.feedPolicy, false) ? null : "communities.feed.policyStaff";
 }
 
+export type Audience = "public" | "private" | "community";
+
 /**
- * Oluşturma ekranlarının paylaşım alanındaki "Nerede paylaşmak istiyorsun?" seçicisi (docs/history/197-*): varsayılan "Genel akış";
- * dokununca üye olunan topluluklar listelenir, seçilen topluluğun adı ve logosu görünür. Seçim formun içeriğini DEĞİŞTİRMEZ — yalnızca
- * hedefi belirler (topluluk seçilince içerik topluluğa özgü oluşur, görünürlük/taslak yoktur; Genel akış'ta eski davranış).
+ * Yayın adımının "Kim görsün?" alanı (docs/history/215-*): Herkese açık / Sadece ben / Sadece bir topluluk — eski "Nerede paylaşmak
+ * istiyorsun?" seçicisi ile Görünürlük anahtarının TEK yeri. Topluluk seçimi aynı depoya yazılır (`pickCreateDestination`), görünürlük
+ * formun kendi durumuna; seçilemeyen seçenekler (`allowPrivate`/`allowCommunity`) çizilmez.
  */
-export function ShareDestinationField({ blockedReason, disabled = false }: { blockedReason: TranslationKey | null; disabled?: boolean }) {
+export function AudienceField({
+  value,
+  onVisibilityChange,
+  allowPrivate,
+  allowCommunity,
+  blockedReason,
+  disabled = false,
+  children,
+}: {
+  value: Audience;
+  onVisibilityChange?: (next: "public" | "private") => void;
+  allowPrivate: boolean;
+  allowCommunity: boolean;
+  blockedReason: TranslationKey | null;
+  disabled?: boolean;
+  /** Seçeneklerin altındaki ek satırlar (ör. bir yanıtın "profilimde göster" anahtarı). */
+  children?: React.ReactNode;
+}) {
   const { t } = useTranslation();
   const community = useCommunityContext();
   const [pickerOpen, setPickerOpen] = useState(false);
-  const pickerButton = useRef<HTMLButtonElement>(null);
 
-  // Ekrandan çıkınca seçim atılır; sonraki oluşturma ekranı adres parametresinden başlar.
   useEffect(() => () => resetCreateDestination(), []);
 
-  const destination: CreateDestination | null = community.communityId
-    ? { id: community.communityId, name: community.name ?? "", avatarUrl: community.avatarUrl, visibility: community.visibility ?? "public" }
-    : null;
-
-  function choose(next: CreateDestination | null) {
-    pickCreateDestination(next);
-    setPickerOpen(false);
-    pickerButton.current?.focus();
+  function choose(next: Audience) {
+    if (next === "community") {
+      setPickerOpen(true);
+      return;
+    }
+    pickCreateDestination(null);
+    onVisibilityChange?.(next);
   }
 
+  const options: { key: Audience; icon: typeof Globe; title: string; hint: string }[] = [
+    { key: "public", icon: Globe, title: t("publish.public"), hint: t("publish.publicHint") },
+    ...(allowPrivate ? [{ key: "private" as const, icon: Lock, title: t("publish.private"), hint: t("publish.privateHint") }] : []),
+    ...(allowCommunity
+      ? [
+          {
+            key: "community" as const,
+            icon: Users,
+            title: value === "community" && community.name ? community.name : t("publish.community"),
+            hint: value === "community" ? t("publish.changeCommunity") : t("publish.communityHint"),
+          },
+        ]
+      : []),
+  ];
+
   return (
-    <FormSection>
-      <div data-share-destination-field>
-        <p id="share-destination-label" className="mb-1.5 text-label font-semibold text-text">
-          {t("home.destination.label")}
-        </p>
-        <button
-          ref={pickerButton}
-          type="button"
-          disabled={disabled}
-          onClick={() => setPickerOpen(true)}
-          aria-haspopup="dialog"
-          aria-labelledby="share-destination-label share-destination-value"
-          data-share-destination={destination?.id ?? "feed"}
-          className="flex min-h-12 w-full items-center gap-3 rounded-xl border border-border-soft bg-background px-3 py-2 text-left transition-colors hover:border-border-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-60"
-        >
-          <DestinationIcon destination={destination} size={32} />
-          <span id="share-destination-value" className="min-w-0 flex-1">
-            <span className="block truncate text-label font-semibold text-text">{destination ? destination.name || t("common.loading") : t("home.destination.feed")}</span>
-            <span className="block truncate text-caption text-text-muted">{destination ? communityHint(destination, t) : t("home.destination.feedHint")}</span>
-          </span>
-          <ChevronDown size={18} aria-hidden className="shrink-0 text-text-muted" />
-        </button>
-        {blockedReason && (
-          <p role="status" data-share-blocked className="mt-2 text-caption text-text-muted">
+    <FormSection title={t("publish.whoSees")}>
+      <div className="space-y-2" role="radiogroup" aria-label={t("publish.whoSees")} data-audience-field={value}>
+        {options.map((option) => {
+          const selected = option.key === value;
+          return (
+            <button
+              key={option.key}
+              type="button"
+              role="radio"
+              aria-checked={selected}
+              disabled={disabled}
+              onClick={() => choose(option.key)}
+              data-audience-option={option.key}
+              className={cn(
+                "flex min-h-14 w-full items-center gap-3 rounded-xl border px-3 py-2 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-60",
+                selected ? "border-primary/50 bg-primary-soft/60" : "border-border-soft bg-background hover:border-border-strong",
+              )}
+            >
+              {option.key === "community" && selected && community.communityId ? (
+                <GroupAvatar name={community.name ?? ""} avatarUrl={community.avatarUrl} size={36} />
+              ) : (
+                <span aria-hidden className={cn("grid h-9 w-9 shrink-0 place-items-center rounded-full", selected ? "bg-primary text-primary-foreground" : "bg-surface-soft text-text-secondary")}>
+                  <option.icon size={18} strokeWidth={1.9} />
+                </span>
+              )}
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-label font-semibold text-text">{option.title}</span>
+                <span className="block truncate text-caption text-text-muted">{option.hint}</span>
+              </span>
+              <span aria-hidden className={cn("grid h-5 w-5 shrink-0 place-items-center rounded-full border-2", selected ? "border-primary" : "border-border-strong")}>
+                {selected && <span className="h-2.5 w-2.5 rounded-full bg-primary" />}
+              </span>
+            </button>
+          );
+        })}
+        {blockedReason && value === "community" && (
+          <p role="status" data-share-blocked className="text-caption text-text-muted">
             {t(blockedReason)}
           </p>
         )}
+        {children}
       </div>
-      {pickerOpen && <DestinationPicker selectedId={destination?.id ?? null} onChoose={choose} onClose={() => setPickerOpen(false)} />}
+      {pickerOpen && (
+        <DestinationPicker
+          selectedId={community.communityId}
+          onChoose={(next) => {
+            pickCreateDestination(next);
+            if (!next) onVisibilityChange?.("public");
+            setPickerOpen(false);
+          }}
+          onClose={() => setPickerOpen(false)}
+        />
+      )}
     </FormSection>
   );
 }
@@ -102,7 +157,7 @@ function DestinationIcon({ destination, size }: { destination: CreateDestination
 }
 
 /** The target list: "Genel akış" first, then the viewer's communities (a bottom sheet on phones, a centred card on larger screens — the shared `Modal`). */
-function DestinationPicker({ selectedId, onChoose, onClose }: { selectedId: string | null; onChoose: (next: CreateDestination | null) => void; onClose: () => void }) {
+export function DestinationPicker({ selectedId, onChoose, onClose }: { selectedId: string | null; onChoose: (next: CreateDestination | null) => void; onClose: () => void }) {
   const { t } = useTranslation();
   const [communities, setCommunities] = useState<CommunitySummary[] | null>(null);
   const [failed, setFailed] = useState(false);

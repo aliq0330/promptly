@@ -74,7 +74,7 @@ await scenario("2. Başvuru: kendi kimliğiyle gönderi olur; not varsa görün�
   assert.equal(shared.length, 1);
   assert.equal(shared[0].body.p_note, "Bu topluluğa uyar");
   const card = post(page, "Açık Prompt");
-  await card.getByText("Başvuru", { exact: true }).waitFor();
+  await card.getByText("Duyuruldu", { exact: true }).waitFor();
   await card.getByText("Bu topluluğa uyar").waitFor();
   const link = card.getByRole("link", { name: /Açık Prompt/ }).first();
   assert.match((await link.getAttribute("href")) ?? "", /communities\/post\/local\/?\?id=/, "the card opens the application's OWN page");
@@ -101,7 +101,7 @@ await scenario("3. Yerel (topluluğa özgü) içerik: akışta NORMAL içerik ka
   await normalCard.waitFor();
   assert.equal(await card.getByText("Topluluk içeriği").count(), 0, "no extra community bar above the card");
   assert.equal(await card.getByRole("button", { name: /seçenekleri/ }).count(), 1, "ONE menu: the card's own");
-  assert.equal(await card.getByText("Başvuru", { exact: true }).count(), 0);
+  assert.equal(await card.getByText("Duyuruldu", { exact: true }).count(), 0);
   assert.equal(await card.locator("[data-post-engagement]").count(), 0, "native content uses the content's OWN like/comment, not a second engagement bar");
   await normalCard.getByRole("button", { name: /beğen/i }).first().waitFor();
   await normalCard.getByRole("button", { name: /Kaydet|koleksiyon/i }).first().waitFor();
@@ -150,7 +150,7 @@ await scenario("3b. Eski (legacy) gönderi: tür rozeti TAHMİN EDİLMEZ, başvu
   await open(page, C1);
   const card = post(page, "Eski gönderi");
   await card.waitFor();
-  assert.equal(await card.getByText("Başvuru", { exact: true }).count(), 0);
+  assert.equal(await card.getByText("Duyuruldu", { exact: true }).count(), 0);
   await card.getByText("bir prompt paylaştı").waitFor();
   assert.match((await card.getByRole("link", { name: /Eski gönderi/ }).first().getAttribute("href")) ?? "", /communities\/post\/local/);
 }, { setup: (db) => { seed(db, { myRole: "member" }); db.addPost(C1, { title: "Eski gönderi", kind: "legacy" }); } });
@@ -294,21 +294,23 @@ await scenario("12. Yetki: yerel içerikte not/başvuru menüsü yok; başvuruda
 // 13 — oluşturma ekranı topluluk bağlamı
 await scenario("13. Oluşturma ekranı topluluk bağlamıyla açılınca: içeriğin topluluğa özgü olduğu yazar; görünürlük anahtarı ve 'Taslağa kaydet' YOK; bağlam yokken ikisi de var", async ({ page }) => {
   await page.goto(`${BASE}/requests/new?community=${C1}`);
-  await page.locator("[data-community-context]").waitFor();
-  await page.getByText(/“Prompt Atölyesi” topluluğuna özgü/).waitFor();
-  await page.getByText(/profilinde, aramada ve Keşfet'te çıkmaz/).waitFor();
-  assert.equal(await page.locator("[data-visibility-switch]").count(), 0, "visibility is not a choice for community content");
+  // "Kim görsün?" (docs/history/215-*): topluluk seçili, cümle ne olacağını söyler; taslak yok.
+  await page.locator('[data-audience-field="community"]').waitFor();
+  await page.locator('[data-audience-option="community"]').getByText("Prompt Atölyesi").waitFor();
+  assert.match(await page.locator('[data-publish-summary="community"]').innerText(), /Prompt Atölyesi topluluğuna ait olacak/);
+  assert.equal(await page.locator("[data-publish-announce-toggle]").count(), 0, "community content is not announced elsewhere");
   assert.equal(await page.locator("[data-create-form-actions] [data-action=save-draft]").count(), 0, "community content can't be a draft");
   await page.locator("[data-create-form-actions] [data-action=publish]").waitFor();
   await page.goto(`${BASE}/requests/new`);
-  await page.locator("[data-visibility-switch] [role=switch]").waitFor();
+  await page.locator('[data-audience-field="public"]').waitFor();
+  await page.locator('[data-audience-option="private"]').waitFor();
   await page.locator("[data-create-form-actions] [data-action=save-draft]").waitFor();
-  assert.equal(await page.locator("[data-community-context]").count(), 0);
+  await page.locator('[data-publish-summary="public"]').waitFor();
 }, { setup: (db) => seed(db, { myRole: "member" }) });
 
 await scenario("13b. Yayınlama: topluluk bağlamlı NORMAL istek formu içeriği doğrudan `community_id` ile kaydeder (ayrı RPC YOK), akış gönderisi kendiliğinden oluşur ve akışa dönülür", async ({ page, db }) => {
   await page.goto(`${BASE}/requests/new?community=${C1}`);
-  await page.locator("[data-community-context]").waitFor();
+  await page.locator('[data-audience-field="community"]').waitFor();
   await page.locator("#request-title").fill("Topluluğa özel istek");
   await page.locator("#request-description").fill("Bu topluluk için bir stil isteği");
   await page.locator("[data-create-form-actions] [data-action=publish]").click();
@@ -338,7 +340,7 @@ await scenario("13c. Normal (topluluk bağlamsız) istek formu `community_id` g�
 await scenario("13d. Prompt: /create?mode=prompt&community= ve yalnız ?community= seçim ekranına DÜŞMEDEN doğrudan prompt formunu açar; seçim ekranından da topluluk bağlamı seçilen türe taşınır", async ({ page }) => {
   for (const url of [`/create?mode=prompt&community=${C1}`, `/create?community=${C1}`]) {
     await page.goto(`${BASE}${url}`);
-    await page.locator("[data-community-context]").waitFor();
+    await page.locator('[data-audience-field="community"]').waitFor();
     assert.equal(await page.getByText("Ne oluşturmak istersin?").count(), 0, `${url} must not show the type picker`);
   }
 }, { setup: (db) => seed(db, { myRole: "member" }) });
@@ -390,7 +392,7 @@ await scenario("16g. Kaydedilenler: kaydedilen başvuru gönderisi, akıştaki k
   await page.goto(`${BASE}/saved`);
   const card = page.locator("article", { hasText: "Kaydedilmiş başvuru" }).first();
   await card.waitFor();
-  await card.getByText("Başvuru", { exact: true }).waitFor();
+  await card.getByText("Duyuruldu", { exact: true }).waitFor();
   await card.getByRole("button", { name: /İstatistik/i }).first().waitFor();
   await card.getByRole("button", { name: "Paylaş" }).waitFor();
   assert.match((await card.getByRole("link", { name: /Kaydedilmiş başvuru/ }).first().getAttribute("href")) ?? "", /communities\/post\/local/);
@@ -493,7 +495,7 @@ await scenario("17b. Alıcı gönderiyi okuyamıyorsa (topluluğa erişimi yok) 
 await scenario("14. İngilizce: Create post / Apply an existing item / Application / Community content / post engagement metinleri", async ({ page }) => {
   await open(page, C1);
   const app = post(page, "App post");
-  await app.getByText("Application", { exact: true }).waitFor();
+  await app.getByText("Announced", { exact: true }).waitFor();
   assert.equal(await app.getByText("Open the original").count(), 0, "the original link lives on the application's page");
   const nat = post(page, "Native post");
   assert.equal(await nat.getByText("Community content").count(), 0);

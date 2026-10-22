@@ -9,7 +9,7 @@ import { useCommentCountDelta } from "@/features/prompts/comment-count-store";
 import { CommentNode, type CommentTree } from "@/features/prompts/comment-node";
 import { useCommentThread, type CommentTarget } from "@/features/prompts/use-comment-thread";
 import { MentionInput } from "@/features/mentions/mention-field";
-import type { FeedItem } from "@/features/feed/types";
+import type { PostFeedItem } from "@/features/feed/types";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn, formatCount } from "@/lib/utils";
 
@@ -22,11 +22,11 @@ import { cn, formatCount } from "@/lib/utils";
  */
 
 /** Opens the comment sheet for a post — provided by `FocusScreen`. */
-export const FocusCommentsContext = createContext<(item: FeedItem) => void>(() => undefined);
+export const FocusCommentsContext = createContext<(item: PostFeedItem) => void>(() => undefined);
 
 const QUICK_EMOJI = ["❤️", "🙌", "🔥", "👏", "😢", "😍", "😮", "😂"] as const;
 
-function targetOf(item: FeedItem): CommentTarget {
+function targetOf(item: PostFeedItem): CommentTarget {
   switch (item.kind) {
     case "prompt":
       return { promptId: item.data.id };
@@ -40,7 +40,7 @@ function targetOf(item: FeedItem): CommentTarget {
 }
 
 /** The rail's comment button in Odak: same look and live count as `CommentCountLink`, but opens the sheet in place. */
-export function FocusCommentButton({ item, size, className }: { item: FeedItem; size: number; className?: string }) {
+export function FocusCommentButton({ item, size, className }: { item: PostFeedItem; size: number; className?: string }) {
   const { t } = useTranslation();
   const openComments = useContext(FocusCommentsContext);
   const delta = useCommentCountDelta(item.data.id);
@@ -105,7 +105,7 @@ function useDragToClose(onClose: () => void) {
   return { offset, dragging: offset > 0, handlers: { onPointerDown, onPointerMove, onPointerUp, onPointerCancel: onPointerUp } };
 }
 
-export function FocusCommentsSheet({ item, onClose }: { item: FeedItem; onClose: () => void }) {
+export function FocusCommentsSheet({ item, onClose }: { item: PostFeedItem; onClose: () => void }) {
   const { t } = useTranslation();
   const titleId = useId();
   const sheetRef = useRef<HTMLDivElement>(null);

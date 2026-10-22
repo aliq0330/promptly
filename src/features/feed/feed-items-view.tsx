@@ -3,7 +3,7 @@
 import { FOCUS_GRID_NARROW_COLUMNS, FocusGrid } from "@/features/focus/focus-grid";
 import { useViewMode } from "@/features/content/view-mode-store";
 import { FeedGrid } from "./feed-grid";
-import type { FeedItem } from "./types";
+import { isPostItem, type FeedItem } from "./types";
 
 /**
  * Picks between the two list renderings: "Kart" = the existing, untouched
@@ -14,6 +14,7 @@ import type { FeedItem } from "./types";
 export function FeedItemsView(props: React.ComponentProps<typeof FeedGrid>) {
   const [mode] = useViewMode();
   const items: FeedItem[] = props.items;
-  if (mode === "focus" && items.length > 0) return <FocusGrid items={items} columns={props.layout === "home" ? FOCUS_GRID_NARROW_COLUMNS : undefined} />;
+  // Izgara yalnız gönderilerin çıktısını çizer; listede yalnız Space varsa (Keşfet → Spaces) kart görünümü kalır.
+  if (mode === "focus" && items.some(isPostItem)) return <FocusGrid items={items} columns={props.layout === "home" ? FOCUS_GRID_NARROW_COLUMNS : undefined} />;
   return <FeedGrid {...props} />;
 }

@@ -10,8 +10,8 @@ import type { TranslationKey } from "@/lib/i18n/translations";
 import { cn } from "@/lib/utils";
 
 /** Mevcut oluşturma ekranları — ikinci bir form YOK: topluluk bağlamı yalnızca `?community=` ile taşınır. */
-const CREATE_HREF: Record<CommunityPostType, string> = { prompt: "/create?mode=prompt", request: "/requests/new", workflow: "/workflows/create", preset: "/presets/create" };
-const TYPES: { type: CommunityPostType; icon: LucideIcon; label: TranslationKey }[] = [
+const CREATE_HREF: Record<Exclude<CommunityPostType, "space">, string> = { prompt: "/create?mode=prompt", request: "/requests/new", workflow: "/workflows/create", preset: "/presets/create" };
+const TYPES: { type: Exclude<CommunityPostType, "space">; icon: LucideIcon; label: TranslationKey }[] = [
   { type: "prompt", icon: SquareTerminal, label: "communities.feed.type.prompt" },
   { type: "request", icon: Sparkles, label: "communities.feed.type.request" },
   { type: "workflow", icon: WorkflowIcon, label: "communities.feed.type.workflow" },

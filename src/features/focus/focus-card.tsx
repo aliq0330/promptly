@@ -4,12 +4,12 @@ import { memo } from "react";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { promptHref } from "@/lib/utils";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
-import type { FeedItem } from "@/features/feed/types";
+import type { PostFeedItem } from "@/features/feed/types";
 import { FocusPresetCard, FocusRequestCard, FocusWorkflowCard } from "./focus-structure-cards";
 import { FocusTextCard } from "./focus-text-card";
 import { FocusVisualCard } from "./focus-visual-card";
 
-function FocusPromptCard({ item }: { item: Extract<FeedItem, { kind: "prompt" }> }) {
+function FocusPromptCard({ item }: { item: Extract<PostFeedItem, { kind: "prompt" }> }) {
   const { t } = useTranslation();
   const prompt = item.data;
   const image = prompt.media[0];
@@ -40,7 +40,7 @@ function FocusPromptCard({ item }: { item: Extract<FeedItem, { kind: "prompt" }>
  * its brief). Memoised so a long mixed feed doesn't re-render when only an
  * unrelated list-level state (sort, filter chip) changes.
  */
-export const FocusCard = memo(function FocusCard({ item }: { item: FeedItem }) {
+export const FocusCard = memo(function FocusCard({ item }: { item: PostFeedItem }) {
   switch (item.kind) {
     case "prompt":
       return <FocusPromptCard item={item} />;

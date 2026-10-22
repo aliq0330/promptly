@@ -46,7 +46,7 @@ export interface StatisticsTarget {
 export function StatisticsModal({ target, onClose }: { target: StatisticsTarget; onClose: () => void }) {
   const { t } = useTranslation();
   const { contentType, contentId } = target;
-  const canSave = contentType === "request" ? false : contentType === "community_post" ? target.savable === true : true;
+  const canSave = contentType === "request" || contentType === "space" ? false : contentType === "community_post" ? target.savable === true : true;
   const kinds: StatisticsKind[] = canSave ? ["likes", "comments", "saves"] : ["likes", "comments"];
   const [active, setActive] = useState<StatisticsKind>("likes");
   const copyCount = target.copyCount;

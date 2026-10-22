@@ -2,7 +2,7 @@
 
 import { Play, type LucideIcon } from "lucide-react";
 import { ContentCard } from "@/features/content/content-card";
-import type { FeedItem } from "@/features/feed/types";
+import type { PostFeedItem } from "@/features/feed/types";
 import type { PromptMedia, UserProfile } from "@/types";
 import { clampAspectRatio, FocusActions, FocusCreator, FocusTitle, FocusTypeBadge } from "./focus-parts";
 import { StorageAppearanceImage } from "@/components/ui/storage-media";
@@ -28,7 +28,7 @@ export function FocusVisualCard({
   moreImages = 0,
   playable = false,
 }: {
-  item: FeedItem;
+  item: PostFeedItem;
   href: string;
   image: PromptMedia;
   creator: UserProfile;

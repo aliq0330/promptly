@@ -6,6 +6,7 @@ import { formatCount, presetHref, promptHref, requestHref, resultHref, workflowH
 import { contentActionClassName } from "@/features/content/action-styles";
 import { useCommentCountDelta } from "./comment-count-store";
 import { useTranslation } from "@/lib/i18n/language-provider";
+import { spaceHref } from "@/lib/spaces";
 
 /**
  * Comment count link. Reflects the target's real, database-backed
@@ -31,6 +32,7 @@ export function CommentCountLink({
   resultId,
   workflowId,
   presetId,
+  spaceId,
   baseCount,
   size = 16,
   className,
@@ -40,14 +42,18 @@ export function CommentCountLink({
   resultId?: string;
   workflowId?: string;
   presetId?: string;
+  /** Akışta paylaşılmış Space (docs/history/215-*): yorumlar Space sayfasının sonunda. */
+  spaceId?: string;
   baseCount: number;
   size?: number;
   className?: string;
 }) {
   const { t } = useTranslation();
-  const delta = useCommentCountDelta(promptId ?? requestId ?? resultId ?? workflowId ?? presetId);
+  const delta = useCommentCountDelta(promptId ?? requestId ?? resultId ?? workflowId ?? presetId ?? spaceId);
   const count = Math.max(0, baseCount + delta);
-  const baseHref = presetId
+  const baseHref = spaceId
+    ? spaceHref(spaceId)
+    : presetId
     ? presetHref({ id: presetId })
     : workflowId
     ? workflowHref({ id: workflowId })

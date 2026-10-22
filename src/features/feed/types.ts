@@ -7,12 +7,23 @@ import type { FeedEntry } from "@/lib/supabase/feed";
  */
 export type FeedItem = FeedEntry;
 
+/**
+ * A content post (prompt, request, workflow, preset) — every feed slot except a shared Space (docs/history/215-*). Odak and the
+ * Izgara view draw posts only: a Space is a project with its own page, not a single output to play full screen.
+ */
+export type PostFeedItem = Exclude<FeedItem, { kind: "space" }>;
+
+export function isPostItem(item: FeedItem): item is PostFeedItem {
+  return item.kind !== "space";
+}
+
 export function feedItemKey(item: FeedItem): string {
   return `${item.kind}-${item.data.id}`;
 }
 
 export function feedItemCreatedAt(item: FeedItem): number {
-  return new Date(item.data.createdAt).getTime();
+  // A Space enters the feed when it is shared, not when it was created.
+  return new Date(item.kind === "space" ? (item.data.sharedAt ?? item.data.createdAt) : item.data.createdAt).getTime();
 }
 
 /** Rough cross-type popularity heuristic used to sort the "Popüler" tab. */

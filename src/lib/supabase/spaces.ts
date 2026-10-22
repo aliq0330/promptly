@@ -50,6 +50,8 @@ const SPACE_ERROR_KEYS: Record<SpaceErrorCode, TranslationKey> = {
   space_palette_limit: "spaces.error.paletteLimit",
   space_source_unavailable: "spaces.error.sourceUnavailable",
   space_duplicate: "spaces.error.duplicate",
+  space_not_public: "spaces.error.notPublic",
+  space_too_empty: "spaces.error.tooEmpty",
 };
 
 export class SpaceError extends Error {
@@ -125,6 +127,11 @@ export interface Space {
   createdAt: string;
   updatedAt: string;
   updatedBy: string | null;
+  /** Akışta gönderi olarak paylaşıldığı an (docs/history/215-*); `null` = akışta değil. Yalnız `set_space_shared` yazar. */
+  sharedAt: string | null;
+  /** Gönderi olarak aldığı beğeni ve yorum (korumalı sayaçlar). */
+  likeCount: number;
+  commentCount: number;
 }
 
 export interface SpaceItem {
@@ -247,9 +254,13 @@ interface SpaceRow {
   created_at: string;
   updated_at: string;
   updated_by: string | null;
+  shared_at: string | null;
+  like_count: number | null;
+  comment_count: number | null;
 }
 
-const SPACE_COLS = "id, owner_id, title, description, kind, visibility, cover_url, cover_item_id, archived_at, created_at, updated_at, updated_by";
+const SPACE_COLS =
+  "id, owner_id, title, description, kind, visibility, cover_url, cover_item_id, archived_at, created_at, updated_at, updated_by, shared_at, like_count, comment_count";
 
 function mapSpace(row: SpaceRow): Space {
   return {
@@ -265,6 +276,9 @@ function mapSpace(row: SpaceRow): Space {
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     updatedBy: row.updated_by,
+    sharedAt: row.shared_at ?? null,
+    likeCount: row.like_count ?? 0,
+    commentCount: row.comment_count ?? 0,
   };
 }
 
@@ -481,6 +495,42 @@ export async function listSpaces({
 export async function listPublicSpaces({ ownerId, promptId, limit = SPACE_PAGE_SIZE }: { ownerId?: string; promptId?: string; limit?: number }): Promise<SpaceSummary[]> {
   const rows = await rpc<SummaryRow[]>("list_public_spaces", { p_owner: ownerId ?? null, p_prompt: promptId ?? null, p_limit: limit, p_offset: 0 });
   return (rows ?? []).map(mapSpaceSummary);
+}
+
+/** Akış kartı (docs/history/215-*): özet + akış alanları + ilk paletin renkleri. */
+export interface SpaceFeedCard extends SpaceSummary {
+  sharedAt: string | null;
+  likeCount: number;
+  commentCount: number;
+  palette: string[];
+}
+
+interface FeedCardRow extends SummaryRow {
+  shared_at: string | null;
+  like_count: number | null;
+  comment_count: number | null;
+  palette_colors: string[] | null;
+}
+
+/** Kimliklere göre akış kartları (`space_feed_cards`, INVOKER: okunamayan Space hiç gelmez). Sıra çağıranındır. */
+export async function fetchSpaceFeedCards(ids: string[]): Promise<SpaceFeedCard[]> {
+  if (ids.length === 0) return [];
+  const rows = await rpc<FeedCardRow[]>("space_feed_cards", { p_ids: Array.from(new Set(ids)).slice(0, 100) });
+  return (rows ?? []).map((row) => ({
+    ...mapSpaceSummary(row),
+    sharedAt: row.shared_at,
+    likeCount: row.like_count ?? 0,
+    commentCount: row.comment_count ?? 0,
+    palette: row.palette_colors ?? [],
+  }));
+}
+
+/**
+ * Akışta gönderi olarak paylaş / akıştan kaldır (yalnız sahip). Paylaşmak için Space herkese açık, arşivsiz ve en az 3 öğe + 1 görsel
+ * içermeli (`space_not_public` / `space_too_empty`). Dönen değer paylaşım anıdır (`null` = akışta değil).
+ */
+export async function setSpaceShared(spaceId: string, shared: boolean): Promise<string | null> {
+  return rpc<string | null>("set_space_shared", { p_space_id: spaceId, p_shared: shared });
 }
 
 /** Her Space'in ilk paletinin renkleri (kartın palet çizgisi). Okunamayan Space'in paleti RLS ile hiç gelmez. */
@@ -995,6 +1045,9 @@ export function spaceFromSummary(summary: SpaceSummary): Space {
     createdAt: summary.createdAt,
     updatedAt: summary.updatedAt,
     updatedBy: null,
+    sharedAt: "sharedAt" in summary ? (summary as SpaceFeedCard).sharedAt : null,
+    likeCount: "likeCount" in summary ? (summary as SpaceFeedCard).likeCount : 0,
+    commentCount: "commentCount" in summary ? (summary as SpaceFeedCard).commentCount : 0,
   };
 }
 

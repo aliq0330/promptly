@@ -9,7 +9,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import { LikeButton } from "@/features/prompts/like-button";
 import { SaveButton } from "@/features/prompts/save-button";
 import { CommentCountLink } from "@/features/prompts/comment-count-link";
-import type { FeedItem } from "@/features/feed/types";
+import type { PostFeedItem } from "@/features/feed/types";
 import type { UserProfile } from "@/types";
 
 /** Shared building blocks of every Focus card — kept small and presentational. */
@@ -72,7 +72,7 @@ export function FocusTitle({ href, title, onImage = false, className }: { href: 
  * use (nothing re-implemented). A request has no save. Tightened so the three
  * fit a two-column phone layout.
  */
-export function FocusActions({ item }: { item: FeedItem }) {
+export function FocusActions({ item }: { item: PostFeedItem }) {
   const { t } = useTranslation();
   return (
     <div className="relative z-10 flex items-center justify-between gap-0.5 border-t border-border-soft px-1 py-1 [&_a]:gap-1 [&_a]:px-1.5 [&_button]:gap-1 [&_button]:px-1.5">

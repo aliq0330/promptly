@@ -10,15 +10,15 @@ import {
   focusFeedShouldLoadMore,
   focusFeedStartIndex,
 } from "./focus-feed.ts";
-import type { FeedEntry } from "./supabase/feed";
+import type { PostEntry } from "./supabase/feed";
 
 const media = (id: string) => ({ id, url: `https://example.supabase.co/storage/v1/object/public/prompt-media/${id}.jpg`, width: 800, height: 600, alt: "" });
 
-function prompt(contentType: "image" | "text" | "audio" | "video", mediaCount: number): FeedEntry {
+function prompt(contentType: "image" | "text" | "audio" | "video", mediaCount: number): PostEntry {
   return {
     kind: "prompt",
     data: { id: `p-${contentType}-${mediaCount}`, title: "Başlık", contentType, media: Array.from({ length: mediaCount }, (_, i) => media(`m${i}`)) },
-  } as unknown as FeedEntry;
+  } as unknown as PostEntry;
 }
 
 test("an image prompt with media is image-first; without media it is a text slide", () => {
@@ -44,11 +44,11 @@ test("video / audio prompts are playable slides (with or without a poster) and c
 });
 
 test("workflow / preset / request keep their own structure unless they have a real picture", () => {
-  const workflow = { kind: "workflow", data: { id: "w", title: "W", media: [] } } as unknown as FeedEntry;
-  const workflowWithCover = { kind: "workflow", data: { id: "w2", title: "W", media: [media("c")] } } as unknown as FeedEntry;
-  const preset = { kind: "preset", data: { id: "s", title: "S", coverUrl: null } } as unknown as FeedEntry;
-  const presetWithCover = { kind: "preset", data: { id: "s2", title: "S", coverUrl: "https://example.com/c.jpg" } } as unknown as FeedEntry;
-  const request = { kind: "request", data: { id: "r", title: "R", media: [] } } as unknown as FeedEntry;
+  const workflow = { kind: "workflow", data: { id: "w", title: "W", media: [] } } as unknown as PostEntry;
+  const workflowWithCover = { kind: "workflow", data: { id: "w2", title: "W", media: [media("c")] } } as unknown as PostEntry;
+  const preset = { kind: "preset", data: { id: "s", title: "S", coverUrl: null } } as unknown as PostEntry;
+  const presetWithCover = { kind: "preset", data: { id: "s2", title: "S", coverUrl: "https://example.com/c.jpg" } } as unknown as PostEntry;
+  const request = { kind: "request", data: { id: "r", title: "R", media: [] } } as unknown as PostEntry;
   assert.equal(focusFeedLayout(workflow), "workflow");
   assert.equal(focusFeedLayout(workflowWithCover), "visual");
   assert.equal(focusFeedLayout(preset), "preset");

@@ -5,6 +5,7 @@ import { ArrowRight, Play, Workflow as WorkflowIcon } from "lucide-react";
 import { workflowHref } from "@/lib/utils";
 import { CARD_PRIMARY_CLASS, ContentCard, ContentCardPost, ContentCardTitle } from "@/features/content/content-card";
 import { ContentTypePill } from "@/features/content/content-type-label";
+import { AnnouncedChip } from "@/features/communities/announced-chip";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
 import { PostTargetMenu, postMeta } from "@/features/prompts/post-header";
 import { PromptCardFooter } from "@/features/prompts/prompt-card-footer";
@@ -40,6 +41,7 @@ export function WorkflowCard({
         badges={
           <>
             <ContentTypePill icon={WorkflowIcon} label={t("workflow.singular")} detail={category} />
+            <AnnouncedChip kind="workflow" id={workflow.id} />
             {workflow.status === "draft" && <Badge variant="warning">{t("workflow.draftBadge")}</Badge>}
           </>
         }

@@ -22,7 +22,7 @@ const COMMENT_SELECT = `
 
 function mapCommentRow(
   row: CommentRow,
-  target: { promptId: string } | { requestId: string } | { resultId: string } | { workflowId: string } | { presetId: string } | { communityPostId: string },
+  target: { promptId: string } | { requestId: string } | { resultId: string } | { workflowId: string } | { presetId: string } | { communityPostId: string } | { spaceId: string },
 ): PromptComment {
   return {
     id: row.id,
@@ -245,6 +245,36 @@ export async function postCommentOnCommunityPost(
     .single();
   if (error || !data) throw new Error(error?.message ?? translateForRuntime("comments.postFailed"));
   return mapCommentRow(data as unknown as CommentRow, { communityPostId });
+}
+
+/** Akışta paylaşılmış bir Space'in yorumları (eskiden yeniye; docs/history/215-*). Okuma Space'in kendi RLS'ini izler (`can_read_space`). */
+export async function fetchCommentsForSpace(spaceId: string): Promise<PromptComment[]> {
+  try {
+    const { data, error } = await supabase
+      .from("prompt_comments")
+      .select(COMMENT_SELECT)
+      .eq("space_id", spaceId)
+      .order("created_at", { ascending: true });
+    if (error) {
+      console.error("fetchCommentsForSpace", error);
+      return [];
+    }
+    return withoutBlocked(((data ?? []) as unknown as CommentRow[]).map((row) => mapCommentRow(row, { spaceId })), (c) => c.author.id);
+  } catch (err) {
+    console.error("fetchCommentsForSpace", err);
+    return [];
+  }
+}
+
+/** Space'e yorum: yalnız akışta paylaşılmış + herkese açık Space'e (sunucu tetikleyicisi doğrular); `spaces.comment_count` tetikleyiciyle tutulur. */
+export async function postCommentOnSpace(spaceId: string, authorId: string, body: string, parentId: string | null): Promise<PromptComment> {
+  const { data, error } = await supabase
+    .from("prompt_comments")
+    .insert({ space_id: spaceId, author_id: authorId, body, parent_id: parentId })
+    .select(COMMENT_SELECT)
+    .single();
+  if (error || !data) throw new Error(error?.message ?? translateForRuntime("comments.postFailed"));
+  return mapCommentRow(data as unknown as CommentRow, { spaceId });
 }
 
 /**

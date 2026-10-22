@@ -4,7 +4,8 @@ import { EyeOff, Pin } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ContentCard, ContentCardPost, ContentCardTitle } from "@/features/content/content-card";
 import { ContentTypePill } from "@/features/content/content-type-label";
-import { StorageImage } from "@/components/ui/storage-media";
+import { StorageImage, StorageImg } from "@/components/ui/storage-media";
+import { PaletteStrip, SpaceCoverArt } from "@/features/spaces/space-visuals";
 import { OutputPosterPreview, OutputThumbnailStrip } from "@/features/prompts/multi-image-output-options";
 import { PostCommentLink, PostLike, PostSave, PostShareButton, PostStatisticsButton, type EngageMode } from "./post-engagement";
 import { summarizeContent } from "./content-summary";
@@ -19,6 +20,7 @@ const SHARED_LABEL: Record<CommunityPost["contentType"], TranslationKey> = {
   request: "communities.feed.shared.request",
   workflow: "communities.feed.shared.workflow",
   preset: "communities.feed.shared.preset",
+  space: "communities.feed.shared.space",
 };
 
 /**
@@ -64,7 +66,11 @@ export function ApplicationCard({
         menu={menu}
         art={
           summary ? (
-            summary.playable && poster ? (
+            summary.type === "space" ? (
+              <span data-card-media className="block">
+                <SpaceCoverArt urls={summary.spaceArt ?? []} className="aspect-[16/9] w-full overflow-hidden rounded-lg shadow-pop" iconSize={40} />
+              </span>
+            ) : summary.playable && poster ? (
               <OutputPosterPreview media={poster} />
             ) : summary.media.length > 0 ? (
               <OutputThumbnailStrip media={summary.media} />
@@ -75,7 +81,13 @@ export function ApplicationCard({
             </p>
           )
         }
-        backdrop={picture ? <StorageImage src={picture.url} alt="" fill sizes="240px" className="object-cover" /> : undefined}
+        backdrop={
+          summary?.type === "space" ? (
+            picture ? <StorageImg src={picture.url} alt="" className="h-full w-full object-cover" /> : undefined
+          ) : picture ? (
+            <StorageImage src={picture.url} alt="" fill sizes="240px" className="object-cover" />
+          ) : undefined
+        }
         tint={picture?.color}
         title={summary ? <ContentCardTitle href={href} title={summary.title} /> : null}
         footer={
@@ -90,6 +102,7 @@ export function ApplicationCard({
           </div>
         }
       >
+        {summary?.palette && summary.palette.length > 0 && <PaletteStrip colors={summary.palette} className="h-1.5" />}
         {post.note && <p data-post-note className="whitespace-pre-wrap break-words rounded-lg bg-surface/80 px-3 py-2.5 text-small text-text-secondary">{post.note}</p>}
       </ContentCardPost>
     </ContentCard>

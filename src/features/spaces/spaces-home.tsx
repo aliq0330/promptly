@@ -169,6 +169,16 @@ export function SpacesHome() {
     setCreateOpen(true);
   }
 
+  // Oluştur → Space (`?new=1`, docs/history/215-*): oluşturma penceresi bir kez açılır, parametre adresten silinir.
+  const wantsNew = searchParams.get("new") === "1";
+  useEffect(() => {
+    if (!wantsNew || authLoading) return;
+    router.replace("/spaces");
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- adresten gelen tek seferlik açılış
+    if (user) setCreateOpen(true);
+    else requireAuth("create");
+  }, [wantsNew, authLoading, user, router, requireAuth]);
+
   const updateOne = (next: SpaceSummary) => {
     setItems((list) => list?.map((item) => (item.id === next.id ? next : item)) ?? list);
     setRecent((list) => list.map((item) => (item.id === next.id ? next : item)));

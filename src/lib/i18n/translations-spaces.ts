@@ -542,5 +542,11 @@ export const spaceTranslations = {
   "spaces.error.paletteLimit": { tr: "Bir Space'te en çok 30 palet olabilir.", en: "A Space can have at most 30 palettes." },
   "spaces.error.sourceUnavailable": { tr: "Bu içerik eklenemez: erişimin yok ya da topluluğa ait.", en: "This post can't be added: you don't have access or it belongs to a community." },
   "spaces.error.duplicate": { tr: "Bu içerik bu Space'te zaten var.", en: "This is already in the Space." },
+  "spaces.feed.toggle": { tr: "Akışta gönderi olarak paylaş", en: "Share to the feed as a post" },
+  "spaces.feed.toggleHint": { tr: "Ana Sayfa, Keşfet ve aramada gönderi olarak çıkar; beğeni ve yorum alır.", en: "Appears as a post on Home, Discover and search; gets likes and comments." },
+  "spaces.feed.toggleOnHint": { tr: "Akışta gönderi olarak görünüyor. Kapatırsan akıştan kalkar.", en: "Showing in the feed as a post. Turn off to remove it." },
+  "spaces.feed.unshare": { tr: "Akıştan kaldır", en: "Remove from feed" },
+  "spaces.error.notPublic": { tr: "Akışta paylaşmak için Space herkese açık olmalı.", en: "A Space must be public to be shared to the feed." },
+  "spaces.error.tooEmpty": { tr: "Akışta paylaşmak için Space'te en az 3 öğe ve 1 görsel olmalı.", en: "To share to the feed, a Space needs at least 3 items and 1 image." },
   "spaces.error.upload": { tr: "Görsel yüklenemedi.", en: "The image couldn't be uploaded." },
 } as const;

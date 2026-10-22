@@ -8,7 +8,7 @@ import { SaveButton } from "@/features/prompts/save-button";
 import { FocusCommentButton } from "./focus-comments-sheet";
 import { ShareTriggerButton, type ShareModalTarget } from "@/features/prompts/share-modal";
 import { contentActionClassName } from "@/features/content/action-styles";
-import type { FeedItem } from "@/features/feed/types";
+import type { PostFeedItem } from "@/features/feed/types";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn, formatCount, profileHref, requestHref } from "@/lib/utils";
 import type { UserProfile } from "@/types";
@@ -45,7 +45,7 @@ const ROW_ACTION = cn(
   "max-sm:[&>:last-child:not(:first-child)]:sr-only",
 );
 
-export function FocusFeedRail({ item, author, layout = "column" }: { item: FeedItem; author: UserProfile; layout?: "column" | "row" }) {
+export function FocusFeedRail({ item, author, layout = "column" }: { item: PostFeedItem; author: UserProfile; layout?: "column" | "row" }) {
   const { t } = useTranslation();
   const share: ShareModalTarget =
     item.kind === "prompt"

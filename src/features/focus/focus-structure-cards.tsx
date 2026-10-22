@@ -8,7 +8,7 @@ import { ContentCard } from "@/features/content/content-card";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
 import { STATUS_LABELS, STATUS_VARIANTS } from "@/features/requests/request-card";
 import { MEDIA_ICON, STEP_TYPE_META } from "@/features/workflows/step-meta";
-import type { FeedItem } from "@/features/feed/types";
+import type { PostFeedItem } from "@/features/feed/types";
 import { taxonomyPathLabel } from "@/lib/content-taxonomy";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { presetParameterEntries } from "@/lib/preset-utils";
@@ -36,7 +36,7 @@ function StructureShell({
   children,
   observeRef,
 }: {
-  item: FeedItem;
+  item: PostFeedItem;
   href: string;
   creator: UserProfile;
   icon: LucideIcon;

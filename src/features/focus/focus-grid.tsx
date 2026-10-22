@@ -1,7 +1,6 @@
 "use client";
 
-import type { FeedItem } from "@/features/feed/types";
-import { feedItemKey } from "@/features/feed/types";
+import { feedItemKey, isPostItem, type FeedItem } from "@/features/feed/types";
 import { FocusCard } from "./focus-card";
 import { Reveal } from "@/components/ui/reveal";
 import { cn } from "@/lib/utils";
@@ -16,9 +15,10 @@ import { cn } from "@/lib/utils";
  * passes `FOCUS_GRID_NARROW_COLUMNS` (its main column is too narrow for four).
  */
 export function FocusGrid({ items, columns = "md:columns-3 xl:columns-4" }: { items: FeedItem[]; columns?: string }) {
+  // The Izgara view shows posts' outputs; a shared Space (docs/history/215-*) stays in the card view only.
   return (
     <div className={cn("columns-2 gap-2.5 sm:gap-3", columns)}>
-      {items.map((item, index) => (
+      {items.filter(isPostItem).map((item, index) => (
         <Reveal key={feedItemKey(item)} index={index} className="pb-2.5 break-inside-avoid sm:pb-3">
           <FocusCard item={item} />
         </Reveal>

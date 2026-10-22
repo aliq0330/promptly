@@ -20,6 +20,8 @@ import {
   postCommentOnRequest,
   postCommentOnResult,
   updateComment,
+  fetchCommentsForSpace,
+  postCommentOnSpace,
 } from "@/lib/supabase/comments";
 import { fetchLikedCommentIds, likeComment, unlikeComment } from "@/lib/supabase/comment-likes";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -27,7 +29,7 @@ import type { PromptComment } from "@/types";
 import { bumpCommentCount } from "./comment-count-store";
 import type { CommentTree } from "./comment-node";
 
-export type CommentTarget = { promptId: string } | { requestId: string } | { resultId: string } | { workflowId: string } | { presetId: string } | { communityPostId: string };
+export type CommentTarget = { promptId: string } | { requestId: string } | { resultId: string } | { workflowId: string } | { presetId: string } | { communityPostId: string } | { spaceId: string };
 
 /** How long a jumped-to comment/reply stays visually flashed before fading back to normal — long enough to notice, short enough not to nag (Aşama 5: "göz yoran yanıp sönme veya aşırı hareket kullanma"). */
 const HIGHLIGHT_DURATION_MS = 2500;
@@ -80,7 +82,7 @@ export function useCommentThread(target: CommentTarget, { highlightCommentId = n
   const highlightTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const processedHighlightId = useRef<string | null>(null);
 
-  const targetKind: "prompt" | "request" | "result" | "workflow" | "preset" | "community_post" =
+  const targetKind: "prompt" | "request" | "result" | "workflow" | "preset" | "community_post" | "space" =
     "promptId" in target
       ? "prompt"
       : "requestId" in target
@@ -91,7 +93,9 @@ export function useCommentThread(target: CommentTarget, { highlightCommentId = n
             ? "preset"
             : "communityPostId" in target
               ? "community_post"
-              : "result";
+              : "spaceId" in target
+                ? "space"
+                : "result";
   const targetId =
     "promptId" in target
       ? target.promptId
@@ -103,7 +107,9 @@ export function useCommentThread(target: CommentTarget, { highlightCommentId = n
             ? target.presetId
             : "communityPostId" in target
               ? target.communityPostId
-              : target.resultId;
+              : "spaceId" in target
+                ? target.spaceId
+                : target.resultId;
 
   // Small dispatch helpers instead of repeating a four-way ternary at each
   // of the three call sites below (initial fetch, top-level post, reply).
@@ -113,6 +119,7 @@ export function useCommentThread(target: CommentTarget, { highlightCommentId = n
     if (kind === "workflow") return fetchCommentsForWorkflow(id);
     if (kind === "preset") return fetchCommentsForPreset(id);
     if (kind === "community_post") return fetchCommentsForCommunityPost(id);
+    if (kind === "space") return fetchCommentsForSpace(id);
     return fetchCommentsForResult(id);
   }
   function postCommentForTarget(kind: typeof targetKind, id: string, userId: string, body: string, parentId: string | null) {
@@ -121,6 +128,7 @@ export function useCommentThread(target: CommentTarget, { highlightCommentId = n
     if (kind === "workflow") return postCommentOnWorkflow(id, userId, body, parentId);
     if (kind === "preset") return postCommentOnPreset(id, userId, body, parentId);
     if (kind === "community_post") return postCommentOnCommunityPost(id, userId, body, parentId);
+    if (kind === "space") return postCommentOnSpace(id, userId, body, parentId);
     return postCommentOnResult(id, userId, body, parentId);
   }
 
