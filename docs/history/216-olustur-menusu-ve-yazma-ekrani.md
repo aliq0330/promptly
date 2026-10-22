@@ -93,5 +93,9 @@ Kullanıcının isteği: "Gönderi oluşturma ekranlarını standart paylaşım 
   - `run-create-destination` yeniden yazıldı, 14/14: yazma ekranında menülerin kalkması, son kontrol, eksikler + odak, Sadece ben, topluluk seçici, topluluk / geri dönüş + seçimin korunması, yönetim kuralı, `?community=`, Prompt / Workflow / Hazır ayar'da aynı kabuk, duyuru + kısmi hata raporu, ✕ (doğrudan çıkış / devam / taslağa kaydet), "+" menüsü, boş topluluk, mobil, İngilizce.
   - `run-community-posts` 36/36 (13–13d yeni akışa göre).
   - `run-space-posts` 7/7.
-  - Diğer bütün takımlar raporda.
+  - Bütün takımlar son derlemeyle:
+    - `run-chat-popovers` 8/8, `run-chat` 38/38, `run-communities` 65/65, `run-community-home` 38/38, `run-community-shelf` 7/7.
+    - `run-detail-pages` 45/45, `run-discover` 6/6, `run-focus-feed` 25/25, `run-groups` 36/36, `run-home-motion` 9/9.
+    - `run-profile-collections` 6/6, `run-search-notifications` 8/8, `run-shared-cards` 11/11, `run-spaces` 28/28, `run-stories` 24/24, `run-topic-pages` 9/9.
+  - Toplu koşuda `run-chat` 8e (sohbet ayarı kaydı bildirimi) ve `run-communities` 33b (kapak yükleme) birer kez zaman aşımına düştü. Tek başına yeniden koşulunca ikisi de geçti; ikisi de bu değişikliğin dokunmadığı ekranlar.
 - İngilizce karşılıklar eklendi (`createMenu.*`, `compose.*`).
