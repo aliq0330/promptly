@@ -20,7 +20,7 @@ import { usePrefersReducedMotion } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import { FocusFeedSlide, FocusPlaybackContext, HIDE_WHILE_COMMENTS } from "./focus-feed-slide";
 import { FocusCommentsContext, FocusCommentsSheet } from "./focus-comments-sheet";
-import type { FeedItem } from "@/features/feed/types";
+import { isPostItem, type PostFeedItem } from "@/features/feed/types";
 
 /**
  * Odak (`/focus`, docs/history/199-*) — everyone's public posts, one per screen, scrolled vertically, full screen (the
@@ -232,8 +232,8 @@ function FocusScreen() {
   const [mediaOnly, setMediaOnly] = useState(false);
   const [muted, setMuted] = useState(true);
   // The post whose comments are open (docs/history/200-*): the sheet slides up, the post shrinks above it and keeps playing.
-  const [commentsItem, setCommentsItem] = useState<FeedItem | null>(null);
-  const openComments = useCallback((item: FeedItem) => setCommentsItem(item), []);
+  const [commentsItem, setCommentsItem] = useState<PostFeedItem | null>(null);
+  const openComments = useCallback((item: PostFeedItem) => setCommentsItem(item), []);
   const closeComments = useCallback(() => setCommentsItem(null), []);
   const contentRef = useRef<HTMLDivElement>(null);
   const [shrink, setShrink] = useState<{ scale: number; x: number; y: number } | null>(null);
@@ -244,7 +244,11 @@ function FocusScreen() {
   const waitingForAuth = tab === "following" && authLoading;
   const needsLogin = tab === "following" && !authLoading && !user;
   const feed = useFeedPages({ scope: tab === "following" ? "following" : "all", order: "newest", kind: "all", taxonomy: EMPTY_TAXONOMY_FILTER }, !needsLogin && !waitingForAuth);
-  const items = useMemo(() => (mediaOnly ? feed.items.filter(focusFeedHasMedia) : feed.items), [feed.items, mediaOnly]);
+  // Odak plays posts; a Space shared to the feed has its own page (docs/history/215-*).
+  const items = useMemo(() => {
+    const posts = feed.items.filter(isPostItem);
+    return mediaOnly ? posts.filter(focusFeedHasMedia) : posts;
+  }, [feed.items, mediaOnly]);
   const loading = !needsLogin && (feed.loading || waitingForAuth);
   const memoryKey = `${tab}:${mediaOnly ? "media" : "all"}`;
 

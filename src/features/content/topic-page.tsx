@@ -12,6 +12,7 @@ import { TaxonomySheetSections, taxonomyActiveCount } from "@/features/content/l
 import { TaxonomyTypeChips } from "@/features/content/taxonomy-filter";
 import { SORT_KEYS, type ContentSortKey } from "@/features/content/sort-select";
 import { FeedItemsView } from "@/features/feed/feed-items-view";
+import { isPostItem } from "@/features/feed/types";
 import { LoadMore } from "@/features/feed/load-more";
 import { useFeedPages } from "@/features/feed/use-feed-pages";
 import { ShareButton } from "@/features/prompts/share-button";
@@ -100,7 +101,7 @@ export function TopicPage({
     fetchFeedPage({ scope: "all", order: "popular", kind: "all", ...base, limit: 12 })
       .then((page) => {
         if (cancelled) return;
-        const images = page.items.map((item) => contentImage(item)).filter((media): media is PromptMedia => media !== null).slice(0, 4);
+        const images = page.items.filter(isPostItem).map((item) => contentImage(item)).filter((media): media is PromptMedia => media !== null).slice(0, 4);
         setCover({ key: filterKey, images });
       })
       .catch(() => !cancelled && setCover({ key: filterKey, images: [] }));

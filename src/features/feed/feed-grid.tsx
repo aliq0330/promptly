@@ -7,6 +7,8 @@ import { PromptCard } from "@/features/prompts/prompt-card";
 import { RequestCard } from "@/features/requests/request-card";
 import { WorkflowCard } from "@/features/workflows/workflow-card";
 import { PresetCard } from "@/features/presets/preset-card";
+import { SpaceFeedCardView } from "@/features/spaces/space-feed-card";
+import { AnnouncedProvider } from "@/features/communities/announced-chip";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { feedItemKey, type FeedItem } from "./types";
 import { Reveal } from "@/components/ui/reveal";
@@ -62,23 +64,28 @@ export function FeedGrid({
       <RequestCard request={item.data} />
     ) : item.kind === "preset" ? (
       <PresetCard preset={item.data} />
+    ) : item.kind === "space" ? (
+      <SpaceFeedCardView space={item.data} />
     ) : (
       <WorkflowCard workflow={item.data} />
     );
 
+  // "Duyuruldu" çipleri (docs/history/215-*): görünen içeriklerin başvuru gönderileri tek istekte okunur.
   return (
-    <div ref={gridRef}>
-      <ContentGrid columns={layout === "home" ? "sm:columns-2" : undefined}>
-        {items.map((item, index) => (
-          <div key={feedItemKey(item)} data-flip-key={feedItemKey(item)} className={CONTENT_GRID_ITEM_CLASS}>
-            <Reveal index={index}>
-              {itemNote?.(item)}
-              {card(item)}
-            </Reveal>
-          </div>
-        ))}
-      </ContentGrid>
-    </div>
+    <AnnouncedProvider entries={items.map((item) => ({ kind: item.kind, id: item.data.id }))}>
+      <div ref={gridRef}>
+        <ContentGrid columns={layout === "home" ? "sm:columns-2" : undefined}>
+          {items.map((item, index) => (
+            <div key={feedItemKey(item)} data-flip-key={feedItemKey(item)} className={CONTENT_GRID_ITEM_CLASS}>
+              <Reveal index={index}>
+                {itemNote?.(item)}
+                {card(item)}
+              </Reveal>
+            </div>
+          ))}
+        </ContentGrid>
+      </div>
+    </AnnouncedProvider>
   );
 }
 

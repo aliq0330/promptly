@@ -14,6 +14,9 @@ import { ReportModal } from "./report-modal";
 import { DropdownMenu, MenuItem } from "./dropdown-menu";
 import { PostScopeProvider } from "./post-scope";
 import { summarizeContent } from "./content-summary";
+import { PaletteStrip, SpaceCoverArt } from "@/features/spaces/space-visuals";
+import { spaceHref } from "@/lib/spaces";
+import { summaryArt } from "@/lib/supabase/spaces";
 import { PostMenuExtras, type PostMenuExtra } from "@/features/prompts/post-menu-extras";
 import { PromptDetailView } from "@/features/prompts/prompt-detail-view";
 import { RequestDetailView } from "@/features/requests/request-detail-view";
@@ -35,6 +38,7 @@ const SHARED_LABEL: Record<CommunityPost["contentType"], TranslationKey> = {
   request: "communities.feed.shared.request",
   workflow: "communities.feed.shared.workflow",
   preset: "communities.feed.shared.preset",
+  space: "communities.feed.shared.space",
 };
 
 type Dialog = "edit" | "delete" | "moderate" | "report" | null;
@@ -155,7 +159,7 @@ export function CommunityPostPage() {
                 <span>{formatRelativeTime(post.createdAt, language)}</span>
               </p>
             </div>
-            {!content && extras.length > 0 && (
+            {(!content || content.type === "space") && extras.length > 0 && (
               <DropdownMenu label={t("communities.feed.postMenu")}>
                 {(close) => (
                   <>
@@ -189,11 +193,24 @@ export function CommunityPostPage() {
         </PostMenuExtras>
       </PostScopeProvider>
 
-      {!content && (
+      {(!content || content.type === "space") && (
         <div className="mx-auto w-full max-w-3xl space-y-4 px-3 py-4 sm:px-5">
-          <p className="flex items-center gap-2 rounded-lg border border-dashed border-border px-3 py-4 text-small text-text-muted">
-            <EyeOff size={15} aria-hidden /> {t("communities.feed.contentGone")}
-          </p>
+          {content?.type === "space" ? (
+            // Space'in kendi sayfası pano/vitrindir (detay sayfası yok): burada kapak kolajı + başlık + "Space'i aç"; gönderinin kendi
+            // beğeni/yorumu aşağıda (sayaçlar GÖNDERİNİN — docs/history/215-*).
+            <Link href={spaceHref(content.data.id)} data-post-space={content.data.id} className="block overflow-hidden rounded-lg border border-border-soft bg-surface shadow-card transition-shadow hover:shadow-card-hover">
+              <SpaceCoverArt urls={summaryArt(content.data)} className="aspect-[16/9] w-full" iconSize={48} />
+              {content.data.palette.length > 0 && <PaletteStrip colors={content.data.palette} className="h-1.5 rounded-none" />}
+              <span className="block space-y-1 p-4">
+                <span className="block text-h3 font-bold text-text">{content.data.title}</span>
+                {content.data.description && <span className="line-clamp-3 block text-small text-text-secondary">{content.data.description}</span>}
+              </span>
+            </Link>
+          ) : (
+            <p className="flex items-center gap-2 rounded-lg border border-dashed border-border px-3 py-4 text-small text-text-muted">
+              <EyeOff size={15} aria-hidden /> {t("communities.feed.contentGone")}
+            </p>
+          )}
           <section className="space-y-2" aria-label={t("communities.post.page.commentsTitle")}>
             <p className="text-caption text-text-muted">{t("communities.post.page.commentsHelp")}</p>
             <PostEngagement post={post} mode={mode} onToast={show} highlightCommentId={highlightCommentId} />

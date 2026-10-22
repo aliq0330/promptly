@@ -5,6 +5,7 @@ import { PenLine, Reply, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { CARD_PRIMARY_CLASS, ContentCard, ContentCardPost, ContentCardTitle } from "@/features/content/content-card";
 import { ContentTypePill } from "@/features/content/content-type-label";
+import { AnnouncedChip } from "@/features/communities/announced-chip";
 import { StorageImage } from "@/components/ui/storage-media";
 import { useAuth } from "@/features/auth/auth-provider";
 import { clampedAspectRatio } from "@/lib/placeholder-image";
@@ -64,6 +65,7 @@ export function RequestCard({ request, onDeleted }: { request: PromptRequest; on
         badges={
           <>
             <ContentTypePill icon={Sparkles} label={t("request.title")} detail={typeMeta ? t(typeMeta.labelKey) : null} />
+            <AnnouncedChip kind="request" id={request.id} />
             <Badge variant={STATUS_VARIANTS[request.status]}>
               <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-current" />
               {t(STATUS_LABELS[request.status])}

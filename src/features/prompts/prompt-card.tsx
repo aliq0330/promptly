@@ -6,6 +6,7 @@ import { promptHref } from "@/lib/utils";
 import { handOffPrompt } from "@/lib/detail-handoff";
 import { ContentCard, ContentCardPost, ContentCardTitle } from "@/features/content/content-card";
 import { ContentTypePill } from "@/features/content/content-type-label";
+import { AnnouncedChip } from "@/features/communities/announced-chip";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { CONTENT_TYPE_META } from "./content-type-meta";
 import { PostTargetMenu, postMeta } from "./post-header";
@@ -57,7 +58,12 @@ export function PromptCard({
       <ContentCardPost
         author={prompt.author}
         meta={postMeta(prompt.author.username, prompt.createdAt, language, isResponse ? t("prompt.sharedAReply") : undefined)}
-        badges={<ContentTypePill icon={meta.icon} label={`${t(meta.labelKey)} Prompt`} detail={tool} />}
+        badges={
+          <>
+            <ContentTypePill icon={meta.icon} label={`${t(meta.labelKey)} Prompt`} detail={tool} />
+            <AnnouncedChip kind="prompt" id={prompt.id} />
+          </>
+        }
         menu={<PostTargetMenu prompt={prompt} onDeleted={onDeleted} collectionRemoval={collectionRemoval} />}
         art={
           media.length > 0 ? (

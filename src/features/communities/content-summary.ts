@@ -2,6 +2,9 @@ import type { LucideIcon } from "lucide-react";
 import { SlidersHorizontal, Sparkles, SquareTerminal, Workflow as WorkflowIcon } from "lucide-react";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
 import { presetHref, promptHref, requestHref, workflowHref } from "@/lib/utils";
+import { spaceHref } from "@/lib/spaces";
+import { summaryArt } from "@/lib/supabase/spaces";
+import { SpacesIcon } from "@/features/spaces/space-visuals";
 import type { CommunityPostContent, CommunityPostType } from "@/lib/supabase/communities";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import type { PromptMedia, Tag, UserProfile } from "@/types";
@@ -30,6 +33,9 @@ export interface ContentSummary {
   creativeDirection?: string;
   stepCount?: number;
   fieldCount?: number;
+  /** Yalnız Space: kolaj kapağın görselleri ve ilk paletin renkleri. */
+  spaceArt?: string[];
+  palette?: string[];
 }
 
 const TYPE_LABEL: Record<CommunityPostType, TranslationKey> = {
@@ -37,6 +43,7 @@ const TYPE_LABEL: Record<CommunityPostType, TranslationKey> = {
   request: "communities.feed.type.request",
   workflow: "communities.feed.type.workflow",
   preset: "communities.feed.type.preset",
+  space: "communities.feed.type.space",
 };
 
 export function summarizeContent(content: CommunityPostContent): ContentSummary {
@@ -93,6 +100,29 @@ export function summarizeContent(content: CommunityPostContent): ContentSummary 
       typeLabelKey: TYPE_LABEL.workflow,
       detail: null,
       stepCount: x.stepCount,
+    };
+  }
+  if (content.type === "space") {
+    const x = content.data;
+    const art = summaryArt(x);
+    return {
+      type: "space",
+      href: spaceHref(x.id),
+      title: x.title,
+      description: x.description,
+      // Space sahibinin herkese açık alanları; profil sayısı/biyografisi bu kartta gerekmez.
+      author: x.owner
+        ? { id: x.owner.id, username: x.owner.username, displayName: x.owner.displayName, avatarUrl: x.owner.avatarUrl, coverUrl: null, bio: null, website: null, followerCount: 0, followingCount: 0, createdAt: x.createdAt }
+        : null,
+      media: art.map((url, index) => ({ id: `${x.id}-art-${index}`, url, width: 1, height: 1, alt: "" })),
+      playable: false,
+      tags: [],
+      tools: [],
+      typeIcon: SpacesIcon,
+      typeLabelKey: TYPE_LABEL.space,
+      detail: null,
+      spaceArt: art,
+      palette: x.palette,
     };
   }
   const x = content.data;

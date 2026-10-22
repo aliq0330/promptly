@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Check, Copy, Link2, Loader2, X } from "lucide-react";
+import { Check, Copy, House, Link2, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { ConfirmDialog } from "@/features/groups/confirm-dialog";
@@ -19,6 +19,7 @@ import {
   uploadSpaceImage,
   type Space,
   type SpaceItem,
+  setSpaceShared,
 } from "@/lib/supabase/spaces";
 import { SPACE_TEMPLATE_GROUPS, spaceHref, spaceLinkHref, type SpaceKind, type SpaceVisibility } from "@/lib/spaces";
 import { CoverPicker, DescriptionField, FormError, KindField, SubmitButton, TemplateField, TitleField, VisibilityField } from "./space-forms";
@@ -278,7 +279,12 @@ export function SpaceSettingsModal({
  * Paylaşım: görünürlük (neyin yayımlanacağı açıkça yazılır) + "bağlantıya sahip olanlar" için bağlantı yönetimi. Bağlantının
  * kendisi yalnız oluşturulduğu anda gösterilir (sunucu yalnız özetini saklar); kaybolursa yenisi oluşturulur ve eskisi iptal olur.
  */
-export function ShareSpaceModal({ space, onClose, onChanged }: { space: Space; onClose: () => void; onChanged: (space: Space) => void }) {
+/**
+ * Space paylaşım ayarları (sahip): "Kim görsün?" (Özel · Bağlantıya sahip olanlar · Herkese açık), bağlantı yönetimi ve — herkese açık
+ * Space'te — "Akışta gönderi olarak paylaş" (docs/history/215-*: açık onay, varsayılan kapalı; sunucu kuralı `set_space_shared`).
+ * Birleşik Paylaş penceresinin (`ShareModal`) Space bölümüdür; tek başına `ShareSpaceModal` içinde de kullanılır.
+ */
+export function SpaceShareSettings({ space, onChanged }: { space: Space; onChanged: (space: Space) => void }) {
   const { t, language } = useTranslation();
   const [visibility, setVisibility] = useState<SpaceVisibility>(space.visibility);
   const [current, setCurrent] = useState(space);
@@ -356,13 +362,50 @@ export function ShareSpaceModal({ space, onClose, onChanged }: { space: Space; o
     }
   }
 
+  async function toggleFeed(next: boolean) {
+    setBusy(true);
+    setError(null);
+    try {
+      const sharedAt = await setSpaceShared(current.id, next);
+      const saved = { ...current, sharedAt };
+      setCurrent(saved);
+      onChanged(saved);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("spaces.error.generic"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   const publicUrl = absoluteUrl(spaceHref(current.id));
+  const canFeed = current.visibility === "public" && !current.archivedAt;
 
   return (
-    <SpaceDialog title={t("spaces.share.title")} onClose={onClose}>
       <div className="space-y-4" data-testid="share-space-modal">
         <VisibilityField value={visibility} onChange={(next) => void applyVisibility(next)} name="share-visibility" />
         <p className="rounded-md bg-surface-soft px-3 py-2 text-caption text-text-secondary">{t("spaces.share.neverPublished")}</p>
+
+        {canFeed && (
+          <label
+            data-space-feed-toggle={current.sharedAt ? "on" : "off"}
+            className="flex cursor-pointer items-center gap-3 rounded-lg border border-border-soft bg-background px-3 py-2.5 has-[:checked]:border-primary/50 has-[:checked]:bg-primary-soft"
+          >
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-surface-soft text-text-secondary">
+              <House size={17} aria-hidden />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-small font-semibold text-text">{t("spaces.feed.toggle")}</span>
+              <span className="block text-caption text-text-muted">{current.sharedAt ? t("spaces.feed.toggleOnHint") : t("spaces.feed.toggleHint")}</span>
+            </span>
+            <input
+              type="checkbox"
+              checked={Boolean(current.sharedAt)}
+              disabled={busy}
+              onChange={(event) => void toggleFeed(event.target.checked)}
+              className="h-5 w-5 shrink-0 accent-primary"
+            />
+          </label>
+        )}
 
         {current.visibility === "public" && (
           <div className="flex items-center gap-2">
@@ -413,6 +456,15 @@ export function ShareSpaceModal({ space, onClose, onChanged }: { space: Space; o
         )}
         <FormError message={error} />
       </div>
+  );
+}
+
+/** Tek başına Space paylaşım penceresi (ayarlar bölümü + çerçeve). Birleşik Paylaş penceresi aynı bölümü kullanır. */
+export function ShareSpaceModal({ space, onClose, onChanged }: { space: Space; onClose: () => void; onChanged: (space: Space) => void }) {
+  const { t } = useTranslation();
+  return (
+    <SpaceDialog title={t("spaces.share.title")} onClose={onClose}>
+      <SpaceShareSettings space={space} onChanged={onChanged} />
     </SpaceDialog>
   );
 }

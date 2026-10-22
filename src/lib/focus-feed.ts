@@ -11,7 +11,7 @@
  * output its AUTHOR uploaded (the detail page's rule); without one it falls
  * back to its poster or its words.
  */
-import type { FeedEntry } from "@/lib/supabase/feed";
+import type { PostEntry } from "@/lib/supabase/feed";
 
 export type FocusFeedLayout = "visual" | "playable" | "text" | "workflow" | "preset" | "request";
 
@@ -22,7 +22,7 @@ export interface FocusFeedCover {
 }
 
 /** The picture that fronts an entry (its first image / cover / reference / video poster), or `null`. */
-export function focusFeedCover(entry: FeedEntry): FocusFeedCover | null {
+export function focusFeedCover(entry: PostEntry): FocusFeedCover | null {
   switch (entry.kind) {
     case "prompt": {
       // Same rule as the cards: an image prompt shows its outputs; a video/audio prompt's first media is its poster.
@@ -43,19 +43,19 @@ export function focusFeedCover(entry: FeedEntry): FocusFeedCover | null {
 }
 
 /** How many further pictures the entry has beyond its cover (a quiet "+N"; browsing them is the detail page's job). */
-export function focusFeedExtraImages(entry: FeedEntry): number {
+export function focusFeedExtraImages(entry: PostEntry): number {
   if (entry.kind === "preset") return 0;
   if (entry.kind === "prompt" && entry.data.contentType !== "image") return 0;
   return Math.max(0, entry.data.media.length - 1);
 }
 
 /** A video / audio prompt: its slide looks for the author's uploaded output and plays it. */
-export function focusFeedPlayable(entry: FeedEntry): boolean {
+export function focusFeedPlayable(entry: PostEntry): boolean {
   return entry.kind === "prompt" && (entry.data.contentType === "video" || entry.data.contentType === "audio");
 }
 
 /** The slide layout: playable for video / audio prompts, image-first only when there is a real picture, otherwise the kind's own structure. */
-export function focusFeedLayout(entry: FeedEntry): FocusFeedLayout {
+export function focusFeedLayout(entry: PostEntry): FocusFeedLayout {
   if (focusFeedPlayable(entry)) return "playable";
   if (entry.kind === "prompt") return focusFeedCover(entry) ? "visual" : "text";
   // A request / preset / workflow with a picture still keeps its own structure below the title, inside the visual slide.
@@ -64,7 +64,7 @@ export function focusFeedLayout(entry: FeedEntry): FocusFeedLayout {
 }
 
 /** The "Medya" filter: posts with a picture, and video / audio prompts (their output is looked up when they come into view). */
-export function focusFeedHasMedia(entry: FeedEntry): boolean {
+export function focusFeedHasMedia(entry: PostEntry): boolean {
   return focusFeedPlayable(entry) || focusFeedCover(entry) !== null;
 }
 

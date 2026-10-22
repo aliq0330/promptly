@@ -6,6 +6,7 @@ import { Header } from "@/components/layout/header";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { useChromeAutoHide } from "@/components/layout/use-chrome-autohide";
 import { WelcomeTour } from "@/features/onboarding/welcome-tour";
+import { AnnounceReportNotice } from "@/features/communities/announce-picker";
 import { useTranslation } from "@/lib/i18n/language-provider";
 
 interface AppShellProps {
@@ -46,6 +47,7 @@ export function AppShell({ children, aside }: AppShellProps) {
       </div>
       <MobileNav />
       <WelcomeTour />
+      <AnnounceReportNotice />
     </div>
   );
 }

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { fetchCommunityCard, type CommunityPostType } from "@/lib/supabase/communities";
 import { communityHref } from "@/lib/communities";
+import { runPendingAnnounce } from "./announce-picker";
 import type { GroupVisibility } from "@/types";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -58,9 +59,12 @@ export function useCommunityReturn(): (type: CommunityPostType, contentId: strin
     communityRef.current = communityIdFromUrl();
   }, []);
 
-  return useCallback(async () => {
+  return useCallback(async (type: CommunityPostType, contentId: string) => {
     const communityId = picked !== undefined ? (picked?.id ?? null) : communityRef.current;
-    return communityId ? `${communityHref(communityId, "feed")}&shared=1` : null;
+    if (communityId) return `${communityHref(communityId, "feed")}&shared=1`;
+    // Genel akışta yayınlandı: yayın adımında seçilen "Topluluklarda da duyur" şimdi gönderilir (sonuç kabukta raporlanır).
+    await runPendingAnnounce(type, contentId);
+    return null;
   }, []);
 }
 

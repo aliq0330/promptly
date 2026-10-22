@@ -12,7 +12,7 @@ import { COMMUNITY_NOTE_MAX } from "@/lib/communities";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
 
-const TYPES: CommunityPostType[] = ["prompt", "request", "workflow", "preset"];
+const TYPES: CommunityPostType[] = ["prompt", "request", "workflow", "preset", "space"];
 
 /**
  * "Mevcut içeriğe başvur": kullanıcının KENDİ yayında ve herkese açık içeriklerinden biri seçilir; isteğe bağlı not eklenir. İçerik

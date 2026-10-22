@@ -184,6 +184,8 @@ export const SPACE_ERROR_CODES = [
   "space_palette_limit",
   "space_source_unavailable",
   "space_duplicate",
+  "space_not_public",
+  "space_too_empty",
 ] as const;
 export type SpaceErrorCode = (typeof SPACE_ERROR_CODES)[number];
 

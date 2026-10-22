@@ -20,9 +20,10 @@ import { EMPTY_TAXONOMY_FILTER, type TaxonomyFilterValue } from "@/lib/content-t
 import { CreatorCard } from "@/features/profile/creator-card";
 import { useCreatorPages } from "@/features/profile/use-creator-pages";
 import { useTranslation } from "@/lib/i18n/language-provider";
+import { SpacesIcon } from "@/features/spaces/space-visuals";
 import type { TranslationKey } from "@/lib/i18n/translations";
 
-type Section = "all" | "prompts" | "workflows" | "presets" | "requests" | "creators";
+type Section = "all" | "prompts" | "workflows" | "presets" | "requests" | "spaces" | "creators";
 
 const SECTIONS: { key: Section; labelKey: TranslationKey; icon: typeof LayoutGrid }[] = [
   { key: "all", labelKey: "common.all", icon: LayoutGrid },
@@ -30,6 +31,8 @@ const SECTIONS: { key: Section; labelKey: TranslationKey; icon: typeof LayoutGri
   { key: "workflows", labelKey: "nav.workflows", icon: WorkflowIcon },
   { key: "presets", labelKey: "nav.presets", icon: SlidersHorizontal },
   { key: "requests", labelKey: "nav.requestsShort", icon: Sparkles },
+  // Akışta gönderi olarak paylaşılmış Space'ler (docs/history/215-*).
+  { key: "spaces", labelKey: "nav.spaces", icon: SpacesIcon },
   { key: "creators", labelKey: "discover.creators", icon: Users },
 ];
 
@@ -40,6 +43,7 @@ const SECTION_KIND: Record<Exclude<Section, "creators">, FeedKind | "all"> = {
   workflows: "workflow",
   presets: "preset",
   requests: "request",
+  spaces: "space",
 };
 
 /**
@@ -102,14 +106,15 @@ export function DiscoverFeed() {
         onChange={setSection}
         ariaLabel={t("discover.sectionsAriaLabel")}
         hideControls={isCreators}
-        chips={<TaxonomyTypeChips value={taxonomy} onChange={setTaxonomy} />}
+        // Space'in türü/kategorisi yok: süzgeçler Spaces bölümünde çizilmez (sunucu da süzgeçli sorguda Space döndürmez).
+        chips={section === "spaces" ? undefined : <TaxonomyTypeChips value={taxonomy} onChange={setTaxonomy} />}
         chipsLabel={t("toolbar.contentTypeAria")}
         sort={effectiveSort}
         onSortChange={setSort}
         sortKeys={sortKeys}
         sheetSections={
           <>
-            <TaxonomySheetSections value={taxonomy} onChange={setTaxonomy} />
+            {section !== "spaces" && <TaxonomySheetSections value={taxonomy} onChange={setTaxonomy} />}
             {section === "requests" && (
               <SheetSection title={t("toolbar.status")}>
                 <SheetChips>{openOnlyChips}</SheetChips>

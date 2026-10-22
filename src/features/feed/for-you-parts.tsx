@@ -87,7 +87,8 @@ const REASON_ICON: Record<ForYouReason["kind"], LucideIcon> = {
 /** The one-line reason above a "Sana özel" card — always the server's real signal (`for_you_page`). */
 export function ForYouReasonNote({ item, reason }: { item: FeedItem; reason: ForYouReason | undefined }) {
   const { t } = useTranslation();
-  if (!reason) return null;
+  // "Sana özel" never ranks a Space (docs/history/215-*); the guard narrows the item to a content post.
+  if (!reason || item.kind === "space") return null;
   const tagLabel = (slug: string | null) => (slug ? (item.data.tags.find((tag) => tag.slug === slug)?.label ?? slug) : "");
   const person = item.kind === "workflow" || item.kind === "preset" ? item.data.creator : item.data.author;
   const text =

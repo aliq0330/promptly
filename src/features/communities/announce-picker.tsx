@@ -1,0 +1,311 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { AlertCircle, Check, Loader2, Megaphone } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { GroupAvatar } from "@/features/groups/group-avatar";
+import { useAuth } from "@/features/auth/auth-provider";
+import { useTranslation } from "@/lib/i18n/language-provider";
+import { listMyCommunities, shareToCommunity, type CommunityPostType, type CommunitySummary } from "@/lib/supabase/communities";
+import { cn } from "@/lib/utils";
+
+/** Toplulukta duyuru notu sınırı (sunucu: `community_posts_note_len`). */
+export const ANNOUNCE_NOTE_MAX = 500;
+
+export interface AnnounceSelection {
+  communityIds: string[];
+  note: string;
+}
+
+export type AnnounceResult = { communityId: string; name: string; ok: true } | { communityId: string; name: string; ok: false; message: string };
+
+/**
+ * İçeriği seçilen topluluklarda duyurur (docs/history/215-*): her topluluk için ayrı `share_to_community` (başvuru gönderisi; içerik
+ * kopyalanmaz). Biri başarısız olsa da diğerleri denenir; sonuç topluluk başına döner — sessiz başarı yok.
+ */
+export async function announceToCommunities(
+  type: CommunityPostType,
+  contentId: string,
+  selection: AnnounceSelection,
+  names: Map<string, string>,
+): Promise<AnnounceResult[]> {
+  const results: AnnounceResult[] = [];
+  for (const communityId of selection.communityIds) {
+    const name = names.get(communityId) ?? "";
+    try {
+      await shareToCommunity(communityId, type, contentId, selection.note);
+      results.push({ communityId, name, ok: true });
+    } catch (err) {
+      results.push({ communityId, name, ok: false, message: err instanceof Error ? err.message : "" });
+    }
+  }
+  return results;
+}
+
+/** Üye olunan topluluklar (ilk sayfa; kapatılmış olanlar seçilemez). Yetki/kural yine sunucuda denetlenir. */
+export function useAnnounceCommunities(enabled: boolean) {
+  const { user } = useAuth();
+  const [state, setState] = useState<{ status: "idle" | "loading" | "ready" | "error"; list: CommunitySummary[] }>({ status: "idle", list: [] });
+  const userId = user?.id ?? null;
+  useEffect(() => {
+    if (!enabled || !userId) return;
+    let alive = true;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- the request below fills it
+    setState({ status: "loading", list: [] });
+    listMyCommunities("member")
+      .then(({ communities }) => alive && setState({ status: "ready", list: communities }))
+      .catch(() => alive && setState({ status: "error", list: [] }));
+    return () => {
+      alive = false;
+    };
+  }, [enabled, userId]);
+  return state;
+}
+
+/**
+ * "Topluluklarda duyur" seçicisi: üye olunan topluluklar (çoklu seçim) + isteğe bağlı not. Denetimli bileşen — Paylaş penceresi
+ * hemen gönderir (`AnnounceSection`), yayın adımı içerik oluşunca gönderir (`CreateFormActions`).
+ */
+export function AnnouncePicker({
+  value,
+  onChange,
+  communities,
+  status,
+  disabled,
+  results,
+}: {
+  value: AnnounceSelection;
+  onChange: (next: AnnounceSelection) => void;
+  communities: CommunitySummary[];
+  status: "idle" | "loading" | "ready" | "error";
+  disabled?: boolean;
+  results?: AnnounceResult[] | null;
+}) {
+  const { t } = useTranslation();
+  const resultOf = (id: string) => results?.find((result) => result.communityId === id);
+
+  if (status === "loading" || status === "idle") {
+    return (
+      <p className="flex items-center gap-2 px-1 py-2 text-small text-text-muted">
+        <Loader2 size={14} className="animate-spin" aria-hidden /> {t("common.loading")}
+      </p>
+    );
+  }
+  if (status === "error") return <p className="px-1 py-2 text-small text-danger">{t("communities.feed.pickLoadError")}</p>;
+  if (communities.length === 0) return <p className="px-1 py-2 text-small text-text-muted">{t("share.announce.noCommunities")}</p>;
+
+  function toggle(id: string) {
+    const has = value.communityIds.includes(id);
+    onChange({ ...value, communityIds: has ? value.communityIds.filter((x) => x !== id) : [...value.communityIds, id] });
+  }
+
+  return (
+    <div className="space-y-2" data-announce-picker="">
+      <ul className="max-h-56 space-y-1.5 overflow-y-auto pr-0.5">
+        {communities.map((community) => {
+          const checked = value.communityIds.includes(community.id);
+          const result = resultOf(community.id);
+          const unavailable = community.closed;
+          return (
+            <li key={community.id}>
+              <label
+                data-announce-community={community.id}
+                className={cn(
+                  "flex items-center gap-3 rounded-lg border px-3 py-2 transition-colors",
+                  checked ? "border-primary/50 bg-primary-soft" : "border-border-soft bg-background",
+                  unavailable || disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer hover:border-border-strong",
+                )}
+              >
+                <GroupAvatar name={community.name} avatarUrl={community.avatarUrl} size={32} />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-small font-semibold text-text">{community.name}</span>
+                  {result ? (
+                    result.ok ? (
+                      <span className="flex items-center gap-1 text-caption text-success">
+                        <Check size={12} aria-hidden /> {t("share.announce.done")}
+                      </span>
+                    ) : (
+                      <span className="flex items-start gap-1 text-caption text-danger">
+                        <AlertCircle size={12} aria-hidden className="mt-0.5 shrink-0" /> {result.message || t("common.actionFailedRetry")}
+                      </span>
+                    )
+                  ) : (
+                    <span className="block text-caption text-text-muted">
+                      {unavailable ? t("communities.detail.closedNotice") : t("spaces.count.members", { count: community.memberCount })}
+                    </span>
+                  )}
+                </span>
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  disabled={unavailable || disabled || Boolean(result?.ok)}
+                  onChange={() => toggle(community.id)}
+                  className="h-5 w-5 shrink-0 accent-primary"
+                />
+              </label>
+            </li>
+          );
+        })}
+      </ul>
+      <label className="block">
+        <span className="sr-only">{t("communities.feed.noteLabel")}</span>
+        <textarea
+          value={value.note}
+          onChange={(event) => onChange({ ...value, note: event.target.value })}
+          rows={2}
+          maxLength={ANNOUNCE_NOTE_MAX}
+          disabled={disabled}
+          placeholder={t("share.announce.notePlaceholder")}
+          data-announce-note=""
+          className="w-full resize-none rounded-lg border border-border bg-surface px-3 py-2 text-small text-text placeholder:text-text-muted focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
+        />
+      </label>
+    </div>
+  );
+}
+
+/**
+ * Paylaş penceresinin "Topluluklarda duyur" satırı: açılınca seçici + "N toplulukta duyur". `blockedReason` varsa (içerik herkese açık
+ * değil) satır nedenini yazar ve açılmaz — topluluk paylaşımı hiçbir içeriği otomatik herkese açmaz.
+ */
+export function AnnounceSection({ type, contentId, blockedReason }: { type: CommunityPostType; contentId: string; blockedReason?: string | null }) {
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
+  const [selection, setSelection] = useState<AnnounceSelection>({ communityIds: [], note: "" });
+  const [busy, setBusy] = useState(false);
+  const [results, setResults] = useState<AnnounceResult[] | null>(null);
+  const communities = useAnnounceCommunities(open);
+  const pending = selection.communityIds.filter((id) => !results?.some((result) => result.communityId === id && result.ok));
+
+  async function submit() {
+    if (pending.length === 0) return;
+    setBusy(true);
+    const names = new Map(communities.list.map((community) => [community.id, community.name]));
+    const next = await announceToCommunities(type, contentId, { ...selection, communityIds: pending }, names);
+    setResults((previous) => [...(previous ?? []).filter((old) => !next.some((result) => result.communityId === old.communityId)), ...next]);
+    setBusy(false);
+  }
+
+  return (
+    <div className="rounded-md border border-border" data-announce-section="">
+      <button
+        type="button"
+        onClick={() => !blockedReason && setOpen((value) => !value)}
+        aria-expanded={open}
+        disabled={Boolean(blockedReason)}
+        className="flex w-full items-center gap-3 p-3 text-left transition-colors hover:bg-accent-surface/50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+      >
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary">
+          <Megaphone size={18} />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-sm font-semibold text-text">{t("share.announce.title")}</span>
+          <span className={cn("block text-xs", blockedReason ? "text-warning" : "text-text-muted")}>{blockedReason ?? t("share.announce.hint")}</span>
+        </span>
+      </button>
+      {open && !blockedReason && (
+        <div className="space-y-2 border-t border-border-soft p-3">
+          <AnnouncePicker value={selection} onChange={setSelection} communities={communities.list} status={communities.status} disabled={busy} results={results} />
+          {communities.status === "ready" && communities.list.length > 0 && (
+            <div className="flex justify-end">
+              <Button size="sm" onClick={() => void submit()} disabled={busy || pending.length === 0} data-announce-submit="">
+                {busy && <Loader2 size={14} className="animate-spin" aria-hidden />}
+                {t("share.announce.submit", { count: pending.length })}
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------------------------
+// Yayın adımında seçilen duyuru (Oluştur → "Topluluklarda da duyur"): içerik oluşunca gönderilir
+// ---------------------------------------------------------------------------------------------
+
+const REPORT_KEY = "promptly-announce-report";
+let pending: { selection: AnnounceSelection; names: Map<string, string> } | null = null;
+
+/** Oluşturma formunun alt alanı seçimi buraya yazar; boş seçim = duyuru yok. */
+export function setPendingAnnounce(selection: AnnounceSelection | null, names: Map<string, string>) {
+  pending = selection && selection.communityIds.length > 0 ? { selection, names } : null;
+}
+
+/**
+ * İçerik yayınlandıktan sonra (formların `useCommunityReturn` çağrısı) bekleyen duyuruyu gönderir. Sonuç sayfa değişse de kaybolmasın
+ * diye `sessionStorage`'a yazılır, `AnnounceReportNotice` gösterir — kısmi başarısızlık dahil, sessiz başarı yok.
+ */
+export async function runPendingAnnounce(type: CommunityPostType, contentId: string): Promise<void> {
+  if (!pending) return;
+  const { selection, names } = pending;
+  pending = null;
+  const results = await announceToCommunities(type, contentId, selection, names);
+  try {
+    sessionStorage.setItem(REPORT_KEY, JSON.stringify(results));
+  } catch {
+    // Depolama kapalı: rapor gösterilemez, duyurular yine yapıldı.
+  }
+  window.dispatchEvent(new Event(REPORT_KEY));
+}
+
+/** Uygulama kabuğunda: son yayının duyuru sonucu (başarılı topluluklar + nedeniyle başarısız olanlar), kapatılana kadar. */
+export function AnnounceReportNotice() {
+  const { t } = useTranslation();
+  const [results, setResults] = useState<AnnounceResult[] | null>(null);
+  useEffect(() => {
+    const read = () => {
+      try {
+        const raw = sessionStorage.getItem(REPORT_KEY);
+        setResults(raw ? (JSON.parse(raw) as AnnounceResult[]) : null);
+      } catch {
+        setResults(null);
+      }
+    };
+    read();
+    window.addEventListener(REPORT_KEY, read);
+    return () => window.removeEventListener(REPORT_KEY, read);
+  }, []);
+  if (!results || results.length === 0) return null;
+  const ok = results.filter((result) => result.ok);
+  const failed = results.filter((result): result is Extract<AnnounceResult, { ok: false }> => !result.ok);
+  function dismiss() {
+    try {
+      sessionStorage.removeItem(REPORT_KEY);
+    } catch {
+      // yok say
+    }
+    setResults(null);
+  }
+  return (
+    <div
+      role="status"
+      data-announce-report=""
+      className="fixed inset-x-3 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-50 mx-auto max-w-md animate-pop-in rounded-lg border border-border bg-surface-elevated p-3.5 shadow-pop md:bottom-6"
+    >
+      <div className="flex items-start gap-3">
+        <span className={cn("mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full", failed.length > 0 ? "bg-warning/15 text-warning" : "bg-primary-soft text-primary")}>
+          {failed.length > 0 ? <AlertCircle size={16} aria-hidden /> : <Megaphone size={16} aria-hidden />}
+        </span>
+        <div className="min-w-0 flex-1 space-y-1 text-small">
+          {ok.length > 0 && <p className="text-text">{t("announceReport.ok", { names: ok.map((result) => result.name).join(", ") })}</p>}
+          {failed.length > 0 && (
+            <div className="text-text">
+              <p className="font-semibold">{t("announceReport.failed")}</p>
+              <ul className="mt-0.5 space-y-0.5 text-caption text-text-secondary">
+                {failed.map((result) => (
+                  <li key={result.communityId}>
+                    {result.name}: {result.message || t("common.actionFailedRetry")}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+        <Button type="button" variant="ghost" size="sm" onClick={dismiss} className="shrink-0">
+          {t("common.close")}
+        </Button>
+      </div>
+    </div>
+  );
+}

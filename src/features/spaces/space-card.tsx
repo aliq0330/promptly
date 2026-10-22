@@ -12,7 +12,8 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn, formatCount, formatRelativeTime } from "@/lib/utils";
 import { removeSpaceMember, setSpaceFavorite, spaceFromSummary, summaryArt, summaryCover, updateSpace, type Space, type SpaceSummary } from "@/lib/supabase/spaces";
 import { SPACE_KIND_LABEL, spaceCapabilities, spaceHref } from "@/lib/spaces";
-import { DeleteSpaceDialog, ShareSpaceModal, SpaceSettingsModal } from "./space-modals";
+import { DeleteSpaceDialog, SpaceSettingsModal } from "./space-modals";
+import { ShareModal } from "@/features/prompts/share-modal";
 import { SpaceMenu } from "./space-menu";
 import { PaletteStrip, SpaceCoverArt, SpacesIcon, VisibilityBadge } from "./space-visuals";
 
@@ -148,7 +149,7 @@ export function SpaceCard({
   const dialogs = (
     <>
       {dialog === "settings" && <SpaceSettingsModal space={spaceFromSummary(space)} onClose={() => setDialog(null)} onSaved={applySaved} />}
-      {dialog === "share" && <ShareSpaceModal space={spaceFromSummary(space)} onClose={() => setDialog(null)} onChanged={applySaved} />}
+      {dialog === "share" && <ShareModal target={{ contentType: "space", space: spaceFromSummary(space), art, onChanged: applySaved }} onClose={() => setDialog(null)} />}
       {dialog === "delete" && <DeleteSpaceDialog space={space} onClose={() => setDialog(null)} onDeleted={() => onRemove(space.id)} />}
       {dialog === "leave" && userId && (
         <ConfirmDialog

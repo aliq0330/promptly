@@ -2,9 +2,14 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { ArrowRight, CircleFadingPlus, SlidersHorizontal, Sparkles, SquareTerminal, Workflow } from "lucide-react";
+import { useState } from "react";
+import { ArrowRight, CircleFadingPlus, Megaphone, SlidersHorizontal, Sparkles, SquareTerminal, Workflow } from "lucide-react";
+import { useAuth } from "@/features/auth/auth-provider";
+import { useAuthPrompt } from "@/features/auth/auth-prompt-provider";
+import { SpacesIcon } from "@/features/spaces/space-visuals";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
+import { ShareExistingModal } from "./share-existing-modal";
 
 /**
  * The picker shown when a user hits a bare "Oluştur" entry point (nav,
@@ -52,6 +57,14 @@ const OPTIONS = [
     bodyKey: "create.storyBody" as TranslationKey,
     hintKey: "create.storyHint" as TranslationKey,
   },
+  // Space (docs/history/215-*): yaratıcı proje; Spaces sayfasında oluşturma penceresiyle açılır, sonra akışta gönderi olarak paylaşılabilir.
+  {
+    href: "/spaces?new=1",
+    icon: SpacesIcon,
+    titleKey: "create.spaceTitle" as TranslationKey,
+    bodyKey: "create.spaceBody" as TranslationKey,
+    hintKey: "create.spaceHint" as TranslationKey,
+  },
 ] as const;
 
 /** A weekly theme's `?tag=` is carried into whichever type is picked (each form attaches it, see `usePrefillTag`). */
@@ -66,6 +79,9 @@ export function CreateChoice() {
   const tag = params.get("tag");
   // Topluluk bağlamı seçilen türe de taşınır: içerik o toplulukta yerel gönderi olarak yayınlanır.
   const community = params.get("community");
+  const { user } = useAuth();
+  const { requireAuth } = useAuthPrompt();
+  const [shareExisting, setShareExisting] = useState(false);
   return (
     <div className="mx-auto w-full max-w-5xl px-3 py-8 sm:px-5 sm:py-12 lg:px-8">
       <div className="mb-8 space-y-2 text-center">
@@ -78,7 +94,7 @@ export function CreateChoice() {
         {OPTIONS.map((option) => (
           <Link
             key={option.href}
-            href={withParam(withParam(option.href, "tag", tag), "community", community)}
+            href={option.href.startsWith("/spaces") ? option.href : withParam(withParam(option.href, "tag", tag), "community", community)}
             className="group flex flex-col items-start gap-3 rounded-lg border border-border-soft bg-surface p-5 text-left shadow-card transition-[border-color,box-shadow] duration-200 hover:border-primary/40 hover:shadow-card-hover"
           >
             <span className="flex h-11 w-11 items-center justify-center rounded-md bg-primary-soft text-primary transition-colors duration-200 group-hover:bg-primary group-hover:text-primary-foreground">
@@ -93,6 +109,24 @@ export function CreateChoice() {
           </Link>
         ))}
       </div>
+
+      {/* Yeni içerik değil: var olan bir içeriği topluluklarda duyur (aynı Paylaş satırı). */}
+      <button
+        type="button"
+        onClick={() => requireAuth("create") && setShareExisting(true)}
+        data-create-share-existing=""
+        className="group mt-3 flex w-full items-center gap-3 rounded-lg border border-dashed border-border bg-surface/60 p-4 text-left transition-colors duration-200 hover:border-primary/40 sm:mt-4"
+      >
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary-soft text-primary">
+          <Megaphone size={18} strokeWidth={1.9} />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-small font-semibold text-text">{t("create.shareExistingTitle")}</span>
+          <span className="block text-caption text-text-muted">{t("create.shareExistingBody")}</span>
+        </span>
+        <ArrowRight size={16} className="shrink-0 text-text-muted transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-primary" />
+      </button>
+      {shareExisting && user && <ShareExistingModal userId={user.id} onClose={() => setShareExisting(false)} />}
     </div>
   );
 }

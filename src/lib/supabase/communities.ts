@@ -5,6 +5,7 @@ import { REQUEST_SELECT, mapRequestRow, type RequestRow } from "./requests";
 import { WORKFLOW_SELECT, mapWorkflowRow, type WorkflowRow } from "./workflows";
 import { PRESET_SELECT, mapPresetRow, type PresetRow } from "./presets";
 import { callRpc, fetchCommunityCards, PROFILE_EMBED, toGroupError, type CommunityCard } from "./chat-groups";
+import { fetchSpaceFeedCards, type SpaceFeedCard } from "./spaces";
 import { DEFAULT_ROLE_PERMISSIONS } from "@/lib/chat-groups";
 import { isDiscoverFeedSource, orderByIds, type DiscoverFeedSource } from "@/lib/community-home";
 import { parseInviteResult, parseGroupJoinToken, type InviteResult } from "@/lib/chat-groups";
@@ -534,7 +535,7 @@ export async function setCommunityNotifyPrefs(groupId: string, userId: string, l
 // Gönderiler (içerik akışı)
 // ---------------------------------------------------------------------------------------------
 
-export type CommunityPostType = "prompt" | "request" | "workflow" | "preset";
+export type CommunityPostType = "prompt" | "request" | "workflow" | "preset" | "space";
 
 /**
  * Gönderi türü: `native` = içerik bu toplulukta oluşturuldu; `application` = var olan içerikle başvuru;
@@ -547,7 +548,9 @@ export type CommunityPostContent =
   | { type: "prompt"; data: Prompt }
   | { type: "request"; data: PromptRequest }
   | { type: "workflow"; data: Workflow }
-  | { type: "preset"; data: Preset };
+  | { type: "preset"; data: Preset }
+  /** Toplulukta duyurulmuş bir Space (docs/history/215-*): canlı başvuru — kart Space'in güncel hâlini gösterir. */
+  | { type: "space"; data: SpaceFeedCard };
 
 export interface CommunityPost {
   id: string;
@@ -582,9 +585,10 @@ interface PostRow {
   prompt_requests: RequestRow | null;
   workflows: WorkflowRow | null;
   presets: PresetRow | null;
+  space_id: string | null;
 }
 
-const POST_SELECT = `id, community_id, kind, like_count, comment_count, save_count, content_type, note, pinned_at, created_at, author:author_id ( ${PROFILE_EMBED} ),
+const POST_SELECT = `id, community_id, kind, like_count, comment_count, save_count, content_type, note, pinned_at, created_at, space_id, author:author_id ( ${PROFILE_EMBED} ),
   prompts ( ${PROMPT_SELECT} ), prompt_requests ( ${REQUEST_SELECT} ), workflows ( ${WORKFLOW_SELECT} ), presets ( ${PRESET_SELECT} )`;
 
 function mapPostRow(row: PostRow): CommunityPost {
@@ -609,6 +613,21 @@ function mapPostRow(row: PostRow): CommunityPost {
   };
 }
 
+/**
+ * Satırlar → gönderiler. Space gönderisinin içeriği ayrı, RLS'li tek çağrıyla gelir (`space_feed_cards`): okunamayan Space
+ * (özele çekildi, sahip engelli) içeriksiz kalır ve genel akışlarda çizilmez — diğer içerik türleriyle aynı kural.
+ */
+async function mapPostRows(rows: PostRow[]): Promise<CommunityPost[]> {
+  const posts = rows.map(mapPostRow);
+  const spaceIds = rows.filter((row) => row.content_type === "space" && row.space_id).map((row) => row.space_id!);
+  if (spaceIds.length === 0) return posts;
+  const cards = new Map((await fetchSpaceFeedCards(spaceIds).catch(() => [])).map((card) => [card.id, card]));
+  return posts.map((post, index) => {
+    const card = rows[index].space_id ? cards.get(rows[index].space_id!) : undefined;
+    return card ? { ...post, content: { type: "space", data: card } } : post;
+  });
+}
+
 export const POST_PAGE_SIZE = 12;
 
 /** Akış sayfası: yeniden eskiye keyset (`created_at`, `id`). Sabit gönderiler ayrıca `fetchPinnedPosts` ile başa konur. */
@@ -628,7 +647,7 @@ export async function fetchCommunityPosts(
   const { data, error } = await query;
   if (error) throw toGroupError(error);
   const rows = (data ?? []) as unknown as PostRow[];
-  return { hasMore: rows.length > POST_PAGE_SIZE, posts: rows.slice(0, POST_PAGE_SIZE).map(mapPostRow) };
+  return { hasMore: rows.length > POST_PAGE_SIZE, posts: await mapPostRows(rows.slice(0, POST_PAGE_SIZE)) };
 }
 
 export interface HomeFeedCursor {
@@ -718,14 +737,14 @@ export async function fetchPinnedPosts(communityId: string): Promise<CommunityPo
     .order("pinned_at", { ascending: false })
     .limit(3);
   if (error) throw toGroupError(error);
-  return ((data ?? []) as unknown as PostRow[]).map(mapPostRow);
+  return mapPostRows((data ?? []) as unknown as PostRow[]);
 }
 
 /** Başvuru sayfası: gönderiyi yalnız kimliğiyle okur (topluluk kimliği bilinmez); okunamıyorsa null. */
 export async function fetchCommunityPostById(postId: string): Promise<CommunityPost | null> {
   const { data, error } = await supabase.from("community_posts").select(POST_SELECT).eq("id", postId).maybeSingle();
   if (error) throw toGroupError(error);
-  return data ? mapPostRow(data as unknown as PostRow) : null;
+  return data ? (await mapPostRows([data as unknown as PostRow]))[0] : null;
 }
 
 /** Kaydedilenler/koleksiyon: kimlik listesinden gönderiler (okunamayanlar — topluluktan çıkıldı/silindi — kendiliğinden dışarıda kalır). */
@@ -734,7 +753,7 @@ export async function fetchCommunityPostsByIds(ids: string[]): Promise<Map<strin
   if (ids.length === 0) return posts;
   const { data, error } = await supabase.from("community_posts").select(POST_SELECT).in("id", ids);
   if (error) throw toGroupError(error);
-  for (const row of (data ?? []) as unknown as PostRow[]) posts.set(row.id, mapPostRow(row));
+  for (const post of await mapPostRows((data ?? []) as unknown as PostRow[])) posts.set(post.id, post);
   return posts;
 }
 
@@ -742,7 +761,7 @@ export async function fetchCommunityPostsByIds(ids: string[]): Promise<Map<strin
 export async function fetchCommunityPost(postId: string, communityId: string): Promise<CommunityPost | null> {
   const { data, error } = await supabase.from("community_posts").select(POST_SELECT).eq("id", postId).eq("community_id", communityId).maybeSingle();
   if (error) throw toGroupError(error);
-  return data ? mapPostRow(data as unknown as PostRow) : null;
+  return data ? (await mapPostRows([data as unknown as PostRow]))[0] : null;
 }
 
 /** Başvuru: var olan, yayında ve herkese açık içerik için bağımsız bir gönderi (isteğe bağlı not). */
@@ -774,6 +793,19 @@ export interface ShareableContent {
 }
 
 export async function fetchOwnShareableContent(userId: string, type: CommunityPostType): Promise<ShareableContent[]> {
+  if (type === "space") {
+    // Yalnız herkese açık + arşivsiz Space duyurulur (docs/history/215-*; sunucu da denetler).
+    const { data, error } = await supabase
+      .from("spaces")
+      .select("id, title")
+      .eq("owner_id", userId)
+      .eq("visibility", "public")
+      .is("archived_at", null)
+      .order("updated_at", { ascending: false })
+      .limit(30);
+    if (error) throw toGroupError(error);
+    return ((data ?? []) as { id: string; title: string }[]).map((row) => ({ id: row.id, type, title: row.title }));
+  }
   const table = type === "prompt" ? "prompts" : type === "request" ? "prompt_requests" : type === "workflow" ? "workflows" : "presets";
   const ownerColumn = type === "workflow" || type === "preset" ? "creator_id" : "author_id";
   let query = supabase.from(table).select("id, title").eq(ownerColumn, userId).eq("visibility", "public");
@@ -1029,4 +1061,51 @@ export async function fetchCommunityStats(groupId: string, days: number): Promis
 /** Site moderatörü için eski grup → topluluk geçiş raporu (salt okunur). */
 export async function fetchMigrationReport(): Promise<unknown> {
   return callRpc<unknown>("community_migration_report", {});
+}
+
+// ---------------------------------------------------------------------------------------------
+// Genel akışta "duyuruldu" çipi (docs/history/215-*)
+// ---------------------------------------------------------------------------------------------
+
+export type AnnouncedKey = `${CommunityPostType}:${string}`;
+
+/**
+ * Akıştaki içeriklerin hangi topluluklarda DUYURULDUĞU (başvuru gönderileri). `community_posts` okuması RLS'ten geçer: çağıran yalnız
+ * okuyabildiği toplulukların gönderilerini görür (kapalı topluluk üyesi olmayana sızmaz); adlar `community_cards`'tan. Tek sorgu + tek
+ * RPC; hata çipi gizler (akış etkilenmez).
+ */
+export async function fetchAnnouncedIn(entries: { kind: CommunityPostType; id: string }[]): Promise<Map<AnnouncedKey, string[]>> {
+  const result = new Map<AnnouncedKey, string[]>();
+  if (entries.length === 0) return result;
+  const column: Record<CommunityPostType, string> = { prompt: "prompt_id", request: "request_id", workflow: "workflow_id", preset: "preset_id", space: "space_id" };
+  const filters = (Object.keys(column) as CommunityPostType[])
+    .map((kind) => {
+      const ids = entries.filter((entry) => entry.kind === kind).map((entry) => entry.id);
+      return ids.length > 0 ? `${column[kind]}.in.(${ids.join(",")})` : null;
+    })
+    .filter(Boolean)
+    .join(",");
+  const { data, error } = await supabase
+    .from("community_posts")
+    .select("community_id, prompt_id, request_id, workflow_id, preset_id, space_id")
+    .eq("kind", "application")
+    .or(filters)
+    .limit(500);
+  if (error) throw toGroupError(error);
+  const rows = (data ?? []) as ({ community_id: string } & Record<string, string | null>)[];
+  if (rows.length === 0) return result;
+  const names = new Map((await fetchCommunityCards([...new Set(rows.map((row) => row.community_id))])).map((card) => [card.id, card.name]));
+  for (const row of rows) {
+    const name = names.get(row.community_id);
+    if (!name) continue;
+    for (const kind of Object.keys(column) as CommunityPostType[]) {
+      const id = row[column[kind]];
+      if (!id) continue;
+      const key: AnnouncedKey = `${kind}:${id}`;
+      const list = result.get(key) ?? [];
+      if (!list.includes(name)) list.push(name);
+      result.set(key, list);
+    }
+  }
+  return result;
 }

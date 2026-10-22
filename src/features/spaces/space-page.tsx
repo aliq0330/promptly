@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { Archive, ArchiveRestore, Check, Eye, LayoutDashboard, LogOut, Palette, Pin, PinOff, Settings, Share2, Trash2 } from "lucide-react";
+import { Archive, ArchiveRestore, Eye, LayoutDashboard, LogOut, Palette, Pin, PinOff, Settings, Share2, Trash2 } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Button, buttonClassName } from "@/components/ui/button";
 import { DetailSkeleton, NotFoundBlock } from "@/components/ui/detail-skeleton";
@@ -13,7 +13,7 @@ import { BAND_PRIMARY_CLASS, BandActionRow, DetailBand } from "@/features/conten
 import { useAuth } from "@/features/auth/auth-provider";
 import { ConfirmDialog } from "@/features/groups/confirm-dialog";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import { absoluteUrl, cn, formatRelativeTime, profileHref } from "@/lib/utils";
+import { cn, formatRelativeTime, profileHref } from "@/lib/utils";
 import {
   fetchMyRole,
   fetchSpace,
@@ -30,7 +30,13 @@ import {
 } from "@/lib/supabase/spaces";
 import { isSpaceTab, SPACE_KIND_LABEL, SPACE_TAB_LABEL, SPACE_TABS, spaceHref, type SpaceTab } from "@/lib/spaces";
 import { SpaceProvider, useSpaceContext, type SpaceData } from "./space-provider";
-import { DeleteSpaceDialog, ShareSpaceModal, SpaceSettingsModal } from "./space-modals";
+import { DeleteSpaceDialog, SpaceSettingsModal } from "./space-modals";
+import { CommentSection } from "@/features/prompts/comment-section";
+import { CommentCountLink } from "@/features/prompts/comment-count-link";
+import { LikeButton } from "@/features/prompts/like-button";
+import { ShareModal } from "@/features/prompts/share-modal";
+import { StatisticsButton } from "@/features/statistics/statistics-button";
+import { ReportButton } from "@/features/moderation/report-button";
 import { SpaceMenu } from "./space-menu";
 import { PaletteStrip, SpaceCoverArt, SpacesIcon, VisibilityBadge } from "./space-visuals";
 import { OverviewTab } from "./tabs/overview-tab";
@@ -153,27 +159,14 @@ function SpaceView({ owner, initialFavorite }: { owner: SpacePerson | null; init
   const coverUrls = space.coverUrl ? [space.coverUrl] : coverItem?.mediaUrl ? [coverItem.mediaUrl] : images.slice(-4).map((item) => item.mediaUrl!).reverse();
 
   const leadPalette = palettes.find((palette) => palette.colors.length > 0) ?? null;
-  const [linkCopied, setLinkCopied] = useState(false);
-
-  /** Üye olmayan / sahip olmayan için Paylaş: herkese açık Space'in adresi (telefonda sistem paylaşım sayfası, yoksa kopyala). */
-  async function sharePublicLink() {
-    const url = absoluteUrl(spaceHref(space.id));
-    try {
-      if (typeof navigator.share === "function") {
-        await navigator.share({ title: space.title, url });
-        return;
-      }
-      await navigator.clipboard.writeText(url);
-      setLinkCopied(true);
-      setTimeout(() => setLinkCopied(false), 1500);
-    } catch {
-      // Paylaşım penceresi kapatıldı ya da pano izni yok: sessizce geç.
-    }
-  }
-
-  // Paylaş: sahip görünürlüğü/bağlantıyı yönetir (pencere); herkese açık Space'te herkes adresini paylaşır.
+  // Paylaş (docs/history/215-*): tek pencere — sahip orada "Kim görsün?" ve "Akışta gönderi olarak" ayarlarını da görür; herkese açık
+  // Space'te herkes topluluklarda duyurur ya da bağlantıyı paylaşır.
   const canShare = caps.share || space.visibility === "public";
-  const share = () => (caps.share ? setDialog("share") : void sharePublicLink());
+  const share = () => setDialog("share");
+  // Akışta paylaşılmış Space bir gönderidir: beğeni · yorum · istatistik ve yorumlar görünür.
+  const isPost = Boolean(space.sharedAt) && space.visibility === "public" && !space.archivedAt;
+  const highlightParam = searchParams.get("hl");
+  const highlightCommentId = highlightParam?.startsWith("comment:") ? highlightParam.slice("comment:".length) : null;
 
   async function toggleFavorite() {
     const next = !favorite;
@@ -267,15 +260,16 @@ function SpaceView({ owner, initialFavorite }: { owner: SpacePerson | null; init
               {caps.edit ? t("spaces.page.openBoard") : t("spaces.page.viewBoard")}
             </Button>
             <SaveIndicator status={layoutStatus} onRetry={() => void flushLayout()} />
+            {isPost && (
+              <div className="flex items-center gap-0.5" data-space-engagement="">
+                <LikeButton id={space.id} likeCount={space.likeCount} contentType="space" size={18} />
+                <CommentCountLink spaceId={space.id} baseCount={space.commentCount} size={18} />
+                <StatisticsButton target={{ contentType: "space", contentId: space.id, likeCount: space.likeCount, commentCount: space.commentCount }} size={18} />
+              </div>
+            )}
             {canShare && (
-              <Button
-                variant="outline"
-                className="ml-auto h-12 w-12 rounded-full p-0"
-                onClick={share}
-                aria-label={linkCopied ? t("common.copied") : t("spaces.card.share")}
-                title={linkCopied ? t("common.copied") : t("spaces.card.share")}
-              >
-                {linkCopied ? <Check size={18} aria-hidden /> : <Share2 size={18} aria-hidden />}
+              <Button variant="outline" className="ml-auto h-12 w-12 rounded-full p-0" onClick={share} aria-label={t("spaces.card.share")} title={t("spaces.card.share")}>
+                <Share2 size={18} aria-hidden />
               </Button>
             )}
           </BandActionRow>
@@ -320,10 +314,25 @@ function SpaceView({ owner, initialFavorite }: { owner: SpacePerson | null; init
           {tab === "notes" && <NotesTab onShowOnBoard={(itemId) => goTo("board", itemId)} />}
           {tab === "members" && <MembersTab />}
         </div>
+
+        {/* Gönderi olarak paylaşılmış Space'in yorumları (detay sayfalarıyla aynı yorum yüzeyi; `#comments` çapası kartlardan gelir). */}
+        {isPost && tab !== "board" && (
+          <section id="comments" aria-labelledby="space-comments-title" className="mt-12 scroll-mt-20 space-y-3 border-t border-border-soft pt-6" data-space-comments="">
+            <h2 id="space-comments-title" className="text-h3 font-bold text-text">
+              {t("comments.title")}
+            </h2>
+            <CommentSection target={{ spaceId: space.id }} highlightCommentId={highlightCommentId} headless />
+            {userId && userId !== space.ownerId && (
+              <div className="pt-2">
+                <ReportButton targetType="space" targetId={space.id} menuItem={false} />
+              </div>
+            )}
+          </section>
+        )}
       </div>
 
       {dialog === "settings" && <SpaceSettingsModal space={space} images={images} onClose={() => setDialog(null)} onSaved={setSpace} />}
-      {dialog === "share" && <ShareSpaceModal space={space} onClose={() => setDialog(null)} onChanged={setSpace} />}
+      {dialog === "share" && <ShareModal target={{ contentType: "space", space, art: coverUrls, onChanged: setSpace }} onClose={() => setDialog(null)} />}
       {dialog === "delete" && <DeleteSpaceDialog space={space} onClose={() => setDialog(null)} onDeleted={() => router.replace("/spaces")} />}
       {dialog === "leave" && userId && (
         <ConfirmDialog

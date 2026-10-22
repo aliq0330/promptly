@@ -1,15 +1,16 @@
 "use client";
 
-import { Children, type ReactNode } from "react";
-import { Users } from "lucide-react";
+import { Children, useEffect, useState, type ReactNode } from "react";
+import { ChevronDown, Megaphone } from "lucide-react";
 import { useCommunityContext } from "@/features/communities/community-return";
+import { AnnouncePicker, setPendingAnnounce, useAnnounceCommunities, type AnnounceSelection } from "@/features/communities/announce-picker";
+import { useAuth } from "@/features/auth/auth-provider";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
 import type { ContentVisibility } from "@/types";
 import { FormSection } from "./form-section";
-import { ShareDestinationField, useDestinationBlock } from "./share-destination-field";
-import { VisibilitySwitch } from "./visibility-switch";
+import { AudienceField, useDestinationBlock, type Audience } from "./share-destination-field";
 
 /**
  * The end of every creation form (Prompt, Prompt İsteği, Generator, Workflow,
@@ -20,8 +21,10 @@ import { VisibilitySwitch } from "./visibility-switch";
  *   ┌ actions card ────────┐   [Taslağa kaydet] [Paylaş]
  *   └──────────────────────┘
  *
- * Above them sits the "Nerede paylaşmak istiyorsun?" destination picker (`ShareDestinationField`, docs/history/197-*): "Genel akış"
- * (default) or one of the viewer's communities. A community makes the content community-only (no visibility card, no draft).
+ * Above them sits the "Kim görsün?" field (`AudienceField`, docs/history/215-*; replaces 197's destination picker + the visibility
+ * switch): Herkese açık / Sadece ben / Sadece bir topluluk. A community makes the content community-only (no draft). Public content can
+ * also be announced in communities ("Topluluklarda da duyur"): the selection is sent once the content exists (`runPendingAnnounce`,
+ * called from the forms' `useCommunityReturn`), and a sentence says what will happen.
  *
  * "Paylaş" is the primary action; with no `onPublish` it is the form's submit
  * button, so the form's own `onSubmit` (and its validation) stays the single
@@ -62,30 +65,89 @@ export function CreateFormActions({
   className?: string;
 }) {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const hasNotices = Children.toArray(children).length > 0;
-  // Topluluktan açıldıysa (`?community=`): içerik topluluğa ÖZGÜDÜR — görünürlük seçilmez (yalnız topluluğu okuyabilenler görür) ve taslak olmaz.
+  // Topluluktan açıldıysa (`?community=`) ya da seçildiyse: içerik topluluğa ÖZGÜDÜR — görünürlük seçilmez (yalnız topluluğu okuyabilenler görür) ve taslak olmaz.
   const community = useCommunityContext();
   const inCommunity = community.communityId !== null;
   const blockedReason = useDestinationBlock(hideDestination ? null : community.communityId);
-  const showVisibility = visibility !== undefined && onVisibilityChange !== undefined && !inCommunity;
+  const canChooseVisibility = visibility !== undefined && onVisibilityChange !== undefined;
+  const audience: Audience = inCommunity ? "community" : visibility === "private" ? "private" : "public";
+  const allowCommunity = !hideDestination;
+  const showAudience = canChooseVisibility || allowCommunity;
+
+  // "Topluluklarda da duyur": yalnız yeni + herkese açık içerikte (düzenlemede yok; özel/topluluğa özgü içerik duyurulamaz).
+  const canAnnounce = Boolean(user) && !hideDestination && audience === "public";
+  const [announceOpen, setAnnounceOpen] = useState(false);
+  const [announce, setAnnounce] = useState<AnnounceSelection>({ communityIds: [], note: "" });
+  const communities = useAnnounceCommunities(canAnnounce && announceOpen);
+  const announceCount = canAnnounce ? announce.communityIds.length : 0;
+  useEffect(() => {
+    setPendingAnnounce(canAnnounce ? announce : null, new Map(communities.list.map((item) => [item.id, item.name])));
+  }, [canAnnounce, announce, communities.list]);
+  useEffect(() => () => setPendingAnnounce(null, new Map()), []);
+
+  const summary =
+    audience === "community"
+      ? t("publish.summary.community", { name: community.name ?? "…" })
+      : audience === "private"
+        ? t("publish.summary.private")
+        : announceCount > 0
+          ? t("publish.summary.publicAnnounce", { count: announceCount })
+          : t("publish.summary.public");
+
   return (
     <div className={cn("min-w-0 space-y-4", className)} data-create-form-actions>
-      {!hideDestination && <ShareDestinationField blockedReason={blockedReason} disabled={busy} />}
-      {inCommunity && (
-        <p role="status" data-community-context className="flex items-start gap-2 rounded-lg bg-primary-soft px-3.5 py-3 text-small text-text">
-          <Users size={16} strokeWidth={1.75} className="mt-0.5 shrink-0 text-primary" aria-hidden />
-          <span className="min-w-0 break-words">
-            {community.name ? t("communities.create.contextBanner", { name: community.name }) : t("communities.create.contextBannerGeneric")}
-          </span>
-        </p>
+      {showAudience ? (
+        <AudienceField
+          value={audience}
+          onVisibilityChange={canChooseVisibility ? onVisibilityChange : undefined}
+          allowPrivate={canChooseVisibility}
+          allowCommunity={allowCommunity}
+          blockedReason={blockedReason}
+          disabled={busy}
+        >
+          {extra}
+        </AudienceField>
+      ) : (
+        extra && (
+          <FormSection title={t("visibility.label")}>
+            <div className="space-y-3">{extra}</div>
+          </FormSection>
+        )
       )}
-      {(showVisibility || extra) && (
-        <FormSection title={t("visibility.label")}>
-          <div className="space-y-3">
-            {showVisibility && <VisibilitySwitch value={visibility} onChange={onVisibilityChange} disabled={busy} hideLabel />}
-            {extra}
-          </div>
+      {canAnnounce && (
+        <FormSection>
+          <button
+            type="button"
+            onClick={() => setAnnounceOpen((open) => !open)}
+            aria-expanded={announceOpen}
+            data-publish-announce-toggle=""
+            className="flex w-full items-center gap-3 text-left"
+          >
+            <span aria-hidden className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-primary-soft text-primary">
+              <Megaphone size={17} strokeWidth={1.9} />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-label font-semibold text-text">
+                {t("publish.announceTitle")}
+                {announceCount > 0 && <span className="ml-1.5 rounded-full bg-primary px-1.5 py-0.5 text-caption text-primary-foreground">{announceCount}</span>}
+              </span>
+              <span className="block text-caption text-text-muted">{t("publish.announceHint")}</span>
+            </span>
+            <ChevronDown size={18} aria-hidden className={cn("shrink-0 text-text-muted transition-transform", announceOpen && "rotate-180")} />
+          </button>
+          {announceOpen && (
+            <div className="mt-3">
+              <AnnouncePicker value={announce} onChange={setAnnounce} communities={communities.list} status={communities.status} disabled={busy} />
+            </div>
+          )}
         </FormSection>
+      )}
+      {showAudience && (
+        <p data-publish-summary={audience} className="px-1 text-small text-text-secondary">
+          {summary}
+        </p>
       )}
       <FormSection>
         {hasNotices && <div className="mb-4 space-y-3">{children}</div>}
