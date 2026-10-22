@@ -3,7 +3,7 @@
 **Durum:**
 - İstemci kodu ve `20260921140000_space_discovery.sql` repoda.
 - Migration yerel PostgreSQL'de sınandı: `supabase/tests/space-discovery.sql` 14/14, `spaces.sql` 59/59 (temiz veritabanı, tüm migration'lar baştan).
-- Migration **canlıya UYGULANMADI**. Önce migration, sonra istemci. Migration yoksa yalnız profilin "Spaces" sekmesi ve prompt detayındaki "Bu prompt şu Space'lerde" bloğu sessizce boş kalır; başka bir sayfa etkilenmez.
+- Migration **canlıya UYGULANDI** (kullanıcı onayıyla, MCP `execute_sql`, tek işlem; `schema_migrations`'a `20260921140000` kaydı). Canlıda salt-okunur sorgularla doğrulandı: SECURITY INVOKER, `anon` + `authenticated` EXECUTE, ziyaretçi gözüyle sahibe göre çağrıda yalnız herkese açık + arşivsiz satır ve kişisel alanlar boş. Önce migration, sonra istemci sırası korundu.
 - Arayüz ağ taklitli Playwright'ta sınandı: `run-spaces` 28/28 (4 yeni senaryo), `run-detail-pages` 45/45, `run-profile-collections` 6/6, `run-stories` 24/24, `run-focus-feed` 25/25; `npm test` temiz.
 - Gerçek Supabase'e, gerçek oturuma, cihaza ya da iOS Safari'ye karşı **denenmedi**.
 
@@ -59,5 +59,5 @@ Kullanıcının isteği: Spaces'i incele, Albüm tasarımı öner; favorinin be�
 
 ## 7. Uygulama adımları
 
-1. Migration'ı canlıya uygula (`20260921140000_space_discovery.sql`, tek işlem) ve `supabase_migrations.schema_migrations`'a dosya sürümüyle kayıt düş.
-2. İstemciyi yayınla.
+1. ~~Migration'ı canlıya uygula~~ — yapıldı (yukarıda).
+2. İstemciyi yayınla (PR birleşince `deploy.yml`).
