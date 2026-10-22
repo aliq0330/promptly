@@ -2,7 +2,7 @@
 
 import { createContext, memo, useContext, useEffect, useId, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { ArrowDown, ArrowUpRight, ImageOff, Music, Pause, Play, SlidersHorizontal, Sparkles, SquareTerminal, Workflow as WorkflowIcon, X, type LucideIcon } from "lucide-react";
+import { ArrowDown, ArrowUpRight, ImageOff, Music, Pause, Play, Shapes, SlidersHorizontal, Sparkles, SquareTerminal, Workflow as WorkflowIcon, X, type LucideIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Modal } from "@/components/ui/modal";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -23,6 +23,8 @@ import { splitSourceNotes } from "@/lib/source-notes";
 import { cn, presetHref, promptHref, requestHref, workflowHref } from "@/lib/utils";
 import type { Preset, Prompt, PromptRequest, UserProfile, Workflow } from "@/types";
 import { FocusFeedRail } from "./focus-feed-rail";
+import { useAuth } from "@/features/auth/auth-provider";
+import { AddToSpaceModal } from "@/features/spaces/add-to-space-modal";
 import { usePromptOutput, useWorkflowFocusSteps } from "./use-focus-data";
 
 /** Everything a slide shows about an entry, read from the real feed row (nothing assumed beyond its own fields). */
@@ -493,6 +495,23 @@ function AlbumPrimary({ prompt, href }: { prompt: Prompt | null; href: string })
   );
 }
 
+/** Odak'ta "Space'e ekle" (docs/history/213-*): oturumlu kullanıcıya, topluluğa ait olmayan gönderide. */
+function FocusAddToSpace({ item, className }: { item: FeedItem; className: string }) {
+  const { t } = useTranslation();
+  const { user } = useAuth();
+  const [open, setOpen] = useState(false);
+  if (!user || item.data.communityId) return null;
+  return (
+    <>
+      <button type="button" onClick={() => setOpen(true)} aria-haspopup="dialog" className={className} data-focus-add-to-space="">
+        <Shapes size={15} aria-hidden />
+        {t("spaces.add.menu")}
+      </button>
+      {open && <AddToSpaceModal target={{ type: item.kind, id: item.data.id }} onClose={() => setOpen(false)} />}
+    </>
+  );
+}
+
 function AlbumSlide({
   item,
   model,
@@ -572,6 +591,7 @@ function AlbumSlide({
               <ArrowUpRight size={15} aria-hidden />
             </Link>
           )}
+          <FocusAddToSpace item={item} className={link} />
         </div>
       </div>
     </article>

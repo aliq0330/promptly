@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { Bookmark, Compass, GalleryVerticalEnd, Hash, Home, LogIn, Plus, Settings, SlidersHorizontal, Sparkles, SquareTerminal, User, Users, UsersRound, WandSparkles, Workflow } from "lucide-react";
+import { Bookmark, Compass, GalleryVerticalEnd, Hash, Home, LogIn, Plus, Settings, Shapes, SlidersHorizontal, Sparkles, SquareTerminal, User, Users, UsersRound, WandSparkles, Workflow } from "lucide-react";
 import type { TranslationKey } from "@/lib/i18n/translations";
 
 /** Who may see a nav entry: everyone, or only a signed-in member. */
@@ -47,6 +47,8 @@ export const navGroups: NavGroup[] = [
     labelKey: "nav.groupLibrary",
     items: [
       { href: "/saved", labelKey: "nav.saved", icon: Bookmark, match: "/saved", visibility: "authenticated" },
+      // Promptly Spaces (docs/history/213-*): ziyaretçi de herkese açık Space'leri görür.
+      { href: "/spaces", labelKey: "nav.spaces", icon: Shapes },
       { href: "/following", labelKey: "nav.following", icon: Users, visibility: "authenticated" },
       { href: "/communities", labelKey: "nav.communities", icon: UsersRound },
       { href: PROFILE_NAV_PLACEHOLDER, labelKey: "nav.profile", icon: User, match: "/profile", visibility: "authenticated" },

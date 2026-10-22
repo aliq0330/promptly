@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeftRight, Bookmark, LayoutGrid, LogIn, LogOut, Moon, Settings, ShieldCheck, Undo2, User, UserPlus, Users } from "lucide-react";
+import { ArrowLeftRight, Bookmark, LayoutGrid, LogIn, LogOut, Moon, Settings, Shapes, ShieldCheck, Undo2, User, UserPlus, Users } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { iconButtonClassName } from "@/components/ui/icon-button";
@@ -155,6 +155,7 @@ export function AccountMenu() {
           <MenuGroup label={t("account.groupAccount")}>
             <MenuLink href="/my-content" icon={LayoutGrid} label={t("account.myContent")} onNavigate={close} />
             <MenuLink href="/saved" icon={Bookmark} label={t("nav.saved")} onNavigate={close} />
+            <MenuLink href="/spaces" icon={Shapes} label={t("nav.spaces")} onNavigate={close} />
             <MenuLink href="/following" icon={Users} label={t("nav.following")} onNavigate={close} />
           </MenuGroup>
 

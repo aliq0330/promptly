@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import Link from "next/link";
+import { AddToSpaceModal, type AddToSpaceTarget } from "@/features/spaces/add-to-space-modal";
 import { useRouter } from "next/navigation";
 import {
   Archive,
@@ -18,6 +19,7 @@ import {
   Repeat2,
   RotateCcw,
   Send,
+  Shapes,
   ShieldOff,
   Trash2,
   Users,
@@ -95,6 +97,8 @@ export function StoryViewer({ groups, startGroupIndex, startStoryId, onClose }: 
   const [inputFocused, setInputFocused] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [sheet, setSheet] = useState<Sheet | null>(null);
+  // Bağlantılı içeriği Space'e ekleme penceresi (docs/history/213-*): açıkken hikâye durur, tuşlar pencereye kalır.
+  const [spaceTarget, setSpaceTarget] = useState<AddToSpaceTarget | null>(null);
   const [mediaReady, setMediaReady] = useState(false);
   const [mediaFailed, setMediaFailed] = useState(false);
   const [mediaAttempt, setMediaAttempt] = useState(0);
@@ -258,7 +262,7 @@ export function StoryViewer({ groups, startGroupIndex, startStoryId, onClose }: 
   }, [stories, storyIndex]);
 
   // --- Oynatma motoru -----------------------------------------------------------------------------------------------------------
-  const playing = Boolean(story) && mediaReady && !mediaFailed && !paused && !holding && !inputFocused && !menuOpen && !sheet && !docHidden;
+  const playing = Boolean(story) && mediaReady && !mediaFailed && !paused && !holding && !inputFocused && !menuOpen && !sheet && !spaceTarget && !docHidden;
   const duration = story ? storyDisplayDuration(story) : 0;
 
   useEffect(() => {
@@ -391,6 +395,7 @@ export function StoryViewer({ groups, startGroupIndex, startStoryId, onClose }: 
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
+      if (spaceTarget) return;
       const typing = event.target instanceof HTMLElement && /^(INPUT|TEXTAREA)$/.test(event.target.tagName);
       if (event.key === "Escape") {
         event.preventDefault();
@@ -429,7 +434,7 @@ export function StoryViewer({ groups, startGroupIndex, startStoryId, onClose }: 
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [sheet, menuOpen, close, goNext, goPrev]);
+  }, [sheet, menuOpen, spaceTarget, close, goNext, goPrev]);
 
   useEffect(() => {
     if (!notice) return;
@@ -692,6 +697,20 @@ export function StoryViewer({ groups, startGroupIndex, startStoryId, onClose }: 
             )}
           </div>
 
+          {spaceTarget && (
+            // Portal'daki pencerenin olayları görüntüleyicinin dokun-ilerle / basılı-tut işleyicilerine kabarmasın.
+            <div data-story-interactive onPointerDown={(event) => event.stopPropagation()} onPointerUp={(event) => event.stopPropagation()} onClick={(event) => event.stopPropagation()}>
+              <AddToSpaceModal
+                target={spaceTarget}
+                onClose={() => setSpaceTarget(null)}
+                overLayers
+                onOpenSpace={(href) => {
+                  setSpaceTarget(null);
+                  leaveTo(href);
+                }}
+              />
+            </div>
+          )}
           {menuOpen && story && (
             <div className="absolute inset-0 z-20" data-story-interactive>
               <button type="button" aria-label={t("common.close")} className="absolute inset-0 cursor-default" onClick={() => setMenuOpen(false)} />
@@ -713,6 +732,16 @@ export function StoryViewer({ groups, startGroupIndex, startStoryId, onClose }: 
                         if (await copyTextToClipboard(absoluteUrl(storyHref(story.id)))) setNotice(t("common.linkCopied"));
                       }}
                     />
+                    {user && story.linkedType && story.linkedId && (
+                      <MenuButton
+                        icon={Shapes}
+                        label={t("spaces.add.fromStory")}
+                        onClick={() => {
+                          setMenuOpen(false);
+                          setSpaceTarget({ type: story.linkedType!, id: story.linkedId! });
+                        }}
+                      />
+                    )}
                     {user ? (
                       <MenuButton icon={Flag} label={t("stories.report.title")} onClick={() => setSheet({ kind: "report" })} />
                     ) : null}

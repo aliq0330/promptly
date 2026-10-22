@@ -8,6 +8,7 @@ import assert from "node:assert/strict";
 import { serve } from "./server.mjs";
 import { createDb, installMock, U } from "./mock.mjs";
 import { svg } from "./detail-fixtures.mjs";
+import { setupSpaces, SID } from "./mock-spaces.mjs";
 
 const BASE = "http://localhost:4181/promptly";
 const server = await serve(4181);
@@ -541,6 +542,55 @@ await scenario("23. Masaüstü: yorumlar sağda panel, gönderi küçülmez yana
   assert.equal(content, 860);
   await shot(page, "23-comments-desktop");
 }, { lang: "en" });
+
+await scenario("24. Spaces (docs/history/213-*): Odak'taki gönderi 'Space'e ekle' ile görseline başvurarak eklenir", async ({ page, db, feed }) => {
+  setupSpaces(db);
+  db.addSpace(1, { title: "Manzara fikirleri" });
+  await page.route(`https://example.supabase.co/rest/v1/prompts?**`, (route) => {
+    const url = new URL(route.request().url());
+    const id = (url.searchParams.get("id") ?? "").replace("eq.", "");
+    const row = feed.prompts.find((p) => p.id === id);
+    if (route.request().method() !== "GET" || !row || !(url.searchParams.get("id") ?? "").startsWith("eq.")) return route.fallback();
+    return route.fulfill({ status: 200, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: JSON.stringify(row) });
+  });
+  await page.goto(`${BASE}/focus`);
+  await slides(page).first().waitFor();
+  await page.locator("[data-focus-add-to-space]").first().click();
+  const modal = page.getByTestId("add-to-space");
+  await modal.locator('[data-add-space="Manzara fikirleri"]').click();
+  await page.getByTestId("add-to-space-submit").click();
+  await page.getByTestId("add-to-space-done").waitFor();
+  const added = db.spaceItems.filter((i) => i.space_id === SID(1));
+  assert.equal(added.length, 1);
+  assert.equal(added[0].kind, "image");
+  assert.equal(added[0].prompt_id, feed.prompts[0].id);
+});
+
+await scenario("25. Spaces: Ana Sayfa kartının ⋮ menüsünden 'Space'e ekle' — penceredeki tıklamalar kartı AÇMAZ", async ({ page, db, feed }) => {
+  setupSpaces(db);
+  db.addSpace(1, { title: "Kart testi" });
+  await page.route(`https://example.supabase.co/rest/v1/prompts?**`, (route) => {
+    const url = new URL(route.request().url());
+    const id = (url.searchParams.get("id") ?? "").replace("eq.", "");
+    const row = feed.prompts.find((p) => p.id === id);
+    if (route.request().method() !== "GET" || !row || !(url.searchParams.get("id") ?? "").startsWith("eq.")) return route.fallback();
+    return route.fulfill({ status: 200, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: JSON.stringify(row) });
+  });
+  await page.goto(`${BASE}/`);
+  const card = page.locator("article").first();
+  await card.waitFor();
+  await card.getByRole("button", { name: "Gönderi seçenekleri" }).click();
+  await page.locator("[data-add-to-space]").first().click();
+  const modal = page.getByTestId("add-to-space");
+  await modal.getByRole("textbox").first().click();
+  await modal.locator('[data-add-space="Kart testi"]').click();
+  await page.getByTestId("add-to-space-submit").click();
+  await page.getByTestId("add-to-space-done").waitFor();
+  await page.getByTestId("add-to-space-done").getByRole("button", { name: "Kapat" }).click();
+  await page.waitForTimeout(400);
+  assert.equal(new URL(page.url()).pathname, "/promptly/", "kart açılmadı, sayfada kaldı");
+  assert.equal(db.spaceItems.filter((i) => i.space_id === SID(1)).length, 1);
+});
 
 await browser.close();
 server.close();

@@ -18,6 +18,7 @@
 
 import { communityTranslations } from "./translations-communities";
 import { storyTranslations } from "./translations-stories";
+import { spaceTranslations } from "./translations-spaces";
 
 export const translations = {
   // ---- Primary navigation (desktop sidebar) ----
@@ -2992,6 +2993,7 @@ export const translations = {
   "groups.owner.membersCanPinHelp": { tr: "Kapalıyken yalnızca sabitleme yetkisi olan yönetim kadrosu sabitler. Açıkken her üye mesaj sabitleyebilir ve kaldırabilir.", en: "When off, only staff with the pin permission can pin. When on, every member can pin and unpin messages." },
   "groups.owner.pinTitle": { tr: "Mesaj sabitleme", en: "Pinning messages" },
   ...communityTranslations,
+  ...spaceTranslations,
   ...storyTranslations,
 } as const satisfies Record<string, { tr: string; en: string }>;
 

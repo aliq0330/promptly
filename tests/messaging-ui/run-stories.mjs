@@ -5,6 +5,8 @@ import assert from "node:assert/strict";
 import { serve } from "./server.mjs";
 import { createDb, installMock } from "./mock.mjs";
 import { setupStories, layer, ME, U, MEDIA_BASE } from "./mock-stories.mjs";
+import { setupSpaces, SID } from "./mock-spaces.mjs";
+import { installDetailData, ID as DETAIL_ID } from "./detail-fixtures.mjs";
 
 const BASE = "http://localhost:4181/promptly";
 const server = await serve(4181);
@@ -550,6 +552,33 @@ await scenario("20. Masaüstü: kenar okları, tuval 9:16 ortada; oluşturucu ik
   await page.getByRole("button", { name: "Anket" }).click();
   if (process.env.SHOT_DIR) await page.screenshot({ path: `${process.env.SHOT_DIR}/stories-editor-desktop.png`, fullPage: true });
   assert.equal(await overflowFree(page), true);
+});
+
+// 21 — Promptly Spaces (docs/history/213-*): bağlantılı içerik görüntüleyicinin ⋮ menüsünden Space'e eklenir; pencere hikâyenin ÜSTÜNDE
+// açılır, açıkken hikâye durur, olaylar görüntüleyiciye kabarmaz (hikâye ilerlemez).
+await scenario("21. Spaces: bağlantılı içerik ⋮ → Space'e ekle; pencere görüntüleyicinin üstünde, hikâye ilerlemez", async ({ page, db, context }) => {
+  setupSpaces(db);
+  db.addSpace(1, { title: "İlham panosu" });
+  await installDetailData(context);
+  const s = db.addStory(U.bob, { text: "Bağlantılı", linked_type: "prompt", linked_id: DETAIL_ID.prompt });
+  db.addStory(U.bob, { text: "Sonraki", minutesAgo: 5 });
+  await page.goto(`${BASE}/stories?id=${s.id}`);
+  await viewer(page).waitFor();
+  await viewer(page).getByRole("button", { name: "Diğer işlemler" }).click();
+  await page.getByRole("menuitem", { name: "Bağlantılı içeriği Space'e ekle" }).click();
+  const modal = page.getByTestId("add-to-space");
+  await modal.locator('[data-add-space="İlham panosu"]').click();
+  const z = await page.evaluate(() => {
+    const dialogs = [...document.querySelectorAll('[role="dialog"][aria-modal="true"]')];
+    return Number(getComputedStyle(dialogs[dialogs.length - 1]).zIndex);
+  });
+  assert.ok(z > 60, `pencere görüntüleyicinin üstünde (z=${z})`);
+  await page.waitForTimeout(1200);
+  await page.getByTestId("add-to-space-submit").click();
+  await page.getByTestId("add-to-space-done").waitFor();
+  assert.ok(db.spaceItems.some((i) => i.space_id === SID(1) && i.prompt_id === DETAIL_ID.prompt), "başvuru eklendi");
+  await page.getByTestId("add-to-space-done").getByRole("button", { name: "Kapat" }).click();
+  assert.equal(await shown(page), "Bağlantılı", "pencere açıkken hikâye ilerlemedi");
 });
 
 await browser.close();
