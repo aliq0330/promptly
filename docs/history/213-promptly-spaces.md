@@ -214,3 +214,14 @@ Fonksiyonlar:
 - Herkese açık Space'ler yalnız Spaces → "Herkese açık" süzgecinde keşfedilir; profil, Keşfet ve aramaya bağlanmadı.
 - Negatif prompt ve üretim parametreleri Promptly gönderi modelinde yok; "Paylaşılmamış" yazılır.
 - Pano iOS Safari'de, gerçek dokunmatik cihazda ve çok sayıda öğeyle (yüzlerce) performans açısından **denenmedi**. Dokunma ve kıstırma sentetik Pointer olaylarıyla sınandı.
+
+## Demo Space'leri (seed)
+
+`supabase/seed/build-spaces-seed.mjs` → `supabase/seed/spaces-demo.sql` (tek `DO` bloğu, tek işlem; yalnızca INSERT/UPDATE, silme yok; kimlikler `md5('seed-…')::uuid` olduğundan tekrar çalıştırılabilir). **Canlıya uygulandı** (kullanıcı isteğiyle, MCP `execute_sql`).
+
+- 19 Space / 18 demo + `aliq` hesabı: tema başına seçilmiş (etiket/kategori/içerik türü) gerçek, herkese açık promptlardan; görsel öğeler gerçek `prompt_media` kimliklerine **başvurur** (kopya yok), topluluğa özgü içerik hiç girmez.
+- Çeşitlilik: herkese açık, özel, "bağlantı" görünürlüğü (bağlantı üretilmedi), arşivli (`ali`), düzenleyici/görüntüleyici üyelikler, `aliq` için 2 bekleyen davet (+ bildirim), favoriler ve "son açılanlar".
+- Her Space: 1–3 grup, elle yazılmış tema paletleri, görsellerin KAYITLI baskın renklerinden türetilen palet (`source='image'`; renksiz görseller atlanır), kullanıcıya ait prompt taslağı (kaynağa bağlı), 2–4 not (biri gizli), pano yerleşimi (görseller solda, promptlar ortada, notlar sağda, paletler üstte) ve bazılarında workflow/hazır ayar/istek başvuruları.
+- Canlıda doğrulandı: 20 Space (19 seed + `aliq`'ın kendi denemesi), 396 öğe, 40 palet (16'sı görsel renklerinden), 29 üyelik, 2 bekleyen davet, 0 aktörsüz etkinlik; `aliq` gözüyle `list_spaces` (5 Space: 3 sahip + 1 düzenleyici + 1 görüntüleyici), ziyaretçi gözüyle yalnız 14 herkese açık Space, gizli notlar/etkinlik/özel ve bağlantı Space'leri görünmüyor.
+- Geri alma: betikte silme yoktur; kaldırmak için `delete from spaces where id in (select md5('seed-space:'||k)::uuid …)` ayrıca (onayla) yazılmalıdır — zincirleme silme öğeleri/paletleri/grupları da götürür.
+
