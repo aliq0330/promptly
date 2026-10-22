@@ -124,5 +124,5 @@ Ayrıntılar:
   - `run-community-posts` "Duyuruldu" ve yeni alanla güncellendi.
   - `run-spaces` 25. senaryo yeni Paylaş penceresiyle güncellendi.
   - Yeni `run-space-posts` (Space akış kartı, Space sayfası etkileşimi, akış anahtarı, Keşfet Spaces, Oluştur karoları, duyuruldu çipi, topluluktaki Space başvurusu).
-  - Bütün takımların sonuçları rapordadır.
+  - Bütün takımlar (son derlemeyle): `run-chat-popovers` 8/8, `run-chat` 38/38, `run-communities` 65/65, `run-community-home` 38/38, `run-community-posts` 36/36, `run-community-shelf` 7/7, `run-create-destination` 11/11, `run-detail-pages` 45/45, `run-discover` 6/6, `run-focus-feed` 25/25, `run-groups` 36/36, `run-home-motion` 9/9, `run-profile-collections` 6/6, `run-search-notifications` 8/8, `run-shared-cards` 11/11, `run-spaces` 28/28, `run-stories` 24/24, `run-topic-pages` 9/9, `run-space-posts` 7/7.
 - İngilizce karşılıklar eklendi (`translations.ts`, `translations-spaces.ts`, `translations-communities.ts`).
