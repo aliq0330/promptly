@@ -203,7 +203,7 @@ await scenario("9. Topluluklarda da duyur: iki topluluk + not, cümle sayıyı s
   await page.locator("[data-announce-note]").fill("Yeni isteğim");
   assert.match(await summary(page).innerText(), /2 toplulukta duyurulacak/);
   assert.equal(calls(db, "share_to_community").length, 0, "nothing is announced before the content exists");
-  if (process.env.SHOTS) await page.screenshot({ path: `${process.env.SHOTS}/cd-publish-sheet.png` });
+  if (process.env.SHOTS) { await page.mouse.move(0, 0); await page.waitForTimeout(300); await page.screenshot({ path: `${process.env.SHOTS}/cd-publish-sheet.png` }); }
   await publish(page).click();
   await page.waitForURL(/requests\/local/);
   const shared = calls(db, "share_to_community");
