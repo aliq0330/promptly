@@ -1,5 +1,6 @@
-// Oluşturma ekranlarının yayın adımı: "Kim görsün?" (Herkese açık / Sadece ben / Sadece bir topluluk) + "Topluluklarda da duyur" +
-// "ne olacak" cümlesi (ağ taklitli) — docs/history/197-*, 215-*.
+// Oluştur menüsü + yazma ekranı + son kontrol penceresi (docs/history/216-*; önce 197-*, 215-*): "+" menüsü, yazma ekranında
+// uygulama menülerinin kalkması, "Paylaş" → son kontrol ("Kim görsün?" Herkese açık / Sadece ben / Bir topluluk, "Topluluklarda da
+// duyur", "ne olacak" cümlesi, eksikler), ✕ → "Taslak olarak kaydedilsin mi?". Ağ taklitli.
 // Gerçek Supabase'e KARŞI DENENMEDİ. Topluluk RPC'leri `mock-communities.mjs`'te.
 import { chromium } from "playwright";
 import assert from "node:assert/strict";
@@ -40,12 +41,14 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lan
 }
 
 const calls = (db, table, method) => db.calls.filter((c) => c.table === table && (!method || c.method === method));
+const sheet = (page) => page.locator("[data-publish-sheet]");
 const field = (page) => page.locator("[data-audience-field]");
 const option = (page, key) => page.locator(`[data-audience-option='${key}']`);
 const summary = (page) => page.locator("[data-publish-summary]");
-const publish = (page) => page.locator("[data-create-form-actions] [data-action=publish]");
-const draft = (page) => page.locator("[data-create-form-actions] [data-action=save-draft]");
-const openForm = async (page, url = "/requests/new") => { await page.goto(`${BASE}${url}`); await field(page).waitFor(); await page.waitForTimeout(400); };
+const publish = (page) => page.locator("[data-publish-sheet] [data-action=publish]");
+const draft = (page) => page.locator("[data-publish-sheet] [data-action=save-draft]");
+const openForm = async (page, url = "/requests/new") => { await page.goto(`${BASE}${url}`); await page.locator("[data-compose]").waitFor(); await page.waitForTimeout(400); };
+const openSheet = async (page) => { await page.locator("[data-compose-publish]").click(); await sheet(page).waitFor(); await page.waitForTimeout(250); };
 const openPicker = async (page) => { await option(page, "community").click(); await page.getByRole("listbox").waitFor(); await page.waitForTimeout(350); };
 const overflowFree = (page) => page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1);
 const fillRequest = async (page) => {
@@ -53,25 +56,45 @@ const fillRequest = async (page) => {
   await page.locator("#request-description").fill("Bu isteğin hedef seçiciyle gönderildiğini sınayan yeterince uzun açıklama");
 };
 
-await scenario("1. Varsayılan: 'Kim görsün?' üç seçenek, Herkese açık seçili; cümle akışı anlatır; taslak + 'Topluluklarda da duyur' var", async ({ page }) => {
+await scenario("1. Yazma ekranı: uygulama menüleri kalkar, üstte ✕ · başlık · Paylaş; Paylaş son kontrolü açar: üç seçenek, Herkese açık seçili, cümle, Taslak ve duyuru", async ({ page }) => {
   await openForm(page);
+  assert.equal(await page.locator("[data-app-chrome]:visible").count(), 0, "header, sidebar and bottom nav are gone while composing");
+  await page.locator("[data-compose-close]").waitFor();
+  await page.getByRole("heading", { level: 1, name: "Yeni istek" }).waitFor();
+  await openSheet(page);
   await page.getByText("Kim görsün?").first().waitFor();
   assert.equal(await field(page).getAttribute("data-audience-field"), "public");
   assert.equal(await page.locator("[data-audience-option]").count(), 3);
   assert.equal(await option(page, "public").getAttribute("aria-checked"), "true");
   assert.match(await summary(page).innerText(), /Herkes görebilecek: Ana Sayfa'da, Keşfet'te ve profilinde/);
   await draft(page).waitFor();
-  await page.locator("[data-publish-announce-toggle]").waitFor();
-  assert.equal(await page.locator("[data-visibility-switch]").count(), 0, "the old switch is gone: one place decides who sees it");
+  await page.locator("[data-announce-picker]").waitFor();
+  assert.equal(await page.locator("[data-visibility-switch]").count(), 0, "one place decides who sees it");
 });
 
-await scenario("2. 'Sadece ben': cümle değişir, duyuru satırı kalkar, yayın private gönderir; Herkese açık'a dönünce public", async ({ page, db }) => {
+await scenario("2. Eksikler: başlık/açıklama yokken son kontrol onları listeler ve Paylaş pasif; eksiğe dokununca pencere kapanır, alana odaklanır", async ({ page }) => {
+  await openForm(page);
+  await openSheet(page);
+  await page.locator("[data-publish-problem=title]").waitFor();
+  await page.locator("[data-publish-problem=description]").waitFor();
+  assert.equal(await publish(page).isDisabled(), true);
+  await page.locator("[data-publish-problem=title]").click();
+  await sheet(page).waitFor({ state: "detached" });
+  await page.waitForFunction(() => document.activeElement?.id === "request-title");
+  await fillRequest(page);
+  await openSheet(page);
+  assert.equal(await page.locator("[data-publish-problem]").count(), 0);
+  assert.equal(await publish(page).isDisabled(), false);
+});
+
+await scenario("3. 'Sadece ben': cümle değişir, duyuru kalkar, yayın private gönderir", async ({ page, db }) => {
   await openForm(page);
   await fillRequest(page);
+  await openSheet(page);
   await option(page, "private").click();
   assert.equal(await field(page).getAttribute("data-audience-field"), "private");
   assert.match(await summary(page).innerText(), /Yalnızca sen göreceksin/);
-  assert.equal(await page.locator("[data-publish-announce-toggle]").count(), 0);
+  assert.equal(await page.locator("[data-announce-picker]").count(), 0);
   await draft(page).waitFor();
   await publish(page).click();
   await page.waitForURL(/requests\/local/);
@@ -81,8 +104,9 @@ await scenario("2. 'Sadece ben': cümle değişir, duyuru satırı kalkar, yayı
   assert.ok(!inserted[0].body.community_id);
 });
 
-await scenario("3. Topluluk seçici: Genel akış önce, sonra YALNIZ üyesi olunan ve kapatılmamış topluluklar; dış ve kapatılmış yok", async ({ page }) => {
+await scenario("4. Topluluk seçici: Genel akış önce, sonra YALNIZ üyesi olunan ve kapatılmamış topluluklar; dış ve kapatılmış yok", async ({ page }) => {
   await openForm(page);
+  await openSheet(page);
   await openPicker(page);
   await page.waitForFunction(() => document.querySelectorAll("[data-destination-option]").length >= 4);
   const names = await page.getByRole("option").allTextContents();
@@ -95,18 +119,18 @@ await scenario("3. Topluluk seçici: Genel akış önce, sonra YALNIZ üyesi olu
   assert.doesNotMatch(joined, /Kapatılmış Topluluk/);
 });
 
-await scenario("4. Topluluk seçilince seçenek adını gösterir; içerik topluluğa özgü (taslak + duyuru yok, cümle söyler) ve `community_id` ile kaydedilir", async ({ page, db }) => {
+await scenario("5. Topluluk seçilince ad görünür; içerik topluluğa özgü (Taslak + duyuru yok, cümle söyler) ve `community_id` ile kaydedilir", async ({ page, db }) => {
   await openForm(page);
   await fillRequest(page);
+  await openSheet(page);
   await openPicker(page);
   await page.locator(`[data-destination-option='${A}']`).click();
   await page.getByRole("listbox").waitFor({ state: "detached" });
   assert.equal(await field(page).getAttribute("data-audience-field"), "community");
-  assert.match(await option(page, "community").textContent(), /Açık Topluluk/);
+  assert.match(await page.locator("[data-audience-community]").textContent(), /Açık Topluluk/);
   assert.match(await summary(page).innerText(), /Açık Topluluk topluluğuna ait olacak/);
   assert.equal(await draft(page).count(), 0, "community content can't be a draft");
-  assert.equal(await page.locator("[data-publish-announce-toggle]").count(), 0);
-  assert.equal(await page.locator("#request-title").inputValue(), "Hedef seçici isteği", "typed content survives choosing a destination");
+  assert.equal(await page.locator("[data-announce-picker]").count(), 0);
   await publish(page).click();
   await page.waitForURL(/communities\/local\/?\?id=.*shared=1/);
   const inserted = calls(db, "prompt_requests", "POST");
@@ -114,16 +138,21 @@ await scenario("4. Topluluk seçilince seçenek adını gösterir; içerik toplu
   assert.equal(inserted[0].body.community_id, A);
 });
 
-await scenario("5. Topluluktan Herkese açık'a dönünce eski davranış: taslak + duyuru var, yayın `community_id` göndermez; yazılan içerik korunur", async ({ page, db }) => {
+await scenario("6. Topluluktan Herkese açık'a dönünce: Taslak + duyuru geri gelir, yayın `community_id` göndermez; pencere kapanıp açılınca seçim ve yazılan içerik korunur", async ({ page, db }) => {
   await openForm(page);
   await fillRequest(page);
+  await openSheet(page);
   await openPicker(page);
   await page.locator(`[data-destination-option='${A}']`).click();
   await page.waitForFunction(() => document.querySelector("[data-audience-field]")?.getAttribute("data-audience-field") === "community");
+  await page.keyboard.press("Escape");
+  await sheet(page).waitFor({ state: "detached" });
+  await page.locator("[data-compose-audience]").getByText("Açık Topluluk").waitFor();
+  await openSheet(page);
+  assert.equal(await field(page).getAttribute("data-audience-field"), "community", "the choice survives closing the sheet");
   await option(page, "public").click();
-  assert.equal(await field(page).getAttribute("data-audience-field"), "public");
   await draft(page).waitFor();
-  await page.locator("[data-publish-announce-toggle]").waitFor();
+  await page.locator("[data-announce-picker]").waitFor();
   assert.equal(await page.locator("#request-title").inputValue(), "Hedef seçici isteği");
   await publish(page).click();
   await page.waitForURL(/requests\/local/);
@@ -133,8 +162,10 @@ await scenario("5. Topluluktan Herkese açık'a dönünce eski davranış: tasla
   assert.equal(inserted[0].body.visibility, "public");
 });
 
-await scenario("6. Yalnız yönetimin paylaşabildiği topluluk: 'Paylaş' pasif + açıklama; Herkese açık'a dönünce yeniden etkin", async ({ page }) => {
+await scenario("7. Yalnız yönetimin paylaşabildiği topluluk: Paylaş pasif + açıklama; Herkese açık'a dönünce yeniden etkin", async ({ page }) => {
   await openForm(page);
+  await fillRequest(page);
+  await openSheet(page);
   await openPicker(page);
   await page.locator(`[data-destination-option='${C}']`).click();
   await page.locator("[data-share-blocked]").waitFor();
@@ -145,32 +176,34 @@ await scenario("6. Yalnız yönetimin paylaşabildiği topluluk: 'Paylaş' pasif
   assert.equal(await publish(page).isDisabled(), false);
 });
 
-await scenario("7. Topluluk sayfasından gelen bağlantı (?community=): topluluk seçili gelir; Herkese açık'a çevrilebilir; aynı alan her tür formunda var", async ({ page }) => {
+await scenario("8. Topluluk sayfasından gelen bağlantı (?community=): topluluk seçili gelir, Herkese açık'a çevrilebilir; aynı kabuk ve son kontrol Prompt, Workflow ve Hazır ayar'da", async ({ page }) => {
   await openForm(page, `/requests/new?community=${A}`);
-  await page.waitForFunction(() => document.querySelector("[data-audience-field]")?.getAttribute("data-audience-field") === "community");
-  await page.waitForFunction(() => /Açık Topluluk/.test(document.querySelector("[data-audience-option='community']")?.textContent ?? ""));
+  await page.locator("[data-compose-audience]").getByText("Açık Topluluk").waitFor();
+  await openSheet(page);
+  assert.equal(await field(page).getAttribute("data-audience-field"), "community");
   await option(page, "public").click();
   assert.equal(await field(page).getAttribute("data-audience-field"), "public");
   for (const url of ["/create?mode=prompt", "/workflows/create", "/presets/create"]) {
     await openForm(page, url);
+    assert.equal(await page.locator("[data-app-chrome]:visible").count(), 0, url);
+    await openSheet(page);
     assert.equal(await field(page).getAttribute("data-audience-field"), "public", url);
     assert.equal(await page.locator("[data-audience-option]").count(), 3, url);
   }
 });
 
-await scenario("8. Topluluklarda da duyur: iki topluluk + not seçilir, cümle sayıyı söyler; yayından SONRA her biri için share_to_community; kısmi hata dürüstçe raporlanır", async ({ page, db }) => {
+await scenario("9. Topluluklarda da duyur: iki topluluk + not, cümle sayıyı söyler; yayından SONRA her biri için share_to_community; kısmi hata dürüstçe raporlanır", async ({ page, db }) => {
   await openForm(page);
   await fillRequest(page);
-  await page.locator("[data-publish-announce-toggle]").click();
-  await page.locator("[data-announce-picker]").waitFor();
-  // Kapatılmış topluluk seçilemez.
-  assert.equal(await page.locator(`[data-announce-community='${D}'] input`).isDisabled(), true);
+  await openSheet(page);
+  await page.locator(`[data-announce-community='${A}']`).waitFor();
+  assert.equal(await page.locator(`[data-announce-community='${D}']`).isDisabled(), true, "a closed community can't be picked");
   await page.locator(`[data-announce-community='${A}']`).click();
   await page.locator(`[data-announce-community='${C}']`).click();
   await page.locator("[data-announce-note]").fill("Yeni isteğim");
   assert.match(await summary(page).innerText(), /2 toplulukta duyurulacak/);
-  if (process.env.SHOTS) { await field(page).scrollIntoViewIfNeeded(); await page.screenshot({ path: `${process.env.SHOTS}/cd-publish-step.png`, fullPage: true }); }
   assert.equal(calls(db, "share_to_community").length, 0, "nothing is announced before the content exists");
+  if (process.env.SHOTS) await page.screenshot({ path: `${process.env.SHOTS}/cd-publish-sheet.png` });
   await publish(page).click();
   await page.waitForURL(/requests\/local/);
   const shared = calls(db, "share_to_community");
@@ -180,7 +213,6 @@ await scenario("8. Topluluklarda da duyur: iki topluluk + not seçilir, cümle s
   assert.deepEqual(shared.map((c) => c.body.p_group_id).sort(), [A, C].sort());
   const report = page.locator("[data-announce-report]");
   await report.waitFor();
-  if (process.env.SHOTS) await page.screenshot({ path: `${process.env.SHOTS}/cd-report.png` });
   assert.match(await report.innerText(), /Duyuruldu: Açık Topluluk/);
   assert.match(await report.innerText(), /Şu topluluklarda duyurulamadı/);
   assert.match(await report.innerText(), /Yönetim Alanı/);
@@ -189,9 +221,44 @@ await scenario("8. Topluluklarda da duyur: iki topluluk + not seçilir, cümle s
   await report.waitFor({ state: "detached" });
 });
 
-await scenario("9. Hiç topluluğu olmayan kullanıcı: seçicide boş durum + 'Topluluk bul'; duyuru satırı da boş durumu söyler", async ({ page }) => {
+await scenario("10. ✕: değişiklik yoksa doğrudan çıkılır; yazılmışsa 'Taslak olarak kaydedilsin mi?' — Taslağa kaydet taslağı yazıp çıkar, Yazmaya devam et kalır", async ({ page, db }) => {
+  await page.goto(`${BASE}/discover`);
+  await page.waitForTimeout(300);
   await openForm(page);
-  await page.locator("[data-publish-announce-toggle]").click();
+  await page.locator("[data-compose-close]").click();
+  await page.waitForURL(/\/discover/);
+  await openForm(page);
+  await page.locator("#request-title").fill("Yarım kalan istek");
+  await page.locator("[data-compose-close]").click();
+  await page.locator("[data-compose-leave]").waitFor();
+  await page.locator("[data-leave-continue]").click();
+  await page.locator("[data-compose-leave]").waitFor({ state: "detached" });
+  assert.equal(await page.locator("#request-title").inputValue(), "Yarım kalan istek");
+  await page.locator("[data-compose-close]").click();
+  await page.locator("[data-leave-save]").click();
+  await page.waitForURL((url) => !url.pathname.includes("/requests/new"));
+  const drafts = calls(db, "prompt_requests", "POST");
+  assert.equal(drafts.length, 1);
+  assert.equal(drafts[0].body.is_draft, true);
+  assert.equal(drafts[0].body.title, "Yarım kalan istek");
+});
+
+await scenario("11. '+' menüsü: alt menünün '+'sı alttan menü açar (Prompt, İstek, Hikâye, Workflow, Hazır ayar, Space, Var olan içeriği paylaş); Prompt yazma ekranına götürür", async ({ page }) => {
+  await page.goto(`${BASE}/discover`);
+  await page.locator("[data-nav-create]:visible").first().click();
+  await page.locator("[data-create-menu]").waitFor();
+  for (const key of ["prompt", "request", "story", "workflow", "preset", "space"]) await page.locator(`[data-create-option=${key}]`).waitFor();
+  await page.locator("[data-create-share-existing]").waitFor();
+  assert.equal(await overflowFree(page), true);
+  if (process.env.SHOTS) await page.screenshot({ path: `${process.env.SHOTS}/cd-menu.png` });
+  await page.locator("[data-create-option=prompt]").click();
+  await page.waitForURL(/\/create\/?\?mode=prompt/);
+  await page.locator("#prompt-title").waitFor();
+}, { viewport: { width: 390, height: 844 } });
+
+await scenario("12. Hiç topluluğu olmayan kullanıcı: seçicide boş durum + 'Topluluk bul'; duyuru satırı boş durumu söyler", async ({ page }) => {
+  await openForm(page);
+  await openSheet(page);
   await page.getByText("Henüz bir topluluğa üye değilsin.").waitFor();
   await openPicker(page);
   await page.locator("[data-destination-empty]").waitFor();
@@ -200,32 +267,39 @@ await scenario("9. Hiç topluluğu olmayan kullanıcı: seçicide boş durum + '
   assert.equal(await field(page).getAttribute("data-audience-field"), "public");
 }, { setup: () => {} });
 
-await scenario("10. Mobil (390px): seçenekler tam genişlik, ≥44px, yatay taşma yok", async ({ page }) => {
+await scenario("13. Mobil (390px): araç çubuğu altta ve görünür, seçenekler ≥44px, yatay taşma yok", async ({ page }) => {
   await openForm(page);
+  const bar = await page.locator("[data-compose-toolbar]").boundingBox();
+  assert.ok(bar && bar.y + bar.height >= 844 - 2, `toolbar docks to the bottom (${JSON.stringify(bar)})`);
+  await fillRequest(page);
+  if (process.env.SHOTS) await page.screenshot({ path: `${process.env.SHOTS}/cd-compose.png` });
+  await openSheet(page);
   for (const key of ["public", "private", "community"]) {
     const box = await option(page, key).boundingBox();
-    assert.ok(box.width > 300 && box.height >= 44, `${key} (${box.width}x${box.height})`);
+    assert.ok(box.height >= 44, `${key} (${box.width}x${box.height})`);
   }
-  await page.locator("[data-publish-announce-toggle]").click();
-  await page.locator("[data-announce-picker]").waitFor();
   assert.equal(await overflowFree(page), true);
   await openPicker(page);
   assert.ok((await page.getByRole("listbox").boundingBox()).width <= 390);
   assert.equal(await overflowFree(page), true);
-}, { viewport: { width: 390, height: 800 } });
+}, { viewport: { width: 390, height: 844 } });
 
-await scenario("11. İngilizce: başlık, seçenekler, cümle ve duyuru satırı çevrilmiş", async ({ page }) => {
+await scenario("14. İngilizce: yazma ekranı, son kontrol ve ✕ penceresi çevrilmiş", async ({ page }) => {
   await openForm(page);
+  await page.getByRole("heading", { level: 1, name: "New request" }).waitFor();
+  await openSheet(page);
+  await page.getByText("Before you share").waitFor();
   await page.getByText("Who can see it?").first().waitFor();
   assert.match(await option(page, "public").textContent(), /Public/);
   assert.match(await option(page, "private").textContent(), /Only me/);
-  assert.match(await option(page, "community").textContent(), /Only a community/);
+  assert.match(await option(page, "community").textContent(), /A community/);
   assert.match(await summary(page).innerText(), /Everyone can see it/);
   await page.getByText("Also announce in communities").waitFor();
-  await openPicker(page);
-  await page.getByText("My communities").waitFor();
-  await page.locator(`[data-destination-option='${B}']`).click();
-  assert.match(await summary(page).innerText(), /It will belong to Kapalı Topluluk/);
+  await page.locator("[data-publish-problem=title]").getByText(/title/i).waitFor();
+  await page.keyboard.press("Escape");
+  await page.locator("#request-title").fill("Draft");
+  await page.locator("[data-compose-close]").click();
+  await page.getByText("Save as a draft?").waitFor();
 }, { lang: "en" });
 
 await browser.close(); server.close();

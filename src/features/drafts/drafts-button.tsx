@@ -27,9 +27,12 @@ export interface DraftItem {
 export function DraftsButton({
   load,
   onDelete,
+  compact = false,
 }: {
   load: (userId: string) => Promise<DraftItem[]>;
   onDelete: (id: string) => Promise<void>;
+  /** Yazma ekranının üst çubuğu (docs/history/216-*): yalnız simge + sayı. */
+  compact?: boolean;
 }) {
   const { t } = useTranslation();
   const { language } = useLanguage();
@@ -75,19 +78,36 @@ export function DraftsButton({
 
   return (
     <>
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        className="shrink-0"
-        onClick={() => {
-          setOpen(true);
-          void refresh();
-        }}
-      >
-        <FileText size={15} aria-hidden />
-        {count > 0 ? t("draft.buttonLabel", { count }) : t("draft.buttonLabelEmpty")}
-      </Button>
+      {compact ? (
+        <button
+          type="button"
+          onClick={() => {
+            setOpen(true);
+            void refresh();
+          }}
+          aria-label={count > 0 ? t("draft.buttonLabel", { count }) : t("draft.buttonLabelEmpty")}
+          title={count > 0 ? t("draft.buttonLabel", { count }) : t("draft.buttonLabelEmpty")}
+          data-drafts-button=""
+          className="relative grid h-9 w-9 shrink-0 place-items-center rounded-full text-text-secondary transition-colors hover:bg-surface-soft hover:text-text"
+        >
+          <FileText size={18} aria-hidden />
+          {count > 0 && <span className="absolute right-0.5 top-0.5 min-w-4 rounded-full bg-primary px-1 text-center text-[0.625rem] font-bold leading-4 text-primary-foreground">{count}</span>}
+        </button>
+      ) : (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="shrink-0"
+          onClick={() => {
+            setOpen(true);
+            void refresh();
+          }}
+        >
+          <FileText size={15} aria-hidden />
+          {count > 0 ? t("draft.buttonLabel", { count }) : t("draft.buttonLabelEmpty")}
+        </Button>
+      )}
 
       {open && (
         <Modal onClose={() => setOpen(false)} labelledBy="drafts-modal-title">

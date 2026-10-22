@@ -1,0 +1,97 @@
+# 216 — Oluştur menüsü, yazma ekranı ve son kontrol penceresi (A+D)
+
+**Durum:**
+- Yalnız istemci kodu, migration yok.
+- Arayüz ağ taklitli Playwright'ta sınandı (sonuçlar aşağıda).
+- Gerçek Supabase'e, gerçek oturuma, cihaza, iOS Safari'ye karşı **denenmedi**. Özellikle klavye açıkken araç çubuğunun klavyenin üstüne çıkması (`visualViewport`) gerçek iPhone'da denenmeli.
+
+Kullanıcının isteği: "Gönderi oluşturma ekranlarını standart paylaşım ekranları gibi yapabilir miyiz". Dört yön (A menü, B tek ekran, C iki adım, D son kontrol) görsellerle gösterildi. Kullanıcı **A+D**'yi seçti ve uygulanmasını istedi; mevcut özelliklerin bozulmaması şartıyla.
+
+## A · "+" = Oluştur menüsü (`create-choice.tsx`)
+
+- Alt menünün "+"sı ve kenar çubuğunun "Oluştur"u artık ayrı sayfaya gitmez; `CreateMenuSheet` açılır (telefonda alttan, masaüstünde ortada).
+- Menünün içeriği:
+  - Prompt / İstek / Hikâye büyük satır.
+  - Workflow / Hazır ayar / Space küçük karo.
+  - En altta "Var olan içeriği paylaş" (215'teki `ShareExistingModal`).
+- Liste tek yerde (`CreateMenuList`). Doğrudan `/create` ziyareti aynı listeyi sayfa olarak gösterir; eski bağlantılar ve yer imleri çalışır, `?tag=` / `?community=` seçilen türe taşınır.
+
+## Yazma ekranı (`content/compose.tsx`, `content/compose-fields.tsx`)
+
+**`ComposeShell`:**
+- Açıkken `html[data-compose-open]` → `[data-app-chrome]` (üst menü, kenar çubuğu, alt menü) `display: none`.
+- Yerine yapışkan üst çubuk: ✕ · başlık + taslaklar (`KindDraftsButton compact`) · durum · "Paylaş".
+- "Paylaş" yayınlamaz, son kontrol penceresini açar.
+- `toolbar` telefonda ekranın altına yapışır, klavye açılınca `visualViewport` ile üstüne çıkar; `lg`+ yazının altında durur.
+- `aside` (canlı önizleme) yalnız `lg`+ sağ sütundur.
+- Çıkışta yayın adımının seçimleri (duyuru, seçilen topluluk) sıfırlanır.
+
+**Prompt ve İstek gövdesi (kutusuz):**
+- Tür çipleri (`ContentTypeChips`; düzenlemede kilitli).
+- "aliq · Herkese açık" satırı (`ComposeAuthorLine`; ikinci kısım son kontrolü açar).
+- Büyük başlık ve kısa açıklama.
+- Prompt metin editörü: değişkenler ve "Görselden yardım" aynen.
+- **Hazır ayarlar ve ek alan önerileri satırı yazma ekranında kalır** (`ExtraSettingsSection`). Kendi penceresini açar ve uygulananları çip olarak gösterir; kullanıcının "hazır öneriler bozulmasın" şartı.
+- Görseller / video-ses çıktısı.
+- Seçilenlerin özeti (`ComposeSummaryChips`: araç, kategori, etiketler; boşsa "+ Araç" vb.).
+- **Etiket önerileri görünür kalır** (`SuggestedTagsRow`): dokununca eklenir, hiçbiri kendiliğinden eklenmez.
+- İstekte açıklama, referans görseller (+ görselden yardım) ve "Yaratıcı yön" de yazma ekranında.
+
+**Araç çubuğu → alt sayfa (`ComposeSheet`, başlık + "Bitti"):**
+- Etiket (`TagPicker`; turuncu sayı = bekleyen öneri sayısı).
+- Araç (`ToolPicker`).
+- Kategori (`TaxonomyPicker`).
+- Promptta "Gelişmiş": Prompt DNA (sayı = kabul edilen bölüm sayısı) ve referans gereksinimi.
+- Bileşenler değişmedi, yalnız yerleri değişti.
+
+## D · Son kontrol penceresi (`content/publish-sheet.tsx`; 215'teki `CreateFormActions`'ın yerine)
+
+- **Eksikler** en üstte. Örnekler:
+  - Prompt: başlık / kısa açıklama.
+  - İstek: en kısa uzunluklar.
+  - Workflow: `validateWorkflow`'un hataları.
+  - Hazır ayar: ad, en az bir alan.
+- Eksiğe dokununca pencere kapanır ve alana odaklanır ya da adımı seçer. Eksik varken "Paylaş" pasif: alt sayfaya taşınan alanın hatası saklı kalmaz.
+- Kartın küçük önizlemesi (`PublishPreview`).
+- **"Kim görsün?"** üçlü: Herkese açık / Sadece ben / Bir topluluk.
+  - Topluluk seçimi aynı `DestinationPicker` ve aynı depo (`pickCreateDestination`); seçilen topluluk satırda görünür.
+  - Yalnız yönetimin paylaşabildiği toplulukta "Paylaş" pasif, nedeni yazar (`useDestinationBlock`).
+- **"Topluluklarda da duyur"** (yalnız yeni + herkese açık): çip satırı + not.
+  - Seçim modül deposunda (`useAnnounceSelection`); pencere kapanıp açılsa da kalır.
+  - "Paylaş" anında kurulur (`armPendingAnnounce`), içerik oluşunca `runPendingAnnounce` gönderir.
+  - Sonuç kabukta `AnnounceReportNotice`'ta (215).
+- "Ne olacak" cümlesi, formun bildirimleri, "Taslak" (varsa) ve "Paylaş" / "Kaydet".
+- Yanıtın "profilimde göster" anahtarı bu pencerede (`extra`).
+
+## ✕ ile çıkış (`useComposeLeave`, `useDirty`)
+
+- Değişiklik yoksa doğrudan çıkılır (`router.back()`, geçmiş yoksa Ana Sayfa).
+- Değişiklik varsa sorulur:
+  - Taslak olabilen içerikte: "Taslak olarak kaydedilsin mi?" — Taslağa kaydet / Sil / Yazmaya devam et.
+  - Olamayanda (yayındaki içeriği düzenleme, isteğe yanıt): "Değişiklikler kaydedilmedi" — Çık / Yazmaya devam et.
+- "Taslağa kaydet" formun kendi taslak kaydını `leaving` ile çağırır: yeni taslağın düzenleme adresine gitmeden çıkılır.
+- Değişmişken sekme kapatılırsa tarayıcı uyarır (`beforeunload`).
+- "Değişti mi?" hazır anındaki imzayla karşılaştırılır; düzenlemede yüklenen içerik "değişmiş" sayılmaz.
+
+## Workflow ve Hazır ayar
+
+- Yalnız kabuk değişti: `ComposeShell` (Workflow `wide`, durum etiketi üst çubukta), aynı son kontrol penceresi ve ✕ davranışı.
+- Adım editörü ve parametre kurucusu bugünkü gibi.
+- Workflow'un kendi `dirty` durumu kullanılır.
+- Hazır ayar ✕ → "Taslağa kaydet" taslak listesine gitmeden çıkar.
+
+## Kaldırılanlar
+
+- `content/create-form-actions.tsx` (yerine `publish-sheet.tsx`).
+- `content/create-page-header.tsx` (yerine üst çubuk).
+- `share-destination-field.tsx`'teki `AudienceField`. `DestinationPicker` ve `useDestinationBlock` kalır.
+
+## Sınama
+
+- `npx tsc --noEmit`, `npm run lint` (0 hata), `npm test` 400/400, `npm run build` temiz.
+- Playwright:
+  - `run-create-destination` yeniden yazıldı, 14/14: yazma ekranında menülerin kalkması, son kontrol, eksikler + odak, Sadece ben, topluluk seçici, topluluk / geri dönüş + seçimin korunması, yönetim kuralı, `?community=`, Prompt / Workflow / Hazır ayar'da aynı kabuk, duyuru + kısmi hata raporu, ✕ (doğrudan çıkış / devam / taslağa kaydet), "+" menüsü, boş topluluk, mobil, İngilizce.
+  - `run-community-posts` 36/36 (13–13d yeni akışa göre).
+  - `run-space-posts` 7/7.
+  - Diğer bütün takımlar raporda.
+- İngilizce karşılıklar eklendi (`createMenu.*`, `compose.*`).

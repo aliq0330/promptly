@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
+import { CreateMenuSheet } from "@/features/prompts/create-choice";
 import { Plus, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BrandMark } from "@/components/layout/brand-mark";
@@ -25,6 +27,7 @@ export function Sidebar() {
   const { t } = useTranslation();
   const isModerator = useIsModerator();
   const status = useAuthStatus();
+  const [createOpen, setCreateOpen] = useState(false);
   const { requireAuth } = useAuthPrompt();
   const isAuthenticated = status === "authenticated";
   const visibleGroups = navGroups
@@ -74,27 +77,19 @@ export function Sidebar() {
       </div>
 
       <div className="px-3 pb-2 lg:px-4">
-        {status === "unauthenticated" ? (
-          <button
-            type="button"
-            onClick={() => requireAuth("create")}
-            aria-haspopup="dialog"
-            title={t("nav.createShort")}
-            className={buttonClassName({ className: "h-11 w-full text-[0.9375rem] font-bold" })}
-          >
-            <Plus size={18} strokeWidth={2.4} />
-            <span className="sr-only lg:not-sr-only">{t("nav.createShort")}</span>
-          </button>
-        ) : (
-          <Link
-            href="/create"
-            title={t("nav.createShort")}
-            className={buttonClassName({ className: "h-11 w-full text-[0.9375rem] font-bold" })}
-          >
-            <Plus size={18} strokeWidth={2.4} />
-            <span className="sr-only lg:not-sr-only">{t("nav.createShort")}</span>
-          </Link>
-        )}
+        {/* Oluştur menüsü (docs/history/216-*): ayrı seçim sayfası yerine pencere; misafire giriş diyaloğu. */}
+        <button
+          type="button"
+          onClick={() => (status === "unauthenticated" ? requireAuth("create") : setCreateOpen(true))}
+          aria-haspopup="dialog"
+          title={t("nav.createShort")}
+          data-nav-create=""
+          className={buttonClassName({ className: "h-11 w-full text-[0.9375rem] font-bold" })}
+        >
+          <Plus size={18} strokeWidth={2.4} />
+          <span className="sr-only lg:not-sr-only">{t("nav.createShort")}</span>
+        </button>
+        {createOpen && <CreateMenuSheet onClose={() => setCreateOpen(false)} />}
       </div>
 
       <nav aria-label={t("nav.primaryLabel")} className="flex flex-1 flex-col gap-4 overflow-y-auto px-3 py-3 lg:px-4">

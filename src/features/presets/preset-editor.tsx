@@ -6,9 +6,10 @@ import { useRouter } from "next/navigation";
 import { useCommunityContext, useCommunityReturn } from "@/features/communities/community-return";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useOwnProfile } from "@/features/auth/own-profile-provider";
+import { SlidersHorizontal } from "lucide-react";
 import { KindDraftsButton } from "@/features/drafts/kind-drafts-button";
-import { CreatePageHeader } from "@/features/content/create-page-header";
-import { CreateFormActions } from "@/features/content/create-form-actions";
+import { ComposeShell, PublishPreview, useComposeLeave, useDirty } from "@/features/content/compose";
+import { PublishSheet, type PublishProblem } from "@/features/content/publish-sheet";
 import { FormSection } from "@/features/content/form-section";
 import { MultiImagePicker, type MultiImageItem } from "@/features/content/multi-image-picker";
 import { TaxonomyPicker } from "@/features/content/taxonomy-picker";
@@ -98,19 +99,26 @@ export function PresetEditor({ editId }: { editId: string | null }) {
 
   const titleError = titleTouched && title.trim().length < 3;
 
-  function handleSubmit(event?: React.FormEvent) {
-    event?.preventDefault();
-    return save(false);
-  }
+  // Yazma ekranı kabuğu (docs/history/216-*): son kontrol penceresi + ✕'teki "kaydedilsin mi?".
+  const [publishOpen, setPublishOpen] = useState(false);
+  const dirty = useDirty(
+    JSON.stringify([title, description, contentType, category, subcategory, tools, fields, selection, cover.map((item) => item.key), tagPicker.accepted.map((entry) => entry.tag.slug), visibility]),
+    loadState === "ready",
+  );
+  const leave = useComposeLeave({ dirty, saveDraft: () => save(true, true) });
 
-  async function save(asDraft: boolean) {
-    if (!user || isSaving) return;
+  /** `leaving`: ✕ → "Taslağa kaydet" — kaydedip çıkılır (taslak listesine gitmez). */
+  async function save(asDraft: boolean, leaving = false): Promise<boolean> {
+    if (!user || isSaving) return false;
     setTitleTouched(true);
     setError(null);
-    if (title.trim().length < 3) return;
+    if (title.trim().length < 3) {
+      if (leaving) document.getElementById("preset-title")?.focus();
+      return false;
+    }
     if (!asDraft && Object.keys(effectiveSelection).length === 0) {
       setError(t("presetBuilder.errorNoFields"));
-      return;
+      return false;
     }
     // Own fields need a name and a value; anything half-typed is left out of the saved preset.
     const savedFields = fields.filter((f) => f.name.trim() && effectiveSelection[f.id] !== undefined);
@@ -136,11 +144,14 @@ export function PresetEditor({ editId }: { editId: string | null }) {
         },
         user.id,
       );
+      if (asDraft && leaving) return true;
       router.push(asDraft ? "/presets" : ((await returnToCommunity("preset", id)) ?? presetHref({ id })));
+      return true;
     } catch (err) {
       console.error("savePreset", err);
       setError(err instanceof Error && err.message ? err.message : t("preset.errorSave"));
       setIsSaving(false);
+      return false;
     }
   }
 
@@ -208,16 +219,38 @@ export function PresetEditor({ editId }: { editId: string | null }) {
     updatedAt: new Date().toISOString(),
   };
 
-  return (
-    <div className="mx-auto max-w-5xl px-3 py-5 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
-      <CreatePageHeader
-        title={editId ? t("preset.editTitle") : t("preset.createTitle")}
-        hint={t("preset.createHint")}
-        drafts={<KindDraftsButton kind="preset" />}
-      />
+  const problems: PublishProblem[] = [
+    ...(title.trim().length < 3 ? [{ key: "title", label: t("preset.errorTitle"), onFix: () => document.getElementById("preset-title")?.focus() }] : []),
+    ...(Object.keys(effectiveSelection).length === 0 ? [{ key: "fields", label: t("presetBuilder.errorNoFields") }] : []),
+  ];
 
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_360px]">
-        <form onSubmit={handleSubmit} className="min-w-0 space-y-4">
+  return (
+    <ComposeShell
+      title={editId ? t("preset.editTitle") : t("compose.newPreset")}
+      titleExtra={<KindDraftsButton kind="preset" compact />}
+      onClose={leave.requestClose}
+      onPublish={() => {
+        setTitleTouched(true);
+        setPublishOpen(true);
+      }}
+      publishLabel={editId ? t("common.save") : t("common.share")}
+      publishDisabled={isSaving}
+      aside={
+        <>
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-muted">{t("forms.livePreview")}</p>
+          <div className="pointer-events-none select-none">
+            <PresetCard preset={previewPreset} />
+          </div>
+        </>
+      }
+    >
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            setPublishOpen(true);
+          }}
+          className="min-w-0 space-y-4"
+        >
           <FormSection title={t("taxonomy.categoryLabel")}>
             <TaxonomyPicker
               bare
@@ -285,29 +318,38 @@ export function PresetEditor({ editId }: { editId: string | null }) {
             <TagPicker picker={tagPicker} />
           </FormSection>
 
-          <CreateFormActions
-            hideDestination={Boolean(editId)}
-            visibility={visibility}
-            onVisibilityChange={setVisibility}
-            onSaveDraft={() => void save(true)}
-            busy={isSaving}
-            publishLabel={isSaving ? t("common.saving") : editId ? t("common.save") : t("common.share")}
-          >
-            {error && (
-              <p role="alert" className="text-sm text-danger">
-                {error}
-              </p>
-            )}
-          </CreateFormActions>
         </form>
 
-        <div className="min-w-0 lg:sticky lg:top-20 lg:self-start">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-muted">{t("forms.livePreview")}</p>
-          <div className="pointer-events-none select-none">
-            <PresetCard preset={previewPreset} />
-          </div>
-        </div>
-      </div>
-    </div>
+      {publishOpen && (
+        <PublishSheet
+          onClose={() => setPublishOpen(false)}
+          onConfirm={() => void save(false)}
+          onSaveDraft={() => void save(true)}
+          busy={isSaving}
+          title={editId ? t("compose.beforeSave") : undefined}
+          confirmLabel={isSaving ? t("common.saving") : editId ? t("common.save") : t("common.share")}
+          hideDestination={Boolean(editId)}
+          visibility={visibility}
+          onVisibilityChange={setVisibility}
+          problems={problems}
+          preview={
+            <PublishPreview
+              thumbnail={cover[0]?.url ?? null}
+              icon={SlidersHorizontal}
+              typeLabel={t("preset.singular")}
+              title={title.trim() || t("preset.untitled")}
+              meta={ownProfile ? `@${ownProfile.username}` : ""}
+            />
+          }
+        >
+          {error && (
+            <p role="alert" className="text-sm text-danger">
+              {error}
+            </p>
+          )}
+        </PublishSheet>
+      )}
+      {leave.dialog}
+    </ComposeShell>
   );
 }
