@@ -153,7 +153,6 @@ function CommunityPageInner() {
       <DetailBand
         align="center"
         data-testid="community-header"
-        before={g.coverUrl ? <CommunityCover coverUrl={g.coverUrl} coverColor={g.coverColor} avatarUrl={g.avatarUrl} className="h-28 sm:h-40" /> : undefined}
         backdrop={<CommunityCover coverUrl={g.coverUrl} coverColor={g.coverColor} avatarUrl={g.avatarUrl} className="h-full sm:h-full" />}
         art={
           <span className="inline-flex shrink-0 rounded-[1.9rem] border-4 border-surface bg-surface shadow-pop">

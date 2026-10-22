@@ -668,8 +668,8 @@
     visibility: hidden;
   }
 
-  /* Scrolling down hides the header (below `lg`; the desktop sidebar never moves) and turns the bottom nav translucent — it stays
-   * in place and tappable — scrolling up brings both back (`useChromeAutoHide`); a focused control keeps its bar. */
+  /* Scrolling down hides the header (below `lg`; the desktop sidebar never moves); the bottom nav stays as it is — scrolling up
+   * brings the header back (`useChromeAutoHide`); a focused control keeps its bar. */
   [data-app-header],
   [data-app-nav] {
     transition:
@@ -682,9 +682,6 @@
       opacity: 0;
       pointer-events: none;
     }
-  }
-  html[data-chrome-hidden] [data-app-nav]:not(:focus-within) {
-    opacity: 0.5;
   }
 
   /* A sticky row that rides under the header (`SectionNav`'s folded bar, Home/Keşfet): it pins below the 4rem header and, once the header slides
@@ -700,7 +697,7 @@
   }
 
   /* A detail page's actions row pinned to the screen's bottom (`DetailActionBar`): on phones it rides just above the
-   * bottom nav (its safe-area padding tucks under the nav) and, like the nav, turns translucent while the page scrolls down. */
+   * bottom nav (its safe-area padding tucks under the nav). */
   [data-detail-dock] {
     padding-bottom: env(safe-area-inset-bottom);
     transition: opacity 320ms var(--ease-soft);
@@ -708,9 +705,6 @@
   @media (max-width: 767.98px) {
     [data-detail-dock] {
       transform: translateY(-4rem);
-    }
-    html[data-chrome-hidden] [data-detail-dock]:not(:focus-within) {
-      opacity: 0.5;
     }
   }
 
