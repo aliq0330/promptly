@@ -121,6 +121,11 @@ export function localizeNotificationMessage(message: string, language: "tr" | "e
   if (message === "Hikâyendeki soruyu yanıtladı.") return t("notifMsg.storyQuestionAnswer");
   const storyReply = /^Hikâyene yanıt verdi: ([\s\S]*)$/.exec(message);
   if (storyReply) return t("notifMsg.storyReply", { preview: localizePreviewText(storyReply[1], t) });
+  // Promptly Spaces (docs/history/213-*): Space adı çevrilmez.
+  const spaceInvited = /^Seni "([\s\S]*)" Space'ine davet etti\.$/.exec(message);
+  if (spaceInvited) return t("notifMsg.spaceInvited", { name: spaceInvited[1] });
+  const spaceJoined = /^"([\s\S]*)" Space'ine katıldı\.$/.exec(message);
+  if (spaceJoined) return t("notifMsg.spaceJoined", { name: spaceJoined[1] });
   const storyRemoved = /^"([\s\S]*)" topluluğundaki hikâyen kaldırıldı\.$/.exec(message);
   if (storyRemoved) return t("notifMsg.storyRemovedCommunity", { name: storyRemoved[1] });
   if (message === "Seni takip etmeye başladı.") return t("notifMsg.followed");

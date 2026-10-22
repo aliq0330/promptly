@@ -195,10 +195,13 @@ export function Modal({
   labelledBy,
   children,
   variant = "dialog",
+  overLayers = false,
 }: {
   onClose: () => void;
   labelledBy: string;
   children: React.ReactNode;
+  /** Tam ekran katmanların (hikâye görüntüleyici z-60) ÜSTÜNDE açılır — o katmandan açılan pencereler için. */
+  overLayers?: boolean;
   /**
    * `dialog` (varsayılan): mobilde alt sayfa, `sm`+ ortalanmış pencere.
    * `sheet`: HER genişlikte alta yapışık alt sayfa (Bottom Sheet) — çocuk
@@ -246,7 +249,8 @@ export function Modal({
         <div
           ref={overlayRef}
           className={
-            "fixed inset-0 z-50 flex animate-fade-in bg-[rgb(10_8_20/0.45)] backdrop-blur-[2px] " +
+            "fixed inset-0 flex animate-fade-in bg-[rgb(10_8_20/0.45)] backdrop-blur-[2px] " +
+            (overLayers ? "z-[70] " : "z-50 ") +
             (isSide ? "justify-end" : "flex-col justify-end")
           }
           role="dialog"
@@ -271,7 +275,7 @@ export function Modal({
     <Portal>
       <div
         ref={overlayRef}
-        className="fixed inset-0 z-50 flex flex-col overflow-y-auto bg-[rgb(10_8_20/0.45)] animate-fade-in backdrop-blur-[2px] sm:p-4"
+        className={"fixed inset-0 flex flex-col overflow-y-auto bg-[rgb(10_8_20/0.45)] animate-fade-in backdrop-blur-[2px] sm:p-4 " + (overLayers ? "z-[70]" : "z-50")}
         role="dialog"
         aria-modal="true"
         aria-labelledby={labelledBy}

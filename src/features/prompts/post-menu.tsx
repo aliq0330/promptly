@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Copy, FolderMinus, Link2, Loader2, MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { Copy, FolderMinus, Link2, Loader2, MoreVertical, Pencil, Shapes, Trash2 } from "lucide-react";
 import { useAuth } from "@/features/auth/auth-provider";
 import { usePostMenuExtras } from "./post-menu-extras";
 import { usePostScope } from "@/features/communities/post-scope";
@@ -14,6 +14,7 @@ import { deletePreset } from "@/lib/supabase/presets";
 import { deleteRealRequest } from "@/lib/supabase/requests";
 import { deletePromptResult } from "@/lib/supabase/prompt-results";
 import { ReportButton } from "@/features/moderation/report-button";
+import { AddToSpaceModal } from "@/features/spaces/add-to-space-modal";
 import { useTranslation } from "@/lib/i18n/language-provider";
 
 /**
@@ -119,7 +120,10 @@ export function PostMenu({
   const [confirmingRemove, setConfirmingRemove] = useState(false);
   const [isRemoving, setIsRemoving] = useState(false);
   const [removeError, setRemoveError] = useState<string | null>(null);
+  const [spaceOpen, setSpaceOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  // "Space'e ekle" (docs/history/213-*): oturumlu kullanıcıya; sonuç ve topluluğa ait içerik hariç (içerik topluluktan çıkmaz).
+  const canAddToSpace = Boolean(user) && !isResult && !communityId && !postScope;
 
   useEffect(() => {
     if (!open) return;
@@ -203,6 +207,14 @@ export function PostMenu({
 
   if (postScope && extras.length === 0) return null;
 
+  const spaceTarget = isPreset
+    ? { type: "preset" as const, id: presetId! }
+    : isWorkflow
+      ? { type: "workflow" as const, id: workflowId! }
+      : isRequest
+        ? { type: "request" as const, id: requestId! }
+        : { type: "prompt" as const, id: promptId! };
+
   return (
     <div ref={ref} className="relative z-20 shrink-0">
       <button
@@ -236,6 +248,23 @@ export function PostMenu({
             >
               <Link2 size={14} />
               {copied ? t("common.copied") : t("common.copyLink")}
+            </button>
+          )}
+          {canAddToSpace && (
+            <button
+              type="button"
+              role="menuitem"
+              data-add-to-space=""
+              onClick={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                setOpen(false);
+                setSpaceOpen(true);
+              }}
+              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-text hover:bg-surface-soft"
+            >
+              <Shapes size={14} />
+              {t("spaces.add.menu")}
             </button>
           )}
           {extras.map((extra) => (
@@ -332,6 +361,12 @@ export function PostMenu({
             </div>
           )}
           {error && <p className="px-3 py-1 text-xs text-danger">{error}</p>}
+        </div>
+      )}
+      {spaceOpen && (
+        // Portal'daki pencerenin olayları React ağacında kartın bağlantısına kadar kabarmasın (kart açılmasın).
+        <div onClick={(event) => event.stopPropagation()} onPointerDown={(event) => event.stopPropagation()} onKeyDown={(event) => event.stopPropagation()}>
+          <AddToSpaceModal target={spaceTarget} onClose={() => setSpaceOpen(false)} />
         </div>
       )}
     </div>

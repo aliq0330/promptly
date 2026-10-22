@@ -12,9 +12,10 @@ import { storagePathFromUrl } from "./storage-cleanup";
  * yalnız topluluğun KARTI çağıran için görülebildiği sürece (herkese açık/kapalı
  * topluluk, ya da üye/davetli/başvuran) okunur — tamamen kapalı topluluğun görseli
  * yabancıya imza vermez. `story-media` (docs/history/198-*): hikâye medyası; dosya, onu gösteren hikâye çağırana görünürken
- * (hedef kitle, süre, öne çıkan, engel) okunur — süresi dolan hikâyenin dosyası yetkisiz kişiye imza vermez.
+ * (hedef kitle, süre, öne çıkan, engel) okunur — süresi dolan hikâyenin dosyası yetkisiz kişiye imza vermez. `space-media`
+ * (docs/history/213-*): Space'e yüklenen görseller/kapaklar; dosya Space okunabildiği sürece (`can_read_space`) okunur.
  */
-export const PROTECTED_MEDIA_BUCKETS = ["prompt-media", "request-references", "result-media", "community-avatars", "story-media"] as const;
+export const PROTECTED_MEDIA_BUCKETS = ["prompt-media", "request-references", "result-media", "community-avatars", "story-media", "space-media"] as const;
 export type ProtectedMediaBucket = (typeof PROTECTED_MEDIA_BUCKETS)[number];
 
 /** Kısa ömür: gönderi private yapıldıktan sonra önceden alınmış bir imzanın geçerli kalabileceği azami süre. */

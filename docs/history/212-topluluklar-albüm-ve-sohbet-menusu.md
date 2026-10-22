@@ -2,7 +2,7 @@
 
 **Durum:**
 - İstemci kodu uygulandı.
-- `20260921120000_community_unseen_counts.sql` yerel PostgreSQL'de sınandı, **canlıya UYGULANMADI**. Yalnızca ekleyici: tek fonksiyon, `drop` yok.
+- `20260921120000_community_unseen_counts.sql` yerel PostgreSQL'de sınandı ve **canlıya UYGULANDI** (kullanıcı onayıyla, MCP `execute_sql`, tek işlem; `schema_migrations`'a dosya sürümüyle kayıt; canlıda yetkiler doğrulandı: anon EXECUTE yok, authenticated var). Yalnızca ekleyici: tek fonksiyon, `drop` yok.
 - İstemci, migration olmadan da çalışır: sayaç çağrısı hata verirse raf rozetsiz çizilir. Bu yüzden sıralama zorunlu değil, ama rozetler migration'dan sonra görünür.
 
 ## 1. Topluluklar ana sayfası (kullanıcı A + D karışımını seçti)
