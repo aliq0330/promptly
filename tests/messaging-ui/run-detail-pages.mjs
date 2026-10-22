@@ -159,8 +159,8 @@ await scenario("4b. mobil: sabitlenen eylem satırı sayfa sonundaki içeriği �
   assert.ok(lowest <= dock.top + 1, `content ends above the pinned actions row (${lowest} vs ${dock.top})`);
 }, { viewport: { width: 390, height: 844 } });
 
-// 4c — kaydırınca üst menü kaybolur, alt menü ve eylem satırı yerinde kalıp yarı saydamlaşır; yukarı kaydırınca hepsi döner
-await scenario("4c. mobil: aşağı kaydırınca üst menü kaybolur, alt menü + eylem satırı yerinde yarı saydam kalır; yukarı kaydırınca hepsi geri gelir", "prompt", async ({ page }) => {
+// 4c — kaydırınca üst menü kaybolur; alt menü ve eylem satırı yerinde, tam opak kalır (docs/history/214-*); yukarı kaydırınca üst menü döner
+await scenario("4c. mobil: aşağı kaydırınca üst menü kaybolur, alt menü + eylem satırı yerinde ve TAM opak kalır; yukarı kaydırınca üst menü geri gelir", "prompt", async ({ page }) => {
   await page.waitForTimeout(1200);
   const nav = page.locator("[data-app-nav]");
   const header = page.locator("[data-app-header]");
@@ -174,12 +174,12 @@ await scenario("4c. mobil: aşağı kaydırınca üst menü kaybolur, alt menü 
   const headerBox = await box(header);
   assert.ok(headerBox.bottom <= 1, `header slid up (${headerBox.bottom})`);
   assert.ok(navBox.bottom >= 843, `nav stays in place (${navBox.bottom})`);
-  assert.equal(await nav.evaluate((el) => getComputedStyle(el).opacity), "0.5", "nav translucent");
+  assert.equal(await nav.evaluate((el) => getComputedStyle(el).opacity), "1", "nav stays opaque");
   assert.notEqual(await nav.evaluate((el) => getComputedStyle(el).pointerEvents), "none", "nav stays tappable");
   const dockEl = page.locator("[data-detail-dock]");
   const dock = await box(dockEl);
   assert.ok(Math.abs(dock.bottom - navBox.top) <= 1, `pinned row stays right above the nav (${dock.bottom} vs ${navBox.top})`);
-  assert.equal(await dockEl.evaluate((el) => getComputedStyle(el).opacity), "0.5", "pinned row translucent");
+  assert.equal(await dockEl.evaluate((el) => getComputedStyle(el).opacity), "1", "pinned row stays opaque");
 
   await page.evaluate(() => window.scrollBy(0, -60));
   await page.waitForTimeout(600);
@@ -187,8 +187,8 @@ await scenario("4c. mobil: aşağı kaydırınca üst menü kaybolur, alt menü 
   const navBack = await box(nav);
   const dockBack = await box(dockEl);
   assert.ok(Math.abs(dockBack.bottom - navBack.top) <= 1, `pinned row rides right above the nav (${dockBack.bottom} vs ${navBack.top})`);
-  assert.equal(await nav.evaluate((el) => getComputedStyle(el).opacity), "1", "nav opaque again");
-  assert.equal(await dockEl.evaluate((el) => getComputedStyle(el).opacity), "1", "pinned row opaque again");
+  assert.equal(await nav.evaluate((el) => getComputedStyle(el).opacity), "1", "nav still opaque");
+  assert.equal(await dockEl.evaluate((el) => getComputedStyle(el).opacity), "1", "pinned row still opaque");
   assert.ok((await box(header)).top >= -1, "header back");
 
   await page.evaluate(() => window.scrollTo(0, 0));

@@ -32,6 +32,7 @@ import { fetchPresetsByCreator } from "@/lib/supabase/presets";
 import { ProfilePresetsPanel } from "@/features/presets/profile-presets-panel";
 import type { Collection, Preset, Prompt, PromptContentType, PromptRequest, UserProfile, Workflow } from "@/types";
 import { CONTENT_GRID_ITEM_CLASS, ContentGrid, ContentGridColumns } from "@/features/content/content-card";
+import { ProfileSpacesPanel, usePublicSpaces, type PublicSpaces } from "@/features/spaces/public-spaces";
 
 function sortPrompts(prompts: Prompt[], sort: ProfileSortKey): Prompt[] {
   const sorted = [...prompts];
@@ -129,6 +130,12 @@ export function ProfileView({
     };
   }, [user.id]);
 
+  // Herkese açık Space'ler (docs/history/214-*): sahibi dahil herkes için aynı vitrin; hiç yoksa sekme yok.
+  const fetchedSpaces = usePublicSpaces({ ownerId: user.id });
+  const [spacesOverride, setSpacesOverride] = useState<{ owner: string; data: PublicSpaces } | null>(null);
+  const publicSpaces = spacesOverride?.owner === user.id ? spacesOverride.data : fetchedSpaces;
+  const spaceCount = publicSpaces?.spaces.length ?? 0;
+
   const [activeTab, setActiveTab] = useState<ProfileTabKey>("prompts");
   const [activeType, setActiveType] = useState<PromptContentType | "all">("all");
   const [sort, setSort] = useState<ProfileSortKey>("newest");
@@ -168,9 +175,10 @@ export function ProfileView({
     if (!isOwnProfile && publicCollections.length > 0) {
       base.push({ key: "collections", label: t("profile.tabCollections"), count: publicCollections.length });
     }
+    if (spaceCount > 0) base.push({ key: "spaces", label: t("spaces.discover.profileTab"), count: spaceCount });
     base.push({ key: "about", label: t("profile.tabAbout") });
     return base;
-  }, [postCounts, isOwnProfile, likedPrompts.length, publicCollections.length, t]);
+  }, [postCounts, isOwnProfile, likedPrompts.length, publicCollections.length, spaceCount, t]);
 
   const activeSource = useMemo(() => {
     switch (activeTab) {
@@ -307,6 +315,8 @@ export function ProfileView({
                   <CollectionCard key={collection.id} collection={collection} readOnly />
                 ))}
               </div>
+            ) : activeTab === "spaces" && publicSpaces ? (
+              <ProfileSpacesPanel data={publicSpaces} onChange={(data) => setSpacesOverride({ owner: user.id, data })} />
             ) : activeTab === "drafts" ? (
               // Owner-only (the tab itself is only ever offered when
               // isOwnProfile, see `tabs` above) — all four content types'

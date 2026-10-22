@@ -39,6 +39,7 @@ import { cn, formatCount, promptHref, relationMapHref } from "@/lib/utils";
 import { splitSourceNotes } from "@/lib/source-notes";
 import { SourceNotes } from "@/features/content/source-notes";
 import { FollowButton } from "@/features/profile/follow-button";
+import { PromptSpacesAside } from "@/features/spaces/public-spaces";
 import { AsideSection, DetailActionBar, DetailArt, DetailArtPlaceholder, DetailArtThumb, DetailAside, DetailBand, DetailByline, DetailComments, DetailLede, DetailSection, DetailShell, DetailTags, DetailTitle } from "@/features/content/detail-parts";
 import { ReferenceRequirementNotes } from "@/features/content/reference-requirements";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -215,6 +216,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
             </DetailMetaCard>
           </AsideSection>
           <RelatedPrompts prompt={prompt} />
+          <PromptSpacesAside promptId={prompt.id} />
           <ContributorsPanel key={contributorsRefreshKey} promptId={prompt.id} />
         </DetailAside>
       }

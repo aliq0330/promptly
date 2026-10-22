@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { EyeOff, Globe2, ImageOff, Link2, Lock, Shapes, type LucideIcon } from "lucide-react";
+import { Check, EyeOff, Globe2, ImageOff, Link2, Lock, Shapes, type LucideIcon } from "lucide-react";
 import { StorageImg } from "@/components/ui/storage-media";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
@@ -68,6 +68,56 @@ export function SpaceImage({
           {reason && <span className="text-caption leading-tight">{reason}</span>}
         </span>
       )}
+    </span>
+  );
+}
+
+/**
+ * Bir paletin renkleri yan yana (docs/history/214-*): Space bandında dokununca HEX kopyalanır (`copyable`), kartta ince ve
+ * yalnız gösterim. Renkler kullanıcı içeriğidir (#rrggbb, sunucuda doğrulanır) — tasarım token'ı değil, bu yüzden satır içi stil.
+ */
+export function PaletteStrip({ colors, copyable, max = 8, className }: { colors: string[]; copyable?: boolean; max?: number; className?: string }) {
+  const { t } = useTranslation();
+  const [copied, setCopied] = useState<string | null>(null);
+  const list = colors.slice(0, max);
+  if (list.length === 0) return null;
+  if (!copyable) {
+    return (
+      <span aria-hidden data-palette-strip="" className={cn("flex gap-1", className)}>
+        {list.map((color, index) => (
+          <span key={`${color}-${index}`} className="h-full min-w-0 flex-1 rounded-full" style={{ backgroundColor: color }} />
+        ))}
+      </span>
+    );
+  }
+  async function copy(color: string) {
+    try {
+      await navigator.clipboard.writeText(color);
+      setCopied(color);
+      setTimeout(() => setCopied((current) => (current === color ? null : current)), 1400);
+    } catch {
+      // Panoya yazılamadı (izin yok): renk yine ekranda; sessizce geç.
+    }
+  }
+  return (
+    <span data-palette-strip="" className={cn("flex gap-1.5", className)}>
+      {list.map((color, index) => (
+        <button
+          key={`${color}-${index}`}
+          type="button"
+          onClick={() => void copy(color)}
+          aria-label={t("spaces.palette.copyColor", { hex: color })}
+          title={copied === color ? t("common.copied") : color}
+          className="relative h-7 min-w-0 flex-1 rounded-[0.6rem] shadow-xs ring-1 ring-inset ring-text/10 transition-transform duration-200 ease-soft hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          style={{ backgroundColor: color }}
+        >
+          {copied === color && (
+            <span className="absolute inset-0 flex items-center justify-center rounded-[0.6rem] bg-text/50 text-background">
+              <Check size={14} strokeWidth={2.5} aria-hidden />
+            </span>
+          )}
+        </button>
+      ))}
     </span>
   );
 }
