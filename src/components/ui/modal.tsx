@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useKeyboardViewport } from "@/lib/use-keyboard-viewport";
 import { Portal } from "./portal";
 
 /**
@@ -217,6 +218,9 @@ export function Modal({
     onCloseRef.current = onClose;
   });
   const { overlayRef, sheetRef } = useSheetDismiss(variant, onCloseRef);
+  // Ekran klavyesi açıkken (iOS Safari) katman görünür alana oturur: alt sayfa klavyenin ÜSTÜNDE kalır, başlığı ekranın dışına kaçmaz.
+  const keyboard = useKeyboardViewport();
+  const overlayStyle = keyboard && variant !== "side" ? { top: keyboard.top, height: keyboard.height, bottom: "auto" as const } : undefined;
   useEffect(() => {
     lockBodyScroll();
     const id = Symbol("modal");
@@ -253,6 +257,7 @@ export function Modal({
             (overLayers ? "z-[70] " : "z-50 ") +
             (isSide ? "justify-end" : "flex-col justify-end")
           }
+          style={overlayStyle}
           role="dialog"
           aria-modal="true"
           aria-labelledby={labelledBy}
@@ -276,6 +281,7 @@ export function Modal({
       <div
         ref={overlayRef}
         className={"fixed inset-0 flex flex-col overflow-y-auto bg-[rgb(10_8_20/0.45)] animate-fade-in backdrop-blur-[2px] sm:p-4 " + (overLayers ? "z-[70]" : "z-50")}
+        style={overlayStyle}
         role="dialog"
         aria-modal="true"
         aria-labelledby={labelledBy}

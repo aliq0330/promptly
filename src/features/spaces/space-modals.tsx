@@ -22,6 +22,7 @@ import {
   setSpaceShared,
 } from "@/lib/supabase/spaces";
 import { SPACE_TEMPLATE_GROUPS, spaceHref, spaceLinkHref, type SpaceKind, type SpaceVisibility } from "@/lib/spaces";
+import { useKeyboardViewport } from "@/lib/use-keyboard-viewport";
 import { CoverPicker, DescriptionField, FormError, KindField, SubmitButton, TemplateField, TitleField, VisibilityField } from "./space-forms";
 import { SpaceImage } from "./space-visuals";
 
@@ -29,9 +30,12 @@ import { SpaceImage } from "./space-visuals";
 export function SpaceDialog({ title, onClose, children, wide, busy, overLayers }: { title: string; onClose: () => void; children: React.ReactNode; wide?: boolean; busy?: boolean; overLayers?: boolean }) {
   const { t } = useTranslation();
   const id = useId();
+  // Klavye açıkken pencere, klavyenin üstündeki görünür alana sığar (iOS Safari: yoksa başlık ekranın dışında kalır).
+  const keyboard = useKeyboardViewport();
   return (
     <Modal onClose={busy ? () => undefined : onClose} labelledBy={id} overLayers={overLayers}>
       <div
+        style={keyboard ? { maxHeight: Math.max(240, keyboard.height - 12) } : undefined}
         className={cn("flex max-h-[92dvh] w-full flex-col rounded-lg border border-border bg-surface shadow-lg", wide ? "max-w-xl" : "max-w-md")}
         onClick={(event) => event.stopPropagation()}
       >
