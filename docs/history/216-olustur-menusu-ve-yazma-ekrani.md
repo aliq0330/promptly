@@ -123,3 +123,18 @@ Kullanıcının isteği: "Gönderi oluşturma ekranlarını standart paylaşım 
 - Bilinçli bedel: uzun yazıda araçlar ekrandan çıkabilir (yukarı kaydırınca erişilir). "Sohbet gibi tam ekran kabuk" seçeneği de çizilmişti ama kullanıcı iPhone'da o yöntemde de (Mesajlar) sorun yaşadığını bildirdi, seçilmedi.
 - Üst çubuk hâlâ `sticky`; iOS klavye açıkken görünen alanı kaydırırsa geçici olarak ekran dışında kalabilir, klavye kapanınca döner.
 - Test: `run-create-destination` 13. senaryo artık araç satırının `position: static` olduğunu ve yazının hemen altında durduğunu doğrular (15/15), `run-community-posts` 36/36, `run-space-posts` 7/7. Gerçek iPhone'da yeniden denenmesi gerekir.
+
+## Düzeltme 3: araç satırı yazının ÜSTÜNDE, yayın bilgileri "Paylaşmadan önce"de
+
+**Neden:** Düzeltme 2'deki "yazının altında akışta" araç satırı kullanıcıya yetmedi (uzun yazıda ekrandan çıkıyor; Kategori/Etiket/Araç/Gelişmiş hazır ayarı sona itiyordu). Kullanıcı önce alternatif görseller istedi, referans olarak başka bir uygulamanın yazma ekranını (avatar + ad + hap + tek satır araç + geniş boş alan) gösterdi ve Kategori/DNA gibi yayın bilgilerinin "Paylaş"a basınca gelmesini istedi.
+
+**Yazma ekranı (hiçbir öğe klavye geometrisine bağlı değil):**
+- Üstte avatar + ad + **tür hapı** (`ContentTypePicker`: Görsel ⌄ → "Ne üretiyorsun?" alt sayfası, 4 tür; düzenlemede pasif). `ContentTypeChips` kaldırıldı. Yalnız topluluğa yazarken adın yanında hedef topluluk görünür (`data-compose-audience`).
+- Hemen altında **araç satırı** (`ComposeToolbar`, sayfanın akışında, yazıdan ÖNCE): Prompt = Hazır ayar (vurgulu, seçili sayısı rozetli) · Görsel · Değişken · Görselden yardım (Görsel/Görselden yardım yalnız görsel türünde); İstek = Referans · Yön · Yardım. Hazır ayar satırdan doğrudan açılır (`ExtraSettingsSection` paneli); Gelişmiş sayfası kalktı.
+- Altında tam genişlikte başlık, açıklama, mono prompt metni, seçili hazır ayar çipleri, görsel şeridi.
+
+**"Paylaşmadan önce" penceresi** (`PublishSheet` `details` yuvası, `PublishDetailsSection`): "Kim görsün?"in altında **Gönderi bilgisi** (Kategori · Araç / Model · Etiketler + etiket önerileri çip olarak), **Gelişmiş** (Prompt DNA · Referans gereksinimi [metinde yok]); her satır ilgili alt sayfayı (`ComposeSheet`) pencerenin üstünde açar, "Bitti" ile dönülür. Sheet anahtarları: `tags | tool | category | dna | references`. Etiket önerileri artık yazarken değil yayından önce görünür; yine hiçbiri kendiliğinden eklenmez. Kategori zorunlu değildir (eksikler listesi değişmedi: başlık, açıklama).
+
+**Çeviri:** yeni `compose.*` anahtarları (`whatMaking`, `toolPreset`, `toolVision`, `postInfo`, `suggestionCount`, `tagCount`, `notChosen`, `dnaHint`, `references`, `referencesHint`, `typeSub.*`) TR+EN eklendi.
+
+**Test:** `run-create-destination` 13 (araç satırı `static` ve yazının üstünde) ve 15 (tür hapı, araç sırası, Paylaş → bilgi satırları → alt sayfa) güncellendi: 15/15; `run-community-posts` 36/36; `run-space-posts` 7/7; `npm test` 400/400. **Gerçek iPhone'da (klavye açıkken üst çubuğun ✕/Paylaş'ı görünür kalıp kalmadığı dahil) DENENMEDİ.** Üst çubuk hâlâ `sticky`; iOS klavye açıkken görünen alanı kaydırırsa geçici olarak ekran dışında kalabilir.

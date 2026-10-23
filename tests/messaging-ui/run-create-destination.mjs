@@ -267,14 +267,14 @@ await scenario("12. Hiç topluluğu olmayan kullanıcı: seçicide boş durum + 
   assert.equal(await field(page).getAttribute("data-audience-field"), "public");
 }, { setup: () => {} });
 
-await scenario("13. Mobil (390px): araç satırı yazının hemen altında ve akışta (fixed değil), seçenekler ≥44px, yatay taşma yok", async ({ page }) => {
+await scenario("13. Mobil (390px): araç satırı yazının ÜSTÜNDE ve akışta (fixed değil), seçenekler ≥44px, yatay taşma yok", async ({ page }) => {
   await openForm(page);
-  // iPhone klavyesi (docs/history/216-*): araç satırı sayfanın akışında; `fixed`/`sticky` değil, yazının hemen altında.
+  // iPhone klavyesi (docs/history/216-*): araç satırı sayfanın en üstünde ve akışta; `fixed`/`sticky` değil, yazıdan önce.
   const bar = page.locator("[data-compose-toolbar]");
   assert.equal(await bar.evaluate((el) => getComputedStyle(el).position), "static", "toolbar is a normal in-flow row");
   const barBox = await bar.boundingBox();
-  const descBox = await page.locator("#request-description").boundingBox();
-  assert.ok(barBox && descBox && barBox.y >= descBox.y + descBox.height - 1 && barBox.y - (descBox.y + descBox.height) < 200, `toolbar sits right under the text (${JSON.stringify({ barBox, descBox })})`);
+  const titleBox = await page.locator("#request-title").boundingBox();
+  assert.ok(barBox && titleBox && barBox.y + barBox.height <= titleBox.y + 1, `toolbar sits above the text (${JSON.stringify({ barBox, titleBox })})`);
   assert.ok(barBox.width <= 390, "toolbar stays inside the screen width");
   await fillRequest(page);
   if (process.env.SHOTS) await page.screenshot({ path: `${process.env.SHOTS}/cd-compose.png` });
@@ -307,23 +307,46 @@ await scenario("14. İngilizce: yazma ekranı, son kontrol ve ✕ penceresi çev
   await page.getByText("Save as a draft?").waitFor();
 }, { lang: "en" });
 
-await scenario("15. Prompt yazma ekranı örnekteki gibi: solda avatar, kutusuz mono metin (Şablon/Değişken satırı yok), görsel şeridi; araç çubuğu Görsel · Etiket · Araç · Kategori · Değişken · Gelişmiş; Değişken ekleme yüzeyini, Gelişmiş hazır ayar + görselden yardım satırlarını açar", async ({ page }) => {
+await scenario("15. Prompt yazma ekranı: tür hapı + araç satırı Hazır ayar · Görsel · Değişken · Görselden yardım (kategori/araç/etiket/DNA yok); tür hapı 4 türü açar; Paylaş → Gönderi bilgisi + Gelişmiş satırları alt sayfa açar", async ({ page }) => {
   await openForm(page, "/create?mode=prompt");
   await page.locator("[data-compose-body]").waitFor();
   assert.equal(await page.locator("[data-insert-trigger]:visible").count(), 0, "no 'Değişken ekle' bar inside the text");
   assert.equal(await page.locator("[data-image-help]:visible").count(), 0, "vision help is not inline");
   await page.locator("[data-image-picker=strip]").waitFor();
-  const tools = await page.locator("[data-compose-tool]").evaluateAll((els) => els.map((el) => el.getAttribute("data-compose-tool")));
-  assert.deepEqual(tools, ["image", "tags", "tool", "category", "variable", "advanced"]);
+  const toolKeys = () => page.locator("[data-compose-tool]").evaluateAll((els) => els.map((el) => el.getAttribute("data-compose-tool")));
+  assert.deepEqual(await toolKeys(), ["preset", "image", "variable", "vision"]);
+  assert.equal(await page.locator("[data-compose-summary], [data-compose-suggested]").count(), 0, "no tag/tool/category chips on the writing screen");
+  // Tür hapı: Görsel ⌄ → "Ne üretiyorsun?" 4 tür; Metin seçilince görsele özgü araçlar kalkar.
+  await page.locator("[data-compose-type-pill=image]").click();
+  const types = await page.locator("[data-compose-sheet=type] [data-taxonomy-type]").evaluateAll((els) => els.map((el) => el.getAttribute("data-taxonomy-type")));
+  assert.deepEqual(types, ["image", "text", "audio", "video"]);
+  await page.locator("[data-compose-sheet=type] [data-taxonomy-type=text]").click();
+  await page.locator("[data-compose-type-pill=text]").waitFor();
+  assert.deepEqual(await toolKeys(), ["preset", "variable"]);
+  await page.locator("[data-compose-type-pill=text]").click();
+  await page.locator("[data-compose-sheet=type] [data-taxonomy-type=image]").click();
   await page.locator("#prompt-text").fill("cinematic portrait of a fox");
   await page.locator("[data-compose-tool=variable]").click();
   await page.locator("#insert-picker-title").waitFor();
   await page.keyboard.press("Escape");
-  await page.locator("[data-compose-tool=advanced]").click();
-  await page.locator("[data-compose-sheet=advanced] [data-advanced-row=extra]").waitFor();
-  await page.locator("[data-compose-sheet=advanced] [data-advanced-row=vision]").click();
-  await page.locator("[data-compose-sheet=vision] [data-image-help]").waitFor();
+  await page.locator("[data-compose-tool=preset]").click();
+  await page.locator("[data-extra-panel]").waitFor();
+  await page.keyboard.press("Escape");
+  await page.locator("[data-compose-tool=vision]").click();
+  await page.locator("[data-image-help]").waitFor();
+  await page.keyboard.press("Escape");
   assert.equal(await overflowFree(page), true);
+  // Paylaş → son kontrol: Gönderi bilgisi (Kategori · Araç · Etiketler) + Gelişmiş (DNA · Referans) satırları.
+  await openSheet(page);
+  const rows = await page.locator("[data-publish-detail]").evaluateAll((els) => els.map((el) => el.getAttribute("data-publish-detail")));
+  assert.deepEqual(rows, ["category", "tool", "tags", "dna", "references"]);
+  await page.locator("[data-publish-detail=category]").click();
+  await page.locator("[data-compose-sheet=category]").waitFor();
+  await page.locator("[data-compose-sheet-done]").first().click();
+  await page.locator("[data-compose-sheet=category]").waitFor({ state: "detached" });
+  await sheet(page).waitFor();
+  await page.locator("[data-publish-detail=dna]").click();
+  await page.locator("[data-compose-sheet=dna]").waitFor();
 }, { viewport: { width: 390, height: 844 } });
 
 await browser.close(); server.close();
