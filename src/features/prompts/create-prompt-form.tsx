@@ -790,20 +790,6 @@ export function CreatePromptForm() {
       onPublish={() => setPublishOpen(true)}
       publishLabel={isSaveMode ? t("common.save") : t("common.share")}
       publishDisabled={isSubmitting}
-      toolbar={
-        <ComposeToolbar
-          tools={[
-            ...(contentType === "image"
-              ? [{ key: "image", icon: ImagePlus, label: t("compose.toolImage"), onClick: () => document.getElementById(IMAGE_INPUT_ID)?.click() }]
-              : []),
-            { key: "tags", icon: Hash, label: t("compose.toolTags"), badge: tagPicker.suggested.length || undefined, onClick: () => setSheet("tags") },
-            { key: "tool", icon: Cpu, label: t("compose.toolTool"), onClick: () => setSheet("tool") },
-            { key: "category", icon: Folder, label: t("compose.toolCategory"), onClick: () => setSheet("category") },
-            { key: "variable", icon: Braces, label: t("compose.toolVariable"), badge: variables.length || undefined, onClick: () => editorRef.current?.openInsert() },
-            { key: "advanced", icon: Layers, label: t("compose.toolAdvanced"), badge: Object.keys(extraSettings).length + dnaSections.length || undefined, onClick: () => setSheet("advanced") },
-          ]}
-        />
-      }
       aside={
         <>
           <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-muted">{t("forms.livePreview")}</p>
@@ -917,6 +903,20 @@ export function CreatePromptForm() {
             category={category}
             subcategory={subcategory}
             tools={tools}
+          />
+
+          {/* Araçlar yazının hemen altında, sayfanın akışında (iOS klavyesiyle kaymaz) — docs/history/216-*. */}
+          <ComposeToolbar
+            tools={[
+              ...(contentType === "image"
+                ? [{ key: "image", icon: ImagePlus, label: t("compose.toolImage"), onClick: () => document.getElementById(IMAGE_INPUT_ID)?.click() }]
+                : []),
+              { key: "tags", icon: Hash, label: t("compose.toolTags"), badge: tagPicker.suggested.length || undefined, onClick: () => setSheet("tags") },
+              { key: "tool", icon: Cpu, label: t("compose.toolTool"), onClick: () => setSheet("tool") },
+              { key: "category", icon: Folder, label: t("compose.toolCategory"), onClick: () => setSheet("category") },
+              { key: "variable", icon: Braces, label: t("compose.toolVariable"), badge: variables.length || undefined, onClick: () => editorRef.current?.openInsert() },
+              { key: "advanced", icon: Layers, label: t("compose.toolAdvanced"), badge: Object.keys(extraSettings).length + dnaSections.length || undefined, onClick: () => setSheet("advanced") },
+            ]}
           />
 
           {contentType === "image" && (

@@ -381,20 +381,6 @@ export function CreateRequestForm() {
       }}
       publishLabel={isSaveMode ? t("common.save") : t("common.share")}
       publishDisabled={isSubmitting}
-      toolbar={
-        <ComposeToolbar
-          tools={[
-            { key: "reference", icon: ImagePlus, label: t("compose.toolReference"), onClick: () => document.getElementById("request-images")?.click() },
-            { key: "direction", icon: Sparkles, label: t("compose.toolDirection"), onClick: () => document.getElementById("request-direction")?.focus() },
-            { key: "tags", icon: Hash, label: t("compose.toolTags"), badge: tagPicker.suggested.length || undefined, onClick: () => setSheet("tags") },
-            { key: "tool", icon: Cpu, label: t("compose.toolTool"), onClick: () => setSheet("tool") },
-            { key: "category", icon: Folder, label: t("compose.toolCategory"), onClick: () => setSheet("category") },
-            ...(!isEditMode && contentType === "image"
-              ? [{ key: "vision", icon: WandSparkles, label: t("compose.toolHelp"), onClick: () => setSheet("vision") }]
-              : []),
-          ]}
-        />
-      }
       aside={
         <>
           <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-muted">{t("forms.livePreview")}</p>
@@ -454,6 +440,20 @@ export function CreateRequestForm() {
               <span className="shrink-0 text-caption text-text-muted">{`${description.length}/${DESCRIPTION_MAX}`}</span>
             </div>
           </div>
+
+          {/* Araçlar yazının hemen altında, sayfanın akışında (iOS klavyesiyle kaymaz) — docs/history/216-*. */}
+          <ComposeToolbar
+            tools={[
+              { key: "reference", icon: ImagePlus, label: t("compose.toolReference"), onClick: () => document.getElementById("request-images")?.click() },
+              { key: "direction", icon: Sparkles, label: t("compose.toolDirection"), onClick: () => document.getElementById("request-direction")?.focus() },
+              { key: "tags", icon: Hash, label: t("compose.toolTags"), badge: tagPicker.suggested.length || undefined, onClick: () => setSheet("tags") },
+              { key: "tool", icon: Cpu, label: t("compose.toolTool"), onClick: () => setSheet("tool") },
+              { key: "category", icon: Folder, label: t("compose.toolCategory"), onClick: () => setSheet("category") },
+              ...(!isEditMode && contentType === "image"
+                ? [{ key: "vision", icon: WandSparkles, label: t("compose.toolHelp"), onClick: () => setSheet("vision") }]
+                : []),
+            ]}
+          />
 
           <MultiImagePicker variant="strip" inputId="request-images" items={images} onChange={setImages} />
 

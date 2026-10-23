@@ -25,7 +25,6 @@ export function ComposeShell({
   onPublish,
   publishLabel,
   publishDisabled = false,
-  toolbar,
   aside,
   wide = false,
   children,
@@ -38,14 +37,12 @@ export function ComposeShell({
   onPublish: () => void;
   publishLabel: string;
   publishDisabled?: boolean;
-  toolbar?: ReactNode;
   aside?: ReactNode;
   /** Geniş editörler (Workflow): sağ sütun yok, gövde tam genişlik. */
   wide?: boolean;
   children: ReactNode;
 }) {
   const { t } = useTranslation();
-  const inset = useKeyboardInset();
 
   useEffect(() => {
     const root = document.documentElement;
@@ -83,40 +80,14 @@ export function ComposeShell({
       </div>
       {status && <div className="px-4 pt-2 text-caption text-text-muted sm:hidden">{status}</div>}
 
-      <div className={cn("mx-auto px-3 pb-28 pt-4 sm:px-5 lg:px-8 lg:pb-12", wide ? "max-w-6xl" : "grid max-w-5xl grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1fr)_340px]")}>
+      <div className={cn("mx-auto px-3 pb-16 pt-4 sm:px-5 lg:px-8 lg:pb-12", wide ? "max-w-6xl" : "grid max-w-5xl grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1fr)_340px]")}>
         <div className="min-w-0">
           {children}
-          {toolbar && (
-            <div
-              data-compose-toolbar=""
-              style={inset > 0 ? { transform: `translateY(-${inset}px)` } : undefined}
-              className="fixed inset-x-0 bottom-0 z-30 border-t border-border-soft bg-background pb-[env(safe-area-inset-bottom)] lg:static lg:mt-6 lg:border-0 lg:bg-transparent lg:pb-0"
-            >
-              {toolbar}
-            </div>
-          )}
         </div>
         {aside && !wide && <div className="hidden min-w-0 lg:sticky lg:top-20 lg:block lg:self-start">{aside}</div>}
       </div>
     </div>
   );
-}
-
-/** Telefonda açık klavyenin kapattığı yükseklik (`visualViewport`): alttaki araç çubuğu klavyenin üstünde kalsın. */
-function useKeyboardInset(): number {
-  const [inset, setInset] = useState(0);
-  useEffect(() => {
-    const viewport = window.visualViewport;
-    if (!viewport) return;
-    const update = () => setInset(Math.max(0, Math.round(window.innerHeight - viewport.height - viewport.offsetTop)));
-    viewport.addEventListener("resize", update);
-    viewport.addEventListener("scroll", update);
-    return () => {
-      viewport.removeEventListener("resize", update);
-      viewport.removeEventListener("scroll", update);
-    };
-  }, []);
-  return inset;
 }
 
 export interface ComposeTool {
@@ -128,22 +99,26 @@ export interface ComposeTool {
   onClick: () => void;
 }
 
-/** Araç çubuğu: simge + kısa etiket; her biri bir alt sayfa açar. */
+/**
+ * Araç satırı: simge + kısa etiket; her biri bir alt sayfa açar. Yazının hemen altında, sayfanın akışında durur (docs/history/216-*):
+ * `fixed`/`sticky` bir alt çubuk iOS Safari'de klavye açılınca görünen alanla birlikte kaymadığı için asılı kalıyor ya da yazının
+ * üstüne biniyordu; akıştaki bir satır klavyeyle sayfa kayarken kendiliğinden doğru yerde kalır. Dar ekranda yatay kayar.
+ */
 export function ComposeToolbar({ tools }: { tools: ComposeTool[] }) {
   return (
-    <div className="mx-auto flex max-w-5xl items-stretch justify-around gap-1 px-1 py-1.5 lg:justify-start lg:gap-2 lg:border-t lg:border-border-soft lg:px-0 lg:pt-3" role="toolbar">
+    <div data-compose-toolbar="" className="-mx-1 flex items-stretch gap-0.5 overflow-x-auto border-y border-border-soft py-1" role="toolbar">
       {tools.map((tool) => (
         <button
           key={tool.key}
           type="button"
           onClick={tool.onClick}
           data-compose-tool={tool.key}
-          className="relative flex min-h-12 min-w-14 flex-col items-center justify-center gap-0.5 rounded-xl px-2 text-[0.6875rem] font-medium text-text-secondary transition-colors hover:bg-surface-soft hover:text-text"
+          className="relative flex min-h-12 min-w-[3.25rem] flex-1 flex-col items-center justify-center gap-0.5 rounded-xl px-1.5 text-[0.6875rem] font-medium text-text-secondary transition-colors hover:bg-surface-soft hover:text-text"
         >
           <tool.icon size={20} strokeWidth={1.9} className="text-primary" />
           {tool.label}
           {tool.badge ? (
-            <span aria-hidden className="absolute right-1.5 top-0.5 min-w-4 rounded-full bg-secondary px-1 text-center text-[0.625rem] font-bold leading-4 text-background">
+            <span aria-hidden className="absolute right-1 top-0.5 min-w-4 rounded-full bg-secondary px-1 text-center text-[0.625rem] font-bold leading-4 text-background">
               {tool.badge}
             </span>
           ) : null}
