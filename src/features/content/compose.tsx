@@ -57,7 +57,7 @@ export function ComposeShell({
   return (
     <div data-compose="" className="min-h-dvh">
       <div className="sticky top-0 z-30 border-b border-border-soft bg-background/95 backdrop-blur-xl">
-        <div className={cn("mx-auto flex h-14 items-center gap-2 px-2 sm:px-4", wide ? "max-w-6xl" : "max-w-5xl")}>
+        <div className={cn("mx-auto flex h-14 items-center gap-2 px-2 sm:px-4", "max-w-5xl")}>
           <button
             type="button"
             onClick={onClose}
@@ -79,7 +79,7 @@ export function ComposeShell({
       </div>
       {status && <div className="px-4 pt-2 text-caption text-text-muted sm:hidden">{status}</div>}
 
-      <div className={cn("mx-auto px-3 pb-16 pt-4 sm:px-5 lg:px-8 lg:pb-12", wide ? "max-w-6xl" : "grid max-w-5xl grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1fr)_340px]")}>
+      <div className={cn("mx-auto px-3 pb-16 pt-4 sm:px-5 lg:px-8 lg:pb-12", wide ? "max-w-5xl" : "grid max-w-5xl grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1fr)_340px]")}>
         <div className="min-w-0">
           {children}
         </div>

@@ -4,10 +4,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCommunityContext, useCommunityReturn } from "@/features/communities/community-return";
-import { AlertTriangle, Workflow as WorkflowIcon, X } from "lucide-react";
+import { AlertTriangle, Cpu, Folder, Hash, Workflow as WorkflowIcon, X } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
 import { Tabs } from "@/components/ui/tabs";
 import { useAuth } from "@/features/auth/auth-provider";
+import { useOwnProfile } from "@/features/auth/own-profile-provider";
 import { fetchWorkflowById, saveWorkflow } from "@/lib/supabase/workflows";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { appendLinkedStep, duplicateStep, moveStep, newStep, sanitizeLinks, validateWorkflow, type WorkflowIssue } from "@/lib/workflow-logic";
@@ -15,7 +16,7 @@ import { cn } from "@/lib/utils";
 import { multiImageItemFromMedia } from "@/lib/supabase/media-input";
 import type { ContentVisibility, WorkflowContentRef, WorkflowStep } from "@/types";
 import { AddContentModal } from "./add-content-modal";
-import { ContentPane, GeneralPane, IOPane, SettingsPane, StepPreview } from "./step-panes";
+import { ContentPane, GeneralPane, IOPane, SettingsPane, StepActions, StepPreview } from "./step-panes";
 import { StepList } from "./step-list";
 import { useTagPicker } from "@/features/prompts/use-tag-picker";
 import { usePrefillTag } from "@/features/challenges/use-prefill-tag";
@@ -24,28 +25,35 @@ import { useLayoutMode } from "./use-layout-mode";
 import { EMPTY_META, WorkflowMetaForm, type WorkflowMeta } from "./workflow-meta-form";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import { KindDraftsButton } from "@/features/drafts/kind-drafts-button";
-import { ComposeShell, PublishPreview, useComposeLeave } from "@/features/content/compose";
-import { PublishSheet, type PublishProblem } from "@/features/content/publish-sheet";
+import { ComposeSheet, ComposeShell, PublishPreview, useComposeLeave } from "@/features/content/compose";
+import { SuggestedTagsRow } from "@/features/content/compose-fields";
+import { PublishDetailsSection, PublishSheet, type PublishDetailRow, type PublishProblem } from "@/features/content/publish-sheet";
+import { TaxonomyPicker } from "@/features/content/taxonomy-picker";
+import { ToolPicker } from "@/features/content/tool-picker";
+import { TagPicker } from "@/features/prompts/tag-picker";
+import { resolveToolRefs } from "@/lib/ai-tool-catalog";
+import { taxonomyPathLabel } from "@/lib/content-taxonomy";
 
 type SaveState = "idle" | "saving" | "saved" | "error";
 type LoadState = "loading" | "ready" | "notfound" | "forbidden";
+type MetaSheet = "tags" | "tool" | "category";
 type AddTarget = { stepId: string | null; initialMode: "existing" | "scratch" } | null;
 
 const card = "rounded-xl border border-border-soft bg-surface p-4 shadow-card sm:p-6";
 
 /**
- * The workflow editor: name/details on top, then the step timeline and the
- * selected step's editor. Desktop = three columns (steps · step · content &
- * settings); tablet = steps + one tabbed detail card; mobile = the step list,
- * each step opening in a bottom sheet with its tabs. Nothing here runs a
- * model — it only saves how existing content is chained.
+ * The workflow editor: a compact header (type pill, title, description, cover) on top, then the step list and the selected step's
+ * editor. Wide (≥ 640px of editor width) = two columns (steps · one tabbed step card with its actions in the card header);
+ * mobile = the step list, each step opening in a bottom sheet with its tabs. Kategori / Araç / Etiketler live in the
+ * "Paylaşmadan önce" sheet (docs/history/216-*). Nothing here runs a model — it only saves how existing content is chained.
  */
 export function WorkflowEditor({ editId }: { editId: string | null }) {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const router = useRouter();
   const returnToCommunity = useCommunityReturn();
-  const { communityId } = useCommunityContext();
+  const { communityId, name: communityName } = useCommunityContext();
   const { user, loading: authLoading } = useAuth();
+  const { profile: ownProfile } = useOwnProfile();
   const [rootRef, mode] = useLayoutMode();
 
   const [workflowId, setWorkflowId] = useState<string | null>(editId);
@@ -66,7 +74,7 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
   const [visibility, setVisibility] = useState<ContentVisibility>("public");
   const [addTarget, setAddTarget] = useState<AddTarget>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
-  const [centerTab, setCenterTab] = useState<"general" | "io">("general");
+  const [metaSheet, setMetaSheet] = useState<MetaSheet | null>(null);
   const [detailTab, setDetailTab] = useState<"general" | "content" | "io" | "settings">("general");
 
   // Load an existing workflow (owner only).
@@ -331,6 +339,29 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
     }));
   const warnings = liveIssues.filter((issue) => issue.level !== "error");
 
+  function updateMeta(patch: Partial<WorkflowMeta>) {
+    setMeta((prev) => ({ ...prev, ...patch }));
+    touch();
+  }
+  const metaSheetTitle: Record<MetaSheet, string> = {
+    tags: t("forms.tags"),
+    tool: t("formSection.tool"),
+    category: t("taxonomy.categoryLabel"),
+  };
+  const categoryPath = meta.category ? taxonomyPathLabel({ contentType: meta.contentType, category: meta.category, subcategory: meta.subcategory }, language, false) : "";
+  const infoRows: PublishDetailRow[] = [
+    { key: "category", icon: Folder, label: t("taxonomy.categoryLabel"), value: categoryPath, onClick: () => setMetaSheet("category") },
+    { key: "tool", icon: Cpu, label: t("formSection.tool"), value: resolveToolRefs(meta.tools)[0]?.label, onClick: () => setMetaSheet("tool") },
+    {
+      key: "tags",
+      icon: Hash,
+      label: t("forms.tags"),
+      value: tagPicker.accepted.length > 0 ? t("compose.tagCount", { count: tagPicker.accepted.length }) : undefined,
+      hint: tagPicker.suggested.length > 0 ? t("compose.suggestionCount", { count: tagPicker.suggested.length }) : undefined,
+      onClick: () => setMetaSheet("tags"),
+    },
+  ];
+
   return (
     <ComposeShell
       wide
@@ -356,10 +387,12 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
         </p>
       )}
 
-      {/* Details — one card per main section (Kategori, Temel Bilgiler, Kapak, Araç/Model, Etiketler) */}
+      {/* Compact header: type pill, title, description, cover. Kategori / Araç / Etiketler → "Paylaşmadan önce" */}
       <WorkflowMetaForm
         meta={meta}
-        tagPicker={tagPicker}
+        profile={ownProfile}
+        audienceLabel={communityId ? (communityName ?? t("compose.aCommunity")) : undefined}
+        onAudience={() => setPublishOpen(true)}
         titleError={issues.some((i) => i.code === "titleRequired")}
         onChange={(patch) => {
           setMeta((prev) => ({ ...prev, ...patch }));
@@ -368,52 +401,54 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
       />
 
       {/* Steps + step editor */}
-      {mode === "desktop" && (
-        <div className="grid grid-cols-[minmax(220px,260px)_minmax(0,1fr)_minmax(240px,300px)] items-start gap-4">
+      {mode !== "mobile" && (
+        <div className="grid grid-cols-[minmax(220px,280px)_minmax(0,1fr)] items-start gap-4">
           <section className={cn(card, "sticky top-20 min-w-0 max-h-[calc(100dvh-6rem)] overflow-y-auto")}>
             <h2 className="mb-3 text-sm font-semibold text-text">{t("workflow.stepsHeading")}</h2>
             {list}
           </section>
           <section className={cn(card, "min-w-0")}>
-            {panes ? (
+            {panes && selected ? (
               <div className="space-y-4">
+                <div className="flex items-center justify-between gap-3">
+                  <h2 className="min-w-0 truncate text-base font-semibold text-text">
+                    {selectedIndex + 1} · {selected.title || t("workflow.untitledStep")}
+                  </h2>
+                  <StepActions
+                    index={selectedIndex}
+                    count={steps.length}
+                    onDuplicate={() => handleDuplicate(selected)}
+                    onDelete={() => handleDelete(selected)}
+                    onMove={(delta) => handleReorder(selectedIndex, selectedIndex + delta)}
+                  />
+                </div>
                 <Tabs
                   items={[
                     { key: "general" as const, label: t("workflow.tabGeneral") },
                     { key: "io" as const, label: t("workflow.tabIO") },
+                    { key: "content" as const, label: t("workflow.tabContent") },
                   ]}
-                  active={centerTab}
-                  onChange={setCenterTab}
+                  active={detailTab === "settings" ? "general" : detailTab}
+                  onChange={setDetailTab}
                   ariaLabel={t("workflow.stepDetailAria")}
                 />
-                {centerTab === "general" ? panes.general : panes.io}
+                {detailTab !== "content" && detailTab !== "io" && panes.general}
+                {detailTab === "io" && (
+                  <div className="space-y-4">
+                    {panes.io}
+                    {panes.preview}
+                  </div>
+                )}
+                {detailTab === "content" && (
+                  <div className="space-y-4">
+                    {panes.content}
+                    {panes.preview}
+                  </div>
+                )}
               </div>
             ) : (
               <p className="py-10 text-center text-sm text-text-muted">{t("workflow.selectStepHint")}</p>
             )}
-          </section>
-          <section className={cn(card, "sticky top-20 min-w-0 max-h-[calc(100dvh-6rem)] space-y-5 overflow-y-auto")}>
-            {panes ? (
-              <>
-                {panes.content}
-                {panes.preview}
-                {panes.settings}
-              </>
-            ) : (
-              <p className="py-6 text-center text-sm text-text-muted">{t("workflow.noStepsBody")}</p>
-            )}
-          </section>
-        </div>
-      )}
-
-      {mode === "tablet" && (
-        <div className="grid grid-cols-[minmax(200px,240px)_minmax(0,1fr)] items-start gap-4">
-          <section className={cn(card, "sticky top-20 min-w-0 max-h-[calc(100dvh-6rem)] overflow-y-auto")}>
-            <h2 className="mb-3 text-sm font-semibold text-text">{t("workflow.stepsHeading")}</h2>
-            {list}
-          </section>
-          <section className={cn(card, "min-w-0")}>
-            {panes ? detailTabs : <p className="py-10 text-center text-sm text-text-muted">{t("workflow.selectStepHint")}</p>}
           </section>
         </div>
       )}
@@ -441,6 +476,25 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
         </Modal>
       )}
 
+      {metaSheet && (
+        <ComposeSheet id={metaSheet} title={metaSheetTitle[metaSheet]} onClose={() => setMetaSheet(null)}>
+          {metaSheet === "tags" && <TagPicker picker={tagPicker} />}
+          {metaSheet === "tool" && (
+            <>
+              <ToolPicker value={meta.tools} onChange={(tools) => updateMeta({ tools })} contentType={meta.contentType} category={meta.category} />
+              <p className="mt-2 text-caption text-text-muted">{t("workflow.noteToolsMeta")}</p>
+            </>
+          )}
+          {metaSheet === "category" && (
+            <TaxonomyPicker
+              bare
+              value={{ contentType: meta.contentType, category: meta.category, subcategory: meta.subcategory }}
+              onChange={(next) => updateMeta({ contentType: next.contentType, category: next.category, subcategory: next.subcategory })}
+            />
+          )}
+        </ComposeSheet>
+      )}
+
       {publishOpen && (
         <PublishSheet
           onClose={() => setPublishOpen(false)}
@@ -456,6 +510,12 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
             touch();
           }}
           problems={problems}
+          details={
+            <>
+              <PublishDetailsSection title={t("compose.postInfo")} rows={infoRows} />
+              <SuggestedTagsRow picker={tagPicker} />
+            </>
+          }
           preview={
             <PublishPreview
               thumbnail={meta.media[0]?.url ?? null}

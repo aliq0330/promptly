@@ -318,6 +318,7 @@ await scenario("15. Prompt yazma ekranı: tür hapı + araç satırı Hazır aya
   assert.equal(await page.locator("[data-compose-summary], [data-compose-suggested]").count(), 0, "no tag/tool/category chips on the writing screen");
   // Tür hapı: Görsel ⌄ → "Ne üretiyorsun?" 4 tür; Metin seçilince görsele özgü araçlar kalkar.
   await page.locator("[data-compose-type-pill=image]").click();
+  await page.locator("[data-compose-sheet=type]").waitFor();
   const types = await page.locator("[data-compose-sheet=type] [data-taxonomy-type]").evaluateAll((els) => els.map((el) => el.getAttribute("data-taxonomy-type")));
   assert.deepEqual(types, ["image", "text", "audio", "video"]);
   await page.locator("[data-compose-sheet=type] [data-taxonomy-type=text]").click();
@@ -348,6 +349,41 @@ await scenario("15. Prompt yazma ekranı: tür hapı + araç satırı Hazır aya
   await page.locator("[data-publish-detail=dna]").click();
   await page.locator("[data-compose-sheet=dna]").waitFor();
 }, { viewport: { width: 390, height: 844 } });
+
+await scenario("16. Büyük ekran (tablet yatay 1180x820): Workflow'da kompakt başlık + adımlar ilk ekranda (iki sütun), Kategori/Araç/Etiket yalnız Paylaş penceresinde; Hazır ayar'da parametreler ilk ekranda", async ({ page }) => {
+  await openForm(page, "/workflows/create");
+  await page.locator("[data-compose-type-pill]").waitFor();
+  await page.locator("#wf-title").fill("Siberpunk hattı");
+  assert.equal(await page.locator("[data-taxonomy-type]:visible").count(), 0, "no inline Kategori/type chips");
+  const stepsHeading = page.getByRole("heading", { name: "Adımlar" });
+  await stepsHeading.waitFor();
+  const box = await stepsHeading.boundingBox();
+  assert.ok(box && box.y + box.height < 820, `steps start on the first screen (${JSON.stringify(box)})`);
+  assert.equal(await overflowFree(page), true);
+  await openSheet(page);
+  assert.deepEqual(
+    await page.locator("[data-publish-detail]").evaluateAll((els) => els.map((el) => el.getAttribute("data-publish-detail"))),
+    ["category", "tool", "tags"],
+  );
+  await page.locator("[data-publish-detail=category]").click();
+  await page.locator("[data-compose-sheet=category]").waitFor();
+  await page.keyboard.press("Escape");
+  await page.keyboard.press("Escape");
+  await openForm(page, "/presets/create");
+  await page.locator("[data-compose-type-pill]").waitFor();
+  await page.locator("#preset-title").fill("Sinematik portre");
+  assert.equal(await page.locator("[data-taxonomy-type]:visible").count(), 0, "no inline Kategori/type chips");
+  const fields = page.getByRole("heading", { name: /Alanlar/ }).first();
+  await fields.waitFor();
+  const fbox = await fields.boundingBox();
+  assert.ok(fbox && fbox.y + fbox.height < 820, `parameters start on the first screen (${JSON.stringify(fbox)})`);
+  assert.equal(await overflowFree(page), true);
+  await openSheet(page);
+  assert.deepEqual(
+    await page.locator("[data-publish-detail]").evaluateAll((els) => els.map((el) => el.getAttribute("data-publish-detail"))),
+    ["category", "tool", "tags"],
+  );
+}, { viewport: { width: 1180, height: 820 } });
 
 await browser.close(); server.close();
 for (const [s, n] of results) console.log(`${s === "PASS" ? "✓" : "✗"} ${n}`);

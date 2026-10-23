@@ -138,3 +138,14 @@ Kullanıcının isteği: "Gönderi oluşturma ekranlarını standart paylaşım 
 **Çeviri:** yeni `compose.*` anahtarları (`whatMaking`, `toolPreset`, `toolVision`, `postInfo`, `suggestionCount`, `tagCount`, `notChosen`, `dnaHint`, `references`, `referencesHint`, `typeSub.*`) TR+EN eklendi.
 
 **Test:** `run-create-destination` 13 (araç satırı `static` ve yazının üstünde) ve 15 (tür hapı, araç sırası, Paylaş → bilgi satırları → alt sayfa) güncellendi: 15/15; `run-community-posts` 36/36; `run-space-posts` 7/7; `npm test` 400/400. **Gerçek iPhone'da (klavye açıkken üst çubuğun ✕/Paylaş'ı görünür kalıp kalmadığı dahil) DENENMEDİ.** Üst çubuk hâlâ `sticky`; iOS klavye açıkken görünen alanı kaydırırsa geçici olarak ekran dışında kalabilir.
+
+## Düzeltme 4: Workflow ve Hazır ayar büyük ekranda (kullanıcının tablet fotoğrafları)
+
+**Sorun:** Tablet yatay (≈1100px) ekranda Workflow'un üç sütunlu düzeni (adımlar | form | önizleme + işlemler, iki iç kaydırma) sıkışıktı ve sağ sütunun üstü sabit çubuğun altında kesiliyordu; Kategori / Temel Bilgiler / Kapak / Araç / Etiketler kartları tam genişlikte adımların önüne diziliyordu, asıl iş sayfanın altında kalıyordu. Hazır ayar'da da aynı kart yığını vardı. Prompt ve İstek 216 Düzeltme 3'te yeni düzene geçmişti, bu ikisi eski kalmıştı.
+
+**Çözüm (kullanıcı onayıyla, görsel önerilen düzen):**
+- Workflow (`workflow-editor.tsx`, `workflow-meta-form.tsx`): üstte kompakt başlık (avatar + ad + tür hapı, başlık, açıklama, küçük kapak şeridi); altında **iki sütun** — solda sabit adım listesi, sağda tek düzenleyici kartı (başlıkta `n · adım adı` + `StepActions`: Yukarı · Aşağı · Kopyala · Sil; sekmeler Genel · Girdi/Çıktı · İçerik, önizleme İçerik ve Girdi/Çıktı sekmelerinin altında). `desktop` ve `tablet` modları birleşti (`mode !== "mobile"`); telefondaki alt sayfa akışı aynen duruyor (`SettingsPane` orada). `ComposeShell wide` genişliği `max-w-6xl` → `max-w-5xl`.
+- Hazır ayar (`preset-editor.tsx`): aynı başlık düzeni; **Alanlar** (parametreler) ilk ekranda ana kart, canlı önizleme `lg`+ sağda. Tür değişince alanlar/seçim sıfırlanması korundu (`changeTaxonomy`).
+- İkisinde de Kategori, Araç ve Etiketler (+ öneriler) "Paylaşmadan önce" penceresinde (`PublishDetailsSection`), alt sayfaları `ComposeSheet`. Yeni çeviri anahtarı gerekmedi (var olanlar yeniden kullanıldı).
+- Test: `run-create-destination` 16. senaryo (1180x820): adımlar / alanlar ilk ekranda, satır içi Kategori yok, Paylaş → Kategori · Araç · Etiketler; senaryo 15'te sheet bekleme yarışı giderildi. 16/16; `run-community-posts` 36/36.
+- **Gerçek tablette DENENMEDİ**; adım içeriği ekleme/değiştirme akışı yalnız kod okumasıyla ve mevcut testlerle korundu (mock DB'de adımlı workflow düzenleme ekran görüntüsü alınmadı).

@@ -294,6 +294,54 @@ export function SettingsPane({
   );
 }
 
+/** Geniş düzende adımın başlığındaki kompakt işlem satırı (Yukarı · Aşağı · Kopyala · Sil); `SettingsPane`le aynı işlemler, simge düğmeleri. */
+export function StepActions({
+  index,
+  count,
+  onDuplicate,
+  onDelete,
+  onMove,
+}: {
+  index: number;
+  count: number;
+  onDuplicate: () => void;
+  onDelete: () => void;
+  onMove: (delta: -1 | 1) => void;
+}) {
+  const { t } = useTranslation();
+  const [confirm, setConfirm] = useState(false);
+  return (
+    <div className="flex shrink-0 items-center gap-1.5" data-step-actions="">
+      <Button type="button" variant="outline" size="sm" disabled={index === 0} onClick={() => onMove(-1)} aria-label={t("workflow.moveUp")} title={t("workflow.moveUp")}>
+        <ChevronUp size={14} />
+      </Button>
+      <Button type="button" variant="outline" size="sm" disabled={index === count - 1} onClick={() => onMove(1)} aria-label={t("workflow.moveDown")} title={t("workflow.moveDown")}>
+        <ChevronDown size={14} />
+      </Button>
+      <Button type="button" variant="outline" size="sm" onClick={onDuplicate} aria-label={t("workflow.duplicate")} title={t("workflow.duplicate")}>
+        <Copy size={14} />
+      </Button>
+      <Button
+        type="button"
+        variant={confirm ? "danger" : "outline"}
+        size="sm"
+        onClick={() => {
+          if (confirm) {
+            setConfirm(false);
+            onDelete();
+          } else setConfirm(true);
+        }}
+        onBlur={() => setConfirm(false)}
+        aria-label={confirm ? t("workflow.confirmDelete") : t("workflow.delete")}
+        title={confirm ? t("workflow.confirmDelete") : t("workflow.delete")}
+      >
+        <Trash2 size={14} />
+        {confirm && t("workflow.confirmDelete")}
+      </Button>
+    </div>
+  );
+}
+
 /** "What does this step take, do and give?" at a glance. */
 export function StepPreview({ step, steps, index }: Omit<PaneProps, "onChange">) {
   const { t, language } = useTranslation();
