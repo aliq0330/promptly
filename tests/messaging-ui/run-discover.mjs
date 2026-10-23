@@ -88,6 +88,39 @@ async function scenario(name, fn, { viewport = { width: 390, height: 844 }, lang
 const overflowFree = (page) => page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1);
 const shot = async (page, name, fullPage = false) => { if (SHOTS) await page.screenshot({ path: `${SHOTS}/${name}.png`, fullPage }); };
 
+async function skeletonThenStrips({ page }) {
+  // En yavaş istek (yaratıcılar) gecikir: şeritlerden hiçbiri tek başına belirmemeli.
+  await page.route(/\/rest\/v1\/profiles\?.*order=follower_count/, async (route) => {
+    await new Promise((r) => setTimeout(r, 1200));
+    return route.fallback();
+  });
+  await page.goto(`${BASE}/discover`);
+  const nav = page.locator('main [role="tablist"]').first();
+  await page.locator("[data-discover-highlights-loading]").waitFor();
+  assert.equal(await page.locator("[data-discover-category]").count(), 0, "no strip before the data is ready");
+  assert.equal(await page.locator("#discover-popular").count(), 0);
+  const before = (await nav.boundingBox()).y;
+  await shot(page, "0-skeleton");
+  await page.locator("[data-discover-category]").first().waitFor();
+  assert.equal(await page.locator("[data-discover-highlights-loading]").count(), 0, "skeleton gone");
+  for (const sel of ["#discover-trending", "#discover-popular", "#discover-creators"]) assert.equal(await page.locator(sel).count(), 1, `${sel} arrived with the others`);
+  const after = (await nav.boundingBox()).y;
+  assert.ok(Math.abs(after - before) <= 16, `content below stays put (${Math.round(before)} → ${Math.round(after)})`);
+  // Popüler karolar ve kategori kolajı kayıtlı renk + bulanık önizlemeyle açılır (boş gri kutu değil).
+  assert.ok((await page.locator("[data-discover-popular] span[style*='background-color']").count()) > 0, "popular covers carry the stored colour");
+  assert.ok((await page.locator("[data-discover-category]").first().locator("span[style*='background-color']").count()) > 0, "category collage cells carry the stored colour");
+  // Geri: sayfadan çıkıp dönünce şeritler iskelet göstermeden hazır.
+  await page.locator("[data-discover-category]").first().click();
+  await page.waitForURL(/\/categories\/local/);
+  await page.goBack();
+  await page.waitForURL(/\/discover/);
+  assert.equal(await page.locator("[data-discover-highlights-loading]").count(), 0, "no skeleton on the way back");
+  await page.locator("[data-discover-category]").first().waitFor({ timeout: 500 });
+}
+
+await scenario("0. telefon: şeritler iskeletle yer tutar, HEPSİ birlikte gelir, altındaki içerik kaymaz; Geri'de yeniden yüklenmez (docs/history/220-*)", skeletonThenStrips);
+await scenario("0b. masaüstü: aynı (iskelet yüksekliği gerçek şeritlerle eşit)", skeletonThenStrips, { viewport: { width: 1280, height: 900 } });
+
 await scenario("1. telefon: görünür başlık yok (yalnız ekran okuyucuya); dört şerit sırayla; ilk gönderi ilk ekranda başlar", async ({ page }) => {
   await page.goto(`${BASE}/discover`);
   await page.getByRole("heading", { level: 1, name: "Keşfet" }).waitFor({ state: "attached" });

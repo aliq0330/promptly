@@ -7,7 +7,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { PromptCardSkeletonGrid } from "@/components/ui/prompt-card-skeleton";
 import { FeedItemsView } from "./feed-items-view";
 import { LoadMore } from "./load-more";
-import { CategoryStrip, CreatorStrip, PopularStrip, TagStrip, useDiscoverHighlights } from "./discover-highlights";
+import { CategoryStrip, CreatorStrip, DiscoverHighlightsSkeleton, PopularStrip, TagStrip, useDiscoverHighlights } from "./discover-highlights";
 import { useFeedPages } from "./use-feed-pages";
 import type { FeedKind } from "@/lib/supabase/feed";
 import { feedOrderForSort } from "@/lib/feed-cursor";
@@ -98,10 +98,16 @@ export function DiscoverFeed() {
 
   const idleContent = (
     <div className="space-y-4">
-      <CategoryStrip sample={highlights.sample} />
-      <TagStrip tags={highlights.tags} />
-      <PopularStrip popular={highlights.popular} />
-      <CreatorStrip creators={highlights.creators} onSeeAll={() => setSection("creators")} />
+      {highlights.loading ? (
+        <DiscoverHighlightsSkeleton />
+      ) : (
+        <>
+          <CategoryStrip sample={highlights.sample} />
+          <TagStrip tags={highlights.tags} />
+          <PopularStrip popular={highlights.popular} />
+          <CreatorStrip creators={highlights.creators} onSeeAll={() => setSection("creators")} />
+        </>
+      )}
 
       <SectionNav
         items={SECTIONS.map((s) => ({ key: s.key, label: t(s.labelKey), icon: s.icon }))}
