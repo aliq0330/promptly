@@ -2,6 +2,7 @@
 
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode, type RefObject } from "react";
 import { SlidersHorizontal, type LucideIcon } from "lucide-react";
+import { ScrollRow } from "@/components/ui/scroll-row";
 import { ListFilterSheet } from "@/features/content/list-toolbar";
 import { SortSelect, SORT_KEYS, type ContentSortKey } from "@/features/content/sort-select";
 import { MobileViewToggle, ViewModeSwitcher } from "@/features/content/view-mode-switcher";
@@ -158,17 +159,14 @@ export function SectionNav<K extends string>({
               </div>
             )}
             {chips && (
-              <div
+              <ScrollRow
                 role="group"
                 aria-label={chipsLabel}
-                className={cn(
-                  "scrollbar-none order-2 min-w-0 flex-1 touch-pan-x gap-1.5 overflow-x-auto overscroll-x-contain md:order-1",
-                  chipsOnMobile ? "flex" : "hidden md:flex",
-                  QUIET_CHIPS,
-                )}
+                wrapperClassName={cn("order-2 flex-1 md:order-1", !chipsOnMobile && "hidden md:block")}
+                className={cn("gap-1.5", QUIET_CHIPS)}
               >
                 {chips}
-              </div>
+              </ScrollRow>
             )}
             <div className="order-3 ml-auto flex shrink-0 items-center gap-2">
               {filterButton}
@@ -259,7 +257,7 @@ function FoldedBar<K extends string>({
   visible: boolean;
   actions: ReactNode;
 }) {
-  const rowRef = useRef<HTMLDivElement>(null);
+  const rowRef = useRef<HTMLElement>(null);
   // The chosen pill can sit beyond the edge of a scrolling row (Keşfet's last sections): bring it into view whenever it changes or the bar appears.
   useLayoutEffect(() => {
     const row = rowRef.current;
@@ -278,12 +276,7 @@ function FoldedBar<K extends string>({
           visible ? "translate-y-0 opacity-100" : "pointer-events-none -translate-y-2 opacity-0",
         )}
       >
-        <div
-          ref={rowRef}
-          role="group"
-          aria-label={ariaLabel}
-          className="scrollbar-none relative flex min-w-0 flex-1 touch-pan-x items-center gap-1.5 overflow-x-auto overscroll-x-contain"
-        >
+        <ScrollRow ref={rowRef} role="group" aria-label={ariaLabel} wrapperClassName="flex-1" className="relative items-center gap-1.5">
           {items.map((item) => {
             const Icon = item.icon;
             const selected = item.key === active;
@@ -307,7 +300,7 @@ function FoldedBar<K extends string>({
               </button>
             );
           })}
-        </div>
+        </ScrollRow>
         <div className="flex shrink-0 items-center gap-2">{actions}</div>
       </div>
     </div>

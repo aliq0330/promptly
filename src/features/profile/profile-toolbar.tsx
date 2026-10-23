@@ -1,6 +1,7 @@
 "use client";
 
 import { Chip } from "@/components/ui/chip";
+import { ScrollRow } from "@/components/ui/scroll-row";
 
 import { Search, X } from "lucide-react";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
@@ -49,7 +50,7 @@ export function ProfileToolbar({
   return (
     <div className="space-y-2.5">
       <div className="flex items-center gap-2">
-        <div className="scrollbar-none flex flex-1 touch-pan-x gap-2 overflow-x-auto overscroll-x-contain">
+        <ScrollRow wrapperClassName="flex-1" className="gap-2">
           <Chip selected={activeType === "all"} onClick={() => onTypeChange("all")}>
             {t("common.all")}
           </Chip>
@@ -58,7 +59,7 @@ export function ProfileToolbar({
               {t(CONTENT_TYPE_META[type].labelKey)}
             </Chip>
           ))}
-        </div>
+        </ScrollRow>
 
         <select
           value={sort}

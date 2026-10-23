@@ -135,3 +135,11 @@ CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/mess
 ```bash
 CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/messaging-ui/run-spaces.mjs   # 28/28 beklenir
 ```
+
+## Yatay şeritler (`docs/history/219-*`)
+
+`run-hscroll.mjs` (5 senaryo): `ScrollRow` — tekerlekle yatay kaydırma (uçlarda sayfaya bırakma), fareyle sürükleme (bağlantıyı açmaz), ok düğmeleri + tek yönlü soluklaşma, profil sekmeleri (seçilen sekme görünür alana alınır), telefonda tekerleğin ele geçirilmemesi. Sentetik fare/tekerlek olaylarıyla; gerçek fareye/trackpad'e KARŞI DENENMEDİ.
+
+```bash
+CHROMIUM_PATH=/opt/pw-browsers/chromium node tests/messaging-ui/run-hscroll.mjs   # 5/5 beklenir
+```

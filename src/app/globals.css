@@ -815,6 +815,39 @@
   }
 }
 
+/* Hidden on touch, a thin calm bar for a mouse — for rows too minor for `ScrollRow` (it has the wheel, drag and arrows). Horizontal only: `scrollbar-width` has no axis, so never on a vertical scroller. */
+@utility scrollbar-fine {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border-strong) transparent;
+    &::-webkit-scrollbar {
+      display: block;
+      height: 6px;
+    }
+    &::-webkit-scrollbar-thumb {
+      background-color: var(--color-border-strong);
+      border-radius: 9999px;
+    }
+  }
+}
+
+/* `ScrollRow` edge fade: only the side that still has hidden content fades (the component sets data-fade-prev / data-fade-next). */
+@utility scroll-row-fade {
+  --scroll-fade-start: 0px;
+  --scroll-fade-end: 0px;
+  mask-image: linear-gradient(to right, transparent 0, #000 var(--scroll-fade-start), #000 calc(100% - var(--scroll-fade-end)), transparent 100%);
+  &[data-fade-prev] {
+    --scroll-fade-start: 1.75rem;
+  }
+  &[data-fade-next] {
+    --scroll-fade-end: 1.75rem;
+  }
+}
+
 /* Thin, calm vertical scrollbar for inner scroll areas (e.g. long prompt text). */
 @utility scrollbar-thin-soft {
   scrollbar-width: thin;

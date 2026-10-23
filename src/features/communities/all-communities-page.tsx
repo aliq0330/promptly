@@ -145,7 +145,7 @@ function BrowseView({ onToast }: { onToast: (message: string) => void }) {
       </label>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex gap-1.5 overflow-x-auto pb-1" role="group" aria-label={t("communities.filter.categoryAria")}>
+        <div className="flex gap-1.5 overflow-x-auto pb-1 md:flex-wrap md:overflow-visible" role="group" aria-label={t("communities.filter.categoryAria")}>
           {[null, ...COMMUNITY_CATEGORIES].map((value) => (
             <button
               key={value ?? "all"}

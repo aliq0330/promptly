@@ -2,6 +2,7 @@
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useLanguage } from "@/lib/i18n/language-provider";
+import { ScrollRow } from "@/components/ui/scroll-row";
 import { cn } from "@/lib/utils";
 import { dayKey, fetchContributionCounts } from "@/lib/supabase/contributions";
 
@@ -24,7 +25,7 @@ function levelFor(count: number): number {
 export function ContributionMap({ userId }: { userId: string }) {
   const { t, language } = useLanguage();
   const [counts, setCounts] = useState<Record<string, number>>({});
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLElement>(null);
 
   const { weeks, start, todayKey } = useMemo(() => {
     const today = new Date();
@@ -80,8 +81,8 @@ export function ContributionMap({ userId }: { userId: string }) {
   return (
     <section className="rounded-xl border border-border-soft bg-surface p-4 shadow-card sm:p-6" aria-label={t("contrib.title", { count: total })}>
       <h2 className="mb-4 text-center text-h3 font-semibold text-text-secondary">{t("contrib.title", { count: total })}</h2>
-      <div ref={scrollRef} className="scrollbar-none overflow-x-auto pb-1">
-        <div className="mx-auto flex w-max gap-1.5">
+      <ScrollRow ref={scrollRef} className="pb-1">
+        <div className="mx-auto flex w-max shrink-0 gap-1.5">
           <div className="flex flex-col gap-[3px] pt-5 text-[10px] leading-3 text-text-muted" aria-hidden>
             {dayLabels.map((label, i) => (
               <span key={i} className="h-3">{label}</span>
@@ -109,7 +110,7 @@ export function ContributionMap({ userId }: { userId: string }) {
             ))}
           </div>
         </div>
-      </div>
+      </ScrollRow>
       <div className="mt-3 flex items-center justify-end gap-1.5 text-[11px] text-text-muted">
         <span>{t("contrib.less")}</span>
         {LEVEL_CLASSES.map((cls, i) => (

@@ -46,7 +46,7 @@ export function MembersTab({ group, role, viewerId, reload, onToast, section }: 
       )}
       {active === "list" && (
         <>
-          <div className="flex gap-1.5 overflow-x-auto pb-1" role="group" aria-label={t("communities.members.filterAria")}>
+          <div className="flex gap-1.5 overflow-x-auto pb-1 md:flex-wrap md:overflow-visible" role="group" aria-label={t("communities.members.filterAria")}>
             {FILTERS.map((value) => (
               <button
                 key={value ?? "all"}

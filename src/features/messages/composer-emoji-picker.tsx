@@ -48,7 +48,7 @@ function PickerBody({ onPick, compact }: { onPick: (emoji: string) => void; comp
 
   return (
     <div className="flex min-h-0 flex-col">
-      <div role="tablist" aria-label={t("emoji.categories")} className="flex shrink-0 gap-0.5 overflow-x-auto border-b border-border-soft px-1.5 py-1.5 scrollbar-none">
+      <div role="tablist" aria-label={t("emoji.categories")} className="flex shrink-0 gap-0.5 overflow-x-auto border-b border-border-soft px-1.5 py-1.5 scrollbar-fine">
         {tabs.map((tab) => (
           <button
             key={tab.id}

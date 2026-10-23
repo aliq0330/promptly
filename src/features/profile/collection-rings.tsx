@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Bookmark, FolderOpen } from "lucide-react";
+import { ScrollRow } from "@/components/ui/scroll-row";
 import { CollectionCover } from "@/features/collections/collection-card";
 import { collectionHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -17,7 +18,7 @@ export function CollectionRings({ collections }: { collections: Collection[] }) 
   const { t } = useTranslation();
   if (collections.length === 0) return null;
   return (
-    <nav aria-label={t("profile.collectionRingsLabel")} data-collection-rings className="scrollbar-none -mx-3 flex touch-pan-x gap-4 overflow-x-auto overscroll-x-contain px-3 sm:mx-0 sm:px-0">
+    <ScrollRow as="nav" aria-label={t("profile.collectionRingsLabel")} data-collection-rings className="-mx-3 gap-4 px-3 sm:mx-0 sm:px-0">
       {collections.map((collection) => (
         <Link
           key={collection.id}
@@ -37,6 +38,6 @@ export function CollectionRings({ collections }: { collections: Collection[] }) 
           <span className="w-full truncate text-caption text-text-secondary">{collection.name}</span>
         </Link>
       ))}
-    </nav>
+    </ScrollRow>
   );
 }

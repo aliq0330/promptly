@@ -125,7 +125,7 @@ export function ImageLightbox({
 
         {hasMultiple && (
           <div
-            className="flex gap-2 overflow-x-auto px-4 pb-[max(1rem,env(safe-area-inset-bottom))]"
+            className="scrollbar-fine flex gap-2 overflow-x-auto px-4 pb-[max(1rem,env(safe-area-inset-bottom))]"
             onClick={(event) => event.stopPropagation()}
           >
             {images.map((image, i) => (

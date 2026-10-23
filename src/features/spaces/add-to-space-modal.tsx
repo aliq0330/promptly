@@ -196,7 +196,7 @@ export function AddToSpaceModal({
           <fieldset className="space-y-2">
             <legend className="mb-1.5 text-label font-medium text-text">{t("spaces.add.what")}</legend>
             {images.length > 0 && (
-              <div className="scrollbar-none flex gap-2 overflow-x-auto pb-1">
+              <div className="scrollbar-fine flex gap-2 overflow-x-auto pb-1">
                 {images.map((media) => {
                   const on = chosenImages.includes(media.url);
                   return (

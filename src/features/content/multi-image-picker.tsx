@@ -88,7 +88,7 @@ export function MultiImagePicker({
           {label} <span className="text-text-muted">({t("common.optional")})</span>
         </label>
       )}
-      <div className={variant === "strip" ? "-mx-3 flex gap-2 overflow-x-auto px-3 pb-1 sm:mx-0 sm:px-0" : "grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5"} data-image-picker={variant}>
+      <div className={variant === "strip" ? "scrollbar-fine -mx-3 flex gap-2 overflow-x-auto px-3 pb-1 sm:mx-0 sm:px-0" : "grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5"} data-image-picker={variant}>
         {items.map((item, index) => (
           <figure key={item.key} className={variant === "strip" ? "relative h-32 w-24 shrink-0 overflow-hidden rounded-xl border border-border-soft bg-surface-soft" : "relative aspect-square overflow-hidden rounded-md border border-border bg-surface-soft"}>
             <StorageImg src={item.url} alt="" className="h-full w-full object-cover" draggable={false} />

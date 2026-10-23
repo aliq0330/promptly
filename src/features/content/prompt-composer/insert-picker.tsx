@@ -132,7 +132,7 @@ export function InsertPicker({
       </div>
 
       {filters.length > 1 && (
-        <div className="scrollbar-none flex touch-pan-x gap-1.5 overflow-x-auto px-4 pb-2" role="group" aria-label={t("composer.filtersAria")}>
+        <div className="scrollbar-fine flex touch-pan-x gap-1.5 overflow-x-auto px-4 pb-2" role="group" aria-label={t("composer.filtersAria")}>
           {filters.map((entry) => (
             <Chip key={entry.id} selected={filter === entry.id} onClick={() => setFilter(entry.id)} className="h-7 px-2.5 text-caption">
               {entry.label}
