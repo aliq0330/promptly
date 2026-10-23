@@ -55,7 +55,8 @@ export function TitleField({ value, onChange, autoFocus }: { value: string; onCh
         onChange={(event) => onChange(event.target.value)}
         maxLength={SPACE_TITLE_MAX}
         required
-        autoFocus={autoFocus}
+        // Dokunmatik cihazda pencere açılır açılmaz klavyeyi açma: klavye pencereyi ekranın dışına iter (docs/history/218-*).
+        autoFocus={autoFocus && !(typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches)}
         placeholder={t("spaces.form.titlePlaceholder")}
         className={fieldInputClassName}
       />

@@ -523,6 +523,73 @@ await scenario("28. profil: herkese açık Space varsa 'Spaces' sekmesi (yalnız
 
 // ---------------------------------------------------------------- dil + telefon
 
+await scenario("29. pano araç çubuğu: '+' menüsü kırpılmaz (görünür alanda, öğeler tıklanabilir); seçim çubuğunda 'Hizala' menüsü ekranın altına taşmaz, üste açılır", async ({ page }) => {
+  await page.goto(`${BASE}/spaces/local?id=${SID(1)}&tab=board`);
+  await page.locator('[data-board-item="aaaaaaaa-0000-4000-8000-000000000001"]').waitFor({ state: "attached" });
+  await page.getByRole("button", { name: "Ekrana sığdır" }).first().tap();
+  await page.getByRole("button", { name: "Ekle", exact: true }).click();
+  const menu = page.getByRole("menu");
+  await menu.waitFor();
+  const first = menu.getByRole("menuitem").first();
+  const box = await first.boundingBox();
+  const vp = page.viewportSize();
+  assert.ok(box && box.x >= 0 && box.y >= 0 && box.x + box.width <= vp.width && box.y + box.height <= vp.height, `menü öğesi görünür alanda: ${JSON.stringify(box)}`);
+  // Menü araç çubuğunun overflow kırpmasının DIŞINDA: öğenin merkezindeki en üst öğe menü öğesinin kendisi.
+  const hit = await first.evaluate((el) => {
+    const r = el.getBoundingClientRect();
+    return el.contains(document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2));
+  });
+  assert.ok(hit, "menü öğesi kırpılmadan tıklanabilir");
+  await menu.getByRole("menuitem", { name: "Not" }).click();
+  await page.getByRole("dialog").waitFor();
+  await page.keyboard.press("Escape");
+  // İki öğeyi seç → Hizala menüsü (seçim çubuğu ekranın altında): yukarı açılır, görünür kalır.
+  await page.getByRole("button", { name: "Ekrana sığdır" }).first().tap();
+  await page.getByRole("button", { name: "Çoklu seçim" }).first().tap();
+  await page.locator('[data-board-item="aaaaaaaa-0000-4000-8000-000000000001"]').tap();
+  await page.locator('[data-board-item="aaaaaaaa-0000-4000-8000-000000000002"]').tap();
+  await page.locator('[data-board-selection="2"]').waitFor();
+  await page.getByRole("button", { name: "Hizala ve düzenle" }).click();
+  const align = page.getByRole("menu");
+  await align.waitFor();
+  const alignBox = await align.boundingBox();
+  assert.ok(alignBox.y >= 0 && alignBox.y + alignBox.height <= vp.height, `hizala menüsü görünür alanda: ${JSON.stringify(alignBox)}`);
+}, { viewport: { width: 390, height: 844 }, touch: true, setup: (db) => boardWith(db, 1) });
+
+await scenario("30. Yeni Space penceresi (iOS klavyesi): dokunmatikte başlık kutusu kendiliğinden odaklanmaz; klavye açılınca pencere görünür alana (visualViewport) sığar, başlık ve Oluştur görünür kalır", async ({ page }) => {
+  await page.addInitScript(() => {
+    const vv = new EventTarget();
+    Object.assign(vv, { height: window.innerHeight, width: window.innerWidth, offsetTop: 0, offsetLeft: 0, scale: 1 });
+    Object.defineProperty(window, "visualViewport", { value: vv, configurable: true });
+  });
+  await page.goto(`${BASE}/spaces`);
+  await page.getByTestId("spaces-first-empty").waitFor();
+  await page.getByTestId("create-space").click();
+  const form = page.getByTestId("create-space-form");
+  await form.waitFor();
+  assert.equal(await page.evaluate(() => document.activeElement?.tagName === "INPUT"), false, "dokunmatikte klavye kendiliğinden açılmaz");
+  // Klavye açıldı: görünür alan 844 → 380 px.
+  await page.evaluate(() => {
+    window.visualViewport.height = 380;
+    window.visualViewport.dispatchEvent(new Event("resize"));
+  });
+  await page.waitForTimeout(300);
+  const dialog = await page.getByRole("dialog").boundingBox();
+  assert.ok(dialog.y >= -1 && dialog.y + dialog.height <= 381, `pencere katmanı görünür alana oturur: ${JSON.stringify(dialog)}`);
+  const title = await page.getByRole("heading", { name: "Yeni Space" }).boundingBox();
+  assert.ok(title && title.y >= 0, `başlık ekranın içinde: ${JSON.stringify(title)}`);
+  const submit = await form.getByRole("button", { name: "Oluştur" }).boundingBox();
+  assert.ok(submit && submit.y + submit.height <= 381, `Oluştur düğmesi klavyenin üstünde: ${JSON.stringify(submit)}`);
+  // Klavye kapandı: katman tam ekrana döner.
+  await page.evaluate(() => {
+    window.visualViewport.height = window.innerHeight;
+    window.visualViewport.dispatchEvent(new Event("resize"));
+  });
+  await page.waitForTimeout(300);
+  const restored = await page.getByRole("dialog").boundingBox();
+  assert.ok(restored.height >= 800, `katman tam ekrana döndü: ${restored.height}`);
+}, { viewport: { width: 390, height: 844 }, touch: true });
+
 await scenario("21. İngilizce: ana sayfa, sekmeler ve pano araçları İngilizce", async ({ page }) => {
   await page.goto(`${BASE}/spaces`);
   await page.getByRole("tab", { name: "Mine" }).waitFor();
