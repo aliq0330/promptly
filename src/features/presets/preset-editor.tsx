@@ -6,11 +6,11 @@ import { useRouter } from "next/navigation";
 import { useCommunityContext, useCommunityReturn } from "@/features/communities/community-return";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useOwnProfile } from "@/features/auth/own-profile-provider";
-import { SlidersHorizontal } from "lucide-react";
+import { Cpu, Folder, Hash, SlidersHorizontal } from "lucide-react";
 import { KindDraftsButton } from "@/features/drafts/kind-drafts-button";
-import { ComposeShell, PublishPreview, useComposeLeave, useDirty } from "@/features/content/compose";
-import { PublishSheet, type PublishProblem } from "@/features/content/publish-sheet";
-import { FormSection } from "@/features/content/form-section";
+import { ComposeSheet, ComposeShell, PublishPreview, composeBodyClassName, composeTitleClassName, useComposeLeave, useDirty } from "@/features/content/compose";
+import { ComposeBody, ContentTypePicker, SuggestedTagsRow } from "@/features/content/compose-fields";
+import { PublishDetailsSection, PublishSheet, type PublishDetailRow, type PublishProblem } from "@/features/content/publish-sheet";
 import { MultiImagePicker, type MultiImageItem } from "@/features/content/multi-image-picker";
 import { TaxonomyPicker } from "@/features/content/taxonomy-picker";
 import { ToolPicker } from "@/features/content/tool-picker";
@@ -23,10 +23,13 @@ import { sanitizeSelection, type PresetField, type PresetSelection } from "@/lib
 import { normalizePresetForEditing, resolvePresetFields } from "@/lib/preset-utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { presetHref } from "@/lib/utils";
-import { TitleField, DescriptionField } from "@/features/content/core-fields";
+import { resolveToolRefs } from "@/lib/ai-tool-catalog";
+import { taxonomyPathLabel } from "@/lib/content-taxonomy";
 import { PresetCard } from "./preset-card";
 import { PresetParametersBuilder } from "./preset-parameters-builder";
 import type { ContentVisibility, Preset, PromptContentType } from "@/types";
+
+type ComposeSheetKey = "tags" | "tool" | "category";
 
 /**
  * Hazır Ayar create/edit form (`/presets/create`, `?edit=<id>`): name,
@@ -34,13 +37,14 @@ import type { ContentVisibility, Preset, PromptContentType } from "@/types";
  * recommended tool/model, parameters (the SAME catalog the Prompt form's "Ek
  * Ayar Önerileri" uses, shown for the chosen type/category), tags, cover and
  * and the shared footer (Görünürlük switch, Taslağa kaydet / Paylaş) with a
- * live `PresetCard` preview. Same two-column create layout as the request form.
+ * live `PresetCard` preview. Yazma ekranında yalnız başlık, açıklama, kapak ve parametreler durur; Kategori / Araç / Etiketler
+ * "Paylaşmadan önce" penceresindedir (docs/history/216-*, Prompt ve İstek'le aynı düzen).
  */
 export function PresetEditor({ editId }: { editId: string | null }) {
   const { t, language } = useTranslation();
   const router = useRouter();
   const returnToCommunity = useCommunityReturn();
-  const { communityId } = useCommunityContext();
+  const { communityId, name: communityName } = useCommunityContext();
   const { user, loading: authLoading } = useAuth();
   const { profile: ownProfile } = useOwnProfile();
   const { catalog } = useTagCatalog();
@@ -55,6 +59,7 @@ export function PresetEditor({ editId }: { editId: string | null }) {
   const [selection, setSelection] = useState<PresetSelection>({});
   const [cover, setCover] = useState<MultiImageItem[]>([]);
   const [visibility, setVisibility] = useState<ContentVisibility>("public");
+  const [sheet, setSheet] = useState<ComposeSheetKey | null>(null);
   const tagPicker = useTagPicker({ title, content: description, catalog });
   usePrefillTag(tagPicker.addManual, !editId);
   const tagsSeededRef = useRef(false);
@@ -224,6 +229,36 @@ export function PresetEditor({ editId }: { editId: string | null }) {
     ...(Object.keys(effectiveSelection).length === 0 ? [{ key: "fields", label: t("presetBuilder.errorNoFields") }] : []),
   ];
 
+  /** Tür değişince parametre katalogu da değişir: alanlar ve seçim sıfırlanır (eski davranış). */
+  function changeTaxonomy(next: { contentType: PromptContentType; category: string | null; subcategory: string | null }) {
+    if (next.contentType !== contentType) {
+      setFields([]);
+      setSelection({});
+    }
+    setContentType(next.contentType);
+    setCategory(next.category);
+    setSubcategory(next.subcategory);
+  }
+
+  const sheetTitle: Record<ComposeSheetKey, string> = {
+    tags: t("forms.tags"),
+    tool: t("formSection.tool"),
+    category: t("taxonomy.categoryLabel"),
+  };
+  const categoryPath = category ? taxonomyPathLabel({ contentType, category, subcategory }, language, false) : "";
+  const infoRows: PublishDetailRow[] = [
+    { key: "category", icon: Folder, label: t("taxonomy.categoryLabel"), value: categoryPath, onClick: () => setSheet("category") },
+    { key: "tool", icon: Cpu, label: t("formSection.tool"), value: resolveToolRefs(tools)[0]?.label, onClick: () => setSheet("tool") },
+    {
+      key: "tags",
+      icon: Hash,
+      label: t("forms.tags"),
+      value: tagPicker.accepted.length > 0 ? t("compose.tagCount", { count: tagPicker.accepted.length }) : undefined,
+      hint: tagPicker.suggested.length > 0 ? t("compose.suggestionCount", { count: tagPicker.suggested.length }) : undefined,
+      onClick: () => setSheet("tags"),
+    },
+  ];
+
   return (
     <ComposeShell
       title={editId ? t("preset.editTitle") : t("compose.newPreset")}
@@ -251,55 +286,44 @@ export function PresetEditor({ editId }: { editId: string | null }) {
           }}
           className="min-w-0 space-y-4"
         >
-          <FormSection title={t("taxonomy.categoryLabel")}>
-            <TaxonomyPicker
-              bare
-              value={{ contentType, category, subcategory }}
-              onChange={(next) => {
-                if (next.contentType !== contentType) {
-                  setFields([]);
-                  setSelection({});
-                }
-                setContentType(next.contentType);
-                setCategory(next.category);
-                setSubcategory(next.subcategory);
-              }}
-            />
-          </FormSection>
-
-          <FormSection title={t("formSection.basics")}>
-            <div className="space-y-4">
-              <TitleField
-                id="preset-title"
-                label={t("preset.titleLabel")}
-                value={title}
-                onChange={setTitle}
-                onBlur={() => setTitleTouched(true)}
-                placeholder={t("preset.titlePlaceholder")}
-                maxLength={120}
-                required
-                error={titleError ? t("preset.errorTitle") : null}
-              />
-
-              <DescriptionField
-                id="preset-desc"
-                label={t("preset.descriptionLabel")}
-                value={description}
-                onChange={setDescription}
-                placeholder={t("preset.descriptionPlaceholder")}
-                maxLength={1000}
-                optional
-              />
+          <ComposeBody
+            profile={ownProfile}
+            audienceLabel={communityId ? (communityName ?? t("compose.aCommunity")) : undefined}
+            onAudience={() => setPublishOpen(true)}
+            typeSlot={<ContentTypePicker value={contentType} onChange={(type) => changeTaxonomy({ contentType: type, category: null, subcategory: null })} />}
+          >
+            <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto]">
+              <div className="min-w-0 space-y-3">
+                <div className="space-y-1.5">
+                  <input
+                    id="preset-title"
+                    value={title}
+                    onChange={(event) => setTitle(event.target.value)}
+                    onBlur={() => setTitleTouched(true)}
+                    maxLength={120}
+                    placeholder={t("preset.titlePlaceholder")}
+                    aria-label={t("preset.titleLabel")}
+                    aria-invalid={titleError}
+                    className={composeTitleClassName}
+                  />
+                  {titleError && <p className="text-caption text-danger">{t("preset.errorTitle")}</p>}
+                </div>
+                <textarea
+                  id="preset-desc"
+                  value={description}
+                  onChange={(event) => setDescription(event.target.value)}
+                  maxLength={1000}
+                  rows={2}
+                  placeholder={t("preset.descriptionPlaceholder")}
+                  aria-label={t("preset.descriptionLabel")}
+                  className={composeBodyClassName}
+                />
+              </div>
+              <div className="sm:w-40">
+                <MultiImagePicker variant="strip" max={1} items={cover} onChange={setCover} hint="" />
+              </div>
             </div>
-          </FormSection>
-
-          <FormSection title={t("formSection.cover")}>
-            <MultiImagePicker items={cover} onChange={setCover} max={1} />
-          </FormSection>
-
-          <FormSection title={t("formSection.tool")}>
-            <ToolPicker value={tools} onChange={setTools} contentType={contentType} category={category} />
-          </FormSection>
+          </ComposeBody>
 
           <PresetParametersBuilder
             contentType={contentType}
@@ -314,11 +338,15 @@ export function PresetEditor({ editId }: { editId: string | null }) {
             }}
           />
 
-          <FormSection title={t("forms.tags")}>
-            <TagPicker picker={tagPicker} />
-          </FormSection>
-
         </form>
+
+      {sheet && (
+        <ComposeSheet id={sheet} title={sheetTitle[sheet]} onClose={() => setSheet(null)}>
+          {sheet === "tags" && <TagPicker picker={tagPicker} />}
+          {sheet === "tool" && <ToolPicker value={tools} onChange={setTools} contentType={contentType} category={category} />}
+          {sheet === "category" && <TaxonomyPicker bare value={{ contentType, category, subcategory }} onChange={changeTaxonomy} />}
+        </ComposeSheet>
+      )}
 
       {publishOpen && (
         <PublishSheet
@@ -332,6 +360,12 @@ export function PresetEditor({ editId }: { editId: string | null }) {
           visibility={visibility}
           onVisibilityChange={setVisibility}
           problems={problems}
+          details={
+            <>
+              <PublishDetailsSection title={t("compose.postInfo")} rows={infoRows} />
+              <SuggestedTagsRow picker={tagPicker} />
+            </>
+          }
           preview={
             <PublishPreview
               thumbnail={cover[0]?.url ?? null}
