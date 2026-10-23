@@ -112,3 +112,14 @@ Kullanıcının isteği: "Gönderi oluşturma ekranlarını standart paylaşım 
   - İstek: Referans · Yön · Etiket · Araç · Kategori · Yardım (isteğin "Referans görselden yardım"ı alt sayfada).
 - Diğer ekranlar (Workflow meta, Hazır ayar, değişken düzenleyici) bileşenlerin varsayılan biçimini kullanır, değişmedi.
 - **Sınama:** `run-create-destination` 15/15 (yeni 15. senaryo: düzen, araç sırası, Değişken ve Gelişmiş satırları), `run-community-posts` 36/36, `run-space-posts` 7/7, `run-detail-pages` 45/45, `npm test` 400/400; tsc / lint / build temiz. Gerçek cihazda denenmedi.
+
+## Düzeltme 2: iPhone klavyesinde araç çubuğu (kullanıcının iPhone ekran görüntüleri)
+
+**Sorun (gerçek iPhone'da görüldü):** Klavye açılınca üst çubuk (✕ · Paylaş) ekrandan kayıyor; `fixed` alt araç çubuğu ya ortada asılı kalıyor (klavye yokken bile) ya da yazının üstüne biniyordu. Sebep: iOS Safari klavye açılınca yerleşim alanını küçültmüyor, görünen alanı kaydırıyor; `visualViewport` ile elle hesaplanan kaydırma (`useKeyboardInset`) bu cihazda güvenilir çıkmadı.
+
+**Çözüm:**
+- Araç satırı artık `fixed` değil, sayfanın akışında yazının hemen altında (`ComposeToolbar`: sınırlı satır, dar ekranda yatay kayar). `ComposeShell`'den `toolbar` özelliği ve `useKeyboardInset` kaldırıldı; formlar satırı gövdeye kendisi koyar (Prompt: hazır ayar satırından sonra, görsel şeridinden önce; İstek: açıklamadan sonra).
+- Klavye hesabı yok: sayfa kayarken satır yazıyla birlikte kaydığı için bozulacak bir şey kalmadı.
+- Bilinçli bedel: uzun yazıda araçlar ekrandan çıkabilir (yukarı kaydırınca erişilir). "Sohbet gibi tam ekran kabuk" seçeneği de çizilmişti ama kullanıcı iPhone'da o yöntemde de (Mesajlar) sorun yaşadığını bildirdi, seçilmedi.
+- Üst çubuk hâlâ `sticky`; iOS klavye açıkken görünen alanı kaydırırsa geçici olarak ekran dışında kalabilir, klavye kapanınca döner.
+- Test: `run-create-destination` 13. senaryo artık araç satırının `position: static` olduğunu ve yazının hemen altında durduğunu doğrular (15/15), `run-community-posts` 36/36, `run-space-posts` 7/7. Gerçek iPhone'da yeniden denenmesi gerekir.

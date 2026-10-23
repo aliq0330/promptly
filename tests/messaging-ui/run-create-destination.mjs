@@ -267,10 +267,15 @@ await scenario("12. Hiç topluluğu olmayan kullanıcı: seçicide boş durum + 
   assert.equal(await field(page).getAttribute("data-audience-field"), "public");
 }, { setup: () => {} });
 
-await scenario("13. Mobil (390px): araç çubuğu altta ve görünür, seçenekler ≥44px, yatay taşma yok", async ({ page }) => {
+await scenario("13. Mobil (390px): araç satırı yazının hemen altında ve akışta (fixed değil), seçenekler ≥44px, yatay taşma yok", async ({ page }) => {
   await openForm(page);
-  const bar = await page.locator("[data-compose-toolbar]").boundingBox();
-  assert.ok(bar && bar.y + bar.height >= 844 - 2, `toolbar docks to the bottom (${JSON.stringify(bar)})`);
+  // iPhone klavyesi (docs/history/216-*): araç satırı sayfanın akışında; `fixed`/`sticky` değil, yazının hemen altında.
+  const bar = page.locator("[data-compose-toolbar]");
+  assert.equal(await bar.evaluate((el) => getComputedStyle(el).position), "static", "toolbar is a normal in-flow row");
+  const barBox = await bar.boundingBox();
+  const descBox = await page.locator("#request-description").boundingBox();
+  assert.ok(barBox && descBox && barBox.y >= descBox.y + descBox.height - 1 && barBox.y - (descBox.y + descBox.height) < 200, `toolbar sits right under the text (${JSON.stringify({ barBox, descBox })})`);
+  assert.ok(barBox.width <= 390, "toolbar stays inside the screen width");
   await fillRequest(page);
   if (process.env.SHOTS) await page.screenshot({ path: `${process.env.SHOTS}/cd-compose.png` });
   await openSheet(page);
