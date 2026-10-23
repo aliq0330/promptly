@@ -17,6 +17,7 @@ import { tokensToQuery, type SearchToken } from "./search-tokens";
 import { searchPromptsPage } from "@/lib/supabase/prompts";
 import { searchProfiles } from "@/lib/supabase/profiles";
 import { searchRequestsPage } from "@/lib/supabase/requests";
+import { SearchQuotes } from "@/features/quotes/search-quotes";
 import { searchWorkflowsPage } from "@/lib/supabase/workflows";
 import { WorkflowCard } from "@/features/workflows/workflow-card";
 import { searchPresetsPage } from "@/lib/supabase/presets";
@@ -82,6 +83,8 @@ export function SearchView({ idle }: { idle?: ReactNode } = {}) {
   const [communities, setCommunities] = useState<{ items: CommunitySummary[]; hasMore: boolean; failed: boolean }>({ items: [], hasMore: false, failed: false });
   const [loadingMoreCommunities, setLoadingMoreCommunities] = useState(false);
   const [tab, setTabState] = useState<SearchTab>("all");
+  // Alıntılar (docs/history/217-*): metin aramasında ayrı bir grup; bulunan sayı "sonuç yok" metnini etkiler.
+  const [quoteHits, setQuoteHits] = useState(0);
   const [retryKey, setRetryKey] = useState(0);
   const { node: toastNode, show: showToast } = useToast();
   const [isSearching, setIsSearching] = useState(false);
@@ -260,7 +263,8 @@ export function SearchView({ idle }: { idle?: ReactNode } = {}) {
     );
 
   const textOnly = !hasTokens;
-  const noPosts = prompts.length === 0 && workflows.length === 0 && presets.length === 0 && requests.length === 0;
+  const quoteTotal = textOnly && normalized.length >= 2 ? quoteHits : 0;
+  const noPosts = prompts.length === 0 && workflows.length === 0 && presets.length === 0 && requests.length === 0 && quoteTotal === 0;
   const nothingFound = noPosts && (!textOnly || (users.length === 0 && tags.length === 0 && communities.items.length === 0));
   const taxonomy: TaxonomyFilterValue = { contentType: singleMedia, category, subcategory };
   const showPosts = tab === "all" || tab === "posts";
@@ -471,6 +475,7 @@ export function SearchView({ idle }: { idle?: ReactNode } = {}) {
                 {loadMoreButton("prompt")}
               </section>
             )}
+            {textOnly && normalized.length >= 2 && <SearchQuotes query={normalized} onCount={setQuoteHits} />}
             {(tab === "posts" ? noPosts : nothingFound) && (
               <p className="py-6 text-center text-sm text-text-muted">
                 {hasTokens ? t("search.noMatchingFilters") : t("common.noResults")}

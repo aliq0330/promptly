@@ -73,6 +73,7 @@ export function AnnouncePicker({
   status,
   disabled,
   results,
+  hideNote = false,
 }: {
   value: AnnounceSelection;
   onChange: (next: AnnounceSelection) => void;
@@ -80,6 +81,8 @@ export function AnnouncePicker({
   status: "idle" | "loading" | "ready" | "error";
   disabled?: boolean;
   results?: AnnounceResult[] | null;
+  /** Not başka bir yerde yazılıyorsa (Alıntıla bölümü ortak notu kendi çizer). */
+  hideNote?: boolean;
 }) {
   const { t } = useTranslation();
   const resultOf = (id: string) => results?.find((result) => result.communityId === id);
@@ -147,74 +150,20 @@ export function AnnouncePicker({
           );
         })}
       </ul>
-      <label className="block">
-        <span className="sr-only">{t("communities.feed.noteLabel")}</span>
-        <textarea
-          value={value.note}
-          onChange={(event) => onChange({ ...value, note: event.target.value })}
-          rows={2}
-          maxLength={ANNOUNCE_NOTE_MAX}
-          disabled={disabled}
-          placeholder={t("share.announce.notePlaceholder")}
-          data-announce-note=""
-          className="w-full resize-none rounded-lg border border-border bg-surface px-3 py-2 text-small text-text placeholder:text-text-muted focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
-        />
-      </label>
-    </div>
-  );
-}
-
-/**
- * Paylaş penceresinin "Topluluklarda duyur" satırı: açılınca seçici + "N toplulukta duyur". `blockedReason` varsa (içerik herkese açık
- * değil) satır nedenini yazar ve açılmaz — topluluk paylaşımı hiçbir içeriği otomatik herkese açmaz.
- */
-export function AnnounceSection({ type, contentId, blockedReason }: { type: CommunityPostType; contentId: string; blockedReason?: string | null }) {
-  const { t } = useTranslation();
-  const [open, setOpen] = useState(false);
-  const [selection, setSelection] = useState<AnnounceSelection>({ communityIds: [], note: "" });
-  const [busy, setBusy] = useState(false);
-  const [results, setResults] = useState<AnnounceResult[] | null>(null);
-  const communities = useAnnounceCommunities(open);
-  const pending = selection.communityIds.filter((id) => !results?.some((result) => result.communityId === id && result.ok));
-
-  async function submit() {
-    if (pending.length === 0) return;
-    setBusy(true);
-    const names = new Map(communities.list.map((community) => [community.id, community.name]));
-    const next = await announceToCommunities(type, contentId, { ...selection, communityIds: pending }, names);
-    setResults((previous) => [...(previous ?? []).filter((old) => !next.some((result) => result.communityId === old.communityId)), ...next]);
-    setBusy(false);
-  }
-
-  return (
-    <div className="rounded-md border border-border" data-announce-section="">
-      <button
-        type="button"
-        onClick={() => !blockedReason && setOpen((value) => !value)}
-        aria-expanded={open}
-        disabled={Boolean(blockedReason)}
-        className="flex w-full items-center gap-3 p-3 text-left transition-colors hover:bg-accent-surface/50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
-      >
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary">
-          <Megaphone size={18} />
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="block text-sm font-semibold text-text">{t("share.announce.title")}</span>
-          <span className={cn("block text-xs", blockedReason ? "text-warning" : "text-text-muted")}>{blockedReason ?? t("share.announce.hint")}</span>
-        </span>
-      </button>
-      {open && !blockedReason && (
-        <div className="space-y-2 border-t border-border-soft p-3">
-          <AnnouncePicker value={selection} onChange={setSelection} communities={communities.list} status={communities.status} disabled={busy} results={results} />
-          {communities.status === "ready" && communities.list.length > 0 && (
-            <div className="flex justify-end">
-              <Button size="sm" onClick={() => void submit()} disabled={busy || pending.length === 0} data-announce-submit="">
-                {busy && <Loader2 size={14} className="animate-spin" aria-hidden />}
-                {t("share.announce.submit", { count: pending.length })}
-              </Button>
-            </div>
-          )}
-        </div>
+      {!hideNote && (
+        <label className="block">
+          <span className="sr-only">{t("communities.feed.noteLabel")}</span>
+          <textarea
+            value={value.note}
+            onChange={(event) => onChange({ ...value, note: event.target.value })}
+            rows={2}
+            maxLength={ANNOUNCE_NOTE_MAX}
+            disabled={disabled}
+            placeholder={t("share.announce.notePlaceholder")}
+            data-announce-note=""
+            className="w-full resize-none rounded-lg border border-border bg-surface px-3 py-2 text-small text-text placeholder:text-text-muted focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
+          />
+        </label>
       )}
     </div>
   );

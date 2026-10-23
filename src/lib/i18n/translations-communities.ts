@@ -319,7 +319,7 @@ export const communityTranslations = {
   "communities.post.new.title": { tr: "Hangi türde içerik oluşturacaksın?", en: "What kind of content will you create?" },
   "communities.post.new.help": { tr: "Seçtiğin türün oluşturma ekranı bu topluluk bağlamıyla açılır. Görünürlüğü orada seçersin.", en: "That type's creation screen opens in this community's context. You pick the visibility there." },
   "communities.post.back": { tr: "Geri", en: "Back" },
-  "communities.post.badge.application": { tr: "Duyuruldu", en: "Announced" },
+  "communities.post.badge.application": { tr: "Alıntı", en: "Quote" },
   "communities.post.linked.appliedLabel": { tr: "Başvurulan içerik", en: "Applied content" },
   "communities.post.linked.openOriginal": { tr: "Orijinal içeriği aç", en: "Open the original" },
   "communities.post.engage.joinToLike": { tr: "Gönderiyi beğenmek için topluluğa katıl.", en: "Join the community to like posts." },

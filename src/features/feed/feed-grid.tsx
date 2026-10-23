@@ -8,6 +8,7 @@ import { RequestCard } from "@/features/requests/request-card";
 import { WorkflowCard } from "@/features/workflows/workflow-card";
 import { PresetCard } from "@/features/presets/preset-card";
 import { SpaceFeedCardView } from "@/features/spaces/space-feed-card";
+import { QuoteCard } from "@/features/quotes/quote-card";
 import { AnnouncedProvider } from "@/features/communities/announced-chip";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { feedItemKey, type FeedItem } from "./types";
@@ -66,13 +67,15 @@ export function FeedGrid({
       <PresetCard preset={item.data} />
     ) : item.kind === "space" ? (
       <SpaceFeedCardView space={item.data} />
+    ) : item.kind === "quote" ? (
+      <QuoteCard quote={item.data} />
     ) : (
       <WorkflowCard workflow={item.data} />
     );
 
   // "Duyuruldu" çipleri (docs/history/215-*): görünen içeriklerin başvuru gönderileri tek istekte okunur.
   return (
-    <AnnouncedProvider entries={items.map((item) => ({ kind: item.kind, id: item.data.id }))}>
+    <AnnouncedProvider entries={items.flatMap((item) => (item.kind === "quote" ? [] : [{ kind: item.kind, id: item.data.id }]))}>
       <div ref={gridRef}>
         <ContentGrid columns={layout === "home" ? "sm:columns-2" : undefined}>
           {items.map((item, index) => (

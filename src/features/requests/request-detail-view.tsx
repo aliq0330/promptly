@@ -274,6 +274,7 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
               toolRefs={live.tools}
               legacyTool={live.preferredTool}
               hasChips={Boolean(live.contentType && live.category) || live.tags.length > 0}
+              quoteCount={live.quoteCount}
             >
               {live.contentType && <TaxonomyLinks className="contents" contentType={live.contentType} category={live.category} subcategory={live.subcategory} />}
               <DetailTags className="contents" tags={live.tags} />

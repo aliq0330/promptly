@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { LayoutGrid, Sparkles, SquareTerminal, SlidersHorizontal, Users, Workflow as WorkflowIcon } from "lucide-react";
+import { LayoutGrid, Quote as QuoteIcon, Sparkles, SquareTerminal, SlidersHorizontal, Users, Workflow as WorkflowIcon } from "lucide-react";
 import { Chip } from "@/components/ui/chip";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PromptCardSkeletonGrid } from "@/components/ui/prompt-card-skeleton";
@@ -23,7 +23,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import { SpacesIcon } from "@/features/spaces/space-visuals";
 import type { TranslationKey } from "@/lib/i18n/translations";
 
-type Section = "all" | "prompts" | "workflows" | "presets" | "requests" | "spaces" | "creators";
+type Section = "all" | "prompts" | "workflows" | "presets" | "requests" | "spaces" | "quotes" | "creators";
 
 const SECTIONS: { key: Section; labelKey: TranslationKey; icon: typeof LayoutGrid }[] = [
   { key: "all", labelKey: "common.all", icon: LayoutGrid },
@@ -33,6 +33,8 @@ const SECTIONS: { key: Section; labelKey: TranslationKey; icon: typeof LayoutGri
   { key: "requests", labelKey: "nav.requestsShort", icon: Sparkles },
   // Akışta gönderi olarak paylaşılmış Space'ler (docs/history/215-*).
   { key: "spaces", labelKey: "nav.spaces", icon: SpacesIcon },
+  // Alıntılar (docs/history/217-*): bir içeriğin notla alıntılanmış hâli, normal gönderi gibi.
+  { key: "quotes", labelKey: "quotes.discover.section", icon: QuoteIcon },
   { key: "creators", labelKey: "discover.creators", icon: Users },
 ];
 
@@ -44,6 +46,7 @@ const SECTION_KIND: Record<Exclude<Section, "creators">, FeedKind | "all"> = {
   presets: "preset",
   requests: "request",
   spaces: "space",
+  quotes: "quote",
 };
 
 /**
@@ -107,14 +110,14 @@ export function DiscoverFeed() {
         ariaLabel={t("discover.sectionsAriaLabel")}
         hideControls={isCreators}
         // Space'in türü/kategorisi yok: süzgeçler Spaces bölümünde çizilmez (sunucu da süzgeçli sorguda Space döndürmez).
-        chips={section === "spaces" ? undefined : <TaxonomyTypeChips value={taxonomy} onChange={setTaxonomy} />}
+        chips={section === "spaces" || section === "quotes" ? undefined : <TaxonomyTypeChips value={taxonomy} onChange={setTaxonomy} />}
         chipsLabel={t("toolbar.contentTypeAria")}
         sort={effectiveSort}
         onSortChange={setSort}
         sortKeys={sortKeys}
         sheetSections={
           <>
-            {section !== "spaces" && <TaxonomySheetSections value={taxonomy} onChange={setTaxonomy} />}
+            {section !== "spaces" && section !== "quotes" && <TaxonomySheetSections value={taxonomy} onChange={setTaxonomy} />}
             {section === "requests" && (
               <SheetSection title={t("toolbar.status")}>
                 <SheetChips>{openOnlyChips}</SheetChips>

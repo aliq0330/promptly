@@ -33,6 +33,8 @@ import { ProfilePresetsPanel } from "@/features/presets/profile-presets-panel";
 import type { Collection, Preset, Prompt, PromptContentType, PromptRequest, UserProfile, Workflow } from "@/types";
 import { CONTENT_GRID_ITEM_CLASS, ContentGrid, ContentGridColumns } from "@/features/content/content-card";
 import { ProfileSpacesPanel, usePublicSpaces, type PublicSpaces } from "@/features/spaces/public-spaces";
+import { ProfileQuotesPanel } from "@/features/quotes/profile-quotes-panel";
+import { fetchProfileQuoteCount } from "@/lib/supabase/quotes";
 
 function sortPrompts(prompts: Prompt[], sort: ProfileSortKey): Prompt[] {
   const sorted = [...prompts];
@@ -136,6 +138,16 @@ export function ProfileView({
   const publicSpaces = spacesOverride?.owner === user.id ? spacesOverride.data : fetchedSpaces;
   const spaceCount = publicSpaces?.spaces.length ?? 0;
 
+  // Alıntılar (docs/history/217-*): kişinin alıntıladığı gönderiler; hiç yoksa başkasının profilinde sekme yok (kendi profilinde boş durum + ipucu).
+  const [quoteCount, setQuoteCount] = useState(0);
+  useEffect(() => {
+    let cancelled = false;
+    fetchProfileQuoteCount(user.id).then((count) => !cancelled && setQuoteCount(count));
+    return () => {
+      cancelled = true;
+    };
+  }, [user.id]);
+
   const [activeTab, setActiveTab] = useState<ProfileTabKey>("prompts");
   const [activeType, setActiveType] = useState<PromptContentType | "all">("all");
   const [sort, setSort] = useState<ProfileSortKey>("newest");
@@ -163,6 +175,7 @@ export function ProfileView({
       { key: "workflows", label: t("nav.workflows"), count: postCounts.workflows },
       { key: "presets", label: t("nav.presets"), count: postCounts.presets },
     ];
+    if (quoteCount > 0 || isOwnProfile) base.push({ key: "quotes", label: t("quotes.profile.tab"), count: quoteCount > 0 ? quoteCount : undefined });
     if (isOwnProfile) {
       // Taslaklar (drafts) is owner-only, same as Kaydedilenler/Beğeniler —
       // RLS already hides draft rows from anyone else, this just keeps the
@@ -178,7 +191,7 @@ export function ProfileView({
     if (spaceCount > 0) base.push({ key: "spaces", label: t("spaces.discover.profileTab"), count: spaceCount });
     base.push({ key: "about", label: t("profile.tabAbout") });
     return base;
-  }, [postCounts, isOwnProfile, likedPrompts.length, publicCollections.length, spaceCount, t]);
+  }, [postCounts, quoteCount, isOwnProfile, likedPrompts.length, publicCollections.length, spaceCount, t]);
 
   const activeSource = useMemo(() => {
     switch (activeTab) {
@@ -300,6 +313,8 @@ export function ProfileView({
                   )}
                 </>
               )
+            ) : activeTab === "quotes" ? (
+              <ProfileQuotesPanel authorId={user.id} isOwn={isOwnProfile} />
             ) : activeTab === "presets" ? (
               <ProfilePresetsPanel ownerId={user.id} isOwn={isOwnProfile} created={presets} />
             ) : activeTab === "saved" ? (

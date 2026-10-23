@@ -25,6 +25,7 @@ export interface PresetRow {
   visibility: "public" | "private";
   community_id?: string | null;
   like_count: number | null;
+  quote_count?: number | null;
   comment_count: number | null;
   save_count: number | null;
   created_at: string;
@@ -35,7 +36,7 @@ export interface PresetRow {
 
 export const PRESET_SELECT = `
   id, creator_id, title, description, cover_url, content_type, category, subcategory, tools, selection, status, visibility, community_id,
-  like_count, comment_count, save_count, created_at, updated_at,
+  like_count, comment_count, save_count, quote_count, created_at, updated_at,
   profiles:creator_id ( ${PROFILE_SELECT} ),
   preset_tags ( tags ( slug, label ) )
 `;
@@ -57,6 +58,7 @@ export function mapPresetRow(row: PresetRow): Preset {
     visibility: row.visibility,
     communityId: row.community_id ?? null,
     likeCount: row.like_count ?? 0,
+    quoteCount: row.quote_count ?? 0,
     commentCount: row.comment_count ?? 0,
     saveCount: row.save_count ?? 0,
     tags: (row.preset_tags ?? []).map((pt): Tag => ({ slug: pt.tags.slug, label: pt.tags.label })),

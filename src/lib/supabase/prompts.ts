@@ -36,6 +36,8 @@ export interface PromptRow {
   like_count: number;
   save_count: number;
   comment_count: number;
+  /** Absent on rows read before migration 20260921160000. */
+  quote_count?: number | null;
   /** Absent on rows read before migration 20260919850000 reached the database. */
   copy_count?: number | null;
   created_at: string;
@@ -63,7 +65,7 @@ export interface PromptRow {
 export const PROMPT_SELECT = `
   id, title, description, prompt_text, tool, tools, content_type, category, subcategory, status,
   origin_type, request_id,
-  like_count, save_count, comment_count, copy_count, created_at, show_on_profile, requires_reference_image, requires_reference_video, requires_reference_audio, visibility,
+  like_count, save_count, comment_count, copy_count, quote_count, created_at, show_on_profile, requires_reference_image, requires_reference_video, requires_reference_audio, visibility,
   deleted_at, community_id,
   profiles:author_id ( id, username, display_name, avatar_url, cover_url, bio, website, follower_count, following_count, created_at, interests ),
   prompt_media ( id, url, width, height, alt, position, dominant_color, placeholder ),
@@ -138,6 +140,7 @@ export function mapPromptRow(row: PromptRow): Prompt {
     tags,
     origin: mapOrigin(row),
     likeCount: row.like_count,
+    quoteCount: row.quote_count ?? 0,
     saveCount: row.save_count,
     commentCount: row.comment_count,
     copyCount: row.copy_count ?? 0,

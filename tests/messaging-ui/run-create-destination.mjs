@@ -201,7 +201,7 @@ await scenario("9. Topluluklarda da duyur: iki topluluk + not, cümle sayıyı s
   await page.locator(`[data-announce-community='${A}']`).click();
   await page.locator(`[data-announce-community='${C}']`).click();
   await page.locator("[data-announce-note]").fill("Yeni isteğim");
-  assert.match(await summary(page).innerText(), /2 toplulukta duyurulacak/);
+  assert.match(await summary(page).innerText(), /2 toplulukta alıntılanacak/);
   assert.equal(calls(db, "share_to_community").length, 0, "nothing is announced before the content exists");
   if (process.env.SHOTS) await page.screenshot({ path: `${process.env.SHOTS}/cd-publish-sheet.png` });
   await publish(page).click();
@@ -213,8 +213,8 @@ await scenario("9. Topluluklarda da duyur: iki topluluk + not, cümle sayıyı s
   assert.deepEqual(shared.map((c) => c.body.p_group_id).sort(), [A, C].sort());
   const report = page.locator("[data-announce-report]");
   await report.waitFor();
-  assert.match(await report.innerText(), /Duyuruldu: Açık Topluluk/);
-  assert.match(await report.innerText(), /Şu topluluklarda duyurulamadı/);
+  assert.match(await report.innerText(), /Alıntılandı: Açık Topluluk/);
+  assert.match(await report.innerText(), /Şu topluluklarda alıntılanamadı/);
   assert.match(await report.innerText(), /Yönetim Alanı/);
   assert.equal(db.posts.filter((p) => p.kind === "application").length, 1);
   await report.getByRole("button", { name: "Kapat" }).click();
@@ -299,7 +299,7 @@ await scenario("14. İngilizce: yazma ekranı, son kontrol ve ✕ penceresi çev
   assert.match(await option(page, "private").textContent(), /Only me/);
   assert.match(await option(page, "community").textContent(), /A community/);
   assert.match(await summary(page).innerText(), /Everyone can see it/);
-  await page.getByText("Also announce in communities").waitFor();
+  await page.getByText("Also quote in communities").waitFor();
   await page.locator("[data-publish-problem=title]").getByText(/title/i).waitFor();
   await page.keyboard.press("Escape");
   await page.locator("#request-title").fill("Draft");

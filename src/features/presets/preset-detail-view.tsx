@@ -103,7 +103,7 @@ export function PresetDetailView({ presetId }: { presetId?: string } = {}) {
   const aside = (
     <DetailAside>
       <AsideSection id="detail-about-title" title={t("profile.tabAbout")} bare>
-          <DetailMetaCard toolLabel={t("tool.recommendedLabel")} toolRefs={preset.tools} fallbackTool={t("preset.generalTool")} hasChips={preset.tags.length > 0}>
+          <DetailMetaCard toolLabel={t("tool.recommendedLabel")} toolRefs={preset.tools} fallbackTool={t("preset.generalTool")} hasChips={preset.tags.length > 0} quoteCount={preset.quoteCount}>
             <DetailTags className="contents" tags={preset.tags} />
           </DetailMetaCard>
       </AsideSection>

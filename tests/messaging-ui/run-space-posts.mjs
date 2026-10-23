@@ -185,7 +185,7 @@ await scenario("4. Sahip: Paylaş tek pencere — 'Akışta gönderi olarak payl
   assert.ok(db.spaces.find((s) => s.id === SID(2)).shared_at);
   assert.equal(rpcCalls(db, "set_space_shared").at(-1).body.p_shared, true);
   // Duyur satırı ve "Kendin için" bölümü aynı pencerede.
-  await page.locator("[data-announce-section]").waitFor();
+  await page.locator("[data-quote-section]").waitFor();
   await page.waitForTimeout(400);
   await shot(page, "sp-share-modal");
 });
@@ -201,7 +201,7 @@ await scenario("5. Oluştur menüsü: 'Space' karosu Spaces'te oluşturma pencer
   await page.getByRole("tab", { name: "Space" }).click().catch(() => page.getByRole("button", { name: "Space", exact: true }).click());
   await page.locator("[data-share-existing-item]").first().waitFor();
   await page.locator("[data-share-existing-item]").first().click();
-  await page.locator("[data-share-existing] [data-announce-section]").waitFor();
+  await page.locator("[data-share-existing] [data-quote-section]").waitFor();
   assert.equal(await overflowFree(page), true);
 });
 
@@ -209,7 +209,7 @@ await scenario("6. Genel akış: duyurulmuş içeriğin kartında 'X topluluğun
   await openNewest(page);
   const prompt = page.locator("main article").filter({ hasText: "Duyurulmuş prompt" }).first();
   await prompt.locator("[data-announced-chip]").waitFor();
-  assert.match(await prompt.locator("[data-announced-chip]").innerText(), /Işık Kulübü topluluğunda duyuruldu/);
+  assert.match(await prompt.locator("[data-announced-chip]").innerText(), /Işık Kulübü topluluğunda alıntılandı/);
   await spaceCard(page).waitFor();
   assert.equal(await spaceCard(page).locator("[data-announced-chip]").count(), 0);
   assert.equal(state.announcedQueries, 1, "one batched query for the visible page");
@@ -221,7 +221,7 @@ await scenario("7. İngilizce + telefon: Space kartı ve Spaces bölümü çevri
   await card.waitFor();
   await card.getByRole("link", { name: "Browse board" }).waitFor();
   const prompt = page.locator("main article").filter({ hasText: "Duyurulmuş prompt" }).first();
-  await prompt.getByText("Announced in Işık Kulübü").waitFor();
+  await prompt.getByText("Quoted in Işık Kulübü").waitFor();
   await card.scrollIntoViewIfNeeded();
   await page.waitForTimeout(600);
   await shot(page, "sp-mobile-card");

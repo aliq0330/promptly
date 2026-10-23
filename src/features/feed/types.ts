@@ -8,13 +8,14 @@ import type { FeedEntry } from "@/lib/supabase/feed";
 export type FeedItem = FeedEntry;
 
 /**
- * A content post (prompt, request, workflow, preset) — every feed slot except a shared Space (docs/history/215-*). Odak and the
- * Izgara view draw posts only: a Space is a project with its own page, not a single output to play full screen.
+ * A content post (prompt, request, workflow, preset) — every feed slot except a shared Space (docs/history/215-*) and a quote
+ * (docs/history/217-*). Odak and the Izgara view draw posts only: a Space is a project with its own page and a quote is a
+ * note about another post, not a single output to play full screen.
  */
-export type PostFeedItem = Exclude<FeedItem, { kind: "space" }>;
+export type PostFeedItem = Exclude<FeedItem, { kind: "space" | "quote" }>;
 
 export function isPostItem(item: FeedItem): item is PostFeedItem {
-  return item.kind !== "space";
+  return item.kind !== "space" && item.kind !== "quote";
 }
 
 export function feedItemKey(item: FeedItem): string {

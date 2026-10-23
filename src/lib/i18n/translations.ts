@@ -19,6 +19,7 @@
 import { communityTranslations } from "./translations-communities";
 import { storyTranslations } from "./translations-stories";
 import { spaceTranslations } from "./translations-spaces";
+import { quoteTranslations } from "./translations-quotes";
 
 export const translations = {
   // ---- Primary navigation (desktop sidebar) ----
@@ -960,14 +961,14 @@ export const translations = {
   "share.sendAsMessageHint": { tr: "Bir kullanıcıya veya gruba doğrudan gönder", en: "Send it directly to a user or group" },
   "share.shareElsewhere": { tr: "Diğer uygulamalarla paylaş", en: "Share with other apps" },
   "share.shareElsewhereHint": { tr: "Linki kopyala veya farklı uygulamalarda paylaş", en: "Copy the link or share it in another app" },
-  "share.announce.title": { tr: "Topluluklarda duyur", en: "Announce in communities" },
+  "share.announce.title": { tr: "Topluluklarda alıntıla", en: "Quote in communities" },
   "share.announce.hint": { tr: "Üyesi olduğun topluluklarda gönderi olarak göster (içerik kopyalanmaz)", en: "Show it as a post in communities you're in (it isn't copied)" },
-  "share.announce.notPublic": { tr: "Duyurmak için önce herkese açık yayınla", en: "Publish it publicly first to announce it" },
-  "share.announce.spaceNotPublic": { tr: "Duyurmak için Space herkese açık olmalı", en: "The Space must be public to announce it" },
+  "share.announce.notPublic": { tr: "Alıntılamak için önce herkese açık yayınla", en: "Publish it publicly first to quote it" },
+  "share.announce.spaceNotPublic": { tr: "Alıntılamak için Space herkese açık olmalı", en: "The Space must be public to quote it" },
   "share.announce.noCommunities": { tr: "Henüz bir topluluğa üye değilsin.", en: "You're not in any community yet." },
   "share.announce.notePlaceholder": { tr: "Not ekle (isteğe bağlı)", en: "Add a note (optional)" },
-  "share.announce.submit": { tr: "{{count}} toplulukta duyur", en: "Announce in {{count}} communities" },
-  "share.announce.done": { tr: "Duyuruldu", en: "Announced" },
+  "share.announce.submit": { tr: "{{count}} toplulukta alıntıla", en: "Quote in {{count}} communities" },
+  "share.announce.done": { tr: "Alıntılandı", en: "Quoted" },
   "share.forYourself": { tr: "Kendin için", en: "For yourself" },
   "share.addToSpace": { tr: "Space'e ekle", en: "Add to Space" },
   "share.saveToCollection": { tr: "Koleksiyona kaydet", en: "Save to a collection" },
@@ -2383,7 +2384,7 @@ export const translations = {
   "create.spaceBody": { tr: "Görselleri, promptları, notları ve paletleri bir yaratıcı projede topla; istersen akışta paylaş.", en: "Gather images, prompts, notes and palettes into a creative project; share it in the feed if you like." },
   "create.spaceHint": { tr: "Pano · Palet · Notlar", en: "Board · Palette · Notes" },
   "create.shareExistingTitle": { tr: "Var olan içeriği paylaş", en: "Share existing content" },
-  "create.shareExistingBody": { tr: "Yayındaki bir içeriğini ya da Space'ini topluluklarda duyur.", en: "Announce one of your published posts or Spaces in communities." },
+  "create.shareExistingBody": { tr: "Yayındaki bir içeriğini ya da Space'ini alıntıla: akışta ve topluluklarda.", en: "Quote one of your published posts or Spaces in the feed and in communities." },
   "createMenu.prompt": { tr: "Prompt", en: "Prompt" },
   "createMenu.request": { tr: "İstek", en: "Request" },
   "createMenu.requestHint": { tr: "Topluluktan bir prompt iste", en: "Ask the community for a prompt" },
@@ -2437,12 +2438,12 @@ export const translations = {
   "compose.typeSub.audio": { tr: "Müzik, ses efekti, konuşma", en: "Music, sound effects, speech" },
   "compose.typeSub.video": { tr: "Video üreten promptlar", en: "Prompts that make video" },
   "compose.untitledWorkflow": { tr: "Adsız workflow", en: "Untitled workflow" },
-  "shareExisting.help": { tr: "Yalnız herkese açık ve yayında olan içeriklerin listelenir; duyurmak içeriği kopyalamaz.", en: "Only your public, published content is listed; announcing doesn't copy it." },
+  "shareExisting.help": { tr: "Yalnız herkese açık ve yayında olan içeriklerin listelenir; alıntılamak içeriği kopyalamaz.", en: "Only your public, published content is listed; quoting doesn't copy it." },
   "shareExisting.open": { tr: "İçeriği aç", en: "Open content" },
-  "announced.in": { tr: "{{name}} topluluğunda duyuruldu", en: "Announced in {{name}}" },
-  "announced.inMany": { tr: "{{count}} toplulukta duyuruldu", en: "Announced in {{count}} communities" },
-  "announceReport.ok": { tr: "Duyuruldu: {{names}}", en: "Announced in: {{names}}" },
-  "announceReport.failed": { tr: "Şu topluluklarda duyurulamadı:", en: "Couldn't announce in:" },
+  "announced.in": { tr: "{{name}} topluluğunda alıntılandı", en: "Quoted in {{name}}" },
+  "announced.inMany": { tr: "{{count}} toplulukta alıntılandı", en: "Quoted in {{count}} communities" },
+  "announceReport.ok": { tr: "Alıntılandı: {{names}}", en: "Quoted in: {{names}}" },
+  "announceReport.failed": { tr: "Şu topluluklarda alıntılanamadı:", en: "Couldn't quote in:" },
   "publish.whoSees": { tr: "Kim görsün?", en: "Who can see it?" },
   "publish.public": { tr: "Herkese açık", en: "Public" },
   "publish.publicHint": { tr: "Ana Sayfa'da, Keşfet'te ve profilinde görünür", en: "Shows on Home, Explore and your profile" },
@@ -2450,10 +2451,10 @@ export const translations = {
   "publish.privateHint": { tr: "Yalnızca sen görebilirsin", en: "Only you can see it" },
   "publish.community": { tr: "Sadece bir topluluk", en: "Only a community" },
   "publish.communityHint": { tr: "Topluluğa özgü olur; profilinde ve Keşfet'te görünmez", en: "Belongs to the community; not on your profile or Explore" },
-  "publish.announceTitle": { tr: "Topluluklarda da duyur", en: "Also announce in communities" },
+  "publish.announceTitle": { tr: "Topluluklarda da alıntıla", en: "Also quote in communities" },
   "publish.announceHint": { tr: "İsteğe bağlı: içerik herkese açık kalır, seçtiğin topluluklarda gönderi olarak da görünür", en: "Optional: it stays public and also shows as a post in the communities you pick" },
   "publish.summary.public": { tr: "Herkes görebilecek: Ana Sayfa'da, Keşfet'te ve profilinde yer alacak.", en: "Everyone can see it: it will be on Home, Explore and your profile." },
-  "publish.summary.publicAnnounce": { tr: "Herkes görebilecek ve {{count}} toplulukta duyurulacak.", en: "Everyone can see it, and it will be announced in {{count}} communities." },
+  "publish.summary.publicAnnounce": { tr: "Herkes görebilecek ve {{count}} toplulukta alıntılanacak.", en: "Everyone can see it, and it will be quoted in {{count}} communities." },
   "publish.summary.private": { tr: "Yalnızca sen göreceksin; akışta ve profilinde görünmez.", en: "Only you will see it; it won't be in the feed or on your profile." },
   "publish.summary.community": { tr: "{{name}} topluluğuna ait olacak: yalnız o topluluğu görebilenler görür.", en: "It will belong to {{name}}: only people who can see that community will see it." },
   "publish.changeCommunity": { tr: "Topluluğu değiştir", en: "Change community" },
@@ -3085,6 +3086,7 @@ export const translations = {
   ...communityTranslations,
   ...spaceTranslations,
   ...storyTranslations,
+  ...quoteTranslations,
 } as const satisfies Record<string, { tr: string; en: string }>;
 
 export type TranslationKey = keyof typeof translations;

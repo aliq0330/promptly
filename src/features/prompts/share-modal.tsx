@@ -19,13 +19,16 @@ import { CONTENT_TYPE_META } from "./content-type-meta";
 import { shareOrCopyLink } from "./share-button";
 import type { Preset, Prompt, PromptRequest, PromptResult, StoryLinkedType, Workflow } from "@/types";
 import { StorageBackground } from "@/components/ui/storage-media";
-import { AnnounceSection } from "@/features/communities/announce-picker";
+import { QuoteSection } from "@/features/quotes/quote-section";
 import { SaveToCollectionModal } from "@/features/collections/save-to-collection-modal";
 import { AddToSpaceModal, type AddToSpaceTarget } from "@/features/spaces/add-to-space-modal";
 import { SpaceShareSettings } from "@/features/spaces/space-modals";
 import { SPACE_KIND_LABEL, spaceHref } from "@/lib/spaces";
 import type { Space } from "@/lib/supabase/spaces";
 import type { CommunityPostType } from "@/lib/supabase/communities";
+import { summarizeContent } from "@/features/communities/content-summary";
+import { quoteHref } from "@/lib/quotes";
+import type { Quote } from "@/lib/supabase/quotes";
 
 export type ShareModalTarget =
   | { contentType: "prompt"; prompt: Prompt }
@@ -39,7 +42,9 @@ export type ShareModalTarget =
    * Bir Space (docs/history/215-*). Sahibi aynı pencerede "Kim görsün?" + "Akışta gönderi olarak paylaş" ayarlarını da görür
    * (`SpaceShareSettings`); `art` önizleme kolajının ilk görseli için, `onChanged` sayfanın Space durumunu güncel tutar.
    */
-  | { contentType: "space"; space: Space; art?: string[]; onChanged?: (space: Space) => void };
+  | { contentType: "space"; space: Space; art?: string[]; onChanged?: (space: Space) => void }
+  /** Bir içeriğin ALINTISI (docs/history/217-*): bağlantı alıntının kendi sayfasıdır. */
+  | { contentType: "quote"; quote: Quote };
 
 interface SharePreview {
   id: string;
@@ -150,6 +155,22 @@ function getSharePreview(target: ShareModalTarget, t: (key: TranslationKey) => s
       storyLink: null,
     };
   }
+  if (target.contentType === "quote") {
+    const quote = target.quote;
+    const summary = quote.content ? summarizeContent(quote.content) : null;
+    return {
+      id: quote.id,
+      title: summary?.title ?? t("quotes.badge"),
+      description: quote.note ?? summary?.description ?? "",
+      thumbnailUrl: summary?.media[0]?.url ?? null,
+      badgeLabel: summary ? `${t("quotes.badge")} · ${t(summary.typeLabelKey)}` : t("quotes.badge"),
+      badgeVariant: "neutral",
+      href: quoteHref(quote.id),
+      messageParam: null,
+      directLink: true,
+      storyLink: null,
+    };
+  }
   if (target.contentType === "community_post") {
     return {
       id: target.postId,
@@ -181,7 +202,7 @@ function getSharePreview(target: ShareModalTarget, t: (key: TranslationKey) => s
 }
 
 /**
- * "Topluluklarda duyur" hedefi: yalnız topluluğa ait OLMAYAN içerik; herkese açık + yayında değilse satır nedeniyle kapalı durur
+ * "Alıntıla" hedefi (akışta + topluluklarda; eskiden "Topluluklarda duyur"): yalnız topluluğa ait OLMAYAN içerik; herkese açık + yayında değilse satır nedeniyle kapalı durur
  * (topluluk paylaşımı hiçbir içeriği otomatik açmaz). Sonuç ve topluluk gönderisi duyurulamaz.
  */
 function announceTarget(target: ShareModalTarget, space: Space | null): { type: CommunityPostType; id: string; blockedKey: TranslationKey | null } | null {
@@ -340,7 +361,7 @@ export function ShareModal({ target, onClose }: { target: ShareModalTarget; onCl
         )}
 
         <div className="mt-4 space-y-2">
-          {announce && <AnnounceSection type={announce.type} contentId={announce.id} blockedReason={announce.blockedKey ? t(announce.blockedKey) : null} />}
+          {announce && <QuoteSection type={announce.type} contentId={announce.id} blockedReason={announce.blockedKey ? t(announce.blockedKey) : null} />}
           {user && preview.messageParam && (
             <Link
               href={`/messages?${preview.messageParam}`}

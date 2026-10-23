@@ -3,21 +3,23 @@ import { batcherRegistry } from "./batched-lookup";
 
 /**
  * `prompt_likes` holds likes for several content types — a nullable
- * `prompt_id`, `request_id`, `result_id`, `workflow_id`, `preset_id`, `community_post_id` OR `space_id`,
+ * `prompt_id`, `request_id`, `result_id`, `workflow_id`, `preset_id`, `community_post_id`, `space_id` OR `quote_id`,
  * exactly one of them (DB-level CHECK). The table's own name stayed `prompt_likes`
  * (same reasoning `prompt_comments` already accepted for holding request/
  * result comments too — renaming a live table is a bigger, riskier
  * migration than the naming mismatch is worth).
  */
-export type LikeableContentType = "prompt" | "request" | "prompt_result" | "workflow" | "preset" | "community_post" | "space";
+export type LikeableContentType = "prompt" | "request" | "prompt_result" | "workflow" | "preset" | "community_post" | "space" | "quote";
 
 /** `community_post` = bir topluluk gönderisinin KENDİ beğenisi: işaret ettiği içeriğin beğeni sayısından bağımsızdır. */
 function targetColumn(
   contentType: LikeableContentType,
-): "prompt_id" | "request_id" | "result_id" | "workflow_id" | "preset_id" | "community_post_id" | "space_id" {
+): "prompt_id" | "request_id" | "result_id" | "workflow_id" | "preset_id" | "community_post_id" | "space_id" | "quote_id" {
   if (contentType === "community_post") return "community_post_id";
   // Akışta paylaşılmış Space (docs/history/215-*): yalnız herkese açık + paylaşılmış Space beğenilir (sunucu tetikleyicisi denetler).
   if (contentType === "space") return "space_id";
+  // Bir içeriğin alıntısı (docs/history/217-*): alıntının KENDİ beğenisi, alıntılanan içeriğin beğenisinden bağımsızdır.
+  if (contentType === "quote") return "quote_id";
   if (contentType === "preset") return "preset_id";
   if (contentType === "workflow") return "workflow_id";
   if (contentType === "request") return "request_id";

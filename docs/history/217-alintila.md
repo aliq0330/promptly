@@ -1,0 +1,34 @@
+# 217 — Alıntıla (normal akışta "duyur")
+
+**Durum:** Aşama A (veritabanı), B (akış kartı, Alıntıla penceresi, alıntı sayfası) ve C (profil/Keşfet/arama/bildirim metni/adlandırma) tamam. Migration durumu en altta.
+
+## İstek ve kararlar
+Kullanıcı: topluluktaki "duyur" mantığı topluluğa bağlı olmadan **normal paylaşım** olarak da yapılabilsin; adı **"Alıntıla"** olsun (topluluklarda da: "Topluluklarda alıntıla"). Alıntı bir gönderi gibi davransın: akışta, Keşfet'te, aramada, profilde ("Alıntılar" sekmesi); kendi beğeni/yorum/istatistiği olsun. Beş tür: Prompt, İstek, Workflow, Hazır ayar, Space. Varsayılanlar (kullanıcı "tamam" dedi): başkasının içeriği de alıntılanabilir (alıntılanan kişiye bildirim, engel iki yönlü); yalnız yayında + herkese açık, topluluğa ait olmayan içerik; aynı içerik günde bir; günde en çok 30; "Sana özel" ve Odak ilk sürümde alıntı almaz; alıntıyı kaydetme yok; Space'in "Akışta gönderi olarak paylaş" anahtarı ilk sürümde YERİNDE kalır (birleştirme ayrı adım).
+
+**Neden yeni tablo:** `community_posts` genişletilmedi — `community_id` zorunlu; okuma kuralları (`can_read_community`), benzersiz dizinler, görülmemiş sayaçları, sabitleme, topluluk ana sayfası RPC'leri ve 100'lerce SQL kontrolü topluluğa bağlı. Topluluktaki başvuru gönderisi olduğu gibi kalır (yalnız arayüz adı "alıntıla" olur); normal akış için `content_quotes`.
+
+## Veritabanı (aşama A) — `20260921160000_content_quotes.sql`
+- `content_quotes`: alıntılayan + hedef (5 hedef sütunu, tam biri dolu, `target_id` üretilmiş sütun) + not (≤500) + korumalı `like_count`/`comment_count`. Okuma politikası: hedef halka açık (`quote_target_ok`) ve alıntılayanla engel yok → hedef gizlenir/taslağa dönerse alıntı da görünmez, geri gelirse geri gelir. İstemci yazamaz (insert/update yetkisi yok); alıntıyı yalnız sahibi siler.
+- `create_quote(p_content_type, p_content_id, p_note)`: TEK yazma yolu — oturum, `posting_blocked`, tür, not ≤500, yayında+herkese açık+topluluğa ait değil (Space: herkese açık + arşivsiz), başkasının özel içeriği `content_not_found` (varlık sızmaz), engel, aynı içerik 24 saatte bir (`already_quoted`), günde 30 (`quote_rate_limit`), eşzamanlılık için `pg_advisory_xact_lock`.
+- Orijinallerde korumalı `quote_count` (prompts, prompt_requests, workflows, presets, spaces; ayrı tek sütunlu `protect_counter_columns` tetikleyicileri), `handle_quote_count_change`.
+- `prompt_likes`/`prompt_comments`: sekizinci hedef `quote_id` (CHECK yeniden tanımı), tekil dizin, `enforce_quote_engagement` (oturum, hedef halka açık, engel, yanıt aynı alıntıda), sayaç tetikleyicileri (hedef zinciri açık), okuma/yazma politikaları, `handle_comment_delete` (alıntı silinirken yumuşak silme devre dışı).
+- Bildirimler: yeni tür `quote` ("İçeriğini alıntıladı: …", içerik sahibine), alıntı beğenisi, alıntı yorumu/yanıtı, yorum beğenisi ve @bahsetme alıntı adresiyle (`/quotes/local?id=`); alıntı silinince bildirimleri de gider. Genel `notify_comment_reply` alıntıyı kendi fonksiyonuna bırakır (adressiz bildirim üretmesin).
+- `content_engagers('quote', …)` (beğenenler / yorum yapanlar; kaydedenler boş), `reports` hedef türü `quote` (kaldırma = alıntıyı siler), `moderation_report_queue` alıntıyı gösterir.
+- Akış/profil/arama: `feed_page` (aynı 13 argümanlı imza) `kind='quote'` döndürür — zaman = alıntı anı, popülerlik = beğeni; etiket/kategori/araç/tür süzgeci ve "etiketlerim" kapsamında alıntı yok (Space'teki kural); `quote_feed_cards`, `profile_quotes_page`, `profile_quote_count`, `search_quotes` (hepsi INVOKER).
+- `drop` yalnız CHECK yeniden tanımları: `prompt_likes_exactly_one_target`, `prompt_comments_exactly_one_target`, `reports_target_type_check`, `notifications_type_check` (215'teki gibi; veri silinmez). **Canlıya uygulamadan önce kullanıcı onayı.**
+
+## Test
+`supabase/tests/quotes.sql` yerel PostgreSQL'de **47/47**; diğer 23 SQL dosyası temiz veritabanında `FAILED=0`. Mutasyon denemesi: okuma politikası `true`, etkileşim kuralı boş, sayaç tetikleyicisi boş, topluluk içeriği alınabilir yapıldığında ilgili kontroller kırmızıya döner.
+Gerçek Supabase'e / oturuma karşı DENENMEDİ.
+
+## İstemci (aşama B + C)
+- **Veri katmanı:** `lib/supabase/quotes.ts` (`Quote`, `fetchQuotesByIds`, `fetchQuoteById`, `createQuote`, `deleteQuote`, `fetchProfileQuotes`, `fetchProfileQuoteCount`, `searchQuotes`, hata eşleme `toQuoteError`); `lib/quotes.ts` `quoteHref` (`/quotes/local?id=`). Beğeni/yorum/istatistik/şikâyet katmanları `quote` hedefini tanır (`quote_id`); orijinallerde `quoteCount` ("N kez alıntılandı", `DetailMetaCard`).
+- **Akış:** `FeedEntry` birleşimine `{kind:"quote"}`; `feed_page` `kind='quote'` hidratlanır. `PostEntry`/`isPostItem` Space gibi alıntıyı da dışlar (Odak, Sana özel, Izgara). Kart `QuoteCard` (`ContentCardPost` kabuğu: not + alıntılanan içeriğin kartı; sayaçlar ALINTININ), ⋮ menüsü `QuoteMenu` (sil / şikâyet / bağlantı).
+- **Alıntıla penceresi:** `QuoteSection` (`share-modal`, `share-existing-modal`) eski `AnnounceSection`'ın yerini aldı: tek not + "Akışta" seçeneği + çoklu topluluk (`AnnouncePicker hideNote`). Akış → `createQuote`, topluluklar → `announceToCommunities` (başvuru gönderisi); hedef başına sonuç, sessiz başarı yok. Yayın adımındaki "Topluluklarda da alıntıla" aynı depo/rapor (`AnnounceReportNotice`).
+- **Sayfa ve yüzeyler:** `/quotes/local?id=` (`QuotePage`: alıntılayan + not, orijinal özeti, `QuoteEngagement` — `LikeButton contentType="quote"`, `CommentSection target={{quoteId}}`), profilde "Alıntılar" sekmesi (`ProfileQuotesPanel`), Keşfet'te "Alıntılar" bölümü (`p_kinds=['quote']`), aramada "Alıntılar" grubu (`SearchQuotes`), bildirim türü `quote` (Gönderiler kategorisi), moderasyon kuyruğunda alıntı.
+- **Adlandırma:** her yerde "duyur…" → "alıntıla…" / "Alıntı" (TR+EN; `share.announce.*`, `announced.*`, `announceReport.*`, `publish.*`, topluluk başvuru rozeti). Topluluk **Duyurular** (yönetimin yazdığı) ayrı bir özellik, dokunulmadı.
+- **İngilizce karşılıklar eklendi:** evet — `lib/i18n/translations-quotes.ts` (`{tr,en}`), `notifMsg.quotedContent/likedQuote/commentedQuote`, `notification-message.ts` kalıpları.
+- **Test:** `tests/messaging-ui/run-quotes.mjs` (11 senaryo: kart, pencere, sayfa, beğeni/yorum, silme, profil, Keşfet, arama), `src/lib/quotes.test.ts`; adlandırma değişen eski paketler (`run-space-posts`, `run-community-posts`, `run-create-destination`) güncellendi.
+
+## Sınırlar
+Gerçek Supabase'e / oturuma / cihaza karşı DENENMEDİ (ağ taklitli Playwright + yerel PostgreSQL). "Sana özel" ve Odak alıntı almaz; alıntı kaydedilmez; Space'in "Akışta gönderi olarak paylaş" anahtarı yerinde (alıntıyla birleştirme ayrı iş); `/share/quote/` statik paylaşım sayfası yok.
