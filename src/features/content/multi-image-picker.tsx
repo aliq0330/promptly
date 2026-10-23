@@ -27,7 +27,13 @@ export function MultiImagePicker({
   disabled,
   label,
   hint,
+  variant = "grid",
+  inputId: givenInputId,
 }: {
+  /** `strip` (yazma ekranı, docs/history/216-*): yatay küçük kapaklar + "+" karosu, açıklama yalnız boşken. */
+  variant?: "grid" | "strip";
+  /** Dışarıdan (ör. araç çubuğundaki "Görsel") dosya seçiciyi açmak için girişin kimliği. */
+  inputId?: string;
   items: MultiImageItem[];
   onChange: (items: MultiImageItem[]) => void;
   max?: number;
@@ -37,7 +43,8 @@ export function MultiImagePicker({
   hint?: string;
 }) {
   const { t } = useTranslation();
-  const inputId = useId();
+  const ownInputId = useId();
+  const inputId = givenInputId ?? ownInputId;
   const [problem, setProblem] = useState<string | null>(null);
 
   async function handleFiles(fileList: FileList | null) {
@@ -81,9 +88,9 @@ export function MultiImagePicker({
           {label} <span className="text-text-muted">({t("common.optional")})</span>
         </label>
       )}
-      <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5">
+      <div className={variant === "strip" ? "-mx-3 flex gap-2 overflow-x-auto px-3 pb-1 sm:mx-0 sm:px-0" : "grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5"} data-image-picker={variant}>
         {items.map((item, index) => (
-          <figure key={item.key} className="relative aspect-square overflow-hidden rounded-md border border-border bg-surface-soft">
+          <figure key={item.key} className={variant === "strip" ? "relative h-32 w-24 shrink-0 overflow-hidden rounded-xl border border-border-soft bg-surface-soft" : "relative aspect-square overflow-hidden rounded-md border border-border bg-surface-soft"}>
             <StorageImg src={item.url} alt="" className="h-full w-full object-cover" draggable={false} />
             <button
               type="button"
@@ -126,10 +133,14 @@ export function MultiImagePicker({
         {canAddMore && (
           <label
             htmlFor={inputId}
-            className="flex aspect-square cursor-pointer flex-col items-center justify-center gap-1 rounded-md border border-dashed border-border-strong bg-surface-soft text-text-secondary hover:border-primary"
+            className={
+              variant === "strip"
+                ? "flex h-32 w-20 shrink-0 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-border-strong text-text-muted hover:border-primary hover:text-primary"
+                : "flex aspect-square cursor-pointer flex-col items-center justify-center gap-1 rounded-md border border-dashed border-border-strong bg-surface-soft text-text-secondary hover:border-primary"
+            }
           >
             <ImagePlus size={18} strokeWidth={1.75} />
-            <span className="text-[0.7rem] font-medium">{t("media.addImages")}</span>
+            <span className={variant === "strip" ? "px-1 text-center text-[0.65rem] font-medium leading-tight" : "text-[0.7rem] font-medium"}>{t("media.addImages")}</span>
             <input
               id={inputId}
               type="file"
@@ -145,7 +156,7 @@ export function MultiImagePicker({
           </label>
         )}
       </div>
-      <p className="mt-1.5 text-caption text-text-muted">{hint ?? t("media.multiImageHint", { max })}</p>
+      {(variant === "grid" || items.length === 0) && <p className="mt-1.5 text-caption text-text-muted">{hint ?? t("media.multiImageHint", { max })}</p>}
       {problem && (
         <p role="alert" className="mt-1 text-caption text-danger">
           {problem}

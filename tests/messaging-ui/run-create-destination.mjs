@@ -302,6 +302,25 @@ await scenario("14. İngilizce: yazma ekranı, son kontrol ve ✕ penceresi çev
   await page.getByText("Save as a draft?").waitFor();
 }, { lang: "en" });
 
+await scenario("15. Prompt yazma ekranı örnekteki gibi: solda avatar, kutusuz mono metin (Şablon/Değişken satırı yok), görsel şeridi; araç çubuğu Görsel · Etiket · Araç · Kategori · Değişken · Gelişmiş; Değişken ekleme yüzeyini, Gelişmiş hazır ayar + görselden yardım satırlarını açar", async ({ page }) => {
+  await openForm(page, "/create?mode=prompt");
+  await page.locator("[data-compose-body]").waitFor();
+  assert.equal(await page.locator("[data-insert-trigger]:visible").count(), 0, "no 'Değişken ekle' bar inside the text");
+  assert.equal(await page.locator("[data-image-help]:visible").count(), 0, "vision help is not inline");
+  await page.locator("[data-image-picker=strip]").waitFor();
+  const tools = await page.locator("[data-compose-tool]").evaluateAll((els) => els.map((el) => el.getAttribute("data-compose-tool")));
+  assert.deepEqual(tools, ["image", "tags", "tool", "category", "variable", "advanced"]);
+  await page.locator("#prompt-text").fill("cinematic portrait of a fox");
+  await page.locator("[data-compose-tool=variable]").click();
+  await page.locator("#insert-picker-title").waitFor();
+  await page.keyboard.press("Escape");
+  await page.locator("[data-compose-tool=advanced]").click();
+  await page.locator("[data-compose-sheet=advanced] [data-advanced-row=extra]").waitFor();
+  await page.locator("[data-compose-sheet=advanced] [data-advanced-row=vision]").click();
+  await page.locator("[data-compose-sheet=vision] [data-image-help]").waitFor();
+  assert.equal(await overflowFree(page), true);
+}, { viewport: { width: 390, height: 844 } });
+
 await browser.close(); server.close();
 for (const [s, n] of results) console.log(`${s === "PASS" ? "✓" : "✗"} ${n}`);
 console.log(`${results.filter((r) => r[0] === "PASS").length}/${results.length} passed`);

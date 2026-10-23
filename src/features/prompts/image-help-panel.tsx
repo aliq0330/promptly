@@ -42,7 +42,10 @@ export function ImageHelpPanel({
   sourceFile,
   onApplyPrompt,
   onApplyVariables,
+  bare = false,
 }: {
+  /** Kendi alt sayfasında (yazma ekranı, docs/history/216-*): başlık satırı ve çerçeve yok, hep açık. */
+  bare?: boolean;
   /** Context sent with the variable analysis (first 400 characters). */
   promptText: string;
   variables: VisionVariable[];
@@ -53,7 +56,8 @@ export function ImageHelpPanel({
   onApplyVariables: (result: { values: MatchedVariableValue[]; suggestions: CleanSuggestedField[] }) => void;
 }) {
   const { t } = useTranslation();
-  const [expanded, setExpanded] = useState(false);
+  const [expandedState, setExpanded] = useState(false);
+  const expanded = bare || expandedState;
   const [ownFile, setOwnFile] = useState<File | null>(null);
   const file = sourceFile ?? ownFile;
   const inputRef = useRef<HTMLInputElement>(null);
@@ -167,9 +171,10 @@ export function ImageHelpPanel({
   const hasVarResult = matched.length > 0 || suggestions.length > 0;
 
   return (
-    <div className="rounded-lg border border-border bg-surface-soft/60" data-image-help>
+    <div className={cn(!bare && "rounded-lg border border-border bg-surface-soft/60")} data-image-help>
       <button
         type="button"
+        hidden={bare}
         onClick={() => setExpanded((v) => !v)}
         aria-expanded={expanded}
         aria-controls="image-help-body"
@@ -181,7 +186,7 @@ export function ImageHelpPanel({
       </button>
 
       <Collapsible open={expanded} id="image-help-body">
-        <div className="space-y-3 border-t border-border-soft px-3 pb-3 pt-3">
+        <div className={cn("space-y-3", !bare && "border-t border-border-soft px-3 pb-3 pt-3")}>
           <p className="text-caption text-text-secondary">{t("vision.helpIntro")}</p>
 
           {file ? (

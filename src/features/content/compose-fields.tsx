@@ -47,18 +47,34 @@ export function ContentTypeChips({ value, onChange, locked = false }: { value: P
   );
 }
 
-/** "aliq · Herkese açık": kim olarak ve kime paylaşıldığı; ikinci kısım son kontrol penceresini açar. */
-export function ComposeAuthorLine({ profile, audienceLabel, onAudience }: { profile: UserProfile | null; audienceLabel: string; onAudience: () => void }) {
+/**
+ * Yazma ekranının gövdesi (docs/history/216-*, X / Threads düzeni): solda avatar, sağda "aliq · Herkese açık" satırı (ikinci kısım son
+ * kontrol penceresini açar) ve altında yazılanlar.
+ */
+export function ComposeBody({
+  profile,
+  audienceLabel,
+  onAudience,
+  children,
+}: {
+  profile: UserProfile | null;
+  audienceLabel: string;
+  onAudience: () => void;
+  children: React.ReactNode;
+}) {
   return (
-    <div className="flex items-center gap-2.5">
-      <Avatar src={profile?.avatarUrl ?? null} alt={profile?.displayName ?? ""} size={36} />
-      <p className="min-w-0 truncate text-small">
-        <span className="font-semibold text-text">{profile?.displayName ?? ""}</span>
-        <span className="text-text-muted"> · </span>
-        <button type="button" onClick={onAudience} data-compose-audience="" className="font-medium text-text-muted underline-offset-2 hover:text-text hover:underline">
-          {audienceLabel}
-        </button>
-      </p>
+    <div className="flex gap-3" data-compose-body="">
+      <Avatar src={profile?.avatarUrl ?? null} alt={profile?.displayName ?? ""} size={40} className="shrink-0" />
+      <div className="min-w-0 flex-1 space-y-3">
+        <p className="truncate pt-0.5 text-small">
+          <span className="font-semibold text-text">{profile?.displayName ?? ""}</span>
+          <span className="text-text-muted"> · </span>
+          <button type="button" onClick={onAudience} data-compose-audience="" className="font-medium text-text-muted underline-offset-2 hover:text-text hover:underline">
+            {audienceLabel}
+          </button>
+        </p>
+        {children}
+      </div>
     </div>
   );
 }

@@ -95,3 +95,20 @@ Kullanıcının isteği: "Gönderi oluşturma ekranlarını standart paylaşım 
   - `run-space-posts` 7/7.
   - Diğer bütün takımlar raporda.
 - İngilizce karşılıklar eklendi (`createMenu.*`, `compose.*`).
+
+## Düzeltme: örnek görsele uyum (kullanıcı: "Örnekteki resimle alakası yok")
+
+İlk sürüm kabuğu kurmuş ama gövdede eski form parçalarını (çerçeveli prompt editörü + Şablon/Önizleme/"Değişken ekle" satırı, satır içi "Görselden yardım", büyük "Hazır Ayarlar ve Ek Alan Önerileri" kutusu, büyük görsel karosu) bırakmıştı. Örnekteki (B) yazma ekranına getirildi:
+
+- **Düzen:** `ComposeBody` — solda avatar, sağda "Ad · Herkese açık", başlık, tek satır kısa açıklama, prompt metni, görseller, özet çipleri, önerilen etiketler (X / Threads).
+- **Prompt metni:** `PromptTextEditor variant="compose"`. Kutusuz düz mono metin (`PromptComposer bare`, `PromptDocEditor bare`), üst satır yok; değişken jetonları, seçimden değişkene dönüştürme ve değişken listesi aynen. "Değişken ekle" yüzeyi araç çubuğundan açılır (`ComposerHandle.openInsert`).
+- **Görseller:** `MultiImagePicker variant="strip"` (küçük kapaklar + "Görsel ekle"); araç çubuğundaki "Görsel" aynı dosya seçiciyi açar (`inputId`).
+- **Gelişmiş alt sayfası:**
+  - "Hazır Ayarlar ve Ek Alan Önerileri" satırı: aynı panel, `ExtraSettingsSection open/onOpenChange`; uygulananlar yazma ekranında çip olarak görünür (`compact`).
+  - "Görselden yardım" satırı: `ImageHelpPanel bare` kendi alt sayfasında.
+  - Prompt DNA ve referans gereksinimi.
+- **Araç çubuğu:**
+  - Prompt: Görsel · Etiket · Araç · Kategori · Değişken · Gelişmiş.
+  - İstek: Referans · Yön · Etiket · Araç · Kategori · Yardım (isteğin "Referans görselden yardım"ı alt sayfada).
+- Diğer ekranlar (Workflow meta, Hazır ayar, değişken düzenleyici) bileşenlerin varsayılan biçimini kullanır, değişmedi.
+- **Sınama:** `run-create-destination` 15/15 (yeni 15. senaryo: düzen, araç sırası, Değişken ve Gelişmiş satırları), `run-community-posts` 36/36, `run-space-posts` 7/7, `run-detail-pages` 45/45, `npm test` 400/400; tsc / lint / build temiz. Gerçek cihazda denenmedi.
