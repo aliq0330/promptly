@@ -10,31 +10,79 @@ import { ReportButton } from "@/features/moderation/report-button";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { deleteQuote, type Quote } from "@/lib/supabase/quotes";
 
-/**
- * Alıntının ⋮ menüsü: kendi alıntısı → "Alıntıyı sil" (onaylı; alıntı, beğenileri ve yorumlarıyla kalkar, alıntılanan içerik durur);
- * başkasının alıntısı → şikâyet (moderatör kuyruğunda `quote` türü).
- */
-export function QuoteMenu({ quote, onDeleted }: { quote: Quote; onDeleted: () => void }) {
+/** "Alıntıyı sil" onayı (kart menüsü ve alıntı sayfasının ⋮ menüsü ortak kullanır): alıntı beğeni/yorumlarıyla kalkar, alıntılanan içerik durur. */
+export function QuoteDeleteDialog({ quote, onClose, onDeleted }: { quote: Quote; onClose: () => void; onDeleted: () => void }) {
   const { t } = useTranslation();
-  const { user } = useAuth();
-  const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const mine = user?.id === quote.author.id;
-  if (!user) return null;
 
   async function remove() {
     setBusy(true);
     setError(null);
     try {
       await deleteQuote(quote.id);
-      setConfirming(false);
+      onClose();
       onDeleted();
     } catch (err) {
       setError(err instanceof Error ? err.message : t("common.actionFailedRetry"));
       setBusy(false);
     }
   }
+
+  return (
+    <Modal onClose={() => !busy && onClose()} labelledBy="quote-delete-title">
+      <div data-quote-delete className="w-full max-w-sm space-y-3 rounded-t-2xl border border-border bg-surface-elevated p-5 shadow-pop sm:rounded-2xl" onClick={(event) => event.stopPropagation()}>
+        <h2 id="quote-delete-title" className="text-h3 font-bold text-text">
+          {t("quotes.delete.title")}
+        </h2>
+        <p className="text-small text-text-secondary">{t("quotes.delete.body")}</p>
+        {error && (
+          <p role="alert" className="text-small text-danger">
+            {error}
+          </p>
+        )}
+        <div className="flex justify-end gap-2">
+          <Button type="button" variant="outline" onClick={onClose} disabled={busy}>
+            {t("common.cancel")}
+          </Button>
+          <Button type="button" variant="danger" onClick={() => void remove()} disabled={busy} data-quote-delete-confirm="">
+            {t("quotes.delete.confirm")}
+          </Button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
+/** Başkasının alıntısını şikâyet penceresi (alıntı sayfasının ⋮ menüsünden açılır; moderatör kuyruğunda `quote` türü). */
+export function QuoteReportDialog({ quote, onClose }: { quote: Quote; onClose: () => void }) {
+  const { t } = useTranslation();
+  return (
+    <Modal onClose={onClose} labelledBy="quote-report-title">
+      <div data-quote-report className="w-full max-w-sm space-y-3 rounded-t-2xl border border-border bg-surface-elevated p-5 shadow-pop sm:rounded-2xl" onClick={(event) => event.stopPropagation()}>
+        <h2 id="quote-report-title" className="text-h3 font-bold text-text">
+          {t("quotes.report.title")}
+        </h2>
+        <ReportButton targetType="quote" targetId={quote.id} menuItem={false} />
+        <div className="flex justify-end">
+          <Button type="button" variant="outline" onClick={onClose}>
+            {t("common.close")}
+          </Button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
+/**
+ * Alıntının ⋮ menüsü (kartta): kendi alıntısı → "Alıntıyı sil" (onaylı); başkasının alıntısı → şikâyet.
+ */
+export function QuoteMenu({ quote, onDeleted }: { quote: Quote; onDeleted: () => void }) {
+  const { t } = useTranslation();
+  const { user } = useAuth();
+  const [confirming, setConfirming] = useState(false);
+  const mine = user?.id === quote.author.id;
+  if (!user) return null;
 
   return (
     <>
@@ -59,29 +107,7 @@ export function QuoteMenu({ quote, onDeleted }: { quote: Quote; onDeleted: () =>
           }
         </DropdownMenu>
       </span>
-      {confirming && (
-        <Modal onClose={() => !busy && setConfirming(false)} labelledBy="quote-delete-title">
-          <div data-quote-delete className="w-full max-w-sm space-y-3 rounded-t-2xl border border-border bg-surface-elevated p-5 shadow-pop sm:rounded-2xl" onClick={(event) => event.stopPropagation()}>
-            <h2 id="quote-delete-title" className="text-h3 font-bold text-text">
-              {t("quotes.delete.title")}
-            </h2>
-            <p className="text-small text-text-secondary">{t("quotes.delete.body")}</p>
-            {error && (
-              <p role="alert" className="text-small text-danger">
-                {error}
-              </p>
-            )}
-            <div className="flex justify-end gap-2">
-              <Button type="button" variant="outline" onClick={() => setConfirming(false)} disabled={busy}>
-                {t("common.cancel")}
-              </Button>
-              <Button type="button" variant="danger" onClick={() => void remove()} disabled={busy} data-quote-delete-confirm="">
-                {t("quotes.delete.confirm")}
-              </Button>
-            </div>
-          </div>
-        </Modal>
-      )}
+      {confirming && <QuoteDeleteDialog quote={quote} onClose={() => setConfirming(false)} onDeleted={onDeleted} />}
     </>
   );
 }

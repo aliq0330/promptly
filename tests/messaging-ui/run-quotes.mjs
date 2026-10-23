@@ -163,7 +163,10 @@ await scenario("2. Alıntı sayfası: üstte alıntılayan + not, 'Orijinal içe
   await page.locator("[data-quote-note]").getByText("Bu ışık gerçekten çok iyi").waitFor();
   const original = page.locator("[data-open-original]");
   assert.match((await original.getAttribute("href")) ?? "", /\/prompts\/local\/?\?id=b0000000/);
-  await page.locator("[data-quote-engagement]").waitFor();
+  // Topluluk gönderisiyle AYNI yapı: alıntılanan içeriğin NORMAL detay sayfası (Albüm bandı: başlık + prompt metni) altta çizilir.
+  await page.getByRole("heading", { name: "Ay ışığında bekleyen kitsune" }).first().waitFor();
+  await page.getByText("cinematic portrait, soft light").first().waitFor();
+  assert.equal(await page.locator("[data-quote-engagement]").count(), 0, "ayrı alıntı etkileşim bloğu yok; detay sayfasının kendi eylem satırı kullanılır");
   const input = page.getByPlaceholder("Bir yorum yaz...").first();
   await input.fill("Aynı fikirdeyim");
   await input.press("Enter");
@@ -270,6 +273,30 @@ await scenario("10. Orijinalde 'N kez alıntılandı': prompt sayfasındaki meta
   await page.goto(`${BASE}/prompts/local?id=${PROMPT}`);
   await page.locator("[data-quote-count]").waitFor();
   assert.match(await page.locator("[data-quote-count]").innerText(), /3 kez alıntılandı/);
+});
+
+await scenario("12. Alıntı sayfası = normal detay + ALINTININ eylemleri: beğeni `quote_id`, Kaydet yok, ⋮ menüsünde yalnız alıntı işleri (kendi alıntında sil, başkasınınkinde şikâyet)", async ({ page, state }) => {
+  await page.goto(`${BASE}/quotes/local?id=${Q_BOB}`);
+  await page.locator(`[data-quote-page="${Q_BOB}"]`).waitFor();
+  await page.getByRole("heading", { name: "Ay ışığında bekleyen kitsune" }).first().waitFor();
+  assert.equal(await page.getByRole("button", { name: /^Kaydet/ }).count(), 0, "alıntı kaydedilmez");
+  await page.getByRole("button", { name: /Beğen/ }).first().click();
+  await waitFor(() => state.likes.length > 0);
+  assert.equal(state.likes[0].quote_id, Q_BOB);
+  assert.ok(!state.likes[0].prompt_id, "orijinalin beğenisine karışmaz");
+  await page.getByRole("button", { name: "Paylaş" }).first().click();
+  await page.locator("[data-quote-section]").waitFor({ state: "detached" }).catch(() => {});
+  await page.keyboard.press("Escape");
+  const menu = page.locator('button[aria-label="Gönderi seçenekleri"]').first();
+  await menu.click();
+  await page.getByRole("menuitem", { name: /Şikayet/ }).first().waitFor();
+  assert.equal(await page.getByRole("menuitem", { name: "Bağlantıyı kopyala" }).count(), 0, "içeriğin kendi yönetimi orijinalde kalır");
+  assert.equal(await page.getByRole("menuitem", { name: "Alıntıyı sil" }).count(), 0);
+  await shot(page, "qt-page-scoped");
+  await page.goto(`${BASE}/quotes/local?id=${Q_ME}`);
+  await page.locator(`[data-quote-page="${Q_ME}"]`).waitFor();
+  await page.locator('button[aria-label="Gönderi seçenekleri"]').first().click();
+  await page.getByRole("menuitem", { name: "Alıntıyı sil" }).waitFor();
 });
 
 await scenario("11. İngilizce + telefon: kart, sayfa ve Alıntıla bölümü çevrilmiş, yatay taşma yok", async ({ page }) => {

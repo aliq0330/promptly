@@ -33,6 +33,8 @@ export const quoteTranslations = {
   "quotes.delete.title": { tr: "Alıntı silinsin mi?", en: "Delete this quote?" },
   "quotes.delete.body": { tr: "Alıntı, beğenileri ve yorumlarıyla birlikte kalkar. Alıntıladığın içerik silinmez.", en: "The quote goes away with its likes and comments. The content you quoted isn't deleted." },
   "quotes.delete.confirm": { tr: "Sil", en: "Delete" },
+  "quotes.report.title": { tr: "Alıntıyı şikâyet et", en: "Report this quote" },
+  "quotes.page.scopeHelp": { tr: "Aşağıdaki içerik alıntılanan içeriğin kendisidir; beğeni, yorum ve paylaşım bu alıntıya aittir.", en: "The content below is the quoted content itself; likes, comments and shares belong to this quote." },
   "quotes.delete.done": { tr: "Alıntı silindi.", en: "Quote deleted." },
 
   // ---- Alıntıla bölümü (Paylaş penceresi) ----

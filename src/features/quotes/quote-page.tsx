@@ -3,26 +3,34 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, ArrowUpRight, EyeOff } from "lucide-react";
+import { ArrowLeft, ArrowUpRight, EyeOff, Flag, Trash2 } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonClassName } from "@/components/ui/button";
 import { DetailSkeleton, NotFoundBlock } from "@/components/ui/detail-skeleton";
 import { useAuth } from "@/features/auth/auth-provider";
 import { summarizeContent } from "@/features/communities/content-summary";
-import { ContentTypePill } from "@/features/content/content-type-label";
-import { OutputPosterPreview, OutputThumbnailStrip } from "@/features/prompts/multi-image-output-options";
+import { DropdownMenu, MenuItem } from "@/features/communities/dropdown-menu";
+import { PostMenuExtras, type PostMenuExtra } from "@/features/prompts/post-menu-extras";
+import { PromptDetailView } from "@/features/prompts/prompt-detail-view";
+import { RequestDetailView } from "@/features/requests/request-detail-view";
+import { WorkflowDetailView } from "@/features/workflows/workflow-view";
+import { PresetDetailView } from "@/features/presets/preset-detail-view";
 import { PaletteStrip, SpaceCoverArt } from "@/features/spaces/space-visuals";
+import { spaceHref } from "@/lib/spaces";
+import { summaryArt } from "@/lib/supabase/spaces";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { fetchQuoteById, type Quote } from "@/lib/supabase/quotes";
 import { formatRelativeTime, profileHref } from "@/lib/utils";
 import { QuoteEngagement } from "./quote-engagement";
-import { QuoteMenu } from "./quote-menu";
+import { QuoteDeleteDialog, QuoteReportDialog } from "./quote-menu";
+import { QuoteScopeProvider } from "./quote-scope";
 
 /**
- * `/quotes/local?id=<alıntı>`: bir alıntının kendi sayfası (docs/history/217-*). Üstte alıntılayan + not, altında alıntılanan içeriğin özeti
- * ("Orijinal içeriği aç"), sonra ALINTININ kendi beğeni/yorumları (`QuoteEngagement`, varsayılan açık; `#comments`). Alıntıyı okuyamayan
- * (silindi, alıntılanan içerik gizlendi, engel) "bulunamadı" görür — varlığı sızmaz.
+ * `/quotes/local?id=<alıntı>`: bir alıntının kendi sayfası (docs/history/217-*). Topluluk başvuru gönderisi sayfasıyla (`CommunityPostPage`) AYNI yapı:
+ * üstte alıntı şeridi (alıntılayan + not + "Orijinal içeriği aç"), altında alıntılanan içeriğin NORMAL detay sayfası (Albüm bandı, iki sütun,
+ * tüm eylemler); beğeni/yorum/istatistik/paylaş ALINTININ kendisine bağlanır (`QuoteScope`, orijinale karışmaz). Space'in detay sayfası yok:
+ * kapak kolajı + başlık + ALINTININ kendi etkileşimi gösterilir. Alıntıyı okuyamayan (silindi, içerik gizlendi, engel) "bulunamadı" görür.
  */
 export function QuotePage() {
   const { t, language } = useTranslation();
@@ -31,9 +39,10 @@ export function QuotePage() {
   const quoteId = params.get("id");
   const hl = params.get("hl");
   const highlightCommentId = hl?.startsWith("comment:") ? hl.slice("comment:".length) : null;
-  const { loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [quote, setQuote] = useState<Quote | null | undefined>(undefined);
   const [failed, setFailed] = useState(false);
+  const [dialog, setDialog] = useState<"delete" | "report" | null>(null);
 
   const load = useCallback(async () => {
     if (!quoteId) {
@@ -79,13 +88,19 @@ export function QuotePage() {
     );
   }
 
-  const summary = quote.content ? summarizeContent(quote.content) : null;
-  const poster = summary?.playable ? summary.media[0] : undefined;
+  const content = quote.content;
+  const summary = content ? summarizeContent(content) : null;
+  const mine = user?.id === quote.author.id;
+
+  // Alıntı işleri içeriğin NORMAL ⋮ menüsüne eklenir (ikinci menü yok); içeriğin kendi yönetimi orijinalin sayfasında kalır.
+  const extras: PostMenuExtra[] = [];
+  if (user && mine) extras.push({ key: "delete", label: t("quotes.menu.delete"), icon: <Trash2 size={14} />, danger: true, onSelect: () => setDialog("delete") });
+  if (user && !mine) extras.push({ key: "report", label: t("messages.reportAction"), icon: <Flag size={14} />, onSelect: () => setDialog("report") });
 
   return (
     <div data-quote-page={quote.id}>
       <section aria-label={t("quotes.page.titleFor", { name: quote.author.displayName })} className="border-b border-border-soft bg-surface">
-        <div className="mx-auto w-full max-w-3xl px-4 py-4 sm:px-6">
+        <div className="mx-auto w-full max-w-6xl px-4 py-4 sm:px-6 lg:px-10">
           <button type="button" onClick={() => (window.history.length > 1 ? router.back() : router.push("/"))} className="inline-flex items-center gap-1.5 text-small text-text-muted hover:text-text">
             <ArrowLeft size={14} aria-hidden /> {t("quotes.page.back")}
           </button>
@@ -103,59 +118,72 @@ export function QuotePage() {
                 <span>{formatRelativeTime(quote.createdAt, language)}</span>
               </p>
             </div>
-            <QuoteMenu quote={quote} onDeleted={() => router.replace("/")} />
+            {(!content || content.type === "space") && extras.length > 0 && (
+              <span data-quote-menu={quote.id} className="relative z-10">
+                <DropdownMenu label={t("quotes.card.menu")}>
+                  {(close) => (
+                    <>
+                      {extras.map((extra) => (
+                        <MenuItem key={extra.key} icon={extra.icon} label={extra.label} danger={extra.danger} onClick={() => { close(); extra.onSelect(); }} />
+                      ))}
+                    </>
+                  )}
+                </DropdownMenu>
+              </span>
+            )}
           </div>
           {quote.note && (
             <p data-quote-note className="mt-3 whitespace-pre-wrap break-words rounded-lg bg-surface-soft px-3.5 py-3 text-body text-text">
               {quote.note}
             </p>
           )}
+          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-3 border-t border-border-soft pt-3">
+            <p className="min-w-0 flex-1 basis-56 text-caption text-text-muted">{t("quotes.page.scopeHelp")}</p>
+            {summary && (
+              <Link href={summary.href} data-open-original className={buttonClassName({ size: "sm", variant: "outline", className: "ml-auto shrink-0 gap-1.5" })}>
+                {t("quotes.page.openOriginal")}
+                <ArrowUpRight size={14} aria-hidden />
+              </Link>
+            )}
+          </div>
         </div>
       </section>
 
-      <div className="mx-auto w-full max-w-3xl space-y-4 px-3 py-4 sm:px-5">
-        {summary ? (
-          <div data-quote-target={summary.type} className="space-y-3 overflow-hidden rounded-xl border border-border-soft bg-surface p-3.5 shadow-card">
-            {summary.type === "space" ? (
-              <Link href={summary.href} className="block">
-                <SpaceCoverArt urls={summary.spaceArt ?? []} className="aspect-[16/9] w-full overflow-hidden rounded-lg" iconSize={40} />
-              </Link>
-            ) : summary.playable && poster ? (
-              <OutputPosterPreview media={poster} />
-            ) : summary.media.length > 0 ? (
-              <OutputThumbnailStrip media={summary.media} />
-            ) : null}
-            {summary.palette && summary.palette.length > 0 && <PaletteStrip colors={summary.palette} className="h-1.5" />}
-            <div className="space-y-1.5">
-              <ContentTypePill icon={summary.typeIcon} label={t(summary.typeLabelKey)} detail={summary.tools.length > 0 ? null : summary.detail} />
-              <Link href={summary.href} className="block break-words text-h3 font-bold text-text hover:text-primary">
-                {summary.title}
-              </Link>
-              {summary.description && <p className="line-clamp-3 break-words text-small text-text-secondary">{summary.description}</p>}
-              {summary.author && (
-                <p className="text-caption text-text-muted">
-                  <Link href={profileHref(summary.author)} className="font-semibold text-text hover:text-primary">
-                    {summary.author.displayName}
-                  </Link>{" "}
-                  · @{summary.author.username}
-                </p>
-              )}
-            </div>
-            <Link href={summary.href} data-open-original className={buttonClassName({ size: "sm", variant: "outline", className: "gap-1.5" })}>
-              {t("quotes.page.openOriginal")}
-              <ArrowUpRight size={14} aria-hidden />
+      <QuoteScopeProvider value={{ quote }}>
+        <PostMenuExtras items={extras}>
+          {content?.type === "prompt" && <PromptDetailView prompt={content.data} />}
+          {content?.type === "request" && <RequestDetailView request={content.data} />}
+          {content?.type === "workflow" && <WorkflowDetailView workflowId={content.data.id} />}
+          {content?.type === "preset" && <PresetDetailView presetId={content.data.id} />}
+        </PostMenuExtras>
+      </QuoteScopeProvider>
+
+      {(!content || content.type === "space") && (
+        <div className="mx-auto w-full max-w-3xl space-y-4 px-3 py-4 sm:px-5">
+          {content?.type === "space" ? (
+            // Space'in kendi sayfası pano/vitrindir (detay sayfası yok): kapak kolajı + başlık + "Space'i aç"; beğeni/yorum aşağıda ALINTININ.
+            <Link href={spaceHref(content.data.id)} data-post-space={content.data.id} className="block overflow-hidden rounded-lg border border-border-soft bg-surface shadow-card transition-shadow hover:shadow-card-hover">
+              <SpaceCoverArt urls={summaryArt(content.data)} className="aspect-[16/9] w-full" iconSize={48} />
+              {content.data.palette.length > 0 && <PaletteStrip colors={content.data.palette} className="h-1.5 rounded-none" />}
+              <span className="block space-y-1 p-4">
+                <span className="block text-h3 font-bold text-text">{content.data.title}</span>
+                {content.data.description && <span className="line-clamp-3 block text-small text-text-secondary">{content.data.description}</span>}
+              </span>
             </Link>
-          </div>
-        ) : (
-          <p className="flex items-center gap-2 rounded-lg border border-dashed border-border px-3 py-4 text-small text-text-muted">
-            <EyeOff size={15} aria-hidden /> {t("quotes.card.contentGone")}
-          </p>
-        )}
-        <section className="space-y-2" aria-label={t("quotes.page.commentsTitle")}>
-          <p className="text-caption text-text-muted">{t("quotes.page.commentsHelp")}</p>
-          <QuoteEngagement quote={quote} highlightCommentId={highlightCommentId} />
-        </section>
-      </div>
+          ) : (
+            <p className="flex items-center gap-2 rounded-lg border border-dashed border-border px-3 py-4 text-small text-text-muted">
+              <EyeOff size={15} aria-hidden /> {t("quotes.card.contentGone")}
+            </p>
+          )}
+          <section className="space-y-2" aria-label={t("quotes.page.commentsTitle")}>
+            <p className="text-caption text-text-muted">{t("quotes.page.commentsHelp")}</p>
+            <QuoteEngagement quote={quote} highlightCommentId={highlightCommentId} />
+          </section>
+        </div>
+      )}
+
+      {dialog === "delete" && <QuoteDeleteDialog quote={quote} onClose={() => setDialog(null)} onDeleted={() => router.replace("/")} />}
+      {dialog === "report" && <QuoteReportDialog quote={quote} onClose={() => setDialog(null)} />}
     </div>
   );
 }

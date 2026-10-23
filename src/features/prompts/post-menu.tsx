@@ -6,6 +6,7 @@ import { Copy, FolderMinus, Link2, Loader2, MoreVertical, Pencil, Shapes, Trash2
 import { useAuth } from "@/features/auth/auth-provider";
 import { usePostMenuExtras } from "./post-menu-extras";
 import { usePostScope } from "@/features/communities/post-scope";
+import { useQuoteScope } from "@/features/quotes/quote-scope";
 import { shareLinkForHref } from "@/lib/share-link";
 import { absoluteUrl, cn, presetHref, promptHref, requestHref, resultHref, workflowHref } from "@/lib/utils";
 import { deleteRealPrompt } from "@/lib/supabase/prompts";
@@ -111,7 +112,9 @@ export function PostMenu({
 
   const extras = usePostMenuExtras();
   // Başvuru gönderisi sayfasında içeriğin KENDİ yönetimi (düzenle/çoğalt/sil/bağlantı/bildir) orijinalin sayfasında kalır; menü yalnız gönderi işlerini (ekstralar) taşır.
-  const postScope = usePostScope();
+  const postOnlyScope = usePostScope();
+  const quoteScope = useQuoteScope();
+  const postScope = postOnlyScope ?? quoteScope;
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
