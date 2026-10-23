@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { Wrench } from "lucide-react";
+import { Quote, Wrench } from "lucide-react";
+import { useTranslation } from "@/lib/i18n/language-provider";
 import type { ReactNode } from "react";
 import { resolveToolRefs } from "@/lib/ai-tool-catalog";
 import { toolHref } from "@/lib/utils";
@@ -17,6 +18,7 @@ export function DetailMetaCard({
   legacyTool,
   fallbackTool,
   hasChips,
+  quoteCount = 0,
   children,
 }: {
   toolLabel: string;
@@ -26,11 +28,14 @@ export function DetailMetaCard({
   fallbackTool?: string;
   /** Whether `children` will render any chip (the chip components render nothing on their own when empty). */
   hasChips: boolean;
+  /** "N kez alıntılandı" (docs/history/217-*); 0 ise satır çizilmez. */
+  quoteCount?: number;
   children?: ReactNode;
 }) {
+  const { t } = useTranslation();
   const items = resolveToolRefs(toolRefs);
   const hasTool = items.length > 0 || Boolean(legacyTool) || Boolean(fallbackTool);
-  if (!hasTool && !hasChips) return null;
+  if (!hasTool && !hasChips && quoteCount <= 0) return null;
 
   const linkClass = "transition-colors hover:text-primary";
   return (
@@ -61,6 +66,11 @@ export function DetailMetaCard({
         </div>
       )}
       {hasChips && <div className="flex min-w-0 basis-full flex-wrap gap-1.5">{children}</div>}
+      {quoteCount > 0 && (
+        <p data-quote-count={quoteCount} className="flex basis-full items-center gap-1.5 text-caption text-text-muted">
+          <Quote size={13} aria-hidden /> {t("quotes.count", { count: quoteCount })}
+        </p>
+      )}
     </section>
   );
 }

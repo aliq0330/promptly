@@ -80,6 +80,8 @@ export interface Prompt {
   tags: Tag[];
   origin: PromptOrigin;
   likeCount: number;
+  /** Kaç kez alıntılandı (`quote_count`, docs/history/217-*; korumalı sayaç). */
+  quoteCount?: number;
   /** Real, trigger-maintained `prompts.save_count` — one per distinct user who saved it into ANY of their own collections, not per collection. */
   saveCount: number;
   commentCount: number;
@@ -138,6 +140,8 @@ export interface PromptComment {
   communityPostId?: string;
   /** Akışta paylaşılmış bir Space'in yorumu (docs/history/215-*). */
   spaceId?: string;
+  /** Bir içeriğin alıntısının yorumu (docs/history/217-*): alıntının kendi kimliğine bağlıdır. */
+  quoteId?: string;
   author: UserProfile;
   body: string;
   /** Points at another `PromptComment.id` — a reply can target a top-level comment OR another reply, to any depth (self-referencing `prompt_comments.parent_id`). */
@@ -233,6 +237,8 @@ export interface PromptRequest {
   responseCount: number;
   /** Real, database-backed like count (`prompt_requests.like_count`) — the same `prompt_likes` system a prompt/generator uses (see `LikeableContentType`). */
   likeCount: number;
+  /** Kaç kez alıntılandı (`quote_count`, docs/history/217-*; korumalı sayaç). */
+  quoteCount?: number;
   /** Real, database-backed comment count (`prompt_requests.comment_count`) — the same `prompt_comments`/`handle_prompt_comment_change` system a prompt/generator uses. */
   commentCount: number;
   createdAt: string;
@@ -280,7 +286,9 @@ export type NotificationType =
   | "prompt_result_shared"
   | "story_reaction"
   | "story_poll_vote"
-  | "story_question_answer";
+  | "story_question_answer"
+  /** İçeriğin alıntılandı (docs/history/217-*). */
+  | "quote";
 
 export interface AppNotification {
   id: string;
@@ -847,6 +855,8 @@ export interface Workflow {
   visibility: ContentVisibility;
   stepCount: number;
   likeCount: number;
+  /** Kaç kez alıntılandı (`quote_count`, docs/history/217-*; korumalı sayaç). */
+  quoteCount?: number;
   /** Real, trigger-maintained `workflows.save_count` — same "one per distinct user" rule as `Prompt.saveCount`/`Generator.saveCount`. */
   saveCount: number;
   commentCount: number;
@@ -889,6 +899,8 @@ export interface Preset {
   visibility: "public" | "private";
   /** Real, trigger-maintained counters (`presets.*_count`). */
   likeCount: number;
+  /** Kaç kez alıntılandı (`quote_count`, docs/history/217-*; korumalı sayaç). */
+  quoteCount?: number;
   commentCount: number;
   saveCount: number;
   tags: Tag[];

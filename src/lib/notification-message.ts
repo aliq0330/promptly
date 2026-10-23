@@ -21,6 +21,10 @@ const PREVIEW_TEMPLATES: [prefix: string, key: string, hasNoPreviewForm: boolean
   ["Sonucuna yorum yaptı", "notifMsg.commentedResult", false],
   ["İsteğine yorum yaptı", "notifMsg.commentedRequest", true],
   ["Koleksiyonunu takip etmeye başladı", "notifMsg.followedCollection", false],
+  // Alıntılar (docs/history/217-*)
+  ["İçeriğini alıntıladı", "notifMsg.quotedContent", false],
+  ["Alıntını beğendi", "notifMsg.likedQuote", false],
+  ["Alıntına yorum yaptı", "notifMsg.commentedQuote", false],
   ["Seni bir yorumda andı", "notifMsg.mentionedComment", false],
   ["Seni bir istekte andı", "notifMsg.mentionedRequest", false],
   ["Yorumuna yanıt verdi", "notifMsg.repliedComment", true],

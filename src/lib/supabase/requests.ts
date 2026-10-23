@@ -34,6 +34,7 @@ export interface RequestRow {
   selected_response_prompt_id: string | null;
   response_count: number;
   like_count: number;
+  quote_count?: number | null;
   comment_count: number;
   created_at: string;
   deleted_at: string | null;
@@ -48,7 +49,7 @@ export interface RequestRow {
 export const REQUEST_SELECT = `
   id, title, description, creative_direction, preferred_tool, tools, content_type, category, subcategory,
   reference_image_url, reference_image_width, reference_image_height,
-  status, selected_response_prompt_id, response_count, like_count, comment_count, created_at, deleted_at, is_draft, visibility, community_id,
+  status, selected_response_prompt_id, response_count, like_count, comment_count, quote_count, created_at, deleted_at, is_draft, visibility, community_id,
   profiles:author_id ( id, username, display_name, avatar_url, cover_url, bio, website, follower_count, following_count, created_at, interests ),
   prompt_request_tags ( tags ( slug, label ) ),
   prompt_request_media ( id, url, width, height, alt, position )
@@ -103,6 +104,7 @@ export function mapRequestRow(row: RequestRow): PromptRequest {
     status: row.status,
     responseCount: row.response_count,
     likeCount: row.like_count,
+    quoteCount: row.quote_count ?? 0,
     commentCount: row.comment_count,
     createdAt: row.created_at,
     selectedResponsePromptId: row.selected_response_prompt_id ?? undefined,

@@ -22,7 +22,7 @@ const COMMENT_SELECT = `
 
 function mapCommentRow(
   row: CommentRow,
-  target: { promptId: string } | { requestId: string } | { resultId: string } | { workflowId: string } | { presetId: string } | { communityPostId: string } | { spaceId: string },
+  target: { promptId: string } | { requestId: string } | { resultId: string } | { workflowId: string } | { presetId: string } | { communityPostId: string } | { spaceId: string } | { quoteId: string },
 ): PromptComment {
   return {
     id: row.id,
@@ -275,6 +275,36 @@ export async function postCommentOnSpace(spaceId: string, authorId: string, body
     .single();
   if (error || !data) throw new Error(error?.message ?? translateForRuntime("comments.postFailed"));
   return mapCommentRow(data as unknown as CommentRow, { spaceId });
+}
+
+/** Bir içeriğin alıntısının yorumları (eskiden yeniye; docs/history/217-*). Okuma alıntının kendi RLS'ini izler (hedef halka açık + engel yok). */
+export async function fetchCommentsForQuote(quoteId: string): Promise<PromptComment[]> {
+  try {
+    const { data, error } = await supabase
+      .from("prompt_comments")
+      .select(COMMENT_SELECT)
+      .eq("quote_id", quoteId)
+      .order("created_at", { ascending: true });
+    if (error) {
+      console.error("fetchCommentsForQuote", error);
+      return [];
+    }
+    return withoutBlocked(((data ?? []) as unknown as CommentRow[]).map((row) => mapCommentRow(row, { quoteId })), (c) => c.author.id);
+  } catch (err) {
+    console.error("fetchCommentsForQuote", err);
+    return [];
+  }
+}
+
+/** Alıntıya yorum: sunucu tetikleyicisi hedefin halka açıklığını ve engeli doğrular; `content_quotes.comment_count` tetikleyiciyle tutulur. */
+export async function postCommentOnQuote(quoteId: string, authorId: string, body: string, parentId: string | null): Promise<PromptComment> {
+  const { data, error } = await supabase
+    .from("prompt_comments")
+    .insert({ quote_id: quoteId, author_id: authorId, body, parent_id: parentId })
+    .select(COMMENT_SELECT)
+    .single();
+  if (error || !data) throw new Error(error?.message ?? translateForRuntime("comments.postFailed"));
+  return mapCommentRow(data as unknown as CommentRow, { quoteId });
 }
 
 /**

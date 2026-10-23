@@ -210,6 +210,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
               toolRefs={prompt.tools}
               legacyTool={prompt.tool}
               hasChips={Boolean(prompt.category) || prompt.tags.length > 0}
+              quoteCount={prompt.quoteCount}
             >
               <TaxonomyLinks className="contents" contentType={prompt.contentType} category={prompt.category} subcategory={prompt.subcategory} />
               <DetailTags className="contents" tags={prompt.tags} />

@@ -13,6 +13,7 @@ import {
   MessageCircleQuestion,
   MessageCircleReply,
   PenLine,
+  Quote,
   RotateCcw,
   SmilePlus,
   UserPlus,
@@ -58,6 +59,8 @@ export const NOTIFICATION_CATEGORY: Record<NotificationType, NotificationCategor
   story_reaction: "posts",
   story_poll_vote: "posts",
   story_question_answer: "posts",
+  // Alıntılar (docs/history/217-*): içeriğin alıntılandı — bir paylaşım etkileşimi, "posts" altına katılır.
+  quote: "posts",
 };
 
 /**
@@ -153,6 +156,7 @@ export const NOTIFICATION_ICONS = {
   story_reaction: SmilePlus,
   story_poll_vote: ChartColumn,
   story_question_answer: MessageCircleQuestion,
+  quote: Quote,
 } as const satisfies Record<string, LucideIcon>;
 
 /**
@@ -204,6 +208,8 @@ export function getNotificationIconKey(notification: AppNotification): keyof typ
       return "story_poll_vote";
     case "story_question_answer":
       return "story_question_answer";
+    case "quote":
+      return "quote";
     case "system":
     default:
       return "system";

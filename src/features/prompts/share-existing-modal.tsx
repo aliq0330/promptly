@@ -6,7 +6,7 @@ import { ArrowUpRight } from "lucide-react";
 import { buttonClassName } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { Tabs } from "@/components/ui/tabs";
-import { AnnounceSection } from "@/features/communities/announce-picker";
+import { QuoteSection } from "@/features/quotes/quote-section";
 import { fetchOwnShareableContent, type CommunityPostType, type ShareableContent } from "@/lib/supabase/communities";
 import { spaceHref } from "@/lib/spaces";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -24,7 +24,7 @@ function hrefOf(type: CommunityPostType, id: string): string {
 
 /**
  * Oluştur → "Var olan içeriği paylaş" (docs/history/215-*): kullanıcının KENDİ yayında + herkese açık içeriklerinden (ve herkese açık
- * Space'lerinden) biri seçilir, aynı "Topluluklarda duyur" satırıyla (`AnnounceSection`) bir ya da birkaç toplulukta duyurulur. Özel
+ * Space'lerinden) biri seçilir, aynı "Alıntıla" satırıyla (`QuoteSection`) akışta ve/veya bir ya da birkaç toplulukta alıntılanır. Özel
  * ya da taslak içerik listelenmez — duyurmak içeriği otomatik herkese açmaz. Mesajla/hikâyeyle paylaşım içeriğin kendi Paylaş'ındadır.
  */
 export function ShareExistingModal({ userId, onClose }: { userId: string; onClose: () => void }) {
@@ -91,7 +91,7 @@ export function ShareExistingModal({ userId, onClose }: { userId: string; onClos
           {selected && (
             <div className="space-y-3 border-t border-border-soft pt-4">
               {/* Seçim değişince satır sıfırlansın (önceki içeriğin duyuru sonuçları taşınmasın). */}
-              <AnnounceSection key={`${type}:${selected}`} type={type} contentId={selected} />
+              <QuoteSection key={`${type}:${selected}`} type={type} contentId={selected} />
               <Link href={hrefOf(type, selected)} onClick={onClose} className={buttonClassName({ size: "sm", variant: "outline", className: "gap-1.5" })}>
                 {t("shareExisting.open")}
                 <ArrowUpRight size={14} aria-hidden />

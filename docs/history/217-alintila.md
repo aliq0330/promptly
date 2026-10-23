@@ -1,6 +1,6 @@
 # 217 — Alıntıla (normal akışta "duyur")
 
-**Durum:** Aşama A (veritabanı) hazır; aşama B (akış kartı, Alıntıla penceresi, alıntı sayfası) ve C (profil/Keşfet/arama/bildirim metni/adlandırma) bekliyor. **Migration canlıya UYGULANMADI.**
+**Durum:** Aşama A (veritabanı), B (akış kartı, Alıntıla penceresi, alıntı sayfası) ve C (profil/Keşfet/arama/bildirim metni/adlandırma) tamam. Migration durumu en altta.
 
 ## İstek ve kararlar
 Kullanıcı: topluluktaki "duyur" mantığı topluluğa bağlı olmadan **normal paylaşım** olarak da yapılabilsin; adı **"Alıntıla"** olsun (topluluklarda da: "Topluluklarda alıntıla"). Alıntı bir gönderi gibi davransın: akışta, Keşfet'te, aramada, profilde ("Alıntılar" sekmesi); kendi beğeni/yorum/istatistiği olsun. Beş tür: Prompt, İstek, Workflow, Hazır ayar, Space. Varsayılanlar (kullanıcı "tamam" dedi): başkasının içeriği de alıntılanabilir (alıntılanan kişiye bildirim, engel iki yönlü); yalnız yayında + herkese açık, topluluğa ait olmayan içerik; aynı içerik günde bir; günde en çok 30; "Sana özel" ve Odak ilk sürümde alıntı almaz; alıntıyı kaydetme yok; Space'in "Akışta gönderi olarak paylaş" anahtarı ilk sürümde YERİNDE kalır (birleştirme ayrı adım).
@@ -20,3 +20,15 @@ Kullanıcı: topluluktaki "duyur" mantığı topluluğa bağlı olmadan **normal
 ## Test
 `supabase/tests/quotes.sql` yerel PostgreSQL'de **47/47**; diğer 23 SQL dosyası temiz veritabanında `FAILED=0`. Mutasyon denemesi: okuma politikası `true`, etkileşim kuralı boş, sayaç tetikleyicisi boş, topluluk içeriği alınabilir yapıldığında ilgili kontroller kırmızıya döner.
 Gerçek Supabase'e / oturuma karşı DENENMEDİ.
+
+## İstemci (aşama B + C)
+- **Veri katmanı:** `lib/supabase/quotes.ts` (`Quote`, `fetchQuotesByIds`, `fetchQuoteById`, `createQuote`, `deleteQuote`, `fetchProfileQuotes`, `fetchProfileQuoteCount`, `searchQuotes`, hata eşleme `toQuoteError`); `lib/quotes.ts` `quoteHref` (`/quotes/local?id=`). Beğeni/yorum/istatistik/şikâyet katmanları `quote` hedefini tanır (`quote_id`); orijinallerde `quoteCount` ("N kez alıntılandı", `DetailMetaCard`).
+- **Akış:** `FeedEntry` birleşimine `{kind:"quote"}`; `feed_page` `kind='quote'` hidratlanır. `PostEntry`/`isPostItem` Space gibi alıntıyı da dışlar (Odak, Sana özel, Izgara). Kart `QuoteCard` (`ContentCardPost` kabuğu: not + alıntılanan içeriğin kartı; sayaçlar ALINTININ), ⋮ menüsü `QuoteMenu` (sil / şikâyet / bağlantı).
+- **Alıntıla penceresi:** `QuoteSection` (`share-modal`, `share-existing-modal`) eski `AnnounceSection`'ın yerini aldı: tek not + "Akışta" seçeneği + çoklu topluluk (`AnnouncePicker hideNote`). Akış → `createQuote`, topluluklar → `announceToCommunities` (başvuru gönderisi); hedef başına sonuç, sessiz başarı yok. Yayın adımındaki "Topluluklarda da alıntıla" aynı depo/rapor (`AnnounceReportNotice`).
+- **Sayfa ve yüzeyler:** `/quotes/local?id=` (`QuotePage`: alıntılayan + not, orijinal özeti, `QuoteEngagement` — `LikeButton contentType="quote"`, `CommentSection target={{quoteId}}`), profilde "Alıntılar" sekmesi (`ProfileQuotesPanel`), Keşfet'te "Alıntılar" bölümü (`p_kinds=['quote']`), aramada "Alıntılar" grubu (`SearchQuotes`), bildirim türü `quote` (Gönderiler kategorisi), moderasyon kuyruğunda alıntı.
+- **Adlandırma:** her yerde "duyur…" → "alıntıla…" / "Alıntı" (TR+EN; `share.announce.*`, `announced.*`, `announceReport.*`, `publish.*`, topluluk başvuru rozeti). Topluluk **Duyurular** (yönetimin yazdığı) ayrı bir özellik, dokunulmadı.
+- **İngilizce karşılıklar eklendi:** evet — `lib/i18n/translations-quotes.ts` (`{tr,en}`), `notifMsg.quotedContent/likedQuote/commentedQuote`, `notification-message.ts` kalıpları.
+- **Test:** `tests/messaging-ui/run-quotes.mjs` (11 senaryo: kart, pencere, sayfa, beğeni/yorum, silme, profil, Keşfet, arama), `src/lib/quotes.test.ts`; adlandırma değişen eski paketler (`run-space-posts`, `run-community-posts`, `run-create-destination`) güncellendi.
+
+## Sınırlar
+Gerçek Supabase'e / oturuma / cihaza karşı DENENMEDİ (ağ taklitli Playwright + yerel PostgreSQL). "Sana özel" ve Odak alıntı almaz; alıntı kaydedilmez; Space'in "Akışta gönderi olarak paylaş" anahtarı yerinde (alıntıyla birleştirme ayrı iş); `/share/quote/` statik paylaşım sayfası yok.
