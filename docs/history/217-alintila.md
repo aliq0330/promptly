@@ -30,6 +30,9 @@ Gerçek Supabase'e / oturuma karşı DENENMEDİ.
 - **İngilizce karşılıklar eklendi:** evet — `lib/i18n/translations-quotes.ts` (`{tr,en}`), `notifMsg.quotedContent/likedQuote/commentedQuote`, `notification-message.ts` kalıpları.
 - **Test:** `tests/messaging-ui/run-quotes.mjs` (11 senaryo: kart, pencere, sayfa, beğeni/yorum, silme, profil, Keşfet, arama), `src/lib/quotes.test.ts`; adlandırma değişen eski paketler (`run-space-posts`, `run-community-posts`, `run-create-destination`) güncellendi.
 
+## Düzeltme 1 — alıntı sayfası topluluk gönderisiyle aynı yapıya getirildi
+İlk sürümde `/quotes/local` sade ayrı bir sayfaydı (özet kartı + yalnız beğeni/yorum), topluluk başvuru gönderisinin sayfası ise alıntılanan içeriğin NORMAL detay sayfasıydı (Albüm bandı, iki sütun, tüm eylemler) — aynı içerik iki yerde farklı görünüyordu. Şimdi `QuotePage` `CommunityPostPage` ile aynı kalıpta: üstte alıntı şeridi (alıntılayan + not + "Orijinal içeriği aç"), altında `PromptDetailView` / `RequestDetailView` / `WorkflowDetailView` / `PresetDetailView`. Beğeni/yorum/istatistik/paylaş ALINTIYA bağlanır: `QuoteScope` bağlamı (`quotes/quote-scope.tsx`, `PostScope`'un karşılığı) `content/scoped-engagement.tsx`'te okunur; alıntı kaydedilmediği için Kaydet çizilmez; içeriğin ⋮ menüsü (`PostMenu`) yalnız alıntı işlerini taşır (kendi alıntında "Alıntıyı sil", başkasınınkinde "Şikayet Et"; `QuoteDeleteDialog` / `QuoteReportDialog`). Space'in detay sayfası olmadığından orada kapak kolajı + başlık + `QuoteEngagement` kalır; içerik gizlenmişse "artık görünmüyor". Yalnız istemci; migration yok. Test: `run-quotes` 12/12 (yeni senaryo 12).
+
 ## Sınırlar
 Gerçek Supabase'e / oturuma / cihaza karşı DENENMEDİ (ağ taklitli Playwright + yerel PostgreSQL). "Sana özel" ve Odak alıntı almaz; alıntı kaydedilmez; Space'in "Akışta gönderi olarak paylaş" anahtarı yerinde (alıntıyla birleştirme ayrı iş); `/share/quote/` statik paylaşım sayfası yok.
 
