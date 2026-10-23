@@ -3,8 +3,9 @@
 import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { Flame, Heart, TrendingUp } from "lucide-react";
-import { StorageImg } from "@/components/ui/storage-media";
+import { StorageAppearanceImage } from "@/components/ui/storage-media";
 import { Avatar } from "@/components/ui/avatar";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollRow } from "@/components/ui/scroll-row";
 import { FollowButton } from "@/features/profile/follow-button";
 import { useTaxonomyVersion } from "@/features/content/taxonomy-hydrator";
@@ -16,7 +17,7 @@ import { fetchCreatorsPage } from "@/lib/supabase/profiles";
 import { useAuth } from "@/features/auth/auth-provider";
 import { categoryHref, cn, formatCount, profileHref, promptHref, tagHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import type { Prompt, PromptContentType, Tag, UserProfile } from "@/types";
+import type { Prompt, PromptContentType, PromptMedia, Tag, UserProfile } from "@/types";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 /** Fewer than this in a window and the strip falls back to the wider window (then hides) — never padded with older posts under a "this week" title. */
@@ -43,35 +44,99 @@ const STRIP_CLASS = "-mx-3 gap-2 px-3 sm:mx-0 sm:px-0";
  * - the most followed creators.
  */
 export function useDiscoverHighlights() {
-  const [popular, setPopular] = useState<{ window: PopularWindow; prompts: Prompt[] } | null>(null);
-  const [sample, setSample] = useState<Prompt[]>([]);
-  const [tags, setTags] = useState<{ trending: boolean; tags: StripTag[] } | null>(null);
-  const [creators, setCreators] = useState<UserProfile[]>([]);
+  const [data, setData] = useState<DiscoverHighlights | null>(() => readCachedHighlights());
 
   useEffect(() => {
+    if (readCachedHighlights()) return;
     let cancelled = false;
-    const now = Date.now();
-    (async () => {
-      const week = await fetchTopPrompts({ since: new Date(now - 7 * DAY_MS).toISOString(), limit: 10 });
-      if (week.length >= POPULAR_MIN) return { window: "week" as const, prompts: week };
-      const month = await fetchTopPrompts({ since: new Date(now - 30 * DAY_MS).toISOString(), limit: 10 });
-      return month.length >= POPULAR_MIN ? { window: "month" as const, prompts: month } : null;
-    })().then((result) => !cancelled && setPopular(result));
-    fetchTopPrompts({ limit: CATEGORY_SAMPLE }).then((top) => !cancelled && setSample(top));
-    (async () => {
-      const trending = await fetchTrendingTags(10);
-      if (trending.length > 0) return { trending: true, tags: trending as StripTag[] };
-      return { trending: false, tags: (await fetchPopularTags(10)) as StripTag[] };
-    })().then((result) => !cancelled && setTags(result));
-    fetchCreatorsPage(null, CREATORS_MAX + 1)
-      .then((page) => !cancelled && setCreators(page.creators))
-      .catch((err) => console.error("fetchCreatorsPage (discover)", err));
+    loadHighlights().then((loaded) => {
+      highlightsCache = { data: loaded, at: Date.now() };
+      if (!cancelled) setData(loaded);
+    });
     return () => {
       cancelled = true;
     };
   }, []);
 
+  return { loading: data === null, popular: data?.popular ?? null, sample: data?.sample ?? [], tags: data?.tags ?? null, creators: data?.creators ?? [] };
+}
+
+interface DiscoverHighlights {
+  popular: { window: PopularWindow; prompts: Prompt[] } | null;
+  sample: Prompt[];
+  tags: { trending: boolean; tags: StripTag[] };
+  creators: UserProfile[];
+}
+
+/** The strips arrive TOGETHER (docs/history/220-*): one reveal instead of four pop-ins that each pushed the posts down. Kept a few minutes so Back does not reload them. */
+const HIGHLIGHTS_TTL_MS = 3 * 60 * 1000;
+let highlightsCache: { data: DiscoverHighlights; at: number } | null = null;
+
+function readCachedHighlights(): DiscoverHighlights | null {
+  return highlightsCache && Date.now() - highlightsCache.at < HIGHLIGHTS_TTL_MS ? highlightsCache.data : null;
+}
+
+/** All queries at once (the wider-window / fallback ones too, so no second round trip waits behind the first); a failed one leaves its strip empty. */
+async function loadHighlights(): Promise<DiscoverHighlights> {
+  const now = Date.now();
+  const [week, month, sample, trending, popularTags, creators] = await Promise.all([
+    fetchTopPrompts({ since: new Date(now - 7 * DAY_MS).toISOString(), limit: 10 }),
+    fetchTopPrompts({ since: new Date(now - 30 * DAY_MS).toISOString(), limit: 10 }),
+    fetchTopPrompts({ limit: CATEGORY_SAMPLE }),
+    fetchTrendingTags(10).catch(() => []),
+    fetchPopularTags(10).catch(() => []),
+    fetchCreatorsPage(null, CREATORS_MAX + 1)
+      .then((page) => page.creators)
+      .catch((err) => {
+        console.error("fetchCreatorsPage (discover)", err);
+        return [] as UserProfile[];
+      }),
+  ]);
+  const popular = week.length >= POPULAR_MIN ? { window: "week" as const, prompts: week } : month.length >= POPULAR_MIN ? { window: "month" as const, prompts: month } : null;
+  const tags = trending.length > 0 ? { trending: true, tags: trending as StripTag[] } : { trending: false, tags: popularTags as StripTag[] };
   return { popular, sample, tags, creators };
+}
+
+/**
+ * Stand-ins while the strips load, each as tall as the strip it holds, so nothing below moves when the real ones arrive
+ * (docs/history/220-*). Rows are clipped, not scrollable.
+ */
+export function DiscoverHighlightsSkeleton() {
+  const { t } = useTranslation();
+  return (
+    <div className="space-y-4" aria-busy="true" aria-label={t("common.loadingAriaLabel")} data-discover-highlights-loading="">
+      <div className={cn(STRIP_CLASS, "flex overflow-hidden")}>
+        {[0, 1, 2].map((i) => (
+          <Skeleton key={i} className="h-[3.125rem] w-48 shrink-0 rounded-[14px]" />
+        ))}
+      </div>
+      <div className={cn(STRIP_CLASS, "flex items-center overflow-hidden")}>
+        {[0, 1, 2, 3].map((i) => (
+          <Skeleton key={i} className="h-9 w-28 shrink-0 rounded-full" />
+        ))}
+      </div>
+      <div className="space-y-2">
+        <Skeleton className="h-7 w-40 rounded-md" />
+        <div className={cn(STRIP_CLASS, "flex overflow-hidden")}>
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className="w-28 shrink-0 space-y-1 sm:w-36">
+              <Skeleton className="aspect-square w-full rounded-[14px]" />
+              <Skeleton className="h-5 w-4/5 rounded-md" />
+              <Skeleton className="h-4 w-3/5 rounded-md" />
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="space-y-2">
+        <Skeleton className="h-7 w-44 rounded-md" />
+        <div className={cn(STRIP_CLASS, "flex overflow-hidden")}>
+          {[0, 1].map((i) => (
+            <Skeleton key={i} className="h-[3.25rem] w-64 shrink-0 rounded-full" />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 /** Section title of a strip, with an optional "Tümü" action on the right. */
@@ -90,7 +155,7 @@ interface CategoryEntry {
   type: PromptContentType;
   id: string;
   labelKey: string;
-  covers: string[];
+  covers: PromptMedia[];
   hits: number;
 }
 
@@ -111,7 +176,7 @@ export function CategoryStrip({ sample }: { sample: Prompt[] }) {
       const key = `${prompt.contentType}:${category.id}`;
       const entry = byKey.get(key) ?? { type: prompt.contentType, id: category.id, labelKey: category.labelKey, covers: [], hits: 0 };
       entry.hits += 1;
-      const cover = prompt.contentType === "image" ? prompt.media[0]?.url : undefined;
+      const cover = prompt.contentType === "image" ? prompt.media[0] : undefined;
       if (cover && entry.covers.length < 2) entry.covers.push(cover);
       byKey.set(key, entry);
     }
@@ -137,9 +202,11 @@ export function CategoryStrip({ sample }: { sample: Prompt[] }) {
               className="flex shrink-0 items-center gap-2 rounded-[14px] border border-border-soft bg-surface py-1.5 pl-1.5 pr-3 text-left transition-colors duration-200 ease-soft hover:border-border"
             >
               {cells.length > 0 ? (
-                <span aria-hidden className="grid h-8 w-8 shrink-0 grid-cols-2 gap-0.5 overflow-hidden rounded-lg">
-                  {cells.map((url, index) => (
-                    <StorageImg key={index} src={url} alt="" className="h-full w-full object-cover" />
+                <span aria-hidden className="grid h-8 w-8 shrink-0 grid-cols-2 grid-rows-2 gap-0.5 overflow-hidden rounded-lg">
+                  {cells.map((cover, index) => (
+                    <span key={index} className="relative block overflow-hidden">
+                      <StorageAppearanceImage src={cover.url} alt="" color={cover.color} placeholder={cover.placeholder} sizes="32px" className="object-cover" />
+                    </span>
                   ))}
                 </span>
               ) : (
@@ -203,7 +270,14 @@ export function PopularStrip({ popular }: { popular: { window: PopularWindow; pr
               <Link href={promptHref(prompt)} className="group block space-y-1">
                 <span className="relative block aspect-square overflow-hidden rounded-[14px] border border-border-soft bg-surface-soft">
                   {cover ? (
-                    <StorageImg src={cover.url} alt="" className="h-full w-full object-cover transition-transform duration-200 ease-soft group-hover:scale-[1.03]" />
+                    <StorageAppearanceImage
+                      src={cover.url}
+                      alt=""
+                      color={cover.color}
+                      placeholder={cover.placeholder}
+                      sizes="(min-width: 640px) 144px, 112px"
+                      className="object-cover transition-transform duration-200 ease-soft group-hover:scale-[1.03]"
+                    />
                   ) : prompt.promptText.trim() ? (
                     <span className="prompt-text block p-2.5 text-[0.6875rem] leading-relaxed text-text-secondary">
                       <span className="line-clamp-5">{prompt.promptText}</span>
