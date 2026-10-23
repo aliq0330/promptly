@@ -28,6 +28,7 @@ import {
   type WorkflowRunState,
 } from "@/lib/workflow-run";
 import { cn } from "@/lib/utils";
+import { ScrollRow } from "@/components/ui/scroll-row";
 import { CardBandBackdrop } from "@/features/content/content-card";
 import type { Prompt, PromptVariable, WorkflowStep } from "@/types";
 import { STEP_TYPE_META } from "./step-meta";
@@ -112,7 +113,7 @@ export function WorkflowRunner({ workflowId, steps }: { workflowId: string; step
           <div className="h-full rounded-full bg-primary transition-[width] duration-200 ease-soft" style={{ width: `${progress.percent}%` }} />
         </div>
         <nav aria-label={t("workflow.run.stepsNavAria")}>
-          <ol className="flex gap-1.5 overflow-x-auto pb-1">
+          <ScrollRow as="ol" className="gap-1.5 pb-1">
             {steps.map((item, itemIndex) => {
               const done = state.done.includes(item.id);
               const current = !showSummary && itemIndex === index;
@@ -138,7 +139,7 @@ export function WorkflowRunner({ workflowId, steps }: { workflowId: string; step
                 </li>
               );
             })}
-          </ol>
+          </ScrollRow>
         </nav>
       </div>
 

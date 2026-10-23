@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Flame, Heart, TrendingUp } from "lucide-react";
 import { StorageImg } from "@/components/ui/storage-media";
 import { Avatar } from "@/components/ui/avatar";
+import { ScrollRow } from "@/components/ui/scroll-row";
 import { FollowButton } from "@/features/profile/follow-button";
 import { useTaxonomyVersion } from "@/features/content/taxonomy-hydrator";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
@@ -30,8 +31,8 @@ type PopularWindow = "week" | "month";
 /** A tag in the compact strip: `recentCount` only when it came from the real trending window. */
 type StripTag = Tag & { recentCount?: number };
 
-/** Shared horizontal strip: edge-to-edge scroll on phones, inside the column from `sm`. */
-const STRIP_CLASS = "scrollbar-none -mx-3 flex touch-pan-x gap-2 overflow-x-auto overscroll-x-contain px-3 sm:mx-0 sm:px-0";
+/** Shared horizontal strip (`ScrollRow`: wheel, drag and arrows on a desktop): edge-to-edge scroll on phones, inside the column from `sm`. */
+const STRIP_CLASS = "-mx-3 gap-2 px-3 sm:mx-0 sm:px-0";
 
 /**
  * Discover's compact top (docs/history/210-*: categories · rising tags · popular · creators, then the posts), all from real rows:
@@ -123,7 +124,7 @@ export function CategoryStrip({ sample }: { sample: Prompt[] }) {
       <h2 id="discover-categories" className="sr-only">
         {t("discover.categories")}
       </h2>
-      <div className={STRIP_CLASS}>
+      <ScrollRow className={STRIP_CLASS}>
         {entries.map((entry) => {
           const Icon = CONTENT_TYPE_META[entry.type].icon;
           // Two covers make a diagonal (a b / b a); one fills all four cells.
@@ -153,7 +154,7 @@ export function CategoryStrip({ sample }: { sample: Prompt[] }) {
             </Link>
           );
         })}
-      </div>
+      </ScrollRow>
     </section>
   );
 }
@@ -163,7 +164,7 @@ export function TagStrip({ tags }: { tags: { trending: boolean; tags: StripTag[]
   const { t } = useTranslation();
   if (!tags || tags.tags.length === 0) return null;
   return (
-    <section aria-labelledby="discover-trending" className={cn(STRIP_CLASS, "items-center")}>
+    <ScrollRow as="section" aria-labelledby="discover-trending" className={cn(STRIP_CLASS, "items-center")}>
       <h2 id="discover-trending" className="flex shrink-0 items-center gap-1 text-caption font-semibold text-text-muted">
         <TrendingUp size={14} className="text-secondary" aria-hidden />
         {t(tags.trending ? "discover.rising" : "discover.trending")}
@@ -179,7 +180,7 @@ export function TagStrip({ tags }: { tags: { trending: boolean; tags: StripTag[]
           {tag.recentCount !== undefined && <span className="text-caption font-semibold tabular-nums text-secondary">{formatCount(tag.recentCount)}</span>}
         </Link>
       ))}
-    </section>
+    </ScrollRow>
   );
 }
 
@@ -193,7 +194,7 @@ export function PopularStrip({ popular }: { popular: { window: PopularWindow; pr
         <Flame size={16} className="text-secondary" aria-hidden />
         {t(popular.window === "week" ? "discover.popularWeek" : "discover.popularMonth")}
       </StripHeader>
-      <ul className={STRIP_CLASS}>
+      <ScrollRow as="ul" className={STRIP_CLASS}>
         {popular.prompts.map((prompt) => {
           const Icon = CONTENT_TYPE_META[prompt.contentType].icon;
           const cover = prompt.contentType === "image" ? prompt.media[0] : undefined;
@@ -224,7 +225,7 @@ export function PopularStrip({ popular }: { popular: { window: PopularWindow; pr
             </li>
           );
         })}
-      </ul>
+      </ScrollRow>
     </section>
   );
 }
@@ -247,7 +248,7 @@ export function CreatorStrip({ creators, onSeeAll }: { creators: UserProfile[]; 
       >
         {t("discover.featuredCreators")}
       </StripHeader>
-      <ul className={STRIP_CLASS}>
+      <ScrollRow as="ul" className={STRIP_CLASS}>
         {visible.map((creator) => (
           <li key={creator.id} className="flex shrink-0 items-center gap-2 rounded-full border border-border-soft bg-surface py-1.5 pl-1.5 pr-1.5">
             <Link href={profileHref(creator)} className="flex min-w-0 items-center gap-2 rounded-full">
@@ -262,7 +263,7 @@ export function CreatorStrip({ creators, onSeeAll }: { creators: UserProfile[]; 
             <FollowButton user={creator} />
           </li>
         ))}
-      </ul>
+      </ScrollRow>
     </section>
   );
 }

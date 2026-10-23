@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Mail } from "lucide-react";
 import { buttonClassName } from "@/components/ui/button";
+import { ScrollRow } from "@/components/ui/scroll-row";
 import { useStorageSrc } from "@/components/ui/storage-media";
 import { fetchMyUnseenCounts, listMyCommunities, type CommunitySummary } from "@/lib/supabase/communities";
 import type { GroupInvitation } from "@/lib/supabase/chat-groups";
@@ -58,13 +59,13 @@ export function MyCommunitiesShelf() {
           {t("common.viewAll")}
         </Link>
       </div>
-      <ul className="scrollbar-none -mx-3 flex touch-pan-x gap-3 overflow-x-auto overscroll-x-contain px-3 pb-2 pt-1 sm:mx-0 sm:px-0">
+      <ScrollRow as="ul" className="-mx-3 gap-3 px-3 pb-2 pt-1 sm:mx-0 sm:px-0">
         {state.communities.map((community) => (
           <li key={community.id} className="w-[6.5rem] shrink-0">
             <ShelfCover community={community} unseen={state.unseen.get(community.id) ?? 0} />
           </li>
         ))}
-      </ul>
+      </ScrollRow>
     </section>
   );
 }

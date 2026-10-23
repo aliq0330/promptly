@@ -1,6 +1,7 @@
 import { forwardRef, type ButtonHTMLAttributes } from "react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ScrollRow } from "@/components/ui/scroll-row";
 
 /** Filter/selection chip — a real toggle button (`aria-pressed`). */
 export const Chip = forwardRef<
@@ -50,15 +51,20 @@ export function ChipRow({
   /** Names the group for assistive tech ("Filtreler"); the row is then exposed as `role="group"`. */
   "aria-label"?: string;
 }) {
+  const role = ariaLabel ? "group" : undefined;
+  if (scroll) {
+    // The wrapper takes the slot the row had in its parent (`className` often carries `min-w-0 flex-1`); the scroller keeps the gap and edge bleed.
+    return (
+      <ScrollRow role={role} aria-label={ariaLabel} wrapperClassName={className} className="-mx-3 gap-2 px-3 sm:mx-0 sm:px-0">
+        {children}
+      </ScrollRow>
+    );
+  }
   return (
     <div
-      role={ariaLabel ? "group" : undefined}
+      role={role}
       aria-label={ariaLabel}
-      className={cn(
-        "scrollbar-none -mx-3 flex touch-pan-x gap-2 overflow-x-auto overscroll-x-contain px-3",
-        scroll ? "sm:mx-0 sm:px-0" : "sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0",
-        className,
-      )}
+      className={cn("scrollbar-none -mx-3 flex touch-pan-x gap-2 overflow-x-auto overscroll-x-contain px-3 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0", className)}
     >
       {children}
     </div>

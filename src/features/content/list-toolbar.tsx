@@ -4,6 +4,7 @@ import { useId, useState, type ReactNode } from "react";
 import { Check, SlidersHorizontal, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
+import { ScrollRow } from "@/components/ui/scroll-row";
 import { TaxonomyDrillList, TaxonomyTypeChips } from "@/features/content/taxonomy-filter";
 import { SortSelect, SORT_KEYS, SORT_LABELS, type ContentSortKey } from "@/features/content/sort-select";
 import { ViewModeControls, ViewModeSwitcher } from "@/features/content/view-mode-switcher";
@@ -218,7 +219,7 @@ export function ListToolbar({
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const hasMobileTabs = mobileTabs !== undefined;
-  const scroller = "scrollbar-none flex min-w-0 touch-pan-x gap-2 overflow-x-auto overscroll-x-contain";
+  const scroller = "gap-2";
 
   const filterCountBadge = (
     <>
@@ -255,18 +256,19 @@ export function ListToolbar({
       <div className={cn("flex min-w-0 flex-col gap-2 md:flex-row md:items-center", tabsBelow && "md:grid md:grid-cols-[minmax(0,1fr)_auto]")}>
         {leading && <div className={cn("min-w-0", tabsBelow ? "md:col-start-1 md:row-start-1" : "md:flex-1")}>{leading}</div>}
         {tabs && (
-          <div
+          <ScrollRow
             role="group"
             aria-label={tabsLabel}
-            className={cn(scroller, tabsBelow ? "md:col-span-2 md:row-start-2" : "md:flex-1", MOBILE_TABS, (hasMobileTabs || hideTabsOnMobile) && "max-md:hidden")}
+            wrapperClassName={cn(tabsBelow ? "md:col-span-2 md:row-start-2" : "md:flex-1", (hasMobileTabs || hideTabsOnMobile) && "max-md:hidden")}
+            className={cn(scroller, MOBILE_TABS)}
           >
             {tabs}
-          </div>
+          </ScrollRow>
         )}
         {hasMobileTabs && (
-          <div role="group" aria-label={tabsLabel} className={cn(scroller, MOBILE_TABS, "md:hidden")}>
+          <ScrollRow role="group" aria-label={tabsLabel} wrapperClassName="md:hidden" className={cn(scroller, MOBILE_TABS)}>
             {mobileTabs}
-          </div>
+          </ScrollRow>
         )}
 
         <div className={cn("flex min-w-0 items-center gap-2 md:shrink-0", tabsBelow && "md:col-start-2 md:row-start-1")}>

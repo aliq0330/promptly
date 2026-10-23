@@ -504,6 +504,8 @@ export const translations = {
   "profile.youBlockedThisUser": { tr: "Bu kullanıcıyı engelledin", en: "You've blocked this user" },
   "common.optional": { tr: "opsiyonel", en: "optional" },
   "common.viewAll": { tr: "Tümünü gör", en: "View all" },
+  "scrollRow.prev": { tr: "Sola kaydır", en: "Scroll left" },
+  "scrollRow.next": { tr: "Sağa kaydır", en: "Scroll right" },
   "common.showMore": { tr: "Daha fazla göster", en: "Show more" },
   "common.showLess": { tr: "Daha az göster", en: "Show less" },
   "common.readMore": { tr: "devamını gör", en: "read more" },

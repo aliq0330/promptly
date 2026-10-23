@@ -8,6 +8,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageContainer } from "@/components/ui/page-header";
+import { ScrollRow } from "@/components/ui/scroll-row";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useAuthPrompt } from "@/features/auth/auth-prompt-provider";
@@ -234,7 +235,7 @@ export function SpacesHome() {
           <h2 id="spaces-recent" className="px-1 text-label font-semibold uppercase tracking-[0.08em] text-text-muted">
             {t("spaces.home.recent")}
           </h2>
-          <ul className="scrollbar-none -mx-3 flex touch-pan-x gap-3 overflow-x-auto px-3 pb-1 sm:mx-0 sm:px-0" data-testid="spaces-recent">
+          <ScrollRow as="ul" className="-mx-3 gap-3 px-3 pb-1 sm:mx-0 sm:px-0" data-testid="spaces-recent">
             {recent.map((space) => (
               <li key={space.id} className="w-24 shrink-0 sm:w-28">
                 <Link href={spaceHref(space.id)} className="group block space-y-1.5 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
@@ -248,7 +249,7 @@ export function SpacesHome() {
                 </Link>
               </li>
             ))}
-          </ul>
+          </ScrollRow>
         </section>
       )}
 

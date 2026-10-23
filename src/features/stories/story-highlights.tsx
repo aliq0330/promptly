@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Check, Loader2, Pencil, Plus, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
+import { ScrollRow } from "@/components/ui/scroll-row";
 import { useAuth } from "@/features/auth/auth-provider";
 import {
   deleteHighlight,
@@ -98,7 +99,7 @@ export function StoryHighlightsRow({ ownerId, isOwnProfile }: { ownerId: string;
   const groups = highlights.map((h) => ({ key: h.id, authorId: ownerId, storyIds: h.storyIds, mode: "highlight" as const, label: h.title }));
 
   return (
-    <nav aria-label={t("stories.highlight.rowLabel")} data-story-highlights className="scrollbar-none -mx-3 flex touch-pan-x gap-4 overflow-x-auto overscroll-x-contain px-3 sm:mx-0 sm:px-0">
+    <ScrollRow as="nav" aria-label={t("stories.highlight.rowLabel")} data-story-highlights className="-mx-3 gap-4 px-3 sm:mx-0 sm:px-0">
       {highlights.map((highlight, index) => {
         const coverId = highlight.coverStoryId && highlight.storyIds.includes(highlight.coverStoryId) ? highlight.coverStoryId : highlight.storyIds[0];
         return (
@@ -148,7 +149,7 @@ export function StoryHighlightsRow({ ownerId, isOwnProfile }: { ownerId: string;
           }}
         />
       )}
-    </nav>
+    </ScrollRow>
   );
 }
 

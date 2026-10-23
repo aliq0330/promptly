@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Plus, RotateCcw, Users, WifiOff } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
+import { ScrollRow } from "@/components/ui/scroll-row";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useOwnProfile } from "@/features/auth/own-profile-provider";
@@ -84,7 +85,7 @@ export function StoryTray({ communityId, canAdd = true, className }: { community
 
   return (
     <nav aria-label={communityId ? t("stories.tray.communityLabel") : t("stories.tray.label")} data-story-tray className={cn("space-y-2", className)}>
-      <div className="scrollbar-none -mx-3 flex touch-pan-x gap-4 overflow-x-auto overscroll-x-contain px-3 sm:mx-0 sm:px-0">
+      <ScrollRow className="-mx-3 gap-4 px-3 sm:mx-0 sm:px-0">
         {/* Kendi halkam: hikâyem varsa açar, artı rozeti yenisini başlatır (paylaşma hakkı yoksa yalnız açar). */}
         {(own || canAdd) && (
           <div className="relative flex w-[68px] shrink-0 flex-col items-center gap-1.5 text-center">
@@ -152,7 +153,7 @@ export function StoryTray({ communityId, canAdd = true, className }: { community
                 </button>
               );
             })}
-      </div>
+      </ScrollRow>
 
       {offline ? (
         <p className="flex items-center gap-1.5 text-caption text-text-muted" role="status">

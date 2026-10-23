@@ -265,7 +265,7 @@ export function PublishSheet({
                 <p className="text-small text-text-muted">{t("share.announce.noCommunities")}</p>
               ) : (
                 <>
-                  <div className="-mx-5 flex gap-2 overflow-x-auto px-5 pb-1">
+                  <div className="scrollbar-fine -mx-5 flex gap-2 overflow-x-auto px-5 pb-1">
                     {communities.list.map((item) => {
                       const on = selection.communityIds.includes(item.id);
                       return (

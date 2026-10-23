@@ -38,6 +38,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { lockBodyScroll, unlockBodyScroll } from "@/components/ui/modal";
+import { ScrollRow } from "@/components/ui/scroll-row";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
 import { imageSourceProblem } from "@/lib/image-processing";
@@ -730,7 +731,7 @@ export function SpaceBoard({ focusId }: { focusId: string | null }) {
       )}
     >
       {/* Üst araç çubuğu */}
-      <div role="toolbar" aria-label={t("spaces.board.toolbar")} className="scrollbar-none z-20 flex shrink-0 items-center gap-1 overflow-x-auto border-b border-border-soft bg-surface px-2 py-1.5">
+      <ScrollRow role="toolbar" aria-label={t("spaces.board.toolbar")} wrapperClassName="z-20 shrink-0 border-b border-border-soft bg-surface" className="items-center gap-1 px-2 py-1.5">
         {editable && (
           <SpaceMenu
             align="left"
@@ -774,7 +775,7 @@ export function SpaceBoard({ focusId }: { focusId: string | null }) {
           <SaveIndicator status={layoutStatus} onRetry={() => void flushLayout()} className="ml-0" />
         </div>
         <input ref={fileRef} type="file" multiple accept="image/jpeg,image/png,image/webp,image/heic,image/heif" className="sr-only" tabIndex={-1} onChange={(event) => { void uploadFiles(event.target.files); event.target.value = ""; }} />
-      </div>
+      </ScrollRow>
 
       {/* Tuval */}
       <div

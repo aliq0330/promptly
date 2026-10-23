@@ -2,6 +2,7 @@
 
 import { useLayoutEffect, useRef, useState } from "react";
 import type { LucideIcon } from "lucide-react";
+import { ScrollRow } from "@/components/ui/scroll-row";
 import { cn } from "@/lib/utils";
 
 export interface TabItem<K extends string> {
@@ -23,7 +24,8 @@ export interface TabItem<K extends string> {
  * isn't perfectly horizontal doesn't also drag the whole page vertically)
  * and `overscroll-x-contain` stops that horizontal scroll from chaining
  * into the page's own vertical scroll once it hits an edge — both real
- * mobile bugs on iOS Safari, not cosmetic.
+ * mobile bugs on iOS Safari, not cosmetic. The row is a `ScrollRow`, so a desktop mouse reaches the hidden tabs too (wheel, drag, arrows;
+ * docs/history/219-*), and the chosen tab is brought into view when it changes (a deep link can select a tab past the edge).
  */
 export function Tabs<K extends string>({
   items,
@@ -40,7 +42,7 @@ export function Tabs<K extends string>({
   variant?: "underline" | "segmented" | "pill";
   className?: string;
 }) {
-  const listRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLElement>(null);
   const [indicator, setIndicator] = useState<{ left: number; width: number } | null>(null);
   const activeIndex = items.findIndex((item) => item.key === active);
   const labelsKey = items.map((item) => `${item.key}:${item.count ?? ""}`).join("|");
@@ -62,19 +64,30 @@ export function Tabs<K extends string>({
     return () => observer.disconnect();
   }, [activeIndex, labelsKey, variant]);
 
+  // Only when the chosen tab changes: a resize or a new count must not yank a row the reader has scrolled.
+  useLayoutEffect(() => {
+    const list = listRef.current;
+    const tab = list?.querySelectorAll<HTMLElement>('[role="tab"]')[activeIndex];
+    if (!list || !tab) return;
+    const gutter = 16;
+    const right = tab.offsetLeft + tab.offsetWidth;
+    if (tab.offsetLeft < list.scrollLeft + gutter) list.scrollLeft = Math.max(0, tab.offsetLeft - gutter);
+    else if (right > list.scrollLeft + list.clientWidth - gutter) list.scrollLeft = right - list.clientWidth + gutter;
+  }, [activeIndex]);
+
   return (
-    <div
+    <ScrollRow
       ref={listRef}
       role="tablist"
       aria-label={ariaLabel}
+      wrapperClassName={className}
       className={cn(
-        "scrollbar-none relative flex touch-pan-x overflow-x-auto overscroll-x-contain",
+        "relative",
         variant === "underline"
           ? "gap-1 border-b border-border-soft"
           : variant === "pill"
             ? "gap-2 py-0.5"
             : "w-fit max-w-full gap-0.5 rounded-lg border border-border-soft bg-surface-soft p-0.5",
-        className,
       )}
     >
       {indicator && variant !== "pill" && (
@@ -142,6 +155,6 @@ export function Tabs<K extends string>({
           </button>
         );
       })}
-    </div>
+    </ScrollRow>
   );
 }

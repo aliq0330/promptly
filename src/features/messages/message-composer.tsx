@@ -174,7 +174,7 @@ export function MessageComposer({
       )}
       {banners}
       {images.length > 0 && (
-        <ul className="mb-2 flex gap-2 overflow-x-auto pb-1 scrollbar-none" aria-label={t("messages.selectedPhotos")}>
+        <ul className="mb-2 flex gap-2 overflow-x-auto pb-1 scrollbar-fine" aria-label={t("messages.selectedPhotos")}>
           {images.map((image, index) => (
             <li key={image.key} className="relative h-16 w-16 shrink-0">
               {/* eslint-disable-next-line @next/next/no-img-element -- local blob preview */}

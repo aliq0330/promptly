@@ -170,6 +170,7 @@ Tek tasarım sistemi, üç kompozisyon (`AppShell`):
 - Masaüstü (lg+): 256px gruplu sidebar (Keşfet / Kütüphanem + ayrı birincil
   "Oluştur" butonu), detay sayfalarında sağ yardımcı sütun.
 - Dokunma hedefleri ≥ 36px, uzun prompt metinleri taşmaz (`break-words`).
+- **Yatay kaydırmalı şerit = `ScrollRow`** (`components/ui/scroll-row.tsx`, `docs/history/219-*`): telefonda parmak, masaüstünde tekerlek + fareyle sürükleme + ‹ › düğmeleri + kenar soluklaşması. Elle `overflow-x-auto scrollbar-none` yazma (fareyle gezilemez, taşan içerik ulaşılamaz olur); küçük bir satır için `scrollbar-fine` (yalnız yatay), sığacak çip satırı için `md:flex-wrap`.
 - Aşağı kaydırınca üst menü (yalnız `lg` altı) yukarı kayıp kaybolur; alt menü ve detay sayfasının sabitlenen eylem satırı (`data-detail-dock`, telefonda) KAPANMAZ ve saydamlaşmaz, yerinde olduğu gibi kalır (`docs/history/214-*`); yukarı kaydırınca üst menü döner (`useChromeAutoHide` → `html[data-chrome-hidden]`, `docs/history/204-*`, `208-*`); ekranın üstüne/altına sabitlenen yeni bir öğe yazarken bu özniteliği hesaba kat.
 
 ## 4.5 Çok Dillilik (Türkçe / İngilizce) — Bağlayıcı Kural
