@@ -22,8 +22,9 @@ import { requestHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { KindDraftsButton } from "@/features/drafts/kind-drafts-button";
 import { ComposeSheet, ComposeShell, ComposeToolbar, PublishPreview, composeBodyClassName, composeTitleClassName, useComposeLeave, useDirty } from "@/features/content/compose";
-import { ComposeBody, ComposeSummaryChips, ContentTypeChips, SuggestedTagsRow } from "@/features/content/compose-fields";
-import { PublishSheet, type PublishProblem } from "@/features/content/publish-sheet";
+import { ComposeBody, ContentTypePicker, SuggestedTagsRow } from "@/features/content/compose-fields";
+import { PublishDetailsSection, PublishSheet, type PublishDetailRow, type PublishProblem } from "@/features/content/publish-sheet";
+import { taxonomyPathLabel } from "@/lib/content-taxonomy";
 import { resolveToolRefs } from "@/lib/ai-tool-catalog";
 import type { ContentVisibility, PromptContentType, PromptRequest } from "@/types";
 import { MentionTextarea } from "@/features/mentions/mention-field";
@@ -41,7 +42,7 @@ const DESCRIPTION_MAX = 500;
  * account).
  */
 export function CreateRequestForm() {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   const router = useRouter();
   const searchParams = useSearchParams();
   const returnToCommunity = useCommunityReturn();
@@ -361,11 +362,23 @@ export function CreateRequestForm() {
   };
 
   const isSaveMode = isEditMode && !isEditingDraft;
-  const audienceLabel = communityId ? (communityName ?? t("compose.aCommunity")) : visibility === "private" ? t("publish.private") : t("publish.public");
   const focusField = (id: string) => () => document.getElementById(id)?.focus();
   const problems: PublishProblem[] = [
     ...(titleError ? [{ key: "title", label: titleError, onFix: focusField("request-title") }] : []),
     ...(descriptionError ? [{ key: "description", label: descriptionError, onFix: focusField("request-description") }] : []),
+  ];
+  const categoryPath = category ? taxonomyPathLabel({ contentType, category, subcategory }, language, false) : "";
+  const infoRows: PublishDetailRow[] = [
+    { key: "category", icon: Folder, label: t("taxonomy.categoryLabel"), value: categoryPath, onClick: () => setSheet("category") },
+    { key: "tool", icon: Cpu, label: t("formSection.tool"), value: resolveToolRefs(tools)[0]?.label, onClick: () => setSheet("tool") },
+    {
+      key: "tags",
+      icon: Hash,
+      label: t("forms.tags"),
+      value: tagPicker.accepted.length > 0 ? t("compose.tagCount", { count: tagPicker.accepted.length }) : undefined,
+      hint: tagPicker.suggested.length > 0 ? t("compose.suggestionCount", { count: tagPicker.suggested.length }) : undefined,
+      onClick: () => setSheet("tags"),
+    },
   ];
   const fieldError = (message: string | null) => (message ? <p className="text-caption text-danger">{message}</p> : null);
 
@@ -397,17 +410,33 @@ export function CreateRequestForm() {
         }}
         className="space-y-4"
       >
-        <ContentTypeChips
-          value={contentType}
-          onChange={(type) => {
-            setContentType(type);
-            setCategory(null);
-            setSubcategory(null);
-          }}
-          locked={isEditMode}
-        />
-
-        <ComposeBody profile={ownProfile} audienceLabel={audienceLabel} onAudience={() => setPublishOpen(true)}>
+        <ComposeBody
+          profile={ownProfile}
+          audienceLabel={communityId ? (communityName ?? t("compose.aCommunity")) : undefined}
+          onAudience={() => setPublishOpen(true)}
+          typeSlot={
+            <ContentTypePicker
+              value={contentType}
+              onChange={(type) => {
+                setContentType(type);
+                setCategory(null);
+                setSubcategory(null);
+              }}
+              locked={isEditMode}
+            />
+          }
+          toolbar={
+            <ComposeToolbar
+              tools={[
+                { key: "reference", icon: ImagePlus, label: t("compose.toolReference"), badge: images.length || undefined, highlight: true, onClick: () => document.getElementById("request-images")?.click() },
+                { key: "direction", icon: Sparkles, label: t("compose.toolDirection"), onClick: () => document.getElementById("request-direction")?.focus() },
+                ...(!isEditMode && contentType === "image"
+                  ? [{ key: "vision", icon: WandSparkles, label: t("compose.toolHelp"), onClick: () => setSheet("vision") }]
+                  : []),
+              ]}
+            />
+          }
+        >
           <div className="space-y-1.5">
             <input
               id="request-title"
@@ -441,20 +470,6 @@ export function CreateRequestForm() {
             </div>
           </div>
 
-          {/* Araçlar yazının hemen altında, sayfanın akışında (iOS klavyesiyle kaymaz) — docs/history/216-*. */}
-          <ComposeToolbar
-            tools={[
-              { key: "reference", icon: ImagePlus, label: t("compose.toolReference"), onClick: () => document.getElementById("request-images")?.click() },
-              { key: "direction", icon: Sparkles, label: t("compose.toolDirection"), onClick: () => document.getElementById("request-direction")?.focus() },
-              { key: "tags", icon: Hash, label: t("compose.toolTags"), badge: tagPicker.suggested.length || undefined, onClick: () => setSheet("tags") },
-              { key: "tool", icon: Cpu, label: t("compose.toolTool"), onClick: () => setSheet("tool") },
-              { key: "category", icon: Folder, label: t("compose.toolCategory"), onClick: () => setSheet("category") },
-              ...(!isEditMode && contentType === "image"
-                ? [{ key: "vision", icon: WandSparkles, label: t("compose.toolHelp"), onClick: () => setSheet("vision") }]
-                : []),
-            ]}
-          />
-
           <MultiImagePicker variant="strip" inputId="request-images" items={images} onChange={setImages} />
 
           <label className="block space-y-1 border-l-2 border-secondary/60 pl-3">
@@ -473,17 +488,6 @@ export function CreateRequestForm() {
             />
           </label>
 
-          <ComposeSummaryChips
-            tools={tools}
-            contentType={contentType}
-            category={category}
-            subcategory={subcategory}
-            tags={tagPicker.accepted.map((entry) => entry.tag)}
-            onTools={() => setSheet("tool")}
-            onCategory={() => setSheet("category")}
-            onTags={() => setSheet("tags")}
-          />
-          <SuggestedTagsRow picker={tagPicker} />
         </ComposeBody>
       </form>
 
@@ -529,6 +533,12 @@ export function CreateRequestForm() {
           visibility={visibility}
           onVisibilityChange={setVisibility}
           problems={problems}
+          details={
+            <>
+              <PublishDetailsSection title={t("compose.postInfo")} rows={infoRows} />
+              <SuggestedTagsRow picker={tagPicker} />
+            </>
+          }
           preview={
             <PublishPreview
               thumbnail={images[0]?.url ?? null}

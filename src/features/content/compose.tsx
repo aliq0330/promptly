@@ -14,8 +14,7 @@ import { cn } from "@/lib/utils";
 /**
  * Yazma ekranı kabuğu (docs/history/216-*; X / Threads tarzı): açıkken üst menü, kenar çubuğu ve alt menü kalkar
  * (`html[data-compose-open]` → `[data-app-chrome]` yok), yerine yapışkan üst çubuk: ✕ · başlık (+ taslaklar) · durum · "Paylaş".
- * "Paylaş" formu yayınlamaz, son kontrol penceresini (`PublishSheet`) açar. `toolbar` telefonda ekranın altına yapışır (klavye
- * açılınca üstüne çıkar), `lg`+ yazının altında durur; `aside` (canlı önizleme) yalnız `lg`+ sağ sütundur.
+ * "Paylaş" formu yayınlamaz, son kontrol penceresini (`PublishSheet`) açar. `aside` (canlı önizleme) yalnız `lg`+ sağ sütundur.
  */
 export function ComposeShell({
   title,
@@ -96,29 +95,35 @@ export interface ComposeTool {
   label: string;
   /** Turuncu sayı: bekleyen öneri ya da seçili ayar sayısı. */
   badge?: number;
+  /** Açık mavi zemin: satırın öne çıkan aracı (hazır ayar). */
+  highlight?: boolean;
   onClick: () => void;
 }
 
 /**
- * Araç satırı: simge + kısa etiket; her biri bir alt sayfa açar. Yazının hemen altında, sayfanın akışında durur (docs/history/216-*):
- * `fixed`/`sticky` bir alt çubuk iOS Safari'de klavye açılınca görünen alanla birlikte kaymadığı için asılı kalıyor ya da yazının
- * üstüne biniyordu; akıştaki bir satır klavyeyle sayfa kayarken kendiliğinden doğru yerde kalır. Dar ekranda yatay kayar.
+ * Araç satırı (docs/history/216-*): simge + kısa etiket; her biri bir alt sayfa ya da panel açar. Yazı alanının ÜSTÜNDE, sayfa akışında
+ * durur: `fixed`/`sticky` bir alt çubuk iOS Safari'de klavye açılınca görünen alanla birlikte kaymadığı için asılı kalıyor ya da
+ * yazının üstüne biniyordu; sayfanın en üstündeki satırı klavye hiç ilgilendirmez. Yalnız YAZARKEN gereken araçlar burada durur
+ * (hazır ayar, görsel, değişken…); kategori/araç/etiket/DNA gibi yayın bilgileri "Paylaşmadan önce" penceresindedir.
  */
 export function ComposeToolbar({ tools }: { tools: ComposeTool[] }) {
   return (
-    <div data-compose-toolbar="" className="-mx-1 flex items-stretch gap-0.5 overflow-x-auto border-y border-border-soft py-1" role="toolbar">
+    <div data-compose-toolbar="" className="-mx-3 flex items-stretch gap-0.5 overflow-x-auto border-b border-border-soft px-2.5 pb-1.5 sm:mx-0 sm:px-0" role="toolbar">
       {tools.map((tool) => (
         <button
           key={tool.key}
           type="button"
           onClick={tool.onClick}
           data-compose-tool={tool.key}
-          className="relative flex min-h-12 min-w-[3.25rem] flex-1 flex-col items-center justify-center gap-0.5 rounded-xl px-1.5 text-[0.6875rem] font-medium text-text-secondary transition-colors hover:bg-surface-soft hover:text-text"
+          className={cn(
+            "relative flex min-h-14 min-w-[4.25rem] flex-1 flex-col items-center justify-center gap-1 rounded-xl px-1.5 text-center text-[0.6875rem] font-semibold leading-tight transition-colors",
+            tool.highlight ? "bg-primary-soft text-primary" : "text-text-secondary hover:bg-surface-soft hover:text-text",
+          )}
         >
-          <tool.icon size={20} strokeWidth={1.9} className="text-primary" />
+          <tool.icon size={21} strokeWidth={1.9} className="text-primary" />
           {tool.label}
           {tool.badge ? (
-            <span aria-hidden className="absolute right-1 top-0.5 min-w-4 rounded-full bg-secondary px-1 text-center text-[0.625rem] font-bold leading-4 text-background">
+            <span aria-hidden className="absolute right-2 top-1 min-w-4 rounded-full bg-secondary px-1 text-center text-[0.625rem] font-bold leading-4 text-background">
               {tool.badge}
             </span>
           ) : null}

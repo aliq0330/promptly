@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { AlertCircle, Check, ChevronRight, Globe, Loader2, Lock, Users } from "lucide-react";
+import { AlertCircle, Check, ChevronRight, Globe, Loader2, Lock, Users, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { GroupAvatar } from "@/features/groups/group-avatar";
@@ -22,6 +22,50 @@ export interface PublishProblem {
   onFix?: () => void;
 }
 
+export interface PublishDetailRow {
+  key: string;
+  icon: LucideIcon;
+  label: string;
+  /** Seçili değer (sağda); boşsa `emptyLabel` ("Seçilmedi") yazılır. */
+  value?: string;
+  hint?: string;
+  /** Turuncu sayı: bekleyen öneri sayısı. */
+  badge?: number;
+  onClick: () => void;
+}
+
+/**
+ * Pencerenin bilgi bölümü (docs/history/216-*): kategori, araç, etiket, DNA gibi yayın bilgileri yazma ekranından buraya taşındı;
+ * her satır ilgili alt sayfayı açar (alt sayfa bu pencerenin üstüne biner, "Bitti" ile dönülür).
+ */
+export function PublishDetailsSection({ title, aside, rows }: { title: string; aside?: string; rows: PublishDetailRow[] }) {
+  const { t } = useTranslation();
+  return (
+    <section className="space-y-2" data-publish-details={rows[0]?.key}>
+      <p className="flex items-baseline justify-between gap-2 text-label font-semibold text-text">
+        {title}
+        {aside && <span className="text-caption font-normal text-text-muted">{aside}</span>}
+      </p>
+      <div className="divide-y divide-border-soft rounded-2xl bg-surface-soft px-3">
+        {rows.map((row) => (
+          <button key={row.key} type="button" onClick={row.onClick} data-publish-detail={row.key} className="flex w-full items-center gap-3 py-2.5 text-left">
+            <span aria-hidden className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary-soft text-primary">
+              <row.icon size={17} strokeWidth={1.9} />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-label font-semibold text-text">{row.label}</span>
+              {row.hint && <span className="block truncate text-caption text-text-muted">{row.hint}</span>}
+            </span>
+            {row.badge ? <span aria-hidden className="shrink-0 rounded-full bg-secondary px-1.5 text-caption font-bold leading-4 text-background">{row.badge}</span> : null}
+            <span className="max-w-[40%] shrink-0 truncate text-small text-text-muted">{row.value || t("compose.notChosen")}</span>
+            <ChevronRight size={16} aria-hidden className="shrink-0 text-text-muted" />
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 /**
  * Son kontrol penceresi (docs/history/216-*): yazma ekranının "Paylaş"ı bunu açar, asıl yayın buradaki düğmededir.
  *  - Eksikler (`problems`) en üstte, dokununca ilgili yere götürür; varken "Paylaş" pasiftir — alt sayfaya taşınan bir alanın
@@ -30,6 +74,7 @@ export interface PublishProblem {
  *  - "Kim görsün?": Herkese açık / Sadece ben / Bir topluluk (215'teki radyo satırlarının yerine; topluluk seçimi aynı depoya,
  *    `pickCreateDestination`, görünürlük formun kendi durumuna). Seçilemeyen seçenek çizilmez (yanıtta "Sadece ben", düzenlemede
  *    "topluluk" yok).
+ *  - Bilgi bölümleri (`details`): Kategori · Araç · Etiketler (öneriler çip olarak) ve Gelişmiş (Prompt DNA, referans gereksinimi).
  *  - "Topluluklarda da duyur": yalnız yeni + herkese açık içerikte; seçim modül deposunda, "Paylaş" anında kurulur ve içerik
  *    oluşunca gönderilir (`runPendingAnnounce`, sonuç kabukta raporlanır).
  *  - "Ne olacak" cümlesi, formun bildirimleri (`children`), "Taslağa kaydet" (varsa) ve "Paylaş".
@@ -44,6 +89,7 @@ export function PublishSheet({
   visibility,
   onVisibilityChange,
   hideDestination = false,
+  details,
   extra,
   preview,
   problems = [],
@@ -60,6 +106,8 @@ export function PublishSheet({
   onVisibilityChange?: (next: ContentVisibility) => void;
   /** Yayındaki içeriği düzenleme: yeri değişmez (topluluk seçeneği ve duyuru yok). */
   hideDestination?: boolean;
+  /** Gönderi bilgisi / Gelişmiş bölümleri (`PublishDetailsSection`), "Kim görsün?"in hemen altında. */
+  details?: ReactNode;
   extra?: ReactNode;
   preview?: ReactNode;
   problems?: PublishProblem[];
@@ -196,6 +244,8 @@ export function PublishSheet({
               )}
             </section>
           )}
+
+          {details}
 
           {extra}
 

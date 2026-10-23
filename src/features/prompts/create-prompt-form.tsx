@@ -5,7 +5,7 @@ import { ToolPicker } from "@/features/content/tool-picker";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Braces, ChevronRight, Copy, Cpu, Eye, EyeOff, Folder, Hash, ImagePlus, Layers, SlidersHorizontal, Sparkles, X } from "lucide-react";
+import { Braces, Copy, Cpu, Eye, EyeOff, FileCheck2, Folder, Hash, ImagePlus, Layers, Sparkles, X } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { PromptCard } from "@/features/prompts/prompt-card";
 import { TaxonomyPicker } from "@/features/content/taxonomy-picker";
@@ -41,26 +41,19 @@ import {
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { KindDraftsButton } from "@/features/drafts/kind-drafts-button";
 import { ComposeSheet, ComposeShell, ComposeToolbar, PublishPreview, composeBodyClassName, composeTitleClassName, useComposeLeave, useDirty } from "@/features/content/compose";
-import { ComposeBody, ComposeSummaryChips, ContentTypeChips, SuggestedTagsRow } from "@/features/content/compose-fields";
-import { PublishSheet, type PublishProblem } from "@/features/content/publish-sheet";
+import { ComposeBody, ContentTypePicker, SuggestedTagsRow } from "@/features/content/compose-fields";
+import { PublishDetailsSection, PublishSheet, type PublishDetailRow, type PublishProblem } from "@/features/content/publish-sheet";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
 import { resolveToolRefs } from "@/lib/ai-tool-catalog";
+import { taxonomyPathLabel } from "@/lib/content-taxonomy";
 import { SwitchRow } from "@/features/content/visibility-switch";
 import type { ContentVisibility, Prompt, PromptContentType, PromptRequest } from "@/types";
 
 
-type ComposeSheetKey = "tags" | "tool" | "category" | "advanced";
+type ComposeSheetKey = "tags" | "tool" | "category" | "dna" | "references";
 
 /** "Görsel" araç düğmesinin açtığı dosya seçici (görsel şeridindeki girişle aynı). */
 const IMAGE_INPUT_ID = "prompt-images";
-
-function SlidersHorizontalIcon() {
-  return (
-    <span aria-hidden className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary-soft text-primary">
-      <SlidersHorizontal size={17} />
-    </span>
-  );
-}
 
 function LoginGate({ message }: { message: string }) {
   const { t } = useTranslation();
@@ -744,11 +737,6 @@ export function CreatePromptForm() {
 
   const isSaveMode = isEditMode && !isEditingDraft;
   const typeMeta = CONTENT_TYPE_META[contentType];
-  const audienceLabel = communityId
-    ? (communityName ?? t("compose.aCommunity"))
-    : !showsVisibilityChoice && visibility === "private"
-      ? t("publish.private")
-      : t("publish.public");
   const focusField = (id: string) => () => document.getElementById(id)?.focus();
   const problems: PublishProblem[] = [
     ...(title.trim() ? [] : [{ key: "title", label: t("compose.problemTitle"), onFix: focusField("prompt-title") }]),
@@ -771,8 +759,28 @@ export function CreatePromptForm() {
     tags: t("forms.tags"),
     tool: t("formSection.tool"),
     category: t("taxonomy.categoryLabel"),
-    advanced: t("compose.advancedTitle"),
+    dna: t("dna.title"),
+    references: t("compose.references"),
   };
+  const categoryPath = category ? taxonomyPathLabel({ contentType, category, subcategory }, language, false) : "";
+  const infoRows: PublishDetailRow[] = [
+    { key: "category", icon: Folder, label: t("taxonomy.categoryLabel"), value: categoryPath, onClick: () => setSheet("category") },
+    { key: "tool", icon: Cpu, label: t("formSection.tool"), value: toolLabel, onClick: () => setSheet("tool") },
+    {
+      key: "tags",
+      icon: Hash,
+      label: t("forms.tags"),
+      value: tagPicker.accepted.length > 0 ? t("compose.tagCount", { count: tagPicker.accepted.length }) : undefined,
+      hint: tagPicker.suggested.length > 0 ? t("compose.suggestionCount", { count: tagPicker.suggested.length }) : undefined,
+      onClick: () => setSheet("tags"),
+    },
+  ];
+  const advancedRows: PublishDetailRow[] = [
+    { key: "dna", icon: FileCheck2, label: t("dna.title"), hint: t("compose.dnaHint"), value: dnaSections.length > 0 ? String(dnaSections.length) : undefined, onClick: () => setSheet("dna") },
+    ...(contentType === "text"
+      ? []
+      : [{ key: "references", icon: ImagePlus, label: t("compose.references"), hint: t("compose.referencesHint"), value: Object.values(effectiveReferences).some(Boolean) ? t("common.yes") : undefined, onClick: () => setSheet("references") }]),
+  ];
 
   return (
     <ComposeShell
@@ -848,9 +856,37 @@ export function CreatePromptForm() {
           </div>
         )}
 
-        <ContentTypeChips value={contentType} onChange={(type) => changeTaxonomy({ contentType: type, category: null, subcategory: null })} locked={isEditMode} />
-
-        <ComposeBody profile={ownProfile} audienceLabel={audienceLabel} onAudience={() => setPublishOpen(true)}>
+        <ComposeBody
+          profile={ownProfile}
+          audienceLabel={communityId ? (communityName ?? t("compose.aCommunity")) : undefined}
+          onAudience={() => setPublishOpen(true)}
+          typeSlot={
+            <ContentTypePicker
+              value={contentType}
+              onChange={(type) => changeTaxonomy({ contentType: type, category: null, subcategory: null })}
+              locked={isEditMode}
+            />
+          }
+          toolbar={
+            <ComposeToolbar
+              tools={[
+                {
+                  key: "preset",
+                  icon: Layers,
+                  label: t("compose.toolPreset"),
+                  badge: Object.keys(extraSettings).length || undefined,
+                  highlight: true,
+                  onClick: () => setExtraOpen(true),
+                },
+                ...(contentType === "image"
+                  ? [{ key: "image", icon: ImagePlus, label: t("compose.toolImage"), badge: images.length || undefined, onClick: () => document.getElementById(IMAGE_INPUT_ID)?.click() }]
+                  : []),
+                { key: "variable", icon: Braces, label: t("compose.toolVariable"), badge: variables.length || undefined, onClick: () => editorRef.current?.openInsert() },
+                ...(contentType === "image" ? [{ key: "vision", icon: Sparkles, label: t("compose.toolVision"), onClick: () => editorRef.current?.openVisionHelp() }] : []),
+              ]}
+            />
+          }
+        >
           <input
             id="prompt-title"
             value={title}
@@ -884,7 +920,7 @@ export function CreatePromptForm() {
             visionFile={contentType === "image" ? (images.find((item) => item.file)?.file ?? null) : null}
           />
 
-          {/* Hazır ayarlar ve ek alan önerileri: panel "Gelişmiş"ten açılır, uygulananlar burada çip olarak görünür. */}
+          {/* Hazır ayarlar ve ek alan önerileri: panel araç satırındaki "Hazır ayar"dan açılır, uygulananlar burada çip olarak görünür. */}
           <ExtraSettingsSection
             compact
             open={extraOpen}
@@ -905,20 +941,6 @@ export function CreatePromptForm() {
             tools={tools}
           />
 
-          {/* Araçlar yazının hemen altında, sayfanın akışında (iOS klavyesiyle kaymaz) — docs/history/216-*. */}
-          <ComposeToolbar
-            tools={[
-              ...(contentType === "image"
-                ? [{ key: "image", icon: ImagePlus, label: t("compose.toolImage"), onClick: () => document.getElementById(IMAGE_INPUT_ID)?.click() }]
-                : []),
-              { key: "tags", icon: Hash, label: t("compose.toolTags"), badge: tagPicker.suggested.length || undefined, onClick: () => setSheet("tags") },
-              { key: "tool", icon: Cpu, label: t("compose.toolTool"), onClick: () => setSheet("tool") },
-              { key: "category", icon: Folder, label: t("compose.toolCategory"), onClick: () => setSheet("category") },
-              { key: "variable", icon: Braces, label: t("compose.toolVariable"), badge: variables.length || undefined, onClick: () => editorRef.current?.openInsert() },
-              { key: "advanced", icon: Layers, label: t("compose.toolAdvanced"), badge: Object.keys(extraSettings).length + dnaSections.length || undefined, onClick: () => setSheet("advanced") },
-            ]}
-          />
-
           {contentType === "image" && (
             <MultiImagePicker
               variant="strip"
@@ -932,18 +954,6 @@ export function CreatePromptForm() {
           {outputKind && (
             <OutputFilePicker kind={outputKind} file={outputFile} onChange={(file) => setPickedOutput(file ? { kind: outputKind, file } : null)} disabled={isSubmitting} />
           )}
-
-          <ComposeSummaryChips
-            tools={tools}
-            contentType={contentType}
-            category={category}
-            subcategory={subcategory}
-            tags={tagPicker.accepted.map((entry) => entry.tag)}
-            onTools={() => setSheet("tool")}
-            onCategory={() => setSheet("category")}
-            onTags={() => setSheet("tags")}
-          />
-          <SuggestedTagsRow picker={tagPicker} />
         </ComposeBody>
       </form>
 
@@ -954,57 +964,13 @@ export function CreatePromptForm() {
           {sheet === "category" && (
             <TaxonomyPicker bare value={{ contentType, category, subcategory }} onChange={changeTaxonomy} lockContentType={isEditMode} lockedHint={t("prompt.notEditableWhileEditing")} />
           )}
-          {sheet === "advanced" && (
-            <div className="space-y-6">
-              <div className="divide-y divide-border-soft rounded-xl border border-border-soft">
-                <button
-                  type="button"
-                  data-advanced-row="extra"
-                  onClick={() => {
-                    setSheet(null);
-                    setExtraOpen(true);
-                  }}
-                  className="flex w-full items-center gap-3 px-3 py-3 text-left"
-                >
-                  <SlidersHorizontalIcon />
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-label font-semibold text-text">{t("extra.title")}</span>
-                    <span className="block text-caption text-text-muted">{t("extra.hint")}</span>
-                  </span>
-                  {Object.keys(extraSettings).length > 0 && (
-                    <span className="rounded-full bg-primary px-2 py-0.5 text-caption font-semibold text-primary-foreground">{Object.keys(extraSettings).length}</span>
-                  )}
-                  <ChevronRight size={16} aria-hidden className="shrink-0 text-text-muted" />
-                </button>
-                {contentType === "image" && (
-                  <button
-                    type="button"
-                    data-advanced-row="vision"
-                    onClick={() => {
-                      setSheet(null);
-                      editorRef.current?.openVisionHelp();
-                    }}
-                    className="flex w-full items-center gap-3 px-3 py-3 text-left"
-                  >
-                    <span aria-hidden className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary-soft text-primary">
-                      <Sparkles size={17} />
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block text-label font-semibold text-text">{t("vision.helpTitle")}</span>
-                      <span className="block text-caption text-text-muted">{t("vision.helpIntro")}</span>
-                    </span>
-                    <ChevronRight size={16} aria-hidden className="shrink-0 text-text-muted" />
-                  </button>
-                )}
-              </div>
-              <section className="space-y-2">
-                <h3 className="text-label font-semibold text-text">{t("dna.title")}</h3>
-                <p className="text-caption text-text-muted">{t("dna.description")}</p>
-                <PromptDnaEditor promptText={promptText} contentType={contentType} sections={dnaSections} onChange={setDnaSections} />
-              </section>
-              <ReferenceRequirementsField contentType={contentType} value={references} onChange={setReferences} />
-            </div>
+          {sheet === "dna" && (
+            <section className="space-y-2">
+              <p className="text-caption text-text-muted">{t("dna.description")}</p>
+              <PromptDnaEditor promptText={promptText} contentType={contentType} sections={dnaSections} onChange={setDnaSections} />
+            </section>
           )}
+          {sheet === "references" && <ReferenceRequirementsField contentType={contentType} value={references} onChange={setReferences} />}
         </ComposeSheet>
       )}
 
@@ -1022,6 +988,13 @@ export function CreatePromptForm() {
           visibility={showsVisibilityChoice ? undefined : visibility}
           onVisibilityChange={showsVisibilityChoice ? undefined : setVisibility}
           problems={problems}
+          details={
+            <>
+              <PublishDetailsSection title={t("compose.postInfo")} rows={infoRows} />
+              <SuggestedTagsRow picker={tagPicker} />
+              <PublishDetailsSection title={t("compose.advancedTitle")} aside={t("common.optional")} rows={advancedRows} />
+            </>
+          }
           preview={
             <PublishPreview
               thumbnail={contentType === "image" ? (images[0]?.url ?? null) : null}
