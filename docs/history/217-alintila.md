@@ -32,3 +32,6 @@ Gerçek Supabase'e / oturuma karşı DENENMEDİ.
 
 ## Sınırlar
 Gerçek Supabase'e / oturuma / cihaza karşı DENENMEDİ (ağ taklitli Playwright + yerel PostgreSQL). "Sana özel" ve Odak alıntı almaz; alıntı kaydedilmez; Space'in "Akışta gönderi olarak paylaş" anahtarı yerinde (alıntıyla birleştirme ayrı iş); `/share/quote/` statik paylaşım sayfası yok.
+
+## Canlı durum
+`20260921160000_content_quotes.sql` **canlıda** (bu oturumda salt-okunur sorguyla doğrulandı; uygulamayı kullanıcı yapmıştı — migration `schema_migrations`'ta kayıtsızdı, dosya sürümüyle kayıt eklendi, SQL yeniden çalıştırılmadı). Doğrulanan: `content_quotes` (2 politika; istemcide insert/update yetkisi yok), 5 mevcut alıntı satırı, 5 tabloda `quote_count`, `prompt_likes`/`prompt_comments`'ta `quote_id`, `notifications_type_check` ve `reports_target_type_check` `quote` içeriyor, 14 alıntı tetikleyicisi, `feed_page` (13 argümanlı) / `content_engagers` / `moderate_report` / beğeni-yorum işleyicileri alıntıyı tanıyor; `create_quote` yalnız `authenticated`, okuma RPC'leri anon+authenticated, iç `_quote_*` / `enforce_*` / `notify_*` fonksiyonlarına EXECUTE yok. Gerçek oturumla / cihazla uçtan uca denenmedi.
