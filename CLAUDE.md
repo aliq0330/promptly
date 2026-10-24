@@ -472,5 +472,5 @@ bağlayıcıdır; ayrıntılı gerekçe için `docs/history/README.md` tablosuna
   isteğin `creative_direction`'ını da kapsar ve keyset sayfalanır (`search_content`); `prompt_saves` canlıdan kaldırıldı; kod içi
   yorumlarda eski "Bölüm 9.x" atıfları arşiv numaralarına (`docs/history/NNN-*`) karşılık gelir.
 
-**Arşiv:** [`docs/history/README.md`](docs/history/README.md) — 224 bölüm, her
+**Arşiv:** [`docs/history/README.md`](docs/history/README.md) — 225 bölüm, her
 biri için durum etiketi (uygulandı / kısmen geçerli / kaldırıldı).

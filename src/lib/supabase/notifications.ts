@@ -82,6 +82,12 @@ export async function deleteNotification(notificationId: string, userId: string)
   if (error) throw new Error(error.message);
 }
 
+/** "Tümünü sil" — kullanıcının KENDİ tüm bildirimlerini tek DELETE ile siler (RLS: yalnız alıcı kendi satırlarını silebilir). */
+export async function deleteAllNotifications(userId: string): Promise<void> {
+  const { error } = await supabase.from("notifications").delete().eq("recipient_id", userId);
+  if (error) throw new Error(error.message);
+}
+
 /**
  * "Tümünü okundu işaretle" — one bulk UPDATE rather than one round-trip per
  * unread row. Same RLS-backed ownership guarantee as the two functions
