@@ -45,9 +45,9 @@ async function scenario(name, fn, { viewport = { width: 390, height: 844 }, lang
     return {
       body: ordered.map((r, i) => ({
         kind: "prompt", id: r.id, created_at: r.created_at, sort_rank: 100 - i,
-        // Sunucu kuralı (docs/history/222-*): takip edilen kişinin gönderisi GİRMEZ, `creator` nedeni üretilmez.
-        reason_kind: r.id === pid(3) && photo ? "interest" : i === 0 ? "tag" : i === 1 ? "liked_tag" : "popular",
-        reason_ref: r.id === pid(3) && photo ? "Fotoğrafçılık" : i <= 1 ? "resim" : null,
+        // Sunucu kuralı (docs/history/223-*): takip edilen kişinin gönderisi girer ve nedeni `creator` olur (ref yok); son satır böyle bir gönderi.
+        reason_kind: i === ordered.length - 1 ? "creator" : r.id === pid(3) && photo ? "interest" : i === 0 ? "tag" : i === 1 ? "liked_tag" : "popular",
+        reason_ref: i === ordered.length - 1 ? null : r.id === pid(3) && photo ? "Fotoğrafçılık" : i <= 1 ? "resim" : null,
       })),
     };
   };
@@ -132,7 +132,7 @@ await scenario("2. misafir: 4'ten az görsel → kompakt tanıtım (boş duvar y
 }, { guest: true, count: 3 });
 
 // 3 — Sana özel
-await scenario("3. üye: varsayılan sekme Sana özel; her kartta gerçek neden (kişi nedeni yok); ilgi alanı çipleri akışta DEĞİL — araç satırı + ilk kullanım kartı", async ({ page, state }) => {
+await scenario("3. üye: varsayılan sekme Sana özel; her kartta gerçek neden (takip edilen kişi dahil); ilgi alanı çipleri akışta DEĞİL — araç satırı + ilk kullanım kartı", async ({ page, state }) => {
   await page.goto(`${BASE}/`);
   const tab = page.getByRole("tab", { name: "Sana özel" });
   await tab.waitFor();
@@ -141,7 +141,7 @@ await scenario("3. üye: varsayılan sekme Sana özel; her kartta gerçek neden 
   await page.getByText("Beğendiğin #Resim gönderilerine benziyor").first().waitFor();
   assert.ok((await page.getByText("Toplulukta öne çıkıyor").count()) >= 1, "sinyalsiz kartın nedeni dürüst: öne çıkıyor, 'şu an popüler' değil");
   assert.equal(await page.getByText("Şu an popüler").count(), 0);
-  assert.equal(await page.getByText(/Takip ettiğin .* paylaştı/).count(), 0, "takip edilen kişi nedeni yok (onlar Takip Ettiklerim'de)");
+  await page.getByText(/Takip ettiğin .* paylaştı/).first().waitFor();
   // İlgi alanları akışın üstünde sıra sıra çip DEĞİL: yalnız araç satırı (Yenile · Sana özel'i ayarla) var.
   assert.equal(await page.getByRole("heading", { name: /İlgi alanların/i }).count(), 0, "akışta 'İlgi alanların' başlığı yok");
   await page.getByRole("button", { name: "Yenile", exact: true }).waitFor();
@@ -181,7 +181,7 @@ await scenario("4. üye: ilgi alanı seçilince kaydedilir, kart kalkar, akış 
   const dialog = page.getByRole("dialog");
   await dialog.getByRole("heading", { name: "Sana özel'i ayarla" }).waitFor();
   assert.equal(await dialog.getByRole("button", { name: "Fotoğrafçılık" }).getAttribute("aria-pressed"), "true");
-  await dialog.getByText(/Takip ettiğin kişilerin paylaşımları burada değil/).waitFor();
+  await dialog.getByText(/takip ettiğin kişilerden, etiketlerden ve AI araçlarından/).waitFor();
   await dialog.getByRole("button", { name: "Fotoğrafçılık" }).click();
   await waitUntil(() => state.interests.length === 0);
   assert.deepEqual(state.patches.at(-1), { interests: [] }, "seçim kaldırılır ve yazılır");

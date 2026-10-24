@@ -121,12 +121,13 @@ export function FeedTabs({ layout = "grid" }: { layout?: "grid" | "home" } = {})
   );
   const forYou = useForYouPages({ kind, taxonomy: EMPTY_TAXONOMY_FILTER }, isForYou && enabled);
   const feed = isForYou ? { ...forYou, retry: forYou.refresh } : feedPages;
-  // Nothing to learn from yet (no interests, no followed tag or AI tool): "Sana özel" shows its first-time card instead of guessing.
+  // Nothing to learn from yet (no interests, no followed person, tag or AI tool): "Sana özel" shows its first-time card instead of guessing.
   const coldStart =
     isForYou &&
     Boolean(user) &&
     profile !== null &&
     (profile.interests ?? []).length === 0 &&
+    profile.followingCount === 0 &&
     followedTagStore.loaded &&
     followedTagStore.tags.length === 0 &&
     followedToolStore.loaded &&

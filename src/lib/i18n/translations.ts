@@ -547,13 +547,13 @@ export const translations = {
   "forYou.reasonPopular": { tr: "Toplulukta öne çıkıyor", en: "Standing out in the community" },
   "feed.emptyForYouLoginTitle": { tr: "Sana özel akış için giriş yap", en: "Sign in for a feed made for you" },
   "feed.emptyForYouLoginDescription": {
-    tr: "Takip ettiğin etiketlerden ve araçlardan, ilgi alanlarından ve beğendiklerinden sana uygun yeni gönderileri sıralarız.",
-    en: "We rank new posts that fit the tags and tools you follow, your interests and what you like.",
+    tr: "Takip ettiğin kişilerden, etiketlerden ve araçlardan, ilgi alanlarından ve beğendiklerinden sana uygun yeni gönderileri sıralarız.",
+    en: "We rank new posts that fit the people, tags and tools you follow, your interests and what you like.",
   },
   "feed.emptyForYouTitle": { tr: "Şimdilik gösterecek yeni bir şey yok", en: "Nothing new to show right now" },
   "feed.emptyForYouDescription": {
-    tr: "Sana özel, takip ettiklerin dışındaki yeni içerikleri gösterir; takip ettiklerinin paylaşımları Takip Ettiklerim'de. Birkaç etiketi ya da aracı takip et, ilgi alanlarını seç.",
-    en: "For you shows new things beyond the people you follow; their posts are under Following. Follow a few tags or tools and pick your interests.",
+    tr: "Sana özel; görmediğin, beğenmediğin, kaydetmediğin ve kopyalamadığın yeni içerikleri gösterir. Birkaç kişi, etiket ya da araç takip et, ilgi alanlarını seç.",
+    en: "For you shows new things you have not seen, liked, saved or copied. Follow a few people, tags or tools and pick your interests.",
   },
   "home.destination.label": { tr: "Nerede paylaşmak istiyorsun?", en: "Where do you want to share?" },
   "home.destination.feed": { tr: "Genel akış", en: "Main feed" },
