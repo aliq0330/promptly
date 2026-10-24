@@ -13,7 +13,7 @@ import { PromptCardSkeletonGrid } from "@/components/ui/prompt-card-skeleton";
 import { FeedItemsView } from "./feed-items-view";
 import { useFeedPages } from "./use-feed-pages";
 import { useForYouPages } from "./use-for-you-pages";
-import { ForYouInterests, ForYouReasonNote } from "./for-you-parts";
+import { ForYouReasonNote, ForYouSetupCard, ForYouToolbar } from "./for-you-parts";
 import {
   EMPTY_FOLLOWED_FILTER,
   FollowedFilterSections,
@@ -27,6 +27,9 @@ import { cameFromHistory } from "@/lib/history-navigation";
 import { cn } from "@/lib/utils";
 import type { FeedItem } from "./types";
 import { useAuth } from "@/features/auth/auth-provider";
+import { useOwnProfile } from "@/features/auth/own-profile-provider";
+import { useFollowedTags } from "@/features/tags/followed-tags-store";
+import { useFollowedTools } from "@/features/tools/followed-tools-store";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
 
@@ -77,6 +80,9 @@ export function FeedTabs({ layout = "grid" }: { layout?: "grid" | "home" } = {})
   const [kind, setKind] = useState<KindFilter>("all");
   const [picked, setPicked] = useState<FollowedFilterValue>(EMPTY_FOLLOWED_FILTER);
   const { user, loading: authLoading } = useAuth();
+  const { profile } = useOwnProfile();
+  const followedTagStore = useFollowedTags();
+  const followedToolStore = useFollowedTools();
   // "Sana özel" is the default (while the session is restored we assume the signed-in case); a guest sees its login prompt.
   const active: TabKey = chosen ?? "forYou";
   const setActive = (tab: TabKey) => {
@@ -115,6 +121,16 @@ export function FeedTabs({ layout = "grid" }: { layout?: "grid" | "home" } = {})
   );
   const forYou = useForYouPages({ kind, taxonomy: EMPTY_TAXONOMY_FILTER }, isForYou && enabled);
   const feed = isForYou ? { ...forYou, retry: forYou.refresh } : feedPages;
+  // Nothing to learn from yet (no interests, no followed tag or AI tool): "Sana özel" shows its first-time card instead of guessing.
+  const coldStart =
+    isForYou &&
+    Boolean(user) &&
+    profile !== null &&
+    (profile.interests ?? []).length === 0 &&
+    followedTagStore.loaded &&
+    followedTagStore.tags.length === 0 &&
+    followedToolStore.loaded &&
+    followedToolStore.tools.length === 0;
 
   const kindChips = (
     <>
@@ -182,7 +198,8 @@ export function FeedTabs({ layout = "grid" }: { layout?: "grid" | "home" } = {})
         <FollowedFilterSummary value={followedFilter} people={followedPeople.people} onChange={setPicked} onClear={clearFollowedFilter} />
       )}
 
-      {isForYou && user && <ForYouInterests onChanged={forYou.refresh} />}
+      {isForYou && user && <ForYouToolbar onRefresh={forYou.refresh} onChanged={forYou.refresh} refreshing={forYou.refreshing} />}
+      {coldStart && <ForYouSetupCard onChanged={forYou.refresh} />}
 
       {needsLogin ? (
         <EmptyState

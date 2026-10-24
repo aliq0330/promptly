@@ -154,7 +154,11 @@ async function hydrateFeedRows(rows: FeedRow[]): Promise<FeedEntry[]> {
   return rows.flatMap((row) => byKey.get(`${row.kind}-${row.id}`) ?? []);
 }
 
-/** Why "Sana özel" shows a post (`public.for_you_page`): the strongest real signal, never a made-up one. */
+/**
+ * Why "Sana özel" shows a post (`public.for_you_page`): the strongest real signal, never a made-up one. Since docs/history/222-* the server
+ * no longer returns posts of followed people (they are under "Takip Ettiklerim"), so `creator` is never produced — it stays in the type so a
+ * response from a server that has not got the migration yet is still understood.
+ */
 export type ForYouReasonKind = "creator" | "tag" | "tool" | "interest" | "liked_tag" | "popular";
 export interface ForYouReason {
   kind: ForYouReasonKind;
