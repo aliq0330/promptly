@@ -42,3 +42,54 @@ export function friendlyServerErrors(baseFetch: typeof fetch): typeof fetch {
     }
   };
 }
+
+/**
+ * Yeni eklenen, İSTEĞE BAĞLI sütunlar (docs/history/226-*): istemci bunları seçer ama sütun henüz canlıda yoksa (migration gecikti ya da
+ * geri alındı) PostgREST tüm isteği 400 (`42703`) ile reddeder ve site açılmaz. Bu sütunlar için istek, sütun çıkarılarak BİR kez
+ * yeniden denenir; sütun o oturumda bir daha seçilmez. Yalnız burada listelenen, yokluğu işlevi bozmayan (rozet gibi) sütunlar için —
+ * zorunlu bir sütunu listeye ekleme, sessizce `undefined` döner. Yeni bir isteğe bağlı sütun eklenince buraya da ekle.
+ */
+const OPTIONAL_COLUMNS = ["is_demo"] as const;
+const missingOptional = new Set<string>();
+
+function stripColumn(select: string, column: string): string {
+  return select.replace(new RegExp(`\\s*,\\s*${column}\\b`, "g"), "").replace(new RegExp(`\\b${column}\\s*,\\s*`, "g"), "");
+}
+
+function withoutMissingColumns(url: string): string {
+  if (missingOptional.size === 0 || !url.includes("/rest/v1/")) return url;
+  const parsed = new URL(url);
+  const select = parsed.searchParams.get("select");
+  if (!select) return url;
+  let next = select;
+  for (const column of missingOptional) next = stripColumn(next, column);
+  if (next === select) return url;
+  parsed.searchParams.set("select", next);
+  return parsed.toString();
+}
+
+function requestUrl(input: RequestInfo | URL): string {
+  return typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
+}
+
+export function tolerateMissingOptionalColumns(baseFetch: typeof fetch): typeof fetch {
+  return async (input, init) => {
+    const url = requestUrl(input);
+    const method = (init?.method ?? (typeof input === "object" && "method" in input ? input.method : "GET")).toUpperCase();
+    const adjusted = withoutMissingColumns(url);
+    const send = (target: string) => baseFetch(typeof input === "string" || input instanceof URL ? target : new Request(target, input), init);
+    const response = await send(adjusted);
+    if (response.status !== 400 || method !== "GET" || !adjusted.includes("/rest/v1/")) return response;
+    try {
+      const body = (await response.clone().json()) as { code?: string; message?: string } | null;
+      if (body?.code !== "42703") return response;
+      const column = OPTIONAL_COLUMNS.find((c) => new RegExp(`\\b${c}\\b`).test(body.message ?? ""));
+      if (!column) return response;
+      missingOptional.add(column);
+      const retry = withoutMissingColumns(adjusted);
+      return retry === adjusted ? response : await send(retry);
+    } catch {
+      return response;
+    }
+  };
+}

@@ -62,10 +62,12 @@ Uygulama tamamen statik export'tur (GitHub Pages, `basePath /promptly`): sunucu
 
 **PWA:** `src/app/manifest.ts` + `public/icons/` ile ana ekrana eklenebilir (`docs/history/163-*`); **service worker yok** (bilerek).
 
-**Dağıtım:** `.github/workflows/deploy.yml` yalnızca statik siteyi GitHub
-Pages'e yayınlar. **Edge Function'lar (`supabase/functions/*`) ve
-migration'lar CI ile deploy edilmez** — elle (`supabase functions deploy …`,
-SQL Editor/MCP) uygulanır; kod değişince unutulmaması gerekir.
+**Dağıtım:** `.github/workflows/deploy.yml` TEK boru hattıdır (`docs/history/226-*`): lint/tsc/test → `scripts/apply-migrations.mjs`
+(bekleyen migration'lar, tek işlem + kayıt; yıkıcı SQL `-- ci:allow-destructive` ister) → `scripts/smoke-test.mjs` (istemcinin sorguları
+canlı şemaya karşı) → derleme → GitHub Pages. Biri kırmızıysa site yayınlanmaz. `supabase/migrations-baseline.txt` = canlıda olduğu
+bilinen son sürüm (CI yalnız ondan yenisini uygular; ilerletmeye gerek yok). PR'lerde `ci.yml` (lint, tsc, test, migration denetimi,
+temiz PostgreSQL'e baştan oynatma + `supabase/tests/*.sql`, bilgilendirici UI kesiti) koşar. **Edge Function'lar
+(`supabase/functions/*`) CI ile deploy EDİLMEZ** — elle (`supabase functions deploy …`, "Deploy Edge Functions" workflow'u).
 
 ---
 
@@ -368,6 +370,11 @@ Kalıplar (yeni migration yazarken uy):
    eklenirse `orphan_storage_objects` listesine de eklenir (yoksa yetim süpürücü dosyayı siler).
 9. **Kök layout'a elle `<head>` + satır içi betik EKLEME** (`src/app/layout.tsx`): tekrar yüklemelerde React #418 ile tüm belgeyi yeniden kurar (`docs/history/192-*`). İlk boyama öncesi çalışacak betikler `<body>`'nin ilk çocuğu olarak düz `<script>` konur; `next/script` `beforeInteractive` ilk boyamadan sonra çalıştığı için bu iş için uygun değildir.
 10. **Kimlik değişince bellek sıfırlanır** (`features/auth/auth-provider.tsx`): kullanıcı A→B ya da çıkış olunca sayfa baştan yüklenir; yeni bir modül düzeyi önbellek/depo eklenirse ayrıca temizleme yazma, bu kural onu da kapsar. Yeni bir "kim neyi beğendi / etiketledi" gibi hedefe bağlı tablo yazarken SELECT politikasını `using (true)` YAPMA — hedefin okunabilirliğini izlet (`docs/history/195-*`).
+11. **Geriye uyumlu geçiş (expand → contract)** (`docs/history/226-*`): migration önce EKLER (yeni sütun/fonksiyon/tablo), istemci sonra
+    kullanır; sütun/fonksiyon silme ya da yeniden adlandırma ancak onu kullanan istemci yayınlandıktan SONRAKİ ayrı bir migration'dır.
+    İstemci, yokluğu işlevi bozmayan yeni bir sütunu seçiyorsa `lib/supabase/server-errors.ts` `OPTIONAL_COLUMNS` listesine eklenir
+    (sütun yoksa istek sütunsuz yeniden denenir); zorunlu yeni sütun/RPC `scripts/smoke-test.mjs` `CHECKS`'ine eklenir. Migration'ı elle
+    (MCP/SQL Editor) uygulamak istisnadır; uygulanırsa `schema_migrations`'a dosya sürümüyle kayıt düşülür.
 
 ---
 
@@ -380,6 +387,7 @@ Canlı projede (kontrol: bu oturum) 20 profil (17 demo hesap), 144 prompt (+44 t
 bağlayıcıdır; ayrıntılı gerekçe için `docs/history/README.md` tablosuna bak.
 
 **Açık işler (kullanıcı/yönetici adımı veya bilinen boşluk):**
+- Tek yayın boru hattı (`docs/history/226-*`): `deploy.yml` migration uygular + duman testi + derleme, `ci.yml` PR denetimi, repoda; **GitHub Actions'ta ve Supabase Management API sürücüsüyle henüz hiç çalıştırılmadı** (yerelde psql sürücüsüyle sınandı). Kullanıcı adımı: depo secret'ları `SUPABASE_ACCESS_TOKEN` + `SUPABASE_PROJECT_REF` eklenmeli (yoksa bekleyen migration varken `deploy.yml` bilerek durur; bekleyen yoksa secret gerekmez). İlk çalışma izlenmeli; isteğe bağlı `production` environment onayı eklenmedi.
 - Güvenlik/sosyal mantık sertleştirmesi (`docs/history/224-*`): `20260923100000_safety_hardening.sql` + `20260923100100_notifications_prune_cron.sql` repoda, yerel PostgreSQL'de sınandı (`safety-hardening.sql` 29/29; diğer 27 SQL dosyası `FAILED=0`), arayüz ağ taklitli Playwright'ta (`run-safety` 10/10), **canlıya UYGULANMADI** — ÖNCE migration (canlı şemayla çakışma/CHECK ihlali salt-okunur sorguyla elendi: ihlal eden satır yok, 17 demo hesap işaretlenecek; `drop table/column` yok; tüm tetikleyici fonksiyonlardan EXECUTE kalkar), SONRA istemci (yeni istemci `profiles.is_demo` seçer; migration yoksa profil sorguları hata verir). Elle kalanlar: canlıdaki 2 eski kendi-beğeni satırı silinmedi; `supabase/seed/close-unanswered-demo-requests.sql` (yanıtsız demo istekleri) çalıştırılmadı; `is_blocked(a,b)` başkasının engel ilişkisini sızdırır (ayrı iş); hız sınırı değerleri elle seçildi. Gerçek Supabase'e / oturuma / cihaza karşı denenmedi.
 - "Sana özel" takip puanı (`docs/history/223-*`, 222'deki "takip edilenler girmez" kararını geri alır): `20260922120000_for_you_followed_points.sql` (yalnızca `create or replace` AYNI imza, `drop` yok) yerel PostgreSQL'de sınandı (`for-you.sql` 17/17, `feed-filters.sql` 19/19), arayüz ağ taklitli Playwright'ta (`run-home-motion` 10/10, `run-feed-filters` 16/16), **canlıya UYGULANDI** (MCP `execute_sql`, tek işlem; `schema_migrations`'a dosya sürümüyle kayıt; canlıda doğrulandı: `aliq` ile 50 satır, hepsi `creator` nedenli — 17/18 yazarı takip ediyor; anon EXECUTE kapalı, authenticated açık). Takip edilen kişi +300 puan (etiket 200, araç 150); aşağıdaki 222 maddesindeki "kişi takibi puan vermez / boş kalır" notları ESKİDİR. Ağırlık elle seçildi; gerçek oturumla/cihazla denenmedi.
 - "Sana özel" yeniden kuruldu (`docs/history/222-*`): `20260922110000_for_you_v2.sql` (yalnızca `create or replace` AYNI imza + `prompt_copy_events` için kullanıcının kendi satırlarını okuma politikası [koşullu `create policy`]; `drop` yok) yerel PostgreSQL'de sınandı (`for-you.sql` 17/17, mutasyonlar yakalandı; 25 SQL test dosyası `FAILED=0`), arayüz ağ taklitli Playwright'ta (`run-home-motion` 10/10), **canlıya UYGULANDI** (kullanıcı izniyle, MCP `execute_sql`, tek işlem; `schema_migrations`'a dosya sürümüyle kayıt; canlıda doğrulandı: `prompt_copy_events` kendi-satırı politikası var, `for_you_page` anon'a kapalı / authenticated'a açık, takibi olmayan gerçek bir hesapla 50 satır — hiçbiri takip edilen yazardan değil, nedenler `popular`). **Bilinen sonuç:** canlıda yalnız 18 yazar var; çoğunu takip eden hesapta (ör. `aliq` 17 yazarı takip ediyor) Sana özel BOŞ kalır — takip edilenler bilerek dışarıda (zamanla içerik/yazar arttıkça kendiliğinden düzelir). Ağırlıklar elle seçildi, gerçek veriyle ayarlanmadı; "görüldü" yalnız beğeni/kaydetme/kopyalama (yalnız açılan gönderi izlenmez); yorum ve koleksiyon takibi sinyal değil. Gerçek Supabase'e / oturuma / cihaza karşı denenmedi.
@@ -472,5 +480,5 @@ bağlayıcıdır; ayrıntılı gerekçe için `docs/history/README.md` tablosuna
   isteğin `creative_direction`'ını da kapsar ve keyset sayfalanır (`search_content`); `prompt_saves` canlıdan kaldırıldı; kod içi
   yorumlarda eski "Bölüm 9.x" atıfları arşiv numaralarına (`docs/history/NNN-*`) karşılık gelir.
 
-**Arşiv:** [`docs/history/README.md`](docs/history/README.md) — 225 bölüm, her
+**Arşiv:** [`docs/history/README.md`](docs/history/README.md) — 226 bölüm, her
 biri için durum etiketi (uygulandı / kısmen geçerli / kaldırıldı).

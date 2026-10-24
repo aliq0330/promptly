@@ -39,9 +39,16 @@ supabase db push
 ```
 
 > `db push`, dosya adı ile canlı sürüm kaydı eşleşmediği için bu depoda güvenilir
-> değildir (aşağıda "Migration geçmişi ve bekleyen dosyalar"); yeni bir
-> migration'ı MCP `apply_migration` ya da SQL Editor ile uygulayıp canlı şemadan
-> doğrulayın.
+> değildir (aşağıda "Migration geçmişi ve bekleyen dosyalar").
+
+**Seçenek C — otomatik (normal yol, `docs/history/226-*`):** `main`'e birleşen her değişiklikte
+`.github/workflows/deploy.yml` önce `node scripts/apply-migrations.mjs` ile `supabase/migrations-baseline.txt`'teki sürümden
+YENİ ve canlıda kaydı olmayan migration'ları sırayla uygular (her biri tek işlemde, kayıtla birlikte), sonra
+`scripts/smoke-test.mjs` ile istemcinin sorgularını canlı şemaya karşı dener, ardından siteyi derleyip yayınlar. Biri
+başarısız olursa site YAYINLANMAZ. Yeni migration eklemek için dosyayı `supabase/migrations/<14 haneli sürüm>_<ad>.sql` adıyla
+koymak yeter; **`migrations-baseline.txt`'e dokunulmaz** (yalnız geçmişi elle uzlaştırınca ilerletilir). Gerekli depo secret'ları:
+`SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_REF` (+ derleme için `NEXT_PUBLIC_SUPABASE_URL/ANON_KEY`). Yıkıcı SQL (`drop table/column/
+function/…`, `truncate`) dosyanın başında `-- ci:allow-destructive` işareti olmadan uygulanmaz.
 
 ## Güncel şema (özet)
 
