@@ -20,6 +20,7 @@
  */
 import type { ContentTypeId } from "@/lib/content-taxonomy";
 import { parseToolRef } from "@/lib/ai-tool-catalog";
+import { TOOL_ONLY_FIELDS } from "@/lib/preset-fit";
 import type { Bilingual, PresetField, PresetFieldConfig, PresetFieldType } from "@/lib/preset-fields";
 
 /** `[value, en, tr, English phrase, Turkish phrase?]` — the Turkish phrase falls back to `TR_FRAGMENTS`, then to the English one. */
@@ -784,7 +785,8 @@ def(group("mj_chaos", "Chaos (--chaos)", "Kaos (--chaos)", [
   ["high", "High", "Yüksek", "--chaos 60"],
 ], "suffix"));
 
-const MIDJOURNEY_FIELDS = ["mj_ar", "mj_stylize", "mj_chaos"];
+/** Midjourney's own parameter fields — the one list lives in `preset-fit.ts` (`TOOL_ONLY_FIELDS`), which also switches them off for other tools. */
+const MIDJOURNEY_FIELDS = Object.keys(TOOL_ONLY_FIELDS).filter((id) => TOOL_ONLY_FIELDS[id] === "midjourney");
 
 const IMAGE_DEFAULT = ["camera", "lens", "composition", "lighting", "style", "visual_atmosphere", "color", "background", "dof", "aspect_ratio"];
 const IMAGE_PORTRAIT = ["camera", "lens", "lighting", "composition", "pose", "outfit", "makeup", "hair", "skin", "style", "visual_atmosphere", "color", "background", "light_intensity", "aspect_ratio"];

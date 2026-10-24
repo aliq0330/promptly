@@ -21,6 +21,7 @@
  */
 import type { Language } from "@/lib/i18n/translations";
 import { translateForRuntime } from "@/lib/i18n/translations";
+import { assemblePromptParts, joinPromptParts, type PromptPart } from "@/lib/prompt-parts";
 
 export type PresetFieldType = "single_select" | "multi_select" | "dropdown" | "text" | "number" | "slider" | "toggle" | "color";
 
@@ -275,6 +276,11 @@ function valuePhrases(field: PresetField, value: PresetValue, language: Language
  * Tool parameters (`suffix` fields) go after the sentence.
  */
 export function composePrompt(original: string, selection: PresetSelection, fields: readonly PresetField[], language: Language = "en"): string {
+  return joinPromptParts(composePromptParts(original, selection, fields, language));
+}
+
+/** `composePrompt`'s text as parts that say whether each piece came from the prompt or from the preset (Studio's final-prompt preview). */
+export function composePromptParts(original: string, selection: PresetSelection, fields: readonly PresetField[], language: Language = "en"): PromptPart[] {
   const clean = sanitizeSelection(selection, fields);
   const phrases: string[] = [];
   const suffixes: string[] = [];
@@ -283,11 +289,7 @@ export function composePrompt(original: string, selection: PresetSelection, fiel
     if (value === undefined) continue;
     (field.kind === "suffix" ? suffixes : phrases).push(...valuePhrases(field, value, language));
   }
-  if (phrases.length === 0 && suffixes.length === 0) return original;
-  const base = original.trim().replace(/[.\s]+$/, "");
-  const sentence = [base, ...phrases].filter(Boolean).join(", ");
-  const withStop = sentence ? `${sentence}.` : "";
-  return [withStop, ...suffixes].filter(Boolean).join(" ");
+  return assemblePromptParts(original, phrases, suffixes);
 }
 
 /** Tooltip text for an option chip: the phrase it adds to the prompt. */

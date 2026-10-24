@@ -8,7 +8,10 @@ import { useRealPrompts } from "@/features/prompts/real-prompts-provider";
 import { searchPrompts } from "@/lib/supabase/prompts";
 import { contentTypeLabelKey, taxonomyLabel } from "@/lib/content-taxonomy";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import type { Prompt } from "@/types";
+import { Chip } from "@/components/ui/chip";
+import { FitBadge } from "@/features/presets/preset-fit-badge";
+import { presetFit, targetOfPrompt, type PresetFit } from "@/lib/preset-fit";
+import type { Preset, Prompt } from "@/types";
 import { StorageImg } from "@/components/ui/storage-media";
 
 export type SourcePickerKind = "prompt";
@@ -20,10 +23,11 @@ interface Row {
   author: string;
   typeLabel: string;
   image: string | null;
+  prompt: Prompt;
 }
 
 function fromPrompt(p: Prompt): Row {
-  return { key: p.id, title: p.title, author: p.author.displayName, typeLabel: contentTypeLabelKey(p.contentType), image: p.media[0]?.url ?? null };
+  return { key: p.id, title: p.title, author: p.author.displayName, typeLabel: contentTypeLabelKey(p.contentType), image: p.media[0]?.url ?? null, prompt: p };
 }
 
 /**
@@ -31,12 +35,24 @@ function fromPrompt(p: Prompt): Row {
  * has in memory, or a title/description search. Picking only returns the
  * key; the page loads the source itself (same path as a `?prompt=` link).
  */
-export function StudioSourcePicker({ kind, onPick, onClose }: { kind: SourcePickerKind; onPick: (key: string) => void; onClose: () => void }) {
+export function StudioSourcePicker({
+  kind,
+  onPick,
+  onClose,
+  fitFor,
+}: {
+  kind: SourcePickerKind;
+  onPick: (key: string) => void;
+  onClose: () => void;
+  /** "Bir promptla dene" (docs/history/228-*): the preset the prompt will be tried with — prompts are filtered, ranked and labelled by how well they fit it. */
+  fitFor?: Preset;
+}) {
   const { t, language } = useTranslation();
   const { realPrompts } = useRealPrompts();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Row[] | null>(null);
   const [searching, setSearching] = useState(false);
+  const [onlyFit, setOnlyFit] = useState(true);
 
   useEffect(() => {
     const text = query.trim();
@@ -64,8 +80,18 @@ export function StudioSourcePicker({ kind, onPick, onClose }: { kind: SourcePick
     () => (realPrompts.filter((p) => !p.deletedAt).slice(0, 30).map(fromPrompt)),
     [realPrompts],
   );
-  const rows = results ?? recent;
-  const titleKey = "studio.pickPrompt";
+  const base = results ?? recent;
+  // With a preset to fit: other types drop out, best fit first, "Uyumlu olanlar" keeps only full matches.
+  const fitted = useMemo(() => {
+    if (!fitFor) return null;
+    return base
+      .map((row, index) => ({ row, fit: presetFit(targetOfPrompt(row.prompt), fitFor), index }))
+      .filter((entry) => entry.fit.level !== "none" && (!onlyFit || entry.fit.level === "match"))
+      .sort((a, b) => b.fit.score - a.fit.score || a.index - b.index);
+  }, [base, fitFor, onlyFit]);
+  const rows = fitted ? fitted.map((entry) => entry.row) : base;
+  const fitOf = new Map<string, PresetFit>(fitted?.map((entry) => [entry.row.key, entry.fit]) ?? []);
+  const titleKey = fitFor ? "presetTry.button" : "studio.pickPrompt";
 
   return (
     <Modal onClose={onClose} labelledBy="studio-source-picker-title">
@@ -94,6 +120,14 @@ export function StudioSourcePicker({ kind, onPick, onClose }: { kind: SourcePick
               className={`${fieldInputClassName} pl-9`}
             />
           </div>
+          {fitFor && (
+            <div className="space-y-2">
+              <p className="text-caption text-text-muted">{t("presetTry.hint")}</p>
+              <Chip selected={onlyFit} onClick={() => setOnlyFit((value) => !value)}>
+                {t("presetTry.onlyFit")}
+              </Chip>
+            </div>
+          )}
           {searching && <p className="text-caption text-text-muted">{t("studio.searching")}</p>}
           {!searching && rows.length === 0 && <p className="rounded-lg border border-dashed border-border bg-surface-soft p-4 text-small text-text-muted">{t("studio.noResults")}</p>}
           <ul className="space-y-1.5">
@@ -114,6 +148,7 @@ export function StudioSourcePicker({ kind, onPick, onClose }: { kind: SourcePick
                     <span className="block truncate text-caption text-text-muted">
                       {row.author} · {taxonomyLabel(row.typeLabel, language)}
                     </span>
+                    {fitFor && fitOf.get(row.key) && <FitBadge fit={fitOf.get(row.key) as PresetFit} preset={fitFor} />}
                   </span>
                 </button>
               </li>

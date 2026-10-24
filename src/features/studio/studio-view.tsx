@@ -13,6 +13,9 @@ import { StudioSourcePicker } from "./studio-source-picker";
 import { StudioPresetPicker } from "./studio-preset-picker";
 import { StudioHistory } from "./studio-history";
 import { StudioSourceCard } from "./studio-source-card";
+import { StudioFieldSwitches } from "./studio-field-switches";
+import { FitBadge } from "@/features/presets/preset-fit-badge";
+import { FinalPromptPreview } from "@/features/presets/final-prompt-preview";
 import { ClampedText } from "./clamped-text";
 import { useAuthPrompt } from "@/features/auth/auth-prompt-provider";
 import { useAuth } from "@/features/auth/auth-provider";
@@ -27,7 +30,9 @@ import { fetchVariablesForPrompt } from "@/lib/supabase/prompt-variables";
 import { resolvePromptText } from "@/lib/prompt-variables";
 import { effectiveVariableValues } from "@/lib/prompt-variable-types";
 import { resolvePresetFields } from "@/lib/preset-utils";
-import { composePrompt, sanitizeSelection, type PresetSelection } from "@/lib/preset-fields";
+import { composePromptParts, sanitizeSelection, type PresetSelection } from "@/lib/preset-fields";
+import { fieldAvailable, presetFit, targetOfPrompt } from "@/lib/preset-fit";
+import { assemblePromptParts, joinPromptParts } from "@/lib/prompt-parts";
 import { contentTypeLabelKey, taxonomyLabel } from "@/lib/content-taxonomy";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
@@ -119,6 +124,8 @@ export function StudioView() {
   const [sourceError, setSourceError] = useState(false);
   const [sourcePicker, setSourcePicker] = useState<"prompt" | "preset" | null>(null);
   const [selection, setSelection] = useState<PresetSelection>({});
+  /** Preset fields the user switched off (the ones that do not fit the model are off on their own — `unavailableFieldIds`). */
+  const [offFields, setOffFields] = useState<string[]>([]);
   const [promptText, setPromptText] = useState("");
   const [count, setCount] = useState(1);
   const [extra, setExtra] = useState<ExtraTarget[]>([]);
@@ -160,6 +167,7 @@ export function StudioView() {
       }
       setPreset(found);
       setSelection(found.selection);
+      setOffFields([]);
       setKind(found.contentType === "text" ? "text" : "image");
     });
     return () => {
@@ -252,11 +260,18 @@ export function StudioView() {
 
   const fields = useMemo(() => (preset ? resolvePresetFields({ fields: preset.fields, selection }) : []), [preset, selection]);
   const { values: variableValues, visible: variableVisible } = useMemo(() => effectiveVariableValues(promptVars, varOverrides), [promptVars, varOverrides]);
-  const finalPrompt = useMemo(() => {
-    if (promptSource) return resolvePromptText(promptText, variableValues).trim();
-    if (preset) return composePrompt(promptText, sanitizeSelection(selection, fields), fields, language).trim();
-    return promptText.trim();
-  }, [promptSource, preset, promptText, variableValues, selection, fields, language]);
+  // Studio sends to ONE model of the chosen provider: fields that belong to another tool (Midjourney's `--ar` …) cannot go in (docs/history/228-*).
+  const targetToolRefs = useMemo(() => [toolIdFor(provider, kind)], [provider, kind]);
+  const unavailableFieldIds = useMemo(() => fields.filter((field) => !fieldAvailable(field.id, targetToolRefs)).map((field) => field.id), [fields, targetToolRefs]);
+  const activeFields = useMemo(() => fields.filter((field) => !unavailableFieldIds.includes(field.id) && !offFields.includes(field.id)), [fields, unavailableFieldIds, offFields]);
+  // The final prompt as parts (prompt vs preset) so the preview can show where each piece came from; the sent text is their join.
+  const finalParts = useMemo(() => {
+    const base = promptSource ? resolvePromptText(promptText, variableValues).trim() : promptText;
+    if (!preset) return assemblePromptParts(base.trim(), [], []);
+    return composePromptParts(base, sanitizeSelection(selection, activeFields), activeFields, language);
+  }, [promptSource, preset, promptText, variableValues, selection, activeFields, language]);
+  const finalPrompt = useMemo(() => joinPromptParts(finalParts).trim(), [finalParts]);
+  const promptFit = useMemo(() => (promptSource && preset ? presetFit(targetOfPrompt(promptSource), preset) : null), [promptSource, preset]);
   const sourceTitle = promptSource?.title ?? preset?.title;
 
   const persistKey = useCallback(
@@ -416,18 +431,34 @@ export function StudioView() {
     setPreset(picked);
     setPresetError(false);
     setSelection(picked.selection);
+    setOffFields([]);
     setSourcePicker(null);
-    router.replace(`/studio?preset=${picked.id}`);
+    // A picked Prompt stays: the preset is a layer on top of it (docs/history/228-*).
+    router.replace(promptId ? `/studio?prompt=${encodeURIComponent(promptId)}&preset=${picked.id}` : `/studio?preset=${picked.id}`);
+  }
+
+  /** Takes the preset off a Prompt source; the Prompt stays. */
+  function removePreset() {
+    setPreset(null);
+    setSelection({});
+    setOffFields([]);
+    setPresetError(false);
+    router.replace(promptId ? `/studio?prompt=${encodeURIComponent(promptId)}` : "/studio");
   }
 
   function pickSource(kindPicked: "prompt", key: string) {
     setSourcePicker(null);
-    router.replace(`/studio?${kindPicked}=${encodeURIComponent(key)}`);
+    router.replace(`/studio?${kindPicked}=${encodeURIComponent(key)}${presetId ? `&preset=${presetId}` : ""}`);
+  }
+
+  function toggleField(fieldId: string) {
+    setOffFields((current) => (current.includes(fieldId) ? current.filter((id) => id !== fieldId) : [...current, fieldId]));
   }
 
   function clearSource() {
     setPromptText("");
     setSelection({});
+    setOffFields([]);
     setSourceError(false);
     router.replace("/studio");
   }
@@ -598,7 +629,7 @@ export function StudioView() {
             </h2>
             <ChipRow>
               {(["blank", "prompt", "preset"] as const).map((k) => (
-                <Chip key={k} selected={source === k} onClick={() => onSourceChip(k)}>
+                <Chip key={k} selected={k === "blank" ? source === "blank" : k === "prompt" ? Boolean(promptId) : Boolean(presetId)} onClick={() => onSourceChip(k)}>
                   {t(`studio.source.${k}` as TranslationKey)}
                 </Chip>
               ))}
@@ -630,10 +661,29 @@ export function StudioView() {
               />
             )}
 
-            {source === "preset" && preset && (
+            {source === "prompt" && promptSource && !preset && !presetId && (
+              <button
+                type="button"
+                onClick={() => setSourcePicker("preset")}
+                aria-haspopup="dialog"
+                className="inline-flex min-h-11 items-center gap-2 rounded-full border border-dashed border-border px-4 text-small font-semibold text-primary transition-colors hover:border-primary hover:bg-primary-soft"
+              >
+                <Plus size={14} aria-hidden /> {t("studio.presetAdd")}
+              </button>
+            )}
+
+            {source === "prompt" && preset && (
+              <div className="space-y-2" data-studio-preset-layer>
+                <StudioSourceCard source={{ kind: "preset", item: preset }} onChange={() => setSourcePicker("preset")} onRemove={removePreset} />
+                {promptFit && <FitBadge fit={promptFit} preset={preset} />}
+              </div>
+            )}
+
+            {preset && (source === "preset" || source === "prompt") && (
               <>
                 {presetTypeNote && <p className="text-caption text-text-muted">{presetTypeNote}</p>}
                 {fields.length > 0 && <PresetFieldList fields={fields} selection={selection} onChange={setSelection} fragmentLanguage={language} defaultOpenFirst={false} />}
+                <StudioFieldSwitches fields={fields} selection={selection} off={offFields} unavailable={unavailableFieldIds} onToggle={toggleField} />
               </>
             )}
           </section>
@@ -652,10 +702,7 @@ export function StudioView() {
               className={`${fieldControlClassName} min-h-28 resize-y py-2.5`}
             />
             {source !== "blank" && finalPrompt && (
-              <div>
-                <p className="mb-1 text-caption font-medium text-text-muted">{t("generate.finalPrompt")}</p>
-                <p className="prompt-text break-words rounded-lg border border-border-soft bg-surface-soft p-3 text-small text-text-secondary">{finalPrompt}</p>
-              </div>
+              <FinalPromptPreview parts={finalParts} label={t("generate.finalPrompt")} />
             )}
             <div>
               <span className={fieldLabelClassName}>{t("generate.count")}</span>
