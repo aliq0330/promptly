@@ -76,10 +76,11 @@ src/
   app/(app)/…, app/(auth)/…   # route'lar (ince katman; iş mantığı feature'da)
   components/ui/              # feature'dan bağımsız UI bileşenleri
   components/layout/          # header, sidebar, mobil nav, shell
-  features/<alan>/            # auth, collections, communities, content, drafts, feed, focus,
-                              # messages, moderation, my-content, notifications,
-                              # groups, onboarding, presets, profile, prompts, relations,
-                              # requests, search, share, spaces, statistics, stories, studio, tags, tools, categories, workflows
+  features/<alan>/            # auth, categories, challenges (haftalık tema), collections, communities, content,
+                              # drafts, feed, focus, groups, legal, mentions (@bahsetme), messages, moderation,
+                              # my-content, notifications, onboarding, presets, profile, prompts, quotes,
+                              # relations, requests, search, share, spaces, statistics, stories, studio, tags,
+                              # tools, versions (sürüm geçmişi), workflows
   lib/                        # utils, i18n, taksonomi, prompt-dna, relations, …
   lib/supabase/               # veri erişim katmanı (tablo başına dosya)
   types/index.ts              # paylaşılan tipler
@@ -171,6 +172,9 @@ Tek tasarım sistemi, üç kompozisyon (`AppShell`):
   "Oluştur" butonu), detay sayfalarında sağ yardımcı sütun.
 - Dokunma hedefleri ≥ 36px, uzun prompt metinleri taşmaz (`break-words`).
 - **Yatay kaydırmalı şerit = `ScrollRow`** (`components/ui/scroll-row.tsx`, `docs/history/219-*`): telefonda parmak, masaüstünde tekerlek + fareyle sürükleme + ‹ › düğmeleri + kenar soluklaşması. Elle `overflow-x-auto scrollbar-none` yazma (fareyle gezilemez, taşan içerik ulaşılamaz olur); küçük bir satır için `scrollbar-fine` (yalnız yatay), sığacak çip satırı için `md:flex-wrap`.
+- **Alttan açılan kartlar aşağı sürükleyerek kapanır** (`docs/history/188-*`): paylaşılan `Modal`'ın mobil `dialog` + `sheet` varyantları `useSheetDismiss` ile parmağı izler (eşik: yükseklik %30'u, en çok 140px, ya da hızlı fırlatma; `SheetGrabber` tutamacı; kaydırılabilir ata en üstte değilse kaydırma kazanır). Yeni bir alt kart yazarken ayrı modal yazma, `Modal` kullan; `side` ve masaüstü ortalanmış pencere sürüklenmez.
+- **Topluluk sayfaları ortak yerleşimi** (`docs/history/187-*`): `features/communities/community-layout.tsx` — `CommunityLayout` (`aside` yuvası: `xl`+ sağ yardımcı sütun — `home-aside.tsx` / `community-aside.tsx`), `CommunityReadingColumn` (form/liste), `FEED_GRID_COLUMNS` / `FEED_ITEM_CONTEXT_CLASS`; yeni topluluk ekranı bunlarla kurulur, kendi `max-w-*` sütununu yazma.
+- **Keşfet sıkı üst veri yükleme** (`docs/history/220-*`): dört şerit `useDiscoverHighlights` ile TEK `Promise.all`'da yüklenir, birlikte gösterilir; yüklenirken gerçek yükseklikte `DiscoverHighlightsSkeleton` (kayma 0 px), 3 dk modül önbelleği (Geri'de yeniden yükleme yok), kapaklar `StorageAppearanceImage`. Üstüne yeni şerit eklenirse iskeletin yüksekliği de güncellenir; şeritler tek tek `null` dönüp belirmez (altındaki içeriği iter).
 - Aşağı kaydırınca üst menü (yalnız `lg` altı) yukarı kayıp kaybolur; alt menü ve detay sayfasının sabitlenen eylem satırı (`data-detail-dock`, telefonda) KAPANMAZ ve saydamlaşmaz, yerinde olduğu gibi kalır (`docs/history/214-*`); yukarı kaydırınca üst menü döner (`useChromeAutoHide` → `html[data-chrome-hidden]`, `docs/history/204-*`, `208-*`); ekranın üstüne/altına sabitlenen yeni bir öğe yazarken bu özniteliği hesaba kat.
 
 ## 4.5 Çok Dillilik (Türkçe / İngilizce) — Bağlayıcı Kural
@@ -213,7 +217,7 @@ tamamlanmış sayılmaz. Ayrıntı ve mimari: `docs/history/049-*`, `056-*`, `05
 |---|---|
 | `/` | Ana Sayfa: karma akış (**Sana özel** — oturumlu kullanıcının varsayılanı, `for_you_page`, her kartta nedeni + ilgi alanı çipleri · En yeni / Popüler / Takip / Etiketlerim — `feed_page`; hepsi sunucudan, keyset), tür çipleri; misafire **canlı vitrin** (`GuestShowcase`: en sevilen görsel promptlar akar, dokununca prompt açılır; az görselde kompakt tanıtım) — `docs/history/209-*` |
 | `/focus` | **Odak** (`docs/history/199-*`): tam ekran, dikey, tek gönderi/ekran (Reels tarzı); herkesin herkese açık gönderileri (`feed_page` en yeni; "Takip ettiklerim"), "Medya" süzgeci, video/ses yazarın yüklediği çıktıyla oynar; açıkken üst/yan/alt menü gizli, hep koyu sahne; telefonda alt menünün 5. yuvası (Profil üstteki avatar menüsünde) |
-| `/discover` | Keşfet: görünür başlık yok (arama kutusu açar, `docs/history/211-*`), sıkı üst (`docs/history/210-*`: Kategoriler · Yükselen etiketler · Bu hafta popüler · Öne çıkan yaratıcılar — her biri tek yatay şerit, ilk gönderi telefonun ilk ekranında başlar), sonra bölümler (Tümü / Promptlar / Workflow / Hazır ayar / İstekler / Spaces [akışta paylaşılmış Space, `docs/history/215-*`] / Yaratıcılar), filtreler (Promptlar'da ek "En çok kullanılan" sıralaması); içerik bölümleri sunucudan `feed_page` (keyset), Yaratıcılar `profiles` keyset |
+| `/discover` | Keşfet: görünür başlık yok (arama kutusu açar, `docs/history/211-*`), sıkı üst (`docs/history/210-*`: Kategoriler · Yükselen etiketler · Bu hafta popüler · Öne çıkan yaratıcılar — her biri tek yatay şerit, ilk gönderi telefonun ilk ekranında başlar), sonra bölümler (Tümü / Promptlar / Workflow / Hazır ayar / İstekler / Spaces [akışta paylaşılmış Space, `docs/history/215-*`] / Yaratıcılar), filtreler (Promptlar'da ek "En çok kullanılan" sıralaması); içerik bölümleri sunucudan `feed_page` (keyset), Yaratıcılar `profiles` keyset; sıkı üstün dört şeridi birlikte yüklenir, iskelet + 3 dk önbellek (`docs/history/220-*`) |
 | `/prompts`, `/requests`, `/workflows`, `/presets` | Tür listeleri (ortak `ContentListPage`: arama, Filtre, sıralama, Kart/Izgara) |
 | `/prompts/local?id=` · `/requests/local?id=` · `/workflows/local?id=` · `/presets/local?id=` · `/results/local?id=` | Detay sayfaları |
 | `/create` · `/requests/new` · `/workflows/create` · `/presets/create` | Oluşturma/düzenleme (`?edit=<id>`) — tam ekran yazma ekranı + "Paylaş" → son kontrol penceresi (`docs/history/216-*`); `/create` (niyetsiz) = Oluştur menüsünün sayfa hâli (Prompt · İstek · Hikâye · Workflow · Hazır ayar · Space [`/spaces?new=1`] + "Var olan içeriği paylaş") |
@@ -254,7 +258,7 @@ kaynağı); `supabase/README.md` uygulama talimatını içerir. Çekirdek tablol
 `prompt_copy_events` (kopyalama sayacının günlük dedupe'u; yalnız RPC yazar), `tag_follows` (kullanıcı başına ≤100 etiket; `feed_page` kapsamı `tags`), `tool_follows` (≤100 AI aracı, katalog kimliği; "Sana özel" sinyali — `docs/history/211-*`), `collection_follows` (herkese açık koleksiyon takibi, ≤200; `collections.follower_count` korumalı sayaç), `weekly_challenges` (moderatör yönetimli haftalık tema; yazma yalnız `admin_save_challenge`/`admin_archive_challenge`), `prompt_likes` / `prompt_comments` / `comment_likes` (hedef sütunlu
 polimorfik: `prompt_id`/`request_id`/`workflow_id`/`preset_id`/…/`community_post_id`/`space_id` — tam biri dolu),
 `collections` / `collection_items` ("Genel" = `is_default`, isimden bağımsız),
-`prompt_versions` / `request_versions` / `workflow_versions` / `preset_versions` (sürüm geçmişi; yazma yalnız trigger/RPC, `docs/history/170-*`), `follows`, `conversations` / `conversation_members` / `messages` /
+`prompt_edit_suggestions` (düzenleme önerisi), `preset_uses` (hazır ayar kullanımı), `message_hidden_for` (mesajı yalnız kendinden silme), `auth_login_attempts` (kullanıcı adı girişi hız sınırı, IP özeti; yalnız `service_role` RPC'si yazar), `prompt_versions` / `request_versions` / `workflow_versions` / `preset_versions` (sürüm geçmişi; yazma yalnız trigger/RPC, `docs/history/170-*`), `follows`, `conversations` / `conversation_members` / `messages` /
 `message_reactions`, `pinned_messages` / `message_stars` (sabit/yıldız: yalnız başvuru, mesaj kopyalanmaz), `chat_groups` (+ `chat_group_join_requests/invitations/links/bans/audit`; id = grup konuşmasının id'si = **topluluğun id'si**) ve topluluk tabloları `community_posts/announcements/events/event_rsvps/rule_acceptances/reports`, `notifications`, `reports`, `blocks`,
 `content_relations`, `content_edits`, `admin_audit_log`, hikâyeler: `stories` (+`story_views/reactions/poll_votes/question_answers`,
 `story_highlights`+`story_highlight_items`, `story_drafts`; `messages.story_id`/`is_story_reply`; `profiles.story_archive_enabled`), Spaces: `spaces` (+`space_members/invitations/groups/items/palettes/activity/share_links/link_grants/user_state`, PRIVATE `space-media` bucket), alıntılar: `content_quotes` (+ `prompts/prompt_requests/workflows/presets/spaces.quote_count`).
@@ -316,7 +320,13 @@ Kalıplar (yeni migration yazarken uy):
 - Hesap silme yalnızca `delete-account` Edge Function'ıyla olur: hedef daima doğrulanmış
   JWT'nin sahibidir (istemci kullanıcı kimliği veremez), kullanıcı adı sunucuda da
   doğrulanır, `delete_account_data` yalnız `service_role`'e açıktır; service role
-  yalnızca o fonksiyonda bulunur.
+  yalnızca Edge Function'larda bulunur (`delete-account`, `username-login`,
+  `cleanup-orphan-storage`, `switch-account`).
+- **`switch-account`** (`docs/history/186-*`) yalnız site sahibi `aliq` içindir: JWT açık,
+  çağıranın profili sunucuda okunur (`aliq` VE `role='moderator'` değilse 403), hedef yalnız
+  seed demo hesaplarıdır (`5eed0000-0000-4000-8000-0000000000NN`), gerçek kullanıcıya
+  geçilemez; oturum magic-link özetinin sunucuda doğrulanmasıyla üretilir. Arayüzdeki
+  "Hesap değiştir" gizlemesi tek koruma DEĞİLDİR; bu kuralları gevşetme.
 - Kullanıcının AI API anahtarı (Studio) sunucuya/Supabase'e ASLA yazılmaz;
   yalnızca bellekte ya da (açık onayla) tarayıcıda tutulur.
 
@@ -327,7 +337,11 @@ Kalıplar (yeni migration yazarken uy):
 1. **Önce mevcut mimariyi oku**, yalnızca gerçek eksikleri kapat; paralel
    sistem kurma. Aynı metin/bileşen/anahtar zaten varsa yeniden kullan.
 2. **Bitirmeden önce:** `npx tsc --noEmit`, `npm run lint`, `npm test`,
-   `npm run build` temiz olmalı. Raporda İngilizce karşılıkların eklenip
+   `npm run build` temiz olmalı. Testler: `npm test` = `src/lib/*.test.ts` birim testleri
+   (`node --test`; yeni test dosyası `package.json`'daki `test` listesine de eklenir);
+   arayüz = ağ taklitli Playwright paketleri `tests/messaging-ui/run-*.mjs` (`README.md`'ye
+   bak; yeni özellik kendi `run-*.mjs`'ini/senaryosunu ekler); veritabanı = yerel
+   PostgreSQL'de `supabase/tests/*.sql` (`run-local.sh`). Raporda İngilizce karşılıkların eklenip
    eklenmediği açıkça yazılır (Bölüm 4.5).
 3. **Dürüst raporlama:** bu sandbox `*.supabase.co`'ya doğrudan erişemez;
    testler ağ taklitli Playwright ve yerel PostgreSQL ile yapılır. Gerçek
@@ -358,12 +372,14 @@ Kalıplar (yeni migration yazarken uy):
 ## 9. Güncel Durum ve Açık İşler
 
 **Durum:** Uygulama uçtan uca gerçek Supabase verisiyle çalışır.
-Canlı projede (kontrol: bu oturum) 20 profil (18 demo hesap), 148 prompt (+43 topluluğa özgü), 15 topluluk (aliq sahip; `docs/history/182-*`),
-39 istek, 12 workflow, 35 hazır ayar, 802 DNA bölümü bulunur; içerik
+Canlı projede (kontrol: bu oturum) 20 profil (17 demo hesap), 144 prompt (+44 topluluğa özgü), 15 topluluk (aliq sahip; `docs/history/182-*`),
+50 istek, 26 workflow, 47 hazır ayar, 920 DNA bölümü, 20 Space, 24 hikâye, 6 alıntı bulunur; içerik
 `supabase/seed/` altındaki viral/topluluk seed'lerinden gelir. Bölüm 1–8
 bağlayıcıdır; ayrıntılı gerekçe için `docs/history/README.md` tablosuna bak.
 
 **Açık işler (kullanıcı/yönetici adımı veya bilinen boşluk):**
+- Keşfet şeritleri yükleme (`docs/history/220-*`), yatay şeritler masaüstünde (`docs/history/219-*`), Spaces mobil düzeltmeleri (`docs/history/218-*`): üçü de yalnız istemci kodu, migration yok; ağ taklitli Playwright'ta sınandı (`run-discover` 8/8, `run-hscroll` 5/5, `run-spaces` 30/30). Gerçek Supabase'e / gerçek ağ gecikmesine / fare-trackpad'e / iOS Safari klavyesine karşı denenmedi. Bilinçli sınırlar: Keşfet'in yedek pencere/etiket kararları hâlâ istemcide (sunucuya taşımak migration ister); `Tabs` için "daha fazla" taşma menüsü yok; `SuggestionStrip` kendi ok düğmelerini korur.
+- Hızlı hesap değiştirme (`docs/history/186-*`): `switch-account` Edge Function canlıda (v1, `verify_jwt` açık; bu oturumda `list_edge_functions` ile görüldü); gerçek oturumla uçtan uca denenmedi (sandbox Supabase'e erişemez).
 - Alıntıla (`docs/history/217-*`): `20260921160000_content_quotes.sql` (yeni tablo `content_quotes`, `create_quote`, 8. etkileşim hedefi; 4 CHECK'in `drop constraint` + yeniden `add`'i var, veri silmez) yerel PostgreSQL'de sınandı (`quotes.sql` 47 kontrol; diğer SQL dosyaları `FAILED=0`), arayüz ağ taklitli Playwright'ta (`run-quotes` 11 senaryo). Gerçek Supabase'e / oturuma / cihaza karşı denenmedi. Bilinçli sınırlar: "Sana özel" ve Odak alıntı almaz, alıntı kaydedilmez, Space'in "Akışta gönderi olarak paylaş" anahtarı yerinde (alıntıyla birleştirme ayrı iş), `/share/quote/` statik sayfası yok. Migration **canlıda** (kullanıcı uyguladı; nesneler salt-okunur sorguyla doğrulandı, `schema_migrations` kaydı dosya sürümüyle eklendi).
 - Oluştur menüsü + yazma ekranı + son kontrol (`docs/history/216-*`): yalnız istemci kodu, migration yok; ağ taklitli Playwright'ta sınandı. Gerçek Supabase'e / oturuma / cihaza karşı denenmedi; yazma ekranı klavye geometrisinden bağımsız (araç satırı yazının üstünde, yayın bilgileri son kontrolde) ama gerçek iPhone Safari'de klavye açıkken üst çubuğun (sticky) davranışı denenmeli.
 - Tek paylaşım + yayın adımı + Space gönderisi (`docs/history/215-*`): `20260921150000_space_posts.sql` canlıda (kullanıcı SQL Editor'den uyguladı; nesneler salt-okunur sorguyla doğrulandı, `schema_migrations` kaydı dosya sürümüyle eklendi). İçinde iki "tam biri dolu" CHECK'inin `drop constraint` + yeniden `add`'i var (veri silmez; plan onayıyla). Arayüz gerçek oturuma / cihaza karşı denenmedi. Yapılmadı: `/share/space/` statik paylaşım sayfası.
@@ -404,7 +420,7 @@ bağlayıcıdır; ayrıntılı gerekçe için `docs/history/README.md` tablosuna
 - Topluluk gönderisi etkileşimi (`docs/history/178-*`, madde 18): `20260920090000` **canlıda** (kullanıcı uyguladı; nesneler salt-okunur sorguyla doğrulandı: kısıtlar, 7 tetikleyici, dizinler, politikalar, 2 legacy gönderi). Gerçek oturumla / Realtime'la / cihazla uçtan uca denenmedi.
 - Topluluk ana sayfası/Keşfet (`docs/history/185-*`): `20260920130000_community_home_feed.sql` repoda (yalnızca ekleyici: `community_post_views` + 5 RPC + 2 iç yardımcı, `drop` yok), yerel PostgreSQL'de sınandı (`community-home.sql` 39 kontrol, mutasyon denemeli; önceki SQL dosyaları `FAILED=0`), arayüz ağ taklitli Playwright'ta, **canlıya UYGULANMADI** — önce migration, sonra istemci (yeni istemci bu RPC'leri çağırır; yoksa Gönderiler/Keşfet/Tüm topluluklar hata kutusu gösterir). Gerçek Supabase'e / oturuma / cihaza karşı ve gerçek veriyle sıralama kalitesi denenmedi; sıralama sabitleri elle seçildi.
 - Topluluk gönderisi eşitliği (`docs/history/184-*`): `20260920120000_community_post_save.sql` **canlıya UYGULANDI** (kullanıcı onayıyla, MCP `execute_sql` ile parça parça; `apply_migration` 60 sn zaman aşımına düştü — bkz. belge; yalnızca ekleyici + `collection_items_exactly_one_target` CHECK'inin genişletilmesi, 296 mevcut satır korundu; `schema_migrations`'a dosya sürümüyle kayıt düşüldü). Yerel PostgreSQL'de `community-post-save.sql` (27 kontrol) + önceki topluluk SQL dosyaları `FAILED=0`; arayüz ağ taklitli Playwright'ta. Gerçek oturumla/cihazla denenmedi.
-- Topluluk/sohbet yeniden düzeni (`docs/history/183-*`, `docs/community-system.md`): **yalnız istemci kodu, migration YOK**; ağ+Realtime taklitli Playwright'ta (`run-groups` 36, `run-communities` 61, `run-community-posts` 30, `run-chat` 35) sınandı, gerçek Supabase'e/oturuma/cihaza karşı denenmedi. Açık: rol değişikliği için bildirim yok (migration ister); kabul/ret/davet bildirimlerinin SQL adresleri eski rotalarda (istemci yönlendirir); paylaşılan `Modal` aşağı çekerek kapatmayı desteklemiyor.
+- Topluluk/sohbet yeniden düzeni (`docs/history/183-*`, `docs/community-system.md`): **yalnız istemci kodu, migration YOK**; ağ+Realtime taklitli Playwright'ta (`run-groups` 36, `run-communities` 61, `run-community-posts` 30, `run-chat` 35) sınandı, gerçek Supabase'e/oturuma/cihaza karşı denenmedi. Açık: rol değişikliği için bildirim yok (migration ister); kabul/ret/davet bildirimlerinin SQL adresleri eski rotalarda (istemci yönlendirir); (paylaşılan `Modal` aşağı çekerek kapatma `docs/history/188-*` ile eklendi.)
 - Topluluk istatistik/paylaş (`docs/history/181-*`, madde 20): `20260920110000_community_statistics.sql` repoda, yerel PostgreSQL'de sınandı (`community-statistics.sql` 10 kontrol), **canlıya UYGULANMADI** — 179'un migration'ından SONRA, istemciden ÖNCE uygulanmalı (yalnızca `create or replace`, `drop` yok); yoksa yerel kartın İstatistik listesi yazar dışında boş, başvuru gönderisinin istatistiği hata verir. Gerçek Supabase'e / oturuma / cihaza karşı denenmedi.
 - Topluluğa özgü içerik (`docs/history/179-*`, madde 19): `20260920100000_community_content.sql` repoda, yerel PostgreSQL'de sınandı (`community-content.sql` 41 kontrol; 17 mutasyon denemesi hepsi yakalandı; önceki SQL dosyaları `FAILED=0`), ağ taklitli Playwright, **canlıya UYGULANMADI** — 178'den SONRA; önce migration (yalnızca ekleyici/değiştirici, `drop` yok), sonra istemci (eski istemci `community_id` göndermez ve 178'in yerel-gönderi RPC'sini çağırır: o RPC artık çalışmaz). 178'in "private içerik + yerel gönderi" yaklaşımının yerini alır. Gerçek Supabase'e / oturuma / cihaza karşı denenmedi.
 - Topluluk gizliliği (`docs/history/177-*`, `docs/yapilacaklar.md` madde 17): `20260920080000_community_privacy_hardening.sql` repoda, yerel PostgreSQL'de sınandı (`community-privacy.sql` 79 kontrol: 3 düzey × 9 aktör × 19 kanal matrisi + yazma/davet/geçiş/DM/Storage; 13 mutasyon denemesi), **canlıya UYGULANMADI** — 176'dan SONRA uygulanmalı; önce migration, sonra istemci (yeni istemci üye olmayan için `chat_groups` yerine `community_cards` kullanır, eski istemci üye olmayanlarda "bulunamadı" gösterir). Gerçek Supabase'e / oturuma / cihaza karşı denenmedi; eski görseller ortak `avatars` bucket'ında kalır (`community_legacy_avatar_report()`); etkinlik konum/bağlantısı herkese açık toplulukta ziyaretçiye görünür.
@@ -433,9 +449,11 @@ bağlayıcıdır; ayrıntılı gerekçe için `docs/history/README.md` tablosuna
 - Gönderi medyası private bucket + signed URL (`docs/history/150-*`): migration
   canlıda, `private_media_buckets` olarak kayıtlı.
 - `delete_account_data` canlıda, `delete-account` Edge Function deploy edildi
-  (v1, `verify_jwt` açık — `docs/history/154-*`). Edge Function'ların dördü de canlıda
-  ve repoyla uyumlu (`analyze-image` v5, `username-login` v1 `verify_jwt` KAPALI —
-  doğru, `cleanup-orphan-storage` v1, `delete-account` v1).
+  (v1, `verify_jwt` açık — `docs/history/154-*`). Edge Function'ların beşi de canlıda
+  (bu oturumda `list_edge_functions` ile görüldü): `analyze-image` v5, `username-login` v2
+  `verify_jwt` KAPALI — doğru, `cleanup-orphan-storage` v1, `delete-account` v1,
+  `switch-account` v1 (`docs/history/186-*`, yalnız `aliq` → demo hesaplar). Kaynak kodlarının
+  canlı sürümle birebir eşitliği bu oturumda karşılaştırılmadı.
 - `20260919640000_remove_studio.sql` uygulandı: `studio_sessions` /
   `studio_session_versions` canlıda artık yok (kontrol edildi).
 - Yetim Storage dosyaları: son kontrolde (`orphan_storage_objects`) 0 yetim dosya.
@@ -448,5 +466,5 @@ bağlayıcıdır; ayrıntılı gerekçe için `docs/history/README.md` tablosuna
   isteğin `creative_direction`'ını da kapsar ve keyset sayfalanır (`search_content`); `prompt_saves` canlıdan kaldırıldı; kod içi
   yorumlarda eski "Bölüm 9.x" atıfları arşiv numaralarına (`docs/history/NNN-*`) karşılık gelir.
 
-**Arşiv:** [`docs/history/README.md`](docs/history/README.md) — 216 bölüm, her
+**Arşiv:** [`docs/history/README.md`](docs/history/README.md) — 220 bölüm, her
 biri için durum etiketi (uygulandı / kısmen geçerli / kaldırıldı).
