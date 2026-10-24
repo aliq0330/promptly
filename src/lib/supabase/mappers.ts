@@ -19,6 +19,7 @@ export interface ProfileRow {
   following_count: number;
   created_at: string;
   interests: string[] | null;
+  is_demo?: boolean | null;
 }
 
 export function mapProfileRow(row: ProfileRow): UserProfile {
@@ -34,5 +35,6 @@ export function mapProfileRow(row: ProfileRow): UserProfile {
     followingCount: row.following_count,
     createdAt: row.created_at,
     interests: row.interests ?? [],
+    isDemo: row.is_demo === true,
   };
 }

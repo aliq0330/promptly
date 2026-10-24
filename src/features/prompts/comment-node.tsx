@@ -122,6 +122,7 @@ function ThreadCommentNode({ comment, depth, tree }: { comment: PromptComment; d
             <div className="space-y-1.5">
               <MentionTextarea
                 value={tree.editDraft}
+                maxLength={2000}
                 onChange={tree.onEditDraftChange}
                 rows={2}
                 autoFocus
@@ -222,6 +223,7 @@ function ThreadCommentNode({ comment, depth, tree }: { comment: PromptComment; d
               </p>
               <MentionTextarea
                 value={tree.replyDraft}
+                maxLength={2000}
                 onChange={tree.onReplyDraftChange}
                 rows={2}
                 autoFocus
@@ -325,6 +327,7 @@ function SheetCommentNode({ comment, depth, tree }: { comment: PromptComment; de
             <div className="mt-1 space-y-1.5">
               <MentionTextarea
                 value={tree.editDraft}
+                maxLength={2000}
                 onChange={tree.onEditDraftChange}
                 rows={2}
                 autoFocus

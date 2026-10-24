@@ -256,6 +256,7 @@ export function MessageComposer({
             aria-label={placeholder}
             disabled={disabled}
             enterKeyHint="enter"
+            maxLength={4000}
             className="max-h-32 min-h-9 min-w-0 flex-1 resize-none bg-transparent px-1.5 py-[7px] text-sm leading-[1.4] text-text placeholder:text-text-muted focus:outline-none disabled:cursor-not-allowed"
           />
           <button

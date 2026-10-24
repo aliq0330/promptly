@@ -156,3 +156,12 @@ CHROMIUM_PATH=/opt/pw-browsers/chromium node tests/messaging-ui/run-feed-filters
 
 `run-home-motion.mjs` (10 senaryo; `docs/history/209-*` + 222): canlı vitrin, Sana özel nedenleri (takip edilen kişi nedeni "Takip ettiğin … paylaştı" dahil, "Toplulukta öne çıkıyor"; docs/history/223-*), ilgi alanı çipleri akışta değil — "Yenile" + "Sana özel'i ayarla" satırı, ilk kullanım kartı, ilgi alanı seçince kartın kalkması + yeniden sıralama + kartların kayması, ayar penceresi, Yenile (yeni `p_as_of`), İngilizce, kart renkleri, kart → detay geçişi, hareket azaltma. Sıralamanın kendisi sunucu kuralıdır: `supabase/tests/for-you.sql`.
 
+## Güvenlik/sosyal mantık sertleştirmesi (`docs/history/224-*`)
+
+`run-safety.mjs`: veritabanı hata kodlarının (`rate_limit`, `interaction_blocked`, `self_like_not_allowed`) Türkçe/İngilizce toast olarak görünmesi (ham kod görünmez, bilinmeyen kodda toast yok), örnek hesap rozeti (profil bandı, TR+EN; gerçek hesapta yok), yorum kutusu `maxLength`. Ağ taklidi: `mock.mjs` (`is_demo` sütunu, `username=eq.` süzgeci). Gerçek Supabase'e KARŞI DENENMEDİ — kuralların kendisi `supabase/tests/safety-hardening.sql`'dedir.
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co NEXT_PUBLIC_SUPABASE_ANON_KEY=dummy npm run build
+CHROMIUM_PATH=/opt/pw-browsers/chromium-1243/chrome-linux64/chrome node tests/messaging-ui/run-safety.mjs   # 10/10 beklenir
+```
+

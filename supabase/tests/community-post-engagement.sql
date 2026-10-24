@@ -135,8 +135,8 @@ reset role;
 set role authenticated;
 select public._as_user(:carol);
 insert into public.prompt_likes (community_post_id, user_id) values (public._g('app_a'), :carol);
-select public._as_user(:bobby);
-insert into public.prompt_likes (community_post_id, user_id) values (public._g('app_a'), :bobby);
+select public._as_user(:alice);
+insert into public.prompt_likes (community_post_id, user_id) values (public._g('app_a'), :alice);
 reset role;
 select public._check(19, 'beğeni: gönderi sayacı artar (2), iki kişi',
   (select like_count from public.community_posts where id = public._g('app_a')) = 2);
@@ -170,10 +170,10 @@ set role authenticated;
 select public._as_user(:dave);
 select public._check(24, 'beğeni: üye olmayan beğenemez; başkası adına beğeni yazılamaz',
   public._try(format($q$insert into public.prompt_likes (community_post_id, user_id) values (%L, %L)$q$, public._g('app_a'), :dave)) like '%forbidden%'
-  and public._try(format($q$insert into public.prompt_likes (community_post_id, user_id) values (%L, %L)$q$, public._g('app_a'), :bobby)) <> 'ok');
-select public._as_user(:bobby);
+  and public._try(format($q$insert into public.prompt_likes (community_post_id, user_id) values (%L, %L)$q$, public._g('app_a'), :alice)) <> 'ok');
+select public._as_user(:alice);
 select public._check(55, 'beğeni: hem gönderi hem içerik hedefli satır reddedilir',
-  public._try(format($q$insert into public.prompt_likes (community_post_id, prompt_id, user_id) values (%L, 'a0000000-0000-4000-8000-000000000004', %L)$q$, public._g('app_b'), :bobby)) like '%exactly_one_target%');
+  public._try(format($q$insert into public.prompt_likes (community_post_id, prompt_id, user_id) values (%L, 'a0000000-0000-4000-8000-000000000004', %L)$q$, public._g('app_b'), :alice)) like '%exactly_one_target%');
 select public._as_user(:dave);
 select public._as_user('');
 set role anon;
@@ -263,13 +263,15 @@ reset role;
 -- 7. Normal içeriğin beğeni/yorumu bozulmadı
 -- ============================================================================
 set role authenticated;
+-- Kendi içeriğini beğenme yasaktır (224): beğeniler carol'dan, yorumlar bobby'den.
+select public._as_user(:carol);
+insert into public.prompt_likes (prompt_id, user_id) values ('a0000000-0000-4000-8000-000000000001', :carol);
+insert into public.prompt_likes (request_id, user_id) values ('d0000000-0000-4000-8000-000000000002', :carol);
+insert into public.prompt_likes (workflow_id, user_id) values ('c0000000-0000-4000-8000-000000000001', :carol);
+insert into public.prompt_likes (preset_id, user_id) values ('b0000000-0000-4000-8000-000000000001', :carol);
 select public._as_user(:bobby);
-insert into public.prompt_likes (prompt_id, user_id) values ('a0000000-0000-4000-8000-000000000001', :bobby);
-insert into public.prompt_likes (request_id, user_id) values ('d0000000-0000-4000-8000-000000000002', :bobby);
 insert into public.prompt_comments (prompt_id, author_id, body) values ('a0000000-0000-4000-8000-000000000001', :bobby, 'normal yorum');
 insert into public.prompt_comments (request_id, author_id, body) values ('d0000000-0000-4000-8000-000000000002', :bobby, 'istek yorumu');
-insert into public.prompt_likes (workflow_id, user_id) values ('c0000000-0000-4000-8000-000000000001', :bobby);
-insert into public.prompt_likes (preset_id, user_id) values ('b0000000-0000-4000-8000-000000000001', :bobby);
 reset role;
 select public._check(38, 'normal içerik: prompt/istek/workflow/hazır ayar beğeni ve yorum sayaçları doğru hedefe yazılır',
   (select like_count from public.prompts where id = 'a0000000-0000-4000-8000-000000000001') = 1
@@ -305,8 +307,9 @@ update public.chat_groups set closed_at = null where id = public._g('B');
 -- 10. Üye ayrılınca / silme basamağı
 -- ============================================================================
 set role authenticated;
+select public._as_user(:alice);
+insert into public.prompt_likes (community_post_id, user_id) values (public._g('app_b'), :alice);
 select public._as_user(:bobby);
-insert into public.prompt_likes (community_post_id, user_id) values (public._g('app_b'), :bobby);
 insert into public.prompt_comments (id, community_post_id, author_id, body) values ('f0000000-0000-4000-8000-000000000001', public._g('app_b'), :bobby, 'üst');
 insert into public.prompt_comments (community_post_id, author_id, body, parent_id) values (public._g('app_b'), :bobby, 'alt', 'f0000000-0000-4000-8000-000000000001');
 select public.leave_chat_group(public._g('B'));

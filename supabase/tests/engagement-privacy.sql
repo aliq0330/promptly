@@ -95,8 +95,9 @@ insert into public.prompt_likes (workflow_id, user_id) values ('c0000000-0000-40
 insert into public.prompt_likes (preset_id, user_id) values ('b0000000-0000-4000-8000-0000000000b1', :erin);
 insert into public.prompt_comments (id, prompt_id, author_id, body) values ('e0000000-0000-4000-8000-0000000000b1', 'a0000000-0000-4000-8000-0000000000b1', :erin, 'R yorumu');
 insert into public.comment_likes (comment_id, user_id) values ('e0000000-0000-4000-8000-0000000000b1', :erin);
-select public._as_user(:bobby);
-insert into public.prompt_likes (prompt_id, user_id) values ('a0000000-0000-4000-8000-0000000000b2', :bobby), ('a0000000-0000-4000-8000-0000000000b3', :bobby);
+-- Kendi içeriğini beğenme yasak (224): T ve P içeriğini alice (sahip) beğenir.
+select public._as_user(:alice);
+insert into public.prompt_likes (prompt_id, user_id) values ('a0000000-0000-4000-8000-0000000000b2', :alice), ('a0000000-0000-4000-8000-0000000000b3', :alice);
 -- Topluluk gönderisinin (R) beğenisi
 reset role;
 insert into public._ctx select 'RPOST', id::text from public.community_posts where community_id = public._g('R') and prompt_id = 'a0000000-0000-4000-8000-0000000000b1';

@@ -48,7 +48,7 @@ export interface CollectionRow {
 
 const COLLECTION_SELECT = `
   id, name, visibility, item_count, follower_count, is_default, created_at, updated_at,
-  profiles:owner_id ( id, username, display_name, avatar_url, cover_url, bio, website, follower_count, following_count, created_at, interests )
+  profiles:owner_id ( id, username, display_name, avatar_url, cover_url, bio, website, follower_count, following_count, created_at, interests, is_demo )
 `;
 
 function mapCollectionRow(row: CollectionRow, coverImage: Collection["coverImage"] = null): Collection {

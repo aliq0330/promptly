@@ -18,6 +18,8 @@ export interface UserProfile {
   createdAt: string;
   /** Yaratıcı ilgi alanları / kategoriler (bkz. profile/interest-options.ts) — `profiles.interests`. */
   interests?: string[];
+  /** Tanıtım için hazırlanmış örnek hesap (`profiles.is_demo`, yalnız sunucu yazar) — gerçek bir kişi değildir; arayüzde rozetle belirtilir. */
+  isDemo?: boolean;
 }
 
 export interface Tag {

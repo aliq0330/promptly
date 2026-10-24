@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { friendlyServerErrors } from "./server-errors";
 
 /**
  * The one real, non-mock backend connection in this codebase (CLAUDE.md
@@ -19,4 +20,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
   );
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  // Veritabanı hata kodlarını (hız sınırı, engel…) kullanıcı dilinde cümleye çevirir.
+  global: { fetch: friendlyServerErrors((input, init) => fetch(input, init)) },
+});

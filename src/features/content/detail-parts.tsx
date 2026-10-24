@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowRight, type LucideIcon } from "lucide-react";
 import { useEffect, useId, useRef, useState, type ReactNode, type Ref } from "react";
 import { Avatar } from "@/components/ui/avatar";
+import { DemoAccountBadge } from "@/components/ui/demo-badge";
 import { StorageImage, StorageImg } from "@/components/ui/storage-media";
 import { bandTint } from "@/features/content/content-card";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -358,6 +359,7 @@ export function DetailByline({
           <Link href={href} data-detail-author className="min-w-0 truncate text-label font-semibold text-text transition-colors hover:text-primary">
             {person.displayName}
           </Link>
+          {person.isDemo && <DemoAccountBadge />}
           {follow}
         </div>
         <p className="mt-0.5 text-caption text-text-secondary">

@@ -103,6 +103,7 @@ export function CommentSection({
               value={draft}
               onChange={setDraft}
               placeholder={t("comments.writeAComment")}
+              maxLength={2000}
               className="h-9 w-full min-w-0 flex-1 rounded-md border border-border bg-surface px-3 text-small text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
             <Button type="submit" size="sm" disabled={!draft.trim() || isPosting}>
