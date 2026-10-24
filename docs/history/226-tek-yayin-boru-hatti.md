@@ -1,6 +1,6 @@
 # 226 — Migration + istemci tek yayın boru hattı
 
-**Durum:** uygulandı (repo; iş akışları ve betikler). Betik mantığı yerelde sınandı (psql sürücüsüyle uçtan uca: uygulama, atomik geri alma, yıkıcı SQL engeli, yeniden çalıştırma; `scripts/migrations-lib.test.mjs` 8 birim test; Playwright `run-safety` 11/11). **GitHub Actions'ta henüz hiç çalıştırılmadı**, Supabase Management API sürücüsü (`MIGRATE_DRIVER` varsayılanı) gerçek projeye karşı DENENMEDİ — ilk çalışma bir PR/`workflow_dispatch` ile izlenmeli.
+**Durum:** uygulandı (repo; iş akışları ve betikler). Betik mantığı yerelde sınandı (psql sürücüsüyle uçtan uca: uygulama, atomik geri alma, yıkıcı SQL engeli, yeniden çalıştırma; `scripts/migrations-lib.test.mjs` 8 birim test; Playwright `run-safety` 11/11). **GitHub Actions'ta ve gerçek projeye karşı DOĞRULANDI** (PR #302 birleşince #351: denetim + duman testi canlı şemaya karşı temiz; PR #303 `20260924100000_pipeline_selftest.sql` [zararsız tablo yorumu] → #352'de Management API sürücüsü migration'ı uyguladı, `schema_migrations`'a `20260924100000` kaydı düştü, yorum canlıda görüldü, ardından duman testi + derleme + yayın yeşil). Denenmeyen: hatada geri alma ve yıkıcı SQL engelinin CANLI projede davranışı (yalnız yerel psql sürücüsüyle sınandı).
 
 ## Sorun
 Migration'lar elle (MCP/SQL Editor), istemci `main`'e birleşince otomatik yayınlanıyordu; aralarında sıra kuralı yoktu. 224'te `profiles.is_demo` sütununu seçen istemci migration'dan önce yayınlandı ve her profil sorgusu 400 verme riski taşıdı.
