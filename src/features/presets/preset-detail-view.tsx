@@ -13,6 +13,7 @@ import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { ContentTypeLabel } from "@/features/content/content-type-label";
 import { DetailMetaCard } from "@/features/content/detail-meta-card";
 import { FollowButton } from "@/features/profile/follow-button";
+import { StudioSourcePicker } from "@/features/studio/studio-source-picker";
 import { RelatedPresets } from "./related-presets";
 import { useAuth } from "@/features/auth/auth-provider";
 import { PostMenu } from "@/features/prompts/post-menu";
@@ -62,6 +63,7 @@ export function PresetDetailView({ presetId }: { presetId?: string } = {}) {
   const id = presetId ?? searchParams.get("id");
   const [preset, setPreset] = useState<Preset | null | undefined>(undefined);
   const [lightbox, setLightbox] = useState(false);
+  const [tryPicker, setTryPicker] = useState(false);
   const [versions, setVersions] = useState<PresetVersion[]>([]);
   // Content (the default) or history — history exists only when the preset has versions, owner included.
   const [tab, setTab] = useState<"preset" | "history">("preset");
@@ -170,9 +172,20 @@ export function PresetDetailView({ presetId }: { presetId?: string } = {}) {
       actions={
         <DetailActionBar
           primary={
-            <Link href={`/studio?preset=${preset.id}`} className={buttonClassName({ size: "lg", className: "h-14 rounded-full px-7 shadow-pop" })}>
-              <WandSparkles size={18} aria-hidden /> {t("studio.openInStudio")}
-            </Link>
+            <div className="flex flex-wrap items-center gap-2">
+              <Link href={`/studio?preset=${preset.id}`} className={buttonClassName({ size: "lg", className: "h-14 rounded-full px-7 shadow-pop" })}>
+                <WandSparkles size={18} aria-hidden /> {t("studio.openInStudio")}
+              </Link>
+              {/* "Bir promptla dene" (docs/history/228-*): pick a prompt that fits this preset, Studio opens with both. */}
+              <button
+                type="button"
+                onClick={() => setTryPicker(true)}
+                aria-haspopup="dialog"
+                className={buttonClassName({ variant: "outline", size: "lg", className: "h-14 rounded-full px-6" })}
+              >
+                {t("presetTry.button")}
+              </button>
+            </div>
           }
           end={
             <>
@@ -238,6 +251,14 @@ export function PresetDetailView({ presetId }: { presetId?: string } = {}) {
           <EngageComments target={{ presetId: preset.id }} highlightCommentId={highlightCommentId} headless />
         </DetailComments>
         <VersionRestoreToast contentId={preset.id} />
+        {tryPicker && (
+          <StudioSourcePicker
+            kind="prompt"
+            fitFor={preset}
+            onPick={(key) => router.push(`/studio?prompt=${encodeURIComponent(key)}&preset=${encodeURIComponent(preset.id)}`)}
+            onClose={() => setTryPicker(false)}
+          />
+        )}
       </article>
     </DetailShell>
   );

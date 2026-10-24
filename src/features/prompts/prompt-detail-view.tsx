@@ -16,6 +16,7 @@ import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { RequestResponseContext } from "@/features/prompts/post-context";
 import { RelationMapLink } from "@/features/relations/relation-map-link";
 import { CopyPromptButton } from "@/features/prompts/copy-prompt-button";
+import { PromptTrySection } from "@/features/prompts/prompt-try-section";
 import { PromptDnaDisplay } from "@/features/prompts/prompt-dna-display";
 import { PromptVariableInputs } from "@/features/prompts/prompt-variable-inputs";
 import { EditHistoryPanel } from "@/features/prompts/edit-history-panel";
@@ -301,6 +302,8 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
               )}
             </DetailSection>
           )}
+
+          {activeTab === "prompt" && <PromptTrySection prompt={prompt} text={displayText} />}
 
           {activeTab === "history" && versions.length > 0 && (
             <div className="space-y-4">
