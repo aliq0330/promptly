@@ -5,13 +5,13 @@ import type { PromptPart } from "@/lib/prompt-parts";
 import { cn } from "@/lib/utils";
 
 /** The final prompt (prompt + preset) as mono text with the preset's pieces tinted, plus a legend while any piece comes from a preset (docs/history/228-*). */
-export function FinalPromptPreview({ parts, label, className }: { parts: readonly PromptPart[]; label: string; className?: string }) {
+export function FinalPromptPreview({ parts, label, className, heading = false }: { parts: readonly PromptPart[]; label: string; className?: string; heading?: boolean }) {
   const { t } = useTranslation();
   const fromPreset = parts.some((part) => part.from === "preset");
   return (
     <div className={className}>
       <p className="mb-1 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-caption font-medium text-text-muted">
-        <span>{label}</span>
+        <span className={cn(heading && "font-bold uppercase tracking-[0.06em]")}>{label}</span>
         {fromPreset && (
           <span className="flex items-center gap-3">
             <span className="flex items-center gap-1.5">

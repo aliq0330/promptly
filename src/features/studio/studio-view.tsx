@@ -2,18 +2,17 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Download, Eye, EyeOff, Loader2, Pencil, Plus, SlidersHorizontal, Sparkles, Square, Upload, X } from "lucide-react";
+import { Download, Eye, EyeOff, Loader2, Pencil, Plus, Sparkles, Square, Upload, X } from "lucide-react";
 import { Button, buttonClassName } from "@/components/ui/button";
 import { Chip, ChipRow } from "@/components/ui/chip";
 import { PageContainer, PageHeader } from "@/components/ui/page-header";
 import { fieldControlClassName, fieldInputClassName, fieldLabelClassName } from "@/components/ui/field";
-import { PresetFieldList } from "@/features/presets/preset-field-list";
 import { PromptVariableInputs } from "@/features/prompts/prompt-variable-inputs";
 import { StudioSourcePicker } from "./studio-source-picker";
 import { StudioPresetPicker } from "./studio-preset-picker";
 import { StudioHistory } from "./studio-history";
 import { StudioSourceCard } from "./studio-source-card";
-import { StudioFieldSwitches } from "./studio-field-switches";
+import { StudioPresetFields } from "./studio-preset-fields";
 import { FitBadge } from "@/features/presets/preset-fit-badge";
 import { FinalPromptPreview } from "@/features/presets/final-prompt-preview";
 import { ClampedText } from "./clamped-text";
@@ -36,7 +35,7 @@ import { assemblePromptParts, joinPromptParts } from "@/lib/prompt-parts";
 import { contentTypeLabelKey, taxonomyLabel } from "@/lib/content-taxonomy";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
-import { copyTextToClipboard } from "@/lib/utils";
+import { cn, copyTextToClipboard } from "@/lib/utils";
 import type { Preset, Prompt, PromptContentType, PromptVariable } from "@/types";
 
 const MAX_COUNT = 4;
@@ -126,6 +125,8 @@ export function StudioView() {
   const [selection, setSelection] = useState<PresetSelection>({});
   /** Preset fields the user switched off (the ones that do not fit the model are off on their own — `unavailableFieldIds`). */
   const [offFields, setOffFields] = useState<string[]>([]);
+  /** The working-text box is open on a prompt/preset source (always open on a blank one). */
+  const [editing, setEditing] = useState(false);
   const [promptText, setPromptText] = useState("");
   const [count, setCount] = useState(1);
   const [extra, setExtra] = useState<ExtraTarget[]>([]);
@@ -399,6 +400,7 @@ export function StudioView() {
     setPromptText(meta.prompt);
     setPreset(null);
     setSelection({});
+    setEditing(true);
     if (source !== "blank") router.replace("/studio");
     window.setTimeout(() => {
       const box = document.getElementById("gen-prompt") as HTMLTextAreaElement | null;
@@ -463,11 +465,6 @@ export function StudioView() {
     router.replace("/studio");
   }
 
-  function onSourceChip(next: SourceKind) {
-    if (next === "blank") return clearSource();
-    setSourcePicker(next);
-  }
-
   // Layout follows what the results ARE (a restored history item may differ from the current form).
   const showLabels = new Set(slots.map((slot) => (slot.status === "done" ? targetLabel(slot.meta) : slot.label))).size > 1;
   const slotsAreImages = slots.every((slot) => (slot.status === "done" ? slot.output.kind === "image" : kind === "image"));
@@ -477,13 +474,120 @@ export function StudioView() {
       ? t("generate.presetKindNote", { type: taxonomyLabel(contentTypeLabelKey(preset.contentType), language) })
       : null;
 
+  const loadingPrompt = Boolean(promptId) && !promptSource && !sourceError;
+  const loadingPreset = Boolean(presetId) && !preset && !presetError;
+  const showWorkingText = source === "blank" || editing;
+
   return (
     <PageContainer>
       <PageHeader title={t("generate.title")} description={t("generate.subtitle")} />
-      <div className="mt-6 grid gap-6 sm:mt-8 lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)]">
+      <div className="mt-6 grid gap-6 sm:mt-8 lg:grid-cols-[minmax(0,36rem)_minmax(0,1fr)] lg:items-start">
         <div className="min-w-0 space-y-4">
-          {/* Provider · key · model */}
-          <section className="space-y-4 rounded-xl border border-border-soft bg-surface p-4 shadow-card sm:p-5">
+          {/* KAYNAK: the prompt is the base, a preset an optional layer (docs/history/228-*) */}
+          <section aria-labelledby="studio-source-title" className={STUDIO_CARD}>
+            <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+              <h2 id="studio-source-title" className={STUDIO_LABEL}>
+                {t("studio.source")}
+              </h2>
+              <p className="text-small text-text-muted">{t("studio.sourceHint")}</p>
+            </div>
+            {(sourceError || presetError) && (
+              <p role="alert" className="mt-2 text-small text-danger">
+                {t(presetError ? "generate.presetLoadFailed" : "studio.sourceLoadFailed")}
+              </p>
+            )}
+
+            <div className="mt-3 space-y-2.5">
+              {promptSource ? (
+                <StudioSourceCard source={{ kind: "prompt", item: promptSource }} onChange={() => setSourcePicker("prompt")} onRemove={clearSource} />
+              ) : loadingPrompt ? (
+                <SourceLoading onRemove={clearSource} />
+              ) : (
+                <SourceSlot onClick={() => setSourcePicker("prompt")}>{t("studio.pickPromptSlot")}</SourceSlot>
+              )}
+
+              {preset ? (
+                <div data-studio-preset-layer className="space-y-3 rounded-lg border-2 border-primary bg-primary-soft/25 p-3">
+                  <StudioSourceCard
+                    bare
+                    source={{ kind: "preset", item: preset }}
+                    onChange={() => setSourcePicker("preset")}
+                    onRemove={promptId ? removePreset : clearSource}
+                    badge={promptFit ? <FitBadge fit={promptFit} preset={preset} /> : null}
+                  />
+                  {presetTypeNote && <p className="text-caption text-text-muted">{presetTypeNote}</p>}
+                  <StudioPresetFields
+                    fields={fields}
+                    selection={selection}
+                    onSelectionChange={setSelection}
+                    off={offFields}
+                    unavailable={unavailableFieldIds}
+                    onToggle={toggleField}
+                  />
+                </div>
+              ) : loadingPreset ? (
+                <SourceLoading onRemove={clearSource} />
+              ) : (
+                <SourceSlot onClick={() => setSourcePicker("preset")} subtle>
+                  {t(promptSource || promptId ? "studio.presetAdd" : "studio.pickPresetSlot")}
+                </SourceSlot>
+              )}
+            </div>
+          </section>
+
+          {/* PROMPT DEĞİŞKENLERİ */}
+          {promptSource && promptVars.length > 0 && (
+            <PromptVariableInputs
+              variables={promptVars}
+              values={variableValues}
+              visible={variableVisible}
+              isCustomized={Object.keys(varOverrides).length > 0}
+              onChange={(name, value) => setVarOverrides((current) => ({ ...current, [name]: value }))}
+              onReset={() => setVarOverrides({})}
+              className="rounded-xl p-4 shadow-card sm:p-5"
+            />
+          )}
+
+          {/* SON PROMPT */}
+          <section aria-labelledby="studio-final-title" className={STUDIO_CARD}>
+            {source !== "blank" && finalPrompt ? (
+              <>
+                <FinalPromptPreview parts={finalParts} label={t("studio.finalPromptTitle")} heading />
+                <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2">
+                  <p className="min-w-0 flex-1 text-small text-text-muted">{preset ? t("studio.workingTextHint") : t("generate.finalPrompt")}</p>
+                  <button
+                    type="button"
+                    onClick={() => setEditing((value) => !value)}
+                    aria-expanded={editing}
+                    className="inline-flex h-9 items-center rounded-full border border-border px-4 text-small font-semibold text-text hover:bg-surface-soft"
+                  >
+                    {t("studio.workingText")}
+                  </button>
+                </div>
+              </>
+            ) : (
+              <h2 id="studio-final-title" className={STUDIO_LABEL}>
+                {t("generate.prompt")}
+              </h2>
+            )}
+            {showWorkingText && (
+              <textarea
+                id="gen-prompt"
+                aria-label={t("generate.prompt")}
+                value={promptText}
+                onChange={(event) => setPromptText(event.target.value)}
+                placeholder={t("generate.promptPlaceholder")}
+                rows={5}
+                className={`${fieldControlClassName} mt-3 min-h-28 resize-y py-2.5`}
+              />
+            )}
+          </section>
+
+          {/* MODEL + Üret */}
+          <section aria-labelledby="studio-model-title" className={`${STUDIO_CARD} space-y-4`}>
+            <h2 id="studio-model-title" className="sr-only">
+              {t("studio.modelCard")}
+            </h2>
             <div>
               <span className={fieldLabelClassName}>{t("generate.kind")}</span>
               <ChipRow>
@@ -494,44 +598,64 @@ export function StudioView() {
                 ))}
               </ChipRow>
             </div>
-            <div>
-              <span className={fieldLabelClassName}>{t("generate.provider")}</span>
-              <ChipRow>
-                {AI_PROVIDERS.map((p) => (
-                  <Chip key={p} selected={provider === p} onClick={() => setProvider(p)}>
-                    {t(`generate.provider.${p}`)}
-                  </Chip>
-                ))}
-              </ChipRow>
-            </div>
-            <div>
-              <label htmlFor="gen-key" className={fieldLabelClassName}>
-                {t("generate.apiKey")}
-              </label>
-              <div className="relative">
-                <input
-                  id="gen-key"
-                  type={showKey ? "text" : "password"}
-                  value={apiKey}
-                  onChange={(event) => onKeyChange(event.target.value)}
-                  placeholder={t("generate.apiKeyPlaceholder")}
-                  autoComplete="off"
-                  autoCapitalize="off"
-                  autoCorrect="off"
-                  spellCheck={false}
-                  className={`${fieldInputClassName} pr-11 font-mono`}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowKey((v) => !v)}
-                  aria-label={showKey ? t("generate.hideKey") : t("generate.showKey")}
-                  className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-text-muted hover:text-text"
-                >
-                  {showKey ? <EyeOff size={16} aria-hidden /> : <Eye size={16} aria-hidden />}
-                </button>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div>
+                <label htmlFor="gen-provider" className={fieldLabelClassName}>
+                  {t("generate.provider")}
+                </label>
+                <select id="gen-provider" value={provider} onChange={(event) => setProvider(event.target.value as AiProvider)} className={fieldInputClassName}>
+                  {AI_PROVIDERS.map((p) => (
+                    <option key={p} value={p}>
+                      {t(`generate.provider.${p}`)}
+                    </option>
+                  ))}
+                </select>
               </div>
-              <p className="mt-1.5 text-caption text-text-muted">{t("generate.apiKeyPrivacy")}</p>
-              <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <label htmlFor="gen-model" className={fieldLabelClassName}>
+                  {t("generate.model")}
+                </label>
+                <select id="gen-model" value={model} onChange={(event) => setModel(event.target.value)} className={fieldInputClassName}>
+                  {models.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label htmlFor="gen-key" className={fieldLabelClassName}>
+                  {t("generate.apiKey")}
+                </label>
+                <div className="relative">
+                  <input
+                    id="gen-key"
+                    type={showKey ? "text" : "password"}
+                    value={apiKey}
+                    onChange={(event) => onKeyChange(event.target.value)}
+                    placeholder={t("generate.apiKeyPlaceholder")}
+                    autoComplete="off"
+                    autoCapitalize="off"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    className={`${fieldInputClassName} pr-11 font-mono`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowKey((v) => !v)}
+                    aria-label={showKey ? t("generate.hideKey") : t("generate.showKey")}
+                    className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-text-muted hover:text-text"
+                  >
+                    {showKey ? <EyeOff size={16} aria-hidden /> : <Eye size={16} aria-hidden />}
+                  </button>
+                </div>
+              </div>
+            </div>
+            {modelsLoading && <p className="text-caption text-text-muted">{t("generate.modelsLoading")}</p>}
+            {modelsFailed && !modelsLoading && <p className="text-caption text-text-muted">{t("generate.modelsFallback")}</p>}
+            <div>
+              <p className="text-caption text-text-muted">{t("generate.apiKeyPrivacy")}</p>
+              <div className="mt-1.5 flex flex-wrap items-center justify-between gap-2">
                 <label className="inline-flex min-h-9 cursor-pointer items-center gap-2 text-small text-text-secondary">
                   <input type="checkbox" checked={remember} onChange={(event) => onRememberChange(event.target.checked)} />
                   {t("generate.remember")}
@@ -543,20 +667,6 @@ export function StudioView() {
                 )}
               </div>
               {remember && <p className="mt-1 text-caption text-warning">{t("generate.rememberWarning")}</p>}
-            </div>
-            <div>
-              <label htmlFor="gen-model" className={fieldLabelClassName}>
-                {t("generate.model")}
-              </label>
-              <select id="gen-model" value={model} onChange={(event) => setModel(event.target.value)} className={fieldInputClassName}>
-                {models.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.label}
-                  </option>
-                ))}
-              </select>
-              {modelsLoading && <p className="mt-1.5 text-caption text-text-muted">{t("generate.modelsLoading")}</p>}
-              {modelsFailed && !modelsLoading && <p className="mt-1.5 text-caption text-text-muted">{t("generate.modelsFallback")}</p>}
             </div>
 
             {/* Compare: the same prompt on more models */}
@@ -615,95 +725,7 @@ export function StudioView() {
                 })}
               </div>
             )}
-            {extra.length < MAX_EXTRA && (
-              <button type="button" onClick={addExtra} className="inline-flex min-h-9 items-center gap-1.5 text-small font-medium text-primary hover:underline">
-                <Plus size={14} aria-hidden /> {t("studio.compareAdd")}
-              </button>
-            )}
-          </section>
 
-          {/* Source */}
-          <section className="space-y-3 rounded-xl border border-border-soft bg-surface p-4 shadow-card sm:p-5">
-            <h2 className="flex items-center gap-2 text-label font-semibold text-text">
-              <SlidersHorizontal size={16} aria-hidden /> {t("studio.source")}
-            </h2>
-            <ChipRow>
-              {(["blank", "prompt", "preset"] as const).map((k) => (
-                <Chip key={k} selected={k === "blank" ? source === "blank" : k === "prompt" ? Boolean(promptId) : Boolean(presetId)} onClick={() => onSourceChip(k)}>
-                  {t(`studio.source.${k}` as TranslationKey)}
-                </Chip>
-              ))}
-            </ChipRow>
-            {(sourceError || presetError) && <p role="alert" className="text-small text-danger">{t(presetError ? "generate.presetLoadFailed" : "studio.sourceLoadFailed")}</p>}
-
-            {source === "blank" && <p className="text-small text-text-muted">{t("studio.sourceBlankHint")}</p>}
-
-            {source !== "blank" && (
-              (source === "prompt" && promptSource && <StudioSourceCard source={{ kind: "prompt", item: promptSource }} onChange={() => setSourcePicker("prompt")} onRemove={clearSource} />) ||
-              (source === "preset" && preset && <StudioSourceCard source={{ kind: "preset", item: preset }} onChange={() => setSourcePicker("preset")} onRemove={clearSource} />) || (
-                <div className="flex items-center justify-between gap-3">
-                  <p className="min-w-0 truncate text-small font-medium text-text-muted">{t("studio.loading")}</p>
-                  <button type="button" onClick={clearSource} className="inline-flex items-center gap-1 text-small font-medium text-text-secondary hover:text-text">
-                    <X size={14} aria-hidden /> {t("studio.remove")}
-                  </button>
-                </div>
-              )
-            )}
-
-            {source === "prompt" && promptSource && promptVars.length > 0 && (
-              <PromptVariableInputs
-                variables={promptVars}
-                values={variableValues}
-                visible={variableVisible}
-                isCustomized={Object.keys(varOverrides).length > 0}
-                onChange={(name, value) => setVarOverrides((current) => ({ ...current, [name]: value }))}
-                onReset={() => setVarOverrides({})}
-              />
-            )}
-
-            {source === "prompt" && promptSource && !preset && !presetId && (
-              <button
-                type="button"
-                onClick={() => setSourcePicker("preset")}
-                aria-haspopup="dialog"
-                className="inline-flex min-h-11 items-center gap-2 rounded-full border border-dashed border-border px-4 text-small font-semibold text-primary transition-colors hover:border-primary hover:bg-primary-soft"
-              >
-                <Plus size={14} aria-hidden /> {t("studio.presetAdd")}
-              </button>
-            )}
-
-            {source === "prompt" && preset && (
-              <div className="space-y-2" data-studio-preset-layer>
-                <StudioSourceCard source={{ kind: "preset", item: preset }} onChange={() => setSourcePicker("preset")} onRemove={removePreset} />
-                {promptFit && <FitBadge fit={promptFit} preset={preset} />}
-              </div>
-            )}
-
-            {preset && (source === "preset" || source === "prompt") && (
-              <>
-                {presetTypeNote && <p className="text-caption text-text-muted">{presetTypeNote}</p>}
-                {fields.length > 0 && <PresetFieldList fields={fields} selection={selection} onChange={setSelection} fragmentLanguage={language} defaultOpenFirst={false} />}
-                <StudioFieldSwitches fields={fields} selection={selection} off={offFields} unavailable={unavailableFieldIds} onToggle={toggleField} />
-              </>
-            )}
-          </section>
-
-          {/* Prompt */}
-          <section className="space-y-3 rounded-xl border border-border-soft bg-surface p-4 shadow-card sm:p-5">
-            <label htmlFor="gen-prompt" className={fieldLabelClassName}>
-              {t("generate.prompt")}
-            </label>
-            <textarea
-              id="gen-prompt"
-              value={promptText}
-              onChange={(event) => setPromptText(event.target.value)}
-              placeholder={t("generate.promptPlaceholder")}
-              rows={5}
-              className={`${fieldControlClassName} min-h-28 resize-y py-2.5`}
-            />
-            {source !== "blank" && finalPrompt && (
-              <FinalPromptPreview parts={finalParts} label={t("generate.finalPrompt")} />
-            )}
             <div>
               <span className={fieldLabelClassName}>{t("generate.count")}</span>
               <ChipRow>
@@ -720,8 +742,8 @@ export function StudioView() {
                 {formError}
               </p>
             )}
-            <div className="flex gap-2">
-              <Button type="button" onClick={onGenerate} disabled={running} className="flex-1">
+            <div className="flex flex-wrap items-center gap-3">
+              <Button type="button" onClick={onGenerate} disabled={running} className="h-12 px-8 text-[1rem] font-bold">
                 {running ? <Loader2 size={16} className="animate-spin" aria-hidden /> : <Sparkles size={16} aria-hidden />}
                 {running ? t("generate.running") : t("generate.run")}
               </Button>
@@ -730,57 +752,63 @@ export function StudioView() {
                   <Square size={14} aria-hidden /> {t("generate.stop")}
                 </Button>
               )}
+              {extra.length < MAX_EXTRA && (
+                <button type="button" onClick={addExtra} className="inline-flex min-h-9 items-center gap-1.5 text-small font-medium text-primary hover:underline">
+                  <Plus size={14} aria-hidden /> {t("studio.compareAdd")}
+                </button>
+              )}
             </div>
           </section>
         </div>
 
-        {/* Results */}
-        <div ref={resultsRef} className={`min-w-0 space-y-6 ${stick ? "lg:sticky lg:top-20 lg:self-start" : ""}`}>
-        <section aria-label={t("generate.results")} className="space-y-3">
-          <h2 className="text-label font-semibold text-text">{t("generate.results")}</h2>
-          {publishError && (
-            <p role="alert" className="text-small text-danger">
-              {t("generate.publishFailed")}
-            </p>
-          )}
-          {slots.length === 0 ? (
-            <p className="rounded-xl border border-dashed border-border bg-surface-soft p-6 text-small text-text-muted">{t("generate.resultsEmpty")}</p>
-          ) : (
-            <ul className={slotsAreImages ? "grid gap-3 sm:grid-cols-2" : "space-y-3"}>
-              {slots.map((slot, index) => (
-                <li key={slot.id} className="min-w-0 overflow-hidden rounded-xl border border-border-soft bg-surface shadow-card">
-                  {showLabels && (
-                    <p className="truncate border-b border-border-soft bg-surface-soft px-3 py-1.5 text-caption font-medium text-text-secondary">
-                      {slot.status === "done" ? targetLabel(slot.meta) : slot.label}
-                    </p>
-                  )}
-                  {slot.status === "loading" && (
-                    <div className={`${slotsAreImages ? "aspect-square" : "h-32"} skeleton-shimmer`} aria-busy="true">
-                      <span className="sr-only">{t("generate.running")}</span>
-                    </div>
-                  )}
-                  {slot.status === "error" && (
-                    <div className="space-y-2 p-4">
-                      <p role="alert" className="text-small text-danger">
-                        {t(ERROR_KEY[slot.error.kind])}
+        {/* SONUÇ */}
+        <div ref={resultsRef} className={`min-w-0 space-y-4 ${stick ? "lg:sticky lg:top-20 lg:self-start" : ""}`}>
+          <section aria-label={t("generate.results")} className={`${STUDIO_CARD} space-y-3`}>
+            <h2 className={STUDIO_LABEL}>{t("generate.results")}</h2>
+            {publishError && (
+              <p role="alert" className="text-small text-danger">
+                {t("generate.publishFailed")}
+              </p>
+            )}
+            {slots.length === 0 ? (
+              <p className="rounded-lg border border-dashed border-border bg-surface-soft p-5 text-small text-text-muted">{t("generate.resultsEmpty")}</p>
+            ) : (
+              <ul className="space-y-3">
+                {slots.map((slot, index) => (
+                  <li key={slot.id} className="min-w-0 overflow-hidden rounded-lg border border-border-soft">
+                    {showLabels && (
+                      <p className="truncate border-b border-border-soft bg-surface-soft px-3 py-1.5 text-caption font-medium text-text-secondary">
+                        {slot.status === "done" ? targetLabel(slot.meta) : slot.label}
                       </p>
-                      {slot.error.message && <p className="break-words text-caption text-text-muted">{slot.error.message}</p>}
-                    </div>
-                  )}
-                  {slot.status === "done" && (
-                    <ResultBody
-                      output={slot.output}
-                      index={index}
-                      onPublish={() => onPublish(slot.output, slot.meta)}
-                      onEdit={() => editFromResult(slot.meta)}
-                    />
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-        <StudioHistory entries={history} onOpen={openHistory} onUsePrompt={usePromptFromHistory} onDelete={removeHistory} onClear={wipeHistory} />
+                    )}
+                    {slot.status === "loading" && (
+                      <div className={`${slotsAreImages ? "aspect-square" : "h-32"} skeleton-shimmer`} aria-busy="true">
+                        <span className="sr-only">{t("generate.running")}</span>
+                      </div>
+                    )}
+                    {slot.status === "error" && (
+                      <div className="space-y-2 p-4">
+                        <p role="alert" className="text-small text-danger">
+                          {t(ERROR_KEY[slot.error.kind])}
+                        </p>
+                        {slot.error.message && <p className="break-words text-caption text-text-muted">{slot.error.message}</p>}
+                      </div>
+                    )}
+                    {slot.status === "done" && (
+                      <ResultBody
+                        output={slot.output}
+                        index={index}
+                        meta={showLabels ? null : targetLabel(slot.meta)}
+                        onPublish={() => onPublish(slot.output, slot.meta)}
+                        onEdit={() => editFromResult(slot.meta)}
+                      />
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+          <StudioHistory entries={history} onOpen={openHistory} onUsePrompt={usePromptFromHistory} onDelete={removeHistory} onClear={wipeHistory} />
         </div>
       </div>
       {sourcePicker === "preset" && <StudioPresetPicker contentType={kind} onPick={pickPreset} onClose={() => setSourcePicker(null)} />}
@@ -791,7 +819,44 @@ export function StudioView() {
   );
 }
 
-function ResultBody({ output, index, onPublish, onEdit }: { output: AiOutput; index: number; onPublish: () => void; onEdit: () => void }) {
+const STUDIO_CARD = "rounded-xl border border-border-soft bg-surface p-4 shadow-card sm:p-5";
+const STUDIO_LABEL = "text-caption font-bold uppercase tracking-[0.06em] text-text-muted";
+
+/** An empty source slot: a dashed pill that opens the picker (`subtle` = the optional preset slot). */
+function SourceSlot({ onClick, subtle = false, children }: { onClick: () => void; subtle?: boolean; children: React.ReactNode }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-haspopup="dialog"
+      className={cn(
+        "flex min-h-14 w-full items-center gap-2 rounded-lg border border-dashed border-border px-4 text-left text-small font-semibold transition-colors",
+        "hover:border-primary hover:bg-primary-soft",
+        subtle ? "text-text-secondary" : "text-primary",
+      )}
+    >
+      <span aria-hidden className="grid h-6 w-6 place-items-center rounded-full bg-primary-soft text-primary">
+        <Plus size={14} strokeWidth={2.5} />
+      </span>
+      {children}
+    </button>
+  );
+}
+
+/** While a source from the URL is being fetched. */
+function SourceLoading({ onRemove }: { onRemove: () => void }) {
+  const { t } = useTranslation();
+  return (
+    <div className="flex min-h-14 items-center justify-between gap-3 rounded-lg border border-border-soft px-4">
+      <p className="min-w-0 truncate text-small font-medium text-text-muted">{t("studio.loading")}</p>
+      <button type="button" onClick={onRemove} className="inline-flex items-center gap-1 text-small font-medium text-text-secondary hover:text-text">
+        <X size={14} aria-hidden /> {t("studio.remove")}
+      </button>
+    </div>
+  );
+}
+
+function ResultBody({ output, index, meta, onPublish, onEdit }: { output: AiOutput; index: number; meta: string | null; onPublish: () => void; onEdit: () => void }) {
   const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
 
@@ -810,23 +875,26 @@ function ResultBody({ output, index, onPublish, onEdit }: { output: AiOutput; in
         <img src={output.imageUrl} alt={t("generate.resultAlt", { n: String(index + 1) })} className="w-full bg-surface-soft object-contain" />
       )}
       {output.text && <ClampedText text={output.text} lines={8} />}
-      <div className="flex flex-wrap items-center gap-2 border-t border-border-soft p-3">
-        <Button type="button" size="sm" onClick={onPublish}>
+      <div className="space-y-2 border-t border-border-soft p-3">
+        {meta && <p className="truncate text-caption text-text-muted">{meta}</p>}
+        <Button type="button" onClick={onPublish} className="h-11 w-full">
           <Upload size={14} aria-hidden /> {t("generate.publish")}
         </Button>
-        <Button type="button" size="sm" variant="outline" onClick={onEdit}>
-          <Pencil size={14} aria-hidden /> {t("studio.editRetry")}
-        </Button>
-        {output.text && (
-          <Button type="button" size="sm" variant="outline" onClick={copy}>
-            {copied ? t("common.copied") : t("generate.copyText")}
+        <div className="flex flex-wrap gap-2">
+          <Button type="button" variant="outline" onClick={onEdit} className="h-11 min-w-0 flex-1">
+            <Pencil size={14} aria-hidden /> {t("studio.editRetry")}
           </Button>
-        )}
-        {output.imageUrl && (
-          <a href={output.imageUrl} download={`promptly-${index + 1}.png`} className={buttonClassName({ variant: "outline", size: "sm" })}>
-            <Download size={14} aria-hidden /> {t("generate.download")}
-          </a>
-        )}
+          {output.text && (
+            <Button type="button" variant="outline" onClick={copy} className="h-11">
+              {copied ? t("common.copied") : t("generate.copyText")}
+            </Button>
+          )}
+          {output.imageUrl && (
+            <a href={output.imageUrl} download={`promptly-${index + 1}.png`} className={buttonClassName({ variant: "outline", className: "h-11" })}>
+              <Download size={14} aria-hidden /> {t("generate.download")}
+            </a>
+          )}
+        </div>
       </div>
     </div>
   );

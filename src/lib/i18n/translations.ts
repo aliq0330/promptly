@@ -2134,7 +2134,7 @@ export const translations = {
   "studio.noResults": { tr: "Sonuç bulunamadı.", en: "No results." },
   "studio.promptExtra": { tr: "Kendi metnin (isteğe bağlı)", en: "Your own text (optional)" },
   "generate.title": { tr: "Studio", en: "Studio" },
-  "generate.subtitle": { tr: "Bir prompt veya hazır ayarı kendi API anahtarınla dene ve sonucu burada gör.", en: "Try a prompt or preset with your own API key and see the result here." },
+  "generate.subtitle": { tr: "Kendi API anahtarınla dene. Anahtar sunucuya yazılmaz, geçmiş yalnız bu tarayıcıda kalır.", en: "Try it with your own API key. The key is never sent to Promptly's servers, and the history stays in this browser." },
   "generate.kind": { tr: "Ne üretilsin?", en: "What to generate" },
   "generate.kindImage": { tr: "Görsel", en: "Image" },
   "generate.kindText": { tr: "Metin", en: "Text" },
