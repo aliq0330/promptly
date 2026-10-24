@@ -1,15 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { ExternalLink, SlidersHorizontal, SquareTerminal, X, type LucideIcon } from "lucide-react";
-import { Avatar } from "@/components/ui/avatar";
-import { ContentTypeLabel } from "@/features/content/content-type-label";
+import type { ReactNode } from "react";
+import { ExternalLink, SlidersHorizontal, SquareTerminal, type LucideIcon } from "lucide-react";
+import { StorageImg } from "@/components/ui/storage-media";
+import { findTool } from "@/lib/ai-tool-catalog";
+import { contentTypeLabelKey, taxonomyLabel } from "@/lib/content-taxonomy";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
-import { contentTypeLabelKey, taxonomyLabel } from "@/lib/content-taxonomy";
-import { formatRelativeTime, presetHref, profileHref, promptHref } from "@/lib/utils";
+import { formatRelativeTime, presetHref, promptHref } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import type { Preset, Prompt } from "@/types";
-import { StorageImg } from "@/components/ui/storage-media";
 
 type Source = { kind: "prompt"; item: Prompt } | { kind: "preset"; item: Preset };
 
@@ -19,62 +20,58 @@ const KIND: Record<Source["kind"], { icon: LucideIcon; label: TranslationKey }> 
 };
 
 /**
- * The picked source in Studio, shown like the content it is: thumbnail (when it
- * has one), type, title, who shared it and when, a short description, tags, and
- * a link to the original. Change / remove stay on the card.
+ * One picked source in Studio as a compact row (docs/history/228-*, the canvas design): a thumbnail, a small-caps line
+ * ("PROMPT · MIDJOURNEY" / "HAZIR AYAR · GÖRSEL"), the title, who made it and when, an optional `badge` (the preset's fit) and
+ * Değiştir / Orijinali aç / Kaldır on the right. `bare` drops the row's own border (a preset sits inside its own framed layer).
  */
-export function StudioSourceCard({ source, onChange, onRemove }: { source: Source; onChange: () => void; onRemove: () => void }) {
+export function StudioSourceCard({
+  source,
+  onChange,
+  onRemove,
+  badge,
+  bare = false,
+}: {
+  source: Source;
+  onChange: () => void;
+  onRemove: () => void;
+  badge?: ReactNode;
+  bare?: boolean;
+}) {
   const { t, language } = useTranslation();
   const { icon: Icon, label } = KIND[source.kind];
   const item = source.item;
   const creator = source.kind === "prompt" ? source.item.author : source.item.creator;
   const imageUrl = source.kind === "prompt" ? (source.item.media[0]?.url ?? null) : source.item.coverUrl;
   const href = source.kind === "prompt" ? promptHref(source.item) : presetHref(source.item);
-  const createdAt = source.item.createdAt;
   const typeText = taxonomyLabel(contentTypeLabelKey(source.item.contentType), language);
+  const firstTool = item.tools[0] ? findTool(item.tools[0].split(":")[0]) : null;
+  const detail = source.kind === "prompt" && firstTool ? firstTool.name : typeText;
 
   return (
-    <div className="space-y-3">
-      <div className="flex gap-3 rounded-lg border border-border-soft bg-surface-soft p-3">
-        <div className="relative grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-md border border-border-soft bg-surface sm:h-24 sm:w-24">
-          {imageUrl ? (
-            <StorageImg src={imageUrl} alt="" className="h-full w-full object-cover" />
-          ) : (
-            <Icon size={26} className="text-text-muted" aria-hidden />
-          )}
-        </div>
-        <div className="min-w-0 flex-1 space-y-1.5">
-          <ContentTypeLabel icon={Icon} label={t(label)} detail={typeText} />
-          <p className="line-clamp-2 break-words text-sm font-semibold leading-snug text-text">{item.title}</p>
-          <p className="flex min-w-0 items-center gap-1.5 text-caption text-text-muted">
-            <Avatar src={creator.avatarUrl} alt="" size={18} />
-            <Link href={profileHref(creator)} className="min-w-0 truncate font-medium text-text-secondary hover:text-primary hover:underline">
-              {creator.displayName || creator.username}
-            </Link>
-            {createdAt && <span className="shrink-0">· {formatRelativeTime(createdAt, language)}</span>}
-          </p>
-        </div>
+    <div className={cn("flex items-center gap-3", !bare && "rounded-lg border border-border-soft p-3")}>
+      <div className="relative grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-md bg-surface-soft sm:h-16 sm:w-16">
+        {imageUrl ? <StorageImg src={imageUrl} alt="" className="h-full w-full object-cover" /> : <Icon size={24} className="text-text-muted" aria-hidden />}
       </div>
-      {item.description && <p className="line-clamp-3 break-words text-small text-text-secondary">{item.description}</p>}
-      {item.tags.length > 0 && (
-        <ul className="flex flex-wrap gap-1.5" aria-label={t("studio.sourceTags")}>
-          {item.tags.slice(0, 5).map((tag) => (
-            <li key={tag.slug} className="rounded-full bg-primary-soft px-2 py-0.5 text-caption font-medium text-text-secondary">
-              #{tag.label}
-            </li>
-          ))}
-          {item.tags.length > 5 && <li className="px-1 py-0.5 text-caption text-text-muted">+{item.tags.length - 5}</li>}
-        </ul>
-      )}
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-        <button type="button" onClick={onChange} className="min-h-9 text-small font-medium text-primary hover:underline">
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-caption font-bold uppercase tracking-[0.06em] text-text-muted">
+          {t(label)} · {detail}
+        </p>
+        <p className="line-clamp-2 break-words font-display text-[1.0625rem] font-bold leading-snug text-text">{item.title}</p>
+        <p className="truncate text-small text-text-muted">
+          @{creator.username}
+          {item.createdAt && ` · ${formatRelativeTime(item.createdAt, language)}`}
+        </p>
+        {badge && <div className="mt-1">{badge}</div>}
+      </div>
+      <div className="flex shrink-0 flex-col items-end text-small font-semibold">
+        <button type="button" onClick={onChange} className="min-h-9 text-primary hover:underline">
           {t("studio.change")}
         </button>
-        <Link href={href} target="_blank" rel="noopener" className="inline-flex min-h-9 items-center gap-1 text-small font-medium text-text-secondary hover:text-text">
-          <ExternalLink size={13} aria-hidden /> {t("studio.openOriginal")}
+        <Link href={href} target="_blank" rel="noopener" className="hidden min-h-9 items-center gap-1 text-primary hover:underline sm:inline-flex">
+          <ExternalLink size={12} aria-hidden /> {t("studio.openOriginal")}
         </Link>
-        <button type="button" onClick={onRemove} className="inline-flex min-h-9 items-center gap-1 text-small font-medium text-text-secondary hover:text-text">
-          <X size={14} aria-hidden /> {t("studio.remove")}
+        <button type="button" onClick={onRemove} className="min-h-9 font-medium text-text-muted hover:text-text">
+          {t("studio.remove")}
         </button>
       </div>
     </div>

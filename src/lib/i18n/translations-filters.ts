@@ -76,4 +76,12 @@ export const filterTranslations = {
   "presetTry.onlyFit": { tr: "Uyumlu olanlar", en: "Compatible ones" },
   "studio.presetAdd": { tr: "Hazır ayar ekle (isteğe bağlı)", en: "Add a preset (optional)" },
   "studio.presetRemove": { tr: "Hazır ayarı kaldır", en: "Remove preset" },
+  "studio.sourceHint": { tr: "Prompt taban, hazır ayar isteğe bağlı katman", en: "The prompt is the base, a preset an optional layer" },
+  "studio.pickPromptSlot": { tr: "Prompt seç", en: "Choose a prompt" },
+  "studio.pickPresetSlot": { tr: "Hazır ayar seç", en: "Choose a preset" },
+  "studio.finalPromptTitle": { tr: "Son prompt", en: "Final prompt" },
+  "studio.workingText": { tr: "Çalışma metni", en: "Working text" },
+  "studio.workingTextHint": { tr: "Kapalı alanlar son prompta eklenmez. Metni değiştirmek için çalışma metnini düzenle.", en: "Fields that are off are not added to the final prompt. Edit the working text to change the wording." },
+  "studio.useField": { tr: "{{name}} alanını kullan", en: "Use the {{name}} field" },
+  "studio.modelCard": { tr: "Model", en: "Model" },
 } as const;

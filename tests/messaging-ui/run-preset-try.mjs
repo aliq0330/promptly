@@ -80,7 +80,7 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lan
     try { await page.screenshot({ path: `${process.env.TMPDIR ?? "/tmp"}/ptry-fail-${results.length}.png` }); } catch {}
   } finally { await context.close(); }
 }
-const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: `${SHOTS}/${name}.png` }); };
+const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: `${SHOTS}/${name}.png`, fullPage: true }); };
 const overflowFree = (page) => page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1);
 const promptUrl = `${BASE}/prompts/local?id=${ID.prompt}`;
 
@@ -135,11 +135,21 @@ await scenario("3. Studio: ?prompt=&preset= ikisi birden — prompt taban, hazı
   assert.doesNotMatch(await preview.textContent(), /--ar/, "Studio Gemini'ye gönderir: Midjourney parametresi yok");
   await page.getByText(/Midjourney parametresi: bu modelde kullanılmaz/).waitFor();
   await shot(page, "3-studio-combo");
+  if (SHOTS) await preview.locator("xpath=..").screenshot({ path: `${SHOTS}/3-final-prompt.png` });
   await layer.getByRole("button", { name: /Kaldır/ }).click();
   await page.waitForURL((url) => url.searchParams.get("prompt") === ID.prompt && !url.searchParams.has("preset"));
   await page.getByRole("button", { name: "Hazır ayar ekle (isteğe bağlı)" }).waitFor();
   assert.equal(await page.locator("[data-from=preset]").count(), 0);
 });
+
+await scenario("3b. Studio telefon 390px: kart düzeni taşmaz, Üret düğmesi ve son prompt görünür", async ({ page }) => {
+  await page.goto(`${BASE}/studio?prompt=${ID.prompt}&preset=${P.match}`);
+  await page.locator("[data-studio-preset-layer]").waitFor();
+  await page.locator("[data-final-prompt]").waitFor();
+  assert.equal(await overflowFree(page), true);
+  await page.getByRole("button", { name: /^Üret/ }).first().waitFor();
+  await shot(page, "3b-studio-combo-mobile");
+}, { viewport: { width: 390, height: 844 } });
 
 await scenario("4. hazır ayar sayfası: 'Bir promptla dene' uyumlu promptları gösterir (Uyumlu olanlar süzgeci), seçince Studio iki kaynakla açılır", async ({ page }) => {
   await page.goto(`${BASE}/presets/local?id=${P.match}`);
