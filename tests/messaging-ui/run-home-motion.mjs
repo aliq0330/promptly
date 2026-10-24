@@ -45,8 +45,9 @@ async function scenario(name, fn, { viewport = { width: 390, height: 844 }, lang
     return {
       body: ordered.map((r, i) => ({
         kind: "prompt", id: r.id, created_at: r.created_at, sort_rank: 100 - i,
-        reason_kind: r.id === pid(3) && photo ? "interest" : i === 0 ? "creator" : i === 1 ? "tag" : "popular",
-        reason_ref: r.id === pid(3) && photo ? "Fotoğrafçılık" : i === 1 ? "resim" : null,
+        // Sunucu kuralı (docs/history/222-*): takip edilen kişinin gönderisi GİRMEZ, `creator` nedeni üretilmez.
+        reason_kind: r.id === pid(3) && photo ? "interest" : i === 0 ? "tag" : i === 1 ? "liked_tag" : "popular",
+        reason_ref: r.id === pid(3) && photo ? "Fotoğrafçılık" : i <= 1 ? "resim" : null,
       })),
     };
   };
@@ -91,6 +92,10 @@ async function scenario(name, fn, { viewport = { width: 390, height: 844 }, lang
   }
 }
 
+const waitUntil = async (cond, ms = 4000) => {
+  const end = Date.now() + ms;
+  while (Date.now() < end && !cond()) await new Promise((resolve) => setTimeout(resolve, 100));
+};
 const overflowFree = (page) => page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1);
 const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: `${SHOTS}/${name}.png` }); };
 
@@ -127,24 +132,32 @@ await scenario("2. misafir: 4'ten az görsel → kompakt tanıtım (boş duvar y
 }, { guest: true, count: 3 });
 
 // 3 — Sana özel
-await scenario("3. üye: varsayılan sekme Sana özel; her kartta gerçek neden; ilgi alanı çipleri", async ({ page, state }) => {
+await scenario("3. üye: varsayılan sekme Sana özel; her kartta gerçek neden (kişi nedeni yok); ilgi alanı çipleri akışta DEĞİL — araç satırı + ilk kullanım kartı", async ({ page, state }) => {
   await page.goto(`${BASE}/`);
   const tab = page.getByRole("tab", { name: "Sana özel" });
   await tab.waitFor();
   assert.equal(await tab.getAttribute("aria-selected"), "true");
-  await page.getByText("Takip ettiğin Bob paylaştı").waitFor();
-  await page.getByText("Takip ettiğin #Resim etiketinden").waitFor();
-  assert.ok((await page.getByText("Şu an popüler").count()) >= 1);
-  await page.getByRole("heading", { name: "İLGİ ALANLARIN" }).or(page.getByRole("heading", { name: "İlgi alanların" })).first().waitFor();
-  assert.equal(await page.getByRole("button", { name: "Fotoğrafçılık" }).getAttribute("aria-pressed"), "false");
+  await page.getByText("Takip ettiğin #Resim etiketinden").first().waitFor();
+  await page.getByText("Beğendiğin #Resim gönderilerine benziyor").first().waitFor();
+  assert.ok((await page.getByText("Toplulukta öne çıkıyor").count()) >= 1, "sinyalsiz kartın nedeni dürüst: öne çıkıyor, 'şu an popüler' değil");
+  assert.equal(await page.getByText("Şu an popüler").count(), 0);
+  assert.equal(await page.getByText(/Takip ettiğin .* paylaştı/).count(), 0, "takip edilen kişi nedeni yok (onlar Takip Ettiklerim'de)");
+  // İlgi alanları akışın üstünde sıra sıra çip DEĞİL: yalnız araç satırı (Yenile · Sana özel'i ayarla) var.
+  assert.equal(await page.getByRole("heading", { name: /İlgi alanların/i }).count(), 0, "akışta 'İlgi alanların' başlığı yok");
+  await page.getByRole("button", { name: "Yenile", exact: true }).waitFor();
+  await page.getByRole("button", { name: "Sana özel'i ayarla" }).waitFor();
+  // Hiç ilgi alanı / takip edilen etiket / araç yok → ilk kullanım kartı (çipler kartın içinde).
+  const setup = page.locator("[data-for-you-setup]");
+  await setup.waitFor();
+  assert.equal(await setup.getByRole("button", { name: "Fotoğrafçılık" }).getAttribute("aria-pressed"), "false");
   assert.ok(state.forYouCalls.length >= 1 && state.forYouCalls[0].p_as_of, "for_you_page called with a fixed as_of");
   await shot(page, "3-for-you");
   assert.equal(await overflowFree(page), true);
 });
 
-await scenario("4. üye: ilgi alanı seçilince kaydedilir, akış yeniden sıralanır ve kartlar yeni yerine kayar", async ({ page, state }) => {
+await scenario("4. üye: ilgi alanı seçilince kaydedilir, kart kalkar, akış yeniden sıralanır ve kartlar yeni yerine kayar; ayar penceresinde seçili görünür", async ({ page, state }) => {
   await page.goto(`${BASE}/`);
-  await page.getByText("Takip ettiğin Bob paylaştı").waitFor();
+  await page.getByText("Takip ettiğin #Resim etiketinden").first().waitFor();
   const firstTitleBefore = await page.locator("[data-flip-key] h2").first().innerText();
   assert.equal(firstTitleBefore, "Görsel prompt 1");
   // Yeniden dizilirken animasyonları yakala.
@@ -156,27 +169,50 @@ await scenario("4. üye: ilgi alanı seçilince kaydedilir, akış yeniden sıra
       return orig.apply(this, args);
     };
   });
-  await page.getByRole("button", { name: "Fotoğrafçılık" }).click();
+  await page.locator("[data-for-you-setup]").getByRole("button", { name: "Fotoğrafçılık" }).click();
   await page.getByText("İlgi alanın: Fotoğrafçılık").waitFor();
   assert.deepEqual(state.patches.at(-1), { interests: ["Fotoğrafçılık"] }, "only interests are written");
-  assert.equal(await page.getByRole("button", { name: "Fotoğrafçılık" }).getAttribute("aria-pressed"), "true");
+  assert.equal(await page.locator("[data-for-you-setup]").count(), 0, "ilgi alanı seçilince ilk kullanım kartı kalkar");
   assert.equal(await page.locator("[data-flip-key] h2").first().innerText(), "Görsel prompt 3");
   assert.ok((await page.evaluate(() => window.__flipAnimations)) > 0, "cards glided to their new places");
   assert.ok(state.forYouCalls.length >= 2);
+  // Kalıcı tercih ayar penceresinde de seçili; kapatınca akış yerinde.
+  await page.getByRole("button", { name: "Sana özel'i ayarla" }).click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByRole("heading", { name: "Sana özel'i ayarla" }).waitFor();
+  assert.equal(await dialog.getByRole("button", { name: "Fotoğrafçılık" }).getAttribute("aria-pressed"), "true");
+  await dialog.getByText(/Takip ettiğin kişilerin paylaşımları burada değil/).waitFor();
+  await dialog.getByRole("button", { name: "Fotoğrafçılık" }).click();
+  await waitUntil(() => state.interests.length === 0);
+  assert.deepEqual(state.patches.at(-1), { interests: [] }, "seçim kaldırılır ve yazılır");
+});
+
+await scenario("4b. Yenile: akış 'şimdi' için baştan sıralanır (yeni p_as_of), tekrar dene gibi", async ({ page, state }) => {
+  await page.goto(`${BASE}/`);
+  await page.getByText("Takip ettiğin #Resim etiketinden").first().waitFor();
+  const firstAsOf = state.forYouCalls[0].p_as_of;
+  await page.waitForTimeout(30);
+  await page.getByRole("button", { name: "Yenile", exact: true }).click();
+  await waitUntil(() => state.forYouCalls.length >= 2);
+  assert.notEqual(state.forYouCalls.at(-1).p_as_of, firstAsOf, "yenilenince oturum anı ilerler");
+  assert.equal(state.forYouCalls.at(-1).p_after_id, null, "baştan");
 });
 
 await scenario("5. İngilizce: For you sekmesi ve nedenler çevrilmiş", async ({ page }) => {
   await page.goto(`${BASE}/`);
   await page.getByRole("tab", { name: "For you" }).waitFor();
-  await page.getByText("Shared by Bob, who you follow").waitFor();
-  await page.getByText("From #Resim, a tag you follow").waitFor();
-  await page.getByRole("heading", { name: /Your interests/i }).waitFor();
+  await page.getByText("From #Resim, a tag you follow").first().waitFor();
+  await page.getByText("Like the #Resim posts you liked").first().waitFor();
+  await page.getByText("Standing out in the community").first().waitFor();
+  await page.getByRole("button", { name: "Refresh", exact: true }).waitFor();
+  await page.getByRole("button", { name: "Tune For you" }).waitFor();
+  await page.getByRole("heading", { name: "Set up For you" }).waitFor();
 }, { lang: "en" });
 
 // 6 — görsel rengi / önizleme
 await scenario("6. kartlar kayıtlı renkle boyanır (bulanık kopya yok), önizleme sonra kalkar; renksiz eski kart eski bandı çizer", async ({ page }) => {
   await page.goto(`${BASE}/`);
-  await page.getByText("Takip ettiğin Bob paylaştı").waitFor();
+  await page.getByText("Takip ettiğin #Resim etiketinden").first().waitFor();
   const card = page.locator("article").filter({ hasText: "Görsel prompt 1" }).first();
   const band = await card.evaluate((el) => {
     const tint = el.querySelector("[aria-hidden][style*='color-mix']");
@@ -195,7 +231,7 @@ await scenario("6. kartlar kayıtlı renkle boyanır (bulanık kopya yok), öniz
 // 7 — kart → detay → geri
 await scenario("7. kart → detay: detay iskeletsiz hemen çizilir ve kapak büyür; geri dönünce liste yerinde, kapak kartına küçülür", async ({ page }) => {
   await page.goto(`${BASE}/`);
-  await page.getByText("Takip ettiğin Bob paylaştı").waitFor();
+  await page.getByText("Takip ettiğin #Resim etiketinden").first().waitFor();
   await page.evaluate(() => {
     window.__heroAnimated = false;
     window.__coverAnimated = false;
@@ -217,7 +253,7 @@ await scenario("7. kart → detay: detay iskeletsiz hemen çizilir ve kapak büy
   assert.match(tint, /color-mix/, "the band has the picture's colour at once");
   await page.waitForTimeout(600);
   await page.goBack();
-  await page.getByText("Takip ettiğin Bob paylaştı").waitFor({ timeout: 1500 });
+  await page.getByText("Takip ettiğin #Resim etiketinden").first().waitFor({ timeout: 1500 });
   assert.equal(await page.locator("[data-flip-key]").count(), 8, "the list came back as it was (no skeleton)");
   await page.waitForTimeout(150);
   assert.equal(await page.evaluate(() => window.__coverAnimated), true, "the hero shrank back into the card");

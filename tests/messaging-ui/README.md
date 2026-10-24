@@ -151,3 +151,8 @@ CHROMIUM_PATH=/opt/pw-browsers/chromium node tests/messaging-ui/run-hscroll.mjs 
 ```bash
 CHROMIUM_PATH=/opt/pw-browsers/chromium node tests/messaging-ui/run-feed-filters.mjs   # 16/16 beklenir
 ```
+
+## Sana özel (`docs/history/222-*`)
+
+`run-home-motion.mjs` (10 senaryo; `docs/history/209-*` + 222): canlı vitrin, Sana özel nedenleri (takip edilen kişi nedeni YOK, "Toplulukta öne çıkıyor"), ilgi alanı çipleri akışta değil — "Yenile" + "Sana özel'i ayarla" satırı, ilk kullanım kartı, ilgi alanı seçince kartın kalkması + yeniden sıralama + kartların kayması, ayar penceresi, Yenile (yeni `p_as_of`), İngilizce, kart renkleri, kart → detay geçişi, hareket azaltma. Sıralamanın kendisi sunucu kuralıdır: `supabase/tests/for-you.sql`.
+

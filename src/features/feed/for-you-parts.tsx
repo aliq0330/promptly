@@ -1,8 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Flame, Hash, Heart, Sparkle, UserCheck, Wrench, type LucideIcon } from "lucide-react";
+import { useId, useState } from "react";
+import Link from "next/link";
+import { Flame, Hash, Heart, RotateCw, SlidersHorizontal, Sparkle, UserCheck, Wrench, X, type LucideIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Chip } from "@/components/ui/chip";
+import { Modal } from "@/components/ui/modal";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useOwnProfile } from "@/features/auth/own-profile-provider";
 import { INTEREST_OPTION_LABELS, INTEREST_OPTIONS, type InterestOption } from "@/features/profile/interest-options";
@@ -17,11 +20,12 @@ function interestLabel(value: string, t: ReturnType<typeof useTranslation>["t"])
 }
 
 /**
- * "Sana özel"'s interest chips (docs/history/209-*): the same `profiles.interests` the profile editor sets, so a pick here
- * is real and shows on the profile too. Saved at once (only this column), then the feed re-ranks (`onChanged`); a failed
- * save puts the previous picks back and says so.
+ * The interest chips (docs/history/209-*, moved out of the feed in 222-*): the same `profiles.interests` the profile editor sets, so a pick
+ * here is real and shows on the profile too. They are a LASTING preference that adds weight to matching posts in "Sana özel" — not a
+ * filter — so they live in the settings sheet / the first-time card, not above the feed. Saved at once (only this column), then
+ * `onChanged` (the feed re-ranks); a failed save puts the previous picks back and says so.
  */
-export function ForYouInterests({ onChanged }: { onChanged: () => void }) {
+export function InterestChips({ onChanged }: { onChanged: () => void }) {
   const { t } = useTranslation();
   const { user } = useAuth();
   const { profile, setProfile } = useOwnProfile();
@@ -52,14 +56,8 @@ export function ForYouInterests({ onChanged }: { onChanged: () => void }) {
   }
 
   return (
-    <section aria-labelledby="for-you-interests" className="space-y-2">
-      <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
-        <h2 id="for-you-interests" className="text-caption font-semibold uppercase tracking-[0.08em] text-text-muted">
-          {t("forYou.interestsTitle")}
-        </h2>
-        <p className="text-caption text-text-muted">{t("forYou.interestsHint")}</p>
-      </div>
-      <div className="scrollbar-none -mx-3 flex touch-pan-x gap-1.5 overflow-x-auto overscroll-x-contain px-3 sm:mx-0 sm:flex-wrap sm:px-0">
+    <div className="space-y-2">
+      <div role="group" aria-label={t("forYou.interestsTitle")} className="flex flex-wrap gap-1.5">
         {INTEREST_OPTIONS.map((value) => (
           <Chip key={value} selected={chosen.includes(value)} onClick={() => void toggle(value)} disabled={saving} className="disabled:opacity-60">
             {t(INTEREST_OPTION_LABELS[value])}
@@ -71,6 +69,80 @@ export function ForYouInterests({ onChanged }: { onChanged: () => void }) {
           {t("forYou.interestsSaveFailed")}
         </p>
       )}
+    </div>
+  );
+}
+
+/**
+ * The row above the "Sana özel" feed: "Yenile" (re-rank from the top as of now — the order is frozen for the session, so new posts
+ * only show after this) and "Sana özel'i ayarla" (the settings sheet: interests + what else shapes the feed).
+ */
+export function ForYouToolbar({ onRefresh, onChanged, refreshing }: { onRefresh: () => void; onChanged: () => void; refreshing: boolean }) {
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
+  const titleId = useId();
+  return (
+    <div className="flex items-center justify-end gap-2" data-for-you-toolbar>
+      <Button variant="outline" size="sm" onClick={onRefresh} disabled={refreshing} className="gap-1.5">
+        <RotateCw size={14} aria-hidden className={refreshing ? "animate-spin" : undefined} />
+        {t("forYou.refresh")}
+      </Button>
+      <Button variant="outline" size="sm" onClick={() => setOpen(true)} aria-haspopup="dialog" className="gap-1.5">
+        <SlidersHorizontal size={14} aria-hidden />
+        {t("forYou.settings")}
+      </Button>
+      {open && (
+        <Modal onClose={() => setOpen(false)} labelledBy={titleId}>
+          <div className="flex max-h-[85dvh] w-full max-w-md flex-col rounded-lg border border-border bg-surface shadow-lg" onClick={(event) => event.stopPropagation()}>
+            <div className="flex items-center justify-between border-b border-border-soft px-4 py-3">
+              <h2 id={titleId} className="text-h3 font-semibold text-text">
+                {t("forYou.settingsTitle")}
+              </h2>
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                aria-label={t("common.close")}
+                className="flex h-10 w-10 items-center justify-center rounded-full text-text-muted hover:bg-surface-soft hover:text-text"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-4 py-4">
+              <section className="space-y-2.5">
+                <h3 className="text-label font-semibold text-text">{t("forYou.interestsTitle")}</h3>
+                <p className="text-caption text-text-muted">{t("forYou.interestsHint")}</p>
+                <InterestChips onChanged={onChanged} />
+              </section>
+              <p className="rounded-md bg-surface-soft px-3 py-2.5 text-small text-text-secondary">{t("forYou.settingsHow")}</p>
+              <Link href="/discover" onClick={() => setOpen(false)} className="inline-flex text-small font-medium text-primary hover:text-primary-hover">
+                {t("feed.goToDiscover")}
+              </Link>
+            </div>
+          </div>
+        </Modal>
+      )}
+    </div>
+  );
+}
+
+/**
+ * First-time card (docs/history/222-*): someone with no interests and no followed tag or AI tool gets a way to teach "Sana özel" what they
+ * like, instead of a feed that can only say "popular" or an empty state that says nothing useful.
+ */
+export function ForYouSetupCard({ onChanged }: { onChanged: () => void }) {
+  const { t } = useTranslation();
+  return (
+    <section aria-labelledby="for-you-setup" data-for-you-setup className="space-y-3 rounded-xl border border-border-soft bg-surface p-4 shadow-card">
+      <div className="space-y-1">
+        <h2 id="for-you-setup" className="text-h3 font-semibold text-text">
+          {t("forYou.setupTitle")}
+        </h2>
+        <p className="text-small text-text-secondary">{t("forYou.setupDescription")}</p>
+      </div>
+      <InterestChips onChanged={onChanged} />
+      <Link href="/discover" className="inline-flex text-small font-medium text-primary hover:text-primary-hover">
+        {t("feed.goToDiscover")}
+      </Link>
     </section>
   );
 }
