@@ -84,23 +84,25 @@ select row_number() over (), f.kind, f.id, f.sort_rank, f.reason_kind, f.reason_
   from public.for_you_page(now(), null, null, null, null, 20, null, null, null) f;
 reset role;
 
--- Takip edilen kişinin (bobby) gönderileri, kendi, beğenilen, kaydedilen, kopyalanan, gizli ve taslak içerik GİRMEZ.
-select public._check(2, 'takip edilen kişinin gönderileri + kendi/beğenilen/kaydedilen/kopyalanan/gizli/taslak girmez',
-  not exists (select 1 from public._page where id in (
-    'f0000000-0000-4000-8000-000000000001', 'f1000000-0000-4000-8000-000000000001', -- takip edilen yazarın prompt'u ve workflow'u
+-- Kendi, beğenilen, kaydedilen, kopyalanan, gizli ve taslak içerik GİRMEZ; takip edilen kişinin (bobby) herkese açık gönderileri GİRER.
+select public._check(2, 'kendi/beğenilen/kaydedilen/kopyalanan/gizli/taslak girmez; takip edilen kişinin açık prompt''u ve workflow''u girer',
+  (select count(*) from public._page where id in ('f0000000-0000-4000-8000-000000000001', 'f1000000-0000-4000-8000-000000000001')) = 2
+  and not exists (select 1 from public._page where id in (
     'f0000000-0000-4000-8000-000000000005', 'f0000000-0000-4000-8000-000000000007', -- beğenilen, kendi
     'f0000000-0000-4000-8000-000000000010', 'f0000000-0000-4000-8000-000000000011', -- kaydedilen, kopyalanan
     'f0000000-0000-4000-8000-000000000008', 'f0000000-0000-4000-8000-000000000009')), -- gizli, taslak
   (select string_agg(id::text, ',') from public._page));
-select public._check(3, 'nedenler: etiket → tag/resim, ilgi alanı → interest/Fotoğrafçılık, beğenilen etiket → liked_tag/kedi, sinyalsiz → popular; creator nedeni üretilmez',
-  (select reason_kind || '/' || reason_ref from public._page where id = 'f0000000-0000-4000-8000-000000000002') = 'tag/resim'
+select public._check(3, 'nedenler: takip edilen kişi → creator, etiket → tag/resim, ilgi alanı → interest/Fotoğrafçılık, beğenilen etiket → liked_tag/kedi, sinyalsiz → popular',
+  (select reason_kind from public._page where id = 'f0000000-0000-4000-8000-000000000001') = 'creator'
+  and (select reason_ref from public._page where id = 'f0000000-0000-4000-8000-000000000001') is null
+  and (select reason_kind || '/' || reason_ref from public._page where id = 'f0000000-0000-4000-8000-000000000002') = 'tag/resim'
   and (select reason_kind || '/' || reason_ref from public._page where id = 'f0000000-0000-4000-8000-000000000003') = 'interest/Fotoğrafçılık'
   and (select reason_kind || '/' || reason_ref from public._page where id = 'f0000000-0000-4000-8000-000000000004') = 'liked_tag/kedi'
-  and (select reason_kind from public._page where id = 'f0000000-0000-4000-8000-000000000006') = 'popular'
-  and not exists (select 1 from public._page where reason_kind = 'creator'),
+  and (select reason_kind from public._page where id = 'f0000000-0000-4000-8000-000000000006') = 'popular',
   (select string_agg(id::text || '=' || reason_kind || '/' || coalesce(reason_ref, '-'), ' ') from public._page));
-select public._check(4, 'sıra: etiket > ilgi alanı > beğenilen etiket > sinyalsiz (aynı yaş bandında)',
-  (select pos from public._page where id = 'f0000000-0000-4000-8000-000000000002') < (select pos from public._page where id = 'f0000000-0000-4000-8000-000000000003')
+select public._check(4, 'sıra: takip edilen kişi > etiket > ilgi alanı > beğenilen etiket > sinyalsiz (aynı yaş bandında)',
+  (select min(pos) from public._page where id in ('f0000000-0000-4000-8000-000000000001', 'f1000000-0000-4000-8000-000000000001')) < (select pos from public._page where id = 'f0000000-0000-4000-8000-000000000002') -- takip edilen kişinin en iyi gönderisi (2.si çeşitlilik cezası alır)
+  and (select pos from public._page where id = 'f0000000-0000-4000-8000-000000000002') < (select pos from public._page where id = 'f0000000-0000-4000-8000-000000000003')
   and (select pos from public._page where id = 'f0000000-0000-4000-8000-000000000003') < (select pos from public._page where id = 'f0000000-0000-4000-8000-000000000004')
   and (select pos from public._page where id = 'f0000000-0000-4000-8000-000000000004') < (select pos from public._page where id = 'f0000000-0000-4000-8000-000000000006'),
   (select string_agg(reason_kind || ':' || sort_rank, ',' order by pos) from public._page));
@@ -138,9 +140,10 @@ select public._check(6, 'p_as_of sonrası içerik girmez (5,5 saat önceki an i�
                    where id in ('f0000000-0000-4000-8000-000000000003', 'f0000000-0000-4000-8000-0000000000e1', 'f1000000-0000-4000-8000-000000000002')));
 
 -- 7. tür süzgeci
-select public._check(7, 'p_kinds = workflow yalnız (takip edilmeyen) workflow döner; takip edilen yazarın workflow''u yok',
-  (select count(*) from public.for_you_page(now(), array['workflow'], null, null, null, 20, null, null, null)) = 1
-  and (select id from public.for_you_page(now(), array['workflow'], null, null, null, 20, null, null, null)) = 'f1000000-0000-4000-8000-000000000002');
+select public._check(7, 'p_kinds = workflow yalnız workflow döner; takip edilen yazarın workflow''u (creator) carol''unkinin önünde',
+  (select count(*) from public.for_you_page(now(), array['workflow'], null, null, null, 20, null, null, null)) = 2
+  and (select id from public.for_you_page(now(), array['workflow'], null, null, null, 20, null, null, null) order by sort_rank desc limit 1) = 'f1000000-0000-4000-8000-000000000001'
+  and (select reason_kind from public.for_you_page(now(), array['workflow'], null, null, null, 20, null, null, null) where id = 'f1000000-0000-4000-8000-000000000001') = 'creator');
 reset role;
 
 -- 8–11. medya görünümü moderatör RPC'leri

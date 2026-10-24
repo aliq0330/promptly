@@ -155,9 +155,8 @@ async function hydrateFeedRows(rows: FeedRow[]): Promise<FeedEntry[]> {
 }
 
 /**
- * Why "Sana özel" shows a post (`public.for_you_page`): the strongest real signal, never a made-up one. Since docs/history/222-* the server
- * no longer returns posts of followed people (they are under "Takip Ettiklerim"), so `creator` is never produced — it stays in the type so a
- * response from a server that has not got the migration yet is still understood.
+ * Why "Sana özel" shows a post (`public.for_you_page`): the strongest real signal, never a made-up one. A followed person (`creator`, +300 —
+ * docs/history/223-*; 222 had left them out) outweighs a followed tag, AI tool, interest or liked tag; `popular` = no personal signal.
  */
 export type ForYouReasonKind = "creator" | "tag" | "tool" | "interest" | "liked_tag" | "popular";
 export interface ForYouReason {

@@ -1,6 +1,6 @@
 # 222 — "Sana özel" yeniden kuruldu (Takip Ettiklerim'den ayrı keşif akışı)
 
-**Durum:** uygulandı (istemci + bir ekleyici migration). `20260922110000_for_you_v2.sql` **canlıya UYGULANMADI** (kullanıcı onayı bekler; 221'in `20260922100000_feed_filters.sql`'inden bağımsız, sırası fark etmez). Gerçek Supabase'e / gerçek oturuma / cihaza KARŞI DENENMEDİ — SQL yerel PostgreSQL'de, arayüz ağ taklitli Playwright'ta sınandı. Ağırlıklar elle seçildi, gerçek veriyle ayarlanmadı.
+**Durum:** uygulandı; **NOT: "takip edilen kişiler girmez" kararı `223-*` ile geri alındı (kişi takibi tekrar +300 puan verir).**  (istemci + bir ekleyici migration). `20260922110000_for_you_v2.sql` **canlıya UYGULANDI** (kullanıcı izniyle, MCP `execute_sql`, tek işlem; `schema_migrations`'a dosya sürümüyle kayıt; canlıda doğrulandı: `prompt_copy_events` kendi-satırı politikası var, `for_you_page` anon'a kapalı / authenticated'a açık, takibi olmayan gerçek bir hesapla 50 satır — hiçbiri takip edilen yazardan değil, nedenler `popular`). Gerçek Supabase'e / gerçek oturuma / cihaza KARŞI DENENMEDİ — SQL yerel PostgreSQL'de, arayüz ağ taklitli Playwright'ta sınandı. Ağırlıklar elle seçildi, gerçek veriyle ayarlanmadı.
 
 ## Neden
 Ana Sayfa'da artık iki sekme var: Sana özel ve Takip Ettiklerim (221). Eski Sana özel takip edilen kişinin gönderisine +600 veriyordu (300 beğenili gönderiyle eşit), yani akışın büyük kısmı Takip Ettiklerim'in kopyasıydı; ayrıca yenilik neredeyse sayılmıyordu (yaş cezası 125 güne yayılıyor), "Şu an popüler" nedeni tüm zamanların beğenisine dayanıyordu, aynı yazar art arda gelebiliyordu, görülenler/kaydedilenler tekrar çıkıyordu ve ilgi alanı çipleri akışın üstünde filtre gibi duruyordu (oysa kalıcı bir profil tercihi).
@@ -38,3 +38,6 @@ Ana Sayfa'da artık iki sekme var: Sana özel ve Takip Ettiklerim (221). Eski Sa
 - Her sayfa isteği tüm herkese açık gönderileri yeniden puanlar (ölçekte maliyetli; önceden hesaplama ister).
 - İlgi alanı → içerik eşlemesi hâlâ SQL'de sabit (yeni bir ilgi alanı migration ister).
 - Migration uygulanmadan: eski `for_you_page` çalışmaya devam eder (yeni arayüz ona uyumlu; `creator` nedeni tipte kalır), yani yalnızca sıralama/kurallar eski kalır.
+
+## Canlıda gözlenen sonuç (uygulama sonrası)
+Canlıda yalnız 18 yazar var ve test hesabı `aliq` 17'sini takip ediyor; Sana özel'de takip edilenler bilerek dışarıda olduğundan bu hesapta akış **boş** (139 başka prompt'un hepsi takip edilen yazarlardan). Takibi olmayan bir hesapta akış 50 satır döner, hepsi `popular` (sinyal yok). Yani küçük bir toplulukta çok kişi takip eden biri için Sana özel boş görünür ve boş durum metni "takip ettiklerin Takip Ettiklerim'de" der; içerik ve yazar sayısı arttıkça kendiliğinden düzelir. İstenirse yumuşatılabilir (ör. akış boşken takip edilenlerin en iyi gönderilerini göstermek) — şu an yapılmadı, ürün kararıdır.

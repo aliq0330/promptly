@@ -46,12 +46,12 @@ export const filterTranslations = {
   "forYou.settings": { tr: "Sana özel'i ayarla", en: "Tune For you" },
   "forYou.settingsTitle": { tr: "Sana özel'i ayarla", en: "Tune For you" },
   "forYou.settingsHow": {
-    tr: "Sana özel; takip ettiğin etiketlerden ve AI araçlarından, ilgi alanlarından, beğendiğin gönderilere benzeyenlerden, kalite ve tazelikten oluşur. Takip ettiğin kişilerin paylaşımları burada değil, Takip Ettiklerim'de.",
-    en: "For you is built from the tags and AI tools you follow, your interests, what is like the posts you liked, quality and freshness. Posts from the people you follow are under Following, not here.",
+    tr: "Sana özel; takip ettiğin kişilerden, etiketlerden ve AI araçlarından, ilgi alanlarından, beğendiğin gönderilere benzeyenlerden, kalite ve tazelikten oluşur. Takip ettiğin kişilerin her paylaşımını kronolojik görmek için Takip Ettiklerim'e bak.",
+    en: "For you is built from the people, tags and AI tools you follow, your interests, what is like the posts you liked, quality and freshness. To see every post from the people you follow in time order, open Following.",
   },
   "forYou.setupTitle": { tr: "Sana özel'i kur", en: "Set up For you" },
   "forYou.setupDescription": {
-    tr: "İlgi alanlarını seç; birkaç etiket ya da AI aracı takip edersen akış daha da sana uyar. Şimdilik topluluktan öne çıkanları görüyorsun.",
-    en: "Pick your interests; follow a few tags or AI tools and the feed fits you even better. For now you see what stands out in the community.",
+    tr: "İlgi alanlarını seç; birkaç kişi, etiket ya da AI aracı takip edersen akış daha da sana uyar. Şimdilik topluluktan öne çıkanları görüyorsun.",
+    en: "Pick your interests; follow a few people, tags or AI tools and the feed fits you even better. For now you see what stands out in the community.",
   },
 } as const;
