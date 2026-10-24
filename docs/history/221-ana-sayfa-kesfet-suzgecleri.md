@@ -1,6 +1,6 @@
 # 221 — Ana Sayfa / Keşfet süzgeç düzeni (eksen ayrımı)
 
-**Durum:** uygulandı (istemci + bir ekleyici migration). `20260922100000_feed_filters.sql` **canlıya UYGULANMADI** (kullanıcı onayı bekler). Gerçek Supabase'e / gerçek oturuma / cihaza KARŞI DENENMEDİ — SQL yerel PostgreSQL'de, arayüz ağ taklitli Playwright'ta sınandı.
+**Durum:** uygulandı (istemci + bir ekleyici migration). `20260922100000_feed_filters.sql` **canlıya UYGULANDI** (kullanıcı izniyle, MCP `execute_sql`, tek işlem; `schema_migrations`'a dosya sürümüyle kayıt; canlıda doğrulandı: 16 argümanlı + 3 eski imza, INVOKER, anon/authenticated EXECUTE, 10/13/16 argümanlı süzgeçsiz çağrılar aynı satırları döndürür, yazar süzgeci yazarın 12 herkese açık promptunu, etiket süzgeci eski tek etiket çağrısıyla aynı 30 satırı verir, `discover_tool_counts` gerçek sayılar döndürür). Gerçek Supabase'e / gerçek oturuma / cihaza KARŞI DENENMEDİ — SQL yerel PostgreSQL'de, arayüz ağ taklitli Playwright'ta sınandı.
 
 ## Sorun
 Ana Sayfa (Sana özel · En yeni · Popüler · Takip · Etiketlerim + tür çipleri + kategori/tür süzgeci) ile Keşfet (tür bölümleri + sıralama + aynı kategori/tür süzgeci) aynı üç şeyi iki yerde yapıyordu: gönderi türü (Ana Sayfa'da çip, Keşfet'te bölüm), sıralama (Ana Sayfa'da balon, Keşfet'te menü), kategori süzgeci (ikisinde de). "Takip ettiklerim" ise iki ayrı sekmeye bölünmüştü (kişiler / etiketler); araç takibi hiçbir sekmede yoktu.
