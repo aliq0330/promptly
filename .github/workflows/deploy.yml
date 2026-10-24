@@ -41,6 +41,27 @@ jobs:
       - name: Unit tests
         run: npm test
 
+      # --- Veritabanı: migration + istemci TEK boru hattında (docs/history/226-*) ---------------------------------------
+      # Sıra sabittir: yukarıdaki lint/tsc/test geçti → migration'lar uygulanır → canlı şemaya duman testi → derleme → yayın.
+      # Migration uygulanamazsa ya da duman testi kırmızıysa aşağıdaki adımlar ÇALIŞMAZ, site eski haliyle kalır
+      # ("istemci migration'dan önce yayınlandı" durumu yapısal olarak olamaz). Zamanlanmış 6 saatlik yeniden derlemede
+      # migration uygulanmaz (yalnız duman testi koşar). Yıkıcı SQL (`drop table` vb.) `-- ci:allow-destructive` işareti olmadan durur.
+      - name: Check migrations (naming, destructive SQL)
+        run: node scripts/apply-migrations.mjs --check
+
+      - name: Apply pending migrations
+        if: github.event_name != 'schedule'
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+        run: node scripts/apply-migrations.mjs
+
+      - name: Smoke test against the live schema
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+        run: node scripts/smoke-test.mjs
+
       - name: Build static export
         run: npm run build
         env:

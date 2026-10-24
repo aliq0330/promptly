@@ -1,0 +1,90 @@
+name: CI
+
+# Pull request'lerde çalışır (deploy.yml yalnızca main'e itildiğinde çalışır). Amaç: migration + istemci değişikliği
+# birleşmeden ÖNCE kırmızı yansın. Canlı veritabanına HİÇ dokunmaz (secret kullanmaz).
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npx tsc --noEmit
+      - run: npm test
+      - name: Migration naming and destructive-SQL check
+        run: node scripts/apply-migrations.mjs --check
+
+  database:
+    # Bütün migration'lar temiz bir PostgreSQL'e baştan oynatılır ve supabase/tests/*.sql çalışır (hepsi FAILED=0 olmalı).
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: localhost
+      PGPORT: "5432"
+      PGUSER: postgres
+      PGPASSWORD: postgres
+    steps:
+      - uses: actions/checkout@v4
+      - name: Replay migrations and run SQL tests
+        run: |
+          set -u
+          status=0
+          for t in supabase/tests/*.sql; do
+            case "$t" in *_local-stubs.sql) continue;; esac
+            out=$(DB="ci_$(basename "$t" .sql | tr '-' '_')" supabase/tests/run-local.sh "$t" 2>&1) || { echo "$out"; status=1; continue; }
+            echo "$out" | grep -E "MIGRATION FAILED|FAILED=|FAIL " || true
+            if echo "$out" | grep -qE "MIGRATION FAILED|FAIL |FAILED=[1-9]"; then echo "::error::$t"; echo "$out" | tail -40; status=1; fi
+          done
+          exit $status
+
+  ui:
+    # Ağ taklitli arayüz paketlerinden hızlı bir kesit. Henüz bilgilendirici: kırmızı olması birleştirmeyi engellemez.
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm i --no-save playwright --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium
+      - name: Build (dummy Supabase URL, network is mocked)
+        run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: dummy
+      - name: Run UI suites
+        run: |
+          set -o pipefail
+          status=0
+          for s in run-safety run-shared-cards run-detail-pages run-home-motion run-feed-filters run-search-notifications; do
+            echo "== $s"; node tests/messaging-ui/$s.mjs | tail -3 || status=1
+          done
+          exit $status

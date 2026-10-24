@@ -108,6 +108,25 @@ await scenario("6. Yorum kutusu 2000 karakterle sınırlı", async ({ page }) =>
   assert.equal(await input.getAttribute("maxlength"), "2000");
 });
 
+await scenario("7. Migration henüz yok: is_demo sütunu canlıda olmasa da profil sayfası açılır (istek sütunsuz yeniden denenir, sonrakiler baştan sütunsuz)", async ({ page, context }) => {
+  const selects = [];
+  await context.route(/\/rest\/v1\/profiles\?/, (route) => {
+    const select = new URL(route.request().url()).searchParams.get("select") ?? "";
+    selects.push(select);
+    if (select.includes("is_demo")) return json(route, { code: "42703", message: "column profiles.is_demo does not exist", details: null, hint: null }, 400);
+    return route.fallback();
+  });
+  await page.goto(`${BASE}/profile/real?username=carol`);
+  await page.getByText("@carol").first().waitFor();
+  assert.equal(await page.getByText("Profil bulunamadı").count(), 0, "profile page did not break");
+  assert.equal(await page.locator("[data-demo-badge]").count(), 0, "no badge without the column");
+  const withColumn = selects.filter((x) => x.includes("is_demo")).length;
+  // Eşzamanlı ilk istekler sütunlu gidebilir (hata henüz öğrenilmemiş); sonra gelenler sütunsuz olmalı.
+  assert.ok(withColumn >= 1 && withColumn <= 3, `only the first, concurrent selects carry the column (saw ${withColumn})`);
+  assert.ok(!selects.at(-1).includes("is_demo"), "later selects omit the column");
+  assert.ok(selects.some((x) => x.length > 0 && !x.includes("is_demo")), "retried without the column");
+});
+
 console.log(results.map(([s, n]) => `${s === "PASS" ? "✓" : "✗"} ${n}`).join("\n"));
 const failed = results.filter(([s]) => s === "FAIL");
 failed.forEach(([, n]) => console.log(n));
