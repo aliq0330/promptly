@@ -48,7 +48,7 @@ test("oldest: the cursor predicate is ascending (>), not the descending <", () =
 
 test("a row equal to the cursor is never 'after' it (no repeat across pages)", () => {
   const cursor = row(3, "2026-09-19T10:00:00.000000+00:00", "x");
-  for (const order of ["newest", "popular", "oldest", "used"] as const) assert.equal(isAfterCursor(order, { ...cursor }, cursor), false);
+  for (const order of ["newest", "popular", "oldest", "used", "recommended"] as const) assert.equal(isAfterCursor(order, { ...cursor }, cursor), false);
 });
 
 test("oldest: equal timestamps are separated by id ascending", () => {
@@ -67,7 +67,7 @@ test("popular: like_count descending first, then created_at and id descending", 
   assert.equal(isAfterCursor("popular", row(5, at, "z"), cursor), false);
 });
 
-for (const order of ["newest", "popular", "oldest", "used"] as const) {
+for (const order of ["newest", "popular", "oldest", "used", "recommended"] as const) {
   for (const limit of [1, 7, 10, 50]) {
     test(`${order}: walking pages of ${limit} returns every row once, in order`, () => {
       const seen = walk(dataset, order, limit);
@@ -117,6 +117,8 @@ test("Keşfet sort keys map to feed orders", () => {
   assert.equal(feedOrderForSort("most-liked"), "popular");
   assert.equal(feedOrderForSort("newest"), "newest");
   assert.equal(feedOrderForSort("oldest"), "oldest");
+  assert.equal(feedOrderForSort("recommended"), "recommended");
+  assert.equal(feedOrderForSort("popular"), "popular", "Keşfet's Popüler is the like order, like the profile lists' most-liked");
 });
 
 test("popular ranks by like_count, used by copy_count (prompts only), the rest by nothing", () => {
@@ -125,4 +127,14 @@ test("popular ranks by like_count, used by copy_count (prompts only), the rest b
   assert.equal(feedSortRank("used", { likeCount: 9 }), 0, "non-prompt kinds have no use counter");
   assert.equal(feedSortRank("newest", { likeCount: 9, copyCount: 4 }), 0);
   assert.equal(feedSortRank("oldest", { likeCount: 9, copyCount: 4 }), 0);
+});
+
+test("recommended ranks by the engagement score (same numbers as supabase/tests/feed-filters.sql)", () => {
+  // likes×3 + saves×2 + comments×2 + copies×2 (+ responses×2 on a request)
+  assert.equal(feedSortRank("recommended", { likeCount: 5 }), 15);
+  assert.equal(feedSortRank("recommended", { likeCount: 1, saveCount: 10 }), 23);
+  assert.equal(feedSortRank("recommended", { likeCount: 0, copyCount: 7 }), 14);
+  assert.equal(feedSortRank("recommended", { likeCount: 2, commentCount: 1, responseCount: 3 }), 14);
+  assert.equal(feedSortRank("recommended", { likeCount: 0 }), 0);
+  assert.equal(isAfterCursor("recommended", { rank: 14, createdAt: "2026-09-19T11:00:00.000000+00:00", id: "z" }, { rank: 15, createdAt: "2026-09-19T09:00:00.000000+00:00", id: "a" }), true, "a lower score is after, even if newer");
 });

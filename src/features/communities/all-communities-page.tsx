@@ -54,7 +54,7 @@ export function AllCommunitiesPage() {
   );
 }
 
-function BrowseView({ onToast }: { onToast: (message: string) => void }) {
+function BrowseView({ onToast, hideSearch }: { onToast: (message: string) => void; hideSearch?: boolean }) {
   const { t } = useTranslation();
   const { refresh } = useRealMessages();
   // `?q=` comes from the Topluluklar search box (docs/history/212-*); read once, the box below owns it after that.
@@ -130,19 +130,21 @@ function BrowseView({ onToast }: { onToast: (message: string) => void }) {
 
   return (
     <div className="space-y-4">
-      <label className="relative block">
-        <span className="sr-only">{t("communities.all.searchPlaceholder")}</span>
-        <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" aria-hidden />
-        <input
-          type="search"
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          maxLength={100}
-          placeholder={t("communities.all.searchPlaceholder")}
-          data-testid="all-search"
-          className="h-11 w-full rounded-full border border-border-soft bg-background pl-9 pr-3 text-sm text-text shadow-xs transition-colors duration-200 ease-soft placeholder:text-text-muted hover:border-border-strong focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
-        />
-      </label>
+      {!hideSearch && (
+        <label className="relative block">
+          <span className="sr-only">{t("communities.all.searchPlaceholder")}</span>
+          <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" aria-hidden />
+          <input
+            type="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            maxLength={100}
+            placeholder={t("communities.all.searchPlaceholder")}
+            data-testid="all-search"
+            className="h-11 w-full rounded-full border border-border-soft bg-background pl-9 pr-3 text-sm text-text shadow-xs transition-colors duration-200 ease-soft placeholder:text-text-muted hover:border-border-strong focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
+          />
+        </label>
+      )}
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex gap-1.5 overflow-x-auto pb-1 md:flex-wrap md:overflow-visible" role="group" aria-label={t("communities.filter.categoryAria")}>
@@ -197,5 +199,20 @@ function BrowseView({ onToast }: { onToast: (message: string) => void }) {
         </>
       )}
     </div>
+  );
+}
+
+/**
+ * The same browse list inside Keşfet's Topluluklar section (docs/history/221-*): oturumlu kullanıcı ilgi sıralı gözatı, ziyaretçi herkese açık
+ * listeyi görür. Typed search is Keşfet's own search box (it searches communities while this section is open), so the list shows no second box.
+ */
+export function EmbeddedCommunitiesBrowse() {
+  const { user, loading: authLoading } = useAuth();
+  const { node: toastNode, show } = useToast();
+  return (
+    <>
+      {authLoading ? <LoadingRows /> : user ? <BrowseView onToast={show} hideSearch /> : <DiscoverView onToast={show} onGoInvites={() => undefined} hideSearch />}
+      {toastNode}
+    </>
   );
 }

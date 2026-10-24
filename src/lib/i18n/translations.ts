@@ -20,6 +20,7 @@ import { communityTranslations } from "./translations-communities";
 import { storyTranslations } from "./translations-stories";
 import { spaceTranslations } from "./translations-spaces";
 import { quoteTranslations } from "./translations-quotes";
+import { filterTranslations } from "./translations-filters";
 
 export const translations = {
   // ---- Primary navigation (desktop sidebar) ----
@@ -534,7 +535,6 @@ export const translations = {
   "home.openRequest": { tr: "İstek aç", en: "Open a Request" },
   "home.tabNewest": { tr: "En yeni", en: "Newest" },
   "home.tabPopular": { tr: "Popüler", en: "Popular" },
-  "home.tabTags": { tr: "Etiketlerim", en: "My tags" },
   "home.tabForYou": { tr: "Sana özel", en: "For you" },
   "forYou.interestsTitle": { tr: "İlgi alanların", en: "Your interests" },
   "forYou.interestsHint": { tr: "Seçtiklerin sıralamayı değiştirir ve profilinde görünür.", en: "Your picks reorder this feed and show on your profile." },
@@ -579,12 +579,6 @@ export const translations = {
   "feed.emptyDefault": { tr: "Henüz gösterilecek içerik yok.", en: "There's nothing to show yet." },
   "feed.emptyFollowingHint": { tr: "Keşfet'ten yeni yaratıcılar bulup takip edebilirsin.", en: "Find and follow new creators on Discover." },
   "feed.loadFailed": { tr: "Akış şu anda yüklenemedi — lütfen tekrar dene.", en: "Couldn't load the feed right now — please try again." },
-  "feed.emptyTagsLoginTitle": { tr: "Etiketlerin burada görünür", en: "Your tags show up here" },
-  "feed.emptyTagsLoginDescription": { tr: "Takip ettiğin etiketlerdeki içerikleri görmek için giriş yap.", en: "Log in to see posts from the tags you follow." },
-  "feed.emptyTagsNoneTitle": { tr: "Henüz etiket takip etmiyorsun", en: "You're not following any tags yet" },
-  "feed.emptyTagsNoneDescription": { tr: "Bir etiketin sayfasında Takip Et'e dokun; o etiketteki yeni içerikler burada toplanır.", en: "Tap Follow on a tag's page and its new posts are collected here." },
-  "feed.emptyTagsNoPosts": { tr: "Takip ettiğin etiketlerde henüz içerik yok", en: "No posts in the tags you follow yet" },
-  "feed.goToTags": { tr: "Etiketlere göz at", en: "Browse tags" },
   "challenge.eyebrow": { tr: "Haftalık tema", en: "Weekly theme" },
   "challenge.endsIn": { tr: "{{time}} sona eriyor", en: "Ends {{time}}" },
   "challenge.join": { tr: "Katıl", en: "Join in" },
@@ -3089,6 +3083,7 @@ export const translations = {
   ...spaceTranslations,
   ...storyTranslations,
   ...quoteTranslations,
+  ...filterTranslations,
 } as const satisfies Record<string, { tr: string; en: string }>;
 
 export type TranslationKey = keyof typeof translations;

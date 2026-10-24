@@ -143,3 +143,11 @@ CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/mess
 ```bash
 CHROMIUM_PATH=/opt/pw-browsers/chromium node tests/messaging-ui/run-hscroll.mjs   # 5/5 beklenir
 ```
+
+## Ana Sayfa / Keşfet süzgeçleri (`docs/history/221-*`)
+
+`run-feed-filters.mjs` (16 senaryo): Ana Sayfa sekmeleri (yalnız Sana özel + Takip Ettiklerim), tür çipleri, kronolojik Takip, takip edilenler süzgeci (kişi/etiket/araç → `feed_page` `p_authors/p_tags/p_tools`, hap kaldırma/temizleme, takip yazımı yok), süzgeç değişince imleç sıfırlanması, boş durum, misafir; Keşfet bölümleri, sıralama (`p_order`), bölüme göre süzgeç ve arama, AI Araçları/Etiketler/Topluluklar bölümleri, İngilizce + telefon. `feed_page` taklidi sunucu kuralını kabaca yineler (asıl doğrulama `supabase/tests/feed-filters.sql`). Statik HTML'e hidrasyondan önce dokunmak kaybolur: Ana Sayfa senaryoları `gotoHome` ile ilk akış isteğini bekler.
+
+```bash
+CHROMIUM_PATH=/opt/pw-browsers/chromium node tests/messaging-ui/run-feed-filters.mjs   # 16/16 beklenir
+```

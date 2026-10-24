@@ -203,7 +203,16 @@ export function CommunitiesPage() {
 }
 
 /** Ziyaretçi için Keşfet (ve `/communities/all`): herkese açık topluluklar + arama; öneri ve akış kişiseldir, oturum ister. */
-export function DiscoverView({ onToast, onGoInvites }: { onToast: (message: string) => void; onGoInvites: () => void }) {
+export function DiscoverView({
+  onToast,
+  onGoInvites,
+  hideSearch,
+}: {
+  onToast: (message: string) => void;
+  onGoInvites: () => void;
+  /** Embedded in Keşfet (docs/history/221-*): the page's own search box drives the typed search, so this list shows no second one. */
+  hideSearch?: boolean;
+}) {
   const { t } = useTranslation();
   const [query, setQuery] = useState("");
   const [debounced, setDebounced] = useState("");
@@ -263,18 +272,20 @@ export function DiscoverView({ onToast, onGoInvites }: { onToast: (message: stri
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        <label className="relative block flex-1">
-          <span className="sr-only">{t("communities.search.placeholder")}</span>
-          <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
-          <input
-            type="search"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            maxLength={100}
-            placeholder={t("communities.search.placeholder")}
-            className="h-10 w-full rounded-full border border-border-soft bg-background pl-9 pr-3 text-sm text-text shadow-xs transition-colors duration-200 ease-soft placeholder:text-text-muted hover:border-border-strong focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
-          />
-        </label>
+        {!hideSearch && (
+          <label className="relative block flex-1">
+            <span className="sr-only">{t("communities.search.placeholder")}</span>
+            <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+            <input
+              type="search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              maxLength={100}
+              placeholder={t("communities.search.placeholder")}
+              className="h-10 w-full rounded-full border border-border-soft bg-background pl-9 pr-3 text-sm text-text shadow-xs transition-colors duration-200 ease-soft placeholder:text-text-muted hover:border-border-strong focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
+            />
+          </label>
+        )}
         {!searching && (
           <Tabs
             variant="segmented"
