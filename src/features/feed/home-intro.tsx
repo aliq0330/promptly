@@ -22,17 +22,17 @@ export function HomeIntro() {
   const [showcaseUnavailable, setShowcaseUnavailable] = useState(false);
   const fallBack = useCallback(() => setShowcaseUnavailable(true), []);
 
-  if (loading) return <div className="h-[74px]" aria-hidden />;
+  if (loading) return <div className="h-14 sm:h-[74px]" aria-hidden />;
 
   if (user) {
     // Meydan (docs/history/190-*): a composer row instead of a greeting card — the
-    // whole row opens the create form, the two buttons pick the kind directly.
+    // whole row opens the create form, the two buttons pick the kind directly. On a phone it is a bare row, no card (docs/history/227-*).
     return (
-      <section aria-label={t("home.sharePrompt")} className="flex items-center gap-3 rounded-xl border border-border-soft bg-surface p-3 sm:p-4">
+      <section aria-label={t("home.sharePrompt")} className="flex items-center gap-3 sm:rounded-xl sm:border sm:border-border-soft sm:bg-surface sm:p-4">
         <Avatar src={profile?.avatarUrl ?? null} alt={profile?.displayName ?? ""} size={42} />
         <Link
           href="/create?mode=prompt"
-          className="min-w-0 flex-1 truncate rounded-full bg-surface-soft px-4 py-2.5 text-small text-text-muted transition-colors hover:bg-border-soft hover:text-text-secondary"
+          className="min-w-0 flex-1 truncate rounded-full bg-surface-soft px-4 py-3 text-small text-text-muted sm:py-2.5 transition-colors hover:bg-border-soft hover:text-text-secondary"
         >
           {t("home.composerPlaceholder")}
         </Link>

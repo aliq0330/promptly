@@ -132,7 +132,7 @@ await scenario("2. misafir: 4'ten az görsel → kompakt tanıtım (boş duvar y
 }, { guest: true, count: 3 });
 
 // 3 — Sana özel
-await scenario("3. üye: varsayılan sekme Sana özel; her kartta gerçek neden (takip edilen kişi dahil); ilgi alanı çipleri akışta DEĞİL — araç satırı + ilk kullanım kartı", async ({ page, state }) => {
+await scenario("3. üye: varsayılan sekme Sana özel; her kartta gerçek neden (takip edilen kişi dahil); ilgi alanı çipleri akışta DEĞİL — Filtre penceresinde Yenile/ayarla + tek satırlık ilk kullanım bandı", async ({ page, state }) => {
   await page.goto(`${BASE}/`);
   const tab = page.getByRole("tab", { name: "Sana özel" });
   await tab.waitFor();
@@ -142,14 +142,22 @@ await scenario("3. üye: varsayılan sekme Sana özel; her kartta gerçek neden 
   assert.ok((await page.getByText("Toplulukta öne çıkıyor").count()) >= 1, "sinyalsiz kartın nedeni dürüst: öne çıkıyor, 'şu an popüler' değil");
   assert.equal(await page.getByText("Şu an popüler").count(), 0);
   await page.getByText(/Takip ettiğin .* paylaştı/).first().waitFor();
-  // İlgi alanları akışın üstünde sıra sıra çip DEĞİL: yalnız araç satırı (Yenile · Sana özel'i ayarla) var.
+  // İlgi alanları akışın üstünde sıra sıra çip DEĞİL; Yenile · Sana özel'i ayarla akışta satır değil, Filtre penceresinde (docs/history/227-*).
   assert.equal(await page.getByRole("heading", { name: /İlgi alanların/i }).count(), 0, "akışta 'İlgi alanların' başlığı yok");
-  await page.getByRole("button", { name: "Yenile", exact: true }).waitFor();
-  await page.getByRole("button", { name: "Sana özel'i ayarla" }).waitFor();
-  // Hiç ilgi alanı / takip edilen etiket / araç yok → ilk kullanım kartı (çipler kartın içinde).
+  assert.equal(await page.getByRole("button", { name: "Yenile", exact: true }).count(), 0, "Yenile akışta değil");
+  await page.getByRole("button", { name: "Filtre" }).last().click();
+  const sheet = page.getByRole("dialog");
+  await sheet.getByRole("button", { name: "Yenile", exact: true }).waitFor();
+  await sheet.getByRole("button", { name: "Sana özel'i ayarla" }).waitFor();
+  await sheet.getByRole("button", { name: "Filtreleri Uygula" }).click();
+  // Hiç ilgi alanı / takip edilen etiket / araç yok → tek satırlık ilk kullanım bandı; tıklayınca ayar penceresi açılır, çipler orada.
   const setup = page.locator("[data-for-you-setup]");
   await setup.waitFor();
-  assert.equal(await setup.getByRole("button", { name: "Fotoğrafçılık" }).getAttribute("aria-pressed"), "false");
+  assert.ok((await setup.boundingBox()).height <= 56, "ilk kullanım bandı tek satır");
+  await setup.getByRole("button", { name: /Sana özel'i ayarla/ }).click();
+  const settings = page.getByRole("dialog");
+  assert.equal(await settings.getByRole("button", { name: "Fotoğrafçılık" }).getAttribute("aria-pressed"), "false");
+  await settings.getByRole("button", { name: "Kapat" }).click();
   assert.ok(state.forYouCalls.length >= 1 && state.forYouCalls[0].p_as_of, "for_you_page called with a fixed as_of");
   await shot(page, "3-for-you");
   assert.equal(await overflowFree(page), true);
@@ -169,16 +177,20 @@ await scenario("4. üye: ilgi alanı seçilince kaydedilir, kart kalkar, akış 
       return orig.apply(this, args);
     };
   });
-  await page.locator("[data-for-you-setup]").getByRole("button", { name: "Fotoğrafçılık" }).click();
+  await page.locator("[data-for-you-setup]").getByRole("button", { name: /Sana özel'i ayarla/ }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Fotoğrafçılık" }).click();
   await page.getByText("İlgi alanın: Fotoğrafçılık").waitFor();
   assert.deepEqual(state.patches.at(-1), { interests: ["Fotoğrafçılık"] }, "only interests are written");
-  assert.equal(await page.locator("[data-for-you-setup]").count(), 0, "ilgi alanı seçilince ilk kullanım kartı kalkar");
+  assert.equal(await page.locator("[data-for-you-setup]").count(), 0, "ilgi alanı seçilince ilk kullanım bandı kalkar");
+  assert.equal(await page.getByRole("dialog").count(), 1, "ayar penceresi seçimle birlikte kapanmaz");
+  await page.getByRole("dialog").getByRole("button", { name: "Kapat" }).click();
   assert.equal(await page.locator("[data-flip-key] h2").first().innerText(), "Görsel prompt 3");
   assert.ok((await page.evaluate(() => window.__flipAnimations)) > 0, "cards glided to their new places");
   assert.ok(state.forYouCalls.length >= 2);
-  // Kalıcı tercih ayar penceresinde de seçili; kapatınca akış yerinde.
-  await page.getByRole("button", { name: "Sana özel'i ayarla" }).click();
-  const dialog = page.getByRole("dialog");
+  // Kalıcı tercih ayar penceresinde de seçili (Filtre penceresinden açılır); kapatınca akış yerinde.
+  await page.getByRole("button", { name: "Filtre" }).last().click();
+  await page.getByRole("dialog").getByRole("button", { name: "Sana özel'i ayarla" }).click();
+  const dialog = page.getByRole("dialog").last();
   await dialog.getByRole("heading", { name: "Sana özel'i ayarla" }).waitFor();
   assert.equal(await dialog.getByRole("button", { name: "Fotoğrafçılık" }).getAttribute("aria-pressed"), "true");
   await dialog.getByText(/takip ettiğin kişilerden, etiketlerden ve AI araçlarından/).waitFor();
@@ -192,7 +204,8 @@ await scenario("4b. Yenile: akış 'şimdi' için baştan sıralanır (yeni p_as
   await page.getByText("Takip ettiğin #Resim etiketinden").first().waitFor();
   const firstAsOf = state.forYouCalls[0].p_as_of;
   await page.waitForTimeout(30);
-  await page.getByRole("button", { name: "Yenile", exact: true }).click();
+  await page.getByRole("button", { name: "Filtre" }).last().click();
+  await page.getByRole("dialog").getByRole("button", { name: "Yenile", exact: true }).click();
   await waitUntil(() => state.forYouCalls.length >= 2);
   assert.notEqual(state.forYouCalls.at(-1).p_as_of, firstAsOf, "yenilenince oturum anı ilerler");
   assert.equal(state.forYouCalls.at(-1).p_after_id, null, "baştan");
@@ -204,9 +217,10 @@ await scenario("5. İngilizce: For you sekmesi ve nedenler çevrilmiş", async (
   await page.getByText("From #Resim, a tag you follow").first().waitFor();
   await page.getByText("Like the #Resim posts you liked").first().waitFor();
   await page.getByText("Standing out in the community").first().waitFor();
-  await page.getByRole("button", { name: "Refresh", exact: true }).waitFor();
-  await page.getByRole("button", { name: "Tune For you" }).waitFor();
-  await page.getByRole("heading", { name: "Set up For you" }).waitFor();
+  await page.getByRole("button", { name: "Tune For you · pick your interests" }).waitFor();
+  await page.getByRole("button", { name: "Filter" }).last().click();
+  await page.getByRole("dialog").getByRole("button", { name: "Refresh", exact: true }).waitFor();
+  await page.getByRole("dialog").getByRole("button", { name: "Tune For you" }).waitFor();
 }, { lang: "en" });
 
 // 6 — görsel rengi / önizleme

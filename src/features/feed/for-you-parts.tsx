@@ -2,10 +2,11 @@
 
 import { useId, useState } from "react";
 import Link from "next/link";
-import { Flame, Hash, Heart, RotateCw, SlidersHorizontal, Sparkle, UserCheck, Wrench, X, type LucideIcon } from "lucide-react";
+import { ChevronRight, Flame, Hash, Heart, RotateCw, SlidersHorizontal, Sparkle, UserCheck, Wrench, X, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Chip } from "@/components/ui/chip";
 import { Modal } from "@/components/ui/modal";
+import { SheetSection } from "@/features/content/list-toolbar";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useOwnProfile } from "@/features/auth/own-profile-provider";
 import { INTEREST_OPTION_LABELS, INTEREST_OPTIONS, type InterestOption } from "@/features/profile/interest-options";
@@ -74,75 +75,106 @@ export function InterestChips({ onChanged }: { onChanged: () => void }) {
 }
 
 /**
- * The row above the "Sana özel" feed: "Yenile" (re-rank from the top as of now — the order is frozen for the session, so new posts
- * only show after this) and "Sana özel'i ayarla" (the settings sheet: interests + what else shapes the feed).
+ * The "Sana özel'i ayarla" dialog: interests + what else shapes the feed. Opened from the first-time banner and from the Filtre sheet
+ * (docs/history/227-*: the Yenile / ayarla row left the feed so the first post starts higher), so it sits above that sheet (`overLayers`).
  */
-export function ForYouToolbar({ onRefresh, onChanged, refreshing }: { onRefresh: () => void; onChanged: () => void; refreshing: boolean }) {
+export function ForYouSettingsModal({ onClose, onChanged }: { onClose: () => void; onChanged: () => void }) {
   const { t } = useTranslation();
-  const [open, setOpen] = useState(false);
   const titleId = useId();
   return (
-    <div className="flex items-center justify-end gap-2" data-for-you-toolbar>
-      <Button variant="outline" size="sm" onClick={onRefresh} disabled={refreshing} className="gap-1.5">
-        <RotateCw size={14} aria-hidden className={refreshing ? "animate-spin" : undefined} />
-        {t("forYou.refresh")}
-      </Button>
-      <Button variant="outline" size="sm" onClick={() => setOpen(true)} aria-haspopup="dialog" className="gap-1.5">
-        <SlidersHorizontal size={14} aria-hidden />
-        {t("forYou.settings")}
-      </Button>
-      {open && (
-        <Modal onClose={() => setOpen(false)} labelledBy={titleId}>
-          <div className="flex max-h-[85dvh] w-full max-w-md flex-col rounded-lg border border-border bg-surface shadow-lg" onClick={(event) => event.stopPropagation()}>
-            <div className="flex items-center justify-between border-b border-border-soft px-4 py-3">
-              <h2 id={titleId} className="text-h3 font-semibold text-text">
-                {t("forYou.settingsTitle")}
-              </h2>
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                aria-label={t("common.close")}
-                className="flex h-10 w-10 items-center justify-center rounded-full text-text-muted hover:bg-surface-soft hover:text-text"
-              >
-                <X size={18} />
-              </button>
-            </div>
-            <div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-4 py-4">
-              <section className="space-y-2.5">
-                <h3 className="text-label font-semibold text-text">{t("forYou.interestsTitle")}</h3>
-                <p className="text-caption text-text-muted">{t("forYou.interestsHint")}</p>
-                <InterestChips onChanged={onChanged} />
-              </section>
-              <p className="rounded-md bg-surface-soft px-3 py-2.5 text-small text-text-secondary">{t("forYou.settingsHow")}</p>
-              <Link href="/discover" onClick={() => setOpen(false)} className="inline-flex text-small font-medium text-primary hover:text-primary-hover">
-                {t("feed.goToDiscover")}
-              </Link>
-            </div>
-          </div>
-        </Modal>
-      )}
-    </div>
+    <Modal onClose={onClose} labelledBy={titleId} overLayers>
+      <div className="flex max-h-[85dvh] w-full max-w-md flex-col rounded-lg border border-border bg-surface shadow-lg" onClick={(event) => event.stopPropagation()}>
+        <div className="flex items-center justify-between border-b border-border-soft px-4 py-3">
+          <h2 id={titleId} className="text-h3 font-semibold text-text">
+            {t("forYou.settingsTitle")}
+          </h2>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label={t("common.close")}
+            className="flex h-10 w-10 items-center justify-center rounded-full text-text-muted hover:bg-surface-soft hover:text-text"
+          >
+            <X size={18} />
+          </button>
+        </div>
+        <div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-4 py-4">
+          <section className="space-y-2.5">
+            <h3 className="text-label font-semibold text-text">{t("forYou.interestsTitle")}</h3>
+            <p className="text-caption text-text-muted">{t("forYou.interestsHint")}</p>
+            <InterestChips onChanged={onChanged} />
+          </section>
+          <p className="rounded-md bg-surface-soft px-3 py-2.5 text-small text-text-secondary">{t("forYou.settingsHow")}</p>
+          <Link href="/discover" onClick={onClose} className="inline-flex text-small font-medium text-primary hover:text-primary-hover">
+            {t("feed.goToDiscover")}
+          </Link>
+        </div>
+      </div>
+    </Modal>
   );
 }
 
 /**
- * First-time card (docs/history/222-*): someone with no interests and no followed tag or AI tool gets a way to teach "Sana özel" what they
- * like, instead of a feed that can only say "popular" or an empty state that says nothing useful.
+ * The "Sana özel" block of the Filtre sheet (docs/history/227-*): "Yenile" (re-rank from the top as of now — the order is frozen for the
+ * session, so new posts only show after this) and "Sana özel'i ayarla" (opens `ForYouSettingsModal`).
  */
-export function ForYouSetupCard({ onChanged }: { onChanged: () => void }) {
+export function ForYouSheetSection({ onRefresh, onOpenSettings, refreshing }: { onRefresh: () => void; onOpenSettings: () => void; refreshing: boolean }) {
   const { t } = useTranslation();
   return (
-    <section aria-labelledby="for-you-setup" data-for-you-setup className="space-y-3 rounded-xl border border-border-soft bg-surface p-4 shadow-card">
-      <div className="space-y-1">
-        <h2 id="for-you-setup" className="text-h3 font-semibold text-text">
-          {t("forYou.setupTitle")}
-        </h2>
-        <p className="text-small text-text-secondary">{t("forYou.setupDescription")}</p>
+    <SheetSection title={t("home.tabForYou")}>
+      <div className="flex flex-wrap gap-2" data-for-you-toolbar>
+        <Button variant="outline" size="sm" onClick={onRefresh} disabled={refreshing} className="gap-1.5">
+          <RotateCw size={14} aria-hidden className={refreshing ? "animate-spin" : undefined} />
+          {t("forYou.refresh")}
+        </Button>
+        <Button variant="outline" size="sm" onClick={onOpenSettings} aria-haspopup="dialog" className="gap-1.5">
+          <SlidersHorizontal size={14} aria-hidden />
+          {t("forYou.settings")}
+        </Button>
       </div>
-      <InterestChips onChanged={onChanged} />
-      <Link href="/discover" className="inline-flex text-small font-medium text-primary hover:text-primary-hover">
-        {t("feed.goToDiscover")}
-      </Link>
+    </SheetSection>
+  );
+}
+
+const SETUP_DISMISSED_KEY = "promptly-foryou-setup-dismissed";
+
+function setupDismissed(): boolean {
+  try {
+    return window.localStorage.getItem(SETUP_DISMISSED_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * First-time banner (docs/history/222-*, one line since 227-*): someone with no interests and no followed tag or AI tool gets a way to
+ * teach "Sana özel" what they like, instead of a feed that can only say "popular". A tap opens the settings dialog; the × hides it for good.
+ */
+export function ForYouSetupBanner({ onOpen }: { onOpen: () => void }) {
+  const { t } = useTranslation();
+  const [dismissed, setDismissed] = useState(setupDismissed);
+  if (dismissed) return null;
+  function dismiss() {
+    setDismissed(true);
+    try {
+      window.localStorage.setItem(SETUP_DISMISSED_KEY, "1");
+    } catch {
+      /* storage blocked — the banner just comes back next time */
+    }
+  }
+  return (
+    <section aria-label={t("forYou.settingsTitle")} data-for-you-setup className="flex min-h-12 items-center gap-1 rounded-lg bg-primary-soft pl-3.5 pr-1">
+      <button type="button" onClick={onOpen} aria-haspopup="dialog" className="flex min-h-11 min-w-0 flex-1 items-center gap-1.5 text-left text-label font-semibold text-primary">
+        <span className="truncate">{t("forYou.setupBanner")}</span>
+        <ChevronRight size={16} aria-hidden className="shrink-0" />
+      </button>
+      <button
+        type="button"
+        onClick={dismiss}
+        aria-label={t("common.close")}
+        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-text-secondary hover:bg-surface/60 hover:text-text"
+      >
+        <X size={16} aria-hidden />
+      </button>
     </section>
   );
 }

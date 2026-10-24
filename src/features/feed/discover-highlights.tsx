@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { Flame, Heart, TrendingUp } from "lucide-react";
+import { Flame, TrendingUp } from "lucide-react";
 import { StorageAppearanceImage } from "@/components/ui/storage-media";
 import { Avatar } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -17,7 +17,7 @@ import { fetchCreatorsPage } from "@/lib/supabase/profiles";
 import { useAuth } from "@/features/auth/auth-provider";
 import { categoryHref, cn, formatCount, profileHref, promptHref, tagHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import type { Prompt, PromptContentType, PromptMedia, Tag, UserProfile } from "@/types";
+import type { Prompt, PromptContentType, Tag, UserProfile } from "@/types";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 /** Fewer than this in a window and the strip falls back to the wider window (then hides) — never padded with older posts under a "this week" title. */
@@ -36,12 +36,13 @@ type StripTag = Tag & { recentCount?: number };
 const STRIP_CLASS = "-mx-3 gap-2 px-3 sm:mx-0 sm:px-0";
 
 /**
- * Discover's compact top (docs/history/210-*: categories · rising tags · popular · creators, then the posts), all from real rows:
+ * Discover's compact top (docs/history/210-*, slimmed in 227-*: ONE chip row of rising tags + categories, then the popular strip, then the
+ * posts; the creators and rising tags also sit in the right column from `xl`), all from real rows:
  * - the most liked public prompts of the last 7 days ("Bu hafta popüler"); if that window has fewer than three, the last 30 days
  *   ("Bu ay popüler"); fewer still and the strip is not drawn;
  * - the categories the most liked public prompts are filed under, most frequent first, with their covers as the collage;
  * - the tags of the real trending window (`trending_tags`), or — while that window is empty — the most used tags;
- * - the most followed creators.
+ * - the most followed creators (right column from `xl`; below that the Yaratıcılar section is one tab away).
  */
 export function useDiscoverHighlights() {
   const [data, setData] = useState<DiscoverHighlights | null>(() => readCachedHighlights());
@@ -105,33 +106,16 @@ export function DiscoverHighlightsSkeleton() {
   const { t } = useTranslation();
   return (
     <div className="space-y-4" aria-busy="true" aria-label={t("common.loadingAriaLabel")} data-discover-highlights-loading="">
-      <div className={cn(STRIP_CLASS, "flex overflow-hidden")}>
-        {[0, 1, 2].map((i) => (
-          <Skeleton key={i} className="h-[3.125rem] w-48 shrink-0 rounded-[14px]" />
-        ))}
-      </div>
       <div className={cn(STRIP_CLASS, "flex items-center overflow-hidden")}>
-        {[0, 1, 2, 3].map((i) => (
-          <Skeleton key={i} className="h-9 w-28 shrink-0 rounded-full" />
+        {[0, 1, 2, 3, 4].map((i) => (
+          <Skeleton key={i} className="h-10 w-28 shrink-0 rounded-full" />
         ))}
       </div>
       <div className="space-y-2">
         <Skeleton className="h-7 w-40 rounded-md" />
         <div className={cn(STRIP_CLASS, "flex overflow-hidden")}>
           {[0, 1, 2, 3].map((i) => (
-            <div key={i} className="w-28 shrink-0 space-y-1 sm:w-36">
-              <Skeleton className="aspect-square w-full rounded-[14px]" />
-              <Skeleton className="h-5 w-4/5 rounded-md" />
-              <Skeleton className="h-4 w-3/5 rounded-md" />
-            </div>
-          ))}
-        </div>
-      </div>
-      <div className="space-y-2">
-        <Skeleton className="h-7 w-44 rounded-md" />
-        <div className={cn(STRIP_CLASS, "flex overflow-hidden")}>
-          {[0, 1].map((i) => (
-            <Skeleton key={i} className="h-[3.25rem] w-64 shrink-0 rounded-full" />
+            <Skeleton key={i} className="aspect-square w-32 shrink-0 rounded-[14px]" />
           ))}
         </div>
       </div>
@@ -155,15 +139,19 @@ interface CategoryEntry {
   type: PromptContentType;
   id: string;
   labelKey: string;
-  covers: PromptMedia[];
   hits: number;
 }
 
+const TOPIC_CHIP =
+  "inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-small font-semibold whitespace-nowrap transition-colors duration-200";
+
 /**
- * The categories as one scrolling row of small pills (a 2×2 collage of real covers + name + type); each opens the category's
- * own page (`categoryHref`, docs/history/211-*).
+ * ONE row of chips under the search box (docs/history/227-*; it was a category strip and a tag strip, two rows): the rising tags first
+ * (the number is the real post count of the trending window, absent for the most-used fallback; from `xl` they live in the right column
+ * instead), then the categories the most liked public prompts are filed under, most frequent first. A category opens its own page
+ * (`categoryHref`, docs/history/211-*), a tag its tag page.
  */
-export function CategoryStrip({ sample }: { sample: Prompt[] }) {
+export function TopicStrip({ sample, tags }: { sample: Prompt[]; tags: { trending: boolean; tags: StripTag[] } | null }) {
   const { t, language } = useTranslation();
   // The taxonomy arrives from the database after the first paint; subscribing re-renders once it does (60 rows: no memo).
   useTaxonomyVersion();
@@ -174,84 +162,54 @@ export function CategoryStrip({ sample }: { sample: Prompt[] }) {
       const category = findCategory(prompt.contentType, prompt.category);
       if (!category) continue;
       const key = `${prompt.contentType}:${category.id}`;
-      const entry = byKey.get(key) ?? { type: prompt.contentType, id: category.id, labelKey: category.labelKey, covers: [], hits: 0 };
+      const entry = byKey.get(key) ?? { type: prompt.contentType, id: category.id, labelKey: category.labelKey, hits: 0 };
       entry.hits += 1;
-      const cover = prompt.contentType === "image" ? prompt.media[0] : undefined;
-      if (cover && entry.covers.length < 2) entry.covers.push(cover);
       byKey.set(key, entry);
     }
     return [...byKey.values()].sort((a, b) => b.hits - a.hits).slice(0, CATEGORY_MAX);
   })();
+  const tagList = tags?.tags ?? [];
 
-  if (entries.length === 0) return null;
+  if (entries.length === 0 && tagList.length === 0) return null;
   return (
-    <section aria-labelledby="discover-categories" className="space-y-2">
-      <h2 id="discover-categories" className="sr-only">
+    <ScrollRow as="section" aria-labelledby="discover-topics" className={cn(STRIP_CLASS, "items-center")}>
+      <h2 id="discover-topics" className="sr-only">
         {t("discover.categories")}
       </h2>
-      <ScrollRow className={STRIP_CLASS}>
-        {entries.map((entry) => {
-          const Icon = CONTENT_TYPE_META[entry.type].icon;
-          // Two covers make a diagonal (a b / b a); one fills all four cells.
-          const cells = entry.covers.length === 0 ? [] : [0, 1, 1, 0].map((i) => entry.covers[i % entry.covers.length]);
-          return (
-            <Link
-              key={`${entry.type}:${entry.id}`}
-              href={categoryHref(entry.type, entry.id)}
-              data-discover-category={`${entry.type}:${entry.id}`}
-              className="flex shrink-0 items-center gap-2 rounded-[14px] border border-border-soft bg-surface py-1.5 pl-1.5 pr-3 text-left transition-colors duration-200 ease-soft hover:border-border"
-            >
-              {cells.length > 0 ? (
-                <span aria-hidden className="grid h-8 w-8 shrink-0 grid-cols-2 grid-rows-2 gap-0.5 overflow-hidden rounded-lg">
-                  {cells.map((cover, index) => (
-                    <span key={index} className="relative block overflow-hidden">
-                      <StorageAppearanceImage src={cover.url} alt="" color={cover.color} placeholder={cover.placeholder} sizes="32px" className="object-cover" />
-                    </span>
-                  ))}
-                </span>
-              ) : (
-                <span aria-hidden className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary-soft text-primary">
-                  <Icon size={16} strokeWidth={1.9} />
-                </span>
-              )}
-              <span className="leading-tight">
-                <span className="block whitespace-nowrap text-small font-semibold text-text">{taxonomyLabel(entry.labelKey, language)}</span>
-                <span className="block whitespace-nowrap text-caption text-text-muted">{t(CONTENT_TYPE_META[entry.type].labelKey)}</span>
-              </span>
-            </Link>
-          );
-        })}
-      </ScrollRow>
-    </section>
-  );
-}
-
-/** Rising tags as one row of chips; the number is the real post count of the trending window (absent for the fallback). */
-export function TagStrip({ tags }: { tags: { trending: boolean; tags: StripTag[] } | null }) {
-  const { t } = useTranslation();
-  if (!tags || tags.tags.length === 0) return null;
-  return (
-    <ScrollRow as="section" aria-labelledby="discover-trending" className={cn(STRIP_CLASS, "items-center")}>
-      <h2 id="discover-trending" className="flex shrink-0 items-center gap-1 text-caption font-semibold text-text-muted">
-        <TrendingUp size={14} className="text-secondary" aria-hidden />
-        {t(tags.trending ? "discover.rising" : "discover.trending")}
-      </h2>
-      {tags.tags.map((tag) => (
+      {tagList.length > 0 && (
+        <h3 id="discover-trending" className="sr-only">
+          {t(tags?.trending ? "discover.rising" : "discover.trending")}
+        </h3>
+      )}
+      {tagList.map((tag) => (
         <Link
           key={tag.slug}
           href={tagHref(tag)}
+          data-discover-tag={tag.slug}
           title={tag.recentCount !== undefined ? t("home.railTrendCount", { count: tag.recentCount }) : undefined}
-          className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-surface-soft px-3 text-small font-semibold text-text transition-colors duration-200 hover:bg-primary-soft hover:text-primary"
+          className={cn(TOPIC_CHIP, "bg-surface-soft text-text hover:bg-primary-soft hover:text-primary xl:hidden")}
         >
+          <TrendingUp size={14} className="text-secondary" aria-hidden />
           #{tag.label}
           {tag.recentCount !== undefined && <span className="text-caption font-semibold tabular-nums text-secondary">{formatCount(tag.recentCount)}</span>}
+        </Link>
+      ))}
+      {entries.map((entry) => (
+        <Link
+          key={`${entry.type}:${entry.id}`}
+          href={categoryHref(entry.type, entry.id)}
+          data-discover-category={`${entry.type}:${entry.id}`}
+          title={t(CONTENT_TYPE_META[entry.type].labelKey)}
+          className={cn(TOPIC_CHIP, "border border-border-soft bg-surface text-text hover:border-border")}
+        >
+          {taxonomyLabel(entry.labelKey, language)}
         </Link>
       ))}
     </ScrollRow>
   );
 }
 
-/** The popular strip: small, horizontally scrolling prompt tiles (cover or prompt text, title, author, likes). */
+/** The popular strip: small, horizontally scrolling prompt tiles (cover or prompt text, with title and likes over the foot of the tile). */
 export function PopularStrip({ popular }: { popular: { window: PopularWindow; prompts: Prompt[] } | null }) {
   const { t } = useTranslation();
   if (!popular) return null;
@@ -266,34 +224,29 @@ export function PopularStrip({ popular }: { popular: { window: PopularWindow; pr
           const Icon = CONTENT_TYPE_META[prompt.contentType].icon;
           const cover = prompt.contentType === "image" ? prompt.media[0] : undefined;
           return (
-            <li key={prompt.id} className="w-28 shrink-0 sm:w-36">
-              <Link href={promptHref(prompt)} className="group block space-y-1">
-                <span className="relative block aspect-square overflow-hidden rounded-[14px] border border-border-soft bg-surface-soft">
-                  {cover ? (
-                    <StorageAppearanceImage
-                      src={cover.url}
-                      alt=""
-                      color={cover.color}
-                      placeholder={cover.placeholder}
-                      sizes="(min-width: 640px) 144px, 112px"
-                      className="object-cover transition-transform duration-200 ease-soft group-hover:scale-[1.03]"
-                    />
-                  ) : prompt.promptText.trim() ? (
-                    <span className="prompt-text block p-2.5 text-[0.6875rem] leading-relaxed text-text-secondary">
-                      <span className="line-clamp-5">{prompt.promptText}</span>
-                    </span>
-                  ) : (
-                    <span className="flex h-full items-center justify-center text-primary">
-                      <Icon size={22} aria-hidden />
-                    </span>
-                  )}
-                </span>
-                <span className="block truncate text-small font-semibold leading-snug text-text group-hover:text-primary">{prompt.title}</span>
-                <span className="flex items-center gap-1.5 text-caption text-text-muted">
-                  <span className="min-w-0 flex-1 truncate">@{prompt.author.username}</span>
-                  <span className="inline-flex shrink-0 items-center gap-0.5">
-                    <Heart size={11} aria-hidden /> {formatCount(prompt.likeCount)}
+            <li key={prompt.id} className="w-32 shrink-0">
+              <Link href={promptHref(prompt)} className="group relative block aspect-square overflow-hidden rounded-[14px] border border-border-soft bg-surface-soft">
+                {cover ? (
+                  <StorageAppearanceImage
+                    src={cover.url}
+                    alt=""
+                    color={cover.color}
+                    placeholder={cover.placeholder}
+                    sizes="128px"
+                    className="object-cover transition-transform duration-200 ease-soft group-hover:scale-[1.03]"
+                  />
+                ) : prompt.promptText.trim() ? (
+                  <span className="prompt-text block p-2.5 text-[0.6875rem] leading-relaxed text-text-secondary">
+                    <span className="line-clamp-5">{prompt.promptText}</span>
                   </span>
+                ) : (
+                  <span className="flex h-full items-center justify-center text-primary">
+                    <Icon size={22} aria-hidden />
+                  </span>
+                )}
+                <span className="absolute inset-x-0 bottom-0 block bg-gradient-to-t from-black/75 to-transparent px-2 pb-1.5 pt-6 text-white">
+                  <span className="block truncate text-caption font-semibold leading-snug">{prompt.title}</span>
+                  <span className="block text-[0.6875rem] leading-tight opacity-90">{t("discover.likesCount", { count: formatCount(prompt.likeCount) })}</span>
                 </span>
               </Link>
             </li>
@@ -304,40 +257,86 @@ export function PopularStrip({ popular }: { popular: { window: PopularWindow; pr
   );
 }
 
-/** Most followed creators as compact pills (avatar · name · followers · Takip et); "Tümü" opens the Yaratıcılar section. */
-export function CreatorStrip({ creators, onSeeAll }: { creators: UserProfile[]; onSeeAll: () => void }) {
+/** A card of Keşfet's right column — the same quiet panel as Ana Sayfa's (`HomeRail`). */
+function AsideCard({ id, title, action, children }: { id: string; title: ReactNode; action?: ReactNode; children: ReactNode }) {
+  return (
+    <section aria-labelledby={id} className="rounded-xl bg-surface-soft p-4">
+      <div className="mb-3 flex items-baseline justify-between gap-3">
+        <h2 id={id} className="flex items-center gap-1.5 font-display text-[1.1875rem] font-bold tracking-[-0.02em] text-text">
+          {title}
+        </h2>
+        {action}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+/**
+ * Keşfet's right column from `xl` (docs/history/227-*; the creators strip and the rising-tag chips left the top of the page for it):
+ * the most followed creators with a follow button, and the rising tags. Both come from the highlights already loaded for the page.
+ */
+export function DiscoverAside({ creators, tags, onSeeAllCreators }: { creators: UserProfile[]; tags: { trending: boolean; tags: StripTag[] } | null; onSeeAllCreators: () => void }) {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const visible = creators.filter((creator) => creator.id !== user?.id).slice(0, CREATORS_MAX);
-  if (visible.length === 0) return null;
+  const visible = creators.filter((creator) => creator.id !== user?.id).slice(0, 5);
+  const tagList = tags?.tags.slice(0, 8) ?? [];
+  if (visible.length === 0 && tagList.length === 0) return null;
   return (
-    <section aria-labelledby="discover-creators" className="space-y-2">
-      <StripHeader
-        id="discover-creators"
-        action={
-          <button type="button" onClick={onSeeAll} className="text-small font-medium text-primary hover:text-primary-hover">
-            {t("common.viewAll")}
-          </button>
-        }
-      >
-        {t("discover.featuredCreators")}
-      </StripHeader>
-      <ScrollRow as="ul" className={STRIP_CLASS}>
-        {visible.map((creator) => (
-          <li key={creator.id} className="flex shrink-0 items-center gap-2 rounded-full border border-border-soft bg-surface py-1.5 pl-1.5 pr-1.5">
-            <Link href={profileHref(creator)} className="flex min-w-0 items-center gap-2 rounded-full">
-              <Avatar src={creator.avatarUrl} alt={creator.displayName} size={36} />
-              <span className="max-w-[8.5rem] leading-tight">
-                <span className="block truncate text-small font-semibold text-text">{creator.displayName}</span>
-                <span className="block truncate text-caption text-text-muted">
-                  {formatCount(creator.followerCount)} {t("profile.followersSuffix")}
-                </span>
-              </span>
-            </Link>
-            <FollowButton user={creator} />
-          </li>
-        ))}
-      </ScrollRow>
-    </section>
+    <div className="space-y-4">
+      {visible.length > 0 && (
+        <AsideCard
+          id="discover-creators"
+          title={t("discover.featuredCreators")}
+          action={
+            <button type="button" onClick={onSeeAllCreators} className="shrink-0 text-small font-medium text-primary hover:text-primary-hover">
+              {t("common.all")}
+            </button>
+          }
+        >
+          <ul className="space-y-3">
+            {visible.map((creator) => (
+              <li key={creator.id} className="flex items-center gap-3">
+                <Link href={profileHref(creator)} className="flex min-w-0 flex-1 items-center gap-2.5 rounded-full">
+                  <Avatar src={creator.avatarUrl} alt={creator.displayName} size={40} />
+                  <span className="min-w-0 leading-tight">
+                    <span className="block truncate text-small font-semibold text-text">{creator.displayName}</span>
+                    <span className="block truncate text-caption text-text-muted">
+                      {formatCount(creator.followerCount)} {t("profile.followersSuffix")}
+                    </span>
+                  </span>
+                </Link>
+                <FollowButton user={creator} />
+              </li>
+            ))}
+          </ul>
+        </AsideCard>
+      )}
+      {tagList.length > 0 && (
+        <AsideCard
+          id="discover-trending-aside"
+          title={
+            <>
+              <TrendingUp size={16} className="text-secondary" aria-hidden />
+              {t(tags?.trending ? "discover.rising" : "discover.trending")}
+            </>
+          }
+        >
+          <div className="flex flex-wrap gap-2">
+            {tagList.map((tag) => (
+              <Link
+                key={tag.slug}
+                href={tagHref(tag)}
+                title={tag.recentCount !== undefined ? t("home.railTrendCount", { count: tag.recentCount }) : undefined}
+                className="inline-flex h-9 items-center gap-1.5 rounded-full bg-surface px-3 text-small font-semibold text-text transition-colors duration-200 hover:bg-primary-soft hover:text-primary"
+              >
+                #{tag.label}
+                {tag.recentCount !== undefined && <span className="text-caption font-semibold tabular-nums text-secondary">{formatCount(tag.recentCount)}</span>}
+              </Link>
+            ))}
+          </div>
+        </AsideCard>
+      )}
+    </div>
   );
 }

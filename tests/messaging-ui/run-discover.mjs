@@ -1,5 +1,5 @@
-// Keşfet'in sıkı üstü (docs/history/210-*; 211-* ile görünür başlık kalktı, kategori hapı kategori sayfasını açar): kategoriler · yükselen etiketler · popüler · öne çıkan yaratıcılar, hemen ardından
-// gönderiler. Ağ taklitli; gerçek Supabase'e KARŞI DENENMEDİ — sayılar/sıralar sunucudan gelir (trending_tags, feed_page).
+// Keşfet'in sıkı üstü (docs/history/210-*; 211-* ile görünür başlık kalktı, kategori hapı kategori sayfasını açar; 227-* ile tek çip satırı
+// [yükselen etiketler + kategoriler] · popüler · metin sekmeleri, yaratıcılar/etiketler `xl`'de sağ sütunda), hemen ardından gönderiler. Ağ taklitli; gerçek Supabase'e KARŞI DENENMEDİ — sayılar/sıralar sunucudan gelir (trending_tags, feed_page).
 import { chromium } from "playwright";
 import assert from "node:assert/strict";
 import { serve } from "./server.mjs";
@@ -106,9 +106,8 @@ async function skeletonThenStrips({ page }) {
   for (const sel of ["#discover-trending", "#discover-popular", "#discover-creators"]) assert.equal(await page.locator(sel).count(), 1, `${sel} arrived with the others`);
   const after = (await nav.boundingBox()).y;
   assert.ok(Math.abs(after - before) <= 16, `content below stays put (${Math.round(before)} → ${Math.round(after)})`);
-  // Popüler karolar ve kategori kolajı kayıtlı renk + bulanık önizlemeyle açılır (boş gri kutu değil).
+  // Popüler karolar kayıtlı renk + bulanık önizlemeyle açılır (boş gri kutu değil).
   assert.ok((await page.locator("[data-discover-popular] span[style*='background-color']").count()) > 0, "popular covers carry the stored colour");
-  assert.ok((await page.locator("[data-discover-category]").first().locator("span[style*='background-color']").count()) > 0, "category collage cells carry the stored colour");
   // Geri: sayfadan çıkıp dönünce şeritler iskelet göstermeden hazır.
   await page.locator("[data-discover-category]").first().click();
   await page.waitForURL(/\/categories\/local/);
@@ -121,31 +120,40 @@ async function skeletonThenStrips({ page }) {
 await scenario("0. telefon: şeritler iskeletle yer tutar, HEPSİ birlikte gelir, altındaki içerik kaymaz; Geri'de yeniden yüklenmez (docs/history/220-*)", skeletonThenStrips);
 await scenario("0b. masaüstü: aynı (iskelet yüksekliği gerçek şeritlerle eşit)", skeletonThenStrips, { viewport: { width: 1280, height: 900 } });
 
-await scenario("1. telefon: görünür başlık yok (yalnız ekran okuyucuya); dört şerit sırayla; ilk gönderi ilk ekranda başlar", async ({ page }) => {
+await scenario("1. telefon: görünür başlık yok (yalnız ekran okuyucuya); tek çip satırı → popüler → metin sekmeleri; ilk gönderi ilk ekranda başlar; yaratıcılar şeridi yok", async ({ page }) => {
   await page.goto(`${BASE}/discover`);
   await page.getByRole("heading", { level: 1, name: "Keşfet" }).waitFor({ state: "attached" });
   await page.locator("[data-discover-category]").first().waitFor();
   await page.getByRole("heading", { name: "Bu hafta popüler" }).waitFor();
-  await page.getByRole("heading", { name: "Öne çıkan yaratıcılar" }).waitFor();
   await page.locator("main article:has(a[data-card-link])").first().waitFor();
   // Başlık görünmez (sr-only); arama kutusu sayfanın ilk görünen öğesi ve satırın tamamını kaplar.
   const h1Box = await page.getByRole("heading", { level: 1 }).boundingBox();
   assert.ok(!h1Box || h1Box.width <= 1, "başlık görsel olarak gizli");
   const search = await page.locator("main input").first().boundingBox();
   assert.ok(search.width >= 280, `arama kutusu geniş (${Math.round(search.width)}px)`);
-  // Sıra: kategoriler → etiketler → popüler → yaratıcılar → gönderiler.
+  // Sıra: çip satırı (etiketler + kategoriler) → popüler → sekmeler → gönderiler; yaratıcılar telefonda üstte değil.
   const ys = await Promise.all(
-    ["[data-discover-category]", "#discover-trending", "#discover-popular", "#discover-creators"].map(async (sel) => (await page.locator(sel).first().boundingBox()).y),
+    ["[data-discover-tag]", "#discover-popular", 'main [role="tablist"]'].map(async (sel) => (await page.locator(sel).first().boundingBox()).y),
   );
-  for (let i = 1; i < ys.length; i++) assert.ok(ys[i] > ys[i - 1], `şerit sırası ${ys.join(" < ")}`);
-  // En sık kategori (Fotoğrafçılık) önce.
+  for (let i = 1; i < ys.length; i++) assert.ok(ys[i] > ys[i - 1], `sıra ${ys.join(" < ")}`);
+  assert.equal(await page.locator("#discover-creators").isVisible(), false, "yaratıcılar şeridi telefonda yok (Yaratıcılar bölümü bir sekme uzakta)");
+  // Tek satır: etiket çipleri ve kategori çipleri aynı yatay şeritte.
+  const tagY = (await page.locator("[data-discover-tag]").first().boundingBox()).y;
+  const catY = (await page.locator("[data-discover-category]").first().boundingBox()).y;
+  assert.ok(Math.abs(tagY - catY) <= 2, "etiketler ve kategoriler aynı satırda");
+  // En sık kategori (Fotoğrafçılık) ilk kategori çipi.
   assert.match(await page.locator("[data-discover-category]").first().textContent(), /Fotoğrafçılık/);
   // Etiketlerde gerçek pencere sayısı.
   assert.match(await page.locator("#discover-trending").locator("xpath=..").textContent(), /Yükselen.*#sinematik\s*12/s);
+  // Bölümler metin sekmesi (balon değil): hepsi sekme, Tümü seçili.
+  const tabs = page.locator('main [role="tablist"]').first().getByRole("tab");
+  assert.equal(await tabs.count(), 11, "11 bölüm sekmesi");
+  assert.equal(await tabs.first().getAttribute("aria-selected"), "true");
+  assert.ok((await tabs.first().boundingBox()).height <= 48, "sekme satırı ince (balon değil)");
   await page.evaluate(() => window.scrollTo(0, 0));
-  // Alt menünün (64px) üstünde, telefonun ilk ekranında ilk gönderi kartının üst kenarı görünür.
+  // Alt menünün (64px) üstünde, telefonun ilk ekranında ilk gönderi kartı başlar ve başlığı okunur.
   const first = await page.locator("main article:has(a[data-card-link])").first().boundingBox();
-  assert.ok(first.y < 844 - 64 - 40, `ilk gönderi ilk ekranda başlıyor (y=${Math.round(first.y)})`);
+  assert.ok(first.y < 520, `ilk gönderi ilk ekranda başlıyor (y=${Math.round(first.y)})`);
   assert.ok(await overflowFree(page), "yatay taşma yok");
   await shot(page, "1-phone");
   await shot(page, "1-phone-full", true);
@@ -161,13 +169,17 @@ await scenario("2. kategori hapı kategorinin kendi sayfasını açar (arama mod
   await page.getByRole("heading", { level: 1, name: "Sanat & İllüstrasyon" }).waitFor();
 });
 
-await scenario("3. yaratıcılar 'Tümünü gör' Yaratıcılar bölümünü açar", async ({ page }) => {
+await scenario("3. masaüstü sağ sütun: yaratıcılar + yükselen etiketler; 'Tümü' Yaratıcılar bölümünü açar", async ({ page }) => {
   await page.goto(`${BASE}/discover`);
   await page.getByRole("heading", { name: "Öne çıkan yaratıcılar" }).waitFor();
-  await page.locator("#discover-creators").locator("xpath=../..").getByRole("button", { name: "Tümünü gör" }).click();
-  await page.locator("main").getByRole("button", { name: /Yaratıcılar/ }).first().waitFor();
-  await page.waitForFunction(() => [...document.querySelectorAll("main [aria-pressed='true'], main [aria-selected='true'], main [aria-current]")].some((el) => /Yaratıcılar/.test(el.textContent ?? "")));
-});
+  const aside = page.locator("aside").filter({ has: page.locator("#discover-creators") });
+  assert.equal(await aside.isVisible(), true, "sağ sütun xl'de görünür");
+  assert.ok((await aside.getByRole("button", { name: /Takip Et/ }).count()) >= 1, "yaratıcıda Takip Et düğmesi");
+  assert.match(await aside.textContent(), /Yükselen.*#sinematik\s*12/s, "yükselen etiketler sağ sütunda");
+  assert.equal(await page.locator("[data-discover-tag]").first().isVisible(), false, "etiket çipleri xl'de çip satırından kalkar (sağ sütunda)");
+  await aside.getByRole("button", { name: "Tümü", exact: true }).click();
+  await page.waitForFunction(() => [...document.querySelectorAll("main [aria-selected='true']")].some((el) => /Yaratıcılar/.test(el.textContent ?? "")));
+}, { viewport: { width: 1280, height: 900 } });
 
 await scenario("4. trend penceresi boşken en çok kullanılan etiketler sayısız gösterilir (uydurma sayı yok)", async ({ page }) => {
   await page.goto(`${BASE}/discover`);
@@ -177,11 +189,12 @@ await scenario("4. trend penceresi boşken en çok kullanılan etiketler sayıs�
   assert.doesNotMatch(text, /#portre\s*\d/);
 }, { trending: false });
 
-await scenario("5. İngilizce: şerit başlıkları çevrili", async ({ page }) => {
+await scenario("5. İngilizce: şerit başlıkları çevrili (sağ sütun dahil)", async ({ page }) => {
   await page.goto(`${BASE}/discover`);
   await page.getByRole("heading", { level: 1, name: "Discover" }).waitFor({ state: "attached" });
   await page.getByRole("heading", { name: "Popular this week" }).waitFor();
-  await page.getByRole("heading", { name: "Featured creators" }).waitFor();
+  await page.locator("#discover-creators").waitFor({ state: "attached" });
+  assert.match(await page.locator("#discover-creators").textContent(), /Featured creators/);
   assert.match(await page.locator("#discover-trending").locator("xpath=..").textContent(), /Rising/);
   assert.match(await page.locator("[data-discover-category]").first().textContent(), /Photography/);
 }, { lang: "en" });
@@ -191,6 +204,22 @@ await scenario("6. masaüstü: taşma yok, aynı sıra", async ({ page }) => {
   await page.locator("main article:has(a[data-card-link])").first().waitFor();
   assert.ok(await overflowFree(page), "yatay taşma yok");
   await shot(page, "6-desktop");
+}, { viewport: { width: 1280, height: 900 } });
+
+await scenario("7. masaüstü: yan menü 8 giriş (Promptlar/Workflow'lar/Hazır Ayarlar/İstekler/Etiketler/Odak yok), Odak üst çubukta; gönderiler yüksekte başlar", async ({ page }) => {
+  await page.goto(`${BASE}/discover`);
+  await page.locator("main article:has(a[data-card-link])").first().waitFor();
+  const nav = page.locator("aside[aria-label] nav");
+  assert.deepEqual(
+    (await nav.getByRole("link").allTextContents()).map((x) => x.trim()),
+    ["Ana Sayfa", "Keşfet", "Topluluklar", "Spaces", "Studio", "Kaydedilenler", "Takip ettiğim kişiler", "Profil"],
+  );
+  assert.equal(await nav.locator("a[aria-current='page']").textContent(), "Keşfet");
+  assert.equal(await page.locator("header[data-app-header] a[href*='/focus']").count(), 1, "Odak üst çubukta");
+  const first = await page.locator("main article:has(a[data-card-link])").first().boundingBox();
+  assert.ok(first.y < 560, `masaüstünde ilk gönderi yüksekte başlıyor (y=${Math.round(first.y)})`);
+  assert.ok(await overflowFree(page), "yatay taşma yok");
+  await shot(page, "7-desktop-sidebar");
 }, { viewport: { width: 1280, height: 900 } });
 
 await browser.close();

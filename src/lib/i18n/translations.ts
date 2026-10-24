@@ -55,6 +55,9 @@ export const translations = {
   "nav.tags": { tr: "Etiketler", en: "Tags" },
   "nav.saved": { tr: "Kaydedilenler", en: "Saved" },
   "nav.following": { tr: "Takip Ettiklerim", en: "Following" },
+  // /following sayfası = takip ettiğim KİŞİLERİN listesi (docs/history/227-*); "Takip Ettiklerim" Ana Sayfa'daki gönderi akışı sekmesidir.
+  "nav.followingPeople": { tr: "Takip ettiğim kişiler", en: "People I follow" },
+  "header.focusLink": { tr: "Odak'ta gez", en: "Browse in Focus" },
   "nav.profile": { tr: "Profil", en: "Profile" },
   "nav.moderation": { tr: "Moderasyon", en: "Moderation" },
   "moderation.title": { tr: "Moderasyon", en: "Moderation" },
@@ -654,6 +657,7 @@ export const translations = {
   "discover.popularWeek": { tr: "Bu hafta popüler", en: "Popular this week" },
   "discover.popularMonth": { tr: "Bu ay popüler", en: "Popular this month" },
   "discover.categories": { tr: "Kategoriler", en: "Categories" },
+  "discover.likesCount": { tr: "{{count}} beğeni", en: "{{count}} likes" },
   "discover.rising": { tr: "Yükselen", en: "Rising" },
   "discover.featuredCreators": { tr: "Öne çıkan yaratıcılar", en: "Featured creators" },
   "discover.sectionsAriaLabel": { tr: "Keşfet bölümleri", en: "Discover sections" },

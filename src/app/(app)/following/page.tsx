@@ -38,7 +38,7 @@ export default function FollowingPage() {
   return (
     <div className="mx-auto w-full max-w-[1400px] space-y-6 px-3 py-5 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
       <section className="space-y-3">
-        <h1 className="text-h1 font-semibold text-text">{t("nav.following")}</h1>
+        <h1 className="text-h1 font-semibold text-text">{t("nav.followingPeople")}</h1>
         <CreatorList users={followed} />
       </section>
       <section className="space-y-3">

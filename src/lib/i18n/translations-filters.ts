@@ -41,7 +41,7 @@ export const filterTranslations = {
   "discover.toolsNoMatch": { tr: "Eşleşen araç yok.", en: "No matching tool." },
   "discover.toolPosts": { tr: "{{count}} gönderi", en: "{{count}} posts" },
 
-  // ---- Sana özel: ayar penceresi, ilk kullanım kartı, yenile (docs/history/222-*) ----
+  // ---- Sana özel: ayar penceresi, ilk kullanım bandı, yenile (docs/history/222-*, 227-*) ----
   "forYou.refresh": { tr: "Yenile", en: "Refresh" },
   "forYou.settings": { tr: "Sana özel'i ayarla", en: "Tune For you" },
   "forYou.settingsTitle": { tr: "Sana özel'i ayarla", en: "Tune For you" },
@@ -49,9 +49,5 @@ export const filterTranslations = {
     tr: "Sana özel; takip ettiğin kişilerden, etiketlerden ve AI araçlarından, ilgi alanlarından, beğendiğin gönderilere benzeyenlerden, kalite ve tazelikten oluşur. Takip ettiğin kişilerin her paylaşımını kronolojik görmek için Takip Ettiklerim'e bak.",
     en: "For you is built from the people, tags and AI tools you follow, your interests, what is like the posts you liked, quality and freshness. To see every post from the people you follow in time order, open Following.",
   },
-  "forYou.setupTitle": { tr: "Sana özel'i kur", en: "Set up For you" },
-  "forYou.setupDescription": {
-    tr: "İlgi alanlarını seç; birkaç kişi, etiket ya da AI aracı takip edersen akış daha da sana uyar. Şimdilik topluluktan öne çıkanları görüyorsun.",
-    en: "Pick your interests; follow a few people, tags or AI tools and the feed fits you even better. For now you see what stands out in the community.",
-  },
+  "forYou.setupBanner": { tr: "Sana özel'i ayarla · ilgi alanlarını seç", en: "Tune For you · pick your interests" },
 } as const;

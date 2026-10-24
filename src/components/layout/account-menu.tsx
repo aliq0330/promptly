@@ -156,7 +156,7 @@ export function AccountMenu() {
             <MenuLink href="/my-content" icon={LayoutGrid} label={t("account.myContent")} onNavigate={close} />
             <MenuLink href="/saved" icon={Bookmark} label={t("nav.saved")} onNavigate={close} />
             <MenuLink href="/spaces" icon={Shapes} label={t("nav.spaces")} onNavigate={close} />
-            <MenuLink href="/following" icon={Users} label={t("nav.following")} onNavigate={close} />
+            <MenuLink href="/following" icon={Users} label={t("nav.followingPeople")} onNavigate={close} />
           </MenuGroup>
 
           <div className="border-t border-border-soft" />
