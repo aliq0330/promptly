@@ -149,7 +149,8 @@ select public._check(10, 'yazma: kapatılmış topluluğa içerik eklenemez',
   public._try(format($q$insert into public.prompts (author_id, title, description, prompt_text, content_type, status, community_id) values (%L, 'x', 'd', 'm', 'text', 'published', %L)$q$, :bobby, public._g('A'))) like '%community_closed%');
 reset role;
 update public.chat_groups set closed_at = null where id = public._g('A');
--- günlük sınır: 30 gönderi
+-- günlük sınır: 30 gönderi (toplu kurulum hız sınırına takılmasın: oturumsuz/sunucu gibi yazılır)
+select set_config('request.jwt.claim.sub', '', false);
 create temp table _rl as select gen_random_uuid() as id from generate_series(1, 30);
 insert into public.prompts (id, author_id, title, description, prompt_text, content_type, status, visibility)
   select id, :bobby, 'rl', 'd', 'm', 'text', 'published', 'public' from _rl;

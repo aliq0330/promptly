@@ -6,6 +6,7 @@ import { ProfileAvatar } from "./profile-avatar";
 import { ProfileStats } from "./profile-stats";
 import { ProfileBadges } from "./profile-badges";
 import { Badge } from "@/components/ui/badge";
+import { DemoAccountBadge } from "@/components/ui/demo-badge";
 import { DetailBand, DetailTitle, Eyebrow } from "@/features/content/detail-parts";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn, formatCount } from "@/lib/utils";
@@ -81,7 +82,10 @@ export function ProfileBand({
       title={<DetailTitle>{user.displayName}</DetailTitle>}
       byline={
         <div className="flex w-full flex-col items-center gap-3 lg:items-start">
-          <p className="truncate text-body text-text-secondary">@{user.username}</p>
+          <div className="flex max-w-full flex-wrap items-center justify-center gap-2 lg:justify-start">
+            <p className="truncate text-body text-text-secondary">@{user.username}</p>
+            {user.isDemo && <DemoAccountBadge />}
+          </div>
           <ProfileStats
             postCounts={postCounts}
             followerCount={followerCount}

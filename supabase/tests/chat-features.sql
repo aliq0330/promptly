@@ -330,7 +330,8 @@ reset role;
 update public.messages set deleted_at = now(), body = null where id = '00000000-0000-4000-8000-0000000000c3';
 select public._check(50, 'yıldız: mesaj herkes için silinince herkesin yıldızı kalkar; liste tutarlı',
   (select count(*) from public.message_stars where message_id = '00000000-0000-4000-8000-0000000000c3') = 0);
--- 1000 yıldız sınırı
+-- 1000 yıldız sınırı (toplu kurulum hız sınırına takılmasın: oturumsuz/sunucu gibi yazılır)
+select set_config('request.jwt.claim.sub', '', false);
 insert into public.messages (id, conversation_id, sender_id, body, created_at)
   select gen_random_uuid(), public._g('dm'), :bobby, 'yildiz ' || i, now() - make_interval(secs => 1000 + i) from generate_series(1, 1001) i;
 insert into public.message_stars (user_id, message_id) select :carol, id from (select id from public.messages where body like 'yildiz %' limit 1000) s;

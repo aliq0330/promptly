@@ -18,7 +18,7 @@ const DEFAULT_PERMS = {
   admin: { edit_settings: true, change_visibility: true, manage_invites: true, manage_requests: true, remove_members: true, ban_members: true, manage_roles: true, delete_messages: true, pin_messages: true },
   moderator: { edit_settings: false, change_visibility: false, manage_invites: false, manage_requests: true, remove_members: true, ban_members: false, manage_roles: false, delete_messages: true, pin_messages: true },
 };
-const PUBLIC_COLS = ["id", "username", "display_name", "avatar_url", "cover_url", "bio", "website", "follower_count", "following_count", "created_at", "interests"];
+const PUBLIC_COLS = ["id", "username", "display_name", "avatar_url", "cover_url", "bio", "website", "follower_count", "following_count", "created_at", "interests", "is_demo"];
 const pub = (p) => Object.fromEntries(PUBLIC_COLS.map((c) => [c, p[c]]));
 
 export function createDb() {
@@ -438,6 +438,8 @@ export async function installMock(context, db, opts = {}) {
       let list = Object.values(U);
       if (id) list = list.filter((u) => u.id === id);
       if (ids) list = list.filter((u) => ids.includes(u.id));
+      const uname = val(q.get("username") ?? "", "eq");
+      if (uname) list = list.filter((u) => u.username === uname);
       const or = q.get("or");
       if (or) {
         const m = or.match(/ilike\.%(.*?)%/);

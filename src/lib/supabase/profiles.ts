@@ -6,7 +6,7 @@ import type { UserProfile } from "@/types";
 import { mapProfileRow, type ProfileRow } from "./mappers";
 
 export const PROFILE_SELECT =
-  "id, username, display_name, avatar_url, cover_url, bio, website, follower_count, following_count, created_at, interests";
+  "id, username, display_name, avatar_url, cover_url, bio, website, follower_count, following_count, created_at, interests, is_demo";
 
 /**
  * The real `profiles` row for a signed-in Supabase user — created
