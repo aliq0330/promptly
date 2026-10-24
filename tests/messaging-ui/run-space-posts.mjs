@@ -115,12 +115,13 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lan
 
 const rpcCalls = (db, name) => db.calls.filter((c) => c.method === "RPC" && c.table === name);
 const spaceCard = (page) => page.locator("main article").filter({ hasText: "Neon şehir panosu" }).first();
-/** Oturumlu Ana Sayfa "Sana özel" ile açılır (Space orada yok): "En yeni" balonuna geçilir. */
-const openNewest = async (page, label = "En yeni") => {
-  await page.goto(`${BASE}/`);
-  const bubble = page.getByRole("button", { name: label, exact: true }).first();
-  await bubble.waitFor();
-  await bubble.evaluate((el) => el.click());
+/**
+ * Space genel akışta Keşfet'te görünür (docs/history/221-*): Ana Sayfa yalnız "Sana özel" + "Takip Ettiklerim"dir, "En yeni" balonu kalktı.
+ * `label` eski çağrı imzasını korur (artık kullanılmaz).
+ */
+const openNewest = async (page, label = "") => {
+  void label;
+  await page.goto(`${BASE}/discover`);
 };
 const shot = async (page, name) => { if (process.env.SHOTS) await page.screenshot({ path: `${process.env.SHOTS}/${name}.png` }); };
 const overflowFree = (page) => page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1);

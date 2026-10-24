@@ -6,6 +6,9 @@ import { cameFromHistory } from "@/lib/history-navigation";
 
 export type FeedQuery = Omit<FeedPageParams, "limit" | "cursor">;
 
+/** Order-independent text of a filter set (the same chips picked in another order are the same query). */
+const setKey = (values: string[] | undefined) => (values?.length ? [...values].sort().join(",") : "");
+
 interface FeedState {
   /** Which query (and retry) this state belongs to — a mismatch means the new query is still loading. */
   key: string;
@@ -43,7 +46,7 @@ function remember(state: FeedState) {
  */
 export function useFeedPages(query: FeedQuery, enabled: boolean) {
   const [retry, setRetry] = useState(0);
-  const key = `${retry}|${query.scope}|${query.order}|${query.kind}|${query.taxonomy.contentType}|${query.taxonomy.category}|${query.taxonomy.subcategory}|${query.openOnly ? 1 : 0}|${query.tag ?? ""}|${query.tool ?? ""}`;
+  const key = `${retry}|${query.scope}|${query.order}|${query.kind}|${query.taxonomy.contentType}|${query.taxonomy.category}|${query.taxonomy.subcategory}|${query.openOnly ? 1 : 0}|${query.tag ?? ""}|${query.tool ?? ""}|${setKey(query.authors)}|${setKey(query.tags)}|${setKey(query.tools)}`;
   const [state, setState] = useState<FeedState | null>(() => {
     if (!cameFromHistory()) return null;
     const kept = historyMemory.get(queryPart(key));
@@ -56,7 +59,7 @@ export function useFeedPages(query: FeedQuery, enabled: boolean) {
     if (state && !state.loadingMore && !state.failed) remember(state);
   }, [state]);
 
-  const { scope, order, kind, taxonomy, openOnly, tag, tool } = query;
+  const { scope, order, kind, taxonomy, openOnly, tag, tool, authors, tags, tools } = query;
   useEffect(() => {
     if (!enabled) return;
     if (restoredKey.current === key) {
@@ -65,7 +68,7 @@ export function useFeedPages(query: FeedQuery, enabled: boolean) {
     }
     restoredKey.current = null;
     let cancelled = false;
-    fetchFeedPage({ scope, order, kind, taxonomy, openOnly, tag, tool })
+    fetchFeedPage({ scope, order, kind, taxonomy, openOnly, tag, tool, authors, tags, tools })
       .then((page) => {
         if (!cancelled) setState({ key, items: page.items, cursor: page.nextCursor, failed: false, loadingMore: false });
       })
@@ -76,6 +79,7 @@ export function useFeedPages(query: FeedQuery, enabled: boolean) {
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `key` already carries the filter sets by value (the arrays are new on every render)
   }, [enabled, key, scope, order, kind, taxonomy, openOnly, tag, tool]);
 
   const current = enabled && state && state.key === key ? state : null;
@@ -85,7 +89,7 @@ export function useFeedPages(query: FeedQuery, enabled: boolean) {
     const cursor = current.cursor;
     setState((prev) => (prev && prev.key === key ? { ...prev, loadingMore: true, failed: false } : prev));
     try {
-      const page = await fetchFeedPage({ scope, order, kind, taxonomy, openOnly, tag, tool, cursor });
+      const page = await fetchFeedPage({ scope, order, kind, taxonomy, openOnly, tag, tool, authors, tags, tools, cursor });
       setState((prev) => {
         if (!prev || prev.key !== key) return prev;
         const seen = new Set(prev.items.map((item) => `${item.kind}-${item.data.id}`));
@@ -96,6 +100,7 @@ export function useFeedPages(query: FeedQuery, enabled: boolean) {
       console.error("fetchFeedPage (load more)", err);
       setState((prev) => (prev && prev.key === key ? { ...prev, loadingMore: false, failed: true } : prev));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `key` already carries the filter sets by value
   }, [current, key, scope, order, kind, taxonomy, openOnly, tag, tool]);
 
   return {

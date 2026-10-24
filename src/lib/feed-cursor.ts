@@ -8,10 +8,12 @@
  *   popular → rank is `like_count`,        triple DESCENDING
  *   oldest  → rank is a constant 0,        triple ASCENDING
  *   used    → rank is `copy_count` for prompts and 0 for every other kind, triple DESCENDING
+ *   recommended → rank is the time-independent engagement score of `feedSortRank` (likes×3 + saves×2 + comments×2 [+ copies×2 on a
+ *                 prompt, + responses×2 on a request]), triple DESCENDING. Not personalised, and with no clock in it the keyset never drifts.
  * The next page is "every row strictly after the cursor row in that order":
  * `<` for the descending orders, `>` for oldest (see the SQL migrations).
  */
-export type FeedOrder = "newest" | "popular" | "oldest" | "used";
+export type FeedOrder = "newest" | "popular" | "oldest" | "used" | "recommended";
 
 /** Keyset position of the last row of a page: `(sort_rank, created_at, id)` of `public.feed_page`. */
 export interface FeedCursor {
@@ -21,11 +23,12 @@ export interface FeedCursor {
 }
 
 /** Structural twin of `ContentSortKey` (kept literal here so this file imports nothing from the UI). */
-export type DiscoverSortKey = "newest" | "oldest" | "most-liked" | "most-used";
+export type DiscoverSortKey = "recommended" | "newest" | "oldest" | "popular" | "most-liked" | "most-used";
 
 /** Keşfet's sort select → the `p_order` the database understands. */
 export function feedOrderForSort(sort: DiscoverSortKey): FeedOrder {
-  if (sort === "most-liked") return "popular";
+  if (sort === "recommended") return "recommended";
+  if (sort === "popular" || sort === "most-liked") return "popular";
   if (sort === "most-used") return "used";
   if (sort === "oldest") return "oldest";
   return "newest";
@@ -33,11 +36,18 @@ export function feedOrderForSort(sort: DiscoverSortKey): FeedOrder {
 
 /**
  * Rank a row would carry in `order` (as in SQL): like_count for popular, copy_count for used
- * (`copyCount` is only passed for prompts — every other kind ranks 0), a constant 0 otherwise.
+ * (`copyCount` is only passed for prompts — every other kind ranks 0), the engagement score for recommended
+ * (counters a kind does not have are simply left out), a constant 0 otherwise.
  */
-export function feedSortRank(order: FeedOrder, counts: { likeCount: number; copyCount?: number }): number {
+export function feedSortRank(
+  order: FeedOrder,
+  counts: { likeCount: number; copyCount?: number; saveCount?: number; commentCount?: number; responseCount?: number },
+): number {
   if (order === "popular") return counts.likeCount;
   if (order === "used") return counts.copyCount ?? 0;
+  if (order === "recommended") {
+    return counts.likeCount * 3 + (counts.saveCount ?? 0) * 2 + (counts.commentCount ?? 0) * 2 + (counts.copyCount ?? 0) * 2 + (counts.responseCount ?? 0) * 2;
+  }
   return 0;
 }
 

@@ -13,7 +13,7 @@ import { RequestList } from "@/features/requests/request-list";
 import { TaxonomyFilter } from "@/features/content/taxonomy-filter";
 import { AdvancedSearchBox } from "./advanced-search-box";
 import { findTool } from "@/lib/ai-tool-catalog";
-import { tokensToQuery, type SearchToken } from "./search-tokens";
+import { tokensToQuery, type ContentKind, type SearchToken } from "./search-tokens";
 import { searchPromptsPage } from "@/lib/supabase/prompts";
 import { searchProfiles } from "@/lib/supabase/profiles";
 import { searchRequestsPage } from "@/lib/supabase/requests";
@@ -23,6 +23,8 @@ import { WorkflowCard } from "@/features/workflows/workflow-card";
 import { searchPresetsPage } from "@/lib/supabase/presets";
 import { PresetCard } from "@/features/presets/preset-card";
 import { searchTags } from "@/lib/supabase/tags";
+import { TagRows } from "@/features/tags/tags-section";
+import { ToolsSection } from "@/features/tools/tools-section";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { findCategory, findSubcategory, isContentTypeId, type TaxonomyFilterValue } from "@/lib/content-taxonomy";
 import type { ContentSearchFilters } from "@/lib/supabase/taxonomy-query";
@@ -49,7 +51,7 @@ type Sort = NonNullable<ContentSearchFilters["sort"]>;
  * Gönderiler = the four content kinds; Kişiler / Topluluklar search by the typed text alone — the chips filter posts only.
  * The tab is kept in the address (`?tab=`), "Tümü" leaves it out.
  */
-type SearchTab = "all" | "posts" | "people" | "communities";
+type SearchTab = "all" | "posts" | "people" | "communities" | "tags" | "tools";
 const SEARCH_TABS: { key: SearchTab; labelKey: TranslationKey }[] = [
   { key: "all", labelKey: "common.all" },
   { key: "posts", labelKey: "notifications.categoryPosts" },
@@ -57,6 +59,14 @@ const SEARCH_TABS: { key: SearchTab; labelKey: TranslationKey }[] = [
   { key: "communities", labelKey: "nav.communities" },
 ];
 const isSearchTab = (value: string | null): value is SearchTab => SEARCH_TABS.some((tab) => tab.key === value);
+
+/**
+ * What a scoped search looks in (Keşfet, docs/history/221-*): the section chosen there decides it — one kind of post, people, communities,
+ * tags or AI tools. Unscoped (`undefined`) is the whole-site search (Tümü), exactly as before. A scoped search shows no tab row.
+ * `label` is the section's name, for the box's placeholder ("Promptlar içinde ara").
+ */
+export type SearchScope = { kind: "content"; content: ContentKind; label: string } | { kind: "people" | "communities" | "tags" | "tools"; label: string };
+const scopeTab = (scope: SearchScope): SearchTab => (scope.kind === "content" ? "posts" : scope.kind);
 /** How many people / communities "Tümü" previews before its "Tümünü gör". */
 const ALL_TAB_PREVIEW = 4;
 
@@ -65,7 +75,7 @@ const ALL_TAB_PREVIEW = 4;
  * shows while there is no query (the normal Explore content); once chips or
  * text exist, results replace it.
  */
-export function SearchView({ idle }: { idle?: ReactNode } = {}) {
+export function SearchView({ idle, scope }: { idle?: ReactNode; scope?: SearchScope } = {}) {
   const { t } = useTranslation();
   const router = useRouter();
   const [viewMode] = useViewMode();
@@ -82,7 +92,8 @@ export function SearchView({ idle }: { idle?: ReactNode } = {}) {
   const [presets, setPresets] = useState<Preset[]>([]);
   const [communities, setCommunities] = useState<{ items: CommunitySummary[]; hasMore: boolean; failed: boolean }>({ items: [], hasMore: false, failed: false });
   const [loadingMoreCommunities, setLoadingMoreCommunities] = useState(false);
-  const [tab, setTabState] = useState<SearchTab>("all");
+  const [pickedTab, setTabState] = useState<SearchTab>("all");
+  const tab: SearchTab = scope ? scopeTab(scope) : pickedTab;
   // Alıntılar (docs/history/217-*): metin aramasında ayrı bir grup; bulunan sayı "sonuç yok" metnini etkiler.
   const [quoteHits, setQuoteHits] = useState(0);
   const [retryKey, setRetryKey] = useState(0);
@@ -97,11 +108,14 @@ export function SearchView({ idle }: { idle?: ReactNode } = {}) {
   const hasTokens = tokens.length > 0;
   const active = hasTokens || Boolean(normalized);
 
-  const { filters: tokenFilters, kinds } = useMemo(() => tokensToQuery(tokens), [tokens]);
+  const { filters: tokenFilters, kinds: tokenKinds } = useMemo(() => tokensToQuery(tokens), [tokens]);
+  // A scope decides the kinds itself (a people / communities / tags / tools scope searches no posts at all).
+  const kinds: ContentKind[] = scope ? (scope.kind === "content" ? [scope.content] : []) : tokenKinds;
+  const scopeKey = scope ? (scope.kind === "content" ? `content:${scope.content}` : scope.kind) : "";
   const singleMedia = tokenFilters.contentTypes?.length === 1 ? tokenFilters.contentTypes[0] : null;
   const category = singleMedia ? subFilter.category : null;
   const subcategory = singleMedia ? subFilter.subcategory : null;
-  const filterKey = JSON.stringify([tokenFilters, kinds, category, subcategory, sort]);
+  const filterKey = JSON.stringify([tokenFilters, kinds, category, subcategory, sort, scopeKey]);
 
   // Prefill from `?q=` (the Explore page's search box hands off here).
   useEffect(() => {
@@ -154,14 +168,17 @@ export function SearchView({ idle }: { idle?: ReactNode } = {}) {
       // Plain text only (no chips): tags are results too. People and communities follow the typed text whenever there is
       // some (their own tabs); "Tümü" still shows them only for a plain-text search.
       const textOnly = !hasTokens;
+      // Only what the scope looks in is fetched (unscoped: everything, as before).
+      const wantsPeople = !scope || scope.kind === "people";
+      const wantsCommunities = !scope || scope.kind === "communities";
       const [foundPrompts, foundWorkflows, foundPresets, foundRequests, foundUsers, foundTags, foundCommunities] = await Promise.all([
         kinds.includes("prompt") ? searchPromptsPage(normalized, filters) : NO_RESULTS,
         kinds.includes("workflow") ? searchWorkflowsPage(normalized, filters) : NO_RESULTS,
         kinds.includes("preset") ? searchPresetsPage(normalized, filters) : NO_RESULTS,
         kinds.includes("request") ? searchRequestsPage(normalized, filters) : NO_RESULTS,
-        normalized ? searchProfiles(normalized) : [],
-        textOnly ? searchTags(normalized, 6) : [],
-        normalized
+        normalized && wantsPeople ? searchProfiles(normalized) : [],
+        scope ? (scope.kind === "tags" ? searchTags(normalized, 40) : []) : textOnly ? searchTags(normalized, 6) : [],
+        normalized && wantsCommunities
           ? searchCommunities({ query: normalized, category: null, offset: 0 }).then(
               (page) => ({ items: page.communities, hasMore: page.hasMore, failed: false }),
               (err) => {
@@ -263,7 +280,7 @@ export function SearchView({ idle }: { idle?: ReactNode } = {}) {
     );
 
   const textOnly = !hasTokens;
-  const quoteTotal = textOnly && normalized.length >= 2 ? quoteHits : 0;
+  const quoteTotal = !scope && textOnly && normalized.length >= 2 ? quoteHits : 0;
   const noPosts = prompts.length === 0 && workflows.length === 0 && presets.length === 0 && requests.length === 0 && quoteTotal === 0;
   const nothingFound = noPosts && (!textOnly || (users.length === 0 && tags.length === 0 && communities.items.length === 0));
   const taxonomy: TaxonomyFilterValue = { contentType: singleMedia, category, subcategory };
@@ -316,7 +333,14 @@ export function SearchView({ idle }: { idle?: ReactNode } = {}) {
   return (
     <div className={idle ? "space-y-4" : "mx-auto w-full max-w-[1400px] space-y-6 px-3 py-5 sm:px-5 sm:py-6 lg:px-8 lg:py-8"}>
       <div className="space-y-3">
-        <AdvancedSearchBox tokens={tokens} onTokensChange={setTokens} text={text} onTextChange={setText} autoFocus={!idle} />
+        <AdvancedSearchBox
+          tokens={tokens}
+          onTokensChange={setTokens}
+          text={text}
+          onTextChange={setText}
+          autoFocus={!idle}
+          placeholder={scope ? t("discover.searchIn", { scope: scope.label }) : undefined}
+        />
         {singleMedia && (
           <TaxonomyFilter
             value={taxonomy}
@@ -333,7 +357,7 @@ export function SearchView({ idle }: { idle?: ReactNode } = {}) {
             }}
           />
         )}
-        {active && (
+        {active && !scope && (
           <Tabs
             items={SEARCH_TABS.map((item) => ({ key: item.key, label: t(item.labelKey) }))}
             active={tab}
@@ -362,7 +386,19 @@ export function SearchView({ idle }: { idle?: ReactNode } = {}) {
       ) : isSearching ? (
         <p className="py-10 text-center text-sm text-text-muted">{t("search.searching")}</p>
       ) : (
-        tab === "people" || tab === "communities" ? (
+        tab === "tools" ? (
+          !normalized ? (
+            <p className="py-6 text-center text-sm text-text-muted">{t("search.startTyping")}</p>
+          ) : (
+            <ToolsSection query={normalized} />
+          )
+        ) : tab === "tags" ? (
+          !normalized ? (
+            <p className="py-6 text-center text-sm text-text-muted">{t("search.startTyping")}</p>
+          ) : (
+            <TagRows tags={tags} emptyMessage={t("common.noResults")} />
+          )
+        ) : tab === "people" || tab === "communities" ? (
           !normalized ? (
             <p className="py-6 text-center text-sm text-text-muted">{t("search.textOnlyHint")}</p>
           ) : tab === "people" ? (
@@ -475,7 +511,7 @@ export function SearchView({ idle }: { idle?: ReactNode } = {}) {
                 {loadMoreButton("prompt")}
               </section>
             )}
-            {textOnly && normalized.length >= 2 && <SearchQuotes query={normalized} onCount={setQuoteHits} />}
+            {!scope && textOnly && normalized.length >= 2 && <SearchQuotes query={normalized} onCount={setQuoteHits} />}
             {(tab === "posts" ? noPosts : nothingFound) && (
               <p className="py-6 text-center text-sm text-text-muted">
                 {hasTokens ? t("search.noMatchingFilters") : t("common.noResults")}

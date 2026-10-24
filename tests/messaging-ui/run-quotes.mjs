@@ -123,12 +123,13 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lan
   }
 }
 
-/** Oturumlu Ana Sayfa "Sana özel" ile açılır (alıntı orada yok): "En yeni" balonuna geçilir. */
-const openNewest = async (page, label = "En yeni") => {
-  await page.goto(`${BASE}/`);
-  const bubble = page.getByRole("button", { name: label, exact: true }).first();
-  await bubble.waitFor();
-  await bubble.evaluate((el) => el.click());
+/**
+ * alıntı genel akışta Keşfet'te görünür (docs/history/221-*): Ana Sayfa yalnız "Sana özel" + "Takip Ettiklerim"dir, "En yeni" balonu kalktı.
+ * `label` eski çağrı imzasını korur (artık kullanılmaz).
+ */
+const openNewest = async (page, label = "") => {
+  void label;
+  await page.goto(`${BASE}/discover`);
 };
 /** Akıştaki ALINTI olmayan kart (alıntı kartları da aynı başlığı gösterir). */
 const promptCard = (page) => page.locator("main article").filter({ hasText: "Ay ışığında bekleyen kitsune" }).filter({ hasNotText: /alıntıladı|quoted/ }).first();

@@ -21,7 +21,7 @@ export type FeedEntry =
 export type FeedKind = FeedEntry["kind"];
 /** A feed slot that is a content post (everything but a shared Space or a quote). */
 export type PostEntry = Exclude<FeedEntry, { kind: "space" | "quote" }>;
-export type FeedScope = "all" | "following" | "tags";
+export type FeedScope = "all" | "following";
 export type { FeedCursor, FeedOrder };
 
 export interface FeedPage {
@@ -41,6 +41,14 @@ export interface FeedPageParams {
   tag?: string | null;
   /** Only content recommending this AI tool (catalog id; every model of it matches — a tool page). */
   tool?: string | null;
+  /**
+   * Home's "takip edilenler" filters (docs/history/221-*): several values narrow like the search chips do — different filters AND,
+   * authors / tools are alternatives (OR) inside their own kind, tags must ALL be present. Empty / omitted = no filter.
+   * A narrowing only: visibility is decided by the database exactly as without them.
+   */
+  authors?: string[];
+  tags?: string[];
+  tools?: string[];
   limit?: number;
   cursor?: FeedCursor | null;
 }
@@ -63,11 +71,12 @@ interface FeedRow {
  *
  *   scope "following" → only authors the signed-in user follows (`follows`
  *                       rows, read server-side with `auth.uid()`)
- *   scope "tags"      → only content tagged with a tag the signed-in user follows
- *                       (`tag_follows` rows, same server-side `auth.uid()`; migration 20260919860000)
+ *   (the old scope "tags" still exists in the database; no screen uses it since Home's tabs became Sana özel / Takip Ettiklerim)
  *   order "newest"    → created_at ↓
  *   order "popular"   → like_count ↓ (every public kind), then created_at ↓
  *   order "oldest"    → created_at ↑ (cursor comparison flips to `>`, see `feed-cursor.ts`)
+ *   order "used"      → copy_count ↓ (prompts; every other kind ranks 0)
+ *   order "recommended" → engagement score ↓ (migration 20260922100000; not personalised)
  *
  * The RPC returns only ids + sort keys; the full rows are then fetched with the
  * same selects/mappers the list pages use (RLS applies there as well). A row
@@ -77,12 +86,15 @@ interface FeedRow {
  */
 export async function fetchFeedPage(params: FeedPageParams): Promise<FeedPage> {
   const limit = params.limit ?? DEFAULT_LIMIT;
-  // `p_open_only` is only sent when asked for: Home keeps calling the 10-argument form. A tag/tool page calls the
-  // 13-argument form (docs/history/211-*), whose new arguments have no defaults — so it needs all three.
-  const topic = Boolean(params.tag || params.tool);
+  // The RPC is overloaded and its newer arguments have no defaults, so the argument SET picks the form: plain calls keep the
+  // 10-argument form, `p_open_only` alone the 11-argument one, a tag/tool page the 13-argument one (docs/history/211-*), and only a
+  // call that really carries a Home filter needs the 16-argument form (migration 20260922100000) — the rest keeps working without it.
+  const multi = Boolean(params.authors?.length || params.tags?.length || params.tools?.length);
+  const topic = Boolean(params.tag || params.tool) || multi;
   const { data, error } = await supabase.rpc("feed_page", {
     ...(params.openOnly || topic ? { p_open_only: Boolean(params.openOnly) } : {}),
     ...(topic ? { p_tag: params.tag ?? null, p_tool: params.tool ?? null } : {}),
+    ...(multi ? { p_authors: params.authors?.length ? params.authors : null, p_tags: params.tags?.length ? params.tags : null, p_tools: params.tools?.length ? params.tools : null } : {}),
     p_scope: params.scope,
     p_order: params.order,
     p_kinds: params.kind === "all" ? null : [params.kind],

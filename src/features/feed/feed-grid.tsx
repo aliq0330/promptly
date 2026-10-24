@@ -42,7 +42,7 @@ export function FeedGrid({
   emptyIcon?: LucideIcon;
   emptyTitle?: string;
   emptyDescription?: string;
-  emptyAction?: { label: string; href: string };
+  emptyAction?: React.ComponentProps<typeof EmptyState>["action"];
 }) {
   const { t } = useTranslation();
   const gridRef = useRef<HTMLDivElement>(null);
