@@ -135,6 +135,7 @@ await scenario("3. Studio: ?prompt=&preset= ikisi birden — prompt taban, hazı
   assert.doesNotMatch(await preview.textContent(), /--ar/, "Studio Gemini'ye gönderir: Midjourney parametresi yok");
   await page.getByText(/Midjourney parametresi: bu modelde kullanılmaz/).waitFor();
   await shot(page, "3-studio-combo");
+  if (SHOTS) await preview.locator("xpath=..").screenshot({ path: `${SHOTS}/3-final-prompt.png` });
   await layer.getByRole("button", { name: /Kaldır/ }).click();
   await page.waitForURL((url) => url.searchParams.get("prompt") === ID.prompt && !url.searchParams.has("preset"));
   await page.getByRole("button", { name: "Hazır ayar ekle (isteğe bağlı)" }).waitFor();

@@ -15,11 +15,11 @@ export function FinalPromptPreview({ parts, label, className, heading = false }:
         {fromPreset && (
           <span className="flex items-center gap-3">
             <span className="flex items-center gap-1.5">
-              <span aria-hidden className="h-2.5 w-2.5 rounded-sm bg-border" />
+              <span aria-hidden className="h-2.5 w-2.5 rounded-sm bg-text-muted/40" />
               {t("presetFit.legendPrompt")}
             </span>
             <span className="flex items-center gap-1.5">
-              <span aria-hidden className="h-2.5 w-2.5 rounded-sm bg-primary-soft ring-1 ring-primary/30" />
+              <span aria-hidden className="h-2.5 w-2.5 rounded-sm bg-primary/20 ring-1 ring-primary/40" />
               {t("presetFit.legendPreset")}
             </span>
           </span>
@@ -27,7 +27,7 @@ export function FinalPromptPreview({ parts, label, className, heading = false }:
       </p>
       <p data-final-prompt className="prompt-text break-words rounded-lg border border-border-soft bg-surface-soft p-3 text-small text-text-secondary">
         {parts.map((part, index) => (
-          <span key={index} data-from={part.from} className={cn(part.from === "preset" && "rounded-sm bg-primary-soft text-text")}>
+          <span key={index} data-from={part.from} className={cn(part.from === "preset" ? "rounded-sm bg-primary/20 text-text [box-decoration-break:clone]" : "text-text-secondary")}>
             {part.text}
           </span>
         ))}
