@@ -1550,6 +1550,10 @@ export const translations = {
 
   // ---- Notifications ----
   "notifications.markAllRead": { tr: "Tümünü okundu işaretle", en: "Mark all as read" },
+  "notifications.clearAll": { tr: "Tüm bildirimleri sil", en: "Delete all notifications" },
+  "notifications.clearAllTitle": { tr: "Tüm bildirimler silinsin mi?", en: "Delete all notifications?" },
+  "notifications.clearAllBody": { tr: "Bütün bildirimlerin kalıcı olarak silinir. Bu işlem geri alınamaz.", en: "All your notifications will be permanently deleted. This can't be undone." },
+  "notifications.clearAllConfirm": { tr: "Tümünü sil", en: "Delete all" },
   "notifications.groupToday": { tr: "Bugün", en: "Today" },
   "notifications.groupYesterday": { tr: "Dün", en: "Yesterday" },
   "notifications.groupThisWeek": { tr: "Bu hafta", en: "This week" },

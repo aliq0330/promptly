@@ -6,6 +6,7 @@ import {
   deleteNotification,
   fetchNotificationsForUser,
   markAllNotificationsRead,
+  deleteAllNotifications,
   markNotificationRead,
 } from "@/lib/supabase/notifications";
 import { supabase } from "@/lib/supabase/client";
@@ -18,6 +19,8 @@ interface NotificationsContextValue {
   refresh: () => Promise<void>;
   markRead: (id: string) => Promise<void>;
   markAllRead: () => Promise<void>;
+  /** Hepsini veritabanından siler; başarısızsa fırlatır (liste dokunulmaz). */
+  clearAll: () => Promise<void>;
   remove: (id: string) => Promise<void>;
 }
 
@@ -133,11 +136,17 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     }
   }, [user, notifications]);
 
+  const clearAll = useCallback(async () => {
+    if (!user) return;
+    await deleteAllNotifications(user.id);
+    setNotifications([]);
+  }, [user]);
+
   const unreadCount = useMemo(() => notifications.filter((n) => !n.isRead).length, [notifications]);
 
   const value = useMemo(
-    () => ({ notifications, unreadCount, refresh, markRead, markAllRead, remove }),
-    [notifications, unreadCount, refresh, markRead, markAllRead, remove],
+    () => ({ notifications, unreadCount, refresh, markRead, markAllRead, clearAll, remove }),
+    [notifications, unreadCount, refresh, markRead, markAllRead, clearAll, remove],
   );
 
   return <NotificationsContext.Provider value={value}>{children}</NotificationsContext.Provider>;

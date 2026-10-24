@@ -25,7 +25,7 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lan
   await installMock(context, db, {});
   // Registered after the mock, so it answers first.
   await context.route(/\/rest\/v1\/notifications(\?|$)/, (route) => {
-    if (route.request().method() !== "GET") return route.fulfill({ status: 204, body: "" });
+    if (route.request().method() !== "GET") { (db.notifWrites ??= []).push({ method: route.request().method(), url: route.request().url() }); return route.fulfill({ status: 204, body: "" }); }
     return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(notifications) });
   });
   await context.addInitScript((l) => { try { localStorage.setItem("promptly-language", l); } catch {} }, lang);
@@ -156,6 +156,33 @@ await scenario("7. Keşfet: arama kutusuna yazınca aynı sekmeler; boşaltınca
   await page.getByRole("tablist", { name: "Keşfet bölümleri" }).waitFor();
   assert.equal(await page.getByRole("tablist", { name: "Arama sonuçları" }).count(), 0);
 }, { setup: seedCommunities });
+
+await scenario("7. Bildirimler: ✕ düğmesi onay penceresi açar; Vazgeç'te hiçbir şey silinmez, Tümünü sil'de DELETE gider ve liste boşalır", async ({ page, db }) => {
+  await page.goto(`${BASE}/notifications`);
+  const clear = page.getByRole("button", { name: "Tüm bildirimleri sil" });
+  await clear.waitFor();
+  await clear.click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByText("Tüm bildirimler silinsin mi?").waitFor();
+  await dialog.getByRole("button", { name: "Vazgeç" }).click();
+  assert.equal(await dialog.count(), 0, "dialog closed");
+  assert.equal((db.notifWrites ?? []).length, 0, "nothing deleted on cancel");
+  await clear.click();
+  await page.getByRole("dialog").getByRole("button", { name: "Tümünü sil" }).click();
+  await page.getByText(/henüz bildirim|bildirim yok/i).first().waitFor();
+  const del = (db.notifWrites ?? []).filter((w) => w.method === "DELETE");
+  assert.equal(del.length, 1, "one bulk DELETE");
+  assert.match(del[0].url, /recipient_id=eq\./, "scoped to the user's own rows");
+  assert.ok(!del[0].url.includes("id=eq.n"), "not row by row");
+  assert.equal(await clear.isDisabled(), true, "button disabled when empty");
+}, { notifications: NOTIFS });
+
+await scenario("8. Bildirimler: tümünü silme penceresi İngilizce", async ({ page }) => {
+  await page.goto(`${BASE}/notifications`);
+  await page.getByRole("button", { name: "Delete all notifications" }).click();
+  await page.getByRole("dialog").getByText("Delete all notifications?").waitFor();
+  await page.getByRole("dialog").getByRole("button", { name: "Delete all" }).waitFor();
+}, { lang: "en", notifications: NOTIFS });
 
 await browser.close(); server.close();
 let failed = 0;
