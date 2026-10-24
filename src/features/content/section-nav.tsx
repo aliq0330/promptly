@@ -267,7 +267,13 @@ function SectionTabs<K extends string>({
   spread?: boolean;
 }) {
   return (
-    <ScrollRow role="tablist" aria-label={ariaLabel} wrapperClassName="border-b border-border-soft" className={cn("gap-1", spread && "[&>button]:flex-1")}>
+    // On a phone the row is a white strip edge to edge (the page behind it is the soft grey), from `sm` it sits on the page.
+    <ScrollRow
+      role="tablist"
+      aria-label={ariaLabel}
+      wrapperClassName="border-b border-border-soft max-sm:-mx-3 max-sm:border-t max-sm:bg-surface"
+      className={cn("gap-1 max-sm:px-3", spread && "[&>button]:flex-1")}
+    >
       {items.map((item) => {
         const selected = item.key === active;
         return (
