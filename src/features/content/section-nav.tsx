@@ -60,7 +60,8 @@ function useScrolledPast(ref: RefObject<HTMLElement | null>): boolean {
 /**
  * Home's and Keşfet's section switcher (docs/history/207-*, the "Bölüm balonları" design): big rounded-square tiles
  * (icon + name, the chosen one dark) with the list controls — sort, Filtre, Kart | Izgara — in one calm row under
- * them. Once the tiles scroll away they fold into ONE 52px bar pinned under the header (in its place while the header
+ * them. `variant="tabs"` (docs/history/227-*, used by Home and Keşfet) swaps the tiles for ONE row of underlined text tabs
+ * and leaves the phone's Kart | Izgara toggle to the Filtre sheet, so the first post starts higher. Once the tiles scroll away they fold into ONE 52px bar pinned under the header (in its place while the header
  * is hidden, `[data-sticky-under-header]`): the chosen section as a labelled pill, the others as icons, Filtre and the
  * view toggle at the end. Render it as a direct child of the TALL container (the page / feed section): the bar is a
  * zero-height `sticky` element, so its containing block must reach the end of the list.
@@ -71,6 +72,7 @@ export function SectionNav<K extends string>({
   onChange,
   ariaLabel,
   spread,
+  variant = "tiles",
   hideControls,
   chips,
   chipsLabel,
@@ -88,8 +90,10 @@ export function SectionNav<K extends string>({
   active: K;
   onChange: (key: K) => void;
   ariaLabel: string;
-  /** Few tiles (Home): spread across a phone's width instead of scrolling. */
+  /** Few tiles / tabs (Home): spread across a phone's width instead of scrolling. */
   spread?: boolean;
+  /** "tiles" = the rounded-square balloons (Topluluklar, Spaces, topic pages); "tabs" = one row of underlined text tabs (Home, Keşfet). */
+  variant?: "tiles" | "tabs";
   /** Only the tiles (Keşfet's Yaratıcılar section is not a filterable feed): no sort / Filtre / view controls. */
   hideControls?: boolean;
   /** A secondary chip row (post kind / content type) in the control row. */
@@ -137,19 +141,23 @@ export function SectionNav<K extends string>({
       <FoldedBar items={items} active={active} onChange={onChange} ariaLabel={ariaLabel} visible={folded} actions={hideControls ? null : <>{filterButton}<MobileViewToggle className={ICON_BUTTON} /></>} />
 
       <div ref={blockRef} className="space-y-3">
-        <div
-          role="tablist"
-          aria-label={ariaLabel}
-          className={cn(
-            "scrollbar-none flex touch-pan-x overflow-x-auto overscroll-x-contain pb-1",
-            items.some((item) => item.count) && "pr-1.5 pt-1.5",
-            spread ? "justify-between gap-1 sm:justify-start sm:gap-5" : "gap-2 sm:flex-wrap sm:overflow-visible",
-          )}
-        >
-          {items.map((item) => (
-            <SectionTile key={item.key} item={item} selected={item.key === active} onSelect={() => onChange(item.key)} fluid={spread} />
-          ))}
-        </div>
+        {variant === "tabs" ? (
+          <SectionTabs items={items} active={active} onChange={onChange} ariaLabel={ariaLabel} spread={spread} />
+        ) : (
+          <div
+            role="tablist"
+            aria-label={ariaLabel}
+            className={cn(
+              "scrollbar-none flex touch-pan-x overflow-x-auto overscroll-x-contain pb-1",
+              items.some((item) => item.count) && "pr-1.5 pt-1.5",
+              spread ? "justify-between gap-1 sm:justify-start sm:gap-5" : "gap-2 sm:flex-wrap sm:overflow-visible",
+            )}
+          >
+            {items.map((item) => (
+              <SectionTile key={item.key} item={item} selected={item.key === active} onSelect={() => onChange(item.key)} fluid={spread} />
+            ))}
+          </div>
+        )}
 
         {!hideControls && (
           <div className="flex min-w-0 items-center gap-2">
@@ -170,7 +178,7 @@ export function SectionNav<K extends string>({
             )}
             <div className="order-3 ml-auto flex shrink-0 items-center gap-2">
               {filterButton}
-              <MobileViewToggle className={cn(ICON_BUTTON, "md:hidden")} />
+              {variant === "tiles" && <MobileViewToggle className={cn(ICON_BUTTON, "md:hidden")} />}
               <ViewModeSwitcher className="max-md:hidden" />
             </div>
           </div>
@@ -238,6 +246,53 @@ function SectionTile<K extends string>({
       <span className={cn("text-center text-caption leading-tight", selected ? "font-semibold text-text" : "font-medium text-text-muted")}>{item.label}</span>
       {item.count ? <CountBadge count={item.count} /> : null}
     </button>
+  );
+}
+
+/**
+ * The text-tab form of the section switcher: one underlined row (the chosen tab bold with a primary underline). A spread row (Home's two
+ * views) shares the width; Keşfet's eleven sections scroll (`ScrollRow`: finger, wheel, drag, arrows).
+ */
+function SectionTabs<K extends string>({
+  items,
+  active,
+  onChange,
+  ariaLabel,
+  spread,
+}: {
+  items: SectionNavItem<K>[];
+  active: K;
+  onChange: (key: K) => void;
+  ariaLabel: string;
+  spread?: boolean;
+}) {
+  return (
+    <ScrollRow role="tablist" aria-label={ariaLabel} wrapperClassName="border-b border-border-soft" className={cn("gap-1", spread && "[&>button]:flex-1")}>
+      {items.map((item) => {
+        const selected = item.key === active;
+        return (
+          <button
+            key={item.key}
+            type="button"
+            role="tab"
+            aria-selected={selected}
+            onClick={() => onChange(item.key)}
+            className={cn(
+              "inline-flex h-11 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap border-b-[3px] px-3.5 text-body transition-colors duration-200 ease-soft",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary",
+              selected ? "border-primary font-bold text-text" : "border-transparent font-medium text-text-muted hover:text-text",
+            )}
+          >
+            {item.label}
+            {item.count ? (
+              <span data-section-count="" className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[0.6875rem] font-bold leading-none text-primary-foreground">
+                {item.count > 99 ? "99+" : item.count}
+              </span>
+            ) : null}
+          </button>
+        );
+      })}
+    </ScrollRow>
   );
 }
 

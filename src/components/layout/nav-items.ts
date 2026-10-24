@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { Bookmark, Compass, GalleryVerticalEnd, Hash, Home, LogIn, Plus, Settings, Shapes, SlidersHorizontal, Sparkles, SquareTerminal, User, Users, UsersRound, WandSparkles, Workflow } from "lucide-react";
+import { Bookmark, Compass, GalleryVerticalEnd, Home, LogIn, Plus, Settings, Shapes, User, Users, UsersRound, WandSparkles } from "lucide-react";
 import type { TranslationKey } from "@/lib/i18n/translations";
 
 /** Who may see a nav entry: everyone, or only a signed-in member. */
@@ -18,6 +18,8 @@ export interface NavItem {
    * finally highlights "Profil" while viewing your own real profile.
    */
   match?: string;
+  /** Further path prefixes that keep this entry lit (Keşfet: the content list / topic pages that are one of its sections now, docs/history/227-*). */
+  alsoMatch?: string[];
 }
 
 export interface NavGroup {
@@ -27,30 +29,28 @@ export interface NavGroup {
 
 export const PROFILE_NAV_PLACEHOLDER = "/profile/me";
 
-/** Desktop/tablet sidebar. "Oluştur" is a separate primary action above these groups. */
+/**
+ * Desktop/tablet sidebar. "Oluştur" is a separate primary action above these groups. Promptlar, İstekler, Workflow'lar, Hazır ayarlar
+ * and Etiketler are sections of Keşfet (its tabs), not sidebar entries of their own, and Odak is a button in the header from `md`
+ * (docs/history/227-*): eight entries instead of fourteen.
+ */
 export const navGroups: NavGroup[] = [
   {
     labelKey: "nav.groupDiscover",
     items: [
       { href: "/", labelKey: "nav.home", icon: Home },
-      { href: "/focus", labelKey: "nav.focus", icon: GalleryVerticalEnd },
-      { href: "/discover", labelKey: "nav.discover", icon: Compass },
-      { href: "/prompts", labelKey: "nav.prompts", icon: SquareTerminal },
-      { href: "/workflows", labelKey: "nav.workflows", icon: Workflow },
-      { href: "/presets", labelKey: "nav.presets", icon: SlidersHorizontal },
+      { href: "/discover", labelKey: "nav.discover", icon: Compass, alsoMatch: ["/prompts", "/requests", "/workflows", "/presets", "/tags", "/categories", "/tools", "/results", "/quotes"] },
+      { href: "/communities", labelKey: "nav.communities", icon: UsersRound },
+      // Promptly Spaces (docs/history/213-*): ziyaretçi de herkese açık Space'leri görür.
+      { href: "/spaces", labelKey: "nav.spaces", icon: Shapes },
       { href: "/studio", labelKey: "nav.studio", icon: WandSparkles },
-      { href: "/requests", labelKey: "nav.requests", icon: Sparkles },
-      { href: "/tags", labelKey: "nav.tags", icon: Hash },
     ],
   },
   {
     labelKey: "nav.groupLibrary",
     items: [
       { href: "/saved", labelKey: "nav.saved", icon: Bookmark, match: "/saved", visibility: "authenticated" },
-      // Promptly Spaces (docs/history/213-*): ziyaretçi de herkese açık Space'leri görür.
-      { href: "/spaces", labelKey: "nav.spaces", icon: Shapes },
-      { href: "/following", labelKey: "nav.following", icon: Users, visibility: "authenticated" },
-      { href: "/communities", labelKey: "nav.communities", icon: UsersRound },
+      { href: "/following", labelKey: "nav.followingPeople", icon: Users, visibility: "authenticated" },
       { href: PROFILE_NAV_PLACEHOLDER, labelKey: "nav.profile", icon: User, match: "/profile", visibility: "authenticated" },
     ],
   },
@@ -75,9 +75,8 @@ export const mobileNavItems: NavItem[] = [
 ];
 
 export function isNavItemActive(pathname: string, item: NavItem) {
-  const prefix = item.match ?? item.href;
-  if (prefix === "/") return pathname === "/";
-  return pathname === prefix || pathname.startsWith(`${prefix}/`) || pathname.startsWith(prefix);
+  const prefixes = [item.match ?? item.href, ...(item.alsoMatch ?? [])];
+  return prefixes.some((prefix) => (prefix === "/" ? pathname === "/" : pathname === prefix || pathname.startsWith(`${prefix}/`) || pathname.startsWith(prefix)));
 }
 
 /** Central visibility filter: guests (and the loading state) only ever get public entries. */

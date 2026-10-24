@@ -13,7 +13,7 @@ import { PromptCardSkeletonGrid } from "@/components/ui/prompt-card-skeleton";
 import { FeedItemsView } from "./feed-items-view";
 import { useFeedPages } from "./use-feed-pages";
 import { useForYouPages } from "./use-for-you-pages";
-import { ForYouReasonNote, ForYouSetupCard, ForYouToolbar } from "./for-you-parts";
+import { ForYouReasonNote, ForYouSettingsModal, ForYouSetupBanner, ForYouSheetSection } from "./for-you-parts";
 import {
   EMPTY_FOLLOWED_FILTER,
   FollowedFilterSections,
@@ -43,7 +43,8 @@ import type { TranslationKey } from "@/lib/i18n/translations";
  *                 scope `following`, order `newest`) — strictly chronological, nothing re-ranked.
  * On top of either: the post-type chips (Hepsi / Promptlar / İstekler / Workflow'lar / Hazır ayarlar), and on "Takip
  * Ettiklerim" the optional filters of followed people, tags and AI tools (`followed-filters.tsx`). Category / content-type /
- * sort filters live on Keşfet only — they are not repeated here.
+ * sort filters live on Keşfet only — they are not repeated here. The two views are one row of text tabs (docs/history/227-*);
+ * "Yenile" / "Sana özel'i ayarla" live in the Filtre sheet and the first-time hint is a one-line banner, so the first post starts high.
  */
 type TabKey = "forYou" | "following";
 type KindFilter = "all" | FeedItem["kind"];
@@ -79,6 +80,7 @@ export function FeedTabs({ layout = "grid" }: { layout?: "grid" | "home" } = {})
   const [chosen, setChosen] = useState<TabKey | null>(restoredTab);
   const [kind, setKind] = useState<KindFilter>("all");
   const [picked, setPicked] = useState<FollowedFilterValue>(EMPTY_FOLLOWED_FILTER);
+  const [forYouSettingsOpen, setForYouSettingsOpen] = useState(false);
   const { user, loading: authLoading } = useAuth();
   const { profile } = useOwnProfile();
   const followedTagStore = useFollowedTags();
@@ -149,6 +151,7 @@ export function FeedTabs({ layout = "grid" }: { layout?: "grid" | "home" } = {})
         <SheetChips>{kindChips}</SheetChips>
       </SheetSection>
       {filtersShown && <FollowedFilterSections value={followedFilter} onChange={setPicked} people={followedPeople} />}
+      {isForYou && user && <ForYouSheetSection onRefresh={forYou.refresh} onOpenSettings={() => setForYouSettingsOpen(true)} refreshing={forYou.refreshing} />}
     </>
   );
   const activeCount = (kind === "all" ? 0 : 1) + (filtersShown ? followedCount : 0);
@@ -168,6 +171,7 @@ export function FeedTabs({ layout = "grid" }: { layout?: "grid" | "home" } = {})
           onChange={setActive}
           ariaLabel={t("feed.viewAriaLabel")}
           spread
+          variant="tabs"
           chips={kindChips}
           chipsLabel={t("toolbar.postKindAria")}
           chipsOnMobile
@@ -199,8 +203,8 @@ export function FeedTabs({ layout = "grid" }: { layout?: "grid" | "home" } = {})
         <FollowedFilterSummary value={followedFilter} people={followedPeople.people} onChange={setPicked} onClear={clearFollowedFilter} />
       )}
 
-      {isForYou && user && <ForYouToolbar onRefresh={forYou.refresh} onChanged={forYou.refresh} refreshing={forYou.refreshing} />}
-      {coldStart && <ForYouSetupCard onChanged={forYou.refresh} />}
+      {coldStart && <ForYouSetupBanner onOpen={() => setForYouSettingsOpen(true)} />}
+      {forYouSettingsOpen && <ForYouSettingsModal onClose={() => setForYouSettingsOpen(false)} onChanged={forYou.refresh} />}
 
       {needsLogin ? (
         <EmptyState

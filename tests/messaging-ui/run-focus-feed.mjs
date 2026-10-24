@@ -1,5 +1,5 @@
 // Odak (`/focus`, docs/history/199-*): tam ekran, dikey, tek gönderi/ekran — Ana Sayfa'da Akış seçeneği YOK (Kart | Izgara),
-// yan menü + telefonda alt menüdeki Odak girişi, üst/alt/yan menünün gizlenmesi, tür başına slayt, video/ses oynatma (yazarın
+// üst çubuktaki (md+) ve telefonda alt menüdeki Odak girişi, üst/alt/yan menünün gizlenmesi, tür başına slayt, video/ses oynatma (yazarın
 // yüklediği çıktı), Medya süzgeci, gerçek beğeni/kaydet/yorum/paylaş/kopyala, sayfalama, klavye, kapatma, misafir, mobil/İngilizce/açık tema.
 // Gerçek Supabase'e KARŞI DENENMEDİ: `feed_page`, içerik ve `prompt_results` satırları burada taklit edilir; medya oynatma
 // `HTMLMediaElement.play/pause` taslağıyla sınanır (gerçek video/ses çözülmez).
@@ -181,20 +181,21 @@ const step = async (page, key = "ArrowDown", times = 1) => { for (let i = 0; i <
 const media = (page) => page.evaluate(() => window.__media);
 const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: `${SHOTS}/${name}.png` }); };
 
-await scenario("1. Ana Sayfa değişmedi: Akış seçeneği yok, seçici Kart | Izgara; yan menüde Odak", async ({ page }) => {
+await scenario("1. Ana Sayfa değişmedi: Akış seçeneği yok, seçici Kart | Izgara; üst çubukta Odak (yan menüde yok)", async ({ page }) => {
   await page.goto(`${BASE}/`);
   await page.locator("article").first().waitFor();
   assert.equal(await stage(page).count(), 0);
   const group = page.getByRole("group", { name: "Görünüm modu" }).first();
   assert.deepEqual(await group.getByRole("button").allTextContents(), ["Kart", "Izgara"]);
-  const link = page.locator("aside[aria-label] a[href*='/focus']");
-  assert.equal(await link.count(), 1, "sidebar has Odak");
+  const link = page.locator("header[data-app-header] a[href*='/focus']");
+  assert.equal(await link.count(), 1, "header has Odak");
+  assert.equal(await page.locator("aside[aria-label] a[href*='/focus']").count(), 0, "sidebar no longer lists Odak (docs/history/227-*)");
   assert.match(await link.textContent(), /Odak/);
 });
 
-await scenario("2. Yan menüden Odak: tam ekran, üst/yan menü gizli, koyu sahne, sayfa kilitli, başlık", async ({ page }) => {
+await scenario("2. Üst çubuktan Odak: tam ekran, üst/yan menü gizli, koyu sahne, sayfa kilitli, başlık", async ({ page }) => {
   await page.goto(`${BASE}/`);
-  await page.locator("aside[aria-label] a[href*='/focus']").click();
+  await page.locator("header[data-app-header] a[href*='/focus']").click();
   await slides(page).first().waitFor();
   await page.waitForTimeout(500);
   assert.match(page.url(), /\/focus/);
@@ -331,7 +332,7 @@ await scenario("10. Sayfalama: keyset imleciyle ikinci sayfa, sonda 'Hepsini gö
 await scenario("11. Kapat (X) ve Esc: geldiği sayfaya döner, menüler ve kaydırma geri gelir", async ({ page }) => {
   await page.goto(`${BASE}/discover`);
   await page.waitForTimeout(800);
-  await page.locator("aside[aria-label] a[href*='/focus']").click();
+  await page.locator("header[data-app-header] a[href*='/focus']").click();
   await slides(page).first().waitFor();
   await stage(page).getByRole("button", { name: "Odak'ı kapat" }).first().click();
   await page.waitForURL(/\/discover/);
@@ -339,7 +340,7 @@ await scenario("11. Kapat (X) ve Esc: geldiği sayfaya döner, menüler ve kayd�
   assert.equal(await stage(page).count(), 0);
   assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector("header[data-app-chrome]")).visibility), "visible");
   assert.equal(await page.evaluate(() => document.body.style.overflow), "");
-  await page.locator("aside[aria-label] a[href*='/focus']").click();
+  await page.locator("header[data-app-header] a[href*='/focus']").click();
   await slides(page).first().waitFor();
   await page.waitForTimeout(300);
   await page.keyboard.press("Escape");
@@ -349,14 +350,14 @@ await scenario("11. Kapat (X) ve Esc: geldiği sayfaya döner, menüler ve kayd�
 await scenario("12. Kapatıp yeniden açınca bu oturumda son açık gönderiden devam eder", async ({ page }) => {
   await page.goto(`${BASE}/`);
   await page.locator("article").first().waitFor();
-  await page.locator("aside[aria-label] a[href*='/focus']").click();
+  await page.locator("header[data-app-header] a[href*='/focus']").click();
   await slides(page).first().waitFor();
   await page.waitForTimeout(400);
   await step(page, "ArrowDown", 3);
   await stage(page).getByRole("button", { name: "Odak'ı kapat" }).first().click();
   await page.waitForTimeout(800);
   assert.doesNotMatch(page.url(), /\/focus/);
-  await page.locator("aside[aria-label] a[href*='/focus']").click();
+  await page.locator("header[data-app-header] a[href*='/focus']").click();
   await slides(page).first().waitFor();
   await page.waitForTimeout(500);
   assert.equal(await activeIndex(page), 4, "back on the post last open");

@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, Languages, MessageCircle, Search } from "lucide-react";
+import { Bell, GalleryVerticalEnd, Languages, MessageCircle, Search } from "lucide-react";
+import { buttonClassName } from "@/components/ui/button";
 import { iconButtonClassName } from "@/components/ui/icon-button";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { useAuthStatus } from "@/features/auth/use-auth-status";
@@ -62,6 +63,11 @@ export function Header() {
           <Search size={20} />
         </Link>
         )}
+        {/* Odak (docs/history/227-*): from `md` it is a header button — a vertical full-screen feed is not a sidebar destination; on a phone it keeps its bottom-nav slot. */}
+        <Link href="/focus" className={buttonClassName({ variant: "outline", size: "sm", className: "mr-1 hidden shrink-0 gap-1.5 md:inline-flex" })}>
+          <GalleryVerticalEnd size={16} aria-hidden />
+          {t("header.focusLink")}
+        </Link>
         {status === "authenticated" && (
           <>
             <Link

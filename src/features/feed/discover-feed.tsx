@@ -7,7 +7,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { PromptCardSkeletonGrid } from "@/components/ui/prompt-card-skeleton";
 import { FeedItemsView } from "./feed-items-view";
 import { LoadMore } from "./load-more";
-import { CategoryStrip, CreatorStrip, DiscoverHighlightsSkeleton, PopularStrip, TagStrip, useDiscoverHighlights } from "./discover-highlights";
+import { DiscoverAside, DiscoverHighlightsSkeleton, PopularStrip, TopicStrip, useDiscoverHighlights } from "./discover-highlights";
 import { useFeedPages } from "./use-feed-pages";
 import type { FeedKind } from "@/lib/supabase/feed";
 import { feedOrderForSort } from "@/lib/feed-cursor";
@@ -152,97 +152,106 @@ export function DiscoverFeed() {
     </>
   );
 
+  // docs/history/227-*: the main column (chip row, popular strip, section tabs, posts) and — from `xl` — a right column with the creators and rising tags.
   const idleContent = (
-    <div className="space-y-4">
-      {highlights.loading ? (
-        <DiscoverHighlightsSkeleton />
-      ) : (
-        <>
-          <CategoryStrip sample={highlights.sample} />
-          <TagStrip tags={highlights.tags} />
-          <PopularStrip popular={highlights.popular} />
-          <CreatorStrip creators={highlights.creators} onSeeAll={() => setSection("creators")} />
-        </>
-      )}
-
-      <SectionNav
-        items={SECTIONS.map((s) => ({ key: s.key, label: t(s.labelKey), icon: s.icon }))}
-        active={section}
-        onChange={setSection}
-        ariaLabel={t("discover.sectionsAriaLabel")}
-        // The entity sections (tools, tags, creators, communities) are lists to follow from, not filterable feeds: only the tiles.
-        hideControls={entity}
-        // Space'in türü/kategorisi yok: süzgeçler Spaces ve Alıntılar bölümünde çizilmez (sunucu da süzgeçli sorguda ikisini de döndürmez).
-        chips={postFilters ? <TaxonomyTypeChips value={taxonomy} onChange={setTaxonomy} /> : undefined}
-        chipsLabel={t("toolbar.contentTypeAria")}
-        sort={effectiveSort}
-        onSortChange={setSort}
-        sortKeys={sortKeys}
-        sheetSections={
-          <>
-            {postFilters && <TaxonomySheetSections value={taxonomy} onChange={setTaxonomy} />}
-            {postFilters && (
-              <SheetSection title={t("discover.toolFilter")}>
-                <SheetChips>
-                  <Chip selected={effectiveTool === null} onClick={() => setTool(null)}>
-                    {t("discover.toolFilterAny")}
-                  </Chip>
-                  {availableTools.map((entry) => (
-                    <Chip key={entry.id} selected={effectiveTool === entry.id} onClick={() => setTool(entry.id)}>
-                      {entry.name}
-                    </Chip>
-                  ))}
-                </SheetChips>
-              </SheetSection>
-            )}
-            {section === "requests" && (
-              <SheetSection title={t("toolbar.status")}>
-                <SheetChips>{openOnlyChips}</SheetChips>
-              </SheetSection>
-            )}
-          </>
-        }
-        activeCount={activeCount}
-        onClear={clearFilters}
-      />
-
-      {section === "tools" ? (
-        <ToolsSection />
-      ) : section === "tags" ? (
-        <TagsSection />
-      ) : section === "communities" ? (
-        <EmbeddedCommunitiesBrowse />
-      ) : section === "creators" ? (
-        creatorPages.loading ? (
-          <PromptCardSkeletonGrid count={3} />
-        ) : creatorPages.failed && creatorPages.creators.length === 0 ? (
-          <EmptyState icon={Users} title={t("feed.loadFailed")} action={{ label: t("common.retry"), onClick: creatorPages.retry }} />
-        ) : creatorPages.creators.length === 0 ? (
-          <EmptyState icon={Users} title={t("discover.noCreatorsYet")} />
+    <div className="xl:flex xl:items-start xl:gap-7">
+      <div className="min-w-0 flex-1 space-y-4">
+        {highlights.loading ? (
+          <DiscoverHighlightsSkeleton />
         ) : (
           <>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3">
-              {creatorPages.creators.map((creator) => (
-                <CreatorCard key={creator.id} creator={creator} />
-              ))}
-            </div>
-            <LoadMore failed={creatorPages.failed} hasMore={creatorPages.hasMore} loadingMore={creatorPages.loadingMore} onLoadMore={() => void creatorPages.loadMore()} />
+            <TopicStrip sample={highlights.sample} tags={highlights.tags} />
+            <PopularStrip popular={highlights.popular} />
           </>
-        )
-      ) : feed.loading ? (
-        <PromptCardSkeletonGrid count={6} />
-      ) : feed.failed && feed.items.length === 0 ? (
-        <EmptyState icon={Sparkles} title={t("feed.loadFailed")} action={{ label: t("common.retry"), onClick: feed.retry }} />
-      ) : (
-        <>
-          <FeedItemsView
-            items={feed.items}
-            emptyTitle={t("discover.noMatchTitle")}
-            emptyDescription={t("discover.noMatchDescription")}
-            emptyAction={activeCount > 0 ? { label: t("feed.clearFilters"), onClick: clearFilters } : undefined}
-          />
-          <LoadMore failed={feed.failed} hasMore={feed.hasMore} loadingMore={feed.loadingMore} onLoadMore={() => void feed.loadMore()} />
-        </>
+        )}
+
+        <SectionNav
+          variant="tabs"
+          items={SECTIONS.map((s) => ({ key: s.key, label: t(s.labelKey), icon: s.icon }))}
+          active={section}
+          onChange={setSection}
+          ariaLabel={t("discover.sectionsAriaLabel")}
+          // The entity sections (tools, tags, creators, communities) are lists to follow from, not filterable feeds: only the tiles.
+          hideControls={entity}
+          // Space'in türü/kategorisi yok: süzgeçler Spaces ve Alıntılar bölümünde çizilmez (sunucu da süzgeçli sorguda ikisini de döndürmez).
+          chips={postFilters ? <TaxonomyTypeChips value={taxonomy} onChange={setTaxonomy} /> : undefined}
+          chipsLabel={t("toolbar.contentTypeAria")}
+          sort={effectiveSort}
+          onSortChange={setSort}
+          sortKeys={sortKeys}
+          sheetSections={
+            <>
+              {postFilters && <TaxonomySheetSections value={taxonomy} onChange={setTaxonomy} />}
+              {postFilters && (
+                <SheetSection title={t("discover.toolFilter")}>
+                  <SheetChips>
+                    <Chip selected={effectiveTool === null} onClick={() => setTool(null)}>
+                      {t("discover.toolFilterAny")}
+                    </Chip>
+                    {availableTools.map((entry) => (
+                      <Chip key={entry.id} selected={effectiveTool === entry.id} onClick={() => setTool(entry.id)}>
+                        {entry.name}
+                      </Chip>
+                    ))}
+                  </SheetChips>
+                </SheetSection>
+              )}
+              {section === "requests" && (
+                <SheetSection title={t("toolbar.status")}>
+                  <SheetChips>{openOnlyChips}</SheetChips>
+                </SheetSection>
+              )}
+            </>
+          }
+          activeCount={activeCount}
+          onClear={clearFilters}
+        />
+
+        {section === "tools" ? (
+          <ToolsSection />
+        ) : section === "tags" ? (
+          <TagsSection />
+        ) : section === "communities" ? (
+          <EmbeddedCommunitiesBrowse />
+        ) : section === "creators" ? (
+          creatorPages.loading ? (
+            <PromptCardSkeletonGrid count={3} />
+          ) : creatorPages.failed && creatorPages.creators.length === 0 ? (
+            <EmptyState icon={Users} title={t("feed.loadFailed")} action={{ label: t("common.retry"), onClick: creatorPages.retry }} />
+          ) : creatorPages.creators.length === 0 ? (
+            <EmptyState icon={Users} title={t("discover.noCreatorsYet")} />
+          ) : (
+            <>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3">
+                {creatorPages.creators.map((creator) => (
+                  <CreatorCard key={creator.id} creator={creator} />
+                ))}
+              </div>
+              <LoadMore failed={creatorPages.failed} hasMore={creatorPages.hasMore} loadingMore={creatorPages.loadingMore} onLoadMore={() => void creatorPages.loadMore()} />
+            </>
+          )
+        ) : feed.loading ? (
+          <PromptCardSkeletonGrid count={6} />
+        ) : feed.failed && feed.items.length === 0 ? (
+          <EmptyState icon={Sparkles} title={t("feed.loadFailed")} action={{ label: t("common.retry"), onClick: feed.retry }} />
+        ) : (
+          <>
+            <FeedItemsView
+              items={feed.items}
+              emptyTitle={t("discover.noMatchTitle")}
+              emptyDescription={t("discover.noMatchDescription")}
+              emptyAction={activeCount > 0 ? { label: t("feed.clearFilters"), onClick: clearFilters } : undefined}
+              // The column sits next to the right column from `xl`: two post columns at most (as on Ana Sayfa).
+              layout="home"
+            />
+            <LoadMore failed={feed.failed} hasMore={feed.hasMore} loadingMore={feed.loadingMore} onLoadMore={() => void feed.loadMore()} />
+          </>
+        )}
+      </div>
+      {!highlights.loading && (
+        <aside className="hidden w-[300px] shrink-0 xl:sticky xl:top-24 xl:block">
+          <DiscoverAside creators={highlights.creators} tags={highlights.tags} onSeeAllCreators={() => setSection("creators")} />
+        </aside>
       )}
     </div>
   );

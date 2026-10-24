@@ -21,7 +21,7 @@ const ROUTE_TITLES: Record<string, TranslationKey> = {
   "/presets/create": "nav.presets",
   "/tags": "nav.tags",
   "/saved": "nav.saved",
-  "/following": "nav.following",
+  "/following": "nav.followingPeople",
   "/followers": "nav.followers",
   "/settings": "nav.settings",
   "/settings/blocked": "nav.settings",
