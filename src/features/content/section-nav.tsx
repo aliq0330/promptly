@@ -176,7 +176,22 @@ export function SectionNav<K extends string>({
             )}
           </div>
         ) : variant === "tabs" ? (
-          <SectionTabs items={items} active={active} onChange={onChange} ariaLabel={ariaLabel} spread={spread} />
+          // Sade düzen (docs/history/237-*): sekmeler solda, Filtre + Kart/Izgara simgeleri AYNI satırın sağında.
+          <SectionTabs
+            items={items}
+            active={active}
+            onChange={onChange}
+            ariaLabel={ariaLabel}
+            spread={spread}
+            end={
+              hideControls ? undefined : (
+                <>
+                  {menuFilterButton}
+                  <CompactViewToggle />
+                </>
+              )
+            }
+          />
         ) : (
           <div
             role="tablist"
@@ -193,7 +208,7 @@ export function SectionNav<K extends string>({
           </div>
         )}
 
-        {!hideControls && variant !== "menu" && (
+        {!hideControls && variant !== "menu" && variant !== "tabs" && (
           <div className="flex min-w-0 items-center gap-2">
             {sort && onSortChange && (
               <div className={cn("order-1 flex min-w-0 md:order-2 md:shrink-0", !chips && "flex-1 md:flex-none", chips && !chipsOnMobile && "max-md:flex-1")}>
@@ -293,46 +308,47 @@ function SectionTabs<K extends string>({
   onChange,
   ariaLabel,
   spread,
+  end,
 }: {
   items: SectionNavItem<K>[];
   active: K;
   onChange: (key: K) => void;
   ariaLabel: string;
   spread?: boolean;
+  /** Controls at the end of the same strip (Filtre, Kart/Izgara). */
+  end?: ReactNode;
 }) {
   return (
     // On a phone the row is a white strip edge to edge (the page behind it is the soft grey), from `sm` it sits on the page.
-    <ScrollRow
-      role="tablist"
-      aria-label={ariaLabel}
-      wrapperClassName="border-b border-border-soft max-sm:-mx-3 max-sm:border-t max-sm:bg-surface"
-      className={cn("gap-1 max-sm:px-3", spread && "[&>button]:flex-1")}
-    >
-      {items.map((item) => {
-        const selected = item.key === active;
-        return (
-          <button
-            key={item.key}
-            type="button"
-            role="tab"
-            aria-selected={selected}
-            onClick={() => onChange(item.key)}
-            className={cn(
-              "inline-flex h-11 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap border-b-[3px] px-3.5 text-body transition-colors duration-200 ease-soft",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary",
-              selected ? "border-primary font-bold text-text" : "border-transparent font-medium text-text-muted hover:text-text",
-            )}
-          >
-            {item.label}
-            {item.count ? (
-              <span data-section-count="" className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[0.6875rem] font-bold leading-none text-primary-foreground">
-                {item.count > 99 ? "99+" : item.count}
-              </span>
-            ) : null}
-          </button>
-        );
-      })}
-    </ScrollRow>
+    <div className="flex items-center border-b border-border-soft max-sm:-mx-3 max-sm:border-t max-sm:bg-surface max-sm:px-3">
+      <ScrollRow role="tablist" aria-label={ariaLabel} wrapperClassName="min-w-0 flex-1" className={cn("gap-1", spread && "[&>button]:flex-1")}>
+        {items.map((item) => {
+          const selected = item.key === active;
+          return (
+            <button
+              key={item.key}
+              type="button"
+              role="tab"
+              aria-selected={selected}
+              onClick={() => onChange(item.key)}
+              className={cn(
+                "inline-flex h-11 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap border-b-[3px] px-3.5 text-body transition-colors duration-200 ease-soft",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary",
+                selected ? "border-primary font-bold text-text" : "border-transparent font-medium text-text-muted hover:text-text",
+              )}
+            >
+              {item.label}
+              {item.count ? (
+                <span data-section-count="" className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[0.6875rem] font-bold leading-none text-primary-foreground">
+                  {item.count > 99 ? "99+" : item.count}
+                </span>
+              ) : null}
+            </button>
+          );
+        })}
+      </ScrollRow>
+      {end && <div className="flex shrink-0 items-center gap-0.5 pl-1">{end}</div>}
+    </div>
   );
 }
 

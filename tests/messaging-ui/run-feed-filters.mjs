@@ -205,10 +205,10 @@ await scenario("1. Ana Sayfa: yalnız Sana özel + Takip Ettiklerim; En yeni / P
   assert.deepEqual((await tabs.getByRole("tab").allInnerTexts()).map((s) => s.trim()), ["Sana özel", "Takip Ettiklerim"]);
   assert.equal(await homeTab(page, "Sana özel").getAttribute("aria-selected"), "true", "oturumlu varsayılan Sana özel");
   for (const gone of ["En yeni", "Popüler", "Etiketlerim"]) assert.equal(await page.getByRole("tab", { name: gone, exact: true }).count(), 0, `${gone} balonu yok`);
-  const kinds = page.getByRole("group", { name: "Gönderi türü" }).first();
-  assert.equal(await kinds.getByRole("button").count(), 5, "Hepsi + dört tür");
+  assert.equal(await page.getByRole("group", { name: "Gönderi türü" }).count(), 0, "tür çip satırı sayfada yok (docs/history/237-*)");
   await openFilter(page);
   await page.getByRole("dialog").getByRole("heading", { name: "Gönderi türü" }).waitFor();
+  assert.equal(await page.getByRole("dialog").getByRole("button", { name: /^(Tümü|Promptlar|İstekler|İstek|Workflow'lar|Hazır [Aa]yarlar)$/ }).count(), 5, "Hepsi + dört tür Filtre penceresinde");
   for (const taxonomy of ["İçerik türü", "Kategori", "Alt kategori"]) assert.equal(await page.getByRole("dialog").getByRole("heading", { name: taxonomy }).count(), 0, `${taxonomy} yalnız Keşfet'te`);
   assert.equal(await page.getByRole("dialog").getByRole("heading", { name: "Kişiler" }).count(), 0, "Sana özel'de takip edilenler süzgeci yok");
   assert.equal(await overflowFree(page), true);
@@ -339,7 +339,10 @@ await scenario("5. Filtreye uyan paylaşım yoksa: dürüst boş durum + 'Filtre
 await scenario("6. Sana özel: süzgeç bölümü yok, for_you_page'e yeni argüman gitmez; tür çipi p_kinds'ı süzer; Takip'e geçip dönünce tür seçimi korunur", async ({ page, state }) => {
   await gotoHome(page, state);
   await homeTab(page, "Sana özel").waitFor();
-  await page.getByRole("group", { name: "Gönderi türü" }).first().getByRole("button", { name: "Promptlar" }).click();
+  // Tür çipleri Filtre penceresindedir (docs/history/237-*).
+  await openFilter(page);
+  await sheetChip(page, "Promptlar").click();
+  await closeFilter(page);
   await waitFor(() => state.forYouCalls.some((c) => c.p_kinds?.[0] === "prompt"));
   const call = state.forYouCalls.find((c) => c.p_kinds?.[0] === "prompt");
   for (const key of ["p_authors", "p_tags", "p_tools"]) assert.ok(!(key in call), `Sana özel ${key} almaz`);
