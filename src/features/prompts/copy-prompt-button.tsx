@@ -38,8 +38,9 @@ export function CopyPromptButton({
   className?: string;
   /** "lg" = the detail page's big primary action (a large pill, docs/history/201-*). */
   size?: "sm" | "md" | "lg";
-  /** "primary" = the one filled action of a prompt block (detail page); "link" = bare text action (Meydan card prompt box). */
-  variant?: "outline" | "primary" | "link";
+  /** "primary" = the one filled action of a prompt block (detail page); "link" = bare text action (Meydan card prompt box);
+   *  "segment" = the left half of the detail page's joined Kopyala | Çalıştır pill (docs/history/229-*; the wrapper rounds and clips it). */
+  variant?: "outline" | "primary" | "link" | "segment";
 }) {
   const { t } = useTranslation();
   const { user } = useAuth();
@@ -87,15 +88,16 @@ export function CopyPromptButton({
           ? "border-primary/30 bg-primary-soft text-primary"
           : state === "failed"
             ? "border-danger/40 bg-danger/5 text-danger"
-            : variant === "primary"
+            : variant === "primary" || variant === "segment"
               ? "border-primary bg-primary text-primary-foreground hover:bg-primary-hover"
               : variant === "link"
                 ? "border-transparent bg-transparent font-bold text-primary hover:text-primary-hover"
                 : "border-border-soft bg-surface text-text-secondary hover:border-border hover:text-text",
+        variant === "segment" && "h-11 flex-1 justify-center gap-2 rounded-none border-0 px-5 text-label font-bold focus-visible:ring-inset focus-visible:ring-offset-0",
         className,
       )}
     >
-      <Icon key={state} size={size === "sm" ? 12 : size === "md" ? 14 : 20} className={state === "copied" ? "animate-check-pop" : undefined} />
+      <Icon key={state} size={variant === "segment" ? 16 : size === "sm" ? 12 : size === "md" ? 14 : 20} className={state === "copied" ? "animate-check-pop" : undefined} />
       {displayLabel}
     </button>
   );

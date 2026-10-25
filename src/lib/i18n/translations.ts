@@ -704,6 +704,8 @@ export const translations = {
   // ---- Prompt detail page ----
   "prompt.promptTextHeading": { tr: "Prompt Metni", en: "Prompt Text" },
   "prompt.suggestEdit": { tr: "Düzenleme öner", en: "Suggest an Edit" },
+  "prompt.recommendedTool": { tr: "Önerilen araç: {{tool}}", en: "Recommended tool: {{tool}}" },
+  "prompt.charCount": { tr: "{{count}} karakter", en: "{{count}} characters" },
   "prompt.customizePrompt": { tr: "Promptu kişiselleştir", en: "Customize Prompt" },
   "prompt.outputCaption": { tr: "Prompt sonucu", en: "Prompt result" },
   "source.heading": { tr: "Kaynak ve lisans", en: "Source and license" },

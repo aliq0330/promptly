@@ -80,7 +80,7 @@ await scenario("2. prompt: 'Kaynak ve lisans' kapalı satır + CC BY 4.0 rozeti;
   await notes.getByRole("link", { name: /x\.com\/egeberkina/ }).waitFor();
   assert.equal(await notes.getByRole("button", { name: /Kaynak ve lisans/ }).getAttribute("aria-expanded"), "true");
 });
-await scenario("2b. prompt: Kopyala · Çalıştır · Studio'da aç prompt bloğunun altında; 'Düzenleme öner' en altta; araç adı çift yazılmaz", "prompt", async ({ page }) => {
+await scenario("2b. prompt: Kopyala | Çalıştır · Studio'da aç prompt bloğunun altında; 'Düzenleme öner' bloğun alt satırında (docs/history/229-*); araç adı çift yazılmaz", "prompt", async ({ page }) => {
   const card = page.locator("section#prompt-text");
   await card.waitFor();
   for (const name of [/Kopyala/, /Çalıştır/, /Studio/]) await card.getByRole("button", { name }).or(card.getByRole("link", { name })).first().waitFor();
@@ -88,7 +88,8 @@ await scenario("2b. prompt: Kopyala · Çalıştır · Studio'da aç prompt blo�
   const copy = await box(card.getByRole("button", { name: /Kopyala/ }));
   const suggest = await box(card.getByRole("button", { name: "Düzenleme öner" }));
   assert.ok(copy.top >= text.bottom - 1, "the prompt actions sit under the prompt text (docs/history/201-*)");
-  assert.ok(suggest.top > copy.top, "'Düzenleme öner' is the last row");
+  assert.ok(suggest.top >= text.top && suggest.bottom <= text.bottom + 1, "'Düzenleme öner' sits in the prompt block's footer, not as a row of its own");
+  assert.ok(suggest.bottom <= copy.top + 1, "the action buttons come after the block footer");
   const meta = (await page.getByTestId("detail-meta").textContent()) ?? "";
   assert.match(meta, /GPT Image 1/);
   assert.ok(!/GPT Image GPT Image/.test(meta), "model name is not prefixed with the tool name twice");

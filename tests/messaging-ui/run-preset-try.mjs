@@ -81,14 +81,43 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lan
   } finally { await context.close(); }
 }
 const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: `${SHOTS}/${name}.png`, fullPage: true }); };
+const shotView = async (page, name) => { if (SHOTS) await page.screenshot({ path: `${SHOTS}/${name}.png` }); };
 const overflowFree = (page) => page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1);
 const promptUrl = `${BASE}/prompts/local?id=${ID.prompt}`;
 
-await scenario("1. prompt sayfası: aynı türdeki hazır ayarlar uyuma göre dizilir (eşleşti → kısmen), farklı tür hiç gelmez, nedeni yazılır", async ({ page }) => {
+const openSheet = async (page, name = "Hazır ayarla dene") => {
+  await page.getByRole("button", { name: new RegExp(`^${name}`) }).click();
+  const dialog = page.getByRole("dialog");
+  await dialog.locator("[data-preset-option]").first().waitFor();
+  return dialog;
+};
+
+await scenario("1. prompt sayfası: hazır ayar sayfada gömülü değil; birleşik Kopyala | Çalıştır, Studio'da aç, sayaçlı 'Hazır ayarla dene'; araç ve Düzenleme öner kutunun altında", async ({ page }) => {
   await page.goto(promptUrl);
-  const section = page.locator("#prompt-try");
-  await section.getByRole("heading", { name: "Hazır ayarla dene" }).waitFor();
-  const options = section.locator("[data-preset-option]");
+  const block = page.locator("[data-prompt-block]");
+  await block.waitFor();
+  const trigger = page.getByRole("button", { name: /^Hazır ayarla dene/ });
+  await trigger.waitFor();
+  assert.equal(await page.locator("#prompt-try").count(), 0, "gömülü hazır ayar bölümü yok");
+  assert.equal(await page.locator("[data-preset-option]").count(), 0, "pencere kapalıyken ayar listesi çizilmez");
+  assert.equal((await trigger.locator("[data-fit-count]").textContent()).trim(), "1", "yalnız tam uyan ayarlar sayılır");
+  const joined = page.locator("div.divide-x", { has: page.getByRole("button", { name: "Kopyala" }) });
+  await joined.getByRole("button", { name: "Çalıştır" }).waitFor();
+  await page.getByRole("link", { name: "Studio'da aç" }).waitFor();
+  assert.match(await block.textContent(), /Önerilen araç: GPT Image/);
+  assert.match(await block.textContent(), /\d+ karakter/);
+  await block.getByRole("button", { name: "Düzenleme öner" }).waitFor();
+  assert.equal(await overflowFree(page), true);
+  await shot(page, "1-prompt-desktop");
+});
+
+await scenario("1b. 'Hazır ayarla dene' penceresi: varsayılan yalnız uyumlu olanlar; süzgeç kalkınca aynı türdeki hepsi uyuma göre dizilir (eşleşti → kısmen), farklı tür hiç gelmez, nedeni yazılır", async ({ page }) => {
+  await page.goto(promptUrl);
+  const dialog = await openSheet(page);
+  const options = dialog.locator("[data-preset-option]");
+  assert.equal(await options.count(), 1, "'Uyumlu olanlar' açık: yalnız tam uyan");
+  assert.match(await options.first().textContent(), /Genel portre ayarı/);
+  await dialog.getByRole("button", { name: "Uyumlu olanlar" }).click();
   assert.equal(await options.count(), 3, "metin türündeki hazır ayar listede yok");
   assert.deepEqual(await options.evaluateAll((els) => els.map((el) => el.getAttribute("data-preset-option"))), [P.match, P.mj, P.portrait]);
   assert.equal(await options.first().getAttribute("aria-checked"), "true", "en uyumlu olan varsayılan seçili");
@@ -96,31 +125,33 @@ await scenario("1. prompt sayfası: aynı türdeki hazır ayarlar uyuma göre di
   assert.match(await options.nth(0).textContent(), /Araçtan bağımsız/);
   assert.match(await options.nth(1).textContent(), /Kısmen.*Başka araç: Midjourney/s);
   assert.match(await options.nth(2).textContent(), /Kısmen.*Farklı kategori/s);
-  assert.equal(await overflowFree(page), true);
-  await shot(page, "1-prompt-desktop");
+  await dialog.getByPlaceholder("Hazır ayar ara").fill("odaklı");
+  assert.equal(await options.count(), 1);
+  assert.match(await options.first().textContent(), /Portre odaklı ayar/);
+  await shot(page, "1b-sheet-desktop");
 });
 
-await scenario("2. prompt sayfası: son prompt kaynağı gösterir; Midjourney alanı (--ar) GPT Image'da kapalı, kalan alanlar tek tek açılıp kapanır; Studio bağlantısı ikisini taşır", async ({ page }) => {
+await scenario("2. pencere: son prompt kaynağı gösterir; Midjourney alanı (--ar) GPT Image'da kapalı, kalan alanlar tek tek açılıp kapanır; Studio bağlantısı ikisini taşır", async ({ page }) => {
   await page.goto(promptUrl);
-  const section = page.locator("#prompt-try");
-  await section.locator("[data-preset-option]").first().waitFor();
-  const preview = section.locator("[data-final-prompt]");
+  const dialog = await openSheet(page);
+  await dialog.getByRole("button", { name: "Uyumlu olanlar" }).click();
+  const preview = dialog.locator("[data-final-prompt]");
   assert.ok((await preview.locator("[data-from=preset]").count()) >= 2, "ayarın eklediği parçalar ayrı boyalı");
   assert.ok((await preview.locator("[data-from=prompt]").count()) >= 1);
   assert.match(await preview.textContent(), /85mm/);
   assert.doesNotMatch(await preview.textContent(), /--ar/, "Midjourney parametresi GPT Image'a eklenmez");
-  const mj = section.getByRole("button", { name: /Oran \(--ar\)/ });
+  const mj = dialog.getByRole("button", { name: /Oran \(--ar\)/ });
   assert.equal(await mj.isDisabled(), true);
-  await section.getByText(/Midjourney parametresi: bu modelde kullanılmaz/).waitFor();
-  const lens = section.getByRole("button", { name: "Lens", exact: true });
+  await dialog.getByText(/Midjourney parametresi: bu modelde kullanılmaz/).waitFor();
+  const lens = dialog.getByRole("button", { name: "Lens", exact: true });
   assert.equal(await lens.getAttribute("aria-pressed"), "true");
   await lens.click();
   assert.doesNotMatch(await preview.textContent(), /85mm/, "kapatılan alan son prompttan çıkar");
-  const studio = section.getByRole("link", { name: "Studio'da dene" });
+  const studio = dialog.getByRole("link", { name: "Studio'da dene" });
   assert.match(await studio.getAttribute("href"), new RegExp(`/studio/?\\?prompt=${ID.prompt}&preset=${P.match}$`));
-  await section.locator("[data-preset-option]").nth(1).click();
+  await dialog.locator("[data-preset-option]").nth(1).click();
   assert.match(await studio.getAttribute("href"), new RegExp(`preset=${P.mj}$`), "seçim değişince bağlantı da değişir");
-  await shot(page, "2-prompt-fields");
+  await shot(page, "2-sheet-fields");
 });
 
 await scenario("3. Studio: ?prompt=&preset= ikisi birden — prompt taban, hazır ayar katman; neden/uyum görünür; araca özel alan kapalı; kaldırınca prompt kalır", async ({ page }) => {
@@ -167,26 +198,39 @@ await scenario("4. hazır ayar sayfası: 'Bir promptla dene' uyumlu promptları 
   await page.waitForURL((url) => url.pathname.includes("/studio") && url.searchParams.get("preset") === P.match && url.searchParams.get("prompt") === PROMPTS[0].id);
 });
 
-await scenario("5. telefon 390px: bölüm taşmaz, hazır ayar kartları yatay kayar, düğmeler görünür", async ({ page }) => {
+await scenario("5. telefon 390px: eylemler ve pencere taşmaz; birleşik düğme tam genişlik, alt çubuk düğmeleri görünür", async ({ page }) => {
   await page.goto(promptUrl);
-  const section = page.locator("#prompt-try");
-  await section.locator("[data-preset-option]").first().waitFor();
+  await page.getByRole("button", { name: /^Hazır ayarla dene/ }).waitFor();
   assert.equal(await overflowFree(page), true);
-  await section.getByRole("link", { name: "Studio'da dene" }).waitFor();
-  await section.getByRole("button", { name: "Ayarlı metni kopyala" }).waitFor();
+  const copy = await page.getByRole("button", { name: "Kopyala" }).boundingBox();
+  const run = await page.getByRole("button", { name: "Çalıştır" }).boundingBox();
+  assert.ok(Math.abs(copy.y - run.y) < 2 && run.x > copy.x, "Kopyala | Çalıştır yan yana, tek hap");
   await shot(page, "5-prompt-phone");
+  await page.locator("[data-prompt-block]").scrollIntoViewIfNeeded();
+  await page.evaluate(() => window.scrollBy(0, 160));
+  await shotView(page, "5-actions-phone");
+  const dialog = await openSheet(page);
+  assert.equal(await overflowFree(page), true);
+  await shotView(page, "5-sheet-phone-view");
+  await dialog.getByRole("link", { name: "Studio'da dene" }).waitFor();
+  await dialog.getByRole("button", { name: "Ayarlı metni kopyala" }).waitFor();
+  await shot(page, "5-sheet-phone");
 }, { viewport: { width: 390, height: 844 } });
 
-await scenario("6. İngilizce: bölüm, uyum nedenleri ve alan notu çevrili", async ({ page }) => {
+await scenario("6. İngilizce: eylemler, araç satırı, uyum nedenleri ve alan notu çevrili", async ({ page }) => {
   await page.goto(promptUrl);
-  const section = page.locator("#prompt-try");
-  await section.getByRole("heading", { name: "Try with a preset" }).waitFor();
-  const options = section.locator("[data-preset-option]");
+  const block = page.locator("[data-prompt-block]");
+  await block.waitFor();
+  assert.match(await block.textContent(), /Recommended tool: GPT Image/);
+  assert.match(await block.textContent(), /\d+ characters/);
+  const dialog = await openSheet(page, "Try with a preset");
+  await dialog.getByRole("button", { name: "Compatible ones" }).click();
+  const options = dialog.locator("[data-preset-option]");
   assert.match(await options.nth(0).textContent(), /Matches .* · Any tool/);
   assert.match(await options.nth(1).textContent(), /Partly.*For another tool: Midjourney/s);
-  await section.getByText(/Midjourney parameter: not used with this model/).waitFor();
-  await section.getByRole("button", { name: "Copy adjusted text" }).waitFor();
-  await section.getByRole("link", { name: "Try in Studio" }).waitFor();
+  await dialog.getByText(/Midjourney parameter: not used with this model/).waitFor();
+  await dialog.getByRole("button", { name: "Copy adjusted text" }).waitFor();
+  await dialog.getByRole("link", { name: "Try in Studio" }).waitFor();
 }, { lang: "en" });
 
 await browser.close(); server.close();

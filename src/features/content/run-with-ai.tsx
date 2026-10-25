@@ -28,6 +28,7 @@ export function RunButton({
   promptId,
   preview = false,
   size = "md",
+  variant = "default",
   className,
   disabled,
 }: {
@@ -39,11 +40,14 @@ export function RunButton({
   promptId?: string;
   preview?: boolean;
   size?: "sm" | "md";
+  /** "segment" = the right half of the detail page's joined Kopyala | Çalıştır pill (docs/history/229-*; the wrapper rounds and clips it). */
+  variant?: "default" | "segment";
   className?: string;
   disabled?: boolean;
 }) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
+  const segment = variant === "segment";
   return (
     <>
       <button
@@ -58,10 +62,11 @@ export function RunButton({
           "relative z-10 inline-flex shrink-0 items-center gap-1.5 rounded-sm border border-primary/30 bg-primary-soft font-medium text-primary transition-colors duration-200 ease-soft hover:border-primary/60",
           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50",
           size === "sm" ? "h-7 px-2 text-caption" : "h-9 px-3 text-label",
+          segment && "h-11 flex-1 justify-center gap-2 rounded-none border-0 bg-primary-hover px-5 font-bold text-primary-foreground hover:bg-primary-hover hover:brightness-95 focus-visible:ring-inset focus-visible:ring-offset-0",
           className,
         )}
       >
-        <Play size={size === "sm" ? 12 : 14} aria-hidden />
+        <Play size={segment ? 14 : size === "sm" ? 12 : 14} aria-hidden />
         {t("run.button")}
       </button>
       {open && <RunModal text={text} recommendedRefs={recommendedRefs} promptId={promptId} preview={preview} onClose={() => setOpen(false)} />}
