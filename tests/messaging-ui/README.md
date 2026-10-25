@@ -169,9 +169,9 @@ CHROMIUM_PATH=/opt/pw-browsers/chromium-1243/chrome-linux64/chrome node tests/me
 
 ## Hazır ayarla dene (`docs/history/228-*`)
 
-`run-preset-try.mjs` (8 senaryo): prompt sayfasında birleşik Kopyala | Çalıştır + sayaçlı "Hazır ayarla dene" düğmesi (gömülü bölüm yok, `docs/history/229-*`), "Önerilen araç" satırı ve pencere içinde (aynı tür zorunlu, uyum sırası eşleşti → kısmen, neden satırları, son prompt kaynak renkleri, Midjourney alanı GPT Image'da kapalı, alan alan aç/kapa, Studio bağlantısı `?prompt=&preset=`), Studio'da prompt + hazır ayar birlikte (katman, uyum rozeti, kaldırınca prompt kalır), hazır ayar sayfasında "Bir promptla dene" seçicisi ("Uyumlu olanlar" süzgeci), telefon 390px, İngilizce. Hazır ayar/prompt satırları testin içinde (`presetRow` / `pr`); kategori kimlikleri GERÇEK taksonomi kimlikleridir (bilinmeyen kimlik prompt eşlenirken null olur). Gerçek Supabase'e KARŞI DENENMEDİ — kuralın kendisi `src/lib/preset-fit.test.ts`'tedir.
+`run-preset-try.mjs` (10 senaryo; 3c/3d Studio'da Çalıştır / API seçenekleri + Yayınla, `docs/history/230-*`): prompt sayfasında birleşik Kopyala | Çalıştır + sayaçlı "Hazır ayarla dene" düğmesi (gömülü bölüm yok, `docs/history/229-*`), "Önerilen araç" satırı ve pencere içinde (aynı tür zorunlu, uyum sırası eşleşti → kısmen, neden satırları, son prompt kaynak renkleri, Midjourney alanı GPT Image'da kapalı, alan alan aç/kapa, Studio bağlantısı `?prompt=&preset=`), Studio'da prompt + hazır ayar birlikte (katman, uyum rozeti, kaldırınca prompt kalır), hazır ayar sayfasında "Bir promptla dene" seçicisi ("Uyumlu olanlar" süzgeci), telefon 390px, İngilizce. Hazır ayar/prompt satırları testin içinde (`presetRow` / `pr`); kategori kimlikleri GERÇEK taksonomi kimlikleridir (bilinmeyen kimlik prompt eşlenirken null olur). Gerçek Supabase'e KARŞI DENENMEDİ — kuralın kendisi `src/lib/preset-fit.test.ts`'tedir.
 
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co NEXT_PUBLIC_SUPABASE_ANON_KEY=dummy npm run build
-CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/messaging-ui/run-preset-try.mjs   # 8/8 beklenir
+CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/messaging-ui/run-preset-try.mjs   # 10/10 beklenir
 ```
