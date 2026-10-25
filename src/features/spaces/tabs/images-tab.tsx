@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Grid2x2, ImageIcon, Layers, List, Loader2, Search, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Chip, ChipRow } from "@/components/ui/chip";
+import { SectionMenu } from "@/features/content/section-menu";
 import { EmptyState } from "@/components/ui/empty-state";
 import { imageSourceProblem } from "@/lib/image-processing";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -140,21 +141,37 @@ export function ImagesTab({ onShowOnBoard, focusId }: { onShowOnBoard: (id: stri
         </div>
       </div>
 
-      {groups.length > 0 && (
-        <ChipRow aria-label={t("spaces.groups.filter")}>
-          <Chip selected={group === "all"} onClick={() => setGroup("all")}>
-            {t("spaces.groups.all")}
-          </Chip>
-          {groups.map((entry) => (
-            <Chip key={entry.id} selected={group === entry.id} onClick={() => setGroup(entry.id)}>
-              {entry.name}
+      {groups.length > 0 &&
+        (groups.length + 2 >= 4 ? (
+          // docs/history/236-*: dört ya da daha çok grup seçeneği tek menüde; az olunca çipler kalır.
+          <div className="flex items-center">
+            <SectionMenu
+              items={[
+                { key: "all", label: t("spaces.groups.all") },
+                ...groups.map((entry) => ({ key: entry.id, label: entry.name })),
+                { key: "none", label: t("spaces.groups.none") },
+              ]}
+              active={group}
+              onChange={setGroup}
+              ariaLabel={t("spaces.groups.filter")}
+              title={t("spaces.groups.filter")}
+            />
+          </div>
+        ) : (
+          <ChipRow aria-label={t("spaces.groups.filter")}>
+            <Chip selected={group === "all"} onClick={() => setGroup("all")}>
+              {t("spaces.groups.all")}
             </Chip>
-          ))}
-          <Chip selected={group === "none"} onClick={() => setGroup("none")}>
-            {t("spaces.groups.none")}
-          </Chip>
-        </ChipRow>
-      )}
+            {groups.map((entry) => (
+              <Chip key={entry.id} selected={group === entry.id} onClick={() => setGroup(entry.id)}>
+                {entry.name}
+              </Chip>
+            ))}
+            <Chip selected={group === "none"} onClick={() => setGroup("none")}>
+              {t("spaces.groups.none")}
+            </Chip>
+          </ChipRow>
+        ))}
 
       {uploadErrors.length > 0 && (
         <div role="alert" className="space-y-1 rounded-md bg-danger/10 px-3 py-2 text-small text-danger">

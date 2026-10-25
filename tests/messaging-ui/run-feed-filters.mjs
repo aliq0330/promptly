@@ -541,7 +541,7 @@ await scenario("16. Arama seçili bölüme göre: Promptlar'da yalnız prompt ar
   await page.getByPlaceholder("Prompt veya kullanıcı ara").first().fill("kedi");
   await waitFor(() => (state.searchCalls ?? []).length >= 4);
   assert.deepEqual([...new Set(state.searchCalls.map((c) => c.p_kind))].sort(), ["preset", "prompt", "request", "workflow"]);
-  await page.getByRole("tab", { name: "Gönderiler" }).waitFor();
+  await page.locator("[data-section-menu]").filter({ hasText: "Tümü" }).waitFor(); // sonuç türü menüsü (docs/history/236-*)
   // Promptlar bölümü.
   await page.goto(`${BASE}/discover`);
   state.searchCalls = [];
@@ -551,7 +551,7 @@ await scenario("16. Arama seçili bölüme göre: Promptlar'da yalnız prompt ar
   await waitFor(() => (state.searchCalls ?? []).length >= 1);
   await page.waitForTimeout(500);
   assert.deepEqual([...new Set(state.searchCalls.map((c) => c.p_kind))], ["prompt"], "yalnız prompt aranır");
-  assert.equal(await page.getByRole("tab", { name: "Gönderiler" }).count(), 0, "kapsamlı aramada sekme satırı yok");
+  assert.equal(await page.locator("[data-section-menu]").count(), 0, "kapsamlı aramada sonuç türü menüsü yok");
   // Araçlar bölümü: ağ araması yok, katalog süzülür.
   await page.goto(`${BASE}/discover`);
   state.searchCalls = [];

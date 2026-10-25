@@ -7,7 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
 import { Chip, ChipRow } from "@/components/ui/chip";
-import { Tabs } from "@/components/ui/tabs";
+import { SectionMenu } from "@/features/content/section-menu";
+import { Hash, LayoutGrid, SquareTerminal, Users, UsersRound, Bot, type LucideIcon } from "lucide-react";
 import { PromptGrid } from "@/features/prompts/prompt-grid";
 import { RequestList } from "@/features/requests/request-list";
 import { TaxonomyFilter } from "@/features/content/taxonomy-filter";
@@ -58,6 +59,7 @@ const SEARCH_TABS: { key: SearchTab; labelKey: TranslationKey }[] = [
   { key: "people", labelKey: "search.tabPeople" },
   { key: "communities", labelKey: "nav.communities" },
 ];
+const SEARCH_TAB_ICON: Record<SearchTab, LucideIcon> = { all: LayoutGrid, posts: SquareTerminal, people: Users, communities: UsersRound, tags: Hash, tools: Bot };
 const isSearchTab = (value: string | null): value is SearchTab => SEARCH_TABS.some((tab) => tab.key === value);
 
 /**
@@ -358,12 +360,10 @@ export function SearchView({ idle, scope }: { idle?: ReactNode; scope?: SearchSc
           />
         )}
         {active && !scope && (
-          <Tabs
-            items={SEARCH_TABS.map((item) => ({ key: item.key, label: t(item.labelKey) }))}
-            active={tab}
-            onChange={setTab}
-            ariaLabel={t("search.tabsAria")}
-          />
+          // docs/history/236-*: sonuç türleri (Tümü · Gönderiler · Kişiler · Topluluklar) tek menüde (4+ bölüm kuralı).
+          <div className="flex items-center">
+            <SectionMenu items={SEARCH_TABS.map((item) => ({ key: item.key, label: t(item.labelKey), icon: SEARCH_TAB_ICON[item.key] }))} active={tab} onChange={setTab} ariaLabel={t("search.tabsAria")} title={t("search.tabsAria")} />
+          </div>
         )}
         {active && showPosts && (
           <div className="flex items-center gap-2">
