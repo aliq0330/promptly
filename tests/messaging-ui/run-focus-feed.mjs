@@ -185,8 +185,8 @@ await scenario("1. Ana Sayfa değişmedi: Akış seçeneği yok, seçici Kart | 
   await page.goto(`${BASE}/`);
   await page.locator("article").first().waitFor();
   assert.equal(await stage(page).count(), 0);
-  const group = page.getByRole("group", { name: "Görünüm modu" }).first();
-  assert.deepEqual(await group.getByRole("button").allTextContents(), ["Kart", "Izgara"]);
+  // Kart | Izgara tek simge düğmesidir (docs/history/237-*): kart görünümünde "Izgara'ya geç" der, listede tek tane var.
+  assert.equal(await page.locator("[data-view-toggle='card']").count() >= 1, true, "Kart | Izgara simgesi sekme satırında");
   const link = page.locator("header[data-app-header] a[href*='/focus']");
   assert.equal(await link.count(), 1, "header has Odak");
   assert.equal(await page.locator("aside[aria-label] a[href*='/focus']").count(), 0, "sidebar no longer lists Odak (docs/history/227-*)");

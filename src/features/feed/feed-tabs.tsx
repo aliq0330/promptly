@@ -170,11 +170,7 @@ export function FeedTabs({ layout = "grid" }: { layout?: "grid" | "home" } = {})
           active={active}
           onChange={setActive}
           ariaLabel={t("feed.viewAriaLabel")}
-          spread
           variant="tabs"
-          chips={kindChips}
-          chipsLabel={t("toolbar.postKindAria")}
-          chipsOnMobile
           sheetSections={sheetSections}
           activeCount={activeCount}
           onClear={clearFilters}
