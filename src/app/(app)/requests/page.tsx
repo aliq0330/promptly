@@ -42,7 +42,6 @@ export default function RequestsPage() {
   return (
     <ContentListPage
       icon={Sparkles}
-      eyebrow={t("request.communityEyebrow")}
       title={t("nav.requests")}
       description={t("request.pageDescription")}
       createHref="/requests/new"
@@ -58,7 +57,6 @@ export default function RequestsPage() {
       extra={<SheetChips>{statusChips}</SheetChips>}
       desktopActiveExtra={status === "all" ? 0 : 1}
       onClearExtra={() => setStatus("all")}
-      mobileTabs={statusChips}
       searchPlaceholder={t("search.placeholderRequests")}
       renderItems={(items) => <RequestList requests={items} />}
       focusKind="request"

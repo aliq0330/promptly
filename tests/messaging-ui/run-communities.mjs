@@ -627,7 +627,11 @@ await scenario("19b. Davet bağlantısı: kurallar sayfada görünür; kabul zor
 
 await scenario("20. Mesajlar: 'Yeni sohbet' penceresinde 'Topluluklar' kısayolu var, 'Yeni grup' (bağımsız grup oluşturma) yok; liste başlığında Topluluklar bağlantısı", async ({ page, db }) => {
   await page.goto(`${BASE}/messages`);
-  await page.locator("a[aria-label='Topluluklara git']:visible").first().waitFor();
+  // Mesajlar menüsünde "Topluluk sohbetleri" satırı Topluluklar'a götürür (docs/history/234-*).
+  await page.locator("[data-section-menu]:visible").first().click();
+  await page.getByRole("radio", { name: "Topluluklara git" }).waitFor();
+  await page.keyboard.press("Escape");
+  await page.mouse.click(5, 5);
   await page.locator("button[aria-label='Yeni sohbet başlat']:visible").first().click();
   await dlg(page).getByRole("link", { name: /Topluluklar — keşfet, katıl ve oluştur/ }).waitFor();
   assert.equal(await dlg(page).getByRole("button", { name: /Yeni topluluk|Yeni grup/ }).count(), 0, "no standalone group creation from Messages");

@@ -1,25 +1,25 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
-import { ChevronDown, Info, Plus } from "lucide-react";
-import { Button, buttonClassName } from "@/components/ui/button";
-import { Collapsible } from "@/components/ui/collapsible";
+import { LayoutGrid } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
-import { PageContainer, PageHeader } from "@/components/ui/page-header";
+import { PageContainer } from "@/components/ui/page-header";
 import { PromptCardSkeletonGrid } from "@/components/ui/prompt-card-skeleton";
 import { type ContentSortKey } from "@/features/content/sort-select";
-import { ListToolbar, SheetSection, TaxonomySheetSections, taxonomyActiveCount } from "@/features/content/list-toolbar";
+import { SheetSection, TaxonomySheetSections, taxonomyActiveCount } from "@/features/content/list-toolbar";
+import { ListControlRow, SadeTitle } from "@/features/content/list-control-row";
+import { type SectionMenuItem } from "@/features/content/section-menu";
+import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
 import { useViewMode } from "@/features/content/view-mode-store";
 import { FocusGrid } from "@/features/focus/focus-grid";
 import type { FeedItem } from "@/features/feed/types";
-import { TaxonomyTypeChips } from "@/features/content/taxonomy-filter";
 import { AdvancedSearchBox } from "@/features/search/advanced-search-box";
 import { tokensToQuery, type SearchToken } from "@/features/search/search-tokens";
-import { EMPTY_TAXONOMY_FILTER, matchesTaxonomy, type TaxonomyFilterValue } from "@/lib/content-taxonomy";
+import { CONTENT_TYPE_IDS, EMPTY_TAXONOMY_FILTER, matchesTaxonomy, type TaxonomyFilterValue } from "@/lib/content-taxonomy";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import { cn } from "@/lib/utils";
+import type { PromptContentType } from "@/types";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import type { ContentSearchFilters } from "@/lib/supabase/taxonomy-query";
 import type { SearchCursor, SearchPage } from "@/lib/supabase/search";
@@ -42,7 +42,6 @@ const DEBOUNCE_MS = 300;
  */
 export function ContentListPage<T extends { id: string; createdAt: string; likeCount: number; contentType?: string | null; category?: string | null; subcategory?: string | null }>({
   icon,
-  eyebrow,
   title,
   description,
   createHref,
@@ -58,7 +57,6 @@ export function ContentListPage<T extends { id: string; createdAt: string; likeC
   extra,
   desktopActiveExtra = 0,
   onClearExtra,
-  mobileTabs,
   searchPlaceholder,
   renderItems,
   focusKind,
@@ -69,7 +67,6 @@ export function ContentListPage<T extends { id: string; createdAt: string; likeC
   onLoadMore,
 }: {
   icon: LucideIcon;
-  eyebrow: string;
   title: string;
   description: string;
   createHref: string;
@@ -83,12 +80,10 @@ export function ContentListPage<T extends { id: string; createdAt: string; likeC
   showCategories?: boolean;
   postFilter?: (items: T[]) => T[];
   /** Extra chip row under the type chips (md+). */
-  /** Page-specific filter (e.g. request status chips) — lives in the Filtre sheet from `md` up; on phones the page passes it as `mobileTabs`. */
+  /** Page-specific filter (e.g. request status chips) — a section of the Filtre sheet at every width. */
   extra?: ReactNode;
   desktopActiveExtra?: number;
   onClearExtra?: () => void;
-  /** Phones: these chips become the tab row (e.g. request status) and the content-type chips move into the filter sheet. */
-  mobileTabs?: ReactNode;
   searchPlaceholder?: string;
   renderItems: (items: T[]) => ReactNode;
   /** What the items are, so the Focus View ("Izgara") can render them; `renderItems` stays the Card view. */
@@ -104,7 +99,7 @@ export function ContentListPage<T extends { id: string; createdAt: string; likeC
   const [tokens, setTokens] = useState<SearchToken[]>([]);
   const [text, setText] = useState("");
   const [sort, setSort] = useState<ContentSortKey>("newest");
-  const [stepsOpen, setStepsOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const [taxonomy, setTaxonomy] = useState<TaxonomyFilterValue>(EMPTY_TAXONOMY_FILTER);
   const [viewMode] = useViewMode();
   const [results, setResults] = useState<T[] | null>(null);
@@ -179,87 +174,64 @@ export function ContentListPage<T extends { id: string; createdAt: string; likeC
     );
   }, [results, baseItems, taxonomy, matches, postFilter, sort]);
 
+  const menuItems: SectionMenuItem<"all" | PromptContentType>[] = [
+    { key: "all", label: t("common.all"), icon: LayoutGrid },
+    ...CONTENT_TYPE_IDS.map((type) => ({ key: type, label: t(CONTENT_TYPE_META[type].labelKey), icon: CONTENT_TYPE_META[type].icon })),
+  ];
+  const statusActive = desktopActiveExtra;
+
   return (
-    <PageContainer className="space-y-6">
-      <PageHeader
-        eyebrow={eyebrow}
-        icon={icon}
-        title={title}
-        description={description}
-        actions={
-          <Link href={createHref} className={buttonClassName({ size: "sm" })}>
-            <Plus size={15} />
-            {createLabel}
-          </Link>
-        }
-      />
-
-      {/* "How it works" is onboarding, not content: one slim toggle instead of
-          three always-open cards pushing the list below the fold. */}
-      <div className="-mt-2">
-        <button
-          type="button"
-          onClick={() => setStepsOpen((open) => !open)}
-          aria-expanded={stepsOpen}
-          aria-controls="list-how-it-works"
-          className="inline-flex min-h-9 items-center gap-1.5 rounded-md px-1 text-label font-medium text-text-secondary transition-colors hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-        >
-          <Info size={15} aria-hidden />
-          {t("list.howItWorks")}
-          <ChevronDown size={15} className={cn("transition-transform duration-200", stepsOpen && "rotate-180")} aria-hidden />
-        </button>
-        <Collapsible open={stepsOpen} id="list-how-it-works">
-          {/* Phones: a swipeable row of full-width-ish steps; sm+: the three-up grid. */}
-          <ol
-            className="scrollbar-none -mx-3 flex touch-pan-x snap-x snap-mandatory gap-2 overflow-x-auto overscroll-x-contain px-3 pb-1 pt-2 sm:mx-0 sm:grid sm:grid-cols-3 sm:gap-3 sm:overflow-visible sm:px-0"
-            aria-label={t("list.howItWorks")}
-          >
-            {steps.map((step, index) => (
-              <li
-                key={step.titleKey}
-                className="flex w-[78%] shrink-0 snap-start items-start gap-3 rounded-lg border border-border-soft bg-surface p-3.5 shadow-card sm:w-auto"
-              >
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary-soft text-primary">
-                  <step.icon size={16} strokeWidth={2} />
-                </span>
-                <span className="min-w-0 leading-tight">
-                  <span className="block text-[0.6875rem] font-semibold uppercase tracking-[0.07em] text-text-muted">
-                    {t("list.step")} {index + 1}
-                  </span>
-                  <span className="mt-1 block text-label font-semibold text-text">{t(step.titleKey)}</span>
-                  <span className="mt-1 block text-caption leading-snug text-text-muted">{t(step.bodyKey)}</span>
-                </span>
-              </li>
-            ))}
-          </ol>
-        </Collapsible>
-      </div>
-
-      <div className="space-y-3">
-        <AdvancedSearchBox
-          tokens={tokens}
-          onTokensChange={setTokens}
-          text={text}
-          onTextChange={setText}
-          hideKindSuggestions
-          placeholder={searchPlaceholder}
-        />
-        <ListToolbar
-          tabs={<TaxonomyTypeChips value={taxonomy} onChange={setTaxonomy} />}
-          tabsLabel={t("toolbar.contentTypeAria")}
-          mobileTabs={mobileTabs}
-          sort={sort}
-          onSortChange={setSort}
-          sheetSections={<TaxonomySheetSections value={taxonomy} onChange={setTaxonomy} showCategories={showCategories} />}
-          activeCount={taxonomyActiveCount(taxonomy, mobileTabs !== undefined)}
-          desktopSheetSections={extra ? <SheetSection title={t("toolbar.status")}>{extra}</SheetSection> : undefined}
-          desktopActiveExtra={desktopActiveExtra}
-          onClear={() => {
+    <PageContainer className="space-y-5 pb-16 pt-3 sm:pt-5">
+      <SadeTitle>{title}</SadeTitle>
+      {/* Sade düzen (docs/history/234-*): tek "Tümü ▾" tür menüsü + arama · Filtre · Kart/Izgara · "+". Eski açıklama, "nasıl çalışır" adımları ve sayfaya özel süzgeçler (istek durumu) Filtre penceresindedir. */}
+      <ListControlRow
+        menu={{
+          items: menuItems,
+          active: taxonomy.contentType ?? "all",
+          onChange: (key) => setTaxonomy({ contentType: key === "all" ? null : key, category: null, subcategory: null }),
+          ariaLabel: t("toolbar.contentTypeAria"),
+          title,
+        }}
+        search={{ open: searchOpen || active, onToggle: () => (active ? (setTokens([]), setText(""), setSearchOpen(false)) : setSearchOpen((open) => !open)), label: t("header.searchAriaLabel") }}
+        filter={{
+          sheetSections: (
+            <>
+              <TaxonomySheetSections value={taxonomy} onChange={setTaxonomy} showCategories={showCategories} />
+              {extra ? <SheetSection title={t("toolbar.status")}>{extra}</SheetSection> : null}
+              <SheetSection title={t("list.howItWorks")}>
+                <p className="text-small text-text-muted">{description}</p>
+                <ol aria-label={t("list.howItWorks")} className="space-y-2">
+                  {steps.map((step, index) => (
+                    <li key={step.titleKey} className="flex items-start gap-3 rounded-lg border border-border-soft bg-surface p-3">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary-soft text-primary">
+                        <step.icon size={16} strokeWidth={2} />
+                      </span>
+                      <span className="min-w-0 leading-tight">
+                        <span className="block text-[0.6875rem] font-semibold uppercase tracking-[0.07em] text-text-muted">
+                          {t("list.step")} {index + 1}
+                        </span>
+                        <span className="mt-1 block text-label font-semibold text-text">{t(step.titleKey)}</span>
+                        <span className="mt-1 block text-caption leading-snug text-text-muted">{t(step.bodyKey)}</span>
+                      </span>
+                    </li>
+                  ))}
+                </ol>
+              </SheetSection>
+            </>
+          ),
+          sort,
+          onSortChange: setSort,
+          activeCount: taxonomyActiveCount(taxonomy, false) + statusActive,
+          onClear: () => {
             setTaxonomy(EMPTY_TAXONOMY_FILTER);
             onClearExtra?.();
-          }}
-        />
-      </div>
+          },
+        }}
+        create={{ href: createHref, label: createLabel }}
+      />
+      {(searchOpen || active) && (
+        <AdvancedSearchBox tokens={tokens} onTokensChange={setTokens} text={text} onTextChange={setText} hideKindSuggestions placeholder={searchPlaceholder} />
+      )}
 
       {(loading && baseItems.length === 0 && !active) || searching ? (
         <PromptCardSkeletonGrid count={3} />

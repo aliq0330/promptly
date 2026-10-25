@@ -1,15 +1,26 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { X } from "lucide-react";
+import { CheckCheck, Info, LayoutGrid, MessageCircle, Sparkles, SquareTerminal, Trash2, UserPlus, Users, type LucideIcon } from "lucide-react";
 import { NotificationList } from "@/features/notifications/notification-list";
-import { NotificationCategoryFilter } from "@/features/notifications/notification-category-filter";
+import { ListControlRow, SadeTitle } from "@/features/content/list-control-row";
+import { CONTROL_ICON_BUTTON, type SectionMenuItem } from "@/features/content/section-menu";
 import { useNotifications } from "@/features/notifications/notifications-provider";
-import { notificationCategory, type NotificationCategory } from "@/lib/notification-utils";
+import { CATEGORY_FILTERS, notificationCategory, type NotificationCategory } from "@/lib/notification-utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import { buttonClassName } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { ConfirmDialog } from "@/features/groups/confirm-dialog";
 import { useAsyncAction } from "@/features/groups/use-async-action";
+
+const CATEGORY_ICONS: Record<"all" | NotificationCategory, LucideIcon> = {
+  all: LayoutGrid,
+  posts: SquareTerminal,
+  requests: Sparkles,
+  follow: UserPlus,
+  messages: MessageCircle,
+  community: Users,
+  system: Info,
+};
 
 export default function NotificationsPage() {
   const { t } = useTranslation();
@@ -28,31 +39,49 @@ export default function NotificationsPage() {
 
   const hasUnread = notifications.some((n) => !n.isRead);
 
+  const unreadIn = (key: "all" | NotificationCategory) =>
+    notifications.filter((n) => !n.isRead && (key === "all" || notificationCategory(n) === key)).length;
+  const menuItems: SectionMenuItem<"all" | NotificationCategory>[] = CATEGORY_FILTERS.map((filter) => ({
+    key: filter.key,
+    label: t(filter.labelKey),
+    icon: CATEGORY_ICONS[filter.key],
+    count: unreadIn(filter.key) || undefined,
+    // "Tümü" is the first group; the topical categories follow after a divider.
+    dividerBefore: filter.key === "posts",
+  }));
+
   return (
-    <div className="mx-auto w-full max-w-3xl px-3 py-5 sm:px-5 sm:py-6 lg:px-8 lg:py-8">
-      <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
-        <h1 className="text-h1 font-bold text-text">{t("header.notificationsAriaLabel")}</h1>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={markAllRead}
-            disabled={!hasUnread}
-            className={buttonClassName({ size: "sm", variant: "outline" })}
-          >
-            {t("notifications.markAllRead")}
-          </button>
-          <button
-            type="button"
-            onClick={() => setConfirmClear(true)}
-            disabled={notifications.length === 0}
-            aria-label={t("notifications.clearAll")}
-            title={t("notifications.clearAll")}
-            className={buttonClassName({ size: "sm", variant: "outline", className: "px-2.5" })}
-          >
-            <X size={16} aria-hidden />
-          </button>
-        </div>
-      </div>
+    <div className="mx-auto w-full max-w-3xl space-y-5 px-3 pb-16 pt-3 sm:px-5 sm:pt-5 lg:px-8">
+      <SadeTitle>{t("header.notificationsAriaLabel")}</SadeTitle>
+      {/* Sade düzen (docs/history/234-*): tek "Tümü ▾" kategori menüsü (okunmamış sayılarıyla) + tümünü okundu say + hepsini sil. */}
+      <ListControlRow
+        showView={false}
+        menu={{ items: menuItems, active: category, onChange: setCategory, ariaLabel: t("notifications.categoriesAria"), title: t("header.notificationsAriaLabel") }}
+        trailing={
+          <>
+            <button
+              type="button"
+              onClick={markAllRead}
+              disabled={!hasUnread}
+              aria-label={t("notifications.markAllRead")}
+              title={t("notifications.markAllRead")}
+              className={cn(CONTROL_ICON_BUTTON, "disabled:cursor-not-allowed disabled:opacity-40")}
+            >
+              <CheckCheck size={22} strokeWidth={1.75} aria-hidden />
+            </button>
+            <button
+              type="button"
+              onClick={() => setConfirmClear(true)}
+              disabled={notifications.length === 0}
+              aria-label={t("notifications.clearAll")}
+              title={t("notifications.clearAll")}
+              className={cn(CONTROL_ICON_BUTTON, "disabled:cursor-not-allowed disabled:opacity-40")}
+            >
+              <Trash2 size={22} strokeWidth={1.75} aria-hidden />
+            </button>
+          </>
+        }
+      />
       {confirmClear && (
         <ConfirmDialog
           id="clear-notifications-title"
@@ -74,7 +103,6 @@ export default function NotificationsPage() {
           }}
         />
       )}
-      <NotificationCategoryFilter active={category} onChange={setCategory} />
       <NotificationList
         notifications={filtered}
         onRead={markRead}

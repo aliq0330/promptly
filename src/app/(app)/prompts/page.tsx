@@ -13,7 +13,6 @@ export default function PromptsPage() {
   return (
     <ContentListPage
       icon={SquareTerminal}
-      eyebrow={t("prompts.eyebrow")}
       title={t("prompts.pageTitle")}
       description={t("prompts.pageDescription")}
       createHref="/create?mode=prompt"

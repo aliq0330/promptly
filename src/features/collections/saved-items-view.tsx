@@ -1,17 +1,21 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Bookmark } from "lucide-react";
+import { ScrollRow } from "@/components/ui/scroll-row";
 import { StorageImage } from "@/components/ui/storage-media";
 import { DetailSkeleton } from "@/components/ui/detail-skeleton";
 import { CollectionEntryList } from "./collection-entry-list";
 import { entryImage } from "./collection-band";
+import { CollectionCover } from "./collection-card";
 import { CollageArt, DetailBand, DetailShell, DetailTitle, Eyebrow } from "@/features/content/detail-parts";
 import { useAuth } from "@/features/auth/auth-provider";
 import { engagementStore } from "@/features/content/engagement-store";
-import { fetchSavedItems, type CollectionEntry } from "@/lib/supabase/collections";
+import { fetchOwnCollections, fetchSavedItems, type CollectionEntry } from "@/lib/supabase/collections";
+import { collectionHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import type { PromptMedia } from "@/types";
+import type { Collection, PromptMedia } from "@/types";
 
 /**
  * `/saved` — "Kaydedilenler": every distinct work in at least one of the
@@ -27,6 +31,17 @@ export function SavedItemsView() {
   const [items, setItems] = useState<CollectionEntry[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [collections, setCollections] = useState<Collection[]>([]);
+
+  // "Koleksiyonlarım" shelf (docs/history/234-*): the viewer's own collections, each opening its own page; a failure just leaves the shelf out.
+  useEffect(() => {
+    let cancelled = false;
+    if (!user) return;
+    fetchOwnCollections(user.id).then((list) => !cancelled && setCollections(list));
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
 
   useEffect(() => {
     let cancelled = false;
@@ -71,6 +86,22 @@ export function SavedItemsView() {
       }
     >
       <div className="space-y-4">
+        {collections.length > 0 && (
+          <section aria-labelledby="saved-collections" data-saved-collections="" className="space-y-2">
+            <h2 id="saved-collections" className="px-1 text-label font-semibold uppercase tracking-[0.08em] text-text-muted">
+              {t("saved.myCollections")}
+            </h2>
+            <ScrollRow className="gap-3">
+              {collections.map((collection) => (
+                <Link key={collection.id} href={collectionHref(collection)} className="group w-[8.75rem] shrink-0 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+                  <CollectionCover collection={collection} className="aspect-[7/5] w-full overflow-hidden rounded-2xl" />
+                  <p className="mt-2 truncate text-small font-medium text-text group-hover:text-primary">{collection.name}</p>
+                  <p className="text-caption tabular-nums text-text-muted">{t("collection.itemCount", { count: collection.itemCount })}</p>
+                </Link>
+              ))}
+            </ScrollRow>
+          </section>
+        )}
         <CollectionEntryList
           items={items}
           searchPlaceholderKey="saved.searchPlaceholder"

@@ -1,9 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { FolderOpen, Search, SearchX, X } from "lucide-react";
+import { FolderOpen, LayoutGrid, Search, SearchX, SlidersHorizontal, SquareTerminal, Users, Workflow as WorkflowIcon, X } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Chip, ChipRow } from "@/components/ui/chip";
+import type { LucideIcon } from "lucide-react";
+import { ListControlRow } from "@/features/content/list-control-row";
+import type { SectionMenuItem } from "@/features/content/section-menu";
 import { PromptCard } from "@/features/prompts/prompt-card";
 import { WorkflowCard } from "@/features/workflows/workflow-card";
 import { PresetCard } from "@/features/presets/preset-card";
@@ -16,7 +18,6 @@ import type { CollectionEntry } from "@/lib/supabase/collections";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import { CONTENT_GRID_ITEM_CLASS, ContentGrid } from "@/features/content/content-card";
 import { useViewMode } from "@/features/content/view-mode-store";
-import { ViewModeControls } from "@/features/content/view-mode-switcher";
 import { FocusGrid } from "@/features/focus/focus-grid";
 import type { FeedItem } from "@/features/feed/types";
 
@@ -53,6 +54,7 @@ export function CollectionEntryList({
   const { t } = useTranslation();
   const [query, setQuery] = useState("");
   const [type, setType] = useState<CollectionEntry["type"] | "all">("all");
+  const [searchOpen, setSearchOpen] = useState(false);
   const [viewMode] = useViewMode();
 
   // Kind chips with their counts (docs/history/203-*), only when the list holds more than one kind.
@@ -74,47 +76,46 @@ export function CollectionEntryList({
     });
   }, [items, activeType, normalizedQuery]);
 
+  // Sade kontrol satırı (docs/history/234-*): tür menüsü (yalnız birden çok tür varken; sayılar satırlarda) · arama simgesi (alanı açar) · Kart/Izgara.
+  const searching = searchOpen || query !== "";
+  const menuItems: SectionMenuItem<CollectionEntry["type"] | "all">[] = [
+    { key: "all", label: t("common.all"), icon: LayoutGrid, meta: items.length },
+    ...typeCounts.map((item) => ({ key: item.key, label: t(ENTRY_TYPE_LABELS[item.key]), icon: ENTRY_TYPE_ICONS[item.key], meta: item.count })),
+  ];
+
   return (
     <>
-      {items.length > 0 && (
-        <div className="flex items-center gap-2">
-          <div className="relative min-w-0 flex-1">
-            <Search size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" aria-hidden />
+      {items.length > 0 &&
+        (searching ? (
+          <form role="search" className="relative" onSubmit={(event) => event.preventDefault()}>
+            <Search size={20} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" aria-hidden />
             <input
               type="search"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder={t(searchPlaceholderKey)}
               aria-label={t(searchPlaceholderKey)}
-              className="h-11 w-full rounded-full border border-border-soft bg-surface pl-10 pr-10 text-body text-text shadow-xs outline-none transition-colors placeholder:text-text-muted hover:border-border focus:border-primary focus-visible:ring-2 focus-visible:ring-primary/30 [&::-webkit-search-cancel-button]:hidden"
+              autoFocus
+              className="h-12 w-full rounded-xl border-2 border-primary bg-surface pl-11 pr-12 text-body text-text placeholder:text-text-muted [&::-webkit-search-cancel-button]:hidden"
             />
-            {query && (
-              <button
-                type="button"
-                onClick={() => setQuery("")}
-                aria-label={t("common.clear")}
-                className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-text-muted hover:bg-surface-soft hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-              >
-                <X size={15} aria-hidden />
-              </button>
-            )}
-          </div>
-          <ViewModeControls />
-        </div>
-      )}
-
-      {typeCounts.length > 1 && (
-        <ChipRow scroll aria-label={t("collection.typeFilterAria")}>
-          <Chip selected={activeType === "all"} onClick={() => setType("all")}>
-            {t("common.all")} <span className="tabular-nums opacity-70">{items.length}</span>
-          </Chip>
-          {typeCounts.map((item) => (
-            <Chip key={item.key} selected={activeType === item.key} onClick={() => setType(item.key)}>
-              {t(ENTRY_TYPE_LABELS[item.key])} <span className="tabular-nums opacity-70">{item.count}</span>
-            </Chip>
-          ))}
-        </ChipRow>
-      )}
+            <button
+              type="button"
+              onClick={() => {
+                setQuery("");
+                setSearchOpen(false);
+              }}
+              aria-label={t("common.clear")}
+              className="absolute right-1.5 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-lg text-text hover:bg-surface-soft"
+            >
+              <X size={20} aria-hidden />
+            </button>
+          </form>
+        ) : (
+          <ListControlRow
+            menu={typeCounts.length > 1 ? { items: menuItems, active: activeType, onChange: setType, ariaLabel: t("collection.typeFilterAria"), title: t("common.all") } : undefined}
+            search={{ open: false, onToggle: () => setSearchOpen(true), label: t(searchPlaceholderKey) }}
+          />
+        ))}
 
       {items.length > 0 && visibleItems.length === 0 ? (
         <EmptyState
@@ -139,6 +140,7 @@ export function CollectionEntryList({
 }
 
 const ENTRY_TYPES: CollectionEntry["type"][] = ["prompt", "workflow", "preset", "community_post"];
+const ENTRY_TYPE_ICONS: Record<CollectionEntry["type"], LucideIcon> = { prompt: SquareTerminal, workflow: WorkflowIcon, preset: SlidersHorizontal, community_post: Users };
 const ENTRY_TYPE_LABELS: Record<CollectionEntry["type"], TranslationKey> = {
   prompt: "feed.filterPrompts",
   workflow: "nav.workflows",
