@@ -119,25 +119,19 @@ await scenario("3. masaüstü: üzerine gelince ok düğmeleri; ok bastıkça ka
   assert.equal(await next.count(), 0, "the right arrow is gone at the end");
 });
 
-await scenario("4. profil sekmeleri: dar masaüstünde tekerlekle gezilir", async ({ page, db }) => {
+await scenario("4. profil bölüm menüsü: dar masaüstünde sekme satırı yok, menü açılıp seçilir, yatay taşma yok (docs/history/233-*)", async ({ page, db }) => {
   withCollections(db, U.bob);
   await page.setViewportSize({ width: 700, height: 800 });
   await page.goto(`${BASE}/profile/real?username=${U.bob.username}`);
-  const tabs = page.getByRole("tablist", { name: "Profil bölümleri" });
-  await tabs.waitFor();
-  assert.equal(await tabs.evaluate((el) => el.scrollWidth > el.clientWidth), true, "tabs overflow at 700px");
-  assert.equal(await wheel(tabs, 120), true);
-  assert.ok((await left(tabs)) > 60);
-  const lastTab = tabs.getByRole("tab").last();
-  await lastTab.click();
-  await page.waitForTimeout(150);
-  const visible = await tabs.evaluate((list) => {
-    const tab = list.querySelector('[role="tab"][aria-selected="true"]');
-    const a = list.getBoundingClientRect();
-    const b = tab.getBoundingClientRect();
-    return b.left >= a.left - 1 && b.right <= a.right + 1;
-  });
-  assert.equal(visible, true, "the chosen tab is fully inside the row");
+  const menu = page.locator("[data-section-menu]");
+  await menu.waitFor();
+  assert.equal(await page.getByRole("tablist", { name: "Profil bölümleri" }).count(), 0, "profil sekme satırı yok");
+  await menu.click();
+  const options = page.getByRole("radiogroup", { name: "Profil bölümleri" }).getByRole("radio");
+  assert.ok((await options.count()) >= 5, "bölümler menüde");
+  await options.last().click();
+  assert.match(await menu.textContent(), /Hakkında/);
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth), true, "yatay taşma yok");
 });
 
 await scenario("5. telefon (dokunmatik): tekerlek ele geçirilmez, ok düğmesi çizilmez", async ({ page, db }) => {

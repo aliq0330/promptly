@@ -14,7 +14,6 @@ import { feedOrderForSort } from "@/lib/feed-cursor";
 import { DISCOVER_SORT_KEYS, type ContentSortKey } from "@/features/content/sort-select";
 import { SectionNav } from "@/features/content/section-nav";
 import { SheetChips, SheetSection, TaxonomySheetSections, taxonomyActiveCount } from "@/features/content/list-toolbar";
-import { TaxonomyTypeChips } from "@/features/content/taxonomy-filter";
 import { SearchView, type SearchScope } from "@/features/search/search-view";
 import { AI_TOOLS, getToolsForContentType } from "@/lib/ai-tool-catalog";
 import { EMPTY_TAXONOMY_FILTER, type TaxonomyFilterValue } from "@/lib/content-taxonomy";
@@ -31,7 +30,7 @@ type FeedSection = "all" | "prompts" | "requests" | "workflows" | "presets" | "s
 type EntitySection = "tools" | "tags" | "creators" | "communities";
 type Section = FeedSection | EntitySection;
 
-const SECTIONS: { key: Section; labelKey: TranslationKey; icon: typeof LayoutGrid }[] = [
+const SECTIONS: { key: Section; labelKey: TranslationKey; icon: typeof LayoutGrid; dividerBefore?: boolean }[] = [
   { key: "all", labelKey: "common.all", icon: LayoutGrid },
   // The four content categories …
   { key: "prompts", labelKey: "feed.filterPrompts", icon: SquareTerminal },
@@ -42,7 +41,7 @@ const SECTIONS: { key: Section; labelKey: TranslationKey; icon: typeof LayoutGri
   { key: "spaces", labelKey: "nav.spaces", icon: SpacesIcon },
   { key: "quotes", labelKey: "quotes.discover.section", icon: QuoteIcon },
   // … and the things to find and follow (docs/history/221-*).
-  { key: "tools", labelKey: "discover.sectionTools", icon: Bot },
+  { key: "tools", labelKey: "discover.sectionTools", icon: Bot, dividerBefore: true },
   { key: "tags", labelKey: "discover.sectionTags", icon: Hash },
   { key: "creators", labelKey: "discover.creators", icon: Users },
   { key: "communities", labelKey: "discover.sectionCommunities", icon: UsersRound },
@@ -166,16 +165,15 @@ export function DiscoverFeed() {
         )}
 
         <SectionNav
-          variant="tabs"
-          items={SECTIONS.map((s) => ({ key: s.key, label: t(s.labelKey), icon: s.icon }))}
+          variant="menu"
+          menuTitle={t("nav.discover")}
+          items={SECTIONS.map((s) => ({ key: s.key, label: t(s.labelKey), icon: s.icon, dividerBefore: s.dividerBefore }))}
           active={section}
           onChange={setSection}
           ariaLabel={t("discover.sectionsAriaLabel")}
-          // The entity sections (tools, tags, creators, communities) are lists to follow from, not filterable feeds: only the tiles.
+          // The entity sections (tools, tags, creators, communities) are lists to follow from, not filterable feeds: only the menu.
           hideControls={entity}
           // Space'in türü/kategorisi yok: süzgeçler Spaces ve Alıntılar bölümünde çizilmez (sunucu da süzgeçli sorguda ikisini de döndürmez).
-          chips={postFilters ? <TaxonomyTypeChips value={taxonomy} onChange={setTaxonomy} /> : undefined}
-          chipsLabel={t("toolbar.contentTypeAria")}
           sort={effectiveSort}
           onSortChange={setSort}
           sortKeys={sortKeys}

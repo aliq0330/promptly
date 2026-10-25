@@ -153,7 +153,7 @@ await scenario("7. Keşfet: arama kutusuna yazınca aynı sekmeler; boşaltınca
   await page.getByRole("tablist", { name: "Arama sonuçları" }).waitFor();
   await page.locator("[data-search-communities]").waitFor();
   await searchBox(page).fill("");
-  await page.getByRole("tablist", { name: "Keşfet bölümleri" }).waitFor();
+  await page.locator("[data-section-menu]").waitFor();
   assert.equal(await page.getByRole("tablist", { name: "Arama sonuçları" }).count(), 0);
 }, { setup: seedCommunities });
 

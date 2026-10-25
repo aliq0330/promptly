@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Heart, SearchX, Sparkles, Workflow as WorkflowIcon } from "lucide-react";
+import { Heart, Info, Pencil, Quote as QuoteIcon, Bookmark, Shapes, SlidersHorizontal, SearchX, Sparkles, SquareTerminal, Folder, Workflow as WorkflowIcon } from "lucide-react";
 import { ProfileBand } from "./profile-header";
 import { OtherProfileActions, OwnProfileActions } from "./profile-actions";
 import { ProfileAside } from "./profile-aside";
@@ -9,11 +9,11 @@ import { useFollowState } from "./use-follow-state";
 import { DetailShell } from "@/features/content/detail-parts";
 import { StoryHighlightsRow } from "@/features/stories/story-highlights";
 import { useViewMode } from "@/features/content/view-mode-store";
-import { ViewModeControls } from "@/features/content/view-mode-switcher";
+import { CompactViewToggle } from "@/features/content/view-mode-switcher";
+import { SectionMenu, type SectionMenuItem } from "@/features/content/section-menu";
 import { FocusGrid } from "@/features/focus/focus-grid";
-import { ProfileTabs, type ProfileTabKey } from "./profile-tabs";
 import { ContributionMap } from "./contribution-map";
-import { ProfileToolbar, type ProfileSortKey } from "./profile-toolbar";
+import { ProfileFilterControl, type ProfileSortKey } from "./profile-toolbar";
 import { ProfileContentGrid } from "./profile-content-grid";
 import { ProfileEmptyState } from "./profile-empty-state";
 import { ProfileAbout } from "./profile-about";
@@ -48,6 +48,9 @@ function sortPrompts(prompts: Prompt[], sort: ProfileSortKey): Prompt[] {
       return sorted.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }
 }
+
+/** One flat set of sections since Meydan (docs/history/190-*); since docs/history/233-* they live in ONE "Promptlar ▾" menu instead of a tab row. */
+export type ProfileTabKey = "prompts" | "requests" | "workflows" | "presets" | "drafts" | "saved" | "collections" | "spaces" | "quotes" | "liked" | "about";
 
 export function ProfileView({
   user,
@@ -168,28 +171,29 @@ export function ProfileView({
   const reuseCount = useMemo(() => authorPrompts.reduce((sum, prompt) => sum + prompt.copyCount, 0), [authorPrompts]);
 
   const tabs = useMemo(() => {
-    // Meydan (docs/history/190-*): the four kinds are top-level tabs (no nested "Gönderiler" row, no second "Hazır Ayarlar").
-    const base: { key: ProfileTabKey; label: string; count?: number }[] = [
-      { key: "prompts", label: t("feed.filterPrompts"), count: postCounts.prompts },
-      { key: "requests", label: t("nav.requests"), count: postCounts.requests },
-      { key: "workflows", label: t("nav.workflows"), count: postCounts.workflows },
-      { key: "presets", label: t("nav.presets"), count: postCounts.presets },
+    // Three groups, a divider between them (docs/history/233-*): what the creator posted · what is theirs to keep (Spaces, and — owner only — Taslaklar, Kaydedilenler, Beğeniler) · Hakkında.
+    // Taslaklar/Kaydedilenler/Beğeniler are owner-only (RLS already hides draft rows from others; the entries are never offered to a visitor — Bölüm 9.65/9.66).
+    // "Kaydedilenler" has no single flat count — it's a list of collections (Bölüm 9.22 §1).
+    const base: SectionMenuItem<ProfileTabKey>[] = [
+      { key: "prompts", label: t("feed.filterPrompts"), icon: SquareTerminal, meta: postCounts.prompts },
+      { key: "requests", label: t("nav.requests"), icon: Sparkles, meta: postCounts.requests },
+      { key: "workflows", label: t("nav.workflows"), icon: WorkflowIcon, meta: postCounts.workflows },
+      { key: "presets", label: t("nav.presets"), icon: SlidersHorizontal, meta: postCounts.presets },
     ];
-    if (quoteCount > 0 || isOwnProfile) base.push({ key: "quotes", label: t("quotes.profile.tab"), count: quoteCount > 0 ? quoteCount : undefined });
+    if (quoteCount > 0 || isOwnProfile) base.push({ key: "quotes", label: t("quotes.profile.tab"), icon: QuoteIcon, meta: quoteCount });
+    let firstOfGroup = true;
+    const group = (item: SectionMenuItem<ProfileTabKey>) => {
+      base.push(firstOfGroup ? { ...item, dividerBefore: true } : item);
+      firstOfGroup = false;
+    };
+    if (spaceCount > 0) group({ key: "spaces", label: t("spaces.discover.profileTab"), icon: Shapes, meta: spaceCount });
     if (isOwnProfile) {
-      // Taslaklar (drafts) is owner-only, same as Kaydedilenler/Beğeniler —
-      // RLS already hides draft rows from anyone else, this just keeps the
-      // tab itself from ever being offered to a visitor (Bölüm 9.65/9.66).
-      base.push({ key: "drafts", label: t("profile.tabDrafts") });
-      // "Kaydedilenler" has no single flat count anymore — it's a list of
-      // collections now, not a list of prompts (Bölüm 9.22 §1).
-      base.push({ key: "saved", label: t("profile.tabSaved") }, { key: "liked", label: t("profile.tabLiked"), count: likedPrompts.length });
+      group({ key: "drafts", label: t("profile.tabDrafts"), icon: Pencil });
+      group({ key: "saved", label: t("profile.tabSaved"), icon: Bookmark });
+      group({ key: "liked", label: t("profile.tabLiked"), icon: Heart, meta: likedPrompts.length });
     }
-    if (!isOwnProfile && publicCollections.length > 0) {
-      base.push({ key: "collections", label: t("profile.tabCollections"), count: publicCollections.length });
-    }
-    if (spaceCount > 0) base.push({ key: "spaces", label: t("spaces.discover.profileTab"), count: spaceCount });
-    base.push({ key: "about", label: t("profile.tabAbout") });
+    if (!isOwnProfile && publicCollections.length > 0) group({ key: "collections", label: t("profile.tabCollections"), icon: Folder, meta: publicCollections.length });
+    base.push({ key: "about", label: t("profile.tabAbout"), icon: Info, dividerBefore: true });
     return base;
   }, [postCounts, quoteCount, isOwnProfile, likedPrompts.length, publicCollections.length, spaceCount, t]);
 
@@ -226,6 +230,11 @@ export function ProfileView({
     return sortPrompts(items, sort);
   }, [activeSource, activeType, normalizedSearch, sort]);
 
+  // The section's own filter icon (prompts / liked lists) and the Kart | Izgara toggle (every list that has one) sit in the control row next to the menu.
+  const filterable = activeTab === "prompts" || activeTab === "liked";
+  const viewable =
+    (filterable && activeSource.length > 0) || (activeTab === "requests" && authorRequests.length > 0) || (activeTab === "workflows" && workflows.length > 0);
+
   const hasActiveFilters = activeType !== "all" || normalizedSearch.length > 0;
 
   function clearFilters() {
@@ -255,7 +264,25 @@ export function ProfileView({
           <StoryHighlightsRow ownerId={user.id} isOwnProfile={isOwnProfile} />
           <CollectionRings collections={publicCollections} />
 
-          <ProfileTabs tabs={tabs} active={activeTab} onChange={setActiveTab} />
+          <div className="flex items-center gap-1.5">
+            <SectionMenu items={tabs} active={activeTab} onChange={setActiveTab} ariaLabel={t("profile.sectionsAriaLabel")} title={user.displayName} />
+            <span className="flex-1" />
+            {filterable && activeSource.length > 0 && (
+              <ProfileFilterControl
+                availableTypes={availableTypes}
+                activeType={activeType}
+                onTypeChange={setActiveType}
+                sort={sort}
+                onSortChange={setSort}
+                search={search}
+                onSearchChange={setSearch}
+                showSearch={activeSource.length > 8}
+                hasActiveFilters={hasActiveFilters}
+                onClear={clearFilters}
+              />
+            )}
+            {viewable && <CompactViewToggle />}
+          </div>
 
           <div className="space-y-4">
             {activeTab === "about" ? (
@@ -280,12 +307,7 @@ export function ProfileView({
                   action={isOwnProfile ? { label: t("create.requestTitle"), href: "/requests/new" } : undefined}
                 />
               ) : (
-                <>
-                  <div className="flex justify-end">
-                    <ViewModeControls />
-                  </div>
-                  <RequestList requests={authorRequests} />
-                </>
+                <RequestList requests={authorRequests} />
               )
             ) : activeTab === "workflows" ? (
               workflows.length === 0 ? (
@@ -296,22 +318,17 @@ export function ProfileView({
                   action={isOwnProfile ? { label: t("workflow.create"), href: "/workflows/create" } : undefined}
                 />
               ) : (
-                <>
-                  <div className="flex justify-end">
-                    <ViewModeControls />
-                  </div>
-                  {viewMode === "focus" ? (
-                    <FocusGrid items={workflows.map((data) => ({ kind: "workflow" as const, data }))} />
-                  ) : (
-                    <ContentGrid>
-                      {workflows.map((workflow) => (
-                        <div key={workflow.id} className={CONTENT_GRID_ITEM_CLASS}>
-                          <WorkflowCard workflow={workflow} />
-                        </div>
-                      ))}
-                    </ContentGrid>
-                  )}
-                </>
+                viewMode === "focus" ? (
+                  <FocusGrid items={workflows.map((data) => ({ kind: "workflow" as const, data }))} />
+                ) : (
+                  <ContentGrid>
+                    {workflows.map((workflow) => (
+                      <div key={workflow.id} className={CONTENT_GRID_ITEM_CLASS}>
+                        <WorkflowCard workflow={workflow} />
+                      </div>
+                    ))}
+                  </ContentGrid>
+                )
               )
             ) : activeTab === "quotes" ? (
               <ProfileQuotesPanel authorId={user.id} isOwn={isOwnProfile} />
@@ -340,21 +357,6 @@ export function ProfileView({
               <ProfileDraftsPanel userId={user.id} />
             ) : (
               <>
-                {activeSource.length > 0 && (
-                  <ProfileToolbar
-                    availableTypes={availableTypes}
-                    activeType={activeType}
-                    onTypeChange={setActiveType}
-                    sort={sort}
-                    onSortChange={setSort}
-                    search={search}
-                    onSearchChange={setSearch}
-                    showSearch={activeSource.length > 8}
-                    hasActiveFilters={hasActiveFilters}
-                    onClear={clearFilters}
-                  />
-                )}
-
                 <ProfileContentGrid
                   prompts={filtered}
                   isOwnProfile={isOwnProfile && activeTab === "prompts"}
