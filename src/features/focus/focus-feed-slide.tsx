@@ -3,6 +3,7 @@
 import { createContext, memo, useContext, useEffect, useId, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { ArrowDown, ArrowUpRight, ImageOff, Music, Pause, Play, Shapes, SlidersHorizontal, Sparkles, SquareTerminal, Workflow as WorkflowIcon, X, type LucideIcon } from "lucide-react";
+import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Modal } from "@/components/ui/modal";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -20,8 +21,9 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Language } from "@/lib/i18n/translations";
 import { presetParameterEntries } from "@/lib/preset-utils";
 import { splitSourceNotes } from "@/lib/source-notes";
-import { cn, presetHref, promptHref, requestHref, workflowHref } from "@/lib/utils";
+import { cn, presetHref, profileHref, promptHref, requestHref, workflowHref } from "@/lib/utils";
 import type { Preset, Prompt, PromptRequest, UserProfile, Workflow } from "@/types";
+import { FollowButton } from "@/features/profile/follow-button";
 import { FocusFeedRail } from "./focus-feed-rail";
 import { useAuth } from "@/features/auth/auth-provider";
 import { AddToSpaceModal } from "@/features/spaces/add-to-space-modal";
@@ -76,6 +78,28 @@ function AuthorLine({ author, createdAt, language, onImage }: { author: UserProf
       <span aria-hidden> · </span>
       {postMeta(author.username, createdAt, language)}
     </p>
+  );
+}
+
+/** The slide's author line (docs/history/238-*): avatar, name with "Takip Et" beside it (not for yourself), @user · time under. */
+function SlideByline({ author, createdAt, language, near }: { author: UserProfile; createdAt: string; language: Language; near: boolean }) {
+  const { user } = useAuth();
+  const href = profileHref(author);
+  return (
+    <div className="flex min-w-0 items-center gap-2.5">
+      <Link href={href} tabIndex={-1} aria-hidden className="shrink-0 rounded-full">
+        <Avatar src={author.avatarUrl} alt={author.displayName} size={36} />
+      </Link>
+      <div className="min-w-0 leading-tight">
+        <div className="flex min-w-0 items-center gap-2">
+          <Link href={href} className="min-w-0 truncate text-label font-semibold text-white hover:underline">
+            {author.displayName}
+          </Link>
+          {near && user?.id !== author.id && <FollowButton user={author} size="sm" className="shrink-0" />}
+        </div>
+        <p className="mt-0.5 truncate text-caption text-white/75">{postMeta(author.username, createdAt, language)}</p>
+      </div>
+    </div>
   );
 }
 
@@ -539,12 +563,9 @@ function AlbumSlide({
   const Icon = model.icon;
   const link = "inline-flex items-center gap-1 rounded-full text-label font-semibold text-white/80 underline-offset-4 hover:text-white hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
   return (
-    <article
-      data-album-slide
-      className="absolute inset-0 flex flex-col lg:mx-auto lg:max-w-[1120px] lg:flex-row lg:items-center lg:gap-16 lg:px-10 lg:pb-8 lg:pt-20"
-    >
-      {/* Phone and tablet: the art above the words; from `lg` side by side, like the detail pages' band. */}
-      <div className={cn("flex min-h-0 flex-1 items-center justify-center px-5", PHONE_TOP, "md:px-12 md:pt-20 lg:h-full lg:max-h-[640px] lg:flex-[1.15] lg:p-0")}>
+    <article data-album-slide className={cn("absolute inset-0 flex flex-col", SLIDE_TOP)}>
+      {/* The album art in the slide's own card width; the words and actions sit under it (docs/history/238-*). */}
+      <div className="flex min-h-0 flex-1 items-center justify-center">
         {playable && prompt ? (
           <AlbumArtFrame ratio={playableRatio(prompt)}>
             <PlayableMedia prompt={prompt} cover={cover} active={active} near={near} />
@@ -555,7 +576,8 @@ function AlbumSlide({
           <AlbumArtCard item={item} model={model} near={near} />
         )}
       </div>
-      <div className={cn(HIDE_WHILE_COMMENTS, "shrink-0 space-y-3 px-5 pt-5 md:space-y-4 md:px-12 md:pt-8 lg:flex-1 lg:p-0", PHONE_BOTTOM, "md:pb-10 lg:pb-0")}>
+      <div className={cn(HIDE_WHILE_COMMENTS, "shrink-0 space-y-2.5 pt-4 md:space-y-3", PHONE_BOTTOM, "md:pb-8")}>
+        <SlideByline author={model.author} createdAt={model.createdAt} language={language} near={near} />
         <div className="flex flex-wrap items-center gap-2">
           <p className="flex min-w-0 items-center gap-1.5 text-caption font-bold uppercase tracking-[0.1em] text-white/85">
             <Icon size={13} strokeWidth={2.25} aria-hidden className="shrink-0" />
@@ -567,14 +589,13 @@ function AlbumSlide({
           {item.kind === "request" && <RequestStatus request={item.data} />}
           {extra > 0 && <span className="rounded-full border border-white/20 bg-black/30 px-2.5 py-0.5 text-caption font-semibold text-white">{t("focusFeed.moreImages", { count: extra })}</span>}
         </div>
-        <h2 id={titleId} className="line-clamp-3 break-words font-display text-[clamp(1.75rem,4vw,3.5rem)] font-extrabold leading-[1.02] tracking-[-0.035em] text-white">
+        <h2 id={titleId} className="line-clamp-2 break-words font-display text-[clamp(1.375rem,3.2vw,1.875rem)] font-extrabold leading-[1.1] tracking-[-0.03em] text-white">
           {model.title}
         </h2>
-        {model.description && <p className="line-clamp-2 max-w-xl break-words text-small leading-relaxed text-white/80 sm:text-body">{model.description}</p>}
+        {model.description && <p className="line-clamp-2 break-words text-small leading-relaxed text-white/80">{model.description}</p>}
         {/* A picture post that has its own structure (a workflow / preset / request) keeps a compact version of it here. */}
         {cover && item.kind !== "prompt" && <StructureBlock item={item} near={near} onImage />}
-        <AuthorLine author={model.author} createdAt={model.createdAt} language={language} onImage />
-        <div className="flex items-center gap-3 sm:gap-4">
+        <div className="flex items-center gap-2 sm:gap-3">
           <AlbumPrimary prompt={prompt} href={model.href} />
           <FocusFeedRail item={item} author={model.author} layout="row" />
         </div>
@@ -607,14 +628,19 @@ function AlbumSlide({
 export const HIDE_WHILE_COMMENTS =
   "transition-opacity duration-200 ease-soft max-md:group-data-[comments-open]/stage:pointer-events-none max-md:group-data-[comments-open]/stage:opacity-0";
 
-/** Bottom of a slide on a phone: above the home indicator; on the right the action rail needs its column. */
+/** Bottom of a slide on a phone: above the home indicator. */
 const PHONE_BOTTOM = "pb-[calc(1.25rem+env(safe-area-inset-bottom))]";
-/** Top of a slide on a phone: below Odak's floating bar (+ the notch). */
-const PHONE_TOP = "pt-[calc(4rem+env(safe-area-inset-top))]";
+/** Top of a slide: below Odak's floating bar and its thumbnail strip (+ the notch). */
+const SLIDE_TOP = "pt-[calc(9.25rem+env(safe-area-inset-top))] md:pt-[10.75rem]";
+/**
+ * A slide's width: the card with the neighbours' edges peeking on a phone, a 36rem card with the dimmed neighbours beside it
+ * from `md` (sized against Odak's content box — `cqw` — so the comment panel narrows it too).
+ */
+export const FOCUS_SLIDE_WIDTH = "w-[calc(100cqw-3rem)] md:w-[min(36rem,calc(100cqw-3rem))]";
 
 /**
- * One post of Odak — a full-height snap point. On a phone it is the whole screen (media edge to edge, words over it, the
- * action rail floating on the right); from `md` it is a card with the rail beside it. Image-first only when the post really
+ * One post of Odak — a horizontal snap point (docs/history/238-*): the card with its neighbours peeking, the art above the
+ * words and actions; the inactive ones are dimmed and not tappable. Image-first only when the post really
  * has a picture; a video / audio prompt plays its author's output; everything else shows its own structure.
  * `near` = within reach of the active slide: only then are pictures / video / audio / workflow steps loaded.
  */
@@ -644,7 +670,15 @@ export const FocusFeedSlide = memo(function FocusFeedSlide({
   // Albüm (docs/history/203-*): every post is a "now playing" slide — its picture / playing video / audio (or its words,
   // steps, settings) as album art over Odak's blurred backdrop, the title and one big action under it.
   return (
-    <section data-slide-index={index} aria-labelledby={titleId} className="relative h-full snap-start snap-always">
+    <section
+      data-slide-index={index}
+      aria-labelledby={titleId}
+      className={cn(
+        "relative h-full shrink-0 snap-center snap-always transition-[opacity,transform] duration-300 ease-soft motion-reduce:transition-none",
+        FOCUS_SLIDE_WIDTH,
+        active ? "opacity-100" : "pointer-events-none scale-[0.94] opacity-40",
+      )}
+    >
       <AlbumSlide
         item={item}
         model={model}
