@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Tabs, type TabItem } from "@/components/ui/tabs";
+import { SectionMenu, type SectionMenuItem } from "@/features/content/section-menu";
 import { GroupSettingsSection } from "@/features/groups/group-settings-section";
 import { useRealMessages } from "@/features/messages/real-messages-provider";
 import { AnnouncementsSection } from "./announcements-section";
@@ -38,7 +38,7 @@ export function ManageTab({ group, role, onToast, reload, section }: CommunityTa
       moderation: t("communities.manage.moderation"),
       history: t("communities.manage.history"),
     };
-    return manageSections(role, perms).map<TabItem<ManageSection>>((key) => ({ key, label: labels[key] }));
+    return manageSections(role, perms).map<SectionMenuItem<ManageSection>>((key) => ({ key, label: labels[key] }));
   }, [role, perms, t]);
 
   const active = (sections.find((item) => item.key === section)?.key ?? sections[0]?.key) as ManageSection | undefined;
@@ -47,11 +47,12 @@ export function ManageTab({ group, role, onToast, reload, section }: CommunityTa
 
   return (
     <div className="space-y-5">
-      <Tabs
-        items={sections}
+      {/* docs/history/235-*: 5 bölüm = tek "Özet ▾" menüsü (4+ bölüm kuralı). */}
+      <SectionMenu
+        items={sections.map((item) => ({ key: item.key, label: item.label }))}
         active={active}
-        variant="segmented"
         ariaLabel={t("communities.manage.aria")}
+        title={t("communities.manage.aria")}
         onChange={(key) => router.replace(communityHref(group.id, "manage", key))}
       />
       <div>

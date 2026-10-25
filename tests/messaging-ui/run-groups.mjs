@@ -445,8 +445,10 @@ await scenario("23b. Owner değilse sahip ayarları ve tehlikeli bölge görünm
 // 24
 await scenario("24. Yetkiye göre: moderatöre ayar yetkisi verilince topluluk Ayarlar'ı (görünürlük ve sahip bölümleri yok) ve sohbet penceresinde 'Sohbet ayarları' (yalnız kim yazabilir) açılır", async ({ page }) => {
   await openCommunity(page, "manage");
-  assert.deepEqual(await tabNames(page, 0), ["Ayarlar", "Moderasyon"]);
-  await page.getByRole("tab", { name: "Ayarlar" }).click();
+  // Yönetim bölümleri ikinci menüdür (docs/history/235-*).
+  await page.locator("[data-section-menu]").nth(1).click();
+  assert.deepEqual((await page.getByRole("radiogroup", { name: "Yönetim bölümleri" }).getByRole("radio").allInnerTexts()).map((t) => t.split("\n")[0].trim()), ["Ayarlar", "Moderasyon"]);
+  await page.getByRole("radio", { name: "Ayarlar" }).click();
   await page.getByLabel("Topluluk adı").waitFor();
   assert.equal(await page.getByRole("radio", { name: /^Herkese açık/ }).count(), 0, "no visibility without that permission");
   assert.equal(await page.getByRole("heading", { name: "Yönetici ve moderatör yetkileri" }).count(), 0);

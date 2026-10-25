@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import Link from "next/link";
 import {
   FileText,
   Search,
@@ -10,18 +9,16 @@ import {
   SquareTerminal,
   Workflow as WorkflowIcon,
 } from "lucide-react";
-import { PageContainer, PageHeader } from "@/components/ui/page-header";
-import { Tabs } from "@/components/ui/tabs";
-import { Chip, ChipRow } from "@/components/ui/chip";
+import { PageContainer } from "@/components/ui/page-header";
+import { Chip } from "@/components/ui/chip";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
-import { buttonClassName } from "@/components/ui/button";
 import { Reveal } from "@/components/ui/reveal";
 import { useAuth } from "@/features/auth/auth-provider";
-import {
-  SortSelect,
-  type ContentSortKey,
-} from "@/features/content/sort-select";
+import { type ContentSortKey } from "@/features/content/sort-select";
+import { ListControlRow, SadeTitle } from "@/features/content/list-control-row";
+import { SheetChips, SheetSection } from "@/features/content/list-toolbar";
+import type { SectionMenuItem } from "@/features/content/section-menu";
 import { PromptCard } from "@/features/prompts/prompt-card";
 import { RequestCard } from "@/features/requests/request-card";
 import { WorkflowCard } from "@/features/workflows/workflow-card";
@@ -40,7 +37,6 @@ import type {
 } from "@/types";
 import { CONTENT_GRID_ITEM_CLASS, ContentGrid } from "@/features/content/content-card";
 import { useViewMode } from "@/features/content/view-mode-store";
-import { ViewModeControls } from "@/features/content/view-mode-switcher";
 import { FocusGrid } from "@/features/focus/focus-grid";
 import type { FeedItem } from "@/features/feed/types";
 
@@ -86,6 +82,7 @@ export function MyContentView() {
   const [visibility, setVisibility] = useState<VisibilityFilter>("all");
   const [sort, setSort] = useState<ContentSortKey>("newest");
   const [search, setSearch] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
 
   const userId = user?.id;
   useEffect(() => {
@@ -228,75 +225,62 @@ export function MyContentView() {
   }, [entries, kind, visibility, needle, sort]);
 
   const total = kind === "drafts" ? 0 : entries[kind].length;
-  const isFiltered = visibility !== "all" || needle.length > 0;
+
+  const searching = searchOpen || search !== "";
+  const menuItems: SectionMenuItem<Kind>[] = kindTabs.map((tab) => ({ key: tab.key, label: tab.label, icon: tab.icon, meta: "count" in tab ? tab.count : undefined, dividerBefore: tab.key === "drafts" }));
 
   return (
-    <PageContainer className="space-y-5">
-      <PageHeader
-        eyebrow={t("account.groupAccount")}
-        title={t("myContent.title")}
-        description={t("myContent.description")}
-      />
+    <PageContainer className="space-y-5 pb-16 pt-3 sm:pt-5">
+      <SadeTitle>{t("myContent.title")}</SadeTitle>
+      <p className="sr-only">{t("myContent.description")}</p>
 
-      <Tabs
-        items={kindTabs}
-        active={kind}
-        onChange={setKind}
-        ariaLabel={t("myContent.kindsAria")}
-        variant="segmented"
+      {/* Sade düzen (docs/history/235-*): tek "Promptlar ▾" tür menüsü (sayılarla) + arama · Filtre (görünürlük, sıralama) · Kart/Izgara · "+". */}
+      <ListControlRow
+        showView={kind !== "drafts"}
+        menu={{ items: menuItems, active: kind, onChange: setKind, ariaLabel: t("myContent.kindsAria"), title: t("myContent.title") }}
+        search={kind === "drafts" ? undefined : { open: searching, onToggle: () => (searching ? (setSearch(""), setSearchOpen(false)) : setSearchOpen(true)), label: t("myContent.searchPlaceholder") }}
+        filter={
+          kind === "drafts"
+            ? undefined
+            : {
+                sheetSections: (
+                  <SheetSection title={t("myContent.visibilityAria")}>
+                    <SheetChips>
+                      {(["all", "public", "private"] as const).map((value) => (
+                        <Chip key={value} selected={visibility === value} onClick={() => setVisibility(value)}>
+                          {value === "all" ? t("common.all") : t(value === "public" ? "visibility.public" : "visibility.private")}
+                        </Chip>
+                      ))}
+                    </SheetChips>
+                  </SheetSection>
+                ),
+                sort,
+                onSortChange: setSort,
+                activeCount: visibility !== "all" ? 1 : 0,
+                onClear: () => setVisibility("all"),
+              }
+        }
+        create={kind === "drafts" ? undefined : createLinks[kind]}
       />
+      {searching && kind !== "drafts" && (
+        <div className="relative">
+          <Search size={20} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" aria-hidden />
+          <input
+            type="search"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder={t("myContent.searchPlaceholder")}
+            aria-label={t("myContent.searchPlaceholder")}
+            autoFocus
+            className="h-12 w-full rounded-xl border-2 border-primary bg-surface pl-11 pr-4 text-body text-text placeholder:text-text-muted [&::-webkit-search-cancel-button]:hidden"
+          />
+        </div>
+      )}
 
       {kind === "drafts" ? (
         user && <ProfileDraftsPanel userId={user.id} />
       ) : (
         <>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div
-              role="group"
-              aria-label={t("myContent.visibilityAria")}
-              className="min-w-0"
-            >
-              <ChipRow scroll>
-                <Chip
-                  selected={visibility === "all"}
-                  onClick={() => setVisibility("all")}
-                >
-                  {t("common.all")}
-                </Chip>
-                <Chip
-                  selected={visibility === "public"}
-                  onClick={() => setVisibility("public")}
-                >
-                  {t("visibility.public")}
-                </Chip>
-                <Chip
-                  selected={visibility === "private"}
-                  onClick={() => setVisibility("private")}
-                >
-                  {t("visibility.private")}
-                </Chip>
-              </ChipRow>
-            </div>
-            <div className="flex items-center gap-2">
-              <label className="relative min-w-0 flex-1 sm:w-56 sm:flex-none">
-                <Search
-                  size={15}
-                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-muted"
-                />
-                <input
-                  type="search"
-                  value={search}
-                  onChange={(event) => setSearch(event.target.value)}
-                  placeholder={t("myContent.searchPlaceholder")}
-                  aria-label={t("myContent.searchPlaceholder")}
-                  className="h-11 w-full rounded-lg border border-border bg-surface pl-9 pr-3 text-small text-text placeholder:text-text-muted sm:h-9"
-                />
-              </label>
-              <SortSelect value={sort} onChange={setSort} />
-              <ViewModeControls />
-            </div>
-          </div>
-
           {loading ? (
             <div className="columns-1 gap-4 sm:columns-2 xl:columns-3">
               {[0, 1, 2].map((i) => (
@@ -334,16 +318,6 @@ export function MyContentView() {
             </ContentGrid>
           )}
 
-          {!loading && total > 0 && !isFiltered && (
-            <div className="flex justify-center">
-              <Link
-                href={createLinks[kind].href}
-                className={buttonClassName({ variant: "outline" })}
-              >
-                {t("myContent.createNew")} · {createLinks[kind].label}
-              </Link>
-            </div>
-          )}
         </>
       )}
     </PageContainer>

@@ -47,6 +47,10 @@ const waitNoTab = async (page, name) => { for (let i = 0; i < 40; i += 1) { if (
 const tabIsActive = async (page, name) => { await menuOpen(page); const active = (await menuOption(page, name).getAttribute("aria-checked")) === "true"; await menuClose(page); return active; };
 const tabNames = async (page) => { if ((await page.locator("[data-section-menu]").count()) === 0) return []; await menuOpen(page); const names = (await page.locator(SECTION_OPTION).allInnerTexts()).map((t) => t.split("\n")[0].replace(/\d+$/, "").trim()); await menuClose(page); return names; };
 
+// Yönetim bölümleri (Özet · Ayarlar · Duyurular · Moderasyon · İşlem geçmişi) topluluk menüsünün ALTINDAKİ ikinci menüdür (docs/history/235-*).
+const manageMenu = (page) => page.locator("[data-section-menu]").nth(1);
+const pickManage = async (page, name) => { await manageMenu(page).click(); await page.getByRole("radio", { name: new RegExp("^" + String(name).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")) }).click(); };
+const manageNames = async (page) => { await manageMenu(page).click(); const names = (await page.getByRole("radiogroup", { name: /Yönetim bölümleri|Management sections/ }).getByRole("radio").allInnerTexts()).map((t) => t.split("\n")[0].replace(/\d+$/, "").trim()); await page.keyboard.press("Escape"); await page.mouse.click(5, 5); return names; };
 const dlg = (page) => page.getByRole("dialog").last();
 const calls = (db, table, method) => db.calls.filter((c) => c.table === table && (!method || c.method === method));
 const open = async (page, id, tab) => { await page.goto(`${BASE}/communities/local?id=${id}${tab ? `&tab=${tab}` : ""}`); await page.locator("h1").first().waitFor(); await page.waitForTimeout(250); };
@@ -245,9 +249,8 @@ await scenario("10. Üye: Yönetim sekmesi yok; durum 'Üyesin' görünür", asy
 
 await scenario("10b. Moderatör: Yönet yalnız yetkisi olan bölüm (moderasyon); katılım istekleri Üyeler sekmesinde (sayaçlı)", async ({ page }) => {
   await open(page, C1, "manage");
-  await page.getByRole("tab", { name: "Moderasyon" }).waitFor();
-  const sections = await page.getByRole("tablist").first().getByRole("tab").allInnerTexts();
-  assert.deepEqual(sections.map((t) => t.split("\n")[0].replace(/\d+$/, "").trim()), ["Moderasyon"]);
+  await manageMenu(page).waitFor();
+  assert.deepEqual(await manageNames(page), ["Moderasyon"]);
   assert.equal(await page.getByRole("tab", { name: /Katılım istekleri/ }).count(), 0, "requests are not under Manage any more");
   await pickTab(page, /Üyeler/);
   await page.getByRole("tab", { name: /Katılım istekleri/ }).waitFor();
@@ -511,7 +514,7 @@ await scenario("17. Yönetim · Özet: gerçek veriden sayılar, gizlilik notu; 
 
 await scenario("17b. Yönetim · Moderasyon kuyruğu: reddet / içeriği kaldır; karar kuyruğu 'Kapanan'a taşır", async ({ page, db }) => {
   await open(page, C1, "manage");
-  await page.getByRole("tab", { name: "Moderasyon" }).click();
+  await pickManage(page, "Moderasyon");
   await page.getByText("Uygunsuz içerik").first().waitFor();
   await page.getByRole("button", { name: "Reddet" }).first().click();
   await dlg(page).getByRole("button", { name: "Reddet" }).click();
@@ -535,7 +538,7 @@ await scenario("17b. Yönetim · Moderasyon kuyruğu: reddet / içeriği kaldır
 
 await scenario("17c. Yönetim · Ayarlar: yalnızca değişen alanlar gönderilir; kapatma onaylıdır; geçmiş sekmesi işlemleri listeler", async ({ page, db }) => {
   await open(page, C1, "manage");
-  await page.getByRole("tab", { name: "Ayarlar" }).click();
+  await pickManage(page, "Ayarlar");
   await page.getByLabel("Kategori").selectOption("learning");
   await page.getByRole("tabpanel").getByRole("button", { name: "Kaydet", exact: true }).first().click();
   await page.getByText("Ayarlar kaydedildi.").waitFor();
@@ -545,13 +548,13 @@ await scenario("17c. Yönetim · Ayarlar: yalnızca değişen alanlar gönderili
   await dlg(page).getByRole("button", { name: "Topluluğu kapat" }).click();
   await page.getByText("Topluluk kapatıldı.").waitFor();
   assert.equal(calls(db, "close_community", "RPC").length, 1);
-  await page.getByRole("tab", { name: "İşlem geçmişi" }).click();
+  await pickManage(page, "İşlem geçmişi");
   await page.getByText("Bir gönderiyi akıştan kaldırdı").waitFor();
 }, { setup: (db) => { seed(db, { myRole: "owner" }); db.audit.push({ id: crypto.randomUUID(), group_id: C1, action: "post_removed", actor_id: U.bob.id, target_user_id: U.dave.id, details: {}, created_at: db.stamp() }); } });
 
 await scenario("17d. Yönetim · Kurallar: owner kural metnini ve kabul zorunluluğunu değiştirir (edit_rules); metin boşken kabul zorunlu kaydedilemez", async ({ page, db }) => {
   await open(page, C1, "manage");
-  await page.getByRole("tab", { name: "Ayarlar" }).click();
+  await pickManage(page, "Ayarlar");
   await page.getByLabel("Topluluk kuralları").fill("");
   await page.getByLabel(/Katılmadan önce kuralları kabul etmek/).check();
   await page.getByRole("tabpanel").getByRole("button", { name: "Kaydet", exact: true }).first().click();
@@ -834,7 +837,7 @@ await scenario("27. Oluştur: üç görünürlük seçeneği (Herkese açık · 
 
 await scenario("27b. Yönetim · Ayarlar: görünürlük seçicisi mevcut düzeyi vurgular; başka düzey seçmek ETKİSİNİ anlatan onay penceresi açar; vazgeçince değişmez; onaylayınca uygulanır", async ({ page, db }) => {
   await open(page, C1, "manage");
-  await page.getByRole("tab", { name: "Ayarlar" }).click();
+  await pickManage(page, "Ayarlar");
   const publicRadio = page.getByRole("radio", { name: /^Herkese açık/ });
   assert.equal(await publicRadio.isChecked(), true, "current level is selected");
   await page.getByText("Şu anki", { exact: true }).waitFor();
@@ -1037,7 +1040,7 @@ async function pickHeavyPhoto(page, selector, { fakeBytes } = {}) {
 await scenario("33. Kapak · Renk: varsayılan Otomatik; renk seçilip kaydedilince şerit o renk olur (kapak fotoğrafı temizlenir); Otomatik'e dönünce renk kalkar", async ({ page, db }) => {
   await open(page, C1, "manage");
   assert.equal(await cover(page).getAttribute("data-community-cover"), "auto", "nothing chosen → automatic (follows the community picture)");
-  await page.getByRole("tab", { name: "Ayarlar" }).click();
+  await pickManage(page, "Ayarlar");
   const group = page.getByRole("radiogroup", { name: "Kapak türü" });
   assert.equal(await group.getByRole("radio", { name: "Otomatik" }).getAttribute("aria-checked"), "true");
   await group.getByRole("radio", { name: "Renk" }).click();
@@ -1058,7 +1061,7 @@ await scenario("33. Kapak · Renk: varsayılan Otomatik; renk seçilip kaydedili
 
 await scenario("33b. Kapak · Fotoğraf: ağır (8 MB üstü) fotoğraf reddedilmez; ≤ ~1 MB'a küçülüp özel bucket'a yüklenir, adresi kaydedilir ve şerit fotoğraf olur", async ({ page, db }) => {
   await open(page, C1, "manage");
-  await page.getByRole("tab", { name: "Ayarlar" }).click();
+  await pickManage(page, "Ayarlar");
   await page.getByRole("radiogroup", { name: "Kapak türü" }).getByRole("radio", { name: "Fotoğraf" }).click();
   await saveBasic(page).click();
   await page.getByText("Bir fotoğraf seç ya da başka bir kapak türü kullan.").waitFor();
@@ -1082,7 +1085,7 @@ await scenario("33b. Kapak · Fotoğraf: ağır (8 MB üstü) fotoğraf reddedil
 
 await scenario("33c. Topluluk görseli: ağır fotoğraf artık '8 MB' diye reddedilmez, ≤ ~200 KB kareye küçülüp yüklenir ve kaydedilir; 40 MB üstü dosya anlaşılır bir mesajla reddedilir", async ({ page, db }) => {
   await open(page, C1, "manage");
-  await page.getByRole("tab", { name: "Ayarlar" }).click();
+  await pickManage(page, "Ayarlar");
   const AVATAR_INPUT = 'section[aria-labelledby="settings-basic-title"] input[type=file]';
   await page.locator(AVATAR_INPUT).waitFor({ state: "attached" });
   const tooBig = await pickHeavyPhoto(page, AVATAR_INPUT, { fakeBytes: 41 * 1024 * 1024 });
