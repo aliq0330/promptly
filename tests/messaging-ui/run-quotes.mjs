@@ -219,7 +219,10 @@ await scenario("5. Alıntıla: sunucu hatası (already_quoted) nedeniyle açıkl
 
 await scenario("6. Profil: 'Alıntılar' sekmesi sayıyla görünür, alıntı kartları normal ızgarada (profile_quotes_page); başka birinin boş profilinde sekme yok", async ({ page, state }) => {
   await page.goto(`${BASE}/profile/real?username=${U.bob.username}`);
-  const tab = page.getByRole("tab", { name: /Alıntılar/ });
+  // Profil bölümleri TEK menüde (docs/history/233-*): "Alıntılar" satırı sayıyla görünür.
+  await page.locator("[data-section-menu]").waitFor();
+  await page.locator("[data-section-menu]").click();
+  const tab = page.getByRole("radio", { name: /Alıntılar/ });
   await tab.waitFor();
   assert.match(await tab.innerText(), /1/);
   await tab.click();
@@ -228,14 +231,17 @@ await scenario("6. Profil: 'Alıntılar' sekmesi sayıyla görünür, alıntı k
   assert.equal(state.profileCalls.at(-1).p_author, U.bob.id);
   await shot(page, "qt-profile");
   await page.goto(`${BASE}/profile/real?username=${U.dave.username}`);
-  await page.getByRole("tab", { name: /Promptlar|Prompt/ }).first().waitFor();
-  assert.equal(await page.getByRole("tab", { name: /Alıntılar/ }).count(), 0);
+  await page.locator("[data-section-menu]").waitFor();
+  await page.locator("[data-section-menu]").click();
+  await page.getByRole("radio", { name: /Promptlar|Prompt/ }).first().waitFor();
+  assert.equal(await page.getByRole("radio", { name: /Alıntılar/ }).count(), 0);
 });
 
 await scenario("7. Keşfet → Alıntılar: `feed_page` yalnız `quote` türüyle çağrılır, tür çipleri çizilmez, alıntı kartları gelir", async ({ page, state }) => {
   await page.goto(`${BASE}/discover`);
   await page.locator("main article").first().waitFor();
-  await page.locator("main").getByRole("button", { name: "Alıntılar", exact: true }).first().evaluate((el) => el.click());
+  await page.locator("[data-section-menu]").click();
+  await page.getByRole("radio", { name: "Alıntılar", exact: true }).click();
   await waitFor(() => state.feedCalls.some((c) => JSON.stringify(c.p_kinds) === JSON.stringify(["quote"])));
   assert.ok(state.feedCalls.some((c) => JSON.stringify(c.p_kinds) === JSON.stringify(["quote"])));
   await bobQuote(page).waitFor();

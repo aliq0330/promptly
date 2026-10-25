@@ -527,6 +527,21 @@ const seedCommunity = (db, opts = {}) => {
   Object.assign(db.groups.find((g) => g.id === G), { category: "general", feed_policy: "members", rules: null, rules_required: false, closed_at: null, origin: "native", post_count: 0 });
 };
 
+// Topluluk sayfası bölümleri TEK menüde (docs/history/232-*): satırın metni (sayaç dahil) menü açılıp okunur; bekleyen sayı için yoklanır.
+const sectionRowText = async (page, name) => {
+  await page.locator("[data-section-menu]").click();
+  const found = await page.locator("[data-section-option]").filter({ hasText: name }).allInnerTexts();
+  await page.keyboard.press("Escape");
+  await page.mouse.click(5, 5);
+  return found.map((x) => x.replace(/\s+/g, " ").trim());
+};
+const waitSectionRow = async (page, name, check) => {
+  for (let i = 0; i < 40; i += 1) {
+    if (check(await sectionRowText(page, name))) return;
+    await page.waitForTimeout(150);
+  }
+  assert.fail(`section row "${name}" never matched`);
+};
 await scenario("18. Canlı eşitleme: topluluk sayfası açıkken yeni katılım isteği gelince başlıktaki 'N bekleyen istek' + Üyeler sayacı kendiliğinden görünür, işlenince kaybolur; sohbet başlığındaki rozet aynı sayıyı gösterir", async ({ page, db, hub }) => {
   await page.goto(`${BASE}/communities/local?id=${G}`);
   await page.locator("h1").first().waitFor();
@@ -536,7 +551,7 @@ await scenario("18. Canlı eşitleme: topluluk sayfası açıkken yeni katılım
   row.pending_request_count = 1; // başka bir kullanıcı istek gönderdi (sunucu sayacı artırdı)
   hub.emitPostgresChange("chat_groups", "UPDATE", row);
   await page.locator("[data-community-actions] [data-pending-requests]").getByText("1 bekleyen istek").waitFor();
-  await page.getByRole("tab", { name: /Üyeler/ }).getByText("1").waitFor();
+  await waitSectionRow(page, "Üyeler", (rows) => rows.some((r) => /Üyeler.*1$/.test(r)));
   row.pending_request_count = 0; // başka bir yönetici işledi
   hub.emitPostgresChange("chat_groups", "UPDATE", row);
   await page.locator("[data-community-actions] [data-pending-requests]").waitFor({ state: "detached" });
@@ -549,11 +564,11 @@ await scenario("18. Canlı eşitleme: topluluk sayfası açıkken yeni katılım
 
 await scenario("18b. Canlı eşitleme: başka bir yönetici benim rolümü değiştirir → topluluk sayfası yeniden okunur; Yönet sekmesi kalkar", async ({ page, db, hub }) => {
   await page.goto(`${BASE}/communities/local?id=${G}`);
-  await page.getByRole("tab", { name: "Yönetim" }).waitFor();
+  await waitSectionRow(page, "Yönetim", (rows) => rows.length > 0);
   const mine = db.member(G, ME);
   mine.role = "member"; // owner/admin rolümü aldı
   hub.emitPostgresChange("conversation_members", "UPDATE", mine);
-  await page.getByRole("tab", { name: "Yönetim" }).waitFor({ state: "detached" });
+  await waitSectionRow(page, "Yönetim", (rows) => rows.length === 0);
 }, { setup: (db) => seedCommunity(db, { myRole: "admin" }) });
 
 // 19 — mobil: açık sohbette alt menü yok (docs/history/193-*); composer ekranın altında; liste sayfasında menü var

@@ -134,6 +134,66 @@ await scenario("6. Koleksiyon Albüm: bant + Takip Et; Hakkında ve sahibinin di
   assert.equal(await overflowFree(page), true);
 });
 
+// 7 — Profil bölümleri TEK menüde (docs/history/233-*): gruplar, sayılar, Filtre simgesi ve Kart | Izgara düğmesi kontrol satırında
+/** Bobun iki yayınlanmış promptu: profilde Filtre simgesi / Kart | Izgara düğmesi ancak liste doluyken çıkar. */
+function withPrompts(db, owner) {
+  const inner = db.extraRoutes;
+  const row = (i, type) => ({
+    id: `b0000000-0000-4000-8000-0000000000${i}0`, title: `Prompt ${i}`, description: "d", prompt_text: `text ${i}`, tool: null, tools: [], content_type: type, category: null, subcategory: null,
+    status: "published", origin_type: "original", request_id: null, like_count: i, save_count: 0, comment_count: 0, copy_count: 0, created_at: `2026-02-0${i}T00:00:00Z`, show_on_profile: true,
+    requires_reference_image: false, requires_reference_video: false, requires_reference_audio: false, visibility: "public", deleted_at: null, community_id: null,
+    profiles: pubOf(owner), prompt_media: [], prompt_tags: [],
+  });
+  db.extraRoutes = async (ctx) => {
+    if (ctx.table === "prompts" && ctx.q.get("author_id")) return ctx.rows([row(1, "image"), row(2, "text")]);
+    return inner ? inner(ctx) : null;
+  };
+}
+const menuRadios = (page) => page.getByRole("radiogroup", { name: /Profil bölümleri|Profile sections/ }).getByRole("radio");
+await scenario("7. Profil bölüm menüsü: sekme satırı yok; kendi profilimde gruplar (içerik · Spaces/Taslaklar/Kaydedilenler/Beğeniler · Hakkında), ziyaretçide Taslak/Kaydedilen/Beğeni yok", async ({ page, db }) => {
+  withCollections(db, U.alice);
+  await page.goto(`${BASE}/profile/real?username=${U.alice.username}`);
+  const menu = page.locator("[data-section-menu]");
+  await menu.waitFor();
+  assert.equal(await page.getByRole("tablist", { name: "Profil bölümleri" }).count(), 0, "profil sekme satırı yok");
+  assert.match(await menu.textContent(), /Promptlar/);
+  await menu.click();
+  const own = (await menuRadios(page).allInnerTexts()).map((x) => x.replace(/\s*\d+$/, "").trim());
+  for (const wanted of ["Promptlar", "Prompt İstekleri", "Taslaklar", "Kaydedilenler", "Beğeniler", "Hakkında"]) assert.ok(own.some((n) => n.startsWith(wanted)), `${wanted}: ${own.join(" | ")}`);
+  assert.ok(own.findIndex((n) => n.startsWith("Taslaklar")) > own.findIndex((n) => n.startsWith("Promptlar")), "içerik önce, kütüphane sonra");
+  assert.equal(await page.locator("[data-section-option]").evaluateAll((els) => els.filter((el) => el.className.includes("border-t")).length), 2, "iki ayırıcı: kütüphane grubu ve Hakkında");
+  await page.getByRole("radio", { name: /Beğeniler/ }).click();
+  assert.match(await menu.textContent(), /Beğeniler/);
+  await page.goto(`${BASE}/profile/real?username=${U.bob.username}`);
+  await menu.waitFor();
+  await menu.click();
+  const other = (await menuRadios(page).allInnerTexts()).map((x) => x.replace(/\s*\d+$/, "").trim());
+  for (const hidden of ["Taslaklar", "Kaydedilenler", "Beğeniler"]) assert.ok(!other.some((n) => n.startsWith(hidden)), `${hidden} ziyaretçiye gösterilmez`);
+  assert.ok(other.some((n) => n.startsWith("Koleksiyonlar")), "ziyaretçide herkese açık Koleksiyonlar");
+});
+
+await scenario("8. Profil kontrol satırı: Promptlar listesinde Filtre simgesi (tür · sıralama) + Kart | Izgara düğmesi; Hakkında'da ikisi de yok; 390px'te taşma yok", async ({ page, db }) => {
+  withCollections(db, U.bob);
+  withPrompts(db, U.bob);
+  await page.goto(`${BASE}/profile/real?username=${U.bob.username}`);
+  const menu = page.locator("[data-section-menu]");
+  await menu.waitFor();
+  const filter = page.locator("[data-profile-filter]");
+  await filter.waitFor();
+  assert.ok(await page.locator("[data-view-toggle]").count(), "Kart | Izgara düğmesi");
+  await filter.click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByRole("heading", { name: "Sırala" }).waitFor();
+  await dialog.getByRole("button", { name: "En eski" }).click();
+  await dialog.getByRole("button", { name: "Filtreleri Uygula" }).click();
+  await dialog.waitFor({ state: "detached" });
+  await menu.click();
+  await page.getByRole("radio", { name: /Hakkında/ }).click();
+  assert.equal(await page.locator("[data-profile-filter]").count(), 0, "Hakkında'da Filtre yok");
+  assert.equal(await page.locator("[data-view-toggle]").count(), 0, "Hakkında'da görünüm düğmesi yok");
+  assert.equal(await overflowFree(page), true);
+}, { viewport: { width: 390, height: 844 } });
+
 await browser.close(); server.close();
 for (const [s, n] of results) console.log(`${s === "PASS" ? "✓" : "✗"} ${n}`);
 console.log(`${results.filter((r) => r[0] === "PASS").length}/${results.length} passed`);

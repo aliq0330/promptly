@@ -95,7 +95,7 @@ async function skeletonThenStrips({ page }) {
     return route.fallback();
   });
   await page.goto(`${BASE}/discover`);
-  const nav = page.locator('main [role="tablist"]').first();
+  const nav = page.locator("[data-section-menu]").first();
   await page.locator("[data-discover-highlights-loading]").waitFor();
   assert.equal(await page.locator("[data-discover-category]").count(), 0, "no strip before the data is ready");
   assert.equal(await page.locator("#discover-popular").count(), 0);
@@ -133,7 +133,7 @@ await scenario("1. telefon: görünür başlık yok (yalnız ekran okuyucuya); t
   assert.ok(search.width >= 280, `arama kutusu geniş (${Math.round(search.width)}px)`);
   // Sıra: çip satırı (etiketler + kategoriler) → popüler → sekmeler → gönderiler; yaratıcılar telefonda üstte değil.
   const ys = await Promise.all(
-    ["[data-discover-tag]", "#discover-popular", 'main [role="tablist"]'].map(async (sel) => (await page.locator(sel).first().boundingBox()).y),
+    ["[data-discover-tag]", "#discover-popular", "[data-section-menu]"].map(async (sel) => (await page.locator(sel).first().boundingBox()).y),
   );
   for (let i = 1; i < ys.length; i++) assert.ok(ys[i] > ys[i - 1], `sıra ${ys.join(" < ")}`);
   assert.equal(await page.locator("#discover-creators").isVisible(), false, "yaratıcılar şeridi telefonda yok (Yaratıcılar bölümü bir sekme uzakta)");
@@ -145,11 +145,17 @@ await scenario("1. telefon: görünür başlık yok (yalnız ekran okuyucuya); t
   assert.match(await page.locator("[data-discover-category]").first().textContent(), /Fotoğrafçılık/);
   // Etiketlerde gerçek pencere sayısı.
   assert.match(await page.locator("#discover-trending").locator("xpath=..").textContent(), /Yükselen.*#sinematik\s*12/s);
-  // Bölümler metin sekmesi (balon değil): hepsi sekme, Tümü seçili.
-  const tabs = page.locator('main [role="tablist"]').first().getByRole("tab");
-  assert.equal(await tabs.count(), 11, "11 bölüm sekmesi");
-  assert.equal(await tabs.first().getAttribute("aria-selected"), "true");
-  assert.ok((await tabs.first().boundingBox()).height <= 48, "sekme satırı ince (balon değil)");
+  // Bölümler TEK menüde (docs/history/233-*): "Tümü ▾" düğmesi; menüde 11 bölüm, Tümü seçili.
+  const menu = page.locator("[data-section-menu]").first();
+  assert.match(await menu.textContent(), /Tümü/);
+  assert.ok((await menu.boundingBox()).height <= 48, "tek kontrol satırı (sekme satırı yok)");
+  assert.equal(await page.locator('main [role="tablist"]').count(), 0, "sekme satırı yok");
+  await menu.click();
+  const options = page.getByRole("radio");
+  assert.equal(await options.count(), 11, "menüde 11 bölüm");
+  assert.equal(await options.first().getAttribute("aria-checked"), "true");
+  await page.keyboard.press("Escape");
+  await page.mouse.click(5, 5);
   await page.evaluate(() => window.scrollTo(0, 0));
   // Alt menünün (64px) üstünde, telefonun ilk ekranında ilk gönderi kartı başlar ve başlığı okunur.
   const first = await page.locator("main article:has(a[data-card-link])").first().boundingBox();
@@ -178,7 +184,7 @@ await scenario("3. masaüstü sağ sütun: yaratıcılar + yükselen etiketler; 
   assert.match(await aside.textContent(), /Yükselen.*#sinematik\s*12/s, "yükselen etiketler sağ sütunda");
   assert.equal(await page.locator("[data-discover-tag]").first().isVisible(), false, "etiket çipleri xl'de çip satırından kalkar (sağ sütunda)");
   await aside.getByRole("button", { name: "Tümü", exact: true }).click();
-  await page.waitForFunction(() => [...document.querySelectorAll("main [aria-selected='true']")].some((el) => /Yaratıcılar/.test(el.textContent ?? "")));
+  await page.waitForFunction(() => /Yaratıcılar/.test(document.querySelector("[data-section-menu]")?.textContent ?? ""));
 }, { viewport: { width: 1280, height: 900 } });
 
 await scenario("4. trend penceresi boşken en çok kullanılan etiketler sayısız gösterilir (uydurma sayı yok)", async ({ page }) => {

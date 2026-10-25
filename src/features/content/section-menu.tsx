@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { Check, ChevronDown } from "lucide-react";
+import { Check, ChevronDown, type LucideIcon } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
 import { cn } from "@/lib/utils";
 
@@ -25,8 +25,13 @@ function useWide() {
 export interface SectionMenuItem<K extends string> {
   key: K;
   label: string;
-  /** Bekleyen sayı (davet) — mavi rozet. */
+  /** Bekleyen sayı (davet) — mavi rozet; düğmede mavi nokta da çıkarır. */
   count?: number;
+  /** Bilgi amaçlı sayı (Profil: gönderi sayıları) — sağda sönük metin, nokta çıkarmaz. */
+  meta?: number;
+  icon?: LucideIcon;
+  /** Önceki satırdan ince çizgiyle ayrılan yeni grup (Keşfet, Profil, docs/history/233-*). */
+  dividerBefore?: boolean;
 }
 
 /**
@@ -58,6 +63,7 @@ export function SectionMenu<K extends string>({ items, active, onChange, ariaLab
     <div role="radiogroup" aria-label={ariaLabel} className="space-y-0.5">
       {items.map((item) => {
         const selected = item.key === active;
+        const Icon = item.icon;
         return (
           <button
             key={item.key}
@@ -72,10 +78,12 @@ export function SectionMenu<K extends string>({ items, active, onChange, ariaLab
             className={cn(
               "flex min-h-12 w-full items-center gap-2 rounded-lg px-3 text-left text-body transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
               selected ? "font-semibold text-text" : "text-text-secondary",
-              item.key === "invites" && "mt-1 border-t border-border-soft",
+              (item.dividerBefore || item.key === "invites") && "mt-1 border-t border-border-soft pt-1",
             )}
           >
+            {Icon && <Icon size={20} strokeWidth={1.75} aria-hidden className="shrink-0 text-text-muted" />}
             <span className="flex-1">{item.label}</span>
+            {item.meta ? <span data-section-meta className="text-small tabular-nums text-text-muted">{item.meta}</span> : null}
             {item.count ? <span className="grid h-6 min-w-6 place-items-center rounded-full bg-primary px-1.5 text-caption font-bold text-primary-foreground">{item.count}</span> : null}
             {selected && <Check size={18} className="text-primary" aria-hidden />}
           </button>

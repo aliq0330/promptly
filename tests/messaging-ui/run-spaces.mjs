@@ -509,7 +509,8 @@ await scenario("27. prompt detayı: 'Bu prompt şu Space'lerde' yalnız herkese 
 
 await scenario("28. profil: herkese açık Space varsa 'Spaces' sekmesi (yalnız herkese açık olanlar); yoksa sekme yok", async ({ page, db }) => {
   await page.goto(`${BASE}/profile/real?username=${U.bob.username}`);
-  await page.getByRole("tab", { name: /Spaces/ }).click();
+  await page.locator("[data-section-menu]").click();
+  await page.getByRole("radio", { name: /Spaces/ }).click();
   const grid = page.getByTestId("profile-spaces");
   await grid.waitFor();
   assert.equal(await grid.locator("[data-space-card]").count(), 1);
@@ -519,7 +520,9 @@ await scenario("28. profil: herkese açık Space varsa 'Spaces' sekmesi (yalnız
   await page.getByRole("heading", { level: 1 }).first().waitFor();
   await waitFor(() => calls(db, "RPC", "list_public_spaces").some((c) => c.body.p_owner === U.carol.id));
   await page.waitForTimeout(300);
-  assert.equal(await page.getByRole("tab", { name: /Spaces/ }).count(), 0);
+  await page.locator("[data-section-menu]").click();
+  await page.getByRole("radio", { name: /Promptlar/ }).first().waitFor();
+  assert.equal(await page.getByRole("radio", { name: /Spaces/ }).count(), 0);
 }, {
   setup: (db) => {
     db.addSpace(1, { title: "Bob'un açık Space'i", owner: U.bob.id, visibility: "public" });

@@ -376,21 +376,41 @@ await scenario("8. İngilizce + telefon: sekmeler, süzgeç bölümleri ve özet
 }, { lang: "en", viewport: { width: 390, height: 844 } });
 
 // ───────────────────────────── Keşfet ─────────────────────────────
-const discoverTabs = (page) => page.getByRole("tablist", { name: /Keşfet bölümleri|Discover sections/ });
-const sortSelect = (page) => page.locator("select").filter({ has: page.locator("option", { hasText: /Önerilen|Recommended/ }) }).first();
-const options = (select) => select.locator("option").allInnerTexts().then((list) => list.map((s) => s.trim()));
+// Keşfet bölümleri TEK menüdedir (docs/history/233-*): "Tümü ▾" → radyo satırları; sıralama Filtre penceresindedir.
+const sectionMenu = (page) => page.locator("[data-section-menu]").first();
+const openMenu = async (page) => {
+  await sectionMenu(page).click();
+  await page.getByRole("radiogroup", { name: /Keşfet bölümleri|Discover sections/ }).waitFor();
+};
+const sectionNames = async (page) => {
+  await openMenu(page);
+  const names = (await page.getByRole("radiogroup", { name: /Keşfet bölümleri|Discover sections/ }).getByRole("radio").allInnerTexts()).map((s) => s.trim());
+  await page.keyboard.press("Escape");
+  await page.mouse.click(5, 5);
+  return names;
+};
+const sortRadios = (page) => page.getByRole("dialog").getByRole("radiogroup", { name: /Sırala|Sort/ }).getByRole("radio");
+const sortNames = async (page) => {
+  await openFilter(page);
+  const names = (await sortRadios(page).allInnerTexts()).map((s) => s.trim());
+  await closeFilter(page);
+  return names;
+};
+const pickSort = async (page, name) => {
+  await openFilter(page);
+  await sortRadios(page).filter({ hasText: name }).first().click();
+  await closeFilter(page);
+};
 const lastDiscoverCall = (state) => state.feedCalls[state.feedCalls.length - 1];
 const openSection = async (page, name) => {
-  const tab = discoverTabs(page).getByRole("tab", { name, exact: true });
-  await tab.waitFor();
-  await tab.evaluate((el) => el.click());
+  await openMenu(page);
+  await page.getByRole("radio", { name, exact: true }).click();
 };
 
 await scenario("10. Keşfet bölümleri: dört içerik kategorisi + Spaces/Alıntılar + AI Araçları · Etiketler · Yaratıcılar · Topluluklar", async ({ page }) => {
   await page.goto(`${BASE}/discover`);
-  const tabs = discoverTabs(page);
-  await tabs.waitFor();
-  const names = (await tabs.getByRole("tab").allInnerTexts()).map((s) => s.trim());
+  await sectionMenu(page).waitFor();
+  const names = await sectionNames(page);
   assert.equal(names[0], "Tümü");
   for (const wanted of ["Promptlar", "AI Araçları", "Etiketler", "Yaratıcılar", "Topluluklar", "Spaces"]) assert.ok(names.includes(wanted), `${wanted} bölümü var: ${names.join(" | ")}`);
   assert.ok(names.indexOf("Promptlar") < names.indexOf("AI Araçları") && names.indexOf("Spaces") < names.indexOf("AI Araçları"), "içerikler önce, takip edilecekler sonra");
@@ -400,28 +420,29 @@ await scenario("10. Keşfet bölümleri: dört içerik kategorisi + Spaces/Alın
 await scenario("11. Keşfet sıralama: Önerilen (varsayılan, recommended) · En yeni · Popüler; En çok kullanılan yalnız Promptlar'da; başka bölüme geçince Önerilen'e döner", async ({ page, state }) => {
   await page.goto(`${BASE}/discover`);
   await waitFor(() => state.feedCalls.length > 0);
-  const select = sortSelect(page);
-  await select.waitFor();
-  assert.deepEqual(await options(select), ["Önerilen", "En yeni", "Popüler"]);
-  assert.equal(await select.inputValue(), "recommended");
+  await sectionMenu(page).waitFor();
+  assert.deepEqual(await sortNames(page), ["Önerilen", "En yeni", "Popüler"]);
+  await openFilter(page);
+  assert.equal(await sortRadios(page).first().getAttribute("aria-checked"), "true", "Önerilen seçili");
+  await closeFilter(page);
   assert.equal(state.feedCalls[0].p_order, "recommended", "varsayılan sıra Önerilen");
-  await select.selectOption("popular");
+  await pickSort(page, "Popüler");
   await waitFor(() => lastDiscoverCall(state).p_order === "popular");
   assert.equal(lastDiscoverCall(state).p_order, "popular");
-  await select.selectOption("newest");
+  await pickSort(page, "En yeni");
   await waitFor(() => lastDiscoverCall(state).p_order === "newest");
   // Promptlar: ek olarak En çok kullanılan (kopyalama sayacı gerçek).
   await openSection(page, "Promptlar");
   await waitFor(() => lastDiscoverCall(state).p_kinds?.[0] === "prompt");
-  assert.deepEqual(await options(sortSelect(page)), ["Önerilen", "En yeni", "Popüler", "En çok kullanılan"]);
-  await sortSelect(page).selectOption("most-used");
+  assert.deepEqual(await sortNames(page), ["Önerilen", "En yeni", "Popüler", "En çok kullanılan"]);
+  await pickSort(page, "En çok kullanılan");
   await waitFor(() => lastDiscoverCall(state).p_order === "used");
   assert.equal(lastDiscoverCall(state).p_order, "used");
   // İstekler'de kullanım sayacı yok: seçenek yok ve sıra Önerilen'e düşer (anlamsız sıra gönderilmez).
   await openSection(page, "İstekler");
   await waitFor(() => lastDiscoverCall(state).p_kinds?.[0] === "request");
   assert.equal(lastDiscoverCall(state).p_order, "recommended");
-  assert.deepEqual(await options(sortSelect(page)), ["Önerilen", "En yeni", "Popüler"]);
+  assert.deepEqual(await sortNames(page), ["Önerilen", "En yeni", "Popüler"]);
 });
 
 await scenario("12. Gelişmiş süzgeç seçili bölüme uyar: AI aracı (p_tool) içerik bölümlerinde; Spaces'te tür/kategori/araç sunucuya gitmez; Temizle hepsini sıfırlar", async ({ page, state }) => {
@@ -435,10 +456,12 @@ await scenario("12. Gelişmiş süzgeç seçili bölüme uyar: AI aracı (p_tool
   assert.equal(lastDiscoverCall(state).p_tool, "flux");
   await closeFilter(page);
   await waitTitles(page, ["Prompt 3", "Prompt 4", "Prompt 5"]);
-  // İçerik türü çipi (Görsel) seçilir: Promptlar'da sunucuya gider.
-  await page.getByRole("group", { name: "İçerik türüne göre filtrele" }).getByRole("button", { name: /Görsel/ }).first().click();
+  // İçerik türü çipi (Görsel) Filtre penceresindedir (docs/history/233-*): seçilir, Promptlar'da sunucuya gider.
+  await openFilter(page);
+  await sheetChip(page, "Görsel").click();
   await waitFor(() => lastDiscoverCall(state).p_content_type === "image");
   assert.equal(lastDiscoverCall(state).p_content_type, "image");
+  await closeFilter(page);
   // Spaces: bu süzgeçlerin anlamı yok → sorguya karışmaz (sunucu aksi hâlde Space'i eler) ve sheet'te bölümleri çizilmez.
   await openSection(page, "Spaces");
   await waitFor(() => lastDiscoverCall(state).p_kinds?.[0] === "space");
@@ -472,7 +495,7 @@ await scenario("13. Keşfet → AI Araçları: araçlar gönderi sayısıyla (en
   assert.match(await rows.nth(1).innerText(), /3 gönderi/);
   assert.match((await rows.first().getByRole("link").first().getAttribute("href")) ?? "", /\/tools\/local\/?\?id=midjourney/);
   // Süzgeç/sıralama denetimleri entity bölümünde yok.
-  assert.equal(await sortSelect(page).count(), 0);
+  assert.equal(await page.getByRole("button", { name: /^(Filtre|Filter)(,|$)/ }).count(), 0);
   const flux = section.locator("li").filter({ hasText: "FLUX" }).first();
   await flux.getByRole("button", { name: /Takip Et|Follow/ }).click();
   await waitFor(() => state.writes.some((w) => w[0] === "tool-follow"));
@@ -548,13 +571,13 @@ await scenario("16. Arama seçili bölüme göre: Promptlar'da yalnız prompt ar
 
 await scenario("17. İngilizce + telefon: bölümler, sıralama ve süzgeç çevrili; yatay taşma yok", async ({ page }) => {
   await page.goto(`${BASE}/discover`);
-  // Dile özgü ad: hidrasyondan ÖNCEKİ (Türkçe) HTML'i değil çevrilmiş sekmeleri bekler.
-  const tabs = page.getByRole("tablist", { name: "Discover sections" });
-  await tabs.waitFor();
-  const names = (await tabs.getByRole("tab").allInnerTexts()).map((s) => s.trim());
+  // Dile özgü ad: hidrasyondan ÖNCEKİ (Türkçe) HTML'i değil çevrilmiş menüyü bekler.
+  await page.getByRole("button", { name: /^All/ }).first().waitFor();
+  await page.waitForFunction(() => /All/.test(document.querySelector("[data-section-menu]")?.textContent ?? ""));
+  const names = await sectionNames(page);
   for (const wanted of ["All", "Prompts", "AI tools", "Tags", "Creators", "Communities"]) assert.ok(names.includes(wanted), `${wanted}: ${names.join(" | ")}`);
-  assert.deepEqual(await options(sortSelect(page)), ["Recommended", "Newest", "Popular"]);
   await openFilter(page);
+  assert.deepEqual((await sortRadios(page).allInnerTexts()).map((x) => x.trim()), ["Recommended", "Newest", "Popular"]);
   await page.getByRole("dialog").getByRole("heading", { name: "AI tool" }).waitFor();
   await closeFilter(page);
   assert.equal(await overflowFree(page), true);

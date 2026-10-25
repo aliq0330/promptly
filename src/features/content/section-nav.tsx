@@ -5,7 +5,8 @@ import { SlidersHorizontal, type LucideIcon } from "lucide-react";
 import { ScrollRow } from "@/components/ui/scroll-row";
 import { ListFilterSheet } from "@/features/content/list-toolbar";
 import { SortSelect, SORT_KEYS, type ContentSortKey } from "@/features/content/sort-select";
-import { MobileViewToggle, ViewModeSwitcher } from "@/features/content/view-mode-switcher";
+import { CONTROL_ICON_BUTTON, SectionMenu } from "@/features/content/section-menu";
+import { CompactViewToggle, MobileViewToggle, ViewModeSwitcher } from "@/features/content/view-mode-switcher";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
 
@@ -15,6 +16,8 @@ export interface SectionNavItem<K extends string> {
   icon: LucideIcon;
   /** Something waiting there (Topluluklar' invitations): a small count on the tile and on the folded bar's icon. */
   count?: number;
+  /** `variant="menu"`: a divider line before this row (a new group of the menu). */
+  dividerBefore?: boolean;
 }
 
 /**
@@ -73,6 +76,7 @@ export function SectionNav<K extends string>({
   ariaLabel,
   spread,
   variant = "tiles",
+  menuTitle,
   hideControls,
   chips,
   chipsLabel,
@@ -93,7 +97,9 @@ export function SectionNav<K extends string>({
   /** Few tiles / tabs (Home): spread across a phone's width instead of scrolling. */
   spread?: boolean;
   /** "tiles" = the rounded-square balloons (Topluluklar, Spaces, topic pages); "tabs" = one row of underlined text tabs (Home, Keşfet). */
-  variant?: "tiles" | "tabs";
+  variant?: "tiles" | "tabs" | "menu";
+  /** `variant="menu"` (Keşfet, docs/history/233-*): ONE "Tümü ▾" menu instead of the tabs; the sheet's title on phones. */
+  menuTitle?: string;
   /** Only the tiles (Keşfet's Yaratıcılar section is not a filterable feed): no sort / Filtre / view controls. */
   hideControls?: boolean;
   /** A secondary chip row (post kind / content type) in the control row. */
@@ -135,13 +141,41 @@ export function SectionNav<K extends string>({
       )}
     </button>
   );
+  // The sade control row (docs/history/233-*) uses the same quiet icon button as Spaces / Topluluklar.
+  const menuFilterButton = (
+    <button type="button" onClick={() => setSheetOpen(true)} aria-haspopup="dialog" aria-label={filterLabel} title={t("toolbar.filter")} className={cn(CONTROL_ICON_BUTTON, "relative")}>
+      <SlidersHorizontal size={22} strokeWidth={1.75} aria-hidden />
+      {totalActive > 0 && (
+        <span className="absolute right-0.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[0.625rem] font-semibold tabular-nums text-primary-foreground">
+          {totalActive}
+        </span>
+      )}
+    </button>
+  );
 
   return (
     <>
       <FoldedBar items={items} active={active} onChange={onChange} ariaLabel={ariaLabel} visible={folded} actions={hideControls ? null : <>{filterButton}<MobileViewToggle className={ICON_BUTTON} /></>} />
 
       <div ref={blockRef} className="space-y-3">
-        {variant === "tabs" ? (
+        {variant === "menu" ? (
+          <div className="flex min-w-0 items-center gap-1.5">
+            <SectionMenu
+              items={items.map((item) => ({ key: item.key, label: item.label, icon: item.icon, count: item.count, dividerBefore: item.dividerBefore }))}
+              active={active}
+              onChange={onChange}
+              ariaLabel={ariaLabel}
+              title={menuTitle ?? ariaLabel}
+            />
+            <span className="flex-1" />
+            {!hideControls && (
+              <>
+                {menuFilterButton}
+                <CompactViewToggle />
+              </>
+            )}
+          </div>
+        ) : variant === "tabs" ? (
           <SectionTabs items={items} active={active} onChange={onChange} ariaLabel={ariaLabel} spread={spread} />
         ) : (
           <div
@@ -159,7 +193,7 @@ export function SectionNav<K extends string>({
           </div>
         )}
 
-        {!hideControls && (
+        {!hideControls && variant !== "menu" && (
           <div className="flex min-w-0 items-center gap-2">
             {sort && onSortChange && (
               <div className={cn("order-1 flex min-w-0 md:order-2 md:shrink-0", !chips && "flex-1 md:flex-none", chips && !chipsOnMobile && "max-md:flex-1")}>
