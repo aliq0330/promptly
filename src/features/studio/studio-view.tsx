@@ -2,12 +2,14 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Download, Eye, EyeOff, Loader2, Pencil, Plus, Sparkles, Square, Upload, X } from "lucide-react";
+import { Download, Eye, EyeOff, KeyRound, Loader2, Pencil, Play, Plus, Send, Sparkles, Square, Upload, X } from "lucide-react";
 import { Button, buttonClassName } from "@/components/ui/button";
 import { Chip, ChipRow } from "@/components/ui/chip";
 import { PageContainer, PageHeader } from "@/components/ui/page-header";
 import { fieldControlClassName, fieldInputClassName, fieldLabelClassName } from "@/components/ui/field";
 import { PromptVariableInputs } from "@/features/prompts/prompt-variable-inputs";
+import { CopyPromptButton } from "@/features/prompts/copy-prompt-button";
+import { RunButton } from "@/features/content/run-with-ai";
 import { StudioSourcePicker } from "./studio-source-picker";
 import { StudioPresetPicker } from "./studio-preset-picker";
 import { StudioHistory } from "./studio-history";
@@ -136,6 +138,9 @@ export function StudioView() {
   const [running, setRunning] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [publishError, setPublishError] = useState(false);
+  // Two ways to run the final prompt: hand it to another tool ("run") or generate here with the user's own key ("api"). Docs/history/230-*.
+  const [runMode, setRunMode] = useState<"run" | "api">("api");
+  const [promptPublishError, setPromptPublishError] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
   const resultsRef = useRef<HTMLDivElement | null>(null);
   /** The results column follows the page while it fits on screen; once it is taller than the viewport it scrolls normally. */
@@ -389,6 +394,16 @@ export function StudioView() {
     router.push("/create?mode=prompt&fromGenerate=1");
   }
 
+  /** "Yayınla": the final prompt (preset applied) goes to the create screen as the prompt text; no result image, the author can add one there. */
+  function onPublishPrompt() {
+    if (!user) return requireAuth("create");
+    if (!finalPrompt) return;
+    setPromptPublishError(false);
+    const ok = stashHandoff({ contentType: kind, promptText: finalPrompt, toolId: toolIdFor(provider, kind) });
+    if (!ok) return setPromptPublishError(true);
+    router.push("/create?mode=prompt&fromGenerate=1");
+  }
+
   function openHistory(entry: HistoryEntry) {
     setPublishError(false);
     setSlots([{ id: Date.now(), status: "done", output: entry.output, meta: { provider: entry.provider, model: entry.model, prompt: entry.prompt } }]);
@@ -583,11 +598,32 @@ export function StudioView() {
             )}
           </section>
 
-          {/* MODEL + Üret */}
-          <section aria-labelledby="studio-model-title" className={`${STUDIO_CARD} space-y-4`}>
-            <h2 id="studio-model-title" className="sr-only">
-              {t("studio.modelCard")}
+          {/* ÇALIŞTIR: iki yol (başka araçta çalıştır · API anahtarıyla üret) + Yayınla */}
+          <section aria-labelledby="studio-run-title" className={`${STUDIO_CARD} space-y-4`}>
+            <h2 id="studio-run-title" className={STUDIO_LABEL}>
+              {t("studio.runTitle")}
             </h2>
+            <div role="radiogroup" aria-label={t("studio.runTitle")} className="grid gap-2 sm:grid-cols-2">
+              <RunModeOption selected={runMode === "run"} onSelect={() => setRunMode("run")} icon={<Play size={18} aria-hidden />} title={t("studio.optionRun")} hint={t("studio.optionRunHint")} />
+              <RunModeOption selected={runMode === "api"} onSelect={() => setRunMode("api")} icon={<KeyRound size={18} aria-hidden />} title={t("studio.optionApi")} hint={t("studio.optionApiHint")} />
+            </div>
+
+            {runMode === "run" && (
+              <div data-run-panel className="space-y-3 rounded-lg bg-surface-soft p-4">
+                <p className="text-small text-text-secondary">{t("studio.runPanelHint")}</p>
+                {finalPrompt ? (
+                  <div className="flex w-full divide-x divide-primary-foreground/30 overflow-hidden rounded-full bg-primary shadow-xs sm:inline-flex sm:w-auto">
+                    <CopyPromptButton text={finalPrompt} promptId={promptSource?.id} variant="segment" size="md" />
+                    <RunButton text={finalPrompt} recommendedRefs={promptSource?.tools?.length ? promptSource.tools : preset?.tools} promptId={promptSource?.id} variant="segment" />
+                  </div>
+                ) : (
+                  <p className="text-small text-text-muted">{t("generate.needPrompt")}</p>
+                )}
+              </div>
+            )}
+
+            {runMode === "api" && (
+            <div className="space-y-4">
             <div>
               <span className={fieldLabelClassName}>{t("generate.kind")}</span>
               <ChipRow>
@@ -758,6 +794,21 @@ export function StudioView() {
                 </button>
               )}
             </div>
+            </div>
+            )}
+
+            {/* Yayınla: the same final prompt, handed to the create screen */}
+            <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-border-soft pt-4">
+              <p className="min-w-0 flex-1 text-small text-text-muted">{t("studio.publishHint")}</p>
+              <Button type="button" variant="outline" onClick={onPublishPrompt} disabled={!finalPrompt}>
+                <Send size={15} aria-hidden /> {t("studio.publishPrompt")}
+              </Button>
+            </div>
+            {promptPublishError && (
+              <p role="alert" className="text-small text-danger">
+                {t("studio.publishPromptFailed")}
+              </p>
+            )}
           </section>
         </div>
 
@@ -816,6 +867,29 @@ export function StudioView() {
         <StudioSourcePicker kind="prompt" onPick={(key) => pickSource("prompt", key)} onClose={() => setSourcePicker(null)} />
       )}
     </PageContainer>
+  );
+}
+
+function RunModeOption({ selected, onSelect, icon, title, hint }: { selected: boolean; onSelect: () => void; icon: React.ReactNode; title: string; hint: string }) {
+  return (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={selected}
+      onClick={onSelect}
+      className={cn(
+        "flex items-start gap-3 rounded-lg border p-3 text-left transition-colors duration-200",
+        selected ? "border-primary bg-primary-soft/50 ring-1 ring-primary" : "border-border-soft bg-background hover:border-border-strong hover:bg-surface-soft",
+      )}
+    >
+      <span aria-hidden className={cn("grid h-9 w-9 shrink-0 place-items-center rounded-md", selected ? "bg-primary text-primary-foreground" : "bg-surface-soft text-text-secondary")}>
+        {icon}
+      </span>
+      <span className="min-w-0">
+        <span className="block text-small font-semibold text-text">{title}</span>
+        <span className="block text-caption text-text-muted">{hint}</span>
+      </span>
+    </button>
   );
 }
 

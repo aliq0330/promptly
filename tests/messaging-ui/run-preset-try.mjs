@@ -182,6 +182,44 @@ await scenario("3b. Studio telefon 390px: kart düzeni taşmaz, Üret düğmesi 
   await shot(page, "3b-studio-combo-mobile");
 }, { viewport: { width: 390, height: 844 } });
 
+await scenario("3c. Studio: Çalıştır / API anahtarıyla üret iki seçenek; Çalıştır birleşik Kopyala | Çalıştır + araç seçici; Yayınla promptu oluşturma ekranına taşır (docs/history/230-*)", async ({ page }) => {
+  await page.goto(`${BASE}/studio?prompt=${ID.prompt}&preset=${P.match}`);
+  await page.locator("[data-final-prompt]").waitFor();
+  const options = page.getByRole("radiogroup", { name: "Nasıl çalıştıralım?" });
+  await options.waitFor();
+  assert.equal(await options.getByRole("radio").count(), 2);
+  assert.equal(await options.getByRole("radio", { name: /API anahtarıyla üret/ }).getAttribute("aria-checked"), "true", "varsayılan: API ile üret (eski akış)");
+  await page.getByRole("button", { name: /^Üret/ }).waitFor();
+  await options.getByRole("radio", { name: /^Çalıştır/ }).click();
+  const panel = page.locator("[data-run-panel]");
+  await panel.waitFor();
+  assert.equal(await page.getByRole("button", { name: /^Üret/ }).count(), 0, "API paneli kapanır");
+  await panel.getByRole("button", { name: "Kopyala" }).waitFor();
+  await panel.getByRole("button", { name: "Çalıştır" }).click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByText(/GPT Image/).first().waitFor();
+  await page.keyboard.press("Escape");
+  await dialog.waitFor({ state: "detached" });
+  await shot(page, "3c-studio-run");
+  const publish = page.getByRole("button", { name: "Yayınla" });
+  await publish.click();
+  await page.waitForURL((url) => url.pathname.includes("/create") && url.searchParams.get("fromGenerate") === "1");
+  const box = page.locator("textarea").first();
+  await box.waitFor();
+  assert.match(await box.inputValue(), /85mm/, "ayarlı son prompt oluşturma ekranına düştü");
+});
+
+await scenario("3d. Studio telefon 390px: iki seçenek alt alta, Çalıştır paneli taşmaz", async ({ page }) => {
+  await page.goto(`${BASE}/studio?prompt=${ID.prompt}&preset=${P.match}`);
+  const options = page.getByRole("radiogroup", { name: "Nasıl çalıştıralım?" });
+  await options.waitFor();
+  await options.getByRole("radio", { name: /^Çalıştır/ }).click();
+  await page.locator("[data-run-panel]").waitFor();
+  assert.equal(await overflowFree(page), true);
+  await page.getByRole("button", { name: "Yayınla" }).waitFor();
+  await shot(page, "3d-studio-run-mobile");
+}, { viewport: { width: 390, height: 844 } });
+
 await scenario("4. hazır ayar sayfası: 'Bir promptla dene' uyumlu promptları gösterir (Uyumlu olanlar süzgeci), seçince Studio iki kaynakla açılır", async ({ page }) => {
   await page.goto(`${BASE}/presets/local?id=${P.match}`);
   await page.getByRole("heading", { level: 1 }).waitFor();
