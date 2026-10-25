@@ -16,6 +16,7 @@ export function OpenInStudioButton({
   label,
   quiet = false,
   primary = false,
+  className,
 }: {
   kind: "prompt";
   id: string;
@@ -23,11 +24,12 @@ export function OpenInStudioButton({
   label?: string;
   quiet?: boolean;
   primary?: boolean;
+  className?: string;
 }) {
   const { t } = useTranslation();
   const href = `/studio?${kind}=${encodeURIComponent(id)}${presetId ? `&preset=${encodeURIComponent(presetId)}` : ""}`;
   return (
-    <Link href={href} className={buttonClassName(primary ? { size: "md" } : { variant: quiet ? "ghost" : "outline", size: "sm" })}>
+    <Link href={href} className={buttonClassName({ ...(primary ? { size: "md" as const } : { variant: quiet ? ("ghost" as const) : ("outline" as const), size: "sm" as const }), className })}>
       <WandSparkles size={primary ? 16 : 14} aria-hidden /> {label ?? t("studio.openInStudio")}
     </Link>
   );

@@ -2,12 +2,10 @@
 
 import { EngageCommentCount, EngageComments, EngageLike, EngageSave, EngageShare, EngageStatistics } from "@/features/content/scoped-engagement";
 import { usePageTitle } from "@/components/layout/page-title";
-import { RunButton } from "@/features/content/run-with-ai";
 import { DetailMetaCard } from "@/features/content/detail-meta-card";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { PenLine } from "lucide-react";
-import { OpenInStudioButton } from "@/features/studio/open-in-studio-button";
 import { ContentTypeLabel } from "@/features/content/content-type-label";
 import { RelatedPrompts } from "@/features/prompts/related-prompts";
 import { TaxonomyLinks } from "@/features/content/taxonomy-links";
@@ -15,8 +13,7 @@ import { clampedAspectRatio } from "@/lib/placeholder-image";
 import { ImageLightbox } from "@/components/ui/image-lightbox";
 import { RequestResponseContext } from "@/features/prompts/post-context";
 import { RelationMapLink } from "@/features/relations/relation-map-link";
-import { CopyPromptButton } from "@/features/prompts/copy-prompt-button";
-import { PromptTrySection } from "@/features/prompts/prompt-try-section";
+import { PromptActions } from "@/features/prompts/prompt-actions";
 import { PromptDnaDisplay } from "@/features/prompts/prompt-dna-display";
 import { PromptVariableInputs } from "@/features/prompts/prompt-variable-inputs";
 import { EditHistoryPanel } from "@/features/prompts/edit-history-panel";
@@ -43,6 +40,7 @@ import { FollowButton } from "@/features/profile/follow-button";
 import { PromptSpacesAside } from "@/features/spaces/public-spaces";
 import { AsideSection, DetailActionBar, DetailArt, DetailArtPlaceholder, DetailArtThumb, DetailAside, DetailBand, DetailByline, DetailComments, DetailLede, DetailSection, DetailShell, DetailTags, DetailTitle } from "@/features/content/detail-parts";
 import { ReferenceRequirementNotes } from "@/features/content/reference-requirements";
+import { findTool, parseToolRef } from "@/lib/ai-tool-catalog";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Prompt, PromptVariable, PromptVersion } from "@/types";
 import type { DnaSection } from "@/lib/prompt-dna/types";
@@ -99,6 +97,9 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
   // What the viewer sees, copies and runs: the template with their values substituted.
   const displayText = variables.length > 0 ? resolvePromptText(livePromptText, variableValues) : livePromptText;
   const assemble = useAssembleProgress(variables, variableValues, variableVisible);
+  // "Önerilen araç: ChatGPT · 112 karakter" under the text — the tool is the same one "Çalıştır" preselects.
+  const toolNames = useMemo(() => [...new Set(prompt.tools.map((ref) => findTool(parseToolRef(ref).toolId)?.name).filter((name): name is string => Boolean(name)))], [prompt.tools]);
+  const promptInfoLine = [toolNames.length > 0 ? t("prompt.recommendedTool", { tool: toolNames.join(", ") }) : null, t("prompt.charCount", { count: displayText.length.toLocaleString(language) })].filter(Boolean).join(" · ");
 
   const searchParams = useSearchParams();
   const highlight = parseHighlightValue(searchParams.get("hl"));
@@ -283,27 +284,24 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
                     displayText
                   )}
                 </ScrollablePrompt>
+                <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-t border-border-soft px-5 py-2.5 text-caption text-text-muted">
+                  <span>{promptInfoLine}</span>
+                  {user && !isOwn && (
+                    <button
+                      type="button"
+                      onClick={() => setIsSuggestModalOpen(true)}
+                      className="inline-flex min-h-8 items-center gap-1.5 whitespace-nowrap font-medium text-text-secondary transition-colors hover:text-primary"
+                    >
+                      <PenLine size={14} aria-hidden />
+                      {t("prompt.suggestEdit")}
+                    </button>
+                  )}
+                </div>
                 <AssembleSweep seq={assemble.sweepSeq} />
               </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <CopyPromptButton text={displayText} promptId={prompt.id} size="md" variant="primary" />
-                <RunButton text={displayText} recommendedRefs={prompt.tools} promptId={prompt.id} />
-                <OpenInStudioButton kind="prompt" id={prompt.id} quiet />
-              </div>
-              {user && !isOwn && (
-                <button
-                  type="button"
-                  onClick={() => setIsSuggestModalOpen(true)}
-                  className="inline-flex h-9 items-center gap-2 rounded-full px-1 text-label font-medium text-text-secondary transition-colors hover:text-primary"
-                >
-                  <PenLine size={14} aria-hidden />
-                  {t("prompt.suggestEdit")}
-                </button>
-              )}
+              <PromptActions prompt={prompt} text={displayText} />
             </DetailSection>
           )}
-
-          {activeTab === "prompt" && <PromptTrySection prompt={prompt} text={displayText} />}
 
           {activeTab === "history" && versions.length > 0 && (
             <div className="space-y-4">

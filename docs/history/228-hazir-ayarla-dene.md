@@ -1,5 +1,7 @@
 # 228 — Hazır ayarla dene: prompt + hazır ayar birlikte, "Uyumlu" kuralı
 
+> **Güncelleme:** prompt sayfasındaki gömülü "Hazır ayarla dene" bölümü `docs/history/229-*` ile düğme + pencereye çevrildi; aşağıdaki "Prompt sayfası" anlatımı eski yerleşimi anlatır (uyum kuralı ve Studio aynen geçerli).
+
 **Durum:** uygulandı (yalnız istemci kodu, migration yok). Birim testler (`prompt-parts.test.ts`, `preset-fit.test.ts`; `npm test` 427/427) ve ağ taklitli Playwright `run-preset-try` 7/7; **gerçek Supabase'e / gerçek AI çağrısına / gerçek telefona karşı denenmedi**. İngilizce karşılıklar eklendi (`presetFit.*`, `promptTry.*`, `presetTry.*`, `studio.presetAdd|presetRemove`). Tasarım önce tuvalde çizildi (önce/sonra), kullanıcı onayıyla kodlandı.
 
 ## Sorun
