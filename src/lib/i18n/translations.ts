@@ -1548,6 +1548,10 @@ export const translations = {
   "messages.pickAConversationBody": { tr: "Kime göndermek istersin? Bir konuşma seç — yalnızca mevcut konuşmalarına gönderebilirsin, yeni bir konuşma buradan başlatılamaz.", en: "Who would you like to send this to? Pick a conversation — you can only send it to an existing conversation, a new one can't be started from here." },
   "messages.messageRequestsHeading": { tr: "Mesaj İstekleri", en: "Message Requests" },
   "messages.messageRequestsHint": { tr: "Seni takip etmeyen kişilerden gelen mesajlar burada bekler — açıp yanıtlarsan otomatik kabul edilir.", en: "Messages from people who don't follow you wait here — opening and replying accepts them automatically." },
+  "messages.sectionsAria": { tr: "Mesaj bölümleri", en: "Message sections" },
+  "messages.requestsBanner": { tr: "{{count}} mesaj isteği bekliyor", en: "{{count}} message request(s) waiting" },
+  "messages.requestsOpen": { tr: "Gör", en: "View" },
+  "messages.requestsEmpty": { tr: "Bekleyen mesaj isteği yok.", en: "No pending message requests." },
   "messages.chatsHeading": { tr: "Sohbetler", en: "Chats" },
   "messages.searchConversations": { tr: "Sohbetlerde ara", en: "Search conversations" },
   "messages.noConversationMatches": { tr: "Aramanla eşleşen sohbet yok.", en: "No conversations match your search." },
@@ -1555,6 +1559,7 @@ export const translations = {
   "messages.selectConversationBody": { tr: "Soldaki listeden bir kişi seçerek mesajlaşmaya başla.", en: "Pick someone from the list to start chatting." },
 
   // ---- Notifications ----
+  "notifications.categoriesAria": { tr: "Bildirim kategorileri", en: "Notification categories" },
   "notifications.markAllRead": { tr: "Tümünü okundu işaretle", en: "Mark all as read" },
   "notifications.clearAll": { tr: "Tüm bildirimleri sil", en: "Delete all notifications" },
   "notifications.clearAllTitle": { tr: "Tüm bildirimler silinsin mi?", en: "Delete all notifications?" },
@@ -1668,6 +1673,7 @@ export const translations = {
   "request.communityEyebrow": { tr: "Topluluk", en: "Community" },
   "request.pageDescription": { tr: "Aradığın promptu tarif et, topluluk yanıtlasın. Ya da açık bir isteğe kendi promptunla yanıt ver.", en: "Describe the prompt you're looking for and let the community respond — or answer an open request with your own prompt." },
   "saved.loginRequiredBody": { tr: "Kaydettiklerini görmek için önce giriş yapmalısın.", en: "You need to log in first to see what you've saved." },
+  "saved.myCollections": { tr: "Koleksiyonlarım", en: "My collections" },
   "saved.subtitle": { tr: "Koleksiyonlarının herhangi birindeki tüm çalışmalar, her biri bir kez.", en: "Every work in any of your collections, each shown once." },
   "saved.searchPlaceholder": { tr: "Kaydedilenlerde ara", en: "Search saved" },
   "saved.emptyTitle": { tr: "Henüz kaydettiğin bir çalışma yok.", en: "You haven't saved anything yet." },

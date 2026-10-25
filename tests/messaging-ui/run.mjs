@@ -125,6 +125,11 @@ await scenario("7. Modal kapatılınca ve taslaktan çıkılınca boş sohbet ol
   assert.equal(db.member(db.conversations[0].id, U.amy.id).status, "pending", "recipient gets a message request (amy doesn't follow alice)");
 }, { setup: (db) => db.follow(U.alice, U.amy) });
 
+// Mesajlar bölümleri TEK menüde (docs/history/234-*).
+const pickMsgSection = async (page, name) => {
+  await page.locator("[data-section-menu]:visible").first().click();
+  await page.getByRole("radio", { name: new RegExp(`^${name}`) }).click();
+};
 // 8
 await scenario("8. Arşivle yalnızca kendi listeni etkiler; Arşivlenenler'de görünür", async ({ page, db }) => {
   await openThread(page);
@@ -138,18 +143,18 @@ await scenario("8. Arşivle yalnızca kendi listeni etkiler; Arşivlenenler'de g
   await menu(page); await menuItem(page, "Arşivden çıkar").waitFor(); await page.keyboard.press("Escape");
   await openList(page);
   assert.deepEqual(await visibleRowNames(page), [], "gone from inbox");
-  await page.locator("button:visible", { hasText: "Arşivlenenler" }).first().click();
+  await pickMsgSection(page, "Arşivlenenler");
   assert.deepEqual(await visibleRowNames(page), ["Bob"]);
 }, { setup: (db) => seedBob(db) });
 
 // 9
 await scenario("9. Arşivden çıkar sohbeti gelen kutusuna döndürür", async ({ page, db }) => {
   await openList(page);
-  await page.locator("button:visible", { hasText: "Arşivlenenler" }).first().click();
+  await pickMsgSection(page, "Arşivlenenler");
   await page.locator("button[aria-label='Arşivden çıkar: Bob']:visible").click();
   await page.getByText("Arşivlenmiş sohbetin yok.").waitFor();
   assert.equal(db.member(CONV, ME).archived_at, null);
-  await page.locator("button[aria-label='Sohbetlere dön']:visible").click();
+  await pickMsgSection(page, "Sohbetler");
   await page.waitForTimeout(200);
   assert.deepEqual(await visibleRowNames(page), ["Bob"]);
 }, { setup: (db) => seedBob(db, { my: { archived_at: "2026-06-02T00:00:00Z" } }) });
@@ -275,7 +280,9 @@ await scenario("13. Gizlilik: 'yalnızca takip ettiklerimden' kullanıcı listed
 // 14
 await scenario("14a. Mesaj isteği: ayrı bölümde, sohbet menüsü yok, Kabul Et çalışır", async ({ page, db }) => {
   await openList(page);
-  await page.locator("h2:visible", { hasText: "Mesaj İstekleri" }).waitFor();
+  // Bekleyen istek: sohbet listesinin üstünde banner; "Gör" → Mesaj İstekleri görünümü (docs/history/234-*).
+  await page.locator("[data-message-requests-banner]:visible").click();
+  assert.deepEqual(await visibleRowNames(page), ["Carol"], "Mesaj istekleri görünümünde bekleyen istek");
   await openThread(page, CONV2);
   await page.getByText("Bu bir mesaj isteği", { exact: false }).waitFor();
   await menu(page);

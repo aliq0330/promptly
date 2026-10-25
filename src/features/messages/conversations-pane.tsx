@@ -2,8 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
-import { Archive, ArrowLeft, MessageCircle, Plus, Search, Star, UsersRound } from "lucide-react";
+import { Archive, Inbox, MessageCircle, Plus, Search, Star, UsersRound } from "lucide-react";
 import { ConversationList } from "./conversation-list";
 import { NewChatModal } from "./new-chat-modal";
 import { useRealMessages } from "./real-messages-provider";
@@ -12,7 +11,11 @@ import { bucketConversations } from "@/lib/conversation-lists";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn, messageHref } from "@/lib/utils";
 import { Eyebrow } from "@/features/content/detail-parts";
+import { ListControlRow, SadeTitle } from "@/features/content/list-control-row";
+import { CONTROL_ICON_BUTTON, type SectionMenuItem } from "@/features/content/section-menu";
 import type { Conversation } from "@/types";
+
+type MessagesView = "inbox" | "requests" | "archived" | "starred" | "communities";
 
 /**
  * The conversation list (message requests + chats) with its own search box.
@@ -27,7 +30,8 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
   const pathname = usePathname();
   const router = useRouter();
   const [query, setQuery] = useState("");
-  const [view, setView] = useState<"inbox" | "archived">("inbox");
+  const [view, setView] = useState<MessagesView>("inbox");
+  const [searchOpen, setSearchOpen] = useState(false);
   const [newChatOpen, setNewChatOpen] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [actionError, setActionError] = useState(false);
@@ -71,8 +75,9 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
   const archived = matches(buckets.archived);
   const searching = query.trim() !== "";
   const inArchive = view === "archived";
-  const noMatches = searching && (inArchive ? archived.length === 0 : accepted.length === 0 && pending.length === 0);
-  const nothingAtAll = !searching && !inArchive && buckets.inbox.length === 0 && buckets.requests.length === 0;
+  const inRequests = view === "requests";
+  const noMatches = searching && (inArchive ? archived.length === 0 : inRequests ? pending.length === 0 : accepted.length === 0 && pending.length === 0);
+  const nothingAtAll = !searching && view === "inbox" && buckets.inbox.length === 0 && buckets.requests.length === 0;
 
   const withShare = (href: string) => (shareQuery ? `${href}&${shareQuery}` : href);
 
@@ -89,80 +94,72 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
     }
   }
 
+  const menuItems: SectionMenuItem<MessagesView>[] = [
+    { key: "inbox", label: t("messages.chatsHeading"), icon: MessageCircle },
+    { key: "requests", label: t("messages.messageRequestsHeading"), icon: Inbox, count: buckets.requests.length || undefined },
+    { key: "archived", label: t("messages.archivedHeading"), icon: Archive, meta: buckets.archived.length },
+    // Not views but doors: the starred messages screen and the communities (their chats live there).
+    { key: "starred", label: t("chat.starred.title"), icon: Star, dividerBefore: true },
+    { key: "communities", label: t("communities.messages.entryAria"), icon: UsersRound },
+  ];
+  function pickView(next: MessagesView) {
+    if (next === "starred") return router.push("/messages/starred");
+    if (next === "communities") return router.push("/communities");
+    setView(next);
+    setActionError(false);
+  }
+  const searchShown = searchOpen || searching;
+
   return (
-    <div className={cn("flex min-h-0 flex-1 flex-col", embedded ? "" : "mx-auto w-full max-w-3xl px-3 py-5 sm:px-5 sm:py-6")}>
+    <div className={cn("flex min-h-0 flex-1 flex-col", embedded ? "" : "mx-auto w-full max-w-3xl px-3 pb-6 pt-3 sm:px-5 sm:pt-5")}>
       <div className={cn(embedded && "px-4 pt-4")}>
-        <div className="mb-3 flex items-center justify-between gap-2">
-          {inArchive ? (
-            <div className="flex min-w-0 items-center gap-1">
+        {embedded ? <h1 className="mb-3 font-display text-[1.875rem] font-bold leading-[1.1] tracking-[-0.02em] text-text">{t("header.messagesAriaLabel")}</h1> : <SadeTitle className="mb-4">{t("header.messagesAriaLabel")}</SadeTitle>}
+        {/* Sade düzen (docs/history/234-*): tek "Sohbetler ▾" menüsü (istekler sayaçlı, arşiv, yıldızlı, topluluk sohbetleri) + arama simgesi + yeni sohbet. */}
+        <div className="mb-3">
+          <ListControlRow
+            showView={false}
+            menu={{ items: menuItems, active: view, onChange: pickView, ariaLabel: t("messages.sectionsAria"), title: t("header.messagesAriaLabel") }}
+            search={{ open: searchShown, onToggle: () => (searchShown ? (setQuery(""), setSearchOpen(false)) : setSearchOpen(true)), label: t("messages.searchConversations") }}
+            trailing={
               <button
                 type="button"
-                onClick={() => {
-                  setView("inbox");
-                  setActionError(false);
-                }}
-                aria-label={t("messages.backToChats")}
-                className="-ml-2 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-surface-soft hover:text-text"
+                onClick={() => setNewChatOpen(true)}
+                aria-label={t("messages.newChatAria")}
+                title={t("messages.newChat")}
+                aria-haspopup="dialog"
+                className={cn(CONTROL_ICON_BUTTON, "bg-surface-soft hover:bg-border-soft")}
               >
-                <ArrowLeft size={20} />
+                <Plus size={22} strokeWidth={1.75} aria-hidden />
               </button>
-              <h1 className={cn("truncate text-text", embedded ? "text-h2" : "text-h1")}>{t("messages.archivedHeading")}</h1>
-            </div>
-          ) : (
-            <h1 className={cn("text-text", embedded ? "text-h2" : "text-h1")}>{t("header.messagesAriaLabel")}</h1>
-          )}
-          <div className="flex shrink-0 items-center gap-1.5">
-            <Link
-              href="/communities"
-              aria-label={t("communities.messages.entryAria")}
-              title={t("communities.messages.entryAria")}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border-soft bg-surface text-text-secondary shadow-xs transition-colors hover:border-border-strong hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-            >
-              <UsersRound size={17} />
-            </Link>
-            <Link
-              href="/messages/starred"
-              aria-label={t("chat.starred.entryAria")}
-              title={t("chat.starred.title")}
-              className={cn(
-                "flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border-soft bg-surface text-text-secondary shadow-xs transition-colors hover:border-border-strong hover:text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-                pathname.startsWith("/messages/starred") && "border-primary/40 bg-primary-soft text-primary",
-              )}
-            >
-              <Star size={17} />
-            </Link>
-            <button
-              type="button"
-              onClick={() => setNewChatOpen(true)}
-              aria-label={t("messages.newChatAria")}
-              title={t("messages.newChat")}
-              aria-haspopup="dialog"
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-xs transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-            >
-              <Plus size={18} />
-            </button>
-          </div>
-        </div>
-        <label className="relative mb-3 block">
-          <span className="sr-only">{t("messages.searchConversations")}</span>
-          <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
-          <input
-            type="search"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder={t("messages.searchConversations")}
-            className="h-10 w-full rounded-full border border-border-soft bg-background pl-9 pr-3 text-sm text-text shadow-xs transition-colors duration-200 ease-soft placeholder:text-text-muted hover:border-border-strong focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
+            }
           />
-        </label>
-        {!inArchive && buckets.archived.length > 0 && (
+        </div>
+        {searchShown && (
+          <label className="relative mb-3 block">
+            <span className="sr-only">{t("messages.searchConversations")}</span>
+            <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+            <input
+              type="search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder={t("messages.searchConversations")}
+              autoFocus
+              className="h-10 w-full rounded-full border border-border-soft bg-background pl-9 pr-3 text-sm text-text shadow-xs transition-colors duration-200 ease-soft placeholder:text-text-muted hover:border-border-strong focus:border-primary/60 focus:outline-none focus:ring-2 focus:ring-primary/15"
+            />
+          </label>
+        )}
+        {view === "inbox" && buckets.requests.length > 0 && !searching && (
           <button
             type="button"
-            onClick={() => setView("archived")}
-            className="mb-3 flex w-full items-center gap-2 rounded-lg border border-border-soft bg-surface px-3 py-2 text-left text-sm font-medium text-text transition-colors hover:border-border-strong hover:bg-surface-soft"
+            onClick={() => setView("requests")}
+            data-message-requests-banner=""
+            className="mb-3 flex w-full items-center gap-3 rounded-lg border border-primary/25 bg-primary-soft/60 px-3 py-2.5 text-left transition-colors hover:bg-primary-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
-            <Archive size={16} className="text-text-muted" />
-            <span className="flex-1">{t("messages.archivedHeading")}</span>
-            <span className="text-caption tabular-nums text-text-muted">{buckets.archived.length}</span>
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface text-primary">
+              <Inbox size={17} aria-hidden />
+            </span>
+            <span className="min-w-0 flex-1 truncate text-small font-semibold text-text">{t("messages.requestsBanner", { count: buckets.requests.length })}</span>
+            <span className="shrink-0 text-small font-semibold text-primary">{t("messages.requestsOpen")}</span>
           </button>
         )}
         {actionError && (
@@ -189,6 +186,11 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
             onUnarchive={handleUnarchive}
             busyId={busyId}
           />
+        ) : inRequests ? (
+          <>
+            <p className={cn("mb-2 text-xs text-text-muted", embedded ? "px-4" : "px-1")}>{t("messages.messageRequestsHint")}</p>
+            <ConversationList conversations={pending} shareQuery={shareQuery} activeId={activeId} flush={embedded} emptyLabel={t("messages.requestsEmpty")} />
+          </>
         ) : nothingAtAll ? (
           <EmptyState
             icon={MessageCircle}
@@ -199,27 +201,26 @@ export function ConversationsPane({ embedded = false }: { embedded?: boolean }) 
             compact
           />
         ) : (
-          <>
-            {pending.length > 0 && (
-              <div className="mb-4">
-                <Eyebrow as="h2" className={cn("mb-1.5", embedded ? "px-4" : "px-1")}>
-                  {t("messages.messageRequestsHeading")} ({pending.length})
-                </Eyebrow>
-                <p className={cn("mb-2 text-xs text-text-muted", embedded ? "px-4" : "px-1")}>
-                  {t("messages.messageRequestsHint")}
-                </p>
-                <ConversationList conversations={pending} shareQuery={shareQuery} activeId={activeId} flush={embedded} />
-              </div>
-            )}
-            {pending.length > 0 && accepted.length > 0 && (
-              <Eyebrow as="h2" className={cn("mb-2", embedded ? "px-4" : "px-1")}>
-                {t("messages.chatsHeading")}
-              </Eyebrow>
-            )}
-            {(accepted.length > 0 || pending.length === 0) && (
+          (accepted.length > 0 || pending.length === 0 || searching) && (
+            <>
+              {searching && pending.length > 0 && (
+                <>
+                  <Eyebrow as="h2" className={cn("mb-1.5", embedded ? "px-4" : "px-1")}>
+                    {t("messages.messageRequestsHeading")} ({pending.length})
+                  </Eyebrow>
+                  <div className="mb-4">
+                    <ConversationList conversations={pending} shareQuery={shareQuery} activeId={activeId} flush={embedded} />
+                  </div>
+                  {accepted.length > 0 && (
+                    <Eyebrow as="h2" className={cn("mb-2", embedded ? "px-4" : "px-1")}>
+                      {t("messages.chatsHeading")}
+                    </Eyebrow>
+                  )}
+                </>
+              )}
               <ConversationList conversations={accepted} shareQuery={shareQuery} activeId={activeId} flush={embedded} />
-            )}
-          </>
+            </>
+          )
         )}
       </div>
       {newChatOpen && (

@@ -194,6 +194,18 @@ await scenario("8. Profil kontrol satırı: Promptlar listesinde Filtre simgesi 
   assert.equal(await overflowFree(page), true);
 }, { viewport: { width: 390, height: 844 } });
 
+// 9 — Kaydedilenler: "Koleksiyonlarım" rafı (docs/history/234-*): kendi koleksiyonları (özel olan da), her biri kendi sayfasını açar
+await scenario("9. Kaydedilenler: 'Koleksiyonlarım' rafı kendi koleksiyonlarını (özel dahil) gösterir, kart koleksiyon sayfasını açar", async ({ page, db }) => {
+  withCollections(db, U.alice);
+  await page.goto(`${BASE}/saved`);
+  const shelf = page.locator("[data-saved-collections]");
+  await shelf.waitFor();
+  const names = (await shelf.locator("a p.truncate").allTextContents()).map((x) => x.trim());
+  for (const wanted of ["Işık denemeleri", "Genel", "Gizli klasör"]) assert.ok(names.includes(wanted), `${wanted}: ${names.join(" | ")}`);
+  assert.match((await shelf.locator("a").first().getAttribute("href")) ?? "", /\/collections\/local\/?\?id=/);
+  assert.equal(await overflowFree(page), true);
+});
+
 await browser.close(); server.close();
 for (const [s, n] of results) console.log(`${s === "PASS" ? "✓" : "✗"} ${n}`);
 console.log(`${results.filter((r) => r[0] === "PASS").length}/${results.length} passed`);

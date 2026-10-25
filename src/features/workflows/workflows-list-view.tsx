@@ -14,7 +14,6 @@ export function WorkflowsListView() {
   return (
     <ContentListPage
       icon={WorkflowIcon}
-      eyebrow={t("nav.workflows")}
       title={t("workflow.pageTitle")}
       description={t("workflow.pageDescription")}
       createHref="/workflows/create"

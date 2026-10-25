@@ -14,7 +14,6 @@ export function PresetsListView() {
   return (
     <ContentListPage
       icon={SlidersHorizontal}
-      eyebrow={t("nav.presets")}
       title={t("preset.pageTitle")}
       description={t("preset.pageDescription")}
       createHref="/presets/create"

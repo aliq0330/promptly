@@ -379,8 +379,13 @@ await scenario("8. İngilizce + telefon: sekmeler, süzgeç bölümleri ve özet
 // Keşfet bölümleri TEK menüdedir (docs/history/233-*): "Tümü ▾" → radyo satırları; sıralama Filtre penceresindedir.
 const sectionMenu = (page) => page.locator("[data-section-menu]").first();
 const openMenu = async (page) => {
-  await sectionMenu(page).click();
-  await page.getByRole("radiogroup", { name: /Keşfet bölümleri|Discover sections/ }).waitFor();
+  // Hidrasyondan önceki tıklama menüyü açmaz: açılana kadar yeniden dener.
+  const group = page.getByRole("radiogroup", { name: /Keşfet bölümleri|Discover sections/ });
+  for (let i = 0; i < 6 && !(await group.isVisible()); i += 1) {
+    await sectionMenu(page).click();
+    await group.waitFor({ timeout: 1500 }).catch(() => {});
+  }
+  await group.waitFor();
 };
 const sectionNames = async (page) => {
   await openMenu(page);
@@ -583,6 +588,28 @@ await scenario("17. İngilizce + telefon: bölümler, sıralama ve süzgeç çev
   assert.equal(await overflowFree(page), true);
   await shot(page, "ff-discover-mobile-en");
 }, { lang: "en", viewport: { width: 390, height: 844 } });
+
+// ───────────────────── tür listeleri (docs/history/234-*) ─────────────────────
+await scenario("18. Tür listesi (/prompts): tek 'Tümü ▾' tür menüsü (Tümü · Görsel · Metin · Ses · Video), arama simgesi kutuyu açar, Filtre pencerede 'Nasıl çalışır', '+' oluşturmaya gider; sekme/chip satırı yok", async ({ page }) => {
+  await page.goto(`${BASE}/prompts`);
+  const menu = sectionMenu(page);
+  await menu.waitFor();
+  assert.match(await menu.textContent(), /Tümü/);
+  assert.equal(await page.getByRole("tablist").count(), 0, "sekme satırı yok");
+  await menu.click();
+  const names = (await page.getByRole("radio").allInnerTexts()).map((s) => s.trim());
+  assert.deepEqual(names, ["Tümü", "Görsel", "Metin", "Ses", "Video"]);
+  await page.getByRole("radio", { name: "Metin" }).click();
+  assert.match(await menu.textContent(), /Metin/);
+  assert.match((await page.locator("[data-list-create]").getAttribute("href")) ?? "", /\/create/);
+  await page.locator("[data-list-search]").click();
+  await page.getByRole("combobox").first().waitFor();
+  await page.locator("[data-list-search]").click();
+  await openFilter(page);
+  await page.getByRole("dialog").getByRole("heading", { name: "Nasıl çalışır" }).waitFor();
+  await closeFilter(page);
+  assert.equal(await overflowFree(page), true);
+}, { viewport: { width: 390, height: 844 } });
 
 console.log(results.map(([s, n]) => `${s === "PASS" ? "✓" : "✗"} ${n}`).join("\n"));
 const passed = results.filter(([s]) => s === "PASS").length;

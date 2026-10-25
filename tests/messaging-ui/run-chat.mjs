@@ -300,7 +300,9 @@ await scenario("10. Yıldız: menüden yıldızla/kaldır (kişiye özel, mesaj 
 
 await scenario("11. Yıldızlı mesajlar ekranı: birebir + topluluk TEK listede; sohbet adı, gönderen, tür etiketi; başkasının yıldızı görünmez; silinen/erişilemeyen elenir", async ({ page, db }) => {
   await page.goto(`${BASE}/messages`);
-  await page.getByRole("link", { name: "Yıldızlı mesajları aç" }).first().click();
+  // Mesajlar bölümleri TEK menüde (docs/history/234-*): "Yıldızlı mesajlar" satırı yıldızlı ekranı açar.
+  await page.locator("[data-section-menu]:visible").first().click();
+  await page.getByRole("radio", { name: "Yıldızlı mesajlar" }).click();
   await page.waitForURL(/messages\/starred/);
   const items = page.locator("[data-starred-item]");
   await items.first().waitFor();

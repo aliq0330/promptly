@@ -9,7 +9,6 @@ import { BandActionRow, CollageArt, DetailBand, DetailShell, DetailTitle, Eyebro
 import { contentImage } from "@/features/content/content-image";
 import { SectionNav } from "@/features/content/section-nav";
 import { TaxonomySheetSections, taxonomyActiveCount } from "@/features/content/list-toolbar";
-import { TaxonomyTypeChips } from "@/features/content/taxonomy-filter";
 import { SORT_KEYS, type ContentSortKey } from "@/features/content/sort-select";
 import { FeedItemsView } from "@/features/feed/feed-items-view";
 import { isPostItem } from "@/features/feed/types";
@@ -146,12 +145,12 @@ export function TopicPage({
       <div className="space-y-4">
         {beforeNav}
         <SectionNav
+          variant="menu"
+          menuTitle={title}
           items={SECTIONS.map((s) => ({ key: s.key, label: t(s.labelKey), icon: s.icon }))}
           active={section}
           onChange={setSection}
           ariaLabel={t("topic.sectionsAria")}
-          chips={typeFixed ? undefined : <TaxonomyTypeChips value={picked} onChange={setPicked} />}
-          chipsLabel={t("toolbar.contentTypeAria")}
           sort={sort}
           onSortChange={setSort}
           sortKeys={SORT_KEYS}

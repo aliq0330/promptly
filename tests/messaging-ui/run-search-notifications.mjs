@@ -49,8 +49,10 @@ const NOTIFS = [
   n("n7", "system", "Site bakımı yapılacak.", "/settings", 7),
 ];
 const rowTexts = (page) => page.locator("main li, main [data-notification-id]").allTextContents();
+// Bildirim kategorileri TEK menüde (docs/history/234-*); satır adı okunmamış sayıyı da içerir, bu yüzden başı eşleşir.
 async function pick(page, label) {
-  await page.getByRole("button", { name: label, exact: true }).click();
+  await page.locator("[data-section-menu]").click();
+  await page.getByRole("radio", { name: new RegExp(`^${label}`) }).click();
   await page.waitForTimeout(150);
   return (await page.locator("main").textContent()) ?? "";
 }
@@ -58,7 +60,10 @@ async function pick(page, label) {
 await scenario("1. Bildirimler: 'Topluluklar' sekmesi topluluk sayfası/sohbeti/gönderisi bildirimlerini toplar; Sistem ve Gönderiler'den çıkarlar", async ({ page }) => {
   await page.goto(`${BASE}/notifications`);
   await page.getByText("Site bakımı yapılacak.").waitFor();
-  const chips = await page.locator("main button").allTextContents();
+  await page.locator("[data-section-menu]").click();
+  const chips = (await page.getByRole("radio").allTextContents()).map((c) => c.replace(/\s*\d+$/, ""));
+  await page.keyboard.press("Escape");
+  await page.mouse.click(5, 5);
   const order = ["Tümü", "Gönderiler", "İstekler", "Takip", "Mesajlar", "Topluluklar", "Sistem"].map((label) => chips.findIndex((c) => c.trim() === label));
   assert.ok(order.every((i, k) => i >= 0 && (k === 0 || i > order[k - 1])), `chip order: ${chips.join(" | ")}`);
   let text = await pick(page, "Topluluklar");
@@ -76,7 +81,8 @@ await scenario("1. Bildirimler: 'Topluluklar' sekmesi topluluk sayfası/sohbeti/
 
 await scenario("1b. Bildirimler (İngilizce): sekme 'Communities'", async ({ page }) => {
   await page.goto(`${BASE}/notifications`);
-  await page.getByRole("button", { name: "Communities", exact: true }).click();
+  await page.locator("[data-section-menu]").click();
+  await page.getByRole("radio", { name: /^Communities/ }).click();
   await page.getByText("Topluluğa davet edildin.").waitFor();
 }, { lang: "en", notifications: NOTIFS });
 
