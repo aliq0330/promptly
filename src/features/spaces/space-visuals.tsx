@@ -1,14 +1,25 @@
 "use client";
 
 import { useState } from "react";
-import { Check, EyeOff, Globe2, ImageOff, Link2, Lock, Shapes, type LucideIcon } from "lucide-react";
+import { BadgeCheck, Check, EyeOff, Globe2, ImageOff, LayoutDashboard, Link2, Lock, Shapes, Sofa, Swords, UserRound, type LucideIcon } from "lucide-react";
 import { StorageImg } from "@/components/ui/storage-media";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
-import { SPACE_VISIBILITY_LABEL, type SpaceColor, type SpaceVisibility } from "@/lib/spaces";
+import { SPACE_VISIBILITY_LABEL, type SpaceColor, type SpaceKind, type SpaceVisibility } from "@/lib/spaces";
 
 /** Spaces'in simgesi (gezinme, bant, boş durum): her yerde aynı. */
 export const SpacesIcon: LucideIcon = Shapes;
+
+/** Tür simgesi (oluşturma formu, "Yeni bir Space başlatın" karoları, kart) + yumuşak renk (hex yok, palet token'ları) — docs/history/231-*. */
+export const SPACE_KIND_ICON: Record<SpaceKind, LucideIcon> = { moodboard: LayoutDashboard, character: UserRound, brand: BadgeCheck, game_world: Swords, interior: Sofa, free: Shapes };
+export const SPACE_KIND_TINT: Record<SpaceKind, string> = {
+  moodboard: "bg-primary-soft text-primary",
+  character: "bg-secondary/15 text-secondary",
+  brand: "bg-warning/15 text-warning",
+  game_world: "bg-success/15 text-success",
+  interior: "bg-danger/10 text-danger",
+  free: "bg-surface-soft text-text-secondary",
+};
 
 export const VISIBILITY_ICON: Record<SpaceVisibility, LucideIcon> = { private: Lock, link: Link2, public: Globe2 };
 

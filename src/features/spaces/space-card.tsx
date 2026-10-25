@@ -15,7 +15,7 @@ import { SPACE_KIND_LABEL, spaceCapabilities, spaceHref } from "@/lib/spaces";
 import { DeleteSpaceDialog, SpaceSettingsModal } from "./space-modals";
 import { ShareModal } from "@/features/prompts/share-modal";
 import { SpaceMenu } from "./space-menu";
-import { PaletteStrip, SpaceCoverArt, SpacesIcon, VisibilityBadge } from "./space-visuals";
+import { PaletteStrip, SPACE_KIND_ICON, SPACE_KIND_TINT, SpaceCoverArt, VisibilityBadge } from "./space-visuals";
 
 /**
  * Space kartı (ızgara: Albüm kartı) ve satırı (liste): kapak (yüklenen › seçilen › kolaj), ad, sahip, görünürlük,
@@ -199,9 +199,10 @@ export function SpaceCard({
     );
   }
 
-  // Albüm kartı (docs/history/214-*): kapaktan renk alan bant — kolaj, tür + görünürlük, büyük ad, sahip satırı ve ⋮, ilk paletin
-  // ince çizgisi; altında sayılar ve "Sabitli". Ad bağlantısı kartın tamamını kaplar (`after:inset-0`), denetimler `relative z-10`
-  // ile üstünde; kart yığın bağlamı kurmaz (⋮ menüsü sonraki kartın üstüne açılır).
+  // Albüm kartı (docs/history/214-*, sade düzen docs/history/231-*): kapaktan renk alan bant + büyük kapak, Sabitle ve ⋮ kapağın sağ üst
+  // köşesinde yüzer; altında tür karosu + ad, tür/görünürlük/son düzenleme, sahip ve sayılar. Ad bağlantısı kartın tamamını kaplar
+  // (`after:inset-0`), denetimler `relative z-10` ile üstünde; kart yığın bağlamı kurmaz (⋮ menüsü sonraki kartın üstüne açılır).
+  const KindIcon = SPACE_KIND_ICON[space.kind];
   return (
     <li
       data-space-card={space.id}
@@ -209,16 +210,23 @@ export function SpaceCard({
     >
       <div className="relative rounded-t-xl p-2.5 pb-3">
         <CardBandBackdrop backdrop={cover ? <StorageImg src={cover} alt="" className="h-full w-full object-cover" /> : undefined} />
-        <div className="relative space-y-2.5">
-          <SpaceCoverArt urls={art} className="aspect-[16/10] w-full overflow-hidden rounded-lg shadow-pop" iconSize={40} />
-          <div className="min-w-0 space-y-1.5 px-1">
-            <p className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-              <span className="inline-flex items-center gap-1.5 text-caption font-bold uppercase tracking-[0.1em] text-primary">
-                <SpacesIcon size={13} strokeWidth={2.25} aria-hidden />
-                {t(SPACE_KIND_LABEL[space.kind])}
-              </span>
-              <VisibilityBadge visibility={space.visibility} className="bg-surface/75" />
-            </p>
+        <div className="relative space-y-2">
+          <div className="relative">
+            <SpaceCoverArt urls={art} className="aspect-[16/10] w-full overflow-hidden rounded-lg shadow-pop" iconSize={40} />
+            <div className="absolute right-2 top-2 z-10 flex items-center gap-1.5 [&_button]:bg-surface/90 [&_button]:shadow-xs">
+              {pinned}
+              {menu}
+            </div>
+          </div>
+          {palette && palette.length > 0 && <PaletteStrip colors={palette} className="h-1.5 px-1" />}
+        </div>
+      </div>
+      <div className="space-y-2 px-3.5 py-3">
+        <div className="flex min-w-0 items-center gap-3">
+          <span aria-hidden className={cn("grid h-11 w-11 shrink-0 place-items-center rounded-lg", SPACE_KIND_TINT[space.kind])}>
+            <KindIcon size={20} strokeWidth={1.75} />
+          </span>
+          <div className="min-w-0 flex-1">
             <h3 className="min-w-0">
               <Link
                 href={href}
@@ -227,17 +235,14 @@ export function SpaceCard({
                 {space.title}
               </Link>
             </h3>
-            <div className="flex min-w-0 items-center gap-2">
-              <div className="min-w-0 flex-1">{owner}</div>
-              <div className="relative z-10 -my-1 -mr-1 shrink-0">{menu}</div>
-            </div>
-            {palette && palette.length > 0 && <PaletteStrip colors={palette} className="h-1.5 pt-0.5" />}
+            <p className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5 text-caption text-text-muted">
+              <span className="font-semibold text-text-secondary">{t(SPACE_KIND_LABEL[space.kind])}</span>
+              <VisibilityBadge visibility={space.visibility} />
+            </p>
           </div>
         </div>
-      </div>
-      <div className="mt-auto flex items-center justify-between gap-2 px-3.5 py-2.5">
+        {owner}
         {counts}
-        {pinned}
       </div>
       {error && <p role="alert" className="px-3.5 pb-2 text-caption text-danger">{error}</p>}
       {dialogs}

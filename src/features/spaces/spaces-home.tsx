@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Archive, Check, Globe2, Grid2x2, ImageIcon, List, Loader2, Mail, Pin, Plus, Search, SquareTerminal, StickyNote, UserRound, Users, X } from "lucide-react";
+import { Check, Grid2x2, ImageIcon, List, ListFilter, Loader2, Mail, Plus, Search, SquareTerminal, StickyNote, X } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -12,7 +12,6 @@ import { ScrollRow } from "@/components/ui/scroll-row";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useAuthPrompt } from "@/features/auth/auth-prompt-provider";
-import { SectionNav, type SectionNavItem } from "@/features/content/section-nav";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import { cn, formatRelativeTime } from "@/lib/utils";
@@ -25,9 +24,10 @@ import {
   type MySpaceInvitation,
   type SpaceSummary,
 } from "@/lib/supabase/spaces";
-import { isSpaceFilter, SPACE_KIND_LABEL, SPACE_PAGE_SIZE, SPACE_ROLE_LABEL, SPACE_SORTS, spaceHref, type SpaceFilter, type SpaceSort } from "@/lib/spaces";
+import { isSpaceFilter, SPACE_KIND_LABEL, SPACE_PAGE_SIZE, SPACE_ROLE_LABEL, spaceHref, type SpaceFilter, type SpaceKind, type SpaceSort, type SpaceVisibility } from "@/lib/spaces";
 import { CreateSpaceModal } from "./space-modals";
 import { SpaceCard } from "./space-card";
+import { SpacesFilterSheet, SpacesSectionMenu, SpaceTemplates, type SectionMenuItem } from "./spaces-controls";
 import { SpaceCoverArt, SpacesIcon } from "./space-visuals";
 
 const FILTER_LABEL: Record<SpaceFilter, TranslationKey> = {
@@ -37,13 +37,6 @@ const FILTER_LABEL: Record<SpaceFilter, TranslationKey> = {
   favorites: "spaces.filter.favorites",
   public: "spaces.filter.public",
   archived: "spaces.filter.archived",
-};
-
-const SORT_LABEL: Record<SpaceSort, TranslationKey> = {
-  updated: "spaces.sort.updated",
-  opened: "spaces.sort.opened",
-  created: "spaces.sort.created",
-  title: "spaces.sort.title",
 };
 
 const VIEW_KEY = "promptly-spaces-view";
@@ -57,10 +50,11 @@ function readView(): "grid" | "list" {
 }
 
 /**
- * Spaces ana sayfası (docs/history/213-*, Albüm düzeni docs/history/214-*): görünür başlık yok — üstte arama (proje adı/açıklaması +
- * içindeki görsel/prompt/not metinleri, sunucuda) ve "+", "Son açılanlar" rafı (kare kapaklar), bölümler `SectionNav` balonlarında
- * (Tümü · Benim · Paylaşılan · Sabitli · Herkese açık · Arşiv; bekleyen davet varsa sayaçlı "Davetler"), sıralama + ızgara/liste,
- * Albüm kartları ve kademeli yükleme. Ziyaretçi yalnız herkese açık Space'leri görür; oluşturmak giriş ister.
+ * Spaces ana sayfası (docs/history/213-*, Albüm düzeni 214-*, sade düzen 231-*): büyük başlık; tek kontrol satırı — "Tümü ▾" bölüm menüsü
+ * (Tümü · Benim · Paylaşılan · Sabitli · Herkese açık · Arşiv; bekleyen davet varsa nokta + sayaçlı "Davetler"), arama (proje adı/açıklaması +
+ * içindeki görsel/prompt/not metinleri, sunucuda), filtre/sıralama sayfası, ızgara/liste anahtarı ve "+"; "Yeni bir Space başlatın" tür
+ * karoları, tek satırlık davet kartı, "Son açılanlar" rafı, Albüm kartları ve kademeli yükleme. Ziyaretçi yalnız herkese açık Space'leri
+ * görür; oluşturmak giriş ister.
  */
 export function SpacesHome() {
   const { t, language } = useTranslation();
@@ -83,6 +77,11 @@ export function SpacesHome() {
   const [invites, setInvites] = useState<MySpaceInvitation[]>([]);
   const [palettes, setPalettes] = useState<Map<string, string[]>>(() => new Map());
   const [createOpen, setCreateOpen] = useState(false);
+  const [createKind, setCreateKind] = useState<SpaceKind | undefined>(undefined);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [kindFilter, setKindFilter] = useState<SpaceKind | null>(null);
+  const [visibilityFilter, setVisibilityFilter] = useState<SpaceVisibility | null>(null);
   const requestId = useRef(0);
   const askedPalettes = useRef(new Set<string>());
 
@@ -165,8 +164,9 @@ export function SpacesHome() {
     }
   }
 
-  function openCreate() {
+  function openCreate(kind?: SpaceKind) {
     if (!requireAuth("create")) return;
+    setCreateKind(kind);
     setCreateOpen(true);
   }
 
@@ -189,46 +189,108 @@ export function SpacesHome() {
     setRecent((list) => list.filter((item) => item.id !== id));
   };
 
-  const navItems: SectionNavItem<SpaceFilter | "invites">[] = [
-    { key: "all", label: t("spaces.filter.all"), icon: SpacesIcon },
-    { key: "mine", label: t("spaces.nav.mine"), icon: UserRound },
-    { key: "shared", label: t("spaces.nav.shared"), icon: Users },
-    { key: "favorites", label: t("spaces.filter.favorites"), icon: Pin },
-    { key: "public", label: t("spaces.filter.public"), icon: Globe2 },
-    { key: "archived", label: t("spaces.filter.archived"), icon: Archive },
-    ...(invites.length > 0 ? [{ key: "invites" as const, label: t("spaces.nav.invites"), icon: Mail, count: invites.length }] : []),
+  const menuItems: SectionMenuItem<SpaceFilter | "invites">[] = [
+    { key: "all", label: t("spaces.filter.all") },
+    { key: "mine", label: t("spaces.nav.mine") },
+    { key: "shared", label: t("spaces.nav.shared") },
+    { key: "favorites", label: t("spaces.filter.favorites") },
+    { key: "public", label: t("spaces.filter.public") },
+    { key: "archived", label: t("spaces.filter.archived") },
+    ...(invites.length > 0 ? [{ key: "invites" as const, label: t("spaces.nav.invites"), count: invites.length }] : []),
   ];
+  // Tür/görünürlük süzgeci yüklenmiş Space'ler üzerinde çalışır.
+  const shown = items?.filter((item) => (!kindFilter || item.kind === kindFilter) && (!visibilityFilter || item.visibility === visibilityFilter)) ?? null;
+  const filtersActive = sort !== "updated" || kindFilter !== null || visibilityFilter !== null;
 
   const showRecent = Boolean(user) && section === "all" && !debounced && recent.length > 0;
   const isEmptyLibrary = items !== null && items.length === 0 && !debounced && (effectiveFilter === "all" || effectiveFilter === "mine");
+  // Tür karoları: oturumlu, "Tümü", arama yok; boş kütüphanede "İlk Space'ini oluştur" kartı zaten aynı işi yapar.
+  const showTemplates = Boolean(user) && section === "all" && !debounced && !isEmptyLibrary && items !== null;
 
+  const iconButton = "grid h-11 w-11 shrink-0 place-items-center rounded-xl text-text transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
   return (
     <PageContainer className="space-y-5 pb-16 pt-3 sm:pt-5">
-      {/* Görünür başlık yok (Topluluklar / Keşfet ile aynı): arama kutusu sayfayı açar; başlık ekran okuyucuya kalır. */}
-      <h1 className="sr-only">{t("spaces.home.title")}</h1>
+      <h1 className="font-display text-[2.375rem] font-bold leading-[1.1] tracking-[-0.02em] text-text">{t("spaces.home.title")}</h1>
 
-      <div className="flex items-center gap-2">
-        <form role="search" className="relative min-w-0 flex-1" onSubmit={(event) => event.preventDefault()}>
-          <Search size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" aria-hidden />
+      {searchOpen || query ? (
+        <form role="search" className="relative" onSubmit={(event) => event.preventDefault()}>
+          <Search size={20} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" aria-hidden />
           <input
             type="search"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder={t("spaces.home.searchPlaceholder")}
             aria-label={t("spaces.home.searchPlaceholder")}
-            className="h-11 w-full rounded-full border border-border bg-surface pl-10 pr-10 text-small text-text shadow-xs placeholder:text-text-muted focus:border-primary/60"
+            autoFocus
+            className="h-12 w-full rounded-xl border-2 border-primary bg-surface pl-11 pr-12 text-body text-text placeholder:text-text-muted"
           />
-          {query && (
-            <button type="button" onClick={() => setQuery("")} aria-label={t("common.clear")} className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1.5 text-text-muted hover:bg-surface-soft">
-              <X size={14} />
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={() => {
+              setQuery("");
+              setSearchOpen(false);
+            }}
+            aria-label={t("common.clear")}
+            className="absolute right-1.5 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-lg text-text hover:bg-surface-soft"
+          >
+            <X size={20} />
+          </button>
         </form>
-        <Button onClick={openCreate} data-testid="create-space" className="h-11 w-11 shrink-0 rounded-full p-0 shadow-pop sm:w-auto sm:px-5" title={t("spaces.home.create")}>
-          <Plus size={20} aria-hidden />
-          <span className="max-sm:sr-only">{t("spaces.home.create")}</span>
-        </Button>
-      </div>
+      ) : (
+        <div className="flex items-center gap-1.5">
+          {user && <SpacesSectionMenu items={menuItems} active={showInvites ? "invites" : filter} onChange={setSection} ariaLabel={t("spaces.filter.label")} />}
+          <span className="flex-1" />
+          <button type="button" onClick={() => setSearchOpen(true)} aria-label={t("spaces.home.searchOpen")} title={t("spaces.home.searchOpen")} className={iconButton}>
+            <Search size={22} strokeWidth={1.75} aria-hidden />
+          </button>
+          {!showInvites && (
+            <>
+              <button
+                type="button"
+                onClick={() => setFilterOpen(true)}
+                aria-label={t("spaces.home.filterOpen")}
+                title={t("spaces.home.filterOpen")}
+                data-filter-button
+                className={cn(iconButton, "relative", filtersActive && "bg-surface-soft")}
+              >
+                <ListFilter size={22} strokeWidth={1.75} aria-hidden />
+                {filtersActive && <span aria-hidden className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full border-2 border-background bg-primary" />}
+              </button>
+              <button
+                type="button"
+                onClick={() => changeView(view === "grid" ? "list" : "grid")}
+                aria-label={t(view === "grid" ? "spaces.home.viewList" : "spaces.home.viewGrid")}
+                title={t(view === "grid" ? "spaces.home.viewList" : "spaces.home.viewGrid")}
+                className={iconButton}
+              >
+                {view === "grid" ? <List size={22} strokeWidth={1.75} aria-hidden /> : <Grid2x2 size={22} strokeWidth={1.75} aria-hidden />}
+              </button>
+            </>
+          )}
+          <Button onClick={() => openCreate()} data-testid="create-space" title={t("spaces.home.create")} className="h-11 w-11 shrink-0 rounded-xl bg-surface-soft p-0 text-text shadow-none hover:bg-border-soft">
+            <Plus size={22} strokeWidth={1.75} aria-hidden />
+            <span className="sr-only">{t("spaces.home.create")}</span>
+          </Button>
+        </div>
+      )}
+
+      {/* Bekleyen davet: tek satırlık kart (Topluluklar'daki gibi); dokununca "Davetler" bölümü açılır. */}
+      {user && invites.length > 0 && !showInvites && (
+        <button
+          type="button"
+          onClick={() => setSection("invites")}
+          data-testid="space-invites-banner"
+          className="flex w-full items-center gap-3 rounded-lg border border-primary/25 bg-primary-soft/60 px-3 py-2.5 text-left transition-colors hover:bg-primary-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        >
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface text-primary">
+            <Mail size={17} aria-hidden />
+          </span>
+          <span className="min-w-0 flex-1 truncate text-small font-semibold text-text">{t("spaces.invites.banner", { count: invites.length })}</span>
+          <span className="shrink-0 text-small font-semibold text-primary">{t("spaces.invites.open")}</span>
+        </button>
+      )}
+
+      {showTemplates && <SpaceTemplates onPick={(kind) => openCreate(kind)} />}
 
       {showRecent && (
         <section aria-labelledby="spaces-recent" className="space-y-2">
@@ -253,59 +315,10 @@ export function SpacesHome() {
         </section>
       )}
 
-      {user && <SectionNav items={navItems} active={showInvites ? "invites" : filter} onChange={setSection} ariaLabel={t("spaces.filter.label")} hideControls />}
-
-      {/* Bekleyen davet: tek satırlık kart (Topluluklar'daki gibi); dokununca "Davetler" bölümü açılır. */}
-      {user && invites.length > 0 && !showInvites && (
-        <button
-          type="button"
-          onClick={() => setSection("invites")}
-          data-testid="space-invites-banner"
-          className="flex w-full items-center gap-3 rounded-lg border border-primary/25 bg-primary-soft/60 px-3 py-2.5 text-left transition-colors hover:bg-primary-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-        >
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface text-primary">
-            <Mail size={17} aria-hidden />
-          </span>
-          <span className="min-w-0 flex-1 truncate text-small font-semibold text-text">{t("spaces.invites.banner", { count: invites.length })}</span>
-          <span className="shrink-0 text-small font-semibold text-primary">{t("spaces.invites.open")}</span>
-        </button>
-      )}
-
-      {!showInvites && (
-        <div className="flex items-center justify-end gap-2">
-          <select
-            value={sort}
-            onChange={(event) => setSort(event.target.value as SpaceSort)}
-            aria-label={t("spaces.sort.label")}
-            className="h-10 min-w-0 rounded-full border border-border-soft bg-surface px-4 text-small font-medium text-text-secondary"
-          >
-            {SPACE_SORTS.filter((key) => key !== "opened" || user).map((key) => (
-              <option key={key} value={key}>
-                {t(SORT_LABEL[key])}
-              </option>
-            ))}
-          </select>
-          <div role="group" aria-label={t("spaces.home.viewLabel")} className="flex rounded-full border border-border-soft bg-surface p-0.5">
-            {(["grid", "list"] as const).map((key) => (
-              <button
-                key={key}
-                type="button"
-                onClick={() => changeView(key)}
-                aria-pressed={view === key}
-                aria-label={t(key === "grid" ? "spaces.home.viewGrid" : "spaces.home.viewList")}
-                className={cn("flex h-9 w-10 items-center justify-center rounded-full transition-colors", view === key ? "bg-text text-background" : "text-text-muted hover:text-text")}
-              >
-                {key === "grid" ? <Grid2x2 size={16} aria-hidden /> : <List size={16} aria-hidden />}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
       {!user && !authLoading && (
         <div className="flex flex-col gap-3 rounded-lg border border-border-soft bg-primary-soft/50 p-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-small text-text-secondary">{t("spaces.home.guestHint")}</p>
-          <Button size="sm" onClick={openCreate}>
+          <Button size="sm" onClick={() => openCreate()}>
             {t("spaces.home.create")}
           </Button>
         </div>
@@ -334,18 +347,18 @@ export function SpacesHome() {
               ))}
             </ul>
           ) : isEmptyLibrary && user ? (
-            <FirstSpaceEmpty onCreate={openCreate} />
-          ) : items.length === 0 ? (
+            <FirstSpaceEmpty onCreate={() => openCreate()} />
+          ) : shown === null || shown.length === 0 ? (
             <EmptyState
-              icon={debounced ? Search : SpacesIcon}
-              title={debounced ? t("spaces.home.noResults") : t(`spaces.empty.${effectiveFilter}` as TranslationKey)}
-              description={debounced ? t("spaces.home.noResultsHelp") : undefined}
+              icon={debounced || filtersActive ? Search : SpacesIcon}
+              title={debounced || (items && items.length > 0) ? t("spaces.home.noResults") : t(`spaces.empty.${effectiveFilter}` as TranslationKey)}
+              description={debounced || (items && items.length > 0) ? t("spaces.home.noResultsHelp") : undefined}
               compact
             />
           ) : (
             <>
               <ul data-testid="spaces-list" data-view={view} className={view === "grid" ? "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3" : "space-y-2"}>
-                {items.map((space) => (
+                {shown.map((space) => (
                   <SpaceCard key={space.id} space={space} layout={view} userId={user?.id ?? null} palette={palettes.get(space.id)} onChange={updateOne} onRemove={removeOne} />
                 ))}
               </ul>
@@ -362,7 +375,24 @@ export function SpacesHome() {
         </section>
       )}
 
-      {createOpen && <CreateSpaceModal onClose={() => setCreateOpen(false)} />}
+      {createOpen && <CreateSpaceModal initialKind={createKind} onClose={() => setCreateOpen(false)} />}
+      {filterOpen && (
+        <SpacesFilterSheet
+          sort={sort}
+          onSort={setSort}
+          kind={kindFilter}
+          onKind={setKindFilter}
+          visibility={visibilityFilter}
+          onVisibility={setVisibilityFilter}
+          signedIn={Boolean(user)}
+          onReset={() => {
+            setSort("updated");
+            setKindFilter(null);
+            setVisibilityFilter(null);
+          }}
+          onClose={() => setFilterOpen(false)}
+        />
+      )}
     </PageContainer>
   );
 }
