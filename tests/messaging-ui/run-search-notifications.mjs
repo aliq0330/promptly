@@ -48,6 +48,10 @@ const NOTIFS = [
   n("n6", "message", "Sana bir mesaj gönderdi.", "/messages/local?id=dm1&hl=message:m1", 6),
   n("n7", "system", "Site bakımı yapılacak.", "/settings", 7),
 ];
+// Arama sonuç türleri TEK menüde (docs/history/236-*).
+const resultMenu = (page) => page.locator("[data-section-menu]");
+const resultTabNames = async (page) => { await resultMenu(page).click(); const names = (await page.getByRole("radio").allTextContents()).map((x) => x.trim()); await page.keyboard.press("Escape"); await page.mouse.click(5, 5); return names; };
+const pickResultTab = async (page, name) => { await resultMenu(page).click(); await page.getByRole("radio", { name, exact: true }).click(); };
 const rowTexts = (page) => page.locator("main li, main [data-notification-id]").allTextContents();
 // Bildirim kategorileri TEK menüde (docs/history/234-*); satır adı okunmamış sayıyı da içerir, bu yüzden başı eşleşir.
 async function pick(page, label) {
@@ -96,40 +100,37 @@ const searchBox = (page) => page.getByRole("combobox").first();
 await scenario("2. Arama: Tümü'nde Topluluklar bölümü (tamamen kapalı yok); Topluluklar sekmesi kartları + adres ?tab=; Gönderiler'de topluluk yok, sıralama var", async ({ page, db }) => {
   await page.goto(`${BASE}/search`);
   await searchBox(page).fill("Atölye");
-  const tabs = page.getByRole("tablist", { name: "Arama sonuçları" });
-  await tabs.waitFor();
-  assert.deepEqual((await tabs.getByRole("tab").allTextContents()).map((s) => s.trim()), ["Tümü", "Gönderiler", "Kişiler", "Topluluklar"]);
+  await resultMenu(page).waitFor();
+  assert.deepEqual(await resultTabNames(page), ["Tümü", "Gönderiler", "Kişiler", "Topluluklar"]);
   const list = page.locator("[data-search-communities]");
   await list.waitFor();
   const names = await list.locator("h2").allTextContents();
   assert.deepEqual(names.map((s) => s.trim()).sort(), ["Atölye Bir", "Atölye Kapalı"], "public + restricted, never private");
   assert.equal(db.calls.filter((c) => c.table === "search_communities").length >= 1, true);
-  await tabs.getByRole("tab", { name: "Topluluklar" }).click();
+  await pickResultTab(page, "Topluluklar");
   assert.match(page.url(), /[?&]tab=communities/);
   await list.waitFor();
   assert.equal(await page.getByRole("button", { name: "İlgili" }).count(), 0, "no post sort on the communities tab");
   await list.getByRole("button", { name: /katıl/i }).first().waitFor();
-  await tabs.getByRole("tab", { name: "Gönderiler" }).click();
+  await pickResultTab(page, "Gönderiler");
   assert.equal(await page.locator("[data-search-communities]").count(), 0, "no communities under posts");
   await page.getByRole("button", { name: "İlgili" }).waitFor();
-  await tabs.getByRole("tab", { name: "Tümü" }).click();
+  await pickResultTab(page, "Tümü");
   assert.ok(!/[?&]tab=/.test(page.url()), "Tümü leaves the address clean");
 }, { setup: seedCommunities });
 
 await scenario("3. Arama: Kişiler sekmesi yalnız kişiler; ?tab=people ile açılır", async ({ page }) => {
   await page.goto(`${BASE}/search?q=bob&tab=people`);
-  const tabs = page.getByRole("tablist", { name: "Arama sonuçları" });
-  await tabs.waitFor();
-  assert.equal(await tabs.getByRole("tab", { name: "Kişiler" }).getAttribute("aria-selected"), "true");
+  await resultMenu(page).waitFor();
+  assert.match(await resultMenu(page).textContent(), /Kişiler/);
   await page.getByRole("link", { name: /Bob/ }).first().waitFor();
   assert.equal(await page.locator("[data-search-communities]").count(), 0);
 }, { setup: seedCommunities });
 
 await scenario("4. Arama: yalnız filtre (metin yok) → Kişiler/Topluluklar sekmesinde açıklama, istek yok", async ({ page, db }) => {
   await page.goto(`${BASE}/search?type=image`);
-  const tabs = page.getByRole("tablist", { name: "Arama sonuçları" });
-  await tabs.waitFor();
-  await tabs.getByRole("tab", { name: "Topluluklar" }).click();
+  await resultMenu(page).waitFor();
+  await pickResultTab(page, "Topluluklar");
   await page.getByText(/filtreler yalnızca gönderilere uygulanır/).waitFor();
   assert.equal(db.calls.filter((c) => c.table === "search_communities").length, 0, "no community search without text");
 }, { setup: seedCommunities });
@@ -146,9 +147,8 @@ await scenario("5. Arama: Topluluklar sekmesi hatası → hata kutusu + Tekrar d
 
 await scenario("6. Arama (İngilizce, telefon): sekmeler çevrilmiş, yatay taşma yok", async ({ page }) => {
   await page.goto(`${BASE}/search?q=At%C3%B6lye`);
-  const tabs = page.getByRole("tablist", { name: "Search results" });
-  await tabs.waitFor();
-  assert.deepEqual((await tabs.getByRole("tab").allTextContents()).map((s) => s.trim()), ["All", "Posts", "People", "Communities"]);
+  await resultMenu(page).waitFor();
+  assert.deepEqual(await resultTabNames(page), ["All", "Posts", "People", "Communities"]);
   await page.locator("[data-search-communities]").waitFor();
   assert.ok(await overflowFree(page));
 }, { lang: "en", viewport: { width: 390, height: 844 }, setup: seedCommunities });
@@ -156,11 +156,11 @@ await scenario("6. Arama (İngilizce, telefon): sekmeler çevrilmiş, yatay taş
 await scenario("7. Keşfet: arama kutusuna yazınca aynı sekmeler; boşaltınca Keşfet içeriği geri gelir", async ({ page }) => {
   await page.goto(`${BASE}/discover`);
   await searchBox(page).fill("Atölye");
-  await page.getByRole("tablist", { name: "Arama sonuçları" }).waitFor();
   await page.locator("[data-search-communities]").waitFor();
+  await resultMenu(page).waitFor();
   await searchBox(page).fill("");
   await page.locator("[data-section-menu]").waitFor();
-  assert.equal(await page.getByRole("tablist", { name: "Arama sonuçları" }).count(), 0);
+  assert.equal(await page.locator("[data-search-communities]").count(), 0);
 }, { setup: seedCommunities });
 
 await scenario("7. Bildirimler: ✕ düğmesi onay penceresi açar; Vazgeç'te hiçbir şey silinmez, Tümünü sil'de DELETE gider ve liste boşalır", async ({ page, db }) => {

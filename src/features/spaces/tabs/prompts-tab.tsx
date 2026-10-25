@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { ExternalLink, Pencil, Plus, Search, SquareTerminal } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Chip, ChipRow } from "@/components/ui/chip";
+import { SectionMenu } from "@/features/content/section-menu";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
@@ -115,13 +115,16 @@ export function PromptsTab({ onShowOnBoard }: { onShowOnBoard: (id: string) => v
           )}
         </div>
       </div>
-      <ChipRow aria-label={t("spaces.prompts.sourceFilter")}>
-        {(Object.keys(SOURCE_LABEL) as Source[]).map((key) => (
-          <Chip key={key} selected={source === key} onClick={() => setSource(key)}>
-            {t(SOURCE_LABEL[key])}
-          </Chip>
-        ))}
-      </ChipRow>
+      {/* docs/history/236-*: dört kaynak süzgeci tek menüde. */}
+      <div className="flex items-center">
+        <SectionMenu
+          items={(Object.keys(SOURCE_LABEL) as Source[]).map((key) => ({ key, label: t(SOURCE_LABEL[key]) }))}
+          active={source}
+          onChange={setSource}
+          ariaLabel={t("spaces.prompts.sourceFilter")}
+          title={t("spaces.prompts.sourceFilter")}
+        />
+      </div>
       {error && (
         <p role="alert" className="text-small text-danger">
           {error}
