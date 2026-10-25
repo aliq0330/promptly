@@ -26,6 +26,16 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, set
   finally { await context.close(); }
 }
 
+// Bölüm menüsü (docs/history/231-*, 232-*): sekmeler artık tek "Akış ▾ / Gönderiler ▾" menüsünün seçenekleridir.
+const SECTION_OPTION = "[data-section-option]";
+const optMatcher = (name) => (name instanceof RegExp ? name : new RegExp("^" + String(name).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+const menuIsOpen = async (page) => (await page.locator(SECTION_OPTION).count()) > 0;
+const menuOpen = async (page) => { if (!(await menuIsOpen(page))) { await page.locator("[data-section-menu]").first().click(); await page.locator(SECTION_OPTION).first().waitFor(); } };
+const menuClose = async (page) => { if (await menuIsOpen(page)) { await page.keyboard.press("Escape"); await page.locator(SECTION_OPTION).first().waitFor({ state: "detached" }).catch(() => undefined); } };
+const menuOption = (page, name) => page.locator(SECTION_OPTION).filter({ hasText: optMatcher(name) }).first();
+const optionText = async (page, name) => { await menuOpen(page); const text = await menuOption(page, name).innerText(); await menuClose(page); return text; };
+const tabIsActive = async (page, name) => { await menuOpen(page); const active = (await menuOption(page, name).getAttribute("aria-checked")) === "true"; await menuClose(page); return active; };
+
 const dlg = (page) => page.getByRole("dialog").last();
 const calls = (db, table, method) => db.calls.filter((c) => c.table === table && (!method || c.method === method));
 const openThread = async (page, id = G) => { await page.goto(`${BASE}/messages/local?id=${id}`); await page.locator("button[aria-label^='Topluluk seçenekleri'], button[aria-label^='Community options']").first().waitFor(); await page.waitForTimeout(300); };
@@ -91,7 +101,7 @@ await scenario("4. Moderatör: katılım istekleri topluluk sayfasında (Üyeler
   await page.waitForURL(/communities\/local\/?\?id=.*tab=members.*section=requests/);
   const items = page.locator("ul[aria-label='Bekleyen katılım istekleri'] li");
   await items.first().waitFor();
-  assert.deepEqual(await tabNames(page, 1), ["Üyeler", "Katılım istekleri"]);
+  assert.deepEqual(await tabNames(page, 0), ["Üyeler", "Katılım istekleri"]);
   assert.equal(await items.count(), 2);
   await page.getByText("Topluluğa girmek istiyorum").waitFor();
   await page.getByRole("button", { name: "Erin isteğini kabul et" }).dblclick();
@@ -319,7 +329,7 @@ await scenario("19c. Sohbet bilgi penceresindeki üye listesi salt okunur: owner
 // 20
 await scenario("20. Davetler (Üyeler → Davet): takip ettiklerim'de üyeler görünmez, aramada 'Zaten üye' yazar ve seçilemez; gönderim; bağlantı yalnızca bir kez gösterilir", async ({ page, db }) => {
   await openCommunity(page, "members", "invites");
-  assert.deepEqual(await tabNames(page, 1), ["Üyeler", "Katılım istekleri", "Davet"]);
+  assert.deepEqual(await tabNames(page, 0), ["Üyeler", "Katılım istekleri", "Davet"]);
   await page.getByRole("checkbox", { name: /Amy/ }).waitFor();
   assert.equal(await page.getByRole("checkbox", { name: /Dave/ }).count(), 0, "members never appear in the followed list");
   await page.getByPlaceholder("Kullanıcı adı veya isimle ara").fill("dave");
@@ -435,7 +445,7 @@ await scenario("23b. Owner değilse sahip ayarları ve tehlikeli bölge görünm
 // 24
 await scenario("24. Yetkiye göre: moderatöre ayar yetkisi verilince topluluk Ayarlar'ı (görünürlük ve sahip bölümleri yok) ve sohbet penceresinde 'Sohbet ayarları' (yalnız kim yazabilir) açılır", async ({ page }) => {
   await openCommunity(page, "manage");
-  assert.deepEqual(await tabNames(page, 1), ["Ayarlar", "Moderasyon"]);
+  assert.deepEqual(await tabNames(page, 0), ["Ayarlar", "Moderasyon"]);
   await page.getByRole("tab", { name: "Ayarlar" }).click();
   await page.getByLabel("Topluluk adı").waitFor();
   assert.equal(await page.getByRole("radio", { name: /^Herkese açık/ }).count(), 0, "no visibility without that permission");
@@ -483,8 +493,8 @@ await scenario("26. Topluluk sayfası: yetkiliye başlıkta 'N bekleyen istek' k
   await openCommunity(page);
   const chip = page.locator("[data-community-actions] [data-pending-requests]");
   await chip.getByText("2 bekleyen istek").waitFor();
-  await page.getByRole("tab", { name: /Üyeler/ }).getByText("2").waitFor();
-  assert.equal(await page.getByRole("tab", { name: "Akış" }).getAttribute("aria-selected"), "true", "the feed stays the landing tab");
+  assert.match(await optionText(page, /Üyeler/), /2/, "pending count on the Üyeler section");
+  assert.equal(await tabIsActive(page, "Akış"), true, "the feed stays the landing tab");
   await chip.click();
   await page.waitForURL(/tab=members.*section=requests/);
   await page.locator("ul[aria-label='Bekleyen katılım istekleri'] li").first().waitFor();
@@ -509,7 +519,7 @@ await scenario("27. Topluluk ↔ sohbet geçişi: başlıktaki 'Sohbeti aç' soh
   await openThread(page); await openInfo(page);
   await dlg(page).locator("[data-info-community-link]").click();
   await page.waitForURL(/communities\/local\/?\?id=/);
-  assert.equal(await page.getByRole("tab", { name: "Akış" }).getAttribute("aria-selected"), "true");
+  assert.equal(await tabIsActive(page, "Akış"), true);
 }, { setup: (db) => seed(db, { myRole: "member" }) });
 
 await scenario("28. Hakkında: kişiye özel tercihler (topluluk bildirim düzeyi + sohbeti sessize al + ayrıl) topluluk sayfasında; sessize alma bilgi penceresiyle AYNI durumu değiştirir", async ({ page, db }) => {

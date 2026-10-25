@@ -12,6 +12,7 @@ export const communityTranslations = {
   "communities.page.eyebrow": { tr: "Topluluklar", en: "Communities" },
   "communities.page.title": { tr: "Topluluklar", en: "Communities" },
   "communities.page.create": { tr: "Topluluk oluştur", en: "Create community" },
+  "communities.page.searchOpen": { tr: "Ara", en: "Search" },
   "communities.page.tabsAria": { tr: "Topluluk bölümleri", en: "Community sections" },
   "communities.page.loadError": { tr: "Topluluklar yüklenemedi.", en: "Couldn't load communities." },
   "communities.tab.discover": { tr: "Keşfet", en: "Discover" },

@@ -3,11 +3,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Compass, Loader2, Mail, Plus, Search, ShieldCheck, SquareStack, Users, type LucideIcon } from "lucide-react";
+import { Compass, Loader2, Plus, Search, ShieldCheck, Users, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Tabs } from "@/components/ui/tabs";
-import { SectionNav, type SectionNavItem } from "@/features/content/section-nav";
+import { CONTROL_ICON_BUTTON, SectionMenu, type SectionMenuItem } from "@/features/content/section-menu";
+import { CompactViewToggle } from "@/features/content/view-mode-switcher";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useAuthPrompt } from "@/features/auth/auth-prompt-provider";
 import { useRealMessages } from "@/features/messages/real-messages-provider";
@@ -33,14 +34,11 @@ import {
   type MyCommunityScope,
 } from "@/lib/supabase/communities";
 import { CATEGORY_LABEL_KEYS, COMMUNITY_CATEGORIES, communityHref } from "@/lib/communities";
-import { cn } from "@/lib/utils";
 import { homeHref, isInvitesSection, resolveHomeView, type HomeTab, type InvitesSection } from "@/lib/community-home";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { CommunityCategory } from "@/types";
 
 const SORTS: CommunitySort[] = ["popular", "newest", "active"];
-
-const TAB_ICONS: Record<HomeTab, LucideIcon> = { posts: SquareStack, discover: Compass, managed: ShieldCheck, invites: Mail };
 
 
 /**
@@ -70,6 +68,7 @@ export function CommunitiesPage() {
   const [invitations, setInvitations] = useState<GroupInvitation[] | null>(null);
   const [inviteReload, setInviteReload] = useState(0);
   const [query, setQuery] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
   const inviteCount = invitations?.length ?? null;
 
   const sectionParam = searchParams.get("section");
@@ -85,10 +84,9 @@ export function CommunitiesPage() {
     managed: t("communities.tab.managed"),
     invites: t("communities.tab.invitesAndRequests"),
   };
-  const tabs: SectionNavItem<HomeTab>[] = tabKeys.map((key) => ({
+  const tabs: SectionMenuItem<HomeTab>[] = tabKeys.map((key) => ({
     key,
     label: tabLabel[key],
-    icon: TAB_ICONS[key],
     count: key === "invites" && actionCount > 0 ? actionCount : undefined,
   }));
   const activeTab: HomeTab = view === "mine" ? "posts" : view;
@@ -130,41 +128,72 @@ export function CommunitiesPage() {
       aside={user ? <HomeAside managedCount={managed.length} actionCount={actionCount} /> : undefined}
       asideLabel={t("communities.aside.label")}
     >
-      <h1 className="sr-only">{t("communities.page.title")}</h1>
-      <div className="flex items-center gap-2">
-        {user ? (
-          <form role="search" onSubmit={search} className="relative min-w-0 flex-1">
-            <Search size={17} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-text-muted" aria-hidden />
-            <input
-              type="search"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder={t("communities.all.searchPlaceholder")}
-              aria-label={t("communities.all.searchPlaceholder")}
-              enterKeyHint="search"
-              className="h-11 w-full rounded-full border border-transparent bg-surface-soft pl-11 pr-4 text-body text-text placeholder:text-text-muted focus:border-border-strong focus:outline-none"
-            />
-          </form>
-        ) : (
-          <span className="flex-1" />
-        )}
-        <Button type="button" size="sm" onClick={() => requireAuth("create") && setCreateOpen(true)} className={cn(!user && "h-11")}>
-          <Plus size={16} /> {user ? <span className="sr-only sm:not-sr-only">{t("communities.page.create")}</span> : t("communities.page.create")}
-        </Button>
-      </div>
+      <h1 className="font-display text-[2.375rem] font-bold leading-[1.1] tracking-[-0.02em] text-text">{t("communities.page.title")}</h1>
 
+      {/* Tek kontrol satırı (docs/history/232-*, Spaces ile aynı kalıp): bölüm menüsü · arama · Kart/Izgara · "+". */}
+      {user && searchOpen ? (
+        <form role="search" onSubmit={search} className="relative">
+          <Search size={20} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" aria-hidden />
+          <input
+            type="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder={t("communities.all.searchPlaceholder")}
+            aria-label={t("communities.all.searchPlaceholder")}
+            enterKeyHint="search"
+            autoFocus
+            className="h-12 w-full rounded-xl border-2 border-primary bg-surface pl-11 pr-12 text-body text-text placeholder:text-text-muted focus:outline-none"
+          />
+          <button
+            type="button"
+            onClick={() => {
+              setQuery("");
+              setSearchOpen(false);
+            }}
+            aria-label={t("common.clear")}
+            className="absolute right-1.5 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-lg text-text hover:bg-surface-soft"
+          >
+            <X size={20} />
+          </button>
+        </form>
+      ) : (
+        <div className="flex items-center gap-1.5">
+          {user && <SectionMenu items={tabs} active={activeTab} onChange={goTab} ariaLabel={t("communities.page.tabsAria")} title={t("communities.page.title")} />}
+          <span className="flex-1" />
+          {user && (
+            <button type="button" onClick={() => setSearchOpen(true)} aria-label={t("communities.page.searchOpen")} title={t("communities.page.searchOpen")} className={CONTROL_ICON_BUTTON}>
+              <Search size={22} strokeWidth={1.75} aria-hidden />
+            </button>
+          )}
+          {user && (view === "posts" || view === "discover") && <CompactViewToggle />}
+          {user ? (
+            <Button
+              type="button"
+              onClick={() => requireAuth("create") && setCreateOpen(true)}
+              title={t("communities.page.create")}
+              data-create-community
+              className="h-11 w-11 shrink-0 rounded-xl bg-surface-soft p-0 text-text shadow-none hover:bg-border-soft"
+            >
+              <Plus size={22} strokeWidth={1.75} aria-hidden />
+              <span className="sr-only">{t("communities.page.create")}</span>
+            </Button>
+          ) : (
+            <Button type="button" size="sm" onClick={() => requireAuth("create") && setCreateOpen(true)} className="h-11">
+              <Plus size={16} /> {t("communities.page.create")}
+            </Button>
+          )}
+        </div>
+      )}
+
+      {user && view === "posts" && invitations && invitations.length > 0 && <HomeInviteNotice invitations={invitations} />}
       {user && <MyCommunitiesShelf />}
-      {user && <SectionNav items={tabs} active={activeTab} onChange={goTab} ariaLabel={t("communities.page.tabsAria")} hideControls />}
 
       {authLoading ? (
         <LoadingRows />
       ) : !user ? (
         <DiscoverView onToast={show} onGoInvites={() => goTab("invites")} />
       ) : view === "posts" ? (
-        <>
-          {invitations && invitations.length > 0 && <HomeInviteNotice invitations={invitations} />}
-          <HomePostsTab onToast={show} />
-        </>
+        <HomePostsTab onToast={show} />
       ) : view === "discover" ? (
         <HomeDiscoverTab onToast={show} onGoInvites={() => goTab("invites")} />
       ) : view === "mine" ? (

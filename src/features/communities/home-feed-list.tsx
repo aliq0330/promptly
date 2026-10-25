@@ -7,7 +7,6 @@ import { CONTENT_GRID_ITEM_CLASS, ContentGrid } from "@/features/content/content
 import { FEED_GRID_COLUMNS } from "./community-layout";
 import { postFeedItem } from "./content-summary";
 import { useViewMode } from "@/features/content/view-mode-store";
-import { ViewModeControls } from "@/features/content/view-mode-switcher";
 import { FOCUS_GRID_NARROW_COLUMNS, FocusGrid } from "@/features/focus/focus-grid";
 import type { FeedItem } from "@/features/feed/types";
 import { ErrorBox } from "./home-shared";
@@ -54,10 +53,7 @@ export function HomeFeedList({ feed, empty, onToast, viewerIsMember }: { feed: F
 
   return (
     <div className="space-y-4">
-      {/* Keşfet's Kart | Izgara switcher; Izgara shows each post's content (seen-tracking stays with the card view). */}
-      <div className="flex justify-end gap-2">
-        <ViewModeControls />
-      </div>
+      {/* Kart | Izgara anahtarı sayfanın kontrol satırındadır (docs/history/232-*); Izgara her gönderinin içeriğini gösterir (görüldü izleme kart görünümünde kalır). */}
       {viewMode === "focus" ? (
         <FocusGrid
           items={feed.entries.map((entry) => postFeedItem(entry.post.content)).filter((item): item is FeedItem => item !== null)}

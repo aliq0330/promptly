@@ -52,7 +52,7 @@ export function MyCommunitiesShelf() {
   return (
     <section aria-labelledby="my-communities-shelf" className="space-y-2.5" data-testid="my-communities-shelf">
       <div className="flex items-baseline justify-between gap-3">
-        <h2 id="my-communities-shelf" className="font-display text-[1.125rem] font-bold text-text">
+        <h2 id="my-communities-shelf" className="text-small text-text-muted">
           {t("communities.home.myCommunities")}
         </h2>
         <Link href={homeHref("mine")} className="text-small font-medium text-primary hover:text-primary-hover" data-testid="my-communities-link">
@@ -61,7 +61,7 @@ export function MyCommunitiesShelf() {
       </div>
       <ScrollRow as="ul" className="-mx-3 gap-3 px-3 pb-2 pt-1 sm:mx-0 sm:px-0">
         {state.communities.map((community) => (
-          <li key={community.id} className="w-[6.5rem] shrink-0">
+          <li key={community.id} className="w-36 shrink-0 sm:w-40">
             <ShelfCover community={community} unseen={state.unseen.get(community.id) ?? 0} />
           </li>
         ))}
@@ -77,9 +77,9 @@ function ShelfCover({ community, unseen }: { community: CommunitySummary; unseen
   const initial = community.name.trim().charAt(0).toLocaleUpperCase(language === "tr" ? "tr" : "en");
   return (
     <Link href={communityHref(community.id)} className="group block space-y-1.5" data-shelf-community={community.id}>
-      <span className="relative block aspect-square overflow-hidden rounded-[18px] bg-primary-soft shadow-card transition-transform duration-200 ease-soft group-hover:-translate-y-0.5">
+      <span className="relative block aspect-[4/3] overflow-hidden rounded-[18px] bg-primary-soft transition-transform duration-200 ease-soft group-hover:-translate-y-0.5">
         {src ? (
-          <Image src={src} alt="" fill sizes="104px" className="object-cover" />
+          <Image src={src} alt="" fill sizes="160px" className="object-cover" />
         ) : (
           <span aria-hidden className="flex h-full w-full items-center justify-center font-display text-[2rem] font-extrabold text-primary">
             {initial}
