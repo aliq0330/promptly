@@ -53,6 +53,11 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 860 }, lan
   }
 }
 
+/** "Tümü ▾" bölüm menüsünden bir bölüm seç (docs/history/231-*; telefonda alt sayfa, masaüstünde açılır kutu). */
+const pickSection = async (page, name) => {
+  await page.locator("[data-section-menu]").click();
+  await page.getByRole("radio", { name }).click();
+};
 const calls = (db, method, table) => db.calls.filter((c) => c.method === method && c.table === table);
 const waitFor = async (check, ms = 4000) => {
   const end = Date.now() + ms;
@@ -104,14 +109,15 @@ await scenario("2. liste: kartlar, süzgeç RPC'ye gider, arama gecikmeli, liste
   await page.goto(`${BASE}/spaces`);
   await page.getByTestId("spaces-list").waitFor();
   assert.equal(await page.locator("[data-space-card]").count(), 2);
-  await page.getByRole("tab", { name: "Paylaşılan" }).click();
+  await pickSection(page, "Paylaşılan");
   await waitFor(() => calls(db, "RPC", "list_spaces").some((c) => c.body.p_filter === "shared"));
   await page.getByText("Seninle paylaşılan Space yok").waitFor();
-  await page.getByRole("tab", { name: "Tümü" }).click();
+  await pickSection(page, "Tümü");
+  await page.getByRole("button", { name: "Ara", exact: true }).click();
   await page.getByRole("searchbox", { name: /Space, görsel/ }).fill("altın");
   await waitFor(() => calls(db, "RPC", "list_spaces").some((c) => c.body.p_query === "altın"));
   await waitFor(async () => (await page.locator("[data-space-card]").count()) === 1);
-  await page.getByRole("searchbox", { name: /Space, görsel/ }).fill("");
+  await page.getByRole("button", { name: "Temizle" }).click();
   await page.getByRole("button", { name: "Liste" }).click();
   await page.locator('[data-view="list"]').waitFor();
   await page.locator(`[data-space-card="${SID(1)}"]`).getByRole("button", { name: "Sabitle" }).click();
@@ -475,7 +481,7 @@ await scenario("26. sahip: bant paleti + ⋮ → Sabitle (set_space_favorite); a
   const card = page.locator(`[data-space-card="${SID(1)}"]`);
   await card.locator("[data-palette-strip]").waitFor();
   await card.getByRole("button", { name: "Sabitlemeyi kaldır" }).waitFor();
-  await page.getByRole("tab", { name: "Sabitli" }).click();
+  await pickSection(page, "Sabitli");
   await waitFor(() => calls(db, "RPC", "list_spaces").some((c) => c.body.p_filter === "favorites"));
 }, {
   setup: (db) => {
@@ -590,10 +596,85 @@ await scenario("30. Yeni Space penceresi (iOS klavyesi): dokunmatikte başlık k
   assert.ok(restored.height >= 800, `katman tam ekrana döndü: ${restored.height}`);
 }, { viewport: { width: 390, height: 844 }, touch: true });
 
+await scenario("31. sade ana sayfa (docs/history/231-*): başlık + tek 'Tümü ▾' menüsü (davet noktası + sayaç) + simgeler; tür karosu Yeni Space'i o türle açar; filtre sayfası sıralama/tür/görünürlük; görünüm anahtarı; hiçbir özellik eksik değil", async ({ page, db }) => {
+  await page.goto(`${BASE}/spaces`);
+  await page.getByRole("heading", { level: 1, name: "Spaces" }).waitFor();
+  await page.getByTestId("spaces-list").waitFor();
+  if (process.env.SHOTS) await page.screenshot({ path: `${process.env.SHOTS}/spaces-new-desktop.png` });
+  await page.locator("[data-section-dot]").waitFor();
+  await page.getByTestId("space-invites-banner").waitFor();
+  // Menü: yedi seçenek, davet sayaçlı.
+  await page.locator("[data-section-menu]").click();
+  assert.equal(await page.getByRole("radio").count(), 7);
+  assert.match(await page.locator('[data-section-option="invites"]').textContent(), /Davetler\s*1/);
+  await page.keyboard.press("Escape");
+  // Tür karosu → Yeni Space penceresi o türle.
+  const tile = page.locator('[data-space-template="brand"]');
+  await tile.waitFor();
+  await tile.click();
+  const form = page.getByTestId("create-space-form");
+  await form.waitFor();
+  assert.equal(await form.getByRole("radio", { name: /Marka kimliği/ }).isChecked(), true, "tür önceden seçili");
+  await page.keyboard.press("Escape");
+  await form.waitFor({ state: "detached" });
+  // Filtre sayfası: sıralama RPC'ye gider; tür süzgeci yüklenmiş kartları süzer; temizle geri getirir.
+  await page.locator("[data-filter-button]").click();
+  const sheet = page.getByRole("dialog");
+  await sheet.getByRole("button", { name: "Ada göre (A–Z)" }).click();
+  await waitFor(() => calls(db, "RPC", "list_spaces").some((c) => c.body.p_sort === "title"));
+  await sheet.getByRole("button", { name: "Karakter tasarımı" }).click();
+  await waitFor(async () => (await page.locator("[data-space-card]").count()) === 1);
+  await sheet.getByRole("button", { name: "İç mekân tasarımı" }).click();
+  await sheet.getByRole("button", { name: "Bitti" }).click();
+  await page.getByText("Sonuç yok").waitFor();
+  assert.equal(await page.locator("[data-space-card]").count(), 0, "tür süzgeci kartları süzer");
+  await page.locator("[data-filter-button]").click();
+  await page.getByRole("dialog").getByRole("button", { name: "Süzgeçleri temizle" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Bitti" }).click();
+  await waitFor(async () => (await page.locator("[data-space-card]").count()) >= 2);
+  // Görünüm anahtarı tek düğme; tercih kalır.
+  await page.getByRole("button", { name: "Liste", exact: true }).click();
+  await page.locator('[data-view="list"]').waitFor();
+  await page.getByRole("button", { name: "Izgara", exact: true }).waitFor();
+  await page.reload();
+  await page.locator('[data-view="list"]').waitFor();
+}, {
+  setup: (db) => {
+    boardWith(db, 1);
+    db.addSpace(2, { title: "Marka" });
+    db.addSpace(3, { title: "Davetli Space", owner: U.bob.id, visibility: "private" });
+    db.spaceInvites.push({ id: "inv1", space_id: SID(3), invitee_id: ME, role: "editor", invited_by: U.bob.id, status: "pending", created_at: "2026-09-20T10:00:00Z" });
+  },
+});
+
+await scenario("32. telefon 390px: bölüm menüsü alt sayfa, filtre sayfası ve arama taşmaz", async ({ page }) => {
+  await page.goto(`${BASE}/spaces`);
+  await page.getByTestId("spaces-list").waitFor();
+  assert.ok(await overflowFree(page));
+  if (process.env.SHOTS) await page.screenshot({ path: `${process.env.SHOTS}/spaces-new-mobile.png` });
+  await page.locator("[data-section-menu]").click();
+  await page.getByRole("radio", { name: "Herkese açık" }).waitFor();
+  assert.ok(await overflowFree(page));
+  if (process.env.SHOTS) { await page.waitForTimeout(500); await page.screenshot({ path: `${process.env.SHOTS}/spaces-new-menu-mobile.png` }); }
+  await page.getByRole("radio", { name: "Herkese açık" }).click();
+  await waitFor(() => true);
+  await page.locator("[data-filter-button]").click();
+  await page.getByRole("dialog").getByRole("button", { name: "Bitti" }).waitFor();
+  assert.ok(await overflowFree(page));
+  await page.getByRole("dialog").getByRole("button", { name: "Bitti" }).click();
+  await page.getByRole("button", { name: "Ara", exact: true }).click();
+  await page.getByRole("searchbox").waitFor();
+  assert.ok(await overflowFree(page));
+}, { viewport: { width: 390, height: 844 }, setup: (db) => boardWith(db, 1) });
+
 await scenario("21. İngilizce: ana sayfa, sekmeler ve pano araçları İngilizce", async ({ page }) => {
   await page.goto(`${BASE}/spaces`);
-  await page.getByRole("tab", { name: "Mine" }).waitFor();
+  await page.locator("[data-section-menu]").click();
+  await page.getByRole("radio", { name: "Mine" }).waitFor();
+  await page.getByRole("radio", { name: "Shared" }).waitFor();
+  await page.keyboard.press("Escape");
   await page.getByTestId("create-space").getByText("New Space").waitFor();
+  await page.getByText("Start a new Space").waitFor();
   await page.goto(`${BASE}/spaces/local?id=${SID(1)}&tab=board`);
   await page.getByRole("tab", { name: /Board/ }).waitFor();
   await page.getByRole("button", { name: "Fit to screen" }).first().waitFor();

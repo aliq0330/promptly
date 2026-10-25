@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
-import { BadgeCheck, ImagePlus, LayoutDashboard, Loader2, Shapes, Sofa, Swords, UserRound, X, type LucideIcon } from "lucide-react";
+import { ImagePlus, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ChoiceCard, fieldControlClassName, fieldInputClassName, fieldLabelClassName } from "@/components/ui/field";
 import { imageSourceProblem } from "@/lib/image-processing";
@@ -19,21 +19,12 @@ import {
   type SpaceVisibility,
 } from "@/lib/spaces";
 import type { TranslationKey } from "@/lib/i18n/translations";
-import { VISIBILITY_ICON } from "./space-visuals";
+import { SPACE_KIND_ICON as KIND_ICON, VISIBILITY_ICON } from "./space-visuals";
 
 /*
  * Space oluşturma ve ayar formlarının ortak alanları (docs/history/213-*): ad, açıklama, tür, görünürlük (neyin yayımlanacağı
  * açıkça yazılır), başlangıç şablonu ve kapak seçici. Yalnız sunum + yerel doğrulama; yazma çağıranda.
  */
-
-export const KIND_ICON: Record<SpaceKind, LucideIcon> = {
-  moodboard: LayoutDashboard,
-  character: UserRound,
-  brand: BadgeCheck,
-  game_world: Swords,
-  interior: Sofa,
-  free: Shapes,
-};
 
 const VISIBILITY_HELP: Record<SpaceVisibility, TranslationKey> = {
   private: "spaces.visibility.privateHelp",

@@ -57,12 +57,12 @@ export function SpaceDialog({ title, onClose, children, wide, busy, overLayers }
  * Yeni Space: ad (zorunlu), açıklama, tür, görünürlük (varsayılan Özel), başlangıç şablonu, kapak. Başarıda Space'in sayfasına
  * gider. Kapak yüklenemezse Space yine oluşmuştur: pencere bunu söyler ve Space'e geçmeyi önerir (sessizce yutulmaz).
  */
-export function CreateSpaceModal({ onClose, onCreated }: { onClose: () => void; onCreated?: (id: string) => void }) {
+export function CreateSpaceModal({ onClose, onCreated, initialKind }: { onClose: () => void; onCreated?: (id: string) => void; initialKind?: SpaceKind }) {
   const { t } = useTranslation();
   const router = useRouter();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [kind, setKind] = useState<SpaceKind>("moodboard");
+  const [kind, setKind] = useState<SpaceKind>(initialKind ?? "moodboard");
   const [visibility, setVisibility] = useState<SpaceVisibility>("private");
   const [template, setTemplate] = useState<"empty" | "template">("template");
   const [cover, setCover] = useState<File | null>(null);
