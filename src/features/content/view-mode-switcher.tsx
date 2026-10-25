@@ -4,6 +4,7 @@ import { LayoutGrid, Rows3, type LucideIcon } from "lucide-react";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import { cn } from "@/lib/utils";
+import { CONTROL_ICON_BUTTON } from "./section-menu";
 import { useViewMode, type ViewMode } from "./view-mode-store";
 
 const OPTIONS: { mode: ViewMode; icon: LucideIcon; labelKey: TranslationKey; titleKey: TranslationKey }[] = [
@@ -92,5 +93,28 @@ export function ViewModeControls() {
       <MobileViewToggle className="md:hidden" />
       <ViewModeSwitcher className="max-md:hidden" />
     </>
+  );
+}
+
+/**
+ * Sade kontrol satırının tek Kart / Izgara düğmesi (docs/history/232-*): `ViewModeControls` ile AYNI `useViewMode` durumu; simge geçilecek görünümü
+ * gösterir. Listenin kendi içinde ayrı bir anahtar çizilmez — sayfanın kontrol satırında durur.
+ */
+export function CompactViewToggle() {
+  const { t } = useTranslation();
+  const [mode, setMode] = useViewMode();
+  const next: ViewMode = mode === "card" ? "focus" : "card";
+  const Icon = mode === "card" ? LayoutGrid : Rows3;
+  return (
+    <button
+      type="button"
+      onClick={() => setMode(next)}
+      aria-label={t(mode === "card" ? "view.switchToFocus" : "view.switchToCard")}
+      title={t(mode === "card" ? "view.focusTitle" : "view.cardTitle")}
+      data-view-toggle={mode}
+      className={CONTROL_ICON_BUTTON}
+    >
+      <Icon size={22} strokeWidth={1.75} aria-hidden />
+    </button>
   );
 }

@@ -30,8 +30,21 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, set
   finally { await context.close(); }
 }
 
+// Bölüm menüsü (docs/history/231-*, 232-*): sekmeler artık tek "Akış ▾ / Gönderiler ▾" menüsünün seçenekleridir.
+const SECTION_OPTION = "[data-section-option]";
+const optMatcher = (name) => (name instanceof RegExp ? name : new RegExp("^" + String(name).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+const menuIsOpen = async (page) => (await page.locator(SECTION_OPTION).count()) > 0;
+const menuOpen = async (page) => { if (!(await menuIsOpen(page))) { await page.locator("[data-section-menu]").first().click(); await page.locator(SECTION_OPTION).first().waitFor(); } };
+const menuClose = async (page) => { if (await menuIsOpen(page)) { await page.keyboard.press("Escape"); await page.locator(SECTION_OPTION).first().waitFor({ state: "detached" }).catch(() => undefined); } };
+const menuOption = (page, name) => page.locator(SECTION_OPTION).filter({ hasText: optMatcher(name) }).first();
+const pickTab = async (page, name) => { await menuOpen(page); await menuOption(page, name).click(); };
+const hasTab = async (page, name) => { if ((await page.locator("[data-section-menu]").count()) === 0) return false; await menuOpen(page); const found = (await page.locator(SECTION_OPTION).filter({ hasText: optMatcher(name) }).count()) > 0; await menuClose(page); return found; };
+const waitTab = async (page, name) => { for (let i = 0; i < 40; i += 1) { if (await hasTab(page, name)) return; await page.waitForTimeout(150); } assert.fail(`section "${name}" never appeared`); };
+const optionText = async (page, name) => { await menuOpen(page); const text = await menuOption(page, name).innerText(); await menuClose(page); return text; };
+const tabIsActive = async (page, name) => { await menuOpen(page); const active = (await menuOption(page, name).getAttribute("aria-checked")) === "true"; await menuClose(page); return active; };
+const tabNames = async (page) => { if ((await page.locator("[data-section-menu]").count()) === 0) return []; await menuOpen(page); const names = (await page.locator(SECTION_OPTION).allInnerTexts()).map((t) => t.split("\n")[0].replace(/\d+$/, "").trim()); await menuClose(page); return names; };
+
 const calls = (db, name) => db.calls.filter((c) => c.table === name);
-const tabNames = (page) => page.getByRole("tablist").first().getByRole("tab").allInnerTexts().then((l) => l.map((t) => t.split("\n")[0].replace(/\d+$/, "").trim()));
 const overflowFree = (page) => page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1);
 // Sonsuz kaydırma ve "Daha fazla" düğmesi birlikte çalışır: sayı hedefe ulaşana dek düğmeye basmayı dener (liste büyürken kararsız olabilir) ya da beklemeye devam eder.
 const loadUntil = async (page, selector, count) => {
@@ -65,7 +78,7 @@ await scenario("1. Varsayılan sekme Gönderiler; sekmeler: Gönderiler, Keşfet
   await page.goto(`${BASE}/communities`);
   await page.getByRole("heading", { name: "Topluluklarından gönderiler" }).waitFor();
   assert.deepEqual(await tabNames(page), ["Gönderiler", "Keşfet", "Davet ve başvurular"]);
-  assert.equal(await page.getByRole("tab", { name: "Gönderiler" }).getAttribute("aria-selected"), "true");
+  assert.equal(await tabIsActive(page, "Gönderiler"), true);
 }, { setup: world });
 
 // 2
@@ -334,11 +347,11 @@ await scenario("19. Tüm topluluklar: kapalı topluluğa kartın düğmesiyle is
 // 20
 await scenario("20. Yönettiklerim yalnız yönettiği topluluğu olana görünür; Davet ve başvurular: Davetler · Başvurularım · Gelen başvurular (yöneticiye) sayaçlı", async ({ page }) => {
   await page.goto(`${BASE}/communities`);
-  await page.getByRole("tab", { name: "Yönettiklerim" }).waitFor();
+  await waitTab(page, "Yönettiklerim");
   const names = await tabNames(page);
   assert.deepEqual(names, ["Gönderiler", "Keşfet", "Yönettiklerim", "Davet ve başvurular"]);
-  assert.match(await page.getByRole("tab", { name: /Davet ve başvurular/ }).innerText(), /3/, "badge counts the incoming requests");
-  await page.getByRole("tab", { name: /Davet ve başvurular/ }).click();
+  assert.match(await optionText(page, /Davet ve başvurular/), /3/, "badge counts the incoming requests");
+  await pickTab(page, /Davet ve başvurular/);
   await page.getByRole("tab", { name: "Gelen başvurular" }).click();
   const row = page.getByTestId("incoming-requests").locator("li", { hasText: "Yönetilen" });
   await row.getByText("3 bekleyen başvuru").waitFor();
@@ -376,7 +389,7 @@ await scenario("23. Ziyaretçi (oturumsuz): yalnız Keşfet — herkese açık t
   await page.goto(`${BASE}/communities`);
   await page.getByRole("heading", { name: "Dış Açık" }).waitFor();
   assert.equal(await page.getByRole("heading", { name: "Dış Kapalı" }).count(), 0, "visitors only browse public communities");
-  assert.equal(await page.getByRole("tab", { name: "Gönderiler" }).count(), 0);
+  assert.equal(await hasTab(page, "Gönderiler"), false);
   for (const name of ["member_feed_page", "discover_feed_page", "recommend_communities", "mark_community_posts_seen"]) assert.equal(calls(db, name).length, 0, name);
   await page.goto(`${BASE}/communities/all`);
   await page.getByRole("heading", { name: "Dış Açık" }).waitFor();
@@ -387,7 +400,7 @@ await scenario("24. İngilizce: sekmeler, şerit, düğme, akış ve Tüm toplul
   await page.goto(`${BASE}/communities`);
   await page.getByRole("heading", { name: "Posts from your communities" }).waitFor();
   assert.deepEqual(await tabNames(page), ["Posts", "Discover", "Invitations & requests"]);
-  await page.getByRole("tab", { name: "Discover" }).click();
+  await pickTab(page, "Discover");
   await page.getByRole("heading", { name: "Communities for you" }).waitFor();
   await page.getByTestId("all-communities-button").getByText("All communities").waitFor();
   await page.getByRole("heading", { name: "Discover feed" }).waitFor();

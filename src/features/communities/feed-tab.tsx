@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Flag, Pencil, Pin, PinOff, Plus, ShieldAlert, SquareStack, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -41,7 +42,8 @@ import { CONTENT_GRID_ITEM_CLASS, ContentGrid } from "@/features/content/content
 import { FEED_GRID_COLUMNS, FEED_ITEM_CONTEXT_CLASS } from "./community-layout";
 import { postFeedItem } from "./content-summary";
 import { useViewMode } from "@/features/content/view-mode-store";
-import { ViewModeControls } from "@/features/content/view-mode-switcher";
+import { CompactViewToggle } from "@/features/content/view-mode-switcher";
+import { CONTROL_ICON_BUTTON } from "@/features/content/section-menu";
 import { FOCUS_GRID_NARROW_COLUMNS, FocusGrid } from "@/features/focus/focus-grid";
 import type { FeedItem } from "@/features/feed/types";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -58,7 +60,7 @@ type PostAction = { kind: "edit" | "delete" | "moderate" | "report"; post: Commu
  * Düzenleme/silme: yazar kendi gönderisini; kaldırma/sabitleme: ilgili yetenekle (denetim kaydı düşer, yazara bildirim gider).
  */
 export function FeedTab(props: CommunityTabProps) {
-  const { group, role, viewerId, onToast, reload } = props;
+  const { group, role, viewerId, onToast, reload, actionsEl } = props;
   const { t } = useTranslation();
   const [viewMode] = useViewMode();
   const router = useRouter();
@@ -184,19 +186,29 @@ export function FeedTab(props: CommunityTabProps) {
         </p>
       )}
 
+      {/* Kart/Izgara + "Gönderi oluştur" simgeleri sayfanın kontrol satırındaki yuvadadır (docs/history/232-*). */}
+      {actionsEl &&
+        createPortal(
+          <>
+            <CompactViewToggle />
+            {canPost && (
+              <button
+                type="button"
+                onClick={() => setCreateOpen(true)}
+                data-create-post
+                aria-label={t("communities.feed.share")}
+                title={t("communities.feed.share")}
+                className={`${CONTROL_ICON_BUTTON} bg-surface-soft hover:bg-border-soft`}
+              >
+                <Plus size={22} strokeWidth={1.75} aria-hidden />
+              </button>
+            )}
+          </>,
+          actionsEl,
+        )}
       <div className="flex items-center justify-between gap-3">
         <p className="text-small text-text-muted">{group.feedPolicy === "admins" ? t("communities.feed.policyStaff") : t("communities.feed.policyMembers")}</p>
-        <div className="flex shrink-0 items-center gap-2">
-          {canPost ? (
-            <Button type="button" size="sm" onClick={() => setCreateOpen(true)} data-create-post>
-              <Plus size={14} /> {t("communities.feed.share")}
-            </Button>
-          ) : (
-            role && group.closedAt === null && <span className="text-caption text-text-muted">{t("communities.feed.cannotShare")}</span>
-          )}
-          {/* Keşfet's Kart | Izgara switcher. */}
-          <ViewModeControls />
-        </div>
+        {!canPost && role && group.closedAt === null && <span className="text-caption text-text-muted">{t("communities.feed.cannotShare")}</span>}
       </div>
 
       {focusId && focusPost === null && (

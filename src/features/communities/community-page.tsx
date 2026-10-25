@@ -1,13 +1,13 @@
 "use client";
 
-import { Suspense, useEffect, useMemo } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { MessageSquare, RefreshCw, UserCog } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonClassName } from "@/components/ui/button";
 import { DetailSkeleton, NotFoundBlock } from "@/components/ui/detail-skeleton";
-import { Tabs, type TabItem } from "@/components/ui/tabs";
+import { SectionMenu, type SectionMenuItem } from "@/features/content/section-menu";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useRealMessages } from "@/features/messages/real-messages-provider";
 import { GroupAvatar } from "@/features/groups/group-avatar";
@@ -45,6 +45,8 @@ export interface CommunityTabProps {
   goTab: (tab: CommunityTab, section?: string) => void;
   /** Adresteki `section` (Üyeler: list|requests|invites · Yönet: stats|settings|…); geçersizse sekme ilk bölümünü açar. */
   section: string | null;
+  /** Kontrol satırındaki eylem yuvası (docs/history/232-*): Akış, Kart/Izgara + "+" simgelerini buraya portal eder; diğer sekmeler kullanmaz. */
+  actionsEl: HTMLElement | null;
 }
 
 /**
@@ -71,6 +73,7 @@ function CommunityPageInner() {
   const { conversations, refresh } = useRealMessages();
   const { node: toastNode, show } = useToast();
   const { state, reload } = useCommunity(authLoading ? null : id, user?.id ?? null);
+  const [actionsEl, setActionsEl] = useState<HTMLElement | null>(null);
 
   const role = state.status === "ready" ? (state.membership?.role ?? null) : null;
   const group = state.status === "ready" ? state.group : null;
@@ -124,7 +127,7 @@ function CommunityPageInner() {
   };
   // Bekleyen istek sayısı, istekleri yönetebilenin "Üyeler" sekmesinde görünür (isteklerin bulunduğu yer burasıdır).
   const pendingForMe = role && can(role, "manage_requests", ready.group.rolePermissions) ? ready.group.pendingRequestCount : 0;
-  const tabs: TabItem<CommunityTab>[] = allowed.map((key) => ({
+  const tabs: SectionMenuItem<CommunityTab>[] = allowed.map((key) => ({
     key,
     label: tabLabels[key],
     count: key === "members" && pendingForMe > 0 ? pendingForMe : undefined,
@@ -142,7 +145,7 @@ function CommunityPageInner() {
 
   const joinState: JoinState = role ? "member" : ready.gate.invitationId ? "invited" : ready.gate.requestId ? "requested" : "none";
 
-  const common: CommunityTabProps = { group: ready.group, role, viewerId: user?.id ?? null, membership: ready.membership, reload, onToast: show, goTab, section: view?.section ?? null };
+  const common: CommunityTabProps = { group: ready.group, role, viewerId: user?.id ?? null, membership: ready.membership, reload, onToast: show, goTab, section: view?.section ?? null, actionsEl };
   const g = ready.group;
 
   const categoryLabel = t(CATEGORY_LABEL_KEYS[g.category]);
@@ -225,7 +228,12 @@ function CommunityPageInner() {
             {!role && (
               <CommunityGate group={g} gate={ready.gate} onChanged={reload} onToast={show} compact />
             )}
-            <Tabs items={tabs} active={tab} onChange={goTab} ariaLabel={t("communities.detail.tabsAria")} variant="pill" />
+            {/* Tek kontrol satırı (docs/history/232-*): bölüm menüsü ("Akış ▾") + sekmenin kendi eylem yuvası. */}
+            <div className="flex items-center gap-1.5">
+              <SectionMenu items={tabs} active={tab} onChange={goTab} ariaLabel={t("communities.detail.tabsAria")} title={g.name} />
+              <span className="flex-1" />
+              <div ref={setActionsEl} className="flex items-center gap-1.5" data-community-actions-slot />
+            </div>
             <div role="tabpanel">
               {tab === "feed" && <FeedTab {...common} />}
               {tab !== "feed" && (

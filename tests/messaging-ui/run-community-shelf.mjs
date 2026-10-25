@@ -50,28 +50,38 @@ async function scenario(name, fn, { viewport = { width: 390, height: 844 }, lang
 
 const shelf = (page) => page.getByTestId("my-communities-shelf");
 const shelfNames = (page) => shelf(page).locator("[data-shelf-community]").evaluateAll((els) => els.map((el) => el.querySelector("span.truncate")?.textContent ?? ""));
+// Bölüm menüsü (docs/history/231-*, 232-*): sekmeler artık tek "Akış ▾ / Gönderiler ▾" menüsünün seçenekleridir.
+const SECTION_OPTION = "[data-section-option]";
+const optMatcher = (name) => (name instanceof RegExp ? name : new RegExp("^" + String(name).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+const menuIsOpen = async (page) => (await page.locator(SECTION_OPTION).count()) > 0;
+const menuOpen = async (page) => { if (!(await menuIsOpen(page))) { await page.locator("[data-section-menu]").first().click(); await page.locator(SECTION_OPTION).first().waitFor(); } };
+const menuClose = async (page) => { if (await menuIsOpen(page)) { await page.keyboard.press("Escape"); await page.locator(SECTION_OPTION).first().waitFor({ state: "detached" }).catch(() => undefined); } };
+const menuOption = (page, name) => page.locator(SECTION_OPTION).filter({ hasText: optMatcher(name) }).first();
+const hasTab = async (page, name) => { if ((await page.locator("[data-section-menu]").count()) === 0) return false; await menuOpen(page); const found = (await page.locator(SECTION_OPTION).filter({ hasText: optMatcher(name) }).count()) > 0; await menuClose(page); return found; };
+const optionText = async (page, name) => { await menuOpen(page); const text = await menuOption(page, name).innerText(); await menuClose(page); return text; };
+
 const overflowFree = (page) => page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1);
 const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: `${SHOTS}/${name}.png` }); };
 
-await scenario("1. telefon: görünür başlık yok; arama + '+' tek satır; raf, balonlar, gönderiler sırayla", async ({ page }) => {
+await scenario("1. telefon: büyük görünür başlık; menü + simgeler + '+' tek kontrol satırı; raf, gönderiler sırayla (docs/history/232-*)", async ({ page }) => {
   await page.goto(`${BASE}/communities`);
-  await page.getByRole("heading", { level: 1, name: "Topluluklar" }).waitFor({ state: "attached" });
-  const h1 = await page.getByRole("heading", { level: 1 }).boundingBox();
-  assert.ok(!h1 || h1.width <= 1, "başlık görsel olarak gizli");
-  const search = await page.getByRole("searchbox").boundingBox();
+  const h1 = await page.getByRole("heading", { level: 1, name: "Topluluklar" }).boundingBox();
+  assert.ok(h1 && h1.height > 30, "başlık görünür ve büyük");
+  const menu = await page.locator("[data-section-menu]").boundingBox();
+  const search = await page.getByRole("button", { name: "Ara", exact: true }).boundingBox();
   const create = await page.getByRole("button", { name: "Topluluk oluştur" }).boundingBox();
-  assert.ok(Math.abs(search.y + search.height / 2 - (create.y + create.height / 2)) < 6, "arama ve '+' aynı satırda");
+  assert.ok(Math.abs(menu.y + menu.height / 2 - (create.y + create.height / 2)) < 6, "menü ve '+' aynı satırda");
+  assert.ok(Math.abs(search.y + search.height / 2 - (create.y + create.height / 2)) < 6, "arama simgesi de aynı satırda");
   await shelf(page).waitFor();
   await page.locator("[data-home-post]").first().waitFor();
   const shelfY = (await shelf(page).boundingBox()).y;
-  const navY = (await page.getByRole("tab", { name: /Gönderiler/ }).boundingBox()).y;
   const postY = (await page.locator("[data-home-post]").first().boundingBox()).y;
-  assert.ok(search.y < shelfY && shelfY < navY && navY < postY, "sıra: arama → raf → balonlar → gönderiler");
+  assert.ok(menu.y < shelfY && shelfY < postY, "sıra: kontrol satırı → raf → gönderiler");
   assert.ok(await overflowFree(page), "yatay taşma yok");
   await shot(page, "1-phone");
 });
 
-await scenario("2. raf: kare kapaklar, yeni olan önce; 'N yeni' rozeti (99+ kesilir); topluluğa bağlanır; üye olunmayan topluluk YOK", async ({ page }) => {
+await scenario("2. raf: 4:3 kapaklar, yeni olan önce; 'N yeni' rozeti (99+ kesilir); topluluğa bağlanır; üye olunmayan topluluk YOK", async ({ page }) => {
   await page.goto(`${BASE}/communities`);
   await shelf(page).waitFor();
   const names = await shelfNames(page);
@@ -80,8 +90,8 @@ await scenario("2. raf: kare kapaklar, yeni olan önce; 'N yeni' rozeti (99+ kes
   assert.equal(await shelf(page).locator(`[data-shelf-community="${id(2)}"]`).getByText("4 yeni").count(), 1);
   assert.equal(await shelf(page).locator(`[data-shelf-community="${id(3)}"]`).getByText("99+ yeni").count(), 1);
   assert.equal(await shelf(page).locator(`[data-shelf-community="${id(1)}"] [data-shelf-unseen]`).count(), 0, "yeni yoksa rozet yok");
-  const cover = await shelf(page).locator(`[data-shelf-community="${id(1)}"] span.aspect-square`).boundingBox();
-  assert.ok(Math.abs(cover.width - cover.height) < 1, "kapak kare");
+  const cover = await shelf(page).locator(`[data-shelf-community="${id(1)}"]`).locator("xpath=./span[1]").boundingBox();
+  assert.ok(Math.abs(cover.width / cover.height - 4 / 3) < 0.05, "kapak 4:3");
   assert.match(await shelf(page).locator(`[data-shelf-community="${id(2)}"]`).getAttribute("href"), new RegExp(`/communities/local/?\\?id=${id(2)}`));
   await shelf(page).getByRole("link", { name: "Tümünü gör" }).click();
   await page.waitForURL(/tab=mine/);
@@ -94,11 +104,10 @@ await scenario("3. sayaç alınamazsa raf rozetsiz çizilir (hata kutusu yok)", 
   assert.equal(await page.getByText("Topluluklar yüklenemedi.").count(), 0);
 }, { unseen: false });
 
-await scenario("4. davet: balonda sayaç; Gönderiler'de tek satırlık kart → 'Gör' Davetler bölümünü açar; Davetler'de kart yok", async ({ page }) => {
+await scenario("4. davet: menüde sayaç + nokta; Gönderiler'de tek satırlık kart → 'Gör' Davetler bölümünü açar; Davetler'de kart yok", async ({ page }) => {
   await page.goto(`${BASE}/communities`);
-  const invitesTab = page.getByRole("tab", { name: /Davet ve başvurular/ });
-  await invitesTab.locator("[data-section-count]").waitFor();
-  assert.equal((await invitesTab.locator("[data-section-count]").textContent()).trim(), "2");
+  await page.locator("[data-section-dot]").waitFor();
+  assert.match(await optionText(page, /Davet ve başvurular/), /2/);
   const notice = page.getByTestId("home-invite-notice");
   await notice.waitFor();
   assert.match(await notice.textContent(), /2 davetin var.*Anime Çizim/s);
@@ -110,6 +119,7 @@ await scenario("4. davet: balonda sayaç; Gönderiler'de tek satırlık kart →
 
 await scenario("5. arama 'Tüm topluluklar'a sorguyla gider ve sorgu kutuda hazır gelir", async ({ page }) => {
   await page.goto(`${BASE}/communities`);
+  await page.getByRole("button", { name: "Ara", exact: true }).click();
   await page.getByRole("searchbox").fill("anime");
   await page.getByRole("searchbox").press("Enter");
   await page.waitForURL(/\/communities\/all\/?\?q=anime/);
@@ -120,7 +130,7 @@ await scenario("6. ziyaretçi: arama/raf/balon yok, Keşfet listesi + 'Topluluk 
   await page.goto(`${BASE}/communities`);
   await page.getByRole("button", { name: "Topluluk oluştur" }).waitFor();
   assert.equal(await shelf(page).count(), 0);
-  assert.equal(await page.getByRole("tab", { name: /Gönderiler/ }).count(), 0);
+  assert.equal(await hasTab(page, /Gönderiler/), false);
   await page.getByRole("button", { name: "Topluluk oluştur" }).click();
   await page.getByRole("dialog").waitFor();
 }, { guest: true });

@@ -27,7 +27,8 @@ import {
 import { isSpaceFilter, SPACE_KIND_LABEL, SPACE_PAGE_SIZE, SPACE_ROLE_LABEL, spaceHref, type SpaceFilter, type SpaceKind, type SpaceSort, type SpaceVisibility } from "@/lib/spaces";
 import { CreateSpaceModal } from "./space-modals";
 import { SpaceCard } from "./space-card";
-import { SpacesFilterSheet, SpacesSectionMenu, SpaceTemplates, type SectionMenuItem } from "./spaces-controls";
+import { SectionMenu, type SectionMenuItem, CONTROL_ICON_BUTTON } from "@/features/content/section-menu";
+import { SpacesFilterSheet, SpaceTemplates } from "./spaces-controls";
 import { SpaceCoverArt, SpacesIcon } from "./space-visuals";
 
 const FILTER_LABEL: Record<SpaceFilter, TranslationKey> = {
@@ -207,7 +208,7 @@ export function SpacesHome() {
   // Tür karoları: oturumlu, "Tümü", arama yok; boş kütüphanede "İlk Space'ini oluştur" kartı zaten aynı işi yapar.
   const showTemplates = Boolean(user) && section === "all" && !debounced && !isEmptyLibrary && items !== null;
 
-  const iconButton = "grid h-11 w-11 shrink-0 place-items-center rounded-xl text-text transition-colors hover:bg-surface-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
+  const iconButton = CONTROL_ICON_BUTTON;
   return (
     <PageContainer className="space-y-5 pb-16 pt-3 sm:pt-5">
       <h1 className="font-display text-[2.375rem] font-bold leading-[1.1] tracking-[-0.02em] text-text">{t("spaces.home.title")}</h1>
@@ -238,7 +239,7 @@ export function SpacesHome() {
         </form>
       ) : (
         <div className="flex items-center gap-1.5">
-          {user && <SpacesSectionMenu items={menuItems} active={showInvites ? "invites" : filter} onChange={setSection} ariaLabel={t("spaces.filter.label")} />}
+          {user && <SectionMenu items={menuItems} active={showInvites ? "invites" : filter} onChange={setSection} ariaLabel={t("spaces.filter.label")} title={t("spaces.home.title")} />}
           <span className="flex-1" />
           <button type="button" onClick={() => setSearchOpen(true)} aria-label={t("spaces.home.searchOpen")} title={t("spaces.home.searchOpen")} className={iconButton}>
             <Search size={22} strokeWidth={1.75} aria-hidden />

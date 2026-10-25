@@ -175,3 +175,5 @@ CHROMIUM_PATH=/opt/pw-browsers/chromium-1243/chrome-linux64/chrome node tests/me
 NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co NEXT_PUBLIC_SUPABASE_ANON_KEY=dummy npm run build
 CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/messaging-ui/run-preset-try.mjs   # 10/10 beklenir
 ```
+
+Topluluklar sade düzen (`docs/history/232-*`): üst düzey sekmeler tek "Gönderiler ▾ / Akış ▾" menüsüdür; `run-communities` / `run-community-home` / `run-community-shelf` / `run-groups` içindeki `pickTab` / `hasTab` / `tabNames` / `optionText` yardımcıları menüyü açıp seçeneklere bakar (içteki alt sekmeler hâlâ `tab`). `run-communities` 34: arama simgesi + tek Kart/Izgara + kontrol satırı.
