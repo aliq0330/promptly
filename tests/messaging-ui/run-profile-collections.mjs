@@ -206,6 +206,44 @@ await scenario("9. Kaydedilenler: 'Koleksiyonlarım' rafı kendi koleksiyonları
   assert.equal(await overflowFree(page), true);
 });
 
+// 10 — Kütüphanem (/my-content) ve Moderasyon (docs/history/235-*): tek bölüm menüsü + simge satırı
+await scenario("10. Kütüphanem: sekme satırı yok; 'Promptlar ▾' menüsü (Taslaklar çizgiden sonra), arama simgesi alanı açar, Filtre'de görünürlük, '+' oluşturmaya gider", async ({ page, db }) => {
+  withCollections(db, U.alice);
+  withPrompts(db, U.alice);
+  await page.goto(`${BASE}/my-content`);
+  const menu = page.locator("[data-section-menu]");
+  await menu.waitFor();
+  assert.equal(await page.getByRole("tablist").count(), 0, "sekme satırı yok");
+  await menu.click();
+  const names = (await page.getByRole("radio").allInnerTexts()).map((x) => x.split("\n")[0].replace(/\d+$/, "").trim());
+  assert.deepEqual(names.slice(-1), ["Taslaklar"]);
+  assert.ok(names.includes("Workflow'lar") || names.some((n) => /Workflow/.test(n)));
+  await page.keyboard.press("Escape");
+  await page.mouse.click(5, 5);
+  assert.match((await page.locator("[data-list-create]").getAttribute("href")) ?? "", /create|prompt/);
+  await page.locator("[data-list-search]").click();
+  await page.getByRole("searchbox").waitFor();
+  await page.locator("[data-list-filter]").click();
+  await page.getByRole("dialog").getByRole("heading", { name: /Görünürlük|Visibility/i }).waitFor();
+  assert.equal(await overflowFree(page), true);
+}, { viewport: { width: 390, height: 844 } });
+
+await scenario("11. Moderasyon: 4 sekme yerine tek menü; şikâyet durumu Filtre penceresinde; menüden Kullanıcılar seçilir", async ({ page, db }) => {
+  db.rpc.is_moderator = () => ({ body: true });
+  await page.goto(`${BASE}/moderation`);
+  const menu = page.locator("[data-section-menu]");
+  await menu.waitFor();
+  assert.equal(await page.getByRole("tablist").count(), 0, "sekme satırı yok");
+  await page.locator("[data-list-filter]").click();
+  await page.getByRole("dialog").getByRole("button", { name: /Açık|Open/ }).first().waitFor();
+  await page.keyboard.press("Escape");
+  await page.mouse.click(5, 5);
+  await menu.click();
+  await page.getByRole("radio", { name: /Kullanıcılar|Users/ }).click();
+  assert.match(await menu.textContent(), /Kullanıcılar|Users/);
+  assert.equal(await page.locator("[data-list-filter]").count(), 0, "Filtre yalnız Şikâyetler'de");
+});
+
 await browser.close(); server.close();
 for (const [s, n] of results) console.log(`${s === "PASS" ? "✓" : "✗"} ${n}`);
 console.log(`${results.filter((r) => r[0] === "PASS").length}/${results.length} passed`);

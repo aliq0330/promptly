@@ -5,7 +5,8 @@ import Link from "next/link";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Tabs, type TabItem } from "@/components/ui/tabs";
+import { type TabItem } from "@/components/ui/tabs";
+import { SectionMenu } from "@/features/content/section-menu";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { fetchAdminUser, type AdminActivityKind, type AdminUser } from "@/lib/supabase/admin";
 import { formatCount, formatRelativeTime } from "@/lib/utils";
@@ -153,7 +154,7 @@ export function UserDetail({ userId, onBack }: { userId: string; onBack: () => v
       <UserActions user={user} onChanged={reload} onDeleted={onBack} />
 
       <section className={CARD}>
-        <Tabs items={tabs} active={tab} onChange={setTab} ariaLabel={t("admin.user.tabsAria")} />
+        <SectionMenu items={tabs.map((item) => ({ key: item.key, label: item.label, meta: item.count }))} active={tab} onChange={setTab} ariaLabel={t("admin.user.tabsAria")} title={t("admin.user.tabsAria")} />
         <div className="pt-4">
           {tab === "messages" ? (
             <MessagesPanel userId={user.id} />

@@ -2,10 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { FileText, SlidersHorizontal, Sparkles, SquareTerminal, Trash2, Workflow as WorkflowIcon } from "lucide-react";
+import { FileText, LayoutGrid, SlidersHorizontal, Sparkles, SquareTerminal, Trash2, Workflow as WorkflowIcon } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Tabs } from "@/components/ui/tabs";
+import { SectionMenu } from "@/features/content/section-menu";
 import { EmptyState } from "@/components/ui/empty-state";
 import { deleteDraft, fetchOwnDrafts, type DraftKind } from "@/lib/supabase/drafts";
 import type { DraftItem } from "@/features/drafts/drafts-button";
@@ -98,7 +98,14 @@ export function ProfileDraftsPanel({ userId }: { userId: string }) {
 
   return (
     <div className="space-y-4">
-      <Tabs items={tabs} active={filter} onChange={setFilter} ariaLabel={t("profile.draftKindsAriaLabel")} variant="segmented" />
+      {/* docs/history/235-*: tür süzgeci (Tümü + dört tür) tek menüde, sayılarla. */}
+      <SectionMenu
+        items={tabs.map((tab) => ({ key: tab.key, label: tab.label, meta: tab.count, icon: tab.key === "all" ? LayoutGrid : KIND_META[tab.key].icon }))}
+        active={filter}
+        onChange={setFilter}
+        ariaLabel={t("profile.draftKindsAriaLabel")}
+        title={t("profile.tabDrafts")}
+      />
 
       {visible.length === 0 ? (
         <EmptyState icon={FileText} title={t("draft.empty")} className="border-0" />

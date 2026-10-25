@@ -2,12 +2,12 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { ExternalLink, Flag, ShieldCheck } from "lucide-react";
+import { BarChart3, CalendarDays, ExternalLink, Flag, ShieldCheck, Users } from "lucide-react";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useIsModerator } from "@/features/moderation/use-is-moderator";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Chip, ChipRow } from "@/components/ui/chip";
+import { Chip } from "@/components/ui/chip";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
@@ -18,7 +18,8 @@ import { MediaAppearanceCard } from "@/features/moderation/media-appearance-card
 import { SiteStatsPanel } from "@/features/moderation/admin/site-stats-panel";
 import { UsersPanel } from "@/features/moderation/admin/users-panel";
 import { ChallengesPanel } from "@/features/moderation/admin/challenges-panel";
-import { Tabs } from "@/components/ui/tabs";
+import { ListControlRow } from "@/features/content/list-control-row";
+import { SheetChips, SheetSection } from "@/features/content/list-toolbar";
 import { fetchReportQueue, moderateReport, type ModerationAction, type ModerationReport, type ReportStatus } from "@/lib/supabase/moderation";
 
 type Filter = ReportStatus | "all";
@@ -72,6 +73,7 @@ export function ModerationView() {
     return TAB_IDS.includes(value as AdminTab) ? (value as AdminTab) : "reports";
   });
   const [userId, setUserIdState] = useState<string | null>(() => readParam("user"));
+  const [reportFilter, setReportFilter] = useState<Filter>("open");
 
   function setTab(next: AdminTab) {
     setTabState(next);
@@ -98,19 +100,42 @@ export function ModerationView() {
         <h1 className="text-h1 font-semibold text-text">{t("moderation.title")}</h1>
         <p className="text-small text-text-secondary">{t("moderation.subtitle")}</p>
       </div>
-      <Tabs
-        items={[
-          { key: "reports" as const, label: t("admin.tabReports") },
-          { key: "stats" as const, label: t("admin.tabStats") },
-          { key: "users" as const, label: t("admin.tabUsers") },
-          { key: "challenges" as const, label: t("admin.tabChallenges") },
-        ]}
-        active={tab}
-        onChange={setTab}
-        ariaLabel={t("admin.tabsAria")}
-        variant="segmented"
+      {/* Sade düzen (docs/history/235-*): tek "Şikâyetler ▾" bölüm menüsü; şikâyet durumu süzgeci Filtre penceresinde. */}
+      <ListControlRow
+        showView={false}
+        menu={{
+          items: [
+            { key: "reports" as const, label: t("admin.tabReports"), icon: Flag },
+            { key: "stats" as const, label: t("admin.tabStats"), icon: BarChart3 },
+            { key: "users" as const, label: t("admin.tabUsers"), icon: Users },
+            { key: "challenges" as const, label: t("admin.tabChallenges"), icon: CalendarDays },
+          ],
+          active: tab,
+          onChange: setTab,
+          ariaLabel: t("admin.tabsAria"),
+          title: t("moderation.title"),
+        }}
+        filter={
+          tab === "reports"
+            ? {
+                sheetSections: (
+                  <SheetSection title={t("moderation.title")}>
+                    <SheetChips>
+                      {FILTERS.map((f) => (
+                        <Chip key={f.id} selected={reportFilter === f.id} onClick={() => setReportFilter(f.id)}>
+                          {t(f.key)}
+                        </Chip>
+                      ))}
+                    </SheetChips>
+                  </SheetSection>
+                ),
+                activeCount: reportFilter === "open" ? 0 : 1,
+                onClear: () => setReportFilter("open"),
+              }
+            : undefined
+        }
       />
-      {tab === "reports" && <ReportsPanel />}
+      {tab === "reports" && <ReportsPanel filter={reportFilter} />}
       {tab === "stats" && <SiteStatsPanel />}
       {tab === "users" && <UsersPanel userId={userId} onSelectUser={setUserId} />}
       {tab === "challenges" && <ChallengesPanel />}
@@ -118,10 +143,9 @@ export function ModerationView() {
   );
 }
 
-function ReportsPanel() {
+function ReportsPanel({ filter }: { filter: Filter }) {
   const { t } = useTranslation();
   const isModerator = useIsModerator();
-  const [filter, setFilter] = useState<Filter>("open");
   const [reports, setReports] = useState<ModerationReport[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -149,13 +173,6 @@ function ReportsPanel() {
 
   return (
     <div className="space-y-4">
-      <ChipRow>
-        {FILTERS.map((f) => (
-          <Chip key={f.id} selected={filter === f.id} onClick={() => setFilter(f.id)}>
-            {t(f.key)}
-          </Chip>
-        ))}
-      </ChipRow>
       {error && <p className="text-small text-danger">{error}</p>}
       {reports && reports.length === 0 && !error && <EmptyState icon={Flag} title={t("moderation.empty")} />}
       <ul className="space-y-3">

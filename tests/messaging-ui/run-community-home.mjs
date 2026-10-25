@@ -323,12 +323,14 @@ await scenario("18. Tüm topluluklar: kategori süzgeci + sıralama sunucuya gid
   await page.getByRole("button", { name: "Ses", exact: true }).click();
   await page.getByRole("heading", { name: "Ses Topluluğu" }).waitFor();
   assert.ok(calls(db, "browse_communities").some((c) => c.body.p_category === "audio"));
-  await page.getByRole("tab", { name: "En yeni" }).click();
+  await page.locator("[data-section-menu]").click();
+  await page.getByRole("radio", { name: "En yeni" }).click();
   await page.waitForTimeout(300);
   assert.ok(calls(db, "browse_communities").some((c) => c.body.p_sort === "newest"));
   let fail = true;
   db.rpc.browse_communities = () => (fail ? { status: 500, body: { message: "boom" } } : null);
-  await page.getByRole("tab", { name: "Popüler" }).click();
+  await page.locator("[data-section-menu]").click();
+  await page.getByRole("radio", { name: "Popüler" }).click();
   await page.getByText("Topluluklar yüklenemedi.").waitFor();
   fail = false;
   delete db.rpc.browse_communities;
@@ -406,7 +408,7 @@ await scenario("24. İngilizce: sekmeler, şerit, düğme, akış ve Tüm toplul
   await page.getByRole("heading", { name: "Discover feed" }).waitFor();
   await page.getByTestId("all-communities-button").click();
   await page.getByPlaceholder("Search communities, topics or tags…").waitFor();
-  await page.getByRole("tab", { name: "Best match" }).waitFor();
+  await page.locator("[data-section-menu]").filter({ hasText: "Best match" }).waitFor();
 }, { lang: "en", setup: world });
 
 // 25

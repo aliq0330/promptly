@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ArrowLeft, Compass, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
-import { Tabs } from "@/components/ui/tabs";
+import { SectionMenu } from "@/features/content/section-menu";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useRealMessages } from "@/features/messages/real-messages-provider";
 import { useToast } from "@/features/groups/use-toast";
@@ -163,7 +163,7 @@ function BrowseView({ onToast, hideSearch }: { onToast: (message: string) => voi
             </button>
           ))}
         </div>
-        <Tabs variant="segmented" ariaLabel={t("groups.page.sortAria")} active={sort} onChange={setSort} items={SORTS.map((value) => ({ key: value, label: t(SORT_LABEL[value]) }))} />
+        <SectionMenu ariaLabel={t("groups.page.sortAria")} title={t("groups.page.sortAria")} active={sort} onChange={setSort} items={SORTS.map((value) => ({ key: value, label: t(SORT_LABEL[value]) }))} />
       </div>
 
       {!current ? (

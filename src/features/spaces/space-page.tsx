@@ -3,12 +3,12 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { Archive, ArchiveRestore, Eye, LayoutDashboard, LogOut, Palette, Pin, PinOff, Settings, Share2, Trash2 } from "lucide-react";
+import { Archive, ArchiveRestore, Eye, Image as ImageIcon, LayoutDashboard, LogOut, Palette, Pin, PinOff, Presentation, Settings, Share2, SquareTerminal, StickyNote, Trash2, Users, type LucideIcon } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Button, buttonClassName } from "@/components/ui/button";
 import { DetailSkeleton, NotFoundBlock } from "@/components/ui/detail-skeleton";
 import { StorageImg } from "@/components/ui/storage-media";
-import { Tabs } from "@/components/ui/tabs";
+import { ListControlRow } from "@/features/content/list-control-row";
 import { BAND_PRIMARY_CLASS, BandActionRow, DetailBand } from "@/features/content/detail-parts";
 import { useAuth } from "@/features/auth/auth-provider";
 import { ConfirmDialog } from "@/features/groups/confirm-dialog";
@@ -128,6 +128,16 @@ export function SpacePage() {
     </SpaceProvider>
   );
 }
+
+const SPACE_TAB_ICON: Record<SpaceTab, LucideIcon> = {
+  overview: LayoutDashboard,
+  board: Presentation,
+  images: ImageIcon,
+  prompts: SquareTerminal,
+  palette: Palette,
+  notes: StickyNote,
+  members: Users,
+};
 
 function SpaceView({ owner, initialFavorite }: { owner: SpacePerson | null; initialFavorite: boolean }) {
   const { t, language } = useTranslation();
@@ -292,18 +302,24 @@ function SpaceView({ owner, initialFavorite }: { owner: SpacePerson | null; init
           </p>
         )}
 
-        <Tabs
-          variant="pill"
-          className="mt-4"
-          ariaLabel={t("spaces.page.tabsAria")}
-          active={tab}
-          onChange={(next) => goTo(next)}
-          items={visibleTabs.map((key) => ({
-            key,
-            label: t(SPACE_TAB_LABEL[key]),
-            count: key === "images" ? images.length : key === "prompts" ? items.filter((i) => i.kind === "prompt").length : key === "notes" ? noteCount : key === "palette" ? palettes.length : undefined,
-          }))}
-        />
+        {/* Sade düzen (docs/history/235-*): yedi hap sekme yerine tek "Genel bakış ▾" menüsü (sayılarla). */}
+        <div className="mt-4">
+          <ListControlRow
+            showView={false}
+            menu={{
+              items: visibleTabs.map((key) => ({
+                key,
+                label: t(SPACE_TAB_LABEL[key]),
+                icon: SPACE_TAB_ICON[key],
+                meta: key === "images" ? images.length : key === "prompts" ? items.filter((i) => i.kind === "prompt").length : key === "notes" ? noteCount : key === "palette" ? palettes.length : undefined,
+              })),
+              active: tab,
+              onChange: (next) => goTo(next),
+              ariaLabel: t("spaces.page.tabsAria"),
+              title: space.title,
+            }}
+          />
+        </div>
 
         <div className="pt-5" role="tabpanel" aria-label={t(SPACE_TAB_LABEL[tab])}>
           {tab === "overview" && <OverviewTab onNavigate={goTo} />}
