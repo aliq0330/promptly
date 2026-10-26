@@ -404,9 +404,10 @@ function FocusChannelRail({ channel, onPick }: { channel: FocusChannel; onPick: 
             aria-label={label}
             title={label}
             aria-current={active ? "true" : undefined}
-            className="flex h-7 w-6 items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary md:w-7"
+            className="relative h-7 w-6 [-webkit-tap-highlight-color:transparent] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary md:w-7"
           >
-            <span className={cn("block rounded-full bg-white transition-all duration-200 ease-soft", active ? "h-6 w-1.5 opacity-100" : "h-1.5 w-1.5 opacity-45")} />
+            {/* Fixed slot, instant size swap: a size transition left neighbours half-grown when the section changed fast. */}
+            <span className={cn("absolute left-1/2 top-1/2 block -translate-x-1/2 -translate-y-1/2 rounded-full bg-white", active ? "h-6 w-1.5" : "h-1.5 w-1.5 opacity-45")} />
           </button>
         );
       })}
@@ -579,10 +580,15 @@ function FocusScreen() {
 
   // Sections (docs/history/239-*): up / down moves `delta` steps through Tümü · Prompt · İstek · Workflow · Hazır ayar; the
   // name shows for a moment. Each section is its own server query, so it opens at its own start.
+  const lastChange = useRef(0);
   const changeChannel = useCallback(
     (delta: number) => {
       const next = focusChannelStep(channel, delta);
       if (next === channel) return;
+      // One section per gesture: a fling that fires twice (or a quick second swipe) must not skip a section.
+      const now = performance.now();
+      if (now - lastChange.current < 350) return;
+      lastChange.current = now;
       setPanel(null);
       setChannelShift(delta > 0 ? 1 : -1);
       setChannel(next);

@@ -329,7 +329,8 @@ await scenario("9. Kaydet / Paylaş pencereleri (Esc yalnız pencereyi kapatır)
   await s0.getByRole("button", { name: "Bilgi" }).click();
   await page.locator("[data-focus-info]").waitFor();
   await page.locator("[data-focus-info]").getByRole("button", { name: "Promptu incele" }).click();
-  const dialog = page.locator("[aria-modal='true']").last();
+  const dialog = page.getByRole("dialog", { name: "Görsel prompt 1" });
+  await dialog.waitFor();
   await dialog.getByRole("button", { name: "Kopyala" }).click();
   await page.waitForTimeout(400);
   assert.equal(await page.evaluate(() => navigator.clipboard.readText()), "cinematic misty landscape number 1, volumetric light, {style}");
@@ -674,8 +675,11 @@ await scenario("28. Bölümler (docs/history/239-*): solda 5 nokta (yazı yok), 
   await page.waitForTimeout(400);
   assert.equal(await activeChannel(page), "Tümü", "no wrap above the first");
   await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("ArrowDown"); // a second step right away is ignored: one section per gesture
   await page.waitForTimeout(900);
   assert.equal(await activeChannel(page), "Promptlar");
+  const dotSizes = await railDots(page).evaluateAll((els) => els.map((e) => { const r = e.querySelector("span").getBoundingClientRect(); return [Math.round(r.width), Math.round(r.height), e.getAttribute("aria-current") === "true"]; }));
+  assert.deepEqual(dotSizes, [[6, 6, false], [6, 24, true], [6, 6, false], [6, 6, false], [6, 6, false]], "every dot is a clean 6 px circle, the active one a 24 px pill");
   await stage(page).getByRole("status").filter({ hasText: "Promptlar" }).waitFor();
   assert.deepEqual(db.feedCalls.at(-1).p_kinds, ["prompt"]);
   const types = await slides(page).evaluateAll((els) => els.slice(0, -1).map((e) => /PROMPT|Prompt/.test(e.textContent)));
@@ -707,9 +711,19 @@ await scenario("29. Görselsiz istek ve hazır ayar: görselin yerinde kendi met
   assert.match(await art.textContent(), /Neon harfli bir şehir posteri istiyorum/);
   assert.match(await art.textContent(), /Blade Runner/);
   assert.match(await art.textContent(), /Açık/);
-  assert.equal(await request.getByRole("link", { name: "Yanıtla", exact: true }).count(), 1, "open request: the big action is Yanıtla");
+  assert.equal(await request.getByRole("link", { name: "Yanıtla", exact: true }).count(), 0, "no big button on the slide's face");
+  assert.equal(await request.getByRole("link", { name: /Ayrıntıları aç/ }).count(), 0);
   const preset = slides(page).filter({ hasText: "Sinematik portre ayarı" }).first();
   assert.match(await preset.locator("[data-album-art]").textContent(), /Hazır Ayar/);
+  // Yanıtla (open request) is in the Bilgi sheet now.
+  await page.keyboard.press("ArrowRight");
+  await page.keyboard.press("ArrowRight");
+  await page.waitForTimeout(900);
+  await request.getByRole("button", { name: "Bilgi" }).click();
+  await page.locator("[data-focus-info]").waitFor();
+  assert.equal(await page.locator("[data-focus-info]").getByRole("link", { name: "Yanıtla", exact: true }).count(), 1, "Yanıtla lives in the info sheet");
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(400);
   await page.keyboard.press("ArrowDown");
   await page.waitForTimeout(900);
   const titles = await slides(page).evaluateAll((els) => els.slice(0, -1).map((e) => e.querySelector("h2")?.textContent));
@@ -724,12 +738,15 @@ await scenario("30. Bilgi: gönderide yalnız özet; Bilgi açınca alttan sayfa
   await openFocus(page);
   const slide = slides(page).nth(0);
   assert.equal(await slide.getByText("Açıklama 1").count(), 0, "the description is not on the slide's face");
+  assert.equal(await slide.getByRole("button", { name: "Kopyala" }).count(), 0, "no big Kopyala on the face");
+  assert.equal(await slide.getByRole("link", { name: /Ayrıntıları aç/ }).count(), 0, "no big Ayrıntıları aç on the face");
   await slide.getByRole("button", { name: "Bilgi" }).click();
   const info = page.locator("[data-focus-info]");
   await info.waitFor();
   await page.waitForTimeout(500);
   assert.match(await info.textContent(), /Açıklama 1/);
   assert.equal(await info.getByRole("link", { name: /Ayrıntıları aç/ }).count(), 1);
+  assert.ok((await info.getByRole("button", { name: "Kopyala" }).count()) >= 1, "Kopyala is in the info sheet (prompt block)");
   const box = await info.boundingBox();
   const art = await slide.locator("[data-album-art]").boundingBox();
   assert.ok(art.y >= 0 && art.y + art.height <= box.y + 1, `art above the sheet (${JSON.stringify(art)} / ${box.y})`);

@@ -2,7 +2,8 @@
 
 import { useEffect, useId, useState } from "react";
 import Link from "next/link";
-import { ArrowUpRight, SquareTerminal } from "lucide-react";
+import { ArrowUpRight, PenLine, SquareTerminal } from "lucide-react";
+import { useAuth } from "@/features/auth/auth-provider";
 import type { PostFeedItem } from "@/features/feed/types";
 import { focusFeedExtraImages } from "@/lib/focus-feed";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -17,11 +18,15 @@ import { FocusSheetFrame } from "./focus-sheet-frame";
 export function FocusInfoSheet({ item, onClose }: { item: PostFeedItem; onClose: () => void }) {
   const { t } = useTranslation();
   const titleId = useId();
+  const { user } = useAuth();
   const [promptOpen, setPromptOpen] = useState(false);
   const model = modelOf(item, t);
   const Icon = model.icon;
   const prompt = item.kind === "prompt" ? item.data : null;
   const extra = focusFeedExtraImages(item);
+  // The slide's face carries no big button any more (docs/history/240-*): "Yanıtla" for an open request lives here, next to
+  // "Ayrıntıları aç"; a prompt's "Kopyala" is in its prompt block below and in "Promptu incele".
+  const canReply = item.kind === "request" && item.data.status === "open" && user?.id !== item.data.author.id;
   const chip =
     "inline-flex h-9 items-center gap-1.5 rounded-full bg-surface-soft px-3.5 text-label font-semibold text-text transition-colors hover:bg-surface-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
 
@@ -55,6 +60,15 @@ export function FocusInfoSheet({ item, onClose }: { item: PostFeedItem; onClose:
         {model.description && <p className="whitespace-pre-line break-words text-body leading-relaxed text-text-secondary">{model.description}</p>}
         <StructureBlock item={item} near onImage={false} />
         <div className="flex flex-wrap items-center gap-2">
+          {canReply && item.kind === "request" && (
+            <Link
+              href={`/create?answerRequest=${item.data.id}`}
+              className="inline-flex h-9 items-center gap-1.5 rounded-full bg-primary px-3.5 text-label font-semibold text-primary-foreground transition-colors hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            >
+              <PenLine size={15} aria-hidden />
+              {t("request.reply")}
+            </Link>
+          )}
           {prompt && prompt.promptText.trim() && (
             <button type="button" onClick={() => setPromptOpen(true)} aria-haspopup="dialog" className={chip}>
               <SquareTerminal size={15} aria-hidden />
