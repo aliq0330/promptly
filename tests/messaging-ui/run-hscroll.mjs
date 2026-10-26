@@ -54,7 +54,8 @@ async function scenario(name, fn, { viewport = { width: 900, height: 800 }, mobi
   }
 }
 
-const ringsRow = (page) => page.locator("[data-collection-rings]");
+// Hikâye + koleksiyon grupları TEK şeritte kayar (docs/history/243-*): kaydıran öğe şeridin kendisi.
+const ringsRow = (page) => page.locator("[data-profile-rail]");
 const left = (loc) => loc.evaluate((el) => el.scrollLeft);
 /** Sentetik tekerlek: dönen `defaultPrevented` sayfaya bırakılıp bırakılmadığını söyler. */
 const wheel = (loc, deltaY) =>
@@ -113,22 +114,22 @@ await scenario("3. masaüstü: üzerine gelince ok düğmeleri; ok bastıkça ka
   await next.waitFor();
   assert.equal(await row.evaluate((el) => "fadeNext" in el.dataset && !("fadePrev" in el.dataset)), true, "fade only on the side with content");
   await next.click();
-  await page.waitForFunction(() => document.querySelector("[data-collection-rings]").scrollLeft > 150);
+  await page.waitForFunction(() => document.querySelector("[data-profile-rail]").scrollLeft > 150);
   await prev.waitFor();
   for (let i = 0; i < 8 && (await next.count()) > 0; i += 1) { await next.click(); await page.waitForTimeout(450); }
   assert.equal(await next.count(), 0, "the right arrow is gone at the end");
 });
 
-await scenario("4. profil bölüm menüsü: dar masaüstünde sekme satırı yok, menü açılıp seçilir, yatay taşma yok (docs/history/233-*)", async ({ page, db }) => {
+await scenario("4. profil bölümleri: dar masaüstünde dört sekme + 'Daha fazla' menüsü açılıp seçilir, yatay taşma yok (docs/history/243-*)", async ({ page, db }) => {
   withCollections(db, U.bob);
   await page.setViewportSize({ width: 700, height: 800 });
   await page.goto(`${BASE}/profile/real?username=${U.bob.username}`);
   const menu = page.locator("[data-section-menu]");
   await menu.waitFor();
-  assert.equal(await page.getByRole("tablist", { name: "Profil bölümleri" }).count(), 0, "profil sekme satırı yok");
+  assert.equal(await page.getByRole("tablist", { name: "Profil bölümleri" }).getByRole("tab").count(), 4, "dört içerik sekmesi");
   await menu.click();
   const options = page.getByRole("radiogroup", { name: "Profil bölümleri" }).getByRole("radio");
-  assert.ok((await options.count()) >= 5, "bölümler menüde");
+  assert.ok((await options.count()) >= 2, "kalan bölümler menüde");
   await options.last().click();
   assert.match(await menu.textContent(), /Hakkında/);
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth), true, "yatay taşma yok");

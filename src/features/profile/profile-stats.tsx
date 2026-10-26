@@ -4,7 +4,7 @@ import Link from "next/link";
 import { formatCount, cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 
-// Meydan: one inline line — "148 gönderi · 1.284 takipçi · 312 takip".
+// Meydan, left-aligned under the name since docs/history/243-*: one inline line — "148 gönderi · 1.284 takipçi · 312 takip".
 const STAT_CLASS = "inline-flex items-baseline gap-1.5 text-body text-text-secondary";
 const STAT_VALUE_CLASS = "font-semibold tabular-nums text-text";
 
@@ -75,7 +75,7 @@ export function ProfileStats({
   const { t } = useTranslation();
   const total = postCounts.prompts + postCounts.requests + postCounts.workflows + postCounts.presets;
   return (
-    <div className="flex flex-wrap items-baseline justify-center gap-x-6 gap-y-1 lg:justify-start">
+    <div className="flex flex-wrap items-baseline gap-x-5 gap-y-1">
       <StatButton label={t("profile.postsSuffix")} value={total} onClick={onSelectPosts} />
       {isOwnProfile ? (
         <Link href="/followers" className={cn(STAT_CLASS, "rounded-sm transition-colors hover:text-text")}>

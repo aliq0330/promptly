@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { Bookmark, FolderOpen } from "lucide-react";
-import { ScrollRow } from "@/components/ui/scroll-row";
 import { CollectionCover } from "@/features/collections/collection-card";
 import { collectionHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -13,12 +12,20 @@ import type { Collection } from "@/types";
  * shape as Home's community rings, but the ring is the brand colour and the picture is the collection's
  * own cover (its newest item's media, else a calm icon tile). Each ring opens the collection. Nothing is
  * drawn without a collection to show: only public, non-empty ones are passed in (`fetchPublicCollectionsByOwner`).
+ * The second group of the profile's `ProfileRail` (docs/history/243-*): no scroll row of its own.
  */
 export function CollectionRings({ collections }: { collections: Collection[] }) {
   const { t } = useTranslation();
   if (collections.length === 0) return null;
   return (
-    <ScrollRow as="nav" aria-label={t("profile.collectionRingsLabel")} data-collection-rings className="-mx-3 gap-4 px-3 sm:mx-0 sm:px-0">
+    // Hikâye öne çıkanlarından ince çizgiyle ayrılır; onlar yoksa (şeridin ilk grubuysa) çizgi de yoktur.
+    <div
+      role="group"
+      aria-label={t("profile.collectionRingsLabel")}
+      data-collection-rings
+      data-rail-group=""
+      className="flex shrink-0 gap-4 border-l border-border-soft pl-4 first:border-l-0 first:pl-0"
+    >
       {collections.map((collection) => (
         <Link
           key={collection.id}
@@ -38,6 +45,6 @@ export function CollectionRings({ collections }: { collections: Collection[] }) 
           <span className="w-full truncate text-caption text-text-secondary">{collection.name}</span>
         </Link>
       ))}
-    </ScrollRow>
+    </div>
   );
 }

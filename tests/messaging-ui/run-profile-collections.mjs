@@ -76,7 +76,7 @@ await scenario("1. Başkasının profili: halkalar yalnız herkese açık + boş
   assert.match((await rings(page).first().getAttribute("href")) ?? "", /\/collections\/local\/?\?id=c1000000-0000-4000-8000-000000000001$/);
   assert.equal(await rings(page).first().locator("div[style*='background-image']").count(), 1, "cover photo on the first ring");
   assert.equal(await rings(page).nth(1).locator("svg").count(), 1, "icon tile when there is no cover");
-  assert.equal(await page.getByRole("navigation", { name: "Herkese açık koleksiyonlar" }).count(), 1);
+  assert.equal(await page.getByRole("group", { name: "Herkese açık koleksiyonlar" }).count(), 1);
   assert.equal(await overflowFree(page), true);
   if (process.env.SHOT_DIR) await page.screenshot({ path: `${process.env.SHOT_DIR}/f7-profile.png` });
 });
@@ -105,7 +105,7 @@ await scenario("4. İngilizce etiket ve 390px'te yatay taşma yok", async ({ pag
   withCollections(db, U.bob);
   await page.goto(`${BASE}/profile/real?username=${U.bob.username}`);
   await rings(page).first().waitFor();
-  assert.equal(await page.getByRole("navigation", { name: "Public collections" }).count(), 1);
+  assert.equal(await page.getByRole("group", { name: "Public collections" }).count(), 1);
   assert.equal(await overflowFree(page), true);
 }, { viewport: { width: 390, height: 800 }, lang: "en" });
 
@@ -150,26 +150,30 @@ function withPrompts(db, owner) {
   };
 }
 const menuRadios = (page) => page.getByRole("radiogroup", { name: /Profil bölümleri|Profile sections/ }).getByRole("radio");
-await scenario("7. Profil bölüm menüsü: sekme satırı yok; kendi profilimde gruplar (içerik · Spaces/Taslaklar/Kaydedilenler/Beğeniler · Hakkında), ziyaretçide Taslak/Kaydedilen/Beğeni yok", async ({ page, db }) => {
+await scenario("7. Profil bölümleri: ilk dört bölüm sekme, kalanı 'Daha fazla ▾' menüsünde; kendi profilimde gruplar (Alıntılar · Taslaklar/Kaydedilenler/Beğeniler · Hakkında), ziyaretçide Taslak/Kaydedilen/Beğeni yok", async ({ page, db }) => {
   withCollections(db, U.alice);
   await page.goto(`${BASE}/profile/real?username=${U.alice.username}`);
   const menu = page.locator("[data-section-menu]");
   await menu.waitFor();
-  assert.equal(await page.getByRole("tablist", { name: "Profil bölümleri" }).count(), 0, "profil sekme satırı yok");
-  assert.match(await menu.textContent(), /Promptlar/);
+  const tabs = page.getByRole("tablist", { name: "Profil bölümleri" }).getByRole("tab");
+  assert.deepEqual((await tabs.allInnerTexts()).map((x) => x.replace(/\s*\d+$/, "").trim()), ["Promptlar", "Prompt İstekleri", "Workflow'lar", "Hazır Ayarlar"], "dört içerik bölümü sekme");
+  assert.equal(await tabs.first().getAttribute("aria-selected"), "true");
+  assert.match(await menu.textContent(), /Daha fazla/);
   await menu.click();
   const own = (await menuRadios(page).allInnerTexts()).map((x) => x.replace(/\s*\d+$/, "").trim());
-  for (const wanted of ["Promptlar", "Prompt İstekleri", "Taslaklar", "Kaydedilenler", "Beğeniler", "Hakkında"]) assert.ok(own.some((n) => n.startsWith(wanted)), `${wanted}: ${own.join(" | ")}`);
-  assert.ok(own.findIndex((n) => n.startsWith("Taslaklar")) > own.findIndex((n) => n.startsWith("Promptlar")), "içerik önce, kütüphane sonra");
+  assert.deepEqual(own, ["Alıntılar", "Taslaklar", "Kaydedilenler", "Beğeniler", "Hakkında"]);
   assert.equal(await page.locator("[data-section-option]").evaluateAll((els) => els.filter((el) => el.className.includes("border-t")).length), 2, "iki ayırıcı: kütüphane grubu ve Hakkında");
   await page.getByRole("radio", { name: /Beğeniler/ }).click();
-  assert.match(await menu.textContent(), /Beğeniler/);
+  assert.match(await menu.textContent(), /Beğeniler/, "etkin bölüm menü düğmesinde yazar");
+  assert.equal(await tabs.first().getAttribute("aria-selected"), "false");
+  assert.match(await page.locator("[data-profile-section-title]").textContent(), /Beğeniler/);
   await page.goto(`${BASE}/profile/real?username=${U.bob.username}`);
   await menu.waitFor();
   await menu.click();
   const other = (await menuRadios(page).allInnerTexts()).map((x) => x.replace(/\s*\d+$/, "").trim());
   for (const hidden of ["Taslaklar", "Kaydedilenler", "Beğeniler"]) assert.ok(!other.some((n) => n.startsWith(hidden)), `${hidden} ziyaretçiye gösterilmez`);
   assert.ok(other.some((n) => n.startsWith("Koleksiyonlar")), "ziyaretçide herkese açık Koleksiyonlar");
+  assert.equal(await page.locator('[data-section-option="about"]').count(), 1, "Hakkında menüde");
 });
 
 await scenario("8. Profil kontrol satırı: Promptlar listesinde Filtre simgesi (tür · sıralama) + Kart | Izgara düğmesi; Hakkında'da ikisi de yok; 390px'te taşma yok", async ({ page, db }) => {
@@ -181,6 +185,7 @@ await scenario("8. Profil kontrol satırı: Promptlar listesinde Filtre simgesi 
   const filter = page.locator("[data-profile-filter]");
   await filter.waitFor();
   assert.ok(await page.locator("[data-view-toggle]").count(), "Kart | Izgara düğmesi");
+  if (process.env.SHOT_DIR) await page.screenshot({ path: `${process.env.SHOT_DIR}/profile-sade-list-phone.png` });
   await filter.click();
   const dialog = page.getByRole("dialog");
   await dialog.getByRole("heading", { name: "Sırala" }).waitFor();
@@ -242,6 +247,42 @@ await scenario("11. Moderasyon: 4 sekme yerine tek menü; şikâyet durumu Filtr
   await page.getByRole("radio", { name: /Kullanıcılar|Users/ }).click();
   assert.match(await menu.textContent(), /Kullanıcılar|Users/);
   assert.equal(await page.locator("[data-list-filter]").count(), 0, "Filtre yalnız Şikâyetler'de");
+});
+
+// 12 — Sade profil (docs/history/243-*): tek şerit (hikâye + koleksiyon, aralarında çizgi), sekme tıklayınca bölüm değişir, telefonda sekme satırı + "Daha fazla" tek satır
+await scenario("12. Sade profil: sekme seçimi başlığı değiştirir; şeritte koleksiyonlar tek kaydırma satırında; 390px'te sekmeler + Daha fazla tek satırda, taşma yok", async ({ page, db }) => {
+  withCollections(db, U.bob);
+  withPrompts(db, U.bob);
+  await page.goto(`${BASE}/profile/real?username=${U.bob.username}`);
+  await page.locator("[data-profile-band] h1", { hasText: U.bob.display_name }).waitFor();
+  await rings(page).first().waitFor();
+  assert.equal(await page.locator("[data-profile-rail]").count(), 1, "tek şerit");
+  assert.equal(await page.locator("[data-profile-rail] [data-collection-rings]").count(), 1, "koleksiyonlar şeridin içinde");
+  const tab = (name) => page.getByRole("tab", { name: new RegExp(name) });
+  await tab("Workflow").click();
+  assert.equal(await tab("Workflow").getAttribute("aria-selected"), "true");
+  assert.match(await page.locator("[data-profile-section-title]").textContent(), /Workflow/);
+  const row = await page.locator("[data-profile-tabs]").evaluate((el) => {
+    const top = (node) => Math.round(node.getBoundingClientRect().top);
+    return [...el.querySelectorAll("[role=tab], [data-section-menu]")].map(top);
+  });
+  assert.equal(new Set(row).size, 1, `sekmeler ve Daha fazla tek satırda ${JSON.stringify(row)}`);
+  assert.equal(await overflowFree(page), true);
+  if (process.env.SHOT_DIR) await page.screenshot({ path: `${process.env.SHOT_DIR}/profile-sade-phone.png`, fullPage: true });
+}, { viewport: { width: 390, height: 844 } });
+
+await scenario("13. Sade profil: hikâye ve koleksiyon yoksa şerit hiç yer kaplamaz; Hakkında sekmesi bilgileri + katkı haritasını taşır, yan sütun yok", async ({ page, db }) => {
+  db.extraRoutes = async (ctx) => byUsername(ctx) ?? (ctx.table === "collections" || ctx.table === "collection_items" ? ctx.rows([]) : null);
+  await page.goto(`${BASE}/profile/real?username=${U.bob.username}`);
+  await page.locator("[data-profile-band] h1").waitFor();
+  await page.waitForTimeout(500);
+  assert.equal(await page.locator("[data-profile-rail]").isVisible(), false, "boş şerit görünmez");
+  assert.equal(await page.locator("[data-profile-aside]").count(), 0, "yan sütun yok");
+  await page.locator("[data-section-menu]").click();
+  await page.locator('[data-section-option="about"]').click();
+  await page.getByText(/tarihinde katıldı/).last().waitFor();
+  assert.equal(await overflowFree(page), true);
+  if (process.env.SHOT_DIR) await page.screenshot({ path: `${process.env.SHOT_DIR}/profile-sade-desktop.png`, fullPage: true });
 });
 
 await browser.close(); server.close();

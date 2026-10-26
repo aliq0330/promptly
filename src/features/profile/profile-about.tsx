@@ -7,7 +7,7 @@ import type { Language } from "@/lib/i18n/translations";
 import { INTEREST_OPTION_LABELS, type InterestOption } from "./interest-options";
 import type { UserProfile } from "@/types";
 
-function formatJoinDate(isoDate: string, language: Language): string {
+export function formatJoinDate(isoDate: string, language: Language): string {
   return new Date(isoDate).toLocaleDateString(language === "en" ? "en-US" : "tr-TR", { year: "numeric", month: "long" });
 }
 
@@ -23,7 +23,7 @@ export function ProfileAbout({ user }: { user: UserProfile }) {
   const hasAnything = user.bio || user.website || (user.interests && user.interests.length > 0);
 
   return (
-    <div className="space-y-5 px-4 py-5 lg:px-6">
+    <div className="space-y-5 py-2">
       {user.bio && <p className="whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-sm text-text">{user.bio}</p>}
 
       <div className="space-y-2 text-sm text-text-muted">
