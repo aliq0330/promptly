@@ -219,7 +219,7 @@ await scenario("5. Alıntıla: sunucu hatası (already_quoted) nedeniyle açıkl
 
 await scenario("6. Profil: 'Alıntılar' sekmesi sayıyla görünür, alıntı kartları normal ızgarada (profile_quotes_page); başka birinin boş profilinde sekme yok", async ({ page, state }) => {
   await page.goto(`${BASE}/profile/real?username=${U.bob.username}`);
-  // Profil bölümleri TEK menüde (docs/history/233-*): "Alıntılar" satırı sayıyla görünür.
+  // Profil: ilk dört bölüm sekme, "Alıntılar" "Daha fazla" menüsünde (docs/history/243-*) ve sayıyla görünür.
   await page.locator("[data-section-menu]").waitFor();
   await page.locator("[data-section-menu]").click();
   const tab = page.getByRole("radio", { name: /Alıntılar/ });
@@ -233,7 +233,7 @@ await scenario("6. Profil: 'Alıntılar' sekmesi sayıyla görünür, alıntı k
   await page.goto(`${BASE}/profile/real?username=${U.dave.username}`);
   await page.locator("[data-section-menu]").waitFor();
   await page.locator("[data-section-menu]").click();
-  await page.getByRole("radio", { name: /Promptlar|Prompt/ }).first().waitFor();
+  await page.getByRole("radio", { name: /Hakkında/ }).first().waitFor();
   assert.equal(await page.getByRole("radio", { name: /Alıntılar/ }).count(), 0);
 });
 

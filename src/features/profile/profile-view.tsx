@@ -2,12 +2,11 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Heart, Info, Pencil, Quote as QuoteIcon, Bookmark, Shapes, SlidersHorizontal, SearchX, Sparkles, SquareTerminal, Folder, Workflow as WorkflowIcon } from "lucide-react";
-import { ProfileBand } from "./profile-header";
+import { ProfileHeader } from "./profile-header";
 import { OtherProfileActions, OwnProfileActions } from "./profile-actions";
-import { ProfileAside } from "./profile-aside";
+import { ProfileRail } from "./profile-rail";
 import { useFollowState } from "./use-follow-state";
-import { DetailShell } from "@/features/content/detail-parts";
-import { StoryHighlightsRow } from "@/features/stories/story-highlights";
+import { ScrollRow } from "@/components/ui/scroll-row";
 import { useViewMode } from "@/features/content/view-mode-store";
 import { CompactViewToggle } from "@/features/content/view-mode-switcher";
 import { SectionMenu, type SectionMenuItem } from "@/features/content/section-menu";
@@ -19,12 +18,12 @@ import { ProfileEmptyState } from "./profile-empty-state";
 import { ProfileAbout } from "./profile-about";
 import { ProfileDraftsPanel } from "./profile-drafts-panel";
 import { RequestList } from "@/features/requests/request-list";
-import { CollectionRings } from "@/features/profile/collection-rings";
 import { CollectionsPanel } from "@/features/collections/collections-panel";
 import { CollectionCard } from "@/features/collections/collection-card";
 import { fetchPublicCollectionsByOwner } from "@/lib/supabase/collections";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useTranslation } from "@/lib/i18n/language-provider";
+import { cn } from "@/lib/utils";
 import { fetchLikedPrompts } from "@/lib/supabase/prompts";
 import { fetchWorkflowsByCreator } from "@/lib/supabase/workflows";
 import { WorkflowCard } from "@/features/workflows/workflow-card";
@@ -49,8 +48,11 @@ function sortPrompts(prompts: Prompt[], sort: ProfileSortKey): Prompt[] {
   }
 }
 
-/** One flat set of sections since Meydan (docs/history/190-*); since docs/history/233-* they live in ONE "Promptlar ▾" menu instead of a tab row. */
+/** One flat set of sections since Meydan (docs/history/190-*). Since docs/history/243-* the four post types are tabs and the rest sit behind "Daha fazla ▾" (docs/history/233-* had them all in one menu). */
 export type ProfileTabKey = "prompts" | "requests" | "workflows" | "presets" | "drafts" | "saved" | "collections" | "spaces" | "quotes" | "liked" | "about";
+
+/** The first sections are tabs; the rest live in the "Daha fazla" menu. */
+const MAIN_TAB_COUNT = 4;
 
 export function ProfileView({
   user,
@@ -242,30 +244,73 @@ export function ProfileView({
     setSearch("");
   }
 
-  return (
-    // Albüm (docs/history/203-*): band (avatar-tinted) · actions row · [tabs + lists | Hakkında from `lg`].
-    <ContentGridColumns value="sm:columns-2">
-      <DetailShell
-        band={
-          <ProfileBand
-            user={user}
-            isOwnProfile={isOwnProfile}
-            postCounts={postCounts}
-            followerCount={followState.followerCount}
-            reuseCount={reuseCount}
-            onSelectPosts={() => setActiveTab("prompts")}
-          />
-        }
-        actions={isOwnProfile ? <OwnProfileActions user={user} /> : <OtherProfileActions user={user} followState={followState} />}
-        aside={<ProfileAside user={user} />}
-      >
-        <div className="space-y-5">
-          {/* Öne çıkan hikâyeler (docs/history/198-*); topluluk halkalarının yerini aldı. */}
-          <StoryHighlightsRow ownerId={user.id} isOwnProfile={isOwnProfile} />
-          <CollectionRings collections={publicCollections} />
+  const mainTabs = tabs.slice(0, MAIN_TAB_COUNT);
+  // The first menu entry never needs a divider above it.
+  const moreTabs = tabs.slice(MAIN_TAB_COUNT).map((item, index) => (index === 0 ? { ...item, dividerBefore: false } : item));
+  const activeItem = tabs.find((item) => item.key === activeTab) ?? tabs[0];
+  const activeInMore = moreTabs.some((item) => item.key === activeTab);
 
-          <div className="flex items-center gap-1.5">
-            <SectionMenu items={tabs} active={activeTab} onChange={setActiveTab} ariaLabel={t("profile.sectionsAriaLabel")} title={user.displayName} />
+  return (
+    // Sade (docs/history/243-*): header · rail (stories + collections) · tabs + "Daha fazla" · [title + tools] · list.
+    <ContentGridColumns value="sm:columns-2">
+      <div className="w-full animate-rise-in pb-16">
+        <ProfileHeader
+          user={user}
+          isOwnProfile={isOwnProfile}
+          postCounts={postCounts}
+          followerCount={followState.followerCount}
+          reuseCount={reuseCount}
+          onSelectPosts={() => setActiveTab("prompts")}
+          actions={isOwnProfile ? <OwnProfileActions user={user} /> : <OtherProfileActions user={user} followState={followState} />}
+        />
+        <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-10">
+          <ProfileRail ownerId={user.id} isOwnProfile={isOwnProfile} collections={publicCollections} />
+
+          <div className="mt-5 flex items-end border-b border-border-soft" data-profile-tabs="">
+            <ScrollRow
+              role="tablist"
+              aria-label={t("profile.sectionsAriaLabel")}
+              wrapperClassName="flex-1 -mb-px"
+              className="-mx-4 px-4 sm:mx-0 sm:px-0"
+            >
+              {mainTabs.map((item) => {
+                const selected = item.key === activeTab;
+                return (
+                  <button
+                    key={item.key}
+                    type="button"
+                    role="tab"
+                    aria-selected={selected}
+                    data-profile-tab={item.key}
+                    onClick={() => setActiveTab(item.key)}
+                    className={cn(
+                      "inline-flex h-11 shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 px-3 text-body transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                      selected ? "border-primary font-semibold text-text" : "border-transparent font-medium text-text-secondary hover:text-text",
+                    )}
+                  >
+                    {item.label}
+                    {item.meta ? <span className="text-small font-normal tabular-nums text-text-muted">{item.meta}</span> : null}
+                  </button>
+                );
+              })}
+            </ScrollRow>
+            <SectionMenu
+              items={moreTabs}
+              active={activeInMore ? activeTab : ("" as ProfileTabKey)}
+              onChange={setActiveTab}
+              ariaLabel={t("profile.sectionsAriaLabel")}
+              title={user.displayName}
+              variant="tab"
+              align="end"
+              placeholder={t("profile.moreSections")}
+            />
+          </div>
+
+          <div className="mt-4 flex items-center gap-1.5">
+            <h2 className="min-w-0 truncate text-h3 font-semibold text-text" data-profile-section-title="">
+              {activeItem?.label}
+              {activeItem?.meta ? <span className="ml-2 font-medium tabular-nums text-text-muted">{activeItem.meta}</span> : null}
+            </h2>
             <span className="flex-1" />
             {filterable && activeSource.length > 0 && (
               <ProfileFilterControl
@@ -284,14 +329,11 @@ export function ProfileView({
             {viewable && <CompactViewToggle />}
           </div>
 
-          <div className="space-y-4">
+          <div className="mt-4 space-y-4">
             {activeTab === "about" ? (
-              // The contribution map moved here from under the header (it took a full-width card before every visit).
-              // From `lg` the side column already shows the about details, so the tab keeps only the map there.
+              // The side column is gone (docs/history/243-*): the tab carries the details and the contribution map.
               <div className="space-y-5">
-                <div className="lg:hidden">
-                  <ProfileAbout user={user} />
-                </div>
+                <ProfileAbout user={user} />
                 <ContributionMap userId={user.id} />
               </div>
             ) : activeTab === "requests" ? (
@@ -377,7 +419,7 @@ export function ProfileView({
             )}
           </div>
         </div>
-      </DetailShell>
+      </div>
     </ContentGridColumns>
   );
 }

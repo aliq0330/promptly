@@ -4,7 +4,6 @@ import { useCallback, useEffect, useState } from "react";
 import { Check, Loader2, Pencil, Plus, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
-import { ScrollRow } from "@/components/ui/scroll-row";
 import { useAuth } from "@/features/auth/auth-provider";
 import {
   deleteHighlight,
@@ -69,7 +68,7 @@ export function useProfileStories(userId: string): { ids: string[]; unseen: bool
 /**
  * Profildeki öne çıkanlar (docs/history/198-*): kalıcı hikâye koleksiyonları. Her öğe yalnız ASIL hedef kitlesine görünür — öne
  * çıkana eklemek hikâyeyi kimseye açmaz; ziyaretçinin hiçbir öğesini göremediği öne çıkan hiç çizilmez. Sahibine "Yeni" halkası ve
- * düzenleme düğmesi.
+ * düzenleme düğmesi. Profil şeridinin (`ProfileRail`, docs/history/243-*) ilk grubudur: kendi kaydırma satırı yok, şeridin içine oturur.
  */
 export function StoryHighlightsRow({ ownerId, isOwnProfile }: { ownerId: string; isOwnProfile: boolean }) {
   const { t } = useTranslation();
@@ -99,7 +98,7 @@ export function StoryHighlightsRow({ ownerId, isOwnProfile }: { ownerId: string;
   const groups = highlights.map((h) => ({ key: h.id, authorId: ownerId, storyIds: h.storyIds, mode: "highlight" as const, label: h.title }));
 
   return (
-    <ScrollRow as="nav" aria-label={t("stories.highlight.rowLabel")} data-story-highlights className="-mx-3 gap-4 px-3 sm:mx-0 sm:px-0">
+    <div role="group" aria-label={t("stories.highlight.rowLabel")} data-story-highlights data-rail-group="" className="flex shrink-0 gap-4 first:border-l-0 first:pl-0">
       {highlights.map((highlight, index) => {
         const coverId = highlight.coverStoryId && highlight.storyIds.includes(highlight.coverStoryId) ? highlight.coverStoryId : highlight.storyIds[0];
         return (
@@ -149,7 +148,7 @@ export function StoryHighlightsRow({ ownerId, isOwnProfile }: { ownerId: string;
           }}
         />
       )}
-    </ScrollRow>
+    </div>
   );
 }
 

@@ -38,11 +38,32 @@ export interface SectionMenuItem<K extends string> {
  * "Tümü ▾" (docs/history/231-*, Topluluklar 232-*): bölüm balonlarının/sekmelerinin yerini alan TEK menü. Telefonda alt sayfa, masaüstünde açılır kutu; bekleyen
  * davet varken düğmede mavi nokta, "Davetler" satırında sayaç. Aynı seçenekler (Tümü · Benim · Paylaşılan · Sabitli · Herkese açık · Arşiv · Davetler).
  */
-export function SectionMenu<K extends string>({ items, active, onChange, ariaLabel, title }: { items: SectionMenuItem<K>[]; active: K; onChange: (key: K) => void; ariaLabel: string; title: string }) {
+export function SectionMenu<K extends string>({
+  items,
+  active,
+  onChange,
+  ariaLabel,
+  title,
+  variant = "pill",
+  align = "start",
+  placeholder,
+}: {
+  items: SectionMenuItem<K>[];
+  active: K;
+  onChange: (key: K) => void;
+  ariaLabel: string;
+  title: string;
+  /** "tab": bir sekme satırının sonundaki "Daha fazla ▾" düğmesi (Profil, docs/history/243-*) — etkin bölüm menüde değilse `placeholder` yazar. */
+  variant?: "pill" | "tab";
+  /** Açılır kutunun hizası; satırın sonundaki düğme için "end". */
+  align?: "start" | "end";
+  placeholder?: string;
+}) {
   const wide = useWide();
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
-  const current = items.find((item) => item.key === active) ?? items[0];
+  const activeItem = items.find((item) => item.key === active);
+  const current = activeItem ?? (variant === "tab" ? undefined : items[0]);
   const pending = items.find((item) => item.count)?.count ?? 0;
 
   useEffect(() => {
@@ -100,13 +121,24 @@ export function SectionMenu<K extends string>({ items, active, onChange, ariaLab
         aria-haspopup="true"
         aria-expanded={open}
         data-section-menu
-        className="relative inline-flex h-11 items-center gap-2 rounded-xl bg-surface-soft pl-4 pr-3 text-body font-semibold text-text transition-colors hover:bg-border-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+        data-section-trigger={variant}
+        className={cn(
+          "relative inline-flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+          variant === "tab"
+            ? cn(
+                "-mb-px h-11 gap-1.5 whitespace-nowrap border-b-2 px-3 text-body transition-colors",
+                activeItem ? "border-primary font-semibold text-text" : "border-transparent font-medium text-text-secondary hover:text-text",
+              )
+            : "h-11 gap-2 rounded-xl bg-surface-soft pl-4 pr-3 text-body font-semibold text-text transition-colors hover:bg-border-soft",
+        )}
       >
-        {current?.label}
-        <ChevronDown size={18} aria-hidden className={cn("transition-transform", open && "rotate-180")} />
+        {current?.label ?? placeholder}
+        <ChevronDown size={variant === "tab" ? 16 : 18} aria-hidden className={cn("transition-transform", open && "rotate-180")} />
         {pending > 0 && <span aria-hidden data-section-dot className="absolute right-1.5 top-1.5 h-2.5 w-2.5 rounded-full border-2 border-background bg-primary" />}
       </button>
-      {open && wide && <div className="absolute left-0 top-full z-40 mt-2 w-72 rounded-xl border border-border-soft bg-surface p-2 shadow-pop animate-pop-in">{list}</div>}
+      {open && wide && (
+        <div className={cn("absolute top-full z-40 mt-2 w-72 rounded-xl border border-border-soft bg-surface p-2 shadow-pop animate-pop-in", align === "end" ? "right-0" : "left-0")}>{list}</div>
+      )}
       {open && !wide && (
         <Modal onClose={() => setOpen(false)} labelledBy="section-menu-title" variant="sheet">
           <div role="document" onClick={(event) => event.stopPropagation()} className="max-h-[85dvh] w-full overflow-y-auto rounded-t-xl bg-surface px-4 pb-6 pt-3 shadow-pop">

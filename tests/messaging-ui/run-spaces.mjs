@@ -526,7 +526,7 @@ await scenario("28. profil: herkese açık Space varsa 'Spaces' sekmesi (yalnız
   await waitFor(() => calls(db, "RPC", "list_public_spaces").some((c) => c.body.p_owner === U.carol.id));
   await page.waitForTimeout(300);
   await page.locator("[data-section-menu]").click();
-  await page.getByRole("radio", { name: /Promptlar/ }).first().waitFor();
+  await page.getByRole("radio", { name: /Hakkında/ }).first().waitFor();
   assert.equal(await page.getByRole("radio", { name: /Spaces/ }).count(), 0);
 }, {
   setup: (db) => {

@@ -1187,6 +1187,8 @@ export const translations = {
   "profile.followingSuffix": { tr: "takip", en: "following" },
   "profile.sectionsAriaLabel": { tr: "Profil bölümleri", en: "Profile sections" },
   "profile.collectionRingsLabel": { tr: "Herkese açık koleksiyonlar", en: "Public collections" },
+  "profile.railAriaLabel": { tr: "Öne çıkan hikâyeler ve koleksiyonlar", en: "Story highlights and collections" },
+  "profile.moreSections": { tr: "Daha fazla", en: "More" },
   "profile.tabCollections": { tr: "Koleksiyonlar", en: "Collections" },
   "profile.tabSaved": { tr: "Kaydedilenler", en: "Saved" },
   "profile.tabLiked": { tr: "Beğeniler", en: "Liked" },
