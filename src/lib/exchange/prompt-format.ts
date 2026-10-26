@@ -36,6 +36,17 @@ export const EXCHANGE_LIMITS = {
   items: 30,
   /** Seçilen dosyanın en büyük boyutu (bayt). */
   fileBytes: 2_000_000,
+  /** Kaynak/atıf alanları (`source`). */
+  sourceCredit: 300,
+  sourceUrl: 500,
+} as const;
+
+/** Moderatör toplu yüklemesi (docs/history/251-*): toplam adet sınırı YOK; yalnız tek RPC çağrısına konan adet ve dosya boyutu sınırlıdır. */
+export const ADMIN_IMPORT_LIMITS = {
+  /** Tek `admin_import_prompts` çağrısındaki en çok prompt (deyim zaman aşımına karşı; dosya bu boyda parçalanarak yüklenir). */
+  batch: 50,
+  /** Seçilen / getirilen dosyanın en büyük boyutu (bayt). */
+  fileBytes: 25_000_000,
 } as const;
 
 export interface ExchangeVariableOption {
@@ -53,6 +64,14 @@ export interface ExchangeVariable {
   config: Record<string, unknown>;
 }
 
+/** Promptun nereden geldiği (isteğe bağlı): içe aktarırken açıklamanın sonuna "Kaynak: …" satırı olarak yazılır (`withSourceNote`). */
+export interface ExchangeSource {
+  /** Okunur atıf metni: "@kullanici · Promptly", "prompts.chat (CC0) — @katkıcı". */
+  credit: string | null;
+  /** Yalnız http(s) adresi. */
+  url: string | null;
+}
+
 export interface ExchangePrompt {
   title: string;
   description: string;
@@ -66,6 +85,8 @@ export interface ExchangePrompt {
   tags: string[];
   /** Yalnızca JSON taşır; Markdown ve CSV'de değişkenler metindeki `{ad}` jetonlarıyla kalır. */
   variables: ExchangeVariable[];
+  /** Yalnızca varsa bulunur (başkasının promptu dışa aktarılınca ya da toplu kaynaktan gelince). */
+  source?: ExchangeSource;
 }
 
 export type ExchangeIssueCode =
@@ -186,6 +207,35 @@ function normalizeVariableEntry(raw: unknown): ExchangeVariable | null {
 }
 
 /**
+ * Atıf alanı: JSON'da `source: {credit, url}`, Markdown/CSV'de düz `sourceCredit`/`sourceUrl` (ya da `source_credit`/`source_url`).
+ * Yalnızca bilgi amaçlıdır; geçersiz/uzun değer sessizce atılır (içeriği reddettirmez). Adres yalnız http(s) olabilir.
+ */
+function normalizeSource(r: Record<string, unknown>): ExchangeSource | null {
+  const nested = r.source && typeof r.source === "object" && !Array.isArray(r.source) ? (r.source as Record<string, unknown>) : {};
+  const credit = str(nested.credit ?? r.sourceCredit ?? r.source_credit).replace(/[\u0000-\u001f\u007f]+/g, " ").trim();
+  const rawUrl = str(nested.url ?? r.sourceUrl ?? r.source_url).trim();
+  const url = /^https?:\/\/[^\s<>"']+$/i.test(rawUrl) && rawUrl.length <= EXCHANGE_LIMITS.sourceUrl ? rawUrl : null;
+  const text = credit.length > 0 && credit.length <= EXCHANGE_LIMITS.sourceCredit ? credit : null;
+  return text || url ? { credit: text, url } : null;
+}
+
+/** Açıklamada zaten bir "Kaynak:/Source:" satırı varsa (`source-notes.ts` biçimi) tekrar eklenmez. */
+const HAS_SOURCE_LINE = /^\s*(kaynak|source)\s*:/im;
+
+/**
+ * İçe aktarmadan hemen önce çağrılır: `source` varsa açıklamanın sonuna `Kaynak: <atıf> <adres>` satırı ekler (detay sayfası bu satırı
+ * "kaynak notu" olarak gösterir, adresi bağlantıya çevirir). Zaten bir kaynak satırı varsa dokunmaz; 5000 karakter sınırı aşılırsa açıklama kısaltılır.
+ */
+export function withSourceNote(item: ExchangePrompt): ExchangePrompt {
+  const { source } = item;
+  if (!source || HAS_SOURCE_LINE.test(item.description)) return item;
+  const note = `Kaynak: ${[source.credit, source.url].filter(Boolean).join(" ")}`.trim();
+  const room = EXCHANGE_LIMITS.description - note.length - 2;
+  const body = item.description.length > room ? `${item.description.slice(0, Math.max(0, room - 1)).trimEnd()}…` : item.description;
+  return { ...item, description: body ? `${body}\n\n${note}` : note };
+}
+
+/**
  * Ham bir kaydı (JSON nesnesi, CSV satırı, Markdown belgesi) doğrular ve temizler. Bilinmeyen alanlar atılır.
  * Geçersizse `item` null döner ve en az bir sorun bildirilir.
  */
@@ -238,6 +288,8 @@ export function normalizePrompt(raw: unknown, row: number): { item: ExchangeProm
     }
   }
 
+  const source = normalizeSource(r);
+
   if (issues.length > 0) return { item: null, issues };
   return {
     item: {
@@ -250,15 +302,16 @@ export function normalizePrompt(raw: unknown, row: number): { item: ExchangeProm
       tools,
       tags,
       variables,
+      ...(source ? { source } : {}),
     },
     issues,
   };
 }
 
 /** Birden çok ham kaydı doğrular; geçerliler `items`'a, sorunlar `issues`'a gider. Satır sayısı sınırı aşılırsa fatal. */
-export function normalizeAll(rows: unknown[]): ParseResult {
+export function normalizeAll(rows: unknown[], maxItems: number = EXCHANGE_LIMITS.items): ParseResult {
   if (rows.length === 0) return fatalResult("empty");
-  if (rows.length > EXCHANGE_LIMITS.items) return { ...fatalResult("too_many_items"), total: rows.length };
+  if (rows.length > maxItems) return { ...fatalResult("too_many_items"), total: rows.length };
   const items: ExchangePrompt[] = [];
   const issues: ExchangeIssue[] = [];
   rows.forEach((raw, index) => {
@@ -274,7 +327,7 @@ export function normalizeAll(rows: unknown[]): ParseResult {
 // ---------------------------------------------------------------------------------------------------------------------
 
 /** `Prompt`'un dışa aktarmak için gereken parçası (yapısal tip: bu dosya uygulama tiplerini import etmez). */
-export interface ExchangeSource {
+export interface ExchangeAppPrompt {
   title: string;
   description: string;
   promptText: string;
@@ -294,7 +347,7 @@ export interface ExchangeVariableSource {
   config: object;
 }
 
-export function toExchangePrompt(source: ExchangeSource, variables: ExchangeVariableSource[] = []): ExchangePrompt {
+export function toExchangePrompt(source: ExchangeAppPrompt, variables: ExchangeVariableSource[] = [], credit?: ExchangeSource | null): ExchangePrompt {
   return {
     title: source.title,
     description: source.description,
@@ -313,5 +366,6 @@ export function toExchangePrompt(source: ExchangeSource, variables: ExchangeVari
       options: variable.options.map((option) => (option.color ? { label: option.label, value: option.value, color: option.color } : { label: option.label, value: option.value })),
       config: { ...variable.config },
     })),
+    ...(credit && (credit.credit || credit.url) ? { source: credit } : {}),
   };
 }

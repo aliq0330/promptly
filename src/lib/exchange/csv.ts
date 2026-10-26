@@ -1,7 +1,7 @@
-import { ExchangeError, fatalResult, normalizeAll, type ExchangePrompt, type ParseResult } from "./prompt-format.ts";
+import { EXCHANGE_LIMITS, ExchangeError, fatalResult, normalizeAll, type ExchangePrompt, type ParseResult } from "./prompt-format.ts";
 
 /** Sütun sırası sabittir; okurken başlıklar ada göre eşleşir (sıra ve fazladan sütunlar önemsiz). */
-export const CSV_COLUMNS = ["title", "description", "prompt_text", "content_type", "category", "subcategory", "tools", "tags"] as const;
+export const CSV_COLUMNS = ["title", "description", "prompt_text", "content_type", "category", "subcategory", "tools", "tags", "source_credit", "source_url"] as const;
 
 /**
  * Excel/Sheets'te formül gibi çalışabilen hücreler (`=`, `+`, `-`, `@`, sekme, satır başı) tek tırnakla başlatılır
@@ -91,13 +91,15 @@ export function serializeCsv(items: ExchangePrompt[]): string {
         // Etiket ve araç adları kontrol karakteri taşıyamaz (doğrulama) — satır sonu güvenli ayraçtır.
         item.tools.join("\n"),
         item.tags.join("\n"),
+        item.source?.credit ?? "",
+        item.source?.url ?? "",
       ].map(guardCell),
     ),
   ];
   return stringifyCsvRows(rows);
 }
 
-export function parseCsv(text: string): ParseResult {
+export function parseCsv(text: string, maxItems: number = EXCHANGE_LIMITS.items): ParseResult {
   let rows: string[][];
   try {
     rows = parseCsvRows(text);
@@ -116,5 +118,5 @@ export function parseCsv(text: string): ParseResult {
     }
     return record;
   });
-  return normalizeAll(records);
+  return normalizeAll(records, maxItems);
 }

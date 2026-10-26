@@ -97,6 +97,11 @@ export function ExportPromptsModal({ single, load, onClose }: { single?: boolean
               ))}
             </fieldset>
             <p className="text-caption text-text-muted">{t("exchange.export.note")}</p>
+            {items.some((item) => item.source) && (
+              <p className="text-caption text-text-muted" data-testid="exchange-credit-note">
+                {t("exchange.export.creditNote")}
+              </p>
+            )}
           </>
         )}
         {error && (

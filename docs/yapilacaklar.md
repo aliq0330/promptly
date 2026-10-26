@@ -21,6 +21,42 @@ saat, **O** = 1–2 gün, **B** = birkaç gün.
 6. **Canlıya uygulama sırası:** önce migration (yalnızca ekleyici), sonra kod. Yıkıcı SQL için onay.
 7. Migration kaydı **dosya sürümüyle** düşülür (MCP `apply_migration` ayrı zaman damgası yazar).
 
+## ⭐ Öncelikli yapılacaklar — kullanıcı "sorduğumda hatırlat" dedi
+
+> **Yeni oturumdaki asistana:** kullanıcı "sıradaki ne", "ne yapacaktık", "hatırlat" ya da benzerini sorarsa BU bölümü oku, özetle ve
+> hangi maddenin kullanıcı kararı beklediğini söyle. Madde bitince burada işaretle (silme), anlatısını `docs/history/NNN-*`'e yaz.
+> Kaynak: `docs/history/250-*` (dışa/içe aktarma), `251-*` (başkasının promptu + moderatör toplu yükleme), 2026-10-26 analizi.
+
+**A. Önce yapılacak (kullanıcı/yönetici adımı)**
+
+| # | Madde | Not |
+|---|---|---|
+| Ö1 | `claude/exchange-export-import` dalını PR ile `main`'e birleştir | Migration'lar `20260927100000_import_prompts.sql` + `20260927110000_admin_import_prompts.sql` canlıya UYGULANMADI; birleşince `deploy.yml` uygular (önce migration, sonra istemci; duman testi iki RPC'nin varlığını denetler). |
+| Ö2 | Canlıda ilk toplu yükleme: Moderasyon → "Toplu prompt yükleme" → **Kontrol et** → **taslak olarak yükle** | Yayın kutusunu AÇMADAN başla. Dosya: `https://raw.githubusercontent.com/f/prompts.chat/main/PROMPTS.md` (CC0; 3026 kayıt → ~3012 yüklenir). |
+| Ö3 | KARAR: yüklenen içerik kimin hesabı altında, nasıl yayınlanacak? | Şimdi moderatörün KENDİ hesabı + her promptta "Kaynak: prompts.chat (CC0) — @katkıcı" satırı + ortak etiket `prompts.chat`. 3000 içeriği tek hesaptan bir anda yayınlamak akışı doldurur; önerilen: taslak yükle, seçerek/etiketle yayınla (aşağıda Ö9). |
+| Ö4 | KARAR + hukuki metin: başkasının promptunu indirme/yeniden kullanma | Artık herkes okuyabildiği her promptu indirebilir (dosyada yazar adı + bağlantı). Kullanım Koşulları (`features/legal/legal-content.ts`, TR+EN) yalnız "paylaşma hakkın olan içeriği yükle" diyor; yeniden kullanım/indirme izni ve atıf kuralı yazılmalı. |
+| Ö5 | Gerçek ortamda dene | Gerçek Supabase'e, gerçek oturuma, Excel'e (CSV/BOM), telefona karşı hiçbir şey denenmedi; deyim zaman aşımı (Supabase ~8 sn) yerelde 74 ms/parça ile sınandı, canlıda ölçülmedi. |
+
+**B. Geliştirme sırası (API / otomasyon yol haritası — her adım öncekinin üstüne kurulur)**
+
+| # | Madde | Karar/Not |
+|---|---|---|
+| Ö6 | **API token'ları + salt-okunur `/v1`** (Edge Function `api`, OpenAPI belgesi) | `api_tokens` (SHA-256 özet, kapsam, son kullanım, `kind` = user/agent/bot). EN BÜYÜK RİSK: service role ile yazan API `auth.uid()` boş olduğu için hız sınırı/askı/RLS'i atlar → token'ı doğrulayıp işlem içinde kullanıcı kimliğini kuran RPC'ler, SQL testiyle. Edge Function'lar CI ile deploy EDİLMİYOR (CLAUDE.md §2). |
+| Ö7 | **CLI** (`cli/`, kök `package.json`'a dokunmadan) | Yalnız public API'yi kullanır; `login/pull/push/export/import`. Dışa/içe aktarma çekirdeği `src/lib/exchange` — yeniden yazılmaz. |
+| Ö8 | **Skill paketleri** (çok dosyalı, sürümlü) | KARAR: sosyal içerik türü mü (beğeni/yorum/alıntı zinciri ister) yoksa sosyalsiz kütüphane kaynağı mı (önerilen). `workflow_versions`/`save_workflow_content` kalıbı. NOT: prompts.chat'te **163 SKILL.md kaydı** var; şimdi metin prompt olarak yükleniyor, paket gelince taşınmalı. |
+| Ö9 | **MCP sunucusu** | Aynı API işleyicilerinin üstünde; varsayılan salt-okunur; herkese açık prompt metni ajan bağlamına girdiği için yanıtlar "güvenilmeyen içerik" işaretli. |
+| Ö10 | **GitHub senkronizasyonu** | KARAR: GitHub App (önerilen) mi OAuth mu. Markdown biçimi hazır (`schemaVersion`'lu). Webhook HMAC, döngü önleme, `last_synced_sha` çakışma çözümü, kullanıcının reposuna yazmak açık onay ister. |
+| Ö11 | **Bot/Agent kimliği** | KARAR: ilk fazda "sahibi adına yazan kapsamlı token" (önerilen) mi, ayrı herkese açık bot profili mi (auth.users satırı ister). |
+
+**C. Bilinen eksikler (bu işlerin)**
+
+- **Toplu yönetim aracı:** `prompts.chat` etiketli taslakları topluca/seçerek yayınla ya da topluca sil (şimdi yok; yükleme geri alınamaz, tek tek silinir).
+- Yalnız **Prompt** dışa/içe aktarılır; Workflow / Hazır Ayar / İstek yok. Markdown ve CSV **değişken tanımı** taşımaz.
+- prompts.chat içeriği hep `text` türünde, kategorisiz; `${var:varsayılan}` ve `{Var}` şablonları (~682 kayıt) Promptly değişkenine ÇEVRİLMEZ, metin olduğu gibi kalır. Görsel/ses/video promptları ayrılmaz.
+- prompts.chat'te 7 kayıt 50 000 karakter sınırını aşıyor → atlanır (kesilmez); 7 kayıt birebir yinelenen. ~700 kaydın katkıcı alanı **e-posta adresi**, 621'i anonim → bunlar bilerek yalnız genel "prompts.chat (CC0)" atfı alır (kişisel veri kopyalanmaz).
+- Düzenlenmiş dosyayı yeniden içe aktarmak mevcut promptu **güncellemez** (yinelenme = aynı başlık + metin); güncelleme/senkronizasyon GitHub aşamasının işi.
+- Kullanıcı içe aktarması tek seferde en çok 30 prompt (saatlik hız sınırıyla uyumlu); moderatörde sınır yok (50'şerli parça).
+
 ## Sıra ve gerekçe
 
 Önce küçük, bağımsız, büyümeyi/etkileşimi doğrudan etkileyenler; paylaşılan RPC'yi

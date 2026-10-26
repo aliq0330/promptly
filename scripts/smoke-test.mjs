@@ -44,6 +44,7 @@ const CHECKS = [
   { name: "rpc discover_tool_counts", rpc: "discover_tool_counts", body: {} },
   // Yalnız oturumlu kullanıcıya açık RPC (docs/history/250-*): ziyaretçiye 401/403 dönmesi "var ama kapalı" demektir; 404 "yok" demektir ve boru hattını durdurur.
   { name: "rpc import_prompts (yalnız oturumlu; ziyaretçiye kapalı)", rpc: "import_prompts", body: { p_items: [], p_dry_run: true }, deniedOk: true },
+  { name: "rpc admin_import_prompts (yalnız oturumlu moderatör; ziyaretçiye kapalı)", rpc: "admin_import_prompts", body: { p_items: [], p_dry_run: true }, deniedOk: true },
 ];
 
 const headers = { apikey: key, Authorization: `Bearer ${key}`, "Content-Type": "application/json" };

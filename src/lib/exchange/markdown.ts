@@ -37,6 +37,8 @@ function documentFor(item: ExchangePrompt): string {
     frontmatterLine("subcategory", item.subcategory),
     frontmatterLine("tools", item.tools),
     frontmatterLine("tags", item.tags),
+    frontmatterLine("sourceCredit", item.source?.credit),
+    frontmatterLine("sourceUrl", item.source?.url),
   ].filter((line): line is string => line !== null);
   return `---\n${lines.join("\n")}\n---\n\n${item.promptText}\n`;
 }
@@ -100,7 +102,7 @@ function parseDocument(chunk: string): Record<string, unknown> | null {
   return record;
 }
 
-export function parseMarkdown(text: string): ParseResult {
+export function parseMarkdown(text: string, maxItems: number = EXCHANGE_LIMITS.items): ParseResult {
   const chunks = text
     .split(/\r?\n/)
     .reduce<string[][]>(
@@ -115,7 +117,7 @@ export function parseMarkdown(text: string): ParseResult {
     .filter((chunk) => chunk.trim() !== "");
 
   if (chunks.length === 0) return fatalResult("empty");
-  if (chunks.length > EXCHANGE_LIMITS.items) return { ...fatalResult("too_many_items"), total: chunks.length };
+  if (chunks.length > maxItems) return { ...fatalResult("too_many_items"), total: chunks.length };
 
   const items: ExchangePrompt[] = [];
   const issues: ExchangeIssue[] = [];

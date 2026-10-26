@@ -16,7 +16,7 @@ export const ISSUE_KEYS: Record<ExchangeIssueCode, TranslationKey> = {
   missing_frontmatter: "exchange.issue.missing_frontmatter",
 };
 
-export const FATAL_KEYS: Record<ExchangeFatalCode, TranslationKey> = {
+export const FATAL_KEYS: Record<ExchangeFatalCode | "fetch_failed" | "bad_url", TranslationKey> = {
   empty: "exchange.fatal.empty",
   too_large: "exchange.fatal.too_large",
   invalid_json: "exchange.fatal.invalid_json",
@@ -26,6 +26,8 @@ export const FATAL_KEYS: Record<ExchangeFatalCode, TranslationKey> = {
   missing_columns: "exchange.fatal.missing_columns",
   too_many_items: "exchange.fatal.too_many_items",
   markdown_separator: "exchange.fatal.markdown_separator",
+  fetch_failed: "exchange.fatal.fetch_failed",
+  bad_url: "exchange.fatal.bad_url",
 };
 
 export const FIELD_KEYS: Record<string, TranslationKey> = {

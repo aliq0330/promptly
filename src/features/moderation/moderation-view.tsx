@@ -15,6 +15,7 @@ import { formatRelativeTime } from "@/lib/utils";
 import { StorageCleanupCard } from "@/features/moderation/storage-cleanup-card";
 import { DnaBackfillCard } from "@/features/moderation/dna-backfill-card";
 import { MediaAppearanceCard } from "@/features/moderation/media-appearance-card";
+import { BulkImportCard } from "@/features/moderation/bulk-import-card";
 import { SiteStatsPanel } from "@/features/moderation/admin/site-stats-panel";
 import { UsersPanel } from "@/features/moderation/admin/users-panel";
 import { ChallengesPanel } from "@/features/moderation/admin/challenges-panel";
@@ -183,6 +184,7 @@ function ReportsPanel({ filter }: { filter: Filter }) {
       <StorageCleanupCard />
       <DnaBackfillCard />
       <MediaAppearanceCard />
+      <BulkImportCard />
     </div>
   );
 }
