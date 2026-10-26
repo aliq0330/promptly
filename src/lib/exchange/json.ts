@@ -1,4 +1,4 @@
-import { EXCHANGE_JSON_FORMAT, EXCHANGE_SCHEMA_VERSION, fatalResult, normalizeAll, type ExchangePrompt, type ParseResult } from "./prompt-format.ts";
+import { EXCHANGE_JSON_FORMAT, EXCHANGE_LIMITS, EXCHANGE_SCHEMA_VERSION, fatalResult, normalizeAll, type ExchangePrompt, type ParseResult } from "./prompt-format.ts";
 
 /** Tam yedek biçimi: sürüm numaralı zarf + prompt listesi (değişken tanımlarıyla birlikte). */
 export function serializeJson(items: ExchangePrompt[], exportedAt: string = new Date().toISOString()): string {
@@ -6,21 +6,21 @@ export function serializeJson(items: ExchangePrompt[], exportedAt: string = new 
 }
 
 /** Zarf, çıplak dizi ya da tek nesne kabul eder. Gelecekteki bir `schemaVersion` sessizce okunmaz, reddedilir. */
-export function parseJson(text: string): ParseResult {
+export function parseJson(text: string, maxItems: number = EXCHANGE_LIMITS.items): ParseResult {
   let data: unknown;
   try {
     data = JSON.parse(text);
   } catch {
     return fatalResult("invalid_json");
   }
-  if (Array.isArray(data)) return normalizeAll(data);
+  if (Array.isArray(data)) return normalizeAll(data, maxItems);
   if (!data || typeof data !== "object") return fatalResult("invalid_json");
   const envelope = data as Record<string, unknown>;
   if (Array.isArray(envelope.items)) {
     const version = envelope.schemaVersion;
     if (typeof version === "number" && version > EXCHANGE_SCHEMA_VERSION) return fatalResult("unsupported_version");
     if (envelope.format !== undefined && envelope.format !== EXCHANGE_JSON_FORMAT) return fatalResult("invalid_json");
-    return normalizeAll(envelope.items);
+    return normalizeAll(envelope.items, maxItems);
   }
-  return normalizeAll([data]);
+  return normalizeAll([data], maxItems);
 }

@@ -5,6 +5,8 @@ import { EXCHANGE_LIMITS, fatalResult, type ExchangeFormat, type ExchangePrompt,
 
 export * from "./prompt-format.ts";
 export { PROMPT_SEPARATOR } from "./markdown.ts";
+export { detectPromptsChat, parsePromptsChat } from "./prompts-chat.ts";
+export { runBatches, runChunks, type ChunkOutcome, type BulkBatchReport, type BulkInvalid, type BulkItemResult, type BulkOutcome, type BulkProgress } from "./bulk.ts";
 
 export const FORMAT_META: Record<ExchangeFormat, { extension: string; mime: string }> = {
   json: { extension: "json", mime: "application/json" },
@@ -19,12 +21,13 @@ export function serializePrompts(items: ExchangePrompt[], format: ExchangeFormat
 }
 
 /** `text`'in kendi bayt boyutunu sınırlar; sonra seçilen biçimde ayrıştırır ve her kaydı doğrular. */
-export function parsePrompts(text: string, format: ExchangeFormat): ParseResult {
+export function parsePrompts(text: string, format: ExchangeFormat, limits: { maxItems?: number; maxBytes?: number } = {}): ParseResult {
+  const maxItems = limits.maxItems ?? EXCHANGE_LIMITS.items;
   if (text.trim() === "") return fatalResult("empty");
-  if (text.length > EXCHANGE_LIMITS.fileBytes) return fatalResult("too_large");
-  if (format === "csv") return parseCsv(text);
-  if (format === "markdown") return parseMarkdown(text);
-  return parseJson(text);
+  if (text.length > (limits.maxBytes ?? EXCHANGE_LIMITS.fileBytes)) return fatalResult("too_large");
+  if (format === "csv") return parseCsv(text, maxItems);
+  if (format === "markdown") return parseMarkdown(text, maxItems);
+  return parseJson(text, maxItems);
 }
 
 export function formatFromFileName(name: string): ExchangeFormat | null {

@@ -130,8 +130,8 @@ export function PostMenu({
   const ref = useRef<HTMLDivElement>(null);
   // "Space'e ekle" (docs/history/213-*): oturumlu kullanıcıya; sonuç ve topluluğa ait içerik hariç (içerik topluluktan çıkmaz).
   const canAddToSpace = Boolean(user) && !isResult && !communityId && !postScope;
-  // "Dışa aktar" (docs/history/250-*): yalnız kendi promptu; topluluğa özgü içerik topluluktan çıkmaz.
-  const canExport = isOwn && Boolean(promptId) && !isRequest && !isResult && !isWorkflow && !isPreset && !communityId && !postScope;
+  // "Dışa aktar" (docs/history/250-*, 251-*): okuyabildiğin HER prompt (başkasınınki yazar adı + bağlantıyla); topluluğa özgü içerik topluluktan çıkmaz.
+  const canExport = Boolean(promptId) && !isRequest && !isResult && !isWorkflow && !isPreset && !communityId && !postScope;
 
   useEffect(() => {
     if (!open) return;
@@ -275,6 +275,23 @@ export function PostMenu({
               {t("spaces.add.menu")}
             </button>
           )}
+          {canExport && (
+            <button
+              type="button"
+              role="menuitem"
+              data-export-prompt=""
+              onClick={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                setOpen(false);
+                setExportOpen(true);
+              }}
+              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-text hover:bg-surface-soft"
+            >
+              <Download size={14} />
+              {t("exchange.export.menu")}
+            </button>
+          )}
           {extras.map((extra) => (
             <button
               key={extra.key}
@@ -337,23 +354,6 @@ export function PostMenu({
                   {t("common.edit")}
                 </Link>
               )}
-              {canExport && (
-                <button
-                  type="button"
-                  role="menuitem"
-                  data-export-prompt=""
-                  onClick={(event) => {
-                    event.preventDefault();
-                    event.stopPropagation();
-                    setOpen(false);
-                    setExportOpen(true);
-                  }}
-                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-text hover:bg-surface-soft"
-                >
-                  <Download size={14} />
-                  {t("exchange.export.menu")}
-                </button>
-              )}
               {!isRequest && !isResult && !isWorkflow && !isPreset && !communityId && (
                 <Link
                   href={`/create?duplicate=${promptId}`}
@@ -390,7 +390,7 @@ export function PostMenu({
       )}
       {exportOpen && promptId && (
         <div onClick={(event) => event.stopPropagation()} onPointerDown={(event) => event.stopPropagation()} onKeyDown={(event) => event.stopPropagation()}>
-          <ExportPromptsModal single load={() => fetchPromptForExport(promptId).then((item) => (item ? [item] : []))} onClose={() => setExportOpen(false)} />
+          <ExportPromptsModal single load={() => fetchPromptForExport(promptId, user?.id).then((item) => (item ? [item] : []))} onClose={() => setExportOpen(false)} />
         </div>
       )}
       {spaceOpen && (

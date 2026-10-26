@@ -162,7 +162,7 @@ CHROMIUM_PATH=/opt/pw-browsers/chromium node tests/messaging-ui/run-feed-filters
 
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co NEXT_PUBLIC_SUPABASE_ANON_KEY=dummy npm run build
-CHROMIUM_PATH=/opt/pw-browsers/chromium-1243/chrome-linux64/chrome node tests/messaging-ui/run-safety.mjs   # 10/10 beklenir
+CHROMIUM_PATH=/opt/pw-browsers/chromium-1243/chrome-linux64/chrome node tests/messaging-ui/run-safety.mjs   # 18/18 beklenir
 ```
 
 
@@ -180,10 +180,10 @@ Topluluklar sade düzen (`docs/history/232-*`): üst düzey sekmeler tek "Gönde
 
 ## Prompt dışa / içe aktarma (`docs/history/250-*`)
 
-`run-exchange.mjs` (10 senaryo): Kütüphanem'de toplu dışa aktarma (JSON/Markdown/CSV dosyası GERÇEKTEN indirilir ve `src/lib/exchange` ile geri okunur; taslak + "Sadece ben" dahil, sayaç/yazar kimliği dosyada yok, `community_id is null` süzgeci), kartın ⋮ menüsünde tek prompt (dosya adı ASCII), içe aktarma (dosya seç → kuru çalıştırma → özet/satır durumları → onay → Taslaklar; dosyadaki yazar/durum/sayaç alanları RPC'ye gitmez), yinelenen/geçersiz kayıt, bozuk dosya mesajları, sunucu hatası (`rate_limit`, "eklendi" denmez), İngilizce, 390px. `import_prompts` RPC'sinin yanıtı burada TAKLİTTİR; gerçek kuralları `supabase/tests/import-prompts.sql` doğrular. Gerçek Supabase'e KARŞI DENENMEDİ.
+`run-exchange.mjs` (24 senaryo; 11–12 başkasının promptu + atıf, 13–18 moderatör toplu yükleme, 19–24 toplu yönetim: etiketle listele, damla damla yayınla, onaylı silme, yarıda kalma): Kütüphanem'de toplu dışa aktarma (JSON/Markdown/CSV dosyası GERÇEKTEN indirilir ve `src/lib/exchange` ile geri okunur; taslak + "Sadece ben" dahil, sayaç/yazar kimliği dosyada yok, `community_id is null` süzgeci), kartın ⋮ menüsünde tek prompt (dosya adı ASCII), içe aktarma (dosya seç → kuru çalıştırma → özet/satır durumları → onay → Taslaklar; dosyadaki yazar/durum/sayaç alanları RPC'ye gitmez), yinelenen/geçersiz kayıt, bozuk dosya mesajları, sunucu hatası (`rate_limit`, "eklendi" denmez), İngilizce, 390px. `import_prompts` RPC'sinin yanıtı burada TAKLİTTİR; gerçek kuralları `supabase/tests/import-prompts.sql` doğrular. Gerçek Supabase'e KARŞI DENENMEDİ.
 
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co NEXT_PUBLIC_SUPABASE_ANON_KEY=dummy npm run build
-CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/messaging-ui/run-exchange.mjs   # 10/10 beklenir
+CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/messaging-ui/run-exchange.mjs   # 24/24 beklenir
 DEBUG=1 ONLY="5" node tests/messaging-ui/run-exchange.mjs   # konsol/sayfa hatalarını yazdırır, yalnız "5" ile başlayan senaryo
 ```
