@@ -917,6 +917,8 @@ export const translations = {
   "composer.moveLeft": { tr: "Sola taşı", en: "Move left" },
   "composer.moveRight": { tr: "Sağa taşı", en: "Move right" },
   "composer.removeToken": { tr: "Kaldır", en: "Remove" },
+  "composer.tokenToText": { tr: "Metne çevir", en: "Make plain text" },
+  "composer.editToken": { tr: "Düzenle", en: "Edit" },
   "composer.apply": { tr: "Uygula", en: "Apply" },
   "composer.selectionToolbarAria": { tr: "Seçili metin işlemleri", en: "Selected text actions" },
   "composer.shortcutHint": { tr: "Kısayol: Ctrl + /", en: "Shortcut: Ctrl + /" },

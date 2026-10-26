@@ -1,8 +1,8 @@
 "use client";
 
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
-import { ArrowLeft, ArrowRight, Braces, Library, PanelRight, Pencil, Plus, Replace, TextCursorInput, Trash2, X } from "lucide-react";
-import { moveTokenByWord, tokenRanges } from "@/lib/prompt-doc";
+import { ArrowLeft, ArrowRight, Braces, Library, PanelRight, Pencil, Plus, Replace, TextCursorInput, Trash2, Type, X } from "lucide-react";
+import { moveTokenByWord, tokenRanges, unwrapTokenEdit } from "@/lib/prompt-doc";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -216,6 +216,27 @@ export const PromptComposer = forwardRef<
       label: t("composer.moveRight"),
       icon: ArrowRight,
       onClick: () => moveSelectedToken("right"),
+    },
+    {
+      // Çip bölünmez olduğu için içine yazılamaz: düzenlenebilsin diye ham `{…}` metnini açar.
+      id: "edit-token",
+      label: t("composer.editToken"),
+      icon: Pencil,
+      onClick: () => {
+        setEditValue(selectedText);
+        setEditing(true);
+      },
+    },
+    {
+      // Yanlış/tanımsız jetonu (ör. boşluklu `${A B}`) silmeden sıradan metne indirir.
+      id: "token-to-text",
+      label: t("composer.tokenToText"),
+      icon: Type,
+      onClick: () => {
+        if (!selectedToken) return;
+        const edit = unwrapTokenEdit(value, selectedToken);
+        editorRef.current?.replaceRange(edit.start, edit.end, edit.text);
+      },
     },
     {
       id: "remove-token",

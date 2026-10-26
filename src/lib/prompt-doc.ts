@@ -98,6 +98,20 @@ export function forwardDeleteRange(text: string, start: number, end: number): { 
   return token ? { start: token.start, end: token.end } : null;
 }
 
+/**
+ * Bir jetonu düz metne çevirmek için değiştirilecek aralık ve yeni metin:
+ * süslü parantezler atılır, içindeki yazı kalır. Parantezin hemen önündeki
+ * `$` (`${ad}` şablon sözdizimi) de gider — yalnız `$` artığı kalmasın.
+ */
+export function unwrapTokenEdit(
+  text: string,
+  token: { start: number; end: number },
+): { start: number; end: number; text: string } {
+  const inner = text.slice(token.start + 1, token.end - 1);
+  const start = text[token.start - 1] === "$" ? token.start - 1 : token.start;
+  return { start, end: token.end, text: inner };
+}
+
 /** `[start,end)` aralığını `insertion` ile değiştirir; yeni imleç konumunu da döner. */
 export function replaceRange(
   text: string,
