@@ -386,13 +386,14 @@ const CHANNEL_META: Record<FocusChannel, { icon: LucideIcon; label: TranslationK
 
 /**
  * The five sections as dots down the left edge (docs/history/239-*): swiping up / down (or the wheel, ↑ ↓) moves between
- * Tümü · Prompt · İstek · Workflow · Hazır ayar, the active one a tall pill. No words here — the name shows briefly in a
+ * Tümü · Prompt · İstek · Workflow · Hazır ayar, the active one a tall pill. Nearly invisible at rest (`visible` = while a
+ * vertical swipe is under way and for a moment after a section change; hovering or focusing it shows it too). No words here — the name shows briefly in a
  * toast while switching (`ChannelToast`); each dot is also a button with the name for assistive tech and as a tooltip.
  */
-function FocusChannelRail({ channel, onPick }: { channel: FocusChannel; onPick: (channel: FocusChannel) => void }) {
+function FocusChannelRail({ channel, onPick, visible }: { channel: FocusChannel; onPick: (channel: FocusChannel) => void; visible: boolean }) {
   const { t } = useTranslation();
   return (
-    <nav aria-label={t("focusFeed.channels")} className={cn(HIDE_WHILE_COMMENTS, "absolute left-0 top-1/2 z-20 flex -translate-y-1/2 flex-col items-center md:left-3")}>
+    <nav aria-label={t("focusFeed.channels")} className={cn(HIDE_WHILE_COMMENTS, "absolute left-0 top-1/2 z-20 flex -translate-y-1/2 flex-col items-center transition-opacity duration-300 ease-soft hover:opacity-100 focus-within:opacity-100", visible ? "opacity-100" : "opacity-[0.12]", "md:left-3")}>
       {FOCUS_CHANNELS.map((key) => {
         const active = key === channel;
         const label = t(CHANNEL_META[key].label);
@@ -609,6 +610,7 @@ function FocusScreen() {
 
   // A touch swipe that is mostly vertical changes the section (the scroller is `touch-action: pan-x`, so the browser keeps
   // the sideways scroll and leaves vertical moves to us). Mouse drags do nothing: the wheel and ↑ ↓ are the desktop's way.
+  const [swiping, setSwiping] = useState(false);
   const swipe = useRef<{ x: number; y: number; t: number; axis: "v" | "h" | null } | null>(null);
   const swipeHandlers = {
     onPointerDown: (event: ReactPointerEvent<HTMLElement>) => {
@@ -620,11 +622,15 @@ function FocusScreen() {
       if (!start || start.axis) return;
       const dx = event.clientX - start.x;
       const dy = event.clientY - start.y;
-      if (Math.max(Math.abs(dx), Math.abs(dy)) > 12) start.axis = Math.abs(dy) > Math.abs(dx) * 1.2 ? "v" : "h";
+      if (Math.max(Math.abs(dx), Math.abs(dy)) > 12) {
+        start.axis = Math.abs(dy) > Math.abs(dx) * 1.2 ? "v" : "h";
+        if (start.axis === "v") setSwiping(true);
+      }
     },
     onPointerUp: (event: ReactPointerEvent<HTMLElement>) => {
       const start = swipe.current;
       swipe.current = null;
+      setSwiping(false);
       if (!start || start.axis !== "v") return;
       const dy = event.clientY - start.y;
       const velocity = Math.abs(dy) / Math.max(1, performance.now() - start.t);
@@ -632,6 +638,7 @@ function FocusScreen() {
     },
     onPointerCancel: () => {
       swipe.current = null;
+      setSwiping(false);
     },
   };
 
@@ -831,7 +838,7 @@ function FocusScreen() {
             )}
           </>
         )}
-        <FocusChannelRail channel={channel} onPick={(next) => changeChannel(FOCUS_CHANNELS.indexOf(next) - FOCUS_CHANNELS.indexOf(channel))} />
+        <FocusChannelRail visible={swiping || Boolean(toast?.shown)} channel={channel} onPick={(next) => changeChannel(FOCUS_CHANNELS.indexOf(next) - FOCUS_CHANNELS.indexOf(channel))} />
         {toast && <ChannelToast channel={toast.channel} shown={toast.shown} />}
       </FocusInfoContext.Provider>
       </FocusCommentsContext.Provider>

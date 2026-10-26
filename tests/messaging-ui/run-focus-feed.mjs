@@ -680,12 +680,15 @@ await scenario("28. Bölümler (docs/history/239-*): solda 5 nokta (yazı yok), 
   assert.equal(await activeChannel(page), "Promptlar");
   const dotSizes = await railDots(page).evaluateAll((els) => els.map((e) => { const r = e.querySelector("span").getBoundingClientRect(); return [Math.round(r.width), Math.round(r.height), e.getAttribute("aria-current") === "true"]; }));
   assert.deepEqual(dotSizes, [[6, 6, false], [6, 24, true], [6, 6, false], [6, 6, false], [6, 6, false]], "every dot is a clean 6 px circle, the active one a 24 px pill");
+  const railOpacity = () => stage(page).locator("nav[aria-label='Odak bölümleri']").evaluate((el) => Number(getComputedStyle(el).opacity));
+  assert.ok((await railOpacity()) > 0.9, "the dots show while the section changes");
   await stage(page).getByRole("status").filter({ hasText: "Promptlar" }).waitFor();
   assert.deepEqual(db.feedCalls.at(-1).p_kinds, ["prompt"]);
   const types = await slides(page).evaluateAll((els) => els.slice(0, -1).map((e) => /PROMPT|Prompt/.test(e.textContent)));
   assert.ok(types.every(Boolean), "only prompts in the Prompt section");
   await page.waitForTimeout(1600);
   assert.equal(await stage(page).getByRole("status").filter({ hasText: "Promptlar" }).count(), 0, "the name fades after a moment");
+  assert.ok((await railOpacity()) < 0.3, "at rest the dots are nearly invisible");
   await railDots(page).nth(3).click();
   await page.waitForTimeout(900);
   assert.equal(await activeChannel(page), "Workflow'lar");
