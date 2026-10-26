@@ -63,7 +63,7 @@ export function FocusPage() {
 /* ------------------------------------------------------------------------ chrome */
 
 /**
- * Full screen while mounted: the app bars hide (`html[data-focus-open]`, globals.css), the page behind does not scroll, and the
+ * Full screen while mounted: the route has no app bars at all (`AppShell` renders none on `/focus`), the page behind does not scroll, and the
  * browser's own bars (iOS status / toolbar, `theme-color`) take the stage colour instead of the page's; all restored on leave. The WHOLE site
  * goes dark while Odak is open (`holdDarkMode`) and returns to what it was on leave: iOS Safari tints its bars by the document's mode, and
  * the stage's own `.dark` scope is not enough for it (docs/history/246-*, 247-*).
