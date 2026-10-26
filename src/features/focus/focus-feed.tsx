@@ -64,7 +64,8 @@ export function FocusPage() {
 
 /**
  * Full screen while mounted: the app bars hide (`html[data-focus-open]`, globals.css), the page behind does not scroll, and the
- * browser's own bars (iOS status / toolbar, `theme-color`) take the stage colour instead of the page's; all restored on leave.
+ * browser's own bars (iOS status / toolbar, `theme-color`) take the stage colour instead of the page's; all restored on leave. The document's
+ * `color-scheme` turns dark with it (`html[data-focus-open]`, globals.css): iOS Safari tints its bars by the scheme, not by the stage's `.dark` scope.
  */
 function useFullScreenChrome() {
   useEffect(() => {
@@ -97,7 +98,7 @@ function Stage({ children, className, commentsOpen = false }: { children: ReactN
       data-focus-feed
       data-palette={palette}
       data-comments-open={commentsOpen ? "" : undefined}
-      className={cn("group/stage dark fixed inset-0 z-[45] flex flex-col overflow-hidden bg-background text-text", className)}
+      className={cn("group/stage dark fixed inset-0 z-[45] flex flex-col overflow-hidden bg-background text-text [color-scheme:dark]", className)}
     >
       {children}
     </div>
