@@ -1,6 +1,8 @@
 # 246 — Odak: iOS Safari alt araç çubuğunun arkası açık temada beyaz kalıyordu
 
-**Durum:** uygulandı (yalnız istemci kodu, migration yok). Ağ taklitli Playwright'ta sınandı (`run-focus-feed` 30/30: açıkken belge `color-scheme: dark`, kapanınca `light`). **Gerçek iPhone Safari'de DENENMEDİ** (sandbox yüzen araç çubuğunu çizemez) — kullanıcı cihazda doğrulayacak.
+**Durum:** uygulandı, ama iPhone'da yetmedi — yerini `247-*` aldı (tüm site koyu moda geçer).
+
+(Eski durum:) uygulandı (yalnız istemci kodu, migration yok). Ağ taklitli Playwright'ta sınandı (`run-focus-feed` 30/30: açıkken belge `color-scheme: dark`, kapanınca `light`). **Gerçek iPhone Safari'de DENENMEDİ** (sandbox yüzen araç çubuğunu çizemez) — kullanıcı cihazda doğrulayacak.
 
 ## Sorun
 Kullanıcı ekran görüntüsü: Odak (hep koyu sahne) açıkken, sitenin teması AÇIK ise Safari'nin yüzen alt araç çubuğunun arkası ve çubuğun kendisi beyaz; tema KOYU ise siyah. Hikâye görüntüleyicide üç tur boyama (`198-*`) bunu çözmemişti.

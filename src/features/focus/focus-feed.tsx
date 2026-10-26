@@ -9,7 +9,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { lockBodyScroll, unlockBodyScroll } from "@/components/ui/modal";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StorageImg, useStorageSrc } from "@/components/ui/storage-media";
-import { useTheme } from "@/components/theme/theme-provider";
+import { holdDarkMode, useTheme } from "@/components/theme/theme-provider";
 import { useAuth } from "@/features/auth/auth-provider";
 import { feedItemKey } from "@/features/feed/types";
 import { useFeedPages } from "@/features/feed/use-feed-pages";
@@ -64,8 +64,9 @@ export function FocusPage() {
 
 /**
  * Full screen while mounted: the app bars hide (`html[data-focus-open]`, globals.css), the page behind does not scroll, and the
- * browser's own bars (iOS status / toolbar, `theme-color`) take the stage colour instead of the page's; all restored on leave. The document's
- * `color-scheme` turns dark with it (`html[data-focus-open]`, globals.css): iOS Safari tints its bars by the scheme, not by the stage's `.dark` scope.
+ * browser's own bars (iOS status / toolbar, `theme-color`) take the stage colour instead of the page's; all restored on leave. The WHOLE site
+ * goes dark while Odak is open (`holdDarkMode`) and returns to what it was on leave: iOS Safari tints its bars by the document's mode, and
+ * the stage's own `.dark` scope is not enough for it (docs/history/246-*, 247-*).
  */
 function useFullScreenChrome() {
   useEffect(() => {
@@ -80,7 +81,9 @@ function useFullScreenChrome() {
       if (meta) meta.content = stage;
     }
     lockBodyScroll();
+    const releaseDark = holdDarkMode();
     return () => {
+      releaseDark();
       unlockBodyScroll();
       delete html.dataset.focusOpen;
       html.style.backgroundColor = saved.html;
@@ -98,7 +101,7 @@ function Stage({ children, className, commentsOpen = false }: { children: ReactN
       data-focus-feed
       data-palette={palette}
       data-comments-open={commentsOpen ? "" : undefined}
-      className={cn("group/stage dark fixed inset-0 z-[45] flex flex-col overflow-hidden bg-background text-text [color-scheme:dark]", className)}
+      className={cn("group/stage dark fixed inset-0 z-[45] flex flex-col overflow-hidden bg-background text-text", className)}
     >
       {children}
     </div>

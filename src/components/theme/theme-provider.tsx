@@ -143,3 +143,16 @@ function withInstantSwitch(apply: () => void) {
   void root.offsetHeight;
   requestAnimationFrame(() => requestAnimationFrame(() => root.classList.remove("theme-instant")));
 }
+
+/**
+ * Puts the whole document in dark mode for as long as a full-screen dark surface (Odak) is open, WITHOUT touching the saved
+ * preference or React's theme state, and returns the call that undoes it: only if this call added `.dark`, only that is
+ * removed — a visitor already on the dark theme stays on it, a light one comes back to light exactly as it was (docs/history/247-*).
+ * iOS Safari draws its own bars from the DOCUMENT's mode, not from a dark subtree.
+ */
+export function holdDarkMode(): () => void {
+  const root = document.documentElement;
+  if (root.classList.contains("dark")) return () => undefined;
+  withInstantSwitch(() => root.classList.add("dark"));
+  return () => withInstantSwitch(() => root.classList.remove("dark"));
+}
