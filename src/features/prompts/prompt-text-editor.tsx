@@ -1,6 +1,6 @@
 "use client";
 
-import { forwardRef, useImperativeHandle, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { Eye, FileText } from "lucide-react";
 import {
@@ -32,7 +32,6 @@ import { VariableList } from "./variable-list";
 import { VariableField } from "./variable-field";
 import type { VariableFormValues } from "./variable-spec-editor";
 import { ImageHelpPanel } from "./image-help-panel";
-import { ComposeSheet } from "@/features/content/compose";
 
 // 196 alanlık katalog yalnızca seçici açılınca yüklenir (ana pakete girmez).
 const FieldCatalogPicker = dynamic(() => import("@/features/prompts/field-catalog-picker").then((m) => m.FieldCatalogPicker), { ssr: false });
@@ -64,46 +63,28 @@ function makeTempId(): string {
  * kaydet/yeniden aç sonrası yapı birebir korunur. Generator şablonlarıyla
  * hiçbir veri modeli paylaşılmaz; yalnızca `PromptComposer` altyapısı ortaktır.
  */
-/** Yazma ekranının araç çubuğu için: "Değişken ekle" ve "Görselden yardım" dışarıdan açılır. */
-export interface PromptTextEditorHandle {
-  openInsert(): void;
-  openVisionHelp(): void;
-}
-
-export const PromptTextEditor = forwardRef<
-  PromptTextEditorHandle,
-  {
-    id?: string;
-    value: string;
-    onChange: (value: string) => void;
-    variables: DraftVariable[];
-    onVariablesChange: (variables: DraftVariable[]) => void;
-    rows?: number;
-    placeholder?: string;
-    className?: string;
-    /** The image the author already picked in the form (feeds "Görselden yardım" without a second upload). */
-    visionFile?: File | null;
-    /**
-     * `compose` (yazma ekranı, docs/history/216-*): kutusuz düz mono metin; Şablon/Önizleme ve "Değişken ekle" satırı yok —
-     * ekleme ve "Görselden yardım" araç çubuğundan (`ref`) açılır, yardım kendi alt sayfasında.
-     */
-    variant?: "form" | "compose";
-  }
->(function PromptTextEditor(
-  {
-    id = "prompt-text",
-    value,
-    onChange,
-    variables,
-    onVariablesChange,
-    rows = 5,
-    placeholder,
-    className,
-    visionFile,
-    variant = "form",
-  },
-  ref,
-) {
+export function PromptTextEditor({
+  id = "prompt-text",
+  value,
+  onChange,
+  variables,
+  onVariablesChange,
+  rows = 5,
+  placeholder,
+  className,
+  visionFile,
+}: {
+  id?: string;
+  value: string;
+  onChange: (value: string) => void;
+  variables: DraftVariable[];
+  onVariablesChange: (variables: DraftVariable[]) => void;
+  rows?: number;
+  placeholder?: string;
+  className?: string;
+  /** The image the author already picked in the form (feeds "Görselden yardım" without a second upload). */
+  visionFile?: File | null;
+}) {
   const { t } = useTranslation();
   const composerRef = useRef<ComposerHandle>(null);
   const [tab, setTab] = useState<"template" | "preview">("template");
@@ -112,9 +93,6 @@ export const PromptTextEditor = forwardRef<
   const [editingVariable, setEditingVariable] = useState<DraftVariable | null>(null);
   const [previewValues, setPreviewValues] = useState<Record<string, string>>({});
   const [catalogRange, setCatalogRange] = useState<EditorSelection | null>(null);
-  const compose = variant === "compose";
-  const [visionOpen, setVisionOpen] = useState(false);
-  useImperativeHandle(ref, () => ({ openInsert: () => composerRef.current?.openInsert(), openVisionHelp: () => setVisionOpen(true) }), []);
 
   const usage = useMemo(() => tokenUsageMap(value), [value]);
   const items: PickerItem[] = variables.map((variable) => ({
@@ -294,16 +272,15 @@ export const PromptTextEditor = forwardRef<
         minRows={rows}
         ariaLabel={t("prompt.promptTextHeading")}
         required
-        leading={compose ? undefined : tabSwitcher}
-        hideEditor={!compose && activeTab === "preview"}
-        bare={compose}
+        leading={tabSwitcher}
+        hideEditor={activeTab === "preview"}
         onCreateNew={({ range, selectedText }) => setCreating({ range, selectedText })}
         onConvertSelection={({ range, selectedText }) => setCreating({ range, selectedText })}
         onOpenCatalog={() => setCatalogRange(composerRef.current?.getPendingRange() ?? cursorRange())}
         panelExtra={variables.length > 0 ? list : undefined}
       />
 
-      {!compose && activeTab === "template" && (
+      {activeTab === "template" && (
         <div className="space-y-2">
           <ImageHelpPanel
             promptText={value}
@@ -315,26 +292,7 @@ export const PromptTextEditor = forwardRef<
         </div>
       )}
 
-      {compose && visionOpen && (
-        <ComposeSheet id="vision" title={t("vision.helpTitle")} onClose={() => setVisionOpen(false)}>
-          <ImageHelpPanel
-            bare
-            promptText={value}
-            variables={variables}
-            sourceFile={visionFile}
-            onApplyPrompt={(text, mode) => {
-              onChange(mode === "replace" || !value.trim() ? text : `${value}\n\n${text}`);
-              setVisionOpen(false);
-            }}
-            onApplyVariables={(result) => {
-              handleVisionApply(result);
-              setVisionOpen(false);
-            }}
-          />
-        </ComposeSheet>
-      )}
-
-      {!compose && activeTab === "preview" && (
+      {activeTab === "preview" && (
         <div className="space-y-3 rounded-md border border-border bg-background p-3">
           <div className="whitespace-pre-wrap break-words font-mono text-sm text-text">{previewText}</div>
           <div className="grid gap-3 border-t border-border pt-3 sm:grid-cols-2">
@@ -391,4 +349,4 @@ export const PromptTextEditor = forwardRef<
       )}
     </div>
   );
-});
+}

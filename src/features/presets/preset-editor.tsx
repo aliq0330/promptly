@@ -6,11 +6,12 @@ import { useRouter } from "next/navigation";
 import { useCommunityContext, useCommunityReturn } from "@/features/communities/community-return";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useOwnProfile } from "@/features/auth/own-profile-provider";
-import { Cpu, Folder, Hash, SlidersHorizontal } from "lucide-react";
+import { SlidersHorizontal } from "lucide-react";
 import { KindDraftsButton } from "@/features/drafts/kind-drafts-button";
-import { ComposeSheet, ComposeShell, PublishPreview, composeBodyClassName, composeTitleClassName, useComposeLeave, useDirty } from "@/features/content/compose";
-import { ComposeBody, ContentTypePicker, SuggestedTagsRow } from "@/features/content/compose-fields";
-import { PublishDetailsSection, PublishSheet, type PublishDetailRow, type PublishProblem } from "@/features/content/publish-sheet";
+import { ComposeShell, PublishPreview, useComposeLeave, useDirty } from "@/features/content/compose";
+import { ComposeAudienceLine, ComposeSection, FormDisclosure, FormField, formTextInputClassName, formTextareaClassName } from "@/features/content/compose-form";
+import { ContentTypePicker, SuggestedTagsRow } from "@/features/content/compose-fields";
+import { PublishPanel, type PublishPanelHandle, type PublishProblem } from "@/features/content/publish-panel";
 import { MultiImagePicker, type MultiImageItem } from "@/features/content/multi-image-picker";
 import { TaxonomyPicker } from "@/features/content/taxonomy-picker";
 import { ToolPicker } from "@/features/content/tool-picker";
@@ -29,7 +30,6 @@ import { PresetCard } from "./preset-card";
 import { PresetParametersBuilder } from "./preset-parameters-builder";
 import type { ContentVisibility, Preset, PromptContentType } from "@/types";
 
-type ComposeSheetKey = "tags" | "tool" | "category";
 
 /**
  * Hazır Ayar create/edit form (`/presets/create`, `?edit=<id>`): name,
@@ -59,13 +59,13 @@ export function PresetEditor({ editId }: { editId: string | null }) {
   const [selection, setSelection] = useState<PresetSelection>({});
   const [cover, setCover] = useState<MultiImageItem[]>([]);
   const [visibility, setVisibility] = useState<ContentVisibility>("public");
-  const [sheet, setSheet] = useState<ComposeSheetKey | null>(null);
   const tagPicker = useTagPicker({ title, content: description, catalog });
   usePrefillTag(tagPicker.addManual, !editId);
   const tagsSeededRef = useRef(false);
 
   const [loadState, setLoadState] = useState<"loading" | "ready" | "notfound" | "forbidden">(editId ? "loading" : "ready");
   const [titleTouched, setTitleTouched] = useState(false);
+  const [attempted, setAttempted] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -104,8 +104,8 @@ export function PresetEditor({ editId }: { editId: string | null }) {
 
   const titleError = titleTouched && title.trim().length < 3;
 
-  // Yazma ekranı kabuğu (docs/history/216-*): son kontrol penceresi + ✕'teki "kaydedilsin mi?".
-  const [publishOpen, setPublishOpen] = useState(false);
+  // Tek sayfa form (docs/history/244-*): yayın bölümü + ✕'teki "kaydedilsin mi?".
+  const panelRef = useRef<PublishPanelHandle>(null);
   const dirty = useDirty(
     JSON.stringify([title, description, contentType, category, subcategory, tools, fields, selection, cover.map((item) => item.key), tagPicker.accepted.map((entry) => entry.tag.slug), visibility]),
     loadState === "ready",
@@ -240,36 +240,18 @@ export function PresetEditor({ editId }: { editId: string | null }) {
     setSubcategory(next.subcategory);
   }
 
-  const sheetTitle: Record<ComposeSheetKey, string> = {
-    tags: t("forms.tags"),
-    tool: t("formSection.tool"),
-    category: t("taxonomy.categoryLabel"),
-  };
   const categoryPath = category ? taxonomyPathLabel({ contentType, category, subcategory }, language, false) : "";
-  const infoRows: PublishDetailRow[] = [
-    { key: "category", icon: Folder, label: t("taxonomy.categoryLabel"), value: categoryPath, onClick: () => setSheet("category") },
-    { key: "tool", icon: Cpu, label: t("formSection.tool"), value: resolveToolRefs(tools)[0]?.label, onClick: () => setSheet("tool") },
-    {
-      key: "tags",
-      icon: Hash,
-      label: t("forms.tags"),
-      value: tagPicker.accepted.length > 0 ? t("compose.tagCount", { count: tagPicker.accepted.length }) : undefined,
-      hint: tagPicker.suggested.length > 0 ? t("compose.suggestionCount", { count: tagPicker.suggested.length }) : undefined,
-      onClick: () => setSheet("tags"),
-    },
-  ];
 
   return (
     <ComposeShell
       title={editId ? t("preset.editTitle") : t("compose.newPreset")}
       titleExtra={<KindDraftsButton kind="preset" compact />}
       onClose={leave.requestClose}
-      onPublish={() => {
-        setTitleTouched(true);
-        setPublishOpen(true);
-      }}
+      onPublish={() => panelRef.current?.publish()}
       publishLabel={editId ? t("common.save") : t("common.share")}
       publishDisabled={isSaving}
+      publishDimmed={problems.length > 0}
+      onSaveDraft={communityId ? undefined : () => void save(true)}
       aside={
         <>
           <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-muted">{t("forms.livePreview")}</p>
@@ -279,52 +261,51 @@ export function PresetEditor({ editId }: { editId: string | null }) {
         </>
       }
     >
-        <form
-          onSubmit={(event) => {
-            event.preventDefault();
-            setPublishOpen(true);
-          }}
-          className="min-w-0 space-y-4"
-        >
-          <ComposeBody
-            profile={ownProfile}
-            audienceLabel={communityId ? (communityName ?? t("compose.aCommunity")) : undefined}
-            onAudience={() => setPublishOpen(true)}
-            typeSlot={<ContentTypePicker value={contentType} onChange={(type) => changeTaxonomy({ contentType: type, category: null, subcategory: null })} />}
-          >
-            <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto]">
-              <div className="min-w-0 space-y-3">
-                <div className="space-y-1.5">
-                  <input
-                    id="preset-title"
-                    value={title}
-                    onChange={(event) => setTitle(event.target.value)}
-                    onBlur={() => setTitleTouched(true)}
-                    maxLength={120}
-                    placeholder={t("preset.titlePlaceholder")}
-                    aria-label={t("preset.titleLabel")}
-                    aria-invalid={titleError}
-                    className={composeTitleClassName}
-                  />
-                  {titleError && <p className="text-caption text-danger">{t("preset.errorTitle")}</p>}
-                </div>
-                <textarea
-                  id="preset-desc"
-                  value={description}
-                  onChange={(event) => setDescription(event.target.value)}
-                  maxLength={1000}
-                  rows={2}
-                  placeholder={t("preset.descriptionPlaceholder")}
-                  aria-label={t("preset.descriptionLabel")}
-                  className={composeBodyClassName}
-                />
-              </div>
-              <div className="sm:w-40">
-                <MultiImagePicker variant="strip" max={1} items={cover} onChange={setCover} hint="" />
-              </div>
-            </div>
-          </ComposeBody>
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          panelRef.current?.publish();
+        }}
+        data-compose-body=""
+        className="min-w-0 space-y-6"
+      >
+        {communityId && (
+          <ComposeAudienceLine profile={ownProfile} label={communityName ?? t("compose.aCommunity")} onClick={() => document.getElementById("compose-publish")?.scrollIntoView({ behavior: "smooth", block: "center" })} />
+        )}
 
+        <ComposeSection title={t("formSection.basics")}>
+          <FormField label={t("compose.whatMaking")} required>
+            <ContentTypePicker value={contentType} onChange={(type) => changeTaxonomy({ contentType: type, category: null, subcategory: null })} />
+          </FormField>
+          <FormField label={t("preset.titleLabel")} htmlFor="preset-title" required error={titleError ? t("preset.errorTitle") : null}>
+            <input
+              id="preset-title"
+              value={title}
+              onChange={(event) => setTitle(event.target.value)}
+              onBlur={() => setTitleTouched(true)}
+              maxLength={120}
+              placeholder={t("preset.titlePlaceholder")}
+              aria-invalid={titleError}
+              className={formTextInputClassName}
+            />
+          </FormField>
+          <FormField label={t("preset.descriptionLabel")} htmlFor="preset-desc" optional>
+            <textarea
+              id="preset-desc"
+              value={description}
+              onChange={(event) => setDescription(event.target.value)}
+              maxLength={1000}
+              rows={3}
+              placeholder={t("preset.descriptionPlaceholder")}
+              className={formTextareaClassName}
+            />
+          </FormField>
+          <FormField label={t("formSection.cover")} optional>
+            <MultiImagePicker max={1} items={cover} onChange={setCover} hint="" />
+          </FormField>
+        </ComposeSection>
+
+        <ComposeSection title={t("compose.sectionParameters")}>
           <PresetParametersBuilder
             contentType={contentType}
             category={category}
@@ -337,52 +318,61 @@ export function PresetEditor({ editId }: { editId: string | null }) {
               setSelection(nextSelection);
             }}
           />
+        </ComposeSection>
 
-        </form>
+        <ComposeSection title={t("compose.sectionDetails")}>
+          <FormDisclosure id="tool" label={t("formSection.tool")} value={resolveToolRefs(tools)[0]?.label}>
+            <ToolPicker value={tools} onChange={setTools} contentType={contentType} category={category} />
+          </FormDisclosure>
+          <FormDisclosure id="category" label={t("taxonomy.categoryLabel")} value={categoryPath}>
+            <TaxonomyPicker bare value={{ contentType, category, subcategory }} onChange={changeTaxonomy} />
+          </FormDisclosure>
+          <FormDisclosure
+            id="tags"
+            label={t("forms.tags")}
+            value={tagPicker.accepted.length > 0 ? t("compose.tagCount", { count: tagPicker.accepted.length }) : undefined}
+            hint={tagPicker.suggested.length > 0 ? t("compose.suggestionCount", { count: tagPicker.suggested.length }) : undefined}
+          >
+            <TagPicker picker={tagPicker} />
+          </FormDisclosure>
+          <SuggestedTagsRow picker={tagPicker} />
+        </ComposeSection>
 
-      {sheet && (
-        <ComposeSheet id={sheet} title={sheetTitle[sheet]} onClose={() => setSheet(null)}>
-          {sheet === "tags" && <TagPicker picker={tagPicker} />}
-          {sheet === "tool" && <ToolPicker value={tools} onChange={setTools} contentType={contentType} category={category} />}
-          {sheet === "category" && <TaxonomyPicker bare value={{ contentType, category, subcategory }} onChange={changeTaxonomy} />}
-        </ComposeSheet>
-      )}
-
-      {publishOpen && (
-        <PublishSheet
-          onClose={() => setPublishOpen(false)}
-          onConfirm={() => void save(false)}
-          onSaveDraft={() => void save(true)}
-          busy={isSaving}
-          title={editId ? t("compose.beforeSave") : undefined}
-          confirmLabel={isSaving ? t("common.saving") : editId ? t("common.save") : t("common.share")}
-          hideDestination={Boolean(editId)}
-          visibility={visibility}
-          onVisibilityChange={setVisibility}
-          problems={problems}
-          details={
-            <>
-              <PublishDetailsSection title={t("compose.postInfo")} rows={infoRows} />
-              <SuggestedTagsRow picker={tagPicker} />
-            </>
-          }
-          preview={
-            <PublishPreview
-              thumbnail={cover[0]?.url ?? null}
-              icon={SlidersHorizontal}
-              typeLabel={t("preset.singular")}
-              title={title.trim() || t("preset.untitled")}
-              meta={ownProfile ? `@${ownProfile.username}` : ""}
-            />
-          }
-        >
-          {error && (
-            <p role="alert" className="text-sm text-danger">
-              {error}
-            </p>
-          )}
-        </PublishSheet>
-      )}
+        <ComposeSection title={t("publish.whoSees")} id="compose-publish">
+          <PublishPanel
+            ref={panelRef}
+            onConfirm={() => void save(false)}
+            onSaveDraft={() => void save(true)}
+            onBlocked={(problem) => {
+              setTitleTouched(true);
+              setAttempted(true);
+              problem.onFix?.();
+            }}
+            busy={isSaving}
+            confirmLabel={isSaving ? t("common.saving") : editId ? t("common.save") : t("common.share")}
+            hideDestination={Boolean(editId)}
+            visibility={visibility}
+            onVisibilityChange={setVisibility}
+            problems={problems}
+            showProblems={attempted}
+            preview={
+              <PublishPreview
+                thumbnail={cover[0]?.url ?? null}
+                icon={SlidersHorizontal}
+                typeLabel={t("preset.singular")}
+                title={title.trim() || t("preset.untitled")}
+                meta={ownProfile ? `@${ownProfile.username}` : ""}
+              />
+            }
+          >
+            {error && (
+              <p role="alert" className="text-sm text-danger">
+                {error}
+              </p>
+            )}
+          </PublishPanel>
+        </ComposeSection>
+      </form>
       {leave.dialog}
     </ComposeShell>
   );

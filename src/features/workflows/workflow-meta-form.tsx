@@ -1,12 +1,11 @@
 "use client";
 
 import { MultiImagePicker } from "@/features/content/multi-image-picker";
-import { composeBodyClassName, composeTitleClassName } from "@/features/content/compose";
-import { ComposeBody, ContentTypePicker } from "@/features/content/compose-fields";
+import { ComposeSection, FormField, formTextInputClassName, formTextareaClassName } from "@/features/content/compose-form";
+import { ContentTypePicker } from "@/features/content/compose-fields";
 import type { ContentTypeId } from "@/lib/content-taxonomy";
 import type { MultiImageItem } from "@/lib/supabase/media-input";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import type { UserProfile } from "@/types";
 
 export interface WorkflowMeta {
   title: string;
@@ -22,63 +21,50 @@ export interface WorkflowMeta {
 export const EMPTY_META: WorkflowMeta = { title: "", description: "", media: [], contentType: "image", category: null, subcategory: null, tools: [] };
 
 /**
- * Workflow başlığı (docs/history/216-*): avatar + ad + tür hapı, başlık, açıklama ve küçük kapak şeridi — Prompt / İstek / Hazır ayarla
- * aynı düzen. Kategori, Araç ve Etiketler yazma ekranında değil "Paylaşmadan önce" penceresindedir (editör bunları alt sayfalarla açar).
+ * Workflow'un "Temel bilgiler" bölümü (docs/history/244-*): tür, ad, açıklama ve küçük kapak şeridi — Prompt / İstek / Hazır ayarla aynı etiketli
+ * form düzeni. Kategori, Araç ve Etiketler editörün "İsteğe bağlı ayrıntılar" bölümündedir.
  */
 export function WorkflowMetaForm({
   meta,
   onChange,
   titleError,
-  profile,
-  audienceLabel,
-  onAudience,
 }: {
   meta: WorkflowMeta;
   onChange: (patch: Partial<WorkflowMeta>) => void;
   titleError?: boolean;
-  profile: UserProfile | null;
-  audienceLabel?: string;
-  onAudience?: () => void;
 }) {
   const { t } = useTranslation();
 
   return (
-    <ComposeBody
-      profile={profile}
-      audienceLabel={audienceLabel}
-      onAudience={onAudience}
-      typeSlot={<ContentTypePicker value={meta.contentType} onChange={(type) => onChange({ contentType: type, category: null, subcategory: null })} />}
-    >
-      <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto]">
-        <div className="min-w-0 space-y-3">
-          <div className="space-y-1.5">
-            <input
-              id="wf-title"
-              value={meta.title}
-              onChange={(event) => onChange({ title: event.target.value })}
-              maxLength={120}
-              placeholder={t("workflow.titlePlaceholder")}
-              aria-label={t("workflow.titleLabel")}
-              aria-invalid={Boolean(titleError)}
-              className={composeTitleClassName}
-            />
-            {titleError && <p className="text-caption text-danger">{t("workflow.issueTitleRequired")}</p>}
-          </div>
-          <textarea
-            id="wf-desc"
-            value={meta.description}
-            onChange={(event) => onChange({ description: event.target.value })}
-            maxLength={1000}
-            rows={2}
-            placeholder={t("workflow.descriptionPlaceholder")}
-            aria-label={t("workflow.descriptionLabel")}
-            className={composeBodyClassName}
-          />
-        </div>
-        <div className="sm:w-48">
-          <MultiImagePicker variant="strip" max={4} items={meta.media} onChange={(media) => onChange({ media })} hint="" />
-        </div>
-      </div>
-    </ComposeBody>
+    <ComposeSection title={t("formSection.basics")}>
+      <FormField label={t("compose.whatMaking")} required>
+        <ContentTypePicker value={meta.contentType} onChange={(type) => onChange({ contentType: type, category: null, subcategory: null })} />
+      </FormField>
+      <FormField label={t("workflow.titleLabel")} htmlFor="wf-title" required error={titleError ? t("workflow.issueTitleRequired") : null}>
+        <input
+          id="wf-title"
+          value={meta.title}
+          onChange={(event) => onChange({ title: event.target.value })}
+          maxLength={120}
+          placeholder={t("workflow.titlePlaceholder")}
+          aria-invalid={Boolean(titleError)}
+          className={formTextInputClassName}
+        />
+      </FormField>
+      <FormField label={t("workflow.descriptionLabel")} htmlFor="wf-desc" optional>
+        <textarea
+          id="wf-desc"
+          value={meta.description}
+          onChange={(event) => onChange({ description: event.target.value })}
+          maxLength={1000}
+          rows={3}
+          placeholder={t("workflow.descriptionPlaceholder")}
+          className={formTextareaClassName}
+        />
+      </FormField>
+      <FormField label={t("formSection.cover")} optional>
+        <MultiImagePicker max={4} items={meta.media} onChange={(media) => onChange({ media })} hint="" />
+      </FormField>
+    </ComposeSection>
   );
 }

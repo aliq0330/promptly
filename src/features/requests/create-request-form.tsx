@@ -2,8 +2,8 @@
 import { useCommunityContext, useCommunityReturn } from "@/features/communities/community-return";
 import { ToolPicker } from "@/features/content/tool-picker";
 
-import { useEffect, useState } from "react";
-import { Cpu, Folder, Hash, ImagePlus, Sparkles, WandSparkles } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { RequestCard } from "./request-card";
@@ -21,9 +21,10 @@ import { multiImageItemFromMedia, toDeferredMediaInputs, type MultiImageItem } f
 import { requestHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { KindDraftsButton } from "@/features/drafts/kind-drafts-button";
-import { ComposeSheet, ComposeShell, ComposeToolbar, PublishPreview, composeBodyClassName, composeTitleClassName, useComposeLeave, useDirty } from "@/features/content/compose";
-import { ComposeBody, ContentTypePicker, SuggestedTagsRow } from "@/features/content/compose-fields";
-import { PublishDetailsSection, PublishSheet, type PublishDetailRow, type PublishProblem } from "@/features/content/publish-sheet";
+import { ComposeShell, PublishPreview, useComposeLeave, useDirty } from "@/features/content/compose";
+import { ComposeAudienceLine, ComposeSection, FormDisclosure, FormField, formTextInputClassName, formTextareaClassName } from "@/features/content/compose-form";
+import { ContentTypePicker, SuggestedTagsRow } from "@/features/content/compose-fields";
+import { PublishPanel, type PublishPanelHandle, type PublishProblem } from "@/features/content/publish-panel";
 import { taxonomyPathLabel } from "@/lib/content-taxonomy";
 import { resolveToolRefs } from "@/lib/ai-tool-catalog";
 import type { ContentVisibility, PromptContentType, PromptRequest } from "@/types";
@@ -146,9 +147,8 @@ export function CreateRequestForm() {
         : null;
   const isValid = !titleError && !descriptionError;
 
-  // Yazma ekranı (docs/history/216-*): araç çubuğunun alt sayfası, son kontrol penceresi ve ✕'teki "kaydedilsin mi?".
-  const [sheet, setSheet] = useState<"tags" | "tool" | "category" | "vision" | null>(null);
-  const [publishOpen, setPublishOpen] = useState(false);
+  // Tek sayfa form (docs/history/244-*): yayın bölümü (`PublishPanel`) ve ✕'teki "kaydedilsin mi?".
+  const panelRef = useRef<PublishPanelHandle>(null);
   const canSaveDraft = !isEditMode || isEditingDraft;
   const dirty = useDirty(
     JSON.stringify([contentType, category, subcategory, title, description, creativeDirection, tools, images.map((item) => item.key), tagPicker.accepted.map((entry) => entry.tag.slug), visibility]),
@@ -368,32 +368,20 @@ export function CreateRequestForm() {
     ...(descriptionError ? [{ key: "description", label: descriptionError, onFix: focusField("request-description") }] : []),
   ];
   const categoryPath = category ? taxonomyPathLabel({ contentType, category, subcategory }, language, false) : "";
-  const infoRows: PublishDetailRow[] = [
-    { key: "category", icon: Folder, label: t("taxonomy.categoryLabel"), value: categoryPath, onClick: () => setSheet("category") },
-    { key: "tool", icon: Cpu, label: t("formSection.tool"), value: resolveToolRefs(tools)[0]?.label, onClick: () => setSheet("tool") },
-    {
-      key: "tags",
-      icon: Hash,
-      label: t("forms.tags"),
-      value: tagPicker.accepted.length > 0 ? t("compose.tagCount", { count: tagPicker.accepted.length }) : undefined,
-      hint: tagPicker.suggested.length > 0 ? t("compose.suggestionCount", { count: tagPicker.suggested.length }) : undefined,
-      onClick: () => setSheet("tags"),
-    },
-  ];
-  const fieldError = (message: string | null) => (message ? <p className="text-caption text-danger">{message}</p> : null);
+  const showTitleError = titleTouched && Boolean(titleError);
+  const showDescriptionError = descriptionTouched && Boolean(descriptionError);
+  const publishLabel = isSubmitting ? (isSaveMode ? t("common.saving") : t("prompt.publishing")) : isSaveMode ? t("common.save") : t("common.share");
 
   return (
     <ComposeShell
       title={isEditMode ? t("request.editRequestTitle") : t("compose.newRequest")}
       titleExtra={<KindDraftsButton kind="request" compact />}
       onClose={leave.requestClose}
-      onPublish={() => {
-        setTitleTouched(true);
-        setDescriptionTouched(true);
-        setPublishOpen(true);
-      }}
+      onPublish={() => panelRef.current?.publish()}
       publishLabel={isSaveMode ? t("common.save") : t("common.share")}
       publishDisabled={isSubmitting}
+      publishDimmed={problems.length > 0}
+      onSaveDraft={canSaveDraft && !communityId ? () => void handleSaveDraft() : undefined}
       aside={
         <>
           <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-muted">{t("forms.livePreview")}</p>
@@ -406,15 +394,17 @@ export function CreateRequestForm() {
       <form
         onSubmit={(event) => {
           event.preventDefault();
-          setPublishOpen(true);
+          panelRef.current?.publish();
         }}
-        className="space-y-4"
+        data-compose-body=""
+        className="space-y-6"
       >
-        <ComposeBody
-          profile={ownProfile}
-          audienceLabel={communityId ? (communityName ?? t("compose.aCommunity")) : undefined}
-          onAudience={() => setPublishOpen(true)}
-          typeSlot={
+        {communityId && (
+          <ComposeAudienceLine profile={ownProfile} label={communityName ?? t("compose.aCommunity")} onClick={() => document.getElementById("compose-publish")?.scrollIntoView({ behavior: "smooth", block: "center" })} />
+        )}
+
+        <ComposeSection title={t("formSection.basics")}>
+          <FormField label={t("compose.whatMaking")} required>
             <ContentTypePicker
               value={contentType}
               onChange={(type) => {
@@ -424,20 +414,8 @@ export function CreateRequestForm() {
               }}
               locked={isEditMode}
             />
-          }
-          toolbar={
-            <ComposeToolbar
-              tools={[
-                { key: "reference", icon: ImagePlus, label: t("compose.toolReference"), badge: images.length || undefined, highlight: true, onClick: () => document.getElementById("request-images")?.click() },
-                { key: "direction", icon: Sparkles, label: t("compose.toolDirection"), onClick: () => document.getElementById("request-direction")?.focus() },
-                ...(!isEditMode && contentType === "image"
-                  ? [{ key: "vision", icon: WandSparkles, label: t("compose.toolHelp"), onClick: () => setSheet("vision") }]
-                  : []),
-              ]}
-            />
-          }
-        >
-          <div className="space-y-1.5">
+          </FormField>
+          <FormField label={t("request.requestTitleLabel")} htmlFor="request-title" required error={showTitleError ? titleError : null}>
             <input
               id="request-title"
               value={title}
@@ -445,67 +423,55 @@ export function CreateRequestForm() {
               onBlur={() => setTitleTouched(true)}
               maxLength={TITLE_MAX}
               placeholder={t("request.titlePlaceholder")}
-              aria-label={t("request.requestTitleLabel")}
-              aria-invalid={titleTouched && Boolean(titleError)}
-              className={composeTitleClassName}
+              aria-invalid={showTitleError}
+              className={formTextInputClassName}
             />
-            {titleTouched && fieldError(titleError)}
-          </div>
-          <div className="space-y-1.5">
+          </FormField>
+          <FormField label={t("request.requestDescriptionLabel")} htmlFor="request-description" required error={showDescriptionError ? descriptionError : null}>
             <textarea
               id="request-description"
               value={description}
               onChange={(event) => setDescription(event.target.value)}
               onBlur={() => setDescriptionTouched(true)}
               maxLength={DESCRIPTION_MAX}
-              rows={3}
+              rows={4}
               placeholder={t("request.descriptionPlaceholder")}
-              aria-label={t("request.requestDescriptionLabel")}
-              aria-invalid={descriptionTouched && Boolean(descriptionError)}
-              className={composeBodyClassName}
+              aria-invalid={showDescriptionError}
+              className={formTextareaClassName}
             />
-            <div className="flex items-start justify-between gap-3">
-              {descriptionTouched ? fieldError(descriptionError) : <span />}
-              <span className="shrink-0 text-caption text-text-muted">{`${description.length}/${DESCRIPTION_MAX}`}</span>
-            </div>
-          </div>
+            <p className="text-right text-caption text-text-muted">{`${description.length}/${DESCRIPTION_MAX}`}</p>
+          </FormField>
+        </ComposeSection>
 
-          <MultiImagePicker variant="strip" inputId="request-images" items={images} onChange={setImages} />
-
-          <label className="block space-y-1 border-l-2 border-secondary/60 pl-3">
-            <span className="flex items-center gap-1.5 text-label font-semibold text-text">
-              <Sparkles size={14} aria-hidden className="text-secondary" />
-              {t("request.creativeDirection")}
-            </span>
+        <ComposeSection title={t("compose.sectionDirection")}>
+          <FormField label={t("request.creativeDirection")} htmlFor="request-direction" optional>
             <MentionTextarea
               id="request-direction"
-              aria-label={t("request.creativeDirection")}
-              rows={2}
+              rows={3}
               value={creativeDirection}
               onChange={setCreativeDirection}
               placeholder={t("request.creativeDirectionPlaceholder")}
-              className={composeBodyClassName}
+              className={formTextareaClassName}
             />
-          </label>
-
-        </ComposeBody>
-      </form>
-
-      {sheet && (
-        <ComposeSheet
-          id={sheet}
-          title={sheet === "tags" ? t("forms.tags") : sheet === "tool" ? t("formSection.tool") : sheet === "vision" ? t("vision.helpTitle") : t("taxonomy.categoryLabel")}
-          onClose={() => setSheet(null)}
-        >
-          {sheet === "tags" && <TagPicker picker={tagPicker} />}
-          {sheet === "vision" && (
-            <RequestVisionAssist
-              onApplyDescription={(text) => setDescription((prev) => (prev.trim() ? `${prev}\n\n${text}` : text))}
-              onApplyCreativeDirection={(text) => setCreativeDirection((prev) => (prev.trim() ? `${prev} · ${text}` : text))}
-            />
+          </FormField>
+          <FormField label={t("compose.toolReference")} optional>
+            <MultiImagePicker items={images} onChange={setImages} />
+          </FormField>
+          {!isEditMode && contentType === "image" && (
+            <FormDisclosure id="vision" label={t("vision.helpTitle")} hint={t("compose.toolHelp")}>
+              <RequestVisionAssist
+                onApplyDescription={(text) => setDescription((prev) => (prev.trim() ? `${prev}\n\n${text}` : text))}
+                onApplyCreativeDirection={(text) => setCreativeDirection((prev) => (prev.trim() ? `${prev} · ${text}` : text))}
+              />
+            </FormDisclosure>
           )}
-          {sheet === "tool" && <ToolPicker value={tools} onChange={setTools} contentType={contentType} category={category} />}
-          {sheet === "category" && (
+        </ComposeSection>
+
+        <ComposeSection title={t("compose.sectionDetails")}>
+          <FormDisclosure id="tool" label={t("formSection.tool")} value={resolveToolRefs(tools)[0]?.label}>
+            <ToolPicker value={tools} onChange={setTools} contentType={contentType} category={category} />
+          </FormDisclosure>
+          <FormDisclosure id="category" label={t("taxonomy.categoryLabel")} value={categoryPath}>
             <TaxonomyPicker
               bare
               value={{ contentType, category, subcategory }}
@@ -517,46 +483,54 @@ export function CreateRequestForm() {
               lockContentType={isEditMode}
               lockedHint={t("prompt.notEditableWhileEditing")}
             />
-          )}
-        </ComposeSheet>
-      )}
+          </FormDisclosure>
+          <FormDisclosure
+            id="tags"
+            label={t("forms.tags")}
+            value={tagPicker.accepted.length > 0 ? t("compose.tagCount", { count: tagPicker.accepted.length }) : undefined}
+            hint={tagPicker.suggested.length > 0 ? t("compose.suggestionCount", { count: tagPicker.suggested.length }) : undefined}
+          >
+            <TagPicker picker={tagPicker} />
+          </FormDisclosure>
+          <SuggestedTagsRow picker={tagPicker} />
+        </ComposeSection>
 
-      {publishOpen && (
-        <PublishSheet
-          onClose={() => setPublishOpen(false)}
-          onConfirm={() => void publish()}
-          onSaveDraft={canSaveDraft ? () => void handleSaveDraft() : undefined}
-          busy={isSubmitting}
-          title={isSaveMode ? t("compose.beforeSave") : undefined}
-          confirmLabel={isSubmitting ? (isSaveMode ? t("common.saving") : t("prompt.publishing")) : isSaveMode ? t("common.save") : t("common.share")}
-          hideDestination={isEditMode}
-          visibility={visibility}
-          onVisibilityChange={setVisibility}
-          problems={problems}
-          details={
-            <>
-              <PublishDetailsSection title={t("compose.postInfo")} rows={infoRows} />
-              <SuggestedTagsRow picker={tagPicker} />
-            </>
-          }
-          preview={
-            <PublishPreview
-              thumbnail={images[0]?.url ?? null}
-              icon={Sparkles}
-              typeLabel={[t("request.title"), resolveToolRefs(tools)[0]?.label].filter(Boolean).join(" · ")}
-              title={title.trim() || t("request.untitledRequest")}
-              meta={[ownProfile ? `@${ownProfile.username}` : "", ...tagPicker.accepted.slice(0, 3).map((entry) => `#${entry.tag.label}`)].filter(Boolean).join(" · ")}
-            />
-          }
-        >
-          {draftNotice && <p className="text-sm text-success">{t("draft.saved")}</p>}
-          {publishError && (
-            <p role="alert" className="animate-pop-in text-sm text-danger">
-              {publishError}
-            </p>
-          )}
-        </PublishSheet>
-      )}
+        <ComposeSection title={t("publish.whoSees")} id="compose-publish">
+          <PublishPanel
+            ref={panelRef}
+            onConfirm={() => void publish()}
+            onSaveDraft={canSaveDraft ? () => void handleSaveDraft() : undefined}
+            onBlocked={(problem) => {
+              setTitleTouched(true);
+              setDescriptionTouched(true);
+              problem.onFix?.();
+            }}
+            busy={isSubmitting}
+            confirmLabel={publishLabel}
+            hideDestination={isEditMode}
+            visibility={visibility}
+            onVisibilityChange={setVisibility}
+            problems={problems}
+            showProblems={titleTouched || descriptionTouched}
+            preview={
+              <PublishPreview
+                thumbnail={images[0]?.url ?? null}
+                icon={Sparkles}
+                typeLabel={[t("request.title"), resolveToolRefs(tools)[0]?.label].filter(Boolean).join(" · ")}
+                title={title.trim() || t("request.untitledRequest")}
+                meta={[ownProfile ? `@${ownProfile.username}` : "", ...tagPicker.accepted.slice(0, 3).map((entry) => `#${entry.tag.label}`)].filter(Boolean).join(" · ")}
+              />
+            }
+          >
+            {draftNotice && <p className="text-sm text-success">{t("draft.saved")}</p>}
+            {publishError && (
+              <p role="alert" className="animate-pop-in text-sm text-danger">
+                {publishError}
+              </p>
+            )}
+          </PublishPanel>
+        </ComposeSection>
+      </form>
       {leave.dialog}
     </ComposeShell>
   );

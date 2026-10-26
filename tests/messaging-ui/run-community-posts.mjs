@@ -291,12 +291,12 @@ await scenario("12. Yetki: yerel içerikte not/başvuru menüsü yok; başvuruda
   assert.equal(await page.getByRole("menuitem", { name: /Gönderiyi kaldır \(yönetici\)/ }).count(), 0, "a member never gets staff removal");
 }, { setup: (db) => { seed(db, { myRole: "member" }); db.addPost(C1, { author: U.alice, title: "Yerel yazar", kind: "native" }); db.addPost(C1, { author: U.alice, title: "Başvuru yazar", kind: "application", note: "n" }); db.addPost(C1, { author: U.bob, title: "Başkasının yerel", kind: "native" }); } });
 
-// 13 — oluşturma ekranı topluluk bağlamı (docs/history/216-*: yazma ekranı + son kontrol penceresi)
+// 13 — oluşturma ekranı topluluk bağlamı (docs/history/244-*: tek sayfa form, formun sonunda "Kim görsün?" bölümü)
 const openPublish = async (page) => {
-  await page.locator("[data-compose-publish]").click();
-  await page.locator("[data-publish-sheet]").waitFor();
+  await page.locator("[data-publish-panel]").waitFor();
+  await page.locator("[data-publish-panel]").scrollIntoViewIfNeeded();
 };
-await scenario("13. Oluşturma ekranı topluluk bağlamıyla açılınca: yazma ekranı topluluğu söyler; son kontrolde topluluk seçili, cümle ne olacağını yazar, 'Taslak' YOK; bağlam yokken taslak var", async ({ page }) => {
+await scenario("13. Oluşturma ekranı topluluk bağlamıyla açılınca: yazma ekranı topluluğu söyler; Kim görsün?'te topluluk seçili, cümle ne olacağını yazar, 'Taslak' YOK; bağlam yokken taslak var", async ({ page }) => {
   await page.goto(`${BASE}/requests/new?community=${C1}`);
   await page.locator("[data-compose-audience]").getByText("Prompt Atölyesi").waitFor();
   await openPublish(page);
@@ -304,13 +304,13 @@ await scenario("13. Oluşturma ekranı topluluk bağlamıyla açılınca: yazma 
   await page.locator("[data-audience-community]").getByText("Prompt Atölyesi").waitFor();
   assert.match(await page.locator('[data-publish-summary="community"]').innerText(), /Prompt Atölyesi topluluğuna ait olacak/);
   assert.equal(await page.locator("[data-announce-picker]").count(), 0, "community content is not announced elsewhere");
-  assert.equal(await page.locator("[data-publish-sheet] [data-action=save-draft]").count(), 0, "community content can't be a draft");
-  await page.locator("[data-publish-sheet] [data-action=publish]").waitFor();
+  assert.equal(await page.locator("[data-publish-panel] [data-action=save-draft]").count(), 0, "community content can't be a draft");
+  await page.locator("[data-publish-panel] [data-action=publish]").waitFor();
   await page.goto(`${BASE}/requests/new`);
   await openPublish(page);
   await page.locator('[data-audience-field="public"]').waitFor();
   await page.locator('[data-audience-option="private"]').waitFor();
-  await page.locator("[data-publish-sheet] [data-action=save-draft]").waitFor();
+  await page.locator("[data-publish-panel] [data-action=save-draft]").waitFor();
   await page.locator('[data-publish-summary="public"]').waitFor();
 }, { setup: (db) => seed(db, { myRole: "member" }) });
 
@@ -320,7 +320,7 @@ await scenario("13b. Yayınlama: topluluk bağlamlı NORMAL istek formu içeriğ
   await page.locator("#request-title").fill("Topluluğa özel istek");
   await page.locator("#request-description").fill("Bu topluluk için bir stil isteği");
   await openPublish(page);
-  await page.locator("[data-publish-sheet] [data-action=publish]").click();
+  await page.locator("[data-publish-panel] [data-action=publish]").click();
   await page.waitForURL(/communities\/local\/?\?id=.*shared=1/);
   const inserted = calls(db, "prompt_requests", "POST");
   assert.equal(inserted.length, 1);
@@ -338,7 +338,7 @@ await scenario("13c. Normal (topluluk bağlamsız) istek formu `community_id` g�
   await page.locator("#request-title").fill("Normal istek");
   await page.locator("#request-description").fill("Bu normal bir isteğin yeterince uzun açıklamasıdır");
   await openPublish(page);
-  await page.locator("[data-publish-sheet] [data-action=publish]").click();
+  await page.locator("[data-publish-panel] [data-action=publish]").click();
   await page.waitForURL(/requests\/local/);
   const inserted = calls(db, "prompt_requests", "POST");
   assert.equal(inserted.length, 1);
