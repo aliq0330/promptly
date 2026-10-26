@@ -230,8 +230,10 @@ await scenario("2. Üst çubuktan Odak: tam ekran, üst/yan menü gizli, koyu sa
   assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector("aside[data-app-chrome]")).visibility), "hidden");
   assert.equal(await page.evaluate(() => document.body.style.overflow), "hidden");
   assert.equal(await stage(page).evaluate((el) => el.classList.contains("dark")), true);
-  // iOS Safari boyar kendi çubuklarını BELGENİN color-scheme'ine göre (docs/history/246-*): açık temada da Odak açıkken belge koyu şemada olmalı.
+  // iOS Safari kendi çubuklarını BELGENİN moduna göre boyar (docs/history/246-*, 247-*): açık temada da Odak açıkken site gerçekten koyu moddadır.
+  assert.equal(await page.evaluate(() => document.documentElement.classList.contains("dark")), true, "the whole site is dark while Odak is open");
   assert.equal(await page.evaluate(() => getComputedStyle(document.documentElement).colorScheme), "dark", "document color-scheme is dark while Odak is open");
+  assert.equal(await page.evaluate(() => localStorage.getItem("promptly-theme")), null, "the saved theme preference is untouched");
   assert.equal(await counter(page).getAttribute("aria-label"), "Gönderi 1 / 16", "Medya açık: görselsiz metin promptu ve workflow düşer (18 satırdan 2 eksik)");
   assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector("[data-focus-feed] [role='region']")).scrollSnapType), "x mandatory");
   assert.match(await page.title(), /Odak/);
@@ -370,7 +372,8 @@ await scenario("11. Kapat (X) ve Esc: geldiği sayfaya döner, menüler ve kayd�
   assert.equal(await stage(page).count(), 0);
   assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector("header[data-app-chrome]")).visibility), "visible");
   assert.equal(await page.evaluate(() => document.body.style.overflow), "");
-  assert.equal(await page.evaluate(() => getComputedStyle(document.documentElement).colorScheme), "light", "light theme: the document scheme comes back on close");
+  assert.equal(await page.evaluate(() => document.documentElement.classList.contains("dark")), false, "light theme: the site comes back to light on close");
+  assert.equal(await page.evaluate(() => getComputedStyle(document.documentElement).colorScheme), "light", "…and so does the document scheme");
   await page.locator("header[data-app-header] a[href*='/focus']").click();
   await slides(page).first().waitFor();
   await page.waitForTimeout(300);
@@ -447,7 +450,7 @@ await scenario("15. İngilizce", async ({ page }) => {
 
 await scenario("16. Açık temada da koyu sahne; hareket azaltmada geçiş yok", async ({ page }) => {
   await openFocus(page);
-  assert.equal(await page.evaluate(() => document.documentElement.classList.contains("dark")), false, "site stays light");
+  assert.equal(await page.evaluate(() => document.documentElement.classList.contains("dark")), true, "the site goes dark while Odak is open (docs/history/247-*)");
   const lum = await stage(page).evaluate((el) => { const [r, g, b] = getComputedStyle(el).backgroundColor.match(/\d+/g).map(Number); return (r + g + b) / 3; });
   assert.ok(lum < 40, `stage is dark (${lum})`);
   const duration = await page.evaluate(() => getComputedStyle(document.querySelector("[data-focus-feed] [data-slide-index] img")).transitionDuration);
@@ -785,6 +788,42 @@ await scenario("30. Bilgi: gönderide yalnız özet; Bilgi açınca alttan sayfa
   await page.waitForTimeout(400);
   assert.equal(await info.count(), 0, "one sheet at a time");
 }, { viewport: { width: 390, height: 844 } });
+
+await scenario("31. Koyu temada Odak: site zaten koyu, kapatınca koyu kalır, kayıtlı tercih değişmez", async ({ page }) => {
+  await page.goto(`${BASE}/discover`);
+  await page.waitForTimeout(800);
+  assert.equal(await page.evaluate(() => document.documentElement.classList.contains("dark")), true, "dark theme to start with");
+  await page.locator("header[data-app-header] a[href*='/focus']").click();
+  await slides(page).first().waitFor();
+  assert.equal(await page.evaluate(() => document.documentElement.classList.contains("dark")), true);
+  await stage(page).getByRole("button", { name: "Odak'ı kapat" }).first().click();
+  await page.waitForURL(/\/discover/);
+  await page.waitForTimeout(500);
+  assert.equal(await page.evaluate(() => document.documentElement.classList.contains("dark")), true, "a dark visitor stays dark after Odak");
+  assert.equal(await page.evaluate(() => localStorage.getItem("promptly-theme")), "dark");
+}, { theme: "dark" });
+
+await scenario("32. Açık temada Odak: açıkken TÜM site koyu moda geçer, kapatınca (X ve Esc) eski açık haline döner; kayıtlı tercih 'light' kalır", async ({ page }) => {
+  await page.goto(`${BASE}/discover`);
+  await page.waitForTimeout(800);
+  const dark = () => page.evaluate(() => document.documentElement.classList.contains("dark"));
+  assert.equal(await dark(), false, "light theme to start with");
+  await page.locator("header[data-app-header] a[href*='/focus']").click();
+  await slides(page).first().waitFor();
+  assert.equal(await dark(), true, "dark while Odak is open");
+  await stage(page).getByRole("button", { name: "Odak'ı kapat" }).first().click();
+  await page.waitForURL(/\/discover/);
+  await page.waitForTimeout(500);
+  assert.equal(await dark(), false, "back to light after X");
+  await page.locator("header[data-app-header] a[href*='/focus']").click();
+  await slides(page).first().waitFor();
+  assert.equal(await dark(), true);
+  await page.keyboard.press("Escape");
+  await page.waitForURL(/\/discover/);
+  await page.waitForTimeout(500);
+  assert.equal(await dark(), false, "back to light after Esc");
+  assert.equal(await page.evaluate(() => localStorage.getItem("promptly-theme")), "light", "the saved preference never changed");
+}, { theme: "light" });
 
 await browser.close();
 server.close();
