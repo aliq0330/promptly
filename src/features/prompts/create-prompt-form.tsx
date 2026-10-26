@@ -5,7 +5,7 @@ import { ToolPicker } from "@/features/content/tool-picker";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Braces, Copy, Cpu, Eye, EyeOff, FileCheck2, Folder, Hash, ImagePlus, Layers, Sparkles, X } from "lucide-react";
+import { Copy, Eye, EyeOff, X } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { PromptCard } from "@/features/prompts/prompt-card";
 import { TaxonomyPicker } from "@/features/content/taxonomy-picker";
@@ -20,7 +20,7 @@ import { TagPicker } from "@/features/prompts/tag-picker";
 import { ExtraSettingsSection } from "@/features/prompts/extra-settings-panel";
 import { catalogFields, catalogFieldsForType, fieldIdsFor } from "@/lib/prompt-extra-settings";
 import { composePrompt, mergeFields, sanitizeSelection, withCustomOptions, type CustomOptions, type PresetField, type PresetSelection } from "@/lib/preset-fields";
-import { PromptTextEditor, type DraftVariable, type PromptTextEditorHandle } from "@/features/prompts/prompt-text-editor";
+import { PromptTextEditor, type DraftVariable } from "@/features/prompts/prompt-text-editor";
 import { PromptDnaEditor } from "@/features/prompts/prompt-dna-editor";
 import { fetchDnaSections, replaceDnaSections } from "@/lib/supabase/prompt-dna";
 import type { DnaSection } from "@/lib/prompt-dna/types";
@@ -40,9 +40,10 @@ import {
 } from "@/features/content/reference-requirements";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { KindDraftsButton } from "@/features/drafts/kind-drafts-button";
-import { ComposeSheet, ComposeShell, ComposeToolbar, PublishPreview, composeBodyClassName, composeTitleClassName, useComposeLeave, useDirty } from "@/features/content/compose";
-import { ComposeBody, ContentTypePicker, SuggestedTagsRow } from "@/features/content/compose-fields";
-import { PublishDetailsSection, PublishSheet, type PublishDetailRow, type PublishProblem } from "@/features/content/publish-sheet";
+import { ComposeShell, PublishPreview, useComposeLeave, useDirty } from "@/features/content/compose";
+import { ComposeAudienceLine, ComposeSection, FormDisclosure, FormField, formTextInputClassName, formTextareaClassName } from "@/features/content/compose-form";
+import { ContentTypePicker, SuggestedTagsRow } from "@/features/content/compose-fields";
+import { PublishPanel, type PublishPanelHandle, type PublishProblem } from "@/features/content/publish-panel";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
 import { resolveToolRefs } from "@/lib/ai-tool-catalog";
 import { taxonomyPathLabel } from "@/lib/content-taxonomy";
@@ -50,10 +51,8 @@ import { SwitchRow } from "@/features/content/visibility-switch";
 import type { ContentVisibility, Prompt, PromptContentType, PromptRequest } from "@/types";
 
 
-type ComposeSheetKey = "tags" | "tool" | "category" | "dna" | "references";
 
 /** "Görsel" araç düğmesinin açtığı dosya seçici (görsel şeridindeki girişle aynı). */
-const IMAGE_INPUT_ID = "prompt-images";
 
 function LoginGate({ message }: { message: string }) {
   const { t } = useTranslation();
@@ -342,11 +341,10 @@ export function CreatePromptForm() {
   const outputFailedParam = isEditMode ? searchParams.get("outputFailed") : null;
   const canSaveDraft = !isAnswerMode && (!isEditMode || isEditingDraft);
   // Yazma ekranı (docs/history/216-*): araç çubuğunun alt sayfası, son kontrol penceresi ve ✕'teki "kaydedilsin mi?".
-  const [sheet, setSheet] = useState<ComposeSheetKey | null>(null);
-  const [publishOpen, setPublishOpen] = useState(false);
+  const panelRef = useRef<PublishPanelHandle>(null);
+  // İlk "Paylaş" denemesinden sonra eksik alanların hataları görünür (denemeden önce yalnız "Zorunlu" işareti var).
+  const [attempted, setAttempted] = useState(false);
   // Araç çubuğu yazma alanlarını dışarıdan açar: "Değişken" ekleme yüzeyini, "Görsel" dosya seçiciyi, "Gelişmiş" hazır ayar panelini.
-  const editorRef = useRef<PromptTextEditorHandle>(null);
-  const [extraOpen, setExtraOpen] = useState(false);
   const dirty = useDirty(
     JSON.stringify([contentType, category, subcategory, title, description, promptText, tools, images.map((item) => item.key), tagPicker.accepted.map((entry) => entry.tag.slug), extraSettings, variables, dnaSections.length, references, visibility, showOnProfile, pickedOutput?.file.name ?? null]),
     sourceChecked && (fieldsSeeded || (!isEditMode && !isDuplicateMode && !isAnswerMode)),
@@ -755,32 +753,8 @@ export function CreatePromptForm() {
     setSubcategory(next.subcategory);
   }
 
-  const sheetTitle: Record<ComposeSheetKey, string> = {
-    tags: t("forms.tags"),
-    tool: t("formSection.tool"),
-    category: t("taxonomy.categoryLabel"),
-    dna: t("dna.title"),
-    references: t("compose.references"),
-  };
   const categoryPath = category ? taxonomyPathLabel({ contentType, category, subcategory }, language, false) : "";
-  const infoRows: PublishDetailRow[] = [
-    { key: "category", icon: Folder, label: t("taxonomy.categoryLabel"), value: categoryPath, onClick: () => setSheet("category") },
-    { key: "tool", icon: Cpu, label: t("formSection.tool"), value: toolLabel, onClick: () => setSheet("tool") },
-    {
-      key: "tags",
-      icon: Hash,
-      label: t("forms.tags"),
-      value: tagPicker.accepted.length > 0 ? t("compose.tagCount", { count: tagPicker.accepted.length }) : undefined,
-      hint: tagPicker.suggested.length > 0 ? t("compose.suggestionCount", { count: tagPicker.suggested.length }) : undefined,
-      onClick: () => setSheet("tags"),
-    },
-  ];
-  const advancedRows: PublishDetailRow[] = [
-    { key: "dna", icon: FileCheck2, label: t("dna.title"), hint: t("compose.dnaHint"), value: dnaSections.length > 0 ? String(dnaSections.length) : undefined, onClick: () => setSheet("dna") },
-    ...(contentType === "text"
-      ? []
-      : [{ key: "references", icon: ImagePlus, label: t("compose.references"), hint: t("compose.referencesHint"), value: Object.values(effectiveReferences).some(Boolean) ? t("common.yes") : undefined, onClick: () => setSheet("references") }]),
-  ];
+  const publishLabel = isSubmitting ? (isSaveMode ? t("common.saving") : t("prompt.publishing")) : isSaveMode ? t("common.save") : t("common.share");
 
   return (
     <ComposeShell
@@ -795,9 +769,11 @@ export function CreatePromptForm() {
       }
       titleExtra={<KindDraftsButton kind="prompt" compact />}
       onClose={leave.requestClose}
-      onPublish={() => setPublishOpen(true)}
+      onPublish={() => panelRef.current?.publish()}
       publishLabel={isSaveMode ? t("common.save") : t("common.share")}
       publishDisabled={isSubmitting}
+      publishDimmed={problems.length > 0}
+      onSaveDraft={canSaveDraft && !communityId ? () => void handleSaveDraft() : undefined}
       aside={
         <>
           <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-muted">{t("forms.livePreview")}</p>
@@ -810,9 +786,10 @@ export function CreatePromptForm() {
       <form
         onSubmit={(event) => {
           event.preventDefault();
-          setPublishOpen(true);
+          panelRef.current?.publish();
         }}
-        className="space-y-4"
+        data-compose-body=""
+        className="space-y-6"
       >
         {isAnswerMode && answeredRequest && (
           <div className="space-y-2 rounded-xl border border-primary/30 bg-primary/5 p-3 text-sm">
@@ -856,75 +833,47 @@ export function CreatePromptForm() {
           </div>
         )}
 
-        <ComposeBody
-          profile={ownProfile}
-          audienceLabel={communityId ? (communityName ?? t("compose.aCommunity")) : undefined}
-          onAudience={() => setPublishOpen(true)}
-          typeSlot={
+        {communityId && (
+          <ComposeAudienceLine profile={ownProfile} label={communityName ?? t("compose.aCommunity")} onClick={() => document.getElementById("compose-publish")?.scrollIntoView({ behavior: "smooth", block: "center" })} />
+        )}
+
+        <ComposeSection title={t("formSection.basics")}>
+          <FormField label={t("compose.whatMaking")} required>
             <ContentTypePicker
               value={contentType}
               onChange={(type) => changeTaxonomy({ contentType: type, category: null, subcategory: null })}
               locked={isEditMode}
             />
-          }
-          toolbar={
-            <ComposeToolbar
-              tools={[
-                {
-                  key: "preset",
-                  icon: Layers,
-                  label: t("compose.toolPreset"),
-                  badge: Object.keys(extraSettings).length || undefined,
-                  highlight: true,
-                  onClick: () => setExtraOpen(true),
-                },
-                ...(contentType === "image"
-                  ? [{ key: "image", icon: ImagePlus, label: t("compose.toolImage"), badge: images.length || undefined, onClick: () => document.getElementById(IMAGE_INPUT_ID)?.click() }]
-                  : []),
-                { key: "variable", icon: Braces, label: t("compose.toolVariable"), badge: variables.length || undefined, onClick: () => editorRef.current?.openInsert() },
-                ...(contentType === "image" ? [{ key: "vision", icon: Sparkles, label: t("compose.toolVision"), onClick: () => editorRef.current?.openVisionHelp() }] : []),
-              ]}
+          </FormField>
+          <FormField label={t("forms.title")} htmlFor="prompt-title" required hint={t("compose.titleHint")} error={attempted && !title.trim() ? t("compose.problemTitle") : null}>
+            <input
+              id="prompt-title"
+              value={title}
+              onChange={(event) => setTitle(event.target.value)}
+              maxLength={80}
+              placeholder={t("prompt.titlePlaceholder")}
+              aria-invalid={attempted && !title.trim() ? true : undefined}
+              className={formTextInputClassName}
             />
-          }
-        >
-          <input
-            id="prompt-title"
-            value={title}
-            onChange={(event) => setTitle(event.target.value)}
-            maxLength={80}
-            placeholder={t("prompt.titlePlaceholder")}
-            aria-label={t("forms.title")}
-            className={composeTitleClassName}
-          />
-          <input
-            id="prompt-description"
-            value={description}
-            onChange={(event) => setDescription(event.target.value)}
-            maxLength={200}
-            placeholder={t("prompt.descriptionPlaceholder")}
-            aria-label={t("compose.descriptionLabel")}
-            className={composeBodyClassName}
-          />
+          </FormField>
+        </ComposeSection>
 
-          <PromptTextEditor
-            ref={editorRef}
-            variant="compose"
-            id="prompt-text"
-            value={promptText}
-            onChange={setPromptText}
-            variables={variables}
-            onVariablesChange={setVariables}
-            rows={4}
-            placeholder={t("prompt.promptTextPlaceholder")}
-            // "Görselden yardım" works on the image already picked below — no second upload.
-            visionFile={contentType === "image" ? (images.find((item) => item.file)?.file ?? null) : null}
-          />
+        <ComposeSection title={t("formSection.prompt")}>
+          <FormField label={t("compose.promptText")} required>
+            <PromptTextEditor
+              id="prompt-text"
+              value={promptText}
+              onChange={setPromptText}
+              variables={variables}
+              onVariablesChange={setVariables}
+              rows={5}
+              placeholder={t("prompt.promptTextPlaceholder")}
+              // "Görselden yardım" works on the image already picked below — no second upload.
+              visionFile={contentType === "image" ? (images.find((item) => item.file)?.file ?? null) : null}
+            />
+          </FormField>
 
-          {/* Hazır ayarlar ve ek alan önerileri: panel araç satırındaki "Hazır ayar"dan açılır, uygulananlar burada çip olarak görünür. */}
           <ExtraSettingsSection
-            compact
-            open={extraOpen}
-            onOpenChange={setExtraOpen}
             contentType={contentType}
             value={extraSettings}
             onChange={setExtraSettings}
@@ -942,93 +891,116 @@ export function CreatePromptForm() {
           />
 
           {contentType === "image" && (
-            <MultiImagePicker
-              variant="strip"
-              inputId={IMAGE_INPUT_ID}
-              items={images}
-              onChange={setImages}
-              hint={isEditMode ? t("prompt.imageEditHint") : t("prompt.imageUploadHint")}
-            />
+            <FormField label={t("formSection.images")} optional>
+              <MultiImagePicker items={images} onChange={setImages} hint={isEditMode ? t("prompt.imageEditHint") : t("prompt.imageUploadHint")} />
+            </FormField>
           )}
 
           {outputKind && (
-            <OutputFilePicker kind={outputKind} file={outputFile} onChange={(file) => setPickedOutput(file ? { kind: outputKind, file } : null)} disabled={isSubmitting} />
+            <FormField label={outputKind === "video" ? t("formSection.outputVideo") : t("formSection.outputAudio")} optional>
+              <OutputFilePicker kind={outputKind} file={outputFile} onChange={(file) => setPickedOutput(file ? { kind: outputKind, file } : null)} disabled={isSubmitting} />
+            </FormField>
           )}
-        </ComposeBody>
-      </form>
 
-      {sheet && (
-        <ComposeSheet id={sheet} title={sheetTitle[sheet]} onClose={() => setSheet(null)}>
-          {sheet === "tags" && <TagPicker picker={tagPicker} />}
-          {sheet === "tool" && <ToolPicker value={tools} onChange={setTools} contentType={contentType} category={category} />}
-          {sheet === "category" && (
+          <FormField label={t("compose.descriptionLabel")} htmlFor="prompt-description" required error={attempted && !description.trim() ? t("compose.problemDescription") : null}>
+            <textarea
+              id="prompt-description"
+              value={description}
+              onChange={(event) => setDescription(event.target.value)}
+              maxLength={200}
+              rows={3}
+              placeholder={t("prompt.descriptionPlaceholder")}
+              aria-invalid={attempted && !description.trim() ? true : undefined}
+              className={formTextareaClassName}
+            />
+          </FormField>
+        </ComposeSection>
+
+        <ComposeSection title={t("compose.sectionDetails")}>
+          <FormDisclosure id="tool" label={t("formSection.tool")} value={toolLabel}>
+            <ToolPicker value={tools} onChange={setTools} contentType={contentType} category={category} />
+          </FormDisclosure>
+          <FormDisclosure id="category" label={t("taxonomy.categoryLabel")} value={categoryPath}>
             <TaxonomyPicker bare value={{ contentType, category, subcategory }} onChange={changeTaxonomy} lockContentType={isEditMode} lockedHint={t("prompt.notEditableWhileEditing")} />
-          )}
-          {sheet === "dna" && (
+          </FormDisclosure>
+          <FormDisclosure
+            id="tags"
+            label={t("forms.tags")}
+            value={tagPicker.accepted.length > 0 ? t("compose.tagCount", { count: tagPicker.accepted.length }) : undefined}
+            hint={tagPicker.suggested.length > 0 ? t("compose.suggestionCount", { count: tagPicker.suggested.length }) : undefined}
+          >
+            <TagPicker picker={tagPicker} />
+          </FormDisclosure>
+          <SuggestedTagsRow picker={tagPicker} />
+          <FormDisclosure id="dna" label={t("dna.title")} hint={t("compose.dnaHint")} value={dnaSections.length > 0 ? String(dnaSections.length) : undefined}>
             <section className="space-y-2">
               <p className="text-caption text-text-muted">{t("dna.description")}</p>
               <PromptDnaEditor promptText={promptText} contentType={contentType} sections={dnaSections} onChange={setDnaSections} />
             </section>
+          </FormDisclosure>
+          {contentType !== "text" && (
+            <FormDisclosure
+              id="references"
+              label={t("compose.references")}
+              hint={t("compose.referencesHint")}
+              value={Object.values(effectiveReferences).some(Boolean) ? t("common.yes") : undefined}
+            >
+              <ReferenceRequirementsField contentType={contentType} value={references} onChange={setReferences} />
+            </FormDisclosure>
           )}
-          {sheet === "references" && <ReferenceRequirementsField contentType={contentType} value={references} onChange={setReferences} />}
-        </ComposeSheet>
-      )}
+        </ComposeSection>
 
-      {publishOpen && (
-        <PublishSheet
-          onClose={() => setPublishOpen(false)}
-          onConfirm={() => void publish()}
-          onSaveDraft={canSaveDraft ? () => void handleSaveDraft() : undefined}
-          busy={isSubmitting}
-          title={isSaveMode ? t("compose.beforeSave") : undefined}
-          confirmLabel={
-            isSubmitting ? (isSaveMode ? t("common.saving") : t("prompt.publishing")) : isSaveMode ? t("common.save") : t("common.share")
-          }
-          hideDestination={isEditMode}
-          visibility={showsVisibilityChoice ? undefined : visibility}
-          onVisibilityChange={showsVisibilityChoice ? undefined : setVisibility}
-          problems={problems}
-          details={
-            <>
-              <PublishDetailsSection title={t("compose.postInfo")} rows={infoRows} />
-              <SuggestedTagsRow picker={tagPicker} />
-              <PublishDetailsSection title={t("compose.advancedTitle")} aside={t("common.optional")} rows={advancedRows} />
-            </>
-          }
-          preview={
-            <PublishPreview
-              thumbnail={contentType === "image" ? (images[0]?.url ?? null) : null}
-              icon={typeMeta.icon}
-              typeLabel={[`${t(typeMeta.labelKey)} Prompt`, toolLabel].filter(Boolean).join(" · ")}
-              title={title.trim() || t("prompt.untitledPrompt")}
-              meta={[ownProfile ? `@${ownProfile.username}` : "", ...tagPicker.accepted.slice(0, 3).map((entry) => `#${entry.tag.label}`)].filter(Boolean).join(" · ")}
-            />
-          }
-          extra={
-            showsVisibilityChoice ? (
-              <div>
-                <p className="mb-2 text-sm font-medium text-text">{t("prompt.showOnProfileQuestion")}</p>
-                <SwitchRow
-                  checked={showOnProfile}
-                  onChange={setShowOnProfile}
-                  icon={showOnProfile ? <Eye size={18} strokeWidth={1.75} /> : <EyeOff size={18} strokeWidth={1.75} />}
-                  title={showOnProfile ? t("prompt.shareOnProfile") : t("prompt.dontShareOnProfile")}
-                  description={showOnProfile ? t("prompt.shareOnProfileHint") : t("prompt.dontShareOnProfileHint")}
-                  ariaLabel={t("prompt.showOnProfileQuestion")}
-                  disabled={isSubmitting}
-                />
+        <ComposeSection title={t("publish.whoSees")} id="compose-publish">
+          <PublishPanel
+            ref={panelRef}
+            onConfirm={() => void publish()}
+            onSaveDraft={canSaveDraft ? () => void handleSaveDraft() : undefined}
+            onBlocked={(problem) => {
+              setAttempted(true);
+              problem.onFix?.();
+            }}
+            busy={isSubmitting}
+            confirmLabel={publishLabel}
+            hideDestination={isEditMode}
+            visibility={showsVisibilityChoice ? undefined : visibility}
+            onVisibilityChange={showsVisibilityChoice ? undefined : setVisibility}
+            problems={problems}
+            showProblems={attempted}
+            preview={
+              <PublishPreview
+                thumbnail={contentType === "image" ? (images[0]?.url ?? null) : null}
+                icon={typeMeta.icon}
+                typeLabel={[`${t(typeMeta.labelKey)} Prompt`, toolLabel].filter(Boolean).join(" · ")}
+                title={title.trim() || t("prompt.untitledPrompt")}
+                meta={[ownProfile ? `@${ownProfile.username}` : "", ...tagPicker.accepted.slice(0, 3).map((entry) => `#${entry.tag.label}`)].filter(Boolean).join(" · ")}
+              />
+            }
+            extra={
+              showsVisibilityChoice ? (
+                <div>
+                  <p className="mb-2 text-sm font-medium text-text">{t("prompt.showOnProfileQuestion")}</p>
+                  <SwitchRow
+                    checked={showOnProfile}
+                    onChange={setShowOnProfile}
+                    icon={showOnProfile ? <Eye size={18} strokeWidth={1.75} /> : <EyeOff size={18} strokeWidth={1.75} />}
+                    title={showOnProfile ? t("prompt.shareOnProfile") : t("prompt.dontShareOnProfile")}
+                    description={showOnProfile ? t("prompt.shareOnProfileHint") : t("prompt.dontShareOnProfileHint")}
+                    ariaLabel={t("prompt.showOnProfileQuestion")}
+                    disabled={isSubmitting}
+                  />
+                </div>
+              ) : undefined
+            }
+          >
+            {draftNotice && <p className="animate-pop-in text-sm text-success">{t("draft.saved")}</p>}
+            {publishError && (
+              <div role="alert" className="animate-pop-in rounded-xl border border-danger/30 bg-danger/5 p-3 text-sm text-danger">
+                {publishError}
               </div>
-            ) : undefined
-          }
-        >
-          {draftNotice && <p className="animate-pop-in text-sm text-success">{t("draft.saved")}</p>}
-          {publishError && (
-            <div role="alert" className="animate-pop-in rounded-xl border border-danger/30 bg-danger/5 p-3 text-sm text-danger">
-              {publishError}
-            </div>
-          )}
-        </PublishSheet>
-      )}
+            )}
+          </PublishPanel>
+        </ComposeSection>
+      </form>
       {leave.dialog}
     </ComposeShell>
   );

@@ -12,9 +12,10 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
 
 /**
- * Yazma ekranı kabuğu (docs/history/216-*; X / Threads tarzı): açıkken üst menü, kenar çubuğu ve alt menü kalkar
- * (`html[data-compose-open]` → `[data-app-chrome]` yok), yerine yapışkan üst çubuk: ✕ · başlık (+ taslaklar) · durum · "Paylaş".
- * "Paylaş" formu yayınlamaz, son kontrol penceresini (`PublishSheet`) açar. `aside` (canlı önizleme) yalnız `lg`+ sağ sütundur.
+ * Oluşturma ekranı kabuğu (docs/history/216-*, düzeni 244'te "tek sayfa form"a döndü): açıkken üst menü, kenar çubuğu ve alt menü kalkar
+ * (`html[data-compose-open]` → `[data-app-chrome]` yok), yerine yapışkan üst çubuk: ✕ · başlık (+ taslaklar) · durum · "Taslak" · "Paylaş".
+ * "Paylaş" formun kendi yayın bölümünü (`PublishPanel`) çalıştırır; eksik varken soluktur ama basılabilir (eksikleri gösterir).
+ * `aside` (canlı önizleme) yalnız `lg`+ sağ sütundur.
  */
 export function ComposeShell({
   title,
@@ -24,6 +25,8 @@ export function ComposeShell({
   onPublish,
   publishLabel,
   publishDisabled = false,
+  publishDimmed = false,
+  onSaveDraft,
   aside,
   wide = false,
   children,
@@ -36,6 +39,10 @@ export function ComposeShell({
   onPublish: () => void;
   publishLabel: string;
   publishDisabled?: boolean;
+  /** Eksik zorunlu alan varken soluk görünür (yine de basılabilir: eksikleri gösterir). */
+  publishDimmed?: boolean;
+  /** Verilirse üst çubukta "Taslak" düğmesi çıkar. */
+  onSaveDraft?: () => void;
   aside?: ReactNode;
   /** Geniş editörler (Workflow): sağ sütun yok, gövde tam genişlik. */
   wide?: boolean;
@@ -72,7 +79,20 @@ export function ComposeShell({
             {titleExtra}
           </div>
           {status && <div className="hidden shrink-0 text-caption text-text-muted sm:block">{status}</div>}
-          <Button type="button" size="md" onClick={onPublish} disabled={publishDisabled} data-compose-publish="" className="shrink-0 px-5">
+          {onSaveDraft && (
+            <Button type="button" variant="ghost" size="md" onClick={onSaveDraft} disabled={publishDisabled} data-compose-draft="" className="shrink-0 px-3 sm:px-4">
+              <span className="sm:hidden">{t("compose.draft")}</span>
+              <span className="hidden sm:inline">{t("createActions.saveDraft")}</span>
+            </Button>
+          )}
+          <Button
+            type="button"
+            size="md"
+            onClick={onPublish}
+            disabled={publishDisabled}
+            data-compose-publish=""
+            className={cn("shrink-0 px-5", publishDimmed && "opacity-60")}
+          >
             {publishLabel}
           </Button>
         </div>
@@ -89,75 +109,7 @@ export function ComposeShell({
   );
 }
 
-export interface ComposeTool {
-  key: string;
-  icon: LucideIcon;
-  label: string;
-  /** Turuncu sayı: bekleyen öneri ya da seçili ayar sayısı. */
-  badge?: number;
-  /** Açık mavi zemin: satırın öne çıkan aracı (hazır ayar). */
-  highlight?: boolean;
-  onClick: () => void;
-}
-
-/**
- * Araç satırı (docs/history/216-*): simge + kısa etiket; her biri bir alt sayfa ya da panel açar. Yazı alanının ÜSTÜNDE, sayfa akışında
- * durur: `fixed`/`sticky` bir alt çubuk iOS Safari'de klavye açılınca görünen alanla birlikte kaymadığı için asılı kalıyor ya da
- * yazının üstüne biniyordu; sayfanın en üstündeki satırı klavye hiç ilgilendirmez. Yalnız YAZARKEN gereken araçlar burada durur
- * (hazır ayar, görsel, değişken…); kategori/araç/etiket/DNA gibi yayın bilgileri "Paylaşmadan önce" penceresindedir.
- */
-export function ComposeToolbar({ tools }: { tools: ComposeTool[] }) {
-  return (
-    <div data-compose-toolbar="" className="-mx-3 flex items-stretch gap-0.5 overflow-x-auto border-b border-border-soft px-2.5 pb-1.5 sm:mx-0 sm:px-0" role="toolbar">
-      {tools.map((tool) => (
-        <button
-          key={tool.key}
-          type="button"
-          onClick={tool.onClick}
-          data-compose-tool={tool.key}
-          className={cn(
-            "relative flex min-h-14 min-w-[4.25rem] flex-1 flex-col items-center justify-center gap-1 rounded-xl px-1.5 text-center text-[0.6875rem] font-semibold leading-tight transition-colors",
-            tool.highlight ? "bg-primary-soft text-primary" : "text-text-secondary hover:bg-surface-soft hover:text-text",
-          )}
-        >
-          <tool.icon size={21} strokeWidth={1.9} className="text-primary" />
-          {tool.label}
-          {tool.badge ? (
-            <span aria-hidden className="absolute right-2 top-1 min-w-4 rounded-full bg-secondary px-1 text-center text-[0.625rem] font-bold leading-4 text-background">
-              {tool.badge}
-            </span>
-          ) : null}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-/** Araç çubuğunun açtığı alt sayfa: başlık + "Bitti"; mevcut alan bileşeni olduğu gibi içinde. */
-export function ComposeSheet({ id, title, onClose, children }: { id: string; title: string; onClose: () => void; children: ReactNode }) {
-  const { t } = useTranslation();
-  return (
-    <Modal onClose={onClose} labelledBy={`compose-sheet-${id}-title`}>
-      <div
-        data-compose-sheet={id}
-        className="flex max-h-[88vh] w-full max-w-xl flex-col rounded-t-2xl border border-border bg-surface shadow-pop sm:rounded-2xl"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <div className="flex shrink-0 items-center justify-between gap-3 px-4 pb-2 pt-3">
-          <h2 id={`compose-sheet-${id}-title`} className="text-h3 font-bold text-text">
-            {title}
-          </h2>
-          <button type="button" onClick={onClose} data-compose-sheet-done="" className="rounded-full px-3 py-1.5 text-body font-semibold text-primary hover:bg-primary-soft">
-            {t("compose.done")}
-          </button>
-        </div>
-        <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))] sm:pb-5">{children}</div>
-      </div>
-    </Modal>
-  );
-}
-
-/** Son kontrol penceresindeki küçük önizleme: kapak + tür + başlık + alt satır. */
+/** "Kim görsün?" bölümündeki küçük önizleme (yanda canlı önizleme olmayan ekranlarda): kapak + tür + başlık + alt satır. */
 export function PublishPreview({ thumbnail, icon: Icon, typeLabel, title, meta }: { thumbnail?: string | null; icon: LucideIcon; typeLabel: string; title: string; meta: string }) {
   return (
     <div data-publish-preview="" className="flex items-center gap-3 rounded-xl border border-border-soft bg-gradient-to-b from-primary-soft to-surface p-3">
@@ -172,12 +124,6 @@ export function PublishPreview({ thumbnail, icon: Icon, typeLabel, title, meta }
     </div>
   );
 }
-
-/** Başlıksız giriş alanları (kutu yok): yazma ekranının büyük başlığı ve kısa açıklaması. */
-export const composeTitleClassName =
-  "w-full border-0 bg-transparent p-0 font-display text-h2 font-bold text-text placeholder:text-text-muted focus:outline-none focus:ring-0";
-export const composeBodyClassName =
-  "w-full resize-none border-0 bg-transparent p-0 text-body text-text-secondary placeholder:text-text-muted focus:outline-none focus:ring-0";
 
 /**
  * Formun "değişti mi?" bilgisi: hazır olduğu andaki (yeni formda boş, düzenlemede yüklenmiş) imza saklanır, sonraki imza ondan

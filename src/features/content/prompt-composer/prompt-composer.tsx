@@ -22,8 +22,6 @@ export interface ComposerHandle {
   /** Ekleme yüzeyi / oluşturma akışı açıldığı andaki seçim. */
   getPendingRange(): EditorSelection | null;
   getSelection(): EditorSelection;
-  /** "Değişken ekle" yüzeyini dışarıdan açar (yazma ekranının araç çubuğu). */
-  openInsert(): void;
 }
 
 /**
@@ -62,8 +60,6 @@ export const PromptComposer = forwardRef<
     leading?: React.ReactNode;
     /** Düzenleyiciyi gizle (durumu korunur) — ör. Önizleme sekmesi. */
     hideEditor?: boolean;
-    /** Yazma ekranı (docs/history/216-*): üst eylem satırı yok, düzenleyici kutusuz; ekleme `openInsert` ile açılır. */
-    bare?: boolean;
     className?: string;
   }
 >(function PromptComposer(
@@ -85,7 +81,6 @@ export const PromptComposer = forwardRef<
     panelExtra,
     leading,
     hideEditor,
-    bare = false,
     className,
   },
   ref,
@@ -141,7 +136,6 @@ export const PromptComposer = forwardRef<
       insertTokens,
       getPendingRange: () => pendingRangeRef.current,
       getSelection: () => editorRef.current?.getSelection() ?? { start: 0, end: 0 },
-      openInsert: () => openPickerRef.current(),
     }),
     [insertToken, insertTokens],
   );
@@ -157,12 +151,6 @@ export const PromptComposer = forwardRef<
     if (surface === "sheet") editor.blur(); // klavyeyi kapat: sayfa klavyenin altında kalmasın
     setPicker({ surface, range });
   }
-
-  // The imperative handle is created once per insert function; it calls the latest `openPicker` through this ref.
-  const openPickerRef = useRef(() => openPicker());
-  useEffect(() => {
-    openPickerRef.current = () => openPicker();
-  });
 
   function closePicker() {
     setPicker(null);
@@ -354,8 +342,8 @@ export const PromptComposer = forwardRef<
 
   return (
     <div className={cn("space-y-2", className)}>
-      {/* Mobilde uzun metinde bile "Değişken ekle" ekranda kalsın: üst bar'ın altına yapışır. Yazma ekranında bu satır yok (araç çubuğu). */}
-      <div className={cn("flex flex-wrap items-center justify-between gap-2 max-lg:sticky max-lg:top-16 max-lg:z-20 max-lg:-mx-1 max-lg:bg-surface max-lg:px-1 max-lg:py-1.5", bare && "hidden")}>
+      {/* Mobilde uzun metinde bile "Değişken ekle" ekranda kalsın: üst bar'ın altına yapışır. */}
+      <div className="flex flex-wrap items-center justify-between gap-2 max-lg:sticky max-lg:top-16 max-lg:z-20 max-lg:-mx-1 max-lg:bg-surface max-lg:px-1 max-lg:py-1.5">
         <div className="min-w-0">{leading}</div>
         <Button
           ref={triggerRef}
@@ -386,7 +374,6 @@ export const PromptComposer = forwardRef<
         ariaLabel={ariaLabel}
         required={required}
         hidden={hideEditor}
-        bare={bare}
         onSelectionChange={setSelection}
         onFocusChange={setFocused}
         onRequestInsert={() => openPicker()}
@@ -394,7 +381,7 @@ export const PromptComposer = forwardRef<
 
       {toolbar}
 
-      {coarse && !bare && !hideEditor && !hasSelection && (
+      {coarse && !hideEditor && !hasSelection && (
         <p className="flex items-center gap-1.5 text-caption text-text-muted">
           <TextCursorInput size={12} aria-hidden /> {isVariable ? t("composer.hintTouchVariable") : t("composer.hintTouchField")}
         </p>

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCommunityContext, useCommunityReturn } from "@/features/communities/community-return";
-import { AlertTriangle, Cpu, Folder, Hash, Workflow as WorkflowIcon, X } from "lucide-react";
+import { AlertTriangle, Workflow as WorkflowIcon, X } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
 import { Tabs } from "@/components/ui/tabs";
 import { useAuth } from "@/features/auth/auth-provider";
@@ -25,9 +25,10 @@ import { useLayoutMode } from "./use-layout-mode";
 import { EMPTY_META, WorkflowMetaForm, type WorkflowMeta } from "./workflow-meta-form";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import { KindDraftsButton } from "@/features/drafts/kind-drafts-button";
-import { ComposeSheet, ComposeShell, PublishPreview, useComposeLeave } from "@/features/content/compose";
+import { ComposeShell, PublishPreview, useComposeLeave } from "@/features/content/compose";
+import { ComposeAudienceLine, ComposeSection, FormDisclosure } from "@/features/content/compose-form";
 import { SuggestedTagsRow } from "@/features/content/compose-fields";
-import { PublishDetailsSection, PublishSheet, type PublishDetailRow, type PublishProblem } from "@/features/content/publish-sheet";
+import { PublishPanel, type PublishPanelHandle, type PublishProblem } from "@/features/content/publish-panel";
 import { TaxonomyPicker } from "@/features/content/taxonomy-picker";
 import { ToolPicker } from "@/features/content/tool-picker";
 import { TagPicker } from "@/features/prompts/tag-picker";
@@ -36,7 +37,6 @@ import { taxonomyPathLabel } from "@/lib/content-taxonomy";
 
 type SaveState = "idle" | "saving" | "saved" | "error";
 type LoadState = "loading" | "ready" | "notfound" | "forbidden";
-type MetaSheet = "tags" | "tool" | "category";
 type AddTarget = { stepId: string | null; initialMode: "existing" | "scratch" } | null;
 
 const card = "rounded-xl border border-border-soft bg-surface p-4 shadow-card sm:p-6";
@@ -74,7 +74,6 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
   const [visibility, setVisibility] = useState<ContentVisibility>("public");
   const [addTarget, setAddTarget] = useState<AddTarget>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
-  const [metaSheet, setMetaSheet] = useState<MetaSheet | null>(null);
   const [detailTab, setDetailTab] = useState<"general" | "content" | "io" | "settings">("general");
 
   // Load an existing workflow (owner only).
@@ -226,11 +225,12 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
     }
   }
 
-  // Yazma ekranı kabuğu (docs/history/216-*): son kontrol penceresi + ✕'teki "kaydedilsin mi?" (yayındaki workflow taslağa dönmez).
-  const [publishOpen, setPublishOpen] = useState(false);
+  // Tek sayfa form (docs/history/244-*): yayın bölümü + ✕'teki "kaydedilsin mi?" (yayındaki workflow taslağa dönmez).
+  const panelRef = useRef<PublishPanelHandle>(null);
+  const [attempted, setAttempted] = useState(false);
   const leave = useComposeLeave({ dirty, saveDraft: status === "published" ? undefined : () => handleSave("draft") });
-  // Pencere açıkken eksikler canlı: başlık, adım ve adım içerikleri (yayın kuralı `validateWorkflow`).
-  const liveIssues = publishOpen ? validateWorkflow(meta, steps, true) : [];
+  // Eksikler: başlık, adım ve adım içerikleri (yayın kuralı `validateWorkflow`); ilk "Paylaş" denemesinden sonra gösterilir.
+  const liveIssues = validateWorkflow(meta, steps, true);
 
   const gate = authLoading || loadState === "loading" || mode === null ? (
     <div className="mx-auto max-w-lg px-4 py-16 text-center text-sm text-text-muted">{t("common.loading")}</div>
@@ -343,24 +343,7 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
     setMeta((prev) => ({ ...prev, ...patch }));
     touch();
   }
-  const metaSheetTitle: Record<MetaSheet, string> = {
-    tags: t("forms.tags"),
-    tool: t("formSection.tool"),
-    category: t("taxonomy.categoryLabel"),
-  };
   const categoryPath = meta.category ? taxonomyPathLabel({ contentType: meta.contentType, category: meta.category, subcategory: meta.subcategory }, language, false) : "";
-  const infoRows: PublishDetailRow[] = [
-    { key: "category", icon: Folder, label: t("taxonomy.categoryLabel"), value: categoryPath, onClick: () => setMetaSheet("category") },
-    { key: "tool", icon: Cpu, label: t("formSection.tool"), value: resolveToolRefs(meta.tools)[0]?.label, onClick: () => setMetaSheet("tool") },
-    {
-      key: "tags",
-      icon: Hash,
-      label: t("forms.tags"),
-      value: tagPicker.accepted.length > 0 ? t("compose.tagCount", { count: tagPicker.accepted.length }) : undefined,
-      hint: tagPicker.suggested.length > 0 ? t("compose.suggestionCount", { count: tagPicker.suggested.length }) : undefined,
-      onClick: () => setMetaSheet("tags"),
-    },
-  ];
 
   return (
     <ComposeShell
@@ -373,11 +356,13 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
         </span>
       }
       onClose={leave.requestClose}
-      onPublish={() => setPublishOpen(true)}
+      onPublish={() => panelRef.current?.publish()}
       publishLabel={isSaveMode ? t("common.save") : t("common.share")}
       publishDisabled={saveState === "saving"}
+      publishDimmed={problems.length > 0}
+      onSaveDraft={status === "published" || communityId ? undefined : () => void handleSave("draft")}
     >
-    <div ref={rootRef} className="w-full min-w-0 space-y-4">
+    <div ref={rootRef} className="w-full min-w-0 space-y-6">
       {notice && (
         <p className="flex items-start justify-between gap-2 rounded-md bg-primary-soft p-2.5 text-caption text-primary">
           {notice}
@@ -387,24 +372,23 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
         </p>
       )}
 
-      {/* Compact header: type pill, title, description, cover. Kategori / Araç / Etiketler → "Paylaşmadan önce" */}
+      {communityId && (
+        <ComposeAudienceLine profile={ownProfile} label={communityName ?? t("compose.aCommunity")} onClick={() => document.getElementById("compose-publish")?.scrollIntoView({ behavior: "smooth", block: "center" })} />
+      )}
+
       <WorkflowMetaForm
         meta={meta}
-        profile={ownProfile}
-        audienceLabel={communityId ? (communityName ?? t("compose.aCommunity")) : undefined}
-        onAudience={() => setPublishOpen(true)}
-        titleError={issues.some((i) => i.code === "titleRequired")}
+        titleError={issues.some((i) => i.code === "titleRequired") || (attempted && !meta.title.trim())}
         onChange={(patch) => {
           setMeta((prev) => ({ ...prev, ...patch }));
           touch();
         }}
       />
 
-      {/* Steps + step editor */}
+      <ComposeSection title={t("workflow.stepsHeading")}>
       {mode !== "mobile" && (
         <div className="grid grid-cols-[minmax(220px,280px)_minmax(0,1fr)] items-start gap-4">
           <section className={cn(card, "sticky top-20 min-w-0 max-h-[calc(100dvh-6rem)] overflow-y-auto")}>
-            <h2 className="mb-3 text-sm font-semibold text-text">{t("workflow.stepsHeading")}</h2>
             {list}
           </section>
           <section className={cn(card, "min-w-0")}>
@@ -455,10 +439,11 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
 
       {mode === "mobile" && (
         <section className={card}>
-          <h2 className="mb-3 text-sm font-semibold text-text">{t("workflow.stepsHeading")}</h2>
           {list}
         </section>
       )}
+
+      </ComposeSection>
 
       {mode === "mobile" && sheetOpen && selected && (
         <Modal onClose={() => setSheetOpen(false)} labelledBy="workflow-step-sheet-title">
@@ -476,32 +461,39 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
         </Modal>
       )}
 
-      {metaSheet && (
-        <ComposeSheet id={metaSheet} title={metaSheetTitle[metaSheet]} onClose={() => setMetaSheet(null)}>
-          {metaSheet === "tags" && <TagPicker picker={tagPicker} />}
-          {metaSheet === "tool" && (
-            <>
-              <ToolPicker value={meta.tools} onChange={(tools) => updateMeta({ tools })} contentType={meta.contentType} category={meta.category} />
-              <p className="mt-2 text-caption text-text-muted">{t("workflow.noteToolsMeta")}</p>
-            </>
-          )}
-          {metaSheet === "category" && (
-            <TaxonomyPicker
-              bare
-              value={{ contentType: meta.contentType, category: meta.category, subcategory: meta.subcategory }}
-              onChange={(next) => updateMeta({ contentType: next.contentType, category: next.category, subcategory: next.subcategory })}
-            />
-          )}
-        </ComposeSheet>
-      )}
+      <ComposeSection title={t("compose.sectionDetails")}>
+        <FormDisclosure id="tool" label={t("formSection.tool")} value={resolveToolRefs(meta.tools)[0]?.label}>
+          <ToolPicker value={meta.tools} onChange={(tools) => updateMeta({ tools })} contentType={meta.contentType} category={meta.category} />
+          <p className="mt-2 text-caption text-text-muted">{t("workflow.noteToolsMeta")}</p>
+        </FormDisclosure>
+        <FormDisclosure id="category" label={t("taxonomy.categoryLabel")} value={categoryPath}>
+          <TaxonomyPicker
+            bare
+            value={{ contentType: meta.contentType, category: meta.category, subcategory: meta.subcategory }}
+            onChange={(next) => updateMeta({ contentType: next.contentType, category: next.category, subcategory: next.subcategory })}
+          />
+        </FormDisclosure>
+        <FormDisclosure
+          id="tags"
+          label={t("forms.tags")}
+          value={tagPicker.accepted.length > 0 ? t("compose.tagCount", { count: tagPicker.accepted.length }) : undefined}
+          hint={tagPicker.suggested.length > 0 ? t("compose.suggestionCount", { count: tagPicker.suggested.length }) : undefined}
+        >
+          <TagPicker picker={tagPicker} />
+        </FormDisclosure>
+        <SuggestedTagsRow picker={tagPicker} />
+      </ComposeSection>
 
-      {publishOpen && (
-        <PublishSheet
-          onClose={() => setPublishOpen(false)}
+      <ComposeSection title={t("publish.whoSees")} id="compose-publish">
+        <PublishPanel
+          ref={panelRef}
           onConfirm={() => void handleSave("published")}
           onSaveDraft={status === "published" ? undefined : () => void handleSave("draft")}
+          onBlocked={(problem) => {
+            setAttempted(true);
+            problem.onFix?.();
+          }}
           busy={saveState === "saving"}
-          title={isSaveMode ? t("compose.beforeSave") : undefined}
           confirmLabel={saveState === "saving" ? t("workflow.saving") : isSaveMode ? t("common.save") : t("common.share")}
           hideDestination={Boolean(editId)}
           visibility={visibility}
@@ -510,12 +502,7 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
             touch();
           }}
           problems={problems}
-          details={
-            <>
-              <PublishDetailsSection title={t("compose.postInfo")} rows={infoRows} />
-              <SuggestedTagsRow picker={tagPicker} />
-            </>
-          }
+          showProblems={attempted}
           preview={
             <PublishPreview
               thumbnail={meta.media[0]?.url ?? null}
@@ -528,7 +515,7 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
         >
           {saveState === "saved" && status === "draft" && !dirty && <p className="text-sm text-success">{t("draft.saved")}</p>}
           {saveError && <p role="alert" className="rounded-md border border-danger/40 bg-danger/5 p-3 text-sm text-danger">{saveError}</p>}
-          {warnings.length > 0 && (
+          {attempted && warnings.length > 0 && (
             <div role="status" className="rounded-md border border-warning/40 bg-warning/5 p-3">
               <p className="mb-1 flex items-center gap-1.5 text-sm font-semibold text-text">
                 <AlertTriangle size={14} className="text-warning" />
@@ -541,8 +528,8 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
               </ul>
             </div>
           )}
-        </PublishSheet>
-      )}
+        </PublishPanel>
+      </ComposeSection>
 
       {addTarget && (
         <AddContentModal
