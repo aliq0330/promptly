@@ -46,6 +46,8 @@ const CHECKS = [
   { name: "rpc import_prompts (yalnız oturumlu; ziyaretçiye kapalı)", rpc: "import_prompts", body: { p_items: [], p_dry_run: true }, deniedOk: true, soft: true },
   { name: "rpc admin_import_prompts (yalnız oturumlu moderatör; ziyaretçiye kapalı)", rpc: "admin_import_prompts", body: { p_items: [], p_dry_run: true }, deniedOk: true, soft: true },
   { name: "rpc admin_bulk_delete_prompts (yalnız oturumlu moderatör; ziyaretçiye kapalı)", rpc: "admin_bulk_delete_prompts", body: { p_ids: [] }, deniedOk: true, soft: true },
+  { name: "rpc admin_bulk_delete_prompts p_force (docs/history/252-*)", rpc: "admin_bulk_delete_prompts", body: { p_ids: [], p_force: true }, deniedOk: true, soft: true },
+  { name: "rpc admin_bulk_delete_impact (docs/history/252-*)", rpc: "admin_bulk_delete_impact", body: { p_ids: [] }, deniedOk: true, soft: true },
 ];
 
 const headers = { apikey: key, Authorization: `Bearer ${key}`, "Content-Type": "application/json" };
