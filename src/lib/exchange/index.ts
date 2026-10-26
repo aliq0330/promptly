@@ -6,7 +6,7 @@ import { EXCHANGE_LIMITS, fatalResult, type ExchangeFormat, type ExchangePrompt,
 export * from "./prompt-format.ts";
 export { PROMPT_SEPARATOR } from "./markdown.ts";
 export { detectPromptsChat, parsePromptsChat } from "./prompts-chat.ts";
-export { runBatches, type BulkBatchReport, type BulkInvalid, type BulkItemResult, type BulkOutcome, type BulkProgress } from "./bulk.ts";
+export { runBatches, runChunks, type ChunkOutcome, type BulkBatchReport, type BulkInvalid, type BulkItemResult, type BulkOutcome, type BulkProgress } from "./bulk.ts";
 
 export const FORMAT_META: Record<ExchangeFormat, { extension: string; mime: string }> = {
   json: { extension: "json", mime: "application/json" },

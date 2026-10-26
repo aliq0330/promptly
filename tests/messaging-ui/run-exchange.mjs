@@ -6,10 +6,11 @@ import { chromium } from "playwright";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { serve } from "./server.mjs";
-import { createDb, installMock, U } from "./mock.mjs";
+import { createDb, installMock, ME, U } from "./mock.mjs";
 import { ID, PAGES, installDetailData } from "./detail-fixtures.mjs";
 import { parsePrompts } from "../../src/lib/exchange/index.ts";
 
+const ME_ID = ME;
 const PORT = 4199;
 const BASE = `http://localhost:${PORT}/promptly`;
 const server = await serve(PORT);
@@ -32,10 +33,40 @@ const row = (id, title, extra = {}) => ({
 const ROWS = [row(P1, "Yağmurlu Gece"), row(P2, "İkinci Prompt", { content_type: "text", tools: [], prompt_tags: [], visibility: "private" }), row(P3, "Taslak Prompt", { status: "draft", visibility: "private", created_at: "2026-09-02T00:00:00Z" })];
 const VARIABLES = [{ id: "v1", prompt_id: P1, name: "Stil", default_value: "noir", description: "Tarz", sort_order: 0, created_at: "2026-09-01T00:00:00Z", updated_at: "2026-09-01T00:00:00Z", type: "select", options: [{ label: "Noir", value: "noir" }, { label: "Neon", value: "neon" }], config: {} }];
 
-async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lang = "tr", detail = false, moderator = false } = {}) {
+async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lang = "tr", detail = false, moderator = false, manageCount = 250 } = {}) {
   if (ONLY && !name.startsWith(ONLY)) return;
   const db = createDb();
-  const state = { prompts: [], imports: [], importResult: null, variableCalls: 0, adminCalls: [], adminResult: null };
+  const state = { prompts: [], imports: [], importResult: null, variableCalls: 0, adminCalls: [], adminResult: null, manageQueries: [], manageCalls: [], manageFailAt: 0 };
+  // Toplu yönetim taklidi: 250 kayıt = 200 taslak (2'si etkileşimli) + 30 yayında (2'si etkileşimli) + 20 gizli (1'i etkileşimli); >250 ise hepsi taslak.
+  state.manageRows = Array.from({ length: manageCount }, (_, i) => ({
+    id: `e0000000-0000-4000-8000-${String(i).padStart(12, "0")}`, title: `Toplu ${i + 1}`,
+    status: manageCount === 250 && i >= 200 ? "published" : "draft", visibility: manageCount === 250 && i >= 200 && i < 230 ? "public" : "private",
+    like_count: [3, 4, 205, 206, 240].includes(i) ? 1 : 0, comment_count: 0, save_count: 0,
+  }));
+  const failNow = () => state.manageFailAt > 0 && state.manageCalls.length === state.manageFailAt;
+  const forbidden = { status: 400, body: { code: "P0001", message: "Yetkisiz.", details: "", hint: "" } };
+  db.rpc.admin_bulk_set_prompt_visibility = (body) => {
+    state.manageCalls.push({ fn: "visibility", ...body });
+    if (failNow()) return forbidden;
+    let changed = 0;
+    for (const id of body.p_ids) {
+      const row = state.manageRows.find((r) => r.id === id);
+      if (!row) continue;
+      if (body.p_public) { if (row.status !== "published" || row.visibility !== "public") { row.status = "published"; row.visibility = "public"; changed += 1; } }
+      else if (row.status === "published" && row.visibility !== "private") { row.visibility = "private"; changed += 1; }
+    }
+    return { body: { affected: changed, skipped: body.p_ids.length - changed } };
+  };
+  db.rpc.admin_bulk_delete_prompts = (body) => {
+    state.manageCalls.push({ fn: "delete", ...body });
+    if (failNow()) return forbidden;
+    let deleted = 0;
+    for (const id of body.p_ids) {
+      const at = state.manageRows.findIndex((r) => r.id === id);
+      if (at >= 0 && state.manageRows[at].like_count === 0) { state.manageRows.splice(at, 1); deleted += 1; }
+    }
+    return { body: { affected: deleted, skipped: body.p_ids.length - deleted } };
+  };
   if (moderator) db.rpc.is_moderator = () => ({ body: true });
   db.rpc.admin_import_prompts = (body) => {
     state.adminCalls.push(body);
@@ -56,6 +87,14 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lan
     return { body: { dryRun: body.p_dry_run, ok: true, created: body.p_dry_run ? 0 : items.filter((x) => x.status === "ok").length, items } };
   };
   db.extraRoutes = async (ctx) => {
+    if (ctx.table === "prompts" && ctx.method === "GET" && ctx.sel.includes("save_count") && !ctx.sel.includes("prompt_media")) {
+      state.manageQueries.push(Object.fromEntries(ctx.q.entries()));
+      const tagFilter = ctx.q.get("prompt_tags.tag_slug");
+      if (tagFilter && tagFilter !== "eq.prompts-chat") return ctx.rows([]);
+      const offset = Number(ctx.q.get("offset") ?? 0);
+      const limit = Number(ctx.q.get("limit") ?? 1000);
+      return ctx.rows(state.manageRows.slice(offset, offset + limit).map((r) => ({ ...r, ...(tagFilter ? { prompt_tags: [{ tag_slug: "prompts-chat" }] } : {}) })));
+    }
     if (ctx.table === "prompts" && ctx.method === "GET") {
       state.prompts.push(Object.fromEntries(ctx.q.entries()));
       const id = ctx.q.get("id")?.replace(/^eq\./, "");
@@ -423,6 +462,118 @@ await scenario("18. Kendi JSON dosyan da 30'dan fazla yüklenir; geçersiz etike
   assert.deepEqual(state.adminCalls.map((c) => c.p_items.length), [50, 25]);
   assert.ok(state.adminCalls.flatMap((c) => c.p_items).every((i) => i.tags.length === 0), "etiket boşsa eklenmez");
 }, { lang: "en", moderator: true });
+
+// ---------------------------------------------------------------------------------------------------------------------------------
+// Moderatör toplu yönetim: listele, seçerek yayınla / gizle / sil (docs/history/251-*)
+// ---------------------------------------------------------------------------------------------------------------------------------
+const rowsOf = (page) => page.getByTestId("manage-row");
+async function openManage(page) {
+  await page.goto(`${BASE}/moderation`);
+  await page.getByTestId("bulk-manage").waitFor();
+  await page.getByTestId("manage-load").click();
+  await page.getByTestId("manage-summary").waitFor();
+}
+
+await scenario("19. Toplu yönetim: kendi promptların etikete göre listelenir (yalnız kendi, topluluksuz, orijinal); özet sayıları; 100'erli gösterim", async ({ page, state }) => {
+  await openManage(page);
+  assert.match(await page.getByTestId("manage-summary").innerText(), /250 prompt: 200 taslak, 30 yayında, 20 gizli \(yalnız sen\)\./);
+  const q = state.manageQueries[0];
+  assert.equal(q["prompt_tags.tag_slug"], "eq.prompts-chat", "etiket süzgeci (slug)");
+  assert.equal(q.author_id, `eq.${ME_ID}`);
+  assert.equal(q.community_id, "is.null");
+  assert.equal(q.origin_type, "eq.original");
+  assert.equal(await rowsOf(page).count(), 100);
+  assert.match(await page.getByTestId("manage-showing").innerText(), /100 \/ 250 gösteriliyor/);
+  await page.getByTestId("manage-more").click();
+  assert.equal(await rowsOf(page).count(), 200);
+  await page.getByTestId("manage-status").selectOption("hidden");
+  assert.equal(await rowsOf(page).count(), 20);
+  await page.getByTestId("manage-status").selectOption("all");
+  await page.getByTestId("manage-search").fill("Toplu 25");
+  assert.equal(await rowsOf(page).count(), 2, '"Toplu 25" araması: "Toplu 25" ve "Toplu 250"');
+  await page.getByTestId("manage-tag").fill("başka-etiket");
+  await page.getByTestId("manage-load").click();
+  await page.getByText("Bu etikette senin prompt'un yok.").waitFor();
+}, { moderator: true });
+
+await scenario("20. 1000'den çok prompt: liste sayfalanarak (1000'lik) tamamen okunur", async ({ page, state }) => {
+  await openManage(page);
+  assert.match(await page.getByTestId("manage-summary").innerText(), /1050 prompt: 1050 taslak/);
+  assert.deepEqual(state.manageQueries.map((x) => x.offset), ["0", "1000"]);
+}, { moderator: true, manageCount: 1050 });
+
+await scenario("21. Damla damla yayınlama: Taslak süzgeci + 'ilk 50'yi seç' → tek çağrı, onaysız; sonuç ve liste güncellenir", async ({ page, state }) => {
+  await openManage(page);
+  await page.getByTestId("manage-status").selectOption("draft");
+  await page.getByTestId("manage-first-n").fill("50");
+  await page.getByTestId("manage-select-first").click();
+  assert.match(await page.getByTestId("manage-selected").innerText(), /50 seçili/);
+  assert.match(await page.getByTestId("manage-publish").innerText(), /50 promptu yayınla/);
+  await page.getByTestId("manage-publish").click();
+  await page.getByTestId("manage-outcome").waitFor();
+  assert.match(await page.getByTestId("manage-outcome").innerText(), /50 prompt yayınlandı, 0 zaten yayındaydı\./);
+  assert.equal(state.manageCalls.length, 1);
+  assert.equal(state.manageCalls[0].p_ids.length, 50);
+  assert.equal(state.manageCalls[0].p_public, true);
+  assert.equal(await page.getByTestId("manage-confirm").count(), 0, "50 prompt için onay istenmez");
+  assert.match(await page.getByTestId("manage-summary").innerText(), /250 prompt: 150 taslak, 80 yayında, 20 gizli/);
+  assert.match(await page.getByTestId("manage-selected").innerText(), /0 seçili/, "seçim temizlenir");
+}, { moderator: true });
+
+await scenario("22. Çok sayıda yayınlama onay ister (Vazgeç çağrı yapmaz); 200 prompt 100'erli 2 çağrı; Gizle onaysız ve yalnız yayındakileri etkiler", async ({ page, state }) => {
+  await openManage(page);
+  await page.getByTestId("manage-status").selectOption("draft");
+  await page.getByTestId("manage-select-all").click();
+  await page.getByTestId("manage-publish").click();
+  await page.getByTestId("manage-confirm").waitFor();
+  assert.match(await page.getByTestId("manage-confirm").innerText(), /200 prompt herkese açık yayınlanacak/);
+  await page.getByTestId("manage-cancel").click();
+  assert.equal(state.manageCalls.length, 0);
+  await page.getByTestId("manage-publish").click();
+  await page.getByTestId("manage-confirm-yes").click();
+  await page.getByTestId("manage-outcome").waitFor();
+  assert.deepEqual(state.manageCalls.map((c) => [c.fn, c.p_ids.length, c.p_public]), [["visibility", 100, true], ["visibility", 100, true]]);
+  assert.match(await page.getByTestId("manage-outcome").innerText(), /200 prompt yayınlandı/);
+  assert.match(await page.getByTestId("manage-summary").innerText(), /250 prompt: 0 taslak, 230 yayında, 20 gizli/);
+  // gizle: yayındakileri seç → 'Gizle'
+  await page.getByTestId("manage-status").selectOption("public");
+  await page.getByTestId("manage-select-all").click();
+  await page.getByTestId("manage-hide").click();
+  await page.getByTestId("manage-outcome").filter({ hasText: "230 prompt gizlendi, 0 atlandı" }).waitFor();
+  assert.equal(await page.getByTestId("manage-confirm").count(), 0, "gizle onay istemez (geri alınabilir)");
+  assert.match(await page.getByTestId("manage-summary").innerText(), /250 prompt: 0 taslak, 0 yayında, 250 gizli/);
+}, { moderator: true });
+
+await scenario("23. Silme her zaman onay ister ve uyarır; etkileşimli promptlar sunucuda atlanır, sonuç ikisini de sayar; liste yeniden okunur", async ({ page, state }) => {
+  await openManage(page);
+  await page.getByTestId("manage-select-all").click();
+  await page.getByTestId("manage-delete").click();
+  await page.getByTestId("manage-confirm").waitFor();
+  assert.match(await page.getByTestId("manage-confirm").innerText(), /250 prompt KALICI olarak silinecek.*atlanır.*Geri alınamaz/s);
+  assert.equal(state.manageCalls.length, 0, "onaylanmadan hiçbir çağrı yok");
+  await page.getByTestId("manage-confirm-yes").click();
+  await page.getByTestId("manage-outcome").waitFor();
+  assert.deepEqual(state.manageCalls.map((c) => [c.fn, c.p_ids.length]), [["delete", 100], ["delete", 100], ["delete", 50]]);
+  assert.match(await page.getByTestId("manage-outcome").innerText(), /245 prompt silindi, 5 atlandı \(etkileşimi ya da bağı olan\)\./);
+  assert.match(await page.getByTestId("manage-summary").innerText(), /5 prompt:/);
+  assert.equal(await rowsOf(page).count(), 5);
+  assert.match((await rowsOf(page).first().innerText()), /etkileşimli/);
+}, { moderator: true });
+
+await scenario("24. Yarıda kalma: 2. parça hata verirse 1. parça işlenmiş kalır, uyarı 'tekrar çalıştır' der; İngilizce arayüz", async ({ page, state }) => {
+  state.manageFailAt = 2;
+  await openManage(page);
+  await page.getByTestId("manage-status").selectOption("draft");
+  await page.getByTestId("manage-select-all").click();
+  await page.getByTestId("manage-publish").click();
+  await page.getByTestId("manage-confirm-yes").click();
+  await page.getByTestId("manage-partial").waitFor();
+  assert.match(await page.getByTestId("manage-partial").innerText(), /Stopped early: 100 \/ 200 processed/);
+  assert.match(await page.getByTestId("manage-error").innerText(), /Yetkisiz\./);
+  assert.match(await page.getByTestId("manage-outcome").innerText(), /100 prompt\(s\) published/);
+  assert.equal(state.manageCalls.length, 2, "hatadan sonra yeni parça gönderilmez");
+  assert.match(await page.getByTestId("manage-summary").innerText(), /250 prompt\(s\): 100 draft, 130 published, 20 hidden/);
+}, { moderator: true, lang: "en" });
 
 await browser.close();
 server.close();

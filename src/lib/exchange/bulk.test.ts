@@ -66,3 +66,39 @@ test("dry run: 'new' counts what WOULD be added while created stays 0; empty inp
   assert.equal(empty.done, 0);
   assert.equal(empty.stoppedAt, null);
 });
+
+import { runChunks } from "./bulk.ts";
+
+const ids = (n: number) => Array.from({ length: n }, (_, i) => `id-${i + 1}`);
+
+test("runChunks: sends the ids in order in chunks, sums affected/skipped and reports progress", async () => {
+  const seen: string[][] = [];
+  const progress: number[] = [];
+  const outcome = await runChunks(ids(250), 100, async (chunk) => { seen.push(chunk); return { affected: chunk.length - 1, skipped: 1 }; }, { onProgress: (p) => progress.push(p.done) });
+  assert.deepEqual(seen.map((c) => c.length), [100, 100, 50]);
+  assert.deepEqual([seen[0][0], seen[1][0], seen[2][0]], ["id-1", "id-101", "id-201"]);
+  assert.deepEqual(progress, [100, 200, 250]);
+  assert.equal(outcome.affected, 247);
+  assert.equal(outcome.skipped, 3);
+  assert.equal(outcome.stoppedAt, null);
+});
+
+test("runChunks: an error stops the run and says where to resume; 'Durdur' stops between chunks; empty is a no-op", async () => {
+  let calls = 0;
+  const failed = await runChunks(ids(300), 100, async (chunk) => { calls += 1; if (calls === 2) throw new Error("Yetkisiz."); return { affected: chunk.length, skipped: 0 }; });
+  assert.equal(calls, 2);
+  assert.equal(failed.affected, 100);
+  assert.equal(failed.stoppedAt, 100);
+  assert.equal(failed.error, "Yetkisiz.");
+
+  let stop = false;
+  let n = 0;
+  const stopped = await runChunks(ids(300), 100, async (chunk) => { n += 1; stop = n === 1; return { affected: chunk.length, skipped: 0 }; }, { shouldStop: () => stop });
+  assert.equal(n, 1);
+  assert.equal(stopped.stoppedAt, 100);
+  assert.equal(stopped.error, null);
+
+  const empty = await runChunks([], 100, async () => { throw new Error("must not be called"); });
+  assert.equal(empty.done, 0);
+  assert.equal(empty.stoppedAt, null);
+});

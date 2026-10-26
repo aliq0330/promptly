@@ -33,7 +33,7 @@ saat, **O** = 1–2 gün, **B** = birkaç gün.
 |---|---|---|
 | Ö1 | `claude/exchange-export-import` dalını PR ile `main`'e birleştir | Migration'lar `20260927100000_import_prompts.sql` + `20260927110000_admin_import_prompts.sql` canlıya UYGULANMADI; birleşince `deploy.yml` uygular (önce migration, sonra istemci; duman testi iki RPC'nin varlığını denetler). |
 | Ö2 | Canlıda ilk toplu yükleme: Moderasyon → "Toplu prompt yükleme" → **Kontrol et** → **taslak olarak yükle** | Yayın kutusunu AÇMADAN başla. Dosya: `https://raw.githubusercontent.com/f/prompts.chat/main/PROMPTS.md` (CC0; 3026 kayıt → ~3012 yüklenir). |
-| Ö3 | KARAR: yüklenen içerik kimin hesabı altında, nasıl yayınlanacak? | Şimdi moderatörün KENDİ hesabı + her promptta "Kaynak: prompts.chat (CC0) — @katkıcı" satırı + ortak etiket `prompts.chat`. 3000 içeriği tek hesaptan bir anda yayınlamak akışı doldurur; önerilen: taslak yükle, seçerek/etiketle yayınla (aşağıda Ö9). |
+| Ö3 | ~~KARAR: hesap~~ **verildi (2026-10-26):** yüklenen içerik moderatörün KENDİ hesabı altında kalır | Her promptta "Kaynak: prompts.chat (CC0) — @katkıcı" + ortak etiket `prompts.chat`. Akışı doldurmamak için önerilen yöntem: taslak yükle → Moderasyon → "Toplu prompt yönetimi"nde etiketle listele → "İlk N'i seç" ile küçük gruplar hâlinde yayınla (**yapıldı**, `docs/history/251-*`). |
 | Ö4 | KARAR + hukuki metin: başkasının promptunu indirme/yeniden kullanma | Artık herkes okuyabildiği her promptu indirebilir (dosyada yazar adı + bağlantı). Kullanım Koşulları (`features/legal/legal-content.ts`, TR+EN) yalnız "paylaşma hakkın olan içeriği yükle" diyor; yeniden kullanım/indirme izni ve atıf kuralı yazılmalı. |
 | Ö5 | Gerçek ortamda dene | Gerçek Supabase'e, gerçek oturuma, Excel'e (CSV/BOM), telefona karşı hiçbir şey denenmedi; deyim zaman aşımı (Supabase ~8 sn) yerelde 74 ms/parça ile sınandı, canlıda ölçülmedi. |
 
@@ -50,7 +50,7 @@ saat, **O** = 1–2 gün, **B** = birkaç gün.
 
 **C. Bilinen eksikler (bu işlerin)**
 
-- **Toplu yönetim aracı:** `prompts.chat` etiketli taslakları topluca/seçerek yayınla ya da topluca sil (şimdi yok; yükleme geri alınamaz, tek tek silinir).
+- ~~Toplu yönetim aracı~~ **yapıldı** (`docs/history/251-*`): etiketle listele, seçerek yayınla / gizle ("Sadece ben") / sil. Yayından GERİ ÇEKME bilerek yok (etiket kullanım sayacı geri azalmıyor → sayaç şişer); yerine "gizle". Silme yalnız kimsenin dokunmadığı promptları siler.
 - Yalnız **Prompt** dışa/içe aktarılır; Workflow / Hazır Ayar / İstek yok. Markdown ve CSV **değişken tanımı** taşımaz.
 - prompts.chat içeriği hep `text` türünde, kategorisiz; `${var:varsayılan}` ve `{Var}` şablonları (~682 kayıt) Promptly değişkenine ÇEVRİLMEZ, metin olduğu gibi kalır. Görsel/ses/video promptları ayrılmaz.
 - prompts.chat'te 7 kayıt 50 000 karakter sınırını aşıyor → atlanır (kesilmez); 7 kayıt birebir yinelenen. ~700 kaydın katkıcı alanı **e-posta adresi**, 621'i anonim → bunlar bilerek yalnız genel "prompts.chat (CC0)" atfı alır (kişisel veri kopyalanmaz).

@@ -95,3 +95,47 @@ export async function runBatches(
   }
   return outcome;
 }
+
+export interface ChunkOutcome {
+  done: number;
+  total: number;
+  /** Sunucunun gerçekten değiştirdiği/sildiği kayıt sayısı. */
+  affected: number;
+  /** Değişmeden kalanlar (zaten o durumdaydı, kendi promptun değildi ya da silme korumasına takıldı). */
+  skipped: number;
+  stoppedAt: number | null;
+  error: string | null;
+}
+
+/**
+ * Kimlik listesi üzerinde parça parça işlem (toplu yayınla/gizle/sil). `runBatches` ile aynı sözleşme: her parça sunucuda atomik,
+ * hata ya da "Durdur" kalan parçaları göndermez, `stoppedAt` nereden devam edileceğini söyler. İşlemler idempotenttir
+ * (zaten yayında olan/silinmiş kayıt `skipped` sayılır), bu yüzden yarıda kalan işlem aynı seçimle tekrarlanabilir.
+ */
+export async function runChunks(
+  ids: string[],
+  size: number,
+  call: (chunk: string[]) => Promise<{ affected: number; skipped: number }>,
+  options: { onProgress?: (progress: ChunkOutcome) => void; shouldStop?: () => boolean } = {},
+): Promise<ChunkOutcome> {
+  const outcome: ChunkOutcome = { done: 0, total: ids.length, affected: 0, skipped: 0, stoppedAt: null, error: null };
+  for (let offset = 0; offset < ids.length; offset += size) {
+    if (options.shouldStop?.()) {
+      outcome.stoppedAt = offset;
+      return outcome;
+    }
+    const chunk = ids.slice(offset, offset + size);
+    try {
+      const result = await call(chunk);
+      outcome.affected += result.affected;
+      outcome.skipped += result.skipped;
+    } catch (err) {
+      outcome.stoppedAt = offset;
+      outcome.error = err instanceof Error ? err.message : String(err);
+      return outcome;
+    }
+    outcome.done = offset + chunk.length;
+    options.onProgress?.({ ...outcome });
+  }
+  return outcome;
+}
