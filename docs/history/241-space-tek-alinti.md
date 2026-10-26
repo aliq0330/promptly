@@ -9,7 +9,7 @@ Space'in kendi beğeni/yorum/gönderisi vardı (215); başkası alıntılayınca
 - Space'in kendi beğeni/yorum/istatistiği yok; `space_id`'li yeni beğeni/yorum reddedilir (`space_engagement_closed`).
 - Akışa girmek = alıntı. Sahibin "Akışta paylaş" anahtarı onun KENDİ alıntısıdır (Space başına bir; kapatınca silinir; kart/sayfa "paylaştı" der). Başkası normal alıntılar (24 saatte bir).
 - Eşik her alıntıda: ≥3 öğe ve ≥1 görsel (`space_too_empty`). Okuma kuralı (`quote_target_ok`) değişmedi → eşik yüzünden eski alıntı kaybolmaz.
-- Alıntı sayfası ve başvuru gönderisi sayfası Space'i `SpacePreview` (Albüm bandı + "Panoyu gez" / "Space'i aç") ile gösterir; beğeni/yorum alıntının.
+- Alıntı sayfası ve başvuru gönderisi sayfası Space'i `SpacePreview` ile gösterir: diğer dört türün detay sayfasıyla AYNI iskelet (`DetailShell`: Albüm bandı, tek eylem satırı [Panoyu gez · Space'i aç · alıntının beğeni/yorum/istatistik/paylaş], "Space hakkında" sütunu, palet/görseller, yorumlar). Beğeni/yorum `Engage*` ailesiyle alıntının; ilk sürümdeki ayrı dar etkileşim bölümü kaldırıldı.
 - Space sayfası: eylem satırında beğeni/yorum yok; altta "N kez alıntılandı" + Şikâyet.
 - Keşfet → Spaces artık gönderi akışı değil, herkese açık Space listesi (`list_spaces('public')`, ofsetle sayfalanır, `SpaceDiscoverCard`).
 - Odak / Sana özel / Izgara alıntı almaz (değişmedi).

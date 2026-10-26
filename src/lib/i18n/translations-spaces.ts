@@ -226,6 +226,8 @@ export const spaceTranslations = {
   "spaces.page.loadError": { tr: "Space yüklenemedi.", en: "Couldn't load the Space." },
   "spaces.page.actions": { tr: "Space işlemleri", en: "Space actions" },
   "spaces.page.openBoard": { tr: "Panoyu aç", en: "Open board" },
+  "spaces.preview.about": { tr: "Space hakkında", en: "About this Space" },
+  "spaces.preview.updated": { tr: "Son düzenleme", en: "Last edited" },
   "spaces.preview.open": { tr: "Space'i aç", en: "Open Space" },
   "spaces.page.viewBoard": { tr: "Panoyu gez", en: "Browse board" },
   "spaces.page.settings": { tr: "Ayarlar", en: "Settings" },
