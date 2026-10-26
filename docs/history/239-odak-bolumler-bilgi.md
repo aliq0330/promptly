@@ -17,3 +17,6 @@
 - Bölüm geçişi parmağı izlemez (eşik aşılınca animasyonla geçer); mouse sürüklemesi bölüm değiştirmez.
 - Tümü/Prompt vb. için gönderi sayısı gösterilmez (sunucudan toplam gelmiyor).
 - Bölüm değişince küçük resim şeridi anında yeni listeye döner, animasyonlanmaz.
+
+## Düzeltme (`240-*`)
+Telefonda slayt yüzündeki büyük düğme (Kopyala / Ayrıntıları aç / Yanıtla) kaldırıldı; bunlar Bilgi sayfasında: Kopyala prompt bloğunda ve "Promptu incele"de, Ayrıntıları aç bağlantıda, açık istekte **Yanıtla** (kendi isteğin değilse) bilgi sayfasının eylem satırının başında. Bölüm noktaları: boyut geçişi kaldırıldı (hızlı bölüm değişiminde komşu noktalar yarı büyümüş kalıyordu), noktalar sabit yuvada anında değişir; bölüm değişimi 350 ms içinde ikinci kez tetiklenmez.

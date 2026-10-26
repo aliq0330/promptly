@@ -2,7 +2,7 @@
 
 import { createContext, memo, useContext, useEffect, useId, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { ArrowDown, ArrowUpRight, ChevronUp, ImageOff, Music, Pause, PenLine, Play, Shapes, SlidersHorizontal, Sparkles, Workflow as WorkflowIcon, X, type LucideIcon } from "lucide-react";
+import { ArrowDown, ArrowUpRight, ChevronUp, ImageOff, Music, Pause, Play, Shapes, SlidersHorizontal, Sparkles, Workflow as WorkflowIcon, X, type LucideIcon } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Modal } from "@/components/ui/modal";
@@ -547,30 +547,6 @@ function AlbumArtCard({ item, model, near }: { item: PostFeedItem; model: SlideM
   );
 }
 
-/** The slide's big action: "Kopyala" for a prompt with words (counts a use), "Yanıtla" for an open request, else the way to its page. */
-function AlbumPrimary({ item, href }: { item: PostFeedItem; href: string }) {
-  const { t } = useTranslation();
-  const { user } = useAuth();
-  const bright = "h-12 w-full justify-center rounded-full border-white bg-white px-6 text-body font-semibold text-black shadow-[0_10px_30px_rgb(0_0_0/0.35)] hover:bg-white/90";
-  if (item.kind === "prompt" && item.data.promptText.trim()) {
-    return <CopyPromptButton text={item.data.promptText} promptId={item.data.id} size="md" variant="primary" label={t("common.copy")} className={bright} />;
-  }
-  if (item.kind === "request" && item.data.status === "open" && user?.id !== item.data.author.id) {
-    return (
-      <Link href={`/create?answerRequest=${item.data.id}`} className={cn("inline-flex shrink-0 items-center gap-2", bright)}>
-        <PenLine size={18} aria-hidden />
-        {t("request.reply")}
-      </Link>
-    );
-  }
-  return (
-    <Link href={href} className={cn("inline-flex shrink-0 items-center gap-2", bright)}>
-      {t("focusFeed.openDetail")}
-      <ArrowUpRight size={18} aria-hidden />
-    </Link>
-  );
-}
-
 /** Odak'ta "Space'e ekle" (docs/history/213-*): oturumlu kullanıcıya, topluluğa ait olmayan gönderide. */
 export function FocusAddToSpace({ item, className }: { item: PostFeedItem; className: string }) {
   const { t } = useTranslation();
@@ -650,7 +626,6 @@ function AlbumSlide({
             <ChevronUp size={16} aria-hidden />
           </button>
         </div>
-        <AlbumPrimary item={item} href={model.href} />
       </div>
     </article>
   );
