@@ -1,5 +1,5 @@
-import { normalizeTagLabel } from "./tag-normalize";
-import { CANDIDATE_TAG_LABELS } from "./tag-candidates";
+import { normalizeTagLabel } from "./tag-normalize.ts";
+import { CANDIDATE_TAG_LABELS } from "./tag-candidates.ts";
 import type { Tag } from "@/types";
 
 /**

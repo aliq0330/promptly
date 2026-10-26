@@ -19,7 +19,10 @@ import {
 } from "@/lib/exchange";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
+import { AutoTagOptionsField } from "@/features/moderation/auto-tag-options";
+import { autoTagsEnabled, mergeTagLabels, pickAutoTagsBatch, type AutoTagOptions } from "@/lib/exchange/auto-tags";
 import { runAdminImport } from "@/lib/supabase/prompt-exchange";
+import { fetchAllTags } from "@/lib/supabase/tags";
 
 const PROMPTS_CHAT_URL = "https://raw.githubusercontent.com/f/prompts.chat/main/PROMPTS.md";
 const ALLOWED_URL_PREFIX = "https://raw.githubusercontent.com/";
@@ -53,6 +56,9 @@ export function BulkImportCard() {
   const [url, setUrl] = useState(PROMPTS_CHAT_URL);
   const [tag, setTag] = useState("prompts.chat");
   const [publish, setPublish] = useState(false);
+  const [autoTags, setAutoTags] = useState<AutoTagOptions>({ automatic: true, suggested: false });
+  const [analysis, setAnalysis] = useState<{ done: number; total: number } | null>(null);
+  const [autoNote, setAutoNote] = useState<{ prompts: number; tags: number } | null>(null);
   const [phase, setPhase] = useState<Phase>("idle");
   const [fileName, setFileName] = useState("");
   const [kind, setKind] = useState<Kind | null>(null);
@@ -73,6 +79,7 @@ export function BulkImportCard() {
     setFatal(null);
     setProgress(null);
     setOutcome(null);
+    setAutoNote(null);
   }
 
   function load(text: string, name: string) {
@@ -140,10 +147,29 @@ export function BulkImportCard() {
     stopRef.current = false;
     setPhase("running");
     setOutcome(null);
+    setAutoNote(null);
     setProgress({ done: 0, total: items.length, newCount: 0, duplicates: 0, invalid: 0, created: 0, published: 0, warnings: 0 });
-    const prepared: ExchangePrompt[] = tagTrimmed
+    let prepared: ExchangePrompt[] = tagTrimmed
       ? items.map((item) => (item.tags.some((x) => x.toLocaleLowerCase("tr") === tagTrimmed.toLocaleLowerCase("tr")) ? item : { ...item, tags: [...item.tags, tagTrimmed] }))
       : items;
+    if (autoTagsEnabled(autoTags)) {
+      // Oluşturma formundaki analizle aynı motor; tarayıcıda, yazımdan ÖNCE. Dosyadaki etiketler korunur, üstüne eklenir (en çok 20).
+      const catalog = await fetchAllTags();
+      const picks = await pickAutoTagsBatch(
+        prepared.map((item) => ({ title: item.title, text: item.promptText, existing: item.tags })),
+        catalog,
+        autoTags,
+        { onProgress: (done, total) => setAnalysis({ done, total }), shouldStop: () => stopRef.current },
+      );
+      setAnalysis(null);
+      if (!picks) {
+        setProgress(null);
+        setPhase("idle");
+        return;
+      }
+      prepared = prepared.map((item, index) => (picks[index].length > 0 ? { ...item, tags: mergeTagLabels(item.tags, picks[index]) } : item));
+      setAutoNote({ prompts: picks.filter((p) => p.length > 0).length, tags: picks.reduce((sum, p) => sum + p.length, 0) });
+    }
     const result = await runAdminImport(prepared, {
       dryRun: mode === "check",
       publish: mode === "import" && publish,
@@ -253,6 +279,8 @@ export function BulkImportCard() {
             <p className={`text-caption ${tagInvalid ? "text-danger" : "text-text-muted"}`}>{tagInvalid ? t("exchange.admin.tagInvalid") : t("exchange.admin.tagHint")}</p>
           </div>
 
+          <AutoTagOptionsField value={autoTags} onChange={setAutoTags} disabled={busy} testId="bulk-autotag" />
+
           <label className="flex cursor-pointer items-start gap-2 text-small text-text">
             <input type="checkbox" checked={publish} onChange={(event) => setPublish(event.target.checked)} disabled={busy} className="mt-1 accent-primary" data-testid="bulk-publish" />
             <span>
@@ -284,7 +312,13 @@ export function BulkImportCard() {
         </div>
       )}
 
-      {progress && (
+      {analysis && (
+        <p className="text-caption text-text-secondary" data-testid="bulk-analyzing">
+          {t("exchange.autotag.analyzing", { done: analysis.done, total: analysis.total })}
+        </p>
+      )}
+
+      {progress && !analysis && (
         <div className="space-y-1" data-testid="bulk-progress">
           <div role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={percent} className="h-2 w-full overflow-hidden rounded-full bg-surface-soft">
             <div className="h-full bg-primary transition-[width] duration-200" style={{ width: `${percent}%` }} />
@@ -300,6 +334,11 @@ export function BulkImportCard() {
               ? t("exchange.admin.checkDone", { new: outcome.result.newCount, dup: outcome.result.duplicates, invalid: outcome.result.invalid })
               : t("exchange.admin.importDone", { created: outcome.result.created, published: outcome.result.published, dup: outcome.result.duplicates, invalid: outcome.result.invalid })}
           </p>
+          {autoNote && (
+            <p className="text-caption text-text-muted" data-testid="bulk-autonote">
+              {t("exchange.autotag.importNote", autoNote)}
+            </p>
+          )}
           {outcome.result.warnings > 0 && <p className="text-caption text-text-muted">{t("exchange.admin.warnings", { count: outcome.result.warnings })}</p>}
           {outcome.result.stoppedAt !== null && (
             <p className="text-warning" data-testid="bulk-partial">

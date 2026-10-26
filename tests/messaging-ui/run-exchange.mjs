@@ -31,12 +31,13 @@ const row = (id, title, extra = {}) => ({
   ...extra,
 });
 const ROWS = [row(P1, "Yağmurlu Gece"), row(P2, "İkinci Prompt", { content_type: "text", tools: [], prompt_tags: [], visibility: "private" }), row(P3, "Taslak Prompt", { status: "draft", visibility: "private", created_at: "2026-09-02T00:00:00Z" })];
+const TAG_CATALOG = [{ slug: "portre", label: "Portre" }, { slug: "anime", label: "Anime" }, { slug: "manzara", label: "Manzara" }];
 const VARIABLES = [{ id: "v1", prompt_id: P1, name: "Stil", default_value: "noir", description: "Tarz", sort_order: 0, created_at: "2026-09-01T00:00:00Z", updated_at: "2026-09-01T00:00:00Z", type: "select", options: [{ label: "Noir", value: "noir" }, { label: "Neon", value: "neon" }], config: {} }];
 
 async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lang = "tr", detail = false, moderator = false, manageCount = 250 } = {}) {
   if (ONLY && !name.startsWith(ONLY)) return;
   const db = createDb();
-  const state = { prompts: [], imports: [], importResult: null, variableCalls: 0, adminCalls: [], adminResult: null, manageQueries: [], manageCalls: [], manageFailAt: 0 };
+  const state = { prompts: [], imports: [], importResult: null, variableCalls: 0, adminCalls: [], adminResult: null, manageQueries: [], manageCalls: [], manageFailAt: 0, impactCalls: [], impactFail: false, tagPuts: [], tagCreates: [], tagCatalog: TAG_CATALOG };
   // Toplu yönetim taklidi: 250 kayıt = 200 taslak (2'si etkileşimli) + 30 yayında (2'si etkileşimli) + 20 gizli (1'i etkileşimli); >250 ise hepsi taslak.
   state.manageRows = Array.from({ length: manageCount }, (_, i) => ({
     id: `e0000000-0000-4000-8000-${String(i).padStart(12, "0")}`, title: `Toplu ${i + 1}`,
@@ -63,9 +64,21 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lan
     let deleted = 0;
     for (const id of body.p_ids) {
       const at = state.manageRows.findIndex((r) => r.id === id);
-      if (at >= 0 && state.manageRows[at].like_count === 0) { state.manageRows.splice(at, 1); deleted += 1; }
+      if (at >= 0 && (body.p_force === true || state.manageRows[at].like_count === 0)) { state.manageRows.splice(at, 1); deleted += 1; }
     }
     return { body: { affected: deleted, skipped: body.p_ids.length - deleted } };
+  };
+  // Silme etkisi taklidi (docs/history/252-*): etkileşimli satır = 1 beğeni + 2 yorum + 1 koleksiyon kaydı; sunucu mantığı supabase/tests/admin-bulk-delete-force.sql'dedir.
+  db.rpc.admin_bulk_delete_impact = (body) => {
+    state.impactCalls.push(body);
+    if (state.impactFail) return forbidden;
+    const hit = body.p_ids.map((id) => state.manageRows.find((r) => r.id === id)).filter(Boolean);
+    const engaged = hit.filter((r) => r.like_count > 0).length;
+    return { body: { prompts: hit.length, engaged, likes: engaged, comments: engaged * 2, saves: engaged, quotes: 0, communityPosts: 0, results: 0, suggestions: 0, spaceItems: 0, workflowSteps: engaged, sharedInMessages: 0 } };
+  };
+  db.rpc.get_or_create_tag = (body) => {
+    state.tagCreates.push(body.p_label);
+    return { body: { slug: body.p_label.toLowerCase().replace(/[^a-z0-9]+/g, "-"), label: body.p_label } };
   };
   if (moderator) db.rpc.is_moderator = () => ({ body: true });
   db.rpc.admin_import_prompts = (body) => {
@@ -94,6 +107,17 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lan
       const offset = Number(ctx.q.get("offset") ?? 0);
       const limit = Number(ctx.q.get("limit") ?? 1000);
       return ctx.rows(state.manageRows.slice(offset, offset + limit).map((r) => ({ ...r, ...(tagFilter ? { prompt_tags: [{ tag_slug: "prompts-chat" }] } : {}) })));
+    }
+    if (ctx.table === "tags" && ctx.method === "GET" && ctx.sel.replace(/\s/g, "") === "slug,label") return ctx.rows(state.tagCatalog);
+    // Etiketleme için prompt okuma (docs/history/252-*): başlık + metin + var olan etiketler; metin sıraya göre değişir.
+    if (ctx.table === "prompts" && ctx.method === "GET" && ctx.sel.includes("prompt_text") && ctx.sel.includes("prompt_tags(tag_slug)")) {
+      const ids = (ctx.q.get("id") ?? "").replace(/^in\./, "").replace(/[()]/g, "").split(",");
+      const texts = ["bir anime portrait sahnesi", "manzara and photography", "düz metin"];
+      return ctx.rows(ids.map((id) => state.manageRows.find((r) => r.id === id)).filter(Boolean).map((r) => ({ id: r.id, title: r.title, prompt_text: texts[(Number(r.title.replace("Toplu ", "")) - 1) % 3], prompt_tags: [] })));
+    }
+    if (ctx.table === "prompt_tags" && ctx.method === "POST") {
+      state.tagPuts.push({ rows: ctx.body, query: Object.fromEntries(ctx.q.entries()) });
+      return ctx.json(201, []);
     }
     if (ctx.table === "prompts" && ctx.method === "GET") {
       state.prompts.push(Object.fromEntries(ctx.q.entries()));
@@ -574,6 +598,138 @@ await scenario("24. Yarıda kalma: 2. parça hata verirse 1. parça işlenmiş k
   assert.equal(state.manageCalls.length, 2, "hatadan sonra yeni parça gönderilmez");
   assert.match(await page.getByTestId("manage-summary").innerText(), /250 prompt\(s\): 100 draft, 130 published, 20 hidden/);
 }, { moderator: true, lang: "en" });
+
+
+await scenario("25. Etkileşimi olanları da sil (B): silmeden önce etki sayılır ve gösterilir; kutu işaretlenmeden p_force gitmez; işaretlenince hepsi gider", async ({ page, state }) => {
+  await openManage(page);
+  await page.getByTestId("manage-select-all").click();
+  await page.getByTestId("manage-delete").click();
+  await page.getByTestId("manage-impact").waitFor();
+  const impact = await page.getByTestId("manage-impact").innerText();
+  assert.match(impact, /5 promptta başkalarının etkileşimi var\. Normal silme bunları atlar\./);
+  assert.match(impact, /5 beğeni, 10 yorum, 5 koleksiyon kaydı, 0 alıntı, 0 topluluk gönderisi, 0 sonuç görseli, 0 düzenleme önerisi/);
+  assert.match(impact, /5 workflow adımı/);
+  assert.deepEqual(state.impactCalls.map((c) => c.p_ids.length), [100, 100, 50], "etki de parçalarla sayılır");
+  assert.equal(state.manageCalls.length, 0, "etki sayımı hiçbir şey silmez");
+  assert.equal(await page.getByTestId("manage-force").isChecked(), false, "varsayılan: kapalı");
+  assert.match(await page.getByTestId("manage-confirm-yes").innerText(), /Evet, kalıcı sil/);
+  await page.getByTestId("manage-force").check();
+  assert.match(await page.getByTestId("manage-confirm-yes").innerText(), /Evet, etkileşimleriyle birlikte sil/);
+  await page.getByTestId("manage-confirm-yes").click();
+  await page.getByTestId("manage-outcome").waitFor();
+  assert.ok(state.manageCalls.every((c) => c.fn === "delete" && c.p_force === true), "p_force=true gönderildi");
+  assert.match(await page.getByTestId("manage-outcome").innerText(), /250 prompt etkileşimleriyle birlikte silindi, 0 atlandı\./);
+  assert.equal(await rowsOf(page).count(), 0);
+  // sonraki silme tekrar kapalı başlar
+}, { moderator: true });
+
+await scenario("26. Etkileşimsiz seçimde onay kutusu çıkmaz ('kimsenin etkileşimi yok'); kutu işaretsizken p_force gönderilmez", async ({ page, state }) => {
+  await openManage(page);
+  await page.getByTestId("manage-search").fill("Toplu 25");
+  await page.getByTestId("manage-select-all").click();
+  await page.getByTestId("manage-delete").click();
+  await page.getByTestId("manage-impact-none").waitFor();
+  assert.equal(await page.getByTestId("manage-force").count(), 0);
+  await page.getByTestId("manage-confirm-yes").click();
+  await page.getByTestId("manage-outcome").waitFor();
+  assert.ok(state.manageCalls.every((c) => c.p_force === undefined), "kutu yoksa eski 1 argümanlı biçim");
+  assert.match(await page.getByTestId("manage-outcome").innerText(), /2 prompt silindi, 0 atlandı/);
+}, { moderator: true });
+
+await scenario("27. Etki hesaplanamazsa silme onayı kilitli kalır (hiçbir şey silinmez); Vazgeç çalışır; İngilizce", async ({ page, state }) => {
+  state.impactFail = true;
+  await openManage(page);
+  await page.getByTestId("manage-select-all").click();
+  await page.getByTestId("manage-delete").click();
+  await page.getByTestId("manage-impact-failed").waitFor();
+  assert.match(await page.getByTestId("manage-impact-failed").innerText(), /Couldn't work out the impact; nothing was deleted/);
+  assert.equal(await page.getByTestId("manage-confirm-yes").isDisabled(), true);
+  await page.getByTestId("manage-cancel").click();
+  assert.equal(await page.getByTestId("manage-confirm").count(), 0);
+  assert.equal(state.manageCalls.length, 0);
+  state.impactFail = false;
+  await page.getByTestId("manage-delete").click();
+  await page.getByTestId("manage-impact").waitFor();
+  assert.match(await page.getByTestId("manage-impact").innerText(), /5 prompt\(s\) have other people's activity/);
+  assert.equal(await page.getByTestId("manage-force").isChecked(), false);
+}, { moderator: true, lang: "en" });
+
+await scenario("28. Etiketle (mevcut promptlara): yalnız 'Otomatik' açıkken katalog etiketleri eklenir, yeni etiket oluşturulmaz; 'Önerilen' ile yeni etiket de oluşur", async ({ page, state }) => {
+  await openManage(page);
+  await page.getByTestId("manage-status").selectOption("draft");
+  await page.getByTestId("manage-first-n").fill("50");
+  await page.getByTestId("manage-select-first").click();
+  await page.getByTestId("manage-tag-open").click();
+  await page.getByTestId("manage-tag-panel").waitFor();
+  assert.equal(await page.getByTestId("manage-autotag-automatic").isChecked(), true);
+  assert.equal(await page.getByTestId("manage-autotag-suggested").isChecked(), false);
+  await page.getByTestId("manage-tag-run").click();
+  await page.getByTestId("manage-tag-outcome").waitFor();
+  assert.match(await page.getByTestId("manage-tag-outcome").innerText(), /34 promptta toplam 51 etiket eklendi, 0 yeni etiket oluşturuldu\./);
+  const links = state.tagPuts.flatMap((c) => c.rows);
+  assert.equal(links.length, 51);
+  assert.ok(links.every((l) => l.source === "automatic" && ["anime", "portre", "manzara"].includes(l.tag_slug)));
+  assert.ok(state.tagPuts.every((c) => c.query.on_conflict === "prompt_id,tag_slug"), "yinelenen bağlar yok sayılır (var olan etiket değişmez)");
+  assert.deepEqual(state.tagCreates, []);
+  // Önerilen de açık: aday sözlüğünden gelen (ör. Photography) yeni etiket olarak oluşturulur, bir kez
+  state.tagPuts.length = 0;
+  await page.getByTestId("manage-autotag-suggested").check();
+  await page.getByTestId("manage-tag-run").click();
+  await page.getByTestId("manage-tag-outcome").filter({ hasText: /yeni etiket oluşturuldu/ }).waitFor();
+  assert.ok(state.tagCreates.includes("Photography"), "aday etiket get_or_create_tag ile oluşturuldu");
+  assert.equal(state.tagCreates.filter((l) => l === "Photography").length, 1, "aynı etiket tekrar tekrar oluşturulmaz");
+  assert.ok(state.tagPuts.flatMap((c) => c.rows).some((l) => l.tag_slug === "photography" && l.source === "manual"));
+  assert.deepEqual(state.manageCalls, [], "etiketleme görünürlüğe/silmeye dokunmaz");
+}, { moderator: true });
+
+await scenario("29. Etiket seçenekleri kapalıyken çalıştır kilitli; seçim yokken düğme kapalı; İngilizce metinler", async ({ page, state }) => {
+  await openManage(page);
+  await page.getByTestId("manage-select-first").click();
+  await page.getByTestId("manage-tag-open").click();
+  await page.getByTestId("manage-autotag-automatic").uncheck();
+  assert.equal(await page.getByTestId("manage-tag-run").isDisabled(), true);
+  await page.getByText("Turn on at least one option.").waitFor();
+  assert.equal(state.tagPuts.length, 0);
+}, { moderator: true, lang: "en" });
+
+await scenario("30. Toplu yükleme: otomatik etiket varsayılan AÇIK, dosyadaki ve ortak etiketin üstüne eklenir; kapalıyken eklenmez; Önerilen yeni etiket adaylarını da ekler", async ({ page, state }) => {
+  await page.goto(`${BASE}/moderation`);
+  await page.getByTestId("bulk-import").waitFor();
+  const file = [
+    { title: "A", promptText: "bir anime portrait sahnesi çiz", contentType: "text", tags: ["özel"] },
+    { title: "B", promptText: "düz metin", contentType: "text" },
+  ];
+  await page.getByTestId("bulk-file").setInputFiles({ name: "x.json", mimeType: "application/json", buffer: Buffer.from(JSON.stringify(file)) });
+  await page.getByTestId("bulk-loaded").waitFor();
+  assert.equal(await page.getByTestId("bulk-autotag-automatic").isChecked(), true);
+  assert.equal(await page.getByTestId("bulk-autotag-suggested").isChecked(), false);
+  await page.getByTestId("bulk-run").click();
+  await page.getByTestId("bulk-outcome").waitFor();
+  const first = state.adminCalls[0].p_items;
+  assert.deepEqual(first[0].tags.slice(0, 2), ["özel", "prompts.chat"], "dosyadaki + ortak etiket önce");
+  assert.ok(first[0].tags.includes("Anime") && first[0].tags.includes("Portre"), "katalog etiketleri eklendi");
+  assert.deepEqual(first[1].tags, ["prompts.chat"], "eşleşmeyen prompta yalnız ortak etiket");
+  assert.match(await page.getByTestId("bulk-autonote").innerText(), /1 prompta toplam 2 etiket eklendi/);
+  // kapalı
+  state.adminCalls.length = 0;
+  await page.getByTestId("bulk-autotag-automatic").uncheck();
+  await page.getByTestId("bulk-run").click();
+  await page.getByTestId("bulk-outcome").waitFor();
+  assert.deepEqual(state.adminCalls[0].p_items[0].tags, ["özel", "prompts.chat"]);
+  assert.equal(await page.getByTestId("bulk-autonote").count(), 0);
+  // önerilen
+  state.adminCalls.length = 0;
+  await page.getByTestId("bulk-autotag-suggested").check();
+  await page.getByTestId("bulk-tag").fill("");
+  const cand = [{ title: "C", promptText: "photography tips for travel", contentType: "text" }];
+  await page.getByTestId("bulk-file").setInputFiles({ name: "y.json", mimeType: "application/json", buffer: Buffer.from(JSON.stringify(cand)) });
+  await page.getByTestId("bulk-loaded").waitFor();
+  await page.getByTestId("bulk-run").click();
+  await page.getByTestId("bulk-outcome").waitFor();
+  assert.ok(state.adminCalls[0].p_items[0].tags.includes("Photography"), "aday sözlüğünden gelen etiket eklendi");
+  assert.ok(state.adminCalls[0].p_items[0].tags.length <= 20);
+  assert.deepEqual(state.tagCreates, [], "yükleme tarafında etiketi sunucu (import RPC'si) oluşturur; istemci get_or_create_tag çağırmaz");
+}, { moderator: true });
 
 await browser.close();
 server.close();

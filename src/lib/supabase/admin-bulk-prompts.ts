@@ -86,16 +86,71 @@ export function bulkSetVisibility(ids: string[], makePublic: boolean, options: {
   );
 }
 
-/** Permanent. Prompts anyone else has touched are skipped by the server and counted in `skipped`. */
-export function bulkDeletePrompts(ids: string[], options: { onProgress?: (p: ChunkOutcome) => void; shouldStop?: () => boolean } = {}): Promise<ChunkOutcome> {
+/** What deleting the selected (own) prompts takes along or empties — counts only (`admin_bulk_delete_impact`). */
+export interface DeleteImpact {
+  prompts: number;
+  /** Prompts someone else has touched (a normal delete skips them; a forced delete removes them). */
+  engaged: number;
+  /** Removed together with the prompts (CASCADE). */
+  likes: number;
+  comments: number;
+  saves: number;
+  quotes: number;
+  communityPosts: number;
+  results: number;
+  suggestions: number;
+  /** Rows that stay but lose their prompt link (SET NULL). */
+  spaceItems: number;
+  workflowSteps: number;
+  sharedInMessages: number;
+}
+
+export const EMPTY_IMPACT: DeleteImpact = {
+  prompts: 0,
+  engaged: 0,
+  likes: 0,
+  comments: 0,
+  saves: 0,
+  quotes: 0,
+  communityPosts: 0,
+  results: 0,
+  suggestions: 0,
+  spaceItems: 0,
+  workflowSteps: 0,
+  sharedInMessages: 0,
+};
+
+/** Sums `admin_bulk_delete_impact` over chunks. Reads only; throws on the first failed chunk. */
+export async function fetchDeleteImpact(ids: string[], shouldStop?: () => boolean): Promise<DeleteImpact> {
+  const total: DeleteImpact = { ...EMPTY_IMPACT };
+  for (let offset = 0; offset < ids.length; offset += BULK_MANAGE_CHUNK) {
+    if (shouldStop?.()) break;
+    const { data, error } = await supabase.rpc("admin_bulk_delete_impact", { p_ids: ids.slice(offset, offset + BULK_MANAGE_CHUNK) });
+    if (error) throw new Error(error.message);
+    const part = data as DeleteImpact;
+    for (const key of Object.keys(total) as (keyof DeleteImpact)[]) total[key] += Number(part[key] ?? 0);
+  }
+  return total;
+}
+
+/**
+ * Permanent. By default prompts anyone else has touched are skipped by the server and counted in `skipped`; with `force` they are deleted too
+ * and the other people's likes, comments, saves, quotes, community posts, results and suggestions on them go with them.
+ */
+export function bulkDeletePrompts(
+  ids: string[],
+  options: { force?: boolean; onProgress?: (p: ChunkOutcome) => void; shouldStop?: () => boolean } = {},
+): Promise<ChunkOutcome> {
   return runChunks(
     ids,
     BULK_MANAGE_CHUNK,
     async (chunk) => {
-      const { data, error } = await supabase.rpc("admin_bulk_delete_prompts", { p_ids: chunk });
+      const { data, error } = options.force
+        ? await supabase.rpc("admin_bulk_delete_prompts", { p_ids: chunk, p_force: true })
+        : await supabase.rpc("admin_bulk_delete_prompts", { p_ids: chunk });
       if (error) throw new Error(error.message);
       return data as RpcCounts;
     },
-    options,
+    { onProgress: options.onProgress, shouldStop: options.shouldStop },
   );
 }

@@ -1,16 +1,22 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import { Eye, EyeOff, ListChecks, Loader2, Trash2 } from "lucide-react";
+import { Eye, EyeOff, ListChecks, Loader2, Tags, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/auth-provider";
 import type { ChunkOutcome } from "@/lib/exchange";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
-import { bulkDeletePrompts, bulkSetVisibility, fetchOwnPromptsForManage, type ManageRow, type ManageStatus } from "@/lib/supabase/admin-bulk-prompts";
+import { AutoTagOptionsField } from "@/features/moderation/auto-tag-options";
+import { autoTagsEnabled, type AutoTagOptions } from "@/lib/exchange/auto-tags";
+import { autoTagOwnPrompts, type AutoTagOutcome, type AutoTagProgress } from "@/lib/supabase/admin-auto-tags";
+import { bulkDeletePrompts, bulkSetVisibility, fetchDeleteImpact, fetchOwnPromptsForManage, type DeleteImpact, type ManageRow, type ManageStatus } from "@/lib/supabase/admin-bulk-prompts";
+import { fetchAllTags } from "@/lib/supabase/tags";
 
 type StatusFilter = "all" | ManageStatus;
 type Action = "publish" | "hide" | "delete";
+type Running = Action | "tag";
+type ImpactState = { status: "loading" } | { status: "failed" } | { status: "ready"; impact: DeleteImpact };
 
 const SHOW_STEP = 100;
 /** Bu sayının üstünde yayınlama da onay ister (akışa tek seferde çok içerik girmesin). */
@@ -24,14 +30,16 @@ const STATE_KEYS: Record<ManageStatus, TranslationKey> = {
 const STATE_COLORS: Record<ManageStatus, string> = { draft: "text-text-muted", public: "text-success", hidden: "text-warning" };
 
 /**
- * Moderatör aracı: KENDİ promptlarını (etikete göre; örn. toplu yüklediklerini) listeleyip seçerek yayınlar, gizler ya da siler
- * (docs/history/251-*). Her yazma `admin_bulk_*` RPC'sinden geçer (yalnız çağıranın kendi promptları; silme etkileşimli içeriği atlar).
- * Yayınlama/silme onay ister; "İlk N'i seç" akışı küçük gruplar hâlinde (damla damla) yayınlamak içindir.
+ * Moderatör aracı: KENDİ promptlarını (etikete göre; örn. toplu yüklediklerini) listeleyip seçerek yayınlar, gizler, siler ya da etiketler
+ * (docs/history/251-*, 252-*). Her yazma `admin_bulk_*` RPC'sinden geçer (yalnız çağıranın kendi promptları). Silme önce etkisini sayar
+ * (beğeni/yorum/kayıt/alıntı…); etkileşimi olanlar varsayılan olarak ATLANIR, "etkileşimi olanları da sil" açıkça seçilirse onlarla birlikte
+ * silinir. Yayınlama/silme onay ister; "İlk N'i seç" akışı küçük gruplar hâlinde (damla damla) yayınlamak içindir.
  */
 export function BulkManageCard() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const stopRef = useRef(false);
+  const impactRequest = useRef(0);
   const [tag, setTag] = useState("prompts.chat");
   const [rows, setRows] = useState<ManageRow[] | null>(null);
   const [truncated, setTruncated] = useState(false);
@@ -43,9 +51,15 @@ export function BulkManageCard() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [firstN, setFirstN] = useState(50);
   const [pending, setPending] = useState<Action | null>(null);
-  const [running, setRunning] = useState<Action | null>(null);
+  const [running, setRunning] = useState<Running | null>(null);
   const [progress, setProgress] = useState<ChunkOutcome | null>(null);
-  const [outcome, setOutcome] = useState<{ action: Action; result: ChunkOutcome } | null>(null);
+  const [outcome, setOutcome] = useState<{ action: Action; force: boolean; result: ChunkOutcome } | null>(null);
+  const [impact, setImpact] = useState<ImpactState | null>(null);
+  const [force, setForce] = useState(false);
+  const [tagPanel, setTagPanel] = useState(false);
+  const [tagOptions, setTagOptions] = useState<AutoTagOptions>({ automatic: true, suggested: false });
+  const [tagProgress, setTagProgress] = useState<AutoTagProgress | null>(null);
+  const [tagOutcome, setTagOutcome] = useState<AutoTagOutcome | null>(null);
 
   const filtered = useMemo(() => {
     const needle = query.trim().toLocaleLowerCase("tr");
@@ -89,13 +103,17 @@ export function BulkManageCard() {
   async function execute(action: Action) {
     if (selectedIds.length === 0 || busy) return;
     stopRef.current = false;
+    const forced = action === "delete" && force;
     setPending(null);
+    setImpact(null);
     setOutcome(null);
+    setTagOutcome(null);
     setRunning(action);
     setProgress({ done: 0, total: selectedIds.length, affected: 0, skipped: 0, stoppedAt: null, error: null });
     const options = { onProgress: setProgress, shouldStop: () => stopRef.current };
-    const result = action === "delete" ? await bulkDeletePrompts(selectedIds, options) : await bulkSetVisibility(selectedIds, action === "publish", options);
-    setOutcome({ action, result });
+    const result = action === "delete" ? await bulkDeletePrompts(selectedIds, { ...options, force: forced }) : await bulkSetVisibility(selectedIds, action === "publish", options);
+    setOutcome({ action, force: forced, result });
+    setForce(false);
     setProgress(null);
     setRunning(null);
     // Durumlar değişti: listeyi yeniden oku (seçim temizlenir).
@@ -112,11 +130,42 @@ export function BulkManageCard() {
   }
 
   function request(action: Action) {
-    if (action === "delete" || (action === "publish" && selectedIds.length > PUBLISH_CONFIRM_ABOVE)) setPending(action);
+    if (action === "delete") {
+      setForce(false);
+      const token = ++impactRequest.current;
+      setImpact({ status: "loading" });
+      setPending("delete");
+      fetchDeleteImpact(selectedIds).then(
+        (result) => token === impactRequest.current && setImpact({ status: "ready", impact: result }),
+        () => token === impactRequest.current && setImpact({ status: "failed" }),
+      );
+    } else if (action === "publish" && selectedIds.length > PUBLISH_CONFIRM_ABOVE) setPending(action);
     else void execute(action);
   }
 
+  function cancelPending() {
+    impactRequest.current += 1;
+    setPending(null);
+    setImpact(null);
+    setForce(false);
+  }
+
+  async function runAutoTag() {
+    if (!user || selectedIds.length === 0 || busy || !autoTagsEnabled(tagOptions)) return;
+    stopRef.current = false;
+    setOutcome(null);
+    setTagOutcome(null);
+    setRunning("tag");
+    setTagProgress({ done: 0, total: selectedIds.length, tagged: 0, added: 0, created: 0 });
+    const catalog = await fetchAllTags();
+    const result = await autoTagOwnPrompts(selectedIds, user.id, catalog, tagOptions, { onProgress: setTagProgress, shouldStop: () => stopRef.current });
+    setTagOutcome(result);
+    setTagProgress(null);
+    setRunning(null);
+  }
+
   const percent = progress && progress.total > 0 ? Math.round((progress.done / progress.total) * 100) : 0;
+  const tagPercent = tagProgress && tagProgress.total > 0 ? Math.round((tagProgress.done / tagProgress.total) * 100) : 0;
   const doneKey: Record<Action, TranslationKey> = { publish: "exchange.manage.donePublished", hide: "exchange.manage.doneHidden", delete: "exchange.manage.doneDeleted" };
 
   return (
@@ -244,33 +293,82 @@ export function BulkManageCard() {
                 {pending ? (
                   <div role="alertdialog" className="space-y-2 rounded-lg border border-danger/40 bg-danger/5 p-3" data-testid="manage-confirm">
                     <p className="text-small text-text">{t(pending === "delete" ? "exchange.manage.deleteConfirm" : "exchange.manage.publishConfirm", { count: selectedIds.length })}</p>
+                    {pending === "delete" && impact?.status === "loading" && (
+                      <p className="text-caption text-text-secondary" data-testid="manage-impact-loading">
+                        {t("exchange.manage.impactLoading")}
+                      </p>
+                    )}
+                    {pending === "delete" && impact?.status === "failed" && (
+                      <p role="alert" className="text-caption text-danger" data-testid="manage-impact-failed">
+                        {t("exchange.manage.impactFailed")}
+                      </p>
+                    )}
+                    {pending === "delete" && impact?.status === "ready" &&
+                      (impact.impact.engaged === 0 ? (
+                        <p className="text-caption text-text-secondary" data-testid="manage-impact-none">
+                          {t("exchange.manage.impactNone")}
+                        </p>
+                      ) : (
+                        <div className="space-y-2" data-testid="manage-impact">
+                          <p className="text-small font-semibold text-text">{t("exchange.manage.impactEngaged", impact.impact as unknown as Record<string, number>)}</p>
+                          <p className="text-caption text-text-secondary" data-testid="manage-impact-goes">
+                            {t("exchange.manage.impactGoes", impact.impact as unknown as Record<string, number>)}
+                          </p>
+                          <p className="text-caption text-text-secondary" data-testid="manage-impact-emptied">
+                            {t("exchange.manage.impactEmptied", impact.impact as unknown as Record<string, number>)}
+                          </p>
+                          <label className="flex cursor-pointer items-start gap-2 text-small text-text">
+                            <input type="checkbox" checked={force} onChange={(event) => setForce(event.target.checked)} className="mt-1 accent-primary" data-testid="manage-force" />
+                            <span>
+                              <span className="block font-semibold">{t("exchange.manage.forceLabel")}</span>
+                              <span className="block text-caption text-text-secondary">{t("exchange.manage.forceHint")}</span>
+                            </span>
+                          </label>
+                        </div>
+                      ))}
                     <div className="flex flex-wrap gap-2">
-                      <Button type="button" size="sm" variant="danger" onClick={() => void execute(pending)} data-testid="manage-confirm-yes">
-                        {t(pending === "delete" ? "exchange.manage.confirmDelete" : "exchange.manage.confirmPublish")}
+                      <Button type="button" size="sm" variant="danger" onClick={() => void execute(pending)} disabled={pending === "delete" && impact?.status !== "ready"} data-testid="manage-confirm-yes">
+                        {t(pending === "delete" ? (force ? "exchange.manage.confirmDeleteForce" : "exchange.manage.confirmDelete") : "exchange.manage.confirmPublish")}
                       </Button>
-                      <Button type="button" size="sm" variant="ghost" onClick={() => setPending(null)} data-testid="manage-cancel">
+                      <Button type="button" size="sm" variant="ghost" onClick={cancelPending} data-testid="manage-cancel">
                         {t("exchange.manage.cancel")}
                       </Button>
                     </div>
                   </div>
                 ) : (
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Button type="button" size="sm" onClick={() => request("publish")} disabled={busy || selectedIds.length === 0} data-testid="manage-publish">
-                      <Eye size={14} />
-                      {t("exchange.manage.publish", { count: selectedIds.length })}
-                    </Button>
-                    <Button type="button" size="sm" variant="outline" onClick={() => request("hide")} disabled={busy || selectedIds.length === 0} data-testid="manage-hide">
-                      <EyeOff size={14} />
-                      {t("exchange.manage.hide")}
-                    </Button>
-                    <Button type="button" size="sm" variant="outline" onClick={() => request("delete")} disabled={busy || selectedIds.length === 0} data-testid="manage-delete" className="text-danger">
-                      <Trash2 size={14} />
-                      {t("exchange.manage.delete")}
-                    </Button>
-                    {running && (
-                      <Button type="button" size="sm" variant="ghost" onClick={() => (stopRef.current = true)} data-testid="manage-stop">
-                        {t("exchange.manage.stop")}
+                  <div className="space-y-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Button type="button" size="sm" onClick={() => request("publish")} disabled={busy || selectedIds.length === 0} data-testid="manage-publish">
+                        <Eye size={14} />
+                        {t("exchange.manage.publish", { count: selectedIds.length })}
                       </Button>
+                      <Button type="button" size="sm" variant="outline" onClick={() => request("hide")} disabled={busy || selectedIds.length === 0} data-testid="manage-hide">
+                        <EyeOff size={14} />
+                        {t("exchange.manage.hide")}
+                      </Button>
+                      <Button type="button" size="sm" variant="outline" onClick={() => setTagPanel((open) => !open)} disabled={busy || selectedIds.length === 0} aria-expanded={tagPanel} data-testid="manage-tag-open">
+                        <Tags size={14} />
+                        {t("exchange.autotag.open")}
+                      </Button>
+                      <Button type="button" size="sm" variant="outline" onClick={() => request("delete")} disabled={busy || selectedIds.length === 0} data-testid="manage-delete" className="text-danger">
+                        <Trash2 size={14} />
+                        {t("exchange.manage.delete")}
+                      </Button>
+                      {running && (
+                        <Button type="button" size="sm" variant="ghost" onClick={() => (stopRef.current = true)} data-testid="manage-stop">
+                          {t("exchange.manage.stop")}
+                        </Button>
+                      )}
+                    </div>
+                    {tagPanel && (
+                      <div className="space-y-2 rounded-lg border border-border-soft p-3" data-testid="manage-tag-panel">
+                        <AutoTagOptionsField value={tagOptions} onChange={setTagOptions} disabled={busy} testId="manage-autotag" />
+                        <p className="text-caption text-text-muted">{t(autoTagsEnabled(tagOptions) ? "exchange.autotag.existingKept" : "exchange.autotag.pickOne")}</p>
+                        <Button type="button" size="sm" onClick={() => void runAutoTag()} disabled={busy || selectedIds.length === 0 || !autoTagsEnabled(tagOptions)} data-testid="manage-tag-run">
+                          {running === "tag" && <Loader2 size={14} className="animate-spin" />}
+                          {t("exchange.autotag.run", { count: selectedIds.length })}
+                        </Button>
+                      </div>
                     )}
                   </div>
                 )}
@@ -289,9 +387,34 @@ export function BulkManageCard() {
         </div>
       )}
 
+      {tagProgress && (
+        <div className="space-y-1" data-testid="manage-tag-progress">
+          <div role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={tagPercent} className="h-2 w-full overflow-hidden rounded-full bg-surface-soft">
+            <div className="h-full bg-primary transition-[width] duration-200" style={{ width: `${tagPercent}%` }} />
+          </div>
+          <p className="text-caption text-text-secondary">{t("exchange.autotag.progress", { done: tagProgress.done, total: tagProgress.total })}</p>
+        </div>
+      )}
+
+      {tagOutcome && (
+        <div className="space-y-1 text-small" data-testid="manage-tag-outcome">
+          <p className="text-text">{t("exchange.autotag.done", { tagged: tagOutcome.tagged, added: tagOutcome.added, created: tagOutcome.created })}</p>
+          {tagOutcome.stoppedAt !== null && (
+            <p className="text-warning" data-testid="manage-tag-partial">
+              {t("exchange.manage.partial", { done: tagOutcome.done, total: tagOutcome.total })}
+            </p>
+          )}
+          {tagOutcome.error && (
+            <p role="alert" className="text-danger" data-testid="manage-tag-error">
+              {tagOutcome.error}
+            </p>
+          )}
+        </div>
+      )}
+
       {outcome && (
         <div className="space-y-1 text-small" data-testid="manage-outcome">
-          <p className="text-text">{t(doneKey[outcome.action], { affected: outcome.result.affected, skipped: outcome.result.skipped })}</p>
+          <p className="text-text">{t(outcome.action === "delete" && outcome.force ? "exchange.manage.doneDeletedForce" : doneKey[outcome.action], { affected: outcome.result.affected, skipped: outcome.result.skipped })}</p>
           {outcome.result.stoppedAt !== null && (
             <p className="text-warning" data-testid="manage-partial">
               {t("exchange.manage.partial", { done: outcome.result.done, total: outcome.result.total })}
