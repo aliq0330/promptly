@@ -78,15 +78,9 @@ export function focusFeedShown(entry: PostEntry, mediaOnly: boolean): boolean {
   return focusFeedHasMedia(entry);
 }
 
-/** Odak's sections (docs/history/239-*): swiping up / down moves between them, sideways moves between the posts of one. */
+/** Odak's post types (docs/history/239-*, 245-*): picked in the bar's filter menu; sideways moves between the posts of one. */
 export const FOCUS_CHANNELS = ["all", "prompt", "request", "workflow", "preset"] as const;
 export type FocusChannel = (typeof FOCUS_CHANNELS)[number];
-
-/** The channel `delta` steps from `channel`, or the same one at either end (no wrap-around). */
-export function focusChannelStep(channel: FocusChannel, delta: number): FocusChannel {
-  const index = FOCUS_CHANNELS.indexOf(channel) + delta;
-  return FOCUS_CHANNELS[Math.max(0, Math.min(FOCUS_CHANNELS.length - 1, index))];
-}
 
 /** Where the feed opens: the post last open in this feed during the session (if it is still in the list), else the top. */
 export function focusFeedStartIndex(keys: readonly string[], rememberedKey: string | null | undefined): number {

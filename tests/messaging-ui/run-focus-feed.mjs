@@ -196,6 +196,14 @@ const menuItem = async (page, name) => {
   if (!(await item.isVisible())) await stage(page).getByRole("button", { name: /Odak seçenekleri|Focus options/ }).click();
   return item;
 };
+// Üst çubuğun tek süzgeç çipi (docs/history/245-*): tür + kaynak. Menüyü açar, öğeyi seçer.
+const filterChip = (page) => stage(page).getByRole("button", { name: /Odak süzgeci|Focus filter/ });
+const pickFilter = async (page, name) => {
+  await filterChip(page).click();
+  await stage(page).getByRole("menuitemradio", { name }).click();
+  await page.waitForTimeout(900);
+};
+
 const shot = async (page, name) => { if (SHOTS) await page.screenshot({ path: `${SHOTS}/${name}.png` }); };
 
 await scenario("1. Ana Sayfa değişmedi: Akış seçeneği yok, seçici Kart | Izgara; üst çubukta Odak (yan menüde yok)", async ({ page }) => {
@@ -389,7 +397,7 @@ await scenario("13. Misafir: beğeni giriş penceresi açar; Takip sekmesi giri�
   await page.locator("[aria-modal='true']").waitFor();
   assert.equal(db.calls.filter((c) => c.table === "prompt_likes").length, 0);
   await page.keyboard.press("Escape");
-  await stage(page).getByRole("tab", { name: /Takip/ }).click();
+  await pickFilter(page, "Takip Ettiklerim");
   await stage(page).getByRole("link", { name: "Giriş Yap" }).waitFor();
 }, { guest: true });
 
@@ -412,12 +420,12 @@ await scenario("14. Telefon 390px: alt menüde Profil yerine Odak; ekranı kapla
   assert.equal(await stage(page).locator("[data-focus-strip] button").count() > 5, true, "thumbnail strip");
   const like = await slides(page).nth(0).getByRole("button", { name: /Beğen/ }).boundingBox();
   assert.ok(like.x + like.width <= 390 && like.y + like.height <= 844);
-  await shot(page, "14-focus-phone");
   await step(page);
   await shot(page, "14b-focus-phone-text");
   await stage(page).getByRole("button", { name: "Odak'ı kapat" }).first().click();
   await page.waitForTimeout(600);
   assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector("nav[data-app-chrome]")).visibility), "visible");
+  await shot(page, "14-focus-phone");
 }, { viewport: { width: 390, height: 844 } });
 
 await scenario("15. İngilizce", async ({ page }) => {
@@ -428,7 +436,10 @@ await scenario("15. İngilizce", async ({ page }) => {
   await page.keyboard.press("Escape");
   await slides(page).nth(0).getByRole("button", { name: "Info" }).click();
   assert.ok(await page.locator("[data-focus-info]").getByRole("button", { name: "View prompt" }).isVisible());
-  assert.deepEqual(await stage(page).locator("nav[aria-label='Focus sections'] button").evaluateAll((els) => els.map((e) => e.getAttribute("aria-label"))), ["All", "Prompts", "Requests", "Workflows", "Presets"]);
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(300);
+  await filterChip(page).click();
+  assert.deepEqual(await stage(page).getByRole("menuitemradio").allInnerTexts(), ["All", "Prompts", "Requests", "Workflows", "Presets", "Newest", "Following"]);
 }, { lang: "en" });
 
 await scenario("16. Açık temada da koyu sahne; hareket azaltmada geçiş yok", async ({ page }) => {
@@ -658,53 +669,61 @@ await scenario("27. Yana kaydırma: yatay kaydırma bir sonraki kartı etkin yap
   assert.equal(await stage(page).count(), 0, "a second Esc closes Odak");
 });
 
-const railDots = (page) => stage(page).locator("nav[aria-label='Odak bölümleri'] button");
-const activeChannel = (page) => stage(page).locator("nav[aria-label='Odak bölümleri'] button[aria-current]").getAttribute("aria-label");
 const swipeVertical = (page, from, to) => page.locator("[data-focus-feed] [data-channel-area]").evaluate((el, [y0, y1]) => {
   const fire = (type, y) => el.dispatchEvent(new PointerEvent(type, { pointerType: "touch", pointerId: 7, clientX: 200, clientY: y, bubbles: true, isPrimary: true }));
   fire("pointerdown", y0); fire("pointermove", (y0 + y1) / 2); fire("pointermove", y1); fire("pointerup", y1);
 }, [from, to]);
-
-await scenario("28. Bölümler (docs/history/239-*): solda 5 nokta (yazı yok), ↓ ↑ ile Tümü · Prompt · İstek · Workflow · Hazır ayar; geçişte ad belirir; her bölüm kendi sunucu sorgusu", async ({ page, db }) => {
+await scenario("28. Süzgeç menüsü (docs/history/245-*): üstte tek 'Tümü · En yeni' çipi, tür + kaynak yazıyla; nokta/kapsül yok; yukarı kaydırma = Bilgi; her tür kendi sunucu sorgusu", async ({ page, db }) => {
   await openFocus(page, { all: false });
-  assert.equal(await railDots(page).count(), 5);
-  assert.equal(await stage(page).locator("nav[aria-label='Odak bölümleri']").innerText(), "", "the dots carry no words");
-  assert.equal(await activeChannel(page), "Tümü");
+  assert.equal(await stage(page).locator("nav[aria-label='Odak bölümleri']").count(), 0, "no dots down the edge");
+  assert.equal(await stage(page).locator("[role='tablist']").count(), 0, "no two-feed capsule");
+  assert.equal((await filterChip(page).innerText()).replace(/\s+/g, " ").trim(), "Tümü · En yeni");
   assert.equal(db.feedCalls.at(-1).p_kinds, null, "Tümü = every kind");
-  await page.keyboard.press("ArrowUp");
-  await page.waitForTimeout(400);
-  assert.equal(await activeChannel(page), "Tümü", "no wrap above the first");
-  await page.keyboard.press("ArrowDown");
-  await page.keyboard.press("ArrowDown"); // a second step right away is ignored: one section per gesture
-  await page.waitForTimeout(900);
-  assert.equal(await activeChannel(page), "Promptlar");
-  const dotSizes = await railDots(page).evaluateAll((els) => els.map((e) => { const r = e.querySelector("span").getBoundingClientRect(); return [Math.round(r.width), Math.round(r.height), e.getAttribute("aria-current") === "true"]; }));
-  assert.deepEqual(dotSizes, [[6, 6, false], [6, 24, true], [6, 6, false], [6, 6, false], [6, 6, false]], "every dot is a clean 6 px circle, the active one a 24 px pill");
-  const railOpacity = () => stage(page).locator("nav[aria-label='Odak bölümleri']").evaluate((el) => Number(getComputedStyle(el).opacity));
-  assert.ok((await railOpacity()) > 0.9, "the dots show while the section changes");
-  await stage(page).getByRole("status").filter({ hasText: "Promptlar" }).waitFor();
+  assert.equal(db.feedCalls.at(-1).p_scope, "all");
+  await filterChip(page).click();
+  assert.equal(await stage(page).getByRole("menuitemradio").count(), 7, "5 types + 2 sources");
+  assert.equal(await stage(page).getByRole("menuitemradio", { name: "Tümü" }).getAttribute("aria-checked"), "true");
+  assert.equal(await stage(page).getByRole("menuitemradio", { name: "En yeni" }).getAttribute("aria-checked"), "true");
+  await shot(page, "28-filter-menu");
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(300);
+  assert.equal(await stage(page).getByRole("menu").count(), 0, "Esc closes the menu first");
+  assert.equal(await stage(page).count(), 1, "…not Odak");
+  await pickFilter(page, "Promptlar");
+  assert.equal((await filterChip(page).innerText()).replace(/\s+/g, " ").trim(), "Promptlar · En yeni");
   assert.deepEqual(db.feedCalls.at(-1).p_kinds, ["prompt"]);
   const types = await slides(page).evaluateAll((els) => els.slice(0, -1).map((e) => /PROMPT|Prompt/.test(e.textContent)));
-  assert.ok(types.every(Boolean), "only prompts in the Prompt section");
-  await page.waitForTimeout(1600);
-  assert.equal(await stage(page).getByRole("status").filter({ hasText: "Promptlar" }).count(), 0, "the name fades after a moment");
-  assert.ok((await railOpacity()) < 0.3, "at rest the dots are nearly invisible");
-  await railDots(page).nth(3).click();
-  await page.waitForTimeout(900);
-  assert.equal(await activeChannel(page), "Workflow'lar");
+  assert.ok(types.every(Boolean), "only prompts in the Prompt type");
+  await pickFilter(page, "Workflow'lar");
   assert.deepEqual(db.feedCalls.at(-1).p_kinds, ["workflow"]);
-  await page.keyboard.press("ArrowUp");
-  await page.waitForTimeout(900);
-  assert.equal(await activeChannel(page), "İstekler");
-  // Touch swipe up (finger moves up) = next section; mouse wheel too.
-  await swipeVertical(page, 500, 280);
-  await page.waitForTimeout(900);
-  assert.equal(await activeChannel(page), "Workflow'lar", "a vertical touch swipe changes the section");
+  await pickFilter(page, "Takip Ettiklerim");
+  assert.equal(db.feedCalls.at(-1).p_scope, "following", "the source is the same menu");
+  assert.deepEqual(db.feedCalls.at(-1).p_kinds, ["workflow"], "…and the type stays");
+  assert.equal((await filterChip(page).innerText()).replace(/\s+/g, " ").trim(), "Workflow'lar · Takip Ettiklerim");
+  await pickFilter(page, "Tümü");
+  await pickFilter(page, "En yeni");
+  assert.equal(db.feedCalls.at(-1).p_kinds, null);
+  assert.equal(db.feedCalls.at(-1).p_scope, "all");
+  // Vertical moves no longer change the type: the wheel and ↓ do nothing, a touch swipe up / ↑ open Bilgi.
   await page.mouse.move(640, 450);
   await page.mouse.wheel(0, 300);
-  await page.waitForTimeout(900);
-  assert.equal(await activeChannel(page), "Hazır Ayarlar", "the wheel changes the section");
-  await shot(page, "28-channels");
+  await page.keyboard.press("ArrowDown");
+  await page.waitForTimeout(700);
+  assert.equal(await page.locator("[data-focus-info]").count(), 0, "the wheel / ↓ do not open anything");
+  assert.equal((await filterChip(page).innerText()).replace(/\s+/g, " ").trim(), "Tümü · En yeni", "…and do not change the type");
+  await page.keyboard.press("ArrowUp");
+  await page.locator("[data-focus-info]").waitFor();
+  await page.keyboard.press("Escape");
+  await page.waitForTimeout(400);
+  assert.equal(await page.locator("[data-focus-info]").count(), 0);
+  await swipeVertical(page, 280, 500);
+  await page.waitForTimeout(400);
+  assert.equal(await page.locator("[data-focus-info]").count(), 0, "a swipe down does nothing");
+  await swipeVertical(page, 500, 280);
+  await page.locator("[data-focus-info]").waitFor();
+  assert.match(await page.locator("[data-focus-info]").textContent(), /Görsel prompt 1|Açıklama 1/, "a swipe up opens the info of the active post");
+  const thumb = await stage(page).locator("[data-focus-strip] button").first().boundingBox();
+  assert.ok(thumb.width <= 40.5, `the thumbnails are small (${thumb.width}px wide)`);
 });
 
 await scenario("29. Görselsiz istek ve hazır ayar: görselin yerinde kendi metni / parametre özeti; Prompt bölümünde Medya açıkken yalnız görselli/oynatılan promptlar", async ({ page }) => {
@@ -727,8 +746,7 @@ await scenario("29. Görselsiz istek ve hazır ayar: görselin yerinde kendi met
   assert.equal(await page.locator("[data-focus-info]").getByRole("link", { name: "Yanıtla", exact: true }).count(), 1, "Yanıtla lives in the info sheet");
   await page.keyboard.press("Escape");
   await page.waitForTimeout(400);
-  await page.keyboard.press("ArrowDown");
-  await page.waitForTimeout(900);
+  await pickFilter(page, "Promptlar");
   const titles = await slides(page).evaluateAll((els) => els.slice(0, -1).map((e) => e.querySelector("h2")?.textContent));
   assert.ok(!titles.includes("Kısa öykü açılışı"), "the text prompt stays out while Medya is on");
   assert.ok(titles.includes("Neon şehirde drone çekimi"));

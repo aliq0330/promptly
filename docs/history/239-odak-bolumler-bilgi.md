@@ -1,5 +1,7 @@
 # 239 — Odak: Albüm A (özet + Bilgi sayfası) ve bölümler
 
+> **Güncelleme (`245-*`):** "dikey kaydırma = bölüm" kaldırıldı; tür + kaynak üstteki tek süzgeç çipinde, yukarı kaydırma Bilgi'yi açar. Aşağıdaki bölüm hareketi/nokta anlatımı eskidir.
+
 **Durum:** uygulandı (yalnız istemci kodu, migration yok). Ağ taklitli Playwright'ta sınandı (`run-focus-feed` 30 senaryo, birim testleri `focus-feed.test.ts`). **Gerçek Supabase'e / gerçek telefona (iOS Safari dokunmatik dikey/yatay kaydırma) / gerçek fare-trackpad'e karşı denenmedi.** İngilizce karşılıklar eklendi (`focusFeed.info`, `infoClose`, `channels`; `mediaOnlyTitle` ve `keyboardHint` güncellendi).
 
 ## Neden

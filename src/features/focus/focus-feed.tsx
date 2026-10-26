@@ -3,7 +3,7 @@
 import { Component, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, type ErrorInfo, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, ChevronRight, ChevronUp, Clock, GalleryVerticalEnd, Images, Inbox, LayoutGrid, MoreVertical, SlidersHorizontal, Sparkles, SquareTerminal, UserCheck, Volume2, VolumeX, Workflow as WorkflowIcon, X, type LucideIcon } from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronUp, GalleryVerticalEnd, Images, Inbox, MoreVertical, SlidersHorizontal, Sparkles, UserCheck, Volume2, VolumeX, Workflow as WorkflowIcon, X, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { lockBodyScroll, unlockBodyScroll } from "@/components/ui/modal";
@@ -14,14 +14,14 @@ import { useAuth } from "@/features/auth/auth-provider";
 import { feedItemKey } from "@/features/feed/types";
 import { useFeedPages } from "@/features/feed/use-feed-pages";
 import { EMPTY_TAXONOMY_FILTER } from "@/lib/content-taxonomy";
-import { FOCUS_CHANNELS, focusChannelStep, focusFeedCover, focusFeedIsNear, focusFeedShouldLoadMore, focusFeedShown, focusFeedStartIndex, type FocusChannel } from "@/lib/focus-feed";
+import { FOCUS_CHANNELS, focusFeedCover, focusFeedIsNear, focusFeedShouldLoadMore, focusFeedShown, focusFeedStartIndex, type FocusChannel } from "@/lib/focus-feed";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { usePrefersReducedMotion } from "@/lib/motion";
-import type { TranslationKey } from "@/lib/i18n/translations";
 import { cn } from "@/lib/utils";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
 import { FOCUS_SLIDE_WIDTH, FocusFeedSlide, FocusInfoContext, FocusPlaybackContext, HIDE_WHILE_COMMENTS } from "./focus-feed-slide";
 import { FocusInfoSheet } from "./focus-info-sheet";
+import { FocusFilterMenu, type FocusTab } from "./focus-filter-menu";
 import { FocusCommentsContext, FocusCommentsSheet } from "./focus-comments-sheet";
 import { isPostItem, type PostFeedItem } from "@/features/feed/types";
 
@@ -33,12 +33,11 @@ import { isPostItem, type PostFeedItem } from "@/features/feed/types";
  * are the cards' own components.
  *
  * Scrolling is native: a HORIZONTAL `scroll-snap` carousel (docs/history/238-*; mandatory, one stop per post, the neighbours'
- * edges peeking) the browser drives; JS only scrolls on an explicit keyboard / button / thumbnail step. The active post is the one nearest the carousel's centre; only it and its
+ * edges peeking) the browser drives; JS only scrolls on an explicit keyboard / button / thumbnail step. Up on a post (a swipe, ↑)
+ * opens its info sheet; the post type and the source are chosen in the bar's one filter menu (docs/history/245-*). The active post is the one nearest the carousel's centre; only it and its
  * neighbours mount pictures / video / audio, and its picture is mirrored, blurred, into the cross-fading backdrop. The
  * active video / audio plays (muted until the sound switch is turned on), the others pause.
  */
-
-type FocusTab = "newest" | "following";
 
 /** Scroll position that centres a slide in the carousel (the scroller is the slide's `offsetParent`). */
 function slideScrollLeft(scroller: HTMLElement, slide: HTMLElement): number {
@@ -140,44 +139,6 @@ function FocusFailed({ onRetry }: { onRetry: () => void }) {
   );
 }
 
-/** The two feeds as one glassy capsule (Albüm, docs/history/203-*): the chosen one lifted, with its icon. */
-function FocusTabs<K extends string>({
-  items,
-  active,
-  onChange,
-  ariaLabel,
-}: {
-  items: { key: K; label: string; icon: LucideIcon }[];
-  active: K;
-  onChange: (key: K) => void;
-  ariaLabel: string;
-}) {
-  return (
-    <div role="tablist" aria-label={ariaLabel} className="inline-flex h-11 min-w-0 shrink-0 items-center gap-0.5 rounded-full border border-white/15 bg-white/10 p-1 backdrop-blur-md">
-      {items.map((item) => {
-        const selected = item.key === active;
-        const Icon = item.icon;
-        return (
-          <button
-            key={item.key}
-            type="button"
-            role="tab"
-            aria-selected={selected}
-            onClick={() => onChange(item.key)}
-            className={cn(
-              "inline-flex h-9 items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 text-label font-semibold transition-colors duration-200 ease-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
-              selected ? "bg-white/20 text-white" : "text-white/70 hover:text-white",
-            )}
-          >
-            {selected && <Icon size={15} aria-hidden />}
-            {item.label}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
 /* ---------------------------------------------------------------------- backdrop */
 
 function BackdropLayer({ url, visible }: { url: string | null; visible: boolean }) {
@@ -264,7 +225,7 @@ function FocusStrip({ items, active, onGo }: { items: PostFeedItem[]; active: nu
       role="group"
       aria-label={t("focusFeed.strip")}
       data-focus-strip
-      className={cn(HIDE_WHILE_COMMENTS, "pointer-events-none absolute inset-x-0 top-[calc(4.25rem+env(safe-area-inset-top))] z-20 h-[4.75rem] overflow-hidden [--ts:3rem] md:top-[4.75rem] md:h-[5.75rem] md:[--ts:4rem]")}
+      className={cn(HIDE_WHILE_COMMENTS, "pointer-events-none absolute inset-x-0 top-[calc(4.25rem+env(safe-area-inset-top))] z-20 h-[3.5rem] overflow-hidden [--ts:2.25rem] md:top-[4.75rem] md:h-[4.25rem] md:[--ts:3rem]")}
     >
       <div
         className="absolute left-1/2 top-2 h-full transition-transform duration-300 ease-soft motion-reduce:transition-none"
@@ -293,7 +254,7 @@ function FocusStrip({ items, active, onGo }: { items: PostFeedItem[]; active: nu
                 <StorageImg src={cover.url} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
               ) : (
                 <span className="flex h-full w-full items-center justify-center text-white/80">
-                  <Icon size={18} aria-hidden />
+                  <Icon size={14} aria-hidden />
                 </span>
               )}
             </button>
@@ -374,62 +335,6 @@ function FocusMenu({ mediaOnly, onToggleMedia, muted, onToggleMuted }: { mediaOn
   );
 }
 
-/* --------------------------------------------------------------------- channels */
-
-const CHANNEL_META: Record<FocusChannel, { icon: LucideIcon; label: TranslationKey }> = {
-  all: { icon: LayoutGrid, label: "focusFeed.all" },
-  prompt: { icon: SquareTerminal, label: "nav.prompts" },
-  request: { icon: Sparkles, label: "nav.requestsShort" },
-  workflow: { icon: WorkflowIcon, label: "nav.workflows" },
-  preset: { icon: SlidersHorizontal, label: "nav.presets" },
-};
-
-/**
- * The five sections as dots down the left edge (docs/history/239-*): swiping up / down (or the wheel, ↑ ↓) moves between
- * Tümü · Prompt · İstek · Workflow · Hazır ayar, the active one a tall pill. Nearly invisible at rest (`visible` = while a
- * vertical swipe is under way and for a moment after a section change; hovering or focusing it shows it too). No words here — the name shows briefly in a
- * toast while switching (`ChannelToast`); each dot is also a button with the name for assistive tech and as a tooltip.
- */
-function FocusChannelRail({ channel, onPick, visible }: { channel: FocusChannel; onPick: (channel: FocusChannel) => void; visible: boolean }) {
-  const { t } = useTranslation();
-  return (
-    <nav aria-label={t("focusFeed.channels")} className={cn(HIDE_WHILE_COMMENTS, "absolute left-0 top-1/2 z-20 flex -translate-y-1/2 flex-col items-center transition-opacity duration-300 ease-soft hover:opacity-100 focus-within:opacity-100", visible ? "opacity-100" : "opacity-[0.12]", "md:left-3")}>
-      {FOCUS_CHANNELS.map((key) => {
-        const active = key === channel;
-        const label = t(CHANNEL_META[key].label);
-        return (
-          <button
-            key={key}
-            type="button"
-            onClick={() => onPick(key)}
-            aria-label={label}
-            title={label}
-            aria-current={active ? "true" : undefined}
-            className="relative h-7 w-6 [-webkit-tap-highlight-color:transparent] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary md:w-7"
-          >
-            {/* Fixed slot, instant size swap: a size transition left neighbours half-grown when the section changed fast. */}
-            <span className={cn("absolute left-1/2 top-1/2 block -translate-x-1/2 -translate-y-1/2 rounded-full bg-white", active ? "h-6 w-1.5" : "h-1.5 w-1.5 opacity-45")} />
-          </button>
-        );
-      })}
-    </nav>
-  );
-}
-
-/** The section's name, in the middle of the screen for a moment after a swipe. */
-function ChannelToast({ channel, shown }: { channel: FocusChannel; shown: boolean }) {
-  const { t } = useTranslation();
-  const Icon = CHANNEL_META[channel].icon;
-  return (
-    <div role="status" className={cn("pointer-events-none absolute inset-x-0 top-[40%] z-30 flex justify-center transition-opacity duration-300 ease-soft", shown ? "opacity-100" : "opacity-0")}>
-      <span className="inline-flex h-12 animate-pop-in items-center gap-2.5 rounded-full bg-white/95 px-5 text-body font-extrabold text-black shadow-pop">
-        <Icon size={20} strokeWidth={2.25} aria-hidden />
-        {t(CHANNEL_META[channel].label)}
-      </span>
-    </div>
-  );
-}
-
 /* ------------------------------------------------------------------------ screen */
 
 function FocusScreen() {
@@ -441,9 +346,8 @@ function FocusScreen() {
   // "Medya" is on from the start (docs/history/239-*): prompts and workflows with nothing to look at stay out until it is turned off.
   const [mediaOnly, setMediaOnly] = useState(true);
   const [channel, setChannel] = useState<FocusChannel>("all");
-  // Which way the last section change went (1 = down the list) — only for the entrance animation; 0 = none yet.
+  // Which way the last type change went (1 = further down the menu's list) — only for the entrance animation; 0 = none yet.
   const [channelShift, setChannelShift] = useState<0 | 1 | -1>(0);
-  const [toast, setToast] = useState<{ key: number; channel: FocusChannel; shown: boolean } | null>(null);
   const [muted, setMuted] = useState(true);
   // The post whose comments are open (docs/history/200-*): the sheet slides up, the post shrinks above it and keeps playing.
   // The sheet over the post (comments or info, docs/history/239-*): one at a time.
@@ -475,8 +379,6 @@ function FocusScreen() {
   }, [router]);
 
   const scrollerRef = useRef<HTMLDivElement>(null);
-  // The area under the strip (posts, loading, empty and error states alike): the section gestures work on all of them.
-  const areaRef = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState(0);
   // Which list (tab + filter) the slides were positioned for — a new list opens at its own start.
   const positionedFor = useRef<string | null>(null);
@@ -579,38 +481,21 @@ function FocusScreen() {
     [reducedMotion],
   );
 
-  // Sections (docs/history/239-*): up / down moves `delta` steps through Tümü · Prompt · İstek · Workflow · Hazır ayar; the
-  // name shows for a moment. Each section is its own server query, so it opens at its own start.
-  const lastChange = useRef(0);
-  const changeChannel = useCallback(
-    (delta: number) => {
-      const next = focusChannelStep(channel, delta);
+  // The post type is picked in the bar's filter menu (docs/history/245-*); each type is its own server query, so it opens at its
+  // own start. Same type picked again = nothing happens.
+  const pickChannel = useCallback(
+    (next: FocusChannel) => {
       if (next === channel) return;
-      // One section per gesture: a fling that fires twice (or a quick second swipe) must not skip a section.
-      const now = performance.now();
-      if (now - lastChange.current < 350) return;
-      lastChange.current = now;
       setPanel(null);
-      setChannelShift(delta > 0 ? 1 : -1);
+      setChannelShift(FOCUS_CHANNELS.indexOf(next) > FOCUS_CHANNELS.indexOf(channel) ? 1 : -1);
       setChannel(next);
-      setToast({ key: Date.now(), channel: next, shown: true });
     },
     [channel],
   );
-  const toastKey = toast?.key ?? null;
-  useEffect(() => {
-    if (toastKey === null) return;
-    const hide = setTimeout(() => setToast((current) => (current ? { ...current, shown: false } : null)), 1100);
-    const remove = setTimeout(() => setToast(null), 1450);
-    return () => {
-      clearTimeout(hide);
-      clearTimeout(remove);
-    };
-  }, [toastKey]);
 
-  // A touch swipe that is mostly vertical changes the section (the scroller is `touch-action: pan-x`, so the browser keeps
-  // the sideways scroll and leaves vertical moves to us). Mouse drags do nothing: the wheel and ↑ ↓ are the desktop's way.
-  const [swiping, setSwiping] = useState(false);
+  // Up on a post opens its info sheet (the "Bilgi ⌃" button's own gesture). The scroller is `touch-action: pan-x`, so the
+  // browser keeps the sideways scroll and leaves vertical moves to us. Mouse drags do nothing (desktop: the button, or ↑).
+  const activeIndex = Math.min(active, Math.max(0, total - 1));
   const swipe = useRef<{ x: number; y: number; t: number; axis: "v" | "h" | null } | null>(null);
   const swipeHandlers = {
     onPointerDown: (event: ReactPointerEvent<HTMLElement>) => {
@@ -622,27 +507,23 @@ function FocusScreen() {
       if (!start || start.axis) return;
       const dx = event.clientX - start.x;
       const dy = event.clientY - start.y;
-      if (Math.max(Math.abs(dx), Math.abs(dy)) > 12) {
-        start.axis = Math.abs(dy) > Math.abs(dx) * 1.2 ? "v" : "h";
-        if (start.axis === "v") setSwiping(true);
-      }
+      if (Math.max(Math.abs(dx), Math.abs(dy)) > 12) start.axis = Math.abs(dy) > Math.abs(dx) * 1.2 ? "v" : "h";
     },
     onPointerUp: (event: ReactPointerEvent<HTMLElement>) => {
       const start = swipe.current;
       swipe.current = null;
-      setSwiping(false);
       if (!start || start.axis !== "v") return;
       const dy = event.clientY - start.y;
       const velocity = Math.abs(dy) / Math.max(1, performance.now() - start.t);
-      if (Math.abs(dy) > 60 || velocity > 0.5) changeChannel(dy < 0 ? 1 : -1);
+      const item = items[activeIndex];
+      if (item && dy < 0 && (Math.abs(dy) > 60 || velocity > 0.5)) openInfo(item);
     },
     onPointerCancel: () => {
       swipe.current = null;
-      setSwiping(false);
     },
   };
 
-  // ← → / PageUp PageDown / h l / Home End step through the posts, ↑ ↓ / k j through the sections; Esc closes Odak.
+  // ← → / PageUp PageDown / h l / Home End step through the posts, ↑ / k open the post's info; Esc closes Odak.
   // Ignored while a dialog (save / share / prompt / login) is open or a field has focus.
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
@@ -650,6 +531,10 @@ function FocusScreen() {
       if (document.querySelector('[aria-modal="true"]')) return;
       const target = event.target as HTMLElement | null;
       if (target && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName))) return;
+      const openActiveInfo = () => {
+        const item = items[activeIndex];
+        if (item && !panel) openInfo(item);
+      };
       const keys: Record<string, () => void> = {
         ArrowRight: () => go(active + 1),
         PageDown: () => go(active + 1),
@@ -657,10 +542,8 @@ function FocusScreen() {
         ArrowLeft: () => go(active - 1),
         PageUp: () => go(active - 1),
         h: () => go(active - 1),
-        ArrowDown: () => changeChannel(1),
-        j: () => changeChannel(1),
-        ArrowUp: () => changeChannel(-1),
-        k: () => changeChannel(-1),
+        ArrowUp: openActiveInfo,
+        k: openActiveInfo,
         Home: () => go(0),
         End: () => go(Number.MAX_SAFE_INTEGER),
         Escape: close,
@@ -673,25 +556,7 @@ function FocusScreen() {
     }
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [active, go, close, changeChannel]);
-
-  // A mouse wheel / vertical trackpad swipe changes the section (the carousel is horizontal; a sideways swipe scrolls it
-  // natively). One step per gesture: further wheel events are ignored while the previous step is still settling.
-  useEffect(() => {
-    const area = areaRef.current;
-    if (!area || panel) return;
-    let lockedUntil = 0;
-    const onWheel = (event: WheelEvent) => {
-      if (Math.abs(event.deltaY) <= Math.abs(event.deltaX) || Math.abs(event.deltaY) < 4) return;
-      event.preventDefault();
-      const now = performance.now();
-      if (now < lockedUntil) return;
-      lockedUntil = now + 500;
-      changeChannel(event.deltaY > 0 ? 1 : -1);
-    };
-    area.addEventListener("wheel", onWheel, { passive: false });
-    return () => area.removeEventListener("wheel", onWheel);
-  }, [changeChannel, panel]);
+  }, [active, activeIndex, items, panel, go, close, openInfo]);
 
   const backdropUrl = activeItem && !loading ? (focusFeedCover(activeItem)?.url ?? null) : null;
   // Albüm (docs/history/203-*): one roomy row — round 44px buttons on the ends, the two feeds as a capsule between them.
@@ -713,17 +578,15 @@ function FocusScreen() {
           </button>
           <span className="hidden shrink-0 font-display text-h3 font-bold tracking-[-0.03em] text-white sm:inline">{t("nav.focus")}</span>
           <div className="flex min-w-0 flex-1 justify-center">
-            <FocusTabs
-              items={[
-                { key: "newest" as const, label: t("home.tabNewest"), icon: Clock },
-                { key: "following" as const, label: t("nav.following"), icon: UserCheck },
-              ]}
-              active={tab}
-              onChange={(next) => {
+            <FocusFilterMenu
+              channel={channel}
+              tab={tab}
+              onChannel={pickChannel}
+              onTab={(next) => {
+                if (next === tab) return;
                 closePanel();
                 setTab(next);
               }}
-              ariaLabel={t("feed.viewAriaLabel")}
             />
           </div>
           {total > 0 && !loading && (
@@ -752,7 +615,6 @@ function FocusScreen() {
 
         <div
           key={channel}
-          ref={areaRef}
           data-channel-area
           {...swipeHandlers}
           className={cn(
@@ -762,7 +624,7 @@ function FocusScreen() {
           )}
         >
         {loading ? (
-          <div className="relative flex min-h-0 flex-1 justify-center px-6 pb-5 pt-[calc(9.25rem+env(safe-area-inset-top))] md:pt-[10.75rem]" aria-busy="true">
+          <div className="relative flex min-h-0 flex-1 justify-center px-6 pb-5 pt-[calc(8rem+env(safe-area-inset-top))] md:pt-[9.25rem]" aria-busy="true">
             <div className="flex h-full w-full max-w-[36rem] flex-col gap-3">
               <Skeleton className="min-h-0 flex-1 rounded-xl" />
               <Skeleton className="h-5 w-2/3" />
@@ -838,8 +700,6 @@ function FocusScreen() {
             )}
           </>
         )}
-        <FocusChannelRail visible={swiping || Boolean(toast?.shown)} channel={channel} onPick={(next) => changeChannel(FOCUS_CHANNELS.indexOf(next) - FOCUS_CHANNELS.indexOf(channel))} />
-        {toast && <ChannelToast channel={toast.channel} shown={toast.shown} />}
       </FocusInfoContext.Provider>
       </FocusCommentsContext.Provider>
       </FocusPlaybackContext.Provider>

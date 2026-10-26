@@ -9,7 +9,6 @@ import {
   focusFeedPlayable,
   focusFeedShouldLoadMore,
   focusFeedShown,
-  focusChannelStep,
   focusFeedStartIndex,
 } from "./focus-feed.ts";
 import type { PostEntry } from "./supabase/feed";
@@ -98,9 +97,3 @@ test("the Medya switch hides prompts and workflows without anything to look at, 
   assert.equal(focusFeedShown(request, true), true);
 });
 
-test("channels step one at a time and stop at the ends", () => {
-  assert.equal(focusChannelStep("all", 1), "prompt");
-  assert.equal(focusChannelStep("preset", 1), "preset");
-  assert.equal(focusChannelStep("all", -1), "all");
-  assert.equal(focusChannelStep("workflow", -1), "request");
-});

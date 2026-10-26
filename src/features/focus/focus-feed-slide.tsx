@@ -643,7 +643,7 @@ export const HIDE_WHILE_COMMENTS =
 /** Bottom of a slide on a phone: above the home indicator. */
 const PHONE_BOTTOM = "pb-[calc(1.25rem+env(safe-area-inset-bottom))]";
 /** Top of a slide: below Odak's floating bar and its thumbnail strip (+ the notch). */
-const SLIDE_TOP = "pt-[calc(9.25rem+env(safe-area-inset-top))] md:pt-[10.75rem]";
+const SLIDE_TOP = "pt-[calc(8rem+env(safe-area-inset-top))] md:pt-[9.25rem]";
 /**
  * A slide's width: the card with the neighbours' edges peeking on a phone, a 36rem card with the dimmed neighbours beside it
  * from `md` (sized against Odak's content box — `cqw` — so the comment panel narrows it too).

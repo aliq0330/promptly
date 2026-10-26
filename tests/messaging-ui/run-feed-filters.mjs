@@ -208,8 +208,11 @@ await scenario("1. Ana Sayfa: yalnız Sana özel + Takip Ettiklerim; En yeni / P
   assert.equal(await page.getByRole("group", { name: "Gönderi türü" }).count(), 0, "tür çip satırı sayfada yok (docs/history/237-*)");
   await openFilter(page);
   await page.getByRole("dialog").getByRole("heading", { name: "Gönderi türü" }).waitFor();
-  assert.equal(await page.getByRole("dialog").getByRole("button", { name: /^(Tümü|Promptlar|İstekler|İstek|Workflow'lar|Hazır [Aa]yarlar)$/ }).count(), 5, "Hepsi + dört tür Filtre penceresinde");
-  for (const taxonomy of ["İçerik türü", "Kategori", "Alt kategori"]) assert.equal(await page.getByRole("dialog").getByRole("heading", { name: taxonomy }).count(), 0, `${taxonomy} yalnız Keşfet'te`);
+  assert.equal(await page.getByRole("dialog").getByRole("button", { name: /^(Tümü|Promptlar|İstekler|İstek|Workflow'lar|Hazır [Aa]yarlar)$/ }).count(), 6, "Hepsi + dört tür Filtre penceresinde (Tümü iki bölümde de var: gönderi türü + içerik türü)");
+  // İçerik türü (docs/history/245-*): ikinci bir Tümü + Görsel · Metin · Ses · Video; kategori / alt kategori yine yalnız Keşfet'te.
+  await page.getByRole("dialog").getByRole("heading", { name: "İçerik türü" }).waitFor();
+  assert.equal(await page.getByRole("dialog").getByRole("button", { name: /^(Tümü|Görsel|Metin|Ses|Video)$/ }).count(), 6, "Gönderi türünün Tümü'sü + içerik türünün Tümü'sü + dört içerik türü");
+  for (const taxonomy of ["Kategori", "Alt kategori"]) assert.equal(await page.getByRole("dialog").getByRole("heading", { name: taxonomy }).count(), 0, `${taxonomy} yalnız Keşfet'te`);
   assert.equal(await page.getByRole("dialog").getByRole("heading", { name: "Kişiler" }).count(), 0, "Sana özel'de takip edilenler süzgeci yok");
   assert.equal(await overflowFree(page), true);
 });
@@ -614,6 +617,32 @@ await scenario("18. Tür listesi (/prompts): tek 'Tümü ▾' tür menüsü (Tü
   await closeFilter(page);
   assert.equal(await overflowFree(page), true);
 }, { viewport: { width: 390, height: 844 } });
+
+await scenario("19. Ana Sayfa içerik türü (docs/history/245-*): Filtre'de Görsel · Metin · Ses · Video; iki görünümde de sunucuya p_content_type gider, sayaç + Temizle", async ({ page, state }) => {
+  await gotoHome(page, state);
+  await homeTab(page, "Sana özel").waitFor();
+  await openFilter(page);
+  const dialog = page.getByRole("dialog");
+  assert.deepEqual((await dialog.getByRole("heading", { name: "İçerik türü" }).locator("xpath=..").getByRole("button").allInnerTexts()).map((s) => s.trim()), ["Tümü", "Görsel", "Metin", "Ses", "Video"]);
+  await dialog.getByRole("button", { name: "Video", exact: true }).click();
+  await closeFilter(page);
+  await waitFor(() => state.forYouCalls.some((c) => c.p_content_type === "video"));
+  assert.equal(state.forYouCalls.at(-1).p_content_type, "video", "Sana özel p_content_type ile istenir");
+  assert.equal(state.forYouCalls.at(-1).p_category, null, "kategori Ana Sayfa'da yok");
+  assert.ok(await page.getByRole("button", { name: /^(Filtre|Filter), 1 (etkin|active)$/ }).count(), "Filtre düğmesi bir etkin süzgeci sayar");
+  await selectHomeTab(page, "Takip Ettiklerim");
+  await waitFor(() => lastFollowingCall(state)?.p_content_type === "video");
+  assert.equal(lastFollowingCall(state).p_content_type, "video", "içerik türü iki görünümde ortak");
+  await openFilter(page);
+  await dialog.getByRole("button", { name: "Görsel", exact: true }).click();
+  await closeFilter(page);
+  await waitFor(() => lastFollowingCall(state)?.p_content_type === "image");
+  await openFilter(page);
+  await dialog.getByRole("button", { name: /Temizle|Clear/ }).click();
+  await closeFilter(page);
+  await waitFor(() => lastFollowingCall(state)?.p_content_type === null);
+  assert.equal(await overflowFree(page), true);
+});
 
 console.log(results.map(([s, n]) => `${s === "PASS" ? "✓" : "✗"} ${n}`).join("\n"));
 const passed = results.filter(([s]) => s === "PASS").length;
