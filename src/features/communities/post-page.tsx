@@ -157,7 +157,7 @@ export function CommunityPostPage() {
                 <span>{formatRelativeTime(post.createdAt, language)}</span>
               </p>
             </div>
-            {(!content || content.type === "space") && extras.length > 0 && (
+            {!content && extras.length > 0 && (
               <DropdownMenu label={t("communities.feed.postMenu")}>
                 {(close) => (
                   <>
@@ -188,17 +188,15 @@ export function CommunityPostPage() {
           {content?.type === "request" && <RequestDetailView request={content.data} />}
           {content?.type === "workflow" && <WorkflowDetailView workflowId={content.data.id} />}
           {content?.type === "preset" && <PresetDetailView presetId={content.data.id} />}
+          {content?.type === "space" && <SpacePreview space={content.data} />}
         </PostMenuExtras>
       </PostScopeProvider>
 
-      {content?.type === "space" && <SpacePreview space={content.data} />}
-      {(!content || content.type === "space") && (
+      {!content && (
         <div className="mx-auto w-full max-w-3xl space-y-4 px-3 py-4 sm:px-5">
-          {!content && (
-            <p className="flex items-center gap-2 rounded-lg border border-dashed border-border px-3 py-4 text-small text-text-muted">
-              <EyeOff size={15} aria-hidden /> {t("communities.feed.contentGone")}
-            </p>
-          )}
+          <p className="flex items-center gap-2 rounded-lg border border-dashed border-border px-3 py-4 text-small text-text-muted">
+            <EyeOff size={15} aria-hidden /> {t("communities.feed.contentGone")}
+          </p>
           <section className="space-y-2" aria-label={t("communities.post.page.commentsTitle")}>
             <p className="text-caption text-text-muted">{t("communities.post.page.commentsHelp")}</p>
             <PostEngagement post={post} mode={mode} onToast={show} highlightCommentId={highlightCommentId} />

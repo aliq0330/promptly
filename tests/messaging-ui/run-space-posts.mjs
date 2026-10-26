@@ -222,16 +222,23 @@ await scenario("4. Sahip: Paylaş tek pencere — 'Akışta paylaş' anahtarı; 
   assert.equal(state.deleted.length, 1);
 });
 
-await scenario("4b. Alıntı sayfası (Space): Albüm bandında Space önizlemesi — başlık, 'Panoyu gez', 'Space'i aç'; beğeni/yorum ALINTININ", async ({ page, state }) => {
+await scenario("4b. Alıntı sayfası (Space): diğer türlerle AYNI iskelet — Albüm bandı, tek eylem satırı (Panoyu gez + alıntının beğeni/yorum/istatistik/paylaş), 'Hakkında' sütunu, yorumlar; ayrı dar etkileşim bölümü yok", async ({ page, state }) => {
   await page.goto(`${BASE}/quotes/local?id=${Q_SPACE}`);
-  const preview = page.locator("[data-space-preview]");
-  await preview.waitFor();
-  await preview.getByText("Neon şehir panosu").first().waitFor();
-  assert.match((await preview.getByRole("link", { name: "Panoyu gez" }).getAttribute("href")) ?? "", /tab=board/);
-  assert.match((await preview.getByRole("link", { name: /Space'i aç/ }).getAttribute("href")) ?? "", /\/spaces\/local\/?\?id=/);
-  await page.getByText("Bob paylaştı").or(page.getByText("paylaştı").first()).first().waitFor();
-  await page.locator("[data-quote-engagement], section[aria-label='Alıntının yorumları']").first().waitFor();
-  assert.equal(state.likes.length, 0);
+  const band = page.locator("[data-space-preview]");
+  await band.waitFor();
+  await band.getByText("Neon şehir panosu").first().waitFor();
+  await page.locator("[data-detail-aside]").waitFor();
+  await page.getByRole("link", { name: "Panoyu gez" }).first().waitFor();
+  assert.match((await page.getByRole("link", { name: "Panoyu gez" }).first().getAttribute("href")) ?? "", /tab=board/);
+  assert.match((await page.getByRole("link", { name: /Space'i aç/ }).first().getAttribute("href")) ?? "", /\/spaces\/local\/?\?id=/);
+  await page.getByText("paylaştı").first().waitFor();
+  assert.equal(await page.locator("section[aria-label='Alıntının yorumları']").count(), 0, "no separate narrow engagement section");
+  await page.getByRole("button", { name: /Beğen/ }).first().click();
+  const end = Date.now() + 4000;
+  while (Date.now() < end && state.likes.length === 0) await page.waitForTimeout(100);
+  assert.equal(state.likes[0].quote_id, Q_SPACE);
+  assert.ok(!state.likes[0].space_id);
+  await shot(page, "sp-quote-page");
 });
 
 await scenario("5. Oluştur menüsü: 'Space' karosu Spaces'te oluşturma penceresini açar; 'Var olan içeriği paylaş' seçici + duyur satırı", async ({ page }) => {

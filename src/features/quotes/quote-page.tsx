@@ -117,7 +117,7 @@ export function QuotePage() {
                 <span>{formatRelativeTime(quote.createdAt, language)}</span>
               </p>
             </div>
-            {(!content || content.type === "space") && extras.length > 0 && (
+            {!content && extras.length > 0 && (
               <span data-quote-menu={quote.id} className="relative z-10">
                 <DropdownMenu label={t("quotes.card.menu")}>
                   {(close) => (
@@ -154,17 +154,15 @@ export function QuotePage() {
           {content?.type === "request" && <RequestDetailView request={content.data} />}
           {content?.type === "workflow" && <WorkflowDetailView workflowId={content.data.id} />}
           {content?.type === "preset" && <PresetDetailView presetId={content.data.id} />}
+          {content?.type === "space" && <SpacePreview space={content.data} />}
         </PostMenuExtras>
       </QuoteScopeProvider>
 
-      {content?.type === "space" && <SpacePreview space={content.data} />}
-      {(!content || content.type === "space") && (
+      {!content && (
         <div className="mx-auto w-full max-w-3xl space-y-4 px-3 py-4 sm:px-5">
-          {!content && (
-            <p className="flex items-center gap-2 rounded-lg border border-dashed border-border px-3 py-4 text-small text-text-muted">
-              <EyeOff size={15} aria-hidden /> {t("quotes.card.contentGone")}
-            </p>
-          )}
+          <p className="flex items-center gap-2 rounded-lg border border-dashed border-border px-3 py-4 text-small text-text-muted">
+            <EyeOff size={15} aria-hidden /> {t("quotes.card.contentGone")}
+          </p>
           <section className="space-y-2" aria-label={t("quotes.page.commentsTitle")}>
             <p className="text-caption text-text-muted">{t("quotes.page.commentsHelp")}</p>
             <QuoteEngagement quote={quote} highlightCommentId={highlightCommentId} />
