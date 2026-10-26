@@ -29,7 +29,7 @@ import type { TranslationKey } from "@/lib/i18n/translations";
 import type { Preset, Prompt, PromptRequest, Workflow } from "@/types";
 import { useSpaceContext } from "./space-provider";
 import { FormError, SubmitButton } from "./space-forms";
-import { SpaceDialog } from "./space-modals";
+import { DIALOG_FOOTER_CLASS, SpaceDialog } from "./space-modals";
 import { SPACE_COLOR_CLASS, SpaceImage } from "./space-visuals";
 
 /*
@@ -524,7 +524,7 @@ export function NoteEditorModal({
           </span>
         </label>
         <FormError message={error} />
-        <div className="flex justify-end gap-2">
+        <div data-dialog-footer className={DIALOG_FOOTER_CLASS}>
           <Button type="button" variant="ghost" onClick={onClose} disabled={busy}>
             {t("common.cancel")}
           </Button>
@@ -582,7 +582,7 @@ export function DraftEditorModal({ draft, onClose, near }: { draft?: SpaceItem |
           <textarea id={bodyId} value={body} onChange={(event) => setBody(event.target.value)} maxLength={SPACE_ITEM_BODY_MAX} rows={8} className={cn(fieldControlClassName, "prompt-text py-2.5")} />
         </div>
         <FormError message={error} />
-        <div className="flex justify-end gap-2">
+        <div data-dialog-footer className={DIALOG_FOOTER_CLASS}>
           <Button type="button" variant="ghost" onClick={onClose} disabled={busy}>
             {t("common.cancel")}
           </Button>

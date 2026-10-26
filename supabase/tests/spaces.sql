@@ -198,11 +198,10 @@ select public._as_user(:alice);
 update public.spaces set visibility = 'public' where id = public._g('S');
 set role anon;
 select public._as_user('');
-select public._check(28, 'herkese açık Space ziyaretçiye görünür; gizli not, üye listesi ve etkinlik görünmez',
+select public._check(28, 'herkese açık Space ziyaretçiye görünür; gizli not ve üye listesi görünmez (etkinlik varsayılan olarak görünür — 242; "yalnız üyeler" ayarı space-comments-activity.sql)',
   public._cnt(format($q$select count(*) from public.spaces where id = %L$q$, public._g('S'))) = 1
   and public._cnt(format($q$select count(*) from public.space_items where space_id = %L and kind = 'note'$q$, public._g('S'))) = 2
   and public._cnt($q$select count(*) from public.space_items where id = 'b0000000-0000-4000-8000-000000000004'$q$) = 0
-  and public._cnt(format($q$select count(*) from public.space_activity where space_id = %L$q$, public._g('S'))) <= 0
   and public._cnt(format($q$select count(*) from public.space_members where space_id = %L$q$, public._g('S'))) <= 0);
 select public._check(29, 'ziyaretçi herkese açık Space''lerde listeler ve arar; yazamaz',
   public._cnt($q$select count(*) from public.list_spaces('public')$q$) = 1

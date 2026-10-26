@@ -7,6 +7,7 @@ import {
   matchesQuery,
   parseSpaceLinkToken,
   sourceStateOf,
+  spaceActivityHref,
   spaceCapabilities,
   spaceHref,
   spaceLinkHref,
@@ -71,4 +72,16 @@ test("matchesQuery ignores case, Turkish dotless i and accents", () => {
   assert.ok(matchesQuery("cafe", null, "Café noir"));
   assert.ok(matchesQuery("  ", "anything"));
   assert.ok(!matchesQuery("ejderha", "kedi", undefined));
+});
+
+test("activity visibility: members always see it, strangers only when the owner left it open (docs/history/242-*)", () => {
+  assert.equal(spaceCapabilities(null, false, "everyone").seeActivity, true);
+  assert.equal(spaceCapabilities(null, false, "members").seeActivity, false);
+  assert.equal(spaceCapabilities("viewer", false, "members").seeActivity, true);
+  // Eski çağıranlar (üçüncü argüman yok) üyeye özel davranışı korur.
+  assert.equal(spaceCapabilities(null, false).seeActivity, false);
+});
+
+test("spaceActivityHref opens the activity tab on one event", () => {
+  assert.equal(spaceActivityHref("s1", "e 2"), "/spaces/local?id=s1&tab=activity&event=e%202");
 });

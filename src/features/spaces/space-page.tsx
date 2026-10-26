@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { Archive, ArchiveRestore, Eye, Image as ImageIcon, LayoutDashboard, LogOut, Palette, Pin, PinOff, Presentation, Quote, Settings, Share2, SquareTerminal, StickyNote, Trash2, Users, type LucideIcon } from "lucide-react";
+import { Archive, ArchiveRestore, Eye, History, MessageCircle, Image as ImageIcon, LayoutDashboard, LogOut, Palette, Pin, PinOff, Presentation, Quote, Settings, Share2, SquareTerminal, StickyNote, Trash2, Users, type LucideIcon } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Button, buttonClassName } from "@/components/ui/button";
 import { DetailSkeleton, NotFoundBlock } from "@/components/ui/detail-skeleton";
@@ -41,6 +41,9 @@ import { PromptsTab } from "./tabs/prompts-tab";
 import { PaletteTab } from "./tabs/palette-tab";
 import { NotesTab } from "./tabs/notes-tab";
 import { MembersTab } from "./tabs/members-tab";
+import { CommentsTab, formatRating } from "./tabs/comments-tab";
+import { ActivityTab } from "./tabs/activity-tab";
+import { StarRatingDisplay } from "@/components/ui/star-rating";
 import { SpaceBoard } from "./board/space-board";
 import { SaveIndicator } from "./save-indicator";
 
@@ -132,6 +135,8 @@ const SPACE_TAB_ICON: Record<SpaceTab, LucideIcon> = {
   prompts: SquareTerminal,
   palette: Palette,
   notes: StickyNote,
+  comments: MessageCircle,
+  activity: History,
   members: Users,
 };
 
@@ -143,8 +148,14 @@ function SpaceView({ owner, initialFavorite }: { owner: SpacePerson | null; init
   const tabParam = searchParams.get("tab");
   const noteCount = items.filter((item) => item.kind === "note").length;
   // Üye çalışma alanını, üye olmayan VİTRİNİ görür (docs/history/214-*): genel bakış ve üyeler yok, not yoksa Notlar da yok.
-  const visibleTabs = SPACE_TABS.filter((tab) => (caps.member ? true : tab !== "overview" && tab !== "members" && (tab !== "notes" || noteCount > 0)));
-  const defaultTab: SpaceTab = caps.member ? "overview" : "images";
+  // Yorumlar herkese (Space'i okuyan), Etkinlik ise sahibinin ayarına göre (varsayılan herkes; "yalnız üyeler" ise üye olmayana yok) görünür (docs/history/242-*).
+  const visibleTabs = SPACE_TABS.filter((tab) => {
+    if (tab === "activity") return caps.seeActivity;
+    return caps.member ? true : tab !== "overview" && tab !== "members" && (tab !== "notes" || noteCount > 0);
+  });
+  // Bir yorum bildiriminden gelen bağlantı (`hl=comment:…`) yorumlara açılır.
+  const commentLink = searchParams.get("hl")?.startsWith("comment:") ?? false;
+  const defaultTab: SpaceTab = commentLink ? "comments" : caps.member ? "overview" : "images";
   const tab: SpaceTab = isSpaceTab(tabParam) && visibleTabs.includes(tabParam) ? tabParam : defaultTab;
   const focusId = searchParams.get("focus");
   const [dialog, setDialog] = useState<null | "settings" | "share" | "delete" | "leave">(null);
@@ -228,6 +239,19 @@ function SpaceView({ owner, initialFavorite }: { owner: SpacePerson | null; init
                 <span>{t("spaces.card.edited", { time: formatRelativeTime(space.updatedAt, language) })}</span>
               </p>
             )}
+            {space.ratingCount > 0 && (
+              <button
+                type="button"
+                onClick={() => goTo("comments")}
+                aria-label={t("spaces.rating.chipAria", { avg: formatRating(space.ratingAvg, language), count: space.ratingCount })}
+                className="inline-flex items-center gap-1.5 rounded-full border border-border-soft bg-surface px-3 py-1 text-caption font-semibold tabular-nums text-text hover:border-border-strong max-lg:-ml-28"
+                data-space-rating-chip=""
+              >
+                <StarRatingDisplay value={space.ratingAvg} size={14} />
+                {formatRating(space.ratingAvg, language)}
+                <span className="font-normal text-text-muted">· {t("spaces.rating.count", { count: space.ratingCount })}</span>
+              </button>
+            )}
             {leadPalette && (
               <div className="flex max-w-xl items-center gap-3 pt-1 max-lg:-ml-28 max-lg:pt-3" data-space-band-palette="">
                 <span className="inline-flex min-w-0 max-w-[40%] shrink-0 items-center gap-1.5 text-caption font-semibold text-text-secondary">
@@ -296,7 +320,7 @@ function SpaceView({ owner, initialFavorite }: { owner: SpacePerson | null; init
                 key,
                 label: t(SPACE_TAB_LABEL[key]),
                 icon: SPACE_TAB_ICON[key],
-                meta: key === "images" ? images.length : key === "prompts" ? items.filter((i) => i.kind === "prompt").length : key === "notes" ? noteCount : key === "palette" ? palettes.length : undefined,
+                meta: key === "images" ? images.length : key === "prompts" ? items.filter((i) => i.kind === "prompt").length : key === "notes" ? noteCount : key === "palette" ? palettes.length : key === "comments" ? space.commentCount : undefined,
               })),
               active: tab,
               onChange: (next) => goTo(next),
@@ -313,6 +337,8 @@ function SpaceView({ owner, initialFavorite }: { owner: SpacePerson | null; init
           {tab === "prompts" && <PromptsTab onShowOnBoard={(itemId) => goTo("board", itemId)} />}
           {tab === "palette" && <PaletteTab />}
           {tab === "notes" && <NotesTab onShowOnBoard={(itemId) => goTo("board", itemId)} />}
+          {tab === "comments" && <CommentsTab />}
+          {tab === "activity" && <ActivityTab />}
           {tab === "members" && <MembersTab />}
         </div>
 

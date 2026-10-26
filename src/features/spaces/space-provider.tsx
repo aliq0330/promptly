@@ -90,7 +90,7 @@ export function SpaceProvider({ initial, userId, children }: { initial: SpaceDat
   const [layoutStatus, setLayoutStatus] = useState<SaveStatus>("idle");
   const [layoutNotice, setLayoutNotice] = useState<string | null>(null);
 
-  const caps = useMemo(() => spaceCapabilities(role, Boolean(space.archivedAt)), [role, space.archivedAt]);
+  const caps = useMemo(() => spaceCapabilities(role, Boolean(space.archivedAt), space.activityVisibility), [role, space.archivedAt, space.activityVisibility]);
 
   // ---- kaynak içerik: başta bir kez, sonra yalnız YENİ başvurular için ----
   const loadedRefs = useRef(new Set<string>());
