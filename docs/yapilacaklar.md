@@ -31,11 +31,11 @@ saat, **O** = 1–2 gün, **B** = birkaç gün.
 
 | # | Madde | Not |
 |---|---|---|
-| Ö1 | `claude/exchange-export-import` dalını PR ile `main`'e birleştir | Migration'lar `20260927100000_import_prompts.sql` + `20260927110000_admin_import_prompts.sql` canlıya UYGULANMADI; birleşince `deploy.yml` uygular (önce migration, sonra istemci; duman testi iki RPC'nin varlığını denetler). |
+| Ö1 | ~~Dalı `main`'e birleştir~~ **YAPILDI (2026-10-26):** PR #333 + #334 birleşti; `deploy.yml` run 391: 2 bekleyen migration (`20260927110000`, `20260927120000`) uygulandı + kaydedildi, duman testi 14/14, site yayınlandı. | `20260927100000` #333 ile daha önce canlıya girmişti. Duman testi canlıda üç oturumlu-RPC'nin ziyaretçiye 401/403 döndüğünü doğruladı (404 değil) → "yoktur" ile "kapalıdır" ayrımı doğru çalışıyor; `soft` bayrağı artık kaldırılabilir. |
 | Ö2 | Canlıda ilk toplu yükleme: Moderasyon → "Toplu prompt yükleme" → **Kontrol et** → **taslak olarak yükle** | Yayın kutusunu AÇMADAN başla. Dosya: `https://raw.githubusercontent.com/f/prompts.chat/main/PROMPTS.md` (CC0; 3026 kayıt → ~3012 yüklenir). |
 | Ö3 | ~~KARAR: hesap~~ **verildi (2026-10-26):** yüklenen içerik moderatörün KENDİ hesabı altında kalır | Her promptta "Kaynak: prompts.chat (CC0) — @katkıcı" + ortak etiket `prompts.chat`. Akışı doldurmamak için önerilen yöntem: taslak yükle → Moderasyon → "Toplu prompt yönetimi"nde etiketle listele → "İlk N'i seç" ile küçük gruplar hâlinde yayınla (**yapıldı**, `docs/history/251-*`). |
 | Ö4 | KARAR + hukuki metin: başkasının promptunu indirme/yeniden kullanma | Artık herkes okuyabildiği her promptu indirebilir (dosyada yazar adı + bağlantı). Kullanım Koşulları (`features/legal/legal-content.ts`, TR+EN) yalnız "paylaşma hakkın olan içeriği yükle" diyor; yeniden kullanım/indirme izni ve atıf kuralı yazılmalı. |
-| Ö5 | Gerçek ortamda dene | Gerçek Supabase'e, gerçek oturuma, Excel'e (CSV/BOM), telefona karşı hiçbir şey denenmedi; deyim zaman aşımı (Supabase ~8 sn) yerelde 74 ms/parça ile sınandı, canlıda ölçülmedi. |
+| Ö5 | Gerçek ortamda dene | Migration'lar canlıda ama gerçek oturumla arayüz, Excel'e (CSV/BOM) ve telefona karşı hiçbir şey denenmedi; deyim zaman aşımı (Supabase ~8 sn) yerelde 74 ms/parça ile sınandı, canlıda ölçülmedi. |
 
 **B. Geliştirme sırası (API / otomasyon yol haritası — her adım öncekinin üstüne kurulur)**
 
