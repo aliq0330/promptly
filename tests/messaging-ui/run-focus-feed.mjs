@@ -226,8 +226,8 @@ await scenario("2. Üst çubuktan Odak: tam ekran, üst/yan menü gizli, koyu sa
   assert.match(page.url(), /\/focus/);
   const box = await stage(page).boundingBox();
   assert.deepEqual([box.x, box.y, box.width, box.height], [0, 0, 1280, 900]);
-  assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector("header[data-app-chrome]")).visibility), "hidden");
-  assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector("aside[data-app-chrome]")).visibility), "hidden");
+  assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector("header[data-app-chrome]")).display), "none");
+  assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector("aside[data-app-chrome]")).display), "none");
   assert.equal(await page.evaluate(() => document.body.style.overflow), "hidden");
   assert.equal(await stage(page).evaluate((el) => el.classList.contains("dark")), true);
   // iOS Safari kendi çubuklarını BELGENİN moduna göre boyar (docs/history/246-*, 247-*): açık temada da Odak açıkken site gerçekten koyu moddadır.
@@ -370,7 +370,7 @@ await scenario("11. Kapat (X) ve Esc: geldiği sayfaya döner, menüler ve kayd�
   await page.waitForURL(/\/discover/);
   await page.waitForTimeout(400);
   assert.equal(await stage(page).count(), 0);
-  assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector("header[data-app-chrome]")).visibility), "visible");
+  assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector("header[data-app-chrome]")).display), "flex");
   assert.equal(await page.evaluate(() => document.body.style.overflow), "");
   assert.equal(await page.evaluate(() => document.documentElement.classList.contains("dark")), false, "light theme: the site comes back to light on close");
   assert.equal(await page.evaluate(() => getComputedStyle(document.documentElement).colorScheme), "light", "…and so does the document scheme");
@@ -418,7 +418,7 @@ await scenario("14. Telefon 390px: alt menüde Profil yerine Odak; ekranı kapla
   await page.waitForTimeout(600);
   const box = await stage(page).boundingBox();
   assert.deepEqual([box.x, box.y, box.width, box.height], [0, 0, 390, 844]);
-  assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector("nav[data-app-chrome]")).visibility), "hidden");
+  assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector("nav[data-app-chrome]")).display), "none", "the bottom nav is out of the layout, not just hidden (docs/history/247-*)");
   const slide = await slides(page).nth(0).boundingBox();
   assert.deepEqual([slide.x, slide.width, slide.height], [24, 342, 844], "a post is a full-height card, 24px in from each edge");
   const next = await slides(page).nth(1).boundingBox();
@@ -430,7 +430,7 @@ await scenario("14. Telefon 390px: alt menüde Profil yerine Odak; ekranı kapla
   await shot(page, "14b-focus-phone-text");
   await stage(page).getByRole("button", { name: "Odak'ı kapat" }).first().click();
   await page.waitForTimeout(600);
-  assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector("nav[data-app-chrome]")).visibility), "visible");
+  assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector("nav[data-app-chrome]")).display), "block");
   await shot(page, "14-focus-phone");
 }, { viewport: { width: 390, height: 844 } });
 
