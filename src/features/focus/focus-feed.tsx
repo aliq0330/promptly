@@ -44,8 +44,30 @@ function slideScrollLeft(scroller: HTMLElement, slide: HTMLElement): number {
   return slide.offsetLeft + slide.offsetWidth / 2 - scroller.clientWidth / 2;
 }
 
-/** Last open post per feed (tab + filter) — session memory only (a module map; the page reloads when the account changes). */
-const lastOpen = new Map<string, string>();
+/**
+ * Last open post per feed (tab + filter), kept for the browser session: Odak is entered by a full page load (docs/history/249-*), so a
+ * module variable would be gone every time — `sessionStorage` carries it (the map is the fallback when storage is blocked). Account
+ * changes reload the page and storage is per tab, so another account's position can not leak in.
+ */
+const lastOpenFallback = new Map<string, string>();
+const LAST_OPEN_PREFIX = "promptly-focus-last:";
+const lastOpen = {
+  get(key: string): string | undefined {
+    try {
+      return window.sessionStorage.getItem(LAST_OPEN_PREFIX + key) ?? lastOpenFallback.get(key);
+    } catch {
+      return lastOpenFallback.get(key);
+    }
+  },
+  set(key: string, value: string) {
+    lastOpenFallback.set(key, value);
+    try {
+      window.sessionStorage.setItem(LAST_OPEN_PREFIX + key, value);
+    } catch {
+      /* storage blocked — the fallback map still remembers within this page load */
+    }
+  },
+};
 
 const noSubscribe = () => () => undefined;
 

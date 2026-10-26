@@ -4,8 +4,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { CreateMenuSheet } from "@/features/prompts/create-choice";
+import { FullLoadLink } from "@/components/ui/full-load-link";
 import { cn } from "@/lib/utils";
-import { CREATE_HREF, guestLoginNavItem, isNavItemActive, mobileNavItems, PROFILE_NAV_PLACEHOLDER, type NavItem } from "@/components/layout/nav-items";
+import { CREATE_HREF, FOCUS_HREF, guestLoginNavItem, isNavItemActive, mobileNavItems, PROFILE_NAV_PLACEHOLDER, type NavItem } from "@/components/layout/nav-items";
 import { useAuthStatus } from "@/features/auth/use-auth-status";
 import { useAuthPrompt } from "@/features/auth/auth-prompt-provider";
 import { useProfileNavHref } from "@/features/auth/use-profile-nav-href";
@@ -90,9 +91,16 @@ export function MobileNav() {
                   {inner}
                 </button>
               ) : (
-                <Link href={href} aria-current={active ? "page" : undefined} className={itemClassName}>
-                  {inner}
-                </Link>
+                // Odak is entered by a full page load (docs/history/249-*): iOS Safari colours the strip behind its toolbar on load.
+                item.href === FOCUS_HREF ? (
+                  <FullLoadLink href={href} aria-current={active ? "page" : undefined} className={itemClassName}>
+                    {inner}
+                  </FullLoadLink>
+                ) : (
+                  <Link href={href} aria-current={active ? "page" : undefined} className={itemClassName}>
+                    {inner}
+                  </Link>
+                )
               )}
             </li>
           );

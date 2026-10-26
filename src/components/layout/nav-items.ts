@@ -64,6 +64,9 @@ export const guestLoginNavItem: NavItem = { href: "/login", labelKey: "header.lo
 /** The Create action — for guests it opens the login dialog instead of navigating. */
 export const CREATE_HREF = "/create";
 
+/** Odak's route — entered by a full page load, never a client-side swap (`FullLoadLink`, docs/history/249-*). */
+export const FOCUS_HREF = "/focus";
+
 /** Mobile bottom navigation — the middle item is rendered as the emphasized Create action. Odak opens full screen (the bars hide). */
 export const mobileNavItems: NavItem[] = [
   { href: "/", labelKey: "nav.home", icon: Home },
@@ -71,7 +74,7 @@ export const mobileNavItems: NavItem[] = [
   { href: CREATE_HREF, labelKey: "nav.createShort", icon: Plus },
   { href: "/communities", labelKey: "nav.communities", icon: UsersRound },
   // Odak (docs/history/199-*) took the profile slot: the profile stays one tap away in the header's account menu (guests: its login menu).
-  { href: "/focus", labelKey: "nav.focus", icon: GalleryVerticalEnd },
+  { href: FOCUS_HREF, labelKey: "nav.focus", icon: GalleryVerticalEnd },
 ];
 
 export function isNavItemActive(pathname: string, item: NavItem) {
