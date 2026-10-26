@@ -220,10 +220,12 @@ await scenario("1. Ana Sayfa değişmedi: Akış seçeneği yok, seçici Kart | 
 
 await scenario("2. Üst çubuktan Odak: tam ekran, üst/yan menü gizli, koyu sahne, sayfa kilitli, başlık", async ({ page }) => {
   await page.goto(`${BASE}/`);
+  await page.evaluate(() => { window.__spaMarker = 1; });
   await page.locator("header[data-app-header] a[href*='/focus']").click();
   await slides(page).first().waitFor();
   await page.waitForTimeout(500);
   assert.match(page.url(), /\/focus/);
+  assert.equal(await page.evaluate(() => window.__spaMarker), undefined, "the header button LOADS the page (docs/history/249-*)");
   const box = await stage(page).boundingBox();
   assert.deepEqual([box.x, box.y, box.width, box.height], [0, 0, 1280, 900]);
   // Odak ayrı bir sayfadır (docs/history/248-*): /focus'ta üst/yan/alt menü HİÇ kurulmaz (gizli değil, DOM'da yok).
@@ -414,9 +416,13 @@ await scenario("14. Telefon 390px: alt menüde Profil yerine Odak; ekranı kapla
   const nav = page.locator("nav[data-app-chrome]");
   const labels = (await nav.locator("li").allTextContents()).map((s) => s.trim());
   assert.deepEqual(labels, ["Ana Sayfa", "Keşfet", "Oluştur", "Topluluklar", "Odak"]);
+  // Odak'a giriş GERÇEK sayfa yüklemesidir (docs/history/249-*): Safari araç çubuğu rengini yüklemede örnekler, uygulama içi geçişte değil.
+  assert.equal(await nav.getByRole("link", { name: "Odak" }).getAttribute("href"), "/promptly/focus/", "a plain link, not next/link");
+  await page.evaluate(() => { window.__spaMarker = 1; });
   await nav.getByRole("link", { name: "Odak" }).click();
   await slides(page).first().waitFor();
   await page.waitForTimeout(600);
+  assert.equal(await page.evaluate(() => window.__spaMarker), undefined, "the page was LOADED (window state is gone), not swapped client-side");
   const box = await stage(page).boundingBox();
   assert.deepEqual([box.x, box.y, box.width, box.height], [0, 0, 390, 844]);
   assert.equal(await page.locator("nav[data-app-chrome]").count(), 0, "the bottom nav is not in the DOM on /focus (docs/history/248-*)");

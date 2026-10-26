@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { FullLoadLink } from "@/components/ui/full-load-link";
 import { Bell, GalleryVerticalEnd, Languages, MessageCircle, Search } from "lucide-react";
 import { buttonClassName } from "@/components/ui/button";
 import { iconButtonClassName } from "@/components/ui/icon-button";
@@ -63,11 +64,11 @@ export function Header() {
           <Search size={20} />
         </Link>
         )}
-        {/* Odak (docs/history/227-*): from `md` it is a header button — a vertical full-screen feed is not a sidebar destination; on a phone it keeps its bottom-nav slot. */}
-        <Link href="/focus" className={buttonClassName({ variant: "outline", size: "sm", className: "mr-1 hidden shrink-0 gap-1.5 md:inline-flex" })}>
+        {/* Odak (docs/history/227-*): from `md` it is a header button — a vertical full-screen feed is not a sidebar destination; on a phone it keeps its bottom-nav slot. A full page load, not a client-side swap (docs/history/249-*). */}
+        <FullLoadLink href="/focus" className={buttonClassName({ variant: "outline", size: "sm", className: "mr-1 hidden shrink-0 gap-1.5 md:inline-flex" })}>
           <GalleryVerticalEnd size={16} aria-hidden />
           {t("header.focusLink")}
-        </Link>
+        </FullLoadLink>
         {status === "authenticated" && (
           <>
             <Link

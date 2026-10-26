@@ -94,6 +94,14 @@ export function absoluteUrl(path: string): string {
 }
 
 /**
+ * The plain-`<a>` form of an app route (basePath + trailing slash, as the static export serves it): a link written this way makes the
+ * browser LOAD the page instead of Next swapping it in client-side — see `FullLoadLink`.
+ */
+export function withBasePath(path: string): string {
+  return `${BASE_PATH}${path.endsWith("/") ? path : `${path}/`}`;
+}
+
+/**
  * Resizes an uploaded image file to fit within a max dimension, preserving
  * aspect ratio — used for the request-creation reference image
  * (features/requests) and for duplicate live previews.
