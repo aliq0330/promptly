@@ -690,6 +690,12 @@
   html[data-focus-open] [data-app-chrome] {
     visibility: hidden;
   }
+  /* Odak's stage is always dark, but the `.dark` class only scopes its subtree: the DOCUMENT stays `color-scheme: light` in a light theme, and
+   * iOS Safari draws its own bars (the strip behind the floating toolbar) in the document's scheme — white. Dark theme was black for this reason
+   * (docs/history/246-*). */
+  html[data-focus-open] {
+    color-scheme: dark;
+  }
 
   /* Yazma ekranı (docs/history/216-*): üst menü, kenar çubuğu ve alt menü yerini ekranın kendi üst çubuğuna ve araç çubuğuna bırakır. */
   /* `!important`: the bars' own `flex`/`md:flex` utilities sit in a later layer than this base rule. */
