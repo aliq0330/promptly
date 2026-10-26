@@ -21,25 +21,53 @@ import {
   type SpaceItem,
 } from "@/lib/supabase/spaces";
 import { createQuote, deleteQuote, fetchOwnSpaceQuoteId } from "@/lib/supabase/quotes";
-import { SPACE_TEMPLATE_GROUPS, spaceHref, spaceLinkHref, type SpaceKind, type SpaceVisibility } from "@/lib/spaces";
-import { useKeyboardViewport } from "@/lib/use-keyboard-viewport";
+import { SPACE_TEMPLATE_GROUPS, spaceHref, spaceLinkHref, type SpaceActivityVisibility, type SpaceKind, type SpaceVisibility } from "@/lib/spaces";
 import { CoverPicker, DescriptionField, FormError, KindField, SubmitButton, TemplateField, TitleField, VisibilityField } from "./space-forms";
 import { SpaceImage } from "./space-visuals";
 
-/** Ortak pencere gövdesi: başlık + ✕ + içerik (mobilde alttan açılan sayfa, masaüstünde ortalanmış). */
-export function SpaceDialog({ title, onClose, children, wide, busy, overLayers }: { title: string; onClose: () => void; children: React.ReactNode; wide?: boolean; busy?: boolean; overLayers?: boolean }) {
+/** Gövdenin İÇİNDE yazılmış alt düğme satırı (Vazgeç / Kaydet) için: kayan gövdenin altına yapışır (`has-[[data-dialog-footer]]:pb-0` altındaki boşluğu kaldırır). `footer` prop'u varsa gerek yok. */
+export const DIALOG_FOOTER_CLASS = "sticky bottom-0 z-10 -mx-5 mt-4 flex justify-end gap-2 border-t border-border-soft bg-surface px-5 py-3";
+
+/**
+ * Ortak pencere gövdesi (docs/history/242-*): başlık + ✕ SABİT üstte, `footer` (Vazgeç / Kaydet) SABİT altta, yalnız ortası kayar; kart en çok
+ * ekranın %75'i (`Modal`). `onSubmit` verilirse gövde + footer tek `<form>`dur (Enter ve submit düğmesi çalışır).
+ */
+export function SpaceDialog({
+  title,
+  onClose,
+  children,
+  footer,
+  onSubmit,
+  formTestId,
+  wide,
+  busy,
+  overLayers,
+}: {
+  title: string;
+  onClose: () => void;
+  children: React.ReactNode;
+  footer?: React.ReactNode;
+  onSubmit?: (event: React.FormEvent<HTMLFormElement>) => void;
+  formTestId?: string;
+  wide?: boolean;
+  busy?: boolean;
+  overLayers?: boolean;
+}) {
   const { t } = useTranslation();
   const id = useId();
-  // Klavye açıkken pencere, klavyenin üstündeki görünür alana sığar (iOS Safari: yoksa başlık ekranın dışında kalır).
-  const keyboard = useKeyboardViewport();
+  const content = (
+    <>
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4 has-[[data-dialog-footer]]:pb-0">{children}</div>
+      {footer && <div className="flex shrink-0 justify-end gap-2 border-t border-border-soft bg-surface px-5 py-3">{footer}</div>}
+    </>
+  );
   return (
     <Modal onClose={busy ? () => undefined : onClose} labelledBy={id} overLayers={overLayers}>
       <div
-        style={keyboard ? { maxHeight: Math.max(240, keyboard.height - 12) } : undefined}
-        className={cn("flex max-h-[92dvh] w-full flex-col rounded-lg border border-border bg-surface shadow-lg", wide ? "max-w-xl" : "max-w-md")}
+        className={cn("flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-lg", wide ? "max-w-xl" : "max-w-md")}
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="flex items-center justify-between gap-2 border-b border-border-soft px-5 py-3.5">
+        <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border-soft px-5 py-3.5">
           <h2 id={id} className="text-h3 font-semibold text-text">
             {title}
           </h2>
@@ -47,7 +75,13 @@ export function SpaceDialog({ title, onClose, children, wide, busy, overLayers }
             <X size={18} />
           </button>
         </div>
-        <div className="min-h-0 overflow-y-auto overscroll-contain px-5 py-4">{children}</div>
+        {onSubmit ? (
+          <form onSubmit={onSubmit} noValidate className="flex min-h-0 flex-1 flex-col" data-testid={formTestId}>
+            {content}
+          </form>
+        ) : (
+          content
+        )}
       </div>
     </Modal>
   );
@@ -128,8 +162,23 @@ export function CreateSpaceModal({ onClose, onCreated, initialKind }: { onClose:
   }
 
   return (
-    <SpaceDialog title={t("spaces.create.title")} onClose={onClose} busy={busy} wide>
-      <form onSubmit={submit} className="space-y-4" data-testid="create-space-form" noValidate>
+    <SpaceDialog
+      title={t("spaces.create.title")}
+      onClose={onClose}
+      busy={busy}
+      wide
+      onSubmit={submit}
+      formTestId="create-space-form"
+      footer={
+        <>
+          <Button type="button" variant="ghost" onClick={onClose} disabled={busy}>
+            {t("common.cancel")}
+          </Button>
+          <SubmitButton busy={busy}>{busy ? t("spaces.create.creating") : t("spaces.create.submit")}</SubmitButton>
+        </>
+      }
+    >
+      <div className="space-y-4">
         <TitleField value={title} onChange={setTitle} autoFocus />
         <DescriptionField value={description} onChange={setDescription} />
         <KindField value={kind} onChange={setKind} />
@@ -137,13 +186,7 @@ export function CreateSpaceModal({ onClose, onCreated, initialKind }: { onClose:
         <VisibilityField value={visibility} onChange={setVisibility} />
         <CoverPicker file={cover} onChange={setCover} />
         <FormError message={error} />
-        <div className="sticky bottom-0 -mx-5 flex justify-end gap-2 border-t border-border-soft bg-surface px-5 pt-3">
-          <Button type="button" variant="ghost" onClick={onClose} disabled={busy}>
-            {t("common.cancel")}
-          </Button>
-          <SubmitButton busy={busy}>{busy ? t("spaces.create.creating") : t("spaces.create.submit")}</SubmitButton>
-        </div>
-      </form>
+      </div>
     </SpaceDialog>
   );
 }
@@ -168,6 +211,7 @@ export function SpaceSettingsModal({
   const [title, setTitle] = useState(space.title);
   const [description, setDescription] = useState(space.description);
   const [kind, setKind] = useState<SpaceKind>(space.kind);
+  const [activityVisibility, setActivityVisibility] = useState<SpaceActivityVisibility>(space.activityVisibility);
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverItemId, setCoverItemId] = useState<string | null>(space.coverItemId);
   const [removeUpload, setRemoveUpload] = useState(false);
@@ -205,6 +249,7 @@ export function SpaceSettingsModal({
         title,
         description,
         kind,
+        activityVisibility,
         coverItemId,
         ...(coverUrl !== undefined ? { coverUrl } : {}),
       });
@@ -217,11 +262,44 @@ export function SpaceSettingsModal({
   }
 
   return (
-    <SpaceDialog title={t("spaces.settings.title")} onClose={onClose} busy={busy} wide>
-      <form onSubmit={submit} className="space-y-4" data-testid="space-settings-form" noValidate>
+    <SpaceDialog
+      title={t("spaces.settings.title")}
+      onClose={onClose}
+      busy={busy}
+      wide
+      onSubmit={submit}
+      formTestId="space-settings-form"
+      footer={
+        <>
+          <Button type="button" variant="ghost" onClick={onClose} disabled={busy}>
+            {t("common.cancel")}
+          </Button>
+          <SubmitButton busy={busy}>{t("common.save")}</SubmitButton>
+        </>
+      }
+    >
+      <div className="space-y-4">
         <TitleField value={title} onChange={setTitle} />
         <DescriptionField value={description} onChange={setDescription} />
         <KindField value={kind} onChange={setKind} />
+        <fieldset data-space-activity-visibility="">
+          <legend className="mb-1 text-label font-medium text-text">{t("spaces.settings.activityVisibility")}</legend>
+          <p className="mb-2 text-caption text-text-muted">{t("spaces.settings.activityVisibilityHint")}</p>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {(["everyone", "members"] as const).map((value) => (
+              <label
+                key={value}
+                className={cn(
+                  "flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2.5 text-small font-medium has-[:checked]:border-primary/50 has-[:checked]:bg-primary-soft",
+                  activityVisibility === value ? "border-primary/50 bg-primary-soft text-text" : "border-border-soft text-text-secondary",
+                )}
+              >
+                <input type="radio" name="space-activity-visibility" value={value} checked={activityVisibility === value} onChange={() => setActivityVisibility(value)} className="accent-primary" />
+                {t(value === "everyone" ? "spaces.activity.visible.everyone" : "spaces.activity.visible.members")}
+              </label>
+            ))}
+          </div>
+        </fieldset>
         <CoverPicker
           file={coverFile}
           onChange={(file) => {
@@ -268,13 +346,7 @@ export function SpaceSettingsModal({
           )}
         </div>
         <FormError message={error} />
-        <div className="sticky bottom-0 -mx-5 flex justify-end gap-2 border-t border-border-soft bg-surface px-5 pt-3">
-          <Button type="button" variant="ghost" onClick={onClose} disabled={busy}>
-            {t("common.cancel")}
-          </Button>
-          <SubmitButton busy={busy}>{t("common.save")}</SubmitButton>
-        </div>
-      </form>
+      </div>
     </SpaceDialog>
   );
 }

@@ -11,6 +11,7 @@ import {
   type SpaceColor,
   type SpaceContentType,
   type SpaceErrorCode,
+  type SpaceActivityVisibility,
   type SpaceFilter,
   type SpaceItemKind,
   type SpaceKind,
@@ -52,6 +53,7 @@ const SPACE_ERROR_KEYS: Record<SpaceErrorCode, TranslationKey> = {
   space_duplicate: "spaces.error.duplicate",
   space_not_public: "spaces.error.notPublic",
   space_too_empty: "spaces.error.tooEmpty",
+  space_rating_owner: "spaces.error.ratingOwner",
 };
 
 export class SpaceError extends Error {
@@ -132,6 +134,12 @@ export interface Space {
    * (sahibinin kendi paylaşımı da bir alıntıdır). Korumalı sayaç (`spaces.quote_count`).
    */
   quoteCount: number;
+  /** Space'in kendi yorumları ve 1–5 puanı (docs/history/242-*): ortalama + puan sayısı korumalı sayaçlardır. */
+  ratingAvg: number;
+  ratingCount: number;
+  /** Genel yorum sayısı (etkinlik yorumları hariç). */
+  commentCount: number;
+  activityVisibility: SpaceActivityVisibility;
 }
 
 export interface SpaceItem {
@@ -219,6 +227,21 @@ export type SpaceActivityAction =
   | "palette_created" | "palette_updated" | "palette_deleted" | "group_created" | "group_deleted"
   | "member_invited" | "member_joined" | "member_removed" | "role_changed" | "link_created" | "link_revoked";
 
+/** Etkinliğin önce/sonra ayrıntısı (`space_activity.details`, docs/history/242-*). Alanlar eylem türüne göre dolar. */
+export interface SpaceActivityItem {
+  kind: string;
+  title?: string | null;
+  text?: string | null;
+  thumb?: string | null;
+}
+
+export interface SpaceActivityDetails {
+  /** Ad / görünürlük için metin, palet için renk listesi. */
+  before?: string | string[] | null;
+  after?: string | string[] | null;
+  items?: SpaceActivityItem[];
+}
+
 export interface SpaceActivity {
   id: string;
   action: SpaceActivityAction;
@@ -226,6 +249,11 @@ export interface SpaceActivity {
   count: number;
   createdAt: string;
   actor: SpacePerson | null;
+  actorId: string | null;
+  details: SpaceActivityDetails | null;
+  /** Değişikliği yapanın notu (yalnız o yazar). */
+  authorNote: string | null;
+  commentCount: number;
 }
 
 interface PersonRow {
@@ -255,10 +283,14 @@ interface SpaceRow {
   updated_at: string;
   updated_by: string | null;
   quote_count: number | null;
+  rating_avg: number | string | null;
+  rating_count: number | null;
+  comment_count: number | null;
+  activity_visibility: SpaceActivityVisibility | null;
 }
 
 const SPACE_COLS =
-  "id, owner_id, title, description, kind, visibility, cover_url, cover_item_id, archived_at, created_at, updated_at, updated_by, quote_count";
+  "id, owner_id, title, description, kind, visibility, cover_url, cover_item_id, archived_at, created_at, updated_at, updated_by, quote_count, rating_avg, rating_count, comment_count, activity_visibility";
 
 function mapSpace(row: SpaceRow): Space {
   return {
@@ -275,6 +307,10 @@ function mapSpace(row: SpaceRow): Space {
     updatedAt: row.updated_at,
     updatedBy: row.updated_by,
     quoteCount: row.quote_count ?? 0,
+    ratingAvg: Number(row.rating_avg ?? 0),
+    ratingCount: row.rating_count ?? 0,
+    commentCount: row.comment_count ?? 0,
+    activityVisibility: row.activity_visibility ?? "everyone",
   };
 }
 
@@ -470,7 +506,8 @@ export async function listSpaces({
 }: {
   filter: SpaceFilter | "recent";
   query?: string;
-  sort?: SpaceSort;
+  /** `recommended` yalnız Keşfet → Spaces'te (alıntı sayısı + en az 3 puan olan Space'te puan; docs/history/242-*). */
+  sort?: SpaceSort | "recommended";
   limit?: number;
   offset?: number;
 }): Promise<SpaceSummary[]> {
@@ -550,6 +587,29 @@ export async function fetchSpace(id: string): Promise<Space | null> {
   return data ? mapSpace(data as SpaceRow) : null;
 }
 
+/** Kartlar için sayaçlar (alıntı sayısı + puan); okuma Space'in RLS'ini izler, okunamayan hiç gelmez. */
+export async function fetchSpaceStats(ids: string[]): Promise<Map<string, { quoteCount: number; ratingAvg: number; ratingCount: number }>> {
+  const result = new Map<string, { quoteCount: number; ratingAvg: number; ratingCount: number }>();
+  if (ids.length === 0) return result;
+  const { data, error } = await supabase.from("spaces").select("id, quote_count, rating_avg, rating_count").in("id", ids);
+  if (error) throw toSpaceError(error);
+  for (const row of (data ?? []) as { id: string; quote_count: number | null; rating_avg: number | string | null; rating_count: number | null }[]) {
+    result.set(row.id, { quoteCount: row.quote_count ?? 0, ratingAvg: Number(row.rating_avg ?? 0), ratingCount: row.rating_count ?? 0 });
+  }
+  return result;
+}
+
+/** Puan dağılımı (1–5 → kaç puan): yorum satırlarındaki `rating`ten; okuma Space'in RLS'ini izler (docs/history/242-*). */
+export async function fetchSpaceRatingDistribution(spaceId: string): Promise<Record<1 | 2 | 3 | 4 | 5, number>> {
+  const { data, error } = await supabase.from("prompt_comments").select("rating").eq("space_id", spaceId).not("rating", "is", null);
+  if (error) throw toSpaceError(error);
+  const out: Record<1 | 2 | 3 | 4 | 5, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+  for (const row of (data ?? []) as { rating: number | null }[]) {
+    if (row.rating && row.rating >= 1 && row.rating <= 5) out[row.rating as 1 | 2 | 3 | 4 | 5] += 1;
+  }
+  return out;
+}
+
 export async function fetchMyRole(spaceId: string, userId: string | null): Promise<SpaceRole | null> {
   if (!userId) return null;
   const { data, error } = await supabase.from("space_members").select("role").eq("space_id", spaceId).eq("user_id", userId).maybeSingle();
@@ -575,7 +635,7 @@ export async function fetchSpacePalettes(spaceId: string): Promise<SpacePalette[
   return (data ?? []).map((row) => mapPalette(row as PaletteRow));
 }
 
-export type SpacePatch = Partial<Pick<Space, "title" | "description" | "kind" | "visibility" | "coverUrl" | "coverItemId" | "archivedAt">>;
+export type SpacePatch = Partial<Pick<Space, "title" | "description" | "kind" | "visibility" | "coverUrl" | "coverItemId" | "archivedAt" | "activityVisibility">>;
 
 /** Yalnız sahip (RLS). Etkilenen satır yoksa yetki hatası — sessiz başarı yok. */
 export async function updateSpace(id: string, patch: SpacePatch): Promise<Space> {
@@ -587,6 +647,7 @@ export async function updateSpace(id: string, patch: SpacePatch): Promise<Space>
   if (patch.coverUrl !== undefined) body.cover_url = patch.coverUrl;
   if (patch.coverItemId !== undefined) body.cover_item_id = patch.coverItemId;
   if (patch.archivedAt !== undefined) body.archived_at = patch.archivedAt;
+  if (patch.activityVisibility !== undefined) body.activity_visibility = patch.activityVisibility;
   const { data, error } = await supabase.from("spaces").update(body).eq("id", id).select(SPACE_COLS).maybeSingle();
   if (error) throw toSpaceError(error);
   if (!data) throw new SpaceError("space_forbidden", translateForRuntime("spaces.error.forbidden"));
@@ -917,18 +978,67 @@ export async function openSpaceLink(token: string): Promise<string> {
   return rpc<string>("open_space_link", { p_token: token });
 }
 
+const ACTIVITY_COLS = `id, action, label, count, created_at, actor_id, details, author_note, comment_count, actor:profiles!space_activity_actor_id_fkey(${PERSON_COLS})`;
+
+interface ActivityRow {
+  id: string;
+  action: SpaceActivityAction;
+  label: string | null;
+  count: number;
+  created_at: string;
+  actor_id: string | null;
+  details: SpaceActivityDetails | null;
+  author_note: string | null;
+  comment_count: number | null;
+  actor: PersonRow | null;
+}
+
+function mapActivity(r: ActivityRow): SpaceActivity {
+  return {
+    id: r.id,
+    action: r.action,
+    label: r.label,
+    count: r.count,
+    createdAt: r.created_at,
+    actor: mapPerson(r.actor),
+    actorId: r.actor_id,
+    details: r.details ?? null,
+    authorNote: r.author_note,
+    commentCount: r.comment_count ?? 0,
+  };
+}
+
 export async function fetchSpaceActivity(spaceId: string, limit = 30): Promise<SpaceActivity[]> {
   const { data, error } = await supabase
     .from("space_activity")
-    .select(`id, action, label, count, created_at, actor:profiles!space_activity_actor_id_fkey(${PERSON_COLS})`)
+    .select(ACTIVITY_COLS)
     .eq("space_id", spaceId)
     .order("created_at", { ascending: false })
     .limit(limit);
   if (error) throw toSpaceError(error);
-  return (data ?? []).map((row) => {
-    const r = row as unknown as { id: string; action: SpaceActivityAction; label: string | null; count: number; created_at: string; actor: PersonRow | null };
-    return { id: r.id, action: r.action, label: r.label, count: r.count, createdAt: r.created_at, actor: mapPerson(r.actor) };
-  });
+  return (data ?? []).map((row) => mapActivity(row as unknown as ActivityRow));
+}
+
+/** Tek etkinlik + bir önceki / bir sonraki (etkinlik sayfasındaki "önceki etkinliğe dön" için). Okunamayan etkinlik `null` döner. */
+export async function fetchSpaceActivityEvent(spaceId: string, activityId: string): Promise<{ event: SpaceActivity; previous: SpaceActivity | null; next: SpaceActivity | null } | null> {
+  const { data, error } = await supabase.from("space_activity").select(ACTIVITY_COLS).eq("space_id", spaceId).eq("id", activityId).maybeSingle();
+  if (error) throw toSpaceError(error);
+  if (!data) return null;
+  const event = mapActivity(data as unknown as ActivityRow);
+  const [older, newer] = await Promise.all([
+    supabase.from("space_activity").select(ACTIVITY_COLS).eq("space_id", spaceId).lt("created_at", event.createdAt).order("created_at", { ascending: false }).limit(1).maybeSingle(),
+    supabase.from("space_activity").select(ACTIVITY_COLS).eq("space_id", spaceId).gt("created_at", event.createdAt).order("created_at", { ascending: true }).limit(1).maybeSingle(),
+  ]);
+  return {
+    event,
+    previous: older.data ? mapActivity(older.data as unknown as ActivityRow) : null,
+    next: newer.data ? mapActivity(newer.data as unknown as ActivityRow) : null,
+  };
+}
+
+/** Etkinliğe not (yalnız değişikliği yapan; en çok 280 karakter, boş not siler). */
+export async function setSpaceActivityNote(activityId: string, note: string): Promise<void> {
+  await rpc("set_space_activity_note", { p_activity_id: activityId, p_note: note });
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -1028,6 +1138,10 @@ export function spaceFromSummary(summary: SpaceSummary): Space {
     updatedAt: summary.updatedAt,
     updatedBy: null,
     quoteCount: 0,
+    ratingAvg: 0,
+    ratingCount: 0,
+    commentCount: 0,
+    activityVisibility: "everyone",
   };
 }
 

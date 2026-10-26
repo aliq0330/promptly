@@ -220,7 +220,11 @@ export function Modal({
   const { overlayRef, sheetRef } = useSheetDismiss(variant, onCloseRef);
   // Ekran klavyesi açıkken (iOS Safari) katman görünür alana oturur: alt sayfa klavyenin ÜSTÜNDE kalır, başlığı ekranın dışına kaçmaz.
   const keyboard = useKeyboardViewport();
-  const overlayStyle = keyboard && variant !== "side" ? { top: keyboard.top, height: keyboard.height, bottom: "auto" as const } : undefined;
+  // `--sheet-max-h`: klavye açıkken kartın en çok yüksekliği görünür alanı (klavyenin üstünü) aşmaz; kapalıyken %75 sınırı geçerlidir.
+  const overlayStyle =
+    keyboard && variant !== "side"
+      ? ({ top: keyboard.top, height: keyboard.height, bottom: "auto", "--sheet-max-h": `${Math.max(240, keyboard.height - 12)}px` } as React.CSSProperties)
+      : undefined;
   useEffect(() => {
     lockBodyScroll();
     const id = Symbol("modal");
@@ -265,7 +269,7 @@ export function Modal({
         >
           <div
             ref={sheetRef}
-            className={isSide ? "flex h-full animate-panel-in" : "relative flex w-full justify-center animate-sheet-up"}
+            className={isSide ? "flex h-full animate-panel-in" : "relative flex w-full justify-center animate-sheet-up *:!max-h-[min(75dvh,var(--sheet-max-h,100dvh))]"}
             onClick={(event) => event.stopPropagation()}
           >
             {!isSide && <SheetGrabber always />}
@@ -292,6 +296,9 @@ export function Modal({
           className={
             "relative mt-auto flex w-full justify-center animate-sheet-up sm:mb-auto sm:animate-pop-in " +
             "*:shadow-pop max-sm:*:max-w-none max-sm:*:rounded-b-none max-sm:*:border-x-0 max-sm:*:border-b-0 " +
+            // Alttan açılan kart en çok ekranın %75'i: üstteki çeyrek hep görünür (docs/history/242-*). Başlık/düğme satırı sabit, ortası kayar:
+            // kartın kendisi `flex flex-col` + kaydırılan gövde (`SheetFrame`) olmalı.
+            "max-sm:*:!max-h-[min(75dvh,var(--sheet-max-h,100dvh))] " +
             "max-sm:*:pb-[max(1.25rem,env(safe-area-inset-bottom))]"
           }
         >

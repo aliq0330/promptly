@@ -142,6 +142,10 @@ export interface PromptComment {
   communityPostId?: string;
   /** Akışta paylaşılmış bir Space'in yorumu (docs/history/215-*). */
   spaceId?: string;
+  /** Space yorumunun bir ETKİNLİĞE düştüğü (docs/history/242-*); yoksa Space'in genel yorumu. */
+  spaceActivityId?: string;
+  /** Space'in genel yorumuyla verilen 1–5 puan (yanıtta ve etkinlik yorumunda yok). */
+  rating?: number | null;
   /** Bir içeriğin alıntısının yorumu (docs/history/217-*): alıntının kendi kimliğine bağlıdır. */
   quoteId?: string;
   author: UserProfile;

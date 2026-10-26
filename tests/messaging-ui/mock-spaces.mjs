@@ -60,10 +60,32 @@ export function setupSpaces(db) {
       created_at: over.created_at ?? `2026-09-${String(10 + n).padStart(2, "0")}T10:00:00Z`,
       updated_at: over.updated_at ?? `2026-09-${String(10 + n).padStart(2, "0")}T12:00:00Z`,
       updated_by: null,
+      quote_count: over.quote_count ?? 0,
+      rating_avg: over.rating_avg ?? 0,
+      rating_count: over.rating_count ?? 0,
+      comment_count: over.comment_count ?? 0,
+      activity_visibility: over.activity_visibility ?? "everyone",
     };
     db.spaces.push(row);
     db.spaceMembers.push({ space_id: row.id, user_id: row.owner_id, role: "owner", created_at: row.created_at });
     for (const [user, role] of over.members ?? []) db.spaceMembers.push({ space_id: row.id, user_id: user.id, role, created_at: row.created_at });
+    return row;
+  };
+  // Etkinlik satırı (docs/history/242-*): önce/sonra ayrıntısı + yapanın notu + yorum sayacı.
+  db.addActivity = (spaceId, over = {}) => {
+    const row = {
+      id: over.id ?? crypto.randomUUID(),
+      space_id: spaceId,
+      actor_id: over.actor ?? ME,
+      action: over.action ?? "renamed",
+      label: over.label ?? null,
+      count: over.count ?? 1,
+      details: over.details ?? null,
+      author_note: over.author_note ?? null,
+      comment_count: over.comment_count ?? 0,
+      created_at: over.created_at ?? now(),
+    };
+    db.spaceActivity.push(row);
     return row;
   };
   db.addItem = (spaceId, over = {}) => {
@@ -239,6 +261,16 @@ export function setupSpaces(db) {
         db.spaceMembers = db.spaceMembers.filter((x) => !(x.space_id === body.p_space_id && x.user_id === body.p_user_id && x.role !== "owner"));
         return json(200, null);
       }) ??
+      rpcCall("set_space_activity_note", () => {
+        if (!uid) return err("not_authenticated");
+        const a = db.spaceActivity.find((x) => x.id === body.p_activity_id);
+        if (!a || !canRead(a.space_id, uid)) return err("space_not_found");
+        if (a.actor_id !== uid) return err("space_forbidden");
+        const note = String(body.p_note ?? "").trim();
+        if (note.length > 280) return err("invalid_note");
+        a.author_note = note || null;
+        return json(200, null);
+      }) ??
       rpcCall("create_space_link", () => {
         const s = space(body.p_space_id);
         if (roleOf(s.id, uid) !== "owner") return err("space_forbidden");
@@ -294,7 +326,17 @@ export function setupSpaces(db) {
     }
     if (table === "space_user_state" && method === "GET") return rows(applyFilters(db.spaceState, q).filter((x) => x.user_id === uid));
     if (table === "space_activity" && method === "GET") {
-      return rows(applyFilters(db.spaceActivity, q).filter((a) => roleOf(a.space_id, uid)).map((a) => ({ ...a, actor: person(a.actor_id) })));
+      // Okuma: üye her zaman; üye olmayan yalnız Space'i okuyabiliyorsa ve ayar "herkes" ise (varsayılan).
+      const visible = (a) => roleOf(a.space_id, uid) || (canRead(a.space_id, uid) && space(a.space_id)?.activity_visibility !== "members");
+      let list = applyFilters(db.spaceActivity, q).filter(visible);
+      const lt = q.get("created_at")?.startsWith("lt.") ? q.get("created_at").slice(3) : null;
+      const gt = q.get("created_at")?.startsWith("gt.") ? q.get("created_at").slice(3) : null;
+      if (lt) list = list.filter((a) => a.created_at < lt);
+      if (gt) list = list.filter((a) => a.created_at > gt);
+      const order = q.get("order") ?? "";
+      list = [...list].sort((a, b) => (order.endsWith(".asc") ? a.created_at.localeCompare(b.created_at) : b.created_at.localeCompare(a.created_at)));
+      if (q.get("limit")) list = list.slice(0, Number(q.get("limit")));
+      return rows(list.map((a) => ({ ...a, actor: person(a.actor_id) })));
     }
     for (const [name, key] of [["space_items", "spaceItems"], ["space_groups", "spaceGroups"], ["space_palettes", "spacePalettes"]]) {
       if (table !== name) continue;

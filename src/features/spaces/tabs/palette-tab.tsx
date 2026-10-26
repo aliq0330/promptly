@@ -15,7 +15,7 @@ import { createSpacePalette, deleteSpacePalette, updateSpacePalette, type SpaceP
 import { useSpaceContext } from "../space-provider";
 import { resolveSource, sourceReasonKey, usePlaceNewItems, useItemTitle } from "../space-items";
 import { FormError } from "../space-forms";
-import { SpaceDialog } from "../space-modals";
+import { DIALOG_FOOTER_CLASS, SpaceDialog } from "../space-modals";
 import { SpaceImage } from "../space-visuals";
 
 /**
@@ -352,7 +352,7 @@ function PaletteFormModal({ palette, onClose, onSubmit }: { palette?: SpacePalet
           <input id={descriptionId} value={description} onChange={(event) => setDescription(event.target.value)} maxLength={SPACE_PALETTE_DESCRIPTION_MAX} className={fieldInputClassName} />
         </div>
         <FormError message={error} />
-        <div className="flex justify-end gap-2">
+        <div data-dialog-footer className={DIALOG_FOOTER_CLASS}>
           <Button type="button" variant="ghost" onClick={onClose} disabled={busy}>
             {t("common.cancel")}
           </Button>

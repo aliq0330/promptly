@@ -11,6 +11,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import type { PromptComment } from "@/types";
 import { MentionText } from "@/features/mentions/mention-text";
 import { MentionTextarea } from "@/features/mentions/mention-field";
+import { StarRatingDisplay, StarRatingInput } from "@/components/ui/star-rating";
 
 /** Beyond this nesting level, indentation stops growing (mobile/readability) — the "@kime yanıt verdiği" hint below takes over showing the relationship instead. */
 const MAX_INDENT_DEPTH = 6;
@@ -54,6 +55,8 @@ export interface CommentTree {
    * (docs/history/200-*) — Instagram-like rows, the heart on the right, replies written in the sheet's one composer.
    */
   layout?: "thread" | "sheet";
+  /** Space yorumlarında kendi puanını yıldızlardan değiştirmek (docs/history/242-*); yoksa yıldızlar yalnız gösterilir. */
+  onRate?: (id: string, rating: number) => void;
 }
 
 /**
@@ -75,6 +78,21 @@ export function CommentNode({
 }) {
   if (tree.layout === "sheet") return <SheetCommentNode comment={comment} depth={depth} tree={tree} />;
   return <ThreadCommentNode comment={comment} depth={depth} tree={tree} />;
+}
+
+/** Space yorumunun puanı: başkasınınki yalnız yıldız, kendininki dokunarak değişir (docs/history/242-*). Puan yorumla birlikte, yorumun üstünde görünür. */
+function CommentRating({ comment, tree, isOwn }: { comment: PromptComment; tree: CommentTree; isOwn: boolean }) {
+  const rating = comment.rating ?? 0;
+  return (
+    <div className="mb-0.5 flex items-center gap-1.5" data-comment-rating={rating}>
+      {isOwn && tree.onRate ? (
+        <StarRatingInput value={rating} size={16} allowClear={false} onChange={(value) => value > 0 && tree.onRate?.(comment.id, value)} />
+      ) : (
+        <StarRatingDisplay value={rating} size={14} />
+      )}
+      <span className="text-xs font-semibold tabular-nums text-text-secondary">{rating}/5</span>
+    </div>
+  );
 }
 
 function ThreadCommentNode({ comment, depth, tree }: { comment: PromptComment; depth: number; tree: CommentTree }) {
@@ -144,19 +162,22 @@ function ThreadCommentNode({ comment, depth, tree }: { comment: PromptComment; d
               {tree.editError && <p className="text-xs text-danger">{tree.editError}</p>}
             </div>
           ) : (
-            <p className="text-sm break-words">
-              <Link href={profileHref(comment.author)} className="font-medium text-text hover:underline">
-                {comment.author.displayName}
-              </Link>{" "}
-              {showParentHint && (
-                <span className="mr-1 inline-flex items-center gap-0.5 text-xs font-medium text-primary">
-                  <CornerDownRight size={11} />@{parent.author.username}
+            <>
+              {comment.rating ? <CommentRating comment={comment} tree={tree} isOwn={isOwn} /> : null}
+              <p className="text-sm break-words">
+                <Link href={profileHref(comment.author)} className="font-medium text-text hover:underline">
+                  {comment.author.displayName}
+                </Link>{" "}
+                {showParentHint && (
+                  <span className="mr-1 inline-flex items-center gap-0.5 text-xs font-medium text-primary">
+                    <CornerDownRight size={11} />@{parent.author.username}
+                  </span>
+                )}
+                <span className="text-text-muted">
+                  <MentionText text={comment.body} />
                 </span>
-              )}
-              <span className="text-text-muted">
-                <MentionText text={comment.body} />
-              </span>
-            </p>
+              </p>
+            </>
           )}
 
           {!isDeleted && !isEditingHere && (
@@ -321,6 +342,7 @@ function SheetCommentNode({ comment, depth, tree }: { comment: PromptComment; de
               {comment.editedAt && ` · ${t("comments.edited")}`}
             </span>
           </p>
+          {!isDeleted && !isEditingHere && comment.rating ? <CommentRating comment={comment} tree={tree} isOwn={isOwn} /> : null}
           {isDeleted ? (
             <p className="text-small italic text-text-muted">{t("comments.thisCommentWasDeleted")}</p>
           ) : isEditingHere ? (

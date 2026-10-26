@@ -94,10 +94,10 @@ export function VariableEditorModal({
   return (
     <Modal onClose={onClose} labelledBy="variable-editor-modal-title">
       <div
-        className="w-full max-w-lg space-y-4 rounded-lg border border-border bg-surface p-5 shadow-lg"
+        className="flex max-h-[90dvh] w-full max-w-lg flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-lg"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="flex items-start justify-between gap-2">
+        <div className="flex shrink-0 items-start justify-between gap-2 border-b border-border-soft px-5 py-3.5">
           <h2 id="variable-editor-modal-title" className="text-base font-semibold text-text">
             {t("variable.editTitle")}
           </h2>
@@ -111,7 +111,7 @@ export function VariableEditorModal({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col"><div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-5 py-4">
           <div>
             <label htmlFor="variable-name" className="mb-1.5 block text-sm font-medium text-text">
               {t("variable.nameLabel")}
@@ -167,7 +167,9 @@ export function VariableEditorModal({
             error={conditionError}
           />
 
-          <div className="flex justify-end gap-2 pt-1">
+          </div>
+
+          <div className="flex shrink-0 justify-end gap-2 border-t border-border-soft px-5 py-3">
             <Button type="button" variant="ghost" onClick={onClose}>
               {t("common.cancel")}
             </Button>

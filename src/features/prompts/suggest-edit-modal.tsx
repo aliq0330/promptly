@@ -72,10 +72,10 @@ export function SuggestEditModal({
   return (
     <Modal onClose={onClose} labelledBy="suggest-edit-modal-title">
       <div
-        className="w-full max-w-lg space-y-4 rounded-lg border border-border bg-surface p-5 shadow-lg"
+        className="flex max-h-[90dvh] w-full max-w-lg flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-lg"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="flex items-start justify-between gap-2">
+        <div className="flex shrink-0 items-start justify-between gap-2 border-b border-border-soft px-5 py-3.5">
           <h2 id="suggest-edit-modal-title" className="text-base font-semibold text-text">
             {t("prompt.suggestEdit")}
           </h2>
@@ -90,9 +90,9 @@ export function SuggestEditModal({
         </div>
 
         {pendingCheck === "checking" ? (
-          <p className="py-4 text-sm text-text-muted">{t("prompt.checking")}</p>
+          <p className="px-5 py-4 text-sm text-text-muted">{t("prompt.checking")}</p>
         ) : pendingCheck === "already-pending" ? (
-          <div className="space-y-4">
+          <div className="space-y-4 px-5 py-4">
             <p className="rounded-md border border-warning/30 bg-warning/10 px-3 py-2 text-sm text-warning">
               {t("prompt.alreadyHasPendingSuggestion")}
             </p>
@@ -103,7 +103,7 @@ export function SuggestEditModal({
             </div>
           </div>
         ) : sent ? (
-          <div className="space-y-4">
+          <div className="space-y-4 px-5 py-4">
             <p className="rounded-md border border-success/30 bg-success/10 px-3 py-2 text-sm text-success">
               {t("prompt.suggestionSent")}
             </p>
@@ -114,7 +114,7 @@ export function SuggestEditModal({
             </div>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col"><div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-5 py-4">
             <div>
               <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-text-muted">{t("prompt.currentPromptText")}</p>
               <p className="max-h-32 overflow-y-auto whitespace-pre-wrap rounded-md border border-border-soft bg-surface-soft px-3 py-2 font-mono text-xs text-text-muted">
@@ -164,7 +164,9 @@ export function SuggestEditModal({
 
             {error && <p className="text-sm text-danger">{error}</p>}
 
-            <div className="flex justify-end gap-2 pt-1">
+            </div>
+
+            <div className="flex shrink-0 justify-end gap-2 border-t border-border-soft px-5 py-3">
               <Button type="button" variant="ghost" onClick={onClose}>
                 {t("common.cancel")}
               </Button>

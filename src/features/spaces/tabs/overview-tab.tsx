@@ -6,38 +6,14 @@ import { ArrowRight, History, ImageIcon, Layers, LayoutDashboard, Palette, Squar
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import type { TranslationKey } from "@/lib/i18n/translations";
 import { cn, formatRelativeTime, profileHref } from "@/lib/utils";
-import { fetchSpaceActivity, type SpaceActivity, type SpaceActivityAction } from "@/lib/supabase/spaces";
-import { SPACE_VISIBILITY_LABEL, type SpaceTab, type SpaceVisibility } from "@/lib/spaces";
+import { fetchSpaceActivity, type SpaceActivity } from "@/lib/supabase/spaces";
+import { SPACE_VISIBILITY_LABEL, spaceHref, type SpaceTab, type SpaceVisibility } from "@/lib/spaces";
 import { useSpaceContext } from "../space-provider";
+import { useActivityText } from "../activity-parts";
 import { resolveSource, sourceReasonKey, useItemTitle } from "../space-items";
 import { SPACE_COLOR_CLASS, SpaceImage } from "../space-visuals";
 
-const ACTIVITY_KEY: Record<SpaceActivityAction, TranslationKey> = {
-  created: "spaces.activity.created",
-  renamed: "spaces.activity.renamed",
-  visibility_changed: "spaces.activity.visibility_changed",
-  archived: "spaces.activity.archived",
-  unarchived: "spaces.activity.unarchived",
-  image_added: "spaces.activity.image_added",
-  image_removed: "spaces.activity.image_removed",
-  prompt_added: "spaces.activity.prompt_added",
-  note_added: "spaces.activity.note_added",
-  content_added: "spaces.activity.content_added",
-  item_removed: "spaces.activity.item_removed",
-  palette_created: "spaces.activity.palette_created",
-  palette_updated: "spaces.activity.palette_updated",
-  palette_deleted: "spaces.activity.palette_deleted",
-  group_created: "spaces.activity.group_created",
-  group_deleted: "spaces.activity.group_deleted",
-  member_invited: "spaces.activity.member_invited",
-  member_joined: "spaces.activity.member_joined",
-  member_removed: "spaces.activity.member_removed",
-  role_changed: "spaces.activity.role_changed",
-  link_created: "spaces.activity.link_created",
-  link_revoked: "spaces.activity.link_revoked",
-};
 
 /**
  * Genel bakış: kaldığın yerden devam (panoya), son görseller, son promptlar, notlar, paletler; yanda sayılar, gruplar ve —
@@ -243,7 +219,8 @@ function ActivityList() {
   const { space, items } = useSpaceContext();
   const [list, setList] = useState<SpaceActivity[] | null>(null);
   const [failed, setFailed] = useState(false);
-  const [limit, setLimit] = useState(10);
+  const limit = 6;
+  const activityText = useActivityText();
   const refreshKey = items.length;
 
   useEffect(() => {
@@ -282,20 +259,16 @@ function ActivityList() {
                 )}
                 <span className="min-w-0">
                   <span className="font-semibold text-text">{entry.actor?.displayName ?? t("spaces.activity.someone")}</span>{" "}
-                  {t(ACTIVITY_KEY[entry.action], {
-                    count: entry.count,
-                    label: entry.action === "visibility_changed" && entry.label ? t(SPACE_VISIBILITY_LABEL[entry.label as SpaceVisibility] ?? "spaces.visibility.private") : (entry.label ?? ""),
-                  })}
+                  {activityText(entry)}
                   <span className="block text-text-muted">{formatRelativeTime(entry.createdAt, language)}</span>
                 </span>
               </li>
             ))}
           </ul>
-          {list.length >= limit && (
-            <button type="button" onClick={() => setLimit((value) => value + 20)} className="text-caption font-semibold text-primary hover:underline">
-              {t("spaces.activity.more")}
-            </button>
-          )}
+          <Link href={spaceHref(space.id, "activity")} className="inline-flex items-center gap-1 text-caption font-semibold text-primary hover:underline" data-activity-all="">
+            {t("spaces.activity.backToList")}
+            <ArrowRight size={12} aria-hidden />
+          </Link>
         </>
       )}
     </section>

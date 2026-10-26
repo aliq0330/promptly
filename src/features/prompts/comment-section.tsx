@@ -6,8 +6,10 @@ import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { CommentNode } from "./comment-node";
 import { ArrowRight } from "lucide-react";
+import type { TranslationKey } from "@/lib/i18n/translations";
 import { MentionInput } from "@/features/mentions/mention-field";
 import { useCommentThread, type CommentTarget } from "./use-comment-thread";
+import { StarRatingInput } from "@/components/ui/star-rating";
 
 export type { CommentTarget };
 
@@ -22,8 +24,17 @@ export function CommentSection({
   disabledReason,
   highlightCommentId,
   headless = false,
+  spaceOwnerId = null,
+  placeholder,
+  onChange,
 }: {
   target: CommentTarget;
+  /** Space yorumlarında: sahibi kendini puanlayamaz (yıldız seçici yerine açıklama görür). */
+  spaceOwnerId?: string | null;
+  /** Yazma kutusunun ipucu metni (varsayılan "Bir yorum yaz…"). */
+  placeholder?: string;
+  /** Yorum/puan değişince çağrılır (Space puan özeti için). */
+  onChange?: () => void;
   /** The page already titles the thread (the detail pages' numbered "Yorumlar" section): drop the own heading, keep the count + "Tümünü gör". */
   headless?: boolean;
   /** When set, hides the composer and shows this text instead (e.g. a closed request). */
@@ -40,8 +51,29 @@ export function CommentSection({
   highlightCommentId?: string | null;
 }) {
   const { t } = useTranslation();
-  const { user, ownProfile, requireAuth, comments, loaded, topLevel, tree, draft, setDraft, submitComment, isPosting, postError, deleteError, highlightNotFound, showAll, setShowAll } =
-    useCommentThread(target, { highlightCommentId });
+  const {
+    user,
+    ownProfile,
+    requireAuth,
+    comments,
+    loaded,
+    topLevel,
+    tree,
+    draft,
+    setDraft,
+    ratingEnabled,
+    draftRating,
+    setDraftRating,
+    myRatedComment,
+    isSpaceOwner,
+    submitComment,
+    isPosting,
+    postError,
+    deleteError,
+    highlightNotFound,
+    showAll,
+    setShowAll,
+  } = useCommentThread(target, { highlightCommentId, spaceOwnerId, onChange });
 
   function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -98,17 +130,36 @@ export function CommentSection({
       ) : (
         <form onSubmit={handleSubmit} className="flex items-start gap-2.5">
           <Avatar src={ownProfile?.avatarUrl ?? null} alt={ownProfile?.displayName ?? t("prompt.previewAuthorName")} size={32} />
-          <div className="flex min-w-0 flex-1 gap-2">
+          <div className="min-w-0 flex-1 space-y-2">
+            {ratingEnabled && (
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1" data-space-rating-picker="">
+                {isSpaceOwner ? (
+                  <p className="text-caption text-text-muted">{t("spaces.rating.owner")}</p>
+                ) : myRatedComment ? (
+                  <p className="text-caption text-text-muted">{t("spaces.rating.yours", { rating: myRatedComment.rating ?? 0 })}</p>
+                ) : (
+                  <>
+                    <StarRatingInput value={draftRating} onChange={setDraftRating} size={26} />
+                    <span className="min-w-20 text-caption text-text-secondary">
+                      {draftRating > 0 ? `${draftRating} · ${t(`spaces.rating.label${draftRating}` as TranslationKey)}` : t("spaces.rating.pick")}
+                    </span>
+                  </>
+                )}
+              </div>
+            )}
+          <div className="flex min-w-0 gap-2">
             <MentionInput
               value={draft}
               onChange={setDraft}
-              placeholder={t("comments.writeAComment")}
+              placeholder={placeholder ?? t("comments.writeAComment")}
               maxLength={2000}
               className="h-9 w-full min-w-0 flex-1 rounded-md border border-border bg-surface px-3 text-small text-text placeholder:text-text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
             <Button type="submit" size="sm" disabled={!draft.trim() || isPosting}>
               {isPosting ? t("common.sending") : t("common.send")}
             </Button>
+          </div>
+          {ratingEnabled && !isSpaceOwner && !myRatedComment && <p className="text-caption text-text-muted">{t("spaces.rating.rules")}</p>}
           </div>
         </form>
       )}

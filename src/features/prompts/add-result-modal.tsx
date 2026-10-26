@@ -154,10 +154,10 @@ export function AddResultModal({
   return (
     <Modal onClose={onClose} labelledBy="add-result-modal-title">
       <div
-        className="w-full max-w-lg space-y-4 rounded-lg border border-border bg-surface p-5 shadow-lg"
+        className="flex max-h-[90dvh] w-full max-w-lg flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-lg"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="flex items-start justify-between gap-2">
+        <div className="flex shrink-0 items-start justify-between gap-2 border-b border-border-soft px-5 py-3.5">
           <h2
             id="add-result-modal-title"
             className="text-base font-semibold text-text"
@@ -173,9 +173,9 @@ export function AddResultModal({
             <X size={18} />
           </button>
         </div>
-        <p className="text-sm text-text-muted">{t("result.sharePromptHint")}</p>
+        <p className="px-5 pt-3 text-sm text-text-muted">{t("result.sharePromptHint")}</p>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col"><div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-5 py-4">
           <div className="flex gap-1 rounded-md border border-border-soft bg-surface-soft p-1">
             {(["file", "text"] as const).map((option) => (
               <button
@@ -351,7 +351,9 @@ export function AddResultModal({
 
           {error && <p className="text-sm text-danger">{error}</p>}
 
-          <div className="flex justify-end gap-2 pt-1">
+          </div>
+
+          <div className="flex shrink-0 justify-end gap-2 border-t border-border-soft px-5 py-3">
             <Button type="button" variant="ghost" onClick={onClose}>
               {t("common.cancel")}
             </Button>

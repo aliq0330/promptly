@@ -12,11 +12,13 @@ interface CommentRow {
   created_at: string;
   edited_at: string | null;
   deleted_at: string | null;
+  rating?: number | null;
+  space_activity_id?: string | null;
   profiles: ProfileRow;
 }
 
 const COMMENT_SELECT = `
-  id, body, parent_id, like_count, created_at, edited_at, deleted_at,
+  id, body, parent_id, like_count, created_at, edited_at, deleted_at, rating, space_activity_id,
   profiles:author_id ( id, username, display_name, avatar_url, cover_url, bio, website, follower_count, following_count, created_at, interests )
 `;
 
@@ -34,6 +36,8 @@ function mapCommentRow(
     createdAt: row.created_at,
     editedAt: row.edited_at,
     deletedAt: row.deleted_at,
+    rating: row.rating ?? null,
+    ...(row.space_activity_id ? { spaceActivityId: row.space_activity_id } : {}),
   };
 }
 
@@ -247,13 +251,14 @@ export async function postCommentOnCommunityPost(
   return mapCommentRow(data as unknown as CommentRow, { communityPostId });
 }
 
-/** Akışta paylaşılmış bir Space'in yorumları (eskiden yeniye; docs/history/215-*). Okuma Space'in kendi RLS'ini izler (`can_read_space`). */
+/** Space'in GENEL yorumları (etkinlik yorumları hariç; eskiden yeniye). Okuma Space'in kendi RLS'ini izler (`can_read_space`; docs/history/242-*). */
 export async function fetchCommentsForSpace(spaceId: string): Promise<PromptComment[]> {
   try {
     const { data, error } = await supabase
       .from("prompt_comments")
       .select(COMMENT_SELECT)
       .eq("space_id", spaceId)
+      .is("space_activity_id", null)
       .order("created_at", { ascending: true });
     if (error) {
       console.error("fetchCommentsForSpace", error);
@@ -266,15 +271,67 @@ export async function fetchCommentsForSpace(spaceId: string): Promise<PromptComm
   }
 }
 
-/** Space'e yorum: yalnız akışta paylaşılmış + herkese açık Space'e (sunucu tetikleyicisi doğrular); `spaces.comment_count` tetikleyiciyle tutulur. */
-export async function postCommentOnSpace(spaceId: string, authorId: string, body: string, parentId: string | null): Promise<PromptComment> {
+/** Bir Space etkinliğinin yorumları (eskiden yeniye). Okuma etkinliğin kendi görünürlük kuralını izler (varsayılan herkes, sahibi "yalnız üyeler" yapabilir). */
+export async function fetchCommentsForSpaceActivity(spaceId: string, activityId: string): Promise<PromptComment[]> {
+  try {
+    const { data, error } = await supabase
+      .from("prompt_comments")
+      .select(COMMENT_SELECT)
+      .eq("space_id", spaceId)
+      .eq("space_activity_id", activityId)
+      .order("created_at", { ascending: true });
+    if (error) {
+      console.error("fetchCommentsForSpaceActivity", error);
+      return [];
+    }
+    return withoutBlocked(((data ?? []) as unknown as CommentRow[]).map((row) => mapCommentRow(row, { spaceId })), (c) => c.author.id);
+  } catch (err) {
+    console.error("fetchCommentsForSpaceActivity", err);
+    return [];
+  }
+}
+
+/** Sunucunun bilerek fırlattığı Space yorum kodları (rating tekilliği, sahip, arşiv) kullanıcıya çevrilir. */
+function spaceCommentError(error: { message?: string } | null): Error {
+  const message = error?.message ?? "";
+  if (/prompt_comments_space_rating_uniq/.test(message)) return new Error(translateForRuntime("comments.error.alreadyRated"));
+  if (/space_rating_owner/.test(message)) return new Error(translateForRuntime("comments.error.ratingOwner"));
+  if (/space_archived/.test(message)) return new Error(translateForRuntime("comments.error.archived"));
+  return new Error(message || translateForRuntime("comments.postFailed"));
+}
+
+/**
+ * Space'e yorum (docs/history/242-*): `rating` yalnız ana yorumda (1–5; kişi başına tek, sahibi veremez), `activityId` verilirse yorum o etkinliğe düşer.
+ * Sunucu tetikleyicisi okuma/engel/arşiv kurallarını doğrular; `spaces.comment_count` ya da `space_activity.comment_count` tetikleyiciyle tutulur.
+ */
+export async function postCommentOnSpace(
+  spaceId: string,
+  authorId: string,
+  body: string,
+  parentId: string | null,
+  options: { rating?: number | null; activityId?: string | null } = {},
+): Promise<PromptComment> {
   const { data, error } = await supabase
     .from("prompt_comments")
-    .insert({ space_id: spaceId, author_id: authorId, body, parent_id: parentId })
+    .insert({
+      space_id: spaceId,
+      author_id: authorId,
+      body,
+      parent_id: parentId,
+      ...(options.activityId ? { space_activity_id: options.activityId } : {}),
+      ...(options.rating ? { rating: options.rating } : {}),
+    })
     .select(COMMENT_SELECT)
     .single();
-  if (error || !data) throw new Error(error?.message ?? translateForRuntime("comments.postFailed"));
+  if (error || !data) throw spaceCommentError(error);
   return mapCommentRow(data as unknown as CommentRow, { spaceId });
+}
+
+/** Kendi puanlı yorumunun puanını değiştirir ("0 satır etkilendi" sessiz başarı sayılmaz). */
+export async function updateCommentRating(commentId: string, authorId: string, rating: number): Promise<void> {
+  const { data, error } = await supabase.from("prompt_comments").update({ rating }).eq("id", commentId).eq("author_id", authorId).select("id").maybeSingle();
+  if (error) throw spaceCommentError(error);
+  if (!data) throw new Error(translateForRuntime("comments.error.rateFailed"));
 }
 
 /** Bir içeriğin alıntısının yorumları (eskiden yeniye; docs/history/217-*). Okuma alıntının kendi RLS'ini izler (hedef halka açık + engel yok). */

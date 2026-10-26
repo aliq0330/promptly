@@ -92,10 +92,10 @@ export function VariableCreateModal({
   return (
     <Modal onClose={onClose} labelledBy="variable-create-title">
       <div
-        className="w-full max-w-lg space-y-4 rounded-lg border border-border bg-surface p-5 shadow-lg"
+        className="flex max-h-[90dvh] w-full max-w-lg flex-col overflow-hidden rounded-lg border border-border bg-surface shadow-lg"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="flex items-start justify-between gap-2">
+        <div className="flex shrink-0 items-start justify-between gap-2 border-b border-border-soft px-5 py-3.5">
           <h2 id="variable-create-title" className="text-base font-semibold text-text">
             {selectedText ? t("variable.convertTitle") : t("variable.createTitle")}
           </h2>
@@ -110,12 +110,12 @@ export function VariableCreateModal({
         </div>
 
         {selectedText && (
-          <p className="rounded-md bg-surface-soft px-3 py-2 text-sm text-text-secondary">
+          <p className="mx-5 mt-3 rounded-md bg-surface-soft px-3 py-2 text-sm text-text-secondary">
             {t("variable.selectedTextLabel")} <span className="font-medium text-text">“{selectedText}”</span>
           </p>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+        <form onSubmit={handleSubmit} noValidate className="flex min-h-0 flex-1 flex-col"><div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-5 py-4">
           <div>
             <label htmlFor="variable-create-name" className="mb-1.5 block text-sm font-medium text-text">
               {t("variable.nameLabel")}
@@ -198,7 +198,9 @@ export function VariableCreateModal({
             </label>
           )}
 
-          <div className="flex justify-end gap-2 pt-1">
+          </div>
+
+          <div className="flex shrink-0 justify-end gap-2 border-t border-border-soft px-5 py-3">
             <Button type="button" variant="ghost" onClick={onClose}>
               {t("common.cancel")}
             </Button>

@@ -23,7 +23,7 @@ import {
 } from "@/lib/supabase/spaces";
 import type { Prompt } from "@/types";
 import { FormError } from "./space-forms";
-import { SpaceDialog } from "./space-modals";
+import { DIALOG_FOOTER_CLASS, SpaceDialog } from "./space-modals";
 import { SpaceCoverArt, SpaceImage } from "./space-visuals";
 
 export interface AddToSpaceTarget {
@@ -285,7 +285,7 @@ export function AddToSpaceModal({
 
         {selected && existing.has(selected) && <p className="text-caption text-warning">{t("spaces.add.duplicateWarning")}</p>}
         <FormError message={error} />
-        <div className="flex justify-end gap-2 border-t border-border-soft pt-3">
+        <div data-dialog-footer className={DIALOG_FOOTER_CLASS}>
           <Button variant="ghost" onClick={onClose} disabled={busy}>
             {t("common.cancel")}
           </Button>

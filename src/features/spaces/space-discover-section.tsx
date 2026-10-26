@@ -13,16 +13,20 @@ import { postMeta } from "@/features/prompts/post-header";
 import { ShareTriggerButton } from "@/features/prompts/share-modal";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { SPACE_KIND_LABEL, SPACE_PAGE_SIZE, spaceHref } from "@/lib/spaces";
-import { fetchLeadPalettes, listSpaces, spaceFromSummary, summaryArt, summaryCover, type SpaceSummary } from "@/lib/supabase/spaces";
+import { fetchLeadPalettes, fetchSpaceStats, listSpaces, spaceFromSummary, summaryArt, summaryCover, type SpaceSummary } from "@/lib/supabase/spaces";
+import { StarRatingDisplay } from "@/components/ui/star-rating";
+import { formatRating } from "./tabs/comments-tab";
 import { absoluteUrl } from "@/lib/utils";
 import { SpaceMenu } from "./space-menu";
 import { PaletteStrip, SpaceCoverArt, SpacesIcon } from "./space-visuals";
 
 /**
- * Keşfet'in Spaces bölümündeki kart (docs/history/241-*): diğer gönderilerle AYNI Albüm kabuğu. Space'in kendi beğeni/yorumu yoktur — akışta
- * görünmesi bir ALINTIDIR; kartta yalnız Paylaş (→ "Alıntıla") vardır, tek büyük eylem "Panoyu gez".
+ * Keşfet'in Spaces bölümündeki kart (docs/history/241-*, 242-*): diğer gönderilerle AYNI Albüm kabuğu. Space'in beğenisi yoktur — akışta
+ * görünmesi bir ALINTIDIR; kartta puan ortalaması + alıntı sayısı, Paylaş (→ "Alıntıla") vardır, tek büyük eylem "Panoyu gez".
  */
-export function SpaceDiscoverCard({ space, palette }: { space: SpaceSummary; palette: string[] }) {
+export type SpaceCardStats = { quoteCount: number; ratingAvg: number; ratingCount: number };
+
+export function SpaceDiscoverCard({ space, palette, stats }: { space: SpaceSummary; palette: string[]; stats?: SpaceCardStats }) {
   const { t, language } = useTranslation();
   const [copied, setCopied] = useState(false);
   const href = spaceHref(space.id);
@@ -66,6 +70,14 @@ export function SpaceDiscoverCard({ space, palette }: { space: SpaceSummary; pal
         }
         footer={
           <>
+            {stats && stats.ratingCount > 0 && (
+              <span className="inline-flex items-center gap-1 text-caption font-semibold tabular-nums text-text-secondary" data-space-card-rating="">
+                <StarRatingDisplay value={stats.ratingAvg} size={13} />
+                {formatRating(stats.ratingAvg, language)}
+                <span className="font-normal text-text-muted">({stats.ratingCount})</span>
+              </span>
+            )}
+            {stats && stats.quoteCount > 0 && <span className="text-caption text-text-muted">{t("quotes.count", { count: stats.quoteCount })}</span>}
             <span className="ml-auto" />
             <ShareTriggerButton target={{ contentType: "space", space: spaceFromSummary(space), art }} />
           </>
@@ -80,6 +92,7 @@ export function SpaceDiscoverCard({ space, palette }: { space: SpaceSummary; pal
 interface SectionState {
   spaces: SpaceSummary[];
   palettes: Map<string, string[]>;
+  stats: Map<string, SpaceCardStats>;
   hasMore: boolean;
   failed: boolean;
   loading: boolean;
@@ -89,23 +102,27 @@ interface SectionState {
 /** Herkese açık (başkalarının) Space'ler: `list_spaces('public')`, ofsetle sayfalanır; palet çizgisi ayrı tek sorgu. */
 function usePublicSpaces(enabled: boolean) {
   const [retry, setRetry] = useState(0);
-  const [state, setState] = useState<SectionState>({ spaces: [], palettes: new Map(), hasMore: false, failed: false, loading: true, loadingMore: false });
+  const [state, setState] = useState<SectionState>({ spaces: [], palettes: new Map(), stats: new Map(), hasMore: false, failed: false, loading: true, loadingMore: false });
   const offset = useRef(0);
 
   useEffect(() => {
     if (!enabled) return;
     let cancelled = false;
     offset.current = 0;
-    listSpaces({ filter: "public", offset: 0 })
+    listSpaces({ filter: "public", sort: "recommended", offset: 0 })
       .then(async (spaces) => {
-        const palettes = await fetchLeadPalettes(spaces.map((s) => s.id)).catch(() => new Map<string, string[]>());
+        const ids = spaces.map((s) => s.id);
+        const [palettes, stats] = await Promise.all([
+          fetchLeadPalettes(ids).catch(() => new Map<string, string[]>()),
+          fetchSpaceStats(ids).catch(() => new Map<string, SpaceCardStats>()),
+        ]);
         if (cancelled) return;
         offset.current = spaces.length;
-        setState({ spaces, palettes, hasMore: spaces.length >= SPACE_PAGE_SIZE, failed: false, loading: false, loadingMore: false });
+        setState({ spaces, palettes, stats, hasMore: spaces.length >= SPACE_PAGE_SIZE, failed: false, loading: false, loadingMore: false });
       })
       .catch((err) => {
         console.error("listSpaces public", err);
-        if (!cancelled) setState({ spaces: [], palettes: new Map(), hasMore: false, failed: true, loading: false, loadingMore: false });
+        if (!cancelled) setState({ spaces: [], palettes: new Map(), stats: new Map(), hasMore: false, failed: true, loading: false, loadingMore: false });
       });
     return () => {
       cancelled = true;
@@ -115,8 +132,12 @@ function usePublicSpaces(enabled: boolean) {
   const loadMore = useCallback(async () => {
     setState((prev) => ({ ...prev, loadingMore: true, failed: false }));
     try {
-      const next = await listSpaces({ filter: "public", offset: offset.current });
-      const palettes = await fetchLeadPalettes(next.map((s) => s.id)).catch(() => new Map<string, string[]>());
+      const next = await listSpaces({ filter: "public", sort: "recommended", offset: offset.current });
+      const ids = next.map((s) => s.id);
+      const [palettes, stats] = await Promise.all([
+        fetchLeadPalettes(ids).catch(() => new Map<string, string[]>()),
+        fetchSpaceStats(ids).catch(() => new Map<string, SpaceCardStats>()),
+      ]);
       offset.current += next.length;
       setState((prev) => {
         const known = new Set(prev.spaces.map((s) => s.id));
@@ -124,6 +145,7 @@ function usePublicSpaces(enabled: boolean) {
           ...prev,
           spaces: [...prev.spaces, ...next.filter((s) => !known.has(s.id))],
           palettes: new Map([...prev.palettes, ...palettes]),
+          stats: new Map([...prev.stats, ...stats]),
           hasMore: next.length >= SPACE_PAGE_SIZE,
           loadingMore: false,
         };
@@ -156,7 +178,7 @@ export function SpaceDiscoverSection() {
       <ContentGrid columns="sm:columns-2">
         {pages.spaces.map((space) => (
           <div key={space.id} className={CONTENT_GRID_ITEM_CLASS}>
-            <SpaceDiscoverCard space={space} palette={pages.palettes.get(space.id) ?? []} />
+            <SpaceDiscoverCard space={space} palette={pages.palettes.get(space.id) ?? []} stats={pages.stats.get(space.id)} />
           </div>
         ))}
       </ContentGrid>

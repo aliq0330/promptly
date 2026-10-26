@@ -21,6 +21,8 @@ import {
   postCommentOnResult,
   updateComment,
   fetchCommentsForSpace,
+  fetchCommentsForSpaceActivity,
+  updateCommentRating,
   fetchCommentsForQuote,
   postCommentOnSpace,
   postCommentOnQuote,
@@ -31,7 +33,18 @@ import type { PromptComment } from "@/types";
 import { bumpCommentCount } from "./comment-count-store";
 import type { CommentTree } from "./comment-node";
 
-export type CommentTarget = { promptId: string } | { requestId: string } | { resultId: string } | { workflowId: string } | { presetId: string } | { communityPostId: string } | { spaceId: string } | { quoteId: string };
+export type CommentTarget =
+  | { promptId: string }
+  | { requestId: string }
+  | { resultId: string }
+  | { workflowId: string }
+  | { presetId: string }
+  | { communityPostId: string }
+  /** Space'in GENEL yorumları: 1–5 puan yorumla birlikte verilir (docs/history/242-*). */
+  | { spaceId: string; spaceActivityId?: undefined }
+  /** Space'in bir ETKİNLİĞİNE düşen yorumlar (puan yok). */
+  | { spaceId: string; spaceActivityId: string }
+  | { quoteId: string };
 
 /** How long a jumped-to comment/reply stays visually flashed before fading back to normal — long enough to notice, short enough not to nag (Aşama 5: "göz yoran yanıp sönme veya aşırı hareket kullanma"). */
 const HIGHLIGHT_DURATION_MS = 2500;
@@ -44,12 +57,17 @@ const HIGHLIGHT_DURATION_MS = 2500;
  *
  * Shared by the detail pages' `CommentSection` and Odak's comment sheet (docs/history/200-*): one thread logic, two layouts.
  */
-export function useCommentThread(target: CommentTarget, { highlightCommentId = null }: { highlightCommentId?: string | null } = {}) {
+export function useCommentThread(
+  target: CommentTarget,
+  { highlightCommentId = null, spaceOwnerId = null, onChange }: { highlightCommentId?: string | null; /** Space yorumlarında: sahibi kendini puanlayamaz. */ spaceOwnerId?: string | null; /** Yorum/puan eklendi, değişti ya da silindi (Space puan özeti yeniden okunsun diye). */ onChange?: () => void } = {},
+) {
   const { t } = useTranslation();
   const { user } = useAuth();
   const { requireAuth } = useAuthPrompt();
   const { profile: ownProfile } = useOwnProfile();
   const [draft, setDraft] = useState("");
+  // Space'in genel yorumlarında 1–5 puan yorumla birlikte verilir (0 = puansız).
+  const [draftRating, setDraftRating] = useState(0);
   // The thread opens short (first few comments) so a long discussion never pushes related content out of reach; a jumped-to comment or the viewer's own new comment opens it all.
   const [showAll, setShowAll] = useState(Boolean(highlightCommentId));
   const [postError, setPostError] = useState<string | null>(null);
@@ -84,7 +102,7 @@ export function useCommentThread(target: CommentTarget, { highlightCommentId = n
   const highlightTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const processedHighlightId = useRef<string | null>(null);
 
-  const targetKind: "prompt" | "request" | "result" | "workflow" | "preset" | "community_post" | "space" | "quote" =
+  const targetKind: "prompt" | "request" | "result" | "workflow" | "preset" | "community_post" | "space" | "space_activity" | "quote" =
     "promptId" in target
       ? "prompt"
       : "requestId" in target
@@ -96,7 +114,9 @@ export function useCommentThread(target: CommentTarget, { highlightCommentId = n
             : "communityPostId" in target
               ? "community_post"
               : "spaceId" in target
-                ? "space"
+                ? target.spaceActivityId
+                  ? "space_activity"
+                  : "space"
                 : "quoteId" in target
                   ? "quote"
                   : "result";
@@ -112,7 +132,7 @@ export function useCommentThread(target: CommentTarget, { highlightCommentId = n
             : "communityPostId" in target
               ? target.communityPostId
               : "spaceId" in target
-                ? target.spaceId
+                ? (target.spaceActivityId ?? target.spaceId)
                 : "quoteId" in target
                   ? target.quoteId
                   : target.resultId;
@@ -126,16 +146,18 @@ export function useCommentThread(target: CommentTarget, { highlightCommentId = n
     if (kind === "preset") return fetchCommentsForPreset(id);
     if (kind === "community_post") return fetchCommentsForCommunityPost(id);
     if (kind === "space") return fetchCommentsForSpace(id);
+    if (kind === "space_activity" && "spaceId" in target) return fetchCommentsForSpaceActivity(target.spaceId, id);
     if (kind === "quote") return fetchCommentsForQuote(id);
     return fetchCommentsForResult(id);
   }
-  function postCommentForTarget(kind: typeof targetKind, id: string, userId: string, body: string, parentId: string | null) {
+  function postCommentForTarget(kind: typeof targetKind, id: string, userId: string, body: string, parentId: string | null, rating: number | null = null) {
     if (kind === "prompt") return postCommentOnPrompt(id, userId, body, parentId);
     if (kind === "request") return postCommentOnRequest(id, userId, body, parentId);
     if (kind === "workflow") return postCommentOnWorkflow(id, userId, body, parentId);
     if (kind === "preset") return postCommentOnPreset(id, userId, body, parentId);
     if (kind === "community_post") return postCommentOnCommunityPost(id, userId, body, parentId);
-    if (kind === "space") return postCommentOnSpace(id, userId, body, parentId);
+    if (kind === "space") return postCommentOnSpace(id, userId, body, parentId, { rating });
+    if (kind === "space_activity" && "spaceId" in target) return postCommentOnSpace(target.spaceId, userId, body, parentId, { activityId: id });
     if (kind === "quote") return postCommentOnQuote(id, userId, body, parentId);
     return postCommentOnResult(id, userId, body, parentId);
   }
@@ -210,6 +232,10 @@ export function useCommentThread(target: CommentTarget, { highlightCommentId = n
     return map;
   }, [comments]);
   const topLevel = useMemo(() => comments.filter((c) => !c.parentId), [comments]);
+  const ratingEnabled = targetKind === "space";
+  // Kişi başına tek puan: kullanıcının zaten puanlı (silinmemiş) yorumu varsa yeni yorumda puan verilmez, mevcut puan yorumundaki yıldızlardan değişir.
+  const myRatedComment = useMemo(() => (user ? comments.find((c) => c.author.id === user.id && c.rating && !c.deletedAt) ?? null : null), [comments, user]);
+  const isSpaceOwner = Boolean(spaceOwnerId) && user?.id === spaceOwnerId;
 
   const registerNodeRef = useCallback((id: string, el: HTMLDivElement | null) => {
     if (el) nodeRefs.current.set(id, el);
@@ -311,16 +337,20 @@ export function useCommentThread(target: CommentTarget, { highlightCommentId = n
   async function submitComment() {
     const trimmed = draft.trim();
     if (!trimmed || !user) return;
+    // Yalnız puan verip yazı yazmayan kişi: yorum yazısı zorunlu (puan yorumla birlikte görünür).
 
     setIsPosting(true);
     setPostError(null);
     try {
-      const posted = await postCommentForTarget(targetKind, targetId, user.id, trimmed, null);
+      const rating = ratingEnabled && !myRatedComment && !isSpaceOwner && draftRating > 0 ? draftRating : null;
+      const posted = await postCommentForTarget(targetKind, targetId, user.id, trimmed, null, rating);
       bumpCommentCount(targetId, 1);
       setComments((prev) => [...prev, posted]);
       setLikeCounts((prev) => ({ ...prev, [posted.id]: 0 }));
       setDraft("");
+      setDraftRating(0);
       setShowAll(true);
+      onChange?.();
     } catch (err) {
       setPostError(err instanceof Error ? err.message : t("comments.postFailed"));
     } finally {
@@ -383,11 +413,27 @@ export function useCommentThread(target: CommentTarget, { highlightCommentId = n
       // in the list anymore next time this thread is fetched fresh, and a
       // soft delete needs exactly this placeholder treatment right now.
       const deletedAt = new Date().toISOString();
-      setComments((prev) => prev.map((c) => (c.id === id ? { ...c, body: "", deletedAt } : c)));
+      setComments((prev) => prev.map((c) => (c.id === id ? { ...c, body: "", deletedAt, rating: null } : c)));
+      onChange?.();
     } catch (err) {
       setDeleteError(err instanceof Error ? err.message : t("comments.deleteFailed"));
     } finally {
       setIsDeletingId(null);
+    }
+  }
+
+  /** Kendi puanlı yorumunun yıldızlarını değiştirir (iyimser; hata olursa geri alınır). */
+  async function rateComment(id: string, rating: number) {
+    if (!user || rating < 1 || rating > 5) return;
+    const previous = comments.find((c) => c.id === id)?.rating ?? null;
+    setComments((prev) => prev.map((c) => (c.id === id ? { ...c, rating } : c)));
+    setPostError(null);
+    try {
+      await updateCommentRating(id, user.id, rating);
+      onChange?.();
+    } catch (err) {
+      setComments((prev) => prev.map((c) => (c.id === id ? { ...c, rating: previous } : c)));
+      setPostError(err instanceof Error ? err.message : t("comments.error.rateFailed"));
     }
   }
 
@@ -424,6 +470,7 @@ export function useCommentThread(target: CommentTarget, { highlightCommentId = n
     isDeletingId,
     registerNodeRef,
     highlightedId,
+    onRate: ratingEnabled ? rateComment : undefined,
   };
 
 
@@ -437,6 +484,11 @@ export function useCommentThread(target: CommentTarget, { highlightCommentId = n
     tree,
     draft,
     setDraft,
+    ratingEnabled,
+    draftRating,
+    setDraftRating,
+    myRatedComment,
+    isSpaceOwner,
     submitComment,
     isPosting,
     postError,
