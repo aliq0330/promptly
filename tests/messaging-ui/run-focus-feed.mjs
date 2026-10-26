@@ -230,6 +230,8 @@ await scenario("2. Üst çubuktan Odak: tam ekran, üst/yan menü gizli, koyu sa
   assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector("aside[data-app-chrome]")).visibility), "hidden");
   assert.equal(await page.evaluate(() => document.body.style.overflow), "hidden");
   assert.equal(await stage(page).evaluate((el) => el.classList.contains("dark")), true);
+  // iOS Safari boyar kendi çubuklarını BELGENİN color-scheme'ine göre (docs/history/246-*): açık temada da Odak açıkken belge koyu şemada olmalı.
+  assert.equal(await page.evaluate(() => getComputedStyle(document.documentElement).colorScheme), "dark", "document color-scheme is dark while Odak is open");
   assert.equal(await counter(page).getAttribute("aria-label"), "Gönderi 1 / 16", "Medya açık: görselsiz metin promptu ve workflow düşer (18 satırdan 2 eksik)");
   assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector("[data-focus-feed] [role='region']")).scrollSnapType), "x mandatory");
   assert.match(await page.title(), /Odak/);
@@ -368,6 +370,7 @@ await scenario("11. Kapat (X) ve Esc: geldiği sayfaya döner, menüler ve kayd�
   assert.equal(await stage(page).count(), 0);
   assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector("header[data-app-chrome]")).visibility), "visible");
   assert.equal(await page.evaluate(() => document.body.style.overflow), "");
+  assert.equal(await page.evaluate(() => getComputedStyle(document.documentElement).colorScheme), "light", "light theme: the document scheme comes back on close");
   await page.locator("header[data-app-header] a[href*='/focus']").click();
   await slides(page).first().waitFor();
   await page.waitForTimeout(300);
