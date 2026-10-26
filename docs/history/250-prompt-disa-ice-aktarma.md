@@ -1,6 +1,6 @@
 # 250 — Prompt dışa / içe aktarma (JSON · Markdown · CSV)
 
-**Durum:** uygulandı, **canlıya UYGULANMADI**. Migration `20260927100000_import_prompts.sql` repoda; `main`'e birleşince `deploy.yml` uygular (önce migration, sonra istemci; duman testi RPC'nin varlığını denetler). Yerel PostgreSQL'de sınandı (`supabase/tests/import-prompts.sql`, 29 kontrol, mutasyon denemesinde 4 kontrol kırıldı), arayüz ağ taklitli Playwright'ta (`run-exchange` 10/10; `run-profile-collections` 13/13, `run-shared-cards` 11/11, `run-detail-pages` 45/45 bozulmadı), çekirdek 15 birim testle. **Gerçek Supabase'e / gerçek oturuma / telefona / Excel'e karşı DENENMEDİ.**
+**Durum:** uygulandı ve **canlıda** (PR #333 → `deploy.yml`; migration `20260927100000_import_prompts.sql`; ziyaretçi anahtarıyla 401/403 = var ve kapalı, duman testiyle doğrulandı). Yerel PostgreSQL'de sınandı (`supabase/tests/import-prompts.sql`, 29 kontrol, mutasyon denemesinde 4 kontrol kırıldı), arayüz ağ taklitli Playwright'ta (`run-exchange` 10/10; `run-profile-collections` 13/13, `run-shared-cards` 11/11, `run-detail-pages` 45/45 bozulmadı), çekirdek 15 birim testle. **Gerçek Supabase'e / gerçek oturuma / telefona / Excel'e karşı DENENMEDİ.**
 
 ## Amaç
 Kullanıcı kendi promptlarını dosya olarak çıkarabilsin ve dosyadan geri alabilsin. Bu iş, sonraki adımların (public API, CLI, MCP, GitHub senkronizasyonu) ortak temelidir: hepsi aynı dönüştürme çekirdeğini ve aynı içe aktarma RPC'sini kullanacak.
