@@ -45,7 +45,13 @@ const ROW_ACTION = cn(
   "max-sm:[&>:last-child:not(:first-child)]:sr-only",
 );
 
-export function FocusFeedRail({ item, author, layout = "column" }: { item: PostFeedItem; author: UserProfile; layout?: "column" | "row" }) {
+/**
+ * Albüm A (docs/history/239-*): bare icons with their counts, in one quiet row under the title — beğeni · yorum · kaydet · paylaş.
+ * No round frames: on the dark stage the icon + number is enough, and a phone row must fit beside "Bilgi".
+ */
+const COMPACT_ACTION = "h-9 min-w-9 flex-row gap-1.5 rounded-md bg-transparent px-2 text-label font-semibold text-white/90 hover:bg-white/10 hover:text-white";
+
+export function FocusFeedRail({ item, author, layout = "column" }: { item: PostFeedItem; author: UserProfile; layout?: "column" | "row" | "compact" }) {
   const { t } = useTranslation();
   const share: ShareModalTarget =
     item.kind === "prompt"
@@ -56,10 +62,12 @@ export function FocusFeedRail({ item, author, layout = "column" }: { item: PostF
           ? { contentType: "preset", preset: item.data }
           : { contentType: "request", request: item.data };
 
-  const row = layout === "row";
-  const RAIL_ACTION = row ? ROW_ACTION : RAIL_ACTION_COLUMN;
+  const compact = layout === "compact";
+  const row = layout === "row" || compact;
+  const RAIL_ACTION = compact ? COMPACT_ACTION : row ? ROW_ACTION : RAIL_ACTION_COLUMN;
+  const iconSize = compact ? 22 : ICON_SIZE;
   return (
-    <div className={row ? "flex items-center gap-1.5 sm:gap-3" : "flex w-12 flex-col items-center gap-3.5 sm:w-14 sm:gap-4"}>
+    <div className={compact ? "flex items-center gap-1" : row ? "flex items-center gap-1.5 sm:gap-3" : "flex w-12 flex-col items-center gap-3.5 sm:w-14 sm:gap-4"}>
       {!row && <Link
         href={profileHref(author)}
         aria-label={author.displayName}
@@ -71,39 +79,39 @@ export function FocusFeedRail({ item, author, layout = "column" }: { item: PostF
 
       {item.kind === "prompt" ? (
         <>
-          <LikeButton id={item.data.id} likeCount={item.data.likeCount} contentType="prompt" size={ICON_SIZE} className={RAIL_ACTION} />
-          <FocusCommentButton item={item} size={ICON_SIZE} className={RAIL_ACTION} />
-          <SaveButton promptId={item.data.id} saveCount={item.data.saveCount} size={ICON_SIZE} className={RAIL_ACTION} />
+          <LikeButton id={item.data.id} likeCount={item.data.likeCount} contentType="prompt" size={iconSize} className={RAIL_ACTION} />
+          <FocusCommentButton item={item} size={iconSize} className={RAIL_ACTION} />
+          <SaveButton promptId={item.data.id} saveCount={item.data.saveCount} size={iconSize} className={RAIL_ACTION} />
         </>
       ) : item.kind === "workflow" ? (
         <>
-          <LikeButton id={item.data.id} likeCount={item.data.likeCount} contentType="workflow" size={ICON_SIZE} className={RAIL_ACTION} />
-          <FocusCommentButton item={item} size={ICON_SIZE} className={RAIL_ACTION} />
-          <SaveButton workflowId={item.data.id} saveCount={item.data.saveCount} size={ICON_SIZE} className={RAIL_ACTION} />
+          <LikeButton id={item.data.id} likeCount={item.data.likeCount} contentType="workflow" size={iconSize} className={RAIL_ACTION} />
+          <FocusCommentButton item={item} size={iconSize} className={RAIL_ACTION} />
+          <SaveButton workflowId={item.data.id} saveCount={item.data.saveCount} size={iconSize} className={RAIL_ACTION} />
         </>
       ) : item.kind === "preset" ? (
         <>
-          <LikeButton id={item.data.id} likeCount={item.data.likeCount} contentType="preset" size={ICON_SIZE} className={RAIL_ACTION} />
-          <FocusCommentButton item={item} size={ICON_SIZE} className={RAIL_ACTION} />
-          <SaveButton presetId={item.data.id} saveCount={item.data.saveCount} size={ICON_SIZE} className={RAIL_ACTION} />
+          <LikeButton id={item.data.id} likeCount={item.data.likeCount} contentType="preset" size={iconSize} className={RAIL_ACTION} />
+          <FocusCommentButton item={item} size={iconSize} className={RAIL_ACTION} />
+          <SaveButton presetId={item.data.id} saveCount={item.data.saveCount} size={iconSize} className={RAIL_ACTION} />
         </>
       ) : (
         <>
-          <LikeButton id={item.data.id} likeCount={item.data.likeCount} contentType="request" size={ICON_SIZE} className={RAIL_ACTION} />
-          <FocusCommentButton item={item} size={ICON_SIZE} className={RAIL_ACTION} />
+          <LikeButton id={item.data.id} likeCount={item.data.likeCount} contentType="request" size={iconSize} className={RAIL_ACTION} />
+          <FocusCommentButton item={item} size={iconSize} className={RAIL_ACTION} />
           <Link
             href={`${requestHref(item.data)}#request-responses`}
             className={contentActionClassName(false, RAIL_ACTION)}
             title={t("request.replies")}
             aria-label={`${t("request.replies")} (${formatCount(item.data.responseCount)})`}
           >
-            <Reply size={ICON_SIZE} strokeWidth={1.75} />
+            <Reply size={iconSize} strokeWidth={1.75} />
             <span aria-hidden>{formatCount(item.data.responseCount)}</span>
           </Link>
         </>
       )}
 
-      <ShareTriggerButton target={share} size={ICON_SIZE} label={t("common.share")} className={cn(RAIL_ACTION, row ? "[&>span]:sr-only" : "[&>span]:inline")} />
+      <ShareTriggerButton target={share} size={iconSize} label={t("common.share")} className={cn(RAIL_ACTION, row ? "[&>span]:sr-only" : "[&>span]:inline")} />
     </div>
   );
 }

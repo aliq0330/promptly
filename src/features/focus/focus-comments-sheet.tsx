@@ -1,7 +1,8 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useId, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
+import { createContext, useCallback, useContext, useEffect, useId, useRef } from "react";
 import { ArrowUp, MessageCircle, X } from "lucide-react";
+import { FocusSheetFrame } from "./focus-sheet-frame";
 import { Avatar } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { contentActionClassName } from "@/features/content/action-styles";
@@ -64,55 +65,11 @@ export function FocusCommentButton({ item, size, className }: { item: PostFeedIt
   );
 }
 
-/** How far the on-screen keyboard covers the layout viewport (iOS Safari keeps fixed boxes behind it). */
-function useKeyboardInset() {
-  const [inset, setInset] = useState(0);
-  useEffect(() => {
-    const viewport = window.visualViewport;
-    if (!viewport) return;
-    const update = () => setInset(Math.max(0, Math.round(window.innerHeight - viewport.height - viewport.offsetTop)));
-    viewport.addEventListener("resize", update);
-    viewport.addEventListener("scroll", update);
-    return () => {
-      viewport.removeEventListener("resize", update);
-      viewport.removeEventListener("scroll", update);
-    };
-  }, []);
-  return inset;
-}
-
-/** Drag-down-to-close on the sheet's handle (touch / pen / mouse): it follows the pointer and closes past a distance or a flick. */
-function useDragToClose(onClose: () => void) {
-  const [offset, setOffset] = useState(0);
-  const start = useRef<{ y: number; t: number } | null>(null);
-  const onPointerDown = (event: ReactPointerEvent<HTMLElement>) => {
-    if (event.button !== 0 || (event.target as HTMLElement).closest("button")) return;
-    start.current = { y: event.clientY, t: performance.now() };
-    event.currentTarget.setPointerCapture(event.pointerId);
-  };
-  const onPointerMove = (event: ReactPointerEvent<HTMLElement>) => {
-    if (!start.current) return;
-    setOffset(Math.max(0, event.clientY - start.current.y));
-  };
-  const onPointerUp = (event: ReactPointerEvent<HTMLElement>) => {
-    if (!start.current) return;
-    const distance = event.clientY - start.current.y;
-    const velocity = distance / Math.max(1, performance.now() - start.current.t);
-    start.current = null;
-    if (distance > 120 || velocity > 0.6) onClose();
-    else setOffset(0);
-  };
-  return { offset, dragging: offset > 0, handlers: { onPointerDown, onPointerMove, onPointerUp, onPointerCancel: onPointerUp } };
-}
-
 export function FocusCommentsSheet({ item, onClose }: { item: PostFeedItem; onClose: () => void }) {
   const { t } = useTranslation();
   const titleId = useId();
-  const sheetRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const keyboard = useKeyboardInset();
-  const drag = useDragToClose(onClose);
   const thread = useCommentThread(targetOf(item));
   const { user, ownProfile, requireAuth, tree: baseTree } = thread;
   const replyingTo = baseTree.replyingTo;
@@ -173,56 +130,19 @@ export function FocusCommentsSheet({ item, onClose }: { item: PostFeedItem; onCl
     return () => document.removeEventListener("keydown", onKey);
   }, [replyingTo, baseTree, onClose]);
 
-  // Focus moves into the sheet when it opens and back to the comment button when it closes.
-  useEffect(() => {
-    const previous = document.activeElement as HTMLElement | null;
-    sheetRef.current?.focus({ preventScroll: true });
-    return () => previous?.focus({ preventScroll: true });
-  }, []);
-
   return (
-    <div
-      ref={sheetRef}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby={titleId}
-      tabIndex={-1}
-      data-focus-comments
-      className={cn(
-        // Outer box: place + drag / keyboard offset. The entrance animation runs on the inner box (an animation's end
-        // state would otherwise override this transform).
-        "absolute inset-x-0 bottom-0 z-40 h-[65dvh] max-h-[calc(100dvh-5rem)] outline-none",
-        "md:inset-y-0 md:left-auto md:right-0 md:h-auto md:max-h-none md:w-[420px]",
-        !drag.dragging && "transition-transform duration-200 ease-soft",
-      )}
-      style={{ transform: drag.offset || keyboard ? `translateY(${drag.offset - keyboard}px)` : undefined }}
+    <FocusSheetFrame
+      kind="comments"
+      titleId={titleId}
+      title={
+        <>
+          {t("comments.title")}
+          {thread.loaded && <span className="font-normal tabular-nums text-text-muted"> · {formatCount(thread.comments.length)}</span>}
+        </>
+      }
+      closeLabel={t("focusComments.close")}
+      onClose={onClose}
     >
-      <div
-        className={cn(
-          "flex h-full flex-col rounded-t-[28px] border-t border-border-soft bg-surface text-text shadow-pop",
-          "animate-sheet-up motion-reduce:animate-none md:animate-panel-in md:rounded-none md:rounded-l-3xl md:border-l md:border-t-0",
-        )}
-      >
-        {/* Handle + title: the drag area. */}
-        <div className="relative shrink-0 touch-none select-none px-4 pb-2 pt-2.5" {...drag.handlers}>
-          <span aria-hidden className="mx-auto block h-1 w-10 rounded-full bg-border-strong md:hidden" />
-          <div className="mt-2 flex items-center justify-center md:mt-1 md:justify-start">
-            <h2 id={titleId} className="text-label font-semibold text-text">
-              {t("comments.title")}
-              {thread.loaded && <span className="font-normal tabular-nums text-text-muted"> · {formatCount(thread.comments.length)}</span>}
-            </h2>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label={t("focusComments.close")}
-            title={t("focusComments.close")}
-            className="absolute right-2.5 top-2.5 inline-flex h-9 w-9 items-center justify-center rounded-full text-text-muted transition-colors hover:bg-surface-soft hover:text-text"
-          >
-            <X size={18} aria-hidden />
-          </button>
-        </div>
-
         <div ref={listRef} className="min-h-0 flex-1 overflow-y-auto overscroll-contain border-t border-border-soft px-3 py-3">
           {!thread.loaded ? (
             <div className="space-y-4" role="status" aria-label={t("comments.loadingComments")}>
@@ -317,7 +237,6 @@ export function FocusCommentsSheet({ item, onClose }: { item: PostFeedItem; onCl
             </div>
           )}
         </div>
-      </div>
-    </div>
+    </FocusSheetFrame>
   );
 }

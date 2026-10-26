@@ -8,6 +8,8 @@ import {
   focusFeedLayout,
   focusFeedPlayable,
   focusFeedShouldLoadMore,
+  focusFeedShown,
+  focusChannelStep,
   focusFeedStartIndex,
 } from "./focus-feed.ts";
 import type { PostEntry } from "./supabase/feed";
@@ -79,4 +81,26 @@ test("only nearby slides load media; the next page is asked for near the end, on
   assert.equal(focusFeedShouldLoadMore(17, 18, { ...idle, hasMore: false }), false);
   assert.equal(focusFeedShouldLoadMore(0, 0, idle), true, "an empty filtered list keeps paging while the server has more");
   assert.equal(focusFeedShouldLoadMore(0, 0, { ...idle, hasMore: false }), false);
+});
+
+test("the Medya switch hides prompts and workflows without anything to look at, never requests or presets", () => {
+  const workflow = { kind: "workflow", data: { id: "w", title: "W", media: [] } } as unknown as PostEntry;
+  const workflowWithCover = { kind: "workflow", data: { id: "w2", title: "W", media: [media("c")] } } as unknown as PostEntry;
+  const preset = { kind: "preset", data: { id: "s", title: "S", coverUrl: null } } as unknown as PostEntry;
+  const request = { kind: "request", data: { id: "r", title: "R", media: [] } } as unknown as PostEntry;
+  assert.equal(focusFeedShown(prompt("text", 0), true), false);
+  assert.equal(focusFeedShown(prompt("text", 0), false), true);
+  assert.equal(focusFeedShown(prompt("image", 1), true), true);
+  assert.equal(focusFeedShown(prompt("audio", 0), true), true, "a playable prompt stays");
+  assert.equal(focusFeedShown(workflow, true), false);
+  assert.equal(focusFeedShown(workflowWithCover, true), true);
+  assert.equal(focusFeedShown(preset, true), true);
+  assert.equal(focusFeedShown(request, true), true);
+});
+
+test("channels step one at a time and stop at the ends", () => {
+  assert.equal(focusChannelStep("all", 1), "prompt");
+  assert.equal(focusChannelStep("preset", 1), "preset");
+  assert.equal(focusChannelStep("all", -1), "all");
+  assert.equal(focusChannelStep("workflow", -1), "request");
 });

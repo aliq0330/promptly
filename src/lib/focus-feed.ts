@@ -63,9 +63,29 @@ export function focusFeedLayout(entry: PostEntry): FocusFeedLayout {
   return entry.kind;
 }
 
-/** The "Medya" filter: posts with a picture, and video / audio prompts (their output is looked up when they come into view). */
+/** Has a picture, or is a video / audio prompt (its output is looked up when it comes into view). */
 export function focusFeedHasMedia(entry: PostEntry): boolean {
   return focusFeedPlayable(entry) || focusFeedCover(entry) !== null;
+}
+
+/**
+ * The "Medya" switch (on by default, docs/history/239-*): it hides the prompts and workflows that have nothing to look at —
+ * no picture, no video / audio. Requests and presets are never hidden by it: without a picture their own text / parameter
+ * summary takes the picture's place.
+ */
+export function focusFeedShown(entry: PostEntry, mediaOnly: boolean): boolean {
+  if (!mediaOnly || entry.kind === "request" || entry.kind === "preset") return true;
+  return focusFeedHasMedia(entry);
+}
+
+/** Odak's sections (docs/history/239-*): swiping up / down moves between them, sideways moves between the posts of one. */
+export const FOCUS_CHANNELS = ["all", "prompt", "request", "workflow", "preset"] as const;
+export type FocusChannel = (typeof FOCUS_CHANNELS)[number];
+
+/** The channel `delta` steps from `channel`, or the same one at either end (no wrap-around). */
+export function focusChannelStep(channel: FocusChannel, delta: number): FocusChannel {
+  const index = FOCUS_CHANNELS.indexOf(channel) + delta;
+  return FOCUS_CHANNELS[Math.max(0, Math.min(FOCUS_CHANNELS.length - 1, index))];
 }
 
 /** Where the feed opens: the post last open in this feed during the session (if it is still in the list), else the top. */
