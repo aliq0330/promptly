@@ -42,6 +42,8 @@ const CHECKS = [
   { name: "prompt_comments (puan + etkinlik yorumu)", get: () => `prompt_comments?select=${encodeURIComponent("id,rating,space_activity_id")}&limit=1` },
   { name: "rpc feed_page", rpc: "feed_page", body: feedArgs },
   { name: "rpc discover_tool_counts", rpc: "discover_tool_counts", body: {} },
+  // Yalnız oturumlu kullanıcıya açık RPC (docs/history/250-*): ziyaretçiye 401/403 dönmesi "var ama kapalı" demektir; 404 "yok" demektir ve boru hattını durdurur.
+  { name: "rpc import_prompts (yalnız oturumlu; ziyaretçiye kapalı)", rpc: "import_prompts", body: { p_items: [], p_dry_run: true }, deniedOk: true },
 ];
 
 const headers = { apikey: key, Authorization: `Bearer ${key}`, "Content-Type": "application/json" };
@@ -51,7 +53,7 @@ for (const check of CHECKS) {
     const response = check.rpc
       ? await fetch(`${url}/rest/v1/rpc/${check.rpc}`, { method: "POST", headers, body: JSON.stringify(check.body) })
       : await fetch(`${url}/rest/v1/${check.get()}`, { headers });
-    if (!response.ok) {
+    if (!response.ok && !(check.deniedOk && (response.status === 401 || response.status === 403))) {
       failed += 1;
       console.error(`✗ ${check.name}: ${response.status} ${(await response.text()).slice(0, 300)}`);
     } else {

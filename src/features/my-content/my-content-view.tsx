@@ -2,13 +2,16 @@
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
+  Download,
   FileText,
   Search,
   SlidersHorizontal,
   Sparkles,
   SquareTerminal,
+  Upload,
   Workflow as WorkflowIcon,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { PageContainer } from "@/components/ui/page-header";
 import { Chip } from "@/components/ui/chip";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -24,6 +27,9 @@ import { RequestCard } from "@/features/requests/request-card";
 import { WorkflowCard } from "@/features/workflows/workflow-card";
 import { PresetCard } from "@/features/presets/preset-card";
 import { ProfileDraftsPanel } from "@/features/profile/profile-drafts-panel";
+import { ExportPromptsModal } from "@/features/exchange/export-prompts-modal";
+import { ImportPromptsModal } from "@/features/exchange/import-prompts-modal";
+import { fetchOwnPromptsForExport } from "@/lib/supabase/prompt-exchange";
 import { fetchPromptsByAuthor } from "@/lib/supabase/prompts";
 import { fetchRequestsByAuthor } from "@/lib/supabase/requests";
 import { fetchWorkflowsByCreator } from "@/lib/supabase/workflows";
@@ -83,6 +89,9 @@ export function MyContentView() {
   const [sort, setSort] = useState<ContentSortKey>("newest");
   const [search, setSearch] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
+  // Dışa/İçe aktar (docs/history/250-*): yalnız Promptlar bölümünde.
+  const [exportOpen, setExportOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
 
   const userId = user?.id;
   useEffect(() => {
@@ -262,6 +271,18 @@ export function MyContentView() {
         }
         create={kind === "drafts" ? undefined : createLinks[kind]}
       />
+      {kind === "prompts" && (
+        <div className="flex justify-end gap-2">
+          <Button type="button" variant="outline" size="sm" onClick={() => setImportOpen(true)} data-testid="my-content-import">
+            <Upload size={14} />
+            {t("exchange.import.menu")}
+          </Button>
+          <Button type="button" variant="outline" size="sm" onClick={() => setExportOpen(true)} data-testid="my-content-export">
+            <Download size={14} />
+            {t("exchange.export.menu")}
+          </Button>
+        </div>
+      )}
       {searching && kind !== "drafts" && (
         <div className="relative">
           <Search size={20} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" aria-hidden />
@@ -320,6 +341,8 @@ export function MyContentView() {
 
         </>
       )}
+      {exportOpen && userId && <ExportPromptsModal load={() => fetchOwnPromptsForExport(userId)} onClose={() => setExportOpen(false)} />}
+      {importOpen && <ImportPromptsModal onClose={() => setImportOpen(false)} onImported={() => setKind("drafts")} />}
     </PageContainer>
   );
 }

@@ -58,6 +58,26 @@ export async function fetchVariablesForPrompt(promptId: string): Promise<PromptV
   }
 }
 
+/** Several prompts' variable definitions in one round trip (export) — grouped by prompt id, each list in author-defined order. */
+export async function fetchVariablesForPrompts(promptIds: string[]): Promise<Map<string, PromptVariable[]>> {
+  const grouped = new Map<string, PromptVariable[]>();
+  const CHUNK = 50;
+  for (let at = 0; at < promptIds.length; at += CHUNK) {
+    const ids = promptIds.slice(at, at + CHUNK);
+    const read = (columns: string) =>
+      supabase.from("prompt_variables").select(columns).in("prompt_id", ids).order("sort_order", { ascending: true });
+    let result = await read(VARIABLE_SELECT);
+    if (result.error?.code === "42703") result = await read(LEGACY_VARIABLE_SELECT);
+    if (result.error) throw new Error(result.error.message);
+    for (const row of (result.data ?? []) as unknown as PromptVariableRow[]) {
+      const list = grouped.get(row.prompt_id) ?? [];
+      list.push(mapVariableRow(row));
+      grouped.set(row.prompt_id, list);
+    }
+  }
+  return grouped;
+}
+
 export interface VariableDraft extends Partial<PromptVariableSpec> {
   name: string;
   defaultValue: string;
