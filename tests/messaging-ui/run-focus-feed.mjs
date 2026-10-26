@@ -226,8 +226,9 @@ await scenario("2. Üst çubuktan Odak: tam ekran, üst/yan menü gizli, koyu sa
   assert.match(page.url(), /\/focus/);
   const box = await stage(page).boundingBox();
   assert.deepEqual([box.x, box.y, box.width, box.height], [0, 0, 1280, 900]);
-  assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector("header[data-app-chrome]")).display), "none");
-  assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector("aside[data-app-chrome]")).display), "none");
+  // Odak ayrı bir sayfadır (docs/history/248-*): /focus'ta üst/yan/alt menü HİÇ kurulmaz (gizli değil, DOM'da yok).
+  assert.equal(await page.locator("[data-app-chrome]").count(), 0, "no app bars in the DOM on /focus");
+  assert.equal(await page.locator("a[href='#main-content']").count(), 0, "no skip link either");
   assert.equal(await page.evaluate(() => document.body.style.overflow), "hidden");
   assert.equal(await stage(page).evaluate((el) => el.classList.contains("dark")), true);
   // iOS Safari kendi çubuklarını BELGENİN moduna göre boyar (docs/history/246-*, 247-*): açık temada da Odak açıkken site gerçekten koyu moddadır.
@@ -418,7 +419,7 @@ await scenario("14. Telefon 390px: alt menüde Profil yerine Odak; ekranı kapla
   await page.waitForTimeout(600);
   const box = await stage(page).boundingBox();
   assert.deepEqual([box.x, box.y, box.width, box.height], [0, 0, 390, 844]);
-  assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector("nav[data-app-chrome]")).display), "none", "the bottom nav is out of the layout, not just hidden (docs/history/247-*)");
+  assert.equal(await page.locator("nav[data-app-chrome]").count(), 0, "the bottom nav is not in the DOM on /focus (docs/history/248-*)");
   const slide = await slides(page).nth(0).boundingBox();
   assert.deepEqual([slide.x, slide.width, slide.height], [24, 342, 844], "a post is a full-height card, 24px in from each edge");
   const next = await slides(page).nth(1).boundingBox();

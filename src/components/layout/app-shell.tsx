@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { usePathname } from "next/navigation";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { MobileNav } from "@/components/layout/mobile-nav";
@@ -22,10 +23,26 @@ interface AppShellProps {
  *   tablet  (md–lg): 72px icon rail + header + content
  *   desktop (lg+):  256px grouped sidebar + header + content (+ optional aside)
  * Below `lg` the header and the bottom nav slide away while scrolling down (`useChromeAutoHide`).
+ * Odak (`/focus`) is a page of its own (docs/history/248-*): its route gets NO bars at all — no header, sidebar, bottom nav or
+ * skip link in the DOM — only the providers, the notices and its own full-screen stage. (Hiding them was not enough on iPhone:
+ * Safari took the strip behind its toolbar from the fixed bottom nav even while it was hidden.)
  */
 export function AppShell({ children, aside }: AppShellProps) {
   const { t } = useTranslation();
   useChromeAutoHide();
+  const bare = /^\/focus\/?$/.test(usePathname() ?? "");
+  if (bare) {
+    return (
+      <div className="flex min-h-screen">
+        <main id="main-content" className="min-w-0 flex-1">
+          {children}
+        </main>
+        <WelcomeTour />
+        <AnnounceReportNotice />
+        <NoticeHost />
+      </div>
+    );
+  }
   return (
     <div className="flex min-h-screen">
       <a
