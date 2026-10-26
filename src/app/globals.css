@@ -686,9 +686,14 @@
 
   /* Story viewer / Odak open (docs/history/198-*, 199-*): the header, sidebar and bottom nav are covered, but iOS Safari still samples fixed bars
    * at the screen edges for the colour behind its own bars — hide them (layout stays put, out of the tab order) so the full-screen colour is found. */
-  html[data-story-open] [data-app-chrome],
-  html[data-focus-open] [data-app-chrome] {
+  html[data-story-open] [data-app-chrome] {
     visibility: hidden;
+  }
+  /* Odak (docs/history/247-*): `visibility: hidden` was not enough on iPhone — Safari kept sampling the (hidden) fixed bottom nav, whose
+   * `after:` extension is the page surface colour, for the strip behind its toolbar (white in a light theme, black in a dark one).
+   * Gone from the layout like the compose screen's bars; `!important` because the bars' own `flex`/`md:flex` utilities sit in a later layer. */
+  html[data-focus-open] [data-app-chrome] {
+    display: none !important;
   }
 
   /* Yazma ekranı (docs/history/216-*): üst menü, kenar çubuğu ve alt menü yerini ekranın kendi üst çubuğuna ve araç çubuğuna bırakır. */
