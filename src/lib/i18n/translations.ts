@@ -21,6 +21,7 @@ import { storyTranslations } from "./translations-stories";
 import { spaceTranslations } from "./translations-spaces";
 import { quoteTranslations } from "./translations-quotes";
 import { filterTranslations } from "./translations-filters";
+import { exchangeTranslations } from "./translations-exchange";
 
 export const translations = {
   // ---- Primary navigation (desktop sidebar) ----
@@ -3103,6 +3104,7 @@ export const translations = {
   ...storyTranslations,
   ...quoteTranslations,
   ...filterTranslations,
+  ...exchangeTranslations,
 } as const satisfies Record<string, { tr: string; en: string }>;
 
 export type TranslationKey = keyof typeof translations;
