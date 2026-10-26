@@ -59,11 +59,15 @@ insert into public.prompt_requests (id, author_id, title, description, is_draft,
 insert into public.presets (id, creator_id, title, status, visibility) values
   ('b0000000-0000-4000-8000-0000000000a1', :alice, 'Hazır ayar', 'published', 'public');
 
+insert into public.prompt_media (prompt_id, url, width, height) values ('a0000000-0000-4000-8000-0000000000a1', 'https://x.supabase.co/storage/v1/object/public/prompt-media/p1.jpg', 800, 600);
 set role authenticated;
 select public._as_user(:alice);
 select public._set('SP', public.create_space('Neon', 'gece', 'moodboard', 'public')::text);
 select public._set('SPP', public.create_space('Gizli', '', 'free', 'private')::text);
 select public._set('SPA', public.create_space('Arşiv', '', 'free', 'public')::text);
+-- Space alıntısı eşiği (241): en az 3 öğe + 1 görsel; SP bunu karşılar.
+select public._try(format($q$insert into public.space_items (space_id, kind, prompt_id, media_url, created_by) values (%L, 'image', 'a0000000-0000-4000-8000-0000000000a1', 'https://x.supabase.co/storage/v1/object/public/prompt-media/p1.jpg', auth.uid())$q$, public._g('SP')));
+select public._try(format($q$insert into public.space_items (space_id, kind, title, created_by) values (%L, 'note', 'n1', auth.uid()), (%L, 'note', 'n2', auth.uid())$q$, public._g('SP'), public._g('SP')));
 reset role;
 update public.spaces set archived_at = now() where id = public._g('SPA');
 -- alice'in topluluğu + topluluğa özgü istek (alıntılanamaz)
@@ -371,6 +375,28 @@ select public._check(47, 'yetkiler: create_quote yalnız authenticated; okuma RP
   and not has_table_privilege('authenticated', 'public.content_quotes', 'update')
   and has_table_privilege('anon', 'public.content_quotes', 'select')
   and not has_table_privilege('anon', 'public.content_quotes', 'delete'));
+
+
+-- ============================================================================
+-- Space alıntısı (241): eşik + sahibin tek paylaşımı
+-- ============================================================================
+set role authenticated;
+select public._as_user(:alice);
+select public._set('SE', public.create_space('Boş', '', 'free', 'public')::text);
+select public._check(90, 'boş Space (3 öğe + 1 görsel yok) kimse tarafından alıntılanamaz (space_too_empty), sahibi dahil',
+  public._try(format($q$select public.create_quote('space', %L, null)$q$, public._g('SE'))) like '%space_too_empty%');
+select public._as_user(:dave);
+select public._check(91, 'eşiği geçen Space başkasınca (dave) alıntılanır',
+  public._try(format($q$select public.create_quote('space', %L, null)$q$, public._g('SP'))) = 'ok');
+select public._as_user(:alice);
+select public._check(92, 'sahibin kendi Space paylaşımı: ilki ok, ikincisi already_quoted; set_space_shared(false) siler, true yeniden yaratır',
+  public._try(format($q$select public.create_quote('space', %L, 'benim')$q$, public._g('SP'))) = 'ok'
+  and public._try(format($q$select public.create_quote('space', %L, null)$q$, public._g('SP'))) like '%already_quoted%'
+  and public._try(format($q$select public.set_space_shared(%L, false)$q$, public._g('SP'))) = 'ok'
+  and public._q(format($q$select count(*) from public.content_quotes where author_id = %L and space_id = %L$q$, :alice, public._g('SP'))) = '0'
+  and public._try(format($q$select public.set_space_shared(%L, true)$q$, public._g('SP'))) = 'ok'
+  and public._q(format($q$select count(*) from public.content_quotes where author_id = %L and space_id = %L$q$, :alice, public._g('SP'))) = '1');
+reset role;
 
 select 'FAILED=' || count(*) filter (where not ok) || ' / ' || count(*) from public._results;
 select n, name, detail from public._results where not ok order by n;

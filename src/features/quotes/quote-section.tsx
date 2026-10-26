@@ -26,17 +26,28 @@ type FeedResult = { ok: true; quoteId: string } | { ok: false; message: string }
  * İçerik KOPYALANMAZ; alıntı notla birlikte bir referanstır. Her hedef ayrı denenir, sonuç hedef başına gösterilir — sessiz başarı yok.
  * `blockedReason` varsa (içerik herkese açık değil) satır nedenini yazar ve açılmaz.
  */
-export function QuoteSection({ type, contentId, blockedReason }: { type: CommunityPostType; contentId: string; blockedReason?: string | null }) {
+export function QuoteSection({
+  type,
+  contentId,
+  blockedReason,
+  hideFeed = false,
+}: {
+  type: CommunityPostType;
+  contentId: string;
+  blockedReason?: string | null;
+  /** Akış hedefi başka yerde yönetiliyorsa (Space sahibinin "Akışta paylaş" anahtarı) yalnız topluluklar sunulur. */
+  hideFeed?: boolean;
+}) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
-  const [feed, setFeed] = useState(true);
+  const [feed, setFeed] = useState(!hideFeed);
   const [selection, setSelection] = useState<AnnounceSelection>({ communityIds: [], note: "" });
   const [busy, setBusy] = useState(false);
   const [feedResult, setFeedResult] = useState<FeedResult>(null);
   const [results, setResults] = useState<AnnounceResult[] | null>(null);
   const communities = useAnnounceCommunities(open);
 
-  const feedPending = feed && !feedResult?.ok;
+  const feedPending = !hideFeed && feed && !feedResult?.ok;
   const pending = selection.communityIds.filter((id) => !results?.some((result) => result.communityId === id && result.ok));
   const nothing = !feedPending && pending.length === 0;
 
@@ -92,6 +103,7 @@ export function QuoteSection({ type, contentId, blockedReason }: { type: Communi
           </label>
 
           <p className="text-label font-semibold text-text">{t("quotes.section.destinations")}</p>
+          {!hideFeed && (
           <label
             data-quote-destination="feed"
             className={cn(
@@ -122,6 +134,7 @@ export function QuoteSection({ type, contentId, blockedReason }: { type: Communi
             </span>
             <input type="checkbox" checked={feed} disabled={busy || Boolean(feedResult?.ok)} onChange={() => setFeed((value) => !value)} className="h-5 w-5 shrink-0 accent-primary" />
           </label>
+          )}
 
           <p className="text-label font-semibold text-text">{t("quotes.section.communities")}</p>
           <AnnouncePicker value={selection} onChange={setSelection} communities={communities.list} status={communities.status} disabled={busy} results={results} hideNote />

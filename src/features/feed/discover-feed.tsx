@@ -24,10 +24,11 @@ import { TagsSection } from "@/features/tags/tags-section";
 import { ToolsSection } from "@/features/tools/tools-section";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { SpacesIcon } from "@/features/spaces/space-visuals";
+import { SpaceDiscoverSection } from "@/features/spaces/space-discover-section";
 import type { TranslationKey } from "@/lib/i18n/translations";
 
-type FeedSection = "all" | "prompts" | "requests" | "workflows" | "presets" | "spaces" | "quotes";
-type EntitySection = "tools" | "tags" | "creators" | "communities";
+type FeedSection = "all" | "prompts" | "requests" | "workflows" | "presets" | "quotes";
+type EntitySection = "spaces" | "tools" | "tags" | "creators" | "communities";
 type Section = FeedSection | EntitySection;
 
 const SECTIONS: { key: Section; labelKey: TranslationKey; icon: typeof LayoutGrid; dividerBefore?: boolean }[] = [
@@ -37,7 +38,7 @@ const SECTIONS: { key: Section; labelKey: TranslationKey; icon: typeof LayoutGri
   { key: "requests", labelKey: "nav.requestsShort", icon: Sparkles },
   { key: "workflows", labelKey: "nav.workflows", icon: WorkflowIcon },
   { key: "presets", labelKey: "nav.presets", icon: SlidersHorizontal },
-  // Akışta gönderi olarak paylaşılmış Space'ler (docs/history/215-*) ve alıntılar (docs/history/217-*): normal gönderiler gibi akar.
+  // Herkese açık Space'ler (docs/history/241-*: akışa yalnız alıntı olarak girerler) ve alıntılar (docs/history/217-*).
   { key: "spaces", labelKey: "nav.spaces", icon: SpacesIcon },
   { key: "quotes", labelKey: "quotes.discover.section", icon: QuoteIcon },
   // … and the things to find and follow (docs/history/221-*).
@@ -54,15 +55,14 @@ const SECTION_KIND: Record<FeedSection, FeedKind | "all"> = {
   requests: "request",
   workflows: "workflow",
   presets: "preset",
-  spaces: "space",
   quotes: "quote",
 };
 
 const isEntity = (section: Section): section is EntitySection =>
-  section === "tools" || section === "tags" || section === "creators" || section === "communities";
+  section === "spaces" || section === "tools" || section === "tags" || section === "creators" || section === "communities";
 
-/** A Space or a quote has no content type / category / AI tool, so the post filters do not apply to them (the database leaves them out when one is set). */
-const hasPostFilters = (section: FeedSection) => section !== "spaces" && section !== "quotes";
+/** A quote has no content type / category / AI tool, so the post filters do not apply to it (the database leaves it out when one is set). */
+const hasPostFilters = (section: FeedSection) => section !== "quotes";
 
 /** The kind of result the typed search looks for in each section (the sections "Tümü", Spaces and Alıntılar search the whole site, as before). */
 function searchScope(section: Section, label: string): SearchScope | undefined {
@@ -90,7 +90,7 @@ function searchScope(section: Section, label: string): SearchScope | undefined {
 
 /**
  * Keşfet (docs/history/221-*) is where new things are found: the four content categories (Promptlar, İstekler, Workflow'lar,
- * Hazır ayarlar — "Tümü" mixes them), Spaces and Alıntılar, and the things to follow: AI Araçları, Etiketler, Yaratıcılar, Topluluklar.
+ * Hazır ayarlar — "Tümü" mixes them), Alıntılar, public Spaces (a list of their own: a Space reaches the feed only as a quote, docs/history/241-*), and the things to follow: AI Araçları, Etiketler, Yaratıcılar, Topluluklar.
  * The content sections are SERVER queries (`public.feed_page`, the same keyset hook as Home): sort, filters and "Load more" are decided by
  * the database. Sorts: Önerilen (engagement score, not personalised), En yeni, Popüler (likes) and — only where a real use counter exists,
  * Promptlar — En çok kullanılan. The advanced filters (type / category, AI tool, request status) apply only to the sections they mean
@@ -113,7 +113,7 @@ export function DiscoverFeed() {
   const effectiveSort: ContentSortKey = sort === "most-used" && section !== "prompts" ? "recommended" : sort;
   const sortKeys: ContentSortKey[] = section === "prompts" ? [...DISCOVER_SORT_KEYS, "most-used"] : DISCOVER_SORT_KEYS;
 
-  // Only filters that mean something in the open section reach the query (a Space has no category: carrying one over would empty the list).
+  // Only filters that mean something in the open section reach the query (a quote has no category: carrying one over would empty the list).
   const effectiveTaxonomy = postFilters ? taxonomy : EMPTY_TAXONOMY_FILTER;
   const availableTools = taxonomy.contentType ? getToolsForContentType(taxonomy.contentType, taxonomy.category) : AI_TOOLS.filter((entry) => entry.isActive);
   const effectiveTool = postFilters && tool && availableTools.some((entry) => entry.id === tool) ? tool : null;
@@ -171,9 +171,9 @@ export function DiscoverFeed() {
           active={section}
           onChange={setSection}
           ariaLabel={t("discover.sectionsAriaLabel")}
-          // The entity sections (tools, tags, creators, communities) are lists to follow from, not filterable feeds: only the menu.
+          // The entity sections (Spaces, tools, tags, creators, communities) are lists to browse / follow from, not filterable feeds: only the menu.
           hideControls={entity}
-          // Space'in türü/kategorisi yok: süzgeçler Spaces ve Alıntılar bölümünde çizilmez (sunucu da süzgeçli sorguda ikisini de döndürmez).
+          // Alıntının türü/kategorisi yok: süzgeçler Alıntılar bölümünde çizilmez (sunucu da süzgeçli sorguda döndürmez).
           sort={effectiveSort}
           onSortChange={setSort}
           sortKeys={sortKeys}
@@ -205,7 +205,9 @@ export function DiscoverFeed() {
           onClear={clearFilters}
         />
 
-        {section === "tools" ? (
+        {section === "spaces" ? (
+          <SpaceDiscoverSection />
+        ) : section === "tools" ? (
           <ToolsSection />
         ) : section === "tags" ? (
           <TagsSection />

@@ -55,6 +55,7 @@ const ERROR_KEYS: Record<string, TranslationKey> = {
   blocked: "quotes.error.blocked",
   already_quoted: "quotes.error.alreadyQuoted",
   quote_rate_limit: "quotes.error.rateLimit",
+  space_too_empty: "quotes.error.spaceTooEmpty",
 };
 
 export function toQuoteError(error: { message?: string } | null): Error {
@@ -131,6 +132,20 @@ export async function createQuote(type: CommunityPostType, contentId: string, no
   const { data, error } = await supabase.rpc("create_quote", { p_content_type: type, p_content_id: contentId, p_note: note.trim() || null });
   if (error) throw toQuoteError(error);
   return String(data);
+}
+
+/** Kullanıcının bir Space'e ait kendi (en eski) alıntısının kimliği; yoksa `null`. Sahibin "Akışta paylaş" anahtarı budur (docs/history/241-*). */
+export async function fetchOwnSpaceQuoteId(spaceId: string, userId: string): Promise<string | null> {
+  const { data, error } = await supabase
+    .from("content_quotes")
+    .select("id")
+    .eq("author_id", userId)
+    .eq("space_id", spaceId)
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw toQuoteError(error);
+  return data ? String((data as { id: string }).id) : null;
 }
 
 /** Kendi alıntını siler; "0 satır etkilendi" sessiz başarı sayılmaz. */

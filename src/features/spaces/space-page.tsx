@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { Archive, ArchiveRestore, Eye, Image as ImageIcon, LayoutDashboard, LogOut, Palette, Pin, PinOff, Presentation, Settings, Share2, SquareTerminal, StickyNote, Trash2, Users, type LucideIcon } from "lucide-react";
+import { Archive, ArchiveRestore, Eye, Image as ImageIcon, LayoutDashboard, LogOut, Palette, Pin, PinOff, Presentation, Quote, Settings, Share2, SquareTerminal, StickyNote, Trash2, Users, type LucideIcon } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Button, buttonClassName } from "@/components/ui/button";
 import { DetailSkeleton, NotFoundBlock } from "@/components/ui/detail-skeleton";
@@ -31,11 +31,7 @@ import {
 import { isSpaceTab, SPACE_KIND_LABEL, SPACE_TAB_LABEL, SPACE_TABS, spaceHref, type SpaceTab } from "@/lib/spaces";
 import { SpaceProvider, useSpaceContext, type SpaceData } from "./space-provider";
 import { DeleteSpaceDialog, SpaceSettingsModal } from "./space-modals";
-import { CommentSection } from "@/features/prompts/comment-section";
-import { CommentCountLink } from "@/features/prompts/comment-count-link";
-import { LikeButton } from "@/features/prompts/like-button";
 import { ShareModal } from "@/features/prompts/share-modal";
-import { StatisticsButton } from "@/features/statistics/statistics-button";
 import { ReportButton } from "@/features/moderation/report-button";
 import { SpaceMenu } from "./space-menu";
 import { PaletteStrip, SpaceCoverArt, SpacesIcon, VisibilityBadge } from "./space-visuals";
@@ -169,14 +165,10 @@ function SpaceView({ owner, initialFavorite }: { owner: SpacePerson | null; init
   const coverUrls = space.coverUrl ? [space.coverUrl] : coverItem?.mediaUrl ? [coverItem.mediaUrl] : images.slice(-4).map((item) => item.mediaUrl!).reverse();
 
   const leadPalette = palettes.find((palette) => palette.colors.length > 0) ?? null;
-  // Paylaş (docs/history/215-*): tek pencere — sahip orada "Kim görsün?" ve "Akışta gönderi olarak" ayarlarını da görür; herkese açık
-  // Space'te herkes topluluklarda duyurur ya da bağlantıyı paylaşır.
+  // Paylaş (docs/history/215-*): tek pencere — sahip orada "Kim görsün?" ve "Akışta paylaş" ayarlarını da görür; herkese açık
+  // Space'te herkes alıntılar ya da bağlantıyı paylaşır.
   const canShare = caps.share || space.visibility === "public";
   const share = () => setDialog("share");
-  // Akışta paylaşılmış Space bir gönderidir: beğeni · yorum · istatistik ve yorumlar görünür.
-  const isPost = Boolean(space.sharedAt) && space.visibility === "public" && !space.archivedAt;
-  const highlightParam = searchParams.get("hl");
-  const highlightCommentId = highlightParam?.startsWith("comment:") ? highlightParam.slice("comment:".length) : null;
 
   async function toggleFavorite() {
     const next = !favorite;
@@ -270,13 +262,6 @@ function SpaceView({ owner, initialFavorite }: { owner: SpacePerson | null; init
               {caps.edit ? t("spaces.page.openBoard") : t("spaces.page.viewBoard")}
             </Button>
             <SaveIndicator status={layoutStatus} onRetry={() => void flushLayout()} />
-            {isPost && (
-              <div className="flex items-center gap-0.5" data-space-engagement="">
-                <LikeButton id={space.id} likeCount={space.likeCount} contentType="space" size={18} />
-                <CommentCountLink spaceId={space.id} baseCount={space.commentCount} size={18} />
-                <StatisticsButton target={{ contentType: "space", contentId: space.id, likeCount: space.likeCount, commentCount: space.commentCount }} size={18} />
-              </div>
-            )}
             {canShare && (
               <Button variant="outline" className="ml-auto h-12 w-12 rounded-full p-0" onClick={share} aria-label={t("spaces.card.share")} title={t("spaces.card.share")}>
                 <Share2 size={18} aria-hidden />
@@ -331,19 +316,16 @@ function SpaceView({ owner, initialFavorite }: { owner: SpacePerson | null; init
           {tab === "members" && <MembersTab />}
         </div>
 
-        {/* Gönderi olarak paylaşılmış Space'in yorumları (detay sayfalarıyla aynı yorum yüzeyi; `#comments` çapası kartlardan gelir). */}
-        {isPost && tab !== "board" && (
-          <section id="comments" aria-labelledby="space-comments-title" className="mt-12 scroll-mt-20 space-y-3 border-t border-border-soft pt-6" data-space-comments="">
-            <h2 id="space-comments-title" className="text-h3 font-bold text-text">
-              {t("comments.title")}
-            </h2>
-            <CommentSection target={{ spaceId: space.id }} highlightCommentId={highlightCommentId} headless />
-            {userId && userId !== space.ownerId && (
-              <div className="pt-2">
-                <ReportButton targetType="space" targetId={space.id} menuItem={false} />
-              </div>
+        {/* Space'in kendi beğeni/yorumu yok (docs/history/241-*): akıştaki yeri bir alıntıdır, etkileşim orada. Burada yalnız alıntı sayısı + şikâyet. */}
+        {tab !== "board" && space.visibility === "public" && !space.archivedAt && (space.quoteCount > 0 || (userId && userId !== space.ownerId)) && (
+          <footer className="mt-12 flex flex-wrap items-center gap-3 border-t border-border-soft pt-4 text-caption text-text-muted" data-space-footer="">
+            {space.quoteCount > 0 && (
+              <span className="inline-flex items-center gap-1.5" data-space-quote-count="">
+                <Quote size={13} aria-hidden /> {t("quotes.count", { count: space.quoteCount })}
+              </span>
             )}
-          </section>
+            {userId && userId !== space.ownerId && <ReportButton targetType="space" targetId={space.id} menuItem={false} />}
+          </footer>
         )}
       </div>
 

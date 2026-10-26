@@ -1,4 +1,5 @@
--- Space = gönderi (docs/history/215-*): akışta paylaşım, beğeni/yorum hedefi, bildirim, istatistik, şikâyet, feed_page, topluluk duyurusu.
+-- Space'in tek etkileşim hattı = alıntı (docs/history/241-*; 215'in "Space = gönderi" modelinin yerini aldı): veri geçişi, create_quote eşiği,
+-- sahibin tek paylaşımı, set_space_shared sarmalayıcısı, Space'e yeni beğeni/yorum kapalı, feed_page Space döndürmez, topluluk duyurusu.
 -- Çalıştırma: supabase/tests/run-local.sh supabase/tests/space-posts.sql  ("FAILED=0" beklenir).
 -- Kullanıcılar: alice(sahip) bobby(alice'in Space'inde düzenleyici) carol(beğenen/yorumcu) dave(takipçi) erin(alice tarafından engellenmiş)
 --               mod(moderatör). Ziyaretçi = boş kimlik.
@@ -61,147 +62,116 @@ select public._as_user(:bobby);
 select public._try($q$select public.respond_space_invitation((select id from public.space_invitations limit 1), true)$q$);
 reset role;
 
+
 -- ============================================================================
--- 1. Akışta paylaşım
+-- 1. Veri geçişi (215 modelinden): eski "akışta paylaşılmış Space" → sahibin alıntısı
+--    Eski veri, tetikleyiciler kapalıyken (replica) kurulur; sonra migration yeniden oynatılır (tekrar çalıştırılabilir olmalı).
+-- ============================================================================
+set session_replication_role = replica;
+update public.spaces set shared_at = '2026-09-22 10:00:00+00', like_count = 1, comment_count = 2 where id = public._g('S');
+insert into public.prompt_likes (space_id, user_id) values (public._g('S'), :carol);
+insert into public.prompt_comments (id, space_id, author_id, body) values ('c0000000-0000-4000-8000-000000000001', public._g('S'), :carol, 'Harika palet');
+insert into public.prompt_comments (id, space_id, author_id, body, parent_id) values ('c0000000-0000-4000-8000-000000000002', public._g('S'), :alice, 'Teşekkürler', 'c0000000-0000-4000-8000-000000000001');
+set session_replication_role = origin;
+\ir ../migrations/20260925100000_space_single_thread.sql
+select public._set('Q', (select id::text from public.content_quotes where author_id = :alice and space_id = public._g('S')));
+select public._check(1, 'geçiş: sahibin alıntısı eski paylaşım anıyla yaratıldı (içerik türü space)',
+  public._q(format($q$select (created_at = '2026-09-22 10:00:00+00')::text || ':' || content_type from public.content_quotes where id = %L$q$, public._g('Q'))) = 'true:space');
+select public._check(2, 'geçiş: beğeni ve yorumlar alıntıya taşındı (Space''te kalmadı), alıntı sayaçları doğru',
+  public._q(format($q$select count(*) from public.prompt_likes where quote_id = %L$q$, public._g('Q'))) = '1'
+  and public._q(format($q$select count(*) from public.prompt_comments where quote_id = %L$q$, public._g('Q'))) = '2'
+  and public._q(format($q$select count(*) from public.prompt_likes where space_id = %L$q$, public._g('S'))) = '0'
+  and public._q(format($q$select count(*) from public.prompt_comments where space_id = %L$q$, public._g('S'))) = '0'
+  and public._q(format($q$select like_count || ':' || comment_count from public.content_quotes where id = %L$q$, public._g('Q'))) = '1:2');
+select public._check(3, 'geçiş: Space''in gönderi alanları boşaldı; "N kez alıntılandı" sayacı 1',
+  public._q(format($q$select (shared_at is null)::text || ':' || like_count || ':' || comment_count || ':' || quote_count from public.spaces where id = %L$q$, public._g('S'))) = 'true:0:0:1');
+\ir ../migrations/20260925100000_space_single_thread.sql
+select public._check(4, 'geçiş tekrar çalışınca bir şey değişmez (tek alıntı, aynı sayaçlar)',
+  public._q(format($q$select count(*) from public.content_quotes where space_id = %L$q$, public._g('S'))) = '1'
+  and public._q(format($q$select like_count || ':' || comment_count from public.content_quotes where id = %L$q$, public._g('Q'))) = '1:2');
+
+-- ============================================================================
+-- 2. Space'in kendi gönderisi yok: shared_at yazılamaz, beğeni/yorum kapalı, akış Space döndürmez
 -- ============================================================================
 set role authenticated;
 select public._as_user(:alice);
-select public._check(1, 'istemci shared_at yazamaz (yalnız RPC)',
+select public._check(5, 'istemci shared_at yazamaz',
   public._try(format($q$update public.spaces set shared_at = now() where id = %L$q$, public._g('S'))) like '%space_invalid%');
-select public._check(2, 'istemci beğeni sayacı yazamaz (sessizce korunur)',
-  public._try(format($q$update public.spaces set like_count = 99 where id = %L$q$, public._g('S'))) = 'ok'
-  and public._q(format($q$select like_count from public.spaces where id = %L$q$, public._g('S'))) = '0');
-select public._check(3, 'boş Space paylaşılamaz (space_too_empty)',
-  public._try(format($q$select public.set_space_shared(%L, true)$q$, public._g('E'))) like '%space_too_empty%');
-select public._as_user(:bobby);
-select public._check(4, 'düzenleyici paylaşamaz (yalnız sahip)',
-  public._try(format($q$select public.set_space_shared(%L, true)$q$, public._g('S'))) like '%space_forbidden%');
 select public._as_user(:carol);
-select public._check(5, 'yabancı: aynı yanıt değil ama yetki yok',
-  public._try(format($q$select public.set_space_shared(%L, true)$q$, public._g('S'))) like '%space_forbidden%');
-select public._as_user(:alice);
-select public._check(6, 'sahip paylaşır; ikinci çağrı ilk anı korur',
-  public._try(format($q$select public.set_space_shared(%L, true)$q$, public._g('S'))) = 'ok'
-  and public._q(format($q$select shared_at is not null from public.spaces where id = %L$q$, public._g('S'))) = 'true');
-select public._set('AT', public._q(format($q$select shared_at::text from public.spaces where id = %L$q$, public._g('S'))));
-select public._try(format($q$select public.set_space_shared(%L, true)$q$, public._g('S')));
-select public._check(7, 'yeniden paylaşım sırayı değiştirmez',
-  public._q(format($q$select shared_at::text from public.spaces where id = %L$q$, public._g('S'))) = (select v from public._ctx where k = 'AT'));
+select public._check(6, 'Space''e yeni beğeni ve yorum yazılamaz (space_engagement_closed)',
+  public._try(format($q$insert into public.prompt_likes (space_id, user_id) values (%L, auth.uid())$q$, public._g('S'))) like '%space_engagement_closed%'
+  and public._try(format($q$insert into public.prompt_comments (space_id, author_id, body) values (%L, auth.uid(), 'x')$q$, public._g('S'))) like '%space_engagement_closed%');
 reset role;
-
--- ============================================================================
--- 2. feed_page
--- ============================================================================
 set role anon;
 select public._as_user('');
-select public._check(8, 'ziyaretçi akışında paylaşılan Space var (13 argüman); paylaşılmayan yok',
-  public._val(format($q$select count(*)::text from public.feed_page('all','newest',null,null,null,null,50,null,null,null,false,null,null) f where f.kind = 'space' and f.id = %L$q$, public._g('S'))) = '1'
-  and public._val(format($q$select count(*)::text from public.feed_page('all','newest',null,null,null,null,50,null,null,null,false,null,null) f where f.id = %L$q$, public._g('E'))) = '0');
-select public._check(9, 'eski 10/11 argümanlı sarmalayıcılar da Space döndürür',
-  public._val($q$select count(*)::text from public.feed_page('all','newest',null,null,null,null,50,null,null,null) f where f.kind = 'space'$q$) = '1'
-  and public._val($q$select count(*)::text from public.feed_page('all','newest',null,null,null,null,50,null,null,null,false) f where f.kind = 'space'$q$) = '1');
-select public._check(10, 'tür/kategori/etiket/araç süzgecinde Space yok; yalnız Space türü istenince var',
-  public._val($q$select count(*)::text from public.feed_page('all','newest',null,'image',null,null,50,null,null,null,false,null,null) f where f.kind = 'space'$q$) = '0'
-  and public._val($q$select count(*)::text from public.feed_page('all','newest',null,null,null,null,50,null,null,null,false,'gece',null) f where f.kind = 'space'$q$) = '0'
-  and public._val($q$select count(*)::text from public.feed_page('all','newest',array['space'],null,null,null,50,null,null,null,false,null,null) f$q$) = '1'
-  and public._val($q$select count(*)::text from public.feed_page('all','newest',array['prompt'],null,null,null,50,null,null,null,false,null,null) f where f.kind = 'space'$q$) = '0');
-select public._check(11, 'akış zamanı = shared_at; ikinci sayfa (keyset) tekrar etmez',
-  public._val(format($q$select (f.created_at::text = %L)::text from public.feed_page('all','newest',array['space'],null,null,null,50,null,null,null,false,null,null) f$q$, (select v from public._ctx where k = 'AT'))) = 'true'
-  and public._val($q$select count(*)::text from public.feed_page('all','newest',array['space'],null,null,null,1,0,(select f.created_at from public.feed_page('all','newest',array['space'],null,null,null,1,null,null,null,false,null,null) f),(select f.id from public.feed_page('all','newest',array['space'],null,null,null,1,null,null,null,false,null,null) f),false,null,null) x$q$) = '0');
-select public._check(12, 'space_feed_cards: sayılar, ilk palet, kişisel alanlar boş',
-  public._val(format($q$select image_count || ':' || note_count || ':' || array_to_string(palette_colors, ',') || ':' || coalesce(my_role, '-') || ':' || (shared_at is not null)::text from public.space_feed_cards(array[%L]::uuid[])$q$, public._g('S'))) = '1:2:#ff5fa2,#22d3c5:-:true');
-reset role;
-set role authenticated;
-select public._as_user(:dave);
-select public._check(13, 'takip akışında takip edilen sahibin Space''i var',
-  public._val($q$select count(*)::text from public.feed_page('following','newest',null,null,null,null,50,null,null,null,false,null,null) f where f.kind = 'space'$q$) = '1');
-select public._check(14, '"etiketlerim" kapsamında Space yok',
-  public._val($q$select count(*)::text from public.feed_page('tags','newest',null,null,null,null,50,null,null,null,false,null,null) f where f.kind = 'space'$q$) = '0');
-select public._as_user(:erin);
-select public._check(15, 'engellenen kullanıcı akışta ve kartta Space''i görmez',
+select public._check(7, 'ziyaretçi akışı Space türü döndürmez (13 argüman, eski 10/11 argüman, yalnız-space isteği); sahibin alıntısı quote türünde var',
   public._val($q$select count(*)::text from public.feed_page('all','newest',null,null,null,null,50,null,null,null,false,null,null) f where f.kind = 'space'$q$) = '0'
-  and public._val(format($q$select count(*)::text from public.space_feed_cards(array[%L]::uuid[])$q$, public._g('S'))) = '0');
+  and public._val($q$select count(*)::text from public.feed_page('all','newest',null,null,null,null,50,null,null,null) f where f.kind = 'space'$q$) = '0'
+  and public._val($q$select count(*)::text from public.feed_page('all','newest',array['space'],null,null,null,50,null,null,null,false,null,null) f$q$) = '0'
+  and public._val(format($q$select count(*)::text from public.feed_page('all','newest',null,null,null,null,50,null,null,null,false,null,null) f where f.kind = 'quote' and f.id = %L$q$, public._g('Q'))) = '1');
+select public._check(8, 'space_feed_cards (alıntı kartı için) hâlâ çalışır: sayılar + ilk palet',
+  public._val(format($q$select image_count || ':' || note_count || ':' || array_to_string(palette_colors, ',') from public.space_feed_cards(array[%L]::uuid[])$q$, public._g('S'))) = '1:2:#ff5fa2,#22d3c5');
 reset role;
 
 -- ============================================================================
--- 3. Beğeni / yorum
+-- 3. Alıntı kuralları (Space): eşik, sahibin tek paylaşımı, set_space_shared sarmalayıcısı
 -- ============================================================================
-set role anon;
-select public._as_user('');
-select public._set('ANON', public._try(format($q$insert into public.prompt_likes (space_id, user_id) values (%L, %L)$q$, public._g('S'), :carol)));
-select public._check(16, 'ziyaretçi beğenemez',
-  (select v from public._ctx where k = 'ANON') ~ '(not_authenticated|row-level security|permission denied)');
-reset role;
 set role authenticated;
-select public._as_user(:carol);
-select public._check(17, 'beğeni: sayaç 1, sahibine "Space''ini beğendi" bildirimi Space adresiyle',
-  public._try(format($q$insert into public.prompt_likes (space_id, user_id) values (%L, auth.uid())$q$, public._g('S'))) = 'ok'
-  and public._q(format($q$select like_count from public.spaces where id = %L$q$, public._g('S'))) = '1'
-  and public._q(format($q$select count(*) from public.notifications where recipient_id = %L and message like 'Space''ini beğendi:%%' and target_href = '/spaces/local?id=%s'$q$, :alice, public._g('S'))) = '1');
-select public._check(18, 'aynı kişi ikinci kez beğenemez',
-  public._try(format($q$insert into public.prompt_likes (space_id, user_id) values (%L, auth.uid())$q$, public._g('S'))) like '%duplicate key%');
-select public._check(19, 'paylaşılmamış Space beğenilemez / yorumlanamaz',
-  public._try(format($q$insert into public.prompt_likes (space_id, user_id) values (%L, auth.uid())$q$, public._g('E'))) like '%space_not_found%'
-  and public._try(format($q$insert into public.prompt_comments (space_id, author_id, body) values (%L, auth.uid(), 'x')$q$, public._g('E'))) like '%space_not_found%');
-select public._set('CM', public._val(format($q$insert into public.prompt_comments (space_id, author_id, body) values (%L, auth.uid(), 'Harika palet') returning id::text$q$, public._g('S'))));
-select public._check(20, 'yorum: sayaç 1, sahibine "Space''ine yorum yaptı" + hl adresi',
-  public._q(format($q$select comment_count from public.spaces where id = %L$q$, public._g('S'))) = '1'
-  and public._q(format($q$select count(*) from public.notifications where recipient_id = %L and message like 'Space''ine yorum yaptı:%%' and target_href = '/spaces/local?id=%s&hl=comment:%s'$q$, :alice, public._g('S'), public._g('CM'))) = '1');
-select public._check(21, 'başka hedefin yorumuna Space yanıtı bağlanamaz',
-  public._try(format($q$insert into public.prompt_comments (prompt_id, author_id, body, parent_id) values ('a0000000-0000-4000-8000-0000000000a1', auth.uid(), 'x', %L)$q$, public._g('CM'))) like '%invalid_parent%');
 select public._as_user(:alice);
-select public._set('RP', public._val(format($q$insert into public.prompt_comments (space_id, author_id, body, parent_id) values (%L, auth.uid(), 'Teşekkürler @dave', %L) returning id::text$q$, public._g('S'), public._g('CM'))));
-select public._try(format($q$insert into public.comment_likes (comment_id, user_id) values (%L, auth.uid())$q$, public._g('CM')));
-select public._check(22, 'yanıt → carol''a; @bahsetme → dave''e; yorum beğenisi → Space adresiyle',
-  public._q(format($q$select count(*) from public.notifications where recipient_id = %L and type = 'comment_reply' and target_href like '/spaces/local?id=%s&hl=comment:%%'$q$, :carol, public._g('S'))) = '1'
-  and public._q(format($q$select count(*) from public.notifications where recipient_id = %L and message like 'Seni bir yorumda andı%%' and target_href like '/spaces/local?id=%s%%'$q$, :dave, public._g('S'))) = '1'
-  and public._q(format($q$select count(*) from public.notifications where recipient_id = %L and message like 'Yorumunu beğendi%%' and target_href = '/spaces/local?id=%s&hl=comment:%s'$q$, :carol, public._g('S'), public._g('CM'))) = '1');
-select public._check(23, 'adressiz (target_href boş) bildirim üretilmedi',
-  public._q($q$select count(*) from public.notifications where target_href is null$q$) = '0');
-select public._as_user(:erin);
-select public._check(24, 'engellenen kullanıcı beğenemez',
-  public._try(format($q$insert into public.prompt_likes (space_id, user_id) values (%L, auth.uid())$q$, public._g('S'))) like '%space_not_found%');
-select public._as_user(:dave);
-select public._check(25, 'istatistik: beğenenler + yorum yapanlar; kaydedenler boş',
-  public._val(format($q$select string_agg(actor_username, ',') from public.content_engagers('space', %L, 'likes')$q$, public._g('S'))) = 'carol'
-  and public._val(format($q$select count(*)::text from public.content_engagers('space', %L, 'comments')$q$, public._g('S'))) = '2'
-  and public._val(format($q$select count(*)::text from public.content_engagers('space', %L, 'saves')$q$, public._g('S'))) = '0');
-select public._check(26, 'yabancı beğeni ve yorum satırlarını okur (herkese açık Space)',
-  public._val(format($q$select count(*)::text from public.prompt_likes where space_id = %L$q$, public._g('S'))) = '1'
-  and public._val(format($q$select count(*)::text from public.prompt_comments where space_id = %L$q$, public._g('S'))) = '2');
+select public._check(9, 'boş Space kimse tarafından alıntılanamaz (space_too_empty); set_space_shared da aynı eşiği ister',
+  public._try(format($q$select public.create_quote('space', %L, null)$q$, public._g('E'))) like '%space_too_empty%'
+  and public._try(format($q$select public.set_space_shared(%L, true)$q$, public._g('E'))) like '%space_too_empty%');
+select public._as_user(:bobby);
+select public._check(10, 'düzenleyici akışta paylaşamaz (yalnız sahip): set_space_shared space_forbidden',
+  public._try(format($q$select public.set_space_shared(%L, true)$q$, public._g('S'))) like '%space_forbidden%');
 select public._as_user(:carol);
-select public._try(format($q$delete from public.prompt_likes where space_id = %L and user_id = auth.uid()$q$, public._g('S')));
-select public._check(27, 'beğeni geri alınınca sayaç 0 ve bildirim silinir',
-  public._q(format($q$select like_count from public.spaces where id = %L$q$, public._g('S'))) = '0'
-  and public._q(format($q$select count(*) from public.notifications where message like 'Space''ini beğendi:%%'$q$)) = '0');
-select public._try(format($q$insert into public.prompt_likes (space_id, user_id) values (%L, auth.uid())$q$, public._g('S')));
+select public._check(11, 'yabancı set_space_shared çağıramaz; ama herkese açık eşiği geçen Space''i alıntılar',
+  public._try(format($q$select public.set_space_shared(%L, true)$q$, public._g('S'))) like '%space_forbidden%'
+  and public._try(format($q$select public.create_quote('space', %L, 'güzel')$q$, public._g('S'))) = 'ok'
+  and public._q(format($q$select quote_count from public.spaces where id = %L$q$, public._g('S'))) = '2');
+select public._as_user(:alice);
+select public._check(12, 'sahibi kendi Space''ini yalnız bir kez paylaşır: ikinci create_quote already_quoted; set_space_shared(true) eskisini döndürür',
+  public._try(format($q$select public.create_quote('space', %L, null)$q$, public._g('S'))) like '%already_quoted%'
+  and public._q(format($q$select (public.set_space_shared(%L, true) = created_at)::text from public.content_quotes where id = %L$q$, public._g('S'), public._g('Q'))) = 'true');
+select public._as_user(:bobby);
+select public._check(13, 'sahibin alıntısı normal alıntı gibi beğenilir/yorumlanır (quote_id), Space sayacı yok',
+  public._try(format($q$insert into public.prompt_likes (quote_id, user_id) values (%L, auth.uid())$q$, public._g('Q'))) = 'ok'
+  and public._q(format($q$select like_count from public.content_quotes where id = %L$q$, public._g('Q'))) = '2');
+select public._as_user(:alice);
+select public._check(14, 'set_space_shared(false) sahibin alıntısını (ve beğeni/yorumlarını) siler; sayaç düşer; sonra true yeniden yaratır (shared_at hep boş)',
+  public._try(format($q$select public.set_space_shared(%L, false)$q$, public._g('S'))) = 'ok'
+  and public._q(format($q$select count(*) from public.content_quotes where id = %L$q$, public._g('Q'))) = '0'
+  and public._q(format($q$select count(*) from public.prompt_comments where quote_id = %L$q$, public._g('Q'))) = '0'
+  and public._q(format($q$select quote_count from public.spaces where id = %L$q$, public._g('S'))) = '1'
+  and public._try(format($q$select public.set_space_shared(%L, true)$q$, public._g('S'))) = 'ok'
+  and public._q(format($q$select (shared_at is null)::text from public.spaces where id = %L$q$, public._g('S'))) = 'true'
+  and public._q(format($q$select count(*) from public.content_quotes where author_id = %L and space_id = %L$q$, :alice, public._g('S'))) = '1');
 reset role;
 
 -- ============================================================================
--- 4. Topluluk duyurusu
+-- 4. Topluluk duyurusu (başvuru gönderisi) — değişmedi; Space'in sayaçları karışmaz
 -- ============================================================================
 set role authenticated;
 select public._as_user(:alice);
 select public._set('CP', public._val(format($q$select public.share_to_community(%L, 'space', %L, 'yeni palet')::text$q$, public._g('C'), public._g('S'))));
-select public._check(28, 'herkese açık Space toplulukta duyurulur (başvuru)',
+select public._check(15, 'herkese açık Space toplulukta duyurulur (başvuru)',
   public._q(format($q$select kind || ':' || content_type || ':' || (space_id = %L)::text from public.community_posts where id = %L$q$, public._g('S'), public._g('CP'))) = 'application:space:true');
-select public._check(29, 'aynı Space aynı toplulukta ikinci kez duyurulamaz',
+select public._check(16, 'aynı Space aynı toplulukta ikinci kez duyurulamaz',
   public._try(format($q$select public.share_to_community(%L, 'space', %L)$q$, public._g('C'), public._g('S'))) like '%already_shared%');
-select public._try(format($q$select public.set_space_shared(%L, false)$q$, public._g('E')));
 select public._try(format($q$update public.spaces set visibility = 'private' where id = %L$q$, public._g('E')));
-select public._check(30, 'özel Space duyurulamaz: sahibe content_not_public',
+select public._check(17, 'özel Space duyurulamaz: sahibe content_not_public',
   public._try(format($q$select public.share_to_community(%L, 'space', %L)$q$, public._g('C'), public._g('E'))) like '%content_not_public%');
 select public._as_user(:carol);
 select public._try(format($q$select public.join_community(%L)$q$, public._g('C')));
-select public._check(31, 'başkasının özel Space''i: varlığı sızmaz (content_not_found)',
+select public._check(18, 'başkasının özel Space''i: varlığı sızmaz (content_not_found)',
   public._try(format($q$select public.share_to_community(%L, 'space', %L)$q$, public._g('C'), public._g('E'))) like '%content_not_found%'
     or public._try(format($q$select public.share_to_community(%L, 'space', %L)$q$, public._g('C'), public._g('E'))) like '%forbidden%');
-select public._check(32, 'gönderi beğenisi gönderinin sayacına gider, Space''inkine değil (bağlama özel)',
+select public._check(19, 'gönderi beğenisi gönderinin sayacına gider (bağlama özel); Space''te beğeni sayacı hiç oluşmaz',
   public._try(format($q$insert into public.prompt_likes (community_post_id, user_id) values (%L, auth.uid())$q$, public._g('CP'))) = 'ok'
   and public._q(format($q$select like_count from public.community_posts where id = %L$q$, public._g('CP'))) = '1'
-  and public._q(format($q$select like_count from public.spaces where id = %L$q$, public._g('S'))) = '1');
+  and public._q(format($q$select like_count from public.spaces where id = %L$q$, public._g('S'))) = '0');
 reset role;
-select public._check(33, 'Space yalnız başvuru olabilir (yerel Space gönderisi yok)',
+select public._check(20, 'Space yalnız başvuru olabilir (yerel Space gönderisi yok)',
   public._try(format($q$insert into public.community_posts (community_id, author_id, kind, content_type, space_id) values (%L, %L, 'native', 'space', %L)$q$, public._g('CR'), :alice, public._g('S'))) like '%community_posts_space_application%');
 
 -- ============================================================================
@@ -210,36 +180,46 @@ select public._check(33, 'Space yalnız başvuru olabilir (yerel Space gönderis
 set role authenticated;
 select public._as_user(:alice);
 select public._try(format($q$update public.spaces set archived_at = now() where id = %L$q$, public._g('S')));
-select public._check(34, 'arşivlenen Space akıştan düşer (shared_at boşalır)',
-  public._q(format($q$select (shared_at is null)::text from public.spaces where id = %L$q$, public._g('S'))) = 'true');
+set role anon;
+select public._as_user('');
+select public._check(21, 'arşivlenen Space''in alıntıları akıştan ve okumadan düşer; arşivden dönünce geri gelir',
+  public._val(format($q$select count(*)::text from public.content_quotes where space_id = %L$q$, public._g('S'))) = '0');
+reset role;
+set role authenticated;
+select public._as_user(:alice);
 select public._try(format($q$update public.spaces set archived_at = null where id = %L$q$, public._g('S')));
-select public._try(format($q$select public.set_space_shared(%L, true)$q$, public._g('S')));
+set role anon;
+select public._as_user('');
+select public._check(22, 'arşivden dönünce alıntılar geri görünür',
+  public._val(format($q$select count(*)::text from public.content_quotes where space_id = %L$q$, public._g('S'))) = '2');
+reset role;
+set role authenticated;
 select public._as_user(:carol);
 select public._try(format($q$insert into public.reports (reporter_id, target_type, target_id, reason) values (auth.uid(), 'space', %L, 'spam')$q$, public._g('S')));
 select public._as_user(:mod);
-select public._check(35, 'moderatör kuyruğunda Space şikâyeti başlık + adresle görünür',
+select public._check(23, 'moderatör kuyruğunda Space şikâyeti başlık + adresle görünür (Space şikâyeti sürüyor)',
   public._val(format($q$select target_title || '|' || target_href from public.moderation_report_queue('open') where target_type = 'space'$q$)) = 'Neon|/spaces/local?id=' || public._g('S'));
 select public._try($q$select public.moderate_report((select id from public.reports where target_type = 'space' limit 1), 'removed')$q$);
-select public._check(36, 'kaldırma = akıştan çıkar + özel yap (Space silinmez)',
-  public._q(format($q$select visibility || ':' || (shared_at is null)::text from public.spaces where id = %L$q$, public._g('S'))) = 'private:true');
+select public._check(24, 'kaldırma = özel yap (Space silinmez)',
+  public._q(format($q$select visibility from public.spaces where id = %L$q$, public._g('S'))) = 'private');
 select public._as_user(:dave);
-select public._check(37, 'özele çekilen Space''in beğeni/yorumu yabancıya okunmaz',
-  public._val(format($q$select count(*)::text from public.prompt_likes where space_id = %L$q$, public._g('S'))) = '0'
-  and public._val(format($q$select count(*)::text from public.prompt_comments where space_id = %L$q$, public._g('S'))) = '0');
+select public._check(25, 'özele çekilen Space''in alıntıları yabancıya okunmaz',
+  public._val(format($q$select count(*)::text from public.content_quotes where space_id = %L$q$, public._g('S'))) = '0');
 select public._as_user(:alice);
-select public._check(38, 'yanıtlı yorumu olan Space silinir (FK basamağı), bildirimleri temizlenir',
+select public._check(26, 'Space silinir: alıntıları, beğeni/yorumları, topluluk başvurusu ve bildirimleri temizlenir',
   public._try(format($q$delete from public.spaces where id = %L$q$, public._g('S'))) = 'ok'
-  and public._q(format($q$select count(*) from public.prompt_comments where space_id = %L$q$, public._g('S'))) = '0'
-  and public._q(format($q$select count(*) from public.notifications where target_href like '/spaces/local?id=%s%%'$q$, public._g('S'))) = '0'
+  and public._q(format($q$select count(*) from public.content_quotes where space_id = %L$q$, public._g('S'))) = '0'
+  and public._q(format($q$select count(*) from public.prompt_comments where quote_id in (select id from public.content_quotes where space_id = %L)$q$, public._g('S'))) = '0'
   and public._q(format($q$select count(*) from public.community_posts where id = %L$q$, public._g('CP'))) = '0');
 reset role;
 
-select public._check(39, 'yeni fonksiyonların yetkileri: set_space_shared yalnız authenticated; space_feed_cards anon dahil; iç tetikleyiciler kapalı',
+select public._check(27, 'yetkiler: set_space_shared / create_quote yalnız authenticated; space_feed_cards anon dahil; iç tetikleyici kapalı',
   not has_function_privilege('anon', 'public.set_space_shared(uuid, boolean)', 'execute')
   and has_function_privilege('authenticated', 'public.set_space_shared(uuid, boolean)', 'execute')
+  and not has_function_privilege('anon', 'public.create_quote(text, uuid, text)', 'execute')
+  and has_function_privilege('authenticated', 'public.create_quote(text, uuid, text)', 'execute')
   and has_function_privilege('anon', 'public.space_feed_cards(uuid[])', 'execute')
-  and not has_function_privilege('authenticated', 'public.enforce_space_engagement()', 'execute')
-  and not has_function_privilege('authenticated', 'public.notify_space_like()', 'execute'));
+  and not has_function_privilege('authenticated', 'public.enforce_space_engagement()', 'execute'));
 
 select 'FAILED=' || count(*) filter (where not ok) || ' / ' || count(*) from public._results;
 select n, name, detail from public._results where not ok order by n;

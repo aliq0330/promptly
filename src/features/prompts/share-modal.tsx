@@ -361,7 +361,7 @@ export function ShareModal({ target, onClose }: { target: ShareModalTarget; onCl
         )}
 
         <div className="mt-4 space-y-2">
-          {announce && <QuoteSection type={announce.type} contentId={announce.id} blockedReason={announce.blockedKey ? t(announce.blockedKey) : null} />}
+          {announce && <QuoteSection type={announce.type} contentId={announce.id} blockedReason={announce.blockedKey ? t(announce.blockedKey) : null} hideFeed={ownsSpace} />}
           {user && preview.messageParam && (
             <Link
               href={`/messages?${preview.messageParam}`}
