@@ -7,7 +7,8 @@ import { Chip } from "@/components/ui/chip";
 import { SectionNav } from "@/features/content/section-nav";
 import { Button } from "@/components/ui/button";
 import { ListToolbar, SheetChips, SheetSection } from "@/features/content/list-toolbar";
-import { EMPTY_TAXONOMY_FILTER } from "@/lib/content-taxonomy";
+import { TaxonomyTypeChips } from "@/features/content/taxonomy-filter";
+import { EMPTY_TAXONOMY_FILTER, type TaxonomyFilterValue } from "@/lib/content-taxonomy";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PromptCardSkeletonGrid } from "@/components/ui/prompt-card-skeleton";
 import { FeedItemsView } from "./feed-items-view";
@@ -42,8 +43,9 @@ import type { TranslationKey } from "@/lib/i18n/translations";
  *   - following → "Takip Ettiklerim": the posts of the people the signed-in user follows, NEWEST FIRST (`public.feed_page`
  *                 scope `following`, order `newest`) — strictly chronological, nothing re-ranked.
  * On top of either: the post-type chips (Hepsi / Promptlar / İstekler / Workflow'lar / Hazır ayarlar), and on "Takip
- * Ettiklerim" the optional filters of followed people, tags and AI tools (`followed-filters.tsx`). Category / content-type /
- * sort filters live on Keşfet only — they are not repeated here. The two views are one row of text tabs (docs/history/227-*);
+ * Ettiklerim" the optional filters of followed people, tags and AI tools (`followed-filters.tsx`). The Filtre sheet also has the
+ * content type — Görsel / Metin / Ses / Video (docs/history/245-*; `p_content_type`, which both RPCs already take, so no migration).
+ * Category and sort stay on Keşfet only — they are not repeated here. The two views are one row of text tabs (docs/history/227-*);
  * "Yenile" / "Sana özel'i ayarla" live in the Filtre sheet and the first-time hint is a one-line banner, so the first post starts high.
  */
 type TabKey = "forYou" | "following";
@@ -79,6 +81,8 @@ export function FeedTabs({ layout = "grid" }: { layout?: "grid" | "home" } = {})
   const { t } = useTranslation();
   const [chosen, setChosen] = useState<TabKey | null>(restoredTab);
   const [kind, setKind] = useState<KindFilter>("all");
+  // Content type only (category / subcategory stay empty on Home): Görsel · Metin · Ses · Video, a view filter like the kind chips.
+  const [taxonomy, setTaxonomy] = useState<TaxonomyFilterValue>(EMPTY_TAXONOMY_FILTER);
   const [picked, setPicked] = useState<FollowedFilterValue>(EMPTY_FOLLOWED_FILTER);
   const [forYouSettingsOpen, setForYouSettingsOpen] = useState(false);
   const { user, loading: authLoading } = useAuth();
@@ -114,14 +118,14 @@ export function FeedTabs({ layout = "grid" }: { layout?: "grid" | "home" } = {})
       scope: "following",
       order: "newest",
       kind,
-      taxonomy: EMPTY_TAXONOMY_FILTER,
+      taxonomy,
       authors: followedFilter.people,
       tags: followedFilter.tags,
       tools: followedFilter.tools,
     },
     !isForYou && enabled,
   );
-  const forYou = useForYouPages({ kind, taxonomy: EMPTY_TAXONOMY_FILTER }, isForYou && enabled);
+  const forYou = useForYouPages({ kind, taxonomy }, isForYou && enabled);
   const feed = isForYou ? { ...forYou, retry: forYou.refresh } : feedPages;
   // Nothing to learn from yet (no interests, no followed person, tag or AI tool): "Sana özel" shows its first-time card instead of guessing.
   const coldStart =
@@ -150,15 +154,28 @@ export function FeedTabs({ layout = "grid" }: { layout?: "grid" | "home" } = {})
       <SheetSection title={t("toolbar.postKind")}>
         <SheetChips>{kindChips}</SheetChips>
       </SheetSection>
+      <SheetSection title={t("toolbar.contentType")}>
+        <SheetChips>
+          <TaxonomyTypeChips value={taxonomy} onChange={setTaxonomy} />
+        </SheetChips>
+      </SheetSection>
       {filtersShown && <FollowedFilterSections value={followedFilter} onChange={setPicked} people={followedPeople} />}
       {isForYou && user && <ForYouSheetSection onRefresh={forYou.refresh} onOpenSettings={() => setForYouSettingsOpen(true)} refreshing={forYou.refreshing} />}
     </>
   );
-  const activeCount = (kind === "all" ? 0 : 1) + (filtersShown ? followedCount : 0);
+  const typeNarrowed = taxonomy.contentType !== null;
+  const activeCount = (kind === "all" ? 0 : 1) + (typeNarrowed ? 1 : 0) + (filtersShown ? followedCount : 0);
   const clearFollowedFilter = () => setPicked(EMPTY_FOLLOWED_FILTER);
   const clearFilters = () => {
     setKind("all");
+    setTaxonomy(EMPTY_TAXONOMY_FILTER);
     clearFollowedFilter();
+  };
+  // A narrowing the person picked (followed people / tags / tools, or a content type) that left nothing: say so and offer the way back.
+  const narrowedEmpty = typeNarrowed || (!isForYou && followedCount > 0);
+  const clearNarrowing = () => {
+    setTaxonomy(EMPTY_TAXONOMY_FILTER);
+    if (!isForYou) clearFollowedFilter();
   };
 
   return (
@@ -229,20 +246,12 @@ export function FeedTabs({ layout = "grid" }: { layout?: "grid" | "home" } = {})
             itemNote={isForYou ? (item) => <ForYouReasonNote item={item} reason={forYou.reasons[`${item.kind}-${item.data.id}`]} /> : undefined}
             flip={isForYou}
             emptyTitle={
-              isForYou
-                ? t("feed.emptyForYouTitle")
-                : followedCount > 0
-                  ? t("feed.filteredEmptyTitle")
-                  : t("feed.emptyFollowingNoPosts")
+              narrowedEmpty ? t("feed.filteredEmptyTitle") : isForYou ? t("feed.emptyForYouTitle") : t("feed.emptyFollowingNoPosts")
             }
             emptyDescription={
-              isForYou ? t("feed.emptyForYouDescription") : followedCount > 0 ? t("feed.filteredEmptyDescription") : t("feed.emptyFollowingHint")
+              narrowedEmpty ? t("feed.filteredEmptyDescription") : isForYou ? t("feed.emptyForYouDescription") : t("feed.emptyFollowingHint")
             }
-            emptyAction={
-              !isForYou && followedCount > 0
-                ? { label: t("feed.clearFilters"), onClick: clearFollowedFilter }
-                : { label: t("feed.goToDiscover"), href: "/discover" }
-            }
+            emptyAction={narrowedEmpty ? { label: t("feed.clearFilters"), onClick: clearNarrowing } : { label: t("feed.goToDiscover"), href: "/discover" }}
           />
           {feed.failed && <p className="text-center text-small text-danger">{t("feed.loadFailed")}</p>}
           {feed.hasMore && (
