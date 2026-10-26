@@ -16,9 +16,8 @@ import { PromptDetailView } from "@/features/prompts/prompt-detail-view";
 import { RequestDetailView } from "@/features/requests/request-detail-view";
 import { WorkflowDetailView } from "@/features/workflows/workflow-view";
 import { PresetDetailView } from "@/features/presets/preset-detail-view";
-import { PaletteStrip, SpaceCoverArt } from "@/features/spaces/space-visuals";
-import { spaceHref } from "@/lib/spaces";
-import { summaryArt } from "@/lib/supabase/spaces";
+import { SpacePreview } from "@/features/spaces/space-preview";
+import { quoteVerbKey } from "@/lib/quotes";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { fetchQuoteById, type Quote } from "@/lib/supabase/quotes";
 import { formatRelativeTime, profileHref } from "@/lib/utils";
@@ -99,7 +98,7 @@ export function QuotePage() {
 
   return (
     <div data-quote-page={quote.id}>
-      <section aria-label={t("quotes.page.titleFor", { name: quote.author.displayName })} className="border-b border-border-soft bg-surface">
+      <section aria-label={t(quoteVerbKey(quote) === "quotes.card.shared" ? "quotes.page.titleForShared" : "quotes.page.titleFor", { name: quote.author.displayName })} className="border-b border-border-soft bg-surface">
         <div className="mx-auto w-full max-w-6xl px-4 py-4 sm:px-6 lg:px-10">
           <button type="button" onClick={() => (window.history.length > 1 ? router.back() : router.push("/"))} className="inline-flex items-center gap-1.5 text-small text-text-muted hover:text-text">
             <ArrowLeft size={14} aria-hidden /> {t("quotes.page.back")}
@@ -111,7 +110,7 @@ export function QuotePage() {
                 <Link href={profileHref(quote.author)} className="font-semibold hover:underline">
                   {quote.author.displayName}
                 </Link>{" "}
-                <span className="text-text-muted">{t("quotes.card.quoted")}</span>
+                <span className="text-text-muted">{t(quoteVerbKey(quote))}</span>
               </p>
               <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-caption text-text-muted">
                 <Badge variant="default">{t("quotes.badge")}</Badge>
@@ -158,19 +157,10 @@ export function QuotePage() {
         </PostMenuExtras>
       </QuoteScopeProvider>
 
+      {content?.type === "space" && <SpacePreview space={content.data} />}
       {(!content || content.type === "space") && (
         <div className="mx-auto w-full max-w-3xl space-y-4 px-3 py-4 sm:px-5">
-          {content?.type === "space" ? (
-            // Space'in kendi sayfası pano/vitrindir (detay sayfası yok): kapak kolajı + başlık + "Space'i aç"; beğeni/yorum aşağıda ALINTININ.
-            <Link href={spaceHref(content.data.id)} data-post-space={content.data.id} className="block overflow-hidden rounded-lg border border-border-soft bg-surface shadow-card transition-shadow hover:shadow-card-hover">
-              <SpaceCoverArt urls={summaryArt(content.data)} className="aspect-[16/9] w-full" iconSize={48} />
-              {content.data.palette.length > 0 && <PaletteStrip colors={content.data.palette} className="h-1.5 rounded-none" />}
-              <span className="block space-y-1 p-4">
-                <span className="block text-h3 font-bold text-text">{content.data.title}</span>
-                {content.data.description && <span className="line-clamp-3 block text-small text-text-secondary">{content.data.description}</span>}
-              </span>
-            </Link>
-          ) : (
+          {!content && (
             <p className="flex items-center gap-2 rounded-lg border border-dashed border-border px-3 py-4 text-small text-text-muted">
               <EyeOff size={15} aria-hidden /> {t("quotes.card.contentGone")}
             </p>

@@ -127,11 +127,11 @@ export interface Space {
   createdAt: string;
   updatedAt: string;
   updatedBy: string | null;
-  /** Akışta gönderi olarak paylaşıldığı an (docs/history/215-*); `null` = akışta değil. Yalnız `set_space_shared` yazar. */
-  sharedAt: string | null;
-  /** Gönderi olarak aldığı beğeni ve yorum (korumalı sayaçlar). */
-  likeCount: number;
-  commentCount: number;
+  /**
+   * "N kez alıntılandı" (docs/history/241-*): Space'in kendi beğeni/yorumu YOK; akışta görünmek ve tartışılmak alıntı üzerinden olur
+   * (sahibinin kendi paylaşımı da bir alıntıdır). Korumalı sayaç (`spaces.quote_count`).
+   */
+  quoteCount: number;
 }
 
 export interface SpaceItem {
@@ -254,13 +254,11 @@ interface SpaceRow {
   created_at: string;
   updated_at: string;
   updated_by: string | null;
-  shared_at: string | null;
-  like_count: number | null;
-  comment_count: number | null;
+  quote_count: number | null;
 }
 
 const SPACE_COLS =
-  "id, owner_id, title, description, kind, visibility, cover_url, cover_item_id, archived_at, created_at, updated_at, updated_by, shared_at, like_count, comment_count";
+  "id, owner_id, title, description, kind, visibility, cover_url, cover_item_id, archived_at, created_at, updated_at, updated_by, quote_count";
 
 function mapSpace(row: SpaceRow): Space {
   return {
@@ -276,9 +274,7 @@ function mapSpace(row: SpaceRow): Space {
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     updatedBy: row.updated_by,
-    sharedAt: row.shared_at ?? null,
-    likeCount: row.like_count ?? 0,
-    commentCount: row.comment_count ?? 0,
+    quoteCount: row.quote_count ?? 0,
   };
 }
 
@@ -497,40 +493,26 @@ export async function listPublicSpaces({ ownerId, promptId, limit = SPACE_PAGE_S
   return (rows ?? []).map(mapSpaceSummary);
 }
 
-/** Akış kartı (docs/history/215-*): özet + akış alanları + ilk paletin renkleri. */
+/**
+ * Alıntı kartı / önizlemesi için Space (docs/history/215-*, 241-*): özet + ilk paletin renkleri. Eski gönderi alanları (`shared_at`,
+ * beğeni/yorum sayıları) sunucuda duruyor ama kullanılmaz: Space'in kendi etkileşimi yok.
+ */
 export interface SpaceFeedCard extends SpaceSummary {
-  sharedAt: string | null;
-  likeCount: number;
-  commentCount: number;
   palette: string[];
 }
 
 interface FeedCardRow extends SummaryRow {
-  shared_at: string | null;
-  like_count: number | null;
-  comment_count: number | null;
   palette_colors: string[] | null;
 }
 
-/** Kimliklere göre akış kartları (`space_feed_cards`, INVOKER: okunamayan Space hiç gelmez). Sıra çağıranındır. */
+/** Kimliklere göre Space önizleme kartları (`space_feed_cards`, INVOKER: okunamayan Space hiç gelmez). Sıra çağıranındır. */
 export async function fetchSpaceFeedCards(ids: string[]): Promise<SpaceFeedCard[]> {
   if (ids.length === 0) return [];
   const rows = await rpc<FeedCardRow[]>("space_feed_cards", { p_ids: Array.from(new Set(ids)).slice(0, 100) });
   return (rows ?? []).map((row) => ({
     ...mapSpaceSummary(row),
-    sharedAt: row.shared_at,
-    likeCount: row.like_count ?? 0,
-    commentCount: row.comment_count ?? 0,
     palette: row.palette_colors ?? [],
   }));
-}
-
-/**
- * Akışta gönderi olarak paylaş / akıştan kaldır (yalnız sahip). Paylaşmak için Space herkese açık, arşivsiz ve en az 3 öğe + 1 görsel
- * içermeli (`space_not_public` / `space_too_empty`). Dönen değer paylaşım anıdır (`null` = akışta değil).
- */
-export async function setSpaceShared(spaceId: string, shared: boolean): Promise<string | null> {
-  return rpc<string | null>("set_space_shared", { p_space_id: spaceId, p_shared: shared });
 }
 
 /** Her Space'in ilk paletinin renkleri (kartın palet çizgisi). Okunamayan Space'in paleti RLS ile hiç gelmez. */
@@ -1045,9 +1027,7 @@ export function spaceFromSummary(summary: SpaceSummary): Space {
     createdAt: summary.createdAt,
     updatedAt: summary.updatedAt,
     updatedBy: null,
-    sharedAt: "sharedAt" in summary ? (summary as SpaceFeedCard).sharedAt : null,
-    likeCount: "likeCount" in summary ? (summary as SpaceFeedCard).likeCount : 0,
-    commentCount: "commentCount" in summary ? (summary as SpaceFeedCard).commentCount : 0,
+    quoteCount: 0,
   };
 }
 

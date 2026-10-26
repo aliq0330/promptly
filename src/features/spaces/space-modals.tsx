@@ -19,8 +19,8 @@ import {
   uploadSpaceImage,
   type Space,
   type SpaceItem,
-  setSpaceShared,
 } from "@/lib/supabase/spaces";
+import { createQuote, deleteQuote, fetchOwnSpaceQuoteId } from "@/lib/supabase/quotes";
 import { SPACE_TEMPLATE_GROUPS, spaceHref, spaceLinkHref, type SpaceKind, type SpaceVisibility } from "@/lib/spaces";
 import { useKeyboardViewport } from "@/lib/use-keyboard-viewport";
 import { CoverPicker, DescriptionField, FormError, KindField, SubmitButton, TemplateField, TitleField, VisibilityField } from "./space-forms";
@@ -285,7 +285,8 @@ export function SpaceSettingsModal({
  */
 /**
  * Space paylaşım ayarları (sahip): "Kim görsün?" (Özel · Bağlantıya sahip olanlar · Herkese açık), bağlantı yönetimi ve — herkese açık
- * Space'te — "Akışta gönderi olarak paylaş" (docs/history/215-*: açık onay, varsayılan kapalı; sunucu kuralı `set_space_shared`).
+ * Space'te — "Akışta paylaş" (docs/history/215-*: açık onay, varsayılan kapalı). 241'den beri bu, sahibin KENDİ ALINTISIDIR (`create_quote`,
+ * Space başına bir; kapatmak alıntıyı siler): Space'in ayrı gönderisi/beğenisi/yorumu yoktur, etkileşim alıntıdadır.
  * Birleşik Paylaş penceresinin (`ShareModal`) Space bölümüdür; tek başına `ShareSpaceModal` içinde de kullanılır.
  */
 export function SpaceShareSettings({ space, onChanged }: { space: Space; onChanged: (space: Space) => void }) {
@@ -297,6 +298,18 @@ export function SpaceShareSettings({ space, onChanged }: { space: Space; onChang
   const [link, setLink] = useState<{ createdAt: string; openedCount: number } | null | undefined>(undefined);
   const [freshUrl, setFreshUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  // Sahibin bu Space'teki alıntısı: `undefined` = yükleniyor, `null` = akışta paylaşılmamış.
+  const [quoteId, setQuoteId] = useState<string | null | undefined>(undefined);
+
+  useEffect(() => {
+    let alive = true;
+    fetchOwnSpaceQuoteId(current.id, current.ownerId)
+      .then((id) => alive && setQuoteId(id))
+      .catch(() => alive && setQuoteId(null));
+    return () => {
+      alive = false;
+    };
+  }, [current.id, current.ownerId]);
 
   useEffect(() => {
     if (current.visibility !== "link") return;
@@ -370,10 +383,12 @@ export function SpaceShareSettings({ space, onChanged }: { space: Space; onChang
     setBusy(true);
     setError(null);
     try {
-      const sharedAt = await setSpaceShared(current.id, next);
-      const saved = { ...current, sharedAt };
-      setCurrent(saved);
-      onChanged(saved);
+      if (next) {
+        setQuoteId(await createQuote("space", current.id, ""));
+      } else if (quoteId) {
+        await deleteQuote(quoteId);
+        setQuoteId(null);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : t("spaces.error.generic"));
     } finally {
@@ -391,7 +406,7 @@ export function SpaceShareSettings({ space, onChanged }: { space: Space; onChang
 
         {canFeed && (
           <label
-            data-space-feed-toggle={current.sharedAt ? "on" : "off"}
+            data-space-feed-toggle={quoteId ? "on" : "off"}
             className="flex cursor-pointer items-center gap-3 rounded-lg border border-border-soft bg-background px-3 py-2.5 has-[:checked]:border-primary/50 has-[:checked]:bg-primary-soft"
           >
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-surface-soft text-text-secondary">
@@ -399,12 +414,12 @@ export function SpaceShareSettings({ space, onChanged }: { space: Space; onChang
             </span>
             <span className="min-w-0 flex-1">
               <span className="block text-small font-semibold text-text">{t("spaces.feed.toggle")}</span>
-              <span className="block text-caption text-text-muted">{current.sharedAt ? t("spaces.feed.toggleOnHint") : t("spaces.feed.toggleHint")}</span>
+              <span className="block text-caption text-text-muted">{quoteId ? t("spaces.feed.toggleOnHint") : t("spaces.feed.toggleHint")}</span>
             </span>
             <input
               type="checkbox"
-              checked={Boolean(current.sharedAt)}
-              disabled={busy}
+              checked={Boolean(quoteId)}
+              disabled={busy || quoteId === undefined}
               onChange={(event) => void toggleFeed(event.target.checked)}
               className="h-5 w-5 shrink-0 accent-primary"
             />

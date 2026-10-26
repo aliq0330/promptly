@@ -12,11 +12,13 @@ export const quoteTranslations = {
   "quotes.error.notPublic": { tr: "Yalnız yayında ve herkese açık içerik alıntılanabilir.", en: "Only published, public content can be quoted." },
   "quotes.error.blocked": { tr: "Bu içeriği alıntılayamazsın.", en: "You can't quote this content." },
   "quotes.error.alreadyQuoted": { tr: "Bu içeriği son 24 saatte zaten alıntıladın.", en: "You already quoted this in the last 24 hours." },
+  "quotes.error.spaceTooEmpty": { tr: "Bir Space'i alıntılamak için en az 3 öğesi ve 1 görseli olmalı.", en: "A Space needs at least 3 items and 1 image to be quoted." },
   "quotes.error.rateLimit": { tr: "Bugün çok fazla alıntı yaptın; biraz sonra tekrar dene.", en: "You've quoted a lot today; try again a little later." },
 
   // ---- Kart ----
   "quotes.badge": { tr: "Alıntı", en: "Quote" },
   "quotes.card.quoted": { tr: "alıntıladı", en: "quoted" },
+  "quotes.card.shared": { tr: "paylaştı", en: "shared" },
   "quotes.card.menu": { tr: "Alıntı menüsü", en: "Quote menu" },
   "quotes.card.open": { tr: "Alıntıyı aç", en: "Open quote" },
   "quotes.card.contentGone": { tr: "Alıntılanan içerik artık görünmüyor.", en: "The quoted content is no longer visible." },
@@ -54,6 +56,7 @@ export const quoteTranslations = {
 
   // ---- Alıntı sayfası ----
   "quotes.page.back": { tr: "Geri", en: "Back" },
+  "quotes.page.titleForShared": { tr: "{{name}} paylaştı", en: "{{name}} shared" },
   "quotes.page.titleFor": { tr: "{{name}} alıntıladı", en: "{{name}} quoted" },
   "quotes.page.openOriginal": { tr: "Orijinal içeriği aç", en: "Open the original" },
   "quotes.page.commentsTitle": { tr: "Alıntının yorumları", en: "Comments on the quote" },

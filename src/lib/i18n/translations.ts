@@ -665,6 +665,7 @@ export const translations = {
   "discover.allCategories": { tr: "Tüm kategoriler", en: "All categories" },
   "discover.allRequests": { tr: "Tüm istekler", en: "All requests" },
   "discover.noCreatorsYet": { tr: "Henüz öne çıkan yaratıcı yok", en: "No featured creators yet" },
+  "discover.noSpacesYet": { tr: "Henüz herkese açık Space yok", en: "No public Spaces yet" },
   "discover.noMatchTitle": { tr: "Bu filtreye uyan içerik yok", en: "Nothing matches this filter" },
   "discover.noMatchDescription": { tr: "Başka bir tür veya kategori seçmeyi dene.", en: "Try a different type or category." },
   "request.openOnly": { tr: "Yalnızca açık", en: "Open only" },

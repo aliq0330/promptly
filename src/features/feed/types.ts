@@ -8,14 +8,13 @@ import type { FeedEntry } from "@/lib/supabase/feed";
 export type FeedItem = FeedEntry;
 
 /**
- * A content post (prompt, request, workflow, preset) — every feed slot except a shared Space (docs/history/215-*) and a quote
- * (docs/history/217-*). Odak and the Izgara view draw posts only: a Space is a project with its own page and a quote is a
- * note about another post, not a single output to play full screen.
+ * A content post (prompt, request, workflow, preset) — every feed slot except a quote (docs/history/217-*). Odak and the Izgara
+ * view draw posts only: a quote is a note about another post (a Space included, docs/history/241-*), not a single output to play full screen.
  */
-export type PostFeedItem = Exclude<FeedItem, { kind: "space" | "quote" }>;
+export type PostFeedItem = Exclude<FeedItem, { kind: "quote" }>;
 
 export function isPostItem(item: FeedItem): item is PostFeedItem {
-  return item.kind !== "space" && item.kind !== "quote";
+  return item.kind !== "quote";
 }
 
 export function feedItemKey(item: FeedItem): string {
@@ -23,8 +22,7 @@ export function feedItemKey(item: FeedItem): string {
 }
 
 export function feedItemCreatedAt(item: FeedItem): number {
-  // A Space enters the feed when it is shared, not when it was created.
-  return new Date(item.kind === "space" ? (item.data.sharedAt ?? item.data.createdAt) : item.data.createdAt).getTime();
+  return new Date(item.data.createdAt).getTime();
 }
 
 /** Rough cross-type popularity heuristic used to sort the "Popüler" tab. */

@@ -10,7 +10,7 @@ import { summarizeContent } from "@/features/communities/content-summary";
 import { OutputPosterPreview, OutputThumbnailStrip } from "@/features/prompts/multi-image-output-options";
 import { PaletteStrip, SpaceCoverArt } from "@/features/spaces/space-visuals";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import { quoteHref } from "@/lib/quotes";
+import { quoteHref, quoteVerbKey } from "@/lib/quotes";
 import { formatRelativeTime } from "@/lib/utils";
 import type { Quote } from "@/lib/supabase/quotes";
 import { QuoteCommentLink, QuoteLike, QuoteShareButton, QuoteStatisticsButton } from "./quote-engagement";
@@ -35,7 +35,7 @@ export function QuoteCard({ quote }: { quote: Quote }) {
     <ContentCard href={href}>
       <ContentCardPost
         author={quote.author}
-        meta={`${t("quotes.card.quoted")} · ${formatRelativeTime(quote.createdAt, language)}`}
+        meta={`${t(quoteVerbKey(quote))} · ${formatRelativeTime(quote.createdAt, language)}`}
         badges={
           <>
             {summary && <ContentTypePill icon={summary.typeIcon} label={t(summary.typeLabelKey)} detail={summary.tools.length > 0 ? null : summary.detail} />}

@@ -7,7 +7,6 @@ import { PromptCard } from "@/features/prompts/prompt-card";
 import { RequestCard } from "@/features/requests/request-card";
 import { WorkflowCard } from "@/features/workflows/workflow-card";
 import { PresetCard } from "@/features/presets/preset-card";
-import { SpaceFeedCardView } from "@/features/spaces/space-feed-card";
 import { QuoteCard } from "@/features/quotes/quote-card";
 import { AnnouncedProvider } from "@/features/communities/announced-chip";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -65,8 +64,6 @@ export function FeedGrid({
       <RequestCard request={item.data} />
     ) : item.kind === "preset" ? (
       <PresetCard preset={item.data} />
-    ) : item.kind === "space" ? (
-      <SpaceFeedCardView space={item.data} />
     ) : item.kind === "quote" ? (
       <QuoteCard quote={item.data} />
     ) : (

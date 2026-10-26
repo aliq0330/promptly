@@ -453,7 +453,7 @@ await scenario("11. Keşfet sıralama: Önerilen (varsayılan, recommended) · E
   assert.deepEqual(await sortNames(page), ["Önerilen", "En yeni", "Popüler"]);
 });
 
-await scenario("12. Gelişmiş süzgeç seçili bölüme uyar: AI aracı (p_tool) içerik bölümlerinde; Spaces'te tür/kategori/araç sunucuya gitmez; Temizle hepsini sıfırlar", async ({ page, state }) => {
+await scenario("12. Gelişmiş süzgeç seçili bölüme uyar: AI aracı (p_tool) içerik bölümlerinde; Alıntılar'da tür/kategori/araç sunucuya gitmez; Temizle hepsini sıfırlar", async ({ page, state }) => {
   await page.goto(`${BASE}/discover`);
   await openSection(page, "Promptlar");
   await waitFor(() => lastDiscoverCall(state).p_kinds?.[0] === "prompt");
@@ -470,11 +470,12 @@ await scenario("12. Gelişmiş süzgeç seçili bölüme uyar: AI aracı (p_tool
   await waitFor(() => lastDiscoverCall(state).p_content_type === "image");
   assert.equal(lastDiscoverCall(state).p_content_type, "image");
   await closeFilter(page);
-  // Spaces: bu süzgeçlerin anlamı yok → sorguya karışmaz (sunucu aksi hâlde Space'i eler) ve sheet'te bölümleri çizilmez.
-  await openSection(page, "Spaces");
-  await waitFor(() => lastDiscoverCall(state).p_kinds?.[0] === "space");
-  const spaceCall = lastDiscoverCall(state);
-  assert.ok(!spaceCall.p_tool && spaceCall.p_content_type === null && spaceCall.p_category === null, "Spaces'e tür/kategori/araç taşınmaz (aksi hâlde sunucu Space'i eler)");
+  // Alıntılar: bu süzgeçlerin anlamı yok → sorguya karışmaz (sunucu aksi hâlde alıntıyı eler) ve sheet'te bölümleri çizilmez.
+  // (Spaces artık bir akış değil, herkese açık Space listesidir ve süzgeç denetimi çizmez — docs/history/241-*.)
+  await openSection(page, "Alıntılar");
+  await waitFor(() => lastDiscoverCall(state).p_kinds?.[0] === "quote");
+  const quoteCall = lastDiscoverCall(state);
+  assert.ok(!quoteCall.p_tool && quoteCall.p_content_type === null && quoteCall.p_category === null, "Alıntılar'a tür/kategori/araç taşınmaz (aksi hâlde sunucu alıntıyı eler)");
   await openFilter(page);
   assert.equal(await page.getByRole("dialog").getByRole("heading", { name: "AI aracı" }).count(), 0);
   await closeFilter(page);
