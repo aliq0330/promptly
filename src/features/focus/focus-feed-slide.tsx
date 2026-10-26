@@ -2,7 +2,7 @@
 
 import { createContext, memo, useContext, useEffect, useId, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { ArrowDown, ArrowUpRight, ImageOff, Music, Pause, Play, Shapes, SlidersHorizontal, Sparkles, SquareTerminal, Workflow as WorkflowIcon, X, type LucideIcon } from "lucide-react";
+import { ArrowDown, ArrowUpRight, ChevronUp, ImageOff, Music, Pause, PenLine, Play, Shapes, SlidersHorizontal, Sparkles, Workflow as WorkflowIcon, X, type LucideIcon } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Modal } from "@/components/ui/modal";
@@ -16,7 +16,7 @@ import { STATUS_LABELS, STATUS_VARIANTS } from "@/features/requests/request-card
 import { MEDIA_ICON, STEP_TYPE_META } from "@/features/workflows/step-meta";
 import type { PostFeedItem } from "@/features/feed/types";
 import { resolveToolRefs } from "@/lib/ai-tool-catalog";
-import { focusFeedCover, focusFeedExtraImages, focusFeedLayout, type FocusFeedCover } from "@/lib/focus-feed";
+import { focusFeedCover, focusFeedLayout, type FocusFeedCover } from "@/lib/focus-feed";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Language } from "@/lib/i18n/translations";
 import { presetParameterEntries } from "@/lib/preset-utils";
@@ -30,7 +30,7 @@ import { AddToSpaceModal } from "@/features/spaces/add-to-space-modal";
 import { usePromptOutput, useWorkflowFocusSteps } from "./use-focus-data";
 
 /** Everything a slide shows about an entry, read from the real feed row (nothing assumed beyond its own fields). */
-interface SlideModel {
+export interface SlideModel {
   href: string;
   author: UserProfile;
   createdAt: string;
@@ -43,7 +43,7 @@ interface SlideModel {
   tool: string | null;
 }
 
-function modelOf(item: PostFeedItem, t: ReturnType<typeof useTranslation>["t"]): SlideModel {
+export function modelOf(item: PostFeedItem, t: ReturnType<typeof useTranslation>["t"]): SlideModel {
   const base = (description: string, tools: string[], fallbackTool: string | null = null) => ({
     description: splitSourceNotes(description).body,
     tool: resolveToolRefs(tools)[0]?.label ?? fallbackTool,
@@ -107,7 +107,7 @@ function SlideByline({ author, createdAt, language, near }: { author: UserProfil
  * "Promptu incele": the full prompt text in the signature mono block, the shared `CopyPromptButton`
  * (which also counts a use for signed-in viewers, `record_prompt_copy`) and the way on to the detail page.
  */
-function PromptDialog({ prompt, onClose }: { prompt: Prompt; onClose: () => void }) {
+export function PromptDialog({ prompt, onClose }: { prompt: Prompt; onClose: () => void }) {
   const { t, language } = useTranslation();
   const titleId = useId();
   const tool = resolveToolRefs(prompt.tools)[0]?.label ?? prompt.tool;
@@ -190,6 +190,9 @@ function SlideImage({ cover, active, near }: { cover: FocusFeedCover; active: bo
  * an audio post's play button, applies to every following post until it is turned off again.
  */
 export const FocusPlaybackContext = createContext<{ muted: boolean; setMuted: (muted: boolean) => void }>({ muted: true, setMuted: () => undefined });
+
+/** Opens the info sheet of a post (docs/history/239-*) — provided by `FocusScreen`, like the comments sheet. */
+export const FocusInfoContext = createContext<(item: PostFeedItem) => void>(() => undefined);
 
 /** Thin progress line along the bottom of a playing video / audio. */
 function MediaProgress({ value }: { value: number }) {
@@ -395,7 +398,7 @@ function RequestBrief({ request, onImage }: { request: PromptRequest; onImage: b
   );
 }
 
-function RequestStatus({ request }: { request: PromptRequest }) {
+export function RequestStatus({ request }: { request: PromptRequest }) {
   const { t } = useTranslation();
   return (
     <Badge variant={STATUS_VARIANTS[request.status]} className="shrink-0">
@@ -406,7 +409,7 @@ function RequestStatus({ request }: { request: PromptRequest }) {
 }
 
 /** Per-kind structure under the title (visual slides show a compact version over the picture). */
-function StructureBlock({ item, near, onImage }: { item: PostFeedItem; near: boolean; onImage: boolean }): ReactNode {
+export function StructureBlock({ item, near, onImage }: { item: PostFeedItem; near: boolean; onImage: boolean }): ReactNode {
   switch (item.kind) {
     case "workflow":
       return <WorkflowSteps workflow={item.data} near={near} onImage={onImage} />;
@@ -484,13 +487,53 @@ function AlbumArtFrame({ ratio, children }: { ratio: number; children: ReactNode
   );
 }
 
-/** The album art of a post without a picture: its own words (prompt) or structure (steps / settings / brief) on a raised card. */
+/**
+ * The album art of a post without a picture (docs/history/239-*): a prompt shows its own words, a workflow its steps, a
+ * request its text + creative direction, a preset its first parameters — the title, author and actions stay under it as ever.
+ */
 function AlbumArtCard({ item, model, near }: { item: PostFeedItem; model: SlideModel; near: boolean }) {
+  const { t, language } = useTranslation();
   const Icon = model.icon;
+  const frame = "flex max-h-full w-full max-w-[26rem] flex-col overflow-hidden rounded-[26px] p-5 shadow-[0_30px_70px_rgb(0_0_0/0.5)] sm:p-6";
+  if (item.kind === "request") {
+    const request = item.data;
+    return (
+      <div data-album-art className={cn(frame, "gap-4 border border-white/15 bg-white/10 backdrop-blur-md")}>
+        <div className="flex items-center gap-2 text-caption font-bold uppercase tracking-[0.1em] text-white/80">
+          <Icon size={15} strokeWidth={2.25} aria-hidden />
+          {t("request.title")}
+          <span className="ml-auto">
+            <RequestStatus request={request} />
+          </span>
+        </div>
+        <p className="line-clamp-6 whitespace-pre-line break-words font-display text-h3 font-bold leading-snug text-white">{model.description || model.title}</p>
+        <RequestBrief request={request} onImage />
+      </div>
+    );
+  }
+  if (item.kind === "preset") {
+    const entries = presetParameterEntries(item.data, language);
+    const shown = entries.slice(0, 4);
+    return (
+      <div data-album-art className={cn(frame, "gap-2 border border-white/15 bg-white/10 backdrop-blur-md")}>
+        <p className="mb-1 flex items-center gap-2 text-caption font-bold uppercase tracking-[0.1em] text-white/80">
+          <Icon size={15} strokeWidth={2.25} aria-hidden />
+          {t("preset.singular")} · {t("preset.paramCount", { count: entries.length })}
+        </p>
+        {shown.map((entry) => (
+          <div key={entry.fieldId} className="flex min-w-0 items-baseline justify-between gap-3 rounded-lg bg-black/35 px-3.5 py-2.5 text-small">
+            <span className="shrink-0 text-white/75">{entry.fieldLabel}</span>
+            <span className="min-w-0 truncate text-right font-semibold text-white">{entry.valueLabel}</span>
+          </div>
+        ))}
+        {entries.length > shown.length && <p className="pl-1 pt-1 text-caption font-semibold text-white/75">+{entries.length - shown.length}</p>}
+      </div>
+    );
+  }
   const words = item.kind === "prompt" && item.data.promptText.trim() ? item.data.promptText : null;
   const structure = item.kind !== "prompt" ? <StructureBlock item={item} near={near} onImage={false} /> : null;
   return (
-    <div className="flex max-h-full w-full max-w-[26rem] flex-col overflow-hidden rounded-[26px] bg-surface p-5 shadow-[0_30px_70px_rgb(0_0_0/0.5)] sm:p-6">
+    <div data-album-art className={cn(frame, "bg-surface")}>
       {words ? (
         <p className="prompt-text line-clamp-[12] whitespace-pre-line break-words text-text-secondary">{words}</p>
       ) : structure ? (
@@ -504,12 +547,21 @@ function AlbumArtCard({ item, model, near }: { item: PostFeedItem; model: SlideM
   );
 }
 
-/** The slide's big action: "Kopyala" for a prompt with words (counts a use), else the way to its page. */
-function AlbumPrimary({ prompt, href }: { prompt: Prompt | null; href: string }) {
+/** The slide's big action: "Kopyala" for a prompt with words (counts a use), "Yanıtla" for an open request, else the way to its page. */
+function AlbumPrimary({ item, href }: { item: PostFeedItem; href: string }) {
   const { t } = useTranslation();
-  const bright = "h-12 rounded-full border-white bg-white px-6 text-body font-semibold text-black shadow-[0_10px_30px_rgb(0_0_0/0.35)] hover:bg-white/90";
-  if (prompt && prompt.promptText.trim()) {
-    return <CopyPromptButton text={prompt.promptText} promptId={prompt.id} size="md" variant="primary" label={t("common.copy")} className={bright} />;
+  const { user } = useAuth();
+  const bright = "h-12 w-full justify-center rounded-full border-white bg-white px-6 text-body font-semibold text-black shadow-[0_10px_30px_rgb(0_0_0/0.35)] hover:bg-white/90";
+  if (item.kind === "prompt" && item.data.promptText.trim()) {
+    return <CopyPromptButton text={item.data.promptText} promptId={item.data.id} size="md" variant="primary" label={t("common.copy")} className={bright} />;
+  }
+  if (item.kind === "request" && item.data.status === "open" && user?.id !== item.data.author.id) {
+    return (
+      <Link href={`/create?answerRequest=${item.data.id}`} className={cn("inline-flex shrink-0 items-center gap-2", bright)}>
+        <PenLine size={18} aria-hidden />
+        {t("request.reply")}
+      </Link>
+    );
   }
   return (
     <Link href={href} className={cn("inline-flex shrink-0 items-center gap-2", bright)}>
@@ -520,7 +572,7 @@ function AlbumPrimary({ prompt, href }: { prompt: Prompt | null; href: string })
 }
 
 /** Odak'ta "Space'e ekle" (docs/history/213-*): oturumlu kullanıcıya, topluluğa ait olmayan gönderide. */
-function FocusAddToSpace({ item, className }: { item: PostFeedItem; className: string }) {
+export function FocusAddToSpace({ item, className }: { item: PostFeedItem; className: string }) {
   const { t } = useTranslation();
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
@@ -536,35 +588,38 @@ function FocusAddToSpace({ item, className }: { item: PostFeedItem; className: s
   );
 }
 
+/** The short facts under the title: kind · tool · the kind's own count (steps / parameters) — the rest lives in the info sheet. */
+function metaLine(item: PostFeedItem, model: SlideModel, t: ReturnType<typeof useTranslation>["t"]): string {
+  const parts: string[] = [model.typeLabel];
+  if (model.tool) parts.push(model.tool);
+  if (item.kind === "workflow") parts.push(t("workflow.stepCount", { count: String(item.data.stepCount) }));
+  return parts.join(" · ");
+}
+
 function AlbumSlide({
   item,
   model,
   cover,
   playable,
-  extra,
   active,
   near,
   titleId,
-  onOpenPrompt,
 }: {
   item: PostFeedItem;
   model: SlideModel;
   cover: FocusFeedCover | null;
   /** A video / audio prompt whose author's output (or poster) is there: it plays inside the album art. */
   playable: boolean;
-  extra: number;
   active: boolean;
   near: boolean;
   titleId: string;
-  onOpenPrompt: () => void;
 }) {
   const { t, language } = useTranslation();
+  const openInfo = useContext(FocusInfoContext);
   const prompt = item.kind === "prompt" ? item.data : null;
-  const Icon = model.icon;
-  const link = "inline-flex items-center gap-1 rounded-full text-label font-semibold text-white/80 underline-offset-4 hover:text-white hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary";
   return (
     <article data-album-slide className={cn("absolute inset-0 flex flex-col", SLIDE_TOP)}>
-      {/* The album art in the slide's own card width; the words and actions sit under it (docs/history/238-*). */}
+      {/* The album art in the slide's own card width; the words and actions sit under it (docs/history/238-*, 239-*). */}
       <div className="flex min-h-0 flex-1 items-center justify-center">
         {playable && prompt ? (
           <AlbumArtFrame ratio={playableRatio(prompt)}>
@@ -578,42 +633,24 @@ function AlbumSlide({
       </div>
       <div className={cn(HIDE_WHILE_COMMENTS, "shrink-0 space-y-2.5 pt-4 md:space-y-3", PHONE_BOTTOM, "md:pb-8")}>
         <SlideByline author={model.author} createdAt={model.createdAt} language={language} near={near} />
-        <div className="flex flex-wrap items-center gap-2">
-          <p className="flex min-w-0 items-center gap-1.5 text-caption font-bold uppercase tracking-[0.1em] text-white/85">
-            <Icon size={13} strokeWidth={2.25} aria-hidden className="shrink-0" />
-            <span className="truncate">
-              {model.typeLabel}
-              {model.tool && <> · {model.tool}</>}
-            </span>
-          </p>
-          {item.kind === "request" && <RequestStatus request={item.data} />}
-          {extra > 0 && <span className="rounded-full border border-white/20 bg-black/30 px-2.5 py-0.5 text-caption font-semibold text-white">{t("focusFeed.moreImages", { count: extra })}</span>}
-        </div>
         <h2 id={titleId} className="line-clamp-2 break-words font-display text-[clamp(1.375rem,3.2vw,1.875rem)] font-extrabold leading-[1.1] tracking-[-0.03em] text-white">
           {model.title}
         </h2>
-        {model.description && <p className="line-clamp-2 break-words text-small leading-relaxed text-white/80">{model.description}</p>}
-        {/* A picture post that has its own structure (a workflow / preset / request) keeps a compact version of it here. */}
-        {cover && item.kind !== "prompt" && <StructureBlock item={item} near={near} onImage />}
-        <div className="flex items-center gap-2 sm:gap-3">
-          <AlbumPrimary prompt={prompt} href={model.href} />
-          <FocusFeedRail item={item} author={model.author} layout="row" />
+        <p className="truncate text-caption font-bold uppercase tracking-[0.1em] text-white/75">{metaLine(item, model, t)}</p>
+        <div className="flex items-center gap-1">
+          <FocusFeedRail item={item} author={model.author} layout="compact" />
+          <button
+            type="button"
+            onClick={() => openInfo(item)}
+            aria-haspopup="dialog"
+            data-focus-info-button=""
+            className="ml-auto inline-flex h-9 shrink-0 items-center gap-1 rounded-full border border-white/50 px-3.5 text-label font-semibold text-white transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          >
+            {t("focusFeed.info")}
+            <ChevronUp size={16} aria-hidden />
+          </button>
         </div>
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-          {prompt && prompt.promptText.trim() && (
-            <button type="button" onClick={onOpenPrompt} aria-haspopup="dialog" className={link}>
-              <SquareTerminal size={15} aria-hidden />
-              {t("focusFeed.viewPrompt")}
-            </button>
-          )}
-          {(prompt?.promptText.trim() ?? "") !== "" && (
-            <Link href={model.href} className={link}>
-              {t("focusFeed.openDetail")}
-              <ArrowUpRight size={15} aria-hidden />
-            </Link>
-          )}
-          <FocusAddToSpace item={item} className={link} />
-        </div>
+        <AlbumPrimary item={item} href={model.href} />
       </div>
     </article>
   );
@@ -656,7 +693,6 @@ export const FocusFeedSlide = memo(function FocusFeedSlide({
   near: boolean;
 }) {
   const { t } = useTranslation();
-  const [promptOpen, setPromptOpen] = useState(false);
   const model = modelOf(item, t);
   const cover = focusFeedCover(item);
   const layout = focusFeedLayout(item);
@@ -664,7 +700,6 @@ export const FocusFeedSlide = memo(function FocusFeedSlide({
   // A playable prompt whose output and poster are both missing reads as its words (once the lookup is done).
   const { data: output, loading: outputLoading } = usePromptOutput(layout === "playable" ? prompt : null, near);
   const playableWithoutMedia = layout === "playable" && !cover && !outputLoading && !output && near;
-  const extra = focusFeedExtraImages(item);
   const titleId = useId();
 
   // Albüm (docs/history/203-*): every post is a "now playing" slide — its picture / playing video / audio (or its words,
@@ -684,13 +719,10 @@ export const FocusFeedSlide = memo(function FocusFeedSlide({
         model={model}
         cover={layout === "visual" || layout === "playable" ? cover : null}
         playable={layout === "playable" && !playableWithoutMedia}
-        extra={extra}
         active={active}
         near={near}
         titleId={titleId}
-        onOpenPrompt={() => setPromptOpen(true)}
       />
-      {promptOpen && prompt && <PromptDialog prompt={prompt} onClose={() => setPromptOpen(false)} />}
     </section>
   );
 });

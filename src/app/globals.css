@@ -436,6 +436,9 @@
    * CSS column by different amounts mid-animation (mobile Safari renders that
    * as misaligned tops), so grid items never move. */
   --animate-grid-in: fade-in 300ms var(--ease-soft) backwards;
+  /* Odak: a new section's content comes in from the side the swipe went (backwards: no transform left behind). */
+  --animate-channel-down: channel-down 300ms var(--ease-soft) backwards;
+  --animate-channel-up: channel-up 300ms var(--ease-soft) backwards;
   --animate-sheet-up: sheet-up 260ms var(--ease-soft) both;
   --animate-panel-in: panel-in 240ms var(--ease-soft) both;
   --animate-shimmer: shimmer 1.6s linear infinite;
@@ -481,6 +484,26 @@
     to {
       opacity: 1;
       transform: translateY(0) scale(1);
+    }
+  }
+  @keyframes channel-down {
+    from {
+      opacity: 0;
+      transform: translateY(40px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  @keyframes channel-up {
+    from {
+      opacity: 0;
+      transform: translateY(-40px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
     }
   }
   @keyframes sheet-up {
