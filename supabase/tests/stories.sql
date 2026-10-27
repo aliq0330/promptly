@@ -425,5 +425,28 @@ select public._check(65, 'istemci purge_expired_stories çağıramaz',
   public._try($q$select public.purge_expired_stories()$q$) like '%permission denied%');
 reset role;
 
+-- 66+. Görüntüleyenler sayfalı (docs/history/258-*): 130 görüntüleyen; limit/offset sayfaları eksiksiz ve tekrarsız; en çok 100; yalnız sahip.
+insert into auth.users (id, email, raw_user_meta_data)
+select ('90000000-0000-4000-8000-' || lpad(i::text, 12, '0'))::uuid, 'v' || i || '@test.dev', jsonb_build_object('username', 'v' || i, 'display_name', 'V' || i)
+from generate_series(1, 130) i;
+insert into public.story_views (story_id, viewer_id, first_viewed_at, last_viewed_at)
+select public._g('PUB'), ('90000000-0000-4000-8000-' || lpad(i::text, 12, '0'))::uuid, now() - i * interval '1 minute', now() - i * interval '1 minute' from generate_series(1, 130) i;
+set role authenticated;
+select public._as_user(:alice);
+select public._check(66, 'story_viewers(id, limit, offset): 50 + 50 + 32 (önceki görüntüleyenler dahil), sıralı ve tekrarsız',
+  (select count(*) from public.story_viewers(public._g('PUB'), 50, 0)) = 50
+  and (select count(*) from public.story_viewers(public._g('PUB'), 50, 50)) = 50
+  and (select count(*) from public.story_viewers(public._g('PUB'), 50, 100)) = 32
+  and (select count(distinct viewer_id) from (
+        select viewer_id from public.story_viewers(public._g('PUB'), 50, 0)
+        union all select viewer_id from public.story_viewers(public._g('PUB'), 50, 50)
+        union all select viewer_id from public.story_viewers(public._g('PUB'), 50, 100)) x) = 132);
+select public._check(67, 'story_viewers: limit en çok 100''e kırpılır; eski tek argümanlı imza çalışmaya devam eder',
+  (select count(*) from public.story_viewers(public._g('PUB'), 1000, 0)) = 100
+  and (select count(*) from public.story_viewers(public._g('PUB'))) = 132);
+select public._as_user(:carol);
+select public._check(68, 'story_viewers (sayfalı): sahibi olmayan satır almaz', (select count(*) from public.story_viewers(public._g('PUB'), 50, 0)) = 0);
+reset role;
+
 select 'FAILED=' || count(*) filter (where not ok) from public._results;
 select n, name, detail from public._results where not ok order by n;

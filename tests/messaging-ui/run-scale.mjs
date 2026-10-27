@@ -145,6 +145,52 @@ await scenario("4. Bildirimden gelen derin bağlantı: 6. sayfadaki bir yanıt (
   assert.equal(await page.getByText("Bu yorum artık mevcut değil", { exact: false }).count(), 0);
 }, { detail: true, setup: seedThread });
 
+const COMMUNITY = "e0000000-0000-4000-8000-0000000000a1";
+
+await scenario("5. Topluluk etkinlikleri (120 geçmiş): ilk pencere 50 (+1 'daha var mı' için), kaydırınca 100'e çıkar; eskiden 50'de kesilirdi", async ({ page, db }) => {
+  await page.goto(`${BASE}/communities/local?id=${COMMUNITY}&tab=events`);
+  await page.getByRole("tab", { name: "Geçmiş" }).click();
+  await page.getByRole("heading", { name: /^Etkinlik \d+/ }).first().waitFor();
+  const count = () => page.getByRole("heading", { name: /^Etkinlik \d+/ }).count();
+  assert.equal(await count(), 50, "ilk pencere 50 etkinlik");
+  assert.ok(db.eventQueries.some((x) => x.scope === "past" && x.limit === 51), JSON.stringify(db.eventQueries));
+  for (let i = 0; i < 20 && (await count()) < 120; i += 1) {
+    await page.locator("[data-testid=load-more]:visible").first().scrollIntoViewIfNeeded().catch(() => {});
+    await page.waitForTimeout(200);
+  }
+  assert.equal(await count(), 120, "hepsi geldi (50 → 100 → 120)");
+  assert.deepEqual([...new Set(db.eventQueries.filter((x) => x.scope === "past").map((x) => x.limit))], [51, 101, 151]);
+}, {
+  setup: (db) => {
+    db.addCommunity(COMMUNITY, { myRole: "member" });
+    const base = { community_id: COMMUNITY, description: null, ends_at: null, timezone: "UTC", location: null, online_url: null, going_count: 0, maybe_count: 0, rsvps: {}, status: "scheduled" };
+    for (let i = 0; i < 120; i += 1) db.events.push({ ...base, id: `22222222-bbbb-4000-8000-${String(i).padStart(12, "0")}`, title: `Etkinlik ${i + 1}`, starts_at: new Date(Date.now() - (i + 1) * 86400000).toISOString() });
+  },
+});
+
+await scenario("6. 'Var olan içeriği paylaş' (90 prompt): ilk 30 (limit=31), 'daha var mı' kaydırınca devam; başlığa göre arama sorguya gider (eskiden en yeni 30 ile kesilirdi)", async ({ page, db }) => {
+  await page.goto(`${BASE}/create`);
+  await page.locator("[data-create-share-existing]").click();
+  const modal = page.locator("[data-share-existing]");
+  const items = () => modal.locator("[data-share-existing-item]");
+  await items().first().waitFor();
+  assert.ok((await items().count()) >= 30 && (await items().count()) <= 90);
+  assert.ok(db.shareQueries.some((x) => x.type === "prompt" && x.limit === 31 && x.search === ""), JSON.stringify(db.shareQueries));
+  for (let i = 0; i < 20 && (await items().count()) < 90; i += 1) {
+    await modal.locator("[data-testid=load-more]:visible").first().scrollIntoViewIfNeeded().catch(() => {});
+    await page.waitForTimeout(200);
+  }
+  assert.equal(await items().count(), 90, "hepsi listelenebilir");
+  await modal.getByRole("searchbox").fill("Prompt 77");
+  await page.waitForFunction(() => document.querySelectorAll("[data-share-existing-item]").length === 1);
+  assert.ok(db.shareQueries.some((x) => x.search === "prompt 77"), "arama sorguya gitti");
+}, {
+  setup: (db) => {
+    db.addCommunity(COMMUNITY, { myRole: "member" });
+    db.ownContent.prompt = Array.from({ length: 90 }, (_, i) => ({ id: `f6000000-0000-4000-8000-${String(i).padStart(12, "0")}`, title: `Prompt ${i + 1}`, visibility: "public" }));
+  },
+});
+
 await browser.close();
 server.close();
 for (const [status, name] of results) console.log(`${status === "PASS" ? "✓" : "✗"} ${name}`);

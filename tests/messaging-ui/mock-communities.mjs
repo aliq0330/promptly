@@ -492,7 +492,9 @@ export function setupCommunities(db) {
     }
     if ((table === "prompts" || table === "prompt_requests" || table === "workflows" || table === "presets") && method === "GET" && (q.get("select") ?? "").replace(/\s/g, "") === "id,title") {
       const type = table === "prompts" ? "prompt" : table === "prompt_requests" ? "request" : table === "workflows" ? "workflow" : "preset";
-      return rows(db.ownContent[type].filter((c) => c.visibility !== "private").map((c) => ({ id: c.id, title: c.title })));
+      const needle = /ilike\.%(.*)%/.exec(q.get("title") ?? "")?.[1]?.toLowerCase();
+      db.shareQueries = [...(db.shareQueries ?? []), { type, limit: Number(q.get("limit") ?? 0), search: needle ?? "" }];
+      return rows(db.ownContent[type].filter((c) => c.visibility !== "private" && (!needle || c.title.toLowerCase().includes(needle))).slice(0, Number(q.get("limit") ?? 0) || undefined).map((c) => ({ id: c.id, title: c.title })));
     }
 
     // ---- duyurular ----
@@ -528,7 +530,9 @@ export function setupCommunities(db) {
       const cid = eq(q, "community_id");
       const gte = q.get("starts_at")?.startsWith("gte.") ? q.get("starts_at").slice(4) : null;
       const lt = q.get("starts_at")?.startsWith("lt.") ? q.get("starts_at").slice(3) : null;
-      return rows(db.events.filter((e) => e.community_id === cid && (!gte || e.starts_at >= gte) && (!lt || e.starts_at < lt)).sort((a, b) => a.starts_at.localeCompare(b.starts_at)).map((e) => { const copy = { ...e }; delete copy.rsvps; return copy; }));
+      db.eventQueries = [...(db.eventQueries ?? []), { limit: Number(q.get("limit") ?? 0), scope: lt ? "past" : "upcoming" }];
+      const lim = Number(q.get("limit") ?? 0);
+      return rows(db.events.filter((e) => e.community_id === cid && (!gte || e.starts_at >= gte) && (!lt || e.starts_at < lt)).sort((a, b) => (lt ? b.starts_at.localeCompare(a.starts_at) : a.starts_at.localeCompare(b.starts_at))).slice(0, lim || undefined).map((e) => { const copy = { ...e }; delete copy.rsvps; return copy; }));
     }
     if (table === "community_event_rsvps" && method === "GET") {
       const ids = q.get("event_id")?.startsWith("in.(") ? q.get("event_id").slice(4, -1).split(",").map((s) => s.replace(/"/g, "")) : [];
