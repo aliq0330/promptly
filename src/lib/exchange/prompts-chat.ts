@@ -43,9 +43,17 @@ export function contributorHandles(line: string): string[] {
   return handles;
 }
 
-export function parsePromptsChat(text: string, options: { tag?: string | null } = {}): ParseResult {
-  const records: Record<string, unknown>[] = [];
-  const tag = options.tag?.trim();
+export interface PromptsChatBlock {
+  /** Başlık: HTML kaçışları açılmış, boşluklar tek aralığa indirilmiş, sınırı aşarsa "…" ile kısaltılmış (içe aktarmayla AYNI kural). */
+  title: string;
+  /** `</summary>` ile ilk ```md çiti arası: başlık satırı, "Contributed by …", (kategorili dosyada) Tür/Kategori/Alt kategori satırları. */
+  header: string;
+  promptText: string;
+}
+
+/** Dosyadaki kayıtları (başlık + üst bilgi + prompt metni) sırayla verir; `parsePromptsChat` ve kategori motoru aynı bölmeyi kullanır. */
+export function promptsChatBlocks(text: string): PromptsChatBlock[] {
+  const blocks: PromptsChatBlock[] = [];
   for (const match of text.matchAll(BLOCK)) {
     const body = match[2];
     const open = FENCE_OPEN.exec(body);
@@ -53,11 +61,20 @@ export function parsePromptsChat(text: string, options: { tag?: string | null } 
     let title = unescapeHtml(match[1]).replace(/\s+/g, " ").trim();
     if (title.length > EXCHANGE_LIMITS.title) title = `${title.slice(0, EXCHANGE_LIMITS.title - 1).trimEnd()}…`;
     const promptText = open && close > open.index + open[0].length ? body.slice(open.index + open[0].length, close) : "";
-    const contributorLine = /^Contributed by (.*)$/m.exec(body)?.[1] ?? "";
+    blocks.push({ title, header: open ? body.slice(0, open.index) : body, promptText });
+  }
+  return blocks;
+}
+
+export function parsePromptsChat(text: string, options: { tag?: string | null } = {}): ParseResult {
+  const records: Record<string, unknown>[] = [];
+  const tag = options.tag?.trim();
+  for (const block of promptsChatBlocks(text)) {
+    const contributorLine = /^Contributed by (.*)$/m.exec(block.header)?.[1] ?? "";
     const handles = contributorHandles(contributorLine);
     records.push({
-      title,
-      promptText,
+      title: block.title,
+      promptText: block.promptText,
       contentType: "text",
       tags: tag ? [tag] : [],
       source: {
@@ -70,4 +87,3 @@ export function parsePromptsChat(text: string, options: { tag?: string | null } 
   // Toplu yükleme: adet sınırı yok (yalnız dosya boyutu); her kayıt yine aynı doğrulamadan geçer.
   return normalizeAll(records, Number.MAX_SAFE_INTEGER);
 }
-

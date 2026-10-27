@@ -53,6 +53,7 @@ const CHECKS = [
   { name: "rpc admin_bulk_delete_impact (docs/history/252-*)", rpc: "admin_bulk_delete_impact", body: { p_ids: [] }, deniedOk: true, soft: true },
   { name: "rpc admin_template_variables_candidates (docs/history/253-*)", rpc: "admin_template_variables_candidates", body: { p_scope: "own", p_limit: 1 }, deniedOk: true, soft: true },
   { name: "rpc admin_convert_template_variables (docs/history/253-*)", rpc: "admin_convert_template_variables", body: { p_ids: [], p_scope: "own" }, deniedOk: true, soft: true },
+  { name: "rpc admin_bulk_set_prompt_taxonomy (docs/history/260-*)", rpc: "admin_bulk_set_prompt_taxonomy", body: { p_items: [], p_overwrite: false }, deniedOk: true, soft: true },
 ];
 
 const headers = { apikey: key, Authorization: `Bearer ${key}`, "Content-Type": "application/json" };
