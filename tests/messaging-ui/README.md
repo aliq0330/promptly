@@ -188,13 +188,29 @@ CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/mess
 DEBUG=1 ONLY="5" node tests/messaging-ui/run-exchange.mjs   # konsol/sayfa hatalarını yazdırır, yalnız "5" ile başlayan senaryo
 ```
 
-## Workflow ↔ Space bağlantısı (`docs/history/261-*`)
+## Workflow ↔ Space bağlantısı (`docs/history/261-*`, `262-*`)
 
-`run-workflow-space.mjs` (18 senaryo): panodaki workflow çerçevesi (akış diyagramı: adım/ok/içerik kartı/ilişki, katman bayrakları, erişilemeyen workflow), Space içinden "Workflow aktar" (yalnız kendi workflow'ların, önizleme, katman kutuları → gönderilen satır, tekrar aktarılamaz, izleyici aktaramaz), workflow sayfasındaki "Space panosu" önizlemesi (herkese açık / özel-ziyaretçi / özel-sahibi / çoklu Space + çip geçişi / bağ yok / gizli not sızmaz), workflow formunda "Space'te göster" (seçim notları, yayında öğe eklenir, mevcut bağ önceden dolu, kapatınca silinir), İngilizce, telefonda taşma yok. Ağ taklidi `mock-spaces.mjs` + test içi workflow uçları (`workflows`, `workflow_steps`, `content_relations`, `space_items` + `spaces!inner`). Gerçek Supabase'e KARŞI DENENMEDİ — yetki kuralı `supabase/tests/space-workflow-flow.sql`'dedir.
+`run-workflow-space.mjs` (28 senaryo, 262'de yeniden yazıldı: ayrı nesneler + Güncelle): panodaki workflow çerçevesi (akış diyagramı: adım/ok/içerik kartı/ilişki, katman bayrakları, erişilemeyen workflow), Space içinden "Workflow aktar" (yalnız kendi workflow'ların, önizleme, katman kutuları → gönderilen satır, tekrar aktarılamaz, izleyici aktaramaz), workflow sayfasındaki "Space panosu" önizlemesi (herkese açık / özel-ziyaretçi / özel-sahibi / çoklu Space + çip geçişi / bağ yok / gizli not sızmaz), workflow formunda "Space'te göster" (seçim notları, yayında öğe eklenir, mevcut bağ önceden dolu, kapatınca silinir), İngilizce, telefonda taşma yok. Ağ taklidi `mock-spaces.mjs` + test içi workflow uçları (`workflows`, `workflow_steps`, `content_relations`, `space_items`, `prompt_media`; `spaces` gömmesi içeren istek hata sayılır). Gerçek Supabase'e KARŞI DENENMEDİ — yetki kuralı `supabase/tests/space-workflow-flow.sql`'dedir.
 
 ```bash
 npm i --no-save playwright            # repoya bağımlılık eklenmez
 NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co NEXT_PUBLIC_SUPABASE_ANON_KEY=dummy npm run build
-node tests/messaging-ui/run-workflow-space.mjs   # 18/18 beklenir
+node tests/messaging-ui/run-workflow-space.mjs   # 28/28 beklenir
 ```
 
+
+## Pano okları (`docs/history/262-*`)
+
+`run-space-connectors.mjs` (15 senaryo): panoda ok çizme aracı (C, iki tıklama, Esc, çoklu seçimi bağla, telefonda dokunma), ok seçme/düzenleme (etiket, çizgi, ok başı, yol, renk, yönü çevir, sil), nesne taşınınca okun izlemesi, geri al/yinele, aynı çiftin tekrar bağlanamaması, İngilizce, telefonda taşma yok. DB tarafı `supabase/tests/space-connections.sql` (27).
+
+```bash
+node tests/messaging-ui/run-space-connectors.mjs   # 15/15 beklenir
+```
+
+## Pano araç seti (`docs/history/263-*`)
+
+`run-space-board-tools.mjs` (11 senaryo): akıllı kılavuzlar (çıkar + hizalar, Alt'ta yok), Çoğalt / Ctrl+D / Ctrl+C-V (kopya + ok, tek adımda geri al, görsel çoğaltılamaz, izleyici yapamaz), mini harita (gezinme + tercih), Ctrl+F arama, İngilizce, telefon. Sayfa yüklenirken yerleşim kaydığı için sürükleme testleri konumu `settled()` ile sabitlenene dek bekler.
+
+```bash
+node tests/messaging-ui/run-space-board-tools.mjs   # 11/11 beklenir
+```

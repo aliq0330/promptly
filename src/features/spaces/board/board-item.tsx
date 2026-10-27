@@ -9,6 +9,7 @@ import type { ResolvedSource } from "../space-items";
 import { sourceReasonKey } from "../space-items";
 import { SPACE_COLOR_CLASS, SpaceImage } from "../space-visuals";
 import { WorkflowFlowDiagram, useWorkflowFlow } from "@/features/workflows/workflow-flow-diagram";
+import { parseStepBody } from "@/lib/workflow-board-plan";
 
 /**
  * Panodaki tek öğe (docs/history/213-*). Konum/boyut DÜNYA birimindedir; pano dönüşümü (kaydırma + yakınlaştırma) üst katmandadır.
@@ -117,6 +118,26 @@ function ItemBody({ item, resolved, palette, attachedTitle, lowDetail }: { item:
     );
   }
 
+  // Workflow'dan aktarılan adım kartı (docs/history/262-*): numara rozeti, başlık, girdi/çıktı. Normal bir nottur (düzenlenir, taşınır, silinir).
+  if (item.kind === "note" && item.sourceRole === "step") {
+    const parsed = parseStepBody(item.body);
+    return (
+      <div className="flex h-full w-full flex-col gap-2 overflow-hidden rounded-xl border border-primary/50 bg-surface p-3 shadow-card" data-step-card="">
+        <div className="flex items-start gap-2">
+          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-[12px] font-bold text-primary-foreground">{item.sourceStepNo ?? "·"}</span>
+          <p className="line-clamp-2 min-w-0 flex-1 text-small font-semibold leading-5 text-text">{item.title || t("wfSpace.objects.untitledStep")}</p>
+        </div>
+        {!lowDetail && (
+          <>
+            {parsed.inputs.length > 0 && <StepChips label={t("wfSpace.objects.stepInput")} values={parsed.inputs} />}
+            {parsed.outputs.length > 0 && <StepChips label={t("wfSpace.objects.stepOutput")} values={parsed.outputs} />}
+            {parsed.text && <p className="line-clamp-3 break-words text-caption text-text-secondary">{parsed.text}</p>}
+          </>
+        )}
+      </div>
+    );
+  }
+
   if (item.kind === "note") {
     const colors = SPACE_COLOR_CLASS[item.color];
     return (
@@ -156,6 +177,23 @@ function ItemBody({ item, resolved, palette, attachedTitle, lowDetail }: { item:
     return <WorkflowFlowItem item={item} fallback={<ContentCard item={item} resolved={resolved} reason={reason} lowDetail={lowDetail} />} lowDetail={lowDetail} />;
   }
   return <ContentCard item={item} resolved={resolved} reason={reason} lowDetail={lowDetail} />;
+}
+
+function StepChips({ label, values }: { label: string; values: string[] }) {
+  const shown = values.slice(0, 3);
+  return (
+    <div className="grid grid-cols-[48px_minmax(0,1fr)] items-start gap-1.5">
+      <span className="pt-0.5 text-[10px] font-bold uppercase tracking-[0.07em] text-text-muted">{label}</span>
+      <div className="flex min-w-0 flex-wrap gap-1">
+        {shown.map((value, index) => (
+          <span key={index} className="max-w-full truncate rounded-md border border-border-soft bg-surface-soft px-1.5 py-0.5 font-mono text-[11px] leading-4 text-text-secondary">
+            {value}
+          </span>
+        ))}
+        {values.length > shown.length && <span className="rounded-md border border-border-soft bg-surface-soft px-1.5 py-0.5 text-[11px] leading-4 text-text-muted">+{values.length - shown.length}</span>}
+      </div>
+    </div>
+  );
 }
 
 /** Workflow çerçevesi (docs/history/261-*): workflow'un akış diyagramı. Adımlar workflow'dan canlı okunur; okunamazsa sade kart. */

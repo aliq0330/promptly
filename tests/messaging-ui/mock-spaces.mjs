@@ -38,6 +38,7 @@ export function setupSpaces(db) {
   db.spaces = [];
   db.spaceMembers = [];
   db.spaceItems = [];
+  db.spaceConnections = []; // docs/history/262-*: pano okları
   db.spaceGroups = [];
   db.spacePalettes = [];
   db.spaceInvites = [];
@@ -101,7 +102,8 @@ export function setupSpaces(db) {
       media_height: over.media_height ?? null,
       is_draft: over.is_draft ?? false,
       source_prompt_id: null,
-      content_type: null, content_id: null,
+      content_type: over.content_type ?? null, content_id: over.content_id ?? null,
+      source_workflow_id: over.source_workflow_id ?? null, source_step_id: over.source_step_id ?? null, source_role: over.source_role ?? null, source_step_no: over.source_step_no ?? null,
       palette_id: over.palette_id ?? null,
       title: over.title ?? "", body: over.body ?? "", note: over.note ?? "",
       color: over.color ?? "neutral",
@@ -111,6 +113,12 @@ export function setupSpaces(db) {
       created_at: over.created_at ?? now(), updated_at: over.updated_at ?? now(),
     };
     db.spaceItems.push(row);
+    return row;
+  };
+
+  db.addConnection = (spaceId, from, to, over = {}) => {
+    const row = { id: over.id ?? crypto.randomUUID(), space_id: spaceId, from_item_id: from, to_item_id: to, label: over.label ?? "", line_style: over.line_style ?? "solid", arrow: over.arrow ?? "end", route: over.route ?? "curve", color: over.color ?? "primary", source_workflow_id: over.source_workflow_id ?? null, source_role: over.source_role ?? null, created_by: ME, created_at: now() };
+    db.spaceConnections.push(row);
     return row;
   };
 
@@ -338,7 +346,7 @@ export function setupSpaces(db) {
       if (q.get("limit")) list = list.slice(0, Number(q.get("limit")));
       return rows(list.map((a) => ({ ...a, actor: person(a.actor_id) })));
     }
-    for (const [name, key] of [["space_items", "spaceItems"], ["space_groups", "spaceGroups"], ["space_palettes", "spacePalettes"]]) {
+    for (const [name, key] of [["space_items", "spaceItems"], ["space_groups", "spaceGroups"], ["space_palettes", "spacePalettes"], ["space_connections", "spaceConnections"]]) {
       if (table !== name) continue;
       if (method === "GET") {
         let list = applyFilters(db[key], q).filter((r) => canRead(r.space_id, uid));
@@ -348,6 +356,12 @@ export function setupSpaces(db) {
       if (method === "POST") {
         const input = Array.isArray(body) ? body : [body];
         if (input.some((r) => !canEdit(r.space_id, uid))) return json(403, { code: "42501", message: "new row violates row-level security policy for table \"" + name + "\"" });
+        if (name === "space_connections") {
+          for (const r of input) {
+            if (db.spaceConnections.some((c) => (c.from_item_id === r.from_item_id && c.to_item_id === r.to_item_id))) return json(409, { code: "23505", message: "duplicate key value violates unique constraint \"space_connections_pair_idx\"" });
+            if (db.spaceFail.connectionLimit) return err("space_connection_limit");
+          }
+        }
         if (name === "space_items") {
           for (const r of input) {
             if (r.kind === "image" && db.spaceItems.some((i) => i.space_id === r.space_id && i.kind === "image" && i.media_url === r.media_url)) {
@@ -368,6 +382,10 @@ export function setupSpaces(db) {
       if (method === "DELETE") {
         const targets = applyFilters(db[key], q).filter((r) => canEdit(r.space_id, uid));
         db[key] = db[key].filter((r) => !targets.includes(r));
+        if (name === "space_items") {
+          const gone = new Set(targets.map((r) => r.id));
+          db.spaceConnections = db.spaceConnections.filter((c) => !gone.has(c.from_item_id) && !gone.has(c.to_item_id));
+        }
         if (name === "space_groups") db.spaceItems.forEach((i) => targets.some((g) => g.id === i.group_id) && (i.group_id = null));
         return rows(targets.map((r) => ({ id: r.id })));
       }

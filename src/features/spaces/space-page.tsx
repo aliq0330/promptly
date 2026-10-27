@@ -17,6 +17,7 @@ import { cn, formatRelativeTime, profileHref } from "@/lib/utils";
 import {
   fetchMyRole,
   fetchSpace,
+  fetchSpaceConnections,
   fetchSpaceGroups,
   fetchSpaceItems,
   fetchSpacePalettes,
@@ -78,16 +79,17 @@ export function SpacePage() {
           if (alive) setState({ status: "missing" });
           return;
         }
-        const [role, items, groups, palettes, owner, favorite] = await Promise.all([
+        const [role, items, groups, palettes, connections, owner, favorite] = await Promise.all([
           fetchMyRole(id, userId),
           fetchSpaceItems(id),
           fetchSpaceGroups(id),
           fetchSpacePalettes(id),
+          fetchSpaceConnections(id),
           fetchSpacePerson(space.ownerId),
           fetchSpaceFavorite(id, userId),
         ]);
         if (!alive) return;
-        setState({ status: "ready", data: { space, role, items, groups, palettes }, owner, favorite });
+        setState({ status: "ready", data: { space, role, items, groups, palettes, connections }, owner, favorite });
         if (userId) touchSpace(id);
       } catch {
         if (alive) setState({ status: "error" });

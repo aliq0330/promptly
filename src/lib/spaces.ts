@@ -190,6 +190,7 @@ export const SPACE_ERROR_CODES = [
   "space_not_link_visible",
   "space_archived",
   "space_item_limit",
+  "space_connection_limit",
   "space_group_limit",
   "space_palette_limit",
   "space_source_unavailable",

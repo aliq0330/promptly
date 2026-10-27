@@ -50,7 +50,7 @@ export function useWorkflowSpaceChoice(workflowId: string | null, userId: string
       const editable = new Set(spaces.map((space) => space.id));
       const link = links.find((entry) => editable.has(entry.spaceId));
       if (link) {
-        setChoice({ enabled: true, spaceId: link.spaceId, showIo: link.showIo, showLinks: link.showLinks, showRelations: link.showRelations, existing: { itemId: link.itemId, spaceId: link.spaceId } });
+        setChoice({ enabled: true, spaceId: link.spaceId, showIo: true, showLinks: true, showImages: true, showRelations: true, existing: { itemId: link.itemId, spaceId: link.spaceId, objects: link.objects } });
       }
     });
     return () => {
@@ -63,7 +63,7 @@ export function useWorkflowSpaceChoice(workflowId: string | null, userId: string
     setChoice(next);
   }
   /** Kaydedildikten sonra: seçim artık "var olan bağ"dır (bir sonraki Paylaş'ta çift öğe açılmasın). */
-  function settle(linked: { itemId: string; spaceId: string } | null) {
+  function settle(linked: { itemId: string; spaceId: string; objects: boolean } | null) {
     setChoice((current) => (linked ? { ...current, enabled: true, spaceId: linked.spaceId, existing: linked } : { ...current, enabled: false, spaceId: null, existing: null }));
   }
   return { choice, update, settle, spaces, failed };
@@ -97,15 +97,17 @@ export function WorkflowSpaceField({
     else if (selected) note = { text: t("wfSpace.field.notePublic"), warn: false };
   }
 
-  const layers: { key: "showIo" | "showLinks" | "showRelations"; label: string; hint: string }[] = [
-    { key: "showIo", label: t("wfSpace.layer.io"), hint: t("wfSpace.layer.ioHint") },
-    { key: "showLinks", label: t("wfSpace.layer.links"), hint: t("wfSpace.layer.linksHint") },
-    { key: "showRelations", label: t("wfSpace.layer.relations"), hint: t("wfSpace.layer.relationsHint") },
+  const layers: { key: "showLinks" | "showImages" | "showIo" | "showRelations"; label: string; hint: string; disabled?: boolean }[] = [
+    { key: "showLinks", label: t("wfSpace.objects.optPrompts"), hint: t("wfSpace.objects.optPromptsHint") },
+    { key: "showImages", label: t("wfSpace.objects.optImages"), hint: t("wfSpace.objects.optImagesHint"), disabled: !choice.showLinks },
+    { key: "showIo", label: t("wfSpace.objects.optIo"), hint: t("wfSpace.objects.optIoHint") },
+    { key: "showRelations", label: t("wfSpace.objects.optRelations"), hint: t("wfSpace.objects.optRelationsHint"), disabled: !choice.showLinks },
   ];
 
   return (
     <FormDisclosure id="space" label={t("wfSpace.field.label")} hint={t("wfSpace.field.hint")} value={summary}>
       <div className="space-y-4">
+        {!choice.enabled && choice.existing?.objects && <p className="text-caption text-warning">{t("wfSpace.field.offRemoves")}</p>}
         <SwitchRow
           checked={choice.enabled}
           onChange={(enabled) => onChange({ ...choice, enabled })}
@@ -163,11 +165,12 @@ export function WorkflowSpaceField({
             </div>
 
             <div>
-              <p className="mb-2 text-caption font-bold uppercase tracking-[0.06em] text-text-secondary">{t("wfSpace.import.layers")}</p>
+              <p className="mb-1 text-caption font-bold uppercase tracking-[0.06em] text-text-secondary">{t("wfSpace.objects.options")}</p>
+              <p className="mb-2 text-caption text-text-muted">{t("wfSpace.objects.optStepsHint")}</p>
               <div className="space-y-2">
                 {layers.map((row) => (
-                  <label key={row.key} className="flex items-start gap-2.5 text-small text-text">
-                    <input type="checkbox" checked={choice[row.key]} onChange={(event) => onChange({ ...choice, [row.key]: event.target.checked })} className="mt-1 h-4 w-4 accent-primary" />
+                  <label key={row.key} className={cn("flex items-start gap-2.5 text-small text-text", row.disabled && "opacity-50")}>
+                    <input type="checkbox" checked={choice[row.key] && !row.disabled} disabled={row.disabled} onChange={(event) => onChange({ ...choice, [row.key]: event.target.checked })} className="mt-1 h-4 w-4 accent-primary" />
                     <span>
                       <span className="block font-medium">{row.label}</span>
                       <span className="block text-caption text-text-muted">{row.hint}</span>
@@ -184,6 +187,7 @@ export function WorkflowSpaceField({
               </p>
             )}
             {isDraft && <p className="text-caption text-text-muted">{t("wfSpace.field.draftHint")}</p>}
+            {choice.existing?.objects && choice.spaceId !== choice.existing.spaceId && <p className="text-caption text-text-muted">{t("wfSpace.field.moveRemoves")}</p>}
           </>
         )}
       </div>

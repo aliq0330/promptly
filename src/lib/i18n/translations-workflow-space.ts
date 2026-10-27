@@ -12,20 +12,13 @@ export const workflowSpaceTranslations = {
   "wfSpace.flow.noContent": { tr: "Bağlı içerik yok", en: "No linked content" },
   "wfSpace.flow.relatesTo": { tr: "Adım {{n}} ({{title}}) · {{type}}", en: "Step {{n}} ({{title}}) · {{type}}" },
 
-  // ---- Katmanlar (hem formda hem aktarma penceresinde) ----
-  "wfSpace.layer.io": { tr: "Girdi ve çıktılar", en: "Inputs and outputs" },
-  "wfSpace.layer.ioHint": { tr: "Her adımın girdi değişkenleri ve çıktıları.", en: "Each step's input variables and outputs." },
-  "wfSpace.layer.links": { tr: "Bağlı içerikler", en: "Linked content" },
-  "wfSpace.layer.linksHint": { tr: "Adımlarda kullanılan promptlar.", en: "The prompts used in the steps." },
-  "wfSpace.layer.relations": { tr: "İlişkiler", en: "Relations" },
-  "wfSpace.layer.relationsHint": { tr: "Bu içerikler arasındaki Benzer / Alternatif / Esinlenme bağları.", en: "Similar / Alternative / Inspired-by links between those contents." },
 
   // ---- Space içinden: "Workflow aktar" ----
   "wfSpace.import.menu": { tr: "Workflow aktar", en: "Import workflow" },
   "wfSpace.import.title": { tr: "Workflow aktar", en: "Import workflow" },
   "wfSpace.import.hint": {
-    tr: "Panoya akış diyagramı olarak getirilecek bir workflow seç. Workflow kopyalanmaz: sonradan değişirse pano da güncellenir.",
-    en: "Pick a workflow to bring onto the board as a flow diagram. It is not copied: if the workflow changes later, the board follows.",
+    tr: "Panoya getirilecek bir workflow seç. Her adım için adım kartı, kullandığı prompt ve görselleri ayrı nesneler olarak gelir; aralarında oklar çizilir. Workflow kopyalanmaz: değişirse panoda \"Güncelle\" çıkar.",
+    en: "Pick a workflow to bring onto the board. Each step comes as a step card, with its prompt and images as separate objects, connected by arrows. It isn't copied: if the workflow changes, an \"Update\" prompt appears on the board.",
   },
   "wfSpace.import.onlyOwn": { tr: "Burada yalnız sana ait, yayınlanmış workflow'lar listelenir.", en: "Only your own published workflows are listed here." },
   "wfSpace.import.emptyTitle": { tr: "Yayınlanmış workflow'un yok", en: "You have no published workflow" },
@@ -33,21 +26,25 @@ export const workflowSpaceTranslations = {
   "wfSpace.import.create": { tr: "Workflow oluştur", en: "Create workflow" },
   "wfSpace.import.onBoard": { tr: "Panoda", en: "On board" },
   "wfSpace.import.preview": { tr: "Önizleme", en: "Preview" },
-  "wfSpace.import.layers": { tr: "Panoda neler görünsün?", en: "What should the board show?" },
-  "wfSpace.import.alreadyOnBoard": { tr: "Bu workflow zaten panoda. Çerçeveyi panodan düzenleyebilirsin.", en: "This workflow is already on the board. You can adjust its frame there." },
   "wfSpace.import.privateWarn": {
-    tr: "Bu workflow \"Sadece ben\". Bu Space'i açan başkaları çerçeveyi \"erişilemiyor\" olarak görür. İstersen önce workflow'u herkese açık yap.",
-    en: "This workflow is \"Only me\". Other people who open this Space will see the frame as \"unavailable\". You may want to make the workflow public first.",
+    tr: "Bu workflow \"Sadece ben\". Adım kartlarının başlık ve girdi/çıktıları bu Space'i açan herkese görünür olur. İstersen Space'i özel tut ya da workflow'u önce herkese açık yap.",
+    en: "This workflow is \"Only me\". The step cards' titles and inputs/outputs will be visible to everyone who opens this Space. You may want to keep the Space private or make the workflow public first.",
   },
   "wfSpace.import.submit": { tr: "Panoya aktar", en: "Add to board" },
   "wfSpace.import.loadFailed": { tr: "Workflow yüklenemedi. Biraz sonra tekrar dene.", en: "Couldn't load the workflow. Try again in a moment." },
 
   // ---- Workflow formu: "Space'te göster" ----
   "wfSpace.field.label": { tr: "Space'te göster", en: "Show in a Space" },
-  "wfSpace.field.hint": { tr: "Workflow'u bir Space panosunda akış diyagramı olarak göster.", en: "Show this workflow on a Space board as a flow diagram." },
+  "wfSpace.field.hint": {
+    tr: "Workflow'u bir Space panosuna adım kartları, promptlar, görseller ve oklarla getir.",
+    en: "Bring this workflow onto a Space board with step cards, prompts, images and arrows.",
+  },
   "wfSpace.field.on": { tr: "Space'te gösterilecek", en: "Will be shown in a Space" },
   "wfSpace.field.off": { tr: "Kapalı", en: "Off" },
-  "wfSpace.field.switchHint": { tr: "Workflow tek kaynak kalır; pano adımlarını ondan okur.", en: "The workflow stays the single source; the board reads its steps from it." },
+  "wfSpace.field.switchHint": {
+    tr: "Workflow tek kaynak kalır; değişirse panoda \"Güncelle\" çıkar.",
+    en: "The workflow stays the single source; if it changes, the board offers an \"Update\".",
+  },
   "wfSpace.field.pick": { tr: "Space seç", en: "Choose a Space" },
   "wfSpace.field.newSpace": { tr: "Yeni Space oluştur", en: "Create a new Space" },
   "wfSpace.field.newSpaceHint": { tr: "Workflow'un adıyla, özel olarak başlar.", en: "Starts private, named after the workflow." },
@@ -61,8 +58,8 @@ export const workflowSpaceTranslations = {
     en: "This Space isn't public: the preview on the workflow page is only visible to Space members. You can make the Space public.",
   },
   "wfSpace.field.noteWorkflowPrivate": {
-    tr: "Workflow \"Sadece ben\" olduğu için başkaları panoda çerçeveyi \"erişilemiyor\" olarak görür.",
-    en: "Because the workflow is \"Only me\", other people see the frame as \"unavailable\" on the board.",
+    tr: "Workflow \"Sadece ben\" olsa da adım kartlarının başlık ve girdi/çıktıları Space'i açan herkese görünür.",
+    en: "Even though the workflow is \"Only me\", the step cards' titles and inputs/outputs will be visible to everyone who opens the Space.",
   },
   "wfSpace.field.draftHint": { tr: "Taslakta kaydedilen workflow Space'e eklenmez; bağ yayınlayınca kurulur.", en: "A workflow saved as a draft isn't added to the Space; the link is made when you publish." },
   "wfSpace.field.applyFailed": {

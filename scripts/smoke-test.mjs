@@ -39,6 +39,8 @@ const CHECKS = [
   { name: "notifications (RLS: ziyaretçiye boş, tablo/sütun var)", get: () => `notifications?select=${encodeURIComponent("id,is_read,created_at")}&limit=1` },
   { name: "spaces (puan + etkinlik görünürlüğü, docs/history/242-*)", get: () => `spaces?select=${encodeURIComponent("id,quote_count,rating_avg,rating_count,comment_count,activity_visibility")}&limit=1` },
   { name: "space_activity (önce/sonra ayrıntısı, not, yorum sayacı)", get: () => `space_activity?select=${encodeURIComponent("id,details,author_note,comment_count")}&limit=1` },
+  { name: "space_connections (pano okları, docs/history/262-*)", get: () => `space_connections?select=${encodeURIComponent("id,space_id,from_item_id,to_item_id,label,line_style,arrow,route,color,source_workflow_id,source_role")}&limit=1` },
+  { name: "space_items kaynak sütunları (workflow'dan aktarılan nesneler, docs/history/262-*)", get: () => `space_items?select=${encodeURIComponent("id,source_workflow_id,source_step_id,source_role,source_step_no")}&limit=1` },
   { name: "prompt_comments (puan + etkinlik yorumu)", get: () => `prompt_comments?select=${encodeURIComponent("id,rating,space_activity_id")}&limit=1` },
   { name: "rpc feed_page", rpc: "feed_page", body: feedArgs },
   { name: "rpc feed_page p_has_media (Odak Medya süzgeci sunucuda, docs/history/254-*)", rpc: "feed_page", body: { ...feedArgs, p_open_only: false, p_tag: null, p_tool: null, p_authors: null, p_tags: null, p_tools: null, p_has_media: true } },

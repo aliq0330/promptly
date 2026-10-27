@@ -2,15 +2,21 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
+  addSpaceConnections,
   addSpaceItems,
+  deleteSpaceConnections,
   deleteSpaceItems,
   emptySources,
   fetchSpaceSources,
   saveSpaceLayout,
   updateSpaceItem,
+  updateSpaceConnection,
   type LayoutEntry,
+  type NewSpaceConnection,
   type NewSpaceItem,
   type Space,
+  type SpaceConnection,
+  type SpaceConnectionPatch,
   type SpaceGroup,
   type SpaceItem,
   type SpaceItemPatch,
@@ -38,6 +44,8 @@ export interface SpaceData {
   items: SpaceItem[];
   groups: SpaceGroup[];
   palettes: SpacePalette[];
+  /** Panodaki oklar (docs/history/262-*). */
+  connections: SpaceConnection[];
 }
 
 interface SpaceContextValue extends SpaceData {
@@ -52,6 +60,10 @@ interface SpaceContextValue extends SpaceData {
   addItems: (items: NewSpaceItem[]) => Promise<SpaceItem[]>;
   removeItems: (ids: string[]) => Promise<SpaceItem[]>;
   patchItem: (id: string, patch: SpaceItemPatch) => Promise<SpaceItem>;
+  setConnections: (updater: (connections: SpaceConnection[]) => SpaceConnection[]) => void;
+  addConnections: (connections: NewSpaceConnection[]) => Promise<SpaceConnection[]>;
+  removeConnections: (ids: string[]) => Promise<SpaceConnection[]>;
+  patchConnection: (id: string, patch: SpaceConnectionPatch) => Promise<SpaceConnection>;
   queueLayout: (entries: LayoutEntry[]) => void;
   flushLayout: () => Promise<void>;
   layoutStatus: SaveStatus;
@@ -85,6 +97,7 @@ export function SpaceProvider({ initial, userId, children }: { initial: SpaceDat
   const [items, setItemsState] = useState(initial.items);
   const [groups, setGroupsState] = useState(initial.groups);
   const [palettes, setPalettesState] = useState(initial.palettes);
+  const [connections, setConnectionsState] = useState(initial.connections);
   const [sources, setSources] = useState<SpaceSources>(emptySources);
   const [sourcesLoading, setSourcesLoading] = useState(true);
   const [layoutStatus, setLayoutStatus] = useState<SaveStatus>("idle");
@@ -233,6 +246,8 @@ export function SpaceProvider({ initial, userId, children }: { initial: SpaceDat
   const removeItems = useCallback(async (ids: string[]) => {
     const removed = itemsRef.current.filter((item) => ids.includes(item.id));
     await deleteSpaceItems(ids);
+    // Sunucuda uçlarından biri silinen oklar kendiliğinden gider (cascade); yerelde de düşer.
+    setConnectionsState((list) => list.filter((c) => !ids.includes(c.fromItemId) && !ids.includes(c.toItemId)));
     setItemsState((list) =>
       list
         .filter((item) => !ids.includes(item.id))
@@ -249,6 +264,36 @@ export function SpaceProvider({ initial, userId, children }: { initial: SpaceDat
     return updated;
   }, []);
 
+  // ---- oklar ----
+  const addConnections = useCallback(
+    async (list: NewSpaceConnection[]) => {
+      if (!userId) throw new Error(translateForRuntime("spaces.error.notAuthenticated"));
+      const created = await addSpaceConnections(list, userId);
+      setConnectionsState((current) => [...current.filter((c) => !created.some((n) => n.id === c.id)), ...created]);
+      return created;
+    },
+    [userId],
+  );
+
+  const connectionsRef = useRef(connections);
+  useEffect(() => {
+    connectionsRef.current = connections;
+  }, [connections]);
+
+  /** Kaldırılanları döner (geri al için). */
+  const removeConnections = useCallback(async (ids: string[]) => {
+    const removed = connectionsRef.current.filter((c) => ids.includes(c.id));
+    await deleteSpaceConnections(ids);
+    setConnectionsState((current) => current.filter((c) => !ids.includes(c.id)));
+    return removed;
+  }, []);
+
+  const patchConnection = useCallback(async (id: string, patch: SpaceConnectionPatch) => {
+    const updated = await updateSpaceConnection(id, patch);
+    setConnectionsState((current) => current.map((c) => (c.id === id ? updated : c)));
+    return updated;
+  }, []);
+
   const value = useMemo<SpaceContextValue>(
     () => ({
       space,
@@ -256,6 +301,7 @@ export function SpaceProvider({ initial, userId, children }: { initial: SpaceDat
       items,
       groups,
       palettes,
+      connections,
       caps,
       userId,
       sources,
@@ -267,6 +313,10 @@ export function SpaceProvider({ initial, userId, children }: { initial: SpaceDat
       addItems,
       removeItems,
       patchItem,
+      setConnections: setConnectionsState,
+      addConnections,
+      removeConnections,
+      patchConnection,
       queueLayout,
       flushLayout,
       layoutStatus,
@@ -274,7 +324,7 @@ export function SpaceProvider({ initial, userId, children }: { initial: SpaceDat
       dismissLayoutNotice: () => setLayoutNotice(null),
       readable,
     }),
-    [space, role, items, groups, palettes, caps, userId, sources, sourcesLoading, addItems, removeItems, patchItem, queueLayout, flushLayout, layoutStatus, layoutNotice, readable],
+    [space, role, items, groups, palettes, connections, caps, userId, sources, sourcesLoading, addItems, removeItems, patchItem, addConnections, removeConnections, patchConnection, queueLayout, flushLayout, layoutStatus, layoutNotice, readable],
   );
 
   return <SpaceContext.Provider value={value}>{children}</SpaceContext.Provider>;
