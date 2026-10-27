@@ -19,6 +19,7 @@ import {
   snapSelectionToTokens,
   tokenRanges,
   tokenUsageMap,
+  unwrapTokenEdit,
 } from "./prompt-doc.ts";
 
 const SAMPLE = "Profesyonel bir {Stil} tarzında, {Konu} konulu bir görsel oluştur.";
@@ -154,4 +155,27 @@ test("removeToken: jetonu ve fazla boşluğu toparlar, geri kalana dokunmaz", ()
   assert.equal(removeToken("bir iki {X}", "X"), "bir iki");
   assert.equal(removeToken("a  b {X} c   d", "X"), "a  b c   d"); // yazarın çift boşluğuna dokunmaz
   assert.equal(removeToken("{X} {Y} {X}", "X"), "{Y}");
+});
+
+// --- jetonu düz metne çevirme -----------------------------------------------------
+
+test("unwrapTokenEdit: parantezleri atar, içindeki yazıyı korur", () => {
+  const text = "Merhaba {Mother Language:Turkish} dünya";
+  const [token] = tokenRanges(text);
+  const edit = unwrapTokenEdit(text, token);
+  assert.equal(replaceRange(text, edit.start, edit.end, edit.text).text, "Merhaba Mother Language:Turkish dünya");
+});
+
+test("unwrapTokenEdit: hemen önündeki $ de gider (${ad} sözdizimi)", () => {
+  const text = "for ${Mother Language:Turkish} speaking";
+  const [token] = tokenRanges(text);
+  const edit = unwrapTokenEdit(text, token);
+  assert.equal(replaceRange(text, edit.start, edit.end, edit.text).text, "for Mother Language:Turkish speaking");
+});
+
+test("unwrapTokenEdit: $ bir boşlukla ayrılmışsa dokunmaz", () => {
+  const text = "cost $ {x}";
+  const [token] = tokenRanges(text);
+  const edit = unwrapTokenEdit(text, token);
+  assert.equal(replaceRange(text, edit.start, edit.end, edit.text).text, "cost $ x");
 });

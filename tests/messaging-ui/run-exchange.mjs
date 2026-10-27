@@ -34,10 +34,10 @@ const ROWS = [row(P1, "Yağmurlu Gece"), row(P2, "İkinci Prompt", { content_typ
 const TAG_CATALOG = [{ slug: "portre", label: "Portre" }, { slug: "anime", label: "Anime" }, { slug: "manzara", label: "Manzara" }];
 const VARIABLES = [{ id: "v1", prompt_id: P1, name: "Stil", default_value: "noir", description: "Tarz", sort_order: 0, created_at: "2026-09-01T00:00:00Z", updated_at: "2026-09-01T00:00:00Z", type: "select", options: [{ label: "Noir", value: "noir" }, { label: "Neon", value: "neon" }], config: {} }];
 
-async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lang = "tr", detail = false, moderator = false, manageCount = 250 } = {}) {
+async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lang = "tr", detail = false, moderator = false, manageCount = 250, templateCount = 3 } = {}) {
   if (ONLY && !name.startsWith(ONLY)) return;
   const db = createDb();
-  const state = { prompts: [], imports: [], importResult: null, variableCalls: 0, adminCalls: [], adminResult: null, manageQueries: [], manageCalls: [], manageFailAt: 0, impactCalls: [], impactFail: false, tagPuts: [], tagCreates: [], tagCatalog: TAG_CATALOG };
+  const state = { prompts: [], imports: [], importResult: null, variableCalls: 0, adminCalls: [], adminResult: null, manageQueries: [], manageCalls: [], manageFailAt: 0, impactCalls: [], impactFail: false, tagPuts: [], tagCreates: [], tagCatalog: TAG_CATALOG, tmplScans: [], tmplCalls: [], tmplFailAt: 0 };
   // Toplu yönetim taklidi: 250 kayıt = 200 taslak (2'si etkileşimli) + 30 yayında (2'si etkileşimli) + 20 gizli (1'i etkileşimli); >250 ise hepsi taslak.
   state.manageRows = Array.from({ length: manageCount }, (_, i) => ({
     id: `e0000000-0000-4000-8000-${String(i).padStart(12, "0")}`, title: `Toplu ${i + 1}`,
@@ -75,6 +75,26 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lan
     const hit = body.p_ids.map((id) => state.manageRows.find((r) => r.id === id)).filter(Boolean);
     const engaged = hit.filter((r) => r.like_count > 0).length;
     return { body: { prompts: hit.length, engaged, likes: engaged, comments: engaged * 2, saves: engaged, quotes: 0, communityPosts: 0, results: 0, suggestions: 0, spaceItems: 0, workflowSteps: engaged, sharedInMessages: 0 } };
+  };
+  // ${Ad:Varsayılan} dönüştürme taklidi (docs/history/253-*): sunucu mantığı supabase/tests/admin-template-variables.sql'dedir; burada yalnız arayüz sözleşmesi.
+  // Kendi promptların: 1 = Role+Topic, 2 = Mood + zaten tanımlı Stil, 3 = taslak, çakışan varsayılan (Ton); diğer kullanıcının 2 promptu yalnız 'all' kapsamında gelir.
+  const tmplVars = (i) => (i % 3 === 0 ? [{ name: "Role", default: "Teacher", existing: false }, { name: "Topic", default: "Math", existing: false }] : i % 3 === 1 ? [{ name: "Mood", default: "", existing: false }, { name: "Stil", default: "Noir", existing: true }] : [{ name: "Ton", default: "Sıcak", existing: false }]);
+  const tmplPool = (scope) => [
+    ...Array.from({ length: templateCount }, (_, i) => ({ id: `f0000000-0000-4000-8000-${String(i).padStart(12, "0")}`, title: `Şablon ${i + 1}`, author: "ben", status: i % 3 === 2 ? "draft" : "published", variables: tmplVars(i), conflicts: i % 3 === 2 ? 1 : 0, own: true })),
+    ...(scope === "all" ? [0, 1].map((i) => ({ id: `f1000000-0000-4000-8000-${String(i).padStart(12, "0")}`, title: `Başkası ${i + 1}`, author: "alice", status: "published", variables: [{ name: "Language", default: "French", existing: false }], conflicts: 0, own: false })) : []),
+  ];
+  state.tmplDone = new Set();
+  db.rpc.admin_template_variables_candidates = (body) => {
+    state.tmplScans.push(body);
+    const left = tmplPool(body.p_scope).filter((x) => !state.tmplDone.has(x.id));
+    return { body: { total: left.length, items: left.slice(0, body.p_limit).map(({ own, ...rest }) => rest) } };
+  };
+  db.rpc.admin_convert_template_variables = (body) => {
+    state.tmplCalls.push(body);
+    if (state.tmplFailAt > 0 && state.tmplCalls.length === state.tmplFailAt) return forbidden;
+    const hit = tmplPool(body.p_scope).filter((x) => body.p_ids.includes(x.id) && !state.tmplDone.has(x.id));
+    hit.forEach((x) => state.tmplDone.add(x.id));
+    return { body: { affected: hit.length, skipped: body.p_ids.length - hit.length, variables: hit.reduce((n, x) => n + x.variables.filter((v) => !v.existing).length, 0), conflicts: hit.reduce((n, x) => n + x.conflicts, 0) } };
   };
   db.rpc.get_or_create_tag = (body) => {
     state.tagCreates.push(body.p_label);
@@ -730,6 +750,121 @@ await scenario("30. Toplu yükleme: otomatik etiket varsayılan AÇIK, dosyadaki
   assert.ok(state.adminCalls[0].p_items[0].tags.length <= 20);
   assert.deepEqual(state.tagCreates, [], "yükleme tarafında etiketi sunucu (import RPC'si) oluşturur; istemci get_or_create_tag çağırmaz");
 }, { moderator: true });
+
+
+// ---- ${Ad:Varsayılan} → değişken (docs/history/253-*) ----
+async function openTemplate(page) {
+  await page.goto(`${BASE}/moderation`);
+  await page.getByTestId("template-vars").waitFor();
+}
+const templateRows = (page) => page.getByTestId("template-row");
+
+await scenario("31. Şablon değişkenleri: varsayılan kapsam 'yalnız kendi promptlarım'; tarama yazmaz; her prompt için olacaklar listelenir; tek tuşla dönüşür, onay istemez, sonra yeniden taranır", async ({ page, state }) => {
+  await openTemplate(page);
+  assert.equal(await page.getByTestId("template-scope-own").isChecked(), true);
+  assert.equal(await page.getByTestId("template-scope-all").isChecked(), false);
+  assert.equal(await page.getByTestId("template-convert").count(), 0, "taramadan önce dönüştür düğmesi yok");
+  await page.getByTestId("template-scan").click();
+  await page.getByTestId("template-summary").waitFor();
+  assert.deepEqual(state.tmplScans, [{ p_scope: "own", p_limit: 1000 }]);
+  assert.equal(state.tmplCalls.length, 0, "tarama hiçbir şey yazmaz");
+  assert.match(await page.getByTestId("template-summary").innerText(), /3 promptta 4 yeni değişken dönüşecek\./);
+  assert.equal(await templateRows(page).count(), 3);
+  const first = await templateRows(page).nth(0).innerText();
+  assert.match(first, /\{Role\} = Teacher/);
+  assert.match(first, /\{Topic\} = Math/);
+  assert.match(await templateRows(page).nth(1).innerText(), /\{Stil\} = Noir/, "zaten tanımlı değişken de gösterilir");
+  assert.match(await templateRows(page).nth(2).innerText(), /farklı varsayılanlarla geçiyor/);
+  assert.equal(await page.getByTestId("template-list").locator("input:checked").count(), 3, "hepsi varsayılan seçili");
+  assert.match(await page.getByTestId("template-convert").innerText(), /3 promptu dönüştür/);
+  await page.getByTestId("template-convert").click();
+  await page.getByTestId("template-outcome").waitFor();
+  assert.equal(await page.getByTestId("template-confirm").count(), 0, "kendi promptların için onay yok");
+  assert.equal(state.tmplCalls.length, 1);
+  assert.equal(state.tmplCalls[0].p_scope, "own");
+  assert.equal(state.tmplCalls[0].p_ids.length, 3);
+  assert.match(await page.getByTestId("template-outcome").innerText(), /3 prompt dönüştürüldü, 4 yeni değişken eklendi, 0 atlandı\./);
+  assert.match(await page.getByTestId("template-outcome").innerText(), /1 yerde aynı ad farklı varsayılanla/);
+  await page.getByText("Dönüştürülecek ${…} yazımı bulunamadı.").waitFor();
+  assert.equal(state.tmplScans.length, 2, "dönüşümden sonra yeniden tarandı");
+  assert.equal(await templateRows(page).count(), 0);
+}, { moderator: true });
+
+await scenario("32. 'Tüm promptlar' ayrı ve uyarılı seçenek: başkasının promptları @yazarla listelenir, dönüştürmeden önce AÇIK onay ister (Vazgeç çağrı yapmaz); onaylanınca p_scope=all gider", async ({ page, state }) => {
+  await openTemplate(page);
+  await page.getByText("başka kullanıcıların prompt metnini değiştirir").waitFor();
+  await page.getByTestId("template-scope-all").check();
+  await page.getByTestId("template-scan").click();
+  await page.getByTestId("template-summary").waitFor();
+  assert.equal(state.tmplScans[0].p_scope, "all");
+  assert.equal(await templateRows(page).count(), 5);
+  assert.match(await page.getByTestId("template-list").innerText(), /@alice/);
+  await page.getByTestId("template-convert").click();
+  await page.getByTestId("template-confirm").waitFor();
+  assert.match(await page.getByTestId("template-confirm").innerText(), /Başka kullanıcıların promptları da dahil 5 prompt dönüştürülecek\./);
+  assert.match(await page.getByTestId("template-confirm").innerText(), /Yazarlara bildirim gitmez/);
+  assert.equal(state.tmplCalls.length, 0, "onay verilmeden hiçbir şey yazılmaz");
+  await page.getByTestId("template-cancel").click();
+  assert.equal(await page.getByTestId("template-confirm").count(), 0);
+  assert.equal(state.tmplCalls.length, 0);
+  await page.getByTestId("template-convert").click();
+  await page.getByTestId("template-confirm-yes").click();
+  await page.getByTestId("template-outcome").waitFor();
+  assert.equal(state.tmplCalls.length, 1);
+  assert.equal(state.tmplCalls[0].p_scope, "all");
+  assert.equal(state.tmplCalls[0].p_ids.length, 5);
+  assert.match(await page.getByTestId("template-outcome").innerText(), /5 prompt dönüştürüldü/);
+}, { moderator: true });
+
+await scenario("33. Seçim: tek tek çıkarılabilir; hiçbiri seçili değilken düğme kapalı; yalnız seçilenler gönderilir; kapsam taramadan sonra değiştirilirse eski taramanın kapsamı kullanılır", async ({ page, state }) => {
+  await openTemplate(page);
+  await page.getByTestId("template-scan").click();
+  await page.getByTestId("template-summary").waitFor();
+  await templateRows(page).nth(0).locator("input").uncheck();
+  assert.match(await page.getByTestId("template-convert").innerText(), /2 promptu dönüştür/);
+  await page.getByTestId("template-clear").click();
+  assert.equal(await page.getByTestId("template-convert").isDisabled(), true);
+  await templateRows(page).nth(1).locator("input").check();
+  await page.getByTestId("template-scope-all").check();
+  await page.getByTestId("template-convert").click();
+  await page.getByTestId("template-outcome").waitFor();
+  assert.equal(state.tmplCalls.length, 1, "kendi taraması 'own' idi: onay istemeden 'own' ile gitti");
+  assert.deepEqual(state.tmplCalls[0], { p_ids: ["f0000000-0000-4000-8000-000000000001"], p_scope: "own" });
+}, { moderator: true });
+
+await scenario("34. 250 prompt: 100'erli 3 çağrı, sonuç toplamı yazar; liste 100'erli gösterilir; tekrar tarayınca boş", async ({ page, state }) => {
+  await openTemplate(page);
+  await page.getByTestId("template-scan").click();
+  await page.getByTestId("template-summary").waitFor();
+  assert.match(await page.getByTestId("template-summary").innerText(), /250 promptta/);
+  assert.equal(await templateRows(page).count(), 100);
+  assert.match(await page.getByTestId("template-showing").innerText(), /100 \/ 250 gösteriliyor/);
+  await page.getByTestId("template-more").click();
+  assert.equal(await templateRows(page).count(), 200);
+  await page.getByTestId("template-convert").click();
+  await page.getByTestId("template-outcome").waitFor();
+  assert.deepEqual(state.tmplCalls.map((c) => c.p_ids.length), [100, 100, 50]);
+  assert.match(await page.getByTestId("template-outcome").innerText(), /250 prompt dönüştürüldü/);
+  await page.getByText("Dönüştürülecek ${…} yazımı bulunamadı.").waitFor();
+}, { moderator: true, templateCount: 250 });
+
+await scenario("35. Yarıda kalma: 2. parça hata verirse 1. parça dönüşmüş kalır, uyarı gösterilir, kalanlar listede durur; yeniden denenince tamamlanır; İngilizce + telefonda taşma yok", async ({ page, state }) => {
+  state.tmplFailAt = 2;
+  await openTemplate(page);
+  await page.getByTestId("template-scan").click();
+  await page.getByTestId("template-summary").waitFor();
+  assert.match(await page.getByTestId("template-summary").innerText(), /250 new variable|will be created across 250 prompt/);
+  await page.getByTestId("template-convert").click();
+  await page.getByTestId("template-partial").waitFor();
+  assert.match(await page.getByTestId("template-partial").innerText(), /100 \/ 250/);
+  assert.match(await page.getByTestId("template-outcome").innerText(), /100 prompt\(s\) converted/);
+  await page.getByTestId("template-error").waitFor();
+  assert.match(await page.getByTestId("template-summary").innerText(), /across 150 prompt/, "kalan 150 yeniden tarandı");
+  assert.equal(await overflowFree(page), true);
+  await page.getByTestId("template-convert").click();
+  await page.getByTestId("template-outcome").filter({ hasText: /150 prompt\(s\) converted/ }).waitFor();
+  await page.getByText("No ${…} syntax to convert was found.").waitFor();
+}, { moderator: true, lang: "en", templateCount: 250, viewport: { width: 375, height: 800 } });
 
 await browser.close();
 server.close();
