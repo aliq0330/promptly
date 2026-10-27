@@ -427,8 +427,13 @@ await scenario("13. 'Daha fazla yükle' hep kendiliğinden yüklenir: düğmeye 
 await scenario("14. Keşfet → Etiketler (1516 etiket): 30'arlı sayfa, toplam ilk sayfada sayılır, sonraki sayfa kaydırınca kendiliğinden gelir; hepsini çeken istek yok", async ({ page, db }) => {
   withLibrary(db, U.alice, { total: 1, tags: 1516 });
   await page.goto(`${BASE}/discover`);
-  await page.locator("[data-section-menu]").click();
-  await page.getByRole("radio", { name: "Etiketler", exact: true }).click();
+  // Menü hidrasyondan önce açılırsa kapanabilir: açılana kadar yeniden dene.
+  const radio = page.getByRole("radio", { name: "Etiketler", exact: true });
+  for (let i = 0; i < 5 && !(await radio.isVisible()); i += 1) {
+    await page.locator("[data-section-menu]").first().click();
+    await radio.waitFor({ timeout: 1500 }).catch(() => {});
+  }
+  await radio.click();
   const rows = page.locator("[data-tags-section] li");
   await rows.first().waitFor();
   const first = db.tagQueries.find((x) => x.limit === 30);
