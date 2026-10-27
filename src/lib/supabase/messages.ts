@@ -4,6 +4,7 @@ import { mapProfileRow, type ProfileRow } from "./mappers";
 import type { Conversation, Message, MessageAttachment, UserProfile } from "@/types";
 import { removeMessageImages } from "./message-images";
 import { mapChatGroupRow, CHAT_GROUP_SELECT, type ChatGroupRow } from "./chat-groups";
+import { fetchAllRows } from "./paged";
 import type { GroupRole } from "@/types";
 
 interface ConversationEmbed {
@@ -125,30 +126,37 @@ function previewTextFor(row: PreviewRow | undefined): string {
  */
 export async function fetchConversationsForUser(userId: string): Promise<Conversation[]> {
   try {
-    const { data: memberships, error } = await supabase
-      .from("conversation_members")
-      .select(MEMBERSHIP_SELECT)
-      .eq("user_id", userId);
-    if (error || !memberships || memberships.length === 0) return [];
+    // Her üyelik, 1000'lik sayfalarla (çok sohbetli bir kişide PostgREST 1000'de keser); hata olursa fırlatır — yarım liste bütün gibi görünmez.
+    const { rows: memberships } = await fetchAllRows((from, to) =>
+      supabase.from("conversation_members").select(MEMBERSHIP_SELECT).eq("user_id", userId).order("conversation_id", { ascending: true }).range(from, to),
+    );
+    if (memberships.length === 0) return [];
 
     const rows = memberships as unknown as MembershipRow[];
     const conversationIds = rows.map((m) => m.conversation_id);
     const directIds = rows.filter((m) => m.conversations?.kind !== "group").map((m) => m.conversation_id);
 
     // Birebir sohbetlerin karşı tarafı. Gruplarda üye listesi bu yoldan ASLA çekilmez (RLS yalnız kendi satırımı verir; liste `chat_group_members` RPC'sinde).
-    const { data: otherMembers } =
-      directIds.length > 0
-        ? await supabase
+    // Kimlikler adrese yazıldığı için parça parça (yüzlerce birebir sohbette tek `in(...)` adres sınırını aşar ve liste hiç gelmezdi).
+    const otherMembers = (
+      await Promise.all(
+        chunk(directIds, ID_CHUNK).map(async (ids) => {
+          const { data } = await supabase
             .from("conversation_members")
             .select(
               "conversation_id, profiles(id, username, display_name, avatar_url, cover_url, bio, website, follower_count, following_count, created_at, interests)",
             )
-            .in("conversation_id", directIds)
-            .neq("user_id", userId)
-        : { data: [] };
+            .in("conversation_id", ids)
+            .neq("user_id", userId);
+          return data ?? [];
+        }),
+      )
+    ).flat();
 
     // Her konuşmanın görünür SON mesajı (sunucu: kişisel temizleme + RLS uygulanmış, konuşma başına tek satır).
     const lastMessageByConversation = await fetchLastMessages(conversationIds);
+    // Grupta okunmamış sayısı sunucuda okuma anında hesaplanır (docs/history/258-*); migration yoksa sütun değeri kalır.
+    const groupUnread = await fetchGroupUnreadCounts(rows.filter((m) => m.conversations?.kind === "group").map((m) => m.conversation_id));
 
     const otherByConversation = new Map<string, ProfileRow>();
     for (const row of (otherMembers ?? []) as unknown as { conversation_id: string; profiles: ProfileRow | null }[]) {
@@ -166,7 +174,7 @@ export async function fetchConversationsForUser(userId: string): Promise<Convers
         const base = {
           id: m.conversation_id,
           lastMessageAt: m.conversations?.last_message_at ?? last?.created_at ?? new Date(0).toISOString(),
-          unreadCount: m.unread_count,
+          unreadCount: m.conversations?.kind === "group" ? (groupUnread.get(m.conversation_id) ?? m.unread_count) : m.unread_count,
           myStatus: m.status,
           archivedAt: m.archived_at,
           deletedAt: m.deleted_at,
@@ -199,16 +207,37 @@ export async function fetchConversationsForUser(userId: string): Promise<Convers
 type LastMessageRow = PreviewRow & { conversation_id: string; sender_id: string };
 
 /** `conversation_last_messages` RPC: konuşma başına tek, görünür son mesaj. Hata → boş harita (önizleme "henüz mesaj yok" olur, liste yine açılır). */
+const ID_CHUNK = 100;
+const chunk = <T,>(items: T[], size: number): T[][] => Array.from({ length: Math.ceil(items.length / size) }, (_, i) => items.slice(i * size, (i + 1) * size));
+
 async function fetchLastMessages(conversationIds: string[]): Promise<Map<string, LastMessageRow>> {
   const result = new Map<string, LastMessageRow>();
-  if (conversationIds.length === 0) return result;
-  const { data, error } = await supabase.rpc("conversation_last_messages", { p_conversation_ids: conversationIds.slice(0, 500) });
-  if (error) {
-    console.error("conversation_last_messages", error);
-    return result;
-  }
-  if (!Array.isArray(data)) return result;
-  for (const row of data as LastMessageRow[]) result.set(row.conversation_id, row);
+  // 200'erli parçalar: tek çağrı 500'de kesiliyordu (500. sohbetten sonrasının önizlemesi boş kalırdı).
+  const answers = await Promise.all(
+    chunk(conversationIds, 200).map(async (ids) => {
+      const { data, error } = await supabase.rpc("conversation_last_messages", { p_conversation_ids: ids });
+      if (error) {
+        console.error("conversation_last_messages", error);
+        return [];
+      }
+      return Array.isArray(data) ? (data as LastMessageRow[]) : [];
+    }),
+  );
+  for (const row of answers.flat()) result.set(row.conversation_id, row);
+  return result;
+}
+
+/** Grup/topluluk sohbetlerinde okunmamış mesaj sayısı (sunucu okuma anında sayar, en çok 100). Hata/eksik migration → boş harita (sütun değeri kullanılır). */
+export async function fetchGroupUnreadCounts(groupIds: string[]): Promise<Map<string, number>> {
+  const result = new Map<string, number>();
+  const answers = await Promise.all(
+    chunk(groupIds, ID_CHUNK).map(async (ids) => {
+      const { data, error } = await supabase.rpc("group_unread_counts", { p_ids: ids });
+      if (error || !Array.isArray(data)) return [];
+      return data as { conversation_id: string; unread_count: number }[];
+    }),
+  );
+  for (const row of answers.flat()) result.set(row.conversation_id, Number(row.unread_count ?? 0));
   return result;
 }
 
@@ -217,8 +246,8 @@ async function fetchSenderNames(senderIds: (string | undefined)[], viewerId: str
   const ids = [...new Set(senderIds.filter((id): id is string => Boolean(id) && id !== viewerId))];
   const names = new Map<string, string>();
   if (ids.length === 0) return names;
-  const { data } = await supabase.from("profiles").select("id, display_name").in("id", ids.slice(0, 200));
-  for (const row of (data ?? []) as { id: string; display_name: string }[]) names.set(row.id, row.display_name);
+  const found = await Promise.all(chunk(ids, ID_CHUNK).map(async (part) => (await supabase.from("profiles").select("id, display_name").in("id", part)).data ?? []));
+  for (const row of found.flat() as { id: string; display_name: string }[]) names.set(row.id, row.display_name);
   return names;
 }
 
@@ -268,7 +297,7 @@ export async function fetchConversationForUser(conversationId: string, userId: s
     const base = {
       id: conversationId,
       lastMessageAt: row.conversations?.last_message_at ?? last?.created_at ?? new Date(0).toISOString(),
-      unreadCount: row.unread_count,
+      unreadCount: isGroup ? ((await fetchGroupUnreadCounts([conversationId])).get(conversationId) ?? row.unread_count) : row.unread_count,
       myStatus: row.status,
       archivedAt: row.archived_at,
       deletedAt: row.deleted_at,

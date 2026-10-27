@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ArchiveRestore, BellOff } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { GroupAvatar } from "@/features/groups/group-avatar";
-import { cn, formatRelativeTime, messageHref } from "@/lib/utils";
+import { cn, formatRelativeTime, formatUnread, messageHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Conversation } from "@/types";
 
@@ -71,7 +71,7 @@ export function ConversationRow({
               muted ? "bg-border-strong text-text" : "bg-primary text-primary-foreground",
             )}
           >
-            {conversation.unreadCount}
+            {formatUnread(conversation.unreadCount)}
           </span>
         )}
       </Link>

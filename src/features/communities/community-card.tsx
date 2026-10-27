@@ -12,6 +12,7 @@ import { Eyebrow } from "@/features/content/detail-parts";
 import { VisibilityLabel } from "./visibility-label";
 import { CATEGORY_LABEL_KEYS, communityHref, REASON_LABEL_KEYS } from "@/lib/communities";
 import { memberCountText } from "@/lib/group-labels";
+import { formatUnread } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { CommunityReason, CommunitySummary } from "@/lib/supabase/communities";
 
@@ -104,7 +105,7 @@ export function CommunityCard({
           )}
           {community.unreadCount > 0 && (
             <span className="flex items-center gap-1 text-primary">
-              <MessageSquare size={12} aria-hidden /> {t("communities.card.unread", { count: community.unreadCount })}
+              <MessageSquare size={12} aria-hidden /> {t("communities.card.unread", { count: formatUnread(community.unreadCount) })}
             </span>
           )}
           {community.pendingRequestCount > 0 && <span className="text-primary">{t("communities.card.pendingRequests", { count: community.pendingRequestCount })}</span>}

@@ -331,3 +331,8 @@ export function readBlobAsBase64(blob: Blob): Promise<string> {
     reader.readAsDataURL(blob);
   });
 }
+
+/** Okunmamış sayısı rozeti: sunucu grup sohbetinde en çok 100'e kadar sayar → 100 ve üstü "99+" (docs/history/258-*). */
+export function formatUnread(count: number): string {
+  return count >= 100 ? "99+" : String(count);
+}

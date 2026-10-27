@@ -462,6 +462,9 @@ export async function installMock(context, db, opts = {}) {
     if (table === "conversation_members") {
       if (method === "GET") {
         let list = filterRows(db.members, q, ["conversation_id", "user_id"]);
+        // PostgREST `.range()`: offset/limit (sayfalı okuma — 1000'den çok üyelik).
+        const rangeLimit = Number(q.get("limit") ?? 0);
+        if (rangeLimit) list = list.slice(Number(q.get("offset") ?? 0), Number(q.get("offset") ?? 0) + rangeLimit);
         if (sel.includes("profiles(")) return rows(list.map((m) => ({ conversation_id: m.conversation_id, profiles: pub(Object.values(U).find((u) => u.id === m.user_id)) })));
         if (sel === "cleared_at") return rows(list.map((m) => ({ cleared_at: m.cleared_at })));
         if (sel === "last_read_at") return rows(list.map((m) => ({ last_read_at: m.last_read_at ?? null })));
