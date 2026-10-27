@@ -55,9 +55,14 @@ export function usePagedList<T>(
 
   const current = enabled && state && state.key === fullKey ? state : null;
 
+  // The auto-load observer and a click can fire in the same tick, before `loadingMore` has rendered: a ref makes "this page is on its way" immediate.
+  const inFlight = useRef<string | null>(null);
   const loadMore = useCallback(async () => {
     if (current?.nextOffset == null || current.loadingMore) return;
     const offset = current.nextOffset;
+    const flightKey = `${fullKey}|${offset}`;
+    if (inFlight.current === flightKey) return;
+    inFlight.current = flightKey;
     setState((prev) => (prev && prev.key === fullKey ? { ...prev, loadingMore: true, failed: false } : prev));
     try {
       const page = await loadRef.current(offset);
@@ -69,6 +74,8 @@ export function usePagedList<T>(
     } catch (err) {
       console.error("usePagedList (load more)", err);
       setState((prev) => (prev && prev.key === fullKey ? { ...prev, loadingMore: false, failed: true } : prev));
+    } finally {
+      if (inFlight.current === flightKey) inFlight.current = null;
     }
   }, [current, fullKey]);
 

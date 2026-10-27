@@ -34,6 +34,10 @@ topluluk etkinlikleri ve raporları (50 → büyüyen pencere `useGrowingList`; 
 (yeni `story_viewers(uuid, int, int)` aşırı yüklemesi; açıkken 20 sn'lik yenileme yalnız ilk sayfayı tazeler), "Var olan içeriği paylaş" seçicileri (tür başına en yeni 30 → başlık araması + sayfa).
 Bilinçli olarak değişmeyenler: Space öğeleri (DB 500'de açık hata veriyor — sessiz kesme değil), kişinin kendi bekleyen başvuruları (DB en çok 20).
 
+## Yarış düzeltmesi (testin yakaladığı gerçek hata)
+"Daha fazla yükle" otomatik gözlemcisi ile bir tıklama aynı anda tetiklenince `loadingMore` henüz çizilmediği için aynı sayfa İKİ kez isteniyordu (`run-pagination` 7. senaryo ara sıra kırmızıydı).
+`usePagedList`, `useGrowingList` ve yorum sayfalaması artık "bu sayfa yolda" bilgisini ref ile anında tutuyor.
+
 ## Testler
 - SQL: `community-notify-scale.sql` (30 000 üye, sınıf kuralları, 20 000 sınırı, zaman), `group-unread.sql` (fan-out yok, imleç/temizleme/katılma/100 sınırı, `list_my_communities`), `stories.sql` 66–68 (sayfalı görüntüleyenler); `chat-groups.sql` 108 yeni davranışa göre güncellendi.
 - Arayüz: `run-scale.mjs` (1200 birebir sohbet, grup okunmamış "99+", 130 üst yorumlu thread + derin bağlantı, 120 geçmiş etkinlik, 90 içerikli paylaşım seçicisi + arama); `unbounded-queries.test.ts` güncellendi.

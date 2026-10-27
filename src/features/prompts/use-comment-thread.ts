@@ -72,6 +72,7 @@ export function useCommentThread(
   // Üst düzey yorumlar 20'şerli sayfa (docs/history/258-*): sonraki sayfanın başlangıcı (null = hepsi okundu).
   const [nextOffset, setNextOffset] = useState<number | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
+  const loadingMoreRef = useRef(false); // observer + click in the same tick must not read the same page twice
   const [moreFailed, setMoreFailed] = useState(false);
   const [loadFailed, setLoadFailed] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
@@ -235,7 +236,8 @@ export function useCommentThread(
 
   /** The next page of top-level comments (with their replies), appended — also by itself when the end of the list scrolls into view. */
   async function loadMoreComments() {
-    if (nextOffset === null || loadingMore) return;
+    if (nextOffset === null || loadingMore || loadingMoreRef.current) return;
+    loadingMoreRef.current = true;
     setLoadingMore(true);
     setMoreFailed(false);
     try {
@@ -254,6 +256,7 @@ export function useCommentThread(
       console.error("comment thread (more)", err);
       setMoreFailed(true);
     } finally {
+      loadingMoreRef.current = false;
       setLoadingMore(false);
     }
   }
