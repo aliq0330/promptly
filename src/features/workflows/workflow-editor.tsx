@@ -10,6 +10,9 @@ import { Tabs } from "@/components/ui/tabs";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useOwnProfile } from "@/features/auth/own-profile-provider";
 import { fetchWorkflowById, saveWorkflow } from "@/lib/supabase/workflows";
+import { invalidateWorkflowFlow } from "@/lib/supabase/workflow-flow";
+import { applyWorkflowSpaceChoice } from "@/lib/supabase/workflow-space";
+import { WorkflowSpaceField, useWorkflowSpaceChoice } from "./workflow-space-field";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { appendLinkedStep, duplicateStep, moveStep, newStep, sanitizeLinks, validateWorkflow, type WorkflowIssue } from "@/lib/workflow-logic";
 import { cn } from "@/lib/utils";
@@ -72,6 +75,8 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
   const [issues, setIssues] = useState<WorkflowIssue[]>([]);
   const [notice, setNotice] = useState<string | null>(null);
   const [visibility, setVisibility] = useState<ContentVisibility>("public");
+  // "Space'te göster" (docs/history/261-*): karar yayınlanınca uygulanır.
+  const spaceChoice = useWorkflowSpaceChoice(workflowId, user?.id ?? null);
   const [addTarget, setAddTarget] = useState<AddTarget>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [detailTab, setDetailTab] = useState<"general" | "content" | "io" | "settings">("general");
@@ -216,6 +221,17 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
       setDirty(false);
       setSaveState("saved");
       if (!editId) window.history.replaceState(null, "", `${window.location.pathname}?edit=${id}`);
+      invalidateWorkflowFlow(id);
+      if (target === "published") {
+        // Workflow kaydedildi; Space bağı ayrı bir adım. Başarısız olursa kullanıcı yerinde kalır (Paylaş yeniden dener), workflow kaybolmaz.
+        try {
+          spaceChoice.settle(await applyWorkflowSpaceChoice({ workflowId: id, title: meta.title, userId: user.id, choice: spaceChoice.choice }));
+        } catch {
+          setSaveState("error");
+          setSaveError(t("wfSpace.field.applyFailed"));
+          return false;
+        }
+      }
       if (target === "published") router.push((await returnToCommunity("workflow", id)) ?? `/workflows/local?id=${id}`);
       return true;
     } catch {
@@ -482,6 +498,17 @@ export function WorkflowEditor({ editId }: { editId: string | null }) {
           <TagPicker picker={tagPicker} />
         </FormDisclosure>
         <SuggestedTagsRow picker={tagPicker} />
+        <WorkflowSpaceField
+          choice={spaceChoice.choice}
+          onChange={(next) => {
+            spaceChoice.update(next);
+            touch();
+          }}
+          spaces={spaceChoice.spaces}
+          failed={spaceChoice.failed}
+          workflowVisibility={visibility}
+          isDraft={status !== "published"}
+        />
       </ComposeSection>
 
       <ComposeSection title={t("publish.whoSees")} id="compose-publish">

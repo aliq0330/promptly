@@ -42,6 +42,7 @@ import type { Workflow, WorkflowStep, WorkflowVersion } from "@/types";
 import { categoryLabel } from "./step-meta";
 import { WorkflowFlow } from "./workflow-flow";
 import { WorkflowRunner } from "./workflow-runner";
+import { WorkflowSpacePreview } from "./workflow-space-preview";
 import { WorkflowHistoryPanel } from "@/features/versions/content-history-panels";
 import { VersionRestoreToast } from "@/features/versions/version-restore-toast";
 import { fetchVersionsForWorkflow } from "@/lib/supabase/content-versions";
@@ -287,6 +288,7 @@ export function WorkflowDetailView({ workflowId }: { workflowId?: string } = {})
         >
           {view === "run" && steps.length > 0 ? <WorkflowRunner key={workflow.id} workflowId={workflow.id} steps={steps} /> : <WorkflowFlow steps={steps} />}
         </DetailSection>
+        <WorkflowSpacePreview workflowId={workflow.id} />
         </>)}
 
         <DetailComments>

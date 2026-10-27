@@ -8,6 +8,7 @@ import type { SpaceItem, SpacePalette } from "@/lib/supabase/spaces";
 import type { ResolvedSource } from "../space-items";
 import { sourceReasonKey } from "../space-items";
 import { SPACE_COLOR_CLASS, SpaceImage } from "../space-visuals";
+import { WorkflowFlowDiagram, useWorkflowFlow } from "@/features/workflows/workflow-flow-diagram";
 
 /**
  * Panodaki tek öğe (docs/history/213-*). Konum/boyut DÜNYA birimindedir; pano dönüşümü (kaydırma + yakınlaştırma) üst katmandadır.
@@ -151,6 +152,26 @@ function ItemBody({ item, resolved, palette, attachedTitle, lowDetail }: { item:
     );
   }
 
+  if (item.contentType === "workflow" && item.contentId && !reason) {
+    return <WorkflowFlowItem item={item} fallback={<ContentCard item={item} resolved={resolved} reason={reason} lowDetail={lowDetail} />} lowDetail={lowDetail} />;
+  }
+  return <ContentCard item={item} resolved={resolved} reason={reason} lowDetail={lowDetail} />;
+}
+
+/** Workflow çerçevesi (docs/history/261-*): workflow'un akış diyagramı. Adımlar workflow'dan canlı okunur; okunamazsa sade kart. */
+function WorkflowFlowItem({ item, fallback, lowDetail }: { item: SpaceItem; fallback: ReactNode; lowDetail: boolean }) {
+  const { data, state } = useWorkflowFlow(item.contentId);
+  if (state === "failed") return <>{fallback}</>;
+  if (!data) return <div className="skeleton-shimmer h-full w-full rounded-xl border border-border-soft bg-surface-soft" aria-hidden />;
+  return (
+    <div className="h-full w-full overflow-hidden rounded-xl border border-border-soft bg-surface shadow-card">
+      <WorkflowFlowDiagram data={data} options={{ showIo: item.flowShowIo, showLinks: item.flowShowLinks, showRelations: item.flowShowRelations }} fit={{ mode: "box" }} lowDetail={lowDetail} />
+    </div>
+  );
+}
+
+function ContentCard({ item, resolved, reason, lowDetail }: { item: SpaceItem; resolved: ResolvedSource; reason: ReturnType<typeof sourceReasonKey>; lowDetail: boolean }) {
+  const { t } = useTranslation();
   const Icon = item.contentType === "workflow" ? Workflow : item.contentType === "preset" ? SlidersHorizontal : Sparkles;
   return (
     <div className="flex h-full w-full flex-col overflow-hidden rounded-lg border border-border-soft bg-surface p-3 shadow-card">

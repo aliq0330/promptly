@@ -34,10 +34,12 @@ import {
   Trash2,
   Undo2,
   Ungroup,
+  Workflow as WorkflowIcon,
   X,
   type LucideIcon,
 } from "lucide-react";
 import { lockBodyScroll, unlockBodyScroll } from "@/components/ui/modal";
+import { WorkflowImportModal } from "../workflow-import-modal";
 import { ScrollRow } from "@/components/ui/scroll-row";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
@@ -156,6 +158,7 @@ export function SpaceBoard({ focusId }: { focusId: string | null }) {
     | { kind: "draft"; item?: SpaceItem | null; near?: { x: number; y: number } }
     | { kind: "groups" }
     | { kind: "shortcuts" }
+    | { kind: "importWorkflow" }
   >(null);
   const [error, setError] = useState<string | null>(null);
   const [undoNotice, setUndoNotice] = useState<string | null>(null);
@@ -741,6 +744,7 @@ export function SpaceBoard({ focusId }: { focusId: string | null }) {
               { key: "note", label: t("spaces.board.addNote"), icon: StickyNote, onSelect: () => setDialog({ kind: "note", near: viewCenter() }) },
               { key: "draft", label: t("spaces.board.addDraft"), icon: SquareTerminal, onSelect: () => setDialog({ kind: "draft", near: viewCenter() }) },
               { key: "image", label: t("spaces.board.addImage"), icon: ImagePlus, onSelect: () => fileRef.current?.click() },
+              { key: "workflow", label: t("wfSpace.import.menu"), icon: WorkflowIcon, onSelect: () => setDialog({ kind: "importWorkflow" }) },
               ...boardPalettes.slice(0, 6).map((palette) => ({
                 key: `palette-${palette.id}`,
                 label: t("spaces.board.addPalette", { name: palette.name }),
@@ -917,6 +921,21 @@ export function SpaceBoard({ focusId }: { focusId: string | null }) {
       {dialog?.kind === "note" && <NoteEditorModal note={dialog.item ?? null} attachTo={dialog.attachTo ?? null} near={dialog.near} onClose={() => setDialog(null)} />}
       {dialog?.kind === "draft" && <DraftEditorModal draft={dialog.item ?? null} near={dialog.near} onClose={() => setDialog(null)} />}
       {dialog?.kind === "groups" && <GroupsManagerModal onClose={() => setDialog(null)} />}
+      {dialog?.kind === "importWorkflow" && (
+        <WorkflowImportModal
+          spaceVisibility={space.visibility}
+          existingWorkflowIds={new Set(items.filter((item) => item.kind === "content" && item.contentType === "workflow" && item.contentId).map((item) => item.contentId!))}
+          onClose={() => setDialog(null)}
+          onImport={async ({ workflow, size, showIo, showLinks, showRelations }) => {
+            // Hata pencerede gösterilsin diye `addFromBoard` değil doğrudan `addItems` (aynı geri alma + seçim davranışı).
+            const created = await addItems(
+              place([{ spaceId: space.id, kind: "content", contentType: "workflow", contentId: workflow.id, title: "", flowShowIo: showIo, flowShowLinks: showLinks, flowShowRelations: showRelations }], viewCenter(), [size]),
+            );
+            setHistory((h) => pushHistory(h, { type: "add", items: created }));
+            setSelection(created.map((item) => item.id));
+          }}
+        />
+      )}
       {dialog?.kind === "shortcuts" && <ShortcutsDialog onClose={() => setDialog(null)} />}
     </div>
   );

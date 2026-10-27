@@ -187,3 +187,14 @@ NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co NEXT_PUBLIC_SUPABASE_ANON_K
 CHROMIUM_PATH=/opt/pw-browsers/chromium-1194/chrome-linux/chrome node tests/messaging-ui/run-exchange.mjs   # 30/30 beklenir
 DEBUG=1 ONLY="5" node tests/messaging-ui/run-exchange.mjs   # konsol/sayfa hatalarını yazdırır, yalnız "5" ile başlayan senaryo
 ```
+
+## Workflow ↔ Space bağlantısı (`docs/history/261-*`)
+
+`run-workflow-space.mjs` (18 senaryo): panodaki workflow çerçevesi (akış diyagramı: adım/ok/içerik kartı/ilişki, katman bayrakları, erişilemeyen workflow), Space içinden "Workflow aktar" (yalnız kendi workflow'ların, önizleme, katman kutuları → gönderilen satır, tekrar aktarılamaz, izleyici aktaramaz), workflow sayfasındaki "Space panosu" önizlemesi (herkese açık / özel-ziyaretçi / özel-sahibi / çoklu Space + çip geçişi / bağ yok / gizli not sızmaz), workflow formunda "Space'te göster" (seçim notları, yayında öğe eklenir, mevcut bağ önceden dolu, kapatınca silinir), İngilizce, telefonda taşma yok. Ağ taklidi `mock-spaces.mjs` + test içi workflow uçları (`workflows`, `workflow_steps`, `content_relations`, `space_items` + `spaces!inner`). Gerçek Supabase'e KARŞI DENENMEDİ — yetki kuralı `supabase/tests/space-workflow-flow.sql`'dedir.
+
+```bash
+npm i --no-save playwright            # repoya bağımlılık eklenmez
+NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co NEXT_PUBLIC_SUPABASE_ANON_KEY=dummy npm run build
+node tests/messaging-ui/run-workflow-space.mjs   # 18/18 beklenir
+```
+

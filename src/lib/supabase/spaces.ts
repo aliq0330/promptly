@@ -167,6 +167,10 @@ export interface SpaceItem {
   color: SpaceColor;
   attachedItemId: string | null;
   isPrivate: boolean;
+  /** Workflow çerçevesinde hangi katmanlar çizilir (docs/history/261-*; yalnız `contentType === "workflow"` öğesinde anlamlı). */
+  flowShowIo: boolean;
+  flowShowLinks: boolean;
+  flowShowRelations: boolean;
   createdBy: string | null;
   updatedBy: string | null;
   createdAt: string;
@@ -339,14 +343,18 @@ export interface SpaceItemRow {
   color: SpaceColor;
   attached_item_id: string | null;
   is_private: boolean;
+  flow_show_io?: boolean;
+  flow_show_links?: boolean;
+  flow_show_relations?: boolean;
   created_by: string | null;
   updated_by: string | null;
   created_at: string;
   updated_at: string;
 }
 
+// `flow_show_*` (docs/history/261-*) yoksa istek sütunsuz yeniden denenir (server-errors.ts OPTIONAL_COLUMNS) — Space'ler migration'dan önce de açılır.
 const ITEM_COLS =
-  "id, space_id, kind, x, y, w, h, z, group_id, prompt_id, media_url, media_width, media_height, is_draft, source_prompt_id, content_type, content_id, palette_id, title, body, note, color, attached_item_id, is_private, created_by, updated_by, created_at, updated_at";
+  "id, space_id, kind, x, y, w, h, z, group_id, prompt_id, media_url, media_width, media_height, is_draft, source_prompt_id, content_type, content_id, palette_id, title, body, note, color, attached_item_id, is_private, flow_show_io, flow_show_links, flow_show_relations, created_by, updated_by, created_at, updated_at";
 
 export function mapSpaceItem(row: SpaceItemRow): SpaceItem {
   return {
@@ -374,6 +382,9 @@ export function mapSpaceItem(row: SpaceItemRow): SpaceItem {
     color: row.color ?? "neutral",
     attachedItemId: row.attached_item_id,
     isPrivate: Boolean(row.is_private),
+    flowShowIo: row.flow_show_io ?? true,
+    flowShowLinks: row.flow_show_links ?? true,
+    flowShowRelations: row.flow_show_relations ?? true,
     createdBy: row.created_by,
     updatedBy: row.updated_by,
     createdAt: row.created_at,
@@ -698,6 +709,10 @@ export interface NewSpaceItem {
   color?: SpaceColor;
   attachedItemId?: string | null;
   isPrivate?: boolean;
+  /** Yalnız workflow çerçevesi için; verilmezse sütun hiç gönderilmez (migration öncesi sunucuyla da çalışır). */
+  flowShowIo?: boolean;
+  flowShowLinks?: boolean;
+  flowShowRelations?: boolean;
 }
 
 function itemInsertRow(item: NewSpaceItem, userId: string): Record<string, unknown> {
@@ -727,6 +742,9 @@ function itemInsertRow(item: NewSpaceItem, userId: string): Record<string, unkno
     color: item.color ?? "neutral",
     attached_item_id: item.attachedItemId ?? null,
     is_private: item.isPrivate ?? false,
+    ...(item.flowShowIo === undefined ? {} : { flow_show_io: item.flowShowIo }),
+    ...(item.flowShowLinks === undefined ? {} : { flow_show_links: item.flowShowLinks }),
+    ...(item.flowShowRelations === undefined ? {} : { flow_show_relations: item.flowShowRelations }),
     created_by: userId,
   };
 }
@@ -744,7 +762,7 @@ export async function restoreSpaceItems(items: SpaceItem[], userId: string): Pro
   return addSpaceItems(items, userId);
 }
 
-export type SpaceItemPatch = Partial<Pick<SpaceItem, "title" | "body" | "note" | "color" | "isPrivate" | "attachedItemId" | "groupId">>;
+export type SpaceItemPatch = Partial<Pick<SpaceItem, "title" | "body" | "note" | "color" | "isPrivate" | "attachedItemId" | "groupId" | "flowShowIo" | "flowShowLinks" | "flowShowRelations">>;
 
 export async function updateSpaceItem(id: string, patch: SpaceItemPatch): Promise<SpaceItem> {
   const body: Record<string, unknown> = {};
@@ -755,6 +773,9 @@ export async function updateSpaceItem(id: string, patch: SpaceItemPatch): Promis
   if (patch.isPrivate !== undefined) body.is_private = patch.isPrivate;
   if (patch.attachedItemId !== undefined) body.attached_item_id = patch.attachedItemId;
   if (patch.groupId !== undefined) body.group_id = patch.groupId;
+  if (patch.flowShowIo !== undefined) body.flow_show_io = patch.flowShowIo;
+  if (patch.flowShowLinks !== undefined) body.flow_show_links = patch.flowShowLinks;
+  if (patch.flowShowRelations !== undefined) body.flow_show_relations = patch.flowShowRelations;
   const { data, error } = await supabase.from("space_items").update(body).eq("id", id).select(ITEM_COLS).maybeSingle();
   if (error) throw toSpaceError(error);
   if (!data) throw new SpaceError("space_forbidden", translateForRuntime("spaces.error.forbidden"));
