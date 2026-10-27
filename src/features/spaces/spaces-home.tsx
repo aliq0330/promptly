@@ -1,5 +1,6 @@
 "use client";
 
+import { LoadMoreButton } from "@/features/feed/load-more";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -364,12 +365,7 @@ export function SpacesHome() {
                 ))}
               </ul>
               {hasMore && (
-                <div className="mt-6 flex justify-center">
-                  <Button variant="outline" onClick={() => void loadMore()} disabled={loadingMore}>
-                    {loadingMore && <Loader2 size={14} className="animate-spin" aria-hidden />}
-                    {t("spaces.home.loadMore")}
-                  </Button>
-                </div>
+                <LoadMoreButton wrapperClassName="mt-6 flex justify-center" label={t("spaces.home.loadMore")} loading={loadingMore} onLoadMore={() => void loadMore()} />
               )}
             </>
           )}

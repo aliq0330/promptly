@@ -33,15 +33,10 @@ import { fetchOwnPromptsForExport } from "@/lib/supabase/prompt-exchange";
 import { fetchAuthorPromptsPage, fetchProfileContentStats, type AuthorPromptSort, type ProfileContentStats } from "@/lib/supabase/prompts";
 import { usePagedList } from "@/features/content/use-paged-list";
 import { LoadMore } from "@/features/feed/load-more";
-import { fetchRequestsByAuthor } from "@/lib/supabase/requests";
-import { fetchWorkflowsByCreator } from "@/lib/supabase/workflows";
-import { fetchPresetsByCreator } from "@/lib/supabase/presets";
+import { fetchRequestsByAuthorPage } from "@/lib/supabase/requests";
+import { fetchWorkflowsByCreatorPage } from "@/lib/supabase/workflows";
+import { fetchPresetsByCreatorPage } from "@/lib/supabase/presets";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import type {
-  Preset,
-  PromptRequest,
-  Workflow,
-} from "@/types";
 import { CONTENT_GRID_ITEM_CLASS, ContentGrid } from "@/features/content/content-card";
 import { useViewMode } from "@/features/content/view-mode-store";
 import { FocusGrid } from "@/features/focus/focus-grid";
@@ -79,11 +74,6 @@ export function MyContentView() {
   const { user } = useAuth();
   const [viewMode] = useViewMode();
 
-  const [requests, setRequests] = useState<PromptRequest[]>([]);
-  const [workflows, setWorkflows] = useState<Workflow[]>([]);
-  const [presets, setPresets] = useState<Preset[]>([]);
-  const [loading, setLoading] = useState(true);
-
   const [kind, setKind] = useState<Kind>("prompts");
   const [visibility, setVisibility] = useState<VisibilityFilter>("all");
   const [sort, setSort] = useState<ContentSortKey>("newest");
@@ -106,18 +96,20 @@ export function MyContentView() {
     fetchAuthorPromptsPage({ authorId: userId ?? "", sort: promptSort, visibility, search: debouncedSearch }, offset),
   );
   const prompts = promptPages.items;
+  // "İstekler", "Workflow'lar", "Hazır ayarlar": same shape — filter, sort and search go to the query, a page at a time.
+  const filter = { sort: promptSort, visibility, search: debouncedSearch };
+  const filterKey = `${promptSort}|${visibility}|${debouncedSearch}`;
+  const requestPages = usePagedList(`mine-requests|${userId ?? ""}|${filterKey}`, Boolean(userId) && kind === "requests", (offset) => fetchRequestsByAuthorPage(userId ?? "", filter, offset));
+  const workflowPages = usePagedList(`mine-workflows|${userId ?? ""}|${filterKey}`, Boolean(userId) && kind === "workflows", (offset) => fetchWorkflowsByCreatorPage(userId ?? "", filter, offset));
+  const presetPages = usePagedList(`mine-presets|${userId ?? ""}|${filterKey}`, Boolean(userId) && kind === "presets", (offset) => fetchPresetsByCreatorPage(userId ?? "", filter, offset));
+  const requests = requestPages.items;
+  const workflows = workflowPages.items;
+  const presets = presetPages.items;
+  // The tab counts come from the database (`profile_content_stats`): the lists are read a page at a time, so their lengths are no counts.
   useEffect(() => {
     if (!userId) return;
     let cancelled = false;
-    // Prompts are read a page at a time below (a member can own thousands); the other kinds are small enough to read whole.
-    Promise.all([fetchRequestsByAuthor(userId), fetchWorkflowsByCreator(userId), fetchPresetsByCreator(userId), fetchProfileContentStats(userId)]).then(([r, w, pr, counted]) => {
-      if (cancelled) return;
-      setStats(counted);
-      setRequests(r);
-      setWorkflows(w.filter((x) => x.status === "published"));
-      setPresets(pr.filter((x) => x.status === "published"));
-      setLoading(false);
-    });
+    fetchProfileContentStats(userId).then((counted) => !cancelled && setStats(counted));
     return () => {
       cancelled = true;
     };
@@ -188,30 +180,30 @@ export function MyContentView() {
       {
         key: "requests" as const,
         label: t("nav.requests"),
-        count: requests.length,
+        count: stats?.requests ?? requestPages.total ?? undefined,
         icon: Sparkles,
       },
       {
         key: "workflows" as const,
         label: t("nav.workflows"),
-        count: workflows.length,
+        count: stats?.workflows ?? workflowPages.total ?? undefined,
         icon: WorkflowIcon,
       },
       {
         key: "presets" as const,
         label: t("nav.presets"),
-        count: presets.length,
+        count: stats?.presets ?? presetPages.total ?? undefined,
         icon: SlidersHorizontal,
       },
       { key: "drafts" as const, label: t("profile.tabDrafts"), icon: FileText },
     ],
     [
       t,
-      stats?.prompts,
+      stats,
       promptPages.total,
-      requests.length,
-      workflows.length,
-      presets.length,
+      requestPages.total,
+      workflowPages.total,
+      presetPages.total,
     ],
   );
 
@@ -225,28 +217,12 @@ export function MyContentView() {
     presets: { href: "/presets/create", label: t("preset.create") },
   };
 
-  const needle = search.trim().toLocaleLowerCase("tr");
-  const visible = useMemo(() => {
-    if (kind === "drafts") return [];
-    let list = entries[kind];
-    // Prompts were already filtered, searched and sorted by the database.
-    if (kind === "prompts") return list;
-    if (visibility !== "all")
-      list = list.filter((e) => e.isPrivate === (visibility === "private"));
-    if (needle)
-      list = list.filter((e) =>
-        `${e.title} ${e.description}`.toLocaleLowerCase("tr").includes(needle),
-      );
-    return [...list].sort((a, b) => {
-      if (sort === "most-liked") return b.likeCount - a.likeCount;
-      const diff =
-        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-      return sort === "oldest" ? diff : -diff;
-    });
-  }, [entries, kind, visibility, needle, sort]);
+  // Every kind is filtered, searched and sorted by the database; the list is shown as loaded.
+  const visible = kind === "drafts" ? [] : entries[kind];
+  const pages = kind === "drafts" ? promptPages : { prompts: promptPages, requests: requestPages, workflows: workflowPages, presets: presetPages }[kind];
 
   // "Is there anything at all?" — for prompts the counted total; a filtered-to-nothing list is then "no match", not "no content".
-  const total = kind === "drafts" ? 0 : kind === "prompts" ? (stats?.prompts ?? promptPages.total ?? entries.prompts.length) : entries[kind].length;
+  const total = kind === "drafts" ? 0 : (stats?.[kind] ?? pages.total ?? entries[kind].length);
 
   const searching = searchOpen || search !== "";
   const menuItems: SectionMenuItem<Kind>[] = kindTabs.map((tab) => ({ key: tab.key, label: tab.label, icon: tab.icon, meta: "count" in tab ? tab.count : undefined, dividerBefore: tab.key === "drafts" }));
@@ -315,7 +291,7 @@ export function MyContentView() {
         user && <ProfileDraftsPanel userId={user.id} />
       ) : (
         <>
-          {loading || (kind === "prompts" && promptPages.loading) ? (
+          {pages.loading ? (
             <div className="columns-1 gap-4 sm:columns-2 xl:columns-3">
               {[0, 1, 2].map((i) => (
                 <Skeleton
@@ -324,10 +300,10 @@ export function MyContentView() {
                 />
               ))}
             </div>
-          ) : kind === "prompts" && promptPages.failed && prompts.length === 0 ? (
+          ) : pages.failed && visible.length === 0 ? (
             <div className="space-y-3 py-8 text-center" role="alert">
               <p className="text-small text-danger">{t("feed.loadFailed")}</p>
-              <Button type="button" variant="outline" onClick={promptPages.retry} data-testid="my-content-retry">
+              <Button type="button" variant="outline" onClick={pages.retry} data-testid="my-content-retry">
                 {t("common.retry")}
               </Button>
             </div>
@@ -358,10 +334,9 @@ export function MyContentView() {
               ))}
             </ContentGrid>
           )}
-          {kind === "prompts" && !promptPages.loading && (
-            <LoadMore failed={promptPages.failed} hasMore={promptPages.hasMore} loadingMore={promptPages.loadingMore} onLoadMore={() => void promptPages.loadMore()} auto />
+          {!pages.loading && (
+            <LoadMore failed={pages.failed} hasMore={pages.hasMore} loadingMore={pages.loadingMore} onLoadMore={() => void pages.loadMore()} auto />
           )}
-
         </>
       )}
       {exportOpen && userId && <ExportPromptsModal load={() => fetchOwnPromptsForExport(userId)} onClose={() => setExportOpen(false)} />}

@@ -1,10 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { LoadMoreButton } from "@/features/feed/load-more";
 import Link from "next/link";
 import { ExternalLink } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { fetchAdminUserActivity, type AdminActivityItem, type AdminActivityKind } from "@/lib/supabase/admin";
 import { formatCount, formatRelativeTime } from "@/lib/utils";
@@ -119,11 +119,7 @@ export function ActivityList({ userId, kind }: { userId: string; kind: AdminActi
         ))}
       </ul>
       {hasMore && (
-        <div className="flex justify-center">
-          <Button variant="secondary" size="sm" disabled={loadingMore} onClick={loadMore}>
-            {loadingMore ? t("common.loadingMore") : t("common.loadMore")}
-          </Button>
-        </div>
+        <LoadMoreButton variant="secondary" size="sm" wrapperClassName="flex justify-center" onLoadMore={() => void loadMore?.()} loading={loadingMore} />
       )}
     </div>
   );

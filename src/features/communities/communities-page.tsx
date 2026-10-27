@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { LoadMoreButton } from "@/features/feed/load-more";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Compass, Loader2, Plus, Search, ShieldCheck, Users, X } from "lucide-react";
@@ -369,11 +370,7 @@ export function DiscoverView({
             ))}
           </ul>
           {current.hasMore && (
-            <div className="flex justify-center">
-              <Button type="button" variant="outline" size="sm" onClick={loadMore} disabled={loadingMore}>
-                {loadingMore ? t("common.loadingMore") : t("common.loadMore")}
-              </Button>
-            </div>
+            <LoadMoreButton size="sm" wrapperClassName="flex justify-center" onLoadMore={() => void loadMore?.()} loading={loadingMore} />
           )}
         </>
       )}
@@ -493,11 +490,7 @@ function MyCommunitiesView({ scope, onToast }: { scope: MyCommunityScope; onToas
         </ul>
       )}
       {current.hasMore && (
-        <div className="flex justify-center">
-          <Button type="button" variant="outline" size="sm" onClick={loadMore} disabled={loadingMore}>
-            {loadingMore ? t("common.loadingMore") : t("common.loadMore")}
-          </Button>
-        </div>
+        <LoadMoreButton size="sm" wrapperClassName="flex justify-center" onLoadMore={() => void loadMore?.()} loading={loadingMore} />
       )}
     </div>
   );

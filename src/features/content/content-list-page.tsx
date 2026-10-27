@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { LoadMoreButton } from "@/features/feed/load-more";
 import type { LucideIcon } from "lucide-react";
 import { LayoutGrid } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageContainer } from "@/components/ui/page-header";
 import { PromptCardSkeletonGrid } from "@/components/ui/prompt-card-skeleton";
@@ -243,18 +243,15 @@ export function ContentListPage<T extends { id: string; createdAt: string; likeC
         // one" empty state would strand the user on a false dead end, so
         // this branch offers "load more" instead of (never alongside) the
         // create action.
-        <EmptyState
-          icon={icon}
-          title={active || hasMore ? t("search.noMatchingFilters") : emptyTitle}
-          description={active ? t("list.tryDifferentSearch") : hasMore ? t("search.noMatchingFiltersOnPage") : emptyBody}
-          action={
-            active
-              ? undefined
-              : hasMore
-                ? { label: loadingMore ? t("common.loadingMore") : t("common.loadMore"), onClick: () => onLoadMore?.() }
-                : { label: createLabel, href: createHref }
-          }
-        />
+        <>
+          <EmptyState
+            icon={icon}
+            title={active || hasMore ? t("search.noMatchingFilters") : emptyTitle}
+            description={active ? t("list.tryDifferentSearch") : hasMore ? t("search.noMatchingFiltersOnPage") : emptyBody}
+            action={active || hasMore ? undefined : { label: createLabel, href: createHref }}
+          />
+          {!active && hasMore && <LoadMoreButton onLoadMore={() => void onLoadMore?.()} loading={loadingMore} />}
+        </>
       ) : (
         <>
           {focusKind && viewMode === "focus" ? (
@@ -263,18 +260,10 @@ export function ContentListPage<T extends { id: string; createdAt: string; likeC
             renderItems(visible)
           )}
           {!active && hasMore && (
-            <div className="flex justify-center pt-2">
-              <Button variant="outline" onClick={onLoadMore} disabled={loadingMore}>
-                {loadingMore ? t("common.loadingMore") : t("common.loadMore")}
-              </Button>
-            </div>
+            <LoadMoreButton onLoadMore={() => void onLoadMore?.()} loading={loadingMore} />
           )}
           {active && searchCursor && (
-            <div className="flex justify-center pt-2">
-              <Button variant="outline" onClick={() => void loadMoreSearch()} disabled={searchLoadingMore}>
-                {searchLoadingMore ? t("common.loadingMore") : t("common.loadMore")}
-              </Button>
-            </div>
+            <LoadMoreButton onLoadMore={() => void loadMoreSearch()} loading={searchLoadingMore} />
           )}
         </>
       )}

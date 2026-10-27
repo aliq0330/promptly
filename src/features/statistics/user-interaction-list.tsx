@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { LoadMoreButton } from "@/features/feed/load-more";
 import type { LucideIcon } from "lucide-react";
 import { UserX } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
@@ -135,11 +136,7 @@ export function UserInteractionList({
         ))}
       </ul>
       {list.hasMore && (
-        <div className="flex justify-center py-3">
-          <Button type="button" variant="outline" size="sm" onClick={list.loadMore} disabled={list.loadingMore}>
-            {list.loadingMore ? t("common.loadingMore") : t("common.loadMore")}
-          </Button>
-        </div>
+        <LoadMoreButton size="sm" wrapperClassName="flex justify-center py-3" onLoadMore={() => void list.loadMore?.()} loading={list.loadingMore} />
       )}
     </div>
   );

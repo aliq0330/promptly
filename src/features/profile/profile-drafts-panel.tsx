@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { LoadMoreButton } from "@/features/feed/load-more";
 import Link from "next/link";
 import { FileText, LayoutGrid, SlidersHorizontal, Sparkles, SquareTerminal, Trash2, Workflow as WorkflowIcon } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -152,11 +153,7 @@ export function ProfileDraftsPanel({ userId }: { userId: string }) {
         </ul>
       )}
       {visible.length > shown && (
-        <div className="flex justify-center pt-1">
-          <Button type="button" variant="outline" onClick={() => setShown((count) => count + DRAFTS_SHOWN_STEP)} data-testid="drafts-more">
-            {t("common.loadMore")} ({shown} / {visible.length})
-          </Button>
-        </div>
+        <LoadMoreButton wrapperClassName="flex justify-center pt-1" onLoadMore={() => setShown((count) => count + DRAFTS_SHOWN_STEP)} />
       )}
       {error && <p className="text-sm text-danger">{error}</p>}
     </div>

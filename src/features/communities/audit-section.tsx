@@ -1,9 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { LoadMoreButton } from "@/features/feed/load-more";
 import { History } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
 import { fetchCommunityAudit, type CommunityAuditEntry } from "@/lib/supabase/communities";
 import { auditActionKey } from "@/lib/communities";
 import { formatRelativeTime } from "@/lib/utils";
@@ -81,11 +81,7 @@ export function AuditSection({ groupId }: { groupId: string }) {
             ))}
           </ul>
           {hasMore && (
-            <div className="flex justify-center">
-              <Button type="button" size="sm" variant="outline" onClick={() => void loadMore()} disabled={loadingMore}>
-                {loadingMore ? t("common.loadingMore") : t("common.loadMore")}
-              </Button>
-            </div>
+            <LoadMoreButton size="sm" wrapperClassName="flex justify-center" onLoadMore={() => void loadMore()} loading={loadingMore} />
           )}
         </>
       )}

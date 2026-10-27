@@ -8,7 +8,6 @@ import { ProfileRail } from "./profile-rail";
 import { useFollowState } from "./use-follow-state";
 import { ScrollRow } from "@/components/ui/scroll-row";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useViewMode } from "@/features/content/view-mode-store";
 import { CompactViewToggle } from "@/features/content/view-mode-switcher";
 import { SectionMenu, type SectionMenuItem } from "@/features/content/section-menu";
@@ -29,12 +28,13 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
 import { fetchAuthorPromptsPage, fetchLikedPromptsPage, fetchProfileContentStats, type ProfileContentStats } from "@/lib/supabase/prompts";
 import { usePagedList } from "@/features/content/use-paged-list";
+import { PagedListSkeleton, PagedListState } from "@/features/feed/paged-list-state";
 import { LoadMore } from "@/features/feed/load-more";
-import { fetchWorkflowsByCreator } from "@/lib/supabase/workflows";
+import { fetchWorkflowsByCreatorPage } from "@/lib/supabase/workflows";
+import { fetchRequestsByAuthorPage } from "@/lib/supabase/requests";
 import { WorkflowCard } from "@/features/workflows/workflow-card";
-import { fetchPresetsByCreator } from "@/lib/supabase/presets";
 import { ProfilePresetsPanel } from "@/features/presets/profile-presets-panel";
-import type { Collection, Preset, Prompt, PromptContentType, PromptRequest, UserProfile, Workflow } from "@/types";
+import type { Collection, Prompt, PromptContentType, UserProfile } from "@/types";
 import { CONTENT_GRID_ITEM_CLASS, ContentGrid, ContentGridColumns } from "@/features/content/content-card";
 import { ProfileSpacesPanel, usePublicSpaces, type PublicSpaces } from "@/features/spaces/public-spaces";
 import { ProfileQuotesPanel } from "@/features/quotes/profile-quotes-panel";
@@ -62,12 +62,9 @@ const MAIN_TAB_COUNT = 4;
 export function ProfileView({
   user,
   isOwnProfile,
-  authorRequests,
 }: {
   user: UserProfile;
   isOwnProfile: boolean;
-  /** This profile's own real prompt requests (Prompt İstekleri) — always public, shown on every profile, not just the owner's (CLAUDE.md prompt-request module). */
-  authorRequests: PromptRequest[];
 }) {
   const { t } = useTranslation();
   const { user: authUser } = useAuth();
@@ -82,25 +79,6 @@ export function ProfileView({
   // there's nothing left to fetch/hold at this level for it (CLAUDE.md
   // Bölüm 9.22 §1 — the old "Tümü" sub-tab and its state were removed
   // structurally, not just hidden with CSS).
-  // RLS: a visitor gets this creator's published workflows, the owner their drafts too.
-  const [workflows, setWorkflows] = useState<Workflow[]>([]);
-  useEffect(() => {
-    let cancelled = false;
-    fetchWorkflowsByCreator(user.id).then((list) => !cancelled && setWorkflows(list));
-    return () => {
-      cancelled = true;
-    };
-  }, [user.id]);
-
-  // Same RLS rule: a visitor gets this creator's public published presets, the owner all of theirs (private + drafts).
-  const [presets, setPresets] = useState<Preset[]>([]);
-  useEffect(() => {
-    let cancelled = false;
-    fetchPresetsByCreator(user.id).then((list) => !cancelled && setPresets(list));
-    return () => {
-      cancelled = true;
-    };
-  }, [user.id]);
 
   // The creator's public collections: the ring strip under the header on every profile, and (for a visitor) the "Koleksiyonlar" tab.
   // The owner manages all of theirs, private ones too, under "Kaydedilenler" instead.
@@ -130,6 +108,9 @@ export function ProfileView({
   }, [user.id]);
 
   const [activeTab, setActiveTab] = useState<ProfileTabKey>("prompts");
+  // "İstekler" and "Workflow'lar": a page at a time like the prompts (RLS: a visitor sees the public ones, the owner their private ones too); "Hazır Ayarlar" pages itself.
+  const requests = usePagedList(`requests|${user.id}`, activeTab === "requests", (offset) => fetchRequestsByAuthorPage(user.id, {}, offset));
+  const workflows = usePagedList(`workflows|${user.id}`, activeTab === "workflows", (offset) => fetchWorkflowsByCreatorPage(user.id, {}, offset));
   const [activeType, setActiveType] = useState<PromptContentType | "all">("all");
   const [sort, setSort] = useState<ProfileSortKey>("newest");
   const [search, setSearch] = useState("");
@@ -166,11 +147,11 @@ export function ProfileView({
   const postCounts = useMemo(
     () => ({
       prompts: stats?.prompts ?? prompts.total ?? 0,
-      requests: stats?.requests ?? authorRequests.length,
-      workflows: stats?.workflows ?? workflows.filter((w) => w.status === "published").length,
-      presets: stats?.presets ?? presets.filter((p) => p.status === "published").length,
+      requests: stats?.requests ?? requests.total ?? 0,
+      workflows: stats?.workflows ?? workflows.total ?? 0,
+      presets: stats?.presets ?? 0,
     }),
-    [stats, prompts.total, authorRequests.length, workflows, presets],
+    [stats, prompts.total, requests.total, workflows.total],
   );
   // Real `copy_count` (one per signed-in person per day, never the author — docs/history/160-*), summed by the database over the prompts this profile lists.
   const reuseCount = stats?.reuse ?? 0;
@@ -233,7 +214,7 @@ export function ProfileView({
     if (listKnown) setFilterShown((prev) => (prev[activeTab] ? prev : { ...prev, [activeTab]: true }));
   }, [listKnown, activeTab]);
   const showFilter = filterable && (listKnown || filterShown[activeTab] === true);
-  const viewable = (filterable && (listKnown || filterShown[activeTab] === true) && (list.items.length > 0 || list.loading)) || (activeTab === "requests" && authorRequests.length > 0) || (activeTab === "workflows" && workflows.length > 0);
+  const viewable = (filterable && (listKnown || filterShown[activeTab] === true) && (list.items.length > 0 || list.loading)) || (activeTab === "requests" && requests.items.length > 0) || (activeTab === "workflows" && workflows.items.length > 0);
 
   function clearFilters() {
     setActiveType("all");
@@ -333,45 +314,43 @@ export function ProfileView({
                 <ContributionMap userId={user.id} />
               </div>
             ) : activeTab === "requests" ? (
-              authorRequests.length === 0 ? (
-                <ProfileEmptyState
-                  icon={Sparkles}
-                  title={t("profile.noRequestsYetTitle")}
-                  description={
-                    isOwnProfile
-                      ? t("profile.noRequestsYetOwnBody")
-                      : t("profile.noRequestsYetOtherBody")
-                  }
-                  action={isOwnProfile ? { label: t("create.requestTitle"), href: "/requests/new" } : undefined}
-                />
-              ) : (
-                <RequestList requests={authorRequests} />
-              )
+              <PagedListState list={requests}>
+                {requests.items.length === 0 ? (
+                  <ProfileEmptyState
+                    icon={Sparkles}
+                    title={t("profile.noRequestsYetTitle")}
+                    description={isOwnProfile ? t("profile.noRequestsYetOwnBody") : t("profile.noRequestsYetOtherBody")}
+                    action={isOwnProfile ? { label: t("create.requestTitle"), href: "/requests/new" } : undefined}
+                  />
+                ) : (
+                  <RequestList requests={requests.items} />
+                )}
+              </PagedListState>
             ) : activeTab === "workflows" ? (
-              workflows.length === 0 ? (
-                <ProfileEmptyState
-                  icon={WorkflowIcon}
-                  title={t("workflow.noneYetTitle")}
-                  description={isOwnProfile ? t("workflow.noneYetBody") : t("workflow.noneYetOtherBody")}
-                  action={isOwnProfile ? { label: t("workflow.create"), href: "/workflows/create" } : undefined}
-                />
-              ) : (
-                viewMode === "focus" ? (
-                  <FocusGrid items={workflows.map((data) => ({ kind: "workflow" as const, data }))} />
+              <PagedListState list={workflows}>
+                {workflows.items.length === 0 ? (
+                  <ProfileEmptyState
+                    icon={WorkflowIcon}
+                    title={t("workflow.noneYetTitle")}
+                    description={isOwnProfile ? t("workflow.noneYetBody") : t("workflow.noneYetOtherBody")}
+                    action={isOwnProfile ? { label: t("workflow.create"), href: "/workflows/create" } : undefined}
+                  />
+                ) : viewMode === "focus" ? (
+                  <FocusGrid items={workflows.items.map((data) => ({ kind: "workflow" as const, data }))} />
                 ) : (
                   <ContentGrid>
-                    {workflows.map((workflow) => (
+                    {workflows.items.map((workflow) => (
                       <div key={workflow.id} className={CONTENT_GRID_ITEM_CLASS}>
                         <WorkflowCard workflow={workflow} />
                       </div>
                     ))}
                   </ContentGrid>
-                )
-              )
+                )}
+              </PagedListState>
             ) : activeTab === "quotes" ? (
               <ProfileQuotesPanel authorId={user.id} isOwn={isOwnProfile} />
             ) : activeTab === "presets" ? (
-              <ProfilePresetsPanel ownerId={user.id} isOwn={isOwnProfile} created={presets} />
+              <ProfilePresetsPanel ownerId={user.id} isOwn={isOwnProfile} />
             ) : activeTab === "saved" ? (
               // No more separate flat "Tümü" list here — Kaydedilenler IS the
               // collections view now, "Genel" (the default, general-save
@@ -396,7 +375,7 @@ export function ProfileView({
             ) : (
               <>
                 {list.loading ? (
-                  <ProfileListSkeleton />
+                  <PagedListSkeleton />
                 ) : list.failed && list.items.length === 0 ? (
                   <div className="space-y-3 py-8 text-center" role="alert">
                     <p className="text-small text-danger">{t("feed.loadFailed")}</p>
@@ -453,17 +432,5 @@ function TabEmptyState({ tab, isOwnProfile }: { tab: ProfileTabKey; isOwnProfile
       description={t("profile.creativeJourneyStartsHereBody")}
       action={isOwnProfile ? { label: t("create.promptTitle"), href: "/create" } : undefined}
     />
-  );
-}
-
-function ProfileListSkeleton() {
-  return (
-    <ContentGrid>
-      {[0, 1, 2, 3].map((i) => (
-        <div key={i} className={CONTENT_GRID_ITEM_CLASS}>
-          <Skeleton className="h-64 w-full rounded-xl" />
-        </div>
-      ))}
-    </ContentGrid>
   );
 }

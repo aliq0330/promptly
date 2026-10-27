@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { LoadMoreButton } from "@/features/feed/load-more";
 import { createPortal } from "react-dom";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Flag, Pencil, Pin, PinOff, Plus, ShieldAlert, SquareStack, Trash2 } from "lucide-react";
@@ -254,11 +255,7 @@ export function FeedTab(props: CommunityTabProps) {
             columns={FOCUS_GRID_NARROW_COLUMNS}
           />
           {hasMore && (
-            <div className="flex justify-center">
-              <Button type="button" variant="outline" size="sm" onClick={() => void loadMore()} disabled={loadingMore}>
-                {loadingMore ? t("common.loadingMore") : t("common.loadMore")}
-              </Button>
-            </div>
+            <LoadMoreButton size="sm" wrapperClassName="flex justify-center" onLoadMore={() => void loadMore()} loading={loadingMore} />
           )}
         </>
       ) : (
@@ -276,11 +273,7 @@ export function FeedTab(props: CommunityTabProps) {
             ))}
           </ContentGrid>
           {hasMore && (
-            <div className="flex justify-center">
-              <Button type="button" variant="outline" size="sm" onClick={() => void loadMore()} disabled={loadingMore}>
-                {loadingMore ? t("common.loadingMore") : t("common.loadMore")}
-              </Button>
-            </div>
+            <LoadMoreButton size="sm" wrapperClassName="flex justify-center" onLoadMore={() => void loadMore()} loading={loadingMore} />
           )}
         </>
       )}

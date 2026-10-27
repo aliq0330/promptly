@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { LoadMoreButton } from "@/features/feed/load-more";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
@@ -274,11 +275,7 @@ export function SearchView({ idle, scope }: { idle?: ReactNode; scope?: SearchSc
 
   const loadMoreButton = (kind: SearchKind) =>
     cursors[kind] && (
-      <div className="flex justify-center pt-1">
-        <Button variant="outline" onClick={() => void loadMore(kind)} disabled={loadingMoreKind !== null}>
-          {loadingMoreKind === kind ? t("common.loadingMore") : t("common.loadMore")}
-        </Button>
-      </div>
+      <LoadMoreButton wrapperClassName="flex justify-center pt-1" onLoadMore={() => void loadMore(kind)} loading={loadingMoreKind === kind} disabled={loadingMoreKind !== null} />
     );
 
   const textOnly = !hasTokens;
@@ -417,11 +414,7 @@ export function SearchView({ idle, scope }: { idle?: ReactNode; scope?: SearchSc
               <ResultsHeading count={communities.items.length}>{t("nav.communities")}</ResultsHeading>
               {communityList(communities.items)}
               {communities.hasMore && (
-                <div className="flex justify-center pt-1">
-                  <Button variant="outline" onClick={() => void loadMoreCommunities()} disabled={loadingMoreCommunities}>
-                    {loadingMoreCommunities ? t("common.loadingMore") : t("common.loadMore")}
-                  </Button>
-                </div>
+                <LoadMoreButton wrapperClassName="flex justify-center pt-1" onLoadMore={() => void loadMoreCommunities()} loading={loadingMoreCommunities} />
               )}
             </section>
           ) : (

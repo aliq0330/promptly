@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Button } from "@/components/ui/button";
+import { LoadMoreButton } from "@/features/feed/load-more";
 import { Eyebrow } from "@/features/content/detail-parts";
 import { CONTENT_GRID_ITEM_CLASS, ContentGrid } from "@/features/content/content-card";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -72,11 +72,7 @@ export function SearchQuotes({ query, onCount }: { query: string; onCount: (coun
         ))}
       </ContentGrid>
       {cursor && (
-        <div className="flex justify-center pt-1">
-          <Button variant="outline" onClick={() => void loadMore()} disabled={loadingMore}>
-            {loadingMore ? t("common.loadingMore") : t("common.loadMore")}
-          </Button>
-        </div>
+        <LoadMoreButton wrapperClassName="flex justify-center pt-1" onLoadMore={() => void loadMore()} loading={loadingMore} />
       )}
     </section>
   );

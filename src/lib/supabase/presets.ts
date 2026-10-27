@@ -1,11 +1,11 @@
 import { supabase } from "./client";
-import { fetchAllRows } from "./paged";
+import { fetchAllRows, OWNED_PAGE, type OwnedListFilter, type PagedResult } from "./paged";
 import { withoutBlocked } from "./blocked-users";
 import { applyKeysetCursor, nextCursorFrom, type KeysetCursor } from "./pagination";
 import { PROFILE_SELECT } from "./profiles";
 import { mapProfileRow, type ProfileRow } from "./mappers";
 import { normalizeToolRefs } from "@/lib/ai-tool-catalog";
-import { taxonomyColumns, type ContentSearchFilters } from "./taxonomy-query";
+import { sanitizeSearchText, taxonomyColumns, type ContentSearchFilters } from "./taxonomy-query";
 import { orderByIds, searchContentIds, type SearchCursor, type SearchPage } from "./search";
 import { translateForRuntime } from "@/lib/i18n/translations";
 import { type PresetField, type PresetFieldConfig, type PresetFieldType, type PresetOption, type PresetSelection } from "@/lib/preset-fields";
@@ -232,6 +232,25 @@ export async function fetchPresetById(id: string): Promise<Preset | null> {
     console.error("fetchPresetById", err);
     return null;
   }
+}
+
+/** One page of a person's published presets (profile "Hazır Ayarlar", "İçeriklerim"); same contract as `fetchRequestsByAuthorPage`. */
+export async function fetchPresetsByCreatorPage(creatorId: string, filter: OwnedListFilter = {}, offset = 0, limit = OWNED_PAGE): Promise<PagedResult<Preset>> {
+  const text = sanitizeSearchText(filter.search ?? "");
+  let request = supabase
+    .from("presets")
+    .select(PRESET_SELECT, offset === 0 ? { count: "exact" } : undefined)
+    .eq("creator_id", creatorId)
+    .is("community_id", null)
+    .eq("status", "published");
+  if (filter.visibility && filter.visibility !== "all") request = request.eq("visibility", filter.visibility);
+  if (text) request = request.or(`title.ilike.%${text}%,description.ilike.%${text}%`);
+  const sort = filter.sort ?? "newest";
+  request = sort === "most-liked" ? request.order("like_count", { ascending: false }).order("created_at", { ascending: false }) : request.order("created_at", { ascending: sort === "oldest" });
+  const { data, count, error } = await request.order("id", { ascending: sort === "oldest" }).range(offset, offset + limit - 1);
+  if (error) throw new Error(error.message);
+  const rows = (data ?? []) as unknown as PresetRow[];
+  return { items: await withFields(rows.map(mapPresetRow)), total: offset === 0 ? (count ?? null) : null, nextOffset: rows.length === limit ? offset + limit : null };
 }
 
 /** A creator's presets — RLS gives a visitor only public published ones, the owner their private ones and drafts too ("Oluşturduklarım"). */

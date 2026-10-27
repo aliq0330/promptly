@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef, type ReactNode } from "react";
-import { Button } from "@/components/ui/button";
+import type { ReactNode } from "react";
+import { LoadMoreButton } from "@/features/feed/load-more";
 import { PromptCardSkeleton } from "@/components/ui/prompt-card-skeleton";
 import { CONTENT_GRID_ITEM_CLASS, ContentGrid } from "@/features/content/content-card";
 import { FEED_GRID_COLUMNS } from "./community-layout";
@@ -25,17 +25,7 @@ export function HomeFeedList({ feed, empty, onToast, viewerIsMember }: { feed: F
   const { t } = useTranslation();
   const [viewMode] = useViewMode();
   const tracker = useSeenTracker(true);
-  const sentinel = useRef<HTMLDivElement>(null);
   const { loadMore, hasMore, loadingMore, moreError } = feed;
-
-  // Sonsuz kaydırma: sonuncuya yaklaşınca sıradaki sayfa; hata sonrası otomatik tekrar denemez (düğmeyle).
-  useEffect(() => {
-    const el = sentinel.current;
-    if (!el || !hasMore || moreError || typeof IntersectionObserver === "undefined") return;
-    const io = new IntersectionObserver((entries) => entries.some((e) => e.isIntersecting) && void loadMore(), { rootMargin: "400px 0px" });
-    io.observe(el);
-    return () => io.disconnect();
-  }, [hasMore, moreError, loadMore, feed.entries.length]);
 
   if (feed.status === "loading") {
     return (
@@ -69,15 +59,13 @@ export function HomeFeedList({ feed, empty, onToast, viewerIsMember }: { feed: F
         </ContentGrid>
       )}
       {hasMore && (
-        <div ref={sentinel} className="flex flex-col items-center gap-2">
+        <div className="flex flex-col items-center gap-2">
           {moreError && (
             <p role="alert" className="text-small text-danger">
               {t("communities.home.feedMoreError")}
             </p>
           )}
-          <Button type="button" variant="outline" size="sm" onClick={() => void loadMore()} disabled={loadingMore}>
-            {loadingMore ? t("common.loadingMore") : moreError ? t("common.retry") : t("common.loadMore")}
-          </Button>
+          <LoadMoreButton size="sm" wrapperClassName="" onLoadMore={() => void loadMore()} loading={loadingMore} error={Boolean(moreError)} />
         </div>
       )}
     </div>

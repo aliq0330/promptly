@@ -1,5 +1,5 @@
 import { supabase } from "./client";
-import { fetchAllRows } from "./paged";
+import { fetchAllRows, OWNED_PAGE, type OwnedListFilter, type PagedResult } from "./paged";
 import { withoutBlocked } from "./blocked-users";
 import { applyKeysetCursor, nextCursorFrom, type KeysetCursor } from "./pagination";
 import { PROFILE_SELECT } from "./profiles";
@@ -8,7 +8,7 @@ import { PROMPT_SELECT, mapPromptRow, type PromptRow } from "./prompts";
 import { REQUEST_SELECT, mapRequestRow, type RequestRow } from "./requests";
 import { connectionsFromSteps } from "@/lib/workflow-logic";
 import { normalizeToolRefs } from "@/lib/ai-tool-catalog";
-import type { ContentSearchFilters } from "./taxonomy-query";
+import { sanitizeSearchText, type ContentSearchFilters } from "./taxonomy-query";
 import { orderByIds, searchContentIds, type SearchCursor, type SearchPage } from "./search";
 import { promptHref, requestHref } from "@/lib/utils";
 import { translateForRuntime } from "@/lib/i18n/translations";
@@ -171,6 +171,25 @@ export async function searchWorkflowsPage(query: string, filters: ContentSearchF
 /** First page only — for pickers that never page. */
 export async function searchWorkflows(query: string, filters: ContentSearchFilters = {}, limit = 20): Promise<Workflow[]> {
   return (await searchWorkflowsPage(query, filters, limit)).items;
+}
+
+/** One page of a person's published workflows (profile "Workflow'lar", "İçeriklerim"); same contract as `fetchRequestsByAuthorPage`. */
+export async function fetchWorkflowsByCreatorPage(creatorId: string, filter: OwnedListFilter = {}, offset = 0, limit = OWNED_PAGE): Promise<PagedResult<Workflow>> {
+  const text = sanitizeSearchText(filter.search ?? "");
+  let request = supabase
+    .from("workflows")
+    .select(WORKFLOW_SELECT, offset === 0 ? { count: "exact" } : undefined)
+    .eq("creator_id", creatorId)
+    .is("community_id", null)
+    .eq("status", "published");
+  if (filter.visibility && filter.visibility !== "all") request = request.eq("visibility", filter.visibility);
+  if (text) request = request.or(`title.ilike.%${text}%,description.ilike.%${text}%`);
+  const sort = filter.sort ?? "newest";
+  request = sort === "most-liked" ? request.order("like_count", { ascending: false }).order("created_at", { ascending: false }) : request.order("created_at", { ascending: sort === "oldest" });
+  const { data, count, error } = await request.order("id", { ascending: sort === "oldest" }).range(offset, offset + limit - 1);
+  if (error) throw new Error(error.message);
+  const rows = (data ?? []) as unknown as WorkflowRow[];
+  return { items: rows.map(mapWorkflowRow), total: offset === 0 ? (count ?? null) : null, nextOffset: rows.length === limit ? offset + limit : null };
 }
 
 /** A creator's workflows — RLS gives a visitor only published ones, the owner their drafts too. */

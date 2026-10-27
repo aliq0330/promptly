@@ -34,3 +34,14 @@ export interface PagedResult<T> {
   total: number | null;
   nextOffset: number | null;
 }
+
+/** The filters of a person's own list (requests, workflows, presets — and prompts): sort, visibility and a title / description search, all applied by the database. */
+export interface OwnedListFilter {
+  sort?: "newest" | "oldest" | "most-liked";
+  /** Only the owner has both kinds (RLS hides "Sadece ben" from everyone else). */
+  visibility?: "all" | "public" | "private";
+  search?: string;
+}
+
+/** Items per request on a person's own lists (profile tabs, "İçeriklerim"). */
+export const OWNED_PAGE = 24;

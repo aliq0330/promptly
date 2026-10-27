@@ -18,6 +18,7 @@ import { STORY_LIMITS } from "@/lib/stories";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn, formatRelativeTime } from "@/lib/utils";
 import type { Story, StoryHighlight } from "@/types";
+import { LoadMoreButton } from "@/features/feed/load-more";
 import { StoryCanvas } from "./story-canvas";
 import { Ring } from "./story-tray";
 import { useStoryViewer } from "./story-viewer-provider";
@@ -179,6 +180,7 @@ export function HighlightEditor({
     (before: string | null) => {
       if (!user) return;
       setLoading(true);
+      setError(null);
       fetchStoryArchive(user.id, before)
         .then((page) => {
           setArchive((prev) => [...prev, ...page.stories.filter((s) => s.moderationStatus === "visible")]);
@@ -292,9 +294,7 @@ export function HighlightEditor({
             </p>
           )}
           {hasMore && !loading && (
-            <Button type="button" variant="ghost" size="sm" className="w-full" onClick={() => loadMore(archive[archive.length - 1]?.createdAt ?? null)}>
-              {t("stories.archive.more")}
-            </Button>
+            <LoadMoreButton variant="ghost" size="sm" className="w-full" wrapperClassName="" label={t("stories.archive.more")} onLoadMore={() => loadMore(archive[archive.length - 1]?.createdAt ?? null)} error={Boolean(error)} />
           )}
           {error && <p role="alert" className="text-small text-danger">{error}</p>}
         </div>
