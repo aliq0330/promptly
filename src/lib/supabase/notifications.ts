@@ -17,38 +17,58 @@ const NOTIFICATION_SELECT = `
   actor:actor_id ( id, username, display_name, avatar_url, cover_url, bio, website, follower_count, following_count, created_at, interests )
 `;
 
+/** Notifications per request (the list grows with "Daha fazla"; the bell's number is counted separately, see `fetchUnreadNotificationCount`). */
+export const NOTIFICATIONS_PAGE = 60;
+
+function mapNotificationRow(row: NotificationRow): AppNotification {
+  return {
+    id: row.id,
+    type: row.type,
+    actor: row.actor ? mapProfileRow(row.actor) : null,
+    message: row.message,
+    targetHref: row.target_href,
+    isRead: row.is_read,
+    createdAt: row.created_at,
+  };
+}
+
 /**
- * This user's real notifications, newest first. RLS (Bölüm 19) already
- * limits this to the caller's own rows; a series of `SECURITY DEFINER`
- * triggers (Bölüm 19, 20260919150000, 20260919160000, 20260919180000) now
- * actually populate this table for likes/comments/replies/request
- * responses/follows/messages, so this resolves to real data once any of
- * those events happen to the signed-in user.
+ * One slice of this user's real notifications, newest first: rows `[offset, offset + limit)`. RLS (Bölüm 19) already
+ * limits this to the caller's own rows; a series of `SECURITY DEFINER` triggers (Bölüm 19, 20260919150000, 20260919160000,
+ * 20260919180000) populate this table for likes/comments/replies/request responses/follows/messages. Reading ALL of them at once stopped at
+ * PostgREST's 1000 rows and loaded every actor profile on each sign-in and each realtime event. Throws on failure (a failed "more" must not
+ * look like "no more").
  */
-export async function fetchNotificationsForUser(userId: string): Promise<AppNotification[]> {
+export async function fetchNotificationsPage(userId: string, offset = 0, limit = NOTIFICATIONS_PAGE): Promise<AppNotification[]> {
+  const { data, error } = await supabase
+    .from("notifications")
+    .select(NOTIFICATION_SELECT)
+    .eq("recipient_id", userId)
+    .order("created_at", { ascending: false })
+    .order("id", { ascending: false })
+    .range(offset, offset + limit - 1);
+  if (error) throw new Error(error.message);
+  return ((data ?? []) as unknown as NotificationRow[]).map(mapNotificationRow);
+}
+
+/** The first `limit` notifications (default one page); a failed read is an empty list so the bell never breaks the page. */
+export async function fetchNotificationsForUser(userId: string, limit = NOTIFICATIONS_PAGE): Promise<AppNotification[]> {
   try {
-    const { data, error } = await supabase
-      .from("notifications")
-      .select(NOTIFICATION_SELECT)
-      .eq("recipient_id", userId)
-      .order("created_at", { ascending: false });
-    if (error) {
-      console.error("fetchNotificationsForUser", error);
-      return [];
-    }
-    return ((data ?? []) as unknown as NotificationRow[]).map((row) => ({
-      id: row.id,
-      type: row.type,
-      actor: row.actor ? mapProfileRow(row.actor) : null,
-      message: row.message,
-      targetHref: row.target_href,
-      isRead: row.is_read,
-      createdAt: row.created_at,
-    }));
+    return await fetchNotificationsPage(userId, 0, limit);
   } catch (err) {
     console.error("fetchNotificationsForUser", err);
     return [];
   }
+}
+
+/** How many of the caller's notifications are unread — counted by the database, so the bell is right however few rows are loaded. `null` when it failed. */
+export async function fetchUnreadNotificationCount(userId: string): Promise<number | null> {
+  const { count, error } = await supabase.from("notifications").select("id", { count: "exact", head: true }).eq("recipient_id", userId).eq("is_read", false);
+  if (error) {
+    console.error("fetchUnreadNotificationCount", error);
+    return null;
+  }
+  return count ?? 0;
 }
 
 /**

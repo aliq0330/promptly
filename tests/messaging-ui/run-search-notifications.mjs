@@ -24,14 +24,25 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lan
   const context = await browser.newContext({ viewport });
   await installMock(context, db, {});
   // Registered after the mock, so it answers first.
+  // Notifications come a page at a time (docs/history/254-*): `.range` sends offset / limit, the bell's number is a HEAD count of the unread rows.
   await context.route(/\/rest\/v1\/notifications(\?|$)/, (route) => {
-    if (route.request().method() !== "GET") { (db.notifWrites ??= []).push({ method: route.request().method(), url: route.request().url() }); return route.fulfill({ status: 204, body: "" }); }
-    return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(notifications) });
+    const method = route.request().method();
+    const url = new URL(route.request().url());
+    if (method === "HEAD") {
+      (db.notifHeads ??= []).push(url.search);
+      return route.fulfill({ status: 200, headers: { "access-control-allow-origin": "*", "access-control-expose-headers": "content-range", "content-range": `*/${notifications.filter((x) => !x.is_read).length}` }, body: "" });
+    }
+    if (method !== "GET") { (db.notifWrites ??= []).push({ method, url: route.request().url() }); return route.fulfill({ status: 204, body: "" }); }
+    const offset = Number(url.searchParams.get("offset") ?? 0);
+    const limit = Number(url.searchParams.get("limit") ?? notifications.length);
+    (db.notifGets ??= []).push({ offset, limit });
+    return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(notifications.slice(offset, offset + limit)) });
   });
   await context.addInitScript((l) => { try { localStorage.setItem("promptly-language", l); } catch {} }, lang);
   const page = await context.newPage(); page.setDefaultTimeout(8000);
   const errors = [];
   page.on("pageerror", (e) => errors.push(String(e)));
+  if (process.env.DEBUG) page.on("console", (m) => console.log("console:", m.type(), m.text().slice(0, 300)));
   try { await fn({ page, db }); assert.deepEqual(errors, [], "no uncaught page errors"); results.push(["PASS", name]); }
   catch (e) { results.push(["FAIL", name + "\n      " + String(e.message).split("\n").slice(0, 8).join("\n      ")]); try { await page.screenshot({ path: `${process.env.TMPDIR ?? "/tmp"}/snfail-${results.length}.png` }); } catch {} }
   finally { await context.close(); }
@@ -189,6 +200,30 @@ await scenario("8. Bildirimler: tümünü silme penceresi İngilizce", async ({ 
   await page.getByRole("dialog").getByText("Delete all notifications?").waitFor();
   await page.getByRole("dialog").getByRole("button", { name: "Delete all" }).waitFor();
 }, { lang: "en", notifications: NOTIFS });
+
+
+await scenario("9. Bildirimler sayfa sayfa: ilk 60 gelir; okunmamışı VERİTABANI sayar (yüklenen listeden değil: ilk 60 okunmuş, eski 70 okunmamış → zil noktası + 'Tümünü okundu say' açık); 'Daha fazla' sonraki 60'ı ekler", async ({ page, db }) => {
+  await page.goto(`${BASE}/notifications`);
+  const rows = page.locator("[data-notification-icon]");
+  await rows.first().waitFor();
+  assert.equal(await rows.count(), 60, "yalnız ilk sayfa (60) çizildi");
+  assert.deepEqual(db.notifGets[0], { offset: 0, limit: 60 });
+  assert.ok((db.notifHeads ?? []).length >= 1, "okunmamış sayısı ayrı HEAD sayımıyla okundu");
+  assert.match(db.notifHeads[0], /is_read=eq\.false/);
+  assert.equal(await page.locator("header[data-app-header] a[href*='/notifications'] span.bg-primary").count(), 1, "zil noktası: yüklenenler okunmuş ama veritabanında 70 okunmamış var");
+  assert.equal(await page.getByRole("button", { name: "Tümünü okundu işaretle" }).isDisabled(), false);
+  // "Daha fazla" (the next page may also start by itself when the button is near the screen).
+  for (let i = 0; i < 20 && (await page.locator("[data-notification-icon]").count()) < 130; i += 1) {
+    await page.getByTestId("load-more").click({ timeout: 1000 }).catch(() => {});
+    await page.waitForTimeout(200);
+  }
+  assert.equal(await page.locator("[data-notification-icon]").count(), 130);
+  assert.deepEqual(db.notifGets.map((x) => x.offset), [0, 60, 120], "60'ar 60'ar, hiç tekrar yok");
+  assert.equal(await page.getByTestId("load-more").count(), 0, "son sayfadan sonra düğme yok");
+  await page.getByRole("button", { name: "Tümünü okundu işaretle" }).click();
+  await page.locator("header[data-app-header] a[href*='/notifications'] span.bg-primary").waitFor({ state: "detached" });
+  assert.ok((db.notifWrites ?? []).some((w) => w.method === "PATCH" && /is_read=eq\.false/.test(w.url)), "tek toplu PATCH");
+}, { notifications: Array.from({ length: 130 }, (_, i) => ({ ...n(`m${i}`, "like", `Bildirim ${i + 1}`, "/settings", i + 1), is_read: i < 60 })) });
 
 await browser.close(); server.close();
 let failed = 0;

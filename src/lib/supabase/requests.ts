@@ -1,6 +1,7 @@
 import { removeStorageObjectsByUrl } from "./storage-cleanup";
 import { normalizeToolRefs } from "@/lib/ai-tool-catalog";
 import { supabase } from "./client";
+import { fetchAllRows } from "./paged";
 import { withoutBlocked } from "./blocked-users";
 import { applyKeysetCursor, nextCursorFrom, type KeysetCursor } from "./pagination";
 import { resizeImageToBlob } from "@/lib/utils";
@@ -207,17 +208,18 @@ export async function fetchRequestById(id: string): Promise<PromptRequest | null
  */
 export async function fetchRequestsByAuthor(authorId: string): Promise<PromptRequest[]> {
   try {
-    const { data, error } = await supabase
-      .from("prompt_requests")
-      .select(REQUEST_SELECT)
-      .eq("author_id", authorId)
-      .is("community_id", null)
-      .order("created_at", { ascending: false });
-    if (error) {
-      console.error("fetchRequestsByAuthor", error);
-      return [];
-    }
-    return filterNotDeleted(((data ?? []) as unknown as RequestRow[]).map(mapRequestRow));
+    // Every row, a page at a time (PostgREST stops at 1000 per request).
+    const { rows } = await fetchAllRows((from, to) =>
+      supabase
+        .from("prompt_requests")
+        .select(REQUEST_SELECT)
+        .eq("author_id", authorId)
+        .is("community_id", null)
+        .order("created_at", { ascending: false })
+        .order("id", { ascending: false })
+        .range(from, to),
+    );
+    return filterNotDeleted((rows as unknown as RequestRow[]).map(mapRequestRow));
   } catch (err) {
     console.error("fetchRequestsByAuthor", err);
     return [];

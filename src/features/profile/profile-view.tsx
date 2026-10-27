@@ -7,12 +7,15 @@ import { OtherProfileActions, OwnProfileActions } from "./profile-actions";
 import { ProfileRail } from "./profile-rail";
 import { useFollowState } from "./use-follow-state";
 import { ScrollRow } from "@/components/ui/scroll-row";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useViewMode } from "@/features/content/view-mode-store";
 import { CompactViewToggle } from "@/features/content/view-mode-switcher";
 import { SectionMenu, type SectionMenuItem } from "@/features/content/section-menu";
 import { FocusGrid } from "@/features/focus/focus-grid";
 import { ContributionMap } from "./contribution-map";
 import { ProfileFilterControl, type ProfileSortKey } from "./profile-toolbar";
+import { PROFILE_TYPE_OPTIONS } from "./profile-type-options";
 import { ProfileContentGrid } from "./profile-content-grid";
 import { ProfileEmptyState } from "./profile-empty-state";
 import { ProfileAbout } from "./profile-about";
@@ -24,7 +27,9 @@ import { fetchPublicCollectionsByOwner } from "@/lib/supabase/collections";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
-import { fetchLikedPrompts } from "@/lib/supabase/prompts";
+import { fetchAuthorPromptsPage, fetchLikedPromptsPage, fetchProfileContentStats, type ProfileContentStats } from "@/lib/supabase/prompts";
+import { usePagedList } from "@/features/content/use-paged-list";
+import { LoadMore } from "@/features/feed/load-more";
 import { fetchWorkflowsByCreator } from "@/lib/supabase/workflows";
 import { WorkflowCard } from "@/features/workflows/workflow-card";
 import { fetchPresetsByCreator } from "@/lib/supabase/presets";
@@ -57,12 +62,10 @@ const MAIN_TAB_COUNT = 4;
 export function ProfileView({
   user,
   isOwnProfile,
-  authorPrompts: initialAuthorPrompts,
   authorRequests,
 }: {
   user: UserProfile;
   isOwnProfile: boolean;
-  authorPrompts: Prompt[];
   /** This profile's own real prompt requests (Prompt İstekleri) — always public, shown on every profile, not just the owner's (CLAUDE.md prompt-request module). */
   authorRequests: PromptRequest[];
 }) {
@@ -70,16 +73,6 @@ export function ProfileView({
   const { user: authUser } = useAuth();
   // One follow state for the band's follower count and the actions row's button (see FollowButtonView's comment).
   const followState = useFollowState(user);
-
-  const [authorPrompts, setAuthorPrompts] = useState(initialAuthorPrompts);
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- resyncs when a freshly-fetched prompt list (a new array) replaces the previous one, e.g. navigating to a different profile
-    setAuthorPrompts(initialAuthorPrompts);
-  }, [initialAuthorPrompts]);
-
-  function handleDeleted(promptId: string) {
-    setAuthorPrompts((prev) => prev.filter((prompt) => prompt.id !== promptId));
-  }
 
   // Real likes — only ever fetched for one's own profile, and only for the
   // signed-in real viewer (RLS keeps prompt_likes' "did I like this"
@@ -89,23 +82,6 @@ export function ProfileView({
   // there's nothing left to fetch/hold at this level for it (CLAUDE.md
   // Bölüm 9.22 §1 — the old "Tümü" sub-tab and its state were removed
   // structurally, not just hidden with CSS).
-  const [likedPrompts, setLikedPrompts] = useState<Prompt[]>([]);
-
-  useEffect(() => {
-    let cancelled = false;
-    if (!isOwnProfile || !authUser) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- nothing to fetch for someone else's profile or a signed-out viewer
-      setLikedPrompts([]);
-      return;
-    }
-    fetchLikedPrompts(authUser.id).then((prompts) => {
-      if (!cancelled) setLikedPrompts(prompts);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [isOwnProfile, authUser]);
-
   // RLS: a visitor gets this creator's published workflows, the owner their drafts too.
   const [workflows, setWorkflows] = useState<Workflow[]>([]);
   useEffect(() => {
@@ -157,20 +133,47 @@ export function ProfileView({
   const [activeType, setActiveType] = useState<PromptContentType | "all">("all");
   const [sort, setSort] = useState<ProfileSortKey>("newest");
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  useEffect(() => {
+    const id = setTimeout(() => setDebouncedSearch(search.trim()), 300);
+    return () => clearTimeout(id);
+  }, [search]);
   const [viewMode] = useViewMode();
+
+  // The header numbers come from the database (`profile_content_stats`): the prompt list is read a page at a time, so its length is no count.
+  const [stats, setStats] = useState<ProfileContentStats | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    fetchProfileContentStats(user.id).then((result) => !cancelled && setStats(result));
+    return () => {
+      cancelled = true;
+    };
+  }, [user.id]);
+
+  // "Promptlar": filters, sort and text search are query conditions (server side), 24 per page; the list grows as it is scrolled.
+  const prompts = usePagedList(`prompts|${user.id}|${sort}|${activeType}|${debouncedSearch}`, activeTab === "prompts", (offset) =>
+    fetchAuthorPromptsPage({ authorId: user.id, sort, contentType: activeType === "all" ? null : activeType, search: debouncedSearch }, offset),
+  );
+  // "Beğeniler" (own profile only): the viewer's likes, newest first, a page at a time; the chips filter what is loaded.
+  const liked = usePagedList(`liked|${user.id}`, isOwnProfile && Boolean(authUser) && activeTab === "liked", (offset) => fetchLikedPromptsPage(authUser?.id ?? "", offset));
+
+  function handleDeleted(promptId: string) {
+    prompts.removeItem(promptId);
+    setStats((prev) => (prev ? { ...prev, prompts: Math.max(0, prev.prompts - 1) } : prev));
+  }
 
   // Published posts only — an owner's drafts (visible to them via RLS) aren't "posts" yet.
   const postCounts = useMemo(
     () => ({
-      prompts: authorPrompts.length,
-      requests: authorRequests.length,
-      workflows: workflows.filter((w) => w.status === "published").length,
-      presets: presets.filter((p) => p.status === "published").length,
+      prompts: stats?.prompts ?? prompts.total ?? 0,
+      requests: stats?.requests ?? authorRequests.length,
+      workflows: stats?.workflows ?? workflows.filter((w) => w.status === "published").length,
+      presets: stats?.presets ?? presets.filter((p) => p.status === "published").length,
     }),
-    [authorPrompts.length, authorRequests.length, workflows, presets],
+    [stats, prompts.total, authorRequests.length, workflows, presets],
   );
-  // Real `copy_count` (one per signed-in person per day, never the author — docs/history/160-*), summed over the prompts this profile lists.
-  const reuseCount = useMemo(() => authorPrompts.reduce((sum, prompt) => sum + prompt.copyCount, 0), [authorPrompts]);
+  // Real `copy_count` (one per signed-in person per day, never the author — docs/history/160-*), summed by the database over the prompts this profile lists.
+  const reuseCount = stats?.reuse ?? 0;
 
   const tabs = useMemo(() => {
     // Three groups, a divider between them (docs/history/233-*): what the creator posted · what is theirs to keep (Spaces, and — owner only — Taslaklar, Kaydedilenler, Beğeniler) · Hakkında.
@@ -192,35 +195,19 @@ export function ProfileView({
     if (isOwnProfile) {
       group({ key: "drafts", label: t("profile.tabDrafts"), icon: Pencil });
       group({ key: "saved", label: t("profile.tabSaved"), icon: Bookmark });
-      group({ key: "liked", label: t("profile.tabLiked"), icon: Heart, meta: likedPrompts.length });
+      group({ key: "liked", label: t("profile.tabLiked"), icon: Heart, meta: liked.total ?? undefined });
     }
     if (!isOwnProfile && publicCollections.length > 0) group({ key: "collections", label: t("profile.tabCollections"), icon: Folder, meta: publicCollections.length });
     base.push({ key: "about", label: t("profile.tabAbout"), icon: Info, dividerBefore: true });
     return base;
-  }, [postCounts, quoteCount, isOwnProfile, likedPrompts.length, publicCollections.length, spaceCount, t]);
-
-  const activeSource = useMemo(() => {
-    switch (activeTab) {
-      case "liked":
-        return likedPrompts;
-      default:
-        return authorPrompts;
-    }
-  }, [activeTab, authorPrompts, likedPrompts]);
-
-  const availableTypes = useMemo(() => {
-    const types = new Set<PromptContentType>();
-    activeSource.forEach((prompt) => types.add(prompt.contentType));
-    return Array.from(types);
-  }, [activeSource]);
+  }, [postCounts, quoteCount, isOwnProfile, liked.total, publicCollections.length, spaceCount, t]);
 
   const normalizedSearch = search.trim().toLocaleLowerCase("tr");
 
-  const filtered = useMemo(() => {
-    let items = activeSource;
-    if (activeType !== "all") {
-      items = items.filter((prompt) => prompt.contentType === activeType);
-    }
+  // Prompts arrive filtered and sorted by the database; the liked list is filtered here (it holds what has been loaded so far).
+  const filteredLiked = useMemo(() => {
+    let items = liked.items;
+    if (activeType !== "all") items = items.filter((prompt) => prompt.contentType === activeType);
     if (normalizedSearch) {
       items = items.filter(
         (prompt) =>
@@ -230,14 +217,23 @@ export function ProfileView({
       );
     }
     return sortPrompts(items, sort);
-  }, [activeSource, activeType, normalizedSearch, sort]);
+  }, [liked.items, activeType, normalizedSearch, sort]);
+  const list = activeTab === "liked" ? { items: filteredLiked, loading: liked.loading, failed: liked.failed, hasMore: liked.hasMore, loadingMore: liked.loadingMore, loadMore: liked.loadMore, retry: liked.retry, total: liked.total } : prompts;
 
   // The section's own filter icon (prompts / liked lists) and the Kart | Izgara toggle (every list that has one) sit in the control row next to the menu.
   const filterable = activeTab === "prompts" || activeTab === "liked";
-  const viewable =
-    (filterable && activeSource.length > 0) || (activeTab === "requests" && authorRequests.length > 0) || (activeTab === "workflows" && workflows.length > 0);
-
   const hasActiveFilters = activeType !== "all" || normalizedSearch.length > 0;
+  // The control row shows once there is something to filter, or while a filter is on (an empty result must still let the filter be cleared).
+  const listKnown = !list.loading && (list.items.length > 0 || hasActiveFilters || (list.total ?? 0) > 0);
+  // Once shown it stays: changing a filter reloads the list, and the control (which owns the open filter sheet) must not vanish — and close the
+  // sheet — while the new page loads.
+  const [filterShown, setFilterShown] = useState<Record<string, boolean>>({});
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- latches once the list is known (see above); nothing async to wait on
+    if (listKnown) setFilterShown((prev) => (prev[activeTab] ? prev : { ...prev, [activeTab]: true }));
+  }, [listKnown, activeTab]);
+  const showFilter = filterable && (listKnown || filterShown[activeTab] === true);
+  const viewable = (filterable && (listKnown || filterShown[activeTab] === true) && (list.items.length > 0 || list.loading)) || (activeTab === "requests" && authorRequests.length > 0) || (activeTab === "workflows" && workflows.length > 0);
 
   function clearFilters() {
     setActiveType("all");
@@ -312,16 +308,16 @@ export function ProfileView({
               {activeItem?.meta ? <span className="ml-2 font-medium tabular-nums text-text-muted">{activeItem.meta}</span> : null}
             </h2>
             <span className="flex-1" />
-            {filterable && activeSource.length > 0 && (
+            {showFilter && (
               <ProfileFilterControl
-                availableTypes={availableTypes}
+                availableTypes={PROFILE_TYPE_OPTIONS}
                 activeType={activeType}
                 onTypeChange={setActiveType}
                 sort={sort}
                 onSortChange={setSort}
                 search={search}
                 onSearchChange={setSearch}
-                showSearch={activeSource.length > 8}
+                showSearch={(list.total ?? list.items.length) > 8 || hasActiveFilters}
                 hasActiveFilters={hasActiveFilters}
                 onClear={clearFilters}
               />
@@ -399,22 +395,36 @@ export function ProfileView({
               <ProfileDraftsPanel userId={user.id} />
             ) : (
               <>
-                <ProfileContentGrid
-                  prompts={filtered}
-                  isOwnProfile={isOwnProfile && activeTab === "prompts"}
-                  onDeleted={handleDeleted}
-                  emptyState={
-                    hasActiveFilters ? (
-                      <ProfileEmptyState
-                        icon={SearchX}
-                        title={t("profile.noMatchForFilterTitle")}
-                        description={t("profile.noMatchForFilterBody")}
-                      />
-                    ) : (
-                      <TabEmptyState tab={activeTab} isOwnProfile={isOwnProfile} />
-                    )
-                  }
-                />
+                {list.loading ? (
+                  <ProfileListSkeleton />
+                ) : list.failed && list.items.length === 0 ? (
+                  <div className="space-y-3 py-8 text-center" role="alert">
+                    <p className="text-small text-danger">{t("feed.loadFailed")}</p>
+                    <Button variant="outline" onClick={list.retry} data-testid="profile-list-retry">
+                      {t("common.retry")}
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    <ProfileContentGrid
+                      prompts={list.items}
+                      isOwnProfile={isOwnProfile && activeTab === "prompts"}
+                      onDeleted={handleDeleted}
+                      emptyState={
+                        hasActiveFilters ? (
+                          <ProfileEmptyState
+                            icon={SearchX}
+                            title={t("profile.noMatchForFilterTitle")}
+                            description={t("profile.noMatchForFilterBody")}
+                          />
+                        ) : (
+                          <TabEmptyState tab={activeTab} isOwnProfile={isOwnProfile} />
+                        )
+                      }
+                    />
+                    <LoadMore failed={list.failed} hasMore={list.hasMore} loadingMore={list.loadingMore} onLoadMore={() => void list.loadMore()} auto />
+                  </>
+                )}
               </>
             )}
           </div>
@@ -443,5 +453,17 @@ function TabEmptyState({ tab, isOwnProfile }: { tab: ProfileTabKey; isOwnProfile
       description={t("profile.creativeJourneyStartsHereBody")}
       action={isOwnProfile ? { label: t("create.promptTitle"), href: "/create" } : undefined}
     />
+  );
+}
+
+function ProfileListSkeleton() {
+  return (
+    <ContentGrid>
+      {[0, 1, 2, 3].map((i) => (
+        <div key={i} className={CONTENT_GRID_ITEM_CLASS}>
+          <Skeleton className="h-64 w-full rounded-xl" />
+        </div>
+      ))}
+    </ContentGrid>
   );
 }

@@ -1,4 +1,5 @@
 import { supabase } from "./client";
+import { fetchAllRows } from "./paged";
 import { withoutBlocked } from "./blocked-users";
 import { applyKeysetCursor, nextCursorFrom, type KeysetCursor } from "./pagination";
 import { PROFILE_SELECT } from "./profiles";
@@ -175,17 +176,17 @@ export async function searchWorkflows(query: string, filters: ContentSearchFilte
 /** A creator's workflows — RLS gives a visitor only published ones, the owner their drafts too. */
 export async function fetchWorkflowsByCreator(creatorId: string): Promise<Workflow[]> {
   try {
-    const { data, error } = await supabase
-      .from("workflows")
-      .select(WORKFLOW_SELECT)
-      .eq("creator_id", creatorId)
-      .is("community_id", null)
-      .order("created_at", { ascending: false });
-    if (error) {
-      console.error("fetchWorkflowsByCreator", error);
-      return [];
-    }
-    return (data ?? []).map((row) => mapWorkflowRow(row as unknown as WorkflowRow));
+    const { rows } = await fetchAllRows((from, to) =>
+      supabase
+        .from("workflows")
+        .select(WORKFLOW_SELECT)
+        .eq("creator_id", creatorId)
+        .is("community_id", null)
+        .order("created_at", { ascending: false })
+        .order("id", { ascending: false })
+        .range(from, to),
+    );
+    return rows.map((row) => mapWorkflowRow(row as unknown as WorkflowRow));
   } catch (err) {
     console.error("fetchWorkflowsByCreator", err);
     return [];

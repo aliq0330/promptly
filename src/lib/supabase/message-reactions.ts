@@ -1,4 +1,5 @@
 import { supabase } from "./client";
+import { fetchAllRows } from "./paged";
 
 export interface MessageReactionRow {
   messageId: string;
@@ -22,12 +23,17 @@ interface RawReactionRow {
  */
 export async function fetchReactionsForConversation(conversationId: string): Promise<MessageReactionRow[]> {
   try {
-    const { data, error } = await supabase
-      .from("message_reactions")
-      .select("message_id, user_id, emoji")
-      .eq("conversation_id", conversationId);
-    if (error || !data) return [];
-    return (data as RawReactionRow[]).map((row) => ({
+    // A page at a time: a long thread can pass PostgREST's 1000 rows and its later reactions would vanish.
+    const { rows } = await fetchAllRows((from, to) =>
+      supabase
+        .from("message_reactions")
+        .select("message_id, user_id, emoji")
+        .eq("conversation_id", conversationId)
+        .order("message_id", { ascending: true })
+        .order("user_id", { ascending: true })
+        .range(from, to),
+    );
+    return (rows as RawReactionRow[]).map((row) => ({
       messageId: row.message_id,
       userId: row.user_id,
       emoji: row.emoji,

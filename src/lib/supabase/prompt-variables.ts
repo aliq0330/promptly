@@ -1,4 +1,5 @@
 import { supabase } from "./client";
+import { fetchAllRows } from "./paged";
 import { translateForRuntime } from "@/lib/i18n/translations";
 import { normalizeVariable, parseStoredConfig, parseStoredOptions, parseStoredType } from "@/lib/prompt-variable-types";
 import type { PromptVariable, PromptVariableSpec } from "@/types";
@@ -62,14 +63,31 @@ export async function fetchVariablesForPrompt(promptId: string): Promise<PromptV
 export async function fetchVariablesForPrompts(promptIds: string[]): Promise<Map<string, PromptVariable[]>> {
   const grouped = new Map<string, PromptVariable[]>();
   const CHUNK = 50;
-  for (let at = 0; at < promptIds.length; at += CHUNK) {
-    const ids = promptIds.slice(at, at + CHUNK);
-    const read = (columns: string) =>
-      supabase.from("prompt_variables").select(columns).in("prompt_id", ids).order("sort_order", { ascending: true });
-    let result = await read(VARIABLE_SELECT);
-    if (result.error?.code === "42703") result = await read(LEGACY_VARIABLE_SELECT);
-    if (result.error) throw new Error(result.error.message);
-    for (const row of (result.data ?? []) as unknown as PromptVariableRow[]) {
+  // Small id lists keep the request URL short; a 3000-prompt export is ~60 requests, run a few at a time instead of one after the other.
+  const PARALLEL = 6;
+  const chunks: string[][] = [];
+  for (let at = 0; at < promptIds.length; at += CHUNK) chunks.push(promptIds.slice(at, at + CHUNK));
+  const readChunk = async (ids: string[]) => {
+    // Paged too: a chunk of prompts with many variables each can pass PostgREST's 1000-row answer.
+    let legacy = false;
+    const { rows } = await fetchAllRows(async (from, to) => {
+      const read = (columns: string) =>
+        supabase.from("prompt_variables").select(columns).in("prompt_id", ids).order("sort_order", { ascending: true }).order("id", { ascending: true }).range(from, to);
+      let result = await read(legacy ? LEGACY_VARIABLE_SELECT : VARIABLE_SELECT);
+      if (result.error?.code === "42703" && !legacy) {
+        legacy = true;
+        result = await read(LEGACY_VARIABLE_SELECT);
+      }
+      return result as unknown as { data: PromptVariableRow[] | null; error: { message: string } | null };
+    });
+    return rows;
+  };
+  const byChunk: PromptVariableRow[][] = [];
+  for (let at = 0; at < chunks.length; at += PARALLEL) {
+    byChunk.push(...(await Promise.all(chunks.slice(at, at + PARALLEL).map(readChunk))));
+  }
+  for (const rows of byChunk) {
+    for (const row of rows) {
       const list = grouped.get(row.prompt_id) ?? [];
       list.push(mapVariableRow(row));
       grouped.set(row.prompt_id, list);

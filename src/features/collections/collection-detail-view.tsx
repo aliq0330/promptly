@@ -18,12 +18,14 @@ import { CollectionFormModal } from "./collection-form-modal";
 import { CollectionMoreMenu } from "./collection-more-menu";
 import { CollectionFollowButton } from "./collection-follow-button";
 import { useAuth } from "@/features/auth/auth-provider";
+import { usePagedList } from "@/features/content/use-paged-list";
+import { LoadMore } from "@/features/feed/load-more";
 import {
   fetchCollectionById,
-  fetchCollectionItems,
+  collectionEntryKey,
+  fetchCollectionItemsPage,
   removeFromCollection,
   updateCollection,
-  type CollectionEntry,
 } from "@/lib/supabase/collections";
 import { collectionHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -52,7 +54,6 @@ export function CollectionDetailView() {
   const id = searchParams.get("id");
 
   const [collection, setCollection] = useState<Collection | null>(null);
-  const [items, setItems] = useState<CollectionEntry[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [editing, setEditing] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
@@ -66,16 +67,19 @@ export function CollectionDetailView() {
       return;
     }
     setLoaded(false);
-    Promise.all([fetchCollectionById(id), fetchCollectionItems(id)]).then(([foundCollection, foundItems]) => {
+    fetchCollectionById(id).then((foundCollection) => {
       if (cancelled) return;
       setCollection(foundCollection);
-      setItems(foundCollection ? foundItems : []);
       setLoaded(true);
     });
     return () => {
       cancelled = true;
     };
   }, [id]);
+
+  // The collection's works, 24 at a time (a collection can hold thousands): the list grows as it is scrolled.
+  const entries = usePagedList(`collection|${id ?? ""}`, Boolean(id) && loaded && Boolean(collection), (offset) => fetchCollectionItemsPage(id ?? "", offset), collectionEntryKey);
+  const items = entries.items;
 
   useEffect(() => {
     return () => {
@@ -100,7 +104,7 @@ export function CollectionDetailView() {
   async function handleRemoveItem(id: string, contentType: "prompt" | "workflow" | "preset" | "community_post") {
     if (!collection) return;
     await removeFromCollection(collection.id, id, contentType);
-    setItems((prev) => prev.filter((entry) => !(entry.type === contentType && entry.data.id === id)));
+    entries.removeItem(`${contentType}:${id}`);
     setCollection((prev) => (prev ? { ...prev, itemCount: Math.max(0, prev.itemCount - 1) } : prev));
     showToast(t("collection.removedFromCollectionToast"));
     if (user) void refreshSaveState(id, contentType, user.id);
@@ -110,7 +114,7 @@ export function CollectionDetailView() {
     return <NotFoundBlock title={t("collection.notFoundTitle")} description={t("collection.notFoundDescription")} />;
   }
 
-  if (!loaded || !collection) {
+  if (!loaded || !collection || entries.loading) {
     return <DetailSkeleton />;
   }
 
@@ -161,6 +165,8 @@ export function CollectionDetailView() {
             emptyTitleKey="collection.emptyItemsTitle"
             emptyDescriptionKey="collection.emptyItemsDescription"
             removalFor={isOwner ? (entry) => ({ onRemove: () => handleRemoveItem(entry.data.id, entry.type) }) : undefined}
+            totalCount={collection.itemCount}
+            footer={<LoadMore failed={entries.failed} hasMore={entries.hasMore} loadingMore={entries.loadingMore} onLoadMore={() => void entries.loadMore()} auto />}
           />
         </div>
         {editing && (

@@ -11,6 +11,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
 import { ConfirmDialog } from "@/features/groups/confirm-dialog";
 import { useAsyncAction } from "@/features/groups/use-async-action";
+import { LoadMore } from "@/features/feed/load-more";
 
 const CATEGORY_ICONS: Record<"all" | NotificationCategory, LucideIcon> = {
   all: LayoutGrid,
@@ -24,7 +25,7 @@ const CATEGORY_ICONS: Record<"all" | NotificationCategory, LucideIcon> = {
 
 export default function NotificationsPage() {
   const { t } = useTranslation();
-  const { notifications, markRead, markAllRead, clearAll, remove } = useNotifications();
+  const { notifications, unreadCount, hasMore, loadingMore, loadMore, markRead, markAllRead, clearAll, remove } = useNotifications();
   const [confirmClear, setConfirmClear] = useState(false);
   const clearing = useAsyncAction();
   const [category, setCategory] = useState<"all" | NotificationCategory>("all");
@@ -37,7 +38,8 @@ export default function NotificationsPage() {
     [notifications, category],
   );
 
-  const hasUnread = notifications.some((n) => !n.isRead);
+  // The database's count: older unread rows may not be loaded yet.
+  const hasUnread = unreadCount > 0;
 
   const unreadIn = (key: "all" | NotificationCategory) =>
     notifications.filter((n) => !n.isRead && (key === "all" || notificationCategory(n) === key)).length;
@@ -111,6 +113,7 @@ export default function NotificationsPage() {
           category === "all" ? t("notifications.noneYet") : t("notifications.noneInCategory")
         }
       />
+      <LoadMore failed={false} hasMore={hasMore} loadingMore={loadingMore} onLoadMore={() => void loadMore()} auto />
     </div>
   );
 }

@@ -30,14 +30,15 @@ import { ProfileDraftsPanel } from "@/features/profile/profile-drafts-panel";
 import { ExportPromptsModal } from "@/features/exchange/export-prompts-modal";
 import { ImportPromptsModal } from "@/features/exchange/import-prompts-modal";
 import { fetchOwnPromptsForExport } from "@/lib/supabase/prompt-exchange";
-import { fetchPromptsByAuthor } from "@/lib/supabase/prompts";
+import { fetchAuthorPromptsPage, fetchProfileContentStats, type AuthorPromptSort, type ProfileContentStats } from "@/lib/supabase/prompts";
+import { usePagedList } from "@/features/content/use-paged-list";
+import { LoadMore } from "@/features/feed/load-more";
 import { fetchRequestsByAuthor } from "@/lib/supabase/requests";
 import { fetchWorkflowsByCreator } from "@/lib/supabase/workflows";
 import { fetchPresetsByCreator } from "@/lib/supabase/presets";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type {
   Preset,
-  Prompt,
   PromptRequest,
   Workflow,
 } from "@/types";
@@ -78,7 +79,6 @@ export function MyContentView() {
   const { user } = useAuth();
   const [viewMode] = useViewMode();
 
-  const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [requests, setRequests] = useState<PromptRequest[]>([]);
   const [workflows, setWorkflows] = useState<Workflow[]>([]);
   const [presets, setPresets] = useState<Preset[]>([]);
@@ -94,17 +94,25 @@ export function MyContentView() {
   const [importOpen, setImportOpen] = useState(false);
 
   const userId = user?.id;
+  const [stats, setStats] = useState<ProfileContentStats | null>(null);
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  useEffect(() => {
+    const id = setTimeout(() => setDebouncedSearch(search.trim()), 300);
+    return () => clearTimeout(id);
+  }, [search]);
+  // "Promptlar": visibility, sort and search are query conditions (server side), 24 per page, growing as the list is scrolled.
+  const promptSort: AuthorPromptSort = sort === "oldest" || sort === "most-liked" ? sort : "newest";
+  const promptPages = usePagedList(`mine|${userId ?? ""}|${promptSort}|${visibility}|${debouncedSearch}`, Boolean(userId) && kind === "prompts", (offset) =>
+    fetchAuthorPromptsPage({ authorId: userId ?? "", sort: promptSort, visibility, search: debouncedSearch }, offset),
+  );
+  const prompts = promptPages.items;
   useEffect(() => {
     if (!userId) return;
     let cancelled = false;
-    Promise.all([
-      fetchPromptsByAuthor(userId),
-      fetchRequestsByAuthor(userId),
-      fetchWorkflowsByCreator(userId),
-      fetchPresetsByCreator(userId),
-    ]).then(([p, r, w, pr]) => {
+    // Prompts are read a page at a time below (a member can own thousands); the other kinds are small enough to read whole.
+    Promise.all([fetchRequestsByAuthor(userId), fetchWorkflowsByCreator(userId), fetchPresetsByCreator(userId), fetchProfileContentStats(userId)]).then(([r, w, pr, counted]) => {
       if (cancelled) return;
-      setPrompts(p.filter((x) => x.status === "published"));
+      setStats(counted);
       setRequests(r);
       setWorkflows(w.filter((x) => x.status === "published"));
       setPresets(pr.filter((x) => x.status === "published"));
@@ -128,9 +136,10 @@ export function MyContentView() {
         node: (
           <PromptCard
             prompt={p}
-            onDeleted={() =>
-              setPrompts((prev) => prev.filter((x) => x.id !== p.id))
-            }
+            onDeleted={() => {
+              promptPages.removeItem(p.id);
+              setStats((prev) => (prev ? { ...prev, prompts: Math.max(0, prev.prompts - 1) } : prev));
+            }}
           />
         ),
       })),
@@ -165,7 +174,7 @@ export function MyContentView() {
         item: { kind: "preset" as const, data: p },
       })),
     }),
-    [prompts, requests, workflows, presets],
+    [prompts, promptPages, requests, workflows, presets],
   );
 
   const kindTabs = useMemo(
@@ -173,7 +182,7 @@ export function MyContentView() {
       {
         key: "prompts" as const,
         label: t("feed.filterPrompts"),
-        count: prompts.length,
+        count: stats?.prompts ?? promptPages.total ?? undefined,
         icon: SquareTerminal,
       },
       {
@@ -198,7 +207,8 @@ export function MyContentView() {
     ],
     [
       t,
-      prompts.length,
+      stats?.prompts,
+      promptPages.total,
       requests.length,
       workflows.length,
       presets.length,
@@ -219,6 +229,8 @@ export function MyContentView() {
   const visible = useMemo(() => {
     if (kind === "drafts") return [];
     let list = entries[kind];
+    // Prompts were already filtered, searched and sorted by the database.
+    if (kind === "prompts") return list;
     if (visibility !== "all")
       list = list.filter((e) => e.isPrivate === (visibility === "private"));
     if (needle)
@@ -233,7 +245,8 @@ export function MyContentView() {
     });
   }, [entries, kind, visibility, needle, sort]);
 
-  const total = kind === "drafts" ? 0 : entries[kind].length;
+  // "Is there anything at all?" — for prompts the counted total; a filtered-to-nothing list is then "no match", not "no content".
+  const total = kind === "drafts" ? 0 : kind === "prompts" ? (stats?.prompts ?? promptPages.total ?? entries.prompts.length) : entries[kind].length;
 
   const searching = searchOpen || search !== "";
   const menuItems: SectionMenuItem<Kind>[] = kindTabs.map((tab) => ({ key: tab.key, label: tab.label, icon: tab.icon, meta: "count" in tab ? tab.count : undefined, dividerBefore: tab.key === "drafts" }));
@@ -302,7 +315,7 @@ export function MyContentView() {
         user && <ProfileDraftsPanel userId={user.id} />
       ) : (
         <>
-          {loading ? (
+          {loading || (kind === "prompts" && promptPages.loading) ? (
             <div className="columns-1 gap-4 sm:columns-2 xl:columns-3">
               {[0, 1, 2].map((i) => (
                 <Skeleton
@@ -310,6 +323,13 @@ export function MyContentView() {
                   className="mb-4 h-56 w-full break-inside-avoid rounded-xl"
                 />
               ))}
+            </div>
+          ) : kind === "prompts" && promptPages.failed && prompts.length === 0 ? (
+            <div className="space-y-3 py-8 text-center" role="alert">
+              <p className="text-small text-danger">{t("feed.loadFailed")}</p>
+              <Button type="button" variant="outline" onClick={promptPages.retry} data-testid="my-content-retry">
+                {t("common.retry")}
+              </Button>
             </div>
           ) : visible.length === 0 ? (
             total === 0 ? (
@@ -337,6 +357,9 @@ export function MyContentView() {
                 </Reveal>
               ))}
             </ContentGrid>
+          )}
+          {kind === "prompts" && !promptPages.loading && (
+            <LoadMore failed={promptPages.failed} hasMore={promptPages.hasMore} loadingMore={promptPages.loadingMore} onLoadMore={() => void promptPages.loadMore()} auto />
           )}
 
         </>

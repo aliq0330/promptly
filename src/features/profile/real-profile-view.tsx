@@ -8,9 +8,8 @@ import { ProfileView } from "./profile-view";
 import { useAuth } from "@/features/auth/auth-provider";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { fetchProfileByUsername } from "@/lib/supabase/profiles";
-import { fetchPromptsByAuthor } from "@/lib/supabase/prompts";
 import { fetchRequestsByAuthor } from "@/lib/supabase/requests";
-import type { Prompt, PromptRequest, UserProfile } from "@/types";
+import type { PromptRequest, UserProfile } from "@/types";
 
 /**
  * Client-rendered counterpart to `/profile/[username]` for a real, signed-up
@@ -28,7 +27,6 @@ export function RealProfileView() {
   const { user } = useAuth();
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [prompts, setPrompts] = useState<Prompt[]>([]);
   const [requests, setRequests] = useState<PromptRequest[]>([]);
   const [status, setStatus] = useState<"loading" | "found" | "not-found">("loading");
 
@@ -48,13 +46,10 @@ export function RealProfileView() {
         setStatus("not-found");
         return;
       }
-      const [authorPrompts, authorRequests] = await Promise.all([
-        fetchPromptsByAuthor(result.id),
-        fetchRequestsByAuthor(result.id),
-      ]);
+      // Prompts are read a page at a time by the profile itself (a 3000-prompt profile must not load — or render — them all at once).
+      const authorRequests = await fetchRequestsByAuthor(result.id);
       if (cancelled) return;
       setProfile(result);
-      setPrompts(authorPrompts);
       setRequests(authorRequests);
       setStatus("found");
     });
@@ -91,7 +86,6 @@ export function RealProfileView() {
     <ProfileView
       user={profile}
       isOwnProfile={isOwnProfile}
-      authorPrompts={prompts}
       authorRequests={requests}
     />
   );

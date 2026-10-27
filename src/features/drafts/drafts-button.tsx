@@ -9,6 +9,8 @@ import { useAuth } from "@/features/auth/auth-provider";
 import { useLanguage, useTranslation } from "@/lib/i18n/language-provider";
 import { formatRelativeTime } from "@/lib/utils";
 
+const DRAFTS_SHOWN_STEP = 50;
+
 export interface DraftItem {
   id: string;
   title: string;
@@ -42,6 +44,8 @@ export function DraftsButton({
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // A bulk import can leave thousands of drafts: all are loaded (a light row each) but drawn 50 at a time.
+  const [shown, setShown] = useState(DRAFTS_SHOWN_STEP);
 
   const userId = user?.id;
   const refresh = useCallback(async () => {
@@ -130,7 +134,7 @@ export function DraftsButton({
               <p className="rounded-md border border-dashed border-border p-4 text-center text-sm text-text-muted">{t("draft.empty")}</p>
             ) : (
               <ul className="space-y-2">
-                {items.map((item) => (
+                {items.slice(0, shown).map((item) => (
                   <li key={item.id} className="rounded-md border border-border-soft bg-surface-soft p-3">
                     <p className="truncate text-sm font-medium text-text">{item.title.trim() || t("draft.untitled")}</p>
                     <p className="mb-2 text-xs text-text-muted">{t("draft.lastEdited", { time: formatRelativeTime(item.updatedAt, language) })}</p>
@@ -152,6 +156,13 @@ export function DraftsButton({
                   </li>
                 ))}
               </ul>
+            )}
+            {items !== null && items.length > shown && (
+              <div className="flex justify-center">
+                <Button type="button" variant="outline" size="sm" onClick={() => setShown((count) => count + DRAFTS_SHOWN_STEP)} data-testid="drafts-more">
+                  {t("common.loadMore")} ({shown} / {items.length})
+                </Button>
+              </div>
             )}
             {error && <p className="text-sm text-danger">{error}</p>}
           </div>
