@@ -826,10 +826,13 @@ update public.conversation_members set muted_at = now(), archived_at = now() whe
 select public._as_user(:ivy);
 insert into public.messages (conversation_id, sender_id, body) values (public._g('g6'), :ivy, 'yeni mesaj');
 reset role;
-select public._check(108, 'sessiz/arşiv: sessize alıp arşivleyen üye yeni mesajla geri gelmez; diğer üyeler etkilenmez, okunmamış sayacı artar',
+select public._check(108, 'sessiz/arşiv: sessize alıp arşivleyen üye yeni mesajla geri gelmez; diğer üyeler etkilenmez, okunmamış mesaj okuma anında sayılır (üye satırı güncellenmez)',
   (select archived_at is not null from public.conversation_members where conversation_id = public._g('g6') and user_id = :erin)
   and (select count(*) from public.conversation_members where conversation_id = public._g('g6') and user_id <> :erin and archived_at is not null) = 0
-  and (select unread_count from public.conversation_members where conversation_id = public._g('g6') and user_id = :dave) = 1);
+  -- 258: grupta okunmamış sayısı okuma anında hesaplanır (mesaj üye satırını güncellemez).
+  and (select unread_count from public.conversation_members where conversation_id = public._g('g6') and user_id = :dave) = 0
+  and (select u.n from (select count(*)::int n from public.messages x join public.conversation_members m on m.conversation_id = x.conversation_id and m.user_id = :dave
+        where x.conversation_id = public._g('g6') and x.sender_id <> :dave and x.created_at > coalesce(m.last_read_at, '-infinity') and x.created_at >= m.joined_at) u) = 1);
 select public._check(109, 'sessiz/bildirim: sessize alan yönetici katılım bildirimi almaz (dave için aldı, erin için almadı)',
   (select count(*) from public.notifications where recipient_id = :ivy and message like '%grubuna katıldı.' and actor_id = :dave) = 1
   and (select count(*) from public.notifications where recipient_id = :ivy and message like '%grubuna katıldı.' and actor_id = :erin) = 0);

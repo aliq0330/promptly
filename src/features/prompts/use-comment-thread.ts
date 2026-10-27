@@ -7,12 +7,10 @@ import { useAuth } from "@/features/auth/auth-provider";
 import { useOwnProfile } from "@/features/auth/own-profile-provider";
 import {
   deleteComment,
-  fetchCommentsForPrompt,
-  fetchCommentsForRequest,
-  fetchCommentsForResult,
-  fetchCommentsForWorkflow,
-  fetchCommentsForPreset,
-  fetchCommentsForCommunityPost,
+  fetchCommentThread,
+  fetchCommentThreadPage,
+  fetchOwnRatedSpaceComment,
+  type CommentScope,
   postCommentOnCommunityPost,
   postCommentOnPreset,
   postCommentOnWorkflow,
@@ -20,10 +18,7 @@ import {
   postCommentOnRequest,
   postCommentOnResult,
   updateComment,
-  fetchCommentsForSpace,
-  fetchCommentsForSpaceActivity,
   updateCommentRating,
-  fetchCommentsForQuote,
   postCommentOnSpace,
   postCommentOnQuote,
 } from "@/lib/supabase/comments";
@@ -74,6 +69,13 @@ export function useCommentThread(
   const [isPosting, setIsPosting] = useState(false);
   const [comments, setComments] = useState<PromptComment[]>([]);
   const [loaded, setLoaded] = useState(false);
+  // Üst düzey yorumlar 20'şerli sayfa (docs/history/258-*): sonraki sayfanın başlangıcı (null = hepsi okundu).
+  const [nextOffset, setNextOffset] = useState<number | null>(null);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const loadingMoreRef = useRef(false); // observer + click in the same tick must not read the same page twice
+  const [moreFailed, setMoreFailed] = useState(false);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
 
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
@@ -137,19 +139,12 @@ export function useCommentThread(
                   ? target.quoteId
                   : target.resultId;
 
-  // Small dispatch helpers instead of repeating a four-way ternary at each
-  // of the three call sites below (initial fetch, top-level post, reply).
-  function fetchCommentsForTarget(kind: typeof targetKind, id: string) {
-    if (kind === "prompt") return fetchCommentsForPrompt(id);
-    if (kind === "request") return fetchCommentsForRequest(id);
-    if (kind === "workflow") return fetchCommentsForWorkflow(id);
-    if (kind === "preset") return fetchCommentsForPreset(id);
-    if (kind === "community_post") return fetchCommentsForCommunityPost(id);
-    if (kind === "space") return fetchCommentsForSpace(id);
-    if (kind === "space_activity" && "spaceId" in target) return fetchCommentsForSpaceActivity(target.spaceId, id);
-    if (kind === "quote") return fetchCommentsForQuote(id);
-    return fetchCommentsForResult(id);
-  }
+  const scope: CommentScope = { kind: targetKind, id: targetId, spaceId: "spaceId" in target ? target.spaceId : undefined };
+  const scopeRef = useRef(scope);
+  useEffect(() => {
+    scopeRef.current = scope;
+  });
+
   function postCommentForTarget(kind: typeof targetKind, id: string, userId: string, body: string, parentId: string | null, rating: number | null = null) {
     if (kind === "prompt") return postCommentOnPrompt(id, userId, body, parentId);
     if (kind === "request") return postCommentOnRequest(id, userId, body, parentId);
@@ -166,53 +161,105 @@ export function useCommentThread(
     let cancelled = false;
     // eslint-disable-next-line react-hooks/set-state-in-effect -- resets when the target (a new prompt/request) changes
     setLoaded(false);
-    fetchCommentsForTarget(targetKind, targetId).then(async (result) => {
-      if (cancelled) return;
-      setComments(result);
-      setLikeCounts(Object.fromEntries(result.map((c) => [c.id, c.likeCount])));
-      setLoaded(true);
-      if (user) {
-        const liked = await fetchLikedCommentIds(
-          result.map((c) => c.id),
-          user.id,
-        );
-        if (!cancelled) setLikedIds(liked);
+    setLoadFailed(false);
+    setMoreFailed(false);
+    (async () => {
+      const first = await fetchCommentThreadPage(scopeRef.current, 0);
+      let result = first.comments;
+      // Space'te kişi başına tek puan: kişinin kendi puanlı yorumu başka bir sayfada olsa da yüklenir.
+      if (targetKind === "space" && user) {
+        const mine = await fetchOwnRatedSpaceComment(targetId, user.id).catch(() => null);
+        if (mine) result = mergeComments(result, [mine]);
       }
-
-      // Land on a specific comment/reply from a notification (Aşama 4.2-4.4)
-      // — only once per `highlightCommentId` (a like on this same thread
-      // shouldn't re-trigger the jump on every re-fetch).
-      if (highlightCommentId && processedHighlightId.current !== highlightCommentId) {
-        processedHighlightId.current = highlightCommentId;
-        const byId = new Map(result.map((c) => [c.id, c]));
-        const target = byId.get(highlightCommentId);
-        if (!target) {
-          setHighlightNotFound(true);
-        } else {
-          // Expand every ancestor so the target is actually rendered (a
-          // reply nested under a collapsed "N yanıtı göster" toggle has no
-          // DOM node to scroll to yet).
-          const ancestorIds = new Set<string>();
-          let cursor = target.parentId ? byId.get(target.parentId) : undefined;
-          while (cursor) {
-            ancestorIds.add(cursor.id);
-            cursor = cursor.parentId ? byId.get(cursor.parentId) : undefined;
-          }
-          if (ancestorIds.size > 0) {
-            setExpandedIds((prev) => new Set([...prev, ...ancestorIds]));
-          }
-          pendingScrollToId.current = highlightCommentId;
-          setHighlightedId(highlightCommentId);
-          if (highlightTimer.current) clearTimeout(highlightTimer.current);
-          highlightTimer.current = setTimeout(() => setHighlightedId(null), HIGHLIGHT_DURATION_MS);
+      // Bildirimden gelen yorum henüz okunmamış bir sayfadaysa kök yorumu ve altı ayrıca yüklenir.
+      if (highlightCommentId && !result.some((c) => c.id === highlightCommentId)) {
+        result = mergeComments(result, await fetchCommentThread(scopeRef.current, highlightCommentId).catch(() => []));
+      }
+      return { result, nextOffset: first.nextOffset };
+    })()
+      .then(async ({ result, nextOffset: next }) => {
+        if (cancelled) return;
+        setComments(result);
+        setNextOffset(next);
+        setLikeCounts(Object.fromEntries(result.map((c) => [c.id, c.likeCount])));
+        setLoaded(true);
+        if (user) {
+          const liked = await fetchLikedCommentIds(
+            result.map((c) => c.id),
+            user.id,
+          );
+          if (!cancelled) setLikedIds(liked);
         }
-      }
-    });
+
+        // Land on a specific comment/reply from a notification (Aşama 4.2-4.4)
+        // — only once per `highlightCommentId` (a like on this same thread
+        // shouldn't re-trigger the jump on every re-fetch).
+        if (highlightCommentId && processedHighlightId.current !== highlightCommentId) {
+          processedHighlightId.current = highlightCommentId;
+          const byId = new Map(result.map((c) => [c.id, c]));
+          const found = byId.get(highlightCommentId);
+          if (!found) {
+            setHighlightNotFound(true);
+          } else {
+            // Expand every ancestor so the target is actually rendered (a
+            // reply nested under a collapsed "N yanıtı göster" toggle has no
+            // DOM node to scroll to yet).
+            const ancestorIds = new Set<string>();
+            let cursor = found.parentId ? byId.get(found.parentId) : undefined;
+            while (cursor) {
+              ancestorIds.add(cursor.id);
+              cursor = cursor.parentId ? byId.get(cursor.parentId) : undefined;
+            }
+            if (ancestorIds.size > 0) {
+              setExpandedIds((prev) => new Set([...prev, ...ancestorIds]));
+            }
+            pendingScrollToId.current = highlightCommentId;
+            setHighlightedId(highlightCommentId);
+            if (highlightTimer.current) clearTimeout(highlightTimer.current);
+            highlightTimer.current = setTimeout(() => setHighlightedId(null), HIGHLIGHT_DURATION_MS);
+          }
+        }
+      })
+      .catch((err) => {
+        console.error("comment thread", err);
+        if (cancelled) return;
+        setComments([]);
+        setNextOffset(null);
+        setLoadFailed(true);
+        setLoaded(true);
+      });
     return () => {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [targetKind, targetId, user?.id, highlightCommentId]);
+  }, [targetKind, targetId, user?.id, highlightCommentId, reloadKey]);
+
+  /** The next page of top-level comments (with their replies), appended — also by itself when the end of the list scrolls into view. */
+  async function loadMoreComments() {
+    if (nextOffset === null || loadingMore || loadingMoreRef.current) return;
+    loadingMoreRef.current = true;
+    setLoadingMore(true);
+    setMoreFailed(false);
+    try {
+      const page = await fetchCommentThreadPage(scopeRef.current, nextOffset);
+      setComments((prev) => mergeComments(prev, page.comments));
+      setLikeCounts((prev) => ({ ...Object.fromEntries(page.comments.map((c) => [c.id, c.likeCount])), ...prev }));
+      setNextOffset(page.nextOffset);
+      if (user && page.comments.length > 0) {
+        const liked = await fetchLikedCommentIds(
+          page.comments.map((c) => c.id),
+          user.id,
+        );
+        setLikedIds((prev) => new Set([...prev, ...liked]));
+      }
+    } catch (err) {
+      console.error("comment thread (more)", err);
+      setMoreFailed(true);
+    } finally {
+      loadingMoreRef.current = false;
+      setLoadingMore(false);
+    }
+  }
 
   useEffect(() => {
     return () => {
@@ -221,17 +268,19 @@ export function useCommentThread(
   }, []);
 
   const commentsById = useMemo(() => new Map(comments.map((c) => [c.id, c])), [comments]);
+  // Oldest first, like the server order — pages and the viewer's own new comments merge into one chronological thread.
+  const sorted = useMemo(() => [...comments].sort(byCreated), [comments]);
   const childrenByParent = useMemo(() => {
     const map = new Map<string, PromptComment[]>();
-    for (const comment of comments) {
+    for (const comment of sorted) {
       if (!comment.parentId) continue;
       const siblings = map.get(comment.parentId) ?? [];
       siblings.push(comment);
       map.set(comment.parentId, siblings);
     }
     return map;
-  }, [comments]);
-  const topLevel = useMemo(() => comments.filter((c) => !c.parentId), [comments]);
+  }, [sorted]);
+  const topLevel = useMemo(() => sorted.filter((c) => !c.parentId), [sorted]);
   const ratingEnabled = targetKind === "space";
   // Kişi başına tek puan: kullanıcının zaten puanlı (silinmemiş) yorumu varsa yeni yorumda puan verilmez, mevcut puan yorumundaki yıldızlardan değişir.
   const myRatedComment = useMemo(() => (user ? comments.find((c) => c.author.id === user.id && c.rating && !c.deletedAt) ?? null : null), [comments, user]);
@@ -496,5 +545,20 @@ export function useCommentThread(
     highlightNotFound,
     showAll,
     setShowAll,
+    hasMore: nextOffset !== null,
+    loadMore: loadMoreComments,
+    loadingMore,
+    moreFailed,
+    loadFailed,
+    retryLoad: () => setReloadKey((n) => n + 1),
   };
+}
+
+const byCreated = (a: PromptComment, b: PromptComment) => a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id);
+
+/** Adds the comments not in the list yet (the list's own copies — edited, liked — win). */
+function mergeComments(current: PromptComment[], incoming: PromptComment[]): PromptComment[] {
+  const seen = new Set(current.map((c) => c.id));
+  const fresh = incoming.filter((c) => !seen.has(c.id));
+  return fresh.length === 0 ? current : [...current, ...fresh];
 }

@@ -1,3 +1,4 @@
+import type { PagedResult } from "./paged";
 import { supabase } from "./client";
 import { sniffImageMime } from "./message-images";
 import { translateForRuntime, type TranslationKey } from "@/lib/i18n/translations";
@@ -245,17 +246,31 @@ export async function fetchMyReaction(storyId: string, userId: string): Promise<
   return (data as { emoji: string } | null)?.emoji ?? null;
 }
 
-export async function fetchStoryViewers(storyId: string): Promise<StoryViewer[]> {
-  const rows = await rpc<
-    Array<{ viewer_id: string; username: string; display_name: string | null; avatar_url: string | null; first_viewed_at: string; last_viewed_at: string; view_count: number; reaction: string | null }> | null
-  >("story_viewers", { p_story_id: storyId });
-  return (rows ?? []).map((row) => ({
-    user: { id: row.viewer_id, username: row.username, displayName: row.display_name || row.username, avatarUrl: row.avatar_url },
-    firstViewedAt: row.first_viewed_at,
-    lastViewedAt: row.last_viewed_at,
-    viewCount: row.view_count,
-    reaction: row.reaction,
-  }));
+type ViewerRow = { viewer_id: string; username: string; display_name: string | null; avatar_url: string | null; first_viewed_at: string; last_viewed_at: string; view_count: number; reaction: string | null };
+const mapViewer = (row: ViewerRow): StoryViewer => ({
+  user: { id: row.viewer_id, username: row.username, displayName: row.display_name || row.username, avatarUrl: row.avatar_url },
+  firstViewedAt: row.first_viewed_at,
+  lastViewedAt: row.last_viewed_at,
+  viewCount: row.view_count,
+  reaction: row.reaction,
+});
+
+export const STORY_PEOPLE_PAGE = 50;
+
+/**
+ * Sahibine: kimler gördü (+ tepkisi), 50'şerli sayfa (docs/history/258-*; eskiden en yeni 500'de kesiliyordu). Sayfalı imza henüz veritabanında
+ * yoksa (`PGRST202`) eski imza çağrılır ve yalnız ilk sayfa (500) kullanılabilir.
+ */
+export async function fetchStoryViewersPage(storyId: string, offset = 0, limit = STORY_PEOPLE_PAGE): Promise<PagedResult<StoryViewer>> {
+  const { data, error } = await supabase.rpc("story_viewers", { p_story_id: storyId, p_limit: limit, p_offset: offset });
+  if (error?.code === "PGRST202") {
+    const old = await rpc<ViewerRow[] | null>("story_viewers", { p_story_id: storyId });
+    const rows = (old ?? []).slice(offset, offset + limit);
+    return { items: rows.map(mapViewer), total: null, nextOffset: rows.length === limit ? offset + limit : null };
+  }
+  if (error) throw toStoryError(error);
+  const rows = (data ?? []) as ViewerRow[];
+  return { items: rows.map(mapViewer), total: null, nextOffset: rows.length === limit ? offset + limit : null };
 }
 
 export async function fetchPollResults(storyId: string): Promise<StoryPollResults> {
@@ -263,36 +278,47 @@ export async function fetchPollResults(storyId: string): Promise<StoryPollResult
   return { revealed: raw.revealed === true, myVote: raw.my_vote ?? null, total: raw.total ?? null, counts: raw.counts ?? null };
 }
 
-/** Sahibine: soruya gelen yanıtlar; yanıtlayana: yalnız kendi yanıtları (RLS). */
-export async function fetchQuestionAnswers(storyId: string): Promise<StoryQuestionAnswer[]> {
+const ANSWER_SELECT = "id, story_id, body, created_at, responder:profiles!story_question_answers_responder_id_fkey(id, username, display_name, avatar_url)";
+type AnswerRow = { id: string; story_id: string; body: string; created_at: string; responder: AuthorRow | AuthorRow[] | null };
+const mapAnswer = (row: AnswerRow): StoryQuestionAnswer => ({ id: row.id, storyId: row.story_id, body: row.body, createdAt: row.created_at, responder: mapAuthor(one(row.responder)) });
+
+/** Sahibine: soruya gelen yanıtlar, 50'şerli sayfa (docs/history/258-*; eskiden en yeni 300'de kesiliyordu); yanıtlayana: yalnız kendi yanıtları (RLS). */
+export async function fetchQuestionAnswersPage(storyId: string, offset = 0, limit = STORY_PEOPLE_PAGE): Promise<PagedResult<StoryQuestionAnswer>> {
   const { data, error } = await supabase
     .from("story_question_answers")
-    .select("id, story_id, body, created_at, responder:profiles!story_question_answers_responder_id_fkey(id, username, display_name, avatar_url)")
+    .select(ANSWER_SELECT)
     .eq("story_id", storyId)
     .order("created_at", { ascending: false })
-    .limit(300);
+    .order("id", { ascending: false })
+    .range(offset, offset + limit - 1);
   if (error) throw toStoryError(error);
-  return ((data ?? []) as unknown as Array<{ id: string; story_id: string; body: string; created_at: string; responder: AuthorRow | AuthorRow[] | null }>).map((row) => ({
-    id: row.id,
-    storyId: row.story_id,
-    body: row.body,
-    createdAt: row.created_at,
-    responder: mapAuthor(one(row.responder)),
-  }));
+  const rows = (data ?? []) as unknown as AnswerRow[];
+  return { items: rows.map(mapAnswer), total: null, nextOffset: rows.length === limit ? offset + limit : null };
 }
 
-/** Sahibine: anket oylarının kim → hangi seçenek listesi. */
-export async function fetchPollVoters(storyId: string): Promise<Array<{ user: StoryAuthor; option: number }>> {
+/** Tek yanıt (hikâyede paylaşma akışı: kimliğiyle açılır — listenin hangi sayfasında olduğu önemsiz). */
+export async function fetchQuestionAnswer(storyId: string, answerId: string): Promise<StoryQuestionAnswer | null> {
+  const { data, error } = await supabase.from("story_question_answers").select(ANSWER_SELECT).eq("story_id", storyId).eq("id", answerId).maybeSingle();
+  if (error) throw toStoryError(error);
+  return data ? mapAnswer(data as unknown as AnswerRow) : null;
+}
+
+/** Sahibine: anket oylarının kim → hangi seçenek listesi, 50'şerli sayfa (eskiden en yeni 500'de kesiliyordu). */
+export async function fetchPollVotersPage(storyId: string, offset = 0, limit = STORY_PEOPLE_PAGE): Promise<PagedResult<{ user: StoryAuthor; option: number }>> {
   const { data, error } = await supabase
     .from("story_poll_votes")
     .select("option_index, voter:profiles!story_poll_votes_voter_id_fkey(id, username, display_name, avatar_url)")
     .eq("story_id", storyId)
     .order("updated_at", { ascending: false })
-    .limit(500);
+    .order("voter_id", { ascending: true })
+    .range(offset, offset + limit - 1);
   if (error) throw toStoryError(error);
-  return ((data ?? []) as unknown as Array<{ option_index: number; voter: AuthorRow | AuthorRow[] | null }>)
-    .map((row) => ({ user: mapAuthor(one(row.voter)), option: row.option_index }))
-    .filter((row): row is { user: StoryAuthor; option: number } => row.user !== null);
+  const rows = (data ?? []) as unknown as Array<{ option_index: number; voter: AuthorRow | AuthorRow[] | null }>;
+  return {
+    items: rows.map((row) => ({ user: mapAuthor(one(row.voter)), option: row.option_index })).filter((row): row is { user: StoryAuthor; option: number } => row.user !== null),
+    total: null,
+    nextOffset: rows.length === limit ? offset + limit : null,
+  };
 }
 
 // ---------------------------------------------------------------------------

@@ -28,7 +28,6 @@ const BOUNDED_BY_DESIGN: Record<string, string> = {
   "content-versions.ts:fetchVersionsForRequest": "versions of ONE request (one row per edit)",
   "content-versions.ts:fetchVersionsForWorkflow": "versions of ONE workflow (one row per edit)",
   "content-versions.ts:fetchVersionsForPreset": "versions of ONE preset (one row per edit)",
-  "messages.ts:fetchConversationsForUser": "the viewer's own conversations",
   "presets.ts:fetchPresetsByIds": "ids come from one page",
   "presets.ts:mapFieldRow": "mapper, not a query",
   "profiles.ts:fetchFollowedProfiles": "pickers pass a cap (`limit`); the /following page pages with fetchFollowedProfilesPage",

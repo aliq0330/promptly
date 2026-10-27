@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { CheckCircle2, Flag, MessageSquare, SquareStack } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
@@ -13,6 +13,8 @@ import { useAsyncAction } from "@/features/groups/use-async-action";
 import { fetchCommunityReports, resolveCommunityReport, type CommunityReport } from "@/lib/supabase/communities";
 import { communityChatHref } from "@/lib/communities";
 import { formatRelativeTime, profileHref } from "@/lib/utils";
+import { useGrowingList } from "@/features/content/use-growing-list";
+import { LoadMore } from "@/features/feed/load-more";
 import { useTranslation } from "@/lib/i18n/language-provider";
 
 type Filter = "open" | "closed";
@@ -25,27 +27,15 @@ type Filter = "open" | "closed";
 export function ModerationSection({ groupId, onChanged }: { groupId: string; onChanged: () => void | Promise<void> }) {
   const { t, language } = useTranslation();
   const [filter, setFilter] = useState<Filter>("open");
-  const [reports, setReports] = useState<CommunityReport[] | null>(null);
-  const [loadError, setLoadError] = useState(false);
   const [pending, setPending] = useState<{ report: CommunityReport; action: "dismiss" | "remove" } | null>(null);
   const [note, setNote] = useState("");
   const action = useAsyncAction();
 
-  const load = useCallback(async () => {
-    try {
-      setReports(await fetchCommunityReports(groupId, filter));
-      setLoadError(false);
-    } catch (err) {
-      console.error("community reports", err);
-      setLoadError(true);
-    }
-  }, [groupId, filter]);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- süzgeç değişince yeniden yükle
-    setReports(null);
-    void load();
-  }, [load]);
+  // İlk 50 rapor; devamı kaydırınca (eskiden 50'de kesiliyordu — kapanmış rapor geçmişine ulaşılamıyordu).
+  const list = useGrowingList(`${groupId}|${filter}`, (limit) => fetchCommunityReports(groupId, filter, limit));
+  const reports = list.items;
+  const loadError = list.failed && reports !== null && reports.length === 0;
+  const load = list.reload;
 
   async function confirm() {
     if (!pending) return;
@@ -78,7 +68,7 @@ export function ModerationSection({ groupId, onChanged }: { groupId: string; onC
             {t("common.retry")}
           </button>
         </p>
-      ) : reports === null ? (
+      ) : reports === null || list.loading ? (
         <div className="h-24 animate-pulse rounded-lg border border-border-soft bg-surface-soft" aria-busy="true" />
       ) : reports.length === 0 ? (
         <p className="flex items-center justify-center gap-2 rounded-lg border border-dashed border-border px-4 py-8 text-small text-text-muted">
@@ -134,6 +124,9 @@ export function ModerationSection({ groupId, onChanged }: { groupId: string; onC
             </li>
           ))}
         </ul>
+      )}
+      {reports !== null && reports.length > 0 && (
+        <LoadMore failed={list.failed} hasMore={list.hasMore} loadingMore={list.loadingMore} onLoadMore={list.grow} />
       )}
 
       {pending && (

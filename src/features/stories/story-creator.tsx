@@ -30,7 +30,7 @@ import {
   createStory,
   deleteDraft,
   fetchDrafts,
-  fetchQuestionAnswers,
+  fetchQuestionAnswer,
   fetchStoryById,
   prepareStoryMedia,
   saveDraft,
@@ -152,9 +152,8 @@ export function StoryCreator() {
     const answerId = searchParams.get("answer");
     const sourceStory = searchParams.get("story");
     if (answerId && sourceStory && isUuid(answerId) && isUuid(sourceStory)) {
-      Promise.all([fetchStoryById(sourceStory), fetchQuestionAnswers(sourceStory)])
-        .then(([story, answers]) => {
-          const answer = answers.find((a) => a.id === answerId);
+      Promise.all([fetchStoryById(sourceStory), fetchQuestionAnswer(sourceStory, answerId)])
+        .then(([story, answer]) => {
           if (!answer) return;
           const question = story?.sticker?.question ?? "";
           startText("ink");

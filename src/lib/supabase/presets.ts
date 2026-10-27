@@ -279,27 +279,42 @@ export async function fetchPresetsByCreator(creatorId: string): Promise<Preset[]
  * preset. Presets that are no longer visible (made private/deleted) simply
  * drop out (RLS yields a null embed).
  */
+export async function fetchSavedPresetsPage(userId: string, offset = 0, limit = OWNED_PAGE): Promise<PagedResult<Preset>> {
+  const { data, count, error } = await supabase
+    .from("collection_items")
+    .select(`id, created_at, collections!inner ( owner_id ), presets ( ${PRESET_SELECT} )`, offset === 0 ? { count: "exact" } : undefined)
+    .eq("collections.owner_id", userId)
+    .not("preset_id", "is", null)
+    .order("created_at", { ascending: false })
+    .order("id", { ascending: false })
+    .range(offset, offset + limit - 1);
+  if (error) throw new Error(error.message);
+  const rows = (data ?? []) as unknown as { presets: PresetRow | null }[];
+  const seen = new Set<string>();
+  const items: Preset[] = [];
+  for (const row of rows) {
+    if (!row.presets || seen.has(row.presets.id)) continue;
+    seen.add(row.presets.id);
+    items.push(mapPresetRow(row.presets));
+  }
+  return { items: await withFields(items), total: offset === 0 ? (count ?? null) : null, nextOffset: rows.length === limit ? offset + limit : null };
+}
+
+/** Every saved preset (pickers that must offer all of them: "Hazır ayarla dene", the preset picker) — the pages above, read to the end (was cut at 120). */
 export async function fetchSavedPresets(userId: string): Promise<Preset[]> {
   try {
-    const { data, error } = await supabase
-      .from("collection_items")
-      .select(`created_at, collections!inner ( owner_id ), presets ( ${PRESET_SELECT} )`)
-      .eq("collections.owner_id", userId)
-      .not("preset_id", "is", null)
-      .order("created_at", { ascending: false })
-      .limit(120);
-    if (error) {
-      console.error("fetchSavedPresets", error);
-      return [];
-    }
-    const seen = new Set<string>();
     const out: Preset[] = [];
-    for (const row of (data ?? []) as unknown as { presets: PresetRow | null }[]) {
-      if (!row.presets || seen.has(row.presets.id)) continue;
-      seen.add(row.presets.id);
-      out.push(mapPresetRow(row.presets));
+    const seen = new Set<string>();
+    for (let offset: number | null = 0, guard = 0; offset !== null && guard < 200; guard += 1) {
+      const page: PagedResult<Preset> = await fetchSavedPresetsPage(userId, offset, 100);
+      for (const preset of page.items) {
+        if (seen.has(preset.id)) continue;
+        seen.add(preset.id);
+        out.push(preset);
+      }
+      offset = page.nextOffset;
     }
-    return withFields(out);
+    return out;
   } catch (err) {
     console.error("fetchSavedPresets", err);
     return [];

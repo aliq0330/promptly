@@ -54,6 +54,9 @@ const RealMessagesContext = createContext<RealMessagesContextValue | null>(null)
  * `conversations`/`conversation_members`/`messages` tables. Only ever
  * holds a signed-in user's own conversations.
  */
+/** Grup sohbetlerinin listede yenilenme aralığı (görünürken). */
+const GROUP_REFRESH_MS = 120_000;
+
 export function RealMessagesProvider({ children }: { children: React.ReactNode }) {
   const { t } = useTranslation();
   const { user } = useAuth();
@@ -112,6 +115,22 @@ export function RealMessagesProvider({ children }: { children: React.ReactNode }
       supabase.removeChannel(channel);
     };
   }, [user]);
+
+  // Grup/topluluk sohbetlerinde yeni mesaj artık üyelerin satırını güncellemez (docs/history/258-*: 100 000 üyeli toplulukta mesaj başına 100 000 güncelleme
+  // olurdu) — yukarıdaki abonelik yalnız birebir sohbetleri canlı tutar. Gruplar sekme tekrar görününce ve görünürken seyrek aralıkla yenilenir.
+  const hasGroups = conversations.some((c) => c.kind === "group");
+  useEffect(() => {
+    if (!user || !hasGroups) return;
+    const reload = () => {
+      if (document.visibilityState === "visible") fetchConversationsForUser(user.id).then(setConversations);
+    };
+    const timer = setInterval(reload, GROUP_REFRESH_MS);
+    document.addEventListener("visibilitychange", reload);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener("visibilitychange", reload);
+    };
+  }, [user, hasGroups]);
 
   const getCached = useCallback(
     (id: string) => conversations.find((conversation) => conversation.id === id),

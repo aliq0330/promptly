@@ -4,6 +4,11 @@
  * page by page with this helper; lists a person scrolls through are paged by the screen instead (`usePagedList`).
  */
 export const SUPABASE_PAGE = 1000;
+
+/** Splits a list into parts of `size` (ids written into a URL / an `in(...)` list are sent in parts: hundreds in one address overflow it). */
+export function chunk<T>(items: T[], size: number): T[][] {
+  return Array.from({ length: Math.ceil(items.length / size) }, (_, i) => items.slice(i * size, (i + 1) * size));
+}
 /** Safety ceiling: a list that long is a bug, not data — `truncated` tells the caller instead of looping forever. */
 export const FETCH_ALL_MAX = 20_000;
 

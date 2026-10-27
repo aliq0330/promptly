@@ -1,3 +1,4 @@
+import { sanitizeSearchText } from "./taxonomy-query";
 import { supabase } from "./client";
 import { mapProfileRow, type ProfileRow } from "./mappers";
 import { PROMPT_SELECT, mapPromptRow, type PromptRow } from "./prompts";
@@ -792,29 +793,33 @@ export interface ShareableContent {
   title: string;
 }
 
-export async function fetchOwnShareableContent(userId: string, type: CommunityPostType): Promise<ShareableContent[]> {
+/**
+ * Paylaşılabilir içerikler: `limit` satırlık pencere + "daha var mı", isteğe bağlı başlık araması (docs/history/258-*: eskiden tür başına
+ * en yeni 30 ile kesiliyordu — binlerce promptlu kişi eski bir promptu bulamıyordu).
+ */
+export async function fetchOwnShareableContentWindow(userId: string, type: CommunityPostType, { search = "", limit = 30 }: { search?: string; limit?: number } = {}): Promise<{ items: ShareableContent[]; hasMore: boolean }> {
+  const text = sanitizeSearchText(search);
+  let rows: { id: string; title: string }[];
   if (type === "space") {
     // Yalnız herkese açık + arşivsiz Space duyurulur (docs/history/215-*; sunucu da denetler).
-    const { data, error } = await supabase
-      .from("spaces")
-      .select("id, title")
-      .eq("owner_id", userId)
-      .eq("visibility", "public")
-      .is("archived_at", null)
-      .order("updated_at", { ascending: false })
-      .limit(30);
+    let query = supabase.from("spaces").select("id, title").eq("owner_id", userId).eq("visibility", "public").is("archived_at", null);
+    if (text) query = query.ilike("title", `%${text}%`);
+    const { data, error } = await query.order("updated_at", { ascending: false }).order("id", { ascending: false }).limit(limit + 1);
     if (error) throw toGroupError(error);
-    return ((data ?? []) as { id: string; title: string }[]).map((row) => ({ id: row.id, type, title: row.title }));
+    rows = (data ?? []) as { id: string; title: string }[];
+  } else {
+    const table = type === "prompt" ? "prompts" : type === "request" ? "prompt_requests" : type === "workflow" ? "workflows" : "presets";
+    const ownerColumn = type === "workflow" || type === "preset" ? "creator_id" : "author_id";
+    let query = supabase.from(table).select("id, title").eq(ownerColumn, userId).eq("visibility", "public").is("community_id", null);
+    if (type === "prompt") query = query.eq("status", "published").is("deleted_at", null);
+    else if (type === "request") query = query.eq("is_draft", false).is("deleted_at", null);
+    else query = query.eq("status", "published");
+    if (text) query = query.ilike("title", `%${text}%`);
+    const { data, error } = await query.order("created_at", { ascending: false }).order("id", { ascending: false }).limit(limit + 1);
+    if (error) throw toGroupError(error);
+    rows = (data ?? []) as { id: string; title: string }[];
   }
-  const table = type === "prompt" ? "prompts" : type === "request" ? "prompt_requests" : type === "workflow" ? "workflows" : "presets";
-  const ownerColumn = type === "workflow" || type === "preset" ? "creator_id" : "author_id";
-  let query = supabase.from(table).select("id, title").eq(ownerColumn, userId).eq("visibility", "public");
-  if (type === "prompt") query = query.eq("status", "published").is("deleted_at", null);
-  else if (type === "request") query = query.eq("is_draft", false).is("deleted_at", null);
-  else query = query.eq("status", "published");
-  const { data, error } = await query.order("created_at", { ascending: false }).limit(30);
-  if (error) throw toGroupError(error);
-  return ((data ?? []) as { id: string; title: string }[]).map((row) => ({ id: row.id, type, title: row.title }));
+  return { items: rows.slice(0, limit).map((row) => ({ id: row.id, type, title: row.title })), hasMore: rows.length > limit };
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -897,20 +902,29 @@ function mapEventRow(row: EventRow, myRsvp: RsvpStatus | null): CommunityEvent {
   };
 }
 
-/** Etkinlikler (yaklaşan önce): `scope` upcoming = bitmemiş, past = bitmiş. Benim cevaplarım tek ek sorguyla eklenir. */
-export async function fetchCommunityEvents(communityId: string, userId: string | null, scope: "upcoming" | "past"): Promise<CommunityEvent[]> {
+/**
+ * Etkinlikler (yaklaşan önce): `scope` upcoming = bitmemiş, past = bitmiş. Benim cevaplarım tek ek sorguyla eklenir.
+ * `limit` satırlık pencere + "daha var mı" (docs/history/258-*: eskiden 50'de kesiliyordu, 50'den eski geçmiş etkinliklere ulaşılamıyordu).
+ */
+export async function fetchCommunityEventsWindow(communityId: string, userId: string | null, scope: "upcoming" | "past", limit = 50): Promise<{ items: CommunityEvent[]; hasMore: boolean }> {
   const cutoff = new Date(Date.now() - 3 * 3_600_000).toISOString();
   let query = supabase.from("community_events").select(EVENT_SELECT).eq("community_id", communityId);
   query = scope === "upcoming" ? query.gte("starts_at", cutoff).order("starts_at", { ascending: true }) : query.lt("starts_at", cutoff).order("starts_at", { ascending: false });
-  const { data, error } = await query.limit(50);
+  const { data, error } = await query.order("id", { ascending: true }).limit(limit + 1);
   if (error) throw toGroupError(error);
-  const rows = (data ?? []) as EventRow[];
+  const all = (data ?? []) as EventRow[];
+  const rows = all.slice(0, limit);
   const mine = new Map<string, RsvpStatus>();
   if (userId && rows.length > 0) {
     const rsvps = await supabase.from("community_event_rsvps").select("event_id, status").eq("user_id", userId).in("event_id", rows.map((row) => row.id));
     for (const row of (rsvps.data ?? []) as { event_id: string; status: RsvpStatus }[]) mine.set(row.event_id, row.status);
   }
-  return rows.map((row) => mapEventRow(row, mine.get(row.id) ?? null));
+  return { items: rows.map((row) => mapEventRow(row, mine.get(row.id) ?? null)), hasMore: all.length > limit };
+}
+
+/** Kısa özetler (akış üstündeki yaklaşan etkinlikler): ilk `limit` etkinlik. */
+export async function fetchCommunityEvents(communityId: string, userId: string | null, scope: "upcoming" | "past", limit = 50): Promise<CommunityEvent[]> {
+  return (await fetchCommunityEventsWindow(communityId, userId, scope, limit)).items;
 }
 
 export interface EventInput {
@@ -983,7 +997,8 @@ export interface CommunityReport {
   postTitle: string | null;
 }
 
-export async function fetchCommunityReports(communityId: string, status: "open" | "closed"): Promise<CommunityReport[]> {
+/** Raporlar: `limit` satırlık pencere + "daha var mı" (docs/history/258-*: eskiden 50'de kesiliyordu, kapanmış rapor geçmişine ulaşılamıyordu). */
+export async function fetchCommunityReports(communityId: string, status: "open" | "closed", limit = 50): Promise<{ items: CommunityReport[]; hasMore: boolean }> {
   let query = supabase
     .from("community_reports")
     .select(
@@ -992,7 +1007,7 @@ export async function fetchCommunityReports(communityId: string, status: "open" 
     )
     .eq("community_id", communityId);
   query = status === "open" ? query.eq("status", "open").order("created_at", { ascending: true }) : query.neq("status", "open").order("resolved_at", { ascending: false });
-  const { data, error } = await query.limit(50);
+  const { data, error } = await query.order("id", { ascending: true }).limit(limit + 1);
   if (error) throw toGroupError(error);
   type Row = {
     id: string; target_kind: "post" | "message"; post_id: string | null; message_id: string | null; target_user_id: string | null; reason: string;
@@ -1000,7 +1015,8 @@ export async function fetchCommunityReports(communityId: string, status: "open" 
     messages: { body: string | null; deleted_at: string | null } | null;
     community_posts: { prompts: { title: string } | null; prompt_requests: { title: string } | null; workflows: { title: string } | null; presets: { title: string } | null } | null;
   };
-  return ((data ?? []) as unknown as Row[]).map((row) => {
+  const all = (data ?? []) as unknown as Row[];
+  const items = all.slice(0, limit).map((row) => {
     const post = row.community_posts;
     return {
       id: row.id, kind: row.target_kind, reporter: row.reporter ? mapProfileRow(row.reporter) : null, targetUserId: row.target_user_id,
@@ -1009,6 +1025,7 @@ export async function fetchCommunityReports(communityId: string, status: "open" 
       postTitle: post ? (post.prompts?.title ?? post.prompt_requests?.title ?? post.workflows?.title ?? post.presets?.title ?? null) : null,
     };
   });
+  return { items, hasMore: all.length > limit };
 }
 
 export async function resolveCommunityReport(reportId: string, action: "dismiss" | "remove", note: string): Promise<void> {

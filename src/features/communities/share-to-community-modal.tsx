@@ -1,14 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { fieldControlClassName, fieldLabelClassName } from "@/components/ui/field";
 import { Modal } from "@/components/ui/modal";
 import { Tabs } from "@/components/ui/tabs";
 import { useAsyncAction } from "@/features/groups/use-async-action";
-import { fetchOwnShareableContent, shareToCommunity, type CommunityPostType, type ShareableContent } from "@/lib/supabase/communities";
+import { shareToCommunity, type CommunityPostType } from "@/lib/supabase/communities";
 import { COMMUNITY_NOTE_MAX } from "@/lib/communities";
+import { LoadMore } from "@/features/feed/load-more";
+import { useShareableContent } from "@/features/communities/use-shareable-content";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
 
@@ -23,30 +25,19 @@ const TYPES: CommunityPostType[] = ["prompt", "request", "workflow", "preset", "
 export function ShareToCommunityModal({ communityId, userId, onClose, onShared }: { communityId: string; userId: string; onClose: () => void; onShared: () => void | Promise<void> }) {
   const { t } = useTranslation();
   const [type, setType] = useState<CommunityPostType>("prompt");
-  const [items, setItems] = useState<ShareableContent[] | null>(null);
-  const [loadError, setLoadError] = useState(false);
+  const { search, setSearch, list } = useShareableContent(userId, type);
+  const items = list.items;
+  const loadError = list.failed && items !== null && items.length === 0;
   const [selected, setSelected] = useState<string | null>(null);
   const [note, setNote] = useState("");
   const { busy, error, run } = useAsyncAction();
 
-  useEffect(() => {
-    let cancelled = false;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- tür değişince listeyi sıfırla
-    setItems(null);
-    setLoadError(false);
+  // Tür değişince seçim ve arama sıfırlanır.
+  function changeType(next: CommunityPostType) {
+    setType(next);
     setSelected(null);
-    fetchOwnShareableContent(userId, type)
-      .then((list) => {
-        if (!cancelled) setItems(list);
-      })
-      .catch((err) => {
-        console.error("fetchOwnShareableContent", err);
-        if (!cancelled) setLoadError(true);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [type, userId]);
+    setSearch("");
+  }
 
   async function submit() {
     if (!selected) return;
@@ -67,14 +58,22 @@ export function ShareToCommunityModal({ communityId, userId, onClose, onShared }
           <p className="text-small text-text-muted">{t("communities.feed.shareHelp")}</p>
         </div>
         <div className="px-5">
-          <Tabs variant="segmented" ariaLabel={t("communities.feed.typeAria")} active={type} onChange={setType} items={TYPES.map((value) => ({ key: value, label: t(`communities.feed.type.${value}`) }))} />
+          <Tabs variant="segmented" ariaLabel={t("communities.feed.typeAria")} active={type} onChange={changeType} items={TYPES.map((value) => ({ key: value, label: t(`communities.feed.type.${value}`) }))} />
         </div>
         <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 pb-4 pt-3">
+          <input
+            type="search"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder={t("communities.feed.pickSearch")}
+            aria-label={t("communities.feed.pickSearch")}
+            className={`${fieldControlClassName} h-10`}
+          />
           {loadError ? (
             <p role="alert" className="text-small text-danger">
               {t("communities.feed.pickLoadError")}
             </p>
-          ) : items === null ? (
+          ) : items === null || list.loading ? (
             <div className="h-20 animate-pulse rounded-lg bg-surface-soft" aria-busy="true" />
           ) : items.length === 0 ? (
             <p className="rounded-lg border border-dashed border-border px-4 py-6 text-center text-small text-text-muted">{t("communities.feed.pickEmpty")}</p>
@@ -94,6 +93,9 @@ export function ShareToCommunityModal({ communityId, userId, onClose, onShared }
                 </li>
               ))}
             </ul>
+          )}
+          {items !== null && items.length > 0 && (
+            <LoadMore failed={list.failed} hasMore={list.hasMore} loadingMore={list.loadingMore} onLoadMore={list.grow} />
           )}
 
           <div>

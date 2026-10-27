@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Copy, Link2, Loader2, Send, Trash2, UserCheck } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
+import { LoadMoreButton } from "@/features/feed/load-more";
 import { Button } from "@/components/ui/button";
 import { fieldControlClassName, fieldLabelClassName } from "@/components/ui/field";
 import { InviteePicker } from "./invitee-picker";
@@ -53,6 +54,8 @@ const USES_OPTIONS = [
  * Üye davet etme (owner/admin): kullanıcı arama + takip ettiklerim, bekleyen davetler (iptal), davet bağlantıları
  * (süreli, kullanım sınırlı, iptal edilebilir; ham token yalnızca oluşturulduğu anda gösterilir) ve yasaklı kullanıcılar.
  */
+const LIST_SHOWN_STEP = 50;
+
 export function GroupInvitesSection({
   group,
   onChanged,
@@ -64,6 +67,9 @@ export function GroupInvitesSection({
 }) {
   const { t, language } = useTranslation();
   const [reloadKey, setReloadKey] = useState(0);
+  // Bekleyen davetler / yasaklılar hepsi okunur (eskiden 200'de kesiliyordu) ama 50'şer çizilir, devamı kaydırınca (docs/history/258-*).
+  const [invShown, setInvShown] = useState(LIST_SHOWN_STEP);
+  const [banShown, setBanShown] = useState(LIST_SHOWN_STEP);
   const [loaded, setLoaded] = useState<Loaded | null>(null);
   const [selected, setSelected] = useState<UserProfile[]>([]);
   const [memberIds, setMemberIds] = useState<Set<string> | null>(null);
@@ -216,8 +222,9 @@ export function GroupInvitesSection({
             {current.invitations.length === 0 ? (
               <p className="text-small text-text-muted">{t("groups.invite.pendingEmpty")}</p>
             ) : (
+              <>
               <ul className="divide-y divide-border-soft rounded-lg border border-border-soft">
-                {current.invitations.map((invitation) => (
+                {current.invitations.slice(0, invShown).map((invitation) => (
                   <li key={invitation.id} className="flex items-center gap-3 px-3 py-2.5">
                     <Avatar src={invitation.user?.avatarUrl} alt={invitation.user?.displayName ?? ""} size={36} />
                     <span className="min-w-0 flex-1 leading-tight">
@@ -239,6 +246,10 @@ export function GroupInvitesSection({
                   </li>
                 ))}
               </ul>
+              {current.invitations.length > invShown && (
+                <LoadMoreButton variant="ghost" size="sm" wrapperClassName="flex justify-center pt-1" onLoadMore={() => setInvShown((n) => n + LIST_SHOWN_STEP)} />
+              )}
+              </>
             )}
           </section>
 
@@ -324,7 +335,7 @@ export function GroupInvitesSection({
                 {t("groups.bans.title")} ({current.bans.length})
               </h3>
               <ul className="divide-y divide-border-soft rounded-lg border border-border-soft">
-                {current.bans.map((ban) => (
+                {current.bans.slice(0, banShown).map((ban) => (
                   <li key={ban.userId} className="flex items-center gap-3 px-3 py-2.5">
                     <Avatar src={ban.user?.avatarUrl} alt={ban.user?.displayName ?? ""} size={36} />
                     <span className="min-w-0 flex-1 leading-tight">
@@ -345,6 +356,9 @@ export function GroupInvitesSection({
                   </li>
                 ))}
               </ul>
+              {current.bans.length > banShown && (
+                <LoadMoreButton variant="ghost" size="sm" wrapperClassName="flex justify-center pt-1" onLoadMore={() => setBanShown((n) => n + LIST_SHOWN_STEP)} />
+              )}
             </section>
           )}
         </>

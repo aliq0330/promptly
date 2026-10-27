@@ -1,27 +1,29 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { Ban, Eye, Loader2, Plus, Share, X } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/auth-provider";
+import { usePagedList } from "@/features/content/use-paged-list";
+import { LoadMore } from "@/features/feed/load-more";
 import { blockUser } from "@/lib/supabase/blocks";
 import { fileReport } from "@/lib/supabase/reports";
 import {
   addStoryToHighlight,
   fetchHighlights,
   fetchPollResults,
-  fetchPollVoters,
-  fetchQuestionAnswers,
-  fetchStoryViewers,
+  fetchPollVotersPage,
+  fetchQuestionAnswersPage,
+  fetchStoryViewersPage,
   reshareStory,
   saveHighlight,
 } from "@/lib/supabase/stories";
 import { STORY_LIMITS, pollPercentages } from "@/lib/stories";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn, formatRelativeTime, profileHref } from "@/lib/utils";
-import type { Story, StoryAudience, StoryAuthor, StoryHighlight, StoryPollResults, StoryQuestionAnswer, StoryViewer as StoryViewerRow } from "@/types";
+import type { Story, StoryAudience, StoryAuthor, StoryHighlight, StoryPollResults } from "@/types";
 import { StoryAudiencePicker } from "./story-audience-picker";
 
 /**
@@ -85,37 +87,31 @@ export function OwnerActivitySheet({ story, initialTab, onClose, onLeave }: { st
   const router = useRouter();
   const { user } = useAuth();
   const [tab, setTab] = useState<ActivityTab>(initialTab);
-  const [viewers, setViewers] = useState<StoryViewerRow[] | null>(null);
-  const [poll, setPoll] = useState<{ results: StoryPollResults; voters: Array<{ user: StoryAuthor; option: number }> } | null>(null);
-  const [answers, setAnswers] = useState<StoryQuestionAnswer[] | null>(null);
+  const [pollResults, setPollResults] = useState<StoryPollResults | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [blocked, setBlocked] = useState<ReadonlySet<string>>(new Set());
 
-  const loadViewers = useCallback(() => {
-    fetchStoryViewers(story.id)
-      .then(setViewers)
-      .catch((err: unknown) => setError(err instanceof Error ? err.message : t("stories.error.generic")));
-  }, [story.id, t]);
+  // Her liste 50'şerli sayfa, devamı kaydırınca (docs/history/258-*: eskiden 500 / 300'de kesiliyordu). Görüntüleyenler açıkken 20 sn'de bir
+  // yalnız İLK sayfa tazelenir (kaydırmış okuyucunun listesine dokunulmaz).
+  const viewerPages = usePagedList(`viewers|${story.id}`, tab === "viewers", (offset) => fetchStoryViewersPage(story.id, offset), (row) => row.user.id);
+  const voterPages = usePagedList(`voters|${story.id}`, tab === "poll", (offset) => fetchPollVotersPage(story.id, offset), (row) => row.user.id);
+  const answerPages = usePagedList(`answers|${story.id}`, tab === "answers", (offset) => fetchQuestionAnswersPage(story.id, offset));
+  const viewers = viewerPages.loading ? null : viewerPages.items;
+  const refreshViewers = viewerPages.refresh;
 
   useEffect(() => {
     if (tab !== "viewers") return;
-    loadViewers();
-    const timer = window.setInterval(loadViewers, 20_000);
+    const timer = window.setInterval(() => void refreshViewers(), 20_000);
     return () => window.clearInterval(timer);
-  }, [tab, loadViewers]);
+  }, [tab, refreshViewers]);
 
   useEffect(() => {
-    if (tab === "poll" && !poll) {
-      Promise.all([fetchPollResults(story.id), fetchPollVoters(story.id)])
-        .then(([results, voters]) => setPoll({ results, voters }))
+    if (tab === "poll" && !pollResults) {
+      fetchPollResults(story.id)
+        .then(setPollResults)
         .catch((err: unknown) => setError(err instanceof Error ? err.message : t("stories.error.generic")));
     }
-    if (tab === "answers" && !answers) {
-      fetchQuestionAnswers(story.id)
-        .then(setAnswers)
-        .catch((err: unknown) => setError(err instanceof Error ? err.message : t("stories.error.generic")));
-    }
-  }, [tab, poll, answers, story.id, t]);
+  }, [tab, pollResults, story.id, t]);
 
   const openProfile = (person: StoryAuthor) => {
     onLeave();
@@ -201,25 +197,26 @@ export function OwnerActivitySheet({ story, initialTab, onClose, onLeave }: { st
                 />
               ))}
             </ul>
+            <LoadMore failed={viewerPages.failed} hasMore={viewerPages.hasMore} loadingMore={viewerPages.loadingMore} onLoadMore={() => void viewerPages.loadMore()} />
           </>
         ))}
 
       {tab === "poll" &&
         story.sticker?.kind === "poll" &&
-        (poll === null ? (
+        (pollResults === null ? (
           <SheetLoading />
         ) : (
           <div className="space-y-4">
             <p className="font-semibold">{story.sticker.question}</p>
             <ul className="space-y-2">
               {story.sticker.options.map((option, index) => {
-                const percent = poll.results.counts ? pollPercentages(poll.results.counts)[index] : 0;
+                const percent = pollResults.counts ? pollPercentages(pollResults.counts)[index] : 0;
                 return (
                   <li key={index}>
                     <div className="flex items-center justify-between text-small">
                       <span className="font-medium">{option}</span>
                       <span className="tabular-nums text-text-muted">
-                        {poll.results.counts?.[index] ?? 0} · {percent}%
+                        {pollResults.counts?.[index] ?? 0} · {percent}%
                       </span>
                     </div>
                     <div className="mt-1 h-2 overflow-hidden rounded-full bg-surface-soft">
@@ -229,10 +226,11 @@ export function OwnerActivitySheet({ story, initialTab, onClose, onLeave }: { st
                 );
               })}
             </ul>
-            <p className="text-caption text-text-muted">{t("stories.poll.totalVotes", { count: poll.results.total ?? 0 })}</p>
-            {poll.voters.length > 0 && (
+            <p className="text-caption text-text-muted">{t("stories.poll.totalVotes", { count: pollResults.total ?? 0 })}</p>
+            {voterPages.items.length > 0 && (
+              <>
               <ul className="divide-y divide-border-soft">
-                {poll.voters.map((row) => (
+                {voterPages.items.map((row) => (
                   <PersonRow
                     key={row.user.id}
                     user={row.user}
@@ -241,20 +239,22 @@ export function OwnerActivitySheet({ story, initialTab, onClose, onLeave }: { st
                   />
                 ))}
               </ul>
+              <LoadMore failed={voterPages.failed} hasMore={voterPages.hasMore} loadingMore={voterPages.loadingMore} onLoadMore={() => void voterPages.loadMore()} />
+              </>
             )}
           </div>
         ))}
 
       {tab === "answers" &&
-        (answers === null ? (
+        (answerPages.loading ? (
           <SheetLoading />
-        ) : answers.length === 0 ? (
+        ) : answerPages.items.length === 0 ? (
           <p className="py-6 text-center text-small text-text-muted">{t("stories.question.noAnswers")}</p>
         ) : (
           <>
             <p className="mb-2 text-caption text-text-muted">{t("stories.question.shareHint")}</p>
             <ul className="space-y-2">
-              {answers.map((answer) => (
+              {answerPages.items.map((answer) => (
                 <li key={answer.id} className="rounded-md border border-border-soft bg-surface-soft p-3">
                   <p className="break-words text-small text-text">{answer.body}</p>
                   <div className="mt-2 flex items-center justify-between gap-2 text-caption text-text-muted">
@@ -275,6 +275,7 @@ export function OwnerActivitySheet({ story, initialTab, onClose, onLeave }: { st
                 </li>
               ))}
             </ul>
+            <LoadMore failed={answerPages.failed} hasMore={answerPages.hasMore} loadingMore={answerPages.loadingMore} onLoadMore={() => void answerPages.loadMore()} />
           </>
         ))}
     </ViewerSheet>

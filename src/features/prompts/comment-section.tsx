@@ -3,6 +3,7 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { LoadMore } from "@/features/feed/load-more";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { CommentNode } from "./comment-node";
 import { ArrowRight } from "lucide-react";
@@ -73,6 +74,12 @@ export function CommentSection({
     highlightNotFound,
     showAll,
     setShowAll,
+    hasMore,
+    loadMore,
+    loadingMore,
+    moreFailed,
+    loadFailed,
+    retryLoad,
   } = useCommentThread(target, { highlightCommentId, spaceOwnerId, onChange });
 
   function handleSubmit(event: React.FormEvent) {
@@ -84,14 +91,14 @@ export function CommentSection({
     <section className="space-y-4">
       <div className="flex items-center justify-between gap-3">
         {headless ? (
-          <p className="text-caption tabular-nums text-text-muted">{t("comments.countLabel", { count: comments.length })}</p>
+          <p className="text-caption tabular-nums text-text-muted">{t("comments.countLabel", { count: hasMore ? `${comments.length}+` : comments.length })}</p>
         ) : (
           <h2 className="text-label font-semibold text-text">
             {t("comments.title")}
-            <span className="font-normal tabular-nums text-text-muted"> · {comments.length}</span>
+            <span className="font-normal tabular-nums text-text-muted"> · {hasMore ? `${comments.length}+` : comments.length}</span>
           </h2>
         )}
-        {topLevel.length > COLLAPSED_COMMENTS && (
+        {(topLevel.length > COLLAPSED_COMMENTS || hasMore) && (
           <button
             type="button"
             onClick={() => setShowAll((prev) => !prev)}
@@ -179,6 +186,13 @@ export function CommentSection({
             </div>
           ))}
         </div>
+      ) : loadFailed ? (
+        <div className="space-y-2 py-4 text-center" role="alert">
+          <p className="text-small text-danger">{t("feed.loadFailed")}</p>
+          <Button type="button" variant="outline" size="sm" onClick={retryLoad}>
+            {t("common.retry")}
+          </Button>
+        </div>
       ) : topLevel.length === 0 ? (
         <p className="rounded-md border border-dashed border-border py-6 text-center text-small text-text-muted">{t("comments.noCommentsYet")}</p>
       ) : (
@@ -186,6 +200,8 @@ export function CommentSection({
           {(showAll ? topLevel : topLevel.slice(0, COLLAPSED_COMMENTS)).map((comment) => (
             <CommentNode key={comment.id} comment={comment} depth={0} tree={tree} />
           ))}
+          {/* Sonraki sayfa yalnız liste açıkken (kısa özet görünümünde bütün sayfaları gereksiz yüklemesin) ve kendiliğinden gelir. */}
+          {showAll && <LoadMore failed={moreFailed} hasMore={hasMore} loadingMore={loadingMore} onLoadMore={() => void loadMore()} />}
         </div>
       )}
     </section>

@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Bookmark, SlidersHorizontal } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Tabs } from "@/components/ui/tabs";
-import { fetchPresetsByCreatorPage, fetchSavedPresets } from "@/lib/supabase/presets";
+import { fetchPresetsByCreatorPage, fetchSavedPresetsPage } from "@/lib/supabase/presets";
 import { usePagedList } from "@/features/content/use-paged-list";
 import { PagedListState } from "@/features/feed/paged-list-state";
 import { useTranslation } from "@/lib/i18n/language-provider";
@@ -41,19 +41,13 @@ function PresetGrid({ presets }: { presets: Preset[] }) {
 export function ProfilePresetsPanel({ ownerId, isOwn }: { ownerId: string; isOwn: boolean }) {
   const { t } = useTranslation();
   const [scope, setScope] = useState<Scope>("created");
-  const [saved, setSaved] = useState<Preset[] | null>(null);
   // "Oluşturduklarım": a page at a time (docs/history/255-*).
   const createdPages = usePagedList(`presets|${ownerId}`, true, (offset) => fetchPresetsByCreatorPage(ownerId, {}, offset));
   const created = createdPages.items;
 
-  useEffect(() => {
-    if (!isOwn || scope !== "saved" || saved !== null) return;
-    let cancelled = false;
-    fetchSavedPresets(ownerId).then((list) => !cancelled && setSaved(list));
-    return () => {
-      cancelled = true;
-    };
-  }, [isOwn, scope, saved, ownerId]);
+  // "Kaydettiklerim": 24'erli sayfa, kendiliğinden devam (eskiden 120'de kesiliyordu).
+  const savedPages = usePagedList(`presets-saved|${ownerId}`, isOwn && scope === "saved", (offset) => fetchSavedPresetsPage(ownerId, offset));
+  const saved = savedPages.items;
 
   return (
     <div className="space-y-4">
@@ -87,17 +81,19 @@ export function ProfilePresetsPanel({ ownerId, isOwn }: { ownerId: string; isOwn
             <PresetGrid presets={created} />
           )}
         </PagedListState>
-      ) : saved === null ? (
-        <p className="py-10 text-center text-small text-text-muted">{t("common.loading")}</p>
-      ) : saved.length === 0 ? (
-        <EmptyState
-          icon={Bookmark}
-          title={t("preset.noSavedTitle")}
-          description={t("preset.noSavedBody")}
-          action={{ label: t("preset.discover"), href: "/presets" }}
-        />
       ) : (
-        <PresetGrid presets={saved} />
+        <PagedListState list={savedPages} skeleton={<p className="py-10 text-center text-small text-text-muted">{t("common.loading")}</p>}>
+          {saved.length === 0 ? (
+            <EmptyState
+              icon={Bookmark}
+              title={t("preset.noSavedTitle")}
+              description={t("preset.noSavedBody")}
+              action={{ label: t("preset.discover"), href: "/presets" }}
+            />
+          ) : (
+            <PresetGrid presets={saved} />
+          )}
+        </PagedListState>
       )}
     </div>
   );
