@@ -1,4 +1,5 @@
 import { supabase } from "./client";
+import { fetchAllRows } from "./paged";
 
 /**
  * Ids of the users the signed-in viewer has blocked — used to hide their
@@ -25,14 +26,17 @@ export async function getBlockedIds(): Promise<Set<string>> {
     if (cacheUser === userId) return cacheIds;
     if (!pending) {
       pending = (async () => {
-        const { data: rows, error } = await supabase.from("blocks").select("blocked_id").eq("blocker_id", userId);
-        if (error) return new Set<string>();
+        // Every block, a page at a time: a list cut at PostgREST's 1000 rows would show the 1001st blocked person's content again.
+        const { rows } = await fetchAllRows((from, to) => supabase.from("blocks").select("blocked_id").eq("blocker_id", userId).order("blocked_id", { ascending: true }).range(from, to));
         cacheUser = userId;
-        cacheIds = new Set((rows ?? []).map((row) => row.blocked_id as string));
+        cacheIds = new Set(rows.map((row) => row.blocked_id as string));
         return cacheIds;
-      })().finally(() => {
-        pending = null;
-      });
+      })()
+        // A failed read is "nobody blocked" for this call only (nothing is cached), as before.
+        .catch(() => new Set<string>())
+        .finally(() => {
+          pending = null;
+        });
     }
     return await pending;
   } catch {

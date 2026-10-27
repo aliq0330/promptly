@@ -1,10 +1,13 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@/features/auth/auth-provider";
 import {
   deleteNotification,
   fetchNotificationsForUser,
+  fetchNotificationsPage,
+  fetchUnreadNotificationCount,
+  NOTIFICATIONS_PAGE,
   markAllNotificationsRead,
   deleteAllNotifications,
   markNotificationRead,
@@ -15,7 +18,12 @@ import type { AppNotification } from "@/types";
 
 interface NotificationsContextValue {
   notifications: AppNotification[];
+  /** Counted by the database (the list below holds only the newest page(s)). */
   unreadCount: number;
+  /** Older notifications exist beyond what is loaded. */
+  hasMore: boolean;
+  loadingMore: boolean;
+  loadMore: () => Promise<void>;
   refresh: () => Promise<void>;
   markRead: (id: string) => Promise<void>;
   markAllRead: () => Promise<void>;
@@ -36,33 +44,71 @@ const NotificationsContext = createContext<NotificationsContextValue | null>(nul
 export function NotificationsProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [unread, setUnread] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  // How many rows are loaded: a refresh re-reads at least that many, so "Daha fazla" is not undone by every realtime event.
+  const loadedRef = useRef(0);
+  useEffect(() => {
+    loadedRef.current = notifications.length;
+  }, [notifications.length]);
+
+  /** Re-reads the loaded range (at least one page) and the unread count. */
+  const reload = useCallback(
+    async (userId: string, isCancelled: () => boolean = () => false) => {
+      const size = Math.max(NOTIFICATIONS_PAGE, loadedRef.current);
+      const [result, count] = await Promise.all([fetchNotificationsForUser(userId, size), fetchUnreadNotificationCount(userId)]);
+      if (isCancelled()) return;
+      setNotifications(result);
+      setHasMore(result.length === size);
+      if (count !== null) setUnread(count);
+      else setUnread(result.filter((n) => !n.isRead).length);
+    },
+    [],
+  );
 
   useEffect(() => {
     let cancelled = false;
     if (!user) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- signed out, no real notifications to fetch
       setNotifications([]);
+      setUnread(0);
+      setHasMore(false);
       return;
     }
-    fetchNotificationsForUser(user.id).then((result) => {
-      if (!cancelled) setNotifications(result);
-    });
+    void reload(user.id, () => cancelled);
     // Topluluk etkinlik hatırlatmaları (docs/history/175-*): zamanlayıcı yok; uygulama açılışında, kullanıcının "geliyorum/belki" dediği
     // ve 24 saat içinde başlayan etkinlikler için sunucu bir kez bildirim üretir. Yeni bildirim oluştuysa liste yenilenir.
     // Hata (ör. migration henüz uygulanmadı) bildirimleri etkilemez, sessizce yok sayılır.
     dispatchMyEventReminders()
-      .then((created) => (created > 0 && !cancelled ? fetchNotificationsForUser(user.id).then((result) => !cancelled && setNotifications(result)) : undefined))
+      .then((created) => (created > 0 && !cancelled ? reload(user.id, () => cancelled) : undefined))
       .catch(() => undefined);
     return () => {
       cancelled = true;
     };
-  }, [user]);
+  }, [user, reload]);
 
   const refresh = useCallback(async () => {
     if (!user) return;
-    const result = await fetchNotificationsForUser(user.id);
-    setNotifications(result);
-  }, [user]);
+    await reload(user.id);
+  }, [user, reload]);
+
+  const loadMore = useCallback(async () => {
+    if (!user || loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    try {
+      const older = await fetchNotificationsPage(user.id, loadedRef.current, NOTIFICATIONS_PAGE);
+      setNotifications((prev) => {
+        const seen = new Set(prev.map((n) => n.id));
+        return [...prev, ...older.filter((n) => !seen.has(n.id))];
+      });
+      setHasMore(older.length === NOTIFICATIONS_PAGE);
+    } catch (err) {
+      console.error("notifications loadMore", err);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [user, loadingMore, hasMore]);
 
   // Gerçek zamanlı senkronizasyon (Bölüm 9.78'in belgelediği, mesajlaşmanın
   // Bölüm 21 Faz C'de kurduğu AYNI desen) — `notifications` tablosu
@@ -81,7 +127,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
         "postgres_changes",
         { event: "*", schema: "public", table: "notifications", filter: `recipient_id=eq.${user.id}` },
         () => {
-          fetchNotificationsForUser(user.id).then(setNotifications);
+          void reload(user.id);
         },
       )
       .subscribe();
@@ -89,7 +135,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user]);
+  }, [user, reload]);
 
   const markRead = useCallback(
     async (id: string) => {
@@ -98,11 +144,13 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
       if (!target || target.isRead) return;
       // Optimistic — reverted below if the write fails.
       setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)));
+      setUnread((count) => Math.max(0, count - 1));
       try {
         await markNotificationRead(id, user.id);
       } catch (err) {
         console.error("markRead", err);
         setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, isRead: false } : n)));
+        setUnread((count) => count + 1);
       }
     },
     [user, notifications],
@@ -112,12 +160,15 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     async (id: string) => {
       if (!user) return;
       const previous = notifications;
+      const wasUnread = previous.some((n) => n.id === id && !n.isRead);
       setNotifications((prev) => prev.filter((n) => n.id !== id));
+      if (wasUnread) setUnread((count) => Math.max(0, count - 1));
       try {
         await deleteNotification(id, user.id);
       } catch (err) {
         console.error("remove notification", err);
         setNotifications(previous);
+        if (wasUnread) setUnread((count) => count + 1);
       }
     },
     [user, notifications],
@@ -126,27 +177,31 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
   const markAllRead = useCallback(async () => {
     if (!user) return;
     const previous = notifications;
-    if (previous.every((n) => n.isRead)) return;
+    const previousUnread = unread;
+    // Older unread rows may not be loaded: the database's count decides, not the loaded list.
+    if (previousUnread === 0 && previous.every((n) => n.isRead)) return;
     setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+    setUnread(0);
     try {
       await markAllNotificationsRead(user.id);
     } catch (err) {
       console.error("markAllRead", err);
       setNotifications(previous);
+      setUnread(previousUnread);
     }
-  }, [user, notifications]);
+  }, [user, notifications, unread]);
 
   const clearAll = useCallback(async () => {
     if (!user) return;
     await deleteAllNotifications(user.id);
     setNotifications([]);
+    setUnread(0);
+    setHasMore(false);
   }, [user]);
 
-  const unreadCount = useMemo(() => notifications.filter((n) => !n.isRead).length, [notifications]);
-
   const value = useMemo(
-    () => ({ notifications, unreadCount, refresh, markRead, markAllRead, clearAll, remove }),
-    [notifications, unreadCount, refresh, markRead, markAllRead, clearAll, remove],
+    () => ({ notifications, unreadCount: unread, hasMore, loadingMore, loadMore, refresh, markRead, markAllRead, clearAll, remove }),
+    [notifications, unread, hasMore, loadingMore, loadMore, refresh, markRead, markAllRead, clearAll, remove],
   );
 
   return <NotificationsContext.Provider value={value}>{children}</NotificationsContext.Provider>;

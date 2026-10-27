@@ -1,5 +1,6 @@
 import { sanitizeSearchText } from "./taxonomy-query";
 import { supabase } from "./client";
+import { fetchAllRows } from "./paged";
 import { translateForRuntime } from "@/lib/i18n/translations";
 import { PROMPT_SELECT, mapPromptRow, type PromptRow } from "./prompts";
 import { normalizeTagLabel } from "@/lib/tag-normalize";
@@ -32,12 +33,10 @@ function mapTagStatsRow(row: TagStatsRow): Tag {
 /** Every real tag (seeded once in supabase/migrations/20260919120600_seed_tags.sql, plus any real user-created tag since — Bölüm 9.23), alphabetical, WITHOUT stats. Public read (Bölüm 19). Cheap — used by the live analyzer and the manual-tag autocomplete, which only need slug+label. */
 export async function fetchAllTags(): Promise<Tag[]> {
   try {
-    const { data, error } = await supabase.from("tags").select("slug, label").order("label", { ascending: true });
-    if (error) {
-      console.error("fetchAllTags", error);
-      return [];
-    }
-    return (data ?? []) as Tag[];
+    // A page at a time: PostgREST stops at 1000 rows and the catalogue is past that (1516 tags) — the tags after the 1000th were missing from
+    // the autocomplete, the automatic tagger and /tags. `slug` is the unique tie-break for the alphabetical order.
+    const { rows } = await fetchAllRows((from, to) => supabase.from("tags").select("slug, label").order("label", { ascending: true }).order("slug", { ascending: true }).range(from, to));
+    return rows as Tag[];
   } catch (err) {
     console.error("fetchAllTags", err);
     return [];
@@ -86,12 +85,8 @@ export async function fetchNewestTags(limit = 20): Promise<Tag[]> {
 /** Every real tag WITH stats (for the /tags "Tümü" list + client-side search) — same shape as fetchPopularTags, sorted alphabetically instead. */
 export async function fetchAllTagsWithStats(): Promise<Tag[]> {
   try {
-    const { data, error } = await supabase.from("tags").select(TAG_STATS_SELECT).order("label", { ascending: true });
-    if (error) {
-      console.error("fetchAllTagsWithStats", error);
-      return [];
-    }
-    return ((data ?? []) as TagStatsRow[]).map(mapTagStatsRow);
+    const { rows } = await fetchAllRows((from, to) => supabase.from("tags").select(TAG_STATS_SELECT).order("label", { ascending: true }).order("slug", { ascending: true }).range(from, to));
+    return (rows as TagStatsRow[]).map(mapTagStatsRow);
   } catch (err) {
     console.error("fetchAllTagsWithStats", err);
     return [];

@@ -7,9 +7,10 @@ import { placeholderArt } from "@/lib/placeholder-image";
 import { resizeImageToBlob } from "@/lib/utils";
 import { translateForRuntime } from "@/lib/i18n/translations";
 import { mapProfileRow, type ProfileRow } from "./mappers";
+import type { PagedResult } from "./paged";
 import { resolveMediaInputs, type MediaInput } from "./media-input";
 import { normalizeLegacyContentType, sanitizeTaxonomy } from "@/lib/content-taxonomy";
-import { taxonomyColumns, type ContentSearchFilters } from "./taxonomy-query";
+import { sanitizeSearchText, taxonomyColumns, type ContentSearchFilters } from "./taxonomy-query";
 import { orderByIds, searchContentIds, type SearchCursor, type SearchPage } from "./search";
 import { imageAppearanceFromBlob } from "@/lib/image-appearance";
 import type { ContentVisibility, Prompt, PromptContentType, PromptMedia, PromptOrigin, Tag, UserProfile } from "@/types";
@@ -221,31 +222,72 @@ export async function fetchPromptById(id: string): Promise<Prompt | null> {
   }
 }
 
+/** Prompts per screenful on a profile / "İçeriklerim" list (the rest comes with "Daha fazla" / scrolling). */
+export type { PagedResult } from "./paged";
+export const AUTHOR_PROMPTS_PAGE = 24;
+
+export type AuthorPromptSort = "newest" | "oldest" | "most-liked";
+
+export interface AuthorPromptsQuery {
+  authorId: string;
+  sort?: AuthorPromptSort;
+  /** One content type, or every type. */
+  contentType?: PromptContentType | null;
+  /** Title / description text (tags are not searched here). */
+  search?: string;
+  /** Only the owner has both kinds (RLS hides "Sadece ben" from everyone else). */
+  visibility?: "all" | "public" | "private";
+}
+
 /**
- * Every real prompt by one author, newest first — for a real profile page
- * (CLAUDE.md Bölüm 21 Faz 2). RLS (Bölüm 19) already does the right thing
- * here without any extra filtering: a visitor gets only that author's
- * published prompts, while the author viewing their own profile also sees
- * their own drafts.
+ * One page of an author's normal posts, newest first by default — the profile's "Promptlar" tab and "İçeriklerim". Everything the old
+ * "fetch them all and filter" code did on the client is a query condition now: published (no drafts), not deleted, not community-only
+ * (docs/history/179-*), and a request answer only when its author keeps it on the profile. PostgREST stops at 1000 rows per request, so a
+ * whole-list read silently capped a 3000-prompt profile at 1000 and rendered every card at once; pages are 24 and the total is counted
+ * with the first page. Throws on failure so the screen can offer a retry instead of a false "no prompts".
  */
-export async function fetchPromptsByAuthor(authorId: string): Promise<Prompt[]> {
-  try {
-    const { data, error } = await supabase
-      .from("prompts")
-      .select(PROMPT_SELECT)
-      .eq("author_id", authorId)
-      // Topluluğa özgü içerik yazarın sayfasında/listelerinde görünmez (docs/history/179-*).
-      .is("community_id", null)
-      .order("created_at", { ascending: false });
-    if (error) {
-      console.error("fetchPromptsByAuthor", error);
-      return [];
-    }
-    return filterNotDeleted(filterProfileVisible((data ?? []).map((row) => mapPromptRow(row as unknown as PromptRow))));
-  } catch (err) {
-    console.error("fetchPromptsByAuthor", err);
-    return [];
-  }
+export async function fetchAuthorPromptsPage(query: AuthorPromptsQuery, offset = 0, limit = AUTHOR_PROMPTS_PAGE): Promise<PagedResult<Prompt>> {
+  const text = sanitizeSearchText(query.search ?? "");
+  // ONE `or` group: the visibility rule alone, or ANDed with the text match (two stacked `.or()` calls have no verified combination).
+  const profileVisible = "or(origin_type.eq.original,show_on_profile.is.true)";
+  const textMatch = text ? `or(title.ilike.%${text}%,description.ilike.%${text}%)` : "";
+  let request = supabase
+    .from("prompts")
+    .select(PROMPT_SELECT, offset === 0 ? { count: "exact" } : undefined)
+    .eq("author_id", query.authorId)
+    .eq("status", "published")
+    .is("community_id", null)
+    .is("deleted_at", null)
+    .or(textMatch ? `and(${profileVisible},${textMatch})` : profileVisible.slice(3, -1));
+  if (query.contentType) request = request.eq("content_type", query.contentType);
+  if (query.visibility && query.visibility !== "all") request = request.eq("visibility", query.visibility);
+  const sort = query.sort ?? "newest";
+  request =
+    sort === "most-liked"
+      ? request.order("like_count", { ascending: false }).order("created_at", { ascending: false })
+      : request.order("created_at", { ascending: sort === "oldest" });
+  const { data, count, error } = await request.order("id", { ascending: sort === "oldest" }).range(offset, offset + limit - 1);
+  if (error) throw new Error(error.message);
+  const rows = (data ?? []) as unknown as PromptRow[];
+  return { items: rows.map(mapPromptRow), total: offset === 0 ? (count ?? null) : null, nextOffset: rows.length === limit ? offset + limit : null };
+}
+
+/** The profile's header numbers (`profile_content_stats`): counted by the database, not read off a list that stops at 1000. `null` when it failed. */
+export interface ProfileContentStats {
+  prompts: number;
+  requests: number;
+  workflows: number;
+  presets: number;
+  /** Sum of `copy_count` over the listed prompts. */
+  reuse: number;
+}
+
+export async function fetchProfileContentStats(userId: string): Promise<ProfileContentStats | null> {
+  const { data, error } = await supabase.rpc("profile_content_stats", { p_user: userId });
+  if (error || !data || typeof data !== "object") return null;
+  const row = data as Record<string, unknown>;
+  const num = (value: unknown) => Number(value ?? 0) || 0;
+  return { prompts: num(row.prompts), requests: num(row.requests), workflows: num(row.workflows), presets: num(row.presets), reuse: num(row.reuse) };
 }
 
 /** Every real answer (a prompt with `origin_type = 'request_response'`) to one real request, newest-first — for the request's detail page (CLAUDE.md Bölüm 21 Faz 5). */
@@ -386,28 +428,21 @@ export async function deleteRealPrompt(promptId: string): Promise<void> {
   );
 }
 
-/** Every real prompt this user has liked, newest-first — for a real own-profile's "Beğeniler" tab. Likes are public (Bölüm 19), but this is always called for "my own" liked list. */
-export async function fetchLikedPrompts(userId: string): Promise<Prompt[]> {
-  try {
-    const { data, error } = await supabase
-      .from("prompt_likes")
-      .select(`created_at, prompts ( ${PROMPT_SELECT} )`)
-      .eq("user_id", userId)
-      .order("created_at", { ascending: false });
-    if (error) {
-      console.error("fetchLikedPrompts", error);
-      return [];
-    }
-    return filterNotDeleted(
-      ((data ?? []) as unknown as { prompts: PromptRow | null }[])
-        .map((row) => row.prompts)
-        .filter((row): row is PromptRow => row !== null && !row.community_id)
-        .map((row) => mapPromptRow(row)),
-    );
-  } catch (err) {
-    console.error("fetchLikedPrompts", err);
-    return [];
-  }
+/** The viewer's own liked prompts, newest like first, one page at a time ("Beğeniler"). */
+export async function fetchLikedPromptsPage(userId: string, offset = 0, limit = AUTHOR_PROMPTS_PAGE): Promise<PagedResult<Prompt>> {
+  const { data, count, error } = await supabase
+    .from("prompt_likes")
+    .select(`created_at, prompts ( ${PROMPT_SELECT} )`, offset === 0 ? { count: "exact" } : undefined)
+    .eq("user_id", userId)
+    .not("prompt_id", "is", null)
+    .order("created_at", { ascending: false })
+    .order("id", { ascending: false })
+    .range(offset, offset + limit - 1);
+  if (error) throw new Error(error.message);
+  const raw = (data ?? []) as unknown as { prompts: PromptRow | null }[];
+  // A like whose prompt vanished (deleted, made private, community-only) is skipped; the page still counts as full for paging.
+  const items = filterNotDeleted(raw.map((row) => row.prompts).filter((row): row is PromptRow => row !== null && !row.community_id).map((row) => mapPromptRow(row)));
+  return { items, total: offset === 0 ? (count ?? null) : null, nextOffset: raw.length === limit ? offset + limit : null };
 }
 
 export interface CreateRealPromptInput {

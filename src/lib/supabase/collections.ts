@@ -1,4 +1,5 @@
 import { supabase } from "./client";
+import type { PagedResult } from "./paged";
 import { batcherRegistry } from "./batched-lookup";
 import { translateForRuntime } from "@/lib/i18n/translations";
 import { mapProfileRow, type ProfileRow } from "./mappers";
@@ -318,52 +319,47 @@ async function resolvePostEntries(rows: CollectionItemRow[]): Promise<Map<string
  * the same way every other listing does; a generator is never soft-deleted
  * (Bölüm 9.27 — hard delete only), so no equivalent filter is needed there.
  */
-export async function fetchCollectionItems(collectionId: string): Promise<CollectionEntry[]> {
-  try {
-    const { data, error } = await supabase
-      .from("collection_items")
-      .select(`created_at, community_post_id, prompts ( ${PROMPT_SELECT} ), workflows ( ${WORKFLOW_SELECT} ), presets ( ${PRESET_SELECT} )`)
-      .eq("collection_id", collectionId)
-      .order("created_at", { ascending: false });
-    if (error || !data) {
-      if (error) console.error("fetchCollectionItems", error);
-      return [];
-    }
-    const rows = data as unknown as CollectionItemRow[];
-    return mapCollectionItemRows(rows, await resolvePostEntries(rows));
-  } catch (err) {
-    console.error("fetchCollectionItems", err);
-    return [];
-  }
+export async function fetchCollectionItemsPage(collectionId: string, offset = 0, limit = COLLECTION_PAGE): Promise<PagedResult<CollectionEntry>> {
+  const { data, count, error } = await supabase
+    .from("collection_items")
+    .select(`created_at, community_post_id, prompts ( ${PROMPT_SELECT} ), workflows ( ${WORKFLOW_SELECT} ), presets ( ${PRESET_SELECT} )`, offset === 0 ? { count: "exact" } : undefined)
+    .eq("collection_id", collectionId)
+    .order("created_at", { ascending: false })
+    .order("id", { ascending: false })
+    .range(offset, offset + limit - 1);
+  if (error) throw new Error(error.message);
+  const rows = (data ?? []) as unknown as CollectionItemRow[];
+  return { items: mapCollectionItemRows(rows, await resolvePostEntries(rows)), total: offset === 0 ? (count ?? null) : null, nextOffset: rows.length === limit ? offset + limit : null };
 }
 
-/** Membership rows read for "Kaydedilenler" (PostgREST returns at most 1000 rows per request anyway). */
-const SAVED_ROW_LIMIT = 1000;
+/** Items per request on a collection / "Kaydedilenler" page (the rest comes as the list is scrolled). */
+export const COLLECTION_PAGE = 24;
+
+/** `${type}:${id}` — what makes two collection entries the same work. */
+export const collectionEntryKey = (entry: CollectionEntry) => `${entry.type}:${entry.data.id}`;
 
 /**
- * "Kaydedilenler": every distinct work in at least one of this user's own
- * collections — "Genel" and the custom ones alike — newest save first, each
- * work once however many collections hold it. It is a read over
- * `collection_items`, the same rows `isPromptSaved` looks at, so the list and
- * the bookmark icon can't disagree. The owner filter is explicit because the
- * select policy also exposes other people's public collections.
+ * "Kaydedilenler": every distinct work in at least one of this user's own collections — "Genel" and the custom ones alike — newest save
+ * first, one page at a time. It is a read over `collection_items`, the same rows `isPromptSaved` looks at, so the list and the bookmark
+ * icon can't disagree. The owner filter is explicit because the select policy also exposes other people's public collections. A work held
+ * by several collections is one entry (a repeat on a later page is dropped by the list's own de-duplication, `collectionEntryKey`).
  *
- * Unlike the per-collection fetch this THROWS on failure: a failed load must
- * not look like "nothing saved".
+ * Unlike the per-collection fetch this THROWS on failure: a failed load must not look like "nothing saved".
  */
-export async function fetchSavedItems(userId: string): Promise<CollectionEntry[]> {
-  const { data, error } = await supabase
+export async function fetchSavedItemsPage(userId: string, offset = 0, limit = COLLECTION_PAGE): Promise<PagedResult<CollectionEntry>> {
+  const { data, count, error } = await supabase
     .from("collection_items")
-    .select(`created_at, community_post_id, collections!inner ( owner_id ), prompts ( ${PROMPT_SELECT} ), workflows ( ${WORKFLOW_SELECT} ), presets ( ${PRESET_SELECT} )`)
+    .select(`created_at, community_post_id, collections!inner ( owner_id ), prompts ( ${PROMPT_SELECT} ), workflows ( ${WORKFLOW_SELECT} ), presets ( ${PRESET_SELECT} )`, offset === 0 ? { count: "exact" } : undefined)
     .eq("collections.owner_id", userId)
     .order("created_at", { ascending: false })
-    .limit(SAVED_ROW_LIMIT);
+    .order("id", { ascending: false })
+    .range(offset, offset + limit - 1);
   if (error) {
-    console.error("fetchSavedItems", error);
+    console.error("fetchSavedItemsPage", error);
     throw new Error(error.message);
   }
   const rows = (data ?? []) as unknown as CollectionItemRow[];
-  return dedupeSavedEntries(mapCollectionItemRows(rows, await resolvePostEntries(rows)));
+  return { items: dedupeSavedEntries(mapCollectionItemRows(rows, await resolvePostEntries(rows))), total: offset === 0 ? (count ?? null) : null, nextOffset: rows.length === limit ? offset + limit : null };
 }
 
 /**

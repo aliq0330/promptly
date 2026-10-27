@@ -41,6 +41,8 @@ const CHECKS = [
   { name: "space_activity (önce/sonra ayrıntısı, not, yorum sayacı)", get: () => `space_activity?select=${encodeURIComponent("id,details,author_note,comment_count")}&limit=1` },
   { name: "prompt_comments (puan + etkinlik yorumu)", get: () => `prompt_comments?select=${encodeURIComponent("id,rating,space_activity_id")}&limit=1` },
   { name: "rpc feed_page", rpc: "feed_page", body: feedArgs },
+  { name: "rpc feed_page p_has_media (Odak Medya süzgeci sunucuda, docs/history/254-*)", rpc: "feed_page", body: { ...feedArgs, p_open_only: false, p_tag: null, p_tool: null, p_authors: null, p_tags: null, p_tools: null, p_has_media: true } },
+  { name: "rpc profile_content_stats (profil sayıları, docs/history/254-*)", rpc: "profile_content_stats", body: { p_user: "00000000-0000-4000-8000-000000000000" } },
   { name: "rpc discover_tool_counts", rpc: "discover_tool_counts", body: {} },
   // Yalnız oturumlu kullanıcıya açık RPC (docs/history/250-*): ziyaretçiye 401/403 dönmesi "var ama kapalı" demektir; 404 "yok" demektir ve boru hattını durdurur.
   { name: "rpc import_prompts (yalnız oturumlu; ziyaretçiye kapalı)", rpc: "import_prompts", body: { p_items: [], p_dry_run: true }, deniedOk: true, soft: true },

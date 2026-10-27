@@ -1,4 +1,5 @@
 import { supabase } from "./client";
+import { fetchAllRows } from "./paged";
 import { withoutBlocked } from "./blocked-users";
 import { applyKeysetCursor, nextCursorFrom, type KeysetCursor } from "./pagination";
 import { PROFILE_SELECT } from "./profiles";
@@ -236,17 +237,17 @@ export async function fetchPresetById(id: string): Promise<Preset | null> {
 /** A creator's presets — RLS gives a visitor only public published ones, the owner their private ones and drafts too ("Oluşturduklarım"). */
 export async function fetchPresetsByCreator(creatorId: string): Promise<Preset[]> {
   try {
-    const { data, error } = await supabase
-      .from("presets")
-      .select(PRESET_SELECT)
-      .eq("creator_id", creatorId)
-      .is("community_id", null)
-      .order("created_at", { ascending: false });
-    if (error) {
-      console.error("fetchPresetsByCreator", error);
-      return [];
-    }
-    return withFields((data ?? []).map((row) => mapPresetRow(row as unknown as PresetRow)));
+    const { rows } = await fetchAllRows((from, to) =>
+      supabase
+        .from("presets")
+        .select(PRESET_SELECT)
+        .eq("creator_id", creatorId)
+        .is("community_id", null)
+        .order("created_at", { ascending: false })
+        .order("id", { ascending: false })
+        .range(from, to),
+    );
+    return withFields(rows.map((row) => mapPresetRow(row as unknown as PresetRow)));
   } catch (err) {
     console.error("fetchPresetsByCreator", err);
     return [];

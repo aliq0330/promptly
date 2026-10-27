@@ -389,7 +389,8 @@ function FocusScreen() {
   // "Takip" needs an account: a guest gets the login prompt and no request is made (while the session restores we wait).
   const waitingForAuth = tab === "following" && authLoading;
   const needsLogin = tab === "following" && !authLoading && !user;
-  const feed = useFeedPages({ scope: tab === "following" ? "following" : "all", order: "newest", kind: channel, taxonomy: EMPTY_TAXONOMY_FILTER }, !needsLogin && !waitingForAuth);
+  // "Medya" is decided by the database (docs/history/254-*): a page is full of posts with something to look at, not empty because thousands of text prompts come first.
+  const feed = useFeedPages({ scope: tab === "following" ? "following" : "all", order: "newest", kind: channel, taxonomy: EMPTY_TAXONOMY_FILTER, hasMedia: mediaOnly }, !needsLogin && !waitingForAuth);
   // Odak plays posts; a Space shared to the feed has its own page (docs/history/215-*).
   const items = useMemo(() => {
     const posts = feed.items.filter(isPostItem);

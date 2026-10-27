@@ -1,4 +1,5 @@
 import { supabase } from "./client";
+import { fetchAllRows } from "./paged";
 import { fetchPromptById, mapPromptRow, PROMPT_SELECT, type PromptRow } from "./prompts";
 import { fetchVariablesForPrompt, fetchVariablesForPrompts } from "./prompt-variables";
 import { ADMIN_IMPORT_LIMITS, runBatches, toExchangePrompt, withSourceNote, type BulkBatchReport, type BulkOutcome, type BulkProgress, type ExchangePrompt } from "@/lib/exchange";
@@ -12,24 +13,25 @@ function forServer(item: ExchangePrompt): ExchangePrompt {
   return payload;
 }
 
-/** Export reads at most this many of the member's prompts (PostgREST's own page size is 1000). */
-const EXPORT_LIMIT = 1000;
-
 /**
  * Every prompt the member owns — drafts and "Sadece ben" included — with its variable definitions, newest first. Community-only
  * content stays in its community (`community_id is null`, docs/history/179-*). RLS is the access check; nothing here widens it.
+ * Read a page at a time (PostgREST stops at 1000 per request — a 3000-prompt library used to export only its newest 1000, silently).
+ * Throws when a page fails: half a file must never look like the whole library.
  */
 export async function fetchOwnPromptsForExport(userId: string): Promise<ExchangePrompt[]> {
-  const { data, error } = await supabase
-    .from("prompts")
-    .select(PROMPT_SELECT)
-    .eq("author_id", userId)
-    .is("community_id", null)
-    .is("deleted_at", null)
-    .order("created_at", { ascending: false })
-    .range(0, EXPORT_LIMIT - 1);
-  if (error) throw new Error(error.message);
-  const prompts = (data ?? []).map((row) => mapPromptRow(row as unknown as PromptRow));
+  const { rows } = await fetchAllRows((from, to) =>
+    supabase
+      .from("prompts")
+      .select(PROMPT_SELECT)
+      .eq("author_id", userId)
+      .is("community_id", null)
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: false })
+      .range(from, to),
+  );
+  const prompts = rows.map((row) => mapPromptRow(row as unknown as PromptRow));
   const variables = await fetchVariablesForPrompts(prompts.map((prompt) => prompt.id));
   return prompts.map((prompt) => toExchangePrompt(prompt, variables.get(prompt.id) ?? []));
 }

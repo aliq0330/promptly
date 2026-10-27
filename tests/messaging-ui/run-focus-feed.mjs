@@ -75,7 +75,12 @@ async function installFeed(context, db, feed) {
     if (table === "rpc/feed_page") {
       const body = JSON.parse(req.postData() || "{}");
       db.feedCalls.push(body);
-      const rows = feed.order.filter(([kind]) => !body.p_kinds || body.p_kinds.includes(kind)).map(([kind, row]) => ({ kind, id: row.id, created_at: row.created_at, sort_rank: 0 }));
+      // A database without the 17-argument form (migration not applied yet): PostgREST answers PGRST202 for the unknown signature.
+      if (db.noMediaRpc && body.p_has_media) return ok({ code: "PGRST202", message: "Could not find the function public.feed_page" }, 404);
+      // `p_has_media` (docs/history/254-*): the database applies Odak's "Medya" rule — a prompt with a picture or a video / audio type, a workflow with a
+      // picture, every request and preset (the SQL itself is tested in supabase/tests/feed-page-media.sql).
+      const hasMedia = ([kind, row]) => (kind === "prompt" ? row.prompt_media.length > 0 || row.content_type === "video" || row.content_type === "audio" : kind === "workflow" ? row.workflow_media.length > 0 : true);
+      const rows = feed.order.filter(([kind]) => !body.p_kinds || body.p_kinds.includes(kind)).filter((entry) => !body.p_has_media || hasMedia(entry)).map(([kind, row]) => ({ kind, id: row.id, created_at: row.created_at, sort_rank: 0 }));
       const start = body.p_after_id ? rows.findIndex((r) => r.id === body.p_after_id) + 1 : 0;
       return ok(rows.slice(start, start + body.p_limit));
     }
@@ -141,9 +146,10 @@ const MEDIA_STUB = () => {
   };
 };
 
-async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lang = "tr", guest = false, theme, reducedMotion } = {}) {
+async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lang = "tr", guest = false, theme, reducedMotion, noMediaRpc = false } = {}) {
   if (ONLY && !name.startsWith(ONLY)) return;
   const db = createDb();
+  db.noMediaRpc = noMediaRpc;
   const feed = buildFeed();
   const context = await browser.newContext({ viewport, reducedMotion: reducedMotion ? "reduce" : "no-preference", permissions: ["clipboard-read", "clipboard-write"] });
   await installMock(context, db, { guest });
@@ -237,7 +243,7 @@ await scenario("2. Üst çubuktan Odak: tam ekran, üst/yan menü gizli, koyu sa
   assert.equal(await page.evaluate(() => document.documentElement.classList.contains("dark")), true, "the whole site is dark while Odak is open");
   assert.equal(await page.evaluate(() => getComputedStyle(document.documentElement).colorScheme), "dark", "document color-scheme is dark while Odak is open");
   assert.equal(await page.evaluate(() => localStorage.getItem("promptly-theme")), null, "the saved theme preference is untouched");
-  assert.equal(await counter(page).getAttribute("aria-label"), "Gönderi 1 / 16", "Medya açık: görselsiz metin promptu ve workflow düşer (18 satırdan 2 eksik)");
+  assert.equal(await counter(page).getAttribute("aria-label"), "Gönderi 1 / 18", "Medya açık: sunucu yalnız medyalı gönderileri verir, ilk sayfa 18 slayt (22 medyalı gönderiden)");
   assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector("[data-focus-feed] [role='region']")).scrollSnapType), "x mandatory");
   assert.match(await page.title(), /Odak/);
   await shot(page, "02-focus-desktop");
@@ -356,8 +362,11 @@ await scenario("10. Sayfalama: keyset imleciyle ikinci sayfa, sonda 'Hepsini gö
   await openFocus(page);
   await step(page, "End");
   await page.waitForTimeout(1200);
-  assert.equal(db.feedCalls.length, 2);
-  assert.ok(db.feedCalls[1].p_after_id);
+  // Açılış (Medya açık, p_has_media) + Medya kapatınca yeniden okuma + ikinci sayfa.
+  assert.equal(db.feedCalls.length, 3);
+  assert.equal(db.feedCalls[0].p_has_media, true);
+  assert.equal(db.feedCalls[1].p_has_media, undefined, "Medya kapalı: süzgeçsiz biçim");
+  assert.ok(db.feedCalls[2].p_after_id);
   assert.equal(await slides(page).count(), 25, "24 posts + end slide");
   await step(page, "End");
   await page.waitForTimeout(800);
@@ -831,6 +840,32 @@ await scenario("32. Açık temada Odak: açıkken TÜM site koyu moda geçer, ka
   assert.equal(await dark(), false, "back to light after Esc");
   assert.equal(await page.evaluate(() => localStorage.getItem("promptly-theme")), "light", "the saved preference never changed");
 }, { theme: "light" });
+
+
+await scenario("33. Medya süzgeci sunucuda (docs/history/254-*): açılış TEK istekte dolu ilk sayfa (p_has_media=true); metin promptu ve görselsiz workflow hiç gelmez; kapatınca süzgeçsiz yeniden okunur, açınca yine sunucudan", async ({ page, db }) => {
+  await openFocus(page, { all: false });
+  assert.equal(db.feedCalls.length, 1, "ilk slayt tek istekle geldi (eskiden Medya istemcide eleniyordu: binlerce görselsiz gönderi varsa ~170 sayfa)");
+  assert.equal(db.feedCalls[0].p_has_media, true);
+  assert.equal(await slides(page).count(), 19, "18 medyalı gönderi + son slayt");
+  const texts = await slides(page).allTextContents();
+  assert.ok(!texts.some((t) => /Kısa öykü açılışı|Ürün fotoğrafından/.test(t)));
+  await (await menuItem(page, /Medya/)).click();
+  await page.waitForFunction(() => [...document.querySelectorAll("[data-focus-feed] [data-slide-index]")].some((el) => /Kısa öykü açılışı/.test(el.textContent ?? "")));
+  assert.equal(db.feedCalls.length, 2);
+  assert.equal(db.feedCalls[1].p_has_media, undefined);
+  await (await menuItem(page, /Medya/)).click();
+  await page.waitForFunction(() => ![...document.querySelectorAll("[data-focus-feed] [data-slide-index]")].some((el) => /Kısa öykü açılışı/.test(el.textContent ?? "")));
+  assert.equal(db.feedCalls.length, 3);
+  assert.equal(db.feedCalls[2].p_has_media, true);
+});
+
+await scenario("34. Migration henüz yoksa (17 argümanlı feed_page bilinmiyor): Odak açılır — istek süzgeçsiz yinelenir, Medya istemcide uygulanır (16 slayt)", async ({ page, db }) => {
+  await openFocus(page, { all: false });
+  assert.equal(db.feedCalls.length, 2, "p_has_media'lı istek reddedildi, süzgeçsiz yinelendi");
+  assert.equal(db.feedCalls[0].p_has_media, true);
+  assert.equal(db.feedCalls[1].p_has_media, undefined);
+  assert.equal(await counter(page).getAttribute("aria-label"), "Gönderi 1 / 16", "eski davranış: görselsiz metin promptu ve workflow istemcide düşer");
+}, { noMediaRpc: true });
 
 await browser.close();
 server.close();

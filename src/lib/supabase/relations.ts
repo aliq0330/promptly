@@ -19,7 +19,7 @@ import { withoutBlocked } from "./blocked-users";
 import { fetchDnaSections } from "./prompt-dna";
 import { fetchSuggestionsForPrompt } from "./prompt-edit-suggestions";
 import { fetchVersionsForPrompt } from "./prompt-versions";
-import { fetchPromptById, fetchPromptsByAuthor, mapPromptRow, searchPrompts, PROMPT_SELECT, type PromptRow } from "./prompts";
+import { fetchAuthorPromptsPage, fetchPromptById, mapPromptRow, searchPrompts, PROMPT_SELECT, type PromptRow } from "./prompts";
 import { fetchWorkflowById, fetchWorkflowsByCreator, mapWorkflowRow, searchWorkflows, WORKFLOW_SELECT, type WorkflowRow } from "./workflows";
 import { fetchRequestById, fetchRequestsByAuthor, mapRequestRow, searchRequests, REQUEST_SELECT, type RequestRow } from "./requests";
 import { translateForRuntime } from "@/lib/i18n/translations";
@@ -701,7 +701,7 @@ export async function searchRelatableContent(query: string, kinds: RelatableKind
   const tasks = kinds.map(async (kind): Promise<RelationNode[]> => {
     try {
       if (kind === "prompt") {
-        const list = q ? await searchPrompts(q, {}, limit) : viewerId ? (await fetchPromptsByAuthor(viewerId)).slice(0, limit) : [];
+        const list = q ? await searchPrompts(q, {}, limit) : viewerId ? (await fetchAuthorPromptsPage({ authorId: viewerId }, 0, limit)).items : [];
         return list.filter((p) => p.status === "published").map(promptToNode);
       }
       if (kind === "workflow") {

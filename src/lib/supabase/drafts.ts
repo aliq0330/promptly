@@ -1,4 +1,5 @@
 import { supabase } from "./client";
+import { fetchAllRows } from "./paged";
 import { deleteRealPrompt } from "./prompts";
 import { deleteRealRequest } from "./requests";
 import { deleteWorkflow } from "./workflows";
@@ -18,17 +19,18 @@ const SOURCES: Record<DraftKind, { table: string; ownerColumn: string; draftColu
 export async function fetchOwnDrafts(kind: DraftKind, userId: string): Promise<DraftItem[]> {
   const source = SOURCES[kind];
   try {
-    const { data, error } = await supabase
-      .from(source.table)
-      .select("id, title, updated_at")
-      .eq(source.ownerColumn, userId)
-      .eq(source.draftColumn, source.draftValue)
-      .order("updated_at", { ascending: false });
-    if (error) {
-      console.error("fetchOwnDrafts", kind, error);
-      return [];
-    }
-    return ((data ?? []) as unknown as { id: string; title: string; updated_at: string }[]).map((row) => ({
+    // Every draft, a page at a time (a bulk import leaves thousands of them; PostgREST stops at 1000 per request).
+    const { rows } = await fetchAllRows((from, to) =>
+      supabase
+        .from(source.table)
+        .select("id, title, updated_at")
+        .eq(source.ownerColumn, userId)
+        .eq(source.draftColumn, source.draftValue)
+        .order("updated_at", { ascending: false })
+        .order("id", { ascending: false })
+        .range(from, to),
+    );
+    return (rows as unknown as { id: string; title: string; updated_at: string }[]).map((row) => ({
       id: row.id,
       title: row.title,
       updatedAt: row.updated_at,

@@ -47,6 +47,12 @@ export interface FeedPageParams {
   authors?: string[];
   tags?: string[];
   tools?: string[];
+  /**
+   * Only posts with something to look at (Odak's "Medya" switch, docs/history/254-*): prompts with a picture or a video / audio type,
+   * workflows with a picture, and always requests and presets. Decided by the database, so a page is full of such posts instead of
+   * empty when thousands of text-only prompts are newer. A narrowing only, like the other filters.
+   */
+  hasMedia?: boolean;
   limit?: number;
   cursor?: FeedCursor | null;
 }
@@ -88,11 +94,12 @@ export async function fetchFeedPage(params: FeedPageParams): Promise<FeedPage> {
   // 10-argument form, `p_open_only` alone the 11-argument one, a tag/tool page the 13-argument one (docs/history/211-*), and only a
   // call that really carries a Home filter needs the 16-argument form (migration 20260922100000) — the rest keeps working without it.
   const multi = Boolean(params.authors?.length || params.tags?.length || params.tools?.length);
-  const topic = Boolean(params.tag || params.tool) || multi;
-  const { data, error } = await supabase.rpc("feed_page", {
+  const media = Boolean(params.hasMedia);
+  const topic = Boolean(params.tag || params.tool) || multi || media;
+  const args = {
     ...(params.openOnly || topic ? { p_open_only: Boolean(params.openOnly) } : {}),
     ...(topic ? { p_tag: params.tag ?? null, p_tool: params.tool ?? null } : {}),
-    ...(multi ? { p_authors: params.authors?.length ? params.authors : null, p_tags: params.tags?.length ? params.tags : null, p_tools: params.tools?.length ? params.tools : null } : {}),
+    ...(multi || media ? { p_authors: params.authors?.length ? params.authors : null, p_tags: params.tags?.length ? params.tags : null, p_tools: params.tools?.length ? params.tools : null } : {}),
     p_scope: params.scope,
     p_order: params.order,
     p_kinds: params.kind === "all" ? null : [params.kind],
@@ -103,7 +110,11 @@ export async function fetchFeedPage(params: FeedPageParams): Promise<FeedPage> {
     p_after_rank: params.cursor ? params.cursor.rank : null,
     p_after_created_at: params.cursor ? params.cursor.createdAt : null,
     p_after_id: params.cursor ? params.cursor.id : null,
-  });
+  };
+  let { data, error } = await supabase.rpc("feed_page", media ? { ...args, p_has_media: true } : args);
+  // The 17-argument form ships with a migration; against a database that does not have it yet the request is retried without the filter
+  // (the screen then filters what it gets, as before) instead of failing the whole feed.
+  if (media && error?.code === "PGRST202") ({ data, error } = await supabase.rpc("feed_page", args));
   if (error) throw new Error(error.message);
 
   const rows = (data ?? []) as FeedRow[];

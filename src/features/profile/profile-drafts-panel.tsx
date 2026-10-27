@@ -35,11 +35,15 @@ const KIND_META: Record<DraftKind, { labelKey: TranslationKey; icon: LucideIcon 
  * author, so this never needs its own visibility check beyond the caller
  * only rendering it when `isOwnProfile`.
  */
+const DRAFTS_SHOWN_STEP = 50;
+
 export function ProfileDraftsPanel({ userId }: { userId: string }) {
   const { t } = useTranslation();
   const { language } = useLanguage();
   const [rows, setRows] = useState<DraftRow[] | null>(null);
   const [filter, setFilter] = useState<DraftFilter>("all");
+  // A bulk import can leave thousands of drafts: they are all loaded (a light row each) but drawn 50 at a time.
+  const [shown, setShown] = useState(DRAFTS_SHOWN_STEP);
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -102,7 +106,10 @@ export function ProfileDraftsPanel({ userId }: { userId: string }) {
       <SectionMenu
         items={tabs.map((tab) => ({ key: tab.key, label: tab.label, meta: tab.count, icon: tab.key === "all" ? LayoutGrid : KIND_META[tab.key].icon }))}
         active={filter}
-        onChange={setFilter}
+        onChange={(next) => {
+          setFilter(next);
+          setShown(DRAFTS_SHOWN_STEP);
+        }}
         ariaLabel={t("profile.draftKindsAriaLabel")}
         title={t("profile.tabDrafts")}
       />
@@ -111,7 +118,7 @@ export function ProfileDraftsPanel({ userId }: { userId: string }) {
         <EmptyState icon={FileText} title={t("draft.empty")} className="border-0" />
       ) : (
         <ul className="space-y-2">
-          {visible.map((row) => {
+          {visible.slice(0, shown).map((row) => {
             const Icon = KIND_META[row.kind].icon;
             return (
               <li key={`${row.kind}-${row.id}`} className="rounded-md border border-border-soft bg-surface-soft p-3">
@@ -143,6 +150,13 @@ export function ProfileDraftsPanel({ userId }: { userId: string }) {
             );
           })}
         </ul>
+      )}
+      {visible.length > shown && (
+        <div className="flex justify-center pt-1">
+          <Button type="button" variant="outline" onClick={() => setShown((count) => count + DRAFTS_SHOWN_STEP)} data-testid="drafts-more">
+            {t("common.loadMore")} ({shown} / {visible.length})
+          </Button>
+        </div>
       )}
       {error && <p className="text-sm text-danger">{error}</p>}
     </div>

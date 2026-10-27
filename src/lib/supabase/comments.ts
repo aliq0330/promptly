@@ -1,4 +1,5 @@
 import { supabase } from "./client";
+import { fetchAllRows } from "./paged";
 import { withoutBlocked } from "./blocked-users";
 import { translateForRuntime } from "@/lib/i18n/translations";
 import { mapProfileRow, type ProfileRow } from "./mappers";
@@ -44,15 +45,16 @@ function mapCommentRow(
 /** Every real comment on a real prompt, oldest first — publicly readable per Bölüm 19's RLS (same visibility as the prompt itself). */
 export async function fetchCommentsForPrompt(promptId: string): Promise<PromptComment[]> {
   try {
-    const { data, error } = await supabase
-      .from("prompt_comments")
-      .select(COMMENT_SELECT)
-      .eq("prompt_id", promptId)
-      .order("created_at", { ascending: true });
-    if (error) {
-      console.error("fetchCommentsForPrompt", error);
-      return [];
-    }
+    // Every comment, a page at a time (PostgREST stops at 1000 rows per request).
+    const { rows: data } = await fetchAllRows((from, to) =>
+      supabase
+        .from("prompt_comments")
+        .select(COMMENT_SELECT)
+        .eq("prompt_id", promptId)
+        .order("created_at", { ascending: true })
+        .order("id", { ascending: true })
+        .range(from, to),
+    );
     return withoutBlocked(((data ?? []) as unknown as CommentRow[]).map((row) => mapCommentRow(row, { promptId })), (c) => c.author.id);
   } catch (err) {
     console.error("fetchCommentsForPrompt", err);
@@ -63,15 +65,16 @@ export async function fetchCommentsForPrompt(promptId: string): Promise<PromptCo
 /** Every real comment on a real request, oldest first — same visibility rules as a prompt's comments (Bölüm 19). */
 export async function fetchCommentsForRequest(requestId: string): Promise<PromptComment[]> {
   try {
-    const { data, error } = await supabase
-      .from("prompt_comments")
-      .select(COMMENT_SELECT)
-      .eq("request_id", requestId)
-      .order("created_at", { ascending: true });
-    if (error) {
-      console.error("fetchCommentsForRequest", error);
-      return [];
-    }
+    // Every comment, a page at a time (PostgREST stops at 1000 rows per request).
+    const { rows: data } = await fetchAllRows((from, to) =>
+      supabase
+        .from("prompt_comments")
+        .select(COMMENT_SELECT)
+        .eq("request_id", requestId)
+        .order("created_at", { ascending: true })
+        .order("id", { ascending: true })
+        .range(from, to),
+    );
     return withoutBlocked(((data ?? []) as unknown as CommentRow[]).map((row) => mapCommentRow(row, { requestId })), (c) => c.author.id);
   } catch (err) {
     console.error("fetchCommentsForRequest", err);
@@ -114,15 +117,16 @@ export async function postCommentOnPrompt(
 /** Every real comment on a real Kullanıcı Sonucu, oldest first — publicly readable wherever the result's own prompt is (Bölüm 19's RLS, widened by the "Kullanıcı Sonuçları" migration). */
 export async function fetchCommentsForResult(resultId: string): Promise<PromptComment[]> {
   try {
-    const { data, error } = await supabase
-      .from("prompt_comments")
-      .select(COMMENT_SELECT)
-      .eq("result_id", resultId)
-      .order("created_at", { ascending: true });
-    if (error) {
-      console.error("fetchCommentsForResult", error);
-      return [];
-    }
+    // Every comment, a page at a time (PostgREST stops at 1000 rows per request).
+    const { rows: data } = await fetchAllRows((from, to) =>
+      supabase
+        .from("prompt_comments")
+        .select(COMMENT_SELECT)
+        .eq("result_id", resultId)
+        .order("created_at", { ascending: true })
+        .order("id", { ascending: true })
+        .range(from, to),
+    );
     return withoutBlocked(((data ?? []) as unknown as CommentRow[]).map((row) => mapCommentRow(row, { resultId })), (c) => c.author.id);
   } catch (err) {
     console.error("fetchCommentsForResult", err);
@@ -149,15 +153,16 @@ export async function postCommentOnResult(
 /** Every real comment on a real workflow, oldest first — publicly readable wherever the workflow itself is (same shared `prompt_comments` layer as a prompt/generator). */
 export async function fetchCommentsForWorkflow(workflowId: string): Promise<PromptComment[]> {
   try {
-    const { data, error } = await supabase
-      .from("prompt_comments")
-      .select(COMMENT_SELECT)
-      .eq("workflow_id", workflowId)
-      .order("created_at", { ascending: true });
-    if (error) {
-      console.error("fetchCommentsForWorkflow", error);
-      return [];
-    }
+    // Every comment, a page at a time (PostgREST stops at 1000 rows per request).
+    const { rows: data } = await fetchAllRows((from, to) =>
+      supabase
+        .from("prompt_comments")
+        .select(COMMENT_SELECT)
+        .eq("workflow_id", workflowId)
+        .order("created_at", { ascending: true })
+        .order("id", { ascending: true })
+        .range(from, to),
+    );
     return withoutBlocked(((data ?? []) as unknown as CommentRow[]).map((row) => mapCommentRow(row, { workflowId })), (c) => c.author.id);
   } catch (err) {
     console.error("fetchCommentsForWorkflow", err);
@@ -168,15 +173,16 @@ export async function fetchCommentsForWorkflow(workflowId: string): Promise<Prom
 /** Every real comment on a real preset (Hazır Ayar), oldest first — same shared `prompt_comments` layer, visible wherever the preset is. */
 export async function fetchCommentsForPreset(presetId: string): Promise<PromptComment[]> {
   try {
-    const { data, error } = await supabase
-      .from("prompt_comments")
-      .select(COMMENT_SELECT)
-      .eq("preset_id", presetId)
-      .order("created_at", { ascending: true });
-    if (error) {
-      console.error("fetchCommentsForPreset", error);
-      return [];
-    }
+    // Every comment, a page at a time (PostgREST stops at 1000 rows per request).
+    const { rows: data } = await fetchAllRows((from, to) =>
+      supabase
+        .from("prompt_comments")
+        .select(COMMENT_SELECT)
+        .eq("preset_id", presetId)
+        .order("created_at", { ascending: true })
+        .order("id", { ascending: true })
+        .range(from, to),
+    );
     return withoutBlocked(((data ?? []) as unknown as CommentRow[]).map((row) => mapCommentRow(row, { presetId })), (c) => c.author.id);
   } catch (err) {
     console.error("fetchCommentsForPreset", err);
@@ -219,15 +225,16 @@ export async function postCommentOnWorkflow(
 /** Bir topluluk gönderisinin yorumları (eskiden yeniye): gönderinin KENDİ iş parçacığı — işaret ettiği içeriğin yorumlarıyla karışmaz. Okuma, gönderiyi okuyabilene açıktır (RLS). */
 export async function fetchCommentsForCommunityPost(communityPostId: string): Promise<PromptComment[]> {
   try {
-    const { data, error } = await supabase
-      .from("prompt_comments")
-      .select(COMMENT_SELECT)
-      .eq("community_post_id", communityPostId)
-      .order("created_at", { ascending: true });
-    if (error) {
-      console.error("fetchCommentsForCommunityPost", error);
-      return [];
-    }
+    // Every comment, a page at a time (PostgREST stops at 1000 rows per request).
+    const { rows: data } = await fetchAllRows((from, to) =>
+      supabase
+        .from("prompt_comments")
+        .select(COMMENT_SELECT)
+        .eq("community_post_id", communityPostId)
+        .order("created_at", { ascending: true })
+        .order("id", { ascending: true })
+        .range(from, to),
+    );
     return withoutBlocked(((data ?? []) as unknown as CommentRow[]).map((row) => mapCommentRow(row, { communityPostId })), (c) => c.author.id);
   } catch (err) {
     console.error("fetchCommentsForCommunityPost", err);
@@ -254,16 +261,17 @@ export async function postCommentOnCommunityPost(
 /** Space'in GENEL yorumları (etkinlik yorumları hariç; eskiden yeniye). Okuma Space'in kendi RLS'ini izler (`can_read_space`; docs/history/242-*). */
 export async function fetchCommentsForSpace(spaceId: string): Promise<PromptComment[]> {
   try {
-    const { data, error } = await supabase
-      .from("prompt_comments")
-      .select(COMMENT_SELECT)
-      .eq("space_id", spaceId)
-      .is("space_activity_id", null)
-      .order("created_at", { ascending: true });
-    if (error) {
-      console.error("fetchCommentsForSpace", error);
-      return [];
-    }
+    // Every comment, a page at a time (PostgREST stops at 1000 rows per request).
+    const { rows: data } = await fetchAllRows((from, to) =>
+      supabase
+        .from("prompt_comments")
+        .select(COMMENT_SELECT)
+        .eq("space_id", spaceId)
+        .is("space_activity_id", null)
+        .order("created_at", { ascending: true })
+        .order("id", { ascending: true })
+        .range(from, to),
+    );
     return withoutBlocked(((data ?? []) as unknown as CommentRow[]).map((row) => mapCommentRow(row, { spaceId })), (c) => c.author.id);
   } catch (err) {
     console.error("fetchCommentsForSpace", err);
@@ -274,16 +282,17 @@ export async function fetchCommentsForSpace(spaceId: string): Promise<PromptComm
 /** Bir Space etkinliğinin yorumları (eskiden yeniye). Okuma etkinliğin kendi görünürlük kuralını izler (varsayılan herkes, sahibi "yalnız üyeler" yapabilir). */
 export async function fetchCommentsForSpaceActivity(spaceId: string, activityId: string): Promise<PromptComment[]> {
   try {
-    const { data, error } = await supabase
-      .from("prompt_comments")
-      .select(COMMENT_SELECT)
-      .eq("space_id", spaceId)
-      .eq("space_activity_id", activityId)
-      .order("created_at", { ascending: true });
-    if (error) {
-      console.error("fetchCommentsForSpaceActivity", error);
-      return [];
-    }
+    // Every comment, a page at a time (PostgREST stops at 1000 rows per request).
+    const { rows: data } = await fetchAllRows((from, to) =>
+      supabase
+        .from("prompt_comments")
+        .select(COMMENT_SELECT)
+        .eq("space_id", spaceId)
+        .eq("space_activity_id", activityId)
+        .order("created_at", { ascending: true })
+        .order("id", { ascending: true })
+        .range(from, to),
+    );
     return withoutBlocked(((data ?? []) as unknown as CommentRow[]).map((row) => mapCommentRow(row, { spaceId })), (c) => c.author.id);
   } catch (err) {
     console.error("fetchCommentsForSpaceActivity", err);
@@ -337,15 +346,16 @@ export async function updateCommentRating(commentId: string, authorId: string, r
 /** Bir içeriğin alıntısının yorumları (eskiden yeniye; docs/history/217-*). Okuma alıntının kendi RLS'ini izler (hedef halka açık + engel yok). */
 export async function fetchCommentsForQuote(quoteId: string): Promise<PromptComment[]> {
   try {
-    const { data, error } = await supabase
-      .from("prompt_comments")
-      .select(COMMENT_SELECT)
-      .eq("quote_id", quoteId)
-      .order("created_at", { ascending: true });
-    if (error) {
-      console.error("fetchCommentsForQuote", error);
-      return [];
-    }
+    // Every comment, a page at a time (PostgREST stops at 1000 rows per request).
+    const { rows: data } = await fetchAllRows((from, to) =>
+      supabase
+        .from("prompt_comments")
+        .select(COMMENT_SELECT)
+        .eq("quote_id", quoteId)
+        .order("created_at", { ascending: true })
+        .order("id", { ascending: true })
+        .range(from, to),
+    );
     return withoutBlocked(((data ?? []) as unknown as CommentRow[]).map((row) => mapCommentRow(row, { quoteId })), (c) => c.author.id);
   } catch (err) {
     console.error("fetchCommentsForQuote", err);

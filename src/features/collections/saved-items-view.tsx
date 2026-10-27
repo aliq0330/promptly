@@ -12,7 +12,9 @@ import { CollectionCover } from "./collection-card";
 import { CollageArt, DetailBand, DetailShell, DetailTitle, Eyebrow } from "@/features/content/detail-parts";
 import { useAuth } from "@/features/auth/auth-provider";
 import { engagementStore } from "@/features/content/engagement-store";
-import { fetchOwnCollections, fetchSavedItems, type CollectionEntry } from "@/lib/supabase/collections";
+import { collectionEntryKey, fetchOwnCollections, fetchSavedItemsPage } from "@/lib/supabase/collections";
+import { usePagedList } from "@/features/content/use-paged-list";
+import { LoadMore } from "@/features/feed/load-more";
 import { collectionHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Collection, PromptMedia } from "@/types";
@@ -28,9 +30,6 @@ import type { Collection, PromptMedia } from "@/types";
 export function SavedItemsView() {
   const { t } = useTranslation();
   const { user } = useAuth();
-  const [items, setItems] = useState<CollectionEntry[]>([]);
-  const [loaded, setLoaded] = useState(false);
-  const [failed, setFailed] = useState(false);
   const [collections, setCollections] = useState<Collection[]>([]);
 
   // "Koleksiyonlarım" shelf (docs/history/234-*): the viewer's own collections, each opening its own page; a failure just leaves the shelf out.
@@ -43,26 +42,17 @@ export function SavedItemsView() {
     };
   }, [user]);
 
+  // The saved works, 24 at a time (a member can have thousands): the list grows as it is scrolled.
+  const saved = usePagedList(`saved|${user?.id ?? ""}`, Boolean(user), (offset) => fetchSavedItemsPage(user?.id ?? "", offset), collectionEntryKey);
+  const items = saved.items;
+
+  // Everything listed here is in a collection: make the shared bookmark state say so, even if an earlier session-local guess differed.
   useEffect(() => {
-    let cancelled = false;
-    if (!user) return;
-    fetchSavedItems(user.id)
-      .then((entries) => {
-        if (cancelled) return;
-        // Everything listed here is in a collection: make the shared bookmark state say so, even if an earlier session-local guess differed.
-        for (const entry of entries) engagementStore.setActive(engagementStore.keyOf("save", entry.type, entry.data.id), true);
-        setItems(entries);
-      })
-      .catch(() => {
-        if (!cancelled) setFailed(true);
-      })
-      .finally(() => {
-        if (!cancelled) setLoaded(true);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [user]);
+    for (const entry of items) engagementStore.setActive(engagementStore.keyOf("save", entry.type, entry.data.id), true);
+  }, [items]);
+
+  const failed = saved.failed && items.length === 0;
+  const loaded = !saved.loading;
 
   if (failed) {
     return <div className="mx-auto max-w-md px-4 py-16 text-center text-sm text-text-muted">{t("saved.loadFailed")}</div>;
@@ -79,7 +69,7 @@ export function SavedItemsView() {
           data-saved-band=""
           backdrop={images[0] ? <StorageImage src={images[0].url} alt="" fill sizes="100vw" className="object-cover" /> : undefined}
           art={<CollageArt images={images} icon={Bookmark} />}
-          kicker={<Eyebrow tone="primary">{t("collection.visibilityPrivateShort")} · {t("collection.itemCount", { count: items.length })}</Eyebrow>}
+          kicker={<Eyebrow tone="primary">{t("collection.visibilityPrivateShort")} · {t("collection.itemCount", { count: Math.max(items.length, saved.total ?? 0) })}</Eyebrow>}
           title={<DetailTitle>{t("nav.saved")}</DetailTitle>}
           byline={<p className="text-body text-text-secondary">{t("saved.subtitle")}</p>}
         />
@@ -108,6 +98,8 @@ export function SavedItemsView() {
           emptyTitleKey="saved.emptyTitle"
           emptyDescriptionKey="saved.emptyDescription"
           dropWhenUnsaved
+          totalCount={saved.total}
+          footer={<LoadMore failed={saved.failed} hasMore={saved.hasMore} loadingMore={saved.loadingMore} onLoadMore={() => void saved.loadMore()} auto />}
         />
       </div>
     </DetailShell>

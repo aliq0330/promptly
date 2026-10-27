@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { FolderOpen, LayoutGrid, Search, SearchX, SlidersHorizontal, SquareTerminal, Users, Workflow as WorkflowIcon, X } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import type { LucideIcon } from "lucide-react";
@@ -43,6 +43,8 @@ export function CollectionEntryList({
   emptyDescriptionKey,
   removalFor,
   dropWhenUnsaved = false,
+  totalCount,
+  footer,
 }: {
   items: CollectionEntry[];
   searchPlaceholderKey: TranslationKey;
@@ -50,6 +52,10 @@ export function CollectionEntryList({
   emptyDescriptionKey: TranslationKey;
   removalFor?: (entry: CollectionEntry) => EntryRemoval;
   dropWhenUnsaved?: boolean;
+  /** The list holds only the pages loaded so far: the real size (counted by the database), when known, for the "Tümü" count. */
+  totalCount?: number | null;
+  /** Under the cards, also when a filter hides every loaded one — "Daha fazla" for the next page. */
+  footer?: ReactNode;
 }) {
   const { t } = useTranslation();
   const [query, setQuery] = useState("");
@@ -79,7 +85,7 @@ export function CollectionEntryList({
   // Sade kontrol satırı (docs/history/234-*): tür menüsü (yalnız birden çok tür varken; sayılar satırlarda) · arama simgesi (alanı açar) · Kart/Izgara.
   const searching = searchOpen || query !== "";
   const menuItems: SectionMenuItem<CollectionEntry["type"] | "all">[] = [
-    { key: "all", label: t("common.all"), icon: LayoutGrid, meta: items.length },
+    { key: "all", label: t("common.all"), icon: LayoutGrid, meta: Math.max(items.length, totalCount ?? 0) },
     ...typeCounts.map((item) => ({ key: item.key, label: t(ENTRY_TYPE_LABELS[item.key]), icon: ENTRY_TYPE_ICONS[item.key], meta: item.count })),
   ];
 
@@ -135,6 +141,7 @@ export function CollectionEntryList({
           ))}
         </ContentGrid>
       )}
+      {footer}
     </>
   );
 }
