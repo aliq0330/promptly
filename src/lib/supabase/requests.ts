@@ -1,13 +1,13 @@
 import { removeStorageObjectsByUrl } from "./storage-cleanup";
 import { normalizeToolRefs } from "@/lib/ai-tool-catalog";
 import { supabase } from "./client";
-import { fetchAllRows } from "./paged";
+import { fetchAllRows, OWNED_PAGE, type OwnedListFilter, type PagedResult } from "./paged";
 import { withoutBlocked } from "./blocked-users";
 import { applyKeysetCursor, nextCursorFrom, type KeysetCursor } from "./pagination";
 import { resizeImageToBlob } from "@/lib/utils";
 import { translateForRuntime } from "@/lib/i18n/translations";
 import { normalizeLegacyContentType, sanitizeTaxonomy } from "@/lib/content-taxonomy";
-import { taxonomyColumns, type ContentSearchFilters } from "./taxonomy-query";
+import { sanitizeSearchText, taxonomyColumns, type ContentSearchFilters } from "./taxonomy-query";
 import { orderByIds, searchContentIds, type SearchCursor, type SearchPage } from "./search";
 import { mapProfileRow, type ProfileRow } from "./mappers";
 import { resolveMediaInputs, type MediaInput } from "./media-input";
@@ -197,6 +197,29 @@ export async function fetchRequestById(id: string): Promise<PromptRequest | null
     console.error("fetchRequestById", err);
     return null;
   }
+}
+
+/**
+ * One page of a person's requests (profile "İstekler", "İçeriklerim"), newest first by default; sort / visibility / search are query conditions and
+ * the total is counted with the first page (docs/history/254-*, 255-*). Throws on failure so the screen can offer a retry.
+ */
+export async function fetchRequestsByAuthorPage(authorId: string, filter: OwnedListFilter = {}, offset = 0, limit = OWNED_PAGE): Promise<PagedResult<PromptRequest>> {
+  const text = sanitizeSearchText(filter.search ?? "");
+  let request = supabase
+    .from("prompt_requests")
+    .select(REQUEST_SELECT, offset === 0 ? { count: "exact" } : undefined)
+    .eq("author_id", authorId)
+    .is("community_id", null)
+    .is("deleted_at", null)
+    .eq("is_draft", false);
+  if (filter.visibility && filter.visibility !== "all") request = request.eq("visibility", filter.visibility);
+  if (text) request = request.or(`title.ilike.%${text}%,description.ilike.%${text}%`);
+  const sort = filter.sort ?? "newest";
+  request = sort === "most-liked" ? request.order("like_count", { ascending: false }).order("created_at", { ascending: false }) : request.order("created_at", { ascending: sort === "oldest" });
+  const { data, count, error } = await request.order("id", { ascending: sort === "oldest" }).range(offset, offset + limit - 1);
+  if (error) throw new Error(error.message);
+  const rows = (data ?? []) as unknown as RequestRow[];
+  return { items: rows.map(mapRequestRow), total: offset === 0 ? (count ?? null) : null, nextOffset: rows.length === limit ? offset + limit : null };
 }
 
 /**

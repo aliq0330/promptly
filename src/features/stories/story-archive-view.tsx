@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Archive, Highlighter, Loader2, Plus } from "lucide-react";
 import { Button, buttonClassName } from "@/components/ui/button";
+import { LoadMoreButton } from "@/features/feed/load-more";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageContainer } from "@/components/ui/page-header";
 import { useAuth } from "@/features/auth/auth-provider";
@@ -72,6 +73,7 @@ export function StoryArchiveView() {
   async function loadMore() {
     if (!user || !stories || stories.length === 0) return;
     setLoadingMore(true);
+    setError(null);
     try {
       const page = await fetchStoryArchive(user.id, stories[stories.length - 1].createdAt);
       setStories((prev) => [...(prev ?? []), ...page.stories]);
@@ -188,9 +190,7 @@ export function StoryArchiveView() {
             </section>
           ))}
           {hasMore && (
-            <Button type="button" variant="ghost" className="w-full" onClick={() => void loadMore()} disabled={loadingMore}>
-              {loadingMore ? <Loader2 size={15} className="animate-spin" aria-hidden /> : null} {t("stories.archive.more")}
-            </Button>
+            <LoadMoreButton variant="ghost" className="w-full" wrapperClassName="" label={t("stories.archive.more")} loading={loadingMore} error={Boolean(error)} onLoadMore={() => void loadMore()} />
           )}
         </div>
       )}

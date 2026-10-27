@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { LoadMoreButton } from "@/features/feed/load-more";
 import { ChevronDown, ChevronUp, Search, X } from "lucide-react";
 import { searchConversationMessages } from "@/lib/supabase/chat-features";
 import { normalizeSearchTerm, SEARCH_MAX_CHARS, SEARCH_MIN_CHARS, snippetAround, splitHighlight, stepIndex } from "@/lib/chat-features";
@@ -222,17 +223,17 @@ export function ConversationSearchPanel({
               ))}
               {hasMore && (
                 <li>
-                  <button
-                    type="button"
-                    disabled={status === "loading"}
-                    onClick={() => {
+                  <LoadMoreButton
+                    variant="ghost"
+                    size="sm"
+                    wrapperClassName="flex justify-center py-1.5"
+                    label={t("chat.search.loadMore")}
+                    loading={status === "loading"}
+                    onLoadMore={() => {
                       const last = hits[hits.length - 1];
                       if (term && last) void run(term, true, { createdAt: last.createdAt, id: last.id });
                     }}
-                    className="block w-full px-4 py-2.5 text-center text-small font-medium text-primary hover:bg-surface-soft disabled:opacity-60"
-                  >
-                    {status === "loading" ? t("common.loadingMore") : t("chat.search.loadMore")}
-                  </button>
+                  />
                 </li>
               )}
             </ul>

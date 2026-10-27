@@ -1,9 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { LoadMoreButton } from "@/features/feed/load-more";
 import Link from "next/link";
 import { ArrowLeft, Compass, Search } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { SectionMenu } from "@/features/content/section-menu";
 import { useAuth } from "@/features/auth/auth-provider";
@@ -66,7 +66,6 @@ function BrowseView({ onToast, hideSearch }: { onToast: (message: string) => voi
   const [state, setState] = useState<ListState | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
   const [moreError, setMoreError] = useState(false);
-  const sentinel = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => setDebounced(query.trim()), 300);
@@ -111,15 +110,6 @@ function BrowseView({ onToast, hideSearch }: { onToast: (message: string) => voi
     }
   }, [current, fetchPage, key, loadingMore, onToast]);
 
-  const hasMore = Boolean(current?.hasMore);
-  const itemCount = current?.items.length ?? 0;
-  useEffect(() => {
-    const el = sentinel.current;
-    if (!el || !hasMore || moreError || typeof IntersectionObserver === "undefined") return;
-    const io = new IntersectionObserver((entries) => entries.some((e) => e.isIntersecting) && void loadMore(), { rootMargin: "400px 0px" });
-    io.observe(el);
-    return () => io.disconnect();
-  }, [hasMore, moreError, itemCount, loadMore]);
 
   function changeStatus(id: string, next: JoinState) {
     setState((prev) => (prev ? { ...prev, items: prev.items.map((c) => (c.id === id ? applyJoinState(c, next) : c)) } : prev));
@@ -190,11 +180,7 @@ function BrowseView({ onToast, hideSearch }: { onToast: (message: string) => voi
             ))}
           </ul>
           {current.hasMore && (
-            <div ref={sentinel} className="flex justify-center">
-              <Button type="button" variant="outline" size="sm" onClick={() => void loadMore()} disabled={loadingMore}>
-                {loadingMore ? t("common.loadingMore") : moreError ? t("common.retry") : t("common.loadMore")}
-              </Button>
-            </div>
+            <LoadMoreButton size="sm" wrapperClassName="flex justify-center" onLoadMore={() => void loadMore()} loading={loadingMore} error={Boolean(moreError)} />
           )}
         </>
       )}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type UIEvent } from "react";
+import { LoadMoreButton } from "@/features/feed/load-more";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Bell, BellOff, ChevronsDown, Info, LogOut, Search, Users, X } from "lucide-react";
@@ -1472,16 +1473,15 @@ export function LocalConversationView() {
         }}
       >
         {hasOlder && (
-          <div className="flex justify-center">
-            <button
-              type="button"
-              onClick={() => void loadOlderMessages()}
-              disabled={loadingOlder}
-              className="rounded-full border border-border-soft bg-surface px-3.5 py-1.5 text-xs font-medium text-text-secondary shadow-xs transition-colors hover:border-border-strong hover:text-text disabled:opacity-60"
-            >
-              {loadingOlder ? t("common.loadingMore") : t("groups.chat.loadOlder")}
-            </button>
-          </div>
+          // Older messages load by themselves as the top of the thread nears the screen (the scroll position is kept, see `loadOlderMessages`).
+          <LoadMoreButton
+            variant="ghost"
+            size="sm"
+            wrapperClassName="flex justify-center"
+            label={t("groups.chat.loadOlder")}
+            onLoadMore={() => void loadOlderMessages()}
+            loading={loadingOlder}
+          />
         )}
         {messageHighlightNotFound && (
           <p className="mx-auto w-fit max-w-full rounded-full border border-border-soft bg-surface px-3.5 py-1.5 text-center text-xs text-text-muted shadow-xs">

@@ -4,7 +4,9 @@ import { useEffect, useState } from "react";
 import { Bookmark, SlidersHorizontal } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Tabs } from "@/components/ui/tabs";
-import { fetchSavedPresets } from "@/lib/supabase/presets";
+import { fetchPresetsByCreatorPage, fetchSavedPresets } from "@/lib/supabase/presets";
+import { usePagedList } from "@/features/content/use-paged-list";
+import { PagedListState } from "@/features/feed/paged-list-state";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { PresetCard } from "./preset-card";
 import { useViewMode } from "@/features/content/view-mode-store";
@@ -36,10 +38,13 @@ function PresetGrid({ presets }: { presets: Preset[] }) {
  * (other people's presets in any of one's collections — the same save system
  * as the bookmark / "Listeme Ekle", never shown on someone else's profile).
  */
-export function ProfilePresetsPanel({ ownerId, isOwn, created }: { ownerId: string; isOwn: boolean; created: Preset[] }) {
+export function ProfilePresetsPanel({ ownerId, isOwn }: { ownerId: string; isOwn: boolean }) {
   const { t } = useTranslation();
   const [scope, setScope] = useState<Scope>("created");
   const [saved, setSaved] = useState<Preset[] | null>(null);
+  // "Oluşturduklarım": a page at a time (docs/history/255-*).
+  const createdPages = usePagedList(`presets|${ownerId}`, true, (offset) => fetchPresetsByCreatorPage(ownerId, {}, offset));
+  const created = createdPages.items;
 
   useEffect(() => {
     if (!isOwn || scope !== "saved" || saved !== null) return;
@@ -57,7 +62,7 @@ export function ProfilePresetsPanel({ ownerId, isOwn, created }: { ownerId: stri
           {isOwn && (
             <Tabs
               items={[
-                { key: "created" as const, label: t("preset.scopeCreated"), count: created.length },
+                { key: "created" as const, label: t("preset.scopeCreated"), count: createdPages.total ?? created.length },
                 { key: "saved" as const, label: t("preset.scopeSaved"), icon: Bookmark },
               ]}
               active={scope}
@@ -70,16 +75,18 @@ export function ProfilePresetsPanel({ ownerId, isOwn, created }: { ownerId: stri
         <ViewModeControls />
       </div>
       {scope === "created" || !isOwn ? (
-        created.length === 0 ? (
-          <EmptyState
-            icon={SlidersHorizontal}
-            title={t("preset.noneYetTitle")}
-            description={isOwn ? t("preset.noneYetBody") : t("preset.noneYetOtherBody")}
-            action={isOwn ? { label: t("preset.create"), href: "/presets/create" } : undefined}
-          />
-        ) : (
-          <PresetGrid presets={created} />
-        )
+        <PagedListState list={createdPages}>
+          {created.length === 0 ? (
+            <EmptyState
+              icon={SlidersHorizontal}
+              title={t("preset.noneYetTitle")}
+              description={isOwn ? t("preset.noneYetBody") : t("preset.noneYetOtherBody")}
+              action={isOwn ? { label: t("preset.create"), href: "/presets/create" } : undefined}
+            />
+          ) : (
+            <PresetGrid presets={created} />
+          )}
+        </PagedListState>
       ) : saved === null ? (
         <p className="py-10 text-center text-small text-text-muted">{t("common.loading")}</p>
       ) : saved.length === 0 ? (

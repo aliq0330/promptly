@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { LoadMoreButton } from "@/features/feed/load-more";
 import Link from "next/link";
 import { FileText, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -158,11 +159,7 @@ export function DraftsButton({
               </ul>
             )}
             {items !== null && items.length > shown && (
-              <div className="flex justify-center">
-                <Button type="button" variant="outline" size="sm" onClick={() => setShown((count) => count + DRAFTS_SHOWN_STEP)} data-testid="drafts-more">
-                  {t("common.loadMore")} ({shown} / {items.length})
-                </Button>
-              </div>
+              <LoadMoreButton size="sm" wrapperClassName="flex justify-center" onLoadMore={() => setShown((count) => count + DRAFTS_SHOWN_STEP)} />
             )}
             {error && <p className="text-sm text-danger">{error}</p>}
           </div>

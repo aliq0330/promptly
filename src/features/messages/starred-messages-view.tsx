@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { LoadMoreButton } from "@/features/feed/load-more";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Star } from "lucide-react";
@@ -172,11 +173,7 @@ export function StarredMessagesView() {
           </ul>
         )}
         {status === "ready" && hasMore && (
-          <div className="mt-4 flex justify-center">
-            <Button type="button" variant="ghost" size="sm" onClick={() => void loadMore()} disabled={loadingMore}>
-              {loadingMore ? t("common.loadingMore") : t("chat.starred.loadMore")}
-            </Button>
-          </div>
+          <LoadMoreButton variant="ghost" size="sm" wrapperClassName="mt-4 flex justify-center" label={t("chat.starred.loadMore")} onLoadMore={() => void loadMore()} loading={loadingMore} />
         )}
       </div>
     </div>

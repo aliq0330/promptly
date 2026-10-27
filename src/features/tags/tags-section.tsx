@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { LoadMoreButton } from "@/features/feed/load-more";
 import Link from "next/link";
 import { Hash, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { fetchAllTagsWithStats, fetchTrendingTags, type TrendingTag } from "@/lib/supabase/tags";
 import { formatCount, tagHref } from "@/lib/utils";
@@ -67,11 +67,7 @@ export function TagsSection() {
       )}
       <TagRows tags={all.slice(0, shown)} emptyMessage={t("tag.noTagsAtAll")} />
       {all.length > shown && (
-        <div className="flex justify-center">
-          <Button variant="outline" onClick={() => setShown((n) => n + PAGE)}>
-            {t("common.loadMore")}
-          </Button>
-        </div>
+        <LoadMoreButton wrapperClassName="flex justify-center" onLoadMore={() => setShown((n) => n + PAGE)} />
       )}
     </section>
   );

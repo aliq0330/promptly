@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { LoadMoreButton } from "@/features/feed/load-more";
 import { Clock, LayoutGrid, SquareTerminal, SlidersHorizontal, Sparkles, UserCheck, UserStar, Workflow as WorkflowIcon } from "lucide-react";
 import { Tabs } from "@/components/ui/tabs";
 import { Chip } from "@/components/ui/chip";
 import { SectionNav } from "@/features/content/section-nav";
-import { Button } from "@/components/ui/button";
 import { ListToolbar, SheetChips, SheetSection } from "@/features/content/list-toolbar";
 import { TaxonomyTypeChips } from "@/features/content/taxonomy-filter";
 import { EMPTY_TAXONOMY_FILTER, type TaxonomyFilterValue } from "@/lib/content-taxonomy";
@@ -255,11 +255,7 @@ export function FeedTabs({ layout = "grid" }: { layout?: "grid" | "home" } = {})
           />
           {feed.failed && <p className="text-center text-small text-danger">{t("feed.loadFailed")}</p>}
           {feed.hasMore && (
-            <div className="flex justify-center pt-2">
-              <Button variant="outline" onClick={() => void feed.loadMore()} disabled={feed.loadingMore}>
-                {feed.loadingMore ? t("common.loadingMore") : t("common.loadMore")}
-              </Button>
-            </div>
+            <LoadMoreButton onLoadMore={() => void feed.loadMore()} loading={feed.loadingMore} error={feed.failed} />
           )}
         </div>
       )}

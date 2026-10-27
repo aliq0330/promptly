@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { LoadMoreButton } from "@/features/feed/load-more";
 import Link from "next/link";
 import { Ban, Loader2, MoreVertical, Search, ShieldCheck, UserMinus, UserRound } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
@@ -237,11 +238,7 @@ export function GroupMembersSection({
             })}
           </ul>
           {current.hasMore && (
-            <div className="flex justify-center">
-              <Button type="button" variant="outline" size="sm" onClick={loadMore} disabled={loadingMore}>
-                {loadingMore ? t("common.loadingMore") : t("common.loadMore")}
-              </Button>
-            </div>
+            <LoadMoreButton size="sm" wrapperClassName="flex justify-center" onLoadMore={() => void loadMore?.()} loading={loadingMore} />
           )}
         </>
       )}
