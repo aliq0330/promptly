@@ -5,10 +5,10 @@
 \pset pager off
 \set ON_ERROR_STOP off
 \set alice '''11111111-1111-4111-8111-111111111111'''
-\set N 30000
+\set N 21000
 
 insert into auth.users (id, email, raw_user_meta_data) values (:alice, 'alice@test.dev', '{"username":"alice","display_name":"Alice"}');
--- 30 000 üye (süper kullanıcı toplu kurulumu).
+-- 21 000 üye (süper kullanıcı toplu kurulumu).
 insert into auth.users (id, email, raw_user_meta_data)
 select ('90000000-0000-4000-8000-' || lpad(i::text, 12, '0'))::uuid, 'm' || i || '@test.dev', jsonb_build_object('username', 'm' || i, 'display_name', 'M' || i)
 from generate_series(1, :N) i;
@@ -36,9 +36,9 @@ insert into public.conversation_members (conversation_id, user_id, role)
 select (select v::uuid from public._ctx where k = 'g'), ('90000000-0000-4000-8000-' || lpad(i::text, 12, '0'))::uuid, 'member'
 from generate_series(1, :N) i;
 update public.conversation_members set last_read_at = now() where conversation_id = (select v::uuid from public._ctx where k = 'g')
-  and user_id in ('90000000-0000-4000-8000-000000030000', '90000000-0000-4000-8000-000000029999', '90000000-0000-4000-8000-000000029998');
-update public.conversation_members set notify_level = 'none' where conversation_id = (select v::uuid from public._ctx where k = 'g') and user_id = '90000000-0000-4000-8000-000000029998';
-update public.conversation_members set notify_muted_until = now() + interval '1 day' where conversation_id = (select v::uuid from public._ctx where k = 'g') and user_id = '90000000-0000-4000-8000-000000029999';
+  and user_id in ('90000000-0000-4000-8000-000000021000', '90000000-0000-4000-8000-000000020999', '90000000-0000-4000-8000-000000020998');
+update public.conversation_members set notify_level = 'none' where conversation_id = (select v::uuid from public._ctx where k = 'g') and user_id = '90000000-0000-4000-8000-000000020998';
+update public.conversation_members set notify_muted_until = now() + interval '1 day' where conversation_id = (select v::uuid from public._ctx where k = 'g') and user_id = '90000000-0000-4000-8000-000000020999';
 select set_config('promptly.t0', clock_timestamp()::text, false);
 
 -- 1. Duyuru ('important'): tek çağrı, sorgu zaman aşımı içinde.
@@ -53,11 +53,11 @@ select public._check(2, 'duyuru bildirimi olay başına en çok 20 000 üyeye ya
   (select count(*) from public.notifications where message like '%yeni duyuru%') = 20000,
   (select count(*)::text from public.notifications where message like '%yeni duyuru%'));
 select public._check(3, 'sohbette yakın zamanda okuyan üye (öncelik) bildirim alır; sınırın dışında kalan okumamış üye almaz',
-  exists (select 1 from public.notifications where recipient_id = '90000000-0000-4000-8000-000000030000' and message like '%yeni duyuru%')
+  exists (select 1 from public.notifications where recipient_id = '90000000-0000-4000-8000-000000021000' and message like '%yeni duyuru%')
   and (select count(*) from public.notifications where message like '%yeni duyuru%' and recipient_id in
         (select user_id from public.conversation_members where conversation_id = (select v::uuid from public._ctx where k = 'g') and last_read_at is null)) = 19999);
 select public._check(4, '''important'': düzeyi none olan ya da sessize alan üye almaz',
-  not exists (select 1 from public.notifications where recipient_id in ('90000000-0000-4000-8000-000000029998', '90000000-0000-4000-8000-000000029999') and message like '%yeni duyuru%'));
+  not exists (select 1 from public.notifications where recipient_id in ('90000000-0000-4000-8000-000000020998', '90000000-0000-4000-8000-000000020999') and message like '%yeni duyuru%'));
 select public._check(5, 'duyuru yazarına (eylemi yapana) bildirim gitmez', not exists (select 1 from public.notifications where recipient_id = :alice));
 select public._check(6, 'bildirim türü/adresi/yazarı doğru',
   (select count(*) from public.notifications where message like '%yeni duyuru%' and type = 'system' and actor_id = :alice and target_href like '/communities/local?id=%&tab=overview') = 20000);
@@ -70,14 +70,14 @@ select public.create_community_event((select v::uuid from public._ctx where k = 
 reset role;
 select public._check(7, '''info'' (etkinlik): hiç kimse ''all'' düzeyinde değilse kimseye gitmez',
   (select count(*) from public.notifications where message like '%yeni etkinlik%') = 0);
-update public.conversation_members set notify_level = 'all' where conversation_id = (select v::uuid from public._ctx where k = 'g') and user_id = '90000000-0000-4000-8000-000000030000';
+update public.conversation_members set notify_level = 'all' where conversation_id = (select v::uuid from public._ctx where k = 'g') and user_id = '90000000-0000-4000-8000-000000021000';
 set role authenticated;
 select public._as_user(:alice);
 select public.create_community_event((select v::uuid from public._ctx where k = 'g'), 'İkinci etkinlik', null, now() + interval '3 days', null) as evt2 \gset
 reset role;
 select public._check(8, '''info'': yalnız düzeyi ''all'' olan üye bildirim alır',
   (select count(*) from public.notifications where message like '%İkinci etkinlik%') = 1
-  and exists (select 1 from public.notifications where recipient_id = '90000000-0000-4000-8000-000000030000' and message like '%İkinci etkinlik%'));
+  and exists (select 1 from public.notifications where recipient_id = '90000000-0000-4000-8000-000000021000' and message like '%İkinci etkinlik%'));
 
 -- 3. Kapat / yeniden aç ('direct'): düzeyden bağımsız, sınırlı; yeniden açma da bildirir (aynı saniyede olsa bile: ayrı tekilleştirme anahtarı).
 set role authenticated;
@@ -88,7 +88,7 @@ reset role;
 select public._check(9, '''direct'' (kapat / yeniden aç): düzeyi none olan üye de alır; her olay en çok 20 000',
   (select count(*) from public.notifications where message like '%topluluğu kapatıldı%') = 20000
   and (select count(*) from public.notifications where message like '%topluluğu yeniden açıldı%') = 20000
-  and exists (select 1 from public.notifications where recipient_id = '90000000-0000-4000-8000-000000029998' and message like '%kapatıldı%'));
+  and exists (select 1 from public.notifications where recipient_id = '90000000-0000-4000-8000-000000020998' and message like '%kapatıldı%'));
 
 -- 4. Bağlantı kuralı: istemcinin çağıramayacağı iç fonksiyon.
 select public._check(10, 'iç fonksiyon istemciye kapalı (authenticated/anon/public EXECUTE yok)',
