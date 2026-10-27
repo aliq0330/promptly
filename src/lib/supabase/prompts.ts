@@ -309,29 +309,6 @@ export async function fetchPromptsForRequest(requestId: string): Promise<Prompt[
   }
 }
 
-/** Every real, published prompt by any of these authors, newest-first — for the "Takip Ettiklerim" feed (only ever the viewer's followed authors). */
-export async function fetchPromptsByAuthors(authorIds: string[], limit = 60): Promise<Prompt[]> {
-  if (authorIds.length === 0) return [];
-  try {
-    const { data, error } = await supabase
-      .from("prompts")
-      .select(PROMPT_SELECT)
-      .in("author_id", authorIds)
-      .eq("status", "published")
-      .is("community_id", null)
-      .order("created_at", { ascending: false })
-      .limit(limit);
-    if (error) {
-      console.error("fetchPromptsByAuthors", error);
-      return [];
-    }
-    return withoutBlocked(filterNotDeleted(filterProfileVisible((data ?? []).map((row) => mapPromptRow(row as unknown as PromptRow)))), (p) => p.author.id);
-  } catch (err) {
-    console.error("fetchPromptsByAuthors", err);
-    return [];
-  }
-}
-
 /**
  * Discover's highlights (Meydan, docs/history/190-* Faz 6): public, published, non-community prompts ranked by real likes —
  * optionally only those created since `since` ("Bu hafta popüler"). Same deleted/profile/blocked filters as every stream.

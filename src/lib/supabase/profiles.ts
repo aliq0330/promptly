@@ -169,7 +169,30 @@ export async function searchMentionCandidates(prefix: string, limit = 6): Promis
   }
 }
 
-/** Every real profile this user follows — for `/following`, via the real `follows` table (public read, Bölüm 19). */
+export const PEOPLE_PAGE = 50;
+
+/**
+ * One page of the people a user follows / who follow them (`/following`, `/followers`), newest first (`created_at`, then the person's id so pages never overlap).
+ * No total is counted: a person with 100 000 followers would pay a count of all of them for a number the list does not need (the profile's `follower_count` is the number).
+ */
+async function fetchPeoplePage(userId: string, side: "following" | "followers", offset: number, limit: number): Promise<PagedResult<UserProfile>> {
+  const [ownColumn, otherColumn] = side === "following" ? (["follower_id", "following_id"] as const) : (["following_id", "follower_id"] as const);
+  const { data, error } = await supabase
+    .from("follows")
+    .select(`${otherColumn}, profiles:${otherColumn} ( ${PROFILE_SELECT} )`)
+    .eq(ownColumn, userId)
+    .order("created_at", { ascending: false })
+    .order(otherColumn, { ascending: true })
+    .range(offset, offset + limit - 1);
+  if (error) throw new Error(error.message);
+  const rows = (data ?? []) as unknown as { profiles: ProfileRow | null }[];
+  return { items: rows.map((row) => row.profiles).filter((row): row is ProfileRow => Boolean(row)).map((row) => mapProfileRow(row)), total: null, nextOffset: rows.length === limit ? offset + limit : null };
+}
+
+export const fetchFollowedProfilesPage = (userId: string, offset = 0, limit = PEOPLE_PAGE) => fetchPeoplePage(userId, "following", offset, limit);
+export const fetchFollowerProfilesPage = (userId: string, offset = 0, limit = PEOPLE_PAGE) => fetchPeoplePage(userId, "followers", offset, limit);
+
+/** The people this user follows, up to `limit` — for pickers that show a short list (the `/following` page pages with `fetchFollowedProfilesPage`). */
 export async function fetchFollowedProfiles(userId: string, limit?: number): Promise<UserProfile[]> {
   try {
     let query = supabase
@@ -192,7 +215,7 @@ export async function fetchFollowedProfiles(userId: string, limit?: number): Pro
   }
 }
 
-/** Every real profile that follows this user — for `/followers`, via the real `follows` table (public read, Bölüm 19). */
+/** The people who follow this user, up to `limit` — for pickers that show a short list (the `/followers` page pages with `fetchFollowerProfilesPage`). */
 export async function fetchFollowerProfiles(userId: string, limit?: number): Promise<UserProfile[]> {
   try {
     let query = supabase
