@@ -17,6 +17,7 @@ import { DnaBackfillCard } from "@/features/moderation/dna-backfill-card";
 import { MediaAppearanceCard } from "@/features/moderation/media-appearance-card";
 import { BulkImportCard } from "@/features/moderation/bulk-import-card";
 import { BulkManageCard } from "@/features/moderation/bulk-manage-card";
+import { BulkTaxonomyCard } from "@/features/moderation/bulk-taxonomy-card";
 import { TemplateVariablesCard } from "@/features/moderation/template-variables-card";
 import { SiteStatsPanel } from "@/features/moderation/admin/site-stats-panel";
 import { UsersPanel } from "@/features/moderation/admin/users-panel";
@@ -188,6 +189,7 @@ function ReportsPanel({ filter }: { filter: Filter }) {
       <MediaAppearanceCard />
       <BulkImportCard />
       <BulkManageCard />
+      <BulkTaxonomyCard />
       <TemplateVariablesCard />
     </div>
   );

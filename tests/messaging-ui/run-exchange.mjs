@@ -34,10 +34,10 @@ const ROWS = [row(P1, "Yağmurlu Gece"), row(P2, "İkinci Prompt", { content_typ
 const TAG_CATALOG = [{ slug: "portre", label: "Portre" }, { slug: "anime", label: "Anime" }, { slug: "manzara", label: "Manzara" }];
 const VARIABLES = [{ id: "v1", prompt_id: P1, name: "Stil", default_value: "noir", description: "Tarz", sort_order: 0, created_at: "2026-09-01T00:00:00Z", updated_at: "2026-09-01T00:00:00Z", type: "select", options: [{ label: "Noir", value: "noir" }, { label: "Neon", value: "neon" }], config: {} }];
 
-async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lang = "tr", detail = false, moderator = false, manageCount = 250, templateCount = 3 } = {}) {
+async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lang = "tr", detail = false, moderator = false, manageCount = 250, templateCount = 3, taxRows = [] } = {}) {
   if (ONLY && !name.startsWith(ONLY)) return;
   const db = createDb();
-  const state = { prompts: [], imports: [], importResult: null, variableCalls: 0, adminCalls: [], adminResult: null, manageQueries: [], manageCalls: [], manageFailAt: 0, impactCalls: [], impactFail: false, tagPuts: [], tagCreates: [], tagCatalog: TAG_CATALOG, tmplScans: [], tmplCalls: [], tmplFailAt: 0 };
+  const state = { prompts: [], imports: [], importResult: null, variableCalls: 0, adminCalls: [], adminResult: null, manageQueries: [], manageCalls: [], manageFailAt: 0, impactCalls: [], impactFail: false, tagPuts: [], tagCreates: [], tagCatalog: TAG_CATALOG, tmplScans: [], tmplCalls: [], tmplFailAt: 0, taxQueries: [], taxCalls: [], taxFailAt: 0, taxRows: taxRows.map((r) => ({ ...r })) };
   // Toplu yönetim taklidi: 250 kayıt = 200 taslak (2'si etkileşimli) + 30 yayında (2'si etkileşimli) + 20 gizli (1'i etkileşimli); >250 ise hepsi taslak.
   state.manageRows = Array.from({ length: manageCount }, (_, i) => ({
     id: `e0000000-0000-4000-8000-${String(i).padStart(12, "0")}`, title: `Toplu ${i + 1}`,
@@ -96,6 +96,23 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lan
     hit.forEach((x) => state.tmplDone.add(x.id));
     return { body: { affected: hit.length, skipped: body.p_ids.length - hit.length, variables: hit.reduce((n, x) => n + x.variables.filter((v) => !v.existing).length, 0), conflicts: hit.reduce((n, x) => n + x.conflicts, 0) } };
   };
+  // Toplu tür/kategori taklidi (docs/history/260-*): sunucu mantığı supabase/tests/admin-bulk-taxonomy.sql'dedir; burada yalnız arayüz sözleşmesi
+  // (kategori dolu satır overwrite kapalıyken atlanır; kategori null = geri alma).
+  db.rpc.admin_bulk_set_prompt_taxonomy = (body) => {
+    state.taxCalls.push(body);
+    if (state.taxFailAt > 0 && state.taxCalls.length === state.taxFailAt) return forbidden;
+    let affected = 0;
+    let already = 0;
+    for (const item of body.p_items) {
+      const r = state.taxRows.find((x) => x.id === item.id);
+      if (!r) continue;
+      if (r.category !== null && !body.p_overwrite) { already += 1; continue; }
+      if (r.content_type === item.content_type && r.category === item.category && r.subcategory === (item.category ? item.subcategory : null)) continue;
+      r.content_type = item.content_type; r.category = item.category; r.subcategory = item.category ? item.subcategory : null;
+      affected += 1;
+    }
+    return { body: { affected, skipped: body.p_items.length - affected, invalid: [], not_mine: 0, already_categorized: already, subcategory_dropped: 0 } };
+  };
   db.rpc.get_or_create_tag = (body) => {
     state.tagCreates.push(body.p_label);
     return { body: { slug: body.p_label.toLowerCase().replace(/[^a-z0-9]+/g, "-"), label: body.p_label } };
@@ -127,6 +144,12 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, lan
       const offset = Number(ctx.q.get("offset") ?? 0);
       const limit = Number(ctx.q.get("limit") ?? 1000);
       return ctx.rows(state.manageRows.slice(offset, offset + limit).map((r) => ({ ...r, ...(tagFilter ? { prompt_tags: [{ tag_slug: "prompts-chat" }] } : {}) })));
+    }
+    if (ctx.table === "prompts" && ctx.method === "GET" && ctx.sel.replace(/\s/g, "") === "id,title,content_type,category,subcategory") {
+      state.taxQueries.push(Object.fromEntries(ctx.q.entries()));
+      const offset = Number(ctx.q.get("offset") ?? 0);
+      const limit = Number(ctx.q.get("limit") ?? 1000);
+      return ctx.rows(state.taxRows.slice(offset, offset + limit));
     }
     if (ctx.table === "tags" && ctx.method === "GET" && ctx.sel.replace(/\s/g, "") === "slug,label") return ctx.rows(state.tagCatalog);
     // Etiketleme için prompt okuma (docs/history/252-*): başlık + metin + var olan etiketler; metin sıraya göre değişir.
@@ -865,6 +888,105 @@ await scenario("35. Yarıda kalma: 2. parça hata verirse 1. parça dönüşmü�
   await page.getByTestId("template-outcome").filter({ hasText: /150 prompt\(s\) converted/ }).waitFor();
   await page.getByText("No ${…} syntax to convert was found.").waitFor();
 }, { moderator: true, lang: "en", templateCount: 250, viewport: { width: 375, height: 800 } });
+
+
+// ===================== Toplu tür / kategori (docs/history/260-*) =====================
+const taxBlock = (title, tur, kategori, alt) => `<details>\n<summary><strong>${title}</strong></summary>\n\n**Tür:** ${tur}\n\n**Kategori:** ${kategori}\n${alt ? `\n**Alt kategori:** ${alt}\n` : ""}\n## ${title}\n\nContributed by [@kisi](https://github.com/kisi)\n\n\`\`\`md\nmetin ${title}\n\`\`\`\n</details>\n`;
+const taxFile = (blocks) => ({ name: "PROMPTS_categorized.md", mimeType: "text/markdown", buffer: Buffer.from(`# Awesome\n\n${blocks.join("\n")}`) });
+const taxRow = (i, extra = {}) => ({ id: `a1000000-0000-4000-8000-${String(i).padStart(12, "0")}`, title: `Tax ${i}`, content_type: "text", category: null, subcategory: null, ...extra });
+async function openTaxonomy(page) {
+  await page.goto(`${BASE}/moderation`);
+  await page.getByTestId("bulk-taxonomy").waitFor();
+}
+
+await scenario("36. Kategori motoru: dosya seçilince ÖNİZLEME (yazmaz); onay iki adımlı; yedek yazımdan önce iner; sunucuya doğru türler gider; Geri al eski değerlere döner", async ({ page, state }) => {
+  await openTaxonomy(page);
+  assert.equal(await page.getByTestId("taxonomy-apply").count(), 0, "dosyadan önce uygula düğmesi yok");
+  const file = taxFile([
+    taxBlock("Tax 1", "Metin", "Metin – Kodlama", "Kod"),
+    taxBlock("Tax 2", "Metin", "Metin – Yazarlık", "Hikâye"),
+    taxBlock("Tax 3", "Görsel", "Görsel – İnsan & Karakter", "Portre"),
+    taxBlock("Tax 4", "Video", "Video – Sinematik", "Sinematik Sahne"),
+    taxBlock("Tax 5", "Metin", "Metin – Eğitim", "Ders"),
+    taxBlock("Başka Yerde", "Ses", "Ses – Müzik", "Şarkı"),
+  ]);
+  await page.getByTestId("taxonomy-file").setInputFiles(file);
+  await page.getByTestId("taxonomy-preview").waitFor();
+  assert.deepEqual(state.taxCalls, [], "önizleme hiçbir şey yazmaz");
+  assert.match(await page.getByTestId("taxonomy-summary").innerText(), /Dosyada 6 kayıt \(6 geçerli\)\. Promptlarınla eşleşen: 5\. Yazılacak: 4\./);
+  assert.match(await page.getByTestId("taxonomy-type-text").innerText(), /Metin: 2/);
+  assert.match(await page.getByTestId("taxonomy-type-image").innerText(), /Görsel: 1/);
+  assert.match(await page.getByTestId("taxonomy-type-video").innerText(), /Video: 1/);
+  assert.match(await page.getByTestId("taxonomy-already").innerText(), /1 promptun kategorisi zaten dolu/);
+  assert.match(await page.getByTestId("taxonomy-notfound").innerText(), /1 kayıt kütüphanende bulunamadı/);
+  assert.match(await page.getByTestId("taxonomy-odak-note").innerText(), /1 prompt Video\/Ses olacak/);
+  await page.getByTestId("taxonomy-apply").click();
+  await page.getByTestId("taxonomy-confirm").waitFor();
+  assert.deepEqual(state.taxCalls, [], "ilk tık yalnız onay ister");
+  const [download] = await Promise.all([page.waitForEvent("download"), page.getByTestId("taxonomy-confirm").click()]);
+  assert.match(download.suggestedFilename(), /^promptly-kategori-yedek-\d{4}-\d{2}-\d{2}\.json$/);
+  const backup = JSON.parse(readFileSync(await download.path(), "utf8"));
+  assert.equal(backup.length, 4);
+  assert.deepEqual(backup[0].before, { contentType: "text", category: null, subcategory: null });
+  await page.getByTestId("taxonomy-outcome").waitFor();
+  assert.equal(state.taxCalls.length, 1);
+  assert.equal(state.taxCalls[0].p_overwrite, false);
+  assert.deepEqual(state.taxCalls[0].p_items.map((i) => `${i.content_type}/${i.category}/${i.subcategory}`).sort(), ["image/human_character/portrait", "text/coding/code", "text/writing/story", "video/cinematic/cinematic_scene"]);
+  assert.match(await page.getByTestId("taxonomy-outcome").innerText(), /4 prompt kategorilendi, 0 atlandı\./);
+  assert.equal(state.taxRows.find((r) => r.title === "Tax 4").content_type, "video");
+  await page.getByTestId("taxonomy-undo").click();
+  await page.getByTestId("taxonomy-outcome").filter({ hasText: /eski haline döndürüldü/ }).waitFor();
+  assert.equal(state.taxCalls.length, 2);
+  assert.equal(state.taxCalls[1].p_overwrite, true, "geri alma overwrite ister");
+  assert.ok(state.taxCalls[1].p_items.every((i) => i.category === null && i.content_type === "text"));
+  assert.deepEqual(state.taxRows.filter((r) => r.title !== "Tax 5").map((r) => `${r.content_type}/${r.category}`), ["text/null", "text/null", "text/null", "text/null"], "dört prompt eski hâlinde");
+  assert.equal(state.taxRows.find((r) => r.title === "Tax 5").category, "teaching_dummy", "elle kategorili prompta dokunulmadı");
+}, { moderator: true, taxRows: [taxRow(1), taxRow(2), taxRow(3), taxRow(4), taxRow(5, { category: "teaching_dummy" })] });
+
+await scenario("37. Kategorili olmayan / bozuk dosya anlaşılır mesaj verir ve hiçbir çağrı yapmaz; 'üzerine yaz' yazılacak sayıyı değiştirir; 150 kayıt 100'erli 2 çağrı", async ({ page, state }) => {
+  await openTaxonomy(page);
+  await page.getByTestId("taxonomy-file").setInputFiles({ name: "x.md", mimeType: "text/markdown", buffer: Buffer.from("merhaba") });
+  await page.getByTestId("taxonomy-problem").waitFor();
+  assert.match(await page.getByTestId("taxonomy-problem").innerText(), /Tür \/ Kategori satırları yok/);
+  const plain = `<details>\n<summary><strong>P</strong></summary>\n\nContributed by [@a](https://github.com/a)\n\n\`\`\`md\nm\n\`\`\`\n</details>`;
+  await page.getByTestId("taxonomy-file").setInputFiles({ name: "plain.md", mimeType: "text/markdown", buffer: Buffer.from(plain) });
+  await page.getByTestId("taxonomy-problem").filter({ hasText: /Tür \/ Kategori satırları yok/ }).waitFor();
+  assert.deepEqual(state.taxCalls, []);
+  const blocks = Array.from({ length: 150 }, (_, i) => taxBlock(`Tax ${i + 1}`, "Metin", "Metin – Araştırma", "Analiz"));
+  await page.getByTestId("taxonomy-file").setInputFiles(taxFile(blocks));
+  await page.getByTestId("taxonomy-preview").waitFor();
+  assert.match(await page.getByTestId("taxonomy-summary").innerText(), /Yazılacak: 100\./, "50'si zaten kategorili: varsayılan olarak ezilmez");
+  await page.getByTestId("taxonomy-overwrite").check();
+  assert.match(await page.getByTestId("taxonomy-summary").innerText(), /Yazılacak: 150\./);
+  await page.getByTestId("taxonomy-apply").click();
+  const [download] = await Promise.all([page.waitForEvent("download"), page.getByTestId("taxonomy-confirm").click()]);
+  assert.ok(download);
+  await page.getByTestId("taxonomy-outcome").waitFor();
+  assert.deepEqual(state.taxCalls.map((c) => c.p_items.length), [100, 50]);
+  assert.ok(state.taxCalls.every((c) => c.p_overwrite === true));
+  assert.match(await page.getByTestId("taxonomy-outcome").innerText(), /150 prompt kategorilendi/);
+}, { moderator: true, taxRows: Array.from({ length: 150 }, (_, i) => taxRow(i + 1, i < 50 ? { category: "writing", subcategory: "story" } : {})) });
+
+await scenario("38. Yarıda kalma: 2. parça hata verirse 1. parça yazılmış kalır, uyarı gösterilir; İngilizce metinler + telefonda taşma yok", async ({ page, state }) => {
+  state.taxFailAt = 2;
+  await openTaxonomy(page);
+  const blocks = Array.from({ length: 150 }, (_, i) => taxBlock(`Tax ${i + 1}`, "Ses", "Ses – Müzik", "Şarkı"));
+  await page.getByTestId("taxonomy-file").setInputFiles(taxFile(blocks));
+  await page.getByTestId("taxonomy-preview").waitFor();
+  assert.match(await page.getByTestId("taxonomy-summary").innerText(), /150 entries in the file \(150 valid\)\. Matched to your prompts: 150\. To be written: 150\./);
+  assert.match(await page.getByTestId("taxonomy-type-audio").innerText(), /Audio: 150/);
+  assert.match(await page.getByTestId("taxonomy-odak-note").innerText(), /150 prompt\(s\) will become Video\/Audio/);
+  assert.equal(await overflowFree(page), true);
+  await page.getByTestId("taxonomy-apply").click();
+  await page.getByTestId("taxonomy-confirm").waitFor();
+  assert.match(await page.getByTestId("bulk-taxonomy").innerText(), /150 prompt\(s\) will change type and category/);
+  await Promise.all([page.waitForEvent("download"), page.getByTestId("taxonomy-confirm").click()]);
+  await page.getByTestId("taxonomy-partial").waitFor();
+  await page.getByTestId("taxonomy-error").waitFor();
+  assert.match(await page.getByTestId("taxonomy-outcome").innerText(), /100 prompt\(s\) categorized/);
+  assert.equal(state.taxRows.filter((r) => r.category === "music").length, 100);
+  assert.equal(await overflowFree(page), true);
+}, { moderator: true, lang: "en", viewport: { width: 375, height: 800 }, taxRows: Array.from({ length: 150 }, (_, i) => taxRow(i + 1)) });
 
 await browser.close();
 server.close();

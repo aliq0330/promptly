@@ -30,7 +30,7 @@ returns table (kind text, id uuid, created_at timestamptz, sort_rank bigint) lan
 $$;
 grant execute on function public._fm(boolean, integer, text[], bigint, timestamptz, uuid) to public;
 
--- Yeni → eski: M1 görselli · T1 metin · V1 video türü (görselsiz) · M2 görselli · I1 görselsiz resim · PRIV görselli ama gizli · DRAFT görselli taslak
+-- Yeni → eski: M1 görselli · T1 metin · V1 video türü (görselsiz ama video çıktısı var) · M2 görselli · I1 görselsiz resim · PRIV görselli ama gizli · DRAFT görselli taslak
 insert into public.prompts (id, author_id, title, description, prompt_text, content_type, status, visibility, created_at, copy_count) values
   ('a0000000-0000-4000-8000-000000000001', :bobby, 'M1',   'd', 'm', 'image', 'published', 'public',  now() - interval '1 hour',  3),
   ('a0000000-0000-4000-8000-000000000002', :bobby, 'T1',   'd', 'm', 'text',  'published', 'public',  now() - interval '2 hours', 0),
@@ -41,6 +41,9 @@ insert into public.prompts (id, author_id, title, description, prompt_text, cont
   ('a0000000-0000-4000-8000-000000000007', :bobby, 'DRAFT','d', 'm', 'image', 'draft',     'public',  now() - interval '7 hours', 0);
 insert into public.prompt_media (prompt_id, url, width, height, position)
 select id, 'https://x/' || id || '.jpg', 10, 10, 0 from public.prompts where title in ('M1', 'M2', 'PRIV', 'DRAFT');
+-- V1 video türü: oynatılabilir bir video ÇIKTISI var (docs/history/260-*: video/ses türü tek başına yetmez, gerçek çıktısı olmalı).
+insert into public.prompt_results (prompt_id, creator_id, media_type, media_url, thumbnail_url)
+  values ('a0000000-0000-4000-8000-000000000003', :bobby, 'video', 'result-media/x/v1.mp4', 'result-media/x/v1.jpg');
 -- W1 görselli · W2 görselsiz
 insert into public.workflows (id, creator_id, title, status, visibility, created_at) values
   ('a1000000-0000-4000-8000-000000000001', :bobby, 'W1', 'published', 'public', now() - interval '30 minutes'),
