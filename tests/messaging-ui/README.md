@@ -206,3 +206,11 @@ node tests/messaging-ui/run-workflow-space.mjs   # 28/28 beklenir
 ```bash
 node tests/messaging-ui/run-space-connectors.mjs   # 15/15 beklenir
 ```
+
+## Pano araç seti (`docs/history/263-*`)
+
+`run-space-board-tools.mjs` (11 senaryo): akıllı kılavuzlar (çıkar + hizalar, Alt'ta yok), Çoğalt / Ctrl+D / Ctrl+C-V (kopya + ok, tek adımda geri al, görsel çoğaltılamaz, izleyici yapamaz), mini harita (gezinme + tercih), Ctrl+F arama, İngilizce, telefon. Sayfa yüklenirken yerleşim kaydığı için sürükleme testleri konumu `settled()` ile sabitlenene dek bekler.
+
+```bash
+node tests/messaging-ui/run-space-board-tools.mjs   # 11/11 beklenir
+```

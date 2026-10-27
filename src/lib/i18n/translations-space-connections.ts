@@ -36,6 +36,20 @@ export const spaceConnectionTranslations = {
   "spaces.connect.clear": { tr: "Seçimi bırak", en: "Clear selection" },
   "spaces.shortcuts.connect": { tr: "Ok çizme aracı", en: "Arrow tool" },
 
+  // ---- Pano: akıllı kılavuz, çoğaltma, mini harita, arama (docs/history/263-*) ----
+  "spaces.board.duplicate": { tr: "Çoğalt", en: "Duplicate" },
+  "spaces.board.duplicated": { tr: "{{count}} nesne çoğaltıldı", en: "{{count}} objects duplicated" },
+  "spaces.board.duplicatedSkipped": { tr: "{{count}} nesne çoğaltıldı; {{skipped}} nesne çoğaltılamaz (görsel, yayınlanmış prompt, içerik ve palet panoda tek olabilir).", en: "{{count}} objects duplicated; {{skipped}} can't be duplicated (an image, published prompt, content or palette can only appear once on a board)." },
+  "spaces.board.duplicateNone": { tr: "Yalnız notlar ve taslak promptlar çoğaltılabilir.", en: "Only notes and draft prompts can be duplicated." },
+  "spaces.board.copied": { tr: "{{count}} nesne kopyalandı · yapıştırmak için ⌘/Ctrl + V", en: "{{count}} objects copied · paste with ⌘/Ctrl + V" },
+  "spaces.shortcuts.copyPaste": { tr: "Kopyala · yapıştır", en: "Copy · paste" },
+  "spaces.board.minimap": { tr: "Mini harita", en: "Minimap" },
+  "spaces.board.search": { tr: "Panoda ara (⌘/Ctrl + F)", en: "Search the board (⌘/Ctrl + F)" },
+  "spaces.board.searchPlaceholder": { tr: "Panoda ara…", en: "Search the board…" },
+  "spaces.board.searchNone": { tr: "Sonuç yok", en: "No results" },
+  "spaces.board.searchPrev": { tr: "Önceki sonuç", en: "Previous result" },
+  "spaces.board.searchNext": { tr: "Sonraki sonuç", en: "Next result" },
+
   // ---- Workflow'u ayrı nesneler olarak aktarma ----
   "wfSpace.objects.stepInput": { tr: "Girdi", en: "Input" },
   "wfSpace.objects.stepOutput": { tr: "Çıktı", en: "Output" },

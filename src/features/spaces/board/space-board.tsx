@@ -11,6 +11,7 @@ import {
   AlignStartVertical,
   AlignVerticalDistributeCenter,
   BringToFront,
+  Copy,
   ExternalLink,
   Group,
   Hand,
@@ -19,6 +20,7 @@ import {
   LayoutGrid,
   Layers,
   Loader2,
+  Map as MapIcon,
   Maximize,
   Maximize2,
   Minimize2,
@@ -27,6 +29,7 @@ import {
   Palette,
   Plus,
   Redo2,
+  Search,
   SendToBack,
   Spline,
   SquareDashedMousePointer,
@@ -42,6 +45,8 @@ import {
 import { lockBodyScroll, unlockBodyScroll } from "@/components/ui/modal";
 import { WorkflowImportModal } from "../workflow-import-modal";
 import { BoardConnectors, type ConnectorDraft } from "./board-connectors";
+import { BoardMinimap } from "./board-minimap";
+import { BoardSearch } from "./board-search";
 import { ConnectionBar } from "./connection-bar";
 import { WorkflowSyncBar } from "./workflow-sync-bar";
 import { ScrollRow } from "@/components/ui/scroll-row";
@@ -67,6 +72,7 @@ import {
   screenToWorld,
   snap,
   tidyItems,
+  topZ,
   undoHistory,
   zoomAt,
   type AlignMode,
@@ -75,7 +81,9 @@ import {
   type Rect,
   type Viewport,
 } from "@/lib/space-board";
+import { isDuplicable, planDuplicate } from "@/lib/space-clipboard";
 import { chainPairs, connectionExists } from "@/lib/space-connectors";
+import { smartSnap, type Guide } from "@/lib/space-guides";
 import { loadPlanInput, runImport, type PlanIO } from "@/lib/supabase/workflow-board";
 import { createSpaceGroup, uploadSpaceImage, type LayoutEntry, type SpaceConnection, type SpaceConnectionPatch, type SpaceItem } from "@/lib/supabase/spaces";
 import { useSpaceContext } from "../space-provider";
@@ -133,6 +141,8 @@ interface Pinch {
   vpStart: Viewport;
 }
 
+const GUIDE_PX = 6;
+const DUPLICATE_OFFSET = 32;
 const MOVE_THRESHOLD = 4;
 const MIN_START_ZOOM = 0.5;
 const LOW_DETAIL_ZOOM = 0.4;
@@ -168,6 +178,11 @@ export function SpaceBoard({ focusId }: { focusId: string | null }) {
   const [connectFrom, setConnectFrom] = useState<string | null>(null);
   const [draftPoint, setDraftPoint] = useState<{ x: number; y: number } | null>(null);
   const [multiSelect, setMultiSelect] = useState(false);
+  const [guides, setGuides] = useState<Guide[]>([]);
+  const [minimapOn, setMinimapOn] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [view, setView] = useState({ w: 800, h: 600 });
+  const clipboard = useRef<{ ids: string[]; pastes: number }>({ ids: [], pastes: 0 });
   const [spaceHeld, setSpaceHeld] = useState(false);
   const [history, setHistory] = useState<History<Entry>>(emptyHistory);
   const [fullscreen, setFullscreen] = useState(false);
@@ -193,6 +208,36 @@ export function SpaceBoard({ focusId }: { focusId: string | null }) {
   }, [vp]);
 
   const editable = caps.edit;
+
+  // Görünür alanın ölçüsü (mini harita) ve mini harita tercihi (yalnız bu tarayıcıda).
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const measure = () => setView({ w: canvas.clientWidth, h: canvas.clientHeight });
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(canvas);
+    return () => observer.disconnect();
+  }, []);
+  useEffect(() => {
+    try {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- tarayıcı tercihi ilk çizimden sonra okunur
+      if (window.localStorage.getItem("promptly-board-minimap") === "0") setMinimapOn(false);
+      else setMinimapOn(true);
+    } catch {
+      setMinimapOn(true);
+    }
+  }, []);
+  const toggleMinimap = useCallback(() => {
+    setMinimapOn((on) => {
+      try {
+        window.localStorage.setItem("promptly-board-minimap", on ? "0" : "1");
+      } catch {
+        // Depolama yoksa tercih yalnız bu oturum için geçerli.
+      }
+      return !on;
+    });
+  }, []);
 
   // ---- türetilmiş veri ----
   const geoms = useMemo(() => {
@@ -333,6 +378,46 @@ export function SpaceBoard({ focusId }: { focusId: string | null }) {
       setError(err instanceof Error ? err.message : t("spaces.error.generic"));
     }
   }, [editable, selection, connections, removeItems, t]);
+
+  // ---- çoğalt / kopyala-yapıştır (docs/history/263-*) ----
+  const duplicate = useCallback(
+    async (ids: string[], step: number) => {
+      if (!editable || ids.length === 0) return;
+      setError(null);
+      const plan = planDuplicate(items, connections, ids, { offset: { x: DUPLICATE_OFFSET * step, y: DUPLICATE_OFFSET * step }, z: topZ(items), makeId: () => crypto.randomUUID() });
+      if (plan.items.length === 0) {
+        setError(t("spaces.board.duplicateNone"));
+        return;
+      }
+      try {
+        const created = await addItems(plan.items);
+        const arrows = plan.connections.length ? await addConnections(plan.connections) : [];
+        setHistory((h) => pushHistory(h, { type: "import", items: created, connections: arrows }));
+        setSelection(created.map((item) => item.id));
+        setUndoNotice(plan.skipped ? t("spaces.board.duplicatedSkipped", { count: created.length, skipped: plan.skipped }) : t("spaces.board.duplicated", { count: created.length }));
+      } catch (err) {
+        setError(err instanceof Error ? err.message : t("spaces.error.generic"));
+      }
+    },
+    [editable, items, connections, addItems, addConnections, t],
+  );
+
+  const copySelection = useCallback(() => {
+    const ids = items.filter((item) => selectedSet.has(item.id) && isDuplicable(item)).map((item) => item.id);
+    if (ids.length === 0) {
+      setError(t("spaces.board.duplicateNone"));
+      return;
+    }
+    clipboard.current = { ids, pastes: 0 };
+    setUndoNotice(t("spaces.board.copied", { count: ids.length }));
+  }, [items, selectedSet, t]);
+
+  const pasteClipboard = useCallback(() => {
+    const ids = clipboard.current.ids.filter((id) => items.some((item) => item.id === id));
+    if (ids.length === 0) return;
+    clipboard.current.pastes += 1;
+    void duplicate(ids, clipboard.current.pastes);
+  }, [items, duplicate]);
 
   const runEntry = useCallback(
     async (entry: Entry, direction: "undo" | "redo") => {
@@ -680,6 +765,18 @@ export function SpaceBoard({ focusId }: { focusId: string | null }) {
         const y = origin.y + dy / zoom;
         next[id] = { ...origin, x: clampPosition(event.altKey ? x : snap(x)), y: clampPosition(event.altKey ? y : snap(y)) };
       }
+      // Akıllı kılavuzlar: taşınanların birleşik kutusu diğer nesnelerin kenar/ortasına yaklaşınca oraya yakalanır (Alt: kapalı).
+      let found: Guide[] = [];
+      if (!event.altKey) {
+        const movingIds = new Set(Object.keys(next));
+        const box = boundsOf(Object.values(next));
+        if (box) {
+          const result = smartSnap(box, boardGeoms.filter((geom) => !movingIds.has(geom.id)), GUIDE_PX / zoom);
+          if (result.dx || result.dy) for (const id of Object.keys(next)) next[id] = { ...next[id], x: clampPosition(next[id].x + result.dx), y: clampPosition(next[id].y + result.dy) };
+          found = result.guides;
+        }
+      }
+      setGuides(found);
       setLive(next);
     } else if (current.kind === "resize" && current.targetId) {
       const origin = current.origin[current.targetId];
@@ -724,6 +821,7 @@ export function SpaceBoard({ focusId }: { focusId: string | null }) {
       }
     }
     setLive(null);
+    setGuides([]);
     setMarquee(null);
   }
 
@@ -733,6 +831,7 @@ export function SpaceBoard({ focusId }: { focusId: string | null }) {
     interaction.current = null;
     setPanning(false);
     setLive(null);
+    setGuides([]);
     setMarquee(null);
   }
 
@@ -780,6 +879,27 @@ export function SpaceBoard({ focusId }: { focusId: string | null }) {
     if (mod && key === "a") {
       event.preventDefault();
       setSelection(items.map((item) => item.id));
+      return;
+    }
+    if (mod && key === "d") {
+      event.preventDefault();
+      if (editable) void duplicate(selection, 1);
+      return;
+    }
+    if (mod && key === "c") {
+      if (selection.length === 0) return;
+      event.preventDefault();
+      if (editable) copySelection();
+      return;
+    }
+    if (mod && key === "v") {
+      event.preventDefault();
+      if (editable) pasteClipboard();
+      return;
+    }
+    if (mod && key === "f") {
+      event.preventDefault();
+      setSearchOpen(true);
       return;
     }
     if (mod && key === "g") {
@@ -956,6 +1076,8 @@ export function SpaceBoard({ focusId }: { focusId: string | null }) {
         </button>
         <ToolButton icon={Plus} label={t("spaces.board.zoomIn")} onClick={() => zoomBy(1.2)} />
         <ToolButton icon={Maximize} label={t("spaces.board.fit")} onClick={fit} />
+        <ToolButton icon={Search} label={t("spaces.board.search")} active={searchOpen} onClick={() => setSearchOpen((open) => !open)} />
+        <ToolButton icon={MapIcon} label={t("spaces.board.minimap")} active={minimapOn} onClick={toggleMinimap} className="max-sm:hidden" />
         <ToolButton icon={Keyboard} label={t("spaces.board.shortcuts")} onClick={() => setDialog({ kind: "shortcuts" })} className="max-md:hidden" />
         <ToolButton icon={fullscreen ? Minimize2 : Maximize2} label={fullscreen ? t("spaces.board.exitFullscreen") : t("spaces.board.fullscreen")} onClick={() => setFullscreen((value) => !value)} />
         <div className="ml-auto flex shrink-0 items-center gap-2 pl-2">
@@ -1015,6 +1137,13 @@ export function SpaceBoard({ focusId }: { focusId: string | null }) {
               return target ? itemTitle(target) : "";
             }}
           />
+          {guides.map((guide, index) =>
+            guide.axis === "x" ? (
+              <div key={`gx${index}`} data-board-guide="x" className="pointer-events-none absolute bg-secondary" style={{ left: guide.pos - 0.5 / vp.zoom, top: guide.from, width: 1 / vp.zoom, height: guide.to - guide.from, zIndex: 9000 }} />
+            ) : (
+              <div key={`gy${index}`} data-board-guide="y" className="pointer-events-none absolute bg-secondary" style={{ left: guide.from, top: guide.pos - 0.5 / vp.zoom, width: guide.to - guide.from, height: 1 / vp.zoom, zIndex: 9000 }} />
+            ),
+          )}
           {ordered.map((item) => {
             const geom = geoms[item.id];
             const selected = selectedSet.has(item.id) || item.id === activeFrom;
@@ -1038,6 +1167,17 @@ export function SpaceBoard({ focusId }: { focusId: string | null }) {
             );
           })}
         </div>
+        {minimapOn && <BoardMinimap geoms={boardGeoms} vp={vp} view={view} onNavigate={(wx, wy) => setVp((current) => ({ ...current, x: view.w / 2 - wx * current.zoom, y: view.h / 2 - wy * current.zoom }))} />}
+        {searchOpen && (
+          <BoardSearch
+            haystack={items.map((item) => ({ id: item.id, text: [itemTitle(item), item.title, item.body, item.note].filter(Boolean).join(" ") }))}
+            onFocusItem={centerOn}
+            onClose={() => {
+              setSearchOpen(false);
+              canvasRef.current?.focus({ preventScroll: true });
+            }}
+          />
+        )}
         {editable && (
           <WorkflowSyncBar
             spaceId={space.id}
@@ -1106,6 +1246,7 @@ export function SpaceBoard({ focusId }: { focusId: string | null }) {
             {editable && single && single.kind !== "note" && single.kind !== "palette" && <ToolButton icon={StickyNote} label={t("spaces.board.attachNote")} onClick={() => setDialog({ kind: "note", attachTo: single.id })} />}
             {editable && (
               <>
+                {selectedItems.some(isDuplicable) && <ToolButton icon={Copy} label={t("spaces.board.duplicate")} onClick={() => void duplicate(selection, 1)} />}
                 <ToolButton icon={BringToFront} label={t("spaces.board.bringFront")} onClick={() => stack("front")} />
                 <ToolButton icon={SendToBack} label={t("spaces.board.sendBack")} onClick={() => stack("back")} />
                 {selectedItems.length >= 2 && <ToolButton icon={Group} label={t("spaces.board.group")} onClick={() => void groupSelection()} />}
@@ -1209,6 +1350,9 @@ function ShortcutsDialog({ onClose }: { onClose: () => void }) {
     ["⌘/Ctrl + A", t("spaces.shortcuts.selectAll")],
     ["⌘/Ctrl + G · ⌘/Ctrl + Shift + G", t("spaces.shortcuts.group")],
     ["C", t("spaces.shortcuts.connect")],
+    ["⌘/Ctrl + D", t("spaces.board.duplicate")],
+    ["⌘/Ctrl + C · ⌘/Ctrl + V", t("spaces.shortcuts.copyPaste")],
+    ["⌘/Ctrl + F", t("spaces.board.search")],
     ["Enter", t("spaces.board.open")],
     ["[ · ]", t("spaces.shortcuts.cycle")],
     ["+ · − · 0", t("spaces.shortcuts.zoom")],
