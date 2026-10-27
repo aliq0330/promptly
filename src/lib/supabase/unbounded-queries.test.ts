@@ -31,7 +31,6 @@ const BOUNDED_BY_DESIGN: Record<string, string> = {
   "messages.ts:fetchConversationsForUser": "the viewer's own conversations",
   "presets.ts:fetchPresetsByIds": "ids come from one page",
   "presets.ts:mapFieldRow": "mapper, not a query",
-  "profiles.ts:fetchBlockedProfiles": "the viewer's own blocked people",
   "prompt-dna.ts:fetchDnaSections": "the DNA sections of ONE prompt (a handful)",
   "prompt-edit-suggestions.ts:fetchSuggestionsForPrompt": "suggestions on ONE prompt",
   "prompt-edit-suggestions.ts:fetchContributorsForPrompt": "contributors of ONE prompt",

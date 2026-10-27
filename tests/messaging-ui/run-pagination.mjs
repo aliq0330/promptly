@@ -36,12 +36,13 @@ const respond = (ctx, list, { offset, total }) =>
  * A `total`-prompt library for `owner`. Answers the way PostgREST does: filters, order, `offset`/`limit` (`.range`), and — only when the request asks
  * (`Prefer: count=exact`) — the total in `Content-Range`. Every prompts request is recorded in `db.promptQueries`.
  */
-function withLibrary(db, owner, { total = 3016, likes = 0, collections = [], drafts = 0, tags = 0, other = 0 } = {}) {
+function withLibrary(db, owner, { total = 3016, likes = 0, collections = [], drafts = 0, tags = 0, other = 0, blocked = 0 } = {}) {
   const all = Array.from({ length: total }, (_, i) => promptRow(i, owner));
   db.promptQueries = [];
   db.itemQueries = [];
   db.tagQueries = [];
   db.otherQueries = [];
+  db.blockQueries = [];
   db.rpc.profile_content_stats = () => ({ body: { prompts: total, requests: other, workflows: other, presets: other, reuse: total } });
   db.extraRoutes = async (ctx) => {
     const { table, q, method } = ctx;
@@ -103,6 +104,15 @@ function withLibrary(db, owner, { total = 3016, likes = 0, collections = [], dra
       return true;
     }
     if (table === "preset_fields") return ctx.rows([]);
+    // Engelliler: kimlik kümesi (süzgeç için, 1000'lik sayfalarla TAMAMI) ve ayarlar listesi (profil gömülü, 30'arlı sayfa).
+    if (table === "blocks" && method === "GET") {
+      const people = Array.from({ length: blocked }, (_, i) => ({ id: `a1000000-0000-4000-8000-${String(i).padStart(12, "0")}`, username: `engelli${i + 1}`, display_name: `Engelli ${i + 1}`, avatar_url: null, cover_url: null, bio: "", website: null, follower_count: 0, following_count: 0, created_at: "2026-01-01T00:00:00Z", interests: [] }));
+      const embedded = /profiles/.test(ctx.sel ?? "");
+      db.blockQueries.push({ embedded, offset, limit, prefer: wantsCount ? "count=exact" : "" });
+      const rows = people.map((u) => (embedded ? { blocked_id: u.id, profiles: u } : { blocked_id: u.id }));
+      respond(ctx, rows.slice(offset, offset + limit), { offset, total: rows.length });
+      return true;
+    }
     if (table === "tags" && method === "GET") {
       db.tagQueries.push({ offset, limit });
       const rows = Array.from({ length: tags }, (_, i) => ({ slug: `etiket-${String(i).padStart(4, "0")}`, label: `Etiket ${String(i).padStart(4, "0")}`, prompt_usage_count: 1, request_usage_count: 0, usage_count: 1, created_at: "2026-01-01T00:00:00Z" }));
@@ -402,6 +412,40 @@ await scenario("13. 'Daha fazla yükle' hep kendiliğinden yüklenir: düğmeye 
   await page.waitForTimeout(1500);
   assert.ok(hits <= 2, `hata sonrası döngü yok (${hits} istek)`);
   assert.match(await page.getByTestId("load-more").innerText(), /Tekrar dene/);
+});
+
+await scenario("14. Keşfet → Etiketler (1516 etiket): 30'arlı sayfa, toplam ilk sayfada sayılır, sonraki sayfa kaydırınca kendiliğinden gelir; hepsini çeken istek yok", async ({ page, db }) => {
+  withLibrary(db, U.alice, { total: 1, tags: 1516 });
+  await page.goto(`${BASE}/discover`);
+  await page.locator("[data-section-menu]").click();
+  await page.getByRole("radio", { name: "Etiketler", exact: true }).click();
+  const rows = page.locator("[data-tags-section] li");
+  await rows.first().waitFor();
+  const first = db.tagQueries.find((x) => x.limit === 30);
+  assert.ok(first, JSON.stringify(db.tagQueries));
+  assert.equal(first.offset, 0);
+  assert.equal(await rows.count(), 30, "1516 değil 30 satır çizildi");
+  await page.getByTestId("load-more").scrollIntoViewIfNeeded();
+  await page.waitForFunction(() => document.querySelectorAll("[data-tags-section] li").length >= 60);
+  assert.ok(db.tagQueries.some((x) => x.limit === 30 && x.offset === 30), "ikinci sayfa offset=30 ile");
+  assert.ok(!db.tagQueries.some((x) => x.limit === 1000), "tüm kataloğu çeken istek yok (Keşfet bölümünde)");
+});
+
+await scenario("15. Ayarlar → Engellenenler (75 kişi): 30'arlı sayfa, kaydırınca kendiliğinden devam; engeli kaldırınca satır gider; içerik süzgeci için kimlik kümesi eksiksiz okunur", async ({ page, db }) => {
+  withLibrary(db, U.alice, { total: 1, blocked: 75 });
+  await page.goto(`${BASE}/settings/blocked`);
+  const rows = page.getByRole("button", { name: "Engeli kaldır" });
+  await rows.first().waitFor();
+  const first = db.blockQueries.find((x) => x.embedded);
+  assert.equal(first.limit, 30);
+  assert.equal(first.offset, 0);
+  assert.equal(first.prefer, "count=exact");
+  assert.equal(await rows.count(), 30);
+  await page.getByTestId("load-more").scrollIntoViewIfNeeded();
+  await page.waitForFunction(() => [...document.querySelectorAll("main button")].filter((b) => b.textContent.trim() === "Engeli kaldır").length >= 60);
+  await page.getByTestId("load-more").scrollIntoViewIfNeeded().catch(() => {});
+  await page.waitForFunction(() => [...document.querySelectorAll("main button")].filter((b) => b.textContent.trim() === "Engeli kaldır").length >= 75);
+  assert.equal(await page.getByTestId("load-more").count(), 0, "son sayfadan sonra düğme yok");
 });
 
 await browser.close();

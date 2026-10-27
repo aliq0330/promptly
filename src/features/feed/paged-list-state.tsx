@@ -22,12 +22,15 @@ export function PagedListSkeleton() {
 export function PagedListState({
   list,
   children,
+  skeleton,
 }: {
+  /** Shown while the first page loads (default: content-card skeletons). */
+  skeleton?: React.ReactNode;
   list: { loading: boolean; failed: boolean; items: unknown[]; hasMore: boolean; loadingMore: boolean; loadMore: () => Promise<void>; retry: () => void };
   children: React.ReactNode;
 }) {
   const { t } = useTranslation();
-  if (list.loading) return <PagedListSkeleton />;
+  if (list.loading) return <>{skeleton ?? <PagedListSkeleton />}</>;
   if (list.failed && list.items.length === 0) {
     return (
       <div className="space-y-3 py-8 text-center" role="alert">
