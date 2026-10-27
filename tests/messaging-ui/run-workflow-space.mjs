@@ -53,8 +53,6 @@ function setupWorkflowSpace(db) {
   db.addWorkflowItem = (spaceN, over = {}) =>
     Object.assign(db.addItem(SID(spaceN), { kind: "content", x: 0, y: 0, w: 900, h: 420, z: 1, ...over }), { content_type: "workflow", content_id: WID(1), flow_show_io: true, flow_show_links: true, flow_show_relations: true, ...over.flow });
   const prior = db.extraRoutes;
-  const memberOf = (spaceId, uid) => db.spaceMembers.some((m) => m.space_id === spaceId && m.user_id === uid);
-  const readable = (s, uid) => memberOf(s.id, uid) || (s.visibility === "public" && !s.archived_at);
   db.extraRoutes = async (ctx) => {
     const { table, method, q, signedIn, json, rows } = ctx;
     if (table === "prompts" && method === "GET") {
@@ -79,19 +77,6 @@ function setupWorkflowSpace(db) {
       return rows(wid ? stepRows(wid) : []);
     }
     if (table === "content_relations" && method === "GET") return rows(db.wfRelations);
-    if (table === "space_items" && method === "GET" && q.get("select")?.includes("spaces!inner")) {
-      const type = eqv(q.get("content_type"));
-      const cid = eqv(q.get("content_id"));
-      const out = db.spaceItems
-        .filter((i) => i.kind === "content" && i.content_type === type && i.content_id === cid)
-        .map((i) => ({ item: i, space: db.spaces.find((s) => s.id === i.space_id) }))
-        .filter(({ space }) => space && readable(space, signedIn))
-        .map(({ item, space }) => ({
-          id: item.id, space_id: item.space_id, flow_show_io: item.flow_show_io ?? true, flow_show_links: item.flow_show_links ?? true, flow_show_relations: item.flow_show_relations ?? true,
-          spaces: { id: space.id, title: space.title, visibility: space.visibility, archived_at: space.archived_at, updated_at: space.updated_at },
-        }));
-      return rows(out);
-    }
     // Düzenleme kaydı (workflow formu): içerik RPC'si + üst satır güncellemesi + yan tablolar.
     if (table === "rpc/save_workflow_content") return json(200, null);
     if (table === "workflows" && method === "PATCH") return rows([{ id: eqv(q.get("id")) }]);
@@ -112,6 +97,8 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 860 }, lan
   page.setDefaultTimeout(8000);
   const errors = [];
   page.on("pageerror", (e) => errors.push(String(e)));
+  // `spaces`↔`space_items` arasında iki yabancı anahtar var: gömme (`spaces!…`) PostgREST'te belirsizdir (PGRST201) — hiçbir istek kullanmamalı.
+  page.on("request", (r) => { if (/[?&]select=[^&]*spaces(%21|!)/.test(r.url())) errors.push(`belirsiz gömme: ${r.url()}`); });
   try {
     await fn({ page, db, context });
     assert.deepEqual(errors, [], "no uncaught page errors");
