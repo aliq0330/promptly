@@ -103,7 +103,14 @@ interface LinkRow {
   flow_show_io?: boolean;
   flow_show_links?: boolean;
   flow_show_relations?: boolean;
-  spaces: { id: string; title: string; visibility: SpaceVisibility; archived_at: string | null; updated_at: string } | { id: string; title: string; visibility: SpaceVisibility; archived_at: string | null; updated_at: string }[] | null;
+}
+
+interface LinkedSpaceRow {
+  id: string;
+  title: string;
+  visibility: SpaceVisibility;
+  archived_at: string | null;
+  updated_at: string;
 }
 
 const MAX_LINKED_SPACES = 24;
@@ -114,11 +121,15 @@ export function sortWorkflowSpaceLinks(links: WorkflowSpaceLink[]): WorkflowSpac
   return [...links].sort((x, y) => rank(x) - rank(y) || y.updatedAt.localeCompare(x.updatedAt));
 }
 
-/** Bu workflow'u çerçeve olarak içeren, OKUYUCUNUN okuyabildiği Space'ler (özel Space ziyaretçi için hiç gelmez). */
+/**
+ * Bu workflow'u çerçeve olarak içeren, OKUYUCUNUN okuyabildiği Space'ler (özel Space ziyaretçi için hiç gelmez).
+ * İki ayrı okuma: `space_items` → `spaces` gömmesi (`spaces!inner`) kullanılamaz, çünkü iki tablo arasında iki yabancı anahtar var
+ * (`space_items.space_id` ve `spaces.cover_item_id`) ve PostgREST gömmeyi belirsiz bulup hata verir (PGRST201).
+ */
 export async function fetchWorkflowSpaceLinks(workflowId: string): Promise<WorkflowSpaceLink[]> {
   const { data, error } = await supabase
     .from("space_items")
-    .select("id, space_id, flow_show_io, flow_show_links, flow_show_relations, spaces!inner(id, title, visibility, archived_at, updated_at)")
+    .select("id, space_id, flow_show_io, flow_show_links, flow_show_relations")
     .eq("kind", "content")
     .eq("content_type", "workflow")
     .eq("content_id", workflowId)
@@ -127,9 +138,21 @@ export async function fetchWorkflowSpaceLinks(workflowId: string): Promise<Workf
     console.error("fetchWorkflowSpaceLinks", error);
     return [];
   }
+  const items = (data ?? []) as unknown as LinkRow[];
+  if (items.length === 0) return [];
+  const { data: spaceData, error: spaceError } = await supabase
+    .from("spaces")
+    .select("id, title, visibility, archived_at, updated_at")
+    .in("id", [...new Set(items.map((item) => item.space_id))])
+    .limit(MAX_LINKED_SPACES);
+  if (spaceError) {
+    console.error("fetchWorkflowSpaceLinks spaces", spaceError);
+    return [];
+  }
+  const spaces = new Map(((spaceData ?? []) as unknown as LinkedSpaceRow[]).map((space) => [space.id, space]));
   const links: WorkflowSpaceLink[] = [];
-  for (const row of (data ?? []) as unknown as LinkRow[]) {
-    const space = Array.isArray(row.spaces) ? row.spaces[0] : row.spaces;
+  for (const row of items) {
+    const space = spaces.get(row.space_id);
     if (!space) continue;
     links.push({
       itemId: row.id,

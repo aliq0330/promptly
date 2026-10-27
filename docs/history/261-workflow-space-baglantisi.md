@@ -34,3 +34,6 @@ Workflow oluştururken en sonda "Space'te göster" seçeneği; Space içinden "W
 - Satırlar arası (4'ten fazla adımda) ilişki yay olarak değil kartın altında yazı olarak gösterilir.
 - Başkasının workflow'u aktarılamaz; `/share/workflow/` statik sayfası ve bildirimler değişmedi (Space'e workflow eklemek bildirim üretmez).
 - Workflow silinirse Space'teki öğe "kaynak silindi" yer tutucusuna döner (mevcut `213-*` davranışı); önizleme workflow sayfasında olduğundan orada görünmez.
+
+## Düzeltme (canlıda görülen hata)
+İlk sürümde `fetchWorkflowSpaceLinks` `space_items` → `spaces` gömmesi (`spaces!inner(...)`) kullanıyordu. İki tablo arasında iki yabancı anahtar var (`space_items.space_id` ve `spaces.cover_item_id`), PostgREST gömmeyi belirsiz bulur (PGRST201) ve istek hata verir; kod hatada boş liste döndüğü için workflow sayfasında "Space panosu" hiç çıkmıyordu (pano çerçevesi çalışıyordu). Ağ taklidi bu belirsizliği modellemediği için testler yakalamadı. Düzeltme: iki ayrı okuma (önce `space_items`, sonra `spaces` `id in (…)`); `run-workflow-space` artık `spaces!` gömmesi içeren her isteği hata sayar. Kural: `space_items` ile `spaces` arasında PostgREST gömmesi kullanma.
