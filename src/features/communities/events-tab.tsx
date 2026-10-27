@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { CalendarDays, CalendarX, Check, CircleHelp, ExternalLink, MapPin, Pencil, Plus, Trash2, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,7 @@ import {
   cancelCommunityEvent,
   createCommunityEvent,
   deleteCommunityEvent,
-  fetchCommunityEvents,
+  fetchCommunityEventsWindow,
   setEventRsvp,
   updateCommunityEvent,
   type CommunityEvent,
@@ -38,6 +38,8 @@ import {
   type EventFieldProblem,
   type RsvpStatus,
 } from "@/lib/communities";
+import { useGrowingList } from "@/features/content/use-growing-list";
+import { LoadMore } from "@/features/feed/load-more";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
 
@@ -51,29 +53,17 @@ type Scope = "upcoming" | "past";
 export function EventsTab({ group, role, viewerId, onToast, reload }: CommunityTabProps) {
   const { t } = useTranslation();
   const [scope, setScope] = useState<Scope>("upcoming");
-  const [events, setEvents] = useState<CommunityEvent[] | null>(null);
-  const [loadError, setLoadError] = useState(false);
   const [editing, setEditing] = useState<CommunityEvent | "new" | null>(null);
   const [confirm, setConfirm] = useState<{ kind: "cancel" | "delete"; event: CommunityEvent } | null>(null);
   const confirmAction = useAsyncAction();
   const rsvpAction = useAsyncAction();
   const canManage = can(role, "manage_events", group.rolePermissions) && !group.closedAt;
 
-  const load = useCallback(async () => {
-    try {
-      setEvents(await fetchCommunityEvents(group.id, role ? viewerId : null, scope));
-      setLoadError(false);
-    } catch (err) {
-      console.error("community events", err);
-      setLoadError(true);
-    }
-  }, [group.id, role, viewerId, scope]);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- kapsam değişince yeniden yükle
-    setEvents(null);
-    void load();
-  }, [load]);
+  // İlk 50 etkinlik; devamı kaydırınca (eskiden 50'de kesiliyordu — geçmiş etkinliklere ulaşılamıyordu).
+  const list = useGrowingList(`${group.id}|${role ? viewerId : ""}|${scope}`, (limit) => fetchCommunityEventsWindow(group.id, role ? viewerId : null, scope, limit));
+  const events = list.items;
+  const loadError = list.failed && events !== null && events.length === 0;
+  const load = list.reload;
 
   async function rsvp(event: CommunityEvent, status: RsvpStatus) {
     const next = event.myRsvp === status ? "none" : status;
@@ -137,7 +127,7 @@ export function EventsTab({ group, role, viewerId, onToast, reload }: CommunityT
             {t("common.retry")}
           </Button>
         </div>
-      ) : events === null ? (
+      ) : events === null || list.loading ? (
         <ul className="space-y-3" aria-busy="true">
           {[0, 1].map((i) => (
             <li key={i} className="h-32 animate-pulse rounded-xl border border-border-soft bg-surface-soft" />
@@ -165,6 +155,9 @@ export function EventsTab({ group, role, viewerId, onToast, reload }: CommunityT
             />
           ))}
         </ul>
+      )}
+      {events !== null && events.length > 0 && (
+        <LoadMore failed={list.failed} hasMore={list.hasMore} loadingMore={list.loadingMore} onLoadMore={list.grow} />
       )}
 
       {editing && (

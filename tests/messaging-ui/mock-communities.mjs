@@ -449,7 +449,15 @@ export function setupCommunities(db) {
       const COMMENT_COLS = (c) => ({ id: c.id, body: c.body, parent_id: c.parent_id ?? null, like_count: 0, created_at: c.created_at, edited_at: null, deleted_at: null, profiles: pub(userById(c.author_id)) });
       if (method === "GET") {
         const cp = eq(q, "community_post_id"); const pr = eq(q, "prompt_id");
-        return rows(db.comments.filter((c) => (cp ? c.community_post_id === cp : pr ? c.prompt_id === pr : false)).sort((a, b) => a.created_at.localeCompare(b.created_at)).map(COMMENT_COLS));
+        // Sayfalı yorum ağacı (docs/history/258-*): üst düzey (parent_id=is.null) + range, yanıtlar parent_id=in.(…), tek yorum id=eq.
+        const parents = (q.get("parent_id") ?? "").startsWith("in.(") ? q.get("parent_id").slice(4, -1).split(",").map((x) => x.replace(/"/g, "")) : null;
+        const byId = eq(q, "id");
+        let list = db.comments.filter((c) => (byId ? c.id === byId : parents ? parents.includes(c.parent_id) : cp ? c.community_post_id === cp : pr ? c.prompt_id === pr : false));
+        if (q.get("parent_id") === "is.null") list = list.filter((c) => !c.parent_id);
+        list = list.sort((a, b) => a.created_at.localeCompare(b.created_at) || a.id.localeCompare(b.id));
+        db.commentQueries = [...(db.commentQueries ?? []), { parent: q.get("parent_id"), offset: Number(q.get("offset") ?? 0), limit: Number(q.get("limit") ?? 0) }];
+        if (q.get("limit")) list = list.slice(Number(q.get("offset") ?? 0), Number(q.get("offset") ?? 0) + Number(q.get("limit")));
+        return rows(list.map(COMMENT_COLS));
       }
       if (method === "POST") {
         if (body.community_post_id) {

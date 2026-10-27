@@ -203,7 +203,8 @@ export function setupStories(db, { profileByUsername = true } = {}) {
       const s = db.stories.find((x) => x.id === sid);
       return rows(
         db.answers
-          .filter((a) => a.story_id === sid && (a.responder_id === viewer || s?.author_id === viewer))
+          .filter((a) => a.story_id === sid && (a.responder_id === viewer || s?.author_id === viewer) && (!q.get("id") || a.id === eq(q.get("id"))))
+          .slice(Number(q.get("offset") ?? 0), q.get("limit") ? Number(q.get("offset") ?? 0) + Number(q.get("limit")) : undefined)
           .map((a) => ({ id: a.id, story_id: a.story_id, body: a.body, created_at: a.created_at, responder: author(a.responder_id) })),
       );
     }
@@ -223,6 +224,7 @@ export function setupStories(db, { profileByUsername = true } = {}) {
         200,
         db.storyViews
           .filter((v) => v.story_id === s.id)
+          .slice(Number(body.p_offset ?? 0), body.p_limit ? Number(body.p_offset ?? 0) + Number(body.p_limit) : undefined)
           .map((v) => {
             const a = author(v.viewer_id);
             return { viewer_id: a.id, username: a.username, display_name: a.display_name, avatar_url: null, first_viewed_at: v.at, last_viewed_at: v.at, view_count: 1, reaction: db.storyReactions.find((r) => r.story_id === s.id && r.user_id === a.id)?.emoji ?? null };

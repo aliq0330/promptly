@@ -1,14 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { ArrowUpRight } from "lucide-react";
 import { buttonClassName } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
+import { fieldControlClassName } from "@/components/ui/field";
 import { Tabs } from "@/components/ui/tabs";
 import { QuoteSection } from "@/features/quotes/quote-section";
-import { fetchOwnShareableContent, type CommunityPostType, type ShareableContent } from "@/lib/supabase/communities";
+import { type CommunityPostType } from "@/lib/supabase/communities";
 import { spaceHref } from "@/lib/spaces";
+import { LoadMore } from "@/features/feed/load-more";
+import { useShareableContent } from "@/features/communities/use-shareable-content";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn, presetHref, promptHref, requestHref, workflowHref } from "@/lib/utils";
 
@@ -30,23 +33,17 @@ function hrefOf(type: CommunityPostType, id: string): string {
 export function ShareExistingModal({ userId, onClose }: { userId: string; onClose: () => void }) {
   const { t } = useTranslation();
   const [type, setType] = useState<CommunityPostType>("prompt");
-  const [items, setItems] = useState<ShareableContent[] | null>(null);
-  const [loadError, setLoadError] = useState(false);
+  const { search, setSearch, list } = useShareableContent(userId, type);
+  const items = list.items;
+  const loadError = list.failed && items !== null && items.length === 0;
   const [selected, setSelected] = useState<string | null>(null);
 
-  useEffect(() => {
-    let cancelled = false;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- tür değişince listeyi sıfırla
-    setItems(null);
-    setLoadError(false);
+  // Tür değişince seçim ve arama sıfırlanır.
+  function changeType(next: CommunityPostType) {
+    setType(next);
     setSelected(null);
-    fetchOwnShareableContent(userId, type)
-      .then((list) => !cancelled && setItems(list))
-      .catch(() => !cancelled && setLoadError(true));
-    return () => {
-      cancelled = true;
-    };
-  }, [type, userId]);
+    setSearch("");
+  }
 
   return (
     <Modal onClose={onClose} labelledBy="share-existing-title">
@@ -58,14 +55,22 @@ export function ShareExistingModal({ userId, onClose }: { userId: string; onClos
           <p className="text-small text-text-muted">{t("shareExisting.help")}</p>
         </div>
         <div className="px-5">
-          <Tabs variant="segmented" ariaLabel={t("communities.feed.typeAria")} active={type} onChange={setType} items={TYPES.map((value) => ({ key: value, label: t(`communities.feed.type.${value}`) }))} />
+          <Tabs variant="segmented" ariaLabel={t("communities.feed.typeAria")} active={type} onChange={changeType} items={TYPES.map((value) => ({ key: value, label: t(`communities.feed.type.${value}`) }))} />
         </div>
         <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 pb-5 pt-3">
+          <input
+            type="search"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder={t("communities.feed.pickSearch")}
+            aria-label={t("communities.feed.pickSearch")}
+            className={`${fieldControlClassName} h-10`}
+          />
           {loadError ? (
             <p role="alert" className="text-small text-danger">
               {t("communities.feed.pickLoadError")}
             </p>
-          ) : items === null ? (
+          ) : items === null || list.loading ? (
             <div className="h-20 animate-pulse rounded-lg bg-surface-soft" aria-busy="true" />
           ) : items.length === 0 ? (
             <p className="rounded-lg border border-dashed border-border px-4 py-6 text-center text-small text-text-muted">{t("communities.feed.pickEmpty")}</p>
@@ -86,6 +91,9 @@ export function ShareExistingModal({ userId, onClose }: { userId: string; onClos
                 </li>
               ))}
             </ul>
+          )}
+          {items !== null && items.length > 0 && (
+            <LoadMore failed={list.failed} hasMore={list.hasMore} loadingMore={list.loadingMore} onLoadMore={list.grow} />
           )}
 
           {selected && (

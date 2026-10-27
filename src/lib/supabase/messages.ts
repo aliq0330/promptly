@@ -228,7 +228,7 @@ async function fetchLastMessages(conversationIds: string[]): Promise<Map<string,
 }
 
 /** Grup/topluluk sohbetlerinde okunmamış mesaj sayısı (sunucu okuma anında sayar, en çok 100). Hata/eksik migration → boş harita (sütun değeri kullanılır). */
-export async function fetchGroupUnreadCounts(groupIds: string[]): Promise<Map<string, number>> {
+async function fetchGroupUnreadCounts(groupIds: string[]): Promise<Map<string, number>> {
   const result = new Map<string, number>();
   const answers = await Promise.all(
     chunk(groupIds, ID_CHUNK).map(async (ids) => {

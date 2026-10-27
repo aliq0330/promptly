@@ -1,5 +1,6 @@
 "use client";
 
+import { LoadMore } from "@/features/feed/load-more";
 import { createContext, useCallback, useContext, useEffect, useId, useRef } from "react";
 import { ArrowUp, MessageCircle, X } from "lucide-react";
 import { FocusSheetFrame } from "./focus-sheet-frame";
@@ -137,7 +138,7 @@ export function FocusCommentsSheet({ item, onClose }: { item: PostFeedItem; onCl
       title={
         <>
           {t("comments.title")}
-          {thread.loaded && <span className="font-normal tabular-nums text-text-muted"> · {formatCount(thread.comments.length)}</span>}
+          {thread.loaded && <span className="font-normal tabular-nums text-text-muted"> · {formatCount(thread.comments.length)}{thread.hasMore ? "+" : ""}</span>}
         </>
       }
       closeLabel={t("focusComments.close")}
@@ -166,6 +167,7 @@ export function FocusCommentsSheet({ item, onClose }: { item: PostFeedItem; onCl
               {thread.topLevel.map((comment) => (
                 <CommentNode key={comment.id} comment={comment} depth={0} tree={tree} />
               ))}
+              <LoadMore failed={thread.moreFailed} hasMore={thread.hasMore} loadingMore={thread.loadingMore} onLoadMore={() => void thread.loadMore()} />
             </div>
           )}
         </div>

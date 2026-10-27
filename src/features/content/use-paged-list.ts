@@ -72,6 +72,22 @@ export function usePagedList<T>(
     }
   }, [current, fullKey]);
 
+  /**
+   * Re-reads the FIRST page in place (no loading state, no key change): a live list (story viewers) stays fresh. Only while nothing beyond the
+   * first page was loaded — once the reader scrolled on, their position is theirs and the list is left alone.
+   */
+  const refresh = useCallback(async () => {
+    try {
+      const page = await loadRef.current(0);
+      setState((prev) => {
+        if (!prev || prev.key !== fullKey || prev.items.length > page.items.length + 1 || prev.loadingMore) return prev;
+        return { ...prev, items: page.items, total: page.total ?? prev.total, nextOffset: page.nextOffset, failed: false };
+      });
+    } catch (err) {
+      console.error("usePagedList (refresh)", err);
+    }
+  }, [fullKey]);
+
   /** Drops one row (by its key) after it was deleted; the total follows. */
   const removeItem = useCallback(
     (id: string) =>
@@ -93,5 +109,6 @@ export function usePagedList<T>(
     loadMore,
     retry: () => setRetry((n) => n + 1),
     removeItem,
+    refresh,
   };
 }

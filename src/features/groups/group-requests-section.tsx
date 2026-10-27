@@ -1,21 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { Check, Inbox, Loader2, X } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
-import { decideJoinRequest, fetchGroupJoinRequests, toGroupError, type GroupJoinRequest } from "@/lib/supabase/chat-groups";
+import { usePagedList } from "@/features/content/use-paged-list";
+import { LoadMore } from "@/features/feed/load-more";
+import { decideJoinRequest, fetchGroupJoinRequestsPage, toGroupError, type GroupJoinRequest } from "@/lib/supabase/chat-groups";
 import { formatRelativeTime, profileHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { ChatGroup } from "@/types";
-
-interface Loaded {
-  key: string;
-  requests: GroupJoinRequest[];
-  error: boolean;
-}
 
 /**
  * Bekleyen katılma istekleri (owner/admin/moderator): başvuranın avatarı, adı, zamanı, varsa mesajı; Kabul et / Reddet.
@@ -32,28 +28,12 @@ export function GroupRequestsSection({
 }) {
   const { t, language } = useTranslation();
   const [reloadKey, setReloadKey] = useState(0);
-  const [loaded, setLoaded] = useState<Loaded | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [rowError, setRowError] = useState<{ id: string; message: string } | null>(null);
 
   // Sayaç başka bir yönetici/ekran tarafından değiştiyse (Realtime ile gelen taze satır) liste de yeniden okunur.
-  const key = `${group.id}|${group.pendingRequestCount}|${reloadKey}`;
-  useEffect(() => {
-    let cancelled = false;
-    fetchGroupJoinRequests(group.id)
-      .then((requests) => {
-        if (!cancelled) setLoaded({ key, requests, error: false });
-      })
-      .catch((err) => {
-        console.error("fetchGroupJoinRequests", err);
-        if (!cancelled) setLoaded({ key, requests: [], error: true });
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [group.id, key]);
-
-  const current = loaded && loaded.key === key ? loaded : null;
+  // 50'şerli sayfa, kalan başvurular kaydırınca kendiliğinden gelir (docs/history/258-*: eskiden 200'de kesiliyordu).
+  const pages = usePagedList(`${group.id}|${group.pendingRequestCount}|${reloadKey}`, true, (offset) => fetchGroupJoinRequestsPage(group.id, offset));
 
   async function decide(request: GroupJoinRequest, accept: boolean) {
     if (busyId) return;
@@ -79,14 +59,14 @@ export function GroupRequestsSection({
     }
   }
 
-  if (!current) {
+  if (pages.loading) {
     return (
       <p role="status" className="flex items-center justify-center gap-2 py-8 text-small text-text-muted">
         <Loader2 size={16} className="animate-spin" /> {t("common.loading")}
       </p>
     );
   }
-  if (current.error) {
+  if (pages.failed && pages.items.length === 0) {
     return (
       <div className="space-y-2 py-8 text-center">
         <p role="alert" className="text-small text-danger">
@@ -98,13 +78,14 @@ export function GroupRequestsSection({
       </div>
     );
   }
-  if (current.requests.length === 0) {
+  if (pages.items.length === 0) {
     return <EmptyState icon={Inbox} title={t("groups.requests.empty")} description={t("groups.requests.emptyHelp")} compact />;
   }
 
   return (
+    <>
     <ul className="divide-y divide-border-soft rounded-lg border border-border-soft" aria-label={t("groups.requests.listLabel")}>
-      {current.requests.map((request) => (
+      {pages.items.map((request) => (
         <li key={request.id} className="space-y-2 px-3 py-3">
           <div className="flex items-center gap-3">
             <Link href={profileHref(request.user)} className="flex min-w-0 flex-1 items-center gap-3">
@@ -136,5 +117,7 @@ export function GroupRequestsSection({
         </li>
       ))}
     </ul>
+    <LoadMore failed={pages.failed} hasMore={pages.hasMore} loadingMore={pages.loadingMore} onLoadMore={() => void pages.loadMore()} />
+    </>
   );
 }

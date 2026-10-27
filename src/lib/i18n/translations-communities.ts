@@ -282,6 +282,7 @@ export const communityTranslations = {
   "communities.feed.shareTitle": { tr: "Mevcut içeriğe başvur", en: "Apply an existing item" },
   "communities.feed.shareHelp": { tr: "Yayında ve herkese açık içeriklerinden birini seç. İçerik kopyalanmaz; akışa kendi beğeni ve yorumları olan bir başvuru gönderisi eklenir.", en: "Pick one of your published, public items. It isn't copied; a post with its own likes and comments is added to the feed." },
   "communities.feed.pickAria": { tr: "Paylaşılacak içerik", en: "Content to share" },
+  "communities.feed.pickSearch": { tr: "Başlığa göre ara", en: "Search by title" },
   "communities.feed.pickEmpty": { tr: "Bu türde yayında ve herkese açık içeriğin yok. Özel ya da taslak içerik topluluk yoluyla paylaşılamaz.", en: "You have no published, public content of this type. Private or draft content can't be shared through a community." },
   "communities.feed.pickLoadError": { tr: "İçeriklerin yüklenemedi.", en: "Couldn't load your content." },
   "communities.feed.untitled": { tr: "(Başlıksız)", en: "(Untitled)" },

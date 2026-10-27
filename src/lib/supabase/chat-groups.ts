@@ -1,6 +1,7 @@
 import { supabase } from "./client";
 import { translateForRuntime, type TranslationKey } from "@/lib/i18n/translations";
 import { mapProfileRow, type ProfileRow } from "./mappers";
+import { fetchAllRows, type PagedResult } from "./paged";
 import { resizeImageToCoverBlob, resizeImageToSquareBlob } from "@/lib/utils";
 import {
   extractGroupErrorCode,
@@ -570,19 +571,24 @@ export interface GroupJoinRequest {
   createdAt: string;
 }
 
-/** Bekleyen başvurular (yetkili için), eskiden yeniye. */
-export async function fetchGroupJoinRequests(groupId: string): Promise<GroupJoinRequest[]> {
-  const { data, error } = await supabase
+/** Bekleyen başvurular (yetkili için), eskiden yeniye, 50'şerli sayfa (docs/history/258-*: eskiden 200'de kesiliyordu). */
+export const GROUP_REQUESTS_PAGE = 50;
+export async function fetchGroupJoinRequestsPage(groupId: string, offset = 0, limit = GROUP_REQUESTS_PAGE): Promise<PagedResult<GroupJoinRequest>> {
+  const { data, count, error } = await supabase
     .from("chat_group_join_requests")
-    .select(`id, group_id, message, created_at, profiles:user_id ( ${PROFILE_EMBED} )`)
+    .select(`id, group_id, message, created_at, profiles:user_id ( ${PROFILE_EMBED} )`, offset === 0 ? { count: "exact" } : undefined)
     .eq("group_id", groupId)
     .eq("status", "pending")
     .order("created_at", { ascending: true })
-    .limit(200);
+    .order("id", { ascending: true })
+    .range(offset, offset + limit - 1);
   if (error) throw toGroupError(error);
-  return ((data ?? []) as unknown as { id: string; group_id: string; message: string | null; created_at: string; profiles: ProfileRow | null }[])
-    .filter((row) => row.profiles)
-    .map((row) => ({ id: row.id, groupId: row.group_id, user: mapProfileRow(row.profiles as ProfileRow), message: row.message, createdAt: row.created_at }));
+  const rows = (data ?? []) as unknown as { id: string; group_id: string; message: string | null; created_at: string; profiles: ProfileRow | null }[];
+  return {
+    items: rows.filter((row) => row.profiles).map((row) => ({ id: row.id, groupId: row.group_id, user: mapProfileRow(row.profiles as ProfileRow), message: row.message, createdAt: row.created_at })),
+    total: offset === 0 ? (count ?? null) : null,
+    nextOffset: rows.length === limit ? offset + limit : null,
+  };
 }
 
 export interface GroupInvitation {
@@ -597,15 +603,24 @@ export interface GroupInvitation {
 
 /** Bir grubun bekleyen davetleri (owner/admin; RLS zaten yalnız onlara verir). */
 export async function fetchGroupInvitations(groupId: string): Promise<GroupInvitation[]> {
-  const { data, error } = await supabase
-    .from("chat_group_invitations")
-    .select(`id, group_id, created_at, expires_at, invitee:invitee_id ( ${PROFILE_EMBED} )`)
-    .eq("group_id", groupId)
-    .eq("status", "pending")
-    .gt("expires_at", new Date().toISOString())
-    .order("created_at", { ascending: false })
-    .limit(200);
-  if (error) throw toGroupError(error);
+  // Hepsi, 1000'lik sayfalarla (eskiden 200'de kesiliyordu; ekran 50'şer çizer).
+  const expiresAfter = new Date().toISOString();
+  let data: unknown[];
+  try {
+    ({ rows: data } = await fetchAllRows((from, to) =>
+      supabase
+        .from("chat_group_invitations")
+        .select(`id, group_id, created_at, expires_at, invitee:invitee_id ( ${PROFILE_EMBED} )`)
+        .eq("group_id", groupId)
+        .eq("status", "pending")
+        .gt("expires_at", expiresAfter)
+        .order("created_at", { ascending: false })
+        .order("id", { ascending: false })
+        .range(from, to),
+    ));
+  } catch (err) {
+    throw toGroupError(err instanceof Error ? err : null);
+  }
   return ((data ?? []) as unknown as { id: string; group_id: string; created_at: string; expires_at: string; invitee: ProfileRow | null }[]).map((row) => ({
     id: row.id,
     groupId: row.group_id,
@@ -762,13 +777,20 @@ export interface GroupBan {
 }
 
 export async function fetchGroupBans(groupId: string): Promise<GroupBan[]> {
-  const { data, error } = await supabase
-    .from("chat_group_bans")
-    .select(`user_id, reason, created_at, profiles:user_id ( ${PROFILE_EMBED} )`)
-    .eq("group_id", groupId)
-    .order("created_at", { ascending: false })
-    .limit(200);
-  if (error) throw toGroupError(error);
+  let data: unknown[];
+  try {
+    ({ rows: data } = await fetchAllRows((from, to) =>
+      supabase
+        .from("chat_group_bans")
+        .select(`user_id, reason, created_at, profiles:user_id ( ${PROFILE_EMBED} )`)
+        .eq("group_id", groupId)
+        .order("created_at", { ascending: false })
+        .order("user_id", { ascending: true })
+        .range(from, to),
+    ));
+  } catch (err) {
+    throw toGroupError(err instanceof Error ? err : null);
+  }
   return ((data ?? []) as unknown as { user_id: string; reason: string | null; created_at: string; profiles: ProfileRow | null }[]).map((row) => ({
     userId: row.user_id,
     user: row.profiles ? mapProfileRow(row.profiles) : null,
