@@ -347,12 +347,13 @@ await scenario("15. Prompt formu: Tür · Başlık · Prompt metni (+ Değişken
   assert.equal(await overflowFree(page), true);
 }, { viewport: { width: 390, height: 844 } });
 
-await scenario("16. Büyük ekran (tablet yatay 1180x820): Workflow ve Hazır ayar da aynı etiketli form; Workflow'da adımlar ve Kategori/Araç/Etiket satırları, Hazır ayar'da parametreler formda", async ({ page }) => {
+await scenario("16. Büyük ekran (tablet yatay 1180x820): Workflow ve Hazır ayar da aynı etiketli form; Workflow'da adımlar ve Kategori/Araç/Etiket/Space satırları, Hazır ayar'da parametreler formda", async ({ page }) => {
   await openForm(page, "/workflows/create");
   await page.locator("[data-compose-type]").waitFor();
   await page.locator("#wf-title").fill("Siberpunk hattı");
   await page.getByRole("heading", { name: "Adımlar" }).first().waitFor();
-  assert.deepEqual(await page.locator("[data-form-row]").evaluateAll((els) => els.map((el) => el.getAttribute("data-form-row"))), ["tool", "category", "tags"]);
+  // Workflow formunda ayrıca "Space'te göster" satırı vardır (docs/history/261-*).
+  assert.deepEqual(await page.locator("[data-form-row]").evaluateAll((els) => els.map((el) => el.getAttribute("data-form-row"))), ["tool", "category", "tags", "space"]);
   assert.equal(await overflowFree(page), true);
   await openSheet(page);
   await option(page, "public").waitFor();

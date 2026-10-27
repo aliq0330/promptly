@@ -49,7 +49,7 @@ export function friendlyServerErrors(baseFetch: typeof fetch): typeof fetch {
  * yeniden denenir; sütun o oturumda bir daha seçilmez. Yalnız burada listelenen, yokluğu işlevi bozmayan (rozet gibi) sütunlar için —
  * zorunlu bir sütunu listeye ekleme, sessizce `undefined` döner. Yeni bir isteğe bağlı sütun eklenince buraya da ekle.
  */
-const OPTIONAL_COLUMNS = ["is_demo"] as const;
+const OPTIONAL_COLUMNS = ["is_demo", "flow_show_io", "flow_show_links", "flow_show_relations"] as const;
 const missingOptional = new Set<string>();
 
 function stripColumn(select: string, column: string): string {
