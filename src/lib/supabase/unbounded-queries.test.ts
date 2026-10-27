@@ -31,6 +31,8 @@ const BOUNDED_BY_DESIGN: Record<string, string> = {
   "messages.ts:fetchConversationsForUser": "the viewer's own conversations",
   "presets.ts:fetchPresetsByIds": "ids come from one page",
   "presets.ts:mapFieldRow": "mapper, not a query",
+  "profiles.ts:fetchFollowedProfiles": "pickers pass a cap (`limit`); the /following page pages with fetchFollowedProfilesPage",
+  "profiles.ts:fetchFollowerProfiles": "pickers pass a cap (`limit`); the /followers page pages with fetchFollowerProfilesPage",
   "prompt-dna.ts:fetchDnaSections": "the DNA sections of ONE prompt (a handful)",
   "prompt-edit-suggestions.ts:fetchSuggestionsForPrompt": "suggestions on ONE prompt",
   "prompt-edit-suggestions.ts:fetchContributorsForPrompt": "contributors of ONE prompt",
@@ -56,6 +58,8 @@ const BOUNDED_BY_DESIGN: Record<string, string> = {
   "workflows.ts:requestRef": "mapper helper",
 };
 
+/** A `limit?: number` parameter is "no limit unless the caller asks": `if (limit) query.limit(limit)` does NOT bound the list (it let /followers read 1000 rows and draw them all). */
+const OPTIONAL_LIMIT = /\blimit\?: number/;
 const BOUNDS = /\.limit\(|\.range\(|\.maybeSingle\(|\.single\(|head: true|count: "exact"|fetchAllRows\(/;
 const WRITES = /\.(insert|update|delete|upsert)\(/;
 
@@ -67,7 +71,7 @@ function unboundedFunctions(): string[] {
       const fn = /^export (?:async )?function (\w+)/.exec(part)?.[1];
       if (!fn || !part.includes(".from(") || !part.includes(".select(")) continue;
       if (WRITES.test(part)) continue; // a write, not a list read
-      if (BOUNDS.test(part)) continue;
+      if (BOUNDS.test(part) && !OPTIONAL_LIMIT.test(part.split("{")[0])) continue;
       found.push(`${name}:${fn}`);
     }
   }

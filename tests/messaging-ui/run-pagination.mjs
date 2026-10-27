@@ -36,13 +36,15 @@ const respond = (ctx, list, { offset, total }) =>
  * A `total`-prompt library for `owner`. Answers the way PostgREST does: filters, order, `offset`/`limit` (`.range`), and — only when the request asks
  * (`Prefer: count=exact`) — the total in `Content-Range`. Every prompts request is recorded in `db.promptQueries`.
  */
-function withLibrary(db, owner, { total = 3016, likes = 0, collections = [], drafts = 0, tags = 0, other = 0, blocked = 0 } = {}) {
+function withLibrary(db, owner, { total = 3016, likes = 0, collections = [], drafts = 0, tags = 0, other = 0, blocked = 0, people = 0 } = {}) {
   const all = Array.from({ length: total }, (_, i) => promptRow(i, owner));
   db.promptQueries = [];
   db.itemQueries = [];
   db.tagQueries = [];
   db.otherQueries = [];
   db.blockQueries = [];
+  db.followQueries = [];
+  db.feedRpcCalls = [];
   db.rpc.profile_content_stats = () => ({ body: { prompts: total, requests: other, workflows: other, presets: other, reuse: total } });
   db.extraRoutes = async (ctx) => {
     const { table, q, method } = ctx;
@@ -104,6 +106,14 @@ function withLibrary(db, owner, { total = 3016, likes = 0, collections = [], dra
       return true;
     }
     if (table === "preset_fields") return ctx.rows([]);
+    // Takipçiler / takip ettiklerim: `people` kişi, PostgREST gibi offset/limit; her istek kaydedilir.
+    if (table === "follows" && method === "GET" && /profiles:/.test(ctx.sel ?? "")) {
+      const side = q.get("following_id") ? "followers" : "following";
+      db.followQueries.push({ side, offset, limit, order: q.get("order") ?? "" });
+      const list = Array.from({ length: people }, (_, i) => ({ profiles: { id: `a2000000-0000-4000-8000-${String(i).padStart(12, "0")}`, username: `kisi${i + 1}`, display_name: `Kişi ${i + 1}`, avatar_url: null, cover_url: null, bio: "", website: null, follower_count: 0, following_count: 0, created_at: "2026-01-01T00:00:00Z", interests: [] } }));
+      respond(ctx, list.slice(offset, offset + limit), { offset, total: list.length });
+      return true;
+    }
     // Engelliler: kimlik kümesi (süzgeç için, 1000'lik sayfalarla TAMAMI) ve ayarlar listesi (profil gömülü, 30'arlı sayfa).
     if (table === "blocks" && method === "GET") {
       const people = Array.from({ length: blocked }, (_, i) => ({ id: `a1000000-0000-4000-8000-${String(i).padStart(12, "0")}`, username: `engelli${i + 1}`, display_name: `Engelli ${i + 1}`, avatar_url: null, cover_url: null, bio: "", website: null, follower_count: 0, following_count: 0, created_at: "2026-01-01T00:00:00Z", interests: [] }));
@@ -424,7 +434,7 @@ await scenario("14. Keşfet → Etiketler (1516 etiket): 30'arlı sayfa, toplam 
   const first = db.tagQueries.find((x) => x.limit === 30);
   assert.ok(first, JSON.stringify(db.tagQueries));
   assert.equal(first.offset, 0);
-  assert.equal(await rows.count(), 30, "1516 değil 30 satır çizildi");
+  assert.ok((await rows.count()) >= 30 && (await rows.count()) < 200, "1516 değil birkaç sayfa çizildi (ilk sayfa 30; kısa liste kendiliğinden devam edebilir)");
   await page.getByTestId("load-more").scrollIntoViewIfNeeded();
   await page.waitForFunction(() => document.querySelectorAll("[data-tags-section] li").length >= 60);
   assert.ok(db.tagQueries.some((x) => x.limit === 30 && x.offset === 30), "ikinci sayfa offset=30 ile");
@@ -440,12 +450,37 @@ await scenario("15. Ayarlar → Engellenenler (75 kişi): 30'arlı sayfa, kaydı
   assert.equal(first.limit, 30);
   assert.equal(first.offset, 0);
   assert.equal(first.prefer, "count=exact");
-  assert.equal(await rows.count(), 30);
+  assert.ok((await rows.count()) >= 30);
   await page.getByTestId("load-more").scrollIntoViewIfNeeded();
   await page.waitForFunction(() => [...document.querySelectorAll("main button")].filter((b) => b.textContent.trim() === "Engeli kaldır").length >= 60);
   await page.getByTestId("load-more").scrollIntoViewIfNeeded().catch(() => {});
   await page.waitForFunction(() => [...document.querySelectorAll("main button")].filter((b) => b.textContent.trim() === "Engeli kaldır").length >= 75);
   assert.equal(await page.getByTestId("load-more").count(), 0, "son sayfadan sonra düğme yok");
+});
+
+await scenario("16. Takipçiler (130 kişi): 50'şerli sayfa, kaydırınca kendiliğinden devam; sınırsız istek yok. Takip ettiklerim aynı; son paylaşımlar feed_page ile (takip edilenlerin kimlikleri istemciden gitmez)", async ({ page, db }) => {
+  withLibrary(db, U.alice, { total: 1, people: 130 });
+  db.rpc.feed_page = (args) => { db.feedRpcCalls.push(args); return { body: [] }; };
+  await page.goto(`${BASE}/followers`);
+  const rows = page.getByText(/^Kişi \d+$/);
+  await rows.first().waitFor();
+  assert.equal(db.followQueries[0].limit, 50);
+  assert.equal(db.followQueries[0].offset, 0);
+  assert.match(db.followQueries[0].order, /^created_at\.desc,follower_id\.asc$/);
+  assert.ok((await rows.count()) >= 50 && (await rows.count()) < 130, "130 değil ilk sayfalar çizildi");
+  for (let i = 0; i < 8 && (await rows.count()) < 130; i += 1) {
+    await page.getByTestId("load-more").scrollIntoViewIfNeeded().catch(() => {});
+    await page.waitForTimeout(400);
+  }
+  assert.equal(await rows.count(), 130, "kaydırınca hepsi geldi");
+  assert.deepEqual(db.followQueries.map((x) => x.offset), [0, 50, 100]);
+  await page.goto(`${BASE}/following`);
+  await rows.first().waitFor();
+  assert.equal(db.followQueries.at(-1).side, "following");
+  assert.equal(db.followQueries.at(-1).limit, 50);
+  await page.waitForFunction(() => true);
+  await page.waitForTimeout(500);
+  assert.ok(db.feedRpcCalls.some((c) => c.p_scope === "following"), JSON.stringify(db.feedRpcCalls));
 });
 
 await browser.close();
