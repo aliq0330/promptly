@@ -1,6 +1,6 @@
 import { sanitizeSearchText } from "./taxonomy-query";
 import { supabase } from "./client";
-import { fetchAllRows } from "./paged";
+import { fetchAllRows, type PagedResult } from "./paged";
 import { translateForRuntime } from "@/lib/i18n/translations";
 import { PROMPT_SELECT, mapPromptRow, type PromptRow } from "./prompts";
 import { normalizeTagLabel } from "@/lib/tag-normalize";
@@ -91,6 +91,21 @@ export async function fetchAllTagsWithStats(): Promise<Tag[]> {
     console.error("fetchAllTagsWithStats", err);
     return [];
   }
+}
+
+/** Keşfet → Etiketler: one page of the catalogue with real usage stats, most used first (`label`, `slug` break ties so pages never overlap). `total` is counted with the first page only. */
+export const TAGS_PAGE = 30;
+export async function fetchTagsPage(offset = 0, limit = TAGS_PAGE): Promise<PagedResult<Tag>> {
+  const { data, count, error } = await supabase
+    .from("tags")
+    .select(TAG_STATS_SELECT, offset === 0 ? { count: "exact" } : undefined)
+    .order("usage_count", { ascending: false })
+    .order("label", { ascending: true })
+    .order("slug", { ascending: true })
+    .range(offset, offset + limit - 1);
+  if (error) throw new Error(error.message);
+  const rows = (data ?? []) as unknown as TagStatsRow[];
+  return { items: rows.map(mapTagStatsRow), total: offset === 0 ? (count ?? null) : null, nextOffset: rows.length === limit ? offset + limit : null };
 }
 
 /** A single real tag by slug, with stats — for the tag detail page's header. */

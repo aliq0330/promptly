@@ -1,3 +1,4 @@
+import type { PagedResult } from "./paged";
 import { sanitizeSearchText } from "./taxonomy-query";
 import { supabase } from "./client";
 import { resizeImageToSquareBlob } from "@/lib/utils";
@@ -214,25 +215,25 @@ export async function fetchFollowerProfiles(userId: string, limit?: number): Pro
   }
 }
 
-/** Profiles the signed-in user has blocked (the `blocks` SELECT policy only exposes the blocker's own rows). */
-export async function fetchBlockedProfiles(userId: string): Promise<UserProfile[]> {
-  try {
-    const { data, error } = await supabase
-      .from("blocks")
-      .select(`profiles:blocked_id ( ${PROFILE_SELECT} )`)
-      .eq("blocker_id", userId);
-    if (error) {
-      console.error("fetchBlockedProfiles", error);
-      return [];
-    }
-    return ((data ?? []) as unknown as { profiles: ProfileRow | null }[])
-      .map((row) => row.profiles)
-      .filter((row): row is ProfileRow => Boolean(row))
-      .map((row) => mapProfileRow(row));
-  } catch (err) {
-    console.error("fetchBlockedProfiles", err);
-    return [];
-  }
+/**
+ * Profiles the signed-in user has blocked, newest block first, one page at a time (the `blocks` SELECT policy only exposes the blocker's own rows).
+ * Only the settings list is paged: the id set that hides blocked people's content (`getBlockedIds`) is always read in full.
+ */
+export async function fetchBlockedProfilesPage(userId: string, offset = 0, limit = 30): Promise<PagedResult<UserProfile>> {
+  const { data, count, error } = await supabase
+    .from("blocks")
+    .select(`blocked_id, profiles:blocked_id ( ${PROFILE_SELECT} )`, offset === 0 ? { count: "exact" } : undefined)
+    .eq("blocker_id", userId)
+    .order("created_at", { ascending: false })
+    .order("blocked_id", { ascending: true })
+    .range(offset, offset + limit - 1);
+  if (error) throw new Error(error.message);
+  const rows = (data ?? []) as unknown as { profiles: ProfileRow | null }[];
+  return {
+    items: rows.map((row) => row.profiles).filter((row): row is ProfileRow => Boolean(row)).map((row) => mapProfileRow(row)),
+    total: offset === 0 ? (count ?? null) : null,
+    nextOffset: rows.length === limit ? offset + limit : null,
+  };
 }
 
 export type MessagePrivacy = "everyone" | "followers_only";
