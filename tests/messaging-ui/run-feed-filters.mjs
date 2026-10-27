@@ -163,6 +163,17 @@ const waitTitles = async (page, expected) => {
   }
   assert.deepEqual(last, expected);
 };
+/** The list STARTS with `expected` (a short list may also bring its next page by itself — "Daha fazla" loads on scroll). */
+const waitTitlesStart = async (page, expected) => {
+  const end = Date.now() + 8000;
+  let last = [];
+  while (Date.now() < end) {
+    last = await titles(page);
+    if (last.length >= expected.length && JSON.stringify(last.slice(0, expected.length)) === JSON.stringify(expected)) return last;
+    await page.waitForTimeout(100);
+  }
+  assert.deepEqual(last.slice(0, expected.length), expected);
+};
 const openFilter = async (page) => {
   // İlk eşleşme katlanmış çubuğun (inert) kopyası olabilir: asıl kontrol satırındaki düğme sonuncudur.
   await page.getByRole("button", { name: /^(Filtre|Filter)(,|$)/ }).last().evaluate((el) => el.click());
@@ -299,25 +310,29 @@ await scenario("4. Sayfalama ve süzgeç: süzgeç değişince ilk sayfa baştan
   const bob = names(newest(state.rows.filter((r) => r.profiles.id === U.bob.id)));
   await page.goto(`${BASE}/`);
   await selectHomeTab(page, "Takip Ettiklerim");
-  await waitTitles(page, all.slice(0, 18));
-  await page.getByRole("button", { name: "Daha fazla yükle" }).click();
+  await waitTitlesStart(page, all.slice(0, 18));
+  await page.getByRole("button", { name: "Daha fazla yükle" }).click({ timeout: 1500 }).catch(() => {});
   await waitTitles(page, all);
   const more = state.feedCalls.filter((c) => c.p_scope === "following" && c.p_after_id);
   assert.equal(more[0].p_after_id, pid(18), "sonraki sayfa son satırın imlecinden");
   // Süzgeç → yeni sorgu: imleç yok, önceki sayfaların kartları gitti, yalnız Bob'un listesi.
+  // (Liste kısaysa sonraki sayfa kendiliğinden gelir; sorgunun KENDİSİ — ilk çağrı — imleçsiz olmalı.)
+  const firstFollowingAfter = (mark) => state.feedCalls.slice(mark).find((c) => c.p_scope === "following");
+  let mark = state.feedCalls.length;
   await openFilter(page);
   await sheetChip(page, "Bob").click();
   await closeFilter(page);
-  await waitTitles(page, bob);
-  const afterFilter = lastFollowingCall(state);
+  await waitTitlesStart(page, bob.slice(0, 18));
+  const afterFilter = firstFollowingAfter(mark);
   assert.equal(afterFilter.p_after_id, null, "yeni sorgu imleç taşımaz");
   assert.deepEqual(afterFilter.p_authors, [U.bob.id]);
   // Süzgeç kalkınca ilk sayfaya (18 kart) dönülür; önceki "daha fazla" sonucu geri gelmez.
+  mark = state.feedCalls.length;
   await openFilter(page);
   await sheetChip(page, "Bob").click();
   await closeFilter(page);
-  await waitTitles(page, all.slice(0, 18));
-  assert.equal(lastFollowingCall(state).p_after_id, null);
+  await waitTitlesStart(page, all.slice(0, 18));
+  assert.equal(firstFollowingAfter(mark).p_after_id, null);
 }, { many: true });
 
 await scenario("5. Filtreye uyan paylaşım yoksa: dürüst boş durum + 'Filtreleri temizle' sonuçları geri getirir", async ({ page, state }) => {
