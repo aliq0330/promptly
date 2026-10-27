@@ -115,11 +115,8 @@ export function BulkTaxonomyCard() {
     setRun(null);
     setPhase("running");
     setProgress({ done: 0, total: changes.length, affected: 0, skipped: 0, stoppedAt: null, error: null, invalid: 0, subcategoryDropped: 0, alreadyCategorized: 0 });
-    if (kind === "apply") {
-      // Yedek, yazımdan ÖNCE iner: yarıda kalan ya da pişman olunan bir işlem dosyadan geri alınabilir.
-      downloadBackup(changes);
-      setApplied(changes);
-    }
+    // Yedek ayrı bir düğmedir ("Yedeği indir"): iOS Safari indirme sırasında devam eden isteği keserdi ("Load failed"), bu yüzden yazımla aynı anda indirilmez.
+    if (kind === "apply") setApplied(changes);
     const options = { onProgress: setProgress, shouldStop: () => stopRef.current };
     const result = kind === "apply" ? await applyTaxonomyChanges(changes, overwrite, options) : await undoTaxonomyChanges(changes, options);
     setRun({ kind, result });

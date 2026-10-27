@@ -233,7 +233,7 @@ export const exchangeTranslations = {
   "exchange.taxonomy.overwrite": { tr: "Kategorisi dolu olanların da üzerine yaz", en: "Also overwrite prompts that already have a category" },
   "exchange.taxonomy.overwriteHint": { tr: "Kapalıyken elle kategorilediğin promptlara dokunulmaz.", en: "While off, prompts you categorized by hand are left alone." },
   "exchange.taxonomy.apply": { tr: "{{count}} promptu kategorile", en: "Categorize {{count}} prompt(s)" },
-  "exchange.taxonomy.confirm": { tr: "{{count}} promptun türü ve kategorisi değişecek. Eski değerlerin yedeği önce iner.", en: "{{count}} prompt(s) will change type and category. A backup of the old values downloads first." },
+  "exchange.taxonomy.confirm": { tr: "{{count}} promptun türü ve kategorisi değişecek. Önce \"Yedeği indir\" ile eski değerlerin yedeğini almanı öneririz.", en: "{{count}} prompt(s) will change type and category. We recommend downloading the backup of the old values first." },
   "exchange.taxonomy.confirmYes": { tr: "Evet, uygula", en: "Yes, apply" },
   "exchange.taxonomy.backup": { tr: "Yedeği indir", en: "Download backup" },
   "exchange.taxonomy.applyDone": { tr: "{{affected}} prompt kategorilendi, {{skipped}} atlandı.", en: "{{affected}} prompt(s) categorized, {{skipped}} skipped." },

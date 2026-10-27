@@ -28,3 +28,6 @@ prompts.chat'ten içe aktarılan 3 012 prompt `content_type='text'` ve kategoris
 
 ## Bilinçli sınırlar / denenmedi
 Gerçek Supabase'e, gerçek 3 000 kayıtlık yazıma ve gerçek oturuma karşı denenmedi (sunucu mantığı yerel PostgreSQL'de, arayüz ağ taklitli). Alt kategoriler dosyadan alınır ama canlı taksonomide silinmişse boş kalır. Eşleştirme başlığa göredir: başlığı sonradan değiştirilen prompt "bulunamadı" görünür. "Geri al" yalnız o oturumda uygulananları geri alır (sayfa yenilenince yedek JSON'dan elle). Yeni kategoriler `/discover`'daki Tür/Kategori süzgeçlerinde hemen görünür; "Sana özel" sıralaması kategoriyi sinyal olarak KULLANMAZ (değişmedi).
+
+## Düzeltme (iPhone Safari, "TypeError: Load failed")
+"Uygula"da yedek JSON'u yazımla aynı anda iniyordu; iOS Safari indirmeyi başlatınca devam eden isteği kesti → 0/3005 işlendi, "Load failed". Migration canlıda sağlamdı (fonksiyon mevcut). Yedek artık yalnız "Yedeği indir" düğmesiyle iner, "Uygula" hiçbir indirme tetiklemez; "Geri al" için eski değerler bellekte tutulur.
