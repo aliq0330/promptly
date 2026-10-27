@@ -899,7 +899,7 @@ async function openTaxonomy(page) {
   await page.getByTestId("bulk-taxonomy").waitFor();
 }
 
-await scenario("36. Kategori motoru: dosya seçilince ÖNİZLEME (yazmaz); onay iki adımlı; yedek yazımdan önce iner; sunucuya doğru türler gider; Geri al eski değerlere döner", async ({ page, state }) => {
+await scenario("36. Kategori motoru: dosya seçilince ÖNİZLEME (yazmaz); onay iki adımlı; yedek ayrı düğmeyle iner (yazımla aynı anda DEĞİL); sunucuya doğru türler gider; Geri al eski değerlere döner", async ({ page, state }) => {
   await openTaxonomy(page);
   assert.equal(await page.getByTestId("taxonomy-apply").count(), 0, "dosyadan önce uygula düğmesi yok");
   const file = taxFile([
@@ -923,7 +923,8 @@ await scenario("36. Kategori motoru: dosya seçilince ÖNİZLEME (yazmaz); onay 
   await page.getByTestId("taxonomy-apply").click();
   await page.getByTestId("taxonomy-confirm").waitFor();
   assert.deepEqual(state.taxCalls, [], "ilk tık yalnız onay ister");
-  const [download] = await Promise.all([page.waitForEvent("download"), page.getByTestId("taxonomy-confirm").click()]);
+  const [download] = await Promise.all([page.waitForEvent("download"), page.getByTestId("taxonomy-backup").click()]);
+  await page.getByTestId("taxonomy-confirm").click();
   assert.match(download.suggestedFilename(), /^promptly-kategori-yedek-\d{4}-\d{2}-\d{2}\.json$/);
   const backup = JSON.parse(readFileSync(await download.path(), "utf8"));
   assert.equal(backup.length, 4);
@@ -959,8 +960,7 @@ await scenario("37. Kategorili olmayan / bozuk dosya anlaşılır mesaj verir ve
   await page.getByTestId("taxonomy-overwrite").check();
   assert.match(await page.getByTestId("taxonomy-summary").innerText(), /Yazılacak: 150\./);
   await page.getByTestId("taxonomy-apply").click();
-  const [download] = await Promise.all([page.waitForEvent("download"), page.getByTestId("taxonomy-confirm").click()]);
-  assert.ok(download);
+  await page.getByTestId("taxonomy-confirm").click();
   await page.getByTestId("taxonomy-outcome").waitFor();
   assert.deepEqual(state.taxCalls.map((c) => c.p_items.length), [100, 50]);
   assert.ok(state.taxCalls.every((c) => c.p_overwrite === true));
@@ -980,7 +980,7 @@ await scenario("38. Yarıda kalma: 2. parça hata verirse 1. parça yazılmış 
   await page.getByTestId("taxonomy-apply").click();
   await page.getByTestId("taxonomy-confirm").waitFor();
   assert.match(await page.getByTestId("bulk-taxonomy").innerText(), /150 prompt\(s\) will change type and category/);
-  await Promise.all([page.waitForEvent("download"), page.getByTestId("taxonomy-confirm").click()]);
+  await page.getByTestId("taxonomy-confirm").click();
   await page.getByTestId("taxonomy-partial").waitFor();
   await page.getByTestId("taxonomy-error").waitFor();
   assert.match(await page.getByTestId("taxonomy-outcome").innerText(), /100 prompt\(s\) categorized/);
