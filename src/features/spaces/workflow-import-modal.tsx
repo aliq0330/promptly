@@ -1,43 +1,42 @@
 "use client";
 
 import Link from "next/link";
-import { useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import { Check, Lock, Workflow as WorkflowIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/auth-provider";
 import { usePagedList } from "@/features/content/use-paged-list";
 import { PagedListState } from "@/features/feed/paged-list-state";
-import { WorkflowFlowDiagram, useWorkflowFlow } from "@/features/workflows/workflow-flow-diagram";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { SpaceVisibility } from "@/lib/spaces";
-import { fetchWorkflowFlow } from "@/lib/supabase/workflow-flow";
+import { importPlan, loadPlanInput, workflowObjectsOn, type PlanInput } from "@/lib/supabase/workflow-board";
+import type { SpaceItem } from "@/lib/supabase/spaces";
 import { fetchWorkflowsByCreatorPage } from "@/lib/supabase/workflows";
-import { computeFlowLayout, flowItemSize } from "@/lib/workflow-flow-layout";
+import { MAX_ITEMS, type PlanOptions } from "@/lib/workflow-board-plan";
 import { cn } from "@/lib/utils";
 import type { Workflow } from "@/types";
 import { FormError, SubmitButton } from "./space-forms";
 import { SpaceDialog } from "./space-modals";
+import { WorkflowPlanPreview } from "./workflow-plan-preview";
 
 export interface WorkflowImportInput {
   workflow: Workflow;
-  size: { w: number; h: number };
-  showIo: boolean;
-  showLinks: boolean;
-  showRelations: boolean;
+  options: PlanOptions;
 }
 
 /**
- * "Workflow aktar" (docs/history/261-*): kullanıcının KENDİ yayınlanmış workflow'larından birini panoya akış diyagramı olarak getirir.
- * Başkasının workflow'u listelenmez (ilk sürümün bilinçli sınırı). Workflow kopyalanmaz, başvurulur: sonradan değişirse çerçeve de değişir.
+ * "Workflow aktar" (docs/history/262-*): kullanıcının KENDİ yayınlanmış workflow'larından birini panoya AYRI NESNELER olarak getirir:
+ * her adım için adım kartı, kullandığı prompt ve prompt'un görselleri; aralarında oklar. Başkasının workflow'u listelenmez. Kopya değildir:
+ * workflow değişince panoda "Güncelle" çıkar. Önizleme panoya yazılacak planın kendisidir.
  */
 export function WorkflowImportModal({
   spaceVisibility,
-  existingWorkflowIds,
+  items,
   onImport,
   onClose,
 }: {
   spaceVisibility: SpaceVisibility;
-  existingWorkflowIds: ReadonlySet<string>;
+  items: readonly SpaceItem[];
   onImport: (input: WorkflowImportInput) => Promise<void>;
   onClose: () => void;
 }) {
@@ -46,26 +45,39 @@ export function WorkflowImportModal({
   const userId = user?.id ?? null;
   const list = usePagedList<Workflow>(`wf-import:${userId}`, Boolean(userId), (offset) => fetchWorkflowsByCreatorPage(userId!, {}, offset, 24));
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [layers, setLayers] = useState({ showIo: true, showLinks: true, showRelations: true });
+  const [options, setOptions] = useState<PlanOptions>({ io: true, prompts: true, images: true, relations: true });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [input, setInput] = useState<{ id: string; value: PlanInput | null } | null>(null);
   const groupId = useId();
 
   const selected = useMemo(() => list.items.find((workflow) => workflow.id === selectedId) ?? null, [list.items, selectedId]);
-  const preview = useWorkflowFlow(selected?.id);
-  const alreadyOnBoard = selected ? existingWorkflowIds.has(selected.id) : false;
+
+  // Seçilen workflow'un adımları + prompt görselleri (taze okuma: aktarma anındaki hâli görülür).
+  useEffect(() => {
+    if (!selectedId) return;
+    let cancelled = false;
+    loadPlanInput(selectedId, { fresh: true }).then(
+      (value) => !cancelled && setInput({ id: selectedId, value }),
+      () => !cancelled && setInput({ id: selectedId, value: null }),
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedId]);
+  const loaded = input && input.id === selectedId ? input : null;
+  const plan = useMemo(() => (loaded?.value ? importPlan(loaded.value, options, items) : null), [loaded, options, items]);
+  const alreadyOnBoard = selected ? workflowObjectsOn(items, selected.id).length > 0 : false;
   const exposesPrivate = Boolean(selected && selected.visibility === "private" && spaceVisibility !== "private");
+  const tooMany = Boolean(plan && items.length + plan.items.length > MAX_ITEMS);
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
-    if (!selected || alreadyOnBoard) return;
+    if (!selected || alreadyOnBoard || !plan || tooMany) return;
     setBusy(true);
     setError(null);
     try {
-      const flow = await fetchWorkflowFlow(selected.id);
-      if (!flow) throw new Error(t("wfSpace.import.loadFailed"));
-      const size = flowItemSize(computeFlowLayout(flow.steps, layers, flow.relations));
-      await onImport({ workflow: selected, size, ...layers });
+      await onImport({ workflow: selected, options });
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : t("spaces.error.generic"));
@@ -73,10 +85,11 @@ export function WorkflowImportModal({
     }
   }
 
-  const layerRows: { key: keyof typeof layers; label: string; hint: string }[] = [
-    { key: "showIo", label: t("wfSpace.layer.io"), hint: t("wfSpace.layer.ioHint") },
-    { key: "showLinks", label: t("wfSpace.layer.links"), hint: t("wfSpace.layer.linksHint") },
-    { key: "showRelations", label: t("wfSpace.layer.relations"), hint: t("wfSpace.layer.relationsHint") },
+  const optionRows: { key: keyof PlanOptions; label: string; hint: string; disabled?: boolean }[] = [
+    { key: "prompts", label: t("wfSpace.objects.optPrompts"), hint: t("wfSpace.objects.optPromptsHint") },
+    { key: "images", label: t("wfSpace.objects.optImages"), hint: t("wfSpace.objects.optImagesHint"), disabled: !options.prompts },
+    { key: "io", label: t("wfSpace.objects.optIo"), hint: t("wfSpace.objects.optIoHint") },
+    { key: "relations", label: t("wfSpace.objects.optRelations"), hint: t("wfSpace.objects.optRelationsHint"), disabled: !options.prompts },
   ];
 
   return (
@@ -92,8 +105,8 @@ export function WorkflowImportModal({
           <Button type="button" variant="ghost" onClick={onClose} disabled={busy}>
             {t("common.cancel")}
           </Button>
-          <SubmitButton busy={busy} disabled={!selected || alreadyOnBoard}>
-            {t("wfSpace.import.submit")}
+          <SubmitButton busy={busy} disabled={!selected || alreadyOnBoard || !plan || tooMany}>
+            {busy ? t("wfSpace.objects.importing") : t("wfSpace.import.submit")}
           </SubmitButton>
         </>
       }
@@ -115,7 +128,7 @@ export function WorkflowImportModal({
           ) : (
             <ul className="space-y-2" role="radiogroup" aria-labelledby={groupId}>
               {list.items.map((workflow) => {
-                const on = existingWorkflowIds.has(workflow.id);
+                const on = workflowObjectsOn(items, workflow.id).length > 0;
                 const active = workflow.id === selectedId;
                 return (
                   <li key={workflow.id}>
@@ -124,10 +137,7 @@ export function WorkflowImportModal({
                       role="radio"
                       aria-checked={active}
                       onClick={() => setSelectedId(workflow.id)}
-                      className={cn(
-                        "flex w-full items-center gap-3 rounded-xl border bg-surface px-3 py-2.5 text-left transition-colors",
-                        active ? "border-primary ring-1 ring-primary" : "border-border hover:bg-surface-soft",
-                      )}
+                      className={cn("flex w-full items-center gap-3 rounded-xl border bg-surface px-3 py-2.5 text-left transition-colors", active ? "border-primary ring-1 ring-primary" : "border-border hover:bg-surface-soft")}
                     >
                       <span className={cn("h-4 w-4 shrink-0 rounded-full border-2", active ? "border-[5px] border-primary" : "border-border-strong")} aria-hidden />
                       <span className="min-w-0 flex-1">
@@ -158,25 +168,31 @@ export function WorkflowImportModal({
         <div className="mt-5 space-y-4 border-t border-border-soft pt-4">
           <div>
             <p className="mb-2 text-caption font-bold uppercase tracking-[0.06em] text-text-secondary">{t("wfSpace.import.preview")}</p>
-            <div className="overflow-hidden rounded-xl border border-border-soft bg-surface-soft">
-              {preview.data ? (
-                <WorkflowFlowDiagram data={preview.data} options={layers} fit={{ mode: "width" }} />
-              ) : (
-                <div className={cn("h-40", preview.state === "loading" && "skeleton-shimmer")} aria-hidden />
-              )}
-            </div>
-            {preview.state === "failed" && <p className="mt-2 text-caption text-danger">{t("wfSpace.import.loadFailed")}</p>}
+            {plan && loaded?.value ? (
+              <WorkflowPlanPreview plan={plan} steps={loaded.value.steps} />
+            ) : (
+              <div className={cn("h-40 rounded-xl border border-border-soft bg-surface-soft", !loaded && "skeleton-shimmer")} aria-hidden />
+            )}
+            {loaded && !loaded.value && <p className="mt-2 text-caption text-danger">{t("wfSpace.import.loadFailed")}</p>}
+            {plan && (
+              <p className="mt-2 text-caption text-text-muted" data-plan-counts="">
+                {t("wfSpace.objects.willAdd", { steps: plan.counts.steps, prompts: plan.counts.prompts, images: plan.counts.images, arrows: plan.counts.arrows })}
+                {plan.reused > 0 ? ` · ${t("wfSpace.objects.willReuse", { count: plan.reused })}` : ""}
+              </p>
+            )}
           </div>
 
           <div>
-            <p className="mb-2 text-caption font-bold uppercase tracking-[0.06em] text-text-secondary">{t("wfSpace.import.layers")}</p>
+            <p className="mb-2 text-caption font-bold uppercase tracking-[0.06em] text-text-secondary">{t("wfSpace.objects.options")}</p>
+            <p className="mb-2 text-caption text-text-muted">{t("wfSpace.objects.optStepsHint")}</p>
             <div className="space-y-2">
-              {layerRows.map((row) => (
-                <label key={row.key} className="flex items-start gap-2.5 text-small text-text">
+              {optionRows.map((row) => (
+                <label key={row.key} className={cn("flex items-start gap-2.5 text-small text-text", row.disabled && "opacity-50")}>
                   <input
                     type="checkbox"
-                    checked={layers[row.key]}
-                    onChange={(event) => setLayers((prev) => ({ ...prev, [row.key]: event.target.checked }))}
+                    checked={options[row.key] && !row.disabled}
+                    disabled={row.disabled}
+                    onChange={(event) => setOptions((prev) => ({ ...prev, [row.key]: event.target.checked }))}
                     className="mt-1 h-4 w-4 accent-primary"
                   />
                   <span>
@@ -188,7 +204,8 @@ export function WorkflowImportModal({
             </div>
           </div>
 
-          {alreadyOnBoard && <p className="rounded-xl bg-primary-soft px-3 py-2 text-small text-text-secondary">{t("wfSpace.import.alreadyOnBoard")}</p>}
+          {alreadyOnBoard && <p className="rounded-xl bg-primary-soft px-3 py-2 text-small text-text-secondary">{t("wfSpace.objects.alreadyHere")}</p>}
+          {tooMany && <p role="status" className="rounded-xl bg-warning/10 px-3 py-2 text-small text-text-secondary">{t("wfSpace.objects.tooMany")}</p>}
           {exposesPrivate && (
             <p role="status" className="flex items-start gap-2 rounded-xl bg-warning/10 px-3 py-2 text-small text-text-secondary">
               <Lock size={14} className="mt-0.5 shrink-0 text-warning" aria-hidden />

@@ -65,9 +65,9 @@ const FLOW_TTL_MS = 2 * 60 * 1000;
 const flowCache = new Map<string, { at: number; promise: Promise<WorkflowFlowData | null> }>();
 
 /** Workflow + adımlar + adımlar arası ilişkiler. Pano öğeleri ve önizleme aynı workflow'u tekrar tekrar istemesin diye kısa süre önbelleğe alınır. */
-export function fetchWorkflowFlow(id: string): Promise<WorkflowFlowData | null> {
+export function fetchWorkflowFlow(id: string, { fresh = false }: { fresh?: boolean } = {}): Promise<WorkflowFlowData | null> {
   const cached = flowCache.get(id);
-  if (cached && Date.now() - cached.at < FLOW_TTL_MS) return cached.promise;
+  if (!fresh && cached && Date.now() - cached.at < FLOW_TTL_MS) return cached.promise;
   const promise = (async () => {
     const base = await fetchWorkflowById(id);
     if (!base) return null;
@@ -95,11 +95,15 @@ export interface WorkflowSpaceLink {
   showIo: boolean;
   showLinks: boolean;
   showRelations: boolean;
+  /** Workflow bu Space'te ayrı nesneler olarak mı (yeni), yoksa eski tek parça çerçeve olarak mı duruyor. */
+  objects: boolean;
 }
 
 interface LinkRow {
   id: string;
   space_id: string;
+  kind?: string;
+  source_role?: string | null;
   flow_show_io?: boolean;
   flow_show_links?: boolean;
   flow_show_relations?: boolean;
@@ -114,6 +118,7 @@ interface LinkedSpaceRow {
 }
 
 const MAX_LINKED_SPACES = 24;
+const MAX_LINK_ROWS = 400;
 
 /** Önizleme sırası: önce herkese açık + arşivsiz (en yeni başta), sonra okuyucunun yalnız kendi görebildikleri (en yeni başta). */
 export function sortWorkflowSpaceLinks(links: WorkflowSpaceLink[]): WorkflowSpaceLink[] {
@@ -122,39 +127,42 @@ export function sortWorkflowSpaceLinks(links: WorkflowSpaceLink[]): WorkflowSpac
 }
 
 /**
- * Bu workflow'u çerçeve olarak içeren, OKUYUCUNUN okuyabildiği Space'ler (özel Space ziyaretçi için hiç gelmez).
- * İki ayrı okuma: `space_items` → `spaces` gömmesi (`spaces!inner`) kullanılamaz, çünkü iki tablo arasında iki yabancı anahtar var
- * (`space_items.space_id` ve `spaces.cover_item_id`) ve PostgREST gömmeyi belirsiz bulup hata verir (PGRST201).
+ * Bu workflow'u panosunda gösteren, OKUYUCUNUN okuyabildiği Space'ler (özel Space ziyaretçi için hiç gelmez). İki bağ biçimi vardır:
+ * workflow'dan aktarılan AYRI NESNELER (`source_workflow_id` + adım kartı rolü; docs/history/262-*) ve eski tek parça çerçeve öğesi
+ * (`content`/`workflow`, docs/history/261-*). Her Space bir kez döner; nesneli biçim öncelikli.
  */
 export async function fetchWorkflowSpaceLinks(workflowId: string): Promise<WorkflowSpaceLink[]> {
   const { data, error } = await supabase
     .from("space_items")
-    .select("id, space_id, flow_show_io, flow_show_links, flow_show_relations")
-    .eq("kind", "content")
-    .eq("content_type", "workflow")
-    .eq("content_id", workflowId)
-    .limit(MAX_LINKED_SPACES);
+    .select("id, space_id, kind, source_role, flow_show_io, flow_show_links, flow_show_relations")
+    .or(`and(source_workflow_id.eq.${workflowId},source_role.eq.step),and(kind.eq.content,content_type.eq.workflow,content_id.eq.${workflowId})`)
+    .limit(MAX_LINK_ROWS);
   if (error) {
     console.error("fetchWorkflowSpaceLinks", error);
     return [];
   }
   const items = (data ?? []) as unknown as LinkRow[];
   if (items.length === 0) return [];
+  const spaceIds = [...new Set(items.map((item) => item.space_id))].slice(0, MAX_LINKED_SPACES);
   const { data: spaceData, error: spaceError } = await supabase
     .from("spaces")
     .select("id, title, visibility, archived_at, updated_at")
-    .in("id", [...new Set(items.map((item) => item.space_id))])
+    .in("id", spaceIds)
     .limit(MAX_LINKED_SPACES);
   if (spaceError) {
     console.error("fetchWorkflowSpaceLinks spaces", spaceError);
     return [];
   }
   const spaces = new Map(((spaceData ?? []) as unknown as LinkedSpaceRow[]).map((space) => [space.id, space]));
-  const links: WorkflowSpaceLink[] = [];
+  const bySpace = new Map<string, WorkflowSpaceLink>();
   for (const row of items) {
     const space = spaces.get(row.space_id);
     if (!space) continue;
-    links.push({
+    const isObject = row.source_role === "step";
+    const existing = bySpace.get(row.space_id);
+    // Nesneli biçim öncelikli; aynı biçimde en küçük adım numarasına değil ilk bulunana odaklanılır.
+    if (existing && (existing.objects || !isObject)) continue;
+    bySpace.set(row.space_id, {
       itemId: row.id,
       spaceId: row.space_id,
       spaceTitle: space.title,
@@ -164,7 +172,30 @@ export async function fetchWorkflowSpaceLinks(workflowId: string): Promise<Workf
       showIo: row.flow_show_io ?? true,
       showLinks: row.flow_show_links ?? true,
       showRelations: row.flow_show_relations ?? true,
+      objects: isObject,
     });
   }
-  return sortWorkflowSpaceLinks(links);
+  return sortWorkflowSpaceLinks([...bySpace.values()]);
+}
+
+/** Prompt'ların görselleri (panoya getirilirken): her prompt için en çok `perPrompt`, kayıt sırasıyla. RLS: okuyucunun göremediği prompt'un görseli gelmez. */
+export async function fetchPromptImages(promptIds: string[], perPrompt = 4): Promise<Map<string, { url: string; width: number; height: number }[]>> {
+  const out = new Map<string, { url: string; width: number; height: number }[]>();
+  if (promptIds.length === 0) return out;
+  const { data, error } = await supabase
+    .from("prompt_media")
+    .select("prompt_id, url, width, height, position")
+    .in("prompt_id", [...new Set(promptIds)])
+    .order("position", { ascending: true })
+    .limit(500);
+  if (error) {
+    console.error("fetchPromptImages", error);
+    return out;
+  }
+  for (const row of (data ?? []) as { prompt_id: string; url: string; width: number | null; height: number | null }[]) {
+    const list = out.get(row.prompt_id) ?? [];
+    if (list.length < perPrompt) list.push({ url: row.url, width: row.width ?? 0, height: row.height ?? 0 });
+    out.set(row.prompt_id, list);
+  }
+  return out;
 }

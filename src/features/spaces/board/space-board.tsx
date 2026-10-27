@@ -28,6 +28,7 @@ import {
   Plus,
   Redo2,
   SendToBack,
+  Spline,
   SquareDashedMousePointer,
   SquareTerminal,
   StickyNote,
@@ -40,6 +41,9 @@ import {
 } from "lucide-react";
 import { lockBodyScroll, unlockBodyScroll } from "@/components/ui/modal";
 import { WorkflowImportModal } from "../workflow-import-modal";
+import { BoardConnectors, type ConnectorDraft } from "./board-connectors";
+import { ConnectionBar } from "./connection-bar";
+import { WorkflowSyncBar } from "./workflow-sync-bar";
 import { ScrollRow } from "@/components/ui/scroll-row";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { cn } from "@/lib/utils";
@@ -71,7 +75,9 @@ import {
   type Rect,
   type Viewport,
 } from "@/lib/space-board";
-import { createSpaceGroup, uploadSpaceImage, type LayoutEntry, type SpaceItem } from "@/lib/supabase/spaces";
+import { chainPairs, connectionExists } from "@/lib/space-connectors";
+import { loadPlanInput, runImport, type PlanIO } from "@/lib/supabase/workflow-board";
+import { createSpaceGroup, uploadSpaceImage, type LayoutEntry, type SpaceConnection, type SpaceConnectionPatch, type SpaceItem } from "@/lib/supabase/spaces";
 import { useSpaceContext } from "../space-provider";
 import { DraftEditorModal, GroupsManagerModal, ItemDetailModal, NoteEditorModal, resolveSource, usePlaceNewItems, useItemTitle, type ResolvedSource } from "../space-items";
 import { SaveIndicator } from "../save-indicator";
@@ -98,7 +104,14 @@ import { BoardItem } from "./board-item";
  */
 
 type Geom = Pick<BoardGeom, "x" | "y" | "w" | "h" | "z" | "groupId">;
-type Entry = { type: "layout"; before: Record<string, Geom>; after: Record<string, Geom> } | { type: "delete"; items: SpaceItem[] } | { type: "add"; items: SpaceItem[] };
+type Entry =
+  | { type: "layout"; before: Record<string, Geom>; after: Record<string, Geom> }
+  | { type: "delete"; items: SpaceItem[]; connections?: SpaceConnection[] }
+  | { type: "add"; items: SpaceItem[] }
+  | { type: "conn-add"; connections: SpaceConnection[] }
+  | { type: "conn-delete"; connections: SpaceConnection[] }
+  | { type: "conn-patch"; id: string; before: SpaceConnectionPatch; after: SpaceConnectionPatch }
+  | { type: "import"; items: SpaceItem[]; connections: SpaceConnection[] };
 
 interface Interaction {
   kind: "move" | "resize" | "pan" | "marquee";
@@ -132,9 +145,13 @@ function toEntry(id: string, geom: Geom): LayoutEntry {
   return { id, x: geom.x, y: geom.y, w: geom.w, h: geom.h, z: geom.z, groupId: geom.groupId };
 }
 
+function toNewConnection(c: SpaceConnection) {
+  return { id: c.id, spaceId: c.spaceId, fromItemId: c.fromItemId, toItemId: c.toItemId, label: c.label, lineStyle: c.lineStyle, arrow: c.arrow, route: c.route, color: c.color, sourceWorkflowId: c.sourceWorkflowId, sourceRole: c.sourceRole };
+}
+
 export function SpaceBoard({ focusId }: { focusId: string | null }) {
   const { t } = useTranslation();
-  const { space, items, groups, palettes, sources, readable, caps, setItems, setGroups, queueLayout, layoutStatus, flushLayout, layoutNotice, dismissLayoutNotice, addItems, removeItems, userId } =
+  const { space, items, groups, palettes, sources, readable, caps, setItems, setGroups, queueLayout, layoutStatus, flushLayout, layoutNotice, dismissLayoutNotice, addItems, removeItems, patchItem, userId, connections, addConnections, removeConnections, patchConnection } =
     useSpaceContext();
   const itemTitle = useItemTitle();
   const place = usePlaceNewItems();
@@ -146,7 +163,10 @@ export function SpaceBoard({ focusId }: { focusId: string | null }) {
   const [panning, setPanning] = useState(false);
   const [live, setLive] = useState<Record<string, Geom> | null>(null);
   const [marquee, setMarquee] = useState<Rect | null>(null);
-  const [tool, setTool] = useState<"select" | "pan">("select");
+  const [tool, setTool] = useState<"select" | "pan" | "connect">("select");
+  const [selectedConnId, setSelectedConnId] = useState<string | null>(null);
+  const [connectFrom, setConnectFrom] = useState<string | null>(null);
+  const [draftPoint, setDraftPoint] = useState<{ x: number; y: number } | null>(null);
   const [multiSelect, setMultiSelect] = useState(false);
   const [spaceHeld, setSpaceHeld] = useState(false);
   const [history, setHistory] = useState<History<Entry>>(emptyHistory);
@@ -195,6 +215,10 @@ export function SpaceBoard({ focusId }: { focusId: string | null }) {
     return next.length === rawSelection.length ? rawSelection : next;
   }, [rawSelection, items]);
   const selectedSet = useMemo(() => new Set(selection), [selection]);
+  const selectedConn = useMemo(() => connections.find((c) => c.id === selectedConnId) ?? null, [connections, selectedConnId]);
+  // Başlangıç nesnesi silinirse ok çizme bekleyişi kendiliğinden düşer.
+  const activeFrom = useMemo(() => (connectFrom && items.some((item) => item.id === connectFrom) ? connectFrom : null), [connectFrom, items]);
+  const draft = useMemo<ConnectorDraft | null>(() => (activeFrom && draftPoint ? { fromId: activeFrom, x: draftPoint.x, y: draftPoint.y } : null), [activeFrom, draftPoint]);
 
   // ---- görünüm: ilk açılışta sığdır ya da odak öğesine git ----
   const viewSize = useCallback(() => {
@@ -299,14 +323,16 @@ export function SpaceBoard({ focusId }: { focusId: string | null }) {
     if (!editable || selection.length === 0) return;
     setError(null);
     try {
+      // Uçlarından biri silinen oklar sunucuda kendiliğinden gider; geri almada öğelerle birlikte geri gelsin diye saklanır.
+      const touching = connections.filter((c) => selection.includes(c.fromItemId) || selection.includes(c.toItemId));
       const removed = await removeItems(selection);
-      setHistory((h) => pushHistory(h, { type: "delete", items: removed }));
+      setHistory((h) => pushHistory(h, { type: "delete", items: removed, connections: touching }));
       setSelection([]);
       setUndoNotice(t("spaces.board.removed", { count: removed.length }));
     } catch (err) {
       setError(err instanceof Error ? err.message : t("spaces.error.generic"));
     }
-  }, [editable, selection, removeItems, t]);
+  }, [editable, selection, connections, removeItems, t]);
 
   const runEntry = useCallback(
     async (entry: Entry, direction: "undo" | "redo") => {
@@ -314,17 +340,38 @@ export function SpaceBoard({ focusId }: { focusId: string | null }) {
         applyGeoms(direction === "undo" ? entry.before : entry.after);
         return true;
       }
-      const restore = (entry.type === "delete") === (direction === "undo");
       try {
-        if (restore) await addItems(entry.items);
-        else await removeItems(entry.items.map((item) => item.id));
+        if (entry.type === "conn-add" || entry.type === "conn-delete") {
+          const restoreConnections = (entry.type === "conn-delete") === (direction === "undo");
+          if (restoreConnections) await addConnections(entry.connections.map(toNewConnection));
+          else await removeConnections(entry.connections.map((c) => c.id));
+          return true;
+        }
+        if (entry.type === "conn-patch") {
+          await patchConnection(entry.id, direction === "undo" ? entry.before : entry.after);
+          return true;
+        }
+        if (entry.type === "import") {
+          // Workflow aktarımı tek adımda geri alınır / yinelenir; öğeler silinince okları sunucuda kendiliğinden gider.
+          if (direction === "undo") await removeItems(entry.items.map((item) => item.id));
+          else {
+            await addItems(entry.items);
+            await addConnections(entry.connections.map(toNewConnection));
+          }
+          return true;
+        }
+        const restore = (entry.type === "delete") === (direction === "undo");
+        if (restore) {
+          await addItems(entry.items);
+          if (entry.type === "delete" && entry.connections?.length) await addConnections(entry.connections.map(toNewConnection));
+        } else await removeItems(entry.items.map((item) => item.id));
         return true;
       } catch (err) {
         setError(err instanceof Error ? err.message : t("spaces.error.generic"));
         return false;
       }
     },
-    [applyGeoms, addItems, removeItems, t],
+    [applyGeoms, addItems, removeItems, addConnections, removeConnections, patchConnection, t],
   );
 
   const undo = useCallback(async () => {
@@ -342,6 +389,80 @@ export function SpaceBoard({ focusId }: { focusId: string | null }) {
     setHistory(next);
     if (!(await runEntry(entry, "redo"))) setHistory((h) => ({ ...h, past: h.past.slice(0, -1) }));
   }, [history, runEntry]);
+
+  // ---- oklar (docs/history/262-*) ----
+  const setToolMode = useCallback((next: "select" | "pan" | "connect") => {
+    setTool(next);
+    if (next !== "connect") {
+      setConnectFrom(null);
+      setDraftPoint(null);
+    }
+  }, []);
+
+  const connectItems = useCallback(
+    async (pairs: [string, string][]) => {
+      if (!editable || pairs.length === 0) return;
+      setError(null);
+      const fresh = pairs.filter(([a, b]) => !connectionExists(connections, a, b));
+      if (fresh.length === 0) {
+        setError(t("spaces.connect.alreadyConnected"));
+        return;
+      }
+      try {
+        const created = await addConnections(fresh.map(([from, to]) => ({ spaceId: space.id, fromItemId: from, toItemId: to })));
+        setHistory((h) => pushHistory(h, { type: "conn-add", connections: created }));
+        setSelection([]);
+        setSelectedConnId(created[created.length - 1].id);
+        if (created.length > 1) setUndoNotice(t("spaces.connect.added", { count: created.length }));
+      } catch (err) {
+        setError(err instanceof Error ? err.message : t("spaces.error.generic"));
+      }
+    },
+    [editable, connections, addConnections, space.id, t],
+  );
+
+  const handleConnectPick = useCallback(
+    (itemId: string) => {
+      if (!activeFrom) {
+        setConnectFrom(itemId);
+        setSelection([]);
+        return;
+      }
+      setConnectFrom(null);
+      setDraftPoint(null);
+      if (activeFrom !== itemId) void connectItems([[activeFrom, itemId]]);
+    },
+    [activeFrom, connectItems],
+  );
+
+  const patchSelectedConnection = useCallback(
+    async (patch: SpaceConnectionPatch) => {
+      if (!editable || !selectedConn) return;
+      setError(null);
+      const before: SpaceConnectionPatch = {};
+      for (const key of Object.keys(patch) as (keyof SpaceConnectionPatch)[]) (before as Record<string, unknown>)[key] = selectedConn[key];
+      try {
+        await patchConnection(selectedConn.id, patch);
+        setHistory((h) => pushHistory(h, { type: "conn-patch", id: selectedConn.id, before, after: patch }));
+      } catch (err) {
+        setError(err instanceof Error ? err.message : t("spaces.error.generic"));
+      }
+    },
+    [editable, selectedConn, patchConnection, t],
+  );
+
+  const deleteSelectedConnection = useCallback(async () => {
+    if (!editable || !selectedConn) return;
+    setError(null);
+    try {
+      const removed = await removeConnections([selectedConn.id]);
+      setHistory((h) => pushHistory(h, { type: "conn-delete", connections: removed }));
+      setSelectedConnId(null);
+      setUndoNotice(t("spaces.connect.removed", { count: removed.length }));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("spaces.error.generic"));
+    }
+  }, [editable, selectedConn, removeConnections, t]);
 
   const groupSelection = useCallback(async () => {
     if (!editable || selection.length < 2 || !userId) return;
@@ -474,6 +595,26 @@ export function SpaceBoard({ focusId }: { focusId: string | null }) {
       wasSelected: Boolean(itemId && selectedSet.has(itemId)),
     };
     const wantsPan = tool === "pan" || spaceHeld || event.button === 1;
+    const connectorId = target.closest<HTMLElement>("[data-board-connector]")?.dataset.boardConnector ?? null;
+
+    // Ok seçme: öğenin üstünde değilse okun üzerine (ya da etiketine) dokunmak oku seçer.
+    if (connectorId && !itemId && !wantsPan) {
+      setSelectedConnId(connectorId);
+      setSelection([]);
+      setConnectFrom(null);
+      setDraftPoint(null);
+      return;
+    }
+    // Ok çizme aracı: iki nesneye art arda dokun; boş alan bekleyen başlangıcı bırakır (kaydırma yine çalışır).
+    if (tool === "connect" && !wantsPan && editable) {
+      if (itemId) {
+        handleConnectPick(itemId);
+        return;
+      }
+      setConnectFrom(null);
+      setDraftPoint(null);
+    }
+    setSelectedConnId(null);
 
     if (handle && editable && !wantsPan) {
       interaction.current = { ...base, kind: "resize", targetId: handle, origin: { [handle]: geoms[handle] } };
@@ -502,6 +643,11 @@ export function SpaceBoard({ focusId }: { focusId: string | null }) {
   }
 
   function onPointerMove(event: React.PointerEvent<HTMLDivElement>) {
+    // Ok çizerken başlangıç nesnesinden imlece önizleme çizgisi (fare/kalem; dokunmada imleç yok).
+    if (activeFrom && event.pointerType !== "touch") {
+      const at = localPoint(event);
+      setDraftPoint(screenToWorld(vpRef.current, at.x, at.y));
+    }
     if (!pointers.current.has(event.pointerId)) return;
     const point = localPoint(event);
     pointers.current.set(event.pointerId, { ...point, type: event.pointerType });
@@ -642,8 +788,23 @@ export function SpaceBoard({ focusId }: { focusId: string | null }) {
       else void groupSelection();
       return;
     }
+    if (!mod && key === "c" && editable) {
+      event.preventDefault();
+      setToolMode(tool === "connect" ? "select" : "connect");
+      return;
+    }
     if (event.key === "Escape") {
-      setSelection([]);
+      if (activeFrom) {
+        setConnectFrom(null);
+        setDraftPoint(null);
+      } else if (selectedConnId) setSelectedConnId(null);
+      else if (tool === "connect" && selection.length === 0) setToolMode("select");
+      else setSelection([]);
+      return;
+    }
+    if ((event.key === "Delete" || event.key === "Backspace") && selectedConn && selection.length === 0) {
+      event.preventDefault();
+      void deleteSelectedConnection();
       return;
     }
     if ((event.key === "Delete" || event.key === "Backspace") && selection.length) {
@@ -716,12 +877,34 @@ export function SpaceBoard({ focusId }: { focusId: string | null }) {
   // Panodan çıkarken bekleyen yerleşim gönderilir.
   useEffect(() => () => void flushLayout(), [flushLayout]);
 
+  // Workflow aktarımı / güncellemesi sağlayıcının işlevleriyle çalışır (yerel durum ve kaynak yüklemesi güncel kalır).
+  const boardIO = useMemo<PlanIO>(
+    () => ({
+      addItems,
+      addConnections,
+      patchItem: (id, patch) => patchItem(id, patch),
+      removeItems,
+      removeConnections,
+      createGroup: async (name) => {
+        if (!userId) return null;
+        try {
+          const group = await createSpaceGroup(space.id, name, userId, groups.length);
+          setGroups((list) => [...list, group]);
+          return group;
+        } catch {
+          return null;
+        }
+      },
+    }),
+    [addItems, addConnections, patchItem, removeItems, removeConnections, userId, space.id, groups.length, setGroups],
+  );
+
   const selectedItems = items.filter((item) => selectedSet.has(item.id));
   const single = selectedItems.length === 1 ? selectedItems[0] : null;
   const selectionGrouped = selectedItems.some((item) => item.groupId);
   const boardPalettes = palettes.filter((palette) => !items.some((item) => item.kind === "palette" && item.paletteId === palette.id));
   const lowDetail = vp.zoom < LOW_DETAIL_ZOOM;
-  const cursor = panning ? "cursor-grabbing" : tool === "pan" || spaceHeld ? "cursor-grab" : "cursor-default";
+  const cursor = panning ? "cursor-grabbing" : tool === "pan" || spaceHeld ? "cursor-grab" : tool === "connect" ? "cursor-crosshair" : "cursor-default";
 
   return (
     <div
@@ -754,9 +937,10 @@ export function SpaceBoard({ focusId }: { focusId: string | null }) {
             ]}
           />
         )}
-        <ToolButton icon={MousePointer2} label={t("spaces.board.toolSelect")} active={tool === "select" && !multiSelect} onClick={() => { setTool("select"); setMultiSelect(false); }} className="max-md:hidden" />
-        <ToolButton icon={Hand} label={t("spaces.board.toolPan")} active={tool === "pan"} onClick={() => setTool("pan")} className="max-md:hidden" />
+        <ToolButton icon={MousePointer2} label={t("spaces.board.toolSelect")} active={tool === "select" && !multiSelect} onClick={() => { setToolMode("select"); setMultiSelect(false); }} className="max-md:hidden" />
+        <ToolButton icon={Hand} label={t("spaces.board.toolPan")} active={tool === "pan"} onClick={() => setToolMode("pan")} className="max-md:hidden" />
         <ToolButton icon={SquareDashedMousePointer} label={t("spaces.board.multiSelect")} active={multiSelect} onClick={() => setMultiSelect((value) => !value)} />
+        {editable && <ToolButton icon={Spline} label={t("spaces.connect.tool")} active={tool === "connect"} onClick={() => setToolMode(tool === "connect" ? "select" : "connect")} />}
         {editable && (
           <>
             <Divider />
@@ -818,9 +1002,22 @@ export function SpaceBoard({ focusId }: { focusId: string | null }) {
               </div>
             );
           })}
+          <BoardConnectors
+            connections={connections}
+            boxes={geoms}
+            zoom={vp.zoom}
+            selectedId={selectedConnId}
+            draft={draft}
+            interactive
+            lowDetail={lowDetail}
+            titleOf={(itemId) => {
+              const target = items.find((entry) => entry.id === itemId);
+              return target ? itemTitle(target) : "";
+            }}
+          />
           {ordered.map((item) => {
             const geom = geoms[item.id];
-            const selected = selectedSet.has(item.id);
+            const selected = selectedSet.has(item.id) || item.id === activeFrom;
             const attached = item.attachedItemId ? items.find((entry) => entry.id === item.attachedItemId) : null;
             return (
               <BoardItem
@@ -832,7 +1029,7 @@ export function SpaceBoard({ focusId }: { focusId: string | null }) {
                 h={geom.h}
                 z={geom.z}
                 selected={selected}
-                showHandle={editable && selected && selection.length === 1}
+                showHandle={editable && selectedSet.has(item.id) && selection.length === 1}
                 resolved={resolvedMap.get(item.id)!}
                 palette={item.paletteId ? (palettes.find((palette) => palette.id === item.paletteId) ?? null) : null}
                 attachedTitle={attached ? itemTitle(attached) : null}
@@ -841,6 +1038,27 @@ export function SpaceBoard({ focusId }: { focusId: string | null }) {
             );
           })}
         </div>
+        {editable && (
+          <WorkflowSyncBar
+            spaceId={space.id}
+            items={items}
+            connections={connections}
+            io={boardIO}
+            onDone={() => setUndoNotice(t("wfSpace.sync.done"))}
+            onError={(message) => setError(message)}
+          />
+        )}
+        {tool === "connect" && (
+          <div className="pointer-events-none absolute inset-x-0 top-3 z-20 flex justify-center px-3">
+            <div role="status" data-board-connect-hint="" className="pointer-events-auto flex max-w-full items-center gap-2 rounded-full bg-text px-3.5 py-1.5 text-small text-background shadow-pop">
+              <Spline size={14} aria-hidden />
+              <span className="min-w-0 truncate">{activeFrom ? t("spaces.connect.hintTo") : t("spaces.connect.hintFrom")}</span>
+              <button type="button" onClick={() => setToolMode("select")} className="shrink-0 font-semibold underline underline-offset-2">
+                {t("spaces.connect.exit")}
+              </button>
+            </div>
+          </div>
+        )}
         {marquee && <div aria-hidden className="pointer-events-none absolute rounded-sm border border-primary bg-primary/10" style={{ left: marquee.x, top: marquee.y, width: marquee.w, height: marquee.h }} />}
 
         {items.length === 0 && (
@@ -880,7 +1098,7 @@ export function SpaceBoard({ focusId }: { focusId: string | null }) {
       )}
 
       {/* Seçim çubuğu (her ekranda; dokunmada bağlam menüsünün yerine) */}
-      {selectedItems.length > 0 && (
+      {selectedItems.length > 0 && !selectedConn && (
         <div className="pointer-events-none absolute inset-x-0 bottom-3 z-30 flex justify-center px-3">
           <div role="toolbar" aria-label={t("spaces.board.selectionToolbar")} data-board-selection={selectedItems.length} className="scrollbar-none pointer-events-auto flex max-w-full items-center gap-0.5 overflow-x-auto rounded-full border border-border-soft bg-surface px-1.5 py-1 shadow-pop">
             <span className="shrink-0 px-2 text-caption font-semibold text-text-secondary">{t("spaces.board.selected", { count: selectedItems.length })}</span>
@@ -891,6 +1109,7 @@ export function SpaceBoard({ focusId }: { focusId: string | null }) {
                 <ToolButton icon={BringToFront} label={t("spaces.board.bringFront")} onClick={() => stack("front")} />
                 <ToolButton icon={SendToBack} label={t("spaces.board.sendBack")} onClick={() => stack("back")} />
                 {selectedItems.length >= 2 && <ToolButton icon={Group} label={t("spaces.board.group")} onClick={() => void groupSelection()} />}
+                {selectedItems.length >= 2 && <ToolButton icon={Spline} label={t("spaces.connect.selection")} onClick={() => void connectItems(chainPairs(selection, connections))} />}
                 {selectionGrouped && <ToolButton icon={Ungroup} label={t("spaces.board.ungroup")} onClick={ungroupSelection} />}
                 {selectedItems.length >= 2 && (
                   <SpaceMenu
@@ -917,6 +1136,17 @@ export function SpaceBoard({ focusId }: { focusId: string | null }) {
         </div>
       )}
 
+      {selectedConn && (
+        <ConnectionBar
+          connection={selectedConn}
+          editable={editable}
+          onPatch={(patch) => void patchSelectedConnection(patch)}
+          onReverse={() => void patchSelectedConnection({ fromItemId: selectedConn.toItemId, toItemId: selectedConn.fromItemId })}
+          onDelete={() => void deleteSelectedConnection()}
+          onClose={() => setSelectedConnId(null)}
+        />
+      )}
+
       {dialog?.kind === "detail" && <ItemDetailModal itemId={dialog.id} onClose={() => setDialog(null)} />}
       {dialog?.kind === "note" && <NoteEditorModal note={dialog.item ?? null} attachTo={dialog.attachTo ?? null} near={dialog.near} onClose={() => setDialog(null)} />}
       {dialog?.kind === "draft" && <DraftEditorModal draft={dialog.item ?? null} near={dialog.near} onClose={() => setDialog(null)} />}
@@ -924,15 +1154,18 @@ export function SpaceBoard({ focusId }: { focusId: string | null }) {
       {dialog?.kind === "importWorkflow" && (
         <WorkflowImportModal
           spaceVisibility={space.visibility}
-          existingWorkflowIds={new Set(items.filter((item) => item.kind === "content" && item.contentType === "workflow" && item.contentId).map((item) => item.contentId!))}
+          items={items}
           onClose={() => setDialog(null)}
-          onImport={async ({ workflow, size, showIo, showLinks, showRelations }) => {
-            // Hata pencerede gösterilsin diye `addFromBoard` değil doğrudan `addItems` (aynı geri alma + seçim davranışı).
-            const created = await addItems(
-              place([{ spaceId: space.id, kind: "content", contentType: "workflow", contentId: workflow.id, title: "", flowShowIo: showIo, flowShowLinks: showLinks, flowShowRelations: showRelations }], viewCenter(), [size]),
-            );
-            setHistory((h) => pushHistory(h, { type: "add", items: created }));
-            setSelection(created.map((item) => item.id));
+          onImport={async ({ workflow, options }) => {
+            // Hata pencerede gösterilsin diye `addFromBoard` değil doğrudan çalıştırılır; geri al tek adımdır (`import`).
+            const input = await loadPlanInput(workflow.id, { fresh: true });
+            if (!input) throw new Error(t("wfSpace.import.loadFailed"));
+            const result = await runImport({ io: boardIO, spaceId: space.id, workflowId: workflow.id, workflowTitle: workflow.title, input, options, existingItems: items, near: viewCenter() });
+            setHistory((h) => pushHistory(h, { type: "import", items: result.items, connections: result.connections }));
+            setSelection(result.items.map((item) => item.id));
+            const { w, h } = viewSize();
+            setVp(fitViewport(result.items, w, h));
+            if (result.degraded) setUndoNotice(t("wfSpace.objects.degraded"));
           }}
         />
       )}
@@ -975,6 +1208,7 @@ function ShortcutsDialog({ onClose }: { onClose: () => void }) {
     ["⌘/Ctrl + Shift + Z · ⌘/Ctrl + Y", t("spaces.board.redo")],
     ["⌘/Ctrl + A", t("spaces.shortcuts.selectAll")],
     ["⌘/Ctrl + G · ⌘/Ctrl + Shift + G", t("spaces.shortcuts.group")],
+    ["C", t("spaces.shortcuts.connect")],
     ["Enter", t("spaces.board.open")],
     ["[ · ]", t("spaces.shortcuts.cycle")],
     ["+ · − · 0", t("spaces.shortcuts.zoom")],

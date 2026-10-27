@@ -19,6 +19,7 @@ import {
   type SpaceSort,
   type SpaceVisibility,
 } from "@/lib/spaces";
+import type { ConnectorArrow, ConnectorRoute, ConnectorStyle } from "@/lib/space-connectors";
 import type { Preset, Prompt, PromptRequest, Workflow } from "@/types";
 
 /**
@@ -47,6 +48,7 @@ const SPACE_ERROR_KEYS: Record<SpaceErrorCode, TranslationKey> = {
   space_not_link_visible: "spaces.error.notLinkVisible",
   space_archived: "spaces.error.archived",
   space_item_limit: "spaces.error.itemLimit",
+  space_connection_limit: "spaces.error.connectionLimit",
   space_group_limit: "spaces.error.groupLimit",
   space_palette_limit: "spaces.error.paletteLimit",
   space_source_unavailable: "spaces.error.sourceUnavailable",
@@ -171,10 +173,32 @@ export interface SpaceItem {
   flowShowIo: boolean;
   flowShowLinks: boolean;
   flowShowRelations: boolean;
+  /** Bir workflow'dan aktarılan nesnenin kaynağı (docs/history/262-*): workflow, adım ve rol (adım kartı / prompt / görsel). Elle eklenen öğede boş. */
+  sourceWorkflowId: string | null;
+  sourceStepId: string | null;
+  sourceRole: "step" | "prompt" | "image" | null;
+  sourceStepNo: number | null;
   createdBy: string | null;
   updatedBy: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+/** Panodaki iki öğe arasındaki ok / bağlantı (docs/history/262-*). Konum saklanmaz: uçlar öğelerin konumundan hesaplanır. */
+export interface SpaceConnection {
+  id: string;
+  spaceId: string;
+  fromItemId: string;
+  toItemId: string;
+  label: string;
+  lineStyle: ConnectorStyle;
+  arrow: ConnectorArrow;
+  route: ConnectorRoute;
+  color: SpaceColor;
+  sourceWorkflowId: string | null;
+  sourceRole: "flow" | "link" | "relation" | null;
+  createdBy: string | null;
+  createdAt: string;
 }
 
 export interface SpaceGroup {
@@ -346,6 +370,10 @@ export interface SpaceItemRow {
   flow_show_io?: boolean;
   flow_show_links?: boolean;
   flow_show_relations?: boolean;
+  source_workflow_id?: string | null;
+  source_step_id?: string | null;
+  source_role?: "step" | "prompt" | "image" | null;
+  source_step_no?: number | null;
   created_by: string | null;
   updated_by: string | null;
   created_at: string;
@@ -354,7 +382,7 @@ export interface SpaceItemRow {
 
 // `flow_show_*` (docs/history/261-*) yoksa istek sütunsuz yeniden denenir (server-errors.ts OPTIONAL_COLUMNS) — Space'ler migration'dan önce de açılır.
 const ITEM_COLS =
-  "id, space_id, kind, x, y, w, h, z, group_id, prompt_id, media_url, media_width, media_height, is_draft, source_prompt_id, content_type, content_id, palette_id, title, body, note, color, attached_item_id, is_private, flow_show_io, flow_show_links, flow_show_relations, created_by, updated_by, created_at, updated_at";
+  "id, space_id, kind, x, y, w, h, z, group_id, prompt_id, media_url, media_width, media_height, is_draft, source_prompt_id, content_type, content_id, palette_id, title, body, note, color, attached_item_id, is_private, flow_show_io, flow_show_links, flow_show_relations, source_workflow_id, source_step_id, source_role, source_step_no, created_by, updated_by, created_at, updated_at";
 
 export function mapSpaceItem(row: SpaceItemRow): SpaceItem {
   return {
@@ -385,6 +413,10 @@ export function mapSpaceItem(row: SpaceItemRow): SpaceItem {
     flowShowIo: row.flow_show_io ?? true,
     flowShowLinks: row.flow_show_links ?? true,
     flowShowRelations: row.flow_show_relations ?? true,
+    sourceWorkflowId: row.source_workflow_id ?? null,
+    sourceStepId: row.source_step_id ?? null,
+    sourceRole: row.source_role ?? null,
+    sourceStepNo: row.source_step_no ?? null,
     createdBy: row.created_by,
     updatedBy: row.updated_by,
     createdAt: row.created_at,
@@ -713,6 +745,11 @@ export interface NewSpaceItem {
   flowShowIo?: boolean;
   flowShowLinks?: boolean;
   flowShowRelations?: boolean;
+  /** Workflow'dan aktarılan nesne (docs/history/262-*); verilmezse sütunlar hiç gönderilmez. */
+  sourceWorkflowId?: string | null;
+  sourceStepId?: string | null;
+  sourceRole?: "step" | "prompt" | "image" | null;
+  sourceStepNo?: number | null;
 }
 
 function itemInsertRow(item: NewSpaceItem, userId: string): Record<string, unknown> {
@@ -745,6 +782,7 @@ function itemInsertRow(item: NewSpaceItem, userId: string): Record<string, unkno
     ...(item.flowShowIo === undefined ? {} : { flow_show_io: item.flowShowIo }),
     ...(item.flowShowLinks === undefined ? {} : { flow_show_links: item.flowShowLinks }),
     ...(item.flowShowRelations === undefined ? {} : { flow_show_relations: item.flowShowRelations }),
+    ...(item.sourceWorkflowId ? { source_workflow_id: item.sourceWorkflowId, source_step_id: item.sourceStepId ?? null, source_role: item.sourceRole ?? null, source_step_no: item.sourceStepNo ?? null } : {}),
     created_by: userId,
   };
 }
@@ -786,6 +824,117 @@ export async function updateSpaceItem(id: string, patch: SpaceItemPatch): Promis
 export async function deleteSpaceItems(ids: string[]): Promise<string[]> {
   if (ids.length === 0) return [];
   const { data, error } = await supabase.from("space_items").delete().in("id", ids).select("id");
+  if (error) throw toSpaceError(error);
+  return (data ?? []).map((row) => (row as { id: string }).id);
+}
+
+// ---------------------------------------------------------------------------------------------
+// Pano okları / bağlantıları (docs/history/262-*)
+// ---------------------------------------------------------------------------------------------
+
+interface ConnectionRow {
+  id: string;
+  space_id: string;
+  from_item_id: string;
+  to_item_id: string;
+  label: string | null;
+  line_style: ConnectorStyle;
+  arrow: ConnectorArrow;
+  route: ConnectorRoute;
+  color: SpaceColor;
+  source_workflow_id: string | null;
+  source_role: "flow" | "link" | "relation" | null;
+  created_by: string | null;
+  created_at: string;
+}
+
+const CONNECTION_COLS = "id, space_id, from_item_id, to_item_id, label, line_style, arrow, route, color, source_workflow_id, source_role, created_by, created_at";
+
+export function mapSpaceConnection(row: ConnectionRow): SpaceConnection {
+  return {
+    id: row.id,
+    spaceId: row.space_id,
+    fromItemId: row.from_item_id,
+    toItemId: row.to_item_id,
+    label: row.label ?? "",
+    lineStyle: row.line_style,
+    arrow: row.arrow,
+    route: row.route,
+    color: row.color,
+    sourceWorkflowId: row.source_workflow_id,
+    sourceRole: row.source_role,
+    createdBy: row.created_by,
+    createdAt: row.created_at,
+  };
+}
+
+/** Space'in tüm okları (bir Space'te en çok 1000). Tablo henüz yoksa (migration gecikti) pano oksuz açılır, hata vermez. */
+export async function fetchSpaceConnections(spaceId: string): Promise<SpaceConnection[]> {
+  const { data, error } = await supabase.from("space_connections").select(CONNECTION_COLS).eq("space_id", spaceId).order("created_at", { ascending: true }).limit(1000);
+  if (error) {
+    console.error("fetchSpaceConnections", error);
+    return [];
+  }
+  return (data ?? []).map((row) => mapSpaceConnection(row as ConnectionRow));
+}
+
+export interface NewSpaceConnection {
+  id?: string;
+  spaceId: string;
+  fromItemId: string;
+  toItemId: string;
+  label?: string;
+  lineStyle?: ConnectorStyle;
+  arrow?: ConnectorArrow;
+  route?: ConnectorRoute;
+  color?: SpaceColor;
+  sourceWorkflowId?: string | null;
+  sourceRole?: "flow" | "link" | "relation" | null;
+}
+
+export async function addSpaceConnections(connections: NewSpaceConnection[], userId: string): Promise<SpaceConnection[]> {
+  if (connections.length === 0) return [];
+  const rows = connections.map((c) => ({
+    // Kimlik istemcide üretilir: geri alınan silme aynı kimlikle geri gelir.
+    id: c.id ?? crypto.randomUUID(),
+    space_id: c.spaceId,
+    from_item_id: c.fromItemId,
+    to_item_id: c.toItemId,
+    label: c.label ?? "",
+    line_style: c.lineStyle ?? "solid",
+    arrow: c.arrow ?? "end",
+    route: c.route ?? "curve",
+    color: c.color ?? "primary",
+    ...(c.sourceWorkflowId ? { source_workflow_id: c.sourceWorkflowId, source_role: c.sourceRole ?? "flow" } : {}),
+    created_by: userId,
+  }));
+  const { data, error } = await supabase.from("space_connections").insert(rows).select(CONNECTION_COLS);
+  if (error) throw toSpaceError(error);
+  if (!data || data.length !== rows.length) throw new SpaceError("space_forbidden", translateForRuntime("spaces.error.forbidden"));
+  return data.map((row) => mapSpaceConnection(row as ConnectionRow));
+}
+
+export type SpaceConnectionPatch = Partial<Pick<SpaceConnection, "label" | "lineStyle" | "arrow" | "route" | "color" | "fromItemId" | "toItemId">>;
+
+export async function updateSpaceConnection(id: string, patch: SpaceConnectionPatch): Promise<SpaceConnection> {
+  const body: Record<string, unknown> = {};
+  if (patch.label !== undefined) body.label = patch.label;
+  if (patch.lineStyle !== undefined) body.line_style = patch.lineStyle;
+  if (patch.arrow !== undefined) body.arrow = patch.arrow;
+  if (patch.route !== undefined) body.route = patch.route;
+  if (patch.color !== undefined) body.color = patch.color;
+  if (patch.fromItemId !== undefined) body.from_item_id = patch.fromItemId;
+  if (patch.toItemId !== undefined) body.to_item_id = patch.toItemId;
+  const { data, error } = await supabase.from("space_connections").update(body).eq("id", id).select(CONNECTION_COLS).maybeSingle();
+  if (error) throw toSpaceError(error);
+  if (!data) throw new SpaceError("space_forbidden", translateForRuntime("spaces.error.forbidden"));
+  return mapSpaceConnection(data as ConnectionRow);
+}
+
+/** Silinen kimlikleri döner (başkası zaten silmişse eksik gelir; çağıran yine yerelden düşer). */
+export async function deleteSpaceConnections(ids: string[]): Promise<string[]> {
+  if (ids.length === 0) return [];
+  const { data, error } = await supabase.from("space_connections").delete().in("id", ids).select("id");
   if (error) throw toSpaceError(error);
   return (data ?? []).map((row) => (row as { id: string }).id);
 }

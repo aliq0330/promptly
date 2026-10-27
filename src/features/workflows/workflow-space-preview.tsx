@@ -4,14 +4,16 @@ import Link from "next/link";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { ExternalLink, Globe, Lock, Shapes } from "lucide-react";
 import { BoardItem } from "@/features/spaces/board/board-item";
+import { BoardConnectors } from "@/features/spaces/board/board-connectors";
 import { resolveSource } from "@/features/spaces/space-items";
 import { DetailSection } from "@/features/content/detail-parts";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import { boundsOf } from "@/lib/space-board";
+import { boundsOf, groupFrames, rectsIntersect, type Rect } from "@/lib/space-board";
 import { spaceHref } from "@/lib/spaces";
-import { emptySources, fetchSpaceItems, fetchSpacePalettes, fetchSpaceSources, type SpaceItem, type SpacePalette, type SpaceSources } from "@/lib/supabase/spaces";
+import { emptySources, fetchSpaceConnections, fetchSpaceGroups, fetchSpaceItems, fetchSpacePalettes, fetchSpaceSources, type SpaceConnection, type SpaceGroup, type SpaceItem, type SpacePalette, type SpaceSources } from "@/lib/supabase/spaces";
 import { fetchWorkflowSpaceLinks, type WorkflowSpaceLink } from "@/lib/supabase/workflow-flow";
 import { cn } from "@/lib/utils";
+import { SPACE_COLOR_CLASS } from "@/features/spaces/space-visuals";
 
 /** Panodaki öğe `lowDetail` eşiğiyle aynı (space-board.tsx `LOW_DETAIL_ZOOM`): çok küçülünce metin yerine sade bloklar. */
 const LOW_DETAIL_SCALE = 0.4;
@@ -22,6 +24,15 @@ interface MiniBoardData {
   items: SpaceItem[];
   palettes: SpacePalette[];
   sources: SpaceSources;
+  connections: SpaceConnection[];
+  groups: SpaceGroup[];
+}
+
+/** Önizlemenin bakacağı yer: bu workflow'un nesneleri (ya da eski çerçeve öğesi) ve çevresi; hiçbiri yoksa panonun tamamı. */
+function focusRect(items: readonly SpaceItem[], workflowId: string): Rect | null {
+  const own = items.filter((item) => item.sourceWorkflowId === workflowId || (item.kind === "content" && item.contentType === "workflow" && item.contentId === workflowId));
+  const bounds = boundsOf(own.length > 0 ? own : items);
+  return bounds ? { x: bounds.x - PAD, y: bounds.y - PAD, w: bounds.w + PAD * 2, h: bounds.h + PAD * 2 } : null;
 }
 
 /**
@@ -29,7 +40,7 @@ interface MiniBoardData {
  * Okuma okuyucunun yetkisiyle (RLS) gelir: göremediği Space/öğe/kaynak hiç gelmez ya da "erişilemiyor" çizilir. Gizli notlar hiçbir
  * durumda önizlemeye girmez (Space üyesi bile olsa: sayfa herkesin önünde durur).
  */
-function MiniBoard({ spaceId }: { spaceId: string }) {
+function MiniBoard({ spaceId, workflowId }: { spaceId: string; workflowId: string }) {
   const { t } = useTranslation();
   const [data, setData] = useState<{ spaceId: string; value: MiniBoardData | null } | null>(null);
   const hostRef = useRef<HTMLDivElement>(null);
@@ -38,10 +49,10 @@ function MiniBoard({ spaceId }: { spaceId: string }) {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const [rawItems, palettes] = await Promise.all([fetchSpaceItems(spaceId), fetchSpacePalettes(spaceId)]);
+      const [rawItems, palettes, connections, groups] = await Promise.all([fetchSpaceItems(spaceId), fetchSpacePalettes(spaceId), fetchSpaceConnections(spaceId), fetchSpaceGroups(spaceId).catch(() => [])]);
       const items = rawItems.filter((item) => !item.isPrivate);
       const sources = await fetchSpaceSources(items).catch(() => emptySources());
-      return { items, palettes, sources };
+      return { items, palettes, sources, connections, groups };
     })().then(
       (value) => !cancelled && setData({ spaceId, value }),
       () => !cancelled && setData({ spaceId, value: null }),
@@ -63,13 +74,15 @@ function MiniBoard({ spaceId }: { spaceId: string }) {
 
   const board = data && data.spaceId === spaceId ? data.value : null;
   const loading = !data || data.spaceId !== spaceId;
-  const bounds = useMemo(() => (board ? boundsOf(board.items) : null), [board]);
+  const view = useMemo(() => (board ? focusRect(board.items, workflowId) : null), [board, workflowId]);
+  const visibleItems = useMemo(() => (board && view ? board.items.filter((item) => rectsIntersect(item, view)) : []), [board, view]);
+  const boxes = useMemo(() => Object.fromEntries((board?.items ?? []).map((item) => [item.id, { x: item.x - (view?.x ?? 0), y: item.y - (view?.y ?? 0), w: item.w, h: item.h }])), [board, view]);
+  const frames = useMemo(() => (board ? groupFrames(board.items.map((item) => ({ id: item.id, x: item.x, y: item.y, w: item.w, h: item.h, z: item.z, groupId: item.groupId }))) : []), [board]);
   const readable = useMemo(() => {
     const sources = board?.sources ?? emptySources();
     return (id: string) => sources.prompts.has(id) || sources.requests.has(id) || sources.workflows.has(id) || sources.presets.has(id);
   }, [board]);
 
-  const view = bounds ? { x: bounds.x - PAD, y: bounds.y - PAD, w: bounds.w + PAD * 2, h: bounds.h + PAD * 2 } : null;
   const scale = view && width > 0 ? Math.min(1, width / view.w, MAX_PREVIEW_HEIGHT / view.h) : 1;
   const offsetX = view ? Math.max(0, (width - view.w * scale) / 2) : 0;
 
@@ -87,7 +100,20 @@ function MiniBoard({ spaceId }: { spaceId: string }) {
     >
       {board && view && (
         <div className="pointer-events-none absolute left-0 top-0 origin-top-left select-none" style={{ transform: `translate(${offsetX}px, 0) scale(${scale})` }}>
-          {board.items.map((item) => (
+          {frames
+            .filter((frame) => rectsIntersect(frame.rect, view))
+            .map((frame) => {
+              const group = board.groups.find((entry) => entry.id === frame.groupId);
+              if (!group) return null;
+              const colors = SPACE_COLOR_CLASS[group.color];
+              return (
+                <div key={frame.groupId} className={cn("absolute rounded-xl border-2 border-dashed", colors.border)} style={{ left: frame.rect.x - view.x, top: frame.rect.y - view.y, width: frame.rect.w, height: frame.rect.h, zIndex: 0 }}>
+                  <span className={cn("absolute left-2 top-1.5 inline-flex max-w-[calc(100%-1rem)] items-center truncate rounded-full px-2.5 py-1 text-caption font-semibold", colors.surface, colors.text)}>{group.name}</span>
+                </div>
+              );
+            })}
+          <BoardConnectors connections={board.connections} boxes={boxes} zoom={scale} selectedId={null} interactive={false} lowDetail={scale < LOW_DETAIL_SCALE} />
+          {visibleItems.map((item) => (
             <BoardItem
               key={item.id}
               item={item}
@@ -175,7 +201,7 @@ export function WorkflowSpacePreview({ workflowId }: { workflowId: string }) {
             </Link>
           </div>
         </div>
-        <MiniBoard key={current.spaceId} spaceId={current.spaceId} />
+        <MiniBoard key={current.spaceId} spaceId={current.spaceId} workflowId={workflowId} />
       </div>
     </DetailSection>
   );
