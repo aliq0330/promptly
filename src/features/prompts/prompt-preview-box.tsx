@@ -4,6 +4,7 @@ import { CopyPromptButton } from "./copy-prompt-button";
 import { resolveToolRefs } from "@/lib/ai-tool-catalog";
 import { cn, formatCount } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
+import { TextArt, TextArtExcerpt } from "@/features/content/text-art";
 import type { Prompt } from "@/types";
 
 /**
@@ -22,15 +23,13 @@ export function PromptPreviewBox({ prompt, lines = 4, variant = "panel" }: { pro
   const { t } = useTranslation();
   const tool = resolveToolRefs(prompt.tools)[0]?.label ?? prompt.tool;
   if (variant === "art") {
-    // The visual card's art for a prompt without a picture: the prompt itself, in the platform's signature mono, filling the
-    // picture box on the quiet brand tint and fading out where a long prompt is cut off. The type glyph in the card's corner
-    // and the title on hover say the rest.
+    // The visual card's art for a prompt without a picture: the prompt itself, in the platform's signature mono, on a theme-token
+    // surface whose tone follows the prompt's id (`TextArt`), fading out where a long prompt is cut off; the tool sits under it.
     return (
-      <div className="relative aspect-[4/5] w-full overflow-hidden bg-primary-soft px-5 py-6">
-        <p className="prompt-text h-full overflow-hidden break-words whitespace-pre-line text-text [mask-image:linear-gradient(#000_60%,transparent_100%)]">
-          {prompt.promptText}
-        </p>
-      </div>
+      <TextArt seed={prompt.id} className="gap-2.5 p-4">
+        <TextArtExcerpt className="text-small leading-relaxed">{prompt.promptText}</TextArtExcerpt>
+        {tool && <p className="shrink-0 truncate text-caption font-semibold opacity-70">{tool}</p>}
+      </TextArt>
     );
   }
   return (

@@ -172,6 +172,7 @@ export function ContentCardPost({
   author,
   meta,
   typeIcon: TypeIcon,
+  titleInArt,
   status,
   badges,
   menu,
@@ -186,6 +187,8 @@ export function ContentCardPost({
   meta: string;
   /** The small round glyph on the picture: what kind of post this is (skipped for an image prompt, whose picture says it). */
   typeIcon?: LucideIcon;
+  /** The art already shows the title (a text surface): the hover layer keeps it only for assistive tech / keyboard focus. */
+  titleInArt?: boolean;
   /** Always-visible chips on the picture's corner (`Badge`s: Taslak, Açık/Kapandı, Alıntı, Sabit…). */
   status?: React.ReactNode;
   /** The kicker row shown with the title on hover (`ContentTypePill`, announced chip…). */
@@ -217,7 +220,7 @@ export function ContentCardPost({
           </span>
         )}
         {/* Title + kicker over the picture on hover / keyboard focus. The overlay lets clicks through to the stretched link; the title link inside it is the keyboard way in. */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[2] space-y-1.5 bg-gradient-to-t from-black/75 via-black/45 to-transparent px-3.5 pb-3 pt-12 opacity-0 transition-opacity duration-200 ease-soft group-focus-within:opacity-100 group-hover:opacity-100 [&_a]:pointer-events-auto [&_h2]:text-white [&_p]:text-white/85 [&_span]:text-white">
+        <div className={cn("pointer-events-none absolute inset-x-0 bottom-0 z-[2] space-y-1.5 bg-gradient-to-t from-black/75 via-black/45 to-transparent px-3.5 pb-3 pt-12 opacity-0 transition-opacity duration-200 ease-soft group-focus-within:opacity-100 group-hover:opacity-100 [&_a]:pointer-events-auto [&_h2]:text-white [&_p]:text-white/85 [&_span]:text-white", titleInArt && "sr-only")}>
           {badges && <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5">{badges}</div>}
           {title}
           {meta && <p className="truncate text-small leading-tight">{meta}</p>}

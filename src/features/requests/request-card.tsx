@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Reply, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { TextArt, TextArtTitle } from "@/features/content/text-art";
 import { ContentCard, ContentCardPost, ContentCardTitle } from "@/features/content/content-card";
 import { ContentTypePill } from "@/features/content/content-type-label";
 import { AnnouncedChip } from "@/features/communities/announced-chip";
@@ -55,6 +56,7 @@ export function RequestCard({ request, onDeleted }: { request: PromptRequest; on
         author={request.author}
         meta={postMeta(request.author.username, request.createdAt, language)}
         typeIcon={Sparkles}
+        titleInArt={!picture}
         status={
           <Badge variant={STATUS_VARIANTS[request.status]}>
             <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-current" />
@@ -74,15 +76,16 @@ export function RequestCard({ request, onDeleted }: { request: PromptRequest; on
               <StorageImage src={picture.url} alt={picture.alt} fill sizes="(min-width: 1280px) 30vw, (min-width: 640px) 45vw, 100vw" className="object-cover" />
             </figure>
           ) : (
-            <div className="flex aspect-[4/5] w-full flex-col justify-center space-y-2 bg-primary-soft px-5 py-5">
-              <p className="line-clamp-4 whitespace-pre-line break-words text-small leading-relaxed text-text">{request.description}</p>
+            <TextArt seed={request.id} className="gap-2">
+              <TextArtTitle>{request.title}</TextArtTitle>
+              <p className="min-h-0 flex-1 overflow-hidden whitespace-pre-line break-words text-small leading-relaxed [mask-image:linear-gradient(#000_65%,transparent_100%)]">{request.description}</p>
               {request.creativeDirection && (
-                <p className="line-clamp-2 text-caption text-text-secondary">
-                  <span className="font-semibold text-text">{t("request.creativeDirection")} · </span>
+                <p className="line-clamp-1 shrink-0 text-caption opacity-75">
+                  <span className="font-semibold">{t("request.creativeDirection")} · </span>
                   {request.creativeDirection}
                 </p>
               )}
-            </div>
+            </TextArt>
           )
         }
         title={<ContentCardTitle href={href} title={request.title} />}

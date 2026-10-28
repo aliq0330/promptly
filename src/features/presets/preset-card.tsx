@@ -11,6 +11,7 @@ import { AnnouncedChip } from "@/features/communities/announced-chip";
 import { PostTargetMenu, postMeta } from "@/features/prompts/post-header";
 import { PromptCardFooter } from "@/features/prompts/prompt-card-footer";
 import { Badge } from "@/components/ui/badge";
+import { TextArt, TextArtTitle } from "@/features/content/text-art";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Preset } from "@/types";
 
@@ -31,7 +32,7 @@ export function PresetCard({
   const { t, language } = useTranslation();
   const href = presetHref(preset);
   const entries = presetParameterEntries(preset, language);
-  const shown = entries.slice(0, 3);
+  const shown = entries.slice(0, 4);
   const category = taxonomyPathLabel(preset, language, true);
   const toolLabel = resolveToolRefs(preset.tools)[0]?.label ?? null;
 
@@ -55,27 +56,24 @@ export function PresetCard({
           </>
         }
         menu={<PostTargetMenu preset={preset} onDeleted={onDeleted} collectionRemoval={collectionRemoval} />}
+        titleInArt
         art={
-          <div className="flex aspect-[4/5] w-full flex-col justify-center space-y-3 bg-primary-soft p-5">
+          <TextArt seed={preset.id} className="gap-2.5">
+            <TextArtTitle>{preset.title}</TextArtTitle>
             {shown.length > 0 && (
-              <ul className="flex flex-wrap gap-1.5" aria-label={t("preset.contentsTitle")}>
+              <ul className="min-h-0 flex-1 overflow-hidden" aria-label={t("preset.contentsTitle")}>
                 {shown.map((entry) => (
-                  <li key={entry.fieldId} className="inline-flex max-w-full items-center gap-1 rounded-full bg-surface-soft px-2.5 py-1 text-caption text-text-secondary">
-                    <span className="shrink-0 text-text-muted">{entry.fieldLabel}:</span>
-                    <span className="truncate font-medium text-text">{entry.valueLabel}</span>
+                  <li key={entry.fieldId} className="flex items-baseline justify-between gap-3 border-b border-current/15 py-1 text-small last:border-b-0">
+                    <span className="shrink-0 opacity-70">{entry.fieldLabel}</span>
+                    <span className="truncate font-semibold">{entry.valueLabel}</span>
                   </li>
                 ))}
-                {entries.length > shown.length && (
-                  <li className="inline-flex items-center rounded-full bg-surface-soft px-2.5 py-1 text-caption font-medium text-text-muted">
-                    +{entries.length - shown.length}
-                  </li>
-                )}
               </ul>
             )}
-            <p className="text-caption text-text-muted">
+            <p className="shrink-0 truncate text-caption opacity-70">
               {t("preset.paramCount", { count: entries.length })} · {toolLabel ?? t("preset.generalTool")}
             </p>
-          </div>
+          </TextArt>
         }
         title={<ContentCardTitle href={href} title={preset.title} />}
         footer={<PromptCardFooter preset={preset} />}

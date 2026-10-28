@@ -17,6 +17,9 @@
 - Yedi kart (`prompt/workflow/preset/request/quote/application` + Space Keşfet kartı) ve `PromptCardSkeleton` yeni yapıya uyarlandı.
 - Yeni metin yok (i18n): mevcut anahtarlar kullanıldı; `prompt.output` artık kartta kullanılmıyor, çeviri dosyasında duruyor.
 
+## Metin yüzeyleri (resimsiz kartlar) — ilk denemeden sonra düzeltme
+Kullanıcı telefonda gördü: resimsiz kartlar (hazır ayar vb.) çok uzun, boş ve hepsi aynı soluk pastel. Düzeltme (`features/content/text-art.tsx`): resimsiz içeriğin yüzeyi `TextArt` — sabit 4:3 (kısa), yalnız tema token'larından 5 ton (`primary-soft`, düz `primary`, `text` ters, `secondary` karışımı, gradyan), ton içerik kimliğinden seçilir (akış tek renk olmaz; her palet ve koyu/açık mod kendiliğinden uyar); içerik yoğun: prompt metni mono + araç, hazır ayar başlık + 4 satır parametre, workflow başlık + adım türü zinciri, istek başlık + açıklama + yön, alıntı/başvuru içeriğin metni (`SummaryTextArt`). Başlığı yüzeyde gösteren kartlarda hover katmanı yalnız ekran okuyucu için kalır (`titleInArt`). Tür simgesi köşede kaldığı için metin ilk satırlarda ona yer bırakır.
+
 ## Bilinçli sınırlar / açık
 - Dokunmatik cihazda kartta başlık yok (hover yok); kullanıcı isteği "başlık/açıklama kalksın" idi. Gerekirse başlığı alt satıra tek satır ekleyen bir tercih eklenebilir.
 - Kaydet'in sayısı, Paylaş ve İstatistik kartta yok — hızlı paylaşım/istatistik için karta dokunmak gerekir.

@@ -9,6 +9,7 @@ import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
 import { PostTargetMenu, postMeta } from "@/features/prompts/post-header";
 import { PromptCardFooter } from "@/features/prompts/prompt-card-footer";
 import { Badge } from "@/components/ui/badge";
+import { TextArt, TextArtTitle } from "@/features/content/text-art";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { categoryLabel } from "./step-meta";
 import type { Workflow } from "@/types";
@@ -37,6 +38,7 @@ export function WorkflowCard({
         author={workflow.creator}
         meta={postMeta(workflow.creator.username, workflow.createdAt, language)}
         typeIcon={WorkflowIcon}
+        titleInArt={!workflow.coverUrl}
         status={workflow.status === "draft" ? <Badge variant="warning">{t("workflow.draftBadge")}</Badge> : undefined}
         badges={
           <>
@@ -57,15 +59,15 @@ export function WorkflowCard({
               )}
             </figure>
           ) : (
-            <div className="flex aspect-[4/5] w-full flex-col items-center justify-center gap-2.5 bg-primary-soft px-4 py-5 text-center">
-              <span className="text-label font-semibold text-text">{t("workflow.stepCount", { count: String(workflow.stepCount) })}</span>
-              <span className="flex flex-wrap items-center justify-center gap-1.5">
+            <TextArt seed={workflow.id} className="gap-3">
+              <TextArtTitle>{workflow.title}</TextArtTitle>
+              <span className="flex min-h-0 flex-1 flex-wrap content-start items-center gap-1.5">
                 {workflow.contentTypes.map((type, index) => {
                   const Icon = CONTENT_TYPE_META[type].icon;
                   return (
                     <span key={type} className="inline-flex items-center gap-1.5">
-                      {index > 0 && <ArrowRight size={13} aria-hidden className="text-text-muted" />}
-                      <span className="inline-flex h-7 items-center gap-1 rounded-full bg-primary-soft px-2.5 text-caption font-semibold text-primary">
+                      {index > 0 && <ArrowRight size={13} aria-hidden className="opacity-60" />}
+                      <span className="inline-flex h-7 items-center gap-1 rounded-full bg-current/10 px-2.5 text-caption font-semibold">
                         <Icon size={12} aria-hidden />
                         {t(CONTENT_TYPE_META[type].labelKey)}
                       </span>
@@ -73,7 +75,8 @@ export function WorkflowCard({
                   );
                 })}
               </span>
-            </div>
+              <span className="shrink-0 text-caption opacity-70">{t("workflow.stepCount", { count: String(workflow.stepCount) })}</span>
+            </TextArt>
           )
         }
         title={<ContentCardTitle href={href} title={workflow.title} />}
