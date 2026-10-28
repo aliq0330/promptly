@@ -12,12 +12,10 @@ import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { categoryLabel } from "./step-meta";
 import type { Workflow } from "@/types";
-import { ReactionSummary } from "@/features/reactions/reaction-summary";
 
 /**
- * WorkflowCard — the Albüm card (`ContentCardPost`, docs/history/202-*) like PromptCard; its art is the cover (if any) or
- * a "steps" tile (how many steps, which content types it chains), its big action "Çalıştır" opens the detail page straight
- * in the step-by-step run (`?run=1`).
+ * WorkflowCard — the visual card (`ContentCardPost`, docs/history/266-*) like PromptCard; its art is the cover (if any) or
+ * a "steps" tile (how many steps, which content types it chains). The step-by-step run (`?run=1`) starts on the detail page.
  */
 export function WorkflowCard({
   workflow,
@@ -34,31 +32,32 @@ export function WorkflowCard({
   const category = categoryLabel(workflow.contentTypes, workflow.category, language);
 
   return (
-    <ContentCard href={href}>
+    <ContentCard variant="visual" href={href}>
       <ContentCardPost
         author={workflow.creator}
         meta={postMeta(workflow.creator.username, workflow.createdAt, language)}
+        typeIcon={WorkflowIcon}
+        status={workflow.status === "draft" ? <Badge variant="warning">{t("workflow.draftBadge")}</Badge> : undefined}
         badges={
           <>
             <ContentTypePill icon={WorkflowIcon} label={t("workflow.singular")} detail={category} />
             <AnnouncedChip kind="workflow" id={workflow.id} />
-            {workflow.status === "draft" && <Badge variant="warning">{t("workflow.draftBadge")}</Badge>}
           </>
         }
         menu={<PostTargetMenu workflow={workflow} onDeleted={onDeleted} collectionRemoval={collectionRemoval} />}
         art={
           workflow.coverUrl ? (
-            <figure data-card-media className="relative aspect-video w-full overflow-hidden rounded-lg bg-surface-soft shadow-pop">
+            <figure className="relative aspect-video w-full overflow-hidden bg-surface-soft">
               {/* eslint-disable-next-line @next/next/no-img-element -- real, potentially locally-produced data URL cover */}
               <img src={workflow.coverUrl} alt="" className="h-full w-full object-cover" />
               {workflow.media.length > 1 && (
-                <span className="absolute bottom-2 right-2 rounded-xs bg-black/60 px-1.5 py-0.5 text-caption font-medium text-white">
+                <span className="absolute bottom-2.5 left-2.5 rounded-full bg-black/55 px-2 py-0.5 text-caption font-semibold text-white group-focus-within:opacity-0 group-hover:opacity-0">
                   {t("media.moreImagesBadge", { count: workflow.media.length - 1 })}
                 </span>
               )}
             </figure>
           ) : (
-            <div className="flex flex-col items-center gap-2.5 rounded-lg bg-surface px-4 py-5 text-center shadow-pop">
+            <div className="flex aspect-[4/5] w-full flex-col items-center justify-center gap-2.5 bg-primary-soft px-4 py-5 text-center">
               <span className="text-label font-semibold text-text">{t("workflow.stepCount", { count: String(workflow.stepCount) })}</span>
               <span className="flex flex-wrap items-center justify-center gap-1.5">
                 {workflow.contentTypes.map((type, index) => {
@@ -77,10 +76,7 @@ export function WorkflowCard({
             </div>
           )
         }
-        // eslint-disable-next-line @next/next/no-img-element -- decorative tint of the same cover
-        backdrop={workflow.coverUrl ? <img src={workflow.coverUrl} alt="" className="h-full w-full object-cover" /> : undefined}
         title={<ContentCardTitle href={href} title={workflow.title} />}
-        reactions={<ReactionSummary contentType="workflow" id={workflow.id} likeCount={workflow.likeCount} />}
         footer={<PromptCardFooter workflow={workflow} />}
       />
     </ContentCard>

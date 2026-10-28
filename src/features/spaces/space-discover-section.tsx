@@ -1,19 +1,16 @@
 "use client";
 
-import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Eye, Link2 } from "lucide-react";
+import { Link2 } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PromptCardSkeletonGrid } from "@/components/ui/prompt-card-skeleton";
-import { StorageImg } from "@/components/ui/storage-media";
-import { CARD_PRIMARY_CLASS, CONTENT_GRID_ITEM_CLASS, ContentCard, ContentCardPost, ContentCardTitle, ContentGrid } from "@/features/content/content-card";
+import { CONTENT_GRID_ITEM_CLASS, ContentCard, ContentCardPost, ContentCardTitle, ContentGrid } from "@/features/content/content-card";
 import { ContentTypePill } from "@/features/content/content-type-label";
 import { LoadMore } from "@/features/feed/load-more";
 import { postMeta } from "@/features/prompts/post-header";
-import { ShareTriggerButton } from "@/features/prompts/share-modal";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { SPACE_KIND_LABEL, SPACE_PAGE_SIZE, spaceHref } from "@/lib/spaces";
-import { fetchLeadPalettes, fetchSpaceStats, listSpaces, spaceFromSummary, summaryArt, summaryCover, type SpaceSummary } from "@/lib/supabase/spaces";
+import { fetchLeadPalettes, fetchSpaceStats, listSpaces, summaryArt, type SpaceSummary } from "@/lib/supabase/spaces";
 import { StarRatingDisplay } from "@/components/ui/star-rating";
 import { formatRating } from "./tabs/comments-tab";
 import { absoluteUrl } from "@/lib/utils";
@@ -21,8 +18,8 @@ import { SpaceMenu } from "./space-menu";
 import { PaletteStrip, SpaceCoverArt, SpacesIcon } from "./space-visuals";
 
 /**
- * Keşfet'in Spaces bölümündeki kart (docs/history/241-*, 242-*): diğer gönderilerle AYNI Albüm kabuğu. Space'in beğenisi yoktur — akışta
- * görünmesi bir ALINTIDIR; kartta puan ortalaması + alıntı sayısı, Paylaş (→ "Alıntıla") vardır, tek büyük eylem "Panoyu gez".
+ * Keşfet'in Spaces bölümündeki kart (docs/history/241-*, 242-*): diğer gönderilerle AYNI görsel kart kabuğu (docs/history/266-*). Space'in beğenisi yoktur — akışta
+ * görünmesi bir ALINTIDIR; kartta puan ortalaması + alıntı sayısı vardır. Paylaş ("Alıntıla") ve "Panoyu gez" Space sayfasındadır.
  */
 export type SpaceCardStats = { quoteCount: number; ratingAvg: number; ratingCount: number };
 
@@ -30,7 +27,6 @@ export function SpaceDiscoverCard({ space, palette, stats }: { space: SpaceSumma
   const { t, language } = useTranslation();
   const [copied, setCopied] = useState(false);
   const href = spaceHref(space.id);
-  const cover = summaryCover(space);
   const art = summaryArt(space);
 
   async function copyLink() {
@@ -44,10 +40,11 @@ export function SpaceDiscoverCard({ space, palette, stats }: { space: SpaceSumma
   }
 
   return (
-    <ContentCard href={href}>
+    <ContentCard variant="visual" href={href}>
       <ContentCardPost
         author={space.owner}
         meta={space.owner ? postMeta(space.owner.username, space.updatedAt, language) : ""}
+        typeIcon={SpacesIcon}
         badges={<ContentTypePill icon={SpacesIcon} label="Space" detail={t(SPACE_KIND_LABEL[space.kind])} />}
         menu={
           <SpaceMenu
@@ -56,18 +53,9 @@ export function SpaceDiscoverCard({ space, palette, stats }: { space: SpaceSumma
           />
         }
         art={
-          <span data-card-media className="block">
-            <SpaceCoverArt urls={art} className="aspect-[16/9] w-full overflow-hidden rounded-lg shadow-pop" iconSize={40} />
-          </span>
+          <SpaceCoverArt urls={art} className="aspect-[4/3] w-full overflow-hidden" iconSize={40} />
         }
-        backdrop={cover ? <StorageImg src={cover} alt="" className="h-full w-full object-cover" /> : undefined}
         title={<ContentCardTitle href={href} title={space.title} />}
-        primary={
-          <Link href={`${href}&tab=board`} className={CARD_PRIMARY_CLASS}>
-            <Eye size={14} aria-hidden />
-            {t("spaces.page.viewBoard")}
-          </Link>
-        }
         footer={
           <>
             {stats && stats.ratingCount > 0 && (
@@ -78,8 +66,6 @@ export function SpaceDiscoverCard({ space, palette, stats }: { space: SpaceSumma
               </span>
             )}
             {stats && stats.quoteCount > 0 && <span className="text-caption text-text-muted">{t("quotes.count", { count: stats.quoteCount })}</span>}
-            <span className="ml-auto" />
-            <ShareTriggerButton target={{ contentType: "space", space: spaceFromSummary(space), art }} />
           </>
         }
       >

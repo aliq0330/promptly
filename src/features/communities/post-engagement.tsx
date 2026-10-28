@@ -72,9 +72,9 @@ export function PostCommentLink({ post, size = 16 }: { post: CommunityPost; size
  * (`collection_items.community_post_id`, kendi `save_count`'u). Yerel gönderide kaydedilen şey içeriktir (kartın kendi düğmesi), isteklerde
  * kaydetme normal sitede de yoktur → düğme çizilmez.
  */
-export function PostSave({ post, size }: { post: CommunityPost; size?: number }) {
+export function PostSave({ post, size, className }: { post: CommunityPost; size?: number; className?: string }) {
   if (post.kind === "native" || post.contentType === "request") return null;
-  return <SaveButton communityPostId={post.id} saveCount={post.saveCount} size={size} />;
+  return <SaveButton communityPostId={post.id} saveCount={post.saveCount} size={size} className={className} />;
 }
 
 /**

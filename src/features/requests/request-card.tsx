@@ -10,17 +10,14 @@ import { StorageImage } from "@/components/ui/storage-media";
 import { clampedAspectRatio } from "@/lib/placeholder-image";
 import { contentActionClassName } from "@/features/content/action-styles";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
-import { ShareTriggerButton } from "@/features/prompts/share-modal";
 import { LikeButton } from "@/features/prompts/like-button";
 import { CommentCountLink } from "@/features/prompts/comment-count-link";
-import { StatisticsButton } from "@/features/statistics/statistics-button";
 import { PostMenu } from "@/features/prompts/post-menu";
 import { postMeta } from "@/features/prompts/post-header";
 import { formatCount, requestHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import type { PromptRequest } from "@/types";
-import { ReactionSummary } from "@/features/reactions/reaction-summary";
 
 // A request is only ever shown as "Açık"/"Open" (accepting responses) or
 // "Kapandı"/"Closed" (not accepting new ones) — "answered" (closed via a
@@ -41,13 +38,10 @@ export const STATUS_VARIANTS: Record<PromptRequest["status"], "success" | "dange
 };
 
 /**
- * RequestCard — a community prompt request on the Albüm card (`ContentCardPost`, docs/history/202-*): kicker (type +
- * Açık/Kapandı status), art = the reference picture or, without one, the brief itself (and the creative direction),
- * title and author like the other cards, the same real like button and `PostMenu`.
- *
- * The big action is "Yanıtla" — only while the request is open and for someone other than its author (the author
- * manages it on the detail page). The row: Beğeni · Yorum · Yanıt (real response count, the existing link) · İstatistik ·
- * Paylaş — a request has no Kaydet (not savable anywhere) and no "Kopyala".
+ * RequestCard — a community prompt request on the visual card (`ContentCardPost`, docs/history/266-*): the Açık/Kapandı status
+ * stays on the picture, art = the reference picture or, without one, the brief itself (and the creative direction), title and
+ * kicker on hover, the same real like button and `PostMenu`. "Yanıtla" lives on the detail page. The row: Beğeni · Yorum · Yanıt
+ * (real response count, the existing link) — a request has no Kaydet (not savable anywhere) and no "Kopyala".
  */
 export function RequestCard({ request, onDeleted }: { request: PromptRequest; onDeleted?: () => void }) {
   const { t, language } = useTranslation();
@@ -56,28 +50,31 @@ export function RequestCard({ request, onDeleted }: { request: PromptRequest; on
   const picture = request.referenceImage ?? request.media[0];
 
   return (
-    <ContentCard href={href}>
+    <ContentCard variant="visual" href={href}>
       <ContentCardPost
         author={request.author}
         meta={postMeta(request.author.username, request.createdAt, language)}
+        typeIcon={Sparkles}
+        status={
+          <Badge variant={STATUS_VARIANTS[request.status]}>
+            <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-current" />
+            {t(STATUS_LABELS[request.status])}
+          </Badge>
+        }
         badges={
           <>
             <ContentTypePill icon={Sparkles} label={t("request.title")} detail={typeMeta ? t(typeMeta.labelKey) : null} />
             <AnnouncedChip kind="request" id={request.id} />
-            <Badge variant={STATUS_VARIANTS[request.status]}>
-              <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-current" />
-              {t(STATUS_LABELS[request.status])}
-            </Badge>
           </>
         }
         menu={<PostMenu requestId={request.id} communityId={request.communityId} authorId={request.author.id} onDeleted={onDeleted} />}
         art={
           picture ? (
-            <figure data-card-media className="relative w-full overflow-hidden rounded-lg bg-surface-soft shadow-pop" style={{ aspectRatio: Math.max(1, clampedAspectRatio(picture.width, picture.height)) }}>
+            <figure className="relative w-full overflow-hidden bg-surface-soft" style={{ aspectRatio: clampedAspectRatio(picture.width, picture.height) }}>
               <StorageImage src={picture.url} alt={picture.alt} fill sizes="(min-width: 1280px) 30vw, (min-width: 640px) 45vw, 100vw" className="object-cover" />
             </figure>
           ) : (
-            <div className="space-y-2 rounded-lg bg-surface px-4 py-3.5 shadow-pop">
+            <div className="flex aspect-[4/5] w-full flex-col justify-center space-y-2 bg-primary-soft px-5 py-5">
               <p className="line-clamp-4 whitespace-pre-line break-words text-small leading-relaxed text-text">{request.description}</p>
               {request.creativeDirection && (
                 <p className="line-clamp-2 text-caption text-text-secondary">
@@ -88,9 +85,7 @@ export function RequestCard({ request, onDeleted }: { request: PromptRequest; on
             </div>
           )
         }
-        backdrop={picture ? <StorageImage src={picture.url} alt="" fill sizes="240px" className="object-cover" /> : undefined}
         title={<ContentCardTitle href={href} title={request.title} />}
-        reactions={<ReactionSummary contentType="request" id={request.id} likeCount={request.likeCount} />}
         footer={
           <>
             <LikeButton id={request.id} likeCount={request.likeCount} contentType="request" />
@@ -99,9 +94,6 @@ export function RequestCard({ request, onDeleted }: { request: PromptRequest; on
               <Reply size={16} strokeWidth={1.75} />
               <span aria-hidden>{formatCount(request.responseCount)}</span>
             </Link>
-            <StatisticsButton target={{ contentType: "request", contentId: request.id, likeCount: request.likeCount, commentCount: request.commentCount }} />
-            <span className="ml-auto" />
-            <ShareTriggerButton target={{ contentType: "request", request }} />
           </>
         }
       />
