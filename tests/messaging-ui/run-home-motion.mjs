@@ -224,22 +224,20 @@ await scenario("5. İngilizce: For you sekmesi ve nedenler çevrilmiş", async (
 }, { lang: "en" });
 
 // 6 — görsel rengi / önizleme
-await scenario("6. kartlar kayıtlı renkle boyanır (bulanık kopya yok), önizleme sonra kalkar; renksiz eski kart eski bandı çizer", async ({ page }) => {
+await scenario("6. kartlar kayıtlı renkle boyanır (bulanık kopya yok), önizleme sonra kalkar; renksiz eski kart yine resmini çizer", async ({ page }) => {
   await page.goto(`${BASE}/`);
   await page.getByText("Takip ettiğin #Resim etiketinden").first().waitFor();
   const card = page.locator("article").filter({ hasText: "Görsel prompt 1" }).first();
   const band = await card.evaluate((el) => {
-    const tint = el.querySelector("[aria-hidden][style*='color-mix']");
-    return { tint: tint ? getComputedStyle(tint).backgroundColor : null, blurCopies: el.querySelectorAll(".blur-2xl").length };
+    return { blurCopies: el.querySelectorAll(".blur-2xl").length };
   });
-  assert.ok(band.tint, "band tinted from the stored colour");
   assert.equal(band.blurCopies, 0, "no enlarged blurred copy behind the card");
   const frame = card.locator("[data-card-media]");
   assert.ok(await frame.locator("span[aria-hidden][style*='background-color']").count() >= 1, "the frame starts in the picture's colour");
   await page.waitForTimeout(900);
   assert.equal(await frame.locator("img.blur-xl").count(), 0, "the blurred preview is dropped once the picture is in");
   const old = page.locator("article").filter({ hasText: "Görsel prompt 2" }).first();
-  assert.ok((await old.locator(".blur-2xl").count()) >= 1, "a row without colour keeps the blurred backdrop");
+  assert.ok((await old.locator("[data-card-media] img").count()) >= 1, "a row without colour still draws its picture");
 }, { setup: ({ rows }) => { rows[1].prompt_media[0].dominant_color = null; rows[1].prompt_media[0].placeholder = null; } });
 
 // 7 — kart → detay → geri

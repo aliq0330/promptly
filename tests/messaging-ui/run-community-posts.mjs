@@ -97,7 +97,7 @@ await scenario("2b. Notsuz başvuru gönderisinde not alanı hiç bulunmaz", asy
 }, { setup: (db) => { seed(db, { myRole: "member" }); db.addPost(C1, { title: "Notsuz içerik", note: null }); } });
 
 // 3
-await scenario("3. Yerel (topluluğa özgü) içerik: akışta NORMAL içerik kartı, TEK ⋮ menüsü (üst çubuk yok); ayrı gönderi etkileşimi ve 'başvuru' etiketi YOK; kaydet + istatistik + paylaş normal kart gibi VAR", async ({ page }) => {
+await scenario("3. Yerel (topluluğa özgü) içerik: akışta NORMAL içerik kartı, TEK ⋮ menüsü (üst çubuk yok); ayrı gönderi etkileşimi ve 'başvuru' etiketi YOK; kaydet normal kart gibi VAR (paylaş/istatistik detay sayfasında, 266-*)", async ({ page }) => {
   await open(page, C1);
   const card = post(page, "Yerel prompt");
   const normalCard = card.locator("article").first();
@@ -108,31 +108,34 @@ await scenario("3. Yerel (topluluğa özgü) içerik: akışta NORMAL içerik ka
   assert.equal(await card.locator("[data-post-engagement]").count(), 0, "native content uses the content's OWN like/comment, not a second engagement bar");
   await normalCard.getByRole("button", { name: LIKE }).first().waitFor();
   await normalCard.getByRole("button", { name: /Kaydet|koleksiyon/i }).first().waitFor();
-  await normalCard.getByRole("button", { name: /İstatistik/i }).first().waitFor();
-  await normalCard.getByRole("button", { name: "Paylaş" }).waitFor();
+  assert.equal(await normalCard.getByRole("button", { name: /İstatistik|Paylaş/ }).count(), 0, "the visual card has no share/statistics (they live on the detail page)");
   assert.match((await normalCard.getByRole("link", { name: "Yerel prompt" }).getAttribute("href")) ?? "", /prompts\/local\/?\?id=/);
   await card.getByRole("button", { name: /seçenekleri/ }).click();
   await page.getByRole("menuitem", { name: /Sil|Düzenle/ }).first().waitFor();
 }, { setup: (db) => { seed(db, { myRole: "member" }); db.addPost(C1, { author: U.alice, title: "Yerel prompt", kind: "native", visibility: "private" }); } });
 
-await scenario("3c. Yerel kartın paylaşımı özel içerik için paylaşım sayfasına ÇEVRİLMEZ: bağlantı içeriğin kendi sayfasıdır", async ({ page, context }) => {
+await scenario("3c. Yerel içeriğin (detay sayfasından) paylaşımı özel içerik için paylaşım sayfasına ÇEVRİLMEZ: bağlantı içeriğin kendi sayfasıdır", async ({ page, context }) => {
   await context.grantPermissions(["clipboard-read", "clipboard-write"]);
   await open(page, C1);
   await page.evaluate(() => Object.defineProperty(navigator, "share", { value: undefined, configurable: true }));
-  await post(page, "Yerel prompt").locator("article").first().getByRole("button", { name: "Paylaş" }).click();
+  await post(page, "Yerel prompt").locator("article").first().getByRole("link", { name: "Yerel prompt" }).click();
+  await page.locator("[data-detail-actions]").getByRole("button", { name: "Paylaş" }).first().click();
   await dlg(page).getByRole("button", { name: /Diğer uygulamalarla paylaş/ }).click();
   const copied = await page.evaluate(() => navigator.clipboard.readText());
   assert.match(copied, /prompts\/local\/?\?id=/);
   assert.doesNotMatch(copied, /\/share\//, "private community content has no public share page");
 }, { setup: (db) => { seed(db, { myRole: "member" }); db.addPost(C1, { author: U.alice, title: "Yerel prompt", kind: "native", visibility: "private" }); } });
 
-await scenario("3d. Başvuru kartı da normal kart gibi Kaydet + İstatistik + Paylaş sunar; istatistik gönderinin KENDİ etkileşimini sorar (kaydedenler sekmesi dahil); paylaşım bağlantısı gönderinin sayfasına gider, mesajla paylaşım da var", async ({ page, db, context }) => {
+await scenario("3d. Başvuru gönderisinin sayfası Kaydet + İstatistik + Paylaş sunar (kartta yok); istatistik gönderinin KENDİ etkileşimini sorar (kaydedenler sekmesi dahil); paylaşım bağlantısı gönderinin sayfasına gider, mesajla paylaşım da var", async ({ page, db, context }) => {
   await context.grantPermissions(["clipboard-read", "clipboard-write"]);
   db.rpc.content_engagers = (body) => { db.calls.push({ method: "RPC", table: "content_engagers", body }); return { body: [] }; };
   await open(page, C1);
   const card = post(page, "Başvuru prompt");
   await card.waitFor();
-  await card.getByRole("button", { name: /İstatistik/i }).click();
+  assert.equal(await card.getByRole("button", { name: /İstatistik|Paylaş/ }).count(), 0, "no share/statistics on the visual card");
+  await card.getByRole("link", { name: "Başvuru prompt" }).click();
+  const bar3d = page.locator("[data-detail-actions]", { has: page.getByRole("button", { name: "Paylaş" }) }).first();
+  await bar3d.getByRole("button", { name: /İstatistik/i }).click();
   const d = dlg(page);
   await d.getByRole("tab", { name: /Tepki verenler/ }).waitFor();
   await d.getByRole("tab", { name: /Kaydedenler/ }).waitFor();
@@ -142,7 +145,7 @@ await scenario("3d. Başvuru kartı da normal kart gibi Kaydet + İstatistik + P
   assert.ok(stat?.body.p_content_id, "targets the post, not the applied content");
   await d.getByRole("button", { name: /Kapat/ }).click();
   await page.evaluate(() => Object.defineProperty(navigator, "share", { value: undefined, configurable: true }));
-  await card.getByRole("button", { name: "Paylaş" }).click();
+  await bar3d.getByRole("button", { name: "Paylaş" }).click();
   await dlg(page).getByText(/mesaj olarak/i).first().waitFor();
   await dlg(page).getByRole("button", { name: /Diğer uygulamalarla paylaş/ }).click();
   const copied = await page.evaluate(() => navigator.clipboard.readText());
@@ -397,15 +400,13 @@ await scenario("16a. Başvuru sayfasında KAYDET: normal koleksiyon penceresi, k
   await bar.getByRole("button", { name: /koleksiyon|Kaydedildi|Kaydet/i }).first().getByText("1", { exact: true }).waitFor();
 }, { setup: (db) => { seed(db, { myRole: "member" }); db.addPost(C1, { title: "Kaydedilecek", note: "n" }); } });
 
-await scenario("16g. Kaydedilenler: kaydedilen başvuru gönderisi, akıştaki karta AYNI kart (kaydet/istatistik/paylaş) olarak listelenir; topluluğu okuyamayınca listede görünmez", async ({ page, db }) => {
+await scenario("16g. Kaydedilenler: kaydedilen başvuru gönderisi, akıştaki karta AYNI kart olarak listelenir; topluluğu okuyamayınca listede görünmez", async ({ page, db }) => {
   const p = db.posts[0];
   db.collectionItems.push({ id: "f0000000-0000-4000-8000-000000000001", collection_id: db.collections[0].id, community_post_id: p.id, created_at: db.stamp() });
   await page.goto(`${BASE}/saved`);
   const card = page.locator("article", { hasText: "Kaydedilmiş başvuru" }).first();
   await card.waitFor();
   await card.getByText("Alıntı", { exact: true }).waitFor();
-  await card.getByRole("button", { name: /İstatistik/i }).first().waitFor();
-  await card.getByRole("button", { name: "Paylaş" }).waitFor();
   assert.match((await card.getByRole("link", { name: /Kaydedilmiş başvuru/ }).first().getAttribute("href")) ?? "", /communities\/post\/local/);
   // topluluğa erişim kalktı → gönderi okunamaz → kart listede yer almaz (kırık kart yok)
   db.posts.length = 0;

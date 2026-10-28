@@ -161,7 +161,7 @@ await scenario("1. Keşfet 'Tümü': sahibin Space alıntısı alıntı kartıd�
   assert.ok(!state.likes[0].space_id);
 });
 
-await scenario("2. Keşfet → Spaces: herkese açık Space listesi (`list_spaces('public')`), 'Panoyu gez', Paylaş; Space kartında beğeni/yorum yok", async ({ page, db, state }) => {
+await scenario("2. Keşfet → Spaces: herkese açık Space listesi (`list_spaces('public')`), kart Space sayfasına gider (Panoyu gez/Paylaş kartta yok); Space kartında beğeni/yorum yok", async ({ page, db, state }) => {
   await page.goto(`${BASE}/discover`);
   await page.locator("main article").first().waitFor();
   await page.locator("[data-section-menu]").click();
@@ -170,7 +170,8 @@ await scenario("2. Keşfet → Spaces: herkese açık Space listesi (`list_space
   await card.waitFor();
   assert.ok(rpcCalls(db, "list_spaces").some((c) => c.body.p_filter === "public"));
   assert.equal(state.feedCalls.length === 0 || !state.feedCalls.some((c) => JSON.stringify(c.p_kinds) === JSON.stringify(["space"])), true);
-  assert.match((await card.getByRole("link", { name: "Panoyu gez" }).getAttribute("href")) ?? "", /\/spaces\/local\/?\?id=.*tab=board/);
+  assert.match((await card.getByRole("link", { name: "Neon şehir panosu" }).first().getAttribute("href")) ?? "", /\/spaces\/local\/?\?id=/);
+  assert.equal(await card.getByRole("link", { name: "Panoyu gez" }).count() + (await card.getByRole("button", { name: "Paylaş" }).count()), 0, "no big action / share on the visual card");
   await card.locator("[data-palette-strip]").waitFor();
   assert.equal(await card.getByRole("button", { name: /Beğen|Tepki ver|Tepkin:/ }).count(), 0);
   assert.equal(await page.locator("main article").filter({ hasText: "Duyurulmuş prompt" }).count(), 0);

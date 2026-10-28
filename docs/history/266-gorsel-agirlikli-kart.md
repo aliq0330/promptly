@@ -21,4 +21,5 @@
 - Dokunmatik cihazda kartta başlık yok (hover yok); kullanıcı isteği "başlık/açıklama kalksın" idi. Gerekirse başlığı alt satıra tek satır ekleyen bir tercih eklenebilir.
 - Kaydet'in sayısı, Paylaş ve İstatistik kartta yok — hızlı paylaşım/istatistik için karta dokunmak gerekir.
 - Odak/Izgara (`focus-*`) kartları ve Space panosu/Kaydedilenler dışındaki listeler bu kartı `ContentGrid` ile kullanır; Odak'a dokunulmadı.
+- **Doğrulama:** `npx tsc --noEmit`, `npm run lint` (0 hata), `npm test` 544/544, `npm run build` temiz; kartlara dokunan 26 ağ taklitli Playwright paketi geçer. Kartta artık olmayan Paylaş/İstatistik/Panoyu gez/tepki özeti/başlık-tıklamasını bekleyen testler uyarlandı (`run-community-posts` 36/36, `run-quotes` 12/12, `run-reactions` 11/11, `run-space-posts` 8/8, `run-home-motion` 10/10): paylaşma/istatistik artık detay sayfasından sınanıyor. Başlık bağlantısı hover katmanında `pointer-events-auto` ile tıklanabilir (katman görünmezken de).
 - Gerçek Supabase'e / gerçek görsellerle / iOS Safari'ye karşı denenmedi; ekran görüntüleri ağ taklitli Keşfet'te (gradyan sahte görsellerle) alındı.
