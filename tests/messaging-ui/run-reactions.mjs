@@ -126,37 +126,40 @@ const summary = (page) => page.locator(`[data-reaction-summary="${ID.prompt}"]`)
 const summaryHas = (page, id, re) => page.waitForFunction(([sid, source]) => new RegExp(source).test(document.querySelector(`[data-reaction-summary=\"${sid}\"]`)?.textContent ?? ""), [id, re.source], { timeout: 6000 });
 const effectSvg = (page) => page.locator("[data-reaction-effects] svg");
 
-await scenario("1. Detay: kalbe İLK dokunuş beğenir (`reaction` sütunsuz = Sevdim, sayaç 13→14) ve seçiciyi açar — Sevdim seçili, 'Tepkini kaldır' hazır; Ateş seçilince PATCH + emoji + Telegram efekti", async ({ page, state }) => {
+await scenario("1. Detay: kalbe dokunuş YALNIZ seçiciyi açar (hiçbir şey seçili değil, beğeni yazılmaz, sayaç 13); Ateş seçilince POST `reaction: fire` + emoji + Telegram efekti", async ({ page, state }) => {
   await openDetail(page);
   await summaryHas(page, ID.prompt, /Bob ve 12 kişi tepki verdi/);
   assert.equal(state.statsCalls.length >= 1 && state.friendsCalls.length >= 1, true, "per-reaction counts and followed people were read");
   assert.match((await reactButton(page).getAttribute("aria-label")) ?? "", /^Tepki ver \(13 tepki\)/);
   await reactButton(page).click();
   await menu(page).waitFor();
-  await waitFor(() => state.likeCalls.length > 0);
-  assert.equal(state.likeCalls.length, 1, "the first touch already liked");
-  assert.equal("reaction" in state.likeCalls[0], false, "default reaction = no column");
-  assert.equal(state.likeCalls[0].prompt_id, ID.prompt);
+  await page.waitForTimeout(300);
+  assert.equal(state.likeCalls.length, 0, "opening the picker likes nothing");
   const labels = await menu(page).getByRole("menuitem").allInnerTexts();
-  assert.deepEqual(labels.map((l) => l.trim()), ["Sevdim", "Ateş", "Vay be", "Alkış", "Komik", "Faydalı", "Tepkini kaldır"]);
-  assert.equal(await menu(page).getByRole("menuitem", { name: "Sevdim" }).getAttribute("aria-current"), "true", "Sevdim is selected");
-  assert.match((await reactButton(page).locator("img").getAttribute("src")) ?? "", /\/promptly\/reactions\/love\.svg$/);
-  assert.match(await reactButton(page).innerText(), /14/);
-  await effectSvg(page).first().waitFor({ timeout: 6000 });
+  assert.deepEqual(labels.map((l) => l.trim()), ["Sevdim", "Ateş", "Vay be", "Alkış", "Komik", "Faydalı"], "no 'remove' row while nothing is given");
+  assert.equal(await menu(page).locator('[aria-current="true"]').count(), 0, "nothing is selected");
+  assert.equal(await reactButton(page).locator("img").count(), 0, "the heart stays a heart");
+  assert.match(await reactButton(page).innerText(), /13/);
   await menu(page).getByRole("menuitem", { name: "Ateş" }).click();
-  await waitFor(() => state.patchCalls.length > 0);
-  assert.deepEqual(state.patchCalls[0].body, { reaction: "fire" });
-  assert.equal(state.likeCalls.length, 1, "swapping is an UPDATE, not a second insert");
+  await waitFor(() => state.likeCalls.length > 0);
+  assert.equal(state.likeCalls.length, 1);
+  assert.equal(state.likeCalls[0].reaction, "fire");
+  assert.equal(state.likeCalls[0].prompt_id, ID.prompt);
   assert.equal(await menu(page).count(), 0, "picker closed after choosing");
   assert.match((await reactButton(page).locator("img").getAttribute("src")) ?? "", /\/promptly\/reactions\/fire\.svg$/);
-  assert.match(await reactButton(page).innerText(), /14/, "swapping keeps the total");
+  assert.match(await reactButton(page).innerText(), /14/);
+  await effectSvg(page).first().waitFor({ timeout: 6000 });
   await summaryHas(page, ID.prompt, /Sen, Bob ve 12 kişi tepki verdi/);
   await shot(page, "rx-effect");
   await page.waitForFunction(() => document.querySelectorAll("[data-reaction-effects] svg").length === 0, null, { timeout: 8000 });
 });
 
-await scenario("2. Detay: tepki değiştirilir (PATCH), tepki varken dokunuş yalnız seçiciyi açar (yeni istek yok), 'Tepkini kaldır' siler (DELETE, sayaç 13, kalp geri gelir)", async ({ page, state }) => {
+await scenario("2. Detay: tepki seçilir, değiştirilir (PATCH); tepki varken dokunuş seçiciyi açar (yeni istek yok), seçili olan tepkiye TEKRAR basmak siler (DELETE, sayaç 13, kalp geri gelir)", async ({ page, state }) => {
   await openDetail(page);
+  await reactButton(page).click();
+  await menu(page).getByRole("menuitem", { name: "Faydalı" }).click();
+  await waitFor(() => state.likeCalls.length > 0);
+  assert.equal(state.likeCalls[0].reaction, "idea");
   await reactButton(page).click();
   await menu(page).getByRole("menuitem", { name: "Vay be" }).click();
   await waitFor(() => state.patchCalls.length > 0);
@@ -169,7 +172,7 @@ await scenario("2. Detay: tepki değiştirilir (PATCH), tepki varken dokunuş ya
   assert.equal(await current.getAttribute("aria-current"), "true", "the current reaction is highlighted");
   assert.equal(state.likeCalls.length, 1, "touching a reacted button never likes again");
   assert.equal(state.deleteCalls.length, 0, "…and never removes");
-  await menu(page).getByRole("menuitem", { name: "Tepkini kaldır" }).click();
+  await current.click();
   await waitFor(() => state.deleteCalls.length > 0);
   assert.equal(state.deleteCalls.length, 1);
   assert.match(await reactButton(page).innerText(), /13/);
@@ -177,19 +180,17 @@ await scenario("2. Detay: tepki değiştirilir (PATCH), tepki varken dokunuş ya
   await summaryHas(page, ID.prompt, /Bob ve 12 kişi/);
 });
 
-await scenario("3. Seçiciyi kapatmak beğeniyi bozmaz: kalbe dokun, Esc → tek POST (`reaction` sütunsuz), beğeni kalır", async ({ page, state }) => {
+await scenario("3. Seçiciyi kapatmak hiçbir şey yazmaz: kalbe dokun, Esc → beğeni yok, sayaç 13, kalp kalp", async ({ page, state }) => {
   await openDetail(page);
   await reactButton(page).click();
   await menu(page).waitFor();
   await page.keyboard.press("Escape");
   await menu(page).waitFor({ state: "detached" });
-  await waitFor(() => state.likeCalls.length > 0);
-  assert.equal(state.likeCalls.length, 1);
-  assert.equal("reaction" in state.likeCalls[0], false);
-  assert.equal(state.likeCalls[0].prompt_id, ID.prompt);
+  await page.waitForTimeout(300);
+  assert.equal(state.likeCalls.length, 0);
   assert.equal(state.deleteCalls.length, 0);
-  assert.match(await reactButton(page).innerText(), /14/);
-  assert.match((await reactButton(page).locator("img").getAttribute("src")) ?? "", /love\.svg$/);
+  assert.match(await reactButton(page).innerText(), /13/);
+  assert.equal(await reactButton(page).locator("img").count(), 0, "still a plain heart");
 });
 
 await scenario("4. 'Kim ne tepki verdi': özete dokununca Tepkiler sayfası — toplam, sekmeler (Tümü 13 · 8 · 3 · 1 · 1), kişi + @kullanıcı + zaman + tepkisi; sekme süzgeci sunucuya gider", async ({ page, state }) => {
@@ -232,7 +233,7 @@ await scenario("5. Sayfadaki kendi satırım: tepki verince listede 'Sen' etiket
   await mine.waitFor({ state: "detached" });
 }, { mine: null });
 
-await scenario("6. Ana Sayfa/Keşfet kartı: aynı düğme (kartta Kopyala/Çalıştır ve tepki özeti yok); ilk dokunuş beğenir, Komik seçilince PATCH `haha` ve efekt", async ({ page, state }) => {
+await scenario("6. Ana Sayfa/Keşfet kartı: aynı düğme (kartta Kopyala/Çalıştır ve tepki özeti yok); dokunuş seçiciyi açar, Komik seçilince POST `reaction: haha` ve efekt", async ({ page, state }) => {
   await page.goto(`${BASE}/discover`);
   const card = page.locator("main article").filter({ hasText: "Ay ışığında bekleyen kitsune" }).first();
   await card.waitFor();
@@ -240,12 +241,12 @@ await scenario("6. Ana Sayfa/Keşfet kartı: aynı düğme (kartta Kopyala/Çal�
   const button = card.locator('[data-card-actions] button[aria-haspopup="menu"]').first();
   assert.equal(await card.locator("[data-reaction-summary]").count(), 0, "the visual card has no reaction summary (detail page only)");
   await button.click();
+  await menu(page).waitFor();
+  assert.equal(state.likeCalls.length, 0, "opening the picker likes nothing");
+  await menu(page).getByRole("menuitem", { name: "Komik" }).click();
   await waitFor(() => state.likeCalls.length > 0);
   assert.equal(state.likeCalls[0].prompt_id, FEED_PROMPT);
-  assert.equal("reaction" in state.likeCalls[0], false);
-  await menu(page).getByRole("menuitem", { name: "Komik" }).click();
-  await waitFor(() => state.patchCalls.length > 0);
-  assert.deepEqual(state.patchCalls[0].body, { reaction: "haha" });
+  assert.equal(state.likeCalls[0].reaction, "haha");
   await effectSvg(page).first().waitFor({ timeout: 6000 });
   await page.waitForFunction(() => document.querySelectorAll("[data-reaction-effects] svg").length === 0, null, { timeout: 8000 });
   await card.scrollIntoViewIfNeeded();
@@ -296,7 +297,7 @@ await scenario("10. İngilizce: seçici ve özet çevrilmiş", async ({ page }) 
   assert.match((await reactButton(page).getAttribute("aria-label")) ?? "", /React \(13 reactions\)/);
   await reactButton(page).click();
   const labels = await menu(page).getByRole("menuitem").allInnerTexts();
-  assert.deepEqual(labels.map((l) => l.trim()), ["Love", "Fire", "Wow", "Applause", "Funny", "Useful", "Remove your reaction"]);
+  assert.deepEqual(labels.map((l) => l.trim()), ["Love", "Fire", "Wow", "Applause", "Funny", "Useful"]);
 }, { lang: "en" });
 
 await scenario("11. Telefon: seçici ekrana sığar (yatay taşma yok), Tepkiler sayfası ekranın en çok %75'i ve başlık + sekmeler sabit", async ({ page }) => {
