@@ -9,7 +9,7 @@ import { ReactionIcon, type ReactionIconHandle } from "./reaction-icon";
 /**
  * The six-reaction picker (docs/history/265-*): a rounded panel above (or below) the reaction button — placement comes from
  * `useAnchoredPopover` (portalled, `position: fixed`, kept inside the visible area), this is only its content. Each emoji plays Telegram's
- * animation under the finger / pointer; the viewer's current reaction is highlighted, and picking it again plays it again.
+ * animation under the finger / pointer; the viewer's current reaction is highlighted, and picking it again takes it back.
  */
 export function ReactionPicker({
   panelRef,
