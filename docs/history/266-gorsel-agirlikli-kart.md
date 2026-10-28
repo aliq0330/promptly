@@ -6,7 +6,7 @@
 - Kart = gönderinin görseli (yuvarlak, `rounded-xl`, kutu/kenarlık/gölge yok) + altında tek satır: **avatar · ad** solda; **Beğeni · Yorum · Kaydet (yalnız simge) · ⋮** sağda. Başlık, açıklama, tür etiketi, araç, zaman ve tepki özeti kartta GÖRÜNMEZ.
 - **Üzerine gelince / klavyeyle odaklanınca** görselin altında karanlık bir geçişle tür satırı (+araç), başlık ve "@kullanıcı · zaman" belirir. Başlık kartın gerçek bağlantısı olarak durur (klavye/ekran okuyucu); dokunmatikte hover olmadığından başlık görünmez (bilinçli).
 - **Tür** görsel biçimden ve köşedeki yuvarlak simgeden anlaşılır (görsel prompt hariç — görsel zaten söyler): video/ses/metin promptu, Workflow, Hazır ayar, İstek, Alıntılanan içerik, Space. Görselsiz içeriğin "görseli" kendisidir: prompt metni (mono, alta doğru soluyan), Workflow adım özeti, Hazır ayar parametre çipleri, İsteğin metni.
-- **Durum rozetleri hep görünür**, görselin sol üst köşesinde: Taslak, Özel, Açık/Kapandı, Alıntı, Başvuru, Sabit.
+- **Durum rozetleri hep görünür**, görselin SAĞ ALT köşesinde (sol üstteki ilk yerleşim resimsiz kartlarda başlıkla çakıştı): Taslak, Özel, Açık/Kapandı, Alıntı, Başvuru, Sabit.
 - Birden çok çıktı görseli olan promptta kapak + küçük "+N" çipi (şerit kalktı). Video/ses kapağında ortadaki oynat işareti kalktı; yerine köşedeki simge geldi.
 - **Kartlardan kaldırılanlar:** Paylaş ve İstatistik düğmeleri (detay sayfasının eylem satırında duruyor), "Tepki verdi" özeti (`ReactionSummary` — detay sayfasında), Space kartının "Panoyu gez" düğmesi ve Paylaş'ı (Space sayfasında), `OutputCaption` ("Çıktı" etiketi). Beğeni düğmesi aynı `LikeButton`/tepki seçicidir; sayaç yine toplam tepkidir.
 

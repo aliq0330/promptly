@@ -189,7 +189,7 @@ export function ContentCardPost({
   typeIcon?: LucideIcon;
   /** The art already shows the title (a text surface): the hover layer keeps it only for assistive tech / keyboard focus. */
   titleInArt?: boolean;
-  /** Always-visible chips on the picture's corner (`Badge`s: Taslak, Açık/Kapandı, Alıntı, Sabit…). */
+  /** Always-visible chips in the picture's bottom-right corner (clear of the type glyph and of a text surface's title) (`Badge`s: Taslak, Açık/Kapandı, Alıntı, Sabit…). */
   status?: React.ReactNode;
   /** The kicker row shown with the title on hover (`ContentTypePill`, announced chip…). */
   badges?: React.ReactNode;
@@ -213,14 +213,14 @@ export function ContentCardPost({
             {TypeIcon && <TypeIcon size={44} strokeWidth={1.5} />}
           </div>
         )}
-        {status && <div className="absolute left-2.5 top-2.5 z-[1] flex flex-wrap items-center gap-1.5">{status}</div>}
+        {status && <div className="absolute bottom-2.5 right-2.5 z-[3] flex flex-wrap items-center justify-end gap-1.5">{status}</div>}
         {art && TypeIcon && TypeIcon !== ImageIcon && (
           <span aria-hidden className="absolute right-2.5 top-2.5 z-[1] flex h-9 w-9 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm">
             <TypeIcon size={18} strokeWidth={1.75} />
           </span>
         )}
         {/* Title + kicker over the picture on hover / keyboard focus. The overlay lets clicks through to the stretched link; the title link inside it is the keyboard way in. */}
-        <div className={cn("pointer-events-none absolute inset-x-0 bottom-0 z-[2] space-y-1.5 bg-gradient-to-t from-black/75 via-black/45 to-transparent px-3.5 pb-3 pt-12 opacity-0 transition-opacity duration-200 ease-soft group-focus-within:opacity-100 group-hover:opacity-100 [&_a]:pointer-events-auto [&_h2]:text-white [&_p]:text-white/85 [&_span]:text-white", titleInArt && "sr-only")}>
+        <div className={cn("pointer-events-none absolute inset-x-0 bottom-0 z-[2] space-y-1.5 bg-gradient-to-t from-black/75 via-black/45 to-transparent px-3.5 pb-3 pt-12 opacity-0 transition-opacity duration-200 ease-soft group-focus-within:opacity-100 group-hover:opacity-100 [&_a]:pointer-events-auto [&_h2]:text-white [&_p]:text-white/85 [&_span]:text-white", status && "pr-24", titleInArt && "sr-only")}>
           {badges && <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5">{badges}</div>}
           {title}
           {meta && <p className="truncate text-small leading-tight">{meta}</p>}
