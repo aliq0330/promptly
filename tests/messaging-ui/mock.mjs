@@ -416,7 +416,14 @@ export async function installMock(context, db, opts = {}) {
       return rows((db.hidden ?? []).filter((h) => h.user_id === signedIn && (!mid || h.message_id === mid)).map((h) => ({ message_id: h.message_id })));
     }
     if (table === "rpc/filter_messageable_users") return json(200, (body.p_user_ids ?? []).filter((id) => db.messageable(id)));
-    if (table === "rpc/mark_conversation_read") return route.fulfill({ status: 204, headers: { "access-control-allow-origin": "*" } });
+    if (table === "rpc/mark_conversation_read") {
+      // Yalnız sayaç sıfırlanır (okundu imleci ilerlemez); çağrılar `db.unreadResets`'e yazılır.
+      (db.unreadResets ??= []).push(body.p_conversation_id);
+      if (db.failMarkRead) return json(500, { code: "XX000", message: "boom" });
+      const m = db.member(body.p_conversation_id, signedIn);
+      if (m) m.unread_count = 0;
+      return route.fulfill({ status: 204, headers: { "access-control-allow-origin": "*" } });
+    }
     if (table === "rpc/start_direct_conversation") {
       const other = body.other_user_id;
       if (!db.messageable(other)) return json(400, { code: "P0001", message: "Bu kullanıcıyla mesajlaşamazsın.", details: "", hint: "" });

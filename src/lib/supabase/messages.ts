@@ -505,6 +505,12 @@ export async function markConversationRead(conversationId: string): Promise<void
   }
 }
 
+/** Listeden "Okundu": `markConversationRead` ile aynı sunucu yolu (karşı tarafa "okundu" bilgisi gitmez) ama hata SESSİZ geçmez — çağıran yerel sayacı yalnız başarıda sıfırlar. */
+export async function clearConversationUnread(conversationId: string): Promise<void> {
+  const { error } = await supabase.rpc("mark_conversation_read", { p_conversation_id: conversationId });
+  if (error) throw new Error(error.message);
+}
+
 /**
  * Finds an existing real 1:1 conversation between these two real users, or
  * starts a new one — the entry point for a real profile's "Mesaj Gönder"

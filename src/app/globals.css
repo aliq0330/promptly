@@ -699,6 +699,16 @@
     padding-bottom: 0 !important;
   }
 
+  /* Sohbet seçim modu (Mesajlar): telefonda üst ve alt uygulama menüleri yerini seçim başlığına ve sabit alt işlem çubuğuna bırakır. */
+  html[data-chat-select] [data-app-nav] {
+    display: none !important;
+  }
+  @media (max-width: 767.98px) {
+    html[data-chat-select] [data-app-header] {
+      display: none !important;
+    }
+  }
+
   /* Scrolling down hides the header (below `lg`; the desktop sidebar never moves); the bottom nav stays as it is — scrolling up
    * brings the header back (`useChromeAutoHide`); a focused control keeps its bar. */
   [data-app-header],
