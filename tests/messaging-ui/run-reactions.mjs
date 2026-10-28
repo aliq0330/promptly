@@ -232,12 +232,13 @@ await scenario("5. Sayfadaki kendi satırım: tepki verince listede 'Sen' etiket
   await mine.waitFor({ state: "detached" });
 }, { mine: null });
 
-await scenario("6. Ana Sayfa/Keşfet kartı: aynı düğme ve özet satırı (kartta Kopyala/Çalıştır yok); ilk dokunuş beğenir, Komik seçilince PATCH `haha` ve efekt", async ({ page, state }) => {
+await scenario("6. Ana Sayfa/Keşfet kartı: aynı düğme (kartta Kopyala/Çalıştır ve tepki özeti yok); ilk dokunuş beğenir, Komik seçilince PATCH `haha` ve efekt", async ({ page, state }) => {
   await page.goto(`${BASE}/discover`);
   const card = page.locator("main article").filter({ hasText: "Ay ışığında bekleyen kitsune" }).first();
   await card.waitFor();
   assert.equal(await card.getByRole("button", { name: /Kopyala|Çalıştır|Studio/ }).count(), 0, "no big primary action on a card");
-  const button = card.locator('[data-card-actions] button[aria-haspopup="menu"]');
+  const button = card.locator('[data-card-actions] button[aria-haspopup="menu"]').first();
+  assert.equal(await card.locator("[data-reaction-summary]").count(), 0, "the visual card has no reaction summary (detail page only)");
   await button.click();
   await waitFor(() => state.likeCalls.length > 0);
   assert.equal(state.likeCalls[0].prompt_id, FEED_PROMPT);
@@ -245,8 +246,6 @@ await scenario("6. Ana Sayfa/Keşfet kartı: aynı düğme ve özet satırı (ka
   await menu(page).getByRole("menuitem", { name: "Komik" }).click();
   await waitFor(() => state.patchCalls.length > 0);
   assert.deepEqual(state.patchCalls[0].body, { reaction: "haha" });
-  await card.locator(`[data-reaction-summary="${FEED_PROMPT}"]`).waitFor();
-  await summaryHas(page, FEED_PROMPT, /Sen, Bob ve 12 kişi tepki verdi/);
   await effectSvg(page).first().waitFor({ timeout: 6000 });
   await page.waitForFunction(() => document.querySelectorAll("[data-reaction-effects] svg").length === 0, null, { timeout: 8000 });
   await card.scrollIntoViewIfNeeded();

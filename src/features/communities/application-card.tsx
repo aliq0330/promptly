@@ -8,6 +8,7 @@ import { PaletteStrip, SpaceCoverArt } from "@/features/spaces/space-visuals";
 import { OutputPosterPreview, OutputThumbnailStrip } from "@/features/prompts/multi-image-output-options";
 import { PostCommentLink, PostLike, PostSave, type EngageMode } from "./post-engagement";
 import { summarizeContent } from "./content-summary";
+import { SummaryTextArt } from "@/features/content/text-art";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { postPageHref } from "@/lib/communities";
 import { formatRelativeTime } from "@/lib/utils";
@@ -51,6 +52,7 @@ export function ApplicationCard({
         author={post.author}
         meta={`${t(SHARED_LABEL[post.contentType])} · ${formatRelativeTime(post.createdAt, language)}`}
         typeIcon={summary?.typeIcon}
+        titleInArt={Boolean(summary && summary.type !== "space" && summary.media.length === 0 && !summary.promptText)}
         status={
           <>
             {post.kind !== "legacy" && <Badge variant="default">{t("communities.post.badge.application")}</Badge>}
@@ -71,7 +73,9 @@ export function ApplicationCard({
               <OutputPosterPreview media={poster} />
             ) : summary.media.length > 0 ? (
               <OutputThumbnailStrip media={summary.media} />
-            ) : undefined
+            ) : (
+              <SummaryTextArt summary={summary} seed={post.id} />
+            )
           ) : (
             <p className="flex aspect-[4/3] w-full items-center justify-center gap-2 bg-surface-soft px-3 text-small text-text-muted">
               <EyeOff size={15} aria-hidden /> {t("communities.feed.contentGone")}

@@ -8,6 +8,7 @@ import { ContentTypePill } from "@/features/content/content-type-label";
 import { summarizeContent } from "@/features/communities/content-summary";
 import { OutputPosterPreview, OutputThumbnailStrip } from "@/features/prompts/multi-image-output-options";
 import { PaletteStrip, SpaceCoverArt } from "@/features/spaces/space-visuals";
+import { SummaryTextArt } from "@/features/content/text-art";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { quoteHref, quoteVerbKey } from "@/lib/quotes";
 import { formatRelativeTime } from "@/lib/utils";
@@ -35,6 +36,7 @@ export function QuoteCard({ quote }: { quote: Quote }) {
         author={quote.author}
         meta={`${t(quoteVerbKey(quote))} · ${formatRelativeTime(quote.createdAt, language)}`}
         typeIcon={summary?.typeIcon}
+        titleInArt={Boolean(summary && summary.type !== "space" && summary.media.length === 0 && !summary.promptText)}
         status={<Badge variant="default">{t("quotes.badge")}</Badge>}
         badges={summary && <ContentTypePill icon={summary.typeIcon} label={t(summary.typeLabelKey)} detail={summary.tools.length > 0 ? null : summary.detail} />}
         menu={<QuoteMenu quote={quote} onDeleted={() => setGone(true)} />}
@@ -46,7 +48,9 @@ export function QuoteCard({ quote }: { quote: Quote }) {
               <OutputPosterPreview media={poster} />
             ) : summary.media.length > 0 ? (
               <OutputThumbnailStrip media={summary.media} />
-            ) : undefined
+            ) : (
+              <SummaryTextArt summary={summary} seed={quote.id} />
+            )
           ) : (
             <p className="flex aspect-[4/3] w-full items-center justify-center gap-2 bg-surface-soft px-3 text-small text-text-muted">
               <EyeOff size={15} aria-hidden /> {t("quotes.card.contentGone")}

@@ -189,7 +189,9 @@ await scenario("4. Paylaş → Alıntıla: not + 'Akışta' seçili; create_quot
   await openNewest(page);
   const post = promptCard(page);
   await post.waitFor();
-  await post.getByRole("button", { name: "Paylaş" }).first().click();
+  assert.equal(await post.getByRole("button", { name: "Paylaş" }).count(), 0, "the visual card has no share button (detail page)");
+  await post.getByRole("link", { name: /./ }).first().click();
+  await page.locator("[data-detail-actions]").getByRole("button", { name: "Paylaş" }).first().click();
   const modal = page.locator('[data-share-modal="prompt"]');
   await modal.waitFor();
   await modal.locator("[data-quote-section] button[aria-expanded]").click();
@@ -210,7 +212,8 @@ await scenario("5. Alıntıla: sunucu hatası (already_quoted) nedeniyle açıkl
   state.created.push({ warm: true }); // sonraki çağrı ikinci sayılır → already_quoted
   await openNewest(page);
   const post = promptCard(page);
-  await post.getByRole("button", { name: "Paylaş" }).first().click();
+  await post.getByRole("link", { name: /./ }).first().click();
+  await page.locator("[data-detail-actions]").getByRole("button", { name: "Paylaş" }).first().click();
   const modal = page.locator('[data-share-modal="prompt"]');
   await modal.locator("[data-quote-section] button[aria-expanded]").click();
   await modal.locator("[data-quote-submit]").click();
