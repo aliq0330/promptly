@@ -1,0 +1,542 @@
+<title>Telemoji Tepkiler</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Düzen: tek sütunlu akış, kartın altında tepki düğmesi; tepki seçici düğmenin üstünde kayan hap, "kim ne dedi" listesi alttan açılan sayfa. */
+:root {
+  --bg: #f6f4fc;
+  --surface: #ffffff;
+  --soft: #efeafb;
+  --line: #e6e1f3;
+  --text: #1b1633;
+  --muted: #6f6988;
+  --primary: #6a38dd;
+  --primary-ink: #5a2bc8;
+  --primary-soft: #ece5fc;
+  --ring: #d9cef7;
+  --scrim: rgba(18, 12, 40, 0.45);
+  --shadow-card: 0 1px 2px rgba(40, 20, 90, 0.06), 0 14px 34px -14px rgba(60, 30, 140, 0.22);
+  --shadow-pop: 0 12px 44px -8px rgba(40, 20, 100, 0.32), 0 2px 8px rgba(40, 20, 100, 0.1);
+  --font: "DM Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Bricolage Grotesque", "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f0c1a; --surface: #1a1530; --soft: #241d42; --line: #2e2752; --text: #f2effc;
+    --muted: #a69fc4; --primary: #9b7bff; --primary-ink: #b8a2ff; --primary-soft: #2b2253;
+    --ring: #45397d; --scrim: rgba(0, 0, 0, 0.6);
+    --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4), 0 14px 34px -14px rgba(0, 0, 0, 0.6);
+    --shadow-pop: 0 12px 44px -8px rgba(0, 0, 0, 0.7), 0 2px 8px rgba(0, 0, 0, 0.4);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f0c1a; --surface: #1a1530; --soft: #241d42; --line: #2e2752; --text: #f2effc;
+  --muted: #a69fc4; --primary: #9b7bff; --primary-ink: #b8a2ff; --primary-soft: #2b2253;
+  --ring: #45397d; --scrim: rgba(0, 0, 0, 0.6);
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4), 0 14px 34px -14px rgba(0, 0, 0, 0.6);
+  --shadow-pop: 0 12px 44px -8px rgba(0, 0, 0, 0.7), 0 2px 8px rgba(0, 0, 0, 0.4);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--text); font: 16px/1.5 var(--font); -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent; }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+.wrap { max-width: 560px; margin: 0 auto; padding-block: 20px 56px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.logo { font: 800 34px/1 var(--font-display); letter-spacing: -0.04em; }
+.logo span { color: var(--primary); }
+.pill { font-size: 11px; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; color: var(--primary-ink); background: var(--primary-soft); border: 1px solid var(--ring); border-radius: 999px; padding: 8px 12px; white-space: nowrap; }
+h1 { font: 800 clamp(30px, 8vw, 40px)/1.1 var(--font-display); letter-spacing: -0.035em; margin: 36px 0 12px; text-wrap: balance; }
+.lead { color: var(--muted); margin: 0 0 24px; max-width: 62ch; }
+.feed { display: grid; gap: 24px; }
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 28px; box-shadow: var(--shadow-card); overflow: hidden; }
+.banner { height: 160px; display: flex; align-items: flex-end; padding: 20px 24px; color: #fff; font: 700 13px/1 var(--font); letter-spacing: 0.26em; text-transform: uppercase; }
+.b1 { background: radial-gradient(60% 90% at 78% 8%, rgba(255, 255, 255, 0.55), transparent 60%), linear-gradient(135deg, #3d1385 0%, #8b4ff0 52%, #d9b8f6 100%); }
+.b2 { background: radial-gradient(50% 80% at 85% 0%, rgba(255, 214, 170, 0.6), transparent 62%), linear-gradient(135deg, #22145f 0%, #b73a98 58%, #ff9f68 100%); }
+.body { padding: 20px 16px 16px; }
+.by { display: flex; align-items: center; gap: 12px; }
+.av { width: 44px; height: 44px; border-radius: 50%; flex: none; display: grid; place-items: center; color: #fff; font-weight: 700; background: linear-gradient(135deg, #a67bf5, #6a38dd); }
+.by b { display: block; font-size: 16px; line-height: 1.25; }
+.by small { color: var(--muted); font-size: 14px; }
+.card h2 { font: 700 24px/1.2 var(--font-display); letter-spacing: -0.02em; margin: 18px 0 8px; text-wrap: balance; }
+.card p { margin: 0; color: var(--muted); }
+.mono { margin: 14px 0 0; padding: 12px 14px; border-radius: 14px; background: var(--soft); font: 13px/1.55 var(--font-mono); overflow-wrap: anywhere; }
+.rule { border: 0; border-top: 1px solid var(--line); margin: 18px 0 14px; }
+
+.act { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 4px; }
+.rbtn { display: inline-flex; align-items: center; gap: 8px; min-height: 48px; padding: 4px 14px 4px 8px; border-radius: 999px; border: 1.5px solid var(--ring); font-weight: 600; font-size: 15px; color: var(--muted); transition: background 0.2s, color 0.2s, border-color 0.2s; }
+.rbtn[aria-expanded="true"] { border-color: var(--primary); }
+.rbtn.on { background: var(--primary-soft); color: var(--primary-ink); }
+.ico { width: 32px; height: 32px; display: grid; place-items: center; flex: none; }
+.ico svg, .ico img { width: 100%; height: 100%; display: block; }
+.ico.plain svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+.ab { display: inline-flex; align-items: center; gap: 5px; min-height: 48px; padding: 0 8px; font-size: 15px; border-radius: 999px; color: var(--muted); font-weight: 500; }
+.ab svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+@media (max-width: 399px) { .ab .lbl { display: none; } }
+.ab.on { color: var(--primary-ink); }
+.ab.on svg { fill: currentColor; }
+
+.who { display: flex; align-items: center; gap: 12px; width: 100%; margin-top: 10px; padding: 8px 10px 8px 4px; border-radius: 16px; text-align: left; color: var(--muted); }
+.who:hover { background: var(--soft); }
+.who .wt { flex: 1; min-width: 0; font-size: 15px; line-height: 1.35; }
+.who .wt b { color: var(--text); font-weight: 600; }
+.who > svg { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.stack { display: flex; flex: none; }
+.chip { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: var(--primary-soft); box-shadow: 0 0 0 2px var(--surface); margin-left: -9px; }
+.chip:first-child { margin-left: 0; }
+.chip img { width: 22px; height: 22px; display: block; }
+
+.note { margin: 28px 0 0; font-size: 13px; color: var(--muted); max-width: 62ch; }
+
+/* Seçici */
+.picker { position: fixed; z-index: 900; display: grid; grid-template-columns: repeat(6, 1fr); gap: 2px; padding: 8px; background: var(--surface); border: 1px solid var(--line); border-radius: 30px; box-shadow: var(--shadow-pop); transform-origin: 24px bottom; animation: pickerIn 0.22s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
+.picker.below { transform-origin: 24px top; }
+.picker.out { animation: pickerOut 0.14s ease-in forwards; pointer-events: none; }
+.pk { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 0 6px; min-width: 0; border-radius: 22px; color: var(--muted); animation: pkIn 0.34s cubic-bezier(0.2, 0.9, 0.3, 1.3) both; animation-delay: calc(var(--i) * 40ms + 40ms); transition: background 0.15s; }
+.pk .pi { width: 44px; height: 44px; display: block; transition: transform 0.18s cubic-bezier(0.2, 0.9, 0.3, 1.4); }
+.pk .pi svg, .pk .pi img { width: 100%; height: 100%; display: block; }
+.pk .pl { font-size: 12px; line-height: 1.2; white-space: nowrap; }
+.pk.on { background: var(--primary-soft); color: var(--primary-ink); }
+@media (hover: hover) { .pk:hover .pi { transform: scale(1.22) translateY(-3px); } .pk:hover { background: var(--soft); } .pk.on:hover { background: var(--primary-soft); } }
+.pk:active .pi { transform: scale(1.22) translateY(-3px); }
+.pk-rm { grid-column: 1 / -1; margin-top: 4px; padding: 11px 0 8px; border-top: 1px solid var(--line); font-size: 14px; font-weight: 600; color: var(--muted); border-radius: 0 0 22px 22px; }
+.pk-rm:hover { color: var(--text); }
+@keyframes pickerIn { from { opacity: 0; transform: translateY(8px) scale(0.86); } to { opacity: 1; transform: none; } }
+@keyframes pickerOut { to { opacity: 0; transform: translateY(6px) scale(0.92); } }
+@keyframes pkIn { from { opacity: 0; transform: translateY(14px) scale(0.5); } to { opacity: 1; transform: none; } }
+
+/* Efekt katmanı */
+.fxlayer { position: fixed; inset: 0; z-index: 1000; pointer-events: none; overflow: hidden; }
+.fx { position: absolute; }
+.fx svg { width: 100%; height: 100%; display: block; }
+
+/* Tepki listesi sayfası */
+.ov { position: fixed; inset: 0; z-index: 950; background: var(--scrim); animation: fade 0.2s ease both; }
+.sheet { position: fixed; z-index: 960; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; max-height: min(75dvh, 640px); background: var(--surface); border-radius: 26px 26px 0 0; box-shadow: var(--shadow-pop); padding-bottom: env(safe-area-inset-bottom, 0px); animation: sheetUp 0.3s cubic-bezier(0.2, 0.85, 0.25, 1) both; }
+@media (min-width: 640px) {
+  .sheet { left: 50%; right: auto; bottom: auto; top: 50%; width: 440px; max-height: min(80dvh, 640px); border-radius: 26px; animation: sheetPop 0.24s cubic-bezier(0.2, 0.9, 0.3, 1.1) both; }
+}
+.sheet.out { animation: fade 0.15s reverse both; }
+.grab { width: 40px; height: 4px; border-radius: 4px; background: var(--ring); margin: 10px auto 0; flex: none; }
+.sh-head { display: flex; align-items: center; gap: 12px; padding: 12px 12px 4px 20px; flex: none; }
+.sh-head h3 { margin: 0; font: 700 20px/1.2 var(--font-display); letter-spacing: -0.02em; }
+.sh-head p { margin: 0; font-size: 14px; color: var(--muted); }
+.sh-head div { flex: 1; min-width: 0; }
+.sh-x { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%; color: var(--muted); }
+.sh-x:hover { background: var(--soft); }
+.sh-x svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.tabs { display: flex; gap: 6px; padding: 8px 16px 10px; overflow-x: auto; flex: none; scrollbar-width: none; border-bottom: 1px solid var(--line); }
+.tabs::-webkit-scrollbar { display: none; }
+.tab { flex: none; display: inline-flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 14px; border-radius: 999px; font-size: 14px; font-weight: 600; color: var(--muted); border: 1.5px solid transparent; font-variant-numeric: tabular-nums; }
+.tab img { width: 22px; height: 22px; }
+.tab[aria-selected="true"] { background: var(--primary-soft); color: var(--primary-ink); border-color: var(--ring); }
+.list { list-style: none; margin: 0; padding: 6px 8px 12px; overflow-y: auto; flex: 1; min-height: 0; overscroll-behavior: contain; }
+.row { display: flex; align-items: center; gap: 12px; width: 100%; padding: 8px 10px; border-radius: 16px; text-align: left; }
+button.row:hover { background: var(--soft); }
+.row.mine { background: var(--primary-soft); margin-bottom: 4px; }
+.avatar { width: 42px; height: 42px; border-radius: 50%; flex: none; display: grid; place-items: center; color: #fff; font-weight: 700; background: hsl(var(--h) 56% 46%); }
+.avatar.me { background: linear-gradient(135deg, #a67bf5, #6a38dd); }
+.rt-name { flex: 1; min-width: 0; line-height: 1.3; }
+.rt-name b { display: block; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rt-name small { display: block; color: var(--muted); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tag { font-style: normal; font-size: 11px; font-weight: 600; color: var(--primary-ink); background: var(--primary-soft); border-radius: 6px; padding: 1px 6px; margin-left: 6px; vertical-align: 1px; }
+.row.mine .tag { background: var(--surface); }
+.rt { display: inline-flex; align-items: center; gap: 6px; flex: none; font-size: 13px; font-weight: 600; color: var(--muted); }
+.rt img { width: 30px; height: 30px; display: block; }
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes sheetUp { from { transform: translateY(100%); } to { transform: none; } }
+@keyframes sheetPop { from { opacity: 0; transform: translate(-50%, -46%) scale(0.96); } to { opacity: 1; transform: translate(-50%, -50%); } }
+@media (min-width: 640px) { .sheet { transform: translate(-50%, -50%); } }
+
+.toast { position: fixed; z-index: 1100; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translate(-50%, 20px); opacity: 0; background: var(--text); color: var(--bg); padding: 10px 18px; border-radius: 999px; font-size: 14px; font-weight: 500; pointer-events: none; transition: opacity 0.2s, transform 0.2s; max-width: calc(100vw - 32px); text-align: center; }
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+@media (prefers-reduced-motion: reduce) {
+  .picker, .pk, .ov, .sheet { animation: none !important; }
+  .pk .pi, .rbtn { transition: none; }
+}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="logo">prompt<span>ly</span></div>
+    <span class="pill">İnteraktif HTML demosu</span>
+  </header>
+  <h1>Telegram tarzı tepkiler</h1>
+  <p class="lead">Tepki ver'e dokun, bir emoji seç ve Telegram Emoji Effects deposundan gelen animasyonun kartın üzerinde kısa süreli oynadığını gör. Kartın altındaki satıra dokununca kimin hangi tepkiyi verdiğini listeden bak.</p>
+  <main class="feed" id="feed" aria-live="polite"></main>
+  <p class="note">Demo. Hareketli emojiler ve efektler saeedtahmtan/telemoji deposundan (Telegram'ın Animated Emoji paketi) alınmıştır; Telegram'ın kullanım koşulları geçerlidir. Telegram'da ampul için ayrı bir efekt olmadığından Faydalı tepkisinde yıldız efekti kullanıldı. Kişiler ve sayılar örnek veridir.</p>
+</div>
+<div class="fxlayer" id="fx" aria-hidden="true"></div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>/*__LOTTIE__*/</script>
+<script>
+(async function () {
+  var A = __ASSETS__;
+
+  var R = [
+    { key: 'love', label: 'Sevdim', ch: '❤️' },
+    { key: 'fire', label: 'Ateş', ch: '🔥' },
+    { key: 'wow', label: 'Vay be', ch: '🤯' },
+    { key: 'clap', label: 'Alkış', ch: '👏' },
+    { key: 'haha', label: 'Komik', ch: '😂' },
+    { key: 'idea', label: 'Faydalı', ch: '💡' }
+  ];
+  var BY = {};
+  R.forEach(function (r) { BY[r.key] = r; });
+  var reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var root = document.documentElement;
+  var fxLayer = document.getElementById('fx');
+  var toastEl = document.getElementById('toast');
+
+  var ICON = {
+    plus: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 11v1a10 10 0 1 1-9-10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><path d="M9 9h.01"/><path d="M15 9h.01"/><path d="M16 5h6"/><path d="M19 2v6"/></svg>',
+    msg: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>',
+    mark: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg>',
+    next: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>',
+    x: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>'
+  };
+
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function vw() { return document.documentElement.clientWidth; }
+
+  /* ---- Varlıklar: TGS (gzip'li Lottie) -> JSON ---- */
+  var D = {}, P = {};
+  function gunzip(b64) {
+    var bin = atob(b64), bytes = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    var stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
+    return new Response(stream).text().then(JSON.parse);
+  }
+  function makePoster(data) {
+    return new Promise(function (resolve) {
+      var box = document.createElement('div');
+      box.style.cssText = 'position:fixed;left:-9999px;top:0;width:256px;height:256px';
+      document.body.appendChild(box);
+      var an = lottie.loadAnimation({ container: box, renderer: 'svg', loop: false, autoplay: false, animationData: structuredClone(data) });
+      var finish = function () {
+        an.goToAndStop(0, true);
+        setTimeout(function () {
+          var svg = box.querySelector('svg');
+          svg.removeAttribute('style');
+          svg.setAttribute('width', '512');
+          svg.setAttribute('height', '512');
+          var url = URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(svg)], { type: 'image/svg+xml' }));
+          an.destroy(); box.remove(); resolve(url);
+        }, 0);
+      };
+      an.addEventListener('DOMLoaded', finish);
+    });
+  }
+  function fallbackPoster(ch) {
+    return 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text x="50" y="76" font-size="80" text-anchor="middle">' + ch + '</text></svg>');
+  }
+  var live = typeof DecompressionStream !== 'undefined' && typeof structuredClone === 'function' && typeof lottie !== 'undefined';
+  if (live) {
+    try {
+      await Promise.all(R.map(function (r) {
+        return Promise.all([gunzip(A[r.key].e), gunzip(A[r.key].f)]).then(function (v) { D[r.key] = { e: v[0], f: v[1] }; });
+      }));
+      for (var i = 0; i < R.length; i++) P[R[i].key] = await makePoster(D[R[i].key].e);
+    } catch (err) { console.warn('Telemoji varlıkları açılamadı', err); live = false; D = {}; }
+  }
+  if (!live) R.forEach(function (r) { P[r.key] = fallbackPoster(r.ch); });
+
+  /* ---- Örnek veri ---- */
+  var FIRST = ['Zeynep','Mert','Elif','Can','Deniz','Ece','Burak','Selin','Kaan','Ayşe','Emre','Defne','Ozan','Naz','Cem','İrem','Baran','Melis','Arda','Su','Eylül','Tuna','Yağmur','Kerem','Derya','Onur','Pınar','Ege','Gizem','Barış'];
+  var LAST = ['Yılmaz','Kaya','Demir','Şahin','Çelik','Aydın','Arslan','Doğan','Kılıç','Aslan','Koç','Öztürk','Polat','Erdem','Güneş'];
+  function rng(seed) { return function () { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; }; }
+  function fold(s) { return s.toLowerCase().replace(/ı/g, 'i').replace(/i̇/g, 'i').replace(/ç/g, 'c').replace(/ğ/g, 'g').replace(/ö/g, 'o').replace(/ş/g, 's').replace(/ü/g, 'u'); }
+  function ago(m) {
+    if (m < 1) return 'şimdi';
+    if (m < 60) return m + ' dk önce';
+    if (m < 1440) return Math.floor(m / 60) + ' sa önce';
+    return Math.floor(m / 1440) + ' gün önce';
+  }
+  function buildUsers(p) {
+    var rnd = rng(p.seed), pool = [], users = [], n = 0;
+    FIRST.forEach(function (f) { LAST.forEach(function (l) { pool.push([f, l]); }); });
+    for (var i = pool.length - 1; i > 0; i--) { var j = Math.floor(rnd() * (i + 1)), t = pool[i]; pool[i] = pool[j]; pool[j] = t; }
+    R.forEach(function (r) {
+      for (var k = 0; k < p.counts[r.key]; k++) {
+        var nm = pool[n++];
+        users.push({
+          k: r.key, name: nm[0] + ' ' + nm[1],
+          handle: fold(nm[0]) + fold(nm[1]) + (rnd() < 0.35 ? String(10 + Math.floor(rnd() * 90)) : ''),
+          mins: Math.min(60 * 24 * 6, Math.floor(-Math.log(1 - rnd()) * 180) + 1),
+          follows: rnd() < 0.1, hue: Math.floor(rnd() * 360)
+        });
+      }
+    });
+    users.sort(function (a, b) { return a.mins - b.mins; });
+    var f = users.filter(function (u) { return u.follows; });
+    for (var q = 0; f.length < 2 && q < users.length; q += 3) { if (!users[q].follows) { users[q].follows = true; f.push(users[q]); } }
+    return users;
+  }
+
+  var POSTS = [
+    { id: 'a', banner: 'b1', bannerText: 'Promptly · Community', author: 'Promptly Community', handle: 'promptly', initial: 'P', when: 'şimdi',
+      title: 'Bir fikri görsele dönüştür ✨',
+      text: 'İyi bir prompt, hayalindeki dünyayı görünür kılar. Sen bugün ne ürettin? Tepkini bırak, topluluğun ilhamını büyüt.',
+      counts: { love: 54, fire: 31, wow: 17, clap: 12, haha: 9, idea: 6 }, seed: 7 },
+    { id: 'b', banner: 'b2', bannerText: 'Prompt · Görsel', author: 'Elif Nur Kaya', handle: 'elifnur', initial: 'E', when: '2 sa önce',
+      title: 'Neon Tokyo gece sokağı',
+      text: 'Yağmurdan sonra ıslak asfalt, neon tabelalar ve sinematik bir bokeh. Renk paletini kendi sahnene göre değiştir.',
+      code: 'wet asphalt, neon signage reflections, cinematic bokeh, 35mm film grain, {renk_paleti}',
+      counts: { love: 22, fire: 40, wow: 9, clap: 5, haha: 3, idea: 30 }, seed: 21 }
+  ];
+  POSTS.forEach(function (p) { p.mine = null; p.saved = false; p.users = buildUsers(p); });
+
+  function total(p) { var t = p.mine ? 1 : 0; R.forEach(function (r) { t += p.counts[r.key]; }); return t; }
+  function countOf(p, k) { return p.counts[k] + (p.mine === k ? 1 : 0); }
+  function topKeys(p) {
+    return R.filter(function (r) { return countOf(p, r.key) > 0; })
+      .sort(function (a, b) { return countOf(p, b.key) - countOf(p, a.key); }).slice(0, 3).map(function (r) { return r.key; });
+  }
+  function summary(p) {
+    var parts = [];
+    if (p.mine) parts.push('<b>Sen</b>');
+    p.users.filter(function (u) { return u.follows; }).slice(0, p.mine ? 1 : 2).forEach(function (u) { parts.push('<b>' + esc(u.name.split(' ')[0]) + '</b>'); });
+    return parts.join(', ') + ' ve ' + (total(p) - parts.length) + ' kişi tepki verdi';
+  }
+
+  /* ---- Toast ---- */
+  var toastTimer;
+  function toast(msg) {
+    toastEl.textContent = msg; toastEl.classList.add('show');
+    clearTimeout(toastTimer); toastTimer = setTimeout(function () { toastEl.classList.remove('show'); }, 1800);
+  }
+
+  /* ---- Kart ---- */
+  var feed = document.getElementById('feed');
+  function cardEl(p) {
+    var el = document.createElement('article');
+    el.className = 'card';
+    el.innerHTML =
+      '<div class="banner ' + p.banner + '">' + esc(p.bannerText) + '</div>' +
+      '<div class="body">' +
+        '<div class="by"><div class="av">' + p.initial + '</div><div><b>' + esc(p.author) + '</b><small>@' + p.handle + ' · ' + p.when + '</small></div></div>' +
+        '<h2>' + esc(p.title) + '</h2><p>' + esc(p.text) + '</p>' +
+        (p.code ? '<div class="mono">' + esc(p.code) + '</div>' : '') +
+        '<hr class="rule">' +
+        '<div class="act">' +
+          '<button type="button" class="rbtn" aria-haspopup="menu" aria-expanded="false"></button>' +
+          '<button type="button" class="ab" data-act="comment">' + ICON.msg + '<span class="lbl">Yorum yap</span></button>' +
+          '<button type="button" class="ab" data-act="save">' + ICON.mark + '<span>Kaydet</span></button>' +
+        '</div>' +
+        '<button type="button" class="who" aria-haspopup="dialog"></button>' +
+      '</div>';
+    p.el = el;
+    el.querySelector('.rbtn').addEventListener('click', function (e) { if (pk && pk.post === p) closePicker(); else openPicker(p, e.detail === 0); });
+    el.querySelector('.who').addEventListener('click', function (e) { openSheet(p, 'all', e.currentTarget); });
+    el.querySelector('[data-act="comment"]').addEventListener('click', function () { toast('Bu demoda yalnızca tepkiler çalışır'); });
+    el.querySelector('[data-act="save"]').addEventListener('click', function (e) {
+      p.saved = !p.saved; var b = e.currentTarget;
+      b.classList.toggle('on', p.saved); b.querySelector('span').textContent = p.saved ? 'Kaydedildi' : 'Kaydet';
+    });
+    update(p);
+    return el;
+  }
+  function update(p) {
+    var btn = p.el.querySelector('.rbtn');
+    if (p.mine) {
+      btn.classList.add('on');
+      btn.innerHTML = '<span class="ico"><img alt="" src="' + P[p.mine] + '"></span><span>' + BY[p.mine].label + '</span>';
+      btn.setAttribute('aria-label', 'Tepkin: ' + BY[p.mine].label + '. Değiştirmek için aç.');
+    } else {
+      btn.classList.remove('on');
+      btn.innerHTML = '<span class="ico plain">' + ICON.plus + '</span><span>Tepki ver</span>';
+      btn.setAttribute('aria-label', 'Tepki ver');
+    }
+    var who = p.el.querySelector('.who');
+    who.innerHTML = '<span class="stack">' + topKeys(p).map(function (k) { return '<span class="chip"><img alt="" src="' + P[k] + '"></span>'; }).join('') + '</span>' +
+      '<span class="wt">' + summary(p) + '</span>' + ICON.next;
+    who.setAttribute('aria-label', total(p) + ' tepki, kimlerin verdiğini gör');
+  }
+
+  /* ---- Efektler ---- */
+  function animateIcon(ico, key) {
+    if (!live || reduced || !ico || !D[key]) return;
+    ico.textContent = '';
+    var an = lottie.loadAnimation({ container: ico, renderer: 'svg', loop: false, autoplay: true, animationData: structuredClone(D[key].e) });
+    an.addEventListener('complete', function () {
+      an.destroy();
+      if (ico.isConnected) ico.innerHTML = '<img alt="" src="' + P[key] + '">';
+    });
+  }
+  function playEffect(key, anchor) {
+    if (!live || reduced || !anchor || !D[key]) return;
+    var size = Math.min(260, vw() - 24), box = document.createElement('div'), gone = false;
+    box.className = 'fx'; box.style.width = box.style.height = size + 'px';
+    fxLayer.appendChild(box);
+    function place() {
+      if (!anchor.isConnected) return;
+      var r = anchor.getBoundingClientRect();
+      box.style.left = (r.left + r.width / 2 - size / 2) + 'px';
+      box.style.top = (r.top + r.height / 2 - size / 2) + 'px';
+    }
+    place();
+    var an = lottie.loadAnimation({ container: box, renderer: 'svg', loop: false, autoplay: true, animationData: structuredClone(D[key].f) });
+    function done() {
+      if (gone) return; gone = true;
+      removeEventListener('scroll', place, true); an.destroy(); box.remove();
+    }
+    an.addEventListener('complete', done);
+    addEventListener('scroll', place, true);
+    setTimeout(done, 4500);
+  }
+
+  /* ---- Seçici ---- */
+  var pk = null;
+  function placePicker() {
+    if (!pk) return;
+    var br = pk.post.el.querySelector('.rbtn').getBoundingClientRect();
+    var w = Math.min(vw() - 16, 440);
+    pk.el.style.width = w + 'px';
+    var left = Math.max(8, Math.min(br.left, vw() - w - 8));
+    var h = pk.el.offsetHeight, top = br.top - h - 10, below = false;
+    if (top < 8) { top = br.bottom + 10; below = true; }
+    pk.el.style.left = left + 'px'; pk.el.style.top = top + 'px';
+    pk.el.classList.toggle('below', below);
+    pk.el.style.transformOrigin = Math.max(24, Math.min(br.left + br.width / 2 - left, w - 24)) + 'px ' + (below ? 'top' : 'bottom');
+  }
+  function openPicker(p, viaKey) {
+    closePicker(true);
+    var el = document.createElement('div');
+    el.className = 'picker'; el.setAttribute('role', 'menu'); el.setAttribute('aria-label', 'Tepki seç');
+    el.innerHTML = R.map(function (r, i) {
+      return '<button type="button" class="pk' + (p.mine === r.key ? ' on' : '') + '" role="menuitem" data-k="' + r.key + '" style="--i:' + i + '"><span class="pi"></span><span class="pl">' + r.label + '</span></button>';
+    }).join('') + (p.mine ? '<button type="button" class="pk-rm" role="menuitem" data-rm="1">Tepkini kaldır</button>' : '');
+    document.body.appendChild(el);
+    var anims = [], timers = [];
+    el.querySelectorAll('.pk').forEach(function (b, i) {
+      var key = b.dataset.k, pi = b.querySelector('.pi');
+      if (live && D[key]) {
+        var an = lottie.loadAnimation({ container: pi, renderer: 'svg', loop: false, autoplay: false, animationData: structuredClone(D[key].e) });
+        anims.push(an);
+        an.addEventListener('DOMLoaded', function () { an.goToAndStop(0, true); });
+        if (!reduced) {
+          an.addEventListener('complete', function () { an.goToAndStop(0, true); });
+          b.addEventListener('pointerenter', function () { an.goToAndPlay(0, true); });
+        }
+      } else pi.innerHTML = '<img alt="" src="' + P[key] + '">';
+    });
+    el.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-k]');
+      if (b) choose(p, b.dataset.k);
+      else if (e.target.closest('[data-rm]')) choose(p, null);
+    });
+    pk = { post: p, el: el, anims: anims, timers: timers };
+    p.el.querySelector('.rbtn').setAttribute('aria-expanded', 'true');
+    placePicker();
+    addEventListener('scroll', placePicker, true);
+    addEventListener('resize', placePicker);
+    if (viaKey) (el.querySelector('.pk.on') || el.querySelector('.pk')).focus({ preventScroll: true });
+  }
+  function closePicker(now) {
+    if (!pk) return;
+    var cur = pk; pk = null;
+    removeEventListener('scroll', placePicker, true);
+    removeEventListener('resize', placePicker);
+    cur.timers.forEach(clearTimeout);
+    cur.post.el.querySelector('.rbtn').setAttribute('aria-expanded', 'false');
+    var end = function () { cur.anims.forEach(function (a) { a.destroy(); }); cur.el.remove(); };
+    if (now || reduced) end(); else { cur.el.classList.add('out'); setTimeout(end, 140); }
+  }
+  function choose(p, key) {
+    closePicker();
+    p.mine = key;
+    update(p);
+    if (key) {
+      var ico = p.el.querySelector('.rbtn .ico');
+      animateIcon(ico, key); playEffect(key, ico);
+    } else toast('Tepkin kaldırıldı');
+    if (sh && sh.post === p) renderSheet();
+  }
+  document.addEventListener('pointerdown', function (e) {
+    if (pk && !pk.el.contains(e.target) && !e.target.closest('.rbtn')) closePicker();
+  });
+
+  /* ---- Kim ne tepki verdi ---- */
+  var sh = null;
+  function openSheet(p, tab, trigger) {
+    closePicker(true);
+    var wrap = document.createElement('div');
+    wrap.innerHTML =
+      '<div class="ov" data-close="1"></div>' +
+      '<section class="sheet" role="dialog" aria-modal="true" aria-labelledby="sh-t">' +
+        '<div class="grab"></div>' +
+        '<div class="sh-head"><div><h3 id="sh-t">Tepkiler</h3><p id="sh-n"></p></div><button type="button" class="sh-x" data-close="1" aria-label="Kapat">' + ICON.x + '</button></div>' +
+        '<div class="tabs" role="tablist" aria-label="Tepki türü"></div>' +
+        '<ul class="list"></ul>' +
+      '</section>';
+    var ov = wrap.children[0], sheet = wrap.children[1];
+    document.body.appendChild(ov); document.body.appendChild(sheet);
+    sh = { post: p, tab: tab, ov: ov, el: sheet, trigger: trigger };
+    root.style.overflow = 'hidden';
+    ov.addEventListener('click', closeSheet);
+    sheet.addEventListener('click', function (e) {
+      if (e.target.closest('[data-close]')) return closeSheet();
+      var t = e.target.closest('[data-tab]');
+      if (t) { sh.tab = t.dataset.tab; renderSheet(); sh.el.querySelector('.list').scrollTop = 0; }
+      if (e.target.closest('[data-mine]')) { choose(p, null); }
+    });
+    renderSheet();
+    sheet.querySelector('.sh-x').focus({ preventScroll: true });
+  }
+  function renderSheet() {
+    if (!sh) return;
+    var p = sh.post, sheet = sh.el;
+    var tabs = R.filter(function (r) { return countOf(p, r.key) > 0; });
+    if (sh.tab !== 'all' && !tabs.some(function (r) { return r.key === sh.tab; })) sh.tab = 'all';
+    sheet.querySelector('#sh-n').textContent = total(p) + ' tepki';
+    sheet.querySelector('.tabs').innerHTML =
+      '<button type="button" class="tab" role="tab" data-tab="all" aria-selected="' + (sh.tab === 'all') + '">Tümü ' + total(p) + '</button>' +
+      tabs.map(function (r) {
+        return '<button type="button" class="tab" role="tab" data-tab="' + r.key + '" aria-selected="' + (sh.tab === r.key) + '" aria-label="' + r.label + ' ' + countOf(p, r.key) + '"><img alt="" src="' + P[r.key] + '">' + countOf(p, r.key) + '</button>';
+      }).join('');
+    var rows = '';
+    if (p.mine && (sh.tab === 'all' || sh.tab === p.mine)) {
+      rows += '<li><button type="button" class="row mine" data-mine="1"><span class="avatar me">S</span><span class="rt-name"><b>Sen</b><small>Kaldırmak için dokun</small></span><span class="rt"><img alt="" src="' + P[p.mine] + '">' + BY[p.mine].label + '</span></button></li>';
+    }
+    var users = p.users.filter(function (u) { return sh.tab === 'all' || u.k === sh.tab; });
+    if (sh.tab === 'all') users = users.filter(function (u) { return u.follows; }).concat(users.filter(function (u) { return !u.follows; }));
+    rows += users.map(function (u) {
+      return '<li><div class="row"><span class="avatar" style="--h:' + u.hue + '">' + esc(u.name.charAt(0)) + '</span>' +
+        '<span class="rt-name"><b>' + esc(u.name) + (u.follows ? '<i class="tag">Takipte</i>' : '') + '</b><small>@' + u.handle + ' · ' + ago(u.mins) + '</small></span>' +
+        '<span class="rt"><img alt="" src="' + P[u.k] + '">' + BY[u.k].label + '</span></div></li>';
+    }).join('');
+    sheet.querySelector('.list').innerHTML = rows;
+  }
+  function closeSheet() {
+    if (!sh) return;
+    var cur = sh; sh = null;
+    root.style.overflow = '';
+    cur.el.classList.add('out'); cur.ov.style.opacity = '0';
+    setTimeout(function () { cur.el.remove(); cur.ov.remove(); }, reduced ? 0 : 150);
+    if (cur.trigger && cur.trigger.isConnected) cur.trigger.focus({ preventScroll: true });
+  }
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') {
+      if (sh) closeSheet();
+      else if (pk) { var b = pk.post.el.querySelector('.rbtn'); closePicker(); b.focus({ preventScroll: true }); }
+    } else if (pk && (e.key === 'ArrowRight' || e.key === 'ArrowLeft')) {
+      var items = Array.prototype.slice.call(pk.el.querySelectorAll('.pk')), i = items.indexOf(document.activeElement);
+      items[(i + (e.key === 'ArrowRight' ? 1 : items.length - 1)) % items.length].focus({ preventScroll: true });
+      e.preventDefault();
+    } else if (sh && e.key === 'Tab') {
+      var f = sh.el.querySelectorAll('button'), first = f[0], last = f[f.length - 1];
+      if (!sh.el.contains(document.activeElement)) { first.focus(); e.preventDefault(); }
+      else if (e.shiftKey && document.activeElement === first) { last.focus(); e.preventDefault(); }
+      else if (!e.shiftKey && document.activeElement === last) { first.focus(); e.preventDefault(); }
+    }
+  });
+  POSTS.forEach(function (p) { feed.appendChild(cardEl(p)); });
+})();
+</script>
