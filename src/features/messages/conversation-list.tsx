@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { LoadMoreButton } from "@/features/feed/load-more";
 import { ConversationRow } from "./conversation-row";
+import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Conversation } from "@/types";
 
@@ -17,6 +18,7 @@ export function ConversationList({
   emptyLabel,
   onUnarchive,
   busyId,
+  selection,
 }: {
   conversations: Conversation[];
   shareQuery?: string;
@@ -30,6 +32,8 @@ export function ConversationList({
   onUnarchive?: (conversationId: string) => void;
   /** The conversation whose action is in flight — its button is disabled. */
   busyId?: string | null;
+  /** Seçim modu (varsa satırlar seçilebilir olur): hangi kimlikler seçili + seç/bırak. */
+  selection?: { selectedIds: ReadonlySet<string>; onToggle: (conversationId: string) => void };
 }) {
   const { t } = useTranslation();
   const [shown, setShown] = useState(CONVERSATIONS_SHOWN_STEP);
@@ -43,7 +47,8 @@ export function ConversationList({
   }
 
   return (
-    <div className={flush ? "bg-surface py-1" : "rounded-xl border border-border-soft bg-surface py-1 shadow-card"}>
+    // Meydan düz liste (WhatsApp tarzı): telefonda sayfa kenarına kadar uzanan kutusuz satırlar; sm+ sayfada hafif kartlı çerçeve.
+    <div className={cn("bg-surface", flush ? "" : "-mx-3 sm:mx-0 sm:overflow-hidden sm:rounded-xl sm:border sm:border-border-soft sm:shadow-card")}>
       {conversations.slice(0, visibleCount).map((conversation) => (
         <ConversationRow
           key={conversation.id}
@@ -52,6 +57,7 @@ export function ConversationList({
           isActive={activeId === conversation.id}
           onUnarchive={onUnarchive ? () => onUnarchive(conversation.id) : undefined}
           unarchiveBusy={busyId === conversation.id}
+          selection={selection ? { selected: selection.selectedIds.has(conversation.id), onToggle: () => selection.onToggle(conversation.id) } : undefined}
         />
       ))}
       {conversations.length > visibleCount && (

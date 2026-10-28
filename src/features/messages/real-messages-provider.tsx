@@ -6,6 +6,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import {
   acceptMessageRequest,
   clearConversationHistory,
+  clearConversationUnread,
   declineMessageRequest,
   deleteConversationFromMyList,
   fetchConversationsForUser,
@@ -13,6 +14,7 @@ import {
   restoreConversationToList,
   setConversationArchived,
 } from "@/lib/supabase/messages";
+import { markConversationReadUpTo } from "@/lib/supabase/chat-features";
 import { supabase } from "@/lib/supabase/client";
 import { translateForRuntime } from "@/lib/i18n/translations";
 import type { Conversation, UserProfile } from "@/types";
@@ -42,6 +44,11 @@ interface RealMessagesContextValue {
   unarchiveConversation: (conversationId: string) => Promise<void>;
   deleteConversation: (conversationId: string) => Promise<void>;
   clearConversation: (conversationId: string) => Promise<void>;
+  /**
+   * Listeden "Okundu" (seçim modu / Tümü okundu): birebirde yalnız okunmamış sayacı sıfırlanır (okundu bilgisi karşı tarafa gitmez);
+   * grupta sayı okundu imlecinden hesaplandığı için imleç son mesaja ilerler. Yerel sayaç yalnız sunucu onayından sonra sıfırlanır.
+   */
+  markConversationRead: (conversationId: string) => Promise<void>;
   /** Listemden kaldırılmış / arşivlenmiş sohbeti listeye geri koyar (örn. "Gruplarım"daki gizli grup). */
   restoreConversation: (conversationId: string) => Promise<void>;
 }
@@ -223,6 +230,22 @@ export function RealMessagesProvider({ children }: { children: React.ReactNode }
     [user, patchConversation],
   );
 
+  const markConversationRead = useCallback(
+    async (conversationId: string) => {
+      if (!user) return;
+      const target = conversations.find((c) => c.id === conversationId);
+      if (!target) return;
+      if (target.kind === "group") {
+        const cursor = await markConversationReadUpTo(conversationId, target.lastMessageAt);
+        if (!cursor) throw new Error(translateForRuntime("messages.stateUpdateFailed"));
+      } else {
+        await clearConversationUnread(conversationId);
+      }
+      patchConversation(conversationId, { unreadCount: 0 });
+    },
+    [user, conversations, patchConversation],
+  );
+
   const restoreConversation = useCallback(
     async (conversationId: string) => {
       if (!user) return;
@@ -247,6 +270,7 @@ export function RealMessagesProvider({ children }: { children: React.ReactNode }
       unarchiveConversation,
       deleteConversation,
       clearConversation,
+      markConversationRead,
       restoreConversation,
     }),
     [
@@ -263,6 +287,7 @@ export function RealMessagesProvider({ children }: { children: React.ReactNode }
       unarchiveConversation,
       deleteConversation,
       clearConversation,
+      markConversationRead,
       restoreConversation,
     ],
   );
