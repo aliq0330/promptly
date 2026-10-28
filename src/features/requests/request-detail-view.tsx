@@ -1,6 +1,6 @@
 "use client";
 
-import { EngageCommentCount, EngageComments, EngageLike, EngageShare, EngageStatistics } from "@/features/content/scoped-engagement";
+import { EngageCommentCount, EngageComments, EngageLike, EngageReactionSummary, EngageShare, EngageStatistics } from "@/features/content/scoped-engagement";
 import { usePageTitle } from "@/components/layout/page-title";
 import { DetailMetaCard } from "@/features/content/detail-meta-card";
 import { useEffect, useRef, useState } from "react";
@@ -243,6 +243,7 @@ export function RequestDetailView({ request }: { request: PromptRequest }) {
       actions={
         // Beğeni · Yorum · Yanıt (scrolls to the replies) · İlişki haritası … İstatistik · Paylaş — no Kopyala for a request.
         <DetailActionBar
+          below={<EngageReactionSummary id={live.id} likeCount={live.likeCount} contentType="request" />}
           primary={primary}
           end={
             <>

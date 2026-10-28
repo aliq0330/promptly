@@ -384,10 +384,13 @@ export function DetailByline({
 export function DetailActionBar({
   primary,
   end,
+  below,
   children,
 }: {
   primary?: ReactNode;
   end?: ReactNode;
+  /** A line under the row (`EngageReactionSummary`: who reacted); not part of the pinned toolbar and drawn only while it has content. */
+  below?: ReactNode;
   children: ReactNode;
 }) {
   const { t } = useTranslation();
@@ -412,7 +415,8 @@ export function DetailActionBar({
   }, []);
 
   return (
-    <div className="flex flex-col gap-3 border-b border-border-soft py-4 sm:flex-row sm:items-center sm:gap-5">
+    <div className="border-b border-border-soft">
+    <div className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:gap-5">
       {primary && <div className="flex shrink-0 items-center gap-2">{primary}</div>}
       <div ref={slotRef} className="min-w-0 flex-1" style={dock.pinned ? { minHeight: dock.height } : undefined}>
         <div
@@ -430,6 +434,8 @@ export function DetailActionBar({
           </div>
         </div>
       </div>
+    </div>
+    {below && <div className="-mt-1.5 pb-2.5 empty:hidden">{below}</div>}
     </div>
   );
 }

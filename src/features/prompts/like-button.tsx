@@ -1,15 +1,13 @@
 "use client";
 
-import { Heart } from "lucide-react";
-import { cn, formatCount } from "@/lib/utils";
-import { LikeToggle } from "@/components/ui/like-toggle";
-import { contentActionClassName } from "@/features/content/action-styles";
-import { useTranslation } from "@/lib/i18n/language-provider";
-import { useAuthPrompt } from "@/features/auth/auth-prompt-provider";
-import { useLikeState } from "./use-like-state";
+import { ReactionButton } from "@/features/reactions/reaction-button";
 import type { LikeableContentType } from "@/lib/supabase/likes";
 
-/** Real, working like toggle — genuinely persisted to Supabase; opens the login dialog instead while signed out. */
+/**
+ * The like control of every surface — since docs/history/265-* it is the reaction button: pressing it opens the six-reaction picker (Telegram
+ * emojis + effects); every reaction is one like, so the count stays the total. Persistence and the signed-out login dialog live in
+ * `ReactionButton` / `useLikeState`. The name and props stay as they were, so no call site changed.
+ */
 export function LikeButton({
   id,
   likeCount,
@@ -24,41 +22,5 @@ export function LikeButton({
   size?: number;
   className?: string;
 }) {
-  const { isLiked, likeCount: count, toggle, canLike } = useLikeState(id, likeCount, contentType);
-  const { t } = useTranslation();
-  const { requireAuth } = useAuthPrompt();
-
-  const sharedClassName = contentActionClassName(false, cn(isLiked && "text-danger hover:text-danger", className));
-
-  if (!canLike) {
-    return (
-      <button
-        type="button"
-        onClick={(event) => {
-          event.preventDefault();
-          event.stopPropagation();
-          requireAuth("like");
-        }}
-        aria-haspopup="dialog"
-        title={t("prompt.loginToLike")}
-        aria-label={t("prompt.loginToLikeAria", { count })}
-        className={sharedClassName}
-      >
-        <Heart size={size} strokeWidth={1.75} />
-        <span aria-hidden>{formatCount(count)}</span>
-      </button>
-    );
-  }
-
-  return (
-    <LikeToggle
-      liked={isLiked}
-      count={count}
-      size={size}
-      onToggle={toggle}
-      title={isLiked ? t("prompt.unlike") : t("prompt.like")}
-      label={t(isLiked ? "prompt.unlikeAria" : "prompt.likeAria", { count })}
-      className={sharedClassName}
-    />
-  );
+  return <ReactionButton id={id} likeCount={likeCount} contentType={contentType} size={size} className={className} />;
 }

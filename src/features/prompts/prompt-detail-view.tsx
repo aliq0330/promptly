@@ -1,6 +1,6 @@
 "use client";
 
-import { EngageCommentCount, EngageComments, EngageLike, EngageSave, EngageShare, EngageStatistics } from "@/features/content/scoped-engagement";
+import { EngageCommentCount, EngageComments, EngageLike, EngageReactionSummary, EngageSave, EngageShare, EngageStatistics } from "@/features/content/scoped-engagement";
 import { usePageTitle } from "@/components/layout/page-title";
 import { DetailMetaCard } from "@/features/content/detail-meta-card";
 import { useEffect, useMemo, useState } from "react";
@@ -191,6 +191,7 @@ export function PromptDetailView({ prompt }: { prompt: Prompt }) {
       actions={
         // No big button here: Kopyala is on the prompt block itself (with Çalıştır / Studio'da aç).
         <DetailActionBar
+          below={<EngageReactionSummary id={prompt.id} likeCount={prompt.likeCount} />}
           end={
             <>
               <EngageStatistics target={{ contentType: "prompt", contentId: prompt.id, likeCount: prompt.likeCount, commentCount: prompt.commentCount, saveCount: prompt.saveCount, copyCount: prompt.copyCount }} size={20} />

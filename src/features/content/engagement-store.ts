@@ -1,6 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import { DEFAULT_REACTION, type ReactionKey } from "@/lib/reactions";
 
 /**
  * Shared, session-wide (module-singleton) state for beğeni/kaydetme/takip
@@ -35,9 +36,11 @@ interface Entry {
   active: boolean;
   /** Whether `active` has been resolved for the current viewer yet (vs. just defaulting to false pre-fetch). */
   activeChecked: boolean;
+  /** `like` entries only (docs/history/265-*): which reaction the viewer gave; `null` exactly when `active` is false. */
+  reaction: ReactionKey | null;
 }
 
-const EMPTY_ENTRY: Entry = { count: 0, active: false, activeChecked: false };
+const EMPTY_ENTRY: Entry = { count: 0, active: false, activeChecked: false, reaction: null };
 
 const store = new Map<string, Entry>();
 const listeners = new Map<string, Set<() => void>>();
@@ -74,7 +77,7 @@ function subscribeKey(key: string, onChange: () => void): () => void {
  */
 function ensureSeeded(key: string, baseCount: number) {
   if (!store.has(key)) {
-    store.set(key, { count: Math.max(0, baseCount), active: false, activeChecked: false });
+    store.set(key, { count: Math.max(0, baseCount), active: false, activeChecked: false, reaction: null });
   }
 }
 
@@ -82,15 +85,20 @@ function getSnapshot(key: string): Entry {
   return store.get(key) ?? EMPTY_ENTRY;
 }
 
-function readActive(key: string): { active: boolean; activeChecked: boolean } {
+function readActive(key: string): { active: boolean; activeChecked: boolean; reaction: ReactionKey | null } {
   const entry = store.get(key);
-  return entry ? { active: entry.active, activeChecked: entry.activeChecked } : { active: false, activeChecked: false };
+  return entry ? { active: entry.active, activeChecked: entry.activeChecked, reaction: entry.reaction } : { active: false, activeChecked: false, reaction: null };
 }
 
-/** Records the viewer's real like/save/follow state once it's been fetched — never a guess. */
-function setActive(key: string, active: boolean) {
+/** A like's reaction while it is on (an old caller that only knows "liked" means the default one); off = none. */
+function reactionFor(active: boolean, reaction: ReactionKey | null | undefined, prev: ReactionKey | null): ReactionKey | null {
+  return active ? reaction ?? prev ?? DEFAULT_REACTION : null;
+}
+
+/** Records the viewer's real like/save/follow state once it's been fetched — never a guess. `reaction`: the real one of a like (docs/history/265-*). */
+function setActive(key: string, active: boolean, reaction?: ReactionKey | null) {
   const prev = store.get(key) ?? EMPTY_ENTRY;
-  store.set(key, { ...prev, active, activeChecked: true });
+  store.set(key, { ...prev, active, activeChecked: true, reaction: reactionFor(active, reaction, prev.reaction) });
   notify(key);
 }
 
@@ -114,9 +122,17 @@ function setCount(key: string, count: number) {
 }
 
 /** Optimistic, locally-initiated toggle: flips `active` and adjusts the count by `delta` (±1) in one update/notify. */
-function applyToggle(key: string, active: boolean, delta: number) {
+function applyToggle(key: string, active: boolean, delta: number, reaction?: ReactionKey | null) {
   const prev = store.get(key) ?? EMPTY_ENTRY;
-  store.set(key, { active, activeChecked: true, count: Math.max(0, prev.count + delta) });
+  store.set(key, { active, activeChecked: true, count: Math.max(0, prev.count + delta), reaction: reactionFor(active, reaction, prev.reaction) });
+  notify(key);
+}
+
+/** The viewer swaps their reaction (count unchanged: every reaction is one like). No-op while not liked. */
+function setReaction(key: string, reaction: ReactionKey) {
+  const prev = store.get(key) ?? EMPTY_ENTRY;
+  if (!prev.active || prev.reaction === reaction) return;
+  store.set(key, { ...prev, reaction });
   notify(key);
 }
 
@@ -144,4 +160,5 @@ export const engagementStore = {
   setActive,
   setCount,
   applyToggle,
+  setReaction,
 };

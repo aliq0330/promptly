@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { categoryLabel } from "./step-meta";
 import type { Workflow } from "@/types";
+import { ReactionSummary } from "@/features/reactions/reaction-summary";
 
 /**
  * WorkflowCard — the Albüm card (`ContentCardPost`, docs/history/202-*) like PromptCard; its art is the cover (if any) or
@@ -88,6 +89,7 @@ export function WorkflowCard({
             </Link>
           ) : undefined
         }
+        reactions={<ReactionSummary contentType="workflow" id={workflow.id} likeCount={workflow.likeCount} />}
         footer={<PromptCardFooter workflow={workflow} />}
       />
     </ContentCard>

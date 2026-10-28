@@ -32,6 +32,9 @@ async function scenario(name, fn, { viewport = { width: 1280, height: 900 }, set
 }
 
 const dlg = (page) => page.getByRole("dialog").last();
+/** Beğeni düğmesi tepki seçicisini açar (docs/history/265-*): düğmeye bas, sonra tepkiyi (varsayılan Sevdim = eski beğeni) seç. */
+const react = async (page, button, name = "Sevdim") => { await button.click(); await page.getByRole("menuitem", { name }).click(); };
+const LIKE = /beğen|tepki/i;
 const calls = (db, table, method) => db.calls.filter((c) => c.table === table && (!method || c.method === method));
 const open = async (page, id, tab = "feed", extra = "") => { await page.goto(`${BASE}/communities/local?id=${id}&tab=${tab}${extra}`); await page.locator("h1").first().waitFor(); await page.waitForTimeout(250); };
 const seed = (db, opts = {}) => db.addCommunity(C1, { members: [[U.bob, "admin"], [U.carol, "moderator"], [U.dave, "member"]], ...opts });
@@ -103,7 +106,7 @@ await scenario("3. Yerel (topluluğa özgü) içerik: akışta NORMAL içerik ka
   assert.equal(await card.getByRole("button", { name: /seçenekleri/ }).count(), 1, "ONE menu: the card's own");
   assert.equal(await card.getByText("Alıntı", { exact: true }).count(), 0);
   assert.equal(await card.locator("[data-post-engagement]").count(), 0, "native content uses the content's OWN like/comment, not a second engagement bar");
-  await normalCard.getByRole("button", { name: /beğen/i }).first().waitFor();
+  await normalCard.getByRole("button", { name: LIKE }).first().waitFor();
   await normalCard.getByRole("button", { name: /Kaydet|koleksiyon/i }).first().waitFor();
   await normalCard.getByRole("button", { name: /İstatistik/i }).first().waitFor();
   await normalCard.getByRole("button", { name: "Paylaş" }).waitFor();
@@ -159,8 +162,8 @@ await scenario("3b. Eski (legacy) gönderi: tür rozeti TAHMİN EDİLMEZ, başvu
 await scenario("4. Beğeni gönderi kimliğine bağlanır (community_post_id), içeriğe DEĞİL; geri alınır; çift tık tek istek; sayaç gönderiye aittir", async ({ page, db }) => {
   await open(page, C1);
   const card = post(page, "Beğenilecek");
-  const heart = card.locator("[data-post-engagement]").getByRole("button", { name: /beğen/i }).first();
-  await heart.click();
+  const heart = card.locator("[data-post-engagement]").getByRole("button", { name: LIKE }).first();
+  await react(page, heart);
   await page.waitForTimeout(300);
   let likes = calls(db, "prompt_likes", "POST");
   assert.equal(likes.length, 1);
@@ -168,7 +171,7 @@ await scenario("4. Beğeni gönderi kimliğine bağlanır (community_post_id), i
   assert.equal(likes[0].body.prompt_id, undefined, "never the original content");
   assert.equal(db.posts[0].like_count, 1);
   await card.locator("[data-post-engagement]").getByText("1", { exact: true }).first().waitFor();
-  await heart.click();
+  await react(page, heart, "Tepkini kaldır");
   await page.waitForTimeout(300);
   assert.equal(calls(db, "prompt_likes", "DELETE").length, 1);
   assert.equal(db.posts[0].like_count, 0);
@@ -200,7 +203,7 @@ await scenario("5. Yorum başvuru sayfasında yazılır, gönderi kimliğine ba�
 
 await scenario("6. Aynı içerik iki toplulukta iki ayrı gönderidir: birindeki beğeni diğerinin sayacını değiştirmez", async ({ page, db }) => {
   await open(page, C1);
-  await post(page, "Ortak içerik").locator("[data-post-engagement]").getByRole("button", { name: /beğen/i }).first().click();
+  await react(page, post(page, "Ortak içerik").locator("[data-post-engagement]").getByRole("button", { name: LIKE }).first());
   await page.waitForTimeout(300);
   assert.equal(db.posts.find((p) => p.community_id === C1).like_count, 1);
   assert.equal(db.posts.find((p) => p.community_id === C2).like_count, 0);
@@ -369,7 +372,7 @@ await scenario("16. Başvuru sayfası = başvurulan içeriğin NORMAL detay sayf
   const bar = page.locator("[data-detail-actions]", { has: page.getByRole("button", { name: "Paylaş" }) }).first();
   await bar.getByRole("button", { name: /Kaydet|koleksiyon/i }).first().waitFor();
   await bar.getByRole("button", { name: /İstatistik/i }).first().waitFor();
-  await page.getByRole("button", { name: /beğen/i }).first().click();
+  await react(page, page.getByRole("button", { name: LIKE }).first());
   await page.waitForTimeout(300);
   assert.equal(calls(db, "prompt_likes", "POST")[0].body.community_post_id, p.id);
   assert.equal(calls(db, "prompt_likes", "POST")[0].body.prompt_id, undefined);

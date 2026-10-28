@@ -93,6 +93,11 @@ export function absoluteUrl(path: string): string {
   return `${window.location.origin}${BASE_PATH}${path}`;
 }
 
+/** A file served from `public/` (no trailing slash, unlike `withBasePath`): `publicAssetUrl("/reactions/fire.svg")`. */
+export function publicAssetUrl(path: string): string {
+  return `${BASE_PATH}${path.startsWith("/") ? path : `/${path}`}`;
+}
+
 /**
  * The plain-`<a>` form of an app route (basePath + trailing slash, as the static export serves it): a link written this way makes the
  * browser LOAD the page instead of Next swapping it in client-side — see `FullLoadLink`.
