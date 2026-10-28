@@ -1,9 +1,8 @@
 "use client";
 
-import Link from "next/link";
-import { ArrowRight, Play, Workflow as WorkflowIcon } from "lucide-react";
+import { ArrowRight, Workflow as WorkflowIcon } from "lucide-react";
 import { workflowHref } from "@/lib/utils";
-import { CARD_PRIMARY_CLASS, ContentCard, ContentCardPost, ContentCardTitle } from "@/features/content/content-card";
+import { ContentCard, ContentCardPost, ContentCardTitle } from "@/features/content/content-card";
 import { ContentTypePill } from "@/features/content/content-type-label";
 import { AnnouncedChip } from "@/features/communities/announced-chip";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
@@ -81,14 +80,6 @@ export function WorkflowCard({
         // eslint-disable-next-line @next/next/no-img-element -- decorative tint of the same cover
         backdrop={workflow.coverUrl ? <img src={workflow.coverUrl} alt="" className="h-full w-full object-cover" /> : undefined}
         title={<ContentCardTitle href={href} title={workflow.title} />}
-        primary={
-          workflow.stepCount > 0 ? (
-            <Link href={`${href}&run=1`} className={CARD_PRIMARY_CLASS}>
-              <Play size={14} aria-hidden fill="currentColor" />
-              {t("run.button")}
-            </Link>
-          ) : undefined
-        }
         reactions={<ReactionSummary contentType="workflow" id={workflow.id} likeCount={workflow.likeCount} />}
         footer={<PromptCardFooter workflow={workflow} />}
       />
