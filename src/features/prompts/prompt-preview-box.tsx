@@ -26,9 +26,9 @@ export function PromptPreviewBox({ prompt, lines = 4, variant = "panel" }: { pro
     // The visual card's art for a prompt without a picture: the prompt itself, in the platform's signature mono, on a theme-token
     // surface whose tone follows the prompt's id (`TextArt`), fading out where a long prompt is cut off; the tool sits under it.
     return (
-      <TextArt seed={prompt.id} className="gap-2.5 p-4">
+      <TextArt seed={prompt.id}>
         <TextArtExcerpt className="text-small leading-relaxed">{prompt.promptText}</TextArtExcerpt>
-        {tool && <p className="shrink-0 truncate text-caption font-semibold opacity-70">{tool}</p>}
+        {tool && <p className="truncate text-caption font-semibold opacity-70">{tool}</p>}
       </TextArt>
     );
   }

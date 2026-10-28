@@ -58,10 +58,10 @@ export function PresetCard({
         menu={<PostTargetMenu preset={preset} onDeleted={onDeleted} collectionRemoval={collectionRemoval} />}
         titleInArt
         art={
-          <TextArt seed={preset.id} className="gap-2.5">
+          <TextArt seed={preset.id}>
             <TextArtTitle>{preset.title}</TextArtTitle>
             {shown.length > 0 && (
-              <ul className="min-h-0 flex-1 overflow-hidden" aria-label={t("preset.contentsTitle")}>
+              <ul aria-label={t("preset.contentsTitle")}>
                 {shown.map((entry) => (
                   <li key={entry.fieldId} className="flex items-baseline justify-between gap-3 border-b border-current/15 py-1 text-small last:border-b-0">
                     <span className="shrink-0 opacity-70">{entry.fieldLabel}</span>
@@ -70,7 +70,7 @@ export function PresetCard({
                 ))}
               </ul>
             )}
-            <p className="shrink-0 truncate text-caption opacity-70">
+            <p className="truncate text-caption opacity-70">
               {t("preset.paramCount", { count: entries.length })} · {toolLabel ?? t("preset.generalTool")}
             </p>
           </TextArt>

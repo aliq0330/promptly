@@ -76,11 +76,11 @@ export function RequestCard({ request, onDeleted }: { request: PromptRequest; on
               <StorageImage src={picture.url} alt={picture.alt} fill sizes="(min-width: 1280px) 30vw, (min-width: 640px) 45vw, 100vw" className="object-cover" />
             </figure>
           ) : (
-            <TextArt seed={request.id} className="gap-2">
+            <TextArt seed={request.id}>
               <TextArtTitle>{request.title}</TextArtTitle>
-              <p className="min-h-0 flex-1 overflow-hidden whitespace-pre-line break-words text-small leading-relaxed [mask-image:linear-gradient(#000_65%,transparent_100%)]">{request.description}</p>
+              <p className="line-clamp-4 whitespace-pre-line break-words text-small leading-relaxed">{request.description}</p>
               {request.creativeDirection && (
-                <p className="line-clamp-1 shrink-0 text-caption opacity-75">
+                <p className="line-clamp-1 text-caption opacity-75">
                   <span className="font-semibold">{t("request.creativeDirection")} · </span>
                   {request.creativeDirection}
                 </p>

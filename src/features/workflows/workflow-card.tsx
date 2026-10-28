@@ -59,9 +59,9 @@ export function WorkflowCard({
               )}
             </figure>
           ) : (
-            <TextArt seed={workflow.id} className="gap-3">
+            <TextArt seed={workflow.id}>
               <TextArtTitle>{workflow.title}</TextArtTitle>
-              <span className="flex min-h-0 flex-1 flex-wrap content-start items-center gap-1.5">
+              <span className="flex flex-wrap items-center gap-1.5">
                 {workflow.contentTypes.map((type, index) => {
                   const Icon = CONTENT_TYPE_META[type].icon;
                   return (
@@ -75,7 +75,7 @@ export function WorkflowCard({
                   );
                 })}
               </span>
-              <span className="shrink-0 text-caption opacity-70">{t("workflow.stepCount", { count: String(workflow.stepCount) })}</span>
+              <span className="text-caption opacity-70">{t("workflow.stepCount", { count: String(workflow.stepCount) })}</span>
             </TextArt>
           )
         }
