@@ -15,3 +15,6 @@ export function contentActionClassName(active?: boolean, className?: string) {
     className,
   );
 }
+
+/** A card's Kaydet icon: the count stays on the detail page; the compact card row keeps only the bookmark (`SaveButton` draws the count as its direct `<span>`). */
+export const CARD_SAVE_CLASS = "[&>span]:hidden";

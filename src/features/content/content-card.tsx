@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { ImageIcon, type LucideIcon } from "lucide-react";
 import { createContext, useContext, useRef } from "react";
 import { Avatar } from "@/components/ui/avatar";
 import { rememberCardMedia, useCardMediaReturn } from "@/lib/card-transition";
@@ -30,12 +31,15 @@ import { splitSourceNotes } from "@/lib/source-notes";
 export function ContentCard({
   href,
   onOpen,
+  variant = "box",
   className,
   children,
 }: {
   href: string;
   /** Called when the card's own link is followed — a card hands its post to the detail page (`lib/detail-handoff.ts`). */
   onOpen?: () => void;
+  /** "visual": the picture-first post card (`ContentCardPost`) — no box, the rounded picture is the card. "box": a surface with border + shadow. */
+  variant?: "box" | "visual";
   className?: string;
   children: React.ReactNode;
 }) {
@@ -54,9 +58,13 @@ export function ContentCard({
         }
       }}
       className={cn(
-        "group relative flex flex-col rounded-xl border border-border-soft bg-surface shadow-card transition-[border-color,box-shadow] duration-300 ease-soft hover:border-border hover:shadow-card-hover",
-        // Hover-capable pointers only (Tailwind's hover: variant): a hairline of the brand colour opens along the top edge.
-        "before:pointer-events-none before:absolute before:inset-x-5 before:top-0 before:z-[1] before:h-px before:origin-center before:scale-x-0 before:rounded-full before:bg-primary/55 before:transition-transform before:duration-[var(--motion-emphasis)] before:ease-soft hover:before:scale-x-100",
+        variant === "visual"
+          ? "group relative flex flex-col"
+          : [
+              "group relative flex flex-col rounded-xl border border-border-soft bg-surface shadow-card transition-[border-color,box-shadow] duration-300 ease-soft hover:border-border hover:shadow-card-hover",
+              // Hover-capable pointers only (Tailwind's hover: variant): a hairline of the brand colour opens along the top edge.
+              "before:pointer-events-none before:absolute before:inset-x-5 before:top-0 before:z-[1] before:h-px before:origin-center before:scale-x-0 before:rounded-full before:bg-primary/55 before:transition-transform before:duration-[var(--motion-emphasis)] before:ease-soft hover:before:scale-x-100",
+            ],
         className,
       )}
     >
@@ -85,7 +93,7 @@ export function ContentGrid({
   const pageColumns = useContext(ContentGridColumnsContext);
   columns ??= pageColumns ?? "sm:columns-2 xl:columns-3";
   return (
-    <Tag {...rest} className={cn("sm:gap-4", columns, className)}>
+    <Tag {...rest} className={cn("sm:gap-5", columns, className)}>
       {children}
     </Tag>
   );
@@ -98,29 +106,9 @@ export function ContentGrid({
 const ContentGridColumnsContext = createContext<string | null>(null);
 export const ContentGridColumns = ContentGridColumnsContext.Provider;
 
-/** One cell of a `ContentGrid`: never split across columns; the gap between boxes (12px on a phone, 16px from `sm`). */
-export const CONTENT_GRID_ITEM_CLASS = "break-inside-avoid pb-3 sm:pb-4";
+/** One cell of a `ContentGrid`: never split across columns; the gap between cards (20px on a phone, 24px from `sm`). */
+export const CONTENT_GRID_ITEM_CLASS = "break-inside-avoid pb-5 sm:pb-6";
 
-/**
- * The one inner structure of every content card — the ALBÜM card (docs/history/202-*, the same language as the detail
- * pages' band, docs/history/201-*):
- *
- *   ┌──────────────────────────────────────────────┐
- *   │ BAND (tinted by the post's picture)           │
- *   │   [art: the output / prompt / steps …]        │
- *   │   ▣ GÖRSEL PROMPT · tool  [status]         ⋮  │
- *   │   Big title                                    │
- *   │   (·) Name @user · 3 gün önce                  │
- *   └──────────────────────────────────────────────┘
- *   [ Kopyala ]                 ♥ 12  💬 3  🔖 1  📊  ↗
- *
- * `backdrop` (the post's picture) is shown enlarged and blurred under a veil of the page colour, so the band takes the
- * picture's colours; without one the band is the quiet brand tint. `primary` is the card's one big action (Kopyala /
- * Çalıştır / Studio'da aç / Yanıtla); with it the engagement icons (`footer`, the same components as before: Beğeni ·
- * Yorum · Kaydet · İstatistik … Paylaş) gather on the right, without it they keep their own row. Nothing here creates a
- * stacking context (no `isolate`/transform), so the ⋮ menu still opens over the next card; the controls are `relative z-10`
- * above the card's stretched link and the menu `z-20`.
- */
 /**
  * The tinted layer behind an Albüm card's band: `backdrop` (a picture filling its box) enlarged and blurred under a veil of
  * the page colour, else the quiet brand tint. Put it first inside a `relative rounded-t-xl` band; the band's content goes
@@ -162,101 +150,102 @@ export function bandTint(color: string): string {
   return `color-mix(in srgb, ${color} 34%, var(--color-background))`;
 }
 
+/**
+ * The one inner structure of every content card — the VISUAL card (picture first, the Dribbble-style post):
+ *
+ *   ┌──────────────────────────────────────────────┐
+ *   │ [status]                             ( ▶ )    │  ← the post's picture, rounded, no frame; the small round
+ *   │                                               │    glyph is the type (video/audio/text/workflow/preset/
+ *   │              (the picture / the art)          │    request — not shown for an image prompt)
+ *   │  ░ on hover/focus: kicker, title, @user · time │
+ *   └──────────────────────────────────────────────┘
+ *   (·) Name                       ♥ 12  💬 3  🔖  ⋮
+ *
+ * No visible title or description: the title is revealed over the picture on hover/keyboard focus (it stays the card's real
+ * link for keyboard and screen-reader users). `art` is whatever fills the picture (the output, a prompt text, the steps…) and
+ * sets its height; `status` is always visible (Taslak, Açık/Kapandı, Alıntı…); `badges` (kicker, announced chip) and `meta`
+ * appear with the title. `children` are extra lines (a request-response's provenance, a quote's note) between the picture and
+ * the footer. Nothing here creates a stacking context outside the picture (no `isolate`/transform on the card), so the ⋮ menu
+ * still opens over the next card; the controls are `relative z-10` above the card's stretched link and the menu `z-20`.
+ */
 export function ContentCardPost({
   author,
   meta,
+  typeIcon: TypeIcon,
+  status,
   badges,
   menu,
   art,
-  backdrop,
-  tint,
   title,
-  primary,
   footer,
-  reactions,
   children,
 }: {
   /** `null` = unknown/removed author (shown as a generic user, no profile link). */
   author: Pick<UserProfile, "username" | "displayName" | "avatarUrl"> | null;
-  /** Muted part of the author line — e.g. "@carol · 3 gün önce" or "bir prompt paylaştı · dün". */
+  /** Muted part of the author line — e.g. "@carol · 3 gün önce" or "bir prompt paylaştı · dün"; shown with the title on hover. */
   meta: string;
-  /** The kicker row (`ContentTypePill`, status, "Başvuru"…). */
+  /** The small round glyph on the picture: what kind of post this is (skipped for an image prompt, whose picture says it). */
+  typeIcon?: LucideIcon;
+  /** Always-visible chips on the picture's corner (`Badge`s: Taslak, Açık/Kapandı, Alıntı, Sabit…). */
+  status?: React.ReactNode;
+  /** The kicker row shown with the title on hover (`ContentTypePill`, announced chip…). */
   badges?: React.ReactNode;
   menu?: React.ReactNode;
-  /** The band's picture: the output, a prompt box, the steps… */
+  /** What fills the picture: the output, a prompt box, the steps… It sets the picture's height. */
   art?: React.ReactNode;
-  /** The post's picture again (`<img>`/`StorageImage` filling its box) — tints the band. */
-  backdrop?: React.ReactNode;
-  /** The picture's stored average colour: tints the band without the blurred copy (`CardBandBackdrop`). */
-  tint?: string | null;
   /** `ContentCardTitle`. */
   title: React.ReactNode;
-  /** The card's one big action. */
-  primary?: React.ReactNode;
+  /** The compact counters (Beğeni · Yorum · Kaydet), right of the author. */
   footer?: React.ReactNode;
-  /** "Sen, Zeynep ve 12 kişi tepki verdi" under the action row (`ReactionSummary`, docs/history/265-*); draws nothing while there is no reaction. */
-  reactions?: React.ReactNode;
-  /** Extra lines in the band above the kicker (a request-response's provenance, a community post's note). */
+  /** Extra lines between the picture and the author row. */
   children?: React.ReactNode;
 }) {
   const { t } = useTranslation();
   const name = author?.displayName ?? t("common.genericUser");
   return (
     <>
-      <div className="relative rounded-t-xl px-3.5 pb-4 pt-3.5">
-        <CardBandBackdrop backdrop={backdrop} tint={tint} />
-        <div className="relative space-y-3.5">
-          {art}
-          {children && <div className="space-y-2">{children}</div>}
-          <div className="flex items-start gap-2">
-            <div className="min-w-0 flex-1 space-y-1.5">
-              {badges && <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5">{badges}</div>}
-              {title}
-              <p className="flex min-w-0 items-center gap-2 text-small leading-tight text-text-secondary">
-                {author ? (
-                  <Link href={profileHref(author)} aria-hidden tabIndex={-1} className="relative z-10 shrink-0 rounded-full">
-                    <Avatar src={author.avatarUrl} alt={name} size={22} />
-                  </Link>
-                ) : (
-                  <Avatar src={null} alt={name} size={22} className="shrink-0" />
-                )}
-                <span className="min-w-0 truncate">
-                  {author ? (
-                    <Link href={profileHref(author)} className="relative z-10 rounded-xs font-semibold text-text hover:text-primary">
-                      {name}
-                    </Link>
-                  ) : (
-                    <span className="font-semibold text-text">{name}</span>
-                  )}{" "}
-                  {meta}
-                </span>
-              </p>
-            </div>
-            {menu && <div className="relative z-20 -mr-1.5 -mt-1.5 shrink-0 focus-within:z-30">{menu}</div>}
+      <div data-card-media className="relative overflow-hidden rounded-xl bg-primary-soft">
+        {art ?? (
+          <div aria-hidden className="flex aspect-[4/3] w-full items-center justify-center text-primary/40">
+            {TypeIcon && <TypeIcon size={44} strokeWidth={1.5} />}
           </div>
+        )}
+        {status && <div className="absolute left-2.5 top-2.5 z-[1] flex flex-wrap items-center gap-1.5">{status}</div>}
+        {art && TypeIcon && TypeIcon !== ImageIcon && (
+          <span aria-hidden className="absolute right-2.5 top-2.5 z-[1] flex h-9 w-9 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-sm">
+            <TypeIcon size={18} strokeWidth={1.75} />
+          </span>
+        )}
+        {/* Title + kicker over the picture on hover / keyboard focus. The overlay lets clicks through to the stretched link; the title link inside it is the keyboard way in. */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[2] space-y-1.5 bg-gradient-to-t from-black/75 via-black/45 to-transparent px-3.5 pb-3 pt-12 opacity-0 transition-opacity duration-200 ease-soft group-focus-within:opacity-100 group-hover:opacity-100 [&_a]:pointer-events-auto [&_h2]:text-white [&_p]:text-white/85 [&_span]:text-white">
+          {badges && <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5">{badges}</div>}
+          {title}
+          {meta && <p className="truncate text-small leading-tight">{meta}</p>}
         </div>
       </div>
-      {(primary || footer) && (
-        <div data-card-actions className="relative z-10 flex items-center gap-0.5 px-2 py-2">
-          {primary ? (
-            <>
-              <div className="flex shrink-0 items-center pl-1.5">{primary}</div>
-              {/* Shrink-to-fit: the footer's own `ml-auto` spacer has no room here, so the icons gather on the right. */}
-              <div className="ml-auto flex min-w-0 items-center gap-0.5">{footer}</div>
-            </>
-          ) : (
-            footer
-          )}
-        </div>
-      )}
-      {reactions && <div className="relative z-10 -mt-1 px-3.5 pb-2 empty:hidden">{reactions}</div>}
+      {children && <div className="space-y-2 px-0.5 pt-2.5 empty:hidden">{children}</div>}
+      <div className="relative z-10 flex items-center gap-2 pb-0.5 pl-0.5 pt-2">
+        {author ? (
+          <Link href={profileHref(author)} className="flex min-w-0 flex-1 items-center gap-2 rounded-full outline-none focus-visible:ring-2 focus-visible:ring-primary">
+            <Avatar src={author.avatarUrl} alt="" size={28} className="shrink-0" />
+            <span className="min-w-0 truncate text-body font-medium text-text hover:text-primary">{name}</span>
+          </Link>
+        ) : (
+          <span className="flex min-w-0 flex-1 items-center gap-2">
+            <Avatar src={null} alt="" size={28} className="shrink-0" />
+            <span className="min-w-0 truncate text-body font-medium text-text">{name}</span>
+          </span>
+        )}
+        {(footer || menu) && (
+          <div data-card-actions className="-mr-1.5 flex shrink-0 items-center gap-0">
+            {footer}
+            {menu && <div className="relative z-20 focus-within:z-30">{menu}</div>}
+          </div>
+        )}
+      </div>
     </>
   );
 }
-
-/** The class of a card's big primary action (a `Link`/button beside the engagement icons). */
-export const CARD_PRIMARY_CLASS =
-  "relative z-10 inline-flex h-10 shrink-0 items-center gap-1.5 rounded-full bg-primary px-4 text-label font-semibold text-primary-foreground transition-colors duration-200 hover:bg-primary-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background";
 
 /**
  * Card title — a real link so keyboard users reach the item from its title
