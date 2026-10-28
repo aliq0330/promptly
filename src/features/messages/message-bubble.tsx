@@ -11,7 +11,8 @@ import { MessageImageGrid, useMessageImageUrls } from "./message-image-grid";
 import { MessageActionMenu } from "./message-action-menu";
 import { useAnchoredPopover } from "./use-anchored-popover";
 import { canEditOrDeleteMessage } from "./message-time-limit";
-import { SharedCommunityPostCard, SharedPromptCard, SharedPresetCard, SharedRequestCard, SharedWorkflowCard } from "./shared-content-card";
+import { SharedCommunityPostCard, SharedPromptCard, SharedPresetCard, SharedRequestCard, SharedSpaceCard, SharedWorkflowCard } from "./shared-content-card";
+import { parseSpaceShareBody } from "./space-share-format";
 import { parseWorkflowShareBody } from "./workflow-share-format";
 import { parsePresetShareBody } from "./preset-share-format";
 import { parseCommunityPostShareBody } from "./community-post-share-format";
@@ -115,9 +116,11 @@ export function MessageBubble({
   const workflowShare = !message.sharedPromptId && !message.sharedRequestId ? parseWorkflowShareBody(message.body) : null;
   const presetShare =
     !message.sharedPromptId && !message.sharedRequestId && !workflowShare ? parsePresetShareBody(message.body) : null;
+  const spaceShare =
+    !message.sharedPromptId && !message.sharedRequestId && !workflowShare && !presetShare ? parseSpaceShareBody(message.body) : null;
   const postShare =
-    !message.sharedPromptId && !message.sharedRequestId && !workflowShare && !presetShare ? parseCommunityPostShareBody(message.body) : null;
-  const displayBody = workflowShare ? workflowShare.note : presetShare ? presetShare.note : postShare ? postShare.note : message.body;
+    !message.sharedPromptId && !message.sharedRequestId && !workflowShare && !presetShare && !spaceShare ? parseCommunityPostShareBody(message.body) : null;
+  const displayBody = workflowShare ? workflowShare.note : presetShare ? presetShare.note : spaceShare ? spaceShare.note : postShare ? postShare.note : message.body;
 
   const repliedItem = useRepliedItem(replyPreview);
   const replyPreviewText = replyPreview ? describeReplied(replyPreview, t, repliedItem.title) : null;
@@ -355,6 +358,7 @@ export function MessageBubble({
             {message.sharedRequestId && <SharedRequestCard requestId={message.sharedRequestId} />}
             {workflowShare && <SharedWorkflowCard workflowId={workflowShare.id} />}
             {presetShare && <SharedPresetCard presetId={presetShare.id} />}
+            {spaceShare && <SharedSpaceCard spaceId={spaceShare.id} />}
             {postShare && <SharedCommunityPostCard postId={postShare.id} />}
             {message.attachments.length > 0 && <BubbleImages attachments={message.attachments} isMe={isMe} />}
             {message.announcementId && displayBody && (

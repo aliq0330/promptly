@@ -1,12 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type ClipboardEvent, type DragEvent, type FormEvent, type KeyboardEvent, type ReactNode } from "react";
-import { ImagePlus, Loader2, Smile, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { ArrowUp, Loader2, Plus, Smile, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import { ALLOWED_IMAGE_MIME } from "@/lib/supabase/message-images";
+import { ChatAttachSheet } from "./chat-attach";
 import { ComposerEmojiPicker } from "./composer-emoji-picker";
+import type { CommunityPostType } from "@/lib/supabase/communities";
 import type { ComposerImage } from "./use-composer-images";
 
 const ACCEPT = ALLOWED_IMAGE_MIME.join(",");
@@ -56,8 +57,8 @@ export function useImageDrop(onFiles: (files: File[]) => void, enabled: boolean)
 }
 
 /**
- * The message composer: `[photo] [ text … ] [emoji]  [Send]`. Photos are
- * only STAGED here (preview strip above the input) — nothing is uploaded or
+ * The message composer (docs/history/268-*): `[+] [ text … 😊 ] [↑]`. "+" opens the attach sheet (photo · import a prompt file · share from the
+ * library); photos are only STAGED here (preview strip above the input) — nothing is uploaded or
  * sent until the user presses Send. Enter sends on desktop (Shift+Enter =
  * new line); on touch devices Enter stays a newline. Banners (blocked /
  * replying / sharing) come in through `banners` so this component doesn't
@@ -79,6 +80,8 @@ export function MessageComposer({
   banners,
   error,
   dragActive,
+  onPickLibrary,
+  onImport,
 }: {
   draft: string;
   onDraftChange: (value: string) => void;
@@ -97,6 +100,10 @@ export function MessageComposer({
   error?: string | null;
   /** Whether a file is being dragged over the conversation — shows the drop hint. */
   dragActive: boolean;
+  /** "+" → Kütüphaneden paylaş: seçilen türün seçicisini açar (yoksa o satır çizilmez ve "+" yalnız fotoğraf ekler). */
+  onPickLibrary?: (type: CommunityPostType) => void;
+  /** "+" → Prompt içe aktar. */
+  onImport?: () => void;
 }) {
   const { t } = useTranslation();
   const formRef = useRef<HTMLFormElement>(null);
@@ -105,6 +112,7 @@ export function MessageComposer({
   const emojiButtonRef = useRef<HTMLButtonElement>(null);
   const selectionRef = useRef<{ start: number; end: number }>({ start: 0, end: 0 });
   const [emojiOpen, setEmojiOpen] = useState(false);
+  const [attachOpen, setAttachOpen] = useState(false);
   const closeEmoji = useCallback(() => setEmojiOpen(false), []);
 
   // Grow with the content up to ~5 lines, then scroll inside.
@@ -210,9 +218,21 @@ export function MessageComposer({
         </p>
       )}
       <div className="flex items-end gap-2">
+        <button
+          type="button"
+          onClick={() => (onPickLibrary || onImport ? setAttachOpen(true) : fileInputRef.current?.click())}
+          disabled={disabled}
+          aria-label={t("messages.attach.title")}
+          title={t("messages.attach.title")}
+          aria-haspopup={onPickLibrary || onImport ? "dialog" : undefined}
+          data-composer-plus
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-surface-soft text-text transition-colors hover:bg-border-soft focus-visible:outline-2 focus-visible:outline-primary disabled:pointer-events-none disabled:opacity-50"
+        >
+          <Plus size={22} strokeWidth={1.9} aria-hidden />
+        </button>
         <div
           className={cn(
-            "relative flex min-w-0 flex-1 items-end gap-0.5 rounded-3xl border border-border-soft bg-background px-1.5 py-1 shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus-within:border-primary/60 focus-within:ring-2 focus-within:ring-primary/15",
+            "relative flex min-w-0 flex-1 items-end gap-0.5 rounded-3xl border border-border-soft bg-background px-3 py-1 pr-1.5 shadow-xs transition-colors duration-200 ease-soft hover:border-border-strong focus-within:border-primary/60 focus-within:ring-2 focus-within:ring-primary/15",
             disabled && "opacity-50",
           )}
         >
@@ -228,16 +248,6 @@ export function MessageComposer({
               if (files.length > 0) onAddFiles(files);
             }}
           />
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={disabled}
-            aria-label={t("messages.addPhoto")}
-            title={t("messages.addPhoto")}
-            className={iconButton}
-          >
-            <ImagePlus size={20} aria-hidden />
-          </button>
           <textarea
             ref={textareaRef}
             value={draft}
@@ -257,7 +267,7 @@ export function MessageComposer({
             disabled={disabled}
             enterKeyHint="enter"
             maxLength={4000}
-            className="max-h-32 min-h-9 min-w-0 flex-1 resize-none bg-transparent px-1.5 py-[7px] text-sm leading-[1.4] text-text placeholder:text-text-muted focus:outline-none disabled:cursor-not-allowed"
+            className="max-h-32 min-h-9 min-w-0 flex-1 resize-none bg-transparent py-[9px] text-body leading-[1.4] text-text placeholder:text-text-muted focus:outline-none disabled:cursor-not-allowed"
           />
           <button
             ref={emojiButtonRef}
@@ -277,14 +287,37 @@ export function MessageComposer({
           </button>
           {emojiOpen && <ComposerEmojiPicker onPick={insertEmoji} onClose={closeEmoji} anchorRef={emojiButtonRef} />}
         </div>
-        <Button type="submit" disabled={!canSend || disabled} aria-label={t("messages.sendMessageAria")} className="h-11 shrink-0">
-          {isSending ? t("messages.sendingEllipsis") : t("common.send")}
-        </Button>
+        <button
+          type="submit"
+          disabled={!canSend || disabled}
+          aria-label={t("messages.sendMessageAria")}
+          title={t("common.send")}
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-[opacity,background-color] duration-200 ease-soft hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:pointer-events-none disabled:opacity-40"
+        >
+          {isSending ? <Loader2 size={20} className="animate-spin motion-reduce:animate-none" aria-hidden /> : <ArrowUp size={22} strokeWidth={2.2} aria-hidden />}
+        </button>
       </div>
       {error && (
         <p role="alert" className="mt-2 text-xs text-danger">
           {error}
         </p>
+      )}
+      {attachOpen && (onPickLibrary || onImport) && (
+        <ChatAttachSheet
+          onClose={() => setAttachOpen(false)}
+          onPhoto={() => {
+            setAttachOpen(false);
+            fileInputRef.current?.click();
+          }}
+          onImport={() => {
+            setAttachOpen(false);
+            onImport?.();
+          }}
+          onPickType={(type) => {
+            setAttachOpen(false);
+            onPickLibrary?.(type);
+          }}
+        />
       )}
     </form>
   );

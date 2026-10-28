@@ -50,12 +50,17 @@ await scenario("1. Okunabilir içerik: kart sahibin adını + türü, başlığ�
   await open(page);
   const ready = page.locator("[data-shared-card='ready']");
   assert.equal(await ready.count(), 4, "four readable cards");
+  // docs/history/268-*: tür kapağın üstündeki çipte, sahip adı başlığın altında; "İçeriği aç" düğmesi ve (kaydedilebilen türlerde) Kaydet.
   const owners = await page.locator("[data-shared-card='ready'] [data-shared-owner]").allTextContents();
-  assert.ok(owners.every((o) => o.includes(" · ")), `owner · type on every card: ${JSON.stringify(owners)}`);
-  assert.ok(owners.some((o) => /Prompt$/.test(o)) && owners.some((o) => /İstek$/.test(o)) && owners.some((o) => /Workflow$/.test(o)) && owners.some((o) => /Hazır ayar$/.test(o)), JSON.stringify(owners));
-  assert.ok(owners.some((o) => o.startsWith("Carol")), "workflow/preset owner is Carol");
+  const types = await page.locator("[data-shared-card='ready'] [data-shared-type]").allTextContents();
+  assert.ok(owners.length >= 4 && owners.every((o) => o.trim() === "Carol"), `owner name on every card: ${JSON.stringify(owners)}`);
+  assert.ok(types.some((o) => /Prompt$/.test(o)) && types.some((o) => /İstek$/.test(o)) && types.some((o) => /Workflow$/.test(o)) && types.some((o) => /Hazır ayar$/.test(o)), JSON.stringify(types));
   assert.match(await page.locator("[data-shared-card='ready']", { hasText: "Markalı mekanik klavye tuşları" }).textContent(), /2×2 dizilmiş/, "description snippet");
-  assert.match((await page.locator("[data-shared-card='ready']", { hasText: "Markalı mekanik" }).getAttribute("href")) ?? "", /\/prompts\/local\/?\?id=/);
+  const promptCard = page.locator("[data-shared-card='ready']", { hasText: "Markalı mekanik" });
+  assert.match((await promptCard.locator("a[data-shared-open]").getAttribute("href")) ?? "", /\/prompts\/local\/?\?id=/);
+  assert.equal(await promptCard.locator("button[title], button[aria-label]").filter({ hasText: "" }).count() >= 1, true, "bookmark button on a savable kind");
+  assert.equal(await page.locator("[data-shared-card='ready']", { hasText: "Retro-fütüristik" }).locator("button").count(), 0, "a request is not savable: no bookmark");
+  assert.equal(await page.locator("[data-shared-card='ready'] [data-shared-open]").count(), 4, "one open button per card");
   assert.equal(await page.getByText("Paylaşılan Prompt").count(), 0, "old generic label is gone");
 }, { setup: seed });
 
@@ -71,8 +76,8 @@ await scenario("2. Erişilemeyen içerik: 'Yükleniyor…' DEĞİL, 'Sayfa gizli
 await scenario("3. İngilizce: kartlar ve gizli içerik metni çevrilmiş", async ({ page }) => {
   await open(page);
   assert.match(await page.locator("[data-shared-card='hidden']").first().textContent(), /This page is hidden or has been removed/);
-  const owners = await page.locator("[data-shared-card='ready'] [data-shared-owner]").allTextContents();
-  assert.ok(owners.some((o) => /Request$/.test(o)) && owners.some((o) => /Preset$/.test(o)), JSON.stringify(owners));
+  const types = await page.locator("[data-shared-card='ready'] [data-shared-type]").allTextContents();
+  assert.ok(types.some((o) => /Request$/.test(o)) && types.some((o) => /Preset$/.test(o)), JSON.stringify(types));
 }, { setup: seed, lang: "en" });
 
 const REPLY_SEED = (db) => {
