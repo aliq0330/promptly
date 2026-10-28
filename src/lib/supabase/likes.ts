@@ -1,5 +1,6 @@
 import { supabase } from "./client";
 import { batcherRegistry } from "./batched-lookup";
+import { DEFAULT_REACTION, type ReactionKey } from "@/lib/reactions";
 
 /**
  * `prompt_likes` holds likes for several content types — a nullable
@@ -27,6 +28,9 @@ function targetColumn(
   return "prompt_id";
 }
 
+/** The `prompt_likes` column that holds this content type's id (shared with `reactions.ts`). */
+export const likeTargetColumn = targetColumn;
+
 const likeLookup = batcherRegistry((key) => {
   const [userId, contentType] = key.split("|") as [string, LikeableContentType];
   const column = targetColumn(contentType);
@@ -43,8 +47,11 @@ export async function fetchIsLiked(id: string, userId: string, contentType: Like
 }
 
 /** Genuinely, permanently likes a real prompt. `handle_prompt_like_change` (Bölüm 19/9.34) keeps like_count in sync, even across users. */
-export async function likeContent(id: string, userId: string, contentType: LikeableContentType = "prompt"): Promise<void> {
-  const { error } = await supabase.from("prompt_likes").insert({ [targetColumn(contentType)]: id, user_id: userId });
+export async function likeContent(id: string, userId: string, contentType: LikeableContentType = "prompt", reaction: ReactionKey = DEFAULT_REACTION): Promise<void> {
+  // Her beğeni bir tepkidir (docs/history/265-*). `love` sütunsuz yazılır: varsayılanı odur, migration öncesi şemada da çalışır.
+  const { error } = await supabase
+    .from("prompt_likes")
+    .insert({ [targetColumn(contentType)]: id, user_id: userId, ...(reaction === DEFAULT_REACTION ? {} : { reaction }) });
   if (error) throw new Error(error.message);
 }
 

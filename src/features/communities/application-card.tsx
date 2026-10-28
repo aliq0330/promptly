@@ -14,6 +14,7 @@ import { postPageHref } from "@/lib/communities";
 import { formatRelativeTime } from "@/lib/utils";
 import type { CommunityPost } from "@/lib/supabase/communities";
 import type { TranslationKey } from "@/lib/i18n/translations";
+import { ReactionSummary } from "@/features/reactions/reaction-summary";
 
 const SHARED_LABEL: Record<CommunityPost["contentType"], TranslationKey> = {
   prompt: "communities.feed.shared.prompt",
@@ -90,6 +91,7 @@ export function ApplicationCard({
         }
         tint={picture?.color}
         title={summary ? <ContentCardTitle href={href} title={summary.title} /> : null}
+        reactions={<ReactionSummary contentType="community_post" id={post.id} likeCount={post.likeCount} />}
         footer={
           // `contents`: the buttons stay direct items of the shared action row; the wrapper only marks them as the POST's own counters.
           <div className="contents" data-post-engagement={post.id}>

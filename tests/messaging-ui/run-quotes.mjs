@@ -151,7 +151,8 @@ await scenario("1. Ana Sayfa: alıntı normal gönderi kartıyla akışta — no
   await card.scrollIntoViewIfNeeded();
   await page.waitForTimeout(500);
   await shot(page, "qt-feed-card");
-  await card.getByRole("button", { name: /Beğen/ }).first().click();
+  await card.getByRole("button", { name: /Beğen|Tepki/ }).first().click();
+  await page.getByRole("menuitem", { name: /^(Sevdim|Love)/ }).click(); // docs/history/265-*: düğme tepki seçicisini açar
   await waitFor(() => state.likes.length > 0);
   assert.equal(state.likes.length, 1);
   assert.equal(state.likes[0].quote_id, Q_BOB);
@@ -287,7 +288,8 @@ await scenario("12. Alıntı sayfası = normal detay + ALINTININ eylemleri: beğ
   await page.locator(`[data-quote-page="${Q_BOB}"]`).waitFor();
   await page.getByRole("heading", { name: "Ay ışığında bekleyen kitsune" }).first().waitFor();
   assert.equal(await page.getByRole("button", { name: /^Kaydet/ }).count(), 0, "alıntı kaydedilmez");
-  await page.getByRole("button", { name: /Beğen/ }).first().click();
+  await page.getByRole("button", { name: /Beğen|Tepki/ }).first().click();
+  await page.getByRole("menuitem", { name: /^(Sevdim|Love)/ }).click();
   await waitFor(() => state.likes.length > 0);
   assert.equal(state.likes[0].quote_id, Q_BOB);
   assert.ok(!state.likes[0].prompt_id, "orijinalin beğenisine karışmaz");

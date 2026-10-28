@@ -16,6 +16,7 @@ import { PromptPreviewBox } from "./prompt-preview-box";
 import { CopyPromptButton } from "./copy-prompt-button";
 import { OutputPosterPreview, OutputThumbnailStrip } from "./multi-image-output-options";
 import type { Prompt } from "@/types";
+import { ReactionSummary } from "@/features/reactions/reaction-summary";
 
 type CollectionRemoval = { onRemove: () => Promise<void> };
 
@@ -78,6 +79,7 @@ export function PromptCard({
         tint={picture?.color}
         title={<ContentCardTitle href={href} title={prompt.title} />}
         primary={hasPromptText ? <CopyPromptButton text={prompt.promptText} promptId={prompt.id} size="md" variant="primary" className="h-10 rounded-full px-4" /> : undefined}
+        reactions={<ReactionSummary contentType="prompt" id={prompt.id} likeCount={prompt.likeCount} />}
         footer={<PromptCardFooter prompt={prompt} />}
       >
         {prompt.origin.type === "request-response" && (

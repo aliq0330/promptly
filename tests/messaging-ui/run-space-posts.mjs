@@ -152,7 +152,8 @@ await scenario("1. Keşfet 'Tümü': sahibin Space alıntısı alıntı kartıd�
   await card.scrollIntoViewIfNeeded();
   await page.waitForTimeout(600);
   await shot(page, "sp-quote-card");
-  await card.getByRole("button", { name: /Beğen/ }).first().click();
+  await card.getByRole("button", { name: /Beğen|Tepki/ }).first().click();
+  await page.getByRole("menuitem", { name: /^(Sevdim|Love)/ }).click(); // docs/history/265-*: düğme tepki seçicisini açar
   const end = Date.now() + 4000;
   while (Date.now() < end && state.likes.length === 0) await page.waitForTimeout(100);
   assert.equal(state.likes.length, 1);
@@ -171,7 +172,7 @@ await scenario("2. Keşfet → Spaces: herkese açık Space listesi (`list_space
   assert.equal(state.feedCalls.length === 0 || !state.feedCalls.some((c) => JSON.stringify(c.p_kinds) === JSON.stringify(["space"])), true);
   assert.match((await card.getByRole("link", { name: "Panoyu gez" }).getAttribute("href")) ?? "", /\/spaces\/local\/?\?id=.*tab=board/);
   await card.locator("[data-palette-strip]").waitFor();
-  assert.equal(await card.getByRole("button", { name: /Beğen/ }).count(), 0);
+  assert.equal(await card.getByRole("button", { name: /Beğen|Tepki ver|Tepkin:/ }).count(), 0);
   assert.equal(await page.locator("main article").filter({ hasText: "Duyurulmuş prompt" }).count(), 0);
 });
 
@@ -185,7 +186,7 @@ await scenario("3. Space sayfası (başkasının herkese açık Space'i): beğen
   await footer.getByRole("button", { name: "Şikayet Et" }).waitFor();
   assert.equal(await page.locator("[data-space-engagement]").count(), 0);
   assert.equal(await page.locator("[data-space-comments]").count(), 0);
-  assert.equal(await page.locator("[data-space-actions]").getByRole("button", { name: /Beğen/ }).count(), 0);
+  assert.equal(await page.locator("[data-space-actions]").getByRole("button", { name: /Beğen|Tepki ver|Tepkin:/ }).count(), 0);
 });
 
 await scenario("4. Sahip: Paylaş tek pencere — 'Akışta paylaş' anahtarı; az içerikte sunucu hatası açıklanır, yeterliyse create_quote('space'), kapatınca alıntı silinir; topluluk alıntısı satırı akış hedefi olmadan", async ({ page, db, state }) => {
@@ -233,7 +234,8 @@ await scenario("4b. Alıntı sayfası (Space): diğer türlerle AYNI iskelet —
   assert.match((await page.getByRole("link", { name: /Space'i aç/ }).first().getAttribute("href")) ?? "", /\/spaces\/local\/?\?id=/);
   await page.getByText("paylaştı").first().waitFor();
   assert.equal(await page.locator("section[aria-label='Alıntının yorumları']").count(), 0, "no separate narrow engagement section");
-  await page.getByRole("button", { name: /Beğen/ }).first().click();
+  await page.getByRole("button", { name: /Beğen|Tepki/ }).first().click();
+  await page.getByRole("menuitem", { name: /^(Sevdim|Love)/ }).click();
   const end = Date.now() + 4000;
   while (Date.now() < end && state.likes.length === 0) await page.waitForTimeout(100);
   assert.equal(state.likes[0].quote_id, Q_SPACE);

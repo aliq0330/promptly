@@ -14,6 +14,7 @@ import { PromptCardFooter } from "@/features/prompts/prompt-card-footer";
 import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { Preset } from "@/types";
+import { ReactionSummary } from "@/features/reactions/reaction-summary";
 
 /**
  * PresetCard — the Albüm card (`ContentCardPost`, docs/history/202-*) like PromptCard/WorkflowCard (Hazır Ayar = the 5th
@@ -83,6 +84,7 @@ export function PresetCard({
             Studio
           </Link>
         }
+        reactions={<ReactionSummary contentType="preset" id={preset.id} likeCount={preset.likeCount} />}
         footer={<PromptCardFooter preset={preset} />}
       />
     </ContentCard>

@@ -173,6 +173,7 @@ export function ContentCardPost({
   title,
   primary,
   footer,
+  reactions,
   children,
 }: {
   /** `null` = unknown/removed author (shown as a generic user, no profile link). */
@@ -193,6 +194,8 @@ export function ContentCardPost({
   /** The card's one big action. */
   primary?: React.ReactNode;
   footer?: React.ReactNode;
+  /** "Sen, Zeynep ve 12 kişi tepki verdi" under the action row (`ReactionSummary`, docs/history/265-*); draws nothing while there is no reaction. */
+  reactions?: React.ReactNode;
   /** Extra lines in the band above the kicker (a request-response's provenance, a community post's note). */
   children?: React.ReactNode;
 }) {
@@ -246,6 +249,7 @@ export function ContentCardPost({
           )}
         </div>
       )}
+      {reactions && <div className="relative z-10 -mt-1 px-3.5 pb-2 empty:hidden">{reactions}</div>}
     </>
   );
 }

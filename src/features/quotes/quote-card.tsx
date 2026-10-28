@@ -15,6 +15,7 @@ import { formatRelativeTime } from "@/lib/utils";
 import type { Quote } from "@/lib/supabase/quotes";
 import { QuoteCommentLink, QuoteLike, QuoteShareButton, QuoteStatisticsButton } from "./quote-engagement";
 import { QuoteMenu } from "./quote-menu";
+import { ReactionSummary } from "@/features/reactions/reaction-summary";
 
 /**
  * Alıntının akıştaki kartı (docs/history/217-*): başvuru gönderisinin kartıyla (`ApplicationCard`) AYNI aile — Albüm kartı
@@ -69,6 +70,7 @@ export function QuoteCard({ quote }: { quote: Quote }) {
         }
         tint={picture?.color}
         title={summary ? <ContentCardTitle href={href} title={summary.title} /> : null}
+        reactions={<ReactionSummary contentType="quote" id={quote.id} likeCount={quote.likeCount} />}
         footer={
           // `contents`: the buttons stay direct items of the shared action row; the wrapper only marks them as the QUOTE's own counters.
           <div className="contents" data-quote-engagement={quote.id}>

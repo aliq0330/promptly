@@ -64,7 +64,7 @@ for (const kind of ["prompt", "request", "workflow", "preset"]) {
     assert.ok(menu.top - band.top <= 24 && band.right - menu.right <= 24, "⋮ sits in the band's top-right corner");
     const share = await box(bar.getByRole("button", { name: "Paylaş" }));
     const stats = await box(bar.getByRole("button", { name: /İstatistik/ }).first());
-    const like = await box(bar.getByRole("button", { name: /Beğen/ }).first());
+    const like = await box(bar.getByRole("button", { name: /Beğen|Tepki/ }).first());
     assert.ok(share.left >= stats.right - 1 && stats.left > like.right + 40, "İstatistik · Paylaş on the far right");
     assert.equal(await page.locator("[data-detail-actions]").getByRole("button", { name: "Promptu Kopyala" }).count(), 0, "no big copy button in the actions row");
   }, { viewport: { width: 390, height: 844 } });

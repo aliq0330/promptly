@@ -1,6 +1,6 @@
 "use client";
 
-import { EngageCommentCount, EngageComments, EngageLike, EngageSave, EngageShare, EngageStatistics } from "@/features/content/scoped-engagement";
+import { EngageCommentCount, EngageComments, EngageLike, EngageReactionSummary, EngageSave, EngageShare, EngageStatistics } from "@/features/content/scoped-engagement";
 import { usePageTitle } from "@/components/layout/page-title";
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -171,6 +171,7 @@ export function PresetDetailView({ presetId }: { presetId?: string } = {}) {
       aside={aside}
       actions={
         <DetailActionBar
+          below={<EngageReactionSummary id={preset.id} likeCount={preset.likeCount} contentType="preset" />}
           primary={
             <div className="flex flex-wrap items-center gap-2">
               <Link href={`/studio?preset=${preset.id}`} className={buttonClassName({ size: "lg", className: "h-14 rounded-full px-7 shadow-pop" })}>

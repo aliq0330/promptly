@@ -4,6 +4,7 @@ import { useTranslation } from "@/lib/i18n/language-provider";
 import { CommentCountLink } from "@/features/prompts/comment-count-link";
 import { CommentSection, type CommentTarget } from "@/features/prompts/comment-section";
 import { LikeButton } from "@/features/prompts/like-button";
+import { ReactionSummary } from "@/features/reactions/reaction-summary";
 import { SaveButton } from "@/features/prompts/save-button";
 import { ShareTriggerButton, type ShareModalTarget } from "@/features/prompts/share-modal";
 import { StatisticsButton } from "@/features/statistics/statistics-button";
@@ -26,6 +27,15 @@ export function EngageLike({ id, likeCount, contentType, size = 18 }: { id: stri
   if (quoteScope) return <QuoteLike quote={quoteScope.quote} size={size} />;
   if (scope) return <PostLike post={scope.post} mode={scope.mode} onToast={scope.onToast} size={size} />;
   return <LikeButton id={id} likeCount={likeCount} contentType={contentType} size={size} />;
+}
+
+/** "Sen, Zeynep ve 12 kişi tepki verdi": the reactions of the page's own target (the post's / the quote's when opened as one). */
+export function EngageReactionSummary({ id, likeCount, contentType = "prompt" }: { id: string; likeCount: number; contentType?: LikeableContentType }) {
+  const scope = usePostScope();
+  const quoteScope = useQuoteScope();
+  if (quoteScope) return <ReactionSummary contentType="quote" id={quoteScope.quote.id} likeCount={quoteScope.quote.likeCount} />;
+  if (scope) return <ReactionSummary contentType="community_post" id={scope.post.id} likeCount={scope.post.likeCount} />;
+  return <ReactionSummary contentType={contentType} id={id} likeCount={likeCount} />;
 }
 
 export function EngageCommentCount({

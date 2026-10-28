@@ -50,7 +50,7 @@ function LikeBurstEffect({ size }: { size: number }) {
 }
 
 /** Count that rolls to its new value instead of jumping; width never changes between same-length numbers. */
-function RollingCount({ value }: { value: number }) {
+export function RollingCount({ value }: { value: number }) {
   const [state, setState] = useState({ value, prev: null as number | null, dir: 1 });
   if (state.value !== value) setState({ value, prev: state.value, dir: value > state.value ? 1 : -1 });
 
@@ -61,7 +61,7 @@ function RollingCount({ value }: { value: number }) {
   }, [state.prev, state.value]);
 
   return (
-    <span aria-hidden className="relative inline-flex overflow-hidden tabular-nums" style={{ ["--dir" as string]: state.dir }}>
+    <span aria-hidden className="relative inline-flex shrink-0 overflow-hidden tabular-nums" style={{ ["--dir" as string]: state.dir }}>
       <span className={cn(state.prev !== null && "animate-count-in motion-reduce:animate-none")}>{formatCount(state.value)}</span>
       {state.prev !== null && (
         <span className="absolute inset-0 animate-count-out motion-reduce:hidden">{formatCount(state.prev)}</span>

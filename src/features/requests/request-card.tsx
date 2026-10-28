@@ -21,6 +21,7 @@ import { formatCount, requestHref } from "@/lib/utils";
 import { useTranslation } from "@/lib/i18n/language-provider";
 import type { TranslationKey } from "@/lib/i18n/translations";
 import type { PromptRequest } from "@/types";
+import { ReactionSummary } from "@/features/reactions/reaction-summary";
 
 // A request is only ever shown as "Açık"/"Open" (accepting responses) or
 // "Kapandı"/"Closed" (not accepting new ones) — "answered" (closed via a
@@ -100,6 +101,7 @@ export function RequestCard({ request, onDeleted }: { request: PromptRequest; on
             </Link>
           ) : undefined
         }
+        reactions={<ReactionSummary contentType="request" id={request.id} likeCount={request.likeCount} />}
         footer={
           <>
             <LikeButton id={request.id} likeCount={request.likeCount} contentType="request" />

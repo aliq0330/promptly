@@ -1,6 +1,6 @@
 "use client";
 
-import { EngageCommentCount, EngageComments, EngageLike, EngageSave, EngageShare, EngageStatistics } from "@/features/content/scoped-engagement";
+import { EngageCommentCount, EngageComments, EngageLike, EngageReactionSummary, EngageSave, EngageShare, EngageStatistics } from "@/features/content/scoped-engagement";
 import { usePageTitle } from "@/components/layout/page-title";
 import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -206,6 +206,7 @@ export function WorkflowDetailView({ workflowId }: { workflowId?: string } = {})
       aside={aside}
       actions={
         <DetailActionBar
+          below={<EngageReactionSummary id={workflow.id} likeCount={workflow.likeCount} contentType="workflow" />}
           primary={
             steps.length > 0 && (
               <Button

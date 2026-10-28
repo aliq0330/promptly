@@ -46,7 +46,9 @@ const failLikes = (context, message) =>
     if (route.request().method() !== "POST") return route.fallback();
     return json(route, { code: "P0001", message, details: null, hint: null }, 400);
   });
-const likeButton = (page) => page.locator("button[aria-label^='Beğen'], button[aria-label^='Like']").first();
+/** Beğeni düğmesi tepki seçicisini açar (docs/history/265-*): `react` düğmeye basar, sonra Sevdim'i seçer. */
+const likeButton = (page) => page.locator("button[aria-label^='Beğen'], button[aria-label^='Like'], button[aria-label^='Tepki'], button[aria-label^='React']").first();
+const react = async (page) => { await likeButton(page).click(); await page.getByRole("menuitem", { name: /^(Sevdim|Love)/ }).click(); };
 const toast = (page) => page.locator("[role='status']").filter({ hasText: /\S/ });
 
 for (const [code, tr, en] of [
@@ -58,7 +60,7 @@ for (const [code, tr, en] of [
     await failLikes(context, code);
     await page.goto(`${BASE}${PAGES.prompt}`);
     await likeButton(page).waitFor();
-    await likeButton(page).click();
+    await react(page);
     await toast(page).first().waitFor();
     const text = (await toast(page).allTextContents()).join(" ");
     assert.ok(text.includes(tr), `toast: ${text}`);
@@ -68,7 +70,7 @@ for (const [code, tr, en] of [
     await failLikes(context, code);
     await page.goto(`${BASE}${PAGES.prompt}`);
     await likeButton(page).waitFor();
-    await likeButton(page).click();
+    await react(page);
     await toast(page).first().waitFor();
     assert.ok((await toast(page).allTextContents()).join(" ").includes(en));
   }, { lang: "en" });
@@ -78,7 +80,7 @@ await scenario("3. Bilinmeyen hata kodu çevrilmez / toast çıkmaz (yalnız bil
   await failLikes(context, "some_other_error");
   await page.goto(`${BASE}${PAGES.prompt}`);
   await likeButton(page).waitFor();
-  await likeButton(page).click();
+  await react(page);
   await page.waitForTimeout(800);
   const text = (await toast(page).allTextContents()).join(" ");
   assert.ok(!/hızlı|etkileşime|beğenemezsin/.test(text), text);

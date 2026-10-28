@@ -323,15 +323,17 @@ await scenario("7. Medya süzgeci AÇIK başlar: görselsiz metin promptu + work
 
 await scenario("8. Beğeni gerçek istekle, hata olursa geri alınır", async ({ page, db }) => {
   await openFocus(page);
-  await slides(page).nth(0).getByRole("button", { name: /Beğen/ }).click();
+  await slides(page).nth(0).getByRole("button", { name: /Beğen|Tepki/ }).click();
+  await page.getByRole("menuitem", { name: "Sevdim" }).click(); // docs/history/265-*: düğme tepki seçicisini açar
   await page.waitForTimeout(500);
   assert.ok(db.calls.some((c) => c.table === "prompt_likes" && c.body.prompt_id === pid(1)));
-  assert.match(await slides(page).nth(0).getByRole("button", { name: /Beğen/ }).textContent(), /12/);
+  assert.match(await slides(page).nth(0).getByRole("button", { name: /Beğen|Tepki/ }).textContent(), /12/);
   db.failLike = true;
   await step(page);
-  await slides(page).nth(1).getByRole("button", { name: /Beğen/ }).click();
+  await slides(page).nth(1).getByRole("button", { name: /Beğen|Tepki/ }).click();
+  await page.getByRole("menuitem", { name: "Sevdim" }).click();
   await page.waitForTimeout(700);
-  assert.match(await slides(page).nth(1).getByRole("button", { name: /Beğen/ }).textContent(), /12/, "rolled back");
+  assert.match(await slides(page).nth(1).getByRole("button", { name: /Beğen|Tepki/ }).textContent(), /12/, "rolled back");
 });
 
 await scenario("9. Kaydet / Paylaş pencereleri (Esc yalnız pencereyi kapatır), Yorum → #comments, Promptu incele + Kopyala", async ({ page, db }) => {
@@ -440,7 +442,7 @@ await scenario("14. Telefon 390px: alt menüde Profil yerine Odak; ekranı kapla
   const next = await slides(page).nth(1).boundingBox();
   assert.ok(next.x < 390 && next.x > 366, `the next card peeks in (${next.x})`);
   assert.equal(await stage(page).locator("[data-focus-strip] button").count() > 5, true, "thumbnail strip");
-  const like = await slides(page).nth(0).getByRole("button", { name: /Beğen/ }).boundingBox();
+  const like = await slides(page).nth(0).getByRole("button", { name: /Beğen|Tepki/ }).boundingBox();
   assert.ok(like.x + like.width <= 390 && like.y + like.height <= 844);
   await step(page);
   await shot(page, "14b-focus-phone-text");
