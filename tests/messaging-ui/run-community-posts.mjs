@@ -134,7 +134,7 @@ await scenario("3d. Başvuru kartı da normal kart gibi Kaydet + İstatistik + P
   await card.waitFor();
   await card.getByRole("button", { name: /İstatistik/i }).click();
   const d = dlg(page);
-  await d.getByRole("tab", { name: /Beğenenler/ }).waitFor();
+  await d.getByRole("tab", { name: /Tepki verenler/ }).waitFor();
   await d.getByRole("tab", { name: /Kaydedenler/ }).waitFor();
   await page.waitForTimeout(300);
   const stat = calls(db, "content_engagers", "RPC").at(-1);

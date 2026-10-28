@@ -1,13 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { PenLine, Reply, Sparkles } from "lucide-react";
+import { Reply, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { CARD_PRIMARY_CLASS, ContentCard, ContentCardPost, ContentCardTitle } from "@/features/content/content-card";
+import { ContentCard, ContentCardPost, ContentCardTitle } from "@/features/content/content-card";
 import { ContentTypePill } from "@/features/content/content-type-label";
 import { AnnouncedChip } from "@/features/communities/announced-chip";
 import { StorageImage } from "@/components/ui/storage-media";
-import { useAuth } from "@/features/auth/auth-provider";
 import { clampedAspectRatio } from "@/lib/placeholder-image";
 import { contentActionClassName } from "@/features/content/action-styles";
 import { CONTENT_TYPE_META } from "@/features/prompts/content-type-meta";
@@ -52,11 +51,9 @@ export const STATUS_VARIANTS: Record<PromptRequest["status"], "success" | "dange
  */
 export function RequestCard({ request, onDeleted }: { request: PromptRequest; onDeleted?: () => void }) {
   const { t, language } = useTranslation();
-  const { user } = useAuth();
   const href = requestHref(request);
   const typeMeta = request.contentType ? CONTENT_TYPE_META[request.contentType] : null;
   const picture = request.referenceImage ?? request.media[0];
-  const canReply = request.status === "open" && user?.id !== request.author.id;
 
   return (
     <ContentCard href={href}>
@@ -93,14 +90,6 @@ export function RequestCard({ request, onDeleted }: { request: PromptRequest; on
         }
         backdrop={picture ? <StorageImage src={picture.url} alt="" fill sizes="240px" className="object-cover" /> : undefined}
         title={<ContentCardTitle href={href} title={request.title} />}
-        primary={
-          canReply ? (
-            <Link href={`/create?answerRequest=${request.id}`} className={CARD_PRIMARY_CLASS}>
-              <PenLine size={14} aria-hidden />
-              {t("request.reply")}
-            </Link>
-          ) : undefined
-        }
         reactions={<ReactionSummary contentType="request" id={request.id} likeCount={request.likeCount} />}
         footer={
           <>

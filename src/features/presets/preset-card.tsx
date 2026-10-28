@@ -1,12 +1,11 @@
 "use client";
 
-import { SlidersHorizontal, WandSparkles } from "lucide-react";
+import { SlidersHorizontal } from "lucide-react";
 import { presetHref } from "@/lib/utils";
 import { taxonomyPathLabel } from "@/lib/content-taxonomy";
 import { presetParameterEntries } from "@/lib/preset-utils";
-import Link from "next/link";
 import { resolveToolRefs } from "@/lib/ai-tool-catalog";
-import { CARD_PRIMARY_CLASS, ContentCard, ContentCardPost, ContentCardTitle } from "@/features/content/content-card";
+import { ContentCard, ContentCardPost, ContentCardTitle } from "@/features/content/content-card";
 import { ContentTypePill } from "@/features/content/content-type-label";
 import { AnnouncedChip } from "@/features/communities/announced-chip";
 import { PostTargetMenu, postMeta } from "@/features/prompts/post-header";
@@ -77,13 +76,6 @@ export function PresetCard({
           </div>
         }
         title={<ContentCardTitle href={href} title={preset.title} />}
-        primary={
-          // Short visible label ("Studio'da aç" pushed the counters out of a phone-width card); the full name stays the accessible one.
-          <Link href={`/studio?preset=${preset.id}`} aria-label={t("studio.openInStudio")} title={t("studio.openInStudio")} className={CARD_PRIMARY_CLASS}>
-            <WandSparkles size={14} aria-hidden />
-            Studio
-          </Link>
-        }
         reactions={<ReactionSummary contentType="preset" id={preset.id} likeCount={preset.likeCount} />}
         footer={<PromptCardFooter preset={preset} />}
       />

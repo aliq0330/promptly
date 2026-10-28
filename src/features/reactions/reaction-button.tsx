@@ -10,15 +10,15 @@ import { useAuthPrompt } from "@/features/auth/auth-prompt-provider";
 import { useAnchoredPopover } from "@/features/messages/use-anchored-popover";
 import { useLikeState } from "@/features/prompts/use-like-state";
 import { useTranslation } from "@/lib/i18n/language-provider";
-import { REACTION_LABEL, type ReactionKey } from "@/lib/reactions";
+import { DEFAULT_REACTION, REACTION_LABEL, type ReactionKey } from "@/lib/reactions";
 import type { LikeableContentType } from "@/lib/supabase/likes";
 import { ReactionIcon, type ReactionIconHandle } from "./reaction-icon";
 import { ReactionPicker } from "./reaction-picker";
 import { playReactionEffect } from "./reaction-player";
 
 /**
- * The one reaction control of every like surface (docs/history/265-*; `LikeButton` is this): pressing it opens the six-reaction picker; the
- * chosen emoji replaces the heart, plays its own animation and Telegram's big effect over the page. Every reaction is one like — the count
+ * The one reaction control of every like surface (docs/history/265-*; `LikeButton` is this): the first press likes (Sevdim) at once and opens
+ * the six-reaction picker with it selected; the chosen emoji replaces the heart, plays its own animation and Telegram's big effect over the page. Every reaction is one like — the count
  * is the total and keeps its meaning. Signed out, it opens the login dialog (as the heart did). State and persistence: `useLikeState`.
  */
 export function ReactionButton({
@@ -127,6 +127,14 @@ export function ReactionButton({
           event.preventDefault();
           event.stopPropagation();
           openedByKeyboard.current = event.detail === 0;
+          // First touch of the heart IS the like (the default reaction, with its effect); the picker opens beside it with that reaction
+          // selected, to swap it if the viewer wants. With a reaction already given, the touch only opens/closes the picker.
+          if (!open && reaction === null) {
+            playWhenShown.current = DEFAULT_REACTION;
+            void react(DEFAULT_REACTION).then((result) => {
+              if (result === "failed" || result === "ignored") playWhenShown.current = null;
+            });
+          }
           setOpen((value) => !value);
         }}
         className={classes}
