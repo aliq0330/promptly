@@ -524,7 +524,9 @@ for (const [label, viewport, theme] of [["mobil 390", { width: 390, height: 844 
     const card = post(page, "Uzun başlıklı gönderi");
     const heights = await card.locator("[data-post-engagement] button, [data-post-engagement] a").evaluateAll((els) => els.map((el) => Math.round(el.getBoundingClientRect().height)));
     assert.ok(heights.length >= 2 && heights.every((h) => h >= 36), `touch targets too small: ${heights}`);
-    await card.getByRole("link", { name: /Uzun başlıklı gönderi/ }).first().click();
+    // Resimsiz kartta başlık yüzeyin içinde; gerçek bağlantı yalnız klavye/ekran okuyucu içindir (266-*): odakla + Enter.
+    await card.getByRole("link", { name: /Uzun başlıklı gönderi/ }).first().focus();
+    await page.keyboard.press("Enter");
     await page.waitForURL(/communities\/post\/local/);
     await page.locator("[data-community-post-page]").waitFor();
     assert.ok(await overflowFree(page), "application page overflows horizontally");
