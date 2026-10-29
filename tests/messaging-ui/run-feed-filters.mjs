@@ -560,7 +560,7 @@ await scenario("16. Arama seçili bölüme göre: Promptlar'da yalnız prompt ar
   await page.goto(`${BASE}/discover`);
   const box = () => page.getByRole("combobox").or(page.locator('main input[type="text"], main input:not([type])')).first();
   // Tümü: dört tür + sekmeler.
-  await page.getByPlaceholder("Prompt veya kullanıcı ara").first().fill("kedi");
+  await page.getByPlaceholder("Prompt, kişi, etiket ara…").first().fill("kedi");
   await waitFor(() => (state.searchCalls ?? []).length >= 4);
   assert.deepEqual([...new Set(state.searchCalls.map((c) => c.p_kind))].sort(), ["preset", "prompt", "request", "workflow"]);
   await page.locator("[data-section-menu]").filter({ hasText: "Tümü" }).waitFor(); // sonuç türü menüsü (docs/history/236-*)
