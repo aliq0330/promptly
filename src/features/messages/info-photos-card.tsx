@@ -10,14 +10,14 @@ import { useMessageImageUrls } from "./message-image-grid";
  * "Paylaşılan fotoğraflar": bu sohbette görebildiğin fotoğrafların son dördü + toplam; dokununca o mesaja gider. Hem Kişi bilgisi hem
  * Topluluk bilgisi aynı kartı kullanır (okuma yalnız çağıranın GÖREBİLDİĞİ mesajlardan gelir).
  */
-export function InfoPhotosCard({ conversationId, viewerId, onJumpToMessage }: { conversationId: string; viewerId: string; onJumpToMessage: (messageId: string) => void }) {
+export function InfoPhotosCard({ conversationId, onJumpToMessage }: { conversationId: string; onJumpToMessage: (messageId: string) => void }) {
   const { t } = useTranslation();
   const [photos, setPhotos] = useState<{ items: ConversationPhoto[]; truncated: boolean } | null>(null);
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     let alive = true;
-    fetchConversationPhotos(conversationId, viewerId)
+    fetchConversationPhotos(conversationId)
       .then((result) => {
         if (alive) setPhotos({ items: result.photos, truncated: result.truncated });
       })
@@ -27,7 +27,7 @@ export function InfoPhotosCard({ conversationId, viewerId, onJumpToMessage }: { 
     return () => {
       alive = false;
     };
-  }, [conversationId, viewerId]);
+  }, [conversationId]);
 
   const preview = (photos?.items ?? []).slice(0, 4);
   const urls = useMessageImageUrls(preview.map((photo) => photo.attachment));

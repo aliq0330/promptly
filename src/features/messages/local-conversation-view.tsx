@@ -1709,7 +1709,6 @@ export function LocalConversationView() {
         <ContactInfoPanel
           conversation={conversation}
           participant={participant}
-          viewerId={user.id}
           starredCount={starredIds.size}
           pinnedCount={pinned.items.length}
           blockState={blockState}
@@ -1757,7 +1756,6 @@ export function LocalConversationView() {
         <GroupInfoModal
           conversation={conversation}
           focus={groupInfoFocus}
-          viewerId={user.id}
           starredCount={starredIds.size}
           pinnedCount={pinned.items.length}
           busy={actionBusy}

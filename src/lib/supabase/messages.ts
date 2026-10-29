@@ -511,7 +511,11 @@ export async function clearConversationUnread(conversationId: string): Promise<v
   if (error) throw new Error(error.message);
 }
 
-/** Kişi bilgisi için sohbetin fotoğrafları: en yeni medya mesajlarından en çok 100'ü (kişisel "temizle"/"benden sil"/silinmiş mesajlar HARİÇ — görünmeyen mesajın içeriği hiçbir yolla gösterilmez). */
+/**
+ * Kişi/Topluluk bilgisi için sohbetin paylaşılan medyası (docs/history/271-*): süzgeç SUNUCUDA (`chat_shared_items` / `chat_shared_stats`, SECURITY INVOKER —
+ * mesaj okuma kuralı + kişisel "temizle"/"benden sil"/silinmiş mesajlar HARİÇ; görünmeyen mesajın içeriği hiçbir yolla gösterilmez).
+ * (Eski istemci süzgeci `attachments @> [{}]`'u PostgREST'e `cs.{[object Object]}` diye gönderiyordu → canlıda "Fotoğraflar yüklenemedi".)
+ */
 const PHOTO_MESSAGE_LIMIT = 100;
 
 export interface ConversationPhoto {
@@ -519,36 +523,65 @@ export interface ConversationPhoto {
   attachment: MessageAttachment;
 }
 
-export async function fetchConversationPhotos(conversationId: string, viewerId: string): Promise<{ photos: ConversationPhoto[]; truncated: boolean }> {
-  const { data: membership, error: membershipError } = await supabase
-    .from("conversation_members")
-    .select("cleared_at")
-    .eq("conversation_id", conversationId)
-    .eq("user_id", viewerId)
-    .maybeSingle();
-  if (membershipError) throw new Error(membershipError.message);
-  const clearedAt = (membership as { cleared_at: string | null } | null)?.cleared_at ?? null;
-  let query = supabase
-    .from("messages")
-    .select("id, attachments, created_at")
-    .eq("conversation_id", conversationId)
-    .is("deleted_at", null)
-    // `attachments @> [{}]` = dizide en az bir öğe var (boş dizi eşleşmez).
-    .contains("attachments", [{}]);
-  if (clearedAt) query = query.gt("created_at", clearedAt);
-  const [{ data, error }, { data: hidden }] = await Promise.all([
-    query.order("created_at", { ascending: false }).limit(PHOTO_MESSAGE_LIMIT + 1),
-    supabase.from("message_hidden_for").select("message_id").eq("user_id", viewerId),
-  ]);
+export type ChatSharedKind = "photos" | "links" | "content";
+
+export interface ChatSharedStats {
+  photos: number;
+  content: number;
+  links: number;
+}
+
+export interface ChatSharedItem {
+  id: string;
+  createdAt: string;
+  senderId: string;
+  body: string | null;
+  attachments: MessageAttachment[];
+  sharedPromptId: string | null;
+  sharedRequestId: string | null;
+}
+
+interface SharedItemRow {
+  id: string;
+  created_at: string;
+  sender_id: string;
+  body: string | null;
+  attachments: unknown;
+  shared_prompt_id: string | null;
+  shared_request_id: string | null;
+}
+
+export async function fetchChatSharedItems(conversationId: string, kind: ChatSharedKind, limit = 100): Promise<{ items: ChatSharedItem[]; truncated: boolean }> {
+  const { data, error } = await supabase.rpc("chat_shared_items", { p_conversation_id: conversationId, p_kind: kind, p_limit: limit + 1 });
   if (error) throw new Error(error.message);
-  const hiddenIds = new Set((hidden ?? []).map((row) => row.message_id as string));
-  const rows = (data ?? []) as { id: string; attachments: unknown }[];
+  const rows = (data ?? []) as SharedItemRow[];
+  return {
+    items: rows.slice(0, limit).map((row) => ({
+      id: row.id,
+      createdAt: row.created_at,
+      senderId: row.sender_id,
+      body: row.body,
+      attachments: parseAttachments(row.attachments),
+      sharedPromptId: row.shared_prompt_id,
+      sharedRequestId: row.shared_request_id,
+    })),
+    truncated: rows.length > limit,
+  };
+}
+
+export async function fetchChatSharedStats(conversationId: string): Promise<ChatSharedStats> {
+  const { data, error } = await supabase.rpc("chat_shared_stats", { p_conversation_id: conversationId });
+  if (error) throw new Error(error.message);
+  const row = (data ?? {}) as Record<string, unknown>;
+  const num = (value: unknown) => Number(value ?? 0) || 0;
+  return { photos: num(row.photos), content: num(row.content), links: num(row.links) };
+}
+
+export async function fetchConversationPhotos(conversationId: string): Promise<{ photos: ConversationPhoto[]; truncated: boolean }> {
+  const { items, truncated } = await fetchChatSharedItems(conversationId, "photos", PHOTO_MESSAGE_LIMIT);
   const photos: ConversationPhoto[] = [];
-  for (const row of rows.slice(0, PHOTO_MESSAGE_LIMIT)) {
-    if (hiddenIds.has(row.id)) continue;
-    for (const attachment of parseAttachments(row.attachments)) photos.push({ messageId: row.id, attachment });
-  }
-  return { photos, truncated: rows.length > PHOTO_MESSAGE_LIMIT };
+  for (const item of items) for (const attachment of item.attachments) photos.push({ messageId: item.id, attachment });
+  return { photos, truncated };
 }
 
 /**
