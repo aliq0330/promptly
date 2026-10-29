@@ -140,9 +140,7 @@ await scenario("1. Detay: kalbe dokunuş YALNIZ seçiciyi açar (hiçbir şey se
   assert.equal(await menu(page).locator('[aria-current="true"]').count(), 0, "nothing is selected");
   assert.equal(await reactButton(page).locator("img").count(), 0, "the heart stays a heart");
   assert.match(await reactButton(page).innerText(), /13/);
-  const fireItem = menu(page).getByRole("menuitem", { name: "Ateş" });
-  const pickedBox = await fireItem.boundingBox();
-  await fireItem.click();
+  await menu(page).getByRole("menuitem", { name: "Ateş" }).click();
   await waitFor(() => state.likeCalls.length > 0);
   assert.equal(state.likeCalls.length, 1);
   assert.equal(state.likeCalls[0].reaction, "fire");
@@ -151,12 +149,13 @@ await scenario("1. Detay: kalbe dokunuş YALNIZ seçiciyi açar (hiçbir şey se
   assert.match((await reactButton(page).locator("img").getAttribute("src")) ?? "", /\/promptly\/reactions\/fire\.svg$/);
   assert.match(await reactButton(page).innerText(), /14/);
   await effectSvg(page).first().waitFor({ timeout: 6000 });
-  // The burst starts from the emoji that was tapped in the picker (not from the heart button) and is at most 156 px (60% of the old 260).
+  // The burst leaves from the emoji on the button (its origin sits at 78% / 50% of Telegram's effect canvas) and is at most 156 px (60% of the old 260).
   const effectBox = await page.locator("[data-reaction-effects] > div").first().boundingBox();
   assert.ok(effectBox && effectBox.width <= 156.5 && effectBox.height <= 156.5, `effect is at most 156 px (got ${effectBox?.width})`);
-  const dx = effectBox.x + effectBox.width / 2 - (pickedBox.x + pickedBox.width / 2);
-  const dy = effectBox.y + effectBox.height / 2 - (pickedBox.y + pickedBox.height / 2);
-  assert.ok(Math.hypot(dx, dy) < 40, `effect is centred on the tapped emoji (off by ${Math.round(Math.hypot(dx, dy))} px)`);
+  const iconBox = await reactButton(page).locator("img").boundingBox();
+  const dx = effectBox.x + effectBox.width * 0.78 - (iconBox.x + iconBox.width / 2);
+  const dy = effectBox.y + effectBox.height * 0.5 - (iconBox.y + iconBox.height / 2);
+  assert.ok(Math.hypot(dx, dy) < 6, `burst origin is on the button emoji (off by ${Math.round(Math.hypot(dx, dy))} px)`);
   await summaryHas(page, ID.prompt, /Sen, Bob ve 12 kişi tepki verdi/);
   await shot(page, "rx-effect");
   await page.waitForFunction(() => document.querySelectorAll("[data-reaction-effects] svg").length === 0, null, { timeout: 8000 });
