@@ -1,0 +1,23 @@
+# 269 — Arama: tek satırlık çip şeridi + paylaşılan Filtre penceresi
+
+**Durum: uygulandı (repoda). Yalnız istemci kodu, migration yok.** Kullanıcı ekran görüntüsünde aramanın kutu içinde sarmalanan çiplerle ~290 px yer kapladığını, placeholder'ın kesildiğini ve yazmadan açılan statik "İçerik / İçerik Tipi" listesinin sonuçların üstüne bindiğini gösterdi; önerilerim + kendi mockup'ı (`promptly_search_mockup.html`) birleştirilen bir mockup üzerinde onaylandı, sonra gerçek koda uygulandı.
+
+## Kullanıcı gözüyle
+- **Arama kutusu tek satır:** yalnız arama satırı (yazı varken ✕ yalnız yazıyı siler). Seçili çipler kutunun ALTINDA tek satırlık yana kayan şeritte (`ScrollRow`, sarmaz; ✕ hedefi 28 px, çip 36 px); şeridin sonunda "Temizle" (çipleri + yazıyı siler). Çip yokken şerit yok. Aynı kutu tür listelerinde (`/prompts`…, `ContentListPage`) de bu düzende.
+- **Öneri paneli:** boş + odakta → **Son aramalar** (bu tarayıcıda, `localStorage`, en çok 5, "Geçmişi temizle") ve **Popüler etiketler** (6). Yazınca eskisi gibi kişi / etiket / Biçim / Tür / araç; `@` yalnız kişi, `#` yalnız etiket gösterir ve **Enter ilk öneriyi çip yapar**. Boş kutuda eski statik tür listesi KALKTI. Tür satırları sitenin standart ikonlarıyla (Prompt `SquareTerminal`, İstek `Sparkles`, Workflow `Workflow`, Hazır ayar `SlidersHorizontal`); panel `max-h` + kayar, altında tek satır ipucu. Grup adları "İçerik" → **Biçim** (Görsel/Metin/Ses/Video), "İçerik tipi" → **Tür**.
+- **Tek kontrol satırı** (`ListControlRow`): sonuç türü menüsü (Tümü ▾) + **Filtre** (etkin sayı rozeti) + Kart/Izgara. Eski "İlgili · Yeni · Popüler" çip satırı kalktı — sıralama Filtre penceresinde.
+- **Filtre penceresi** (paylaşılan `ListFilterSheet`: sabit başlık + sabit alt düğmeler): VE/VEYA notu → **Biçim** · **Tür** (Keşfet → Promptlar gibi tek tür kapsamında yok) · **Kullanıcılar** (arama alanı sunucudan bulur, avatarlı satır, seçililer ✕'li çip) · **Etiketler** (arama + popüler öneriler) · **Araçlar** (ilk 8 + "Tümünü gör (N)" + filtre alanı) · **Sıralama**. Pencere ile şerit AYNI `tokens` listesini düzenler (canlı), sorgu mantığı (`tokensToQuery`: gruplar VE, grup içi VEYA, etiketlerin hepsi) DEĞİŞMEDİ.
+- **Tek biçim seçiliyken** kategori/alt kategori satırları kutunun altında kalır (`TaxonomyDeepRows`); eski satırdaki "Tümü · Görsel · Metin…" tür çipleri Biçim ile aynı iş olduğu için kaldırıldı. Filtre rozeti kategori/alt kategoriyi de sayar; "Temizle" hepsini sıfırlar.
+- **Sonuç yokken çıkış yolu:** "Şunlardan birini kaldırmayı dene:" + çip başına tek dokunuşluk "X süzgecini kaldır" düğmeleri (en çok 4).
+
+## Kodda
+- `features/search/advanced-search-box.tsx` (yeniden yazıldı: `Entry` = çip önerisi | son arama, `loadEmptySources`, Enter/`@`/`#` davranışı), yeni `search-chip-meta.ts` (`KIND_ICON`, `KIND_LABEL`, `tokenChip` — şerit, öneri ve pencerenin ortak ikon/etiketi), `search-recents.ts`, `search-filter-sections.tsx` (`SearchFilterSections`, `TokenFinder`, `ToolSection`), `search-tokens.ts` (`toggleToken`), `search-view.tsx` (`ListControlRow` + `showControls`/`showTabMenu`, boş sonuç çıkışı).
+- i18n: `search.suggestHint/recent/clearRecent/popularTags/chipsAria/clearText/filterLogic/hintAny/hintAll/findPerson/findTag/findTool/showAll/showLess/noMatch/removeNamed/tryRemoving` eklendi (TR+EN); `search.groupMedia/groupKind/chipPlaceholder/placeholder` metinleri değişti (EN: Format / Type; placeholder "Prompt, kişi, etiket ara…").
+- Test: `tests/messaging-ui/run-search-notifications.mjs` 7a (Filtre penceresi → şerit tek satır, ✕ + Temizle, rozet), 7b (son aramalar, `@bob` + Enter, boş sonuç çıkışı), 7c (kişi arama alanı, İngilizce, 390 px taşma yok); senaryo 2 "İlgili" düğmesi yerine `[data-list-filter]`; `run-feed-filters.mjs` yeni placeholder.
+
+## Bilinçli sınırlar / açık
+- **Canlı sonuç sayısı ve seçenek sayıları YOK** (mockup'taki "128 sonucu göster", "Görsel 3"): arama sayfalı ve türe göre ayrı RPC'lerle gelir, toplam sayı döndürmez; sahte sayı yazılmadı. Pencere altı "Filtreleri Uygula" (sayısız); sayı için `search_content` ailesine sayım RPC'si gerekir (migration).
+- Boş sonuç çıkışı "kaldırınca kaç sonuç" demez (aynı nedenle).
+- Filtre düğmesi sitenin sade satırındaki simge düğmesidir (mockup'taki yazılı hap değil) — `ListControlRow` kuralı.
+- Kategori satırları pencerede değil kutunun altında; sıralama tek tür kapsamında da pencerededir.
+- Gerçek Supabase'e / oturuma / iOS Safari klavyesine karşı denenmedi; ağ taklitli Playwright'ta sınandı (`run-search-notifications` 14/14, `run-feed-filters` 18/18, `run-discover` 9/9, `run-spaces` 32/32, `run-communities` 66/66, `run-quotes` 12/12, `run-hscroll` 5/5; birim 544/544).

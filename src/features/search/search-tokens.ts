@@ -30,6 +30,12 @@ export function tokenKey(token: SearchToken): string {
   }
 }
 
+/** Adds the chip when it is absent, removes it when present (the filter sheet's toggles). */
+export function toggleToken(tokens: SearchToken[], token: SearchToken): SearchToken[] {
+  const key = tokenKey(token);
+  return tokens.some((existing) => tokenKey(existing) === key) ? tokens.filter((existing) => tokenKey(existing) !== key) : [...tokens, token];
+}
+
 /** A tool chip matches the tool itself and any of its models. */
 function toolRefs(toolId: string): string[] {
   const tool = findTool(toolId);

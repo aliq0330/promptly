@@ -7,15 +7,16 @@ import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
-import { Chip, ChipRow } from "@/components/ui/chip";
-import { SectionMenu } from "@/features/content/section-menu";
+import { ListControlRow } from "@/features/content/list-control-row";
 import { Hash, LayoutGrid, SquareTerminal, Users, UsersRound, Bot, type LucideIcon } from "lucide-react";
 import { PromptGrid } from "@/features/prompts/prompt-grid";
 import { RequestList } from "@/features/requests/request-list";
-import { TaxonomyFilter } from "@/features/content/taxonomy-filter";
+import { TaxonomyDeepRows } from "@/features/content/taxonomy-filter";
 import { AdvancedSearchBox } from "./advanced-search-box";
+import { tokenChip } from "./search-chip-meta";
+import { SearchFilterSections, type SearchSort } from "./search-filter-sections";
 import { findTool } from "@/lib/ai-tool-catalog";
-import { tokensToQuery, type ContentKind, type SearchToken } from "./search-tokens";
+import { toggleToken, tokenKey, tokensToQuery, type ContentKind, type SearchToken } from "./search-tokens";
 import { searchPromptsPage } from "@/lib/supabase/prompts";
 import { searchProfiles } from "@/lib/supabase/profiles";
 import { searchRequestsPage } from "@/lib/supabase/requests";
@@ -36,7 +37,6 @@ import { Eyebrow } from "@/features/content/detail-parts";
 import type { Prompt, PromptRequest, Preset, Tag, UserProfile, Workflow } from "@/types";
 import { CONTENT_GRID_ITEM_CLASS, ContentGrid } from "@/features/content/content-card";
 import { useViewMode } from "@/features/content/view-mode-store";
-import { ViewModeControls } from "@/features/content/view-mode-switcher";
 import { FocusGrid } from "@/features/focus/focus-grid";
 import { CommunityCard } from "@/features/communities/community-card";
 import { applyJoinState, ErrorBox } from "@/features/communities/home-shared";
@@ -46,7 +46,7 @@ import type { TranslationKey } from "@/lib/i18n/translations";
 
 const DEBOUNCE_MS = 300;
 const NO_RESULTS = Promise.resolve({ items: [], nextCursor: null });
-type Sort = NonNullable<ContentSearchFilters["sort"]>;
+type Sort = SearchSort;
 
 /**
  * Result tabs (docs/history/205-*): Tümü = every group (people/tags/communities only for a plain-text search, as before);
@@ -284,6 +284,9 @@ export function SearchView({ idle, scope }: { idle?: ReactNode; scope?: SearchSc
   const nothingFound = noPosts && (!textOnly || (users.length === 0 && tags.length === 0 && communities.items.length === 0));
   const taxonomy: TaxonomyFilterValue = { contentType: singleMedia, category, subcategory };
   const showPosts = tab === "all" || tab === "posts";
+  // The control row: result-type menu (unscoped, once there is a query) + Filtre / Kart-Izgara (post results). Embedded in Keşfet it waits for a query.
+  const showTabMenu = active && !scope;
+  const showControls = (active || !idle) && (showTabMenu || showPosts);
 
   const peopleList = (people: UserProfile[]) => (
     <div className="overflow-hidden rounded-xl border border-border-soft bg-surface shadow-card">
@@ -341,38 +344,46 @@ export function SearchView({ idle, scope }: { idle?: ReactNode; scope?: SearchSc
           placeholder={scope ? t("discover.searchIn", { scope: scope.label }) : undefined}
         />
         {singleMedia && (
-          <TaxonomyFilter
-            value={taxonomy}
-            onChange={(next) => {
-              if (!next.contentType) {
-                setTokens(tokens.filter((token) => token.kind !== "media"));
-                setSubFilter({ category: null, subcategory: null });
-              } else {
-                setSubFilter({ category: next.category, subcategory: next.subcategory });
-                if (next.contentType !== singleMedia) {
-                  setTokens([...tokens.filter((token) => token.kind !== "media"), { kind: "media", type: next.contentType }]);
-                }
-              }
-            }}
+          // Biçim lives in the chip strip / Filtre sheet; under ONE format the category (and subcategory) rows narrow it further.
+          <TaxonomyDeepRows value={taxonomy} onChange={(next) => setSubFilter({ category: next.category, subcategory: next.subcategory })} />
+        )}
+        {showControls && (
+          // docs/history/269-*: ONE control row (the shared sade row) — result-type menu · Filtre (chips + sort live in its sheet) · Kart/Izgara.
+          <ListControlRow
+            menu={
+              showTabMenu
+                ? {
+                    // docs/history/236-*: sonuç türleri (Tümü · Gönderiler · Kişiler · Topluluklar) tek menüde (4+ bölüm kuralı).
+                    items: SEARCH_TABS.map((item) => ({ key: item.key, label: t(item.labelKey), icon: SEARCH_TAB_ICON[item.key] })),
+                    active: tab,
+                    onChange: setTab,
+                    ariaLabel: t("search.tabsAria"),
+                    title: t("search.tabsAria"),
+                  }
+                : undefined
+            }
+            filter={
+              showPosts
+                ? {
+                    sheetSections: (
+                      <SearchFilterSections
+                        tokens={tokens}
+                        onTokensChange={setTokens}
+                        hideKinds={scope?.kind === "content"}
+                        sort={sort}
+                        onSortChange={setSort}
+                      />
+                    ),
+                    activeCount: tokens.length + (category ? 1 : 0) + (subcategory ? 1 : 0),
+                    onClear: () => {
+                      setTokens([]);
+                      setSubFilter({ category: null, subcategory: null });
+                    },
+                  }
+                : undefined
+            }
+            showView={showPosts}
           />
-        )}
-        {active && !scope && (
-          // docs/history/236-*: sonuç türleri (Tümü · Gönderiler · Kişiler · Topluluklar) tek menüde (4+ bölüm kuralı).
-          <div className="flex items-center">
-            <SectionMenu items={SEARCH_TABS.map((item) => ({ key: item.key, label: t(item.labelKey), icon: SEARCH_TAB_ICON[item.key] }))} active={tab} onChange={setTab} ariaLabel={t("search.tabsAria")} title={t("search.tabsAria")} />
-          </div>
-        )}
-        {active && showPosts && (
-          <div className="flex items-center gap-2">
-            <ChipRow className="min-w-0 flex-1">
-              {(["relevant", "new", "popular"] as Sort[]).map((value) => (
-                <Chip key={value} selected={sort === value} onClick={() => setSort(value)}>
-                  {t(value === "relevant" ? "search.sortRelevant" : value === "new" ? "search.sortNew" : "search.sortPopular")}
-                </Chip>
-              ))}
-            </ChipRow>
-            <ViewModeControls />
-          </div>
         )}
       </div>
 
@@ -506,9 +517,29 @@ export function SearchView({ idle, scope }: { idle?: ReactNode; scope?: SearchSc
             )}
             {!scope && textOnly && normalized.length >= 2 && <SearchQuotes query={normalized} onCount={setQuoteHits} />}
             {(tab === "posts" ? noPosts : nothingFound) && (
-              <p className="py-6 text-center text-sm text-text-muted">
-                {hasTokens ? t("search.noMatchingFilters") : t("common.noResults")}
-              </p>
+              <div className="space-y-3 py-6 text-center">
+                <p className="text-sm text-text-muted">{hasTokens ? t("search.noMatchingFilters") : t("common.noResults")}</p>
+                {hasTokens && (
+                  // docs/history/269-*: a dead end names its way out — one tap drops the chip that may have emptied the list.
+                  <div className="mx-auto flex max-w-sm flex-col gap-2" data-search-remove-filters>
+                    <p className="text-caption text-text-muted">{t("search.tryRemoving")}</p>
+                    {tokens.slice(0, 4).map((token) => {
+                      const { icon: Icon, label } = tokenChip(token, t);
+                      return (
+                        <button
+                          key={tokenKey(token)}
+                          type="button"
+                          onClick={() => setTokens(toggleToken(tokens, token))}
+                          className="flex min-h-11 items-center gap-2 rounded-xl border border-border-soft bg-surface px-3.5 text-left text-label text-text hover:border-primary"
+                        >
+                          <Icon size={15} className="shrink-0 text-primary" aria-hidden />
+                          <span className="min-w-0 flex-1 truncate">{t("search.removeNamed", { label })}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             )}
           </div>
         )

@@ -121,11 +121,11 @@ await scenario("2. Arama: Tümü'nde Topluluklar bölümü (tamamen kapalı yok)
   await pickResultTab(page, "Topluluklar");
   assert.match(page.url(), /[?&]tab=communities/);
   await list.waitFor();
-  assert.equal(await page.getByRole("button", { name: "İlgili" }).count(), 0, "no post sort on the communities tab");
+  assert.equal(await page.locator("[data-list-filter]").count(), 0, "no post filter / sort on the communities tab");
   await list.getByRole("button", { name: /katıl/i }).first().waitFor();
   await pickResultTab(page, "Gönderiler");
   assert.equal(await page.locator("[data-search-communities]").count(), 0, "no communities under posts");
-  await page.getByRole("button", { name: "İlgili" }).waitFor();
+  await page.locator("[data-list-filter]").waitFor();
   await pickResultTab(page, "Tümü");
   assert.ok(!/[?&]tab=/.test(page.url()), "Tümü leaves the address clean");
 }, { setup: seedCommunities });
@@ -173,6 +173,66 @@ await scenario("7. Keşfet: arama kutusuna yazınca aynı sekmeler; boşaltınca
   await page.locator("[data-section-menu]").waitFor();
   assert.equal(await page.locator("[data-search-communities]").count(), 0);
 }, { setup: seedCommunities });
+
+// docs/history/269-*: çipler kutudan çıktı (tek satırlık şerit), süzgeçler paylaşılan Filtre penceresinde, boş kutuda son aramalar, @ + Enter.
+const chipStrip = (page) => page.getByRole("group", { name: /Seçili süzgeçler|Selected filters/ });
+
+await scenario("7a. Arama düzeni: Filtre penceresinden Görsel + Metin seçilir → tek satırlık çip şeridi (sarmaz); ✕ ve Temizle çalışır; pencere Sıralama içerir", async ({ page }) => {
+  await page.goto(`${BASE}/search?q=portre`);
+  await page.locator("[data-list-filter]").waitFor();
+  assert.equal(await chipStrip(page).count(), 0, "çip yokken şerit yok");
+  await page.locator("[data-list-filter]").click();
+  const dialog = page.getByRole("dialog");
+  for (const title of ["Biçim", "Tür", "Kullanıcılar", "Etiketler", "Araçlar", "Sıralama"]) await dialog.getByRole("heading", { name: title, exact: true }).waitFor();
+  assert.ok((await dialog.textContent()).includes("Aynı grupta birini seçmen yeterli"), "VE/VEYA notu");
+  await dialog.getByRole("button", { name: "Görsel", exact: true }).click();
+  await dialog.getByRole("button", { name: "Metin", exact: true }).click();
+  await dialog.getByRole("radio", { name: "Popüler" }).click();
+  await dialog.getByRole("button", { name: "Filtreleri Uygula" }).click();
+  await chipStrip(page).waitFor();
+  const boxes = await chipStrip(page).locator("span.rounded-full").evaluateAll((els) => els.map((el) => Math.round(el.getBoundingClientRect().top)));
+  assert.equal(boxes.length, 2, "iki çip");
+  assert.equal(new Set(boxes).size, 1, "çipler tek satırda");
+  assert.match(await page.locator("[data-list-filter]").getAttribute("aria-label"), /2/, "Filtre simgesi etkin sayıyı taşır");
+  await page.getByRole("button", { name: "Filtreyi kaldır: Görsel" }).click();
+  assert.equal(await chipStrip(page).locator("span.rounded-full").count(), 1);
+  await chipStrip(page).getByRole("button", { name: "Temizle" }).click();
+  assert.equal(await chipStrip(page).count(), 0, "Temizle şeridi kaldırır");
+});
+
+await scenario("7b. Arama kutusu: boşken son aramalar; '@bo' + Enter ilk kişiyi çip yapar; boş sonuçta 'şunu kaldır' çıkışı", async ({ page }) => {
+  await page.goto(`${BASE}/search`);
+  const box = searchBox(page);
+  await box.fill("sinematik");
+  await box.press("Enter");
+  await box.fill("");
+  await page.getByText("Son aramalar").waitFor();
+  assert.ok((await page.getByRole("listbox").textContent()).includes("sinematik"), "yazılan arama geçmişte");
+  assert.ok((await page.getByRole("listbox").textContent()).includes("Biçim") === false, "boş kutuda statik tür listesi yok");
+  await page.getByText("@ kişi · # etiket · Enter ile ekle").waitFor();
+  await box.fill("@bob");
+  await page.getByRole("option", { name: /@bob/ }).waitFor();
+  await box.press("Enter");
+  await chipStrip(page).getByText("@bob").waitFor();
+  assert.equal(await box.inputValue(), "", "çip eklenince yazı temizlenir");
+  // Sonuç yok (search_content boş) → dead end names its way out.
+  await page.locator("[data-search-remove-filters]").waitFor();
+  await page.locator("[data-search-remove-filters] button").first().click();
+  assert.equal(await chipStrip(page).count(), 0, "çip kaldırıldı");
+});
+
+await scenario("7c. Filtre penceresi: kişi arama alanı sunucudan bulur, çip olur; İngilizce başlıklar; telefonda taşma yok", async ({ page }) => {
+  await page.goto(`${BASE}/search?q=portre`);
+  await page.locator("[data-list-filter]").click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByRole("heading", { name: "Format", exact: true }).waitFor();
+  await dialog.getByPlaceholder("Find a person…").fill("bob");
+  await dialog.getByRole("button", { name: /@bob/ }).first().click();
+  await dialog.getByRole("button", { name: /Remove filter: @bob/ }).waitFor();
+  await dialog.getByRole("button", { name: "Apply filters" }).click();
+  await chipStrip(page).getByText("@bob").waitFor();
+  assert.ok(await overflowFree(page));
+}, { lang: "en", viewport: { width: 390, height: 844 } });
 
 await scenario("7. Bildirimler: ✕ düğmesi onay penceresi açar; Vazgeç'te hiçbir şey silinmez, Tümünü sil'de DELETE gider ve liste boşalır", async ({ page, db }) => {
   await page.goto(`${BASE}/notifications`);
