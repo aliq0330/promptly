@@ -348,7 +348,7 @@ export function SearchView({ idle, scope }: { idle?: ReactNode; scope?: SearchSc
           <TaxonomyDeepRows value={taxonomy} onChange={(next) => setSubFilter({ category: next.category, subcategory: next.subcategory })} />
         )}
         {showControls && (
-          // docs/history/268-*: ONE control row (the shared sade row) — result-type menu · Filtre (chips + sort live in its sheet) · Kart/Izgara.
+          // docs/history/269-*: ONE control row (the shared sade row) — result-type menu · Filtre (chips + sort live in its sheet) · Kart/Izgara.
           <ListControlRow
             menu={
               showTabMenu
@@ -520,7 +520,7 @@ export function SearchView({ idle, scope }: { idle?: ReactNode; scope?: SearchSc
               <div className="space-y-3 py-6 text-center">
                 <p className="text-sm text-text-muted">{hasTokens ? t("search.noMatchingFilters") : t("common.noResults")}</p>
                 {hasTokens && (
-                  // docs/history/268-*: a dead end names its way out — one tap drops the chip that may have emptied the list.
+                  // docs/history/269-*: a dead end names its way out — one tap drops the chip that may have emptied the list.
                   <div className="mx-auto flex max-w-sm flex-col gap-2" data-search-remove-filters>
                     <p className="text-caption text-text-muted">{t("search.tryRemoving")}</p>
                     {tokens.slice(0, 4).map((token) => {

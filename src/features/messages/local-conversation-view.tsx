@@ -67,6 +67,12 @@ import { summarizeContent } from "@/features/communities/content-summary";
 import { translateForRuntime, type TranslationKey } from "@/lib/i18n/translations";
 import { composeWorkflowShareBody } from "./workflow-share-format";
 import { composePresetShareBody } from "./preset-share-format";
+import { composeSpaceShareBody } from "./space-share-format";
+import { ChatLibraryPicker } from "./chat-attach";
+import { ContactInfoPanel } from "./contact-info-panel";
+import { ImportPromptsModal } from "@/features/exchange/import-prompts-modal";
+import type { CommunityPostType, ShareableContent } from "@/lib/supabase/communities";
+import { fetchSpace } from "@/lib/supabase/spaces";
 import { composeCommunityPostShareBody } from "./community-post-share-format";
 import { fetchPresetById } from "@/lib/supabase/presets";
 import { useRealPresets } from "@/features/presets/real-presets-provider";
@@ -122,6 +128,7 @@ export function LocalConversationView() {
   const shareParamWorkflowId = searchParams.get("shareWorkflowId");
   const shareParamPresetId = searchParams.get("sharePresetId");
   const shareParamPostId = searchParams.get("sharePostId");
+  const shareParamSpaceId = searchParams.get("shareSpaceId");
   const { user } = useAuth();
   const {
     getCached,
@@ -165,7 +172,13 @@ export function LocalConversationView() {
   const [fetchedShareWorkflowTitle, setFetchedShareWorkflowTitle] = useState<string | null>(null);
   const [fetchedSharePresetTitle, setFetchedSharePresetTitle] = useState<string | null>(null);
   const [fetchedSharePostTitle, setFetchedSharePostTitle] = useState<string | null>(null);
+  const [fetchedShareSpaceTitle, setFetchedShareSpaceTitle] = useState<string | null>(null);
   const [dismissedShare, setDismissedShare] = useState(false);
+  // "+" menüsü (docs/history/268-*): kütüphaneden paylaş seçicisi (hangi türle açıldı) ve prompt içe aktarma penceresi.
+  const [libraryType, setLibraryType] = useState<CommunityPostType | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
+  // Birebir sohbette kişiye dokununca açılan "Kişi bilgisi" paneli.
+  const [contactOpen, setContactOpen] = useState(false);
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState("");
@@ -588,6 +601,7 @@ export function LocalConversationView() {
     setFetchedShareWorkflowTitle(null);
     setFetchedSharePresetTitle(null);
     setFetchedSharePostTitle(null);
+    setFetchedShareSpaceTitle(null);
     setDismissedShare(false);
     if (shareParamPromptId && !getCachedPrompt(shareParamPromptId)) {
       fetchPromptById(shareParamPromptId).then((result) => {
@@ -605,6 +619,13 @@ export function LocalConversationView() {
       fetchPresetById(shareParamPresetId).then((result) => {
         if (result) setFetchedSharePresetTitle(result.title);
       });
+    } else if (shareParamSpaceId) {
+      // Space: başlık okunabilen Space'ten gelir; okunamıyorsa başlık gelmez ve gönderilemez.
+      fetchSpace(shareParamSpaceId)
+        .then((result) => {
+          if (result) setFetchedShareSpaceTitle(result.title);
+        })
+        .catch(() => undefined);
     } else if (shareParamPostId) {
       // Topluluk başvuru gönderisi: başlık gönderinin başvurduğu içeriktendir; okunamıyorsa (topluluğa erişim yok) başlık gelmez ve gönderilemez.
       fetchCommunityPostById(shareParamPostId)
@@ -615,7 +636,7 @@ export function LocalConversationView() {
         .catch(() => undefined);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [shareParamPromptId, shareParamRequestId, shareParamWorkflowId, shareParamPresetId, shareParamPostId]);
+  }, [shareParamPromptId, shareParamRequestId, shareParamWorkflowId, shareParamPresetId, shareParamPostId, shareParamSpaceId]);
 
   const pendingShare = dismissedShare
     ? null
@@ -637,7 +658,14 @@ export function LocalConversationView() {
                   title: getCachedPreset(shareParamPresetId)?.title ?? fetchedSharePresetTitle ?? t("common.loading"),
                   resolved: Boolean(getCachedPreset(shareParamPresetId) ?? fetchedSharePresetTitle),
                 }
-              : shareParamPostId
+              : shareParamSpaceId
+                ? {
+                    type: "space" as const,
+                    id: shareParamSpaceId,
+                    title: fetchedShareSpaceTitle ?? t("common.loading"),
+                    resolved: Boolean(fetchedShareSpaceTitle),
+                  }
+                : shareParamPostId
                 ? {
                     type: "community_post" as const,
                     id: shareParamPostId,
@@ -747,6 +775,14 @@ export function LocalConversationView() {
     }
   }
 
+  /** Seçiciden gelen içerik, derin bağlantıyla gelen paylaşımla AYNI yoldan mesaja eklenir (`?share<Tür>Id=`): başlık çözülür, not yazılır, gönderilir. */
+  function attachLibraryItem(item: ShareableContent) {
+    setLibraryType(null);
+    if (!id) return;
+    const param = { prompt: "sharePromptId", request: "shareRequestId", workflow: "shareWorkflowId", preset: "sharePresetId", space: "shareSpaceId" }[item.type];
+    router.replace(`/messages/local?id=${id}&${param}=${item.id}`);
+  }
+
   function clearShareParams() {
     if (!id) return;
     router.replace(`/messages/local?id=${id}`);
@@ -756,6 +792,7 @@ export function LocalConversationView() {
   const isShareUnresolved =
     (pendingShare?.type === "workflow" && !pendingShare.resolved) ||
     (pendingShare?.type === "preset" && !pendingShare.resolved) ||
+    (pendingShare?.type === "space" && !pendingShare.resolved) ||
     (pendingShare?.type === "community_post" && !pendingShare.resolved);
 
   /** The finished `body` for an outgoing message — workflow/preset shares have no embed column (Bölüm 9.52), so they're composed into the text itself. */
@@ -764,7 +801,9 @@ export function LocalConversationView() {
       ? composeWorkflowShareBody(trimmed, pendingShare.title, pendingShare.id)
       : pendingShare?.type === "preset"
         ? composePresetShareBody(trimmed, pendingShare.title, pendingShare.id)
-        : pendingShare?.type === "community_post"
+        : pendingShare?.type === "space"
+          ? composeSpaceShareBody(trimmed, pendingShare.title, pendingShare.id)
+          : pendingShare?.type === "community_post"
           ? composeCommunityPostShareBody(trimmed, pendingShare.title, pendingShare.id)
           : trimmed || undefined;
   }
@@ -1298,9 +1337,13 @@ export function LocalConversationView() {
             </span>
           </button>
         ) : (
-          <Link
-            href={profileHref(participant)}
-            className="group flex min-w-0 flex-1 items-center gap-3 rounded-lg px-1.5 py-1 transition-colors duration-200 ease-soft hover:bg-surface-soft"
+          <button
+            type="button"
+            onClick={() => setContactOpen(true)}
+            aria-haspopup="dialog"
+            aria-label={t("messages.contact.openAria", { name: participant.displayName })}
+            data-contact-open
+            className="group flex min-w-0 flex-1 items-center gap-3 rounded-lg px-1.5 py-1 text-left transition-colors duration-200 ease-soft hover:bg-surface-soft"
           >
             <Avatar src={participant.avatarUrl} alt={participant.displayName} size={36} />
             <span className="min-w-0 leading-tight">
@@ -1313,7 +1356,7 @@ export function LocalConversationView() {
                 <span className="block truncate text-caption text-text-muted">@{participant.username}</span>
               )}
             </span>
-          </Link>
+          </button>
         )}
         {group && (
           <Link
@@ -1611,6 +1654,8 @@ export function LocalConversationView() {
         onDismissNotice={composerImages.dismissNotice}
         error={sendError}
         dragActive={imageDrop.isDragging}
+        onPickLibrary={user ? setLibraryType : undefined}
+        onImport={user ? () => setImportOpen(true) : undefined}
         banners={
           <>
     {isGroup && !canPost && (
@@ -1654,6 +1699,38 @@ export function LocalConversationView() {
           </>
         }
       />
+      {contactOpen && !isGroup && user && conversation && (
+        <ContactInfoPanel
+          conversation={conversation}
+          participant={participant}
+          viewerId={user.id}
+          starredCount={starredIds.size}
+          pinnedCount={pinned.items.length}
+          blockState={blockState}
+          busy={actionBusy}
+          onClose={() => setContactOpen(false)}
+          onSearch={() => {
+            setContactOpen(false);
+            setSearchOpen(true);
+          }}
+          onJumpToMessage={(messageId) => {
+            setContactOpen(false);
+            void jumpWithFeedback(messageId);
+          }}
+          onShowPinned={() => {
+            const first = pinned.items[0];
+            setContactOpen(false);
+            if (first) void jumpWithFeedback(first.message.id);
+          }}
+          onToggleArchive={() => void runChatAction(conversation.archivedAt ? "unarchive" : "archive")}
+          onAsk={(kind) => {
+            setActionError(null);
+            setConfirmKind(kind);
+          }}
+        />
+      )}
+      {libraryType && user && <ChatLibraryPicker userId={user.id} initialType={libraryType} onPick={attachLibraryItem} onClose={() => setLibraryType(null)} />}
+      {importOpen && <ImportPromptsModal onClose={() => setImportOpen(false)} onImported={() => showToast(t("messages.attach.imported"))} />}
       {infoMessage && <MessageInfoModal message={infoMessage} onClose={() => setInfoMessage(null)} />}
       {reportMessage && group && (
         <ReportModal

@@ -174,7 +174,7 @@ await scenario("7. Keşfet: arama kutusuna yazınca aynı sekmeler; boşaltınca
   assert.equal(await page.locator("[data-search-communities]").count(), 0);
 }, { setup: seedCommunities });
 
-// docs/history/268-*: çipler kutudan çıktı (tek satırlık şerit), süzgeçler paylaşılan Filtre penceresinde, boş kutuda son aramalar, @ + Enter.
+// docs/history/269-*: çipler kutudan çıktı (tek satırlık şerit), süzgeçler paylaşılan Filtre penceresinde, boş kutuda son aramalar, @ + Enter.
 const chipStrip = (page) => page.getByRole("group", { name: /Seçili süzgeçler|Selected filters/ });
 
 await scenario("7a. Arama düzeni: Filtre penceresinden Görsel + Metin seçilir → tek satırlık çip şeridi (sarmaz); ✕ ve Temizle çalışır; pencere Sıralama içerir", async ({ page }) => {

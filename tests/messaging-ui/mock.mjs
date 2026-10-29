@@ -462,6 +462,12 @@ export async function installMock(context, db, opts = {}) {
       const key = a ? "following_id" : "follower_id";
       return rows(list.map((f) => ({ profiles: pub(Object.values(U).find((u) => u.id === f[key])) })));
     }
+    if (table === "blocks" && method === "POST") { db.blocks.push({ blocker_id: body.blocker_id, blocked_id: body.blocked_id }); return json(201, {}); }
+    if (table === "blocks" && method === "DELETE") {
+      const blocker = val(q.get("blocker_id") ?? "", "eq"); const blocked = val(q.get("blocked_id") ?? "", "eq");
+      db.blocks = db.blocks.filter((x) => !(x.blocker_id === blocker && x.blocked_id === blocked));
+      return route.fulfill({ status: 204, headers: { "access-control-allow-origin": "*" } });
+    }
     if (table === "blocks" && method === "GET") {
       const b = val(q.get("blocker_id") ?? "", "eq");
       return rows(db.blocks.filter((x) => !b || x.blocker_id === b).map((x) => ({ blocked_id: x.blocked_id, profiles: pub(Object.values(U).find((u) => u.id === x.blocked_id)) })));
@@ -496,6 +502,9 @@ export async function installMock(context, db, opts = {}) {
     if (table === "messages") {
       if (method === "GET") {
         let list = filterRows(db.messages, q, ["id", "conversation_id", "created_at"]);
+        // `.contains("attachments", [{}])` (Kişi bilgisi fotoğrafları) ve `deleted_at is null`.
+        if ((q.get("attachments") ?? "").startsWith("cs.")) list = list.filter((m) => Array.isArray(m.attachments) && m.attachments.length > 0);
+        if (q.get("deleted_at") === "is.null") list = list.filter((m) => !m.deleted_at);
         const order = q.get("order") ?? "";
         list = list.slice().sort((a, b) => a.created_at.localeCompare(b.created_at) * (order.includes("desc") ? -1 : 1));
         const lim = Number(q.get("limit") ?? 0); if (lim) list = list.slice(0, lim);

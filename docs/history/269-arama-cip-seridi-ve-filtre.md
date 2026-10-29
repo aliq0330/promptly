@@ -1,4 +1,4 @@
-# 268 — Arama: tek satırlık çip şeridi + paylaşılan Filtre penceresi
+# 269 — Arama: tek satırlık çip şeridi + paylaşılan Filtre penceresi
 
 **Durum: uygulandı (repoda). Yalnız istemci kodu, migration yok.** Kullanıcı ekran görüntüsünde aramanın kutu içinde sarmalanan çiplerle ~290 px yer kapladığını, placeholder'ın kesildiğini ve yazmadan açılan statik "İçerik / İçerik Tipi" listesinin sonuçların üstüne bindiğini gösterdi; önerilerim + kendi mockup'ı (`promptly_search_mockup.html`) birleştirilen bir mockup üzerinde onaylandı, sonra gerçek koda uygulandı.
 
